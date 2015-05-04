@@ -296,7 +296,7 @@ void CANotifyCallback(const void *data, int32_t dataLen, const char *senderAdrs,
         /* Cannot get Address as of now */
         CARemoteEndpoint_t endPoint;
         endPoint.resourceUri = "";     // will be filled by upper layer
-        endPoint.connectivityType = CA_LE;
+        endPoint.transportType= CA_LE;
 
         g_respCallback(&endPoint, data, dataLen);
     }

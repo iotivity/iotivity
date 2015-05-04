@@ -17,53 +17,47 @@
 * limitations under the License.
 *
 ******************************************************************/
+/**
+ * @file caipnwmonitor.cpp
+ * @brief This file is to keep design in sync with other platforms.  Right now there is no
+ *        api for network monitioring in arduino.
+ */
 
-#include "caethernetinterface_singlethread.h"
+#include "caipinterface_singlethread.h"
 
-#include <Arduino.h>
-#include <Ethernet.h>
-#include <socket.h>
-#include <w5100.h>
-#include <EthernetUdp.h>
-#include <IPAddress.h>
-#include "logger.h"
-#include "caadapterutils.h"
-#include "caethernetadapter_singlethread.h"
+#define TAG "IPNW"
 
-#define ETHERNET_MONITOR_TAG "ETHERNET_MONITOR"
-
-CAResult_t CAEthernetInitializeNetworkMonitor(void)
+CAResult_t CAIPInitializeNetworkMonitor(void)
 {
     return CA_STATUS_OK;
 }
 
-CAResult_t CAEthernetStartNetworkMonitor(void)
+CAResult_t CAIPStartNetworkMonitor(void)
 {
     return CA_STATUS_OK;
 }
 
-CAResult_t CAEthernetGetInterfaceInfo(char **interfaceName, char **ipAddress)
+CAResult_t CAIPGetInterfaceInfo(char **ipAddress, char **interfaceName)
 {
     return CA_STATUS_OK;
 }
 
-bool CAEthernetIsConnected(void)
+bool CAIPIsConnected(void)
 {
     return true;
 }
 
-void CAEthernetSetConnectionStateChangeCallback
-    (CAEthernetConnectionStateChangeCallback callback)
+void CAIPSetConnectionStateChangeCallback(CAIPConnectionStateChangeCallback callback)
 {
     return;
 }
 
-CAResult_t CAEthernetStopNetworkMonitor(void)
+CAResult_t CAIPStopNetworkMonitor(void)
 {
     return CA_STATUS_OK;
 }
 
-void CAEthernetTerminateNetworkMonitor(void)
+void CAIPTerminateNetworkMonitor(void)
 {
     return;
 }

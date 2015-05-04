@@ -9,18 +9,18 @@ import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
 import android.util.Log;
 
-public class CAWiFiInterface {
+public class caipinterface {
 
-    private static String TAG = "CAWiFiInterface";
+    private static String TAG = "caipinterface";
     private static Context mContext = null;
 
-    public CAWiFiInterface(Context context) {
-        Log.d(TAG, "CAWiFiInterface");
+    public caipinterface(Context context) {
+        Log.d(TAG, "caipinterface");
         mContext = context;
-        registerWiFiStateReceiver();
+        registerIpStateReceiver();
     }
 
-    private void registerWiFiStateReceiver() {
+    private void registerIpStateReceiver() {
 
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
@@ -35,21 +35,21 @@ public class CAWiFiInterface {
         public void onReceive(Context context, Intent intent) {
             if (intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE,
                 WifiManager.WIFI_STATE_UNKNOWN) == WifiManager.WIFI_STATE_DISABLED) {
-                CAWiFiStateDisabled();
+                CAIPStateDisabled();
             } else if (intent.getAction().equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
                 ConnectivityManager manager = (ConnectivityManager)
                         mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
                 NetworkInfo nwInfo = manager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
 
                 if(nwInfo.isConnected()) {
-                    CAWiFiStateEnabled();
+                    CAIPStateEnabled();
                 }
             }
         }
     };
 
-    public native static void CAWiFiStateEnabled();
+    public native static void CAIPStateEnabled();
 
-    public native static void CAWiFiStateDisabled();
+    public native static void CAIPStateDisabled();
 }
 

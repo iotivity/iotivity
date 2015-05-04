@@ -24,8 +24,8 @@
  * This file contains  utility function for network configurations.
  */
 
-#ifndef CA_NETWORK_CONFIGURATOR_H_
-#define CA_NETWORK_CONFIGURATOR_H_
+#ifndef NETWORK_CONFIGURATOR_H_
+#define NETWORK_CONFIGURATOR_H_
 
 #include "cacommon.h"
 #include "uarraylist.h"
@@ -37,17 +37,17 @@ extern "C"
 
 /**
  * @brief   Add network type to the selected networks for network packets reception
- * @param   connectivityType       [IN]    connectivity type that needs to be added
+ * @param   transportType       [IN]    Transport type that needs to be added
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAAddNetworkType(CAConnectivityType_t connectivityType);
+CAResult_t CAAddNetworkType(CATransportType_t transportType);
 
 /**
  * @brief   Remove network type from the selected configuration
- * @param   connectivityType       [IN]    connectivity type that needs to be removed
+ * @param   transportType       [IN]    Transport type that needs to be removed
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CARemoveNetworkType(CAConnectivityType_t connectivityType);
+CAResult_t CARemoveNetworkType(CATransportType_t transportType);
 
 /**
  * @brief   Get selected network information
@@ -74,5 +74,5 @@ CAResult_t CATerminateNetworkType();
 } /* extern "C" */
 #endif
 
-#endif //#ifndef CA_NETWORK_CONFIGURATOR_H_
+#endif //#ifndef NETWORK_CONFIGURATOR_H_
 

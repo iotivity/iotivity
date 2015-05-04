@@ -24,8 +24,8 @@
  * This file contains common utility function for CA transport adaptors.
  */
 
-#ifndef __CA_INTERFACE_CONTROLLER_H_
-#define __CA_INTERFACE_CONTROLLER_H_
+#ifndef CA_INTERFACE_CONTROLLER_H_
+#define CA_INTERFACE_CONTROLLER_H_
 
 #include "caadapterinterface.h"
 #include "cathreadpool.h" /* for thread pool */
@@ -58,17 +58,17 @@ void CASetNetworkChangeCallback(CANetworkChangeCallback callback);
 
 /**
  * @brief   Starting different connectivity adapters based on the network selection.
- * @param   connectivity   [IN]    network type that want to start
- * @return  none
+ * @param   transportType   [IN]    interested network for starting
+ * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAStartAdapter(CAConnectivityType_t connectivity);
+CAResult_t CAStartAdapter(CATransportType_t transportType);
 
 /**
  * @brief   Stopping different connectivity adapters based on the network un-selection.
- * @param   connectivity   [IN]    network type that want to stop
+ * @param   transportType   [IN]    network type that want to stop
  * @return  none
  */
-void CAStopAdapter(CAConnectivityType_t connectivity);
+void CAStopAdapter(CATransportType_t transportType);
 
 /**
  * @brief   Get network information such as ipaddress and mac information
@@ -118,5 +118,5 @@ void CATerminateAdapters();
 } /* extern "C" */
 #endif
 
-#endif //#ifndef __CA_INTERFACE_CONTROLLER_H_
+#endif //#ifndef CA_INTERFACE_CONTROLLER_H_
 

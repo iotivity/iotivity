@@ -160,7 +160,7 @@ OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
                                            const char *filterValue,
                                            char * out,
                                            uint16_t *remaining,
-                                           CAConnectivityType_t connType);
+                                           CATransportType_t connType);
 
 /**
  * A helper function that Maps an @ref OCEntityHandlerResult type to an

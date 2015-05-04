@@ -19,12 +19,12 @@
  ******************************************************************/
 
 /**
- * @file 
- * This file contains the common data structures between Resource , CA and adapters.
+ * @file cacommon.h
+ * @brief This file contains the common data structures between Resource , CA and adapters
  */
 
-#ifndef __CA_COMMON_H_
-#define __CA_COMMON_H_
+#ifndef CA_COMMON_H_
+#define CA_COMMON_H_
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -106,16 +106,16 @@ typedef char *CAURI_t;
 typedef char *CAToken_t;
 
 /**
- * @enum CAConnectivityType_t
+ * @enum CATransportType_t
  * @brief Different connectivities that are handled in Connectivity Abstraction
  */
 typedef enum
 {
-    CA_ETHERNET = (1 << 0), /**< Ethernet Connection */
-    CA_WIFI = (1 << 1),     /**< WIFI Connection */
-    CA_EDR = (1 << 2),      /**< EDR Connection */
-    CA_LE = (1 << 3)        /**< LE Connection */
-} CAConnectivityType_t;
+    CA_IPV4 = (1 << 0),     /**< IPV4 Transport Type */
+    CA_IPV6 = (1 << 1),     /**< IPV6 Transport Type */
+    CA_EDR = (1 << 2),      /**< EDR Transport Type */
+    CA_LE = (1 << 3)        /**< LE Transport Type */
+} CATransportType_t;
 
 /**
  * @enum CANetworkStatus_t
@@ -149,7 +149,7 @@ typedef union
     } LE;
 
     /**
-     * @brief IP Information for wifi and ethernet ports
+     * @brief IP Information
      */
     struct
     {
@@ -191,7 +191,7 @@ typedef struct
 
     CAURI_t resourceUri;                    /**< Resource URI information **/
     CAAddress_t addressInfo;                /**< Remote Endpoint address **/
-    CAConnectivityType_t connectivityType;  /**< Connectivity of the endpoint**/
+    CATransportType_t transportType;  /**< Transport Type of the endpoint**/
     bool isSecured;                     /**< Secure connection**/
 } CARemoteEndpoint_t;
 
@@ -202,7 +202,7 @@ typedef struct
 typedef struct
 {
     CAURI_t resourceUri;                    /**< Resource URI information **/
-    CAConnectivityType_t connectivityType;  /**< Connectivity of the endpoint**/
+    CATransportType_t transportType;  /**< Transport type of the endpoint**/
 } CAGroupEndpoint_t;
 
 /**
@@ -211,7 +211,7 @@ typedef struct
 typedef struct
 {
     CAAddress_t addressInfo;    /**< Address of the interface  **/
-    CAConnectivityType_t type;  /**< Connectivity of local device **/
+    CATransportType_t type;  /**< Transport type of local device **/
     bool isSecured;         /**< Secure connection**/
 } CALocalConnectivity_t;
 
@@ -337,5 +337,5 @@ typedef struct
 } /* extern "C" */
 #endif
 
-#endif //#ifndef __CA_COMMON_H_
+#endif //#ifndef CA_COMMON_H_
 

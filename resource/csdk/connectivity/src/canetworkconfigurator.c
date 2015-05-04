@@ -28,12 +28,12 @@
 #define TAG "CANW"
 
 static u_arraylist_t *g_selectedNetworkList = NULL;
-static uint32_t NETWORK_ETHERNET = CA_ETHERNET;
-static uint32_t NETWORK_WIFI = CA_WIFI;
+static uint32_t NETWORK_IP = CA_IPV4;
 static uint32_t NETWORK_EDR = CA_EDR;
 static uint32_t NETWORK_LE = CA_LE;
 
-CAResult_t CAAddNetworkType(CAConnectivityType_t connectivityType)
+
+CAResult_t CAAddNetworkType(CATransportType_t transportType)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     if (NULL == g_selectedNetworkList)
@@ -48,41 +48,29 @@ CAResult_t CAAddNetworkType(CAConnectivityType_t connectivityType)
         }
     }
     CAResult_t res = CA_STATUS_OK;
-    switch (connectivityType)
+    switch (transportType)
     {
-        case CA_ETHERNET:
+        case CA_IPV4:
         {
 
-#ifndef ETHERNET_ADAPTER
-            OIC_LOG(DEBUG, TAG, "Add network type(ETHERNET) - Not Supported");
+#ifndef IP_ADAPTER
+            OIC_LOG(DEBUG, TAG, "Add network type(IP) - Not Supported");
             return CA_NOT_SUPPORTED;
-#endif /* ETHERNET_ADAPTER */
+#endif /* IP_ADAPTER */
 
-            OIC_LOG(DEBUG, TAG, "Add network type(ETHERNET)");
-            if (u_arraylist_contains(g_selectedNetworkList, &NETWORK_ETHERNET))
+            OIC_LOG(DEBUG, TAG, "Add network type(IP)");
+            if (u_arraylist_contains(g_selectedNetworkList, &NETWORK_IP))
             {
                 goto exit;
             }
-            res = u_arraylist_add(g_selectedNetworkList, &NETWORK_ETHERNET);
+            res = u_arraylist_add(g_selectedNetworkList, &NETWORK_IP);
         }
         break;
-
-        case CA_WIFI:
+        case CA_IPV6:
         {
-
-#ifndef WIFI_ADAPTER
-            OIC_LOG(DEBUG, TAG, "Add network type(WIFI) - Not Supported");
+            OIC_LOG(ERROR, TAG, "Currently IPV6 is not supported");
             return CA_NOT_SUPPORTED;
-#endif /* WIFI_ADAPTER */
-
-            OIC_LOG(DEBUG, TAG, "Add network type(WIFI)");
-            if (u_arraylist_contains(g_selectedNetworkList, &NETWORK_WIFI))
-            {
-                goto exit;
-            }
-            res = u_arraylist_add(g_selectedNetworkList, &NETWORK_WIFI);
         }
-        break;
 
         case CA_EDR:
         {
@@ -125,9 +113,8 @@ CAResult_t CAAddNetworkType(CAConnectivityType_t connectivityType)
         OIC_LOG_V(ERROR, TAG, "Add arraylist failed[Err code: %d]", res);
         return res;
     }
-
     // start selected interface adapter
-    res = CAStartAdapter((CAConnectivityType_t)connectivityType);
+    res = CAStartAdapter((CATransportType_t)transportType);
     OIC_LOG(DEBUG, TAG, "OUT");
     return res;
 
@@ -136,7 +123,7 @@ exit:
     return CA_STATUS_OK;
 }
 
-CAResult_t CARemoveNetworkType(CAConnectivityType_t connectivityType)
+CAResult_t CARemoveNetworkType(CATransportType_t transportType)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -156,35 +143,29 @@ CAResult_t CARemoveNetworkType(CAConnectivityType_t connectivityType)
             continue;
         }
 
-        CAConnectivityType_t connType = *(CAConnectivityType_t *) ptrType;
+        CATransportType_t connType = *(CATransportType_t *) ptrType;
 
-        if (connectivityType == connType)
+        if (transportType == connType)
         {
-            switch (connectivityType)
+            switch (transportType)
             {
-                case CA_ETHERNET:
+                case CA_IPV4:
 
-#ifndef ETHERNET_ADAPTER
-                    OIC_LOG(DEBUG, TAG, "Remove network type(ETHERNET) - Not Supported");
+#ifndef IP_ADAPTER
+                    OIC_LOG(DEBUG, TAG, "Remove network type(IP) - Not Supported");
                     return CA_NOT_SUPPORTED;
 #else
 
-                    OIC_LOG(DEBUG, TAG, "Remove network type(ETHERNET)");
+                    OIC_LOG(DEBUG, TAG, "Remove network type(IP)");
                     u_arraylist_remove(g_selectedNetworkList, index);
-#endif /* ETHERNET_ADAPTER */
+#endif /* IP_ADAPTER */
                     break;
 
-                case CA_WIFI:
-
-#ifndef WIFI_ADAPTER
-                    OIC_LOG(DEBUG, TAG, "Remove network type(WIFI) - Not Supported");
+                case CA_IPV6:
+                {
+                    OIC_LOG(ERROR, TAG, "Currently IPV6 is not supported");
                     return CA_NOT_SUPPORTED;
-#else
-                    OIC_LOG(DEBUG, TAG, "Remove network type(WIFI)");
-                    u_arraylist_remove(g_selectedNetworkList, index);
-#endif /* WIFI_ADAPTER */
-
-                    break;
+                }
 
                 case CA_EDR:
 

@@ -24,8 +24,8 @@
  * This file contains the APIs for adapters to be implemented.
  */
 
-#ifndef __CA_ADAPTER_INTERFACE_H_
-#define __CA_ADAPTER_INTERFACE_H_
+#ifndef CA_ADAPTER_INTERFACE_H_
+#define CA_ADAPTER_INTERFACE_H_
 
 #include "cacommon.h"
 
@@ -157,10 +157,10 @@ typedef struct
 
 /**
  * @brief This will be used during the registration of adapters call backs to the common logic
- * @see CAConnectivityHandler_t , CAConnectivityType_t
+ * @see CAConnectivityHandler_t , CATransportType_t
  */
 typedef void (*CARegisterConnectivityCallback)(CAConnectivityHandler_t handler,
-        CAConnectivityType_t cType);
+        CATransportType_t cType);
 
 /**
  * @brief This will be used during the recive of network requests and response.
@@ -179,5 +179,5 @@ typedef void (*CANetworkChangeCallback)(CALocalConnectivity_t *info, CANetworkSt
 } /* extern "C" */
 #endif
 
-#endif  // __CA_ADAPTER_INTERFACE_H_
+#endif  // CA_ADAPTER_INTERFACE_H_
 

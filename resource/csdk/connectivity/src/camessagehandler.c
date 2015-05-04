@@ -664,7 +664,7 @@ CAResult_t CADetachRequestToAllMessage(const CAGroupEndpoint_t *object,
 
     CAAddress_t addr = {};
     remoteEndpoint = CACreateRemoteEndpointInternal(object->resourceUri, addr,
-                                                    object->connectivityType);
+                                                    object->transportType);
 
     // clone request info
     requestInfo = CACloneRequestInfo(request);
@@ -764,7 +764,7 @@ CAResult_t CADetachMessageResourceUri(const CAURI_t resourceUri, const CAToken_t
 
     CAAddress_t addr = {};
     remoteEndpoint = CACreateRemoteEndpointInternal(resourceUri, addr,
-                                                    CA_ETHERNET | CA_WIFI | CA_EDR | CA_LE);
+                                                    CA_IPV4 | CA_EDR | CA_LE);
 
     // create request info
     reqInfo = (CARequestInfo_t *) OICCalloc(1, sizeof(CARequestInfo_t));
@@ -908,7 +908,7 @@ CAResult_t CAInitializeMessageHandler()
 void CATerminateMessageHandler()
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    CAConnectivityType_t connType;
+    CATransportType_t connType;
     u_arraylist_t *list = CAGetSelectedNetworkList();
     uint32_t length = u_arraylist_length(list);
 
@@ -922,7 +922,7 @@ void CATerminateMessageHandler()
             continue;
         }
 
-        connType = *(CAConnectivityType_t *) ptrType;
+        connType = *(CATransportType_t *) ptrType;
         CAStopAdapter(connType);
     }
 

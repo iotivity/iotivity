@@ -196,7 +196,7 @@ CAResult_t CARetransmissionInitialize(CARetransmission_t *context,
     if (NULL == config)
     {
         // setDefault
-        cfg.supportType = (CAConnectivityType_t) DEFAULT_RETRANSMISSION_TYPE;
+        cfg.supportType = (CATransportType_t) DEFAULT_RETRANSMISSION_TYPE;
         cfg.tryingCount = DEFAULT_RETRANSMISSION_COUNT;
     }
     else
@@ -228,10 +228,10 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context, const CARemoteE
     }
 
     // #0. check support connectivity type
-    if (!(context->config.supportType & endpoint->connectivityType))
+    if (!(context->config.supportType & endpoint->transportType))
     {
         OIC_LOG(ERROR, TAG, "error");
-        OIC_LOG_V(ERROR, TAG, "not supported conntype=%d", endpoint->connectivityType);
+        OIC_LOG_V(ERROR, TAG, "not supported conntype=%d", endpoint->transportType);
         return CA_NOT_SUPPORTED;
     }
 
@@ -307,9 +307,9 @@ CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
     }
 
     // #0. check support connectivity type
-    if (!(context->config.supportType & endpoint->connectivityType))
+    if (!(context->config.supportType & endpoint->transportType))
     {
-        OIC_LOG_V(DEBUG, TAG, "not supp conntype=%d", endpoint->connectivityType);
+        OIC_LOG_V(DEBUG, TAG, "not supp conntype=%d", endpoint->transportType);
         return CA_STATUS_OK;
     }
 
@@ -320,7 +320,7 @@ CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
 
     OIC_LOG_V(DEBUG, TAG, "recv pdu, msgtype=%d,msgid=%d", type, messageId);
 
-    if ((CA_MSG_ACKNOWLEDGE != type) && (CA_MSG_RESET != type))
+    if (CA_MSG_ACKNOWLEDGE != type && CA_MSG_RESET != type)
     {
         return CA_STATUS_OK;
     }
@@ -340,7 +340,7 @@ CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
 
         // found index
         if (NULL != retData->endpoint && retData->messageId == messageId
-            && (retData->endpoint->connectivityType == endpoint->connectivityType))
+            && (retData->endpoint->transportType == endpoint->transportType))
         {
             // get pdu data for getting token when CA_EMPTY(RST/ACK) is received from remote device
             // if retransmission was finish..token will be unavailable.

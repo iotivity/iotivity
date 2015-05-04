@@ -24,8 +24,8 @@
  * This file contains common utility function for remote endpoints.
  */
 
-#ifndef __CA_REMOTE_HANDLER_H_
-#define __CA_REMOTE_HANDLER_H_
+#ifndef CA_REMOTE_HANDLER_H_
+#define CA_REMOTE_HANDLER_H_
 
 #include "cacommon.h"
 
@@ -43,22 +43,23 @@ CARemoteEndpoint_t *CACloneRemoteEndpoint(const CARemoteEndpoint_t *endpoint);
 
 /**
  * @brief   Creates a new remote endpoint from the input uri
- * @param   uri               [IN]    absolute uri information to  create remote endpoint
- * @param   connectivityType  [IN]    connectivity type of the endpoint
+ * @param   uri                 [IN]    absolute uri information to create remote endpoint
+ * @param   transportType       [IN]    transport type of the endpoint
  * @return  remote endpoint created
  */
 CARemoteEndpoint_t *CACreateRemoteEndpointUriInternal(const CAURI_t uri,
-        const CAConnectivityType_t connectivityType);
+                                                      const CATransportType_t transportType);
 
 /**
  * @brief   Creates a new remote endpoint from the input and other information
- * @param   resourceUri  [IN]    absolute uri information to  create remote endpoint
- * @param   addr         [IN]    address of the endpoint
- * @param   type         [IN]    connectivity type of the endpoint
+ * @param   resourceUri         [IN]    absolute uri information to create remote endpoint
+ * @param   addr                [IN]    address of the endpoint
+ * @param   type                [IN]    transport  type of the endpoint
  * @return  remote endpoint created
  */
 CARemoteEndpoint_t *CACreateRemoteEndpointInternal(const CAURI_t resourceUri,
-        const CAAddress_t addr, const CAConnectivityType_t type);
+                                                   const CAAddress_t addr,
+                                                   const CATransportType_t type);
 
 /**
  * @brief   Destroy remote endpoint
@@ -99,5 +100,5 @@ void CADestroyResponseInfoInternal(CAResponseInfo_t *response);
 } /* extern "C" */
 #endif
 
-#endif //#ifndef __CA_REMOTE_HANDLER_H_
+#endif //#ifndef CA_REMOTE_HANDLER_H_
 

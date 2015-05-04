@@ -36,7 +36,7 @@ int get_secure_information(CAPayload_t payLoad);
 CAResult_t get_network_type(int selectedNetwork);
 void callback(char *subject, char *receivedData);
 
-CAConnectivityType_t g_selectedNwType = CA_WIFI;
+CATransportType_t g_selectedNwType = CA_IPV4;
 static CAToken_t g_lastRequestToken = NULL;
 static uint8_t g_lastRequestTokenLength;
 static const char SECURE_COAPS_PREFIX[] = "coaps://";
@@ -704,7 +704,7 @@ void request_handler(const CARemoteEndpoint_t* object, const CARequestInfo_t* re
                       securePort, object->resourceUri);
 
             CARemoteEndpoint_t *endpoint = NULL;
-            if (CA_STATUS_OK != CACreateRemoteEndpoint(uri, object->connectivityType, &endpoint))
+            if (CA_STATUS_OK != CACreateRemoteEndpoint(uri, object->transportType, &endpoint))
             {
                 LOGI("Failed to create duplicate of remote endpoint!\n");
                 return;
@@ -724,13 +724,13 @@ void response_handler(const CARemoteEndpoint_t* object, const CAResponseInfo_t* 
     LOGI("##########Received response from remote device #############\n");
     LOGI("Uri: %s\n", object->resourceUri);
 
-    if(object->connectivityType == CA_EDR)
+    if(object->transportType == CA_EDR)
     {
         LOGI("Remote Address: %s\n", object->addressInfo.BT.btMacAddress);
-    } else if(object->connectivityType == CA_LE)
+    } else if(object->transportType == CA_LE)
     {
         LOGI("Remote Address: %s\n", object->addressInfo.LE.leMacAddress);
-    } else if(object->connectivityType == CA_WIFI)
+    } else if(object->transportType == CA_IPV4)
     {
         LOGI("Remote Address: %s\n", object->addressInfo.IP.ipAddress);
     }
@@ -743,13 +743,13 @@ void response_handler(const CARemoteEndpoint_t* object, const CAResponseInfo_t* 
         callback("received response from remote device", "#######");
         callback("Uri: ", object->resourceUri);
 
-        if(object->connectivityType == CA_EDR)
+        if(object->transportType == CA_EDR)
         {
             callback("Remote Address: ", (char*) object->addressInfo.BT.btMacAddress);
-        } else if(object->connectivityType == CA_LE)
+        } else if(object->transportType == CA_LE)
         {
             callback("Remote Address: ", (char*) object->addressInfo.LE.leMacAddress);
-        } else if(object->connectivityType == CA_WIFI)
+        } else if(object->transportType == CA_IPV4)
         {
             callback("Remote Address: ", (char*) object->addressInfo.IP.ipAddress);
         }
@@ -879,14 +879,9 @@ CAResult_t get_network_type(int selectedNetwork)
     {
         return CA_NOT_SUPPORTED;
     }
-    if (number & CA_ETHERNET)
+    if (number & CA_IPV4)
     {
-        g_selectedNwType = CA_ETHERNET;
-        return CA_STATUS_OK;
-    }
-    if (number & CA_WIFI)
-    {
-        g_selectedNwType = CA_WIFI;
+        g_selectedNwType = CA_IPV4;
         return CA_STATUS_OK;
     }
     if (number & CA_EDR)

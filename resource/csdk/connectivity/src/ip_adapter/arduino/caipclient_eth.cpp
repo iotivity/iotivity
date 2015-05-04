@@ -17,7 +17,7 @@
 * limitations under the License.
 *
 ******************************************************************/
-#include "caethernetinterface_singlethread.h"
+#include "caipinterface_singlethread.h"
 
 #include <Arduino.h>
 #include <Ethernet.h>
@@ -29,12 +29,12 @@
 #include "logger.h"
 #include "cacommon.h"
 #include "caadapterinterface.h"
-#include "caethernetadapter_singlethread.h"
-#include "caethernetadapterutils.h"
+#include "caipadapter_singlethread.h"
+#include "caipadapterutils_eth.h"
 #include "caadapterutils.h"
 #include "oic_malloc.h"
 
-#define MOD_NAME "EC"
+#define TAG "IPC"
 
 static int g_sockID = 0;
 
@@ -44,41 +44,41 @@ static int g_sockID = 0;
  */
 static uint16_t g_unicastPort = 0;
 
-void CAEthernetSetUnicastSocket(int socketID)
+void CAIPSetUnicastSocket(int socketID)
 {
-    OIC_LOG(DEBUG, MOD_NAME, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
     if (0 < socketID)
     {
         g_sockID = socketID;
     }
     else
     {
-        OIC_LOG(ERROR, MOD_NAME, "sock err");
+        OIC_LOG(ERROR, TAG, "sock err");
     }
 
-    OIC_LOG(DEBUG, MOD_NAME, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
     return;
 }
 
-void CAEthernetSetUnicastPort(uint16_t port)
+void CAIPSetUnicastPort(uint16_t port)
 {
-    OIC_LOG(DEBUG, MOD_NAME, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
     g_unicastPort = port;
-    OIC_LOG(DEBUG, MOD_NAME, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
     return;
 }
 
-uint32_t CAEthernetSendData(const char *remoteAddress, uint16_t port,
-                            const char *buf, uint32_t bufLen, bool isMulticast)
+uint32_t CAIPSendData(const char *remoteAddress, uint16_t port,
+                      const char *buf, uint32_t bufLen, bool isMulticast)
 {
     if (!isMulticast && 0 == g_unicastPort)
     {
-        OIC_LOG(ERROR, MOD_NAME, "port 0");
+        OIC_LOG(ERROR, TAG, "port 0");
         return 0;
     }
 
-    VERIFY_NON_NULL(buf, MOD_NAME, "buf");
-    VERIFY_NON_NULL(remoteAddress, MOD_NAME, "address");
+    VERIFY_NON_NULL(buf, TAG, "buf");
+    VERIFY_NON_NULL(remoteAddress, TAG, "address");
 
     int socketID = 0;
     if (isMulticast)
@@ -86,12 +86,12 @@ uint32_t CAEthernetSendData(const char *remoteAddress, uint16_t port,
         if (CAArduinoInitMulticastUdpSocket(remoteAddress, port, g_unicastPort, &socketID)
             != CA_STATUS_OK)
         {
-            OIC_LOG(ERROR, MOD_NAME, "init mcast err");
+            OIC_LOG(ERROR, TAG, "init mcast err");
             return 0;
         }
-        OIC_LOG_V(DEBUG, MOD_NAME, "MPORT:%d", port);
-        OIC_LOG_V(DEBUG, MOD_NAME, "LPORT:%d", g_unicastPort);
-        OIC_LOG_V(DEBUG, MOD_NAME, "SOCKET ID:%d", socketID);
+        OIC_LOG_V(DEBUG, TAG, "MPORT:%d", port);
+        OIC_LOG_V(DEBUG, TAG, "LPORT:%d", g_unicastPort);
+        OIC_LOG_V(DEBUG, TAG, "SOCKET ID:%d", socketID);
     }
     else
     {
@@ -99,7 +99,7 @@ uint32_t CAEthernetSendData(const char *remoteAddress, uint16_t port,
         {
             if (CAArduinoInitUdpSocket(&port, &socketID) != CA_STATUS_OK)
             {
-                OIC_LOG(ERROR, MOD_NAME, "init ucast err");
+                OIC_LOG(ERROR, TAG, "init ucast err");
                 return 0;
             }
         }
@@ -115,14 +115,14 @@ uint32_t CAEthernetSendData(const char *remoteAddress, uint16_t port,
     if (CAParseIPv4AddressInternal(remoteAddress, ipAddr, sizeof(ipAddr),
                                    &parsedPort) != CA_STATUS_OK)
     {
-        OIC_LOG(ERROR, MOD_NAME, "parse fail");
+        OIC_LOG(ERROR, TAG, "parse fail");
         return 0;
     }
 
     if (bufLen > 65535) // Max value for uint16_t
     {
         // This will never happen as max buffer size we are dealing with is COAP_MAX_PDU_SIZE
-        OIC_LOG(ERROR, MOD_NAME, "Size exceeded");
+        OIC_LOG(ERROR, TAG, "Size exceeded");
         return 0;
     }
 
@@ -132,7 +132,7 @@ uint32_t CAEthernetSendData(const char *remoteAddress, uint16_t port,
         close(socketID);
     }
 
-    OIC_LOG(DEBUG, MOD_NAME, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
     return ret;
 }
 

@@ -144,14 +144,14 @@ CAResult_t CARegisterDTLSCredentialsHandler(
  *                                    Remote endpoint
  *                                    \n For ex : coap://10.11.12.13:4545/resource_uri ( for IP)
  *                                    \n coap://10:11:12:13:45:45/resource_uri ( for BT)
- * @param   connectivityType    [IN]  Connectivity type of the endpoint
+ * @param   transportType    [IN]  Transport type of the endpoint
  * @param   object              [OUT] Endpoint object which contains the above parsed data
  * @return  #CA_STATUS_OK or #CA_STATUS_FAILED
  * @remark  The created Remote endpoint can be freed using CADestroyRemoteEndpoint() API.
  * @see     CADestroyRemoteEndpoint
  */
 CAResult_t CACreateRemoteEndpoint(const CAURI_t uri,
-                                  const CAConnectivityType_t connectivityType,
+                                  const CATransportType_t transportType,
                                   CARemoteEndpoint_t **object);
 
 /**

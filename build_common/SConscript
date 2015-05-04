@@ -68,9 +68,9 @@ help_vars.Add(BoolVariable('RELEASE', 'Build for release?', True)) # set to 'no'
 help_vars.Add(EnumVariable('TARGET_OS', 'Target platform', host, host_target_map[host]))
 
 if target_os in targets_disallow_multitransport:
-    help_vars.Add(ListVariable('TARGET_TRANSPORT', 'Target transport', 'ETHERNET', ['WIFI', 'BT', 'BLE', 'ETHERNET']))
+    help_vars.Add(ListVariable('TARGET_TRANSPORT', 'Target transport', 'IP', ['BT', 'BLE', 'IP']))
 else:
-    help_vars.Add(ListVariable('TARGET_TRANSPORT', 'Target transport', 'ALL', ['ALL', 'WIFI', 'BT', 'BLE', 'ETHERNET']))
+    help_vars.Add(ListVariable('TARGET_TRANSPORT', 'Target transport', 'ALL', ['ALL', 'BT', 'BLE', 'IP']))
 
 help_vars.Add(EnumVariable('TARGET_ARCH', 'Target architecture', default_arch, os_arch_map[target_os]))
 help_vars.Add(EnumVariable('SECURED', 'Build with DTLS', '0', allowed_values=('0', '1')))

@@ -1,4 +1,4 @@
-/* ****************************************************************
+/******************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -19,17 +19,14 @@
  ******************************************************************/
 
 /**
- * @file
- *
- * This file contains the APIs for Ethernet Adapter.
+ * @file caipadapter_singlethread.h
+ * @brief This file contains the APIs for IP Adapter.
  */
-
-#ifndef __CA_ETHERNET_ADAPTER_H__
-#define __CA_ETHERNET_ADAPTER_H__
+#ifndef CA_IP_ADAPTER_SINGLETHREAD_H_
+#define CA_IP_ADAPTER_SINGLETHREAD_H_
 
 #include "cacommon.h"
 #include "caadapterinterface.h"
-#include "cathreadpool.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -37,96 +34,95 @@ extern "C"
 #endif
 
 /**
- * @brief API to initialize Ethernet Interface.
- * @param registerCallback      [IN] Callback to register ETHERNET interfaces to Connectivity
+ * @brief API to initialize IP Interface.
+ * @param registerCallback      [IN] Callback to register IP interfaces to Connectivity
  *                                   Abstraction Layer
  * @param networkPacketCallback [IN] Callback to notify request and response messages from server(s)
  *                                   started at Connectivity Abstraction Layer.
  * @param netCallback           [IN] Callback to notify the network additions to Connectivity
  *                                   Abstraction Layer.
- * @param handle                [IN] Threadpool Handle
  * @return  #CA_STATUS_OK or Appropriate error code
  */
-CAResult_t CAInitializeEthernet(CARegisterConnectivityCallback registerCallback,
+CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
                                 CANetworkPacketReceivedCallback networkPacketCallback,
-                                CANetworkChangeCallback netCallback, ca_thread_pool_t handle);
+                                CANetworkChangeCallback netCallback);
 
 /**
- * @brief Start Ethernet Interface adapter.
+ * @brief Start IP Interface adapter.
  * @return  #CA_STATUS_OK or Appropriate error code
  */
-CAResult_t CAStartEthernet();
+CAResult_t CAStartIP();
 
 /**
  * @brief Start listening server for receiving multicast search requests
  * Transport Specific Behavior:
- * Ethernet Starts Multicast Server on a particular interface and prefixed port number and
+ * IP Starts Multicast Server on  all available IPs and prefixed port number and
  * as per OIC Specification.
  * @return  #CA_STATUS_OK or Appropriate error code
  */
-CAResult_t CAStartEthernetListeningServer();
+CAResult_t CAStartIPListeningServer();
 
 /**
  * @brief Start discovery servers for receiving multicast advertisements
  * Transport Specific Behavior:
- * Ethernet Starts Start multicast server on a particular interface and prefixed port
+ * IP Starts multicast server on all available IPs and prefixed port
  * number as per OIC Specification
  * @return  #CA_STATUS_OK or Appropriate error code
  */
-CAResult_t CAStartEthernetDiscoveryServer();
+CAResult_t CAStartIPDiscoveryServer();
 
 /**
  * @brief Sends data to the endpoint using the adapter connectivity.
  * @param   endpoint    [IN]    Remote Endpoint information (like ipaddress , port,
  * reference uri and connectivity type) to which the unicast data has to be sent.
- * @param   data        [IN]    Data which is required to be sent.
- * @param   dataLen     [IN]    Size of data to be sent.
- * @return The number of bytes sent on the network. Return value equal to -1 indicates error.
- * @remarks dataLen must be > 0.
- */
-int32_t CASendEthernetUnicastData(const CARemoteEndpoint_t *endpoint, const void *data,
-                                   uint32_t dataLen);
-
-/**
- * @brief Sends Multicast data to the endpoint using the Ethernet connectivity.
  * @param   data        [IN]    Data which required to be sent.
  * @param   dataLen     [IN]    Size of data to be sent.
- * @return The number of bytes sent on the network. Return value equal to -1 indicates error.
- * @remarks dataLen must be > 0.
+ * @return  The number of bytes sent on the network. Return value equal to -1 indicates error.
+ * @remark  dataLen must be > 0.
  */
-int32_t CASendEthernetMulticastData(const void *data, uint32_t dataLen);
+int32_t CASendIPUnicastData(const CARemoteEndpoint_t *endpoint, const void *data,
+                                  uint32_t dataLen);
 
 /**
- * @brief Get Ethernet Connectivity network information
+ * @brief Send Multicast data to the endpoint using the IP connectivity.
+ * @param   data        [IN]    Data which is required to be sent.
+ * @param   dataLen     [IN]    Size of data to be sent.
+ * @return  The number of bytes sent on the network. Return value equal to -1 indicates error.
+ * @remark  dataLen must be > 0.
+ */
+int32_t CASendIPMulticastData(const void *data, uint32_t dataLen);
+
+/**
+ * @brief Get IP Connectivity network information
  * @param   info        [OUT]   Local connectivity information structures
  * @param   size        [OUT]   Number of local connectivity structures.
  * @return  #CA_STATUS_OK or Appropriate error code
  * @remarks info is allocated in this API and should be freed by the caller.
  */
-CAResult_t CAGetEthernetInterfaceInformation(CALocalConnectivity_t **info, uint32_t *size);
+CAResult_t CAGetIPInterfaceInformation(CALocalConnectivity_t **info, uint32_t *size);
 
 /**
  * @brief Read Synchronous API callback.
  * @return  #CA_STATUS_OK or Appropriate error code
  */
-CAResult_t CAReadEthernetData();
+CAResult_t CAReadIPData();
 
 /**
  * @brief Stops Unicast, Multicast servers and close the sockets.
  * @return  #CA_STATUS_OK or Appropriate error code
  */
-CAResult_t CAStopEthernet();
+CAResult_t CAStopIP();
 
 /**
  * @brief Terminate the Ethernet connectivity adapter.
  * Configuration information will be deleted from further use
- * @return  NONE
+ * @return NONE
  */
-void CATerminateEthernet();
+void CATerminateIP();
 
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
 
-#endif  // #ifndef __CA_ETHERNET_ADAPTER_H__
+#endif  // #ifndef CA_IP_ADAPTER_SINGLETHREAD_H_
 

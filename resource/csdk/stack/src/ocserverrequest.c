@@ -244,7 +244,7 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
         char * reqJSONPayload, CAToken_t requestToken,
         uint8_t tokenLength,
         char * resourceUrl, size_t reqTotalSize,
-        CAAddress_t *addressInfo, CAConnectivityType_t connectivityType)
+        CAAddress_t *addressInfo, CATransportType_t connectivityType)
 {
     OCServerRequest * serverRequest = NULL;
 
@@ -460,7 +460,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     // Copy the address
     responseEndpoint.resourceUri      = (CAURI_t) serverRequest->resourceUrl;
     responseEndpoint.addressInfo      = serverRequest->addressInfo;
-    responseEndpoint.connectivityType = serverRequest->connectivityType;
+    responseEndpoint.transportType    = serverRequest->connectivityType;
     responseEndpoint.isSecured        = serverRequest->secured;
 
     responseInfo.result = ConvertEHResultToCAResult(ehResponse->ehResult);
@@ -558,18 +558,18 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
 
     #ifdef WITH_PRESENCE
     //TODO: Add other connectivity types to CAConnTypes[] when enabled
-    CAConnectivityType_t CAConnTypes[] = {CA_ETHERNET, CA_WIFI};
-    const char * connTypes[] = {"ethernet", "wifi"};
-    int size = sizeof(CAConnTypes)/ sizeof(CAConnectivityType_t);
-    CAConnectivityType_t connType = responseEndpoint.connectivityType;
+    CATransportType_t CAConnTypes[] = {CA_IPV4};
+    const char * connTypes[] = {"ip transport"};
+    int size = sizeof(CAConnTypes)/ sizeof(CATransportType_t);
+    CATransportType_t connType = responseEndpoint.transportType;
     CAResult_t caResult = CA_STATUS_FAILED;
     result = OC_STACK_OK;
 
     //Sending response on all n/w interfaces
     for(int i = 0; i < size; i++ )
     {
-        responseEndpoint.connectivityType = (CAConnectivityType_t)(connType & CAConnTypes[i]);
-        if(responseEndpoint.connectivityType)
+        responseEndpoint.transportType = (CATransportType_t)(connType & CAConnTypes[i]);
+        if(responseEndpoint.transportType)
         {
             //The result is set to OC_STACK_OK only if CASendResponse succeeds in sending the
             //response on all the n/w interfaces else it is set to OC_STACK_ERROR

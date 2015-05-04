@@ -33,8 +33,8 @@
 #include "uarraylist.h"
 #include "cacommon.h"
 
-/** CA_ETHERNET, CA_WIFI, CA_EDR, CA_LE **/
-#define DEFAULT_RETRANSMISSION_TYPE     (CA_ETHERNET | CA_WIFI | CA_EDR | CA_LE)
+/** CA_IPV4, CA_EDR, CA_LE **/
+#define DEFAULT_RETRANSMISSION_TYPE     (CA_IPV4 | CA_EDR | CA_LE)
 
 /** default ACK time is 2 sec.(CoAP) **/
 #define DEFAULT_ACK_TIMEOUT_SEC     2
@@ -55,8 +55,8 @@ typedef void (*CATimeoutCallback_t)(const CARemoteEndpoint_t *endpoint, const vo
 
 typedef struct
 {
-    /** retransmission support connectivity type **/
-    CAConnectivityType_t supportType;
+    /** retransmission support transport type **/
+    CATransportType_t supportType;
 
     /** retransmission trying count **/
     uint8_t tryingCount;

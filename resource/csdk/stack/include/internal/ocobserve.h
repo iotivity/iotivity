@@ -49,7 +49,7 @@ typedef struct ResourceObserver
     /** Remote Endpoint address **/
     CAAddress_t addressInfo;
     /** Connectivity of the endpoint**/
-    CAConnectivityType_t connectivityType;
+    CATransportType_t connectivityType;
     // Quality of service of the request
     OCQualityOfService qos;
     // number of times the server failed to reach the observer
@@ -140,7 +140,7 @@ OCStackResult AddObserver (const char         *resUri,
                            OCResource         *resHandle,
                            OCQualityOfService qos,
                            const CAAddress_t  *addressInfo,
-                           CAConnectivityType_t connectivityType);
+                           CATransportType_t connectivityType);
 
 /**
  * Delete observer with specified token from list of observers.

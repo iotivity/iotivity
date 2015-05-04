@@ -83,16 +83,12 @@ env.AppendUnique(CA_SRC = ca_common_src)
 
 
 if 'ALL' in ca_transport:
-	env.SConscript(ca_path + 'ethernet_adapter/SConscript')
-	env.SConscript(ca_path + 'wifi_adapter/SConscript')
+	env.SConscript(ca_path + 'ip_adapter/SConscript')
 	env.SConscript(ca_path + 'bt_edr_adapter/SConscript')
 	env.SConscript(ca_path + 'bt_le_adapter/SConscript')
 
-if 'WIFI' in ca_transport:
-	env.SConscript(ca_path + 'wifi_adapter/SConscript')
-
-if 'ETHERNET' in ca_transport:
-	env.SConscript(ca_path + 'ethernet_adapter/SConscript')
+if 'IP' in ca_transport:
+	env.SConscript(ca_path + 'ip_adapter/SConscript')
 
 if 'BT' in ca_transport:
 	env.SConscript(ca_path + 'bt_edr_adapter/SConscript')

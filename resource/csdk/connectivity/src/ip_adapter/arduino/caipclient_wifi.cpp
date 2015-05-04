@@ -17,7 +17,7 @@
 * limitations under the License.
 *
 ******************************************************************/
-#include "cawifiinterface_singlethread.h"
+#include "caipinterface_singlethread.h"
 
 #include <Arduino.h>
 #include <WiFi.h>
@@ -30,31 +30,35 @@
 #include "logger.h"
 #include "cacommon.h"
 #include "caadapterinterface.h"
-#include "cawifiadapter_singlethread.h"
+#include "caipadapter_singlethread.h"
 #include "caadapterutils.h"
 
 /// This is the max buffer size between Arduino and WiFi Shield
-#define ARDUINO_WIFI_BUFFERSIZE (90)
-
-#define MOD_NAME "WC"
+#define ARDUINO_IP_BUFFERSIZE (90)
+#define TAG "IPC"
 
 static WiFiUDP Udp;
 
-void CAWiFiSetUnicastSocket(int socketID)
+void CAIPSetUnicastSocket(int socketID)
 {
 
 }
 
-uint32_t CAWiFiSendData(const char *remoteAddress, uint32_t port,
-                        const void *data, uint32_t dataLength, bool isMulticast)
+void CAIPSetUnicastPort(uint16_t port)
 {
-    OIC_LOG(DEBUG, MOD_NAME, "IN");
 
-    VERIFY_NON_NULL_RET(data, MOD_NAME, "data", 0);
-    VERIFY_NON_NULL_RET(remoteAddress, MOD_NAME, "address", 0);
+}
 
-    OIC_LOG_V(DEBUG, MOD_NAME, "remoteip: %s", remoteAddress);
-    OIC_LOG_V(DEBUG, MOD_NAME, "port: %d", port);
+uint32_t CAIPSendData(const char *remoteAddress, uint16_t port,
+                      const char *data, uint32_t dataLength, bool isMulticast)
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+
+    VERIFY_NON_NULL_RET(data, TAG, "data", 0);
+    VERIFY_NON_NULL_RET(remoteAddress, TAG, "address", 0);
+
+    OIC_LOG_V(DEBUG, TAG, "remoteip: %s", remoteAddress);
+    OIC_LOG_V(DEBUG, TAG, "port: %d", port);
 
     uint8_t ip[4] = {0};
     uint16_t parsedPort = 0;
@@ -62,7 +66,7 @@ uint32_t CAWiFiSendData(const char *remoteAddress, uint32_t port,
                                                 &parsedPort);
     if (res != CA_STATUS_OK)
     {
-        OIC_LOG_V(ERROR, MOD_NAME, "Remote adrs parse fail %d", res);
+        OIC_LOG_V(ERROR, TAG, "Remote adrs parse fail %d", res);
         return 0;
     }
 
@@ -76,12 +80,12 @@ uint32_t CAWiFiSendData(const char *remoteAddress, uint32_t port,
         size_t writeCount = dataLength - bytesWritten;
         // write upto max ARDUINO_WIFI_BUFFERSIZE bytes
         writeCount = Udp.write((uint8_t *)data + bytesWritten,
-                                (writeCount > ARDUINO_WIFI_BUFFERSIZE ?
-                                 ARDUINO_WIFI_BUFFERSIZE : writeCount));
+                                (writeCount > ARDUINO_IP_BUFFERSIZE ?
+                                 ARDUINO_IP_BUFFERSIZE:writeCount));
         if(writeCount == 0)
         {
             // write failed
-            OIC_LOG_V(ERROR, MOD_NAME, "Failed after %u", bytesWritten);
+            OIC_LOG_V(ERROR, TAG, "Failed after %u", bytesWritten);
             break;
         }
         bytesWritten += writeCount;
@@ -89,10 +93,10 @@ uint32_t CAWiFiSendData(const char *remoteAddress, uint32_t port,
 
     if (Udp.endPacket() == 0)
     {
-        OIC_LOG(ERROR, MOD_NAME, "Failed to send");
+        OIC_LOG(ERROR, TAG, "Failed to send");
         return 0;
     }
-    OIC_LOG(DEBUG, MOD_NAME, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
     return bytesWritten;
 }
 

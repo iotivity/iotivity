@@ -24,8 +24,8 @@
  * This file contains the APIs for the interface controller.
  */
 
-#ifndef __CA_INTERFACE_CONTROLLER_SINGLETHREAD_H_
-#define __CA_INTERFACE_CONTROLLER_SINGLETHREAD_H_
+#ifndef CA_INTERFACE_CONTROLLER_SINGLETHREAD_H_
+#define CA_INTERFACE_CONTROLLER_SINGLETHREAD_H_
 
 #include "caadapterinterface.h"
 
@@ -61,17 +61,17 @@ void CASetNetworkChangeCallback(CANetworkChangeCallback callback);
 
 /**
  * @brief   Starting different connectivity adapters based on the network selection.
- * @param   connectivity    [IN]    network type that want to stop
- * @return   none
+ * @param   transportType    [IN]    network type that want to stop
+ * @return  none
  */
-CAResult_t CAStartAdapter(CAConnectivityType_t connectivity);
+CAResult_t CAStartAdapter(CATransportType_t transportType);
 
 /**
  * @brief   Stopping different connectivity adapters based on the network un-selection.
- * @param   connectivity    [IN]    un selected network for stopping the packets transfer
+ * @param   transportType    [IN]    un selected network for stopping the packets transfer
  * @return   none
  */
-void CAStopAdapter(CAConnectivityType_t connectivity);
+void CAStopAdapter(CATransportType_t transportType);
 
 /**
  * @brief   Get network information such as ipaddress and mac information.  Gets the network

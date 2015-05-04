@@ -161,7 +161,7 @@ TEST_F(CATests, TerminateTest)
 // check return value
 TEST(StartListeningServerTest, DISABLED_TC_03_Positive_01)
 {
-    CASelectNetwork(CA_ETHERNET);
+    CASelectNetwork(CA_IPV4);
     EXPECT_EQ(CA_STATUS_OK, CAStartListeningServer());
 }
 
@@ -187,7 +187,7 @@ TEST_F(CATests, CreateRemoteEndpointTestGood)
 {
     uri = (char *) URI;
 
-    EXPECT_EQ(CA_STATUS_OK, CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep));
+    EXPECT_EQ(CA_STATUS_OK, CACreateRemoteEndpoint(uri, CA_IPV4, &tempRep));
 
     if (tempRep != NULL)
     {
@@ -201,7 +201,7 @@ TEST_F(CATests, CreateRemoteEndpointTestValues)
 {
     uri = (char *) URI;
 
-    CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
+    CACreateRemoteEndpoint(uri, CA_IPV4, &tempRep);
 
     EXPECT_TRUE(tempRep != NULL);
 
@@ -222,7 +222,7 @@ TEST_F(CATests, CreateRemoteEndpointTestBad)
 {
     uri = NULL;
 
-    EXPECT_EQ(CA_STATUS_FAILED, CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep));
+    EXPECT_EQ(CA_STATUS_FAILED, CACreateRemoteEndpoint(uri, CA_IPV4, &tempRep));
 
     if (tempRep != NULL)
     {
@@ -235,7 +235,7 @@ TEST_F(CATests, CreateRemoteEndpointTestBad)
 TEST_F(CATests, CreateRemoteEndpointTestWithNullUri)
 {
     uri = NULL;
-    CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
+    CACreateRemoteEndpoint(uri, CA_IPV4, &tempRep);
 
     if (tempRep != NULL)
     {
@@ -255,7 +255,7 @@ TEST_F(CATests, CreateRemoteEndpointTestWithNullUri)
 TEST_F(CATests, DestroyRemoteEndpointTest)
 {
     uri = (char *) URI;
-    CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
+    CACreateRemoteEndpoint(uri, CA_IPV4, &tempRep);
 
     CADestroyRemoteEndpoint(tempRep);
     tempRep = NULL;
@@ -315,7 +315,7 @@ TEST_F(CATests, FindResourceTest)
 TEST(SendRequestTest, DISABLED_TC_16_Positive_01)
 {
     uri = (char *) URI;
-    CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
+    CACreateRemoteEndpoint(uri, CA_IPV4, &tempRep);
 
     memset(&requestData, 0, sizeof(CAInfo_t));
     CAGenerateToken(&tempToken, tokenLength);
@@ -346,7 +346,7 @@ TEST(SendRequestTest, DISABLED_TC_16_Positive_01)
 TEST_F(CATests, SendRequestTestWithNullURI)
 {
     uri = NULL;
-    CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
+    CACreateRemoteEndpoint(uri, CA_IPV4, &tempRep);
 
     memset(&requestData, 0, sizeof(CAInfo_t));
     CAGenerateToken(&tempToken, tokenLength);
@@ -379,7 +379,7 @@ TEST_F(CATests, SendRequestTestWithNullURI)
 TEST_F(CATests, SendRequestTestWithNullAddr)
 {
     uri = (char *) URI;
-    CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
+    CACreateRemoteEndpoint(uri, CA_IPV4, &tempRep);
 
     EXPECT_EQ(CA_STATUS_INVALID_PARAM, CASendRequest(tempRep, NULL));
 
@@ -395,7 +395,7 @@ TEST_F(CATests, SendRequestTestWithNullAddr)
 TEST(SendResponseTest, DISABLED_TC_19_Positive_01)
 {
     uri = (char *) URI;
-    CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
+    CACreateRemoteEndpoint(uri, CA_IPV4, &tempRep);
 
     memset(&responseData, 0, sizeof(CAInfo_t));
     responseData.type = CA_MSG_NONCONFIRM;
@@ -421,7 +421,7 @@ TEST(SendResponseTest, DISABLED_TC_19_Positive_01)
 TEST(SendResponseTest, DISABLED_TC_20_Negative_01)
 {
     uri = NULL;
-    CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
+    CACreateRemoteEndpoint(uri, CA_IPV4, &tempRep);
 
     memset(&responseData, 0, sizeof(CAInfo_t));
     responseData.type = CA_MSG_NONCONFIRM;
@@ -450,7 +450,7 @@ TEST(SendResponseTest, DISABLED_TC_20_Negative_01)
 TEST_F(CATests, SendResponseTest)
 {
     uri = (char *) URI;
-    CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
+    CACreateRemoteEndpoint(uri, CA_IPV4, &tempRep);
 
     EXPECT_EQ(CA_STATUS_INVALID_PARAM, CASendResponse(tempRep, NULL));
 
@@ -466,7 +466,7 @@ TEST_F(CATests, SendResponseTest)
 TEST(SendNotificationTest, DISABLED_TC_22_Positive_01)
 {
     uri = (char *) URI;
-    CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
+    CACreateRemoteEndpoint(uri, CA_IPV4, &tempRep);
 
     memset(&responseData, 0, sizeof(CAInfo_t));
     responseData.type = CA_MSG_NONCONFIRM;
@@ -494,7 +494,7 @@ TEST(SendNotificationTest, DISABLED_TC_22_Positive_01)
 TEST_F(CATests, SendNotificationTest)
 {
     uri = NULL;
-    CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
+    CACreateRemoteEndpoint(uri, CA_IPV4, &tempRep);
 
     memset(&responseData, 0, sizeof(CAInfo_t));
     responseData.type = CA_MSG_NONCONFIRM;
@@ -595,16 +595,16 @@ TEST_F(CATests, SelectNetworkTestGood)
 
 CAResult_t checkSelectNetwork()
 {
-    CAResult_t res = CASelectNetwork(CA_ETHERNET);
+    CAResult_t res = CASelectNetwork(CA_IPV4);
 
     if (CA_STATUS_OK == res)
     {
-        EXPECT_EQ(CA_STATUS_OK, CAUnSelectNetwork(CA_ETHERNET));
+        EXPECT_EQ(CA_STATUS_OK, CAUnSelectNetwork(CA_IPV4));
         return CA_STATUS_OK;
     }
     if (CA_NOT_SUPPORTED == res)
     {
-        EXPECT_EQ(CA_STATUS_FAILED, CAUnSelectNetwork(CA_ETHERNET));
+        EXPECT_EQ(CA_STATUS_FAILED, CAUnSelectNetwork(CA_IPV4));
         return CA_STATUS_OK;
     }
 
@@ -636,13 +636,13 @@ TEST_F(CATests, HandlerRequestResponseTest)
 // check return value
 TEST(SendRequestToAllTest, DISABLED_TC_31_Positive_01)
 {
-    CASelectNetwork(CA_ETHERNET);
+    CASelectNetwork(CA_IPV4);
 
     uri = (char *) RESOURCE_URI;
-    CACreateRemoteEndpoint(uri, CA_ETHERNET, &tempRep);
+    CACreateRemoteEndpoint(uri, CA_IPV4, &tempRep);
     CAGroupEndpoint_t *group = NULL;
     group = (CAGroupEndpoint_t *) malloc(sizeof(CAGroupEndpoint_t));
-    group->connectivityType = tempRep->connectivityType;
+    group->transportType = tempRep->transportType;
     group->resourceUri = tempRep->resourceUri;
 
     memset(&requestData, 0, sizeof(CAInfo_t));

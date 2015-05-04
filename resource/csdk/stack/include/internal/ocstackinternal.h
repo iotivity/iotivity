@@ -80,7 +80,7 @@ typedef struct
     // TODO: bundle this up as endpoint
     CAAddress_t addressInfo;
     /** Connectivity of the endpoint**/
-    CAConnectivityType_t connectivityType;
+    CATransportType_t connectivityType;
 
     //token for the observe request
     CAToken_t requestToken;

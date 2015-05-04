@@ -346,23 +346,23 @@ static OCStackResult CAToOCStackResult(CAResponseResult_t caCode);
 static CAResponseResult_t OCToCAStackResult(OCStackResult ocCode);
 
 /**
- * Convert OCConnectivityType to CAConnectivityType_t.
+ * Convert OCConnectivityType to CATransportType_t.
  *
  * @param ocConType OCConnectivityType input.
- * @param caConType CAConnectivityType_t output.
+ * @param caConType CATransportType_t output.
  * @return  ::OC_STACK_OK on success, some other value upon failure.
  */
-static OCStackResult OCToCAConnectivityType(OCConnectivityType ocConType,
-        CAConnectivityType_t* caConType);
+static OCStackResult OCToCATransportType(OCConnectivityType ocConType,
+        CATransportType_t* caConType);
 
 /**
- * Convert CAConnectivityType_t to CAConnectivityType_t.
+ * Convert CATransportType_t to OCConnectivityType.
  *
- * @param caConType CAConnectivityType_t input.
+ * @param caConType CATransportType_t input.
  * @param ocConType OCConnectivityType output.
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-static OCStackResult CAToOCConnectivityType(CAConnectivityType_t caConType,
+static OCStackResult CAToOCConnectivityType(CATransportType_t caConType,
         OCConnectivityType *ocConType);
 
 /**
@@ -648,17 +648,17 @@ CAResponseResult_t OCToCAStackResult(OCStackResult ocCode)
     return ret;
 }
 
-OCStackResult OCToCAConnectivityType(OCConnectivityType ocConType, CAConnectivityType_t* caConType)
+OCStackResult OCToCATransportType(OCConnectivityType ocConType, CATransportType_t* caConType)
 {
     OCStackResult ret = OC_STACK_OK;
 
     switch(ocConType)
     {
         case OC_ETHERNET:
-            *caConType = CA_ETHERNET;
+            *caConType = CA_IPV4;
             break;
         case OC_WIFI:
-            *caConType = CA_WIFI;
+            *caConType = CA_IPV4;
             break;
         case OC_EDR:
             *caConType = CA_EDR;
@@ -669,7 +669,7 @@ OCStackResult OCToCAConnectivityType(OCConnectivityType ocConType, CAConnectivit
         case OC_ALL:
             // Currently OC_ALL represents WIFI and ETHERNET
             // Add other connectivity types as they are enabled in future
-            *caConType = (CAConnectivityType_t) (CA_WIFI|CA_ETHERNET);
+            *caConType = (CATransportType_t) (CA_IPV4);
             break;
         default:
             ret = OC_STACK_INVALID_PARAM;
@@ -678,17 +678,14 @@ OCStackResult OCToCAConnectivityType(OCConnectivityType ocConType, CAConnectivit
     return ret;
 }
 
-OCStackResult CAToOCConnectivityType(CAConnectivityType_t caConType, OCConnectivityType *ocConType)
+OCStackResult CAToOCConnectivityType(CATransportType_t caConType, OCConnectivityType *ocConType)
 {
     OCStackResult ret = OC_STACK_OK;
 
     switch(caConType)
     {
-        case CA_ETHERNET:
+        case CA_IPV4:
             *ocConType = OC_ETHERNET;
-            break;
-        case CA_WIFI:
-            *ocConType = OC_WIFI;
             break;
         case CA_EDR:
             *ocConType = OC_EDR;
@@ -927,7 +924,7 @@ static OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
 
     response.addr = &address;
 
-    result = CAToOCConnectivityType(endPoint->connectivityType, &(response.connType));
+    result = CAToOCConnectivityType(endPoint->transportType, &(response.connType));
     if(result != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, PCF("Invalid connectivity type in endpoint"));
@@ -1172,7 +1169,7 @@ void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_
             // Populate the connectivity type. If this is a discovery response,
             // the resource that will be constructed from this response will make
             // further API calls from this interface.
-            result = CAToOCConnectivityType(endPoint->connectivityType,
+            result = CAToOCConnectivityType(endPoint->transportType,
                                     &(response.connType));
             if(result != OC_STACK_OK)
             {
@@ -1495,7 +1492,7 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
 
     // copy the address
     serverRequest.addressInfo      = endPoint->addressInfo;
-    serverRequest.connectivityType = endPoint->connectivityType;
+    serverRequest.connectivityType = endPoint->transportType;
 
     // copy vendor specific header options
     uint8_t tempNum = (requestInfo->info.numOptions);
@@ -2013,9 +2010,9 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
 
     requestInfo.info = requestData;
 
-    CAConnectivityType_t caConType;
+    CATransportType_t caConType;
 
-    result = OCToCAConnectivityType((OCConnectivityType) conType, &caConType);
+    result = OCToCATransportType((OCConnectivityType) conType, &caConType);
     if (result != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, PCF("Invalid Connectivity Type"));
@@ -2025,7 +2022,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     // send request
     if(conType == OC_ALL)
     {
-        grpEnd.connectivityType = caConType;
+        grpEnd.transportType = caConType;
 
         grpEnd.resourceUri = (CAURI_t) OCMalloc(uriLen + 1);
         if(!grpEnd.resourceUri)
@@ -2155,8 +2152,8 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
                     requestInfo.method = CA_GET;
                     requestInfo.info = requestData;
 
-                    CAConnectivityType_t caConType;
-                    ret = OCToCAConnectivityType(clientCB->conType, &caConType);
+                    CATransportType_t caConType;
+                    ret = OCToCATransportType(clientCB->conType, &caConType);
                     if(ret != OC_STACK_OK)
                     {
                         goto Error;
@@ -2283,8 +2280,8 @@ OCStackResult OCProcessPresence()
                     OC_LOG(DEBUG, TAG, PCF("time to test server presence"));
 
 
-                    CAConnectivityType_t caConType;
-                    result = OCToCAConnectivityType(cbNode->conType, &caConType);
+                    CATransportType_t caConType;
+                    result = OCToCATransportType(cbNode->conType, &caConType);
                     caResult = CACreateRemoteEndpoint((char *)cbNode->requestUri, caConType,
                                                         &endpoint);
                     if (caResult != CA_STATUS_OK || result != OC_STACK_OK)
@@ -2375,8 +2372,8 @@ OCStackResult OCStartPresence(const uint32_t ttl)
             return OC_STACK_ERROR;
         }
 
-        CAConnectivityType_t connType;
-        OCToCAConnectivityType(OC_ALL, &connType );
+        CATransportType_t connType;
+        OCToCATransportType(OC_ALL, &connType );
         AddObserver(OC_PRESENCE_URI, NULL, 0, caToken, tokenLength,
                 (OCResource *)presenceResource.handle, OC_LOW_QOS,
                 &addressInfo, connType);
@@ -3827,8 +3824,10 @@ CAResult_t OCSelectNetwork()
     CAResult_t retResult = CA_STATUS_FAILED;
     CAResult_t caResult = CA_STATUS_OK;
 
-    CAConnectivityType_t connTypes[] = {CA_ETHERNET, CA_WIFI, CA_EDR, CA_LE};
-
+    CATransportType_t connTypes[] = {
+            CA_IPV4,
+            CA_EDR,
+            CA_LE};
     int numConnTypes = sizeof(connTypes)/sizeof(connTypes[0]);
 
     for(int i = 0; i<numConnTypes; i++)

@@ -17,7 +17,7 @@
 * limitations under the License.
 *
 ******************************************************************/
-#include "caethernetadapterutils.h"
+#include "caipadapterutils_eth.h"
 
 #include <Arduino.h>
 #include <Ethernet.h>
@@ -29,14 +29,14 @@
 #include "logger.h"
 #include "cacommon.h"
 #include "caadapterinterface.h"
-#include "caethernetadapter_singlethread.h"
+#include "caipadapter_singlethread.h"
 #include "caadapterutils.h"
 
-#define MOD_NAME "EU"
+#define TAG "IPU"
 
 CAResult_t CAArduinoGetAvailableSocket(int *sockID)
 {
-    VERIFY_NON_NULL(sockID, MOD_NAME, "sockID");
+    VERIFY_NON_NULL(sockID, TAG, "sockID");
     uint8_t state;
     //Is any socket available to work with ?
     *sockID = 0;
@@ -52,7 +52,7 @@ CAResult_t CAArduinoGetAvailableSocket(int *sockID)
 
     if (*sockID == 0)
     {
-        OIC_LOG(ERROR, MOD_NAME, "sockID 0");
+        OIC_LOG(ERROR, TAG, "sockID 0");
         return CA_SOCKET_OPERATION_FAILED;
     }
 
@@ -61,26 +61,26 @@ CAResult_t CAArduinoGetAvailableSocket(int *sockID)
 
 CAResult_t CAArduinoInitUdpSocket(uint16_t *port, int *socketID)
 {
-    OIC_LOG(DEBUG, MOD_NAME, "IN");
-    VERIFY_NON_NULL(port, MOD_NAME, "port");
-    VERIFY_NON_NULL(socketID, MOD_NAME, "socketID");
+    OIC_LOG(DEBUG, TAG, "IN");
+    VERIFY_NON_NULL(port, TAG, "port");
+    VERIFY_NON_NULL(socketID, TAG, "socketID");
 
     CAResult_t ret = CAArduinoGetAvailableSocket(socketID);
     if (ret != CA_STATUS_OK)
     {
-        OIC_LOG(ERROR, MOD_NAME, "get sock fail");
+        OIC_LOG(ERROR, TAG, "get sock fail");
         return ret;
     }
 
     //Create a datagram socket on which to recv/send.
     if (!socket(*socketID, SnMR::UDP, *port, 0))
     {
-        OIC_LOG(ERROR, MOD_NAME, "sock fail");
+        OIC_LOG(ERROR, TAG, "sock fail");
         return CA_STATUS_FAILED;
     }
 
-    OIC_LOG_V(DEBUG, MOD_NAME, "socketId:%d", *socketID);
-    OIC_LOG(DEBUG, MOD_NAME, "OUT");
+    OIC_LOG_V(DEBUG, TAG, "socketId:%d", *socketID);
+    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
@@ -88,9 +88,9 @@ CAResult_t CAArduinoInitMulticastUdpSocket(const char *mcastAddress,
                                            uint16_t mport,
                                            uint16_t lport, int *socketID)
 {
-    OIC_LOG(DEBUG, MOD_NAME, "IN");
-    VERIFY_NON_NULL(mcastAddress, MOD_NAME, "address");
-    VERIFY_NON_NULL(socketID, MOD_NAME, "socket");
+    OIC_LOG(DEBUG, TAG, "IN");
+    VERIFY_NON_NULL(mcastAddress, TAG, "address");
+    VERIFY_NON_NULL(socketID, TAG, "socket");
 
     uint8_t mcastMacAddr[] = { 0x01, 0x00, 0x5E, 0x00, 0x00, 0x00};
     uint8_t ipAddr[4] = { 0 };
@@ -98,7 +98,7 @@ CAResult_t CAArduinoInitMulticastUdpSocket(const char *mcastAddress,
     if (CAParseIPv4AddressInternal(mcastAddress, ipAddr, sizeof(ipAddr),
                                    &parsedPort) != CA_STATUS_OK)
     {
-        OIC_LOG(ERROR, MOD_NAME, "parse fail");
+        OIC_LOG(ERROR, TAG, "parse fail");
         return CA_STATUS_FAILED;
     }
 
@@ -106,7 +106,7 @@ CAResult_t CAArduinoInitMulticastUdpSocket(const char *mcastAddress,
     CAResult_t ret = CAArduinoGetAvailableSocket(socketID);
     if (ret != CA_STATUS_OK)
     {
-        OIC_LOG(ERROR, MOD_NAME, "sock fail");
+        OIC_LOG(ERROR, TAG, "sock fail");
         return ret;
     }
 
@@ -121,12 +121,12 @@ CAResult_t CAArduinoInitMulticastUdpSocket(const char *mcastAddress,
     //Create a datagram socket on which to recv/send.
     if (!socket(*socketID, SnMR::UDP, lport, SnMR::MULTI))
     {
-        OIC_LOG(ERROR, MOD_NAME, "sock fail");
+        OIC_LOG(ERROR, TAG, "sock fail");
         return CA_SOCKET_OPERATION_FAILED;
     }
 
-    OIC_LOG_V(DEBUG, MOD_NAME, "socketId:%d", *socketID);
-    OIC_LOG(DEBUG, MOD_NAME, "OUT");
+    OIC_LOG_V(DEBUG, TAG, "socketId:%d", *socketID);
+    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 

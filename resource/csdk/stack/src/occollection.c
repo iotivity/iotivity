@@ -302,7 +302,7 @@ HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest,
 
                 // Function will return error if not enough space in buffer.
                 ret = BuildVirtualResourceResponse(temp, filterOn, filterValue,
-                         (char*)ptr, &remaining, CA_WIFI );
+                         (char*)ptr, &remaining, CA_IPV4 );
                 if (ret != OC_STACK_OK)
                 {
                     break;

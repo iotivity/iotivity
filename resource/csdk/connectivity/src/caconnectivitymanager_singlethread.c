@@ -67,12 +67,12 @@ void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHand
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
-CAResult_t CACreateRemoteEndpoint(const CAURI_t uri,
-    const CAConnectivityType_t connectivityType,CARemoteEndpoint_t **remoteEndpoint)
+CAResult_t CACreateRemoteEndpoint(const CAURI_t uri, const CATransportType_t transportType,
+                                  CARemoteEndpoint_t **remoteEndpoint)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
-    CARemoteEndpoint_t *remote = CACreateRemoteEndpointUriInternal(uri,connectivityType);
+    CARemoteEndpoint_t *remote = CACreateRemoteEndpointUriInternal(uri, transportType);
 
     if (remote == NULL)
     {
@@ -158,19 +158,9 @@ CAResult_t CASelectNetwork(const uint32_t interestedNetwork)
     }
     CAResult_t res = CA_STATUS_OK;
 
-    if (interestedNetwork & CA_ETHERNET)
+    if (interestedNetwork & CA_IPV4)
     {
-        res = CAAddNetworkType(CA_ETHERNET);
-        if (res != CA_STATUS_OK)
-        {
-            OIC_LOG(ERROR, TAG, "Failed to Add n/w type");
-            return res;
-        }
-    }
-
-    if (interestedNetwork & CA_WIFI)
-    {
-        res = CAAddNetworkType(CA_WIFI);
+        res = CAAddNetworkType(CA_IPV4);
         if (res != CA_STATUS_OK)
         {
             OIC_LOG(ERROR, TAG, "Failed to Add n/w type");
@@ -213,19 +203,9 @@ CAResult_t CAUnSelectNetwork(const uint32_t nonInterestedNetwork)
 
     CAResult_t res = CA_STATUS_OK;
 
-    if (nonInterestedNetwork & CA_ETHERNET)
+    if (nonInterestedNetwork & CA_IPV4)
     {
-        res = CARemoveNetworkType(CA_ETHERNET);
-        if (res != CA_STATUS_OK)
-        {
-            OIC_LOG(ERROR, TAG, "Failed to remove n/w type");
-            return res;
-        }
-    }
-
-    if (nonInterestedNetwork & CA_WIFI)
-    {
-        res = CARemoveNetworkType(CA_WIFI);
+        res = CARemoveNetworkType(CA_IPV4);
         if (res != CA_STATUS_OK)
         {
             OIC_LOG(ERROR, TAG, "Failed to remove n/w type");

@@ -342,7 +342,7 @@ OCStackResult AddObserver (const char         *resUri,
                            OCResource         *resHandle,
                            OCQualityOfService qos,
                            const CAAddress_t  *addressInfo,
-                           CAConnectivityType_t connectivityType)
+                           CATransportType_t connectivityType)
 {
     // Check if resource exists and is observable.
     if (!resHandle)

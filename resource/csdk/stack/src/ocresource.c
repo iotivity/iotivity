@@ -75,7 +75,7 @@ OCEntityHandlerResult defaultResourceEHandler(OCEntityHandlerFlag flag,
 }
 
 /* This method will retrieve the port at which the secure resource is hosted */
-static OCStackResult GetSecurePortInfo(CAConnectivityType_t connType, uint16_t *port)
+static OCStackResult GetSecurePortInfo(CATransportType_t connType, uint16_t *port)
 {
     CALocalConnectivity_t* info = NULL;
     uint32_t size = 0;
@@ -88,8 +88,7 @@ static OCStackResult GetSecurePortInfo(CAConnectivityType_t connType, uint16_t *
         {
             if (info[size].isSecured && info[size].type == connType)
             {
-                if (info[size].type == CA_ETHERNET ||
-                    info[size].type == CA_WIFI)
+                if (info[size].type == CA_IPV4)
                 {
                     *port = info[size].addressInfo.IP.port;
                     ret = OC_STACK_OK;
@@ -181,7 +180,7 @@ static OCStackResult ValidateUrlQuery (char *url, char *query,
 OCStackResult
 BuildVirtualResourceResponse(const OCResource *resourcePtr, uint8_t filterOn,
                        const char *filterValue, char *out, uint16_t *remaining,
-                       CAConnectivityType_t connType )
+                       CATransportType_t connType )
 {
     if(!resourcePtr || !out  || !remaining)
     {

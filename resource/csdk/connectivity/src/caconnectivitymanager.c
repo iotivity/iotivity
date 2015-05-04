@@ -85,12 +85,12 @@ CAResult_t CARegisterDTLSCredentialsHandler(
 }
 #endif //__WITH_DTLS__
 
-CAResult_t CACreateRemoteEndpoint(const CAURI_t uri,
-    const CAConnectivityType_t connectivityType,CARemoteEndpoint_t **remoteEndpoint)
+CAResult_t CACreateRemoteEndpoint(const CAURI_t uri, const CATransportType_t transportType,
+                                  CARemoteEndpoint_t **remoteEndpoint)
 {
     OIC_LOG(DEBUG, TAG, "CACreateRemoteEndpoint");
 
-    CARemoteEndpoint_t *remote = CACreateRemoteEndpointUriInternal(uri, connectivityType);
+    CARemoteEndpoint_t *remote = CACreateRemoteEndpointUriInternal(uri, transportType);
 
     if (remote == NULL)
     {
@@ -191,29 +191,24 @@ CAResult_t CASelectNetwork(const uint32_t interestedNetwork)
         return CA_NOT_SUPPORTED;
     }
 
-    CAResult_t res =CA_STATUS_OK;
-    if (interestedNetwork & CA_ETHERNET)
-    {
-        res = CAAddNetworkType(CA_ETHERNET);
-        OIC_LOG_V(DEBUG, TAG, "CAAddNetworkType(CA_ETHERNET) function returns error : %d", res);
-    }
+    CAResult_t res = CA_STATUS_OK;
 
-    if (interestedNetwork & CA_WIFI)
+    if (interestedNetwork & CA_IPV4)
     {
-        res = CAAddNetworkType(CA_WIFI);
-        OIC_LOG_V(DEBUG, TAG, "CAAddNetworkType(CA_WIFI) function returns error : %d", res);
+        res = CAAddNetworkType(CA_IPV4);
+        OIC_LOG_V(ERROR, TAG, "CAAddNetworkType(CA_IPV4) function returns error : %d", res);
     }
 
     if (interestedNetwork & CA_EDR)
     {
         res = CAAddNetworkType(CA_EDR);
-        OIC_LOG_V(DEBUG, TAG, "CAAddNetworkType(CA_EDR) function returns error : %d", res);
+        OIC_LOG_V(ERROR, TAG, "CAAddNetworkType(CA_EDR) function returns error : %d", res);
     }
 
     if (interestedNetwork & CA_LE)
     {
         res = CAAddNetworkType(CA_LE);
-        OIC_LOG_V(DEBUG, TAG, "CAAddNetworkType(CA_LE) function returns error : %d", res);
+        OIC_LOG_V(ERROR, TAG, "CAAddNetworkType(CA_LE) function returns error : %d", res);
     }
 
     return res;
@@ -229,28 +224,23 @@ CAResult_t CAUnSelectNetwork(const uint32_t nonInterestedNetwork)
     }
 
     CAResult_t res = CA_STATUS_OK;
-    if (nonInterestedNetwork & CA_ETHERNET)
-    {
-        res = CARemoveNetworkType(CA_ETHERNET);
-        OIC_LOG_V(DEBUG, TAG, "CARemoveNetworkType(CA_ETHERNET) function returns error : %d", res);
-    }
 
-    if (nonInterestedNetwork & CA_WIFI)
+    if (nonInterestedNetwork & CA_IPV4)
     {
-        res = CARemoveNetworkType(CA_WIFI);
-        OIC_LOG_V(DEBUG, TAG, "CARemoveNetworkType(CA_WIFI) function returns error : %d", res);
+        res = CARemoveNetworkType(CA_IPV4);
+        OIC_LOG_V(ERROR, TAG, "CARemoveNetworkType(CA_IPV4) function returns error : %d", res);
     }
 
     if (nonInterestedNetwork & CA_EDR)
     {
         res = CARemoveNetworkType(CA_EDR);
-        OIC_LOG_V(DEBUG, TAG, "CARemoveNetworkType(CA_EDR) function returns error : %d", res);
+        OIC_LOG_V(ERROR, TAG, "CARemoveNetworkType(CA_EDR) function returns error : %d", res);
     }
 
     if (nonInterestedNetwork & CA_LE)
     {
         res = CARemoveNetworkType(CA_LE);
-        OIC_LOG_V(DEBUG, TAG, "CARemoveNetworkType(CA_LE) function returns error : %d", res);
+        OIC_LOG_V(ERROR, TAG, "CARemoveNetworkType(CA_LE) function returns error : %d", res);
     }
 
     return res;

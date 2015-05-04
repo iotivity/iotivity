@@ -19,7 +19,7 @@
  ******************************************************************/
 #include "caadapternetdtls.h"
 #include "cacommon.h"
-#include "cawifiinterface.h"
+#include "caipinterface.h"
 #include "dtls.h"
 #include "oic_malloc.h"
 

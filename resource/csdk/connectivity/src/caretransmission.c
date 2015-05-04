@@ -342,11 +342,11 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context,
         return CA_STATUS_INVALID_PARAM;
     }
 
-    // #0. check support connectivity type
-    if (!(context->config.supportType & endpoint->connectivityType))
+    // #0. check support transport type
+    if (!(context->config.supportType & endpoint->transportType))
     {
-        OIC_LOG_V(DEBUG, TAG, "not supported connectivity type for retransmission..(%d)",
-                  endpoint->connectivityType);
+        OIC_LOG_V(DEBUG, TAG, "not supported transport type for retransmission..(%d)",
+                  endpoint->transportType);
         return CA_NOT_SUPPORTED;
     }
 
@@ -419,7 +419,7 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context,
 
         // found index
         if (NULL != currData->endpoint && currData->messageId == messageId
-            && (currData->endpoint->connectivityType == endpoint->connectivityType))
+            && (currData->endpoint->transportType == endpoint->transportType))
         {
             OIC_LOG(ERROR, TAG, "Duplicate message ID");
 
@@ -455,11 +455,11 @@ CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
         return CA_STATUS_INVALID_PARAM;
     }
 
-    // #0. check support connectivity type
-    if (!(context->config.supportType & endpoint->connectivityType))
+    // #0. check support transport type
+    if (!(context->config.supportType & endpoint->transportType))
     {
-        OIC_LOG_V(DEBUG, TAG, "not supported connectivity type for retransmission..(%d)",
-                  endpoint->connectivityType);
+        OIC_LOG_V(DEBUG, TAG, "not supported transport type for retransmission..(%d)",
+                  endpoint->transportType);
         return CA_STATUS_OK;
     }
 
@@ -480,7 +480,8 @@ CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
     uint32_t len = u_arraylist_length(context->dataList);
 
     // find index
-    for (uint32_t i = 0; i < len; i++)
+    uint32_t i;
+    for (i = 0; i < len; i++)
     {
         CARetransmissionData_t *retData = (CARetransmissionData_t *) u_arraylist_get(
                 context->dataList, i);
@@ -492,7 +493,7 @@ CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
 
         // found index
         if (NULL != retData->endpoint && retData->messageId == messageId
-            && (retData->endpoint->connectivityType == endpoint->connectivityType))
+            && (retData->endpoint->transportType == endpoint->transportType))
         {
             // get pdu data for getting token when CA_EMPTY(RST/ACK) is received from remote device
             // if retransmission was finish..token will be unavailable.

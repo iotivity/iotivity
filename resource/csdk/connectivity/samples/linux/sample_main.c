@@ -56,8 +56,8 @@
 
 int g_received;
 uint16_t g_local_secure_port = SECURE_DEFAULT_PORT;
-CAConnectivityType_t g_selected_nw_type = CA_ETHERNET;
-const char* MESSAGE_TYPE[] = {"CON", "NON", "ACK", "RESET"};
+CATransportType_t g_selected_nw_type = CA_IPV4;
+const char *MESSAGE_TYPE[] = {"CON", "NON", "ACK", "RESET"};
 
 char get_menu();
 void process();
@@ -608,7 +608,7 @@ void send_secure_request()
 
     // create remote endpoint
     CARemoteEndpoint_t *endpoint = NULL;
-    CAResult_t res = CACreateRemoteEndpoint(uri, CA_ETHERNET, &endpoint);
+    CAResult_t res = CACreateRemoteEndpoint(uri, CA_IPV4, &endpoint);
     if (CA_STATUS_OK != res)
     {
         printf("Failed to create remote endpoint, error code: %d\n", res);
@@ -684,7 +684,7 @@ void send_request_all()
         CADestroyRemoteEndpoint(endpoint);
         return;
     }
-    group->connectivityType = endpoint->connectivityType;
+    group->transportType = endpoint->transportType;
     group->resourceUri = endpoint->resourceUri;
 
     // create token
@@ -910,8 +910,7 @@ void select_network()
 {
     printf("\n=============================================\n");
     printf("\tselect network\n");
-    printf("ETHERNET : 0\n");
-    printf("WIFI : 1\n");
+    printf("IPv4 : 0\n");
     printf("EDR : 2\n");
     printf("LE : 3\n");
     printf("select : ");
@@ -947,8 +946,7 @@ void unselect_network()
 {
     printf("\n=============================================\n");
     printf("\tunselect enabled network\n");
-    printf("ETHERNET : 0\n");
-    printf("WIFI : 1\n");
+    printf("IPv4 : 0\n");
     printf("EDR : 2\n");
     printf("LE : 3\n");
     printf("select : ");
@@ -1046,7 +1044,7 @@ void get_network_info()
     for (index = 0; index < tempSize; index++)
     {
         printf("Type: %d\n", tempInfo[index].type);
-        if (CA_WIFI == tempInfo[index].type || CA_ETHERNET == tempInfo[index].type)
+        if (CA_IPV4 == tempInfo[index].type)
         {
             printf("Address: %s\n", tempInfo[index].addressInfo.IP.ipAddress);
             printf("Port: %d\n", tempInfo[index].addressInfo.IP.port);
@@ -1086,12 +1084,12 @@ void request_handler(const CARemoteEndpoint_t *object, const CARequestInfo_t *re
 
     printf("##########received request from remote device #############\n");
     printf("Uri: %s\n", object->resourceUri);
-    if (CA_WIFI == object->connectivityType || CA_ETHERNET == object->connectivityType)
+    if (CA_IPV4 == object->transportType)
     {
         printf("Remote Address: %s Port: %d secured:%d\n", object->addressInfo.IP.ipAddress,
                object->addressInfo.IP.port, object->isSecured);
     }
-    else if (CA_EDR == object->connectivityType)
+    else if (CA_EDR == object->transportType)
     {
         printf("Remote Address: %s \n", object->addressInfo.BT.btMacAddress);
     }
@@ -1114,7 +1112,7 @@ void request_handler(const CARemoteEndpoint_t *object, const CARequestInfo_t *re
 
     //Check if this has secure communication information
     if (requestInfo->info.payload &&
-            (CA_WIFI == object->connectivityType || CA_ETHERNET == object->connectivityType))
+            (CA_IPV4 == object->transportType))
     {
         int securePort = get_secure_information(requestInfo->info.payload);
         if (0 < securePort) //Set the remote endpoint secure details and send response
@@ -1138,7 +1136,7 @@ void request_handler(const CARemoteEndpoint_t *object, const CARequestInfo_t *re
                     object->addressInfo.IP.port, object->resourceUri);
 
             CARemoteEndpoint_t *endpoint = NULL;
-            if (CA_STATUS_OK != CACreateRemoteEndpoint(uri, object->connectivityType, &endpoint))
+            if (CA_STATUS_OK != CACreateRemoteEndpoint(uri, object->transportType, &endpoint))
             {
                 printf("Failed to create duplicate of remote endpoint!\n");
                 return;
@@ -1160,12 +1158,12 @@ void response_handler(const CARemoteEndpoint_t *object, const CAResponseInfo_t *
 {
     printf("##########Received response from remote device #############\n");
     printf("Uri: %s\n", object->resourceUri);
-    if (CA_WIFI == object->connectivityType || CA_ETHERNET == object->connectivityType)
+    if (CA_IPV4 == object->transportType)
     {
         printf("Remote Address: %s Port: %d secured:%d\n", object->addressInfo.IP.ipAddress,
                object->addressInfo.IP.port, object->isSecured);
     }
-    else if (CA_EDR == object->connectivityType)
+    else if (CA_EDR == object->transportType)
     {
         printf("Remote Address: %s \n", object->addressInfo.BT.btMacAddress);
     }
@@ -1289,7 +1287,7 @@ void send_response(const CARemoteEndpoint_t *endpoint, const CAInfo_t *info)
     responseInfo.result = responseCode;
     responseInfo.info = responseData;
 
-    // send response (connectivityType from remoteEndpoint of request Info)
+    // send response (transportType from remoteEndpoint of request Info)
     CAResult_t res = CASendResponse(endpoint, &responseInfo);
     if (CA_STATUS_OK != res)
     {
@@ -1382,9 +1380,8 @@ CAResult_t get_network_type()
 
     printf("\n=============================================\n");
     printf("\tselect network type\n");
-    printf("ETHERNET : 0\n");
-    printf("WIFI : 1\n");
-    printf("EDR : 2\n");
+    printf("IPv4 : 0\n");
+    printf("BT : 2\n");
     printf("LE : 3\n");
     printf("select : ");
 
@@ -1401,14 +1398,9 @@ CAResult_t get_network_type()
     {
         return CA_NOT_SUPPORTED;
     }
-    if (number & CA_ETHERNET)
+    if (number & CA_IPV4)
     {
-        g_selected_nw_type = CA_ETHERNET;
-        return CA_STATUS_OK;
-    }
-    if (number & CA_WIFI)
-    {
-        g_selected_nw_type = CA_WIFI;
+        g_selected_nw_type = CA_IPV4;
         return CA_STATUS_OK;
     }
     if (number & CA_EDR)

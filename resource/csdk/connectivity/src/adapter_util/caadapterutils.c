@@ -42,8 +42,7 @@ void CALogPDUData(coap_pdu_t *pdu)
     OIC_LOG_V(DEBUG, CA_ADAPTER_UTILS_TAG, "PDU Maker - token : %s", pdu->hdr->token);
 }
 
-CALocalConnectivity_t *CAAdapterCreateLocalEndpoint(CAConnectivityType_t type,
-        const char *address)
+CALocalConnectivity_t *CAAdapterCreateLocalEndpoint(CATransportType_t type, const char *address)
 {
     CALocalConnectivity_t *info = (CALocalConnectivity_t *)
                                   OICCalloc(1, sizeof(CALocalConnectivity_t));
@@ -66,10 +65,16 @@ CALocalConnectivity_t *CAAdapterCreateLocalEndpoint(CAConnectivityType_t type,
             strncpy(info->addressInfo.LE.leMacAddress, address, CA_MACADDR_SIZE - 1);
             info->addressInfo.LE.leMacAddress[CA_MACADDR_SIZE - 1] = '\0';
         }
-        else if (CA_WIFI == type || CA_ETHERNET == type)
+        else if (CA_IPV4 == type)
         {
             strncpy(info->addressInfo.IP.ipAddress, address, CA_IPADDR_SIZE - 1);
             info->addressInfo.IP.ipAddress[CA_IPADDR_SIZE - 1] = '\0';
+        }
+        else if (CA_IPV6 == type)
+        {
+            OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "Currently IPV6 is not supported");
+            OICFree(info);
+            return NULL;
         }
         else
         {
@@ -107,13 +112,20 @@ CALocalConnectivity_t *CAAdapterCopyLocalEndpoint(const CALocalConnectivity_t *c
                 CA_MACADDR_SIZE - 1);
         info->addressInfo.LE.leMacAddress[CA_MACADDR_SIZE - 1] = '\0';
     }
-    else if ((CA_WIFI == info->type || CA_ETHERNET == info->type)
-             && strlen(connectivity->addressInfo.IP.ipAddress))
+    else if ((CA_IPV4 == info->type)
+
+            && strlen(connectivity->addressInfo.IP.ipAddress))
     {
         strncpy(info->addressInfo.IP.ipAddress, connectivity->addressInfo.IP.ipAddress,
                 CA_IPADDR_SIZE - 1);
         info->addressInfo.IP.ipAddress[CA_IPADDR_SIZE - 1] = '\0';
         info->addressInfo.IP.port = connectivity->addressInfo.IP.port;
+    }
+    else if (CA_IPV6 == info->type)
+    {
+        OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "Currently IPV6 is not supported");
+        OICFree(info);
+        return NULL;
     }
     else
     {
@@ -131,9 +143,8 @@ void CAAdapterFreeLocalEndpoint(CALocalConnectivity_t *localEndpoint)
     OICFree(localEndpoint);
 }
 
-CARemoteEndpoint_t *CAAdapterCreateRemoteEndpoint(CAConnectivityType_t type,
-        const char *address,
-        const char *resourceUri)
+CARemoteEndpoint_t *CAAdapterCreateRemoteEndpoint(CATransportType_t type, const char *address,
+                                                  const char *resourceUri)
 {
     CARemoteEndpoint_t *info = (CARemoteEndpoint_t *)
                                OICCalloc(1, sizeof(CARemoteEndpoint_t));
@@ -143,7 +154,7 @@ CARemoteEndpoint_t *CAAdapterCreateRemoteEndpoint(CAConnectivityType_t type,
         return NULL;
     }
 
-    info->connectivityType = type;
+    info->transportType = type;
     if (address && strlen(address))
     {
         if (CA_EDR == type)
@@ -156,10 +167,16 @@ CARemoteEndpoint_t *CAAdapterCreateRemoteEndpoint(CAConnectivityType_t type,
             strncpy(info->addressInfo.LE.leMacAddress, address, CA_MACADDR_SIZE - 1);
             info->addressInfo.LE.leMacAddress[CA_MACADDR_SIZE - 1] = '\0';
         }
-        else if (CA_WIFI == type || CA_ETHERNET == type)
+        else if (CA_IPV4 == type)
         {
             strncpy(info->addressInfo.IP.ipAddress, address, CA_IPADDR_SIZE - 1);
             info->addressInfo.IP.ipAddress[CA_IPADDR_SIZE - 1] = '\0';
+        }
+        else if (CA_IPV6 == type)
+        {
+            OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "Currently IPV6 is not supported");
+            OICFree(info);
+            return NULL;
         }
         else
         {
@@ -189,26 +206,31 @@ CARemoteEndpoint_t *CAAdapterCopyRemoteEndpoint(const CARemoteEndpoint_t *remote
         return NULL;
     }
 
-    info->connectivityType = remoteEndpoint->connectivityType;
-    if (CA_EDR == info->connectivityType && strlen(remoteEndpoint->addressInfo.BT.btMacAddress))
+    info->transportType = remoteEndpoint->transportType;
+    if (CA_EDR == info->transportType && ('\0' != remoteEndpoint->addressInfo.BT.btMacAddress[0]))
     {
         strncpy(info->addressInfo.BT.btMacAddress, remoteEndpoint->addressInfo.BT.btMacAddress,
                 CA_MACADDR_SIZE - 1);
         info->addressInfo.BT.btMacAddress[CA_MACADDR_SIZE - 1] = '\0';
     }
-    else if (CA_LE == info->connectivityType && strlen(remoteEndpoint->addressInfo.LE.leMacAddress))
+    else if (CA_LE == info->transportType
+             && ('\0' != remoteEndpoint->addressInfo.LE.leMacAddress[0]))
     {
         strncpy(info->addressInfo.LE.leMacAddress, remoteEndpoint->addressInfo.LE.leMacAddress,
                 CA_MACADDR_SIZE - 1);
         info->addressInfo.LE.leMacAddress[CA_MACADDR_SIZE - 1] = '\0';
     }
-    else if ((CA_WIFI == info->connectivityType || CA_ETHERNET == info->connectivityType)
-             && strlen(remoteEndpoint->addressInfo.IP.ipAddress))
+    else if ((CA_IPV4 == info->transportType)
+            && ('\0' != remoteEndpoint->addressInfo.IP.ipAddress[0]))
     {
         strncpy(info->addressInfo.IP.ipAddress, remoteEndpoint->addressInfo.IP.ipAddress,
                 CA_IPADDR_SIZE - 1);
         info->addressInfo.IP.ipAddress[CA_IPADDR_SIZE - 1] = '\0';
         info->addressInfo.IP.port = remoteEndpoint->addressInfo.IP.port;
+    }
+    else if (CA_IPV6 == info->transportType)
+    {
+        OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "Currently IPV6 is not supported");
     }
     else
     {
@@ -344,3 +366,190 @@ bool CAAdapterIsSameSubnet(const char *ipAddress1, const char *ipAddress2, const
            && ((ipList1[3] & maskList[3]) == (ipList2[3] & maskList[3]));
 }
 
+
+bool CAIsMulticastServerStarted(const u_arraylist_t *serverInfoList, const char *ipAddress,
+                                const char *multicastAddress, uint16_t port)
+{
+    VERIFY_NON_NULL_RET(serverInfoList, CA_ADAPTER_UTILS_TAG, "serverInfoList is null", false);
+    VERIFY_NON_NULL_RET(ipAddress, CA_ADAPTER_UTILS_TAG, "ipAddress is null", false);
+    VERIFY_NON_NULL_RET(multicastAddress, CA_ADAPTER_UTILS_TAG, "multicastAddress is null", false);
+
+    uint32_t listLength = u_arraylist_length(serverInfoList);
+    for (uint32_t listIndex = 0; listIndex < listLength; listIndex++)
+    {
+        CAServerInfo_t *info = (CAServerInfo_t *) u_arraylist_get(serverInfoList, listIndex);
+        if (!info)
+        {
+            OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "Info is NULL");
+            return false;
+        }
+
+        if (info->isMulticastServer && (strncmp(info->ipAddress, multicastAddress,
+                                                strlen(multicastAddress) == 0))
+            && (info->port == port) && (strncmp(info->ifAddr, ipAddress, strlen(ipAddress)) == 0))
+        {
+            return info->isServerStarted;
+        }
+    }
+    return false;
+}
+
+bool CAIsUnicastServerStarted(const u_arraylist_t *serverInfoList, const char *ipAddress,
+                              uint16_t port)
+{
+    VERIFY_NON_NULL_RET(serverInfoList, CA_ADAPTER_UTILS_TAG, "serverInfoList is null", false);
+    VERIFY_NON_NULL_RET(ipAddress, CA_ADAPTER_UTILS_TAG, "ipAddress is null", false);
+
+    uint32_t listLength = u_arraylist_length(serverInfoList);
+    for (uint32_t listIndex = 0; listIndex < listLength; listIndex++)
+    {
+        CAServerInfo_t *info = (CAServerInfo_t *) u_arraylist_get(serverInfoList, listIndex);
+        if (!info)
+        {
+            continue;
+        }
+
+        if (!info->isMulticastServer && (strncmp(info->ipAddress, ipAddress,
+                                                 strlen(ipAddress)) == 0)
+            && (info->port == port))
+        {
+            return info->isServerStarted;
+        }
+    }
+    return false;
+}
+
+uint16_t CAGetServerPort(const u_arraylist_t *serverInfoList, const char *ipAddress, bool isSecured)
+{
+    VERIFY_NON_NULL_RET(serverInfoList, CA_ADAPTER_UTILS_TAG, "serverInfoList is null", 0);
+    VERIFY_NON_NULL_RET(ipAddress, CA_ADAPTER_UTILS_TAG, "ipAddress is null", 0);
+
+    uint32_t listLength = u_arraylist_length(serverInfoList);
+    for (uint32_t listIndex = 0; listIndex < listLength; listIndex++)
+    {
+        CAServerInfo_t *info = (CAServerInfo_t *) u_arraylist_get(serverInfoList, listIndex);
+        if (!info)
+        {
+            continue;
+        }
+        if ((strncmp(info->ipAddress, ipAddress, strlen(ipAddress)) == 0) &&
+                    (info->isSecured == isSecured))
+        {
+            return info->port;
+        }
+    }
+
+    return 0;
+}
+
+int CAGetSocketFdForUnicastServer(const u_arraylist_t *serverInfoList, const char *ipAddress,
+                                  bool isSecured, bool isMulticast, CATransportType_t type)
+{
+    VERIFY_NON_NULL_RET(serverInfoList, CA_ADAPTER_UTILS_TAG, "serverInfoList is null", -1);
+    VERIFY_NON_NULL_RET(ipAddress, CA_ADAPTER_UTILS_TAG, "ipAddress is null", -1);
+
+    uint32_t listLength = u_arraylist_length(serverInfoList);
+
+    for (uint32_t listIndex = 0; listIndex < listLength; listIndex++)
+    {
+        CAServerInfo_t *info = (CAServerInfo_t *) u_arraylist_get(serverInfoList, listIndex);
+        if (!info)
+        {
+            continue;
+        }
+
+        if (!CAAdapterIsSameSubnet(info->ipAddress, ipAddress, info->subNetMask))
+        {
+            continue;
+        }
+
+        if (!info->isMulticastServer && (info->isSecured == isSecured))
+        {
+            OIC_LOG_V(DEBUG, CA_ADAPTER_UTILS_TAG,
+                      "CAGetSocketFdForServer found socket [%d]", info->socketFd);
+            return info->socketFd;
+        }
+
+    }
+
+    OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG,
+            "CAGetSocketFdForServer socket fd is not found");
+    return -1;
+}
+
+CAResult_t CAAddServerInfo(u_arraylist_t *serverInfoList, CAServerInfo_t *info)
+{
+    VERIFY_NON_NULL(serverInfoList, CA_ADAPTER_UTILS_TAG, "serverInfoList is null");
+    VERIFY_NON_NULL(info, CA_ADAPTER_UTILS_TAG, "info is null");
+
+    CAResult_t result = u_arraylist_add(serverInfoList, (void *) info);
+    if (CA_STATUS_OK != result)
+    {
+        OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "u_arraylist_add failed!");
+    }
+    return result;
+}
+
+void CARemoveServerInfo(u_arraylist_t *serverInfoList, int sockFd)
+{
+    VERIFY_NON_NULL_VOID(serverInfoList, CA_ADAPTER_UTILS_TAG, "serverInfoList is null");
+
+    uint32_t listLength = u_arraylist_length(serverInfoList);
+    for (uint32_t listIndex = 0; listIndex < listLength;)
+    {
+        CAServerInfo_t *info = (CAServerInfo_t *) u_arraylist_get(serverInfoList, listIndex);
+        if (!info)
+        {
+            listIndex++;
+            continue;
+        }
+
+        if (info->socketFd == sockFd)
+        {
+            if (u_arraylist_remove(serverInfoList, listIndex))
+            {
+                OICFree(info);
+                listLength--;
+            }
+            else
+            {
+                OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "u_arraylist_remove failed!");
+                break;
+            }
+        }
+        else
+        {
+            listIndex++;
+        }
+    }
+}
+
+void CAClearNetInterfaceInfoList(u_arraylist_t *infoList)
+{
+    uint32_t listLength = u_arraylist_length(infoList);
+    for (uint32_t listIndex = 0; listIndex < listLength; listIndex++)
+    {
+        CANetInfo_t *netInfo = (CANetInfo_t *) u_arraylist_get(infoList, listIndex);
+        if (!netInfo)
+        {
+            continue;
+        }
+        OICFree(netInfo);
+    }
+    u_arraylist_free(&infoList);
+}
+
+void CAClearServerInfoList(u_arraylist_t *serverInfoList)
+{
+    uint32_t listLength = u_arraylist_length(serverInfoList);
+    for (uint32_t listIndex = 0; listIndex < listLength; listIndex++)
+    {
+        CAServerInfo_t *serverInfo = (CAServerInfo_t *) u_arraylist_get(serverInfoList, listIndex);
+        if (!serverInfo)
+        {
+            continue;
+        }
+        OICFree(serverInfo);
+    }
+    u_arraylist_free(&serverInfoList);
+}

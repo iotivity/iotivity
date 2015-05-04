@@ -128,8 +128,7 @@ typedef struct CACacheMessage
  */
 typedef enum
 {
-    DTLS_ETHERNET = 0,
-    DTLS_WIFI
+    DTLS_IP = 0,
 } eDtlsAdapterType_t;
 
 /**

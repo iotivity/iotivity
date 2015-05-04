@@ -1,4 +1,4 @@
-/* ****************************************************************
+/******************************************************************
 *
 * Copyright 2014 Samsung Electronics All Rights Reserved.
 *
@@ -19,13 +19,12 @@
 ******************************************************************/
 
 /**
- * @file
- *
- * This file provides APIs ethernet client/server/network monitor modules.
+ * @file caethernetadapterutils.h
+ * @brief This file provides APIs ethernet client/server/network monitor modules
  */
 
-#ifndef _CA_ETHERNET_ADAPTER_UTILS_
-#define _CA_ETHERNET_ADAPTER_UTILS_
+#ifndef CA_ETHERNET_ADAPTER_UTILS_
+#define CA_ETHERNET_ADAPTER_UTILS_
 
 #include <Arduino.h>
 #include <Ethernet.h>
@@ -37,7 +36,7 @@
 #include "logger.h"
 #include "cacommon.h"
 #include "caadapterinterface.h"
-#include "caethernetadapter_singlethread.h"
+#include "caipadapter_singlethread.h"
 #include "caadapterutils.h"
 
 #ifdef __cplusplus
@@ -76,6 +75,6 @@ CAResult_t CAArduinoInitMulticastUdpSocket(const char *mcastAddress,
 }
 #endif
 
-#endif //_CA_ETHERNET_ADAPTER_UTILS_
+#endif //CA_ETHERNET_ADAPTER_UTILS_
 
 

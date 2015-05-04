@@ -29,12 +29,10 @@
 #include "cainterface.h"
 #include "Arduino.h"
 
-#ifdef ETHERNET_ADAPTER
-#include "Ethernet.h"
-#endif
-
-#ifdef WIFI_ADAPTER
+#ifdef ARDUINOWIFI
 #include "WiFi.h"
+#elif defined ARDUINOETH
+#include "Ethernet.h"
 #endif
 
 #include "oic_malloc.h"
@@ -97,12 +95,11 @@ void GetData(char *readInput, size_t bufferLength, size_t *dataLength)
     (*dataLength) = len;
 }
 
-CAConnectivityType_t GetConnectivityType()
+CATransportType_t GetConnectivityType()
 {
     char type[2] = {0};
     Serial.println("Select network");
-    Serial.println("ETHERNET: 0");
-    Serial.println("WIFI: 1");
+    Serial.println("IPv4: 0");
     Serial.println("EDR: 2");
     Serial.println("LE: 3");
 
@@ -111,20 +108,18 @@ CAConnectivityType_t GetConnectivityType()
     if (0 >= typeLen)
     {
         Serial.println("i/p err,default ethernet");
-        return CA_ETHERNET;
+        return CA_IPV4;
     }
     switch (type[0])
     {
         case '0':
-            return CA_ETHERNET;
-        case '1':
-            return CA_WIFI;
+            return CA_IPV4;
         case '2':
             return CA_EDR;
         case '3':
             return CA_LE;
     }
-    return CA_ETHERNET;
+    return CA_IPV4;
 }
 
 void setup()
@@ -298,7 +293,7 @@ void FindResource()
 void SendRequest()
 {
     char buf[MAX_BUF_LEN] = {0};
-    CAConnectivityType_t selectedNetwork;
+    CATransportType_t selectedNetwork;
     selectedNetwork = GetConnectivityType();
 
     Serial.println("============");
@@ -385,7 +380,7 @@ void SendRequestAll()
 {
     char buf[MAX_BUF_LEN] = {0};
 
-    CAConnectivityType_t selectedNetwork;
+    CATransportType_t selectedNetwork;
     selectedNetwork = GetConnectivityType();
 
     Serial.println("=========");
@@ -414,7 +409,7 @@ void SendRequestAll()
 
     CAGroupEndpoint_t *group = NULL;
     group = (CAGroupEndpoint_t *)OICMalloc(sizeof(CAGroupEndpoint_t));
-    group->connectivityType = endpoint->connectivityType;
+    group->transportType = endpoint->transportType;
     group->resourceUri = endpoint->resourceUri;
 
     // create token
@@ -560,7 +555,7 @@ void AdvertiseResource()
 void SendNotification()
 {
     char buf[MAX_BUF_LEN] = {0};
-    CAConnectivityType_t selectedNetwork;
+    CATransportType_t selectedNetwork;
     selectedNetwork = GetConnectivityType();
 
     Serial.println("============");
@@ -624,8 +619,7 @@ void SelectNetwork()
 
     Serial.println("============");
     Serial.println("Select network");
-    Serial.println("ETHERNET: 0");
-    Serial.println("WIFI: 1");
+    Serial.println("IPv4: 0");
     Serial.println("EDR: 2");
     Serial.println("LE: 3\n");
 
@@ -642,22 +636,7 @@ void SelectNetwork()
     {
         case 0:
             {
-#ifdef ETHERNET_ADAPTER
-                // Note: ****Update the MAC address here with your shield's MAC address****
-                uint8_t ETHERNET_MAC[] = {0x90, 0xA2, 0xDA, 0x0E, 0xC4, 0x05};
-                uint8_t error = Ethernet.begin(ETHERNET_MAC);
-                if (error  == 0)
-                {
-                    Serial.print("Failed: ");
-                    Serial.println(error);
-                    return;
-                }
-#endif
-            }
-            break;
-        case 1:
-            {
-#ifdef WIFI_ADAPTER
+#ifdef ARDUINOWIFI
                 const char ssid[] = "SSID";              // your network SSID (name)
                 const char pass[] = "SSID_Password";     // your network password
                 int16_t status = WL_IDLE_STATUS;         // the Wifi radio's status
@@ -676,6 +655,16 @@ void SelectNetwork()
                     // Connect to WPA/WPA2 network:
                     status = WiFi.begin((char *)ssid, pass);
                 }
+#elif defined ARDUINOETH
+                // Note: ****Update the MAC address here with your shield's MAC address****
+                uint8_t ETHERNET_MAC[] = {0x90, 0xA2, 0xDA, 0x0E, 0xC4, 0x05};
+                uint8_t error = Ethernet.begin(ETHERNET_MAC);
+                if (error  == 0)
+                {
+                    Serial.print("Failed: ");
+                    Serial.println(error);
+                    return;
+                }
 #endif
             }
             break;
@@ -687,7 +676,7 @@ void SelectNetwork()
             break;
     }
 
-    CASelectNetwork(CAConnectivityType_t(1<<number));
+    CASelectNetwork(CATransportType_t(1<<number));
     Serial.println("============");
 }
 
@@ -697,8 +686,7 @@ void UnselectNetwork()
 
     Serial.println("============");
     Serial.println("Unselect network");
-    Serial.println("ETHERNET: 0");
-    Serial.println("WIFI: 1");
+    Serial.println("IPv4: 0");
     Serial.println("EDR: 2");
     Serial.println("LE: 3\n");
 

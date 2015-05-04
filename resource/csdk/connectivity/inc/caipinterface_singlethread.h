@@ -1,37 +1,34 @@
-/* ****************************************************************
- *
- * Copyright 2014 Samsung Electronics All Rights Reserved.
- *
- *
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- ******************************************************************/
+/******************************************************************
+*
+* Copyright 2014 Samsung Electronics All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*      http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
 
 /**
- * @file
- *
- * This file provides APIs for WIFI adapter - client, server, network
- * monitor modules.
+ * @file caipinterface_singlethread.h
+ * @brief This file provides APIs IP client/server/network monitor modules
  */
 
-#ifndef _CA_WIFI_INTERFACE_H_
-#define _CA_WIFI_INTERFACE_H_
+#ifndef CA_IP_INTERFACE_SINGLETHREAD_H_
+#define CA_IP_INTERFACE_SINGLETHREAD_H_
 
 #include <stdbool.h>
 
 #include "cacommon.h"
-#include "cathreadpool.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -55,37 +52,34 @@ typedef enum
  * @param  port         [IN] Port number on which data is received.
  * @param  data         [IN] Data received from remote OIC device.
  * @param  dataLength   [IN] Length of data in bytes.
- * @param  isSecure     [IN] Indicates the data is secure or not.
  * @return NONE
- * @pre  Callback must be registered using CAWiFiSetPacketReceiveCallback()
+ * @pre  Callback must be registered using CAIPSetPacketReceiveCallback()
  */
-typedef void (*CAWiFiPacketReceivedCallback)(const char *ipAddress, uint16_t port,
-        const void *data, uint32_t dataLength, bool isSecure);
+typedef void (*CAIPPacketReceivedCallback)(const char *ipAddress, uint16_t port,
+                                                 const void *data, uint32_t dataLength);
 
 /**
  * @brief  Callback to be notified when exception occures on multicast/unicast server.
  * @param  type  [IN] Type of server(#CAAdapterServerType_t)
  * @return NONE
- * @pre  Callback must be registered using CAWiFiSetExceptionCallback()
+ * @pre  Callback must be registered using CAIPSetExceptionCallback()
  */
-typedef void (*CAWiFiExceptionCallback)(CAAdapterServerType_t type);
+typedef void (*CAIPExceptionCallback)(CAAdapterServerType_t type);
 
 /**
- * @brief  Initialize WIFI server
- * @param   threadPool  [IN] Thread pool for managing Unicast/Multicast server threads.
+ * @brief  Initialize IP server
  * @return  #CA_STATUS_OK or Appropriate error code
  * @retval  #CA_STATUS_OK  Successful
  * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
  * @retval  #CA_STATUS_FAILED Initialization failed
  */
-CAResult_t CAWiFiInitializeServer(const ca_thread_pool_t threadPool);
-
+CAResult_t CAIPInitializeServer(void);
 
 /**
- * @brief  Terminate WIFI server
+ * @brief  Terminate IP server
  * @return NONE
  */
-void CAWiFiTerminateServer(void);
+void CAIPTerminateServer(void);
 
 /**
  * @brief  Start multicast server for specified multicast address and port
@@ -102,8 +96,8 @@ void CAWiFiTerminateServer(void);
  * @retval  #CA_SERVER_STARTED_ALREADY Multicast server is already started and running.
  * @retval  #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAWiFiStartMulticastServer(const char *localAddress, const char *multicastAddress,
-                                       uint16_t multicastPort, int *serverFD);
+CAResult_t CAIPStartMulticastServer(const char *localAddress, const char *multicastAddress,
+                                          uint16_t multicastPort, int *serverFD);
 
 /**
  * @brief  Start unicast server for specified local address and port
@@ -113,7 +107,6 @@ CAResult_t CAWiFiStartMulticastServer(const char *localAddress, const char *mult
                                   the port failed, server starts in the next available port.
  * @param  forceStart   [IN]      Indicate whether to start server forcesfully on specified port
  *                                or not.
- * @param  isSecured    [IN]      True if the secure server to be started, otherwise false.
  * @param  serverFD     [OUT]     Unicast server socket FD.
  *
  * @return  #CA_STATUS_OK or Appropriate error code
@@ -122,9 +115,8 @@ CAResult_t CAWiFiStartMulticastServer(const char *localAddress, const char *mult
  * @retval  #CA_SERVER_STARTED_ALREADY Unicast server is already started and running.
  * @retval  #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAWiFiStartUnicastServer(const char *localAddress, uint16_t *port,
-                                    bool forceStart, bool isSecured,
-                                    int *serverFD);
+CAResult_t CAIPStartUnicastServer(const char *localAddress, uint16_t *port,
+                                        bool forceStart, int *serverFD);
 
 /**
  * @brief  Stop multicast server.
@@ -133,7 +125,7 @@ CAResult_t CAWiFiStartUnicastServer(const char *localAddress, uint16_t *port,
  * @retval  #CA_STATUS_OK  Successful
  * @retval  #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAWiFiStopMulticastServer(void);
+CAResult_t CAIPStopMulticastServer(void);
 
 /**
  * @brief  Stop unicast server.
@@ -142,7 +134,7 @@ CAResult_t CAWiFiStopMulticastServer(void);
  * @retval  #CA_STATUS_OK  Successful
  * @retval  #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAWiFiStopUnicastServer();
+CAResult_t CAIPStopUnicastServer();
 
 #ifdef __WITH_DTLS__
 /**
@@ -152,13 +144,11 @@ CAResult_t CAWiFiStopUnicastServer();
  * @retval  #CA_STATUS_OK  Successful
  * @retval  #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAWiFiStopSecureUnicastServer();
+CAResult_t CAIPStopSecureUnicastServer();
 #endif
 
 /**
  * @brief  Get the Unicast Server Information if it is started
- *
- * @param  isSecured    [IN] true if the secure server information needed, otherwise false.
  * @param  ipAddress    [OUT] IP address on which server is binded and running.
  * @param  port         [OUT]Port number on which server is running
  * @param  serverFD     [OUT]Server socket fd.
@@ -169,17 +159,21 @@ CAResult_t CAWiFiStopSecureUnicastServer();
  * @retval  #CA_STATUS_FAILED Operation failed
  * @remarks  ipAddress must be freed using free().
  */
-CAResult_t CAWiFiGetUnicastServerInfo(bool isSecured, char **ipAddress, uint16_t *port,
-                                      int *serverFD);
+CAResult_t CAIPGetUnicastServerInfo(char **ipAddress, uint16_t *port, int *serverFD);
 
 /**
  * @brief  Set this callback for receiving data packets from peer devices.
- *
  * @param  callback   [IN] Callback to be notified on reception of unicast/multicast data packets.
  *
  * @return  NONE
  */
-void CAWiFiSetPacketReceiveCallback(CAWiFiPacketReceivedCallback callback);
+void CAIPSetPacketReceiveCallback(CAIPPacketReceivedCallback callback);
+
+/**
+ * @brief  Pull the Received Data
+ * @return NONE
+ */
+void CAIPPullData();
 
 /**
  * @brief  Set this callback for receiving exception notifications.
@@ -188,7 +182,7 @@ void CAWiFiSetPacketReceiveCallback(CAWiFiPacketReceivedCallback callback);
  *
  * @return  NONE
  */
-void CAWiFiSetExceptionCallback(CAWiFiExceptionCallback callback);
+void CAIPSetExceptionCallback(CAIPExceptionCallback callback);
 
 /**
  * @brief  Set socket description for sending unicast UDP data. Once the Unicast server is started,
@@ -197,7 +191,14 @@ void CAWiFiSetExceptionCallback(CAWiFiExceptionCallback callback);
  * @param  socketFD [IN]  Socket descriptor used for sending UDP data.
  * @return  NONE
  */
-void CAWiFiSetUnicastSocket(int socketFD);
+void CAIPSetUnicastSocket(int socketFD);
+
+/**
+ * @brief  Set the port number for sending unicast UDP data
+ * @param  port [IN] Port number used for sending UDP data.
+ * @return NONE
+ */
+void CAIPSetUnicastPort(uint16_t port);
 
 #ifdef __WITH_DTLS__
 /**
@@ -206,7 +207,7 @@ void CAWiFiSetUnicastSocket(int socketFD);
  * @param socketFD [IN] Socket descriptor used for sending secured (encrypted) UDP data.
  * @return  NONE
  */
-void CAWiFiSetSecureUnicastSocket(int socketFD);
+void CAIPSetSecureUnicastSocket(int socketFD);
 #endif
 
 /**
@@ -214,46 +215,40 @@ void CAWiFiSetSecureUnicastSocket(int socketFD);
  *
  * @param  remoteAddress    [IN] IP address to which data needs to be sent.
  * @param  port             [IN] Port to which data needs to be send.
- * @param  data             [IN] Data to be send.
- * @param  dataLength       [IN] Length of data in bytes
+ * @param  buf              [IN] Data to be send.
+ * @param  bufLen           [IN] Length of data in bytes
  * @param  isMulticast      [IN] Whether data needs to be sent to multicast ip
- * @param  isSecured        [IN] Whether data to be sent on secured channel.
  *
  * @return  The number of bytes sent on the network. Returns 0 on error.
- * @remarks isSecure will be ignored when isMulticast is true.
  */
-uint32_t CAWiFiSendData(const char *remoteAddress, uint16_t port,
-                        const void *data, uint32_t dataLength,
-                        bool isMulticast, bool isSecured);
+uint32_t CAIPSendData(const char *remoteAddress, uint16_t port,
+                            const char *buf, uint32_t bufLen, bool isMulticast);
 
 /**
- * @brief  Callback to be notified when wifi adapter connection state changes.
+ * @brief  Callback to be notified when IP adapter connection state changes.
  *
  * @param  ipAddress    [IN] IP address of remote OIC device.
  * @param  status       [IN] Connection status either #CA_INTERFACE_UP or #CA_INTERFACE_DOWN.
  * @return  NONE
- * @pre  Callback must be registered using CAWiFiSetConnectionStateChangeCallback()
+ * @pre  Callback must be registered using CAIPSetConnectionStateChangeCallback()
  */
-typedef void (*CAWiFiConnectionStateChangeCallback)(const char *ipAddress,
-        CANetworkStatus_t status);
+typedef void (*CAIPConnectionStateChangeCallback)(const char *ipAddress,
+                                                        CANetworkStatus_t status);
 
 /**
- * @brief Initialize Wifi network monitor
- *
- * @param  threadPool [IN] Thread pool for managing network monitor thread.
- *
+ * @brief Initialize IP network monitor
  * @return  #CA_STATUS_OK or Appropriate error code
  * @retval  #CA_STATUS_OK  Successful
  * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
  * @retval  #CA_STATUS_FAILED Initialization failed
  */
-CAResult_t CAWiFiInitializeNetworkMonitor(const ca_thread_pool_t threadPool);
+CAResult_t CAIPInitializeNetworkMonitor(void);
 
 /**
- * @brief Terminate WIFI network monitor
+ * @brief Terminate IP network monitor
  * @return  NONE
  */
-void CAWiFiTerminateNetworkMonitor(void);
+void CAIPTerminateNetworkMonitor(void);
 
 /**
  * @brief  Start network monitoring process.
@@ -262,7 +257,7 @@ void CAWiFiTerminateNetworkMonitor(void);
  * @retval  #CA_STATUS_OK  Successful
  * @retval  #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAWiFiStartNetworkMonitor(void);
+CAResult_t CAIPStartNetworkMonitor(void);
 
 /**
  * @brief  Stop network monitoring process.
@@ -271,7 +266,7 @@ CAResult_t CAWiFiStartNetworkMonitor(void);
  * @retval  #CA_STATUS_OK  Successful
  * @retval  #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAWiFiStopNetworkMonitor(void);
+CAResult_t CAIPStopNetworkMonitor(void);
 
 /**
  * @brief  Get local adapter network information.
@@ -285,39 +280,28 @@ CAResult_t CAWiFiStopNetworkMonitor(void);
  * @retval  #CA_STATUS_FAILED Operation failed
  * @remarks  interfaceName and ipAddress must be freed using free().
  */
-CAResult_t CAWiFiGetInterfaceInfo(char **interfaceName, char **ipAddress);
+CAResult_t CAIPGetInterfaceInfo(char **ipAddress, char **interfaceName);
 
 /**
- * @brief  Get local adapter network subnet mask.
+ * @brief  Get Ethernet adapter connection state.
  *
- * @param  subnetMask [OUT] Local adapter interface subnet mask
- *
- * @return  #CA_STATUS_OK or Appropriate error code
- * @retval  #CA_STATUS_OK  Successful
- * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
- * @retval  #CA_STATUS_FAILED Operation failed
- * @remarks subnetMask must be freed using free().
+ * @return  True if Ethernet adapter is connected, otherwise false
  */
-CAResult_t CAWiFiGetInterfaceSubnetMask(char **subnetMask);
+bool CAIPIsConnected(void);
 
 /**
- * @brief  Get WIFI adapter connection state.
+ * @brief  Set callback for receiving local ethernet adapter connection status.
  *
- * @return  True if WIFI adapter is connected, otherwise false
- */
-bool CAWiFiIsConnected(void);
-
-/**
- * @brief  Set callback for receiving local wifi adapter connection status.
- *
- * @param  callback [IN] Callback to be notified when local WIFI adapter connection state changes.
+ * @param  callback [IN] Callback to be notified when local Ethernet adapter connection state
+ *                       changes.
  * @return NONE
  */
-void CAWiFiSetConnectionStateChangeCallback(CAWiFiConnectionStateChangeCallback callback);
+void CAIPSetConnectionStateChangeCallback
+                (CAIPConnectionStateChangeCallback callback);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif //_CA_WIFI_INTERFACE_H_
+#endif //CA_IP_INTERFACE_SINGLETHREAD_H_
 

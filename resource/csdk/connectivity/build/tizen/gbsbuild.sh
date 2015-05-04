@@ -28,7 +28,7 @@ mkdir ./tmp
 mkdir ./tmp/con/
 cp -R ./* $sourcedir/tmp/con
 cp -R ./SConscript $sourcedir/tmp/con
-cp -R ./src/wifi_adapter/SConscript $sourcedir/tmp/con/src/wifi_adapter/
+cp -R ./src/ip_adapter/SConscript $sourcedir/tmp/con/src/ip_adapter/
 cp -R ./src/bt_le_adapter/SConscript $sourcedir/tmp/con/src/bt_le_adapter/
 cp -R ./src/bt_edr_adapter/SConscript $sourcedir/tmp/con/src/bt_edr_adapter/
 cp -R ./common/SConscript $sourcedir/tmp/con/common/

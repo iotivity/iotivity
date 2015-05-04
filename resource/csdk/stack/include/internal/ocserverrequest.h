@@ -48,7 +48,7 @@ typedef struct OCServerRequest
     /** Remote Endpoint address **/
     CAAddress_t addressInfo;
     /** Connectivity of the endpoint**/
-    CAConnectivityType_t connectivityType;
+    CATransportType_t connectivityType;
     // token for the request
     CAToken_t requestToken;
     // token length the request
@@ -166,7 +166,7 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
         char * reqJSONPayload, CAToken_t requestToken,
         uint8_t tokenLength,
         char * resourceUrl, size_t reqTotalSize,
-        CAAddress_t *addressInfo, CAConnectivityType_t connectivityType);
+        CAAddress_t *addressInfo, CATransportType_t connectivityType);
 
 /**
  * Form the OCEntityHandlerRequest struct that is passed to a resource's entity handler

@@ -130,7 +130,7 @@ static int32_t getCAAddress(const char *pAddress, CAAddress_t *outAddress)
 }
 
 CARemoteEndpoint_t *CACreateRemoteEndpointUriInternal(const CAURI_t uri,
-                                                      const CAConnectivityType_t connectivityType)
+                                                      const CATransportType_t transportType)
 {
     // support URI type
     // coap://10.11.12.13:4545/resource_uri
@@ -217,7 +217,7 @@ CARemoteEndpoint_t *CACreateRemoteEndpointUriInternal(const CAURI_t uri,
     CAURI_t resourceUri = pResourceUri;
 
     CARemoteEndpoint_t *remoteEndpoint = CACreateRemoteEndpointInternal(resourceUri, address,
-                                                                        connectivityType);
+                                                                        transportType);
     if (NULL == remoteEndpoint)
     {
         OIC_LOG(ERROR, TAG, "create remote endpoint fail");
@@ -234,7 +234,8 @@ CARemoteEndpoint_t *CACreateRemoteEndpointUriInternal(const CAURI_t uri,
 }
 
 CARemoteEndpoint_t *CACreateRemoteEndpointInternal(const CAURI_t resourceUri,
-        const CAAddress_t addr, const CAConnectivityType_t type)
+                                                   const CAAddress_t addr,
+                                                   const CATransportType_t type)
 {
     if (NULL == resourceUri)
     {
@@ -273,7 +274,7 @@ CARemoteEndpoint_t *CACreateRemoteEndpointInternal(const CAURI_t resourceUri,
     memcpy(&(rep->addressInfo), &addr, sizeof(CAAddress_t));
 
     // save the type
-    rep->connectivityType = type;
+    rep->transportType = type;
 
     return rep;
 }

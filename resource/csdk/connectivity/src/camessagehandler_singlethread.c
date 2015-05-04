@@ -427,7 +427,7 @@ CAResult_t CADetachRequestToAllMessage(const CAGroupEndpoint_t *object,
 
     CAAddress_t addr = {0};
     CARemoteEndpoint_t *remoteEndpoint = CACreateRemoteEndpointInternal(object->resourceUri, addr,
-                                                                        object->connectivityType);
+                                                                        object->transportType);
 
     // save data
     data->type = SEND_TYPE_MULTICAST;
@@ -495,8 +495,7 @@ CAResult_t CADetachMessageResourceUri(const CAURI_t resourceUri, const CAToken_t
 
     CAAddress_t addr = {0};
     CARemoteEndpoint_t *remoteEndpoint =
-            CACreateRemoteEndpointInternal(resourceUri, addr,
-                                           CA_ETHERNET | CA_WIFI | CA_EDR | CA_LE);
+            CACreateRemoteEndpointInternal(resourceUri, addr, CA_IPV4 | CA_EDR | CA_LE);
 
     // create request info
     CARequestInfo_t *reqInfo = (CARequestInfo_t *) OICCalloc(1, sizeof(CARequestInfo_t));

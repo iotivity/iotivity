@@ -18,7 +18,7 @@
 *
 ******************************************************************/
 
-#include "cawifiinterface_singlethread.h"
+#include "caipinterface_singlethread.h"
 
 #include <Arduino.h>
 #include <WiFi.h>
@@ -32,34 +32,34 @@
 #include "cacommon.h"
 #include "cainterface.h"
 #include "caadapterinterface.h"
-#include "cawifiadapter_singlethread.h"
+#include "caipadapter_singlethread.h"
 #include "caadapterutils.h"
 #include "oic_malloc.h"
 
-#define MOD_NAME "WS"
+#define TAG "IPS"
 
 // Length of the IP address decimal notation string
 #define IPNAMESIZE (16)
 
 // Start offsets based on end of received data buffer
-#define WIFI_RECBUF_IPADDR_OFFSET  (6)
-#define WIFI_RECBUF_PORT_OFFSET    (2)
+#define IP_RECBUF_IPADDR_OFFSET  (6)
+#define IP_RECBUF_PORT_OFFSET    (2)
 
-#define WIFI_RECBUF_IPADDR_SIZE    (WIFI_RECBUF_IPADDR_OFFSET - WIFI_RECBUF_PORT_OFFSET)
-#define WIFI_RECBUF_PORT_SIZE      (WIFI_RECBUF_PORT_OFFSET - 0)
-#define WIFI_RECBUF_FOOTER_SIZE    (WIFI_RECBUF_IPADDR_SIZE + WIFI_RECBUF_PORT_SIZE)
+#define IP_RECBUF_IPADDR_SIZE    (IP_RECBUF_IPADDR_OFFSET - IP_RECBUF_PORT_OFFSET)
+#define IP_RECBUF_PORT_SIZE      (IP_RECBUF_PORT_OFFSET - 0)
+#define IP_RECBUF_FOOTER_SIZE    (IP_RECBUF_IPADDR_SIZE + IP_RECBUF_PORT_SIZE)
 
 static CAResult_t CAArduinoGetInterfaceAddress(char *address, int32_t addrLen);
 static void CAArduinoCheckData();
-static void CAPacketReceivedCallback(const char *ipAddress, const uint32_t port,
-                              const void *data, const uint32_t dataLength);
+static void CAPacketReceivedCallback(const char *ipAddress, const uint16_t port,
+                                     const void *data, const uint32_t dataLength);
 
-static CAWiFiPacketReceivedCallback gPacketReceivedCallback = NULL;
+static CAIPPacketReceivedCallback gPacketReceivedCallback = NULL;
 static int32_t gUnicastSocket = 0;
 static bool gServerRunning = false;
 static WiFiUDP Udp;
 
-CAResult_t CAWiFiInitializeServer(void)
+CAResult_t CAIPInitializeServer(void)
 {
     /**
      * This API is to keep design in sync with other platforms.
@@ -68,7 +68,7 @@ CAResult_t CAWiFiInitializeServer(void)
     return CA_STATUS_OK;
 }
 
-void CAWiFiTerminateServer(void)
+void CAIPTerminateServer(void)
 {
     /**
      * This API is to keep design in sync with other platforms.
@@ -76,7 +76,7 @@ void CAWiFiTerminateServer(void)
      */
 }
 
-CAResult_t CAWiFiGetUnicastServerInfo(char **ipAddress, int *port, int *serverID)
+CAResult_t CAIPGetUnicastServerInfo(char **ipAddress, uint16_t *port, int *serverID)
 {
     /*
      * This API is to keep design in sync with other platforms.
@@ -85,81 +85,81 @@ CAResult_t CAWiFiGetUnicastServerInfo(char **ipAddress, int *port, int *serverID
     return CA_STATUS_OK;
 }
 
-CAResult_t CAWiFiStartUnicastServer(const char *localAddress, int16_t *port,
-                                    bool forceStart, int *serverFD)
+CAResult_t CAIPStartUnicastServer(const char *localAddress, uint16_t *port,
+                                  bool forceStart, int *serverFD)
 {
-    OIC_LOG(DEBUG, MOD_NAME, "IN");
-    VERIFY_NON_NULL(port, MOD_NAME, "port");
+    OIC_LOG(DEBUG, TAG, "IN");
+    VERIFY_NON_NULL(port, TAG, "port");
 
     if (gServerRunning)
     {
         // already running
-        OIC_LOG(DEBUG, MOD_NAME, "Error");
+        OIC_LOG(DEBUG, TAG, "Error");
         return CA_STATUS_FAILED;
     }
 
     if (WiFi.status() != WL_CONNECTED)
     {
-        OIC_LOG(ERROR, MOD_NAME, "ERROR:No WIFI");
+        OIC_LOG(ERROR, TAG, "ERROR:No WIFI");
         return CA_STATUS_FAILED;
     }
 
     char localIpAddress[CA_IPADDR_SIZE];
     int32_t localIpAddressLen = sizeof(localIpAddress);
     CAArduinoGetInterfaceAddress(localIpAddress, localIpAddressLen);
-    OIC_LOG_V(DEBUG, MOD_NAME, "address: %s", localIpAddress);
-    OIC_LOG_V(DEBUG, MOD_NAME, "port: %d", *port);
+    OIC_LOG_V(DEBUG, TAG, "address: %s", localIpAddress);
+    OIC_LOG_V(DEBUG, TAG, "port: %d", *port);
 
     Udp.begin((uint16_t ) *port);
     gServerRunning = true;
 
-    OIC_LOG(DEBUG, MOD_NAME, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
-CAResult_t CAWiFiStartMulticastServer(const char *localAddress, const char *multicastAddress,
-                                      int16_t multicastPort, int *serverFD)
+CAResult_t CAIPStartMulticastServer(const char *localAddress, const char *multicastAddress,
+                                      uint16_t multicastPort, int *serverFD)
 {
     // wifi shield does not support multicast
-    OIC_LOG(DEBUG, MOD_NAME, "IN");
-    OIC_LOG(DEBUG, MOD_NAME, "OUT");
+    OIC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_NOT_SUPPORTED;
 }
 
-CAResult_t CAWiFiStopUnicastServer()
+CAResult_t CAIPStopUnicastServer()
 {
-    OIC_LOG(DEBUG, MOD_NAME, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
     Udp.stop();
 
     gServerRunning = false;
-    OIC_LOG(DEBUG, MOD_NAME, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
-CAResult_t CAWiFiStopMulticastServer()
+CAResult_t CAIPStopMulticastServer()
 {
-    return CAWiFiStopUnicastServer();
+    return CAIPStopUnicastServer();
 }
 
-void CAPacketReceivedCallback(const char *ipAddress, const uint32_t port,
+void CAPacketReceivedCallback(const char *ipAddress, const uint16_t port,
                               const void *data, const uint32_t dataLength)
 {
-    OIC_LOG(DEBUG, MOD_NAME, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
     if (gPacketReceivedCallback)
     {
         gPacketReceivedCallback(ipAddress, port, data, dataLength);
-        OIC_LOG(DEBUG, MOD_NAME, "Notified network packet");
+        OIC_LOG(DEBUG, TAG, "Notified network packet");
     }
-    OIC_LOG(DEBUG, MOD_NAME, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 void CAArduinoCheckData()
 {
-    OIC_LOG(DEBUG, MOD_NAME, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
     char addr[IPNAMESIZE] = {0};
     uint16_t senderPort = 0;
     int16_t packetSize = Udp.parsePacket();
-    OIC_LOG_V(DEBUG, MOD_NAME, "Rcv packet of size:%d ", packetSize);
+    OIC_LOG_V(DEBUG, TAG, "Rcv packet of size:%d ", packetSize);
     if (packetSize)
     {
         packetSize = packetSize > COAP_MAX_PDU_SIZE ? COAP_MAX_PDU_SIZE:packetSize;
@@ -171,7 +171,7 @@ void CAArduinoCheckData()
         IPAddress remoteIp = Udp.remoteIP();
         senderPort = Udp.remotePort();
         sprintf(addr, "%d.%d.%d.%d", remoteIp[0], remoteIp[1], remoteIp[2], remoteIp[3]);
-        OIC_LOG_V(DEBUG, MOD_NAME, "remoteip: %s, port: %d", addr, senderPort);
+        OIC_LOG_V(DEBUG, TAG, "remoteip: %s, port: %d", addr, senderPort);
         // read the packet into packetBufffer
         int32_t dataLen = Udp.read(data, COAP_MAX_PDU_SIZE);
         if (dataLen > 0)
@@ -181,22 +181,22 @@ void CAArduinoCheckData()
         CAPacketReceivedCallback(addr, senderPort, data, dataLen);
         OICFree(data);
     }
-    OIC_LOG(DEBUG, MOD_NAME, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
-void CAWiFiSetPacketReceiveCallback(CAWiFiPacketReceivedCallback callback)
+void CAIPSetPacketReceiveCallback(CAIPPacketReceivedCallback callback)
 {
-    OIC_LOG(DEBUG, MOD_NAME, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
     gPacketReceivedCallback = callback;
-    OIC_LOG(DEBUG, MOD_NAME, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
-void CAWiFiSetExceptionCallback(CAWiFiExceptionCallback callback)
+void CAIPSetExceptionCallback(CAIPExceptionCallback callback)
 {
     // TODO
 }
 
-void CAWiFiPullData()
+void CAIPPullData()
 {
     CAArduinoCheckData();
 }
@@ -204,25 +204,25 @@ void CAWiFiPullData()
 /// Retrieves the IP address assigned to Arduino WiFi shield
 CAResult_t CAArduinoGetInterfaceAddress(char *address, int32_t addrLen)
 {
-    OIC_LOG(DEBUG, MOD_NAME, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
     if (WiFi.status() != WL_CONNECTED)
     {
-        OIC_LOG(DEBUG, MOD_NAME, "No WIFI");
+        OIC_LOG(DEBUG, TAG, "No WIFI");
         return CA_STATUS_FAILED;
     }
 
-    VERIFY_NON_NULL(address, MOD_NAME, "Invalid address");
+    VERIFY_NON_NULL(address, TAG, "Invalid address");
     if (addrLen < IPNAMESIZE)
     {
-        OIC_LOG_V(ERROR, MOD_NAME, "AddrLen MUST be atleast %d", IPNAMESIZE);
+        OIC_LOG_V(ERROR, TAG, "AddrLen MUST be atleast %d", IPNAMESIZE);
         return CA_STATUS_FAILED;
     }
 
     IPAddress ip = WiFi.localIP();
     sprintf((char *)address, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
 
-    OIC_LOG_V(DEBUG, MOD_NAME, "Wifi shield address is: %s", address);
-    OIC_LOG(DEBUG, MOD_NAME, "OUT");
+    OIC_LOG_V(DEBUG, TAG, "Wifi shield address is: %s", address);
+    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 

@@ -1,0 +1,45 @@
+#######################################################
+#	Building IP adapter
+#######################################################
+
+Import('env')
+
+print "Reading IP adapter script"
+
+target_os = env.get('TARGET_OS')
+inc_files = env.get('CPPPATH')
+src_dir = './ip_adapter/'
+
+#Source files to build common for all platforms
+if target_os == 'arduino':
+	env.AppendUnique(CA_SRC=[src_dir+'caipadapter_singlethread.c'])
+	env.AppendUnique(CPPPATH=[src_dir+'arduino/'])
+else:
+      env.AppendUnique(CA_SRC=[src_dir+'caipadapter.c'])
+      env.AppendUnique(CA_SRC=[src_dir+'caipclient.c'])
+      env.AppendUnique(CA_SRC=[src_dir+'caipserver.c'])
+
+#Source files to build in Linux platform
+if target_os == 'linux':
+	env.AppendUnique(CA_SRC=[src_dir+'linux/caipnwmonitor.c'])
+
+if target_os == 'tizen':
+	env.AppendUnique(CA_SRC=[src_dir+'tizen/caipnwmonitor.c'])
+
+#Source files to build in Arduino platform
+if target_os == 'arduino':
+	env.AppendUnique(CA_SRC=[src_dir+'arduino/caipnwmonitor.cpp'])
+	if env.get('SHIELD') == 'WIFI':
+		env.AppendUnique(CA_SRC=[src_dir+'arduino/caipclient_wifi.cpp',
+				src_dir+'arduino/caipserver_wifi.cpp',
+				])
+	else:
+		env.AppendUnique(CA_SRC=[src_dir+'arduino/caipadapterutils_eth.cpp',
+				src_dir+'arduino/caipclient_eth.cpp',
+				src_dir+'arduino/caipserver_eth.cpp',
+				])
+
+#Source files to build in android platform
+if target_os == 'android':
+	env.AppendUnique(CA_SRC=[src_dir+'android/caipnwmonitor.c'])
+	env.AppendUnique(CPPPATH=[src_dir+'android/'])
