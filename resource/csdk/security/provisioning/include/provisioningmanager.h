@@ -74,12 +74,11 @@ typedef struct SPDevInfo SPDevInfo_t;
  */
 struct SPTargetDeviceInfo
 {
-    OicUuid_t deviceId;                    /**< Device ID. **/
     char ip[DEV_ADDR_SIZE_MAX];            /**< IP address in IPv4 dot-decimal notation. **/
     int port;                              /**< Remote endpoint port. **/
     SPConnectivityType connType;           /**< Connectivity type. **/
-    uint16_t *oxm;                         /**< Selected owner transfer methods. **/
-    int numberofOxmMethods;                /**< Number of owner transfer methods. **/
+    OicSecPstat_t *pstat;                  /**< Pointer to target's pstat resource. **/
+    OicSecDoxm_t *doxm;                    /**< Pointer to target's doxm resource. **/
     SPTargetDeviceInfo_t *next;            /**< Next pointer. **/
 };
 
@@ -98,15 +97,15 @@ struct SPDevInfo
 
 /**
  * The function is responsible for discovery of device is current subnet. It will list
- * all the device in subnet which are not yet owned.
+ * all the device in subnet which are not yet owned. Please call OCInit with OC_CLIENT_SERVER as
+ * OCMode.
  *
  * @param[in] timeout Timeout in seconds, value till which function will listen to responses from
  *                    client before returning the list of devices.
- * @param[in] connType Connectivity type.
  * @param[out] list List of provision candidate devices.
  * @return SP_SUCCESS in case of success and other value otherwise.
  */
-SPResult SPProvisioningDiscovery(unsigned short timeout, SPConnectivityType connType,
+SPResult SPProvisioningDiscovery(unsigned short timeout,
                                  SPTargetDeviceInfo_t **list);
 
 /**
@@ -119,20 +118,18 @@ SPResult SPProvisioningDiscovery(unsigned short timeout, SPConnectivityType conn
  *
  * @param[in] timeout  Timeout value in secs till which call REST request will wait before
  *                     returning error in case of 0 function will wait till success.
- * @param[in] deviceId DeviceID of the provisioning tool.
  * @param[in] selectedDeviceInfo Device information.
- * @param[out] context Provisioning context.
  * @return SP_SUCCESS in case of success and other value otherwise.
  */
-SPResult SPInitProvisionContext(unsigned short timeout, OicUuid_t *deviceId,
-                                const SPTargetDeviceInfo_t *selectedDeviceInfo);
+SPResult SPInitProvisionContext(unsigned short timeout,
+                                SPTargetDeviceInfo_t *selectedDeviceInfo);
 
 /**
  * Function to send ACL information to resource.
  *
  * @param[in] timeout Timeout value in secs till which call to REST request will wait before
  *                     returning error in case of 0 function will wait till success.
- * @param[in] context Provisioning context.
+ * @param[in] selectedDeviceInfo Selected target device.
  * @param[in] acl ACL to provision
  * @return  SP_SUCCESS in case of success and other value otherwise.
  */
@@ -162,7 +159,7 @@ SPResult SPProvisionCredentials(unsigned short timeout, OicSecCredType_t type,
  * @return  SP_SUCCESS on success
  */
 SPResult SPFinalizeProvisioning(unsigned short timeout,
-                                const SPTargetDeviceInfo_t *selectedDeviceInfo);
+                                SPTargetDeviceInfo_t *selectedDeviceInfo);
 
 /**
  * Function to end Provisioning session.

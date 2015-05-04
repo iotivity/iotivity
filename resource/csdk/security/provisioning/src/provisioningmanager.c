@@ -35,6 +35,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <sys/time.h>
+#include <stdbool.h>
 
 #include "cJSON.h"
 #include "ocmalloc.h"
@@ -46,11 +47,10 @@
 #include "global.h"
 #include "base64.h"
 #include "aclresource.h"
+#include "doxmresource.h"
+#include "pstatresource.h"
+#include "srmresourcestrings.h"
 
-const char SP_OWNER_TRANSFER_METHOD_ATTR[] = "oxm";
-const char SP_DEVICE_ID_ATTR[]             = "deviceID";
-const char SP_SUPP_METHOD_ATTR[]           = "sm";
-const char SP_OC[]                         = "oc";
 typedef enum
 {
     SP_NO_MASK                = (0       ),
@@ -85,15 +85,10 @@ typedef enum
 #define TAG "SPProvisionAPI"
 #define ENABLE_TLS_ECDH_anon_WITH_AES_128_CBC_SHA 1
 #define COAP_QUERY "coap://%s:%d%s"
-#define AUTO_BASE 0
+#define COAPS_QUERY "coaps://%s:%d%s"
 #define CA_SECURE_PORT   5684
 
 void (*handler)(const CARemoteEndpoint_t *, const CAResponseInfo_t *);
-
-/**
- * Device UUID. The value will be set by the provisioning tool.
- */
-static OicUuid_t gDeviceUUID;
 
 /**
  * CA token to keep track of response.
@@ -116,16 +111,6 @@ static SPTargetDeviceInfo_t *gCurrent = NULL;
 static uint32_t gStateManager = 0;
 
 /**
- * Variable to keep track of supported methods of target device.
- */
-static OicSecDpom_t *gDeviceSupportedMethods = NULL;
-
-/**
- * Variable to track number of supported methods.
- */
-static int gNumberOfSupportedOM = 0;
-
-/**
  * Variable for storing provisioning tool's provisioning capabilities
  * Must be in decreasing order of preference. More prefered method should
  * have lower array index.
@@ -137,6 +122,12 @@ static OicSecDpom_t gProvisioningToolCapability[] = { SINGLE_SERVICE_CLIENT_DRIV
  * current version supports only one.
  */
 static int gNumOfProvisioningMethodsPT = 1;
+
+/**
+ * Global variable to save pstat.
+ */
+static OicSecPstat_t *gPstat = NULL;
+
 
 /**
  * Secure String copy function
@@ -305,7 +296,15 @@ static void deleteList()
     while (current)
     {
         SPTargetDeviceInfo_t *next = current->next;
-        OCFree(current->oxm);
+        DeleteDoxmBinData(current->doxm);
+        if (current->pstat)
+        {
+            if (current->pstat->sm)
+            {
+                OCFree(current->pstat->sm);
+            }
+            OCFree(current->pstat);
+        }
         OCFree(current);
         current = next;
     }
@@ -390,7 +389,6 @@ static CAResult_t sendCARequest(CAURI_t uri, char *payload, int payloadLen,
         CADestroyRemoteEndpoint(endpoint);
         return CA_STATUS_FAILED;
     }
-
     // TODO: it can be CA_MSG_NONCONFIRM or CA_MSG_CONFIRM. Pass it as a parameter.
     CAMessageType_t msgType = CA_MSG_NONCONFIRM;
     CAInfo_t requestData = { 0 };
@@ -398,7 +396,8 @@ static CAResult_t sendCARequest(CAURI_t uri, char *payload, int payloadLen,
     if (payload && '\0' != (*(payload + payloadLen)))
     {
         OC_LOG(ERROR, TAG, "Payload not properly terminated.");
-        return SP_RESULT_INTERNAL_ERROR;
+        CADestroyRemoteEndpoint(endpoint);
+        return CA_STATUS_INVALID_PARAM;
     }
     requestData.payload = payload;
     requestData.type = msgType;
@@ -418,36 +417,33 @@ static CAResult_t sendCARequest(CAURI_t uri, char *payload, int payloadLen,
 /**
  * addDevice to list.
  *
- * @param[in] deviceId              Device id of the target device.
  * @param[in] ip                    IP of target device.
  * @param[in] port                  port of remote server.
- * @param[in] ownerTransferMethods  array of ownership transfer methods
- * @param[in] numberOfMethods       number of ownership transfer methods.
  * @param[in] connType              connectivity type of endpoint.
+ * @param[in] doxm                  pointer to doxm instance.
  * @return SP_RESULT_SUCCESS for success and errorcode otherwise.
  */
-static SPResult addDevice(const char *deviceId, const char *ip, int port,
-                          uint16_t *ownerTransferMethods,
-                          int numberOfMethods, SPConnectivityType connType)
+static SPResult addDevice(const char *ip, int port, SPConnectivityType connType, OicSecDoxm_t *doxm)
 {
-    if (NULL == ip || NULL == deviceId || 0 >= port)
+    if (NULL == ip || 0 >= port)
     {
         return SP_RESULT_INVALID_PARAM;
     }
-    SPTargetDeviceInfo_t *ptr = (SPTargetDeviceInfo_t *) OCMalloc(sizeof(SPTargetDeviceInfo_t));
+    SPTargetDeviceInfo_t *ptr = (SPTargetDeviceInfo_t *) OCCalloc(1, sizeof(SPTargetDeviceInfo_t));
     if (NULL == ptr)
     {
         OC_LOG(ERROR, TAG, "Error while allocating memory for linkedlist node !!");
         return SP_RESULT_MEM_ALLOCATION_FAIL;
     }
-    memcpy(ptr->deviceId.id, deviceId, sizeof(ptr->deviceId.id));
 
     SPStringCopy(ptr->ip, ip, sizeof(ptr->ip));
     ptr->port = port;
-    ptr->oxm = ownerTransferMethods;
-    ptr->numberofOxmMethods = numberOfMethods;
     ptr->connType = connType;
+
+    ptr->doxm = doxm;
+
     ptr->next = NULL;
+
     if (NULL == gStartOfDiscoveredDevices)
     {
         gStartOfDiscoveredDevices = ptr;
@@ -479,12 +475,12 @@ static SPResult SPWaitForResponse(unsigned short timeout)
  * @param[out]  selectedMethod         Selected methods
  * @return  SP_SUCCESS on success
  */
-static SPResult selectProvisioningMethod(uint16_t *supportedMethods, int numberOfMethods,
-        uint16_t *selectedMethod)
+static SPResult selectProvisioningMethod(OicSecOxm_t *supportedMethods, size_t numberOfMethods,
+        OicSecOxm_t *selectedMethod)
 {
     /*
      TODO Logic to find appropiate method and assign it to out param
-     for mid april release method at index 0 will be returned.
+     for beachhead release method at index 0 will be returned.
      */
     *selectedMethod = supportedMethods[0];
     return SP_RESULT_SUCCESS;
@@ -502,80 +498,48 @@ static void ProvisionDiscoveryHandler(const CARemoteEndpoint_t *object,
     if ((gStateManager & SP_DISCOVERY_STARTED) && gToken)
     {
         // Response handler for discovery.
-        // Expected response: {"deviceID":"xxx","oxm":["0","1"]}
         if (0 == strncmp(gToken, responseInfo->info.token, CA_MAX_TOKEN_LEN))
         {
             OC_LOG(INFO, TAG, "Inside ProvisionDiscoveryHandler.");
-            cJSON *resJson = cJSON_Parse(responseInfo->info.payload);
-            if (NULL == resJson)
+            if (NULL == responseInfo->info.payload)
             {
-                OC_LOG(ERROR, TAG, "Invalid Json");
-                gStateManager |= SP_DISCOVERY_ERROR;
+                OC_LOG(INFO, TAG, "Skiping Null payload");
                 return;
             }
-            cJSON *objItem = cJSON_GetObjectItem(resJson, SP_OC);
-            cJSON *obj = cJSON_GetArrayItem(objItem, 0);
-            cJSON *cJsonDevId = cJSON_GetObjectItem(obj, SP_DEVICE_ID_ATTR);
-            if ( NULL == cJsonDevId)
+            // temp logic for trimming oc attribute from the json.
+            // JSONToBin should handle oc attribute.
+            char *pTempPayload = (char *)OCMalloc(strlen(responseInfo->info.payload));
+            if (NULL == pTempPayload)
             {
-                OC_LOG(ERROR, TAG, "Invalid JSON data");
-                gStateManager |= SP_DISCOVERY_ERROR;
-                return;
-            }
-            char *stDeviceId = cJsonDevId->valuestring;
-
-            cJSON *oxmObjectItem = cJSON_GetObjectItem(resJson, SP_OWNER_TRANSFER_METHOD_ATTR);
-            int numSupportingMethods = cJSON_GetArraySize(oxmObjectItem);
-
-            uint16_t *supportedMethods = (uint16_t *) OCMalloc(numSupportingMethods * sizeof(uint16_t));
-            if (NULL == supportedMethods)
-            {
-                OC_LOG(ERROR, TAG, "Error while allocating memory.");
-                gStateManager |= SP_DISCOVERY_ERROR;
-                if (resJson)
-                {
-                    cJSON_Delete(resJson);
-                }
+                OC_LOG(ERROR, TAG, "Error while Memory allocation.");
+                gStateManager = gStateManager | SP_DISCOVERY_ERROR;
                 return;
             }
 
-            for (int i = 0; i < numSupportingMethods; i++)
+            strcpy(pTempPayload, responseInfo->info.payload + 7);
+            pTempPayload[strlen(pTempPayload) - 2] = '\0';
+            OC_LOG_V(DEBUG, TAG, "Trimmed payload: %s", pTempPayload);
+            OicSecDoxm_t *ptrDoxm = JSONToDoxmBin(pTempPayload);
+
+            if (NULL == ptrDoxm)
             {
-                cJSON *cJsonSuppMethods = cJSON_GetArrayItem(oxmObjectItem, i);
-                if (NULL == cJsonSuppMethods)
-                {
-                    OC_LOG(ERROR, TAG, "Invalid JSON data");
-                    gStateManager |= SP_DISCOVERY_ERROR;
-                    return;
-                }
-                const char *stSupportedMethod = cJsonSuppMethods->valuestring;
-                if (stSupportedMethod)
-                {
-                    *((supportedMethods) + i) = atoi(stSupportedMethod);
-                }
+                OC_LOG(ERROR, TAG, "Error while converting doxm json to binary");
+                OCFree(pTempPayload);
+                gStateManager = gStateManager | SP_DISCOVERY_ERROR;
+                return;
             }
+            OC_LOG(DEBUG, TAG, "Successfully converted pstat json to bin.");
+            OCFree(pTempPayload);
 
             SPConnectivityType connType = getConnectivitySP(object->connectivityType);
-            SPResult res = addDevice(stDeviceId, object->addressInfo.IP.ipAddress, object->addressInfo.IP.port,
-                                     supportedMethods,
-                                     numSupportingMethods, connType);
+            SPResult res = addDevice(object->addressInfo.IP.ipAddress, object->addressInfo.IP.port,
+                                     connType, ptrDoxm);
             if (SP_RESULT_SUCCESS != res)
             {
                 OC_LOG(ERROR, TAG, "Error while adding data to linkedlist.");
                 gStateManager = gStateManager | SP_DISCOVERY_ERROR;
-                if (resJson)
-                {
-                    cJSON_Delete(resJson);
-                }
-                if (supportedMethods)
-                {
-                    OCFree(supportedMethods);
-                }
+                DeleteDoxmBinData(ptrDoxm);
                 return;
-            }
-            if (resJson)
-            {
-                cJSON_Delete(resJson);
             }
             OC_LOG(INFO, TAG, "Exiting ProvisionDiscoveryHandler.");
             gStateManager |= SP_DISCOVERY_DONE;
@@ -598,6 +562,7 @@ static void OwnerShipTransferModeHandler(const CARemoteEndpoint_t *object,
         OC_LOG(INFO, TAG, "Inside OwnerShipTransferModeHandler.");
         if (strncmp(gToken, responseInfo->info.token, CA_MAX_TOKEN_LEN) == 0)
         {
+            OC_LOG_V(DEBUG, TAG, "Response result for OwnerShipTransferMode: %d", responseInfo->result);
             if (CA_SUCCESS == responseInfo->result)
             {
                 gStateManager |= SP_UP_OWN_TR_METH_DONE;
@@ -621,57 +586,56 @@ static void OwnerShipTransferModeHandler(const CARemoteEndpoint_t *object,
 static void ListMethodsHandler(const CARemoteEndpoint_t *object,
                                const CAResponseInfo_t *responseInfo)
 {
-    // expected response : {"IsOp":"FALSE","sm":["0x3"]}
     if ((gStateManager & SP_LIST_METHODS_STARTED) && gToken)
     {
         OC_LOG(INFO, TAG, "Inside ListMethodsHandler.");
         if (strncmp(gToken, responseInfo->info.token, CA_MAX_TOKEN_LEN) == 0)
         {
+            OC_LOG_V(DEBUG, TAG, "Response result for ListMethodsHandler: %d", responseInfo->result);
             if (CA_SUCCESS == responseInfo->result)
             {
-                cJSON *resJson = cJSON_Parse(responseInfo->info.payload);
-                if (NULL == resJson)
+                OC_LOG_V (DEBUG, TAG, "Response Payload: %s", responseInfo->info.payload);
+                // Temp logic to trim oc attribute from json
+                // JSONToPstatBin should handle OC in JSON.
+                if (NULL == responseInfo->info.payload)
                 {
-                    OC_LOG(ERROR, TAG, "Invalid Json");
+                    OC_LOG(ERROR, TAG, "response payload is null.");
                     gStateManager |= SP_LIST_METHODS_ERROR;
-                    return;
-                }
-                cJSON *resSM = cJSON_GetObjectItem(resJson, SP_SUPP_METHOD_ATTR);
-                int numOfSupportedMethods = cJSON_GetArraySize(resSM);
-                if (0 == numOfSupportedMethods)
-                {
-                    OC_LOG(ERROR, TAG, "Invalid Json data.");
-                    gStateManager |= SP_LIST_METHODS_ERROR;
-                    if (resJson)
-                    {
-                        cJSON_Delete(resJson);
-                    }
-                    return;
-                }
-                gNumberOfSupportedOM = numOfSupportedMethods;
-                gDeviceSupportedMethods = (OicSecDpom_t *) OCMalloc(
-                                              numOfSupportedMethods * sizeof(OicSecDpom_t));
-                if (NULL == gDeviceSupportedMethods)
-                {
-                    OC_LOG(ERROR, TAG, "Error while memory allocation.");
-                    gStateManager |= SP_LIST_METHODS_ERROR;
-                    if (resJson)
-                    {
-                        cJSON_Delete(resJson);
-                    }
                     return;
                 }
 
-                for (int i = 0; i < numOfSupportedMethods; i++)
+                char *pTempPayload = (char *)OCMalloc(strlen(responseInfo->info.payload));
+                if (NULL == pTempPayload)
                 {
-                    const char *stSuppMethods = cJSON_GetArrayItem(resSM, i)->valuestring;
-                    gDeviceSupportedMethods[i] = strtol(stSuppMethods, NULL, AUTO_BASE);
+                    OC_LOG(ERROR, TAG, "Error in memory allocation.");
+                    gStateManager |= SP_LIST_METHODS_ERROR;
+                    return;
                 }
-                if (resJson)
+
+                strcpy(pTempPayload, responseInfo->info.payload + 7);
+                pTempPayload[strlen(pTempPayload) - 2] = '\0';
+
+                OicSecPstat_t *pstat =  JSONToPstatBin(pTempPayload);
+                if (NULL == pstat)
                 {
-                    cJSON_Delete(resJson);
+                    OC_LOG(ERROR, TAG, "Error while converting json to pstat bin");
+                    OCFree(pTempPayload);
+                    gStateManager |= SP_LIST_METHODS_ERROR;
+                    return;
                 }
+                OCFree(pTempPayload);
+
+                if (gPstat)
+                {
+                    if (gPstat->sm)
+                    {
+                        OCFree(gPstat->sm);
+                    }
+                    OCFree(gPstat);
+                }
+                gPstat = pstat;
                 gStateManager |= SP_LIST_METHODS_DONE;
+
                 OC_LOG(INFO, TAG, "Exiting ListMethodsHandler.");
             }
         }
@@ -692,6 +656,7 @@ static void OperationModeUpdateHandler(const CARemoteEndpoint_t *object,
         if (0 == strncmp(gToken, responseInfo->info.token, CA_MAX_TOKEN_LEN))
         {
             OC_LOG(INFO, TAG, "Inside OperationModeUpdateHandler.");
+            OC_LOG_V(DEBUG, TAG, "Response result for OperationModeUpdateHandler: %d", responseInfo->result);
             if (CA_SUCCESS == responseInfo->result)
             {
                 gStateManager |= SP_UPDATE_OP_MODE_DONE;
@@ -721,6 +686,7 @@ static void OwnerShipUpdateHandler(const CARemoteEndpoint_t *object,
         if (0 == strncmp(gToken, responseInfo->info.token, CA_MAX_TOKEN_LEN))
         {
             OC_LOG(INFO, TAG, "Inside OwnerShipUpdateHandler.");
+            OC_LOG_V(DEBUG, TAG, "Response result for OwnerShipUpdateHandler: %d", responseInfo->result);
             if (CA_SUCCESS == responseInfo->result)
             {
                 gStateManager |= SP_UPDATE_OWNER_DONE;
@@ -746,10 +712,12 @@ static void ACLProvisioningHandler(const CARemoteEndpoint_t *object,
 {
     if ((gStateManager & SP_PROV_ACL_STARTED) && gToken)
     {
-        OC_LOG(INFO, TAG, "Inside ACLProvisioningHandler.");
+
         // response handler for ACL provisioning.
         if (0 == strncmp(gToken, responseInfo->info.token, CA_MAX_TOKEN_LEN))
         {
+            OC_LOG(INFO, TAG, "Inside ACLProvisioningHandler.");
+            OC_LOG_V(DEBUG, TAG, "Response result for ACLProvisioningHandler: %d", responseInfo->result);
             if (CA_CREATED == responseInfo->result)
             {
                 OC_LOG(INFO, TAG, "Exiting ACLProvisioningHandler.");
@@ -779,7 +747,8 @@ static void FinalizeProvisioningHandler(const CARemoteEndpoint_t *object,
         if (0 == strncmp(gToken, responseInfo->info.token, CA_MAX_TOKEN_LEN))
         {
             OC_LOG(INFO, TAG, "Inside FinalizeProvisioningHandler.");
-            if (CA_CREATED == responseInfo->result)
+            OC_LOG_V(DEBUG, TAG, "Response result for FinalizeProvisioningHandler: %d", responseInfo->result);
+            if (CA_SUCCESS == responseInfo->result)
             {
                 gStateManager |= SP_UP_HASH_DONE;
                 OC_LOG(INFO, TAG, "Exiting FinalizeProvisioningHandler.");
@@ -806,6 +775,7 @@ static void CredProvisioningHandler(const CARemoteEndpoint_t *object,
     {
         // response handler for CRED provisioning.
         OC_LOG(INFO, TAG, "Inside CredProvisioningHandler.");
+        OC_LOG_V(DEBUG, TAG, "Response result for CredProvisioningHandler: %d", responseInfo->result);
         if (0 == strncmp(gToken, responseInfo->info.token, CA_MAX_TOKEN_LEN))
         {
             if (CA_CREATED == responseInfo->result)
@@ -873,7 +843,7 @@ static SPResult findResource(unsigned short timeout)
     }
     else
     {
-        OC_LOG(INFO, TAG, "Resource found successfully.");
+        OC_LOG(INFO, TAG, "Discovery Request sent successfully");
     }
     return SPWaitForResponse(timeout);
 }
@@ -887,23 +857,30 @@ static SPResult findResource(unsigned short timeout)
  * @return  SP_SUCCESS on success
  */
 static SPResult updateOwnerTransferModeToResource(unsigned short timeout,
-        const SPTargetDeviceInfo_t *deviceInfo)
+        SPTargetDeviceInfo_t *deviceInfo, OicSecOxm_t selectedMethod)
 {
-    static const char DOXM_UPDATE_OWNER_TRANSFER_MODE_QUERY[] = "/oic/sec/doxm";
     SPResult res = SP_RESULT_INTERNAL_ERROR;
     char uri[CA_MAX_URI_LENGTH] = {0};
     size_t uriLen = sizeof(uri);
     snprintf(uri, uriLen - 1, COAP_QUERY, deviceInfo->ip,
-             deviceInfo->port, DOXM_UPDATE_OWNER_TRANSFER_MODE_QUERY);
+             deviceInfo->port, OIC_RSRC_DOXM_URI);
     uri[uriLen - 1] = '\0';
-    // TODO payload will be created at runtime in future
-    char *payload = "{\"OxmSel\":\"oic.sec.doxm.jw\"}";
+
+    deviceInfo->doxm->oxmSel = selectedMethod;
+    char *payload = BinToDoxmJSON(deviceInfo->doxm);
+    if (NULL == payload)
+    {
+        OC_LOG(ERROR, TAG, "Error while converting bin to json");
+        return SP_RESULT_INTERNAL_ERROR;
+    }
+    OC_LOG_V(DEBUG, TAG, "Payload: %s", payload);
     int payloadLen = strlen(payload);
 
-    CAMethod_t method = CA_POST;
+    CAMethod_t method = CA_PUT;
     if (CA_STATUS_OK != CAGenerateToken(&gToken))
     {
         OC_LOG(ERROR, TAG, "Error while generating token");
+        OCFree(payload);
         return SP_RESULT_INTERNAL_ERROR;
     }
     handler = &OwnerShipTransferModeHandler;
@@ -911,6 +888,7 @@ static SPResult updateOwnerTransferModeToResource(unsigned short timeout,
 
     CAResult_t result = sendCARequest(uri, payload, payloadLen, gToken, method,
                                       deviceInfo->connType);
+    OCFree(payload);
     if (CA_STATUS_OK != result)
     {
         OC_LOG(ERROR, TAG, "Error while sending request.");
@@ -936,14 +914,12 @@ static SPResult updateOwnerTransferModeToResource(unsigned short timeout,
  * @return  SP_SUCCESS on success
  */
 static SPResult getProvisioningStatusResource(unsigned short timeout,
-        const SPTargetDeviceInfo_t *deviceInfo)
+        SPTargetDeviceInfo_t *deviceInfo)
 {
-
-    const char PSTAT_STATUS_QUERY[] = "/oic/sec/pstat";
     char uri[CA_MAX_URI_LENGTH] = {0};
     size_t uriLen = sizeof(uri);
     snprintf(uri, uriLen - 1, COAP_QUERY, deviceInfo->ip,
-             deviceInfo->port, PSTAT_STATUS_QUERY);
+             deviceInfo->port, OIC_RSRC_PSTAT_URI);
     uri[uriLen - 1] = '\0';
     CAMethod_t method = CA_GET;
     if (CA_STATUS_OK != CAGenerateToken(&gToken))
@@ -969,7 +945,9 @@ static SPResult getProvisioningStatusResource(unsigned short timeout,
     }
     if (gStateManager && SP_LIST_METHODS_DONE)
     {
+        deviceInfo->pstat = gPstat;
         CADestroyToken(gToken);
+        OC_LOG(DEBUG, TAG, "getProvisioningStatusResource completed.");
         return SP_RESULT_SUCCESS;
     }
     CADestroyToken(gToken);
@@ -984,28 +962,38 @@ static SPResult getProvisioningStatusResource(unsigned short timeout,
  * @param[in]  deviceInfo  Device Info.
  * @return  SP_SUCCESS on success
  */
-static SPResult updateOperationMode(unsigned short timeout, const SPTargetDeviceInfo_t *deviceInfo,
+static SPResult updateOperationMode(unsigned short timeout, SPTargetDeviceInfo_t *deviceInfo,
                                     OicSecDpom_t selectedOperationMode)
 {
-    const char PSTAT_UPDATE_OPERATION_QUERY[] = "/oic/sec/pstat";
+
     SPResult res = SP_RESULT_INTERNAL_ERROR;
+
     char uri[CA_MAX_URI_LENGTH] = {0};
     size_t uriLen = sizeof(uri);
     snprintf(uri, uriLen - 1, COAP_QUERY, deviceInfo->ip,
-             deviceInfo->port , PSTAT_UPDATE_OPERATION_QUERY);
+             deviceInfo->port , OIC_RSRC_PSTAT_URI);
     uri[uriLen - 1] = '\0';
 
-    char payloadBuffer[SP_MAX_BUF_LEN] = {0};
-    size_t payLoadSize = sizeof(payloadBuffer);
-    snprintf(payloadBuffer, payLoadSize - 1, "{\"om\":\"%d\"}", selectedOperationMode);
 
-    payloadBuffer[payLoadSize - 1] = '\0';
-    int payloadLen = strlen(payloadBuffer);
+    deviceInfo->pstat->om = selectedOperationMode;
+
+    char *payloadBuffer = BinToPstatJSON(deviceInfo->pstat);
+    if (NULL == payloadBuffer)
+    {
+        OC_LOG(ERROR, TAG, "Error while converting pstat bin to json");
+        return SP_RESULT_INTERNAL_ERROR;
+    }
+
+    size_t payloadLen = strlen(payloadBuffer);
 
     CAMethod_t method = CA_PUT;
     if (CA_STATUS_OK != CAGenerateToken(&gToken))
     {
         OC_LOG(ERROR, TAG, "Error while generating token");
+        if (payloadBuffer)
+        {
+            OCFree(payloadBuffer);
+        }
         return SP_RESULT_INTERNAL_ERROR;
     }
     handler = &OperationModeUpdateHandler;
@@ -1016,6 +1004,7 @@ static SPResult updateOperationMode(unsigned short timeout, const SPTargetDevice
     {
         OC_LOG(ERROR, TAG, "Error while sending request.");
         CADestroyToken(gToken);
+        OCFree(payloadBuffer);
         return convertCAResultToSPResult(result);
     }
     res = SPTimeout(timeout, SP_UPDATE_OP_MODE_DONE);
@@ -1023,9 +1012,11 @@ static SPResult updateOperationMode(unsigned short timeout, const SPTargetDevice
     {
         OC_LOG(ERROR, TAG, "Internal Error occured");
         CADestroyToken(gToken);
+        OCFree(payloadBuffer);
         return SP_RESULT_TIMEOUT;
     }
     CADestroyToken(gToken);
+    OCFree(payloadBuffer);
 
     if (gStateManager & SP_UPDATE_OP_MODE_DONE)
     {
@@ -1084,36 +1075,38 @@ static SPResult initiateDtlsHandshake(const SPTargetDeviceInfo_t *deviceInfo)
  * @return  SP_SUCCESS on success
  */
 static SPResult sendOwnershipInfo(unsigned short timeout,
-                                  const SPTargetDeviceInfo_t *selectedDeviceInfo)
+                                  SPTargetDeviceInfo_t *selectedDeviceInfo)
 {
-    const char DOXM_SEND_OWNERSHIP_QUERY[] = "/oic/sec/doxm";
     char uri[CA_MAX_URI_LENGTH] = {0};
     size_t uriLen = sizeof(uri);
-    snprintf(uri, uriLen - 1, COAP_QUERY, selectedDeviceInfo->ip,
-             selectedDeviceInfo->port, DOXM_SEND_OWNERSHIP_QUERY);
+    snprintf(uri, uriLen - 1, COAPS_QUERY, selectedDeviceInfo->ip,
+             CA_SECURE_PORT, OIC_RSRC_DOXM_URI);
     uri[uriLen - 1] = '\0';
 
-
-    size_t encodedUUIDSize = B64ENCODE_OUT_SAFESIZE(UUID_LENGTH);
-    char encodedUUID[encodedUUIDSize];
-    uint32_t outLen = 0;
-    if ( B64_OK != b64Encode (gDeviceUUID.id, UUID_LENGTH, encodedUUID, encodedUUIDSize, &outLen))
+    OicUuid_t provTooldeviceID = {};
+    if (OC_STACK_OK != GetDoxmDeviceID(&provTooldeviceID))
     {
-        OC_LOG(ERROR, TAG, "Memory while encoding");
+        OC_LOG(ERROR, TAG, "Error while retrieving provisioning tool's device ID");
         return SP_RESULT_INTERNAL_ERROR;
     }
-    char payloadBuffer[SP_MAX_BUF_LEN] = {0};
-    size_t payloadSize = sizeof(payloadBuffer);
-    snprintf(payloadBuffer, payloadSize - 1, "{\"owned\":\"T\",\"owner\":\"%s\"}", encodedUUID);
+    memcpy(selectedDeviceInfo->doxm->owner.id, provTooldeviceID.id , UUID_LENGTH);
 
-    payloadBuffer[payloadSize - 1] = '\0';
 
+    selectedDeviceInfo->doxm->owned = true;
+
+    char *payloadBuffer =  BinToDoxmJSON(selectedDeviceInfo->doxm);
+    if (NULL == payloadBuffer)
+    {
+        OC_LOG(ERROR, TAG, "Error while converting doxm bin to json");
+        return SP_RESULT_INTERNAL_ERROR;
+    }
     int payloadLen = strlen(payloadBuffer);
 
     CAMethod_t method = CA_PUT;
     if (CA_STATUS_OK != CAGenerateToken(&gToken))
     {
         OC_LOG(ERROR, TAG, "Error while generating token");
+        OCFree(payloadBuffer);
         return SP_RESULT_INTERNAL_ERROR;
 
     }
@@ -1126,6 +1119,7 @@ static SPResult sendOwnershipInfo(unsigned short timeout,
     {
         OC_LOG(ERROR, TAG, "Error while sending request.");
         CADestroyToken(gToken);
+        OCFree(payloadBuffer);
         return convertCAResultToSPResult(result);
     }
     SPResult res = SPTimeout(timeout, SP_UPDATE_OWNER_DONE);
@@ -1133,9 +1127,11 @@ static SPResult sendOwnershipInfo(unsigned short timeout,
     {
         OC_LOG(ERROR, TAG, "Internal Error occured");
         CADestroyToken(gToken);
+        OCFree(payloadBuffer);
         return SP_RESULT_TIMEOUT;
     }
     CADestroyToken(gToken);
+    OCFree(payloadBuffer);
     return SP_RESULT_SUCCESS;
 }
 
@@ -1157,17 +1153,18 @@ static SPResult saveOwnerPSK()
  * @param[out]   selectedMode   selected operation mode
  * @return  SP_SUCCESS on success
  */
-static void selectOperationMode(OicSecDpom_t **selectedMode)
+static void selectOperationMode(const SPTargetDeviceInfo_t *selectedDeviceInfo,
+                                OicSecDpom_t **selectedMode)
 {
     int i = 0;
     int j = 0;
-    while (i < gNumOfProvisioningMethodsPT && j < gNumberOfSupportedOM)
+    while (i < gNumOfProvisioningMethodsPT && j < selectedDeviceInfo->pstat->smLen)
     {
-        if (gProvisioningToolCapability[i] < gDeviceSupportedMethods[j])
+        if (gProvisioningToolCapability[i] < selectedDeviceInfo->pstat->sm[j])
         {
             i++;
         }
-        else if (gDeviceSupportedMethods[j] < gProvisioningToolCapability[i])
+        else if (selectedDeviceInfo->pstat->sm[j] < gProvisioningToolCapability[i])
         {
             j++;
         }
@@ -1188,10 +1185,10 @@ static void selectOperationMode(OicSecDpom_t **selectedMode)
  * @return  SP_SUCCESS on success
  */
 static SPResult doOwnerShipTransfer(unsigned short timeout,
-                                    const SPTargetDeviceInfo_t *selectedDeviceInfo)
+                                    SPTargetDeviceInfo_t *selectedDeviceInfo)
 {
     OicSecDpom_t *selectedOperationMode = NULL;
-    selectOperationMode(&selectedOperationMode);
+    selectOperationMode(selectedDeviceInfo, &selectedOperationMode);
 
     SPResult res = updateOperationMode(timeout, selectedDeviceInfo, *selectedOperationMode);
     if (SP_RESULT_SUCCESS != res)
@@ -1234,14 +1231,13 @@ static SPResult doOwnerShipTransfer(unsigned short timeout,
 SPResult provisionCredentials(unsigned short timeout, const OicSecCred_t *cred,
                               const SPDevInfo_t *deviceInfo)
 {
-    const char CRED_RES[] = "/oic/sec/cred";
     char *credJson = NULL;
     //credJson = BinToJson(cred); // TODO from SRM.
 
     char uri[CA_MAX_URI_LENGTH] = {0};
     size_t uriLen = sizeof(uri);
-    snprintf(uri, uriLen - 1, COAP_QUERY, deviceInfo->ip,
-             deviceInfo->port, CRED_RES);
+    snprintf(uri, uriLen - 1, COAPS_QUERY, deviceInfo->ip,
+             CA_SECURE_PORT, OIC_RSRC_CRED_URI);
     uri[uriLen - 1] = '\0';
 
     int payloadLen = strlen(credJson);
@@ -1252,16 +1248,13 @@ SPResult provisionCredentials(unsigned short timeout, const OicSecCred_t *cred,
         return SP_RESULT_INTERNAL_ERROR;
     }
     handler = &CredProvisioningHandler;
-    // TODO need to change the uri to secure URI.
+
     CAResult_t result = sendCARequest(uri, credJson, payloadLen, gToken, method,
                                       deviceInfo->connType);
+    OCFree(credJson);
     if (CA_STATUS_OK != result)
     {
         OC_LOG(ERROR, TAG, "Internal Error while sending Credentials.");
-        if (credJson)
-        {
-            OCFree(credJson);
-        }
         CADestroyToken(gToken);
         return convertCAResultToSPResult(result);
     }
@@ -1270,54 +1263,21 @@ SPResult provisionCredentials(unsigned short timeout, const OicSecCred_t *cred,
     if (SP_RESULT_SUCCESS != res)
     {
         OC_LOG(ERROR, TAG, "Internal Error occured");
-        if (credJson)
-        {
-            OCFree(credJson);
-        }
         CADestroyToken(gToken);
         return SP_RESULT_TIMEOUT;
-    }
-    if (credJson)
-    {
-        OCFree(credJson);
     }
     CADestroyToken(gToken);
     return res;
 }
 
-SPResult SPProvisioningDiscovery(unsigned short timeout, SPConnectivityType connType,
+SPResult SPProvisioningDiscovery(unsigned short timeout,
                                  SPTargetDeviceInfo_t **list)
 {
-    if ((SP_CONN_ETHERNET != connType) && (SP_CONN_WIFI != connType) && (SP_CONN_EDR != connType)
-        && (SP_CONN_LE != connType))
-    {
-        return SP_RESULT_INVALID_PARAM;
-    }
     if (NULL != *list)
     {
         OC_LOG(ERROR, TAG, "List is not null can cause memory leak");
     }
 
-    CAConnectivityType_t networkType = getConnectivity(connType);
-    CAResult_t res = SP_RESULT_SUCCESS;
-    res = CAInitialize();
-    if (CA_STATUS_OK != res)
-    {
-        OC_LOG(ERROR, TAG, "CA Initialization Failed.");
-        return convertCAResultToSPResult(res);
-    }
-    res = CASelectNetwork(networkType);
-    if (CA_STATUS_OK != res)
-    {
-        OC_LOG(ERROR, TAG, "CA Network Error.");
-        return convertCAResultToSPResult(res);
-    }
-    res = CAStartDiscoveryServer();
-    if (CA_STATUS_OK != res)
-    {
-        OC_LOG(ERROR, TAG, "Start Discovery Failed.");
-        return convertCAResultToSPResult(res);
-    }
     CARegisterHandler(SPRequestHandler, SPResponseHandler);
     SPResult smResponse = SP_RESULT_SUCCESS;
     smResponse = findResource(timeout);
@@ -1337,22 +1297,22 @@ SPResult SPProvisioningDiscovery(unsigned short timeout, SPConnectivityType conn
     return SP_RESULT_INTERNAL_ERROR;
 }
 
-SPResult SPInitProvisionContext(unsigned short timeout, OicUuid_t *deviceId,
-                                const SPTargetDeviceInfo_t *selectedDeviceInfo)
+SPResult SPInitProvisionContext(unsigned short timeout,
+                                SPTargetDeviceInfo_t *selectedDeviceInfo)
 {
-    if (NULL == selectedDeviceInfo || NULL == deviceId)
+    if (NULL == selectedDeviceInfo )
     {
         return SP_RESULT_INVALID_PARAM;
     }
-    memcpy(gDeviceUUID.id, deviceId->id, UUID_LENGTH);
 
     SPResult res = SP_RESULT_SUCCESS;
-    uint16_t selectedMethod = 0;
+    OicSecOxm_t selectedMethod = OIC_JUST_WORKS;
 
-    selectProvisioningMethod(selectedDeviceInfo->oxm, selectedDeviceInfo->numberofOxmMethods,
+    selectProvisioningMethod(selectedDeviceInfo->doxm->oxm, selectedDeviceInfo->doxm->oxmLen,
                              &selectedMethod);
+    OC_LOG_V(DEBUG, TAG, "Selected method %d:", selectedMethod);
+    res = updateOwnerTransferModeToResource(timeout, selectedDeviceInfo, selectedMethod);
 
-    res = updateOwnerTransferModeToResource(timeout, selectedDeviceInfo);
     if (SP_RESULT_SUCCESS != res)
     {
         OC_LOG(ERROR, TAG, "Error while updating owner transfer mode.");
@@ -1365,6 +1325,7 @@ SPResult SPInitProvisionContext(unsigned short timeout, OicUuid_t *deviceId,
         OC_LOG(ERROR, TAG, "Error while getting provisioning status.");
         return SP_RESULT_INTERNAL_ERROR;
     }
+    OC_LOG(INFO, TAG, "Starting ownership transfer");
     return doOwnerShipTransfer(timeout, selectedDeviceInfo);
 
 }
@@ -1385,11 +1346,10 @@ SPResult SPProvisionACL(unsigned short timeout, const SPTargetDeviceInfo_t *sele
         return SP_RESULT_MEM_ALLOCATION_FAIL;
     }
 
-    const char ACL_RESOURCE_PROVISIONING_QUERY[] = "/oic/sec/acl";
     char uri[CA_MAX_URI_LENGTH] = {0};
     size_t uriLen = sizeof(uri);
-    snprintf(uri, uriLen - 1, COAP_QUERY, selectedDeviceInfo->ip,
-             selectedDeviceInfo->port, ACL_RESOURCE_PROVISIONING_QUERY);
+    snprintf(uri, uriLen - 1, COAPS_QUERY, selectedDeviceInfo->ip,
+             CA_SECURE_PORT, OIC_RSRC_ACL_URI);
     uri[uriLen - 1] = '\0';
 
     int payloadLen = strlen(aclString);
@@ -1397,21 +1357,19 @@ SPResult SPProvisionACL(unsigned short timeout, const SPTargetDeviceInfo_t *sele
     if (CA_STATUS_OK != CAGenerateToken(&gToken))
     {
         OC_LOG(ERROR, TAG, "Error while generating token");
+        OCFree(aclString);
         return SP_RESULT_INTERNAL_ERROR;
 
     }
     handler = &ACLProvisioningHandler;
     gStateManager |= SP_PROV_ACL_STARTED;
-    // TODO need to change the uri to secure URI.
+
     CAResult_t result = sendCARequest(uri, aclString, payloadLen, gToken, method,
                                       selectedDeviceInfo->connType);
+    OCFree(aclString);
     if (CA_STATUS_OK != result)
     {
         OC_LOG(ERROR, TAG, "Internal Error while sending ACL.");
-        if (aclString)
-        {
-            OCFree(aclString);
-        }
         CADestroyToken(gToken);
         return convertCAResultToSPResult(result);
     }
@@ -1420,16 +1378,8 @@ SPResult SPProvisionACL(unsigned short timeout, const SPTargetDeviceInfo_t *sele
     if (SP_RESULT_SUCCESS != res)
     {
         OC_LOG(ERROR, TAG, "Internal Error occured");
-        if (aclString)
-        {
-            OCFree(aclString);
-        }
         CADestroyToken(gToken);
         return SP_RESULT_TIMEOUT;
-    }
-    if (aclString)
-    {
-        OCFree(aclString);
     }
     CADestroyToken(gToken);
     return res;
@@ -1443,11 +1393,19 @@ SPResult SPProvisionCredentials(unsigned short timeout, OicSecCredType_t type,
         return SP_RESULT_INVALID_PARAM;
     }
     const SPDevInfo_t *curr = pDevList;
+    OicUuid_t provTooldeviceID = {};
+    if (OC_STACK_OK != GetDoxmDeviceID(&provTooldeviceID))
+    {
+        OC_LOG(ERROR, TAG, "Error while retrieving provisioning tool's device ID");
+        return SP_RESULT_INTERNAL_ERROR;
+    }
     while (curr)
     {
         SPDevInfo_t *next = curr->next;
         OicSecCred_t *cred = NULL;
-        SPResult res = SPGenerateCredentials(type, curr, &gDeviceUUID, &cred);
+
+
+        SPResult res = SPGenerateCredentials(type, curr, &provTooldeviceID, &cred);
         if (res != SP_RESULT_SUCCESS)
         {
             OC_LOG(ERROR, TAG, "error while generating credentials");
@@ -1466,7 +1424,7 @@ SPResult SPProvisionCredentials(unsigned short timeout, OicSecCredType_t type,
 }
 
 SPResult SPFinalizeProvisioning(unsigned short timeout,
-                                const SPTargetDeviceInfo_t *selectedDeviceInfo)
+                                SPTargetDeviceInfo_t *selectedDeviceInfo)
 {
     // TODO
     if (NULL == selectedDeviceInfo)
@@ -1474,35 +1432,35 @@ SPResult SPFinalizeProvisioning(unsigned short timeout,
         OC_LOG(ERROR, TAG, "Target device Info is NULL.");
         return SP_RESULT_INVALID_PARAM;
     }
-    const char PSTAT_COMMIT_HASH_QUERY[] = "/oic/sec/pstat";
     char uri[CA_MAX_URI_LENGTH] = {0};
     size_t uriLen = sizeof(uri);
-    snprintf(uri, uriLen - 1, COAP_QUERY, selectedDeviceInfo->ip,
-             selectedDeviceInfo->port, PSTAT_COMMIT_HASH_QUERY);
+    snprintf(uri, uriLen - 1, COAPS_QUERY, selectedDeviceInfo->ip,
+             CA_SECURE_PORT, OIC_RSRC_PSTAT_URI);
     uri[uriLen - 1] = '\0';
 
-
-    char payloadBuffer[SP_MAX_BUF_LEN] = {0};
-    size_t payloadSize = sizeof(payloadBuffer);
-
-    char aclHash[] = "0"; // value for beachhead version.
-    snprintf(payloadBuffer, payloadSize - 1, "{\"tm\":\"0\",\"commitHash\":\"%s\"}", aclHash);
-
-
-    payloadBuffer[payloadSize - 1] = '\0';
-
+    uint16_t aclHash = 0; // value for beachhead version.
+    selectedDeviceInfo->pstat->commitHash = aclHash;
+    selectedDeviceInfo->pstat->tm = NORMAL;
+    char *payloadBuffer = BinToPstatJSON(selectedDeviceInfo->pstat);
+    if (NULL == payloadBuffer)
+    {
+        OC_LOG(ERROR, TAG, "Error while converting pstat bin to json");
+        return SP_RESULT_INTERNAL_ERROR;
+    }
     int payloadLen = strlen(payloadBuffer);
 
     CAMethod_t method = CA_PUT;
     if (CA_STATUS_OK != CAGenerateToken(&gToken))
     {
         OC_LOG(ERROR, TAG, "Error while generating token");
+        OCFree(payloadBuffer);
         return SP_RESULT_INTERNAL_ERROR;
     }
     handler = &FinalizeProvisioningHandler;
     gStateManager |= SP_UP_HASH_STARTED;
     CAResult_t result = sendCARequest(uri, payloadBuffer, payloadLen, gToken, method,
                                       selectedDeviceInfo->connType);
+    OCFree(payloadBuffer);
     if (CA_STATUS_OK != result)
     {
         OC_LOG(ERROR, TAG, "Internal Error occured");

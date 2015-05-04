@@ -79,6 +79,13 @@ char * BinToDoxmJSON(const OicSecDoxm_t * doxm);
  */
 OCStackResult GetDoxmDeviceID(OicUuid_t *deviceID);
 
+/** This function deallocates the memory for OicSecDoxm_t .
+ *
+ * @param[in] doxm  Pointer to OicSecDoxm_t.
+ */
+void DeleteDoxmBinData(OicSecDoxm_t* doxm);
+
+
 #ifdef __cplusplus
 }
 #endif

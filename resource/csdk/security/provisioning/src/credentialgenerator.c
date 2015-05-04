@@ -45,7 +45,7 @@ SPResult SPGenerateCredentials(OicSecCredType_t type, const SPDevInfo_t *pDevInf
                 //credInstance->CredID = // TODO value from SRM DB.
                 credInstance->subject = pDevInfo->deviceId;
                 credInstance->credType = type;
-                memcpy(credInstance->owners, deviceId, UUID_LENGTH); // in accordance with beach head version.
+                memcpy(credInstance->owners->id, deviceId, UUID_LENGTH); // beach head version.
                 cred = &credInstance;
                 break;
             }

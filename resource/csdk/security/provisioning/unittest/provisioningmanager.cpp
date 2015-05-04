@@ -25,16 +25,14 @@
 
 static OicSecAcl_t acl;
 
-static OicUuid_t gDeviceUUId = {"TEST-UUID"};
-
 TEST(SPProvisioningDiscoveryTest, NullConectivity)
 {
-    EXPECT_EQ(SP_RESULT_INVALID_PARAM, SPProvisioningDiscovery(0, (SPConnectivityType)NULL, NULL));
+    EXPECT_EQ(SP_RESULT_INVALID_PARAM, SPProvisioningDiscovery(0, NULL));
 }
 
 TEST(SPInitProvisionContextTest, NullDeviceInfo)
 {
-    EXPECT_EQ(SP_RESULT_INVALID_PARAM, SPInitProvisionContext(0, &gDeviceUUId, NULL));
+    EXPECT_EQ(SP_RESULT_INVALID_PARAM, SPInitProvisionContext(0, NULL));
 }
 
 TEST(SPProvisionACLTest, NullDeviceInfo)
