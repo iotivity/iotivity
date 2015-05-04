@@ -45,11 +45,11 @@ class ClientFridge
         m_callsMade(0),m_connectivityType(ct)
     {
         std::ostringstream requestURI;
-        requestURI << OC_WELL_KNOWN_QUERY << "?rt=intel.fridge";
+        requestURI << OC_MULTICAST_DISCOVERY_URI << "?rt=intel.fridge";
         std::cout << "Fridge Client has started " <<std::endl;
         FindCallback f (std::bind(&ClientFridge::foundDevice, this, PH::_1));
         OCStackResult result = OCPlatform::findResource(
-                "", requestURI.str(), m_connectivityType, f);
+                "", requestURI.str(), OC_ALL, f);
 
         if(OC_STACK_OK != result)
         {

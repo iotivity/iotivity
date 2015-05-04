@@ -279,9 +279,9 @@ int main(int argc, char* argv[]) {
     try
     {
         // Find all resources
-        requestURI << OC_WELL_KNOWN_QUERY;
+        requestURI << OC_MULTICAST_DISCOVERY_URI;
 
-        OCPlatform::findResource("", requestURI.str(), connectivityType, &foundResource);
+        OCPlatform::findResource("", requestURI.str(), OC_ALL, &foundResource);
         std::cout<< "Finding Resource... " <<std::endl;
 
         // A condition variable will free the mutex it is given, then do a non-

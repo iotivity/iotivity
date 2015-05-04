@@ -171,7 +171,7 @@ bool isResourceReady()
 int main(int argc, char* argv[])
 {
     ostringstream requestURI;
-    requestURI << OC_WELL_KNOWN_QUERY << "?rt=a.collection";
+    requestURI << OC_MULTICAST_DISCOVERY_URI << "?rt=a.collection";
 
     OCConnectivityType connectivityType = OC_WIFI;
 
@@ -228,7 +228,7 @@ int main(int argc, char* argv[])
         string resourceTypeName = "a.collection";
 
         OCPlatform::findResource("", requestURI.str(),
-                                 connectivityType, &foundResource);
+                                 OC_ALL, &foundResource);
 
         //Non-intensive block until foundResource callback is called by OCPlatform
         //and onGet gets resource.

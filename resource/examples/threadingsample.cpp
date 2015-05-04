@@ -285,7 +285,7 @@ void client1()
 {
     std::cout << "in client1\n";
     std::cout<<"result1:" << OCPlatform::findResource("", requestURI.str(),
-            connectivityType, foundResource1)<< std::endl;
+            OC_ALL, foundResource1)<< std::endl;
 
     // A condition variable will free the mutex it is given, then do a non-
     // intensive block until 'notify' is called on it.  In this case, since we
@@ -302,7 +302,7 @@ void client2()
     std::cout << "in client2\n";
     std::cout<<"result2:" << OCPlatform::findResource("",
                 requestURI.str(),
-                connectivityType, foundResource2)<< std::endl;
+                OC_ALL, foundResource2)<< std::endl;
 
     // A condition variable will free the mutex it is given, then do a non-
     // intensive block until 'notify' is called on it.  In this case, since we
@@ -377,7 +377,7 @@ int main(int argc, char* argv[])
         std::cout << "   ConnectivityType : 1 - WIFI" << std::endl;
     }
 
-    requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.foo";
+    requestURI << OC_MULTICAST_DISCOVERY_URI << "?rt=core.foo";
 
     PlatformConfig cfg {
         OC::ServiceType::InProc,

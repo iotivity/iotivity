@@ -143,10 +143,10 @@ int main(int argc, char* argv[])
 
         cout << "registerResource is called." << endl;
 
-        requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.light";
+        requestURI << OC_MULTICAST_DISCOVERY_URI << "?rt=core.light";
 
         OCPlatform::findResource("", requestURI.str(),
-                                 connectivityType, &foundResource);
+                                 OC_ALL, &foundResource);
 
         OCPlatform::bindInterfaceToResource(resourceHandle, GROUP_INTERFACE);
         OCPlatform::bindInterfaceToResource(resourceHandle, DEFAULT_INTERFACE);

@@ -344,10 +344,10 @@ int main(int argc, char* argv[]) {
     try
     {
         // Find all resources
-        requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.garage";
+        requestURI << OC_MULTICAST_DISCOVERY_URI << "?rt=core.garage";
 
         OCPlatform::findResource("", requestURI.str(),
-                connectivityType, &foundResource);
+                OC_ALL, &foundResource);
 
         std::cout<< "Finding Resource... " <<std::endl;
 

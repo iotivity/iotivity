@@ -147,12 +147,12 @@ public:
     void start()
     {
         std::ostringstream requestURI;
-        requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.foo";
+        requestURI << OC_MULTICAST_DISCOVERY_URI << "?rt=core.foo";
 
         std::cout<<"Starting Client find:"<<std::endl;
         FindCallback f (std::bind(&ClientWorker::foundResource, this, std::placeholders::_1));
         std::cout<<"result:" <<
-        OCPlatform::findResource("", requestURI.str(), m_connectivityType, f)
+        OCPlatform::findResource("", requestURI.str(), OC_ALL, f)
         << std::endl;
 
         std::cout<<"Finding Resource..."<<std::endl;

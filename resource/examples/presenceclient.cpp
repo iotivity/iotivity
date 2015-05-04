@@ -334,10 +334,10 @@ int main(int argc, char* argv[]) {
         else
         {
             // Find all resources
-            requestURI << OC_WELL_KNOWN_QUERY;
+            requestURI << OC_MULTICAST_DISCOVERY_URI;
 
             result = OCPlatform::findResource("", requestURI.str(),
-                    connectivityType, &foundResource);
+                    OC_ALL, &foundResource);
             if(result == OC_STACK_OK)
             {
                 std::cout << "Finding Resource... " << std::endl;

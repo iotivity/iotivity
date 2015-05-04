@@ -485,17 +485,17 @@ int main(int argc, char* argv[]) {
         // makes it so that all boolean values are printed as 'true/false' in this stream
         std::cout.setf(std::ios::boolalpha);
         // Find all resources
-        requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.light";
+        requestURI << OC_MULTICAST_DISCOVERY_URI << "?rt=core.light";
 
         OCPlatform::findResource("", requestURI.str(),
-                connectivityType, &foundResource);
+                OC_ALL, &foundResource);
         std::cout<< "Finding Resource... " <<std::endl;
 
         // Find resource is done twice so that we discover the original resources a second time.
         // These resources will have the same uniqueidentifier (yet be different objects), so that
         // we can verify/show the duplicate-checking code in foundResource(above);
         OCPlatform::findResource("", requestURI.str(),
-                connectivityType, &foundResource);
+                OC_ALL, &foundResource);
         std::cout<< "Finding Resource for second time..." << std::endl;
 
         // A condition variable will free the mutex it is given, then do a non-

@@ -36,6 +36,7 @@ extern "C" {
 
 /// Authority + URI string to prefix well known queries
 #define OC_WELL_KNOWN_QUERY                  "224.0.1.187:5683/oc/core"
+#define OC_MULTICAST_DISCOVERY_URI           "/oc/core"
 #define OC_EXPLICIT_DEVICE_DISCOVERY_URI     "224.0.1.187:5683/oc/core/d?rt=core.led"
 /// Multicast address and port string to prefix multicast queries
 #define OC_MULTICAST_PREFIX                  "224.0.1.187:5683"
