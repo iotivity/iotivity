@@ -318,14 +318,7 @@ static OCEntityHandlerResult HandleACLPostRequest (const OCEntityHandlerRequest 
     if (newAcl)
     {
         /* Append the new ACL to existing ACL */
-        if (gAcl)
-        {
-            gAcl->next = newAcl;
-        }
-        else
-        {
-            gAcl = newAcl;
-        }
+        LL_APPEND(gAcl, newAcl);
 
         /* Convert ACL data into JSON for update to persistent storage */
         char *jsonStr = BinToAclJSON(gAcl);
