@@ -675,6 +675,10 @@ CAResult_t CAStopIP()
 {
     OIC_LOG(DEBUG, IP_ADAPTER_TAG, "IN");
 
+#ifdef __WITH_DTLS__
+    CAAdapterNetDtlsDeInit();
+#endif
+
     // Stop IP network monitor
     CAIPStopNetworkMonitor();
 
@@ -695,14 +699,14 @@ void CATerminateIP()
 {
     OIC_LOG(DEBUG, IP_ADAPTER_TAG, "IN");
 
+    // Stop IP adapter
+    CAStopIP();
+
 #ifdef __WITH_DTLS__
     CADTLSSetAdapterCallbacks(NULL, NULL, DTLS_IP);
-    CAAdapterNetDtlsDeInit();
 #endif
 
     CAIPSetPacketReceiveCallback(NULL);
-    // Stop IP adapter
-    CAStopIP();
 
     // Terminate IP server
     CAIPTerminateServer();
