@@ -134,8 +134,6 @@ static void CAReceivedPacketCallback(const CAEndpoint_t *endpoint, void *data, u
     }
     else
     {
-        OICFree(data);
-
         OIC_LOG(ERROR, TAG, "network packet received callback is NULL!");
     }
 

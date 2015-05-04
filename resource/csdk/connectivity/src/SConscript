@@ -62,7 +62,7 @@ if ca_os == 'arduino':
 	ca_common_src = [
 		'caconnectivitymanager.c',
 		'cainterfacecontroller.c',
-		'camessagehandler_singlethread.c',
+		'camessagehandler.c',
 		'canetworkconfigurator.c',
 		'caprotocolmessage.c',
 		'caretransmission.c',

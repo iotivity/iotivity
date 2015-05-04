@@ -52,6 +52,31 @@
 #define CA_MEMORY_ALLOC_CHECK(arg) { if (NULL == arg) {OIC_LOG(ERROR, TAG, "Out of memory"); \
 goto memory_error_exit;} }
 
+typedef enum
+{
+    SEND_TYPE_MULTICAST = 0,
+    SEND_TYPE_UNICAST
+} CASendDataType_t;
+
+typedef enum
+{
+    CA_REQUEST_DATA = 1,
+    CA_RESPONSE_DATA = 2,
+    CA_ERROR_DATA = 3,
+} CADataType_t;
+
+typedef struct
+{
+    CASendDataType_t type;
+    CAEndpoint_t *remoteEndpoint;
+    CARequestInfo_t *requestInfo;
+    CAResponseInfo_t *responseInfo;
+    CAErrorInfo_t *errorInfo;
+    CAHeaderOption_t *options;
+    CADataType_t dataType;
+    uint8_t numOptions;
+} CAData_t;
+
 #ifdef __cplusplus
 extern "C"
 {

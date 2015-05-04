@@ -739,8 +739,13 @@ void CAAdapterDataReceiverHandler(void *context)
     {
         OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "Sending data up !");
         g_networkPacketReceivedCallback(remoteEndpoint, defragData, recvDataLen);
+
+        OICFree(defragData);
+        CAFreeEndpoint(remoteEndpoint);
+
         recvDataLen = 0;
         totalDataLen = 0;
+        defragData = NULL;
         remoteEndpoint = NULL;
         g_isHeaderAvailable = false;
     }

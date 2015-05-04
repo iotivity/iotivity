@@ -86,6 +86,13 @@ CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *response);
  */
 void CADestroyResponseInfoInternal(CAResponseInfo_t *response);
 
+/**
+ * @brief   Free the error information
+ * @param   errorInfo       [IN]    error information to be freed
+ * @return
+ */
+void CADestroyErrorInfoInternal(CAErrorInfo_t *errorInfo);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

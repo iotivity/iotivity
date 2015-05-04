@@ -178,21 +178,9 @@ void CAIPPacketReceivedCB(const CAEndpoint_t *endpoint, const void *data,
 
     OIC_LOG_V(DEBUG, TAG, "Address: %s, port:%d", endpoint->addr, endpoint->port);
 
-    void *buf = OICCalloc(dataLength + 1, sizeof (char));
-    if (!buf)
-    {
-        OIC_LOG(ERROR, TAG, "Memory Allocation failed!");
-        return;
-    }
-    memcpy(buf, data, dataLength);
-
     if (g_networkPacketCallback)
     {
-        g_networkPacketCallback(endpoint, buf, dataLength);
-    }
-    else
-    {
-        OICFree(buf);
+        g_networkPacketCallback(endpoint, data, dataLength);
     }
     OIC_LOG(DEBUG, TAG, "OUT");
 }

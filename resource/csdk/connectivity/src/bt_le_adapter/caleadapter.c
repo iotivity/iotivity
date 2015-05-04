@@ -587,6 +587,7 @@ void CALEServerDataReceiverHandler(void *threadData)
         if (!bleData)
         {
             OIC_LOG(DEBUG, CALEADAPTER_TAG, "Invalid bleData!");
+            ca_mutex_unlock(g_bleServerReceiveDataMutex);
             return;
         }
 
@@ -604,6 +605,7 @@ void CALEServerDataReceiverHandler(void *threadData)
             if (NULL == defragData)
             {
                 OIC_LOG(ERROR, CALEADAPTER_TAG, "defragData is NULL!");
+                ca_mutex_unlock(g_bleServerReceiveDataMutex);
                 return;
             }
 
@@ -631,11 +633,20 @@ void CALEServerDataReceiverHandler(void *threadData)
             if (NULL == g_networkPacketReceivedCallback)
             {
                 OIC_LOG(ERROR, CALEADAPTER_TAG, "gReqRespCallback is NULL!");
+                OICFree(defragData);
+                CAFreeEndpoint(remoteEndpoint);
+                remoteEndpoint = NULL;
+                defragData = NULL;
                 ca_mutex_unlock(g_bleAdapterReqRespCbMutex);
+                ca_mutex_unlock(g_bleServerReceiveDataMutex);
                 return;
             }
             OIC_LOG(DEBUG, CALEADAPTER_TAG, "Sending data up !");
             g_networkPacketReceivedCallback(remoteEndpoint, defragData, recvDataLen);
+
+            OICFree(defragData);
+            CAFreeEndpoint(remoteEndpoint);
+
             recvDataLen = 0;
             totalDataLen = 0;
             isHeaderAvailable = false;
@@ -652,6 +663,8 @@ void CALEServerDataReceiverHandler(void *threadData)
             isHeaderAvailable = false;
             OICFree(defragData);
             CAFreeEndpoint(remoteEndpoint);
+            remoteEndpoint = NULL;
+            defragData = NULL;
             ca_mutex_unlock(g_bleServerReceiveDataMutex);
             return;
         }
@@ -681,6 +694,7 @@ void CALEClientDataReceiverHandler(void *threadData)
         if (!bleData)
         {
             OIC_LOG(DEBUG, CALEADAPTER_TAG, "Invalid wifidata!");
+            ca_mutex_unlock(g_bleClientReceiveDataMutex);
             return;
         }
 
@@ -700,6 +714,7 @@ void CALEClientDataReceiverHandler(void *threadData)
             if (NULL == defragData)
             {
                 OIC_LOG(ERROR, CALEADAPTER_TAG, "defragData is NULL!");
+                ca_mutex_unlock(g_bleClientReceiveDataMutex);
                 return;
             }
 
@@ -727,7 +742,12 @@ void CALEClientDataReceiverHandler(void *threadData)
             if (NULL == g_networkPacketReceivedCallback)
             {
                 OIC_LOG(ERROR, CALEADAPTER_TAG, "gReqRespCallback is NULL!");
+                OICFree(defragData);
+                CAFreeEndpoint(remoteEndpoint);
+                remoteEndpoint = NULL;
+                defragData = NULL;
                 ca_mutex_unlock(g_bleAdapterReqRespCbMutex);
+                ca_mutex_unlock(g_bleClientReceiveDataMutex);
                 return;
             }
             OIC_LOG(DEBUG, CALEADAPTER_TAG, "Sending data up !");
@@ -735,6 +755,8 @@ void CALEClientDataReceiverHandler(void *threadData)
             recvDataLen = 0;
             totalDataLen = 0;
             isHeaderAvailable = false;
+            OICFree(defragData);
+            CAFreeEndpoint(remoteEndpoint);
             remoteEndpoint = NULL;
             defragData = NULL;
             ca_mutex_unlock(g_bleAdapterReqRespCbMutex);
@@ -745,6 +767,8 @@ void CALEClientDataReceiverHandler(void *threadData)
             OIC_LOG(DEBUG, CALEADAPTER_TAG, "GATTClient is terminating. Cleaning up");
             OICFree(defragData);
             CAFreeEndpoint(remoteEndpoint);
+            remoteEndpoint = NULL;
+            defragData = NULL;
             ca_mutex_unlock(g_bleClientReceiveDataMutex);
             return;
         }

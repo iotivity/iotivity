@@ -307,6 +307,21 @@ void CAFreeEndpoint(CAEndpoint_t *rep)
     OICFree(rep);
 }
 
+static void CADestroyInfoInternal(CAInfo_t *info)
+{
+    // free token field
+    OICFree(info->token);
+
+    // free options field
+    OICFree(info->options);
+
+    // free payload field
+    OICFree((char *) info->payload);
+
+    // free uri
+    OICFree(info->resourceUri);
+}
+
 void CADestroyRequestInfoInternal(CARequestInfo_t *rep)
 {
     if (NULL == rep)
@@ -315,18 +330,7 @@ void CADestroyRequestInfoInternal(CARequestInfo_t *rep)
         return;
     }
 
-    // free token field
-    OICFree(rep->info.token);
-
-    // free options field
-    OICFree((CAHeaderOption_t *) rep->info.options);
-
-    // free payload field
-    OICFree((char *) rep->info.payload);
-
-    // free uri
-    OICFree(rep->info.resourceUri);
-
+    CADestroyInfoInternal(&rep->info);
     OICFree(rep);
 }
 
@@ -338,21 +342,19 @@ void CADestroyResponseInfoInternal(CAResponseInfo_t *rep)
         return;
     }
 
-    // free token field
-    OICFree(rep->info.token);
+    CADestroyInfoInternal(&rep->info);
+    OICFree(rep);
+}
 
-    // free options field
-    if (rep->info.options != NULL && rep->info.numOptions)
+void CADestroyErrorInfoInternal(CAErrorInfo_t *errorInfo)
+{
+    if (NULL == errorInfo)
     {
-        OICFree((CAHeaderOption_t *) rep->info.options);
+        OIC_LOG(ERROR, TAG, "parameter is null");
+        return;
     }
 
-    // free payload field
-    OICFree((char *) rep->info.payload);
-
-    // free uri
-    OICFree(rep->info.resourceUri);
-
-    OICFree(rep);
+    CADestroyInfoInternal(&errorInfo->info);
+    OICFree(errorInfo);
 }
 
