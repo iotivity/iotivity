@@ -18,7 +18,7 @@ if target_os != 'arduino':
 	env.AppendUnique(CA_SRC=[src_dir+'caleadapter.c'])
 else:
 	env.AppendUnique(CA_SRC=[src_dir+'caleadapter_singlethread.c'])
-	
+
 #Source files to build in Linux platform
 if target_os == 'linux':
 	env.AppendUnique(CA_SRC=[src_dir+'linux/caleadapter.c',
@@ -44,7 +44,10 @@ if target_os == 'arduino':
 
 #Source files to build in Android platform
 if target_os == 'android':
-	env.AppendUnique(CA_SRC=[src_dir+'android/caleadapter.c',
+	env.PrependUnique(CPPPATH = [src_dir + 'android'])
+	env.AppendUnique(CA_SRC=[
 			src_dir+'android/caleclient.c',
 			src_dir+'android/caleserver.c',
+			src_dir+'android/calenwmonitor.c',
+			src_dir+'android/caleutils.c'
 			])

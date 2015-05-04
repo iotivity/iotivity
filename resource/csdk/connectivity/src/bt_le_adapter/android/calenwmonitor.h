@@ -1,4 +1,4 @@
-/* ****************************************************************
+/******************************************************************
 *
 * Copyright 2014 Samsung Electronics All Rights Reserved.
 *
@@ -19,17 +19,16 @@
 ******************************************************************/
 
 /**
- * @file
- *
- * This file contains the APIs for BT LE communications.
- */
-
-#ifndef __CA_LENWMONITOR_H_
-#define __CA_LENWMONITOR_H_
+* @file calenwmonitor.h
+* @brief This file contains the APIs for BT LE communications.
+*/
+#ifndef CA_LENWMONITOR_H_
+#define CA_LENWMONITOR_H_
 
 #include "cacommon.h"
 #include "cathreadpool.h"
 #include "uarraylist.h"
+#include "caleinterface.h"
 #include "jni.h"
 
 #ifdef __cplusplus
@@ -38,39 +37,27 @@ extern "C"
 #endif
 
 /**
- * @var CALENetStateChantedCallback
- * @brief  Maintains network connection state change callback.
- */
-typedef void (*CALENetStateChantedCallback)(const char* address, const uint32_t status);
-
-/**
  * @brief   set context of application
- * @param   env              [IN] JNI interface pointer
- * @param   context          [IN] context of application
  * @return  None
  */
-void CALENetworkMonitorJNISetContext(JNIEnv *env, jobject context);
+void CALENetworkMonitorJNISetContext();
 
 /**
  * @brief   initialize JNI object
- * @param   env              [IN] JNI interface pointer
- * @param   jvm              [IN] java virtual machine pointer
  * @return  None
  */
-void CALeNetworkMonitorJniInit(JNIEnv *env, JavaVM *jvm);
+void CALENetworkMonitorJniInit();
 
 /**
  * @brief  Set this callback for receiving network information from BT stack.
  * @param  callback   [IN] Callback to be notified on reception of BT state information
  * @return  NONE
  */
-void CALESetNetStateCallback(CALENetStateChantedCallback callback);
+void CALESetNetStateCallback(CALEDeviceStateChangedCallback callback);
 
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
 
 #endif
-
-
 

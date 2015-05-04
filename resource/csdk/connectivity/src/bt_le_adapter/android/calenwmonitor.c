@@ -23,55 +23,257 @@
 #include <android/log.h>
 #include "logger.h"
 #include "calenwmonitor.h"
+#include "caleclient.h"
+#include "caleserver.h"
 #include "caleutils.h"
-#include "com_iotivity_jar_caleinterface.h"
+#include "caleinterface.h"
+#include "caadapterutils.h"
+
+#include "camutex.h"
+
+#include "org_iotivity_jar_caleclientinterface.h"
 
 #define TAG PCF("CA_LE_MONITOR")
 
+#define BT_STATE_ON (12)
+#define BT_STATE_OFF (10)
+
 static JavaVM *g_jvm;
-static jobject g_context;
-static CALENetStateChantedCallback g_networkChangeCb = NULL;
+
+/**
+ * @var gCALEDeviceStateChangedCallback
+ * @brief Maintains the callback to be notified on device state changed.
+ */
+static CALEDeviceStateChangedCallback gCALEDeviceStateChangedCallback = NULL;
+
+/**
+ * @var gCALEDeviceStateChangedCbMutex
+ * @brief Mutex to synchronize access to the deviceStateChanged Callback when the state
+ *           of the LE adapter gets change.
+ */
+static ca_mutex gCALEDeviceStateChangedCbMutex = NULL;
 
 //getting context
-void CALENetworkMonitorJNISetContext(JNIEnv *env, jobject context)
+void CALENetworkMonitorJNISetContext()
 {
-    OIC_LOG(DEBUG, TAG, "CALENetworkMonitorJNISetContext");
-
-    if (context == NULL)
-    {
-        OIC_LOG(DEBUG, TAG, "context is null");
-    }
-
-    g_context = (*env)->NewGlobalRef(env, context);
+    OIC_LOG(DEBUG, TAG, "CALENetworkMonitorJNISetContext - it is not supported");
 }
 
 //getting jvm
-void CALeNetworkMonitorJniInit(JNIEnv *env, JavaVM *jvm)
+void CALENetworkMonitorJniInit()
 {
-    OIC_LOG(DEBUG, TAG, "CALeNetworkMonitorJniInit");
-    g_jvm = jvm;
+    OIC_LOG(DEBUG, TAG, "CALENetworkMonitorJniInit");
+    g_jvm = CANativeJNIGetJavaVM();
 }
 
-void CALESetNetStateCallback(CALENetStateChantedCallback callback)
+void CALESetNetStateCallback(CALEDeviceStateChangedCallback callback)
 {
     OIC_LOG(DEBUG, TAG, "CALESetNetStateCallback");
-    g_networkChangeCb = callback;
+    gCALEDeviceStateChangedCallback = callback;
+}
+
+CAResult_t CAInitializeLEAdapter()
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+
+    CALENetworkMonitorJNISetContext();
+    CALENetworkMonitorJniInit();
+
+    OIC_LOG(DEBUG, TAG, "OUT");
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAInitLENwkMonitorMutexVaraibles()
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+    if (NULL == gCALEDeviceStateChangedCbMutex)
+    {
+        gCALEDeviceStateChangedCbMutex = ca_mutex_new();
+        if (NULL == gCALEDeviceStateChangedCbMutex)
+        {
+            OIC_LOG(ERROR, TAG, "ca_mutex_new has failed");
+            return CA_STATUS_FAILED;
+        }
+    }
+
+    OIC_LOG(DEBUG, TAG, "OUT");
+    return CA_STATUS_OK;
+
+}
+
+void CATerminateLENwkMonitorMutexVaraibles()
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+
+    ca_mutex_free(gCALEDeviceStateChangedCbMutex);
+    gCALEDeviceStateChangedCbMutex = NULL;
+
+    OIC_LOG(DEBUG, TAG, "OUT");
+}
+
+CAResult_t CAGetLEAdapterState()
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+
+    if (!g_jvm)
+    {
+        OIC_LOG(ERROR, TAG, "g_jvm is null");
+        return CA_STATUS_FAILED;
+    }
+
+    bool isAttached = false;
+    JNIEnv* env;
+    jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
+    if (JNI_OK != res)
+    {
+        OIC_LOG(DEBUG, TAG, "Could not get JNIEnv pointer");
+        res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
+
+        if (JNI_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "AttachCurrentThread has failed");
+            return CA_STATUS_FAILED;
+        }
+        isAttached = true;
+    }
+
+    if (!CALEIsEnableBTAdapter(env))
+    {
+        OIC_LOG(ERROR, TAG, "BT adapter is not enabled");
+        if (isAttached)
+        {
+            (*g_jvm)->DetachCurrentThread(g_jvm);
+        }
+        return CA_ADAPTER_NOT_ENABLED;
+    }
+
+    if (isAttached)
+    {
+        (*g_jvm)->DetachCurrentThread(g_jvm);
+    }
+
+    OIC_LOG(DEBUG, TAG, "OUT");
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAInitializeLENetworkMonitor()
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+
+    CAResult_t res = CAInitLENwkMonitorMutexVaraibles();
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "CAInitLENwkMonitorMutexVaraibles has failed");
+        return CA_STATUS_FAILED;
+    }
+
+    OIC_LOG(DEBUG, TAG, "OUT");
+
+    return CA_STATUS_OK;
+
+}
+
+void CATerminateLENetworkMonitor()
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+
+    CATerminateLENwkMonitorMutexVaraibles();
+
+    OIC_LOG(DEBUG, TAG, "OUT");
+}
+
+CAResult_t CASetLEAdapterStateChangedCb(CALEDeviceStateChangedCallback callback)
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+
+    OIC_LOG(DEBUG, TAG, "Setting CALEDeviceStateChangedCallback");
+
+    ca_mutex_lock(gCALEDeviceStateChangedCbMutex);
+    CALESetNetStateCallback(callback);
+    ca_mutex_unlock(gCALEDeviceStateChangedCbMutex);
+
+    OIC_LOG(DEBUG, TAG, "OUT");
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAUnSetLEAdapterStateChangedCb()
+{
+    OIC_LOG(DEBUG, TAG, "it is not required in this platform");
+    return CA_STATUS_OK;
 }
 
 JNIEXPORT void JNICALL
-Java_com_iotivity_jar_caleinterface_CALeStateChangedCallback(JNIEnv *env, jobject obj, jint status)
+Java_org_iotivity_jar_caleclientinterface_CALeStateChangedCallback(JNIEnv *env, jobject obj,
+                                                                   jint status)
 {
-    // STATE_ON:12, STATE_OFF:10
-    OIC_LOG(DEBUG, TAG, "CALeInterface - Network State Changed");
+    VERIFY_NON_NULL_VOID(env, TAG, "env is null");
 
-    if (g_networkChangeCb == NULL)
+
+    OIC_LOG(DEBUG, TAG, "caleclientinterface - Network State Changed");
+
+    if (!gCALEDeviceStateChangedCallback)
     {
-        OIC_LOG(DEBUG, TAG, "g_networkChangeCb is null", status);
+        OIC_LOG_V(ERROR, TAG, "gNetworkChangeCb is null", status);
     }
 
-    jstring jni_address = CALEGetLocalDeviceAddress(env);
-    const char* localAddress = (*env)->GetStringUTFChars(env, jni_address, NULL);
+    if (BT_STATE_ON == status) // STATE_ON:12
+    {
+        CANetworkStatus_t newStatus = CA_INTERFACE_UP;
+        gCALEDeviceStateChangedCallback(newStatus);
+    }
+    else if (BT_STATE_OFF == status) // STATE_OFF:10
+    {
+        // remove obj for client
+        CAResult_t res = CALEClientRemoveAllGattObjs(env);
+        if (CA_STATUS_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "CALEClientRemoveAllGattObjs has failed");
+        }
 
-    g_networkChangeCb(localAddress, status);
+        res = CALEClientRemoveAllScanDevices(env);
+        if (CA_STATUS_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "CALEClientRemoveAllScanDevices has failed");
+        }
+
+        // remove obej for server
+        res = CALEServerRemoveAllDevices(env);
+        if (CA_STATUS_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "CALEServerRemoveAllDevices has failed");
+        }
+
+        CANetworkStatus_t newStatus = CA_INTERFACE_DOWN;
+        gCALEDeviceStateChangedCallback(newStatus);
+    }
 }
 
+JNIEXPORT void JNICALL
+Java_org_iotivity_jar_caleclientinterface_CALeBondStateChangedCallback(JNIEnv *env, jobject obj,
+                                                                       jstring addr)
+{
+    OIC_LOG(DEBUG, TAG, "caleclientinterface - Bond State Changed");
+    VERIFY_NON_NULL_VOID(env, TAG, "env is null");
+    VERIFY_NON_NULL_VOID(addr, TAG, "addr is null");
+
+    // remove obj for client
+    CAResult_t res = CALEClientRemoveGattObjForAddr(env, addr);
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "CANativeRemoveGattObjForAddr has failed");
+    }
+
+    res = CALEClientRemoveDeviceInScanDeviceList(env, addr);
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "CALEClientRemoveDeviceInScanDeviceList has failed");
+    }
+
+    // remove obej for server
+    res = CALEServerRemoveDevice(env, addr);
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "CALEServerRemoveDevice has failed");
+    }
+
+}
