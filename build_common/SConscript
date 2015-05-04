@@ -48,7 +48,7 @@ target_arch = ARGUMENTS.get('TARGET_ARCH', default_arch) # target arch
 
 # True if binary needs to be installed on board. (Might need root permissions)
 # set to 'no', 'false' or 0 for only compilation
-require_upload = ARGUMENTS.get('UPLOAD', True) 
+require_upload = ARGUMENTS.get('UPLOAD', True)
 
 ######################################################################
 # Common build options (release, target os, target arch)
@@ -61,7 +61,6 @@ help_vars.Add(EnumVariable('TARGET_ARCH', 'Target architecture', default_arch, o
 help_vars.Add(EnumVariable('SECURED', 'Build with DTLS', '0', allowed_values=('0', '1')))
 help_vars.Add(BoolVariable('UPLOAD', 'Upload binary ? (For Arduino)', require_upload))
 help_vars.Add(EnumVariable('BUILD_SAMPLE', 'Build with sample', 'ON', allowed_values=('ON', 'OFF')))
-help_vars.Add(EnumVariable('PROVISIONING', 'Build with provisioning capability', '0', allowed_values=('0', '1')))
 ######################################################################
 # Platform(build target) specific options: SDK/NDK & toolchain
 ######################################################################
@@ -183,8 +182,8 @@ Export('env')
 ######################################################################
 if target_os == "yocto":
     '''
-    This code injects Yocto cross-compilation tools+flags into scons' 
-    build environment in order to invoke the relevant tools while 
+    This code injects Yocto cross-compilation tools+flags into scons'
+    build environment in order to invoke the relevant tools while
     performing a build.
     '''
     import os.path
@@ -222,7 +221,7 @@ if target_os == "yocto":
     env['TARGET_OS'] = 'linux'
     '''
     We want to preserve debug symbols to allow BitBake to generate both DEBUG and
-    RELEASE packages for OIC. 
+    RELEASE packages for OIC.
     '''
     env['CCFLAGS'].append('-g')
     Export('env')
