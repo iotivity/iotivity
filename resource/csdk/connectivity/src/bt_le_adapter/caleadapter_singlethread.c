@@ -121,12 +121,11 @@ CAResult_t CAStartLEListeningServer()
         OIC_LOG_V(ERROR, TAG, "ble init fail: %d", result);
         return CA_STATUS_FAILED;
     }
-    uint32_t iter = 0;
     /**
      * Below for loop is to process the BLE Events received from BLE Shield.
      * BLE Events includes BLE Shield Address Added as a patch to RBL Library.
      */
-    for (iter = 0; iter < MAX_EVENT_COUNT; iter++)
+    for (int iter = 0; iter < MAX_EVENT_COUNT; iter++)
     {
         CACheckData();
     }
@@ -195,7 +194,19 @@ CAResult_t CAGetLEInterfaceInformation(CALocalConnectivity_t **info, uint32_t *s
     }
 
     char *leAddress = NULL;
-    CAGetLEAddress(&leAddress);
+    CAResult_t res = CAGetLEAddress(&leAddress);
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "CAGetLEAddress has failed");
+        return res;
+    }
+
+    if (NULL == leAddress)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to get Le addr");
+        return CA_STATUS_FAILED;
+    }
+
     OIC_LOG_V(DEBUG, TAG, "leAddress = %s", leAddress);
 
     /**
@@ -316,7 +327,7 @@ void CACheckData()
                 return;
             }
 
-            g_coapBuffer = (char *)OICCalloc(g_packetDataLen, sizeof(char));
+            g_coapBuffer = (char *)OICCalloc((size_t)g_packetDataLen, sizeof(char));
             if (NULL == g_coapBuffer)
             {
                 OIC_LOG(ERROR, TAG, "malloc");
@@ -365,28 +376,51 @@ int32_t CASendLEData(const void *data, uint32_t dataLen)
 
     if (CA_STATUS_OK != result)
     {
+        OIC_LOG(ERROR, TAG, "Generate header failed");
         return -1;
     }
 
     if (!CAIsBleConnected())
     {
-        OIC_LOG(DEBUG, TAG, "le not conn");
+        OIC_LOG(ERROR, TAG, "le not conn");
         return -1;
     }
 
-    CAUpdateCharacteristicsInGattServer(header, CA_HEADER_LENGTH);
-    int32_t dataLimit = dataLen / CA_SUPPORTED_BLE_MTU_SIZE;
-    int32_t iter = 0;
-    for (iter = 0; iter < dataLimit; iter++)
+    result = CAUpdateCharacteristicsToAllGattClients(header, CA_HEADER_LENGTH);
+    if (CA_STATUS_OK != result)
     {
-        CAUpdateCharacteristicsInGattServer((data + (iter * CA_SUPPORTED_BLE_MTU_SIZE)),
-                                                CA_SUPPORTED_BLE_MTU_SIZE);
+        OIC_LOG(ERROR, TAG, "Update characteristics failed");
+        return -1;
+    }
+
+    int32_t dataLimit = dataLen / CA_SUPPORTED_BLE_MTU_SIZE;
+    for (int32_t iter = 0; iter < dataLimit; iter++)
+    {
+        result = CAUpdateCharacteristicsToAllGattClients((data +
+                                                         (iter * CA_SUPPORTED_BLE_MTU_SIZE)),
+                                                         CA_SUPPORTED_BLE_MTU_SIZE);
+        if (CA_STATUS_OK != result)
+        {
+            OIC_LOG(ERROR, TAG, "Update characteristics failed");
+            return -1;
+        }
         CABleDoEvents();
     }
 
-    CAUpdateCharacteristicsInGattServer((data + (dataLimit * CA_SUPPORTED_BLE_MTU_SIZE)),
-                                            dataLen % CA_SUPPORTED_BLE_MTU_SIZE);
-    CABleDoEvents();
+    uint8_t remainingLen = dataLen % CA_SUPPORTED_BLE_MTU_SIZE;
+    if(remainingLen)
+    {
+        result = CAUpdateCharacteristicsToAllGattClients((data +
+                                                         (dataLimit * CA_SUPPORTED_BLE_MTU_SIZE)),
+                                                         remainingLen);
+        if (CA_STATUS_OK != result)
+        {
+            OIC_LOG(ERROR, TAG, "Update characteristics failed");
+            return -1;
+        }
+        CABleDoEvents();
+    }
+
     OIC_LOG(DEBUG, TAG, "writebytes done");
     OIC_LOG(DEBUG, TAG, "OUT");
     // Arduino BLEWrite doesnot return value. So, Return the received DataLength

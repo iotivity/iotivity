@@ -89,11 +89,14 @@ CAResult_t CASetLEAdapterStateChangedCb(CALEDeviceStateChangedCallback callback)
 
 /**
  * @brief  Provides the BD address of the local adapter.
- * @param  local_address [IN] pointer to the location where bd address needs to be stored.
+ * @param  local_address [OUT] pointer to the location where bd address needs to be stored.
  *
- * @return NONE
+ * @return #CA_STATUS_OK or Appropriate error code
+ * @retval #CA_STATUS_OK  Successful
+ * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
+ * @retval #CA_STATUS_FAILED Operation failed
  */
-void CAGetLEAddress(char **local_address);
+CAResult_t CAGetLEAddress(char **local_address);
 
 /**
  * @brief  Used to start Gatt Server thread for service creation and advertise ble service.
@@ -136,8 +139,8 @@ void CASetBLEReqRespServerCallback(CABLEServerDataReceivedCallback callback);
  * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
  * @retval #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAUpdateCharacteristicsInGattServer(const char *charValue,
-                                               uint32_t charValueLen);
+CAResult_t CAUpdateCharacteristicsToAllGattClients(const char *charValue,
+                                                   uint8_t charValueLen);
 
 /**
  * @brief  Used to start CAStartBleGattClientThread for initializing Gatt Client
@@ -180,7 +183,7 @@ void CATerminateBLEGattClient();
  * @retval #CA_STATUS_FAILED Operation failed
  */
 CAResult_t  CAUpdateCharacteristicsToGattServer(const char *remoteAddress, const char  *data,
-                                                const int32_t dataLen, CALETransferType_t type,
+                                                const uint32_t dataLen, CALETransferType_t type,
                                                 const int32_t position);
 
 /**
@@ -194,7 +197,7 @@ CAResult_t  CAUpdateCharacteristicsToGattServer(const char *remoteAddress, const
  * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
  * @retval #CA_STATUS_FAILED Operation failed
  */
-CAResult_t  CAUpdateCharacteristicsToAllGattServers(const char  *data, int32_t dataLen);
+CAResult_t  CAUpdateCharacteristicsToAllGattServers(const char  *data, uint32_t dataLen);
 
 /**
  * @brief  Used to store upper layer callback locally which will be used to send the data to

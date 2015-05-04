@@ -372,7 +372,7 @@ void CABLEServerSendDataThread(void *threadData);
  * @retval #CA_STATUS_FAILED Operation failed
  */
 CALEData_t *CACreateBLEData(const CARemoteEndpoint_t *remoteEndpoint, const void *data,
-                           uint32_t dataLength);
+                            uint32_t dataLength);
 
 /**
  * @brief Used to free the BLE information stored in the sender/receiver queues.
@@ -401,7 +401,8 @@ typedef void (*CALEDeviceStateChangedCallback)(CAAdapterState_t adapter_state);
  * @retval #CA_STATUS_FAILED Operation failed
  */
 typedef CAResult_t (*CABLEClientDataReceivedCallback)(const char *remoteAddress,
-        const char *serviceUUID, const void *data, uint32_t dataLength, uint32_t *sentLength);
+                    const char *serviceUUID, const void *data, uint32_t dataLength,
+                    uint32_t *sentLength);
 
 /**
  * @brief This will be used to notify that network packet recieved from GATTServer to adapter layer.

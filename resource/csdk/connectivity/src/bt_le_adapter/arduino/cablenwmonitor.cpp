@@ -70,10 +70,10 @@ CAResult_t CAGetLEAdapterState()
     return CA_STATUS_OK;
 }
 
-void CAGetLEAddress(char **leAddress)
+CAResult_t CAGetLEAddress(char **leAddress)
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    VERIFY_NON_NULL_VOID(leAddress, TAG, "leAddress");
+    VERIFY_NON_NULL(leAddress, TAG, "leAddress");
 
     g_leAddress = ble_getAddress();
     /**
@@ -83,11 +83,11 @@ void CAGetLEAddress(char **leAddress)
     if (NULL == *leAddress)
     {
         OIC_LOG(ERROR, TAG, "malloc fail");
-        return;
+        return CA_MEMORY_ALLOC_FAILED;
     }
     memcpy(*leAddress, g_leAddress, CA_MACADDR_SIZE);
     OIC_LOG(DEBUG, TAG, "OUT");
-    return;
+    return CA_STATUS_OK;
 }
 
 CAResult_t CASetLEAdapterStateChangedCb(CALEDeviceStateChangedCallback callback)

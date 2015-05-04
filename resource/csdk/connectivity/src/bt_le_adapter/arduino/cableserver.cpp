@@ -79,16 +79,11 @@ CAResult_t CABleDoEvents()
     return CA_STATUS_OK;
 }
 
-CAResult_t CAUpdateCharacteristicsInGattServer(const char *char_value,
-                                               uint32_t valueLength)
+CAResult_t CAUpdateCharacteristicsToAllGattClients(const char *char_value,
+                                                   uint8_t valueLength)
 {
     // ble_write_bytes() api can send only max of 255 bytes at a time
     // This function shall never be called to send more than 255 bytes by the fragmentation logic.
-    if(valueLength > 255)
-    {
-        OIC_LOG_V(ERROR, TAG, "Error:Max 255");
-        return CA_STATUS_INVALID_PARAM;
-    }
     // Currently ble_write_bytes api returns void.
     ble_write_bytes((unsigned char *)char_value, (unsigned char)valueLength);
     return CA_STATUS_OK;
