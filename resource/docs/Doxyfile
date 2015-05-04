@@ -667,6 +667,7 @@ INPUT                  = . \
                          ../include/OCResourceResponse.h \
                          ../include/OCResource.h \
                          ../resource/csdk/stack/include/octypes.h \
+                         ../resource/csdk/stack/include/ocstackconfig.h \
                          guides \
 
 # This tag can be used to specify the character encoding of the source files
