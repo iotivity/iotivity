@@ -62,6 +62,9 @@ if target_os not in ['windows', 'winrt']:
 	liboctbstack_env.AppendUnique(CFLAGS = ['-Wall'])
 
 liboctbstack_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+
+if target_os in ['android', 'linux']:
+	liboctbstack_env.AppendUnique(LIBS = ['connectivity_abstraction'])
 liboctbstack_env.AppendUnique(LIBS = ['coap', 'm'])
 
 if target_os not in ['android', 'arduino', 'windows', 'winrt']:
@@ -71,12 +74,9 @@ if target_os == 'arduino':
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['NDEBUG', 'WITH_ARDUINO'])
 elif target_os not in ['darwin','ios']:
 	liboctbstack_env.AppendUnique(CFLAGS = ['-fPIC'])
-if target_os in ['android', 'linux']:
-	liboctbstack_env.AppendUnique(LIBS = ['connectivity_abstraction'])
 if target_os in ['darwin', 'ios']:
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
 	liboctbstack_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-	liboctbstack_env.AppendUnique(LIBS = ['coap'])
 
 if env.get('SECURED') == '1':
 	liboctbstack_env.AppendUnique(LIBS = ['tinydtls'])
