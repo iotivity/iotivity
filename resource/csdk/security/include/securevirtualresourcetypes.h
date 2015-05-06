@@ -377,8 +377,8 @@ struct OicSecPstat
     OicSecDpm_t         tm;             // 2:RW:S:Y:oic.sec.dpm
     OicUuid_t           deviceID;       // 3:R:S:Y:oic.uuid
     OicSecDpom_t        om;             // 4:RW:M:Y:oic.sec.dpom
-    size_t              smsLen;         // the number of elts in Sms
-    OicSecDpom_t        *sms;           // 5:R:M:Y:oic.sec.dpom
+    size_t              smLen;          // the number of elts in Sm
+    OicSecDpom_t        *sm;            // 5:R:M:Y:oic.sec.dpom
     uint16_t            commitHash;     // 6:R:S:Y:oic.sec.sha256
     //TODO: this is supposed to be a 256-bit uint; temporarily use uint16_t
     //TODO: need to decide which 256 bit and 128 bit types to use... boost?

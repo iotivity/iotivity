@@ -107,15 +107,15 @@ TEST(MarshalingAndUnMarshalingTest, BinToPstatJSONAndJSONToPstatBin)
     EXPECT_EQ(B64_OK, b64Decode(id, strlen(id), base64Buff, sizeof(base64Buff), &outLen));
     memcpy(pstat.deviceID.id, base64Buff, outLen);
     pstat.isOp = true;
-    pstat.smsLen = 2;
+    pstat.smLen = 2;
     pstat.tm = NORMAL;
     pstat.om = SINGLE_SERVICE_CLIENT_DRIVEN;
-    pstat.sms = (OicSecDpom_t*)OCCalloc(pstat.smsLen, sizeof(OicSecDpom_t));
-    if(NULL != pstat.sms)
+    pstat.sm = (OicSecDpom_t*)OCCalloc(pstat.smLen, sizeof(OicSecDpom_t));
+    if(NULL != pstat.sm)
     {
-        for(size_t i =0; i< pstat.smsLen; i++)
+        for(size_t i =0; i< pstat.smLen; i++)
         {
-            pstat.sms[i] = (OicSecDpom_t)i;
+            pstat.sm[i] = (OicSecDpom_t)i;
         }
     }
     char* jsonPstat = BinToPstatJSON(&pstat);
@@ -123,7 +123,7 @@ TEST(MarshalingAndUnMarshalingTest, BinToPstatJSONAndJSONToPstatBin)
     EXPECT_TRUE(jsonPstat != NULL);
     OicSecPstat_t *pstat1 = JSONToPstatBin(jsonPstat);
     EXPECT_TRUE(pstat1 != NULL);
-    OCFree(pstat1->sms);
+    OCFree(pstat1->sm);
     OCFree(pstat1);
     OCFree(jsonPstat);
 }

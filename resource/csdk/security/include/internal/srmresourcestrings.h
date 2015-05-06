@@ -74,7 +74,7 @@ extern const char * OIC_JSON_DEVICE_ID_NAME;
 extern const char * OIC_JSON_CM_NAME;
 extern const char * OIC_JSON_TM_NAME;
 extern const char * OIC_JSON_OM_NAME;
-extern const char * OIC_JSON_SMS_NAME;
+extern const char * OIC_JSON_SM_NAME;
 
 extern const OicUuid_t WILDCARD_SUBJECT_ID;
 extern const size_t WILDCARD_SUBJECT_ID_LEN;

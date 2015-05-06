@@ -52,7 +52,7 @@ static OicSecPstat_t gDefaultPstat =
     {},                                       // OicUuid_t deviceID
     SINGLE_SERVICE_CLIENT_DRIVEN,             // OicSecDpom_t om */
     1,                                        // the number of elts in Sms
-    &gSm,                                     // OicSecDpom_t *sms
+    &gSm,                                     // OicSecDpom_t *sm
     0,                                        // uint16_t commitHash
 };
 static OicSecPstat_t    *gPstat = NULL;
@@ -89,12 +89,12 @@ char * BinToPstatJSON(const OicSecPstat_t * pstat)
     cJSON_AddNumberToObject(jsonPstat, OIC_JSON_CM_NAME, (int)pstat->cm);
     cJSON_AddNumberToObject(jsonPstat, OIC_JSON_TM_NAME, (int)pstat->tm);
     cJSON_AddNumberToObject(jsonPstat, OIC_JSON_OM_NAME, (int)pstat->om);
-    cJSON *jsonSmsArray = NULL;
-    cJSON_AddItemToObject(jsonPstat, OIC_JSON_SMS_NAME, jsonSmsArray = cJSON_CreateArray());
-    VERIFY_NON_NULL(jsonSmsArray, INFO);
-    for (int i = 0; i < pstat->smsLen; i++)
+    cJSON *jsonSmArray = NULL;
+    cJSON_AddItemToObject(jsonPstat, OIC_JSON_SM_NAME, jsonSmArray = cJSON_CreateArray());
+    VERIFY_NON_NULL(jsonSmArray, INFO);
+    for (int i = 0; i < pstat->smLen; i++)
     {
-        cJSON_AddItemToArray(jsonSmsArray, cJSON_CreateNumber((int )pstat->sms[i]));
+        cJSON_AddItemToArray(jsonSmArray, cJSON_CreateNumber((int )pstat->sm[i]));
     }
     jsonStr = cJSON_Print(jsonRoot);
 exit:
@@ -152,21 +152,21 @@ OicSecPstat_t * JSONToPstatBin(const char * jsonStr)
     VERIFY_SUCCESS(cJSON_Number == jsonObj->type, ERROR);
     pstat->om  = jsonObj->valueint;
 
-    jsonObj = cJSON_GetObjectItem(jsonPstat, OIC_JSON_SMS_NAME);
+    jsonObj = cJSON_GetObjectItem(jsonPstat, OIC_JSON_SM_NAME);
     VERIFY_NON_NULL(jsonObj, ERROR);
     if (cJSON_Array == jsonObj->type)
     {
-        pstat->smsLen = cJSON_GetArraySize(jsonObj);
+        pstat->smLen = cJSON_GetArraySize(jsonObj);
         int idxx = 0;
-        VERIFY_SUCCESS(pstat->smsLen != 0, ERROR);
-        pstat->sms = (OicSecDpom_t*)OCCalloc(pstat->smsLen, sizeof(OicSecDpom_t));
-        VERIFY_NON_NULL(pstat->sms, FATAL);
+        VERIFY_SUCCESS(pstat->smLen != 0, ERROR);
+        pstat->sm = (OicSecDpom_t*)OCCalloc(pstat->smLen, sizeof(OicSecDpom_t));
+        VERIFY_NON_NULL(pstat->sm, FATAL);
         do
         {
-            cJSON *jsonSms = cJSON_GetArrayItem(jsonObj, idxx);
-            VERIFY_NON_NULL(jsonSms, ERROR);
-            pstat->sms[idxx] = jsonSms->valueint;
-        }while ( ++idxx < pstat->smsLen);
+            cJSON *jsonSm = cJSON_GetArrayItem(jsonObj, idxx);
+            VERIFY_NON_NULL(jsonSm, ERROR);
+            pstat->sm[idxx] = jsonSm->valueint;
+        }while ( ++idxx < pstat->smLen);
     }
     ret = OC_STACK_OK;
 
@@ -242,9 +242,9 @@ static OCEntityHandlerResult HandlePstatPostRequest(const OCEntityHandlerRequest
              * Check if the operation mode is in the supported provisioning services
              * operation mode list.
              */
-            for(size_t i=0; i< gPstat->smsLen; i++)
+            for(size_t i=0; i< gPstat->smLen; i++)
             {
-                if(gPstat->sms[i] == omJson->valueint)
+                if(gPstat->sm[i] == omJson->valueint)
                 {
                     gPstat->om = omJson->valueint;
                     break;
