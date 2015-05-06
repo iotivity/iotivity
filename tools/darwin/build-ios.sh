@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # change this to what version of Xcode you have installed
-SDKVER=8.2
+SDKVER=8.3
 
 scons TARGET_OS=ios TARGET_ARCH=armv7 SYS_VERSION=$SDKVER RELEASE=false
 scons TARGET_OS=ios TARGET_ARCH=armv7s SYS_VERSION=$SDKVER RELEASE=false

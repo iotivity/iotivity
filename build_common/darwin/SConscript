@@ -4,8 +4,25 @@
 ##
 import os
 import platform
+import commands
 
 Import('env')
+
+target_arch = env.get('TARGET_ARCH')
+target_os = env.get('TARGET_OS')
+
+tc_path=commands.getoutput('xcode-select -p')
+
+
+#if target_os == 'darwin':
+#	for tc_ver in ['10.10', '10.9','']:
+#		if os.path.exists(tc_path + '/Platforms/' + tc_ver):
+#			break
+#else:
+#	for tc_ver in ['10.10', '10.9','']:
+#		if os.path.exists(tc_path + '/toolchains/x86-' + tc_ver):
+#			break
+	
 
 # SYS_VERSION build option
 help_vars = Variables()
@@ -29,8 +46,6 @@ if sys_version is None:
 '''
 	Exit(1)
 
-target_arch = env.get('TARGET_ARCH')
-target_os = env.get('TARGET_OS')
 # Set release/debug flags
 if env.get('RELEASE'):
 	env.AppendUnique(CCFLAGS = ['-Os'])
@@ -40,12 +55,12 @@ else:
 	env.AppendUnique(LINKFLAGS = ['-g'])
 
 if target_os == 'darwin':
-	sys_root = '/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX' + sys_version + '.sdk/'
+	sys_root = tc_path + '/Platforms/MacOSX.platform/Developer/SDKs/MacOSX' + sys_version + '.sdk/'
 else:
 	if target_arch in ['i386', 'x86_64']:
-		sys_root = '/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator' + sys_version + '.sdk/'
+		sys_root = tc_path + '/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator' + sys_version + '.sdk/'
 	else:
-		sys_root = '/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS' + sys_version + '.sdk/'
+		sys_root = tc_path + '/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS' + sys_version + '.sdk/'
 
 # Set arch flags
 env.AppendUnique(CCFLAGS = ['-arch', target_arch, '-isysroot', sys_root])

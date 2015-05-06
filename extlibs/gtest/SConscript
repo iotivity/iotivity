@@ -37,29 +37,30 @@ if target_os == 'darwin':
 		gtest_lib_dir = gtest_dir + '/lib'
 		gtest_dotlib_dir = gtest_lib_dir + '/.libs'
 
-	        if not os.path.exists(gtest_lib_dir):
-			print 'Create a directory'
-			os.mkdir(gtest_lib_dir)
+        if not os.path.exists(gtest_lib_dir):
+#			print 'Create a directory'
+#			os.mkdir(gtest_lib_dir)
 
-			print 'Change to a directory'
-			os.chdir(gtest_lib_dir)
 
 			print 'Invoke cmake command to generate appropriate make files'
-			env.Configure(gtest_lib_dir, 'cmake -G"Unix Makefiles" ..')
+			env.Configure(gtest_dir, './configure')
 
 			# Run make on gtest
 			print 'Making google unit test'
-			env.Configure(gtest_lib_dir, 'make')
+			env.Configure(gtest_dir, 'make')
 
-			print 'Create a directory'
-			os.mkdir(gtest_dotlib_dir)
+#			print 'Create a directory'
+#			os.mkdir(gtest_dotlib_dir)
 
 			print 'Change to a directory'
 			os.chdir(gtest_dotlib_dir)
 
+##			print 'Change to a directory'
+#			os.chdir(gtest_lib_dir)
+
 			print 'Create hard links pointing to gtest libraries'
-			os.link('../' + 'libgtest.a', 'libgtest.a')
-			os.link('../' + 'libgtest_main.a', 'libgtest_main.a')
+			os.link('libgtest.a', gtest_lib_dir + 'libgtest.a')
+			os.link('libgtest_main.a', gtest_lib_dir +  'libgtest_main.a')
 			print 'Create hard links pointing to gtest libraries - DONE'
 
 
