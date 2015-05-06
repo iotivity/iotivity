@@ -64,8 +64,8 @@ JNIEXPORT jint JNICALL JNIThingsManagerFindCandidateResource(JNIEnv *env, jobjec
     }
     catch (InitializeException &e)
     {
-        LOGE("JNIThingsManagerFindCandidateResource: Exception occurred! %s, %d", e.Reason().c_str(),
-             e.ReasonCode());
+        LOGE("JNIThingsManagerFindCandidateResource: Exception occurred! %s, %d", e.reason().c_str(),
+             e.code());
         return ocResult;
     }
 
@@ -170,8 +170,8 @@ JNIEXPORT jobject JNICALL JNIThingsManagerBindResourceToGroup(JNIEnv *env, jobje
     }
     catch (InitializeException &e)
     {
-        LOGE("JNIThingsManagerBindResourceToGroup: Exception occurred! %s, %d", e.Reason().c_str(),
-             e.ReasonCode());
+        LOGE("JNIThingsManagerBindResourceToGroup: Exception occurred! %s, %d", e.reason().c_str(),
+             e.code());
         return NULL;
     }
 
@@ -203,8 +203,8 @@ JNIEXPORT jint JNICALL JNIThingsManagerFindGroup(JNIEnv *env, jobject interfaceO
     }
     catch (InitializeException &e)
     {
-        LOGE("JNIThingsManagerFindGroup: Exception occurred! %s, %d", e.Reason().c_str(),
-            e.ReasonCode());
+        LOGE("JNIThingsManagerFindGroup: Exception occurred! %s, %d", e.reason().c_str(),
+            e.code());
         return ocResult;
     }
     LOGI("JNIThingsManagerFindGroup: Exit");
@@ -242,8 +242,8 @@ JNIEXPORT jint JNICALL JNIThingsManagerCreateGroup(JNIEnv *env, jobject interfac
     }
     catch (InitializeException &e)
     {
-        LOGE("JNIThingsManagerCreateGroup: Exception occurred! %s, %d", e.Reason().c_str(),
-            e.ReasonCode());
+        LOGE("JNIThingsManagerCreateGroup: Exception occurred! %s, %d", e.reason().c_str(),
+            e.code());
     }
     env->ReleaseStringUTFChars(jResourceType, resourceTypePointer);
     LOGI("JNIThingsManagerCreateGroup: Exit");
@@ -285,8 +285,8 @@ JNIEXPORT jint JNICALL JNIThingsManagerJoinGroupString(JNIEnv *env, jobject inte
     }
     catch (InitializeException &e)
     {
-        LOGE("JNIThingsManagerJoinGroupString: Exception occurred! %s, %d", e.Reason().c_str(),
-             e.ReasonCode());
+        LOGE("JNIThingsManagerJoinGroupString: Exception occurred! %s, %d", e.reason().c_str(),
+             e.code());
     }
     env->ReleaseStringUTFChars(jResourceType, resourceTypePointer);
     LOGI("JNIThingsManagerJoinGroupString: Exit");
@@ -335,8 +335,8 @@ JNIEXPORT jint JNICALL JNIThingsManagerJoinGroupObject(JNIEnv *env, jobject inte
     }
     catch (InitializeException &e)
     {
-        LOGE("JNIThingsManagerJoinGroupObject: Exception occurred! %s, %d", e.Reason().c_str(),
-             e.ReasonCode());
+        LOGE("JNIThingsManagerJoinGroupObject: Exception occurred! %s, %d", e.reason().c_str(),
+             e.code());
         return ocResult;
     }
     LOGI("JNIThingsManagerJoinGroupObject: Exit");
@@ -380,8 +380,8 @@ JNIEXPORT jint JNICALL JNIThingsManagerLeaveGroup(JNIEnv *env, jobject interface
     }
     catch (InitializeException &e)
     {
-        LOGE("JNIThingsManagerLeaveGroup: Exception occurred! %s, %d", e.Reason().c_str(),
-            e.ReasonCode());
+        LOGE("JNIThingsManagerLeaveGroup: Exception occurred! %s, %d", e.reason().c_str(),
+            e.code());
     }
     env->ReleaseStringUTFChars(jResourceType, resourceTypePointer);
     LOGI("JNIThingsManagerLeaveGroup: Exit");
@@ -440,8 +440,8 @@ JNIEXPORT jint JNICALL JNIThingsManagerLeaveGroupForResource(JNIEnv *env, jobjec
     }
     catch (InitializeException &e)
     {
-        LOGE("JNIThingsManagerLeaveGroupForResource: Exception occurred! %s, %d", e.Reason().c_str(),
-             e.ReasonCode());
+        LOGE("JNIThingsManagerLeaveGroupForResource: Exception occurred! %s, %d", e.reason().c_str(),
+             e.code());
     }
 
     env->ReleaseStringUTFChars(jResourceType, resourceTypePointer);
@@ -474,8 +474,8 @@ JNIEXPORT void JNICALL JNIThingsManagerDeleteGroup(JNIEnv *env, jobject interfac
     }
     catch (InitializeException &e)
     {
-        LOGE("JNIThingsManagerDeleteGroup: Exception occurred! %s, %d", e.Reason().c_str(),
-            e.ReasonCode());
+        LOGE("JNIThingsManagerDeleteGroup: Exception occurred! %s, %d", e.reason().c_str(),
+            e.code());
     }
 
     env->ReleaseStringUTFChars(jcollectionResourceType, collectionResourceTypePointer);
@@ -621,8 +621,8 @@ JNIEXPORT jint JNICALL JNIThingsManagerDoBootstrap(JNIEnv *env, jobject interfac
     }
     catch (InitializeException &e)
     {
-        LOGE("JNIThingsManagerDoBootstrap: Exception occurred! %s, %d", e.Reason().c_str(),
-            e.ReasonCode());
+        LOGE("JNIThingsManagerDoBootstrap: Exception occurred! %s, %d", e.reason().c_str(),
+            e.code());
         return ocResult;
     }
 
