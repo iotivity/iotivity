@@ -20,7 +20,7 @@
 
 /// @file PluginManagerImpl.cpp
 
-/// @brief
+/// @brief PluginManagerImple provides abstraction of the plugin manager interface
 
 #include "PluginManagerImpl.h"
 
@@ -43,17 +43,18 @@ extern "C" void destroy_object( PluginManagerImpl *object )
 PluginManagerImpl::PluginManagerImpl(void *args)
 {
 #ifndef ANDROID
+        m_args = args;
         cppm = CpluffAdapter::Getinstance();
 #endif
 #ifdef ANDROID
     m_args = args;
-    cppm = CpluffAdapter::Getinstance(args);    
+    cppm = CpluffAdapter::Getinstance(args);
     if (args)
         javappm = FelixAdapter::Getinstance(args);
     else
         javappm = NULL;
 #endif
-    
+
     refreshPluginInfo();
 }
 

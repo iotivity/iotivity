@@ -20,7 +20,7 @@
 
 /// @file PluginManagerImpl.h
 
-/// @brief
+/// @brief PluginManagerImple provides abstraction of the plugin manager interface
 
 #ifndef __PLUGINMANAGERIMPL_H__
 #define __PLUGINMANAGERIMPL_H__
@@ -189,9 +189,9 @@ namespace OIC
         private:
 
             CpluffAdapter *cppm;
+            void *m_args;
 #ifdef ANDROID
             FelixAdapter *javappm;
-            void *m_args;
 #endif
 
             std::vector<Plugin> m_plugins;
