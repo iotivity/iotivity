@@ -23,7 +23,7 @@ else:
       env.AppendUnique(CA_SRC=[src_dir+'caipserver.c'])
 
 #Source files to build in Linux platform
-if target_os == 'linux':
+if target_os in ['linux','darwin','ios']:
 	env.AppendUnique(CA_SRC=[src_dir+'linux/caipnwmonitor.c'])
 
 if target_os == 'tizen':

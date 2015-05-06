@@ -78,6 +78,7 @@ if target_os == 'arduino':
 elif target_os not in ['darwin','ios']:
 	liboctbstack_env.AppendUnique(CFLAGS = ['-fPIC'])
 if target_os in ['darwin', 'ios']:
+	env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
 	liboctbstack_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 if target_os not in ['arduino']:

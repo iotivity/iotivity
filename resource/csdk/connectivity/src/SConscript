@@ -30,7 +30,7 @@ env.AppendUnique(CPPPATH = [root_dir + '/common/inc/'])
 if ca_os not in ['arduino', 'windows', 'winrt']:
 	env.AppendUnique(CPPDEFINES = ['WITH_POSIX'])
 
-if ca_os in ['darwin']:
+if ca_os in ['darwin','ios']:
 	env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
 
 #Getting common source files
