@@ -57,6 +57,12 @@ namespace std {
         return os.str();
     }
 
+    std::string to_string(long t) {
+        std::ostringstream os;
+            os << t;
+        return os.str();
+    }
+
     std::string to_string(double t) {
         std::ostringstream os;
             os << t;

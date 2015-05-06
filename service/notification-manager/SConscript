@@ -47,7 +47,7 @@ notimgr_env.AppendUnique(CPPPATH = ['../../resource/csdk/logger/include'])
 notimgr_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'libcoap'])
 
 if target_os not in ['windows', 'winrt']:
-	notimgr_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0'])
+	notimgr_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 
 if target_os == 'linux':
 	notimgr_env.AppendUnique(LIBS = ['pthread'])

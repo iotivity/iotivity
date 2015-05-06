@@ -41,6 +41,7 @@ extern "C" {
 #define OC_MULTICAST_IP                      "224.0.1.187"
 #define OC_MULTICAST_PORT                    5683
 
+#define USE_RANDOM_PORT (0)
 #ifdef WITH_PRESENCE
 #define OC_DEFAULT_PRESENCE_TTL (60)
 #define OC_PRESENCE_URI                      "/oc/presence"

@@ -55,8 +55,7 @@ if target_os not in ['arduino','darwin','ios', 'android']:
 	SConscript(build_dir + 'examples/OICMiddle/SConscript')
 
 # Build 'service' sub-project
-if target_os != 'android':
-	SConscript(build_dir + 'service/SConscript')
+SConscript(build_dir + 'service/SConscript')
 
 
 # Append targets information to the help information, to see help info, execute command line:
