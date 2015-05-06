@@ -53,8 +53,16 @@ namespace OCResourceTest
         std::vector<std::string> types = {"intel.rpost"};
         std::vector<std::string> ifaces = {DEFAULT_INTERFACE};
 
-        return OCPlatform::constructResourceObject(host, uri,
+        auto ret = OCPlatform::constructResourceObject(host, uri,
                 connectivityType, false, types, ifaces);
+
+        if(!ret)
+        {
+            ADD_FAILURE() << "ConstructResourceObject result was null";
+            throw std::runtime_error("ConstructResourceObject result was null");
+        }
+
+        return ret;
     }
 
      //Get Test
@@ -252,7 +260,7 @@ namespace OCResourceTest
         OCRepresentation rep;
         EXPECT_ANY_THROW(
                 resource->put(nullptr, DEFAULT_INTERFACE, rep, QueryParamsMap(), &onGetPut));
-        HeaderOptions headerOptions = {};
+        HeaderOptions headerOptions;
         onGetPut(headerOptions, rep, OC_STACK_OK);
     }
 
@@ -492,7 +500,7 @@ namespace OCResourceTest
     {
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
         EXPECT_TRUE(resource != NULL);
-        HeaderOptions headerOptions = {};
+        HeaderOptions headerOptions;
         EXPECT_NO_THROW(resource->setHeaderOptions(headerOptions));
         EXPECT_NO_THROW(resource->unsetHeaderOptions());
     }

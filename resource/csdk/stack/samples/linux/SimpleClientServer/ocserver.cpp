@@ -110,7 +110,13 @@ char* constructJsonResponse (OCEntityHandlerRequest *ehRequest)
     if(OC_REST_PUT == ehRequest->method)
     {
         // Get cJSON pointer to query
-        cJSON *putJson = cJSON_Parse((char *)ehRequest->reqJSONPayload);
+        cJSON *putJson = cJSON_Parse(ehRequest->reqJSONPayload);
+
+        if(!putJson)
+        {
+            OC_LOG_V(ERROR, TAG, "Failed to parse JSON: %s", ehRequest->reqJSONPayload);
+            return NULL;
+        }
 
         // Get root of JSON payload, then the 1st resource.
         cJSON* carrier = cJSON_GetObjectItem(putJson, "oc");
@@ -187,17 +193,21 @@ OCEntityHandlerResult ProcessGetRequest (OCEntityHandlerRequest *ehRequest,
         char *payload, uint16_t maxPayloadSize)
 {
     OCEntityHandlerResult ehResult;
-
     bool queryPassed = checkIfQueryForPowerPassed(ehRequest->query);
 
     // Empty payload if the query has no match.
     if (queryPassed)
     {
         char *getResp = constructJsonResponse(ehRequest);
-
-        if (maxPayloadSize > strlen ((char *)getResp))
+        if(!getResp)
         {
-            strncpy(payload, getResp, strlen((char *)getResp));
+            OC_LOG(ERROR, TAG, "constructJsonResponse failed");
+            return OC_EH_ERROR;
+        }
+
+        if (maxPayloadSize > strlen (getResp))
+        {
+            strncpy(payload, getResp, strlen(getResp));
             ehResult = OC_EH_OK;
         }
         else
@@ -222,6 +232,12 @@ OCEntityHandlerResult ProcessPutRequest (OCEntityHandlerRequest *ehRequest,
 {
     OCEntityHandlerResult ehResult;
     char *putResp = constructJsonResponse(ehRequest);
+
+    if(!putResp)
+    {
+        OC_LOG(ERROR, TAG, "Failed to construct Json response");
+        return OC_EH_ERROR;
+    }
 
     if (maxPayloadSize > strlen ((char *)putResp))
     {

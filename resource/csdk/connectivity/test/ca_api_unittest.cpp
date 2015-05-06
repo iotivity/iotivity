@@ -324,6 +324,13 @@ TEST(SendRequestTest, DISABLED_TC_16_Positive_01)
 
     int length = strlen(NORMAL_INFO_DATA) + strlen("a/light");
     requestData.payload = (CAPayload_t) calloc(length, sizeof(char));
+
+    if(!requestData.payload)
+    {
+        CADestroyToken(tempToken);
+        FAIL() << "requestData.payload allocation failed";
+    }
+
     snprintf(requestData.payload, length, NORMAL_INFO_DATA, "a/light");
     requestData.type = CA_MSG_NONCONFIRM;
 
@@ -355,6 +362,13 @@ TEST_F(CATests, SendRequestTestWithNullURI)
 
     int length = strlen(NORMAL_INFO_DATA) + strlen("a/light");
     requestData.payload = (CAPayload_t) calloc(length, sizeof(char));
+
+    if(!requestData.payload)
+    {
+        CADestroyToken(tempToken);
+        FAIL() << "requestData.payload allocation failed";
+    }
+
     snprintf(requestData.payload, length, NORMAL_INFO_DATA, "a/light");
     requestData.type = CA_MSG_NONCONFIRM;
 
@@ -528,6 +542,11 @@ TEST(AdvertiseResourceTest, DISABLED_TC_24_Positive_01)
     CAHeaderOption_t* headerOpt;
     headerOpt = (CAHeaderOption_t *) calloc(1, optionNum * sizeof(CAHeaderOption_t));
 
+    if(!headerOpt)
+    {
+        FAIL() <<"Allocation for headerOpt failed";
+    }
+
     char* tmpOptionData1 = (char *) "Hello";
     size_t tmpOptionDataLen = (strlen(tmpOptionData1) < CA_MAX_HEADER_OPTION_DATA_LENGTH) ?
             strlen(tmpOptionData1) : CA_MAX_HEADER_OPTION_DATA_LENGTH - 1;
@@ -560,6 +579,11 @@ TEST_F(CATests, AdvertiseResourceTest)
 
     CAHeaderOption_t* headerOpt;
     headerOpt = (CAHeaderOption_t *) calloc(1, optionNum * sizeof(CAHeaderOption_t));
+
+    if(!headerOpt)
+    {
+        FAIL() << "Allocation for headerOpt failed";
+    }
 
     char* tmpOptionData1 = (char *) "Hello";
     size_t tmpOptionDataLen = (strlen(tmpOptionData1) < CA_MAX_HEADER_OPTION_DATA_LENGTH) ?
@@ -642,6 +666,11 @@ TEST(SendRequestToAllTest, DISABLED_TC_31_Positive_01)
     CACreateRemoteEndpoint(uri, CA_IPV4, &tempRep);
     CAGroupEndpoint_t *group = NULL;
     group = (CAGroupEndpoint_t *) malloc(sizeof(CAGroupEndpoint_t));
+    if(!group)
+    {
+        FAIL() << "Allocation for group failed";
+    }
+
     group->transportType = tempRep->transportType;
     group->resourceUri = tempRep->resourceUri;
 
@@ -713,6 +742,8 @@ CAResult_t checkGetNetworkInfo()
     uint32_t tempSize = 0;
 
     CAResult_t res = CAGetNetworkInformation(&tempInfo, &tempSize);
+
+    free(tempInfo);
 
     if (CA_STATUS_OK == res || CA_ADAPTER_NOT_ENABLED == res ||
             CA_NOT_SUPPORTED == res)

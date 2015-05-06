@@ -138,7 +138,7 @@ namespace iotivity
                     try {
                         throw std::runtime_error("deadman timer expired");
                     }
-                    catch (std::exception &e)
+                    catch (std::exception&)
                     {
                         std::terminate();
                     }

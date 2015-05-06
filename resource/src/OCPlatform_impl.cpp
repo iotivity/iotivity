@@ -30,6 +30,8 @@
 //
 //*********************************************************************
 
+#include "OCPlatform_impl.h"
+
 #include <random>
 #include <utility>
 #include <functional>

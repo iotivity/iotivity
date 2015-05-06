@@ -627,16 +627,19 @@ CAResult_t CAIPStartUnicastServer(const char *localAddress, uint16_t *port,
         }
         if (netMask)
         {
-            strncpy(info->subNetMask, netMask, strlen(netMask));
+            strncpy(info->subNetMask, netMask, sizeof(info->subNetMask) - 1);
+            info->subNetMask[sizeof(info->subNetMask)-1] = '\0';
             OICFree(netMask);
         }
-        strncpy(info->ipAddress, localAddress, strlen(localAddress));
+        strncpy(info->ipAddress, localAddress, sizeof(info->ipAddress) - 1);
+        info->ipAddress[sizeof(info->ipAddress) - 1] = '\0';
         info->port = *port;
         info->socketFd = unicastServerFd;
         info->isSecured = isSecured;
         info->isServerStarted = true;
         info->isMulticastServer = false;
-        strncpy(info->ifAddr, localAddress, strlen(localAddress));
+        strncpy(info->ifAddr, localAddress, sizeof(info->ifAddr) - 1);
+        info->ifAddr[sizeof(info->ifAddr) - 1] = '\0';
 
         CAResult_t res = CAAddServerInfo(g_serverInfoList, info);
         if (CA_STATUS_OK != res)
@@ -726,17 +729,20 @@ CAResult_t CAIPStartMulticastServer(const char *localAddress, const char *multic
         }
         if (netMask)
         {
-            strncpy(info->subNetMask, netMask, strlen(netMask));
+            strncpy(info->subNetMask, netMask, sizeof(info->subNetMask) - 1);
+            info->subNetMask[sizeof(info->subNetMask) -1] = '\0';
             OICFree(netMask);
         }
 
-        strncpy(info->ipAddress, multicastAddress, strlen(multicastAddress));
+        strncpy(info->ipAddress, multicastAddress, sizeof(info->ipAddress) - 1);
+        info->ipAddress[sizeof(info->ipAddress) -1] = '\0';
         info->port = multicastPort;
         info->socketFd = mulicastServerFd;
         info->isSecured = false;
         info->isServerStarted = true;
         info->isMulticastServer = true;
-        strncpy(info->ifAddr, localAddress, strlen(localAddress));
+        strncpy(info->ifAddr, localAddress, sizeof(info->ifAddr)-1);
+        info->ifAddr[sizeof(info->ifAddr) -1] = '\0';
 
         ret = CAAddServerInfo(g_serverInfoList, info);
 

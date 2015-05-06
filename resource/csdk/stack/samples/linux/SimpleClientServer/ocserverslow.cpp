@@ -120,6 +120,12 @@ void ProcessGetRequest (OCEntityHandlerRequest *ehRequest)
 {
     OC_LOG(INFO, TAG, "Entering ProcessGetRequest");
     char *getResp = constructJsonResponse(ehRequest);
+
+    if(!getResp)
+    {
+        OC_LOG(ERROR, TAG, "Failed to constructJsonResponse");
+        return;
+    }
     OC_LOG(INFO, TAG, "After constructJsonResponse");
     OCEntityHandlerResponse response;
 

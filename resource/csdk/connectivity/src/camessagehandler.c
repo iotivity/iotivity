@@ -399,11 +399,6 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data, u
         if (NULL == cadata)
         {
             OIC_LOG(ERROR, TAG, "CAReceivedPacketCallback, Memory allocation failed !");
-            if (NULL != endpoint && NULL != endpoint->resourceUri)
-            {
-                OICFree(endpoint->resourceUri);
-            }
-
             OICFree(ReqInfo);
             coap_delete_pdu(pdu);
             CAAdapterFreeRemoteEndpoint(endpoint);
@@ -477,10 +472,6 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data, u
         if (NULL == cadata)
         {
             OIC_LOG(ERROR, TAG, "CAReceivedPacketCallback, Memory allocation failed !");
-            if (NULL != endpoint && NULL != endpoint->resourceUri)
-            {
-                OICFree(endpoint->resourceUri);
-            }
             OICFree(ResInfo);
             coap_delete_pdu(pdu);
             CAAdapterFreeRemoteEndpoint(endpoint);

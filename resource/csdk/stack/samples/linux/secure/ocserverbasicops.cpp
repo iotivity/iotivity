@@ -68,7 +68,13 @@ char* constructJsonResponse (OCEntityHandlerRequest *ehRequest)
 
     if(OC_REST_PUT == ehRequest->method)
     {
-        cJSON *putJson = cJSON_Parse((char *)ehRequest->reqJSONPayload);
+        cJSON *putJson = cJSON_Parse(ehRequest->reqJSONPayload);
+        if(!putJson)
+        {
+            OC_LOG_V(ERROR, TAG, "Failed to parse JSON: %s", ehRequest->reqJSONPayload);
+            return NULL;
+        }
+
         currLEDResource->state = ( !strcmp(cJSON_GetObjectItem(putJson,"state")->valuestring ,
                 "on") ? true:false);
         currLEDResource->power = cJSON_GetObjectItem(putJson,"power")->valuedouble;

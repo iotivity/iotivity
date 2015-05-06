@@ -380,7 +380,8 @@ void * ChangeLightRepresentation (void *param)
 
             if(isListOfObservers)
             {
-                std::shared_ptr<OCResourceResponse> resourceResponse(new OCResourceResponse());
+                std::shared_ptr<OCResourceResponse> resourceResponse =
+                            std::make_shared<OCResourceResponse>();
 
                 resourceResponse->setErrorCode(200);
                 resourceResponse->setResourceRepresentation(lightPtr->get(), DEFAULT_INTERFACE);

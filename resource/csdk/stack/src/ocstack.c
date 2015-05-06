@@ -1505,6 +1505,7 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
                 requestInfo->info.type, requestInfo->info.numOptions,
                 requestInfo->info.options, requestInfo->info.token,
                 requestInfo->info.tokenLength);
+        OCFree(serverRequest.requestToken);
         return;
     }
     serverRequest.numRcvdVendorSpecificHeaderOptions = tempNum;
@@ -1897,6 +1898,14 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     if(method == OC_REST_PRESENCE)
     {
         result = getQueryFromUri(requiredUri, &query, &newUri);
+
+        if(result != OC_STACK_OK)
+        {
+            OC_LOG_V(ERROR, TAG, "Invalid Param from getQueryFromUri: %d, URI is %s",
+                    result, requiredUri);
+            goto exit;
+        }
+
         if(query)
         {
             result = getResourceType((char *) query, &resourceType);
@@ -1997,6 +2006,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
                                     numOptions, OC_OBSERVE_REGISTER);
         if (result != OC_STACK_OK)
         {
+            CADestroyToken(token);
             goto exit;
         }
         requestData.numOptions = numOptions + 1;
@@ -2009,7 +2019,6 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     requestData.payload = (char *)request;
 
     requestInfo.info = requestData;
-
     CATransportType_t caConType;
 
     result = OCToCATransportType((OCConnectivityType) conType, &caConType);
@@ -2028,6 +2037,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
         if(!grpEnd.resourceUri)
         {
             result = OC_STACK_NO_MEMORY;
+            CADestroyToken(token);
             goto exit;
         }
         strncpy(grpEnd.resourceUri, requiredUri, (uriLen + 1));
@@ -2086,6 +2096,7 @@ exit:
     }
     CADestroyRemoteEndpoint(endpoint);
     OCFree(grpEnd.resourceUri);
+
     if (requestData.options  && requestData.numOptions > 0)
     {
         if ((method == OC_REST_OBSERVE) || (method == OC_REST_OBSERVE_ALL))
@@ -3765,6 +3776,11 @@ OCStackResult getQueryFromUri(const char * uri, char** query, char ** uriWithout
         }
         strncpy(*uriWithoutQuery, uri, uriWithoutQueryLen);
     }
+    else
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
     if (queryLen)
     {
         *query = (char *) OCCalloc(queryLen + 1, 1);

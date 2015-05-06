@@ -330,7 +330,7 @@ int main(int argc, char* argv[])
                 std::cout << "Invalid connectivity type selected. Using default WIFI" << std::endl;
             }
         }
-        catch(std::exception& e)
+        catch(std::exception& )
         {
             std::cout << "Invalid input argument. Using WIFI as connectivity type" << std::endl;
         }

@@ -21,6 +21,9 @@
 #ifndef OCRESOURCE_H_
 #define OCRESOURCE_H_
 
+#include "ocstackconfig.h"
+#include "occlientcb.h"
+
 #define OC_OBSERVER_NOT_INTERESTED       (0)
 #define OC_OBSERVER_STILL_INTERESTED     (1)
 #define OC_OBSERVER_FAILED_COMM          (2)

@@ -59,7 +59,7 @@
 
 #define CA_BUFSIZE (128)
 #define CA_PDU_MIN_SIZE (4)
-#define CA_PORT_BUFFER_SIZE (2)
+#define CA_PORT_BUFFER_SIZE (4)
 
 static const char COAP_URI_HEADER[] = "coap://[::]/";
 
@@ -596,7 +596,7 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *
                     // Make sure there is enough room in the optionResult buffer
                     if ((optionLength + bufLength) < sizeof(optionResult))
                     {
-                        memcpy(optionResult + optionLength, buf, bufLength);
+                        memcpy(&optionResult[optionLength], buf, bufLength);
                         optionLength += bufLength;
                     }
                     else
@@ -652,7 +652,7 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *
                     // Make sure there is enough room in the optionResult buffer
                     if ((optionLength + bufLength) < sizeof(optionResult))
                     {
-                        memcpy(optionResult + optionLength, buf, bufLength);
+                        memcpy(&optionResult[optionLength], buf, bufLength);
                         optionLength += bufLength;
                     }
                     else

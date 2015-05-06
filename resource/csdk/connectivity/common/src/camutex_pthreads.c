@@ -124,7 +124,11 @@ void ca_mutex_lock(ca_mutex mutex)
     {
         int ret = pthread_mutex_lock(&mutexInfo->mutex);
         assert(0 == ret);
-        (void)ret;
+        if(ret != 0)
+        {
+            OIC_LOG_V(ERROR, TAG, "Pthread Mutex lock failed: %d", ret);
+            exit(ret);
+        }
     }
     else
     {
@@ -170,7 +174,13 @@ void ca_mutex_unlock(ca_mutex mutex)
     if (mutexInfo)
     {
         int ret = pthread_mutex_unlock(&mutexInfo->mutex);
+
         assert ( 0 == ret);
+        if(ret != 0)
+        {
+            OIC_LOG_V(ERROR, TAG, "Pthread Mutex unlock failed: %d", ret);
+            exit(ret);
+        }
         (void)ret;
     }
     else
@@ -191,6 +201,7 @@ ca_cond ca_cond_new(void)
         {
             OIC_LOG_V(ERROR, TAG, "%s: Failed to initialize condition variable attribute %d!",
                     __func__, ret);
+            OICFree(eventInfo);
             return retVal;
         }
 
@@ -201,6 +212,8 @@ ca_cond ca_cond_new(void)
         {
             OIC_LOG_V(ERROR, TAG, "%s: Failed to set condition variable clock %d!",
                     __func__, ret);
+            pthread_condattr_destroy(&(eventInfo->condattr));
+            OICFree(eventInfo);
             return retVal;
         }
 #endif
@@ -212,6 +225,7 @@ ca_cond ca_cond_new(void)
         else
         {
             OIC_LOG_V(ERROR, TAG, "%s: Failed to initialize condition variable %d!", __func__, ret);
+            pthread_condattr_destroy(&(eventInfo->condattr));
             OICFree(eventInfo);
         }
     }
