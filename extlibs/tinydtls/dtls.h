@@ -437,6 +437,30 @@ int dtls_handle_message(dtls_context_t *ctx, session_t *session,
 dtls_peer_t *dtls_get_peer(const dtls_context_t *context,
 			   const session_t *session);
 
+/**
+* Invokes the DTLS PRF using the current key block for @p session as
+* key and @p label + @p random1 + @p random2 as its input. This function
+* writes upto @p buflen bytes into the given output buffer @p buf.
+*
+* @param ctx The dtls context to use.
+* @param session The session whose key shall be used.
+* @param label A PRF label.
+* @param labellen Actual length of @p label.
+* @param random1 Random seed.
+* @param random1len Actual length of @p random1 (may be zero).
+* @param random2 Random seed.
+* @param random2len Actual length of @p random2 (may be zero).
+* @param buf Output buffer for generated random data.
+* @param buflen Maximum size of @p buf.
+*
+* @return The actual number of bytes written to @p buf or @c 0 on error.
+*/
+size_t dtls_prf_with_current_keyblock(dtls_context_t *ctx, session_t *session,
+                                      const uint8_t* label, const uint32_t labellen,
+                                      const uint8_t* random1, const uint32_t random1len,
+                                      const uint8_t* random2, const uint32_t random2len,
+                                      uint8_t* buf, const uint32_t buflen);
+
 
 #endif /* _DTLS_DTLS_H_ */
 

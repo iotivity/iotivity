@@ -4183,6 +4183,44 @@ dtls_check_retransmit(dtls_context_t *context, clock_time_t *next) {
     *next = node->t;
 }
 
+size_t
+dtls_prf_with_current_keyblock(dtls_context_t *ctx, session_t *session,
+                               const uint8_t* label, const uint32_t labellen,
+                               const uint8_t* random1, const uint32_t random1len,
+                               const uint8_t* random2, const uint32_t random2len,
+                               uint8_t* buf, const uint32_t buflen) {
+  dtls_peer_t *peer = NULL;
+  dtls_security_parameters_t *security = NULL;
+  size_t keysize = 0;
+
+  if(!ctx || !session || !label || !buf || labellen == 0 || buflen == 0) {
+    dtls_warn("dtls_prf_with_current_keyblock(): invalid parameter\n");
+    return 0;
+  }
+
+  peer = dtls_get_peer(ctx, session);
+  if (!peer) {
+    dtls_warn("dtls_prf_with_current_keyblock(): cannot find peer\n");
+    return 0;
+  }
+
+  security = dtls_security_params(peer);
+  if (!security) {
+    dtls_crit("dtls_prf_with_current_keyblock(): peer has empty security parameters\n");
+    return 0;
+  }
+
+  /* note that keysize should never be zero as bad things will happen */
+  keysize = dtls_kb_size(security, peer->role);
+  assert(keysize > 0);
+
+  return dtls_prf(security->key_block, keysize,
+		  label, labellen,
+		  random1, random1len,
+		  random2, random2len,
+		  buf, buflen);
+}
+
 #ifdef WITH_CONTIKI
 /*---------------------------------------------------------------------------*/
 /* message retransmission */
