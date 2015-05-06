@@ -324,7 +324,7 @@ static OCEntityHandlerResult HandleACLPostRequest (const OCEntityHandlerRequest 
             if ((jsonAcl) &&
                 (OC_STACK_OK == UpdateSVRDatabase(OIC_JSON_ACL_NAME, jsonAcl)))
             {
-                ehRet = OC_EH_OK;
+                ehRet = OC_EH_RESOURCE_CREATED;
             }
             cJSON_Delete(jsonAcl);
         }

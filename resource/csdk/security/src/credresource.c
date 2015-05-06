@@ -464,7 +464,7 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
     if(cred)
     {
         //Append the new Cred to existing list
-        ret = (OC_STACK_OK == AddCredential(cred))? OC_EH_OK : OC_EH_ERROR;
+        ret = (OC_STACK_OK == AddCredential(cred))? OC_EH_RESOURCE_CREATED : OC_EH_ERROR;
     }
 
     return ret;
@@ -490,18 +490,20 @@ OCEntityHandlerResult CredEntityHandler (OCEntityHandlerFlag flag,
         switch(ehRequest->method)
         {
             case OC_REST_GET:
+                ret = OC_EH_FORBIDDEN;
                 break;
             case OC_REST_POST:
                 ret = HandlePostRequest(ehRequest);
                 break;
             default:
+                ret = OC_EH_ERROR;
                 break;
         }
     }
 
     //Send payload to request originator
     ret = (SendSRMResponse(ehRequest, ret, NULL) == OC_STACK_OK ?
-                       OC_EH_OK : OC_EH_ERROR);
+                       ret : OC_EH_ERROR);
 
     return ret;
 }
