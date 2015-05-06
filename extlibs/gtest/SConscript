@@ -68,7 +68,10 @@ elif target_os == 'linux':
 		if not os.path.exists(gtest_dir + "/lib"):
 			# Run configure on gtest
 			print 'Configuring google unit test'
-			env.Configure(gtest_dir, './configure')
+			if env.get('CROSS_COMPILE'): 
+				env.Configure(gtest_dir, './configure --host=' + env['CROSS_COMPILE'])
+			else:
+				env.Configure(gtest_dir, './configure')
 
 			# Run make on gtest
 			print 'Making google unit test'

@@ -22,7 +22,7 @@ os_arch_map = {
 		'darwin': ['i386', 'x86_64'],
 		'ios': ['i386', 'x86_64', 'armv7', 'armv7s', 'arm64'],
 		'arduino': ['avr', 'arm'],
-		'yocto': ['x86', 'x86_64'],
+                'yocto': ['i586', 'x86_64', 'arm', 'powerpc', 'powerpc64', 'mips', 'mipsel'],
 		}
 
 host = platform.system().lower()
@@ -221,6 +221,7 @@ if target_os == "yocto":
                     if os.path.isfile(os.path.join(path, tools[tool])):
                         env[tool] = os.path.join(path, os.environ[tool])
                         break
+        env['CROSS_COMPILE'] = target_prefix[:len(target_prefix) - 1]
     except:
         print "ERROR in Yocto cross-toolchain environment"
         Exit(1)
@@ -233,7 +234,18 @@ if target_os == "yocto":
     We want to preserve debug symbols to allow BitBake to generate both DEBUG and
     RELEASE packages for OIC.
     '''
-    env['CCFLAGS'].append('-g')
+    env.AppendUnique(CCFLAGS = ['-g'])
+    '''
+    Additional flags to pass to the Yocto toolchain.
+    '''
+    if env.get('RELEASE'):
+        env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+    if env.get('LOGGING'):
+        env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+    env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '__linux__', '_GNU_SOURCE'])
+    env.AppendUnique(CFLAGS = ['-std=gnu99'])
+    env.AppendUnique(CCFLAGS = ['-Wall', '-fPIC'])
+    env.AppendUnique(LINKFLAGS = ['-ldl', '-lpthread'])
     Export('env')
 else:
     '''
