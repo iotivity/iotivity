@@ -550,7 +550,7 @@ void CAIPTerminateServer()
     if (!g_adapterEthServerContext)
     {
         OIC_LOG(ERROR, IP_SERVER_TAG, "g_adapterEthServerContext NULL");
-        ca_mutex_unlock(g_adapterEthServerContext);
+        ca_mutex_unlock(g_mutexAdapterServerContext);
         return;
     }
 
@@ -559,12 +559,12 @@ void CAIPTerminateServer()
 
     ca_mutex_unlock(g_mutexAdapterServerContext);
 
-    ca_mutex_lock(g_mutexAdapterServerContext);
+    ca_mutex_lock(g_mutexServerInfoList);
 
     CAClearServerInfoList(g_serverInfoList);
     g_serverInfoList = NULL;
 
-    ca_mutex_unlock(g_mutexAdapterServerContext);
+    ca_mutex_unlock(g_mutexServerInfoList);
     // Destroy mutex
     CAIPServerDestroyMutex();
 

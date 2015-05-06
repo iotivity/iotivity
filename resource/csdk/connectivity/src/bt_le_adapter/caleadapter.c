@@ -1152,11 +1152,11 @@ void CABLEServerDataReceiverHandler(void *threadData)
             isHeaderAvailable = false;
             OICFree(defragData);
             CAAdapterFreeRemoteEndpoint(remoteEndpoint);
-            u_mutex_unlock(g_bleServerReceiveDataMutex);
+            ca_mutex_unlock(g_bleServerReceiveDataMutex);
             return;
         }
     }
-    u_mutex_unlock(g_bleServerReceiveDataMutex);
+    ca_mutex_unlock(g_bleServerReceiveDataMutex);
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
 }
 

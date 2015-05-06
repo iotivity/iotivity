@@ -882,7 +882,7 @@ void CAStopBLEGattClient()
         OIC_LOG(ERROR, TZ_BLE_CLIENT_TAG, "g_eventLoop context is NULL");
     }
 
-    u_mutex_unlock(g_bleClientStateMutex);
+    ca_mutex_unlock(g_bleClientStateMutex);
 
     OIC_LOG(DEBUG,  TZ_BLE_CLIENT_TAG, "OUT");
 }
@@ -890,7 +890,7 @@ void CAStopBLEGattClient()
 void CATerminateBLEGattClient()
 {
     OIC_LOG(DEBUG,  TZ_BLE_CLIENT_TAG, "IN");
-    u_mutex_lock(g_bleClientStateMutex);
+    ca_mutex_lock(g_bleClientStateMutex);
 
 
     OICFree(g_remoteAddress);

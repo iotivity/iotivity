@@ -348,7 +348,7 @@ CAResult_t CAStopBleGattServer()
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "g_eventLoop context is NULL");
     }
 
-    u_mutex_unlock(g_bleServerStateMutex);
+    ca_mutex_unlock(g_bleServerStateMutex);
 
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "OUT");
     return CA_STATUS_OK;
@@ -358,7 +358,7 @@ void CATerminateBleGattServer()
 {
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
 
-    u_mutex_lock(g_bleServerStateMutex);
+    ca_mutex_lock(g_bleServerStateMutex);
 
     g_isBleGattServerStarted = false;
     if (NULL != g_hAdvertiser )
@@ -727,12 +727,12 @@ CAResult_t CAUpdateCharacteristicsToGattClient(const char* address, const char *
 
     OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "Client's Unicast address for sending data [%s]", address);
 
-    u_mutex_lock(g_bleCharacteristicMutex);
+    ca_mutex_lock(g_bleCharacteristicMutex);
 
     if (NULL  == g_gattWriteCharPath)
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "gGattWriteCharPath is NULL");
-        u_mutex_unlock(g_bleCharacteristicMutex);
+        ca_mutex_unlock(g_bleCharacteristicMutex);
         return CA_STATUS_FAILED;
     }
 
@@ -740,7 +740,7 @@ CAResult_t CAUpdateCharacteristicsToGattClient(const char* address, const char *
     if (NULL == data)
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "malloc failed!");
-        u_mutex_unlock(g_bleCharacteristicMutex);
+        ca_mutex_unlock(g_bleCharacteristicMutex);
         return CA_STATUS_FAILED;
     }
     memset(data, 0x0, (charValueLen + 1));
@@ -756,12 +756,12 @@ CAResult_t CAUpdateCharacteristicsToGattClient(const char* address, const char *
         OIC_LOG_V(ERROR, TZ_BLE_SERVER_TAG,
                   "bt_gatt_update_characteristic failed with return [%d]", ret);
         OICFree(data);
-        u_mutex_unlock(g_bleCharacteristicMutex);
+        ca_mutex_unlock(g_bleCharacteristicMutex);
         return CA_STATUS_FAILED;
     }
 
     OICFree(data);
-    u_mutex_unlock(g_bleCharacteristicMutex);
+    ca_mutex_unlock(g_bleCharacteristicMutex);
 
     OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "OUT");
     return CA_STATUS_OK;

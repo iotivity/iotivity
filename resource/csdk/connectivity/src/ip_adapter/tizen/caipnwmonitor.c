@@ -23,7 +23,7 @@
 #include <wifi.h>
 
 #include "caadapterutils.h"
-#include "umutex.h"
+#include "camutex.h"
 #include "logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
@@ -34,7 +34,7 @@
  * @var g_networkMonitorContextMutex
  * @brief  Mutex for synchronizing access to cached interface and IP address information.
  */
-static u_mutex g_networkMonitorContextMutex = NULL;
+static ca_mutex g_networkMonitorContextMutex = NULL;
 
 /**
  * @struct CAIPNwMonitorContext
@@ -56,12 +56,12 @@ static CAIPNetworkMonitorContext *g_networkMonitorContext = NULL;
 
 static void CARemoveInterfaceInfo()
 {
-    u_mutex_lock(g_networkMonitorContextMutex);
+    ca_mutex_lock(g_networkMonitorContextMutex);
     if (!g_networkMonitorContext->netInterfaceList)
     {
         OIC_LOG(ERROR, IP_MONITOR_TAG,
                 "netInterfaceList is empty");
-        u_mutex_unlock(g_networkMonitorContextMutex);
+        ca_mutex_unlock(g_networkMonitorContextMutex);
         return;
     }
 
@@ -94,14 +94,14 @@ static void CARemoveInterfaceInfo()
 
     u_arraylist_free(&g_networkMonitorContext->netInterfaceList);
 
-    u_mutex_unlock(g_networkMonitorContextMutex);
+    ca_mutex_unlock(g_networkMonitorContextMutex);
 }
 
 static bool CACheckIsInterfaceInfoChanged(const CANetInfo_t *info)
 {
     VERIFY_NON_NULL_RET(info, IP_MONITOR_TAG, "info is null", false);
 
-    u_mutex_lock(g_networkMonitorContextMutex);
+    ca_mutex_lock(g_networkMonitorContextMutex);
     uint32_t list_index = 0;
     uint32_t list_length = u_arraylist_length(g_networkMonitorContext->netInterfaceList);
     for (list_index = 0; list_index < list_length; list_index++)
@@ -117,7 +117,7 @@ static bool CACheckIsInterfaceInfoChanged(const CANetInfo_t *info)
         {
             if (strncmp(netInfo->ipAddress, info->ipAddress, strlen(info->ipAddress)) == 0)
             {
-                u_mutex_unlock(g_networkMonitorContextMutex);
+                ca_mutex_unlock(g_networkMonitorContextMutex);
                 return false;
             }
             else
@@ -145,7 +145,7 @@ static bool CACheckIsInterfaceInfoChanged(const CANetInfo_t *info)
     if (!newNetInfo)
     {
         OIC_LOG(ERROR, IP_MONITOR_TAG, "newNetInfo malloc failed");
-        u_mutex_unlock(g_networkMonitorContextMutex);
+        ca_mutex_unlock(g_networkMonitorContextMutex);
         return false;
     }
     memcpy(newNetInfo, info, sizeof(*newNetInfo));
@@ -158,10 +158,10 @@ static bool CACheckIsInterfaceInfoChanged(const CANetInfo_t *info)
     {
         OIC_LOG(ERROR, IP_MONITOR_TAG, "u_arraylist_add failed!");
         OICFree(newNetInfo);
-        u_mutex_unlock(g_networkMonitorContextMutex);
+        ca_mutex_unlock(g_networkMonitorContextMutex);
         return false;
     }
-    u_mutex_unlock(g_networkMonitorContextMutex);
+    ca_mutex_unlock(g_networkMonitorContextMutex);
 
     /*Callback will be unset only at the time of termination. By that time, all the threads will be
       stopped gracefully. This callback is properly protected*/
@@ -356,7 +356,7 @@ static CAResult_t CAInitializeNetworkMonitorMutexes()
 {
     if (!g_networkMonitorContextMutex)
     {
-        g_networkMonitorContextMutex = u_mutex_new();
+        g_networkMonitorContextMutex = ca_mutex_new();
         if (!g_networkMonitorContextMutex)
         {
             OIC_LOG(ERROR, IP_MONITOR_TAG, "g_networkMonitorContextMutex Malloc  failed");
@@ -369,7 +369,7 @@ static CAResult_t CAInitializeNetworkMonitorMutexes()
 
 static void CADestroyNetworkMonitorMutexes()
 {
-    u_mutex_free(g_networkMonitorContextMutex);
+    ca_mutex_free(g_networkMonitorContextMutex);
     g_networkMonitorContextMutex = NULL;
 }
 
@@ -386,7 +386,7 @@ CAResult_t CAIPInitializeNetworkMonitor(const ca_thread_pool_t threadPool)
         OIC_LOG(ERROR, IP_MONITOR_TAG, "CAInitializeNetworkMonitorMutexes failed");
         return CA_STATUS_FAILED;
     }
-    u_mutex_lock(g_networkMonitorContextMutex);
+    ca_mutex_lock(g_networkMonitorContextMutex);
 
      // Initialize Wifi service
     wifi_error_e retValue = wifi_initialize();
@@ -401,7 +401,7 @@ CAResult_t CAIPInitializeNetworkMonitor(const ca_thread_pool_t threadPool)
     if (!g_networkMonitorContext)
     {
         OIC_LOG(ERROR, IP_MONITOR_TAG, "g_networkMonitorContext Malloc  failed");
-        u_mutex_unlock(g_networkMonitorContextMutex);
+        ca_mutex_unlock(g_networkMonitorContextMutex);
         CADestroyNetworkMonitorMutexes();
         return CA_MEMORY_ALLOC_FAILED;
     }
@@ -411,14 +411,14 @@ CAResult_t CAIPInitializeNetworkMonitor(const ca_thread_pool_t threadPool)
     {
         OIC_LOG(ERROR, IP_MONITOR_TAG, "u_arraylist_create failed");
         OICFree(g_networkMonitorContext);
-        u_mutex_unlock(g_networkMonitorContextMutex);
+        ca_mutex_unlock(g_networkMonitorContextMutex);
         CADestroyNetworkMonitorMutexes();
         return CA_MEMORY_ALLOC_FAILED;
     }
 
     CAIPGetInterfaceInformation(&g_networkMonitorContext->netInterfaceList);
 
-    u_mutex_unlock(g_networkMonitorContextMutex);
+    ca_mutex_unlock(g_networkMonitorContextMutex);
 
     OIC_LOG(DEBUG, IP_MONITOR_TAG, "OUT");
     return CA_STATUS_OK;
@@ -428,7 +428,7 @@ void CAIPTerminateNetworkMonitor()
 {
     OIC_LOG(DEBUG, IP_MONITOR_TAG, "IN");
 
-    u_mutex_lock(g_networkMonitorContextMutex);
+    ca_mutex_lock(g_networkMonitorContextMutex);
 
      // Deinitialize Wifi service
     wifi_error_e ret = wifi_deinitialize();
@@ -446,7 +446,7 @@ void CAIPTerminateNetworkMonitor()
     OICFree(g_networkMonitorContext);
     g_networkMonitorContext = NULL;
 
-    u_mutex_unlock(g_networkMonitorContextMutex);
+    ca_mutex_unlock(g_networkMonitorContextMutex);
 
     CADestroyNetworkMonitorMutexes();
 
@@ -510,12 +510,12 @@ CAResult_t CAIPGetInterfaceInfo(u_arraylist_t **netInterfaceList)
                     "g_networkMonitorContextMutex is null");
 
     // Get the interface and ipaddress information from cache
-    u_mutex_lock(g_networkMonitorContextMutex);
+    ca_mutex_lock(g_networkMonitorContextMutex);
     if (!g_networkMonitorContext->netInterfaceList
         || !(u_arraylist_length(g_networkMonitorContext->netInterfaceList)))
     {
         OIC_LOG(ERROR, IP_MONITOR_TAG, "Network not enabled");
-        u_mutex_unlock(g_networkMonitorContextMutex);
+        ca_mutex_unlock(g_networkMonitorContextMutex);
         return CA_ADAPTER_NOT_ENABLED;
     }
 
@@ -537,7 +537,7 @@ CAResult_t CAIPGetInterfaceInfo(u_arraylist_t **netInterfaceList)
         if (!newNetinfo)
         {
             OIC_LOG(ERROR, IP_MONITOR_TAG, "Malloc failed!");
-            u_mutex_unlock(g_networkMonitorContextMutex);
+            ca_mutex_unlock(g_networkMonitorContextMutex);
             return CA_MEMORY_ALLOC_FAILED;
         }
 
@@ -547,12 +547,12 @@ CAResult_t CAIPGetInterfaceInfo(u_arraylist_t **netInterfaceList)
         if (CA_STATUS_OK != result)
         {
             OIC_LOG(ERROR, IP_MONITOR_TAG, "u_arraylist_add failed!");
-            u_mutex_unlock(g_networkMonitorContextMutex);
+            ca_mutex_unlock(g_networkMonitorContextMutex);
             return CA_STATUS_FAILED;
         }
     }
 
-    u_mutex_unlock(g_networkMonitorContextMutex);
+    ca_mutex_unlock(g_networkMonitorContextMutex);
 
     OIC_LOG(DEBUG, IP_MONITOR_TAG, "OUT");
     return CA_STATUS_OK;
@@ -570,12 +570,12 @@ CAResult_t CAIPGetInterfaceSubnetMask(const char *ipAddress, char **subnetMask)
                     "g_networkMonitorContextMutex is null");
 
     // Get the interface and ipaddress information from cache
-    u_mutex_lock(g_networkMonitorContextMutex);
+    ca_mutex_lock(g_networkMonitorContextMutex);
     if (!g_networkMonitorContext->netInterfaceList
         || !(u_arraylist_length(g_networkMonitorContext->netInterfaceList)))
     {
         OIC_LOG(DEBUG, IP_MONITOR_TAG, "Network not enabled");
-        u_mutex_unlock(g_networkMonitorContextMutex);
+        ca_mutex_unlock(g_networkMonitorContextMutex);
         return CA_ADAPTER_NOT_ENABLED;
     }
 
@@ -604,7 +604,7 @@ CAResult_t CAIPGetInterfaceSubnetMask(const char *ipAddress, char **subnetMask)
             break;
         }
     }
-    u_mutex_unlock(g_networkMonitorContextMutex);
+    ca_mutex_unlock(g_networkMonitorContextMutex);
 
     OIC_LOG(DEBUG, IP_MONITOR_TAG, "OUT");
     return CA_STATUS_OK;
@@ -640,11 +640,11 @@ void CAIPSetConnectionStateChangeCallback(CAIPConnectionStateChangeCallback call
         OIC_LOG(ERROR, IP_MONITOR_TAG, "CAIPSetConnectionStateChangeCallback failed");
         return;
     }
-    u_mutex_lock(g_networkMonitorContextMutex);
+    ca_mutex_lock(g_networkMonitorContextMutex);
 
     g_networkMonitorContext->networkChangeCb = callback;
 
-    u_mutex_unlock(g_networkMonitorContextMutex);
+    ca_mutex_unlock(g_networkMonitorContextMutex);
 
     OIC_LOG(DEBUG, IP_MONITOR_TAG, "OUT");
 }
