@@ -360,7 +360,7 @@ static OCEntityHandlerResult HandleDoxmGetRequest (const OCEntityHandlerRequest 
 }
 
 
-static OCEntityHandlerResult HandleDoxmPostRequest (const OCEntityHandlerRequest * ehRequest)
+static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest * ehRequest)
 {
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
     OicUuid_t emptyOwner = {};
@@ -490,8 +490,8 @@ OCEntityHandlerResult DoxmEntityHandler (OCEntityHandlerFlag flag,
                 ehRet = HandleDoxmGetRequest(ehRequest);
                 break;
 
-            case OC_REST_POST:
-                ehRet = HandleDoxmPostRequest(ehRequest);
+            case OC_REST_PUT:
+                ehRet = HandleDoxmPutRequest(ehRequest);
                 break;
 
             default:

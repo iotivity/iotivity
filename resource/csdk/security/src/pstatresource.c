@@ -203,7 +203,7 @@ static OCEntityHandlerResult HandlePstatGetRequest (const OCEntityHandlerRequest
  * resource or create a new resource.
  * For pstat, it updates only tm and om.
  */
-static OCEntityHandlerResult HandlePstatPostRequest(const OCEntityHandlerRequest *ehRequest)
+static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest *ehRequest)
 {
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
     cJSON *postJson = NULL;
@@ -289,8 +289,8 @@ OCEntityHandlerResult PstatEntityHandler(OCEntityHandlerFlag flag,
             case OC_REST_GET:
                 ehRet = HandlePstatGetRequest(ehRequest);
                 break;
-            case OC_REST_POST:
-                ehRet = HandlePstatPostRequest(ehRequest);
+            case OC_REST_PUT:
+                ehRet = HandlePstatPutRequest(ehRequest);
                 break;
             default:
                 ehRet = OC_EH_ERROR;
