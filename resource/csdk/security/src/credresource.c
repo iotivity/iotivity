@@ -330,7 +330,6 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
                 cJSON *jsonOwnr = cJSON_GetArrayItem(jsonObj, i);
                 VERIFY_NON_NULL(jsonOwnr, ERROR);
                 VERIFY_SUCCESS(cJSON_String == jsonOwnr->type, ERROR);
-                /* TODO Update once the format of OicSecSvc_t is finalized */
                 outLen = 0;
                 memset(base64Buff, 0, sizeof(base64Buff));
                 b64Ret = b64Decode(jsonOwnr->valuestring, strlen(jsonOwnr->valuestring),
@@ -523,13 +522,12 @@ OCStackResult CreateCredResource()
 {
     OCStackResult ret;
 
-    //TODO : Does these resources needs to be OC_DISCOVERABLE
     ret = OCCreateResource(&gCredHandle,
                            OIC_RSRC_TYPE_SEC_CRED,
                            OIC_MI_DEF,
                            OIC_RSRC_CRED_URI,
                            CredEntityHandler,
-                           OC_DISCOVERABLE);
+                           OC_RES_PROP_NONE);
 
     if (OC_STACK_OK != ret)
     {
@@ -545,7 +543,6 @@ OCStackResult CreateCredResource()
  */
 static OicSecCred_t* GetCredDefault()
 {
-    //TODO: return NULL for the default cred for now. Update it when we finalize the default info.
     return NULL;
 }
 
@@ -620,7 +617,6 @@ const OicSecCred_t* GetCredResourceData(const OicUuid_t* subject)
 
     LL_FOREACH(gCred, cred)
     {
-        /* TODO : Need to synch on 'Subject' data type */
         if(memcmp(cred->subject.id, subject->id, sizeof(subject->id)) == 0)
         {
              return cred;

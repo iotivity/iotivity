@@ -381,13 +381,12 @@ OCStackResult CreateACLResource()
 {
     OCStackResult ret;
 
-    // TODO : Does these resources needs to be OC_DISCOVERABLE
     ret = OCCreateResource(&gAclHandle,
                            OIC_RSRC_TYPE_SEC_ACL,
                            OIC_MI_DEF,
                            OIC_RSRC_ACL_URI,
                            ACLEntityHandler,
-                           OC_DISCOVERABLE | OC_OBSERVABLE);
+                           OC_OBSERVABLE);
 
     if (OC_STACK_OK != ret)
     {

@@ -126,6 +126,8 @@ typedef enum {
 /**
  * Resource Properties
  *
+ * OC_RES_PROP_NONE- When non of the bits are set, the resource is non-discoverable & non-observable
+ *                   by the client.
  * OC_ACTIVE       - When this bit is set, the resource is initialized, otherwise the resource
  *                   is 'inactive'. 'inactive' signifies that the resource has been marked for
  *                   deletion or is already deleted.
@@ -137,11 +139,12 @@ typedef enum {
  * OC_SECURE       - When this bit is set, the resource is a secure resource.
  */
 typedef enum {
-    OC_ACTIVE       = (1 << 0),
-    OC_DISCOVERABLE = (1 << 1),
-    OC_OBSERVABLE   = (1 << 2),
-    OC_SLOW         = (1 << 3),
-    OC_SECURE       = (1 << 4)
+    OC_RES_PROP_NONE = (0),
+    OC_ACTIVE        = (1 << 0),
+    OC_DISCOVERABLE  = (1 << 1),
+    OC_OBSERVABLE    = (1 << 2),
+    OC_SLOW          = (1 << 3),
+    OC_SECURE        = (1 << 4)
 } OCResourceProperty;
 
 /**

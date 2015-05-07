@@ -316,13 +316,12 @@ OCStackResult CreatePstatResource()
 {
     OCStackResult ret;
 
-    // TODO : Does these resources needs to be OC_DISCOVERABLE
     ret = OCCreateResource(&gPstatHandle,
                            OIC_RSRC_TYPE_SEC_PSTAT,
                            OIC_MI_DEF,
                            OIC_RSRC_PSTAT_URI,
                            PstatEntityHandler,
-                           OC_DISCOVERABLE);
+                           OC_RES_PROP_NONE);
 
     if (ret != OC_STACK_OK)
     {

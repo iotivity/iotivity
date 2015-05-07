@@ -386,8 +386,6 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
 #ifdef __WITH_DTLS__
                 CAResult_t pskRet;
 
-                //TODO: Accessing RI layer internal variable. Need an API in RI
-                //to get the addressInfo and connectivityType for the ehRequest.
                 OCServerRequest * request = (OCServerRequest *)ehRequest->requestHandle;
                 uint8_t ownerPSK[OWNER_PSK_LENGTH_128] = {};
 
@@ -462,7 +460,6 @@ OCEntityHandlerResult DoxmEntityHandler (OCEntityHandlerFlag flag,
 
     if (flag & OC_REQUEST_FLAG)
     {
-        // TODO :  Handle PUT method
         OC_LOG (INFO, TAG, PCF("Flag includes OC_REQUEST_FLAG"));
         switch (ehRequest->method)
         {
@@ -491,13 +488,12 @@ OCStackResult CreateDoxmResource()
 {
     OCStackResult ret;
 
-    //TODO : Does these resources needs to be OC_DISCOVERABLE
     ret = OCCreateResource(&gDoxmHandle,
                            OIC_RSRC_TYPE_SEC_DOXM,
                            OIC_MI_DEF,
                            OIC_RSRC_DOXM_URI,
                            DoxmEntityHandler,
-                           OC_DISCOVERABLE | OC_OBSERVABLE);
+                           OC_OBSERVABLE);
 
     if (OC_STACK_OK != ret)
     {
