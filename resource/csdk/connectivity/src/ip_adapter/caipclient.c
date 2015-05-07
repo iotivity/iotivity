@@ -32,6 +32,7 @@
  * @brief Logging tag for module name
  */
 #define IP_CLIENT_TAG "IP_CLIENT"
+#define OC_MULTICAST_IP "224.0.1.187"
 
 static uint32_t CASendData(const char *remoteAddress, uint16_t port, const void *data,
                            uint32_t dataLength, int sockfd)
@@ -98,7 +99,7 @@ uint32_t CAIPSendData(const char *remoteAddress, uint16_t remotePort, const void
     }
 
     uint32_t len = 0;
-    if (isMulticast)
+    if (isMulticast || strcmp(remoteAddress, OC_MULTICAST_IP) == 0)
     {
         uint32_t listIndex = 0;
         uint32_t listLength = u_arraylist_length(tempServerInfoList);
