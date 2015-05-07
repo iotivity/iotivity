@@ -575,7 +575,7 @@ CAResult_t CADtlsSelectCipherSuite(const dtls_cipher_t cipher)
         u_mutex_unlock(gDtlsContextMutex);
         return CA_STATUS_FAILED;
     }
-    dtls_select_cipher(gCaDtlsContext, cipher);
+    dtls_select_cipher(gCaDtlsContext->dtlsContext, cipher);
     u_mutex_unlock(gDtlsContextMutex);
 
     OIC_LOG_V(DEBUG, NET_DTLS_TAG, "Selected cipher suite is 0x%02X%02X\n",
@@ -596,7 +596,7 @@ CAResult_t CADtlsEnablesAnonEcdh(const uint8_t enable)
         u_mutex_unlock(gDtlsContextMutex);
         return CA_STATUS_FAILED;
     }
-    dtls_enables_anon_ecdh(gCaDtlsContext, enable);
+    dtls_enables_anon_ecdh(gCaDtlsContext->dtlsContext, enable);
     u_mutex_unlock(gDtlsContextMutex);
     OIC_LOG_V(DEBUG, NET_DTLS_TAG, "TLS_ECDH_anon_WITH_AES_128_CBC_SHA  is %s",
         enable ? "enabled" : "disabled");
