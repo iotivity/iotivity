@@ -7,9 +7,6 @@ public class RMInterface {
     static {
         // Load RI JNI interface
         System.loadLibrary("RMInterface");
-
-        // Load CA JNI interface
-        System.loadLibrary("CAInterface");
     }
 
     private org.iotivity.service.MainActivity mResponseListener = null;
@@ -31,16 +28,21 @@ public class RMInterface {
     public native void RMSendRequest(String uri, String payload,
             int selectedNetwork, int isSecured, int msgType);
 
-    public native void RMSendResponse(String uri, String payload,
-            int selectedNetwork, int isSecured);
+    public native void RMSendReqestToAll(String uri, int selectedNetwork);
 
-    public native void RMAdvertiseResource(String advertiseResource,
-            int selectedNetwork);
+    public native void RMSendResponse(int selectedNetwork, int isSecured,
+            int msgType, int responseValue);
+
+    public native void RMAdvertiseResource(String advertiseResource);
 
     public native void RMSendNotification(String uri, String payload,
-            int selectedNetwork, int isSecured);
+            int selectedNetwork, int isSecured, int msgType, int responseValue);
 
     public native void RMSelectNetwork(int interestedNetwork);
+
+    public native void RMUnSelectNetwork(int uninterestedNetwork);
+
+    public native void RMGetNetworkInfomation();
 
     public native void RMHandleRequestResponse();
 

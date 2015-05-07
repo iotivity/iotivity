@@ -54,7 +54,7 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/layout_mode" >
-
+                        
             <TextView
                 android:id="@+id/tv_find"
                 android:layout_width="fill_parent"
@@ -211,44 +211,21 @@
                 android:id="@+id/tv_request"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:text="[Send Request]"
-                />
+                android:text="[Send Request]" />
 
          </RelativeLayout>
-
-         <RelativeLayout
-            android:id="@+id/layout_request_setting_for_client"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/layout_request_title" >
-
-            <Button
-                android:id="@+id/btn_Request_setting_for_client"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:layout_alignParentRight="true"
-                android:text="@string/request_setting" />
-        </RelativeLayout>
 
         <RelativeLayout
             android:id="@+id/layout_request"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/layout_request_setting_for_client" >
-
-            <Button
-                android:id="@+id/btn_Request"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentRight="true"
-                android:text="@string/request" />
+            android:layout_below="@id/layout_request_title" >
 
             <EditText
                 android:id="@+id/et_req_data"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
-                android:layout_toLeftOf="@id/btn_Request"
                 android:text="@string/req_data" />
         </RelativeLayout>
 
@@ -264,22 +241,90 @@
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
                 android:text="@string/payload_data_client" />
+        </RelativeLayout>
 
+        <RelativeLayout
+            android:id="@+id/layout_request_setting_for_client"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/layout_payload_client_ed" >
+
+            <Button
+                android:id="@+id/btn_Request"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:text="@string/request" />
+
+            <Button
+                android:id="@+id/btn_Request_setting_for_client"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_toLeftOf="@id/btn_Request"
+                android:text="@string/request_setting" />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/layout_request_to_all_title"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/layout_request_setting_for_client" >
+
+            <TextView
+                android:id="@+id/tv_request_to_all"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content" 
+                android:text="[Send Request to All]"
+                />
+
+         </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/layout_request_to_all"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/layout_request_to_all_title" >
+
+            <EditText
+                android:id="@+id/et_req_to_all_data"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:text="@string/uri" />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/layout_request_to_all_setting_for_client"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/layout_request_to_all" >
+
+            <Button
+                android:id="@+id/btn_request_to_all"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:text="@string/request_to_all" />
+
+            <Button
+                android:id="@+id/btn_request_to_all_setting_for_client"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_toLeftOf="@id/btn_request_to_all"
+                android:text="@string/request_setting" />
         </RelativeLayout>
 
         <RelativeLayout
             android:id="@+id/layout_handle_title"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/layout_advertise_resource" >
+            android:layout_below="@id/layout_request_to_all_setting_for_client" >
 
-        <TextView
+            <TextView
                 android:id="@+id/tv_handle"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:text="[Handle Reqeust/Response data]"
-                />
-
+                android:text="[Handle Reqeust,Response data / Get NetworkInfo]"/>
         </RelativeLayout>
 
         <RelativeLayout
@@ -289,33 +334,17 @@
             android:layout_below="@id/layout_handle_title" >
 
             <Button
+                android:id="@+id/btn_get_network_info"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:text="@string/get_network_info" />
+            <Button
                 android:id="@+id/btn_receive"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:layout_alignParentRight="true"
+                android:layout_toLeftOf="@id/btn_get_network_info"
                 android:text="@string/receive" />
-        </RelativeLayout>
-
-        <RelativeLayout
-            android:id="@+id/layout_received"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/layout_receive" >
-
-            <TextView
-                android:id="@+id/tv_rev_text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:visibility="invisible"
-                android:text="@string/received" />
-
-            <TextView
-                android:id="@+id/tv_ble_received"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:layout_toRightOf="@id/tv_rev_text"
-                android:visibility="invisible"
-                android:text="@string/received" />
         </RelativeLayout>
     </RelativeLayout>
 

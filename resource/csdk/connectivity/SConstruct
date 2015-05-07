@@ -57,3 +57,6 @@ elif target_os == 'android':
 
 	# Build 'src' sub-project
 	SConscript(build_dir + 'SConscript')
+
+	# Build 'samples' sub-project
+	env.SConscript(build_dir + 'samples/android/SConscript')
