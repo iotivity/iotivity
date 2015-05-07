@@ -82,6 +82,10 @@ public class GroupClient {
                 executeActionSetBulbOff(0);
             }
         }
+
+        @Override
+        public void onObserveFailed(Throwable arg0) {
+        }
     }
 
     /**

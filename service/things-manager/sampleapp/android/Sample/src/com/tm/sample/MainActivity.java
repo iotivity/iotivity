@@ -134,7 +134,7 @@ public class MainActivity extends Activity {
         }
         // If wifi is connected calling the configure method for configuring the
         // OcPlatform
-        platformConfigObj = new PlatformConfig(ServiceType.IN_PROC,
+        platformConfigObj = new PlatformConfig(getApplicationContext(),ServiceType.IN_PROC,
                 ModeType.CLIENT_SERVER, "0.0.0.0", 0, QualityOfService.LOW);
 
         Log.i(LOG_TAG, "Before Calling Configure of ocPlatform");

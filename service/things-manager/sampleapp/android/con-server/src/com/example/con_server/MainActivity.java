@@ -129,7 +129,7 @@ public class MainActivity extends Activity {
 
         // If wifi is connected calling the configure method for configuring the
         // ocPlatform
-        PlatformConfig cfg = new PlatformConfig(ServiceType.IN_PROC,
+        PlatformConfig cfg = new PlatformConfig(getApplicationContext(),ServiceType.IN_PROC,
                 ModeType.CLIENT_SERVER, "0.0.0.0", 0, QualityOfService.LOW);
         OcPlatform.Configure(cfg);
         Log.i(LOG_TAG, "Configuration done Successfully");

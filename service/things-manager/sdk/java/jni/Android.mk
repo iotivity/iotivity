@@ -1,11 +1,11 @@
 LOCAL_PATH := $(call my-dir)
 
-ifeq ($(strip $(ANDROID_NDK_HOME)),)
-$(error ANDROID_NDK_HOME is not set!)
+ifeq ($(strip $(ANDROID_NDK)),)
+$(error ANDROID_NDK is not set!)
 endif
 
 include $(CLEAR_VARS)
-OIC_LIB_PATH := ../../../../../deps/android/lib/$(TARGET_ARCH_ABI)
+OIC_LIB_PATH := ../../../../../dep/android/$(TARGET_ARCH_ABI)/usr/lib
 LOCAL_MODULE := libandroid-boost_system
 LOCAL_SRC_FILES := $(OIC_LIB_PATH)/libboost_system.a
 include $(PREBUILT_STATIC_LIBRARY)
@@ -35,12 +35,13 @@ LOCAL_C_INCLUDES := $(OIC_RESOURCE_PATH)/include \
                     $(OIC_SERVICE_PATH)/things-manager/sdk/inc \
                     $(OIC_SERVICE_PATH)/things-manager/sdk/src \
                     $(OIC_SERVICE_PATH)/../android/android_api/base/jni \
+                    $(OIC_SERVICE_PATH)/../build_common/android/compatibility \
                     $(LOCAL_PATH)/jniutil/inc \
                     $(LOCAL_PATH)/tm/inc \
                     $(LOCAL_PATH)/tm/src \
                     $(LOCAL_PATH)/tm/src/base \
-                    $(ANDROID_NDK_HOME)/sources/cxx-stl/gnu-libstdc++/$(TOOLCHAIN_VERSION)/include \
-                    $(ANDROID_NDK_HOME)/sources/cxx-stl/gnu-libstdc++/$(TOOLCHAIN_VERSION)/libs/$(TARGET_ARCH_ABI)/include \
+                    $(ANDROID_NDK)/sources/cxx-stl/gnu-libstdc++/$(TOOLCHAIN_VERSION)/include \
+                    $(ANDROID_NDK)/sources/cxx-stl/gnu-libstdc++/$(TOOLCHAIN_VERSION)/libs/$(TARGET_ARCH_ABI)/include \
 
 LOCAL_SRC_FILES += $(patsubst $(LOCAL_PATH)/%, %, $(wildcard $(LOCAL_PATH)/jniutil/src/*.cpp))
 LOCAL_SRC_FILES += $(patsubst $(LOCAL_PATH)/%, %, $(wildcard $(LOCAL_PATH)/tm/src/*.cpp))
@@ -48,7 +49,7 @@ LOCAL_SRC_FILES += $(patsubst $(LOCAL_PATH)/%, %, $(wildcard $(LOCAL_PATH)/tm/sr
 LOCAL_CPPFLAGS := -std=c++0x -frtti -fexceptions
 
 LOCAL_LDLIBS := -llog -L$(BASE_LIB_PATH) -locstack-jni -L$(OIC_LIB_PATH) -loc -loctbstack -lcoap -loc_logger
-LOCAL_LDLIBS += -L$(ANDROID_NDK_HOME)/sources/cxx-stl/gnu-libstdc++/$(TOOLCHAIN_VERSION)/libs/$(TARGET_ARCH_ABI) -lgnustl_shared
+LOCAL_LDLIBS += -L$(ANDROID_NDK)/sources/cxx-stl/gnu-libstdc++/$(TOOLCHAIN_VERSION)/libs/$(TARGET_ARCH_ABI) -lgnustl_shared
 LOCAL_SHARED_LIBRARIES := android-thingsmanager
 LOCAL_STATIC_LIBRARIES := android-boost_system
 

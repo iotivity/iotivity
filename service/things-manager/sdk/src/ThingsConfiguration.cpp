@@ -325,10 +325,17 @@ namespace OIC
             // For this reason, we create the resource objects.
 
             std::string host = getHostFromURI(oit->getUri());
+
+// TODO: Selecting OC_WIFI for android, tizen and OC_ETHERNET for linux platform.
+// It is temporary change as OC_ALL is not working currently. Remove this code and use OC_ALL
+// once it is functioning.
+#if defined(__ANDROID__) || defined(__TIZEN__)
+            tempResource = OCPlatform::constructResourceObject(host, uri, OC_WIFI, true,
+                    oit->getResourceTypes(), m_if);
+#else
             tempResource = OCPlatform::constructResourceObject(host, uri, OC_ETHERNET, true,
                     oit->getResourceTypes(), m_if);
-            // tempResource = OCPlatform::constructResourceObject(host, uri, OC_WIFI, true,
-            //         oit->getResourceTypes(), m_if);
+#endif
 
             p_resources.push_back(tempResource);
         }

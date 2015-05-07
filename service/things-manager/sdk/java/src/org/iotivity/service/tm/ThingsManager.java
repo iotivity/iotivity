@@ -60,8 +60,8 @@ public class ThingsManager {
     static {
         System.loadLibrary("gnustl_shared");
         System.loadLibrary("oc_logger");
-        System.loadLibrary("coap");
         System.loadLibrary("octbstack");
+        System.loadLibrary("connectivity_abstraction");
         System.loadLibrary("oc");
         System.loadLibrary("TGMSDKLibrary");
         System.loadLibrary("ocstack-jni");
