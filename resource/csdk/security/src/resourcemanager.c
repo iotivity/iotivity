@@ -43,7 +43,7 @@
 OCStackResult SendSRMResponse(const OCEntityHandlerRequest *ehRequest,
         OCEntityHandlerResult ehRet, const char *rspPayload)
 {
-    OCEntityHandlerResponse response;
+    OCEntityHandlerResponse response = {};
     if (ehRequest)
     {
         response.requestHandle = ehRequest->requestHandle;
