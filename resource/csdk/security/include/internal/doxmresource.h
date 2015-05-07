@@ -46,6 +46,26 @@ OCStackResult DeInitDoxmResource();
  */
 const OicSecDoxm_t* GetDoxmResourceData();
 
+/**
+ * This method converts JSON DOXM into binary DOXM.
+ * The JSON DOXM can be from persistent database or
+ * or received as PUT/POST request.
+ *
+ * @param[in] jsonStr  doxm data in json string.
+ * @return pointer to OicSecDoxm_t.
+ */
+OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr);
+
+/**
+ * This method converts DOXM data into JSON format.
+ * Caller needs to invoke 'free' when finished done using
+ * return string
+ *
+ * @param[in] doxm  Pointer to OicSecDoxm_t.
+ * @return pointer to json string.
+ */
+char * BinToDoxmJSON(const OicSecDoxm_t * doxm);
+
 #ifdef __cplusplus
 }
 #endif

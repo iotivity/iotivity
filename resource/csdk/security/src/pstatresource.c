@@ -58,12 +58,6 @@ static OicSecPstat_t gDefaultPstat =
 static OicSecPstat_t    *gPstat = NULL;
 static OCResourceHandle gPstatHandle = NULL;
 
-/**
- * This internal method converts pstat data into JSON format.
- *
- * Note: Caller needs to invoke 'free' when finished done using
- * return string.
- */
 char * BinToPstatJSON(const OicSecPstat_t * pstat)
 {
     cJSON *jsonRoot = cJSON_CreateObject();
@@ -105,9 +99,6 @@ exit:
     return jsonStr;
 }
 
-/**
- * This internal method converts JSON pstat into binary pstat.
- */
 OicSecPstat_t * JSONToPstatBin(const char * jsonStr)
 {
     OCStackResult ret = OC_STACK_ERROR;

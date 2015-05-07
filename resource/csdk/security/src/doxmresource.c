@@ -79,12 +79,6 @@ void DeleteDoxmBinData(OicSecDoxm_t* doxm)
     }
 }
 
-/*
- * This internal method converts DOXM data into JSON format.
- *
- * Note: Caller needs to invoke 'free' when finished done using
- * return string.
- */
 char * BinToDoxmJSON(const OicSecDoxm_t * doxm)
 {
     if (NULL == doxm)
@@ -164,11 +158,6 @@ exit:
     return jsonStr;
 }
 
-/*
- * This internal method converts JSON DOXM into binary DOXM.
- * The JSON DOXM can be from persistent database or
- * or received as PUT/POST request
- */
 OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr)
 {
     OCStackResult ret = OC_STACK_ERROR;

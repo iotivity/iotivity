@@ -39,6 +39,22 @@ OCStackResult InitPstatResource();
  */
 OCStackResult DeInitPstatResource();
 
+/**
+ * This method converts JSON PSTAT into binary PSTAT.
+ *
+ * @param[in] jsonStr  pstat data in json string.
+ * @return pointer to OicSecPstat_t.
+ */
+OicSecPstat_t * JSONToPstatBin(const char * jsonStr);
+
+/**
+ * This method converts pstat data into JSON format.
+ *
+ * @param[in] pstat  pstat data in binary format.
+ * @return pointer to pstat json string.
+ */
+char * BinToPstatJSON(const OicSecPstat_t * pstat);
+
 #ifdef __cplusplus
 }
 #endif
