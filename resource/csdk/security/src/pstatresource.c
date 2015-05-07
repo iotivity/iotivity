@@ -58,6 +58,22 @@ static OicSecPstat_t gDefaultPstat =
 static OicSecPstat_t    *gPstat = NULL;
 static OCResourceHandle gPstatHandle = NULL;
 
+/**
+ * This internal method deletes the pstat data structure.
+ */
+static void DeletePstatBinData(OicSecPstat_t* pstat)
+{
+    if (pstat)
+    {
+        //Clean 'supported modes' field
+        OCFree(pstat->sm);
+
+        //Clean pstat itself
+        OCFree(pstat);
+    }
+}
+
+
 char * BinToPstatJSON(const OicSecPstat_t * pstat)
 {
     cJSON *jsonRoot = cJSON_CreateObject();
@@ -165,9 +181,10 @@ exit:
     cJSON_Delete(jsonRoot);
     if (OC_STACK_OK != ret)
     {
-       OC_LOG (ERROR, TAG, PCF("JSONToPstatBin failed"));
-       OCFree(pstat);
-     }
+        OC_LOG (ERROR, TAG, PCF("JSONToPstatBin failed"));
+        DeletePstatBinData(pstat);
+        pstat = NULL;
+    }
     return pstat;
 }
 
@@ -329,7 +346,7 @@ void SetCommitHash(uint16_t commitHash)
  */
 static OicSecPstat_t* GetPstatDefault()
 {
-    return &gDefaultPstat;;
+    return &gDefaultPstat;
 }
 
 /**
@@ -373,7 +390,8 @@ OCStackResult DeInitPstatResource()
 {
     if(gPstat != &gDefaultPstat)
     {
-        OCFree(gPstat);
+        DeletePstatBinData(gPstat);
+        gPstat = NULL;
     }
     return OCDeleteResource(gPstatHandle);
 }

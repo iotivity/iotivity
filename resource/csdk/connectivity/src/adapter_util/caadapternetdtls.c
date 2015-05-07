@@ -529,6 +529,14 @@ static int32_t CAGetPskCredentials(dtls_context_t *ctx,
         }
     }
 
+    // Free the memory block allocated by SRM callback
+    if (credInfo)
+    {
+        memset(credInfo->creds, 0, credInfo->num * sizeof(OCDtlsPskCreds));
+        OICFree(credInfo->creds);
+    }
+    OICFree(credInfo);
+
     return ret;
 }
 

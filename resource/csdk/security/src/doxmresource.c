@@ -611,3 +611,18 @@ OCStackResult DeInitDoxmResource()
     }
 }
 
+
+/**
+ * This method returns the SRM device ID for this device.
+ *
+ * @retval  OC_STACK_OK for Success, otherwise some error value
+ */
+OCStackResult GetDoxmDeviceID(OicUuid_t *deviceID)
+{
+    if(deviceID && gDoxm)
+    {
+       *deviceID = gDoxm->deviceID;
+        return OC_STACK_OK;
+    }
+    return OC_STACK_ERROR;
+}

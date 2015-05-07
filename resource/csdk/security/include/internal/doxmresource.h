@@ -53,6 +53,9 @@ const OicSecDoxm_t* GetDoxmResourceData();
  *
  * @param[in] jsonStr  doxm data in json string.
  * @return pointer to OicSecDoxm_t.
+ *
+ * @note Caller needs to invoke OCFree after done
+ *       using the return pointer
  */
 OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr);
 
@@ -63,8 +66,18 @@ OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr);
  *
  * @param[in] doxm  Pointer to OicSecDoxm_t.
  * @return pointer to json string.
+ *
+ * @note Caller needs to invoke OCFree after done
+ *       using the return pointer
  */
 char * BinToDoxmJSON(const OicSecDoxm_t * doxm);
+
+/**
+ * This method returns the SRM device ID for this device.
+ *
+ * @retval  OC_STACK_OK for Success, otherwise some error value
+ */
+OCStackResult GetDoxmDeviceID(OicUuid_t *deviceID);
 
 #ifdef __cplusplus
 }

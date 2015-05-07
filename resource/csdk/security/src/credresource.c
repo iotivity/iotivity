@@ -28,6 +28,7 @@
 #include "srmresourcestrings.h"
 #include "credresource.h"
 #include "ocrandom.h"
+#include "doxmresource.h"
 #include "base64.h"
 #include <stdlib.h>
 #include <string.h>
@@ -289,8 +290,15 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
             }
 #endif
 
-            //PrivateData -- Not Mandatory
+            //PrivateData is mandatory for some of the credential types listed below.
             jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_PRIVATEDATA_NAME);
+            if ((cred->credType & SYMMETRIC_PAIR_WISE_KEY) ||
+                (cred->credType & SYMMETRIC_GROUP_KEY) ||
+                (cred->credType & PIN_PASSWORD))
+            {
+                VERIFY_NON_NULL(jsonObj, ERROR);
+                VERIFY_SUCCESS(cJSON_String == jsonObj->type, ERROR);
+            }
             if(jsonObj && cJSON_String == jsonObj->type)
             {
                 jsonObjLen = strlen(jsonObj->valuestring) + 1;
@@ -620,3 +628,84 @@ const OicSecCred_t* GetCredResourceData(const OicUuid_t* subject)
     }
     return NULL;
 }
+
+
+/**
+ * This internal callback is used by lower stack (i.e. CA layer) to
+ * retrieve PSK credentials from RI security layer.
+ *
+ * Note: When finished, caller should initialize memory to zeros and
+ * invoke OCFree to delete @p credInfo.
+ *
+ * @param credInfo
+ *     binary blob containing PSK credentials
+ *
+ * @retval none
+ */
+void GetDtlsPskCredentials(OCDtlsPskCredsBlob **credInfo)
+{
+    OCDtlsPskCredsBlob * ocBlob = NULL;
+    if(credInfo)
+    {
+        ocBlob = (OCDtlsPskCredsBlob *)OCCalloc(sizeof(OCDtlsPskCredsBlob), 1);
+        if (ocBlob)
+        {
+            OicUuid_t deviceID = {};
+
+            // Retrieve Device ID from doxm resource and copy in PSK creds blob
+            VERIFY_SUCCESS(GetDoxmDeviceID(&deviceID) == OC_STACK_OK, ERROR);
+            memcpy(ocBlob->identity, deviceID.id, sizeof(ocBlob->identity));
+
+            OicSecCred_t *cred = NULL;
+            size_t count = 0;
+            LL_FOREACH(gCred, cred)
+            {
+                // Currently, Iotivity supports only symmetric pair wise key credentials
+                if (cred->credType == SYMMETRIC_PAIR_WISE_KEY)
+                {
+                    ++count;
+                }
+            }
+            ocBlob->num = count;
+            if (ocBlob->num)
+            {
+                ocBlob->creds =
+                    (OCDtlsPskCreds*) OCMalloc(ocBlob->num * sizeof(OCDtlsPskCreds));
+                VERIFY_NON_NULL(ocBlob->creds, ERROR);
+
+                unsigned int i = 0;
+                LL_FOREACH(gCred, cred)
+                {
+                    if ((cred->credType == SYMMETRIC_PAIR_WISE_KEY) &&
+                            (i < count))
+
+                    {
+                        // Copy subject ID
+                        memcpy(ocBlob->creds[i].id, cred->subject.id,
+                                sizeof(ocBlob->creds[i].id));
+
+                        // Convert PSK from JSON to binary before copying
+                        uint32_t outLen = 0;
+                        B64Result b64Ret = b64Decode(cred->privateData.data,
+                                strlen(cred->privateData.data), ocBlob->creds[i].psk,
+                                sizeof(ocBlob->creds[i].psk), &outLen);
+                        VERIFY_SUCCESS(b64Ret == B64_OK, ERROR);
+                        i++;
+                    }
+                }
+            }
+        }
+        *credInfo = ocBlob;
+        // Return from here after making the credential list
+        return;
+    }
+
+exit:
+    if (ocBlob)
+    {
+        memset(ocBlob->creds, 0, ocBlob->num * sizeof(OCDtlsPskCreds));
+        OCFree(ocBlob->creds);
+    }
+    OCFree(ocBlob);
+}
+

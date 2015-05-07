@@ -33,6 +33,7 @@ srmtest_env.PrependUnique(CPPPATH = [
         '../../ocmalloc/include',
 		'../../connectivity/inc',
 		'../../connectivity/api',
+		'../../connectivity/external/inc',
 		'../include',
 		'../include/internal',
 		'../../logger/include',

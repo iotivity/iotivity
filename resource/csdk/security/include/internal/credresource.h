@@ -21,6 +21,8 @@
 #ifndef IOTVT_SRM_CREDR_H
 #define IOTVT_SRM_CREDR_H
 
+#include "ocsecurityconfig.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -96,6 +98,21 @@ OicSecCred_t * GenerateCredential(const OicUuid_t* subject, OicSecCredType_t cre
  *      OC_STACK_ERROR  - cred is NULL or fails to update persistent storage
  */
 OCStackResult AddCredential(OicSecCred_t * cred);
+
+/**
+ * This internal callback is used by lower stack (i.e. CA layer) to
+ * retrieve PSK credentials from RI security layer.
+ *
+ * Note: When finished, caller should initialize memory to zeroes and
+ * invoke OCFree to delete @p credInfo.
+ *
+ * @param credInfo
+ *     binary blob containing PSK credentials
+ *
+ * @retval none
+ */
+void GetDtlsPskCredentials(OCDtlsPskCredsBlob **credInfo);
+
 #ifdef __cplusplus
 }
 #endif

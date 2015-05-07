@@ -34,7 +34,6 @@
 #include "ocrandom.h"
 #include "ocmalloc.h"
 #include "ocserverrequest.h"
-#include "ocsecurityinternal.h"
 #include "securityresourcemanager.h"
 #include "cacommon.h"
 #include "cainterface.h"
@@ -1387,11 +1386,6 @@ OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
     myStackMode = mode;
     defaultDeviceHandler = NULL;
 
-#if defined(__WITH_DTLS__)
-    caResult = CARegisterDTLSCredentialsHandler(GetDtlsPskCredentials);
-    result = (caResult == CA_STATUS_OK) ? OC_STACK_OK : OC_STACK_ERROR;
-#endif // (__WITH_DTLS__)
-
 #ifdef WITH_PRESENCE
     PresenceTimeOutSize = sizeof(PresenceTimeOut)/sizeof(PresenceTimeOut[0]) - 1;
 #endif // WITH_PRESENCE
@@ -1468,9 +1462,6 @@ OCStackResult OCStop()
         stackState = OC_STACK_INITIALIZED;
         result = OC_STACK_ERROR;
     }
-
-    // Deinit security blob
-    DeinitOCSecurityInfo();
 
     // De-init the SRM Policy Engine
     // TODO after BeachHead delivery: consolidate into single SRMDeInit()

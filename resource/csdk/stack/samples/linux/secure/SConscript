@@ -48,9 +48,17 @@ samples_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 ######################################################################
 ocserverbasicops = samples_env.Program('ocserverbasicops', ['common.cpp', 'ocserverbasicops.cpp'])
 occlientbasicops = samples_env.Program('occlientbasicops', ['common.cpp', 'occlientbasicops.cpp'])
-gen_sec_bin = samples_env.Program('gen_sec_bin', ['gen_sec_bin.cpp'])
-
 
 Alias("samples", [ocserverbasicops, occlientbasicops])
 
 env.AppendTarget('samples')
+
+src_dir = samples_env.get('SRC_DIR')
+sec_samples_src_dir = src_dir + '/resource/csdk/stack/samples/linux/secure/'
+sec_samples_build_dir = env.get('BUILD_DIR') +'/resource/csdk/stack/samples/linux/secure'
+
+samples_env.Alias("install", samples_env.Install( sec_samples_build_dir, 
+    sec_samples_src_dir + 'oic_svr_db_server.json'))
+samples_env.Alias("install", samples_env.Install( sec_samples_build_dir, 
+    sec_samples_src_dir + 'oic_svr_db_client.json'))
+

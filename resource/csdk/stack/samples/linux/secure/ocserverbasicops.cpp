@@ -41,10 +41,10 @@ static LEDResource gLedInstance[SAMPLE_MAX_NUM_POST_INSTANCE];
 
 char *gResourceUri= (char *)"/a/led";
 
-//File containing Server's Identity and the PSK credentials
+//Secure Virtual Resource database for Iotivity Server
+//It contains Server's Identity and the PSK credentials
 //of other devices which the server trusts
-//This can be generated using 'gen_sec_bin' application
-static char CRED_FILE[] = "server_cred.bin";
+static char CRED_FILE[] = "oic_svr_db_server.json";
 
 //This function takes the request as an input and returns the response
 //in JSON format.
@@ -293,11 +293,26 @@ void handleSigInt(int signum)
     }
 }
 
+FILE* server_fopen(const char *path, const char *mode)
+{
+    (void)path;
+    return fopen(CRED_FILE, mode);
+}
+
 int main(int argc, char* argv[])
 {
     struct timespec timeout;
 
     OC_LOG(DEBUG, TAG, "OCServer is starting...");
+
+    // Initialize Persistent Storage for SVR database
+    OCPersistentStorage ps = {};
+    ps.open = server_fopen;
+    ps.read = fread;
+    ps.write = fwrite;
+    ps.close = fclose;
+    ps.unlink = unlink;
+    OCRegisterPersistentStorageHandler(&ps);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
     {
@@ -305,15 +320,6 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    /*
-     * Read DTLS PSK credentials from persistent storage and
-     * set in the OC stack.
-     */
-    if (SetCredentials(CRED_FILE) != OC_STACK_OK)
-    {
-        OC_LOG(ERROR, TAG, "SetCredentials failed");
-        return 0;
-    }
     /*
      * Declare and create the example resource: LED
      */
