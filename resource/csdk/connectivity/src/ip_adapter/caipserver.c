@@ -298,7 +298,17 @@ static CAResult_t CACreateSocket(int *socketFD, const char *localIp, uint16_t *p
     VERIFY_NON_NULL(localIp, IP_SERVER_TAG, "localIp is NULL");
     VERIFY_NON_NULL(port, IP_SERVER_TAG, "port is NULL");
     // Create a UDP socket
-    int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    int sock = -1;
+
+#ifdef SOCK_CLOEXEC
+    sock = socket(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, IPPROTO_UDP);
+#endif
+
+    if (-1 == sock)
+    {
+        sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    }
+
     if (-1 == sock)
     {
         OIC_LOG_V(ERROR, IP_SERVER_TAG, "Failed to create Socket, Error code: %s",
@@ -437,6 +447,7 @@ static CAResult_t CAIPStartPacketReceiverHandler()
 
     if (1 == listLength) //Its first time.
     {
+        g_packetHandlerStopFlag = false;
         if (CA_STATUS_OK != ca_thread_pool_add_task(g_adapterEthServerContext->threadPool,
                                                    CAReceiveHandler, NULL ))
         {
@@ -616,16 +627,19 @@ CAResult_t CAIPStartUnicastServer(const char *localAddress, uint16_t *port,
         }
         if (netMask)
         {
-            strncpy(info->subNetMask, netMask, strlen(netMask));
+            strncpy(info->subNetMask, netMask, sizeof(info->subNetMask) - 1);
+            info->subNetMask[sizeof(info->subNetMask)-1] = '\0';
             OICFree(netMask);
         }
-        strncpy(info->ipAddress, localAddress, strlen(localAddress));
+        strncpy(info->ipAddress, localAddress, sizeof(info->ipAddress) - 1);
+        info->ipAddress[sizeof(info->ipAddress) - 1] = '\0';
         info->port = *port;
         info->socketFd = unicastServerFd;
         info->isSecured = isSecured;
         info->isServerStarted = true;
         info->isMulticastServer = false;
-        strncpy(info->ifAddr, localAddress, strlen(localAddress));
+        strncpy(info->ifAddr, localAddress, sizeof(info->ifAddr) - 1);
+        info->ifAddr[sizeof(info->ifAddr) - 1] = '\0';
 
         CAResult_t res = CAAddServerInfo(g_serverInfoList, info);
         if (CA_STATUS_OK != res)
@@ -715,17 +729,20 @@ CAResult_t CAIPStartMulticastServer(const char *localAddress, const char *multic
         }
         if (netMask)
         {
-            strncpy(info->subNetMask, netMask, strlen(netMask));
+            strncpy(info->subNetMask, netMask, sizeof(info->subNetMask) - 1);
+            info->subNetMask[sizeof(info->subNetMask) -1] = '\0';
             OICFree(netMask);
         }
 
-        strncpy(info->ipAddress, multicastAddress, strlen(multicastAddress));
+        strncpy(info->ipAddress, multicastAddress, sizeof(info->ipAddress) - 1);
+        info->ipAddress[sizeof(info->ipAddress) -1] = '\0';
         info->port = multicastPort;
         info->socketFd = mulicastServerFd;
         info->isSecured = false;
         info->isServerStarted = true;
         info->isMulticastServer = true;
-        strncpy(info->ifAddr, localAddress, strlen(localAddress));
+        strncpy(info->ifAddr, localAddress, sizeof(info->ifAddr)-1);
+        info->ifAddr[sizeof(info->ifAddr) -1] = '\0';
 
         ret = CAAddServerInfo(g_serverInfoList, info);
 

@@ -22,9 +22,9 @@
 #ifndef OC_CLIENT_CB
 #define OC_CLIENT_CB
 
-#include <ocstack.h>
+#include "ocstack.h"
 
-#include <ocresource.h>
+#include "ocresource.h"
 #include "cacommon.h"
 
 typedef struct OCPresence
@@ -41,6 +41,8 @@ typedef struct OCMulticastNode
     uint32_t nonce;
     struct OCMulticastNode * next;
 } OCMulticastNode;
+
+typedef struct resourcetype_t OCResourceType;
 
 typedef struct ClientCB {
     // callback method defined in application address space

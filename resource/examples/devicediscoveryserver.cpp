@@ -103,7 +103,7 @@ OCStackResult SetDeviceInfo(std::string contentType, std::string dateOfManufactu
         DuplicateString(&deviceInfo.platformVersion, platformVersion);
         DuplicateString(&deviceInfo.supportUrl, supportUrl);
         DuplicateString(&deviceInfo.version, version);
-    }catch(std::exception &e)
+    }catch(std::exception &)
     {
         std::cout<<"String Copy failed!!\n";
         return OC_STACK_ERROR;
@@ -157,10 +157,7 @@ int main()
     std::mutex blocker;
     std::condition_variable cv;
     std::unique_lock<std::mutex> lock(blocker);
-    while(true)
-    {
-        cv.wait(lock);
-    }
+    cv.wait(lock, []{return false;});
 
     // No explicit call to stop the platform.
     // When OCPlatform::destructor is invoked, internally we do platform cleanup

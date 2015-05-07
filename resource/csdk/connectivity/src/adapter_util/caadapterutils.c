@@ -23,10 +23,28 @@
 #include <string.h>
 #include <ctype.h>
 
+#ifdef __ANDROID__
+#include <jni.h>
+#endif
+
 #include "oic_malloc.h"
 #include "oic_string.h"
 
 #define CA_ADAPTER_UTILS_TAG "CA_ADAPTER_UTILS"
+
+#ifdef __ANDROID__
+/**
+ * @var g_jvm
+ * @brief pointer to store JavaVM
+ */
+static JavaVM *g_jvm = NULL;
+
+/**
+ * @var gContext
+ * @brief pointer to store context for android callback interface
+ */
+static jobject g_Context = NULL;
+#endif
 
 void CALogPDUData(coap_pdu_t *pdu)
 {
@@ -553,3 +571,35 @@ void CAClearServerInfoList(u_arraylist_t *serverInfoList)
     }
     u_arraylist_free(&serverInfoList);
 }
+
+#ifdef __ANDROID__
+void CANativeJNISetContext(JNIEnv *env, jobject context)
+{
+    OIC_LOG_V(DEBUG, CA_ADAPTER_UTILS_TAG, "CANativeJNISetContext");
+
+    if (!context)
+    {
+        OIC_LOG(DEBUG, CA_ADAPTER_UTILS_TAG, "context is null");
+
+    }
+
+    g_Context = (*env)->NewGlobalRef(env, context);
+}
+
+void CANativeJNISetJavaVM(JavaVM *jvm)
+{
+    OIC_LOG_V(DEBUG, CA_ADAPTER_UTILS_TAG, "CANativeJNISetJavaVM");
+    g_jvm = jvm;
+}
+
+jobject CANativeJNIGetContext()
+{
+    return g_Context;
+}
+
+JavaVM *CANativeJNIGetJavaVM()
+{
+    return g_jvm;
+}
+#endif
+

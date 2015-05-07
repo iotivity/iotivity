@@ -25,6 +25,7 @@
 // For POSIX.1-2001 base specification,
 // Refer http://pubs.opengroup.org/onlinepubs/009695399/
 #define _POSIX_C_SOURCE 200112L
+#include "occollection.h"
 #include <string.h>
 #include "ocstack.h"
 #include "ocstackinternal.h"
@@ -236,6 +237,13 @@ static OCStackResult BuildRootResourceJSON(OCResource *resource,
     {
         cJSON_AddItemToObject (resObj, OC_RSRVD_HREF, cJSON_CreateString(resource->uri));
         jsonStr = cJSON_PrintUnformatted (resObj);
+
+        if(!jsonStr)
+        {
+            cJSON_Delete(resObj);
+            return OC_STACK_NO_MEMORY;
+        }
+
         jsonLen = strlen(jsonStr);
         if (jsonLen < *remaining)
         {

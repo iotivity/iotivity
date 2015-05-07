@@ -136,7 +136,8 @@ static void CAIPGetInterfaceInformation(u_arraylist_t **netInterfaceList)
             return;
         }
         // set interface name
-        strncpy(netInfo->interfaceName, ifa->ifa_name, strlen(ifa->ifa_name));
+        strncpy(netInfo->interfaceName, ifa->ifa_name, sizeof(netInfo->interfaceName) - 1);
+        netInfo->interfaceName[sizeof(netInfo->interfaceName)-1] = '\0';
 
         // set local ip address
         strncpy(netInfo->ipAddress, interfaceAddress, strlen(interfaceAddress));

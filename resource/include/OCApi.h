@@ -186,13 +186,13 @@ namespace OC
     // const strings for different interfaces
 
     // Default interface
-    const std::string DEFAULT_INTERFACE = "oc.mi.def";
+    const std::string DEFAULT_INTERFACE = "oic.if.baseline";
 
     // Used in discovering (GET) links to other resources of a collection.
-    const std::string LINK_INTERFACE = "oc.mi.ll";
+    const std::string LINK_INTERFACE = "oic.if.ll";
 
     // Used in GET, PUT, POST, DELETE methods on links to other resources of a collection.
-    const std::string BATCH_INTERFACE = "oc.mi.b";
+    const std::string BATCH_INTERFACE = "oic.if.b";
 
     // Used in GET, PUT, POST methods on links to other remote resources of a group.
     const std::string GROUP_INTERFACE = "oc.mi.grp";

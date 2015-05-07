@@ -120,6 +120,12 @@ void ProcessGetRequest (OCEntityHandlerRequest *ehRequest)
 {
     OC_LOG(INFO, TAG, "Entering ProcessGetRequest");
     char *getResp = constructJsonResponse(ehRequest);
+
+    if(!getResp)
+    {
+        OC_LOG(ERROR, TAG, "Failed to constructJsonResponse");
+        return;
+    }
     OC_LOG(INFO, TAG, "After constructJsonResponse");
     OCEntityHandlerResponse response;
 
@@ -363,7 +369,7 @@ int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, 
     ledResource->power= resourcePower;
     OCStackResult res = OCCreateResource(&(ledResource->handle),
             "core.led",
-            "oc.mi.def",
+            OC_RSRVD_INTERFACE_DEFAULT,
             uri,
             OCEntityHandlerCb,
             OC_DISCOVERABLE|OC_OBSERVABLE);

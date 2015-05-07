@@ -205,7 +205,16 @@ static CAResult_t CAIPUpdateInterfaceInformation(u_arraylist_t **netInterfaceLis
     VERIFY_NON_NULL(netInterfaceList, IP_MONITOR_TAG, "netInterfaceList is null");
 
     /* Get a socket handle. */
-    int sck = socket(AF_INET, SOCK_DGRAM, 0);
+    int sck = -1;
+#ifdef SOCK_CLOEXEC
+    sck = socket(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, IPPROTO_UDP);
+#endif
+
+    if ( -1 == sck)
+    {
+        sck=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    }
+
     if (sck < 0)
     {
         OIC_LOG(ERROR, IP_MONITOR_TAG, "Error in socket creation");

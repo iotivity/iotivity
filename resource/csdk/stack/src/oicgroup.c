@@ -1056,8 +1056,16 @@ OCStackResult BuildCollectionGroupActionJSONResponse(
 
         char *jsonResponse;
 
-        ExtractKeyValueFromRequest((char *) ehRequest->reqJSONPayload, &doWhat,
-                &details);
+        stackRet = ExtractKeyValueFromRequest((char *) ehRequest->reqJSONPayload,
+                &doWhat, &details);
+
+        if(stackRet != OC_STACK_OK)
+        {
+            OC_LOG_V(ERROR, TAG, "ExtractKeyValueFromRequest failed: %d", stackRet);
+            return stackRet;
+        }
+
+        stackRet = OC_STACK_ERROR;
 
         cJSON *json;
         cJSON *format;
@@ -1270,7 +1278,7 @@ OCStackResult BuildCollectionGroupActionJSONResponse(
                     {
                         cJSON_AddStringToObject(format, ACTIONSET, plainText);
                     }
-
+                    OCFree(plainText);
                     stackRet = OC_STACK_OK;
                 }
             }

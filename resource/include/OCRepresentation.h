@@ -21,7 +21,7 @@
 /**
  * @file
  *
- * This file contains the declaration of classes and its members related 
+ * This file contains the declaration of classes and its members related
  * to OCRepresentation.
  */
 

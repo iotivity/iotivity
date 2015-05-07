@@ -455,6 +455,13 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
         return OC_STACK_ERROR;
     }
 
+    if(ehResponse->payloadSize >= (MAX_RESPONSE_LENGTH))// - OC_JSON_PREFIX_LEN - OC_JSON_SUFFIX_LEN))
+    {
+        OC_LOG_V(ERROR, TAG, "Response payload size was too large.  Max is %hu, payload size was %hu",
+                (MAX_RESPONSE_LENGTH - OC_JSON_PREFIX_LEN - OC_JSON_SUFFIX_LEN), ehResponse->payloadSize);
+        return OC_STACK_INVALID_PARAM;
+    }
+
     OCServerRequest *serverRequest = (OCServerRequest *)ehResponse->requestHandle;
 
     // Copy the address
@@ -517,6 +524,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
         if(!responseInfo.info.options)
         {
             OC_LOG(FATAL, TAG, PCF("options is NULL"));
+            OCFree(responseInfo.info.token);
             return OC_STACK_NO_MEMORY;
         }
 
@@ -548,7 +556,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
         responseInfo.info.options = NULL;
     }
 
-    char payload[MAX_RESPONSE_LENGTH] = {};
+    char payload[MAX_RESPONSE_LENGTH + OC_JSON_PREFIX_LEN + OC_JSON_SUFFIX_LEN] = {};
 
     // Put the JSON prefix and suffix around the payload
     strcpy(payload, (const char *)OC_JSON_PREFIX);

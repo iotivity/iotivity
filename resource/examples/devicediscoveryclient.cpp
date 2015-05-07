@@ -146,7 +146,7 @@ int main(int argc, char* argv[]) {
                 std::cout << "Invalid connectivity type selected. Using default WIFI" << std::endl;
             }
         }
-        catch(std::exception& e)
+        catch(std::exception&)
         {
             std::cout << "Invalid input argument. Using WIFI as connectivity type" << std::endl;
         }
@@ -183,14 +183,11 @@ int main(int argc, char* argv[]) {
         std::mutex blocker;
         std::condition_variable cv;
         std::unique_lock<std::mutex> lock(blocker);
-        while(true)
-        {
-            cv.wait(lock);
-        }
+        cv.wait(lock, []{return false;});
 
     }catch(OCException& e)
     {
-        //log(e.what());
+        std::cerr << "Failure in main thread: "<<e.reason()<<std::endl;
     }
 
     return 0;

@@ -556,6 +556,9 @@ void collectUniqueResource(const OCClientResponse * clientResponse)
             != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "Error while parsing JSON payload in OCClientResponse");
+        OCFree(sid);
+        OCFree(uri);
+        return;
     }
 
     int i;
@@ -573,6 +576,7 @@ void collectUniqueResource(const OCClientResponse * clientResponse)
         }
     }
 
+    OCFree(sid);
     OCFree(uri);
  }
 

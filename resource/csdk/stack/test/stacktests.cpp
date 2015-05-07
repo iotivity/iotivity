@@ -479,6 +479,95 @@ TEST(StackResource, ResourceTypeInterface)
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
+TEST(StackResource, ResourceDefaultInterfaceAlwaysFirst)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+
+    OC_LOG(INFO, TAG, "Starting ResourceDefaultInterfaceAlwaysFirst test");
+
+    InitStack(OC_SERVER);
+
+    OCResourceHandle handle;
+    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle,
+                                            "core.led",
+                                            "core.rw",
+                                            "/a/led",
+                                            0,
+                                            OC_DISCOVERABLE|OC_OBSERVABLE));
+    EXPECT_EQ(OC_STACK_OK, OCBindResourceInterfaceToResource(handle,
+                                        OC_RSRVD_INTERFACE_DEFAULT));
+    uint8_t numResourceInterfaces;
+    EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceInterfaces(handle, &numResourceInterfaces));
+    EXPECT_EQ(2, numResourceInterfaces);
+
+    const char *interfaceName_1 = OCGetResourceInterfaceName(handle, 0);
+    EXPECT_STREQ(OC_RSRVD_INTERFACE_DEFAULT, interfaceName_1);
+
+    const char*interfaceName_2 = OCGetResourceInterfaceName(handle, 1);
+    EXPECT_STREQ("core.rw", interfaceName_2);
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST(StackResource, ResourceDuplicateDefaultInterfaces)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+
+    OC_LOG(INFO, TAG, "Starting ResourceDuplicateDefaultInterfaces test");
+
+    InitStack(OC_SERVER);
+
+    OCResourceHandle handle;
+    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle,
+                                            "core.led",
+                                            "core.rw",
+                                            "/a/led",
+                                            0,
+                                            OC_DISCOVERABLE|OC_OBSERVABLE));
+
+    EXPECT_EQ(OC_STACK_OK, OCBindResourceInterfaceToResource(handle,
+                                        OC_RSRVD_INTERFACE_DEFAULT));
+    EXPECT_EQ(OC_STACK_OK, OCBindResourceInterfaceToResource(handle,
+                                        OC_RSRVD_INTERFACE_DEFAULT));
+
+    uint8_t numResourceInterfaces;
+    EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceInterfaces(handle, &numResourceInterfaces));
+    EXPECT_EQ(2, numResourceInterfaces);
+
+    const char *interfaceName_1 = OCGetResourceInterfaceName(handle, 0);
+    EXPECT_STREQ(OC_RSRVD_INTERFACE_DEFAULT, interfaceName_1);
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST(StackResource, ResourceDuplicateNonDefaultInterfaces)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+
+    OC_LOG(INFO, TAG, "Starting ResourceDuplicateInterfaces test");
+
+    InitStack(OC_SERVER);
+
+    OCResourceHandle handle;
+    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle,
+                                            "core.led",
+                                            "core.rw",
+                                            "/a/led",
+                                            0,
+                                            OC_DISCOVERABLE|OC_OBSERVABLE));
+
+    EXPECT_EQ(OC_STACK_OK, OCBindResourceInterfaceToResource(handle,
+                                        "core.rw"));
+    EXPECT_EQ(OC_STACK_OK, OCBindResourceInterfaceToResource(handle,
+                                        "core.rw"));
+
+    uint8_t numResourceInterfaces;
+    EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResourceInterfaces(handle, &numResourceInterfaces));
+    EXPECT_EQ(1, numResourceInterfaces);
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
 TEST(StackResource, ResourceTypeInterfaceMethods)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
@@ -608,8 +697,8 @@ TEST(StackResource, StackTestResourceDiscoverManyResources)
     url = OCGetResourceUri(handle3);
     EXPECT_STREQ("/a/led3", url);
 
-    EXPECT_EQ(OC_STACK_OK, OCBindResourceInterfaceToResource(handle3, "oc.mi.ll"));
-    EXPECT_EQ(OC_STACK_OK, OCBindResourceInterfaceToResource(handle3, "oc.mi.b"));
+    EXPECT_EQ(OC_STACK_OK, OCBindResourceInterfaceToResource(handle3, OC_RSRVD_INTERFACE_LL));
+    EXPECT_EQ(OC_STACK_OK, OCBindResourceInterfaceToResource(handle3, OC_RSRVD_INTERFACE_BATCH));
 
     OCResourceHandle handle4;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle4,
@@ -622,8 +711,8 @@ TEST(StackResource, StackTestResourceDiscoverManyResources)
     EXPECT_STREQ("/a/led4", url);
 
     EXPECT_EQ(OC_STACK_OK, OCBindResourceTypeToResource(handle4, "core.brightled"));
-    EXPECT_EQ(OC_STACK_OK, OCBindResourceInterfaceToResource(handle4, "oc.mi.ll"));
-    EXPECT_EQ(OC_STACK_OK, OCBindResourceInterfaceToResource(handle4, "oc.mi.b"));
+    EXPECT_EQ(OC_STACK_OK, OCBindResourceInterfaceToResource(handle4, OC_RSRVD_INTERFACE_LL));
+    EXPECT_EQ(OC_STACK_OK, OCBindResourceInterfaceToResource(handle4, OC_RSRVD_INTERFACE_BATCH));
 
     //EXPECT_EQ(OC_STACK_OK, OCHandleServerRequest(&res, uri, query, req, rsp));
 

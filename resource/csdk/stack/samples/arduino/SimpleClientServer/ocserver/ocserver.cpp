@@ -298,7 +298,7 @@ void createLightResource()
     Light.state = false;
     OCStackResult res = OCCreateResource(&Light.handle,
             "core.light",
-            "oc.mi.def",
+            OC_RSRVD_INTERFACE_DEFAULT,
             "/a/light",
             OCEntityHandlerCb,
             OC_DISCOVERABLE|OC_OBSERVABLE);

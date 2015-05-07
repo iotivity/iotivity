@@ -380,7 +380,7 @@ void foundResource(std::shared_ptr<OCResource> resource)
     }
     catch(std::exception& e)
     {
-        //log(e.what());
+        std::cerr << "Exception in foundResource: "<< e.what() << std::endl;
     }
 }
 
@@ -464,7 +464,7 @@ int main(int argc, char* argv[]) {
             return -1;
         }
     }
-    catch(std::exception& e)
+    catch(std::exception& )
     {
         std::cout << "<===Invalid input arguments===>\n\n";
         return -1;

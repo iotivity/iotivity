@@ -53,11 +53,6 @@ bool isSecure = false;
 /// Specifies whether Entity handler is going to do slow response or not
 bool isSlowResponse = false;
 
-// Entity handler should check for resourceTypeName and ResourceInterface in order to GET
-// the existence of a known resource
-const std::string resourceTypeLight = "core.light";
-const std::string resourceInterfaceDefault = DEFAULT_INTERFACE;
-
 // Forward declaring the entityHandler
 
 /// This class represents a single resource named 'lightResource'. This resource has
@@ -98,9 +93,9 @@ public:
         //URI of the resource
         std::string resourceURI = m_lightUri;
         //resource type name. In this case, it is light
-        std::string resourceTypeName = resourceTypeLight;
+        std::string resourceTypeName = "core.light";
         // resource interface.
-        std::string resourceInterface = resourceInterfaceDefault;
+        std::string resourceInterface = DEFAULT_INTERFACE;
 
         // OCResourceProperty is defined ocstack.h
         uint8_t resourceProperty;
@@ -130,9 +125,9 @@ public:
         // URI of the resource
         std::string resourceURI = "/a/light1";
         // resource type name. In this case, it is light
-        std::string resourceTypeName = resourceTypeLight;
+        std::string resourceTypeName = "core.light";
         // resource interface.
-        std::string resourceInterface = resourceInterfaceDefault;
+        std::string resourceInterface = DEFAULT_INTERFACE;
 
         // OCResourceProperty is defined ocstack.h
         uint8_t resourceProperty;
@@ -280,42 +275,20 @@ OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
             pResponse->setResourceHandle(request->getResourceHandle());
 
             // Check for query params (if any)
-            QueryParamsMap queryParamsMap = request->getQueryParameters();
+            QueryParamsMap queries = request->getQueryParameters();
 
-            // Entity handler to check the validity of resourceTypeName and resource interfaces
-            // It is Entity handler's responsibility to keep track of the list of resources prior to call
-            // Requested method
-
-            std::string interfaceName;
-            std::string typeName;
-
-            cout << "\t\t\tquery params: \n";
-
-            for(auto it : queryParamsMap)
+            if (!queries.empty())
             {
-                cout << "\t\t\t\t" << it.first << ":" << it.second << endl;
-                std::string firstQuery = it.first;
-                if(firstQuery.find_first_of("if") == 0)
-                {
-                    interfaceName = it.second;
-                }
-                else if(firstQuery.find_first_of("rt") == 0 )
-                {
-                    typeName = it.second;
-                }
+                std::cout << "\nQuery processing upto entityHandler" << std::endl;
             }
-            if(typeName.compare(resourceTypeLight) == 0 &&
-                interfaceName.compare(resourceInterfaceDefault) == 0)
+            for (auto it : queries)
             {
-                ehResult = OC_EH_OK;
-            }
-            else
-            {
-                cout<< "\t\t Invalid ResourceInterface Type & Name received from Client"<<endl;
+                std::cout << "Query key: " << it.first << " value : " << it.second
+                        << std:: endl;
             }
 
             // If the request type is GET
-            if(requestType == "GET" && ehResult == OC_EH_OK)
+            if(requestType == "GET")
             {
                 cout << "\t\t\trequestType : GET\n";
                 if(isSlowResponse) // Slow response case
@@ -340,7 +313,7 @@ OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
                     }
                 }
             }
-            else if(requestType == "PUT" && ehResult == OC_EH_OK)
+            else if(requestType == "PUT")
             {
                 cout << "\t\t\trequestType : PUT\n";
                 OCRepresentation rep = request->getResourceRepresentation();
@@ -356,7 +329,7 @@ OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
                     ehResult = OC_EH_OK;
                 }
             }
-            else if(requestType == "POST" && ehResult == OC_EH_OK)
+            else if(requestType == "POST")
             {
                 cout << "\t\t\trequestType : POST\n";
 
@@ -381,9 +354,9 @@ OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
                     ehResult = OC_EH_OK;
                 }
             }
-            else if(requestType == "DELETE" && ehResult == OC_EH_OK)
+            else if(requestType == "DELETE")
             {
-                // DELETE request operations
+                cout << "Delete request received" << endl;
             }
         }
 
@@ -456,7 +429,8 @@ void * ChangeLightRepresentation (void *param)
 
             if(isListOfObservers)
             {
-                std::shared_ptr<OCResourceResponse> resourceResponse(new OCResourceResponse());
+                std::shared_ptr<OCResourceResponse> resourceResponse =
+                            {std::make_shared<OCResourceResponse>()};
 
                 resourceResponse->setErrorCode(200);
                 resourceResponse->setResourceRepresentation(lightPtr->get(), DEFAULT_INTERFACE);
@@ -573,8 +547,9 @@ int main(int argc, char* argv[])
         std::cout << "Created resource." << std::endl;
 
         myLight.addType(std::string("core.brightlight"));
-        myLight.addInterface(std::string("oc.mi.ll"));
+        myLight.addInterface(std::string(LINK_INTERFACE));
         std::cout << "Added Interface and Type" << std::endl;
+
 
         // A condition variable will free the mutex it is given, then do a non-
         // intensive block until 'notify' is called on it.  In this case, since we

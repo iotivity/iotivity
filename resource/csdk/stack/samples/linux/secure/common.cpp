@@ -17,10 +17,10 @@
 // limitations under the License.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#include "common.h"
 
-#include <ocstack.h>
-#include <ocsecurity.h>
-#include <logger.h>
+#include "ocsecurity.h"
+#include "logger.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>

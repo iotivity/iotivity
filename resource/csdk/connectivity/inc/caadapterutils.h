@@ -27,6 +27,11 @@
 #ifndef CA_ADAPTER_UTILS_H_
 #define CA_ADAPTER_UTILS_H_
 
+#include <stdbool.h>
+#ifdef __ANDROID__
+#include <jni.h>
+#endif
+
 #include "cacommon.h"
 #include "logger.h"
 #include "pdu.h"
@@ -161,7 +166,11 @@ CAResult_t CAParseIPv4AddressInternal(const char *ipAddrStr, uint8_t *ipAddr,
 
 /**
  * @fn CAAdapterIsSameSubnet
- * @brief Check if two ip address belong to same subnet
+ * @brief Check if two ip address belong to same subnet.
+ * @param   ipAddress1   [IN]   IP address to be checked
+ * @param   ipAddress2   [IN]   IP address to be checked
+ * @param   netMask      [IN]   Subnet mask
+ * @return  true if same subnet and false if not same subnet
  */
 bool CAAdapterIsSameSubnet(const char *ipAddress1, const char *ipAddress2,
                            const char *netMask);
@@ -258,6 +267,43 @@ void CAClearNetInterfaceInfoList(u_arraylist_t *infoList);
  * @return  None
  */
 void CAClearServerInfoList(u_arraylist_t *serverInfoList);
+
+#ifdef __ANDROID__
+/**
+ * @fn CANativeJNISetContext
+ * @brief   To set context of JNI Application
+ *          This must be called by the Android API before CA Initialization
+ * @param   env         [IN] JNI interface pointer
+ * @param   context     [IN] context object
+ * @return  None
+ */
+void CANativeJNISetContext(JNIEnv *env, jobject context);
+
+/**
+ * @fn CANativeJNISetJavaVM
+ * @brief   To set jvm object
+ *          This must be called by the Android API before CA Initialization
+ * @param   jvm         [IN] jvm object
+ * @return  None
+ */
+void CANativeJNISetJavaVM(JavaVM *jvm);
+
+/**
+ * @fn CANativeJNISetContext
+ * @brief   To get context
+ *          Called by adapters to get Application context
+ * @return  context object
+ */
+jobject CANativeJNIGetContext();
+
+/**
+ * @fn CANativeJNIGetJavaVM
+ * @brief   To get JVM object
+ *          Called from adapters to get JavaVM object
+ * @return  JVM object
+ */
+JavaVM *CANativeJNIGetJavaVM();
+#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

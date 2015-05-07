@@ -553,9 +553,23 @@ CAResult_t CAGetLEInterfaceInformation(CALocalConnectivity_t **info, uint32_t *s
         return CA_STATUS_FAILED;
     }
 
-    strncpy((*info)->addressInfo.BT.btMacAddress, local_address, strlen(local_address));
+    size_t local_address_len = strlen(local_address);
+
+    if(local_address_len >= sizeof(g_localBLEAddress) ||
+            local_address_len >= sizeof((*info)->addressInfo.BT.btMacAddress))
+    {
+        OIC_LOG(ERROR, CALEADAPTER_TAG, "local_address is too long");
+        OICFree(*info);
+        OICFree(local_address);
+        return CA_STATUS_FAILED;
+    }
+
+    strncpy((*info)->addressInfo.BT.btMacAddress, local_address,
+            sizeof((*info)->addressInfo.BT.btMacAddress) - 1);
+    (*info)->addressInfo.BT.btMacAddress[sizeof((*info)->addressInfo.BT.btMacAddress)-1] = '\0';
     ca_mutex_lock(g_bleLocalAddressMutex);
-    strncpy(g_localBLEAddress, local_address, sizeof(g_localBLEAddress));
+    strncpy(g_localBLEAddress, local_address, sizeof(g_localBLEAddress) - 1);
+    g_localBLEAddress[sizeof(g_localBLEAddress)-1] = '\0';
     ca_mutex_unlock(g_bleLocalAddressMutex);
 
     (*info)->type = CA_LE;

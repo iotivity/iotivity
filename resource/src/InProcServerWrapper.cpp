@@ -291,9 +291,11 @@ namespace OC
                 result = OCProcess();
             }
 
-            // ...the value of variable result is simply ignored for now.
             if(OC_STACK_ERROR == result)
-             ;
+            {
+                oclog() << "OCProcess failed with result " << result <<std::flush;
+                // ...the value of variable result is simply ignored for now.
+            }
 
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
@@ -624,6 +626,7 @@ namespace OC
             }
             else
             {
+                OCFree(response.payload);
                 result = OC_STACK_ERROR;
             }
 

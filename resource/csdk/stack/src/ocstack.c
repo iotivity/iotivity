@@ -1505,6 +1505,7 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
                 requestInfo->info.type, requestInfo->info.numOptions,
                 requestInfo->info.options, requestInfo->info.token,
                 requestInfo->info.tokenLength);
+        OCFree(serverRequest.requestToken);
         return;
     }
     serverRequest.numRcvdVendorSpecificHeaderOptions = tempNum;
@@ -1897,6 +1898,14 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     if(method == OC_REST_PRESENCE)
     {
         result = getQueryFromUri(requiredUri, &query, &newUri);
+
+        if(result != OC_STACK_OK)
+        {
+            OC_LOG_V(ERROR, TAG, "Invalid Param from getQueryFromUri: %d, URI is %s",
+                    result, requiredUri);
+            goto exit;
+        }
+
         if(query)
         {
             result = getResourceType((char *) query, &resourceType);
@@ -1997,6 +2006,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
                                     numOptions, OC_OBSERVE_REGISTER);
         if (result != OC_STACK_OK)
         {
+            CADestroyToken(token);
             goto exit;
         }
         requestData.numOptions = numOptions + 1;
@@ -2009,7 +2019,6 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     requestData.payload = (char *)request;
 
     requestInfo.info = requestData;
-
     CATransportType_t caConType;
 
     result = OCToCATransportType((OCConnectivityType) conType, &caConType);
@@ -2028,6 +2037,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
         if(!grpEnd.resourceUri)
         {
             result = OC_STACK_NO_MEMORY;
+            CADestroyToken(token);
             goto exit;
         }
         strncpy(grpEnd.resourceUri, requiredUri, (uriLen + 1));
@@ -2086,6 +2096,7 @@ exit:
     }
     CADestroyRemoteEndpoint(endpoint);
     OCFree(grpEnd.resourceUri);
+
     if (requestData.options  && requestData.numOptions > 0)
     {
         if ((method == OC_REST_OBSERVE) || (method == OC_REST_OBSERVE_ALL))
@@ -3589,34 +3600,54 @@ OCResourceType *findResourceType(OCResourceType * resourceTypeList, const char *
     return NULL;
 }
 
-void insertResourceInterface(OCResource *resource,
-        OCResourceInterface *resourceInterface)
+/*
+ * Insert a new interface into interface linked list only if not already present.
+ * If alredy present, 2nd arg is free'd.
+ * Default interface will always be first if present.
+ */
+void insertResourceInterface(OCResource *resource, OCResourceInterface *newInterface)
 {
     OCResourceInterface *pointer = NULL;
     OCResourceInterface *previous = NULL;
 
-    if (!resource->rsrcInterface)
+    newInterface->next = NULL;
+
+    OCResourceInterface **firstInterface = &(resource->rsrcInterface);
+
+    if (!*firstInterface)
     {
-        resource->rsrcInterface = resourceInterface;
+        *firstInterface = newInterface;
+    }
+    else if (strcmp(newInterface->name, OC_RSRVD_INTERFACE_DEFAULT) == 0)
+    {
+        if (strcmp((*firstInterface)->name, OC_RSRVD_INTERFACE_DEFAULT) == 0)
+        {
+            OCFree(newInterface->name);
+            OCFree(newInterface);
+            return;
+        }
+        else
+        {
+            newInterface->next = *firstInterface;
+            *firstInterface = newInterface;
+        }
     }
     else
     {
-        pointer = resource->rsrcInterface;
+        pointer = *firstInterface;
         while (pointer)
         {
-            // resource type already exists. Free 2nd arg and return.
-            if (!strcmp(resourceInterface->name, pointer->name))
+            if (strcmp(newInterface->name, pointer->name) == 0)
             {
-                OCFree(resourceInterface->name);
-                OCFree(resourceInterface);
+                OCFree(newInterface->name);
+                OCFree(newInterface);
                 return;
             }
             previous = pointer;
             pointer = pointer->next;
         }
-        previous->next = resourceInterface;
+        previous->next = newInterface;
     }
-    resourceInterface->next = NULL;
 }
 
 OCResourceInterface *findResourceInterfaceAtIndex(OCResourceHandle handle,
@@ -3745,6 +3776,11 @@ OCStackResult getQueryFromUri(const char * uri, char** query, char ** uriWithout
         }
         strncpy(*uriWithoutQuery, uri, uriWithoutQueryLen);
     }
+    else
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
     if (queryLen)
     {
         *query = (char *) OCCalloc(queryLen + 1, 1);

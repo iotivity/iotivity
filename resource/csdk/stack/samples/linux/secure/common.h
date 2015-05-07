@@ -21,6 +21,8 @@
 #ifndef OCSAMPLE_COMMON_H_
 #define OCSAMPLE_COMMON_H_
 
+#include "ocstack.h"
+
 /* Get the result in string format. */
 const char *getResult(OCStackResult result);
 

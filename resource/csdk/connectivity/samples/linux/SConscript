@@ -38,7 +38,7 @@ print " sample src %s" % sample_src
 
 sample_env.PrependUnique(LIBPATH = [sample_env.get('BUILD_DIR'), '.',])
 sample_env.PrependUnique(RPATH = [sample_env.get('BUILD_DIR'), '.',])
-sample_env.PrependUnique(LIBS = ['connectivity_abstraction', 'coap',])
+sample_env.PrependUnique(LIBS = ['connectivity_abstraction', 'coap', 'pthread', 'rt'])
 
 if secured == '1':
 	sample_env.AppendUnique(CPPPATH = [root_dir + 'external/inc/'])

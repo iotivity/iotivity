@@ -312,7 +312,7 @@ namespace OC
         {
             ar(v);
         }
-        catch(cereal::Exception& e)
+        catch(cereal::Exception&)
         {
             ar.setNextName(nullptr);
             // Loading a key that doesn't exist results in an exception

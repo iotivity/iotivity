@@ -667,7 +667,8 @@ int InitDeviceDiscovery(OCQualityOfService qos)
     else
     {
         strncpy(szQueryUri, MULTICAST_DEVICE_DISCOVERY_QUERY,
-                (strlen(MULTICAST_DEVICE_DISCOVERY_QUERY) + 1));
+                sizeof(szQueryUri) -1 );
+        szQueryUri[sizeof(szQueryUri) -1] = '\0';
     }
 
     if(UNICAST_DISCOVERY)

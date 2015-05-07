@@ -110,7 +110,22 @@ static int32_t getCAAddress(const char *pAddress, CAAddress_t *outAddress)
 
     if (isIp)
     {
-        strncpy(outAddress->IP.ipAddress, pAddress, ipLen == 0 ? len : ipLen);
+        if(ipLen && ipLen < sizeof(outAddress->IP.ipAddress))
+        {
+            strncpy(outAddress->IP.ipAddress, pAddress, ipLen);
+            outAddress->IP.ipAddress[ipLen] = '\0';
+        }
+        else if (!ipLen && len < sizeof(outAddress->IP.ipAddress))
+        {
+            strncpy(outAddress->IP.ipAddress, pAddress, len);
+            outAddress->IP.ipAddress[len] = '\0';
+        }
+        else
+        {
+            OIC_LOG_V(ERROR, TAG, "IP Address too long: %d", ipLen==0 ? len : ipLen);
+            return -1;
+        }
+
 
         if (ipLen > 0)
         {
@@ -176,6 +191,7 @@ CARemoteEndpoint_t *CACreateRemoteEndpointUriInternal(const CAURI_t uri,
     }
 
     memcpy(cloneUri, &uri[startIndex], sizeof(char) * len);
+    cloneUri[len] = '\0';
 
     // #3. parse address
     // #4. parse resource uri

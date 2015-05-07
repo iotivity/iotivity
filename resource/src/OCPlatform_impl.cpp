@@ -30,6 +30,8 @@
 //
 //*********************************************************************
 
+#include "OCPlatform_impl.h"
+
 #include <random>
 #include <utility>
 #include <functional>
@@ -220,7 +222,7 @@ namespace OC
 
         return checked_guard(m_server, &IServerWrapper::registerResourceWithHost,
                 std::ref(resourceHandle), resource->host(), resource->uri(),
-                resourceTypes[0]/*"core.remote"*/, "oc.mi.def",
+                resourceTypes[0]/*"core.remote"*/, DEFAULT_INTERFACE,
                 (EntityHandler) nullptr, resourceProperty);
     }
 

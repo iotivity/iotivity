@@ -25,10 +25,8 @@
 // For POSIX.1-2001 base specification,
 // Refer http://pubs.opengroup.org/onlinepubs/009695399/
 #define _POSIX_C_SOURCE 200112L
+#include "ocresource.h"
 #include <string.h>
-#include "ocstack.h"
-#include "ocstackconfig.h"
-#include "ocstackinternal.h"
 #include "ocresourcehandler.h"
 #include "ocobserve.h"
 #include "occollection.h"
@@ -57,7 +55,7 @@ static const char * VIRTUAL_RSRCS[] =
        "/oc/core/d",
        "/oc/core/types/d",
        #ifdef WITH_PRESENCE
-       "/oc/presence"
+       "/oic/ad"
        #endif
 };
 
@@ -289,6 +287,12 @@ BuildVirtualResourceResponse(const OCResource *resourcePtr, uint8_t filterOn,
         }
     }
     jsonStr = cJSON_PrintUnformatted (resObj);
+
+    if(!jsonStr)
+    {
+        cJSON_Delete(resObj);
+        return OC_STACK_NO_MEMORY;
+    }
 
     jsonLen = strlen(jsonStr);
     if (jsonLen < *remaining)

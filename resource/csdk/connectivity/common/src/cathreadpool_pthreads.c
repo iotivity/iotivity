@@ -185,6 +185,7 @@ void ca_thread_pool_free(ca_thread_pool_t thread_pool)
     if(!thread_pool)
     {
         OIC_LOG(ERROR, TAG, "Invalid parameter thread_pool was NULL");
+        return;
     }
 
     ca_mutex_lock(thread_pool->details->list_lock);

@@ -260,13 +260,14 @@ OCStackResult SendListObserverNotification (OCResource * resource,
                     {
                         OCEntityHandlerResponse ehResponse = {};
                         ehResponse.ehResult = OC_EH_OK;
-                        ehResponse.payload = (char *) OCMalloc(MAX_RESPONSE_LENGTH);
+                        ehResponse.payload = (char *) OCMalloc(MAX_RESPONSE_LENGTH + 1);
                         if(!ehResponse.payload)
                         {
                             FindAndDeleteServerRequest(request);
                             continue;
                         }
                         strncpy(ehResponse.payload, notificationJSONPayload, MAX_RESPONSE_LENGTH-1);
+                        ehResponse.payload[MAX_RESPONSE_LENGTH] = '\0';
                         ehResponse.payloadSize = strlen(ehResponse.payload) + 1;
                         ehResponse.persistentBufferFlag = 0;
                         ehResponse.requestHandle = (OCRequestHandle) request;
