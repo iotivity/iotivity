@@ -58,7 +58,8 @@ typedef enum
  * @pre  Callback must be registered using CAWiFiSetPacketReceiveCallback()
  */
 typedef void (*CAWiFiPacketReceivedCallback)(const char *ipAddress, const uint32_t port,
-        const void *data, const uint32_t dataLength, const CABool_t isSecure);
+                                             const void *data, const uint32_t dataLength,
+                                             const CABool_t isSecure, const CARemoteId_t *identity);
 
 /**
  * @brief  Callback to be notified when exception occures on multicast/unicast server.

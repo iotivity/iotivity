@@ -26,6 +26,7 @@
 #include "caadapterutils.h"
 #include "ocsecurityconfig.h"
 #include "cainterface.h"
+#include "cacommon.h"
 
 #define MAX_SUPPORTED_ADAPTERS 2
 
@@ -35,7 +36,8 @@
 extern void OCGetDtlsPskCredentials(OCDtlsPskCredsBlob **credInfo);
 
 typedef void (*CAPacketReceivedCallback)(const char *ipAddress, const uint32_t port,
-        const void *data, const uint32_t dataLength, const CABool_t isSecured);
+                                         const void *data, const uint32_t dataLength,
+                                         const CABool_t isSecured, const CARemoteId_t *identity);
 
 typedef uint32_t (*CAPacketSendCallback)(const char *ipAddress, const uint32_t port,
         const void *data, const uint32_t dataLength);
@@ -57,6 +59,8 @@ typedef struct CAAdapterCallbacks
  */
 typedef struct stCADtlsContext
 {
+    u_arraylist_t *peerInfoList;        /**< peerInfo list which holds the mapping between
+                                             peer id to it's n/w address */
     u_arraylist_t  *cacheList;          /**< pdu's are cached until DTLS session is formed */
     struct dtls_context_t *dtlsContext;    /**< pointer to tinyDTLS context */
     struct stPacketInfo *packetInfo;          /**< used by callback during
@@ -131,6 +135,17 @@ typedef enum
 } eDtlsAdapterType_t;
 
 /**
+ * @struct stCADtlsPeerInfo_t
+ * @brief structure associates the peer psk id with peer n/w address
+ */
+typedef struct stCADtlsPeerInfo
+{
+    CAAddress_t address;
+    CARemoteId_t identity;
+}stCADtlsPeerInfo_t;
+
+
+/**
  * @fn  CADTLSSetAdapterCallbacks
  * @brief  Used set send and recv callbacks for different adapters(WIFI,EtherNet)
  *
@@ -166,10 +181,10 @@ void CADTLSSetCredentialsCallback(CAGetDTLSCredentialsHandler credCallback);
 CAResult_t CADtlsSelectCipherSuite(const dtls_cipher_t cipher);
 
 /**
- * Select the cipher suite for dtls handshake
+ * Enable anonymous ECDH cipher suite for dtls handshake
  *
- * @param[in] enable  0, enabling TLS_ECDH_anon_WITH_AES_128_CBC_SHA
- *                     other value, disabling TLS_ECDH_anon_WITH_AES_128_CBC_SHA
+ * @param[in] enable  1, enabling TLS_ECDH_anon_WITH_AES_128_CBC_SHA
+ *                    0, disabling TLS_ECDH_anon_WITH_AES_128_CBC_SHA
  *
  * @return  0 on success otherwise a positive error value
  * @retval  CA_STATUS_OK    Successful

@@ -247,7 +247,7 @@ static void CAReceiveHandler(void *data)
                 // Notify data to upper layer
                 if (gPacketReceivedCallback)
                 {
-                    gPacketReceivedCallback(srcIPAddress, srcPort, recvBuffer, recvLen, false);
+                    gPacketReceivedCallback(srcIPAddress, srcPort, recvBuffer, recvLen, false, NULL);
                 }
                 break;
 #ifdef __WITH_DTLS__

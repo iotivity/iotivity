@@ -57,11 +57,9 @@ void SRMRequestHandler(const CARemoteEndpoint_t *endPoint, const CARequestInfo_t
         return;
     }
 
-    /*
-     * TODO Update this when Peer Id propagation task is merged
-     */
-    OicUuid_t subjectId = {.id = {0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2,
-                                  0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2} };
+    // Copy the subjectID
+    OicUuid_t subjectId = {};
+    memcpy(subjectId.id, endPoint->identity.id, sizeof(subjectId.id));
 
     //Check the URI has the query and skip it before checking the permission
     char *uri = strstr(endPoint->resourceUri, "?");

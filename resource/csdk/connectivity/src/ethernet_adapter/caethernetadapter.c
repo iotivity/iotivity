@@ -134,7 +134,8 @@ static void CAEthernetNotifyNetworkChange(const char *address, const int16_t por
 static void CAEthernetConnectionStateCB(const char *ipAddress,
                                     const CANetworkStatus_t status);
 static void CAEthernetPacketReceivedCB(const char *ipAddress, const uint32_t port,
-                                       const void *data, const uint32_t dataLength, const CABool_t isSecured);
+                                       const void *data, const uint32_t dataLength,
+                                       const CABool_t isSecured, const CARemoteId_t *identity);
 #ifdef __WITH_DTLS__
 static uint32_t CAEthernetPacketSendCB(const char *ipAddress, const uint32_t port,
                                        const void *data, const uint32_t dataLength);
@@ -320,7 +321,8 @@ uint32_t CAEthernetPacketSendCB(const char *ipAddress, const uint32_t port,
 #endif
 
 void CAEthernetPacketReceivedCB(const char *ipAddress, const uint32_t port,
-                                const void *data, const uint32_t dataLength, const CABool_t isSecured)
+                                const void *data, const uint32_t dataLength,
+                                const CABool_t isSecured, const CARemoteId_t *identity)
 {
     OIC_LOG(DEBUG, ETHERNET_ADAPTER_TAG, "IN");
     OIC_LOG_V(DEBUG, ETHERNET_ADAPTER_TAG, "Address: %s, port:%d, data:%s", ipAddress, port, data);
@@ -334,6 +336,11 @@ void CAEthernetPacketReceivedCB(const char *ipAddress, const uint32_t port,
     }
     endPoint->addressInfo.IP.port = port;
     endPoint->isSecured = isSecured;
+    if (identity)
+    {
+        endPoint->identity = *identity;
+    }
+
 
     void *buf = OICMalloc(dataLength + 1);
     if (NULL == buf)

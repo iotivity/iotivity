@@ -136,7 +136,7 @@ static void CAWiFiConnectionStateCB(const char *ipAddress,
                                     const CANetworkStatus_t status);
 static void CAWiFiPacketReceivedCB(const char *ipAddress, const uint32_t port,
                                    const void *data, const uint32_t dataLength,
-                                   const CABool_t isSecured);
+                                   const CABool_t isSecured, const CARemoteId_t *identity);
 #ifdef __WITH_DTLS__
 static uint32_t CAWiFiPacketSendCB(const char *ipAddress, const uint32_t port,
                                    const void *data, const uint32_t dataLength);
@@ -334,7 +334,8 @@ uint32_t CAWiFiPacketSendCB(const char *ipAddress, const uint32_t port,
 #endif
 
 void CAWiFiPacketReceivedCB(const char *ipAddress, const uint32_t port,
-                            const void *data, const uint32_t dataLength, const CABool_t isSecured)
+                            const void *data, const uint32_t dataLength,
+                            const CABool_t isSecured, const CARemoteId_t *identity)
 {
     OIC_LOG(DEBUG, WIFI_ADAPTER_TAG, "IN");
     OIC_LOG_V(DEBUG, WIFI_ADAPTER_TAG, "Address: %s, port:%d, data:%s", ipAddress, port, data);
@@ -348,6 +349,10 @@ void CAWiFiPacketReceivedCB(const char *ipAddress, const uint32_t port,
     }
     endPoint->addressInfo.IP.port = port;
     endPoint->isSecured = isSecured;
+    if (identity)
+    {
+        endPoint->identity = *identity;
+    }
 
     void *buf = OICMalloc(dataLength + 1);
     if (NULL == buf)

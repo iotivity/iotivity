@@ -62,6 +62,11 @@ extern "C"
 #define CA_MAX_TOKEN_LEN (8)
 
 /**
+ *@brief Maximum length of the remoteEndpoint identity
+ */
+#define CA_MAX_ENDPOINT_IDENTITY_LEN   (32)
+
+/**
  * @brief option types - the highest option number 63
  */
 #define CA_OPTION_IF_MATCH 1
@@ -155,6 +160,15 @@ typedef union
     } IP;
 } CAAddress_t;
 
+/*
+ * @brief remoteEndpoint identity
+ */
+typedef struct
+{
+    uint16_t id_length;
+    unsigned char id[CA_MAX_ENDPOINT_IDENTITY_LEN];
+}CARemoteId_t;
+
 /**
  * @enum CAMessageType_t
  * @brief Message Type for Base source code
@@ -189,6 +203,7 @@ typedef struct
     CAAddress_t addressInfo;                /**< Remote Endpoint address **/
     CAConnectivityType_t connectivityType;  /**< Connectivity of the endpoint**/
     CABool_t isSecured;                     /**< Secure connection**/
+    CARemoteId_t identity;                  /**< Endpoint identity **/
 } CARemoteEndpoint_t;
 
 
