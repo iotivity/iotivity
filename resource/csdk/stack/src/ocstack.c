@@ -2574,11 +2574,13 @@ OCStackResult OCCreateResourceWithHost(OCResourceHandle *handle,
         OCEntityHandler entityHandler,
         uint8_t resourceProperties)
 {
+    OC_LOG(INFO, TAG, PCF("Entering OCCreateResourceWithHost"));
     char *str = NULL;
     size_t size = 0;
 
     if(!host)
     {
+        OC_LOG(ERROR, TAG, PCF("Added resource host is NULL."));
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -2587,16 +2589,18 @@ OCStackResult OCCreateResourceWithHost(OCResourceHandle *handle,
     result = OCCreateResource(handle, resourceTypeName, resourceInterfaceName,
                                 uri, entityHandler, resourceProperties);
 
-    if (result != OC_STACK_ERROR)
+    if (result == OC_STACK_OK)
     {
         // Set the uri
         size = strlen(host) + 1;
         str = (char *) OCMalloc(size);
         if (!str)
         {
+            OC_LOG(ERROR, TAG, PCF("Memory could not be allocated."));
             return OC_STACK_NO_MEMORY;
         }
         strncpy(str, host, size);
+
         ((OCResource *) *handle)->host = str;
     }
 
