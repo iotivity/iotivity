@@ -47,7 +47,6 @@ static u_mutex gDtlsContextMutex = NULL;
  */
 static CAGetDTLSCredentialsHandler gGetCredentialsCallback = NULL;
 
-
 static stCADtlsPeerInfo_t * GetPeerInfo(const char *peerAddr, const uint32_t port)
 {
     uint32_t list_index = 0;
@@ -630,6 +629,9 @@ CAResult_t CADtlsInitiateHandshake(const CAAddress_t* addrInfo,
     dst.addr.sin.sin_port = htons(addrInfo->IP.port);
     dst.size = sizeof(dst.addr);
 
+    //TODO: pass eDtlsAdapterType_t type rather than CAConnectivityType_t
+    dst.ifIndex = connType == CA_WIFI ? DTLS_WIFI:DTLS_ETHERNET;
+
     u_mutex_lock(gDtlsContextMutex);
     if(NULL == gDtlsContextMutex)
     {
@@ -677,6 +679,9 @@ CAResult_t CADtlsGenerateOwnerPSK(const CAAddress_t* addrInfo,
     dst.addr.sin.sin_family = AF_INET;
     dst.addr.sin.sin_port = htons(addrInfo->IP.port);
     dst.size = sizeof(dst.addr);
+
+    //TODO: pass eDtlsAdapterType_t type rather than CAConnectivityType_t
+    dst.ifIndex = connType == CA_WIFI ? DTLS_WIFI:DTLS_ETHERNET;
 
     u_mutex_lock(gDtlsContextMutex);
     if (NULL == gCaDtlsContext)
