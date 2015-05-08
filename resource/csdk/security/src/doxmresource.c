@@ -405,7 +405,7 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
                                             request->connectivityType,
                                      (uint8_t*) OXM_JUST_WORKS, strlen(OXM_JUST_WORKS),
                                      gDoxm->deviceID.id, sizeof(gDoxm->deviceID.id),
-                                     gDoxm->owner.id, sizeof(gDoxm->owner.id),
+                                     newDoxm->owner.id, sizeof(newDoxm->owner.id),
                                      ownerPSK, OWNER_PSK_LENGTH_128);
 
                 VERIFY_SUCCESS(pskRet == CA_STATUS_OK, ERROR);
