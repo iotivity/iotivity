@@ -40,11 +40,8 @@
 #define DASH '-'
 #define TAG  "provisioningclient"
 
-/**
- * Dummy device ID
- */
-static OicUuid_t gDeviceUUID = {"adminDeviceUUID"};
 static OicSecAcl_t        *gAcl = NULL;
+static char CRED_FILE[] = "oic_svr_db.json";
 
 /**
  * Perform cleanup for ACL list
@@ -169,7 +166,7 @@ static SPResult InputACL(OicSecAcl_t *acl)
     for (int i = 0; temp_id[i] != '\0'; i++)
     {
         if (DASH != temp_id[i])
-            acl->subject.id[j++] = temp_id[i] - '0';
+            acl->subject.id[j++] = temp_id[i];
     }
     //Set Resource.
     printf("Num. of Resource : ");
@@ -224,11 +221,17 @@ static SPResult InputACL(OicSecAcl_t *acl)
         {
             if (DASH != temp_id[k])
             {
-                acl->owners[i].id[j++] = temp_id[k] - '0';
+                acl->owners[i].id[j++] = temp_id[k];
             }
         }
     }
     return SP_RESULT_SUCCESS;
+}
+
+FILE* client_fopen(const char *path, const char *mode)
+{
+    (void)path;
+    return fopen(CRED_FILE, mode);
 }
 
 /**
@@ -237,50 +240,32 @@ static SPResult InputACL(OicSecAcl_t *acl)
  */
 int main(int argc, char **argv)
 {
-    int c = 0;
-    int flag = 0;
     SPResult res = SP_RESULT_SUCCESS;
-    SPConnectivityType networkType = SP_CONN_ETHERNET;
     SPTargetDeviceInfo_t *pDeviceList = NULL;
     gAcl = (OicSecAcl_t *)OCMalloc(sizeof(OicSecAcl_t));
+
+    // Initialize Persistent Storage for SVR database
+    OCPersistentStorage ps = {};
+    ps.open = client_fopen;
+    ps.read = fread;
+    ps.write = fwrite;
+    ps.close = fclose;
+    ps.unlink = unlink;
+    OCRegisterPersistentStorageHandler(&ps);
+
+    if (OCInit(NULL, 0, OC_CLIENT_SERVER) != OC_STACK_OK)
+    {
+        OC_LOG(ERROR, TAG, "OCStack init error");
+        return 0;
+    }
+
     if (NULL == gAcl)
     {
         OC_LOG(ERROR, TAG, "Error while memory allocation");
         return SP_RESULT_MEM_ALLOCATION_FAIL;
     }
 
-    while ((c = getopt(argc, argv, "ew")) != -1)
-    {
-        switch (c)
-        {
-            case 'e':
-                {
-                    printf("Network type Ethernet\n");
-                    networkType = SP_CONN_ETHERNET;
-                    flag = 1;
-                    break;
-                }
-            case 'w':
-                {
-                    printf("Network type Wifi\n");
-                    networkType = SP_CONN_WIFI;
-                    flag = 1;
-                    break;
-                }
-            default:
-                {
-                    break;
-                }
-        }
-    }
-    if (!flag)
-    {
-        printf("******************************************************************************\n");
-        printf("starting provisioning server with default network type: Ethernet \n");
-        printf("To change network type use command line option -w for Wifi and -e for Ethernet\n");
-        printf("******************************************************************************\n");
-    }
-    res = SPProvisioningDiscovery(PREDEFINED_TIMEOUT, networkType, &pDeviceList);
+    res = SPProvisioningDiscovery(PREDEFINED_TIMEOUT, &pDeviceList);
     if (SP_RESULT_SUCCESS == res)
     {
         while (pDeviceList != NULL)
@@ -288,14 +273,14 @@ int main(int argc, char **argv)
             printf("-Provisioning device ID : ");
             for (int i = 0; i < MAX_INPUT_ID_LENGTH; i++)
             {
-                if (pDeviceList->deviceId.id[i] == '\0')
+                if (pDeviceList->doxm->deviceID.id[i] == '\0')
                 {
                      break;
                 }
-                printf("%c", pDeviceList->deviceId.id[i]);
+                printf("%c", pDeviceList->doxm->deviceID.id[i]);
             }
             printf("\n");
-            res = SPInitProvisionContext(PREDEFINED_TIMEOUT, &gDeviceUUID, pDeviceList);
+            res = SPInitProvisionContext(PREDEFINED_TIMEOUT, pDeviceList);
             if (SP_RESULT_SUCCESS != res)
             {
                 OC_LOG(ERROR, TAG, "Error while init provisioning Context");
