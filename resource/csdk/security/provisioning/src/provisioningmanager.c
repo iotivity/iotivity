@@ -390,7 +390,9 @@ static CAResult_t sendCARequest(CAURI_t uri, char *payload, int payloadLen,
         CADestroyRemoteEndpoint(endpoint);
         return CA_STATUS_FAILED;
     }
-    CAMessageType_t msgType = CA_MSG_CONFIRM; // set confirmable message type
+
+    // TODO: it can be CA_MSG_NONCONFIRM or CA_MSG_CONFIRM. Pass it as a parameter.
+    CAMessageType_t msgType = CA_MSG_NONCONFIRM;
     CAInfo_t requestData = { 0 };
     requestData.token = token;
     if (payload && '\0' != (*(payload + payloadLen)))
