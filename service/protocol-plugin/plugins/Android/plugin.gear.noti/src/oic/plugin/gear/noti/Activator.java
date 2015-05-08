@@ -114,7 +114,7 @@ public class Activator extends Activity implements BundleActivator,
                     AppContext);
             Log.w(TAG, "RichNoti instance created");
 
-            PlatformConfig cfg = new PlatformConfig(ServiceType.IN_PROC,
+            PlatformConfig cfg = new PlatformConfig(this, ServiceType.IN_PROC,
                     ModeType.CLIENT_SERVER, "0.0.0.0", 0, QualityOfService.LOW);
 
             OcPlatform.Configure(cfg);

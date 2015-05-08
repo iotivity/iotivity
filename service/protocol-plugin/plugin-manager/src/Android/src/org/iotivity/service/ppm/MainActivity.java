@@ -24,8 +24,8 @@ package org.iotivity.service.ppm;
 
 import java.util.HashMap;
 import java.util.Map;
-
 import org.iotivity.base.ModeType;
+import org.iotivity.base.OcConnectivityType;
 import org.iotivity.base.OcException;
 import org.iotivity.base.OcPlatform;
 import org.iotivity.base.OcRepresentation;
@@ -130,15 +130,15 @@ public class MainActivity extends Activity implements
                 .setDescendantFocusability(android.widget.NumberPicker.FOCUS_BLOCK_DESCENDANTS);
         hue_color.setOnValueChangedListener(this);
 
-        PlatformConfig cfg = new PlatformConfig(ServiceType.IN_PROC,
+        PlatformConfig cfg = new PlatformConfig(this, ServiceType.IN_PROC,
                 ModeType.CLIENT_SERVER, "0.0.0.0", 0, QualityOfService.LOW);
 
         OcPlatform.Configure(cfg);
 
         try {
             FoundResource foundResource = new FoundResource();
-            OcPlatform.findResource("", "coap://224.0.1.187/oc/core",
-                    foundResource);
+            OcPlatform.findResource("", OcPlatform.WELL_KNOWN_QUERY,
+                    OcConnectivityType.WIFI, foundResource);
         } catch (Exception e) {
             Log.e("Felix", "Exception : " + e);
         }
@@ -148,30 +148,32 @@ public class MainActivity extends Activity implements
             public void onClick(View v) {
                 Log.i("Felix", "Belkin button click listener");
                 OcRepresentation rep = new OcRepresentation();
-
-                if (belkinplug.m_power == null) {
-                    Log.i("Felix", "m_power is null");
-                    belkinplug.m_power = "on";
-                    rep.setValueString("power", "on");
+                try {
+                    if (belkinplug.m_power == null) {
+                        Log.i("Felix", "m_power is null");
+                        belkinplug.m_power = "on";
+                        rep.setValue("power", "on");
+                    }
+                    if (belkinplug.m_power.equals("on")) {
+                        Toast.makeText(getApplicationContext(), "Off",
+                                Toast.LENGTH_SHORT).show();
+                        Log.i("Felix", "belkin wemo off");
+                        rep.setValue("power", "off");
+                    } else if (belkinplug.m_power.equals("off")) {
+                        Toast.makeText(getApplicationContext(), "On",
+                                Toast.LENGTH_SHORT).show();
+                        Log.i("Felix", "belkin wemo on");
+                        rep.setValue("power", "on");
+                    } else {
+                        rep.setValue("power", "on");
+                    }
+                    rep.setValue("name", "belkin");
+                    rep.setValue("uri", "/a/wemo");
+                    rep.setValue("brightness", 0);
+                    rep.setValue("color", 0);
+                } catch (OcException e) {
+                    Log.e("Felix", e.getMessage());
                 }
-
-                if (belkinplug.m_power.equals("on")) {
-                    Toast.makeText(getApplicationContext(), "Off",
-                            Toast.LENGTH_SHORT).show();
-                    Log.i("Felix", "belkin wemo off");
-                    rep.setValueString("power", "off");
-                } else if (belkinplug.m_power.equals("off")) {
-                    Toast.makeText(getApplicationContext(), "On",
-                            Toast.LENGTH_SHORT).show();
-                    Log.i("Felix", "belkin wemo on");
-                    rep.setValueString("power", "on");
-                } else {
-                    rep.setValueString("power", "on");
-                }
-                rep.setValueString("name", "belkin");
-                rep.setValueString("uri", "/a/wemo");
-                rep.setValueInt("brightness", 0);
-                rep.setValueInt("color", 0);
                 OnPutBelkinplug onPut = new OnPutBelkinplug();
                 if (belkinResource != null) {
                     try {
@@ -202,9 +204,8 @@ public class MainActivity extends Activity implements
                         try {
                             OcPlatform
                                     .findResource(
-                                            "",
-                                            "coap://224.0.1.187/oc/core?rt=device.smartplug",
-                                            foundResource);
+                                            "", OcPlatform.WELL_KNOWN_QUERY + "?rt=" + "device.smartplug",
+                                            OcConnectivityType.WIFI, foundResource);
                         } catch (OcException e) {
                             e.printStackTrace();
                         }
@@ -222,7 +223,6 @@ public class MainActivity extends Activity implements
                 try {
                     java.lang.Thread.sleep(2000);
                 } catch (InterruptedException e) {
-                    // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
             }
@@ -279,13 +279,17 @@ public class MainActivity extends Activity implements
             public void onClick(View v) {
                 Log.i("Felix", "Gear button click listener");
                 OcRepresentation rep = new OcRepresentation();
-
-                rep.setValueString("power", "Happy New Year!");
-                rep.setValueString("name", "gear");
-                rep.setValueString("uri", "/a/galaxy/gear");
-                rep.setValueInt("brightness", 0);
-                rep.setValueInt("color", 0);
-
+                
+                try{   
+                    rep.setValue("power", "Happy New Year!");
+                    rep.setValue("name", "gear");
+                    rep.setValue("uri", "/a/galaxy/gear");
+                    rep.setValue("brightness", 0);
+                    rep.setValue("color", 0);
+                } catch (OcException e) {
+                    Log.e("Felix", e.getMessage());
+                }
+                
                 if (gearResource != null) {
                     Toast.makeText(getApplicationContext(),
                             "Send Noti. to Gear", Toast.LENGTH_SHORT).show();
@@ -317,10 +321,9 @@ public class MainActivity extends Activity implements
                         FoundResource foundResource = new FoundResource();
                         try {
                             OcPlatform
-                                    .findResource(
-                                            "",
-                                            "coap://224.0.1.187/oc/core?rt=device.notify",
-                                            foundResource);
+                            .findResource(
+                                    "", OcPlatform.WELL_KNOWN_QUERY + "?rt=" + "device.notify",
+                                    OcConnectivityType.WIFI, foundResource);
                         } catch (OcException e) {
                             e.printStackTrace();
                         }
@@ -401,11 +404,16 @@ public class MainActivity extends Activity implements
                         Log.e("Felix", "hueplug m_bright is 0");
                         hueplug.m_bright = 128;
                     }
-                    rep.setValueString("power", "on");
-                    rep.setValueString("name", "hue");
-                    rep.setValueString("uri", "/a/huebulb");
-                    rep.setValueInt("brightness", hueplug.m_bright);
-                    rep.setValueInt("color", hueplug.m_color);
+                    try {
+                        rep.setValue("power", "on");
+                        rep.setValue("name", "hue");
+                        rep.setValue("uri", "/a/huebulb");
+                        rep.setValue("brightness", hueplug.m_bright);
+                        rep.setValue("color", hueplug.m_color);
+                    } catch (OcException e) {
+                        Log.e("Felix", e.getMessage());
+                    }
+
                     OnPutHuebulb onPut = new OnPutHuebulb();
                     if (hueResource != null) {
                         try {
@@ -425,11 +433,16 @@ public class MainActivity extends Activity implements
                         Log.e("Felix", "hueplug m_bright is 0");
                         hueplug.m_bright = 128;
                     }
-                    rep.setValueString("power", "off");
-                    rep.setValueString("name", "hue");
-                    rep.setValueString("uri", "/a/huebulb");
-                    rep.setValueInt("brightness", hueplug.m_bright);
-                    rep.setValueInt("color", hueplug.m_color);
+                    try {
+                        rep.setValue("power", "off");
+                        rep.setValue("name", "hue");
+                        rep.setValue("uri", "/a/huebulb");
+                        rep.setValue("brightness", hueplug.m_bright);
+                        rep.setValue("color", hueplug.m_color);
+                    } catch (OcException e) {
+                        Log.e("Felix", e.getMessage());
+                    }
+
                     OnPutHuebulb onPut = new OnPutHuebulb();
 
                     if (hueResource != null) {
@@ -461,10 +474,9 @@ public class MainActivity extends Activity implements
                         FoundResource foundResource = new FoundResource();
                         try {
                             OcPlatform
-                                    .findResource(
-                                            "",
-                                            "coap://224.0.1.187/oc/core?rt=device.light",
-                                            foundResource);
+                            .findResource(
+                                    "", OcPlatform.WELL_KNOWN_QUERY + "?rt=" + "device.light",
+                                    OcConnectivityType.WIFI, foundResource);
                         } catch (OcException e) {
                             e.printStackTrace();
                         }
@@ -640,11 +652,15 @@ public class MainActivity extends Activity implements
                 if (hueplug.m_bright == 0) {
                     hueplug.m_bright = 128;
                 }
-                rep.setValueString("power", hueplug.m_power);
-                rep.setValueString("name", "huebulb");
-                rep.setValueString("uri", "/a/huebulb");
-                rep.setValueInt("brightness", hueplug.m_bright = 180);
-                rep.setValueInt("color", hueplug.m_color);
+                try{
+                    rep.setValue("power", hueplug.m_power);
+                    rep.setValue("name", "huebulb");
+                    rep.setValue("uri", "/a/huebulb");
+                    rep.setValue("brightness", hueplug.m_bright = 180);
+                    rep.setValue("color", hueplug.m_color);
+                } catch (OcException e) {
+                    Log.e("Felix", e.getMessage());
+                }
 
                 OnPutHuebulb onPut = new OnPutHuebulb();
                 if (hueResource != null) {

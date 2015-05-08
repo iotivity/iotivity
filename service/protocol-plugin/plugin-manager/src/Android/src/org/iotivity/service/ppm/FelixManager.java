@@ -39,7 +39,6 @@ import org.osgi.framework.BundleException;
 import org.osgi.framework.Constants;
 
 import android.content.Context;
-import android.content.ContextWrapper;
 import android.content.res.AssetManager;
 import android.os.FileObserver;
 import android.util.Log;

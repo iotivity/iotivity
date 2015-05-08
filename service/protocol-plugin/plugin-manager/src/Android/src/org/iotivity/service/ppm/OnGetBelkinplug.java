@@ -26,6 +26,8 @@ package org.iotivity.service.ppm;
 
 import java.util.List;
 
+import org.iotivity.base.ErrorCode;
+import org.iotivity.base.OcException;
 import org.iotivity.base.OcHeaderOption;
 import org.iotivity.base.OcRepresentation;
 import org.iotivity.base.OcResource;
@@ -35,18 +37,22 @@ import android.util.Log;
 public class OnGetBelkinplug implements OcResource.OnGetListener {
     final private static String TAG = "OnGetBelkinplug";
 
+    @Override
     public void onGetCompleted(List<OcHeaderOption> headerOptions,
             OcRepresentation rep) {
         Log.i(TAG, "GET request Belkin wemo plug was successful");
         Log.i(TAG, "Resource URI : " + rep.getUri());
-
         Log.i(TAG, "power : " + MainActivity.belkinplug.m_power);
 
-        MainActivity.belkinplug.m_name = rep.getValueString("name");
-        MainActivity.belkinplug.m_power = rep.getValueString("power");
-        MainActivity.belkinplug.m_bright = rep.getValueInt("brightness");
-        MainActivity.belkinplug.m_color = rep.getValueInt("color");
-        MainActivity.belkinplug.m_uri = rep.getValueString("uri");
+        try{
+            MainActivity.belkinplug.m_name = rep.getValue("name");
+            MainActivity.belkinplug.m_power = rep.getValue("power");
+            MainActivity.belkinplug.m_bright = rep.getValue("brightness");
+            MainActivity.belkinplug.m_color = rep.getValue("color");
+            MainActivity.belkinplug.m_uri = rep.getValue("uri");
+        } catch (OcException e) {
+            Log.e(TAG, e.getMessage());
+        }
 
         Log.i(TAG, "name : " + MainActivity.belkinplug.m_name);
         Log.i(TAG, "power : " + MainActivity.belkinplug.m_power);
@@ -61,5 +67,14 @@ public class OnGetBelkinplug implements OcResource.OnGetListener {
                 MainActivity.updateBelkinStatus();
             }
         });
+    }
+
+    @Override
+    public void onGetFailed(Throwable ex) {
+        if (ex instanceof OcException) {
+            OcException ocEx = (OcException) ex;
+            ErrorCode errCode = ocEx.getErrorCode();
+        }
+        Log.e(TAG, ex.toString());
     }
 }

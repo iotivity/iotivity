@@ -26,6 +26,8 @@ package org.iotivity.service.ppm;
 
 import java.util.List;
 
+import org.iotivity.base.ErrorCode;
+import org.iotivity.base.OcException;
 import org.iotivity.base.OcHeaderOption;
 import org.iotivity.base.OcRepresentation;
 import org.iotivity.base.OcResource;
@@ -35,20 +37,34 @@ import android.util.Log;
 public class OnPutHuebulb implements OcResource.OnPutListener {
     final private static String TAG = "OnPutHuebulb";
 
+    @Override
     public void onPutCompleted(List<OcHeaderOption> options,
             OcRepresentation rep) {
         Log.i(TAG, "PUT request was successful");
 
-        MainActivity.hueplug.m_name = rep.getValueString("name");
-        MainActivity.hueplug.m_power = rep.getValueString("power");
-        MainActivity.hueplug.m_bright = rep.getValueInt("brightness");
-        MainActivity.hueplug.m_color = rep.getValueInt("color");
-        MainActivity.hueplug.m_uri = rep.getValueString("uri");
+        try{
+            MainActivity.hueplug.m_name = rep.getValue("name");
+            MainActivity.hueplug.m_power = rep.getValue("power");
+            MainActivity.hueplug.m_bright = rep.getValue("brightness");
+            MainActivity.hueplug.m_color = rep.getValue("color");
+            MainActivity.hueplug.m_uri = rep.getValue("uri");
+        } catch (OcException e) {
+            Log.e(TAG, e.getMessage());
+        }
 
         Log.i(TAG, "name : " + MainActivity.hueplug.m_name);
         Log.i(TAG, "power : " + MainActivity.hueplug.m_power);
         Log.i(TAG, "brightness : " + MainActivity.hueplug.m_bright);
         Log.i(TAG, "color : " + MainActivity.hueplug.m_color);
         Log.i(TAG, "uri : " + MainActivity.hueplug.m_uri);
+    }
+
+    @Override
+    public void onPutFailed(Throwable ex) {
+        if (ex instanceof OcException) {
+            OcException ocEx = (OcException) ex;
+            ErrorCode errCode = ocEx.getErrorCode();
+        }
+        Log.e(TAG, ex.toString());
     }
 }

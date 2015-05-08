@@ -230,6 +230,7 @@ public class Activator extends Activity implements BundleActivator {
                                                            System.currentTimeMillis());
 
                                            PlatformConfig cfg = new PlatformConfig(
+                                                   this,
                                                    ServiceType.IN_PROC,
                                                    ModeType.CLIENT_SERVER,
                                                    "0.0.0.0", 0,
