@@ -18,7 +18,7 @@
 *
 ******************************************************************/
 
-#include "CaWiFiInterface.h"
+#include "cawifiinterface.h"
 
 #include <wifi.h>
 #include "logger.h"

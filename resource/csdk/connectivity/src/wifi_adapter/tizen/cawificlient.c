@@ -17,7 +17,7 @@
 * limitations under the License.
 *
 ******************************************************************/
-#include "CaWiFiInterface.h"
+#include "cawifiinterface.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
