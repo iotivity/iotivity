@@ -79,7 +79,7 @@ static std::string putPayload = "{\"state\":\"off\",\"power\":\"0\"}";
 //The following variable determines the interface protocol (IPv4, IPv6, etc)
 //to be used for sending unicast messages. Default set to IPv4.
 static OCConnectivityType OC_CONNTYPE = OC_IPV4;
-static const char * MULTICAST_RESOURCE_DISCOVERY_QUERY = "/oc/core";
+static const char * MULTICAST_RESOURCE_DISCOVERY_QUERY = "/oic/res";
 
 // The handle for the observe registration
 OCDoHandle gObserveDoHandle;

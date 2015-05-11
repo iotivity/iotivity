@@ -51,10 +51,10 @@ static OCPlatformInfo savedPlatformInfo = {};
 static cJSON *savedDeviceInfo = NULL;
 static const char * VIRTUAL_RSRCS[] =
 {
-       "/oc/core",
-       "/oc/core/d",
        "/oic/p",
-       "/oc/core/types/d",
+       "/oic/res",
+       "/oic/res/d",
+       "/oic/res/types/d",
        #ifdef WITH_PRESENCE
        "/oic/ad"
        #endif

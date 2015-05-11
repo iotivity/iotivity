@@ -79,11 +79,11 @@ void verifyParsedOptions(CoAPOptionCase const *cases,
 
 TEST(CAProtocolMessage, CAParseURIBase)
 {
-    char sampleURI[] = "coap://[::]/oc/core?rt=core.sensor&if=core.mi.ll";
+    char sampleURI[] = "coap://[::]/oic/res?rt=core.sensor&if=core.mi.ll";
 
     CoAPOptionCase cases[] = {
-        {COAP_OPTION_URI_PATH, 2, "oc"},
-        {COAP_OPTION_URI_PATH, 4, "core"},
+        {COAP_OPTION_URI_PATH, 3, "oic"},
+        {COAP_OPTION_URI_PATH, 3, "res"},
         {COAP_OPTION_URI_QUERY, 14, "rt=core.sensor"},
         {COAP_OPTION_URI_QUERY, 13, "if=core.mi.ll"},
     };
@@ -132,12 +132,12 @@ TEST(CAProtocolMessage, CAParseURIManyPath)
 // Try for multiple URI parameters that still total less than 128
 TEST(CAProtocolMessage, CAParseURIManyParams)
 {
-    char sampleURI[] = "coap://[::]/oc/core/"
+    char sampleURI[] = "coap://[::]/oic/res/"
         "?rt=core.sensor&a=0&b=1&c=2&d=3&e=4&f=5&g=6&h=7&i=8&j=9";
 
     CoAPOptionCase cases[] = {
-        {COAP_OPTION_URI_PATH, 2, "oc"},
-        {COAP_OPTION_URI_PATH, 4, "core"},
+        {COAP_OPTION_URI_PATH, 3, "oic"},
+        {COAP_OPTION_URI_PATH, 3, "res"},
         {COAP_OPTION_URI_QUERY, 14, "rt=core.sensor"},
         {COAP_OPTION_URI_QUERY, 3, "a=0"},
         {COAP_OPTION_URI_QUERY, 3, "b=1"},
@@ -163,16 +163,16 @@ TEST(CAProtocolMessage, CAParseURIManyParams)
 // Test that an initial long path component won't hide latter ones.
 TEST(CAProtocolMessage, CAParseURILongPath)
 {
-    char sampleURI[] = "coap://[::]/oc"
+    char sampleURI[] = "coap://[::]/oic"
         "123456789012345678901234567890123456789012345678901234567890"
         "12345678901234567890123456789012345678901234567890"
-        "/core?rt=core.sensor&if=core.mi.ll";
+        "/res?rt=core.sensor&if=core.mi.ll";
 
     CoAPOptionCase cases[] = {
-        {COAP_OPTION_URI_PATH, 112, "oc"
+        {COAP_OPTION_URI_PATH, 113, "oic"
 	 "123456789012345678901234567890123456789012345678901234567890"
 	 "12345678901234567890123456789012345678901234567890"},
-        {COAP_OPTION_URI_PATH, 4, "core"},
+        {COAP_OPTION_URI_PATH, 3, "res"},
         {COAP_OPTION_URI_QUERY, 14, "rt=core.sensor"},
         {COAP_OPTION_URI_QUERY, 13, "if=core.mi.ll"},
     };

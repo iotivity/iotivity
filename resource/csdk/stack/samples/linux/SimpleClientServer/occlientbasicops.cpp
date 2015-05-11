@@ -38,13 +38,13 @@ static int IPV4_ADDR_SIZE = 16;
 static int UNICAST_DISCOVERY = 0;
 static int TEST_CASE = 0;
 
-static const char UNICAST_DISCOVERY_QUERY[] = "coap://%s:6298/oc/core";
+static const char UNICAST_DISCOVERY_QUERY[] = "coap://%s:6298/oic/res";
 static std::string putPayload = "{\"state\":\"off\",\"power\":10}";
 
 //The following variable determines the interface protocol (IPv4, IPv6, etc)
 //to be used for sending unicast messages. Default set to IPv4.
 static OCConnectivityType OC_CONNTYPE = OC_IPV4;
-static const char * MULTICAST_RESOURCE_DISCOVERY_QUERY = "/oc/core";
+static const char * MULTICAST_RESOURCE_DISCOVERY_QUERY = "/oic/res";
 
 int gQuitFlag = 0;
 
@@ -442,7 +442,7 @@ int parseJSON(const char * resJSONPayload, char ** sid_c,
         return OC_STACK_INVALID_JSON;
     }
 
-    oc = cJSON_GetObjectItem(root,"oc");
+    oc = cJSON_GetObjectItem(root,"oic");
     if (!oc)
     {
         OC_LOG(ERROR, TAG, "Invalid JSON : Missing oc object");

@@ -789,7 +789,7 @@ void parsePresencePayload(char* payload, uint32_t* seqNum, uint32_t* maxAge, cha
 {
     char * tok = NULL;
     char * savePtr = NULL;
-    // The format of the payload is {"oc":[%u:%u:%s]}
+    // The format of the payload is {"oic":[%u:%u:%s]}
     // %u : sequence number,
     // %u : max age
     // %s : Resource Type (Optional)

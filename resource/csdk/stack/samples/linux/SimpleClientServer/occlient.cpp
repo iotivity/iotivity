@@ -31,16 +31,18 @@
 
 static int UNICAST_DISCOVERY = 0;
 static int TEST_CASE = 0;
-static const char * UNICAST_DISCOVERY_QUERY = "coap://%s:6298/oc/core";
-static const char * UNICAST_DEVICE_DISCOVERY_QUERY = "coap://%s:6298/oc/core/d";
+
+static const char * UNICAST_DISCOVERY_QUERY = "coap://%s:6298/oic/res";
+static const char * UNICAST_DEVICE_DISCOVERY_QUERY = "coap://%s:6298/oic/res/d";
 static const char * UNICAST_PLATFORM_DISCOVERY_QUERY = "coap://%s:6298/oic/p";
-static const char * MULTICAST_DEVICE_DISCOVERY_QUERY = "/oc/core/d";
+static const char * MULTICAST_DEVICE_DISCOVERY_QUERY = "/oic/res/d";
 static const char * MULTICAST_PLATFORM_DISCOVERY_QUERY = "/oic/p";
-static const char * MULTICAST_RESOURCE_DISCOVERY_QUERY = "/oc/core";
+static const char * MULTICAST_RESOURCE_DISCOVERY_QUERY = "/oic/res";
 //The following variable determines the interface protocol (IPv4, IPv6, etc)
 //to be used for sending unicast messages. Default set to IPv4.
 static OCConnectivityType OC_CONNTYPE = OC_IPV4;
-static std::string putPayload = "{\"oc\":[{\"rep\":{\"power\":15,\"state\":true}}]}";
+
+static std::string putPayload = "{\"oic\":[{\"rep\":{\"power\":15,\"state\":true}}]}";
 static std::string coapServerIP = "255.255.255.255";
 static std::string coapServerPort = "5683";
 static std::string coapServerResource = "/a/light";

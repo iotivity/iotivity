@@ -123,7 +123,7 @@ char* constructJsonResponse (OCEntityHandlerRequest *ehRequest)
         }
 
         // Get root of JSON payload, then the 1st resource.
-        cJSON* carrier = cJSON_GetObjectItem(putJson, "oc");
+        cJSON* carrier = cJSON_GetObjectItem(putJson, "oic");
         carrier = cJSON_GetArrayItem(carrier, 0);
         carrier = cJSON_GetObjectItem(carrier, "rep");
 

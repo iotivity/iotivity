@@ -35,9 +35,9 @@ extern "C" {
 //Don't want to expose to application layer that lower level stack is using CoAP.
 
 /// Authority + URI string to prefix well known queries
-#define OC_WELL_KNOWN_QUERY                  "224.0.1.187:5683/oc/core"
-#define OC_MULTICAST_DISCOVERY_URI           "/oc/core"
-#define OC_EXPLICIT_DEVICE_DISCOVERY_URI     "224.0.1.187:5683/oc/core/d?rt=core.led"
+#define OC_WELL_KNOWN_QUERY                  "224.0.1.187:5683/oic/res"
+#define OC_MULTICAST_DISCOVERY_URI           "/oic/res"
+#define OC_EXPLICIT_DEVICE_DISCOVERY_URI     "224.0.1.187:5683/oic/res/d?rt=core.led"
 /// Multicast address and port string to prefix multicast queries
 #define OC_MULTICAST_PREFIX                  "224.0.1.187:5683"
 /// IP Multicast address to use for multicast requests
@@ -70,7 +70,8 @@ extern "C" {
 #define OC_RSRVD_INTERFACE_DEFAULT      "oic.if.baseline"
 #define OC_RSRVD_INTERFACE_LL           "oic.if.ll"
 #define OC_RSRVD_INTERFACE_BATCH        "oic.if.b"
-#define OC_RSRVD_INTERFACE_GROUP        "oc.mi.grp"
+#define OC_RSRVD_INTERFACE_GROUP        "oic.mi.grp"
+#define OC_RSRVD_MFG_DATE               "mndt"
 #define OC_RSRVD_FW_VERSION             "mnfv"
 #define OC_RSRVD_HOST_NAME              "hn"
 #define OC_RSRVD_VERSION                "icv"
@@ -111,10 +112,10 @@ typedef struct OCDevAddr
  */
 typedef enum
 {
-    OC_WELL_KNOWN_URI= 0,       ///< "/oc/core"
-    OC_DEVICE_URI,              ///< "/oc/core/d"
+    OC_WELL_KNOWN_URI= 0,       ///< "/oic/res"
+    OC_DEVICE_URI,              ///< "/oic/res/d"
     OC_PLATFORM_URI,            ///< "/oic/p"
-    OC_RESOURCE_TYPES_URI,      ///< "/oc/core/d/type"
+    OC_RESOURCE_TYPES_URI,      ///< "/oic/res/d/type"
     #ifdef WITH_PRESENCE
     OC_PRESENCE,                ///< "/oic/ad"
     #endif
