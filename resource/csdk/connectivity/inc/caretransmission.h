@@ -42,7 +42,7 @@
 #define DEFAULT_ACK_TIMEOUT_SEC     2
 
 /** default max retransmission trying count is 4.(CoAP) **/
-#define DEFAULT_MAX_RETRANSMIT      4
+#define DEFAULT_RETRANSMISSION_COUNT      4
 
 /** check period is 1 sec. **/
 #define RETRANSMISSION_CHECK_PERIOD_SEC     1
@@ -110,7 +110,8 @@ extern "C"
  *                                           if NULL is coming, it will set default values.
  * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
-CAResult_t CARetransmissionInitialize(CARetransmission_t *context, ca_thread_pool_t handle,
+CAResult_t CARetransmissionInitialize(CARetransmission_t *context,
+                                      ca_thread_pool_t handle,
                                       CADataSendMethod_t retransmissionSendMethod,
                                       CATimeoutCallback_t timeoutCallback,
                                       CARetransmissionConfig_t* config);
@@ -162,6 +163,12 @@ CAResult_t CARetransmissionStop(CARetransmission_t *context);
  * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
 CAResult_t CARetransmissionDestroy(CARetransmission_t *context);
+
+/**
+ * @brief   Invoke Retransmission according to TimedAction Response
+ * @param   threadValue [IN]    context for retransmission
+ */
+void CARetransmissionBaseRoutine(void *threadValue);
 
 #ifdef __cplusplus
 } /* extern "C" */

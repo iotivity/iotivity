@@ -54,13 +54,13 @@ if ca_os == 'arduino':
 	env.AppendUnique(CPPDEFINES = ['SINGLE_THREAD'])
 	env.AppendUnique(CPPDEFINES = ['WITH_ARDUINO'])
 	print "setting WITH_ARDUINO"
-        ca_common_src = [
-                'caconnectivitymanager_singlethread.c',
+	ca_common_src = [
+		'caconnectivitymanager_singlethread.c',
 		'cainterfacecontroller_singlethread.c',
 		'camessagehandler_singlethread.c',
 		'canetworkconfigurator.c',
 		'caprotocolmessage.c',
-		'caretransmission_singlethread.c',
+		'caretransmission.c',
 		]
 else:
 	env.AppendUnique(CPPDEFINES = ['MULTI_THREAD'])
