@@ -63,15 +63,15 @@ typedef struct
 
 testToTextMap queryInterface[] = {
         {"invalid", TEST_INVALID},
-        {"?if=oc.mi.def", TEST_GET_DEFAULT},
-        {"?if=oc.mi.b", TEST_GET_BATCH},
-        {"?if=oc.mi.ll", TEST_GET_LINK_LIST},
-        {"?if=oc.mi.def", TEST_UNKNOWN_RESOURCE_GET_DEFAULT},
-        {"?if=oc.mi.b", TEST_UNKNOWN_RESOURCE_GET_BATCH},
-        {"?if=oc.mi.ll", TEST_UNKNOWN_RESOURCE_GET_LINK_LIST},
-        {"?if=oc.mi.def", TEST_PUT_DEFAULT},
-        {"?if=oc.mi.b", TEST_PUT_BATCH},
-        {"?if=oc.mi.ll", TEST_PUT_LINK_LIST},
+        {"?if=oic.if.baseline", TEST_GET_DEFAULT},
+        {"?if=oic.if.b", TEST_GET_BATCH},
+        {"?if=oic.if.ll", TEST_GET_LINK_LIST},
+        {"?if=oic.if.baseline", TEST_UNKNOWN_RESOURCE_GET_DEFAULT},
+        {"?if=oic.if.b", TEST_UNKNOWN_RESOURCE_GET_BATCH},
+        {"?if=oic.if.ll", TEST_UNKNOWN_RESOURCE_GET_LINK_LIST},
+        {"?if=oic.if.baseline", TEST_PUT_DEFAULT},
+        {"?if=oic.if.b", TEST_PUT_BATCH},
+        {"?if=oic.if.ll", TEST_PUT_LINK_LIST},
 };
 
 static std::string putPayload = "{\"state\":\"off\",\"power\":\"0\"}";

@@ -52,6 +52,38 @@ extern "C" {
 /// operation.
 #define OC_MAX_PRESENCE_TTL_SECONDS     (60 * 60 * 24) // 60 sec/min * 60 min/hr * 24 hr/day
 #define OC_PRESENCE_URI                      "/oc/presence"
+
+/**
+ * Attributes used to form a proper OIC conforming JSON message.
+ */
+#define OC_RSRVD_OC                     "oic"
+#define OC_RSRVD_PAYLOAD                "payload"
+#define OC_RSRVD_HREF                   "href"
+#define OC_RSRVD_PROPERTY               "prop"
+#define OC_RSRVD_REPRESENTATION         "rep"
+#define OC_RSRVD_CONTENT_TYPE           "ct"
+#define OC_RSRVD_RESOURCE_TYPE          "rt"
+#define OC_RSRVD_RESOURCE_TYPE_PRESENCE "core.presence"
+#define OC_RSRVD_INTERFACE              "if"
+#define OC_RSRVD_DEVICE_ID              "di"
+#define OC_RSRVD_DEVICE_NAME            "dn"
+#define OC_RSRVD_INTERFACE_DEFAULT      "oic.if.baseline"
+#define OC_RSRVD_INTERFACE_LL           "oic.if.ll"
+#define OC_RSRVD_INTERFACE_BATCH        "oic.if.b"
+#define OC_RSRVD_INTERFACE_GROUP        "oc.mi.grp"
+#define OC_RSRVD_MFG_DATE               "mndt"
+#define OC_RSRVD_FW_VERSION             "mnfv"
+#define OC_RSRVD_HOST_NAME              "hn"
+#define OC_RSRVD_MFG_NAME               "mnmn"
+#define OC_RSRVD_MFG_URL                "mnml"
+#define OC_RSRVD_MODEL_NUM              "mnmo"
+#define OC_RSRVD_PLATFORM_VERSION       "mnpv"
+#define OC_RSRVD_SUPPORT_URL            "mnsl"
+#define OC_RSRVD_VERSION                "icv"
+#define OC_RSRVD_OBSERVABLE             "obs"
+#define OC_RSRVD_SECURE                 "sec"
+#define OC_RSRVD_HOSTING_PORT           "port"
+#define OC_RSRVD_SERVER_INSTANCE_ID     "sid"
 #endif
 
 //-----------------------------------------------------------------------------

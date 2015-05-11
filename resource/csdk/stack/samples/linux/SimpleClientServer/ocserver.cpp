@@ -83,7 +83,7 @@ const char *version = "myVersion";
 // Entity handler should check for resourceTypeName and ResourceInterface in order to GET
 // the existence of a known resource
 const char *resourceTypeName = "core.light";
-const char *resourceInterface = "oc.mi.def";
+const char *resourceInterface = OC_RSRVD_INTERFACE_DEFAULT;
 
 OCDeviceInfo deviceInfo;
 

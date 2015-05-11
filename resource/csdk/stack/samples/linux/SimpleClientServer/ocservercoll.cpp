@@ -159,7 +159,7 @@ OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
 
         if(OC_REST_GET == ehRequest->method)
         {
-            if(query.find("oc.mi.def") != std::string::npos)
+            if(query.find(OC_RSRVD_INTERFACE_DEFAULT) != std::string::npos)
             {
                 ret = HandleCallback(ehRequest,
                         rspGetRoomDefault, rspFailureRoom, payload, sizeof(payload));
@@ -176,7 +176,7 @@ OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
                             rspGetFanCollection, rspFailureFan, payload, sizeof(payload));
                 }
             }
-            else if(query.find("oc.mi.ll") != std::string::npos)
+            else if(query.find(OC_RSRVD_INTERFACE_LL) != std::string::npos)
             {
                 ret = HandleCallback(ehRequest,
                         rspGetRoomCollection, rspFailureRoom, payload, sizeof(payload));
@@ -193,7 +193,7 @@ OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
                             rspGetFanCollection, rspFailureFan, payload, sizeof(payload));
                 }
             }
-            else if(query.find("oc.mi.b") != std::string::npos)
+            else if(query.find(OC_RSRVD_INTERFACE_BATCH) != std::string::npos)
             {
                 ret = HandleCallback(ehRequest,
                         rspGetRoomCollection, rspFailureRoom, payload, sizeof(payload));
@@ -234,7 +234,7 @@ OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
         }
         else if(OC_REST_PUT == ehRequest->method)
         {
-            if(query.find("oc.mi.def") != std::string::npos)
+            if(query.find(OC_RSRVD_INTERFACE_DEFAULT) != std::string::npos)
             {
                 if(ret != OC_EH_ERROR)
                 {
@@ -242,7 +242,7 @@ OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
                             rspPutRoomDefault, rspFailureRoom, payload, sizeof(payload));
                 }
             }
-            if(query.find("oc.mi.ll") != std::string::npos)
+            if(query.find(OC_RSRVD_INTERFACE_LL) != std::string::npos)
             {
                 if(ret != OC_EH_ERROR)
                 {
@@ -262,7 +262,7 @@ OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
                             rspPutFanCollection, rspFailureFan, payload, sizeof(payload));
                 }
             }
-            if(query.find("oc.mi.b") != std::string::npos)
+            if(query.find(OC_RSRVD_INTERFACE_BATCH ) != std::string::npos)
             {
                 if(ret != OC_EH_ERROR)
                 {
@@ -547,7 +547,7 @@ void createResources()
     OCResourceHandle fan;
     OCStackResult res = OCCreateResource(&fan,
             "core.fan",
-            "oc.mi.def",
+            OC_RSRVD_INTERFACE_DEFAULT,
             "/a/fan",
             OCEntityHandlerFanCb,
             OC_DISCOVERABLE|OC_OBSERVABLE);
@@ -556,7 +556,7 @@ void createResources()
     OCResourceHandle light;
     res = OCCreateResource(&light,
             "core.light",
-            "oc.mi.def",
+            OC_RSRVD_INTERFACE_DEFAULT,
             "/a/light",
             OCEntityHandlerLightCb,
             OC_DISCOVERABLE|OC_OBSERVABLE);
@@ -568,7 +568,7 @@ void createResources()
     {
         res = OCCreateResource(&room,
                 "core.room",
-                "oc.mi.b",
+                OC_RSRVD_INTERFACE_BATCH,
                 "/a/room",
                 OCEntityHandlerRoomCb,
                 OC_DISCOVERABLE);
@@ -577,15 +577,15 @@ void createResources()
     {
         res = OCCreateResource(&room,
                 "core.room",
-                "oc.mi.b",
+                OC_RSRVD_INTERFACE_BATCH,
                 "/a/room",
                 NULL,
                 OC_DISCOVERABLE);
     }
 
     OC_LOG_V(INFO, TAG, "Created room resource with result: %s", getResult(res));
-    OCBindResourceInterfaceToResource(room, "oc.mi.ll");
-    OCBindResourceInterfaceToResource(room, "oc.mi.def");
+    OCBindResourceInterfaceToResource(room, OC_RSRVD_INTERFACE_LL);
+    OCBindResourceInterfaceToResource(room, OC_RSRVD_INTERFACE_DEFAULT);
 
     res = OCBindResource(room, light);
     OC_LOG_V(INFO, TAG, "OC Bind Contained Resource to resource: %s", getResult(res));

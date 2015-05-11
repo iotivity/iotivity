@@ -45,11 +45,14 @@ static CAToken_t g_lastRequestToken = NULL;
 static uint8_t g_lastRequestTokenLength;
 
 static const char SECURE_COAPS_PREFIX[] = "coaps://";
-static const char SECURE_INFO_DATA[] = "{\"oc\":[{\"href\":\"%s\",\"prop\":{\"rt\":[\"core.led\"],"
-                                       "\"if\":[\"oc.mi.def\"],\"obs\":1,\"sec\":1,"
-                                       "\"port\":%d}}]}";
-static const char NORMAL_INFO_DATA[] = "{\"oc\":[{\"href\":\"%s\",\"prop\":{\"rt\":[\"core.led\"],"
-                                       "\"if\":[\"oc.mi.def\"],\"obs\":1}}]}";
+
+static const char SECURE_INFO_DATA[]
+                                   = "{\"oc\":[{\"href\":\"%s\",\"prop\":{\"rt\":[\"core.led\"],"
+                                     "\"if\":[\"oic.if.baseline\"],\"obs\":1,\"sec\":1,\"port\":%d}}]}";
+static const char NORMAL_INFO_DATA[]
+                                   = "{\"oc\":[{\"href\":\"%s\",\"prop\":{\"rt\":[\"core.led\"],"
+                                     "\"if\":[\"oic.if.baseline\"],\"obs\":1}}]}";
+
 
 static jobject g_responseListenerObject = NULL;
 static JavaVM *g_jvm;

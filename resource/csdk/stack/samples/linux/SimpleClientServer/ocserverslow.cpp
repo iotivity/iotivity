@@ -369,7 +369,7 @@ int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, 
     ledResource->power= resourcePower;
     OCStackResult res = OCCreateResource(&(ledResource->handle),
             "core.led",
-            "oc.mi.def",
+            OC_RSRVD_INTERFACE_DEFAULT,
             uri,
             OCEntityHandlerCb,
             OC_DISCOVERABLE|OC_OBSERVABLE);

@@ -547,8 +547,9 @@ int main(int argc, char* argv[])
         std::cout << "Created resource." << std::endl;
 
         myLight.addType(std::string("core.brightlight"));
-        myLight.addInterface(std::string("oc.mi.ll"));
+        myLight.addInterface(std::string(LINK_INTERFACE));
         std::cout << "Added Interface and Type" << std::endl;
+
 
         // A condition variable will free the mutex it is given, then do a non-
         // intensive block until 'notify' is called on it.  In this case, since we

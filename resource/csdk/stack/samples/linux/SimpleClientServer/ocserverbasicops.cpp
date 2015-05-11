@@ -39,7 +39,7 @@ static LEDResource LED;
 // This variable determines instance number of the LED resource.
 // Used by POST method to create a new instance of LED resource.
 static int gCurrLedInstance = 0;
-#define SAMPLE_MAX_NUM_POST_INSTANCE  2
+#define SAMPLE_MAX_NUM_POST_INSTANCE 2
 static LEDResource gLedInstance[SAMPLE_MAX_NUM_POST_INSTANCE];
 
 char *gResourceUri= (char *)"/a/led";
@@ -388,7 +388,7 @@ int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, 
     ledResource->power= resourcePower;
     OCStackResult res = OCCreateResource(&(ledResource->handle),
             "core.led",
-            "oc.mi.def",
+            OC_RSRVD_INTERFACE_DEFAULT,
             uri,
             OCEntityHandlerCb,
             OC_DISCOVERABLE|OC_OBSERVABLE);
