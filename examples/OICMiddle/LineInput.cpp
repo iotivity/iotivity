@@ -52,9 +52,8 @@ int LineInput::run()
     while (true) {
         fputs(">", stdout);
         len = 0;
-        getline(&line, &len, stdin);
-        int n = strlen(line);
-        if (!n)
+        const ssize_t n = getline(&line, &len, stdin);
+        if (n <= 0)
             continue;
         if (m_observer) {
             m_observer->cancelObserve();
@@ -382,7 +381,7 @@ ParseState LineInput::putCharInElem(char c, char *& e, ParseState newState)
 LineResult LineInput::parseLine(string lineIn, elements_t& elems)
 {
     const char *d;
-    char c, *e, delim;
+    char c, *e, delim = 0;
     bool isSep1, isSep2;
     size_t len = lineIn.size();
     ParseState state = PS_Between;
