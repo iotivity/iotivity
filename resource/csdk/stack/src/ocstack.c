@@ -3589,34 +3589,54 @@ OCResourceType *findResourceType(OCResourceType * resourceTypeList, const char *
     return NULL;
 }
 
-void insertResourceInterface(OCResource *resource,
-        OCResourceInterface *resourceInterface)
+/*
+ * Insert a new interface into interface linked list only if not already present.
+ * If alredy present, 2nd arg is free'd.
+ * Default interface will always be first if present.
+ */
+void insertResourceInterface(OCResource *resource, OCResourceInterface *newInterface)
 {
     OCResourceInterface *pointer = NULL;
     OCResourceInterface *previous = NULL;
 
-    if (!resource->rsrcInterface)
+    newInterface->next = NULL;
+
+    OCResourceInterface **firstInterface = &(resource->rsrcInterface);
+
+    if (!*firstInterface)
     {
-        resource->rsrcInterface = resourceInterface;
+        *firstInterface = newInterface;
+    }
+    else if (strcmp(newInterface->name, OC_RSRVD_INTERFACE_DEFAULT) == 0)
+    {
+        if (strcmp((*firstInterface)->name, OC_RSRVD_INTERFACE_DEFAULT) == 0)
+        {
+            OCFree(newInterface->name);
+            OCFree(newInterface);
+            return;
+        }
+        else
+        {
+            newInterface->next = *firstInterface;
+            *firstInterface = newInterface;
+        }
     }
     else
     {
-        pointer = resource->rsrcInterface;
+        pointer = *firstInterface;
         while (pointer)
         {
-            // resource type already exists. Free 2nd arg and return.
-            if (!strcmp(resourceInterface->name, pointer->name))
+            if (strcmp(newInterface->name, pointer->name) == 0)
             {
-                OCFree(resourceInterface->name);
-                OCFree(resourceInterface);
+                OCFree(newInterface->name);
+                OCFree(newInterface);
                 return;
             }
             previous = pointer;
             pointer = pointer->next;
         }
-        previous->next = resourceInterface;
+        previous->next = newInterface;
     }
-    resourceInterface->next = NULL;
 }
 
 OCResourceInterface *findResourceInterfaceAtIndex(OCResourceHandle handle,
