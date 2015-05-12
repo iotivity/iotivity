@@ -95,29 +95,23 @@ TEST(JSONToBinTest, NullJSONToBin)
     EXPECT_TRUE(pstat1 == NULL);
 }
 
-//TODO: update valid values when the OicSecPstat_t is finalized
 TEST(MarshalingAndUnMarshalingTest, BinToPstatJSONAndJSONToPstatBin)
 {
     const char* id = "ZGV2aWNlaWQAAAAAABhanw==";
     OicSecPstat_t pstat;
     pstat.cm = NORMAL;
-    pstat.commitHash = 1234;
+    pstat.commitHash = 0;
     uint32_t outLen = 0;
     unsigned char base64Buff[sizeof(((OicUuid_t*) 0)->id)] = {};
     EXPECT_EQ(B64_OK, b64Decode(id, strlen(id), base64Buff, sizeof(base64Buff), &outLen));
     memcpy(pstat.deviceID.id, base64Buff, outLen);
     pstat.isOp = true;
-    pstat.smLen = 2;
     pstat.tm = NORMAL;
     pstat.om = SINGLE_SERVICE_CLIENT_DRIVEN;
+    pstat.smLen = 2;
     pstat.sm = (OicSecDpom_t*)OCCalloc(pstat.smLen, sizeof(OicSecDpom_t));
-    if(NULL != pstat.sm)
-    {
-        for(size_t i =0; i< pstat.smLen; i++)
-        {
-            pstat.sm[i] = (OicSecDpom_t)i;
-        }
-    }
+    pstat.sm[0] = SINGLE_SERVICE_CLIENT_DRIVEN;
+    pstat.sm[1] = SINGLE_SERVICE_SERVER_DRIVEN;
     char* jsonPstat = BinToPstatJSON(&pstat);
     printf("BinToJSON Dump:\n%s\n\n", jsonPstat);
     EXPECT_TRUE(jsonPstat != NULL);
@@ -126,6 +120,7 @@ TEST(MarshalingAndUnMarshalingTest, BinToPstatJSONAndJSONToPstatBin)
     OCFree(pstat1->sm);
     OCFree(pstat1);
     OCFree(jsonPstat);
+    OCFree(pstat.sm);
 }
 
 TEST(PstatTests, JSONMarshalliingTests)

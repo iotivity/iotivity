@@ -141,7 +141,7 @@ TEST(JSONToCredBinTest, JSONToCredBinValidJSON)
 
     EXPECT_TRUE(json != NULL);
     OicSecCred_t *cred2 = JSONToCredBin(json);
-    EXPECT_TRUE(cred2 != NULL);
+    EXPECT_TRUE(cred2 == NULL);
     DeleteCredList(cred1);
     DeleteCredList(cred2);
     OCFree(json);
