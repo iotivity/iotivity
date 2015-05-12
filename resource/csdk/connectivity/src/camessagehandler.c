@@ -278,15 +278,10 @@ static void CASendThreadProcess(void *threadData)
     {
         OIC_LOG(DEBUG, TAG, "both requestInfo & responseInfo is not available");
 
-        CAInfo_t info = { };
+        CAInfo_t info = data->requestInfo->info;
 
         info.options = data->options;
         info.numOptions = data->numOptions;
-        info.token = data->requestInfo->info.token;
-        info.tokenLength = data->requestInfo->info.tokenLength;
-        info.type = data->requestInfo->info.type;
-        info.messageId = data->requestInfo->info.messageId;
-        info.payload = data->requestInfo->info.payload;
 
         coap_pdu_t *pdu = (coap_pdu_t *) CAGeneratePDU(data->remoteEndpoint->resourceUri, CA_GET,
                                                        info);
