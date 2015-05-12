@@ -1,6 +1,8 @@
 #!/bin/sh
 
-spec=`ls build/tizen/packaging/*.spec`
+cur_dir="./resource/csdk/connectivity/"
+
+spec=`ls ./resource/csdk/connectivity/build/tizen/packaging/*.spec`
 version=`rpm --query --queryformat '%{version}\n' --specfile $spec`
 
 name=`echo $name|cut -d" " -f 1`
@@ -26,18 +28,24 @@ echo `pwd`
 
 mkdir ./tmp
 mkdir ./tmp/con/
-cp -R ./* $sourcedir/tmp/con
-cp -R ./SConscript $sourcedir/tmp/con
-cp -R ./src/ip_adapter/SConscript $sourcedir/tmp/con/src/ip_adapter/
-cp -R ./src/bt_le_adapter/SConscript $sourcedir/tmp/con/src/bt_le_adapter/
-cp -R ./src/bt_edr_adapter/SConscript $sourcedir/tmp/con/src/bt_edr_adapter/
-cp -R ./common/SConscript $sourcedir/tmp/con/common/
-cp -R ./lib/libcoap-4.1.1/SConscript $sourcedir/tmp/con/lib/libcoap-4.1.1/
-cp -R ./samples/tizen/ $sourcedir/tmp/con/sample/
+cp -R $cur_dir/* $sourcedir/tmp/con
+cp -R $cur_dir/SConscript $sourcedir/tmp/con
+cp -R $cur_dir/src/ip_adapter/SConscript $sourcedir/tmp/con/src/ip_adapter/
+cp -R $cur_dir/src/bt_le_adapter/SConscript $sourcedir/tmp/con/src/bt_le_adapter/
+cp -R $cur_dir/src/bt_edr_adapter/SConscript $sourcedir/tmp/con/src/bt_edr_adapter/
+cp -R $cur_dir/common/SConscript $sourcedir/tmp/con/common/
+cp -R $cur_dir/lib/libcoap-4.1.1/SConscript $sourcedir/tmp/con/lib/libcoap-4.1.1/
+cp -R $cur_dir/samples/tizen/ $sourcedir/tmp/con/sample/
 mkdir -p $sourcedir/tmp/con/sample/lib/tizen/ble/libs
-cp -R ./lib/tizen/ble/libs/* $sourcedir/tmp/con/sample/lib/tizen/ble/libs/
+cp -R $cur_dir/lib/tizen/ble/libs/* $sourcedir/tmp/con/sample/lib/tizen/ble/libs/
 
-cd $sourcedir/build/tizen
+mkdir -p $sourcedir/tmp/iotivityconfig
+cd $sourcedir/build_common/
+cp -R ./iotivityconfig/* $sourcedir/tmp/iotivityconfig/
+cp -R ./SConscript $sourcedir/tmp/
+
+cd $sourcedir
+cd $cur_dir/build/tizen
 
 cp -R ./* $sourcedir/tmp/
 cp SConscript $sourcedir/tmp/
