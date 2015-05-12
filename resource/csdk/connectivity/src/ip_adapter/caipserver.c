@@ -447,6 +447,7 @@ static CAResult_t CAIPStartPacketReceiverHandler()
 
     if (1 == listLength) //Its first time.
     {
+        g_packetHandlerStopFlag = false;
         if (CA_STATUS_OK != ca_thread_pool_add_task(g_adapterEthServerContext->threadPool,
                                                    CAReceiveHandler, NULL ))
         {
