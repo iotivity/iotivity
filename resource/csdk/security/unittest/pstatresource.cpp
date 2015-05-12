@@ -26,7 +26,7 @@
 #include "cJSON.h"
 #include "base64.h"
 #include "cainterface.h"
-#include "securityresourcemanager.h"
+#include "secureresourcemanager.h"
 #include <unistd.h>
 #ifdef __cplusplus
 extern "C" {

@@ -245,15 +245,6 @@ OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr)
         doxm->owned = gDoxm->owned;
     }
 
-    //TODO: Need more clarification on deviceIDFormat field type.
-#if 0
-    //DeviceIdFormat -- Mandatory
-    jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_DEVICE_ID_FORMAT_NAME);
-    VERIFY_NON_NULL(jsonObj, ERROR);
-    VERIFY_SUCCESS(cJSON_Number == jsonObj->type, ERROR)
-    doxm->deviceIDFormat = jsonObj->valueint;
-#endif
-
     //DeviceId -- Mandatory
     jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_DEVICE_ID_NAME);
     if(jsonObj)
@@ -310,7 +301,7 @@ static bool UpdatePersistentStorage(OicSecDoxm_t * doxm)
 
     if (NULL != doxm)
     {
-        /* Convert Doxm data into JSON for update to persistent storage */
+        // Convert Doxm data into JSON for update to persistent storage
         char *jsonStr = BinToDoxmJSON(doxm);
         if (jsonStr)
         {
@@ -447,7 +438,7 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
     }
 
 exit:
-    /* Send payload to request originator */
+    // Send payload to request originator
     SendSRMResponse(ehRequest, ehRet, NULL);
 
     DeleteDoxmBinData(newDoxm);
@@ -471,7 +462,7 @@ OCEntityHandlerResult DoxmEntityHandler (OCEntityHandlerFlag flag,
 
     if (flag & OC_REQUEST_FLAG)
     {
-        /* TODO :  Handle PUT method */
+        // TODO :  Handle PUT method
         OC_LOG (INFO, TAG, PCF("Flag includes OC_REQUEST_FLAG"));
         switch (ehRequest->method)
         {

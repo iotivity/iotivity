@@ -55,17 +55,17 @@ void DeleteACLList(OicSecAcl_t* acl)
 
             LL_DELETE(acl, aclTmp1);
 
-            /* Clean Resources */
+            // Clean Resources
             for (i = 0; i < aclTmp1->resourcesLen; i++)
             {
                 OCFree(aclTmp1->resources[i]);
             }
             OCFree(aclTmp1->resources);
 
-            /* Clean Owners */
+            // Clean Owners
             OCFree(aclTmp1->owners);
 
-            /* Clean ACL node itself */
+            // Clean ACL node itself
             OCFree(aclTmp1);
         }
     }
@@ -100,7 +100,7 @@ char * BinToAclJSON(const OicSecAcl_t * acl)
 
             cJSON *jsonAcl = cJSON_CreateObject();
 
-            /* Subject -- Mandatory */
+            // Subject -- Mandatory
             outLen = 0;
             if (memcmp(&(acl->subject), &WILDCARD_SUBJECT_ID, sizeof(OicUuid_t)) == 0)
             {
@@ -115,7 +115,7 @@ char * BinToAclJSON(const OicSecAcl_t * acl)
             VERIFY_SUCCESS(b64Ret == B64_OK, ERROR);
             cJSON_AddStringToObject(jsonAcl, OIC_JSON_SUBJECT_NAME, base64Buff );
 
-            /* Resources -- Mandatory */
+            // Resources -- Mandatory
             cJSON *jsonRsrcArray = NULL;
             cJSON_AddItemToObject (jsonAcl, OIC_JSON_RESOURCES_NAME, jsonRsrcArray = cJSON_CreateArray());
             VERIFY_NON_NULL(jsonRsrcArray, ERROR);
@@ -124,10 +124,10 @@ char * BinToAclJSON(const OicSecAcl_t * acl)
                 cJSON_AddItemToArray (jsonRsrcArray, cJSON_CreateString(acl->resources[i]));
             }
 
-            /* Permissions -- Mandatory */
+            // Permissions -- Mandatory
             cJSON_AddNumberToObject (jsonAcl, OIC_JSON_PERMISSION_NAME, acl->permission);
 
-            /* Owners -- Mandatory */
+            // Owners -- Mandatory
             cJSON *jsonOwnrArray = NULL;
             cJSON_AddItemToObject (jsonAcl, OIC_JSON_OWNERS_NAME, jsonOwnrArray = cJSON_CreateArray());
             VERIFY_NON_NULL(jsonOwnrArray, ERROR);
@@ -142,7 +142,7 @@ char * BinToAclJSON(const OicSecAcl_t * acl)
                 cJSON_AddItemToArray (jsonOwnrArray, cJSON_CreateString(base64Buff));
             }
 
-            /* Attach current acl node to Acl Array */
+            // Attach current acl node to Acl Array
             cJSON_AddItemToArray(jsonAclArray, jsonAcl);
             acl = acl->next;
         }
@@ -203,7 +203,7 @@ OicSecAcl_t * JSONToAclBin(const char * jsonStr)
             uint32_t outLen = 0;
             B64Result b64Ret = B64_OK;
 
-            /* Subject -- Mandatory */
+            // Subject -- Mandatory
             jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_SUBJECT_NAME);
             VERIFY_NON_NULL(jsonObj, ERROR);
             VERIFY_SUCCESS(cJSON_String == jsonObj->type, ERROR);
@@ -213,7 +213,7 @@ OicSecAcl_t * JSONToAclBin(const char * jsonStr)
             VERIFY_SUCCESS((b64Ret == B64_OK) && (outLen <= sizeof(acl->subject.id)), ERROR);
             memcpy(acl->subject.id, base64Buff, outLen);
 
-            /* Resources -- Mandatory */
+            // Resources -- Mandatory
             jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_RESOURCES_NAME);
             VERIFY_NON_NULL(jsonObj, ERROR);
             VERIFY_SUCCESS(cJSON_Array == jsonObj->type, ERROR);
@@ -235,13 +235,13 @@ OicSecAcl_t * JSONToAclBin(const char * jsonStr)
                 strncpy(acl->resources[idxx], jsonRsrc->valuestring, jsonObjLen);
             } while ( ++idxx < acl->resourcesLen);
 
-            /* Permissions -- Mandatory */
+            // Permissions -- Mandatory
             jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_PERMISSION_NAME);
             VERIFY_NON_NULL(jsonObj, ERROR);
             VERIFY_SUCCESS(cJSON_Number == jsonObj->type, ERROR);
             acl->permission = jsonObj->valueint;
 
-            /* Owners -- Mandatory */
+            // Owners -- Mandatory
             jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_OWNERS_NAME);
             VERIFY_NON_NULL(jsonObj, ERROR);
             VERIFY_SUCCESS(cJSON_Array == jsonObj->type, ERROR);
@@ -284,7 +284,7 @@ exit:
 
 static OCEntityHandlerResult HandleACLGetRequest (const OCEntityHandlerRequest * ehRequest)
 {
-    /* Convert ACL data into JSON for transmission */
+    // Convert ACL data into JSON for transmission
     char* jsonStr = BinToAclJSON(gAcl);
 
     /*
@@ -293,7 +293,7 @@ static OCEntityHandlerResult HandleACLGetRequest (const OCEntityHandlerRequest *
      */
     OCEntityHandlerResult ehRet = (jsonStr ? OC_EH_OK : OC_EH_ERROR);
 
-    /* Send response payload to request originator */
+    // Send response payload to request originator
     SendSRMResponse(ehRequest, ehRet, jsonStr);
 
     OCFree(jsonStr);
@@ -306,15 +306,15 @@ static OCEntityHandlerResult HandleACLPostRequest (const OCEntityHandlerRequest 
 {
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
-    /* Convert JSON ACL data into binary. This will also validate the ACL data received. */
+    // Convert JSON ACL data into binary. This will also validate the ACL data received.
     OicSecAcl_t* newAcl = JSONToAclBin((char *)(ehRequest->reqJSONPayload));
 
     if (newAcl)
     {
-        /* Append the new ACL to existing ACL */
+        // Append the new ACL to existing ACL
         LL_APPEND(gAcl, newAcl);
 
-        /* Convert ACL data into JSON for update to persistent storage */
+        // Convert ACL data into JSON for update to persistent storage
         char *jsonStr = BinToAclJSON(gAcl);
         if (jsonStr)
         {
@@ -330,7 +330,7 @@ static OCEntityHandlerResult HandleACLPostRequest (const OCEntityHandlerRequest 
         }
     }
 
-    /* Send payload to request originator */
+    // Send payload to request originator
     SendSRMResponse(ehRequest, ehRet, NULL);
 
     OC_LOG_V (INFO, TAG, PCF("%s RetVal %d"), __func__ , ehRet);
@@ -353,7 +353,7 @@ OCEntityHandlerResult ACLEntityHandler (OCEntityHandlerFlag flag,
 
     if (flag & OC_REQUEST_FLAG)
     {
-        /* TODO :  Handle PUT and DEL methods */
+        // TODO :  Handle PUT and DEL methods
         OC_LOG (INFO, TAG, PCF("Flag includes OC_REQUEST_FLAG"));
         switch (ehRequest->method)
         {
@@ -381,7 +381,7 @@ OCStackResult CreateACLResource()
 {
     OCStackResult ret;
 
-    /* TODO : Does these resources needs to be OC_DISCOVERABLE */
+    // TODO : Does these resources needs to be OC_DISCOVERABLE
     ret = OCCreateResource(&gAclHandle,
                            OIC_RSRC_TYPE_SEC_ACL,
                            OIC_MI_DEF,
@@ -432,10 +432,10 @@ OCStackResult  GetDefaultACL(OicSecAcl_t** defaultAcl)
     OicSecAcl_t *acl = OCCalloc(1, sizeof(OicSecAcl_t));
     VERIFY_NON_NULL(acl, ERROR);
 
-    /* Subject -- Mandatory */
+    // Subject -- Mandatory
     memcpy(&(acl->subject), &WILDCARD_SUBJECT_ID, sizeof(acl->subject));
 
-    /* Resources -- Mandatory */
+    // Resources -- Mandatory
     acl->resourcesLen = sizeof(rsrcs)/sizeof(rsrcs[0]);
 
     acl->resources = (char**)OCCalloc(acl->resourcesLen, sizeof(char*));
@@ -491,12 +491,12 @@ OCStackResult InitACLResource()
 {
     OCStackResult ret = OC_STACK_ERROR;
 
-    /* Read ACL resource from PS */
+    // Read ACL resource from PS
     char* jsonSVRDatabase = GetSVRDatabase();
 
     if (jsonSVRDatabase)
     {
-        /* Convert JSON ACL into binary format */
+        // Convert JSON ACL into binary format
         gAcl = JSONToAclBin(jsonSVRDatabase);
         OCFree(jsonSVRDatabase);
     }
@@ -508,11 +508,11 @@ OCStackResult InitACLResource()
     if (!jsonSVRDatabase || !gAcl)
     {
         GetDefaultACL(&gAcl);
-        /* TODO Needs to update persistent storage */
+        // TODO Needs to update persistent storage
     }
     VERIFY_NON_NULL(gAcl, FATAL);
 
-    /* Instantiate 'oic.sec.acl' */
+    // Instantiate 'oic.sec.acl'
     ret = CreateACLResource();
 
 exit:

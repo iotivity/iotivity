@@ -23,7 +23,7 @@
 #include "ocmalloc.h"
 #include "cJSON.h"
 #include "cainterface.h"
-#include "securityresourcemanager.h"
+#include "secureresourcemanager.h"
 #include "resourcemanager.h"
 #include "srmresourcestrings.h"
 #include <stdlib.h>

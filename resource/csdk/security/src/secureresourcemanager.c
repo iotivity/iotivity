@@ -21,7 +21,7 @@
 #include "ocstack.h"
 #include "logger.h"
 #include "cainterface.h"
-#include "securityresourcemanager.h"
+#include "secureresourcemanager.h"
 #include "resourcemanager.h"
 #include "credresource.h"
 #include "policyengine.h"
@@ -96,7 +96,7 @@ void SRMRequestHandler(const CARemoteEndpoint_t *endPoint, const CARequestInfo_t
         return (gRequestHandler(endPoint, requestInfo));
     }
 
-    /* Form a 'access deny' or 'Error' response and send to peer */
+    // Form a 'access deny' or 'Error' response and send to peer
     CAResponseInfo_t responseInfo = {};
     memcpy(&responseInfo.info, &(requestInfo->info), sizeof(responseInfo.info));
     responseInfo.info.payload = NULL;

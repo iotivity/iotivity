@@ -34,7 +34,7 @@
 #include "ocrandom.h"
 #include "ocmalloc.h"
 #include "ocserverrequest.h"
-#include "securityresourcemanager.h"
+#include "secureresourcemanager.h"
 #include "cacommon.h"
 #include "cainterface.h"
 

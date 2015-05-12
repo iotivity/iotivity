@@ -27,7 +27,7 @@
 #include "ocmalloc.h"
 #include "cJSON.h"
 #include "cainterface.h"
-#include "securityresourcemanager.h"
+#include "secureresourcemanager.h"
 #include "securevirtualresourcetypes.h"
 #include "srmresourcestrings.h"
 #include "aclresource.h"

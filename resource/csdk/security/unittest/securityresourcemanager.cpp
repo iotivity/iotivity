@@ -24,7 +24,7 @@
 #include <linux/limits.h>
 #include "ocstack.h"
 #include "cainterface.h"
-#include "securityresourcemanager.h"
+#include "secureresourcemanager.h"
 
 using namespace std;
 
