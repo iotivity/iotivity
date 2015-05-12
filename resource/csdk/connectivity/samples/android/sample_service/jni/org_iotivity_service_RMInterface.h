@@ -59,34 +59,42 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_RMInterface_RMFindResource
 /*
  * Class:     org_iotivity_service_RMInterface
  * Method:    RMSendRequest
- * Signature: (Ljava/lang/String;III)V
+ * Signature: (Ljava/lang/String;Ljava/lang/String;III)V
  */
 JNIEXPORT void JNICALL Java_org_iotivity_service_RMInterface_RMSendRequest
   (JNIEnv *, jobject, jstring, jstring, jint, jint, jint);
 
 /*
  * Class:     org_iotivity_service_RMInterface
- * Method:    RMSendResponse
- * Signature: (Ljava/lang/String;III)V
- */
-JNIEXPORT void JNICALL Java_org_iotivity_service_RMInterface_RMSendResponse
-  (JNIEnv *, jobject, jstring, jstring, jint, jint);
-
-/*
- * Class:     org_iotivity_service_RMInterface
- * Method:    RMAdvertiseResource
+ * Method:    RMSendReqestToAll
  * Signature: (Ljava/lang/String;I)V
  */
-JNIEXPORT void JNICALL Java_org_iotivity_service_RMInterface_RMAdvertiseResource
+JNIEXPORT void JNICALL Java_org_iotivity_service_RMInterface_RMSendReqestToAll
   (JNIEnv *, jobject, jstring, jint);
 
 /*
  * Class:     org_iotivity_service_RMInterface
+ * Method:    RMSendResponse
+ * Signature: (IIII)V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_service_RMInterface_RMSendResponse
+  (JNIEnv *, jobject, jint, jint, jint, jint);
+
+/*
+ * Class:     org_iotivity_service_RMInterface
+ * Method:    RMAdvertiseResource
+ * Signature: (Ljava/lang/String)V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_service_RMInterface_RMAdvertiseResource
+  (JNIEnv *, jobject, jstring);
+
+/*
+ * Class:     org_iotivity_service_RMInterface
  * Method:    RMSendNotification
- * Signature: (Ljava/lang/String;I)V
+ * Signature: (Ljava/lang/String;Ljava/lang/String;IIII)V
  */
 JNIEXPORT void JNICALL Java_org_iotivity_service_RMInterface_RMSendNotification
-  (JNIEnv *, jobject, jstring, jstring, jint, jint);
+  (JNIEnv *, jobject, jstring, jstring, jint, jint, jint, jint);
 
 /*
  * Class:     org_iotivity_service_RMInterface
@@ -95,6 +103,22 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_RMInterface_RMSendNotification
  */
 JNIEXPORT void JNICALL Java_org_iotivity_service_RMInterface_RMSelectNetwork
   (JNIEnv *, jobject, jint);
+
+/*
+ * Class:     org_iotivity_service_RMInterface
+ * Method:    RMUnSelectNetwork
+ * Signature: (I)V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_service_RMInterface_RMUnSelectNetwork
+  (JNIEnv *, jobject, jint);
+
+/*
+ * Class:     org_iotivity_service_RMInterface
+ * Method:    RMGetNetworkInfomation
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_service_RMInterface_RMGetNetworkInfomation
+  (JNIEnv *, jobject);
 
 /*
  * Class:     org_iotivity_service_RMInterface
@@ -108,4 +132,3 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_RMInterface_RMHandleRequestResp
 }
 #endif
 #endif
-
