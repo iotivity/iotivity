@@ -114,7 +114,7 @@ coap_pdu_t *CAGeneratePDU(const char *uri, uint32_t code, const CAInfo_t info)
     if (CA_MSG_RESET == info.type || (CA_EMPTY == code && CA_MSG_ACKNOWLEDGE == info.type))
     {
         OIC_LOG(DEBUG, TAG, "code is empty");
-        if (!(pdu = CAGeneratePDUImpl((code_t) code, NULL, info, NULL)))
+        if (!(pdu = CAGeneratePDUImpl((code_t) code, NULL, info, NULL, 0)))
         {
             OIC_LOG(ERROR, TAG, "pdu NULL");
             return NULL;
@@ -171,7 +171,7 @@ coap_pdu_t *CAGeneratePDU(const char *uri, uint32_t code, const CAInfo_t info)
             return NULL;
         }
 
-        pdu = CAGeneratePDUImpl((code_t) code, optlist, info, info.payload);
+        pdu = CAGeneratePDUImpl((code_t) code, optlist, info, info.payload, strlen(info.payload));
         if (NULL == pdu)
         {
             OIC_LOG(ERROR, TAG, "pdu NULL");
@@ -222,7 +222,7 @@ coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode)
 }
 
 coap_pdu_t *CAGeneratePDUImpl(code_t code, coap_list_t *options, const CAInfo_t info,
-                              const char *payload)
+                              const char *payload, size_t payloadSize)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -281,9 +281,8 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, coap_list_t *options, const CAInfo_t 
 
     if (NULL != payload)
     {
-        uint32_t len = strlen(payload);
         OIC_LOG_V(DEBUG, TAG, "add data, payload:%s", payload);
-        coap_add_data(pdu, len, (const unsigned char *) payload);
+        coap_add_data(pdu, payloadSize, (const unsigned char *) payload);
     }
 
     OIC_LOG(DEBUG, TAG, "OUT");
