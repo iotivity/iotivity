@@ -48,18 +48,6 @@
 #define CA_BLE_SERVICE_UUID  "713D0000-503E-4C75-BA94-3148F18D941E"
 
 /**
- * @def CA_BLE_READ_CHAR_UUID
- * @brief UUID of read characteristic. This UUID is common across all platform for LE transport.
- */
-#define CA_BLE_READ_CHAR_UUID "713D0002-503E-4C75-BA94-3148F18D941E"
-
-/**
- * @def CA_BLE_WRITE_CHAR_UUID
- * @brief UUID of write characteristic. This UUID is common across all platform for LE transport.
- */
-#define CA_BLE_WRITE_CHAR_UUID "713D0003-503E-4C75-BA94-3148F18D941E"
-
-/**
  * @def CA_BLE_INITIAL_BUF_SIZE
  * @brief Initial buffer size for Gatt Server.
  */
@@ -329,37 +317,6 @@ CAResult_t CAStopBleGattServer()
         return CA_STATUS_OK;
     }
 
-    GMainContext  *context_event_loop = NULL;
-    // Required for waking up the thread which is running in gmain loop
-    if ( NULL != g_eventLoop)
-    {
-        context_event_loop = g_main_loop_get_context(g_eventLoop);
-    }
-    if (context_event_loop)
-    {
-        OIC_LOG_V(DEBUG,  TZ_BLE_SERVER_TAG, "g_eventLoop context %x", context_event_loop);
-        g_main_context_wakeup(context_event_loop);
-
-        // Kill g main loops and kill threads
-        g_main_loop_quit(g_eventLoop);
-    }
-    else
-    {
-        OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "g_eventLoop context is NULL");
-    }
-
-    ca_mutex_unlock(g_bleServerStateMutex);
-
-    OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "OUT");
-    return CA_STATUS_OK;
-}
-
-void CATerminateBleGattServer()
-{
-    OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
-
-    ca_mutex_lock(g_bleServerStateMutex);
-
     g_isBleGattServerStarted = false;
     if (NULL != g_hAdvertiser )
     {
@@ -391,6 +348,38 @@ void CATerminateBleGattServer()
     {
         OIC_LOG_V(ERROR, TZ_BLE_SERVER_TAG, "_bt_gatt_deinit_service failed with ret [%d]", res);
     }
+
+    GMainContext  *context_event_loop = NULL;
+    // Required for waking up the thread which is running in gmain loop
+    if (NULL != g_eventLoop)
+    {
+        context_event_loop = g_main_loop_get_context(g_eventLoop);
+
+        if (context_event_loop)
+        {
+            OIC_LOG_V(DEBUG,  TZ_BLE_SERVER_TAG, "g_eventLoop context %x", context_event_loop);
+            g_main_context_wakeup(context_event_loop);
+
+            // Kill g main loops and kill threads
+            g_main_loop_quit(g_eventLoop);
+        }
+    }
+    else
+    {
+        OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "g_eventLoop context is NULL");
+    }
+
+    ca_mutex_unlock(g_bleServerStateMutex);
+
+    OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "OUT");
+    return CA_STATUS_OK;
+}
+
+void CATerminateBleGattServer()
+{
+    OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
+
+    ca_mutex_lock(g_bleServerStateMutex);
 
     // free service Path(unique identifier for ble service)
     ca_mutex_lock(g_bleServiceMutex);
@@ -729,9 +718,9 @@ CAResult_t CAUpdateCharacteristicsToGattClient(const char* address, const char *
 
     ca_mutex_lock(g_bleCharacteristicMutex);
 
-    if (NULL  == g_gattWriteCharPath)
+    if (NULL  == g_gattReadCharPath)
     {
-        OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "gGattWriteCharPath is NULL");
+        OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "g_gattReadCharPath is NULL");
         ca_mutex_unlock(g_bleCharacteristicMutex);
         return CA_STATUS_FAILED;
     }
@@ -748,9 +737,9 @@ CAResult_t CAUpdateCharacteristicsToGattClient(const char* address, const char *
     strncpy(data, charValue, charValueLen);
 
     OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "updating characteristics char [%s] data [%s] dataLen [%d]",
-              (const char *)g_gattWriteCharPath, data, charValueLen);
+              (const char *)g_gattReadCharPath, data, charValueLen);
 
-    int ret =  bt_gatt_update_characteristic(g_gattWriteCharPath, data, charValueLen, address);
+    int ret =  bt_gatt_update_characteristic(g_gattReadCharPath, data, charValueLen, address);
     if (0 != ret)
     {
         OIC_LOG_V(ERROR, TZ_BLE_SERVER_TAG,
@@ -776,9 +765,9 @@ CAResult_t CAUpdateCharacteristicsToAllGattClients(const char *charValue,
 
     ca_mutex_lock(g_bleCharacteristicMutex);
 
-    if (NULL  == g_gattWriteCharPath)
+    if (NULL  == g_gattReadCharPath)
     {
-        OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "g_gattWriteCharPath is NULL");
+        OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "g_gattReadCharPath is NULL");
         ca_mutex_unlock(g_bleCharacteristicMutex);
         return CA_STATUS_FAILED;
     }
@@ -794,9 +783,9 @@ CAResult_t CAUpdateCharacteristicsToAllGattClients(const char *charValue,
     strncpy(data, charValue, charValueLen + 1);
 
     OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "updating characteristics char [%s] data [%s] dataLen [%d]",
-              (const char *)g_gattWriteCharPath, data, charValueLen);
+              (const char *)g_gattReadCharPath, data, charValueLen);
 
-    int ret =  bt_gatt_update_characteristic(g_gattWriteCharPath, data, charValueLen, NULL);
+    int ret =  bt_gatt_update_characteristic(g_gattReadCharPath, data, charValueLen, NULL);
     if (0 != ret)
     {
         OIC_LOG_V(ERROR, TZ_BLE_SERVER_TAG,

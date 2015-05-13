@@ -97,16 +97,6 @@ bool CABleGattCharacteristicsDiscoveredCb(int result, int inputIndex, int total,
                                           bt_gatt_attribute_h characteristic, void *userData);
 
 /**
- * @brief  This is the callback which will be called when bond created with remote device.
- *
- * @param  result      [IN] The result of bond creation.
- * @param  device_info [IN] remote device information
- * @param  userData    [IN] The user data passed from the request function
- * @return  NONE
- */
-void CABtGattBondCreatedCb(int result, bt_device_info_s *device_info, void *user_data);
-
-/**
  * @brief  This is the callback which will be called when we get the primary services repeatedly.
  *
  * @param service  [IN] The attribute handle of service. Unique identifier for service.
@@ -158,8 +148,7 @@ void CAPrintDiscoveryInformation(const bt_adapter_le_device_discovery_info_s *di
 /**
  * @brief This thread will be used to initialize the Gatt Client and start device discovery.
  *        1. Set scan parameters
- *        2. Setting neccessary callbacks for connection, characteristics changed and discovery
- *           and bond creation.
+ *        2. Setting neccessary callbacks for connection, characteristics changed and discovery.
  *        3. Start device discovery
  *
  * @param data [IN] Currently it will be NULL(no parameter)
@@ -202,7 +191,7 @@ void CAClearNonOICDeviceList();
 CAResult_t CABleGattSetScanParameter();
 
 /**
- * @brief  Used to register required callbacks to BLE platform(connection, discovery, bond and etc).
+ * @brief  Used to register required callbacks to BLE platform(connection, discovery, etc).
  *
  * @return #CA_STATUS_OK or Appropriate error code
  * @retval #CA_STATUS_OK  Successful
@@ -368,27 +357,6 @@ void CASetCharacteristicDescriptorValueThread(void *stServiceInfo);
  */
 CAResult_t CASetCharacteristicDescriptorValue
             (stGattCharDescriptor_t *stGattCharDescriptorInfo);
-
-/**
- * @brief  This is the thread  which will be used for creating bond with remote device.
- *
- * @param  stServiceInfo [IN] Service Information which contains the remote address and service
- *                            handle, characteristic handle.
- * @return  NONE
- */
-void CAGATTCreateBondThread(void *stServiceInfo);
-
-/**
- * @brief  Used to make LE bond with remote device(pairng the device) using bt_device_create_bond
- *         api.
- * @param  remoteAddress [IN] MAC address of remote device with which we want to bond
- *
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
- * @retval #CA_STATUS_FAILED Operation failed
- */
-CAResult_t CABleGATTCreateBond(const char *remoteAddress);
 
 /**
  * @brief  Used to enqueue the message into sender queue using CAAdapterEnqueueMessage and make

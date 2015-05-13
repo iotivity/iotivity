@@ -56,6 +56,12 @@
  */
 #define CA_HEADER_LENGTH 2
 
+/**
+ * @var CA_SUPPORTED_BLE_MTU_SIZE
+ * @brief The MTU supported for BLE adapter
+ */
+#define CA_SUPPORTED_BLE_MTU_SIZE  20
+
 #ifdef __TIZEN__
 /**
  * @var PLATFORM_IDENTIFIER_BIT
@@ -68,12 +74,6 @@
  * @brief The MTU supported from Tizen platform for EDR adapter.
  */
 #define CA_SUPPORTED_EDR_MTU_SIZE  512
-
-/**
- * @var CA_SUPPORTED_BLE_MTU_SIZE
- * @brief The MTU supported from Tizen platform for LE adapter.
- */
-#define CA_SUPPORTED_BLE_MTU_SIZE  200
 
 #elif __ANDROID__
 /**
@@ -88,12 +88,6 @@
  */
 #define CA_SUPPORTED_EDR_MTU_SIZE  200
 
-/**
- * @var CA_SUPPORTED_BLE_MTU_SIZE
- * @brief The MTU supported from Android platform for LE adapter.
- */
-#define CA_SUPPORTED_BLE_MTU_SIZE  20
-
 #elif __ARDUINO__
 /**
  * @var PLATFORM_IDENTIFIER_BIT
@@ -107,12 +101,6 @@
  */
 #define CA_SUPPORTED_EDR_MTU_SIZE  200
 
-/**
- * @var CA_SUPPORTED_BLE_MTU_SIZE
- * @brief The MTU supported from Arduino platform for LE adapter.
- */
-#define CA_SUPPORTED_BLE_MTU_SIZE  200
-
 #else //Other Platforms
 /**
  * @var PLATFORM_IDENTIFIER_BIT
@@ -125,12 +113,6 @@
  * @brief The MTU supported for EDR adapter
  */
 #define CA_SUPPORTED_EDR_MTU_SIZE  200
-
-/**
- * @var CA_SUPPORTED_BLE_MTU_SIZE
- * @brief The MTU supported for BLE adapter
- */
-#define CA_SUPPORTED_BLE_MTU_SIZE  200
 
 #endif
 
