@@ -51,7 +51,7 @@ extern "C" {
 /// NOTE: Changing the setting to a longer duration may lead to unsupported and untested
 /// operation.
 #define OC_MAX_PRESENCE_TTL_SECONDS     (60 * 60 * 24) // 60 sec/min * 60 min/hr * 24 hr/day
-#define OC_PRESENCE_URI                      "/oc/presence"
+#define OC_PRESENCE_URI                      "/oic/ad"
 
 /**
  * Attributes used to form a proper OIC conforming JSON message.
@@ -63,7 +63,7 @@ extern "C" {
 #define OC_RSRVD_REPRESENTATION         "rep"
 #define OC_RSRVD_CONTENT_TYPE           "ct"
 #define OC_RSRVD_RESOURCE_TYPE          "rt"
-#define OC_RSRVD_RESOURCE_TYPE_PRESENCE "core.presence"
+#define OC_RSRVD_RESOURCE_TYPE_PRESENCE "oic.wk.ad"
 #define OC_RSRVD_INTERFACE              "if"
 #define OC_RSRVD_DEVICE_ID              "di"
 #define OC_RSRVD_DEVICE_NAME            "dn"
@@ -108,7 +108,7 @@ typedef enum
     OC_DEVICE_URI,              ///< "/oc/core/d"
     OC_RESOURCE_TYPES_URI,      ///< "/oc/core/d/type"
     #ifdef WITH_PRESENCE
-    OC_PRESENCE,                ///< "/oc/presence"
+    OC_PRESENCE,                ///< "/oic/ad"
     #endif
     OC_MAX_VIRTUAL_RESOURCES    ///<s Max items in the list
 } OCVirtualResources;

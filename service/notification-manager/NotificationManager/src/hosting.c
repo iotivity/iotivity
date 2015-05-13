@@ -38,7 +38,6 @@ static RequestHandleList *s_requestHandleList = NULL;
 #define OC_DEFAULT_ADDRESS               "224.0.1.187"
 #define OC_WELL_KNOWN_COORDINATING_QUERY "coap://224.0.1.187:5683/oc/core?rt=Resource.Hosting"
 #define OC_COORDINATING_QUERY            "/oc/core?rt=Resource.Hosting"
-#define OC_PRESENCE_URI                  "/oc/presence"
 #define DEFAULT_CONTEXT_VALUE 0x99
 
 /*

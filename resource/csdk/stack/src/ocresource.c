@@ -55,7 +55,7 @@ static const char * VIRTUAL_RSRCS[] =
        "/oc/core/d",
        "/oc/core/types/d",
        #ifdef WITH_PRESENCE
-       "/oc/presence"
+       "/oic/ad"
        #endif
 };
 
