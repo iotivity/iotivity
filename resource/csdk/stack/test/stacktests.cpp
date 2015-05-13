@@ -483,7 +483,6 @@ TEST(StackResource, ResourceDefaultInterfaceAlwaysFirst)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
 
-    const char * OC_RSRVD_INTERFACE_DEFAULT = "oc.mi.def";
     OC_LOG(INFO, TAG, "Starting ResourceDefaultInterfaceAlwaysFirst test");
 
     InitStack(OC_SERVER);
@@ -514,7 +513,6 @@ TEST(StackResource, ResourceDuplicateDefaultInterfaces)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
 
-    const char * OC_RSRVD_INTERFACE_DEFAULT = "oc.mi.def";
     OC_LOG(INFO, TAG, "Starting ResourceDuplicateDefaultInterfaces test");
 
     InitStack(OC_SERVER);
