@@ -453,12 +453,10 @@ OCStackResult  GetDefaultACL(OicSecAcl_t** defaultAcl)
     acl->periods = NULL;
     acl->recurrences = NULL;
 
-    /*
-     * TODO Doxm resource should expose an API to retrieve the ID of
-     * the owner of this device.
-     */
-    OicUuid_t ownerId = {.id = {0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1,
-        0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1} };
+    // Device ID is the owner of this default ACL
+    OicUuid_t ownerId = {};
+    ret = GetDoxmDeviceID( &ownerId);
+    VERIFY_SUCCESS(OC_STACK_OK == ret, FATAL);
 
     acl->ownersLen = 1;
     acl->owners = (OicUuid_t*)OCMalloc(sizeof(OicUuid_t));

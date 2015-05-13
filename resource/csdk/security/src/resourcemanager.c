@@ -98,7 +98,12 @@ OCStackResult InitSecureResources( )
 {
     OCStackResult ret;
 
-    ret = InitACLResource();
+    /*
+     * doxm resource should be initialized first as it contains the DeviceID
+     * which MAY be used during initialization of other resources.
+     */
+
+    ret = InitDoxmResource();
 
     if(OC_STACK_OK == ret)
     {
@@ -106,7 +111,7 @@ OCStackResult InitSecureResources( )
     }
     if(OC_STACK_OK == ret)
     {
-        ret = InitDoxmResource();
+        ret = InitACLResource();
     }
     if(OC_STACK_OK == ret)
     {
