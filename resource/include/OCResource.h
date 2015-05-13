@@ -84,7 +84,7 @@ namespace OC
                     const std::string& resourceUri );
 
         private:
-            uint32_t m_representation;
+            std::string m_representation;
             const std::string& m_resourceUri;
     };
 

@@ -64,3 +64,43 @@ TEST(RandomGeneration,OCFillRandomMem) {
     EXPECT_EQ((uint8_t )0, array[ARR_SIZE - 1]);
 }
 
+TEST(RandomGeneration, OCGenerateUuid)
+{
+    EXPECT_EQ(RAND_UUID_INVALID_PARAM, OCGenerateUuid(NULL));
+
+    uint8_t uuid[16] = {};
+
+    EXPECT_EQ(RAND_UUID_OK, OCGenerateUuid(uuid));
+
+    EXPECT_FALSE(uuid[0] == '0' && uuid[1] == '0' &&
+                 uuid[2] == '0' && uuid[3] == '0' &&
+                 uuid[4] == '0' && uuid[5] == '0' &&
+                 uuid[6] == '0' && uuid[7] == '0' &&
+                 uuid[8] == '0' && uuid[9] == '0' &&
+                 uuid[10] == '0' && uuid[11] == '0' &&
+                 uuid[12] == '0' && uuid[13] == '0' &&
+                 uuid[14] == '0' && uuid[15] == '0');
+}
+
+TEST(RandomGeneration, OCGenerateUuidString)
+{
+    EXPECT_EQ(RAND_UUID_INVALID_PARAM, OCGenerateUuidString(NULL));
+
+    char uuidString[37] = {};
+
+    EXPECT_EQ(RAND_UUID_OK, OCGenerateUuidString(uuidString));
+    EXPECT_EQ('\0', uuidString[36]);
+    EXPECT_EQ('-', uuidString[8]);
+    EXPECT_EQ('-', uuidString[13]);
+    EXPECT_EQ('-', uuidString[18]);
+    EXPECT_EQ('-', uuidString[23]);
+
+    for(int i = 0; i < 36; ++i)
+    {
+        EXPECT_TRUE(
+                i == 8 || i == 13 || i == 18 || i == 23 ||
+                (uuidString[i] >= 'a' && uuidString[i] <= 'f') ||
+                (uuidString[i] >= '0' && uuidString[i] <= '9'))
+                << "UUID Character out of range: "<< uuidString[i];
+    }
+}

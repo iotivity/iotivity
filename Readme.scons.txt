@@ -5,7 +5,7 @@
 command in this directory)
 
     Install external libraries:
-      $ sudo apt-get install libboost-dev libboost-program-options-dev libexpat1-dev libboost-thread-dev
+      $ sudo apt-get install libboost-dev libboost-program-options-dev libexpat1-dev libboost-thread-dev uuid-dev
 
     Build release binaries:
       $ scons

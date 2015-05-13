@@ -24,6 +24,11 @@
 #include "unistd.h"
 #endif
 #include "ocrandom.h"
+#include <stdio.h>
+
+#if defined(__linux__) || defined(__APPLE__)
+#include <uuid/uuid.h>
+#endif
 
 #ifdef ARDUINO
 #include "Arduino.h"
@@ -131,4 +136,149 @@ uint32_t OCGetRandomRange(uint32_t firstBound, uint32_t secondBound){
     }
     result = ((float)OCGetRandom()/((float)(0xFFFFFFFF))*(float)diff) + (float) base;
     return result;
+}
+
+#if defined(__ANDROID__)
+uint8_t parseUuidChar(char c)
+{
+    if(isdigit(c))
+    {
+        return c - '0';
+    }
+    else
+    {
+        return c - 'a' + 10;
+    }
+}
+uint8_t parseUuidPart(const char *c)
+{
+    return (parseUuidChar(c[0])<<4) + parseUuidChar(c[1]);
+}
+#endif
+
+OCRandomUuidResult OCGenerateUuid(uint8_t uuid[UUID_SIZE])
+{
+    if(!uuid)
+    {
+        return RAND_UUID_INVALID_PARAM;
+    }
+#if defined(__linux__) || defined(__APPLE__)
+    // note: uuid_t is typedefed as unsigned char[16] on linux/apple
+    uuid_generate(uuid);
+    return RAND_UUID_OK;
+#elif defined(__ANDROID__)
+    char uuidString[UUID_STRING_SIZE];
+    int8_t ret = OCGenerateUuidString(uuidString);
+
+    if(ret < 0)
+    {
+        return ret;
+    }
+
+    uuid[ 0] = parseUuidPart(&uuidString[0]);
+    uuid[ 1] = parseUuidPart(&uuidString[2]);
+    uuid[ 2] = parseUuidPart(&uuidString[4]);
+    uuid[ 3] = parseUuidPart(&uuidString[6]);
+
+    uuid[ 4] = parseUuidPart(&uuidString[9]);
+    uuid[ 5] = parseUuidPart(&uuidString[11]);
+
+    uuid[ 6] = parseUuidPart(&uuidString[14]);
+    uuid[ 7] = parseUuidPart(&uuidString[16]);
+
+    uuid[ 8] = parseUuidPart(&uuidString[19]);
+    uuid[ 9] = parseUuidPart(&uuidString[21]);
+
+    uuid[10] = parseUuidPart(&uuidString[24]);
+    uuid[11] = parseUuidPart(&uuidString[26]);
+    uuid[12] = parseUuidPart(&uuidString[28]);
+    uuid[13] = parseUuidPart(&uuidString[30]);
+    uuid[14] = parseUuidPart(&uuidString[32]);
+    uuid[15] = parseUuidPart(&uuidString[34]);
+
+    return RAND_UUID_OK;
+#else
+    // Fallback for all platforms is filling the array with random data
+    OCFillRandomMem(uuid, UUID_SIZE);
+    return RAND_UUID_OK;
+#endif
+}
+
+OCRandomUuidResult OCGenerateUuidString(char uuidString[UUID_STRING_SIZE])
+{
+    if(!uuidString)
+    {
+        return RAND_UUID_INVALID_PARAM;
+    }
+#if defined(__linux__) || defined(__APPLE__)
+    uint8_t uuid[UUID_SIZE];
+    int8_t ret = OCGenerateUuid(uuid);
+
+    if(ret != 0)
+    {
+        return ret;
+    }
+
+    uuid_unparse_lower(uuid, uuidString);
+    return RAND_UUID_OK;
+
+#elif defined(__ANDROID__)
+    int32_t fd = open("/proc/sys/kernel/random/uuid", O_RDONLY);
+    if(fd > 0)
+    {
+        ssize_t readResult = read(fd, uuidString, UUID_STRING_SIZE - 1);
+        close(fd);
+        if(readResult < 0)
+        {
+            return RAND_UUID_READ_ERROR;
+        }
+        else if(readResult < UUID_STRING_SIZE - 1)
+        {
+            uuidString[0] = '\0';
+            return RAND_UUID_READ_ERROR;
+        }
+
+        uuidString[UUID_STRING_SIZE - 1] = '\0';
+        for(char* p = uuidString; *p; ++p)
+        {
+            *p = tolower(*p);
+        }
+        return RAND_UUID_OK;
+    }
+    else
+    {
+        close(fd);
+        return RAND_UUID_READ_ERROR;
+    }
+#else
+    uint8_t uuid[UUID_SIZE];
+    OCGenerateUuid(uuid);
+
+    return OCConvertUuidToString(uuid, uuidString);
+#endif
+}
+
+OCRandomUuidResult OCConvertUuidToString(const uint8_t uuid[UUID_SIZE],
+                                         char uuidString[UUID_STRING_SIZE])
+{
+    if (uuid == NULL || uuidString == NULL)
+    {
+        return RAND_UUID_INVALID_PARAM;
+    }
+
+
+    int ret = snprintf(uuidString, UUID_STRING_SIZE,
+            "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+            uuid[0], uuid[1], uuid[2], uuid[3],
+            uuid[4], uuid[5], uuid[6], uuid[7],
+            uuid[8], uuid[9], uuid[10], uuid[11],
+            uuid[12], uuid[13], uuid[14], uuid[15]
+            );
+
+    if (ret != UUID_STRING_SIZE - 1)
+    {
+        return RAND_UUID_CONVERT_ERROR;
+    }
+
+    return RAND_UUID_OK;
 }

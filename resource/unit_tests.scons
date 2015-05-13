@@ -40,6 +40,7 @@ if target_os == 'linux':
 
 	# Build C unit tests
 	SConscript('csdk/stack/test/SConscript')
+	SConscript('csdk/ocrandom/test/SConscript')
 
 	SConscript('csdk/connectivity/test/SConscript')
 

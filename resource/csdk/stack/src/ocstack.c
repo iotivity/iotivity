@@ -435,13 +435,6 @@ static OCResourceType *findResourceType(OCResourceType * resourceTypeList,
  */
 static OCStackResult ResetPresenceTTL(ClientCB *cbNode, uint32_t maxAgeSeconds);
 
-/**
- * Return a server instance ID.
- *
- * @return Instance ID of the server.
- */
-static const ServerID OCGetServerInstanceID(void);
-
 //-----------------------------------------------------------------------------
 // Internal functions
 //-----------------------------------------------------------------------------
@@ -3802,7 +3795,7 @@ OCStackResult getQueryFromUri(const char * uri, char** query, char ** uriWithout
         return OC_STACK_NO_MEMORY;
 }
 
-const ServerID OCGetServerInstanceID(void)
+const uint8_t* OCGetServerInstanceID(void)
 {
     static bool generated = false;
     static ServerID sid;
@@ -3811,25 +3804,35 @@ const ServerID OCGetServerInstanceID(void)
         return sid;
     }
 
-    sid = OCGetRandom();
+    if (OCGenerateUuid(sid) != RAND_UUID_OK)
+    {
+        OC_LOG(FATAL, TAG, PCF("Generate UUID for Server Instance failed!"));
+        return NULL;
+    }
     generated = true;
     return sid;
 }
 
 const char* OCGetServerInstanceIDString(void)
 {
-    // max printed length of a base 10
-    // uint32 is 10 characters, so 11 includes null.
-    // This will change as the representation gets switched
-    // to another value
-    static char buffer[11];
+    static bool generated = false;
+    static char sidStr[UUID_STRING_SIZE];
 
-    if (snprintf(buffer, sizeof(buffer),"%u", OCGetServerInstanceID()) < 0)
+    if(generated)
     {
-        buffer[0]='\0';
+        return sidStr;
     }
 
-    return buffer;
+    const uint8_t* sid = OCGetServerInstanceID();
+
+    if(OCConvertUuidToString(sid, sidStr) != RAND_UUID_OK)
+    {
+        OC_LOG(FATAL, TAG, PCF("Generate UUID String for Server Instance failed!"));
+        return NULL;
+    }
+
+    generated = true;
+    return sidStr;
 }
 
 int32_t OCDevAddrToIPv4Addr(OCDevAddr *ipAddr, uint8_t *a, uint8_t *b,
