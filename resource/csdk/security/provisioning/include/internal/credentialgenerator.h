@@ -28,15 +28,19 @@
 /**
  * Function to generate credentials according to the type.
  *
- * @param[in]  type      Type of credential.
- * @param[in]  pDevInfo  Instance of structure have device information.
- * @param[in]  deviceId  DeviceID of the provisioning tool.
- * @param[out] cred      Generated credential.
+ * @param[in]  type           Type of credential.
+ * @param[in]  ptDeviceId     Device ID of provisioning tool.
+ * @param[in]  firstDeviceId  DeviceID of the first device.
+ * @param[in]  secondDeviceId DeviceID of the second device.
+ * @param[out] firstCred      Generated credential for first device.
+ * @param[out] secondCred     Generated credential for second device.
  * @return  SP_SUCCESS on success
  */
-SPResult SPGenerateCredentials(OicSecCredType_t type, const SPDevInfo_t *pDevInfo,
-                               OicUuid_t *deviceId,
-                               OicSecCred_t **cred);
+SPResult SPGeneratePairWiseCredentials(OicSecCredType_t type, const OicUuid_t *ptDeviceId,
+                                       const OicUuid_t *firstDeviceId,
+                                       const OicUuid_t *secondDeviceId,
+                                       OicSecCred_t **firstCred,
+                                       OicSecCred_t **secondCred);
 
 #ifdef __cplusplus
 }

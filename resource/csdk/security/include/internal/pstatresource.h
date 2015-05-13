@@ -55,6 +55,13 @@ OicSecPstat_t * JSONToPstatBin(const char * jsonStr);
  */
 char * BinToPstatJSON(const OicSecPstat_t * pstat);
 
+/** This function deallocates the memory for OicSecPstat_t.
+ *
+ * @param[in] pstat  Pointer to OicSecPstat_t.
+ */
+void DeletePstatBinData(OicSecPstat_t* pstat);
+
+
 #ifdef __cplusplus
 }
 #endif

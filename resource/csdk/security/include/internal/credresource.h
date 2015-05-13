@@ -113,6 +113,14 @@ OCStackResult AddCredential(OicSecCred_t * cred);
  */
 void GetDtlsPskCredentials(OCDtlsPskCredsBlob **credInfo);
 
+/**
+ * Function to deallocate allocated memory to OicSecCred_t
+ *
+ * @param cred pointer to cred type
+ *
+ */
+void DeleteCredList(OicSecCred_t* cred);
+
 #ifdef __cplusplus
 }
 #endif

@@ -23,57 +23,54 @@
 #include "credentialgenerator.h"
 #include "ocmalloc.h"
 #include "logger.h"
-
+#include "credresource.h"
+#include "ocrandom.h"
+#include "base64.h"
 #define TAG "SPProvisionAPI"
+#define KEY_LENGTH 16
 
-
-SPResult SPGenerateCredentials(OicSecCredType_t type, const SPDevInfo_t *pDevInfo,
-                               OicUuid_t *deviceId,
-                               OicSecCred_t **cred)
+SPResult SPGeneratePairWiseCredentials(OicSecCredType_t type, const OicUuid_t *ptDeviceId,
+                                       const OicUuid_t *firstDeviceId,
+                                       const OicUuid_t *secondDeviceId,
+                                       OicSecCred_t **firstCred,
+                                       OicSecCred_t **secondCred)
 {
-    switch (type)
+
+    if (NULL == ptDeviceId || NULL == firstDeviceId || NULL == secondDeviceId)
     {
-        case SYMMETRIC_PAIR_WISE_KEY:
-            {
-                // TODO after getting more information.
-                OicSecCred_t *credInstance = (OicSecCred_t *) OCMalloc(sizeof (OicSecCred_t));
-                if (NULL == credInstance)
-                {
-                    OC_LOG(ERROR, TAG, "Error while allocating memory.");
-                    return SP_RESULT_MEM_ALLOCATION_FAIL;
-                }
-                //credInstance->CredID = // TODO value from SRM DB.
-                credInstance->subject = pDevInfo->deviceId;
-                credInstance->credType = type;
-                memcpy(credInstance->owners->id, deviceId, UUID_LENGTH); // beach head version.
-                cred = &credInstance;
-                break;
-            }
-        case SYMMETRIC_GROUP_KEY:
-            {
-                //TODO
-                break;
-            }
-        case ASYMMETRIC_KEY:
-            {
-                //TODO
-                break;
-            }
-        case SIGNED_ASYMMETRIC_KEY:
-            {
-                //TODO
-                break;
-            }
-        case PIN_PASSWORD:
-            {
-                //TODO
-                break;
-            }
-        default:
-            {
-                OC_LOG(ERROR, TAG, "Invalid option.");
-                return SP_RESULT_INVALID_PARAM;
-            }
+        return SP_RESULT_INVALID_PARAM;
     }
-    return SP_RESULT_INTERNAL_ERROR;
+    uint8_t privData[KEY_LENGTH] = {0,};
+    OCFillRandomMem(privData, KEY_LENGTH);
+
+    uint32_t outLen = 0;
+    char base64Buff[B64ENCODE_OUT_SAFESIZE(sizeof(privData)) + 1] = {};
+    B64Result b64Ret = b64Encode(privData, sizeof(privData), base64Buff,
+                                sizeof(base64Buff), &outLen);
+    if (B64_OK != b64Ret)
+    {
+        OC_LOG(ERROR, TAG, "Error while encoding key");
+        return SP_RESULT_INTERNAL_ERROR;
+    }
+
+    // TODO currently owner array is 1. only provisioning tool's id.
+    OicSecCred_t *tempFirstCred =  GenerateCredential(secondDeviceId, type, NULL, base64Buff, 1,
+                                   ptDeviceId);
+    if (NULL == tempFirstCred)
+    {
+        OC_LOG(ERROR, TAG, "Error while generating credential.");
+        return SP_RESULT_INTERNAL_ERROR;
+    }
+    // TODO currently owner array is 1. only provisioning tool's id.
+    OicSecCred_t *tempSecondCred =  GenerateCredential(firstDeviceId, type, NULL, base64Buff, 1,
+                                    ptDeviceId);
+    if (NULL == tempSecondCred)
+    {
+        DeleteCredList(tempFirstCred);
+        OC_LOG(ERROR, TAG, "Error while generating credential.");
+        return SP_RESULT_INTERNAL_ERROR;
+    }
+    *firstCred = tempFirstCred;
+    *secondCred = tempSecondCred;
+    return SP_RESULT_SUCCESS;
 }

@@ -58,10 +58,7 @@ static OicSecPstat_t gDefaultPstat =
 static OicSecPstat_t    *gPstat = NULL;
 static OCResourceHandle gPstatHandle = NULL;
 
-/**
- * This internal method deletes the pstat data structure.
- */
-static void DeletePstatBinData(OicSecPstat_t* pstat)
+void DeletePstatBinData(OicSecPstat_t* pstat)
 {
     if (pstat)
     {
@@ -72,7 +69,6 @@ static void DeletePstatBinData(OicSecPstat_t* pstat)
         OCFree(pstat);
     }
 }
-
 
 char * BinToPstatJSON(const OicSecPstat_t * pstat)
 {

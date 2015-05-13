@@ -297,14 +297,7 @@ static void deleteList()
     {
         SPTargetDeviceInfo_t *next = current->next;
         DeleteDoxmBinData(current->doxm);
-        if (current->pstat)
-        {
-            if (current->pstat->sm)
-            {
-                OCFree(current->pstat->sm);
-            }
-            OCFree(current->pstat);
-        }
+        DeletePstatBinData(current->pstat);
         OCFree(current);
         current = next;
     }
@@ -624,15 +617,8 @@ static void ListMethodsHandler(const CARemoteEndpoint_t *object,
                     return;
                 }
                 OCFree(pTempPayload);
+                DeletePstatBinData(gPstat);
 
-                if (gPstat)
-                {
-                    if (gPstat->sm)
-                    {
-                        OCFree(gPstat->sm);
-                    }
-                    OCFree(gPstat);
-                }
                 gPstat = pstat;
                 gStateManager |= SP_LIST_METHODS_DONE;
 
@@ -1048,16 +1034,13 @@ static SPResult initiateDtlsHandshake(const SPTargetDeviceInfo_t *deviceInfo)
         return SP_RESULT_INTERNAL_ERROR;
     }
     OC_LOG(INFO, TAG, "Anonymous cipher suite Enabled.");
-    CAAddress_t *address = (CAAddress_t *) OCMalloc(sizeof(CAAddress_t));
-    if (NULL == address)
-    {
-        OC_LOG_V(ERROR, TAG, "Error while memory allocation");
-        return SP_RESULT_MEM_ALLOCATION_FAIL;
-    }
-    strncpy(address->IP.ipAddress, deviceInfo->ip, DEV_ADDR_SIZE_MAX);
-    address->IP.ipAddress[DEV_ADDR_SIZE_MAX - 1] = '\0';
-    address->IP.port = CA_SECURE_PORT;
-    caresult = CAInitiateHandshake(address, deviceInfo->connType);
+
+    CAAddress_t address = {};
+    strncpy(address.IP.ipAddress, deviceInfo->ip, DEV_ADDR_SIZE_MAX);
+    address.IP.ipAddress[DEV_ADDR_SIZE_MAX - 1] = '\0';
+    address.IP.port = CA_SECURE_PORT;
+
+    caresult = CAInitiateHandshake(&address, deviceInfo->connType);
     if (CA_STATUS_OK != caresult)
     {
         OC_LOG_V(ERROR, TAG, "DTLS handshake failure.");
@@ -1294,7 +1277,12 @@ SPResult provisionCredentials(unsigned short timeout, const OicSecCred_t *cred,
                               const SPDevInfo_t *deviceInfo)
 {
     char *credJson = NULL;
-    //credJson = BinToJson(cred); // TODO from SRM.
+    credJson = BinToCredJSON(cred);
+    if (NULL == credJson)
+    {
+        OC_LOG(ERROR, TAG, "Memory allocation problem");
+        return SP_RESULT_MEM_ALLOCATION_FAIL;
+    }
 
     char uri[CA_MAX_URI_LENGTH] = {0};
     size_t uriLen = sizeof(uri);
@@ -1310,7 +1298,7 @@ SPResult provisionCredentials(unsigned short timeout, const OicSecCred_t *cred,
         return SP_RESULT_INTERNAL_ERROR;
     }
     handler = &CredProvisioningHandler;
-
+    gStateManager |= SP_PROV_CRED_STARTED;
     CAResult_t result = sendCARequest(uri, credJson, payloadLen, gToken, method,
                                       deviceInfo->connType);
     OCFree(credJson);
@@ -1461,28 +1449,58 @@ SPResult SPProvisionCredentials(unsigned short timeout, OicSecCredType_t type,
         OC_LOG(ERROR, TAG, "Error while retrieving provisioning tool's device ID");
         return SP_RESULT_INTERNAL_ERROR;
     }
-    while (curr)
+    //TODO Need to support other key types in future.
+    switch (type)
     {
-        SPDevInfo_t *next = curr->next;
-        OicSecCred_t *cred = NULL;
+        case SYMMETRIC_PAIR_WISE_KEY:
+            {
+                if (NULL == curr->next)
+                {
+                    return SP_RESULT_INVALID_PARAM;
+                }
+                // Devices if present after second node will not be considered.
+                // in scenario-2. 2 devices are provisioned with credentials.
+                const SPDevInfo_t *firstDevice = curr;
+                const SPDevInfo_t *secondDevice = curr->next;
 
+                OicSecCred_t *firstCred = NULL;
+                OicSecCred_t *secondCred = NULL;
 
-        SPResult res = SPGenerateCredentials(type, curr, &provTooldeviceID, &cred);
-        if (res != SP_RESULT_SUCCESS)
-        {
-            OC_LOG(ERROR, TAG, "error while generating credentials");
+                SPResult res = SPGeneratePairWiseCredentials(type, &provTooldeviceID,
+                               &firstDevice->deviceId, &secondDevice->deviceId,
+                               &firstCred, &secondCred);
+                if (res != SP_RESULT_SUCCESS)
+                {
+                    OC_LOG(ERROR, TAG, "error while generating credentials");
+                    return SP_RESULT_INTERNAL_ERROR;
+                }
+                res = provisionCredentials(timeout, firstCred, firstDevice);
+                if (SP_RESULT_SUCCESS != res)
+                {
+                    OC_LOG_V(ERROR, TAG, "Credentials provisioning Error");
+                    DeleteCredList(firstCred);
+                    DeleteCredList(secondCred);
+                    return SP_RESULT_INTERNAL_ERROR;
+                }
+                res = provisionCredentials(timeout, secondCred, secondDevice);
+                if (SP_RESULT_SUCCESS != res)
+                {
+                    OC_LOG_V(ERROR, TAG, "Credentials provisioning Error");
+                    DeleteCredList(firstCred);
+                    DeleteCredList(secondCred);
+                    return SP_RESULT_INTERNAL_ERROR;
+                }
+                DeleteCredList(firstCred);
+                DeleteCredList(secondCred);
+                return SP_RESULT_SUCCESS;
+            }
+        default:
+            {
+                OC_LOG(ERROR, TAG, "Invalid option.");
+                return SP_RESULT_INVALID_PARAM;
+            }
             return SP_RESULT_INTERNAL_ERROR;
-        }
-        provisionCredentials(timeout, cred, curr);
-        if (SP_RESULT_SUCCESS != res)
-        {
-            OC_LOG_V(ERROR, TAG, "Credentials provisioning Error");
-            return SP_RESULT_INTERNAL_ERROR;
-        }
-        gStateManager = 0;
-        curr = next;
     }
-    return SP_RESULT_SUCCESS;
 }
 
 SPResult SPFinalizeProvisioning(unsigned short timeout,
@@ -1537,7 +1555,21 @@ SPResult SPFinalizeProvisioning(unsigned short timeout,
         CADestroyToken(gToken);
         return SP_RESULT_TIMEOUT;
     }
+
+    CAAddress_t address = {};
+    strncpy(address.IP.ipAddress, selectedDeviceInfo->ip, DEV_ADDR_SIZE_MAX);
+    address.IP.ipAddress[DEV_ADDR_SIZE_MAX - 1] = '\0';
+    address.IP.port = CA_SECURE_PORT;
+
+    result = CACloseDtlsSession(&address, selectedDeviceInfo->connType);
+    if (CA_STATUS_OK != result)
+    {
+        OC_LOG_V(ERROR, TAG, "DTLS handshake failure.");
+    }
+
     CADestroyToken(gToken);
+    gStateManager = 0;
+    gPstat = NULL;
     return res;
 }
 
