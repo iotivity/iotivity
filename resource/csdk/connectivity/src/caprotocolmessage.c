@@ -170,8 +170,8 @@ coap_pdu_t *CAGeneratePDU(const char *uri, uint32_t code, const CAInfo_t info)
             coap_delete_list(optlist);
             return NULL;
         }
-
-        pdu = CAGeneratePDUImpl((code_t) code, optlist, info, info.payload, strlen(info.payload));
+        size_t lenPayload = info.payload ? strlen(info.payload) : 0;
+        pdu = CAGeneratePDUImpl((code_t) code, optlist, info, info.payload, lenPayload);
         if (NULL == pdu)
         {
             OIC_LOG(ERROR, TAG, "pdu NULL");
