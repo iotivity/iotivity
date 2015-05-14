@@ -173,7 +173,6 @@ void CADTLSSetCredentialsCallback(CAGetDTLSCredentialsHandler credCallback);
  *                             0xC018 : TLS_ECDH_anon_WITH_AES_128_CBC_SHA
  *                             0xC0A8 : TLS_PSK_WITH_AES_128_CCM_8
  *                             0xC0AE : TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8
- * @return  0 on success otherwise a positive error value
  * @retval  CA_STATUS_OK    Successful
  * @retval  CA_STATUS_INVALID_PARAM  Invalid input argumets
  * @retval  CA_STATUS_FAILED Operation failed
@@ -186,7 +185,6 @@ CAResult_t CADtlsSelectCipherSuite(const dtls_cipher_t cipher);
  * @param[in] enable  1, enabling TLS_ECDH_anon_WITH_AES_128_CBC_SHA
  *                    0, disabling TLS_ECDH_anon_WITH_AES_128_CBC_SHA
  *
- * @return  0 on success otherwise a positive error value
  * @retval  CA_STATUS_OK    Successful
  * @retval  CA_STATUS_FAILED Operation failed
  */
@@ -198,12 +196,23 @@ CAResult_t CADtlsEnablesAnonEcdh(const uint8_t enable);
  * @param[in] addrInfo  information of network address
  * @param[in] connType  connectivity type
  *
- * @return  0 on success otherwise a positive error value
  * @retval  CA_STATUS_OK    Successful
  * @retval  CA_STATUS_FAILED Operation failed
  */
 CAResult_t CADtlsInitiateHandshake(const CAAddress_t* addrInfo,
                                   const CAConnectivityType_t connType);
+
+/**
+ * Close the DTLS session
+ *
+ * @param[in] addrInfo  information of network address
+ * @param[in] connType  connectivity type
+ *
+ * @retval  CA_STATUS_OK    Successful
+ * @retval  CA_STATUS_FAILED Operation failed
+ */
+CAResult_t CADtlsClose(const CAAddress_t* addrInfo,
+                       const CAConnectivityType_t connType);
 
 /**
  * Generate ownerPSK using PRF
@@ -222,7 +231,6 @@ CAResult_t CADtlsInitiateHandshake(const CAAddress_t* addrInfo,
  * @param[in,out] ownerPSK  Output buffer for owner PSK
  * @param[in] ownerPSKSize  Byte length of the ownerPSK to be generated
  *
- * @return  0 on success otherwise a positive error value
  * @retval  CA_STATUS_OK    Successful
  * @retval  CA_STATUS_FAILED Operation failed
  */
@@ -238,7 +246,6 @@ CAResult_t CADtlsGenerateOwnerPSK(const CAAddress_t* addrInfo,
  * @fn  CAAdapterNetDtlsInit
  * @brief  initialize tinyDTLS library and other necessary intialization.
  *
- * @return  0 on success otherwise a positive error value.
  * @retval  CA_STATUS_OK  Successful
  * @retval  CA_STATUS_INVALID_PARAM  Invalid input argumets
  * @retval  CA_STATUS_FAILED Operation failed

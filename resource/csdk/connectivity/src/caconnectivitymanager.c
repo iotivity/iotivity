@@ -338,7 +338,8 @@ CAResult_t CAGenerateOwnerPSK(const CAAddress_t* addrInfo,
     return res;
 }
 
-CAResult_t CAInitiateHandshake(const CAAddress_t* addrInfo, const CAConnectivityType_t connType)
+CAResult_t CAInitiateHandshake(const CAAddress_t* addrInfo,
+                               const CAConnectivityType_t connType)
 {
     OIC_LOG_V(DEBUG, TAG, "IN : CAInitiateHandshake");
     CAResult_t res = CA_STATUS_OK;
@@ -351,8 +352,32 @@ CAResult_t CAInitiateHandshake(const CAAddress_t* addrInfo, const CAConnectivity
     res = CADtlsInitiateHandshake(addrInfo, connType);
     if(CA_STATUS_OK != res)
     {
-        OIC_LOG_V(ERROR, TAG, "Failed to CAGenerateOwnerPSK : %d", res);
+        OIC_LOG_V(ERROR, TAG, "Failed to CADtlsInitiateHandshake : %d", res);
     }
+
+    OIC_LOG_V(DEBUG, TAG, "OUT : CAInitiateHandshake");
+
+    return res;
+}
+
+CAResult_t CACloseDtlsSession(const CAAddress_t* addrInfo,
+                              const CAConnectivityType_t connType)
+{
+    OIC_LOG_V(DEBUG, TAG, "IN : CACloseDtlsSession");
+    CAResult_t res = CA_STATUS_OK;
+
+    if(!addrInfo)
+    {
+        CA_STATUS_INVALID_PARAM;
+    }
+
+    res = CADtlsClose(addrInfo, connType);
+    if(CA_STATUS_OK != res)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to CADtlsClose : %d", res);
+    }
+
+    OIC_LOG_V(DEBUG, TAG, "OUT : CACloseDtlsSession");
 
     return res;
 }

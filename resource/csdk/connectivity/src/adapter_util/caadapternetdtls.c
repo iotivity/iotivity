@@ -617,7 +617,7 @@ CAResult_t CADtlsInitiateHandshake(const CAAddress_t* addrInfo,
                                  const CAConnectivityType_t connType)
 {
     int res;
-    stCADtlsAddrInfo_t dst;
+    stCADtlsAddrInfo_t dst = {};
 
     OIC_LOG(DEBUG, NET_DTLS_TAG, "IN CADtlsInitiateHandshake");
 
@@ -625,8 +625,6 @@ CAResult_t CADtlsInitiateHandshake(const CAAddress_t* addrInfo,
     {
         return CA_STATUS_INVALID_PARAM;
     }
-
-    memset(&dst, 0, sizeof(stCADtlsAddrInfo_t));
 
     if(inet_aton(addrInfo->IP.ipAddress, &dst.addr.sin.sin_addr) == 0)
     {
@@ -658,6 +656,52 @@ CAResult_t CADtlsInitiateHandshake(const CAAddress_t* addrInfo,
     u_mutex_unlock(gDtlsContextMutex);
 
     OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT CADtlsInitiateHandshake");
+
+    return CA_STATUS_OK;
+}
+
+CAResult_t CADtlsClose(const CAAddress_t* addrInfo,
+                                 const CAConnectivityType_t connType)
+{
+    stCADtlsAddrInfo_t dst = {};
+
+    OIC_LOG(DEBUG, NET_DTLS_TAG, "IN CADtlsDisconnect");
+
+    if(!addrInfo)
+    {
+        return CA_STATUS_INVALID_PARAM;
+    }
+
+    if(inet_aton(addrInfo->IP.ipAddress, &dst.addr.sin.sin_addr) == 0)
+    {
+        OIC_LOG(ERROR, NET_DTLS_TAG, "Failed to convert from ASCII to Network Address");
+        return CA_STATUS_FAILED;
+    }
+    dst.addr.sin.sin_family = AF_INET;
+    dst.addr.sin.sin_port = htons(addrInfo->IP.port);
+    dst.size = sizeof(dst.addr);
+
+    //TODO: pass eDtlsAdapterType_t type rather than CAConnectivityType_t
+    dst.ifIndex = connType == CA_WIFI ? DTLS_WIFI:DTLS_ETHERNET;
+
+    u_mutex_lock(gDtlsContextMutex);
+    if(NULL == gDtlsContextMutex)
+    {
+        OIC_LOG(ERROR, NET_DTLS_TAG, "Context is NULL");
+        u_mutex_unlock(gDtlsContextMutex);
+        return CA_STATUS_FAILED;
+    }
+
+    if(0 > dtls_close(gCaDtlsContext->dtlsContext, &dst))
+    {
+        OIC_LOG(ERROR, NET_DTLS_TAG, "Failed to close the session");
+        u_mutex_unlock(gDtlsContextMutex);
+        return CA_STATUS_FAILED;
+    }
+
+    u_mutex_unlock(gDtlsContextMutex);
+
+    OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT CADtlsDisconnect");
 
     return CA_STATUS_OK;
 }
