@@ -337,5 +337,5 @@ typedef struct
 } /* extern "C" */
 #endif
 
-#endif //#ifndef CA_COMMON_H_
+#endif /* CA_COMMON_H_ */
 

@@ -25,8 +25,8 @@
  * fragmentation and reassemebly.
  */
 
-#ifndef _CA_MSG_PARSER_H_
-#define _CA_MSG_PARSER_H_
+#ifndef CA_MSG_PARSER_H_
+#define CA_MSG_PARSER_H_
 
 #include "cacommon.h"
 #include "logger.h"
@@ -185,5 +185,5 @@ uint32_t CAParseHeader(const char *header);
 } /* extern "C" */
 #endif
 
-#endif  // _CA_MSG_PARSER_H_
+#endif  /* CA_MSG_PARSER_H_ */
 

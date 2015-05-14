@@ -24,8 +24,8 @@
  * This file contains the APIs for queue to be implemented.
  */
 
-#ifndef __U_QUEUE_H_
-#define __U_QUEUE_H_
+#ifndef U_QUEUE_H_
+#define U_QUEUE_H_
 
 #include "cacommon.h"
 
@@ -145,5 +145,5 @@ u_queue_message_t *u_queue_get_head(u_queue_t *queue);
 } /* extern "C" */
 #endif /* __cplusplus */
 
-#endif /* _U_QUEUE_H_ */
+#endif /* U_QUEUE_H_ */
 

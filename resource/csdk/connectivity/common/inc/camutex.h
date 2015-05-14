@@ -24,8 +24,8 @@
  * This file provides APIs related to mutex and semaphores.
  */
 
-#ifndef _CAMUTEX_H_
-#define _CAMUTEX_H_
+#ifndef CA_MUTEX_H_
+#define CA_MUTEX_H_
 
 #include "cacommon.h"
 
@@ -151,5 +151,5 @@ void ca_cond_free(ca_cond cond);
 } /* extern "C" */
 #endif /* __cplusplus */
 
-#endif /*__UMUTEX_H_ */
+#endif /* CA_MUTEX_H_ */
 

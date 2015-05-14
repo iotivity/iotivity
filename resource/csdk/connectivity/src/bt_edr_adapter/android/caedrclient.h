@@ -165,5 +165,5 @@ void CAEDRNativeSocketClose(JNIEnv *env, const char *address, uint32_t id);
 } /* extern "C" */
 #endif
 
-#endif
+#endif /* CA_EDR_CLIENT_H_ */
 

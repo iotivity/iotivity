@@ -231,4 +231,4 @@ CAResponseResult_t CAGetCodeFromPduBinaryData(const void *pdu, uint32_t size);
 } /* extern "C" */
 #endif
 
-#endif //#ifndef CA_PROTOCOL_MESSAGE_H_
+#endif /* CA_PROTOCOL_MESSAGE_H_ */

@@ -24,8 +24,8 @@
  * This file provides the APIs to send data on established RFCOMM connections.
  */
 
-#ifndef __CA_EDR_ENDPOINT_H_
-#define __CA_EDR_ENDPOINT_H_
+#ifndef CA_EDR_ENDPOINT_H_
+#define CA_EDR_ENDPOINT_H_
 
 #include <bluetooth.h>
 
@@ -56,6 +56,6 @@ CAResult_t CAEDRSendData(int serverFD, const void *data, uint32_t dataLength,
 } /* extern "C" */
 #endif
 
-#endif //__CA_EDR_ENDPOINT_H_
+#endif /* CA_EDR_ENDPOINT_H_ */
 
 

@@ -17,8 +17,8 @@
 * limitations under the License.
 *
 ******************************************************************/
-#ifndef _CA_ADAPTER_NET_DTLS_H
-#define _CA_ADAPTER_NET_DTLS_H
+#ifndef CA_ADAPTER_NET_DTLS_H_
+#define CA_ADAPTER_NET_DTLS_H_
 
 #include "dtls.h"
 #include "uarraylist.h"
@@ -225,6 +225,6 @@ CAResult_t CAAdapterNetDtlsDecrypt(const char *remoteAddress,
                                    uint32_t dataLen,
                                    eDtlsAdapterType_t type);
 
-#endif //_CA_ADAPTER_NET_DTLS_H
+#endif /* CA_ADAPTER_NET_DTLS_H_ */
 
 

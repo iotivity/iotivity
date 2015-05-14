@@ -179,5 +179,5 @@ typedef void (*CANetworkChangeCallback)(CALocalConnectivity_t *info, CANetworkSt
 } /* extern "C" */
 #endif
 
-#endif  // CA_ADAPTER_INTERFACE_H_
+#endif  /* CA_ADAPTER_INTERFACE_H_ */
 

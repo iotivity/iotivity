@@ -325,4 +325,4 @@ void CAIPSetConnectionStateChangeCallback(CAIPConnectionStateChangeCallback call
 }
 #endif
 
-#endif //CA_IP_INTERFACE_H_
+#endif /* CA_IP_INTERFACE_H_ */

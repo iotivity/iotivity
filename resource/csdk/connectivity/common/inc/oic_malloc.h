@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef _OIC_MALLOC_H_
-#define _OIC_MALLOC_H_
+#ifndef OIC_MALLOC_H_
+#define OIC_MALLOC_H_
 
 // The purpose of this module is to allow custom dynamic memory allocation
 // code to easily be added to the TB Stack by redefining the OICMalloc and
@@ -94,5 +94,5 @@ void OICFree(void *ptr);
 #ifdef __cplusplus
 }
 #endif // __cplusplus
-#endif /* _OIC_MALLOC_H_ */
+#endif /* OIC_MALLOC_H_ */
 

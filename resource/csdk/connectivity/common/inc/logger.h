@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef _U_LOGGER_H_
-#define _U_LOGGER_H_
+#ifndef U_LOGGER_H_
+#define U_LOGGER_H_
 
 #include <stdint.h>
 #include <stdio.h>
@@ -211,5 +211,5 @@ void OICLogv(LogLevel level, PROGMEM const char *tag, const int16_t lineNum,
 #ifdef __cplusplus
 }
 #endif // __cplusplus
-#endif /* _U_LOGGER_H_ */
+#endif /* U_LOGGER_H_ */
 

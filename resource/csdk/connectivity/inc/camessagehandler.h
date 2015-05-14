@@ -23,8 +23,8 @@
  * @brief This file contains message functionality.
  */
 
-#ifndef __CA_MESSAGE_HANDLER_H_
-#define __CA_MESSAGE_HANDLER_H_
+#ifndef CA_MESSAGE_HANDLER_H_
+#define CA_MESSAGE_HANDLER_H_
 
 #include "cacommon.h"
 #include "coap.h"
@@ -133,5 +133,5 @@ void CALogPDUInfo(coap_pdu_t *pdu);
 } /* extern "C" */
 #endif
 
-#endif //#ifndef __CA_MESSAGE_HANDLER_H_
+#endif /* CA_MESSAGE_HANDLER_H_ */
 

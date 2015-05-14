@@ -59,5 +59,5 @@ void CALESetNetStateCallback(CALEDeviceStateChangedCallback callback);
 } /* extern "C" */
 #endif
 
-#endif
+#endif /* CA_LENWMONITOR_H_ */
 

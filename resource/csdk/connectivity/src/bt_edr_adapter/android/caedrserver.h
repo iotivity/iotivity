@@ -138,5 +138,5 @@ void CAEDRNatvieCloseServerTask(JNIEnv* env);
 } /* extern "C" */
 #endif
 
-#endif
+#endif /* CA_EDR_SERVER_H_ */
 

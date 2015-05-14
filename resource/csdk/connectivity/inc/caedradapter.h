@@ -24,8 +24,8 @@
  * This file contains the APIs for EDR adapters.
  */
 
-#ifndef __CA_EDRADAPTER_H_
-#define __CA_EDRADAPTER_H_
+#ifndef CA_EDRADAPTER_H_
+#define CA_EDRADAPTER_H_
 
 /**
  * EDR Interface AP
@@ -138,5 +138,5 @@ CAResult_t CAAdapterStartQueue();
 } /* extern "C" */
 #endif
 
-#endif  //__CA_EDRADAPTER_H_
+#endif  /* CA_EDRADAPTER_H_ */
 

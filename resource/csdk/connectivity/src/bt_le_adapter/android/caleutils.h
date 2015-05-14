@@ -22,8 +22,8 @@
  * @file caleutils.h
  * @brief This file contains the APIs for BT LE communications.
  */
-#ifndef CA_LEUTILES_H_
-#define CA_LEUTILES_H_
+#ifndef CA_LE_UTILS_H_
+#define CA_LE_UTILS_H_
 
 #include "cacommon.h"
 #include "cathreadpool.h"
@@ -126,4 +126,4 @@ jstring CALEGetAddressFromBTDevice(JNIEnv *env, jobject bluetoothDevice);
 } /* extern "C" */
 #endif
 
-#endif
+#endif /* CA_LE_UTILS_H_ */

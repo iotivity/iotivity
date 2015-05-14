@@ -27,8 +27,8 @@
  * notifying the change of characteristcs for the request will be done here.
  */
 
-#ifndef _BLE_ADAPTER_ARDUINO_H_
-#define _BLE_ADAPTER_ARDUINO_H_
+#ifndef BLE_ADAPTER_ARDUINO_H_
+#define BLE_ADAPTER_ARDUINO_H_
 
 #include "cacommon.h"
 #include "caadapterinterface.h"
@@ -89,5 +89,5 @@ CAResult_t CABleDoEvents();
 } /* extern "C" */
 #endif
 
-#endif //#ifndef _BLE_ADAPTER_ARDUINO_H_
+#endif /* BLE_ADAPTER_ARDUINO_H_ */
 

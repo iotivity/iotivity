@@ -24,8 +24,8 @@
  * This file provides APIs to manage discovered bluetooth device list.
  */
 
-#ifndef __CA_EDR_DEVICE_LIST_H_
-#define __CA_EDR_DEVICE_LIST_H_
+#ifndef CA_EDR_DEVICE_LIST_H_
+#define CA_EDR_DEVICE_LIST_H_
 
 #include "cacommon.h"
 
@@ -192,6 +192,6 @@ void CADestroyEDRDataList(EDRDataList **dataList);
 } /* extern "C" */
 #endif
 
-#endif //__CA_EDR_DEVICE_LIST_H_
+#endif /* CA_EDR_DEVICE_LIST_H_ */
 
 

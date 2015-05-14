@@ -118,5 +118,5 @@ void CATerminateAdapters();
 } /* extern "C" */
 #endif
 
-#endif //#ifndef CA_INTERFACE_CONTROLLER_H_
+#endif /* CA_INTERFACE_CONTROLLER_H_ */
 

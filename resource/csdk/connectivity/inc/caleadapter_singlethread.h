@@ -24,8 +24,8 @@
  * This file contains the APIs for LE adapters to be implemented.
  */
 
-#ifndef _CA_LEADAPTER_SINGLETHREAD_H_
-#define _CA_LEADAPTER_SINGLETHREAD_H_
+#ifndef CA_LEADAPTER_SINGLETHREAD_H_
+#define CA_LEADAPTER_SINGLETHREAD_H_
 
 #include "cacommon.h"
 #include "caadapterinterface.h"
@@ -423,5 +423,5 @@ typedef CAResult_t (*CABLEServerDataReceivedCallback)(const char *remoteAddress,
 } /* extern "C" */
 #endif
 
-#endif //#ifndef _CA_LEADAPTER_SINGLETHREAD_H_
+#endif /* CA_LEADAPTER_SINGLETHREAD_H_ */
 

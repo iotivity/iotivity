@@ -594,4 +594,4 @@ void CALEClientSetTheSendRequestFlag(bool flag);
 } /* extern "C" */
 #endif
 
-#endif
+#endif /* CA_LECLIENT_H_ */

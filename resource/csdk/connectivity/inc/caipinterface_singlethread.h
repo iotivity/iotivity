@@ -303,5 +303,5 @@ void CAIPSetConnectionStateChangeCallback
 }
 #endif
 
-#endif //CA_IP_INTERFACE_SINGLETHREAD_H_
+#endif /* CA_IP_INTERFACE_SINGLETHREAD_H_ */
 

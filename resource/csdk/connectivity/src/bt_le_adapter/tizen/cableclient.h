@@ -28,8 +28,8 @@
  * for the request and response will be done here.
  */
 
-#ifndef _BLE_CLIENT_
-#define _BLE_CLIENT_
+#ifndef TZ_BLE_CLIENT_H_
+#define TZ_BLE_CLIENT_H_
 
 #include <bluetooth.h>
 #include <bluetooth_type.h>
@@ -424,5 +424,5 @@ void CABleClientSenderQueueProcessor();
  */
 CAResult_t CALEReadDataFromLEClient();
 
-#endif //#ifndef _BLE_CLIENT_
+#endif /* TZ_BLE_CLIENT_H_ */
 

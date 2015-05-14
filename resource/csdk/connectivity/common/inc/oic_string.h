@@ -17,8 +17,8 @@
  * limitations under the License.
  *
  ******************************************************************/
-#ifndef _OIC_STRING_H_
-#define _OIC_STRING_H_
+#ifndef OIC_STRING_H_
+#define OIC_STRING_H_
 
 #ifdef __cplusplus
 extern "C"
@@ -41,6 +41,4 @@ char *OICStrdup(const char *str);
 #ifdef __cplusplus
 }
 #endif // __cplusplus
-#endif
-/* _OIC_STRING_H_ */
-
+#endif /* OIC_STRING_H_ */

@@ -25,8 +25,8 @@
  * modules.
  */
 
-#ifndef __CA_EDR_INTERFACE_H_
-#define __CA_EDR_INTERFACE_H_
+#ifndef CA_EDR_INTERFACE_H_
+#define CA_EDR_INTERFACE_H_
 
 #include "caedradapter.h"
 
@@ -284,5 +284,5 @@ CAResult_t CAEDRGetBondedDeviceList();
 } /* extern "C" */
 #endif
 
-#endif //__CA_EDR_INTERFACE_H_
+#endif /* CA_EDR_INTERFACE_H_ */
 

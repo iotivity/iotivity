@@ -127,5 +127,5 @@ CAResult_t CAReadData();
 } /* extern "C" */
 #endif
 
-#endif //#ifndef __CA_INTERFACE_CONTROLLER_H_
+#endif /* CA_INTERFACE_CONTROLLER_SINGLETHREAD_H_ */
 

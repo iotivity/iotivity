@@ -24,8 +24,8 @@
  * This file contains the APIs for Resource Model to use.
  */
 
-#ifndef __CA_INTERFACE_H_
-#define __CA_INTERFACE_H_
+#ifndef CA_INTERFACE_H_
+#define CA_INTERFACE_H_
 
 /**
  * Connectivity Abstraction Interface APIs.
@@ -278,5 +278,5 @@ CAResult_t CAHandleRequestResponse();
 } /* extern "C" */
 #endif
 
-#endif
+#endif /* CA_INTERFACE_H_ */
 

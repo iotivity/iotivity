@@ -29,8 +29,8 @@
  * is connected.
  */
 
-#ifndef _BLE_UTIL_H_
-#define _BLE_UTIL_H_
+#ifndef TZ_BLE_UTIL_H_
+#define TZ_BLE_UTIL_H_
 
 #include <bluetooth.h>
 
@@ -275,4 +275,4 @@ CAResult_t CAVerifyOICServiceByUUID(const char* serviceUUID);
  */
 const char *CABTGetErrorMsg(bt_error_e err);
 
-#endif //#ifndef _BLE_UTIL_H_
+#endif /* TZ_BLE_UTIL_H_ */
