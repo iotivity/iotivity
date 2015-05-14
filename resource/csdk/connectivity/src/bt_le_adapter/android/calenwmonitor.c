@@ -31,7 +31,7 @@
 
 #include "camutex.h"
 
-#include "org_iotivity_jar_caleclientinterface.h"
+#include "org_iotivity_ca_CaLeClientInterface.h"
 
 #define TAG PCF("CA_LE_MONITOR")
 
@@ -203,13 +203,13 @@ CAResult_t CAUnSetLEAdapterStateChangedCb()
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_jar_caleclientinterface_CALeStateChangedCallback(JNIEnv *env, jobject obj,
+Java_org_iotivity_ca_CaLeClientInterface_caLeStateChangedCallback(JNIEnv *env, jobject obj,
                                                                    jint status)
 {
     VERIFY_NON_NULL_VOID(env, TAG, "env is null");
 
 
-    OIC_LOG(DEBUG, TAG, "caleclientinterface - Network State Changed");
+    OIC_LOG(DEBUG, TAG, "CaLeClientInterface - Network State Changed");
 
     if (!gCALEDeviceStateChangedCallback)
     {
@@ -249,10 +249,10 @@ Java_org_iotivity_jar_caleclientinterface_CALeStateChangedCallback(JNIEnv *env, 
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_jar_caleclientinterface_CALeBondStateChangedCallback(JNIEnv *env, jobject obj,
+Java_org_iotivity_ca_CaLeClientInterface_caLeBondStateChangedCallback(JNIEnv *env, jobject obj,
                                                                        jstring addr)
 {
-    OIC_LOG(DEBUG, TAG, "caleclientinterface - Bond State Changed");
+    OIC_LOG(DEBUG, TAG, "CaLeClientInterface - Bond State Changed");
     VERIFY_NON_NULL_VOID(env, TAG, "env is null");
     VERIFY_NON_NULL_VOID(addr, TAG, "addr is null");
 

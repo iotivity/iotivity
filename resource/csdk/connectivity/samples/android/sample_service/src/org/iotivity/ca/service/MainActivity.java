@@ -1,4 +1,4 @@
-package org.iotivity.service;
+package org.iotivity.ca.service;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -14,7 +14,7 @@ import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import org.iotivity.sample_service.R;
+import org.iotivity.ca.sample_service.R;
 
 public class MainActivity extends Activity {
 

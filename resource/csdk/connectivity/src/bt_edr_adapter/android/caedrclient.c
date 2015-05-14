@@ -43,7 +43,7 @@ static const char METHODID_BT_DEVICEPARAM[] =
         "(Ljava/lang/String;)Landroid/bluetooth/BluetoothDevice;";
 static const char CLASSPATH_BT_ADPATER[] = "android/bluetooth/BluetoothAdapter";
 static const char CLASSPATH_BT_DEVICE[] = "android/bluetooth/BluetoothDevice";
-static const char CLASSPATH_BT_INTERFACE[] = "org/iotivity/jar/caedrinterface";
+static const char CLASSPATH_BT_INTERFACE[] = "org/iotivity/ca/CaEdrInterface";
 static const char CLASSPATH_BT_SOCKET[] = "android/bluetooth/BluetoothSocket";
 static const char CLASSPATH_BT_UUID[] = "java/util/UUID";
 static const char CLASSPATH_CONTEXT[] = "android/content/Context";
@@ -309,7 +309,7 @@ CAResult_t CAEDRCreateJNIInterfaceObject(jobject context)
     jclass EDRJniInterface = (*env)->FindClass(env, CLASSPATH_BT_INTERFACE);
     if (!EDRJniInterface)
     {
-        OIC_LOG(ERROR, TAG, "[EDRCore] Could not get caedrinterface class");
+        OIC_LOG(ERROR, TAG, "[EDRCore] Could not get CaEdrInterface class");
         return CA_STATUS_FAILED;
     }
 
@@ -317,7 +317,7 @@ CAResult_t CAEDRCreateJNIInterfaceObject(jobject context)
                                                                   "(Landroid/content/Context;)V");
     if (!EDRInterfaceConstructorMethod)
     {
-        OIC_LOG(ERROR, TAG, "[EDRCore] Could not get caedrinterface constructor method");
+        OIC_LOG(ERROR, TAG, "[EDRCore] Could not get CaEdrInterface constructor method");
         return CA_STATUS_FAILED;
     }
 
@@ -451,7 +451,7 @@ void CAEDRInitialize(ca_thread_pool_t handle)
 
     if (g_context)
     {
-        CAEDRCreateJNIInterfaceObject(g_context); /* create java caedrinterface instance*/
+        CAEDRCreateJNIInterfaceObject(g_context); /* create java CaEdrInterface instance*/
     }
 
     OIC_LOG(DEBUG, TAG, "OUT");

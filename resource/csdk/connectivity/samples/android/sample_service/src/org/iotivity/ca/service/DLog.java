@@ -1,5 +1,5 @@
 
-package org.iotivity.service;
+package org.iotivity.ca.service;
 
 import android.os.Handler;
 import android.widget.TextView;

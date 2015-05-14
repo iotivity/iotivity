@@ -33,7 +33,7 @@
 #include "cathreadpool.h"
 #include "camutex.h"
 #include "uarraylist.h"
-#include "org_iotivity_jar_caleserverinterface.h"
+#include "org_iotivity_ca_CaLeServerInterface.h"
 
 #define TAG PCF("CA_LE_SERVER")
 
@@ -99,10 +99,10 @@ CAResult_t CALEServerCreateJniInterfaceObject()
         isAttached = true;
     }
 
-    jclass jni_LEInterface = (*env)->FindClass(env, "org/iotivity/jar/caleserverinterface");
+    jclass jni_LEInterface = (*env)->FindClass(env, "org/iotivity/ca/CaLeServerInterface");
     if (!jni_LEInterface)
     {
-        OIC_LOG(ERROR, TAG, "Could not get caleserverinterface class");
+        OIC_LOG(ERROR, TAG, "Could not get CaLeServerInterface class");
         goto exit;
     }
 
@@ -110,12 +110,12 @@ CAResult_t CALEServerCreateJniInterfaceObject()
                                                                  "()V");
     if (!LeInterfaceConstructorMethod)
     {
-        OIC_LOG(ERROR, TAG, "Could not get caleserverinterface constructor method");
+        OIC_LOG(ERROR, TAG, "Could not get CaLeServerInterface constructor method");
         goto exit;
     }
 
     (*env)->NewObject(env, jni_LEInterface, LeInterfaceConstructorMethod, g_context);
-    OIC_LOG(DEBUG, TAG, "Create instance for caleserverinterface");
+    OIC_LOG(DEBUG, TAG, "Create instance for CaLeServerInterface");
 
     if (isAttached)
     {
@@ -2041,10 +2041,10 @@ CAResult_t CALEServerReorderinglist(uint32_t index)
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_jar_caleserverinterface_CARegisterLeGattServerCallback(JNIEnv *env, jobject obj,
+Java_org_iotivity_ca_CaLeServerInterface_caLeRegisterGattServerCallback(JNIEnv *env, jobject obj,
                                                                          jobject callback)
 {
-    OIC_LOG(DEBUG, TAG, "caleserverinterface - Register Le Gatt Server Callback");
+    OIC_LOG(DEBUG, TAG, "CaLeServerInterface - Register Le Gatt Server Callback");
     VERIFY_NON_NULL_VOID(env, TAG, "env is null");
     VERIFY_NON_NULL_VOID(callback, TAG, "callback is null");
 
@@ -2052,11 +2052,11 @@ Java_org_iotivity_jar_caleserverinterface_CARegisterLeGattServerCallback(JNIEnv 
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_jar_caleserverinterface_CARegisterBluetoothLeAdvertiseCallback(JNIEnv *env,
-                                                                                 jobject obj,
-                                                                                 jobject callback)
+Java_org_iotivity_ca_CaLeServerInterface_caLeRegisterBluetoothLeAdvertiseCallback(JNIEnv *env,
+                                                                                  jobject obj,
+                                                                                  jobject callback)
 {
-    OIC_LOG(DEBUG, TAG, "caleserverinterface - Register Le Advertise Callback");
+    OIC_LOG(DEBUG, TAG, "CaLeServerInterface - Register Le Advertise Callback");
     VERIFY_NON_NULL_VOID(env, TAG, "env is null");
     VERIFY_NON_NULL_VOID(callback, TAG, "callback is null");
 
@@ -2064,10 +2064,10 @@ Java_org_iotivity_jar_caleserverinterface_CARegisterBluetoothLeAdvertiseCallback
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_jar_caleserverinterface_CALeGattServerConnectionStateChangeCallback(
+Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerConnectionStateChangeCallback(
         JNIEnv *env, jobject obj, jobject device, jint status, jint newState)
 {
-    OIC_LOG(DEBUG, TAG, "caleserverinterface - Gatt Server ConnectionStateChange Callback");
+    OIC_LOG(DEBUG, TAG, "CaLeServerInterface - Gatt Server ConnectionStateChange Callback");
     OIC_LOG_V(DEBUG, TAG, "New connection State: %d", newState);
 
     VERIFY_NON_NULL_VOID(env, TAG, "env is null");
@@ -2142,20 +2142,20 @@ Java_org_iotivity_jar_caleserverinterface_CALeGattServerConnectionStateChangeCal
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_jar_caleserverinterface_CALeGattServerServiceAddedCallback(JNIEnv *env,
+Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerServiceAddedCallback(JNIEnv *env,
                                                                              jobject obj,
                                                                              jint status,
                                                                              jobject gattService)
 {
-    OIC_LOG_V(DEBUG, TAG, "caleserverinterface - Gatt Service Added Callback(%d)", status);
+    OIC_LOG_V(DEBUG, TAG, "CaLeServerInterface - Gatt Service Added Callback(%d)", status);
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_jar_caleserverinterface_CALeGattServerCharacteristicReadRequestCallback(
+Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerCharacteristicReadRequestCallback(
         JNIEnv *env, jobject obj, jobject device, jint requestId, jint offset,
         jobject characteristic, jbyteArray data)
 {
-    OIC_LOG(DEBUG, TAG, "caleserverinterface - Gatt Server Characteristic Read Request Callback");
+    OIC_LOG(DEBUG, TAG, "CaLeServerInterface - Gatt Server Characteristic Read Request Callback");
     VERIFY_NON_NULL_VOID(env, TAG, "env is null");
     VERIFY_NON_NULL_VOID(device, TAG, "device is null");
 
@@ -2166,12 +2166,12 @@ Java_org_iotivity_jar_caleserverinterface_CALeGattServerCharacteristicReadReques
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_jar_caleserverinterface_CALeGattServerCharacteristicWriteRequestCallback(
+Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerCharacteristicWriteRequestCallback(
         JNIEnv *env, jobject obj, jobject device, jint requestId, jobject characteristic,
         jbyteArray data, jboolean preparedWrite, jboolean responseNeeded, jint offset,
         jbyteArray value)
 {
-    OIC_LOG(DEBUG, TAG, "caleserverinterface - Gatt Server Characteristic Write Request Callback");
+    OIC_LOG(DEBUG, TAG, "CaLeServerInterface - Gatt Server Characteristic Write Request Callback");
     VERIFY_NON_NULL_VOID(env, TAG, "env is null");
     VERIFY_NON_NULL_VOID(device, TAG, "device is null");
     VERIFY_NON_NULL_VOID(value, TAG, "value is null");
@@ -2227,28 +2227,28 @@ Java_org_iotivity_jar_caleserverinterface_CALeGattServerCharacteristicWriteReque
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_jar_caleserverinterface_CALeGattServerDescriptorReadRequestCallback(
+Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerDescriptorReadRequestCallback(
         JNIEnv *env, jobject obj, jobject device, jint requestId, jint offset, jobject descriptor)
 {
-    OIC_LOG(DEBUG, TAG, "caleserverinterface_CALeGattServerDescriptorReadRequestCallback");
+    OIC_LOG(DEBUG, TAG, "CaLeServerInterface_CALeGattServerDescriptorReadRequestCallback");
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_jar_caleserverinterface_CALeGattServerDescriptorWriteRequestCallback(
+Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerDescriptorWriteRequestCallback(
         JNIEnv *env, jobject obj, jobject device, jint requestId, jobject descriptor,
         jboolean preparedWrite, jboolean responseNeeded, jint offset, jbyteArray value)
 {
-    OIC_LOG(DEBUG, TAG, "caleserverinterface_CALeGattServerDescriptorWriteRequestCallback");
+    OIC_LOG(DEBUG, TAG, "CaLeServerInterface_CALeGattServerDescriptorWriteRequestCallback");
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_jar_caleserverinterface_CALeGattServerExecuteWriteCallback(JNIEnv *env,
+Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerExecuteWriteCallback(JNIEnv *env,
                                                                              jobject obj,
                                                                              jobject device,
                                                                              jint requestId,
                                                                              jboolean execute)
 {
-    OIC_LOG(DEBUG, TAG, "caleserverinterface_CALeGattServerExecuteWriteCallback");
+    OIC_LOG(DEBUG, TAG, "CaLeServerInterface_CALeGattServerExecuteWriteCallback");
     VERIFY_NON_NULL_VOID(env, TAG, "env is null");
     VERIFY_NON_NULL_VOID(device, TAG, "device is null");
 
@@ -2256,27 +2256,27 @@ Java_org_iotivity_jar_caleserverinterface_CALeGattServerExecuteWriteCallback(JNI
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_jar_caleserverinterface_CALeGattServerNotificationSentCallback(JNIEnv *env,
+Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerNotificationSentCallback(JNIEnv *env,
                                                                                  jobject obj,
                                                                                  jobject device,
                                                                                  jint status)
 {
-    OIC_LOG(DEBUG, TAG, "caleserverinterface - Gatt Server Notification Sent Callback");
+    OIC_LOG(DEBUG, TAG, "CaLeServerInterface - Gatt Server Notification Sent Callback");
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_jar_caleserverinterface_CALeAdvertiseStartSuccessCallback(
+Java_org_iotivity_ca_CaLeServerInterface_caLeAdvertiseStartSuccessCallback(
         JNIEnv *env, jobject obj, jobject settingsInEffect)
 {
-    OIC_LOG(DEBUG, TAG, "caleserverinterface - LE Advertise Start Success Callback");
+    OIC_LOG(DEBUG, TAG, "CaLeServerInterface - LE Advertise Start Success Callback");
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_jar_caleserverinterface_CALeAdvertiseStartFailureCallback(JNIEnv *env,
+Java_org_iotivity_ca_CaLeServerInterface_caLeAdvertiseStartFailureCallback(JNIEnv *env,
                                                                             jobject obj,
                                                                             jint errorCode)
 {
-    OIC_LOG_V(ERROR, TAG, "caleserverinterface - LE Advertise Start Failure Callback(%)",
+    OIC_LOG_V(ERROR, TAG, "CaLeServerInterface - LE Advertise Start Failure Callback(%)",
               errorCode);
 }
 
