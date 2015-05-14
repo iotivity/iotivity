@@ -55,4 +55,3 @@ platform
 # Ignore downloaded dependencies
 extlibs/gtest*
 extlibs/cereal
-extlibs/tinydtls
