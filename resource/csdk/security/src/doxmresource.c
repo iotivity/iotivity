@@ -415,15 +415,25 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
                 //Adding provisioning tool credential to cred Resource.
                 VERIFY_SUCCESS(OC_STACK_OK == AddCredential(cred), ERROR);
 
-                /*
-                 * TODO To avoid inconsistency between RAM and persistent storage ,
-                 * Use a temporary copy to update in persistent storage.
-                 */
                 gDoxm->owned = true;
                 memcpy(&(gDoxm->owner), &(newDoxm->owner), sizeof(OicUuid_t));
 
                 // Update new state in persistent storage
-                ehRet = (UpdatePersistentStorage(gDoxm) == true) ? OC_EH_OK : OC_EH_ERROR;
+                if (true == UpdatePersistentStorage(gDoxm))
+                {
+                    ehRet = OC_EH_OK;
+                }
+                else
+                {
+                    ehRet = OC_EH_ERROR;
+
+                    /*
+                     * If persistent storage update failed, revert back the state
+                     * for global variable.
+                     */
+                    gDoxm->owned = false;
+                    memset(&(gDoxm->owner), 0, sizeof(OicUuid_t));
+                }
 
                 /*
                  * Disable anonymous ECDH cipher in tinyDTLS since device is now
