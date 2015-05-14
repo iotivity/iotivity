@@ -178,6 +178,20 @@ OCStackResult OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandler entityHandle
 OCStackResult OCSetDeviceInfo(OCDeviceInfo deviceInfo);
 
 /**
+ * Set platform information.
+ *
+ * @param platformInfo - Structure passed by the server application containing
+ *                     the platform information.
+ *
+ *
+ * @return
+ *     OC_STACK_OK              - no errors
+ *     OC_STACK_INVALID_PARAM   - invalid paramerter
+ *     OC_STACK_ERROR           - stack process error
+ */
+OCStackResult OCSetPlatformInfo(OCPlatformInfo platformInfo);
+
+/**
  * Create a resource.
  *
  * @param handle Pointer to handle to newly created resource.  Set by ocstack and

@@ -47,12 +47,13 @@
              TAG, PCF(#arg " is NULL")); return (retVal); } }
 
 extern OCResource *headResource;
+static OCPlatformInfo savedPlatformInfo = {};
 static cJSON *savedDeviceInfo = NULL;
-
 static const char * VIRTUAL_RSRCS[] =
 {
        "/oc/core",
        "/oc/core/d",
+       "/oic/p",
        "/oc/core/types/d",
        #ifdef WITH_PRESENCE
        "/oic/ad"
@@ -100,6 +101,86 @@ static OCStackResult GetSecurePortInfo(CATransportType_t connType, uint16_t *por
     return ret;
 }
 
+static char* GetJSONStringFromPlatformInfo(OCPlatformInfo info)
+{
+    cJSON *rootObj = cJSON_CreateObject();
+
+    if (!rootObj)
+    {
+        return NULL;
+    }
+
+    cJSON *repObj = NULL;
+    char *jsonEncodedInfo = NULL;
+
+    cJSON_AddItemToObject (rootObj, OC_RSRVD_HREF,
+            cJSON_CreateString(GetVirtualResourceUri(OC_PLATFORM_URI)));
+
+    cJSON_AddItemToObject (rootObj, OC_RSRVD_REPRESENTATION, repObj = cJSON_CreateObject());
+
+    cJSON_AddItemToObject (repObj, OC_RSRVD_PLATFORM_ID, cJSON_CreateString(info.platformID));
+    cJSON_AddItemToObject (repObj, OC_RSRVD_MFG_NAME, cJSON_CreateString(info.manufacturerName));
+    if (info.manufacturerUrl)
+    {
+        cJSON_AddItemToObject (repObj, OC_RSRVD_MFG_URL,
+                cJSON_CreateString(info.manufacturerUrl));
+    }
+
+    if (info.modelNumber)
+    {
+        cJSON_AddItemToObject (repObj, OC_RSRVD_MODEL_NUM,
+                cJSON_CreateString(info.modelNumber));
+    }
+
+    if (info.dateOfManufacture)
+    {
+        cJSON_AddItemToObject (repObj, OC_RSRVD_MFG_DATE,
+                cJSON_CreateString(info.dateOfManufacture));
+    }
+
+    if (info.platformVersion)
+    {
+        cJSON_AddItemToObject (repObj, OC_RSRVD_PLATFORM_VERSION,
+                cJSON_CreateString(info.platformVersion));
+    }
+
+    if (info.operatingSystemVersion)
+    {
+        cJSON_AddItemToObject (repObj, OC_RSRVD_OS_VERSION,
+                cJSON_CreateString(info.operatingSystemVersion));
+    }
+
+    if (info.hardwareVersion)
+    {
+        cJSON_AddItemToObject (repObj, OC_RSRVD_HARDWARE_VERSION,
+                cJSON_CreateString(info.hardwareVersion));
+    }
+
+    if (info.firmwareVersion)
+    {
+        cJSON_AddItemToObject (repObj, OC_RSRVD_FIRMWARE_VERSION,
+                cJSON_CreateString(info.firmwareVersion));
+    }
+
+    if (info.supportUrl)
+    {
+        cJSON_AddItemToObject (repObj, OC_RSRVD_SUPPORT_URL,
+                cJSON_CreateString(info.supportUrl));
+    }
+
+    if (info.systemTime)
+    {
+        cJSON_AddItemToObject (repObj, OC_RSRVD_SYSTEM_TIME,
+                cJSON_CreateString(info.systemTime));
+    }
+
+    jsonEncodedInfo = cJSON_PrintUnformatted (rootObj);
+
+    cJSON_Delete(rootObj);
+
+    return jsonEncodedInfo;
+}
+
 static OCStackResult ValidateUrlQuery (char *url, char *query,
                                 uint8_t *filterOn, char **filterValue)
 {
@@ -117,7 +198,8 @@ static OCStackResult ValidateUrlQuery (char *url, char *query,
     }
 
     if (strcmp ((char *)url, GetVirtualResourceUri(OC_WELL_KNOWN_URI)) == 0 ||
-                strcmp ((char *)url, GetVirtualResourceUri(OC_DEVICE_URI)) == 0)
+                strcmp ((char *)url, GetVirtualResourceUri(OC_DEVICE_URI)) == 0 ||
+                strcmp((char *)url, GetVirtualResourceUri(OC_PLATFORM_URI)) == 0)
     {
         *filterOn = STACK_RES_DISCOVERY_NOFILTER;
         if (query && *query)
@@ -389,6 +471,7 @@ OCStackResult BuildVirtualResourceResponseForDevice(uint8_t filterOn, char *filt
     }
     else
     {
+        OC_LOG(ERROR, TAG, PCF("No device info found."));
         //error so that stack won't respond with empty payload
         ret = OC_STACK_INVALID_DEVICE_INFO;
     }
@@ -397,6 +480,39 @@ OCStackResult BuildVirtualResourceResponseForDevice(uint8_t filterOn, char *filt
     return ret;
 }
 
+OCStackResult BuildVirtualResourceResponseForPlatform(char *out, uint16_t *remaining)
+{
+    OCStackResult ret = OC_STACK_OK;
+
+    char *jsonStr = GetJSONStringFromPlatformInfo(savedPlatformInfo);
+
+    if(jsonStr)
+    {
+        size_t jsonLen = strlen(jsonStr);
+
+        if (jsonLen < *remaining)
+        {
+            strncpy(out, jsonStr, (jsonLen + 1));
+            *remaining = *remaining - jsonLen;
+            ret = OC_STACK_OK;
+        }
+        else
+        {
+            OC_LOG_V(ERROR, TAG, PCF("Platform info string too big. len: %u"), jsonLen);
+            ret = OC_STACK_ERROR;
+        }
+        OCFree(jsonStr);
+    }
+    else
+    {
+        OC_LOG(ERROR, TAG, PCF("Error encoding save platform info."));
+        ret = OC_STACK_ERROR;
+    }
+
+
+    return ret;
+
+}
 const char * GetVirtualResourceUri( OCVirtualResources resource)
 {
     if (resource < OC_MAX_VIRTUAL_RESOURCES)
@@ -683,6 +799,32 @@ HandleVirtualResource (OCServerRequest *request, OCResource* resource)
                 result = OCDoResponse(&response);
             }
         }
+        else if (strcmp ((char *)request->resourceUrl, GetVirtualResourceUri(OC_PLATFORM_URI)) == 0)
+        {
+            remaining = MAX_RESPONSE_LENGTH;
+            ptr = discoveryResBuf;
+
+            result = BuildVirtualResourceResponseForPlatform((char*)ptr, &remaining);
+
+            if(result == OC_STACK_OK)
+            {
+                ptr += strlen((char*)ptr);
+            }
+
+            if(remaining < MAX_RESPONSE_LENGTH)
+            {
+                OCEntityHandlerResponse response = {0};
+
+                response.ehResult = OC_EH_OK;
+                response.payload = discoveryResBuf;
+                response.payloadSize = strlen((const char *)discoveryResBuf) + 1;
+                response.persistentBufferFlag = 0;
+                response.requestHandle = (OCRequestHandle) request;
+                response.resourceHandle = (OCResourceHandle) resource;
+
+                result = OCDoResponse(&response);
+            }
+        }
         #ifdef WITH_PRESENCE
         else
         {
@@ -930,101 +1072,119 @@ void DeleteDeviceInfo()
     }
 }
 
-OCStackResult SaveDeviceInfo(OCDeviceInfo deviceInfo)
+void DeletePlatformInfo()
 {
-    DeleteDeviceInfo();
+    OC_LOG(INFO, TAG, PCF("Deleting platform info."));
 
-    savedDeviceInfo = cJSON_CreateObject();
-    cJSON *repObj = NULL;
+    OCFree(savedPlatformInfo.platformID);
+    savedPlatformInfo.platformID = NULL;
 
-    cJSON_AddItemToObject (savedDeviceInfo, OC_RSRVD_HREF,
-            cJSON_CreateString(GetVirtualResourceUri(OC_DEVICE_URI)));
+    OCFree(savedPlatformInfo.manufacturerName);
+    savedPlatformInfo.manufacturerName = NULL;
 
-    cJSON_AddItemToObject (savedDeviceInfo, OC_RSRVD_REPRESENTATION, repObj = cJSON_CreateObject());
+    OCFree(savedPlatformInfo.manufacturerUrl);
+    savedPlatformInfo.manufacturerUrl = NULL;
 
-    if (deviceInfo.contentType)
+    OCFree(savedPlatformInfo.modelNumber);
+    savedPlatformInfo.modelNumber = NULL;
+
+    OCFree(savedPlatformInfo.dateOfManufacture);
+    savedPlatformInfo.dateOfManufacture = NULL;
+
+    OCFree(savedPlatformInfo.platformVersion);
+    savedPlatformInfo.platformVersion = NULL;
+
+    OCFree(savedPlatformInfo.operatingSystemVersion);
+    savedPlatformInfo.operatingSystemVersion = NULL;
+
+    OCFree(savedPlatformInfo.hardwareVersion);
+    savedPlatformInfo.hardwareVersion = NULL;
+
+    OCFree(savedPlatformInfo.firmwareVersion);
+    savedPlatformInfo.firmwareVersion = NULL;
+
+    OCFree(savedPlatformInfo.supportUrl);
+    savedPlatformInfo.supportUrl = NULL;
+
+    OCFree(savedPlatformInfo.systemTime);
+    savedPlatformInfo.systemTime = NULL;
+}
+
+static OCStackResult CloneStringIfNonNull(char **dest, char *src)
+{
+    if (src)
     {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_CONTENT_TYPE,
-                cJSON_CreateString(deviceInfo.contentType));
-    }
-
-    if (deviceInfo.dateOfManufacture)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_MFG_DATE,
-                cJSON_CreateString(deviceInfo.dateOfManufacture));
-    }
-
-    if (deviceInfo.deviceName)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_DEVICE_NAME,
-                cJSON_CreateString(deviceInfo.deviceName));
-    }
-
-    if (deviceInfo.deviceUUID)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_DEVICE_ID,
-                cJSON_CreateString(deviceInfo.deviceUUID));
-    }
-
-    if (deviceInfo.firmwareVersion)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_FW_VERSION,
-                cJSON_CreateString(deviceInfo.firmwareVersion));
-    }
-
-    if (deviceInfo.hostName)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_HOST_NAME,
-                cJSON_CreateString(deviceInfo.hostName));
-    }
-
-    if (deviceInfo.manufacturerName)
-    {
-        if(strlen(deviceInfo.manufacturerName) > MAX_MANUFACTURER_NAME_LENGTH)
+        *dest = (char*) OCMalloc(strlen(src) + 1);
+        if (!*dest)
         {
-            DeleteDeviceInfo();
-            return OC_STACK_INVALID_PARAM;
+            return OC_STACK_NO_MEMORY;
         }
-
-        cJSON_AddItemToObject (repObj, OC_RSRVD_MFG_NAME,
-                cJSON_CreateString(deviceInfo.manufacturerName));
+        strcpy(*dest, src);
     }
-
-    if (deviceInfo.manufacturerUrl)
+    else
     {
-        if(strlen(deviceInfo.manufacturerUrl) > MAX_MANUFACTURER_URL_LENGTH)
-        {
-            DeleteDeviceInfo();
-            return OC_STACK_INVALID_PARAM;
-        }
-
-        cJSON_AddItemToObject (repObj, OC_RSRVD_MFG_URL,
-                cJSON_CreateString(deviceInfo.manufacturerUrl));
+        *dest = NULL;
     }
+    return OC_STACK_OK;
+}
+static OCStackResult DeepCopyPlatFormInfo(OCPlatformInfo info)
+{
+    DeletePlatformInfo();
 
-    if (deviceInfo.modelNumber)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_MODEL_NUM,
-                cJSON_CreateString(deviceInfo.modelNumber));
-    }
+    OCStackResult ret = OC_STACK_OK;
+    ret = CloneStringIfNonNull(&(savedPlatformInfo.platformID), info.platformID);
+    VERIFY_SUCCESS(ret, OC_STACK_OK);
 
-    if (deviceInfo.platformVersion)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_PLATFORM_VERSION,
-                cJSON_CreateString(deviceInfo.platformVersion));
-    }
+    ret = CloneStringIfNonNull(&(savedPlatformInfo.manufacturerName), info.manufacturerName);
+    VERIFY_SUCCESS(ret, OC_STACK_OK);
 
-    if (deviceInfo.supportUrl)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_SUPPORT_URL,
-                cJSON_CreateString(deviceInfo.supportUrl));
-    }
+    ret = CloneStringIfNonNull(&(savedPlatformInfo.manufacturerUrl), info.manufacturerUrl);
+    VERIFY_SUCCESS(ret, OC_STACK_OK);
 
-    if (deviceInfo.version)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_VERSION,
-                cJSON_CreateString(deviceInfo.version));
-    }
+    ret = CloneStringIfNonNull(&(savedPlatformInfo.modelNumber), info.modelNumber);
+    VERIFY_SUCCESS(ret, OC_STACK_OK);
+
+    ret = CloneStringIfNonNull(&(savedPlatformInfo.dateOfManufacture), info.dateOfManufacture);
+    VERIFY_SUCCESS(ret, OC_STACK_OK);
+
+    ret = CloneStringIfNonNull(&(savedPlatformInfo.platformVersion), info.platformVersion);
+    VERIFY_SUCCESS(ret, OC_STACK_OK);
+
+    ret = CloneStringIfNonNull(&(savedPlatformInfo.operatingSystemVersion), info.operatingSystemVersion);
+    VERIFY_SUCCESS(ret, OC_STACK_OK);
+
+    ret = CloneStringIfNonNull(&(savedPlatformInfo.hardwareVersion), info.hardwareVersion);
+    VERIFY_SUCCESS(ret, OC_STACK_OK);
+
+    ret = CloneStringIfNonNull(&(savedPlatformInfo.firmwareVersion), info.firmwareVersion);
+    VERIFY_SUCCESS(ret, OC_STACK_OK);
+
+    ret = CloneStringIfNonNull(&(savedPlatformInfo.supportUrl), info.supportUrl);
+    VERIFY_SUCCESS(ret, OC_STACK_OK);
+
+    ret = CloneStringIfNonNull(&(savedPlatformInfo.systemTime), info.systemTime);
+    VERIFY_SUCCESS(ret, OC_STACK_OK);
 
     return OC_STACK_OK;
+
+    exit:
+        DeletePlatformInfo();
+        return ret;
+
+}
+
+OCStackResult SavePlatformInfo(OCPlatformInfo info)
+{
+    OCStackResult res = DeepCopyPlatFormInfo(info);
+
+    if (res != OC_STACK_OK)
+    {
+        OC_LOG_V(ERROR, TAG, PCF("Failed to save platform info. errno(%d)"), res);
+    }
+    else
+    {
+        OC_LOG(ERROR, TAG, PCF("Platform info saved."));
+    }
+
+    return res;
 }

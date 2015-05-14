@@ -197,6 +197,25 @@ namespace OC
                              host, deviceURI, connectivityType, deviceInfoHandler, QoS);
     }
 
+    OCStackResult OCPlatform_impl::getPlatformInfo(const std::string& host,
+                                            const std::string& platformURI,
+                                            OCConnectivityType connectivityType,
+                                            FindPlatformCallback platformInfoHandler)
+    {
+        return result_guard(getPlatformInfo(host, platformURI, connectivityType,
+               platformInfoHandler, m_cfg.QoS));
+    }
+
+    OCStackResult OCPlatform_impl::getPlatformInfo(const std::string& host,
+                                            const std::string& platformURI,
+                                            OCConnectivityType connectivityType,
+                                            FindPlatformCallback platformInfoHandler,
+                                            QualityOfService QoS)
+    {
+        return checked_guard(m_client, &IClientWrapper::ListenForDevice,
+                             host, platformURI, connectivityType, platformInfoHandler, QoS);
+    }
+
     OCStackResult OCPlatform_impl::registerResource(OCResourceHandle& resourceHandle,
                                             std::string& resourceURI,
                                             const std::string& resourceTypeName,
@@ -212,6 +231,11 @@ namespace OC
     OCStackResult OCPlatform_impl::registerDeviceInfo(const OCDeviceInfo deviceInfo)
     {
         return checked_guard(m_server, &IServerWrapper::registerDeviceInfo, deviceInfo);
+    }
+
+    OCStackResult OCPlatform_impl::registerPlatformInfo(const OCPlatformInfo platformInfo)
+    {
+        return checked_guard(m_server, &IServerWrapper::registerPlatformInfo, platformInfo);
     }
 
     OCStackResult OCPlatform_impl::registerResource(OCResourceHandle& resourceHandle,

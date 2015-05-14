@@ -202,6 +202,8 @@ namespace OC
 
     typedef std::function<void(const OCRepresentation&)> FindDeviceCallback;
 
+    typedef std::function<void(const OCRepresentation&)> FindPlatformCallback;
+
     typedef std::function<OCEntityHandlerResult(
                             const std::shared_ptr<OCResourceRequest>)> EntityHandler;
 

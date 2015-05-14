@@ -110,10 +110,15 @@ OCStackResult ProcessRequest(ResourceHandling resHandling,
                              OCServerRequest *request);
 
 /**
- * Internal API used to save all of the device's information for use in device
+ * Internal API used to save all of the platform's information for use in platform
  * discovery requests.
  */
-OCStackResult SaveDeviceInfo(OCDeviceInfo deviceInfo);
+OCStackResult SavePlatformInfo(OCPlatformInfo info);
+
+/**
+ * Internal API used to clear the platform information.
+ */
+void DeletePlatformInfo();
 
 /**
  * Internal API used to clear the device information.

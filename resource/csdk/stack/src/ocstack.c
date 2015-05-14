@@ -1662,6 +1662,41 @@ bool ParseIPv4Address(char * ipAddrStr, uint8_t * ipAddr, uint16_t * port)
     return (3 == dotCount);
 }
 
+bool validatePlatformInfo(OCPlatformInfo info)
+{
+
+    if (!info.platformID)
+    {
+        OC_LOG(ERROR, TAG, PCF("No platform ID found."));
+        return false;
+    }
+
+    if (info.manufacturerName)
+    {
+        size_t lenManufacturerName = strlen(info.manufacturerName);
+
+        if(lenManufacturerName == 0 || lenManufacturerName > MAX_MANUFACTURER_NAME_LENGTH)
+        {
+            OC_LOG(ERROR, TAG, PCF("Manufacturer name fails length requirements."));
+            return false;
+        }
+    }
+    else
+    {
+        OC_LOG(ERROR, TAG, PCF("No manufacturer name present"));
+        return false;
+    }
+
+    if (info.manufacturerUrl)
+    {
+        if(strlen(info.manufacturerUrl) > MAX_MANUFACTURER_URL_LENGTH)
+        {
+            OC_LOG(ERROR, TAG, PCF("Manufacturer url fails length requirements."));
+            return false;
+        }
+    }
+    return true;
+}
 //-----------------------------------------------------------------------------
 // Public APIs
 //-----------------------------------------------------------------------------
@@ -1774,6 +1809,7 @@ OCStackResult OCStop()
     // Free memory dynamically allocated for resources
     deleteAllResources();
     DeleteDeviceInfo();
+    DeletePlatformInfo();
     CATerminate();
     // Remove all observers
     DeleteObserverList();
@@ -2426,18 +2462,34 @@ OCStackResult OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandler entityHandle
     return OC_STACK_OK;
 }
 
-OCStackResult OCSetDeviceInfo(OCDeviceInfo deviceInfo)
+OCStackResult OCSetPlatformInfo(OCPlatformInfo platformInfo)
 {
-    OC_LOG(INFO, TAG, PCF("Entering OCSetDeviceInfo"));
+    OC_LOG(INFO, TAG, PCF("Entering OCSetPlatformInfo"));
 
     if(myStackMode ==  OC_SERVER || myStackMode == OC_CLIENT_SERVER)
     {
-        return SaveDeviceInfo(deviceInfo);
+        if (validatePlatformInfo(platformInfo))
+        {
+            return SavePlatformInfo(platformInfo);
+        }
+        else
+        {
+            return OC_STACK_INVALID_PARAM;
+        }
     }
     else
     {
         return OC_STACK_ERROR;
     }
+}
+
+OCStackResult OCSetDeviceInfo(OCDeviceInfo deviceInfo)
+{
+    // TODO: Implement this.
+    OC_LOG(ERROR, TAG, "Implement OCSetDeviceInfo !!");
+
+    // Returning ok to make samples work.
+    return OC_STACK_OK;
 }
 
 OCStackResult OCCreateResource(OCResourceHandle *handle,

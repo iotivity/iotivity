@@ -313,6 +313,18 @@ namespace OC
         return result;
     }
 
+     OCStackResult InProcServerWrapper::registerPlatformInfo(const OCPlatformInfo platformInfo)
+    {
+        auto cLock = m_csdkLock.lock();
+        OCStackResult result = OC_STACK_ERROR;
+        if(cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            result = OCSetPlatformInfo(platformInfo);
+        }
+        return result;
+    }
+
     OCStackResult InProcServerWrapper::registerResource(
                     OCResourceHandle& resourceHandle,
                     std::string& resourceURI,

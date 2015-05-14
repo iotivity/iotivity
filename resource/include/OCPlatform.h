@@ -144,6 +144,25 @@ namespace OC
                     QualityOfService QoS);
 
         /**
+        * API for Platform Discovery
+        *
+        *
+        * @param host - Host IP Address. If null or empty, Multicast is performed.
+        * @param platformURI - Uri containing address to the virtual platform in C Stack
+                                ("/oic/p")
+        * @param connectivityType - @ref OCConnectivityType type of connectivity indicating the
+        *                           interface. Example: OC_WIFI, OC_ETHERNET, OC_ALL
+        * @param platformInfoHandler - platform discovery callback
+        * @param QoS the quality of communication
+        *
+        */
+        OCStackResult getPlatformInfo(const std::string& host, const std::string& platformURI,
+                    OCConnectivityType connectivityType, FindPlatformCallback platformInfoHandler);
+        OCStackResult getPlatformInfo(const std::string& host, const std::string& platformURI,
+                    OCConnectivityType connectivityType, FindPlatformCallback platformInfoHandler,
+                    QualityOfService QoS);
+
+        /**
         * This API registers a resource with the server
         * NOTE: This API applies to server side only.
         *
@@ -199,6 +218,17 @@ namespace OC
         *      OC_STACK_ERROR - stack process error
         */
         OCStackResult registerDeviceInfo(const OCDeviceInfo deviceInfo);
+
+        /**
+        * Register Platform Info
+        *
+        * @param platformInfo - structure containing all the platform specific information
+        *
+        * @return
+        *      OC_STACK_OK   - no errors
+        *      OC_STACK_ERROR - stack process error
+        */
+        OCStackResult registerPlatformInfo(const OCPlatformInfo platformInfo);
 
         /**
         * Set default device entity handler

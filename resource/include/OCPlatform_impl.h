@@ -86,6 +86,13 @@ namespace OC
                     OCConnectivityType connectivityType, FindDeviceCallback deviceInfoHandler,
                     QualityOfService QoS);
 
+        OCStackResult getPlatformInfo(const std::string& host, const std::string& platformURI,
+                    OCConnectivityType connectivityType, FindPlatformCallback platformInfoHandler);
+
+        OCStackResult getPlatformInfo(const std::string& host, const std::string& platformURI,
+                    OCConnectivityType connectivityType, FindPlatformCallback platformInfoHandler,
+                    QualityOfService QoS);
+
         /**
          * API for Device Discovery
          *
@@ -100,6 +107,21 @@ namespace OC
                     FindDeviceCallback deviceInfoHandler);
         OCStackResult getDeviceInfo(const std::string& host, const std::string& deviceURI,
                     FindDeviceCallback deviceInfoHandler, QualityOfService QoS);
+
+        /**
+         * API for Platform Discovery
+         *
+         * @param host - Host IP Address. If null or empty, Multicast is performed.
+         * @param resourceURI - Uri containing address to the virtual platform in C Stack
+         *                       ("/oic/p")
+         *
+         * @param QualityOfService the quality of communication
+         *
+         */
+        OCStackResult getPlatformInfo(const std::string& host, const std::string& platformURI,
+                    FindPlatformCallback platformInfoHandler);
+        OCStackResult getPlatformInfo(const std::string& host, const std::string& platformURI,
+                    FindPlatformCallback platformInfoHandler, QualityOfService QoS);
 
         /**
         * This API registers a resource with the server
@@ -148,6 +170,17 @@ namespace OC
          * Note: OCDeviceInfo is defined in OCStack.h
          */
         OCStackResult registerDeviceInfo(const OCDeviceInfo deviceInfo);
+
+        /**
+         * This API registers all the platform specific information
+         *
+         * @param OCPlatformInfo - Structure containing all the platform related information
+         *
+         * @return OCStackResult return value of the API. Returns OC_STACK_OK if success
+         *
+         * Note: OCPlatformInfo is defined in OCStack.h
+         */
+        OCStackResult registerPlatformInfo(const OCPlatformInfo platformInfo);
 
         OCStackResult setDefaultDeviceEntityHandler(EntityHandler entityHandler);
 

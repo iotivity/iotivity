@@ -52,7 +52,7 @@ extern "C" {
 /// operation.
 #define OC_MAX_PRESENCE_TTL_SECONDS     (60 * 60 * 24) // 60 sec/min * 60 min/hr * 24 hr/day
 #define OC_PRESENCE_URI                      "/oic/ad"
-
+#endif
 /**
  * Attributes used to form a proper OIC conforming JSON message.
  */
@@ -71,20 +71,27 @@ extern "C" {
 #define OC_RSRVD_INTERFACE_LL           "oic.if.ll"
 #define OC_RSRVD_INTERFACE_BATCH        "oic.if.b"
 #define OC_RSRVD_INTERFACE_GROUP        "oc.mi.grp"
-#define OC_RSRVD_MFG_DATE               "mndt"
 #define OC_RSRVD_FW_VERSION             "mnfv"
 #define OC_RSRVD_HOST_NAME              "hn"
-#define OC_RSRVD_MFG_NAME               "mnmn"
-#define OC_RSRVD_MFG_URL                "mnml"
-#define OC_RSRVD_MODEL_NUM              "mnmo"
-#define OC_RSRVD_PLATFORM_VERSION       "mnpv"
-#define OC_RSRVD_SUPPORT_URL            "mnsl"
 #define OC_RSRVD_VERSION                "icv"
 #define OC_RSRVD_OBSERVABLE             "obs"
 #define OC_RSRVD_SECURE                 "sec"
 #define OC_RSRVD_HOSTING_PORT           "port"
 #define OC_RSRVD_SERVER_INSTANCE_ID     "sid"
-#endif
+
+  //**** Platform ****
+#define OC_RSRVD_PLATFORM_ID            "pi"
+#define OC_RSRVD_MFG_NAME               "mnmn"
+#define OC_RSRVD_MFG_URL                "mnml"
+#define OC_RSRVD_MODEL_NUM              "mnmo"
+#define OC_RSRVD_MFG_DATE               "mndt"
+#define OC_RSRVD_PLATFORM_VERSION       "mnpv"
+#define OC_RSRVD_OS_VERSION             "mnos"
+#define OC_RSRVD_HARDWARE_VERSION       "mnhw"
+#define OC_RSRVD_FIRMWARE_VERSION       "mnfv"
+#define OC_RSRVD_SUPPORT_URL            "mnsl"
+#define OC_RSRVD_SYSTEM_TIME             "st"
+//*******************
 
 //-----------------------------------------------------------------------------
 // Typedefs
@@ -106,6 +113,7 @@ typedef enum
 {
     OC_WELL_KNOWN_URI= 0,       ///< "/oc/core"
     OC_DEVICE_URI,              ///< "/oc/core/d"
+    OC_PLATFORM_URI,            ///< "/oic/p"
     OC_RESOURCE_TYPES_URI,      ///< "/oc/core/d/type"
     #ifdef WITH_PRESENCE
     OC_PRESENCE,                ///< "/oic/ad"
@@ -371,8 +379,27 @@ typedef struct
 } OCClientResponse;
 
 /**
- * This structure describes the device properties. All non-Null properties will be included
- * in a device discovery request.
+ * This structure describes the platform properties. All non-Null properties will be included
+ * in a platform discovery request.
+ */
+typedef struct
+{
+    char *platformID;
+    char *manufacturerName;
+    char *manufacturerUrl;
+    char *modelNumber;
+    char *dateOfManufacture;
+    char *platformVersion;
+    char *operatingSystemVersion;
+    char *hardwareVersion;
+    char *firmwareVersion;
+    char *supportUrl;
+    char *systemTime;
+
+} OCPlatformInfo;
+
+/**
+ * TODO : Modify these. This is just so sample apps compile.
  */
 typedef struct
 {
