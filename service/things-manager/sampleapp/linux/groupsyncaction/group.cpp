@@ -118,12 +118,12 @@ int main(int argc, char* argv[])
                 cout << query.str() << endl;
                 result = OCPlatform::findResource("",
                             query.str(),
-                            OC_ETHERNET,
+                            OC_ALL,
                             onFindResource);
 
                 result = OCPlatform::findResource("",
                             "coap://224.0.1.187/oc/core?rt=core.musicplayer",
-                            OC_WIFI,
+                            OC_ALL,
                             onFindResource);
 
                 if (OC_STACK_OK == result)
@@ -141,12 +141,7 @@ int main(int argc, char* argv[])
                 query << OC_WELL_KNOWN_QUERY << "?rt=core.speaker";
                 result = OCPlatform::findResource("",
                             query.str(),
-                            OC_ETHERNET,
-                            onFindResource);
-
-                result = OCPlatform::findResource("",
-                            "coap://224.0.1.187/oc/core?rt=core.speaker",
-                            OC_WIFI,
+                            OC_ALL,
                             onFindResource);
 
                 if (OC_STACK_OK == result)

@@ -36,7 +36,6 @@ typedef std::map<OCResourceIdentifier, std::shared_ptr<OCResource>> DiscoveredRe
 DiscoveredResourceMap discoveredResources;
 std::shared_ptr<OCResource> curResource;
 static ObserveType OBSERVE_TYPE_TO_USE = ObserveType::Observe;
-static OCConnectivityType connectivityType = OC_WIFI;
 std::mutex curResourceLock;
 
 class Light
@@ -388,12 +387,9 @@ void printUsage()
 {
     std::cout << std::endl;
     std::cout << "---------------------------------------------------------------------\n";
-    std::cout << "Usage : simpleclient <ObserveType> <ConnectivityType>" << std::endl;
+    std::cout << "Usage : simpleclient <ObserveType>" << std::endl;
     std::cout << "   ObserveType : 1 - Observe" << std::endl;
     std::cout << "   ObserveType : 2 - ObserveAll" << std::endl;
-    std::cout << "   connectivityType: Default WIFI" << std::endl;
-    std::cout << "   ConnectivityType : 0 - ETHERNET"<< std::endl;
-    std::cout << "   ConnectivityType : 1 - WIFI"<< std::endl;
     std::cout << "---------------------------------------------------------------------\n\n";
 }
 
@@ -416,25 +412,6 @@ void checkObserverValue(int value)
     }
 }
 
-void checkConnectivityValue(int value)
-{
-    if(value == 0)
-    {
-        connectivityType = OC_ETHERNET;
-        std::cout << "<===Setting connectivityType  to Ethernet===>\n\n";
-    }
-    else if(value == 1)
-    {
-        connectivityType = OC_WIFI;
-        std::cout << "<===Setting connectivityType  to WIFI===>\n\n";
-    }
-    else
-    {
-        std::cout << "<===Invalid ConnectivitType selected."
-                  <<"Setting ConnectivityType to WIFI===>\n\n";
-    }
-}
-
 int main(int argc, char* argv[]) {
 
     std::ostringstream requestURI;
@@ -444,19 +421,11 @@ int main(int argc, char* argv[]) {
         printUsage();
         if (argc == 1)
         {
-            std::cout << "<===Setting ObserveType to Observe and ConnectivityType to WIFI===>\n\n";
+            std::cout << "<===Setting ObserveType to Observe and ConnectivityType to IPv4===>\n\n";
         }
         else if (argc == 2)
         {
-
             checkObserverValue(std::stoi(argv[1]));
-            std::cout << "<===No ConnectivtyType selected. "
-                      << "Setting ConnectivityType to WIFI===>\n\n";
-        }
-        else if(argc == 3)
-        {
-            checkObserverValue(std::stoi(argv[1]));
-            checkConnectivityValue(std::stoi(argv[2]));
         }
         else
         {

@@ -224,47 +224,6 @@ int main(int argc, char* argv[]) {
 
     std::ostringstream requestURI;
 
-    OCConnectivityType connectivityType = OC_WIFI;
-    if(argc == 2)
-    {
-        try
-        {
-            std::size_t inputValLen;
-            int optionSelected = std::stoi(argv[1], &inputValLen);
-
-            if(inputValLen == strlen(argv[1]))
-            {
-                if(optionSelected == 0)
-                {
-                    connectivityType = OC_ETHERNET;
-                }
-                else if(optionSelected == 1)
-                {
-                    connectivityType = OC_WIFI;
-                }
-                else
-                {
-                    std::cout << "Invalid connectivity type selected. Using default WIFI"
-                        << std::endl;
-                }
-            }
-            else
-            {
-                std::cout << "Invalid connectivity type selected. Using default WIFI" << std::endl;
-            }
-        }
-        catch(std::exception& )
-        {
-            std::cout << "Invalid input argument. Using WIFI as connectivity type" << std::endl;
-        }
-    }
-    else
-    {
-        std::cout << "Usage roomclient <connectivityType(0|1)>" << std::endl;
-        std::cout<<"connectivityType: Default WIFI" << std::endl;
-        std::cout << "connectivityType 0: ETHERNET" << std::endl;
-        std::cout << "connectivityType 1: WIFI" << std::endl;
-    }
 
     // Create PlatformConfig object
     PlatformConfig cfg {

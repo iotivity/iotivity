@@ -229,14 +229,7 @@ OCStackResult GroupManager::findCandidateResources(
 
         OCPlatform::findResource("",
                 query,
-                OC_ETHERNET,
-                std::function < void(std::shared_ptr < OCResource > resource)
-                        > (std::bind(&GroupManager::onFoundResource, this, std::placeholders::_1,
-                                waitsec)));
-
-        OCPlatform::findResource("",
-                query,
-                OC_WIFI,
+                OC_ALL,
                 std::function < void(std::shared_ptr < OCResource > resource)
                         > (std::bind(&GroupManager::onFoundResource, this, std::placeholders::_1,
                                 waitsec)));
@@ -369,18 +362,7 @@ void GroupManager::checkCollectionRepresentation(const OCRepresentation& rep,
             result = OCPlatform::subscribePresence(presenceHandle, hostAddress,
                     // resourceType,
                     resourceTypes.front(),
-                    OC_ETHERNET,
-                    std::function<
-                            void(OCStackResult result, const unsigned int nonce,
-                                    const std::string& hostAddress) >(
-                            std::bind(&GroupManager::collectionPresenceHandler, this,
-                                    std::placeholders::_1, std::placeholders::_2,
-                                    std::placeholders::_3, hostAddress, oit->getUri())));
-
-            result = OCPlatform::subscribePresence(presenceHandle, hostAddress,
-                    // resourceType,
-                    resourceTypes.front(),
-                    OC_WIFI,
+                    OC_ALL,
                     std::function<
                             void(OCStackResult result, const unsigned int nonce,
                                     const std::string& hostAddress) >(
@@ -428,7 +410,7 @@ OCStackResult GroupManager::subscribeCollectionPresence(
     {
         return OC_STACK_ERROR;
     }
-    
+
     OCStackResult result = OC_STACK_OK;
     //callback("core.room",OC_STACK_OK);
 
@@ -645,7 +627,7 @@ OCStackResult GroupManager::addActionSet(std::shared_ptr< OCResource > resource,
     {
         if(newActionSet->mDelay < 0)
         {
-            return OC_STACK_INVALID_PARAM; 
+            return OC_STACK_INVALID_PARAM;
         }
 
         std::string message = getStringFromActionSet(newActionSet);

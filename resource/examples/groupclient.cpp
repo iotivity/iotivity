@@ -173,49 +173,6 @@ int main(int argc, char* argv[])
     ostringstream requestURI;
     requestURI << OC_MULTICAST_DISCOVERY_URI << "?rt=a.collection";
 
-    OCConnectivityType connectivityType = OC_WIFI;
-
-    if(argc == 2)
-    {
-        try
-        {
-            std::size_t inputValLen;
-            int optionSelected = stoi(argv[1], &inputValLen);
-
-            if(inputValLen == strlen(argv[1]))
-            {
-                if(optionSelected == 0)
-                {
-                    connectivityType = OC_ETHERNET;
-                }
-                else if(optionSelected == 1)
-                {
-                    connectivityType = OC_WIFI;
-                }
-                else
-                {
-                    std::cout << "Invalid connectivity type selected. Using default WIFI"
-                        << std::endl;
-                }
-            }
-            else
-            {
-                std::cout << "Invalid connectivity type selected. Using default WIFI" << std::endl;
-            }
-        }
-        catch(exception&)
-        {
-            std::cout << "Invalid input argument. Using WIFI as connectivity type" << std::endl;
-        }
-    }
-    else
-    {
-        std::cout<<"Usage: groupclient <ConnectivityType(0|1)>\n";
-        std::cout<<"ConnectivityType: Default WIFI\n";
-        std::cout<<"ConnectivityType 0: ETHERNET\n";
-        std::cout<<"ConnectivityType 1: WIFI\n";
-    }
-
     PlatformConfig config
     { OC::ServiceType::InProc, ModeType::Client, "0.0.0.0", 0, OC::QualityOfService::LowQos };
 

@@ -484,7 +484,7 @@ int main()
 
                     OCPlatform::findResource("",
                             query,
-                            OC_ETHERNET,
+                            OC_ALL,
                             &foundResource);
 
                     // OCPlatform::findResource("",
@@ -500,7 +500,7 @@ int main()
 
                     OCPlatform::findResource("",
                             query,
-                            OC_ETHERNET,
+                            OC_ALL,
                             &foundResource);
                     // OCPlatform::findResource("",
                     //         query,

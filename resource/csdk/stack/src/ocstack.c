@@ -654,11 +654,11 @@ OCStackResult OCToCATransportType(OCConnectivityType ocConType, CATransportType_
 
     switch(ocConType)
     {
-        case OC_ETHERNET:
+        case OC_IPV4:
             *caConType = CA_IPV4;
             break;
-        case OC_WIFI:
-            *caConType = CA_IPV4;
+        case OC_IPV6:
+            *caConType = CA_IPV6;
             break;
         case OC_EDR:
             *caConType = CA_EDR;
@@ -667,7 +667,7 @@ OCStackResult OCToCATransportType(OCConnectivityType ocConType, CATransportType_
             *caConType = CA_LE;
             break;
         case OC_ALL:
-            // Currently OC_ALL represents WIFI and ETHERNET
+            // Currently OC_ALL represents IPv4
             // Add other connectivity types as they are enabled in future
             *caConType = (CATransportType_t) (CA_IPV4);
             break;
@@ -685,7 +685,10 @@ OCStackResult CAToOCConnectivityType(CATransportType_t caConType, OCConnectivity
     switch(caConType)
     {
         case CA_IPV4:
-            *ocConType = OC_ETHERNET;
+            *ocConType = OC_IPV4;
+            break;
+        case CA_IPV6:
+            *ocConType = OC_IPV6;
             break;
         case CA_EDR:
             *ocConType = OC_EDR;

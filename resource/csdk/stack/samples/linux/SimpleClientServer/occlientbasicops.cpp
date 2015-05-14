@@ -41,9 +41,9 @@ static int TEST_CASE = 0;
 static const char UNICAST_DISCOVERY_QUERY[] = "coap://%s:6298/oc/core";
 static std::string putPayload = "{\"state\":\"off\",\"power\":10}";
 
-//The following variable determines the interface (wifi, ethernet etc.)
-//to be used for sending unicast messages. Default set to WIFI.
-static OCConnectivityType OC_CONNTYPE = OC_WIFI;
+//The following variable determines the interface protocol (IPv4, IPv6, etc)
+//to be used for sending unicast messages. Default set to IPv4.
+static OCConnectivityType OC_CONNTYPE = OC_IPV4;
 static const char * MULTICAST_RESOURCE_DISCOVERY_QUERY = "/oc/core";
 
 int gQuitFlag = 0;
@@ -69,8 +69,8 @@ static void PrintUsage()
             " Initiate Nonconfirmable Get/Put/Post Requests");
     OC_LOG(INFO, TAG, "-t 3 : Discover Resources and Initiate "
             "Confirmable Get/Put/Post Requests");
-    OC_LOG(INFO, TAG, "-c <0|1> : Send unicast messages over Ethernet or WIFI.");
-    OC_LOG(INFO, TAG, "Default connectivityType WIFI");
+    OC_LOG(INFO, TAG, "-c <0|1> : IPv4/IPv6 (IPv6 not currently supported)");
+    OC_LOG(INFO, TAG, "Default connectivityType IPv4");
 }
 
 /*
@@ -645,11 +645,14 @@ void printResourceList()
         printf("port = %s\n", iter->port);
         switch (iter->connType)
         {
-            case OC_ETHERNET:
-                printf("connType = %s\n","Ethernet");
+            case OC_IPV4:
+                printf("connType = %s\n","IPv4");
                 break;
-            case OC_WIFI:
-                printf("connType = %s\n","WiFi");
+            case OC_IPV6:
+                // TODO: Allow IPv6 when support is added
+                printf("IPv6 not currently supported, default to IPv4\n");
+                //printf("connType = %s\n","IPv6");
+                printf("connType = %s\n","IPv4");
                 break;
             case OC_LE:
                 printf("connType = %s\n","BLE");
@@ -698,7 +701,10 @@ int main(int argc, char* argv[])
                 TEST_CASE = atoi(optarg);
                 break;
             case 'c':
-                OC_CONNTYPE = OCConnectivityType(atoi(optarg));
+                // TODO: re-enable IPv4/IPv6 command line selection when IPv6 is supported
+                // OC_CONNTYPE = OCConnectivityType(atoi(optarg));
+                OC_CONNTYPE = OC_IPV4;
+                OC_LOG(INFO, TAG, "Using default IPv4, IPv6 not currently supported.");
                 break;
             default:
                 PrintUsage();

@@ -394,7 +394,7 @@ int main(int argc, char *argv[])
         std::cout.setf(std::ios::boolalpha);
         // Find all resources
         requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.fan";
-        OCPlatform::findResource("", requestURI.str(), OC_WIFI, &foundResourceFan);
+        OCPlatform::findResource("", requestURI.str(), OC_ALL, &foundResourceFan);
         std::cout << "Finding Resource... " << std::endl;
         while (true)
         {

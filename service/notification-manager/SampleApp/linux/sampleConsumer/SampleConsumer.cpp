@@ -224,7 +224,7 @@ void foundResource(std::shared_ptr< OCResource > resource)
 
 OCStackResult nmfindResource(const std::string &host , const std::string &resourceName)
 {
-    return OCPlatform::findResource(host , resourceName , OC_ETHERNET, &foundResource);
+    return OCPlatform::findResource(host , resourceName , OC_ALL, &foundResource);
 }
 
 void getRepresentation(std::shared_ptr< OCResource > resource)

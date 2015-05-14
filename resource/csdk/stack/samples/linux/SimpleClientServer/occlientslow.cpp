@@ -37,9 +37,9 @@ static std::string coapServerIP = "255.255.255.255";
 static std::string coapServerPort = "5683";
 static std::string coapServerResource = "/a/led";
 
-//The following variable determines the interface (wifi, ethernet etc.)
-//to be used for sending unicast messages. Default set to WIFI.
-static OCConnectivityType OC_CONNTYPE = OC_WIFI;
+//The following variable determines the interface protocol (IPv4, IPv6, etc)
+//to be used for sending unicast messages. Default set to IPv4.
+static OCConnectivityType OC_CONNTYPE = OC_IPV4;
 static const char * MULTICAST_RESOURCE_DISCOVERY_QUERY = "/oc/core";
 static int IPV4_ADDR_SIZE = 16;
 void StripNewLineChar(char* str);
@@ -58,7 +58,7 @@ void handleSigInt(int signum)
 static void PrintUsage()
 {
     OC_LOG(INFO, TAG, "Usage : occlient -c <0|1> -u <0|1> -t <1|2|3>");
-    OC_LOG(INFO, TAG, "-c <0|1> : Send unicast messages over Ethernet or WIFI");
+    OC_LOG(INFO, TAG, "-c <0|1> : IPv4/IPv6 (IPv6 not currently supported)");
     OC_LOG(INFO, TAG, "-u <0|1> : Perform multicast/unicast discovery of resources");
     OC_LOG(INFO, TAG, "-t 1 : Discover Resources");
     OC_LOG(INFO, TAG, "-t 2 : Discover Resources and Initiate Nonconfirmable Get Request");
@@ -241,7 +241,9 @@ int main(int argc, char* argv[])
                 TEST_CASE = atoi(optarg);
                 break;
             case 'c':
-                OC_CONNTYPE = OCConnectivityType(atoi(optarg));
+                // TODO: re-enable IPv4/IPv6 command line selection when IPv6 is supported
+                // OC_CONNTYPE = OCConnectivityType(atoi(optarg));
+                OC_CONNTYPE = OC_IPV4;
                 break;
             default:
                 PrintUsage();

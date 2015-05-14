@@ -201,8 +201,8 @@ typedef enum
  */
 typedef enum
 {
-    OC_ETHERNET = 0,
-    OC_WIFI,
+    OC_IPV4 = 0,
+    OC_IPV6,
     OC_EDR,
     OC_LE,
     OC_ALL // Multicast message: send over all the interfaces.

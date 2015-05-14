@@ -267,7 +267,7 @@ class ClientFridge
 
 int main(int argc, char* argv[])
 {
-    OCConnectivityType connectivityType = OC_WIFI;
+    OCConnectivityType connectivityType = OC_IPV4;
     if(argc == 2)
     {
         try
@@ -279,34 +279,37 @@ int main(int argc, char* argv[])
             {
                 if(optionSelected == 0)
                 {
-                    connectivityType = OC_ETHERNET;
+                    connectivityType = OC_IPV4;
                 }
                 else if(optionSelected == 1)
                 {
-                    connectivityType = OC_WIFI;
+                    // TODO: re-enable IPv4/IPv6 command line selection when IPv6 is supported
+                    //connectivityType = OC_IPV6;
+                    connectivityType = OC_IPV4;
+                    std::cout << "IPv6 not currently supported. Using default IPv4" << std::endl;
                 }
                 else
                 {
-                    std::cout << "Invalid connectivity type selected. Using default WIFI"
+                    std::cout << "Invalid connectivity type selected. Using default IPv4"
                         << std::endl;
                 }
             }
             else
             {
-                std::cout << "Invalid connectivity type selected. Using default WIFI" << std::endl;
+                std::cout << "Invalid connectivity type selected. Using default IPv4" << std::endl;
             }
         }
         catch(std::exception&)
         {
-            std::cout << "Invalid input argument. Using WIFI as connectivity type" << std::endl;
+            std::cout << "Invalid input argument. Using IPv4 as connectivity type" << std::endl;
         }
     }
     else
     {
-        std::cout<<"Usage: fridgeclient <ConnectivityType(0|1)>\n";
-        std::cout<<"ConnectivityType: Default WIFI\n";
-        std::cout<<"ConnectivityType 0: ETHERNET\n";
-        std::cout<<"ConnectivityType 1: WIFI\n";
+        std::cout << "Usage: fridgeclient <ConnectivityType(0|1)>\n";
+        std::cout << "connectivityType: Default IPv4" << std::endl;
+        std::cout << "connectivityType 0: IPv4" << std::endl;
+        std::cout << "connectivityType 1: IPv6 (not currently supported)" << std::endl;
     }
 
     PlatformConfig cfg

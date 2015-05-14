@@ -370,61 +370,35 @@ void foundResource(std::shared_ptr<OCResource> resource)
 void PrintUsage()
 {
     std::cout << std::endl;
-    std::cout << "Usage : simpleclientHQ <ObserveType> <ConnectivityType>" << std::endl;
+    std::cout << "Usage : simpleclientHQ <ObserveType>" << std::endl;
     std::cout << "   ObserveType : 1 - Observe" << std::endl;
     std::cout << "   ObserveType : 2 - ObserveAll" << std::endl;
-    std::cout<<"    ConnectivityType: Default WIFI" << std::endl;
-    std::cout << "   ConnectivityType : 0 - ETHERNET"<< std::endl;
-    std::cout << "   ConnectivityType : 1 - WIFI"<< std::endl;
 }
 
 int main(int argc, char* argv[]) {
 
     std::ostringstream requestURI;
 
-    OCConnectivityType connectivityType = OC_WIFI;
     try
     {
         if (argc == 1)
         {
             OBSERVE_TYPE_TO_USE = ObserveType::Observe;
         }
-        else if (argc ==2 || argc==3)
+        else if (argc == 2)
         {
             int value = std::stoi(argv[1]);
             if (value == 1)
-                OBSERVE_TYPE_TO_USE = ObserveType::Observe;
-            else if (value == 2)
-                OBSERVE_TYPE_TO_USE = ObserveType::ObserveAll;
-            else
-                OBSERVE_TYPE_TO_USE = ObserveType::Observe;
-
-            if(argc == 3)
             {
-                std::size_t inputValLen;
-                int optionSelected = std::stoi(argv[2], &inputValLen);
-
-                if(inputValLen == strlen(argv[2]))
-                {
-                    if(optionSelected == 0)
-                    {
-                        connectivityType = OC_ETHERNET;
-                    }
-                    else if(optionSelected == 1)
-                    {
-                        connectivityType = OC_WIFI;
-                    }
-                    else
-                    {
-                        std::cout << "Invalid connectivity type selected. Using default WIFI"
-                            << std::endl;
-                    }
-                }
-                else
-                {
-                    std::cout << "Invalid connectivity type selected. Using default WIFI"
-                    << std::endl;
-                }
+                OBSERVE_TYPE_TO_USE = ObserveType::Observe;
+            }
+            else if (value == 2)
+            {
+                OBSERVE_TYPE_TO_USE = ObserveType::ObserveAll;
+            }
+            else
+            {
+                OBSERVE_TYPE_TO_USE = ObserveType::Observe;
             }
         }
         else
@@ -435,9 +409,8 @@ int main(int argc, char* argv[]) {
     }
     catch(std::exception&)
     {
-        std::cout << "Invalid input argument. Using WIFI as connectivity type" << std::endl;
+        std::cout << "Invalid input argument. Using Observe as observe type" << std::endl;
     }
-
 
     // Create PlatformConfig object
     PlatformConfig cfg {

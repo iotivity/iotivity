@@ -258,9 +258,7 @@ int InitDiscovery()
             OC_LOG(ERROR, TAG, "!! Bad input for IPV4 address. !!");
             return OC_STACK_INVALID_PARAM;
         }
-        printf("Select Connectivity type on which discovery request needs to be send : ");
-        printf("0:ETH, 1:WIFI\n");
-        discoveryReqConnType = ((getchar() - '0') == 0) ? OC_ETHERNET : OC_WIFI;
+        discoveryReqConnType = OC_IPV4;
     }
     else
     {

@@ -76,9 +76,9 @@ testToTextMap queryInterface[] = {
 
 static std::string putPayload = "{\"state\":\"off\",\"power\":\"0\"}";
 
-//The following variable determines the interface (wifi, ethernet etc.)
-//to be used for sending unicast messages. Default set to WIFI.
-static OCConnectivityType OC_CONNTYPE = OC_WIFI;
+//The following variable determines the interface protocol (IPv4, IPv6, etc)
+//to be used for sending unicast messages. Default set to IPv4.
+static OCConnectivityType OC_CONNTYPE = OC_IPV4;
 static const char * MULTICAST_RESOURCE_DISCOVERY_QUERY = "/oc/core";
 
 // The handle for the observe registration
@@ -107,24 +107,24 @@ int InitDiscovery();
 void PrintUsage()
 {
     OC_LOG(INFO, TAG, "Usage : occlientcoll -t <Test Case> -c <CA connectivity Type>");
-    OC_LOG(INFO, TAG, "-c <0|1> : Send messages over Ethernet or WIFI");
-    OC_LOG(INFO, TAG, "Test Case 1 : Discover Resources && Initiate GET Request on an"\
+    OC_LOG(INFO, TAG, "-c <0|1> : IPv4/IPv6 (IPv6 not currently supported)");
+    OC_LOG(INFO, TAG, "Test Case 1 : Discover Resources && Initiate GET Request on an "\
             "available resource using default interface.");
-    OC_LOG(INFO, TAG, "Test Case 2 : Discover Resources && Initiate GET Request on an"\
+    OC_LOG(INFO, TAG, "Test Case 2 : Discover Resources && Initiate GET Request on an "\
                  "available resource using batch interface.");
-    OC_LOG(INFO, TAG, "Test Case 3 : Discover Resources && Initiate GET Request on an"\
+    OC_LOG(INFO, TAG, "Test Case 3 : Discover Resources && Initiate GET Request on an "\
                  "available resource using link list interface.");
-    OC_LOG(INFO, TAG, "Test Case 4 : Discover Resources && Initiate GET & PUT Request on an"\
+    OC_LOG(INFO, TAG, "Test Case 4 : Discover Resources && Initiate GET & PUT Request on an "\
                  "available resource using default interface.");
-    OC_LOG(INFO, TAG, "Test Case 5 : Discover Resources && Initiate GET & PUT Request on an"\
+    OC_LOG(INFO, TAG, "Test Case 5 : Discover Resources && Initiate GET & PUT Request on an "\
                  "available resource using batch interface.");
-    OC_LOG(INFO, TAG, "Test Case 6 : Discover Resources && Initiate GET & PUT Request on an"\
+    OC_LOG(INFO, TAG, "Test Case 6 : Discover Resources && Initiate GET & PUT Request on an "\
                  "available resource using link list interface.");
-    OC_LOG(INFO, TAG, "Test Case 7 : Discover Resources && Initiate GET Request on an"\
+    OC_LOG(INFO, TAG, "Test Case 7 : Discover Resources && Initiate GET Request on an "\
                  "unavailable resource using default interface.");
-    OC_LOG(INFO, TAG, "Test Case 8 : Discover Resources && Initiate GET Request on an"\
+    OC_LOG(INFO, TAG, "Test Case 8 : Discover Resources && Initiate GET Request on an "\
                  "unavailable resource using batch interface.");
-    OC_LOG(INFO, TAG, "Test Case 9 : Discover Resources && Initiate GET Request on an"\
+    OC_LOG(INFO, TAG, "Test Case 9 : Discover Resources && Initiate GET Request on an "\
                  "unavailable resource using link list interface.");
 }
 
@@ -358,7 +358,9 @@ int main(int argc, char* argv[])
                 TEST = atoi(optarg);
                 break;
             case 'c':
-                OC_CONNTYPE = OCConnectivityType(atoi(optarg));
+                // TODO: re-enable IPv4/IPv6 command line selection when IPv6 is supported
+                // OC_CONNTYPE = OCConnectivityType(atoi(optarg));
+                OC_CONNTYPE = OC_IPV4;
                 break;
             default:
                 PrintUsage();
