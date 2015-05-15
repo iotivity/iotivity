@@ -275,7 +275,6 @@ typedef void * OCDoHandle;
 typedef void * OCResourceHandle;
 
 typedef void * OCRequestHandle;
-typedef void * OCResponseHandle;
 
 /**
  * Unique identifier for each observation request. Used when observations are
@@ -422,8 +421,6 @@ typedef struct
     // Request handle is passed to server via the entity handler for each incoming request.
     // Stack assigns when request is received, server sets to indicate what request response is for
     OCRequestHandle requestHandle;
-    // New handle for tracking block (or slow) response.  Stack assigns, server uses for subsequent calls
-    OCResponseHandle  *responseHandle;
     // Resource handle
     OCResourceHandle resourceHandle;
     // Allow the entity handler to pass a result with the response

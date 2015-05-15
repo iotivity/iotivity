@@ -454,15 +454,6 @@ OCNotifyListOfObservers (OCResourceHandle handle,
  */
 OCStackResult OCDoResponse(OCEntityHandlerResponse *response);
 
-/**
- * Cancel a response.  Applies to a block response.
- *
- * @param responseHandle Response handle set by stack in OCServerResponse after
- *                       OCDoResponse is called.
- *
- * @return ::OC_STACK_OK on success, some other value upon failure.
- */
-OCStackResult OCCancelResponse(OCResponseHandle responseHandle);
 
 //Utility methods
 

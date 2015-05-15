@@ -3320,17 +3320,6 @@ OCStackResult OCDoResponse(OCEntityHandlerResponse *ehResponse)
     return result;
 }
 
-OCStackResult OCCancelResponse(OCResponseHandle responseHandle)
-{
-    OCStackResult result = OC_STACK_NOTIMPL;
-
-    OC_LOG(INFO, TAG, PCF("Entering OCCancelResponse"));
-
-    // TODO: validate response handle
-
-    return result;
-}
-
 //-----------------------------------------------------------------------------
 // Private internal function definitions
 //-----------------------------------------------------------------------------
