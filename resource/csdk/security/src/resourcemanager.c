@@ -58,37 +58,6 @@ OCStackResult SendSRMResponse(const OCEntityHandlerRequest *ehRequest,
     return OC_STACK_ERROR;
 }
 
-/* TODO: This global should be in doxmresource.c once it is defined. */
-OicSecOxm_t gOicSecDoxmJustWorks = OIC_JUST_WORKS;
-OicSecDoxm_t gDefaultDoxm =
-{
-    NULL,                   /* OicUrn_t *oxmType */
-    0,                      /* size_t oxmTypeLen */
-    &gOicSecDoxmJustWorks,  /* uint16_t *oxm */
-    1,                      /* size_t oxmLen */
-    OIC_JUST_WORKS,         /* OicSecOxm_t oxmsel */
-    false,                  /* bool owned */
- // 0,                      /* uint8_t deviceIDFormat */
-    {},                     /* OicUuid_t deviceID */
-    {},                     /* OicUuid_t owner */
-};
-
-/* TODO: These globals should be in pstatresource.c once it is defined. */
-OicSecDpom_t gSm = SINGLE_SERVICE_CLIENT_DRIVEN;
-OicSecPstat_t gDefaultPstat =
-{
-    false,                                      /* bool isOwned */
-    TAKE_OWNER | BOOTSTRAP_SERVICE | SECURITY_MANAGEMENT_SERVICES \
-    | PROVISION_CREDENTIALS | PROVISION_ACLS,   /* OicSecDpm_t cm */
-    TAKE_OWNER | BOOTSTRAP_SERVICE | SECURITY_MANAGEMENT_SERVICES \
-    | PROVISION_CREDENTIALS | PROVISION_ACLS,   /* OicSecDpm_t tm */
-    {},                                         /* OicUuid_t deviceID */
-    SINGLE_SERVICE_CLIENT_DRIVEN,               /* OicSecDpom_t om */
-    1,                                          /* the number of elts in Sms */
-    &gSm,                                       /* OicSecDpom_t        *sms */
-    0,                                          /* uint16_t commitHash */
-};
-
 /**
  * Initialize all secure resources ( /oic/sec/cred, /oic/sec/acl, /oic/sec/pstat etc).
  *
