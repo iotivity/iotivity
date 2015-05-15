@@ -79,8 +79,7 @@ void verifyParsedOptions(CoAPOptionCase const *cases,
 
 TEST(CAProtocolMessage, CAParseURIBase)
 {
-    char sampleURI[] = "coap://[::]/oic/res?rt=core.sensor&if=core.mi.ll";
-
+    char sampleURI[] = "coap://[::]/oic/res?rt=core.sensor;if=core.mi.ll";
     CoAPOptionCase cases[] = {
         {COAP_OPTION_URI_PATH, 3, "oic"},
         {COAP_OPTION_URI_PATH, 3, "res"},
@@ -102,7 +101,7 @@ TEST(CAProtocolMessage, CAParseURIManyPath)
 {
     char sampleURI[] = "coap://[::]"
         "/medium/a/b/c/d/e/f/g/h/i/j/"
-        "?rt=core.sensor&if=core.mi.ll";
+        "?rt=core.sensor;if=core.mi.ll";
 
     CoAPOptionCase cases[] = {
         {COAP_OPTION_URI_PATH, 6, "medium"},
@@ -133,7 +132,7 @@ TEST(CAProtocolMessage, CAParseURIManyPath)
 TEST(CAProtocolMessage, CAParseURIManyParams)
 {
     char sampleURI[] = "coap://[::]/oic/res/"
-        "?rt=core.sensor&a=0&b=1&c=2&d=3&e=4&f=5&g=6&h=7&i=8&j=9";
+        "?rt=core.sensor;a=0;b=1;c=2;d=3;e=4;f=5;g=6;h=7;i=8;j=9";
 
     CoAPOptionCase cases[] = {
         {COAP_OPTION_URI_PATH, 3, "oic"},
@@ -166,7 +165,7 @@ TEST(CAProtocolMessage, CAParseURILongPath)
     char sampleURI[] = "coap://[::]/oic"
         "123456789012345678901234567890123456789012345678901234567890"
         "12345678901234567890123456789012345678901234567890"
-        "/res?rt=core.sensor&if=core.mi.ll";
+        "/res?rt=core.sensor;if=core.mi.ll";
 
     CoAPOptionCase cases[] = {
         {COAP_OPTION_URI_PATH, 113, "oic"

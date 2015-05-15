@@ -239,7 +239,7 @@ int parse_param(unsigned char *search, size_t search_len, unsigned char *data, s
             data_len -= search_len;
 
             /* key is only valid if we are at end of string or delimiter follows */
-            if (!data_len || *data == '=' || *data == '&')
+            if (!data_len || *data == '=' || *data == ';')
             {
                 while (data_len && *data != '=')
                 {
@@ -252,7 +252,7 @@ int parse_param(unsigned char *search, size_t search_len, unsigned char *data, s
                     /* value begins after '=' */
 
                     result->s = ++data;
-                    while (--data_len && *data != '&')
+                    while (--data_len && *data != ';')
                     {
                         ++data;
                         result->length++;
@@ -264,7 +264,7 @@ int parse_param(unsigned char *search, size_t search_len, unsigned char *data, s
         }
 
         /* otherwise proceed to next */
-        while (--data_len && *data++ != '&')
+        while (--data_len && *data++ != ';')
             ;
     }
 

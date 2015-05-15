@@ -640,7 +640,7 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *
                             // Make sure there is enough room in the optionResult buffer
                             if (optionLength < sizeof(optionResult))
                             {
-                                optionResult[optionLength] = '&';
+                                optionResult[optionLength] = ';';
                                 optionLength++;
                             }
                             else

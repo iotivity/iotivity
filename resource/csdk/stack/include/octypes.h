@@ -55,6 +55,10 @@ extern "C" {
 #define OC_MAX_PRESENCE_TTL_SECONDS     (60 * 60 * 24) // 60 sec/min * 60 min/hr * 24 hr/day
 #define OC_PRESENCE_URI                      "/oic/ad"
 #endif
+
+///Separtor for multiple query string
+#define OC_QUERY_SEPARATOR                "&;"
+
 /**
  * Attributes used to form a proper OIC conforming JSON message.
  */

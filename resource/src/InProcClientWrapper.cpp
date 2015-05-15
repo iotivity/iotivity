@@ -427,11 +427,11 @@ namespace OC
 
         for(auto& param : queryParams)
         {
-            paramsList << param.first <<'='<<param.second<<'&';
+            paramsList << param.first <<'='<<param.second<<';';
         }
 
         std::string queryString = paramsList.str();
-        if(queryString.back() == '&')
+        if(queryString.back() == ';')
         {
             queryString.resize(queryString.size() - 1);
         }

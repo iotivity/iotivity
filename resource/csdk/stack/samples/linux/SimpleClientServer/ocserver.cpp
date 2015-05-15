@@ -154,7 +154,7 @@ char* constructJsonResponse (OCEntityHandlerRequest *ehRequest)
 
 /*
  * Very simple example of query parsing.
- * The query may have multiple filters separated by '&'.
+ * The query may have multiple filters separated by ';'.
  * It is upto the entity handler to parse the query for the individual filters,
  * VALIDATE them and respond as it sees fit.
 
