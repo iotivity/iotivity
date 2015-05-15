@@ -290,13 +290,7 @@ bool prepareLightResponse(std::shared_ptr<OCResourceRequest> request)
         std::string requestType = request->getRequestType();
         int requestFlag = request->getRequestHandlerFlag();
 
-        if(requestFlag == RequestHandlerFlag::InitFlag)
-        {
-            cout << "\t\trequestFlag : Init\n";
-
-            // entity handler to perform resource initialization operations
-        }
-        else if(requestFlag == RequestHandlerFlag::RequestFlag)
+        if(requestFlag == RequestHandlerFlag::RequestFlag)
         {
             cout << "\t\trequestFlag : Request\n";
 
@@ -351,13 +345,7 @@ bool prepareFanResponse(std::shared_ptr<OCResourceRequest> request)
         std::string requestType = request->getRequestType();
         int requestFlag = request->getRequestHandlerFlag();
 
-        if(requestFlag == RequestHandlerFlag::InitFlag)
-        {
-            cout << "\t\trequestFlag : Init\n";
-
-            // entity handler to perform resource initialization operations
-        }
-        else if(requestFlag == RequestHandlerFlag::RequestFlag)
+        if(requestFlag == RequestHandlerFlag::RequestFlag)
         {
             cout << "\t\trequestFlag : Request\n";
 
@@ -412,13 +400,7 @@ OCEntityHandlerResult entityHandlerRoom(std::shared_ptr<OCResourceRequest> reque
         std::string requestType = request->getRequestType();
         int requestFlag = request->getRequestHandlerFlag();
 
-        if(requestFlag == RequestHandlerFlag::InitFlag)
-        {
-            cout << "\t\trequestFlag : Init\n";
-
-            // entity handler to perform resource initialization operations
-        }
-        else if(requestFlag == RequestHandlerFlag::RequestFlag)
+        if(requestFlag == RequestHandlerFlag::RequestFlag)
         {
             cout << "\t\trequestFlag : Request\n";
 

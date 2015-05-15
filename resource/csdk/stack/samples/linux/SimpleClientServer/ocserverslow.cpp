@@ -212,11 +212,6 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
     OCEntityHandlerRequest *request = NULL;
 
     OC_LOG_V (INFO, TAG, "Inside entity handler - flags: 0x%x", flag);
-    if (flag & OC_INIT_FLAG)
-    {
-        OC_LOG(INFO, TAG, "Flag includes OC_INIT_FLAG");
-        result = OC_EH_OK;
-    }
     if (flag & OC_REQUEST_FLAG)
     {
         OC_LOG(INFO, TAG, "Flag includes OC_REQUEST_FLAG");

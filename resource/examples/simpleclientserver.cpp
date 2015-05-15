@@ -278,11 +278,7 @@ struct FooResource
             {
                 std::cout <<"\t\trequestFlag : UNSUPPORTED: ";
 
-                if(request->getRequestHandlerFlag()==RequestHandlerFlag::InitFlag)
-                {
-                    std::cout<<"InitFlag"<<std::endl;
-                }
-                else if(request->getRequestHandlerFlag()== RequestHandlerFlag::ObserverFlag)
+                if(request->getRequestHandlerFlag()== RequestHandlerFlag::ObserverFlag)
                 {
                     std::cout<<"ObserverFlag"<<std::endl;
                 }

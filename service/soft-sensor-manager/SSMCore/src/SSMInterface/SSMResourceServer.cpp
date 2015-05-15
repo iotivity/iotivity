@@ -195,11 +195,6 @@ OCEntityHandlerResult SSMResourceServer::entityHandler(std::shared_ptr< OCResour
         response->setRequestHandle(request->getRequestHandle());
         response->setResourceHandle(request->getResourceHandle());
 
-        if (requestFlag & RequestHandlerFlag::InitFlag)
-        {
-            // entity handler to perform resource initialization operations
-        }
-
         if (requestFlag & RequestHandlerFlag::RequestFlag)
         {
             // If the request type is GET

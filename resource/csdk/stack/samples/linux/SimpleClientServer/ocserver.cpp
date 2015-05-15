@@ -509,10 +509,6 @@ OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
     memset(response.resourceUri, 0, sizeof response.resourceUri);
 
 
-    if (flag & OC_INIT_FLAG)
-    {
-        OC_LOG (INFO, TAG, "Flag includes OC_INIT_FLAG");
-    }
     if (flag & OC_REQUEST_FLAG)
     {
         OC_LOG (INFO, TAG, "Flag includes OC_REQUEST_FLAG");
@@ -612,10 +608,6 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
             0, sizeof response.sendVendorSpecificHeaderOptions);
     memset(response.resourceUri, 0, sizeof response.resourceUri);
 
-    if (flag & OC_INIT_FLAG)
-    {
-        OC_LOG (INFO, TAG, "Flag includes OC_INIT_FLAG");
-    }
     if (flag & OC_REQUEST_FLAG)
     {
         OC_LOG (INFO, TAG, "Flag includes OC_REQUEST_FLAG");

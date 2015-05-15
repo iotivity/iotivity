@@ -1046,10 +1046,6 @@ resourceEntityHandlerCB (OCEntityHandlerFlag entifyHandlerFlag,
            sizeof entityHandlerResponse.sendVendorSpecificHeaderOptions);
     memset(entityHandlerResponse.resourceUri, 0, sizeof entityHandlerResponse.resourceUri);
 
-    if (entifyHandlerFlag & OC_INIT_FLAG)
-    {
-        OC_LOG_V(DEBUG, HOSTING_TAG, "Flag includes OC_INIT_FLAG");
-    }
     if (entifyHandlerFlag & OC_REQUEST_FLAG)
     {
         OC_LOG_V(DEBUG, HOSTING_TAG, "Flag includes OC_REQUEST_FLAG");

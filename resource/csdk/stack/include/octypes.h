@@ -440,7 +440,6 @@ typedef struct
 
 typedef enum
 {
-    OC_INIT_FLAG    = (1 << 0),
     OC_REQUEST_FLAG = (1 << 1),
     OC_OBSERVE_FLAG = (1 << 2)
 } OCEntityHandlerFlag; //entity_handler_flag_t ;

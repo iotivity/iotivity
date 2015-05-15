@@ -228,11 +228,6 @@ OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request
         std::string requestType = request->getRequestType();
         int requestFlag = request->getRequestHandlerFlag();
 
-        if (requestFlag == RequestHandlerFlag::InitFlag)
-        {
-            cout << "\t\trequestFlag : Init\n";
-        }
-
         if (requestFlag == RequestHandlerFlag::RequestFlag)
         {
             cout << "\t\trequestFlag : Request\n";

@@ -660,13 +660,7 @@ OCStackResult GroupSynchronization::leaveGroup(
             std::string requestType = request->getRequestType();
             int requestFlag = request->getRequestHandlerFlag();
 
-            if (requestFlag == RequestHandlerFlag::InitFlag)
-            {
-                OC_LOG(DEBUG, TAG, "\trequestFlag : Init");
-
-                // entity handler to perform resource initialization operations
-            }
-            else if (requestFlag == RequestHandlerFlag::RequestFlag)
+            if (requestFlag == RequestHandlerFlag::RequestFlag)
             {
                 OC_LOG(DEBUG, TAG, "\trequestFlag : Request");
 

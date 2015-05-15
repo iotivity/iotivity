@@ -61,11 +61,6 @@ void formResourceRequest(OCEntityHandlerFlag flag,
         pRequest->setResourceHandle(entityHandlerRequest->resource);
     }
 
-    if(flag & OC_INIT_FLAG)
-    {
-        pRequest->setRequestHandlerFlag(OC::RequestHandlerFlag::InitFlag);
-    }
-
     if(flag & OC_REQUEST_FLAG)
     {
         pRequest->setRequestHandlerFlag(OC::RequestHandlerFlag::RequestFlag);

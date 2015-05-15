@@ -148,7 +148,6 @@ namespace OC
 
     enum RequestHandlerFlag
     {
-        InitFlag = 1 << 0,
         RequestFlag = 1 << 1,
         ObserverFlag = 1 << 2
     };

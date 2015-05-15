@@ -125,9 +125,6 @@ PrintReceivedMsgInfo(OCEntityHandlerFlag flag, OCEntityHandlerRequest * ehReques
 
     switch (flag)
     {
-        case OC_INIT_FLAG:
-            typeOfMessage = "OC_INIT_FLAG";
-            break;
         case OC_REQUEST_FLAG:
             typeOfMessage = "OC_REQUEST_FLAG";
             break;

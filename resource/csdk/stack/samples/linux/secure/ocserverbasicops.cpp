@@ -248,11 +248,6 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
     OCEntityHandlerResponse response;
     char payload[MAX_RESPONSE_LENGTH] = {0};
 
-    if (flag & OC_INIT_FLAG)
-    {
-        OC_LOG (INFO, TAG, "Flag includes OC_INIT_FLAG");
-        ehResult = OC_EH_OK;
-    }
     if (flag & OC_REQUEST_FLAG)
     {
         OC_LOG (INFO, TAG, "Flag includes OC_REQUEST_FLAG");

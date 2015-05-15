@@ -108,13 +108,7 @@ bool prepareResponseForResource(std::shared_ptr< OCResourceRequest > request)
         std::string requestType = request->getRequestType();
         int requestFlag = request->getRequestHandlerFlag();
 
-        if (requestFlag == RequestHandlerFlag::InitFlag)
-        {
-            std::cout << "\t\trequestFlag : Init\n";
-
-            // entity handler to perform resource initialization operations
-        }
-        else if (requestFlag == RequestHandlerFlag::RequestFlag)
+        if (requestFlag == RequestHandlerFlag::RequestFlag)
         {
             std::cout << "\t\trequestFlag : Request\n";
 
