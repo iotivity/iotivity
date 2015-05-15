@@ -151,6 +151,7 @@ static SPResult CalculateAclPermission(const char *temp_pms, uint16_t *pms)
  */
 static SPResult InputACL(OicSecAcl_t *acl)
 {
+    int unused __attribute__((unused));
     char temp_id [MAX_INPUT_ID_LENGTH + 4] = {0,};
     char temp_rsc[MAX_URI_LENGTH + 1] = {0,};
     char temp_pms[MAX_PERMISSION_LENGTH + 1] = {0,};
@@ -161,16 +162,17 @@ static SPResult InputACL(OicSecAcl_t *acl)
     printf("-URN identifying the subject\n");
     printf("ex) 1111-1111-1111-1111 (16 Numbers except to '-')\n");
     printf("Subject : ");
-    scanf("%19s", temp_id);
+    unused = scanf("%19s", temp_id);
     int j = 0;
     for (int i = 0; temp_id[i] != '\0'; i++)
     {
         if (DASH != temp_id[i])
             acl->subject.id[j++] = temp_id[i];
     }
+
     //Set Resource.
     printf("Num. of Resource : ");
-    scanf("%zu", &acl->resourcesLen);
+    unused = scanf("%zu", &acl->resourcesLen);
     printf("-URI of resource\n");
     printf("ex)/oic/sh/temp/0 (Max_URI_Length: 64 Byte )\n");
     acl->resources = (char **)OCMalloc(acl->resourcesLen * sizeof(char *));
@@ -182,7 +184,7 @@ static SPResult InputACL(OicSecAcl_t *acl)
     for (int i = 0; i < acl->resourcesLen; i++)
     {
         printf("[%d]Resource : ", i + 1);
-        scanf("%64s", temp_rsc);
+        unused = scanf("%64s", temp_rsc);
         acl->resources[i] = (char *)OCMalloc((strlen(temp_rsc) + 1) * sizeof(char));
         if (NULL == acl->resources[i])
         {
@@ -198,12 +200,12 @@ static SPResult InputACL(OicSecAcl_t *acl)
         printf("-Set the permission(C,R,U,D,N)\n");
         printf("ex) CRUDN, CRU_N,..(5 Charaters)\n");
         printf("Permission : ");
-        scanf("%5s", temp_pms);
+        unused = scanf("%5s", temp_pms);
     }
     while (SP_RESULT_SUCCESS != CalculateAclPermission(temp_pms, &(acl->permission)) );
     // Set Rowner
     printf("Num. of Rowner : ");
-    scanf("%zu", &acl->ownersLen);
+    unused = scanf("%zu", &acl->ownersLen);
     printf("-URN identifying the rowner\n");
     printf("ex) 1111-1111-1111-1111 (16 Numbers except to '-')\n");
     acl->owners = (OicUuid_t *)OCCalloc(acl->ownersLen, sizeof(OicUuid_t));
@@ -215,7 +217,7 @@ static SPResult InputACL(OicSecAcl_t *acl)
     for (int i = 0; i < acl->ownersLen; i++)
     {
         printf("[%d]Rowner : ", i + 1);
-        scanf("%19s", temp_id);
+        unused = scanf("%19s", temp_id);
         j = 0;
         for (int k = 0; temp_id[k] != '\0'; k++)
         {

@@ -18,6 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include <stdlib.h>
+#include <string.h>
 #include "ocstack.h"
 #include "logger.h"
 #include "ocmalloc.h"
@@ -28,8 +30,7 @@
 #include "psinterface.h"
 #include "utlist.h"
 #include "srmresourcestrings.h"
-#include <stdlib.h>
-#include <string.h>
+#include "doxmresource.h"
 
 #define TAG  PCF("SRM-ACL")
 

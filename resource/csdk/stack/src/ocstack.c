@@ -1899,6 +1899,7 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
                 {
                     ret = OC_STACK_OK;
                 }
+                break;
             #ifdef WITH_PRESENCE
             case OC_REST_PRESENCE:
                 FindAndDeleteClientCB(clientCB);
