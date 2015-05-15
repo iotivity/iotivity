@@ -84,6 +84,10 @@ extlibs/master.zip
 extlibs/cereal/cereal
 extlibs/expat/expat*
 extlibs/cereal
+extlibs/android/gradle/gradle-2.2.1
+extlibs/android/ndk/android-ndk-r10d
+extlibs/android/sdk/android-sdk_r24.2
+extlibs/boost/boost_1_58_0
 *.tgz
 *.zip
 extlibs/arduino/arduino-1.5.8

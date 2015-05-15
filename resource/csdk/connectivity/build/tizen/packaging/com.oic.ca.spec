@@ -40,12 +40,13 @@ scons TARGET_OS=tizen TARGET_TRANSPORT=%{TARGET_TRANSPORT} RELEASE=%{RELEASE}
 mkdir -p %{DEST_INC_DIR}
 mkdir -p %{DEST_LIB_DIR}/pkgconfig
 
-cp -f %{ROOTDIR}/con/src/libconnectivity_abstraction.so %{buildroot}/%{_libdir}
-cp -f %{ROOTDIR}/con/lib/libcoap-4.1.1/libcoap.so %{buildroot}/%{_libdir}
+cp -f %{ROOTDIR}/con/src/libconnectivity_abstraction.a %{buildroot}/%{_libdir}
+cp -f %{ROOTDIR}/con/lib/libcoap-4.1.1/libcoap.a %{buildroot}/%{_libdir}
 cp -rf %{ROOTDIR}/con/api/cacommon.h* %{DEST_INC_DIR}/
 cp -rf %{ROOTDIR}/con/inc/caadapterinterface.h* %{DEST_INC_DIR}/
 cp -rf %{ROOTDIR}/con/common/inc/cathreadpool.h* %{DEST_INC_DIR}/
-cp -rf %{ROOTDIR}/con/inc/caipadapter.h* %{DEST_INC_DIR}/
+cp -rf %{ROOTDIR}/con/inc/cawifiadapter.h* %{DEST_INC_DIR}/
+cp -rf %{ROOTDIR}/con/inc/caethernetadapter.h* %{DEST_INC_DIR}/
 cp -rf %{ROOTDIR}/con/inc/caedradapter.h* %{DEST_INC_DIR}/
 cp -rf %{ROOTDIR}/con/inc/caleadapter.h* %{DEST_INC_DIR}/
 cp -rf %{ROOTDIR}/con/api/cainterface.h* %{DEST_INC_DIR}/
@@ -55,7 +56,7 @@ cp -rf %{ROOTDIR}/com.oic.ca.pc %{DEST_LIB_DIR}/pkgconfig/
 %files
 %manifest com.oic.ca.manifest
 %defattr(-,root,root,-)
-%{_libdir}/lib*.so*
+%{_libdir}/lib*.a*
 %{_includedir}/OICHeaders/*
 %{_libdir}/pkgconfig/*.pc
 

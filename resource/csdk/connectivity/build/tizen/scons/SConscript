@@ -20,7 +20,7 @@ if env.get('LOGGING'):
 
 env.ParseConfig("pkg-config --cflags --libs capi-network-wifi dlog glib-2.0")
 if 'ALL' in transport:
-		env.AppendUnique(CPPDEFINES = ['NO_IP_ADAPTER','EDR_ADAPTER','LE_ADAPTER'])
+		env.AppendUnique(CPPDEFINES = ['WIFI_ADAPTER', 'NO_ETHERNET_ADAPTER','EDR_ADAPTER','LE_ADAPTER'])
 		print "CA Transport is ALL"
 else:
 	if 'BT' in transport:
@@ -34,6 +34,13 @@ else:
 		print "CA Transport is BLE"
 	else:
 		env.AppendUnique(CPPDEFINES = ['NO_LE_ADAPTER'])
+
+	if 'WIFI' in transport:
+		env.AppendUnique(CPPDEFINES = ['WIFI_ADAPTER'])
+		print "CA Transport is WIFI"
+	else:
+		env.AppendUnique(CPPDEFINES = ['NO_WIFI_ADAPTER'])
+
 
 env.SConscript(['../con/lib/libcoap-4.1.1/SConscript'])
 env.SConscript(['../con/SConscript'])

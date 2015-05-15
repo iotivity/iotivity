@@ -48,7 +48,7 @@ if target_os not in ['windows', 'winrt']:
 if target_os == 'android':
 	oclib_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
 	oclib_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-	oclib_env.AppendUnique(LIBS = ['octbstack', 'oc_logger', 'boost_thread', 'gnustl_static', 'log'])
+	oclib_env.AppendUnique(LIBS = ['octbstack', 'oc_logger', 'boost_thread', 'gnustl_shared', 'log'])
 
 if target_os in ['darwin', 'ios']:
 	oclib_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])

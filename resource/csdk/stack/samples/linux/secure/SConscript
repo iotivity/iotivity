@@ -49,7 +49,7 @@ samples_env.Append(LINKFLAGS = ['-Wl,--no-as-needed'])
 
 if target_os == 'android':
 	samples_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-	samples_env.AppendUnique(LIBS = ['gnustl_static'])
+	samples_env.AppendUnique(LIBS = ['gnustl_shared'])
 	samples_env.AppendUnique(CPPDEFINES = ['_GLIBCXX_USE_C99=1', '_GLIBCXX_HAVE_WCSTOF=1'])
 
 	if not env.get('RELEASE'):
