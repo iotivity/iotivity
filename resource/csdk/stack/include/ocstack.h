@@ -245,7 +245,10 @@ typedef enum {
  * calls SRMRegisterPersistentStorageHandler.
  */
 typedef struct {
-    // Persistent storage open handler
+    /*
+     *  Persistent storage open handler points to default file path.
+     *  Application can point to appropriate SVR database path for its Iotivity Server.
+     */
     FILE* (* open)(const char *path, const char *mode);
     // Persistent storage read handler
     size_t (* read)(void *ptr, size_t size, size_t nmemb, FILE *stream);

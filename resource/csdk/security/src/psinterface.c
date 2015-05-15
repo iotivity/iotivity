@@ -31,20 +31,43 @@
 
 #define TAG  PCF("SRM-PSI")
 
+//SVR database buffer block size
+const size_t DB_FILE_SIZE_BLOCK = 1023;
+
 // TODO Consolidate all macros in one file
 #define VERIFY_SUCCESS(op, logLevel) { if (!(op)) \
             {OC_LOG((logLevel), TAG, PCF(#op " failed!!")); goto exit;} }
 
 #define VERIFY_NON_NULL(arg, logLevel) { if (!(arg)) { OC_LOG((logLevel), \
              TAG, PCF(#arg " is NULL")); goto exit; } }
-
-
-#ifdef WITH_ARDUINO
-// Mega 2560 have 4 KB of EEPROM.
-const size_t MAX_DB_FILE_SIZE = 1023;
-#else
-const size_t MAX_DB_FILE_SIZE = 4095;
-#endif
+/**
+ * Gets the Secure Virtual Database size.
+ *
+ * @param ps  pointer of OCPersistentStorage for the SVR name ("acl", "cred", "pstat" etc).
+ *
+ * @retval  total size of the SVR database.
+ */
+size_t GetSVRDatabaseSize(OCPersistentStorage* ps)
+{
+    size_t size = 0;
+    if (!ps)
+    {
+        return size;
+    }
+    size_t bytesRead  = 0;
+    char buffer[DB_FILE_SIZE_BLOCK];
+    FILE* fp = ps->open(SVR_DB_FILE_NAME, "r");
+    if (fp)
+    {
+        do
+        {
+            bytesRead = ps->read(buffer, 1, DB_FILE_SIZE_BLOCK, fp);
+            size += bytesRead;
+        } while (bytesRead > 0);
+        ps->close(fp);
+    }
+    return size;
+}
 
 /**
  * Reads the Secure Virtual Database from PS into dynamically allocated
@@ -60,17 +83,22 @@ char * GetSVRDatabase()
     char * jsonStr = NULL;
     FILE * fp = NULL;
     OCPersistentStorage* ps = SRMGetPersistentStorageHandler();
+    int size = GetSVRDatabaseSize(ps);
+    if (0 == size)
+    {
+        OC_LOG (ERROR, TAG, PCF("FindSVRDatabaseSize failed"));
+        return NULL;
+    }
 
-    // TODO Do we need a GetFileSize API ?
     if (ps && ps->open)
     {
-        // TODO Build consensus on location of SRM database file on Ubuntu
+        // Open default SRM database file. An app could change the path for its server.
         fp = ps->open(SVR_DB_FILE_NAME, "r");
         if (fp)
         {
-            jsonStr = (char*)OCMalloc(MAX_DB_FILE_SIZE + 1);
+            jsonStr = (char*) OCMalloc(size + 1);
             VERIFY_NON_NULL(jsonStr, FATAL);
-            size_t bytesRead = ps->read(jsonStr, 1, MAX_DB_FILE_SIZE, fp);
+            size_t bytesRead = ps->read(jsonStr, 1, size, fp);
             jsonStr[bytesRead] = '\0';
 
             OC_LOG_V(INFO, TAG, PCF("Read %d bytes from SVR database file"), bytesRead);
@@ -79,7 +107,7 @@ char * GetSVRDatabase()
         }
         else
         {
-            OC_LOG (ERROR, TAG, PCF("Unable to open SVR database file!! "));
+            OC_LOG (ERROR, TAG, PCF("Unable to open SVR database file!!"));
         }
     }
 
