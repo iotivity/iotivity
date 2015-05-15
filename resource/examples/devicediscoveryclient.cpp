@@ -33,88 +33,46 @@
 using namespace OC;
 
 //Callback after device information is received
+void receivedPlatformInfo(const OCRepresentation& rep)
+{
+    std::cout << "\nPlatform Information received ---->\n";
+    std::string value;
+    std::string values[22] =
+    {
+        "pi",   "Platform ID                    ",
+        "mnmn", "Manufacturer name              ",
+        "mnml", "Manufacturer url               ",
+        "mnmo", "Manufacturer Model No          ",
+        "mndt", "Manufactured Date              ",
+        "mnpv", "Manufacturer Platform Version  ",
+        "mnos", "Manufacturer OS version        ",
+        "mnhw", "Manufacturer hardware version  ",
+        "mnfv", "Manufacturer firmware version  ",
+        "mnsl", "Manufacturer support url       ",
+        "st",   "Manufacturer system time       "
+    };
+
+    for (int i = 0; i < 22; i += 2)
+    {
+        if(rep.getValue(values[i], value))
+        {
+            std::cout << values[i + 1] << " : "<< value << std::endl;
+        }
+    }
+}
+
 void receivedDeviceInfo(const OCRepresentation& rep)
 {
-    std::cout << "\nDevice Information received ---->\n";
-
-    std::string contentType;
-    std::string dateOfManufacture;
-    std::string deviceName;
-    std::string deviceUUID;
-    std::string firmwareVersion;
-    std::string hostName;
-    std::string manufacturerName;
-    std::string manufacturerUrl;
-    std::string modelNumber;
-    std::string platformVersion;
-    std::string supportUrl;
-    std::string version;
-
-    if(rep.getValue("ct", contentType))
-    {
-        std::cout << "Content Type: " << contentType << std::endl;
-    }
-
-    if(rep.getValue("mndt", dateOfManufacture))
-    {
-        std::cout << "Date of manufacture: " << dateOfManufacture << std::endl;
-    }
-
-    if(rep.getValue("dn", deviceName))
-    {
-        std::cout << "Device Name: " << deviceName << std::endl;
-    }
-
-    if(rep.getValue("di", deviceUUID))
-    {
-        std::cout << "Device UUID: " << deviceUUID << std::endl;
-    }
-
-    if(rep.getValue("mnfv", firmwareVersion))
-    {
-        std::cout << "Firmware Version: " << firmwareVersion << std::endl;
-    }
-
-    if(rep.getValue("hn", hostName))
-    {
-        std::cout << "Host Name: " << hostName << std::endl;
-    }
-
-    if(rep.getValue("mnmn", manufacturerName))
-    {
-        std::cout << "Manufacturer Name: " << manufacturerName << std::endl;
-    }
-
-    if(rep.getValue("mnml", manufacturerUrl))
-    {
-        std::cout << "Manufacturer Url: " << manufacturerUrl << std::endl;
-    }
-
-    if(rep.getValue("mnmo", modelNumber))
-    {
-        std::cout << "Model No. : " << modelNumber << std::endl;
-    }
-
-    if(rep.getValue("mnpv", platformVersion))
-    {
-        std::cout << "Platform Version: " << platformVersion << std::endl;
-    }
-
-    if(rep.getValue("mnsl", supportUrl))
-    {
-        std::cout << "Support URL: " << supportUrl << std::endl;
-    }
-
-    if(rep.getValue("icv", version))
-    {
-        std::cout << "Version: " << version << std::endl;
-    }
+    std::cout << "Implement me !" << std::endl;
 }
 
 int main(int argc, char* argv[]) {
 
-    std::ostringstream requestURI;
-    std::string deviceDiscoveryURI = "/oc/core/d";
+    std::ostringstream platformDiscoveryRequest;
+    std::ostringstream deviceDiscoveryRequest;
+
+    std::string platformDiscoveryURI = "/oic/p";
+    std::string deviceDiscoveryURI   = "/oic/d";
 
     OCConnectivityType connectivityType = OC_IPV4;
 
@@ -173,12 +131,42 @@ int main(int argc, char* argv[]) {
     OCPlatform::Configure(cfg);
     try
     {
-        requestURI << OC_MULTICAST_PREFIX << deviceDiscoveryURI;
+        platformDiscoveryRequest << OC_MULTICAST_PREFIX << platformDiscoveryURI;
+        deviceDiscoveryRequest << OC_MULTICAST_PREFIX << deviceDiscoveryURI;
 
-        OCPlatform::getDeviceInfo("", requestURI.str(), connectivityType,
-                &receivedDeviceInfo);
-        std::cout<< "Querying for device information... " <<std::endl;
+        OCStackResult ret;
 
+        std::cout<< "Querying for platform information... ";
+
+        ret = OCPlatform::getPlatformInfo("", platformDiscoveryRequest.str(), connectivityType,
+                &receivedPlatformInfo);
+
+        if (ret == OC_STACK_OK)
+        {
+            std::cout << "done." << std::endl;
+        }
+        else
+        {
+            std::cout << "failed." << std::endl;
+        }
+
+        bool is_oic_d_implemented = false;
+        if (is_oic_d_implemented)
+        {
+            std::cout<< "Querying for device information... ";
+
+            ret = OCPlatform::getDeviceInfo("", deviceDiscoveryRequest.str(), connectivityType,
+                    &receivedDeviceInfo);
+
+            if (ret == OC_STACK_OK)
+            {
+                std::cout << "done." << std::endl;
+            }
+            else
+            {
+                std::cout << "failed." << std::endl;
+            }
+        }
         // A condition variable will free the mutex it is given, then do a non-
         // intensive block until 'notify' is called on it.  In this case, since we
         // don't ever call cv.notify, this should be a non-processor intensive version

@@ -33,7 +33,9 @@ static int UNICAST_DISCOVERY = 0;
 static int TEST_CASE = 0;
 static const char * UNICAST_DISCOVERY_QUERY = "coap://%s:6298/oc/core";
 static const char * UNICAST_DEVICE_DISCOVERY_QUERY = "coap://%s:6298/oc/core/d";
+static const char * UNICAST_PLATFORM_DISCOVERY_QUERY = "coap://%s:6298/oic/p";
 static const char * MULTICAST_DEVICE_DISCOVERY_QUERY = "/oc/core/d";
+static const char * MULTICAST_PLATFORM_DISCOVERY_QUERY = "/oic/p";
 static const char * MULTICAST_RESOURCE_DISCOVERY_QUERY = "/oc/core";
 //The following variable determines the interface protocol (IPv4, IPv6, etc)
 //to be used for sending unicast messages. Default set to IPv4.
@@ -104,7 +106,7 @@ static void PrintUsage()
             "then cancel immediately with High QOS");
     OC_LOG(INFO, TAG, "-t 18 :  Discover Resources and Initiate Nonconfirmable Get Request and "\
             "add  vendor specific header options");
-    OC_LOG(INFO, TAG, "-t 19 :  Discover Devices");
+    OC_LOG(INFO, TAG, "-t 19 :  Discover Platform");
 }
 
 OCStackResult InvokeOCDoResource(std::ostringstream &query,
@@ -423,12 +425,12 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
     return OC_STACK_KEEP_TRANSACTION;
 }
 
-OCStackApplicationResult DeviceDiscoveryReqCB (void* ctx, OCDoHandle handle,
+OCStackApplicationResult PlatformDiscoveryReqCB (void* ctx, OCDoHandle handle,
         OCClientResponse * clientResponse)
 {
     if (ctx == (void*) DEFAULT_CONTEXT_VALUE)
     {
-        OC_LOG(INFO, TAG, "Callback Context for Device DISCOVER query recvd successfully");
+        OC_LOG(INFO, TAG, "Callback Context for Platform DISCOVER query recvd successfully");
     }
 
     if(clientResponse)
@@ -439,7 +441,7 @@ OCStackApplicationResult DeviceDiscoveryReqCB (void* ctx, OCDoHandle handle,
     }
     else
     {
-        OC_LOG_V(INFO, TAG, "DeviceDiscoveryReqCB received Null clientResponse");
+        OC_LOG_V(INFO, TAG, "PlatformDiscoveryReqCB received Null clientResponse");
     }
 
     return (UNICAST_DISCOVERY) ? OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION;
@@ -656,17 +658,17 @@ int InitDeviceDiscovery(OCQualityOfService qos)
     OCCallbackData cbData;
     char szQueryUri[64] = { 0 };
 
-    cbData.cb = DeviceDiscoveryReqCB;
+    cbData.cb = PlatformDiscoveryReqCB;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
     if(UNICAST_DISCOVERY)
     {
-        snprintf(szQueryUri, sizeof(szQueryUri), UNICAST_DEVICE_DISCOVERY_QUERY, ipv4addr);
+        snprintf(szQueryUri, sizeof(szQueryUri), UNICAST_PLATFORM_DISCOVERY_QUERY, ipv4addr);
     }
     else
     {
-        strncpy(szQueryUri, MULTICAST_DEVICE_DISCOVERY_QUERY,
+        strncpy(szQueryUri, MULTICAST_PLATFORM_DISCOVERY_QUERY,
                 sizeof(szQueryUri) -1 );
         szQueryUri[sizeof(szQueryUri) -1] = '\0';
     }

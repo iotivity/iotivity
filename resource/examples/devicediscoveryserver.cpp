@@ -33,36 +33,34 @@
 using namespace OC;
 
 //Set of strings for each of deviceInfo fields
-std::string contentType = "myContentType";
 std::string dateOfManufacture = "myDateOfManufacture";
-std::string deviceName = "myDeviceName";
-std::string deviceUUID = "myDeviceUUID";
-std::string firmwareVersion = "myFirmwareVersion";
-std::string hostName = "myHostName";
-std::string manufacturerName = "myManufacturerNa";
-std::string manufacturerUrl = "myManufacturerUrl";
+std::string firmwareVersion = "my.Firmware.Version";
+std::string manufacturerName = "myName";
+std::string operatingSystemVersion = "myOS";
+std::string hardwareVersion = "myHardwareVersion";
+std::string platformID = "myPlatformID";
+std::string manufacturerUrl = "www.myurl.com";
 std::string modelNumber = "myModelNumber";
-std::string platformVersion = "myPlatformVersion";
-std::string supportUrl = "mySupportUrl";
-std::string version = "myVersion";
+std::string platformVersion = "platformVersion";
+std::string supportUrl = "www.mysupporturl.com";
+std::string systemTime = "mySystemTime";
 
-//OCDeviceInfo Contains all the device info to be stored
-OCDeviceInfo deviceInfo;
+//OCPlatformInfo Contains all the platform info to be stored
+OCPlatformInfo platformInfo;
 
-void DeleteDeviceInfo()
+void DeletePlatformInfo()
 {
-    delete[] deviceInfo.contentType;
-    delete[] deviceInfo.dateOfManufacture;
-    delete[] deviceInfo.deviceName;
-    delete[] deviceInfo.deviceUUID;
-    delete[] deviceInfo.firmwareVersion;
-    delete[] deviceInfo.hostName;
-    delete[] deviceInfo.manufacturerName;
-    delete[] deviceInfo.manufacturerUrl;
-    delete[] deviceInfo.modelNumber;
-    delete[] deviceInfo.platformVersion;
-    delete[] deviceInfo.supportUrl;
-    delete[] deviceInfo.version;
+    delete[] platformInfo.platformID;
+    delete[] platformInfo.manufacturerName;
+    delete[] platformInfo.manufacturerUrl;
+    delete[] platformInfo.modelNumber;
+    delete[] platformInfo.dateOfManufacture;
+    delete[] platformInfo.platformVersion;
+    delete[] platformInfo.operatingSystemVersion;
+    delete[] platformInfo.hardwareVersion;
+    delete[] platformInfo.firmwareVersion;
+    delete[] platformInfo.supportUrl;
+    delete[] platformInfo.systemTime;
 }
 
 void DuplicateString(char ** targetString, std::string sourceString)
@@ -71,44 +69,22 @@ void DuplicateString(char ** targetString, std::string sourceString)
     strncpy(*targetString, sourceString.c_str(), (sourceString.length() + 1));
 }
 
-OCStackResult SetDeviceInfo(std::string contentType, std::string dateOfManufacture,
-                std::string deviceName, std::string deviceUUID, std::string firmwareVersion,
-                std::string hostName, std::string manufacturerName, std::string manufacturerUrl,
-                std::string modelNumber, std::string platformVersion, std::string supportUrl,
-                std::string version)
+OCStackResult SetPlatformInfo(std::string platformID, std::string manufacturerName,
+    std::string manufacturerUrl, std::string modelNumber, std::string dateOfManufacture,
+    std::string platformVersion, std::string operatingSystemVersion, std::string hardwareVersion,
+    std::string firmwareVersion, std::string supportUrl, std::string systemTime)
 {
-    if(manufacturerName.length() > MAX_MANUFACTURER_NAME_LENGTH)
-    {
-        return OC_STACK_INVALID_PARAM;
-
-    }
-
-    if(manufacturerUrl.length() > MAX_MANUFACTURER_URL_LENGTH)
-    {
-        return OC_STACK_INVALID_PARAM;
-
-    }
-
-    try
-    {
-        DuplicateString(&deviceInfo.contentType, contentType);
-        DuplicateString(&deviceInfo.dateOfManufacture, dateOfManufacture);
-        DuplicateString(&deviceInfo.deviceName, deviceName);
-        DuplicateString(&deviceInfo.deviceUUID, deviceUUID);
-        DuplicateString(&deviceInfo.firmwareVersion, firmwareVersion);
-        DuplicateString(&deviceInfo.hostName, hostName);
-        DuplicateString(&deviceInfo.manufacturerName, manufacturerName);
-        DuplicateString(&deviceInfo.manufacturerUrl, manufacturerUrl);
-        DuplicateString(&deviceInfo.modelNumber, modelNumber);
-        DuplicateString(&deviceInfo.platformVersion, platformVersion);
-        DuplicateString(&deviceInfo.supportUrl, supportUrl);
-        DuplicateString(&deviceInfo.version, version);
-    }catch(std::exception &)
-    {
-        std::cout<<"String Copy failed!!\n";
-        return OC_STACK_ERROR;
-    }
-
+    DuplicateString(&platformInfo.platformID, platformID);
+    DuplicateString(&platformInfo.manufacturerName, manufacturerName);
+    DuplicateString(&platformInfo.manufacturerUrl, manufacturerUrl);
+    DuplicateString(&platformInfo.modelNumber, modelNumber);
+    DuplicateString(&platformInfo.dateOfManufacture, dateOfManufacture);
+    DuplicateString(&platformInfo.platformVersion, platformVersion);
+    DuplicateString(&platformInfo.operatingSystemVersion, operatingSystemVersion);
+    DuplicateString(&platformInfo.hardwareVersion, hardwareVersion);
+    DuplicateString(&platformInfo.firmwareVersion, firmwareVersion);
+    DuplicateString(&platformInfo.supportUrl, supportUrl);
+    DuplicateString(&platformInfo.systemTime, systemTime);
     return OC_STACK_OK;
 }
 
@@ -128,27 +104,27 @@ int main()
 
     OCPlatform::Configure(cfg);
 
-    std::cout<<"Starting server & setting device info\n";
+    std::cout<<"Starting server & setting platform info\n";
 
-    OCStackResult result = SetDeviceInfo(contentType, dateOfManufacture, deviceName,
-            deviceUUID, firmwareVersion, hostName, manufacturerName, manufacturerUrl,
-            modelNumber, platformVersion, supportUrl, version);
-
-    if(result != OC_STACK_OK)
-    {
-        std::cout << "Device Registration failed\n";
-        return -1;
-    }
-
-    result = OCPlatform::registerDeviceInfo(deviceInfo);
+    OCStackResult result = SetPlatformInfo(platformID, manufacturerName, manufacturerUrl,
+            modelNumber, dateOfManufacture, platformVersion,  operatingSystemVersion,
+            hardwareVersion, firmwareVersion,  supportUrl, systemTime);
 
     if(result != OC_STACK_OK)
     {
-        std::cout << "Device Registration failed\n";
+        std::cout << "Platform Registration failed\n";
         return -1;
     }
 
-    DeleteDeviceInfo();
+    result = OCPlatform::registerPlatformInfo(platformInfo);
+
+    if(result != OC_STACK_OK)
+    {
+        std::cout << "Platform Registration failed\n";
+        return -1;
+    }
+
+    DeletePlatformInfo();
 
     // A condition variable will free the mutex it is given, then do a non-
     // intensive block until 'notify' is called on it.  In this case, since we
