@@ -6,9 +6,8 @@
                 "/oc/core",
                 "/oc/core/d",
                 "/oc/core/types/d",
-                "/oc/presence",
-                "/oic/sec/acl"
-			],
+                "/oc/presence"
+  			],
 			"perms": 2,
 			"ownrs" : [
 				"MjIyMjIyMjIyMjIyMjIyMg=="
@@ -18,8 +17,9 @@
             "sub": "Kg==",
             "rsrc": [
                 "/oic/sec/doxm",
-                "/oic/sec/pstat"
-             ],
+                "/oic/sec/pstat",
+                "/oic/sec/acl"
+           ],
              "perms": 6,
              "ownrs" : [
                  "MjIyMjIyMjIyMjIyMjIyMg=="

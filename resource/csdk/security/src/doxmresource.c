@@ -391,11 +391,11 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
 
                 //Generating OwnerPSK
                 pskRet = CAGenerateOwnerPSK(&request->addressInfo,
-                                            request->connectivityType,
-                                     (uint8_t*) OXM_JUST_WORKS, strlen(OXM_JUST_WORKS),
-                                     gDoxm->deviceID.id, sizeof(gDoxm->deviceID.id),
-                                     newDoxm->owner.id, sizeof(newDoxm->owner.id),
-                                     ownerPSK, OWNER_PSK_LENGTH_128);
+                        request->connectivityType,
+                        (uint8_t*) OXM_JUST_WORKS, strlen(OXM_JUST_WORKS),
+                        newDoxm->owner.id, sizeof(newDoxm->owner.id),
+                        gDoxm->deviceID.id, sizeof(gDoxm->deviceID.id),
+                        ownerPSK, OWNER_PSK_LENGTH_128);
 
                 VERIFY_SUCCESS(pskRet == CA_STATUS_OK, ERROR);
 

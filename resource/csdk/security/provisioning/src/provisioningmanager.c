@@ -50,6 +50,7 @@
 #include "doxmresource.h"
 #include "pstatresource.h"
 #include "srmresourcestrings.h"
+#include "credresource.h"
 
 typedef enum
 {
@@ -127,7 +128,6 @@ static int gNumOfProvisioningMethodsPT = 1;
  * Global variable to save pstat.
  */
 static OicSecPstat_t *gPstat = NULL;
-
 
 /**
  * Secure String copy function
@@ -1140,11 +1140,73 @@ static SPResult sendOwnershipInfo(unsigned short timeout,
  *
  * @return  SP_SUCCESS on success
  */
-static SPResult saveOwnerPSK()
+static SPResult saveOwnerPSK(SPTargetDeviceInfo_t *selectedDeviceInfo)
 {
-    //SRMGenerateOwnerPSK();
-    return SP_RESULT_SUCCESS;
+    SPResult result = SP_RESULT_INTERNAL_ERROR;
+    CAAddress_t address = {};
+    strncpy(address.IP.ipAddress, selectedDeviceInfo->ip, DEV_ADDR_SIZE_MAX);
+    address.IP.ipAddress[DEV_ADDR_SIZE_MAX - 1] = '\0';
+    address.IP.port = CA_SECURE_PORT;
 
+    OicUuid_t provTooldeviceID = {};
+    if (OC_STACK_OK != GetDoxmDeviceID(&provTooldeviceID))
+    {
+        OC_LOG(ERROR, TAG, "Error while retrieving provisioning tool's device ID");
+        return result;
+    }
+
+    uint8_t ownerPSK[OWNER_PSK_LENGTH_128] = {};
+
+    //Generating OwnerPSK
+    CAResult_t pskRet = CAGenerateOwnerPSK(&address, selectedDeviceInfo->connType,
+            (uint8_t*) OXM_JUST_WORKS, strlen(OXM_JUST_WORKS), provTooldeviceID.id,
+            sizeof(provTooldeviceID.id), selectedDeviceInfo->doxm->deviceID.id,
+            sizeof(selectedDeviceInfo->doxm->deviceID.id), ownerPSK,
+            OWNER_PSK_LENGTH_128);
+
+    if (CA_STATUS_OK == pskRet)
+    {
+        OC_LOG(INFO, TAG,"ownerPSK dump:\n");
+        OC_LOG_BUFFER(INFO, TAG,ownerPSK, OWNER_PSK_LENGTH_128);
+        //Generating new credential for provisioning tool
+        size_t ownLen = 1;
+        uint32_t outLen = 0;
+
+        char base64Buff[B64ENCODE_OUT_SAFESIZE(sizeof(ownerPSK)) + 1] = {};
+        B64Result b64Ret = b64Encode(ownerPSK, sizeof(ownerPSK), base64Buff, sizeof(base64Buff),
+                &outLen);
+        if (B64_OK == b64Ret)
+        {
+            OicSecCred_t *cred = GenerateCredential(&selectedDeviceInfo->doxm->deviceID,
+                    SYMMETRIC_PAIR_WISE_KEY, NULL,
+                    base64Buff, ownLen, &provTooldeviceID);
+            if (cred)
+            {
+                //Update the SVR database.
+                if (OC_STACK_OK == AddCredential(cred))
+                {
+                    result = SP_RESULT_SUCCESS;
+                }
+                else
+                {
+                    OC_LOG(ERROR, TAG, "AddCredential failed");
+                }
+            }
+            else
+            {
+                OC_LOG(ERROR, TAG, "GenerateCredential failed");
+            }
+        }
+        else
+        {
+            OC_LOG(ERROR, TAG, "b64Encode failed");
+        }
+    }
+    else
+    {
+        OC_LOG(ERROR, TAG, "CAGenerateOwnerPSK failed");
+    }
+    return result;
 }
 
 /**
@@ -1212,7 +1274,7 @@ static SPResult doOwnerShipTransfer(unsigned short timeout,
             return SP_RESULT_INTERNAL_ERROR;
         }
 
-        saveOwnerPSK();
+        saveOwnerPSK(selectedDeviceInfo);
     }
     return SP_RESULT_SUCCESS;
 
