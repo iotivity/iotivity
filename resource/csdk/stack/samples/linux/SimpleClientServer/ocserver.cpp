@@ -813,7 +813,7 @@ void *presenceNotificationGenerator(void *param)
             sleep(1);
             res = OCCreateResource(&presenceNotificationHandles[i],
                     presenceNotificationResources.at(i).c_str(),
-                    "oc.mi.def",
+                    OC_RSRVD_INTERFACE_DEFAULT,
                     presenceNotificationUris.at(i).c_str(),
                     OCNOPEntityHandlerCb,
                     OC_DISCOVERABLE|OC_OBSERVABLE);
@@ -985,7 +985,7 @@ int createLightResource (char *uri, LightResource *lightResource)
     lightResource->power= 0;
     OCStackResult res = OCCreateResource(&(lightResource->handle),
             "core.light",
-            "oc.mi.def",
+            OC_RSRVD_INTERFACE_DEFAULT,
             uri,
             OCEntityHandlerCb,
             OC_DISCOVERABLE|OC_OBSERVABLE);

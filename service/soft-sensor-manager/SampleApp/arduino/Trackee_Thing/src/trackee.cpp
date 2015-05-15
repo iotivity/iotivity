@@ -395,7 +395,7 @@ void createResource()
 
     OCStackResult res = OCCreateResource(&m_handle,
                                          "SSManager.Sensor",
-                                         "oc.mi.def",
+                                         OC_RSRVD_INTERFACE_DEFAULT,
                                          "/Tracker_Thing",
                                          OCEntityHandlerCb,
                                          OC_DISCOVERABLE | OC_OBSERVABLE);

@@ -395,7 +395,7 @@ void createTHResource()
 
     OCStackResult res = OCCreateResource(&TH.m_handle,
                                          "SSManager.Sensor",
-                                         "oc.mi.def",
+                                         OC_RSRVD_INTERFACE_DEFAULT,
                                          "/Thing_TempHumSensor",
                                          OCEntityHandlerCb,
                                          OC_DISCOVERABLE | OC_OBSERVABLE);

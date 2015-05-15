@@ -242,7 +242,7 @@ void createREFERResource()
 
     OCStackResult res = OCCreateResource(&REFER.m_handle,
                                          "SSManager.Sensor",
-                                         "oc.mi.def",
+                                         OC_RSRVD_INTERFACE_DEFAULT,
                                          "/Reference_Thing",
                                          OCEntityHandlerCb,
                                          OC_DISCOVERABLE | OC_OBSERVABLE);
