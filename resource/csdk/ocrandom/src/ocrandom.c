@@ -26,7 +26,7 @@
 #include "ocrandom.h"
 #include <stdio.h>
 
-#if defined(__linux__) || defined(__APPLE__)
+#if !defined(__ANDROID__) && (defined(__linux__) || defined(__APPLE__))
 #include <uuid/uuid.h>
 #endif
 
@@ -162,11 +162,7 @@ OCRandomUuidResult OCGenerateUuid(uint8_t uuid[UUID_SIZE])
     {
         return RAND_UUID_INVALID_PARAM;
     }
-#if defined(__linux__) || defined(__APPLE__)
-    // note: uuid_t is typedefed as unsigned char[16] on linux/apple
-    uuid_generate(uuid);
-    return RAND_UUID_OK;
-#elif defined(__ANDROID__)
+#if defined(__ANDROID__)
     char uuidString[UUID_STRING_SIZE];
     int8_t ret = OCGenerateUuidString(uuidString);
 
@@ -197,6 +193,10 @@ OCRandomUuidResult OCGenerateUuid(uint8_t uuid[UUID_SIZE])
     uuid[15] = parseUuidPart(&uuidString[34]);
 
     return RAND_UUID_OK;
+#elif !defined(__ANDROID__) && (defined(__linux__) || defined(__APPLE__))
+    // note: uuid_t is typedefed as unsigned char[16] on linux/apple
+    uuid_generate(uuid);
+    return RAND_UUID_OK;
 #else
     // Fallback for all platforms is filling the array with random data
     OCFillRandomMem(uuid, UUID_SIZE);
@@ -210,19 +210,7 @@ OCRandomUuidResult OCGenerateUuidString(char uuidString[UUID_STRING_SIZE])
     {
         return RAND_UUID_INVALID_PARAM;
     }
-#if defined(__linux__) || defined(__APPLE__)
-    uint8_t uuid[UUID_SIZE];
-    int8_t ret = OCGenerateUuid(uuid);
-
-    if(ret != 0)
-    {
-        return ret;
-    }
-
-    uuid_unparse_lower(uuid, uuidString);
-    return RAND_UUID_OK;
-
-#elif defined(__ANDROID__)
+#if defined(__ANDROID__)
     int32_t fd = open("/proc/sys/kernel/random/uuid", O_RDONLY);
     if(fd > 0)
     {
@@ -250,6 +238,18 @@ OCRandomUuidResult OCGenerateUuidString(char uuidString[UUID_STRING_SIZE])
         close(fd);
         return RAND_UUID_READ_ERROR;
     }
+#elif !defined(__ANDROID__) && (defined(__linux__) || defined(__APPLE__))
+    uint8_t uuid[UUID_SIZE];
+    int8_t ret = OCGenerateUuid(uuid);
+
+    if(ret != 0)
+    {
+        return ret;
+    }
+
+    uuid_unparse_lower(uuid, uuidString);
+    return RAND_UUID_OK;
+
 #else
     uint8_t uuid[UUID_SIZE];
     OCGenerateUuid(uuid);

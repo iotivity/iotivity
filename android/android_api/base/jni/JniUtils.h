@@ -128,9 +128,9 @@ public:
     {
         switch (type) {
         case 0:
-            return OCConnectivityType::OC_ETHERNET;
+            return OCConnectivityType::OC_IPV4;
         case 1:
-            return OCConnectivityType::OC_WIFI;
+            return OCConnectivityType::OC_IPV6;
         case 2:
             return OCConnectivityType::OC_EDR;
         case 3:

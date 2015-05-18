@@ -216,8 +216,8 @@ public final class OcPlatform {
      *                                If empty, performs multicast resource discovery query
      * @param resourceUri             name of the resource. If null or empty, performs search for all
      *                                resource names
-     * @param connectivityType        a type of connectivity indicating the interface. Example: WIFI,
-     *                                ETHERNET, ALL
+     * @param connectivityType        a type of connectivity indicating the interface. Example: IPV4,
+     *                                IPV6, ALL
      * @param onResourceFoundListener Handles events, success states and failure states.
      * @throws OcException
      */
@@ -248,8 +248,8 @@ public final class OcPlatform {
      *                                If empty, performs multicast resource discovery query
      * @param resourceUri             name of the resource. If null or empty, performs search for all
      *                                resource names
-     * @param connectivityType        a type of connectivity indicating the interface. Example: WIFI,
-     *                                ETHERNET, ALL
+     * @param connectivityType        a type of connectivity indicating the interface. Example: IPV4,
+     *                                IPV6, ALL
      * @param onResourceFoundListener Handles events, success states and failure states.
      * @param qualityOfService        the quality of communication
      * @throws OcException
@@ -281,8 +281,8 @@ public final class OcPlatform {
      *
      * @param host                  Host IP Address. If null or empty, Multicast is performed.
      * @param deviceUri             Uri containing address to the virtual device
-     * @param connectivityType      a type of connectivity indicating the interface. Example: WIFI,
-     *                              ETHERNET, ALL
+     * @param connectivityType      a type of connectivity indicating the interface. Example: IPV4,
+     *                              IPV6, ALL
      * @param onDeviceFoundListener Handles events, success states and failure states.
      * @throws OcException
      */
@@ -311,8 +311,8 @@ public final class OcPlatform {
      *
      * @param host                  Host IP Address. If null or empty, Multicast is performed.
      * @param deviceUri             Uri containing address to the virtual device
-     * @param connectivityType      a type of connectivity indicating the interface. Example: WIFI,
-     *                              ETHERNET, ALL
+     * @param connectivityType      a type of connectivity indicating the interface. Example: IPV4,
+     *                              IPV6, ALL
      * @param onDeviceFoundListener Handles events, success states and failure states.
      * @param qualityOfService      the quality of communication
      * @throws OcException
@@ -600,8 +600,8 @@ public final class OcPlatform {
      * server adds/removes/alters a resource, starts or is intentionally stopped
      *
      * @param host               The IP address/addressable name of the server to subscribe to
-     * @param connectivityType   a type of connectivity indicating the interface. Example: WIFI,
-     *                           ETHERNET, ALL
+     * @param connectivityType   a type of connectivity indicating the interface. Example: IPV4,
+     *                           IPV6, ALL
      * @param onPresenceListener listener that will receive notifications/subscription events
      * @return a handle object that can be used to identify this subscription request. It can be
      * used to unsubscribe from these events in the future
@@ -630,8 +630,8 @@ public final class OcPlatform {
      *
      * @param host               The IP address/addressable name of the server to subscribe to
      * @param resourceType       a resource type specified as a filter for subscription events.
-     * @param connectivityType   a type of connectivity indicating the interface. Example: WIFI,
-     *                           ETHERNET, ALL
+     * @param connectivityType   a type of connectivity indicating the interface. Example: IPV4,
+     *                           IPV6, ALL
      * @param onPresenceListener listener that will receive notifications/subscription events
      * @return a handle object that can be used to identify this subscription request. It can be
      * used to unsubscribe from these events in the future
@@ -687,8 +687,8 @@ public final class OcPlatform {
      * @param uri              the rest of the resource's URI that will permit messages to be
      *                         properly routed.
      *                         Example: /a/light
-     * @param connectivityType a type of connectivity indicating the interface. Example: WIFI,
-     *                         ETHERNET, ALL
+     * @param connectivityType a type of connectivity indicating the interface. Example: IPV4,
+     *                         IPV6, ALL
      * @param isObservable     a boolean containing whether the resource supports observation
      * @param resourceTypeList a collection of resource types implemented by the resource
      * @param interfaceList    a collection of interfaces that the resource supports/implements

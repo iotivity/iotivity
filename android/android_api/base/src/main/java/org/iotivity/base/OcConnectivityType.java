@@ -25,8 +25,8 @@ package org.iotivity.base;
 import java.security.InvalidParameterException;
 
 public enum OcConnectivityType {
-    ETHERNET(0),
-    WIFI    (1),
+    IPV4    (0),
+    IPV6    (1),
     EDR     (2),
     LE      (3),
     ALL     (4),

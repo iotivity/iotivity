@@ -96,7 +96,7 @@ public class SmokeTest extends InstrumentationTestCase {
             //client
             OcPlatform.findResource("",
                     OcPlatform.WELL_KNOWN_QUERY + "?rt=" + resourceType,
-                    OcConnectivityType.WIFI,
+                    OcConnectivityType.IPV4,
                     resourceFoundListener);
 
             //wait for onResourceFound event
@@ -138,7 +138,7 @@ public class SmokeTest extends InstrumentationTestCase {
                             //client
                             OcPresenceHandle presenceHandle = OcPlatform.subscribePresence(
                                     resource.getHost(),
-                                    OcConnectivityType.WIFI,
+                                    OcConnectivityType.IPV4,
                                     presenceListener
                             );
 
@@ -168,7 +168,7 @@ public class SmokeTest extends InstrumentationTestCase {
             //client
             OcPlatform.findResource("",
                     OcPlatform.WELL_KNOWN_QUERY + "?rt=" + resourceType,
-                    OcConnectivityType.WIFI,
+                    OcConnectivityType.IPV4,
                     resourceFoundListener);
 
             //server
@@ -314,7 +314,7 @@ public class SmokeTest extends InstrumentationTestCase {
             //client
             OcPlatform.findResource(null,
                     OcPlatform.WELL_KNOWN_QUERY + "?rt=" + resourceType,
-                    OcConnectivityType.WIFI,
+                    OcConnectivityType.IPV4,
                     resourceFoundListener);
 
             //wait for onResourceFound event
@@ -477,7 +477,7 @@ public class SmokeTest extends InstrumentationTestCase {
             //client
             OcPlatform.findResource("",
                     OcPlatform.WELL_KNOWN_QUERY + "?rt=" + resourceType,
-                    OcConnectivityType.WIFI,
+                    OcConnectivityType.IPV4,
                     resourceFoundListener);
 
             //wait for onResourceFound event
@@ -643,7 +643,7 @@ public class SmokeTest extends InstrumentationTestCase {
             //client
             OcPlatform.findResource("",
                     OcPlatform.WELL_KNOWN_QUERY + "?rt=" + resourceType,
-                    OcConnectivityType.WIFI,
+                    OcConnectivityType.IPV4,
                     resourceFoundListener);
 
             //wait for onResourceFound event
@@ -747,7 +747,7 @@ public class SmokeTest extends InstrumentationTestCase {
             //client
             OcPlatform.findResource("",
                     OcPlatform.WELL_KNOWN_QUERY + "?rt=" + resourceType,
-                    OcConnectivityType.WIFI,
+                    OcConnectivityType.IPV4,
                     resourceFoundListener);
 
             //wait for onResourceFound event
@@ -925,7 +925,7 @@ public class SmokeTest extends InstrumentationTestCase {
             //client
             OcPlatform.findResource("",
                     OcPlatform.WELL_KNOWN_QUERY + "?rt=" + resourceType,
-                    OcConnectivityType.WIFI,
+                    OcConnectivityType.IPV4,
                     resourceFoundListener);
 
             //wait for onResourceFound event
@@ -993,7 +993,7 @@ public class SmokeTest extends InstrumentationTestCase {
             OcPlatform.getDeviceInfo(
                     "",
                     OcPlatform.WELL_KNOWN_QUERY + "/d",
-                    OcConnectivityType.WIFI,
+                    OcConnectivityType.IPV4,
                     deviceFoundListener);
 
             //wait for onDeviceFound event
@@ -1093,7 +1093,7 @@ public class SmokeTest extends InstrumentationTestCase {
             //client
             OcPlatform.findResource("",
                     OcPlatform.WELL_KNOWN_QUERY + "?rt=" + resourceType,
-                    OcConnectivityType.WIFI,
+                    OcConnectivityType.IPV4,
                     resourceFoundListener1);
 
             //wait for onResourceFound event to find 3 registered resources
@@ -1106,7 +1106,7 @@ public class SmokeTest extends InstrumentationTestCase {
             //client
             OcPlatform.findResource("",
                     OcPlatform.WELL_KNOWN_QUERY + "?rt=" + resourceType,
-                    OcConnectivityType.WIFI,
+                    OcConnectivityType.IPV4,
                     resourceFoundListener3);
 
             //wait for onResourceFound event to find 1 collection resources
@@ -1118,7 +1118,7 @@ public class SmokeTest extends InstrumentationTestCase {
             //client
             OcPlatform.findResource("",
                     OcPlatform.WELL_KNOWN_QUERY + "?rt=" + resourceType,
-                    OcConnectivityType.WIFI,
+                    OcConnectivityType.IPV4,
                     resourceFoundListener2);
 
             //wait for onResourceFound event to find 2 resources
@@ -1130,7 +1130,7 @@ public class SmokeTest extends InstrumentationTestCase {
             //client
             OcPlatform.findResource("",
                     OcPlatform.WELL_KNOWN_QUERY + "?rt=" + resourceType,
-                    OcConnectivityType.WIFI,
+                    OcConnectivityType.IPV4,
                     resourceFoundListener4);
 
             //wait for onResourceFound event to find 3 registered resources
@@ -1145,7 +1145,7 @@ public class SmokeTest extends InstrumentationTestCase {
             //client
             OcPlatform.findResource("",
                     OcPlatform.WELL_KNOWN_QUERY + "?rt=" + resourceType,
-                    OcConnectivityType.WIFI,
+                    OcConnectivityType.IPV4,
                     resourceFoundListener6);
 
             //wait for onResourceFound event to find 1 collection resources
@@ -1156,7 +1156,7 @@ public class SmokeTest extends InstrumentationTestCase {
             //client
             OcPlatform.findResource("",
                     OcPlatform.WELL_KNOWN_QUERY + "?rt=" + resourceType,
-                    OcConnectivityType.WIFI,
+                    OcConnectivityType.IPV4,
                     resourceFoundListener5);
 
             //wait for onResourceFound event to find 1 collection resources
@@ -1240,12 +1240,12 @@ public class SmokeTest extends InstrumentationTestCase {
             //client
             OcPlatform.findResource("",
                     OcPlatform.WELL_KNOWN_QUERY + "?rt=" + resourceType1,
-                    OcConnectivityType.WIFI,
+                    OcConnectivityType.IPV4,
                     resourceFoundListener);
 
             OcPlatform.findResource("",
                     OcPlatform.WELL_KNOWN_QUERY + "?rt=" + resourceType2,
-                    OcConnectivityType.WIFI,
+                    OcConnectivityType.IPV4,
                     resourceFoundListener);
 
             //wait for onResourceFound event
@@ -1289,7 +1289,7 @@ public class SmokeTest extends InstrumentationTestCase {
                             OcResource resourceProxy = OcPlatform.constructResourceObject(
                                     resource.getHost(),
                                     resource.getUri(),
-                                    OcConnectivityType.WIFI,
+                                    OcConnectivityType.IPV4,
                                     resource.isObservable(),
                                     resource.getResourceTypes(),
                                     resource.getResourceInterfaces());
@@ -1319,7 +1319,7 @@ public class SmokeTest extends InstrumentationTestCase {
             //client
             OcPlatform.findResource("",
                     OcPlatform.WELL_KNOWN_QUERY + "?rt=" + resourceType,
-                    OcConnectivityType.WIFI,
+                    OcConnectivityType.IPV4,
                     resourceFoundListener);
 
             //wait for onResourceFound event
@@ -1346,7 +1346,7 @@ public class SmokeTest extends InstrumentationTestCase {
             //client
             OcPlatform.findResource("",
                     OcPlatform.WELL_KNOWN_QUERY + "?rt=" + resourceType,
-                    OcConnectivityType.WIFI,
+                    OcConnectivityType.IPV4,
                     resourceFoundListener);
 
             //wait for onResourceFound event
@@ -1518,7 +1518,7 @@ public class SmokeTest extends InstrumentationTestCase {
             //client
             OcPlatform.findResource("",
                     OcPlatform.WELL_KNOWN_QUERY + "?rt=" + resourceType,
-                    OcConnectivityType.WIFI,
+                    OcConnectivityType.IPV4,
                     resourceFoundListener);
 
             //wait for onResourceFound event
