@@ -94,6 +94,11 @@ CALocalConnectivity_t *CAAdapterCreateLocalEndpoint(CATransportType_t type, cons
             OICFree(info);
             return NULL;
         }
+        else if (CA_RA == type)
+        {
+            strncpy(info->addressInfo.RA.jabberID, address, CA_RAJABBERID_SIZE - 1);
+            info->addressInfo.RA.jabberID[CA_RAJABBERID_SIZE - 1] = '\0';
+        }
         else
         {
             OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "type is not matched with any transport!");
@@ -195,6 +200,11 @@ CARemoteEndpoint_t *CAAdapterCreateRemoteEndpoint(CATransportType_t type, const 
             OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "Currently IPV6 is not supported");
             OICFree(info);
             return NULL;
+        }
+        else if (CA_RA == type)
+        {
+            strncpy(info->addressInfo.RA.jabberID, address, CA_RAJABBERID_SIZE - 1);
+            info->addressInfo.RA.jabberID[CA_RAJABBERID_SIZE - 1] = '\0';
         }
         else
         {

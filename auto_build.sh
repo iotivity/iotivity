@@ -15,8 +15,8 @@ function build()
 {
 	if [ $(uname -s) = "Linux" ]
         then
-		echo "*********** Build for linux *************"
-		scons RELEASE=$3
+		echo "*********** Build for linux with RA*************"
+		scons RELEASE=$3 WITH_RA=1
 
 		echo "*********** Build for linux with Security*************"
 		scons RELEASE=$3 SECURED=1

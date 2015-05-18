@@ -10,6 +10,7 @@ secured = env.get('SECURED')
 root_dir = './../'
 ca_path = './'
 current_dir=env.get('SRC_DIR')
+with_ra = env.get('WITH_RA')
 
 # The tinydtls library location is ~/iotivity/extlibs. When scons run from connectivity folder,
 # the build folder is ~/iotivity/resource/csdk/connectivity/out/linux/x86_64/release/.
@@ -20,7 +21,7 @@ extlib_dir ='../../../../../../../../'
 # Source files and Target(s)
 ######################################################################
 
-print"Reading ca script %s"%ca_transport
+print "Reading ca script %s" % ca_transport
 
 env.PrependUnique(CPPPATH = [root_dir + '/api/'])
 env.AppendUnique(CPPPATH = [root_dir + '/inc/'])
@@ -83,12 +84,17 @@ env.AppendUnique(CA_SRC = ca_common_src)
 
 
 if 'ALL' in ca_transport:
+	if with_ra == True:
+		env.SConscript(ca_path + 'ra_adapter/SConscript')
 	env.SConscript(ca_path + 'ip_adapter/SConscript')
 	env.SConscript(ca_path + 'bt_edr_adapter/SConscript')
 	env.SConscript(ca_path + 'bt_le_adapter/SConscript')
 
 if 'IP' in ca_transport:
 	env.SConscript(ca_path + 'ip_adapter/SConscript')
+
+if 'RA' in ca_transport:
+	env.SConscript(ca_path + 'ra_adapter/SConscript')
 
 if 'BT' in ca_transport:
 	env.SConscript(ca_path + 'bt_edr_adapter/SConscript')

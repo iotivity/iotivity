@@ -38,7 +38,7 @@
 #define CA_MEMORY_ALLOC_CHECK(arg) {if (arg == NULL) \
     {OIC_LOG(ERROR, TAG, "memory error");goto memory_error_exit;} }
 
-#define CA_TRANSPORT_TYPE_NUM   4
+#define CA_TRANSPORT_TYPE_NUM   5
 
 static CAConnectivityHandler_t g_adapterHandler[CA_TRANSPORT_TYPE_NUM];
 
@@ -58,6 +58,8 @@ static int CAGetAdapterIndex(CATransportType_t cType)
             return 2;
         case CA_LE:
             return 3;
+        case CA_RA:
+            return 4;
     }
 
     OIC_LOG(DEBUG, TAG, "CA_TRANSPORT_TYPE_NUM is not 4");
@@ -150,6 +152,12 @@ void CAInitializeAdapters(ca_thread_pool_t handle)
     CAInitializeLE(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback,
                    handle);
 #endif /* LE_ADAPTER */
+
+#ifdef RA_ADAPTER
+    CAInitializeRA(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback,
+                   handle);
+#endif /* RA_ADAPTER */
+
 
 }
 

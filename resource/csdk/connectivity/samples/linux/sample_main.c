@@ -913,6 +913,7 @@ void select_network()
     printf("IPv4 : 0\n");
     printf("EDR : 2\n");
     printf("LE : 3\n");
+    printf("RA : 4\n");
     printf("select : ");
 
     char buf[MAX_BUF_LEN] = { 0 };
@@ -923,7 +924,7 @@ void select_network()
 
     int number = buf[0] - '0';
 
-    if (number < 0 || number > 3)
+    if (number < 0 || number > 4)
     {
         printf("Invalid network type\n");
         return;
@@ -949,6 +950,7 @@ void unselect_network()
     printf("IPv4 : 0\n");
     printf("EDR : 2\n");
     printf("LE : 3\n");
+    printf("RA : 4\n");
     printf("select : ");
 
     char buf[MAX_BUF_LEN] = { 0 };
@@ -959,7 +961,7 @@ void unselect_network()
 
     int number = buf[0] - '0';
 
-    if (number < 0 || number > 3)
+    if (number < 0 || number > 4)
     {
         printf("Invalid network type\n");
         return;

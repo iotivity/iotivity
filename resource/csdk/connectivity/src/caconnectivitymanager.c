@@ -211,6 +211,12 @@ CAResult_t CASelectNetwork(const uint32_t interestedNetwork)
         OIC_LOG_V(ERROR, TAG, "CAAddNetworkType(CA_LE) function returns error : %d", res);
     }
 
+    if (interestedNetwork & CA_RA)
+    {
+        res = CAAddNetworkType(CA_RA);
+        OIC_LOG_V(ERROR, TAG, "CAAddNetworkType(CA_RA) function returns error : %d", res);
+    }
+
     return res;
 }
 
@@ -243,6 +249,11 @@ CAResult_t CAUnSelectNetwork(const uint32_t nonInterestedNetwork)
         OIC_LOG_V(ERROR, TAG, "CARemoveNetworkType(CA_LE) function returns error : %d", res);
     }
 
+    if (nonInterestedNetwork & CA_RA)
+    {
+        res = CARemoveNetworkType(CA_RA);
+        OIC_LOG_V(ERROR, TAG, "CARemoveNetworkType(CA_RA) function returns error : %d", res);
+    }
     return res;
 }
 

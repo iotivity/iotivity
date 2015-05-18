@@ -31,6 +31,7 @@ static u_arraylist_t *g_selectedNetworkList = NULL;
 static uint32_t NETWORK_IP = CA_IPV4;
 static uint32_t NETWORK_EDR = CA_EDR;
 static uint32_t NETWORK_LE = CA_LE;
+static uint32_t NETWORK_RA = CA_RA;
 
 
 CAResult_t CAAddNetworkType(CATransportType_t transportType)
@@ -106,6 +107,22 @@ CAResult_t CAAddNetworkType(CATransportType_t transportType)
         }
         break;
 
+        case CA_RA:
+               {
+
+#ifndef RA_ADAPTER
+                   OIC_LOG(DEBUG, TAG, "Add network type(RA) - Not Supported");
+                   return CA_NOT_SUPPORTED;
+#endif /* RA_ADAPTER */
+
+                   OIC_LOG(DEBUG, TAG, "Add network type(RA)");
+                   if (u_arraylist_contains(g_selectedNetworkList, &NETWORK_RA))
+                   {
+                       goto exit;
+                   }
+                   res = u_arraylist_add(g_selectedNetworkList, &NETWORK_RA);
+               }
+               break;
     }
 
     if (CA_STATUS_OK != res)
@@ -188,6 +205,18 @@ CAResult_t CARemoveNetworkType(CATransportType_t transportType)
                     OIC_LOG(DEBUG, TAG, "Remove network type(LE)");
                     u_arraylist_remove(g_selectedNetworkList, index);
 #endif /* LE_ADAPTER */
+
+                    break;
+
+                case CA_RA:
+
+#ifndef RA_ADAPTER
+                    OIC_LOG(DEBUG, TAG, "Remove network type(RA) - Not Supported");
+                    return CA_NOT_SUPPORTED;
+#else
+                    OIC_LOG(DEBUG, TAG, "Remove network type(RA)");
+                    u_arraylist_remove(g_selectedNetworkList, index);
+#endif /* RA_ADAPTER */
 
                     break;
             }

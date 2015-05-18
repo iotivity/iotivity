@@ -7,6 +7,7 @@ Import('env')
 target_os = env.get('TARGET_OS')
 transport = env.get('TARGET_TRANSPORT')
 build_sample = env.get('BUILD_SAMPLE')
+with_ra = env.get('WITH_RA')
 
 print "Given Transport is %s" % transport
 print "Given OS is %s" % target_os
@@ -15,14 +16,16 @@ print "BUILD_SAMPLE is %s" % build_sample
 targets_disallow_multitransport = ['arduino']
 
 if target_os in targets_disallow_multitransport:
-    if ('ALL' in transport) or (len(transport) != 1):
-        print "*** Error invalid option values: TARGET_TRANSPORT"
-        print "%s disallowed until testing can validate use of multiple transports on %s %d" % (transport, target_os, len(transport))
-        Exit(1)
+	if ('ALL' in transport) or (len(transport) != 1):
+		print "*** Error invalid option values: TARGET_TRANSPORT"
+		print "%s disallowed until testing can validate use of multiple transports on %s %d" % (transport, target_os, len(transport))
+		Exit(1)
 
 if 'ALL' in transport:
 	if target_os == 'linux':
 		env.AppendUnique(CPPDEFINES = ['IP_ADAPTER','NO_EDR_ADAPTER','NO_LE_ADAPTER'])
+		if with_ra == True:
+			env.AppendUnique(CPPDEFINES = ['RA_ADAPTER'])
 	elif target_os == 'tizen':
 		env.AppendUnique(CPPDEFINES = ['IP_ADAPTER','EDR_ADAPTER','LE_ADAPTER'])
 	elif target_os == 'darwin':
@@ -56,6 +59,12 @@ else:
 		print "CA Transport is IP"
 	else:
 		env.AppendUnique(CPPDEFINES = ['NO_IP_ADAPTER'])
+
+	if 'RA' in transport:
+		env.AppendUnique(CPPDEFINES = ['RA_ADAPTER'])
+		print "CA Transport is RA"
+	else:
+		env.AppendUnique(CPPDEFINES = ['NO_RA_ADAPTER'])
 
 env.SConscript('./src/SConscript')
 

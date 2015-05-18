@@ -42,6 +42,11 @@ extern "C"
 #define CA_IPADDR_SIZE 16
 
 /**
+ * @brief RA address Length
+ */
+#define CA_RAJABBERID_SIZE 256
+
+/**
  * @brief Mac address length for BT port
  */
 #define CA_MACADDR_SIZE 18
@@ -114,7 +119,8 @@ typedef enum
     CA_IPV4 = (1 << 0),     /**< IPV4 Transport Type */
     CA_IPV6 = (1 << 1),     /**< IPV6 Transport Type */
     CA_EDR = (1 << 2),      /**< EDR Transport Type */
-    CA_LE = (1 << 3)        /**< LE Transport Type */
+    CA_LE = (1 << 3),       /**< LE Transport Type */
+    CA_RA = (1 << 4)        /**< RA Transport Type */
 } CATransportType_t;
 
 /**
@@ -156,6 +162,15 @@ typedef union
         char ipAddress[CA_IPADDR_SIZE]; /**< Ip address of the interface**/
         uint16_t port;                  /**< port information**/
     } IP;
+
+    /**
+     * @brief RA Information
+     */
+    struct
+    {
+        char jabberID[CA_RAJABBERID_SIZE]; /**< Jabber ID of the RA endpoint**/
+    } RA;
+
 } CAAddress_t;
 
 /**
@@ -191,8 +206,8 @@ typedef struct
 
     CAURI_t resourceUri;                    /**< Resource URI information **/
     CAAddress_t addressInfo;                /**< Remote Endpoint address **/
-    CATransportType_t transportType;  /**< Transport Type of the endpoint**/
-    bool isSecured;                     /**< Secure connection**/
+    CATransportType_t transportType;        /**< Transport Type of the endpoint**/
+    bool isSecured;                         /**< Secure connection**/
 } CARemoteEndpoint_t;
 
 
