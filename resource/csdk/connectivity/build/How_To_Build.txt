@@ -10,23 +10,26 @@ Please refer to the following page to install scons:
 To build for some OS (Android / Arduino / IOS ...), an IDE/SDK may be required,
 please go to the relative page to download and install the required IDE/SDK.
 
+Note: Connectivity module building has been changed. We have to build connectivity
+      from the iotivity root folder.
+
 Linux Build:
 
-1) Go to "connectivity/" folder.
+1) Go to "iotivity/" folder.
 
 2) Execute following command(s) to start build based on transport selection required :
 
     -> Building for all transports :
-    $ scons TARGET_OS=linux TARGET_TRANSPORT=ALL
+    $ scons resource/csdk/connectivity/samples/linux/ TARGET_OS=linux TARGET_TRANSPORT=ALL
 
     -> Building for a specific transport :
-    $ scons TARGET_OS=linux TARGET_TRANSPORT=WIFI
+    $ scons resource/csdk/connectivity/samples/linux/ TARGET_OS=linux TARGET_TRANSPORT=IP
 
     -> Building for multiple transports :
-    $ scons TARGET_OS=linux TARGET_TRANSPORT=WIFI,ETHERNET
+    $ scons resource/csdk/connectivity/samples/linux/ TARGET_OS=linux TARGET_TRANSPORT=IP,BT
 
     -> Clean Build (all transports) :
-    scons TARGET_OS=linux TARGET_TRANSPORT=ALL -c (for clean)
+    scons resource/csdk/connectivity/samples/linux/ TARGET_OS=linux TARGET_TRANSPORT=ALL -c (for clean)
 
 
 3) The above command will build sample also.
@@ -34,52 +37,48 @@ Linux Build:
     For Enabling Secured server,
     * Note: tinydtls library has to copied to "connectivity/lib/tinydtls" for secured build.
 
-    Secured Server will be only used for WIFI and ETHERNET transports.
+    Secured Server will be only used for IP transports.
 
-    Give command "scons TARGET_OS=linux TARGET_TRANSPORT=WIFI SECURED=1
-
-    or (For multiple transports will be mentioned using comma)
-
-    Give command "scons TARGET_OS=linux TARGET_TRANSPORT=WIFI,ETHERNET SECURED=1
+    Give command "scons resource/csdk/connectivity/samples/linux/ TARGET_OS=linux TARGET_TRANSPORT=IP SECURED=1
 
 Android Build:
 
-1) Go to "connectivity/" folder.
+1) Go to "iotivity/" folder.
 
 2) Execute following command(s) to start build based on transport selection required :
 
     -> Building for all transports :
-    $ scons TARGET_OS=android TARGET_TRANSPORT=ALL TARGET_ARCH=x86 ANDROID_NDK=your_ndk_path
+    $ scons resource/csdk/connectivity/samples/android/ TARGET_OS=android TARGET_TRANSPORT=ALL TARGET_ARCH=x86 ANDROID_NDK=your_ndk_path
 
     -> Building for a specific transport :
-    $ scons TARGET_OS=android TARGET_TRANSPORT=WIFI TARGET_ARCH=x86 ANDROID_NDK=your_ndk_path
+    $ scons resource/csdk/connectivity/samples/android/ TARGET_OS=android TARGET_TRANSPORT=IP TARGET_ARCH=x86 ANDROID_NDK=your_ndk_path
 
     -> Building for multiple transports :
-    $ scons TARGET_OS=android TARGET_TRANSPORT=WIFI,BT TARGET_ARCH=x86 ANDROID_NDK=your_ndk_path
+    $ scons resource/csdk/connectivity/samples/android/ TARGET_OS=android TARGET_TRANSPORT=IP,BT TARGET_ARCH=x86 ANDROID_NDK=your_ndk_path
 
 Note :- Upon successful execution of above command(s) CA library will be generated at path
-        "~/connectivity/build/out/android/TARGET_ARCH/release or debug".
+        "iotivity/out/android/TARGET_ARCH/release or debug".
 
 Tizen Build:
 
 1) If you are building first time, then delete GBS-ROOT folder from home directory.
 
-2) Go to "connectivity/" folder.
+2) Go to "iotivity/" folder.
 
 3) Execute following command(s) to start build based on transport selection required :
 
     -> Building for all transports :
-    $ scons TARGET_OS=tizen TARGET_TRANSPORT=ALL
+    $ scons -f resource/csdk/connectivity/build/tizen/SConscript TARGET_OS=tizen TARGET_TRANSPORT=ALL
 
     -> Building for a specific transport :
-    $ scons TARGET_OS=tizen TARGET_TRANSPORT=WIFI
+    $ scons -f resource/csdk/connectivity/build/tizen/SConscript TARGET_OS=tizen TARGET_TRANSPORT=IP
 
     -> Building for multiple transports :
-    $ scons TARGET_OS=tizen TARGET_TRANSPORT=WIFI,BT,BLE
+    $ scons -f resource/csdk/connectivity/build/tizen/SConscript TARGET_OS=tizen TARGET_TRANSPORT=IP,BT,BLE
 
 4) By default, above command will build sample also.
    To disable building sample, add BUILD_SAMPLE=OFF to the build command.
-   Ex: scons TARGET_OS=tizen TARGET_TRANSPORT=ALL BUILD_SAMPLE=OFF
+   Ex: scons -f resource/csdk/connectivity/build/tizen/SConscript TARGET_OS=tizen TARGET_TRANSPORT=ALL BUILD_SAMPLE=OFF
    Making this flag ON builds the sample.
 
 Note :- Upon successful execution of above command(s) CA library and sample applications will be
@@ -91,23 +90,21 @@ Note :- Currently Mega & Due build is supported.
 
 1) Set up Arduino first before building. Refer to "connectivity\build\arduino\Arduino_Setup_README.txt" file for help.
 
-2) Go to "connectivity/" folder.
+2) Go to "iotivity/" folder.
 
 3) Execute following command to start build :
 
 For Arduino Mega
-    $ scons TARGET_OS=arduino TARGET_TRANSPORT=<transport> TARGET_ARCH=avr BOARD=mega ARDUINO_HOME=<path_to_arduino_installation>
+    $ scons resource/csdk/connectivity/samples/arduino/ TARGET_OS=arduino TARGET_TRANSPORT=<transport> TARGET_ARCH=avr BOARD=mega ARDUINO_HOME=<path_to_arduino_installation>
 For Arduino Due
-    $ scons TARGET_OS=arduino TARGET_TRANSPORT=<transport> TARGET_ARCH=arm BOARD=arduino_due_x_dbg ARDUINO_HOME=<path_to_arduino_installation>
+    $ scons resource/csdk/connectivity/samples/arduino/ TARGET_OS=arduino TARGET_TRANSPORT=<transport> TARGET_ARCH=arm BOARD=arduino_due_x_dbg ARDUINO_HOME=<path_to_arduino_installation>
     NOTE: BOARD=arduino_due_x_dbg|arduino_due_x. Default is arduino_due_x_dbg.
 
     Possible values for <transport> are:
-    -> ETHERNET :
-    $ scons TARGET_OS=arduino TARGET_TRANSPORT=ETHERNET TARGET_ARCH=avr BOARD=mega ARDUINO_HOME=<path_to_arduino_installation>
-    -> WIFI :
-    $ scons TARGET_OS=arduino TARGET_TRANSPORT=WIFI TARGET_ARCH=avr BOARD=mega ARDUINO_HOME=<path_to_arduino_installation>
+    -> IP :
+    $ scons resource/csdk/connectivity/samples/arduino/ TARGET_OS=arduino TARGET_TRANSPORT=IP TARGET_ARCH=avr BOARD=mega ARDUINO_HOME=<path_to_arduino_installation>
     -> BLE :
-    $ scons TARGET_OS=arduino TARGET_TRANSPORT=BLE TARGET_ARCH=avr BOARD=mega ARDUINO_HOME=<path_to_arduino_installation>
+    $ scons resource/csdk/connectivity/samples/arduino/ TARGET_OS=arduino TARGET_TRANSPORT=BLE TARGET_ARCH=avr BOARD=mega ARDUINO_HOME=<path_to_arduino_installation>
 
     Note :- Only single transport can be built at a time for Arduino.
 
@@ -115,11 +112,11 @@ For Arduino Due
 
 5) After building sample, script will try to install on "/dev/ttyACM0" port in 'sudo' mode.
    To skip installation, set command line argument 'UPLOAD=false'.
-   "scons TARGET_OS=arduino TARGET_TRANSPORT=ETHERNET TARGET_ARCH=avr BOARD=mega ARDUINO_HOME=<path_to_arduino_installation> UPLOAD=false"
+   "scons resource/csdk/connectivity/samples/arduino/ TARGET_OS=arduino TARGET_TRANSPORT=ETHERNET TARGET_ARCH=avr BOARD=mega ARDUINO_HOME=<path_to_arduino_installation> UPLOAD=false"
 
 6) To set BLE Shield Name, include the option DEVICE_NAME during scons build.
 
-   -> $ scons TARGET_OS=arduino TARGET_TRANSPORT=ETHERNET TARGET_ARCH=avr BOARD=mega ARDUINO_HOME=<path_to_arduino_installation> DEVICE_NAME=OIC
+   -> $ scons resource/csdk/connectivity/samples/arduino/ TARGET_OS=arduino TARGET_TRANSPORT=ETHERNET TARGET_ARCH=avr BOARD=mega ARDUINO_HOME=<path_to_arduino_installation> DEVICE_NAME=OIC
 
    Specified Device name length MUST be less than 10 characters. RBL Library has this limitation.
    By Default DEVICE_NAME=OIC-DEVICE, if device name option is not specified
