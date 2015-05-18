@@ -180,6 +180,71 @@ TEST(StackStart, StackStartSuccessiveInits)
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
+TEST(StackStart, SetPlatformInfoValid)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
+
+    OCPlatformInfo info = {};
+    info.platformID = (char *) "platform_id";
+    info.manufacturerName = (char *) "manufac_name";
+
+    EXPECT_EQ(OC_STACK_OK, OCSetPlatformInfo(info));
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST(StackStart, SetPlatformInfoWithNoPlatformID)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
+
+    OCPlatformInfo info = {};
+    info.manufacturerName = (char *) "manufac_name";
+
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSetPlatformInfo(info));
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST(StackStart, SetPlatformInfoWithNoManufacturerName)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
+
+    OCPlatformInfo info = {};
+    info.platformID = (char *) "platform_id";
+
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSetPlatformInfo(info));
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST(StackStart, SetPlatformInfoWithTooLongManufacName)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
+
+    OCPlatformInfo info = {};
+    info.platformID = (char *) "platform_id";
+    info.manufacturerName = (char *) "extremelylongmanufacturername";
+
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSetPlatformInfo(info));
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST(StackStart, SetPlatformInfoWithTooLongManufacURL)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
+
+    OCPlatformInfo info = {};
+    info.platformID = (char *) "platform_id";
+    info.manufacturerName = (char *) "extremelylongmanufacturername";
+    info.manufacturerUrl = (char *)"www.foooooooooooooooo.baaaaaaaaaaaaar";
+
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSetPlatformInfo(info));
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+
 TEST(StackDiscovery, DISABLED_DoResourceDeviceDiscovery)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
