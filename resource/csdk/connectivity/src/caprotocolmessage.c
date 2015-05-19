@@ -902,10 +902,6 @@ CAMessageType_t CAGetMessageTypeFromPduBinaryData(const void *pdu, uint32_t size
     }
 
     coap_hdr_t *hdr = (coap_hdr_t *) pdu;
-    if (NULL == hdr)
-    {
-        return CA_MSG_NONCONFIRM;
-    }
 
     return (CAMessageType_t) hdr->type;
 }
@@ -926,10 +922,6 @@ uint16_t CAGetMessageIdFromPduBinaryData(const void *pdu, uint32_t size)
     }
 
     coap_hdr_t *hdr = (coap_hdr_t *) pdu;
-    if (NULL == hdr)
-    {
-        return 0;
-    }
 
     return hdr->id;
 }
@@ -950,11 +942,6 @@ CAResponseResult_t CAGetCodeFromPduBinaryData(const void *pdu, uint32_t size)
     }
 
     coap_hdr_t *hdr = (coap_hdr_t *) pdu;
-    if (NULL == hdr)
-    {
-        OIC_LOG(ERROR, TAG, "hdr is null");
-        return CA_NOT_FOUND;
-    }
 
     return (CAResponseResult_t) CA_RESPONSE_CODE(hdr->code);
 }
