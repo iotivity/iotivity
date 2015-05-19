@@ -347,10 +347,6 @@ static CAResult_t CACreateSocket(int *socketFD, const char *localIp, uint16_t *p
     {
         sockAddr.sin_addr.s_addr = inet_addr(localIp);
     }
-    else
-    {
-        sockAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    }
 
     int16_t i = 0;
     bool isBound = false;
@@ -810,8 +806,7 @@ CAResult_t CAIPStopServer(const char *interfaceAddress)
                 }
                 CACloseSocket(info->socketFd);
                 OICFree(info);
-                OIC_LOG_V(DEBUG, IP_SERVER_TAG,
-                          "Multicast server is stopped successfully on IF [%s]", info->ifAddr);
+                OIC_LOG(DEBUG, IP_SERVER_TAG, "Multicast server is stopped successfully.");
                 // Reduce list length by 1 as we removed one element.
                 listLength--;
             }
@@ -828,8 +823,7 @@ CAResult_t CAIPStopServer(const char *interfaceAddress)
             {
                 CACloseSocket(info->socketFd);
                 OICFree(info);
-                OIC_LOG_V(DEBUG, IP_SERVER_TAG,
-                          "Unicast server is stopped successfully on IF [%s]", info->ifAddr);
+                OIC_LOG(DEBUG, IP_SERVER_TAG, "Unicast server is stopped successfully.");
                 // Reduce list length by 1 as we removed one element.
                 listLength--;
             }

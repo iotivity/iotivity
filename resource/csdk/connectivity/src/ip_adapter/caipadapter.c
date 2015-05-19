@@ -421,7 +421,7 @@ CAResult_t CAStartIP()
     for (listIndex = 0; listIndex < listLength; listIndex++)
     {
         CANetInfo_t *netInfo = (CANetInfo_t *) u_arraylist_get(netInterfaceList, listIndex);
-        if (!netInfo || !netInfo->ipAddress)
+        if (!netInfo)
         {
             continue;
         }
@@ -479,7 +479,7 @@ CAResult_t CAStartIPListeningServer()
     {
 
         CANetInfo_t *netInfo = (CANetInfo_t *) u_arraylist_get(netInterfaceList, listIndex);
-        if (!netInfo || !netInfo->ipAddress)
+        if (!netInfo)
         {
             continue;
         }
@@ -617,7 +617,7 @@ CAResult_t CAGetIPInterfaceInformation(CALocalConnectivity_t **info, uint32_t *s
     for (listIndex = 0; listIndex < listLength; listIndex++)
     {
         CANetInfo_t *netInfo = (CANetInfo_t *) u_arraylist_get(netInterfaceList, listIndex);
-        if (!netInfo || !netInfo->ipAddress)
+        if (!netInfo)
         {
             continue;
         }
