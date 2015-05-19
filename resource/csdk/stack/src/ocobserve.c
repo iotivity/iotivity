@@ -219,7 +219,8 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
                                     OC_OBSERVE_NO_OPTION, 0);
                         if(result == OC_STACK_OK)
                         {
-                            ehResult = resPtr->entityHandler(OC_REQUEST_FLAG, &ehRequest);
+                            ehResult = resPtr->entityHandler(OC_REQUEST_FLAG, &ehRequest,
+                                                resPtr->entityHandlerCallbackParam);
                             if(ehResult == OC_EH_ERROR)
                             {
                                 FindAndDeleteServerRequest(request);

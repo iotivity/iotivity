@@ -556,13 +556,13 @@ typedef struct OCCallbackData
  * Entity handler callback needs to fill the resPayload of the entityHandlerRequest.
  */
 typedef OCEntityHandlerResult (*OCEntityHandler)
-(OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest);
+(OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest, void* callbackParam);
 
 /**
  * Device Entity handler need to use this call back instead of OCEntityHandler.
  */
 typedef OCEntityHandlerResult (*OCDeviceEntityHandler)
-(OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest, char* uri);
+(OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest, char* uri, void* callbackParam);
 
 #ifdef __cplusplus
 }

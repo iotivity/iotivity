@@ -74,7 +74,7 @@ typedef enum
  * no entity handler.
  */
 OCEntityHandlerResult defaultResourceEHandler(OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest * request);
+        OCEntityHandlerRequest * request, void* callbackParam);
 
 /**
  * Get string value associated with a virtual resource type.

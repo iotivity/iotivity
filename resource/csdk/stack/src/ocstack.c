@@ -97,7 +97,7 @@ static uint32_t PresenceTimeOut[] = {50, 75, 85, 95, 100};
 
 static OCMode myStackMode;
 OCDeviceEntityHandler defaultDeviceHandler;
-
+void* defaultDeviceHandlerCallbackParameter = NULL;
 
 //-----------------------------------------------------------------------------
 // Macros
@@ -524,7 +524,8 @@ OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t stat
             {
                 return result;
             }
-            observer->resource->entityHandler(OC_OBSERVE_FLAG, &ehRequest);
+            observer->resource->entityHandler(OC_OBSERVE_FLAG, &ehRequest,
+                            observer->resource->entityHandlerCallbackParam);
         }
         //observer is not observing anymore
         result = DeleteObserverUsingToken (token, tokenLength);
@@ -569,7 +570,8 @@ OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t stat
                 {
                     return OC_STACK_ERROR;
                 }
-                observer->resource->entityHandler(OC_OBSERVE_FLAG, &ehRequest);
+                observer->resource->entityHandler(OC_OBSERVE_FLAG, &ehRequest,
+                                    observer->resource->entityHandlerCallbackParam);
                 //observer is unreachable
                 result = DeleteObserverUsingToken (token, tokenLength);
                 if(result == OC_STACK_OK)
@@ -1857,6 +1859,7 @@ OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
     myStackMode = mode;
 
     defaultDeviceHandler = NULL;
+    defaultDeviceHandlerCallbackParameter = NULL;
     OCSeedRandom();
 
     result = CAResultToOCResult(CAInitialize());
@@ -2609,9 +2612,11 @@ OCStackResult OCStopPresence()
 }
 #endif
 
-OCStackResult OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandler entityHandler)
+OCStackResult OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandler entityHandler,
+                                            void* callbackParameter)
 {
     defaultDeviceHandler = entityHandler;
+    defaultDeviceHandlerCallbackParameter = callbackParameter;
 
     return OC_STACK_OK;
 }
@@ -2654,6 +2659,7 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
         const char *resourceTypeName,
         const char *resourceInterfaceName,
         const char *uri, OCEntityHandler entityHandler,
+        void* callbackParam,
         uint8_t resourceProperties)
 {
 
@@ -2757,10 +2763,12 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
     if (entityHandler)
     {
         pointer->entityHandler = entityHandler;
+        pointer->entityHandlerCallbackParam = callbackParam;
     }
     else
     {
         pointer->entityHandler = defaultResourceEHandler;
+        pointer->entityHandlerCallbackParam = NULL;
     }
 
     *handle = pointer;
@@ -3225,7 +3233,8 @@ OCResourceHandle OCGetResourceHandleFromCollection(OCResourceHandle collectionHa
 }
 
 OCStackResult OCBindResourceHandler(OCResourceHandle handle,
-        OCEntityHandler entityHandler)
+        OCEntityHandler entityHandler,
+        void* callbackParam)
 {
     OCResource *resource = NULL;
 
@@ -3244,6 +3253,7 @@ OCStackResult OCBindResourceHandler(OCResourceHandle handle,
 
     // Bind the handler
     resource->entityHandler = entityHandler;
+    resource->entityHandlerCallbackParam = callbackParam;
 
     #ifdef WITH_PRESENCE
     if(presenceResource.handle)
@@ -3500,6 +3510,7 @@ OCStackResult initResources()
             OC_RSRVD_RESOURCE_TYPE_PRESENCE,
             "core.r",
             OC_PRESENCE_URI,
+            NULL,
             NULL,
             OC_OBSERVABLE);
     //make resource inactive

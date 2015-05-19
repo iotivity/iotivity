@@ -65,12 +65,13 @@ static const char * VIRTUAL_RSRCS[] =
 // Default resource entity handler function
 //-----------------------------------------------------------------------------
 OCEntityHandlerResult defaultResourceEHandler(OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest * request)
+        OCEntityHandlerRequest * request, void* callbackParam)
 {
     //TODO ("Implement me!!!!");
     // TODO:  remove silence unused param warnings
     (void) flag;
     (void) request;
+    (void) callbackParam;
     return  OC_EH_OK; // Making sure that the Default EH and the Vendor EH have matching signatures
 }
 
@@ -861,7 +862,7 @@ HandleDefaultDeviceEntityHandler (OCServerRequest *request)
 
     // At this point we know for sure that defaultDeviceHandler exists
     ehResult = defaultDeviceHandler(OC_REQUEST_FLAG, &ehRequest,
-                                  (char*) request->resourceUrl);
+                                  (char*) request->resourceUrl, defaultDeviceHandlerCallbackParameter);
     if(ehResult == OC_EH_SLOW)
     {
         OC_LOG(INFO, TAG, PCF("This is a slow resource"));
@@ -974,7 +975,7 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
         goto exit;
     }
 
-    ehResult = resource->entityHandler(ehFlag, &ehRequest);
+    ehResult = resource->entityHandler(ehFlag, &ehRequest, resource->entityHandlerCallbackParam);
     if(ehResult == OC_EH_SLOW)
     {
         OC_LOG(INFO, TAG, PCF("This is a slow resource"));

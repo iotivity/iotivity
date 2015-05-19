@@ -47,6 +47,7 @@ extern "C" {
 // Global variables
 //-----------------------------------------------------------------------------
 extern OCDeviceEntityHandler defaultDeviceHandler;
+extern void* defaultDeviceHandlerCallbackParameter;
 
 //-----------------------------------------------------------------------------
 // Defines

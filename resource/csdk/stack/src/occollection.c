@@ -401,7 +401,8 @@ HandleBatchInterface(OCEntityHandlerRequest *ehRequest)
                 // is ehRequest->resource
                 ehRequest->resource = (OCResourceHandle) temp;
 
-                ehResult = temp->entityHandler(OC_REQUEST_FLAG, ehRequest);
+                ehResult = temp->entityHandler(OC_REQUEST_FLAG, ehRequest,
+                                        temp->entityHandlerCallbackParam);
 
                 // The default collection handler is returning as OK
                 if(stackRet != OC_STACK_SLOW_RESOURCE)

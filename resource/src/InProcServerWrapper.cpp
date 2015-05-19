@@ -137,7 +137,8 @@ void formResourceRequest(OCEntityHandlerFlag flag,
 
 OCEntityHandlerResult DefaultEntityHandlerWrapper(OCEntityHandlerFlag flag,
                                                   OCEntityHandlerRequest * entityHandlerRequest,
-                                                  char* uri)
+                                                  char* uri,
+                                                  void * callbackParam)
 {
     OCEntityHandlerResult result = OC_EH_ERROR;
 
@@ -176,7 +177,8 @@ OCEntityHandlerResult DefaultEntityHandlerWrapper(OCEntityHandlerFlag flag,
 
 
 OCEntityHandlerResult EntityHandlerWrapper(OCEntityHandlerFlag flag,
-                                           OCEntityHandlerRequest * entityHandlerRequest)
+                                           OCEntityHandlerRequest * entityHandlerRequest,
+                                           void* callbackParam)
 {
     OCEntityHandlerResult result = OC_EH_ERROR;
 
@@ -344,6 +346,7 @@ namespace OC
                             resourceInterface.c_str(), //const char * resourceInterfaceName //TODO fix this
                             resourceURI.c_str(), // const char * uri
                             EntityHandlerWrapper, // OCEntityHandler entityHandler
+                            NULL,
                             resourceProperties // uint8_t resourceProperties
                             );
             }
@@ -354,6 +357,7 @@ namespace OC
                             resourceInterface.c_str(), //const char * resourceInterfaceName //TODO fix this
                             resourceURI.c_str(), // const char * uri
                             NULL, // OCEntityHandler entityHandler
+                            NULL,
                             resourceProperties // uint8_t resourceProperties
                             );
             }
@@ -391,12 +395,12 @@ namespace OC
 
         if(entityHandler)
         {
-            result = OCSetDefaultDeviceEntityHandler(DefaultEntityHandlerWrapper);
+            result = OCSetDefaultDeviceEntityHandler(DefaultEntityHandlerWrapper, NULL);
         }
         else
         {
             // If Null passed we unset
-            result = OCSetDefaultDeviceEntityHandler(NULL);
+            result = OCSetDefaultDeviceEntityHandler(NULL, NULL);
         }
 
         return result;

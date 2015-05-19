@@ -265,7 +265,8 @@ OCEntityHandlerResult handleNonExistingResourceRequest(OCEntityHandlerRequest *e
  *     OC_EH_ERROR
  */
 OCEntityHandlerResult resourceEntityHandlerCB (OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest *entityHandlerRequest);
+        OCEntityHandlerRequest *entityHandlerRequest,
+        void *callbackParam);
 
 /**
  *
@@ -343,7 +344,7 @@ OCStackResult registerResourceAsCoordinatable(OCResourceHandle *handle,
     OC_LOG_V(DEBUG, HOSTING_TAG, "requiredUri+coordinatingFlag = %s", coordinatingURI);
 
     ret = OCCreateResource(handle, resourceTypeName, resourceInterfaceName,
-            coordinatingURI, entityHandler, resourceProperties);
+            coordinatingURI, entityHandler, NULL, resourceProperties);
     free(coordinatingURI);
     return ret;
 }
@@ -753,6 +754,7 @@ OCStackResult registerMirrorResource(MirrorResource *mirrorResource)
                               mirrorResource->prop.resourceInterfaceName[0],
                               mirrorResource->uri,
                               resourceEntityHandlerCB,
+                              NULL,
                               OC_DISCOVERABLE | OC_OBSERVABLE);
 
     OC_LOG_V(DEBUG, HOSTING_TAG, "created mirror resource Handle : %u",mirrorResource->resourceHandle[OIC_MIRROR_HANDLE]);
@@ -1026,7 +1028,8 @@ char *buildResponsePayload (OCEntityHandlerRequest *entityHandlerRequest)
 
 OCEntityHandlerResult
 resourceEntityHandlerCB (OCEntityHandlerFlag entifyHandlerFlag,
-                         OCEntityHandlerRequest *entityHandlerRequest)
+                         OCEntityHandlerRequest *entityHandlerRequest,
+                         void* callbackParam)
 {
     OC_LOG_V(DEBUG, HOSTING_TAG, "Inside device default entity handler - flags: 0x%x",
              entifyHandlerFlag);

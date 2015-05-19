@@ -124,7 +124,7 @@ namespace OCResourceResponseTest
         uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
 
         EXPECT_EQ(OC_STACK_OK, OCCreateResource(&resHandle, resourceURI.c_str(),
-                resourceTypeName.c_str(), resourceInterface.c_str(), nullptr,
+                resourceTypeName.c_str(), resourceInterface.c_str(), nullptr, nullptr,
                 resourceProperty));
         EXPECT_EQ(NULL, response.getResourceHandle());
         EXPECT_NO_THROW(response.setResourceHandle(resHandle));
