@@ -26,6 +26,7 @@
 #include "logger.h"
 #include "aclresource.h"
 #include "srmutility.h"
+#include "doxmresource.h"
 #include <string.h>
 
 #define TAG PCF("SRM-PE")
@@ -56,6 +57,28 @@ uint16_t GetPermissionFromCAMethod_t(const CAMethod_t method)
 }
 
 /**
+ * @brief Compares two OicUuid_t structs.
+ * @return true if the two OicUuid_t structs are equal, else false.
+ */
+bool UuidCmp(OicUuid_t *firstId, OicUuid_t *secondId)
+{
+    // TODO use VERIFY macros to check for null when they are merged.
+    if(NULL == firstId || NULL == secondId)
+    {
+        return false;
+    }
+    for(int i = 0; i < UUID_LENGTH; i++)
+    {
+        if(firstId->id[i] != secondId->id[i])
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+
+/**
  * Set the state and clear other stateful context vars.
  */
 void SetPolicyEngineState(PEContext_t *context, const PEState_t state)
@@ -74,12 +97,30 @@ void SetPolicyEngineState(PEContext_t *context, const PEState_t state)
 }
 
 /**
+ * @brief Compare the request's subject to DevOwner.
+ *
+ * @return true if context->subjectId == GetDoxmDevOwner(), else false
+ */
+bool IsRequestFromDevOwner(PEContext_t *context)
+{
+    bool retVal = false;
+    OicUuid_t owner;
+
+    if(OC_STACK_OK == GetDoxmDevOwnerId(&owner))
+    {
+        retVal = UuidCmp(context->subject, &owner);
+    }
+
+    return retVal;
+}
+
+/**
  * Bitwise check to see if 'permission' contains 'request'.
  * @param   permission  The allowed CRUDN permission.
  * @param   request     The CRUDN permission being requested.
  * @return true if 'permission' bits include all 'request' bits.
  */
-static inline bool IsRequestAllowed(const uint16_t permission,
+static inline bool IsPermissionAllowingRequest(const uint16_t permission,
     const uint16_t request)
 {
     if(request == (request & permission))
@@ -204,7 +245,7 @@ void ProcessAccessRequest(PEContext_t *context)
                     context->matchingAclFound = true;
                     // Found the resource, so it's down to permission.
                     context->retVal = ACCESS_DENIED_INSUFFICIENT_PERMISSION;
-                    if(IsRequestAllowed(currentAcl->permission, \
+                    if(IsPermissionAllowingRequest(currentAcl->permission, \
                         context->permission))
                     {
                         context->retVal = ACCESS_GRANTED;
@@ -259,17 +300,27 @@ SRMAccessResponse_t CheckPermission(
     {
         SetPolicyEngineState(context, BUSY);
         CopyParamsToContext(context, subjectId, resource, requestedPermission);
-        ProcessAccessRequest(context);
-        // If matching ACL not found, and subject != wildcard, try wildcard.
-        if((false == context->matchingAclFound) && \
-            (false == IsWildCardSubject(context->subject)))
+        // Before doing any processing, check if request coming
+        // from DevOwner and if so, always GRANT.
+        if(IsRequestFromDevOwner(context))
         {
-            OCFree(context->subject);
-            context->subject = OCMalloc(sizeof(OicUuid_t));
-            VERIFY_NON_NULL(TAG, context->subject, ERROR);
-            memcpy(context->subject, &WILDCARD_SUBJECT_ID, sizeof(OicUuid_t));
-            ProcessAccessRequest(context);  // TODO anonymous subject can result
-                                            // in confusing error code return.
+            context->retVal = ACCESS_GRANTED;
+        }
+        else
+        {
+            ProcessAccessRequest(context);
+            // If matching ACL not found, and subject != wildcard, try wildcard.
+            if((false == context->matchingAclFound) && \
+                (false == IsWildCardSubject(context->subject)))
+            {
+                OCFree(context->subject);
+                context->subject = OCMalloc(sizeof(OicUuid_t));
+                VERIFY_NON_NULL(TAG, context->subject, ERROR);
+                memcpy(context->subject, &WILDCARD_SUBJECT_ID,
+                    sizeof(OicUuid_t));
+                ProcessAccessRequest(context); // TODO anonymous subj can result
+                                               // in confusing err code return.
+            }
         }
     }
     else
@@ -290,7 +341,8 @@ exit:
  * @param   context     Pointer to Policy Engine context to initialize.
  * @return  OC_STACK_OK for Success, otherwise some error value
  */
-OCStackResult InitPolicyEngine(PEContext_t *context) {
+OCStackResult InitPolicyEngine(PEContext_t *context)
+{
     if(NULL != context)
     {
         SetPolicyEngineState(context, AWAITING_REQUEST);
@@ -305,7 +357,8 @@ OCStackResult InitPolicyEngine(PEContext_t *context) {
  * @param   context     Pointer to Policy Engine context to de-initialize.
  * @return  none
  */
-void DeInitPolicyEngine(PEContext_t *context) {
+void DeInitPolicyEngine(PEContext_t *context)
+{
     if(NULL != context)
     {
         SetPolicyEngineState(context, STOPPED);

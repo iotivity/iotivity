@@ -79,6 +79,13 @@ char * BinToDoxmJSON(const OicSecDoxm_t * doxm);
  */
 OCStackResult GetDoxmDeviceID(OicUuid_t *deviceID);
 
+/**
+ * @brief Gets the OicUuid_t value for the owner of this device.
+ *
+ * @return OC_STACK_OK if devOwner is a valid UUID, otherwise OC_STACK_ERROR.
+ */
+OCStackResult GetDoxmDevOwnerId(OicUuid_t *devOwner);
+
 /** This function deallocates the memory for OicSecDoxm_t .
  *
  * @param[in] doxm  Pointer to OicSecDoxm_t.

@@ -627,3 +627,21 @@ OCStackResult GetDoxmDeviceID(OicUuid_t *deviceID)
     }
     return OC_STACK_ERROR;
 }
+
+/**
+ * @brief Gets the OicUuid_t value for the owner of this device.
+ *
+ * @return OC_STACK_OK if devOwner is a valid UUID, otherwise OC_STACK_ERROR.
+ */
+OCStackResult GetDoxmDevOwnerId(OicUuid_t *devOwner)
+{
+    OCStackResult retVal = OC_STACK_ERROR;
+    if(gDoxm)
+    {
+        if(gDoxm->owned) {
+            *devOwner = gDoxm->owner; // TODO change to devOwner when available
+            retVal = OC_STACK_OK;
+        }
+    }
+    return retVal;
+}

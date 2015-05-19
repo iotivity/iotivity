@@ -1,4 +1,4 @@
-LAST UPDATED 3/13/2015
+LAST UPDATED 5/19/2015
 
 Note: These instructions assume the "security-M3" branch of IoTivity has been checked out.
 
@@ -7,7 +7,7 @@ To build the IoTivity stack with the security features enabled:
 1) Build TinyDTLS:
 	$ cd <iotivity-base>/extlibs/tinydtls
 	$ autoconf
-	$ ./configure --without-debug --without-ecc 'CFLAGS=-fPIC'
+	$ ./configure --without-debug
 	$ make
 
 2) Build IoTivity with security enabled:
@@ -17,7 +17,6 @@ To build the IoTivity stack with the security features enabled:
 3) Verify functionality using secure sample apps:
 	$ cd <iotivity-base>/out/<...>/release/resource/csdk/stack/samples/linux/secure
 	$ export LD_LIBRARY_PATH=<iotivity-base>/out/<...>/release
-	$ ./gen_sec_bin
 	$ ./ocserverbasicops &
 	$ ./occlientbasicops -t 1
 

@@ -28,11 +28,14 @@
 
 using namespace std;
 
+#define PE_UT_TAG "\tPE-UT-message: "
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #include "policyengine.h"
+#include "doxmresource.h"
 
 // test parameters
 PEContext_t g_peContext;
@@ -43,6 +46,7 @@ PEContext_t g_peContext;
 
 OicUuid_t g_subjectIdA = {"SubjectA"};
 OicUuid_t g_subjectIdB = {"SubjectB"};
+OicUuid_t g_devOwner;
 char g_resource1[] = "Resource1";
 char g_resource2[] = "Resource2";
 
@@ -59,6 +63,39 @@ TEST(PolicyEngineCore, CheckPermissionNoAcls)
                         &g_subjectIdA,
                         g_resource1,
                         PERMISSION_READ));
+}
+
+//TODO This won't work until we figure out how to OcInit() or equivalent.
+TEST(PolicyEngineCore, CheckDevOwnerRequest)
+{
+    if(OC_STACK_OK == InitDoxmResource())
+    {
+        if(OC_STACK_OK == GetDoxmDevOwnerId(&g_devOwner))
+        {
+            printf("%s", PE_UT_TAG);
+            for(int i = 0; i < UUID_LENGTH; i++)
+            {
+                printf("%d", g_devOwner.id[i]);
+            }
+            printf("\n");
+                EXPECT_EQ(ACCESS_GRANTED,
+                    CheckPermission(&g_peContext,
+                        &g_devOwner,
+                        g_resource1,
+                        PERMISSION_FULL_CONTROL));
+        }
+        else
+        {
+            printf("%s WARNING: InitDoxmResource() returned ERROR!\n", \
+                PE_UT_TAG);
+        }
+    }
+    else
+    {
+        printf("%s WARNING: GetDoxmDevOwnerId() returned ERROR!\n", PE_UT_TAG);
+    }
+
+
 }
 
 TEST(PolicyEngineCore, DeInitPolicyEngine)
