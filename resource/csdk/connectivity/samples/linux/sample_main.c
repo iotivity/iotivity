@@ -911,8 +911,8 @@ void select_network()
     printf("\n=============================================\n");
     printf("\tselect network\n");
     printf("IPv4 : 0\n");
-    printf("EDR : 2\n");
-    printf("LE : 3\n");
+    printf("EDR  : 2\n");
+    printf("LE   : 3\n");
     printf("select : ");
 
     char buf[MAX_BUF_LEN] = { 0 };
@@ -1053,7 +1053,11 @@ void get_network_info()
         {
             printf("Address: %s\n", tempInfo[index].addressInfo.BT.btMacAddress);
         }
-        printf("Secured: %d\n\n", tempInfo[index].isSecured);
+        else if (CA_LE == tempInfo[index].type)
+        {
+            printf("Address: %s\n", tempInfo[index].addressInfo.LE.leMacAddress);
+        }
+        printf("Secured: %s\n\n", tempInfo[index].isSecured ? "true" : "false");
 
         if (tempInfo[index].isSecured)
         {
@@ -1092,6 +1096,10 @@ void request_handler(const CARemoteEndpoint_t *object, const CARequestInfo_t *re
     else if (CA_EDR == object->transportType)
     {
         printf("Remote Address: %s \n", object->addressInfo.BT.btMacAddress);
+    }
+    else if (CA_LE == object->transportType)
+    {
+        printf("Remote Address: %s \n", object->addressInfo.LE.leMacAddress);
     }
     printf("Data: %s\n", requestInfo->info.payload);
     printf("Message type: %s\n", MESSAGE_TYPE[requestInfo->info.type]);
@@ -1166,6 +1174,10 @@ void response_handler(const CARemoteEndpoint_t *object, const CAResponseInfo_t *
     else if (CA_EDR == object->transportType)
     {
         printf("Remote Address: %s \n", object->addressInfo.BT.btMacAddress);
+    }
+    else if (CA_LE == object->transportType)
+    {
+        printf("Remote Address: %s \n", object->addressInfo.LE.leMacAddress);
     }
     printf("response result : %d\n", responseInfo->result);
     printf("Data: %s\n", responseInfo->info.payload);
