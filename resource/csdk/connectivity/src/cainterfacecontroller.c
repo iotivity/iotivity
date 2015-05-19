@@ -21,7 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
+#include <inttypes.h>
 
 #include "cainterfacecontroller.h"
 #include "caipadapter.h"
@@ -207,39 +207,42 @@ void CAStopAdapter(CATransportType_t transportType)
 
 CAResult_t CAGetNetworkInfo(CALocalConnectivity_t **info, uint32_t *size)
 {
+    if (info == NULL || size == NULL)
+    {
+        return CA_STATUS_INVALID_PARAM;
+    }
+
     CALocalConnectivity_t *tempInfo[CA_TRANSPORT_TYPE_NUM] = { 0 };
     uint32_t tempSize[CA_TRANSPORT_TYPE_NUM] = { 0 };
 
-    // #1. get information each adapter
-    uint8_t index = 0;
     CAResult_t res = CA_STATUS_FAILED;
-    for (index = 0; index < CA_TRANSPORT_TYPE_NUM; index++)
+    uint32_t resSize = 0;
+    for (int index = 0; index < CA_TRANSPORT_TYPE_NUM; index++)
     {
         if (g_adapterHandler[index].GetnetInfo != NULL)
         {
-            res = g_adapterHandler[index].GetnetInfo(&tempInfo[index], &tempSize[index]);
+            // #1. get information for each adapter
+            res = g_adapterHandler[index].GetnetInfo(&tempInfo[index],
+                                                     &tempSize[index]);
 
-            OIC_LOG_V(DEBUG, TAG, "%d adapter network info size is %d res:%d", index,
-                      tempSize[index], res);
+            // #2. total size
+            if (res == CA_STATUS_OK)
+            {
+                resSize += tempSize[index];
+            }
+
+            OIC_LOG_V(DEBUG,
+                      TAG,
+                      "%d adapter network info size is %" PRIu32 " res:%d",
+                      index,
+                      tempSize[index],
+                      res);
         }
-    }
-
-    uint32_t resSize = 0;
-    for (index = 0; index < CA_TRANSPORT_TYPE_NUM; index++)
-    {
-        // check information
-        if (tempInfo[index] == NULL || tempSize[index] <= 0)
-        {
-            continue;
-        }
-
-        // #2. total size
-        resSize += tempSize[index];
     }
 
     OIC_LOG_V(DEBUG, TAG, "network info total size is %d!", resSize);
 
-    if (resSize <= 0)
+    if (resSize == 0)
     {
         if (res == CA_ADAPTER_NOT_ENABLED || res == CA_NOT_SUPPORTED)
         {
@@ -251,37 +254,30 @@ CAResult_t CAGetNetworkInfo(CALocalConnectivity_t **info, uint32_t *size)
     // #3. add data into result
     // memory allocation
 
-    CALocalConnectivity_t *resInfo = (CALocalConnectivity_t *) OICCalloc(
-            resSize, sizeof(CALocalConnectivity_t));
+    CALocalConnectivity_t * resInfo = OICCalloc(resSize, sizeof(*resInfo));
     CA_MEMORY_ALLOC_CHECK(resInfo);
 
-    uint8_t pos = 0;
-    for (index = 0; index < CA_TRANSPORT_TYPE_NUM; index++)
+    // #4. save data
+    *info = resInfo;
+    *size = resSize;
+
+    for (int index = 0; index < CA_TRANSPORT_TYPE_NUM; index++)
     {
         // check information
-        if (tempInfo[index] == NULL || tempSize[index] <= 0)
+        if (tempSize[index] == 0)
         {
             continue;
         }
 
-        memcpy(resInfo + pos, tempInfo[index], sizeof(CALocalConnectivity_t) * tempSize[index]);
+        memcpy(resInfo,
+               tempInfo[index],
+               sizeof(*resInfo) * tempSize[index]);
 
-        pos += tempSize[index];
+        resInfo += tempSize[index];
 
         // free adapter data
         OICFree(tempInfo[index]);
         tempInfo[index] = NULL;
-    }
-
-    // #5. save data
-    if ( info != NULL )
-    {
-        *info = resInfo;
-    }
-
-    if (size)
-    {
-        *size = resSize;
     }
 
     OIC_LOG(DEBUG, TAG, "each network info save success!");
@@ -290,7 +286,7 @@ CAResult_t CAGetNetworkInfo(CALocalConnectivity_t **info, uint32_t *size)
     // memory error label.
 memory_error_exit:
 
-    for (index = 0; index < CA_TRANSPORT_TYPE_NUM; index++)
+    for (int index = 0; index < CA_TRANSPORT_TYPE_NUM; index++)
     {
 
         OICFree(tempInfo[index]);
@@ -490,4 +486,3 @@ void CATerminateAdapters()
         }
     }
 }
-
