@@ -632,11 +632,10 @@ Java_org_iotivity_service_RMInterface_RMSendNotification(JNIEnv *env, jobject ob
     if (CA_STATUS_OK != CACreateRemoteEndpoint((const CAURI_t) strUri,
                                                g_selectedNwType, &endpoint))
     {
-        LOGE("Could not create remote end point");
-        return;
-
         //ReleaseStringUTFChars for strUri
         (*env)->ReleaseStringUTFChars(env, uri, strUri);
+        LOGE("Could not create remote end point");
+        return;
     }
 
     char resourceURI[RESOURCE_URI_LENGTH + 1] = { 0 };
@@ -976,25 +975,21 @@ void request_handler(const CARemoteEndpoint_t* object, const CARequestInfo_t* re
 
                 callback("Option info: ", optionInfo);
 
-                if (0 != requestInfo->info.options[i].optionData)
+                uint32_t optionDataLen = strlen(requestInfo->info.options[i].optionData);
+                char *cloneOptionData = (char *) malloc(sizeof(char) * (optionDataLen + 1));
+                if (NULL == cloneOptionData)
                 {
-                    uint32_t optionDataLen = strlen(requestInfo->info.options[i].optionData);
-                    char *cloneOptionData = (char *) malloc(sizeof(char) * (optionDataLen + 1));
-
-                    if (NULL == cloneOptionData)
-                    {
-                        LOGE("cloneOptionData Out of memory");
-                        free(g_clientEndpoint->resourceUri);
-                        free(g_clientEndpoint);
-                        return;
-                    }
-
-                    memcpy(cloneOptionData, requestInfo->info.options[i].optionData,
-                           optionDataLen + 1);
-
-                    callback("Option Data: ", cloneOptionData);
-                    free(cloneOptionData);
+                    LOGE("cloneOptionData Out of memory");
+                    free(g_clientEndpoint->resourceUri);
+                    free(g_clientEndpoint);
+                    return;
                 }
+
+                memcpy(cloneOptionData, requestInfo->info.options[i].optionData,
+                       optionDataLen + 1);
+
+                callback("Option Data: ", cloneOptionData);
+                free(cloneOptionData);
             }
         }
     }
@@ -1133,21 +1128,17 @@ void response_handler(const CARemoteEndpoint_t* object, const CAResponseInfo_t* 
 
                 callback("Option info: ", optionInfo);
 
-                if (0 != responseInfo->info.options[i].optionData)
+                uint32_t optionDataLen = strlen(responseInfo->info.options[i].optionData);
+                char *cloneOptionData = (char *) malloc(sizeof(char) * (optionDataLen + 1));
+                if (NULL == cloneOptionData)
                 {
-                    uint32_t optionDataLen = strlen(responseInfo->info.options[i].optionData);
-                    char *cloneOptionData = (char *) malloc(sizeof(char) * (optionDataLen + 1));
-
-                    if (NULL == cloneOptionData)
-                    {
-                        LOGE("cloneOptionData Out of memory");
-                        return;
-                    }
-                    memcpy(cloneOptionData, responseInfo->info.options[i].optionData,
-                           optionDataLen + 1);
-                    callback("Option Data: ", cloneOptionData);
-                    free(cloneOptionData);
+                    LOGE("cloneOptionData Out of memory");
+                    return;
                 }
+                memcpy(cloneOptionData, responseInfo->info.options[i].optionData,
+                       optionDataLen + 1);
+                callback("Option Data: ", cloneOptionData);
+                free(cloneOptionData);
             }
         }
     }
