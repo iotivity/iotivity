@@ -25,41 +25,10 @@
 #include "srmresourcestrings.h"
 #include "logger.h"
 #include "aclresource.h"
+#include "srmutility.h"
 #include <string.h>
 
 #define TAG PCF("SRM-PE")
-
-/**
- * Return the uint16_t CRUDN permission corresponding to passed OCMethod.
- */
-uint16_t GetPermissionFromOCMethod(const OCMethod method)
-{
-    uint16_t perm = 0;
-    switch(method)
-    {
-        case OC_REST_GET:
-        case OC_REST_OBSERVE:
-        case OC_REST_OBSERVE_ALL:
-        case OC_REST_PRESENCE:
-            perm = (uint16_t)PERMISSION_READ;
-            break;
-        case OC_REST_PUT:   // For now we treat all PUT & POST as Write
-        case OC_REST_POST:  // because we don't know if resource exists yet.
-            perm = (uint16_t)PERMISSION_WRITE;
-            break;
-        case OC_REST_DELETE:
-            perm = (uint16_t)PERMISSION_DELETE;
-            break;
-        case OC_REST_NOMETHOD:
-        case OC_REST_CANCEL_OBSERVE:
-            perm = 0; // TODO is this correct for these cases?
-            break;
-        default: // if not recognized, must assume requesting full control
-            perm = (uint16_t)PERMISSION_FULL_CONTROL;
-            break;
-    }
-    return perm;
-}
 
 /**
  * Return the uint16_t CRUDN permission corresponding to passed CAMethod_t.
@@ -155,7 +124,7 @@ void CopyParamsToContext(
     OCFree(context->subject);
     // Copy the subjectId into context.
     context->subject = OCMalloc(sizeof(OicUuid_t));
-    // TODO check context->subject for NULL and error out
+    VERIFY_NON_NULL(TAG, context->subject, ERROR);
     memcpy(context->subject, subjectId, sizeof(OicUuid_t));
 
     // Copy the resource string into context.
@@ -164,7 +133,7 @@ void CopyParamsToContext(
     {
         OCFree(context->resource);
         context->resource = OCMalloc(length);
-        // TODO check context->resource for NULL and error out
+        VERIFY_NON_NULL(TAG, context->resource, ERROR);
         strncpy(context->resource, resource, length);
         context->resource[length - 1] = '\0';
     }
@@ -172,6 +141,7 @@ void CopyParamsToContext(
     // Assign the permission field.
     context->permission = requestedPermission;
 
+exit:
     return;
 }
 
@@ -276,8 +246,11 @@ SRMAccessResponse_t CheckPermission(
     const char      *resource,
     const uint16_t  requestedPermission)
 {
-    // TODO check all args for NULL
     SRMAccessResponse_t retVal = ACCESS_DENIED_POLICY_ENGINE_ERROR;
+
+    VERIFY_NON_NULL(TAG, context, ERROR);
+    VERIFY_NON_NULL(TAG, subjectId, ERROR);
+    VERIFY_NON_NULL(TAG, resource, ERROR);
 
     // Each state machine context can only be processing one request at a time.
     // Therefore if the context is not in AWAITING_REQUEST state, return error.
@@ -293,7 +266,7 @@ SRMAccessResponse_t CheckPermission(
         {
             OCFree(context->subject);
             context->subject = OCMalloc(sizeof(OicUuid_t));
-            // TODO check context->subject for NULL and error out
+            VERIFY_NON_NULL(TAG, context->subject, ERROR);
             memcpy(context->subject, &WILDCARD_SUBJECT_ID, sizeof(OicUuid_t));
             ProcessAccessRequest(context);  // TODO anonymous subject can result
                                             // in confusing error code return.
@@ -308,6 +281,7 @@ SRMAccessResponse_t CheckPermission(
     retVal = context->retVal;
     SetPolicyEngineState(context, AWAITING_REQUEST);
 
+exit:
     return retVal;
 }
 

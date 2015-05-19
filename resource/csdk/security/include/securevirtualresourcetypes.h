@@ -38,10 +38,6 @@
  * (Last checked against v0.95)
  */
 
-/**
- * TODO WARNING: this code has NOT been unit tested!
- */
-
 #ifndef OC_SECURITY_RESOURCE_TYPES_H
 #define OC_SECURITY_RESOURCE_TYPES_H
 

@@ -31,6 +31,7 @@ extern "C" {
 /**
  * @def VERIFY_SUCCESS
  * @brief Macro to verify success of operation.
+ * eg: VERIFY_SUCCESS(TAG, OC_STACK_OK == foo(), ERROR);
  * @note Invoking function must define "exit:" label for goto functionality to work correctly.
  *
  */
@@ -40,12 +41,12 @@ extern "C" {
 /**
  * @def VERIFY_NON_NULL
  * @brief Macro to verify argument is not equal to NULL.
+ * eg: VERIFY_NON_NULL(TAG, ptrData, ERROR);
  * @note Invoking function must define "exit:" label for goto functionality to work correctly.
  *
  */
-
-#define VERIFY_NON_NULL(tag, arg, logLevel) { if (NULL == (arg)) { OC_LOG((logLevel), \
-             tag, PCF(#arg " is NULL")); goto exit; } }
+#define VERIFY_NON_NULL(tag, arg, logLevel) { if (NULL == (arg)) \
+            { OC_LOG((logLevel), tag, PCF(#arg " is NULL")); goto exit; } }
 
 
 #ifdef __cplusplus
