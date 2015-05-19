@@ -1933,6 +1933,18 @@ OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistent
         OC_LOG(ERROR, TAG, PCF("The persistent storage handler is invalid"));
         return OC_STACK_INVALID_PARAM;
     }
+    else
+    {
+        if( !persistentStorageHandler->open ||
+                !persistentStorageHandler->close ||
+                !persistentStorageHandler->read ||
+                !persistentStorageHandler->unlink ||
+                !persistentStorageHandler->write)
+        {
+            OC_LOG(ERROR, TAG, PCF("The persistent storage handler is invalid"));
+            return OC_STACK_INVALID_PARAM;
+        }
+    }
     return SRMRegisterPersistentStorageHandler(persistentStorageHandler);
 }
 

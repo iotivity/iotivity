@@ -100,7 +100,7 @@ void SetPersistentHandler(OCPersistentStorage *ps, bool set)
         memset(ps, 0, sizeof(OCPersistentStorage));
     }
     EXPECT_EQ(OC_STACK_OK,
-            SRMRegisterPersistentStorageHandler(ps));
+            OCRegisterPersistentStorageHandler(ps));
 }
 
 // JSON Marshalling Tests
@@ -159,9 +159,9 @@ TEST(ACLResourceTest, GetDefaultACLTests)
     // Invoke API to generate default ACL
     OicSecAcl_t * defaultAcl = NULL;
     OCStackResult ret = GetDefaultACL(&defaultAcl);
+    EXPECT_TRUE(NULL == defaultAcl);
 
-    EXPECT_TRUE(NULL != defaultAcl);
-    EXPECT_TRUE(OC_STACK_OK == ret);
+    EXPECT_TRUE(OC_STACK_ERROR == ret);
 
     // Verify if the SRM generated default ACL matches with unit test default
     if (acl && defaultAcl)
@@ -216,7 +216,6 @@ TEST(ACLResourceTest, ACLPostTest)
     EXPECT_TRUE(NULL != subjectAcl);
 
     // Perform cleanup
-    SetPersistentHandler(&ps, false);
     DeleteACLList(acl);
     DeInitACLResource();
     OCFree(jsonStr);
