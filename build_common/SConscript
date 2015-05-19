@@ -108,8 +108,11 @@ tc_set_msg = '''
 '''
 if env.get('VERBOSE') == False:
 	env['CCCOMSTR'] = "Compiling $TARGET"
+	env['SHCCCOMSTR'] = "Compiling $TARGET"
 	env['CXXCOMSTR'] = "Compiling $TARGET"
+	env['SHCXXCOMSTR'] = "Compiling $TARGET"
 	env['LINKCOMSTR'] = "Linking $TARGET"
+	env['SHLINKCOMSTR'] = "Linking $TARGET"
 	env['ARCOMSTR'] = "Archiving $TARGET"
 	env['RANLIBCOMSTR'] = "Indexing Archive $TARGET"
 
