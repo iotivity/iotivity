@@ -30,16 +30,11 @@
 #include "ocrandom.h"
 #include "doxmresource.h"
 #include "base64.h"
+#include "srmutility.h"
 #include <stdlib.h>
 #include <string.h>
 
 #define TAG  PCF("SRM-CREDL")
-
-#define VERIFY_SUCCESS(op, logLevel) { if (!(op)) \
-            {OC_LOG((logLevel), TAG, PCF(#op " failed!!")); goto exit;} }
-
-#define VERIFY_NON_NULL(arg, logLevel) { if (!(arg)) { OC_LOG((logLevel), \
-             TAG, PCF(#arg " is NULL")); goto exit; } }
 
 static OicSecCred_t        *gCred = NULL;
 static OCResourceHandle    gCredHandle = NULL;
@@ -99,17 +94,17 @@ char * BinToCredJSON(const OicSecCred_t * cred)
         B64Result b64Ret = B64_OK;
 
         jsonRoot = cJSON_CreateObject();
-        VERIFY_NON_NULL(jsonRoot, ERROR);
+        VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
 
         cJSON *jsonCredArray = NULL;
         cJSON_AddItemToObject(jsonRoot, OIC_JSON_CRED_NAME,
                 jsonCredArray = cJSON_CreateArray());
-        VERIFY_NON_NULL(jsonCredArray, ERROR);
+        VERIFY_NON_NULL(TAG, jsonCredArray, ERROR);
 
         while(cred)
         {
             cJSON *jsonCred = cJSON_CreateObject();
-            VERIFY_NON_NULL(jsonCred, ERROR);
+            VERIFY_NON_NULL(TAG, jsonCred, ERROR);
 
             //CredID -- Mandatory
             cJSON_AddNumberToObject(jsonCred, OIC_JSON_CREDID_NAME, (int)cred->credId);
@@ -119,7 +114,7 @@ char * BinToCredJSON(const OicSecCred_t * cred)
             memset(base64Buff, 0, sizeof(base64Buff));
             b64Ret = b64Encode(cred->subject.id, sizeof(cred->subject.id), base64Buff,
                    sizeof(base64Buff), &outLen);
-            VERIFY_SUCCESS(b64Ret == B64_OK, ERROR);
+            VERIFY_SUCCESS(TAG, b64Ret == B64_OK, ERROR);
             cJSON_AddStringToObject(jsonCred, OIC_JSON_SUBJECT_NAME, base64Buff);
 
             //Note: Need further clarification on roleID data type
@@ -130,7 +125,7 @@ char * BinToCredJSON(const OicSecCred_t * cred)
                 cJSON *jsonRoleIdsArray = NULL;
                 cJSON_AddItemToObject (jsonCred, OIC_JSON_ROLEIDS_NAME,
                                          jsonRoleIdsArray = cJSON_CreateArray());
-                VERIFY_NON_NULL(jsonRoleIdsArray, ERROR);
+                VERIFY_NON_NULL(TAG, jsonRoleIdsArray, ERROR);
                 for (size_t i = 0; i < cred->roleIdsLen; i++)
                 {
                     cJSON_AddItemToArray (jsonRoleIdsArray,
@@ -166,14 +161,14 @@ char * BinToCredJSON(const OicSecCred_t * cred)
             cJSON *jsonOwnrArray = NULL;
             cJSON_AddItemToObject (jsonCred, OIC_JSON_OWNERS_NAME,
                                              jsonOwnrArray = cJSON_CreateArray());
-            VERIFY_NON_NULL(jsonOwnrArray, ERROR);
+            VERIFY_NON_NULL(TAG, jsonOwnrArray, ERROR);
             for (size_t i = 0; i < cred->ownersLen; i++)
             {
                 outLen = 0;
                 memset(base64Buff, 0, sizeof(base64Buff));
                 b64Ret = b64Encode(cred->owners[i].id, sizeof(cred->owners[i].id),
                         base64Buff, sizeof(base64Buff), &outLen);
-                VERIFY_SUCCESS(b64Ret == B64_OK, ERROR);
+                VERIFY_SUCCESS(TAG, b64Ret == B64_OK, ERROR);
                 cJSON_AddItemToArray (jsonOwnrArray,
                                        cJSON_CreateString((char *)(base64Buff)));
             }
@@ -204,10 +199,10 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
     OicSecCred_t * prevCred = NULL;
 
     cJSON *jsonRoot = cJSON_Parse(jsonStr);
-    VERIFY_NON_NULL(jsonRoot, ERROR);
+    VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
 
     cJSON *jsonCredArray = cJSON_GetObjectItem(jsonRoot, OIC_JSON_CRED_NAME);
-    VERIFY_NON_NULL(jsonCredArray, ERROR);
+    VERIFY_NON_NULL(TAG, jsonCredArray, ERROR);
     if (cJSON_Array == jsonCredArray->type)
     {
         int numCred = cJSON_GetArraySize(jsonCredArray);
@@ -217,14 +212,14 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
         uint32_t outLen = 0;
         B64Result b64Ret = B64_OK;
 
-        VERIFY_SUCCESS(numCred > 0, ERROR);
+        VERIFY_SUCCESS(TAG, numCred > 0, ERROR);
         do
         {
             cJSON *jsonCred = cJSON_GetArrayItem(jsonCredArray, idx);
-            VERIFY_NON_NULL(jsonCred, ERROR);
+            VERIFY_NON_NULL(TAG, jsonCred, ERROR);
 
             OicSecCred_t *cred = (OicSecCred_t*)OCCalloc(1, sizeof(OicSecCred_t));
-            VERIFY_NON_NULL(cred, ERROR);
+            VERIFY_NON_NULL(TAG, cred, ERROR);
 
             headCred = (headCred) ? headCred : cred;
             if (prevCred)
@@ -236,19 +231,19 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
 
             //CredId -- Mandatory
             jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_CREDID_NAME);
-            VERIFY_NON_NULL(jsonObj, ERROR);
-            VERIFY_SUCCESS(cJSON_Number == jsonObj->type, ERROR)
+            VERIFY_NON_NULL(TAG, jsonObj, ERROR);
+            VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR)
             cred->credId = jsonObj->valueint;
 
             //subject -- Mandatory
             jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_SUBJECT_NAME);
-            VERIFY_NON_NULL(jsonObj, ERROR);
-            VERIFY_SUCCESS(cJSON_String == jsonObj->type, ERROR)
+            VERIFY_NON_NULL(TAG, jsonObj, ERROR);
+            VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR)
             outLen = 0;
             memset(base64Buff, 0, sizeof(base64Buff));
             b64Ret = b64Decode(jsonObj->valuestring, strlen(jsonObj->valuestring),
                     base64Buff, sizeof(base64Buff), &outLen);
-            VERIFY_SUCCESS((b64Ret == B64_OK) && (outLen <= sizeof(cred->subject.id)),
+            VERIFY_SUCCESS(TAG, (b64Ret == B64_OK && outLen <= sizeof(cred->subject.id)),
                            ERROR);
             memcpy(cred->subject.id, base64Buff, outLen);
 
@@ -259,13 +254,13 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
             if (jsonObj && cJSON_Array == jsonObj->type)
             {
                 cred->roleIdsLen = cJSON_GetArraySize(jsonObj);
-                VERIFY_SUCCESS(cred->roleIdsLen > 0, ERROR);
+                VERIFY_SUCCESS(TAG, cred->roleIdsLen > 0, ERROR);
                 cred->roleIds = (OicSecRole_t *)OCCalloc(cred->roleIdsLen, sizeof(OicSecRole_t));
-                VERIFY_NON_NULL(cred->roleIds, ERROR);
+                VERIFY_NON_NULL(TAG, (cred->roleIds), ERROR);
                 for(size_t i = 0; i < cred->roleIdsLen; i++)
                 {
                     cJSON *jsonRole = cJSON_GetArrayItem(jsonObj, i);
-                    VERIFY_NON_NULL(jsonRole, ERROR);
+                    VERIFY_NON_NULL(TAG, jsonRole, ERROR);
                     jsonObjLen = strlen(jsonRole->valuestring) + 1;
                     strncpy((char *)cred->roleIds[i].id, (char *)jsonRole->valuestring, jsonObjLen);
                 }
@@ -274,8 +269,8 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
 
             //CredType -- Mandatory
             jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_CREDTYPE_NAME);
-            VERIFY_NON_NULL(jsonObj, ERROR);
-            VERIFY_SUCCESS(cJSON_Number == jsonObj->type, ERROR)
+            VERIFY_NON_NULL(TAG, jsonObj, ERROR);
+            VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR)
             cred->credType = jsonObj->valueint;
 
 #if 0
@@ -285,7 +280,7 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
             {
                 jsonObjLen = strlen(jsonObj->valuestring) + 1;
                 cred->publicData.data = (char *)OCMalloc(jsonObjLen);
-                VERIFY_NON_NULL(cred->publicData.data, ERROR);
+                VERIFY_NON_NULL(TAG, (cred->publicData.data), ERROR);
                 strncpy((char *)cred->publicData.data, (char *)jsonObj->valuestring, jsonObjLen);
             }
 #endif
@@ -296,14 +291,14 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
                 (cred->credType & SYMMETRIC_GROUP_KEY) ||
                 (cred->credType & PIN_PASSWORD))
             {
-                VERIFY_NON_NULL(jsonObj, ERROR);
-                VERIFY_SUCCESS(cJSON_String == jsonObj->type, ERROR);
+                VERIFY_NON_NULL(TAG, jsonObj, ERROR);
+                VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
             }
             if(jsonObj && cJSON_String == jsonObj->type)
             {
                 jsonObjLen = strlen(jsonObj->valuestring) + 1;
                 cred->privateData.data = (char *)OCMalloc(jsonObjLen);
-                VERIFY_NON_NULL(cred->privateData.data, ERROR);
+                VERIFY_NON_NULL(TAG, (cred->privateData.data), ERROR);
                 strncpy((char *)cred->privateData.data, (char *)jsonObj->valuestring, jsonObjLen);
             }
 
@@ -313,29 +308,29 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
             {
                 jsonObjLen = strlen(jsonObj->valuestring) + 1;
                 cred->period = (char *)OCMalloc(jsonObjLen);
-                VERIFY_NON_NULL(cred->period, ERROR);
+                VERIFY_NON_NULL(TAG, cred->period, ERROR);
                 strncpy(cred->period, jsonObj->valuestring, jsonObjLen);
             }
 
             //Owners -- Mandatory
             jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_OWNERS_NAME);
-            VERIFY_NON_NULL(jsonObj, ERROR);
-            VERIFY_SUCCESS(cJSON_Array == jsonObj->type, ERROR)
+            VERIFY_NON_NULL(TAG, jsonObj, ERROR);
+            VERIFY_SUCCESS(TAG, cJSON_Array == jsonObj->type, ERROR)
             cred->ownersLen = cJSON_GetArraySize(jsonObj);
-            VERIFY_SUCCESS(cred->ownersLen > 0, ERROR);
+            VERIFY_SUCCESS(TAG, cred->ownersLen > 0, ERROR);
             cred->owners = (OicUuid_t*)OCCalloc(cred->ownersLen, sizeof(OicUuid_t));
-            VERIFY_NON_NULL(cred->owners, ERROR);
+            VERIFY_NON_NULL(TAG, (cred->owners), ERROR);
             for(size_t i = 0; i < cred->ownersLen; i++)
             {
                 cJSON *jsonOwnr = cJSON_GetArrayItem(jsonObj, i);
-                VERIFY_NON_NULL(jsonOwnr, ERROR);
-                VERIFY_SUCCESS(cJSON_String == jsonOwnr->type, ERROR);
+                VERIFY_NON_NULL(TAG, jsonOwnr, ERROR);
+                VERIFY_SUCCESS(TAG, cJSON_String == jsonOwnr->type, ERROR);
                 outLen = 0;
                 memset(base64Buff, 0, sizeof(base64Buff));
                 b64Ret = b64Decode(jsonOwnr->valuestring, strlen(jsonOwnr->valuestring),
                          base64Buff, sizeof(base64Buff), &outLen);
-                VERIFY_SUCCESS((b64Ret == B64_OK) &&
-                        (outLen <= sizeof(cred->owners[i].id)), ERROR);
+                VERIFY_SUCCESS(TAG, (b64Ret == B64_OK &&
+                               outLen <= sizeof(cred->owners[i].id)), ERROR);
                 memcpy(cred->owners[i].id, base64Buff, outLen);
             }
             prevCred = cred;
@@ -375,12 +370,12 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
     OCStackResult ret = OC_STACK_ERROR;
 
     OicSecCred_t *cred = (OicSecCred_t*)OCCalloc(1, sizeof(OicSecCred_t));
-    VERIFY_NON_NULL(cred, ERROR);
+    VERIFY_NON_NULL(TAG, cred, ERROR);
 
     //TODO:Need more clarification on credId
     OCFillRandomMem((uint8_t*)&cred->credId, sizeof(cred->credId));
 
-    VERIFY_NON_NULL(subject, ERROR);
+    VERIFY_NON_NULL(TAG, subject, ERROR);
     memcpy(cred->subject.id, subject->id , sizeof(cred->subject.id));
 
     //TODO: check credType has one of the values {0, 1, 2, 4, 6, 8, 16}
@@ -390,7 +385,7 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
     if(publicData)
     {
         cred->publicData.data = (char *)OCMalloc(strlen(publicData)+1);
-        VERIFY_NON_NULL(cred->publicData.data, ERROR);
+        VERIFY_NON_NULL(TAG, cred->publicData.data, ERROR);
         strncpy((char *)cred->publicData.data, publicData, strlen(publicData)+1);
     }
 #endif
@@ -398,15 +393,15 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
     if(privateData)
     {
         cred->privateData.data = (char *)OCMalloc(strlen(privateData)+1);
-        VERIFY_NON_NULL(cred->privateData.data, ERROR);
+        VERIFY_NON_NULL(TAG, cred->privateData.data, ERROR);
         strncpy((char *)cred->privateData.data, privateData, strlen(privateData)+1);
     }
 
-    VERIFY_SUCCESS(ownersLen > 0, ERROR);
+    VERIFY_SUCCESS(TAG, ownersLen > 0, ERROR);
     cred->ownersLen = ownersLen;
 
     cred->owners = (OicUuid_t*)OCCalloc(cred->ownersLen, sizeof(OicUuid_t));
-    VERIFY_NON_NULL(cred->owners, ERROR);
+    VERIFY_NON_NULL(TAG, cred->owners, ERROR);
     for(size_t i = 0; i < cred->ownersLen; i++)
     {
         memcpy(cred->owners[i].id, owners[i].id, sizeof(cred->owners[i].id));
@@ -649,7 +644,7 @@ void GetDtlsPskCredentials(OCDtlsPskCredsBlob **credInfo)
             OicUuid_t deviceID = {};
 
             // Retrieve Device ID from doxm resource and copy in PSK creds blob
-            VERIFY_SUCCESS(GetDoxmDeviceID(&deviceID) == OC_STACK_OK, ERROR);
+            VERIFY_SUCCESS(TAG, GetDoxmDeviceID(&deviceID) == OC_STACK_OK, ERROR);
             memcpy(ocBlob->identity, deviceID.id, sizeof(ocBlob->identity));
 
             OicSecCred_t *cred = NULL;
@@ -667,7 +662,7 @@ void GetDtlsPskCredentials(OCDtlsPskCredsBlob **credInfo)
             {
                 ocBlob->creds =
                     (OCDtlsPskCreds*) OCMalloc(ocBlob->num * sizeof(OCDtlsPskCreds));
-                VERIFY_NON_NULL(ocBlob->creds, ERROR);
+                VERIFY_NON_NULL(TAG, ocBlob->creds, ERROR);
 
                 unsigned int i = 0;
                 LL_FOREACH(gCred, cred)
@@ -685,7 +680,7 @@ void GetDtlsPskCredentials(OCDtlsPskCredsBlob **credInfo)
                         B64Result b64Ret = b64Decode(cred->privateData.data,
                                 strlen(cred->privateData.data), ocBlob->creds[i].psk,
                                 sizeof(ocBlob->creds[i].psk), &outLen);
-                        VERIFY_SUCCESS(b64Ret == B64_OK, ERROR);
+                        VERIFY_SUCCESS(TAG, b64Ret == B64_OK, ERROR);
                         i++;
                     }
                 }

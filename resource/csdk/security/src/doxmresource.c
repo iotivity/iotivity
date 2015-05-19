@@ -33,16 +33,12 @@
 #include "cainterface.h"
 #include "credresource.h"
 #include "ocserverrequest.h"
+#include "srmutility.h"
+#include "uthash.h"
 #include <stdlib.h>
-#include <string.h>
+#include <strings.h>
 
 #define TAG  PCF("SRM-DOXM")
-
-#define VERIFY_SUCCESS(op, logLevel) { if (!(op)) \
-            {OC_LOG((logLevel), TAG, PCF(#op " failed!!")); goto exit;} }
-
-#define VERIFY_NON_NULL(arg, logLevel) { if (!(arg)) { OC_LOG((logLevel), \
-             TAG, PCF(#arg " is NULL")); goto exit; } }
 
 static OicSecDoxm_t        *gDoxm = NULL;
 static OCResourceHandle    gDoxmHandle = NULL;
@@ -88,10 +84,10 @@ char * BinToDoxmJSON(const OicSecDoxm_t * doxm)
 
     char *jsonStr = NULL;
     cJSON *jsonRoot = cJSON_CreateObject();
-    VERIFY_NON_NULL(jsonRoot, ERROR);
+    VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
 
     cJSON *jsonDoxm = cJSON_CreateObject();
-    VERIFY_NON_NULL(jsonDoxm, ERROR);
+    VERIFY_NON_NULL(TAG, jsonDoxm, ERROR);
     cJSON_AddItemToObject(jsonRoot, OIC_JSON_DOXM_NAME, jsonDoxm );
 
     char base64Buff[B64ENCODE_OUT_SAFESIZE(sizeof(((OicUuid_t*)0)->id)) + 1] = {};
@@ -102,7 +98,7 @@ char * BinToDoxmJSON(const OicSecDoxm_t * doxm)
     if(doxm->oxmTypeLen > 0)
     {
         cJSON *jsonOxmTyArray = cJSON_CreateArray();
-        VERIFY_NON_NULL(jsonOxmTyArray, ERROR);
+        VERIFY_NON_NULL(TAG, jsonOxmTyArray, ERROR);
         cJSON_AddItemToObject (jsonDoxm, OIC_JSON_OXM_TYPE_NAME, jsonOxmTyArray );
         for (size_t i = 0; i < doxm->oxmTypeLen; i++)
         {
@@ -114,7 +110,7 @@ char * BinToDoxmJSON(const OicSecDoxm_t * doxm)
     if(doxm->oxmLen > 0)
     {
         cJSON *jsonOxmArray = cJSON_CreateArray();
-        VERIFY_NON_NULL(jsonOxmArray, ERROR);
+        VERIFY_NON_NULL(TAG, jsonOxmArray, ERROR);
         cJSON_AddItemToObject (jsonDoxm, OIC_JSON_OXM_NAME,jsonOxmArray );
         for (size_t i = 0; i < doxm->oxmLen; i++)
         {
@@ -138,14 +134,14 @@ char * BinToDoxmJSON(const OicSecDoxm_t * doxm)
     outLen = 0;
     b64Ret = b64Encode(doxm->deviceID.id, sizeof(doxm->deviceID.id), base64Buff,
                     sizeof(base64Buff), &outLen);
-    VERIFY_SUCCESS(b64Ret == B64_OK, ERROR);
+    VERIFY_SUCCESS(TAG, b64Ret == B64_OK, ERROR);
     cJSON_AddStringToObject(jsonDoxm, OIC_JSON_DEVICE_ID_NAME, base64Buff);
 
     //Owner -- Mandatory
     outLen = 0;
     b64Ret = b64Encode(doxm->owner.id, sizeof(doxm->owner.id), base64Buff,
                     sizeof(base64Buff), &outLen);
-    VERIFY_SUCCESS(b64Ret == B64_OK, ERROR);
+    VERIFY_SUCCESS(TAG, b64Ret == B64_OK, ERROR);
     cJSON_AddStringToObject(jsonDoxm, OIC_JSON_OWNER_NAME, base64Buff);
 
     jsonStr = cJSON_PrintUnformatted(jsonRoot);
@@ -164,13 +160,13 @@ OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr)
     OicSecDoxm_t *doxm =  NULL;
 
     cJSON *jsonRoot = cJSON_Parse(jsonStr);
-    VERIFY_NON_NULL(jsonRoot, ERROR);
+    VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
 
     cJSON *jsonDoxm = cJSON_GetObjectItem(jsonRoot, OIC_JSON_DOXM_NAME);
-    VERIFY_NON_NULL(jsonDoxm, ERROR);
+    VERIFY_NON_NULL(TAG, jsonDoxm, ERROR);
 
     doxm = (OicSecDoxm_t*)OCCalloc(1, sizeof(OicSecDoxm_t));
-    VERIFY_NON_NULL(doxm, ERROR);
+    VERIFY_NON_NULL(TAG, doxm, ERROR);
 
     size_t jsonObjLen = 0;
     cJSON *jsonObj = NULL;
@@ -184,19 +180,19 @@ OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr)
     if ((jsonObj) && (cJSON_Array == jsonObj->type))
     {
         doxm->oxmTypeLen = cJSON_GetArraySize(jsonObj);
-        VERIFY_SUCCESS(doxm->oxmTypeLen > 0, ERROR);
+        VERIFY_SUCCESS(TAG, doxm->oxmTypeLen > 0, ERROR);
 
         doxm->oxmType = (OicUrn_t *)OCCalloc(doxm->oxmTypeLen, sizeof(char *));
-        VERIFY_NON_NULL(doxm->oxmType, FATAL);
+        VERIFY_NON_NULL(TAG, (doxm->oxmType), ERROR);
 
         for(int i  = 0; i < doxm->oxmTypeLen ; i++)
         {
             cJSON *jsonOxmTy = cJSON_GetArrayItem(jsonObj, i);
-            VERIFY_NON_NULL(jsonOxmTy, ERROR);
+            VERIFY_NON_NULL(TAG, jsonOxmTy, ERROR);
 
             jsonObjLen = strlen(jsonOxmTy->valuestring) + 1;
             doxm->oxmType[i] = (char*)OCMalloc(jsonObjLen);
-            VERIFY_NON_NULL(doxm->oxmType[i], FATAL);
+            VERIFY_NON_NULL(TAG, doxm->oxmType[i], ERROR);
             strncpy((char *)doxm->oxmType[i], (char *)jsonOxmTy->valuestring, jsonObjLen);
         }
     }
@@ -206,15 +202,15 @@ OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr)
     if (jsonObj && cJSON_Array == jsonObj->type)
     {
         doxm->oxmLen = cJSON_GetArraySize(jsonObj);
-        VERIFY_SUCCESS(doxm->oxmLen > 0, ERROR);
+        VERIFY_SUCCESS(TAG, doxm->oxmLen > 0, ERROR);
 
         doxm->oxm = (OicSecOxm_t*)OCCalloc(doxm->oxmLen, sizeof(short));
-        VERIFY_NON_NULL(doxm->oxm, FATAL);
+        VERIFY_NON_NULL(TAG, doxm->oxm, ERROR);
 
         for(int i  = 0; i < doxm->oxmLen ; i++)
         {
             cJSON *jsonOxm = cJSON_GetArrayItem(jsonObj, i);
-            VERIFY_NON_NULL(jsonOxm, ERROR);
+            VERIFY_NON_NULL(TAG, jsonOxm, ERROR);
             doxm->oxm[i] = jsonOxm->valueint;
         }
     }
@@ -223,12 +219,12 @@ OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr)
     jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_OXM_SEL_NAME);
     if(jsonObj)
     {
-        VERIFY_SUCCESS(cJSON_Number == jsonObj->type, ERROR)
+        VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR)
         doxm->oxmSel = jsonObj->valueint;
     }
     else // PUT/POST JSON may not have oxmsel so set it to the gDoxm->oxmSel
     {
-        VERIFY_NON_NULL(gDoxm, ERROR);
+        VERIFY_NON_NULL(TAG, gDoxm, ERROR);
         doxm->oxmSel = gDoxm->oxmSel;
     }
 
@@ -236,12 +232,12 @@ OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr)
     jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_OWNED_NAME);
     if(jsonObj)
     {
-        VERIFY_SUCCESS((cJSON_True == jsonObj->type) || (cJSON_False == jsonObj->type), ERROR)
+        VERIFY_SUCCESS(TAG, (cJSON_True == jsonObj->type || cJSON_False == jsonObj->type), ERROR)
         doxm->owned = jsonObj->valueint;
     }
     else // PUT/POST JSON may not have owned so set it to the gDomx->owned
     {
-        VERIFY_NON_NULL(gDoxm, ERROR);
+        VERIFY_NON_NULL(TAG, gDoxm, ERROR);
         doxm->owned = gDoxm->owned;
     }
 
@@ -249,7 +245,7 @@ OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr)
     jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_DEVICE_ID_NAME);
     if(jsonObj)
     {
-        VERIFY_SUCCESS(cJSON_String == jsonObj->type, ERROR);
+        VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
         if(jsonObj && cJSON_String == jsonObj->type)
         {
             //Check for empty string, in case DeviceId field has not been set yet
@@ -258,15 +254,16 @@ OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr)
                 outLen = 0;
                 b64Ret = b64Decode(jsonObj->valuestring, strlen(jsonObj->valuestring), base64Buff,
                         sizeof(base64Buff), &outLen);
-                VERIFY_SUCCESS((b64Ret == B64_OK) && (outLen <= sizeof(doxm->deviceID.id)), ERROR);
+                VERIFY_SUCCESS(TAG, (b64Ret == B64_OK && outLen <= sizeof(doxm->deviceID.id)),
+                                ERROR);
                 memcpy(doxm->deviceID.id, base64Buff, outLen);
             }
         }
     }
     else // PUT/POST JSON will not have deviceID so set it to the gDoxm->deviceID.id
     {
-        VERIFY_NON_NULL(gDoxm, ERROR);
-        VERIFY_SUCCESS((strcmp((char *)gDoxm->deviceID.id, "") != 0), ERROR);
+        VERIFY_NON_NULL(TAG, gDoxm, ERROR);
+        VERIFY_SUCCESS(TAG, strcmp((char *)gDoxm->deviceID.id, "") != 0, ERROR);
         strncpy((char *)doxm->deviceID.id, (char *)gDoxm->deviceID.id, sizeof(doxm->deviceID.id));
     }
 
@@ -274,12 +271,12 @@ OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr)
     if (true == doxm->owned)
     {
         jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_OWNER_NAME);
-        VERIFY_NON_NULL(jsonObj, ERROR);
-        VERIFY_SUCCESS(cJSON_String == jsonObj->type, ERROR)
+        VERIFY_NON_NULL(TAG, jsonObj, ERROR);
+        VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR)
             outLen = 0;
         b64Ret = b64Decode(jsonObj->valuestring, strlen(jsonObj->valuestring), base64Buff,
                 sizeof(base64Buff), &outLen);
-        VERIFY_SUCCESS((b64Ret == B64_OK) && (outLen <= sizeof(doxm->owner.id)), ERROR);
+        VERIFY_SUCCESS(TAG, (b64Ret == B64_OK && outLen <= sizeof(doxm->owner.id)), ERROR);
         memcpy(doxm->owner.id, base64Buff, outLen);
     }
 
@@ -292,6 +289,7 @@ exit:
         DeleteDoxmBinData(doxm);
         doxm = NULL;
     }
+
     return doxm;
 }
 
@@ -332,7 +330,10 @@ static OCEntityHandlerResult HandleDoxmGetRequest (const OCEntityHandlerRequest 
     OCEntityHandlerResult ehRet = (jsonStr ? OC_EH_OK : OC_EH_ERROR);
 
     // Send response payload to request originator
-    SendSRMResponse(ehRequest, ehRet, jsonStr);
+    if(OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, jsonStr))
+    {
+        OC_LOG (ERROR, TAG, PCF("SendSRMResponse failed in HandlePstatGetRequest"));
+    }
 
     OCFree(jsonStr);
 
@@ -397,7 +398,7 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
                         gDoxm->deviceID.id, sizeof(gDoxm->deviceID.id),
                         ownerPSK, OWNER_PSK_LENGTH_128);
 
-                VERIFY_SUCCESS(pskRet == CA_STATUS_OK, ERROR);
+                VERIFY_SUCCESS(TAG, pskRet == CA_STATUS_OK, ERROR);
 
                 //Generating new credential for provisioning tool
                 size_t ownLen = 1;
@@ -406,14 +407,14 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
                 char base64Buff[B64ENCODE_OUT_SAFESIZE(sizeof(ownerPSK)) + 1] = {};
                 B64Result b64Ret = b64Encode(ownerPSK, sizeof(ownerPSK), base64Buff,
                                 sizeof(base64Buff), &outLen);
-                VERIFY_SUCCESS(b64Ret == B64_OK, ERROR);
+                VERIFY_SUCCESS(TAG, b64Ret == B64_OK, ERROR);
 
                 OicSecCred_t *cred = GenerateCredential(&newDoxm->owner, SYMMETRIC_PAIR_WISE_KEY,
                                         NULL, base64Buff, ownLen, &newDoxm->owner);
-                VERIFY_NON_NULL(cred, ERROR);
+                VERIFY_NON_NULL(TAG, cred, ERROR);
 
                 //Adding provisioning tool credential to cred Resource.
-                VERIFY_SUCCESS(OC_STACK_OK == AddCredential(cred), ERROR);
+                VERIFY_SUCCESS(TAG, OC_STACK_OK == AddCredential(cred), ERROR);
 
                 gDoxm->owned = true;
                 memcpy(&(gDoxm->owner), &(newDoxm->owner), sizeof(OicUuid_t));
@@ -446,9 +447,12 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
     }
 
 exit:
-    // Send payload to request originator
-    SendSRMResponse(ehRequest, ehRet, NULL);
 
+    //Send payload to request originator
+    if(OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL))
+    {
+        OC_LOG (ERROR, TAG, PCF("SendSRMResponse failed in HandlePstatPostRequest"));
+    }
     DeleteDoxmBinData(newDoxm);
 
     return ehRet;

@@ -26,6 +26,7 @@
 #include "secureresourcemanager.h"
 #include "resourcemanager.h"
 #include "srmresourcestrings.h"
+#include "srmutility.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -34,12 +35,6 @@
 //SVR database buffer block size
 const size_t DB_FILE_SIZE_BLOCK = 1023;
 
-// TODO Consolidate all macros in one file
-#define VERIFY_SUCCESS(op, logLevel) { if (!(op)) \
-            {OC_LOG((logLevel), TAG, PCF(#op " failed!!")); goto exit;} }
-
-#define VERIFY_NON_NULL(arg, logLevel) { if (!(arg)) { OC_LOG((logLevel), \
-             TAG, PCF(#arg " is NULL")); goto exit; } }
 /**
  * Gets the Secure Virtual Database size.
  *
@@ -96,8 +91,8 @@ char * GetSVRDatabase()
         fp = ps->open(SVR_DB_FILE_NAME, "r");
         if (fp)
         {
-            jsonStr = (char*) OCMalloc(size + 1);
-            VERIFY_NON_NULL(jsonStr, FATAL);
+            jsonStr = (char*)OCMalloc(size + 1);
+            VERIFY_NON_NULL(TAG, jsonStr, FATAL);
             size_t bytesRead = ps->read(jsonStr, 1, size, fp);
             jsonStr[bytesRead] = '\0';
 
@@ -136,11 +131,11 @@ OCStackResult UpdateSVRDatabase(const char* rsrcName, cJSON* jsonObj)
 
     // Read SVR database from PS
     char* jsonSVRDbStr = GetSVRDatabase();
-    VERIFY_NON_NULL(jsonSVRDbStr, ERROR);
+    VERIFY_NON_NULL(TAG,jsonSVRDbStr, ERROR);
 
     // Use cJSON_Parse to parse the existing SVR database
     jsonSVRDb = cJSON_Parse(jsonSVRDbStr);
-    VERIFY_NON_NULL(jsonSVRDb, ERROR);
+    VERIFY_NON_NULL(TAG,jsonSVRDb, ERROR);
 
     OCFree(jsonSVRDbStr);
     jsonSVRDbStr = NULL;
@@ -149,7 +144,7 @@ OCStackResult UpdateSVRDatabase(const char* rsrcName, cJSON* jsonObj)
     {
         // Create a duplicate of the JSON object which was passed.
         cJSON* jsonDuplicateObj = cJSON_Duplicate(jsonObj, 1);
-        VERIFY_NON_NULL(jsonDuplicateObj, ERROR);
+        VERIFY_NON_NULL(TAG,jsonDuplicateObj, ERROR);
 
         cJSON* jsonObj = cJSON_GetObjectItem(jsonSVRDb, rsrcName);
 
@@ -164,7 +159,7 @@ OCStackResult UpdateSVRDatabase(const char* rsrcName, cJSON* jsonObj)
         }
         else
         {
-            VERIFY_NON_NULL(jsonObj, ERROR);
+            VERIFY_NON_NULL(TAG,jsonObj, ERROR);
 
             // Replace the modified json object in existing SVR database json
             cJSON_ReplaceItemInObject(jsonSVRDb, rsrcName, jsonDuplicateObj->child);
@@ -172,7 +167,7 @@ OCStackResult UpdateSVRDatabase(const char* rsrcName, cJSON* jsonObj)
 
         // Generate string representation of updated SVR database json object
         jsonSVRDbStr = cJSON_PrintUnformatted(jsonSVRDb);
-        VERIFY_NON_NULL(jsonSVRDbStr, ERROR);
+        VERIFY_NON_NULL(TAG,jsonSVRDbStr, ERROR);
 
         // Update the persistent storage with new SVR database
         OCPersistentStorage* ps = SRMGetPersistentStorageHandler();

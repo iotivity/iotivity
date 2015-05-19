@@ -28,18 +28,11 @@
 #include "utlist.h"
 #include "base64.h"
 #include "srmresourcestrings.h"
+#include "srmutility.h"
 #include <stdlib.h>
 #include <string.h>
 
 #define TAG  PCF("SRM-PSTAT")
-
-// TODO : Add info about macro
-#define VERIFY_SUCCESS(op, logLevel) { if (!(op)) \
-            {OC_LOG((logLevel), TAG, PCF(#op " failed!!")); goto exit;} }
-
-// TODO : Add info about macro
-#define VERIFY_NON_NULL(arg, logLevel) { if (!(arg)) { OC_LOG((logLevel), \
-             TAG, PCF(#arg " is NULL")); goto exit; } }
 
 static OicSecDpom_t gSm = SINGLE_SERVICE_CLIENT_DRIVEN;
 static OicSecPstat_t gDefaultPstat =
@@ -88,7 +81,7 @@ char * BinToPstatJSON(const OicSecPstat_t * pstat)
     outLen = 0;
     b64Ret = b64Encode(pstat->deviceID.id,
             sizeof(pstat->deviceID.id), base64Buff, sizeof(base64Buff), &outLen);
-    VERIFY_SUCCESS(b64Ret == B64_OK, ERROR);
+    VERIFY_SUCCESS(TAG, b64Ret == B64_OK, ERROR);
 
     cJSON_AddStringToObject(jsonPstat, OIC_JSON_DEVICE_ID_NAME, base64Buff);
     cJSON_AddNumberToObject(jsonPstat, OIC_JSON_COMMIT_HASH_NAME, pstat->commitHash);
@@ -97,7 +90,7 @@ char * BinToPstatJSON(const OicSecPstat_t * pstat)
     cJSON_AddNumberToObject(jsonPstat, OIC_JSON_OM_NAME, (int)pstat->om);
     cJSON *jsonSmArray = NULL;
     cJSON_AddItemToObject(jsonPstat, OIC_JSON_SM_NAME, jsonSmArray = cJSON_CreateArray());
-    VERIFY_NON_NULL(jsonSmArray, INFO);
+    VERIFY_NON_NULL(TAG, jsonSmArray, INFO);
     for (int i = 0; i < pstat->smLen; i++)
     {
         cJSON_AddItemToArray(jsonSmArray, cJSON_CreateNumber((int )pstat->sm[i]));
@@ -116,58 +109,58 @@ OicSecPstat_t * JSONToPstatBin(const char * jsonStr)
     OCStackResult ret = OC_STACK_ERROR;
     OicSecPstat_t *pstat = NULL;
     cJSON *jsonRoot = cJSON_Parse(jsonStr);
-    VERIFY_NON_NULL(jsonRoot, INFO);
+    VERIFY_NON_NULL(TAG, jsonRoot, INFO);
 
     cJSON *jsonPstat = cJSON_GetObjectItem(jsonRoot, OIC_JSON_PSTAT_NAME);
-    VERIFY_NON_NULL(jsonPstat, INFO);
+    VERIFY_NON_NULL(TAG, jsonPstat, INFO);
 
     pstat = (OicSecPstat_t*)OCCalloc(1, sizeof(OicSecPstat_t));
-    VERIFY_NON_NULL(pstat, INFO);
+    VERIFY_NON_NULL(TAG, pstat, INFO);
     cJSON *jsonObj = NULL;
     jsonObj = cJSON_GetObjectItem(jsonPstat, OIC_JSON_ISOP_NAME);
-    VERIFY_NON_NULL(jsonObj, ERROR);
-    VERIFY_SUCCESS((cJSON_True == jsonObj->type || cJSON_False == jsonObj->type) , ERROR);
+    VERIFY_NON_NULL(TAG, jsonObj, ERROR);
+    VERIFY_SUCCESS(TAG, (cJSON_True == jsonObj->type || cJSON_False == jsonObj->type) , ERROR);
     pstat->isOp = jsonObj->valueint;
 
     unsigned char base64Buff[sizeof(((OicUuid_t*) 0)->id)] = {};
     uint32_t outLen = 0;
     B64Result b64Ret = B64_OK;
     jsonObj = cJSON_GetObjectItem(jsonPstat, OIC_JSON_DEVICE_ID_NAME);
-    VERIFY_NON_NULL(jsonObj, ERROR);
-    VERIFY_SUCCESS(cJSON_String == jsonObj->type, ERROR);
+    VERIFY_NON_NULL(TAG, jsonObj, ERROR);
+    VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
     b64Ret = b64Decode(jsonObj->valuestring, strlen(jsonObj->valuestring), base64Buff,
                 sizeof(base64Buff), &outLen);
-    VERIFY_SUCCESS((b64Ret == B64_OK) && (outLen <= sizeof(pstat->deviceID.id)), ERROR);
+    VERIFY_SUCCESS(TAG, (b64Ret == B64_OK && outLen <= sizeof(pstat->deviceID.id)), ERROR);
     memcpy(pstat->deviceID.id, base64Buff, outLen);
 
     jsonObj = cJSON_GetObjectItem(jsonPstat, OIC_JSON_COMMIT_HASH_NAME);
-    VERIFY_NON_NULL(jsonObj, ERROR);
-    VERIFY_SUCCESS(cJSON_Number == jsonObj->type, ERROR);
+    VERIFY_NON_NULL(TAG, jsonObj, ERROR);
+    VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
     pstat->commitHash  = jsonObj->valueint;
 
     jsonObj = cJSON_GetObjectItem(jsonPstat, OIC_JSON_CM_NAME);
-    VERIFY_NON_NULL(jsonObj, ERROR);
-    VERIFY_SUCCESS(cJSON_Number == jsonObj->type, ERROR);
+    VERIFY_NON_NULL(TAG, jsonObj, ERROR);
+    VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
     pstat->cm  = jsonObj->valueint;
 
     jsonObj = cJSON_GetObjectItem(jsonPstat, OIC_JSON_OM_NAME);
-    VERIFY_NON_NULL(jsonObj, ERROR);
-    VERIFY_SUCCESS(cJSON_Number == jsonObj->type, ERROR);
+    VERIFY_NON_NULL(TAG, jsonObj, ERROR);
+    VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
     pstat->om  = jsonObj->valueint;
 
     jsonObj = cJSON_GetObjectItem(jsonPstat, OIC_JSON_SM_NAME);
-    VERIFY_NON_NULL(jsonObj, ERROR);
+    VERIFY_NON_NULL(TAG, jsonObj, ERROR);
     if (cJSON_Array == jsonObj->type)
     {
         pstat->smLen = cJSON_GetArraySize(jsonObj);
         int idxx = 0;
-        VERIFY_SUCCESS(pstat->smLen != 0, ERROR);
+        VERIFY_SUCCESS(TAG, pstat->smLen != 0, ERROR);
         pstat->sm = (OicSecDpom_t*)OCCalloc(pstat->smLen, sizeof(OicSecDpom_t));
-        VERIFY_NON_NULL(pstat->sm, FATAL);
+        VERIFY_NON_NULL(TAG, pstat->sm, ERROR);
         do
         {
             cJSON *jsonSm = cJSON_GetArrayItem(jsonObj, idxx);
-            VERIFY_NON_NULL(jsonSm, ERROR);
+            VERIFY_NON_NULL(TAG, jsonSm, ERROR);
             pstat->sm[idxx] = jsonSm->valueint;
         }while ( ++idxx < pstat->smLen);
     }
@@ -215,9 +208,9 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
     if (ehRequest->resource)
     {
         postJson = cJSON_Parse((char *) ehRequest->reqJSONPayload);
-        VERIFY_NON_NULL(postJson, INFO);
+        VERIFY_NON_NULL(TAG, postJson, INFO);
         cJSON *jsonPstat = cJSON_GetObjectItem(postJson, OIC_JSON_PSTAT_NAME);
-        VERIFY_NON_NULL(jsonPstat, INFO);
+        VERIFY_NON_NULL(TAG, jsonPstat, INFO);
         cJSON *commitHashJson = cJSON_GetObjectItem(jsonPstat, OIC_JSON_COMMIT_HASH_NAME);
         uint16_t commitHash = 0;
         if (commitHashJson)

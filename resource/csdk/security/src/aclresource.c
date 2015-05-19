@@ -31,16 +31,11 @@
 #include "utlist.h"
 #include "srmresourcestrings.h"
 #include "doxmresource.h"
+#include "srmutility.h"
+#include <stdlib.h>
+#include <string.h>
 
 #define TAG  PCF("SRM-ACL")
-
-/* TODO : Add info about macro */
-#define VERIFY_SUCCESS(op, logLevel) { if (!(op)) \
-            {OC_LOG((logLevel), TAG, PCF(#op " failed!!")); goto exit;} }
-
-/* TODO : Add info about macro */
-#define VERIFY_NON_NULL(arg, logLevel) { if (!(arg)) { OC_LOG((logLevel), \
-             TAG, PCF(#arg " is NULL")); goto exit; } }
 
 OicSecAcl_t        *gAcl = NULL;
 static OCResourceHandle    gAclHandle = NULL;
@@ -86,11 +81,11 @@ char * BinToAclJSON(const OicSecAcl_t * acl)
     if (acl)
     {
         jsonRoot = cJSON_CreateObject();
-        VERIFY_NON_NULL(jsonRoot, ERROR);
+        VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
 
         cJSON *jsonAclArray = NULL;
         cJSON_AddItemToObject (jsonRoot, OIC_JSON_ACL_NAME, jsonAclArray = cJSON_CreateArray());
-        VERIFY_NON_NULL(jsonAclArray, ERROR);
+        VERIFY_NON_NULL(TAG, jsonAclArray, ERROR);
 
         while(acl)
         {
@@ -113,13 +108,13 @@ char * BinToAclJSON(const OicSecAcl_t * acl)
             }
             b64Ret = b64Encode(acl->subject.id, inLen, base64Buff,
                 sizeof(base64Buff), &outLen);
-            VERIFY_SUCCESS(b64Ret == B64_OK, ERROR);
+            VERIFY_SUCCESS(TAG, b64Ret == B64_OK, ERROR);
             cJSON_AddStringToObject(jsonAcl, OIC_JSON_SUBJECT_NAME, base64Buff );
 
             // Resources -- Mandatory
             cJSON *jsonRsrcArray = NULL;
             cJSON_AddItemToObject (jsonAcl, OIC_JSON_RESOURCES_NAME, jsonRsrcArray = cJSON_CreateArray());
-            VERIFY_NON_NULL(jsonRsrcArray, ERROR);
+            VERIFY_NON_NULL(TAG, jsonRsrcArray, ERROR);
             for (int i = 0; i < acl->resourcesLen; i++)
             {
                 cJSON_AddItemToArray (jsonRsrcArray, cJSON_CreateString(acl->resources[i]));
@@ -131,14 +126,14 @@ char * BinToAclJSON(const OicSecAcl_t * acl)
             // Owners -- Mandatory
             cJSON *jsonOwnrArray = NULL;
             cJSON_AddItemToObject (jsonAcl, OIC_JSON_OWNERS_NAME, jsonOwnrArray = cJSON_CreateArray());
-            VERIFY_NON_NULL(jsonOwnrArray, ERROR);
+            VERIFY_NON_NULL(TAG, jsonOwnrArray, ERROR);
             for (int i = 0; i < acl->ownersLen; i++)
             {
                 outLen = 0;
 
                 b64Ret = b64Encode(acl->owners[i].id, sizeof(((OicUuid_t*)0)->id), base64Buff,
                     sizeof(base64Buff), &outLen);
-                VERIFY_SUCCESS(b64Ret == B64_OK, ERROR);
+                VERIFY_SUCCESS(TAG, b64Ret == B64_OK, ERROR);
 
                 cJSON_AddItemToArray (jsonOwnrArray, cJSON_CreateString(base64Buff));
             }
@@ -169,27 +164,27 @@ OicSecAcl_t * JSONToAclBin(const char * jsonStr)
     OicSecAcl_t * prevAcl = NULL;
     cJSON *jsonRoot = NULL;
 
-    VERIFY_NON_NULL(jsonStr, ERROR);
+    VERIFY_NON_NULL(TAG, jsonStr, ERROR);
 
     jsonRoot = cJSON_Parse(jsonStr);
-    VERIFY_NON_NULL(jsonRoot, ERROR);
+    VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
 
     cJSON *jsonAclArray = cJSON_GetObjectItem(jsonRoot, OIC_JSON_ACL_NAME);
-    VERIFY_NON_NULL(jsonAclArray, ERROR);
+    VERIFY_NON_NULL(TAG, jsonAclArray, ERROR);
 
     if (cJSON_Array == jsonAclArray->type)
     {
         int numAcl = cJSON_GetArraySize(jsonAclArray);
         int idx = 0;
 
-        VERIFY_SUCCESS(numAcl > 0, INFO);
+        VERIFY_SUCCESS(TAG, numAcl > 0, INFO);
         do
         {
             cJSON *jsonAcl = cJSON_GetArrayItem(jsonAclArray, idx);
-            VERIFY_NON_NULL(jsonAcl, ERROR);
+            VERIFY_NON_NULL(TAG, jsonAcl, ERROR);
 
             OicSecAcl_t *acl = (OicSecAcl_t*)OCCalloc(1, sizeof(OicSecAcl_t));
-            VERIFY_NON_NULL(acl, ERROR);
+            VERIFY_NON_NULL(TAG, acl, ERROR);
 
             headAcl = (headAcl) ? headAcl : acl;
             if (prevAcl)
@@ -206,64 +201,65 @@ OicSecAcl_t * JSONToAclBin(const char * jsonStr)
 
             // Subject -- Mandatory
             jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_SUBJECT_NAME);
-            VERIFY_NON_NULL(jsonObj, ERROR);
-            VERIFY_SUCCESS(cJSON_String == jsonObj->type, ERROR);
+            VERIFY_NON_NULL(TAG, jsonObj, ERROR);
+            VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
             outLen = 0;
             b64Ret = b64Decode(jsonObj->valuestring, strlen(jsonObj->valuestring), base64Buff,
                         sizeof(base64Buff), &outLen);
-            VERIFY_SUCCESS((b64Ret == B64_OK) && (outLen <= sizeof(acl->subject.id)), ERROR);
+            VERIFY_SUCCESS(TAG, (b64Ret == B64_OK && outLen <= sizeof(acl->subject.id)), ERROR);
             memcpy(acl->subject.id, base64Buff, outLen);
 
             // Resources -- Mandatory
             jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_RESOURCES_NAME);
-            VERIFY_NON_NULL(jsonObj, ERROR);
-            VERIFY_SUCCESS(cJSON_Array == jsonObj->type, ERROR);
+            VERIFY_NON_NULL(TAG, jsonObj, ERROR);
+            VERIFY_SUCCESS(TAG, cJSON_Array == jsonObj->type, ERROR);
 
             acl->resourcesLen = cJSON_GetArraySize(jsonObj);
-            VERIFY_SUCCESS(acl->resourcesLen > 0, ERROR);
+            VERIFY_SUCCESS(TAG, acl->resourcesLen > 0, ERROR);
             acl->resources = (char**)OCCalloc(acl->resourcesLen, sizeof(char*));
-            VERIFY_NON_NULL(acl->resources, ERROR);
+            VERIFY_NON_NULL(TAG, (acl->resources), ERROR);
 
             int idxx = 0;
             do
             {
                 cJSON *jsonRsrc = cJSON_GetArrayItem(jsonObj, idxx);
-                VERIFY_NON_NULL(jsonRsrc, ERROR);
+                VERIFY_NON_NULL(TAG, jsonRsrc, ERROR);
 
                 jsonObjLen = strlen(jsonRsrc->valuestring) + 1;
                 acl->resources[idxx] = (char*)OCMalloc(jsonObjLen);
-                VERIFY_NON_NULL(acl->resources[idxx], ERROR);
+                VERIFY_NON_NULL(TAG, (acl->resources[idxx]), ERROR);
                 strncpy(acl->resources[idxx], jsonRsrc->valuestring, jsonObjLen);
             } while ( ++idxx < acl->resourcesLen);
 
             // Permissions -- Mandatory
             jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_PERMISSION_NAME);
-            VERIFY_NON_NULL(jsonObj, ERROR);
-            VERIFY_SUCCESS(cJSON_Number == jsonObj->type, ERROR);
+            VERIFY_NON_NULL(TAG, jsonObj, ERROR);
+            VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
             acl->permission = jsonObj->valueint;
 
             // Owners -- Mandatory
             jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_OWNERS_NAME);
-            VERIFY_NON_NULL(jsonObj, ERROR);
-            VERIFY_SUCCESS(cJSON_Array == jsonObj->type, ERROR);
+            VERIFY_NON_NULL(TAG, jsonObj, ERROR);
+            VERIFY_SUCCESS(TAG, cJSON_Array == jsonObj->type, ERROR);
 
             acl->ownersLen = cJSON_GetArraySize(jsonObj);
-            VERIFY_SUCCESS(acl->ownersLen > 0, ERROR);
+            VERIFY_SUCCESS(TAG, acl->ownersLen > 0, ERROR);
             acl->owners = (OicUuid_t*)OCCalloc(acl->ownersLen, sizeof(OicUuid_t));
-            VERIFY_NON_NULL(acl->owners, ERROR);
+            VERIFY_NON_NULL(TAG, (acl->owners), ERROR);
 
             idxx = 0;
             do
             {
                 cJSON *jsonOwnr = cJSON_GetArrayItem(jsonObj, idxx);
-                VERIFY_NON_NULL(jsonOwnr, ERROR);
-                VERIFY_SUCCESS(cJSON_String == jsonOwnr->type, ERROR);
+                VERIFY_NON_NULL(TAG, jsonOwnr, ERROR);
+                VERIFY_SUCCESS(TAG, cJSON_String == jsonOwnr->type, ERROR);
 
                 outLen = 0;
                 b64Ret = b64Decode(jsonOwnr->valuestring, strlen(jsonOwnr->valuestring), base64Buff,
                             sizeof(base64Buff), &outLen);
 
-                VERIFY_SUCCESS((b64Ret == B64_OK) && (outLen <= sizeof(acl->owners[idxx].id)), ERROR);
+                VERIFY_SUCCESS(TAG, (b64Ret == B64_OK && outLen <= sizeof(acl->owners[idxx].id)),
+                                    ERROR);
                 memcpy(acl->owners[idxx].id, base64Buff, outLen);
             } while ( ++idxx < acl->ownersLen);
 
@@ -430,7 +426,7 @@ OCStackResult  GetDefaultACL(OicSecAcl_t** defaultAcl)
     }
 
     OicSecAcl_t *acl = OCCalloc(1, sizeof(OicSecAcl_t));
-    VERIFY_NON_NULL(acl, ERROR);
+    VERIFY_NON_NULL(TAG, acl, ERROR);
 
     // Subject -- Mandatory
     memcpy(&(acl->subject), &WILDCARD_SUBJECT_ID, sizeof(acl->subject));
@@ -439,13 +435,13 @@ OCStackResult  GetDefaultACL(OicSecAcl_t** defaultAcl)
     acl->resourcesLen = sizeof(rsrcs)/sizeof(rsrcs[0]);
 
     acl->resources = (char**)OCCalloc(acl->resourcesLen, sizeof(char*));
-    VERIFY_NON_NULL(acl->resources, ERROR);
+    VERIFY_NON_NULL(TAG, (acl->resources), ERROR);
 
     for (int i = 0; i <  acl->resourcesLen; i++)
     {
         size_t len = strlen(rsrcs[i]) + 1;
         acl->resources[i] = (char*)OCMalloc(len * sizeof(char));
-        VERIFY_NON_NULL(acl->resources[i], ERROR);
+        VERIFY_NON_NULL(TAG, (acl->resources[i]), ERROR);
         strncpy(acl->resources[i], rsrcs[i], len);
     }
 
@@ -457,11 +453,11 @@ OCStackResult  GetDefaultACL(OicSecAcl_t** defaultAcl)
     // Device ID is the owner of this default ACL
     OicUuid_t ownerId = {};
     ret = GetDoxmDeviceID( &ownerId);
-    VERIFY_SUCCESS(OC_STACK_OK == ret, FATAL);
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, FATAL);
 
     acl->ownersLen = 1;
     acl->owners = (OicUuid_t*)OCMalloc(sizeof(OicUuid_t));
-    VERIFY_NON_NULL(acl->owners, ERROR);
+    VERIFY_NON_NULL(TAG, (acl->owners), ERROR);
     memcpy(acl->owners, &ownerId, sizeof(OicUuid_t));
 
     acl->next = NULL;
@@ -508,7 +504,7 @@ OCStackResult InitACLResource()
         GetDefaultACL(&gAcl);
         // TODO Needs to update persistent storage
     }
-    VERIFY_NON_NULL(gAcl, FATAL);
+    VERIFY_NON_NULL(TAG, gAcl, FATAL);
 
     // Instantiate 'oic.sec.acl'
     ret = CreateACLResource();
