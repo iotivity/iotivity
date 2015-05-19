@@ -89,6 +89,7 @@ static void DeleteServerRequest(OCServerRequest * serverRequest)
     if(serverRequest)
     {
         LL_DELETE(serverRequestList, serverRequest);
+        OCFree(serverRequest->requestToken);
         OCFree(serverRequest);
         serverRequest = NULL;
         OC_LOG(INFO, TAG, PCF("Server Request Removed!!"));
@@ -606,6 +607,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     }
     #endif
 
+    OCFree(responseInfo.info.token);
     OCFree(responseInfo.info.options);
     //Delete the request
     FindAndDeleteServerRequest(serverRequest);
