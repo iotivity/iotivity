@@ -34,7 +34,7 @@ using namespace OC;
 
 const int SUCCESS_RESPONSE = OC_STACK_OK;
 
-#define OC_WELL_KNOWN_COORDINATING_QUERY "224.0.1.187:5683/oc/core?rt=Resource.Hosting"
+#define OC_WELL_KNOWN_COORDINATING_QUERY "/oc/core?rt=Resource.Hosting"
 
 #define OBSERVE 1
 #define GET     2

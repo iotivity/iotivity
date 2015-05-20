@@ -30,7 +30,8 @@
 #include "ocstack.h"
 #include "logger.h"
 
-#define OC_TRANSPORT OC_ALL
+//#define OC_TRANSPORT OC_ALL
+#define OC_TRANSPORT OC_IPV4
 
 #ifdef __cplusplus
 extern "C" {
