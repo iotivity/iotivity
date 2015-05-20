@@ -65,6 +65,22 @@ typedef void (*CAIPPacketReceivedCallback)(const char *ipAddress, uint16_t port,
                                            bool isSecured);
 
 /**
+  * @brief Callback to notify error in the IP adapter
+  *
+  * @param  ipAddress    [IN] IP address of the device.
+  * @param  port         [IN] Port number
+  * @param  data         [IN] Data sent/received
+  * @param  dataLength   [IN] Length of data in bytes.
+  * @param  isSecured    [IN] flag to indicate if data is secured
+  * @param  result       [IN] result of request from R.I
+  * @return NONE
+  * @pre  Callback must be registered using CAIPSetPacketReceiveCallback()
+ */
+typedef void (*CAIPErrorHandleCallback)(const char *ipAddress,  uint16_t port,
+                                        const void *data, uint32_t dataLength,
+                                        bool isSecured, CAResult_t result);
+
+/**
  * @brief  Callback to be notified when exception occures on multicast/unicast server.
  * @param  type  [IN] Type of server(#CAAdapterServerType_t)
  * @return NONE

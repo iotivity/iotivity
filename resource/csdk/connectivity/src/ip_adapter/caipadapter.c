@@ -89,6 +89,12 @@ static CANetworkPacketReceivedCallback g_networkPacketCallback = NULL;
 static CANetworkChangeCallback g_networkChangeCallback = NULL;
 
 /**
+ * @var g_errorCallback
+ * @brief error Callback to CA adapter
+ */
+static CAErrorHandleCallback g_errorCallback = NULL;
+
+/**
  * @var g_sendQueueHandle
  * @brief Queue handle for Send Data
  */
@@ -105,15 +111,18 @@ static CAResult_t CAIPInitializeQueueHandles();
 static void CAIPDeinitializeQueueHandles();
 
 static void CAIPNotifyNetworkChange(const char *address, uint16_t port,
-                                          CANetworkStatus_t status);
+                                    CANetworkStatus_t status);
 
 static void CAIPConnectionStateCB(const char *ipAddress, CANetworkStatus_t status);
 
 static void CAIPPacketReceivedCB(const char *ipAddress, uint16_t port, const void *data,
-                                       uint32_t dataLength, bool isSecured);
+                                 uint32_t dataLength, bool isSecured);
+static void CAIPErrorHandler(const char *ipAddress, uint16_t port, const void *data,
+                             uint32_t dataLength, bool isSecured, CAResult_t result);
+
 #ifdef __WITH_DTLS__
 static uint32_t CAIPPacketSendCB(const char *ipAddress, uint16_t port,
-                                       const void *data, uint32_t dataLength);
+                                 const void *data, uint32_t dataLength);
 #endif
 
 static CAResult_t CAIPStopServers();
@@ -121,7 +130,7 @@ static CAResult_t CAIPStopServers();
 static void CAIPSendDataThread(void *threadData);
 
 static CAIPData *CACreateIPData(const CARemoteEndpoint_t *remoteEndpoint,
-                                            const void *data, uint32_t dataLength);
+                                const void *data, uint32_t dataLength);
 void CAFreeIPData(CAIPData *ipData);
 
 static void CADataDestroyer(void *data, uint32_t size);
@@ -268,6 +277,20 @@ uint32_t CAIPPacketSendCB(const char *ipAddress, uint16_t port,
 
     uint32_t sentLength = CAIPSendData(ipAddress, port, data, dataLength, false, true);
 
+    if (sentLength == 0)
+    {
+        CARemoteEndpoint_t *endPoint = CAAdapterCreateRemoteEndpoint(CA_IPV4, ipAddress, NULL);
+        if (!endPoint)
+        {
+            OIC_LOG(ERROR, IP_ADAPTER_TAG, "EndPoint creation failed!");
+            return 0;
+        }
+
+        g_errorCallback(endPoint, data, dataLength, CA_SEND_FAILED);
+
+        CAAdapterFreeRemoteEndpoint(endPoint);
+    }
+
     OIC_LOG_V(DEBUG, IP_ADAPTER_TAG, "Successfully sent %d of encrypted data!", sentLength);
 
     OIC_LOG(DEBUG, IP_ADAPTER_TAG, "OUT");
@@ -288,7 +311,7 @@ void CAIPPacketReceivedCB(const char *ipAddress, uint16_t port, const void *data
     OIC_LOG_V(DEBUG, IP_ADAPTER_TAG, "Address: %s, port:%d", ipAddress, port);
 
     // CA is freeing this memory
-    CARemoteEndpoint_t *endPoint = CAAdapterCreateRemoteEndpoint(CA_IPV4, ipAddress, NULL );
+    CARemoteEndpoint_t *endPoint = CAAdapterCreateRemoteEndpoint(CA_IPV4, ipAddress, NULL);
     if (!endPoint)
     {
         OIC_LOG(ERROR, IP_ADAPTER_TAG, "EndPoint creation failed!");
@@ -297,7 +320,7 @@ void CAIPPacketReceivedCB(const char *ipAddress, uint16_t port, const void *data
     endPoint->addressInfo.IP.port = port;
     endPoint->isSecured = isSecured;
 
-    void *buf = OICCalloc(dataLength + 1, sizeof(char));
+    void *buf = (void*)OICMalloc(sizeof(char) * dataLength);
     if (!buf)
     {
         OIC_LOG(ERROR, IP_ADAPTER_TAG, "Memory Allocation failed!");
@@ -318,9 +341,54 @@ void CAIPPacketReceivedCB(const char *ipAddress, uint16_t port, const void *data
     OIC_LOG(DEBUG, IP_ADAPTER_TAG, "OUT");
 }
 
+void CAIPErrorHandler (const char *ipAddress, uint16_t port, const void *data,
+                       uint32_t dataLength, bool isSecured, CAResult_t result)
+{
+    OIC_LOG(DEBUG, IP_ADAPTER_TAG, "IN");
+
+    VERIFY_NON_NULL_VOID(ipAddress, IP_ADAPTER_TAG, "ipAddress is NULL");
+
+    VERIFY_NON_NULL_VOID(data, IP_ADAPTER_TAG, "data is NULL");
+
+    OIC_LOG_V(DEBUG, IP_ADAPTER_TAG, "Address: %s, port:%d", ipAddress, port);
+
+    // CA is freeing this memory
+    CARemoteEndpoint_t *endPoint = CAAdapterCreateRemoteEndpoint(CA_IPV4, ipAddress, NULL );
+    if (!endPoint)
+    {
+        OIC_LOG(ERROR, IP_ADAPTER_TAG, "EndPoint creation failed!");
+        return;
+    }
+    endPoint->addressInfo.IP.port = port;
+    endPoint->isSecured = isSecured;
+
+    void *buf = (void*)OICMalloc(sizeof(char) * dataLength);
+    if (!buf)
+    {
+        OIC_LOG(ERROR, IP_ADAPTER_TAG, "Memory Allocation failed!");
+        CAAdapterFreeRemoteEndpoint(endPoint);
+        return;
+    }
+    memcpy(buf, data, dataLength);
+    if (g_errorCallback)
+    {
+        g_errorCallback(endPoint, buf, dataLength, result);
+    }
+    else
+    {
+        OICFree(buf);
+        CAAdapterFreeRemoteEndpoint(endPoint);
+    }
+
+    OIC_LOG(DEBUG, IP_ADAPTER_TAG, "OUT");
+
+    return;
+}
+
 CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
-                                CANetworkPacketReceivedCallback networkPacketCallback,
-                                CANetworkChangeCallback netCallback, ca_thread_pool_t handle)
+                          CANetworkPacketReceivedCallback networkPacketCallback,
+                          CANetworkChangeCallback netCallback,
+                          CAErrorHandleCallback errorCallback, ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, IP_ADAPTER_TAG, "IN");
     VERIFY_NON_NULL(registerCallback, IP_ADAPTER_TAG, "registerCallback");
@@ -331,6 +399,7 @@ CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
     g_threadPool = handle;
     g_networkChangeCallback = netCallback;
     g_networkPacketCallback = networkPacketCallback;
+    g_errorCallback = errorCallback;
 
     CAResult_t ret = CAIPInitializeNetworkMonitor(g_threadPool);
     if (CA_STATUS_OK != ret)
@@ -349,6 +418,7 @@ CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
     }
 
     CAIPSetPacketReceiveCallback(CAIPPacketReceivedCB);
+    CAIPSetErrorHandleCallback(CAIPErrorHandler);
 #ifdef __WITH_DTLS__
     CAAdapterNetDtlsInit();
 
@@ -743,8 +813,13 @@ void CAIPSendDataThread(void *threadData)
         if (!ipData->remoteEndpoint->isSecured)
         {
             OIC_LOG(DEBUG, IP_ADAPTER_TAG, "Send Unicast Data is called");
-            CAIPSendData(address, port, ipData->data, ipData->dataLen, false,
+            uint32_t res = CAIPSendData(address, port, ipData->data, ipData->dataLen, false,
                                ipData->remoteEndpoint->isSecured);
+            if (res == 0)
+            {
+                g_errorCallback(ipData->remoteEndpoint, ipData->data, ipData->dataLen,
+                                CA_SEND_FAILED);
+            }
         }
         else
         {
@@ -762,16 +837,25 @@ void CAIPSendDataThread(void *threadData)
                       "CAAdapterNetDtlsEncrypt returned with cache[%d]", cacheFlag);
         }
 #else
-        CAIPSendData(address, port, ipData->data, ipData->dataLen, false,
+        uint32_t res = CAIPSendData(address, port, ipData->data, ipData->dataLen, false,
                            ipData->remoteEndpoint->isSecured);
+        if (res == 0)
+        {
+            g_errorCallback(ipData->remoteEndpoint, ipData->data, ipData->dataLen, CA_SEND_FAILED);
+        }
+
 #endif
     }
     else
     {
         //Processing for sending multicast
         OIC_LOG(DEBUG, IP_ADAPTER_TAG, "Send Multicast Data is called");
-        CAIPSendData(CA_MULTICAST_IP, CA_MCAST_PORT, ipData->data,
+        uint32_t res = CAIPSendData(CA_MULTICAST_IP, CA_MCAST_PORT, ipData->data,
                            ipData->dataLen, true, false);
+        if (res == 0)
+        {
+            g_errorCallback(ipData->remoteEndpoint, ipData->data, ipData->dataLen, CA_SEND_FAILED);
+        }
     }
 
     OIC_LOG(DEBUG, IP_ADAPTER_TAG, "OUT");

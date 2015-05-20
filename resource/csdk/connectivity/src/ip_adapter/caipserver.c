@@ -76,6 +76,7 @@ typedef struct
     ca_thread_pool_t threadPool;
     CAIPPacketReceivedCallback packetReceivedCallback;
     CAIPExceptionCallback exceptionCallback;
+    CAIPErrorHandleCallback IPErrorCallback;
 } CAAdapterIPServerContext_t;
 
 /**
@@ -91,10 +92,10 @@ static u_arraylist_t *g_serverInfoList = NULL;
 static ca_mutex g_mutexServerInfoList = NULL;
 
 /**
- * @var g_adapterEthServerContext
+ * @var g_adapterIPServerContext
  * @brief Mutex to synchronize ethenet adapter context.
  */
-static CAAdapterIPServerContext_t *g_adapterEthServerContext = NULL;
+static CAAdapterIPServerContext_t *g_adapterIPServerContext = NULL;
 
 /**
  * @var g_mutexAdapterServerContext
@@ -223,10 +224,10 @@ static void CAReceiveHandler(void *data)
                     OIC_LOG_V(ERROR, IP_SERVER_TAG, "Server socket shutdown sock fd[%d]", sd);
                     ca_mutex_lock(g_mutexAdapterServerContext);
                     // Notify upper layer this exception
-                    if (g_adapterEthServerContext->exceptionCallback)
+                    if (g_adapterIPServerContext->exceptionCallback)
                     {
                         // need to make proper exception callback.
-                        //g_adapterEthServerContext->exceptionCallback(ctx->type);
+                        //g_adapterIPServerContext->exceptionCallback(ctx->type);
                     }
                     ca_mutex_unlock(g_mutexAdapterServerContext);
                 }
@@ -275,11 +276,11 @@ static void CAReceiveHandler(void *data)
                 {
                     ca_mutex_lock(g_mutexAdapterServerContext);
 
-                    if (g_adapterEthServerContext->packetReceivedCallback)
+                    if (g_adapterIPServerContext->packetReceivedCallback)
                     {
-                        g_adapterEthServerContext->packetReceivedCallback(srcIPAddress, srcPort,
-                                                                          recvBuffer, recvLen,
-                                                                          false);
+                        g_adapterIPServerContext->packetReceivedCallback(srcIPAddress, srcPort,
+                                                                         recvBuffer, recvLen,
+                                                                         false);
                     }
 
                     ca_mutex_unlock(g_mutexAdapterServerContext);
@@ -434,9 +435,9 @@ static CAResult_t CAIPStartPacketReceiverHandler()
 
     ca_mutex_lock(g_mutexAdapterServerContext);
 
-    if (!g_adapterEthServerContext)
+    if (!g_adapterIPServerContext)
     {
-        OIC_LOG(ERROR, IP_SERVER_TAG, "g_adapterEthServerContext NULL");
+        OIC_LOG(ERROR, IP_SERVER_TAG, "g_adapterIPServerContext NULL");
         ca_mutex_unlock(g_mutexAdapterServerContext);
         return CA_STATUS_FAILED;
     }
@@ -444,7 +445,7 @@ static CAResult_t CAIPStartPacketReceiverHandler()
     if (1 == listLength) //Its first time.
     {
         g_packetHandlerStopFlag = false;
-        if (CA_STATUS_OK != ca_thread_pool_add_task(g_adapterEthServerContext->threadPool,
+        if (CA_STATUS_OK != ca_thread_pool_add_task(g_adapterIPServerContext->threadPool,
                                                    CAReceiveHandler, NULL ))
         {
             OIC_LOG(ERROR, IP_SERVER_TAG, "thread_pool_add_task failed!");
@@ -522,17 +523,17 @@ CAResult_t CAIPInitializeServer(const ca_thread_pool_t threadPool)
     }
 
     ca_mutex_lock(g_mutexAdapterServerContext);
-    g_adapterEthServerContext = (CAAdapterIPServerContext_t *) OICCalloc(1,
+    g_adapterIPServerContext = (CAAdapterIPServerContext_t *) OICCalloc(1,
                                  sizeof(CAAdapterIPServerContext_t));
 
-    if (!g_adapterEthServerContext)
+    if (!g_adapterIPServerContext)
     {
         OIC_LOG(ERROR, IP_SERVER_TAG, "Malloc failed");
         ca_mutex_unlock(g_mutexAdapterServerContext);
         return CA_MEMORY_ALLOC_FAILED;
     }
 
-    g_adapterEthServerContext->threadPool = threadPool;
+    g_adapterIPServerContext->threadPool = threadPool;
 
     ca_mutex_unlock(g_mutexAdapterServerContext);
 
@@ -554,15 +555,15 @@ void CAIPTerminateServer()
 {
     OIC_LOG(DEBUG, IP_SERVER_TAG, "IN");
     ca_mutex_lock(g_mutexAdapterServerContext);
-    if (!g_adapterEthServerContext)
+    if (!g_adapterIPServerContext)
     {
-        OIC_LOG(ERROR, IP_SERVER_TAG, "g_adapterEthServerContext NULL");
+        OIC_LOG(ERROR, IP_SERVER_TAG, "g_adapterIPServerContext NULL");
         ca_mutex_unlock(g_mutexAdapterServerContext);
         return;
     }
 
-    OICFree(g_adapterEthServerContext);
-    g_adapterEthServerContext = NULL;
+    OICFree(g_adapterIPServerContext);
+    g_adapterIPServerContext = NULL;
 
     ca_mutex_unlock(g_mutexAdapterServerContext);
 
@@ -953,13 +954,32 @@ void CAIPSetPacketReceiveCallback(CAIPPacketReceivedCallback callback)
 
     ca_mutex_lock(g_mutexAdapterServerContext);
 
-    if (!g_adapterEthServerContext)
+    if (!g_adapterIPServerContext)
     {
-        OIC_LOG(ERROR, IP_SERVER_TAG, "g_adapterEthServerContext NULL");
+        OIC_LOG(ERROR, IP_SERVER_TAG, "g_adapterIPServerContext NULL");
         ca_mutex_unlock(g_mutexAdapterServerContext);
         return;
     }
-    g_adapterEthServerContext->packetReceivedCallback = callback;
+    g_adapterIPServerContext->packetReceivedCallback = callback;
+
+    ca_mutex_unlock(g_mutexAdapterServerContext);
+
+    OIC_LOG(DEBUG, IP_SERVER_TAG, "OUT");
+}
+
+void CAIPSetErrorHandleCallback(CAIPErrorHandleCallback ipErrorCallback)
+{
+    OIC_LOG(DEBUG, IP_SERVER_TAG, "IN");
+
+    ca_mutex_lock(g_mutexAdapterServerContext);
+
+    if (!g_adapterIPServerContext)
+    {
+        OIC_LOG(ERROR, IP_SERVER_TAG, "g_adapterIPServerContext NULL");
+        ca_mutex_unlock(g_mutexAdapterServerContext);
+        return;
+    }
+    g_adapterIPServerContext->IPErrorCallback = ipErrorCallback;
 
     ca_mutex_unlock(g_mutexAdapterServerContext);
 
@@ -971,13 +991,13 @@ void CAIPSetExceptionCallback(CAIPExceptionCallback callback)
     OIC_LOG(DEBUG, IP_SERVER_TAG, "IN");
     ca_mutex_lock(g_mutexAdapterServerContext);
 
-    if (!g_adapterEthServerContext)
+    if (!g_adapterIPServerContext)
     {
-        OIC_LOG(ERROR, IP_SERVER_TAG, "g_adapterEthServerContext NULL");
+        OIC_LOG(ERROR, IP_SERVER_TAG, "g_adapterIPServerContext NULL");
         ca_mutex_unlock(g_mutexAdapterServerContext);
         return;
     }
-    g_adapterEthServerContext->exceptionCallback = callback;
+    g_adapterIPServerContext->exceptionCallback = callback;
 
     ca_mutex_unlock(g_mutexAdapterServerContext);
 
