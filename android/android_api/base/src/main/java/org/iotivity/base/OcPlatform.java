@@ -68,8 +68,8 @@ public final class OcPlatform {
     public static final String MULTICAST_IP = "224.0.1.187";
     public static final int MULTICAST_PORT = 5683;
     public static final int DEFAULT_PRESENCE_TTL = 60;
+    public static final String DEVICE_URI = "/oic/d";
     public static final String PRESENCE_URI = "/oic/ad";
-
     private static volatile boolean sIsPlatformInitialized = false;
 
     private OcPlatform() {
@@ -406,34 +406,13 @@ public final class OcPlatform {
             OcDeviceInfo ocDeviceInfo) throws OcException {
         OcPlatform.initCheck();
         OcPlatform.registerDeviceInfo0(
-                ocDeviceInfo.getDeviceName(),
-                ocDeviceInfo.getHostName(),
-                ocDeviceInfo.getDeviceUuid(),
-                ocDeviceInfo.getContentType(),
-                ocDeviceInfo.getVersion(),
-                ocDeviceInfo.getManufacturerName(),
-                ocDeviceInfo.getManufacturerUrl(),
-                ocDeviceInfo.getModelNumber(),
-                ocDeviceInfo.getDateOfManufacture(),
-                ocDeviceInfo.getPlatformVersion(),
-                ocDeviceInfo.getFirmwareVersion(),
-                ocDeviceInfo.getSupportUrl()
+                ocDeviceInfo.getDeviceName()
         );
     }
 
     private static native void registerDeviceInfo0(
-            String deviceName,
-            String hostName,
-            String deviceUUID,
-            String contentType,
-            String version,
-            String manufacturerName,
-            String manufacturerUrl,
-            String modelNumber,
-            String dateOfManufacture,
-            String platformVersion,
-            String firmwareVersion,
-            String supportUrl) throws OcException;
+            String deviceName
+            ) throws OcException;
 
     /**
      * This API unregisters a resource with the server NOTE: This API applies to server side only.

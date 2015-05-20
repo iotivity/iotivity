@@ -37,7 +37,7 @@ void receivedPlatformInfo(const OCRepresentation& rep)
 {
     std::cout << "\nPlatform Information received ---->\n";
     std::string value;
-    std::string values[22] =
+    std::string values[] =
     {
         "pi",   "Platform ID                    ",
         "mnmn", "Manufacturer name              ",
@@ -52,7 +52,7 @@ void receivedPlatformInfo(const OCRepresentation& rep)
         "st",   "Manufacturer system time       "
     };
 
-    for (int i = 0; i < 22; i += 2)
+    for (unsigned int i = 0; i < sizeof(values) / sizeof(values[0]) ; i += 2)
     {
         if(rep.getValue(values[i], value))
         {
@@ -63,7 +63,23 @@ void receivedPlatformInfo(const OCRepresentation& rep)
 
 void receivedDeviceInfo(const OCRepresentation& rep)
 {
-    std::cout << "Implement me !" << std::endl;
+    std::cout << "\nDevice Information received ---->\n";
+    std::string value;
+    std::string values[] =
+    {
+        "di",   "Device ID        ",
+        "n",    "Device name      ",
+        "lcv",  "Spec version url ",
+        "dmv",  "Data Model Model ",
+    };
+
+    for (unsigned int i = 0; i < sizeof(values) / sizeof(values[0]) ; i += 2)
+    {
+        if(rep.getValue(values[i], value))
+        {
+            std::cout << values[i + 1] << " : "<< value << std::endl;
+        }
+    }
 }
 
 int main(int argc, char* argv[]) {
@@ -150,23 +166,20 @@ int main(int argc, char* argv[]) {
             std::cout << "failed." << std::endl;
         }
 
-        bool is_oic_d_implemented = false;
-        if (is_oic_d_implemented)
+        std::cout<< "Querying for device information... ";
+
+        ret = OCPlatform::getDeviceInfo("", deviceDiscoveryRequest.str(), connectivityType,
+                &receivedDeviceInfo);
+
+        if (ret == OC_STACK_OK)
         {
-            std::cout<< "Querying for device information... ";
-
-            ret = OCPlatform::getDeviceInfo("", deviceDiscoveryRequest.str(), connectivityType,
-                    &receivedDeviceInfo);
-
-            if (ret == OC_STACK_OK)
-            {
-                std::cout << "done." << std::endl;
-            }
-            else
-            {
-                std::cout << "failed." << std::endl;
-            }
+            std::cout << "done." << std::endl;
         }
+        else
+        {
+            std::cout << "failed." << std::endl;
+        }
+
         // A condition variable will free the mutex it is given, then do a non-
         // intensive block until 'notify' is called on it.  In this case, since we
         // don't ever call cv.notify, this should be a non-processor intensive version

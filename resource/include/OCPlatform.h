@@ -130,7 +130,7 @@ namespace OC
         *
         * @param host - Host IP Address. If null or empty, Multicast is performed.
         * @param deviceURI - Uri containing address to the virtual device in C Stack
-                                ("/oic/res/d")
+                                ("/oic/d")
         * @param connectivityType - @ref OCConnectivityType type of connectivity indicating the
         *                           interface. Example: OC_WIFI, OC_ETHERNET, OC_ALL
         * @param deviceInfoHandler - device discovery callback

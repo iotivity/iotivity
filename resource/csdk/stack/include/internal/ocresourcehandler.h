@@ -116,6 +116,14 @@ OCStackResult ProcessRequest(ResourceHandling resHandling,
 OCStackResult SavePlatformInfo(OCPlatformInfo info);
 
 /**
+ * Internal API used to save all of the device's information for use in platform
+ * discovery requests.
+ * The device name is received from the appliation.
+ * The deviceID, spec version and data model verson are initialized by the stack.
+ */
+OCStackResult SaveDeviceInfo(OCDeviceInfo info);
+
+/**
  * Internal API used to clear the platform information.
  */
 void DeletePlatformInfo();

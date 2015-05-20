@@ -798,18 +798,7 @@ jobject jListener, jint jResourceProperty)
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_registerDeviceInfo0
 (JNIEnv *env,
 jclass clazz,
-jstring jDeviceName,
-jstring jHostName,
-jstring jDeviceUUID,
-jstring jContentType,
-jstring jVersion,
-jstring jManufacturerName,
-jstring jManufacturerUrl,
-jstring jModelNumber,
-jstring jDateOfManufacture,
-jstring jPlatformVersion,
-jstring jFirmwareVersion,
-jstring jSupportUrl)
+jstring jDeviceName)
 {
     LOGI("OcPlatform_registerDeviceInfo");
 
@@ -818,81 +807,15 @@ jstring jSupportUrl)
     {
         deviceName = env->GetStringUTFChars(jDeviceName, NULL);
     }
-    std::string hostName;
-    if (jHostName)
-    {
-        hostName = env->GetStringUTFChars(jHostName, NULL);
-    }
-    std::string deviceUUID;
-    if (jDeviceUUID)
-    {
-        deviceUUID = env->GetStringUTFChars(jDeviceUUID, NULL);
-    }
-    std::string contentType;
-    if (jContentType)
-    {
-        contentType = env->GetStringUTFChars(jContentType, NULL);
-    }
-    std::string version;
-    if (jVersion)
-    {
-        version = env->GetStringUTFChars(jVersion, NULL);
-    }
-    std::string manufacturerName;
-    if (jManufacturerName)
-    {
-        manufacturerName = env->GetStringUTFChars(jManufacturerName, NULL);
-    }
-    std::string manufacturerUrl;
-    if (jManufacturerUrl)
-    {
-        manufacturerUrl = env->GetStringUTFChars(jManufacturerUrl, NULL);
-    }
-    std::string modelNumber;
-    if (jModelNumber)
-    {
-        modelNumber = env->GetStringUTFChars(jModelNumber, NULL);
-    }
-    std::string dateOfManufacture;
-    if (jDateOfManufacture)
-    {
-        dateOfManufacture = env->GetStringUTFChars(jDateOfManufacture, NULL);
-    }
-    std::string platformVersion;
-    if (jPlatformVersion)
-    {
-        platformVersion = env->GetStringUTFChars(jPlatformVersion, NULL);
-    }
-    std::string firmwareVersion;
-    if (jFirmwareVersion)
-    {
-        firmwareVersion = env->GetStringUTFChars(jFirmwareVersion, NULL);
-    }
-    std::string supportUrl;
-    if (jSupportUrl)
-    {
-        supportUrl = env->GetStringUTFChars(jSupportUrl, NULL);
-    }
 
     OCDeviceInfo deviceInfo;
     try
     {
-        DuplicateString(&deviceInfo.contentType, contentType);
-        DuplicateString(&deviceInfo.dateOfManufacture, dateOfManufacture);
         DuplicateString(&deviceInfo.deviceName, deviceName);
-        DuplicateString(&deviceInfo.deviceUUID, deviceUUID);
-        DuplicateString(&deviceInfo.firmwareVersion, firmwareVersion);
-        DuplicateString(&deviceInfo.hostName, hostName);
-        DuplicateString(&deviceInfo.manufacturerName, manufacturerName);
-        DuplicateString(&deviceInfo.manufacturerUrl, manufacturerUrl);
-        DuplicateString(&deviceInfo.modelNumber, modelNumber);
-        DuplicateString(&deviceInfo.platformVersion, platformVersion);
-        DuplicateString(&deviceInfo.supportUrl, supportUrl);
-        DuplicateString(&deviceInfo.version, version);
     }
     catch (std::exception &e)
     {
-        ThrowOcException(JNI_EXCEPTION, "Failed to register device info");
+        ThrowOcException(JNI_EXCEPTION, "Failed to construct device info");
         return;
     }
 
@@ -900,18 +823,7 @@ jstring jSupportUrl)
     {
         OCStackResult result = OCPlatform::registerDeviceInfo(deviceInfo);
 
-        delete deviceInfo.contentType;
-        delete deviceInfo.dateOfManufacture;
         delete deviceInfo.deviceName;
-        delete deviceInfo.deviceUUID;
-        delete deviceInfo.firmwareVersion;
-        delete deviceInfo.hostName;
-        delete deviceInfo.manufacturerName;
-        delete deviceInfo.manufacturerUrl;
-        delete deviceInfo.modelNumber;
-        delete deviceInfo.platformVersion;
-        delete deviceInfo.supportUrl;
-        delete deviceInfo.version;
 
         if (OC_STACK_OK != result)
         {

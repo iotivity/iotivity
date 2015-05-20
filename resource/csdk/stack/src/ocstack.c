@@ -2469,11 +2469,15 @@ OCStackResult OCSetPlatformInfo(OCPlatformInfo platformInfo)
 
 OCStackResult OCSetDeviceInfo(OCDeviceInfo deviceInfo)
 {
-    // TODO: Implement this.
-    OC_LOG(ERROR, TAG, "Implement OCSetDeviceInfo !!");
+    OC_LOG(INFO, TAG, PCF("Entering OCSetDeviceInfo"));
 
-    // Returning ok to make samples work.
-    return OC_STACK_OK;
+    if (!deviceInfo.deviceName || deviceInfo.deviceName[0] == '\0')
+    {
+        OC_LOG(ERROR, TAG, PCF("Null or empty device name."));
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    return SaveDeviceInfo(deviceInfo);
 }
 
 OCStackResult OCCreateResource(OCResourceHandle *handle,

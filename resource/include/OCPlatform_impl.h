@@ -98,7 +98,7 @@ namespace OC
          *
          * @param host - Host IP Address. If null or empty, Multicast is performed.
          * @param resourceURI - Uri containing address to the virtual device in C Stack
-         *                       ("/oic/res/d")
+         *                       ("/oic/d")
          *
          * @param QualityOfService the quality of communication
          *

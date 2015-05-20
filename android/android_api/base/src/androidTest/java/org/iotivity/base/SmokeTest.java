@@ -992,12 +992,12 @@ public class SmokeTest extends InstrumentationTestCase {
 //            @Override
 //            public void onDeviceFound(OcRepresentation ocRepresentation) {
 //                try {
-//                    Log.i(TAG, "Device Name: " + ocRepresentation.getValue("dn"));
+//                    Log.i(TAG, "Device Name: " + ocRepresentation.getValue("n"));
 //                } catch (OcException e) {
 //                    Log.e(TAG, e.toString());
 //                    assertTrue(false);
 //                }
-//                boolean hasDeviceNameAtr = ocRepresentation.hasAttribute("dn");
+//                boolean hasDeviceNameAtr = ocRepresentation.hasAttribute("n");
 //                assertTrue(hasDeviceNameAtr);
 //                boolean hasNonExistingAtr = ocRepresentation.hasAttribute("NonExisting");
 //                assertFalse(hasNonExistingAtr);
@@ -1028,7 +1028,7 @@ public class SmokeTest extends InstrumentationTestCase {
 //            //client
 //            OcPlatform.getDeviceInfo(
 //                    "",
-//                    OcPlatform.MULTICAST_PREFIX + "/oc/d",
+//                      OcPlatform.MULTICAST_PREFIX + DEVICE_URI,
 //                    OcConnectivityType.IPV4,
 //                    deviceFoundListener);
 //

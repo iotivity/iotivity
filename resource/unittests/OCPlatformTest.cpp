@@ -54,18 +54,8 @@ namespace OCPlatformTest
     //Helper methods
     void DeleteDeviceInfo(OCDeviceInfo deviceInfo)
     {
-        delete[] deviceInfo.contentType;
-        delete[] deviceInfo.dateOfManufacture;
         delete[] deviceInfo.deviceName;
-        delete[] deviceInfo.deviceUUID;
-        delete[] deviceInfo.firmwareVersion;
-        delete[] deviceInfo.hostName;
-        delete[] deviceInfo.manufacturerName;
-        delete[] deviceInfo.manufacturerUrl;
-        delete[] deviceInfo.modelNumber;
-        delete[] deviceInfo.platformVersion;
-        delete[] deviceInfo.supportUrl;
-        delete[] deviceInfo.version;
+
     }
 
     void DuplicateString(char ** targetString, std::string sourceString)
@@ -632,18 +622,7 @@ namespace OCPlatformTest
     {
         OCDeviceInfo deviceInfo;
 
-        DuplicateString(&deviceInfo.contentType, "myContentType");
-        DuplicateString(&deviceInfo.dateOfManufacture, "myDateOfManufacture");
         DuplicateString(&deviceInfo.deviceName, "myDeviceName");
-        DuplicateString(&deviceInfo.deviceUUID, "myDeviceUUID");
-        DuplicateString(&deviceInfo.firmwareVersion, "myFirmwareVersion");
-        DuplicateString(&deviceInfo.hostName, "myHostName");
-        DuplicateString(&deviceInfo.manufacturerName, "myManufacturerNa");
-        DuplicateString(&deviceInfo.manufacturerUrl, "myManufacturerUrl");
-        DuplicateString(&deviceInfo.modelNumber, "myModelNumber");
-        DuplicateString(&deviceInfo.platformVersion, "myPlatformVersion");
-        DuplicateString(&deviceInfo.supportUrl, "mySupportUrl");
-        DuplicateString(&deviceInfo.version, "myVersion");
 
         EXPECT_EQ(OC_STACK_OK, OCPlatform::registerDeviceInfo(deviceInfo));
         EXPECT_NO_THROW(DeleteDeviceInfo(deviceInfo));
@@ -652,7 +631,7 @@ namespace OCPlatformTest
     TEST(RegisterDeviceInfoTest, RegisterDeviceInfoWithEmptyObject)
     {
         OCDeviceInfo di = {};
-        EXPECT_EQ(OC_STACK_OK, OCPlatform::registerDeviceInfo(di));
+        EXPECT_ANY_THROW(OCPlatform::registerDeviceInfo(di));
     }
 
     //SubscribePresence Test

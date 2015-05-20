@@ -67,12 +67,10 @@ const char responsePayloadDeleteResourceNotSupported[] =
 
 
 char *gResourceUri= (char *)"/a/light";
-const char *contentType = "myContentType";
 const char *dateOfManufacture = "myDateOfManufacture";
 const char *deviceName = "myDeviceName";
 const char *deviceUUID = "myDeviceUUID";
 const char *firmwareVersion = "myFirmwareVersion";
-const char *hostName = "myHostName";
 const char *manufacturerName = "myName";
 const char *operatingSystemVersion = "myOS";
 const char *hardwareVersion = "myHardwareVersion";
@@ -90,6 +88,7 @@ const char *resourceTypeName = "core.light";
 const char *resourceInterface = OC_RSRVD_INTERFACE_DEFAULT;
 
 OCPlatformInfo platformInfo;
+OCDeviceInfo deviceInfo;
 
 //This function takes the request as an input and returns the response
 //in JSON format.
@@ -888,6 +887,11 @@ void DeletePlatformInfo()
     free (platformInfo.systemTime);
 }
 
+void DeleteDeviceInfo()
+{
+    free (deviceInfo.deviceName);
+}
+
 bool DuplicateString(char** targetString, const char* sourceString)
 {
     if(!sourceString)
@@ -989,6 +993,15 @@ OCStackResult SetPlatformInfo(const char* platformID, const char *manufacturerNa
     return OC_STACK_ERROR;
 }
 
+OCStackResult SetDeviceInfo(const char* deviceName)
+{
+    if(!DuplicateString(&deviceInfo.deviceName, deviceName))
+    {
+        return OC_STACK_ERROR;
+    }
+    return OC_STACK_OK;
+}
+
 static void PrintUsage()
 {
     OC_LOG(INFO, TAG, "Usage : ocserver -o <0|1>");
@@ -1038,22 +1051,38 @@ int main(int argc, char* argv[])
 
     OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandlerCb);
 
-    OCStackResult platformRegistrationResult =
+    OCStackResult registrationResult =
         SetPlatformInfo(platformID, manufacturerName, manufacturerUrl, modelNumber,
             dateOfManufacture, platformVersion,  operatingSystemVersion,  hardwareVersion,
             firmwareVersion,  supportUrl, systemTime);
 
-    if (platformRegistrationResult != OC_STACK_OK)
+    if (registrationResult != OC_STACK_OK)
     {
         OC_LOG(INFO, TAG, "Platform info setting failed locally!");
         exit (EXIT_FAILURE);
     }
 
-    platformRegistrationResult = OCSetPlatformInfo(platformInfo);
+    registrationResult = OCSetPlatformInfo(platformInfo);
 
-    if (platformRegistrationResult != OC_STACK_OK)
+    if (registrationResult != OC_STACK_OK)
     {
         OC_LOG(INFO, TAG, "Platform Registration failed!");
+        exit (EXIT_FAILURE);
+    }
+
+    registrationResult = SetDeviceInfo(deviceName);
+
+    if (registrationResult != OC_STACK_OK)
+    {
+        OC_LOG(INFO, TAG, "Device info setting failed locally!");
+        exit (EXIT_FAILURE);
+    }
+
+    registrationResult = OCSetDeviceInfo(deviceInfo);
+
+    if (registrationResult != OC_STACK_OK)
+    {
+        OC_LOG(INFO, TAG, "Device Registration failed!");
         exit (EXIT_FAILURE);
     }
 
@@ -1084,8 +1113,12 @@ int main(int argc, char* argv[])
 
     // Break from loop with Ctrl-C
     OC_LOG(INFO, TAG, "Entering ocserver main loop...");
+
     DeletePlatformInfo();
+    DeleteDeviceInfo();
+
     signal(SIGINT, handleSigInt);
+
     while (!gQuitFlag)
     {
         if (OCProcess() != OC_STACK_OK)
