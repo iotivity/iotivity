@@ -381,7 +381,11 @@ int main(int argc , char *argv[])
                 startPut(g_curResource);
                 break;
             case DELETE:
-                startDelete(g_curResource);
+                try {
+                    startDelete(g_curResource);
+                }catch(OCException e) {
+                    std::cout<< "Caught OCException [Code: "<<e.code()<<" Reason: "<<e.reason()<<std::endl;
+                }
                 break;
             default:
                 std::cout << "Invalid input, please try again" << std::endl;
