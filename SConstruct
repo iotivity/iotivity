@@ -22,13 +22,18 @@
 # The main build script
 #
 ##
+import os
 
 # Load common build config
 SConscript('build_common/SConscript')
 
+Import('env')
+
+if os.environ.get('TERM') != None:
+	env['ENV']['TERM'] = os.environ['TERM']
+
 # Load extra options
 SConscript('extra_options.scons')
-Import('env')
 
 target_os = env.get('TARGET_OS')
 if target_os == 'arduino':
