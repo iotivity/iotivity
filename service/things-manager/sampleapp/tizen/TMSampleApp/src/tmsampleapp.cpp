@@ -135,7 +135,7 @@ configure_platform()
     }
     catch (OCException &e)
     {
-        dlog_print(DLOG_INFO, LOG_TAG, "#### Platform configuration failed!!!!");
+        dlog_print(DLOG_ERROR, LOG_TAG, "Exception occured! (%s)", e.what());
     }
 }
 

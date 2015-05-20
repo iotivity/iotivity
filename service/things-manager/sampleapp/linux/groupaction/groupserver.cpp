@@ -130,7 +130,7 @@ void foundResource(std::shared_ptr<OCResource> resource)
     }
     catch (std::exception& e)
     {
-        std::cout << "" << std::endl;
+        std::cout << "Exception: " << e.what() << std::endl;
     }
 }
 
@@ -356,6 +356,7 @@ void createScheduledActionSet_AllBulbOff()
     if( res < 0 )
     {
         printf("Invalid Input. try again.");
+        delete allBulbOff;
         return;
     }
 

@@ -308,5 +308,6 @@ int main()
 
     // No explicit call to stop the platform.
     // When OCPlatform destructor is invoked, internally we do platform cleanup
+    return 0;
 }
 

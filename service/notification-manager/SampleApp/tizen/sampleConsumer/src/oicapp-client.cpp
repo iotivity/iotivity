@@ -64,6 +64,7 @@ void findResourceCandidate(oicappData *ad)
     }
     catch (OCException &e)
     {
+        ERR("findResourceCandidate exception: %s" , e.what().c_str());
     }
     g_oicFindAd = ad;
 }
@@ -217,6 +218,7 @@ static void foundResource(std::shared_ptr< OCResource > resource)
     }
     catch (std::exception &e)
     {
+        ERR("foundResource exception: %s" , e.what().c_str());
     }
 }
 

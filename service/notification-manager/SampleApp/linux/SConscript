@@ -17,7 +17,7 @@ notimgr_env.AppendUnique(CPPPATH = ['../../../../resource/csdk/connectivity/api'
 notimgr_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 notimgr_c_env = notimgr_env.Clone()
 notimgr_env.AppendUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap', 'pthread'])
-notimgr_c_env.AppendUnique(LIBS = ['octbstack', 'oc_logger', 'connectivity_abstraction', 'coap', 'pthread','NOTISDKLibrary'])
+notimgr_c_env.AppendUnique(LIBS = ['octbstack', 'oc_logger', 'connectivity_abstraction', 'coap', 'pthread','NotificationManager'])
 
 if env.get('SECURED') == '1':
     notimgr_env.AppendUnique(LIBS = ['tinydtls'])

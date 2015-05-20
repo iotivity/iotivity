@@ -275,5 +275,7 @@ int main()
     TerminateSSM();
 
     delete SSMApp;
+
+    return 0;
 }
 

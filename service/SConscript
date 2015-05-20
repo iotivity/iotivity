@@ -28,8 +28,7 @@ target_os = env.get('TARGET_OS')
 
 if target_os not in ['arduino','darwin']:
 	# Build things manager project
-	if target_os != 'android':	
-		SConscript('things-manager/SConscript')
+	SConscript('things-manager/SConscript')
 
 	# Build soft sensor manager project
 	SConscript('soft-sensor-manager/SConscript')

@@ -122,7 +122,7 @@ SSMRESULT CResourceFinder::startResourceFinder()
     OCStackResult ret = OC_STACK_ERROR;
 
     std::ostringstream requestURI;
-    requestURI << OC_WELL_KNOWN_QUERY << "?rt=SSManager.Sensor";
+    requestURI << OC_MULTICAST_DISCOVERY_URI << "?rt=SSManager.Sensor";
 
     std::ostringstream multicastPresenceURI;
     multicastPresenceURI << "coap://" << OC_MULTICAST_PREFIX;

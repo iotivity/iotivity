@@ -23,7 +23,6 @@
 #include <algorithm>
 #include <signal.h>
 #include "hosting.h"
-#include "virtualResource.h"
 
 using namespace std;
 using namespace OC;

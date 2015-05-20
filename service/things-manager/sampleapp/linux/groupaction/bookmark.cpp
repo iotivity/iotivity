@@ -224,6 +224,6 @@ int main()
     }
     catch (OCException e)
     {
-        std::cout << "Exception in main: " << e.what();
+        std::cout << "Exception: " << e.what() << std::endl;
     }
 }

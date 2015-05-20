@@ -98,7 +98,6 @@ void onGetChild(const HeaderOptions& headerOptions, const OCRepresentation& rep,
         std::string resourceURI;
 
         QueryParamsMap query;
-        OCRepresentation rep;
         std::string playStart;
         std::string playStop;
 
@@ -472,7 +471,7 @@ int main(int argc, char* argv[])
     }
     catch (OCException& e)
     {
-        //log(e.what());
+        std::cout << "Exception: " << e.what() << std::endl;
     }
 
     return 0;

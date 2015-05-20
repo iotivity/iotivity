@@ -186,7 +186,7 @@ void onFoundCollectionResource(std::vector< std::shared_ptr< OCResource > > reso
     }
     catch (std::exception& e)
     {
-        //log(e.what());
+        std::cout << "Exception: " << e.what() << std::endl;
     }
 
     isWaiting = 0;
@@ -264,7 +264,7 @@ void onFoundCandidateResource(std::vector< std::shared_ptr< OCResource > > resou
     }
     catch (std::exception& e)
     {
-        //log(e.what());
+        std::cout << "Exception: " << e.what() << std::endl;
     }
 
     isWaiting = 0;

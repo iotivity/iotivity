@@ -237,7 +237,7 @@ int main(int argc, char* argv[])
     }
     catch (OCException& e)
     {
-        //log(e.what());
+        std::cout << "Exception: " << e.what() << std::endl;
     }
 
     return 0;

@@ -330,7 +330,7 @@ void foundResourceFan(std::shared_ptr<OCResource> resource)
     }
     catch (std::exception &e)
     {
-        //log(e.what());
+        std::cout << "Exception: " << e.what() << std::endl;
     }
 }
 
@@ -404,7 +404,7 @@ int main(int argc, char *argv[])
     }
     catch (OCException &e)
     {
-        //log(e.what());
+        std::cout << "Exception: " << e.what() << std::endl;
     }
 
     return 0;

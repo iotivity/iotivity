@@ -219,6 +219,7 @@ void foundResource(std::shared_ptr< OCResource > resource)
     }
     catch (std::exception &e)
     {
+        std::cout << "Exception: " << e.what() << " in foundResource" << std::endl;
     }
 }
 
