@@ -101,9 +101,11 @@ CAResult_t CADetachMessageResourceUri(const CAURI_t resourceUri, const CAToken_t
  * @brief   Setting the request and response callbacks for network packets
  * @param   ReqHandler     [IN]    callback for receiving the requests
  * @param   RespHandler    [IN]    callback for receiving the response
+ * @param   ErrorHandler   [IN]    callback for receiving error response
  * @return  NONE
  */
-void CASetRequestResponseCallbacks(CARequestCallback ReqHandler, CAResponseCallback RespHandler);
+void CASetInterfaceCallbacks(CARequestCallback ReqHandler, CAResponseCallback RespHandler,
+                             CAErrorCallback ErrorHandler);
 
 /**
  * @brief   Initialize the message handler by starting thread pool and initializing the

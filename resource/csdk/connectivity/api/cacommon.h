@@ -334,6 +334,19 @@ typedef struct
     CAInfo_t info;              /**< Information of the response */
 } CAResponseInfo_t;
 
+/**
+ * @brief Error information from CA
+ *        contains error code and message information
+ *
+ * This structure holds error information
+ */
+typedef struct
+{
+    CAResult_t result;  /**< CA API request result  */
+    CAInfo_t info;      /**< message information such as token and payload data
+                             helpful to identify the error */
+} CAErrorInfo_t;
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

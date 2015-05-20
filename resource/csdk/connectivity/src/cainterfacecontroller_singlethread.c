@@ -47,6 +47,8 @@ static CANetworkPacketReceivedCallback g_networkPacketReceivedCallback = NULL;
 
 static CANetworkChangeCallback g_networkChangeCallback = NULL;
 
+static CAErrorHandleCallback g_errorHandleCallback = NULL;
+
 static int CAGetAdapterIndex(CATransportType_t cType)
 {
     switch (cType)
@@ -109,6 +111,12 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data,
         g_networkPacketReceivedCallback(endpoint, data, dataLen);
     }
     OIC_LOG(DEBUG, TAG, "OUT");
+}
+
+void CASetErrorHandleCallback(CAErrorHandleCallback errorCallback)
+{
+    OIC_LOG(DEBUG, TAG, "Set error handle callback");
+    g_errorHandleCallback = errorCallback;
 }
 
 static void CANetworkChangedCallback(CALocalConnectivity_t *info, CANetworkStatus_t status)

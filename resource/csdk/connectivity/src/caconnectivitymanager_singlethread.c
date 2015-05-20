@@ -60,7 +60,7 @@ void CATerminate()
 
     if (g_isInitialized)
     {
-        CASetRequestResponseCallbacks(NULL, NULL);
+        CASetInterfaceCallbacks(NULL, NULL, NULL);
         CATerminateMessageHandler();
         CATerminateNetworkType();
         g_isInitialized = false;
@@ -91,7 +91,8 @@ CAResult_t CAStartDiscoveryServer()
     return CAStartDiscoveryServerAdapters();
 }
 
-void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHandler)
+void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHandler,
+                       CAErrorCallback errorHandler)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -101,7 +102,7 @@ void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHand
         return;
     }
 
-    CASetRequestResponseCallbacks(ReqHandler, RespHandler);
+    CASetInterfaceCallbacks(ReqHandler, RespHandler, errorHandler);
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 

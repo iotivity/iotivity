@@ -175,6 +175,12 @@ typedef void (*CANetworkPacketReceivedCallback)(CARemoteEndpoint_t *endPoint, vo
  */
 typedef void (*CANetworkChangeCallback)(CALocalConnectivity_t *info, CANetworkStatus_t status);
 
+/**
+ * @brief This will be used to notify error result to the connectivity common logic layer
+ */
+typedef void (*CAErrorHandleCallback)(const CARemoteEndpoint_t *remoteEndpoint, const void *data,
+                                      uint32_t dataLen, CAResult_t result);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

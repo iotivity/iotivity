@@ -34,6 +34,8 @@ uint16_t g_localSecurePort = SECURE_DEFAULT_PORT;
 
 void request_handler(const CARemoteEndpoint_t* object, const CARequestInfo_t* requestInfo);
 void response_handler(const CARemoteEndpoint_t* object, const CAResponseInfo_t* responseInfo);
+void error_handler(const CARemoteEndpoint_t *object, const CAErrorInfo_t* errorInfo);
+
 void get_resource_uri(const char *URI, char *resourceURI, uint32_t length);
 uint32_t get_secure_information(CAPayload_t payLoad);
 CAResult_t get_network_type(uint32_t selectedNetwork);
@@ -245,7 +247,7 @@ Java_org_iotivity_ca_service_RMInterface_RMRegisterHandler(JNIEnv *env, jobject 
 {
     LOGI("RMRegisterHandler");
 
-    CARegisterHandler(request_handler, response_handler);
+    CARegisterHandler(request_handler, response_handler, error_handler);
 }
 
 JNIEXPORT void JNICALL
@@ -1153,6 +1155,55 @@ void response_handler(const CARemoteEndpoint_t* object, const CAResponseInfo_t* 
             LOGI("This is secure resource...");
         }
     }
+}
+
+void error_handler(const CARemoteEndpoint_t *rep, const CAErrorInfo_t* errorInfo)
+{
+    printf("+++++++++++++++++++++++++++++++++++ErrorInfo+++++++++++++++++++++++++++++++++++");
+
+    if(rep && rep->resourceUri  )
+    {
+        LOGI("Error Handler, RemoteEndpoint Info resourceUri : %s", rep->resourceUri);
+    }
+    else
+    {
+        LOGI("Error Handler, RemoteEndpoint is NULL");
+    }
+
+    if(errorInfo)
+    {
+        const CAInfo_t *info = &errorInfo->info;
+        LOGI("Error Handler, ErrorInfo :");
+        LOGI("Error Handler result    : %d", errorInfo->result);
+        LOGI("Error Handler token     : %s", info->token);
+        LOGI("Error Handler messageId : %d", (uint16_t) info->messageId);
+        LOGI("Error Handler type      : %d", info->type);
+        LOGI("Error Handler payload   : %s", info->payload);
+
+        if(CA_ADAPTER_NOT_ENABLED == errorInfo->result)
+        {
+            LOGE("CA_ADAPTER_NOT_ENABLED, enable the adapter");
+        }
+        else if(CA_SEND_FAILED == errorInfo->result)
+        {
+            LOGE("CA_SEND_FAILED, unable to send the message, check parameters");
+        }
+        else if(CA_MEMORY_ALLOC_FAILED == errorInfo->result)
+        {
+            LOGE("CA_MEMORY_ALLOC_FAILED, insufficient memory");
+        }
+        else if(CA_SOCKET_OPERATION_FAILED == errorInfo->result)
+        {
+            LOGE("CA_SOCKET_OPERATION_FAILED, socket operation failed");
+        }
+        else if(CA_STATUS_FAILED == errorInfo->result)
+        {
+            LOGE("CA_STATUS_FAILED, message could not be delivered, internal error");
+        }
+    }
+    LOGI("++++++++++++++++++++++++++++++++End of ErrorInfo++++++++++++++++++++++++++++++++");
+
+    return;
 }
 
 void get_resource_uri(const char *URI, char *resourceURI, uint32_t length)

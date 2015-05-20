@@ -1420,6 +1420,28 @@ void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_
 }
 
 /*
+ * This function handles error response from CA
+ * code shall be added to handle the errors
+ */
+void HandleCAErrorResponse(const CARemoteEndpoint_t* endPoint, const CAErrorInfo_t* errrorInfo)
+{
+    OC_LOG(INFO, TAG, PCF("Enter HandleCAErrorResponse"));
+
+    if(NULL == endPoint)
+    {
+        OC_LOG(ERROR, TAG, PCF("endPoint is NULL"));
+        return;
+    }
+
+    if(NULL == errrorInfo)
+    {
+        OC_LOG(ERROR, TAG, PCF("errrorInfo is NULL"));
+        return;
+    }
+    OC_LOG(INFO, TAG, PCF("Exit HandleCAErrorResponse"));
+}
+
+/*
  * This function sends out Direct Stack Responses. These are responses that are not coming
  * from the application entity handler. These responses have no payload and are usually ACKs,
  * RESETs or some error conditions that were caught by the stack.
@@ -1843,7 +1865,7 @@ OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
     result = CAResultToOCResult(OCSelectNetwork());
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
-    CARegisterHandler(HandleCARequests, HandleCAResponses);
+    CARegisterHandler(HandleCARequests, HandleCAResponses, HandleCAErrorResponse);
     switch (myStackMode)
     {
         case OC_CLIENT:

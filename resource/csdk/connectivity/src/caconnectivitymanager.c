@@ -95,7 +95,8 @@ CAResult_t CAStartDiscoveryServer()
     return CAStartDiscoveryServerAdapters();
 }
 
-void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHandler)
+void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHandler,
+                       CAErrorCallback ErrorHandler)
 {
     OIC_LOG(DEBUG, TAG, "CARegisterHandler");
 
@@ -105,7 +106,7 @@ void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHand
         return;
     }
 
-    CASetRequestResponseCallbacks(ReqHandler, RespHandler);
+    CASetInterfaceCallbacks(ReqHandler, RespHandler, ErrorHandler);
 }
 
 #ifdef __WITH_DTLS__
