@@ -73,7 +73,7 @@ namespace OIC
         for (unsigned int i = 0; i < collectionResourceTypes.size(); ++i)
         {
 
-            std::string query = OC_WELL_KNOWN_QUERY;
+            std::string query = OC_MULTICAST_DISCOVERY_URI;
             query.append("?rt=");
             query.append(collectionResourceTypes.at(i));
 
@@ -697,7 +697,7 @@ OCStackResult GroupSynchronization::leaveGroup(
 
                     if (methodType == "joinGroup")
                     {
-                        std::string resourceName = OC_WELL_KNOWN_QUERY;
+                        std::string resourceName = OC_MULTICAST_DISCOVERY_URI;
                         resourceName.append("?rt=");
                         resourceName.append(resourceType);
                         OC_LOG_V(DEBUG, TAG, "\t\t\tresourceName : %s", resourceName.c_str());

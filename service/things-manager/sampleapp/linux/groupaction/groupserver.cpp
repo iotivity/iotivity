@@ -478,7 +478,7 @@ int main()
 
                 if (n == 9)
                 {
-                    std::string query = OC_WELL_KNOWN_QUERY;
+                    std::string query = OC_MULTICAST_DISCOVERY_URI;
                     query.append("?rt=");
                     query.append(resourceTypeName);
 
@@ -494,7 +494,7 @@ int main()
                 }
                 else if (n == 0)
                 {
-                    std::string query = OC_WELL_KNOWN_QUERY;
+                    std::string query = OC_MULTICAST_DISCOVERY_URI;
                     query.append("?rt=");
                     query.append("core.bookmark");
 
