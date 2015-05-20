@@ -161,8 +161,10 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
             {
                 OCEntityHandlerResponse ehResponse = {};
                 char presenceResBuf[MAX_RESPONSE_LENGTH] = {};
+
                 //This is effectively the implementation for the presence entity handler.
                 OC_LOG(DEBUG, TAG, PCF("This notification is for Presence"));
+
                 result = AddServerRequest(&request, 0, 0, 0, 1, OC_REST_GET,
                         0, resPtr->sequenceNum, qos, resourceObserver->query,
                         NULL, NULL,
@@ -228,7 +230,7 @@ OCStackResult SendListObserverNotification (OCResource * resource,
     }
 
     uint8_t numIds = numberOfIds;
-    ResourceObserver *observation = NULL;
+    ResourceObserver *observer = NULL;
     uint8_t numSentNotification = 0;
     OCServerRequest * request = NULL;
     OCStackResult result = OC_STACK_ERROR;
@@ -237,21 +239,20 @@ OCStackResult SendListObserverNotification (OCResource * resource,
     OC_LOG(INFO, TAG, PCF("Entering SendListObserverNotification"));
     while(numIds)
     {
-        OC_LOG_V(INFO, TAG, "Need to notify observation id %d", *obsIdList);
-        observation = GetObserverUsingId (*obsIdList);
-        if(observation)
+        observer = GetObserverUsingId (*obsIdList);
+        if(observer)
         {
-            // Found observation - verify if it matches the resource handle
-            if (observation->resource == resource)
+            // Found observer - verify if it matches the resource handle
+            if (observer->resource == resource)
             {
-                qos = DetermineObserverQoS(OC_REST_GET, observation, qos);
+                qos = DetermineObserverQoS(OC_REST_GET, observer, qos);
 
 
                 result = AddServerRequest(&request, 0, 0, 0, 1, OC_REST_GET,
-                        0, resource->sequenceNum, qos, observation->query,
-                        NULL, NULL, observation->token, observation->tokenLength,
-                        observation->resUri, 0,
-                        &(observation->addressInfo), observation->connectivityType);
+                        0, resource->sequenceNum, qos, observer->query,
+                        NULL, NULL, observer->token, observer->tokenLength,
+                        observer->resUri, 0,
+                        &(observer->addressInfo), observer->connectivityType);
 
                 if(request)
                 {
@@ -275,11 +276,17 @@ OCStackResult SendListObserverNotification (OCResource * resource,
                         result = OCDoResponse(&ehResponse);
                         if(result == OC_STACK_OK)
                         {
-                            // Increment sent notifications only if OCDoResponse is successful
+                            OC_LOG_V(INFO, TAG, "Observer id %d notified.", *obsIdList);
+
+                            // Increment only if OCDoResponse is successful
                             numSentNotification++;
 
                             OCFree(ehResponse.payload);
                             FindAndDeleteServerRequest(request);
+                        }
+                        else
+                        {
+                            OC_LOG_V(INFO, TAG, "Error notifying observer id %d.", *obsIdList);
                         }
                     }
                     else
@@ -328,7 +335,7 @@ OCStackResult GenerateObserverId (OCObservationId *observationId)
         resObs = GetObserverUsingId (*observationId);
     } while (NULL != resObs);
 
-    OC_LOG_V(INFO, TAG, "Observation ID is %u", *observationId);
+    OC_LOG_V(INFO, TAG, "Generated bservation ID is %u", *observationId);
 
     return OC_STACK_OK;
 exit:

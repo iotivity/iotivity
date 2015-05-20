@@ -1881,8 +1881,6 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     CARequestInfo_t requestInfo ={};
     CAGroupEndpoint_t grpEnd = {};
 
-    // To track if memory is allocated for additional header options
-
     OC_LOG(INFO, TAG, PCF("Entering OCDoResource"));
 
     // Validate input parameters
@@ -1899,17 +1897,32 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     switch (method)
     {
         case OC_REST_GET:
-        case OC_REST_PUT:
-        case OC_REST_POST:
-        case OC_REST_DELETE:
         case OC_REST_OBSERVE:
         case OC_REST_OBSERVE_ALL:
         case OC_REST_CANCEL_OBSERVE:
+            requestInfo.method = CA_GET;
             break;
+
+        case OC_REST_PUT:
+            requestInfo.method = CA_PUT;
+            break;
+
+        case OC_REST_POST:
+            requestInfo.method = CA_POST;
+            break;
+
+        case OC_REST_DELETE:
+            requestInfo.method = CA_DELETE;
+            break;
+
         #ifdef WITH_PRESENCE
         case OC_REST_PRESENCE:
+            // Replacing method type with GET because "presence"
+            // is a stack layer only implementation.
+            requestInfo.method = CA_GET;
             break;
         #endif
+
         default:
             result = OC_STACK_INVALID_METHOD;
             goto exit;
@@ -1980,45 +1993,6 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
         goto exit;
     }
 
-    switch (method)
-    {
-        case OC_REST_GET:
-        case OC_REST_OBSERVE:
-        case OC_REST_OBSERVE_ALL:
-        case OC_REST_CANCEL_OBSERVE:
-            {
-                requestInfo.method = CA_GET;
-                break;
-            }
-        case OC_REST_PUT:
-            {
-                requestInfo.method = CA_PUT;
-                break;
-            }
-        case OC_REST_POST:
-            {
-                requestInfo.method = CA_POST;
-                break;
-            }
-        case OC_REST_DELETE:
-            {
-                requestInfo.method = CA_DELETE;
-                break;
-            }
-        #ifdef WITH_PRESENCE
-        case OC_REST_PRESENCE:
-            {
-                // Replacing method type with GET because "presence"
-                // is a stack layer only implementation.
-                requestInfo.method = CA_GET;
-                break;
-            }
-        #endif
-        default:
-            result = OC_STACK_INVALID_METHOD;
-            goto exit;
-    }
-
     // create token
     caResult = CAGenerateToken(&token, tokenLength);
     if (caResult != CA_STATUS_OK)
@@ -2030,8 +2004,10 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     }
 
     requestData.type = qualityOfServiceToMessageType(qos);
+
     requestData.token = token;
     requestData.tokenLength = tokenLength;
+
     if ((method == OC_REST_OBSERVE) || (method == OC_REST_OBSERVE_ALL))
     {
         result = CreateObserveHeaderOption (&(requestData.options), options,
@@ -2048,9 +2024,11 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
         requestData.options = (CAHeaderOption_t*)options;
         requestData.numOptions = numOptions;
     }
+
     requestData.payload = (char *)request;
 
     requestInfo.info = requestData;
+
     CATransportType_t caConType;
 
     result = OCToCATransportType((OCConnectivityType) conType, &caConType);
@@ -2120,7 +2098,7 @@ exit:
     }
     if (result != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, PCF("OCDoResource error"));
+        OC_LOG_V(ERROR, TAG, PCF("OCDoResource error no %d"), result);
         FindAndDeleteClientCB(clientCB);
         OCFree(resHandle);
         OCFree(requestUri);
@@ -2180,13 +2158,13 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
         {
             case OC_REST_OBSERVE:
             case OC_REST_OBSERVE_ALL:
-                OC_LOG(INFO, TAG, PCF("Canceling observation"));
                 if(qos == OC_HIGH_QOS)
                 {
                     requestData.type =  qualityOfServiceToMessageType(qos);
                     requestData.token = clientCB->token;
                     requestData.tokenLength = clientCB->tokenLength;
-                     if (CreateObserveHeaderOption (&(requestData.options),
+
+                    if (CreateObserveHeaderOption (&(requestData.options),
                             options, numOptions, OC_OBSERVE_DEREGISTER) != OC_STACK_OK)
                     {
                         return OC_STACK_ERROR;
@@ -2218,13 +2196,14 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
                         OC_LOG(ERROR, TAG, PCF("CASendRequest error"));
                         ret = OC_STACK_ERROR;
                     }
-                ret = CAResultToOCResult (caResult);
+                    ret = CAResultToOCResult (caResult);
                 }
                 else
                 {
                     FindAndDeleteClientCB(clientCB);
                 }
                 break;
+
             #ifdef WITH_PRESENCE
             case OC_REST_PRESENCE:
                 FindAndDeleteClientCB(clientCB);
@@ -2235,6 +2214,11 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
                 break;
         }
     }
+    else
+    {
+        OC_LOG(ERROR, TAG, PCF("Client callback not found. Called OCCancel twice?"));
+    }
+
     Error:
     CADestroyRemoteEndpoint(endpoint);
     if (requestData.numOptions > 0)
@@ -2358,7 +2342,7 @@ OCStackResult OCProcessPresence()
 exit:
     if (result != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, PCF("OCProcessPresence error"));
+        OC_LOG_V(ERROR, TAG, PCF("OCProcessPresence error no %d"), result);
     }
     return result;
 }
