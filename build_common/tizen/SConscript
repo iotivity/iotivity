@@ -19,8 +19,11 @@ if env.get('LOGGING'):
 env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '__linux__'])
 env.AppendUnique(CFLAGS = ['-std=gnu99'])
 env.AppendUnique(CCFLAGS = ['-Wall', '-fPIC'])
-env.AppendUnique(LIBS = ['uuid'])
 env.AppendUnique(LINKFLAGS = ['-ldl', '-lpthread'])
+
+if env.get('TARGET_OS') == 'tizen':
+    env.AppendUnique(CCFLAGS = ['-D__TIZEN__', '-DSLP_SDK_LOG', '-D_GNU_SOURCE', '-DTIZEN_DEBUG_ENABLE'])
+    env.ParseConfig("pkg-config dlog --cflags --libs")
 
 # Set arch flags
 target_arch = env.get('TARGET_ARCH')

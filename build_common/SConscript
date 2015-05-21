@@ -267,10 +267,7 @@ else:
     If target_os is not Yocto, continue with the regular build process
     '''
     # Load config of target os
-    if target_os in ['linux', 'tizen']:
-		env.SConscript('linux/SConscript')
-    else:
-		env.SConscript(target_os + '/SConscript')
+    env.SConscript(target_os + '/SConscript')
 
 # Delete the temp files of configuration
 if env.GetOption('clean'):

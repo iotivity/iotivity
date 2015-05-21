@@ -63,9 +63,12 @@ if target_os not in ['windows', 'winrt']:
 
 liboctbstack_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 
-if target_os in ['android', 'linux']:
+if target_os in ['android', 'linux', 'tizen']:
 	liboctbstack_env.AppendUnique(LIBS = ['connectivity_abstraction'])
 liboctbstack_env.AppendUnique(LIBS = ['coap', 'm'])
+
+if target_os == 'tizen':
+    liboctbstack_env.ParseConfig("pkg-config --cflags --libs uuid")
 
 if target_os not in ['android', 'arduino', 'windows', 'winrt']:
 	liboctbstack_env.AppendUnique(LIBS = ['pthread'])

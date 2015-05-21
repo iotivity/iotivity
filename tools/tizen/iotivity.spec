@@ -16,8 +16,7 @@ BuildRequires:  boost-thread
 BuildRequires:  boost-system
 BuildRequires:  boost-filesystem
 BuildRequires:  pkgconfig(dlog)
-BuildRequires:  pkgconfig(gthread-2.0)
-BuildRequires:  pkgconfig(glib-2.0)
+BuildRequires:  pkgconfig(uuid)
 BuildRequires:  pkgconfig(capi-network-wifi)
 BuildRequires:  pkgconfig(capi-network-bluetooth)
 Requires(postun): /sbin/ldconfig
@@ -59,7 +58,7 @@ export RPM_ARCH=%{_arch}
 %endif
 
 
-scons -j 4 TARGET_OS=tizen TARGET_ARCH=$RPM_ARCH TARGET_TRANSPORT=WIFI
+scons -j 4 TARGET_OS=tizen TARGET_ARCH=$RPM_ARCH TARGET_TRANSPORT=IP
 
 %install
 rm -rf %{buildroot}
@@ -75,7 +74,6 @@ cp out/tizen/*/release/service/protocol-plugin/plugins/mqtt-light/*.so %{buildro
 
 cp resource/csdk/stack/include/ocstack.h %{buildroot}%{_includedir}
 cp resource/csdk/stack/include/ocstackconfig.h %{buildroot}%{_includedir}
-#cp resource/csdk/ocsocket/include/ocsocket.h %{buildroot}%{_includedir}
 cp resource/oc_logger/include/oc_logger.hpp %{buildroot}%{_includedir}
 cp resource/oc_logger/include/oc_log_stream.hpp %{buildroot}%{_includedir}
 cp resource/oc_logger/include/oc_logger.h %{buildroot}%{_includedir}

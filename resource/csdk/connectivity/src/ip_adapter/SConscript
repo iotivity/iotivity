@@ -10,6 +10,9 @@ target_os = env.get('TARGET_OS')
 inc_files = env.get('CPPPATH')
 src_dir = './ip_adapter/'
 
+if target_os == 'tizen':
+    env.ParseConfig("pkg-config --cflags --libs capi-network-wifi")
+
 #Source files to build common for all platforms
 if target_os == 'arduino':
 	env.AppendUnique(CA_SRC=[src_dir+'caipadapter_singlethread.c'])
