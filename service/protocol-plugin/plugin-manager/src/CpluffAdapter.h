@@ -175,11 +175,11 @@ namespace OIC
             *
             * @return OICPluginManager pointer Address.
             */
-            static CpluffAdapter *Getinstance()
+            static CpluffAdapter *Getinstance(void *args = NULL)
             {
                 if (NULL == s_pinstance)
                 {
-                    s_pinstance = new CpluffAdapter();
+                    s_pinstance = new CpluffAdapter(args);
                 }
 
                 return s_pinstance;
@@ -204,7 +204,7 @@ namespace OIC
             * During construction time, all plugins under the root plugin path will be loaded.
             *
             */
-            CpluffAdapter();
+            CpluffAdapter(void *args = NULL);
 
             /**
             * Virtual destructor
