@@ -326,7 +326,7 @@ namespace OIC
 
             std::string host = getHostFromURI(oit->getUri());
 
-            tempResource = OCPlatform::constructResourceObject(host, uri, OC_ALL, true,
+            tempResource = OCPlatform::constructResourceObject(host, uri, OC_IPV4, true,
                     oit->getResourceTypes(), m_if);
 
             p_resources.push_back(tempResource);
