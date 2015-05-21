@@ -489,6 +489,11 @@ ActionSet* GroupManager::getActionSetfromString(std::string description)
     Capability *capa = NULL;
     ActionSet *actionset = new ActionSet();
 
+    if(actionset == NULL)
+    {
+        goto exit;
+    }
+
     if(description.empty())
     {
         goto exit;
