@@ -276,7 +276,6 @@ static void CASendThreadProcess(void *threadData)
             if (CA_STATUS_OK != res)
             {
                 OIC_LOG_V(ERROR, TAG, "send failed:%d", res);
-                CAErrorHandler(data->remoteEndpoint, pdu->hdr, pdu->length, res);
                 coap_delete_pdu(pdu);
                 return;
             }
@@ -311,7 +310,6 @@ static void CASendThreadProcess(void *threadData)
             if (CA_STATUS_OK != res)
             {
                 OIC_LOG_V(ERROR, TAG, "send failed:%d", res);
-                CAErrorHandler(data->remoteEndpoint, pdu->hdr, pdu->length, res);
                 coap_delete_pdu(pdu);
                 return;
             }

@@ -44,6 +44,8 @@ static jobject g_bluetoothGattServerCallback = NULL;
 static jobject g_leAdvertiseCallback = NULL;
 
 static CAPacketReceiveCallback g_packetReceiveCallback = NULL;
+static CABLEErrorHandleCallback g_serverErrorCallback;
+
 static u_arraylist_t *g_connectedDeviceList = NULL;
 static ca_thread_pool_t g_threadPoolHandle = NULL;
 
@@ -1616,7 +1618,7 @@ CAResult_t CALEServerStartMulticastServer()
     ret = CALEServerStartAdvertise(env, g_leAdvertiseCallback);
     if (CA_STATUS_OK != ret)
     {
-        OIC_LOG(ERROR, TAG, "CALEServerSendMulticastMessageImpl has failed");
+        OIC_LOG(ERROR, TAG, "CALEServerStartAdvertise has failed");
     }
 
     if (isAttached)
@@ -1663,7 +1665,7 @@ CAResult_t CALEServerStopMulticastServer()
     CAResult_t ret = CALEServerStopAdvertise(env, g_leAdvertiseCallback);
     if (CA_STATUS_OK != ret)
     {
-        OIC_LOG(ERROR, TAG, "CALEServerSendMulticastMessageImpl has failed");
+        OIC_LOG(ERROR, TAG, "CALEServerStopAdvertise has failed");
     }
 
     g_isStartServer = false;
@@ -2340,9 +2342,15 @@ void CASetBLEReqRespServerCallback(CABLEServerDataReceivedCallback callback)
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
+void CASetBLEServerErrorHandleCallback(CABLEErrorHandleCallback callback)
+{
+    g_serverErrorCallback = callback;
+}
+
 CAResult_t CAUpdateCharacteristicsToGattClient(const char* address, const char *charValue,
                                                const uint32_t charValueLen)
 {
+    CAResult_t result = CA_SEND_FAILED;
     OIC_LOG(DEBUG, TAG, "IN");
     VERIFY_NON_NULL(address, TAG, "env is null");
     VERIFY_NON_NULL(charValue, TAG, "device is null");
@@ -2350,12 +2358,12 @@ CAResult_t CAUpdateCharacteristicsToGattClient(const char* address, const char *
     if (address)
     {
         OIC_LOG(DEBUG, TAG, "CALEServerSendUnicastData");
-        CALEServerSendUnicastMessage(address, charValue, charValueLen);
+        result = CALEServerSendUnicastMessage(address, charValue, charValueLen);
     }
 
     OIC_LOG(DEBUG, TAG, "OUT");
 
-    return CA_STATUS_OK;
+    return result;
 }
 
 CAResult_t CAUpdateCharacteristicsToAllGattClients(const char *charValue,
@@ -2365,10 +2373,10 @@ CAResult_t CAUpdateCharacteristicsToAllGattClients(const char *charValue,
     VERIFY_NON_NULL(charValue, TAG, "device is null");
 
     OIC_LOG(DEBUG, TAG, "CALEServerSendMulticastMessage");
-    CALEServerSendMulticastMessage(charValue, charValueLen);
+    CAResult_t result = CALEServerSendMulticastMessage(charValue, charValueLen);
 
     OIC_LOG(DEBUG, TAG, "OUT");
-    return CA_STATUS_OK;
+    return result;
 }
 
 void CASetBleServerThreadPoolHandle(ca_thread_pool_t handle)

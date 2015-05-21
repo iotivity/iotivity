@@ -85,6 +85,12 @@ static bt_advertiser_h g_hAdvertiser = NULL;
 static CABLEServerDataReceivedCallback g_bleServerDataReceivedCallback = NULL;
 
 /**
+ * @var g_serverErrorCallback
+ * @brief callback to update the error to le adapter
+ */
+static CABLEErrorHandleCallback g_serverErrorCallback;
+
+/**
  * @var g_isBleGattServerStarted
  * @brief Boolean variable to keep the state of the GATTServer
  */
@@ -812,4 +818,9 @@ void CASetBLEReqRespServerCallback(CABLEServerDataReceivedCallback callback)
     ca_mutex_unlock(g_bleReqRespCbMutex);
 
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "OUT");
+}
+
+void CASetBLEServerErrorHandleCallback(CABLEErrorHandleCallback callback)
+{
+    g_serverErrorCallback = callback;
 }

@@ -286,6 +286,33 @@ void CASetBleClientThreadPoolHandle(ca_thread_pool_t handle);
  * @retval #CA_STATUS_FAILED Operation failed
  */
 CAResult_t CAUnSetLEAdapterStateChangedCb();
+
+/**
+ * @brief This will be used to notify errors in BLE adapter
+ * @param  remoteAddress    [IN] Remote endpoint Address
+ * @param  serviceUUID      [IN] Service UUID
+ * @param  data             [IN] Data received
+ * @param  dataLength       [IN] Length of the data received
+ * @param  result           [IN] error code as per CAResult_t
+ * @return NONE
+ */
+typedef void (*CABLEErrorHandleCallback)(const char *remoteAddress, const void *data,
+                                         uint32_t dataLength, CAResult_t result);
+/**
+ * @brief  sets the error handle callback
+ * @param  callback [IN] Callback function to update error to the adapter
+ * @return NONE
+ */
+void CASetBLEClientErrorHandleCallback(CABLEErrorHandleCallback callback);
+
+
+/**
+ * @brief  sets the error handle callback
+ * @param  callback [IN] Callback function to update error to the adapter
+ * @return NONE
+ */
+void CASetBLEServerErrorHandleCallback(CABLEErrorHandleCallback callback);
+
 #ifdef __cplusplus
 }
 #endif

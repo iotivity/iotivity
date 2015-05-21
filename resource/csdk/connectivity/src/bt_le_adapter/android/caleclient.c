@@ -49,6 +49,7 @@ static u_arraylist_t *g_gattObjectList = NULL;
 static u_arraylist_t *g_deviceStateList = NULL;
 
 static CAPacketReceiveCallback g_packetReceiveCallback = NULL;
+static CABLEErrorHandleCallback g_clientErrorCallback;
 static ca_thread_pool_t g_threadPoolHandle = NULL;
 static jobject g_leScanCallback = NULL;
 static jobject g_leGattCallback = NULL;
@@ -487,6 +488,11 @@ void CALEClientSetCallback(CAPacketReceiveCallback callback)
     g_packetReceiveCallback = callback;
 }
 
+void CASetBLEClientErrorHandleCallback(CABLEErrorHandleCallback callback)
+{
+    g_clientErrorCallback = callback;
+}
+
 CAResult_t CALEClientGetInterfaceInfo(char **address)
 {
     OIC_LOG(INFO, TAG, "CALEClientGetInterfaceInfo is not supported");
@@ -737,6 +743,7 @@ CAResult_t CALEClientSendMulticastMessageImpl(JNIEnv *env, const char* data,
         if (CA_STATUS_OK != res)
         {
             OIC_LOG_V(INFO, TAG, "multicast : send has failed for this device[%s]", address);
+            g_clientErrorCallback(address, data, dataLen, res);
             (*env)->ReleaseStringUTFChars(env, jni_address, address);
             continue;
         }

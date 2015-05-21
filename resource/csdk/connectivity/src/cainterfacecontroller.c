@@ -158,7 +158,7 @@ void CAInitializeAdapters(ca_thread_pool_t handle)
 
 #ifdef LE_ADAPTER
     CAInitializeLE(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback,
-                   handle);
+                   CAAdapterErrorHandleCallback, handle);
 #endif /* LE_ADAPTER */
 
 }
