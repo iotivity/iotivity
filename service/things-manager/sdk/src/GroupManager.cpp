@@ -595,7 +595,7 @@ ActionSet* GroupManager::getActionSetfromString(std::string description)
                 token = strtok_r(NULL, DESC_DELIMITER, &descPtr);
             }
 
-            if( actionset != NULL )
+            if( action != NULL )
                 actionset->listOfAction.push_back(action);
             else
                 goto exit;
