@@ -900,7 +900,7 @@ unsigned int GetNumOfTargetResource(OCAction *actionset)
 OCStackResult SendAction(OCDoHandle *handle, const char *targetUri,
         const unsigned char *action)
 {
-    OCCallbackData cbdata = { 0 };
+    OCCallbackData cbdata;
     cbdata.cb = &ActionSetCB;
     cbdata.cd = NULL;
     cbdata.context = (void*)DEFAULT_CONTEXT_VALUE;

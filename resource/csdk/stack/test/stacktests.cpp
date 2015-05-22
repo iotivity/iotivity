@@ -1501,3 +1501,13 @@ TEST(StackPresence, ParsePresencePayload)
     EXPECT_EQ(NULL, resType);
     OCFree(resType);
 }
+
+TEST(PODTests, OCHeaderOption)
+{
+    EXPECT_TRUE(std::is_pod<OCHeaderOption>::value);
+}
+
+TEST(PODTests, OCCallbackData)
+{
+    EXPECT_TRUE(std::is_pod<OCHeaderOption>::value);
+}

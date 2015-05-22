@@ -24,6 +24,8 @@
 #include "ocstackconfig.h"
 
 #ifdef __cplusplus
+#include <string.h>
+
 extern "C" {
 #endif // __cplusplus
 #define WITH_PRESENCE
@@ -342,6 +344,25 @@ typedef struct OCHeaderOption
     uint16_t optionLength;
     // pointer to its data
     uint8_t optionData[MAX_HEADER_OPTION_DATA_LENGTH];
+
+#ifdef __cplusplus
+    OCHeaderOption() = default;
+    OCHeaderOption(OCTransportProtocolID pid,
+                   uint16_t optId,
+                   uint16_t optlen,
+                   const uint8_t* optData)
+        : protocolID(pid),
+          optionID(optId),
+          optionLength(optlen)
+    {
+
+        // parameter includes the null terminator.
+        optionLength = optionLength < MAX_HEADER_OPTION_DATA_LENGTH ?
+                        optionLength : MAX_HEADER_OPTION_DATA_LENGTH;
+        memcpy(optionData, optData, optionLength);
+        optionData[optionLength - 1] = '\0';
+    }
+#endif
 } OCHeaderOption;
 
 /**
@@ -476,13 +497,18 @@ typedef void (* OCClientContextDeleter)(void *context);
 /**
  * This info is passed from application to OC Stack when initiating a request to Server.
  */
-typedef struct
+typedef struct OCCallbackData
 {
     void *context;
     /// The pointer to a function the stack will call to handle the requests
     OCClientResponseHandler cb;
     /// A pointer to a function to delete the context when this callback is removed
     OCClientContextDeleter cd;
+#ifdef __cplusplus
+    OCCallbackData() = default;
+    OCCallbackData(void* ctx, OCClientResponseHandler callback, OCClientContextDeleter deleter)
+        :context(ctx), cb(callback), cd(deleter){}
+#endif
 } OCCallbackData;
 
 /**
