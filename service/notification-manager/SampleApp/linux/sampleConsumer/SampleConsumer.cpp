@@ -369,27 +369,27 @@ int main(int argc , char *argv[])
             continue;
         }
 
-        switch ((int)in)
-        {
-            case OBSERVE:
-                startObserve(g_curResource);
-                break;
-            case GET:
-                startGet(g_curResource);
-                break;
-            case PUT:
-                startPut(g_curResource);
-                break;
-            case DELETE:
-                try {
+        try {
+            switch ((int)in)
+            {
+                case OBSERVE:
+                    startObserve(g_curResource);
+                    break;
+                case GET:
+                    startGet(g_curResource);
+                    break;
+                case PUT:
+                    startPut(g_curResource);
+                    break;
+                case DELETE:
                     startDelete(g_curResource);
-                }catch(OCException e) {
-                    std::cout<< "Caught OCException [Code: "<<e.code()<<" Reason: "<<e.reason()<<std::endl;
-                }
-                break;
-            default:
-                std::cout << "Invalid input, please try again" << std::endl;
-                break;
+                    break;
+                default:
+                    std::cout << "Invalid input, please try again" << std::endl;
+                    break;
+            }
+        }catch(OCException e) {
+            std::cout<< "Caught OCException [Code: "<<e.code()<<" Reason: "<<e.reason()<<std::endl;
         }
     }
 

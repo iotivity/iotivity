@@ -20,7 +20,7 @@
 
 /// @file Config.cpp
 
-/// @brief
+/// @brief Config class reads pluginmanager.xml file and configures PPM
 
 
 #include "Config.h"
@@ -32,8 +32,9 @@ using namespace std;
 
 Config *Config::s_configinstance = NULL;
 
-Config::Config()
+Config::Config(void *args)
 {
+    std::string path = ".";
 /**
  * For Tizen Platform, specifiy the absolute location of config file. It is required for
  * Tizen 2.3 EFL App to work.
@@ -42,7 +43,21 @@ Config::Config()
     if (loadConfigFile("/opt/usr/apps/org.iotivity.service.ppm.ppmsampleapp/lib/pluginmanager.xml")
                                                                                         != PM_S_OK)
 #else
-    if (loadConfigFile("./pluginmanager.xml") != PM_S_OK)
+#ifdef ANDROID
+    JavaVM *jvm = (JavaVM *)args;
+    JNIEnv *env;
+    jvm->GetEnv((void **)&env, JNI_VERSION_1_6);
+
+    jclass cls = env->FindClass("org/iotivity/service/ppm/FelixManager");
+    jmethodID mid = env->GetStaticMethodID(cls, "getPackageName", "()Ljava/lang/String;");
+    jstring jpath = (jstring)env->CallStaticObjectMethod(cls, mid);
+    path = env->GetStringUTFChars(jpath, 0);
+
+    if(path != ".")
+        path = "/data/data/" + path + "/files";
+#endif
+
+    if (loadConfigFile(path + "/pluginmanager.xml") != PM_S_OK)
 #endif //#ifdef __TIZEN__
     {
         fprintf(stderr, "PM Configuration file is not exist current Folder.\n" );
@@ -52,19 +67,22 @@ Config::Config()
 
 Config::~Config(void)
 {
-    s_configinstance->deleteinstance();
-    s_configinstance = NULL;
+    if (s_configinstance) 
+    {
+        s_configinstance->deleteinstance();
+        s_configinstance = NULL;
+    }
 }
 
 PMRESULT Config::loadConfigFile(const std::string configfilepath)
 {
     // Read the xml file
+   xml_document< char > doc;
     std::basic_ifstream< char > xmlFile(configfilepath.c_str());
     if (!xmlFile.good())
     {
         return PM_S_FALSE;
     }
-    xml_document< char > doc;
 
     xmlFile.seekg(0, std::ios::end);
     unsigned int size = (unsigned int)xmlFile.tellg();
@@ -80,8 +98,13 @@ PMRESULT Config::loadConfigFile(const std::string configfilepath)
     parsing(&xmlData.front(), &doc);
 
     // Find our root node
-    xml_node<> *root_node = doc.first_node("pluginManager");
-    xml_node<> *pluginInfo = root_node->first_node("pluginInfo");
+    xml_node< char > *root_node = doc.first_node("pluginManager");
+    if(!root_node)
+    {
+        throw parse_error("No Root Element", 0);
+    }
+
+    xml_node< char > *pluginInfo = root_node->first_node("pluginInfo");
 
     getXmlData(pluginInfo, "pluginPath");
 

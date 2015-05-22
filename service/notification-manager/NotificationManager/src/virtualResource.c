@@ -166,14 +166,14 @@ OCStackResult insertMirrorResource(MirrorResourceList *mirrorResourceList,
 MirrorResource *findMirrorResourceUsingAddressAndURI(MirrorResourceList *mirrorResourceList,
         const char *address, OICResourceCoordinatorParamType paramType, const char *uri)
 {
-    if (mirrorResourceList->headerNode == NULL)
-    {
-        OC_LOG_V(DEBUG, VR_TAG,"Find Virtual Resource : Empty Virtual Resource List.");
-        return NULL;
-    }
     if (mirrorResourceList == NULL || address == NULL)
     {
         OC_LOG_V(DEBUG, VR_TAG,"Find Virtual Resource : invalid parameter.");
+        return NULL;
+    }
+    if (mirrorResourceList->headerNode == NULL)
+    {
+        OC_LOG_V(DEBUG, VR_TAG,"Find Virtual Resource : Empty Virtual Resource List.");
         return NULL;
     }
 
@@ -281,6 +281,7 @@ OCStackResult ejectMirrorResource(MirrorResourceList *mirrorResourceList,
     if (mirrorResourceList->headerNode == NULL)
     {
         OC_LOG_V(DEBUG, VR_TAG, "Eject Virtual Resource : Empty Virtual Resource List.");
+        return OC_STACK_ERROR;
     }
 
     if (mirrorResource == mirrorResourceList->headerNode)
@@ -340,22 +341,12 @@ MirrorResource *cloneMirrorResource(MirrorResource *sourceMirrorResource)
         strcpy(clonedMirrorResource->address[i], sourceMirrorResource->address[i]);
     }
 
-    // copy prop ??
-
     return clonedMirrorResource;
 }
 
 MirrorResourceList *findMirrorResourceListUsingAddress(MirrorResourceList *mirrorResourceList,
         const char *address, OICResourceCoordinatorParamType paramType)
 {
-
-    MirrorResource *tempNode = mirrorResourceList->headerNode;
-    while (tempNode != NULL)
-    {
-        OC_LOG_V(DEBUG, VR_TAG, "uri = %s", tempNode->uri);
-        tempNode = tempNode->next;
-    }
-
     if (mirrorResourceList == NULL || address == NULL)
     {
         OC_LOG_V(DEBUG, VR_TAG,"Find Virtual Resource List : invalid parameter.");
@@ -366,6 +357,14 @@ MirrorResourceList *findMirrorResourceListUsingAddress(MirrorResourceList *mirro
         OC_LOG_V(DEBUG, VR_TAG,"Find Virtual Resource List : Empty Virtual Resource List.");
         return NULL;
     }
+
+    MirrorResource *tempNode = mirrorResourceList->headerNode;
+    while (tempNode != NULL)
+    {
+        OC_LOG_V(DEBUG, VR_TAG, "uri = %s", tempNode->uri);
+        tempNode = tempNode->next;
+    }
+
 
     MirrorResourceList *resultMirrorResourceList = createMirrorResourceList();
     MirrorResource *mirrorResource = mirrorResourceList->headerNode;

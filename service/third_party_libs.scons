@@ -49,11 +49,11 @@ if target_os in ['linux', 'tizen']:
 
 		conf = Configure(lib_env)
 
-		if not conf.CheckLib('boost_thread', language='C++'):
+		if target_os not in ['tizen'] and not conf.CheckLib('boost_thread', language='C++'):
 			print 'Did not find boost_thread, exiting!'
 			Exit(1)
 
-		if not conf.CheckLib('boost_system', language='C++'):
+		if target_os not in ['tizen'] and not conf.CheckLib('boost_system', language='C++'):
 			print 'Did not find boost_system, exiting!'
 			Exit(1)
 

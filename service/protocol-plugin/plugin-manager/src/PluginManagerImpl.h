@@ -20,7 +20,7 @@
 
 /// @file PluginManagerImpl.h
 
-/// @brief
+/// @brief PluginManagerImple provides abstraction of the plugin manager interface
 
 #ifndef __PLUGINMANAGERIMPL_H__
 #define __PLUGINMANAGERIMPL_H__
@@ -176,11 +176,11 @@ namespace OIC
             */
             virtual std::vector<Plugin> &getAllPlugins(void);
 
-            static PluginManagerImpl *Getinstance(void *arg)
+            static PluginManagerImpl *Getinstance(void *args)
             {
                 if (NULL == s_pinstance)
                 {
-                    s_pinstance = new PluginManagerImpl(arg);
+                    s_pinstance = new PluginManagerImpl(args);
                 }
 
                 return s_pinstance;
@@ -189,6 +189,7 @@ namespace OIC
         private:
 
             CpluffAdapter *cppm;
+            void *m_args;
 #ifdef ANDROID
             FelixAdapter *javappm;
 #endif

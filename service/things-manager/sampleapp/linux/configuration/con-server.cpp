@@ -23,7 +23,7 @@
 ///
 
 #include <functional>
-#include <thread>
+#include <pthread.h>
 
 #include "OCPlatform.h"
 #include "OCApi.h"
@@ -38,6 +38,7 @@ using namespace OIC;
 const int SUCCESS_RESPONSE = 0;
 int g_Steps = 0;
 int isWaiting = 0;
+pthread_mutex_t mutex_lock = PTHREAD_MUTEX_INITIALIZER;
 
 // Default system configuration value's variables
 // The variable's names should be same as the names of "extern" variables defined in
@@ -215,7 +216,9 @@ OCEntityHandlerResult entityHandlerForResource(std::shared_ptr< OCResourceReques
 // callback handler on GET request
 void onBootstrap(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
 {
+    pthread_mutex_lock(&mutex_lock);
     isWaiting = 0;
+    pthread_mutex_unlock(&mutex_lock);
 
     if (eCode != SUCCESS_RESPONSE)
     {
@@ -261,26 +264,38 @@ int main()
         // Perform app tasks
         while (true)
         {
-
+            pthread_mutex_lock(&mutex_lock);
             if (isWaiting > 0)
+            {
+                pthread_mutex_unlock(&mutex_lock);
                 continue;
+            }
 
             isWaiting = 0;
+            pthread_mutex_unlock(&mutex_lock);
 
             std::cout << endl << endl << "(0) Quit" << std::endl;
             std::cout << "(1) Bootstrap" << std::endl;
             std::cout << "(2) Create Configuration Resources" << std::endl;
 
             cin >> g_Steps;
-            //
+
             if (g_Steps == 0)
+            {
                 break;
+            }
             else if (g_Steps == 1)
             {
                 if( g_thingsmanager->doBootstrap(&onBootstrap) == OC_STACK_OK)
+                {
+                    pthread_mutex_lock(&mutex_lock);
                     isWaiting = 1;
+                    pthread_mutex_unlock(&mutex_lock);
+                }
                 else
+                {
                     std::cout << "A callback pointer of the function is NULL." << std::endl;
+                }
             }
             else if (g_Steps == 2)
             {
@@ -297,7 +312,9 @@ int main()
                         > (std::bind(&ConfigurationResource::factoryReset,
                                 myConfigurationResource));
 
+                pthread_mutex_lock(&mutex_lock);
                 isWaiting = 1;
+                pthread_mutex_unlock(&mutex_lock);
             }
         }
     }

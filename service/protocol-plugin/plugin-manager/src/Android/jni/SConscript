@@ -1,0 +1,52 @@
+##
+# Protocol plug-in manager service JNI build script
+##
+
+import os
+Import('env')
+
+# Add third party libraries
+lib_env = env.Clone()
+SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', exports = 'lib_env')
+
+ppm_jni_env = lib_env.Clone()
+target_os = env.get('TARGET_OS')
+ppm_sdk = env.get('SRC_DIR') + '/service/protocol-plugin/plugin-manager'
+
+######################################################################
+# Build flags
+######################################################################
+ppm_jni_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-DLINUX', '-DNDEBUG'])
+ppm_jni_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
+ppm_jni_env.PrependUnique(LIBS = ['pmimpl', 'ppm', 'expat', 'cpluff', 'boost_system', 'boost_thread', 'gnustl_shared', 'log'])
+
+ppm_jni_env.AppendUnique(CPPPATH = [ppm_sdk+'/src'])
+ppm_jni_env.AppendUnique(CPPPATH = [ppm_sdk+'/../lib/cpluff/libcpluff'])
+ppm_jni_env.AppendUnique(CPPPATH = [env.get('SRC_DIR')+'/extlibs/rapidxml'])
+
+######################################################################
+# Source files and Targets
+######################################################################
+ppm_jni_src = ['PluginManager.cpp']
+ppm_jni = ppm_jni_env.SharedLibrary('PluginManager', ppm_jni_src)
+
+ppm_jni_env.InstallTarget(ppm_jni, 'libPluginManager')
+
+######################################################################
+# Install the libraries to /libs/<TARGET_ARCH> directory
+######################################################################
+ppm_jni_env.Install(ppm_sdk+'/src/Android/libs/'+env.get('TARGET_ARCH'),ppm_jni)
+ppm_jni_env.Install(ppm_sdk+'/src/Android/libs/'+env.get('TARGET_ARCH'),env.get('BUILD_DIR')+'/libpmimpl.so')
+ppm_jni_env.Install(ppm_sdk+'/src/Android/libs/'+env.get('TARGET_ARCH'),env.get('SRC_DIR')+'/dep/android/'+env.get('TARGET_ARCH')+'/usr/lib/libexpat.so')
+
+gnu_lib_paths = env.get('LIBPATH')
+for gnu_lib_path in gnu_lib_paths:
+    gnu_lib_path = gnu_lib_path + '/libgnustl_shared.so'
+    if os.path.exists(gnu_lib_path):
+        ppm_jni_env.Install(ppm_sdk+'/src/Android/libs/'+env.get('TARGET_ARCH'), gnu_lib_path)
+        break
+
+
+
+
+

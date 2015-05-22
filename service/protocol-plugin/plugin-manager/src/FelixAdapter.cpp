@@ -33,7 +33,7 @@ FelixAdapter::FelixAdapter(JavaVM *args)
 {
     jvm = args;
 
-    config = Config::Getinstance();
+    config = Config::Getinstance(args);
     std::string pluginpath = config->getPluginPath();
     if (pluginpath != "")
     {
