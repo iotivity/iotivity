@@ -38,5 +38,5 @@ public interface ISubscribePresenceListener {
      * @param result
      *            error code.
      */
-    public void onPresenceCallback(String resource, OCStackResult result);
+    public void onPresenceCallback(String resource, int result);
 }

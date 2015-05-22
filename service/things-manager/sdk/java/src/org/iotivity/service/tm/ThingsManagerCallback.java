@@ -400,15 +400,15 @@ class ThingsManagerCallback {
      *
      * @param resource
      *            URI of resource.
-     * @param result
+     * @param errorValue
      *            error code.
      *
      */
-    public void onPresenceCallback(String resource, OCStackResult result) {
+    public void onPresenceCallback(String resource, int errorValue) {
         if (null != presenceListener) {
             Log.i("ThingsManagerCallback : onPresenceCallback",
                     "Received Callback from JNI");
-            presenceListener.onPresenceCallback(resource, result);
+            presenceListener.onPresenceCallback(resource, errorValue);
         }
     }
 
