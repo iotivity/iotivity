@@ -168,6 +168,7 @@ void OICLogv(LogLevel level, PROGMEM const char *tag, const int16_t lineNum,
 #ifdef __TIZEN__
 #define OIC_LOG(level,tag,mes) LOG_(LOG_ID_MAIN, level, tag, mes)
 #define OIC_LOG_V(level,tag,fmt,args...) LOG_(LOG_ID_MAIN, level, tag, fmt,##args)
+#define OIC_LOG_BUFFER(level, tag, buffer, bufferSize)
 #else // These macros are defined for Linux, Android, and Arduino
 #define OIC_LOG_INIT()    OICLogInit()
 #define OIC_LOG_BUFFER(level, tag, buffer, bufferSize)\
