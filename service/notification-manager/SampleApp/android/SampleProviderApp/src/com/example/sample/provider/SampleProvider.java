@@ -79,7 +79,6 @@ public class SampleProvider extends Activity implements OnClickListener,
             findViewById(R.id.btnHumidityDown).setOnClickListener(this);
             findViewById(R.id.btnLogClear).setOnClickListener(this);
 
-
             isExecutePresence = false;
         }
 
@@ -88,7 +87,8 @@ public class SampleProvider extends Activity implements OnClickListener,
             // create platform config
             PlatformConfig cfg = new PlatformConfig(this,ServiceType.IN_PROC,
                                                     ModeType.SERVER, "0.0.0.0", // bind to all available interfaces
-                                                    0, QualityOfService.HIGH);
+                                                    0, QualityOfService.LOW);
+
             OcPlatform.Configure(cfg);
 
             try
