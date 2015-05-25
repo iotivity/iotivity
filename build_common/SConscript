@@ -261,6 +261,7 @@ if target_os == "yocto":
     env.AppendUnique(CFLAGS = ['-std=gnu99'])
     env.AppendUnique(CCFLAGS = ['-Wall', '-fPIC'])
     env.AppendUnique(LINKFLAGS = ['-ldl', '-lpthread'])
+    env.AppendUnique(LIBS = ['uuid'])
     Export('env')
 else:
     '''
