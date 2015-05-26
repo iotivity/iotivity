@@ -241,6 +241,12 @@ static CAResult_t CAIPUpdateInterfaceInformation(u_arraylist_t **netInterfaceLis
 
     OIC_LOG_V(DEBUG, IP_MONITOR_TAG, "CAIPUpdateInterfaceInformation : %d", interfaces);
 
+    if(0 == interfaces)
+    {
+        OIC_LOG(ERROR, IP_MONITOR_TAG, "no interfaces");
+        return CA_STATUS_FAILED;
+    }
+
     for (int32_t i = 0; i < interfaces; i++)
     {
         struct ifreq temp_ifr = { 0 };
@@ -263,6 +269,8 @@ static CAResult_t CAIPUpdateInterfaceInformation(u_arraylist_t **netInterfaceLis
         if ((temp_ifr.ifr_flags & IFF_LOOPBACK)
             || !(temp_ifr.ifr_flags & IFF_UP) || !(temp_ifr.ifr_flags & IFF_RUNNING))
         {
+            OIC_LOG_V(ERROR, IP_MONITOR_TAG,
+                      "interface is not up or not running or loopback = %x", temp_ifr.ifr_flags);
             continue;
         }
 
@@ -326,15 +334,11 @@ static CAResult_t CAIPUpdateInterfaceInformation(u_arraylist_t **netInterfaceLis
 
         OIC_LOG_V(DEBUG, IP_MONITOR_TAG, "ipAddress : %s, interfaceName : %s, subnetmask : %s",
                 netInfo->ipAddress, netInfo->interfaceName, netInfo->subnetMask);
-        close(sck);
-        return CA_STATUS_OK;
-
-        break;
     }
 
     close(sck);
     OIC_LOG(DEBUG, IP_MONITOR_TAG, "OUT");
-    return CA_STATUS_FAILED;
+    return CA_STATUS_OK;
 }
 
 static bool CACheckIsAnyInterfaceDown(const u_arraylist_t *netInterfaceList,
