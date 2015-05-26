@@ -42,7 +42,7 @@ if target_os not in ['windows', 'winrt']:
 
 if target_os == 'android':
     things_manager_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-    things_manager_env.PrependUnique(LIBS = ['oc', 'octbstack', 'gnustl_shared', 'android_cpp11_compat', 'log'])
+    things_manager_env.PrependUnique(LIBS = ['oc', 'octbstack', 'gnustl_shared'])
 
 ######################################################################
 # Source files and Targets
@@ -52,6 +52,10 @@ tgmsdk_static = things_manager_env.StaticLibrary('TGMSDKLibrary', tgm_src)
 tgmsdk_shared = things_manager_env.SharedLibrary('TGMSDKLibrary', tgm_src)
 
 things_manager_env.InstallTarget([tgmsdk_static,tgmsdk_shared], 'libTGMSDK')
+
+# Build JNI layer
+#if target_os == 'android':
+#    SConscript(os.path.join('sdk', 'java', 'jni', 'SConscript'))
 
 #Go to build sample apps
 SConscript('sampleapp/SConscript')
