@@ -19,6 +19,9 @@ plugin_manager_env.AppendUnique(CPPPATH = [
 		env.get('SRC_DIR')+'/extlibs/rapidxml'
 		])
 
+if target_os == 'tizen':
+    plugin_manager_env.ParseConfig("pkg-config --cflags --libs capi-appfw-app-common")
+
 if target_os not in ['windows', 'winrt']:
 	plugin_manager_env.AppendUnique(CXXFLAGS = ['-Wall','-std=c++0x',
 		'-fpermissive', '-Wsign-compare'])

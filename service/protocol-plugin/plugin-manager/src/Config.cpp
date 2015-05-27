@@ -25,6 +25,9 @@
 
 #include "Config.h"
 
+#ifdef __TIZEN__
+#include <appfw/app_common.h>
+#endif
 
 using namespace OIC;
 using namespace rapidxml;
@@ -35,14 +38,6 @@ Config *Config::s_configinstance = NULL;
 Config::Config(void *args)
 {
     std::string path = ".";
-/**
- * For Tizen Platform, specifiy the absolute location of config file. It is required for
- * Tizen 2.3 EFL App to work.
- */
-#ifdef __TIZEN__
-    if (loadConfigFile("/opt/usr/apps/org.iotivity.service.ppm.ppmsampleapp/lib/pluginmanager.xml")
-                                                                                        != PM_S_OK)
-#else
 #ifdef ANDROID
     JavaVM *jvm = (JavaVM *)args;
     JNIEnv *env;
@@ -52,13 +47,22 @@ Config::Config(void *args)
     jmethodID mid = env->GetStaticMethodID(cls, "getPackageName", "()Ljava/lang/String;");
     jstring jpath = (jstring)env->CallStaticObjectMethod(cls, mid);
     path = env->GetStringUTFChars(jpath, 0);
-
-    if(path != ".")
+    if (path != ".")
         path = "/data/data/" + path + "/files";
+#elif __TIZEN__
+    char *app_id = (char *)malloc(PATH_MAX_SIZE * sizeof(char));
+    char completePath[PATH_MAX_SIZE];
+    int res = app_get_id(&app_id);
+    if (APP_ERROR_NONE == res)
+    {
+        strcpy(completePath, "/opt/usr/apps/");
+        strcat(completePath, app_id);
+        strcat(completePath, "/lib");
+    }
+    path = completePath;
 #endif
 
     if (loadConfigFile(path + "/pluginmanager.xml") != PM_S_OK)
-#endif //#ifdef __TIZEN__
     {
         fprintf(stderr, "PM Configuration file is not exist current Folder.\n" );
         exit(EXIT_FAILURE);
@@ -67,7 +71,7 @@ Config::Config(void *args)
 
 Config::~Config(void)
 {
-    if (s_configinstance) 
+    if (s_configinstance)
     {
         s_configinstance->deleteinstance();
         s_configinstance = NULL;
@@ -77,7 +81,7 @@ Config::~Config(void)
 PMRESULT Config::loadConfigFile(const std::string configfilepath)
 {
     // Read the xml file
-   xml_document< char > doc;
+    xml_document< char > doc;
     std::basic_ifstream< char > xmlFile(configfilepath.c_str());
     if (!xmlFile.good())
     {
@@ -99,7 +103,7 @@ PMRESULT Config::loadConfigFile(const std::string configfilepath)
 
     // Find our root node
     xml_node< char > *root_node = doc.first_node("pluginManager");
-    if(!root_node)
+    if (!root_node)
     {
         throw parse_error("No Root Element", 0);
     }

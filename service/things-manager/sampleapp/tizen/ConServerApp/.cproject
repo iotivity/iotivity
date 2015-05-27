@@ -225,9 +225,9 @@
                                     <listOptionValue builtIn="false" value="TGMSDKLibrary"/>
                                     <listOptionValue builtIn="false" value="oc"/>
                                     <listOptionValue builtIn="false" value="octbstack"/>
-                                    <listOptionValue builtIn="false" value="coap"/>
                                     <listOptionValue builtIn="false" value="oc_logger"/>
                                     <listOptionValue builtIn="false" value="connectivity_abstraction"/>
+                                    <listOptionValue builtIn="false" value="uuid"/>
                                 </option>
                                 <option id="sbi.gnu.cpp.linker.option.shared_flag.core.1600357455" name="Linker.Shared" superClass="sbi.gnu.cpp.linker.option.shared_flag.core" value="false" valueType="boolean"/>
                                 <inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1548223100" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">

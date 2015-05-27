@@ -1,5 +1,5 @@
 Name: iotivity
-Version: 0.9.0
+Version: 0.9.1
 Release: 0
 Summary: IoTivity Base Stack & IoTivity Services
 Group: System Environment/Libraries
@@ -19,6 +19,7 @@ BuildRequires:  pkgconfig(dlog)
 BuildRequires:  pkgconfig(uuid)
 BuildRequires:  pkgconfig(capi-network-wifi)
 BuildRequires:  pkgconfig(capi-network-bluetooth)
+BuildRequires:  pkgconfig(capi-appfw-app-common)
 Requires(postun): /sbin/ldconfig
 Requires(post): /sbin/ldconfig
 
@@ -68,9 +69,11 @@ mkdir -p %{buildroot}%{_libdir}
 mkdir -p %{buildroot}%{_sbindir}
 
 cp out/tizen/*/release/lib*.so %{buildroot}%{_libdir}
-cp out/tizen/*/release/lib*.a %{buildroot}%{_libdir}
+cp out/tizen/*/release/libSSMSDK.a %{buildroot}%{_libdir}
+cp out/tizen/*/release/libppm.a %{buildroot}%{_libdir}
 cp out/tizen/*/release/service/protocol-plugin/plugins/mqtt-fan/*.so %{buildroot}%{_libdir}
 cp out/tizen/*/release/service/protocol-plugin/plugins/mqtt-light/*.so %{buildroot}%{_libdir}
+cp /usr/lib/libuuid.so %{buildroot}%{_libdir}
 
 cp resource/csdk/stack/include/ocstack.h %{buildroot}%{_includedir}
 cp resource/csdk/stack/include/ocstackconfig.h %{buildroot}%{_includedir}

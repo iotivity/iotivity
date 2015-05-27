@@ -24,18 +24,25 @@
 
 
 #include "PluginManager.h"
+#ifdef __TIZEN__
+#include <appfw/app_common.h>
+#endif
 
 using namespace OIC;
 
 PluginManager::PluginManager()
 {
-/**
- * For Tizen Platform, specifiy the absolute location of dynamic library. It is required for
- * Tizen 2.3 EFL App to work.
- */
 #ifdef __TIZEN__
-    handle = dlopen("/opt/usr/apps/org.iotivity.service.ppm.ppmsampleapp/lib/libpmimpl.so",
-                                                                                        RTLD_LAZY);
+    char *app_id = (char *)malloc(PATH_MAX_SIZE * sizeof(char));
+    char completePath[PATH_MAX_SIZE];
+    int res = app_get_id(&app_id);
+    if (APP_ERROR_NONE == res)
+    {
+        strcpy(completePath, "/opt/usr/apps/");
+        strcat(completePath, app_id);
+        strcat(completePath, "/lib/libpmimpl.so");
+    }
+    handle = dlopen(completePath, RTLD_LAZY);
 #else
     handle = dlopen("./libpmimpl.so", RTLD_LAZY);
 #endif //#ifdef __TIZEN__

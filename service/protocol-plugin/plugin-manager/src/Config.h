@@ -36,6 +36,8 @@
 #include <jni.h>
 #endif
 
+#define PATH_MAX_SIZE 100
+
 using namespace rapidxml;
 
 namespace OIC
