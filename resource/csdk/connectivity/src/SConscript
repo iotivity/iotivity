@@ -9,7 +9,10 @@ ca_transport = env.get('TARGET_TRANSPORT')
 secured = env.get('SECURED')
 root_dir = './../'
 ca_path = './'
-current_dir=env.get('SRC_DIR')
+if ca_os == 'tizen':
+	current_dir = root_dir
+else:
+	current_dir=env.get('SRC_DIR')
 
 # The tinydtls library location is ~/iotivity/extlibs. When scons run from connectivity folder,
 # the build folder is ~/iotivity/resource/csdk/connectivity/out/linux/x86_64/release/.
