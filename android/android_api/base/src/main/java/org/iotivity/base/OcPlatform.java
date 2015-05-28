@@ -46,17 +46,17 @@ public final class OcPlatform {
     /**
      * Default interface
      */
-    public static final String DEFAULT_INTERFACE = "oic.mi.def";
+    public static final String DEFAULT_INTERFACE = "oic.if.baseline";
 
     /**
      * Used in discovering (GET) links to other resources of a collection
      */
-    public static final String LINK_INTERFACE = "oic.mi.ll";
+    public static final String LINK_INTERFACE = "oic.if.ll";
 
     /**
      * Used in GET, PUT, POST, DELETE methods on links to other resources of a collection
      */
-    public static final String BATCH_INTERFACE = "oic.mi.b";
+    public static final String BATCH_INTERFACE = "oic.if.b";
 
     /**
      * Used in GET, PUT, POST methods on links to other remote resources of a group
@@ -70,6 +70,7 @@ public final class OcPlatform {
     public static final int DEFAULT_PRESENCE_TTL = 60;
     public static final String DEVICE_URI = "/oic/d";
     public static final String PRESENCE_URI = "/oic/ad";
+
     private static volatile boolean sIsPlatformInitialized = false;
 
     private OcPlatform() {
