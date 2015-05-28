@@ -71,7 +71,9 @@ extern "C" {
 #define OC_RSRVD_RESOURCE_TYPE          "rt"
 #define OC_RSRVD_RESOURCE_TYPE_PRESENCE "oic.wk.ad"
 #define OC_RSRVD_INTERFACE              "if"
-
+#define OC_RSRVD_TTL                    "ttl"
+#define OC_RSRVD_NONCE                  "non"
+#define OC_RSRVD_TRIGGER                "trg"
 
 #define OC_RSRVD_INTERFACE_DEFAULT      "oic.if.baseline"
 #define OC_RSRVD_INTERFACE_LL           "oic.if.ll"
@@ -86,7 +88,13 @@ extern "C" {
 #define OC_RSRVD_HOSTING_PORT           "port"
 #define OC_RSRVD_SERVER_INSTANCE_ID     "sid"
 
-  //**** Platform ****
+//**** Presence "Announcement Triggers" ****
+#define OC_RSRVD_TRIGGER_CREATE         "create"
+#define OC_RSRVD_TRIGGER_CHANGE         "change"
+#define OC_RSRVD_TRIGGER_DELETE         "delete"
+//*******************
+
+//**** Platform ****
 #define OC_RSRVD_PLATFORM_ID            "pi"
 #define OC_RSRVD_MFG_NAME               "mnmn"
 #define OC_RSRVD_MFG_URL                "mnml"
@@ -100,7 +108,7 @@ extern "C" {
 #define OC_RSRVD_SYSTEM_TIME             "st"
 //*******************
 
-  //**** Device ****
+//**** Device ****
 #define OC_RSRVD_DEVICE_ID              "di"
 #define OC_RSRVD_DEVICE_NAME            "n"
 #define OC_RSRVD_SPEC_VERSION           "lcv"

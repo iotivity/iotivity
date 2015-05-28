@@ -27,7 +27,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
-#define WITH_PRESENCE
 #define USE_RANDOM_PORT (0)
 
 //-----------------------------------------------------------------------------

@@ -818,7 +818,7 @@ HandleVirtualResource (OCServerRequest *request, OCResource* resource)
         else
         {
             if(resource->resourceProperties & OC_ACTIVE){
-                SendPresenceNotification(NULL);
+                SendPresenceNotification(resource->rsrcType, OC_PRESENCE_TRIGGER_CHANGE);
             }
         }
         #endif
@@ -1089,24 +1089,6 @@ void DeletePlatformInfo()
 
     OCFree(savedPlatformInfo.systemTime);
     savedPlatformInfo.systemTime = NULL;
-}
-
-static OCStackResult CloneStringIfNonNull(char **dest, char *src)
-{
-    if (src)
-    {
-        *dest = (char*) OCMalloc(strlen(src) + 1);
-        if (!*dest)
-        {
-            return OC_STACK_NO_MEMORY;
-        }
-        strcpy(*dest, src);
-    }
-    else
-    {
-        *dest = NULL;
-    }
-    return OC_STACK_OK;
 }
 
 static OCStackResult DeepCopyPlatFormInfo(OCPlatformInfo info)
