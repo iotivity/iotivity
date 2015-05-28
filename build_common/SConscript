@@ -53,7 +53,10 @@ require_upload = ARGUMENTS.get('UPLOAD', False)
 if ARGUMENTS.get('TEST'):
 	logging_default = False
 else:
-	logging_default = (ARGUMENTS.get('RELEASE', True) == 'false')
+	release_mode = False
+	if ARGUMENTS.get('RELEASE', True) in ['y', 'yes', 'true', 't', '1', 'on', 'all']:
+		release_mode = True
+	logging_default = (release_mode == False)
 
 
 
