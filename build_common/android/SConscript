@@ -202,7 +202,7 @@ else:
 	env.AppendUnique(CCFLAGS = ['-g'])
 
 if env.get('LOGGING'):
-        env.AppendUnique(CPPDEFINES = ['-DTB_LOG'])
+        env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 
 env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '__ANDROID__'])
