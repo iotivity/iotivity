@@ -40,7 +40,11 @@ if target_os not in host_target_map[host]:
 	print "\nError: Unknown target os: %s (Allow values: %s)\n" % (target_os, host_target_map[host])
 	Exit(1)
 
-default_arch = platform.machine()
+if target_os is 'android':
+	default_arch = 'x86'
+else:
+	default_arch = platform.machine()
+
 if default_arch not in os_arch_map[target_os]:
 	default_arch = os_arch_map[target_os][0].lower()
 
@@ -63,7 +67,7 @@ else:
 ######################################################################
 # Common build options (release, target os, target arch)
 ######################################################################
-targets_disallow_multitransport = ['arduino']
+targets_disallow_multitransport = ['arduino', 'android']
 
 help_vars = Variables()
 help_vars.Add(BoolVariable('VERBOSE', 'Show compilation', False))
