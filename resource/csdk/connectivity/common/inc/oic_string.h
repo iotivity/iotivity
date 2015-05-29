@@ -29,7 +29,7 @@ extern "C"
 /**
  * Duplicates the source string and returns it.
  *
- * @note Caller needs to release this memory by calling @ref OICFree.
+ * @note Caller needs to release this memory by calling OICFree().
  *
  * @param str Original valid string which needs to be duplicated.
  *

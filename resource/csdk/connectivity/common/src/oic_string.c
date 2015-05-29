@@ -27,7 +27,10 @@
 #define TAG "OIC_STRING"
 char *OICStrdup(const char *str)
 {
-    assert(str);
+    if(!str)
+    {
+        return NULL;
+    }
 
     // Allocate memory for original string length and 1 extra byte for '\0'
     size_t length = strlen(str);
@@ -36,50 +39,49 @@ char *OICStrdup(const char *str)
     {
         memcpy(dup, str, length + 1);
     }
-    else
-    {
-        assert(NULL != dup);
-    }
 
     return dup;
 }
 
 char* OICStrcpy(char* dest, size_t destSize, const char* source)
 {
-    return OICStrcpyPartial(dest, destSize, source, destSize);
+    return OICStrcpyPartial(dest, destSize, source, destSize == 0 ? 0 : destSize - 1);
 }
 
 char* OICStrcat(char* dest, size_t destSize, const char* source)
 {
-    return OICStrcatPartial(dest, destSize, source, destSize);
+    return OICStrcatPartial(dest, destSize, source, destSize == 0 ? 0 : destSize - 1);
 }
 
-static size_t min3(size_t a, size_t b, size_t c)
+#ifndef min
+static size_t min(size_t a, size_t b)
 {
-    return a < b ? (a < c ? a : c) : (b < c ? b: c);
+    return a < b ? a : b;
 }
+#endif
 
 char* OICStrcpyPartial(char* dest, size_t destSize, const char* source, size_t sourceLen)
 {
-    assert(dest);
-    assert(source);
+    if(!dest || !source)
+    {
+        return NULL;
+    }
 
     if(destSize == 0 || sourceLen == 0)
     {
         return dest;
     }
 
-    size_t limit = min3(destSize - 1, sourceLen, strlen(source));
-    memcpy(dest, source, limit);
-    dest[limit] = '\0';
-
-    return dest;
+    dest[0] = '\0';
+    return strncat(dest, source, min(destSize - 1, sourceLen));
 }
 
 char* OICStrcatPartial(char* dest, size_t destSize, const char* source, size_t sourceLen)
 {
-    assert(dest);
-    assert(source);
+    if (!dest || !source)
+    {
+        return NULL;
+    }
 
     if(destSize == 0 || sourceLen == 0)
     {
@@ -88,13 +90,10 @@ char* OICStrcatPartial(char* dest, size_t destSize, const char* source, size_t s
 
     size_t destLen = strlen(dest);
 
-    if (destLen >= destSize)
+    if(destLen >= destSize)
     {
         return dest;
     }
 
-    size_t limit = min3(destSize - destLen - 1, sourceLen, strlen(source));
-    memcpy(dest + destLen, source, limit);
-    dest[destLen + limit] = '\0';
-    return dest;
+    return strncat(dest, source, min(destSize - destLen - 1, sourceLen));
 }
