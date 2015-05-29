@@ -25,8 +25,8 @@
  * fragmentation and reassemebly.
  */
 
-#ifndef CA_MSG_PARSER_H_
-#define CA_MSG_PARSER_H_
+#ifndef CA_FRAGMENTATION_H_
+#define CA_FRAGMENTATION_H_
 
 #include "cacommon.h"
 #include "logger.h"
@@ -129,7 +129,7 @@ extern "C"
 
 /*****************************************************************
  * @file The CA Header format
- * @brief CA Header will be difined by 2 bytes of Header.
+ * @brief CA Header will be defined by 2 bytes of Header.
  * First two bits : Header version(Currently Its not being used)
  * Third bit and fourth bit: Reserved bits for future use.
  * 5th to 16th bit : 12 bits to provide the length of the data.
@@ -138,15 +138,15 @@ extern "C"
 /**
 * @fn CAGenerateHeader
 * @brief This function is used to generate the CA specific header to maintain the fragmentation
-*           logic. The header sturcture explained above will be formed and returned to the caller.
+*           logic. The header structure explained above will be formed and returned to the caller.
 *
-* @param[in]  data    Pointer to the charcter data which needs to be printed.
+* @param[in]  data    Pointer to the character data which needs to be printed.
 * @param[in]  length The total legth of the data which will be represented from 5th -16th bits
 *                              in the header.
 *
 * @return  CA_STATUS_OK on success. One of theCA_STATUS_FAILED or other error values on error.
 * @retval  CA_STATUS_OK  Successful
-* @retval  CA_STATUS_INVALID_PARAM  Invalid input argumets
+* @retval  CA_STATUS_INVALID_PARAM  Invalid input arguments
 * @retval  CA_STATUS_FAILED Operation failed
 */
 CAResult_t CAGenerateHeader(char *header, uint32_t length);
@@ -156,7 +156,7 @@ CAResult_t CAGenerateHeader(char *header, uint32_t length);
 * @brief This function is used to parse the header in the receiver end. This function will
 *            provide the information of the total length of the data which has been fragmented.
 *
-* @param[in]  header  Pointer to the charcter data which contains the header information.
+* @param[in]  header  Pointer to the character data which contains the header information.
 *                                Note that pointer should point to two bytes of data header
 *                                 which needs to be parsed.
 *
@@ -167,5 +167,5 @@ uint32_t CAParseHeader(const char *header);
 } /* extern "C" */
 #endif
 
-#endif  /* CA_MSG_PARSER_H_ */
+#endif  /* CA_FRAGMENTATION_H_ */
 

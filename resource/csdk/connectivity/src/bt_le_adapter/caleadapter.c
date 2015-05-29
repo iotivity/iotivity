@@ -27,7 +27,7 @@
 #include "camutex.h"
 #include "caadapterutils.h"
 #include "caqueueingthread.h"
-#include "camsgparser.h"
+#include "cafragmentation.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 

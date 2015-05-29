@@ -173,7 +173,7 @@ LOCAL_SRC_FILES = \
                 camessagehandler.c canetworkconfigurator.c caprotocolmessage.c \
                 caretransmission.c caqueueingthread.c \
                 $(ADAPTER_UTILS)/caadapternetdtls.c $(ADAPTER_UTILS)/caadapterutils.c \
-                $(ADAPTER_UTILS)/camsgparser.c \
+                $(ADAPTER_UTILS)/cafragmentation.c \
                 bt_le_adapter/caleadapter.c $(LE_ADAPTER_PATH)/caleclient.c \
                 $(LE_ADAPTER_PATH)/caleserver.c $(LE_ADAPTER_PATH)/caleutils.c \
                 $(LE_ADAPTER_PATH)/calenwmonitor.c \
