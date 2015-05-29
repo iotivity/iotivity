@@ -745,7 +745,7 @@ HandleVirtualResource (OCServerRequest *request, OCResource* resource)
                     if (result != OC_STACK_OK)
                     {
                         // if this failed, we need to remove the comma added above.
-                        if(!firstLoopDone)
+                        if(firstLoopDone)
                         {
                             ptr--;
                             *ptr = '\0';
