@@ -58,7 +58,7 @@ if ARGUMENTS.get('TEST'):
 	logging_default = False
 else:
 	release_mode = False
-	if ARGUMENTS.get('RELEASE', True) in ['y', 'yes', 'true', 't', '1', 'on', 'all']:
+	if ARGUMENTS.get('RELEASE', True) in ['y', 'yes', 'true', 't', '1', 'on', 'all', True]:
 		release_mode = True
 	logging_default = (release_mode == False)
 
