@@ -825,8 +825,6 @@ CAResult_t CAInitializeMessageHandler()
 
     CASetNetworkChangeCallback(CANetworkChangedCallback);
 
-    CASetErrorHandleCallback(CAErrorHandler);
-
     // create thread pool
     CAResult_t res = ca_thread_pool_init(MAX_THREAD_POOL_SIZE, &g_threadPoolHandle);
 

@@ -39,18 +39,16 @@ extern "C"
  * @param registerCallback      [IN] Callback to register IP interfaces to Connectivity
  *                                   Abstraction Layer
  * @param networkPacketCallback [IN] Callback to notify request and response messages from server(s)
- *                                   started at Connectivity Abstraction Layer
+ *                                   started at Connectivity Abstraction Layer.
  * @param netCallback           [IN] Callback to notify the network additions to Connectivity
- *                                   Abstraction Layer
- * @param errorCallback         [IN] Callback to notify the network errors to Connectivity
- *                                   Abstraction Layer
+ *                                   Abstraction Layer.
  * @param handle                [IN] Threadpool Handle
  * @return  #CA_STATUS_OK or Appropriate error code
  */
-CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
-                          CANetworkPacketReceivedCallback networkPacketCallback,
-                          CANetworkChangeCallback netCallback,
-                          CAErrorHandleCallback errorCallback, ca_thread_pool_t handle);
+    CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
+                              CANetworkPacketReceivedCallback networkPacketCallback,
+                              CANetworkChangeCallback netCallback, ca_thread_pool_t handle);
+
 
 /**
  * @brief Start IP Interface adapter.
