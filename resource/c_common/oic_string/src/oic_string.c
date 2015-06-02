@@ -21,7 +21,6 @@
 
 #include <string.h>
 #include <assert.h>
-#include "logger.h"
 #include "oic_malloc.h"
 
 #define TAG "OIC_STRING"

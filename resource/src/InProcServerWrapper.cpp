@@ -33,7 +33,7 @@
 #include <OCResourceResponse.h>
 #include <ocstack.h>
 #include <OCApi.h>
-#include <ocmalloc.h>
+#include <oic_malloc.h>
 #include <OCPlatform.h>
 #include <OCUtilities.h>
 
@@ -534,7 +534,7 @@ namespace OC
             response.resourceHandle = pResponse->getResourceHandle();
             response.ehResult = pResponse->getResponseResult();
 
-            response.payload = static_cast<char*>(OCMalloc(payLoad.length() + 1));
+            response.payload = static_cast<char*>(OICMalloc(payLoad.length() + 1));
             if(!response.payload)
             {
                 result = OC_STACK_NO_MEMORY;
@@ -575,7 +575,7 @@ namespace OC
             }
             else
             {
-                OCFree(response.payload);
+                OICFree(response.payload);
                 result = OC_STACK_ERROR;
             }
 

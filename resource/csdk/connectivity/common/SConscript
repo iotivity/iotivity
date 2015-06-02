@@ -27,8 +27,6 @@ for item in temp:
 # Source files and Target(s)
 ######################################################################
 ca_common_src = [
-		ca_common_src_path + 'oic_malloc.c',
-		ca_common_src_path + 'oic_string.c',
 		ca_common_src_path + 'uarraylist.c',
 		ca_common_src_path + 'uqueue.c',
 	]

@@ -24,7 +24,7 @@ extern "C"
     #include "ocstack.h"
     #include "ocstackinternal.h"
     #include "logger.h"
-    #include "ocmalloc.h"
+    #include "oic_malloc.h"
 }
 
 #include "gtest/gtest.h"
@@ -1493,7 +1493,7 @@ TEST(StackPresence, ParsePresencePayload)
     EXPECT_TRUE(OC_PRESENCE_TRIGGER_DELETE == presenceTrigger);
     EXPECT_TRUE(NULL != resType);
     EXPECT_STREQ("presence", resType);
-    OCFree(resType);
+    OICFree(resType);
 
     presenceTrigger = OC_PRESENCE_TRIGGER_CHANGE;
 
@@ -1509,7 +1509,7 @@ TEST(StackPresence, ParsePresencePayload)
     EXPECT_TRUE(OC_PRESENCE_TRIGGER_CHANGE == presenceTrigger);
     EXPECT_TRUE(NULL == resType);
     EXPECT_EQ(NULL, resType);
-    OCFree(resType);
+    OICFree(resType);
 
     //Bad Scenario
     seqNum = 0; maxAge = 0; resType = NULL;
@@ -1520,7 +1520,7 @@ TEST(StackPresence, ParsePresencePayload)
     EXPECT_TRUE(OC_PRESENCE_TRIGGER_CHANGE == presenceTrigger);
     EXPECT_TRUE(NULL == resType);
     EXPECT_EQ(NULL, resType);
-    OCFree(resType);
+    OICFree(resType);
 
     //Bad Scenario
     seqNum = 0; maxAge = 0; resType = NULL;
@@ -1531,7 +1531,7 @@ TEST(StackPresence, ParsePresencePayload)
     EXPECT_TRUE(OC_PRESENCE_TRIGGER_CHANGE == presenceTrigger);
     EXPECT_TRUE(NULL == resType);
     EXPECT_EQ(NULL, resType);
-    OCFree(resType);
+    OICFree(resType);
 
     //Bad Scenario
     strncpy(payload, "{:]}", sizeof(payload));
@@ -1541,7 +1541,7 @@ TEST(StackPresence, ParsePresencePayload)
     EXPECT_TRUE(OC_PRESENCE_TRIGGER_CHANGE == presenceTrigger);
     EXPECT_TRUE(NULL == resType);
     EXPECT_EQ(NULL, resType);
-    OCFree(resType);
+    OICFree(resType);
 
     //Bad Scenario
     strncpy(payload, "{:[presence}", sizeof(payload));
@@ -1551,7 +1551,7 @@ TEST(StackPresence, ParsePresencePayload)
     EXPECT_TRUE(OC_PRESENCE_TRIGGER_CHANGE == presenceTrigger);
     EXPECT_TRUE(NULL == resType);
     EXPECT_EQ(NULL, resType);
-    OCFree(resType);
+    OICFree(resType);
 }
 
 TEST(PODTests, OCHeaderOption)

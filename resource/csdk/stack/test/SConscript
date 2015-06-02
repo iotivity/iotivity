@@ -36,7 +36,6 @@ stacktest_env.PrependUnique(CPPPATH = [
 		'../../stack/include',
 		'../../stack/include/internal',
 		'../../connectivity/api',
-		'../../ocmalloc/include',
 		'../../extlibs/cjson',
 		'../../../oc_logger/include',
 		'../../../../extlibs/gtest/gtest-1.7.0/include'

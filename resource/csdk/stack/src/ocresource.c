@@ -30,7 +30,7 @@
 #include "ocresourcehandler.h"
 #include "ocobserve.h"
 #include "occollection.h"
-#include "ocmalloc.h"
+#include "oic_malloc.h"
 #include "logger.h"
 #include "cJSON.h"
 
@@ -98,7 +98,7 @@ static OCStackResult GetSecurePortInfo(CATransportType_t connType, uint16_t *por
         }
     }
 
-    OCFree(info);
+    OICFree(info);
     return ret;
 }
 
@@ -424,7 +424,7 @@ BuildVirtualResourceResponse(const OCResource *resourcePtr, uint8_t filterOn,
         ret = OC_STACK_ERROR;
     }
     cJSON_Delete (resObj);
-    OCFree (jsonStr);
+    OICFree (jsonStr);
 
     OC_LOG(INFO, TAG, PCF("Exiting BuildVirtualResourceResponse"));
     return ret;
@@ -459,7 +459,7 @@ OCStackResult BuildVirtualResourceResponseForDevice(uint8_t filterOn, char *filt
             ret = OC_STACK_ERROR;
         }
 
-        OCFree(jsonStr);
+        OICFree(jsonStr);
     }
     else
     {
@@ -490,7 +490,7 @@ OCStackResult BuildVirtualResourceResponseForPlatform(char *out, uint16_t *remai
             OC_LOG_V(ERROR, TAG, PCF("Platform info string too big. len: %u"), jsonLen);
             ret = OC_STACK_ERROR;
         }
-        OCFree(jsonStr);
+        OICFree(jsonStr);
     }
     else
     {
@@ -1057,37 +1057,37 @@ void DeletePlatformInfo()
 {
     OC_LOG(INFO, TAG, PCF("Deleting platform info."));
 
-    OCFree(savedPlatformInfo.platformID);
+    OICFree(savedPlatformInfo.platformID);
     savedPlatformInfo.platformID = NULL;
 
-    OCFree(savedPlatformInfo.manufacturerName);
+    OICFree(savedPlatformInfo.manufacturerName);
     savedPlatformInfo.manufacturerName = NULL;
 
-    OCFree(savedPlatformInfo.manufacturerUrl);
+    OICFree(savedPlatformInfo.manufacturerUrl);
     savedPlatformInfo.manufacturerUrl = NULL;
 
-    OCFree(savedPlatformInfo.modelNumber);
+    OICFree(savedPlatformInfo.modelNumber);
     savedPlatformInfo.modelNumber = NULL;
 
-    OCFree(savedPlatformInfo.dateOfManufacture);
+    OICFree(savedPlatformInfo.dateOfManufacture);
     savedPlatformInfo.dateOfManufacture = NULL;
 
-    OCFree(savedPlatformInfo.platformVersion);
+    OICFree(savedPlatformInfo.platformVersion);
     savedPlatformInfo.platformVersion = NULL;
 
-    OCFree(savedPlatformInfo.operatingSystemVersion);
+    OICFree(savedPlatformInfo.operatingSystemVersion);
     savedPlatformInfo.operatingSystemVersion = NULL;
 
-    OCFree(savedPlatformInfo.hardwareVersion);
+    OICFree(savedPlatformInfo.hardwareVersion);
     savedPlatformInfo.hardwareVersion = NULL;
 
-    OCFree(savedPlatformInfo.firmwareVersion);
+    OICFree(savedPlatformInfo.firmwareVersion);
     savedPlatformInfo.firmwareVersion = NULL;
 
-    OCFree(savedPlatformInfo.supportUrl);
+    OICFree(savedPlatformInfo.supportUrl);
     savedPlatformInfo.supportUrl = NULL;
 
-    OCFree(savedPlatformInfo.systemTime);
+    OICFree(savedPlatformInfo.systemTime);
     savedPlatformInfo.systemTime = NULL;
 }
 
@@ -1157,7 +1157,7 @@ void DeleteDeviceInfo()
 {
     OC_LOG(INFO, TAG, PCF("Deleting device info."));
 
-    OCFree(savedDeviceInfo.deviceName);
+    OICFree(savedDeviceInfo.deviceName);
     savedDeviceInfo.deviceName = NULL;
 }
 

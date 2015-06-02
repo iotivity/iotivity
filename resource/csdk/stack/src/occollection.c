@@ -31,9 +31,8 @@
 #include "ocstackinternal.h"
 #include "ocresourcehandler.h"
 #include "logger.h"
-#include "ocmalloc.h"
 #include "cJSON.h"
-#include "ocmalloc.h"
+#include "oic_malloc.h"
 
 /// Module Name
 #include <stdio.h>
@@ -261,7 +260,7 @@ static OCStackResult BuildRootResourceJSON(OCResource *resource,
     }
 
     cJSON_Delete (resObj);
-    OCFree(jsonStr);
+    OICFree(jsonStr);
 
     return ret;
 }

@@ -19,7 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "ocstack.h"
-#include "ocmalloc.h"
+#include "oic_malloc.h"
 #include "ocsecurity.h"
 #include "ocsecurityconfig.h"
 #include "cainterface.h"
@@ -42,7 +42,7 @@ void DeinitOCSecurityInfo()
         // Initialize sensitive data to zeroes before freeing.
         memset(secConfigData, 0, secConfigDataLen);
 
-        OCFree(secConfigData);
+        OICFree(secConfigData);
         secConfigData = NULL;
     }
 }
@@ -52,7 +52,7 @@ void DeinitOCSecurityInfo()
  * retrieve PSK credentials from RI security layer.
  *
  * Note: When finished, caller should initialize memory to zeroes and
- * invoke OCFree to delete @p credInfo.
+ * invoke OICFree to delete @p credInfo.
  *
  * @param credInfo
  *     binary blob containing PSK credentials
@@ -73,7 +73,7 @@ void GetDtlsPskCredentials(CADtlsPskCredsBlob_t **credInfo)
         {
             if (osb->type == OC_BLOB_TYPE_PSK)
             {
-                caBlob = (CADtlsPskCredsBlob_t *)OCCalloc(sizeof(CADtlsPskCredsBlob_t), 1);
+                caBlob = (CADtlsPskCredsBlob_t *)OICCalloc(sizeof(CADtlsPskCredsBlob_t), 1);
                 if (caBlob)
                 {
                     OCDtlsPskCredsBlob * ocBlob = (OCDtlsPskCredsBlob *)osb->val;
@@ -81,7 +81,7 @@ void GetDtlsPskCredentials(CADtlsPskCredsBlob_t **credInfo)
                     memcpy(caBlob->identity, ocBlob->identity, sizeof(caBlob->identity));
                     caBlob->num = ocBlob->num;
                     caBlob->creds =
-                        (OCDtlsPskCreds*) OCMalloc(caBlob->num * sizeof(OCDtlsPskCreds));
+                        (OCDtlsPskCreds*) OICMalloc(caBlob->num * sizeof(OCDtlsPskCreds));
                     if (caBlob->creds)
                     {
                         memcpy(caBlob->creds, ocBlob->creds,
@@ -101,8 +101,8 @@ void GetDtlsPskCredentials(CADtlsPskCredsBlob_t **credInfo)
     // Clear memory if any memory allocation failed above
     if(caBlob)
     {
-        OCFree(caBlob->creds);
-        OCFree(caBlob);
+        OICFree(caBlob->creds);
+        OICFree(caBlob);
     }
 }
 #endif //__WITH_DTLS__
@@ -219,7 +219,7 @@ OCStackResult OCSecSetConfigData(const OCSecConfigData *cfgData,
         // Remove existing blob
         DeinitOCSecurityInfo();
         // Allocate storage for new blob
-        secConfigData = (OCSecConfigData*)OCMalloc(len);
+        secConfigData = (OCSecConfigData*)OICMalloc(len);
         if (secConfigData)
         {
             memcpy(secConfigData, cfgData, len);

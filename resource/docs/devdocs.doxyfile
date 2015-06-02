@@ -108,14 +108,16 @@ INPUT                  = devdox \
                          ../csdk/connectivity/src \
                          ../csdk/logger/include \
                          ../csdk/logger/src \
-                         ../csdk/ocmalloc/include \
-                         ../csdk/ocmalloc/src \
                          ../csdk/ocrandom/include \
                          ../csdk/ocrandom/src \
                          ../csdk/security/include \
                          ../csdk/security/src \
                          ../csdk/stack/include \
-                         ../csdk/stack/src
+                         ../csdk/stack/src \
+                         ../c_common/oic_malloc/include \
+                         ../c_common/oic_malloc/src \
+                         ../c_common/oic_string/include \
+                         ../c_common/oic_string/src
 
 INPUT_ENCODING         = UTF-8
 FILE_PATTERNS          =

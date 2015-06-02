@@ -29,7 +29,7 @@
 #include "logger.h"
 #include "occlientbasicops.h"
 #include "cJSON.h"
-#include "ocmalloc.h"
+#include "oic_malloc.h"
 
 #define MAX_IP_ADDR_ST_SZ  16 //string size of "155.255.255.255" (15 + 1)
 #define MAX_PORT_ST_SZ  6     //string size of "65535" (5 + 1)
@@ -397,7 +397,7 @@ const char * getIPAddr(const OCClientResponse * clientResponse)
     }
 
     char * ipaddr = NULL;
-    if((ipaddr = (char *) OCCalloc(1, MAX_IP_ADDR_ST_SZ)))
+    if((ipaddr = (char *) OICCalloc(1, MAX_IP_ADDR_ST_SZ)))
     {
         snprintf(ipaddr, MAX_IP_ADDR_ST_SZ, "%d.%d.%d.%d", a,b,c,d);
     }
@@ -417,7 +417,7 @@ const char * getPort(const OCClientResponse * clientResponse)
     }
 
     char * port = NULL;
-    if((port = (char *) OCCalloc(1, MAX_PORT_ST_SZ)))
+    if((port = (char *) OICCalloc(1, MAX_PORT_ST_SZ)))
     {
         snprintf(port, MAX_PORT_ST_SZ, "%d", p);
     }
@@ -463,7 +463,7 @@ int parseJSON(const char * resJSONPayload, char ** sid_c,
         if (cJSON_GetObjectItem(resource, "sid"))
         {
             char * sid = cJSON_GetObjectItem(resource, "sid")->valuestring;
-            if((* sid_c = (char *)OCCalloc(1, strlen (sid) + 1)))
+            if((* sid_c = (char *)OICCalloc(1, strlen (sid) + 1)))
             {
                 memcpy(* sid_c, sid, strlen(sid) + 1);
             }
@@ -479,7 +479,7 @@ int parseJSON(const char * resJSONPayload, char ** sid_c,
             return OC_STACK_INVALID_JSON;
         }
 
-        if(!(* uri_c =  (char ** )OCMalloc ((* totalRes) * sizeof(char **))))
+        if(!(* uri_c =  (char ** )OICMalloc ((* totalRes) * sizeof(char **))))
         {
             OC_LOG(ERROR, TAG, "Memory not allocated to sid_c array");
             return OC_STACK_NO_MEMORY;
@@ -492,7 +492,7 @@ int parseJSON(const char * resJSONPayload, char ** sid_c,
             if (cJSON_GetObjectItem(resource, "href"))
             {
                 char *uri= cJSON_GetObjectItem(resource, "href")->valuestring;
-                if(((*uri_c)[i] = (char *)OCCalloc(1, strlen (uri) + 1)))
+                if(((*uri_c)[i] = (char *)OICCalloc(1, strlen (uri) + 1)))
                 {
                     memcpy((*uri_c)[i], uri, strlen(uri) + 1);
                 }
@@ -556,8 +556,8 @@ void collectUniqueResource(const OCClientResponse * clientResponse)
             != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "Error while parsing JSON payload in OCClientResponse");
-        OCFree(sid);
-        OCFree(uri);
+        OICFree(sid);
+        OICFree(uri);
         return;
     }
 
@@ -576,8 +576,8 @@ void collectUniqueResource(const OCClientResponse * clientResponse)
         }
     }
 
-    OCFree(sid);
-    OCFree(uri);
+    OICFree(sid);
+    OICFree(uri);
  }
 
 /* This function searches for the resource(sid:uri) in the ResourceList.
@@ -603,7 +603,7 @@ int insertResource(const char * sid, char const * uri,
     }
 
     //Creating new ResourceNode
-    if((iter = (ResourceNode *) OCMalloc(sizeof(ResourceNode))))
+    if((iter = (ResourceNode *) OICMalloc(sizeof(ResourceNode))))
     {
         iter->sid = sid;
         iter->uri = uri;
@@ -678,11 +678,11 @@ void freeResourceList()
     {
         temp = resourceList;
         resourceList = resourceList->next;
-        OCFree((void *)temp->sid);
-        OCFree((void *)temp->uri);
-        OCFree((void *)temp->ip);
-        OCFree((void *)temp->port);
-        OCFree(temp);
+        OICFree((void *)temp->sid);
+        OICFree((void *)temp->uri);
+        OICFree((void *)temp->ip);
+        OICFree((void *)temp->port);
+        OICFree(temp);
     }
 }
 
