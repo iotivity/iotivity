@@ -262,7 +262,6 @@ public class FelixManager {
                     Log.d("Felix", "bundle: " + b.getBundleId()
                             + "   symbolicName : " + b.getSymbolicName());
                     b.stop();
-                    b.uninstall();
                     Log.d("Felix", "stop end");
                 }
             }
