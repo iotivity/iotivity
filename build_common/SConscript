@@ -40,7 +40,7 @@ if target_os not in host_target_map[host]:
 	print "\nError: Unknown target os: %s (Allow values: %s)\n" % (target_os, host_target_map[host])
 	Exit(1)
 
-if target_os is 'android':
+if target_os == 'android':
 	default_arch = 'x86'
 else:
 	default_arch = platform.machine()
