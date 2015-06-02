@@ -343,6 +343,39 @@ TEST(StackResource, CreateResourceBadParams)
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
+TEST(StackResource, CreateResourceBadUri)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    OC_LOG(INFO, TAG, "Starting CreateResourceBadUri test");
+    InitStack(OC_SERVER);
+
+    const char *uri65 = "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKL";
+
+    OCResourceHandle handle;
+
+    EXPECT_EQ(OC_STACK_INVALID_URI, OCCreateResource(&handle,
+                                            "core.led",
+                                            "core.rw",
+                                            NULL, //"/a/led",
+                                            0,
+                                            OC_DISCOVERABLE|OC_OBSERVABLE));
+
+    EXPECT_EQ(OC_STACK_INVALID_URI, OCCreateResource(&handle,
+                                            "core.led",
+                                            "core.rw",
+                                            "", //"/a/led",
+                                            0,
+                                            OC_DISCOVERABLE|OC_OBSERVABLE));
+
+    EXPECT_EQ(OC_STACK_INVALID_URI, OCCreateResource(&handle,
+                                            "core.led",
+                                            "core.rw",
+                                            uri65, //"/a/led",
+                                            0,
+                                            OC_DISCOVERABLE|OC_OBSERVABLE));
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
 
 TEST(StackResource, CreateResourceSuccess)
 {
