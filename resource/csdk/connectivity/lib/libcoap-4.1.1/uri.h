@@ -11,6 +11,10 @@
 
 #include "hashkey.h"
 #include "str.h"
+#include <stdbool.h>
+
+///Separtor for multiple query string
+#define OC_QUERY_SEPARATOR                "&;"
 
 /** Representation of parsed URI. Components may be filled from a
  * string with coap_split_uri() and can be used as input for
@@ -69,7 +73,7 @@ int coap_hash_path(const unsigned char *path, size_t len, coap_key_t key);
  * @code
  * unsigned char *token;
  * coap_parse_iterator_t pi;
- * coap_parse_iterator_init(uri.path.s, uri.path.length, '/', "?#", 2, &pi);
+ * coap_parse_iterator_init(uri.path.s, uri.path.length, "/", "?#", 2, &pi);
  *
  * while ((token = coap_parse_next(&pi))) {
  *   ... do something with token ...
@@ -79,7 +83,7 @@ int coap_hash_path(const unsigned char *path, size_t len, coap_key_t key);
 typedef struct
 {
     size_t n; /**< number of remaining characters in buffer */
-    unsigned char separator; /**< segment separators */
+    unsigned char *separator; /**< segment separators */
     unsigned char *delim; /**< delimiters where to split the string */
     size_t dlen; /**< length of separator */
     unsigned char *pos; /**< current position in buffer */
@@ -99,7 +103,7 @@ typedef struct
  * @return The initialized iterator object @p pi.
  */
 coap_parse_iterator_t *
-coap_parse_iterator_init(unsigned char *s, size_t n, unsigned char separator, unsigned char *delim,
+coap_parse_iterator_init(unsigned char *s, size_t n, unsigned char *separator, unsigned char *delim,
         size_t dlen, coap_parse_iterator_t *pi);
 
 /**
@@ -167,5 +171,4 @@ int coap_split_path(const unsigned char *s, size_t length, unsigned char *buf, s
 int coap_split_query(const unsigned char *s, size_t length, unsigned char *buf, size_t *buflen);
 
 /** @} */
-
 #endif /* _COAP_URI_H_ */

@@ -129,7 +129,6 @@ typedef struct resourceinterface_t {
 typedef struct rsrc_t {
     struct rsrc_t *next; // Points to next resource in list
     // Relative path on the device; will be combined with base url to create fully qualified path
-    char *host;
     char *uri;
     OCResourceType *rsrcType; // Resource type(s); linked list
     OCResourceInterface *rsrcInterface; // Resource interface(s); linked list

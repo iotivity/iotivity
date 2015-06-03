@@ -140,16 +140,40 @@ OCStackResult SendDirectStackResponse(const CARemoteEndpoint_t* endPoint, const 
         const uint8_t numOptions, const CAHeaderOption_t *options,
         CAToken_t token, uint8_t tokenLength);
 
-
 #ifdef WITH_PRESENCE
+/**
+ * The OCPresenceTrigger enum delineates the three spec-compliant modes for
+ * "Trigger." These enum values are then mapped to JSON strings
+ * "create", "change", "delete", respectively, before getting encoded into
+ * the JSON payload.
+ *
+ * @enum OC_PRESENCE_TRIGGER_CREATE The creation of a resource is associated with
+ *                            this invocation of @ref SendPresenceNotification.
+ * @enum OC_PRESENCE_TRIGGER_CHANGE The change/update of a resource is associated
+ *                            this invocation of @ref SendPresenceNotification.
+ * @enum OC_PRESENCE_TRIGGER_DELETE The deletion of a resource is associated with
+ *                            this invocation of @ref SendPresenceNotification.
+ *
+ */
+typedef enum
+{
+    OC_PRESENCE_TRIGGER_CREATE = 0,
+    OC_PRESENCE_TRIGGER_CHANGE = 1,
+    OC_PRESENCE_TRIGGER_DELETE = 2
+} OCPresenceTrigger;
+
 /**
  * Notify Presence subscribers that a resource has been modified.
  *
  * @param resourceType Handle to the resourceType linked list of resource
  *                     that was modified.
+ * @param trigger The simplified reason this API was invoked. Valid values are
+ *                  @ref OC_PRESENCE_TRIGGER_CREATE, @ref OC_PRESENCE_TRIGGER_CHANGE,
+ *                  @ref OC_PRESENCE_TRIGGER_DELETE.
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult SendPresenceNotification(OCResourceType *resourceType);
+OCStackResult SendPresenceNotification(OCResourceType *resourceType,
+        OCPresenceTrigger trigger);
 
 /**
  * Send Stop Notification to Presence subscribers.
@@ -235,6 +259,23 @@ CAMessageType_t qualityOfServiceToMessageType(OCQualityOfService qos);
 OCStackResult OCChangeResourceProperty(OCResourceProperty * inputProperty,
         OCResourceProperty resourceProperties, uint8_t enable);
 #endif
+
+/**
+ * Clones a string IFF its pointer value is not NULL.
+ *
+ * Note: The caller to this function is responsible for calling @ref OCFree
+ * for the destination parameter.
+ *
+ * @param dest The destination string for the string value to be cloned.
+ *
+ * @param src The source for the string value to be to cloned.
+ */
+OCStackResult CloneStringIfNonNull(char **dest, const char *src);
+
+
+const char *convertTriggerEnumToString(OCPresenceTrigger trigger);
+
+OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr);
 
 #ifdef __cplusplus
 }

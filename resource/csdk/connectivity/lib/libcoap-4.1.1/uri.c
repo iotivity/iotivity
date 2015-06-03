@@ -21,7 +21,6 @@
 #include "pdu.h"
 #include "option.h"
 #include "uri.h"
-
 /**
  * A length-safe version of strchr(). This function returns a pointer
  * to the first occurrence of @p c  in @p s, or @c NULL if not found.
@@ -398,7 +397,8 @@ int coap_split_path(const unsigned char *s, size_t length, unsigned char *buf, s
     { *buflen, buf }, 0 };
     coap_parse_iterator_t pi;
 
-    coap_parse_iterator_init((unsigned char *) s, length, '/', (unsigned char *) "?#", 2, &pi);
+    coap_parse_iterator_init((unsigned char *) s, length, (unsigned char *)"/",
+                             (unsigned char *) "?#", 2, &pi);
     coap_split_path_impl(&pi, write_option, &tmp);
 
     *buflen = *buflen - tmp.buf.length;
@@ -412,7 +412,8 @@ int coap_split_query(const unsigned char *s, size_t length, unsigned char *buf, 
     { *buflen, buf }, 0 };
     coap_parse_iterator_t pi;
 
-    coap_parse_iterator_init((unsigned char *) s, length, '&', (unsigned char *) "#", 1, &pi);
+    coap_parse_iterator_init((unsigned char *) s, length, (unsigned char *)OC_QUERY_SEPARATOR,
+                             (unsigned char *) "#", 1, &pi);
 
     coap_split_path_impl(&pi, write_option, &tmp);
 
@@ -506,7 +507,8 @@ int coap_hash_path(const unsigned char *path, size_t len, coap_key_t key)
 
     memset(key, 0, sizeof(coap_key_t));
 
-    coap_parse_iterator_init((unsigned char *) path, len, '/', (unsigned char *) "?#", 2, &pi);
+    coap_parse_iterator_init((unsigned char *) path, len, (unsigned char *)"/",
+                              (unsigned char *) "?#", 2, &pi);
     coap_split_path_impl(&pi, hash_segment, key);
 
     return 1;
@@ -515,7 +517,7 @@ int coap_hash_path(const unsigned char *path, size_t len, coap_key_t key)
 /* iterator functions */
 
 coap_parse_iterator_t *
-coap_parse_iterator_init(unsigned char *s, size_t n, unsigned char separator, unsigned char *delim,
+coap_parse_iterator_init(unsigned char *s, size_t n, unsigned char *separator, unsigned char *delim,
         size_t dlen, coap_parse_iterator_t *pi)
 {
     assert(pi);
@@ -534,7 +536,7 @@ coap_parse_iterator_init(unsigned char *s, size_t n, unsigned char separator, un
 unsigned char *
 coap_parse_next(coap_parse_iterator_t *pi)
 {
-    unsigned char *p;
+    unsigned char *p, *s;
 
     if (!pi)
         return NULL;
@@ -543,6 +545,7 @@ coap_parse_next(coap_parse_iterator_t *pi)
     pi->n -= pi->segment_length;
     pi->pos += pi->segment_length;
     pi->segment_length = 0;
+    s = pi->separator;
 
     /* last segment? */
     if (!pi->n || strnchr(pi->delim, pi->dlen, *pi->pos))
@@ -552,26 +555,27 @@ coap_parse_next(coap_parse_iterator_t *pi)
     }
 
     /* skip following separator (the first segment might not have one) */
-    if (*pi->pos == pi->separator)
-    {
-        ++pi->pos;
-        --pi->n;
-    }
 
-    p = pi->pos;
+      if (strchr(s,*(pi->pos)))
+      {
+          ++pi->pos;
+          --pi->n;
+      }
 
-    while (pi->segment_length < pi->n && *p != pi->separator && !strnchr(pi->delim, pi->dlen, *p))
-    {
-        ++p;
-        ++pi->segment_length;
-    }
+      p = pi->pos;
+
+      while ((pi->segment_length < pi->n) && (!strchr(s,*p))
+              && (!strnchr(pi->delim, pi->dlen, *p)))
+      {
+          ++p;
+          ++pi->segment_length;
+      }
 
     if (!pi->n)
     {
         pi->pos = NULL;
         pi->segment_length = 0;
     }
-
     return pi->pos;
 }
 

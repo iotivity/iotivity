@@ -392,6 +392,25 @@ CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *rep)
         return NULL;
     }
 
+    // check the result value of response info.
+    switch (rep->result)
+    {
+        case CA_EMPTY:
+        case CA_SUCCESS:
+        case CA_CREATED:
+        case CA_DELETED:
+        case CA_BAD_REQ:
+        case CA_BAD_OPT:
+        case CA_NOT_FOUND:
+        case CA_INTERNAL_SERVER_ERROR:
+        case CA_RETRANSMIT_TIMEOUT:
+            break;
+
+        default:
+            OIC_LOG(ERROR, TAG, "Response status code is invalid number");
+            return NULL;
+    }
+
     // allocate the response info structure.
     CAResponseInfo_t *clone = (CAResponseInfo_t *) OICCalloc(1, sizeof(CAResponseInfo_t));
     if (NULL == clone)

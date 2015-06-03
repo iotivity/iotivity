@@ -27,7 +27,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
-#define WITH_PRESENCE
 #define USE_RANDOM_PORT (0)
 
 //-----------------------------------------------------------------------------
@@ -214,29 +213,6 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
                                OCEntityHandler entityHandler,
                                uint8_t resourceProperties);
 
-/**
- * Create a resource. with host ip address for remote resource.
- *
- * @param handle Pointer to handle to newly created resource.  Set by ocstack.
- *               Used to refer to resource.
- * @param resourceTypeName Name of resource type.  Example: "core.led".
- * @param resourceInterfaceName Name of resource interface.  Example: "core.rw".
- * @param host HOST address of the remote resource.  Example:  "coap://xxx.xxx.xxx.xxx:xxxxx".
- * @param uri URI of the resource.  Example:  "/a/led".
- * @param entityHandler Entity handler function that is called by ocstack to handle requests, etc.
- *                      NULL for default entity handler.
- * @param resourceProperties Properties supported by resource.
- *                           Example: ::OC_DISCOVERABLE|::OC_OBSERVABLE
- *
- * @return ::OC_STACK_OK on success, some other value upon failure.
- */
-OCStackResult OCCreateResourceWithHost(OCResourceHandle *handle,
-                               const char *resourceTypeName,
-                               const char *resourceInterfaceName,
-                               const char *host,
-                               const char *uri,
-                               OCEntityHandler entityHandler,
-                               uint8_t resourceProperties);
 
 /**
  * Add a resource to a collection resource.

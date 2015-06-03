@@ -39,38 +39,48 @@ namespace OC
         struct GetContext
         {
             GetCallback callback;
+            GetContext(GetCallback cb) : callback(cb){}
         };
 
         struct SetContext
         {
             PutCallback callback;
+            SetContext(PutCallback cb) : callback(cb){}
         };
 
         struct ListenContext
         {
             FindCallback callback;
             std::weak_ptr<IClientWrapper> clientWrapper;
+
+            ListenContext(FindCallback cb, std::weak_ptr<IClientWrapper> cw)
+                : callback(cb), clientWrapper(cw){}
         };
 
         struct DeviceListenContext
         {
             FindDeviceCallback callback;
             IClientWrapper::Ptr clientWrapper;
+            DeviceListenContext(FindDeviceCallback cb, IClientWrapper::Ptr cw)
+                    : callback(cb), clientWrapper(cw){}
         };
 
         struct SubscribePresenceContext
         {
             SubscribeCallback callback;
+            SubscribePresenceContext(SubscribeCallback cb) : callback(cb){}
         };
 
         struct DeleteContext
         {
             DeleteCallback callback;
+            DeleteContext(DeleteCallback cb) : callback(cb){}
         };
 
         struct ObserveContext
         {
             ObserveCallback callback;
+            ObserveContext(ObserveCallback cb) : callback(cb){}
         };
     }
 

@@ -20,8 +20,8 @@ include $(PREBUILT_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
 OIC_LIB_PATH := ../../../../out/android/$(TARGET_ARCH_ABI)/release
-LOCAL_MODULE := libandroid-coap
-LOCAL_SRC_FILES := $(OIC_LIB_PATH)/libcoap.so
+LOCAL_MODULE := libandroid-ca
+LOCAL_SRC_FILES := $(OIC_LIB_PATH)/libconnectivity_abstraction.so
 include $(PREBUILT_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
@@ -51,7 +51,7 @@ LOCAL_SRC_FILES :=  JniOcStack.cpp					\
 LOCAL_LDLIBS := -llog
 LOCAL_STATIC_LIBRARIES := android-oc
 LOCAL_STATIC_LIBRARIES += android-octbstack
-LOCAL_STATIC_LIBRARIES += android-coap
+LOCAL_STATIC_LIBRARIES += android-ca
 LOCAL_STATIC_LIBRARIES += android-oc_logger
 LOCAL_CPPFLAGS += -std=c++0x
 LOCAL_CPP_FEATURES := rtti exceptions

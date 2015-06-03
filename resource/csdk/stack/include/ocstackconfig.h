@@ -33,14 +33,14 @@
  * Maximum length of the response supported by Server for any REST request.
  * The actual repsonse length is 256 for Arduino and 1024 for other platforms.
  * Note that the stack will add a prefix and suffix to the payload.
- * Prefix : {"oc":[
+ * Prefix : {"oic":[
  * Suffix : ]}
- * They have a combined size of 9 bytes.
+ * They have a combined size of 10 bytes.
  */
 #ifdef WITH_ARDUINO
-#define MAX_RESPONSE_LENGTH (247)
+#define MAX_RESPONSE_LENGTH (246)
 #else
-#define MAX_RESPONSE_LENGTH (1015)
+#define MAX_RESPONSE_LENGTH (1014)
 #endif
 
 /**

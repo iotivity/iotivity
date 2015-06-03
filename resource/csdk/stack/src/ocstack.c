@@ -54,6 +54,7 @@
 #include "coap_time.h"
 #include "utlist.h"
 #include "pdu.h"
+#include "cJSON.h"
 
 #ifndef ARDUINO
 #include <arpa/inet.h>
@@ -123,12 +124,8 @@ OCDeviceEntityHandler defaultDeviceHandler;
  * @param maxAge Time To Live (in seconds).
  * @param resType Resource type.
  */
-// TODO: Not sure if I agree with this.  I think it should be static but it is called in
-// stack/test/stacktests.cpp, not included via a header file.  If we intend to allow it
-// to be called externally, we should change the name to OCParsePresencePayload and make
-// it part of the official public API.  But can't change now due to current API freeze.
-// Another option might be to make non-API utility functions for doing stuff like this.
-void parsePresencePayload(char* payload, uint32_t* seqNum, uint32_t* maxAge, char** resType);
+void parsePresencePayload(char* payload, uint32_t* seqNum, uint32_t* maxAge,
+        OCPresenceTrigger *presenceTrigger, char** resType);
 
 //-----------------------------------------------------------------------------
 // Private internal function prototypes
@@ -454,6 +451,33 @@ uint32_t GetTicks(uint32_t afterMilliSeconds)
     {
         return UINT32_MAX;
     }
+}
+/**
+ * Clones a string IFF its pointer value is not NULL.
+ *
+ * Note: The caller to this function is responsible for calling @ref OCFree
+ * for the destination parameter.
+ *
+ * @param dest The destination string for the string value to be cloned.
+ *
+ * @param src The source for the string value to be to cloned.
+ */
+OCStackResult CloneStringIfNonNull(char **dest, const char *src)
+{
+    if (src)
+    {
+        *dest = (char*) OCMalloc(strlen(src) + 1);
+        if (!*dest)
+        {
+            return OC_STACK_NO_MEMORY;
+        }
+        strcpy(*dest, src);
+    }
+    else
+    {
+        *dest = NULL;
+    }
+    return OC_STACK_OK;
 }
 
 OCStackResult OCBuildIPv4Address(uint8_t a, uint8_t b, uint8_t c, uint8_t d,
@@ -785,56 +809,144 @@ static OCStackResult ResetPresenceTTL(ClientCB *cbNode, uint32_t maxAgeSeconds)
     return OC_STACK_OK;
 }
 
-void parsePresencePayload(char* payload, uint32_t* seqNum, uint32_t* maxAge, char** resType)
+const char *convertTriggerEnumToString(OCPresenceTrigger trigger)
 {
-    char * tok = NULL;
-    char * savePtr = NULL;
-    // The format of the payload is {"oc":[%u:%u:%s]}
-    // %u : sequence number,
-    // %u : max age
-    // %s : Resource Type (Optional)
+    if(trigger == OC_PRESENCE_TRIGGER_CREATE)
+    {
+        return OC_RSRVD_TRIGGER_CREATE;
+    }
+    else if(trigger == OC_PRESENCE_TRIGGER_CHANGE)
+    {
+        return OC_RSRVD_TRIGGER_CHANGE;
+    }
+    else
+    {
+        return OC_RSRVD_TRIGGER_DELETE;
+    }
+}
 
-    if (!payload || !seqNum || !maxAge || !resType)
+OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr)
+{
+    if(strcmp(triggerStr, OC_RSRVD_TRIGGER_CREATE) == 0)
+    {
+        return OC_PRESENCE_TRIGGER_CREATE;
+    }
+    else if(strcmp(triggerStr, OC_RSRVD_TRIGGER_CHANGE) == 0)
+    {
+        return OC_PRESENCE_TRIGGER_CHANGE;
+    }
+    else
+    {
+        return OC_PRESENCE_TRIGGER_DELETE;
+    }
+}
+
+void parsePresencePayload(char* payload, uint32_t* seqNum, uint32_t* maxAge,
+        OCPresenceTrigger *presenceTrigger, char** resType)
+{
+    if(!payload || !seqNum || !maxAge || !presenceTrigger || !resType)
     {
         return;
     }
-    tok = strtok_r(payload, "[:]}", &savePtr);
-    payload[strlen(payload)] = ':';
 
-    //Retrieve sequence number
-    tok = strtok_r(NULL, "[:]}", &savePtr);
-    if(tok == NULL)
+    cJSON *repObj = cJSON_Parse(payload);
+    cJSON *ocObj = NULL;
+    cJSON *presenceObj = NULL;
+    cJSON *seqNumObj = NULL;
+    cJSON *maxAgeObj = NULL;
+    cJSON *triggerObj = NULL;
+    cJSON *resObj = NULL;
+    size_t size = 0;
+    if(repObj)
     {
-        return;
+        ocObj = cJSON_GetObjectItem(repObj, OC_RSRVD_OC);
+        if(ocObj)
+        {
+            //Presence payloads should only carry one JSON payload. The first
+            //    & only array item is retrieved.
+            presenceObj = cJSON_GetArrayItem(ocObj, 0);
+            if(presenceObj)
+            {
+                seqNumObj = cJSON_GetObjectItem(presenceObj, OC_RSRVD_NONCE);
+                if(seqNumObj)
+                {
+                    *seqNum = seqNumObj->valueint;
+                }
+                else
+                {
+                    OC_LOG(ERROR, TAG, PCF("Nonce (AKA SeqNum) not found in"
+                            " JSON Presence Payload."));
+                    goto exit;
+                }
+                maxAgeObj = cJSON_GetObjectItem(presenceObj, OC_RSRVD_TTL);
+                if(maxAgeObj)
+                {
+                    *maxAge = maxAgeObj->valueint;
+                }
+                else
+                {
+                    OC_LOG(ERROR, TAG, PCF("TTL (AKA MaxAge) not found in"
+                            " JSON Presence Payload."));
+                    goto exit;
+                }
+                triggerObj = cJSON_GetObjectItem(presenceObj,
+                        OC_RSRVD_TRIGGER);
+                if(triggerObj)
+                {
+                    char * triggerStr = triggerObj->valuestring;
+                    *presenceTrigger = convertTriggerStringToEnum(triggerStr);
+                }
+                else
+                {
+                    OC_LOG(ERROR, TAG, PCF("Trigger Reason not found in"
+                            " JSON Presence Payload."));
+                    goto exit;
+                }
+                resObj = cJSON_GetObjectItem(presenceObj,
+                        OC_RSRVD_RESOURCE_TYPE);
+                if(resObj)
+                {
+                    size = strlen(resObj->valuestring) + 1;
+                    *resType = (char *)OCMalloc(size);
+                    if(!*resType)
+                    {
+                        goto exit;
+                    }
+                    strncpy(*resType, resObj->valuestring, size);
+                }
+                else
+                {
+                    OC_LOG(ERROR, TAG, PCF("Resource Type not found in"
+                            " JSON Presence Payload."));
+                    goto exit;
+                }
+            }
+            else
+            {
+                OC_LOG(ERROR, TAG, PCF("JSON Presence Object not found in"
+                        " Presence Payload."));
+                OCFree(*resType);
+                goto exit;
+            }
+        }
+        else
+        {
+            OC_LOG(ERROR, TAG, PCF("JSON Presence Payload does not contain a"
+                                    " valid \"oic\" JSON representation."));
+            OCFree(*resType);
+            goto exit;
+        }
     }
-    payload[strlen((char *)payload)] = ':';
-    *seqNum = (uint32_t) atoi(tok);
-
-    //Retrieve MaxAge
-    tok = strtok_r(NULL, "[:]}", &savePtr);
-    if(tok == NULL)
+    else
     {
-        return;
-    }
-    *maxAge = (uint32_t) atoi(tok);
-
-    //Retrieve ResourceType
-    tok = strtok_r(NULL, "[:]}",&savePtr);
-    if(tok == NULL)
-    {
-        return;
+        OC_LOG(ERROR, TAG, PCF("JSON Presence Payload does map to a valid JSON"
+                " representation."));
+        OCFree(*resType);
+        goto exit;
     }
 
-    *resType = (char *)OCMalloc(strlen(tok) + 1);
-    if(!*resType)
-    {
-        return;
-    }
-    payload[strlen((char *)payload)] = ':';
-    strcpy(*resType, tok);
-    OC_LOG_V(DEBUG, TAG, "resourceTypeName %s", *resType);
-
-    payload[strlen((char *)payload)] = ']';
+exit:
+    cJSON_Delete(repObj);
 }
 
 static OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
@@ -847,7 +959,7 @@ static OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
     OCDevAddr address = {};
     OCStackResult result = OC_STACK_ERROR;
     uint32_t maxAge = 0;
-
+    OCPresenceTrigger presenceTrigger = OC_PRESENCE_TRIGGER_CHANGE;
     char *fullUri = NULL;
     char *ipAddress = NULL;
     int presenceSubscribe = 0;
@@ -908,8 +1020,7 @@ static OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
         goto exit;
     }
 
-    // No payload to the application in case of presence
-    response.resJSONPayload = NULL;
+    response.resJSONPayload = responseInfo->info.payload;
     response.result = OC_STACK_OK;
 
     result = UpdateResponseAddr(&address, endPoint);
@@ -932,6 +1043,7 @@ static OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
         parsePresencePayload(responseInfo->info.payload,
                                 &(response.sequenceNumber),
                                 &maxAge,
+                                &presenceTrigger,
                                 &resourceTypeName);
     }
 
@@ -995,7 +1107,6 @@ static OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
 
             ResetPresenceTTL(cbNode, maxAge);
 
-            OC_LOG(INFO, TAG, PCF("Presence changed, calling up the stack"));
             cbNode->sequenceNumber = response.sequenceNumber;
 
             // Ensure that a filter is actually applied.
@@ -2411,7 +2522,8 @@ OCStackResult OCStartPresence(const uint32_t ttl)
     // a different random 32-bit integer number is used
     ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
 
-    return SendPresenceNotification(NULL);
+    return SendPresenceNotification(((OCResource *)presenceResource.handle)->rsrcType,
+            OC_PRESENCE_TRIGGER_CREATE);
 }
 
 OCStackResult OCStopPresence()
@@ -2469,11 +2581,15 @@ OCStackResult OCSetPlatformInfo(OCPlatformInfo platformInfo)
 
 OCStackResult OCSetDeviceInfo(OCDeviceInfo deviceInfo)
 {
-    // TODO: Implement this.
-    OC_LOG(ERROR, TAG, "Implement OCSetDeviceInfo !!");
+    OC_LOG(INFO, TAG, PCF("Entering OCSetDeviceInfo"));
 
-    // Returning ok to make samples work.
-    return OC_STACK_OK;
+    if (!deviceInfo.deviceName || deviceInfo.deviceName[0] == '\0')
+    {
+        OC_LOG(ERROR, TAG, PCF("Null or empty device name."));
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    return SaveDeviceInfo(deviceInfo);
 }
 
 OCStackResult OCCreateResource(OCResourceHandle *handle,
@@ -2596,7 +2712,7 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
     if(presenceResource.handle)
     {
         ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
-        SendPresenceNotification(pointer->rsrcType);
+        SendPresenceNotification(pointer->rsrcType, OC_PRESENCE_TRIGGER_CREATE);
     }
     #endif
 exit:
@@ -2609,46 +2725,6 @@ exit:
     return result;
 }
 
-OCStackResult OCCreateResourceWithHost(OCResourceHandle *handle,
-        const char *resourceTypeName,
-        const char *resourceInterfaceName,
-        const char *host,
-        const char *uri,
-        OCEntityHandler entityHandler,
-        uint8_t resourceProperties)
-{
-    OC_LOG(INFO, TAG, PCF("Entering OCCreateResourceWithHost"));
-    char *str = NULL;
-    size_t size = 0;
-
-    if(!host)
-    {
-        OC_LOG(ERROR, TAG, PCF("Added resource host is NULL."));
-        return OC_STACK_INVALID_PARAM;
-    }
-
-    OCStackResult result = OC_STACK_ERROR;
-
-    result = OCCreateResource(handle, resourceTypeName, resourceInterfaceName,
-                                uri, entityHandler, resourceProperties);
-
-    if (result == OC_STACK_OK)
-    {
-        // Set the uri
-        size = strlen(host) + 1;
-        str = (char *) OCMalloc(size);
-        if (!str)
-        {
-            OC_LOG(ERROR, TAG, PCF("Memory could not be allocated."));
-            return OC_STACK_NO_MEMORY;
-        }
-        strncpy(str, host, size);
-
-        ((OCResource *) *handle)->host = str;
-    }
-
-    return result;
-}
 
 OCStackResult OCBindResource(
         OCResourceHandle collectionHandle, OCResourceHandle resourceHandle)
@@ -2689,7 +2765,8 @@ OCStackResult OCBindResource(
             if(presenceResource.handle)
             {
                 ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
-                SendPresenceNotification(((OCResource *) resourceHandle)->rsrcType);
+                SendPresenceNotification(((OCResource *) resourceHandle)->rsrcType,
+                        OC_PRESENCE_TRIGGER_CHANGE);
             }
             #endif
             return OC_STACK_OK;
@@ -2741,7 +2818,8 @@ OCStackResult OCUnBindResource(
             if(presenceResource.handle)
             {
                 ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
-                SendPresenceNotification(((OCResource *) resourceHandle)->rsrcType);
+                SendPresenceNotification(((OCResource *) resourceHandle)->rsrcType,
+                        OC_PRESENCE_TRIGGER_CHANGE);
             }
             #endif
             return OC_STACK_OK;
@@ -2872,7 +2950,7 @@ OCStackResult OCBindResourceTypeToResource(OCResourceHandle handle,
     if(presenceResource.handle)
     {
         ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
-        SendPresenceNotification(resource->rsrcType);
+        SendPresenceNotification(resource->rsrcType, OC_PRESENCE_TRIGGER_CHANGE);
     }
     #endif
 
@@ -2901,7 +2979,7 @@ OCStackResult OCBindResourceInterfaceToResource(OCResourceHandle handle,
     if(presenceResource.handle)
     {
         ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
-        SendPresenceNotification(resource->rsrcType);
+        SendPresenceNotification(resource->rsrcType, OC_PRESENCE_TRIGGER_CHANGE);
     }
     #endif
 
@@ -3113,7 +3191,7 @@ OCStackResult OCBindResourceHandler(OCResourceHandle handle,
     if(presenceResource.handle)
     {
         ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
-        SendPresenceNotification(resource->rsrcType);
+        SendPresenceNotification(resource->rsrcType, OC_PRESENCE_TRIGGER_CHANGE);
     }
     #endif
 
@@ -3150,7 +3228,8 @@ void incrementSequenceNumber(OCResource * resPtr)
 }
 
 #ifdef WITH_PRESENCE
-OCStackResult SendPresenceNotification(OCResourceType *resourceType)
+OCStackResult SendPresenceNotification(OCResourceType *resourceType,
+        OCPresenceTrigger trigger)
 {
     OCResource *resPtr = NULL;
     OCStackResult result = OC_STACK_ERROR;
@@ -3166,7 +3245,8 @@ OCStackResult SendPresenceNotification(OCResourceType *resourceType)
     {
         maxAge = presenceResource.presenceTTL;
 
-        result = SendAllObserverNotification(method, resPtr, maxAge, resourceType, OC_LOW_QOS);
+        result = SendAllObserverNotification(method, resPtr, maxAge,
+                trigger, resourceType, OC_LOW_QOS);
     }
 
     return result;
@@ -3184,7 +3264,8 @@ OCStackResult SendStopNotification()
     }
 
     // maxAge is 0. ResourceType is NULL.
-    result = SendAllObserverNotification(method, resPtr, 0, NULL, OC_LOW_QOS);
+    result = SendAllObserverNotification(method, resPtr, 0, OC_PRESENCE_TRIGGER_DELETE,
+            NULL, OC_LOW_QOS);
 
     return result;
 }
@@ -3222,7 +3303,8 @@ OCStackResult OCNotifyAllObservers(OCResourceHandle handle, OCQualityOfService q
         method = OC_REST_OBSERVE;
         maxAge = MAX_OBSERVE_AGE;
         #ifdef WITH_PRESENCE
-        result = SendAllObserverNotification (method, resPtr, maxAge, NULL, qos);
+        result = SendAllObserverNotification (method, resPtr, maxAge,
+                OC_PRESENCE_TRIGGER_DELETE, NULL, qos);
         #else
         result = SendAllObserverNotification (method, resPtr, maxAge, qos);
         #endif
@@ -3449,14 +3531,7 @@ OCStackResult deleteResource(OCResource *resource)
             if(presenceResource.handle)
             {
                 ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
-                if(resource != (OCResource *) presenceResource.handle)
-                {
-                    SendPresenceNotification(resource->rsrcType);
-                }
-                else
-                {
-                    SendPresenceNotification(NULL);
-                }
+                SendPresenceNotification(resource->rsrcType, OC_PRESENCE_TRIGGER_DELETE);
             }
             #endif
             // Only resource in list.

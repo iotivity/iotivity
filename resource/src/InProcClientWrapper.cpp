@@ -200,15 +200,13 @@ namespace OC
 
         OCStackResult result;
 
-        OCCallbackData cbdata = {0};
-
-        ClientCallbackContext::ListenContext* context = new ClientCallbackContext::ListenContext();
-        context->callback = callback;
-        context->clientWrapper = shared_from_this();
-
-        cbdata.context =  static_cast<void*>(context);
-        cbdata.cb = listenCallback;
-        cbdata.cd = [](void* c){delete static_cast<ClientCallbackContext::ListenContext*>(c);};
+        ClientCallbackContext::ListenContext* context =
+            new ClientCallbackContext::ListenContext(callback, shared_from_this());
+        OCCallbackData cbdata(
+                static_cast<void*>(context),
+                listenCallback,
+                [](void* c){delete static_cast<ClientCallbackContext::ListenContext*>(c);}
+            );
 
         auto cLock = m_csdkLock.lock();
         if(cLock)
@@ -260,14 +258,13 @@ namespace OC
         }
         OCStackResult result;
 
-        OCCallbackData cbdata = {0};
         ClientCallbackContext::DeviceListenContext* context =
-            new ClientCallbackContext::DeviceListenContext();
-        context->callback = callback;
-        context->clientWrapper = shared_from_this();
-        cbdata.context =  static_cast<void*>(context);
-        cbdata.cb = listenDeviceCallback;
-        cbdata.cd = [](void* c){delete static_cast<ClientCallbackContext::DeviceListenContext*>(c);};
+            new ClientCallbackContext::DeviceListenContext(callback, shared_from_this());
+        OCCallbackData cbdata(
+                static_cast<void*>(context),
+                listenDeviceCallback,
+                [](void* c){delete static_cast<ClientCallbackContext::DeviceListenContext*>(c);}
+                );
 
         auto cLock = m_csdkLock.lock();
         if(cLock)
@@ -351,13 +348,13 @@ namespace OC
             return OC_STACK_INVALID_PARAM;
         }
         OCStackResult result;
-        OCCallbackData cbdata = {0};
-
-        ClientCallbackContext::GetContext* ctx = new ClientCallbackContext::GetContext();
-        ctx->callback = callback;
-        cbdata.context = static_cast<void*>(ctx);
-        cbdata.cb = &getResourceCallback;
-        cbdata.cd = [](void* c){delete static_cast<ClientCallbackContext::GetContext*>(c);};
+        ClientCallbackContext::GetContext* ctx =
+            new ClientCallbackContext::GetContext(callback);
+        OCCallbackData cbdata(
+                static_cast<void*>(ctx),
+                getResourceCallback,
+                [](void* c){delete static_cast<ClientCallbackContext::GetContext*>(c);}
+                );
 
         auto cLock = m_csdkLock.lock();
 
@@ -430,11 +427,11 @@ namespace OC
 
         for(auto& param : queryParams)
         {
-            paramsList << param.first <<'='<<param.second<<'&';
+            paramsList << param.first <<'='<<param.second<<';';
         }
 
         std::string queryString = paramsList.str();
-        if(queryString.back() == '&')
+        if(queryString.back() == ';')
         {
             queryString.resize(queryString.size() - 1);
         }
@@ -460,13 +457,12 @@ namespace OC
             return OC_STACK_INVALID_PARAM;
         }
         OCStackResult result;
-        OCCallbackData cbdata = {0};
-
-        ClientCallbackContext::SetContext* ctx = new ClientCallbackContext::SetContext();
-        ctx->callback = callback;
-        cbdata.cb = &setResourceCallback;
-        cbdata.cd = [](void* c){delete static_cast<ClientCallbackContext::SetContext*>(c);};
-        cbdata.context = static_cast<void*>(ctx);
+        ClientCallbackContext::SetContext* ctx = new ClientCallbackContext::SetContext(callback);
+        OCCallbackData cbdata(
+                static_cast<void*>(ctx),
+                setResourceCallback,
+                [](void* c){delete static_cast<ClientCallbackContext::SetContext*>(c);}
+                );
 
         // TODO: in the future the cstack should be combining these two strings!
         ostringstream os;
@@ -507,13 +503,12 @@ namespace OC
             return OC_STACK_INVALID_PARAM;
         }
         OCStackResult result;
-        OCCallbackData cbdata = {0};
-
-        ClientCallbackContext::SetContext* ctx = new ClientCallbackContext::SetContext();
-        ctx->callback = callback;
-        cbdata.cb = &setResourceCallback;
-        cbdata.cd = [](void* c){delete static_cast<ClientCallbackContext::SetContext*>(c);};
-        cbdata.context = static_cast<void*>(ctx);
+        ClientCallbackContext::SetContext* ctx = new ClientCallbackContext::SetContext(callback);
+        OCCallbackData cbdata(
+                static_cast<void*>(ctx),
+                setResourceCallback,
+                [](void* c){delete static_cast<ClientCallbackContext::SetContext*>(c);}
+                );
 
         // TODO: in the future the cstack should be combining these two strings!
         ostringstream os;
@@ -570,13 +565,13 @@ namespace OC
             return OC_STACK_INVALID_PARAM;
         }
         OCStackResult result;
-        OCCallbackData cbdata = {0};
-
-        ClientCallbackContext::DeleteContext* ctx = new ClientCallbackContext::DeleteContext();
-        ctx->callback = callback;
-        cbdata.cb = &deleteResourceCallback;
-        cbdata.cd = [](void* c){delete static_cast<ClientCallbackContext::DeleteContext*>(c);};
-        cbdata.context = static_cast<void*>(ctx);
+        ClientCallbackContext::DeleteContext* ctx =
+            new ClientCallbackContext::DeleteContext(callback);
+        OCCallbackData cbdata(
+                static_cast<void*>(ctx),
+                deleteResourceCallback,
+                [](void* c){delete static_cast<ClientCallbackContext::DeleteContext*>(c);}
+                );
 
         ostringstream os;
         os << host << uri;
@@ -647,13 +642,14 @@ namespace OC
             return OC_STACK_INVALID_PARAM;
         }
         OCStackResult result;
-        OCCallbackData cbdata = {0};
 
-        ClientCallbackContext::ObserveContext* ctx = new ClientCallbackContext::ObserveContext();
-        ctx->callback = callback;
-        cbdata.context = static_cast<void*>(ctx);
-        cbdata.cb = &observeResourceCallback;
-        cbdata.cd = [](void* c){delete static_cast<ClientCallbackContext::ObserveContext*>(c);};
+        ClientCallbackContext::ObserveContext* ctx =
+            new ClientCallbackContext::ObserveContext(callback);
+        OCCallbackData cbdata(
+                static_cast<void*>(ctx),
+                observeResourceCallback,
+                [](void* c){delete static_cast<ClientCallbackContext::ObserveContext*>(c);}
+                );
 
         OCMethod method;
         if (observeType == ObserveType::Observe)
@@ -761,15 +757,16 @@ namespace OC
         {
             return OC_STACK_INVALID_PARAM;
         }
-        OCCallbackData cbdata = {0};
 
         ClientCallbackContext::SubscribePresenceContext* ctx =
-            new ClientCallbackContext::SubscribePresenceContext();
-        ctx->callback = presenceHandler;
-        cbdata.cb = &subscribePresenceCallback;
-        cbdata.context = static_cast<void*>(ctx);
-        cbdata.cd = [](void* c)
-            {delete static_cast<ClientCallbackContext::SubscribePresenceContext*>(c);};
+            new ClientCallbackContext::SubscribePresenceContext(presenceHandler);
+        OCCallbackData cbdata(
+                static_cast<void*>(ctx),
+                subscribePresenceCallback,
+                [](void* c)
+                {delete static_cast<ClientCallbackContext::SubscribePresenceContext*>(c);}
+                );
+
         auto cLock = m_csdkLock.lock();
 
         std::ostringstream os;
@@ -826,11 +823,15 @@ namespace OC
 
         for (auto it=headerOptions.begin(); it != headerOptions.end(); ++it)
         {
-            options[i].protocolID = OC_COAP_ID;
-            options[i].optionID = static_cast<uint16_t>(it->getOptionID());
-            options[i].optionLength = (it->getOptionData()).length() + 1;
-            memcpy(options[i].optionData, (it->getOptionData()).c_str(),
-                    (it->getOptionData()).length() + 1);
+            options[i] = OCHeaderOption(OC_COAP_ID,
+                    it->getOptionID(),
+                    it->getOptionData().length() + 1,
+                    reinterpret_cast<const uint8_t*>(it->getOptionData().c_str()));
+            //options[i].protocolID = OC_COAP_ID;
+            //options[i].optionID = static_cast<uint16_t>(it->getOptionID());
+            //options[i].optionLength = (it->getOptionData()).length() + 1;
+            //memcpy(options[i].optionData, (it->getOptionData()).c_str(),
+            //        (it->getOptionData()).length() + 1);
             i++;
         }
 

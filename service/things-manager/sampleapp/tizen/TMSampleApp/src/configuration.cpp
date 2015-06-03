@@ -812,6 +812,7 @@ static Eina_Bool
 naviframe_pop_cb(void *data, Elm_Object_Item *it)
 {
     onDestroyConfigure();
+    resourceTable.clear();
     if (NULL != log_entry)
     {
         evas_object_del(log_entry);

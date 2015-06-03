@@ -26,5 +26,5 @@ Alias('arduino_simplecs', i_arduino_simplecs)
 sample_env.Default('CASample.hex')
 
 if(sample_env['UPLOAD'] == True):
-	sample_env.Upload(env.get('BUILD_DIR') + '/samples/arduino/' + 'CASample.hex')
+	sample_env.Upload(env.get('BUILD_DIR') + 'resource/csdk/connectivity/samples/arduino/' + 'CASample.hex')
 

@@ -10,7 +10,6 @@ SConscript('plugin-manager/SConscript')
 
 # The code include pthread_cancel method, can't build on android
 # MQTT requires openssl, forbid cross compile as it isn't ready
-#if env.get('TARGET_OS') != 'android' and env.get('TARGET_ARCH') == platform.machine():
 if env.get('TARGET_OS') != 'android':
 	SConscript('plugins/SConscript')
 

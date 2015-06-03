@@ -221,10 +221,10 @@
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/lib}&quot;"/>
                                 </option>
                                 <option id="gnu.cpp.link.option.libs.1032324584" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
-                                    <listOptionValue builtIn="false" value="NOTISDKLibrary"/>
+                                    <listOptionValue builtIn="false" value="uuid"/>
+                                    <listOptionValue builtIn="false" value="NotificationManager"/>
                                     <listOptionValue builtIn="false" value="oc"/>
                                     <listOptionValue builtIn="false" value="octbstack"/>
-                                    <listOptionValue builtIn="false" value="coap"/>
                                     <listOptionValue builtIn="false" value="oc_logger"/>
                                     <listOptionValue builtIn="false" value="connectivity_abstraction"/>
                                 </option>

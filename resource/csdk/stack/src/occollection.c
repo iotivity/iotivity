@@ -118,8 +118,10 @@ ValidateQuery (const char *query, OCResourceHandle resource,
 
     // Break the query string to validate it and determine IF and RT parameters
     // Validate there are atmost 2 parameters in string and that one is 'if' and other 'rt'
+    // separated by token '&' or ';'. Stack will accept both the versions.
+
     char *endStr, *ifPtr = NULL, *rtPtr = NULL;
-    char *token = strtok_r ((char *)query, "&", &endStr);
+    char *token = strtok_r ((char *)query, OC_QUERY_SEPARATOR , &endStr);
 
     // External loop breaks query string into fields using the & separator
     while (token != NULL)
@@ -155,7 +157,7 @@ ValidateQuery (const char *query, OCResourceHandle resource,
             // Query parameter should be of the form if=<string>. String should not have & or =
             return OC_STACK_INVALID_QUERY;
         }
-        token = strtok_r (NULL, "&", &endStr);
+        token = strtok_r (NULL, OC_QUERY_SEPARATOR, &endStr);
     }
     if (numFields > NUM_FIELDS_IN_QUERY)
     {

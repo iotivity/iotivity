@@ -88,7 +88,7 @@ public class SimpleClient extends Activity implements OcPlatform.OnResourceFound
              * find all resources
              */
             OcPlatform.findResource("", OcPlatform.WELL_KNOWN_QUERY + "?rt=" + "core.light",
-                    OcConnectivityType.WIFI, this);
+                    OcConnectivityType.IPV4, this);
         } catch (OcException e) {
             logMessage(TAG + "findResource error: " + e.getMessage());
             Log.e(TAG, e.getMessage());

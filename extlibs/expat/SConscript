@@ -14,7 +14,7 @@ import os
 Import('env')
 
 expat_env = env.Clone()
-
+SConscript(env.get('SRC_DIR') + '/build_common/tools/UnpackAll.py')
 ######################################################################
 # Build flags
 ######################################################################
@@ -26,7 +26,7 @@ if not os.path.exists(src_dir):
 	expat_src = env.UnpackAll(src_dir + '/Makefile', 'expat.tar.gz')
 	env.Configure(src_dir, './configure')
 
-expat_env.AppendUnique(CPPPATH = [src_dir, src_dir + 'lib'])
+expat_env.AppendUnique(CPPPATH = [src_dir, src_dir + 'lib', src_dir + 'vms'])
 
 target_os = env.get('TARGET_OS')
 if target_os not in ['windows', 'winrt']:

@@ -29,9 +29,13 @@ src_dir = stacktest_env.get('SRC_DIR')
 # Build flags
 ######################################################################
 stacktest_env.PrependUnique(CPPPATH = [
+		'../../security/include',
 		'../../ocsocket/include',
 		'../../logger/include',
+		'../../ocrandom/include',
 		'../../stack/include',
+		'../../stack/include/internal',
+		'../../connectivity/api',
 		'../../ocmalloc/include',
 		'../../extlibs/cjson',
 		'../../../oc_logger/include',
