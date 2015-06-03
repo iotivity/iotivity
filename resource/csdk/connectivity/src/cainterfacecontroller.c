@@ -148,7 +148,7 @@ void CAInitializeAdapters(ca_thread_pool_t handle)
     // Initialize adapters and register callback.
 #ifdef IP_ADAPTER
     CAInitializeIP(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback,
-                   handle);
+                   CAAdapterErrorHandleCallback, handle);
 #endif /* IP_ADAPTER */
 
 #ifdef EDR_ADAPTER

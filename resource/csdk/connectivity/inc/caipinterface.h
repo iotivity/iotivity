@@ -63,6 +63,19 @@ typedef void (*CAIPPacketReceivedCallback)(const CAEndpoint_t *endpoint,
                                            uint32_t dataLength);
 
 /**
+  * @brief Callback to notify error in the IP adapter
+  *
+  * @param  endpoint     [IN] [IN] network endpoint description
+  * @param  data         [IN] Data sent/received
+  * @param  dataLength   [IN] Length of data in bytes.
+  * @param  result       [IN] result of request from R.I
+  * @return NONE
+  * @pre  Callback must be registered using CAIPSetPacketReceiveCallback()
+ */
+typedef void (*CAIPErrorHandleCallback)(const CAEndpoint_t *endpoint, const void *data,
+                                        uint32_t dataLength, CAResult_t result);
+
+/**
  * @brief  Callback to be notified when exception occures on multicast/unicast server.
  * @param  type  [IN] Type of server(#CAAdapterServerType_t)
  * @return NONE
@@ -315,6 +328,14 @@ CAResult_t CAIPGetInterfaceSubnetMask(const char *ipAddress, char **subnetMask);
  * @return NONE
  */
 void CAIPSetConnectionStateChangeCallback(CAIPConnectionStateChangeCallback callback);
+
+/**
+ * @brief  Set callback for error handling
+ *
+ * @param  ipErrorCallback [IN] callback to notify error to the ipadapter
+ * @return NONE
+ */
+void CAIPSetErrorHandleCallback(CAIPErrorHandleCallback ipErrorCallback);
 
 #ifdef __cplusplus
 }
