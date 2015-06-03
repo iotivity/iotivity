@@ -80,6 +80,7 @@ namespace OC
         static const char NOT_FOUND[]                  = "Resource Not Found";
         static const char RESOURCE_ERROR[]             = "Resource Error";
         static const char SLOW_RESOURCE[]              = "Slow Resource";
+        static const char DUPLICATE_REQUEST[]          = "Duplicate Request";
         static const char NO_OBSERVERS[]               = "No Observers";
         static const char OBSV_NO_FOUND[]              = "Stack observer not found";
         static const char OBSV_NOT_ADDED[]             = "Stack observer not added";

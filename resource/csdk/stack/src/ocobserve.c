@@ -44,14 +44,12 @@ static struct ResourceObserver * serverObsList = NULL;
 static char* GetJSONStringForPresence(uint32_t ttl, uint32_t nonce,
         OCPresenceTrigger trigger, OCResourceType *resourceType)
 {
-    cJSON *rootObj = cJSON_CreateObject();
-    if (!rootObj)
-    {
-        return NULL;
-    }
-
     char *jsonEncodedInfo = NULL;
     const char * triggerStr = NULL;
+
+    cJSON *rootObj = cJSON_CreateObject();
+    VERIFY_NON_NULL (rootObj);
+
     cJSON_AddItemToObject (rootObj, OC_RSRVD_TTL, cJSON_CreateNumber(ttl));
 
     cJSON_AddItemToObject (rootObj, OC_RSRVD_NONCE, cJSON_CreateNumber(nonce));
