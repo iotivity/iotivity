@@ -738,7 +738,8 @@ CAResult_t CAEDRSendMulticastMessageImpl(JNIEnv *env, const char* data, uint32_t
         (*env)->ReleaseStringUTFChars(env, j_str_address, remoteAddress);
         if (CA_STATUS_OK != res)
         {
-            return res;
+            OIC_LOG_V(DEBUG, TAG, "[EDR][Native] Send data has failed : %s", remoteAddress);
+            continue;
         }
     }
 
