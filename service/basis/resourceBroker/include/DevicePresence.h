@@ -18,40 +18,35 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef RESOURCEBROKER_H_
-#define RESOURCEBROKER_H_
+#ifndef DEVICEPRESENCE_H_
+#define DEVICEPRESENCE_H_
 
-#include <functional>
 #include <list>
 #include <string>
-#include <algorithm>
-#include <mutex>
-#include <condition_variable>
 
 #include "BrokerTypes.h"
-#include "DevicePresence.h"
+#include "ResourcePresence.h"
 
-class ResourceBroker
+class DevicePresence
 {
 public:
-    ResourceBroker * getInstance();
+    DevicePresence(PrimitiveResource & pResource, BrokerCB _cb);
+    ~DevicePresence();
 
-    OCStackResult hostResource(PrimitiveResource & pResource, BrokerCB cb);
+    DevicePresence * createPresenceHandler(PrimitiveResource & pResource, BrokerCB _cb);
 
-    OCStackResult cancelHostResource(PrimitiveResource & pResource);
-
-    OCStackResult getResourceState(PrimitiveResource & pResource);
+    void addPresenceResource(PrimitiveResource & pResource, BrokerCB _cb);
+    ResourcePresence * findResourcePresence(PrimitiveResource & pResource, BrokerCB _cb);
 
 private:
-    ResourceBroker();
-    ~ResourceBroker();
 
-    static ResourceBroker * s_instance;
-    static std::mutex s_mutexForCreation;
-    static std::list< DevicePresence * >  s_presenceList;
+    SubscribeCallback pSubscribeRequestCB;
+    std::list<ResourcePresence *> * presenceResourceList;
 
-    ResourcePresence * findResourcePresence(PrimitiveResource& pResource, BrokerCB cb);
-    DevicePresence * findDevicePresence(PrimitiveResource& pResource, BrokerCB cb);
+    BasePresenceHandle presenceHandle;
+    void subscribeCB(OCStackResult ret, const unsigned int seq, const std::string& msg);
+
+    const std::string address;
 };
 
-#endif /* RESOURCEBROKER_H_ */
+#endif /* DEVICEPRESENCE_H_ */

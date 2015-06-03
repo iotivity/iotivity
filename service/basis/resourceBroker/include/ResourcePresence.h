@@ -18,40 +18,39 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef RESOURCEBROKER_H_
-#define RESOURCEBROKER_H_
+#ifndef RESOURCEPRESENCE_H_
+#define RESOURCEPRESENCE_H_
 
 #include <functional>
 #include <list>
-#include <string>
-#include <algorithm>
-#include <mutex>
-#include <condition_variable>
 
 #include "BrokerTypes.h"
-#include "DevicePresence.h"
 
-class ResourceBroker
+struct BrokerRequesterInfo
 {
-public:
-    ResourceBroker * getInstance();
-
-    OCStackResult hostResource(PrimitiveResource & pResource, BrokerCB cb);
-
-    OCStackResult cancelHostResource(PrimitiveResource & pResource);
-
-    OCStackResult getResourceState(PrimitiveResource & pResource);
-
-private:
-    ResourceBroker();
-    ~ResourceBroker();
-
-    static ResourceBroker * s_instance;
-    static std::mutex s_mutexForCreation;
-    static std::list< DevicePresence * >  s_presenceList;
-
-    ResourcePresence * findResourcePresence(PrimitiveResource& pResource, BrokerCB cb);
-    DevicePresence * findDevicePresence(PrimitiveResource& pResource, BrokerCB cb);
+    BrokerCB brockerCB;
 };
 
-#endif /* RESOURCEBROKER_H_ */
+class ResourcePresence
+{
+public:
+    ResourcePresence(PrimitiveResource & pResource, BrokerCB _cb);
+    ~ResourcePresence();
+
+    void addBrokerRequesterCB(BrokerCB _cb);
+    void removeBrokerRequesterCB(BrokerCB _cb);
+    void removeAllBrokerRequesterCB();
+
+    void requestResourceState();
+
+private:
+    PrimitiveResource & primitiveResource;
+
+    std::list<BrokerRequesterInfo *> * requesterList;
+
+    GetCallback pGetCB;
+    void GetCB(const HeaderOptions &hos, const ResponseStatement& rep, int seq);
+};
+
+#endif /* RESOURCEPRESENCE_H_ */
+
