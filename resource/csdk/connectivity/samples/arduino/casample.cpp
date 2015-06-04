@@ -59,6 +59,7 @@ static void HandleRequestResponse();
 
 static void RequestHandler(const CARemoteEndpoint_t *object, const CARequestInfo_t *requestInfo);
 static void ResponseHandler(const CARemoteEndpoint_t *object, const CAResponseInfo_t *responseInfo);
+static void ErrorHandler(const CARemoteEndpoint_t *object, const CAErrorInfo_t* errorInfo);
 static void Terminate();
 
 void GetData(char *readInput, size_t bufferLength, size_t *dataLength)
@@ -222,7 +223,7 @@ void Initialize()
     }
     SelectNetwork();
     // set handler.
-    CARegisterHandler(RequestHandler, ResponseHandler);
+    CARegisterHandler(RequestHandler, ResponseHandler, ErrorHandler);
 }
 
 void StartListeningServer()
@@ -794,6 +795,55 @@ void ResponseHandler(const CARemoteEndpoint_t *object, const CAResponseInfo_t *r
         Serial.print("res result=");
         Serial.println(responseInfo->result);
     }
+}
+
+void ErrorHandler(const CARemoteEndpoint_t *rep, const CAErrorInfo_t* errorInfo)
+{
+    printf("+++++++++++++++++++++++++++++++++++ErrorInfo+++++++++++++++++++++++++++++++++++\n");
+
+    if(rep && rep->resourceUri  )
+    {
+        printf("Error Handler, RemoteEndpoint Info resourceUri : %s\n", rep->resourceUri);
+    }
+    else
+    {
+        printf("Error Handler, RemoteEndpoint is NULL");
+    }
+
+    if(errorInfo)
+    {
+        const CAInfo_t *info = &errorInfo->info;
+        printf("Error Handler, ErrorInfo :\n");
+        printf("Error Handler result    : %d\n", errorInfo->result);
+        printf("Error Handler token     : %s\n", info->token);
+        printf("Error Handler messageId : %d\n", (uint16_t) info->messageId);
+        printf("Error Handler type      : %d\n", info->type);
+        printf("Error Handler payload   : %s\n", info->payload);
+
+        if(CA_ADAPTER_NOT_ENABLED == errorInfo->result)
+        {
+            printf("CA_ADAPTER_NOT_ENABLED, enable the adapter\n");
+        }
+        else if(CA_SEND_FAILED == errorInfo->result)
+        {
+            printf("CA_SEND_FAILED, unable to send the message, check parameters\n");
+        }
+        else if(CA_MEMORY_ALLOC_FAILED == errorInfo->result)
+        {
+            printf("CA_MEMORY_ALLOC_FAILED, insufficient memory\n");
+        }
+        else if(CA_SOCKET_OPERATION_FAILED == errorInfo->result)
+        {
+            printf("CA_SOCKET_OPERATION_FAILED, socket operation failed\n");
+        }
+        else if(CA_STATUS_FAILED == errorInfo->result)
+        {
+            printf("CA_STATUS_FAILED, message could not be delivered, internal error\n");
+        }
+    }
+    printf("++++++++++++++++++++++++++++++++End of ErrorInfo++++++++++++++++++++++++++++++++\n");
+
+    return;
 }
 
 void SendResponse(CARemoteEndpoint_t *endpoint, const CAInfo_t* info)

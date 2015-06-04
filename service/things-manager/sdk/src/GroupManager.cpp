@@ -489,6 +489,11 @@ ActionSet* GroupManager::getActionSetfromString(std::string description)
     Capability *capa = NULL;
     ActionSet *actionset = new ActionSet();
 
+    if(actionset == NULL)
+    {
+        goto exit;
+    }
+
     if(description.empty())
     {
         goto exit;
@@ -590,7 +595,7 @@ ActionSet* GroupManager::getActionSetfromString(std::string description)
                 token = strtok_r(NULL, DESC_DELIMITER, &descPtr);
             }
 
-            if( actionset != NULL )
+            if( action != NULL )
                 actionset->listOfAction.push_back(action);
             else
                 goto exit;

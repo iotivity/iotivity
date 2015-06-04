@@ -31,7 +31,6 @@ src_dir = randomtest_env.get('SRC_DIR')
 randomtest_env.PrependUnique(CPPPATH = [
         '../include',
 		'../../logger/include',
-		'../../ocmalloc/include',
 		'../../../oc_logger/include',
 		'../../../../extlibs/gtest/gtest-1.7.0/include'
 		])

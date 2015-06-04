@@ -8,7 +8,7 @@
 #include "cainterface.h"
 #include "cacommon.h"
 
-#include "org_iotivity_service_RMInterface.h"
+#include "org_iotivity_ca_service_RMInterface.h"
 
 #define  LOG_TAG   "JNI_INTERFACE_SAMPLE"
 #define  LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
@@ -34,6 +34,8 @@ uint16_t g_localSecurePort = SECURE_DEFAULT_PORT;
 
 void request_handler(const CARemoteEndpoint_t* object, const CARequestInfo_t* requestInfo);
 void response_handler(const CARemoteEndpoint_t* object, const CAResponseInfo_t* responseInfo);
+void error_handler(const CARemoteEndpoint_t *object, const CAErrorInfo_t* errorInfo);
+
 void get_resource_uri(const char *URI, char *resourceURI, uint32_t length);
 uint32_t get_secure_information(CAPayload_t payLoad);
 CAResult_t get_network_type(uint32_t selectedNetwork);
@@ -66,7 +68,7 @@ static char *g_remoteAddress = NULL;
 
 // init
 JNIEXPORT void JNICALL
-Java_org_iotivity_service_RMInterface_setNativeResponseListener(JNIEnv *env, jobject obj,
+Java_org_iotivity_ca_service_RMInterface_setNativeResponseListener(JNIEnv *env, jobject obj,
                                                                 jobject listener)
 {
     LOGI("setNativeResponseListener");
@@ -180,7 +182,7 @@ void JNI_OnUnload(JavaVM *jvm, void *reserved)
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_service_RMInterface_RMInitialize(JNIEnv *env, jobject obj, jobject context)
+Java_org_iotivity_ca_service_RMInterface_RMInitialize(JNIEnv *env, jobject obj, jobject context)
 {
     LOGI("RMInitialize");
 
@@ -211,7 +213,7 @@ Java_org_iotivity_service_RMInterface_RMInitialize(JNIEnv *env, jobject obj, job
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_service_RMInterface_RMTerminate(JNIEnv *env, jobject obj)
+Java_org_iotivity_ca_service_RMInterface_RMTerminate(JNIEnv *env, jobject obj)
 {
     LOGI("RMTerminate");
     CADestroyToken(g_lastRequestToken);
@@ -219,7 +221,7 @@ Java_org_iotivity_service_RMInterface_RMTerminate(JNIEnv *env, jobject obj)
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_service_RMInterface_RMStartListeningServer(JNIEnv *env, jobject obj)
+Java_org_iotivity_ca_service_RMInterface_RMStartListeningServer(JNIEnv *env, jobject obj)
 {
     LOGI("RMStartListeningServer");
 
@@ -230,7 +232,7 @@ Java_org_iotivity_service_RMInterface_RMStartListeningServer(JNIEnv *env, jobjec
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_service_RMInterface_RMStartDiscoveryServer(JNIEnv *env, jobject obj)
+Java_org_iotivity_ca_service_RMInterface_RMStartDiscoveryServer(JNIEnv *env, jobject obj)
 {
     LOGI("RMStartDiscoveryServer");
 
@@ -241,15 +243,15 @@ Java_org_iotivity_service_RMInterface_RMStartDiscoveryServer(JNIEnv *env, jobjec
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_service_RMInterface_RMRegisterHandler(JNIEnv *env, jobject obj)
+Java_org_iotivity_ca_service_RMInterface_RMRegisterHandler(JNIEnv *env, jobject obj)
 {
     LOGI("RMRegisterHandler");
 
-    CARegisterHandler(request_handler, response_handler);
+    CARegisterHandler(request_handler, response_handler, error_handler);
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_service_RMInterface_RMFindResource(JNIEnv *env, jobject obj, jstring uri)
+Java_org_iotivity_ca_service_RMInterface_RMFindResource(JNIEnv *env, jobject obj, jstring uri)
 {
     // create token
     CAToken_t token = NULL;
@@ -288,7 +290,7 @@ Java_org_iotivity_service_RMInterface_RMFindResource(JNIEnv *env, jobject obj, j
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_service_RMInterface_RMSendRequest(JNIEnv *env, jobject obj, jstring uri,
+Java_org_iotivity_ca_service_RMInterface_RMSendRequest(JNIEnv *env, jobject obj, jstring uri,
                                                     jstring payload, jint selectedNetwork,
                                                     jint isSecured, jint msgType)
 {
@@ -391,7 +393,7 @@ Java_org_iotivity_service_RMInterface_RMSendRequest(JNIEnv *env, jobject obj, js
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_service_RMInterface_RMSendReqestToAll(JNIEnv *env, jobject obj, jstring uri,
+Java_org_iotivity_ca_service_RMInterface_RMSendReqestToAll(JNIEnv *env, jobject obj, jstring uri,
                                                         jint selectedNetwork)
 {
     LOGI("selectedNetwork - %d", selectedNetwork);
@@ -475,7 +477,7 @@ Java_org_iotivity_service_RMInterface_RMSendReqestToAll(JNIEnv *env, jobject obj
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_service_RMInterface_RMSendResponse(JNIEnv *env, jobject obj,
+Java_org_iotivity_ca_service_RMInterface_RMSendResponse(JNIEnv *env, jobject obj,
                                                      jint selectedNetwork,
                                                      jint isSecured, jint msgType,
                                                      jint responseValue)
@@ -551,7 +553,7 @@ Java_org_iotivity_service_RMInterface_RMSendResponse(JNIEnv *env, jobject obj,
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_service_RMInterface_RMAdvertiseResource(JNIEnv *env, jobject obj, jstring uri)
+Java_org_iotivity_ca_service_RMInterface_RMAdvertiseResource(JNIEnv *env, jobject obj, jstring uri)
 {
     LOGI("RMAdvertiseResource");
 
@@ -610,7 +612,7 @@ Java_org_iotivity_service_RMInterface_RMAdvertiseResource(JNIEnv *env, jobject o
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_service_RMInterface_RMSendNotification(JNIEnv *env, jobject obj, jstring uri,
+Java_org_iotivity_ca_service_RMInterface_RMSendNotification(JNIEnv *env, jobject obj, jstring uri,
                                                          jstring payload, jint selectedNetwork,
                                                          jint isSecured, jint msgType,
                                                          jint responseValue)
@@ -717,7 +719,7 @@ Java_org_iotivity_service_RMInterface_RMSendNotification(JNIEnv *env, jobject ob
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_service_RMInterface_RMSelectNetwork(JNIEnv *env, jobject obj, jint networkType)
+Java_org_iotivity_ca_service_RMInterface_RMSelectNetwork(JNIEnv *env, jobject obj, jint networkType)
 {
     LOGI("RMSelectNetwork Type : %d", networkType);
 
@@ -728,7 +730,7 @@ Java_org_iotivity_service_RMInterface_RMSelectNetwork(JNIEnv *env, jobject obj, 
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_service_RMInterface_RMUnSelectNetwork(JNIEnv *env, jobject obj, jint networkType)
+Java_org_iotivity_ca_service_RMInterface_RMUnSelectNetwork(JNIEnv *env, jobject obj, jint networkType)
 {
     LOGI("RMUnSelectNetwork Type : %d", networkType);
 
@@ -739,7 +741,7 @@ Java_org_iotivity_service_RMInterface_RMUnSelectNetwork(JNIEnv *env, jobject obj
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_service_RMInterface_RMGetNetworkInfomation(JNIEnv *env, jobject obj)
+Java_org_iotivity_ca_service_RMInterface_RMGetNetworkInfomation(JNIEnv *env, jobject obj)
 {
     LOGI("RMGetNetworkInfomation");
 
@@ -797,7 +799,7 @@ Java_org_iotivity_service_RMInterface_RMGetNetworkInfomation(JNIEnv *env, jobjec
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_service_RMInterface_RMHandleRequestResponse(JNIEnv *env, jobject obj)
+Java_org_iotivity_ca_service_RMInterface_RMHandleRequestResponse(JNIEnv *env, jobject obj)
 {
     LOGI("RMHandleRequestResponse");
 
@@ -1153,6 +1155,55 @@ void response_handler(const CARemoteEndpoint_t* object, const CAResponseInfo_t* 
             LOGI("This is secure resource...");
         }
     }
+}
+
+void error_handler(const CARemoteEndpoint_t *rep, const CAErrorInfo_t* errorInfo)
+{
+    printf("+++++++++++++++++++++++++++++++++++ErrorInfo+++++++++++++++++++++++++++++++++++");
+
+    if(rep && rep->resourceUri  )
+    {
+        LOGI("Error Handler, RemoteEndpoint Info resourceUri : %s", rep->resourceUri);
+    }
+    else
+    {
+        LOGI("Error Handler, RemoteEndpoint is NULL");
+    }
+
+    if(errorInfo)
+    {
+        const CAInfo_t *info = &errorInfo->info;
+        LOGI("Error Handler, ErrorInfo :");
+        LOGI("Error Handler result    : %d", errorInfo->result);
+        LOGI("Error Handler token     : %s", info->token);
+        LOGI("Error Handler messageId : %d", (uint16_t) info->messageId);
+        LOGI("Error Handler type      : %d", info->type);
+        LOGI("Error Handler payload   : %s", info->payload);
+
+        if(CA_ADAPTER_NOT_ENABLED == errorInfo->result)
+        {
+            LOGE("CA_ADAPTER_NOT_ENABLED, enable the adapter");
+        }
+        else if(CA_SEND_FAILED == errorInfo->result)
+        {
+            LOGE("CA_SEND_FAILED, unable to send the message, check parameters");
+        }
+        else if(CA_MEMORY_ALLOC_FAILED == errorInfo->result)
+        {
+            LOGE("CA_MEMORY_ALLOC_FAILED, insufficient memory");
+        }
+        else if(CA_SOCKET_OPERATION_FAILED == errorInfo->result)
+        {
+            LOGE("CA_SOCKET_OPERATION_FAILED, socket operation failed");
+        }
+        else if(CA_STATUS_FAILED == errorInfo->result)
+        {
+            LOGE("CA_STATUS_FAILED, message could not be delivered, internal error");
+        }
+    }
+    LOGI("++++++++++++++++++++++++++++++++End of ErrorInfo++++++++++++++++++++++++++++++++");
+
+    return;
 }
 
 void get_resource_uri(const char *URI, char *resourceURI, uint32_t length)

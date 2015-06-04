@@ -103,6 +103,23 @@ CAResult_t CAGetResponseInfoFromPDU(const coap_pdu_t *pdu, CAResponseInfo_t *out
     return ret;
 }
 
+CAResult_t CAGetErrorInfoFromPDU(const coap_pdu_t *pdu, CAErrorInfo_t *errorInfo,
+                                 char *uri, uint32_t buflen)
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+
+    if (!pdu || !errorInfo || !uri)
+    {
+        OIC_LOG(ERROR, TAG, "parameter is null");
+        return CA_STATUS_INVALID_PARAM;
+    }
+
+    uint32_t code = 0;
+    CAResult_t ret = CAGetInfoFromPDU(pdu, &code, &errorInfo->info, uri, buflen);
+    OIC_LOG(DEBUG, TAG, "OUT");
+    return ret;
+}
+
 coap_pdu_t *CAGeneratePDU(const char *uri, uint32_t code, const CAInfo_t info)
 {
     OIC_LOG(DEBUG, TAG, "IN");
@@ -640,7 +657,7 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *
                             // Make sure there is enough room in the optionResult buffer
                             if (optionLength < sizeof(optionResult))
                             {
-                                optionResult[optionLength] = '&';
+                                optionResult[optionLength] = ';';
                                 optionLength++;
                             }
                             else

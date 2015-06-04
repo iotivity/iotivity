@@ -74,7 +74,7 @@ typedef struct ResourceObserver
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, uint32_t maxAge,
-        OCResourceType *resourceType, OCQualityOfService qos);
+        OCPresenceTrigger trigger, OCResourceType *resourceType, OCQualityOfService qos);
 #else
 /**
  * Create an observe response and send to all observers in the observe list.

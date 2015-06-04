@@ -59,6 +59,14 @@ typedef void (*CARequestCallback)(const CARemoteEndpoint_t *object,
  */
 typedef void (*CAResponseCallback)(const CARemoteEndpoint_t *object,
                                    const CAResponseInfo_t *responseInfo);
+/**
+ * @brief   Callback function type for error
+ * @param   object          [OUT] remote device information
+ * @param   errorInfo       [OUT] CA Error information
+ * @return  NONE
+ */
+typedef void (*CAErrorCallback)(const CARemoteEndpoint_t *object,
+                                const CAErrorInfo_t *errorInfo);
 
 #ifdef __WITH_DTLS__
 
@@ -122,9 +130,11 @@ CAResult_t CAStartDiscoveryServer();
  * @param   RespHandler  [IN] Response Handler Callback
  * @see     CARequestCallback
  * @see     CAResponseCallback
+ * @see     CAErrorCallback
  * @return  NONE
  */
-void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHandler);
+void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHandler,
+                       CAErrorCallback ErrorHandler);
 
 #ifdef __WITH_DTLS__
 /**

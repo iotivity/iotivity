@@ -33,7 +33,7 @@
 #include <OCResourceResponse.h>
 #include <ocstack.h>
 #include <OCApi.h>
-#include <ocmalloc.h>
+#include <oic_malloc.h>
 #include <OCPlatform.h>
 #include <OCUtilities.h>
 
@@ -377,65 +377,7 @@ namespace OC
         return result;
     }
 
-    OCStackResult InProcServerWrapper::registerResourceWithHost(
-                    OCResourceHandle& resourceHandle,
-                    std::string& resourceHOST,
-                    std::string& resourceURI,
-                    const std::string& resourceTypeName,
-                    const std::string& resourceInterface,
-                    EntityHandler& eHandler,
-                    uint8_t resourceProperties)
 
-    {
-        OCStackResult result = OC_STACK_ERROR;
-
-        auto cLock = m_csdkLock.lock();
-
-        if (cLock)
-        {
-            std::lock_guard < std::recursive_mutex > lock(*cLock);
-
-            if (NULL != eHandler)
-            {
-                result = OCCreateResourceWithHost(&resourceHandle, // OCResourceHandle *handle
-                        resourceTypeName.c_str(), // const char * resourceTypeName
-                        resourceInterface.c_str(), //const char * resourceInterfaceName //TODO fix
-                        resourceHOST.c_str(), // const char * host
-                        (resourceHOST + resourceURI).c_str(), // const char * uri
-                        EntityHandlerWrapper, // OCEntityHandler entityHandler
-                        resourceProperties // uint8_t resourceProperties
-                        );
-            }
-            else
-            {
-                result = OCCreateResourceWithHost(&resourceHandle, // OCResourceHandle *handle
-                        resourceTypeName.c_str(), // const char * resourceTypeName
-                        resourceInterface.c_str(), //const char * resourceInterfaceName //TODO fix
-                        resourceHOST.c_str(), // const char * host
-                        (resourceHOST + resourceURI).c_str(), // const char * uri
-                        nullptr, // OCEntityHandler entityHandler
-                        resourceProperties // uint8_t resourceProperties
-                        );
-            }
-
-            if (result != OC_STACK_OK)
-            {
-                resourceHandle = nullptr;
-            }
-            else
-            {
-                std::lock_guard<std::mutex> lock(OC::details::serverWrapperLock);
-                OC::details::entityHandlerMap[resourceHandle] = eHandler;
-                OC::details::resourceUriMap[resourceHandle] = resourceURI;
-            }
-        }
-        else
-        {
-            result = OC_STACK_ERROR;
-        }
-
-        return result;
-    }
 
     OCStackResult InProcServerWrapper::setDefaultDeviceEntityHandler
                                         (EntityHandler entityHandler)
@@ -592,7 +534,7 @@ namespace OC
             response.resourceHandle = pResponse->getResourceHandle();
             response.ehResult = pResponse->getResponseResult();
 
-            response.payload = static_cast<char*>(OCMalloc(payLoad.length() + 1));
+            response.payload = static_cast<char*>(OICMalloc(payLoad.length() + 1));
             if(!response.payload)
             {
                 result = OC_STACK_NO_MEMORY;
@@ -633,7 +575,7 @@ namespace OC
             }
             else
             {
-                OCFree(response.payload);
+                OICFree(response.payload);
                 result = OC_STACK_ERROR;
             }
 

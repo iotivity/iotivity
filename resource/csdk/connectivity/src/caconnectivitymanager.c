@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "cainterface.h"
 #include "caremotehandler.h"
@@ -32,6 +33,8 @@
 
 #define TAG PCF("CA")
 
+static bool g_isInitialized = false;
+
 #ifdef __WITH_DTLS__
 // CAAdapterNetDTLS will register the callback.
 // Taking callback all the way through adapters not the right approach, hence calling here.
@@ -42,21 +45,40 @@ CAResult_t CAInitialize()
 {
     OIC_LOG(DEBUG, TAG, "CAInitialize");
 
-    return CAInitializeMessageHandler();;
+    if (!g_isInitialized)
+    {
+        CAResult_t res = CAInitializeMessageHandler();
+        if (res != CA_STATUS_OK)
+        {
+            OIC_LOG(ERROR, TAG, "CAInitialize has failed");
+            return res;
+        }
+        g_isInitialized = true;
+    }
+    return CA_STATUS_OK;
 }
 
 void CATerminate()
 {
     OIC_LOG(DEBUG, TAG, "CATerminate");
 
-    CATerminateMessageHandler();
+    if (g_isInitialized)
+    {
+        CATerminateMessageHandler();
+        CATerminateNetworkType();
 
-    CATerminateNetworkType();
+        g_isInitialized = false;
+    }
 }
 
 CAResult_t CAStartListeningServer()
 {
     OIC_LOG(DEBUG, TAG, "CAStartListeningServer");
+
+    if(!g_isInitialized)
+    {
+        return CA_STATUS_NOT_INITIALIZED;
+    }
 
     return CAStartListeningServerAdapters();
 }
@@ -65,14 +87,26 @@ CAResult_t CAStartDiscoveryServer()
 {
     OIC_LOG(DEBUG, TAG, "CAStartDiscoveryServer");
 
+    if(!g_isInitialized)
+    {
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+
     return CAStartDiscoveryServerAdapters();
 }
 
-void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHandler)
+void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHandler,
+                       CAErrorCallback ErrorHandler)
 {
     OIC_LOG(DEBUG, TAG, "CARegisterHandler");
 
-    CASetRequestResponseCallbacks(ReqHandler, RespHandler);
+    if(!g_isInitialized)
+    {
+        OIC_LOG(DEBUG, TAG, "CA is not initialized");
+        return;
+    }
+
+    CASetInterfaceCallbacks(ReqHandler, RespHandler, ErrorHandler);
 }
 
 #ifdef __WITH_DTLS__
@@ -80,6 +114,12 @@ CAResult_t CARegisterDTLSCredentialsHandler(
                                              CAGetDTLSCredentialsHandler GetDTLSCredentialsHandler)
 {
     OIC_LOG(DEBUG, TAG, "CARegisterDTLSCredentialsHandler");
+
+    if(!g_isInitialized)
+    {
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+
     CADTLSSetCredentialsCallback(GetDTLSCredentialsHandler);
     return CA_STATUS_OK;
 }
@@ -89,6 +129,11 @@ CAResult_t CACreateRemoteEndpoint(const CAURI_t uri, const CATransportType_t tra
                                   CARemoteEndpoint_t **remoteEndpoint)
 {
     OIC_LOG(DEBUG, TAG, "CACreateRemoteEndpoint");
+
+    if(!g_isInitialized)
+    {
+        return CA_STATUS_NOT_INITIALIZED;
+    }
 
     CARemoteEndpoint_t *remote = CACreateRemoteEndpointUriInternal(uri, transportType);
 
@@ -106,7 +151,6 @@ CAResult_t CACreateRemoteEndpoint(const CAURI_t uri, const CATransportType_t tra
 void CADestroyRemoteEndpoint(CARemoteEndpoint_t *rep)
 {
     OIC_LOG(DEBUG, TAG, "CADestroyRemoteEndpoint");
-
     CADestroyRemoteEndpointInternal(rep);
 }
 
@@ -114,19 +158,27 @@ CAResult_t CAGenerateToken(CAToken_t *token, uint8_t tokenLength)
 {
     OIC_LOG(DEBUG, TAG, "CAGenerateToken");
 
+    if(!g_isInitialized)
+    {
+        return CA_STATUS_NOT_INITIALIZED;
+    }
     return CAGenerateTokenInternal(token, tokenLength);
 }
 
 void CADestroyToken(CAToken_t token)
 {
     OIC_LOG(DEBUG, TAG, "CADestroyToken");
-
     CADestroyTokenInternal(token);
 }
 
 CAResult_t CAGetNetworkInformation(CALocalConnectivity_t **info, uint32_t *size)
 {
     OIC_LOG(DEBUG, TAG, "CAGetNetworkInformation");
+
+    if(!g_isInitialized)
+    {
+        return CA_STATUS_NOT_INITIALIZED;
+    }
 
     return CAGetNetworkInformationInternal(info, size);
 }
@@ -135,6 +187,10 @@ CAResult_t CAFindResource(const CAURI_t resourceUri, const CAToken_t token, uint
 {
     OIC_LOG(DEBUG, TAG, "CAFindResource");
 
+    if(!g_isInitialized)
+    {
+        return CA_STATUS_NOT_INITIALIZED;
+    }
     return CADetachMessageResourceUri(resourceUri, token, tokenLength, NULL, 0);
 
 }
@@ -142,6 +198,11 @@ CAResult_t CAFindResource(const CAURI_t resourceUri, const CAToken_t token, uint
 CAResult_t CASendRequest(const CARemoteEndpoint_t *object,const CARequestInfo_t *requestInfo)
 {
     OIC_LOG(DEBUG, TAG, "CASendGetRequest");
+
+    if(!g_isInitialized)
+    {
+        return CA_STATUS_NOT_INITIALIZED;
+    }
 
     return CADetachRequestMessage(object, requestInfo);
 }
@@ -151,6 +212,11 @@ CAResult_t CASendRequestToAll(const CAGroupEndpoint_t *object,
 {
     OIC_LOG(DEBUG, TAG, "CASendRequestToAll");
 
+    if(!g_isInitialized)
+    {
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+
     return CADetachRequestToAllMessage(object, requestInfo);
 }
 
@@ -158,6 +224,11 @@ CAResult_t CASendNotification(const CARemoteEndpoint_t *object,
     const CAResponseInfo_t *responseInfo)
 {
     OIC_LOG(DEBUG, TAG, "CASendNotification");
+
+    if(!g_isInitialized)
+    {
+        return CA_STATUS_NOT_INITIALIZED;
+    }
 
     return CADetachResponseMessage(object, responseInfo);
 
@@ -167,6 +238,11 @@ CAResult_t CASendResponse(const CARemoteEndpoint_t *object,
     const CAResponseInfo_t *responseInfo)
 {
     OIC_LOG(DEBUG, TAG, "CASendResponse");
+
+    if(!g_isInitialized)
+    {
+        return CA_STATUS_NOT_INITIALIZED;
+    }
 
     return CADetachResponseMessage(object, responseInfo);
 
@@ -178,6 +254,10 @@ CAResult_t CAAdvertiseResource(const CAURI_t resourceUri,const CAToken_t token,
 {
     OIC_LOG(DEBUG, TAG, "CAAdvertiseResource");
 
+    if(!g_isInitialized)
+    {
+        return CA_STATUS_NOT_INITIALIZED;
+    }
     return CADetachMessageResourceUri(resourceUri, token, tokenLength, options, numOptions);
 
 }
@@ -185,6 +265,11 @@ CAResult_t CAAdvertiseResource(const CAURI_t resourceUri,const CAToken_t token,
 CAResult_t CASelectNetwork(const uint32_t interestedNetwork)
 {
     OIC_LOG_V(DEBUG, TAG, "Selected network : %d", interestedNetwork);
+
+    if(!g_isInitialized)
+    {
+        return CA_STATUS_NOT_INITIALIZED;
+    }
 
     if (!(interestedNetwork & 0xf))
     {
@@ -218,6 +303,11 @@ CAResult_t CAUnSelectNetwork(const uint32_t nonInterestedNetwork)
 {
     OIC_LOG_V(DEBUG, TAG, "unselected network : %d", nonInterestedNetwork);
 
+    if(!g_isInitialized)
+    {
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+
     if (!(nonInterestedNetwork & 0xf))
     {
         return CA_NOT_SUPPORTED;
@@ -250,9 +340,14 @@ CAResult_t CAHandleRequestResponse()
 {
     OIC_LOG(DEBUG, TAG, "CAHandleRequestResponse");
 
+    if (!g_isInitialized)
+    {
+        OIC_LOG(ERROR, TAG, "not initialized");
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+
     CAHandleRequestResponseCallbacks();
 
     return CA_STATUS_OK;
 }
-
 

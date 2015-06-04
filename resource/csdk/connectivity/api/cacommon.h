@@ -235,6 +235,7 @@ typedef enum
     CA_REQUEST_TIMEOUT,             /**< Request is Timeout */
     CA_DESTINATION_DISCONNECTED,    /**< Destination is disconnected */
     CA_NOT_SUPPORTED,               /**< Not supported */
+    CA_STATUS_NOT_INITIALIZED,      /**< CA layer is not initialized */
     CA_STATUS_FAILED =255           /**< Failure */
     /* Result code - END HERE */
 } CAResult_t;
@@ -332,6 +333,19 @@ typedef struct
     CAResponseResult_t result;  /**< Result for response by resource model */
     CAInfo_t info;              /**< Information of the response */
 } CAResponseInfo_t;
+
+/**
+ * @brief Error information from CA
+ *        contains error code and message information
+ *
+ * This structure holds error information
+ */
+typedef struct
+{
+    CAResult_t result;  /**< CA API request result  */
+    CAInfo_t info;      /**< message information such as token and payload data
+                             helpful to identify the error */
+} CAErrorInfo_t;
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -186,7 +186,7 @@ public class OcRepresentation {
      */
     @Deprecated
     public int getValueInt(String key) {
-        int value = 0;
+        Integer value = 0;
         try {
             value = this.getValue(key);
         } catch (OcException e) {
@@ -201,7 +201,7 @@ public class OcRepresentation {
      */
     @Deprecated
     public boolean getValueBool(String key) {
-        boolean value = false;
+        Boolean value = false;
         try {
             value = this.getValue(key);
         } catch (OcException e) {

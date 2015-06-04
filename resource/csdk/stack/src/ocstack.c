@@ -39,7 +39,7 @@
 #include "occlientcb.h"
 #include "ocobserve.h"
 #include "ocrandom.h"
-#include "ocmalloc.h"
+#include "oic_malloc.h"
 #include "ocserverrequest.h"
 #include "ocsecurityinternal.h"
 
@@ -54,6 +54,7 @@
 #include "coap_time.h"
 #include "utlist.h"
 #include "pdu.h"
+#include "cJSON.h"
 
 #ifndef ARDUINO
 #include <arpa/inet.h>
@@ -116,19 +117,15 @@ OCDeviceEntityHandler defaultDeviceHandler;
 #define MILLISECONDS_PER_SECOND   (1000)
 /**
  * Parse the presence payload and extract various parameters.
- * Note: Caller should invoke OCFree after done with resType pointer.
+ * Note: Caller should invoke OICFree after done with resType pointer.
  *
  * @param payload Presence payload.
  * @param seqNum Sequence number.
  * @param maxAge Time To Live (in seconds).
  * @param resType Resource type.
  */
-// TODO: Not sure if I agree with this.  I think it should be static but it is called in
-// stack/test/stacktests.cpp, not included via a header file.  If we intend to allow it
-// to be called externally, we should change the name to OCParsePresencePayload and make
-// it part of the official public API.  But can't change now due to current API freeze.
-// Another option might be to make non-API utility functions for doing stuff like this.
-void parsePresencePayload(char* payload, uint32_t* seqNum, uint32_t* maxAge, char** resType);
+void parsePresencePayload(char* payload, uint32_t* seqNum, uint32_t* maxAge,
+        OCPresenceTrigger *presenceTrigger, char** resType);
 
 //-----------------------------------------------------------------------------
 // Private internal function prototypes
@@ -455,6 +452,33 @@ uint32_t GetTicks(uint32_t afterMilliSeconds)
         return UINT32_MAX;
     }
 }
+/**
+ * Clones a string IFF its pointer value is not NULL.
+ *
+ * Note: The caller to this function is responsible for calling @ref OICFree
+ * for the destination parameter.
+ *
+ * @param dest The destination string for the string value to be cloned.
+ *
+ * @param src The source for the string value to be to cloned.
+ */
+OCStackResult CloneStringIfNonNull(char **dest, const char *src)
+{
+    if (src)
+    {
+        *dest = (char*) OICMalloc(strlen(src) + 1);
+        if (!*dest)
+        {
+            return OC_STACK_NO_MEMORY;
+        }
+        strcpy(*dest, src);
+    }
+    else
+    {
+        *dest = NULL;
+    }
+    return OC_STACK_OK;
+}
 
 OCStackResult OCBuildIPv4Address(uint8_t a, uint8_t b, uint8_t c, uint8_t d,
         uint16_t port, OCDevAddr *ipAddr)
@@ -701,7 +725,7 @@ OCStackResult UpdateResponseAddr(OCDevAddr *address, const CARemoteEndpoint_t* e
     OCStackResult ret = OC_STACK_ERROR;
     char * tok = NULL;
     char * savePtr = NULL;
-    char * cpAddress = (char *) OCMalloc(strlen(endPoint->addressInfo.IP.ipAddress) + 1);
+    char * cpAddress = (char *) OICMalloc(strlen(endPoint->addressInfo.IP.ipAddress) + 1);
     if(!cpAddress)
     {
         ret = OC_STACK_NO_MEMORY;
@@ -727,7 +751,7 @@ OCStackResult UpdateResponseAddr(OCDevAddr *address, const CARemoteEndpoint_t* e
     ret = OC_STACK_OK;
 
 exit:
-    OCFree(cpAddress);
+    OICFree(cpAddress);
     return ret;
 }
 
@@ -785,56 +809,144 @@ static OCStackResult ResetPresenceTTL(ClientCB *cbNode, uint32_t maxAgeSeconds)
     return OC_STACK_OK;
 }
 
-void parsePresencePayload(char* payload, uint32_t* seqNum, uint32_t* maxAge, char** resType)
+const char *convertTriggerEnumToString(OCPresenceTrigger trigger)
 {
-    char * tok = NULL;
-    char * savePtr = NULL;
-    // The format of the payload is {"oc":[%u:%u:%s]}
-    // %u : sequence number,
-    // %u : max age
-    // %s : Resource Type (Optional)
+    if(trigger == OC_PRESENCE_TRIGGER_CREATE)
+    {
+        return OC_RSRVD_TRIGGER_CREATE;
+    }
+    else if(trigger == OC_PRESENCE_TRIGGER_CHANGE)
+    {
+        return OC_RSRVD_TRIGGER_CHANGE;
+    }
+    else
+    {
+        return OC_RSRVD_TRIGGER_DELETE;
+    }
+}
 
-    if (!payload || !seqNum || !maxAge || !resType)
+OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr)
+{
+    if(strcmp(triggerStr, OC_RSRVD_TRIGGER_CREATE) == 0)
+    {
+        return OC_PRESENCE_TRIGGER_CREATE;
+    }
+    else if(strcmp(triggerStr, OC_RSRVD_TRIGGER_CHANGE) == 0)
+    {
+        return OC_PRESENCE_TRIGGER_CHANGE;
+    }
+    else
+    {
+        return OC_PRESENCE_TRIGGER_DELETE;
+    }
+}
+
+void parsePresencePayload(char* payload, uint32_t* seqNum, uint32_t* maxAge,
+        OCPresenceTrigger *presenceTrigger, char** resType)
+{
+    if(!payload || !seqNum || !maxAge || !presenceTrigger || !resType)
     {
         return;
     }
-    tok = strtok_r(payload, "[:]}", &savePtr);
-    payload[strlen(payload)] = ':';
 
-    //Retrieve sequence number
-    tok = strtok_r(NULL, "[:]}", &savePtr);
-    if(tok == NULL)
+    cJSON *repObj = cJSON_Parse(payload);
+    cJSON *ocObj = NULL;
+    cJSON *presenceObj = NULL;
+    cJSON *seqNumObj = NULL;
+    cJSON *maxAgeObj = NULL;
+    cJSON *triggerObj = NULL;
+    cJSON *resObj = NULL;
+    size_t size = 0;
+    if(repObj)
     {
-        return;
+        ocObj = cJSON_GetObjectItem(repObj, OC_RSRVD_OC);
+        if(ocObj)
+        {
+            //Presence payloads should only carry one JSON payload. The first
+            //    & only array item is retrieved.
+            presenceObj = cJSON_GetArrayItem(ocObj, 0);
+            if(presenceObj)
+            {
+                seqNumObj = cJSON_GetObjectItem(presenceObj, OC_RSRVD_NONCE);
+                if(seqNumObj)
+                {
+                    *seqNum = seqNumObj->valueint;
+                }
+                else
+                {
+                    OC_LOG(ERROR, TAG, PCF("Nonce (AKA SeqNum) not found in"
+                            " JSON Presence Payload."));
+                    goto exit;
+                }
+                maxAgeObj = cJSON_GetObjectItem(presenceObj, OC_RSRVD_TTL);
+                if(maxAgeObj)
+                {
+                    *maxAge = maxAgeObj->valueint;
+                }
+                else
+                {
+                    OC_LOG(ERROR, TAG, PCF("TTL (AKA MaxAge) not found in"
+                            " JSON Presence Payload."));
+                    goto exit;
+                }
+                triggerObj = cJSON_GetObjectItem(presenceObj,
+                        OC_RSRVD_TRIGGER);
+                if(triggerObj)
+                {
+                    char * triggerStr = triggerObj->valuestring;
+                    *presenceTrigger = convertTriggerStringToEnum(triggerStr);
+                }
+                else
+                {
+                    OC_LOG(ERROR, TAG, PCF("Trigger Reason not found in"
+                            " JSON Presence Payload."));
+                    goto exit;
+                }
+                resObj = cJSON_GetObjectItem(presenceObj,
+                        OC_RSRVD_RESOURCE_TYPE);
+                if(resObj)
+                {
+                    size = strlen(resObj->valuestring) + 1;
+                    *resType = (char *)OICMalloc(size);
+                    if(!*resType)
+                    {
+                        goto exit;
+                    }
+                    strncpy(*resType, resObj->valuestring, size);
+                }
+                else
+                {
+                    OC_LOG(ERROR, TAG, PCF("Resource Type not found in"
+                            " JSON Presence Payload."));
+                    goto exit;
+                }
+            }
+            else
+            {
+                OC_LOG(ERROR, TAG, PCF("JSON Presence Object not found in"
+                        " Presence Payload."));
+                OICFree(*resType);
+                goto exit;
+            }
+        }
+        else
+        {
+            OC_LOG(ERROR, TAG, PCF("JSON Presence Payload does not contain a"
+                                    " valid \"oic\" JSON representation."));
+            OICFree(*resType);
+            goto exit;
+        }
     }
-    payload[strlen((char *)payload)] = ':';
-    *seqNum = (uint32_t) atoi(tok);
-
-    //Retrieve MaxAge
-    tok = strtok_r(NULL, "[:]}", &savePtr);
-    if(tok == NULL)
+    else
     {
-        return;
-    }
-    *maxAge = (uint32_t) atoi(tok);
-
-    //Retrieve ResourceType
-    tok = strtok_r(NULL, "[:]}",&savePtr);
-    if(tok == NULL)
-    {
-        return;
+        OC_LOG(ERROR, TAG, PCF("JSON Presence Payload does map to a valid JSON"
+                " representation."));
+        OICFree(*resType);
+        goto exit;
     }
 
-    *resType = (char *)OCMalloc(strlen(tok) + 1);
-    if(!*resType)
-    {
-        return;
-    }
-    payload[strlen((char *)payload)] = ':';
-    strcpy(*resType, tok);
-    OC_LOG_V(DEBUG, TAG, "resourceTypeName %s", *resType);
-
-    payload[strlen((char *)payload)] = ']';
+exit:
+    cJSON_Delete(repObj);
 }
 
 static OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
@@ -847,7 +959,7 @@ static OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
     OCDevAddr address = {};
     OCStackResult result = OC_STACK_ERROR;
     uint32_t maxAge = 0;
-
+    OCPresenceTrigger presenceTrigger = OC_PRESENCE_TRIGGER_CHANGE;
     char *fullUri = NULL;
     char *ipAddress = NULL;
     int presenceSubscribe = 0;
@@ -860,7 +972,7 @@ static OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
         return OC_STACK_ERROR;
     }
 
-    fullUri = (char *) OCMalloc(MAX_URI_LENGTH);
+    fullUri = (char *) OICMalloc(MAX_URI_LENGTH);
 
     if(!fullUri)
     {
@@ -870,7 +982,7 @@ static OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
     }
 
     addressLen = strlen(endPoint->addressInfo.IP.ipAddress);
-    ipAddress = (char *) OCMalloc(addressLen + 1);
+    ipAddress = (char *) OICMalloc(addressLen + 1);
 
     if(!ipAddress)
     {
@@ -908,8 +1020,7 @@ static OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
         goto exit;
     }
 
-    // No payload to the application in case of presence
-    response.resJSONPayload = NULL;
+    response.resJSONPayload = responseInfo->info.payload;
     response.result = OC_STACK_OK;
 
     result = UpdateResponseAddr(&address, endPoint);
@@ -932,6 +1043,7 @@ static OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
         parsePresencePayload(responseInfo->info.payload,
                                 &(response.sequenceNumber),
                                 &maxAge,
+                                &presenceTrigger,
                                 &resourceTypeName);
     }
 
@@ -963,8 +1075,8 @@ static OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
             response.result = OC_STACK_PRESENCE_STOPPED;
             if(cbNode->presence)
             {
-                OCFree(cbNode->presence->timeOut);
-                OCFree(cbNode->presence);
+                OICFree(cbNode->presence->timeOut);
+                OICFree(cbNode->presence);
                 cbNode->presence = NULL;
             }
         }
@@ -972,7 +1084,7 @@ static OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
         {
             if(!cbNode->presence)
             {
-                cbNode->presence = (OCPresence *) OCMalloc(sizeof(OCPresence));
+                cbNode->presence = (OCPresence *) OICMalloc(sizeof(OCPresence));
                 if(!(cbNode->presence))
                 {
                     OC_LOG(ERROR, TAG, PCF("Could not allocate memory for cbNode->presence"));
@@ -983,11 +1095,11 @@ static OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
                 VERIFY_NON_NULL_V(cbNode->presence);
                 cbNode->presence->timeOut = NULL;
                 cbNode->presence->timeOut = (uint32_t *)
-                        OCMalloc(PresenceTimeOutSize * sizeof(uint32_t));
+                        OICMalloc(PresenceTimeOutSize * sizeof(uint32_t));
                 if(!(cbNode->presence->timeOut)){
                     OC_LOG(ERROR, TAG,
                                   PCF("Could not allocate memory for cbNode->presence->timeOut"));
-                    OCFree(cbNode->presence);
+                    OICFree(cbNode->presence);
                     result = OC_STACK_NO_MEMORY;
                     goto exit;
                 }
@@ -995,7 +1107,6 @@ static OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
 
             ResetPresenceTTL(cbNode, maxAge);
 
-            OC_LOG(INFO, TAG, PCF("Presence changed, calling up the stack"));
             cbNode->sequenceNumber = response.sequenceNumber;
 
             // Ensure that a filter is actually applied.
@@ -1033,7 +1144,7 @@ static OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
         else
         {
             uint32_t uriLen = strlen(fullUri);
-            char* uri = (char *) OCMalloc(uriLen + 1);
+            char* uri = (char *) OICMalloc(uriLen + 1);
             if(uri)
             {
                 memcpy(uri, fullUri, (uriLen + 1));
@@ -1050,7 +1161,7 @@ static OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
             {
                 OC_LOG(ERROR, TAG,
                     PCF("Unable to add Multicast Presence Node"));
-                OCFree(uri);
+                OICFree(uri);
                 goto exit;
             }
         }
@@ -1073,9 +1184,9 @@ static OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
     }
 
 exit:
-OCFree(fullUri);
-OCFree(ipAddress);
-OCFree(resourceTypeName);
+OICFree(fullUri);
+OICFree(ipAddress);
+OICFree(resourceTypeName);
 return result;
 }
 
@@ -1309,6 +1420,28 @@ void HandleCAResponses(const CARemoteEndpoint_t* endPoint, const CAResponseInfo_
 }
 
 /*
+ * This function handles error response from CA
+ * code shall be added to handle the errors
+ */
+void HandleCAErrorResponse(const CARemoteEndpoint_t* endPoint, const CAErrorInfo_t* errrorInfo)
+{
+    OC_LOG(INFO, TAG, PCF("Enter HandleCAErrorResponse"));
+
+    if(NULL == endPoint)
+    {
+        OC_LOG(ERROR, TAG, PCF("endPoint is NULL"));
+        return;
+    }
+
+    if(NULL == errrorInfo)
+    {
+        OC_LOG(ERROR, TAG, PCF("errrorInfo is NULL"));
+        return;
+    }
+    OC_LOG(INFO, TAG, PCF("Exit HandleCAErrorResponse"));
+}
+
+/*
  * This function sends out Direct Stack Responses. These are responses that are not coming
  * from the application entity handler. These responses have no payload and are usually ACKs,
  * RESETs or some error conditions that were caught by the stack.
@@ -1382,13 +1515,13 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     {
         //copy URI
         memcpy (&(serverRequest.resourceUrl), newUri, strlen(newUri));
-        OCFree(newUri);
+        OICFree(newUri);
     }
     else
     {
         OC_LOG(ERROR, TAG, PCF("URI length exceeds MAX_URI_LENGTH."));
-        OCFree(newUri);
-        OCFree(query);
+        OICFree(newUri);
+        OICFree(query);
         return;
     }
     //copy query
@@ -1397,12 +1530,12 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
         if(strlen(query) < MAX_QUERY_LENGTH)
         {
             memcpy (&(serverRequest.query), query, strlen(query));
-            OCFree(query);
+            OICFree(query);
         }
         else
         {
             OC_LOG(ERROR, TAG, PCF("Query length exceeds MAX_QUERY_LENGTH."));
-            OCFree(query);
+            OICFree(query);
             return;
         }
     }
@@ -1457,7 +1590,7 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
             requestInfo->info.tokenLength);
     OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)requestInfo->info.token,
             requestInfo->info.tokenLength);
-    serverRequest.requestToken = (CAToken_t)OCMalloc(requestInfo->info.tokenLength);
+    serverRequest.requestToken = (CAToken_t)OICMalloc(requestInfo->info.tokenLength);
     serverRequest.tokenLength = requestInfo->info.tokenLength;
     // Module Name
     if (!serverRequest.requestToken)
@@ -1501,7 +1634,7 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
                 requestInfo->info.type, requestInfo->info.numOptions,
                 requestInfo->info.options, requestInfo->info.token,
                 requestInfo->info.tokenLength);
-        OCFree(serverRequest.requestToken);
+        OICFree(serverRequest.requestToken);
         return;
     }
     serverRequest.numRcvdVendorSpecificHeaderOptions = tempNum;
@@ -1532,7 +1665,7 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     }
     // requestToken is fed to HandleStackRequests, which then goes to AddServerRequest.
     // The token is copied in there, and is thus still owned by this function.
-    OCFree(serverRequest.requestToken);
+    OICFree(serverRequest.requestToken);
     OC_LOG(INFO, TAG, PCF("Exit HandleCARequests"));
 }
 
@@ -1732,7 +1865,7 @@ OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
     result = CAResultToOCResult(OCSelectNetwork());
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
-    CARegisterHandler(HandleCARequests, HandleCAResponses);
+    CARegisterHandler(HandleCARequests, HandleCAResponses, HandleCAErrorResponse);
     switch (myStackMode)
     {
         case OC_CLIENT:
@@ -1954,7 +2087,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
         if(query)
         {
             result = getResourceType((char *) query, &resourceType);
-            OCFree(query);
+            OICFree(query);
             if(resourceType)
             {
                 OC_LOG_V(DEBUG, TAG, "Got Resource Type: %s", resourceType);
@@ -1975,7 +2108,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     }
 #endif // WITH_PRESENCE
 
-    requestUri = (char *) OCMalloc(uriLen + 1);
+    requestUri = (char *) OICMalloc(uriLen + 1);
     if(requestUri)
     {
         memcpy(requestUri, newUri, (uriLen + 1));
@@ -2043,7 +2176,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     {
         grpEnd.transportType = caConType;
 
-        grpEnd.resourceUri = (CAURI_t) OCMalloc(uriLen + 1);
+        grpEnd.resourceUri = (CAURI_t) OICMalloc(uriLen + 1);
         if(!grpEnd.resourceUri)
         {
             result = OC_STACK_NO_MEMORY;
@@ -2094,24 +2227,24 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
 exit:
     if(newUri != requiredUri)
     {
-        OCFree(newUri);
+        OICFree(newUri);
     }
     if (result != OC_STACK_OK)
     {
         OC_LOG_V(ERROR, TAG, PCF("OCDoResource error no %d"), result);
         FindAndDeleteClientCB(clientCB);
-        OCFree(resHandle);
-        OCFree(requestUri);
-        OCFree(resourceType);
+        OICFree(resHandle);
+        OICFree(requestUri);
+        OICFree(resourceType);
     }
     CADestroyRemoteEndpoint(endpoint);
-    OCFree(grpEnd.resourceUri);
+    OICFree(grpEnd.resourceUri);
 
     if (requestData.options  && requestData.numOptions > 0)
     {
         if ((method == OC_REST_OBSERVE) || (method == OC_REST_OBSERVE_ALL))
         {
-            OCFree(requestData.options);
+            OICFree(requestData.options);
         }
     }
     return result;
@@ -2223,7 +2356,7 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
     CADestroyRemoteEndpoint(endpoint);
     if (requestData.numOptions > 0)
     {
-        OCFree(requestData.options);
+        OICFree(requestData.options);
     }
 
     return ret;
@@ -2411,7 +2544,8 @@ OCStackResult OCStartPresence(const uint32_t ttl)
     // a different random 32-bit integer number is used
     ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
 
-    return SendPresenceNotification(NULL);
+    return SendPresenceNotification(((OCResource *)presenceResource.handle)->rsrcType,
+            OC_PRESENCE_TRIGGER_CREATE);
 }
 
 OCStackResult OCStopPresence()
@@ -2469,11 +2603,15 @@ OCStackResult OCSetPlatformInfo(OCPlatformInfo platformInfo)
 
 OCStackResult OCSetDeviceInfo(OCDeviceInfo deviceInfo)
 {
-    // TODO: Implement this.
-    OC_LOG(ERROR, TAG, "Implement OCSetDeviceInfo !!");
+    OC_LOG(INFO, TAG, PCF("Entering OCSetDeviceInfo"));
 
-    // Returning ok to make samples work.
-    return OC_STACK_OK;
+    if (!deviceInfo.deviceName || deviceInfo.deviceName[0] == '\0')
+    {
+        OC_LOG(ERROR, TAG, PCF("Null or empty device name."));
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    return SaveDeviceInfo(deviceInfo);
 }
 
 OCStackResult OCCreateResource(OCResourceHandle *handle,
@@ -2537,7 +2675,7 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
         }
     }
     // Create the pointer and insert it into the resource list
-    pointer = (OCResource *) OCCalloc(1, sizeof(OCResource));
+    pointer = (OCResource *) OICCalloc(1, sizeof(OCResource));
     if (!pointer)
     {
         result = OC_STACK_NO_MEMORY;
@@ -2549,7 +2687,7 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
 
     // Set the uri
     size = strlen(uri) + 1;
-    str = (char *) OCMalloc(size);
+    str = (char *) OICMalloc(size);
     if (!str)
     {
         result = OC_STACK_NO_MEMORY;
@@ -2596,7 +2734,7 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
     if(presenceResource.handle)
     {
         ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
-        SendPresenceNotification(pointer->rsrcType);
+        SendPresenceNotification(pointer->rsrcType, OC_PRESENCE_TRIGGER_CREATE);
     }
     #endif
 exit:
@@ -2604,51 +2742,11 @@ exit:
     {
         // Deep delete of resource and other dynamic elements that it contains
         deleteResource(pointer);
-        OCFree(str);
+        OICFree(str);
     }
     return result;
 }
 
-OCStackResult OCCreateResourceWithHost(OCResourceHandle *handle,
-        const char *resourceTypeName,
-        const char *resourceInterfaceName,
-        const char *host,
-        const char *uri,
-        OCEntityHandler entityHandler,
-        uint8_t resourceProperties)
-{
-    OC_LOG(INFO, TAG, PCF("Entering OCCreateResourceWithHost"));
-    char *str = NULL;
-    size_t size = 0;
-
-    if(!host)
-    {
-        OC_LOG(ERROR, TAG, PCF("Added resource host is NULL."));
-        return OC_STACK_INVALID_PARAM;
-    }
-
-    OCStackResult result = OC_STACK_ERROR;
-
-    result = OCCreateResource(handle, resourceTypeName, resourceInterfaceName,
-                                uri, entityHandler, resourceProperties);
-
-    if (result == OC_STACK_OK)
-    {
-        // Set the uri
-        size = strlen(host) + 1;
-        str = (char *) OCMalloc(size);
-        if (!str)
-        {
-            OC_LOG(ERROR, TAG, PCF("Memory could not be allocated."));
-            return OC_STACK_NO_MEMORY;
-        }
-        strncpy(str, host, size);
-
-        ((OCResource *) *handle)->host = str;
-    }
-
-    return result;
-}
 
 OCStackResult OCBindResource(
         OCResourceHandle collectionHandle, OCResourceHandle resourceHandle)
@@ -2689,7 +2787,8 @@ OCStackResult OCBindResource(
             if(presenceResource.handle)
             {
                 ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
-                SendPresenceNotification(((OCResource *) resourceHandle)->rsrcType);
+                SendPresenceNotification(((OCResource *) resourceHandle)->rsrcType,
+                        OC_PRESENCE_TRIGGER_CHANGE);
             }
             #endif
             return OC_STACK_OK;
@@ -2741,7 +2840,8 @@ OCStackResult OCUnBindResource(
             if(presenceResource.handle)
             {
                 ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
-                SendPresenceNotification(((OCResource *) resourceHandle)->rsrcType);
+                SendPresenceNotification(((OCResource *) resourceHandle)->rsrcType,
+                        OC_PRESENCE_TRIGGER_CHANGE);
             }
             #endif
             return OC_STACK_OK;
@@ -2770,7 +2870,7 @@ OCStackResult BindResourceTypeToResource(OCResource* resource,
     // Is it presented during resource discovery?
 
     // Create the resourcetype and insert it into the resource list
-    pointer = (OCResourceType *) OCCalloc(1, sizeof(OCResourceType));
+    pointer = (OCResourceType *) OICCalloc(1, sizeof(OCResourceType));
     if (!pointer)
     {
         result = OC_STACK_NO_MEMORY;
@@ -2779,7 +2879,7 @@ OCStackResult BindResourceTypeToResource(OCResource* resource,
 
     // Set the resourceTypeName
     size = strlen(resourceTypeName) + 1;
-    str = (char *) OCMalloc(size);
+    str = (char *) OICMalloc(size);
     if (!str)
     {
         result = OC_STACK_NO_MEMORY;
@@ -2794,8 +2894,8 @@ OCStackResult BindResourceTypeToResource(OCResource* resource,
     exit:
     if (result != OC_STACK_OK)
     {
-        OCFree(pointer);
-        OCFree(str);
+        OICFree(pointer);
+        OICFree(str);
     }
 
     return result;
@@ -2817,7 +2917,7 @@ OCStackResult BindResourceInterfaceToResource(OCResource* resource,
     //TODO ("Make sure that the resourceinterface name doesn't already exist in the resource");
 
     // Create the resourceinterface and insert it into the resource list
-    pointer = (OCResourceInterface *) OCCalloc(1, sizeof(OCResourceInterface));
+    pointer = (OCResourceInterface *) OICCalloc(1, sizeof(OCResourceInterface));
     if (!pointer)
     {
         result = OC_STACK_NO_MEMORY;
@@ -2826,7 +2926,7 @@ OCStackResult BindResourceInterfaceToResource(OCResource* resource,
 
     // Set the resourceinterface name
     size = strlen(resourceInterfaceName) + 1;
-    str = (char *) OCMalloc(size);
+    str = (char *) OICMalloc(size);
     if (!str)
     {
         result = OC_STACK_NO_MEMORY;
@@ -2843,8 +2943,8 @@ OCStackResult BindResourceInterfaceToResource(OCResource* resource,
     exit:
     if (result != OC_STACK_OK)
     {
-        OCFree(pointer);
-        OCFree(str);
+        OICFree(pointer);
+        OICFree(str);
     }
 
     return result;
@@ -2872,7 +2972,7 @@ OCStackResult OCBindResourceTypeToResource(OCResourceHandle handle,
     if(presenceResource.handle)
     {
         ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
-        SendPresenceNotification(resource->rsrcType);
+        SendPresenceNotification(resource->rsrcType, OC_PRESENCE_TRIGGER_CHANGE);
     }
     #endif
 
@@ -2901,7 +3001,7 @@ OCStackResult OCBindResourceInterfaceToResource(OCResourceHandle handle,
     if(presenceResource.handle)
     {
         ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
-        SendPresenceNotification(resource->rsrcType);
+        SendPresenceNotification(resource->rsrcType, OC_PRESENCE_TRIGGER_CHANGE);
     }
     #endif
 
@@ -3113,7 +3213,7 @@ OCStackResult OCBindResourceHandler(OCResourceHandle handle,
     if(presenceResource.handle)
     {
         ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
-        SendPresenceNotification(resource->rsrcType);
+        SendPresenceNotification(resource->rsrcType, OC_PRESENCE_TRIGGER_CHANGE);
     }
     #endif
 
@@ -3150,7 +3250,8 @@ void incrementSequenceNumber(OCResource * resPtr)
 }
 
 #ifdef WITH_PRESENCE
-OCStackResult SendPresenceNotification(OCResourceType *resourceType)
+OCStackResult SendPresenceNotification(OCResourceType *resourceType,
+        OCPresenceTrigger trigger)
 {
     OCResource *resPtr = NULL;
     OCStackResult result = OC_STACK_ERROR;
@@ -3166,7 +3267,8 @@ OCStackResult SendPresenceNotification(OCResourceType *resourceType)
     {
         maxAge = presenceResource.presenceTTL;
 
-        result = SendAllObserverNotification(method, resPtr, maxAge, resourceType, OC_LOW_QOS);
+        result = SendAllObserverNotification(method, resPtr, maxAge,
+                trigger, resourceType, OC_LOW_QOS);
     }
 
     return result;
@@ -3184,7 +3286,8 @@ OCStackResult SendStopNotification()
     }
 
     // maxAge is 0. ResourceType is NULL.
-    result = SendAllObserverNotification(method, resPtr, 0, NULL, OC_LOW_QOS);
+    result = SendAllObserverNotification(method, resPtr, 0, OC_PRESENCE_TRIGGER_DELETE,
+            NULL, OC_LOW_QOS);
 
     return result;
 }
@@ -3222,7 +3325,8 @@ OCStackResult OCNotifyAllObservers(OCResourceHandle handle, OCQualityOfService q
         method = OC_REST_OBSERVE;
         maxAge = MAX_OBSERVE_AGE;
         #ifdef WITH_PRESENCE
-        result = SendAllObserverNotification (method, resPtr, maxAge, NULL, qos);
+        result = SendAllObserverNotification (method, resPtr, maxAge,
+                OC_PRESENCE_TRIGGER_DELETE, NULL, qos);
         #else
         result = SendAllObserverNotification (method, resPtr, maxAge, qos);
         #endif
@@ -3311,7 +3415,7 @@ static OCDoHandle GenerateInvocationHandle()
 {
     OCDoHandle handle = NULL;
     // Generate token here, it will be deleted when the transaction is deleted
-    handle = (OCDoHandle) OCMalloc(sizeof(uint8_t[CA_MAX_TOKEN_LEN]));
+    handle = (OCDoHandle) OICMalloc(sizeof(uint8_t[CA_MAX_TOKEN_LEN]));
     if (handle)
     {
         OCFillRandomMem((uint8_t*)handle, sizeof(uint8_t[CA_MAX_TOKEN_LEN]));
@@ -3449,14 +3553,7 @@ OCStackResult deleteResource(OCResource *resource)
             if(presenceResource.handle)
             {
                 ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
-                if(resource != (OCResource *) presenceResource.handle)
-                {
-                    SendPresenceNotification(resource->rsrcType);
-                }
-                else
-                {
-                    SendPresenceNotification(NULL);
-                }
+                SendPresenceNotification(resource->rsrcType, OC_PRESENCE_TRIGGER_DELETE);
             }
             #endif
             // Only resource in list.
@@ -3482,7 +3579,7 @@ OCStackResult deleteResource(OCResource *resource)
             }
 
             deleteResourceElements(temp);
-            OCFree(temp);
+            OICFree(temp);
             return OC_STACK_OK;
         }
         else
@@ -3503,7 +3600,7 @@ void deleteResourceElements(OCResource *resource)
     }
 
     // remove URI
-    OCFree(resource->uri);
+    OICFree(resource->uri);
 
     // Delete resourcetype linked list
     deleteResourceType(resource->rsrcType);
@@ -3520,8 +3617,8 @@ void deleteResourceType(OCResourceType *resourceType)
     while (pointer)
     {
         next = pointer->next;
-        OCFree(pointer->resourcetypename);
-        OCFree(pointer);
+        OICFree(pointer->resourcetypename);
+        OICFree(pointer);
         pointer = next;
     }
 }
@@ -3534,8 +3631,8 @@ void deleteResourceInterface(OCResourceInterface *resourceInterface)
     while (pointer)
     {
         next = pointer->next;
-        OCFree(pointer->name);
-        OCFree(pointer);
+        OICFree(pointer->name);
+        OICFree(pointer);
         pointer = next;
     }
 }
@@ -3562,8 +3659,8 @@ void insertResourceType(OCResource *resource, OCResourceType *resourceType)
             // resource type already exists. Free 2nd arg and return.
             if (!strcmp(resourceType->resourcetypename, pointer->resourcetypename))
             {
-                OCFree(resourceType->resourcetypename);
-                OCFree(resourceType);
+                OICFree(resourceType->resourcetypename);
+                OICFree(resourceType);
                 return;
             }
             previous = pointer;
@@ -3643,8 +3740,8 @@ void insertResourceInterface(OCResource *resource, OCResourceInterface *newInter
     {
         if (strcmp((*firstInterface)->name, OC_RSRVD_INTERFACE_DEFAULT) == 0)
         {
-            OCFree(newInterface->name);
-            OCFree(newInterface);
+            OICFree(newInterface->name);
+            OICFree(newInterface);
             return;
         }
         else
@@ -3660,8 +3757,8 @@ void insertResourceInterface(OCResource *resource, OCResourceInterface *newInter
         {
             if (strcmp(newInterface->name, pointer->name) == 0)
             {
-                OCFree(newInterface->name);
-                OCFree(newInterface);
+                OICFree(newInterface->name);
+                OICFree(newInterface);
                 return;
             }
             previous = pointer;
@@ -3737,7 +3834,7 @@ OCStackResult getResourceType(const char * query, char** resourceType)
 
     if(strncmp(query, "rt=", 3) == 0)
     {
-        *resourceType = (char *) OCMalloc(strlen(query)-3 + 1);
+        *resourceType = (char *) OICMalloc(strlen(query)-3 + 1);
         if(!*resourceType)
         {
             result = OC_STACK_NO_MEMORY;
@@ -3790,7 +3887,7 @@ OCStackResult getQueryFromUri(const char * uri, char** query, char ** uriWithout
 
     if (uriWithoutQueryLen)
     {
-        *uriWithoutQuery =  (char *) OCCalloc(uriWithoutQueryLen + 1, 1);
+        *uriWithoutQuery =  (char *) OICCalloc(uriWithoutQueryLen + 1, 1);
         if (!*uriWithoutQuery)
         {
             goto exit;
@@ -3804,10 +3901,10 @@ OCStackResult getQueryFromUri(const char * uri, char** query, char ** uriWithout
 
     if (queryLen)
     {
-        *query = (char *) OCCalloc(queryLen + 1, 1);
+        *query = (char *) OICCalloc(queryLen + 1, 1);
         if (!*query)
         {
-            OCFree(*uriWithoutQuery);
+            OICFree(*uriWithoutQuery);
             *uriWithoutQuery = NULL;
             goto exit;
         }

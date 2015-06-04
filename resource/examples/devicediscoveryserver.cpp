@@ -19,8 +19,8 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 ///
-///This sample demonstrates the device discovery feature
-///The server sets the device related info. which can
+///This sample demonstrates platform and device discovery feature
+///The server sets the platform and device related info. which can
 ///be later retrieved by a client.
 ///
 
@@ -45,8 +45,14 @@ std::string platformVersion = "platformVersion";
 std::string supportUrl = "www.mysupporturl.com";
 std::string systemTime = "mySystemTime";
 
+//Set of strings for each of platform info fields
+std::string deviceName = "Bill's Battlestar";
+
 //OCPlatformInfo Contains all the platform info to be stored
 OCPlatformInfo platformInfo;
+
+//OCDeviceInfo Contains all the device info to be stored
+OCDeviceInfo deviceInfo;
 
 void DeletePlatformInfo()
 {
@@ -61,6 +67,12 @@ void DeletePlatformInfo()
     delete[] platformInfo.firmwareVersion;
     delete[] platformInfo.supportUrl;
     delete[] platformInfo.systemTime;
+}
+
+
+void DeleteDeviceInfo()
+{
+    delete[] deviceInfo.deviceName;
 }
 
 void DuplicateString(char ** targetString, std::string sourceString)
@@ -89,10 +101,15 @@ OCStackResult SetPlatformInfo(std::string platformID, std::string manufacturerNa
 }
 
 
+OCStackResult SetDeviceInfo(std::string deviceName)
+{
+    DuplicateString(&deviceInfo.deviceName, deviceName);
+    return OC_STACK_OK;
+}
+
 
 int main()
 {
-
     // Create PlatformConfig object
     PlatformConfig cfg {
         OC::ServiceType::InProc,
@@ -110,12 +127,6 @@ int main()
             modelNumber, dateOfManufacture, platformVersion,  operatingSystemVersion,
             hardwareVersion, firmwareVersion,  supportUrl, systemTime);
 
-    if(result != OC_STACK_OK)
-    {
-        std::cout << "Platform Registration failed\n";
-        return -1;
-    }
-
     result = OCPlatform::registerPlatformInfo(platformInfo);
 
     if(result != OC_STACK_OK)
@@ -124,7 +135,19 @@ int main()
         return -1;
     }
 
+
+    result = SetDeviceInfo(deviceName);
+
+    result = OCPlatform::registerDeviceInfo(deviceInfo);
+
+    if(result != OC_STACK_OK)
+    {
+        std::cout << "Device Registration failed\n";
+        return -1;
+    }
+
     DeletePlatformInfo();
+    DeleteDeviceInfo();
 
     // A condition variable will free the mutex it is given, then do a non-
     // intensive block until 'notify' is called on it.  In this case, since we

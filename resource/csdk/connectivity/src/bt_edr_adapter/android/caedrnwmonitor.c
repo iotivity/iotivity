@@ -33,7 +33,7 @@
 #include "caedrserver.h"
 #include "caedrutils.h"
 
-#include "org_iotivity_jar_caedrinterface.h"
+#include "org_iotivity_ca_CaEdrInterface.h"
 
 //#define DEBUG_MODE
 #define TAG PCF("CA_EDR_MONITOR")
@@ -106,11 +106,11 @@ CAResult_t CAEDRClientSetCallbacks(void)
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_jar_caedrinterface_CAEDRStateChangedCallback(JNIEnv *env, jobject obj,
+Java_org_iotivity_ca_CaEdrInterface_caEdrStateChangedCallback(JNIEnv *env, jobject obj,
                                                                jint status)
 {
     // STATE_ON:12, STATE_OFF:10
-    OIC_LOG(DEBUG, TAG, "caedrinterface - Network State Changed");
+    OIC_LOG(DEBUG, TAG, "CaEdrInterface - Network State Changed");
 
     if (NULL == g_networkChangeCb)
     {
@@ -157,10 +157,10 @@ Java_org_iotivity_jar_caedrinterface_CAEDRStateChangedCallback(JNIEnv *env, jobj
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_jar_caedrinterface_CAEDRBondStateChangedCallback(JNIEnv *env, jobject obj,
+Java_org_iotivity_ca_CaEdrInterface_caEdrBondStateChangedCallback(JNIEnv *env, jobject obj,
                                                                    jstring addr)
 {
-    OIC_LOG(DEBUG, TAG, "caedrinterface - Bond State Changed");
+    OIC_LOG(DEBUG, TAG, "CaEdrInterface - Bond State Changed");
 
     if (addr)
     {

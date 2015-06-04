@@ -98,7 +98,7 @@ namespace OC
          *
          * @param host - Host IP Address. If null or empty, Multicast is performed.
          * @param resourceURI - Uri containing address to the virtual device in C Stack
-         *                       ("/oc/core/d")
+         *                       ("/oic/d")
          *
          * @param QualityOfService the quality of communication
          *
@@ -143,7 +143,7 @@ namespace OC
         * Above relative URI will be prepended (by core) with a host IP + namespace "oc"
         * Therefore, fully qualified URI format would be //HostIP-Address/namespace/relativeURI"
         * Example, a relative URI: 'a/light' will result in a fully qualified URI:
-        *   //192.168.1.1/oc/a/light"
+        *   //192.168.1.1/oic/a/light"
         * First parameter can take a relative URI and core will take care of preparing the fully
         * qualified URI OR
         * first parameter can take fully qualified URI and core will take that as is for further

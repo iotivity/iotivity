@@ -1,8 +1,8 @@
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := coap
-LOCAL_SRC_FILES := ../libs/libcoap.so
+LOCAL_MODULE := ca
+LOCAL_SRC_FILES := ../libs/libconnectivity_abstraction.so
 include $(PREBUILT_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)

@@ -32,7 +32,6 @@ catest_env.PrependUnique(CPPPATH = [
                 '../../ocsocket/include',
                 '../../logger/include',
                 '../../stack/include',
-                '../../ocmalloc/include',
                 '../../extlibs/cjson',
                 '../../../oc_logger/include',
                 '../../../../extlibs/gtest/gtest-1.7.0/include'
@@ -74,7 +73,8 @@ if env.get('LOGGING'):
 catests = catest_env.Program('catests', ['catests.cpp',
                                          'caprotocolmessagetest.cpp',
                                                'ca_api_unittest.cpp',
-                                               'camutex_tests.cpp'])
+                                               'camutex_tests.cpp'
+                                               ])
 
 Alias("test", [catests])
 

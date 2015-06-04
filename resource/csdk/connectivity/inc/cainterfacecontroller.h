@@ -50,6 +50,13 @@ void CAInitializeAdapters(ca_thread_pool_t handle);
 void CASetPacketReceivedCallback(CANetworkPacketReceivedCallback callback);
 
 /**
+ * @brief   Set the error handler callback for message handler
+ * @param   errorCallback       [IN]    error handler callback from adapters
+ * @return  none
+ */
+void CASetErrorHandleCallback(CAErrorHandleCallback errorCallback);
+
+/**
  * @brief   Set the network status changed callback for message handler
  * @param   callback       [IN]    message handler network status callback to receive network changes.
  * @return  none

@@ -30,7 +30,7 @@
  * These details are exposed in ocstackconfig.h file in the form of documentation.
  * Remember to update the documentation there if these are changed.
  */
-#define OC_JSON_PREFIX                     "{\"oc\":["
+#define OC_JSON_PREFIX                     "{\"oic\":["
 #define OC_JSON_PREFIX_LEN                 (sizeof(OC_JSON_PREFIX) - 1)
 #define OC_JSON_SUFFIX                     "]}"
 #define OC_JSON_SUFFIX_LEN                 (sizeof(OC_JSON_SUFFIX) - 1)
@@ -114,6 +114,14 @@ OCStackResult ProcessRequest(ResourceHandling resHandling,
  * discovery requests.
  */
 OCStackResult SavePlatformInfo(OCPlatformInfo info);
+
+/**
+ * Internal API used to save all of the device's information for use in platform
+ * discovery requests.
+ * The device name is received from the appliation.
+ * The deviceID, spec version and data model verson are initialized by the stack.
+ */
+OCStackResult SaveDeviceInfo(OCDeviceInfo info);
 
 /**
  * Internal API used to clear the platform information.

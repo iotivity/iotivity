@@ -25,7 +25,12 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Enumeration;
 
+import org.iotivity.base.ModeType;
+import org.iotivity.base.OcPlatform;
 import org.iotivity.base.OcResourceHandle;
+import org.iotivity.base.PlatformConfig;
+import org.iotivity.base.QualityOfService;
+import org.iotivity.base.ServiceType;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -66,6 +71,15 @@ public class ResourceHosting extends Activity implements OnClickListener
             findViewById(R.id.btnStartHosting).setOnClickListener(this);
             findViewById(R.id.btnStopHosting).setOnClickListener(this);
             findViewById(R.id.btLogClear).setOnClickListener(this);
+
+            PlatformConfig platformConfigObj;
+
+            platformConfigObj = new PlatformConfig(this,ServiceType.IN_PROC,
+                    ModeType.CLIENT_SERVER, "0.0.0.0", 0, QualityOfService.LOW);
+
+            Log.i(TAG, "Before Calling Configure of ocPlatform");
+            OcPlatform.Configure(platformConfigObj);
+            Log.i(TAG, "Configuration done Successfully");
         }
 
         /**
@@ -261,14 +275,15 @@ public class ResourceHosting extends Activity implements OnClickListener
          */
         public native int ResourceHostingTerminate();
 
-        static
-        {
-    		System.loadLibrary("gnustl_shared");
-        	System.loadLibrary("oc_logger");
-    		System.loadLibrary("connectivity_abstraction");
-            System.loadLibrary("octbstack");
-            System.loadLibrary("oc");
-            System.loadLibrary("ocstack-jni");
-            System.loadLibrary("NotificationManager");
-        }
+    static
+    {
+        System.loadLibrary("gnustl_shared");
+        System.loadLibrary("oc_logger");
+        System.loadLibrary("connectivity_abstraction");
+        System.loadLibrary("ca-interface");
+        System.loadLibrary("octbstack");
+        System.loadLibrary("oc");
+        System.loadLibrary("ocstack-jni");
+        System.loadLibrary("NotificationManager");
+    }
 }

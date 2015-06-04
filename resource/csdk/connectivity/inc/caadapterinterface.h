@@ -79,7 +79,7 @@ typedef CAResult_t (*CAAdapterStartDiscoveryServer)();
  * @param   dataLen     [IN]    Size of data to be sent.
  * @return The number of bytes sent on the network. Return value equal to -1 indicates error.
  */
-typedef int32_t (*CAAdapterSendUnitcastData)(const CARemoteEndpoint_t *endpoint,
+typedef int32_t (*CAAdapterSendUnicastData)(const CARemoteEndpoint_t *endpoint,
         const void *data, uint32_t dataLen);
 
 /**
@@ -136,7 +136,7 @@ typedef struct
     CAAdapterStartDiscoveryServer startDiscoveryServer;
 
     /** Unicast data function address**/
-    CAAdapterSendUnitcastData sendData;
+    CAAdapterSendUnicastData sendData;
 
     /** Multicast data function address**/
     CAAdapterSendMulticastData sendDataToAll;
@@ -164,16 +164,22 @@ typedef void (*CARegisterConnectivityCallback)(CAConnectivityHandler_t handler,
 
 /**
  * @brief This will be used during the recive of network requests and response.
- * @see SendUnitcastData(), SendMulticastData()
+ * @see SendUnicastData(), SendMulticastData()
  */
 typedef void (*CANetworkPacketReceivedCallback)(CARemoteEndpoint_t *endPoint, void *data,
         uint32_t dataLen);
 
 /**
  * @brief This will be used to notify network changes to the connectivity common logic layer
- * @see SendUnitcastData(), SendMulticastData()
+ * @see SendUnicastData(), SendMulticastData()
  */
 typedef void (*CANetworkChangeCallback)(CALocalConnectivity_t *info, CANetworkStatus_t status);
+
+/**
+ * @brief This will be used to notify error result to the connectivity common logic layer
+ */
+typedef void (*CAErrorHandleCallback)(const CARemoteEndpoint_t *remoteEndpoint, const void *data,
+                                      uint32_t dataLen, CAResult_t result);
 
 #ifdef __cplusplus
 } /* extern "C" */

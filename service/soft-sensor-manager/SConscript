@@ -156,9 +156,6 @@ ssmcore_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 ssmcore_env.AppendUnique(LIBS = ['oc', 'octbstack', 'oc_logger',
             'connectivity_abstraction', 'coap'])
 
-if target_os in ['tizen']:
-	ssmcore_env.ParseConfig('pkg-config --libs glib-2.0');
-
 shared_libssmcore = ssmcore_env.SharedLibrary(
 		target = 'SSMCore',
 		source = [ssm_core_cpp_src, ssm_core_c_src]

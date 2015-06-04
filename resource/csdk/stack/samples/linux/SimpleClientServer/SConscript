@@ -27,7 +27,6 @@ samples_env = env.Clone()
 samples_env.PrependUnique(CPPPATH = [
 		'../../../../logger/include',
 		'../../../../stack/include',
-		'../../../../ocmalloc/include',
 		'../../../../../../extlibs/cjson',
 		'../../../../../oc_logger/include',
 		'../../../../../connectivity/lib/libcoap-4.1.1'

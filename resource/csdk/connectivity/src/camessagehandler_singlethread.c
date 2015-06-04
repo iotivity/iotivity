@@ -58,6 +58,7 @@ static CARetransmission_t g_retransmissionContext;
 // handler field
 static CARequestCallback g_requestHandler = NULL;
 static CAResponseCallback g_responseHandler = NULL;
+static CAErrorCallback g_errorHandler = NULL;
 
 static void CATimeoutCallback(const CARemoteEndpoint_t *endpoint, const void *pdu, uint32_t size)
 {
@@ -543,11 +544,13 @@ memory_error_exit:
     return CA_MEMORY_ALLOC_FAILED;
 }
 
-void CASetRequestResponseCallbacks(CARequestCallback ReqHandler, CAResponseCallback RespHandler)
+void CASetInterfaceCallbacks(CARequestCallback ReqHandler, CAResponseCallback RespHandler,
+                             CAErrorCallback errorHandler)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     g_requestHandler = ReqHandler;
     g_responseHandler = RespHandler;
+    g_errorHandler = errorHandler;
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 

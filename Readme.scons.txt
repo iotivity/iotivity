@@ -115,6 +115,16 @@ Java codes, this isn't required)
 so you don't need to add it in command line each time. The build script will
 guide you to do that.)
 
+Tizen:
+To build for tizen platform cereal library is needed.
+Please download cereal if it is not present in extlibs/cereal folder
+and apply the patch as following:
+	$ git clone https://github.com/USCiLab/cereal.git extlibs/cereal/cereal
+	$ cd  extlibs/cereal/cereal
+	$ git reset --hard 7121e91e6ab8c3e6a6516d9d9c3e6804e6f65245
+	$ git apply ../../../resource/patches/cereal_gcc46.patch
+
+
 * 3. External libraries
 IoTivity project depends on some external libraries, such as boost, expat ...
 During building, the existence of external library will be checked, if it doesn't
@@ -151,10 +161,10 @@ it's unnecessary to specify it)
 
 4. Build Iotivity project for Tizen
       $ cd <top directory of the project>
-      $ gbs build -A xxx --packaging-dir tools/tizen/
-(xxx can be i586 or armv7l, we provide the spec file required by gbs tool at
-toools/tizen directory. gbs is default build tool for Tizen platfrom, we can
-refer the following wiki to setup Tizen development environment:
+      $ sh gbsbuild.sh
+(we provide the spec file required by gbs tool at toools/tizen directory.
+gbs is default build tool for Tizen platfrom, we can refer the following
+wiki to setup Tizen development environment:
 https://source.tizen.org/documentation/developer-guide/getting-started-guide)
 
 === Build IoTivity project on Android ===

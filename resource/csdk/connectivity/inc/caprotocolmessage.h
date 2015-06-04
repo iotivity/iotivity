@@ -76,6 +76,16 @@ CAResult_t CAGetResponseInfoFromPDU(const coap_pdu_t *pdu, CAResponseInfo_t *out
                                     char *outUri, uint32_t buflen);
 
 /**
+ * @brief   extracts error information from received pdu.
+ * @param   pdu              [IN]     received pdu
+ * @param   errorInfo        [OUT]    error info structure made from received pdu
+ * @param   outUri           [OUT]    uri received in the received pdu
+ * @param   buflen           [IN]     length of outUri
+ * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ */
+CAResult_t CAGetErrorInfoFromPDU(const coap_pdu_t *pdu, CAErrorInfo_t *errorInfo,
+                                 char *outUri, uint32_t buflen);
+/**
  * @brief   creates pdu from the request information
  * @param   code             [IN]    request or response code
  * @param   options          [OUT]   options for the request and response

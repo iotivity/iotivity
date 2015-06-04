@@ -1,6 +1,6 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="org.iotivity.sample_service.MainActivity" >
+    tools:context="org.iotivity.ca.sample_service.MainActivity" >
 
     <item
         android:id="@+id/action_settings"

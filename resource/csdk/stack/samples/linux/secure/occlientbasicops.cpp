@@ -36,10 +36,10 @@ static int UNICAST_DISCOVERY = 0;
 static int TEST_CASE = 0;
 
 static int IPV4_ADDR_SIZE = 16;
-static char UNICAST_DISCOVERY_QUERY[] = "coap://%s:6298/oc/core";
-static char MULTICAST_DISCOVERY_QUERY[] = "/oc/core";
+static char UNICAST_DISCOVERY_QUERY[] = "coap://%s:6298/oic/res";
+static char MULTICAST_DISCOVERY_QUERY[] = "/oic/res";
 
-static std::string putPayload = "{\"state\":\"off\",\"power\":10}";
+static std::string putPayload = "{\"oic\":[{\"rep\":{\"state\":\"off\",\"power\":10}}]}";
 static std::string coapServerIP;
 static std::string coapServerPort;
 static std::string coapServerResource;
@@ -402,7 +402,7 @@ int parseClientResponse(OCClientResponse * clientResponse)
         return -1;
     }
 
-    oc = cJSON_GetObjectItem(root,"oc");
+    oc = cJSON_GetObjectItem(root,"oic");
     if (!oc)
     {
         return -1;

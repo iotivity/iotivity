@@ -22,7 +22,7 @@
 #include "ocstack.h"
 #include "ocserverrequest.h"
 #include "ocresourcehandler.h"
-#include "ocmalloc.h"
+#include "oic_malloc.h"
 
 #include "cacommon.h"
 #include "cainterface.h"
@@ -55,10 +55,10 @@ static OCStackResult AddServerResponse (OCServerResponse ** response, OCRequestH
 {
     OCServerResponse * serverResponse = NULL;
 
-    serverResponse = (OCServerResponse *) OCCalloc(1, sizeof(OCServerResponse));
+    serverResponse = (OCServerResponse *) OICCalloc(1, sizeof(OCServerResponse));
     VERIFY_NON_NULL(serverResponse);
 
-    serverResponse->payload = (char *) OCCalloc(1, MAX_RESPONSE_LENGTH);
+    serverResponse->payload = (char *) OICCalloc(1, MAX_RESPONSE_LENGTH);
     VERIFY_NON_NULL(serverResponse->payload);
 
     serverResponse->remainingPayloadSize = MAX_RESPONSE_LENGTH;
@@ -72,7 +72,7 @@ static OCStackResult AddServerResponse (OCServerResponse ** response, OCRequestH
 exit:
     if (serverResponse)
     {
-        OCFree(serverResponse);
+        OICFree(serverResponse);
         serverResponse = NULL;
     }
     *response = NULL;
@@ -89,8 +89,8 @@ static void DeleteServerRequest(OCServerRequest * serverRequest)
     if(serverRequest)
     {
         LL_DELETE(serverRequestList, serverRequest);
-        OCFree(serverRequest->requestToken);
-        OCFree(serverRequest);
+        OICFree(serverRequest->requestToken);
+        OICFree(serverRequest);
         serverRequest = NULL;
         OC_LOG(INFO, TAG, PCF("Server Request Removed!!"));
     }
@@ -106,8 +106,8 @@ static void DeleteServerResponse(OCServerResponse * serverResponse)
     if(serverResponse)
     {
         LL_DELETE(serverResponseList, serverResponse);
-        OCFree(serverResponse->payload);
-        OCFree(serverResponse);
+        OICFree(serverResponse->payload);
+        OICFree(serverResponse);
         OC_LOG(INFO, TAG, PCF("Server Response Removed!!"));
     }
 }
@@ -252,7 +252,7 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
     //Note: OCServerRequest includes 1 byte for the JSON Payload.  payloadSize is calculated
     //as the required length of the string, so this will result in enough room for the
     //null terminator as well.
-    serverRequest = (OCServerRequest *) OCCalloc(1, sizeof(OCServerRequest) +
+    serverRequest = (OCServerRequest *) OICCalloc(1, sizeof(OCServerRequest) +
         (reqTotalSize ? reqTotalSize : 1) - 1);
     VERIFY_NON_NULL(serverRequest);
 
@@ -294,7 +294,7 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
         // particular library implementation (it may or may not be a null pointer).
         if (tokenLength)
         {
-            serverRequest->requestToken = (CAToken_t) OCMalloc(tokenLength);
+            serverRequest->requestToken = (CAToken_t) OICMalloc(tokenLength);
             VERIFY_NON_NULL(serverRequest->requestToken);
             memcpy(serverRequest->requestToken, requestToken, tokenLength);
         }
@@ -322,7 +322,7 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
 exit:
     if (serverRequest)
     {
-        OCFree(serverRequest);
+        OICFree(serverRequest);
         serverRequest = NULL;
     }
     *request = NULL;
@@ -497,7 +497,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     }
 
     responseInfo.info.messageId = serverRequest->coapID;
-    responseInfo.info.token = (CAToken_t)OCMalloc(CA_MAX_TOKEN_LEN+1);
+    responseInfo.info.token = (CAToken_t)OICMalloc(CA_MAX_TOKEN_LEN+1);
     if (!responseInfo.info.token)
     {
         OC_LOG(FATAL, TAG, "Response Info Token is NULL");
@@ -519,13 +519,13 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     if(responseInfo.info.numOptions > 0)
     {
         responseInfo.info.options = (CAHeaderOption_t *)
-                                      OCCalloc(responseInfo.info.numOptions,
+                                      OICCalloc(responseInfo.info.numOptions,
                                               sizeof(CAHeaderOption_t));
 
         if(!responseInfo.info.options)
         {
             OC_LOG(FATAL, TAG, PCF("options is NULL"));
-            OCFree(responseInfo.info.token);
+            OICFree(responseInfo.info.token);
             return OC_STACK_NO_MEMORY;
         }
 
@@ -607,8 +607,8 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     }
     #endif
 
-    OCFree(responseInfo.info.token);
-    OCFree(responseInfo.info.options);
+    OICFree(responseInfo.info.token);
+    OICFree(responseInfo.info.options);
     //Delete the request
     FindAndDeleteServerRequest(serverRequest);
     return result;

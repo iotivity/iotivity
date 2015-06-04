@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "cainterface.h"
 #include "caremotehandler.h"
@@ -33,37 +34,75 @@
 
 #define TAG "CM_ST"
 
+static bool g_isInitialized = false;
+
 CAResult_t CAInitialize()
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
-    return CAInitializeMessageHandler();
+    if (!g_isInitialized)
+    {
+        CAResult_t res = CAInitializeMessageHandler();
+        if (res != CA_STATUS_OK)
+        {
+            OIC_LOG(ERROR, TAG, "not initialized");
+            return res;
+        }
+        g_isInitialized = true;
+    }
+
+    return CA_STATUS_OK;
 }
 
 void CATerminate()
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    CASetRequestResponseCallbacks(NULL, NULL);
-    CATerminateMessageHandler();
 
-    CATerminateNetworkType();
+    if (g_isInitialized)
+    {
+        CASetInterfaceCallbacks(NULL, NULL, NULL);
+        CATerminateMessageHandler();
+        CATerminateNetworkType();
+        g_isInitialized = false;
+    }
+
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 CAResult_t CAStartListeningServer()
 {
+    if (!g_isInitialized)
+    {
+        OIC_LOG(ERROR, TAG, "not initialized");
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+
     return CAStartListeningServerAdapters();
 }
 
 CAResult_t CAStartDiscoveryServer()
 {
+    if (!g_isInitialized)
+    {
+        OIC_LOG(ERROR, TAG, "not initialized");
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+
     return CAStartDiscoveryServerAdapters();
 }
 
-void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHandler)
+void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHandler,
+                       CAErrorCallback errorHandler)
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    CASetRequestResponseCallbacks(ReqHandler, RespHandler);
+
+    if (!g_isInitialized)
+    {
+        OIC_LOG(ERROR, TAG, "not initialized");
+        return;
+    }
+
+    CASetInterfaceCallbacks(ReqHandler, RespHandler, errorHandler);
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
@@ -71,6 +110,12 @@ CAResult_t CACreateRemoteEndpoint(const CAURI_t uri, const CATransportType_t tra
                                   CARemoteEndpoint_t **remoteEndpoint)
 {
     OIC_LOG(DEBUG, TAG, "IN");
+
+    if (!g_isInitialized)
+    {
+        OIC_LOG(ERROR, TAG, "not initialized");
+        return CA_STATUS_NOT_INITIALIZED;
+    }
 
     CARemoteEndpoint_t *remote = CACreateRemoteEndpointUriInternal(uri, transportType);
 
@@ -93,18 +138,31 @@ void CADestroyRemoteEndpoint(CARemoteEndpoint_t *rep)
 
 CAResult_t CAGenerateToken(CAToken_t *token, uint8_t tokenLength)
 {
+    if (!g_isInitialized)
+    {
+        OIC_LOG(ERROR, TAG, "not initialized");
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+
     return CAGenerateTokenInternal(token, tokenLength);
 }
 
 void CADestroyToken(CAToken_t token)
 {
     OIC_LOG(DEBUG, TAG, "IN");
+
     CADestroyTokenInternal(token);
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 CAResult_t CAGetNetworkInformation(CALocalConnectivity_t **info, uint32_t *size)
 {
+    if (!g_isInitialized)
+    {
+        OIC_LOG(ERROR, TAG, "not initialized");
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+
     return CAGetNetworkInformationInternal(info, size);
 }
 
@@ -112,11 +170,23 @@ CAResult_t CAFindResource(const CAURI_t resourceUri, const CAToken_t token, uint
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
+    if (!g_isInitialized)
+    {
+        OIC_LOG(ERROR, TAG, "not initialized");
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+
     return CADetachMessageResourceUri(resourceUri, token, tokenLength, NULL, 0);
 }
 
 CAResult_t CASendRequest(const CARemoteEndpoint_t *object,const CARequestInfo_t *requestInfo)
 {
+    if (!g_isInitialized)
+    {
+        OIC_LOG(ERROR, TAG, "not initialized");
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+
     return CADetachRequestMessage(object, requestInfo);
 }
 
@@ -125,18 +195,36 @@ CAResult_t CASendRequestToAll(const CAGroupEndpoint_t *object,
 {
     OIC_LOG(DEBUG, TAG, "CASendRequestToAll");
 
+    if (!g_isInitialized)
+    {
+        OIC_LOG(ERROR, TAG, "not initialized");
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+
     return CADetachRequestToAllMessage(object, requestInfo);
 }
 
 CAResult_t CASendNotification(const CARemoteEndpoint_t *object,
     const CAResponseInfo_t *responseInfo)
 {
+    if (!g_isInitialized)
+    {
+        OIC_LOG(ERROR, TAG, "not initialized");
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+
     return CADetachResponseMessage(object, responseInfo);
 }
 
 CAResult_t CASendResponse(const CARemoteEndpoint_t *object,
     const CAResponseInfo_t *responseInfo)
 {
+    if (!g_isInitialized)
+    {
+        OIC_LOG(ERROR, TAG, "not initialized");
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+
     return CADetachResponseMessage(object, responseInfo);
 }
 
@@ -144,12 +232,23 @@ CAResult_t CAAdvertiseResource(const CAURI_t resourceUri,const CAToken_t token,
                                uint8_t tokenLength, const CAHeaderOption_t *options,
                                const uint8_t numOptions)
 {
+    if (!g_isInitialized)
+    {
+        OIC_LOG(ERROR, TAG, "not initialized");
+        return CA_STATUS_NOT_INITIALIZED;
+    }
     return CADetachMessageResourceUri(resourceUri, token, tokenLength, options, numOptions);
 }
 
 CAResult_t CASelectNetwork(const uint32_t interestedNetwork)
 {
     OIC_LOG_V(DEBUG, TAG, "Selected n/W=%d", interestedNetwork);
+
+    if (!g_isInitialized)
+    {
+        OIC_LOG(ERROR, TAG, "not initialized");
+        return CA_STATUS_NOT_INITIALIZED;
+    }
 
     if (!(interestedNetwork & 0xf))
     {
@@ -195,6 +294,12 @@ CAResult_t CAUnSelectNetwork(const uint32_t nonInterestedNetwork)
 {
     OIC_LOG_V(DEBUG, TAG, "unselected n/w=%d", nonInterestedNetwork);
 
+    if (!g_isInitialized)
+    {
+        OIC_LOG(ERROR, TAG, "not initialized");
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+
     if (!(nonInterestedNetwork & 0xf))
     {
         OIC_LOG(ERROR, TAG, "not supported");
@@ -238,8 +343,13 @@ CAResult_t CAUnSelectNetwork(const uint32_t nonInterestedNetwork)
 
 CAResult_t CAHandleRequestResponse()
 {
+    if (!g_isInitialized)
+    {
+        OIC_LOG(ERROR, TAG, "not initialized");
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+
     CAHandleRequestResponseCallbacks();
     return CA_STATUS_OK;
 }
-
 

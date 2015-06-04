@@ -46,29 +46,30 @@ public final class OcPlatform {
     /**
      * Default interface
      */
-    public static final String DEFAULT_INTERFACE = "oc.mi.def";
+    public static final String DEFAULT_INTERFACE = "oic.if.baseline";
 
     /**
      * Used in discovering (GET) links to other resources of a collection
      */
-    public static final String LINK_INTERFACE = "oc.mi.ll";
+    public static final String LINK_INTERFACE = "oic.if.ll";
 
     /**
      * Used in GET, PUT, POST, DELETE methods on links to other resources of a collection
      */
-    public static final String BATCH_INTERFACE = "oc.mi.b";
+    public static final String BATCH_INTERFACE = "oic.if.b";
 
     /**
      * Used in GET, PUT, POST methods on links to other remote resources of a group
      */
-    public static final String GROUP_INTERFACE = "oc.mi.grp";
+    public static final String GROUP_INTERFACE = "oic.mi.grp";
 
-    public static final String WELL_KNOWN_QUERY = "224.0.1.187:5683/oc/core";
+    public static final String WELL_KNOWN_QUERY = "224.0.1.187:5683/oic/res";
     public static final String MULTICAST_PREFIX = "224.0.1.187:5683";
     public static final String MULTICAST_IP = "224.0.1.187";
     public static final int MULTICAST_PORT = 5683;
     public static final int DEFAULT_PRESENCE_TTL = 60;
-    public static final String PRESENCE_URI = "/oc/presence";
+    public static final String DEVICE_URI = "/oic/d";
+    public static final String PRESENCE_URI = "/oic/ad";
 
     private static volatile boolean sIsPlatformInitialized = false;
 
@@ -406,34 +407,13 @@ public final class OcPlatform {
             OcDeviceInfo ocDeviceInfo) throws OcException {
         OcPlatform.initCheck();
         OcPlatform.registerDeviceInfo0(
-                ocDeviceInfo.getDeviceName(),
-                ocDeviceInfo.getHostName(),
-                ocDeviceInfo.getDeviceUuid(),
-                ocDeviceInfo.getContentType(),
-                ocDeviceInfo.getVersion(),
-                ocDeviceInfo.getManufacturerName(),
-                ocDeviceInfo.getManufacturerUrl(),
-                ocDeviceInfo.getModelNumber(),
-                ocDeviceInfo.getDateOfManufacture(),
-                ocDeviceInfo.getPlatformVersion(),
-                ocDeviceInfo.getFirmwareVersion(),
-                ocDeviceInfo.getSupportUrl()
+                ocDeviceInfo.getDeviceName()
         );
     }
 
     private static native void registerDeviceInfo0(
-            String deviceName,
-            String hostName,
-            String deviceUUID,
-            String contentType,
-            String version,
-            String manufacturerName,
-            String manufacturerUrl,
-            String modelNumber,
-            String dateOfManufacture,
-            String platformVersion,
-            String firmwareVersion,
-            String supportUrl) throws OcException;
+            String deviceName
+            ) throws OcException;
 
     /**
      * This API unregisters a resource with the server NOTE: This API applies to server side only.

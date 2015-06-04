@@ -202,7 +202,7 @@ else:
 	env.AppendUnique(CCFLAGS = ['-g'])
 
 if env.get('LOGGING'):
-        env.AppendUnique(CPPDEFINES = ['-DTB_LOG'])
+        env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 
 env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '__ANDROID__'])
@@ -231,3 +231,4 @@ SConscript('compatibility/cpp11_compat.scons')
 
 # Make sure that boost for android is available
 SConscript(env.get('SRC_DIR') + '/extlibs/boost/SConscript')
+SConscript(env.get('SRC_DIR') + '/extlibs/expat/SConscript')
