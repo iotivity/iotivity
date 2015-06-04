@@ -59,7 +59,7 @@ else:
 
 env.SConscript('./src/SConscript')
 
-if build_sample == 'ON':
-	if target_os in ['linux', 'arduino', 'android']:
-		env.SConscript('./samples/' + target_os + '/SConscript')
+#if build_sample == 'ON':
+#	if target_os in ['linux', 'arduino', 'android']:
+#		env.SConscript('./samples/' + target_os + '/SConscript')
 	
