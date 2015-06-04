@@ -47,10 +47,10 @@ static int coapSecureResource;
 static OCConnectivityType ocConnType;
 
 
-//File containing Client's Identity and the PSK credentials
+//Secure Virtual Resource database for Iotivity Client application
+//It contains Client's Identity and the PSK credentials
 //of other devices which the client trusts
-//This can be generated using 'gen_sec_bin' application
-static char CRED_FILE[] = "client_cred.bin";
+static char CRED_FILE[] = "oic_svr_db_client.json";
 
 
 int gQuitFlag = 0;
@@ -286,6 +286,12 @@ int InitDiscovery()
     return ret;
 }
 
+FILE* client_fopen(const char *path, const char *mode)
+{
+    (void)path;
+    return fopen(CRED_FILE, mode);
+}
+
 int main(int argc, char* argv[])
 {
     int opt;
@@ -314,20 +320,19 @@ int main(int argc, char* argv[])
         return -1;
     }
 
+    // Initialize Persistent Storage for SVR database
+    OCPersistentStorage ps = {};
+    ps.open = client_fopen;
+    ps.read = fread;
+    ps.write = fwrite;
+    ps.close = fclose;
+    ps.unlink = unlink;
+    OCRegisterPersistentStorageHandler(&ps);
+
     /* Initialize OCStack*/
-    if (OCInit(NULL, 0, OC_CLIENT) != OC_STACK_OK)
+    if (OCInit(NULL, 0, OC_CLIENT_SERVER) != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "OCStack init error");
-        return 0;
-    }
-
-    /*
-     * Read DTLS PSK credentials from persistent storage and
-     * set in the OC stack.
-     */
-    if (SetCredentials(CRED_FILE) != OC_STACK_OK)
-    {
-        OC_LOG(ERROR, TAG, "SetCredentials failed");
         return 0;
     }
 
@@ -410,9 +415,10 @@ int parseClientResponse(OCClientResponse * clientResponse)
 
     if (oc->type == cJSON_Array)
     {
-        if (cJSON_GetArraySize(oc) > 0)
+        int numRsrcs =  cJSON_GetArraySize(oc);
+        for(int i = 0; i < numRsrcs; i++)
         {
-            cJSON * resource = cJSON_GetArrayItem(oc, 0);
+            cJSON * resource = cJSON_GetArrayItem(oc, i);
             if (cJSON_GetObjectItem(resource, "href"))
             {
                 coapServerResource.assign(cJSON_GetObjectItem(resource, "href")->valuestring);
@@ -445,6 +451,12 @@ int parseClientResponse(OCClientResponse * clientResponse)
                     ss << port;
                     coapServerPort = ss.str();
                 }
+            }
+
+            // If we discovered a secure resource, exit from here
+            if (coapSecureResource)
+            {
+                break;
             }
         }
     }

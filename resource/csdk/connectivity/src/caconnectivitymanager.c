@@ -30,6 +30,9 @@
 #include "canetworkconfigurator.h"
 #include "cainterfacecontroller.h"
 #include "logger.h"
+#ifdef __WITH_DTLS__
+#include "caadapternetdtls.h"
+#endif
 
 #define TAG PCF("CA")
 
@@ -351,3 +354,95 @@ CAResult_t CAHandleRequestResponse()
     return CA_STATUS_OK;
 }
 
+#ifdef __WITH_DTLS__
+
+CAResult_t CASelectCipherSuite(const uint16_t cipher)
+{
+    OIC_LOG_V(DEBUG, TAG, "CASelectCipherSuite");
+
+    return CADtlsSelectCipherSuite(cipher);
+}
+
+CAResult_t CAEnableAnonECDHCipherSuite(const bool enable)
+{
+    OIC_LOG_V(DEBUG, TAG, "CAEnableAnonECDHCipherSuite");
+
+    return CADtlsEnableAnonECDHCipherSuite(enable);
+}
+
+CAResult_t CAGenerateOwnerPSK(const CAAddress_t* addrInfo,
+                    const CATransportType_t transportType,
+                    const uint8_t* label, const size_t labelLen,
+                    const uint8_t* rsrcServerDeviceID, const size_t rsrcServerDeviceIDLen,
+                    const uint8_t* provServerDeviceID, const size_t provServerDeviceIDLen,
+                    uint8_t* ownerPSK, const size_t ownerPSKSize)
+{
+    OIC_LOG_V(DEBUG, TAG, "IN : CAGenerateOwnerPSK");
+
+    CAResult_t res = CA_STATUS_OK;
+
+    //newOwnerLabel and prevOwnerLabe can be NULL
+    if(!addrInfo || !label || 0 == labelLen || !ownerPSK || 0 == ownerPSKSize)
+    {
+        return CA_STATUS_INVALID_PARAM;
+    }
+
+    res = CADtlsGenerateOwnerPSK(addrInfo, transportType, label, labelLen,
+                                  rsrcServerDeviceID, rsrcServerDeviceIDLen,
+                                  provServerDeviceID, provServerDeviceIDLen,
+                                  ownerPSK, ownerPSKSize);
+    if(CA_STATUS_OK != res)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to CAGenerateOwnerPSK : %d", res);
+    }
+
+    OIC_LOG_V(DEBUG, TAG, "OUT : CAGenerateOwnerPSK");
+
+    return res;
+}
+
+CAResult_t CAInitiateHandshake(const CAAddress_t* addrInfo,
+                               const CATransportType_t transportType)
+{
+    OIC_LOG_V(DEBUG, TAG, "IN : CAInitiateHandshake");
+    CAResult_t res = CA_STATUS_OK;
+
+    if(!addrInfo)
+    {
+        return CA_STATUS_INVALID_PARAM;
+    }
+
+    res = CADtlsInitiateHandshake(addrInfo, transportType);
+    if(CA_STATUS_OK != res)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to CADtlsInitiateHandshake : %d", res);
+    }
+
+    OIC_LOG_V(DEBUG, TAG, "OUT : CAInitiateHandshake");
+
+    return res;
+}
+
+CAResult_t CACloseDtlsSession(const CAAddress_t* addrInfo,
+                              const CATransportType_t transportType)
+{
+    OIC_LOG_V(DEBUG, TAG, "IN : CACloseDtlsSession");
+    CAResult_t res = CA_STATUS_OK;
+
+    if(!addrInfo)
+    {
+        return CA_STATUS_INVALID_PARAM;
+    }
+
+    res = CADtlsClose(addrInfo, transportType);
+    if(CA_STATUS_OK != res)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to CADtlsClose : %d", res);
+    }
+
+    OIC_LOG_V(DEBUG, TAG, "OUT : CACloseDtlsSession");
+
+    return res;
+}
+
+#endif /* __WITH_DTLS__ */

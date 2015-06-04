@@ -30,6 +30,7 @@
 
 #include <stdint.h>
 
+#define WITH_AES_DECRYPT 1
 #define AES_MAXKEYBITS	(256)
 #define AES_MAXKEYBYTES	(AES_MAXKEYBITS>>3)
 /* for 256-bit keys we need 14 rounds for a 128 we only need 10 round */

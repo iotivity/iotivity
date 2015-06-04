@@ -60,12 +60,12 @@ typedef enum dtls_credentials_type_t {
   DTLS_PSK_HINT, DTLS_PSK_IDENTITY, DTLS_PSK_KEY
 } dtls_credentials_type_t;
 
-typedef struct dtls_ecdsa_key_t {
+typedef struct dtls_ecc_key_t {
   dtls_ecdh_curve curve;
   const unsigned char *priv_key;	/** < private key as bytes > */
   const unsigned char *pub_key_x;	/** < x part of the public key for the given private key > */
   const unsigned char *pub_key_y;	/** < y part of the public key for the given private key > */
-} dtls_ecdsa_key_t;
+} dtls_ecc_key_t;
 
 /** Length of the secret that is used for generating Hello Verify cookies. */
 #define DTLS_COOKIE_SECRET_LENGTH 12
@@ -183,7 +183,7 @@ typedef struct {
    */
   int (*get_ecdsa_key)(struct dtls_context_t *ctx, 
 		       const session_t *session,
-		       const dtls_ecdsa_key_t **result);
+		       const dtls_ecc_key_t **result);
 
   /**
    * Called during handshake to check the peer's pubic key in this
@@ -238,6 +238,10 @@ typedef struct dtls_context_t {
 
   dtls_handler_t *h;		/**< callback handlers */
 
+  dtls_cipher_enable_t is_anon_ecdh_eabled;    /**< enable/disable the TLS_ECDH_anon_WITH_AES_128_CBC_SHA */
+
+  dtls_cipher_t selected_cipher; /**< selected ciper suite for handshake */
+
   unsigned char readbuf[DTLS_MAX_BUF];
 } dtls_context_t;
 
@@ -262,6 +266,24 @@ void dtls_free_context(dtls_context_t *ctx);
 static inline void dtls_set_handler(dtls_context_t *ctx, dtls_handler_t *h) {
   ctx->h = h;
 }
+
+ /**
+  * @brief Enabling the TLS_ECDH_anon_WITH_AES_128_CBC_SHA
+  *
+  * @param ctx              The DTLS context to use.
+  * @param is_enable    DTLS_CIPHER_ENABLE(1) or DTLS_CIPHER_DISABLE(0)
+  */
+void dtls_enables_anon_ecdh(dtls_context_t* ctx, dtls_cipher_enable_t is_enable);
+
+/**
+ * @brief Select the cipher suite for handshake
+ *
+ * @param ctx              The DTLS context to use.
+ * @param cipher         TLS_ECDH_anon_WITH_AES_128_CBC_SHA (0xC018)
+ *                                  TLS_PSK_WITH_AES_128_CCM_8 (0xX0A8)
+ *                                  TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8 (0xC0AE)
+ */
+void dtls_select_cipher(dtls_context_t* ctx, const dtls_cipher_t cipher);
 
 /**
  * Establishes a DTLS channel with the specified remote peer @p dst.
@@ -414,6 +436,30 @@ int dtls_handle_message(dtls_context_t *ctx, session_t *session,
  */
 dtls_peer_t *dtls_get_peer(const dtls_context_t *context,
 			   const session_t *session);
+
+/**
+* Invokes the DTLS PRF using the current key block for @p session as
+* key and @p label + @p random1 + @p random2 as its input. This function
+* writes upto @p buflen bytes into the given output buffer @p buf.
+*
+* @param ctx The dtls context to use.
+* @param session The session whose key shall be used.
+* @param label A PRF label.
+* @param labellen Actual length of @p label.
+* @param random1 Random seed.
+* @param random1len Actual length of @p random1 (may be zero).
+* @param random2 Random seed.
+* @param random2len Actual length of @p random2 (may be zero).
+* @param buf Output buffer for generated random data.
+* @param buflen Maximum size of @p buf.
+*
+* @return The actual number of bytes written to @p buf or @c 0 on error.
+*/
+size_t dtls_prf_with_current_keyblock(dtls_context_t *ctx, session_t *session,
+                                      const uint8_t* label, const uint32_t labellen,
+                                      const uint8_t* random1, const uint32_t random1len,
+                                      const uint8_t* random2, const uint32_t random2len,
+                                      uint8_t* buf, const uint32_t buflen);
 
 
 #endif /* _DTLS_DTLS_H_ */

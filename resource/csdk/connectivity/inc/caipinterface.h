@@ -56,13 +56,14 @@ typedef enum
  * @param  data         [IN] Data received from remote OIC device.
  * @param  dataLength   [IN] Length of data in bytes.
  * @param  isSecured    [IN] Indicates the data is secure or not.
+ * @param  identity     [IN] Identity of the remote OIC device.
  *
  * @return NONE
  * @pre  Callback must be registered using CAIPSetPacketReceiveCallback()
  */
 typedef void (*CAIPPacketReceivedCallback)(const char *ipAddress, uint16_t port,
                                            const void *data, uint32_t dataLength,
-                                           bool isSecured);
+                                           bool isSecured, const CARemoteId_t *identity);
 
 /**
  * @brief  Callback to be notified when exception occures on multicast/unicast server.

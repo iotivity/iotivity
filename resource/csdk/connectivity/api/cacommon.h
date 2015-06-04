@@ -75,6 +75,11 @@ extern "C"
 #endif
 
 /**
+ *@brief Maximum length of the remoteEndpoint identity
+ */
+#define CA_MAX_ENDPOINT_IDENTITY_LEN   (32)
+
+/**
  * @brief option types - the highest option number 63
  */
 #define CA_OPTION_IF_MATCH 1
@@ -158,6 +163,15 @@ typedef union
     } IP;
 } CAAddress_t;
 
+/*
+ * @brief remoteEndpoint identity
+ */
+typedef struct
+{
+    uint16_t id_length;
+    unsigned char id[CA_MAX_ENDPOINT_IDENTITY_LEN];
+}CARemoteId_t;
+
 /**
  * @enum CAMessageType_t
  * @brief Message Type for Base source code
@@ -191,8 +205,9 @@ typedef struct
 
     CAURI_t resourceUri;                    /**< Resource URI information **/
     CAAddress_t addressInfo;                /**< Remote Endpoint address **/
-    CATransportType_t transportType;  /**< Transport Type of the endpoint**/
-    bool isSecured;                     /**< Secure connection**/
+    CATransportType_t transportType;  /**< Connectivity of the endpoint**/
+    bool isSecured;                         /**< Secure connection**/
+    CARemoteId_t identity;                  /**< Endpoint identity **/
 } CARemoteEndpoint_t;
 
 
@@ -252,7 +267,9 @@ typedef enum
     CA_CREATED = 201,                /**< Created */
     CA_DELETED = 202,                /**< Deleted */
     CA_BAD_REQ = 400,                /**< Bad Request */
+    CA_UNAUTHORIZED_REQ = 401,       /**< Unauthorized Request */
     CA_BAD_OPT = 402,                /**< Bad Option */
+    CA_FORBIDDEN_REQ = 403,          /**< Forbidden Request */
     CA_NOT_FOUND = 404,              /**< Not found */
     CA_INTERNAL_SERVER_ERROR = 500,  /**< Internal Server Error */
     CA_RETRANSMIT_TIMEOUT = 504      /**< Retransmit timeout */

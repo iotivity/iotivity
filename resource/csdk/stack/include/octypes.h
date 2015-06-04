@@ -202,23 +202,26 @@ typedef enum
 /**
  * Resource Properties.
  *
- * ::OC_ACTIVE       When this bit is set, the resource is initialized, otherwise the resource
- *                   is 'inactive'. 'inactive' signifies that the resource has been marked for
- *                   deletion or is already deleted.
- * ::OC_DISCOVERABLE When this bit is set, the resource is allowed to be discovered by clients.
- * ::OC_OBSERVABLE   When this bit is set, the resource is allowed to be observed by clients.
- * ::OC_SLOW         When this bit is set, the resource has been marked as 'slow'. 'slow' signifies
- *                   that responses from this resource can expect delays in processing its
- *                   requests from clients.
- * ::OC_SECURE       When this bit is set, the resource is a secure resource.
+ * ::OC_RES_PROP_NONE When none of the bits are set, the resource is non-discoverable &
+ *                    non-observable by the client.
+ * ::OC_ACTIVE        When this bit is set, the resource is initialized, otherwise the resource
+ *                    is 'inactive'. 'inactive' signifies that the resource has been marked for
+ *                    deletion or is already deleted.
+ * ::OC_DISCOVERABLE  When this bit is set, the resource is allowed to be discovered by clients.
+ * ::OC_OBSERVABLE    When this bit is set, the resource is allowed to be observed by clients.
+ * ::OC_SLOW          When this bit is set, the resource has been marked as 'slow'. 'slow'
+ *                    signifies that responses from this resource can expect delays in
+ *                    processing its requests from clients.
+ * ::OC_SECURE        When this bit is set, the resource is a secure resource.
  */
 typedef enum
 {
-    OC_ACTIVE       = (1 << 0),
-    OC_DISCOVERABLE = (1 << 1),
-    OC_OBSERVABLE   = (1 << 2),
-    OC_SLOW         = (1 << 3),
-    OC_SECURE       = (1 << 4)
+    OC_RES_PROP_NONE = (0),
+    OC_ACTIVE        = (1 << 0),
+    OC_DISCOVERABLE  = (1 << 1),
+    OC_OBSERVABLE    = (1 << 2),
+    OC_SLOW          = (1 << 3),
+    OC_SECURE        = (1 << 4)
 } OCResourceProperty;
 
 /**
@@ -319,6 +322,27 @@ typedef enum
     OC_OBSERVE_DEREGISTER = 1,
     OC_OBSERVE_NO_OPTION = 2
 } OCObserveAction;
+
+
+/**
+ * Persistent storage handlers. An app must provide OCPersistentStorage handler pointers when it
+ * calls OCRegisterPersistentStorageHandler.
+ */
+typedef struct {
+    /*
+     *  Persistent storage open handler points to default file path.
+     *  Application can point to appropriate SVR database path for its Iotivity Server.
+     */
+    FILE* (* open)(const char *path, const char *mode);
+    // Persistent storage read handler
+    size_t (* read)(void *ptr, size_t size, size_t nmemb, FILE *stream);
+    // Persistent storage write handler
+    size_t (* write)(const void *ptr, size_t size, size_t nmemb, FILE *stream);
+    // Persistent storage close handler
+    int (* close)(FILE *fp);
+    // Persistent storage unlink handler
+    int (* unlink)(const char *path);
+} OCPersistentStorage;
 
 typedef struct
 {

@@ -266,7 +266,7 @@ static void CAReceiveHandler(void *data)
 #ifdef __WITH_DTLS__
                     CAResult_t ret = CAAdapterNetDtlsDecrypt(srcIPAddress, srcPort,
                                                              (uint8_t *)recvBuffer, recvLen,
-                                                             DTLS_IP);
+                                                             CA_IPV4);
                     OIC_LOG_V(DEBUG, IP_SERVER_TAG,
                               "CAAdapterNetDtlsDecrypt returns [%d]", ret);
 #endif
@@ -279,7 +279,7 @@ static void CAReceiveHandler(void *data)
                     {
                         g_adapterEthServerContext->packetReceivedCallback(srcIPAddress, srcPort,
                                                                           recvBuffer, recvLen,
-                                                                          false);
+                                                                          false, NULL);
                     }
 
                     ca_mutex_unlock(g_mutexAdapterServerContext);

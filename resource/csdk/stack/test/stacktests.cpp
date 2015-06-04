@@ -713,6 +713,8 @@ TEST(StackResource, StackTestResourceDiscoverOneResourceBad)
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     OC_LOG(INFO, TAG, "Starting StackTestResourceDiscoverOneResourceBad test");
     InitStack(OC_SERVER);
+    uint8_t numResources = 0;
+    EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numResources));
 
     OCResourceHandle handle;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle,
@@ -726,10 +728,9 @@ TEST(StackResource, StackTestResourceDiscoverOneResourceBad)
 
     //EXPECT_EQ(OC_STACK_INVALID_URI, OCHandleServerRequest(&res, uri, query, req, rsp));
     EXPECT_EQ(OC_STACK_OK, OCDeleteResource(handle));
-    uint8_t numResources = 0;
-    uint8_t numExpectedResources = InitNumExpectedResources();
+    uint8_t numExpectedResources = 0;
 
-    EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numResources));
+    EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numExpectedResources));
     EXPECT_EQ(numExpectedResources, numResources);
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
@@ -1048,10 +1049,9 @@ TEST(StackBind, BindContainedResourceGood)
     InitStack(OC_SERVER);
 
     uint8_t numResources = 0;
-    uint8_t numExpectedResources = InitNumExpectedResources();
+    uint8_t numExpectedResources = 0;
 
-    EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numResources));
-    EXPECT_EQ(numExpectedResources, numResources);
+    EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numExpectedResources));
 
     OCResourceHandle containerHandle;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&containerHandle,
@@ -1192,12 +1192,11 @@ TEST(StackResourceAccess, GetResourceByIndex)
     InitStack(OC_SERVER);
 
     uint8_t numResources = 0;
-    uint8_t numExpectedResources = InitNumExpectedResources();
-    uint8_t resourceIndex = InitResourceIndex();
-
-    EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numResources));
-    EXPECT_EQ(numExpectedResources, numResources);
-
+    uint8_t numExpectedResources = 0;
+    uint8_t resourceIndex = 0;
+    uint8_t prevResources = 0;
+    EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numExpectedResources));
+    prevResources = numExpectedResources;
     OCResourceHandle containerHandle;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&containerHandle,
                                             "core.led",
@@ -1267,7 +1266,7 @@ TEST(StackResourceAccess, GetResourceByIndex)
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numResources));
     EXPECT_EQ(++numExpectedResources, numResources);
-
+    resourceIndex += prevResources;
     EXPECT_EQ(containerHandle, OCGetResourceHandle(resourceIndex));
     EXPECT_EQ(handle0, OCGetResourceHandle(++resourceIndex));
     EXPECT_EQ(handle1, OCGetResourceHandle(++resourceIndex));
@@ -1286,10 +1285,9 @@ TEST(StackResourceAccess, DeleteHeadResource)
     InitStack(OC_SERVER);
 
     uint8_t numResources = 0;
-    uint8_t numExpectedResources = InitNumExpectedResources();
+    uint8_t numExpectedResources = 0;
 
-    EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numResources));
-    EXPECT_EQ(numExpectedResources, numResources);
+    EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numExpectedResources));
 
     OCResourceHandle handle0;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle0,
@@ -1315,12 +1313,9 @@ TEST(StackResourceAccess, DeleteHeadResource2)
     InitStack(OC_SERVER);
 
     uint8_t numResources = 0;
-    uint8_t numExpectedResources = InitNumExpectedResources();
-    uint8_t resourceIndex = InitResourceIndex();
+    uint8_t numExpectedResources = 0;
 
-    EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numResources));
-    EXPECT_EQ(numExpectedResources, numResources);
-
+    EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numExpectedResources));
     OCResourceHandle handle0;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle0,
                                             "core.led",
@@ -1345,7 +1340,7 @@ TEST(StackResourceAccess, DeleteHeadResource2)
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numResources));
     EXPECT_EQ(--numExpectedResources, numResources);
 
-    EXPECT_EQ(handle1, OCGetResourceHandle(resourceIndex));
+    EXPECT_EQ(handle1, OCGetResourceHandle(numResources - 1));
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
@@ -1358,12 +1353,10 @@ TEST(StackResourceAccess, DeleteLastResource)
     InitStack(OC_SERVER);
 
     uint8_t numResources = 0;
-    uint8_t numExpectedResources = InitNumExpectedResources();
-    uint8_t resourceIndex = InitResourceIndex();
+    uint8_t numExpectedResources = 0;
 
-    EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numResources));
-    EXPECT_EQ(numExpectedResources, numResources);
-
+    EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numExpectedResources));
+ 
     OCResourceHandle handle0;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle0,
                                             "core.led",
@@ -1388,7 +1381,7 @@ TEST(StackResourceAccess, DeleteLastResource)
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numResources));
     EXPECT_EQ(--numExpectedResources, numResources);
 
-    EXPECT_EQ(handle0, OCGetResourceHandle(resourceIndex));
+    EXPECT_EQ(handle0, OCGetResourceHandle(numResources - 1));
 
     OCResourceHandle handle2;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle2,
@@ -1410,12 +1403,11 @@ TEST(StackResourceAccess, DeleteMiddleResource)
     InitStack(OC_SERVER);
 
     uint8_t numResources = 0;
-    uint8_t numExpectedResources = InitNumExpectedResources();
+    uint8_t numExpectedResources = 0;
     uint8_t resourceIndex = InitResourceIndex();
 
-    EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numResources));
-    EXPECT_EQ(numExpectedResources, numResources);
-
+    EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numExpectedResources));
+    resourceIndex = numExpectedResources;
     OCResourceHandle handle0;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle0,
                                             "core.led",

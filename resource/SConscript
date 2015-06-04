@@ -42,6 +42,9 @@ SConscript('c_common/SConscript')
 # Build connectivity
 SConscript('csdk/connectivity/SConscript')
 
+# Build libocsrm
+SConscript('csdk/security/SConscript')
+
 # Build liboctbstack
 SConscript('csdk/SConscript')
 

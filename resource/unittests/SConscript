@@ -34,6 +34,7 @@ unittests_env.PrependUnique(CPPPATH = [
 		'../csdk/security/include',
 		'../csdk/stack/include/internal',
 		'../csdk/connectivity/api',
+		'../csdk/connectivity/external/inc',
 		'../csdk/ocsocket/include',
 		'../csdk/ocrandom/include',
 		'../csdk/logger/include',

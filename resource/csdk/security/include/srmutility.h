@@ -1,6 +1,6 @@
 //******************************************************************
 //
-// Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
+// Copyright 2015 Intel Mobile Communications GmbH All Rights Reserved.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //
@@ -18,33 +18,39 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef OC_SECURITY_H
-#define OC_SECURITY_H
+#ifndef IOTVT_SRM_UTILITY_H
+#define IOTVT_SRM_UTILITY_H
 
 #include "ocstack.h"
-#include "ocsecurityconfig.h"
-#include <stdio.h>
+#include "uthash.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
 
 /**
- * Provides the Security Configuration data to OC stack.
+ * @def VERIFY_SUCCESS
+ * @brief Macro to verify success of operation.
+ * eg: VERIFY_SUCCESS(TAG, OC_STACK_OK == foo(), ERROR);
+ * @note Invoking function must define "exit:" label for goto functionality to work correctly.
  *
- * @param cfgData
- *     binary blob containing config data
- * @param len
- *     length of binary blob
- *
- * @retval OC_STACK_OK for Success, otherwise some error value
  */
-OCStackResult OCSecSetConfigData(const OCSecConfigData *cfgData,
-                size_t len);
+#define VERIFY_SUCCESS(tag, op, logLevel) { if (!(op)) \
+            {OC_LOG((logLevel), tag, PCF(#op " failed!!")); goto exit;} }
+
+/**
+ * @def VERIFY_NON_NULL
+ * @brief Macro to verify argument is not equal to NULL.
+ * eg: VERIFY_NON_NULL(TAG, ptrData, ERROR);
+ * @note Invoking function must define "exit:" label for goto functionality to work correctly.
+ *
+ */
+#define VERIFY_NON_NULL(tag, arg, logLevel) { if (NULL == (arg)) \
+            { OC_LOG((logLevel), tag, PCF(#arg " is NULL")); goto exit; } }
+
 
 #ifdef __cplusplus
 }
 #endif // __cplusplus
 
-#endif //OC_SECURITY_H
-
+#endif //IOTVT_SRM_UTILITY_H

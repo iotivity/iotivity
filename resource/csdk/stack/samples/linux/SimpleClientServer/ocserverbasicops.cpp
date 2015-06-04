@@ -57,7 +57,8 @@ char* constructJsonResponse (OCEntityHandlerRequest *ehRequest)
     }
 
     cJSON *format;
-    char *jsonResponse;
+    cJSON *putJson = NULL;
+    char *jsonResponse = NULL;
     LEDResource *currLEDResource = &LED;
 
     if (ehRequest->resource == gLedInstance[0].handle)
@@ -73,18 +74,37 @@ char* constructJsonResponse (OCEntityHandlerRequest *ehRequest)
 
     if(OC_REST_PUT == ehRequest->method)
     {
-        cJSON *putJson = cJSON_Parse((char *)ehRequest->reqJSONPayload);
-
-        if(!putJson)
+        cJSON* jsonObj = NULL;
+        putJson = cJSON_Parse(ehRequest->reqJSONPayload);
+        if(putJson)
         {
-            OC_LOG (ERROR, TAG, "putJson object not created properly");
-            cJSON_Delete(json);
-            return NULL;
+            jsonObj = cJSON_GetObjectItem(putJson,"oic");
+            if (jsonObj)
+            {
+                jsonObj = cJSON_GetArrayItem(jsonObj, 0);
+                if (jsonObj)
+                {
+                    jsonObj = cJSON_GetObjectItem(jsonObj, "rep");
+                }
+            }
         }
-        currLEDResource->state = ( !strcmp(cJSON_GetObjectItem(putJson,"state")->valuestring ,
-                "on") ? true:false);
-        currLEDResource->power = cJSON_GetObjectItem(putJson,"power")->valuedouble;
-        cJSON_Delete(putJson);
+        if (NULL == jsonObj)
+        {
+            OC_LOG_V(ERROR, TAG, "Failed to parse JSON: %s", ehRequest->reqJSONPayload);
+            goto exit;
+        }
+
+        cJSON* prop = cJSON_GetObjectItem(jsonObj,"power");
+        if (prop)
+        {
+            currLEDResource->power =prop->valueint;
+        }
+
+        prop = cJSON_GetObjectItem(jsonObj,"state");
+        if (prop)
+        {
+            currLEDResource->state = prop->valueint;
+        }
     }
 
     cJSON_AddStringToObject(json,"href",gResourceUri);
@@ -93,8 +113,7 @@ char* constructJsonResponse (OCEntityHandlerRequest *ehRequest)
     if(!format)
     {
         OC_LOG (ERROR, TAG, "format object not created properly");
-        cJSON_Delete(json);
-        return NULL;
+        goto exit;
     }
 
     cJSON_AddItemToObject(json, "rep", format);
@@ -102,6 +121,9 @@ char* constructJsonResponse (OCEntityHandlerRequest *ehRequest)
     cJSON_AddNumberToObject(format, "power", currLEDResource->power);
 
     jsonResponse = cJSON_Print(json);
+
+exit:
+    cJSON_Delete(putJson);
     cJSON_Delete(json);
     return jsonResponse;
 }

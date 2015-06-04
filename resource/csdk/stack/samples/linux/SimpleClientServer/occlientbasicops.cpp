@@ -39,7 +39,7 @@ static int UNICAST_DISCOVERY = 0;
 static int TEST_CASE = 0;
 
 static const char UNICAST_DISCOVERY_QUERY[] = "coap://%s:6298/oic/res";
-static std::string putPayload = "{\"state\":\"off\",\"power\":10}";
+static std::string putPayload = "{\"oic\":[{\"rep\":{\"power\":15,\"state\":true}}]}";
 
 //The following variable determines the interface protocol (IPv4, IPv6, etc)
 //to be used for sending unicast messages. Default set to IPv4.
