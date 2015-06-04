@@ -196,8 +196,7 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data, u
         return;
     }
 
-    char uri[CA_MAX_URI_LENGTH] = { 0, };
-    uint32_t bufLen = sizeof(uri);
+    char uri[CA_MAX_URI_LENGTH] = { };
 
     if (CA_GET == code || CA_POST == code || CA_PUT == code || CA_DELETE == code)
     {
@@ -209,7 +208,7 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data, u
             return;
         }
 
-        CAResult_t res = CAGetRequestInfoFromPDU(pdu, ReqInfo, uri, bufLen);
+        CAResult_t res = CAGetRequestInfoFromPDU(pdu, ReqInfo, uri, sizeof(uri));
         if (CA_STATUS_OK != res)
         {
             OIC_LOG_V(ERROR, TAG, "CAGetRequestInfoFromPDU failed : %d", res);
@@ -238,7 +237,7 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data, u
         OIC_LOG_BUFFER(DEBUG, TAG, (const uint8_t *) ReqInfo->info.token, CA_MAX_TOKEN_LEN);
         if (NULL != endpoint)
         {
-            endpoint->resourceUri = (char *) OICMalloc(bufLen + 1);
+            endpoint->resourceUri = (char *) OICMalloc(sizeof(uri) + 1);
             if (NULL == endpoint->resourceUri)
             {
                 OIC_LOG(ERROR, TAG, "CAReceivedPacketCallback, Memory allocation failed!");
@@ -246,8 +245,8 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data, u
                 coap_delete_pdu(pdu);
                 return;
             }
-            memcpy(endpoint->resourceUri, uri, bufLen);
-            endpoint->resourceUri[bufLen] = '\0';
+            memcpy(endpoint->resourceUri, uri, sizeof(uri));
+            endpoint->resourceUri[sizeof(uri)] = '\0';
             OIC_LOG_V(DEBUG, TAG, "URI : %s", endpoint->resourceUri);
         }
 
@@ -271,7 +270,7 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data, u
             return;
         }
 
-        CAResult_t res = CAGetResponseInfoFromPDU(pdu, ResInfo, uri, bufLen);
+        CAResult_t res = CAGetResponseInfoFromPDU(pdu, ResInfo, uri, sizeof(uri));
         if (CA_STATUS_OK != res)
         {
             OIC_LOG_V(ERROR, TAG, "CAGetResponseInfoFromPDU failed : %d", res);
@@ -298,7 +297,7 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data, u
 
         if (NULL != endpoint)
         {
-            endpoint->resourceUri = (char *) OICMalloc(bufLen + 1);
+            endpoint->resourceUri = (char *) OICMalloc(sizeof(uri) + 1);
             if (NULL == endpoint->resourceUri)
             {
                 OIC_LOG(ERROR, TAG, "CAReceivedPacketCallback, Memory allocation failed !");
@@ -306,8 +305,8 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data, u
                 coap_delete_pdu(pdu);
                 return;
             }
-            memcpy(endpoint->resourceUri, uri, bufLen);
-            endpoint->resourceUri[bufLen] = '\0';
+            memcpy(endpoint->resourceUri, uri, sizeof(uri));
+            endpoint->resourceUri[sizeof(uri)] = '\0';
             OIC_LOG_V(DEBUG, TAG, "URI : %s", endpoint->resourceUri);
         }
 

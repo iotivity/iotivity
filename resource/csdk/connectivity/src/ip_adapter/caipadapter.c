@@ -34,6 +34,7 @@
 #include "uarraylist.h"
 #include "logger.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 
 /**
  * @def IP_ADAPTER_TAG
@@ -632,8 +633,9 @@ CAResult_t CAGetIPInterfaceInformation(CALocalConnectivity_t **info, uint32_t *s
         conInfo[count].type = CA_IPV4;
         conInfo[count].isSecured = false;
         conInfo[count].addressInfo.IP.port = CAGetServerPortNum(netInfo->ipAddress, false);
-        strncpy(conInfo[count].addressInfo.IP.ipAddress, netInfo->ipAddress,
-                strlen(netInfo->ipAddress));
+        OICStrcpy(conInfo[count].addressInfo.IP.ipAddress,
+                  sizeof(conInfo[count].addressInfo.IP.ipAddress),
+                  netInfo->ipAddress);
 
 #ifdef __WITH_DTLS__
         // copy secure unicast server information
@@ -642,8 +644,9 @@ CAResult_t CAGetIPInterfaceInformation(CALocalConnectivity_t **info, uint32_t *s
             conInfo[count].type = CA_IPV4;
             conInfo[count].isSecured = true;
             conInfo[count].addressInfo.IP.port = CAGetServerPortNum(netInfo->ipAddress, true);
-            strncpy(conInfo[count].addressInfo.IP.ipAddress, netInfo->ipAddress,
-                    strlen(netInfo->ipAddress));
+            OICStrcpy(conInfo[count].addressInfo.IP.ipAddress,
+                      sizeof(conInfo[count].addressInfo.IP.ipAddress),
+                      netInfo->ipAddress);
         }
 #endif
         count ++;

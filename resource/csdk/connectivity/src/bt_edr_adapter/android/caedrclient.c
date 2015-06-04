@@ -27,6 +27,7 @@
 #include "caedrclient.h"
 #include "logger.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 #include "cathreadpool.h" /* for thread pool */
 #include "camutex.h"
 #include "uarraylist.h"
@@ -575,7 +576,7 @@ void CAEDRGetLocalAddress(char **address)
     if (jni_address)
     {
         const char* localAddress = (*env)->GetStringUTFChars(env, jni_address, NULL);
-        *address = (char*) OICMalloc(strlen(localAddress) + 1);
+        *address = OICStrdup(localAddress);
         if (*address == NULL)
         {
             if (isAttached)
@@ -584,7 +585,7 @@ void CAEDRGetLocalAddress(char **address)
             }
             return;
         }
-        memcpy(*address, localAddress, strlen(localAddress));
+
         (*env)->ReleaseStringUTFChars(env, jni_address, localAddress);
     }
 

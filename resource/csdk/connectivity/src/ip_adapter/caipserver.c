@@ -36,6 +36,7 @@
 #endif
 #include "camutex.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 
 /**
  * @def IP_SERVER_TAG
@@ -160,7 +161,7 @@ static void CAReceiveHandler(void *data)
                 return;
             }
 
-            memcpy(newInfo, info, sizeof(CAServerInfo_t));
+            *newInfo = *info;
 
             CAResult_t result = u_arraylist_add(tempServerInfoList, (void *) newInfo);
             if (CA_STATUS_OK != result)
@@ -623,19 +624,16 @@ CAResult_t CAIPStartUnicastServer(const char *localAddress, uint16_t *port,
         }
         if (netMask)
         {
-            strncpy(info->subNetMask, netMask, sizeof(info->subNetMask) - 1);
-            info->subNetMask[sizeof(info->subNetMask)-1] = '\0';
+            OICStrcpy(info->subNetMask, sizeof(info->subNetMask), netMask);
             OICFree(netMask);
         }
-        strncpy(info->ipAddress, localAddress, sizeof(info->ipAddress) - 1);
-        info->ipAddress[sizeof(info->ipAddress) - 1] = '\0';
+        OICStrcpy(info->ipAddress, sizeof(info->ipAddress), localAddress);
         info->port = *port;
         info->socketFd = unicastServerFd;
         info->isSecured = isSecured;
         info->isServerStarted = true;
         info->isMulticastServer = false;
-        strncpy(info->ifAddr, localAddress, sizeof(info->ifAddr) - 1);
-        info->ifAddr[sizeof(info->ifAddr) - 1] = '\0';
+        OICStrcpy(info->ifAddr, sizeof(info->ifAddr), localAddress);
 
         CAResult_t res = CAAddServerInfo(g_serverInfoList, info);
         if (CA_STATUS_OK != res)
@@ -725,20 +723,17 @@ CAResult_t CAIPStartMulticastServer(const char *localAddress, const char *multic
         }
         if (netMask)
         {
-            strncpy(info->subNetMask, netMask, sizeof(info->subNetMask) - 1);
-            info->subNetMask[sizeof(info->subNetMask) -1] = '\0';
+            OICStrcpy(info->subNetMask, sizeof(info->subNetMask), netMask);
             OICFree(netMask);
         }
 
-        strncpy(info->ipAddress, multicastAddress, sizeof(info->ipAddress) - 1);
-        info->ipAddress[sizeof(info->ipAddress) -1] = '\0';
+        OICStrcpy(info->ipAddress, sizeof(info->ipAddress), multicastAddress);
         info->port = multicastPort;
         info->socketFd = mulicastServerFd;
         info->isSecured = false;
         info->isServerStarted = true;
         info->isMulticastServer = true;
-        strncpy(info->ifAddr, localAddress, sizeof(info->ifAddr)-1);
-        info->ifAddr[sizeof(info->ifAddr) -1] = '\0';
+        OICStrcpy(info->ifAddr, sizeof(info->ifAddr), localAddress);
 
         ret = CAAddServerInfo(g_serverInfoList, info);
 
@@ -932,7 +927,7 @@ CAResult_t CAGetIPServerInfoList(u_arraylist_t **serverInfoList)
             return CA_MEMORY_ALLOC_FAILED;
         }
 
-        memcpy(newNetinfo, info, sizeof(*info));
+        *newNetinfo = *info;
 
         CAResult_t result = u_arraylist_add(*serverInfoList, (void *) newNetinfo);
         if (CA_STATUS_OK != result)

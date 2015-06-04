@@ -21,6 +21,7 @@
 #include <string.h>
 
 #include "oic_malloc.h"
+#include "oic_string.h"
 #include "caremotehandler.h"
 #include "logger.h"
 
@@ -41,14 +42,12 @@ CARemoteEndpoint_t *CACloneRemoteEndpoint(const CARemoteEndpoint_t *rep)
         OIC_LOG(ERROR, TAG, "CACloneRemoteEndpoint Out of memory");
         return NULL;
     }
-    memcpy(clone, rep, sizeof(CARemoteEndpoint_t));
+    *clone = *rep;
 
     if (NULL != rep->resourceUri)
     {
         // allocate reference uri field
-        size_t len = strlen(rep->resourceUri);
-
-        char *temp = (char *) OICCalloc(len + 1, sizeof(char));
+        char *temp = OICStrdup(rep->resourceUri);
         if (NULL == temp)
         {
             OIC_LOG(ERROR, TAG, "CACloneRemoteEndpoint Out of memory");
@@ -57,8 +56,6 @@ CARemoteEndpoint_t *CACloneRemoteEndpoint(const CARemoteEndpoint_t *rep)
 
             return NULL;
         }
-
-        strncpy(temp, rep->resourceUri, len);
 
         // save the uri
         clone->resourceUri = temp;
@@ -112,13 +109,13 @@ static int32_t getCAAddress(const char *pAddress, CAAddress_t *outAddress)
     {
         if(ipLen && ipLen < sizeof(outAddress->IP.ipAddress))
         {
-            strncpy(outAddress->IP.ipAddress, pAddress, ipLen);
-            outAddress->IP.ipAddress[ipLen] = '\0';
+            OICStrcpyPartial(outAddress->IP.ipAddress, sizeof(outAddress->IP.ipAddress),
+                    pAddress, ipLen);
         }
         else if (!ipLen && len < sizeof(outAddress->IP.ipAddress))
         {
-            strncpy(outAddress->IP.ipAddress, pAddress, len);
-            outAddress->IP.ipAddress[len] = '\0';
+            OICStrcpy(outAddress->IP.ipAddress, sizeof(outAddress->IP.ipAddress),
+                    pAddress);
         }
         else
         {
@@ -136,7 +133,8 @@ static int32_t getCAAddress(const char *pAddress, CAAddress_t *outAddress)
     }
     else
     {
-        strncpy(outAddress->BT.btMacAddress, pAddress, CA_MACADDR_SIZE - 1);
+        OICStrcpy(outAddress->BT.btMacAddress, sizeof(outAddress->BT.btMacAddress),
+                    pAddress);
 
         OIC_LOG_V(DEBUG, TAG, "mac address : %s", outAddress->BT.btMacAddress);
     }
@@ -269,9 +267,7 @@ CARemoteEndpoint_t *CACreateRemoteEndpointInternal(const CAURI_t resourceUri,
     }
 
     // allocate reference uri field
-    size_t len = strlen(resourceUri);
-
-    char *temp = (char *) OICMalloc(sizeof(char) * (len + 1));
+    char *temp = OICStrdup(resourceUri);
     if (NULL == temp)
     {
         OIC_LOG(ERROR, TAG, "CACreateRemoteEndpointInternal Out of memory");
@@ -280,14 +276,12 @@ CARemoteEndpoint_t *CACreateRemoteEndpointInternal(const CAURI_t resourceUri,
 
         return NULL;
     }
-    strncpy(temp, resourceUri, len);
-    temp[len] = '\0';
 
     // save the uri
     rep->resourceUri = temp;
 
     // save the addressInfo
-    memcpy(&(rep->addressInfo), &addr, sizeof(CAAddress_t));
+    rep->addressInfo = addr;
 
     // save the type
     rep->transportType = type;
@@ -311,7 +305,7 @@ CARequestInfo_t *CACloneRequestInfo(const CARequestInfo_t *rep)
         return NULL;
     }
 
-    memcpy(clone, rep, sizeof(CARequestInfo_t));
+    *clone = *rep;
 
     if (rep->info.token)
     {
@@ -363,9 +357,7 @@ CARequestInfo_t *CACloneRequestInfo(const CARequestInfo_t *rep)
     if (NULL != rep->info.payload)
     {
         // allocate payload field
-        size_t len = strlen(rep->info.payload);
-
-        char *temp = (char *) OICMalloc(sizeof(char) * (len + 1));
+        char *temp = OICStrdup(rep->info.payload);
         if (NULL == temp)
         {
             OIC_LOG(ERROR, TAG, "CACloneRequestInfo Out of memory");
@@ -374,8 +366,6 @@ CARequestInfo_t *CACloneRequestInfo(const CARequestInfo_t *rep)
 
             return NULL;
         }
-        strncpy(temp, rep->info.payload, len);
-        temp[len] = '\0';
 
         // save the payload
         clone->info.payload = temp;
@@ -418,7 +408,7 @@ CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *rep)
         OIC_LOG(ERROR, TAG, "CACloneResponseInfo Out of memory");
         return NULL;
     }
-    memcpy(clone, rep, sizeof(CAResponseInfo_t));
+    *clone = *rep;
 
     if (rep->info.token)
     {
@@ -471,9 +461,7 @@ CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *rep)
     if (NULL != rep->info.payload)
     {
         // allocate payload field
-        int32_t len = strlen(rep->info.payload);
-
-        char *temp = (char *) OICCalloc(len + 1, sizeof(char));
+        char *temp = OICStrdup(rep->info.payload);
         if (NULL == temp)
         {
             OIC_LOG(ERROR, TAG, "CACloneResponseInfo Out of memory");
@@ -482,7 +470,6 @@ CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *rep)
 
             return NULL;
         }
-        strncpy(temp, rep->info.payload, len);
 
         // save the payload
         clone->info.payload = temp;

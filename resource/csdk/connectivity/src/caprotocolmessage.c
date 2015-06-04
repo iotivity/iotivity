@@ -49,6 +49,7 @@
 #include "caprotocolmessage.h"
 #include "logger.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 
 // ARM GCC compiler doesnt define srandom function.
 #if defined(ARDUINO) && !defined(ARDUINO_ARCH_SAM)
@@ -163,8 +164,8 @@ coap_pdu_t *CAGeneratePDU(const char *uri, uint32_t code, const CAInfo_t info)
                 OIC_LOG(ERROR, TAG, "out of memory");
                 return NULL;
             }
-            strcat(coapUri, COAP_URI_HEADER);
-            strcat(coapUri, uri);
+            OICStrcat(coapUri, uriLength, COAP_URI_HEADER);
+            OICStrcat(coapUri, uriLength, uri);
 
             // parsing options in URI
             CAResult_t res = CAParseURI(coapUri, &optlist);
@@ -735,7 +736,6 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *
     if (buflen >= length)
     {
         memcpy(outUri, optionResult, length);
-        outUri[length] = '\0';
 #ifdef ARDUINO
         OIC_LOG_V(DEBUG, TAG, "made URL:%s\n", optionResult);
 #else

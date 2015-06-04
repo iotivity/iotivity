@@ -261,19 +261,6 @@ OCStackResult OCChangeResourceProperty(OCResourceProperty * inputProperty,
         OCResourceProperty resourceProperties, uint8_t enable);
 #endif
 
-/**
- * Clones a string IFF its pointer value is not NULL.
- *
- * Note: The caller to this function is responsible for calling @ref OCFree
- * for the destination parameter.
- *
- * @param dest The destination string for the string value to be cloned.
- *
- * @param src The source for the string value to be to cloned.
- */
-OCStackResult CloneStringIfNonNull(char **dest, const char *src);
-
-
 const char *convertTriggerEnumToString(OCPresenceTrigger trigger);
 
 OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr);

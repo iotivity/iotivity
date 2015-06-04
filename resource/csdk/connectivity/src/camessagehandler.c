@@ -37,6 +37,7 @@
 #include "caqueueingthread.h"
 #include "camutex.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 #include "canetworkconfigurator.h"
 
 #define TAG PCF("CA")
@@ -344,8 +345,7 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data, u
         return;
     }
 
-    char uri[CA_MAX_URI_LENGTH] = { 0, };
-    uint32_t bufLen = sizeof(uri);
+    char uri[CA_MAX_URI_LENGTH] = { };
 
     if (CA_GET == code || CA_POST == code || CA_PUT == code || CA_DELETE == code)
     {
@@ -358,7 +358,7 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data, u
             return;
         }
 
-        CAResult_t res = CAGetRequestInfoFromPDU(pdu, ReqInfo, uri, bufLen);
+        CAResult_t res = CAGetRequestInfoFromPDU(pdu, ReqInfo, uri, sizeof(uri));
         if (CA_STATUS_OK != res)
         {
             OIC_LOG_V(ERROR, TAG, "CAGetRequestInfoFromPDU failed : %d", res);
@@ -397,7 +397,7 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data, u
         OIC_LOG_V(DEBUG, TAG, "Request- msgID : %d", ReqInfo->info.messageId);
         if (NULL != endpoint)
         {
-            endpoint->resourceUri = (char *) OICMalloc(bufLen + 1);
+            endpoint->resourceUri = (char *) OICMalloc(sizeof(uri) + 1);
             if (NULL == endpoint->resourceUri)
             {
                 OIC_LOG(ERROR, TAG, "CAReceivedPacketCallback, Memory allocation failed!");
@@ -406,8 +406,8 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data, u
                 CAAdapterFreeRemoteEndpoint(endpoint);
                 return;
             }
-            memcpy(endpoint->resourceUri, uri, bufLen);
-            endpoint->resourceUri[bufLen] = '\0';
+            memcpy(endpoint->resourceUri, uri, sizeof(uri));
+            endpoint->resourceUri[sizeof(uri)] = '\0';
             OIC_LOG_V(DEBUG, TAG, "URI : %s", endpoint->resourceUri);
         }
         // store the data at queue.
@@ -439,7 +439,7 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data, u
             return;
         }
 
-        CAResult_t res = CAGetResponseInfoFromPDU(pdu, ResInfo, uri, bufLen);
+        CAResult_t res = CAGetResponseInfoFromPDU(pdu, ResInfo, uri, sizeof(uri));
         if (CA_STATUS_OK != res)
         {
             OIC_LOG_V(ERROR, TAG, "CAGetResponseInfoFromPDU failed : %d", res);
@@ -470,7 +470,7 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data, u
 
         if (NULL != endpoint)
         {
-            endpoint->resourceUri = (char *) OICMalloc(bufLen + 1);
+            endpoint->resourceUri = (char *) OICMalloc(sizeof(uri) + 1);
             if (NULL == endpoint->resourceUri)
             {
                 OIC_LOG(ERROR, TAG, "CAReceivedPacketCallback, Memory allocation failed !");
@@ -479,8 +479,8 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data, u
                 CAAdapterFreeRemoteEndpoint(endpoint);
                 return;
             }
-            memcpy(endpoint->resourceUri, uri, bufLen);
-            endpoint->resourceUri[bufLen] = '\0';
+            memcpy(endpoint->resourceUri, uri, sizeof(uri));
+            endpoint->resourceUri[sizeof(uri)] = '\0';
             OIC_LOG_V(DEBUG, TAG, "URI : %s", endpoint->resourceUri);
         }
 
@@ -1052,9 +1052,7 @@ void CAErrorHandler(const CARemoteEndpoint_t *remoteEndpoint, const void *data,
 
     if(NULL == rep->resourceUri)
     {
-        uint32_t bufLen = sizeof(uri);
-
-        CAURI_t resourceUri = (CAURI_t) OICMalloc(bufLen + 1);
+        CAURI_t resourceUri = OICStrdup(uri);
         if (NULL == resourceUri)
         {
             OIC_LOG(ERROR, TAG, "CAErrorHandler, Memory allocation failed!");
@@ -1063,8 +1061,6 @@ void CAErrorHandler(const CARemoteEndpoint_t *remoteEndpoint, const void *data,
             return;
         }
 
-        memcpy(resourceUri, uri, bufLen);
-        resourceUri[bufLen] = '\0';
         OIC_LOG_V(DEBUG, TAG, "URI : %s", resourceUri);
         rep->resourceUri = resourceUri;
     }

@@ -40,7 +40,7 @@
 
 #define CA_TRANSPORT_TYPE_NUM   4
 
-static CAConnectivityHandler_t g_adapterHandler[CA_TRANSPORT_TYPE_NUM];
+static CAConnectivityHandler_t g_adapterHandler[CA_TRANSPORT_TYPE_NUM] = {};
 
 static CANetworkPacketReceivedCallback g_networkPacketReceivedCallback = NULL;
 
@@ -93,7 +93,7 @@ static void CARegisterCallback(CAConnectivityHandler_t handler, CATransportType_
         return;
     }
 
-    memcpy(&g_adapterHandler[index], &handler, sizeof(CAConnectivityHandler_t));
+    g_adapterHandler[index] = handler;
 
     OIC_LOG_V(DEBUG, TAG, "%d type adapter, register complete!", cType);
 }

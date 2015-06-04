@@ -29,6 +29,7 @@
 #include "caqueueingthread.h"
 #include "camsgparser.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 
 /**
  * @var CALEADAPTER_TAG
@@ -564,12 +565,10 @@ CAResult_t CAGetLEInterfaceInformation(CALocalConnectivity_t **info, uint32_t *s
         return CA_STATUS_FAILED;
     }
 
-    strncpy((*info)->addressInfo.BT.btMacAddress, local_address,
-            sizeof((*info)->addressInfo.BT.btMacAddress) - 1);
-    (*info)->addressInfo.BT.btMacAddress[sizeof((*info)->addressInfo.BT.btMacAddress)-1] = '\0';
+    OICStrcpy((*info)->addressInfo.BT.btMacAddress, sizeof ((*info)->addressInfo.BT.btMacAddress),
+            local_address);
     ca_mutex_lock(g_bleLocalAddressMutex);
-    strncpy(g_localBLEAddress, local_address, sizeof(g_localBLEAddress) - 1);
-    g_localBLEAddress[sizeof(g_localBLEAddress)-1] = '\0';
+    OICStrcpy(g_localBLEAddress, sizeof(g_localBLEAddress), local_address);
     ca_mutex_unlock(g_bleLocalAddressMutex);
 
     (*info)->type = CA_LE;
@@ -617,7 +616,9 @@ void CALEDeviceStateChangedCb( CAAdapterState_t adapter_state)
     CALocalConnectivity_t localEndpoint = {};
 
     ca_mutex_lock(g_bleLocalAddressMutex);
-    strncpy(localEndpoint.addressInfo.BT.btMacAddress, g_localBLEAddress, strlen(g_localBLEAddress));
+    OICStrcpy(localEndpoint.addressInfo.BT.btMacAddress,
+            sizeof(localEndpoint.addressInfo.BT.btMacAddress),
+            g_localBLEAddress);
     ca_mutex_unlock(g_bleLocalAddressMutex);
 
     // Start a GattServer/Client if gLeServerStatus is SET

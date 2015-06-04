@@ -190,8 +190,7 @@ CAResult_t CARetransmissionInitialize(CARetransmission_t *context,
 
     memset(context, 0, sizeof(CARetransmission_t));
 
-    CARetransmissionConfig_t cfg;
-    memset(&cfg, 0, sizeof(CARetransmissionConfig_t));
+    CARetransmissionConfig_t cfg = {};
 
     if (NULL == config)
     {

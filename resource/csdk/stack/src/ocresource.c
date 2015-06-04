@@ -31,6 +31,7 @@
 #include "ocobserve.h"
 #include "occollection.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 #include "logger.h"
 #include "cJSON.h"
 
@@ -429,7 +430,7 @@ BuildVirtualResourceResponse(const OCResource *resourcePtr, uint8_t filterOn,
     jsonLen = strlen(jsonStr);
     if (jsonLen < *remaining)
     {
-        strcpy(out, jsonStr);
+        OICStrcpy(out, *remaining, jsonStr);
         *remaining = *remaining - jsonLen;
     }
     else
@@ -463,7 +464,7 @@ OCStackResult BuildVirtualResourceResponseForDevice(uint8_t filterOn, char *filt
 
         if (jsonLen < *remaining)
         {
-            strncpy(out, jsonStr, (jsonLen + 1));
+            OICStrcpy(out, *remaining, jsonStr);
             *remaining = *remaining - jsonLen;
             ret = OC_STACK_OK;
         }
@@ -494,7 +495,7 @@ OCStackResult BuildVirtualResourceResponseForPlatform(char *out, uint16_t *remai
 
         if (jsonLen < *remaining)
         {
-            strncpy(out, jsonStr, (jsonLen + 1));
+            OICStrcpy(out, *remaining, jsonStr);
             *remaining = *remaining - jsonLen;
             ret = OC_STACK_OK;
         }
@@ -1106,45 +1107,35 @@ void DeletePlatformInfo()
 
 static OCStackResult DeepCopyPlatFormInfo(OCPlatformInfo info)
 {
-    OCStackResult ret = OC_STACK_OK;
-    ret = CloneStringIfNonNull(&(savedPlatformInfo.platformID), info.platformID);
-    VERIFY_SUCCESS(ret, OC_STACK_OK);
+    savedPlatformInfo.platformID = OICStrdup(info.platformID);
+    savedPlatformInfo.manufacturerName = OICStrdup(info.manufacturerName);
+    savedPlatformInfo.manufacturerUrl = OICStrdup(info.manufacturerUrl);
+    savedPlatformInfo.modelNumber = OICStrdup(info.modelNumber);
+    savedPlatformInfo.dateOfManufacture = OICStrdup(info.dateOfManufacture);
+    savedPlatformInfo.platformVersion = OICStrdup(info.platformVersion);
+    savedPlatformInfo.operatingSystemVersion = OICStrdup(info.operatingSystemVersion);
+    savedPlatformInfo.hardwareVersion = OICStrdup(info.hardwareVersion);
+    savedPlatformInfo.firmwareVersion = OICStrdup(info.firmwareVersion);
+    savedPlatformInfo.supportUrl = OICStrdup(info.supportUrl);
+    savedPlatformInfo.systemTime = OICStrdup(info.systemTime);
 
-    ret = CloneStringIfNonNull(&(savedPlatformInfo.manufacturerName), info.manufacturerName);
-    VERIFY_SUCCESS(ret, OC_STACK_OK);
-
-    ret = CloneStringIfNonNull(&(savedPlatformInfo.manufacturerUrl), info.manufacturerUrl);
-    VERIFY_SUCCESS(ret, OC_STACK_OK);
-
-    ret = CloneStringIfNonNull(&(savedPlatformInfo.modelNumber), info.modelNumber);
-    VERIFY_SUCCESS(ret, OC_STACK_OK);
-
-    ret = CloneStringIfNonNull(&(savedPlatformInfo.dateOfManufacture), info.dateOfManufacture);
-    VERIFY_SUCCESS(ret, OC_STACK_OK);
-
-    ret = CloneStringIfNonNull(&(savedPlatformInfo.platformVersion), info.platformVersion);
-    VERIFY_SUCCESS(ret, OC_STACK_OK);
-
-    ret = CloneStringIfNonNull(&(savedPlatformInfo.operatingSystemVersion), info.operatingSystemVersion);
-    VERIFY_SUCCESS(ret, OC_STACK_OK);
-
-    ret = CloneStringIfNonNull(&(savedPlatformInfo.hardwareVersion), info.hardwareVersion);
-    VERIFY_SUCCESS(ret, OC_STACK_OK);
-
-    ret = CloneStringIfNonNull(&(savedPlatformInfo.firmwareVersion), info.firmwareVersion);
-    VERIFY_SUCCESS(ret, OC_STACK_OK);
-
-    ret = CloneStringIfNonNull(&(savedPlatformInfo.supportUrl), info.supportUrl);
-    VERIFY_SUCCESS(ret, OC_STACK_OK);
-
-    ret = CloneStringIfNonNull(&(savedPlatformInfo.systemTime), info.systemTime);
-    VERIFY_SUCCESS(ret, OC_STACK_OK);
+    if ((!savedPlatformInfo.platformID && info.platformID)||
+        (!savedPlatformInfo.manufacturerName && info.manufacturerName)||
+        (!savedPlatformInfo.manufacturerUrl && info.manufacturerUrl)||
+        (!savedPlatformInfo.modelNumber && info.modelNumber)||
+        (!savedPlatformInfo.dateOfManufacture && info.dateOfManufacture)||
+        (!savedPlatformInfo.platformVersion && info.platformVersion)||
+        (!savedPlatformInfo.operatingSystemVersion && info.operatingSystemVersion)||
+        (!savedPlatformInfo.hardwareVersion && info.hardwareVersion)||
+        (!savedPlatformInfo.firmwareVersion && info.firmwareVersion)||
+        (!savedPlatformInfo.supportUrl && info.supportUrl)||
+        (!savedPlatformInfo.systemTime && info.systemTime))
+    {
+        DeletePlatformInfo();
+        return OC_STACK_INVALID_PARAM;
+    }
 
     return OC_STACK_OK;
-
-    exit:
-        DeletePlatformInfo();
-        return ret;
 
 }
 
@@ -1176,16 +1167,15 @@ void DeleteDeviceInfo()
 
 static OCStackResult DeepCopyDeviceInfo(OCDeviceInfo info)
 {
-    OCStackResult ret = OC_STACK_OK;
+    savedDeviceInfo.deviceName = OICStrdup(info.deviceName);
 
-    ret = CloneStringIfNonNull(&(savedDeviceInfo.deviceName), info.deviceName);
-    VERIFY_SUCCESS(ret, OC_STACK_OK);
+    if(!savedDeviceInfo.deviceName && info.deviceName)
+    {
+        DeleteDeviceInfo();
+        return OC_STACK_NO_MEMORY;
+    }
 
     return OC_STACK_OK;
-
-    exit:
-        DeleteDeviceInfo();
-        return ret;
 }
 
 OCStackResult SaveDeviceInfo(OCDeviceInfo info)

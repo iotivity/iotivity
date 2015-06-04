@@ -40,6 +40,7 @@
 #include "ocobserve.h"
 #include "ocrandom.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 #include "ocserverrequest.h"
 #include "secureresourcemanager.h"
 #include "cacommon.h"
@@ -451,33 +452,6 @@ uint32_t GetTicks(uint32_t afterMilliSeconds)
         return UINT32_MAX;
     }
 }
-/**
- * Clones a string IFF its pointer value is not NULL.
- *
- * Note: The caller to this function is responsible for calling @ref OICFree
- * for the destination parameter.
- *
- * @param dest The destination string for the string value to be cloned.
- *
- * @param src The source for the string value to be to cloned.
- */
-OCStackResult CloneStringIfNonNull(char **dest, const char *src)
-{
-    if (src)
-    {
-        *dest = (char*) OICMalloc(strlen(src) + 1);
-        if (!*dest)
-        {
-            return OC_STACK_NO_MEMORY;
-        }
-        strcpy(*dest, src);
-    }
-    else
-    {
-        *dest = NULL;
-    }
-    return OC_STACK_OK;
-}
 
 OCStackResult OCBuildIPv4Address(uint8_t a, uint8_t b, uint8_t c, uint8_t d,
         uint16_t port, OCDevAddr *ipAddr)
@@ -726,14 +700,12 @@ OCStackResult UpdateResponseAddr(OCDevAddr *address, const CARemoteEndpoint_t* e
     OCStackResult ret = OC_STACK_ERROR;
     char * tok = NULL;
     char * savePtr = NULL;
-    char * cpAddress = (char *) OICMalloc(strlen(endPoint->addressInfo.IP.ipAddress) + 1);
+    char* cpAddress = OICStrdup(endPoint->addressInfo.IP.ipAddress);
     if(!cpAddress)
     {
         ret = OC_STACK_NO_MEMORY;
         goto exit;
     }
-    memcpy(cpAddress, endPoint->addressInfo.IP.ipAddress,
-            strlen(endPoint->addressInfo.IP.ipAddress) + 1);
 
     // Grabs the first three numbers from the IPv4 address and replaces dots
     for(int i=0; i<4; i++)
@@ -858,7 +830,6 @@ void parsePresencePayload(char* payload, uint32_t* seqNum, uint32_t* maxAge,
     cJSON *maxAgeObj = NULL;
     cJSON *triggerObj = NULL;
     cJSON *resObj = NULL;
-    size_t size = 0;
     if(repObj)
     {
         ocObj = cJSON_GetObjectItem(repObj, OC_RSRVD_OC);
@@ -908,13 +879,11 @@ void parsePresencePayload(char* payload, uint32_t* seqNum, uint32_t* maxAge,
                         OC_RSRVD_RESOURCE_TYPE);
                 if(resObj)
                 {
-                    size = strlen(resObj->valuestring) + 1;
-                    *resType = (char *)OICMalloc(size);
+                    *resType = OICStrdup(resObj->valuestring);
                     if(!*resType)
                     {
                         goto exit;
                     }
-                    strncpy(*resType, resObj->valuestring, size);
                 }
                 else
                 {
@@ -966,7 +935,6 @@ static OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
     char *ipAddress = NULL;
     int presenceSubscribe = 0;
     int multicastPresenceSubscribe = 0;
-    size_t addressLen = 0;
 
     if (responseInfo->result != CA_SUCCESS)
     {
@@ -983,8 +951,7 @@ static OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
         goto exit;
     }
 
-    addressLen = strlen(endPoint->addressInfo.IP.ipAddress);
-    ipAddress = (char *) OICMalloc(addressLen + 1);
+    ipAddress = OICStrdup(endPoint->addressInfo.IP.ipAddress);
 
     if(!ipAddress)
     {
@@ -993,8 +960,6 @@ static OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
         goto exit;
     }
 
-    strncpy(ipAddress, endPoint->addressInfo.IP.ipAddress, addressLen);
-    ipAddress[addressLen] = '\0';
 
     snprintf(fullUri, MAX_URI_LENGTH, "coap://%s:%u%s", ipAddress, endPoint->addressInfo.IP.port,
                 OC_PRESENCE_URI);
@@ -1145,13 +1110,8 @@ static OCStackResult HandlePresenceResponse(const CARemoteEndpoint_t* endPoint,
         }
         else
         {
-            uint32_t uriLen = strlen(fullUri);
-            char* uri = (char *) OICMalloc(uriLen + 1);
-            if(uri)
-            {
-                memcpy(uri, fullUri, (uriLen + 1));
-            }
-            else
+            char* uri = OICStrdup(fullUri);
+            if(!uri)
             {
                 OC_LOG(ERROR, TAG,
                     PCF("No Memory for URI to store in the presence node"));
@@ -1516,7 +1476,8 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     if(strlen(newUri) < MAX_URI_LENGTH)
     {
         //copy URI
-        memcpy (&(serverRequest.resourceUrl), newUri, strlen(newUri));
+        OICStrcpy(serverRequest.resourceUrl, sizeof(serverRequest.resourceUrl),
+                    newUri);
         OICFree(newUri);
     }
     else
@@ -1531,7 +1492,7 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     {
         if(strlen(query) < MAX_QUERY_LENGTH)
         {
-            memcpy (&(serverRequest.query), query, strlen(query));
+            OICStrcpy(serverRequest.query, sizeof(serverRequest.query), query);
             OICFree(query);
         }
         else
@@ -1546,8 +1507,8 @@ void HandleCARequests(const CARemoteEndpoint_t* endPoint, const CARequestInfo_t*
     {
         size_t payloadLen = strlen(requestInfo->info.payload);
         serverRequest.reqTotalSize = payloadLen + 1;
-        memcpy (&(serverRequest.reqJSONPayload), requestInfo->info.payload,
-                payloadLen);
+        OICStrcpy(serverRequest.reqJSONPayload, sizeof(serverRequest.reqJSONPayload),
+                requestInfo->info.payload);
     }
     else
     {
@@ -2120,7 +2081,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
     requestUri = (char *) OICMalloc(uriLen + 1);
     if(requestUri)
     {
-        memcpy(requestUri, newUri, (uriLen + 1));
+        OICStrcpy(requestUri, uriLen + 1, newUri);
     }
     else
     {
@@ -2192,7 +2153,7 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
             CADestroyToken(token);
             goto exit;
         }
-        strncpy(grpEnd.resourceUri, requiredUri, (uriLen + 1));
+        OICStrcpy(grpEnd.resourceUri, uriLen +1, requiredUri);
 
         caResult = CASendRequestToAll(&grpEnd, &requestInfo);
     }
@@ -2559,7 +2520,8 @@ OCStackResult OCStartPresence(const uint32_t ttl)
         presenceState = OC_PRESENCE_INITIALIZED;
 
         CAAddress_t addressInfo;
-        strncpy(addressInfo.IP.ipAddress, OC_MULTICAST_IP, CA_IPADDR_SIZE);
+        OICStrcpy(addressInfo.IP.ipAddress, sizeof(addressInfo.IP.ipAddress),
+                OC_MULTICAST_IP);
         addressInfo.IP.port = OC_MULTICAST_PORT;
 
         CAToken_t caToken = NULL;
@@ -2665,7 +2627,6 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
 
     OCResource *pointer = NULL;
     char *str = NULL;
-    size_t size = 0;
     OCStackResult result = OC_STACK_ERROR;
 
     OC_LOG(INFO, TAG, PCF("Entering OCCreateResource"));
@@ -2728,14 +2689,12 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
     insertResource(pointer);
 
     // Set the uri
-    size = strlen(uri) + 1;
-    str = (char *) OICMalloc(size);
+    str = OICStrdup(uri);
     if (!str)
     {
         result = OC_STACK_NO_MEMORY;
         goto exit;
     }
-    strncpy(str, uri, size);
     pointer->uri = str;
 
     // Set properties.  Set OC_ACTIVE
@@ -2903,7 +2862,6 @@ OCStackResult BindResourceTypeToResource(OCResource* resource,
 {
     OCResourceType *pointer = NULL;
     char *str = NULL;
-    size_t size = 0;
     OCStackResult result = OC_STACK_ERROR;
 
     OC_LOG(INFO, TAG, PCF("Entering BindResourceTypeToResource"));
@@ -2922,14 +2880,12 @@ OCStackResult BindResourceTypeToResource(OCResource* resource,
     }
 
     // Set the resourceTypeName
-    size = strlen(resourceTypeName) + 1;
-    str = (char *) OICMalloc(size);
+    str = OICStrdup(resourceTypeName);
     if (!str)
     {
         result = OC_STACK_NO_MEMORY;
         goto exit;
     }
-    strncpy(str, resourceTypeName, size);
     pointer->resourcetypename = str;
 
     insertResourceType(resource, pointer);
@@ -2950,7 +2906,6 @@ OCStackResult BindResourceInterfaceToResource(OCResource* resource,
 {
     OCResourceInterface *pointer = NULL;
     char *str = NULL;
-    size_t size = 0;
     OCStackResult result = OC_STACK_ERROR;
 
     OC_LOG(INFO, TAG, PCF("Entering BindResourceInterfaceToResource"));
@@ -2969,14 +2924,12 @@ OCStackResult BindResourceInterfaceToResource(OCResource* resource,
     }
 
     // Set the resourceinterface name
-    size = strlen(resourceInterfaceName) + 1;
-    str = (char *) OICMalloc(size);
+    str = OICStrdup(resourceInterfaceName);
     if (!str)
     {
         result = OC_STACK_NO_MEMORY;
         goto exit;
     }
-    strncpy(str, resourceInterfaceName, size);
     pointer->name = str;
 
     // Bind the resourceinterface to the resource
@@ -3889,14 +3842,13 @@ OCStackResult getResourceType(const char * query, char** resourceType)
 
     if(strncmp(query, "rt=", 3) == 0)
     {
-        *resourceType = (char *) OICMalloc(strlen(query)-3 + 1);
+        *resourceType = OICStrdup(&query[3]);
         if(!*resourceType)
         {
             result = OC_STACK_NO_MEMORY;
         }
         else
         {
-            strcpy((char *)*resourceType, ((const char *)&query[3]));
             result = OC_STACK_OK;
         }
     }
@@ -3947,7 +3899,7 @@ OCStackResult getQueryFromUri(const char * uri, char** query, char ** uriWithout
         {
             goto exit;
         }
-        strncpy(*uriWithoutQuery, uri, uriWithoutQueryLen);
+        OICStrcpy(*uriWithoutQuery, uriWithoutQueryLen +1, uri);
     }
     else
     {
@@ -3963,7 +3915,7 @@ OCStackResult getQueryFromUri(const char * uri, char** query, char ** uriWithout
             *uriWithoutQuery = NULL;
             goto exit;
         }
-        strncpy(*query, pointerToDelimiter + 1, queryLen);
+        OICStrcpy(*query, queryLen + 1, pointerToDelimiter + 1);
     }
 
     return OC_STACK_OK;

@@ -24,6 +24,7 @@
 #include "caedrutils.h"
 #include "logger.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 #include "cathreadpool.h"
 #include "uarraylist.h"
 
@@ -335,7 +336,7 @@ void CAEDRUpdateDeviceState(CAConnectedState_t state, const char *address)
         OIC_LOG(ERROR, TAG, "[EDR][Native] newstate is null");
         return;
     }
-    strcpy(newstate->address, address);
+    OICStrcpy(newstate->address, sizeof(newstate->address), address);
     newstate->state = state;
 
     CAEDRNativeAddDeviceStateToList(newstate);

@@ -22,13 +22,12 @@
 
 #include <string.h>
 #include <ctype.h>
+#include "oic_string.h"
+#include "oic_malloc.h"
 
 #ifdef __ANDROID__
 #include <jni.h>
 #endif
-
-#include "oic_malloc.h"
-#include "oic_string.h"
 
 #define CA_ADAPTER_UTILS_TAG "CA_ADAPTER_UTILS"
 
@@ -75,18 +74,18 @@ CALocalConnectivity_t *CAAdapterCreateLocalEndpoint(CATransportType_t type, cons
     {
         if (CA_EDR == type)
         {
-            strncpy(info->addressInfo.BT.btMacAddress, address, CA_MACADDR_SIZE - 1);
-            info->addressInfo.BT.btMacAddress[CA_MACADDR_SIZE - 1] = '\0';
+            OICStrcpy(info->addressInfo.BT.btMacAddress, sizeof(info->addressInfo.BT.btMacAddress),
+                    address);
         }
         else if (CA_LE == type)
         {
-            strncpy(info->addressInfo.LE.leMacAddress, address, CA_MACADDR_SIZE - 1);
-            info->addressInfo.LE.leMacAddress[CA_MACADDR_SIZE - 1] = '\0';
+            OICStrcpy(info->addressInfo.LE.leMacAddress, sizeof(info->addressInfo.LE.leMacAddress),
+                    address);
         }
         else if (CA_IPV4 == type)
         {
-            strncpy(info->addressInfo.IP.ipAddress, address, CA_IPADDR_SIZE - 1);
-            info->addressInfo.IP.ipAddress[CA_IPADDR_SIZE - 1] = '\0';
+            OICStrcpy(info->addressInfo.IP.ipAddress, sizeof(info->addressInfo.IP.ipAddress),
+                    address);
         }
         else if (CA_IPV6 == type)
         {
@@ -120,23 +119,20 @@ CALocalConnectivity_t *CAAdapterCopyLocalEndpoint(const CALocalConnectivity_t *c
     info->type = connectivity->type;
     if (CA_EDR == info->type && strlen(connectivity->addressInfo.BT.btMacAddress))
     {
-        strncpy(info->addressInfo.BT.btMacAddress, connectivity->addressInfo.BT.btMacAddress,
-                CA_MACADDR_SIZE - 1);
-        info->addressInfo.BT.btMacAddress[CA_MACADDR_SIZE - 1] = '\0';
+        OICStrcpy(info->addressInfo.BT.btMacAddress, sizeof(info->addressInfo.BT.btMacAddress),
+                connectivity->addressInfo.BT.btMacAddress);
     }
     else if (CA_LE == info->type && strlen(connectivity->addressInfo.LE.leMacAddress))
     {
-        strncpy(info->addressInfo.LE.leMacAddress, connectivity->addressInfo.LE.leMacAddress,
-                CA_MACADDR_SIZE - 1);
-        info->addressInfo.LE.leMacAddress[CA_MACADDR_SIZE - 1] = '\0';
+        OICStrcpy(info->addressInfo.LE.leMacAddress, sizeof(info->addressInfo.LE.leMacAddress),
+            connectivity->addressInfo.LE.leMacAddress);
     }
     else if ((CA_IPV4 == info->type)
 
             && strlen(connectivity->addressInfo.IP.ipAddress))
     {
-        strncpy(info->addressInfo.IP.ipAddress, connectivity->addressInfo.IP.ipAddress,
-                CA_IPADDR_SIZE - 1);
-        info->addressInfo.IP.ipAddress[CA_IPADDR_SIZE - 1] = '\0';
+        OICStrcpy(info->addressInfo.IP.ipAddress, sizeof(info->addressInfo.IP.ipAddress),
+                connectivity->addressInfo.IP.ipAddress);
         info->addressInfo.IP.port = connectivity->addressInfo.IP.port;
     }
     else if (CA_IPV6 == info->type)
@@ -177,18 +173,18 @@ CARemoteEndpoint_t *CAAdapterCreateRemoteEndpoint(CATransportType_t type, const 
     {
         if (CA_EDR == type)
         {
-            strncpy(info->addressInfo.BT.btMacAddress, address, CA_MACADDR_SIZE - 1);
-            info->addressInfo.BT.btMacAddress[CA_MACADDR_SIZE - 1] = '\0';
+            OICStrcpy(info->addressInfo.BT.btMacAddress, sizeof(info->addressInfo.BT.btMacAddress),
+                    address);
         }
         else if (CA_LE == type)
         {
-            strncpy(info->addressInfo.LE.leMacAddress, address, CA_MACADDR_SIZE - 1);
-            info->addressInfo.LE.leMacAddress[CA_MACADDR_SIZE - 1] = '\0';
+            OICStrcpy(info->addressInfo.LE.leMacAddress, sizeof(info->addressInfo.LE.leMacAddress),
+                    address);
         }
         else if (CA_IPV4 == type)
         {
-            strncpy(info->addressInfo.IP.ipAddress, address, CA_IPADDR_SIZE - 1);
-            info->addressInfo.IP.ipAddress[CA_IPADDR_SIZE - 1] = '\0';
+            OICStrcpy(info->addressInfo.IP.ipAddress, sizeof(info->addressInfo.IP.ipAddress),
+                    address);
         }
         else if (CA_IPV6 == type)
         {
@@ -227,23 +223,20 @@ CARemoteEndpoint_t *CAAdapterCopyRemoteEndpoint(const CARemoteEndpoint_t *remote
     info->transportType = remoteEndpoint->transportType;
     if (CA_EDR == info->transportType && ('\0' != remoteEndpoint->addressInfo.BT.btMacAddress[0]))
     {
-        strncpy(info->addressInfo.BT.btMacAddress, remoteEndpoint->addressInfo.BT.btMacAddress,
-                CA_MACADDR_SIZE - 1);
-        info->addressInfo.BT.btMacAddress[CA_MACADDR_SIZE - 1] = '\0';
+        OICStrcpy(info->addressInfo.BT.btMacAddress, sizeof(info->addressInfo.BT.btMacAddress),
+                remoteEndpoint->addressInfo.BT.btMacAddress);
     }
     else if (CA_LE == info->transportType
              && ('\0' != remoteEndpoint->addressInfo.LE.leMacAddress[0]))
     {
-        strncpy(info->addressInfo.LE.leMacAddress, remoteEndpoint->addressInfo.LE.leMacAddress,
-                CA_MACADDR_SIZE - 1);
-        info->addressInfo.LE.leMacAddress[CA_MACADDR_SIZE - 1] = '\0';
+        OICStrcpy(info->addressInfo.LE.leMacAddress, sizeof(info->addressInfo.LE.leMacAddress),
+                remoteEndpoint->addressInfo.LE.leMacAddress);
     }
     else if ((CA_IPV4 == info->transportType)
             && ('\0' != remoteEndpoint->addressInfo.IP.ipAddress[0]))
     {
-        strncpy(info->addressInfo.IP.ipAddress, remoteEndpoint->addressInfo.IP.ipAddress,
-                CA_IPADDR_SIZE - 1);
-        info->addressInfo.IP.ipAddress[CA_IPADDR_SIZE - 1] = '\0';
+        OICStrcpy(info->addressInfo.IP.ipAddress, sizeof(info->addressInfo.IP.ipAddress),
+                remoteEndpoint->addressInfo.IP.ipAddress);
         info->addressInfo.IP.port = remoteEndpoint->addressInfo.IP.port;
     }
     else if (CA_IPV6 == info->transportType)

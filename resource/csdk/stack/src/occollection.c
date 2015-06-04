@@ -33,6 +33,7 @@
 #include "logger.h"
 #include "cJSON.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 
 /// Module Name
 #include <stdio.h>
@@ -248,7 +249,7 @@ static OCStackResult BuildRootResourceJSON(OCResource *resource,
         jsonLen = strlen(jsonStr);
         if (jsonLen < *remaining)
         {
-            strncpy(bufferPtr, jsonStr, jsonLen);
+            OICStrcpy(bufferPtr, *remaining, jsonStr);
             *remaining -= jsonLen;
             bufferPtr += jsonLen;
             ret = OC_STACK_OK;

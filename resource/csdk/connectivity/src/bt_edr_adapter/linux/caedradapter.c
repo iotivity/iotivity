@@ -40,8 +40,7 @@ CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
     g_threadPoolHandle = handle;
 
     // register handlers
-    CAConnectivityHandler_t handler;
-    memset(&handler, 0, sizeof(CAConnectivityHandler_t));
+    CAConnectivityHandler_t handler = {};
 
     handler.startAdapter = CAStartEDR;
     handler.startListenServer = CAStartEDRListeningServer;

@@ -528,11 +528,8 @@ namespace OC
         else
         {
             OCEntityHandlerResponse response;
-            std::string payLoad;
-            HeaderOptions serverHeaderOptions;
-
-            payLoad = pResponse->getPayload();
-            serverHeaderOptions = pResponse->getHeaderOptions();
+            std::string payLoad = pResponse->getPayload();
+            HeaderOptions serverHeaderOptions = pResponse->getHeaderOptions();
 
             response.requestHandle = pResponse->getRequestHandle();
             response.resourceHandle = pResponse->getResourceHandle();
@@ -545,7 +542,8 @@ namespace OC
                 throw OCException(OC::Exception::NO_MEMORY, OC_STACK_NO_MEMORY);
             }
 
-            strncpy(response.payload, payLoad.c_str(), payLoad.length()+1);
+            payLoad.copy(response.payload, payLoad.length());
+            response.payload[payLoad.length()] = '\0';
             response.payloadSize = payLoad.length() + 1;
             response.persistentBufferFlag = 0;
 
@@ -558,18 +556,19 @@ namespace OC
                     static_cast<uint16_t>(it->getOptionID());
                 response.sendVendorSpecificHeaderOptions[i].optionLength =
                     (it->getOptionData()).length() + 1;
-                memcpy(response.sendVendorSpecificHeaderOptions[i].optionData,
-                    (it->getOptionData()).c_str(),
-                    (it->getOptionData()).length() + 1);
+                std::copy(it->getOptionData().begin(),
+                         it->getOptionData().end(),
+                         response.sendVendorSpecificHeaderOptions[i].optionData);
+                response.sendVendorSpecificHeaderOptions[i].optionData[it->getOptionData().length()]
+                    = '\0';
                 i++;
             }
 
             if(OC_EH_RESOURCE_CREATED == response.ehResult)
             {
-                std::string createdUri = pResponse->getNewResourceUri();
-                strncpy(reinterpret_cast<char*>(response.resourceUri),
-                        createdUri.c_str(),
-                        createdUri.length() + 1);
+                pResponse->getNewResourceUri().copy(response.resourceUri,
+                        sizeof (response.resourceUri) - 1);
+                response.resourceUri[pResponse->getNewResourceUri().length()] = '\0';
             }
 
             if(cLock)

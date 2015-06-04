@@ -94,7 +94,7 @@ static void CARegisterCallback(CAConnectivityHandler_t handler, CATransportType_
         return;
     }
 
-    memcpy(&g_adapterHandler[index], &handler, sizeof(CAConnectivityHandler_t));
+    g_adapterHandler[index] = handler;
 
     OIC_LOG_V(DEBUG, TAG, "%d type adapter", cType);
     OIC_LOG(DEBUG, TAG, "OUT");

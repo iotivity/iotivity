@@ -22,6 +22,7 @@
 #include "caipinterface.h"
 #include "dtls.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 #include "global.h"
 
 /**
@@ -102,9 +103,10 @@ static CAResult_t CAAddIdToPeerInfoList(const char *peerAddr, uint32_t port,
         return CA_MEMORY_ALLOC_FAILED;
     }
 
-    strncpy(peerInfo->address.IP.ipAddress, peerAddr, CA_IPADDR_SIZE);
+    OICStrcpy(peerInfo->address.IP.ipAddress, sizeof(peerInfo->address.IP.ipAddress),
+            peerAddr);
     peerInfo->address.IP.port = port;
-    memcpy(peerInfo->identity.id, id, id_length);
+    OICStrcpyPartial(peerInfo->identity.id, sizeof(peerInfo->identity.id), id, id_length);
     peerInfo->identity.id_length = id_length;
 
     CAResult_t result = u_arraylist_add(g_caDtlsContext->peerInfoList, (void *)peerInfo);

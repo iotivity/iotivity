@@ -827,11 +827,6 @@ namespace OC
                     it->getOptionID(),
                     it->getOptionData().length() + 1,
                     reinterpret_cast<const uint8_t*>(it->getOptionData().c_str()));
-            //options[i].protocolID = OC_COAP_ID;
-            //options[i].optionID = static_cast<uint16_t>(it->getOptionID());
-            //options[i].optionLength = (it->getOptionData()).length() + 1;
-            //memcpy(options[i].optionData, (it->getOptionData()).c_str(),
-            //        (it->getOptionData()).length() + 1);
             i++;
         }
 
