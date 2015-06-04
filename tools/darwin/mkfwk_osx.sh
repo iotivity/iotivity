@@ -1,5 +1,9 @@
 #!/bin/sh
-
+#===============================================================================
+# Author:    Pete Goodliffe
+# Copyright: (c) Copyright 2009 Pete Goodliffe
+# Licence:   Please feel free to use this, with attribution
+#===============================================================================
 
 #VERSION_IOS="${MAJOR_VERSION}.${MINOR_VERSION}.${RELEASE_NUMBER}.${BUILD_NUMBER}"
 VERSION_IOS="0.9.0.1"
