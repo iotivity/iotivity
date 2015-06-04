@@ -373,7 +373,6 @@ void SendRequest()
         CADestroyRemoteEndpoint(endpoint);
     }
 
-    CADestroyToken(token);
     Serial.println("============");
 }
 
