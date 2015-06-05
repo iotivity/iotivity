@@ -1338,6 +1338,7 @@ SPResult SPProvisioningDiscovery(unsigned short timeout,
     if (NULL != *list)
     {
         OC_LOG(ERROR, TAG, "List is not null can cause memory leak");
+        return SP_RESULT_INVALID_PARAM;
     }
 
     CARegisterHandler(SPRequestHandler, SPResponseHandler, SPErrorHandler);
