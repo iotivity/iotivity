@@ -540,7 +540,7 @@ namespace OCPlatformTest
     //GetDeviceInfo Test
     TEST(GetDeviceInfoTest, DISABLED_GetDeviceInfoWithValidParameters)
     {
-        std::string deviceDiscoveryURI = "/oic/res/d";
+        std::string deviceDiscoveryURI = "/oic/d";
         PlatformConfig cfg;
         OCPlatform::Configure(cfg);
         std::ostringstream requestURI;
@@ -559,7 +559,7 @@ namespace OCPlatformTest
 
     TEST(GetDeviceInfoTest, GetDeviceInfoWithNullDeviceInfoHandler)
     {
-        std::string deviceDiscoveryURI = "/oic/res/d";
+        std::string deviceDiscoveryURI = "/oic/d";
         PlatformConfig cfg;
         OCPlatform::Configure(cfg);
         std::ostringstream requestURI;
@@ -571,7 +571,7 @@ namespace OCPlatformTest
 
     TEST(GetDeviceInfoTest, DISABLED_GetDeviceInfoWithLowQos)
     {
-        std::string deviceDiscoveryURI = "/oic/res/d";
+        std::string deviceDiscoveryURI = "/oic/d";
         PlatformConfig cfg;
         OCPlatform::Configure(cfg);
         std::ostringstream requestURI;
@@ -583,7 +583,7 @@ namespace OCPlatformTest
 
     TEST(GetDeviceInfoTest, DISABLED_GetDeviceInfoWithMidQos)
     {
-        std::string deviceDiscoveryURI = "/oic/res/d";
+        std::string deviceDiscoveryURI = "/oic/d";
         PlatformConfig cfg;
         OCPlatform::Configure(cfg);
         std::ostringstream requestURI;
@@ -595,7 +595,7 @@ namespace OCPlatformTest
 
     TEST(GetDeviceInfoTest, DISABLED_GetDeviceInfoWithHighQos)
     {
-        std::string deviceDiscoveryURI = "/oic/res/d";
+        std::string deviceDiscoveryURI = "/oic/d";
         PlatformConfig cfg;
         OCPlatform::Configure(cfg);
         std::ostringstream requestURI;
@@ -607,7 +607,7 @@ namespace OCPlatformTest
 
     TEST(GetDeviceInfoTest, DISABLED_GetDeviceInfoWithNaQos)
     {
-        std::string deviceDiscoveryURI = "/oic/res/d";
+        std::string deviceDiscoveryURI = "/oic/d";
         PlatformConfig cfg;
         OCPlatform::Configure(cfg);
         std::ostringstream requestURI;

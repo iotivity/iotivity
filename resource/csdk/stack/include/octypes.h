@@ -83,7 +83,8 @@ extern "C" {
 #define OC_RSRVD_FW_VERSION             "mnfv"
 #define OC_RSRVD_HOST_NAME              "hn"
 #define OC_RSRVD_VERSION                "icv"
-#define OC_RSRVD_OBSERVABLE             "obs"
+#define OC_RSRVD_POLICY                 "p"
+#define OC_RSRVD_BITMAP                 "bm"
 #define OC_RSRVD_SECURE                 "sec"
 #define OC_RSRVD_HOSTING_PORT           "port"
 #define OC_RSRVD_SERVER_INSTANCE_ID     "sid"
@@ -201,14 +202,17 @@ typedef enum
 
 /**
  * Resource Properties.
+ * The value of a policy property is defined as bitmap.
+ * The LSB represents OC_DISCOVERABLE and Second LSB bit represents OC_OBSERVABLE and so on.
+ * Not including the policy property is equivalent to zero.
  *
  * ::OC_RES_PROP_NONE When none of the bits are set, the resource is non-discoverable &
  *                    non-observable by the client.
+ * ::OC_DISCOVERABLE When this bit is set, the resource is allowed to be discovered by clients.
+ * ::OC_OBSERVABLE   When this bit is set, the resource is allowed to be observed by clients.
  * ::OC_ACTIVE        When this bit is set, the resource is initialized, otherwise the resource
  *                    is 'inactive'. 'inactive' signifies that the resource has been marked for
  *                    deletion or is already deleted.
- * ::OC_DISCOVERABLE  When this bit is set, the resource is allowed to be discovered by clients.
- * ::OC_OBSERVABLE    When this bit is set, the resource is allowed to be observed by clients.
  * ::OC_SLOW          When this bit is set, the resource has been marked as 'slow'. 'slow'
  *                    signifies that responses from this resource can expect delays in
  *                    processing its requests from clients.
@@ -217,9 +221,9 @@ typedef enum
 typedef enum
 {
     OC_RES_PROP_NONE = (0),
-    OC_ACTIVE        = (1 << 0),
-    OC_DISCOVERABLE  = (1 << 1),
-    OC_OBSERVABLE    = (1 << 2),
+    OC_DISCOVERABLE  = (1 << 0),
+    OC_OBSERVABLE    = (1 << 1),
+    OC_ACTIVE        = (1 << 2),
     OC_SLOW          = (1 << 3),
     OC_SECURE        = (1 << 4)
 } OCResourceProperty;

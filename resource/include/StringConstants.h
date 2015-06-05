@@ -124,7 +124,8 @@ namespace OC
     {
         static const std::string OCKEY                      = "oic";
         static const std::string URIKEY                     = "href";
-        static const std::string OBSERVABLEKEY              = "obs";
+        static const std::string POLICYKEY                  = "p";
+        static const std::string BMKEY                      = "bm";
         static const std::string RESOURCETYPESKEY           = "rt";
         static const std::string INTERFACESKEY              = "if";
         static const std::string PROPERTYKEY                = "prop";

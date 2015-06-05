@@ -308,6 +308,7 @@ BuildVirtualResourceResponse(const OCResource *resourcePtr, uint8_t filterOn,
     OCResourceInterface *interfacePtr = NULL;
     cJSON *resObj = NULL;
     cJSON *propObj = NULL;
+    cJSON *policyObj = NULL;
     cJSON *rtArray = NULL;
     char *jsonStr = NULL;
     uint8_t encodeRes = 0;
@@ -366,6 +367,7 @@ BuildVirtualResourceResponse(const OCResource *resourcePtr, uint8_t filterOn,
                                    OC_RSRVD_SERVER_INSTANCE_ID,
                                    cJSON_CreateString(OCGetServerInstanceIDString()));
 
+
             cJSON_AddItemToObject (resObj, OC_RSRVD_PROPERTY, propObj = cJSON_CreateObject());
             // Add resource types
             cJSON_AddItemToObject (propObj, OC_RSRVD_RESOURCE_TYPE, rtArray = cJSON_CreateArray());
@@ -384,25 +386,35 @@ BuildVirtualResourceResponse(const OCResource *resourcePtr, uint8_t filterOn,
                 cJSON_AddItemToArray (rtArray, cJSON_CreateString(interfacePtr->name));
                 interfacePtr = interfacePtr->next;
             }
-            // If resource is observable, set observability flag.
-            // Resources that are not observable will not have the flag.
-            if (resourcePtr->resourceProperties & OC_OBSERVABLE)
+
+            //Add Policy
+            cJSON_AddItemToObject (propObj, OC_RSRVD_POLICY, policyObj = cJSON_CreateObject());
+
+            if (policyObj)
             {
-                cJSON_AddItemToObject (propObj, OC_RSRVD_OBSERVABLE,
-                                       cJSON_CreateNumber(OC_RESOURCE_OBSERVABLE));
-            }
-            // Set secure flag for secure resources
-            if (resourcePtr->resourceProperties & OC_SECURE)
-            {
-                cJSON_AddNumberToObject (propObj, OC_RSRVD_SECURE, OC_RESOURCE_SECURE);
-                //Set the IP port also as secure resources are hosted on a different port
-                uint16_t port = 0;
-                if (GetSecurePortInfo (connType, &port) == OC_STACK_OK)
+                // Policy Property Bitmap
+                // If resource is discoverable, set discoverability flag.
+                // Resources that are not discoverable will not have the flag.
+                cJSON_AddNumberToObject (policyObj, OC_RSRVD_BITMAP,
+                                 resourcePtr->resourceProperties & (OC_OBSERVABLE|OC_DISCOVERABLE));
+
+                // Set secure flag for secure resources
+                if (resourcePtr->resourceProperties & OC_SECURE)
                 {
-                    cJSON_AddNumberToObject (propObj, OC_RSRVD_HOSTING_PORT, port);
+                    cJSON_AddNumberToObject (policyObj, OC_RSRVD_SECURE, OC_RESOURCE_SECURE);
+                    //Set the IP port also as secure resources are hosted on a different port
+                    uint16_t port = 0;
+                    if (GetSecurePortInfo (connType, &port) == OC_STACK_OK)
+                    {
+                        cJSON_AddNumberToObject (policyObj, OC_RSRVD_HOSTING_PORT, port);
+                    }
                 }
             }
-
+            else
+            {
+                cJSON_Delete(resObj);
+                return OC_STACK_NO_MEMORY;
+            }
         }
     }
     jsonStr = cJSON_PrintUnformatted (resObj);

@@ -137,7 +137,6 @@ char* constructJsonResponse (OCEntityHandlerRequest *ehRequest)
         {
             currLightResource->state = prop->valueint;
         }
-
         cJSON_Delete(putJson);
     }
 
@@ -757,6 +756,7 @@ void *ChangeLightRepresentation (void *param)
                 cJSON_AddItemToObject(json, "rep", format=cJSON_CreateObject());
                 cJSON_AddBoolToObject(format, "state", Light.state);
                 cJSON_AddNumberToObject(format, "power", Light.power);
+
                 char * obsResp = cJSON_Print(json);
                 cJSON_Delete(json);
                 result = OCNotifyListOfObservers (Light.handle, obsNotify, j,
