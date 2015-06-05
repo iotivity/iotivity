@@ -427,7 +427,11 @@ else:
 		env.AppendUnique(LIBS = 'm')
 	env.Replace(ARCOM = '$AR ' + platform_info.get('compiler.ar.flags') + ' $TARGET $SOURCES')
 
-
+# Make sure the .d files are removed when clean the build
+if env.GetOption('clean'):
+	dfs = __search_files(env.get('BUILD_DIR'), '*.d')
+	for df in dfs:
+		Execute(Delete(df))
 __build_core(env)
 
 env.AddMethod(__import_lib, "ImportLib") #import arduino library
