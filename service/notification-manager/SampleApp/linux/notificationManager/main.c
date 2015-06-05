@@ -35,17 +35,13 @@ int main()
 {
     printf("OCResourceHosting is starting...\n");
 
-    if (OCInit((char *) NULL, 0, OC_CLIENT_SERVER) != OC_STACK_OK)
+    if (OICStartCoordinate() != OC_STACK_OK)
     {
-        printf("OCStack init error\n");
+        printf("OICStartCoordinate fail\n");
         return 0;
     }
 
-    if (OICStartCoordinate() != OC_STACK_OK)
-    {
-        printf("OIC coordinate start fail\n");
-        return 0;
-    }
+    printf("OCResourceHosting Started Successfully \n");
 
     signal(SIGINT, handleSigInt);
     while (!g_quitFlag)
@@ -62,20 +58,14 @@ int main()
 
     if (OICStopCoordinate() != OC_STACK_OK)
     {
-        printf("OIC coordinate stop error\n");
+        printf("OICStopCoordinate error\n");
     }
     else
     {
-        printf("OIC coordinate stop success\n");
+        printf("OICStopCoordinate success\n");
     }
 
     printf("Exiting occlient main loop...\n");
-
-    if (OCStop() != OC_STACK_OK)
-    {
-        printf("OCStack stop error\n");
-    }
-
     return 0;
 
 }
