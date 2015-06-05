@@ -850,26 +850,70 @@ void SendResponse(CARemoteEndpoint_t *endpoint, const CAInfo_t* info)
     char buf[MAX_BUF_LEN] = {0};
 
     Serial.println("============");
+    Serial.println("Select Message Type");
+    Serial.println("CON: 0");
+    Serial.println("NON: 1");
+    Serial.println("ACK: 2");
+    Serial.println("RESET: 3");
+
+    size_t len = 0;
+    int messageType = 0;
+    while(1)
+    {
+        GetData(buf, sizeof(buf), &len);
+        if(len >= 1)
+        {
+            messageType = buf[0] - '0';
+            if (messageType >= 0 && messageType <= 3)
+            {
+                break;
+            }
+        }
+        Serial.println("Invalid type");
+    }
+
+    int respCode = 0;
+    if(messageType != 3)
+    {
+        Serial.println("============");
+        Serial.println("Enter Resp Code:");
+        Serial.println("For Ex: Empty  : 0");
+        Serial.println("Success: 200");
+        Serial.println("Created: 201");
+        Serial.println("Deleted: 202");
+        Serial.println("BadReq : 400");
+        Serial.println("BadOpt : 402");
+        Serial.println("NotFnd : 404");
+        Serial.println("Internal Srv Err:500");
+        Serial.println("Timeout: 504");
+        while(1)
+        {
+            GetData(buf, sizeof(buf), &len);
+            if(len >= 1)
+            {
+                respCode = atoi(buf);
+                if (respCode >= 0 && respCode <= 504)
+                {
+                    break;
+                }
+            }
+            Serial.println("Invalid response");
+        }
+    }
+
     CAInfo_t responseData = {CA_MSG_RESET};
-    if(info && info->type == CA_MSG_CONFIRM)
-    {
-        responseData.type = CA_MSG_ACKNOWLEDGE;
-    }
-    else
-    {
-        responseData.type = CA_MSG_NONCONFIRM;
-    }
-
+    responseData.type = static_cast<CAMessageType_t>(messageType);
     responseData.messageId = (info != NULL) ? info->messageId : 0;
-    responseData.token = (info != NULL) ? (CAToken_t)info->token : NULL;
-    responseData.tokenLength = (info != NULL) ? info->tokenLength : 0;
-    responseData.payload = (CAPayload_t)"response payload";
-
+    if(messageType != 3)
+    {
+        responseData.token = (info != NULL) ? info->token : NULL;
+        responseData.tokenLength = (info != NULL) ? info->tokenLength : 0;
+        responseData.payload = static_cast<CAPayload_t>("response payload");
+    }
     CAResponseInfo_t responseInfo = {CA_BAD_REQ, {CA_MSG_RESET}};
-    responseInfo.result = (CAResponseResult_t)203;
+    responseInfo.result = static_cast<CAResponseResult_t>(respCode);
     responseInfo.info = responseData;
-
-    // send request (connectivityType from remoteEndpoint of request Info)
+    // send request (transportType from remoteEndpoint of request Info)
     CAResult_t res = CASendResponse(endpoint, &responseInfo);
     if(res != CA_STATUS_OK)
     {
