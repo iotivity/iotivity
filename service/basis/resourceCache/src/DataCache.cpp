@@ -29,23 +29,23 @@
 
 #include "OCApi.h"
 
-CacheHandler::CacheHandler(
-            ServiceResource & pResource,
+DataCache::DataCache(
+            PrimitiveResource & pResource,
             CacheCB func,
             REPORT_FREQUENCY rf,
             long repeatTime
             ):sResource(pResource)
 {
     subscriberList = new SubscriberInfo();
-    data = new(CacheData());
+    data = new CacheData();
 
     state = CACHE_STATE::READY_YET;
     updateTime = 0l;
 
-    pObserveCB = (ObserveCB)(std::bind(&CacheHandler::onObserve, this,
+    pObserveCB = (ObserveCB)(std::bind(&DataCache::onObserve, this,
             std::placeholders::_1, std::placeholders::_2,
             std::placeholders::_3, std::placeholders::_4));
-    pGetCB = (GetCB)(std::bind(&CacheHandler::onGet, this,
+    pGetCB = (GetCB)(std::bind(&DataCache::onGet, this,
             std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 
     if(pResource.isObservable())
@@ -58,7 +58,7 @@ CacheHandler::CacheHandler(
     }
 }
 
-CacheHandler::~CacheHandler()
+DataCache::~DataCache()
 {
     // TODO Auto-generated destructor stub
     data.reset();
@@ -68,7 +68,7 @@ CacheHandler::~CacheHandler()
     delete subscriberList;
 }
 
-CacheID CacheHandler::addSubscriber(CacheCB func, REPORT_FREQUENCY rf, long repeatTime)
+CacheID DataCache::addSubscriber(CacheCB func, REPORT_FREQUENCY rf, long repeatTime)
 {
     Report_Info newItem;
     newItem.rf = rf;
@@ -95,7 +95,7 @@ CacheID CacheHandler::addSubscriber(CacheCB func, REPORT_FREQUENCY rf, long repe
     return newItem.reportID;
 }
 
-CacheID CacheHandler::deleteSubscriber(CacheID id)
+CacheID DataCache::deleteSubscriber(CacheID id)
 {
     CacheID ret = 0;
 
@@ -109,7 +109,7 @@ CacheID CacheHandler::deleteSubscriber(CacheID id)
     return ret;
 }
 
-SubscriberInfoPair CacheHandler::findSubscriber(CacheID id)
+SubscriberInfoPair DataCache::findSubscriber(CacheID id)
 {
     SubscriberInfoPair ret = nullptr;
 
@@ -124,7 +124,7 @@ SubscriberInfoPair CacheHandler::findSubscriber(CacheID id)
     return ret;
 }
 
-std::shared_ptr<CacheData> CacheHandler::getCachedData()
+std::shared_ptr<CacheData> DataCache::getCachedData()
 {
     if(state != CACHE_STATE::READY)
     {
@@ -133,9 +133,9 @@ std::shared_ptr<CacheData> CacheHandler::getCachedData()
     return data;
 }
 
-ServiceResource * CacheHandler::getServiceResource()
+PrimitiveResource * DataCache::getPrimitiveResource()
 {
-    ServiceResource ret = NULL;
+    PrimitiveResource ret = NULL;
     if(sResource)
     {
         ret = sResource;
@@ -144,8 +144,8 @@ ServiceResource * CacheHandler::getServiceResource()
     return ret;
 }
 
-void CacheHandler::onObserve(
-        const HeaderOptions& ho, const ResponseStatement& _rep, int _result, int _seq)
+void DataCache::onObserve(
+        const HeaderOptions& _hos, const ResponseStatement& _rep, int _result, int _seq)
 {
 
     if(_result != OC_STACK_OK)
@@ -153,7 +153,6 @@ void CacheHandler::onObserve(
         // TODO handle error
         return;
     }
-//    if(_rep.empty() || _rep.emptyData())
     if(_rep.getAttributes().isEmpty())
     {
         return;
@@ -163,12 +162,12 @@ void CacheHandler::onObserve(
 
     // set data
     data->clear();
-    OC::OCRepresentation::iterator it = att.begin();
+    ResourceAttributes::iterator it = att.begin();
     for(; att.end(); ++it)
     {
-        std::string key = it->attrname();
+        std::string key = it->key();
         // TODO change template or variant
-        std::string val = it->getValueToString();
+        std::string val = it->value();
 
         data[key] = val;
     }

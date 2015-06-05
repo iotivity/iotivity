@@ -29,11 +29,9 @@
 #include "ocstack.h"
 #include "OCResource.h"
 
-#include "../include/PrimitiveResource.h"
+#include "PrimitiveResource.h"
 
-//class ServiceResource;
-
-typedef PrimitiveResource ServiceResource;
+#define CACHE_TAG  PCF("CACHE")
 
 enum class REPORT_FREQUENCY
 {
@@ -62,7 +60,7 @@ enum class CACHE_STATE
 typedef int CacheID;
 
 typedef std::map<std::string, std::string> CacheData;
-typedef std::function<OCStackResult(std::shared_ptr<ServiceResource>, CacheData)> CacheCB;
+typedef std::function<OCStackResult(std::shared_ptr<PrimitiveResource>, CacheData)> CacheCB;
 typedef std::map<Report_Info, CacheCB> SubscriberInfo;
 typedef std::pair<Report_Info, CacheCB> SubscriberInfoPair;
 

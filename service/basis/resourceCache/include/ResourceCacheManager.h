@@ -18,45 +18,45 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef RESOURCECACHE_H_
-#define RESOURCECACHE_H_
+#ifndef RESOURCECACHEMANAGER_H_
+#define RESOURCECACHEMANAGER_H_
 
 #include <list>
 #include <string>
 
-#include "../../../../resource/csdk/stack/include/octypes.h"
-#include "CacheHandler.h"
+#include "OCPlatform.h"
 #include "CacheTypes.h"
+#include "DataCache.h"
 
 #define CACHE_TAG PCF("CACHE")
 
-class ResourceCache
+class ResourceCacheManager
 {
 public:
-    ResourceCache * getInstance();
+    ResourceCacheManager * getInstance();
 
     CacheID requestResourceCache(
-            ServiceResource & pResource,
+            PrimitiveResource & pResource,
                 CacheCB func = NULL, REPORT_FREQUENCY rf = REPORT_FREQUENCY::NONE, long time = 0l);
 
 //    OCStackResult cancelResourceCache(std::string address, std::string uri);
-    OCStackResult cancelResourceCache(ServiceResource & pResource, CacheID id);
+    OCStackResult cancelResourceCache(PrimitiveResource & pResource, CacheID id);
 
 //    OCStackResult updateResourceCache(std::string address, std::string uri);
-    OCStackResult updateResourceCache(ServiceResource & pResource);
+    OCStackResult updateResourceCache(PrimitiveResource & pResource);
 
 //    OCStackResult getResourceCache(std::string address, std::string uri);
-    OCStackResult getResourceCache(ServiceResource & pResource);
+    OCStackResult getResourceCache(PrimitiveResource & pResource);
 
 private:
-    ResourceCache();
-    ~ResourceCache();
+    ResourceCacheManager();
+    ~ResourceCacheManager();
 
-    static ResourceCache * s_instance;
+    static ResourceCacheManager * s_instance;
     static std::mutex s_mutexForCreation;
-    static std::list< CacheHandler * > * s_cacheDataList;
+    static std::list< DataCache * > * s_cacheDataList;
 
-    CacheHandler * findCacheHandler(ServiceResource & pResource);
+    DataCache * findCacheHandler(PrimitiveResource & pResource);
 };
 
-#endif /* RESOURCECACHE_H_ */
+#endif /* RESOURCECACHEMANAGER_H_ */

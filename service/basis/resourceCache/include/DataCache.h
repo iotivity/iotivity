@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef CACHEHANDLER_H_
-#define CACHEHANDLER_H_
+#ifndef DATACACHE_H_
+#define DATACACHE_H_
 
 #include <list>
 #include <memory>
@@ -31,27 +31,21 @@
 
 #include "CacheTypes.h"
 
-#define CACHE_TAG  PCF("CACHE")
-
-class CacheHandler
+class DataCache
 {
 public:
-    CacheHandler(
-            ServiceResource & pResource,
+    DataCache(
+            PrimitiveResource & pResource,
             CacheCB func,
             REPORT_FREQUENCY rf,
             long repeatTime);
-    ~CacheHandler();
+    ~DataCache();
 
     CacheID addSubscriber(CacheCB func, REPORT_FREQUENCY rf, long repeatTime);
     CacheID deleteSubscriber(CacheID id);
 
     std::shared_ptr<CacheData> getCachedData();
-    ServiceResource * getServiceResource();
-
-    // for request to base
-    OCStackResult requestToNetwork(std::string uri, std::string address, OCMethod method);
-    OCStackResult requestToNetwork(ServiceResource *pResource, OCMethod method);
+    PrimitiveResource * getPrimitiveResource();
 
 private:
     // origin resource info
@@ -59,8 +53,10 @@ private:
     std::string address;
 
     // resource instance
-    ServiceResource *sResource;
+    PrimitiveResource *sResource;
     std::shared_ptr<BaseResource> baseHandler;
+
+    std::shared_ptr<ResourceAttributes> attributes;
 
     // cached data info
     std::shared_ptr<CacheData> data;
@@ -72,9 +68,9 @@ private:
     SubscriberInfoPair findSubscriber(CacheID id);
 
     // for requestCB from base
-    void onObserve(const HeaderOptions& ho, const ResponseStatement& _rep, int _result, int _seq);
-    void onGet(const OC::HeaderOptions& _ho,
-                const OC::OCRepresentation& _rep, const int _result);
+    void onObserve(const HeaderOptions& _hos,
+            const ResponseStatement& _rep, int _result, int _seq);
+    void onGet(const HeaderOptions& _hos, const ResponseStatement& _rep, int _result);
 
     ObserveCB pObserveCB;
     GetCB pGetCB;
@@ -89,4 +85,4 @@ private:
 
 };
 
-#endif /* CACHEHANDLER_H_ */
+#endif /* DATACACHE_H_ */
