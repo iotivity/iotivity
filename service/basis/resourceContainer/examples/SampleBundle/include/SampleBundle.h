@@ -23,7 +23,7 @@
 
 #include <vector>
 
-#include "ResourceContainer.h"
+#include "ResourceContainerBundleAPI.h"
 #include "BundleActivator.h"
 
 using namespace RC;
@@ -34,13 +34,13 @@ class SampleBundle: public BundleActivator
         SampleBundle();
         ~SampleBundle();
 
-        void activateBundle(ResourceContainerInternal resourceContainer);
+        void activateBundle(ResourceContainerBundleAPI* resourceContainer);
         void deactivateBundle();
 
         void createResource();
         void destroyResource();
 
-        ResourceContainerInternal m_ResourceContainer;
+        ResourceContainerBundleAPI* m_ResourceContainer;
         std::vector<Resource *> m_vecResources;
 };
 

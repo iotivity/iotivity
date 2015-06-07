@@ -18,41 +18,57 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-
 #ifndef BUNDLEINFOINTERNAL_H_
 #define BUNDLEINFOINTERNAL_H_
 
 #include <string>
 #include "BundleInfo.h"
+#include "ResourceContainerBundleAPI.h"
 
 using namespace std;
 using namespace RC;
 
-namespace RC{
-	/*
-	 * Adds resource container specific flags to the bundle info class.
-	 */
-	class BundleInfoInternal : public BundleInfo {
-		public:
-			BundleInfoInternal();
-			BundleInfoInternal(BundleInfo* info);
-			virtual ~BundleInfoInternal();
-			void setName(string name);
-			string getName();
-			void setPath(string path);
-			string getPath();
-			void setVersion(string version);
+namespace RC
+{
+    typedef void activator_t(ResourceContainerBundleAPI *);
+    typedef void deactivator_t(void);
 
-			void setLoaded(bool loaded);
-			bool isLoaded();
-			void setActivated(bool activated);
-			bool isActivated();
-			int getId();
-			void setId(int id);
-		private:
-			bool m_loaded, m_activated;
-			int m_id;
-	};
+    class BundleInfoInternal: public BundleInfo
+    {
+    public:
+        BundleInfoInternal();
+        BundleInfoInternal(BundleInfo* info);
+        virtual ~BundleInfoInternal();
+        void setID(string id);
+        string getID();
+        void setPath(string path);
+        string getPath();
+        void setVersion(string version);
+        string getVersion();
+
+        void setLoaded(bool loaded);
+        bool isLoaded();
+        void setActivated(bool activated);
+        bool isActivated();
+        int getId();
+        void setId(int id);
+
+        void setBundleActivator(activator_t*);
+        activator_t* getBundleActivator();
+
+        void setBundleDeactivator(deactivator_t*);
+        deactivator_t* getBundleDeactivator();
+
+        void setBundleHandle(void*);
+        void* getBundleHandle();
+
+    private:
+        bool m_loaded, m_activated;
+        int m_id;
+        activator_t* m_activator;
+        deactivator_t* m_deactivator;
+        void* m_bundleHandle;
+    };
 }
 
 #endif /* BUNDLEINFOINTERNAL_H_ */

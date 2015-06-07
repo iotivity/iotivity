@@ -1,6 +1,6 @@
 #******************************************************************
 #
-# Copyright 2014 Samsung Electronics All Rights Reserved.
+# Copyright 2015 Samsung Electronics All Rights Reserved.
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #
@@ -19,7 +19,7 @@
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 ##
-# things_manager project build script
+# resource container build script
 ##
 import os
 Import('env')
@@ -33,7 +33,12 @@ target_os = env.get('TARGET_OS')
 ######################################################################
 # Build flags
 ######################################################################
-resource_container_env.AppendUnique(CPPPATH = [env.get('SRC_DIR')+'/extlibs', 'include', 'src'])
+resource_container_env.AppendUnique(
+	CPPPATH = [
+		env.get('SRC_DIR')+'/extlibs', 
+		'include', 
+		'src'
+	])
 
 if target_os not in ['windows', 'winrt']:
     resource_container_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
@@ -76,7 +81,8 @@ SAMPLE_RESOURCE_BUNDLE_DIR = 'examples/SampleBundle/'
 sample_resource_bundle_env.AppendUnique(CPPPATH = [
 		SAMPLE_RESOURCE_BUNDLE_DIR + 'include',
 		'include/'
-		])
+		])		
+		
 
 sample_resource_bundle_src = [ Glob(SAMPLE_RESOURCE_BUNDLE_DIR + 'src/*.cpp'), Glob('src/*.cpp')]
 
@@ -88,6 +94,11 @@ sample_resource_bundle_env.InstallTarget(SampleBundle, 'libSampleBundle')
 ######################################################################
 containertest_env = resource_container_env.Clone();
 containertest_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+containertest_env.PrependUnique(LIBS = ['oc', 'oc_logger_core', 'oc_logger'])
+
+# Copy test configuration
+Command("examples/ResourceContainerConfig.xml","examples/ResourceContainerConfig.xml", Copy("$TARGET", "$SOURCE"))
+Ignore("examples/ResourceContainerConfig.xml", "examples/ResourceContainerConfig.xml")
 
 containertestapp = containertest_env.Program('ContainerTest', res_container_src)
 Alias("containertest", containertestapp)

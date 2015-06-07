@@ -21,40 +21,21 @@
 #include "BundleInfo.h"
 #include "BundleInfoInternal.h"
 
-namespace RC{
-	BundleInfo::BundleInfo(){
+namespace RC
+{
+    BundleInfo::BundleInfo()
+    {
 
-	}
+    }
 
-	BundleInfo::~BundleInfo(){
+    BundleInfo::~BundleInfo()
+    {
 
-	}
+    }
 
-	void BundleInfo::setName(string name){
-		m_name = name;
-	}
-
-	string BundleInfo::getName(){
-		return m_name;
-	}
-
-	void BundleInfo::setPath(string path){
-		m_path = path;
-	}
-	string BundleInfo::getPath(){
-		return m_path;
-	}
-
-	void BundleInfo::setVersion(string version){
-		m_version = version;
-	}
-
-	string BundleInfo::getVersion(){
-		return m_version;
-	}
-
-	BundleInfo* BundleInfo::createBundleInfo(){
-		BundleInfoInternal* newBundleInfo = new BundleInfoInternal();
-		return newBundleInfo;
-	}
+    BundleInfo* BundleInfo::createBundleInfo()
+    {
+        BundleInfoInternal* newBundleInfo = new BundleInfoInternal();
+        return newBundleInfo;
+    }
 }

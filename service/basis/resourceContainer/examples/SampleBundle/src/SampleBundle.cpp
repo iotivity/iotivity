@@ -19,6 +19,9 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "SampleBundle.h"
+#include "ResourceContainerBundleAPI.h"
+#include "Configuration.h"
+
 
 using namespace RC;
 
@@ -32,23 +35,24 @@ SampleBundle::~SampleBundle()
 {
 }
 
-void SampleBundle::activateBundle(ResourceContainerInternal resourceContainer)
+void SampleBundle::activateBundle(ResourceContainerBundleAPI* resourceContainer)
 {
     std::cout << "SampleBundle::activateBundle called" << std::endl;
 
     m_ResourceContainer = resourceContainer;
 
     // parse configuration, instantiate resource and register resources
-    ConfigParam configParam = m_ResourceContainer.getConfiguration(CONFIG_RESOURCES, "oic.bundle.sample");
+    Configuration::configInfo config;
+  //  m_ResourceContainer->getConfiguration(ConfigKey::CONFIG_RESOURCES, "oic.bundle.sample", &config);
 
     std::cout << "Resource Information" << std::endl;
-    for (int i = 0; i < configParam.size(); i++)
-    {
-        for (map <string, string>::iterator itor = configParam[i].begin(); itor != configParam[i].end();
-             itor++)
-
-            cout << "key : " << itor->first << " | value : " << itor->second << endl;
-    }
+    // for (int i = 0; i < configParam.size(); i++)
+    //{
+    //     for (map <string, string>::iterator itor = configParam[i].begin(); itor != configParam[i].end();
+    //        itor++)
+    //
+    //       cout << "key : " << itor->first << " | value : " << itor->second << endl;
+    // }
 
     // createResource();
 }
@@ -73,9 +77,8 @@ void SampleBundle::destroyResource()
     //std::cout << "resourceContainer.unregisterResource()" << std::endl;
 }
 
-extern "C" void externalActivateBundle(ResourceContainerInternal resourceContainer)
+extern "C" void externalActivateBundle(ResourceContainerBundleAPI* resourceContainer)
 {
-    printf("External activate\n");
     bundle = new SampleBundle();
     bundle->activateBundle(resourceContainer);
 }
@@ -86,5 +89,4 @@ extern "C" void externalDeactivateBundle()
     {
         bundle->deactivateBundle();
     }
-    printf("External deactivate\n");
 }

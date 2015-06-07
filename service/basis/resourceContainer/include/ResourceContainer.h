@@ -26,6 +26,8 @@
 #include <vector>
 #include <map>
 
+#include "BundleInfo.h"
+
 #include "rapidxml/rapidxml.hpp"
 #include "rapidxml/rapidxml_print.hpp"
 
@@ -33,20 +35,8 @@ using namespace std;
 
 namespace RC
 {
-    /*
-     * Describes a bundle with resources, that can be loaded dynamically.
-     */
-    class BundleInfo
-    {
-        public:
-            BundleInfo();
-            virtual ~BundleInfo();
-        public:
-            string id, name, path, version;
 
-    };
-
-    // Will be provided by the resource builder
+    // placeholder
     class Resource
     {
 
@@ -54,55 +44,24 @@ namespace RC
 
     class ResourceContainer
     {
-        public:
-            ResourceContainer();
-            virtual ~ResourceContainer();
-            virtual void init() = 0;
-            virtual void registerBundle(BundleInfo bundleinfo) = 0;
-            virtual void activateBundle(string id) = 0;
-            virtual void activateBundleByName(string name) = 0;
-            virtual void deactivateBundle(string id) = 0 ;
-            virtual void deactivateBundleByName(string id) = 0;
-            virtual vector<Resource *> listBundleResources(string id) = 0;
-    };
+    public:
+        ResourceContainer();
+        virtual ~ResourceContainer();
+        virtual void init() = 0;
+        virtual void init(string configFile) = 0;
+        virtual void registerBundle(BundleInfo* bundleinfo) = 0;
+        virtual void unregisterBundle(BundleInfo* bundleinfo) = 0;
+        virtual void unregisterBundle(int id) = 0;
+        virtual void activateBundle(int id) = 0;
+        virtual void deactivateBundle(int id) = 0;
+        virtual void activateBundleByName(string name) = 0;
+        virtual void deactivateBundleByName(string id) = 0;
+        virtual void activateBundle(BundleInfo* bundleInfo) = 0;
+        virtual void deactivateBundle(BundleInfo* bundleInfo) = 0;
+        virtual vector< Resource * > listBundleResources(string id) = 0;
 
-    typedef vector < map < std::string, std::string > > ConfigParam;
-    typedef enum { CONFIG_COMMON, CONFIG_BUNDLES, CONFIG_RESOURCES } ConfigKey;
-
-    class ResourceContainerInternal : public ResourceContainer
-    {
-        public:
-            ResourceContainerInternal();
-            virtual ~ResourceContainerInternal();
-            void registerResource(Resource *resource);
-            void unregisterResource(Resource *resource);
-
-            ConfigParam getConfiguration(string configKey);
-            ConfigParam getConfiguration(ConfigKey configKey, string id = "");
-
-            void init();
-            void registerBundle(BundleInfo bundleinfo);
-            void activateBundle(string id);
-            void activateBundleByName(string name);
-            void deactivateBundle(string id);
-            void deactivateBundleByName(string name);
-            vector<Resource *> listBundleResources(string id);
-
-        private:
-            void getConfigDocument(std::string pathConfigFile, std::string *pConfigData);
-            void getConfigBundleData(rapidxml::xml_node< char > *configData, string BundleId,
-                                     ConfigParam *pConfigOutput);
-            void getConfigResourceData(rapidxml::xml_node< char > *configData, string BundleId,
-                                       ConfigParam *pConfigOutput);
-            void getCurrentPath(std::string *path);
-    };
-
-    // TBD
-    class InputPropertyDescriptor
-    {
-
+        static ResourceContainer* getInstance();
     };
 }
-
 
 #endif /* RESOURCECONTAINER_H_ */

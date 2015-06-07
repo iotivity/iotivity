@@ -23,19 +23,24 @@
 
 using namespace RC;
 
-BundleActivator::BundleActivator(){
+namespace RC{
+    BundleActivator::BundleActivator()
+    {
 
-}
+    }
 
+    BundleActivator::~BundleActivator()
+    {
 
-BundleActivator::~BundleActivator(){
+    }
 
-}
+    void BundleActivator::activateBundle(ResourceContainerBundleAPI* resourceContainer)
+    {
 
-void BundleActivator::activateBundle(ResourceContainerInternal resourceContainer){
+    }
 
-}
+    void BundleActivator::deactivateBundle()
+    {
 
-void BundleActivator::deactivateBundle(){
-
+    }
 }

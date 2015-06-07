@@ -18,34 +18,25 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef BUNDLEINFO_H_
-#define BUNDLEINFO_H_
-
-#include <string>
-
-using namespace std;
+#include "ResourceContainer.h"
+#include "ResourceContainerImpl.h"
 
 namespace RC
 {
-    /*
-     * Describes a bundle with resources, that can be loaded dynamically.
-     */
-    class BundleInfo
+
+    ResourceContainer::ResourceContainer()
     {
-    public:
-        BundleInfo();
-        virtual ~BundleInfo();
-        virtual void setID(string name) = 0;
-        virtual string getID() = 0;
-        virtual void setPath(string path) = 0;
-        virtual string getPath() = 0;
-        virtual void setVersion(string version) = 0;
-        virtual string getVersion() = 0;
-        virtual int getId() = 0; // will be set by container
-        static BundleInfo* createBundleInfo();
-    protected:
-        string m_ID, m_path, m_version;
-    };
+
+    }
+
+    ResourceContainer::~ResourceContainer()
+    {
+
+    }
+
+    ResourceContainer* ResourceContainer::getInstance()
+    {
+        return (ResourceContainer*) ResourceContainerImpl::getImplInstance();
+    }
 }
 
-#endif /* BUNDLEINFO_H_ */

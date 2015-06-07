@@ -18,22 +18,24 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef RESOURCEBUNDLE_H_
-#define RESOURCEBUNDLE_H_
+#ifndef BUNDLEACTIVATOR_H_
+#define BUNDLEACTIVATOR_H_
 
-#include "ResourceContainerInternal.h"
+#include "ResourceContainerBundleAPI.h"
 
 using namespace RC;
 
-namespace RC{
-	class BundleActivator {
+namespace RC
+{
+    class BundleActivator
+    {
 
-	public:
-		BundleActivator();
-		virtual ~BundleActivator();
-		virtual void activateBundle(ResourceContainerInternal resourceContainer);
-		virtual void deactivateBundle();
-	};
+    public:
+        BundleActivator();
+        virtual ~BundleActivator();
+        virtual void activateBundle(ResourceContainerBundleAPI* resourceContainer);
+        virtual void deactivateBundle();
+    };
 }
 
 #endif /* RESOURCEBUNDLE_H_ */

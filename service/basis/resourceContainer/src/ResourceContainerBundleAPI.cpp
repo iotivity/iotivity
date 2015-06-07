@@ -18,29 +18,21 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef RESOURCECONTAINERINTERNAL_H_
-#define RESOURCECONTAINERINTERNAL_H_
-
-#include "ResourceContainer.h"
+#include "ResourceContainerBundleAPI.h"
 
 using namespace RC;
 
-namespace RC{
-	class ResourceContainerInternal: public ResourceContainer {
-		public:
-			ResourceContainerInternal();
-			virtual ~ResourceContainerInternal();
-			void registerResource(Resource* resource);
-			void unregisterResource(Resource* resource);
-			ConfigParam getConfiguration(string configKey);
-			void init();
-			void registerBundle(BundleInfo* bundleinfo);
-			void activateBundle(string id);
-			void activateBundleByName(string name);
-			void deactivateBundle(string id);
-			void deactivateBundleByName(string id);
-			vector<Resource*> listBundleResources(string id);
-	};
-}
+namespace RC
+{
 
-#endif //RESOURCECONTAINERINTERNAL_H_
+    ResourceContainerBundleAPI::ResourceContainerBundleAPI()
+    {
+
+    }
+
+    ResourceContainerBundleAPI::~ResourceContainerBundleAPI()
+    {
+
+    }
+
+}
