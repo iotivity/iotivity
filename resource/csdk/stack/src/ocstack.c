@@ -746,7 +746,8 @@ OCStackResult UpdateResponseAddr(OCDevAddr *address, const CARemoteEndpoint_t* e
         address->addr[i] = atoi(tok);
     }
 
-    memcpy(&address->addr[4], &endPoint->addressInfo.IP.port, sizeof(uint16_t));
+    address->addr[4] = (uint8_t)endPoint->addressInfo.IP.port;
+    address->addr[5] = (uint8_t)(endPoint->addressInfo.IP.port >> 8);
     ret = OC_STACK_OK;
 
 exit:
