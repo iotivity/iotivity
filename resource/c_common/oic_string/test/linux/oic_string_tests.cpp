@@ -463,7 +463,7 @@ TEST(StringTests, StrcpyPartialZeroSourceLen)
 TEST(StringTests, StrcatPartialShorterSourceLen)
 {
     char target[10] = "Orig";
-    memset(target + sizeof("Orig"), SENTINEL_VALUE, sizeof(target) + sizeof("Orig"));
+    memset(target + sizeof("Orig"), SENTINEL_VALUE, sizeof(target) - sizeof("Orig"));
     char source[] = "123456";
 
     char* result = OICStrcatPartial(target, sizeof(target), source, strlen(source) - 3);
@@ -483,7 +483,7 @@ TEST(StringTests, StrcatPartialShorterSourceLen)
 TEST(StringTests, StrcatPartialEqualSourceLen)
 {
     char target[10] = "Orig";
-    memset(target + sizeof("Orig"), SENTINEL_VALUE, sizeof(target) + sizeof("Orig"));
+    memset(target + sizeof("Orig"), SENTINEL_VALUE, sizeof(target) - sizeof("Orig"));
     char source[] = "123";
 
     char* result = OICStrcatPartial(target, sizeof(target), source, strlen(source));
@@ -503,7 +503,7 @@ TEST(StringTests, StrcatPartialEqualSourceLen)
 TEST(StringTests, StrcatPartialLongerSourceLen)
 {
     char target[10] = "Orig";
-    memset(target + sizeof("Orig"), SENTINEL_VALUE, sizeof(target) + sizeof("Orig"));
+    memset(target + sizeof("Orig"), SENTINEL_VALUE, sizeof(target) - sizeof("Orig"));
     char source[] = "123";
 
     char* result = OICStrcatPartial(target, sizeof(target), source, 99);
@@ -522,7 +522,7 @@ TEST(StringTests, StrcatPartialLongerSourceLen)
 TEST(StringTests, StrcatPartialZeroSourceLen)
 {
     char target[10] = "Orig";
-    memset(target + sizeof("Orig"), SENTINEL_VALUE, sizeof(target) + sizeof("Orig"));
+    memset(target + sizeof("Orig"), SENTINEL_VALUE, sizeof(target) - sizeof("Orig"));
     char source[] = "123";
 
     char* result = OICStrcatPartial(target, sizeof(target), source, 0);
