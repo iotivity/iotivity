@@ -100,6 +100,11 @@ extern "C"
 #define CA_OPTION_ACCEPT 17
 #define CA_OPTION_LOCATION_QUERY 20
 
+/*
+ * @brief bit mask to support CA_IPV4, CA_IPV6, CA_EDR, CA_LE, and CA_RA transport types
+ */
+#define CA_TRANSPORT_TYPE_BITMASK 0x1f
+
 /**
  * @brief Payload information from resource model
  */

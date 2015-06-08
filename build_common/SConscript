@@ -77,8 +77,7 @@ help_vars.Add(BoolVariable('VERBOSE', 'Show compilation', False))
 help_vars.Add(BoolVariable('RELEASE', 'Build for release?', True)) # set to 'no', 'false' or 0 for debug
 help_vars.Add(EnumVariable('TARGET_OS', 'Target platform', host, host_target_map[host]))
 
-if target_os == 'linux':
-	help_vars.Add(BoolVariable('WITH_RA', 'Build with Remote Access module', False))
+help_vars.Add(BoolVariable('WITH_RA', 'Build with Remote Access module', False))
 
 if target_os in targets_disallow_multitransport:
     help_vars.Add(ListVariable('TARGET_TRANSPORT', 'Target transport', 'IP', ['BT', 'BLE', 'IP']))

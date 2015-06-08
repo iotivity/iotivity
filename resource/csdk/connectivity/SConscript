@@ -22,10 +22,10 @@ if target_os in targets_disallow_multitransport:
         Exit(1)
 
 if 'ALL' in transport:
+	if with_ra == True:
+		env.AppendUnique(CPPDEFINES = ['RA_ADAPTER'])
 	if target_os == 'linux':
 		env.AppendUnique(CPPDEFINES = ['IP_ADAPTER','NO_EDR_ADAPTER','NO_LE_ADAPTER'])
-		if with_ra == True:
-			env.AppendUnique(CPPDEFINES = ['RA_ADAPTER'])
 	elif target_os == 'tizen':
 		env.AppendUnique(CPPDEFINES = ['IP_ADAPTER','EDR_ADAPTER','LE_ADAPTER'])
 	elif target_os in['darwin','ios']:
@@ -69,6 +69,9 @@ else:
 env.SConscript('./src/SConscript')
 
 if build_sample == 'ON':
-	if target_os in ['linux', 'arduino', 'android']:
-		env.SConscript('./samples/' + target_os + '/SConscript')
+	if target_os in ['linux', 'arduino', 'android', 'darwin']:
+		target_path=target_os
+		if target_os == 'darwin':
+			target_path='linux'
+		env.SConscript('./samples/' + target_path + '/SConscript')
 	

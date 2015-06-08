@@ -63,24 +63,6 @@ CAResult_t CAInitializeRA(CARegisterConnectivityCallback registerCallback,
 CAResult_t CAStartRA();
 
 /**
- * @brief Start listening server for receiving multicast search requests
- * Transport Specific Behavior:
- * RA Starts Multicast Server on a particular interface and prefixed port number and
- * as per OIC Specification.
- * @return  #CA_STATUS_OK or Appropriate error code
- */
-CAResult_t CAStartRAListeningServer();
-
-/**
- * @brief Start discovery servers for receiving multicast advertisements
- * Transport Specific Behavior:
- * RA Starts Start multicast server on a particular interface and prefixed port
- * number as per OIC Specification
- * @return  #CA_STATUS_OK or Appropriate error code
- */
-CAResult_t CAStartRADiscoveryServer();
-
-/**
  * @brief Sends data to the endpoint using the adapter connectivity.
  * @param   endpoint    [IN]    Remote Endpoint information (like ipaddress , port,
  * reference uri and transport type) to which the unicast data has to be sent.
@@ -93,15 +75,6 @@ int32_t CASendRAUnicastData(const CARemoteEndpoint_t *endpoint, const void *data
                             uint32_t dataLen);
 
 /**
- * @brief Sends Multicast data to the endpoint using the RA connectivity.
- * @param   data        [IN]    Data which required to be sent.
- * @param   dataLen     [IN]    Size of data to be sent.
- * @return The number of bytes sent on the network. Return value equal to -1 indicates error.
- * @remarks dataLen must be > 0.
- */
-int32_t CASendRAMulticastData(const void *data, uint32_t dataLen);
-
-/**
  * @brief Get RA Connectivity network information
  * @param   info        [OUT]   Local connectivity information structures
  * @param   size        [OUT]   Number of local connectivity structures.
@@ -111,13 +84,7 @@ int32_t CASendRAMulticastData(const void *data, uint32_t dataLen);
 CAResult_t CAGetRAInterfaceInformation(CALocalConnectivity_t **info, uint32_t *size);
 
 /**
- * @brief Read Synchronous API callback.
- * @return  #CA_STATUS_OK or Appropriate error code
- */
-CAResult_t CAReadRAData();
-
-/**
- * @brief Stops Unicast, Multicast servers and close the sockets.
+ * @brief Stops RA server and de-register XMPP callback listeners
  * @return  #CA_STATUS_OK or Appropriate error code
  */
 CAResult_t CAStopRA();
@@ -128,6 +95,14 @@ CAResult_t CAStopRA();
  * @return  NONE
  */
 void CATerminateRA();
+
+/**
+ * These functions are not applicable to Remote Access adapter
+ */
+int32_t CASendRAMulticastData(const void *data, uint32_t dataLen);
+CAResult_t CAStartRAListeningServer();
+CAResult_t CAStartRADiscoveryServer();
+CAResult_t CAReadRAData();
 
 #ifdef __cplusplus
 } /* extern "C" */

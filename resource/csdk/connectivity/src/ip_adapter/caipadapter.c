@@ -408,6 +408,7 @@ CAResult_t CAStartIP()
     if (false == retVal)
     {
         OIC_LOG(DEBUG, IP_ADAPTER_TAG, "IP is not Connected");
+        // TODO: is this a bug?
         return CA_STATUS_OK;
     }
 

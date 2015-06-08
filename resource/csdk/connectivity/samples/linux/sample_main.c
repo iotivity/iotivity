@@ -913,8 +913,9 @@ void select_network()
     printf("\n=============================================\n");
     printf("\tselect network\n");
     printf("IPv4 : 0\n");
-    printf("EDR  : 2\n");
-    printf("LE   : 3\n");
+    printf("EDR : 2\n");
+    printf("LE : 3\n");
+    printf("RA : 4\n");
     printf("select : ");
 
     char buf[MAX_BUF_LEN] = { 0 };
@@ -925,7 +926,7 @@ void select_network()
 
     int number = buf[0] - '0';
 
-    if (number < 0 || number > 3)
+    if (number < 0 || number > 4)
     {
         printf("Invalid network type\n");
         return;
@@ -951,6 +952,7 @@ void unselect_network()
     printf("IPv4 : 0\n");
     printf("EDR : 2\n");
     printf("LE : 3\n");
+    printf("RA : 4\n");
     printf("select : ");
 
     char buf[MAX_BUF_LEN] = { 0 };
@@ -961,7 +963,7 @@ void unselect_network()
 
     int number = buf[0] - '0';
 
-    if (number < 0 || number > 3)
+    if (number < 0 || number > 4)
     {
         printf("Invalid network type\n");
         return;
@@ -1059,8 +1061,13 @@ void get_network_info()
         {
             printf("Address: %s\n", tempInfo[index].addressInfo.LE.leMacAddress);
         }
-        printf("Secured: %s\n\n", tempInfo[index].isSecured ? "true" : "false");
+        else if (CA_RA == tempInfo[index].type)
+        {
+            printf("Jabber ID: %s\n", tempInfo[index].addressInfo.RA.jabberID);
+        }
+        printf("Secured: %d\n\n", tempInfo[index].isSecured);
 
+        // TODO: determine what this is doing and why it's only checking IP port, should move to "if (CA_IPV4)" above?
         if (tempInfo[index].isSecured)
         {
             g_local_secure_port = tempInfo[index].addressInfo.IP.port;

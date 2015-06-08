@@ -29,6 +29,7 @@ SConscript(env.get('SRC_DIR') + '/resource/third_party_libs.scons', 'lib_env')
 liboctbstack_env = lib_env.Clone()
 
 target_os = env.get('TARGET_OS')
+with_ra = env.get('WITH_RA')
 # As in the source code, it includes arduino Time library (C++)
 # It requires compile the .c with g++
 if target_os == 'arduino':
@@ -65,8 +66,10 @@ if target_os not in ['windows', 'winrt']:
 
 liboctbstack_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 
-if target_os in ['android', 'linux', 'tizen']:
+if target_os in ['android', 'linux','tizen']:
 	liboctbstack_env.AppendUnique(LIBS = ['connectivity_abstraction'])
+	if with_ra:
+		liboctbstack_env.AppendUnique(LIBS = ['ra_xmpp'])
 liboctbstack_env.AppendUnique(LIBS = ['coap', 'm'])
 
 if target_os == 'tizen':

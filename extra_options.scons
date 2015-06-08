@@ -32,3 +32,5 @@ target_arch = env.get('TARGET_ARCH')
 src_dir = env.get('SRC_DIR')
 
 env.SConscript('extlibs/cereal/SConscript')
+
+env.SConscript('extlibs/raxmpp/SConscript')

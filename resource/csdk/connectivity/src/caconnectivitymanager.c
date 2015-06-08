@@ -274,7 +274,7 @@ CAResult_t CASelectNetwork(const uint32_t interestedNetwork)
         return CA_STATUS_NOT_INITIALIZED;
     }
 
-    if (!(interestedNetwork & 0xf))
+    if (!(interestedNetwork & CA_TRANSPORT_TYPE_BITMASK))
     {
         return CA_NOT_SUPPORTED;
     }
@@ -317,7 +317,7 @@ CAResult_t CAUnSelectNetwork(const uint32_t nonInterestedNetwork)
         return CA_STATUS_NOT_INITIALIZED;
     }
 
-    if (!(nonInterestedNetwork & 0xf))
+    if (!(nonInterestedNetwork & CA_TRANSPORT_TYPE_BITMASK))
     {
         return CA_NOT_SUPPORTED;
     }

@@ -40,7 +40,10 @@ void response_handler(CARemoteEndpoint_t* object, CAResponseInfo_t* responseInfo
 void error_handler(const CARemoteEndpoint_t *object, const CAErrorInfo_t* errorInfo);
 
 CAResult_t checkGetNetworkInfo();
-CAResult_t checkSelectNetwork();
+CAResult_t checkSelectNetwork(CATransportType_t transportType);
+void createRemoteEndPoint(char* uri, CATransportType_t transportType, CARemoteEndpoint_t** endPoint);
+void destroyRemoteEndPoint(CARemoteEndpoint_t* endPoint);
+
 
 
 
@@ -214,20 +217,11 @@ TEST_F(CATests, CreateRemoteEndpointTestValues)
 {
     uri = (char *) URI;
 
-    CACreateRemoteEndpoint(uri, CA_IPV4, &tempRep);
+    createRemoteEndPoint(uri, CA_IPV4, &tempRep);
+#ifdef RA_ADAPTER
+    createRemoteEndPoint(uri, CA_RA, &tempRep);
+#endif
 
-    EXPECT_TRUE(tempRep != NULL);
-
-    if (tempRep != NULL)
-    {
-        EXPECT_STRNE(NULL, tempRep->resourceUri);
-    }
-
-    if (tempRep != NULL)
-    {
-        CADestroyRemoteEndpoint(tempRep);
-        tempRep = NULL;
-    }
 }
 
 // check return value when uri is NULL
@@ -248,12 +242,32 @@ TEST_F(CATests, CreateRemoteEndpointTestBad)
 TEST_F(CATests, CreateRemoteEndpointTestWithNullUri)
 {
     uri = NULL;
-    CACreateRemoteEndpoint(uri, CA_IPV4, &tempRep);
+    createRemoteEndPoint(uri, CA_IPV4, &tempRep);
+#ifdef RA_ADAPTER
+    createRemoteEndPoint(uri, CA_RA, &tempRep);
+#endif
+
+}
+
+void createRemoteEndPoint(char* uri, CATransportType_t transportType, CARemoteEndpoint_t** endPoint)
+{
+    CACreateRemoteEndpoint(uri, transportType, endPoint);
+
+    if (uri != NULL)
+    {
+        EXPECT_TRUE(tempRep != NULL);
+    }
 
     if (tempRep != NULL)
     {
-        EXPECT_STREQ(NULL, tempRep->resourceUri);
-
+        if (uri != NULL)
+        {
+            EXPECT_STRNE(NULL, tempRep->resourceUri);
+        }
+        else
+        {
+            EXPECT_STREQ(NULL, tempRep->resourceUri);
+        }
     }
 
     if (tempRep != NULL)
@@ -261,6 +275,7 @@ TEST_F(CATests, CreateRemoteEndpointTestWithNullUri)
         CADestroyRemoteEndpoint(tempRep);
         tempRep = NULL;
     }
+
 }
 
 // CADestroyRemoteEndpoint TC
@@ -269,12 +284,23 @@ TEST_F(CATests, DestroyRemoteEndpointTest)
 {
     uri = (char *) URI;
     CACreateRemoteEndpoint(uri, CA_IPV4, &tempRep);
+    destroyRemoteEndPoint(tempRep);
+#ifdef RA_ADAPTER
+    CACreateRemoteEndpoint(uri, CA_RA, &tempRep);
+    destroyRemoteEndPoint(tempRep);
+#endif
 
-    CADestroyRemoteEndpoint(tempRep);
+}
+
+void destroyRemoteEndPoint(CARemoteEndpoint_t* endPoint)
+{
+    CADestroyRemoteEndpoint(endPoint);
+
     tempRep = NULL;
 
     char * check = (char *) "destroy success";
     EXPECT_STREQ(check, "destroy success");
+
 }
 
 // CAGerateToken TC
@@ -626,22 +652,30 @@ TEST_F(CATests, AdvertiseResourceTest)
 // check return value
 TEST_F(CATests, SelectNetworkTestGood)
 {
-    CAResult_t res = checkSelectNetwork();
+    //Selecting IP adapter
+    CAResult_t res = checkSelectNetwork(CA_IPV4);
     EXPECT_EQ(CA_STATUS_OK, res);
+
+#ifdef RA_ADAPTER
+    //Selecting RA adapter
+    res = checkSelectNetwork(CA_RA);
+    EXPECT_EQ(CA_STATUS_OK, res);
+#endif
+
 }
 
-CAResult_t checkSelectNetwork()
+CAResult_t checkSelectNetwork(CATransportType_t transportType)
 {
-    CAResult_t res = CASelectNetwork(CA_IPV4);
+    CAResult_t res = CASelectNetwork(transportType);
 
     if (CA_STATUS_OK == res)
     {
-        EXPECT_EQ(CA_STATUS_OK, CAUnSelectNetwork(CA_IPV4));
+        EXPECT_EQ(CA_STATUS_OK, CAUnSelectNetwork(transportType));
         return CA_STATUS_OK;
     }
     if (CA_NOT_SUPPORTED == res)
     {
-        EXPECT_EQ(CA_STATUS_FAILED, CAUnSelectNetwork(CA_IPV4));
+        EXPECT_EQ(CA_STATUS_FAILED, CAUnSelectNetwork(transportType));
         return CA_STATUS_OK;
     }
 

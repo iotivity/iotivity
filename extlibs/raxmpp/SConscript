@@ -1,0 +1,59 @@
+######################################################################
+# raxmpp library build script
+#
+######################################################################
+import os
+import commands
+
+Import('env')
+
+src_dir = env.get('SRC_DIR')
+target_os = env.get('TARGET_OS')
+target_arch = env.get('TARGET_ARCH')
+
+with_ra = env.get('WITH_RA')
+if with_ra:
+	# check 'raxmppl' library, if it doesn't exits, ask user to download it
+	if not os.path.exists('raxmpp'):
+		raxmpp_env = Environment(ENV = os.environ)
+		c = raxmpp_env.Action(['git clone https://gerrit.iotivity.org/gerrit/iotivity-xmpp raxmpp',
+			'cd raxmpp && git checkout master && git pull'
+			])
+	
+		print 'Downloading raxpp library ...'
+		if raxmpp_env.Execute(c):
+			print '''
+	*********************************** Error: ***********************************************
+	* Please download ra_xmpp as following:                    
+	*     $ git clone https://gerrit.iotivity.org/gerrit/iotivity-xmpp extlibs/raxmpp/raxmpp 
+	*     $ cd  extlibs/raxmpp/raxmpp                                              
+	*     $ git checkout master          
+	******************************************************************************************
+	'''
+			Exit(1)
+		else:
+			print 'Download raxmpp library complete'
+
+
+	print 'building with ra_xmpp'
+	build_dir = src_dir + '/extlibs/raxmpp/raxmpp/out/' + target_os + '/' + target_arch + ('/release/' if env.get('RELEASE') else '/debug/')
+
+	os.chdir('raxmpp')
+	sconsflags = ' RELEASE=true' if  env['RELEASE'] else ' RELEASE=false'
+	foo=commands.getoutput('scons external' + sconsflags )
+	print foo
+	foo=commands.getoutput('scons' + sconsflags )
+	print foo
+
+if with_ra:
+	env.AppendUnique(CPPPATH = src_dir+'/extlibs/raxmpp/raxmpp/ra_xmpp/',
+#				LIBS = ['ra_xmpp'],
+				LIBPATH=build_dir,
+				RPATH = build_dir)
+
+#	if target_os in ['darwin']:
+#		env.Install(env['BUILD_DIR'], build_dir+'/libra_xmpp.dylib')
+#	else:
+#		env.Install(env['BUILD_DIR']+'/libra_xmpp.so', build_dir+'/libra_xmpp.so')
+#		env.Install(env['BUILD_DIR']+'/libccfxmpp.so', build_dir+'/libccfxmpp.so')
+#		env.Install(env['BUILD_DIR']+'/libsafec-1.0.so.1', build_dir+'/libsafec-1.0.so.1')

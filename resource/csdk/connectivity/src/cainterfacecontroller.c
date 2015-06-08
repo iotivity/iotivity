@@ -25,6 +25,7 @@
 
 #include "cainterfacecontroller.h"
 #include "caipadapter.h"
+#include "caraadapter.h"
 #include "caedradapter.h"
 #include "caleadapter.h"
 #include "canetworkconfigurator.h"

@@ -19,7 +19,7 @@
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #######################################################
-#	Building RA adapter
+#	Building Remote Access adapter
 #######################################################
 
 Import('env')
@@ -32,8 +32,4 @@ inc_files = env.get('CPPPATH')
 src_dir = './ra_adapter'
 
 #Source files to build in Linux platform
-if target_os == 'linux':
-	env.AppendUnique(CA_SRC=[os.path.join(src_dir, 'caranwmonitor.c')])
-	env.AppendUnique(CA_SRC=[os.path.join(src_dir, 'caraadapter.c')])
-	env.AppendUnique(CA_SRC=[os.path.join(src_dir, 'caraclient.c')])
-	env.AppendUnique(CA_SRC=[os.path.join(src_dir, 'caraserver.c')])
+env.AppendUnique(CA_SRC=[os.path.join(src_dir, 'caraadapter.c')])

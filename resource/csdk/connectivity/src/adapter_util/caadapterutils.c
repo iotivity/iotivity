@@ -205,6 +205,8 @@ CARemoteEndpoint_t *CAAdapterCreateRemoteEndpoint(CATransportType_t type, const 
         {
             strncpy(info->addressInfo.RA.jabberID, address, CA_RAJABBERID_SIZE - 1);
             info->addressInfo.RA.jabberID[CA_RAJABBERID_SIZE - 1] = '\0';
+            //TODO: Update this flag when the security for RA is finalized
+            info->isSecured = 1;
         }
         else
         {
