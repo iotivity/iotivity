@@ -797,7 +797,7 @@ void *ChangeLightRepresentation (void *param)
 #ifdef WITH_PRESENCE
 void *presenceNotificationGenerator(void *param)
 {
-    sleep(5);
+    sleep(10);
     (void)param;
     OCDoHandle presenceNotificationHandles[numPresenceResources];
     OCStackResult res = OC_STACK_OK;
