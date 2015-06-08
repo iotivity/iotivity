@@ -20,6 +20,7 @@
 #include <signal.h>
 #include <thread>
 #include <functional>
+
 #include "server.h"
 #include "sensors.h"
 #include "namedefs.h"
