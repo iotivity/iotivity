@@ -218,6 +218,19 @@ TEST(StackStart, SetPlatformInfoWithNoManufacturerName)
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
+TEST(StackStart, SetPlatformInfoWithZeroLengthManufacturerName)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
+
+    OCPlatformInfo info = {};
+    info.platformID = (char *) "platform_id";
+    info.manufacturerName = (char *) "";
+
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSetPlatformInfo(info));
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
 TEST(StackStart, SetPlatformInfoWithTooLongManufacName)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
