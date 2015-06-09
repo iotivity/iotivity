@@ -63,19 +63,20 @@ samples_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 ######################################################################
 # Source files and Targets
 ######################################################################
-ocserverbasicops = samples_env.Program('ocserverbasicops', ['common.cpp', 'ocserverbasicops.cpp'])
-occlientbasicops = samples_env.Program('occlientbasicops', ['common.cpp', 'occlientbasicops.cpp'])
+print 'Secure Samples Disabled during WIP'
+#ocserverbasicops = samples_env.Program('ocserverbasicops', ['common.cpp', 'ocserverbasicops.cpp'])
+#occlientbasicops = samples_env.Program('occlientbasicops', ['common.cpp', 'occlientbasicops.cpp'])
 
-Alias("samples", [ocserverbasicops, occlientbasicops])
+#Alias("samples", [ocserverbasicops, occlientbasicops])
 
-env.AppendTarget('samples')
+#env.AppendTarget('samples')
 
 src_dir = samples_env.get('SRC_DIR')
 sec_samples_src_dir = src_dir + '/resource/csdk/stack/samples/linux/secure/'
 sec_samples_build_dir = env.get('BUILD_DIR') +'/resource/csdk/stack/samples/linux/secure'
 
-samples_env.Alias("install", samples_env.Install( sec_samples_build_dir, 
+samples_env.Alias("install", samples_env.Install( sec_samples_build_dir,
     sec_samples_src_dir + 'oic_svr_db_server.json'))
-samples_env.Alias("install", samples_env.Install( sec_samples_build_dir, 
+samples_env.Alias("install", samples_env.Install( sec_samples_build_dir,
     sec_samples_src_dir + 'oic_svr_db_client.json'))
 

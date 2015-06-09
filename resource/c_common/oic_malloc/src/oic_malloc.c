@@ -98,6 +98,29 @@ void *OICCalloc(size_t num, size_t size)
 #endif
 }
 
+void *OICRealloc(void* ptr, size_t size)
+{
+    if(size == 0)
+    {
+        OICFree(ptr);
+        return NULL;
+    }
+
+    if(ptr == NULL)
+    {
+        return OICMalloc(size);
+    }
+
+#ifdef ENABLE_MALLOC_DEBUG
+    void* newptr = NULL;
+    newptr = realloc(ptr, size);
+    OIC_LOG_V(INFO, TAG, "realloc: ptr=%p, newptr=%p, size=%u", ptr, newptr, size);
+    return ptr;
+#else
+    return realloc(ptr, size);
+#endif
+}
+
 void OICFree(void *ptr)
 {
 #ifdef ENABLE_MALLOC_DEBUG

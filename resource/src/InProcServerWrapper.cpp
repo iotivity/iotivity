@@ -140,6 +140,7 @@ OCEntityHandlerResult DefaultEntityHandlerWrapper(OCEntityHandlerFlag flag,
                                                   char* uri,
                                                   void * callbackParam)
 {
+    std::cout << "ERICH: Def Entity Handler: "<< entityHandlerRequest->reqJSONPayload<<std::endl;
     OCEntityHandlerResult result = OC_EH_ERROR;
 
     OC::oclog() << "In Default device entity handler wrapper";
@@ -180,6 +181,7 @@ OCEntityHandlerResult EntityHandlerWrapper(OCEntityHandlerFlag flag,
                                            OCEntityHandlerRequest * entityHandlerRequest,
                                            void* callbackParam)
 {
+    std::cout << "ERICH: Entity Handler: "<< entityHandlerRequest->reqJSONPayload<<std::endl;
     OCEntityHandlerResult result = OC_EH_ERROR;
 
     oclog() << "\nIn entity handler wrapper: " << endl;
@@ -549,6 +551,7 @@ namespace OC
             payLoad.copy(response.payload, payLoad.length());
             response.payload[payLoad.length()] = '\0';
             response.payloadSize = payLoad.length() + 1;
+            std::cout << "ERICH: sendResponse: "<<response.payloadSize << "  "<< response.payload << std::endl;
             response.persistentBufferFlag = 0;
 
             response.numSendVendorSpecificHeaderOptions = serverHeaderOptions.size();

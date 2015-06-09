@@ -411,7 +411,7 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
      * Convert JSON Doxm data into binary. This will also validate
      * the Doxm data received.
      */
-    OicSecDoxm_t* newDoxm = JSONToDoxmBin((char *)(ehRequest->reqJSONPayload));
+    OicSecDoxm_t* newDoxm = JSONToDoxmBin(((OCSecurityPayload*)ehRequest->payload)->securityData);
 
     if (newDoxm)
     {

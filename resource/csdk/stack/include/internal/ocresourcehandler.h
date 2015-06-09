@@ -139,8 +139,7 @@ void DeleteDeviceInfo();
 OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
                                            uint8_t filterOn,
                                            const char *filterValue,
-                                           char * out,
-                                           uint16_t *remaining,
+                                           OCDiscoveryPayload* payload,
                                            CATransportAdapter_t adapter);
 
 /**

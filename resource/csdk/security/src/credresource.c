@@ -431,7 +431,7 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
     OCEntityHandlerResult ret = OC_EH_ERROR;
 
     //Get binary representation of json
-    OicSecCred_t * cred  = JSONToCredBin((char *)ehRequest->reqJSONPayload);
+    OicSecCred_t * cred  = JSONToCredBin(((OCSecurityPayload*)ehRequest->payload)->securityData);
 
     if(cred)
     {

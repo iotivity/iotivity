@@ -196,8 +196,7 @@ coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info)
             coap_delete_list(optlist);
             return NULL;
         }
-        size_t lenPayload = info->payload ? strlen(info->payload) : 0;
-        pdu = CAGeneratePDUImpl((code_t)code, optlist, info, info->payload, lenPayload);
+        pdu = CAGeneratePDUImpl((code_t)code, optlist, info, info->payload, info->payloadSize);
         if (NULL == pdu)
         {
             OIC_LOG(ERROR, TAG, "pdu NULL");
@@ -248,7 +247,7 @@ coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode)
 }
 
 coap_pdu_t *CAGeneratePDUImpl(code_t code, coap_list_t *options, const CAInfo_t *info,
-                              const char *payload, size_t payloadSize)
+                              const uint8_t *payload, size_t payloadSize)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     VERIFY_NON_NULL_RET(info, TAG, "info is NULL", NULL);
@@ -308,7 +307,6 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, coap_list_t *options, const CAInfo_t 
 
     if (NULL != payload)
     {
-        OIC_LOG_V(DEBUG, TAG, "add data, payload:%s", payload);
         coap_add_data(pdu, payloadSize, (const unsigned char *) payload);
     }
 
@@ -724,11 +722,12 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *
     outInfo->tokenLength = pdu->hdr->token_length;
 
     // set payload data
-    if (NULL != pdu->data)
+    size_t dataSize;
+    uint8_t *data;
+    if (coap_get_data(pdu, &dataSize, &data))
     {
-        uint32_t payloadLength = strlen((char*) pdu->data);
         OIC_LOG(DEBUG, TAG, "inside pdu->data");
-        outInfo->payload = (char *) OICMalloc(payloadLength + 1);
+        outInfo->payload = (uint8_t *) OICMalloc(dataSize);
         if (NULL == outInfo->payload)
         {
             OIC_LOG(ERROR, TAG, "Out of memory");
@@ -736,8 +735,8 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *
             OICFree(outInfo->token);
             return CA_MEMORY_ALLOC_FAILED;
         }
-        memcpy(outInfo->payload, pdu->data, payloadLength);
-        outInfo->payload[payloadLength] = '\0';
+        memcpy(outInfo->payload, pdu->data, dataSize);
+        outInfo->payloadSize = dataSize;
     }
 
     uint32_t length = strlen(optionResult);

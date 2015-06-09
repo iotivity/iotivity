@@ -50,8 +50,9 @@ OCStackResult SendSRMResponse(const OCEntityHandlerRequest *ehRequest,
         response.requestHandle = ehRequest->requestHandle;
         response.resourceHandle = ehRequest->resource;
         response.ehResult = ehRet;
-        response.payload = (char *)rspPayload;
-        response.payloadSize = (rspPayload ? strlen(rspPayload) : 0);
+        response.payload = (OCPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
+        response.payload->type = PAYLOAD_TYPE_SECURITY;
+        ((OCSecurityPayload*)response.payload)->securityData = rspPayload;
         response.persistentBufferFlag = 0;
 
         return OCDoResponse(&response);

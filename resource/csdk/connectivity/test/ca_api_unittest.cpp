@@ -281,7 +281,8 @@ TEST(SendRequestTest, DISABLED_TC_16_Positive_01)
         CADestroyToken(tempToken);
         FAIL() << "requestData.payload allocation failed";
     }
-    snprintf(requestData.payload, length, NORMAL_INFO_DATA, "a/light");
+    snprintf((char*)requestData.payload, length, NORMAL_INFO_DATA, "a/light");
+    requestData.payloadSize = length + 1;
     requestData.type = CA_MSG_NONCONFIRM;
 
     memset(&requestInfo, 0, sizeof(CARequestInfo_t));
@@ -317,7 +318,8 @@ TEST_F(CATests, SendRequestTestWithNullURI)
         CADestroyToken(tempToken);
         FAIL() << "requestData.payload allocation failed";
     }
-    snprintf(requestData.payload, length, NORMAL_INFO_DATA, "a/light");
+    snprintf((char*)requestData.payload, length, NORMAL_INFO_DATA, "a/light");
+    requestData.payloadSize = length + 1;
     requestData.type = CA_MSG_NONCONFIRM;
 
     memset(&requestInfo, 0, sizeof(CARequestInfo_t));
@@ -362,7 +364,9 @@ TEST(SendResponseTest, DISABLED_TC_19_Positive_01)
     memset(&responseData, 0, sizeof(CAInfo_t));
     responseData.type = CA_MSG_NONCONFIRM;
     responseData.messageId = 1;
-    responseData.payload = (char *) "response payload";
+    responseData.payload = (CAPayload_t)malloc(sizeof("response payload"));
+    memcpy(responseData.payload, "response payload", sizeof("response payload"));
+    responseData.payloadSize = sizeof("response payload");
 
     CAGenerateToken(&tempToken, tokenLength);
     requestData.token = tempToken;
@@ -376,6 +380,7 @@ TEST(SendResponseTest, DISABLED_TC_19_Positive_01)
 
     CADestroyToken(tempToken);
     CADestroyEndpoint(tempRep);
+    free(responseData.payload);
     tempRep = NULL;
 }
 
@@ -388,7 +393,9 @@ TEST(SendResponseTest, DISABLED_TC_20_Negative_01)
     memset(&responseData, 0, sizeof(CAInfo_t));
     responseData.type = CA_MSG_NONCONFIRM;
     responseData.messageId = 1;
-    responseData.payload = (char *) "response payload";
+    responseData.payload = (CAPayload_t)malloc(sizeof("response payload"));
+    memcpy(responseData.payload, "response payload", sizeof("response payload"));
+    responseData.payloadSize = sizeof("response payload");
 
     CAGenerateToken(&tempToken, tokenLength);
     requestData.token = tempToken;
@@ -406,6 +413,7 @@ TEST(SendResponseTest, DISABLED_TC_20_Negative_01)
         CADestroyEndpoint(tempRep);
         tempRep = NULL;
     }
+    free (responseData.payload);
 }
 
 // check return value NULL is passed instead of a valid CAResponseInfo_t address
@@ -432,7 +440,9 @@ TEST(SendNotificationTest, DISABLED_TC_22_Positive_01)
 
     memset(&responseData, 0, sizeof(CAInfo_t));
     responseData.type = CA_MSG_NONCONFIRM;
-    responseData.payload = (char *) "Temp Notification Data";
+    responseData.payload = (CAPayload_t)malloc(sizeof("Temp Notification Data"));
+    memcpy(responseData.payload, "Temp Notification Data", sizeof("Temp Notification Data"));
+    responseData.payloadSize = sizeof("Temp Notification Data");
 
     CAGenerateToken(&tempToken, tokenLength);
     requestData.token = tempToken;
@@ -450,6 +460,7 @@ TEST(SendNotificationTest, DISABLED_TC_22_Positive_01)
         CADestroyEndpoint(tempRep);
         tempRep = NULL;
     }
+    free(responseData.payload);
 }
 
 // check return value when uri is NULL
@@ -460,7 +471,10 @@ TEST_F(CATests, SendNotificationTest)
 
     memset(&responseData, 0, sizeof(CAInfo_t));
     responseData.type = CA_MSG_NONCONFIRM;
-    responseData.payload = (char *) "Temp Notification Data";
+    responseData.payload = (CAPayload_t)malloc(sizeof("Temp Notification Data"));
+    ASSERT_TRUE(responseData.payload != NULL);
+    memcpy(responseData.payload, "Temp Notification Data", sizeof("Temp Notification Data"));
+    responseData.payloadSize = sizeof("Temp Notification Data");
 
     CAGenerateToken(&tempToken, tokenLength);
     requestData.token = tempToken;
@@ -478,6 +492,7 @@ TEST_F(CATests, SendNotificationTest)
         CADestroyEndpoint(tempRep);
         tempRep = NULL;
     }
+    free(responseData.payload);
 }
 
 // CASelectNewwork TC

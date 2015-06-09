@@ -22,13 +22,16 @@
 #define OCTYPES_H_
 
 #include "ocstackconfig.h"
-
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
 #ifdef __cplusplus
 #include <string.h>
 
 extern "C" {
 #endif // __cplusplus
 #define WITH_PRESENCE
+#include "ocpresence.h"
 //-----------------------------------------------------------------------------
 // Defines
 //-----------------------------------------------------------------------------
@@ -50,7 +53,7 @@ extern "C" {
 /**
  * Attributes used to form a proper OIC conforming JSON message.
  */
-#define OC_RSRVD_OC                     "oic"
+//#define OC_RSRVD_OC                     "oic"
 #define OC_RSRVD_PAYLOAD                "payload"
 #define OC_RSRVD_HREF                   "href"
 #define OC_RSRVD_PROPERTY               "prop"
@@ -498,53 +501,6 @@ typedef struct OCHeaderOption
 } OCHeaderOption;
 
 /**
- * Incoming requests handled by the server. Requests are passed in as a parameter to the
- * @ref OCEntityHandler callback API.
- * @brief The @ref OCEntityHandler callback API must be implemented in the application in order
- * to receive these requests.
- */
-typedef struct
-{
-    // Associated resource
-    OCResourceHandle resource;
-    OCRequestHandle requestHandle;
-    // the REST method retrieved from received request PDU
-    OCMethod method;
-    // resource query send by client
-    char * query;
-    // Information associated with observation - valid only when OCEntityHandler
-    // flag includes OC_OBSERVE_FLAG
-    OCObservationInfo obsInfo;
-    // An array of the received vendor specific header options
-    uint8_t numRcvdVendorSpecificHeaderOptions;
-    OCHeaderOption * rcvdVendorSpecificHeaderOptions;
-    // reqJSON is retrieved from the payload of the received request PDU
-    char * reqJSONPayload;
-} OCEntityHandlerRequest;
-
-/**
- * Response from queries to remote servers. Queries are made by calling the @ref OCDoResource API.
- */
-typedef struct
-{
-    /// Address of remote server
-    OCDevAddr devAddr;
-    OCDevAddr *addr;            // backward compatibility (points to devAddr)
-    OCConnectivityType connType;  // backward compatibility
-    /// the is the result of our stack, OCStackResult should contain coap/other error codes;
-    OCStackResult result;
-    /// If associated with observe, this will represent the sequence of notifications from server.
-    uint32_t sequenceNumber;
-    /// resourceURI
-    const char * resourceUri;
-    /// resJSONPayload is retrieved from the payload of the received request PDU
-    const char * resJSONPayload;
-    /// An array of the received vendor specific header options
-    uint8_t numRcvdVendorSpecificHeaderOptions;
-    OCHeaderOption rcvdVendorSpecificHeaderOptions[MAX_HEADER_OPTIONS];
-} OCClientResponse;
-
-/**
  * This structure describes the platform properties. All non-Null properties will be included
  * in a platform discovery request.
  */
@@ -575,6 +531,164 @@ typedef struct
 
 } OCDeviceInfo;
 
+// Enum to describe the type of object held by the OCPayload object
+typedef enum
+{
+    PAYLOAD_TYPE_INVALID,
+    PAYLOAD_TYPE_DISCOVERY,
+    PAYLOAD_TYPE_DEVICE,
+    PAYLOAD_TYPE_PLATFORM,
+    PAYLOAD_TYPE_REPRESENTATION,
+    PAYLOAD_TYPE_SECURITY,
+    PAYLOAD_TYPE_PRESENCE
+} OCPayloadType;
+
+typedef struct
+{
+    // The type of message that was received
+    OCPayloadType type;
+} OCPayload;
+
+typedef enum
+{
+    OCREP_PROP_INT,
+    OCREP_PROP_BOOL,
+    OCREP_PROP_STRING
+}OCRepPayloadPropType;
+
+typedef struct oc_rep_payload_val_t
+{
+    char* name;
+    OCRepPayloadPropType type;
+    union
+    {
+        int64_t i;
+        bool b;
+        char* str;
+        void* v;
+    };
+    struct oc_rep_payload_val_t* next;
+
+} OCRepPayloadValue;
+
+typedef struct payload_str_ll
+{
+    struct payload_str_ll *next;
+    char* value;
+} OCStringLL;
+
+// used for get/set/put/observe/etc representations
+typedef struct oc_rep_payload_t
+{
+    OCPayloadType type;
+    char* uri;
+    OCStringLL* types;
+    OCStringLL* interfaces;
+    OCRepPayloadValue* values;
+    struct oc_rep_payload_t* next;
+} OCRepPayload;
+
+typedef struct rsrc_t OCResource;
+
+// used inside a discovery payload
+typedef struct oc_res_payload_t
+{
+    char* uri;
+    uint8_t* sid;
+    OCStringLL* types;
+    OCStringLL* interfaces;
+    uint8_t bitmap;
+    bool secure;
+    uint16_t port;
+    struct oc_res_payload_t* next;
+} OCResourcePayload;
+
+typedef struct
+{
+    OCPayloadType type;
+    OCResourcePayload* resources;
+} OCDiscoveryPayload;
+
+typedef struct
+{
+    OCPayloadType type;
+    char* uri;
+    uint8_t* sid;
+    char* deviceName;
+    char* specVersion;
+    char* dataModelVersion;
+} OCDevicePayload;
+
+typedef struct
+{
+    OCPayloadType type;
+    char* uri;
+    OCPlatformInfo info;
+} OCPlatformPayload;
+
+typedef struct
+{
+    OCPayloadType type;
+    char* securityData;
+} OCSecurityPayload;
+#ifdef WITH_PRESENCE
+typedef struct
+{
+    OCPayloadType type;
+    uint32_t sequenceNumber;
+    uint32_t maxAge;
+    OCPresenceTrigger trigger;
+    char* resourceType;
+} OCPresencePayload;
+#endif
+
+/**
+ * Incoming requests handled by the server. Requests are passed in as a parameter to the
+ * @ref OCEntityHandler callback API.
+ * @brief The @ref OCEntityHandler callback API must be implemented in the application in order
+ * to receive these requests.
+ */
+typedef struct
+{
+    // Associated resource
+    OCResourceHandle resource;
+    OCRequestHandle requestHandle;
+    // the REST method retrieved from received request PDU
+    OCMethod method;
+    // resource query send by client
+    char * query;
+    // Information associated with observation - valid only when OCEntityHandler
+    // flag includes OC_OBSERVE_FLAG
+    OCObservationInfo obsInfo;
+    // An array of the received vendor specific header options
+    uint8_t numRcvdVendorSpecificHeaderOptions;
+    OCHeaderOption * rcvdVendorSpecificHeaderOptions;
+    // the payload from the request PDU
+    OCPayload *payload;
+} OCEntityHandlerRequest;
+
+/**
+ * Response from queries to remote servers. Queries are made by calling the @ref OCDoResource API.
+ */
+typedef struct
+{
+    /// Address of remote server
+    OCDevAddr devAddr;
+    OCDevAddr *addr;            // backward compatibility (points to devAddr)
+    OCConnectivityType connType;  // backward compatibility
+    /// the is the result of our stack, OCStackResult should contain coap/other error codes;
+    OCStackResult result;
+    /// If associated with observe, this will represent the sequence of notifications from server.
+    uint32_t sequenceNumber;
+    /// resourceURI
+    const char * resourceUri;
+    // the payload for the response PDU
+    OCPayload *payload;
+    /// An array of the received vendor specific header options
+    uint8_t numRcvdVendorSpecificHeaderOptions;
+    OCHeaderOption rcvdVendorSpecificHeaderOptions[MAX_HEADER_OPTIONS];
+} OCClientResponse;
+
 typedef struct
 {
     // Request handle is passed to server via the entity handler for each incoming request.
@@ -585,9 +699,7 @@ typedef struct
     // Allow the entity handler to pass a result with the response
     OCEntityHandlerResult  ehResult;
     // this is the pointer to server payload data to be transferred
-    char *payload;
-    // size of server payload data.  I don't think we should rely on null terminated data for size
-    uint16_t payloadSize;
+    OCPayload* payload;
     // An array of the vendor specific header options the entity handler wishes to use in response
     uint8_t numSendVendorSpecificHeaderOptions;
     OCHeaderOption sendVendorSpecificHeaderOptions[MAX_HEADER_OPTIONS];

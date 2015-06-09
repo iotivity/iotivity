@@ -69,7 +69,7 @@ typedef struct
     // resource query send by client
     char query[MAX_QUERY_LENGTH];
     // reqJSON is retrieved from the payload of the received request PDU
-    char reqJSONPayload[MAX_REQUEST_LENGTH];
+    uint8_t payload[MAX_REQUEST_LENGTH];
     // qos is indicating if the request is CON or NON
     OCQualityOfService qos;
     // An array of the received vendor specific header options
@@ -136,26 +136,6 @@ OCStackResult SendDirectStackResponse(const CAEndpoint_t* endPoint, const uint16
         CAToken_t token, uint8_t tokenLength);
 
 #ifdef WITH_PRESENCE
-/**
- * The OCPresenceTrigger enum delineates the three spec-compliant modes for
- * "Trigger." These enum values are then mapped to JSON strings
- * "create", "change", "delete", respectively, before getting encoded into
- * the JSON payload.
- *
- * @enum OC_PRESENCE_TRIGGER_CREATE The creation of a resource is associated with
- *                            this invocation of @ref SendPresenceNotification.
- * @enum OC_PRESENCE_TRIGGER_CHANGE The change/update of a resource is associated
- *                            this invocation of @ref SendPresenceNotification.
- * @enum OC_PRESENCE_TRIGGER_DELETE The deletion of a resource is associated with
- *                            this invocation of @ref SendPresenceNotification.
- *
- */
-typedef enum
-{
-    OC_PRESENCE_TRIGGER_CREATE = 0,
-    OC_PRESENCE_TRIGGER_CHANGE = 1,
-    OC_PRESENCE_TRIGGER_DELETE = 2
-} OCPresenceTrigger;
 
 /**
  * Notify Presence subscribers that a resource has been modified.

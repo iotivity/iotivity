@@ -28,6 +28,7 @@
 #include "ocstack.h"
 #include "logger.h"
 #include "occlient.h"
+#include "ocpayload.h"
 
 static int UNICAST_DISCOVERY = 0;
 static int TEST_CASE = 0;
@@ -42,7 +43,6 @@ static const char * MULTICAST_RESOURCE_DISCOVERY_QUERY = "/oic/res";
 //The following variable determines the interface protocol (IPv4, IPv6, etc)
 //to be used for sending unicast messages. Default set to IPv4.
 static OCConnectivityType OC_CONNTYPE = CT_ADAPTER_IP;
-static std::string putPayload = "{\"oic\":[{\"rep\":{\"power\":15,\"state\":true}}]}";
 static std::string coapServerIP = "255.255.255.255";
 static std::string coapServerPort = "5683";
 static std::string coapServerResource = "/a/light";
@@ -72,6 +72,22 @@ void handleSigInt(int signum)
     {
         gQuitFlag = 1;
     }
+}
+
+OCPayload* putPayload()
+{
+    OCRepPayload* payload = OCRepPayloadCreate();
+
+    if(!payload)
+    {
+        std::cout << "Failed to create put payload object"<<std::endl;
+        std::exit(1);
+    }
+
+    OCRepPayloadSetPropInt(payload, "power", 15);
+    OCRepPayloadSetPropBool(payload, "state", true);
+
+    return (OCPayload*) payload;
 }
 
 static void PrintUsage()
@@ -128,7 +144,7 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
     cbData.cd = NULL;
 
     ret = OCDoResource(&handle, method, query.str().c_str(), 0,
-                       (method == OC_REST_PUT) ? putPayload.c_str() : NULL,
+                       (method == OC_REST_PUT) ? putPayload() : NULL,
                        (OC_CONNTYPE), qos, &cbData, options, numOptions);
 
     if (ret != OC_STACK_OK)
@@ -159,8 +175,8 @@ OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle, OCClientResponse
     if(clientResponse)
     {
         OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
-        OC_LOG_V(INFO, TAG, "JSON = %s =============> Put Response",
-                clientResponse->resJSONPayload);
+        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+        OC_LOG(INFO, TAG, PCF("=============> Put Response"));
     }
     else
     {
@@ -179,8 +195,8 @@ OCStackApplicationResult postReqCB(void *ctx, OCDoHandle handle, OCClientRespons
     if(clientResponse)
     {
         OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
-        OC_LOG_V(INFO, TAG, "JSON = %s =============> Post Response",
-                clientResponse->resJSONPayload);
+        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+        OC_LOG(INFO, TAG, PCF("=============> Post Response"));
     }
     else
     {
@@ -200,8 +216,8 @@ OCStackApplicationResult deleteReqCB(void *ctx,
     if(clientResponse)
     {
         OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
-        OC_LOG_V(INFO, TAG, "JSON = %s =============> Delete Response",
-                clientResponse->resJSONPayload);
+        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+        OC_LOG(INFO, TAG, PCF("=============> Delete Response"));
     }
     else
     {
@@ -212,6 +228,7 @@ OCStackApplicationResult deleteReqCB(void *ctx,
 
 OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse)
 {
+    printf("ERICH: getReqCB!\n");
     if(clientResponse == NULL)
     {
         OC_LOG(INFO, TAG, "getReqCB received NULL clientResponse");
@@ -225,7 +242,8 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse
 
     OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
     OC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
-    OC_LOG_V(INFO, TAG, "JSON = %s =============> Get Response", clientResponse->resJSONPayload);
+    OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+    OC_LOG(INFO, TAG, PCF("=============> Get Response"));
 
     if(clientResponse->rcvdVendorSpecificHeaderOptions &&
             clientResponse->numRcvdVendorSpecificHeaderOptions)
@@ -261,8 +279,8 @@ OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle handle, OCClientResponse
         OC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
         OC_LOG_V(INFO, TAG, "Callback Context for OBSERVE notification recvd successfully %d",
                 gNumObserveNotifies);
-        OC_LOG_V(INFO, TAG, "JSON = %s =============> Obs Response",
-                clientResponse->resJSONPayload);
+        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+        OC_LOG(INFO, TAG, PCF("=============> Obs Response"));
         gNumObserveNotifies++;
         if (gNumObserveNotifies == 15) //large number to test observing in DELETE case.
         {
@@ -317,8 +335,8 @@ OCStackApplicationResult presenceCB(void* ctx, OCDoHandle handle, OCClientRespon
         OC_LOG_V(INFO, TAG, "NONCE NUMBER: %u", clientResponse->sequenceNumber);
         OC_LOG_V(INFO, TAG, "Callback Context for Presence notification recvd successfully %d",
                 gNumPresenceNotifies);
-        OC_LOG_V(INFO, TAG, "JSON = %s =============> Presence Response",
-                clientResponse->resJSONPayload);
+        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+        OC_LOG(INFO, TAG, PCF("=============> Presence Response"));
         gNumPresenceNotifies++;
         if (gNumPresenceNotifies == 20)
         {
@@ -353,8 +371,10 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
         std::string connectionType = getConnectivityType (clientResponse->connType);
         OC_LOG_V(INFO, TAG, "Discovered on %s", connectionType.c_str());
         OC_LOG_V(INFO, TAG,
-                "Device =============> Discovered %s @ %s:%d",
-                clientResponse->resJSONPayload, clientResponse->devAddr.addr, clientResponse->devAddr.port);
+                "Device =============> Discovered @ %s:%d",
+                clientResponse->devAddr.addr,
+                clientResponse->devAddr.port);
+        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
 
         parseClientResponse(clientResponse);
 
@@ -433,9 +453,8 @@ OCStackApplicationResult PlatformDiscoveryReqCB (void* ctx, OCDoHandle handle,
 
     if(clientResponse)
     {
-        //OC_LOG truncates the response as it is too long.
-        fprintf(stderr, "Discovery response: \n %s\n", clientResponse->resJSONPayload);
-        fflush(stderr);
+        OC_LOG(INFO, TAG, PCF("Discovery Response:"));
+        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
     }
     else
     {
@@ -455,9 +474,8 @@ OCStackApplicationResult DeviceDiscoveryReqCB (void* ctx, OCDoHandle handle,
 
     if(clientResponse)
     {
-        //OC_LOG truncates the response as it is too long.
-        fprintf(stderr, "Discovery response: \n %s\n", clientResponse->resJSONPayload);
-        fflush(stderr);
+        OC_LOG(INFO, TAG, PCF("Discovery Response:"));
+        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
     }
     else
     {
@@ -662,11 +680,13 @@ int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptio
     }
     if (withVendorSpecificHeaderOptions)
     {
+        printf("ERICH: Sending get request\n");
         return (InvokeOCDoResource(query, OC_REST_GET,
                 (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS, getReqCB, options, 2));
     }
     else
     {
+        printf("ERICH: Sending get request 2\n");
         return (InvokeOCDoResource(query, OC_REST_GET,
                 (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS, getReqCB, NULL, 0));
     }

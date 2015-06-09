@@ -34,6 +34,7 @@
 #include "cJSON.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
+#include "ocpayload.h"
 
 /// Module Name
 #include <stdio.h>
@@ -219,57 +220,11 @@ ValidateQuery (const char *query, OCResourceHandle resource,
     return OC_STACK_OK;
 }
 
-
-static OCStackResult BuildRootResourceJSON(OCResource *resource,
-        char * bufferPtr, uint16_t *remaining)
-{
-    OCStackResult ret = OC_STACK_ERROR;
-    cJSON *resObj = NULL;
-    char *jsonStr = NULL;
-    uint16_t jsonLen;
-
-    OC_LOG(INFO, TAG, PCF("Entering BuildRootResourceJSON"));
-    resObj = cJSON_CreateObject();
-
-    if ( ! resObj)
-    {
-        ret = OC_STACK_NO_MEMORY;
-    }
-    else if (resource)
-    {
-        cJSON_AddItemToObject (resObj, OC_RSRVD_HREF, cJSON_CreateString(resource->uri));
-        jsonStr = cJSON_PrintUnformatted (resObj);
-
-        if(!jsonStr)
-        {
-            cJSON_Delete(resObj);
-            return OC_STACK_NO_MEMORY;
-        }
-
-        jsonLen = strlen(jsonStr);
-        if (jsonLen < *remaining)
-        {
-            OICStrcpy(bufferPtr, *remaining, jsonStr);
-            *remaining -= jsonLen;
-            bufferPtr += jsonLen;
-            ret = OC_STACK_OK;
-        }
-    }
-    else
-    {
-        ret = OC_STACK_INVALID_PARAM;
-    }
-
-    cJSON_Delete (resObj);
-    OICFree(jsonStr);
-
-    return ret;
-}
-
-
 static OCStackResult
 HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest, uint8_t filterOn, char *filterValue)
 {
+    return OC_STACK_NOTIMPL;
+    /*
     if(!ehRequest)
     {
         return OC_STACK_INVALID_PARAM;
@@ -357,11 +312,14 @@ HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest, uint8_t filterOn, c
         ret = OCDoResponse(&response);
     }
     return ret;
+    */
 }
 
 static OCStackResult
 HandleBatchInterface(OCEntityHandlerRequest *ehRequest)
 {
+    return OC_STACK_NOTIMPL;
+    /*
     OCStackResult stackRet = OC_STACK_ERROR;
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
     char jsonbuffer[MAX_RESPONSE_LENGTH] = {0};
@@ -426,6 +384,7 @@ HandleBatchInterface(OCEntityHandlerRequest *ehRequest)
         ehRequest->resource = (OCResourceHandle) collResource;
     }
     return stackRet;
+    */
 }
 
 uint8_t GetNumOfResourcesInCollection (OCResource *resource)
@@ -534,7 +493,7 @@ OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
             case STACK_IF_GROUP:
             {
                 OC_LOG_V(INFO, TAG, "IF_COLLECTION PUT with request ::\n%s\n ",
-                        ehRequest->reqJSONPayload);
+                        OC_LOG_PAYLOAD(ehRequest->payload));
                 return BuildCollectionGroupActionJSONResponse(OC_REST_PUT/*flag*/,
                         (OCResource *) ehRequest->resource, ehRequest);
             }
@@ -550,7 +509,7 @@ OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
             case STACK_IF_GROUP:
             {
                 OC_LOG_V(INFO, TAG, "IF_COLLECTION POST with request :: \n%s\n ",
-                        ehRequest->reqJSONPayload);
+                        OC_LOG_PAYLOAD(ehRequest->payload));
                 return BuildCollectionGroupActionJSONResponse(OC_REST_POST/*flag*/,
                         (OCResource *) ehRequest->resource, ehRequest);
             }
@@ -564,7 +523,7 @@ OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
         if(ifQueryParam == STACK_IF_GROUP)
         {
             OC_LOG_V(INFO, TAG, "IF_COLLECTION POST with request :: \n%s\n ",
-                    ehRequest->reqJSONPayload);
+                    OC_LOG_PAYLOAD(ehRequest->payload));
             return BuildCollectionGroupActionJSONResponse(OC_REST_POST/*flag*/,
                     (OCResource *) ehRequest->resource, ehRequest);
         }

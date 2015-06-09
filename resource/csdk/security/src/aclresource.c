@@ -305,7 +305,7 @@ static OCEntityHandlerResult HandleACLPostRequest (const OCEntityHandlerRequest 
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
     // Convert JSON ACL data into binary. This will also validate the ACL data received.
-    OicSecAcl_t* newAcl = JSONToAclBin((char *)(ehRequest->reqJSONPayload));
+    OicSecAcl_t* newAcl = JSONToAclBin(((OCSecurityPayload*)ehRequest->payload)->securityData);
 
     if (newAcl)
     {

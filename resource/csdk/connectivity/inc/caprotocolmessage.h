@@ -85,7 +85,7 @@ CAResult_t CAGetErrorInfoFromPDU(const coap_pdu_t *pdu, CAErrorInfo_t *errorInfo
  * @return  generated pdu
  */
 coap_pdu_t *CAGeneratePDUImpl(code_t code, coap_list_t *options, const CAInfo_t *info,
-                              const char *payload, size_t payloadSize);
+                              const uint8_t *payload, size_t payloadSize);
 
 /**
  * @brief   parse the URI and creates the options

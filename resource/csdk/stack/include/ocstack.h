@@ -118,7 +118,7 @@ OCStackResult OCDoResource(OCDoHandle *handle,
                             OCMethod method,
                             const char *requestUri,
                             const OCDevAddr *destination,
-                            const char *request,
+                            OCPayload* payload,
                             OCConnectivityType connectivityType,
                             OCQualityOfService qos,
                             OCCallbackData *cbData,
@@ -438,7 +438,7 @@ OCStackResult OCNotifyAllObservers(OCResourceHandle handle, OCQualityOfService q
  * @param handle Handle of resource.
  * @param obsIdList List of observation ids that need to be notified.
  * @param numberOfIds Number of observation ids included in obsIdList.
- * @param notificationJSONPayload JSON encoded payload to send in notification.
+ * @param payload OCRepresentationPayload object representing the notification
  * @param qos Desired quality of service of the observation notifications.
  * NOTE: The memory for obsIdList and notificationJSONPayload is managed by the
  * entity invoking the API. The maximum size of the notification is 1015 bytes
@@ -450,7 +450,7 @@ OCStackResult
 OCNotifyListOfObservers (OCResourceHandle handle,
                             OCObservationId  *obsIdList,
                             uint8_t          numberOfIds,
-                            const char    *notificationJSONPayload,
+                            const OCRepPayload *payload,
                             OCQualityOfService qos);
 
 

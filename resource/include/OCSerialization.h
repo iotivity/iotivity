@@ -218,6 +218,7 @@ namespace OC
                     const OCDevAddr& devAddr, std::stringstream& json)
                     : m_clientWrapper(cw), m_devAddr(devAddr)
             {
+                std::cout << "ERICH: IP is "<<ConvertOCAddrToString(OCSecureType::IPv4, 5)<<std::endl;
                 LoadFromJson(json);
             }
 

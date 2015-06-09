@@ -98,7 +98,7 @@ extern "C"
 /**
  * @brief Payload information from resource model
  */
-typedef char *CAPayload_t;
+typedef uint8_t *CAPayload_t;
 
 /**
  * @brief URI for the OIC base.CA considers relative URI as the URI.
@@ -300,6 +300,7 @@ typedef struct
     CAHeaderOption_t *options;  /** Header Options for the request */
     uint8_t numOptions;         /**< Number of Header options */
     CAPayload_t payload;        /**< payload of the request  */
+    size_t payloadSize;         /**< size in bytes of the payload */
     CAURI_t resourceUri;        /**< Resource URI information **/
 } CAInfo_t;
 

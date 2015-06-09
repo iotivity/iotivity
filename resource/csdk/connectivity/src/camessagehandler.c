@@ -370,10 +370,6 @@ static void CAReceivedPacketCallback(const CAEndpoint_t *endpoint, void *data, u
             }
         }
 
-        if (NULL != ReqInfo->info.payload)
-        {
-            OIC_LOG_V(DEBUG, TAG, "Request- payload: %s", ReqInfo->info.payload);
-        }
         OIC_LOG_V(DEBUG, TAG, "Request- code: %d", ReqInfo->method);
         if (NULL != ReqInfo->info.token)
         {
@@ -382,9 +378,6 @@ static void CAReceivedPacketCallback(const CAEndpoint_t *endpoint, void *data, u
                            ReqInfo->info.tokenLength);
         }
 
-        OIC_LOG_V(DEBUG, TAG, "Request- code: %d", ReqInfo->method);
-        OIC_LOG(DEBUG, TAG, "Request- token");
-        OIC_LOG_BUFFER(DEBUG, TAG, (const uint8_t *) ReqInfo->info.token, CA_MAX_TOKEN_LEN);
         OIC_LOG_V(DEBUG, TAG, "Request- msgID : %d", ReqInfo->info.messageId);
         // store the data at queue.
         CAData_t *cadata = NULL;
@@ -435,10 +428,12 @@ static void CAReceivedPacketCallback(const CAEndpoint_t *endpoint, void *data, u
 
         if (NULL != ResInfo->info.payload)
         {
-            OIC_LOG_V(DEBUG, TAG, "Response- payload: %s", ResInfo->info.payload);
+            OIC_LOG_V(DEBUG, TAG, "Response- payload: %p(%u) from %s", ResInfo->info.payload,
+                    ResInfo->info.payloadSize, endpoint->addr);
         }
         OIC_LOG_V(DEBUG, TAG, "Response- code: %d", ResInfo->result);
-        OIC_LOG_V(DEBUG, TAG, "Response- token : %s", ResInfo->info.token);
+        OIC_LOG(DEBUG, TAG, PCF("Response- token:"));
+        OIC_LOG_BUFFER(DEBUG, TAG, (const uint8_t *)ResInfo->info.token, ResInfo->info.tokenLength);
         OIC_LOG_V(DEBUG, TAG, "Response- msgID: %d", ResInfo->info.messageId);
 
         // store the data at queue.

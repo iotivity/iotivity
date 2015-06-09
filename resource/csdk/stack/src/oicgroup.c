@@ -801,26 +801,29 @@ OCStackApplicationResult ActionSetCB(void* context, OCDoHandle handle,
     {
         int idx;
 
-        unsigned char *responseJson;
-        responseJson = (unsigned char *) OICMalloc(
-                (unsigned int) (strlen((char *) clientResponse->resJSONPayload)
-                        + 1));
+        unsigned char *responseJson = NULL;
+        // TODO: Figure out what this does, change implementation
+        //responseJson = (unsigned char *) OICMalloc(
+        //        (unsigned int) (strlen((char *) clientResponse->resJSONPayload)
+        //                + 1));
 
         if( responseJson == NULL )
             return OC_STACK_DELETE_TRANSACTION;
 
         // We need the body of response.
         // Copy the body from the response
-        strcpy((char *) responseJson,
-                ((char *) clientResponse->resJSONPayload + OC_JSON_PREFIX_LEN));
-        idx = strlen((char *) responseJson) - OC_JSON_SUFFIX_LEN;
+        // TODO: Taken out
+        //strcpy((char *) responseJson,
+        //        ((char *) clientResponse->resJSONPayload + OC_JSON_PREFIX_LEN));
+        //idx = strlen((char *) responseJson) - OC_JSON_SUFFIX_LEN;
         // And insert NULL at the end of body.
         (responseJson[idx]) = 0;
 
         OCEntityHandlerResponse response = { 0 };
         response.ehResult = OC_EH_OK;
-        response.payload = (char*)responseJson;
-        response.payloadSize = (unsigned int) strlen((char *) responseJson) + 1;
+        // TODO: Removing payload size, waht goes here?
+        // response.payload = (char*)responseJson;
+        //response.payloadSize = (unsigned int) strlen((char *) responseJson) + 1;
         response.persistentBufferFlag = 0;
         response.requestHandle = (OCRequestHandle) info->ehRequest;
         response.resourceHandle = (OCResourceHandle) info->collResource;
@@ -905,8 +908,10 @@ OCStackResult SendAction(OCDoHandle *handle, const char *targetUri,
     cbdata.cd = NULL;
     cbdata.context = (void*)DEFAULT_CONTEXT_VALUE;
 
-    return OCDoResource(handle, OC_REST_PUT, targetUri,
-            NULL, (char *) action, CT_ADAPTER_IP, OC_NA_QOS, &cbdata, NULL, 0);
+    // TODO: disabled since this is no longer compatible
+    return OC_STACK_NOTIMPL;
+    //return OCDoResource(handle, OC_REST_PUT, targetUri,
+    //        NULL, (char *) action, CT_ADAPTER_IP, OC_NA_QOS, &cbdata, NULL, 0);
 }
 
 OCStackResult DoAction(OCResource* resource, OCActionSet* actionset,
@@ -1048,8 +1053,10 @@ OCStackResult BuildCollectionGroupActionJSONResponse(
 
         char *jsonResponse;
 
-        stackRet = ExtractKeyValueFromRequest((char *) ehRequest->reqJSONPayload,
-                &doWhat, &details);
+        stackRet = OC_STACK_NOTIMPL;
+        // TODO: Fix?
+        //stackRet = ExtractKeyValueFromRequest((char *) ehRequest->reqJSONPayload,
+        //        &doWhat, &details);
 
         if(stackRet != OC_STACK_OK)
         {
@@ -1122,8 +1129,9 @@ OCStackResult BuildCollectionGroupActionJSONResponse(
                     response.ehResult = OC_EH_OK;
                 else
                     response.ehResult = OC_EH_ERROR;
-                response.payload = (char*)buffer;
-                response.payloadSize = bufferLength + 1;
+                // TODO: Fix
+                //response.payload = (char*)buffer;
+                //response.payloadSize = bufferLength + 1;
                 response.persistentBufferFlag = 0;
                 response.requestHandle =
                         (OCRequestHandle) ehRequest->requestHandle;
@@ -1289,8 +1297,9 @@ OCStackResult BuildCollectionGroupActionJSONResponse(
                     response.ehResult = OC_EH_OK;
                 else
                     response.ehResult = OC_EH_ERROR;
-                response.payload = (char *)buffer;
-                response.payloadSize = bufferLength + 1;
+                // TODO: Implement
+                //response.payload = (char *)buffer;
+                //response.payloadSize = bufferLength + 1;
                 response.persistentBufferFlag = 0;
                 response.requestHandle =
                         (OCRequestHandle) ehRequest->requestHandle;
