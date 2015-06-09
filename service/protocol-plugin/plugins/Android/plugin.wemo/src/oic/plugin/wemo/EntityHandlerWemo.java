@@ -23,6 +23,7 @@
 package oic.plugin.wemo;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 
 import org.iotivity.base.EntityHandlerResult;
 import org.iotivity.base.OcException;
@@ -87,19 +88,25 @@ public class EntityHandlerWemo implements OcPlatform.EntityHandler {
                             String type = wemoDevice.getType();
                             if (type.equals(WeMoDevice.SWITCH)) {
                                 String newState = "";
-                                if (resourcerequest
-                                        .getResourceRepresentation()
-                                        .getValueString("power")
-                                        .equals("on")) {
-                                    Activator.mySmartPlug.m_power = "on";
-                                    newState = WeMoDevice.WEMO_DEVICE_ON;
-                                } else if (resourcerequest
-                                        .getResourceRepresentation()
-                                        .getValueString("power")
-                                        .equals("off")) {
-                                    Activator.mySmartPlug.m_power = "off";
-                                    newState = WeMoDevice.WEMO_DEVICE_OFF;
-                                }
+                                try {
+                                    if (resourcerequest
+                                            .getResourceRepresentation()
+                                            .getValue("power")
+                                            .equals("on")) {
+                                        Activator.mySmartPlug.m_power = "on";
+                                        newState = WeMoDevice.WEMO_DEVICE_ON;
+                                    } else if (resourcerequest
+                                                .getResourceRepresentation()
+                                                .getValue("power")
+                                                .equals("off")) {
+                                            Activator.mySmartPlug.m_power = "off";
+                                            newState = WeMoDevice.WEMO_DEVICE_OFF;
+                                        }
+                                    } catch (OcException e) {
+                                        // TODO Auto-generated catch block
+                                        Log.e(TAG, e.getMessage());
+                                    }
+
                                 Activator.mWeMoSDKContext.setDeviceState(
                                         newState, wemoDevice.getUDN());
                             }
@@ -110,12 +117,18 @@ public class EntityHandlerWemo implements OcPlatform.EntityHandler {
                 }
                 response.setErrorCode(200);
                 // representation.setUri("/a/wemo");
-                representation.setValueString("name",
-                        Activator.mySmartPlug.m_name);
-                representation.setValueString("power",
-                        Activator.mySmartPlug.m_power);
-                representation.setValueInt("brightness", 0);
-                representation.setValueInt("color", 0);
+                try {
+                    representation.setValue("name",
+                            Activator.mySmartPlug.m_name);
+                    representation.setValue("power",
+                            Activator.mySmartPlug.m_power);
+                    representation.setValue("brightness", 0);
+                    representation.setValue("color", 0);
+                } catch (OcException e) {
+                    // TODO Auto-generated catch block
+                    Log.e(TAG, e.getMessage());
+                }
+                
                 response.setResourceRepresentation(representation);
                 try {
                     OcPlatform.sendResponse(response);

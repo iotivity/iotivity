@@ -150,7 +150,7 @@ public class Activator extends Activity implements BundleActivator,
                                 .getWeMoDeviceByUDN(udn);
                         if ((listDevice != null) && (listDevice.isAvailable())) {
                             PlatformConfig cfg = new PlatformConfig(
-                                    this,
+                                    getApplicationContext(),
                                     ServiceType.IN_PROC,
                                     ModeType.CLIENT_SERVER, "0.0.0.0", 0,
                                     QualityOfService.LOW);
