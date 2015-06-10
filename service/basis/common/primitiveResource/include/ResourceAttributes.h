@@ -17,21 +17,25 @@
 // limitations under the License.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 #ifndef __RESOURCEATTRIBUTES_H
 #define __RESOURCEATTRIBUTES_H
-
-#include <functional>
-#include <unordered_map>
 
 // To avoid conflict using different boost::variant configuration with OC.
 // It causes compile errors.
 #include <AttributeValue.h>
 
+#include <functional>
+#include <unordered_map>
+
 #include <boost/variant.hpp>
 #include <boost/mpl/contains.hpp>
+#include <boost/mpl/find.hpp>
+#include <boost/mpl/distance.hpp>
+#include <boost/mpl/begin_end.hpp>
 #include <boost/scoped_ptr.hpp>
 
-#include "PrimitiveException.h"
+#include <PrimitiveException.h>
 
 class ResourceAttributes
 {
@@ -47,19 +51,27 @@ private:
         ResourceAttributes
     >;
 
-    template < typename T >
+    template< typename T >
+    using mpl_begin = typename boost::mpl::begin<T>::type;
+
+    template< typename T >
     using enable_if_supported = typename std::enable_if<
             is_supported_type_helper< T >::type::value >::type;
 
-    template < typename VISITOR >
-    class KeyValueVisitorHelper : public boost::static_visitor<> {
+    template< typename T >
+    using disable_if_unsupported = typename std::enable_if<
+            !is_supported_type_helper< T >::type::value >::type;
+
+    template< typename VISITOR >
+    class KeyValueVisitorHelper: public boost::static_visitor< >
+    {
     public:
         KeyValueVisitorHelper(VISITOR& visitor) :
-            m_visitor(visitor)
+                m_visitor( visitor )
         {
         }
 
-        template < typename T >
+        template< typename T >
         void operator()(const std::string& key, const T& value) const
         {
             m_visitor(key, value);
@@ -70,7 +82,7 @@ private:
     };
 
 public:
-    template < typename T >
+    template< typename T >
     using is_supported_type = typename is_supported_type_helper< T >::type;
 
     class Value
@@ -82,8 +94,12 @@ public:
 
         template< typename T, typename = enable_if_supported< T > >
         Value(T&& value) :
-                m_data { new ValueVariant{ std::forward<T>(value) } } {
+                m_data{ new ValueVariant{ std::forward< T >(value) } }
+        {
         }
+
+        Value& operator=(const Value&);
+        Value& operator=(Value&&) = default;
 
         template< typename T, typename = enable_if_supported< T > >
         Value& operator=(T&& rhs)
@@ -94,23 +110,6 @@ public:
 
         Value& operator=(const char*);
         Value& operator=(std::nullptr_t);
-
-        template< typename T, typename = enable_if_supported< T > >
-        bool operator==(const T& rhs) const
-        {
-            try
-            {
-                return get< T >() == rhs;
-            }
-            catch (const BadGetException&)
-            {
-                return false;
-            }
-        }
-
-        bool operator==(const char*) const;
-
-        bool operator==(std::nullptr_t) const;
 
         template< typename T >
         typename std::add_lvalue_reference< const T >::type get() const
@@ -124,6 +123,33 @@ public:
             return checkedGet< T >();
         }
 
+        bool isTypeEqualWith(const Value& rhs) const
+        {
+            return m_data->which() == rhs.m_data->which();
+        }
+
+        template< typename T, enable_if_supported< T >* = nullptr >
+        bool isTypeOf() const
+        {
+            using iter = boost::mpl::find< ValueVariant::types, int >::type;
+
+            return m_data->which()
+                    == boost::mpl::distance< mpl_begin< ValueVariant::types >, iter >::value;
+        }
+
+        template< typename T, disable_if_unsupported< T >* = nullptr >
+        bool isTypeOf() const
+        {
+            return false;
+        }
+
+        friend bool operator==(const Value&, const Value&);
+
+        template< typename T >
+        friend bool operator==(const Value&, const T&);
+
+        bool operator==(const char*) const;
+
     private:
         template< typename T, typename = enable_if_supported< T > >
         typename std::add_lvalue_reference< T >::type checkedGet() const
@@ -135,6 +161,19 @@ public:
             catch (const boost::bad_get&)
             {
                 throw BadGetException{ "" };
+            }
+        }
+
+        template< typename T, typename U >
+        bool equals(const U& rhs) const
+        {
+            try
+            {
+                return get< T >() == rhs;
+            }
+            catch (const BadGetException&)
+            {
+                return false;
             }
         }
 
@@ -170,17 +209,21 @@ public:
 
     bool erase(const std::string&);
 
+    bool contains(const std::string&) const;
     bool empty() const;
     size_t size() const;
 
+    friend bool operator==(const ResourceAttributes&, const ResourceAttributes&);
+
 private:
-    template < typename VISITOR >
-    void visit(VISITOR& visitor) const {
-        KeyValueVisitorHelper<VISITOR> helper { visitor };
+    template< typename VISITOR >
+    void visit(VISITOR& visitor) const
+    {
+        KeyValueVisitorHelper< VISITOR > helper{ visitor };
 
         for (const auto& i : m_keyValues)
         {
-            boost::variant<const std::string&> key { i.first };
+            boost::variant< const std::string& > key{ i.first };
             boost::apply_visitor(helper, key, *i.second.m_data);
         }
     }
@@ -191,34 +234,47 @@ private:
     friend class ResourceAttributesConverter;
 };
 
-template< typename T, typename = typename std::enable_if<
-         ResourceAttributes::is_supported_type< T >::value >::type >
-bool operator==(const T& lhs, const ResourceAttributes::Value& rhs)
-{
-    return rhs == lhs;
-}
-
 template< typename T > struct ResourceAttributes::is_supported_type_helper
 {
     using type = boost::mpl::contains<ValueVariant::types, typename std::decay< T >::type>;
 };
 
+template< typename T >
+bool operator==(const ResourceAttributes::Value& lhs, const T& rhs)
+{
+    using TypeChecker = typename std::enable_if<
+            ResourceAttributes::is_supported_type< T >::value >::type;
+
+    return lhs.equals< T >(rhs);
+}
+
+template< typename T >
+bool operator==(const T& lhs, const ResourceAttributes::Value& rhs)
+{
+    return rhs == lhs;
+}
+
+bool operator==(const char* lhs, const ResourceAttributes::Value& rhs);
+
 class ResourceAttributes::KeyValuePair
 {
 private:
-    class KeyVisitor : public boost::static_visitor<const std::string&> {
+    class KeyVisitor: public boost::static_visitor< const std::string& >
+    {
     public:
         result_type operator()(iterator*) const;
         result_type operator()(const_iterator*) const;
     };
 
-    class ValueVisitor : public boost::static_visitor<Value&> {
+    class ValueVisitor: public boost::static_visitor< Value& >
+    {
     public:
         result_type operator()(iterator*);
         result_type operator()(const_iterator*);
     };
 
-    class ConstValueVisitor : public boost::static_visitor<const Value&> {
+    class ConstValueVisitor: public boost::static_visitor< const Value& >
+    {
     public:
         result_type operator()(iterator*) const;
         result_type operator()(const_iterator*) const;
@@ -231,12 +287,12 @@ public:
 
 private:
     KeyValuePair(const KeyValuePair&) = default;
-    KeyValuePair(boost::variant<iterator*, const_iterator*>&&);
+    KeyValuePair(boost::variant< iterator*, const_iterator* >&&);
 
     KeyValuePair& operator=(const KeyValuePair&) = default;
 
 private:
-    boost::variant<iterator*, const_iterator*> m_iterRef;
+    boost::variant< iterator*, const_iterator* > m_iterRef;
 
     KeyVisitor m_keyVisitor;
     ValueVisitor m_valueVisitor;

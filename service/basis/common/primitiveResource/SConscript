@@ -1,0 +1,85 @@
+#******************************************************************
+#
+# Copyright 2015 Samsung Electronics All Rights Reserved.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+##
+# things_manager project build script
+##
+import os
+Import('env')
+
+# Add third party libraries
+lib_env = env.Clone()
+SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', exports = 'lib_env')
+
+src_dir = lib_env.get('SRC_DIR')
+
+service_common_env = lib_env.Clone()
+target_os = env.get('TARGET_OS')
+
+######################################################################
+# Build flags
+######################################################################
+service_common_env.AppendUnique(CPPPATH = [env.get('SRC_DIR')+'/extlibs', 'include', 'src'])
+
+if target_os not in ['windows', 'winrt']:
+    service_common_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
+    if target_os != 'android':
+        service_common_env.AppendUnique(CXXFLAGS = ['-pthread'])
+
+if target_os == 'android':
+    service_common_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
+    service_common_env.PrependUnique(LIBS = ['gnustl_shared', 'compatibility', 'log'])
+
+service_common_env.AppendUnique(LIBS = ['dl'])
+
+######################################################################
+# Source files and Targets
+######################################################################
+service_common_src = env.Glob('src/*.cpp')
+service_common_static = service_common_env.StaticLibrary('ServiceCommon', service_common_src)
+service_common_shared = service_common_env.SharedLibrary('ServiceCommon', service_common_src)
+
+service_common_env.InstallTarget([service_common_static,service_common_shared], 'libServiceCommon')
+
+######################################################################
+# Build Test
+######################################################################
+service_common_test_env = service_common_env.Clone();
+service_common_test_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+
+gtest = File(src_dir + '/extlibs/gtest/gtest-1.7.0/lib/.libs/libgtest.a')
+gtest_main = File(src_dir + '/extlibs/gtest/gtest-1.7.0/lib/.libs/libgtest_main.a')
+
+service_common_test_env.PrependUnique(LIBS = [
+    'oc',
+    'octbstack',
+    'oc_logger',
+    'connectivity_abstraction',
+    'coap',
+    'libServiceCommon',
+    gtest,
+    gtest_main
+    ])
+
+service_common_test_src = env.Glob('unittests/*.cpp')
+
+service_common_test = service_common_test_env.Program('service_common_test', service_common_test_src)
+Alias("service_common_test", service_common_test)
+env.AppendTarget('service_common_test')

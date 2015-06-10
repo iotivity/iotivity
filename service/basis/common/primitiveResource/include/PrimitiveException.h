@@ -17,15 +17,41 @@
 // limitations under the License.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 #ifndef __PRIMITIVEEXCEPTION_H
 #define __PRIMITIVEEXCEPTION_H
+
+#include <string>
+
+#include <octypes.h>
 
 class PrimitiveException: public std::exception
 {
 public:
     PrimitiveException() {}
-    PrimitiveException(const std::string& what) {}
+    PrimitiveException(const std::string& what) : m_what{ what } {}
+
+    const char* what() const noexcept override
+    {
+        return m_what.c_str();
+    }
+
+private:
+    std::string m_what;
 };
+
+class PlatformException: public PrimitiveException
+{
+public:
+    PlatformException(OCStackResult reason);
+
+    OCStackResult getReasonCode() const;
+    std::string getReason() const;
+
+private:
+    OCStackResult m_reason;
+};
+
 
 class BadGetException: public PrimitiveException
 {

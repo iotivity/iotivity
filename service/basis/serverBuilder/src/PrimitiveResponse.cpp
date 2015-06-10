@@ -18,4 +18,97 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "PrimitiveResponse.h"
+#include <PrimitiveResponse.h>
+
+#include <internal/RequestHandler.h>
+
+PrimitiveGetResponse PrimitiveGetResponse::defaultAction()
+{
+    static PrimitiveGetResponse defaultRes { new SimpleRequestHandler };
+
+    return defaultRes;
+}
+
+PrimitiveGetResponse PrimitiveGetResponse::create(const OCEntityHandlerResult& result,
+        int errorCode)
+{
+    return PrimitiveGetResponse { new SimpleRequestHandler { result, errorCode } };
+}
+
+PrimitiveGetResponse PrimitiveGetResponse::create(const ResourceAttributes& attrs)
+{
+    return PrimitiveGetResponse { new CustomAttrRequestHandler { attrs } };
+}
+
+PrimitiveGetResponse PrimitiveGetResponse::create(const ResourceAttributes& attrs,
+        const OCEntityHandlerResult& result, int errorCode)
+{
+    return PrimitiveGetResponse { new CustomAttrRequestHandler { attrs, result, errorCode } };
+}
+
+PrimitiveGetResponse PrimitiveGetResponse::create(ResourceAttributes&& result)
+{
+    return PrimitiveGetResponse { new CustomAttrRequestHandler { std::move(result) } };
+}
+
+PrimitiveGetResponse PrimitiveGetResponse::create(ResourceAttributes&& attrs,
+        const OCEntityHandlerResult& result, int errorCode)
+{
+    return PrimitiveGetResponse { new CustomAttrRequestHandler { std::move(attrs), result, errorCode } };
+}
+
+PrimitiveGetResponse::PrimitiveGetResponse(RequestHandler* handler) :
+        m_handler{ handler }
+{
+}
+
+RequestHandler* PrimitiveGetResponse::getHandler() const
+{
+    return m_handler.get();
+}
+
+
+PrimitiveSetResponse PrimitiveSetResponse::defaultAction()
+{
+    static PrimitiveSetResponse defaultRes { new SimpleRequestHandler };
+
+    return defaultRes;
+}
+
+PrimitiveSetResponse PrimitiveSetResponse::create(const OCEntityHandlerResult& result,
+        int errorCode)
+{
+    return PrimitiveSetResponse { new SimpleRequestHandler { result, errorCode } };
+}
+
+PrimitiveSetResponse PrimitiveSetResponse::create(const ResourceAttributes& attrs)
+{
+    return PrimitiveSetResponse { new CustomAttrRequestHandler { attrs } };
+}
+
+PrimitiveSetResponse PrimitiveSetResponse::create(const ResourceAttributes& attrs,
+        const OCEntityHandlerResult& result, int errorCode)
+{
+    return PrimitiveSetResponse { new CustomAttrRequestHandler { attrs, result, errorCode } };
+}
+
+PrimitiveSetResponse PrimitiveSetResponse::create(ResourceAttributes&& result)
+{
+    return PrimitiveSetResponse { new CustomAttrRequestHandler { std::move(result) } };
+}
+
+PrimitiveSetResponse PrimitiveSetResponse::create(ResourceAttributes&& attrs,
+        const OCEntityHandlerResult& result, int errorCode)
+{
+    return PrimitiveSetResponse { new CustomAttrRequestHandler { std::move(attrs), result, errorCode } };
+}
+
+PrimitiveSetResponse::PrimitiveSetResponse(RequestHandler* handler) :
+        m_handler{ handler }
+{
+}
+
+RequestHandler* PrimitiveSetResponse::getHandler() const
+{
+    return m_handler.get();
+}

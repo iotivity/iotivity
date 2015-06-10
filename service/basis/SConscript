@@ -25,10 +25,11 @@ import platform
 
 Import('env')
 
+SConscript('common/SConscript')
 #SConscript('resourceBroker/SConscript')
 #SConscript('resourceCache/SConscript')
 #SConscript('resourceContainer/SConscript')
-#SConscript('serverBuilder/SConscript')
+SConscript('serverBuilder/SConscript')
 #SConscript('sdk/SConscript')
 
 

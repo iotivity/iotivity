@@ -24,223 +24,267 @@
 #include <functional>
 #include <vector>
 
-#include "OCPlatform.h"
+#include <internal/RequestHandler.h>
 
-using namespace OC;
+#include <OCPlatform.h>
 
-PrimitiveServerResource::PrimitiveServerResource(OCResourceHandle &baseResourceHandle)
+namespace
 {
-    m_resourceHandle = baseResourceHandle;
+    uint8_t makePropertyFlags(uint8_t base, uint8_t target, bool add)
+    {
+        if (add)
+        {
+            return base | target;
+        }
+
+        return base & ~target;
+    }
+
+    template <typename RESPONSE>
+    OCEntityHandlerResult sendResponse(PrimitiveServerResource& resource,
+            std::shared_ptr< OC::OCResourceRequest > ocRequest, RESPONSE&& response)
+    {
+        auto ocResponse = response.getHandler()->buildResponse(resource);
+
+        ocResponse->setRequestHandle(ocRequest->getRequestHandle());
+        ocResponse->setResourceHandle(ocRequest->getResourceHandle());
+
+        if (OC::OCPlatform::sendResponse(ocResponse) == OC_STACK_OK)
+        {
+            return OC_EH_OK;
+        }
+        return OC_EH_ERROR;
+    }
+
+    template< typename HANDLER, typename RESPONSE = typename std::decay<HANDLER>::type::result_type>
+    OCEntityHandlerResult handleRequest(PrimitiveServerResource& resource,
+            std::shared_ptr< OC::OCResourceRequest > ocRequest, HANDLER&& handler)
+    {
+        if (handler)
+        {
+            ResourceAttributes attrs{ ResourceAttributesConverter::fromOCRepresentation(
+                    ocRequest->getResourceRepresentation()) };
+
+            return sendResponse(resource, ocRequest, handler(
+                    PrimitiveRequest{ ocRequest->getResourceUri() }, attrs));
+        }
+
+        return sendResponse(resource, ocRequest, RESPONSE::defaultAction());
+    }
+} // unnamed namespace
+
+
+PrimitiveServerResource::PrimitiveServerResource(ResourceAttributes&& attrs) :
+        m_resourceHandle{}, m_resourceAttributes{ std::move(attrs) },
+        m_getRequestHandler{}, m_setRequestHandler{},
+        m_mutex { }
+{
 }
 
 PrimitiveServerResource::Builder::Builder(const std::string &uri, const std::string &type,
-        const std::string &interface)
+        const std::string &interface) :
+        m_uri{ uri }, m_type{ type }, m_interface{ interface }, m_properties{ 0 }
 {
-    m_uri = uri;
-    m_type = type;
-    m_interface = interface;
-    m_property = 0;
 }
 
-PrimitiveServerResource::Builder &PrimitiveServerResource::Builder::setDiscoverable(
-    bool discoverable)
+PrimitiveServerResource::Builder& PrimitiveServerResource::Builder::setDiscoverable(
+        bool discoverable)
 {
-    //set flag
-    if (discoverable)
-        m_property |= OC_DISCOVERABLE;
-    else
-        m_property ^ = OC_DISCOVERABLE;
+    m_properties = ::makePropertyFlags(m_properties, OC_DISCOVERABLE, discoverable);
     return *this;
 }
 
-PrimitiveServerResource::Builder &PrimitiveServerResource::Builder::setObservable(bool observable)
+PrimitiveServerResource::Builder& PrimitiveServerResource::Builder::setObservable(bool observable)
 {
-    //set flag
-    if (observable)
-        m_property |= OC_OBSERVABLE;
-    else
-        m_property ^ = OC_OBSERVABLE;
+    m_properties = ::makePropertyFlags(m_properties, OC_OBSERVABLE, observable);
     return *this;
 }
 
-PrimitiveServerResource::Builder &PrimitiveServerResource::Builder::setAttributes(
-    const ResourceAttributes &attrs)
+PrimitiveServerResource::Builder& PrimitiveServerResource::Builder::setAttributes(
+        const ResourceAttributes &attrs)
 {
-    //set Attributemap
+    m_resourceAttributes = attrs;
     return *this;
 }
 
-PrimitiveServerResource PrimitiveServerResource::Builder::create() const
+PrimitiveServerResource::Builder& PrimitiveServerResource::Builder::setAttributes(
+        ResourceAttributes &&attrs)
 {
-    //TODO: EntityHandler param change
-    OCResourceHandle handle = NULL;
-    EntityHandler cb = std::bind(&PrimitiveServerResource::entityHandler, this, std::placeholders::_1);
-    OCStackResult result = OCPlatform::registerResource( handle, m_uri,
-                           m_type, m_interface, cb, m_property);
+    m_resourceAttributes = std::move(attrs);
+    return *this;
+}
+
+PrimitiveServerResource::Ptr PrimitiveServerResource::Builder::create()
+{
+    OCResourceHandle handle{ nullptr };
+    PrimitiveServerResource::Ptr server { new PrimitiveServerResource{ std::move(m_resourceAttributes) } };
+    OC::EntityHandler entityHandler{ std::bind(&PrimitiveServerResource::entityHandler, server.get(),
+            std::placeholders::_1) };
+
+    OCStackResult result = OC::OCPlatform::registerResource(handle, m_uri, m_type, m_interface, entityHandler,
+            m_properties);
 
     if (OC_STACK_OK != result)
     {
-        //TODO: Throw error exception.
+        throw PlatformException(result);
     }
-    return PrimitiveServerResource(handle);
+
+    server->m_resourceHandle = handle;
+
+    return server;
 }
 
-OCEntityHandlerResult PrimitiveServerResource::entityHandler(std::shared_ptr<OCResourceRequest>
-        request)
+bool PrimitiveServerResource::hasAttribute(const std::string& key) const
 {
-    OCEntityHandlerResult ehResult = OC_EH_ERROR;
-    if (request)
+    WeakGuard lock(*this);
+    return m_resourceAttributes.contains(key);
+}
+
+ResourceAttributes& PrimitiveServerResource::getAttributes()
+{
+    assertOwnLock();
+    return m_resourceAttributes;
+}
+
+const ResourceAttributes& PrimitiveServerResource::getAttributes() const
+{
+    assertOwnLock();
+    return m_resourceAttributes;
+}
+
+void PrimitiveServerResource::assertOwnLock() const
+{
+    if (m_lockOwner != std::this_thread::get_id())
     {
-        //TODO: simplify Code.
+        throw NoLockException{ };
+    }
+}
 
-        // Get the request type and request flag
-        std::string requestType = request->getRequestType();
-        int requestFlag = request->getRequestHandlerFlag();
-
-        if (requestFlag & RequestHandlerFlag::RequestFlag)
-        {
-            auto pResponse = std::make_shared<OC::OCResourceResponse>();
-            pResponse->setRequestHandle(request->getRequestHandle());
-            pResponse->setResourceHandle(request->getResourceHandle());
-
-            // If the request type is GET
-            if (requestType == "GET")
-            {
-                cout << "\t\t\trequestType : GET\n";
-                //TODO: implementation sevral method for "default" or "custom"
-//              pResponse->setErrorCode(200);
-//              pResponse->setResponseResult(OC_EH_OK);
-//              pResponse->setResourceRepresentation(get());
-//              if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
-//              {
-//                  ehResult = OC_EH_OK;
-//              }
-            }
-            else if (requestType == "PUT")
-            {
-                cout << "\t\t\trequestType : PUT\n";
-                //TODO: implementation sevral method for "default" or "custom"
-
-//                OCRepresentation rep = request->getResourceRepresentation();
+//bool PrimitiveServerResource::isObservable() const
+//{
+//    // TODO : fill
+//}
 //
-//                // Do related operations related to PUT request
-//                // Update the lightResource
-//                put(rep);
-//                pResponse->setErrorCode(200);
-//                pResponse->setResponseResult(OC_EH_OK);
-//                pResponse->setResourceRepresentation(get());
-//                if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
-//                {
-//                    ehResult = OC_EH_OK;
-//                }
-            }
-        }
+//bool PrimitiveServerResource::isDiscoverable() const
+//{
+//    // TODO : fill
+//}
 
-        if (requestFlag & RequestHandlerFlag::ObserverFlag)
-        {
-            ObservationInfo observationInfo = request->getObservationInfo();
-            if (ObserveAction::ObserveRegister == observationInfo.action)
-            {
-                m_interestedObservers.push_back(observationInfo.obsId);
-            }
-            else if (ObserveAction::ObserveUnregister == observationInfo.action)
-            {
-                m_interestedObservers.erase(std::remove(
-                                                m_interestedObservers.begin(),
-                                                m_interestedObservers.end(),
-                                                observationInfo.obsId),
-                                            m_interestedObservers.end());
-            }
+void PrimitiveServerResource::setGetRequestHandler(GetRequestHandler h)
+{
+    m_getRequestHandler = h;
+}
 
-            pthread_t threadId;
+void PrimitiveServerResource::setSetRequestHandler(SetRequestHandler h)
+{
+    m_setRequestHandler = h;
+}
 
-            cout << "\t\trequestFlag : Observer\n";
-            gObservation = 1;
-            static int startedThread = 0;
+//void PrimitiveServerResource::notify()
+//{
+//    // TODO : fill
+//}
 
-            // Observation happens on a different thread in ChangeLightRepresentation function.
-            // If we have not created the thread already, we will create one here.
-            if (!startedThread)
-            {
-                pthread_create (&threadId, NULL, ChangeLightRepresentation, (void *)this);
-                startedThread = 1;
-            }
-            ehResult = OC_EH_OK;
-        }
-    }
-    else
+OCEntityHandlerResult PrimitiveServerResource::entityHandler(
+        std::shared_ptr< OC::OCResourceRequest > request)
+{
+    if (!request)
     {
-        std::cout << "Request invalid" << std::endl;
+        return OC_EH_ERROR;
     }
 
-    return ehResult;
+    try
+    {
+        if (request->getRequestHandlerFlag() & OC::RequestHandlerFlag::RequestFlag)
+        {
+            return handleRequest(request);
+        }
+
+        if (request->getRequestHandlerFlag() & OC::RequestHandlerFlag::ObserverFlag)
+        {
+            return handleObserve(request);
+        }
+    }
+    catch (...)
+    {
+        // TODO : how to notify the error?
+    }
+
+    return OC_EH_ERROR;
 }
 
-
-template<typename T>
-void PrimitiveServerResource::setAttribute(const std::string &key, const T &value)
+OCEntityHandlerResult PrimitiveServerResource::handleRequest(
+        std::shared_ptr< OC::OCResourceRequest > request)
 {
+    if (request->getRequestType() == "GET")
+    {
+        return handleRequestGet(request);
+    }
 
+    if (request->getRequestType() == "PUT" || request->getRequestType() == "POST")
+    {
+        return handleRequestSet(request);
+    }
+
+    return OC_EH_ERROR;
 }
 
-template<typename T>
-T PrimitiveServerResource::getAttribute(T &key) const
+OCEntityHandlerResult PrimitiveServerResource::handleRequestGet(
+        std::shared_ptr< OC::OCResourceRequest > request)
 {
-
+    return ::handleRequest(*this, request, m_getRequestHandler);
 }
 
-bool PrimitiveServerResource::hasAttribute(const std::string &key) const
+OCEntityHandlerResult PrimitiveServerResource::handleRequestSet(
+        std::shared_ptr< OC::OCResourceRequest > request)
 {
-
+    return ::handleRequest(*this, request, m_setRequestHandler);
 }
 
-const ResourceAttributes &PrimitiveServerResource::getAttributes() const
+OCEntityHandlerResult PrimitiveServerResource::handleObserve(
+        std::shared_ptr< OC::OCResourceRequest > request)
 {
+//    if (!isObservable())
+//    {
+//        return OC_EH_ERROR;
+//    }
 
+    return OC_EH_OK;
 }
-ResourceAttributes &PrimitiveServerResource::getAttributes()
+
+PrimitiveServerResource::LockGuard::LockGuard(const PrimitiveServerResource& serverResource) :
+        m_serverResource(serverResource)
 {
+    if (m_serverResource.m_lockOwner == std::this_thread::get_id())
+    {
+        throw DeadLockException{ };
+    }
 
+    m_serverResource.m_mutex.lock();
+    m_serverResource.m_lockOwner = std::this_thread::get_id();
 }
 
-bool PrimitiveServerResource:: isObservable() const
+PrimitiveServerResource::LockGuard::~LockGuard()
 {
-
+    m_serverResource.m_lockOwner = std::thread::id();
+    m_serverResource.m_mutex.unlock();
 }
 
-bool PrimitiveServerResource::isDiscoverable() const
+PrimitiveServerResource::WeakGuard::WeakGuard(const PrimitiveServerResource& serverResource) :
+        m_serverResource(serverResource), m_hasLocked{ false }
 {
-
+    if (m_serverResource.m_lockOwner != std::this_thread::get_id())
+    {
+        m_serverResource.m_mutex.lock();
+        m_hasLocked = true;
+    }
 }
 
-void PrimitiveServerResource::setGetRequestHandler(GetRequestHandler)
+PrimitiveServerResource::WeakGuard::~WeakGuard()
 {
-
+    if (m_hasLocked)
+    {
+        m_serverResource.m_mutex.unlock();
+    }
 }
-
-void PrimitiveServerResource::setSetRequestHandler(SetRequestHandler)
-{
-
-}
-
-void PrimitiveServerResource::notify()
-{
-
-}
-
-std::string PrimitiveServerResource::getUri() const
-{
-
-}
-
-std::vector<std::string> PrimitiveServerResource::getTypes() const
-{
-
-}
-
-std::vector<std::string> PrimitiveServerResource::getInterfaces() const
-{
-
-}
-
 

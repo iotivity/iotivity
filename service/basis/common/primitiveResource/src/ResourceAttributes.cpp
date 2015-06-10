@@ -17,9 +17,25 @@
 // limitations under the License.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-#include "ResourceAttributes.h"
-#include "InternalUtil.h"
 
+#include <ResourceAttributes.h>
+
+#include <internal/ResourceAtrributesConverter.h>
+
+bool operator==(const char* lhs, const ResourceAttributes::Value& rhs)
+{
+    return rhs == lhs;
+}
+
+bool operator==(const ResourceAttributes::Value& lhs, const ResourceAttributes::Value& rhs)
+{
+    return *lhs.m_data == *rhs.m_data;
+}
+
+bool operator==(const ResourceAttributes& lhs, const ResourceAttributes& rhs)
+{
+    return lhs.m_keyValues == rhs.m_keyValues;
+}
 
 ResourceAttributes::Value::Value() :
         m_data{ new ValueVariant{} }
@@ -37,6 +53,13 @@ ResourceAttributes::Value::Value(Value&& from) :
     m_data->swap(*from.m_data);
 }
 
+
+auto ResourceAttributes::Value::operator=(const Value& rhs) -> Value&
+{
+    *m_data = new ValueVariant{ *rhs.m_data };
+    return *this;
+}
+
 auto ResourceAttributes::Value::operator=(const char* rhs) -> Value&
 {
     *m_data = std::string{ rhs };
@@ -51,13 +74,13 @@ auto ResourceAttributes::Value::operator=(std::nullptr_t) -> Value&
 
 bool ResourceAttributes::Value::operator==(const char* rhs) const
 {
-    return operator==< std::string >(std::string{ rhs });
+    return equals< std::string >(rhs);
 }
 
-bool ResourceAttributes::Value::operator==(std::nullptr_t) const
-{
-    return operator==< std::nullptr_t >(nullptr);
-}
+//bool ResourceAttributes::Value::operator==(std::nullptr_t) const
+//{
+//    return isTypeOf< std::nullptr_t >();
+//}
 
 auto ResourceAttributes::KeyValuePair::KeyVisitor::operator() (iterator* iter) const
         -> result_type {
@@ -245,12 +268,12 @@ auto ResourceAttributes::cend() const -> const_iterator
     return const_iterator{ m_keyValues.end() };
 }
 
-auto ResourceAttributes::operator[](const std::string & key) -> Value&
+auto ResourceAttributes::operator[](const std::string& key) -> Value&
 {
     return m_keyValues[key];
 }
 
-auto ResourceAttributes::at(const std::string & key) -> Value&
+auto ResourceAttributes::at(const std::string& key) -> Value&
 {
     try
     {
@@ -265,6 +288,11 @@ auto ResourceAttributes::at(const std::string & key) -> Value&
 bool ResourceAttributes::erase(const std::string& key)
 {
     return m_keyValues.erase(key) == 1U;
+}
+
+bool ResourceAttributes::contains(const std::string& key) const
+{
+    return m_keyValues.find(key) != m_keyValues.end();
 }
 
 bool ResourceAttributes::empty() const

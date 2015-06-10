@@ -21,40 +21,60 @@
 #ifndef __PRIMITIVERESPONSE_H
 #define __PRIMITIVERESPONSE_H
 
-class Handler;
+#include <cstdint>
+#include <memory>
 
-class PrimitiveResponse
+#include <octypes.h>
+
+class ResourceAttributes;
+class RequestHandler;
+
+class PrimitiveGetResponse
 {
-    public:
-        static PrimitiveResponse DEFAULT;
+public:
+    static PrimitiveGetResponse defaultAction();
 
-        static PrimitiveResponse createResponse(const ResourceAttributes &attrs);
+    static PrimitiveGetResponse create(const OCEntityHandlerResult&, int errorCode);
 
-        shared_ptr<Handler> m_handler;
+    static PrimitiveGetResponse create(const ResourceAttributes&);
+    static PrimitiveGetResponse create(const ResourceAttributes&,
+            const OCEntityHandlerResult&, int errorCode);
+
+    static PrimitiveGetResponse create(ResourceAttributes&&);
+    static PrimitiveGetResponse create(ResourceAttributes&&, const OCEntityHandlerResult&,
+            int errorCode);
+
+    RequestHandler* getHandler() const;
+
+private:
+    PrimitiveGetResponse(RequestHandler*);
+
+private:
+    std::shared_ptr< RequestHandler > m_handler;
 };
 
-class GetDefaultHandler
+class PrimitiveSetResponse
 {
-    public:
-        OCResponse handle(ServerResource &resource)
-        {
-            // build response
-        }
+public:
+    static PrimitiveSetResponse defaultAction();
+
+    static PrimitiveSetResponse create(const OCEntityHandlerResult&, int errorCode);
+
+    static PrimitiveSetResponse create(const ResourceAttributes&);
+    static PrimitiveSetResponse create(const ResourceAttributes&,
+            const OCEntityHandlerResult&, int errorCode);
+
+    static PrimitiveSetResponse create(ResourceAttributes&&);
+    static PrimitiveSetResponse create(ResourceAttributes&&, const OCEntityHandlerResult&,
+            int errorCode);
+
+    RequestHandler* getHandler() const;
+
+private:
+    PrimitiveSetResponse(RequestHandler*);
+
+private:
+    std::shared_ptr< RequestHandler > m_handler;
 };
-
-GetRequestHandler m_getRequestHandler;
-
-void onGet()
-{
-    Request request;
-    Attributes attributes;
-
-    if (m_getRequestHandler)
-    {
-        GetPrimitiveResponse response = m_getRequestHandler(request, attributes);
-
-        return response->getHandler()->handle(*this);
-    }
-}
 
 #endif

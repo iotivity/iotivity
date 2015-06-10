@@ -17,6 +17,7 @@
 // limitations under the License.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 #ifndef __PRIMITIVERESOURCE_H
 #define __PRIMITIVERESOURCE_H
 
@@ -32,7 +33,8 @@ using HeaderOptions = std::vector<HeaderOption>;
 class ResourceAttributes;
 class ResponseStatement;
 
-class PrimitiveResource {
+class PrimitiveResource
+{
 public:
     using Ptr = std::shared_ptr<PrimitiveResource>;
 
@@ -44,7 +46,7 @@ public:
 
 private:
     using BaseResource = OC::OCResource;
-    using BaseResourcePtr = std::shared_ptr<BaseResource>;
+    using BaseResourcePtr = BaseResource::Ptr;
 
 public:
     static PrimitiveResource::Ptr create(const BaseResourcePtr&);
@@ -54,11 +56,10 @@ public:
     void requestObserve(ObserveCallback);
     void cancelObserve();
 
-// @brief Properties getters.
     std::string getUri() const;
     std::string getHost() const;
-    std::vector<std::string> getTypes() const;
-    std::vector<std::string> getInterfaces() const;
+    std::vector< std::string > getTypes() const;
+    std::vector< std::string > getInterfaces() const;
 
     bool isObservable() const;
 
@@ -68,5 +69,10 @@ private:
 private:
     BaseResourcePtr m_ocResource;
 };
+
+using FindCallback = std::function<void(std::shared_ptr<PrimitiveResource>)>;
+
+void discoverResource(const std::string& host, const std::string& resourceURI,
+        OCConnectivityType connectivityType, FindCallback resourceHandler);
 
 #endif // __PRIMITIVERESOURCE_H

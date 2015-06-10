@@ -18,28 +18,22 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef __PRIMITIVEREQUEST__H
-#define __PRIMITIVEREQUEST__H
+#include <PrimitiveException.h>
 
-#include <string>
+#include <OCException.h>
 
-class PrimitiveRequest
+PlatformException::PlatformException(OCStackResult reason) :
+    PrimitiveException{ "Failed : " + OC::OCException::reason(reason) },
+    m_reason { reason }
 {
-public:
-    explicit PrimitiveRequest(const std::string& resourceUri) :
-            m_resourceUri(resourceUri)
-    {
-    }
+}
 
-    PrimitiveRequest& operator=(PrimitiveRequest&) = delete;
+OCStackResult PlatformException::getReasonCode() const
+{
+    return m_reason;
+}
 
-    std::string getResourceUri() const
-    {
-        return m_resourceUri;
-    }
-
-private:
-    std::string m_resourceUri;
-};
-
-#endif
+std::string PlatformException::getReason() const
+{
+    return  OC::OCException::reason(m_reason);
+}

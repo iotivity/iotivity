@@ -17,10 +17,14 @@
 // limitations under the License.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-#include "PrimitiveResource.h"
-#include "ResourceAttributes.h"
-#include "ResponseStatement.h"
-#include "InternalUtil.h"
+
+#include <PrimitiveResource.h>
+#include <ResourceAttributes.h>
+#include <ResponseStatement.h>
+
+#include <internal/ResourceAtrributesConverter.h>
+
+#include <OCPlatform.h>
 
 using OC::QueryParamsMap;
 using OC::OCRepresentation;
@@ -33,61 +37,79 @@ using std::string;
 
 using namespace std::placeholders;
 
-namespace {
+namespace
+{
 
-ResponseStatement createResponseStatement(
-    const OCRepresentation& ocRepresentation) {
+    ResponseStatement createResponseStatement(const OCRepresentation& ocRepresentation)
+    {
         return ResponseStatement::create(
-            ResourceAttributesConverter::fromOCRepresentation(ocRepresentation));
-}
+                ResourceAttributesConverter::fromOCRepresentation(ocRepresentation));
+    }
 
 } // unnamed namespace
 
 PrimitiveResource::PrimitiveResource(const BaseResourcePtr& ocResource) :
-        m_ocResource(ocResource) {
+        m_ocResource{ ocResource }
+{
 }
 
-PrimitiveResource::Ptr PrimitiveResource::create(const BaseResourcePtr& ptr) {
-    return std::shared_ptr < PrimitiveResource > (new PrimitiveResource(ptr));
+PrimitiveResource::Ptr PrimitiveResource::create(const BaseResourcePtr& ptr)
+{
+    return std::shared_ptr< PrimitiveResource >(new PrimitiveResource{ ptr });
 }
 
-void PrimitiveResource::requestGet(GetCallback callback) {
-    m_ocResource->get(QueryParamsMap(),
+void PrimitiveResource::requestGet(GetCallback callback)
+{
+    m_ocResource->get(QueryParamsMap(), bind(callback, _1, bind(createResponseStatement, _2), _3));
+}
+
+void PrimitiveResource::requestSet(const ResourceAttributes& attrs, SetCallback callback)
+{
+    m_ocResource->put(ResourceAttributesConverter::toOCRepresentation(attrs), QueryParamsMap{},
             bind(callback, _1, bind(createResponseStatement, _2), _3));
 }
 
-void PrimitiveResource::requestSet(const ResourceAttributes& attrs,
-        SetCallback callback) {
-    m_ocResource->put(ResourceAttributesConverter::toOCRepresentation(attrs),
-            QueryParamsMap(),
-            bind(callback, _1, bind(createResponseStatement, _2), _3));
-}
-
-void PrimitiveResource::requestObserve(ObserveCallback callback) {
-    m_ocResource->observe(ObserveType::ObserveAll, QueryParamsMap(),
+void PrimitiveResource::requestObserve(ObserveCallback callback)
+{
+    m_ocResource->observe(ObserveType::ObserveAll, QueryParamsMap{},
             bind(callback, _1, bind(createResponseStatement, _2), _3, _4));
 }
 
-void PrimitiveResource::cancelObserve() {
+void PrimitiveResource::cancelObserve()
+{
     m_ocResource->cancelObserve();
 }
 
-bool PrimitiveResource::isObservable() const {
+bool PrimitiveResource::isObservable() const
+{
     return m_ocResource->isObservable();
 }
 
-string PrimitiveResource::getUri() const {
+string PrimitiveResource::getUri() const
+{
     return m_ocResource->uri();
 }
 
-string PrimitiveResource::getHost() const {
+string PrimitiveResource::getHost() const
+{
     return m_ocResource->host();
 }
 
-vector<string> PrimitiveResource::getTypes() const {
+vector< string > PrimitiveResource::getTypes() const
+{
     return m_ocResource->getResourceTypes();
 }
 
-vector<string> PrimitiveResource::getInterfaces() const {
+vector< string > PrimitiveResource::getInterfaces() const
+{
     return m_ocResource->getResourceInterfaces();
+}
+
+
+
+void discoverResource(const std::string& host, const std::string& resourceURI,
+        OCConnectivityType connectivityType, FindCallback resourceHandler)
+{
+    OC::OCPlatform::findResource(host, resourceURI, connectivityType,
+            std::bind(&PrimitiveResource::create, std::placeholders::_1));
 }

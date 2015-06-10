@@ -17,8 +17,9 @@
 // limitations under the License.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 #include <ResourceAttributes.h>
-#include <InternalUtil.h>
+#include <internal/ResourceAtrributesConverter.h>
 
 #include <gtest/gtest.h>
 
@@ -47,7 +48,7 @@ TEST_F(ResourceAttributesTest, InsertWithSquareBracket)
 
 TEST_F(ResourceAttributesTest, ValueThrowsIfTypeDoesNotMatch)
 {
-    resourceAttributes[KEY] = 1;
+     resourceAttributes[KEY] = 1;
     auto& valueRef = resourceAttributes[KEY];
 
     ASSERT_THROW(valueRef.get< std::string >(), BadGetException);
@@ -123,8 +124,11 @@ TEST_F(ResourceAttributesTest, CanHaveNestedResourceAttributes)
     nested["nested"] = "nested_value";
     resourceAttributes[KEY] = nested;
 
-    ASSERT_TRUE(resourceAttributes[KEY].get<ResourceAttributes>()["nested"] == "nested_value");
+    ASSERT_TRUE("nested_value" == resourceAttributes[KEY].get<ResourceAttributes>()["nested"]);
 }
+
+
+
 
 class ResourceAttributesIteratorTest: public Test
 {
@@ -206,6 +210,7 @@ TEST_F(ResourceAttributesIteratorTest, ConstIteratesCam)
     ASSERT_EQ(1, resourceAttributes[KEY]);
 }
 
+
 TEST(ResourceAttributesValueTest, MovedValueHasNull)
 {
     ResourceAttributes::Value one { 1 };
@@ -213,6 +218,9 @@ TEST(ResourceAttributesValueTest, MovedValueHasNull)
 
     ASSERT_EQ(nullptr, one);
 }
+
+
+
 
 TEST(ResourceAttributesConverterTest, OCRepresentationCanBeConvertedIntoResourceAttributes)
 {
