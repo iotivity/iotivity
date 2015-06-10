@@ -1,0 +1,53 @@
+/******************************************************************
+ *
+ * Copyright 2015 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************/
+package org.iotivity.service.easysetup.mediator;
+
+import android.util.Log;
+
+public class EasySetupCallbackHandler {
+    private static final String             TAG = "EasySetupCallbackHandler";
+    ProvisionEnrollee                       provisioningListener;
+
+    private static EasySetupCallbackHandler easySetupCallbackHandlerObj;
+
+    public static synchronized EasySetupCallbackHandler getInstance() {
+        if (null == easySetupCallbackHandlerObj) {
+            easySetupCallbackHandlerObj = new EasySetupCallbackHandler();
+        }
+        return easySetupCallbackHandlerObj;
+    }
+
+    public void ProvisioningStatusCallBack(int statuscode) {
+        // TODO Auto-generated method stub
+        Log.d(TAG,
+                "onFinishProvisioning() inside Android Java application. statuscode - "
+                        + statuscode);
+        if (this.provisioningListener != null) {
+            this.provisioningListener.ProvisioningStatusCallBack(statuscode);
+        } else {
+            Log.e(TAG, "provisioningListener is not registered");
+        }
+    }
+
+    public void registerProvisioningHandler(
+            ProvisionEnrollee provisioningListener) {
+        this.provisioningListener = provisioningListener;
+    }
+}

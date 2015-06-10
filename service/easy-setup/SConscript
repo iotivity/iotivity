@@ -21,15 +21,20 @@
 ##
 # easy-setup project build script
 ##
+
 import os
+
 Import('env')
 
-# Add third party libraries
-lib_env = env.Clone()
-#SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', exports = 'lib_env')
+env.AppendUnique(CPPDEFINES = ['EASY_SETUP_CA_INIT'])
 
-easy_setup_env = lib_env.Clone()
+easy_setup_env = env.Clone()
 target_os = env.get('TARGET_OS')
+
+lib_env = env.Clone()
+if target_os == 'android':
+	SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', exports = 'lib_env')
+
 ######################################################################
 # Build flags
 ######################################################################
@@ -40,12 +45,21 @@ if target_os not in ['windows', 'winrt']:
     if target_os not in ['android', 'arduino']:
         easy_setup_env.AppendUnique(CXXFLAGS = ['-pthread'])
 
-if target_os == 'android':
-    easy_setup_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-    easy_setup_env.PrependUnique(LIBS = ['oc', 'octbstack', 'gnustl_shared'])
+if target_os in ['android', 'linux']:
+	easy_setup_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+	easy_setup_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
+	easy_setup_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
+	if target_os not in ['linux', 'arduino']:
+		easy_setup_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'gnustl_shared'])	
+	else:
+		easy_setup_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'pthread', 'connectivity_abstraction'])
+	
+	if not env.get('RELEASE'):
+		easy_setup_env.AppendUnique(LIBS = ['log'])
+	
 
 if target_os == 'arduino':
-   easy_setup_env.AppendUnique(CPPPATH = [
+	easy_setup_env.AppendUnique(CPPPATH = [
 				       '../../resource/oc_logger/include',
    				       '../../resource/csdk/logger/include',
 				       '../../resource/csdk/stack/include',
@@ -53,26 +67,42 @@ if target_os == 'arduino':
 				       'sdk/arduino/wifi/inc', 
 				       'sdk/arduino/wifi/src' ])
 
+if target_os in ['android','linux']:					   
+	easy_setup_env.PrependUnique(CPPPATH = [
+		env.get('SRC_DIR') + '/resource/csdk/ocmalloc/include',		
+		env.get('SRC_DIR') + '/resource/csdk/connectivity/common/inc',
+		env.get('SRC_DIR') + '/resource/csdk/connectivity/api',
+        env.get('SRC_DIR') + '/resource/csdk/stack/include',
+        env.get('SRC_DIR') + '/resource/csdk/logger/include',
+		env.get('SRC_DIR') + '/resource/csdk/security/include',
+		env.get('SRC_DIR') + '/extlibs/cjson'		
+		])
+
 ######################################################################
 # Source files and Targets
 ######################################################################
 
-#if target_os == 'arduino':
-   es_src = env.Glob('sdk/src/*.cpp')
-   es_src += env.Glob('sdk/arduino/wifi/src/*.cpp')
-   es_sdk_static = easy_setup_env.StaticLibrary('ESSDKLibrary', es_src)
-   easy_setup_env.InstallTarget(es_sdk_static, 'libESSDK')
+if target_os == 'arduino':
+	es_sdk_static = easy_setup_env.StaticLibrary('ESSDKLibrary',
+					['sdk/src/easysetup.cpp',
+					'sdk/src/resourceHandler.cpp',
+					'sdk/arduino/wifi/src/networkHandler.cpp'])
+	easy_setup_env.InstallTarget(es_sdk_static, 'libESSDK')
+
 
 if target_os == 'android':
-   es_src = env.Glob('sdk/src/*.cpp')
-   es_src += env.Glob('sdk/android/wifi/src/*.cpp')	
-   es_sdk_static = easy_setup_env.StaticLibrary('ESLib', es_src)
-   es_sdk_shared = easy_setup_env.SharedLibrary('ESLib', es_src)
-   easy_setup_env.InstallTarget([es_sdk_static, es_sdk_shared], 'libESSDK')
+	es_sdk_shared = easy_setup_env.SharedLibrary('libESSDK',
+					['sdk/src/easysetupmgr.cpp',
+					'sdk/src/camutex_pthreads.c',
+					'sdk/src/provisioninghandler.cpp'])
+	easy_setup_env.InstallTarget(es_sdk_shared, 'libESSDK')
 
-# Build JNI layer
-#if target_os == 'android':
-#    SConscript(os.path.join('sdk', 'java', 'jni', 'SConscript'))
+if target_os == 'linux':
+	es_sdk_shared = easy_setup_env.SharedLibrary('ESSDKLibrary',
+					['sdk/src/easysetupmgr.cpp',
+					'sdk/src/camutex_pthreads.c',
+					'sdk/src/provisioninghandler.cpp'])
+	easy_setup_env.InstallTarget(es_sdk_shared, 'libESSDK')
 
 #Go to build sample apps
 SConscript('sampleapp/SConscript')

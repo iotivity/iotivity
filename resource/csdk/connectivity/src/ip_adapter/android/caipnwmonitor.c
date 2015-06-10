@@ -479,7 +479,12 @@ CAResult_t CAIPInitializeNetworkMonitor(const ca_thread_pool_t threadPool)
 
     VERIFY_NON_NULL(threadPool, IP_MONITOR_TAG, "threadPool is null");
 
-    CAResult_t ret = CAIPJniInit();
+    CAResult_t ret = CA_STATUS_FAILED;
+
+    //TODO: Have to fix the JNI load issue for CA using direct csdk APIs instead OCPlatform Java API
+    // and remove the EASY_SETUP_CA_INIT
+#ifndef EASY_SETUP_CA_INIT
+    ret = CAIPJniInit();
     if (CA_STATUS_OK != ret)
     {
         OIC_LOG(ERROR, IP_MONITOR_TAG, "Initialization failed");
@@ -499,6 +504,7 @@ CAResult_t CAIPInitializeNetworkMonitor(const ca_thread_pool_t threadPool)
         OIC_LOG(ERROR, IP_MONITOR_TAG, "unable to create CaIpInterface instance");
         return ret;
     }
+#endif
 
     ret = CAInitializeNetworkMonitorMutexes();
 
