@@ -20,6 +20,8 @@
 #ifndef __RESPONSESTATEMENT_H
 #define __RESPONSESTATEMENT_H
 
+#include <ResourceAttributes.h>
+
 /**
  * TODO : design for future flexibility
  */
@@ -42,7 +44,7 @@ public:
     std::vector<std::string> getResourceTypes() const;
     std::vector<std::string> getResourceInterfaces() const;
 
-    ResourceAttributes getAttributes() const;
+    ResourceAttributes getAttributes() const{ return ResourceAttributes(); }
 
     ~ResponseStatement() {}
 };

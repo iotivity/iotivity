@@ -18,8 +18,6 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "CacheHandler.h"
-
 #include <memory>
 #include <cstdlib>
 #include <functional>
@@ -29,15 +27,20 @@
 
 #include "OCApi.h"
 
+#include "DataCache.h"
+
+#include "ResponseStatement.h"
+#include "ResourceAttributes.h"
+
 DataCache::DataCache(
-            PrimitiveResource & pResource,
+            PrimitiveResourcePtr pResource,
             CacheCB func,
             REPORT_FREQUENCY rf,
             long repeatTime
             ):sResource(pResource)
 {
-    subscriberList = new SubscriberInfo();
-    data = new CacheData();
+    subscriberList = std::unique_ptr<SubscriberInfo>(new SubscriberInfo());
+    data = std::make_shared<CachedData>();
 
     state = CACHE_STATE::READY_YET;
     updateTime = 0l;
@@ -48,9 +51,9 @@ DataCache::DataCache(
     pGetCB = (GetCB)(std::bind(&DataCache::onGet, this,
             std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 
-    if(pResource.isObservable())
+    if(pResource->isObservable())
     {
-        pResource.requestObserve(pObserveCB);
+        pResource->requestObserve(pObserveCB);
     }
     else
     {
@@ -65,7 +68,7 @@ DataCache::~DataCache()
 
     // TODO delete all node!!
     subscriberList->clear();
-    delete subscriberList;
+    subscriberList.release();
 }
 
 CacheID DataCache::addSubscriber(CacheCB func, REPORT_FREQUENCY rf, long repeatTime)
@@ -80,7 +83,7 @@ CacheID DataCache::addSubscriber(CacheCB func, REPORT_FREQUENCY rf, long repeatT
 
     while(1)
     {
-        if(findSubscriber(newItem.reportID) != nullptr || newItem.reportID == 0)
+        if(findSubscriber(newItem.reportID).first == 0 || newItem.reportID == 0)
         {
             newItem.reportID = rand();
         }
@@ -90,7 +93,7 @@ CacheID DataCache::addSubscriber(CacheCB func, REPORT_FREQUENCY rf, long repeatT
         }
     }
 
-    subscriberList->insert(SubscriberInfoPair(newItem, func));
+    subscriberList->insert(std::make_pair(newItem.reportID, std::make_pair(newItem, func)));
 
     return newItem.reportID;
 }
@@ -100,9 +103,9 @@ CacheID DataCache::deleteSubscriber(CacheID id)
     CacheID ret = 0;
 
     SubscriberInfoPair pair = findSubscriber(id);
-    if(pair != nullptr)
+    if(pair.first != 0)
     {
-        ret = pair.first.reportID;
+        ret = pair.first;
         subscriberList->erase(pair.first);
     }
 
@@ -111,37 +114,31 @@ CacheID DataCache::deleteSubscriber(CacheID id)
 
 SubscriberInfoPair DataCache::findSubscriber(CacheID id)
 {
-    SubscriberInfoPair ret = nullptr;
+    SubscriberInfoPair ret;
 
-    for(auto i : subscriberList)
+    for(auto & i : *subscriberList)
     {
-        if(i->first.reportID == id)
+        if(i.first == id)
         {
-            ret = i;
+            ret = std::make_pair(i.first, std::make_pair((Report_Info)i.second.first, (CacheCB)i.second.second));
         }
     }
 
     return ret;
 }
 
-std::shared_ptr<CacheData> DataCache::getCachedData()
+CachedDataPtr DataCache::getCachedData()
 {
     if(state != CACHE_STATE::READY)
     {
-        return NULL;
+        return nullptr;
     }
     return data;
 }
 
-PrimitiveResource * DataCache::getPrimitiveResource()
+std::shared_ptr<PrimitiveResource> DataCache::getPrimitiveResource()
 {
-    PrimitiveResource ret = NULL;
-    if(sResource)
-    {
-        ret = sResource;
-    }
-
-    return ret;
+    return sResource;
 }
 
 void DataCache::onObserve(
@@ -153,7 +150,8 @@ void DataCache::onObserve(
         // TODO handle error
         return;
     }
-    if(_rep.getAttributes().isEmpty())
+
+    if(_rep.getAttributes().empty())
     {
         return;
     }
@@ -162,25 +160,34 @@ void DataCache::onObserve(
 
     // set data
     data->clear();
-    ResourceAttributes::iterator it = att.begin();
-    for(; att.end(); ++it)
-    {
-        std::string key = it->key();
-        // TODO change template or variant
-        std::string val = it->value();
 
-        data[key] = val;
+
+    for(auto & i : att)
+    {
+        const std::string &key = i.key();
+//        std::string value = i.value();
+        std::string val;
+        data->insert(CachedData::value_type(key, val));
     }
 
     // notify!!
-    std::map::iterator mapiter = subscriberList->begin();
-    for(; subscriberList->end(); ++mapiter)
+
+    for(auto & i : * subscriberList)
     {
-        if(mapiter->first().rf == REPORT_FREQUENCY::UPTODATE)
+        if(i.second.first.rf == REPORT_FREQUENCY::UPTODATE)
         {
-            // TODO update report time
-//            mapiter->first().latestReportTime = now;
-            mapiter->second()(this->sResource, data);
+            i.second.second(this->sResource, data);
         }
     }
+}
+
+void DataCache::onGet(const HeaderOptions& _hos,
+        const ResponseStatement& _rep, int _result)
+{
+
+}
+
+CACHE_STATE DataCache::getCacheState()
+{
+    return state;
 }

@@ -33,30 +33,32 @@
 class ResourceCacheManager
 {
 public:
-    ResourceCacheManager * getInstance();
+    static ResourceCacheManager * getInstance();
 
     CacheID requestResourceCache(
-            PrimitiveResource & pResource,
+            PrimitiveResourcePtr pResource,
                 CacheCB func = NULL, REPORT_FREQUENCY rf = REPORT_FREQUENCY::NONE, long time = 0l);
 
-//    OCStackResult cancelResourceCache(std::string address, std::string uri);
-    OCStackResult cancelResourceCache(PrimitiveResource & pResource, CacheID id);
+    OCStackResult cancelResourceCache(PrimitiveResourcePtr pResource, CacheID id);
 
-//    OCStackResult updateResourceCache(std::string address, std::string uri);
-    OCStackResult updateResourceCache(PrimitiveResource & pResource);
+    OCStackResult updateResourceCache(PrimitiveResourcePtr pResource);
 
-//    OCStackResult getResourceCache(std::string address, std::string uri);
-    OCStackResult getResourceCache(PrimitiveResource & pResource);
+    CachedDataPtr getCachedData(PrimitiveResourcePtr pResource);
+    CachedDataPtr getCachedData(CacheID id);
 
+    CACHE_STATE getResourceCacheState(PrimitiveResourcePtr pResource);
+    CACHE_STATE getResourceCacheState(CacheID id);
+
+    ~ResourceCacheManager();
 private:
     ResourceCacheManager();
-    ~ResourceCacheManager();
 
     static ResourceCacheManager * s_instance;
     static std::mutex s_mutexForCreation;
-    static std::list< DataCache * > * s_cacheDataList;
+    static std::unique_ptr<std::list<DataCachePtr>> s_cacheDataList;
 
-    DataCache * findCacheHandler(PrimitiveResource & pResource);
+    DataCachePtr findDataCache(PrimitiveResourcePtr pResource);
+    DataCachePtr findDataCache(CacheID id);
 };
 
 #endif /* RESOURCECACHEMANAGER_H_ */

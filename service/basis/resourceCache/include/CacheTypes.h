@@ -33,6 +33,8 @@
 
 #define CACHE_TAG  PCF("CACHE")
 
+class DataCache;
+
 enum class REPORT_FREQUENCY
 {
     NONE = 0,
@@ -54,23 +56,23 @@ enum class CACHE_STATE
     READY_YET,
     LOST_SIGNAL,
     DESTROYED,
-    UPDATING
+    UPDATING,
+    NONE
 };
 
 typedef int CacheID;
 
-typedef std::map<std::string, std::string> CacheData;
-typedef std::function<OCStackResult(std::shared_ptr<PrimitiveResource>, CacheData)> CacheCB;
-typedef std::map<Report_Info, CacheCB> SubscriberInfo;
-typedef std::pair<Report_Info, CacheCB> SubscriberInfoPair;
+typedef std::map<std::string, std::string> CachedData;
+typedef std::function<OCStackResult(std::shared_ptr<PrimitiveResource>, std::shared_ptr<CachedData>)> CacheCB;
+typedef std::map<int, std::pair<Report_Info, CacheCB>> SubscriberInfo;
+typedef std::pair<int, std::pair<Report_Info, CacheCB>> SubscriberInfoPair;
 
 typedef OC::OCResource BaseResource;
-//typedef std::function<void(const OC::HeaderOptions&,
-//            const OC::OCRepresentation&, const int, const int)> ObserveCB;
-//typedef std::function<void(const OC::HeaderOptions&,
-//            const OC::OCRepresentation&, const int)> GetCB;
-
 typedef PrimitiveResource::GetCallback GetCB;
 typedef PrimitiveResource::ObserveCallback ObserveCB;
+
+typedef std::shared_ptr<DataCache> DataCachePtr;
+typedef std::shared_ptr<CachedData> CachedDataPtr;
+typedef std::shared_ptr<PrimitiveResource> PrimitiveResourcePtr;
 
 #endif

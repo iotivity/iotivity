@@ -22,14 +22,14 @@
 
 ResourceCacheManager * ResourceCacheManager::s_instance = NULL;
 std::mutex ResourceCacheManager::s_mutexForCreation;
-std::list< DataCache * > * ResourceCacheManager::s_cacheDataList = NULL;
+std::unique_ptr<std::list<DataCachePtr>> ResourceCacheManager::s_cacheDataList(nullptr);
 
 ResourceCacheManager::ResourceCacheManager()
 {
     // TODO Auto-generated constructor stub
     if(!s_cacheDataList)
     {
-        s_cacheDataList = new std::list< DataCache * >();
+        s_cacheDataList = std::unique_ptr<std::list<DataCachePtr>>(new std::list<DataCachePtr>);
     }
 }
 
@@ -39,19 +39,18 @@ ResourceCacheManager::~ResourceCacheManager()
     if(s_cacheDataList)
     {
         s_cacheDataList->clear();
-        delete s_cacheDataList;
     }
 }
 
 
 ResourceCacheManager * ResourceCacheManager::getInstance()
 {
-    if(!s_instance)
+    if(s_instance == nullptr)
     {
         s_mutexForCreation.lock();
-        if(!s_instance)
+        if(s_instance == nullptr)
         {
-            s_instance = new ResourceCacheManager();
+            s_instance = new ResourceCacheManager();;
         }
         s_mutexForCreation.unlock();
     }
@@ -59,16 +58,12 @@ ResourceCacheManager * ResourceCacheManager::getInstance()
 }
 
 CacheID ResourceCacheManager::requestResourceCache(
-        PrimitiveResource & pResource, CacheCB func, REPORT_FREQUENCY rf, long reportTime)
+        PrimitiveResourcePtr pResource, CacheCB func,
+        REPORT_FREQUENCY rf, long reportTime)
 {
     CacheID ret = 0;
 
-    if(rt == NULL || pResource == NULL)
-    {
-        return ret;
-    }
-
-    if(rt != REPORT_FREQUENCY::NONE)
+    if(rf != REPORT_FREQUENCY::NONE)
     {
         if(func == NULL)
         {
@@ -81,10 +76,10 @@ CacheID ResourceCacheManager::requestResourceCache(
         }
     }
 
-    DataCache * newHandler = findCacheHandler(pResource);
+    DataCachePtr newHandler = findDataCache(pResource);
     if(newHandler == nullptr)
     {
-        DataCache * newHandler = new DataCache(pResource, func, rf, reportTime);
+        DataCachePtr newHandler = std::make_shared<DataCache>(pResource, func, rf, reportTime);
         s_cacheDataList->push_back(newHandler);
     }
     ret = newHandler->addSubscriber(func, rf, reportTime);
@@ -92,18 +87,18 @@ CacheID ResourceCacheManager::requestResourceCache(
     return ret;
 }
 
-OCStackResult ResourceCacheManager::cancelResourceCache(PrimitiveResource & pResource, CacheID id)
+OCStackResult ResourceCacheManager::cancelResourceCache(PrimitiveResourcePtr pResource, CacheID id)
 {
     OCStackResult ret = OC_STACK_ERROR;
 
-    if(pResource == NULL || id == 0)
+    if(id == 0)
     {
         return ret;
     }
 
     // TODO cancel cache
     CacheID retID = 0;
-    DataCache * deleteCacheHandler = findCacheHandler(pResource);
+    DataCachePtr deleteCacheHandler = findDataCache(pResource);
     if(deleteCacheHandler == nullptr)
     {
         return ret;
@@ -121,12 +116,13 @@ OCStackResult ResourceCacheManager::cancelResourceCache(PrimitiveResource & pRes
     return ret;
 }
 
-DataCache * ResourceCacheManager::findCacheHandler(PrimitiveResource & pResource)
+DataCachePtr ResourceCacheManager::findDataCache(PrimitiveResourcePtr pResource)
 {
-    DataCache * retHandler = nullptr;
-    for (auto i : s_cacheDataList)
+    DataCachePtr retHandler = nullptr;
+    for (auto & i : * s_cacheDataList)
     {
-        if(i->getPrimitiveResource() == pResource)
+        if(i->getPrimitiveResource()->getUri() == pResource->getUri() &&
+                i->getPrimitiveResource()->getHost() == pResource->getHost())
         {
             retHandler = i;
             break;
@@ -135,11 +131,65 @@ DataCache * ResourceCacheManager::findCacheHandler(PrimitiveResource & pResource
     return retHandler;
 }
 
-OCStackResult ResourceCacheManager::updateResourceCache(PrimitiveResource & pResource)
+DataCachePtr ResourceCacheManager::findDataCache(CacheID id)
+{
+    DataCachePtr retHandler = nullptr;
+    for (auto & i : * s_cacheDataList)
+    {
+        SubscriberInfoPair pair = i->findSubscriber(id);
+        if(pair.first != 0)
+        {
+            retHandler = i;
+            break;
+        }
+    }
+    return retHandler;
+}
+
+OCStackResult ResourceCacheManager::updateResourceCache(PrimitiveResourcePtr pResource)
 {
     OCStackResult ret = OC_STACK_ERROR;
 
     // TODO update now (request get)
 
     return ret;
+}
+
+CachedDataPtr ResourceCacheManager::getCachedData(PrimitiveResourcePtr pResource)
+{
+    DataCachePtr handler = findDataCache(pResource);
+    if(handler == nullptr)
+    {
+        return nullptr;
+    }
+    return handler->getCachedData();
+}
+
+CachedDataPtr ResourceCacheManager::getCachedData(CacheID id)
+{
+    DataCachePtr handler = findDataCache(id);
+    if(handler == nullptr)
+    {
+        return nullptr;
+    }
+    return handler->getCachedData();
+}
+
+CACHE_STATE ResourceCacheManager::getResourceCacheState(PrimitiveResourcePtr pResource)
+{
+    DataCachePtr handler = findDataCache(pResource);
+    if(handler == nullptr)
+    {
+        return CACHE_STATE::NONE;
+    }
+    return handler->getCacheState();
+}
+CACHE_STATE ResourceCacheManager::getResourceCacheState(CacheID id)
+{
+    DataCachePtr handler = findDataCache(id);
+    if(handler == nullptr)
+    {
+        return CACHE_STATE::NONE;
+    }
+    return handler->getCacheState();
 }

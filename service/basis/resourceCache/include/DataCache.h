@@ -22,7 +22,6 @@
 #define DATACACHE_H_
 
 #include <list>
-#include <memory>
 #include <string>
 #include <boost/progress.hpp>
 
@@ -35,7 +34,7 @@ class DataCache
 {
 public:
     DataCache(
-            PrimitiveResource & pResource,
+            PrimitiveResourcePtr pResource,
             CacheCB func,
             REPORT_FREQUENCY rf,
             long repeatTime);
@@ -44,8 +43,11 @@ public:
     CacheID addSubscriber(CacheCB func, REPORT_FREQUENCY rf, long repeatTime);
     CacheID deleteSubscriber(CacheID id);
 
-    std::shared_ptr<CacheData> getCachedData();
-    PrimitiveResource * getPrimitiveResource();
+    CachedDataPtr getCachedData();
+    CACHE_STATE getCacheState();
+    PrimitiveResourcePtr getPrimitiveResource();
+
+    SubscriberInfoPair findSubscriber(CacheID id);
 
 private:
     // origin resource info
@@ -53,19 +55,17 @@ private:
     std::string address;
 
     // resource instance
-    PrimitiveResource *sResource;
+    PrimitiveResourcePtr sResource;
     std::shared_ptr<BaseResource> baseHandler;
 
-    std::shared_ptr<ResourceAttributes> attributes;
-
     // cached data info
-    std::shared_ptr<CacheData> data;
+    CachedDataPtr data;
+    std::shared_ptr<ResourceAttributes> attributes;
     long updateTime;
     CACHE_STATE state;
 
     // subscriber info
-    SubscriberInfo *subscriberList;
-    SubscriberInfoPair findSubscriber(CacheID id);
+    std::unique_ptr<SubscriberInfo> subscriberList;
 
     // for requestCB from base
     void onObserve(const HeaderOptions& _hos,
@@ -75,7 +75,6 @@ private:
     ObserveCB pObserveCB;
     GetCB pGetCB;
 
-    //
     OCStackResult updateCacheData();
 
     // for timer

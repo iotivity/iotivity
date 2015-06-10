@@ -1,0 +1,74 @@
+#******************************************************************
+#
+# Copyright 2015 Samsung Electronics All Rights Reserved.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+##
+# ResourceCache build script
+##
+
+Import('env')
+
+if env.get('RELEASE'):
+	env.AppendUnique(CCFLAGS = ['-Os'])
+	env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+else:
+	env.AppendUnique(CCFLAGS = ['-g'])
+
+if env.get('LOGGING'):
+	env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+
+lib_env = env.Clone()
+SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+resourcecache_env = lib_env.Clone()
+
+target_os = env.get('TARGET_OS')
+######################################################################
+# Build flags
+######################################################################
+resourcecache_env.AppendUnique(CPPPATH = ['include'])
+resourcecache_env.AppendUnique(CPPPATH = ['../common/primitiveResource/include'])
+resourcecache_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'libcoap'])
+
+if target_os not in ['windows', 'winrt']:
+	resourcecache_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++11'])
+
+if target_os == 'linux':
+	resourcecache_env.AppendUnique(LIBS = ['pthread'])
+
+######################################################################
+# Source files and Targets
+######################################################################
+CACHE_SRC_DIR = 'src/'
+resourcecache_src = [
+        CACHE_SRC_DIR + 'DataCache.cpp',
+        CACHE_SRC_DIR + 'ResourceCacheManager.cpp',
+        CACHE_SRC_DIR + '../../common/primitiveResource/src/PrimitiveResource.cpp',
+        CACHE_SRC_DIR + '../../common/primitiveResource/src/ResourceAttributes.cpp'
+        ]
+
+if target_os in ['tizen','android'] :
+    resourcecachesdk = resourcecache_env.SharedLibrary('ResourceCache', resourcecache_src)
+else :
+    resourcecachesdk = resourcecache_env.StaticLibrary('ResourceCache', resourcecache_src)
+
+resourcecache_env.InstallTarget(resourcecachesdk, 'libResouceCache')
+
+# Go to build sample apps
+#SConscript('SampleApp/SConscript')
+
