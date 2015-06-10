@@ -38,35 +38,12 @@
 #include "camutex.h"
 #include "oic_malloc.h"
 #include "canetworkconfigurator.h"
+#include "cablockwisetransfer.h"
 
 #define TAG PCF("CA")
 #define SINGLE_HANDLE
 
 #define MAX_THREAD_POOL_SIZE    20
-
-typedef enum
-{
-    SEND_TYPE_MULTICAST = 0, SEND_TYPE_UNICAST
-} CASendDataType_t;
-
-typedef enum
-{
-    CA_REQUEST_DATA = 1,
-    CA_RESPONSE_DATA = 2,
-    CA_ERROR_DATA = 3,
-} CADataType_t;
-
-typedef struct
-{
-    CASendDataType_t type;
-    CARemoteEndpoint_t *remoteEndpoint;
-    CARequestInfo_t *requestInfo;
-    CAResponseInfo_t *responseInfo;
-    CAErrorInfo_t *errorInfo;
-    CAHeaderOption_t *options;
-    CADataType_t dataType;
-    uint8_t numOptions;
-} CAData_t;
 
 // thread pool handle
 static ca_thread_pool_t g_threadPoolHandle = NULL;
@@ -84,6 +61,28 @@ static CAErrorCallback g_errorHandler = NULL;
 
 static void CAErrorHandler(const CARemoteEndpoint_t *remoteEndpoint,
                            const void *data, uint32_t dataLen, CAResult_t result);
+
+void CAAddDataToSendThread(CAData_t *data)
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+    VERIFY_NON_NULL_VOID(data, TAG, "data");
+
+    // add thread
+    CAQueueingThreadAddData(&g_sendThread, data, sizeof(CAData_t));
+
+    OIC_LOG(DEBUG, TAG, "OUT");
+}
+
+void CAAddDataToReceiveThread(CAData_t *data)
+{
+    OIC_LOG(DEBUG, TAG, "IN - CAAddDataToReceiveThread");
+    VERIFY_NON_NULL_VOID(data, TAG, "data");
+
+    // add thread
+    CAQueueingThreadAddData(&g_receiveThread, data, sizeof(CAData_t));
+
+    OIC_LOG(DEBUG, TAG, "OUT - CAAddDataToReceiveThread");
+}
 
 static bool CAIsSelectedNetworkAvailable()
 {
@@ -255,6 +254,15 @@ static void CASendThreadProcess(void *threadData)
             pdu = (coap_pdu_t *) CAGeneratePDU(data->remoteEndpoint->resourceUri,
                                                data->requestInfo->method,
                                                data->requestInfo->info);
+            // Blockwise transfer
+            CAResult_t res = CAAddBlockOption(&pdu,
+                                              data->requestInfo->info);
+            if (CA_STATUS_OK != res)
+            {
+                OIC_LOG(INFO, TAG, "to write block option has failed");
+                coap_delete_pdu(pdu);
+                return;
+            }
         }
         else if (NULL != data->responseInfo)
         {
@@ -263,6 +271,15 @@ static void CASendThreadProcess(void *threadData)
             pdu = (coap_pdu_t *) CAGeneratePDU(data->remoteEndpoint->resourceUri,
                                                data->responseInfo->result,
                                                data->responseInfo->info);
+            // Blockwise transfer
+            CAResult_t res = CAAddBlockOption(&pdu,
+                                              data->responseInfo->info);
+            if (CA_STATUS_OK != res)
+            {
+                OIC_LOG(INFO, TAG, "to write block option has failed");
+                coap_delete_pdu(pdu);
+                return;
+            }
         }
         else
         {
@@ -306,6 +323,13 @@ static void CASendThreadProcess(void *threadData)
 
         coap_pdu_t *pdu = (coap_pdu_t *) CAGeneratePDU(data->remoteEndpoint->resourceUri, CA_GET,
                                                        info);
+        // Blockwise transfer
+        CAResult_t res = CAAddBlockOption(&pdu,
+                                          data->requestInfo->info);
+        if (CA_STATUS_OK != res)
+        {
+            OIC_LOG(DEBUG, TAG, "CAAddBlockOption has failed");
+        }
 
         if (NULL != pdu)
         {
@@ -426,7 +450,13 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data, u
         cadata->remoteEndpoint = endpoint;
         cadata->requestInfo = ReqInfo;
         cadata->responseInfo = NULL;
-        CAQueueingThreadAddData(&g_receiveThread, cadata, sizeof(CAData_t));
+
+        res = CAReceiveBlockWiseData(pdu, endpoint, cadata, dataLen);
+        if(CA_NOT_SUPPORTED == res)
+        {
+            OIC_LOG(ERROR, TAG, "this message don't have block option");
+            CAQueueingThreadAddData(&g_receiveThread, cadata, sizeof(CAData_t));
+        }
     }
     else
     {
@@ -500,25 +530,15 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data, u
         cadata->requestInfo = NULL;
 
         // for retransmission
-        void *retransmissionPdu = NULL;
-        CARetransmissionReceivedData(&g_retransmissionContext, endpoint, pdu->hdr, pdu->length,
-                                     &retransmissionPdu);
+        CARetransmissionReceivedData(&g_retransmissionContext, endpoint, pdu->hdr, pdu->length);
 
-        // get token from saved data in retransmission list
-        if (retransmissionPdu && CA_EMPTY == code)
-        {
-            CAResult_t res = CAGetTokenFromPDU((const coap_hdr_t *)retransmissionPdu,
-                                               &(ResInfo->info));
-            if (CA_STATUS_OK != res)
-            {
-                OIC_LOG(ERROR, TAG, "fail to get Token from retransmission list");
-                OICFree(ResInfo->info.token);
-            }
-        }
-        OICFree(retransmissionPdu);
         cadata->responseInfo = ResInfo;
 
-        CAQueueingThreadAddData(&g_receiveThread, cadata, sizeof(CAData_t));
+        res = CAReceiveBlockWiseData(pdu, endpoint, cadata, dataLen);
+        if(CA_NOT_SUPPORTED == res)
+        {
+            CAQueueingThreadAddData(&g_receiveThread, cadata, sizeof(CAData_t));
+        }
     }
 
     if (pdu)
@@ -625,8 +645,13 @@ CAResult_t CADetachRequestMessage(const CARemoteEndpoint_t *object, const CARequ
     data->requestInfo = requestInfo;
     data->responseInfo = NULL;
 
-    // add thread
-    CAQueueingThreadAddData(&g_sendThread, data, sizeof(CAData_t));
+    // send block data
+    CAResult_t res = CASendBlockWiseData(data);
+    if(CA_NOT_SUPPORTED == res)
+    {
+        CAQueueingThreadAddData(&g_sendThread, data, sizeof(CAData_t));
+    }
+
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 
@@ -683,8 +708,12 @@ CAResult_t CADetachRequestToAllMessage(const CAGroupEndpoint_t *object,
     data->requestInfo = requestInfo;
     data->responseInfo = NULL;
 
-    // add thread
-    CAQueueingThreadAddData(&g_sendThread, data, sizeof(CAData_t));
+    // send block data
+    CAResult_t res = CASendBlockWiseData(data);
+    if(CA_NOT_SUPPORTED == res)
+    {
+        CAQueueingThreadAddData(&g_sendThread, data, sizeof(CAData_t));
+    }
 
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
@@ -732,8 +761,12 @@ CAResult_t CADetachResponseMessage(const CARemoteEndpoint_t *object,
     data->requestInfo = NULL;
     data->responseInfo = responseInfo;
 
-    // add thread
-    CAQueueingThreadAddData(&g_sendThread, data, sizeof(CAData_t));
+    // send block data
+    CAResult_t res = CASendBlockWiseData(data);
+    if(CA_NOT_SUPPORTED == res)
+    {
+        CAQueueingThreadAddData(&g_sendThread, data, sizeof(CAData_t));
+    }
 
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
@@ -813,8 +846,12 @@ CAResult_t CADetachMessageResourceUri(const CAURI_t resourceUri, const CAToken_t
         data->numOptions = numOptions;
     }
 
-    // add thread
-    CAQueueingThreadAddData(&g_sendThread, data, sizeof(CAData_t));
+    // send block data
+    CAResult_t res = CASendBlockWiseData(data);
+    if(CA_NOT_SUPPORTED == res)
+    {
+        CAQueueingThreadAddData(&g_sendThread, data, sizeof(CAData_t));
+    }
 
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
@@ -900,10 +937,13 @@ CAResult_t CAInitializeMessageHandler()
     CARetransmissionInitialize(&g_retransmissionContext, g_threadPoolHandle, CASendUnicastData,
                                CATimeoutCallback, NULL);
 
+    // block-wise transfer initialize
+    CAInitializeBlockWiseTransfer(CAAddDataToSendThread, CAAddDataToReceiveThread);
+
     // start retransmission
     res = CARetransmissionStart(&g_retransmissionContext);
 
-    if (res != CA_STATUS_OK)
+    if (CA_STATUS_OK != res)
     {
         OIC_LOG(ERROR, TAG, "thread start error(retransmission thread).");
         return res;
@@ -965,6 +1005,7 @@ void CATerminateMessageHandler()
         g_threadPoolHandle = NULL;
     }
 
+    CATerminateBlockWiseTransfer();
     CARetransmissionDestroy(&g_retransmissionContext);
     CAQueueingThreadDestroy(&g_sendThread);
     CAQueueingThreadDestroy(&g_receiveThread);
@@ -1091,4 +1132,3 @@ void CAErrorHandler(const CARemoteEndpoint_t *remoteEndpoint, const void *data,
 
     return;
 }
-

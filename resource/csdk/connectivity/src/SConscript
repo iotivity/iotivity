@@ -74,6 +74,7 @@ else:
 		ca_path + 'caqueueingthread.c',
 		ca_path + 'caremotehandler.c',
 		ca_path + 'caretransmission.c',
+		ca_path + 'cablockwisetransfer.c',
 		]
 	if secured == '1':
 		env.AppendUnique(CPPDEFINES = ['__WITH_DTLS__'])
@@ -104,4 +105,3 @@ if ca_os in ['android', 'tizen']:
 else:
 	calib = env.StaticLibrary('connectivity_abstraction', env.get('CA_SRC'))
 env.InstallTarget(calib, 'libconnectivity_abstraction')
-

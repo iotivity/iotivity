@@ -146,7 +146,7 @@ LOCAL_CFLAGS += -std=c99 -DWITH_POSIX
 LOCAL_SRC_FILES = \
                 caconnectivitymanager.c caremotehandler.c cainterfacecontroller.c \
                 camessagehandler.c canetworkconfigurator.c caprotocolmessage.c \
-                caretransmission.c caqueueingthread.c \
+                caretransmission.c caqueueingthread.c cablockwisetransfer.c \
                 $(ADAPTER_UTILS)/caadapternetdtls.c $(ADAPTER_UTILS)/caadapterutils.c \
                 $(ADAPTER_UTILS)/camsgparser.c \
                 bt_le_adapter/caleadapter.c $(LE_ADAPTER_PATH)/caleclient.c \
@@ -159,4 +159,3 @@ LOCAL_SRC_FILES = \
                 $(IP_ADAPTER_PATH)/caipclient.c $(IP_ADAPTER_PATH)/android/caipnwmonitor.c \
 
 include $(BUILD_STATIC_LIBRARY)
-
