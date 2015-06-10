@@ -23,18 +23,14 @@
 
 #include <functional>
 #include <list>
+#include <string>
 
 #include "BrokerTypes.h"
-
-struct BrokerRequesterInfo
-{
-    BrokerCB brockerCB;
-};
 
 class ResourcePresence
 {
 public:
-    ResourcePresence(PrimitiveResource & pResource, BrokerCB _cb);
+    ResourcePresence(PrimitiveResourcePtr pResource, BrokerCB _cb);
     ~ResourcePresence();
 
     void addBrokerRequesterCB(BrokerCB _cb);
@@ -44,9 +40,9 @@ public:
     void requestResourceState();
 
 private:
-    PrimitiveResource & primitiveResource;
+    PrimitiveResourcePtr primitiveResource;
 
-    std::list<BrokerRequesterInfo *> * requesterList;
+    std::unique_ptr<std::list<BrokerRequesterInfoPtr>> requesterList;
 
     GetCallback pGetCB;
     void GetCB(const HeaderOptions &hos, const ResponseStatement& rep, int seq);

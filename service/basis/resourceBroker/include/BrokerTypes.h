@@ -30,14 +30,25 @@
 #include "PrimitiveResource.h"
 
 #define BROKER_TAG PCF("BROKER")
-#define BASE_LAYER_C 0
 #define BROKER_TRANSPORT OCConnectivityType::OC_IPV4
 
+struct BrokerRequesterInfo;
+class ResourcePresence;
+class DevicePresence;
+
+enum class DISCOVER_TRANSACTION;
+enum class BROKER_STATE;
+
 typedef std::function<void(std::shared_ptr<OC::OCResource>)> FindCB;
+typedef std::function<DISCOVER_TRANSACTION(std::shared_ptr<PrimitiveResource> resource)> DiscoverCB;
 
 typedef std::function<OCStackResult(BROKER_STATE)> BrokerCB;
 
-typedef std::function<DISCOVER_TRANSACTION(std::shared_ptr<PrimitiveResource> resource)> DiscoverCB;
+typedef std::shared_ptr<PrimitiveResource> PrimitiveResourcePtr;
+typedef std::shared_ptr<BrokerRequesterInfo> BrokerRequesterInfoPtr;
+
+typedef std::shared_ptr<ResourcePresence> ResourcePresencePtr;
+typedef std::shared_ptr<DevicePresence> DevicePresencePtr;
 
 enum class DISCOVER_TRANSACTION
 {
@@ -51,6 +62,11 @@ enum class BROKER_STATE
     REQUESTED,
     LOST_SIGNAL,
     DESTROYED
+};
+
+struct BrokerRequesterInfo
+{
+    BrokerCB brockerCB;
 };
 
 typedef OC::OCPlatform::OCPresenceHandle BasePresenceHandle;

@@ -36,11 +36,11 @@ class ResourceBroker
 public:
     ResourceBroker * getInstance();
 
-    OCStackResult hostResource(PrimitiveResource & pResource, BrokerCB cb);
+    OCStackResult hostResource(PrimitiveResourcePtr pResource, BrokerCB cb);
 
-    OCStackResult cancelHostResource(PrimitiveResource & pResource);
+    OCStackResult cancelHostResource(PrimitiveResourcePtr pResource);
 
-    OCStackResult getResourceState(PrimitiveResource & pResource);
+    OCStackResult getResourceState(PrimitiveResourcePtr pResource);
 
 private:
     ResourceBroker();
@@ -48,10 +48,10 @@ private:
 
     static ResourceBroker * s_instance;
     static std::mutex s_mutexForCreation;
-    static std::list< DevicePresence * >  s_presenceList;
+    static std::unique_ptr<std::list< DevicePresencePtr >>  s_presenceList;
 
-    ResourcePresence * findResourcePresence(PrimitiveResource& pResource, BrokerCB cb);
-    DevicePresence * findDevicePresence(PrimitiveResource& pResource, BrokerCB cb);
+    ResourcePresencePtr findResourcePresence(PrimitiveResourcePtr pResource, BrokerCB cb);
+    DevicePresencePtr findDevicePresence(PrimitiveResourcePtr pResource, BrokerCB cb);
 };
 
 #endif /* RESOURCEBROKER_H_ */

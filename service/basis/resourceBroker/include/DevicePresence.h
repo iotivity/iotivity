@@ -30,18 +30,16 @@
 class DevicePresence
 {
 public:
-    DevicePresence(PrimitiveResource & pResource, BrokerCB _cb);
+    DevicePresence(PrimitiveResourcePtr pResource, BrokerCB _cb);
     ~DevicePresence();
 
-    DevicePresence * createPresenceHandler(PrimitiveResource & pResource, BrokerCB _cb);
-
-    void addPresenceResource(PrimitiveResource & pResource, BrokerCB _cb);
-    ResourcePresence * findResourcePresence(PrimitiveResource & pResource, BrokerCB _cb);
+    void addPresenceResource(PrimitiveResourcePtr pResource, BrokerCB _cb);
+    ResourcePresencePtr findResourcePresence(PrimitiveResourcePtr pResource, BrokerCB _cb);
 
 private:
 
     SubscribeCallback pSubscribeRequestCB;
-    std::list<ResourcePresence *> * presenceResourceList;
+    std::unique_ptr<std::list<ResourcePresencePtr>> presenceResourceList;
 
     BasePresenceHandle presenceHandle;
     void subscribeCB(OCStackResult ret, const unsigned int seq, const std::string& msg);

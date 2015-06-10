@@ -20,16 +20,16 @@
 
 #include "DevicePresence.h"
 
-DevicePresence::DevicePresence(PrimitiveResource & pResource, BrokerCB _cb)
+DevicePresence::DevicePresence(PrimitiveResourcePtr pResource, BrokerCB _cb)
 {
-    address = pResource.getHost();
     pSubscribeRequestCB = std::bind(&DevicePresence::subscribeCB, this,
             std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
 
-    presenceResourceList = new std::list<ResourcePresence *>();
+    presenceResourceList
+    = std::unique_ptr<std::list<ResourcePresencePtr>>(new std::list<ResourcePresencePtr>);
     addPresenceResource(pResource, _cb);
 
-    OC::OCPlatform::subscribePresence(presenceHandle, address,
+    OC::OCPlatform::subscribePresence(presenceHandle, pResource->getHost(),
             BROKER_TRANSPORT, pSubscribeRequestCB);
 }
 
@@ -38,37 +38,35 @@ DevicePresence::~DevicePresence()
     // TODO Auto-generated destructor stub
     OC::OCPlatform::unsubscribePresence(presenceHandle);
     presenceResourceList->clear();
-    delete presenceResourceList;
 }
 
-void DevicePresence::addPresenceResource(PrimitiveResource & pResource, BrokerCB _cb)
+void DevicePresence::addPresenceResource(PrimitiveResourcePtr pResource, BrokerCB _cb)
 {
-    ResourcePresence * newPresenceResource = new ResourcePresence(pResource, _cb);
+    ResourcePresencePtr newPresenceResource = ResourcePresencePtr(new ResourcePresence(pResource, _cb));
     presenceResourceList->push_back(newPresenceResource);
 }
 
-ResourcePresence * DevicePresence::findPresenceResource(PrimitiveResource & pResource, BrokerCB _cb)
+ResourcePresencePtr DevicePresence::findResourcePresence(PrimitiveResourcePtr pResource, BrokerCB _cb)
 {
-    ResourcePresence * retResource = NULL;
-    if (presenceResourceList->empty() || pResource.isEmpty())
+    ResourcePresencePtr retResource(nullptr);
+    if (presenceResourceList->empty())// || pResource.isEmpty())
     {
-       return NULL;
+       return retResource;
     }
     else
     {
-       std::list<ResourcePresence *>::iterator it;
+       std::list<ResourcePresencePtr>::iterator it;
 
-       ResourcePresence * temp = new ResourcePresence(pResource, _cb);
+       ResourcePresencePtr temp = ResourcePresencePtr(new ResourcePresence(pResource, _cb));
        it = std::find(presenceResourceList->begin(), presenceResourceList->end(), temp);
-       delete temp;
 
        if(it == presenceResourceList->end())
        {
-           return NULL;
+           return retResource;
        }
        else
        {
-           retResource = it;
+           retResource = *it;
        }
     }
 

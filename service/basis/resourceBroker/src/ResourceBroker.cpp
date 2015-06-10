@@ -25,25 +25,24 @@
 #define DEFAULT_CONTEXT_VALUE 0x99
 
 ResourceBroker * ResourceBroker::s_instance = NULL;
-std::list< DevicePresence * >  ResourceBroker::s_presenceList = NULL;
+std::unique_ptr<std::list< DevicePresencePtr >>  ResourceBroker::s_presenceList(nullptr);
 
 ResourceBroker::ResourceBroker()
 {
     // TODO Auto-generated constructor stub
-    if(s_presenceList.empty())
+    if(s_presenceList == nullptr)
     {
-        s_presenceList = new std::list< DevicePresence * >();
+        s_presenceList = std::unique_ptr<std::list< DevicePresencePtr >>(new std::list<DevicePresencePtr>);
     }
 }
 
 ResourceBroker::~ResourceBroker()
 {
     // TODO Auto-generated destructor stub
-    if(!s_presenceList.empty())
+    if(s_presenceList != nullptr)
     {
-        s_presenceList.clear();
+        s_presenceList->clear();
     }
-    delete s_presenceList;
 }
 
 ResourceBroker * ResourceBroker::getInstance()
@@ -60,10 +59,10 @@ ResourceBroker * ResourceBroker::getInstance()
     return s_instance;
 }
 
-OCStackResult ResourceBroker::hostResource(PrimitiveResource & pResource, BrokerCB cb)
+OCStackResult ResourceBroker::hostResource(PrimitiveResourcePtr pResource, BrokerCB cb)
 {
     OCStackResult ret = OC_STACK_INVALID_PARAM;
-    if (pResource.getUri().empty() || pResource.getHost().empty())
+    if (pResource->getUri().empty() || pResource->getHost().empty())
     {
         return ret;
     }
@@ -73,11 +72,11 @@ OCStackResult ResourceBroker::hostResource(PrimitiveResource & pResource, Broker
         return ret;
     }
 
-    DevicePresence * presenceItem = findDevicePresence(pResource, cb);
+    DevicePresencePtr presenceItem = findDevicePresence(pResource, cb);
     if(presenceItem == NULL)
     {
-        DevicePresence *newItem = new DevicePresence(pResource, cb);
-        s_presenceList.push_back(newItem);
+        DevicePresencePtr newItem = DevicePresencePtr(new DevicePresence(pResource, cb));
+        s_presenceList->push_back(newItem);
     }
     else
     {
@@ -87,44 +86,43 @@ OCStackResult ResourceBroker::hostResource(PrimitiveResource & pResource, Broker
     return ret;
 }
 
-DevicePresence * ResourceBroker::findDevicePresence(PrimitiveResource& pResource, BrokerCB cb)
+DevicePresencePtr ResourceBroker::findDevicePresence(PrimitiveResourcePtr pResource, BrokerCB cb)
 {
-    DevicePresence * retDevice = NULL;
-    if (s_presenceList.empty() || pResource.isEmpty())
+    DevicePresencePtr retDevice(nullptr);
+    if (s_presenceList->empty())// || pResource->isEmpty())
     {
-        return NULL;
+        return retDevice;
     }
     else
     {
-        std::list<DevicePresence *>::iterator it;
+        std::list<DevicePresencePtr>::iterator it;
 
-        DevicePresence * temp = new DevicePresence(pResource, cb);
-        it = std::find(s_presenceList.begin(), s_presenceList.end(), temp);
-        delete temp;
+        DevicePresencePtr temp = DevicePresencePtr(new DevicePresence(pResource, cb));
+        it = std::find(s_presenceList->begin(), s_presenceList->end(), temp);
 
-        if(it == s_presenceList.end())
+        if(it == s_presenceList->end())
         {
-            return NULL;
+            return retDevice;
         }
         else
         {
-            retDevice = it;
+            retDevice = *it;
         }
     }
 
     return retDevice;
 }
 
-ResourcePresence * ResourceBroker::findResourcePresence(PrimitiveResource & pResource, BrokerCB cb)
+ResourcePresencePtr ResourceBroker::findResourcePresence(PrimitiveResourcePtr pResource, BrokerCB cb)
 {
-    ResourcePresence * retResource = NULL;
-    if (s_presenceList.empty() || pResource.isEmpty())
+    ResourcePresencePtr retResource(nullptr);
+    if (s_presenceList->empty())// || pResource.isEmpty())
     {
-        return NULL;
+        return retResource;
     }
     else
     {
-        DevicePresence * foundDevice = findDevicePresence(pResource, cb);
+        DevicePresencePtr foundDevice = findDevicePresence(pResource, cb);
         retResource = foundDevice->findResourcePresence(pResource, cb);
     }
 

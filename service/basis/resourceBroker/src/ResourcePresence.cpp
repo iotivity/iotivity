@@ -20,33 +20,34 @@
 
 #include "ResourcePresence.h"
 
-ResourcePresence::ResourcePresence(PrimitiveResource & pResource, BrokerCB _cb)
+ResourcePresence::ResourcePresence(PrimitiveResourcePtr pResource, BrokerCB _cb)
 {
     primitiveResource = pResource;
 
     pGetCB = std::bind(&ResourcePresence::GetCB, this,
             std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
 
-    requesterList = new std::list<BrokerRequesterInfo *>();
+    requesterList
+    = std::unique_ptr<std::list<BrokerRequesterInfoPtr>>(new std::list<BrokerRequesterInfoPtr>);
+
     addBrokerRequesterCB(_cb);
 }
 
 ResourcePresence::~ResourcePresence()
 {
     requesterList->clear();
-    delete requesterList;
 }
 
 void ResourcePresence::addBrokerRequesterCB(BrokerCB _cb)
 {
-    BrokerRequesterInfo *newRequester = new BrokerRequesterInfo();
+    BrokerRequesterInfoPtr newRequester = BrokerRequesterInfoPtr(new BrokerRequesterInfo());
     newRequester->brockerCB = _cb;
     requesterList->push_back(newRequester);
 }
 
 void ResourcePresence::requestResourceState()
 {
-    primitiveResource.requestGet(pGetCB);
+    primitiveResource->requestGet(pGetCB);
 }
 
 void ResourcePresence::GetCB(const HeaderOptions &hos, const ResponseStatement& rep, int seq)
