@@ -778,5 +778,14 @@ public class MainActivity extends Activity {
         String callbackData = subject + receivedData;
         DLog.v(TAG, callbackData);
 
+        if (subject.equals(getString(R.string.remote_address))) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(getString(R.string.coap_prefix)).append(receivedData);
+            if (receivedData.contains(".")) { // IP
+                sb.append(getString(R.string.port_num));
+            }
+            sb.append(getString(R.string.uri));
+            mReqData_ed.setText(sb.toString());
+        }
     }
 }
