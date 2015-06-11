@@ -375,6 +375,7 @@ TEST(StackResource, CreateResourceBadUri)
                                             "core.rw",
                                             NULL, //"/a/led",
                                             0,
+                                            0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
 
     EXPECT_EQ(OC_STACK_INVALID_URI, OCCreateResource(&handle,
@@ -382,12 +383,14 @@ TEST(StackResource, CreateResourceBadUri)
                                             "core.rw",
                                             "", //"/a/led",
                                             0,
+                                            0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
 
     EXPECT_EQ(OC_STACK_INVALID_URI, OCCreateResource(&handle,
                                             "core.led",
                                             "core.rw",
                                             uri65, //"/a/led",
+                                            0,
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
 

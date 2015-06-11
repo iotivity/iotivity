@@ -469,7 +469,8 @@ exit:
  * This internal method is the entity handler for DOXM resources.
  */
 OCEntityHandlerResult DoxmEntityHandler (OCEntityHandlerFlag flag,
-                                        OCEntityHandlerRequest * ehRequest)
+                                        OCEntityHandlerRequest * ehRequest,
+                                        void* callbackParam)
 {
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
@@ -514,6 +515,7 @@ OCStackResult CreateDoxmResource()
                            OIC_MI_DEF,
                            OIC_RSRC_DOXM_URI,
                            DoxmEntityHandler,
+                           NULL,
                            OC_OBSERVABLE);
 
     if (OC_STACK_OK != ret)

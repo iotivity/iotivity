@@ -447,7 +447,8 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
  * to handle REST request (PUT/POST/DEL)
  */
 OCEntityHandlerResult CredEntityHandler (OCEntityHandlerFlag flag,
-                                        OCEntityHandlerRequest * ehRequest)
+                                        OCEntityHandlerRequest * ehRequest,
+                                        void* callbackParameter)
 {
     OCEntityHandlerResult ret = OC_EH_ERROR;
 
@@ -492,6 +493,7 @@ OCStackResult CreateCredResource()
                            OIC_MI_DEF,
                            OIC_RSRC_CRED_URI,
                            CredEntityHandler,
+                           NULL,
                            OC_RES_PROP_NONE);
 
     if (OC_STACK_OK != ret)
