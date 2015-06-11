@@ -872,7 +872,7 @@ void parsePresencePayload(char* payload, uint32_t* seqNum, uint32_t* maxAge,
                 seqNumObj = cJSON_GetObjectItem(presenceObj, OC_RSRVD_NONCE);
                 if(seqNumObj)
                 {
-                    *seqNum = seqNumObj->valueint;
+                    *seqNum = (uint32_t)seqNumObj->valuedouble;
                 }
                 else
                 {
