@@ -432,24 +432,28 @@ int parseClientResponse(OCClientResponse * clientResponse)
             cJSON * prop = cJSON_GetObjectItem(resource,"prop");
             if (prop)
             {
-                // If this is a secure resource, the info about the port at which the
-                // resource is hosted on server is embedded inside discovery JSON response
-                if (cJSON_GetObjectItem(prop, "sec"))
+                cJSON * policy = cJSON_GetObjectItem(prop,"p");
+                if (policy)
                 {
-                    if ((cJSON_GetObjectItem(prop, "sec")->valueint) == 1)
+                    // If this is a secure resource, the info about the port at which the
+                    // resource is hosted on server is embedded inside discovery JSON response
+                    if (cJSON_GetObjectItem(policy, "sec"))
                     {
-                        coapSecureResource = 1;
+                        if ((cJSON_GetObjectItem(policy, "sec")->valueint) == 1)
+                        {
+                            coapSecureResource = 1;
+                        }
                     }
-                }
-                OC_LOG_V(INFO, TAG, "Secure -- %s", coapSecureResource == 1 ? "YES" : "NO");
-                if (cJSON_GetObjectItem(prop, "port"))
-                {
-                    port = cJSON_GetObjectItem(prop, "port")->valueint;
-                    OC_LOG_V(INFO, TAG, "Hosting Server Port (embedded inside JSON) -- %u", port);
+                    OC_LOG_V(INFO, TAG, "Secure -- %s", coapSecureResource == 1 ? "YES" : "NO");
+                    if (cJSON_GetObjectItem(policy, "port"))
+                    {
+                        port = cJSON_GetObjectItem(policy, "port")->valueint;
+                        OC_LOG_V(INFO, TAG, "Hosting Server Port (embedded inside JSON) -- %u", port);
 
-                    std::ostringstream ss;
-                    ss << port;
-                    coapServerPort = ss.str();
+                        std::ostringstream ss;
+                        ss << port;
+                        coapServerPort = ss.str();
+                    }
                 }
             }
 
