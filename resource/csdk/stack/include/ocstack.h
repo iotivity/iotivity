@@ -21,6 +21,7 @@
 #ifndef OCSTACK_H_
 #define OCSTACK_H_
 
+#include <stdio.h>
 #include <stdint.h>
 #include "octypes.h"
 
@@ -117,6 +118,15 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
  */
 OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption * options,
         uint8_t numOptions);
+
+/**
+ * @brief   Register Persistent storage callback.
+ * @param   persistentStorageHandler [IN] Pointers to open, read, write, close & unlink handlers.
+ * @return
+ *     OC_STACK_OK    - No errors; Success
+ *     OC_STACK_INVALID_PARAM - Invalid parameter
+ */
+OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler);
 
 #ifdef WITH_PRESENCE
 /**

@@ -64,7 +64,7 @@ JNIEXPORT jint JNICALL Java_com_example_resourcehostingsampleapp_ResourceHosting
     if(threadRun==true)
     {
 
-        messageCallback(env,obj,"already execute OICCoordinatorStart");
+        messageCallback(env,obj,"OICCoordinatorStart already executed");
         result = (jint)HOSTING_THREAD_ERROR;
         return result;
     }
@@ -95,7 +95,7 @@ JNIEXPORT jint JNICALL Java_com_example_resourcehostingsampleapp_ResourceHosting
     }
     else
     {
-            messageCallback(env,obj,"The thread may be not running.");
+            messageCallback(env,obj,"OICCoordinatorStop already terminated");
             result = (jint)HOSTING_THREAD_ERROR;
             return result;
     }

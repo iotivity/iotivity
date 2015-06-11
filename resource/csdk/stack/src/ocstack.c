@@ -41,8 +41,7 @@
 #include "ocrandom.h"
 #include "oic_malloc.h"
 #include "ocserverrequest.h"
-#include "ocsecurityinternal.h"
-
+#include "secureresourcemanager.h"
 #include "cacommon.h"
 #include "cainterface.h"
 
@@ -747,7 +746,8 @@ OCStackResult UpdateResponseAddr(OCDevAddr *address, const CARemoteEndpoint_t* e
         address->addr[i] = atoi(tok);
     }
 
-    memcpy(&address->addr[4], &endPoint->addressInfo.IP.port, sizeof(uint16_t));
+    address->addr[4] = (uint8_t)endPoint->addressInfo.IP.port;
+    address->addr[5] = (uint8_t)(endPoint->addressInfo.IP.port >> 8);
     ret = OC_STACK_OK;
 
 exit:
@@ -1865,18 +1865,20 @@ OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
     result = CAResultToOCResult(OCSelectNetwork());
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
-    CARegisterHandler(HandleCARequests, HandleCAResponses, HandleCAErrorResponse);
     switch (myStackMode)
     {
         case OC_CLIENT:
+			CARegisterHandler(HandleCARequests, HandleCAResponses, HandleCAErrorResponse);
             result = CAResultToOCResult(CAStartDiscoveryServer());
             OC_LOG(INFO, TAG, PCF("Client mode: CAStartDiscoveryServer"));
             break;
         case OC_SERVER:
+			SRMRegisterHandler(HandleCARequests, HandleCAResponses, HandleCAErrorResponse);
             result = CAResultToOCResult(CAStartListeningServer());
             OC_LOG(INFO, TAG, PCF("Server mode: CAStartListeningServer"));
             break;
         case OC_CLIENT_SERVER:
+			SRMRegisterHandler(HandleCARequests, HandleCAResponses, HandleCAErrorResponse);
             result = CAResultToOCResult(CAStartListeningServer());
             if(result == OC_STACK_OK)
             {
@@ -1885,12 +1887,6 @@ OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
             break;
     }
     VERIFY_SUCCESS(result, OC_STACK_OK);
-
-#if defined(__WITH_DTLS__)
-    result = (CARegisterDTLSCredentialsHandler(GetDtlsPskCredentials) == CA_STATUS_OK) ?
-        OC_STACK_OK : OC_STACK_ERROR;
-    VERIFY_SUCCESS(result, OC_STACK_OK);
-#endif // (__WITH_DTLS__)
 
 #ifdef WITH_PRESENCE
     PresenceTimeOutSize = sizeof(PresenceTimeOut)/sizeof(PresenceTimeOut[0]) - 1;
@@ -1903,6 +1899,13 @@ OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
     if(myStackMode != OC_CLIENT)
     {
         result = initResources();
+    }
+
+    // Initialize the SRM Policy Engine
+    if(result == OC_STACK_OK)
+    {
+        result = SRMInitPolicyEngine();
+        // TODO after BeachHead delivery: consolidate into single SRMInit()
     }
 
 exit:
@@ -1948,8 +1951,11 @@ OCStackResult OCStop()
     DeleteObserverList();
     // Remove all the client callbacks
     DeleteClientCBList();
-    // Deinit security blob
-    DeinitOCSecurityInfo();
+
+	// De-init the SRM Policy Engine
+    // TODO after BeachHead delivery: consolidate into single SRMDeInit()
+    SRMDeInitPolicyEngine();
+
     stackState = OC_STACK_UNINITIALIZED;
     return OC_STACK_OK;
 }
@@ -2360,6 +2366,36 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
     }
 
     return ret;
+}
+
+/**
+ * @brief   Register Persistent storage callback.
+ * @param   persistentStorageHandler [IN] Pointers to open, read, write, close & unlink handlers.
+ * @return
+ *     OC_STACK_OK    - No errors; Success
+ *     OC_STACK_INVALID_PARAM - Invalid parameter
+ */
+OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
+{
+    OC_LOG(INFO, TAG, PCF("RegisterPersistentStorageHandler !!"));
+    if(!persistentStorageHandler)
+    {
+        OC_LOG(ERROR, TAG, PCF("The persistent storage handler is invalid"));
+        return OC_STACK_INVALID_PARAM;
+    }
+    else
+    {
+        if( !persistentStorageHandler->open ||
+                !persistentStorageHandler->close ||
+                !persistentStorageHandler->read ||
+                !persistentStorageHandler->unlink ||
+                !persistentStorageHandler->write)
+        {
+            OC_LOG(ERROR, TAG, PCF("The persistent storage handler is invalid"));
+            return OC_STACK_INVALID_PARAM;
+        }
+    }
+    return SRMRegisterPersistentStorageHandler(persistentStorageHandler);
 }
 
 #ifdef WITH_PRESENCE
@@ -3471,6 +3507,12 @@ OCStackResult initResources()
             &(((OCResource *) presenceResource.handle)->resourceProperties),
             OC_ACTIVE, 0);
     #endif
+
+    if (result == OC_STACK_OK)
+    {
+        result = SRMInitSecureResources();
+    }
+
     return result;
 }
 
@@ -3522,6 +3564,8 @@ void deleteAllResources()
         #endif // WITH_PRESENCE
         pointer = temp;
     }
+
+    SRMDeInitSecureResources();
 
     #ifdef WITH_PRESENCE
     // Ensure that the last resource to be deleted is the presence resource. This allows for all

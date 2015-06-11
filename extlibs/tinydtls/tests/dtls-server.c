@@ -113,8 +113,8 @@ get_psk_info(struct dtls_context_t *ctx, const session_t *session,
 static int
 get_ecdsa_key(struct dtls_context_t *ctx,
 	      const session_t *session,
-	      const dtls_ecdsa_key_t **result) {
-  static const dtls_ecdsa_key_t ecdsa_key = {
+	      const dtls_ecc_key_t **result) {
+  static const dtls_ecc_key_t ecdsa_key = {
     .curve = DTLS_ECDH_CURVE_SECP256R1,
     .priv_key = ecdsa_priv_key,
     .pub_key_x = ecdsa_pub_key_x,
@@ -249,10 +249,13 @@ usage(const char *program, const char *version) {
 
   fprintf(stderr, "%s v%s -- DTLS server implementation\n"
 	  "(c) 2011-2014 Olaf Bergmann <bergmann@tzi.org>\n\n"
-	  "usage: %s [-A address] [-p port] [-v num]\n"
+	  "usage: %s [-A address] [-p port] [-v num] [-a enable|disable]\n"
 	  "\t-A address\t\tlisten on specified address (default is ::)\n"
 	  "\t-p port\t\tlisten on specified port (default is %d)\n"
-	  "\t-v num\t\tverbosity level (default: 3)\n",
+	  "\t-v num\t\tverbosity level (default: 3)\n"
+	  "\t-a enable|disable\t(default: disable)\n"
+  	  "\t\t\t\tenable:enable TLS_ECDH_anon_with_AES_128_CBC_SHA\n"
+	  "\t\t\t\tdisable:disable TLS_ECDH_anon_with_AES_128_CBC_SHA\n",
 	   program, version, program, DEFAULT_PORT);
 }
 
@@ -277,6 +280,7 @@ main(int argc, char **argv) {
   struct timeval timeout;
   int fd, opt, result;
   int on = 1;
+  int ecdh_anon_enalbe = DTLS_CIPHER_DISABLE;
   struct sockaddr_in6 listen_addr;
 
   memset(&listen_addr, 0, sizeof(struct sockaddr_in6));
@@ -290,7 +294,7 @@ main(int argc, char **argv) {
   listen_addr.sin6_port = htons(DEFAULT_PORT);
   listen_addr.sin6_addr = in6addr_any;
 
-  while ((opt = getopt(argc, argv, "A:p:v:")) != -1) {
+  while ((opt = getopt(argc, argv, "A:p:v:a:")) != -1) {
     switch (opt) {
     case 'A' :
       if (resolve_address(optarg, (struct sockaddr *)&listen_addr) < 0) {
@@ -303,6 +307,10 @@ main(int argc, char **argv) {
       break;
     case 'v' :
       log_level = strtol(optarg, NULL, 10);
+      break;
+    case 'a':
+      if( strcmp(optarg, "enable") == 0)
+          ecdh_anon_enalbe = DTLS_CIPHER_ENABLE;
       break;
     default:
       usage(argv[0], dtls_package_version());
@@ -347,6 +355,9 @@ main(int argc, char **argv) {
   dtls_init();
 
   the_context = dtls_new_context(&fd);
+
+  /* enable/disable tls_ecdh_anon_with_aes_128_cbc_sha */
+  dtls_enables_anon_ecdh(the_context, ecdh_anon_enalbe);
 
   dtls_set_handler(the_context, &cb);
 

@@ -125,6 +125,9 @@ public class Activator extends Activity implements BundleActivator,
                     "device.notify", "oc.mi.def", entitycb,
                     EnumSet.of(ResourceProperty.DISCOVERABLE));
         }
+        else{
+            Log.w(TAG, "Something Happened");
+        }
     }
 
     @Override

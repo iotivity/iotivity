@@ -44,3 +44,4 @@ else:
 
 env.SConscript(['../con/lib/libcoap-4.1.1/SConscript'])
 env.SConscript(['../con/SConscript'])
+env.SConscript(['../con/c_common/SConscript'])

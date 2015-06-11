@@ -18,6 +18,7 @@ import org.iotivity.base.ResourceProperty;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.Message;
 import android.util.Log;
 
 public class TemperatureResource implements IMessageLogger
@@ -125,8 +126,16 @@ public class TemperatureResource implements IMessageLogger
         {
             mtemp = rep.getValueInt(StringConstants.TEMPERATURE);
             mhumidity = rep.getValueInt(StringConstants.HUMIDITY);
-            logMessage(TAG + "temperature : " + mtemp + "humidity : " + mhumidity);
+            logMessage(TAG + "PUT Request" +"temperature : " + mtemp + "humidity : " + mhumidity);
+             notifyObserver();
             // " Power: " + mPower);
+             String message = mtemp+":"+mhumidity; 
+             Message msg = Message.obtain();
+             msg.what = 0;
+             SampleProvider mainActivityObj = SampleProvider.getSampleProviderObject();
+             SampleProvider.setmessage(message);
+             mainActivityObj.getmHandler().sendMessage(msg);
+
         }
 
         protected OcRepresentation get()
@@ -156,7 +165,7 @@ public class TemperatureResource implements IMessageLogger
                 {
                     try
                     {
-                        logMessage(TAG + "Request");
+                        logMessage(TAG + requestType + "Request");
                         OcResourceResponse ocResourceResponse = new OcResourceResponse();
                         ocResourceResponse.setRequestHandle(request
                                                             .getRequestHandle());

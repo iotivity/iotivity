@@ -54,6 +54,8 @@
 #include "crypto.h"
 #include "ccm.h"
 #include "ecc/ecc.h"
+#include "aes/rijndael.h"
+#include "sha2/sha2.h"
 #include "prng.h"
 #include "netq.h"
 
@@ -292,7 +294,7 @@ dtls_mac(dtls_hmac_context_t *hmac_ctx,
 }
 
 static size_t
-dtls_ccm_encrypt(aes128_ccm_t *ccm_ctx, const unsigned char *src, size_t srclen,
+dtls_ccm_encrypt(aes128_t *ccm_ctx, const unsigned char *src, size_t srclen,
 		 unsigned char *buf,
 		 unsigned char *nounce,
 		 const unsigned char *aad, size_t la) {
@@ -309,7 +311,7 @@ dtls_ccm_encrypt(aes128_ccm_t *ccm_ctx, const unsigned char *src, size_t srclen,
 }
 
 static size_t
-dtls_ccm_decrypt(aes128_ccm_t *ccm_ctx, const unsigned char *src,
+dtls_ccm_decrypt(aes128_t *ccm_ctx, const unsigned char *src,
 		 size_t srclen, unsigned char *buf,
 		 unsigned char *nounce,
 		 const unsigned char *aad, size_t la) {
@@ -323,6 +325,95 @@ dtls_ccm_decrypt(aes128_ccm_t *ccm_ctx, const unsigned char *src,
 				 buf, srclen,
 				 aad, la);
   return len;
+}
+
+static size_t
+dtls_cbc_encrypt(aes128_t *aes_ctx,
+                 const unsigned char *iv,
+                 const unsigned char *src, size_t srclen,
+                 unsigned char *buf) {
+
+    unsigned char cbc[DTLS_BLK_LENGTH];
+    unsigned char tmp[DTLS_BLK_LENGTH];
+    unsigned char *pos;
+    dtls_hash_ctx shactx;
+    int i, j;
+    int blocks;
+
+    pos = buf;
+
+    dtls_hash_init(&shactx);
+    dtls_hash_update(&shactx, src, srclen);
+    dtls_hash_finalize(pos + srclen, &shactx);
+
+    memcpy(cbc, iv, DTLS_BLK_LENGTH);
+    blocks = (srclen + SHA256_DIGEST_LENGTH) / DTLS_BLK_LENGTH;
+
+    for (i = 0; i < blocks; i++) {
+        for (j = 0; j < DTLS_BLK_LENGTH; j++) {
+            cbc[j] ^= pos[j];
+        }
+
+        rijndael_encrypt(&aes_ctx->ctx, cbc, tmp);
+        memcpy(cbc, tmp, DTLS_BLK_LENGTH);
+        memcpy(pos, cbc, DTLS_BLK_LENGTH);
+        pos += DTLS_BLK_LENGTH;
+    }
+
+    dtls_debug_dump("Encrypted Data:", buf, srclen + SHA256_DIGEST_LENGTH);
+
+    return srclen + SHA256_DIGEST_LENGTH;
+}
+
+
+static size_t
+dtls_cbc_decrypt(aes128_t *aes_ctx,
+                 const unsigned char *iv,
+                 const unsigned char *src, size_t srclen,
+                 unsigned char *buf) {
+
+    unsigned char cbc[DTLS_BLK_LENGTH];
+    unsigned char tmp[DTLS_BLK_LENGTH];
+    unsigned char tmp2[DTLS_BLK_LENGTH];
+    unsigned char msg_hash[SHA256_DIGEST_LENGTH];
+    unsigned char *pos;
+    dtls_hash_ctx shactx;
+    int i, j;
+    int blocks;
+
+    pos = buf;
+    memcpy(pos, src, srclen);
+
+    memcpy(cbc, iv, DTLS_BLK_LENGTH);
+    blocks = srclen / DTLS_BLK_LENGTH;
+
+    for (i = 0; i < blocks; i++)
+    {
+        memcpy(tmp, pos, DTLS_BLK_LENGTH);
+        rijndael_decrypt(&aes_ctx->ctx, pos, tmp2);
+        memcpy(pos, tmp2, DTLS_BLK_LENGTH);
+
+        for (j = 0; j < DTLS_BLK_LENGTH; j++) {
+            pos[j] ^= cbc[j];
+        }
+
+        memcpy(cbc, tmp, DTLS_BLK_LENGTH);
+        pos += DTLS_BLK_LENGTH;
+    }
+
+    dtls_hash_init(&shactx);
+    dtls_hash_update(&shactx, buf, srclen - SHA256_DIGEST_LENGTH);
+    dtls_hash_finalize(msg_hash, &shactx);
+
+    dtls_debug_dump("decrypted data:", buf, srclen);
+
+    if(memcmp(msg_hash, buf + (srclen - SHA256_DIGEST_LENGTH), SHA256_DIGEST_LENGTH) != 0)
+    {
+        dtls_warn("message is broken\n");
+        return -1;
+    }
+
+    return srclen - SHA256_DIGEST_LENGTH;
 }
 
 #ifdef DTLS_PSK
@@ -505,21 +596,37 @@ dtls_encrypt(const unsigned char *src, size_t length,
 	     unsigned char *buf,
 	     unsigned char *nounce,
 	     unsigned char *key, size_t keylen,
-	     const unsigned char *aad, size_t la)
+	     const unsigned char *aad, size_t la,
+	     const dtls_cipher_t cipher)
 {
-  int ret;
+  int ret = 0;
   struct dtls_cipher_context_t *ctx = dtls_cipher_context_get();
 
-  ret = rijndael_set_key_enc_only(&ctx->data.ctx, key, 8 * keylen);
-  if (ret < 0) {
-    /* cleanup everything in case the key has the wrong size */
-    dtls_warn("cannot set rijndael key\n");
-    goto error;
-  }
+  if(cipher == TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8 ||
+     cipher == TLS_PSK_WITH_AES_128_CCM_8) {
+      ret = rijndael_set_key_enc_only(&ctx->data.ctx, key, 8 * keylen);
+      if (ret < 0) {
+        /* cleanup everything in case the key has the wrong size */
+        dtls_warn("cannot set rijndael key\n");
+        goto error;
+      }
 
-  if (src != buf)
-    memmove(buf, src, length);
-  ret = dtls_ccm_encrypt(&ctx->data, src, length, buf, nounce, aad, la);
+      if (src != buf)
+        memmove(buf, src, length);
+      ret = dtls_ccm_encrypt(&ctx->data, src, length, buf, nounce, aad, la);
+  }
+  if(cipher == TLS_ECDH_anon_WITH_AES_128_CBC_SHA) {
+      ret = rijndael_set_key(&ctx->data.ctx, key, 8 * keylen);
+      if (ret < 0) {
+        /* cleanup everything in case the key has the wrong size */
+        dtls_warn("cannot set rijndael key\n");
+        goto error;
+      }
+
+      if (src != buf)
+        memmove(buf, src, length);
+      ret = dtls_cbc_encrypt(&ctx->data, nounce, src, length, buf);
+  }
 
 error:
   dtls_cipher_context_release();
@@ -531,21 +638,38 @@ dtls_decrypt(const unsigned char *src, size_t length,
 	     unsigned char *buf,
 	     unsigned char *nounce,
 	     unsigned char *key, size_t keylen,
-	     const unsigned char *aad, size_t la)
+	     const unsigned char *aad, size_t la,
+	     const dtls_cipher_t cipher)
 {
-  int ret;
+  int ret = 0;
   struct dtls_cipher_context_t *ctx = dtls_cipher_context_get();
 
-  ret = rijndael_set_key_enc_only(&ctx->data.ctx, key, 8 * keylen);
-  if (ret < 0) {
-    /* cleanup everything in case the key has the wrong size */
-    dtls_warn("cannot set rijndael key\n");
-    goto error;
+  if(cipher == TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8 ||
+     cipher == TLS_PSK_WITH_AES_128_CCM_8) {
+      ret = rijndael_set_key_enc_only(&ctx->data.ctx, key, 8 * keylen);
+      if (ret < 0) {
+        /* cleanup everything in case the key has the wrong size */
+        dtls_warn("cannot set rijndael key\n");
+        goto error;
+      }
+
+      if (src != buf)
+        memmove(buf, src, length);
+      ret = dtls_ccm_decrypt(&ctx->data, src, length, buf, nounce, aad, la);
   }
 
-  if (src != buf)
-    memmove(buf, src, length);
-  ret = dtls_ccm_decrypt(&ctx->data, src, length, buf, nounce, aad, la);
+  if(cipher == TLS_ECDH_anon_WITH_AES_128_CBC_SHA) {
+      ret = rijndael_set_key(&ctx->data.ctx, key, 8 * keylen);
+      if (ret < 0) {
+        /* cleanup everything in case the key has the wrong size */
+        dtls_warn("cannot set rijndael key\n");
+        goto error;
+      }
+
+      if (src != buf)
+        memmove(buf, src, length);
+      ret = dtls_cbc_decrypt(&ctx->data, nounce, src, length, buf);
+    }
 
 error:
   dtls_cipher_context_release();

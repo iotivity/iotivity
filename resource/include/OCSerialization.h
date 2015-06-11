@@ -38,28 +38,29 @@ namespace OC
 
         class ListenResourceContainer
         {
-            class ListenResourcePropertiesContainer
+            class ListenResourcePolicyContainer
             {
                 friend class cereal::access;
                 friend class ListenResourceContainer;
+                friend class ListenResourcePropertiesContainer;
 
                 template<class Archive>
                 void serialize(Archive& ar)
                 {
                     try
                     {
-                        m_observable=false;
-                        int obsTemp;
-                        ar(cereal::make_nvp(OC::Key::OBSERVABLEKEY, obsTemp));
-                        m_observable = obsTemp != 0;
+                        m_observable = false;
+                        ar(cereal::make_nvp(OC::Key::BMKEY, m_bm));
+                        // In case of observable
+                        if(m_bm & OC_OBSERVABLE)
+                        {
+                            m_observable = true;
+                        }
                     }
                     catch(cereal::Exception&)
                     {
-                        // we swallow this exception, since it means the key
-                        // doesn't exist, allowing these to be optional
                         ar.setNextName(nullptr);
                     }
-
                     try
                     {
                         m_secure = false;
@@ -72,6 +73,35 @@ namespace OC
                     }
                     catch(cereal::Exception&)
                     {
+                       ar.setNextName(nullptr);
+                    }
+
+                 }
+
+                 bool m_observable;
+                 uint8_t m_bm;
+                 bool m_secure;
+                 int m_port;
+            };
+
+            class ListenResourcePropertiesContainer
+            {
+                friend class cereal::access;
+                friend class ListenResourceContainer;
+
+                template<class Archive>
+                void serialize(Archive& ar)
+                {
+                    try
+                    {
+                        ar(cereal::make_nvp(OC::Key::POLICYKEY, m_policy));
+
+                    }
+                    catch(cereal::Exception&)
+                    {
+                        // we swallow this exception, since it means the key
+                        // doesn't exist, allowing these to be optional
+                        oclog() << "Invalid POLICYKEY"<<std::flush;
                         ar.setNextName(nullptr);
                     }
 
@@ -93,11 +123,9 @@ namespace OC
                     }
                 }
 
-                bool m_observable;
                 std::vector<std::string> m_resourceTypes;
                 std::vector<std::string> m_interfaces;
-                bool m_secure;
-                int m_port;
+                ListenResourcePolicyContainer m_policy;
             };
 
             public:
@@ -138,8 +166,8 @@ namespace OC
                 {
                     ar.setNextName(nullptr);
                 }
-            }
 
+            }
 
             std::string m_uri;
             std::string m_serverId;
@@ -153,17 +181,17 @@ namespace OC
 
             bool observable() const
             {
-                return m_props.m_observable;
+                return m_props.m_policy.m_observable;
             }
 
             OCSecureType secureType() const
             {
-                return m_props.m_secure?OCSecureType::IPv4Secure :OCSecureType::IPv4;
+                return m_props.m_policy.m_secure?OCSecureType::IPv4Secure :OCSecureType::IPv4;
             }
 
             int port() const
             {
-                return m_props.m_port;
+                return m_props.m_policy.m_port;
             }
 
             std::vector<std::string> resourceTypes() const

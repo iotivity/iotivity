@@ -83,8 +83,6 @@ else:
 			env.AppendUnique(CPPPATH = [extlib_dir + '/extlibs/tinydtls'])
 env.AppendUnique(CA_SRC = ca_common_src)
 
-
-
 if 'ALL' in ca_transport:
 	env.SConscript(ca_path + 'ip_adapter/SConscript')
 	env.SConscript(ca_path + 'bt_edr_adapter/SConscript')

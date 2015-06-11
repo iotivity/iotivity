@@ -183,6 +183,14 @@ std::vector<Plugin> &FelixAdapter::getAllPlugins(void)
                                 env->NewStringUTF(key.c_str()));
         std::string resourcetype = env->GetStringUTFChars(jresourcetype, 0);
         plugin->setValue("ResourceType", resourcetype);
+
+        // set ResourceURL value
+        key = "Url";
+        jstring juritype = (jstring)env->CallStaticObjectMethod(cls, mid, jid,
+                                env->NewStringUTF(key.c_str()));
+        std::string url = env->GetStringUTFChars(juritype, 0);
+        plugin->setValue("Url", url);
+
         // push the plugin into the vector
         m_plugins.push_back(*plugin);
     }

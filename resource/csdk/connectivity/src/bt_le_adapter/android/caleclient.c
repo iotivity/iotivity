@@ -689,13 +689,12 @@ CAResult_t CALEClientSendMulticastMessageImpl(JNIEnv *env, const char* data,
         goto error_exit;
     }
 
-    uint32_t index = 0;
-    while (index < length)
+    for (uint32_t index = 0; index < length; index++)
     {
         jobject jarrayObj = (jobject) u_arraylist_get(g_deviceList, index);
         if (!jarrayObj)
         {
-            OIC_LOG(ERROR, TAG, "jarrayObj is null");
+            OIC_LOG(ERROR, TAG, "jarrayObj is not available");
             continue;
         }
 
@@ -724,27 +723,25 @@ CAResult_t CALEClientSendMulticastMessageImpl(JNIEnv *env, const char* data,
         if (!jni_address)
         {
             OIC_LOG(ERROR, TAG, "CALEGetAddressFromBTDevice has failed");
-            goto error_exit;
+            continue;
         }
 
         const char* address = (*env)->GetStringUTFChars(env, jni_address, NULL);
         if (!address)
         {
             OIC_LOG(ERROR, TAG, "address is not available");
-            goto error_exit;
+            continue;
         }
 
         res = CALECheckSendState(address);
         if (CA_STATUS_OK != res)
         {
-            OIC_LOG(ERROR, TAG, "send has failed");
+            OIC_LOG_V(INFO, TAG, "multicast : send has failed for this device[%s]", address);
             (*env)->ReleaseStringUTFChars(env, jni_address, address);
-            goto error_exit;
+            continue;
         }
 
         (*env)->ReleaseStringUTFChars(env, jni_address, address);
-
-        index++;
     }
 
     OIC_LOG(DEBUG, TAG, "connection routine is finished");

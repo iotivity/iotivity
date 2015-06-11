@@ -420,7 +420,7 @@ CAResponseResult_t ConvertEHResultToCAResult (OCEntityHandlerResult result)
             caResult = CA_SUCCESS;
             break;
         case OC_EH_FORBIDDEN:
-            caResult = CA_BAD_REQ;
+            caResult = CA_UNAUTHORIZED_REQ;
             break;
         case OC_EH_RESOURCE_NOT_FOUND:
             caResult = CA_NOT_FOUND;
@@ -557,11 +557,16 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
         responseInfo.info.options = NULL;
     }
 
-    char payload[MAX_RESPONSE_LENGTH + OC_JSON_PREFIX_LEN + OC_JSON_SUFFIX_LEN] = {};
+    char payload[MAX_RESPONSE_LENGTH + OC_JSON_PREFIX_LEN + OC_JSON_SUFFIX_LEN + 1] = {};
 
     // Put the JSON prefix and suffix around the payload
     strcpy(payload, (const char *)OC_JSON_PREFIX);
-    strncat(payload, (const char *)ehResponse->payload, ehResponse->payloadSize);
+    if(ehResponse->payloadSize)
+    {
+        strncat(payload, (const char *)ehResponse->payload,
+			ehResponse->payloadSize < MAX_RESPONSE_LENGTH ?
+			ehResponse->payloadSize : MAX_RESPONSE_LENGTH);
+    }
     strcat(payload, (const char *)OC_JSON_SUFFIX);
     responseInfo.info.payload = (CAPayload_t)payload;
 
