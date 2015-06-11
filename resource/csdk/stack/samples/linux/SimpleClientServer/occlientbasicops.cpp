@@ -30,6 +30,7 @@
 #include "occlientbasicops.h"
 #include "cJSON.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 
 #define MAX_IP_ADDR_ST_SZ  16 //string size of "155.255.255.255" (15 + 1)
 #define MAX_PORT_ST_SZ  6     //string size of "65535" (5 + 1)
@@ -479,9 +480,9 @@ int parseJSON(const char * resJSONPayload, char ** sid_c,
             return OC_STACK_INVALID_JSON;
         }
 
-        if(!(* uri_c =  (char ** )OICMalloc ((* totalRes) * sizeof(char **))))
+        if(!(* uri_c =  (char ** )OICMalloc ((* totalRes) * sizeof(char *))))
         {
-            OC_LOG(ERROR, TAG, "Memory not allocated to sid_c array");
+            OC_LOG(ERROR, TAG, "Memory not allocated to uri_c array");
             return OC_STACK_NO_MEMORY;
         }
 
@@ -551,17 +552,23 @@ void collectUniqueResource(const OCClientResponse * clientResponse)
     char * sid = NULL;
     char ** uri = NULL;
     int totalRes = 0;
+    int i;
 
     if(parseJSON(clientResponse->resJSONPayload, & sid, & uri, &totalRes)
             != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "Error while parsing JSON payload in OCClientResponse");
+
         OICFree(sid);
+        for (i = 0; i < totalRes; i++)
+        {
+            OICFree(uri[i]);
+        }
         OICFree(uri);
-        return;
+
+       return;
     }
 
-    int i;
     for(i = 0; i < totalRes; i++)
     {
         if(insertResource(sid, uri[i], clientResponse) == 1)
@@ -577,8 +584,12 @@ void collectUniqueResource(const OCClientResponse * clientResponse)
     }
 
     OICFree(sid);
+    for (i = 0; i < totalRes; i++)
+    {
+        OICFree(uri[i]);
+    }
     OICFree(uri);
- }
+}
 
 /* This function searches for the resource(sid:uri) in the ResourceList.
  * If the Resource is found in the list then it returns 0 else insert
@@ -588,12 +599,16 @@ int insertResource(const char * sid, char const * uri,
             const OCClientResponse * clientResponse)
 {
     ResourceNode * iter = resourceList;
+    char * sid_cpy =  OICStrdup(sid);
+    char * uri_cpy = OICStrdup(uri);
 
     //Checking if the resource(sid:uri) is new
     while(iter)
     {
         if((strcmp(iter->sid, sid) == 0) && (strcmp(iter->uri, uri) == 0))
         {
+            OICFree(sid_cpy);
+            OICFree(uri_cpy);
             return 0;
         }
         else
@@ -605,8 +620,8 @@ int insertResource(const char * sid, char const * uri,
     //Creating new ResourceNode
     if((iter = (ResourceNode *) OICMalloc(sizeof(ResourceNode))))
     {
-        iter->sid = sid;
-        iter->uri = uri;
+        iter->sid = sid_cpy;
+        iter->uri = uri_cpy;
         iter->ip = getIPAddr(clientResponse);
         iter->port = getPort(clientResponse);
         iter->connType = clientResponse->connType;
@@ -615,6 +630,8 @@ int insertResource(const char * sid, char const * uri,
     else
     {
         OC_LOG(ERROR, TAG, "Memory not allocated to ResourceNode");
+        OICFree(sid_cpy);
+        OICFree(uri_cpy);
         return -1;
     }
 
@@ -684,6 +701,7 @@ void freeResourceList()
         OICFree((void *)temp->port);
         OICFree(temp);
     }
+    resourceList = NULL;
 }
 
 int main(int argc, char* argv[])

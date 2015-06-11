@@ -64,12 +64,12 @@ char* constructJsonResponse (OCEntityHandlerRequest *ehRequest)
     if (ehRequest->resource == gLedInstance[0].handle)
     {
         currLEDResource = &gLedInstance[0];
-        gResourceUri = (char *) "a/led/0";
+        gResourceUri = (char *) "/a/led/0";
     }
     else if (ehRequest->resource == gLedInstance[1].handle)
     {
         currLEDResource = &gLedInstance[1];
-        gResourceUri = (char *) "a/led/1";
+        gResourceUri = (char *) "/a/led/1";
     }
 
     if(OC_REST_PUT == ehRequest->method)
