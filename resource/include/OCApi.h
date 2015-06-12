@@ -148,7 +148,6 @@ namespace OC
 
     enum RequestHandlerFlag
     {
-        InitFlag = 1 << 0,
         RequestFlag = 1 << 1,
         ObserverFlag = 1 << 2
     };
@@ -201,6 +200,8 @@ namespace OC
     typedef std::function<void(std::shared_ptr<OCResource>)> FindCallback;
 
     typedef std::function<void(const OCRepresentation&)> FindDeviceCallback;
+
+    typedef std::function<void(const OCRepresentation&)> FindPlatformCallback;
 
     typedef std::function<OCEntityHandlerResult(
                             const std::shared_ptr<OCResourceRequest>)> EntityHandler;

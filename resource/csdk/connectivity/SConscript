@@ -16,10 +16,10 @@ print "BUILD_SAMPLE is %s" % build_sample
 targets_disallow_multitransport = ['arduino']
 
 if target_os in targets_disallow_multitransport:
-	if ('ALL' in transport) or (len(transport) != 1):
-		print "*** Error invalid option values: TARGET_TRANSPORT"
-		print "%s disallowed until testing can validate use of multiple transports on %s %d" % (transport, target_os, len(transport))
-		Exit(1)
+    if ('ALL' in transport) or (len(transport) != 1):
+        print "*** Error invalid option values: TARGET_TRANSPORT"
+        print "%s disallowed until testing can validate use of multiple transports on %s %d" % (transport, target_os, len(transport))
+        Exit(1)
 
 if 'ALL' in transport:
 	if target_os == 'linux':
@@ -28,7 +28,7 @@ if 'ALL' in transport:
 			env.AppendUnique(CPPDEFINES = ['RA_ADAPTER'])
 	elif target_os == 'tizen':
 		env.AppendUnique(CPPDEFINES = ['IP_ADAPTER','EDR_ADAPTER','LE_ADAPTER'])
-	elif target_os == 'darwin':
+	elif target_os in['darwin','ios']:
 		env.AppendUnique(CPPDEFINES = ['IP_ADAPTER','NO_EDR_ADAPTER','NO_LE_ADAPTER'])
 	else:
 		env.AppendUnique(CPPDEFINES = ['IP_ADAPTER','EDR_ADAPTER','LE_ADAPTER'])

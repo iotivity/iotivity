@@ -9,6 +9,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 
+import org.iotivity.base.ModeType;
+import org.iotivity.base.OcPlatform;
+import org.iotivity.base.PlatformConfig;
+import org.iotivity.base.QualityOfService;
+import org.iotivity.base.ServiceType;
 import org.iotivity.service.ssm.DataReader;
 import org.iotivity.service.ssm.IQueryEngineEvent;
 import org.iotivity.service.ssm.ModelData;
@@ -16,10 +21,15 @@ import org.iotivity.service.ssm.R;
 import org.iotivity.service.ssm.SSMInterface;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.res.AssetManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -35,6 +45,8 @@ public class MainActivity extends Activity {
     private ArrayList<Integer> mRunningQueries           = new ArrayList<Integer>();
 
     private IQueryEngineEvent  mQueryEngineEventListener = null;
+    private final String         LOG_TAG = this.getClass().getSimpleName();
+    private static MainActivity  activityObj;
 
     void PrintLog(String log) {
         Message msg = new Message();
@@ -73,6 +85,10 @@ public class MainActivity extends Activity {
         svLog = (ScrollView) findViewById(R.id.sclLog);
         edtQuery = (EditText) findViewById(R.id.editQuery);
         edtUnregisterQuery = (EditText) findViewById(R.id.editUnregisterQuery);
+        
+        // calling the method to check the Wi-fi connectivity and configuring
+        // the OcPlatform
+        configurePlatform();
 
         mQueryEngineEventListener = new IQueryEngineEvent() {
             @Override
@@ -309,5 +325,44 @@ public class MainActivity extends Activity {
         } catch (Exception e) {
             Log.e("tag", e.getMessage());
         }
+    }
+    
+    private void configurePlatform() {
+        // local Variables
+        ConnectivityManager connManager;
+        NetworkInfo wifi;
+        AlertDialog dialog;
+        PlatformConfig platformConfigObj;
+
+        // Check the wifi connectivity
+        connManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+        wifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+        if (false == wifi.isConnected()) {
+            // WiFi is not connected close the application
+            AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
+            dialogBuilder.setTitle("Error");
+            dialogBuilder
+                    .setMessage("WiFi is not enabled/connected! Please connect the WiFi and start application again...");
+            dialogBuilder.setCancelable(false);
+            dialogBuilder.setPositiveButton("OK", new OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    // Closing the application
+                    activityObj.finish();
+                }
+            });
+
+            dialog = dialogBuilder.create();
+            dialog.show();
+            return;
+        }
+        // If wifi is connected calling the configure method for configuring the
+        // OcPlatform
+        platformConfigObj = new PlatformConfig(this,ServiceType.IN_PROC,
+                ModeType.CLIENT_SERVER, "0.0.0.0", 0, QualityOfService.LOW);
+
+        Log.i(LOG_TAG, "Before Calling Configure of ocPlatform");
+        OcPlatform.Configure(platformConfigObj);
+        Log.i(LOG_TAG, "Configuration done Successfully");
     }
 }

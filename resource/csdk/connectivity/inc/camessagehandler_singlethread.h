@@ -23,8 +23,8 @@
  * @brief This file contains message functionality.
  */
 
-#ifndef __CA_MESSAGE_HANDLER_SINGLETHREAD_H_
-#define __CA_MESSAGE_HANDLER_SINGLETHREAD_H_
+#ifndef CA_MESSAGE_HANDLER_SINGLETHREAD_H_
+#define CA_MESSAGE_HANDLER_SINGLETHREAD_H_
 
 #include "cacommon.h"
 #include "coap.h"
@@ -101,9 +101,11 @@ CAResult_t CADetachMessageResourceUri(const CAURI_t resourceUri, const CAToken_t
  * @brief   Setting the request and response callbacks for network packets
  * @param   ReqHandler     [IN]    callback for receiving the requests
  * @param   RespHandler    [IN]    callback for receiving the response
+ * @param   ErrorHandler   [IN]    callback for receiving error response
  * @return  NONE
  */
-void CASetRequestResponseCallbacks(CARequestCallback ReqHandler, CAResponseCallback RespHandler);
+void CASetInterfaceCallbacks(CARequestCallback ReqHandler, CAResponseCallback RespHandler,
+                             CAErrorCallback ErrorHandler);
 
 /**
  * @brief   Initialize the message handler by starting thread pool and initializing the
@@ -133,5 +135,5 @@ void CALogPDUInfo(coap_pdu_t *pdu);
 } /* extern "C" */
 #endif
 
-#endif //#ifndef __CA_MESSAGE_HANDLER_SINGLETHREAD_H_
+#endif /* CA_MESSAGE_HANDLER_SINGLETHREAD_H_ */
 

@@ -127,13 +127,6 @@ OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request
         response->setRequestHandle(request->getRequestHandle());
         response->setResourceHandle(request->getResourceHandle());
 
-        if (requestFlag & RequestHandlerFlag::InitFlag)
-        {
-            cout << "\t\trequestFlag : Init\n";
-
-            // entity handler to perform resource initialization operations
-        }
-
         if (requestFlag & RequestHandlerFlag::RequestFlag)
         {
             cout << "\t\trequestFlag : Request\n";
@@ -217,4 +210,6 @@ int main()
     {
         cout << e.what() << endl;
     }
+
+    return 0;
 }

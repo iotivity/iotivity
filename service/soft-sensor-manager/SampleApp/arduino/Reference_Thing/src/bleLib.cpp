@@ -513,6 +513,11 @@ char *Cble::Debug2BLE( int BLEwrite )
                 }
 
                 result = (char *)malloc(sizeof(char) * (SerialCnt + 1));
+                if (NULL == result)
+                {
+                    debug_printf("Debug2BLE malloc failed .\r\n");
+                    break;
+                }
                 memcpy(result, SerialData, SerialCnt );
                 result[SerialCnt] = NULL;
 

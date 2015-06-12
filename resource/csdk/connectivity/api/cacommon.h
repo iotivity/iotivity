@@ -80,6 +80,11 @@ extern "C"
 #endif
 
 /**
+ *@brief Maximum length of the remoteEndpoint identity
+ */
+#define CA_MAX_ENDPOINT_IDENTITY_LEN   (32)
+
+/**
  * @brief option types - the highest option number 63
  */
 #define CA_OPTION_IF_MATCH 1
@@ -173,6 +178,15 @@ typedef union
 
 } CAAddress_t;
 
+/*
+ * @brief remoteEndpoint identity
+ */
+typedef struct
+{
+    uint16_t id_length;
+    unsigned char id[CA_MAX_ENDPOINT_IDENTITY_LEN];
+}CARemoteId_t;
+
 /**
  * @enum CAMessageType_t
  * @brief Message Type for Base source code
@@ -206,8 +220,9 @@ typedef struct
 
     CAURI_t resourceUri;                    /**< Resource URI information **/
     CAAddress_t addressInfo;                /**< Remote Endpoint address **/
-    CATransportType_t transportType;        /**< Transport Type of the endpoint**/
+    CATransportType_t transportType;  /**< Connectivity of the endpoint**/
     bool isSecured;                         /**< Secure connection**/
+    CARemoteId_t identity;                  /**< Endpoint identity **/
 } CARemoteEndpoint_t;
 
 
@@ -250,6 +265,7 @@ typedef enum
     CA_REQUEST_TIMEOUT,             /**< Request is Timeout */
     CA_DESTINATION_DISCONNECTED,    /**< Destination is disconnected */
     CA_NOT_SUPPORTED,               /**< Not supported */
+    CA_STATUS_NOT_INITIALIZED,      /**< CA layer is not initialized */
     CA_STATUS_FAILED =255           /**< Failure */
     /* Result code - END HERE */
 } CAResult_t;
@@ -266,7 +282,9 @@ typedef enum
     CA_CREATED = 201,                /**< Created */
     CA_DELETED = 202,                /**< Deleted */
     CA_BAD_REQ = 400,                /**< Bad Request */
+    CA_UNAUTHORIZED_REQ = 401,       /**< Unauthorized Request */
     CA_BAD_OPT = 402,                /**< Bad Option */
+    CA_FORBIDDEN_REQ = 403,          /**< Forbidden Request */
     CA_NOT_FOUND = 404,              /**< Not found */
     CA_INTERNAL_SERVER_ERROR = 500,  /**< Internal Server Error */
     CA_RETRANSMIT_TIMEOUT = 504      /**< Retransmit timeout */
@@ -348,9 +366,22 @@ typedef struct
     CAInfo_t info;              /**< Information of the response */
 } CAResponseInfo_t;
 
+/**
+ * @brief Error information from CA
+ *        contains error code and message information
+ *
+ * This structure holds error information
+ */
+typedef struct
+{
+    CAResult_t result;  /**< CA API request result  */
+    CAInfo_t info;      /**< message information such as token and payload data
+                             helpful to identify the error */
+} CAErrorInfo_t;
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
 
-#endif //#ifndef CA_COMMON_H_
+#endif /* CA_COMMON_H_ */
 

@@ -15,6 +15,7 @@ namespace std {
     long double stold(const string& s);
 
     std::string to_string(int i);
+    std::string to_string(long t);
     std::string to_string(uint32_t i);
     std::string to_string(double d);
 }

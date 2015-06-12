@@ -24,7 +24,7 @@
 
 #include "oicgroup.h"
 #include "cJSON.h"
-#include "ocmalloc.h"
+#include "oic_malloc.h"
 #include "occollection.h"
 #include "logger.h"
 #include "timer.h"
@@ -62,7 +62,7 @@
 
 #define OCFREE(pointer) \
     { \
-        OCFree(pointer); \
+        OICFree(pointer); \
         pointer = NULL; \
     }
 
@@ -539,7 +539,7 @@ OCStackResult ExtractKeyValueFromRequest(char *request, char **key,
     VARIFY_POINTER_NULL(iterToken, result, exit);
     length = strlen(iterToken) + 1;
 
-    *key = (char *) OCMalloc(length);
+    *key = (char *) OICMalloc(length);
     VARIFY_POINTER_NULL(*key, result, exit)
 
     strncpy(*key, iterToken + 1, length);
@@ -549,7 +549,7 @@ OCStackResult ExtractKeyValueFromRequest(char *request, char **key,
     VARIFY_POINTER_NULL(iterToken, result, exit);
     length = strlen(iterToken) + 1;
 
-    *value = (char *) OCMalloc(length);
+    *value = (char *) OICMalloc(length);
     VARIFY_POINTER_NULL(*value, result, exit)
 
     strncpy(*value, iterToken + 1, length);
@@ -572,7 +572,7 @@ OCStackResult ExtractActionSetNameAndDelaytime(char *pChar, char **setName,
     OCStackResult result = OC_STACK_OK;
 
     token = (char*) strtok_r(pChar, ACTION_DELIMITER, &tokenPtr);
-    *setName = (char *) OCMalloc(strlen(token) + 1);
+    *setName = (char *) OICMalloc(strlen(token) + 1);
     VARIFY_POINTER_NULL(*setName, result, exit)
     VARIFY_PARAM_NULL(token, result, exit)
     strncpy(*setName, token, strlen(token) + 1);
@@ -604,14 +604,14 @@ OCStackResult BuildActionSetFromString(OCActionSet **set, char* actiondesc)
 
     OC_LOG(INFO, TAG, PCF("Build ActionSet Instance."));
 
-    *set = (OCActionSet*) OCMalloc(sizeof(OCActionSet));
+    *set = (OCActionSet*) OICMalloc(sizeof(OCActionSet));
     VARIFY_POINTER_NULL(*set, result, exit)
 
     iterToken = (char *) strtok_r(actiondesc, ACTION_DELIMITER, &iterTokenPtr);
 
     // ActionSet Name
     memset(*set, 0, sizeof(OCActionSet));
-    (*set)->actionsetName = (char *) OCMalloc(strlen(iterToken) + 1);
+    (*set)->actionsetName = (char *) OICMalloc(strlen(iterToken) + 1);
     VARIFY_POINTER_NULL((*set)->actionsetName, result, exit)
     VARIFY_PARAM_NULL(iterToken, result, exit)
     strncpy((*set)->actionsetName, iterToken, strlen(iterToken) + 1);
@@ -631,7 +631,7 @@ OCStackResult BuildActionSetFromString(OCActionSet **set, char* actiondesc)
     iterToken = (char *) strtok_r(NULL, ACTION_DELIMITER, &iterTokenPtr);
     while (iterToken)
     {
-        desc = (char *) OCMalloc(strlen(iterToken) + 1);
+        desc = (char *) OICMalloc(strlen(iterToken) + 1);
         VARIFY_POINTER_NULL(desc, result, exit)
         VARIFY_PARAM_NULL(desc, result, exit)
         strncpy(desc, iterToken, strlen(iterToken) + 1);
@@ -639,21 +639,21 @@ OCStackResult BuildActionSetFromString(OCActionSet **set, char* actiondesc)
                 &descIterTokenPtr);
         while (descIterToken)
         {
-            attr = (char *) OCMalloc(strlen(descIterToken) + 1);
+            attr = (char *) OICMalloc(strlen(descIterToken) + 1);
             VARIFY_POINTER_NULL(attr, result, exit)
             VARIFY_PARAM_NULL(descIterToken, result, exit)
             strncpy(attr, descIterToken, strlen(descIterToken) + 1);
 
             attrIterToken = (char *) strtok_r(attr, ATTR_ASSIGN,
                     &attrIterTokenPtr);
-            key = (char *) OCMalloc(strlen(attrIterToken) + 1);
+            key = (char *) OICMalloc(strlen(attrIterToken) + 1);
             VARIFY_POINTER_NULL(key, result, exit)
             VARIFY_PARAM_NULL(attrIterToken, result, exit)
             strncpy(key, attrIterToken, strlen(attrIterToken) + 1);
 
             attrIterToken = (char *) strtok_r(NULL, ATTR_ASSIGN,
                     &attrIterTokenPtr);
-            value = (char *) OCMalloc(strlen(attrIterToken) + 1);
+            value = (char *) OICMalloc(strlen(attrIterToken) + 1);
             VARIFY_POINTER_NULL(value, result, exit)
             VARIFY_PARAM_NULL(attrIterToken, result, exit)
             strncpy(value, attrIterToken, strlen(attrIterToken) + 1);
@@ -662,10 +662,10 @@ OCStackResult BuildActionSetFromString(OCActionSet **set, char* actiondesc)
             {
                 OC_LOG(INFO, TAG, PCF("Build OCAction Instance."));
 
-                action = (OCAction*) OCMalloc(sizeof(OCAction));
+                action = (OCAction*) OICMalloc(sizeof(OCAction));
                 VARIFY_POINTER_NULL(action, result, exit)
                 memset(action, 0, sizeof(OCAction));
-                action->resourceUri = (char *) OCMalloc(strlen(value) + 1);
+                action->resourceUri = (char *) OICMalloc(strlen(value) + 1);
                 VARIFY_POINTER_NULL(action->resourceUri, result, exit)
                 VARIFY_PARAM_NULL(value, result, exit)
                 strncpy(action->resourceUri, value, strlen(value) + 1);
@@ -676,16 +676,16 @@ OCStackResult BuildActionSetFromString(OCActionSet **set, char* actiondesc)
                 {
                     OC_LOG(INFO, TAG, PCF("Build OCCapability Instance."));
 
-                    capa = (OCCapability*) OCMalloc(sizeof(OCCapability));
+                    capa = (OCCapability*) OICMalloc(sizeof(OCCapability));
                     VARIFY_POINTER_NULL(capa, result, exit)
                     memset(capa, 0, sizeof(OCCapability));
 
-                    capa->capability = (char *) OCMalloc(strlen(key) + 1);
+                    capa->capability = (char *) OICMalloc(strlen(key) + 1);
                     VARIFY_POINTER_NULL(capa->capability, result, exit)
                     VARIFY_PARAM_NULL(key, result, exit)
                     strncpy(capa->capability, key, strlen(key) + 1);
 
-                    capa->status = (char *) OCMalloc(strlen(value) + 1);
+                    capa->status = (char *) OICMalloc(strlen(value) + 1);
                     VARIFY_POINTER_NULL(capa->status, result, exit)
                     VARIFY_PARAM_NULL(value, result, exit)
                     strncpy(capa->status, value, strlen(value) + 1);
@@ -778,7 +778,7 @@ OCStackResult BuildStringFromActionSet(OCActionSet* actionset, char** desc)
         }
     }
 
-    *desc = (char *) OCMalloc(1024 - remaining);
+    *desc = (char *) OICMalloc(1024 - remaining);
     VARIFY_POINTER_NULL(*desc, res, exit);
     strcpy(*desc, temp);
 
@@ -802,7 +802,7 @@ OCStackApplicationResult ActionSetCB(void* context, OCDoHandle handle,
         int idx;
 
         unsigned char *responseJson;
-        responseJson = (unsigned char *) OCMalloc(
+        responseJson = (unsigned char *) OICMalloc(
                 (unsigned int) (strlen((char *) clientResponse->resJSONPayload)
                         + 1));
 
@@ -900,21 +900,17 @@ unsigned int GetNumOfTargetResource(OCAction *actionset)
 OCStackResult SendAction(OCDoHandle *handle, const char *targetUri,
         const unsigned char *action)
 {
-    OCCallbackData cbdata = { 0 };
+    OCCallbackData cbdata;
     cbdata.cb = &ActionSetCB;
     cbdata.cd = NULL;
     cbdata.context = (void*)DEFAULT_CONTEXT_VALUE;
 
-// TODO: Selecting OC_WIFI for android, tizen and OC_ETHERNET for linux platform.
+// TODO: Selecting OC_IPV4.
 // It is temporary change as OC_ALL is not working currently. Remove this code and use OC_ALL
 // once it is functioning.
-#if defined(__ANDROID__) || defined(__TIZEN__)
+
     return OCDoResource(handle, OC_REST_PUT, targetUri,
-    NULL, (char *) action, OC_WIFI, OC_NA_QOS, &cbdata, NULL, 0);
-#else
-    return OCDoResource(handle, OC_REST_PUT, targetUri,
-    NULL, (char *) action, OC_ETHERNET, OC_NA_QOS, &cbdata, NULL, 0);
-#endif
+    NULL, (char *) action, OC_IPV4, OC_NA_QOS, &cbdata, NULL, 0);
 }
 
 OCStackResult DoAction(OCResource* resource, OCActionSet* actionset,
@@ -935,7 +931,7 @@ OCStackResult DoAction(OCResource* resource, OCActionSet* actionset,
         strncat((char *) actionDescPtr, (const char *) OC_JSON_SUFFIX,
                 strlen((const char *) OC_JSON_SUFFIX));
 
-        ClientRequestInfo *info = (ClientRequestInfo *) OCMalloc(
+        ClientRequestInfo *info = (ClientRequestInfo *) OICMalloc(
                 sizeof(ClientRequestInfo));
 
         if( info == NULL )
@@ -997,7 +993,7 @@ void DoScheduledGroupAction()
     if (info->actionset->type == RECURSIVE)
     {
         ScheduledResourceInfo *schedule;
-        schedule = (ScheduledResourceInfo *) OCMalloc(
+        schedule = (ScheduledResourceInfo *) OICMalloc(
                 sizeof(ScheduledResourceInfo));
 
         if (schedule)
@@ -1208,7 +1204,7 @@ OCStackResult BuildCollectionGroupActionJSONResponse(
                                     (delay == -1 ? actionset->timesteps : delay);
 
                             ScheduledResourceInfo *schedule;
-                            schedule = (ScheduledResourceInfo *) OCMalloc(
+                            schedule = (ScheduledResourceInfo *) OICMalloc(
                                     sizeof(ScheduledResourceInfo));
 
                             if (schedule)
@@ -1278,7 +1274,7 @@ OCStackResult BuildCollectionGroupActionJSONResponse(
                     {
                         cJSON_AddStringToObject(format, ACTIONSET, plainText);
                     }
-                    OCFree(plainText);
+                    OICFree(plainText);
                     stackRet = OC_STACK_OK;
                 }
             }

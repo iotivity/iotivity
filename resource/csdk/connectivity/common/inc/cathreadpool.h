@@ -28,8 +28,8 @@
  * a name that best describes the used technology, not the OS.
  */
 
-#ifndef CATHREAD_POOL_H_
-#define CATHREAD_POOL_H_
+#ifndef CA_THREAD_POOL_H_
+#define CA_THREAD_POOL_H_
 
 #include "cacommon.h"
 
@@ -86,5 +86,5 @@ void ca_thread_pool_free(ca_thread_pool_t thread_pool);
 } /* extern "C" */
 #endif /* __cplusplus */
 
-#endif /* CATHREAD_POOL_H_ */
+#endif /* CA_THREAD_POOL_H_ */
 

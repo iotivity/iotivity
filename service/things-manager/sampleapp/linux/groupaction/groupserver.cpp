@@ -130,7 +130,7 @@ void foundResource(std::shared_ptr<OCResource> resource)
     }
     catch (std::exception& e)
     {
-        std::cout << "" << std::endl;
+        std::cout << "Exception: " << e.what() << std::endl;
     }
 }
 
@@ -356,6 +356,7 @@ void createScheduledActionSet_AllBulbOff()
     if( res < 0 )
     {
         printf("Invalid Input. try again.");
+        delete allBulbOff;
         return;
     }
 
@@ -478,13 +479,13 @@ int main()
 
                 if (n == 9)
                 {
-                    std::string query = OC_WELL_KNOWN_QUERY;
+                    std::string query = OC_MULTICAST_DISCOVERY_URI;
                     query.append("?rt=");
                     query.append(resourceTypeName);
 
                     OCPlatform::findResource("",
                             query,
-                            OC_ETHERNET,
+                            OC_ALL,
                             &foundResource);
 
                     // OCPlatform::findResource("",
@@ -494,13 +495,13 @@ int main()
                 }
                 else if (n == 0)
                 {
-                    std::string query = OC_WELL_KNOWN_QUERY;
+                    std::string query = OC_MULTICAST_DISCOVERY_URI;
                     query.append("?rt=");
                     query.append("core.bookmark");
 
                     OCPlatform::findResource("",
                             query,
-                            OC_ETHERNET,
+                            OC_ALL,
                             &foundResource);
                     // OCPlatform::findResource("",
                     //         query,

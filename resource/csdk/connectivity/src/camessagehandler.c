@@ -49,13 +49,22 @@ typedef enum
     SEND_TYPE_MULTICAST = 0, SEND_TYPE_UNICAST
 } CASendDataType_t;
 
+typedef enum
+{
+    CA_REQUEST_DATA = 1,
+    CA_RESPONSE_DATA = 2,
+    CA_ERROR_DATA = 3,
+} CADataType_t;
+
 typedef struct
 {
     CASendDataType_t type;
     CARemoteEndpoint_t *remoteEndpoint;
     CARequestInfo_t *requestInfo;
     CAResponseInfo_t *responseInfo;
+    CAErrorInfo_t *errorInfo;
     CAHeaderOption_t *options;
+    CADataType_t dataType;
     uint8_t numOptions;
 } CAData_t;
 
@@ -71,6 +80,10 @@ static CARetransmission_t g_retransmissionContext;
 // handler field
 static CARequestCallback g_requestHandler = NULL;
 static CAResponseCallback g_responseHandler = NULL;
+static CAErrorCallback g_errorHandler = NULL;
+
+static void CAErrorHandler(const CARemoteEndpoint_t *remoteEndpoint,
+                           const void *data, uint32_t dataLen, CAResult_t result);
 
 static bool CAIsSelectedNetworkAvailable()
 {
@@ -163,6 +176,15 @@ static void CADataDestroyer(void *data, uint32_t size)
         CADestroyResponseInfoInternal((CAResponseInfo_t *) cadata->responseInfo);
     }
 
+    if (NULL != cadata->errorInfo)
+    {
+       CAInfo_t *info = &cadata->errorInfo->info;
+       OICFree(info->token);
+       OICFree(info->options);
+       OICFree(info->payload);
+       OICFree(cadata->errorInfo);
+    }
+
     OICFree(cadata->options);
     OICFree(cadata);
     OIC_LOG(DEBUG, TAG, "OUT");
@@ -193,22 +215,20 @@ static void CAReceiveThreadProcess(void *threadData)
         return;
     }
 
-    if (NULL != data->requestInfo)
+    if (data->requestInfo && g_requestHandler)
     {
-        if (g_requestHandler)
-        {
-            g_requestHandler(rep, data->requestInfo);
-        }
+        g_requestHandler(rep, data->requestInfo);
+    }
+    else if (data->responseInfo && g_responseHandler)
+    {
+        g_responseHandler(rep, data->responseInfo);
+    }
+    else if (data->errorInfo && g_errorHandler)
+    {
+        g_errorHandler(rep, data->errorInfo);
     }
 
-    if (NULL != data->responseInfo)
-    {
-        if (g_responseHandler)
-        {
-            g_responseHandler(rep, data->responseInfo);
-        }
-    }
-#endif
+#endif /* SINGLE_HANDLE */
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
@@ -258,6 +278,7 @@ static void CASendThreadProcess(void *threadData)
             if (CA_STATUS_OK != res)
             {
                 OIC_LOG_V(ERROR, TAG, "send failed:%d", res);
+                CAErrorHandler(data->remoteEndpoint, pdu->hdr, pdu->length, res);
                 coap_delete_pdu(pdu);
                 return;
             }
@@ -294,6 +315,7 @@ static void CASendThreadProcess(void *threadData)
             if(CA_STATUS_OK != res)
             {
                 OIC_LOG_V(ERROR, TAG, "send failed:%d", res);
+                CAErrorHandler(data->remoteEndpoint, pdu->hdr, pdu->length, res);
                 coap_delete_pdu(pdu);
                 return;
             }
@@ -550,23 +572,22 @@ void CAHandleRequestResponseCallbacks()
         return;
     }
 
-    if (NULL != td->requestInfo)
+    if (td->requestInfo && g_requestHandler)
     {
-        if (g_requestHandler)
-        {
-            OIC_LOG_V(DEBUG, TAG, "callback will be sent : %d", td->requestInfo->info.numOptions);
-            g_requestHandler(rep, td->requestInfo);
-        }
+        OIC_LOG_V(DEBUG, TAG, "request callback : %d", td->requestInfo->info.numOptions);
+        g_requestHandler(rep, td->requestInfo);
+    }
+    else if (td->responseInfo && g_responseHandler)
+    {
+        OIC_LOG_V(DEBUG, TAG, "response callback : %d", td->responseInfo->info.numOptions);
+        g_responseHandler(rep, td->responseInfo);
+    }
+    else if (td->errorInfo && g_errorHandler)
+    {
+        OIC_LOG_V(DEBUG, TAG, "error callback error: %d", td->errorInfo->result);
+        g_errorHandler(rep, td->errorInfo);
     }
 
-    if (NULL != td->responseInfo)
-    {
-        if (g_responseHandler)
-        {
-            g_responseHandler(rep, td->responseInfo);
-        }
-
-    }
     CADataDestroyer(msg, sizeof(CAData_t));
 
 #endif
@@ -810,11 +831,13 @@ memory_error_exit:
     return CA_MEMORY_ALLOC_FAILED;
 }
 
-void CASetRequestResponseCallbacks(CARequestCallback ReqHandler, CAResponseCallback RespHandler)
+void CASetInterfaceCallbacks(CARequestCallback ReqHandler, CAResponseCallback RespHandler,
+                             CAErrorCallback errroHandler)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     g_requestHandler = ReqHandler;
     g_responseHandler = RespHandler;
+    g_errorHandler = errroHandler;
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
@@ -824,6 +847,7 @@ CAResult_t CAInitializeMessageHandler()
     CASetPacketReceivedCallback(CAReceivedPacketCallback);
 
     CASetNetworkChangeCallback(CANetworkChangedCallback);
+    CASetErrorHandleCallback(CAErrorHandler);
 
     // create thread pool
     CAResult_t res = ca_thread_pool_init(MAX_THREAD_POOL_SIZE, &g_threadPoolHandle);
@@ -967,3 +991,104 @@ void CALogPDUInfo(coap_pdu_t *pdu)
 
     OIC_LOG_BUFFER(DEBUG, TAG, pdu->hdr->token, pdu->hdr->token_length);
 }
+
+void CAErrorHandler(const CARemoteEndpoint_t *remoteEndpoint, const void *data,
+                    uint32_t dataLen, CAResult_t result)
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+    VERIFY_NON_NULL_VOID(remoteEndpoint, TAG, "remoteEndpoint");
+    VERIFY_NON_NULL_VOID(data, TAG, "data");
+
+    uint32_t code = CA_NOT_FOUND;
+    //Do not free remoteEndpoint and data. Currently they will be freed in data thread
+    //Get PDU data
+    coap_pdu_t *pdu = (coap_pdu_t *) CAParsePDU((const char *) data, dataLen, &code);
+    if (NULL == pdu)
+    {
+        OIC_LOG(ERROR, TAG, "Parse PDU failed");
+        return;
+    }
+
+    char uri[CA_MAX_URI_LENGTH] = { 0, };
+
+    CAErrorInfo_t *errorInfo = (CAErrorInfo_t *) OICCalloc(1, sizeof(CAErrorInfo_t));
+    if (NULL == errorInfo)
+    {
+        OIC_LOG(ERROR, TAG, "CAErrorHandler, Memory allocation failed!");
+        coap_delete_pdu(pdu);
+        return;
+    }
+
+    CAResult_t res = CAGetErrorInfoFromPDU(pdu, errorInfo, uri, CA_MAX_URI_LENGTH);
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG_V(ERROR, TAG, "CAGetErrorInfoFromPDU failed : %d", res);
+        OICFree(errorInfo);
+        coap_delete_pdu(pdu);
+       return;
+    }
+
+    errorInfo->result = result;
+    OIC_LOG_V(DEBUG, TAG, "error : %d", result);
+    if (NULL != errorInfo->info.payload)
+    {
+        OIC_LOG_V(DEBUG, TAG, "error, payload: %s", errorInfo->info.payload);
+    }
+
+    OIC_LOG(DEBUG, TAG, "error, token");
+    OIC_LOG_BUFFER(DEBUG, TAG, (const uint8_t *) errorInfo->info.token,
+                   errorInfo->info.tokenLength);
+    OIC_LOG_V(DEBUG, TAG, "CAErrorHandler, msgID : %d", errorInfo->info.messageId);
+
+    CARemoteEndpoint_t *rep = NULL;
+    rep = CACloneRemoteEndpoint(remoteEndpoint);
+    if(!rep)
+    {
+        OIC_LOG(ERROR, TAG, "CAErrorHandler, CloneRemoteEndpoint Failed");
+        OICFree(errorInfo);
+        coap_delete_pdu(pdu);
+        return;
+    }
+
+    if(NULL == rep->resourceUri)
+    {
+        uint32_t bufLen = sizeof(uri);
+
+        CAURI_t resourceUri = (CAURI_t) OICMalloc(bufLen + 1);
+        if (NULL == resourceUri)
+        {
+            OIC_LOG(ERROR, TAG, "CAErrorHandler, Memory allocation failed!");
+            OICFree(errorInfo);
+            coap_delete_pdu(pdu);
+            return;
+        }
+
+        memcpy(resourceUri, uri, bufLen);
+        resourceUri[bufLen] = '\0';
+        OIC_LOG_V(DEBUG, TAG, "URI : %s", resourceUri);
+        rep->resourceUri = resourceUri;
+    }
+
+    // store the data at queue.
+    CAData_t *cadata = NULL;
+    cadata = (CAData_t *) OICCalloc(1, sizeof(CAData_t));
+    if (NULL == cadata)
+    {
+        OIC_LOG(ERROR, TAG, "CAReceivedPacketCallback, Memory allocation failed !");
+        CADestroyRemoteEndpointInternal(rep);
+        OICFree(errorInfo);
+        coap_delete_pdu(pdu);
+        return;
+    }
+
+    cadata->remoteEndpoint = rep;
+    cadata->requestInfo = NULL;
+    cadata->responseInfo = NULL;
+    cadata->errorInfo = errorInfo;
+    cadata->dataType = CA_ERROR_DATA;
+    CAQueueingThreadAddData(&g_receiveThread, cadata, sizeof(CAData_t));
+    coap_delete_pdu(pdu);
+
+    return;
+}
+

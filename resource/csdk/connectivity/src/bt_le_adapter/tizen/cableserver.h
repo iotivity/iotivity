@@ -28,8 +28,8 @@
  * LE adapter will interact with this sub module.
  */
 
-#ifndef __TZ_BLE_SERVER_H_
-#define __TZ_BLE_SERVER_H_
+#ifndef TZ_BLE_SERVER_H_
+#define TZ_BLE_SERVER_H_
 
 #include "caadapterinterface.h"
 #include "logger.h"
@@ -220,5 +220,5 @@ CAResult_t CABleServerSenderQueueEnqueueMessage
  */
 void *CABleServerSenderQueueProcessor();
 
-#endif //#ifndef __TZ_BLE_SERVER_H_
+#endif /* TZ_BLE_SERVER_H_ */
 

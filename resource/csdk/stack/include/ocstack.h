@@ -21,13 +21,14 @@
 #ifndef OCSTACK_H_
 #define OCSTACK_H_
 
+#include <stdio.h>
 #include <stdint.h>
 #include "octypes.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
-#define WITH_PRESENCE
+#define USE_RANDOM_PORT (0)
 
 //-----------------------------------------------------------------------------
 // Function prototypes
@@ -118,6 +119,15 @@ OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requ
 OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption * options,
         uint8_t numOptions);
 
+/**
+ * @brief   Register Persistent storage callback.
+ * @param   persistentStorageHandler [IN] Pointers to open, read, write, close & unlink handlers.
+ * @return
+ *     OC_STACK_OK    - No errors; Success
+ *     OC_STACK_INVALID_PARAM - Invalid parameter
+ */
+OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler);
+
 #ifdef WITH_PRESENCE
 /**
  * When operating in @ref OCServer or @ref OCClientServer mode, this API will start sending out
@@ -158,10 +168,11 @@ OCStackResult OCStopPresence();
  * @param entityHandler Entity handler function that is called by ocstack to handle requests for
  *                      any undefined resources or default actions.
  *                      If NULL is passed it removes the device default entity handler.
+ * @param callbackParameter paramter passed back when entityHandler is called.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandler entityHandler);
+OCStackResult OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandler entityHandler, void* callbackParameter);
 
 /**
  * Set device information.
@@ -178,6 +189,20 @@ OCStackResult OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandler entityHandle
 OCStackResult OCSetDeviceInfo(OCDeviceInfo deviceInfo);
 
 /**
+ * Set platform information.
+ *
+ * @param platformInfo - Structure passed by the server application containing
+ *                     the platform information.
+ *
+ *
+ * @return
+ *     OC_STACK_OK              - no errors
+ *     OC_STACK_INVALID_PARAM   - invalid paramerter
+ *     OC_STACK_ERROR           - stack process error
+ */
+OCStackResult OCSetPlatformInfo(OCPlatformInfo platformInfo);
+
+/**
  * Create a resource.
  *
  * @param handle Pointer to handle to newly created resource.  Set by ocstack and
@@ -187,6 +212,7 @@ OCStackResult OCSetDeviceInfo(OCDeviceInfo deviceInfo);
  * @param uri URI of the resource.  Example:  "/a/led".
  * @param entityHandler Entity handler function that is called by ocstack to handle requests, etc.
  *                      NULL for default entity handler.
+ * @param callbackParameter paramter passed back when entityHandler is called.
  * @param resourceProperties Properties supported by resource.
  *                           Example: ::OC_DISCOVERABLE|::OC_OBSERVABLE.
  *
@@ -197,31 +223,9 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
                                const char *resourceInterfaceName,
                                const char *uri,
                                OCEntityHandler entityHandler,
+                               void* callbackParam,
                                uint8_t resourceProperties);
 
-/**
- * Create a resource. with host ip address for remote resource.
- *
- * @param handle Pointer to handle to newly created resource.  Set by ocstack.
- *               Used to refer to resource.
- * @param resourceTypeName Name of resource type.  Example: "core.led".
- * @param resourceInterfaceName Name of resource interface.  Example: "core.rw".
- * @param host HOST address of the remote resource.  Example:  "coap://xxx.xxx.xxx.xxx:xxxxx".
- * @param uri URI of the resource.  Example:  "/a/led".
- * @param entityHandler Entity handler function that is called by ocstack to handle requests, etc.
- *                      NULL for default entity handler.
- * @param resourceProperties Properties supported by resource.
- *                           Example: ::OC_DISCOVERABLE|::OC_OBSERVABLE
- *
- * @return ::OC_STACK_OK on success, some other value upon failure.
- */
-OCStackResult OCCreateResourceWithHost(OCResourceHandle *handle,
-                               const char *resourceTypeName,
-                               const char *resourceInterfaceName,
-                               const char *host,
-                               const char *uri,
-                               OCEntityHandler entityHandler,
-                               uint8_t resourceProperties);
 
 /**
  * Add a resource to a collection resource.
@@ -269,9 +273,11 @@ OCStackResult OCBindResourceInterfaceToResource(OCResourceHandle handle,
  *
  * @param handle Handle to the resource that the contained resource is to be bound.
  * @param entityHandler Entity handler function that is called by ocstack to handle requests, etc.
+ * @param callbackParameter context paremeter that will be passed to entityHandler
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCBindResourceHandler(OCResourceHandle handle, OCEntityHandler entityHandler);
+OCStackResult OCBindResourceHandler(OCResourceHandle handle, OCEntityHandler entityHandler,
+                                        void *callbackParameter);
 
 /**
  * Get the number of resources that have been created in the stack.
@@ -440,15 +446,6 @@ OCNotifyListOfObservers (OCResourceHandle handle,
  */
 OCStackResult OCDoResponse(OCEntityHandlerResponse *response);
 
-/**
- * Cancel a response.  Applies to a block response.
- *
- * @param responseHandle Response handle set by stack in OCServerResponse after
- *                       OCDoResponse is called.
- *
- * @return ::OC_STACK_OK on success, some other value upon failure.
- */
-OCStackResult OCCancelResponse(OCResponseHandle responseHandle);
 
 //Utility methods
 

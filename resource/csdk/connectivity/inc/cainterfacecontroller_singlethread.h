@@ -60,6 +60,13 @@ void CASetPacketReceivedCallback(CANetworkPacketReceivedCallback callback);
 void CASetNetworkChangeCallback(CANetworkChangeCallback callback);
 
 /**
+ * @brief   Set the error handler callback for message handler
+ * @param   errorCallback       [IN]    error handler callback from adapters
+ * @return  none
+ */
+void CASetErrorHandleCallback(CAErrorHandleCallback errorCallback);
+
+/**
  * @brief   Starting different connectivity adapters based on the network selection.
  * @param   transportType    [IN]    network type that want to stop
  * @return  none
@@ -127,5 +134,5 @@ CAResult_t CAReadData();
 } /* extern "C" */
 #endif
 
-#endif //#ifndef __CA_INTERFACE_CONTROLLER_H_
+#endif /* CA_INTERFACE_CONTROLLER_SINGLETHREAD_H_ */
 

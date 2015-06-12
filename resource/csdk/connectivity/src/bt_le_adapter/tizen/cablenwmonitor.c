@@ -154,7 +154,7 @@ CAResult_t CAGetLEAddress(char **local_address)
 {
     OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "IN");
 
-    VERIFY_NON_NULL_VOID(local_address, TZ_LE_NWK_MONITOR_TAG, "local_address is null")
+    VERIFY_NON_NULL(local_address, TZ_LE_NWK_MONITOR_TAG, "local_address is null")
 
     char *address = NULL;
 

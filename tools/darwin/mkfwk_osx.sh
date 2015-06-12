@@ -1,5 +1,9 @@
 #!/bin/sh
-
+#===============================================================================
+# Author:    Pete Goodliffe
+# Copyright: (c) Copyright 2009 Pete Goodliffe
+# Licence:   Please feel free to use this, with attribution
+#===============================================================================
 
 #VERSION_IOS="${MAJOR_VERSION}.${MINOR_VERSION}.${RELEASE_NUMBER}.${BUILD_NUMBER}"
 VERSION_IOS="0.9.0.1"
@@ -81,7 +85,6 @@ find $OUTDIR/objs -name "*.o" | xargs rm
 
 echo "Framework: Copying includes..."
 cp -r  resource/csdk/stack/include/*.h  $FRAMEWORK_BUNDLE/Headers
-cp -r  resource/csdk/ocsocket/include/*.h  $FRAMEWORK_BUNDLE/Headers
 cp -r  resource/csdk/ocrandom/include/*.h  $FRAMEWORK_BUNDLE/Headers
 cp -r  resource/csdk/ocmalloc/include/*.h  $FRAMEWORK_BUNDLE/Headers
 

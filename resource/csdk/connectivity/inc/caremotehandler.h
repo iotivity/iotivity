@@ -100,5 +100,5 @@ void CADestroyResponseInfoInternal(CAResponseInfo_t *response);
 } /* extern "C" */
 #endif
 
-#endif //#ifndef CA_REMOTE_HANDLER_H_
+#endif /* CA_REMOTE_HANDLER_H_ */
 

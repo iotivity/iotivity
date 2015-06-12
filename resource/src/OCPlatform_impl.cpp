@@ -197,6 +197,25 @@ namespace OC
                              host, deviceURI, connectivityType, deviceInfoHandler, QoS);
     }
 
+    OCStackResult OCPlatform_impl::getPlatformInfo(const std::string& host,
+                                            const std::string& platformURI,
+                                            OCConnectivityType connectivityType,
+                                            FindPlatformCallback platformInfoHandler)
+    {
+        return result_guard(getPlatformInfo(host, platformURI, connectivityType,
+               platformInfoHandler, m_cfg.QoS));
+    }
+
+    OCStackResult OCPlatform_impl::getPlatformInfo(const std::string& host,
+                                            const std::string& platformURI,
+                                            OCConnectivityType connectivityType,
+                                            FindPlatformCallback platformInfoHandler,
+                                            QualityOfService QoS)
+    {
+        return checked_guard(m_client, &IClientWrapper::ListenForDevice,
+                             host, platformURI, connectivityType, platformInfoHandler, QoS);
+    }
+
     OCStackResult OCPlatform_impl::registerResource(OCResourceHandle& resourceHandle,
                                             std::string& resourceURI,
                                             const std::string& resourceTypeName,
@@ -214,14 +233,19 @@ namespace OC
         return checked_guard(m_server, &IServerWrapper::registerDeviceInfo, deviceInfo);
     }
 
+    OCStackResult OCPlatform_impl::registerPlatformInfo(const OCPlatformInfo platformInfo)
+    {
+        return checked_guard(m_server, &IServerWrapper::registerPlatformInfo, platformInfo);
+    }
+
     OCStackResult OCPlatform_impl::registerResource(OCResourceHandle& resourceHandle,
                                             const std::shared_ptr< OCResource > resource)
     {
         uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
         std::vector<std::string> resourceTypes = resource->getResourceTypes();
 
-        return checked_guard(m_server, &IServerWrapper::registerResourceWithHost,
-                std::ref(resourceHandle), resource->host(), resource->uri(),
+        return checked_guard(m_server, &IServerWrapper::registerResource,
+                std::ref(resourceHandle), resource->uri(),
                 resourceTypes[0]/*"core.remote"*/, DEFAULT_INTERFACE,
                 (EntityHandler) nullptr, resourceProperty);
     }

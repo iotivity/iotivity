@@ -27,7 +27,7 @@
 #include <sys/time.h>
 #include <list>
 #include "ocstack.h"
-#include "ocmalloc.h"
+#include "oic_malloc.h"
 #include "logger.h"
 #include "cJSON.h"
 #include "ocserverslow.h"
@@ -155,20 +155,20 @@ OCEntityHandlerRequest *CopyRequest(OCEntityHandlerRequest *entityHandlerRequest
 {
     OC_LOG(INFO, TAG, "Copying received request for slow response");
     OCEntityHandlerRequest *request =
-            (OCEntityHandlerRequest *)OCMalloc(sizeof(OCEntityHandlerRequest));
+            (OCEntityHandlerRequest *)OICMalloc(sizeof(OCEntityHandlerRequest));
     if (request)
     {
         // Do shallow copy
         memcpy(request, entityHandlerRequest, sizeof(OCEntityHandlerRequest));
         // Do deep copy of query
         request->query =
-                (char * )OCMalloc(strlen((const char *)entityHandlerRequest->query) + 1);
+                (char * )OICMalloc(strlen((const char *)entityHandlerRequest->query) + 1);
         if (request->query)
         {
             strcpy((char *)request->query, (const char *)entityHandlerRequest->query);
 
             // Copy the request payload
-            request->reqJSONPayload = (char * )OCMalloc(
+            request->reqJSONPayload = (char * )OICMalloc(
                             strlen((const char *)entityHandlerRequest->reqJSONPayload) + 1);
             if (request->reqJSONPayload)
             {
@@ -181,14 +181,14 @@ OCEntityHandlerRequest *CopyRequest(OCEntityHandlerRequest *entityHandlerRequest
             }
             else
             {
-                OCFree(request->query);
-                OCFree(request);
+                OICFree(request->query);
+                OICFree(request);
                 request = NULL;
             }
         }
         else
         {
-            OCFree(request);
+            OICFree(request);
             request = NULL;
         }
     }
@@ -206,17 +206,12 @@ OCEntityHandlerRequest *CopyRequest(OCEntityHandlerRequest *entityHandlerRequest
 
 OCEntityHandlerResult
 OCEntityHandlerCb (OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest *entityHandlerRequest)
+        OCEntityHandlerRequest *entityHandlerRequest, void* callbackParam)
 {
     OCEntityHandlerResult result = OC_EH_ERROR;
     OCEntityHandlerRequest *request = NULL;
 
     OC_LOG_V (INFO, TAG, "Inside entity handler - flags: 0x%x", flag);
-    if (flag & OC_INIT_FLAG)
-    {
-        OC_LOG(INFO, TAG, "Flag includes OC_INIT_FLAG");
-        result = OC_EH_OK;
-    }
     if (flag & OC_REQUEST_FLAG)
     {
         OC_LOG(INFO, TAG, "Flag includes OC_REQUEST_FLAG");
@@ -290,9 +285,9 @@ void AlarmHandler(int sig)
                     entityHandlerRequest->method);
         }
         // Free the request
-        OCFree(entityHandlerRequest->query);
-        OCFree(entityHandlerRequest->reqJSONPayload);
-        OCFree(entityHandlerRequest);
+        OICFree(entityHandlerRequest->query);
+        OICFree(entityHandlerRequest->reqJSONPayload);
+        OICFree(entityHandlerRequest);
 
         // If there are more requests in list, re-arm the alarm signal
         if (gRequestList.empty())
@@ -342,9 +337,9 @@ int main(int argc, char* argv[])
     {
         for (auto iter = gRequestList.begin(); iter != gRequestList.end(); ++iter)
         {
-            OCFree((*iter)->query);
-            OCFree((*iter)->reqJSONPayload);
-            OCFree(*iter);
+            OICFree((*iter)->query);
+            OICFree((*iter)->reqJSONPayload);
+            OICFree(*iter);
         }
         gRequestList.clear();
     }
@@ -372,6 +367,7 @@ int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, 
             OC_RSRVD_INTERFACE_DEFAULT,
             uri,
             OCEntityHandlerCb,
+            NULL,
             OC_DISCOVERABLE|OC_OBSERVABLE);
     OC_LOG_V(INFO, TAG, "Created LED resource with result: %s", getResult(res));
 

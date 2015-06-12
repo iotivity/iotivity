@@ -308,5 +308,5 @@ JavaVM *CANativeJNIGetJavaVM();
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
-#endif  // CA_ADAPTER_UTILS_H_
+#endif  /* CA_ADAPTER_UTILS_H_ */
 

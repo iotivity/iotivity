@@ -113,11 +113,11 @@ def __download(ienv, target, url) :
 
 # Install header file(s) to <src_dir>/deps/<target_os>/include
 def __install_head_file(ienv, file):
-		return ienv.Install(os.path.join(env.get('SRC_DIR'), 'deps', target_os, 'include'), file)
+		return ienv.Install(os.path.join(env.get('SRC_DIR'), 'dep', target_os, target_arch, 'usr', 'include'), file)
 
 # Install library binaries to <src_dir>/deps/<target_os>/lib/<arch>
 def __install_lib(ienv, lib):
-		return ienv.Install(os.path.join(env.get('SRC_DIR'), 'deps', target_os, 'lib', target_arch), lib)
+		return ienv.Install(os.path.join(env.get('SRC_DIR'), 'dep', target_os, target_arch, 'usr', 'lib'), lib)
 
 SConscript('tools/UnpackAll.py')
 

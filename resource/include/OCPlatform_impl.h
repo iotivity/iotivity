@@ -86,12 +86,19 @@ namespace OC
                     OCConnectivityType connectivityType, FindDeviceCallback deviceInfoHandler,
                     QualityOfService QoS);
 
+        OCStackResult getPlatformInfo(const std::string& host, const std::string& platformURI,
+                    OCConnectivityType connectivityType, FindPlatformCallback platformInfoHandler);
+
+        OCStackResult getPlatformInfo(const std::string& host, const std::string& platformURI,
+                    OCConnectivityType connectivityType, FindPlatformCallback platformInfoHandler,
+                    QualityOfService QoS);
+
         /**
          * API for Device Discovery
          *
          * @param host - Host IP Address. If null or empty, Multicast is performed.
          * @param resourceURI - Uri containing address to the virtual device in C Stack
-         *                       ("/oc/core/d")
+         *                       ("/oic/d")
          *
          * @param QualityOfService the quality of communication
          *
@@ -100,6 +107,21 @@ namespace OC
                     FindDeviceCallback deviceInfoHandler);
         OCStackResult getDeviceInfo(const std::string& host, const std::string& deviceURI,
                     FindDeviceCallback deviceInfoHandler, QualityOfService QoS);
+
+        /**
+         * API for Platform Discovery
+         *
+         * @param host - Host IP Address. If null or empty, Multicast is performed.
+         * @param resourceURI - Uri containing address to the virtual platform in C Stack
+         *                       ("/oic/p")
+         *
+         * @param QualityOfService the quality of communication
+         *
+         */
+        OCStackResult getPlatformInfo(const std::string& host, const std::string& platformURI,
+                    FindPlatformCallback platformInfoHandler);
+        OCStackResult getPlatformInfo(const std::string& host, const std::string& platformURI,
+                    FindPlatformCallback platformInfoHandler, QualityOfService QoS);
 
         /**
         * This API registers a resource with the server
@@ -121,7 +143,7 @@ namespace OC
         * Above relative URI will be prepended (by core) with a host IP + namespace "oc"
         * Therefore, fully qualified URI format would be //HostIP-Address/namespace/relativeURI"
         * Example, a relative URI: 'a/light' will result in a fully qualified URI:
-        *   //192.168.1.1/oc/a/light"
+        *   //192.168.1.1/oic/a/light"
         * First parameter can take a relative URI and core will take care of preparing the fully
         * qualified URI OR
         * first parameter can take fully qualified URI and core will take that as is for further
@@ -148,6 +170,17 @@ namespace OC
          * Note: OCDeviceInfo is defined in OCStack.h
          */
         OCStackResult registerDeviceInfo(const OCDeviceInfo deviceInfo);
+
+        /**
+         * This API registers all the platform specific information
+         *
+         * @param OCPlatformInfo - Structure containing all the platform related information
+         *
+         * @return OCStackResult return value of the API. Returns OC_STACK_OK if success
+         *
+         * Note: OCPlatformInfo is defined in OCStack.h
+         */
+        OCStackResult registerPlatformInfo(const OCPlatformInfo platformInfo);
 
         OCStackResult setDefaultDeviceEntityHandler(EntityHandler entityHandler);
 

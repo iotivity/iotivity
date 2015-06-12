@@ -149,7 +149,8 @@ void PrintArduinoMemoryStats()
 
 // This is the entity handler for the registered resource.
 // This is invoked by OCStack whenever it recevies a request for this resource.
-OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest )
+OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest,
+                                        void *callbackParam)
 {
     OCEntityHandlerResult ehRet = OC_EH_OK;
     OCEntityHandlerResponse response = {0};
@@ -301,6 +302,7 @@ void createLightResource()
             OC_RSRVD_INTERFACE_DEFAULT,
             "/a/light",
             OCEntityHandlerCb,
+            NULL,
             OC_DISCOVERABLE|OC_OBSERVABLE);
     OC_LOG_V(INFO, TAG, "Created Light resource with result: %s", getResult(res));
 }

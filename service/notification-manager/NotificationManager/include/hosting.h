@@ -30,14 +30,8 @@
 #include "ocstack.h"
 #include "logger.h"
 
-// TODO: Selecting OC_WIFI for android, tizen and OC_ETHERNET for linux platform
-// is temporary change as OC_ALL is not working currently. Remove this code and use OC_ALL
-// once it is functioning.
-#if defined(__ANDROID__) || defined(__TIZEN__)
-#define OC_TRANSPORT OC_WIFI
-#else
-#define OC_TRANSPORT OC_ETHERNET
-#endif
+//#define OC_TRANSPORT OC_ALL
+#define OC_TRANSPORT OC_IPV4
 
 #ifdef __cplusplus
 extern "C" {

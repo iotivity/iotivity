@@ -36,10 +36,10 @@ static int UNICAST_DISCOVERY = 0;
 static int TEST_CASE = 0;
 
 static int IPV4_ADDR_SIZE = 16;
-static char UNICAST_DISCOVERY_QUERY[] = "coap://%s:6298/oc/core";
-static char MULTICAST_DISCOVERY_QUERY[] = "/oc/core";
+static char UNICAST_DISCOVERY_QUERY[] = "coap://%s:6298/oic/res";
+static char MULTICAST_DISCOVERY_QUERY[] = "/oic/res";
 
-static std::string putPayload = "{\"state\":\"off\",\"power\":10}";
+static std::string putPayload = "{\"oic\":[{\"rep\":{\"state\":\"off\",\"power\":10}}]}";
 static std::string coapServerIP;
 static std::string coapServerPort;
 static std::string coapServerResource;
@@ -47,10 +47,10 @@ static int coapSecureResource;
 static OCConnectivityType ocConnType;
 
 
-//File containing Client's Identity and the PSK credentials
+//Secure Virtual Resource database for Iotivity Client application
+//It contains Client's Identity and the PSK credentials
 //of other devices which the client trusts
-//This can be generated using 'gen_sec_bin' application
-static char CRED_FILE[] = "client_cred.bin";
+static char CRED_FILE[] = "oic_svr_db_client.json";
 
 
 int gQuitFlag = 0;
@@ -258,9 +258,7 @@ int InitDiscovery()
             OC_LOG(ERROR, TAG, "!! Bad input for IPV4 address. !!");
             return OC_STACK_INVALID_PARAM;
         }
-        printf("Select Connectivity type on which discovery request needs to be send : ");
-        printf("0:ETH, 1:WIFI\n");
-        discoveryReqConnType = ((getchar() - '0') == 0) ? OC_ETHERNET : OC_WIFI;
+        discoveryReqConnType = OC_IPV4;
     }
     else
     {
@@ -286,6 +284,12 @@ int InitDiscovery()
         OC_LOG(ERROR, TAG, "OCStack resource error");
     }
     return ret;
+}
+
+FILE* client_fopen(const char *path, const char *mode)
+{
+    (void)path;
+    return fopen(CRED_FILE, mode);
 }
 
 int main(int argc, char* argv[])
@@ -316,20 +320,19 @@ int main(int argc, char* argv[])
         return -1;
     }
 
+    // Initialize Persistent Storage for SVR database
+    OCPersistentStorage ps = {};
+    ps.open = client_fopen;
+    ps.read = fread;
+    ps.write = fwrite;
+    ps.close = fclose;
+    ps.unlink = unlink;
+    OCRegisterPersistentStorageHandler(&ps);
+
     /* Initialize OCStack*/
-    if (OCInit(NULL, 0, OC_CLIENT) != OC_STACK_OK)
+    if (OCInit(NULL, 0, OC_CLIENT_SERVER) != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "OCStack init error");
-        return 0;
-    }
-
-    /*
-     * Read DTLS PSK credentials from persistent storage and
-     * set in the OC stack.
-     */
-    if (SetCredentials(CRED_FILE) != OC_STACK_OK)
-    {
-        OC_LOG(ERROR, TAG, "SetCredentials failed");
         return 0;
     }
 
@@ -404,7 +407,7 @@ int parseClientResponse(OCClientResponse * clientResponse)
         return -1;
     }
 
-    oc = cJSON_GetObjectItem(root,"oc");
+    oc = cJSON_GetObjectItem(root,"oic");
     if (!oc)
     {
         return -1;
@@ -412,9 +415,10 @@ int parseClientResponse(OCClientResponse * clientResponse)
 
     if (oc->type == cJSON_Array)
     {
-        if (cJSON_GetArraySize(oc) > 0)
+        int numRsrcs =  cJSON_GetArraySize(oc);
+        for(int i = 0; i < numRsrcs; i++)
         {
-            cJSON * resource = cJSON_GetArrayItem(oc, 0);
+            cJSON * resource = cJSON_GetArrayItem(oc, i);
             if (cJSON_GetObjectItem(resource, "href"))
             {
                 coapServerResource.assign(cJSON_GetObjectItem(resource, "href")->valuestring);
@@ -428,25 +432,35 @@ int parseClientResponse(OCClientResponse * clientResponse)
             cJSON * prop = cJSON_GetObjectItem(resource,"prop");
             if (prop)
             {
-                // If this is a secure resource, the info about the port at which the
-                // resource is hosted on server is embedded inside discovery JSON response
-                if (cJSON_GetObjectItem(prop, "sec"))
+                cJSON * policy = cJSON_GetObjectItem(prop,"p");
+                if (policy)
                 {
-                    if ((cJSON_GetObjectItem(prop, "sec")->valueint) == 1)
+                    // If this is a secure resource, the info about the port at which the
+                    // resource is hosted on server is embedded inside discovery JSON response
+                    if (cJSON_GetObjectItem(policy, "sec"))
                     {
-                        coapSecureResource = 1;
+                        if ((cJSON_GetObjectItem(policy, "sec")->valueint) == 1)
+                        {
+                            coapSecureResource = 1;
+                        }
+                    }
+                    OC_LOG_V(INFO, TAG, "Secure -- %s", coapSecureResource == 1 ? "YES" : "NO");
+                    if (cJSON_GetObjectItem(policy, "port"))
+                    {
+                        port = cJSON_GetObjectItem(policy, "port")->valueint;
+                        OC_LOG_V(INFO, TAG, "Hosting Server Port (embedded inside JSON) -- %u", port);
+
+                        std::ostringstream ss;
+                        ss << port;
+                        coapServerPort = ss.str();
                     }
                 }
-                OC_LOG_V(INFO, TAG, "Secure -- %s", coapSecureResource == 1 ? "YES" : "NO");
-                if (cJSON_GetObjectItem(prop, "port"))
-                {
-                    port = cJSON_GetObjectItem(prop, "port")->valueint;
-                    OC_LOG_V(INFO, TAG, "Hosting Server Port (embedded inside JSON) -- %u", port);
+            }
 
-                    std::ostringstream ss;
-                    ss << port;
-                    coapServerPort = ss.str();
-                }
+            // If we discovered a secure resource, exit from here
+            if (coapSecureResource)
+            {
+                break;
             }
         }
     }

@@ -30,7 +30,7 @@
 #include "ocresourcehandler.h"
 #include "ocobserve.h"
 #include "occollection.h"
-#include "ocmalloc.h"
+#include "oic_malloc.h"
 #include "logger.h"
 #include "cJSON.h"
 
@@ -47,28 +47,31 @@
              TAG, PCF(#arg " is NULL")); return (retVal); } }
 
 extern OCResource *headResource;
-static cJSON *savedDeviceInfo = NULL;
+static OCPlatformInfo savedPlatformInfo = {};
+static OCDeviceInfo savedDeviceInfo = {};
 
 static const char * VIRTUAL_RSRCS[] =
 {
-       "/oc/core",
-       "/oc/core/d",
-       "/oc/core/types/d",
-       #ifdef WITH_PRESENCE
-       "/oic/ad"
-       #endif
+    "/oic/res",
+    "/oic/d",
+    "/oic/p",
+    "/oic/res/types/d",
+    #ifdef WITH_PRESENCE
+    "/oic/ad"
+    #endif
 };
 
 //-----------------------------------------------------------------------------
 // Default resource entity handler function
 //-----------------------------------------------------------------------------
 OCEntityHandlerResult defaultResourceEHandler(OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest * request)
+        OCEntityHandlerRequest * request, void* callbackParam)
 {
     //TODO ("Implement me!!!!");
     // TODO:  remove silence unused param warnings
     (void) flag;
     (void) request;
+    (void) callbackParam;
     return  OC_EH_OK; // Making sure that the Default EH and the Vendor EH have matching signatures
 }
 
@@ -96,8 +99,124 @@ static OCStackResult GetSecurePortInfo(CATransportType_t connType, uint16_t *por
         }
     }
 
-    OCFree(info);
+    OICFree(info);
     return ret;
+}
+
+static char* GetJSONStringFromPlatformInfo(OCPlatformInfo info)
+{
+    cJSON *rootObj = cJSON_CreateObject();
+
+    if (!rootObj)
+    {
+        return NULL;
+    }
+
+    cJSON *repObj = NULL;
+    char *jsonEncodedInfo = NULL;
+
+    cJSON_AddItemToObject (rootObj, OC_RSRVD_HREF,
+            cJSON_CreateString(GetVirtualResourceUri(OC_PLATFORM_URI)));
+
+    cJSON_AddItemToObject (rootObj, OC_RSRVD_REPRESENTATION, repObj = cJSON_CreateObject());
+
+    cJSON_AddItemToObject (repObj, OC_RSRVD_PLATFORM_ID, cJSON_CreateString(info.platformID));
+    cJSON_AddItemToObject (repObj, OC_RSRVD_MFG_NAME, cJSON_CreateString(info.manufacturerName));
+    if (info.manufacturerUrl)
+    {
+        cJSON_AddItemToObject (repObj, OC_RSRVD_MFG_URL,
+                cJSON_CreateString(info.manufacturerUrl));
+    }
+
+    if (info.modelNumber)
+    {
+        cJSON_AddItemToObject (repObj, OC_RSRVD_MODEL_NUM,
+                cJSON_CreateString(info.modelNumber));
+    }
+
+    if (info.dateOfManufacture)
+    {
+        cJSON_AddItemToObject (repObj, OC_RSRVD_MFG_DATE,
+                cJSON_CreateString(info.dateOfManufacture));
+    }
+
+    if (info.platformVersion)
+    {
+        cJSON_AddItemToObject (repObj, OC_RSRVD_PLATFORM_VERSION,
+                cJSON_CreateString(info.platformVersion));
+    }
+
+    if (info.operatingSystemVersion)
+    {
+        cJSON_AddItemToObject (repObj, OC_RSRVD_OS_VERSION,
+                cJSON_CreateString(info.operatingSystemVersion));
+    }
+
+    if (info.hardwareVersion)
+    {
+        cJSON_AddItemToObject (repObj, OC_RSRVD_HARDWARE_VERSION,
+                cJSON_CreateString(info.hardwareVersion));
+    }
+
+    if (info.firmwareVersion)
+    {
+        cJSON_AddItemToObject (repObj, OC_RSRVD_FIRMWARE_VERSION,
+                cJSON_CreateString(info.firmwareVersion));
+    }
+
+    if (info.supportUrl)
+    {
+        cJSON_AddItemToObject (repObj, OC_RSRVD_SUPPORT_URL,
+                cJSON_CreateString(info.supportUrl));
+    }
+
+    if (info.systemTime)
+    {
+        cJSON_AddItemToObject (repObj, OC_RSRVD_SYSTEM_TIME,
+                cJSON_CreateString(info.systemTime));
+    }
+
+    jsonEncodedInfo = cJSON_PrintUnformatted (rootObj);
+
+    cJSON_Delete(rootObj);
+
+    return jsonEncodedInfo;
+}
+
+static char* GetJSONStringFromDeviceInfo(OCDeviceInfo info)
+{
+    cJSON *rootObj = cJSON_CreateObject();
+
+    if (!rootObj)
+    {
+        return NULL;
+    }
+
+    cJSON *repObj = NULL;
+    char *jsonEncodedInfo = NULL;
+
+    cJSON_AddItemToObject (rootObj, OC_RSRVD_HREF,
+            cJSON_CreateString(GetVirtualResourceUri(OC_DEVICE_URI)));
+
+    cJSON_AddItemToObject (rootObj, OC_RSRVD_REPRESENTATION, repObj = cJSON_CreateObject());
+
+    cJSON_AddItemToObject (repObj, OC_RSRVD_DEVICE_ID,
+                    cJSON_CreateString(OCGetServerInstanceIDString()));
+
+    cJSON_AddItemToObject (repObj, OC_RSRVD_DEVICE_NAME,
+                        cJSON_CreateString(info.deviceName));
+
+    cJSON_AddItemToObject (repObj, OC_RSRVD_SPEC_VERSION,
+                        cJSON_CreateString(OC_SPEC_VERSION));
+
+    cJSON_AddItemToObject (repObj, OC_RSRVD_DATA_MODEL_VERSION,
+                        cJSON_CreateString(OC_DATA_MODEL_VERSION));
+
+    jsonEncodedInfo = cJSON_PrintUnformatted (rootObj);
+
+    cJSON_Delete(rootObj);
+
+    return jsonEncodedInfo;
 }
 
 static OCStackResult ValidateUrlQuery (char *url, char *query,
@@ -117,7 +236,8 @@ static OCStackResult ValidateUrlQuery (char *url, char *query,
     }
 
     if (strcmp ((char *)url, GetVirtualResourceUri(OC_WELL_KNOWN_URI)) == 0 ||
-                strcmp ((char *)url, GetVirtualResourceUri(OC_DEVICE_URI)) == 0)
+                strcmp ((char *)url, GetVirtualResourceUri(OC_DEVICE_URI)) == 0 ||
+                strcmp((char *)url, GetVirtualResourceUri(OC_PLATFORM_URI)) == 0)
     {
         *filterOn = STACK_RES_DISCOVERY_NOFILTER;
         if (query && *query)
@@ -189,6 +309,7 @@ BuildVirtualResourceResponse(const OCResource *resourcePtr, uint8_t filterOn,
     OCResourceInterface *interfacePtr = NULL;
     cJSON *resObj = NULL;
     cJSON *propObj = NULL;
+    cJSON *policyObj = NULL;
     cJSON *rtArray = NULL;
     char *jsonStr = NULL;
     uint8_t encodeRes = 0;
@@ -247,6 +368,7 @@ BuildVirtualResourceResponse(const OCResource *resourcePtr, uint8_t filterOn,
                                    OC_RSRVD_SERVER_INSTANCE_ID,
                                    cJSON_CreateString(OCGetServerInstanceIDString()));
 
+
             cJSON_AddItemToObject (resObj, OC_RSRVD_PROPERTY, propObj = cJSON_CreateObject());
             // Add resource types
             cJSON_AddItemToObject (propObj, OC_RSRVD_RESOURCE_TYPE, rtArray = cJSON_CreateArray());
@@ -265,25 +387,35 @@ BuildVirtualResourceResponse(const OCResource *resourcePtr, uint8_t filterOn,
                 cJSON_AddItemToArray (rtArray, cJSON_CreateString(interfacePtr->name));
                 interfacePtr = interfacePtr->next;
             }
-            // If resource is observable, set observability flag.
-            // Resources that are not observable will not have the flag.
-            if (resourcePtr->resourceProperties & OC_OBSERVABLE)
+
+            //Add Policy
+            cJSON_AddItemToObject (propObj, OC_RSRVD_POLICY, policyObj = cJSON_CreateObject());
+
+            if (policyObj)
             {
-                cJSON_AddItemToObject (propObj, OC_RSRVD_OBSERVABLE,
-                                       cJSON_CreateNumber(OC_RESOURCE_OBSERVABLE));
-            }
-            // Set secure flag for secure resources
-            if (resourcePtr->resourceProperties & OC_SECURE)
-            {
-                cJSON_AddNumberToObject (propObj, OC_RSRVD_SECURE, OC_RESOURCE_SECURE);
-                //Set the IP port also as secure resources are hosted on a different port
-                uint16_t port = 0;
-                if (GetSecurePortInfo (connType, &port) == OC_STACK_OK)
+                // Policy Property Bitmap
+                // If resource is discoverable, set discoverability flag.
+                // Resources that are not discoverable will not have the flag.
+                cJSON_AddNumberToObject (policyObj, OC_RSRVD_BITMAP,
+                                 resourcePtr->resourceProperties & (OC_OBSERVABLE|OC_DISCOVERABLE));
+
+                // Set secure flag for secure resources
+                if (resourcePtr->resourceProperties & OC_SECURE)
                 {
-                    cJSON_AddNumberToObject (propObj, OC_RSRVD_HOSTING_PORT, port);
+                    cJSON_AddNumberToObject (policyObj, OC_RSRVD_SECURE, OC_RESOURCE_SECURE);
+                    //Set the IP port also as secure resources are hosted on a different port
+                    uint16_t port = 0;
+                    if (GetSecurePortInfo (connType, &port) == OC_STACK_OK)
+                    {
+                        cJSON_AddNumberToObject (policyObj, OC_RSRVD_HOSTING_PORT, port);
+                    }
                 }
             }
-
+            else
+            {
+                cJSON_Delete(resObj);
+                return OC_STACK_NO_MEMORY;
+            }
         }
     }
     jsonStr = cJSON_PrintUnformatted (resObj);
@@ -305,7 +437,7 @@ BuildVirtualResourceResponse(const OCResource *resourcePtr, uint8_t filterOn,
         ret = OC_STACK_ERROR;
     }
     cJSON_Delete (resObj);
-    OCFree (jsonStr);
+    OICFree (jsonStr);
 
     OC_LOG(INFO, TAG, PCF("Exiting BuildVirtualResourceResponse"));
     return ret;
@@ -320,83 +452,69 @@ OCStackResult BuildVirtualResourceResponseForDevice(uint8_t filterOn, char *filt
     }
 
     OCStackResult ret = OC_STACK_ERROR;
+    char *jsonStr = NULL;
+    uint16_t jsonLen = 0;
 
-    if (savedDeviceInfo != NULL)
+    jsonStr = GetJSONStringFromDeviceInfo(savedDeviceInfo);
+
+    if(jsonStr)
     {
-        char *jsonStr = NULL;
-        uint16_t jsonLen = 0;
-        cJSON *repObj = cJSON_GetObjectItem(savedDeviceInfo, OC_RSRVD_REPRESENTATION);
+        jsonLen = strlen(jsonStr);
 
-        OC_LOG(INFO, TAG, PCF("Entering BuildVirtualResourceResponseForDevice"));
-
-        if ((filterOn == STACK_DEVICE_DISCOVERY_DI_FILTER) && filterValue)
+        if (jsonLen < *remaining)
         {
-            if((cJSON_GetObjectItem(repObj,OC_RSRVD_DEVICE_ID) != NULL) &&
-                    strcmp(cJSON_GetObjectItem(repObj,OC_RSRVD_DEVICE_ID)->valuestring, filterValue)
-                    == 0)
-            {
-                ret = OC_STACK_OK;
-            }
-        }
-        else if ((filterOn == STACK_DEVICE_DISCOVERY_DN_FILTER) && filterValue)
-        {
-            if((cJSON_GetObjectItem(repObj,OC_RSRVD_DEVICE_NAME) != NULL) &&
-                    strcmp(cJSON_GetObjectItem(repObj,OC_RSRVD_DEVICE_NAME)->valuestring,
-                        filterValue) == 0)
-            {
-                ret = OC_STACK_OK;
-            }
-        }
-        else if (filterOn == STACK_RES_DISCOVERY_NOFILTER)
-        {
+            strncpy(out, jsonStr, (jsonLen + 1));
+            *remaining = *remaining - jsonLen;
             ret = OC_STACK_OK;
         }
         else
         {
-            ret = OC_STACK_INVALID_QUERY;
+            ret = OC_STACK_ERROR;
         }
 
-        if (ret == OC_STACK_OK)
-        {
-            jsonStr = cJSON_PrintUnformatted (savedDeviceInfo);
-
-            if(jsonStr)
-            {
-                jsonLen = strlen(jsonStr);
-
-                if (jsonLen < *remaining)
-                {
-                    strncpy(out, jsonStr, (jsonLen + 1));
-                    *remaining = *remaining - jsonLen;
-                    ret = OC_STACK_OK;
-                }
-                else
-                {
-                    ret = OC_STACK_ERROR;
-                }
-
-                OCFree(jsonStr);
-            }
-            else
-            {
-                ret = OC_STACK_ERROR;
-            }
-        }
-        else
-        {
-            ret = OC_STACK_INVALID_DEVICE_INFO;
-        }
+        OICFree(jsonStr);
     }
     else
     {
-        //error so that stack won't respond with empty payload
-        ret = OC_STACK_INVALID_DEVICE_INFO;
+        OC_LOG(ERROR, TAG, PCF("Error encoding save device info."));
+        ret = OC_STACK_ERROR;
     }
-
-    OC_LOG(INFO, TAG, PCF("Exiting BuildVirtualResourceResponseForDevice"));
     return ret;
 }
 
+OCStackResult BuildVirtualResourceResponseForPlatform(char *out, uint16_t *remaining)
+{
+    OCStackResult ret = OC_STACK_OK;
+
+    char *jsonStr = GetJSONStringFromPlatformInfo(savedPlatformInfo);
+
+    if(jsonStr)
+    {
+        size_t jsonLen = strlen(jsonStr);
+
+        if (jsonLen < *remaining)
+        {
+            strncpy(out, jsonStr, (jsonLen + 1));
+            *remaining = *remaining - jsonLen;
+            ret = OC_STACK_OK;
+        }
+        else
+        {
+            OC_LOG_V(ERROR, TAG, PCF("Platform info string too big. len: %u"), jsonLen);
+            ret = OC_STACK_ERROR;
+        }
+        OICFree(jsonStr);
+    }
+    else
+    {
+        OC_LOG(ERROR, TAG, PCF("Error encoding save platform info."));
+        ret = OC_STACK_ERROR;
+    }
+
+
+    return ret;
+
+}
 const char * GetVirtualResourceUri( OCVirtualResources resource)
 {
     if (resource < OC_MAX_VIRTUAL_RESOURCES)
@@ -629,7 +747,7 @@ HandleVirtualResource (OCServerRequest *request, OCResource* resource)
                     if (result != OC_STACK_OK)
                     {
                         // if this failed, we need to remove the comma added above.
-                        if(!firstLoopDone)
+                        if(firstLoopDone)
                         {
                             ptr--;
                             *ptr = '\0';
@@ -683,11 +801,37 @@ HandleVirtualResource (OCServerRequest *request, OCResource* resource)
                 result = OCDoResponse(&response);
             }
         }
+        else if (strcmp ((char *)request->resourceUrl, GetVirtualResourceUri(OC_PLATFORM_URI)) == 0)
+        {
+            remaining = MAX_RESPONSE_LENGTH;
+            ptr = discoveryResBuf;
+
+            result = BuildVirtualResourceResponseForPlatform((char*)ptr, &remaining);
+
+            if(result == OC_STACK_OK)
+            {
+                ptr += strlen((char*)ptr);
+            }
+
+            if(remaining < MAX_RESPONSE_LENGTH)
+            {
+                OCEntityHandlerResponse response = {0};
+
+                response.ehResult = OC_EH_OK;
+                response.payload = discoveryResBuf;
+                response.payloadSize = strlen((const char *)discoveryResBuf) + 1;
+                response.persistentBufferFlag = 0;
+                response.requestHandle = (OCRequestHandle) request;
+                response.resourceHandle = (OCResourceHandle) resource;
+
+                result = OCDoResponse(&response);
+            }
+        }
         #ifdef WITH_PRESENCE
         else
         {
             if(resource->resourceProperties & OC_ACTIVE){
-                SendPresenceNotification(NULL);
+                SendPresenceNotification(resource->rsrcType, OC_PRESENCE_TRIGGER_CHANGE);
             }
         }
         #endif
@@ -718,7 +862,7 @@ HandleDefaultDeviceEntityHandler (OCServerRequest *request)
 
     // At this point we know for sure that defaultDeviceHandler exists
     ehResult = defaultDeviceHandler(OC_REQUEST_FLAG, &ehRequest,
-                                  (char*) request->resourceUrl);
+                                  (char*) request->resourceUrl, defaultDeviceHandlerCallbackParameter);
     if(ehResult == OC_EH_SLOW)
     {
         OC_LOG(INFO, TAG, PCF("This is a slow resource"));
@@ -831,7 +975,7 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
         goto exit;
     }
 
-    ehResult = resource->entityHandler(ehFlag, &ehRequest);
+    ehResult = resource->entityHandler(ehFlag, &ehRequest, resource->entityHandlerCallbackParam);
     if(ehResult == OC_EH_SLOW)
     {
         OC_LOG(INFO, TAG, PCF("This is a slow resource"));
@@ -922,109 +1066,150 @@ ProcessRequest(ResourceHandling resHandling, OCResource *resource, OCServerReque
     return ret;
 }
 
-void DeleteDeviceInfo()
+void DeletePlatformInfo()
 {
-    if(savedDeviceInfo)
-    {
-        cJSON_Delete(savedDeviceInfo);
-    }
+    OC_LOG(INFO, TAG, PCF("Deleting platform info."));
+
+    OICFree(savedPlatformInfo.platformID);
+    savedPlatformInfo.platformID = NULL;
+
+    OICFree(savedPlatformInfo.manufacturerName);
+    savedPlatformInfo.manufacturerName = NULL;
+
+    OICFree(savedPlatformInfo.manufacturerUrl);
+    savedPlatformInfo.manufacturerUrl = NULL;
+
+    OICFree(savedPlatformInfo.modelNumber);
+    savedPlatformInfo.modelNumber = NULL;
+
+    OICFree(savedPlatformInfo.dateOfManufacture);
+    savedPlatformInfo.dateOfManufacture = NULL;
+
+    OICFree(savedPlatformInfo.platformVersion);
+    savedPlatformInfo.platformVersion = NULL;
+
+    OICFree(savedPlatformInfo.operatingSystemVersion);
+    savedPlatformInfo.operatingSystemVersion = NULL;
+
+    OICFree(savedPlatformInfo.hardwareVersion);
+    savedPlatformInfo.hardwareVersion = NULL;
+
+    OICFree(savedPlatformInfo.firmwareVersion);
+    savedPlatformInfo.firmwareVersion = NULL;
+
+    OICFree(savedPlatformInfo.supportUrl);
+    savedPlatformInfo.supportUrl = NULL;
+
+    OICFree(savedPlatformInfo.systemTime);
+    savedPlatformInfo.systemTime = NULL;
 }
 
-OCStackResult SaveDeviceInfo(OCDeviceInfo deviceInfo)
+static OCStackResult DeepCopyPlatFormInfo(OCPlatformInfo info)
 {
-    DeleteDeviceInfo();
+    OCStackResult ret = OC_STACK_OK;
+    ret = CloneStringIfNonNull(&(savedPlatformInfo.platformID), info.platformID);
+    VERIFY_SUCCESS(ret, OC_STACK_OK);
 
-    savedDeviceInfo = cJSON_CreateObject();
-    cJSON *repObj = NULL;
+    ret = CloneStringIfNonNull(&(savedPlatformInfo.manufacturerName), info.manufacturerName);
+    VERIFY_SUCCESS(ret, OC_STACK_OK);
 
-    cJSON_AddItemToObject (savedDeviceInfo, OC_RSRVD_HREF,
-            cJSON_CreateString(GetVirtualResourceUri(OC_DEVICE_URI)));
+    ret = CloneStringIfNonNull(&(savedPlatformInfo.manufacturerUrl), info.manufacturerUrl);
+    VERIFY_SUCCESS(ret, OC_STACK_OK);
 
-    cJSON_AddItemToObject (savedDeviceInfo, OC_RSRVD_REPRESENTATION, repObj = cJSON_CreateObject());
+    ret = CloneStringIfNonNull(&(savedPlatformInfo.modelNumber), info.modelNumber);
+    VERIFY_SUCCESS(ret, OC_STACK_OK);
 
-    if (deviceInfo.contentType)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_CONTENT_TYPE,
-                cJSON_CreateString(deviceInfo.contentType));
-    }
+    ret = CloneStringIfNonNull(&(savedPlatformInfo.dateOfManufacture), info.dateOfManufacture);
+    VERIFY_SUCCESS(ret, OC_STACK_OK);
 
-    if (deviceInfo.dateOfManufacture)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_MFG_DATE,
-                cJSON_CreateString(deviceInfo.dateOfManufacture));
-    }
+    ret = CloneStringIfNonNull(&(savedPlatformInfo.platformVersion), info.platformVersion);
+    VERIFY_SUCCESS(ret, OC_STACK_OK);
 
-    if (deviceInfo.deviceName)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_DEVICE_NAME,
-                cJSON_CreateString(deviceInfo.deviceName));
-    }
+    ret = CloneStringIfNonNull(&(savedPlatformInfo.operatingSystemVersion), info.operatingSystemVersion);
+    VERIFY_SUCCESS(ret, OC_STACK_OK);
 
-    if (deviceInfo.deviceUUID)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_DEVICE_ID,
-                cJSON_CreateString(deviceInfo.deviceUUID));
-    }
+    ret = CloneStringIfNonNull(&(savedPlatformInfo.hardwareVersion), info.hardwareVersion);
+    VERIFY_SUCCESS(ret, OC_STACK_OK);
 
-    if (deviceInfo.firmwareVersion)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_FW_VERSION,
-                cJSON_CreateString(deviceInfo.firmwareVersion));
-    }
+    ret = CloneStringIfNonNull(&(savedPlatformInfo.firmwareVersion), info.firmwareVersion);
+    VERIFY_SUCCESS(ret, OC_STACK_OK);
 
-    if (deviceInfo.hostName)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_HOST_NAME,
-                cJSON_CreateString(deviceInfo.hostName));
-    }
+    ret = CloneStringIfNonNull(&(savedPlatformInfo.supportUrl), info.supportUrl);
+    VERIFY_SUCCESS(ret, OC_STACK_OK);
 
-    if (deviceInfo.manufacturerName)
-    {
-        if(strlen(deviceInfo.manufacturerName) > MAX_MANUFACTURER_NAME_LENGTH)
-        {
-            DeleteDeviceInfo();
-            return OC_STACK_INVALID_PARAM;
-        }
-
-        cJSON_AddItemToObject (repObj, OC_RSRVD_MFG_NAME,
-                cJSON_CreateString(deviceInfo.manufacturerName));
-    }
-
-    if (deviceInfo.manufacturerUrl)
-    {
-        if(strlen(deviceInfo.manufacturerUrl) > MAX_MANUFACTURER_URL_LENGTH)
-        {
-            DeleteDeviceInfo();
-            return OC_STACK_INVALID_PARAM;
-        }
-
-        cJSON_AddItemToObject (repObj, OC_RSRVD_MFG_URL,
-                cJSON_CreateString(deviceInfo.manufacturerUrl));
-    }
-
-    if (deviceInfo.modelNumber)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_MODEL_NUM,
-                cJSON_CreateString(deviceInfo.modelNumber));
-    }
-
-    if (deviceInfo.platformVersion)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_PLATFORM_VERSION,
-                cJSON_CreateString(deviceInfo.platformVersion));
-    }
-
-    if (deviceInfo.supportUrl)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_SUPPORT_URL,
-                cJSON_CreateString(deviceInfo.supportUrl));
-    }
-
-    if (deviceInfo.version)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_VERSION,
-                cJSON_CreateString(deviceInfo.version));
-    }
+    ret = CloneStringIfNonNull(&(savedPlatformInfo.systemTime), info.systemTime);
+    VERIFY_SUCCESS(ret, OC_STACK_OK);
 
     return OC_STACK_OK;
+
+    exit:
+        DeletePlatformInfo();
+        return ret;
+
+}
+
+OCStackResult SavePlatformInfo(OCPlatformInfo info)
+{
+    DeletePlatformInfo();
+
+    OCStackResult res = DeepCopyPlatFormInfo(info);
+
+    if (res != OC_STACK_OK)
+    {
+        OC_LOG_V(ERROR, TAG, PCF("Failed to save platform info. errno(%d)"), res);
+    }
+    else
+    {
+        OC_LOG(ERROR, TAG, PCF("Platform info saved."));
+    }
+
+    return res;
+}
+
+void DeleteDeviceInfo()
+{
+    OC_LOG(INFO, TAG, PCF("Deleting device info."));
+
+    OICFree(savedDeviceInfo.deviceName);
+    savedDeviceInfo.deviceName = NULL;
+}
+
+static OCStackResult DeepCopyDeviceInfo(OCDeviceInfo info)
+{
+    OCStackResult ret = OC_STACK_OK;
+
+    ret = CloneStringIfNonNull(&(savedDeviceInfo.deviceName), info.deviceName);
+    VERIFY_SUCCESS(ret, OC_STACK_OK);
+
+    return OC_STACK_OK;
+
+    exit:
+        DeleteDeviceInfo();
+        return ret;
+}
+
+OCStackResult SaveDeviceInfo(OCDeviceInfo info)
+{
+    OCStackResult res = OC_STACK_OK;
+
+    DeleteDeviceInfo();
+
+    res = DeepCopyDeviceInfo(info);
+
+    VERIFY_SUCCESS(res, OC_STACK_OK);
+
+    if(OCGetServerInstanceID() == NULL)
+    {
+        OC_LOG(INFO, TAG, PCF("Device ID generation failed"));
+        res =  OC_STACK_ERROR;
+        goto exit;
+    }
+
+    OC_LOG(INFO, TAG, PCF("Device initialized successfully."));
+    return OC_STACK_OK;
+
+    exit:
+        DeleteDeviceInfo();
+        return res;
+
 }

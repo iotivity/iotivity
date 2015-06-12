@@ -34,7 +34,7 @@ using namespace OC;
 
 const int SUCCESS_RESPONSE = OC_STACK_OK;
 
-#define OC_WELL_KNOWN_COORDINATING_QUERY "224.0.1.187:5683/oc/core?rt=Resource.Hosting"
+#define OC_WELL_KNOWN_COORDINATING_QUERY "/oc/core?rt=Resource.Hosting"
 
 #define OBSERVE 1
 #define GET     2
@@ -219,12 +219,13 @@ void foundResource(std::shared_ptr< OCResource > resource)
     }
     catch (std::exception &e)
     {
+        std::cout << "Exception: " << e.what() << " in foundResource" << std::endl;
     }
 }
 
 OCStackResult nmfindResource(const std::string &host , const std::string &resourceName)
 {
-    return OCPlatform::findResource(host , resourceName , OC_ETHERNET, &foundResource);
+    return OCPlatform::findResource(host , resourceName , OC_ALL, &foundResource);
 }
 
 void getRepresentation(std::shared_ptr< OCResource > resource)
@@ -368,23 +369,27 @@ int main(int argc , char *argv[])
             continue;
         }
 
-        switch ((int)in)
-        {
-            case OBSERVE:
-                startObserve(g_curResource);
-                break;
-            case GET:
-                startGet(g_curResource);
-                break;
-            case PUT:
-                startPut(g_curResource);
-                break;
-            case DELETE:
-                startDelete(g_curResource);
-                break;
-            default:
-                std::cout << "Invalid input, please try again" << std::endl;
-                break;
+        try {
+            switch ((int)in)
+            {
+                case OBSERVE:
+                    startObserve(g_curResource);
+                    break;
+                case GET:
+                    startGet(g_curResource);
+                    break;
+                case PUT:
+                    startPut(g_curResource);
+                    break;
+                case DELETE:
+                    startDelete(g_curResource);
+                    break;
+                default:
+                    std::cout << "Invalid input, please try again" << std::endl;
+                    break;
+            }
+        }catch(OCException e) {
+            std::cout<< "Caught OCException [Code: "<<e.code()<<" Reason: "<<e.reason()<<std::endl;
         }
     }
 

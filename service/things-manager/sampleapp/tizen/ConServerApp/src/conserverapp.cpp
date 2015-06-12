@@ -121,11 +121,7 @@ bool prepareResponseForResource(std::shared_ptr< OCResourceRequest > request)
         std::string requestType = request->getRequestType();
         int requestFlag = request->getRequestHandlerFlag();
 
-        if (requestFlag == RequestHandlerFlag::InitFlag)
-        {
-            dlog_print(DLOG_INFO, LOG_TAG, "#### requestFlag : Init");
-        }
-        else if (requestFlag == RequestHandlerFlag::RequestFlag)
+        if (requestFlag == RequestHandlerFlag::RequestFlag)
         {
             dlog_print(DLOG_INFO, LOG_TAG, "#### requestFlag : Request");
 
@@ -440,7 +436,7 @@ configure_platform()
     }
     catch (OCException &e)
     {
-        dlog_print(DLOG_INFO, LOG_TAG, "#### Platform configuration failed!!!!");
+        dlog_print(DLOG_ERROR, LOG_TAG, "Exception occured! (%s)", e.what());
     }
 }
 

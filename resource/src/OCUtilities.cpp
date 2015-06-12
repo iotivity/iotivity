@@ -37,8 +37,7 @@ OC::Utilities::QueryParamsKeyVal OC::Utilities::getQueryParams(const std::string
     }
 
     std::vector<std::string> queryparams;
-    boost::split(queryparams, uri, [](const char c){return c=='&';},
-    boost::token_compress_on);
+    boost::split(queryparams, uri, boost::is_any_of(OC_QUERY_SEPARATOR), boost::token_compress_on);
 
     for(std::string& it: queryparams)
     {

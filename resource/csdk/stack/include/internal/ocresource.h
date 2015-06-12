@@ -129,7 +129,6 @@ typedef struct resourceinterface_t {
 typedef struct rsrc_t {
     struct rsrc_t *next; // Points to next resource in list
     // Relative path on the device; will be combined with base url to create fully qualified path
-    char *host;
     char *uri;
     OCResourceType *rsrcType; // Resource type(s); linked list
     OCResourceInterface *rsrcInterface; // Resource interface(s); linked list
@@ -141,11 +140,10 @@ typedef struct rsrc_t {
     // Pointer to function that handles the entity bound to the resource.
     // This handler has to be explicitly defined by the programmer
     OCEntityHandler entityHandler;
+    // callback parameter
+    void * entityHandlerCallbackParam;
     // Properties on the resource – defines meta information on the resource
     OCResourceProperty resourceProperties ; /* ACTIVE, DISCOVERABLE etc */
-    // Pointer to an opaque object where app/user specific data can be placed with the resource;
-    // this could be information for the entity handler between invocations
-    void *context;
     // NOTE: Methods supported by this resource should be based on the interface targeted
     // i.e. look into the interface structure based on the query request Can be removed here;
     // place holder for the note above

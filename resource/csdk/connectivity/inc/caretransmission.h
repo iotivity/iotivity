@@ -163,4 +163,4 @@ CAResult_t CARetransmissionDestroy(CARetransmission_t *context);
 } /* extern "C" */
 #endif
 
-#endif  // CA_RETRANSMISSION_H_
+#endif  /* CA_RETRANSMISSION_H_ */

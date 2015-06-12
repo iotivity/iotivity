@@ -59,6 +59,7 @@ static void HandleRequestResponse();
 
 static void RequestHandler(const CARemoteEndpoint_t *object, const CARequestInfo_t *requestInfo);
 static void ResponseHandler(const CARemoteEndpoint_t *object, const CAResponseInfo_t *responseInfo);
+static void ErrorHandler(const CARemoteEndpoint_t *object, const CAErrorInfo_t* errorInfo);
 static void Terminate();
 
 void GetData(char *readInput, size_t bufferLength, size_t *dataLength)
@@ -222,7 +223,7 @@ void Initialize()
     }
     SelectNetwork();
     // set handler.
-    CARegisterHandler(RequestHandler, ResponseHandler);
+    CARegisterHandler(RequestHandler, ResponseHandler, ErrorHandler);
 }
 
 void StartListeningServer()
@@ -372,7 +373,6 @@ void SendRequest()
         CADestroyRemoteEndpoint(endpoint);
     }
 
-    CADestroyToken(token);
     Serial.println("============");
 }
 
@@ -796,31 +796,124 @@ void ResponseHandler(const CARemoteEndpoint_t *object, const CAResponseInfo_t *r
     }
 }
 
+void ErrorHandler(const CARemoteEndpoint_t *rep, const CAErrorInfo_t* errorInfo)
+{
+    printf("+++++++++++++++++++++++++++++++++++ErrorInfo+++++++++++++++++++++++++++++++++++\n");
+
+    if(rep && rep->resourceUri  )
+    {
+        printf("Error Handler, RemoteEndpoint Info resourceUri : %s\n", rep->resourceUri);
+    }
+    else
+    {
+        printf("Error Handler, RemoteEndpoint is NULL");
+    }
+
+    if(errorInfo)
+    {
+        const CAInfo_t *info = &errorInfo->info;
+        printf("Error Handler, ErrorInfo :\n");
+        printf("Error Handler result    : %d\n", errorInfo->result);
+        printf("Error Handler token     : %s\n", info->token);
+        printf("Error Handler messageId : %d\n", (uint16_t) info->messageId);
+        printf("Error Handler type      : %d\n", info->type);
+        printf("Error Handler payload   : %s\n", info->payload);
+
+        if(CA_ADAPTER_NOT_ENABLED == errorInfo->result)
+        {
+            printf("CA_ADAPTER_NOT_ENABLED, enable the adapter\n");
+        }
+        else if(CA_SEND_FAILED == errorInfo->result)
+        {
+            printf("CA_SEND_FAILED, unable to send the message, check parameters\n");
+        }
+        else if(CA_MEMORY_ALLOC_FAILED == errorInfo->result)
+        {
+            printf("CA_MEMORY_ALLOC_FAILED, insufficient memory\n");
+        }
+        else if(CA_SOCKET_OPERATION_FAILED == errorInfo->result)
+        {
+            printf("CA_SOCKET_OPERATION_FAILED, socket operation failed\n");
+        }
+        else if(CA_STATUS_FAILED == errorInfo->result)
+        {
+            printf("CA_STATUS_FAILED, message could not be delivered, internal error\n");
+        }
+    }
+    printf("++++++++++++++++++++++++++++++++End of ErrorInfo++++++++++++++++++++++++++++++++\n");
+
+    return;
+}
+
 void SendResponse(CARemoteEndpoint_t *endpoint, const CAInfo_t* info)
 {
     char buf[MAX_BUF_LEN] = {0};
 
     Serial.println("============");
+    Serial.println("Select Message Type");
+    Serial.println("CON: 0");
+    Serial.println("NON: 1");
+    Serial.println("ACK: 2");
+    Serial.println("RESET: 3");
+
+    size_t len = 0;
+    int messageType = 0;
+    while(1)
+    {
+        GetData(buf, sizeof(buf), &len);
+        if(len >= 1)
+        {
+            messageType = buf[0] - '0';
+            if (messageType >= 0 && messageType <= 3)
+            {
+                break;
+            }
+        }
+        Serial.println("Invalid type");
+    }
+
+    int respCode = 0;
+    if(messageType != 3)
+    {
+        Serial.println("============");
+        Serial.println("Enter Resp Code:");
+        Serial.println("For Ex: Empty  : 0");
+        Serial.println("Success: 200");
+        Serial.println("Created: 201");
+        Serial.println("Deleted: 202");
+        Serial.println("BadReq : 400");
+        Serial.println("BadOpt : 402");
+        Serial.println("NotFnd : 404");
+        Serial.println("Internal Srv Err:500");
+        Serial.println("Timeout: 504");
+        while(1)
+        {
+            GetData(buf, sizeof(buf), &len);
+            if(len >= 1)
+            {
+                respCode = atoi(buf);
+                if (respCode >= 0 && respCode <= 504)
+                {
+                    break;
+                }
+            }
+            Serial.println("Invalid response");
+        }
+    }
+
     CAInfo_t responseData = {CA_MSG_RESET};
-    if(info && info->type == CA_MSG_CONFIRM)
-    {
-        responseData.type = CA_MSG_ACKNOWLEDGE;
-    }
-    else
-    {
-        responseData.type = CA_MSG_NONCONFIRM;
-    }
-
+    responseData.type = static_cast<CAMessageType_t>(messageType);
     responseData.messageId = (info != NULL) ? info->messageId : 0;
-    responseData.token = (info != NULL) ? (CAToken_t)info->token : NULL;
-    responseData.tokenLength = (info != NULL) ? info->tokenLength : 0;
-    responseData.payload = (CAPayload_t)"response payload";
-
+    if(messageType != 3)
+    {
+        responseData.token = (info != NULL) ? info->token : NULL;
+        responseData.tokenLength = (info != NULL) ? info->tokenLength : 0;
+        responseData.payload = static_cast<CAPayload_t>("response payload");
+    }
     CAResponseInfo_t responseInfo = {CA_BAD_REQ, {CA_MSG_RESET}};
-    responseInfo.result = (CAResponseResult_t)203;
+    responseInfo.result = static_cast<CAResponseResult_t>(respCode);
     responseInfo.info = responseData;
-
-    // send request (connectivityType from remoteEndpoint of request Info)
+    // send request (transportType from remoteEndpoint of request Info)
     CAResult_t res = CASendResponse(endpoint, &responseInfo);
     if(res != CA_STATUS_OK)
     {

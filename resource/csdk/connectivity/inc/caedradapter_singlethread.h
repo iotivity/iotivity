@@ -24,8 +24,8 @@
  * This file contains the APIs for EDR adapters to be implemented.
  */
 
-#ifndef __CA_EDRADAPTER_SINGLETHREAD_H_
-#define __CA_EDRADAPTER_SINGLETHREAD_H_
+#ifndef CA_EDRADAPTER_SINGLETHREAD_H_
+#define CA_EDRADAPTER_SINGLETHREAD_H_
 
 /**
  * EDR Interface AP
@@ -149,5 +149,5 @@ void CATerminateEDR();
 } /* extern "C" */
 #endif
 
-#endif  //__CA_EDRADAPTER_SINGLETHREAD_H_
+#endif  /* CA_EDRADAPTER_SINGLETHREAD_H_ */
 

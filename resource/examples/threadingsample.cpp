@@ -35,8 +35,6 @@
 #include "OCApi.h"
 using namespace OC;
 
-static OCConnectivityType connectivityType = OC_WIFI;
-
 static std::ostringstream requestURI;
 
 struct FooResource
@@ -143,11 +141,7 @@ struct FooResource
             {
                 std::cout <<"\t\trequestFlag : UNSUPPORTED: ";
 
-                if(request->getRequestHandlerFlag()==RequestHandlerFlag::InitFlag)
-                {
-                    std::cout<<"InitFlag"<<std::endl;
-                }
-                else if(request->getRequestHandlerFlag()== RequestHandlerFlag::ObserverFlag)
+                if(request->getRequestHandlerFlag()== RequestHandlerFlag::ObserverFlag)
                 {
                     std::cout<<"ObserverFlag"<<std::endl;
                 }
@@ -335,47 +329,6 @@ void server()
 
 int main(int argc, char* argv[])
 {
-
-    if(argc == 2)
-    {
-        try
-        {
-            std::size_t inputValLen;
-            int optionSelected = std::stoi(argv[1], &inputValLen);
-
-            if(inputValLen == strlen(argv[1]))
-            {
-                if(optionSelected == 0)
-                {
-                    connectivityType = OC_ETHERNET;
-                }
-                else if(optionSelected == 1)
-                {
-                    connectivityType = OC_WIFI;
-                }
-                else
-                {
-                    std::cout << "Invalid connectivity type selected. Using default WIFI"
-                        << std::endl;
-                }
-            }
-            else
-            {
-                std::cout << "Invalid connectivity type selected. Using default WIFI" << std::endl;
-            }
-        }
-        catch(std::exception& )
-        {
-            std::cout << "Invalid input argument. Using WIFI as connectivity type" << std::endl;
-        }
-    }
-    else
-    {
-        std::cout<< "Usage threadingsample <ConnectivityType(0|1)>" << std::endl;
-        std::cout<<"ConnectivityType: Default WIFI" << std::endl;
-        std::cout << "   ConnectivityType : 0 - ETHERNET" << std::endl;
-        std::cout << "   ConnectivityType : 1 - WIFI" << std::endl;
-    }
 
     requestURI << OC_MULTICAST_DISCOVERY_URI << "?rt=core.foo";
 

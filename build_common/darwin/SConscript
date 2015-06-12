@@ -4,33 +4,52 @@
 ##
 import os
 import platform
+import commands
+from distutils.version import StrictVersion
 
 Import('env')
 
+target_arch = env.get('TARGET_ARCH')
+target_os = env.get('TARGET_OS')
+
+tc_path=commands.getoutput('xcode-select -p')
+
+tc_sdks=commands.getoutput('xcodebuild -showsdks')
+
+#Find the SDK's that are installed
+sdks=[]
+for line in tc_sdks.split('\n'):
+    if (line == ''):
+        bIn=False
+    if (line[:10] == 'OS X SDKs:'):
+        bIn=(target_os == 'darwin')
+    elif (line[:9] == 'iOS SDKs:'):
+        bIn=(target_os == 'ios')
+    elif bIn:
+        sdks.append(line[:14].strip())
+
+#find the latest
+maxsdk='0.0'
+if len(sdks) > 0:
+    for sdk in sdks:
+        p = sdk.rsplit(' ',1)[1]
+        if (StrictVersion(p)) > StrictVersion(maxsdk):
+            maxsdk=p
+
 # SYS_VERSION build option
 help_vars = Variables()
-help_vars.Add('SYS_VERSION', 'MAC OS X version / IOS version', os.environ.get('SYS_VERSION'))
+help_vars.Add('SYS_VERSION', 'MAC OS X SDK version / IOS SDK version', os.environ.get('SYS_VERSION'))
 help_vars.Update(env)
 Help(help_vars.GenerateHelpText(env))
 
 sys_version = env.get('SYS_VERSION')
 
+#if they didn't explictly set it use the auto-detected one
 if sys_version is None:
-	print '''
-*********************************** Error *************************************
-*   MAC OSX/IOS version isn't set, please set it in command line as :         *
-*      # scons TARGET_ARCH=<arch> TARGET_OS=<os> SYS_VERSION=<version> ...    *
-*   To get the version, please see:                      					  *
-* /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/   *
-* /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/ *
-*   <arch> is 'armv7','armv7s','arm64','i386', 'x86_64'
-*   <os> is 'darwin','ios'
-*******************************************************************************
-'''
-	Exit(1)
+    sys_version=maxsdk
 
-target_arch = env.get('TARGET_ARCH')
-target_os = env.get('TARGET_OS')
+env['SYS_VERSION']=sys_version
+
 # Set release/debug flags
 if env.get('RELEASE'):
 	env.AppendUnique(CCFLAGS = ['-Os'])
@@ -40,12 +59,12 @@ else:
 	env.AppendUnique(LINKFLAGS = ['-g'])
 
 if target_os == 'darwin':
-	sys_root = '/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX' + sys_version + '.sdk/'
+	sys_root = tc_path + '/Platforms/MacOSX.platform/Developer/SDKs/MacOSX' + sys_version + '.sdk/'
 else:
 	if target_arch in ['i386', 'x86_64']:
-		sys_root = '/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator' + sys_version + '.sdk/'
+		sys_root = tc_path + '/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator' + sys_version + '.sdk/'
 	else:
-		sys_root = '/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS' + sys_version + '.sdk/'
+		sys_root = tc_path + '/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS' + sys_version + '.sdk/'
 
 # Set arch flags
 env.AppendUnique(CCFLAGS = ['-arch', target_arch, '-isysroot', sys_root])

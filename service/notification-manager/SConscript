@@ -31,7 +31,7 @@ else:
 	env.AppendUnique(CCFLAGS = ['-g'])
 
 if env.get('LOGGING'):
-	env.AppendUnique(CPPDEFINES = ['-DTB_LOG'])
+	env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 lib_env = env.Clone()
 SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
@@ -47,14 +47,14 @@ notimgr_env.AppendUnique(CPPPATH = ['../../resource/csdk/logger/include'])
 notimgr_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'libcoap'])
 
 if target_os not in ['windows', 'winrt']:
-	notimgr_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0'])
+	notimgr_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 
 if target_os == 'linux':
 	notimgr_env.AppendUnique(LIBS = ['pthread'])
 
 if target_os == 'android':
 	notimgr_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-	notimgr_env.AppendUnique(LIBS = ['gnustl_static'])
+	notimgr_env.AppendUnique(LIBS = ['gnustl_shared','log'])
 
 	if not env.get('RELEASE'):
 		notimgr_env.AppendUnique(LIBS = ['log'])
@@ -68,12 +68,15 @@ notimgr_src = [
         NOTI_SRC_DIR + 'requestHandler.c',
         NOTI_SRC_DIR + 'virtualResource.c']
 
-if target_os in ['tizen'] :
-    notificationsdk = notimgr_env.SharedLibrary('NOTISDKLibrary', notimgr_src)
-else :
-    notificationsdk = notimgr_env.StaticLibrary('NOTISDKLibrary', notimgr_src)
+if target_os == 'android':
+        notimgr_src.append(NOTI_SRC_DIR + 'resourceCoordinator_JNI.cpp')
 
-notimgr_env.InstallTarget(notificationsdk, 'libNMSDK')
+if target_os in ['tizen','android'] :
+    notificationsdk = notimgr_env.SharedLibrary('NotificationManager', notimgr_src)
+else :
+    notificationsdk = notimgr_env.StaticLibrary('NotificationManager', notimgr_src)
+
+notimgr_env.InstallTarget(notificationsdk, 'libResouceHosting')
 
 # Go to build sample apps
 SConscript('SampleApp/SConscript')

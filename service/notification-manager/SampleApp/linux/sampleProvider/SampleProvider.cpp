@@ -56,7 +56,7 @@ class TempHumidResource
 
     public:
         TempHumidResource() :
-            m_temp(0), m_humid(0), m_uri("/a/TempHumSensor")
+            m_temp(0), m_humid(0), m_uri("/a/TempHumSensor"), m_resourceHandle(NULL)
         {
         }
 
@@ -227,11 +227,6 @@ OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request
         cout << "flag : request\n";
         std::string requestType = request->getRequestType();
         int requestFlag = request->getRequestHandlerFlag();
-
-        if (requestFlag == RequestHandlerFlag::InitFlag)
-        {
-            cout << "\t\trequestFlag : Init\n";
-        }
 
         if (requestFlag == RequestHandlerFlag::RequestFlag)
         {

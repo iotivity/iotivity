@@ -124,5 +124,5 @@ void CATerminateIP();
 } /* extern "C" */
 #endif
 
-#endif  // #ifndef CA_IP_ADAPTER_SINGLETHREAD_H_
+#endif  /* CA_IP_ADAPTER_SINGLETHREAD_H_ */
 

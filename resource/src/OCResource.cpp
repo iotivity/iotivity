@@ -294,9 +294,7 @@ OCResourceIdentifier OCResource::uniqueIdentifier() const
 
 std::string OCResource::sid() const
 {
-    std::ostringstream os;
-    os << this->uniqueIdentifier().m_representation;
-    return os.str();
+    return this->uniqueIdentifier().m_representation;
 }
 
 bool OCResource::operator==(const OCResource &other) const
@@ -331,13 +329,8 @@ bool OCResource::operator>=(const OCResource &other) const
 
 OCResourceIdentifier::OCResourceIdentifier(const std::string& wireServerIdentifier,
         const std::string& resourceUri)
-    :m_representation(0), m_resourceUri(resourceUri)
+    :m_representation(wireServerIdentifier), m_resourceUri(resourceUri)
 {
-    // test required so we can create Resources without a server. Will leave as default.
-    if(!wireServerIdentifier.empty())
-    {
-        m_representation = boost::lexical_cast<unsigned int>(wireServerIdentifier);
-    }
 }
 
 std::ostream& operator <<(std::ostream& os, const OCResourceIdentifier& ri)

@@ -21,7 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
+#include <inttypes.h>
 
 #include "cainterfacecontroller.h"
 #include "caipadapter.h"
@@ -45,6 +45,8 @@ static CAConnectivityHandler_t g_adapterHandler[CA_TRANSPORT_TYPE_NUM];
 static CANetworkPacketReceivedCallback g_networkPacketReceivedCallback = NULL;
 
 static CANetworkChangeCallback g_networkChangeCallback = NULL;
+
+static CAErrorHandleCallback g_errorHandleCallback = NULL;
 
 static int CAGetAdapterIndex(CATransportType_t cType)
 {
@@ -131,6 +133,18 @@ static void CANetworkChangedCallback(CALocalConnectivity_t *info,
     }
 }
 
+static void CAAdapterErrorHandleCallback(const CARemoteEndpoint_t *endpoint, const void *data,
+                                         uint32_t dataLen, CAResult_t result)
+{
+    OIC_LOG(DEBUG, TAG, "received error from adapter in interfacecontroller");
+
+    // Call the callback.
+    if (g_errorHandleCallback != NULL)
+    {
+        g_errorHandleCallback(endpoint, data, dataLen, result);
+    }
+}
+
 void CAInitializeAdapters(ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, TAG, "initialize adapters..");
@@ -175,6 +189,12 @@ void CASetNetworkChangeCallback(CANetworkChangeCallback callback)
     g_networkChangeCallback = callback;
 }
 
+void CASetErrorHandleCallback(CAErrorHandleCallback errorCallback)
+{
+    OIC_LOG(DEBUG, TAG, "Set error handle callback");
+    g_errorHandleCallback = errorCallback;
+}
+
 CAResult_t CAStartAdapter(CATransportType_t transportType)
 {
     OIC_LOG_V(DEBUG, TAG, "Start the adapter of CAConnectivityType[%d]", transportType);
@@ -215,39 +235,42 @@ void CAStopAdapter(CATransportType_t transportType)
 
 CAResult_t CAGetNetworkInfo(CALocalConnectivity_t **info, uint32_t *size)
 {
+    if (info == NULL || size == NULL)
+    {
+        return CA_STATUS_INVALID_PARAM;
+    }
+
     CALocalConnectivity_t *tempInfo[CA_TRANSPORT_TYPE_NUM] = { 0 };
     uint32_t tempSize[CA_TRANSPORT_TYPE_NUM] = { 0 };
 
-    // #1. get information each adapter
-    uint8_t index = 0;
     CAResult_t res = CA_STATUS_FAILED;
-    for (index = 0; index < CA_TRANSPORT_TYPE_NUM; index++)
+    uint32_t resSize = 0;
+    for (int index = 0; index < CA_TRANSPORT_TYPE_NUM; index++)
     {
         if (g_adapterHandler[index].GetnetInfo != NULL)
         {
-            res = g_adapterHandler[index].GetnetInfo(&tempInfo[index], &tempSize[index]);
+            // #1. get information for each adapter
+            res = g_adapterHandler[index].GetnetInfo(&tempInfo[index],
+                                                     &tempSize[index]);
 
-            OIC_LOG_V(DEBUG, TAG, "%d adapter network info size is %d res:%d", index,
-                      tempSize[index], res);
+            // #2. total size
+            if (res == CA_STATUS_OK)
+            {
+                resSize += tempSize[index];
+            }
+
+            OIC_LOG_V(DEBUG,
+                      TAG,
+                      "%d adapter network info size is %" PRIu32 " res:%d",
+                      index,
+                      tempSize[index],
+                      res);
         }
-    }
-
-    uint32_t resSize = 0;
-    for (index = 0; index < CA_TRANSPORT_TYPE_NUM; index++)
-    {
-        // check information
-        if (tempInfo[index] == NULL || tempSize[index] <= 0)
-        {
-            continue;
-        }
-
-        // #2. total size
-        resSize += tempSize[index];
     }
 
     OIC_LOG_V(DEBUG, TAG, "network info total size is %d!", resSize);
 
-    if (resSize <= 0)
+    if (resSize == 0)
     {
         if (res == CA_ADAPTER_NOT_ENABLED || res == CA_NOT_SUPPORTED)
         {
@@ -259,37 +282,31 @@ CAResult_t CAGetNetworkInfo(CALocalConnectivity_t **info, uint32_t *size)
     // #3. add data into result
     // memory allocation
 
-    CALocalConnectivity_t *resInfo = (CALocalConnectivity_t *) OICCalloc(
-            resSize, sizeof(CALocalConnectivity_t));
+    CALocalConnectivity_t *resInfo = (CALocalConnectivity_t *)
+                                     OICCalloc(resSize, sizeof(CALocalConnectivity_t));
     CA_MEMORY_ALLOC_CHECK(resInfo);
 
-    uint8_t pos = 0;
-    for (index = 0; index < CA_TRANSPORT_TYPE_NUM; index++)
+    // #4. save data
+    *info = resInfo;
+    *size = resSize;
+
+    for (int index = 0; index < CA_TRANSPORT_TYPE_NUM; index++)
     {
         // check information
-        if (tempInfo[index] == NULL || tempSize[index] <= 0)
+        if (tempSize[index] == 0)
         {
             continue;
         }
 
-        memcpy(resInfo + pos, tempInfo[index], sizeof(CALocalConnectivity_t) * tempSize[index]);
+        memcpy(resInfo,
+               tempInfo[index],
+               sizeof(*resInfo) * tempSize[index]);
 
-        pos += tempSize[index];
+        resInfo += tempSize[index];
 
         // free adapter data
         OICFree(tempInfo[index]);
         tempInfo[index] = NULL;
-    }
-
-    // #5. save data
-    if ( info != NULL )
-    {
-        *info = resInfo;
-    }
-
-    if (size)
-    {
-        *size = resSize;
     }
 
     OIC_LOG(DEBUG, TAG, "each network info save success!");
@@ -298,7 +315,7 @@ CAResult_t CAGetNetworkInfo(CALocalConnectivity_t **info, uint32_t *size)
     // memory error label.
 memory_error_exit:
 
-    for (index = 0; index < CA_TRANSPORT_TYPE_NUM; index++)
+    for (int index = 0; index < CA_TRANSPORT_TYPE_NUM; index++)
     {
 
         OICFree(tempInfo[index]);
@@ -348,13 +365,13 @@ CAResult_t CASendMulticastData(const void *data, uint32_t length)
 {
     OIC_LOG(DEBUG, TAG, "Send multicast data to enabled interface..");
 
-    CAResult_t res = CA_STATUS_FAILED;
+    CAResult_t res = CA_SEND_FAILED;
     u_arraylist_t *list = CAGetSelectedNetworkList();
 
     if (!list)
     {
         OIC_LOG(DEBUG, TAG, "No selected network");
-        return CA_STATUS_FAILED;
+        return CA_SEND_FAILED;
     }
 
     int i = 0;
@@ -498,4 +515,3 @@ void CATerminateAdapters()
         }
     }
 }
-

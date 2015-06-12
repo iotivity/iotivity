@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef __OIC_LOGGER_H_
-#define __OIC_LOGGER_H_
+#ifndef OIC_LOGGER_H_
+#define OIC_LOGGER_H_
 
 #include "oic_logger_types.h"
 
@@ -46,5 +46,5 @@ int oic_log_set_module(oic_log_ctx_t *ctx, const char *module_name);
 } // extern "C"
 #endif
 
-#endif
+#endif /* OIC_LOGGER_H_ */
 

@@ -266,7 +266,7 @@ static void CAReceiveHandler(void *data)
 #ifdef __WITH_DTLS__
                     CAResult_t ret = CAAdapterNetDtlsDecrypt(srcIPAddress, srcPort,
                                                              (uint8_t *)recvBuffer, recvLen,
-                                                             DTLS_IP);
+                                                             CA_IPV4);
                     OIC_LOG_V(DEBUG, IP_SERVER_TAG,
                               "CAAdapterNetDtlsDecrypt returns [%d]", ret);
 #endif
@@ -279,7 +279,7 @@ static void CAReceiveHandler(void *data)
                     {
                         g_adapterEthServerContext->packetReceivedCallback(srcIPAddress, srcPort,
                                                                           recvBuffer, recvLen,
-                                                                          false);
+                                                                          false, NULL);
                     }
 
                     ca_mutex_unlock(g_mutexAdapterServerContext);
@@ -346,10 +346,6 @@ static CAResult_t CACreateSocket(int *socketFD, const char *localIp, uint16_t *p
     if (localIp)
     {
         sockAddr.sin_addr.s_addr = inet_addr(localIp);
-    }
-    else
-    {
-        sockAddr.sin_addr.s_addr = htonl(INADDR_ANY);
     }
 
     int16_t i = 0;
@@ -810,8 +806,7 @@ CAResult_t CAIPStopServer(const char *interfaceAddress)
                 }
                 CACloseSocket(info->socketFd);
                 OICFree(info);
-                OIC_LOG_V(DEBUG, IP_SERVER_TAG,
-                          "Multicast server is stopped successfully on IF [%s]", info->ifAddr);
+                OIC_LOG(DEBUG, IP_SERVER_TAG, "Multicast server is stopped successfully.");
                 // Reduce list length by 1 as we removed one element.
                 listLength--;
             }
@@ -828,8 +823,7 @@ CAResult_t CAIPStopServer(const char *interfaceAddress)
             {
                 CACloseSocket(info->socketFd);
                 OICFree(info);
-                OIC_LOG_V(DEBUG, IP_SERVER_TAG,
-                          "Unicast server is stopped successfully on IF [%s]", info->ifAddr);
+                OIC_LOG(DEBUG, IP_SERVER_TAG, "Unicast server is stopped successfully.");
                 // Reduce list length by 1 as we removed one element.
                 listLength--;
             }

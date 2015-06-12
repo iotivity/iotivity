@@ -42,9 +42,10 @@ public class CoreController {
 
             // for android: not complete method
             if (System.getProperty("os.name").toLowerCase().equals("linux")) {
+                System.loadLibrary("gnustl_shared");
                 System.loadLibrary("oc_logger");
+                System.loadLibrary("connectivity_abstraction");
                 System.loadLibrary("octbstack");
-                System.loadLibrary("coap");
                 System.loadLibrary("oc");
                 System.loadLibrary("SSMCore");
             } else {

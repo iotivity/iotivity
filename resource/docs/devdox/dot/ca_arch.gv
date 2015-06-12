@@ -139,7 +139,7 @@ digraph G {
                     <tr><td align="left" href="\ref CAConnectivityHandler_t::startAdapter" tooltip="+startAdapter: CAAdapterStart">+startAdapter: CAAdapterStart</td></tr>
                     <tr><td align="left" href="\ref CAConnectivityHandler_t::startListenServer" tooltip="+startListenServer: CAAdapterStartListeningServer">+startListenServer: CAAdapterStartListeningServer</td></tr>
                     <tr><td align="left" href="\ref CAConnectivityHandler_t::startDiscoveryServer" tooltip="+startDiscoveryServer: CAAdapterStartDiscoveryServer">+startDiscoveryServer: CAAdapterStartDiscoveryServer</td></tr>
-                    <tr><td align="left" href="\ref CAConnectivityHandler_t::sendData" tooltip="+sendData: CAAdapterSendUnitcastData">+sendData: CAAdapterSendUnitcastData</td></tr>
+                    <tr><td align="left" href="\ref CAConnectivityHandler_t::sendData" tooltip="+sendData: CAAdapterSendUnicastData">+sendData: CAAdapterSendUnicastData</td></tr>
                     <tr><td align="left" href="\ref CAConnectivityHandler_t::sendDataToAll" tooltip="+sendDataToAll: CAAdapterSendMulticastData">+sendDataToAll: CAAdapterSendMulticastData</td></tr>
                     <tr><td align="left" href="\ref CAConnectivityHandler_t::GetnetInfo" tooltip="+GetnetInfo: CAAdapterGetNetworkInfo">+GetnetInfo: CAAdapterGetNetworkInfo</td></tr>
                     <tr><td align="left" href="\ref CAConnectivityHandler_t::readData" tooltip="+readData: CAAdapterReadData">+readData: CAAdapterReadData</td></tr>

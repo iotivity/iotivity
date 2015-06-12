@@ -18,8 +18,8 @@
  *
  ******************************************************************/
 
-#ifndef __U_ARRAYLIST_H_
-#define __U_ARRAYLIST_H_
+#ifndef U_ARRAYLIST_H_
+#define U_ARRAYLIST_H_
 
 #include <stdint.h>
 #include "cacommon.h"
@@ -109,4 +109,4 @@ bool u_arraylist_contains(const u_arraylist_t *list,const void *data);
 }
 #endif
 
-#endif /* _U_ARRAYLIST_H_ */
+#endif /* U_ARRAYLIST_H_ */

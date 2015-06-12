@@ -25,25 +25,18 @@ function build()
 	# Note: for android, as oic-resource uses C++11 feature stoi and to_string,
 	# it requires gcc-4.9, currently only android-ndk-r10(for linux)
 	# and windows android-ndk-r10(64bit target version) support these features.
-	if [ "$BUILD_FOR_ANDROID" = "true" ]
-		then
-		echo "*********** Build Boost for android ***********"
-		pushd extlibs
-		.//buildDependencies.sh
-		popd
+	echo "*********** Build Boost for android ***********"
+	# disable parallel build for android as gradle depends on scons to finish first
+	export SCONSFLAGS="-Q"
 
-		echo "*********** Build for android x86 *************"
-		scons TARGET_OS=android TARGET_ARCH=x86 ANDROID_NDK=$1 RELEASE=$3
+	echo "*********** Build for android x86 *************"
+	scons TARGET_OS=android TARGET_ARCH=x86 RELEASE=$3 TARGET_TRANSPORT=IP
 
-		echo "*********** Build for android armeabi *************"
-		scons TARGET_OS=android TARGET_ARCH=armeabi ANDROID_NDK=$1 RELEASE=$3
+	echo "*********** Build for android armeabi *************"
+	scons TARGET_OS=android TARGET_ARCH=armeabi RELEASE=$3 TARGET_TRANSPORT=IP
 
-		echo "*********** Build for android armeabi-v7a *************"
-		scons TARGET_OS=android TARGET_ARCH=armeabi-v7a ANDROID_NDK=$1 RELEASE=$3
-
-		echo "*********** Build for android armeabi-v7a-hard *************"
-		scons TARGET_OS=android TARGET_ARCH=armeabi-v7a-hard ANDROID_NDK=$1 RELEASE=$3
-	fi
+	# enable parallel build
+	export SCONSFLAGS="-Q -j 4"
 
 	echo "*********** Build for arduino avr *************"
 	scons resource TARGET_OS=arduino UPLOAD=false BOARD=mega TARGET_ARCH=avr TARGET_TRANSPORT=IP SHIELD=ETH RELEASE=$3
@@ -52,6 +45,7 @@ function build()
 	echo "*********** Build for arduino arm *************"
 	scons resource TARGET_OS=arduino UPLOAD=false BOARD=arduino_due_x TARGET_ARCH=arm TARGET_TRANSPORT=IP SHIELD=ETH RELEASE=$3
 	scons resource TARGET_OS=arduino UPLOAD=false BOARD=arduino_due_x TARGET_ARCH=arm TARGET_TRANSPORT=IP SHIELD=WIFI RELEASE=$3
+
 
 	if [ $(uname -s) = "Darwin" ]
 	then
@@ -108,4 +102,5 @@ scons resource RELEASE=false -c
 scons resource LOGGING=false RELEASE=false
 scons resource TEST=1 RELEASE=false
 echo "===================== done ====================="
+
 

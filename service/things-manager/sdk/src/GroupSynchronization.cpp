@@ -73,14 +73,13 @@ namespace OIC
         for (unsigned int i = 0; i < collectionResourceTypes.size(); ++i)
         {
 
-            std::string query = OC_WELL_KNOWN_QUERY;
+            std::string query = OC_MULTICAST_DISCOVERY_URI;
             query.append("?rt=");
             query.append(collectionResourceTypes.at(i));
 
             OCPlatform::findResource("", query,
-                    // we will change to OC_ALL when OC_ALL flag is stable.
-                    OC_ETHERNET,
-                    std::bind(&GroupSynchronization::onFindGroup, this, 
+                    OC_ALL,
+                    std::bind(&GroupSynchronization::onFindGroup, this,
                         std::placeholders::_1));
         }
 
@@ -286,10 +285,10 @@ namespace OIC
         std::vector< std::string > resourceInterface;
         resourceInterface.push_back(DEFAULT_INTERFACE);
 
-        OCResource::Ptr groupSyncResource = 
+        OCResource::Ptr groupSyncResource =
                         OCPlatform::constructResourceObject(host, uri,
-                            // we will change to OC_ALL when OC_ALL flag is stable.
-                            OC_ETHERNET, false, 
+
+                            OC_ALL, false,
                             resourceTypes, resourceInterface);
 
         // OCResource::Ptr groupSyncResource = OCPlatform::constructResourceObject(host, uri,
@@ -467,8 +466,7 @@ OCStackResult GroupSynchronization::leaveGroup(
 
         OCResource::Ptr groupSyncResource;
         groupSyncResource = OCPlatform::constructResourceObject(host, uri,
-                // we will change to OC_ALL when OC_ALL flag is stable.
-                OC_ETHERNET, false, 
+                OC_ALL, false,
                 resourceTypes, resourceInterface);
         // groupSyncResource = OCPlatform::constructResourceObject(host, uri,
         //         OC_WIFI, false, resourceTypes, resourceInterface);
@@ -511,7 +509,7 @@ OCStackResult GroupSynchronization::leaveGroup(
     {
         if (0 == collectionResourceType.length())
         {
-            OC_LOG(DEBUG, TAG, 
+            OC_LOG(DEBUG, TAG,
                 "GroupSynchronization::deleteGroup : Error! Input params are wrong.");
             return;
         }
@@ -630,13 +628,13 @@ OCStackResult GroupSynchronization::leaveGroup(
                 result = OCPlatform::unregisterResource(resourceHandle);
                 if (OC_STACK_OK == result)
                 {
-                    OC_LOG_V(DEBUG, TAG, 
+                    OC_LOG_V(DEBUG, TAG,
                         "GroupSynchronization::deleteGroup : UnregisterResource(%d)" \
                         " was successful.", i + 1);
                 }
                 else
                 {
-                    OC_LOG_V(DEBUG, TAG, 
+                    OC_LOG_V(DEBUG, TAG,
                         "GroupSynchronization::deleteGroup : UnregisterResource(%d)" \
                         " was unsuccessful. result - ", i + 1, result);
                 }
@@ -662,13 +660,7 @@ OCStackResult GroupSynchronization::leaveGroup(
             std::string requestType = request->getRequestType();
             int requestFlag = request->getRequestHandlerFlag();
 
-            if (requestFlag == RequestHandlerFlag::InitFlag)
-            {
-                OC_LOG(DEBUG, TAG, "\trequestFlag : Init");
-
-                // entity handler to perform resource initialization operations
-            }
-            else if (requestFlag == RequestHandlerFlag::RequestFlag)
+            if (requestFlag == RequestHandlerFlag::RequestFlag)
             {
                 OC_LOG(DEBUG, TAG, "\trequestFlag : Request");
 
@@ -705,7 +697,7 @@ OCStackResult GroupSynchronization::leaveGroup(
 
                     if (methodType == "joinGroup")
                     {
-                        std::string resourceName = OC_WELL_KNOWN_QUERY;
+                        std::string resourceName = OC_MULTICAST_DISCOVERY_URI;
                         resourceName.append("?rt=");
                         resourceName.append(resourceType);
                         OC_LOG_V(DEBUG, TAG, "\t\t\tresourceName : %s", resourceName.c_str());
@@ -713,8 +705,7 @@ OCStackResult GroupSynchronization::leaveGroup(
                         resourceRequest = request;
 
                         OCPlatform::findResource("", resourceName,
-                            // we will change to OC_ALL when OC_ALL flag is stable.
-                            OC_ETHERNET,
+                            OC_ALL,
                             std::bind(&GroupSynchronization::onFindResource, this,
                                 std::placeholders::_1));
 
@@ -739,7 +730,7 @@ OCStackResult GroupSynchronization::leaveGroup(
 
                             if (0 == resourceType.compare(type))
                             {
-                                OC_LOG_V(DEBUG, TAG, 
+                                OC_LOG_V(DEBUG, TAG,
                                     "GroupSynchronization::groupEntityHandler : " \
                                     "Found! The resource to leave is found. - %s", type);
 
@@ -749,13 +740,13 @@ OCStackResult GroupSynchronization::leaveGroup(
                                         collectionResourceHandle, resourceHandle);
                                 if (OC_STACK_OK == result)
                                 {
-                                    OC_LOG(DEBUG, TAG, 
+                                    OC_LOG(DEBUG, TAG,
                                         "GroupSynchronization::groupEntityHandler : " \
                                         "To unbind resource was successful.");
                                 }
                                 else
                                 {
-                                    OC_LOG_V(DEBUG, TAG, 
+                                    OC_LOG_V(DEBUG, TAG,
                                         "GroupSynchronization::groupEntityHandler : " \
                                         "To unbind resource was unsuccessful. result - %d",
                                         result);
@@ -764,13 +755,13 @@ OCStackResult GroupSynchronization::leaveGroup(
                                 result = OCPlatform::unregisterResource(resourceHandle);
                                 if (OC_STACK_OK == result)
                                 {
-                                    OC_LOG(DEBUG, TAG, 
+                                    OC_LOG(DEBUG, TAG,
                                         "GroupSynchronization::groupEntityHandler : " \
                                         "To unregister resource was successful.");
                                 }
                                 else
                                 {
-                                    OC_LOG_V(DEBUG, TAG, 
+                                    OC_LOG_V(DEBUG, TAG,
                                         "GroupSynchronization::groupEntityHandler : "
                                         "To unregister resource was unsuccessful. result - %d",
                                         result);
@@ -937,7 +928,7 @@ OCStackResult GroupSynchronization::leaveGroup(
             {
                 if( 0 == foundHostUri.compare(savedHostAddress) )
                 {
-                    OC_LOG(DEBUG, TAG, 
+                    OC_LOG(DEBUG, TAG,
                         "GroupSynchronization::IsSameGroup : Found! The same group is found.");
                     return true;
                 }
@@ -1083,7 +1074,7 @@ OCStackResult GroupSynchronization::leaveGroup(
         OCRepresentation child;
 
         OC_LOG(DEBUG, TAG, "GroupSynchronization::onGetJoinedRemoteChild");
-#ifndef NDEBUG      
+#ifndef NDEBUG
         // debugging
         // Get the resource URI
         resourceURI = rep.getUri();

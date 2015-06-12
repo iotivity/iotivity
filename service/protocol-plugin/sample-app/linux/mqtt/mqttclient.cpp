@@ -18,9 +18,10 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+/// @file mqttclient.cpp
 
-// OCClient.cpp : Defines the entry point for the console application.
-//
+/// @brief Samplecode which controls MQTT-fan plugin using Protocol Plugin Manager. 
+
 #include <string>
 #include <cstdlib>
 #include <pthread.h>
@@ -330,7 +331,7 @@ void foundResourceFan(std::shared_ptr<OCResource> resource)
     }
     catch (std::exception &e)
     {
-        //log(e.what());
+        std::cout << "Exception: " << e.what() << std::endl;
     }
 }
 
@@ -393,8 +394,8 @@ int main(int argc, char *argv[])
         // makes it so that all boolean values are printed as 'true/false' in this stream
         std::cout.setf(std::ios::boolalpha);
         // Find all resources
-        requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.fan";
-        OCPlatform::findResource("", requestURI.str(), OC_WIFI, &foundResourceFan);
+        requestURI << OC_MULTICAST_DISCOVERY_URI << "?rt=core.fan";
+        OCPlatform::findResource("", requestURI.str(), OC_ALL, &foundResourceFan);
         std::cout << "Finding Resource... " << std::endl;
         while (true)
         {
@@ -404,7 +405,7 @@ int main(int argc, char *argv[])
     }
     catch (OCException &e)
     {
-        //log(e.what());
+        std::cout << "Exception: " << e.what() << std::endl;
     }
 
     return 0;

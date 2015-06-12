@@ -24,8 +24,8 @@
  * This file provides helper functions for EDR adapter.
  */
 
-#ifndef __CA_EDR_UTILS_H_
-#define __CA_EDR_UTILS_H_
+#ifndef CA_EDR_UTILS_H_
+#define CA_EDR_UTILS_H_
 
 #include <stdbool.h>
 #include <string.h>
@@ -63,6 +63,6 @@ bool CAEDRIsServiceSupported(const char **serviceUUID, int32_t serviceCount,
 } /* extern "C" */
 #endif
 
-#endif //__CA_EDR_UTILS_H_
+#endif /* CA_EDR_UTILS_H_ */
 
 

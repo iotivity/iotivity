@@ -22,8 +22,8 @@
  * @file
  * @brief This file contains the APIs for BT LE communications.
  */
-#ifndef CA_EDR_NWMONITOR_H_
-#define CA_EDR_NWMONITOR_H_
+#ifndef CA_EDR_NW_MONITOR_H_
+#define CA_EDR_NW_MONITOR_H_
 
 #include "cacommon.h"
 
@@ -48,5 +48,5 @@ void CAEDRNetworkMonitorJniInit();
 } /* extern "C" */
 #endif
 
-#endif
+#endif /* CA_EDR_NW_MONITOR_H_ */
 

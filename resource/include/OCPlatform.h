@@ -130,7 +130,7 @@ namespace OC
         *
         * @param host - Host IP Address. If null or empty, Multicast is performed.
         * @param deviceURI - Uri containing address to the virtual device in C Stack
-                                ("/oc/core/d")
+                                ("/oic/d")
         * @param connectivityType - @ref OCConnectivityType type of connectivity indicating the
         *                           interface. Example: OC_WIFI, OC_ETHERNET, OC_ALL
         * @param deviceInfoHandler - device discovery callback
@@ -141,6 +141,25 @@ namespace OC
                     OCConnectivityType connectivityType, FindDeviceCallback deviceInfoHandler);
         OCStackResult getDeviceInfo(const std::string& host, const std::string& deviceURI,
                     OCConnectivityType connectivityType, FindDeviceCallback deviceInfoHandler,
+                    QualityOfService QoS);
+
+        /**
+        * API for Platform Discovery
+        *
+        *
+        * @param host - Host IP Address. If null or empty, Multicast is performed.
+        * @param platformURI - Uri containing address to the virtual platform in C Stack
+                                ("/oic/p")
+        * @param connectivityType - @ref OCConnectivityType type of connectivity indicating the
+        *                           interface. Example: OC_WIFI, OC_ETHERNET, OC_ALL
+        * @param platformInfoHandler - platform discovery callback
+        * @param QoS the quality of communication
+        *
+        */
+        OCStackResult getPlatformInfo(const std::string& host, const std::string& platformURI,
+                    OCConnectivityType connectivityType, FindPlatformCallback platformInfoHandler);
+        OCStackResult getPlatformInfo(const std::string& host, const std::string& platformURI,
+                    OCConnectivityType connectivityType, FindPlatformCallback platformInfoHandler,
                     QualityOfService QoS);
 
         /**
@@ -163,7 +182,7 @@ namespace OC
         * Above relative URI will be prepended (by core) with a host IP + namespace "oc"
         * Therefore, fully qualified URI format would be //HostIP-Address/namespace/relativeURI"
         * Example, a relative URI: 'a/light' will result in a fully qualified URI:
-        *   //192.168.1.1/oc/a/light"
+        *   //192.168.1.1/oic/a/light"
         * First parameter can take a relative URI and core will take care of preparing the fully
         * qualified URI OR
         * first parameter can take fully qualified URI and core will take that as is for further
@@ -199,6 +218,17 @@ namespace OC
         *      OC_STACK_ERROR - stack process error
         */
         OCStackResult registerDeviceInfo(const OCDeviceInfo deviceInfo);
+
+        /**
+        * Register Platform Info
+        *
+        * @param platformInfo - structure containing all the platform specific information
+        *
+        * @return
+        *      OC_STACK_OK   - no errors
+        *      OC_STACK_ERROR - stack process error
+        */
+        OCStackResult registerPlatformInfo(const OCPlatformInfo platformInfo);
 
         /**
         * Set default device entity handler

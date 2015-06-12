@@ -33,7 +33,7 @@
 #include "logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "org_iotivity_jar_caipinterface.h"
+#include "org_iotivity_ca_CaIpInterface.h"
 
 #define IP_MONITOR_TAG "IP_MONITOR"
 #define MAX_INTERFACE_INFO_LENGTH (1024)
@@ -93,7 +93,7 @@ static jobject g_context = NULL;
 static CAResult_t CAIPUpdateInterfaceInformation(u_arraylist_t **netInterfaceList);
 /**
  * @fn CACreateIPJNIInterfaceObject
- * @brief creates new instance of caipinterface through JNI
+ * @brief creates new instance of CaIpInterface through JNI
  */
 static CAResult_t CACreateIPJNIInterfaceObject(jobject context);
 
@@ -175,11 +175,11 @@ CAResult_t CACreateIPJNIInterfaceObject(jobject context)
         return CA_STATUS_FAILED;
     }
 
-    //Create caipinterface jni instance
-    jclass IPJniInterface = (*env)->FindClass(env, "org/iotivity/jar/caipinterface");
+    //Create CaIpInterface jni instance
+    jclass IPJniInterface = (*env)->FindClass(env, "org/iotivity/ca/CaIpInterface");
     if (!IPJniInterface)
     {
-        OIC_LOG(ERROR, IP_MONITOR_TAG, "Could not get caipinterface class");
+        OIC_LOG(ERROR, IP_MONITOR_TAG, "Could not get CaIpInterface class");
         return CA_STATUS_FAILED;
     }
 
@@ -187,12 +187,12 @@ CAResult_t CACreateIPJNIInterfaceObject(jobject context)
                                                                    "(Landroid/content/Context;)V");
     if (!IPInterfaceConstructorMethod)
     {
-        OIC_LOG(ERROR, IP_MONITOR_TAG, "Could not get caipinterface constructor method");
+        OIC_LOG(ERROR, IP_MONITOR_TAG, "Could not get CaIpInterface constructor method");
         return CA_STATUS_FAILED;
     }
 
     (*env)->NewObject(env, IPJniInterface, IPInterfaceConstructorMethod, gApplicationContext);
-    OIC_LOG(DEBUG, IP_MONITOR_TAG, "Create caipinterface instance, success");
+    OIC_LOG(DEBUG, IP_MONITOR_TAG, "Create CaIpInterface instance, success");
 
     OIC_LOG(DEBUG, IP_MONITOR_TAG, "OUT");
     return CA_STATUS_OK;
@@ -241,6 +241,12 @@ static CAResult_t CAIPUpdateInterfaceInformation(u_arraylist_t **netInterfaceLis
 
     OIC_LOG_V(DEBUG, IP_MONITOR_TAG, "CAIPUpdateInterfaceInformation : %d", interfaces);
 
+    if(0 == interfaces)
+    {
+        OIC_LOG(ERROR, IP_MONITOR_TAG, "no interfaces");
+        return CA_STATUS_FAILED;
+    }
+
     for (int32_t i = 0; i < interfaces; i++)
     {
         struct ifreq temp_ifr = { 0 };
@@ -263,6 +269,8 @@ static CAResult_t CAIPUpdateInterfaceInformation(u_arraylist_t **netInterfaceLis
         if ((temp_ifr.ifr_flags & IFF_LOOPBACK)
             || !(temp_ifr.ifr_flags & IFF_UP) || !(temp_ifr.ifr_flags & IFF_RUNNING))
         {
+            OIC_LOG_V(ERROR, IP_MONITOR_TAG,
+                      "interface is not up or not running or loopback = %x", temp_ifr.ifr_flags);
             continue;
         }
 
@@ -326,15 +334,11 @@ static CAResult_t CAIPUpdateInterfaceInformation(u_arraylist_t **netInterfaceLis
 
         OIC_LOG_V(DEBUG, IP_MONITOR_TAG, "ipAddress : %s, interfaceName : %s, subnetmask : %s",
                 netInfo->ipAddress, netInfo->interfaceName, netInfo->subnetMask);
-        close(sck);
-        return CA_STATUS_OK;
-
-        break;
     }
 
     close(sck);
     OIC_LOG(DEBUG, IP_MONITOR_TAG, "OUT");
-    return CA_STATUS_FAILED;
+    return CA_STATUS_OK;
 }
 
 static bool CACheckIsAnyInterfaceDown(const u_arraylist_t *netInterfaceList,
@@ -471,7 +475,7 @@ static void CADestroyNetworkMonitorMutexes()
 
 CAResult_t CAIPInitializeNetworkMonitor(const ca_thread_pool_t threadPool)
 {
-    OIC_LOG(DEBUG, IP_MONITOR_TAG, "IN");
+    OIC_LOG(DEBUG, IP_MONITOR_TAG, "CAIPInitializeNetworkMonitor IN");
 
     VERIFY_NON_NULL(threadPool, IP_MONITOR_TAG, "threadPool is null");
 
@@ -492,7 +496,7 @@ CAResult_t CAIPInitializeNetworkMonitor(const ca_thread_pool_t threadPool)
     ret = CACreateIPJNIInterfaceObject(g_context);
     if (CA_STATUS_OK != ret)
     {
-        OIC_LOG(ERROR, IP_MONITOR_TAG, "unable to create caipinterface instance");
+        OIC_LOG(ERROR, IP_MONITOR_TAG, "unable to create CaIpInterface instance");
         return ret;
     }
 
@@ -703,14 +707,9 @@ CAResult_t CAIPGetInterfaceSubnetMask(const char *ipAddress, char **subnetMask)
 
         if (strncmp(info->ipAddress, ipAddress, strlen(ipAddress)) == 0)
         {
-            if (!info->subnetMask)
-            {
-                OIC_LOG(ERROR, IP_MONITOR_TAG,
-                        "CAIPGetInterfaceSubnetMask subnetmask is null");
-            }
             OIC_LOG_V(DEBUG, IP_MONITOR_TAG,
                       "CAIPGetInterfaceSubnetMask subnetmask is %s", info->subnetMask);
-            *subnetMask = info->subnetMask ? OICStrdup(info->subnetMask) : NULL;
+            *subnetMask = OICStrdup(info->subnetMask);
             break;
         }
     }
@@ -763,21 +762,32 @@ void CAIPSendNetworkChangeCallback(CANetworkStatus_t currNetworkStatus)
 {
     OIC_LOG(DEBUG, IP_MONITOR_TAG, "IN");
     ca_mutex_lock(g_stopNetworkMonitorMutex);
+
     if (g_stopNetworkMonitor)
     {
         OIC_LOG(DEBUG, IP_MONITOR_TAG, "Stop Network Monitor Thread is called");
         ca_mutex_unlock(g_stopNetworkMonitorMutex);
         return;
     }
+
     ca_mutex_unlock(g_stopNetworkMonitorMutex);
 
     ca_mutex_lock(g_networkMonitorContextMutex);
-    if (!g_networkMonitorContext->networkChangeCb)
+
+    if (!g_networkMonitorContext)
     {
-        OIC_LOG(ERROR, IP_MONITOR_TAG, "g_networkChangeCb is NULL");
+        OIC_LOG(ERROR, IP_MONITOR_TAG, "g_networkMonitorContext is NULL");
         ca_mutex_unlock(g_networkMonitorContextMutex);
         return;
     }
+
+    if (!g_networkMonitorContext->networkChangeCb)
+    {
+        OIC_LOG(ERROR, IP_MONITOR_TAG, "g_networkMonitorContext->networkChangeCb is NULL");
+        ca_mutex_unlock(g_networkMonitorContextMutex);
+        return;
+    }
+
     ca_mutex_unlock(g_networkMonitorContextMutex);
 
     u_arraylist_t *netInterfaceList = u_arraylist_create();
@@ -855,25 +865,25 @@ void CAIPSendNetworkChangeCallback(CANetworkStatus_t currNetworkStatus)
             OIC_LOG(DEBUG, IP_MONITOR_TAG, "CACheckIsInterfaceInfoChanged true");
         }
     }
-    CAClearNetInterfaceInfoList(netInterfaceList);
 
+    CAClearNetInterfaceInfoList(netInterfaceList);
     OIC_LOG(DEBUG, IP_MONITOR_TAG, "OUT");
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_jar_caipinterface_CAIPStateEnabled(JNIEnv *env, jclass class)
+Java_org_iotivity_ca_CaIpInterface_caIpStateEnabled(JNIEnv *env, jclass class)
 {
     CANetworkStatus_t currNetworkStatus = CA_INTERFACE_UP;
-    OIC_LOG(DEBUG, IP_MONITOR_TAG, "CAIPStateEnabled");
+    OIC_LOG(DEBUG, IP_MONITOR_TAG, "caIpStateEnabled");
 
     CAIPSendNetworkChangeCallback(currNetworkStatus);
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_jar_caipinterface_CAIPStateDisabled(JNIEnv *env, jclass class)
+Java_org_iotivity_ca_CaIpInterface_caIpStateDisabled(JNIEnv *env, jclass class)
 {
     CANetworkStatus_t currNetworkStatus = CA_INTERFACE_DOWN;
-    OIC_LOG(DEBUG, IP_MONITOR_TAG, "CAIPStateDisabled");
+    OIC_LOG(DEBUG, IP_MONITOR_TAG, "caIpStateDisabled");
 
     CAIPSendNetworkChangeCallback(currNetworkStatus);
 }

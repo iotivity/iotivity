@@ -31,19 +31,25 @@
 
 static int UNICAST_DISCOVERY = 0;
 static int TEST_CASE = 0;
-static const char * UNICAST_DISCOVERY_QUERY = "coap://%s:6298/oc/core";
-static const char * UNICAST_DEVICE_DISCOVERY_QUERY = "coap://%s:6298/oc/core/d";
-static const char * MULTICAST_DEVICE_DISCOVERY_QUERY = "/oc/core/d";
-static const char * MULTICAST_RESOURCE_DISCOVERY_QUERY = "/oc/core";
-//The following variable determines the interface (wifi, ethernet etc.)
-//to be used for sending unicast messages. Default set to WIFI.
-static OCConnectivityType OC_CONNTYPE = OC_WIFI;
-static std::string putPayload = "{\"oc\":[{\"rep\":{\"power\":15,\"state\":true}}]}";
+
+static const char * UNICAST_DEVICE_DISCOVERY_QUERY = "coap://%s:6298/oic/d";
+static const char * UNICAST_PLATFORM_DISCOVERY_QUERY = "coap://%s:6298/oic/p";
+
+static const char * MULTICAST_DEVICE_DISCOVERY_QUERY = "/oic/d";
+static const char * MULTICAST_PLATFORM_DISCOVERY_QUERY = "/oic/p";
+
+static const char * UNICAST_RESOURCE_DISCOVERY_QUERY = "coap://%s:6298/oic/res";
+static const char * MULTICAST_RESOURCE_DISCOVERY_QUERY = "/oic/res";
+//The following variable determines the interface protocol (IPv4, IPv6, etc)
+//to be used for sending unicast messages. Default set to IPv4.
+static OCConnectivityType OC_CONNTYPE = OC_IPV4;
+
+static std::string putPayload = "{\"oic\":[{\"rep\":{\"power\":15,\"state\":true}}]}";
 static std::string coapServerIP = "255.255.255.255";
 static std::string coapServerPort = "5683";
 static std::string coapServerResource = "/a/light";
 static const int IPV4_ADDR_SIZE = 16;
-//Use ipv4addr for both InitDiscovery and InitDeviceDiscovery
+//Use ipv4addr for both InitDiscovery and InitPlatformOrDeviceDiscovery
 char ipv4addr[IPV4_ADDR_SIZE];
 void StripNewLineChar(char* str);
 
@@ -74,7 +80,7 @@ static void PrintUsage()
 {
     OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1..17> -c <0|1>");
     OC_LOG(INFO, TAG, "-u <0|1> : Perform multicast/unicast discovery of resources");
-    OC_LOG(INFO, TAG, "-c <0|1> : Send unicast messages over Ethernet or WIFI");
+    OC_LOG(INFO, TAG, "-c <0|1> : IPv4/IPv6 (IPv6 not currently supported)");
     OC_LOG(INFO, TAG, "-t 1  :  Discover Resources");
     OC_LOG(INFO, TAG, "-t 2  :  Discover Resources and Initiate Nonconfirmable Get Request");
     OC_LOG(INFO, TAG, "-t 3  :  Discover Resources and Initiate Nonconfirmable Get Request"
@@ -104,7 +110,8 @@ static void PrintUsage()
             "then cancel immediately with High QOS");
     OC_LOG(INFO, TAG, "-t 18 :  Discover Resources and Initiate Nonconfirmable Get Request and "\
             "add  vendor specific header options");
-    OC_LOG(INFO, TAG, "-t 19 :  Discover Devices");
+    OC_LOG(INFO, TAG, "-t 19 :  Discover Platform");
+    OC_LOG(INFO, TAG, "-t 20 :  Discover Devices");
 }
 
 OCStackResult InvokeOCDoResource(std::ostringstream &query,
@@ -408,6 +415,9 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
             case TEST_GET_REQ_NON_WITH_VENDOR_HEADER_OPTIONS:
                 InitGetRequest(OC_LOW_QOS, 1, 0);
                 break;
+            case TEST_DISCOVER_PLATFORM_REQ:
+                InitPlatformDiscovery(OC_LOW_QOS);
+                break;
             case TEST_DISCOVER_DEV_REQ:
                 InitDeviceDiscovery(OC_LOW_QOS);
                 break;
@@ -421,6 +431,28 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
         OC_LOG_V(INFO, TAG, "discoveryReqCB received Null clientResponse");
     }
     return OC_STACK_KEEP_TRANSACTION;
+}
+
+OCStackApplicationResult PlatformDiscoveryReqCB (void* ctx, OCDoHandle handle,
+        OCClientResponse * clientResponse)
+{
+    if (ctx == (void*) DEFAULT_CONTEXT_VALUE)
+    {
+        OC_LOG(INFO, TAG, "Callback Context for Platform DISCOVER query recvd successfully");
+    }
+
+    if(clientResponse)
+    {
+        //OC_LOG truncates the response as it is too long.
+        fprintf(stderr, "Discovery response: \n %s\n", clientResponse->resJSONPayload);
+        fflush(stderr);
+    }
+    else
+    {
+        OC_LOG_V(INFO, TAG, "PlatformDiscoveryReqCB received Null clientResponse");
+    }
+
+    return (UNICAST_DISCOVERY) ? OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION;
 }
 
 OCStackApplicationResult DeviceDiscoveryReqCB (void* ctx, OCDoHandle handle,
@@ -439,7 +471,7 @@ OCStackApplicationResult DeviceDiscoveryReqCB (void* ctx, OCDoHandle handle,
     }
     else
     {
-        OC_LOG_V(INFO, TAG, "DeviceDiscoveryReqCB received Null clientResponse");
+        OC_LOG_V(INFO, TAG, "PlatformDiscoveryReqCB received Null clientResponse");
     }
 
     return (UNICAST_DISCOVERY) ? OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION;
@@ -650,8 +682,51 @@ int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptio
     }
 }
 
+int InitPlatformDiscovery(OCQualityOfService qos)
+{
+    OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
+
+    OCStackResult ret;
+    OCCallbackData cbData;
+    char szQueryUri[64] = { 0 };
+
+    cbData.cb = PlatformDiscoveryReqCB;
+    cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
+    cbData.cd = NULL;
+
+    if(UNICAST_DISCOVERY)
+    {
+        snprintf(szQueryUri, sizeof(szQueryUri), UNICAST_PLATFORM_DISCOVERY_QUERY, ipv4addr);
+    }
+    else
+    {
+        strncpy(szQueryUri, MULTICAST_PLATFORM_DISCOVERY_QUERY, sizeof(szQueryUri) -1 );
+    }
+    szQueryUri[sizeof(szQueryUri) -1] = '\0';
+
+    if(UNICAST_DISCOVERY)
+    {
+        ret = OCDoResource(NULL, OC_REST_GET, szQueryUri, 0, 0, OC_CONNTYPE,
+                (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS, &cbData, NULL, 0);
+    }
+    else
+    {
+        ret = OCDoResource(NULL, OC_REST_GET, szQueryUri, 0, 0, (OC_ALL),
+                (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS, &cbData, NULL, 0);
+    }
+
+    if (ret != OC_STACK_OK)
+    {
+        OC_LOG(ERROR, TAG, "OCStack device error");
+    }
+
+    return ret;
+}
+
 int InitDeviceDiscovery(OCQualityOfService qos)
 {
+    OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
+
     OCStackResult ret;
     OCCallbackData cbData;
     char szQueryUri[64] = { 0 };
@@ -666,10 +741,9 @@ int InitDeviceDiscovery(OCQualityOfService qos)
     }
     else
     {
-        strncpy(szQueryUri, MULTICAST_DEVICE_DISCOVERY_QUERY,
-                sizeof(szQueryUri) -1 );
-        szQueryUri[sizeof(szQueryUri) -1] = '\0';
+        strncpy(szQueryUri, MULTICAST_DEVICE_DISCOVERY_QUERY, sizeof(szQueryUri) -1 );
     }
+    szQueryUri[sizeof(szQueryUri) -1] = '\0';
 
     if(UNICAST_DISCOVERY)
     {
@@ -699,7 +773,7 @@ int InitDiscovery(OCQualityOfService qos)
 
     if (UNICAST_DISCOVERY)
     {
-        snprintf(szQueryUri, sizeof(szQueryUri), UNICAST_DISCOVERY_QUERY, ipv4addr);
+        snprintf(szQueryUri, sizeof(szQueryUri), UNICAST_RESOURCE_DISCOVERY_QUERY, ipv4addr);
     }
     else
     {
@@ -741,7 +815,10 @@ int main(int argc, char* argv[])
                 TEST_CASE = atoi(optarg);
                 break;
             case 'c':
-                OC_CONNTYPE = OCConnectivityType(atoi(optarg));
+                // TODO: re-enable IPv4/IPv6 command line selection when IPv6 is supported
+                // OC_CONNTYPE = OCConnectivityType(atoi(optarg));
+                OC_CONNTYPE = OC_IPV4;
+                OC_LOG(INFO, TAG, "IPv6 not currently supported, using IPv4.");
                 break;
             default:
                 PrintUsage();
@@ -780,6 +857,10 @@ int main(int argc, char* argv[])
     if(UNICAST_DISCOVERY  == 0  && TEST_CASE == TEST_DISCOVER_DEV_REQ)
     {
         InitDeviceDiscovery(OC_LOW_QOS);
+    }
+    else if(UNICAST_DISCOVERY  == 0  && TEST_CASE == TEST_DISCOVER_PLATFORM_REQ)
+    {
+        InitPlatformDiscovery(OC_LOW_QOS);
     }
     else
     {
@@ -856,11 +937,11 @@ std::string getConnectivityType (OCConnectivityType connType)
 {
     switch (connType)
     {
-        case OC_ETHERNET:
-            return "Ethernet";
+        case OC_IPV4:
+            return "IPv4";
 
-        case OC_WIFI:
-            return "WiFi";
+        case OC_IPV6:
+            return "IPv6";
 
         case OC_LE:
             return "BLE";

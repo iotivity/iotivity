@@ -198,6 +198,29 @@ namespace OC
                 return val;
             }
 
+	   /**
+            *  Retrieve the attributevalue structure associated with the supplied name
+            *
+            *  @param str Name of the attribute
+            *  @param attrValue Attribute Value structure
+            *  @return The getAttributeValue method returns true if the attribute was
+            *        found in the representation.  Otherwise it returns false.
+            */
+            bool getAttributeValue(const std::string& str, AttributeValue& attrValue) const
+            {
+                auto x = m_values.find(str);
+
+                if (x != m_values.end())
+                {
+                    attrValue = x->second;
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+
             std::string getValueToString(const std::string& key) const;
             bool hasAttribute(const std::string& str) const;
 

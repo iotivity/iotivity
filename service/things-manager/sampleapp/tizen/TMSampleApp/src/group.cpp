@@ -148,6 +148,7 @@ static void createActionSet_AllBulbOff()
         dlog_print(DLOG_INFO, LOG_TAG, "#### NO LIGHT SERVER FOUND");
         ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog,
                                               &logMessage);
+        delete actionSet;
         return;
     }
 
@@ -202,6 +203,7 @@ static void createActionSet_AllBulbOn()
         logMessage += "----------------------<br>";
         dlog_print(DLOG_INFO, LOG_TAG, "#### NO LIGHT SERVER FOUND");
         ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog, &logMessage);
+        delete actionSet;
         return;
     }
 
@@ -567,6 +569,11 @@ void onObserve(const HeaderOptions headerOptions, const OCRepresentation &rep, c
     {
         int level;
         buf = (char *)malloc(4 * sizeof(char));
+        if (NULL == buf)
+        {
+            dlog_print(DLOG_INFO, LOG_TAG, " buf malloc failed");
+            return;
+        }
         sprintf(buf, "%d", sequenceNumber);
         logMessage = "OBSERVE RESULT <br>";
         logMessage += "Sequencenumber:" + string(buf) + "<br>";
@@ -1023,7 +1030,7 @@ void foundResource(shared_ptr< OCResource > resource)
             dlog_print(DLOG_INFO, LOG_TAG, "#### FOUND URI: %s", resourceURI.c_str());
             dlog_print(DLOG_INFO, LOG_TAG, "#### FOUND HOST: %s", hostAddress.c_str());
             logMessage = "FOUND RESOURCE URI <br>" + resourceURI + "<br>";
-            logMessage = "FOUND RESOURCE HOST <br>" + hostAddress + "<br>";
+            logMessage += "FOUND RESOURCE HOST <br>" + hostAddress + "<br>";
             logMessage += "----------------------<br>";
             // Show the UI list of group APIs
             ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))showGroupAPIs, NULL);

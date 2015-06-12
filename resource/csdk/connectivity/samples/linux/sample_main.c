@@ -80,6 +80,8 @@ void send_secure_request();
 
 void request_handler(const CARemoteEndpoint_t *object, const CARequestInfo_t *requestInfo);
 void response_handler(const CARemoteEndpoint_t *object, const CAResponseInfo_t *responseInfo);
+void error_handler(const CARemoteEndpoint_t *object, const CAErrorInfo_t* errorInfo);
+
 void send_response(const CARemoteEndpoint_t *endpoint, const CAInfo_t *info);
 void get_resource_uri(char *URI, char *resourceURI, int length);
 int get_secure_information(CAPayload_t payLoad);
@@ -222,7 +224,7 @@ int main()
 #endif
 
     // set handler.
-    CARegisterHandler(request_handler, response_handler);
+    CARegisterHandler(request_handler, response_handler, error_handler);
 
     process();
 
@@ -911,9 +913,8 @@ void select_network()
     printf("\n=============================================\n");
     printf("\tselect network\n");
     printf("IPv4 : 0\n");
-    printf("EDR : 2\n");
-    printf("LE : 3\n");
-    printf("RA : 4\n");
+    printf("EDR  : 2\n");
+    printf("LE   : 3\n");
     printf("select : ");
 
     char buf[MAX_BUF_LEN] = { 0 };
@@ -924,7 +925,7 @@ void select_network()
 
     int number = buf[0] - '0';
 
-    if (number < 0 || number > 4)
+    if (number < 0 || number > 3)
     {
         printf("Invalid network type\n");
         return;
@@ -950,7 +951,6 @@ void unselect_network()
     printf("IPv4 : 0\n");
     printf("EDR : 2\n");
     printf("LE : 3\n");
-    printf("RA : 4\n");
     printf("select : ");
 
     char buf[MAX_BUF_LEN] = { 0 };
@@ -961,7 +961,7 @@ void unselect_network()
 
     int number = buf[0] - '0';
 
-    if (number < 0 || number > 4)
+    if (number < 0 || number > 3)
     {
         printf("Invalid network type\n");
         return;
@@ -1055,7 +1055,11 @@ void get_network_info()
         {
             printf("Address: %s\n", tempInfo[index].addressInfo.BT.btMacAddress);
         }
-        printf("Secured: %d\n\n", tempInfo[index].isSecured);
+        else if (CA_LE == tempInfo[index].type)
+        {
+            printf("Address: %s\n", tempInfo[index].addressInfo.LE.leMacAddress);
+        }
+        printf("Secured: %s\n\n", tempInfo[index].isSecured ? "true" : "false");
 
         if (tempInfo[index].isSecured)
         {
@@ -1094,6 +1098,10 @@ void request_handler(const CARemoteEndpoint_t *object, const CARequestInfo_t *re
     else if (CA_EDR == object->transportType)
     {
         printf("Remote Address: %s \n", object->addressInfo.BT.btMacAddress);
+    }
+    else if (CA_LE == object->transportType)
+    {
+        printf("Remote Address: %s \n", object->addressInfo.LE.leMacAddress);
     }
     printf("Data: %s\n", requestInfo->info.payload);
     printf("Message type: %s\n", MESSAGE_TYPE[requestInfo->info.type]);
@@ -1169,6 +1177,10 @@ void response_handler(const CARemoteEndpoint_t *object, const CAResponseInfo_t *
     {
         printf("Remote Address: %s \n", object->addressInfo.BT.btMacAddress);
     }
+    else if (CA_LE == object->transportType)
+    {
+        printf("Remote Address: %s \n", object->addressInfo.LE.leMacAddress);
+    }
     printf("response result : %d\n", responseInfo->result);
     printf("Data: %s\n", responseInfo->info.payload);
     printf("Message type: %s\n", MESSAGE_TYPE[responseInfo->info.type]);
@@ -1197,6 +1209,55 @@ void response_handler(const CARemoteEndpoint_t *object, const CAResponseInfo_t *
             printf("This is secure resource...\n");
         }
     }
+}
+
+void error_handler(const CARemoteEndpoint_t *rep, const CAErrorInfo_t* errorInfo)
+{
+    printf("+++++++++++++++++++++++++++++++++++ErrorInfo+++++++++++++++++++++++++++++++++++\n");
+
+    if(rep && rep->resourceUri  )
+    {
+        printf("Error Handler, RemoteEndpoint Info resourceUri : %s\n", rep->resourceUri);
+    }
+    else
+    {
+        printf("Error Handler, RemoteEndpoint is NULL");
+    }
+
+    if(errorInfo)
+    {
+        const CAInfo_t *info = &errorInfo->info;
+        printf("Error Handler, ErrorInfo :\n");
+        printf("Error Handler result    : %d\n", errorInfo->result);
+        printf("Error Handler token     : %s\n", info->token);
+        printf("Error Handler messageId : %d\n", (uint16_t) info->messageId);
+        printf("Error Handler type      : %d\n", info->type);
+        printf("Error Handler payload   : %s\n", info->payload);
+
+        if(CA_ADAPTER_NOT_ENABLED == errorInfo->result)
+        {
+            printf("CA_ADAPTER_NOT_ENABLED, enable the adapter\n");
+        }
+        else if(CA_SEND_FAILED == errorInfo->result)
+        {
+            printf("CA_SEND_FAILED, unable to send the message, check parameters\n");
+        }
+        else if(CA_MEMORY_ALLOC_FAILED == errorInfo->result)
+        {
+            printf("CA_MEMORY_ALLOC_FAILED, insufficient memory\n");
+        }
+        else if(CA_SOCKET_OPERATION_FAILED == errorInfo->result)
+        {
+            printf("CA_SOCKET_OPERATION_FAILED, socket operation failed\n");
+        }
+        else if(CA_STATUS_FAILED == errorInfo->result)
+        {
+            printf("CA_STATUS_FAILED, message could not be delivered, internal error\n");
+        }
+    }
+    printf("++++++++++++++++++++++++++++++++End of ErrorInfo++++++++++++++++++++++++++++++++\n");
+
+    return;
 }
 
 void send_response(const CARemoteEndpoint_t *endpoint, const CAInfo_t *info)

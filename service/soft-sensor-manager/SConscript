@@ -47,7 +47,7 @@ if target_os not in ['windows', 'winrt']:
 
 if target_os == 'android':
 	soft_sensor_manager_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-	soft_sensor_manager_env.AppendUnique(LIBS = ['gnustl_static'])
+	soft_sensor_manager_env.AppendUnique(LIBS = ['gnustl_shared'])
 
 	if not env.get('RELEASE'):
 		soft_sensor_manager_env.AppendUnique(LIBS = ['log'])
@@ -155,9 +155,6 @@ static_libssmcore = ssmcore_env.StaticLibrary(
 ssmcore_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 ssmcore_env.AppendUnique(LIBS = ['oc', 'octbstack', 'oc_logger',
             'connectivity_abstraction', 'coap'])
-
-if target_os in ['tizen']:
-	ssmcore_env.ParseConfig('pkg-config --libs glib-2.0');
 
 shared_libssmcore = ssmcore_env.SharedLibrary(
 		target = 'SSMCore',

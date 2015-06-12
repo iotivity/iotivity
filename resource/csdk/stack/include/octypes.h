@@ -24,6 +24,8 @@
 #include "ocstackconfig.h"
 
 #ifdef __cplusplus
+#include <string.h>
+
 extern "C" {
 #endif // __cplusplus
 #define WITH_PRESENCE
@@ -35,9 +37,9 @@ extern "C" {
 //Don't want to expose to application layer that lower level stack is using CoAP.
 
 /// Authority + URI string to prefix well known queries
-#define OC_WELL_KNOWN_QUERY                  "224.0.1.187:5683/oc/core"
-#define OC_MULTICAST_DISCOVERY_URI           "/oc/core"
-#define OC_EXPLICIT_DEVICE_DISCOVERY_URI     "224.0.1.187:5683/oc/core/d?rt=core.led"
+#define OC_WELL_KNOWN_QUERY                  "224.0.1.187:5683/oic/res"
+#define OC_MULTICAST_DISCOVERY_URI           "/oic/res"
+#define OC_EXPLICIT_DEVICE_DISCOVERY_URI     "224.0.1.187:5683/oic/d?rt=core.led"
 /// Multicast address and port string to prefix multicast queries
 #define OC_MULTICAST_PREFIX                  "224.0.1.187:5683"
 /// IP Multicast address to use for multicast requests
@@ -52,6 +54,10 @@ extern "C" {
 /// operation.
 #define OC_MAX_PRESENCE_TTL_SECONDS     (60 * 60 * 24) // 60 sec/min * 60 min/hr * 24 hr/day
 #define OC_PRESENCE_URI                      "/oic/ad"
+#endif
+
+///Separtor for multiple query string
+#define OC_QUERY_SEPARATOR                "&;"
 
 /**
  * Attributes used to form a proper OIC conforming JSON message.
@@ -65,26 +71,54 @@ extern "C" {
 #define OC_RSRVD_RESOURCE_TYPE          "rt"
 #define OC_RSRVD_RESOURCE_TYPE_PRESENCE "oic.wk.ad"
 #define OC_RSRVD_INTERFACE              "if"
-#define OC_RSRVD_DEVICE_ID              "di"
-#define OC_RSRVD_DEVICE_NAME            "dn"
+#define OC_RSRVD_TTL                    "ttl"
+#define OC_RSRVD_NONCE                  "non"
+#define OC_RSRVD_TRIGGER                "trg"
+
 #define OC_RSRVD_INTERFACE_DEFAULT      "oic.if.baseline"
 #define OC_RSRVD_INTERFACE_LL           "oic.if.ll"
 #define OC_RSRVD_INTERFACE_BATCH        "oic.if.b"
-#define OC_RSRVD_INTERFACE_GROUP        "oc.mi.grp"
+#define OC_RSRVD_INTERFACE_GROUP        "oic.mi.grp"
 #define OC_RSRVD_MFG_DATE               "mndt"
 #define OC_RSRVD_FW_VERSION             "mnfv"
 #define OC_RSRVD_HOST_NAME              "hn"
-#define OC_RSRVD_MFG_NAME               "mnmn"
-#define OC_RSRVD_MFG_URL                "mnml"
-#define OC_RSRVD_MODEL_NUM              "mnmo"
-#define OC_RSRVD_PLATFORM_VERSION       "mnpv"
-#define OC_RSRVD_SUPPORT_URL            "mnsl"
 #define OC_RSRVD_VERSION                "icv"
-#define OC_RSRVD_OBSERVABLE             "obs"
+#define OC_RSRVD_POLICY                 "p"
+#define OC_RSRVD_BITMAP                 "bm"
 #define OC_RSRVD_SECURE                 "sec"
 #define OC_RSRVD_HOSTING_PORT           "port"
 #define OC_RSRVD_SERVER_INSTANCE_ID     "sid"
-#endif
+
+//**** Presence "Announcement Triggers" ****
+#define OC_RSRVD_TRIGGER_CREATE         "create"
+#define OC_RSRVD_TRIGGER_CHANGE         "change"
+#define OC_RSRVD_TRIGGER_DELETE         "delete"
+//*******************
+
+//**** Platform ****
+#define OC_RSRVD_PLATFORM_ID            "pi"
+#define OC_RSRVD_MFG_NAME               "mnmn"
+#define OC_RSRVD_MFG_URL                "mnml"
+#define OC_RSRVD_MODEL_NUM              "mnmo"
+#define OC_RSRVD_MFG_DATE               "mndt"
+#define OC_RSRVD_PLATFORM_VERSION       "mnpv"
+#define OC_RSRVD_OS_VERSION             "mnos"
+#define OC_RSRVD_HARDWARE_VERSION       "mnhw"
+#define OC_RSRVD_FIRMWARE_VERSION       "mnfv"
+#define OC_RSRVD_SUPPORT_URL            "mnsl"
+#define OC_RSRVD_SYSTEM_TIME             "st"
+//*******************
+
+//**** Device ****
+#define OC_RSRVD_DEVICE_ID              "di"
+#define OC_RSRVD_DEVICE_NAME            "n"
+#define OC_RSRVD_SPEC_VERSION           "lcv"
+#define OC_RSRVD_DATA_MODEL_VERSION     "dmv"
+
+#define OC_SPEC_VERSION                "0.9.0"
+#define OC_DATA_MODEL_VERSION          "sec.0.95"
+//*******************
+
 
 //-----------------------------------------------------------------------------
 // Typedefs
@@ -104,9 +138,10 @@ typedef struct OCDevAddr
  */
 typedef enum
 {
-    OC_WELL_KNOWN_URI= 0,       ///< "/oc/core"
-    OC_DEVICE_URI,              ///< "/oc/core/d"
-    OC_RESOURCE_TYPES_URI,      ///< "/oc/core/d/type"
+    OC_WELL_KNOWN_URI= 0,       ///< "/oic/res"
+    OC_DEVICE_URI,              ///< "/oic/d"
+    OC_PLATFORM_URI,            ///< "/oic/p"
+    OC_RESOURCE_TYPES_URI,      ///< "/oic/res/d/type"
     #ifdef WITH_PRESENCE
     OC_PRESENCE,                ///< "/oic/ad"
     #endif
@@ -167,24 +202,30 @@ typedef enum
 
 /**
  * Resource Properties.
+ * The value of a policy property is defined as bitmap.
+ * The LSB represents OC_DISCOVERABLE and Second LSB bit represents OC_OBSERVABLE and so on.
+ * Not including the policy property is equivalent to zero.
  *
- * ::OC_ACTIVE       When this bit is set, the resource is initialized, otherwise the resource
- *                   is 'inactive'. 'inactive' signifies that the resource has been marked for
- *                   deletion or is already deleted.
+ * ::OC_RES_PROP_NONE When none of the bits are set, the resource is non-discoverable &
+ *                    non-observable by the client.
  * ::OC_DISCOVERABLE When this bit is set, the resource is allowed to be discovered by clients.
  * ::OC_OBSERVABLE   When this bit is set, the resource is allowed to be observed by clients.
- * ::OC_SLOW         When this bit is set, the resource has been marked as 'slow'. 'slow' signifies
- *                   that responses from this resource can expect delays in processing its
- *                   requests from clients.
- * ::OC_SECURE       When this bit is set, the resource is a secure resource.
+ * ::OC_ACTIVE        When this bit is set, the resource is initialized, otherwise the resource
+ *                    is 'inactive'. 'inactive' signifies that the resource has been marked for
+ *                    deletion or is already deleted.
+ * ::OC_SLOW          When this bit is set, the resource has been marked as 'slow'. 'slow'
+ *                    signifies that responses from this resource can expect delays in
+ *                    processing its requests from clients.
+ * ::OC_SECURE        When this bit is set, the resource is a secure resource.
  */
 typedef enum
 {
-    OC_ACTIVE       = (1 << 0),
-    OC_DISCOVERABLE = (1 << 1),
-    OC_OBSERVABLE   = (1 << 2),
-    OC_SLOW         = (1 << 3),
-    OC_SECURE       = (1 << 4)
+    OC_RES_PROP_NONE = (0),
+    OC_DISCOVERABLE  = (1 << 0),
+    OC_OBSERVABLE    = (1 << 1),
+    OC_ACTIVE        = (1 << 2),
+    OC_SLOW          = (1 << 3),
+    OC_SECURE        = (1 << 4)
 } OCResourceProperty;
 
 /**
@@ -201,8 +242,8 @@ typedef enum
  */
 typedef enum
 {
-    OC_ETHERNET = 0,
-    OC_WIFI,
+    OC_IPV4 = 0,
+    OC_IPV6,
     OC_EDR,
     OC_LE,
     OC_ALL // Multicast message: send over all the interfaces.
@@ -267,7 +308,6 @@ typedef void * OCDoHandle;
 typedef void * OCResourceHandle;
 
 typedef void * OCRequestHandle;
-typedef void * OCResponseHandle;
 
 /**
  * Unique identifier for each observation request. Used when observations are
@@ -286,6 +326,27 @@ typedef enum
     OC_OBSERVE_DEREGISTER = 1,
     OC_OBSERVE_NO_OPTION = 2
 } OCObserveAction;
+
+
+/**
+ * Persistent storage handlers. An app must provide OCPersistentStorage handler pointers when it
+ * calls OCRegisterPersistentStorageHandler.
+ */
+typedef struct {
+    /*
+     *  Persistent storage open handler points to default file path.
+     *  Application can point to appropriate SVR database path for its Iotivity Server.
+     */
+    FILE* (* open)(const char *path, const char *mode);
+    // Persistent storage read handler
+    size_t (* read)(void *ptr, size_t size, size_t nmemb, FILE *stream);
+    // Persistent storage write handler
+    size_t (* write)(const void *ptr, size_t size, size_t nmemb, FILE *stream);
+    // Persistent storage close handler
+    int (* close)(FILE *fp);
+    // Persistent storage unlink handler
+    int (* unlink)(const char *path);
+} OCPersistentStorage;
 
 typedef struct
 {
@@ -323,6 +384,25 @@ typedef struct OCHeaderOption
     uint16_t optionLength;
     // pointer to its data
     uint8_t optionData[MAX_HEADER_OPTION_DATA_LENGTH];
+
+#ifdef __cplusplus
+    OCHeaderOption() = default;
+    OCHeaderOption(OCTransportProtocolID pid,
+                   uint16_t optId,
+                   uint16_t optlen,
+                   const uint8_t* optData)
+        : protocolID(pid),
+          optionID(optId),
+          optionLength(optlen)
+    {
+
+        // parameter includes the null terminator.
+        optionLength = optionLength < MAX_HEADER_OPTION_DATA_LENGTH ?
+                        optionLength : MAX_HEADER_OPTION_DATA_LENGTH;
+        memcpy(optionData, optData, optionLength);
+        optionData[optionLength - 1] = '\0';
+    }
+#endif
 } OCHeaderOption;
 
 /**
@@ -371,23 +451,34 @@ typedef struct
 } OCClientResponse;
 
 /**
- * This structure describes the device properties. All non-Null properties will be included
- * in a device discovery request.
+ * This structure describes the platform properties. All non-Null properties will be included
+ * in a platform discovery request.
  */
 typedef struct
 {
-    char *deviceName;
-    char *hostName;
-    char *deviceUUID;
-    char *contentType;
-    char *version;
+    char *platformID;
     char *manufacturerName;
     char *manufacturerUrl;
     char *modelNumber;
     char *dateOfManufacture;
     char *platformVersion;
+    char *operatingSystemVersion;
+    char *hardwareVersion;
     char *firmwareVersion;
     char *supportUrl;
+    char *systemTime;
+
+} OCPlatformInfo;
+
+/**
+ * This structure is expected as input for device properties.
+ * device name is mandatory and expected from the application.
+ * device id of type UUID will be generated by the stack.
+ */
+typedef struct
+{
+    char *deviceName;
+
 } OCDeviceInfo;
 
 typedef struct
@@ -395,8 +486,6 @@ typedef struct
     // Request handle is passed to server via the entity handler for each incoming request.
     // Stack assigns when request is received, server sets to indicate what request response is for
     OCRequestHandle requestHandle;
-    // New handle for tracking block (or slow) response.  Stack assigns, server uses for subsequent calls
-    OCResponseHandle  *responseHandle;
     // Resource handle
     OCResourceHandle resourceHandle;
     // Allow the entity handler to pass a result with the response
@@ -416,7 +505,6 @@ typedef struct
 
 typedef enum
 {
-    OC_INIT_FLAG    = (1 << 0),
     OC_REQUEST_FLAG = (1 << 1),
     OC_OBSERVE_FLAG = (1 << 2)
 } OCEntityHandlerFlag; //entity_handler_flag_t ;
@@ -449,13 +537,18 @@ typedef void (* OCClientContextDeleter)(void *context);
 /**
  * This info is passed from application to OC Stack when initiating a request to Server.
  */
-typedef struct
+typedef struct OCCallbackData
 {
     void *context;
     /// The pointer to a function the stack will call to handle the requests
     OCClientResponseHandler cb;
     /// A pointer to a function to delete the context when this callback is removed
     OCClientContextDeleter cd;
+#ifdef __cplusplus
+    OCCallbackData() = default;
+    OCCallbackData(void* ctx, OCClientResponseHandler callback, OCClientContextDeleter deleter)
+        :context(ctx), cb(callback), cd(deleter){}
+#endif
 } OCCallbackData;
 
 /**
@@ -463,13 +556,13 @@ typedef struct
  * Entity handler callback needs to fill the resPayload of the entityHandlerRequest.
  */
 typedef OCEntityHandlerResult (*OCEntityHandler)
-(OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest);
+(OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest, void* callbackParam);
 
 /**
  * Device Entity handler need to use this call back instead of OCEntityHandler.
  */
 typedef OCEntityHandlerResult (*OCDeviceEntityHandler)
-(OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest, char* uri);
+(OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest, char* uri, void* callbackParam);
 
 #ifdef __cplusplus
 }

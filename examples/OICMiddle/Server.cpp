@@ -45,10 +45,6 @@ OCEntityHandlerResult MiddleServer::entityHandler(const std::shared_ptr<OCResour
     int requestFlag = request->getRequestHandlerFlag();
     bool responseNeeded = false;
 
-    if (requestFlag && RequestHandlerFlag::InitFlag) {
-        return OC_EH_OK;
-    }
-
     if (requestFlag && RequestHandlerFlag::RequestFlag) {
         if (requestType == "PUT") {
             responseNeeded = true;

@@ -75,6 +75,6 @@ CAResult_t CAArduinoInitMulticastUdpSocket(const char *mcastAddress,
 }
 #endif
 
-#endif //CA_ETHERNET_ADAPTER_UTILS_
+#endif /* CA_ETHERNET_ADAPTER_UTILS_ */
 
 

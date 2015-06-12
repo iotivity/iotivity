@@ -7,10 +7,13 @@ Import('env')
 ca_os = env.get('TARGET_OS')
 ca_transport = env.get('TARGET_TRANSPORT')
 secured = env.get('SECURED')
+with_ra = env.get('WITH_RA')
 root_dir = './../'
 ca_path = './'
-current_dir=env.get('SRC_DIR')
-with_ra = env.get('WITH_RA')
+if ca_os == 'tizen':
+	current_dir = root_dir
+else:
+	current_dir=env.get('SRC_DIR')
 
 # The tinydtls library location is ~/iotivity/extlibs. When scons run from connectivity folder,
 # the build folder is ~/iotivity/resource/csdk/connectivity/out/linux/x86_64/release/.
@@ -31,7 +34,7 @@ env.AppendUnique(CPPPATH = [root_dir + '/common/inc/'])
 if ca_os not in ['arduino', 'windows', 'winrt']:
 	env.AppendUnique(CPPDEFINES = ['WITH_POSIX'])
 
-if ca_os in ['darwin']:
+if ca_os in ['darwin','ios']:
 	env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
 
 #Getting common source files
@@ -80,8 +83,6 @@ else:
 		else:
 			env.AppendUnique(CPPPATH = [extlib_dir + '/extlibs/tinydtls'])
 env.AppendUnique(CA_SRC = ca_common_src)
-
-
 
 if 'ALL' in ca_transport:
 	if with_ra == True:

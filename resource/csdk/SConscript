@@ -43,16 +43,18 @@ liboctbstack_env.PrependUnique(CPPPATH = [
 		'../../extlibs/timer/',
 		'logger/include',
 		'ocrandom/include',
-		'ocmalloc/include',
 		'stack/include',
 		'stack/include/internal',
 		'../oc_logger/include',
 		'connectivity/lib/libcoap-4.1.1',
 		'connectivity/inc',
 		'connectivity/api',
+		'connectivity/external/inc',
 		'security/include',
 		'security/include/internal',
 		])
+
+liboctbstack_env.AppendUnique(LIBS = ['ocsrm'])
 
 if target_os not in ['arduino', 'windows', 'winrt']:
 	liboctbstack_env.AppendUnique(CPPDEFINES  = ['WITH_POSIX'])
@@ -63,9 +65,12 @@ if target_os not in ['windows', 'winrt']:
 
 liboctbstack_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 
-if target_os in ['android', 'linux']:
+if target_os in ['android', 'linux', 'tizen']:
 	liboctbstack_env.AppendUnique(LIBS = ['connectivity_abstraction'])
 liboctbstack_env.AppendUnique(LIBS = ['coap', 'm'])
+
+if target_os == 'tizen':
+    liboctbstack_env.ParseConfig("pkg-config --cflags --libs uuid")
 
 if target_os not in ['android', 'arduino', 'windows', 'winrt']:
 	liboctbstack_env.AppendUnique(LIBS = ['pthread'])
@@ -75,6 +80,7 @@ if target_os == 'arduino':
 elif target_os not in ['darwin','ios']:
 	liboctbstack_env.AppendUnique(CFLAGS = ['-fPIC'])
 if target_os in ['darwin', 'ios']:
+	env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
 	liboctbstack_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 if target_os not in ['arduino']:
@@ -85,6 +91,8 @@ if env.get('SECURED') == '1':
 
 if env.get('LOGGING'):
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+
+liboctbstack_env.Append(LIBS = ['c_common'])
 
 ######################################################################
 # Source files and Targets
@@ -100,11 +108,10 @@ liboctbstack_src = [
 	OCTBSTACK_SRC + 'ocserverrequest.c',
 	OCTBSTACK_SRC + 'occollection.c',
 	OCTBSTACK_SRC + 'oicgroup.c',
-	'security/src/ocsecurity.c',
 	'logger/src/logger.c',
-	'ocrandom/src/ocrandom.c',
-	'ocmalloc/src/ocmalloc.c'
+	'ocrandom/src/ocrandom.c'
 	]
+
 if target_os in ['arduino','darwin','ios'] :
 	static_liboctbstack = liboctbstack_env.StaticLibrary('octbstack', liboctbstack_src)
 	liboctbstack_env.InstallTarget(static_liboctbstack, 'liboctbstack')

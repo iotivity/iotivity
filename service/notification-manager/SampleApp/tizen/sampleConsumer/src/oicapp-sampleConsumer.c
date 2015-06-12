@@ -45,6 +45,11 @@ static Elm_Object_Item* _gl_append_item(oicappData *ad , Elm_Genlist_Item_Class 
     oicappItemData *it_data;
 
     it_data = calloc(1 , sizeof(oicappItemData));
+    if (NULL == it_data)
+    {
+        DBG("calloc failed!!!!");
+        return NULL;
+    }
     it_data->title = title;
     it_data->ad = ad;
     item = elm_genlist_item_append(ad->genlist , itc , it_data , NULL , ELM_GENLIST_ITEM_NONE ,
@@ -58,6 +63,11 @@ void _gl_update_item(oicappData *ad , const char *title , Elm_Object_Item *item)
     oicappItemData *it_data;
 
     it_data = calloc(1 , sizeof(oicappItemData));
+    if (NULL == it_data)
+    {
+        DBG("calloc failed!!!!");
+        return;
+    }
     it_data->title = title;
     it_data->ad = ad;
 

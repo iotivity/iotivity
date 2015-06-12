@@ -74,5 +74,5 @@ CAResult_t CATerminateNetworkType();
 } /* extern "C" */
 #endif
 
-#endif //#ifndef NETWORK_CONFIGURATOR_H_
+#endif /* NETWORK_CONFIGURATOR_H_ */
 

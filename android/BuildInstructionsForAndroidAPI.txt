@@ -1,0 +1,45 @@
+Build Instructions for Android-API:
+
+1.Verify that you have the latest JDK (you might need to set the JDK_HOME variable)
+2.Clone the latest iotivity codebase.
+3.set environment variables:
+    a.platform=android
+    b.If running in windows, change the following line in the build.gradle file (<iotivity>/android/android_api/base/build.gradle):
+        def ndkBuild = new File(System.env.ANDROID_NDK_HOME, 'ndk-build')
+            to
+        def ndkBuild = new File(System.env.ANDROID_NDK_HOME, 'ndk-build.cmd')
+
+4.Build scons for android and your targeted architecture (This will also build Android API):
+    a.scons TARGET_OS=android TARGET_ARCH=<target arch> TARGET_TRANSPORT=IP RELEASE=1 
+               where <target arch> can be armeabi, armeabi-v7a, x86.
+               Note: To build in debug mode, use RELEASE=0.
+               Note: The minimum SDK version supported is 21.
+               Note: Only TARGET_TRANSPORT currently supported is IP
+    b.If the project is setup correctly, you should see a BUILD SUCCESSFUL message on the terminal
+    c.You should see the .aar files generated inside of '<iotivity>/android/android_api/base/build/outputs/aar' directory. The .aar files contain jni directory and also a .jar file
+
+
+TO RUN UNIT TESTS IN ANDROID-API
+
+5.The '<iotivity>/android/android_api/base/src/androidTest/...' directory contains tests which can be used to get an idea about the Android API usage.
+
+
+TO USE THE .AAR FILE IN <iotivity>/android/examples project
+
+6. Verify that 9 different *.so files exist inside <iotivity>/android/android-api/base/libs/<TARGET_ARCH> directory. (They should already be present in the *.aar file.)
+7. Import Project 'Examples' into android-studio.
+8.To add an .aar file to the 'Examples' project,
+   a.Right click on Examples->New->Module->Import .JAR or .AAR Package
+   b.Select the .aar file from the location in step 6e above
+   c.Right click on Examples->Open Module Settings
+   d.Select each sample app module under 'Modules'->Dependencies->Add->Module Dependency
+   e.The .aar file selected in step 10b above should be present. Select it.
+   f.Repeat steps d and e for each sample app module.
+
+
+TO USE THE .AAR FILE IN A DIFFERENT PROJECT
+
+9. Verify that 9 different *.so files exist inside <iotivity base>/android/android-api/base/libs/<TARGET_ARCH> directory.
+10. Import the .aar file in your project to use it
+
+

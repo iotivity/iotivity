@@ -38,13 +38,7 @@ OCEntityHandlerResult mpEntityHandler(const std::shared_ptr< OCResourceRequest >
         int requestFlag = request->getRequestHandlerFlag();
         std::string action;
 
-        if (requestFlag == RequestHandlerFlag::InitFlag)
-        {
-            cout << "\trequestFlag : Init\n";
-
-            // entity handler to perform resource initialization operations
-        }
-        else if (requestFlag == RequestHandlerFlag::RequestFlag)
+        if (requestFlag == RequestHandlerFlag::RequestFlag)
         {
             cout << "\trequestFlag : Request\n";
 
@@ -155,7 +149,7 @@ int main(int argc, char* argv[])
     }
     catch (OCException& e)
     {
-        //log(e.what());
+        std::cout << "Exception: " << e.what() << std::endl;
     }
 
     return 0;

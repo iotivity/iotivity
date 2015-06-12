@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef _U_LOGGER_H_
-#define _U_LOGGER_H_
+#ifndef U_LOGGER_H_
+#define U_LOGGER_H_
 
 #include <stdint.h>
 #include <stdio.h>
@@ -168,6 +168,7 @@ void OICLogv(LogLevel level, PROGMEM const char *tag, const int16_t lineNum,
 #ifdef __TIZEN__
 #define OIC_LOG(level,tag,mes) LOG_(LOG_ID_MAIN, level, tag, mes)
 #define OIC_LOG_V(level,tag,fmt,args...) LOG_(LOG_ID_MAIN, level, tag, fmt,##args)
+#define OIC_LOG_BUFFER(level, tag, buffer, bufferSize)
 #else // These macros are defined for Linux, Android, and Arduino
 #define OIC_LOG_INIT()    OICLogInit()
 #define OIC_LOG_BUFFER(level, tag, buffer, bufferSize)\
@@ -189,27 +190,18 @@ void OICLogv(LogLevel level, PROGMEM const char *tag, const int16_t lineNum,
 #endif //__TIZEN__
 #else //TB_LOG
 
-#ifdef __ANDROID__
-#define OIC_LOG_CONFIG(ctx)
-#define OIC_LOG_SHUTDOWN()
-#define OIC_LOG_BUFFER(level, tag, buffer, bufferSize)
-#define OIC_LOG_INIT()
-#define OIC_LOG(level,tag,mes) __android_log_print(ANDROID_LOG_INFO, tag, mes)
-#define OIC_LOG_V(level,tag,fmt,args...) __android_log_print(ANDROID_LOG_INFO, tag, fmt,##args)
-
-#else
 #define OIC_LOG_CONFIG(ctx)
 #define OIC_LOG_SHUTDOWN()
 #define OIC_LOG(level, tag, logStr)
 #define OIC_LOG_V(level, tag, ...)
 #define OIC_LOG_BUFFER(level, tag, buffer, bufferSize)
 #define OIC_LOG_INIT()
-#endif //__ANDROID__
+
 #endif // TB_LOG
 
 
 #ifdef __cplusplus
 }
 #endif // __cplusplus
-#endif /* _U_LOGGER_H_ */
+#endif /* U_LOGGER_H_ */
 

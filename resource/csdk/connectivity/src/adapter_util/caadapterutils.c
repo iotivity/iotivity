@@ -273,6 +273,7 @@ CARemoteEndpoint_t *CAAdapterCopyRemoteEndpoint(const CARemoteEndpoint_t *remote
     }
 
     info->isSecured = remoteEndpoint->isSecured;
+    info->identity  = remoteEndpoint->identity;
     return info;
 }
 

@@ -22,17 +22,26 @@
 # The main build script
 #
 ##
+import os
 
 # Load common build config
 SConscript('build_common/SConscript')
 
+Import('env')
+
+if os.environ.get('TERM') != None:
+	env['ENV']['TERM'] = os.environ['TERM']
+
 # Load extra options
 SConscript('extra_options.scons')
-Import('env')
 
 target_os = env.get('TARGET_OS')
 if target_os == 'arduino':
 	SConscript('arduino.scons')
+
+if target_os == 'android':
+	SConscript('android/android_api/SConscript')
+
 # By default, src_dir is current dir, the build_dir is:
 #     ./out/<target_os>/<target_arch>/<release or debug>/
 #
@@ -51,7 +60,6 @@ if target_os not in ['arduino','darwin','ios', 'android']:
 	SConscript(build_dir + 'examples/OICMiddle/SConscript')
 
 # Build 'service' sub-project
-# if target_os != 'android':
 SConscript(build_dir + 'service/SConscript')
 
 # Append targets information to the help information, to see help info, execute command line:

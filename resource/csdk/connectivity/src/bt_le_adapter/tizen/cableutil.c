@@ -315,7 +315,6 @@ void CAFreeBLEServiceInfo(BLEServiceInfo *bleServiceInfo)
     {
         if (bleServiceInfo->bdAddress)
         {
-            bt_device_destroy_bond(bleServiceInfo->bdAddress);
             bt_gatt_disconnect(bleServiceInfo->bdAddress);
             OICFree(bleServiceInfo->bdAddress);
             bt_gatt_destroy_attribute_handle(bleServiceInfo->service_clone);
@@ -351,7 +350,7 @@ CAResult_t CAVerifyOICServiceByServiceHandle(bt_gatt_attribute_h serviceHandle)
     char *uuid = NULL;
     int ret = bt_gatt_get_service_uuid(serviceHandle, &uuid);
 
-    if (0 != ret)
+    if (0 != ret || NULL == uuid)
     {
         OIC_LOG(ERROR, TZ_BLE_CLIENT_UTIL_TAG, "bt_gatt_get_service_uuid failed !");
         return CA_STATUS_FAILED;
@@ -360,8 +359,11 @@ CAResult_t CAVerifyOICServiceByServiceHandle(bt_gatt_attribute_h serviceHandle)
     if (strcasecmp(uuid, OIC_BLE_SERVICE_ID) != 0)
     {
         OIC_LOG(ERROR, TZ_BLE_CLIENT_UTIL_TAG, "It is not OIC service!");
+        OICFree(uuid);
         return CA_STATUS_FAILED;
     }
+
+    OICFree(uuid);
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_UTIL_TAG, "OUT");
     return CA_STATUS_OK;
 }

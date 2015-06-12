@@ -22,8 +22,8 @@
  * @file
  * @brief This file contains the APIs for BT communications.
  */
-#ifndef CA_EDR_UTILES_H_
-#define CA_EDR_UTILES_H_
+#ifndef CA_EDR_UTILS_H_
+#define CA_EDR_UTILS_H_
 
 #include "cacommon.h"
 #include "cathreadpool.h"
@@ -226,5 +226,5 @@ void CAEDRReorderingDeviceSocketList(uint32_t index);
 } /* extern "C" */
 #endif
 
-#endif
+#endif /* CA_EDR_UTILS_H_ */
 

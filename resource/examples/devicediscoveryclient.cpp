@@ -33,90 +33,64 @@
 using namespace OC;
 
 //Callback after device information is received
+void receivedPlatformInfo(const OCRepresentation& rep)
+{
+    std::cout << "\nPlatform Information received ---->\n";
+    std::string value;
+    std::string values[] =
+    {
+        "pi",   "Platform ID                    ",
+        "mnmn", "Manufacturer name              ",
+        "mnml", "Manufacturer url               ",
+        "mnmo", "Manufacturer Model No          ",
+        "mndt", "Manufactured Date              ",
+        "mnpv", "Manufacturer Platform Version  ",
+        "mnos", "Manufacturer OS version        ",
+        "mnhw", "Manufacturer hardware version  ",
+        "mnfv", "Manufacturer firmware version  ",
+        "mnsl", "Manufacturer support url       ",
+        "st",   "Manufacturer system time       "
+    };
+
+    for (unsigned int i = 0; i < sizeof(values) / sizeof(values[0]) ; i += 2)
+    {
+        if(rep.getValue(values[i], value))
+        {
+            std::cout << values[i + 1] << " : "<< value << std::endl;
+        }
+    }
+}
+
 void receivedDeviceInfo(const OCRepresentation& rep)
 {
     std::cout << "\nDevice Information received ---->\n";
-
-    std::string contentType;
-    std::string dateOfManufacture;
-    std::string deviceName;
-    std::string deviceUUID;
-    std::string firmwareVersion;
-    std::string hostName;
-    std::string manufacturerName;
-    std::string manufacturerUrl;
-    std::string modelNumber;
-    std::string platformVersion;
-    std::string supportUrl;
-    std::string version;
-
-    if(rep.getValue("ct", contentType))
+    std::string value;
+    std::string values[] =
     {
-        std::cout << "Content Type: " << contentType << std::endl;
-    }
+        "di",   "Device ID        ",
+        "n",    "Device name      ",
+        "lcv",  "Spec version url ",
+        "dmv",  "Data Model Model ",
+    };
 
-    if(rep.getValue("mndt", dateOfManufacture))
+    for (unsigned int i = 0; i < sizeof(values) / sizeof(values[0]) ; i += 2)
     {
-        std::cout << "Date of manufacture: " << dateOfManufacture << std::endl;
-    }
-
-    if(rep.getValue("dn", deviceName))
-    {
-        std::cout << "Device Name: " << deviceName << std::endl;
-    }
-
-    if(rep.getValue("di", deviceUUID))
-    {
-        std::cout << "Device UUID: " << deviceUUID << std::endl;
-    }
-
-    if(rep.getValue("mnfv", firmwareVersion))
-    {
-        std::cout << "Firmware Version: " << firmwareVersion << std::endl;
-    }
-
-    if(rep.getValue("hn", hostName))
-    {
-        std::cout << "Host Name: " << hostName << std::endl;
-    }
-
-    if(rep.getValue("mnmn", manufacturerName))
-    {
-        std::cout << "Manufacturer Name: " << manufacturerName << std::endl;
-    }
-
-    if(rep.getValue("mnml", manufacturerUrl))
-    {
-        std::cout << "Manufacturer Url: " << manufacturerUrl << std::endl;
-    }
-
-    if(rep.getValue("mnmo", modelNumber))
-    {
-        std::cout << "Model No. : " << modelNumber << std::endl;
-    }
-
-    if(rep.getValue("mnpv", platformVersion))
-    {
-        std::cout << "Platform Version: " << platformVersion << std::endl;
-    }
-
-    if(rep.getValue("mnsl", supportUrl))
-    {
-        std::cout << "Support URL: " << supportUrl << std::endl;
-    }
-
-    if(rep.getValue("icv", version))
-    {
-        std::cout << "Version: " << version << std::endl;
+        if(rep.getValue(values[i], value))
+        {
+            std::cout << values[i + 1] << " : "<< value << std::endl;
+        }
     }
 }
 
 int main(int argc, char* argv[]) {
 
-    std::ostringstream requestURI;
-    std::string deviceDiscoveryURI = "/oc/core/d";
+    std::ostringstream platformDiscoveryRequest;
+    std::ostringstream deviceDiscoveryRequest;
 
-    OCConnectivityType connectivityType = OC_WIFI;
+    std::string platformDiscoveryURI = "/oic/p";
+    std::string deviceDiscoveryURI   = "/oic/d";
+
+    OCConnectivityType connectivityType = OC_IPV4;
 
     if(argc == 2)
     {
@@ -129,34 +103,37 @@ int main(int argc, char* argv[]) {
             {
                 if(optionSelected == 0)
                 {
-                    connectivityType = OC_ETHERNET;
+                    connectivityType = OC_IPV4;
                 }
                 else if(optionSelected == 1)
                 {
-                    connectivityType = OC_WIFI;
+                    // TODO: re-enable IPv4/IPv6 command line selection when IPv6 is supported
+                    //connectivityType = OC_IPV6;
+                    connectivityType = OC_IPV4;
+                    std::cout << "IPv6 not currently supported. Using default IPv4" << std::endl;
                 }
                 else
                 {
-                    std::cout << "Invalid connectivity type selected. Using default WIFI"
+                    std::cout << "Invalid connectivity type selected. Using default IPv4"
                     << std::endl;
                 }
             }
             else
             {
-                std::cout << "Invalid connectivity type selected. Using default WIFI" << std::endl;
+                std::cout << "Invalid connectivity type selected. Using default IPv4" << std::endl;
             }
         }
         catch(std::exception&)
         {
-            std::cout << "Invalid input argument. Using WIFI as connectivity type" << std::endl;
+            std::cout << "Invalid input argument. Using IPv4 as connectivity type" << std::endl;
         }
     }
     else
     {
         std::cout << "Usage devicediscoveryclient <connectivityType(0|1)>" << std::endl;
-        std::cout<<"connectivityType: Default WIFI" << std::endl;
-        std::cout << "connectivityType 0: ETHERNET" << std::endl;
-        std::cout << "connectivityType 1: WIFI" << std::endl;
+        std::cout << "connectivityType: Default IPv4" << std::endl;
+        std::cout << "connectivityType 0: IPv4" << std::endl;
+        std::cout << "connectivityType 1: IPv6 (not currently supported)" << std::endl;
     }
     // Create PlatformConfig object
     PlatformConfig cfg {
@@ -170,11 +147,38 @@ int main(int argc, char* argv[]) {
     OCPlatform::Configure(cfg);
     try
     {
-        requestURI << OC_MULTICAST_PREFIX << deviceDiscoveryURI;
+        platformDiscoveryRequest << OC_MULTICAST_PREFIX << platformDiscoveryURI;
+        deviceDiscoveryRequest << OC_MULTICAST_PREFIX << deviceDiscoveryURI;
 
-        OCPlatform::getDeviceInfo("", requestURI.str(), connectivityType,
+        OCStackResult ret;
+
+        std::cout<< "Querying for platform information... ";
+
+        ret = OCPlatform::getPlatformInfo("", platformDiscoveryRequest.str(), connectivityType,
+                &receivedPlatformInfo);
+
+        if (ret == OC_STACK_OK)
+        {
+            std::cout << "done." << std::endl;
+        }
+        else
+        {
+            std::cout << "failed." << std::endl;
+        }
+
+        std::cout<< "Querying for device information... ";
+
+        ret = OCPlatform::getDeviceInfo("", deviceDiscoveryRequest.str(), connectivityType,
                 &receivedDeviceInfo);
-        std::cout<< "Querying for device information... " <<std::endl;
+
+        if (ret == OC_STACK_OK)
+        {
+            std::cout << "done." << std::endl;
+        }
+        else
+        {
+            std::cout << "failed." << std::endl;
+        }
 
         // A condition variable will free the mutex it is given, then do a non-
         // intensive block until 'notify' is called on it.  In this case, since we

@@ -49,13 +49,7 @@ private:
             std::string requestType = request->getRequestType();
             int requestFlag = request->getRequestHandlerFlag();
 
-            if (requestFlag & RequestHandlerFlag::InitFlag)
-            {
-                cout << "\t\trequestFlag : Init\n";
-
-                // entity handler to perform resource initialization operations
-            }
-            else if (requestFlag & RequestHandlerFlag::RequestFlag)
+            if (requestFlag & RequestHandlerFlag::RequestFlag)
             {
                 auto pResponse = std::make_shared< OC::OCResourceResponse >();
                 pResponse->setRequestHandle(request->getRequestHandle());
@@ -230,6 +224,6 @@ int main()
     }
     catch (OCException e)
     {
-        std::cout << "Exception in main: " << e.what();
+        std::cout << "Exception: " << e.what() << std::endl;
     }
 }

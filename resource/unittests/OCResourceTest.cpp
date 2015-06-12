@@ -49,7 +49,7 @@ namespace OCResourceTest
     //Helper method
     OCResource::Ptr ConstructResourceObject(std::string host, std::string uri)
     {
-        OCConnectivityType connectivityType = OC_WIFI;
+        OCConnectivityType connectivityType = OC_IPV4;
         std::vector<std::string> types = {"intel.rpost"};
         std::vector<std::string> ifaces = {DEFAULT_INTERFACE};
 
@@ -450,7 +450,7 @@ namespace OCResourceTest
     {
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
         EXPECT_TRUE(resource != NULL);
-        EXPECT_TRUE(resource->connectivityType() == OC_WIFI);
+        EXPECT_TRUE(resource->connectivityType() == OC_IPV4);
     }
 
     //IsObservable Test
@@ -466,7 +466,7 @@ namespace OCResourceTest
     {
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
         EXPECT_TRUE(resource != NULL);
-        EXPECT_TRUE(resource->sid() == "0");
+        EXPECT_TRUE(resource->sid() == "");
     }
 
     //UniqueIdentifier Test
@@ -476,7 +476,7 @@ namespace OCResourceTest
         EXPECT_TRUE(resource != NULL);
         std::ostringstream ss;
         ss << resource->uniqueIdentifier();
-        EXPECT_TRUE(ss.str() == "0/resource");
+        EXPECT_TRUE(ss.str() == "/resource");
     }
 
     // HeaderOptions Test

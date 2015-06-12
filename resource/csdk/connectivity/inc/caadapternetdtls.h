@@ -17,8 +17,8 @@
 * limitations under the License.
 *
 ******************************************************************/
-#ifndef _CA_ADAPTER_NET_DTLS_H
-#define _CA_ADAPTER_NET_DTLS_H
+#ifndef CA_ADAPTER_NET_DTLS_H_
+#define CA_ADAPTER_NET_DTLS_H_
 
 #include "dtls.h"
 #include "uarraylist.h"
@@ -26,6 +26,7 @@
 #include "caadapterutils.h"
 #include "ocsecurityconfig.h"
 #include "cainterface.h"
+#include "cacommon.h"
 
 /**
  *   Currently DTLS supported adapters(2) WIFI and ETHENET for linux platform.
@@ -38,10 +39,11 @@
 extern void OCGetDtlsPskCredentials(CADtlsPskCredsBlob_t **credInfo);
 
 typedef void (*CAPacketReceivedCallback)(const char *ipAddress, const uint16_t port,
-         const void *data, const uint32_t dataLength, const bool isSecured);
+                                         const void *data, const uint32_t dataLength,
+                                         const bool isSecured, const CARemoteId_t *identity);
 
 typedef uint32_t (*CAPacketSendCallback)(const char *ipAddress, const uint16_t port,
-        const void *data, const uint32_t dataLength);
+                                         const void *data, const uint32_t dataLength);
 
 /**
  * @struct stCAAdapterCallbacks_t
@@ -60,6 +62,8 @@ typedef struct CAAdapterCallbacks
  */
 typedef struct stCADtlsContext
 {
+    u_arraylist_t *peerInfoList;        /**< peerInfo list which holds the mapping between
+                                             peer id to it's n/w address */
     u_arraylist_t *cacheList;            /**< PDU's are cached until DTLS session is formed. */
     struct dtls_context_t *dtlsContext;  /**< Pointer to tinyDTLS context. */
     struct stPacketInfo *packetInfo;     /**< used by callback during
@@ -116,20 +120,20 @@ typedef struct CACacheMessage
 {
     void *data;
     uint32_t dataLen;
-    stCADtlsAddrInfo_t *destSession;
+    stCADtlsAddrInfo_t destSession;
 } stCACacheMessage_t;
 
+
 /**
- * @enum eDtlsAdapterType_t
- * @brief This enum is used as array index for storing adapter level callbacks.
- *        So Keeping 0 instead of "1 << 0". It is not going to be used as addition
- *        and removal of adapter.
- *
+ * @struct stCADtlsPeerInfo_t
+ * @brief structure associates the peer psk id with peer n/w address
  */
-typedef enum
+typedef struct stCADtlsPeerInfo
 {
-    DTLS_IP = 0,
-} eDtlsAdapterType_t;
+    CAAddress_t address;
+    CARemoteId_t identity;
+}stCADtlsPeerInfo_t;
+
 
 /**
  * @fn  CADTLSSetAdapterCallbacks
@@ -143,7 +147,7 @@ typedef enum
  *
  */
 void CADTLSSetAdapterCallbacks(CAPacketReceivedCallback recvCallback,
-                               CAPacketSendCallback sendCallback, eDtlsAdapterType_t type);
+                               CAPacketSendCallback sendCallback, CATransportType_t type);
 
 /**
  * @brief   Register callback to get DTLS PSK credentials.
@@ -151,6 +155,76 @@ void CADTLSSetAdapterCallbacks(CAPacketReceivedCallback recvCallback,
  * @retval  void
  */
 void CADTLSSetCredentialsCallback(CAGetDTLSCredentialsHandler credCallback);
+
+/**
+ * Select the cipher suite for dtls handshake
+ *
+ * @param[in] cipher    cipher suite
+ *                             0xC018 : TLS_ECDH_anon_WITH_AES_128_CBC_SHA
+ *                             0xC0A8 : TLS_PSK_WITH_AES_128_CCM_8
+ *                             0xC0AE : TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8
+ *
+ * @retval  CA_STATUS_OK for success, otherwise some error value
+ */
+CAResult_t CADtlsSelectCipherSuite(const dtls_cipher_t cipher);
+
+/**
+ * Enable anonymous ECDH cipher suite for dtls handshake
+ *
+ * @param[in] enable  TRUE/FALSE enables/disables anonymous cipher suite
+ *
+ * @retval  CA_STATUS_OK for success, otherwise some error value
+ */
+CAResult_t CADtlsEnableAnonECDHCipherSuite(const bool enable);
+
+/**
+ * Initiate DTLS handshake with selected cipher suite
+ *
+ * @param[in] addrInfo  information of network address
+ * @param[in] transportType  transport type
+ *
+ * @retval  CA_STATUS_OK for success, otherwise some error value
+ */
+CAResult_t CADtlsInitiateHandshake(const CAAddress_t* addrInfo,
+                                   const CATransportType_t transportType);
+
+/**
+ * Close the DTLS session
+ *
+ * @param[in] addrInfo  information of network address
+ * @param[in] transportType  transport type
+ *
+ * @retval  CA_STATUS_OK for success, otherwise some error value
+ */
+CAResult_t CADtlsClose(const CAAddress_t* addrInfo,
+                       const CATransportType_t transportType);
+
+/**
+ * Generate ownerPSK using PRF
+ * OwnerPSK = TLS-PRF('master key' , 'oic.sec.doxm.jw',
+ *                                    'ID of new device(Resource Server)',
+ *                                    'ID of owner smart-phone(Provisioning Server)')
+ *
+ * @param[in] addrInfo  information of network address
+ * @param[in] transportType  transport type
+ * @param[in] label  Ownership transfer method e.g)"oic.sec.doxm.jw"
+ * @param[in] labelLen  Byte length of label
+ * @param[in] rsrcServerDeviceID  ID of new device(Resource Server)
+ * @param[in] rsrcServerDeviceIDLen  Byte length of rsrcServerDeviceID
+ * @param[in] provServerDeviceID  label of previous owner
+ * @param[in] provServerDeviceIDLen  byte length of provServerDeviceID
+ * @param[in,out] ownerPSK  Output buffer for owner PSK
+ * @param[in] ownerPSKSize  Byte length of the ownerPSK to be generated
+ *
+ * @retval  CA_STATUS_OK for success, otherwise some error value
+ */
+CAResult_t CADtlsGenerateOwnerPSK(const CAAddress_t* addrInfo,
+                    const CATransportType_t transportType,
+                    const uint8_t* label, const size_t labelLen,
+                    const uint8_t* rsrcServerDeviceID, const size_t rsrcServerDeviceIDLen,
+                    const uint8_t* provServerDeviceID, const size_t provServerDeviceIDLen,
+                    uint8_t* ownerPSK, const size_t ownerPSKSize);
+;
 
 /**
  * @fn  CAAdapterNetDtlsInit
@@ -185,11 +259,8 @@ void CAAdapterNetDtlsDeInit();
  * @param[in]  port  port to which data will be sent.
  * @param[in]  data  length of data.
  * @param[in]  dataLen  length of given data
- * @param[out]  decdata  output variable to store the starting address
- *                        of decrypted plaintext.
- * @param[out]  cacheFlag  utput variable to indicate if pdu
- *                        is cached and inform the caller to
- *                       NOT free the memory holding pdu.
+ * @param[in]  type  transport at which packet needs to be send
+ *
  * @return  0 on success otherwise a positive error value.
  * @retval  CA_STATUS_OK  Successful
  * @retval  CA_STATUS_INVALID_PARAM  Invalid input argumets
@@ -201,8 +272,7 @@ CAResult_t CAAdapterNetDtlsEncrypt(const char *remoteAddress,
                                    const uint16_t port,
                                    void *data,
                                    uint32_t dataLen,
-                                   uint8_t *cacheFlag,
-                                   eDtlsAdapterType_t type);
+                                   CATransportType_t type);
 
 /**
  * @fn  CAAdapterNetDtlsDecrypt
@@ -223,8 +293,8 @@ CAResult_t CAAdapterNetDtlsDecrypt(const char *remoteAddress,
                                    const uint16_t port,
                                    uint8_t *data,
                                    uint32_t dataLen,
-                                   eDtlsAdapterType_t type);
+                                   CATransportType_t type);
 
-#endif //_CA_ADAPTER_NET_DTLS_H
+#endif /* CA_ADAPTER_NET_DTLS_H_ */
 
 

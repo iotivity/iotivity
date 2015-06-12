@@ -151,5 +151,5 @@ void CARetransmissionBaseRoutine(void *threadValue);
 } /* extern "C" */
 #endif
 
-#endif  // CA_RETRANSMISSION_SINGLETHREAD_H_
+#endif  /* CA_RETRANSMISSION_SINGLETHREAD_H_ */
 
