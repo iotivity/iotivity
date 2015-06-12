@@ -26,54 +26,62 @@
 
 #include <octypes.h>
 
-typedef std::function< void(OCStackResult, const unsigned int, const std::string&) > SubscribeCallback;
-
-class PresenceSubscriber
+namespace OIC
 {
-public:
-    PresenceSubscriber();
+    namespace Service
+    {
 
-    PresenceSubscriber(PresenceSubscriber&&);
+        typedef std::function< void(OCStackResult, const unsigned int, const std::string&) > SubscribeCallback;
 
-    /**
-     * @throw PlatformException
-     */
-    PresenceSubscriber(const std::string& host, OCConnectivityType connectivityType,
-            SubscribeCallback presenceHandler);
+        class PresenceSubscriber
+        {
+        public:
+            PresenceSubscriber();
 
-    /**
-     * @throw PlatformException
-     */
-    PresenceSubscriber(const std::string& host, const std::string& resourceType,
-            OCConnectivityType connectivityType, SubscribeCallback presenceHandler);
+            PresenceSubscriber(PresenceSubscriber&&);
 
-    ~PresenceSubscriber();
+            /**
+             * @throw PlatformException
+             */
+            PresenceSubscriber(const std::string& host, OCConnectivityType connectivityType,
+                    SubscribeCallback presenceHandler);
 
-    PresenceSubscriber& operator=(PresenceSubscriber&&);
+            /**
+             * @throw PlatformException
+             */
+            PresenceSubscriber(const std::string& host, const std::string& resourceType,
+                    OCConnectivityType connectivityType, SubscribeCallback presenceHandler);
 
-    /**
-     * @throw PlatformException
-     */
-    void unsubscribe();
+            ~PresenceSubscriber();
 
-    bool isSubscribing() const;
+            PresenceSubscriber& operator=(PresenceSubscriber&&);
 
-private:
-    OCDoHandle m_handle;
-};
+            /**
+             * @throw PlatformException
+             */
+            void unsubscribe();
 
-/**
- * @throw PlatformException
- */
-void subscribePresence(OCDoHandle& handle, const std::string& host,
-        OCConnectivityType connectivityType, SubscribeCallback presenceHandler);
+            bool isSubscribing() const;
 
-/**
- * @throw PlatformException
- */
-void subscribePresence(OCDoHandle& handle, const std::string& host, const std::string& resourceType,
-        OCConnectivityType connectivityType, SubscribeCallback presenceHandler);
+        private:
+            OCDoHandle m_handle;
+        };
 
-void unsubscribePresence(OCDoHandle handle);
+        /**
+         * @throw PlatformException
+         */
+        void subscribePresence(OCDoHandle& handle, const std::string& host,
+                OCConnectivityType connectivityType, SubscribeCallback presenceHandler);
+
+        /**
+         * @throw PlatformException
+         */
+        void subscribePresence(OCDoHandle& handle, const std::string& host, const std::string& resourceType,
+                OCConnectivityType connectivityType, SubscribeCallback presenceHandler);
+
+        void unsubscribePresence(OCDoHandle handle);
+
+    }
+}
 
 #endif // __PRESENCESUBSCRIBER_H

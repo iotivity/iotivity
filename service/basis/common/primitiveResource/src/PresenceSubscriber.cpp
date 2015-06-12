@@ -20,101 +20,98 @@
 
 #include <PresenceSubscriber.h>
 
-#include <PrimitiveException.h>
+#include <internal/AssertUtils.h>
 
 #include <OCPlatform.h>
 
-void subscribePresence(OCDoHandle& handle, const std::string& host,
-        OCConnectivityType connectivityType, SubscribeCallback presenceHandler)
+namespace OIC
 {
-    OCStackResult result = OC::OCPlatform::subscribePresence(handle, host, connectivityType, presenceHandler);
-
-    if (result != OC_STACK_OK)
+    namespace Service
     {
-        throw PlatformException(result);
-    }
-}
 
-void subscribePresence(OCDoHandle& handle, const std::string& host,
-        const std::string& resourceType, OCConnectivityType connectivityType,
-        SubscribeCallback presenceHandler)
-{
-    OCStackResult result = OC::OCPlatform::subscribePresence(handle, host, resourceType,
-            connectivityType, presenceHandler);
+        void subscribePresence(OCDoHandle& handle, const std::string& host,
+                OCConnectivityType connectivityType, SubscribeCallback presenceHandler)
+        {
+            OCStackResult result = OC::OCPlatform::subscribePresence(handle, host, connectivityType, presenceHandler);
 
-    if (result != OC_STACK_OK)
-    {
-        throw PlatformException(result);
-    }
-}
+            expectOCStackResultOK(result);
+        }
 
-void unsubscribePresence(OCDoHandle handle)
-{
-    OCStackResult result = OC::OCPlatform::unsubscribePresence(handle);
+        void subscribePresence(OCDoHandle& handle, const std::string& host,
+                const std::string& resourceType, OCConnectivityType connectivityType,
+                SubscribeCallback presenceHandler)
+        {
+            OCStackResult result = OC::OCPlatform::subscribePresence(handle, host, resourceType,
+                    connectivityType, presenceHandler);
 
-    if (result != OC_STACK_OK)
-    {
-        throw PlatformException(result);
-    }
-}
+            expectOCStackResultOK(result);
+        }
+
+        void unsubscribePresence(OCDoHandle handle)
+        {
+            expectOCStackResultOK(OC::OCPlatform::unsubscribePresence(handle));
+        }
 
 
-PresenceSubscriber::PresenceSubscriber() :
-    m_handle{ nullptr }
-{
-}
+        PresenceSubscriber::PresenceSubscriber() :
+            m_handle{ nullptr }
+        {
+        }
 
-PresenceSubscriber::PresenceSubscriber(PresenceSubscriber&& from) :
-    m_handle{ nullptr }
-{
-    std::swap(m_handle, from.m_handle);
-}
+        PresenceSubscriber::PresenceSubscriber(PresenceSubscriber&& from) :
+            m_handle{ nullptr }
+        {
+            std::swap(m_handle, from.m_handle);
+        }
 
-PresenceSubscriber::PresenceSubscriber(const std::string& host,
-        OCConnectivityType connectivityType, SubscribeCallback presenceHandler) :
-        m_handle{ nullptr }
-{
-    subscribePresence(m_handle, host, connectivityType, presenceHandler);
-}
+        PresenceSubscriber::PresenceSubscriber(const std::string& host,
+                OCConnectivityType connectivityType, SubscribeCallback presenceHandler) :
+                m_handle{ nullptr }
+        {
+            subscribePresence(m_handle, host, connectivityType, presenceHandler);
+        }
 
-PresenceSubscriber::PresenceSubscriber(const std::string& host, const std::string& resourceType,
-        OCConnectivityType connectivityType, SubscribeCallback presenceHandler) :
-        m_handle{ nullptr }
-{
-    subscribePresence(m_handle, host, resourceType, connectivityType, presenceHandler);
-}
+        PresenceSubscriber::PresenceSubscriber(const std::string& host, const std::string& resourceType,
+                OCConnectivityType connectivityType, SubscribeCallback presenceHandler) :
+                m_handle{ nullptr }
+        {
+            subscribePresence(m_handle, host, resourceType, connectivityType, presenceHandler);
+        }
 
-PresenceSubscriber::~PresenceSubscriber()
-{
-    if (m_handle)
-    {
-        try
+        PresenceSubscriber::~PresenceSubscriber()
+        {
+            if (m_handle)
+            {
+                try
+                {
+                    unsubscribe();
+                }
+                catch (...)
+                {
+                }
+            }
+        }
+
+        PresenceSubscriber& PresenceSubscriber::operator=(PresenceSubscriber&& from)
         {
             unsubscribe();
+            std::swap(m_handle, from.m_handle);
+            return *this;
         }
-        catch (...)
+
+        void PresenceSubscriber::unsubscribe()
         {
+            if (m_handle == nullptr) return;
+
+            unsubscribePresence(m_handle);
+
+            m_handle = nullptr;
         }
+
+        bool PresenceSubscriber::isSubscribing() const
+        {
+            return m_handle != nullptr;
+        }
+
     }
-}
-
-PresenceSubscriber& PresenceSubscriber::operator=(PresenceSubscriber&& from)
-{
-    unsubscribe();
-    std::swap(m_handle, from.m_handle);
-    return *this;
-}
-
-void PresenceSubscriber::unsubscribe()
-{
-    if (m_handle == nullptr) return;
-
-    unsubscribePresence(m_handle);
-
-    m_handle = nullptr;
-}
-
-bool PresenceSubscriber::isSubscribing() const
-{
-    return m_handle != nullptr;
 }
