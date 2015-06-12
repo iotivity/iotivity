@@ -291,6 +291,12 @@ TEST(StackDiscovery, DISABLED_DoResourceDeviceDiscovery)
 TEST(StackStop, StackStopWithoutInit)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    EXPECT_EQ(OC_STACK_ERROR, OCStop());
+}
+
+TEST(StackStop, StackStopRepeated)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_CLIENT));
     EXPECT_EQ(OC_STACK_OK, OCStop());
     EXPECT_EQ(OC_STACK_ERROR, OCStop());
