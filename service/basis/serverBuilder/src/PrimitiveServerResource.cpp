@@ -31,10 +31,12 @@
 
 namespace
 {
+    using namespace OIC::Service;
+
     namespace Detail
     {
         template <typename RESPONSE>
-        OCEntityHandlerResult sendResponse(OIC::Service::PrimitiveServerResource& resource,
+        OCEntityHandlerResult sendResponse(PrimitiveServerResource& resource,
                 std::shared_ptr< OC::OCResourceRequest > ocRequest,
                 const ResourceAttributes& requestAttrs, RESPONSE&& response)
         {
@@ -67,7 +69,7 @@ namespace
     }
 
     template< typename HANDLER, typename RESPONSE = typename std::decay<HANDLER>::type::result_type>
-    OCEntityHandlerResult handleRequest(OIC::Service::PrimitiveServerResource& resource,
+    OCEntityHandlerResult handleRequest(PrimitiveServerResource& resource,
             std::shared_ptr< OC::OCResourceRequest > ocRequest, HANDLER&& handler)
     {
         ResourceAttributes attrs{ ResourceAttributesConverter::fromOCRepresentation(
@@ -76,7 +78,7 @@ namespace
         if (handler)
         {
             return Detail::sendResponse(resource, ocRequest, attrs, handler(
-                    OIC::Service::PrimitiveRequest{ ocRequest->getResourceUri() }, attrs));
+                    PrimitiveRequest{ ocRequest->getResourceUri() }, attrs));
         }
 
         return Detail::sendResponse(resource, ocRequest, attrs, RESPONSE::defaultAction());

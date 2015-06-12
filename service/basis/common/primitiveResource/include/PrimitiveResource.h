@@ -27,52 +27,59 @@
 
 #include <OCResource.h>
 
-using HeaderOption = OC::HeaderOption::OCHeaderOption;
-using HeaderOptions = std::vector<HeaderOption>;
-
-class ResourceAttributes;
-class ResponseStatement;
-
-class PrimitiveResource
+namespace OIC
 {
-public:
-    using Ptr = std::shared_ptr<PrimitiveResource>;
+    namespace Service
+    {
 
-    using GetCallback = std::function<void(const HeaderOptions&, const ResponseStatement&, int)>;
+        using HeaderOption = OC::HeaderOption::OCHeaderOption;
+        using HeaderOptions = std::vector<HeaderOption>;
 
-    using SetCallback = std::function<void(const HeaderOptions&, const ResponseStatement&, int)>;
+        class ResourceAttributes;
+        class ResponseStatement;
 
-    using ObserveCallback = std::function<void(const HeaderOptions&, const ResponseStatement&, int, int)>;
+        class PrimitiveResource
+        {
+        public:
+            using Ptr = std::shared_ptr<PrimitiveResource>;
 
-private:
-    using BaseResource = OC::OCResource;
-    using BaseResourcePtr = BaseResource::Ptr;
+            using GetCallback = std::function<void(const HeaderOptions&, const ResponseStatement&, int)>;
 
-public:
-    static PrimitiveResource::Ptr create(const BaseResourcePtr&);
+            using SetCallback = std::function<void(const HeaderOptions&, const ResponseStatement&, int)>;
 
-    void requestGet(GetCallback);
-    void requestSet(const ResourceAttributes&, SetCallback);
-    void requestObserve(ObserveCallback);
-    void cancelObserve();
+            using ObserveCallback = std::function<void(const HeaderOptions&, const ResponseStatement&, int, int)>;
 
-    std::string getUri() const;
-    std::string getHost() const;
-    std::vector< std::string > getTypes() const;
-    std::vector< std::string > getInterfaces() const;
+        private:
+            using BaseResource = OC::OCResource;
+            using BaseResourcePtr = BaseResource::Ptr;
 
-    bool isObservable() const;
+        public:
+            static PrimitiveResource::Ptr create(const BaseResourcePtr&);
 
-private:
-    PrimitiveResource(const BaseResourcePtr&);
+            void requestGet(GetCallback);
+            void requestSet(const ResourceAttributes&, SetCallback);
+            void requestObserve(ObserveCallback);
+            void cancelObserve();
 
-private:
-    BaseResourcePtr m_ocResource;
-};
+            std::string getUri() const;
+            std::string getHost() const;
+            std::vector< std::string > getTypes() const;
+            std::vector< std::string > getInterfaces() const;
 
-using FindCallback = std::function<void(std::shared_ptr<PrimitiveResource>)>;
+            bool isObservable() const;
 
-void discoverResource(const std::string& host, const std::string& resourceURI,
-        OCConnectivityType connectivityType, FindCallback resourceHandler);
+        private:
+            PrimitiveResource(const BaseResourcePtr&);
 
+        private:
+            BaseResourcePtr m_ocResource;
+        };
+
+        using FindCallback = std::function<void(std::shared_ptr<PrimitiveResource>)>;
+
+        void discoverResource(const std::string& host, const std::string& resourceURI,
+                OCConnectivityType connectivityType, FindCallback resourceHandler);
+
+    }
+}
 #endif // __PRIMITIVERESOURCE_H

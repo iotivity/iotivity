@@ -26,12 +26,12 @@
 
 #include <octypes.h>
 
-class ResourceAttributes;
-
 namespace OIC
 {
     namespace Service
     {
+        class ResourceAttributes;
+
         class RequestHandler;
 
         class PrimitiveGetResponse

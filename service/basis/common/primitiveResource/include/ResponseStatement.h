@@ -23,41 +23,49 @@
 
 #include <ResourceAttributes.h>
 
-/**
- * TODO : design for future flexibility
- */
-class ResponseStatement
+namespace OIC
 {
-public:
-    static ResponseStatement create(ResourceAttributes&& attrs)
+    namespace Service
     {
-        return ResponseStatement(attrs);
+
+        /**
+         * TODO : design for future flexibility
+         */
+        class ResponseStatement
+        {
+        public:
+            static ResponseStatement create(ResourceAttributes&& attrs)
+            {
+                return ResponseStatement(attrs);
+            }
+
+            explicit ResponseStatement(const ResourceAttributes& attrs) :
+                    m_attrs{ attrs }
+            {
+            }
+            explicit ResponseStatement(ResourceAttributes&& attrs) :
+                    m_attrs{ std::move(attrs) }
+            {
+            }
+
+            ResponseStatement(ResponseStatement&&) = default;
+
+            ResponseStatement& operator=(ResponseStatement&&) = default;
+
+        //	std::string getUri() const;
+        //	std::vector<std::string> getResourceTypes() const;
+        //	std::vector<std::string> getResourceInterfaces() const;
+
+            const ResourceAttributes& getAttributes() const
+            {
+                return m_attrs;
+            }
+
+        private:
+            ResourceAttributes m_attrs;
+        };
+
     }
-
-    explicit ResponseStatement(const ResourceAttributes& attrs) :
-            m_attrs{ attrs }
-    {
-    }
-    explicit ResponseStatement(ResourceAttributes&& attrs) :
-            m_attrs{ std::move(attrs) }
-    {
-    }
-
-    ResponseStatement(ResponseStatement&&) = default;
-
-    ResponseStatement& operator=(ResponseStatement&&) = default;
-
-//	std::string getUri() const;
-//	std::vector<std::string> getResourceTypes() const;
-//	std::vector<std::string> getResourceInterfaces() const;
-
-    const ResourceAttributes& getAttributes() const
-    {
-        return m_attrs;
-    }
-
-private:
-    ResourceAttributes m_attrs;
-};
+}
 
 #endif // __RESPONSESTATEMENT_H

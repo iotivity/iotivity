@@ -25,50 +25,58 @@
 
 #include <octypes.h>
 
-class PrimitiveException: public std::exception
+namespace OIC
 {
-public:
-    PrimitiveException() {}
-    PrimitiveException(const std::string& what) : m_what{ what } {}
-
-    const char* what() const noexcept override
-    {
-        return m_what.c_str();
-    }
-
-private:
-    std::string m_what;
-};
-
-class PlatformException: public PrimitiveException
-{
-public:
-    PlatformException(OCStackResult reason);
-
-    OCStackResult getReasonCode() const;
-    std::string getReason() const;
-
-private:
-    OCStackResult m_reason;
-};
-
-
-class BadGetException: public PrimitiveException
-{
-public:
-    BadGetException(const std::string& what)
+    namespace Service
     {
 
-    }
-};
+        class PrimitiveException: public std::exception
+        {
+        public:
+            PrimitiveException() {}
+            PrimitiveException(const std::string& what) : m_what{ what } {}
 
-class InvalidKeyException: public PrimitiveException
-{
-public:
-    InvalidKeyException(const std::string& what)
-    {
+            const char* what() const noexcept override
+            {
+                return m_what.c_str();
+            }
+
+        private:
+            std::string m_what;
+        };
+
+        class PlatformException: public PrimitiveException
+        {
+        public:
+            PlatformException(OCStackResult reason);
+
+            OCStackResult getReasonCode() const;
+            std::string getReason() const;
+
+        private:
+            OCStackResult m_reason;
+        };
+
+
+        class BadGetException: public PrimitiveException
+        {
+        public:
+            BadGetException(const std::string& what)
+            {
+
+            }
+        };
+
+        class InvalidKeyException: public PrimitiveException
+        {
+        public:
+            InvalidKeyException(const std::string& what)
+            {
+
+            }
+        };
 
     }
-};
+}
 
 #endif //__PRIMITIVEEXCEPTION_H

@@ -22,18 +22,26 @@
 
 #include <OCException.h>
 
-PlatformException::PlatformException(OCStackResult reason) :
-    PrimitiveException{ "Failed : " + OC::OCException::reason(reason) },
-    m_reason { reason }
+namespace OIC
 {
-}
+    namespace Service
+    {
 
-OCStackResult PlatformException::getReasonCode() const
-{
-    return m_reason;
-}
+        PlatformException::PlatformException(OCStackResult reason) :
+            PrimitiveException{ "Failed : " + OC::OCException::reason(reason) },
+            m_reason { reason }
+        {
+        }
 
-std::string PlatformException::getReason() const
-{
-    return  OC::OCException::reason(m_reason);
+        OCStackResult PlatformException::getReasonCode() const
+        {
+            return m_reason;
+        }
+
+        std::string PlatformException::getReason() const
+        {
+            return  OC::OCException::reason(m_reason);
+        }
+
+    }
 }

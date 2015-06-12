@@ -24,6 +24,7 @@
 #include <gtest/gtest.h>
 
 using namespace testing;
+using namespace OIC::Service;
 
 #define KEY "key"
 

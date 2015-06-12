@@ -39,6 +39,7 @@ using namespace std::placeholders;
 
 namespace
 {
+    using namespace OIC::Service;
 
     ResponseStatement createResponseStatement(const OCRepresentation& ocRepresentation)
     {
@@ -48,68 +49,77 @@ namespace
 
 } // unnamed namespace
 
-PrimitiveResource::PrimitiveResource(const BaseResourcePtr& ocResource) :
-        m_ocResource{ ocResource }
+
+namespace OIC
 {
-}
+    namespace Service
+    {
 
-PrimitiveResource::Ptr PrimitiveResource::create(const BaseResourcePtr& ptr)
-{
-    return std::shared_ptr< PrimitiveResource >(new PrimitiveResource{ ptr });
-}
+        PrimitiveResource::PrimitiveResource(const BaseResourcePtr& ocResource) :
+                m_ocResource{ ocResource }
+        {
+        }
 
-void PrimitiveResource::requestGet(GetCallback callback)
-{
-    m_ocResource->get(QueryParamsMap(), bind(callback, _1, bind(createResponseStatement, _2), _3));
-}
+        PrimitiveResource::Ptr PrimitiveResource::create(const BaseResourcePtr& ptr)
+        {
+            return std::shared_ptr< PrimitiveResource >(new PrimitiveResource{ ptr });
+        }
 
-void PrimitiveResource::requestSet(const ResourceAttributes& attrs, SetCallback callback)
-{
-    m_ocResource->put(ResourceAttributesConverter::toOCRepresentation(attrs), QueryParamsMap{},
-            bind(callback, _1, bind(createResponseStatement, _2), _3));
-}
+        void PrimitiveResource::requestGet(GetCallback callback)
+        {
+            m_ocResource->get(QueryParamsMap(), bind(callback, _1, bind(createResponseStatement, _2), _3));
+        }
 
-void PrimitiveResource::requestObserve(ObserveCallback callback)
-{
-    m_ocResource->observe(ObserveType::ObserveAll, QueryParamsMap{},
-            bind(callback, _1, bind(createResponseStatement, _2), _3, _4));
-}
+        void PrimitiveResource::requestSet(const ResourceAttributes& attrs, SetCallback callback)
+        {
+            m_ocResource->put(ResourceAttributesConverter::toOCRepresentation(attrs), QueryParamsMap{},
+                    bind(callback, _1, bind(createResponseStatement, _2), _3));
+        }
 
-void PrimitiveResource::cancelObserve()
-{
-    m_ocResource->cancelObserve();
-}
+        void PrimitiveResource::requestObserve(ObserveCallback callback)
+        {
+            m_ocResource->observe(ObserveType::ObserveAll, QueryParamsMap{},
+                    bind(callback, _1, bind(createResponseStatement, _2), _3, _4));
+        }
 
-bool PrimitiveResource::isObservable() const
-{
-    return m_ocResource->isObservable();
-}
+        void PrimitiveResource::cancelObserve()
+        {
+            m_ocResource->cancelObserve();
+        }
 
-string PrimitiveResource::getUri() const
-{
-    return m_ocResource->uri();
-}
+        bool PrimitiveResource::isObservable() const
+        {
+            return m_ocResource->isObservable();
+        }
 
-string PrimitiveResource::getHost() const
-{
-    return m_ocResource->host();
-}
+        string PrimitiveResource::getUri() const
+        {
+            return m_ocResource->uri();
+        }
 
-vector< string > PrimitiveResource::getTypes() const
-{
-    return m_ocResource->getResourceTypes();
-}
+        string PrimitiveResource::getHost() const
+        {
+            return m_ocResource->host();
+        }
 
-vector< string > PrimitiveResource::getInterfaces() const
-{
-    return m_ocResource->getResourceInterfaces();
-}
+        vector< string > PrimitiveResource::getTypes() const
+        {
+            return m_ocResource->getResourceTypes();
+        }
+
+        vector< string > PrimitiveResource::getInterfaces() const
+        {
+            return m_ocResource->getResourceInterfaces();
+        }
 
 
 
-void discoverResource(const std::string& host, const std::string& resourceURI,
-        OCConnectivityType connectivityType, FindCallback resourceHandler)
-{
-    OC::OCPlatform::findResource(host, resourceURI, connectivityType,
-            std::bind(&PrimitiveResource::create, std::placeholders::_1));
+        void discoverResource(const std::string& host, const std::string& resourceURI,
+                OCConnectivityType connectivityType, FindCallback resourceHandler)
+        {
+            OC::OCPlatform::findResource(host, resourceURI, connectivityType,
+                    std::bind(&PrimitiveResource::create, std::placeholders::_1));
+        }
+
+    }
 }
