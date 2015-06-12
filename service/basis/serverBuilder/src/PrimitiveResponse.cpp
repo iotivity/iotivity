@@ -28,7 +28,7 @@ namespace OIC
     {
         PrimitiveGetResponse PrimitiveGetResponse::defaultAction()
         {
-            static PrimitiveGetResponse defaultRes { new SimpleRequestHandler };
+            static PrimitiveGetResponse defaultRes { std::make_shared<SimpleRequestHandler>() };
 
             return defaultRes;
         }
@@ -36,35 +36,37 @@ namespace OIC
         PrimitiveGetResponse PrimitiveGetResponse::create(const OCEntityHandlerResult& result,
                 int errorCode)
         {
-            return PrimitiveGetResponse { new SimpleRequestHandler { result, errorCode } };
+            return PrimitiveGetResponse {
+                std::make_shared<SimpleRequestHandler>( result, errorCode) };
         }
 
         PrimitiveGetResponse PrimitiveGetResponse::create(const ResourceAttributes& attrs)
         {
-            return PrimitiveGetResponse { new CustomAttrRequestHandler { attrs } };
+            return PrimitiveGetResponse { std::make_shared<CustomAttrRequestHandler>(attrs) };
         }
 
         PrimitiveGetResponse PrimitiveGetResponse::create(const ResourceAttributes& attrs,
                 const OCEntityHandlerResult& result, int errorCode)
         {
             return PrimitiveGetResponse {
-                new CustomAttrRequestHandler { attrs, result, errorCode } };
+                std::make_shared<CustomAttrRequestHandler>(attrs, result, errorCode) };
         }
 
         PrimitiveGetResponse PrimitiveGetResponse::create(ResourceAttributes&& result)
         {
-            return PrimitiveGetResponse { new CustomAttrRequestHandler { std::move(result) } };
+            return PrimitiveGetResponse {
+                std::make_shared<CustomAttrRequestHandler>(std::move(result)) };
         }
 
         PrimitiveGetResponse PrimitiveGetResponse::create(ResourceAttributes&& attrs,
                 const OCEntityHandlerResult& result, int errorCode)
         {
-            return PrimitiveGetResponse { new CustomAttrRequestHandler {
-                std::move(attrs), result, errorCode } };
+            return PrimitiveGetResponse { std::make_shared<CustomAttrRequestHandler>(
+                std::move(attrs), result, errorCode) };
         }
 
-        PrimitiveGetResponse::PrimitiveGetResponse(RequestHandler* handler) :
-                m_handler{ handler }
+        PrimitiveGetResponse::PrimitiveGetResponse(std::shared_ptr< RequestHandler >&& handler) :
+                m_handler{ std::move(handler) }
         {
             assert(m_handler);
         }
@@ -77,7 +79,8 @@ namespace OIC
 
         PrimitiveSetResponse PrimitiveSetResponse::defaultAction()
         {
-            static PrimitiveSetResponse defaultRes { withProxy(new SimpleRequestHandler) };
+            static PrimitiveSetResponse defaultRes {
+                withProxy(std::make_shared<SimpleRequestHandler>()) };
 
             return defaultRes;
         }
@@ -85,43 +88,45 @@ namespace OIC
         PrimitiveSetResponse PrimitiveSetResponse::create(const OCEntityHandlerResult& result,
                 int errorCode)
         {
-            return withProxy(new SimpleRequestHandler { result, errorCode });
+            return withProxy(std::make_shared<SimpleRequestHandler>(result, errorCode));
         }
 
         PrimitiveSetResponse PrimitiveSetResponse::create(const ResourceAttributes& attrs)
         {
-            return withProxy(new CustomAttrRequestHandler { attrs });
+            return withProxy(std::make_shared<CustomAttrRequestHandler>(attrs));
         }
 
         PrimitiveSetResponse PrimitiveSetResponse::create(const ResourceAttributes& attrs,
                 const OCEntityHandlerResult& result, int errorCode)
         {
-            return withProxy(new CustomAttrRequestHandler { attrs, result, errorCode });
+            return withProxy(std::make_shared<CustomAttrRequestHandler>(attrs, result, errorCode));
         }
 
         PrimitiveSetResponse PrimitiveSetResponse::create(ResourceAttributes&& result)
         {
-            return withProxy(new CustomAttrRequestHandler { std::move(result) });
+            return withProxy(std::make_shared<CustomAttrRequestHandler>(std::move(result)));
         }
 
         PrimitiveSetResponse PrimitiveSetResponse::create(ResourceAttributes&& attrs,
                 const OCEntityHandlerResult& result, int errorCode)
         {
             return withProxy(
-                new CustomAttrRequestHandler { std::move(attrs), result, errorCode });
+                std::make_shared<CustomAttrRequestHandler>(std::move(attrs), result, errorCode));
         }
 
-        PrimitiveSetResponse::PrimitiveSetResponse(RequestHandler* handler) :
+        PrimitiveSetResponse::PrimitiveSetResponse(std::shared_ptr< RequestHandler >&& handler) :
                 m_handler{ handler }
         {
             assert(m_handler);
         }
 
-        PrimitiveSetResponse PrimitiveSetResponse::withProxy(RequestHandler* handler)
+        PrimitiveSetResponse PrimitiveSetResponse::withProxy(
+                std::shared_ptr< RequestHandler >&& handler)
         {
             assert(handler);
-            return PrimitiveSetResponse{ new SetRequestProxyHandler {
-                RequestHandler::Ptr{ handler } } };
+
+            return PrimitiveSetResponse{
+                std::make_shared<SetRequestProxyHandler>(std::move(handler)) };
         }
 
         RequestHandler* PrimitiveSetResponse::getHandler() const

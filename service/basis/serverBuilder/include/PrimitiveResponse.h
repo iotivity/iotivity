@@ -52,7 +52,7 @@ namespace OIC
             RequestHandler* getHandler() const;
 
         private:
-            PrimitiveGetResponse(RequestHandler*);
+            PrimitiveGetResponse(std::shared_ptr< RequestHandler >&&);
 
         private:
             std::shared_ptr< RequestHandler > m_handler;
@@ -76,9 +76,9 @@ namespace OIC
             RequestHandler* getHandler() const;
 
         private:
-            PrimitiveSetResponse(RequestHandler*);
+            PrimitiveSetResponse(std::shared_ptr< RequestHandler >&&);
 
-            static PrimitiveSetResponse withProxy(RequestHandler*);
+            static PrimitiveSetResponse withProxy(std::shared_ptr< RequestHandler >&&);
 
         private:
             std::shared_ptr< RequestHandler > m_handler;
