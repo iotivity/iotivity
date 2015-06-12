@@ -64,6 +64,12 @@ PresenceSubscriber::PresenceSubscriber() :
 {
 }
 
+PresenceSubscriber::PresenceSubscriber(PresenceSubscriber&& from) :
+    m_handle{ nullptr }
+{
+    std::swap(m_handle, from.m_handle);
+}
+
 PresenceSubscriber::PresenceSubscriber(const std::string& host,
         OCConnectivityType connectivityType, SubscribeCallback presenceHandler) :
         m_handle{ nullptr }
@@ -90,6 +96,13 @@ PresenceSubscriber::~PresenceSubscriber()
         {
         }
     }
+}
+
+PresenceSubscriber& PresenceSubscriber::operator=(PresenceSubscriber&& from)
+{
+    unsubscribe();
+    std::swap(m_handle, from.m_handle);
+    return *this;
 }
 
 void PresenceSubscriber::unsubscribe()

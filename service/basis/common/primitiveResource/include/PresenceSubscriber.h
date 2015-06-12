@@ -33,7 +33,7 @@ class PresenceSubscriber
 public:
     PresenceSubscriber();
 
-    PresenceSubscriber(PresenceSubscriber&&) = default;
+    PresenceSubscriber(PresenceSubscriber&&);
 
     /**
      * @throw PlatformException
@@ -49,7 +49,7 @@ public:
 
     ~PresenceSubscriber();
 
-    PresenceSubscriber& operator=(PresenceSubscriber&&) = default;
+    PresenceSubscriber& operator=(PresenceSubscriber&&);
 
     /**
      * @throw PlatformException
