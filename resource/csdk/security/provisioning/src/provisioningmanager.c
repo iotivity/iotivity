@@ -381,8 +381,7 @@ static CAResult_t sendCARequest(CAURI_t uri, char *payload, int payloadLen,
         CADestroyRemoteEndpoint(endpoint);
         return CA_STATUS_FAILED;
     }
-    // TODO: it can be CA_MSG_NONCONFIRM or CA_MSG_CONFIRM. Pass it as a parameter.
-    CAMessageType_t msgType = CA_MSG_NONCONFIRM;
+    CAMessageType_t msgType = CA_MSG_CONFIRM;
     CAInfo_t requestData = { 0 };
     requestData.token = token;
     requestData.tokenLength  = CA_MAX_TOKEN_LEN;
