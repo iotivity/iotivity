@@ -180,11 +180,6 @@ ResourceAttributes::iterator::iterator() :
 {
 }
 
-ResourceAttributes::iterator::iterator(ResourceAttributes& attrs) :
-        iterator{ attrs.m_keyValues.begin() }
-{
-}
-
 ResourceAttributes::iterator::iterator(base_iterator&& iter) :
         m_cur{ std::move(iter) },
         m_keyValuePair{ this }
@@ -227,11 +222,6 @@ bool ResourceAttributes::iterator::operator!=(const iterator& rhs) const
 
 ResourceAttributes::const_iterator::const_iterator() :
         const_iterator{ base_iterator{} }
-{
-}
-
-ResourceAttributes::const_iterator::const_iterator(const ResourceAttributes& attrs) :
-        const_iterator{ attrs.m_keyValues.begin() }
 {
 }
 
@@ -284,7 +274,7 @@ bool ResourceAttributes::const_iterator::operator!=(const const_iterator& rhs) c
 
 auto ResourceAttributes::begin() -> iterator
 {
-    return iterator{ *this };
+    return iterator{ m_keyValues.begin() };
 }
 
 auto ResourceAttributes::end() -> iterator

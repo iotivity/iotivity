@@ -328,7 +328,6 @@ public:
     bool operator!=(const iterator&) const;
 
 private:
-    explicit iterator(ResourceAttributes&);
     explicit iterator(base_iterator&&);
 
 private:
@@ -362,7 +361,6 @@ public:
     bool operator!=(const const_iterator&) const;
 
 private:
-    explicit const_iterator(const ResourceAttributes&);
     explicit const_iterator(base_iterator&&);
 
 private:
