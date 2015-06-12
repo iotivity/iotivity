@@ -21,48 +21,51 @@
 #ifndef __RESPONSESTATEMENT_H
 #define __RESPONSESTATEMENT_H
 
+#include <string>
+#include <vector>
+
 #include <ResourceAttributes.h>
+
+namespace OC
+{
+    class OCRepresentation;
+}
 
 namespace OIC
 {
     namespace Service
     {
+        class ResourceAttributes;
 
-        /**
-         * TODO : design for future flexibility
-         */
         class ResponseStatement
         {
         public:
-            static ResponseStatement create(ResourceAttributes&& attrs)
-            {
-                return ResponseStatement(attrs);
-            }
+            static ResponseStatement create(const OC::OCRepresentation&);
+            static ResponseStatement create(ResourceAttributes&&);
 
-            explicit ResponseStatement(const ResourceAttributes& attrs) :
-                    m_attrs{ attrs }
-            {
-            }
-            explicit ResponseStatement(ResourceAttributes&& attrs) :
-                    m_attrs{ std::move(attrs) }
-            {
-            }
+            explicit ResponseStatement(const ResourceAttributes&);
+            explicit ResponseStatement(ResourceAttributes&&);
+
+            ResponseStatement(ResourceAttributes&&, std::string&& uri,
+                    std::vector< std::string >&& resourceTypes,
+                    std::vector< std::string >&& resourceInterfaces);
 
             ResponseStatement(ResponseStatement&&) = default;
 
             ResponseStatement& operator=(ResponseStatement&&) = default;
 
-        //	std::string getUri() const;
-        //	std::vector<std::string> getResourceTypes() const;
-        //	std::vector<std::string> getResourceInterfaces() const;
+            std::string getUri() const;
+            std::vector< std::string > getResourceTypes() const;
+            std::vector< std::string > getResourceInterfaces() const;
 
-            const ResourceAttributes& getAttributes() const
-            {
-                return m_attrs;
-            }
+            const ResourceAttributes& getAttributes() const;
 
         private:
             ResourceAttributes m_attrs;
+
+            std::string m_uri;
+            std::vector< std::string > m_resourceTypes;
+            std::vector< std::string > m_resourceInterfaces;
         };
 
     }
