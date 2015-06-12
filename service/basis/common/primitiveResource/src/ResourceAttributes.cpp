@@ -325,7 +325,7 @@ auto ResourceAttributes::at(const std::string& key) -> Value&
     }
     catch (const std::out_of_range&)
     {
-        throw InvalidKeyException{ "" };
+        throw InvalidKeyException{ "No attribute named '" + key + "'" };
     }
 }
 
@@ -337,7 +337,7 @@ auto ResourceAttributes::at(const std::string& key) const -> const Value&
     }
     catch (const std::out_of_range&)
     {
-        throw InvalidKeyException{ "" };
+        throw InvalidKeyException{ "No attribute named '" + key + "'" };
     }
 }
 

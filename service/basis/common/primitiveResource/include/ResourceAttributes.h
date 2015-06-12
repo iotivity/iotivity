@@ -162,7 +162,7 @@ public:
             }
             catch (const boost::bad_get&)
             {
-                throw BadGetException{ "" };
+                throw BadGetException{ "Wrong type" };
             }
         }
 
