@@ -40,7 +40,11 @@ if target_os not in host_target_map[host]:
 	print "\nError: Unknown target os: %s (Allow values: %s)\n" % (target_os, host_target_map[host])
 	Exit(1)
 
-default_arch = platform.machine()
+if target_os == 'android':
+	default_arch = 'x86'
+else:
+	default_arch = platform.machine()
+
 if default_arch not in os_arch_map[target_os]:
 	default_arch = os_arch_map[target_os][0].lower()
 
@@ -50,17 +54,23 @@ target_arch = ARGUMENTS.get('TARGET_ARCH', default_arch) # target arch
 # set to 'no', 'false' or 0 for only compilation
 require_upload = ARGUMENTS.get('UPLOAD', False)
 
+# Get the device name. This name can be used as network display name wherever possible
+device_name = ARGUMENTS.get('DEVICE_NAME', "OIC-DEVICE")
+
 if ARGUMENTS.get('TEST'):
 	logging_default = False
 else:
-	logging_default = (ARGUMENTS.get('RELEASE', True) == 'false')
+	release_mode = False
+	if ARGUMENTS.get('RELEASE', True) in ['y', 'yes', 'true', 't', '1', 'on', 'all', True]:
+		release_mode = True
+	logging_default = (release_mode == False)
 
 
 
 ######################################################################
 # Common build options (release, target os, target arch)
 ######################################################################
-targets_disallow_multitransport = ['arduino']
+targets_disallow_multitransport = ['arduino', 'android']
 
 help_vars = Variables()
 help_vars.Add(BoolVariable('VERBOSE', 'Show compilation', False))
@@ -78,6 +88,8 @@ help_vars.Add(EnumVariable('TEST', 'Run unit tests', '0', allowed_values=('0', '
 help_vars.Add(BoolVariable('LOGGING', 'Enable stack logging', logging_default))
 help_vars.Add(BoolVariable('UPLOAD', 'Upload binary ? (For Arduino)', require_upload))
 help_vars.Add(EnumVariable('BUILD_SAMPLE', 'Build with sample', 'ON', allowed_values=('ON', 'OFF')))
+help_vars.AddVariables(('DEVICE_NAME', 'Network display name for device (For Arduino)', device_name, None, None),)
+
 ######################################################################
 # Platform(build target) specific options: SDK/NDK & toolchain
 ######################################################################
@@ -108,8 +120,11 @@ tc_set_msg = '''
 '''
 if env.get('VERBOSE') == False:
 	env['CCCOMSTR'] = "Compiling $TARGET"
+	env['SHCCCOMSTR'] = "Compiling $TARGET"
 	env['CXXCOMSTR'] = "Compiling $TARGET"
+	env['SHCXXCOMSTR'] = "Compiling $TARGET"
 	env['LINKCOMSTR'] = "Linking $TARGET"
+	env['SHLINKCOMSTR'] = "Linking $TARGET"
 	env['ARCOMSTR'] = "Archiving $TARGET"
 	env['RANLIBCOMSTR'] = "Indexing Archive $TARGET"
 
@@ -117,12 +132,11 @@ if target_os in targets_support_cc:
 	prefix = env.get('TC_PREFIX')
 	tc_path = env.get('TC_PATH')
 	if prefix:
-		env.Replace(CC = prefix + 'gcc')
-		env.Replace(CXX = prefix + 'g++')
-		env.Replace(AR = prefix + 'ar')
-		env.Replace(AS = prefix + 'as')
-		env.Replace(LINK = prefix + 'ld')
-		env.Replace(RANLIB = prefix + 'ranlib')
+		env.Replace(CC = prefix + env.get('CC', 'gcc'))
+		env.Replace(CXX = prefix + env.get('CXX', 'g++'))
+		env.Replace(AR = prefix + env.get('AR', 'ar'))
+		env.Replace(AS = prefix + env.get('AS', 'as'))
+		env.Replace(RANLIB = prefix + env.get('RANLIB', 'ranlib'))
 
 	if tc_path:
 		env.PrependENVPath('PATH', tc_path)
@@ -261,16 +275,14 @@ if target_os == "yocto":
     env.AppendUnique(CFLAGS = ['-std=gnu99'])
     env.AppendUnique(CCFLAGS = ['-Wall', '-fPIC'])
     env.AppendUnique(LINKFLAGS = ['-ldl', '-lpthread'])
+    env.AppendUnique(LIBS = ['uuid'])
     Export('env')
 else:
     '''
     If target_os is not Yocto, continue with the regular build process
     '''
     # Load config of target os
-    if target_os in ['linux', 'tizen']:
-		env.SConscript('linux/SConscript')
-    else:
-		env.SConscript(target_os + '/SConscript')
+    env.SConscript(target_os + '/SConscript')
 
 # Delete the temp files of configuration
 if env.GetOption('clean'):

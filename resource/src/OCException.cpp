@@ -63,6 +63,8 @@ std::string OC::OCException::reason(const OCStackResult sr)
             return OC::Exception::RESOURCE_ERROR;
         case OC_STACK_SLOW_RESOURCE:
             return OC::Exception::SLOW_RESOURCE;
+        case OC_STACK_DUPLICATE_REQUEST:
+            return OC::Exception::DUPLICATE_REQUEST;
         case OC_STACK_NO_OBSERVERS:
             return OC::Exception::NO_OBSERVERS;
         case OC_STACK_OBSERVER_NOT_FOUND:

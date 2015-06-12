@@ -42,6 +42,9 @@ mkdir -p %{DEST_LIB_DIR}/pkgconfig
 
 cp -f %{ROOTDIR}/con/src/libconnectivity_abstraction.so %{buildroot}/%{_libdir}
 cp -f %{ROOTDIR}/con/lib/libcoap-4.1.1/libcoap.a %{buildroot}/%{_libdir}
+if echo %{SECURED}|grep -qi '1'; then
+	cp -f %{ROOTDIR}/con/extlibs/tinydtls/libtinydtls.a %{buildroot}/%{_libdir}
+fi
 cp -rf %{ROOTDIR}/con/api/cacommon.h* %{DEST_INC_DIR}/
 cp -rf %{ROOTDIR}/con/inc/caadapterinterface.h* %{DEST_INC_DIR}/
 cp -rf %{ROOTDIR}/con/common/inc/cathreadpool.h* %{DEST_INC_DIR}/

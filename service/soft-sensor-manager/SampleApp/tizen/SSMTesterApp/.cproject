@@ -218,9 +218,9 @@
                                     <listOptionValue builtIn="false" value="SSMCore"/>
                                     <listOptionValue builtIn="false" value="oc"/>
                                     <listOptionValue builtIn="false" value="octbstack"/>
-                                    <listOptionValue builtIn="false" value="coap"/>
                                     <listOptionValue builtIn="false" value="oc_logger"/>
                                     <listOptionValue builtIn="false" value="connectivity_abstraction"/>
+                                    <listOptionValue builtIn="false" value="uuid"/>
                                 </option>
                                 <option id="gnu.cpp.link.option.debugging.prof.212252607" name="Generate prof information (-p)" superClass="gnu.cpp.link.option.debugging.prof" value="true" valueType="boolean"/>
                                 <option id="gnu.cpp.link.option.debugging.gprof.279130410" name="Generate gprof information (-pg)" superClass="gnu.cpp.link.option.debugging.gprof" value="true" valueType="boolean"/>

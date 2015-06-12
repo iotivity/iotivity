@@ -67,24 +67,27 @@ const char responsePayloadDeleteResourceNotSupported[] =
 
 
 char *gResourceUri= (char *)"/a/light";
-const char *contentType = "myContentType";
 const char *dateOfManufacture = "myDateOfManufacture";
 const char *deviceName = "myDeviceName";
 const char *deviceUUID = "myDeviceUUID";
 const char *firmwareVersion = "myFirmwareVersion";
-const char *hostName = "myHostName";
-const char *manufacturerName = "myManufacturerNa";
+const char *manufacturerName = "myName";
+const char *operatingSystemVersion = "myOS";
+const char *hardwareVersion = "myHardwareVersion";
+const char* platformID = "myPlatformID";
 const char *manufacturerUrl = "myManufacturerUrl";
 const char *modelNumber = "myModelNumber";
 const char *platformVersion = "myPlatformVersion";
 const char *supportUrl = "mySupportUrl";
 const char *version = "myVersion";
+const char *systemTime = "2015-05-15T11.04";
 
 // Entity handler should check for resourceTypeName and ResourceInterface in order to GET
 // the existence of a known resource
 const char *resourceTypeName = "core.light";
 const char *resourceInterface = OC_RSRVD_INTERFACE_DEFAULT;
 
+OCPlatformInfo platformInfo;
 OCDeviceInfo deviceInfo;
 
 //This function takes the request as an input and returns the response
@@ -119,7 +122,7 @@ char* constructJsonResponse (OCEntityHandlerRequest *ehRequest)
         }
 
         // Get root of JSON payload, then the 1st resource.
-        cJSON* carrier = cJSON_GetObjectItem(putJson, "oc");
+        cJSON* carrier = cJSON_GetObjectItem(putJson, "oic");
         carrier = cJSON_GetArrayItem(carrier, 0);
         carrier = cJSON_GetObjectItem(carrier, "rep");
 
@@ -134,7 +137,6 @@ char* constructJsonResponse (OCEntityHandlerRequest *ehRequest)
         {
             currLightResource->state = prop->valueint;
         }
-
         cJSON_Delete(putJson);
     }
 
@@ -151,7 +153,7 @@ char* constructJsonResponse (OCEntityHandlerRequest *ehRequest)
 
 /*
  * Very simple example of query parsing.
- * The query may have multiple filters separated by '&'.
+ * The query may have multiple filters separated by ';'.
  * It is upto the entity handler to parse the query for the individual filters,
  * VALIDATE them and respond as it sees fit.
 
@@ -488,7 +490,7 @@ void ProcessObserveDeregister (OCEntityHandlerRequest *ehRequest)
 
 OCEntityHandlerResult
 OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest *entityHandlerRequest, char* uri)
+        OCEntityHandlerRequest *entityHandlerRequest, char* uri, void* callbackParam)
 {
     OC_LOG_V (INFO, TAG, "Inside device default entity handler - flags: 0x%x, uri: %s", flag, uri);
 
@@ -578,7 +580,7 @@ OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
 
 OCEntityHandlerResult
 OCNOPEntityHandlerCb (OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest *entityHandlerRequest)
+        OCEntityHandlerRequest *entityHandlerRequest, void* callbackParam)
 {
     // This is callback is associated with the 2 presence notification
     // resources. They are non-operational.
@@ -587,7 +589,7 @@ OCNOPEntityHandlerCb (OCEntityHandlerFlag flag,
 
 OCEntityHandlerResult
 OCEntityHandlerCb (OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest *entityHandlerRequest)
+        OCEntityHandlerRequest *entityHandlerRequest, void* callback)
 {
     OC_LOG_V (INFO, TAG, "Inside entity handler - flags: 0x%x", flag);
 
@@ -754,6 +756,7 @@ void *ChangeLightRepresentation (void *param)
                 cJSON_AddItemToObject(json, "rep", format=cJSON_CreateObject());
                 cJSON_AddBoolToObject(format, "state", Light.state);
                 cJSON_AddNumberToObject(format, "power", Light.power);
+
                 char * obsResp = cJSON_Print(json);
                 cJSON_Delete(json);
                 result = OCNotifyListOfObservers (Light.handle, obsNotify, j,
@@ -794,7 +797,7 @@ void *ChangeLightRepresentation (void *param)
 #ifdef WITH_PRESENCE
 void *presenceNotificationGenerator(void *param)
 {
-    sleep(5);
+    sleep(10);
     (void)param;
     OCDoHandle presenceNotificationHandles[numPresenceResources];
     OCStackResult res = OC_STACK_OK;
@@ -816,6 +819,7 @@ void *presenceNotificationGenerator(void *param)
                     OC_RSRVD_INTERFACE_DEFAULT,
                     presenceNotificationUris.at(i).c_str(),
                     OCNOPEntityHandlerCb,
+                    NULL,
                     OC_DISCOVERABLE|OC_OBSERVABLE);
         }
         if(res != OC_STACK_OK)
@@ -847,6 +851,158 @@ void *presenceNotificationGenerator(void *param)
     return NULL;
 }
 #endif
+
+int createLightResource (char *uri, LightResource *lightResource)
+{
+    if (!uri)
+    {
+        OC_LOG(ERROR, TAG, "Resource URI cannot be NULL");
+        return -1;
+    }
+
+    lightResource->state = false;
+    lightResource->power= 0;
+    OCStackResult res = OCCreateResource(&(lightResource->handle),
+            "core.light",
+            "oc.mi.def",
+            uri,
+            OCEntityHandlerCb,
+            NULL,
+            OC_DISCOVERABLE|OC_OBSERVABLE);
+    OC_LOG_V(INFO, TAG, "Created Light resource with result: %s", getResult(res));
+
+    return 0;
+}
+
+void DeletePlatformInfo()
+{
+    free (platformInfo.platformID);
+    free (platformInfo.manufacturerName);
+    free (platformInfo.manufacturerUrl);
+    free (platformInfo.modelNumber);
+    free (platformInfo.dateOfManufacture);
+    free (platformInfo.platformVersion);
+    free (platformInfo.operatingSystemVersion);
+    free (platformInfo.hardwareVersion);
+    free (platformInfo.firmwareVersion);
+    free (platformInfo.supportUrl);
+    free (platformInfo.systemTime);
+}
+
+void DeleteDeviceInfo()
+{
+    free (deviceInfo.deviceName);
+}
+
+bool DuplicateString(char** targetString, const char* sourceString)
+{
+    if(!sourceString)
+    {
+        return false;
+    }
+    else
+    {
+        *targetString = (char *) malloc(strlen(sourceString) + 1);
+
+        if(*targetString)
+        {
+            strncpy(*targetString, sourceString, (strlen(sourceString) + 1));
+            return true;
+        }
+    }
+    return false;
+}
+
+OCStackResult SetPlatformInfo(const char* platformID, const char *manufacturerName,
+    const char *manufacturerUrl, const char *modelNumber, const char *dateOfManufacture,
+    const char *platformVersion, const char* operatingSystemVersion, const char* hardwareVersion,
+    const char *firmwareVersion, const char* supportUrl, const char* systemTime)
+{
+
+    bool success = true;
+
+    if(manufacturerName != NULL && (strlen(manufacturerName) > MAX_MANUFACTURER_NAME_LENGTH))
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    if(manufacturerUrl != NULL && (strlen(manufacturerUrl) > MAX_MANUFACTURER_URL_LENGTH))
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    if(!DuplicateString(&platformInfo.platformID, platformID))
+    {
+        success = false;
+    }
+
+    if(!DuplicateString(&platformInfo.manufacturerName, manufacturerName))
+    {
+        success = false;
+    }
+
+    if(!DuplicateString(&platformInfo.manufacturerUrl, manufacturerUrl))
+    {
+        success = false;
+    }
+
+    if(!DuplicateString(&platformInfo.modelNumber, modelNumber))
+    {
+        success = false;
+    }
+
+    if(!DuplicateString(&platformInfo.dateOfManufacture, dateOfManufacture))
+    {
+        success = false;
+    }
+
+    if(!DuplicateString(&platformInfo.platformVersion, platformVersion))
+    {
+        success = false;
+    }
+
+    if(!DuplicateString(&platformInfo.operatingSystemVersion, operatingSystemVersion))
+    {
+        success = false;
+    }
+
+    if(!DuplicateString(&platformInfo.hardwareVersion, hardwareVersion))
+    {
+        success = false;
+    }
+
+    if(!DuplicateString(&platformInfo.firmwareVersion, firmwareVersion))
+    {
+        success = false;
+    }
+
+    if(!DuplicateString(&platformInfo.supportUrl, supportUrl))
+    {
+        success = false;
+    }
+
+    if(!DuplicateString(&platformInfo.systemTime, systemTime))
+    {
+        success = false;
+    }
+
+    if(success)
+    {
+        return OC_STACK_OK;
+    }
+
+    DeletePlatformInfo();
+    return OC_STACK_ERROR;
+}
+
+OCStackResult SetDeviceInfo(const char* deviceName)
+{
+    if(!DuplicateString(&deviceInfo.deviceName, deviceName))
+    {
+        return OC_STACK_ERROR;
+    }
+    return OC_STACK_OK;
+}
 
 static void PrintUsage()
 {
@@ -895,21 +1051,38 @@ int main(int argc, char* argv[])
     }
 #endif
 
-    OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandlerCb);
+    OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandlerCb, NULL);
 
-    OCStackResult deviceResult = SetDeviceInfo(contentType, dateOfManufacture, deviceName,
-            deviceUUID, firmwareVersion, hostName, manufacturerName,
-            manufacturerUrl, modelNumber, platformVersion, supportUrl, version);
+    OCStackResult registrationResult =
+        SetPlatformInfo(platformID, manufacturerName, manufacturerUrl, modelNumber,
+            dateOfManufacture, platformVersion,  operatingSystemVersion,  hardwareVersion,
+            firmwareVersion,  supportUrl, systemTime);
 
-    if (deviceResult != OC_STACK_OK)
+    if (registrationResult != OC_STACK_OK)
     {
-        OC_LOG(INFO, TAG, "Device Registration failed!");
+        OC_LOG(INFO, TAG, "Platform info setting failed locally!");
         exit (EXIT_FAILURE);
     }
 
-    deviceResult = OCSetDeviceInfo(deviceInfo);
+    registrationResult = OCSetPlatformInfo(platformInfo);
 
-    if (deviceResult != OC_STACK_OK)
+    if (registrationResult != OC_STACK_OK)
+    {
+        OC_LOG(INFO, TAG, "Platform Registration failed!");
+        exit (EXIT_FAILURE);
+    }
+
+    registrationResult = SetDeviceInfo(deviceName);
+
+    if (registrationResult != OC_STACK_OK)
+    {
+        OC_LOG(INFO, TAG, "Device info setting failed locally!");
+        exit (EXIT_FAILURE);
+    }
+
+    registrationResult = OCSetDeviceInfo(deviceInfo);
+
+    if (registrationResult != OC_STACK_OK)
     {
         OC_LOG(INFO, TAG, "Device Registration failed!");
         exit (EXIT_FAILURE);
@@ -942,8 +1115,12 @@ int main(int argc, char* argv[])
 
     // Break from loop with Ctrl-C
     OC_LOG(INFO, TAG, "Entering ocserver main loop...");
+
+    DeletePlatformInfo();
     DeleteDeviceInfo();
+
     signal(SIGINT, handleSigInt);
+
     while (!gQuitFlag)
     {
         if (OCProcess() != OC_STACK_OK)
@@ -971,148 +1148,4 @@ int main(int argc, char* argv[])
     }
 
     return 0;
-}
-
-int createLightResource (char *uri, LightResource *lightResource)
-{
-    if (!uri)
-    {
-        OC_LOG(ERROR, TAG, "Resource URI cannot be NULL");
-        return -1;
-    }
-
-    lightResource->state = false;
-    lightResource->power= 0;
-    OCStackResult res = OCCreateResource(&(lightResource->handle),
-            "core.light",
-            OC_RSRVD_INTERFACE_DEFAULT,
-            uri,
-            OCEntityHandlerCb,
-            OC_DISCOVERABLE|OC_OBSERVABLE);
-    OC_LOG_V(INFO, TAG, "Created Light resource with result: %s", getResult(res));
-
-    return 0;
-}
-
-void DeleteDeviceInfo()
-{
-    free(deviceInfo.contentType);
-    free(deviceInfo.dateOfManufacture);
-    free(deviceInfo.deviceName);
-    free(deviceInfo.deviceUUID);
-    free(deviceInfo.firmwareVersion);
-    free(deviceInfo.hostName);
-    free(deviceInfo.manufacturerName);
-    free(deviceInfo.manufacturerUrl);
-    free(deviceInfo.modelNumber);
-    free(deviceInfo.platformVersion);
-    free(deviceInfo.supportUrl);
-    free(deviceInfo.version);
-}
-
-bool DuplicateString(char** targetString, const char* sourceString)
-{
-    if(!sourceString)
-    {
-        return false;
-    }
-    else
-    {
-        *targetString = (char *) malloc(strlen(sourceString) + 1);
-
-        if(*targetString)
-        {
-            strncpy(*targetString, sourceString, (strlen(sourceString) + 1));
-            return true;
-        }
-    }
-    return false;
-}
-
-OCStackResult SetDeviceInfo(const char *contentType, const char *dateOfManufacture,
-        const char *deviceName, const char *deviceUUID, const char *firmwareVersion,
-        const char *hostName, const char *manufacturerName, const char *manufacturerUrl,
-        const char *modelNumber, const char *platformVersion, const char *supportUrl,
-        const char *version)
-{
-
-    bool success = true;
-
-    if(manufacturerName != NULL && (strlen(manufacturerName) > MAX_MANUFACTURER_NAME_LENGTH))
-    {
-        return OC_STACK_INVALID_PARAM;
-    }
-
-    if(manufacturerUrl != NULL && (strlen(manufacturerUrl) > MAX_MANUFACTURER_URL_LENGTH))
-    {
-        return OC_STACK_INVALID_PARAM;
-    }
-
-    if(!DuplicateString(&deviceInfo.contentType, contentType))
-    {
-        success = false;
-    }
-
-    if(!DuplicateString(&deviceInfo.dateOfManufacture, dateOfManufacture))
-    {
-        success = false;
-    }
-
-    if(!DuplicateString(&deviceInfo.deviceName, deviceName))
-    {
-        success = false;
-    }
-
-    if(!DuplicateString(&deviceInfo.deviceUUID, deviceUUID))
-    {
-        success = false;
-    }
-
-    if(!DuplicateString(&deviceInfo.firmwareVersion, firmwareVersion))
-    {
-        success = false;
-    }
-
-    if(!DuplicateString(&deviceInfo.hostName, hostName))
-    {
-        success = false;
-    }
-
-    if(!DuplicateString(&deviceInfo.manufacturerName, manufacturerName))
-    {
-        success = false;
-    }
-
-    if(!DuplicateString(&deviceInfo.manufacturerUrl, manufacturerUrl))
-    {
-        success = false;
-    }
-
-    if(!DuplicateString(&deviceInfo.modelNumber, modelNumber))
-    {
-        success = false;
-    }
-
-    if(!DuplicateString(&deviceInfo.platformVersion, platformVersion))
-    {
-        success = false;
-    }
-
-    if(!DuplicateString(&deviceInfo.supportUrl, supportUrl))
-    {
-        success = false;
-    }
-
-    if(!DuplicateString(&deviceInfo.version, version))
-    {
-        success = false;
-    }
-
-    if(success)
-    {
-        return OC_STACK_OK;
-    }
-
-    DeleteDeviceInfo();
-    return OC_STACK_ERROR;
 }

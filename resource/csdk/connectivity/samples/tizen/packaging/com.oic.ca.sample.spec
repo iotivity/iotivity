@@ -30,7 +30,7 @@ OIC interfacesample application
 %build
 
 scons TARGET_OS=tizen -c
-scons TARGET_OS=tizen TARGET_TRANSPORT=%{TARGET_TRANSPORT}
+scons TARGET_OS=tizen TARGET_TRANSPORT=%{TARGET_TRANSPORT} SECURED=%{SECURED} RELEASE=%{RELEASE}
 
 %install
 

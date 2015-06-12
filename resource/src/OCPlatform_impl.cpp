@@ -244,8 +244,8 @@ namespace OC
         uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
         std::vector<std::string> resourceTypes = resource->getResourceTypes();
 
-        return checked_guard(m_server, &IServerWrapper::registerResourceWithHost,
-                std::ref(resourceHandle), resource->host(), resource->uri(),
+        return checked_guard(m_server, &IServerWrapper::registerResource,
+                std::ref(resourceHandle), resource->uri(),
                 resourceTypes[0]/*"core.remote"*/, DEFAULT_INTERFACE,
                 (EntityHandler) nullptr, resourceProperty);
     }

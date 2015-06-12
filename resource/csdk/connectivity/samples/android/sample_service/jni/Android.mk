@@ -4,17 +4,12 @@ PROJECT_ROOT_PATH	= ../../..
 
 include $(CLEAR_VARS)
 LOCAL_PATH := $(APP_PATH)
-LOCAL_MODULE := CAInterface
-LOCAL_STATIC_LIBRARIES = CA
-include $(BUILD_SHARED_LIBRARY)
-
-include $(CLEAR_VARS)
-LOCAL_PATH := $(APP_PATH)
 LOCAL_MODULE := RMInterface
 LOCAL_SRC_FILES := ResourceModel.c
+LOCAL_CFLAGS = -D__WITH_DTLS__
+LOCAL_C_INCLUDES = $(PROJECT_ROOT_PATH)/api $(PROJECT_ROOT_PATH)/external/inc
 LOCAL_STATIC_LIBRARIES := CA
 LOCAL_LDLIBS := -llog
-LOCAL_C_INCLUDES := ../../../api
 include $(BUILD_SHARED_LIBRARY)
 
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

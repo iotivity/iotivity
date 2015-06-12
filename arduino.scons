@@ -45,5 +45,7 @@ if 'RBL_NRF8001' in env.get('SHIELD'):
 env.ImportLib('Time/Time')
 # we have variety of macros for arduino!!
 env.AppendUnique(CPPDEFINES = ['WITH_ARDUINO', '__ARDUINO__'])
+# Set device name to __OIC_DEVICE_NAME__
+env.AppendUnique(CPPDEFINES = ['-D__OIC_DEVICE_NAME__=' + "\'\"" + env.get('DEVICE_NAME') + "\"\'"])
 if env.get('LOGGING'):
 	env.AppendUnique(CPPDEFINES = ['TB_LOG'])

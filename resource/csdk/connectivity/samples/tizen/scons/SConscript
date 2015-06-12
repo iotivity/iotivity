@@ -7,6 +7,7 @@ Import('env')
 
 target_os = env.get('TARGET_OS')
 transport = env.get('TARGET_TRANSPORT')
+secured = env.get('SECURED')
 
 OIC_LIB = 'oic'
 root_dir = env.get('ROOT_DIR')
@@ -20,6 +21,11 @@ env.Append(LIBPATH=[root_dir +'/lib/tizen/ble/libs/',])
 env.Append(LIBS=[
   '-lm', '-lpthread', '-lrt', '-ldl', '-lstdc++', '-lgobject-2.0', '-lgio-2.0', '-lglib-2.0', '-lcapi-network-wifi', '-ldlog', '-lcapi-network-bluetooth', '-lconnectivity_abstraction', 'coap',
 ])
+
+if secured == '1':
+	env.PrependUnique(CPPPATH = [root_dir + '/external/inc/'])
+	env.AppendUnique(CPPDEFINES = ['__WITH_DTLS__'])
+	env.Append(LIBS=['-ltinydtls'])
 
 env.Prepend(RPATH=[root_dir +'/lib/tizen/ble/libs/',])
 if 'ALL' in transport:

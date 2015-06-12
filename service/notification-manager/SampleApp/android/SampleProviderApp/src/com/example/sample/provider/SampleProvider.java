@@ -32,6 +32,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Message;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -54,6 +55,12 @@ public class SampleProvider extends Activity implements OnClickListener,
         private boolean isExecutePresence;
         private ScrollView sv_sclLog;
         private MessageReceiver mMessageReceiver = new MessageReceiver();
+        private Handler mHandler;
+        private static String message;
+        private static SampleProvider  sampleProviderObj;
+        private String temp;
+        private String hum;
+
         /*
          * To initialize UI Function Setting
          * To execute initOICStack for running find resource
@@ -62,6 +69,7 @@ public class SampleProvider extends Activity implements OnClickListener,
         public void onCreate(Bundle savedInstanceState)
         {
 
+            sampleProviderObj = this;
             super.onCreate(savedInstanceState);
             setContentView(R.layout.sampleprovider_layout);
             registerReceiver(mMessageReceiver, new IntentFilter(
@@ -79,8 +87,19 @@ public class SampleProvider extends Activity implements OnClickListener,
             findViewById(R.id.btnHumidityDown).setOnClickListener(this);
             findViewById(R.id.btnLogClear).setOnClickListener(this);
 
-
             isExecutePresence = false;
+            mHandler = new Handler() {
+                @Override
+                public void handleMessage(Message msg) {
+                    switch (msg.what) {
+                        case 0:
+                            String[] tempHum = message.split(":");
+                            mTempValue.setText(tempHum[0]);
+                            mHumValue.setText(tempHum[1]);
+                    }
+                }
+            };
+            setmHandler(mHandler);
         }
 
         private void initOICStack()
@@ -88,7 +107,8 @@ public class SampleProvider extends Activity implements OnClickListener,
             // create platform config
             PlatformConfig cfg = new PlatformConfig(this,ServiceType.IN_PROC,
                                                     ModeType.SERVER, "0.0.0.0", // bind to all available interfaces
-                                                    0, QualityOfService.HIGH);
+                                                    0, QualityOfService.LOW);
+
             OcPlatform.Configure(cfg);
 
             try
@@ -267,5 +287,21 @@ public class SampleProvider extends Activity implements OnClickListener,
                     mMessageReceiver);
             }
             return super.onKeyDown(keyCode, event);
+        }
+
+        public Handler getmHandler() {
+            return mHandler;
+        }
+
+        public void setmHandler(Handler mHandler) {
+            this.mHandler = mHandler;
+        }
+
+        public static SampleProvider getSampleProviderObject() {
+            return sampleProviderObj;
+        }
+
+        public static void setmessage(String msg) {
+            message = msg;
         }
 }

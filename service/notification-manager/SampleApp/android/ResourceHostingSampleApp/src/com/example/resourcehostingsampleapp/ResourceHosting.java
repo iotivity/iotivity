@@ -25,7 +25,12 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Enumeration;
 
+import org.iotivity.base.ModeType;
+import org.iotivity.base.OcPlatform;
 import org.iotivity.base.OcResourceHandle;
+import org.iotivity.base.PlatformConfig;
+import org.iotivity.base.QualityOfService;
+import org.iotivity.base.ServiceType;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -49,8 +54,6 @@ public class ResourceHosting extends Activity implements OnClickListener
         private final int RESOURCEHOSTING_DO_NOT_THREADRUNNING = -2;
 
         private String TAG = "ResourceHosting";
-        private OcResourceHandle mResourceHandle;
-        private String  mIpAddress;
         private TextView mLogTextView;
         private String mLog = "";
         /**
@@ -66,6 +69,15 @@ public class ResourceHosting extends Activity implements OnClickListener
             findViewById(R.id.btnStartHosting).setOnClickListener(this);
             findViewById(R.id.btnStopHosting).setOnClickListener(this);
             findViewById(R.id.btLogClear).setOnClickListener(this);
+
+            PlatformConfig platformConfigObj;
+
+            platformConfigObj = new PlatformConfig(this,ServiceType.IN_PROC,
+                    ModeType.CLIENT_SERVER, "0.0.0.0", 0, QualityOfService.LOW);
+
+            Log.i(TAG, "Before Calling Configure of ocPlatform");
+            OcPlatform.Configure(platformConfigObj);
+            Log.i(TAG, "Configuration done Successfully");
         }
 
         /**
@@ -77,7 +89,6 @@ public class ResourceHosting extends Activity implements OnClickListener
         protected void onStart()
         {
             super.onStart();
-            initOICStack();
         }
 
         /**
@@ -89,9 +100,6 @@ public class ResourceHosting extends Activity implements OnClickListener
         protected void onStop()
         {
             super.onStop();
-            int result;
-            result = ResourceHostingTerminate();
-            Log.d(TAG, "ResourceHostingTerminate : "+ result);
         }
 
         protected void onResume()
@@ -108,7 +116,6 @@ public class ResourceHosting extends Activity implements OnClickListener
         protected void onRestart()
         {
             super.onRestart();
-            initOICStack();
         }
 
         /**
@@ -118,56 +125,9 @@ public class ResourceHosting extends Activity implements OnClickListener
         protected void onDestroy()
         {
             super.onDestroy();
-        }
-
-        /**
-         * get IpAddress and execute resourceHostingInit() method.
-         * @see Class   class : com_example_resourcehostingsampleapp_ResourceHosting</br>
-         * @see Method  method : initOICStack</br>
-         */
-        private void initOICStack()
-        {
-            try
-            {
-                mIpAddress = getIpAddress();
-                int result;
-                result = ResourceHostingInit(mIpAddress);
-                Log.d(TAG, "ResourceHostingInit : " + result);
-            }
-            catch (Exception e)
-            {
-                e.printStackTrace();
-            }
-        }
-
-        /**
-         * @see Class   class :  com_example_resourcehostingsampleapp_ResourceHosting</br>
-         * @see Method  method :  getIpAddress</br>
-         */
-        private String getIpAddress()
-        {
-            try
-            {
-                for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces();
-                     en.hasMoreElements();)
-                {
-                    NetworkInterface intf = (NetworkInterface) en.nextElement();
-                    for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();)
-                    {
-                        InetAddress inetAddress = (InetAddress) enumIpAddr.nextElement();
-                        if (!inetAddress.isLoopbackAddress())
-                        {
-                            if (inetAddress instanceof Inet4Address)
-                                return inetAddress.getHostAddress().toString();
-                        }
-                    }
-                }
-            }
-            catch (SocketException e)
-            {
-                e.printStackTrace();
-            }
-            return null;
+            int result;
+            result = OICCoordinatorStop();
+            Log.d(TAG, "OICCoordinatorStop() : "+ result);
         }
 
         /**
@@ -261,14 +221,15 @@ public class ResourceHosting extends Activity implements OnClickListener
          */
         public native int ResourceHostingTerminate();
 
-        static
-        {
-    		System.loadLibrary("gnustl_shared");
-        	System.loadLibrary("oc_logger");
-    		System.loadLibrary("connectivity_abstraction");
-            System.loadLibrary("octbstack");
-            System.loadLibrary("oc");
-            System.loadLibrary("ocstack-jni");
-            System.loadLibrary("NotificationManager");
-        }
+    static
+    {
+        System.loadLibrary("gnustl_shared");
+        System.loadLibrary("oc_logger");
+        System.loadLibrary("connectivity_abstraction");
+        System.loadLibrary("ca-interface");
+        System.loadLibrary("octbstack");
+        System.loadLibrary("oc");
+        System.loadLibrary("ocstack-jni");
+        System.loadLibrary("NotificationManager");
+    }
 }

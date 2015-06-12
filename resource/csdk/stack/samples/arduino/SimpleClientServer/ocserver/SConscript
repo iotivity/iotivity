@@ -33,12 +33,15 @@ arduino_simplecs_env.PrependUnique(CPPPATH = [
 arduino_simplecs_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 arduino_simplecs_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
-arduino_simplecs_env.PrependUnique(LIBS = ['octbstack', 'connectivity_abstraction','coap'])
+arduino_simplecs_env.PrependUnique(LIBS = ['octbstack', 'ocsrm', 'connectivity_abstraction','coap'])
 
 arduino_simplecs = arduino_simplecs_env.Program('SimpleClientServer', 'ocserver.cpp')
 env.CreateBin('SimpleClientServer')
 
 i_arduino_simplecs = arduino_simplecs_env.Install(env.get('BUILD_DIR'), arduino_simplecs)
+
+#The map file is intermediate file, make sure it's removed when clean build
+arduino_simplecs_env.Clean(arduino_simplecs, 'SimpleClientServer.map')
 
 Alias('arduino_simplecs', i_arduino_simplecs)
 env.AppendTarget('arduino_simplecs')

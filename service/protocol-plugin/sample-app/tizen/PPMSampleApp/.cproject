@@ -222,11 +222,11 @@
                                 </option>
                                 <option id="gnu.cpp.link.option.libs.1981950125" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
                                     <listOptionValue builtIn="false" value="ppm"/>
+                                    <listOptionValue builtIn="false" value="uuid"/>
                                     <listOptionValue builtIn="false" value="oc"/>
                                     <listOptionValue builtIn="false" value="octbstack"/>
                                     <listOptionValue builtIn="false" value="oc_logger"/>
                                     <listOptionValue builtIn="false" value="connectivity_abstraction"/>
-                                    <listOptionValue builtIn="false" value="coap"/>
                                     <listOptionValue builtIn="false" value="boost_system"/>
                                     <listOptionValue builtIn="false" value="boost_thread"/>
                                 </option>

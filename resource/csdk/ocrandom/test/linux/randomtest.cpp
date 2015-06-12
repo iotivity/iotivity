@@ -35,7 +35,7 @@ int main(int argc, char* argv[]) {
 }
 
 TEST(RandomGeneration,OCSeedRandom) {
-    EXPECT_EQ((uint32_t )0, OCSeedRandom());
+    EXPECT_EQ(0, OCSeedRandom());
 }
 
 TEST(RandomGeneration,OCGetRandomByte) {

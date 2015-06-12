@@ -73,9 +73,15 @@ typedef unsigned char uint48[6];
 /** Known cipher suites.*/
 typedef enum { 
   TLS_NULL_WITH_NULL_NULL = 0x0000,   /**< NULL cipher  */
+  TLS_ECDH_anon_WITH_AES_128_CBC_SHA = 0xC018, /**< see RFC 4492 */
   TLS_PSK_WITH_AES_128_CCM_8 = 0xC0A8, /**< see RFC 6655 */
   TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8 = 0xC0AE /**< see RFC 7251 */
 } dtls_cipher_t;
+
+typedef enum {
+    DTLS_CIPHER_DISABLE = 0,
+    DTLS_CIPHER_ENABLE = 1
+} dtls_cipher_enable_t;
 
 /** Known compression suites.*/
 typedef enum {

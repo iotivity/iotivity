@@ -37,6 +37,8 @@ class CATests : public testing::Test {
 
 void request_handler(CARemoteEndpoint_t* object, CARequestInfo_t* requestInfo);
 void response_handler(CARemoteEndpoint_t* object, CAResponseInfo_t* responseInfo);
+void error_handler(const CARemoteEndpoint_t *object, const CAErrorInfo_t* errorInfo);
+
 CAResult_t checkGetNetworkInfo();
 CAResult_t checkSelectNetwork();
 
@@ -50,6 +52,17 @@ void request_handler(const CARemoteEndpoint_t *object, const CARequestInfo_t *re
 void response_handler(const CARemoteEndpoint_t *object, const CAResponseInfo_t *responseInfo)
 {
 
+}
+
+void error_handler(const CARemoteEndpoint_t *object, const CAErrorInfo_t* errorInfo)
+{
+    if(!object || !errorInfo)
+    {
+        return;
+    }
+
+    //error handling shall be added
+    return;
 }
 
 static char* uri = NULL;
@@ -176,7 +189,7 @@ TEST(StartDiscoveryServerTest, DISABLED_TC_04_Positive_01)
 // check return value
 TEST_F(CATests, RegisterHandlerTest)
 {
-    CARegisterHandler(request_handler, response_handler);
+    CARegisterHandler(request_handler, response_handler, error_handler);
     char* check = (char *) "registerHandler success";
     EXPECT_STREQ(check, "registerHandler success");
 }

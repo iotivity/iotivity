@@ -165,7 +165,7 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
         public void initOICStack()
         {
             PlatformConfig cfg = new PlatformConfig(this,ServiceType.IN_PROC,
-                                                    ModeType.CLIENT, "0.0.0.0", 0, QualityOfService.HIGH);
+                                                    ModeType.CLIENT, "0.0.0.0", 0, QualityOfService.LOW);
             OcPlatform.Configure(cfg);
             current_log_result += "Created Platform...\n";
             tv_current_log_result.setText(current_log_result);
@@ -175,7 +175,7 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
 
         public void findResourceCandidate()
         {
-            nmfindResource("", "coap://224.0.1.187/oc/core?rt=Resource.Hosting");
+            nmfindResource("", "/oc/core?rt=Resource.Hosting");
             current_log_result += "Finding Resource... \n";
             tv_current_log_result.setText(current_log_result);
         }
@@ -344,12 +344,12 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
                     break;
                 case R.id.btn_delete:
                     tv_select_method_type.setText(DELETE);
-				try {
-					startDelete(curResource);
-				} catch (OcException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+                try {
+                    startDelete(curResource);
+                } catch (OcException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
                     btn_delete.setClickable(false);
                     break;
                 case R.id.btn_clean:
@@ -561,27 +561,27 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
             btn_delete.setClickable(true);
         }
 
-		@Override
-		public void onPutFailed(Throwable arg0) {
-			// TODO Auto-generated method stub
-			
-		}
+        @Override
+        public void onPutFailed(Throwable arg0) {
+            // TODO Auto-generated method stub
 
-		@Override
-		public void onObserveFailed(Throwable arg0) {
-			// TODO Auto-generated method stub
-			
-		}
+        }
 
-		@Override
-		public void onDeleteFailed(Throwable arg0) {
-			// TODO Auto-generated method stub
-			
-		}
+        @Override
+        public void onObserveFailed(Throwable arg0) {
+            // TODO Auto-generated method stub
 
-		@Override
-		public void onGetFailed(Throwable arg0) {
-			// TODO Auto-generated method stub
-			
-		}
+        }
+
+        @Override
+        public void onDeleteFailed(Throwable arg0) {
+            // TODO Auto-generated method stub
+
+        }
+
+        @Override
+        public void onGetFailed(Throwable arg0) {
+            // TODO Auto-generated method stub
+
+        }
 }

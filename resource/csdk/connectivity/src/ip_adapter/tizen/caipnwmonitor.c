@@ -593,14 +593,9 @@ CAResult_t CAIPGetInterfaceSubnetMask(const char *ipAddress, char **subnetMask)
 
         if (strncmp(info->ipAddress, ipAddress, strlen(ipAddress)) == 0)
         {
-            if (!info->subnetMask)
-            {
-                OIC_LOG(ERROR, IP_MONITOR_TAG,
-                        "CAIPGetInterfaceSubnetMask subnetmask is null");
-            }
             OIC_LOG_V(DEBUG, IP_MONITOR_TAG,
                       "CAIPGetInterfaceSubnetMask subnetmask is %s", info->subnetMask);
-            *subnetMask = info->subnetMask ? OICStrdup(info->subnetMask) : NULL;
+            *subnetMask = OICStrdup(info->subnetMask);
             break;
         }
     }

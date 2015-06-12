@@ -110,7 +110,8 @@ static void CAIPNotifyNetworkChange(const char *address, uint16_t port,
 static void CAIPConnectionStateCB(const char *ipAddress, CANetworkStatus_t status);
 
 static void CAIPPacketReceivedCB(const char *ipAddress, uint16_t port, const void *data,
-                                       uint32_t dataLength, bool isSecured);
+                                       uint32_t dataLength, bool isSecured,
+                                       const CARemoteId_t *identity);
 #ifdef __WITH_DTLS__
 static uint32_t CAIPPacketSendCB(const char *ipAddress, uint16_t port,
                                        const void *data, uint32_t dataLength);
@@ -277,7 +278,8 @@ uint32_t CAIPPacketSendCB(const char *ipAddress, uint16_t port,
 #endif
 
 void CAIPPacketReceivedCB(const char *ipAddress, uint16_t port, const void *data,
-                                uint32_t dataLength, bool isSecured)
+                                uint32_t dataLength, bool isSecured,
+                                const CARemoteId_t *identity)
 {
     OIC_LOG(DEBUG, IP_ADAPTER_TAG, "IN");
 
@@ -296,6 +298,11 @@ void CAIPPacketReceivedCB(const char *ipAddress, uint16_t port, const void *data
     }
     endPoint->addressInfo.IP.port = port;
     endPoint->isSecured = isSecured;
+    if (identity)
+    {
+        endPoint->identity = *identity;
+    }
+
 
     void *buf = OICCalloc(dataLength + 1, sizeof(char));
     if (!buf)
@@ -352,7 +359,7 @@ CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
 #ifdef __WITH_DTLS__
     CAAdapterNetDtlsInit();
 
-    CADTLSSetAdapterCallbacks(CAIPPacketReceivedCB, CAIPPacketSendCB, DTLS_IP);
+    CADTLSSetAdapterCallbacks(CAIPPacketReceivedCB, CAIPPacketSendCB, CA_IPV4);
 #endif
 
     CAConnectivityHandler_t ipHandler;
@@ -421,7 +428,7 @@ CAResult_t CAStartIP()
     for (listIndex = 0; listIndex < listLength; listIndex++)
     {
         CANetInfo_t *netInfo = (CANetInfo_t *) u_arraylist_get(netInterfaceList, listIndex);
-        if (!netInfo || !netInfo->ipAddress)
+        if (!netInfo)
         {
             continue;
         }
@@ -479,7 +486,7 @@ CAResult_t CAStartIPListeningServer()
     {
 
         CANetInfo_t *netInfo = (CANetInfo_t *) u_arraylist_get(netInterfaceList, listIndex);
-        if (!netInfo || !netInfo->ipAddress)
+        if (!netInfo)
         {
             continue;
         }
@@ -617,7 +624,7 @@ CAResult_t CAGetIPInterfaceInformation(CALocalConnectivity_t **info, uint32_t *s
     for (listIndex = 0; listIndex < listLength; listIndex++)
     {
         CANetInfo_t *netInfo = (CANetInfo_t *) u_arraylist_get(netInterfaceList, listIndex);
-        if (!netInfo || !netInfo->ipAddress)
+        if (!netInfo)
         {
             continue;
         }
@@ -703,7 +710,7 @@ void CATerminateIP()
     CAStopIP();
 
 #ifdef __WITH_DTLS__
-    CADTLSSetAdapterCallbacks(NULL, NULL, DTLS_IP);
+    CADTLSSetAdapterCallbacks(NULL, NULL, CA_IPV4);
 #endif
 
     CAIPSetPacketReceiveCallback(NULL);
@@ -749,17 +756,15 @@ void CAIPSendDataThread(void *threadData)
         else
         {
             OIC_LOG(DEBUG, IP_ADAPTER_TAG, "CAAdapterNetDtlsEncrypt called!");
-            uint8_t cacheFlag = 0;
             CAResult_t result = CAAdapterNetDtlsEncrypt(address, port, ipData->data,
-                                                        ipData->dataLen, &cacheFlag,
-                                                        DTLS_IP);
+                                                        ipData->dataLen, CA_IPV4);
 
             if (CA_STATUS_OK != result)
             {
                 OIC_LOG(ERROR, IP_ADAPTER_TAG, "CAAdapterNetDtlsEncrypt failed!");
             }
             OIC_LOG_V(DEBUG, IP_ADAPTER_TAG,
-                      "CAAdapterNetDtlsEncrypt returned with cache[%d]", cacheFlag);
+                      "CAAdapterNetDtlsEncrypt returned with result[%d]", result);
         }
 #else
         CAIPSendData(address, port, ipData->data, ipData->dataLen, false,

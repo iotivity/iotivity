@@ -31,9 +31,8 @@
 #include "ocstackinternal.h"
 #include "ocresourcehandler.h"
 #include "logger.h"
-#include "ocmalloc.h"
 #include "cJSON.h"
-#include "ocmalloc.h"
+#include "oic_malloc.h"
 
 /// Module Name
 #include <stdio.h>
@@ -118,8 +117,10 @@ ValidateQuery (const char *query, OCResourceHandle resource,
 
     // Break the query string to validate it and determine IF and RT parameters
     // Validate there are atmost 2 parameters in string and that one is 'if' and other 'rt'
+    // separated by token '&' or ';'. Stack will accept both the versions.
+
     char *endStr, *ifPtr = NULL, *rtPtr = NULL;
-    char *token = strtok_r ((char *)query, "&", &endStr);
+    char *token = strtok_r ((char *)query, OC_QUERY_SEPARATOR , &endStr);
 
     // External loop breaks query string into fields using the & separator
     while (token != NULL)
@@ -155,7 +156,7 @@ ValidateQuery (const char *query, OCResourceHandle resource,
             // Query parameter should be of the form if=<string>. String should not have & or =
             return OC_STACK_INVALID_QUERY;
         }
-        token = strtok_r (NULL, "&", &endStr);
+        token = strtok_r (NULL, OC_QUERY_SEPARATOR, &endStr);
     }
     if (numFields > NUM_FIELDS_IN_QUERY)
     {
@@ -259,7 +260,7 @@ static OCStackResult BuildRootResourceJSON(OCResource *resource,
     }
 
     cJSON_Delete (resObj);
-    OCFree(jsonStr);
+    OICFree(jsonStr);
 
     return ret;
 }
@@ -400,7 +401,8 @@ HandleBatchInterface(OCEntityHandlerRequest *ehRequest)
                 // is ehRequest->resource
                 ehRequest->resource = (OCResourceHandle) temp;
 
-                ehResult = temp->entityHandler(OC_REQUEST_FLAG, ehRequest);
+                ehResult = temp->entityHandler(OC_REQUEST_FLAG, ehRequest,
+                                        temp->entityHandlerCallbackParam);
 
                 // The default collection handler is returning as OK
                 if(stackRet != OC_STACK_SLOW_RESOURCE)

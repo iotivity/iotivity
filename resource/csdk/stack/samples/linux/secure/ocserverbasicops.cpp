@@ -41,18 +41,19 @@ static LEDResource gLedInstance[SAMPLE_MAX_NUM_POST_INSTANCE];
 
 char *gResourceUri= (char *)"/a/led";
 
-//File containing Server's Identity and the PSK credentials
+//Secure Virtual Resource database for Iotivity Server
+//It contains Server's Identity and the PSK credentials
 //of other devices which the server trusts
-//This can be generated using 'gen_sec_bin' application
-static char CRED_FILE[] = "server_cred.bin";
+static char CRED_FILE[] = "oic_svr_db_server.json";
 
 //This function takes the request as an input and returns the response
 //in JSON format.
 char* constructJsonResponse (OCEntityHandlerRequest *ehRequest)
 {
     cJSON *json = cJSON_CreateObject();
+    cJSON *putJson = NULL;
     cJSON *format;
-    char *jsonResponse;
+    char *jsonResponse = NULL;
     LEDResource *currLEDResource = &LED;
 
     if (ehRequest->resource == gLedInstance[0].handle)
@@ -68,17 +69,29 @@ char* constructJsonResponse (OCEntityHandlerRequest *ehRequest)
 
     if(OC_REST_PUT == ehRequest->method)
     {
-        cJSON *putJson = cJSON_Parse(ehRequest->reqJSONPayload);
-        if(!putJson)
+        cJSON* jsonObj = NULL;
+        putJson = cJSON_Parse(ehRequest->reqJSONPayload);
+        if(putJson)
+        {
+            jsonObj = cJSON_GetObjectItem(putJson,"oic");
+            if (jsonObj)
+            {
+                jsonObj = cJSON_GetArrayItem(jsonObj, 0);
+                if (jsonObj)
+                {
+                    jsonObj = cJSON_GetObjectItem(jsonObj, "rep");
+                }
+            }
+        }
+        if (NULL == jsonObj)
         {
             OC_LOG_V(ERROR, TAG, "Failed to parse JSON: %s", ehRequest->reqJSONPayload);
-            return NULL;
+            goto exit;
         }
 
-        currLEDResource->state = ( !strcmp(cJSON_GetObjectItem(putJson,"state")->valuestring ,
-                "on") ? true:false);
-        currLEDResource->power = cJSON_GetObjectItem(putJson,"power")->valuedouble;
-        cJSON_Delete(putJson);
+        currLEDResource->state = ( !strcmp(cJSON_GetObjectItem(jsonObj,"state")->valuestring ,
+                    "on") ? true:false);
+        currLEDResource->power = cJSON_GetObjectItem(jsonObj,"power")->valuedouble;
     }
 
     cJSON_AddStringToObject(json,"href",gResourceUri);
@@ -87,6 +100,9 @@ char* constructJsonResponse (OCEntityHandlerRequest *ehRequest)
     cJSON_AddNumberToObject(format, "power", currLEDResource->power);
 
     jsonResponse = cJSON_Print(json);
+
+exit:
+    cJSON_Delete(putJson);
     cJSON_Delete(json);
     return jsonResponse;
 }
@@ -240,7 +256,8 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest,
 
 OCEntityHandlerResult
 OCEntityHandlerCb (OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest *entityHandlerRequest)
+        OCEntityHandlerRequest *entityHandlerRequest,
+        void* callbackParam)
 {
     OC_LOG_V (INFO, TAG, "Inside entity handler - flags: 0x%x", flag);
 
@@ -310,11 +327,26 @@ void handleSigInt(int signum)
     }
 }
 
+FILE* server_fopen(const char *path, const char *mode)
+{
+    (void)path;
+    return fopen(CRED_FILE, mode);
+}
+
 int main(int argc, char* argv[])
 {
     struct timespec timeout;
 
     OC_LOG(DEBUG, TAG, "OCServer is starting...");
+
+    // Initialize Persistent Storage for SVR database
+    OCPersistentStorage ps = {};
+    ps.open = server_fopen;
+    ps.read = fread;
+    ps.write = fwrite;
+    ps.close = fclose;
+    ps.unlink = unlink;
+    OCRegisterPersistentStorageHandler(&ps);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
     {
@@ -322,15 +354,6 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    /*
-     * Read DTLS PSK credentials from persistent storage and
-     * set in the OC stack.
-     */
-    if (SetCredentials(CRED_FILE) != OC_STACK_OK)
-    {
-        OC_LOG(ERROR, TAG, "SetCredentials failed");
-        return 0;
-    }
     /*
      * Declare and create the example resource: LED
      */
@@ -377,6 +400,7 @@ int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, 
             OC_RSRVD_INTERFACE_DEFAULT,
             uri,
             OCEntityHandlerCb,
+            NULL,
             OC_DISCOVERABLE|OC_OBSERVABLE | OC_SECURE);
     OC_LOG_V(INFO, TAG, "Created LED resource with result: %s", getResult(res));
 

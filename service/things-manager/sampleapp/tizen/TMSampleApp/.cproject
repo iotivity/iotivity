@@ -227,9 +227,9 @@
                                     <listOptionValue builtIn="false" value="TGMSDKLibrary"/>
                                     <listOptionValue builtIn="false" value="oc"/>
                                     <listOptionValue builtIn="false" value="octbstack"/>
-                                    <listOptionValue builtIn="false" value="coap"/>
                                     <listOptionValue builtIn="false" value="oc_logger"/>
                                     <listOptionValue builtIn="false" value="connectivity_abstraction"/>
+                                    <listOptionValue builtIn="false" value="uuid"/>
                                 </option>
                                 <inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.618645708" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
                                     <additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>

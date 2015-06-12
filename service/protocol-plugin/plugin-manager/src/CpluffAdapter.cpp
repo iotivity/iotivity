@@ -28,14 +28,14 @@ using namespace OIC;
 
 CpluffAdapter *CpluffAdapter::s_pinstance;
 
-CpluffAdapter::CpluffAdapter()
+CpluffAdapter::CpluffAdapter(void *args)
 {
     m_status = cp_init();
     m_context = cp_create_context(&m_status);
     m_cp_plugins = nullptr;
     m_plugin = nullptr;
 
-    config = Config::Getinstance();
+    config = Config::Getinstance(args);
     std::string pluginpath = config->getPluginPath();
     if (pluginpath != "")
     {
@@ -313,7 +313,8 @@ std::vector<Plugin> *CpluffAdapter::findPlugins(const std::string key, const std
 
     for (unsigned int i = 0; i < m_plugins.size(); i++)
     {
-        if (!m_plugins[i].getValueByAttribute(key).compare(value))
+        std::string attributeValue = m_plugins[i].getValueByAttribute(key);
+        if (!attributeValue.empty() && !attributeValue.compare(value))
         {
             re_plugins->push_back(m_plugins[i]);
         }

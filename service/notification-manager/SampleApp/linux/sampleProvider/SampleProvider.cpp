@@ -56,7 +56,7 @@ class TempHumidResource
 
     public:
         TempHumidResource() :
-            m_temp(0), m_humid(0), m_uri("/a/TempHumSensor")
+            m_temp(0), m_humid(0), m_uri("/a/TempHumSensor"), m_resourceHandle(NULL)
         {
         }
 

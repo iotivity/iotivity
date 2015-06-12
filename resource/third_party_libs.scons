@@ -47,11 +47,6 @@ if target_os in ['linux', 'tizen']:
 ''' % target_arch
 
 		conf = Configure(lib_env)
-
-		if target_os in ['tizen'] and not conf.CheckLib('glib-2.0'):
-			print 'Install glib-2.0 to compile on Tizen platforms'
-			Exit(1)
-
 		conf.Finish()
 
 

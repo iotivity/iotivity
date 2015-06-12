@@ -51,15 +51,6 @@ namespace OC
         virtual OCStackResult registerPlatformInfo(
                     const OCPlatformInfo PlatformInfo);
 
-        virtual OCStackResult registerResourceWithHost(
-                    OCResourceHandle& resourceHandle,
-                    std::string& resourceHOST,
-                    std::string& resourceURI,
-                    const std::string& resourceTypeName,
-                    const std::string& resourceInterface,
-                    EntityHandler& entityHandler,
-                    uint8_t resourceProperty);
-
         virtual OCStackResult unregisterResource(
                     const OCResourceHandle& resourceHandle);
 
