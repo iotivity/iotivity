@@ -26,22 +26,11 @@
 
 #include <OCPlatform.h>
 
-using OC::QueryParamsMap;
-using OC::OCRepresentation;
-using OC::ObserveType;
-
-using std::bind;
-using std::shared_ptr;
-using std::vector;
-using std::string;
-
-using namespace std::placeholders;
-
 namespace
 {
     using namespace OIC::Service;
 
-    ResponseStatement createResponseStatement(const OCRepresentation& ocRepresentation)
+    ResponseStatement createResponseStatement(const OC::OCRepresentation& ocRepresentation)
     {
         return ResponseStatement::create(
                 ResourceAttributesConverter::fromOCRepresentation(ocRepresentation));
@@ -54,6 +43,7 @@ namespace OIC
 {
     namespace Service
     {
+        using namespace std::placeholders;
 
         PrimitiveResource::PrimitiveResource(const BaseResourcePtr& ocResource) :
                 m_ocResource{ ocResource }
@@ -67,18 +57,20 @@ namespace OIC
 
         void PrimitiveResource::requestGet(GetCallback callback)
         {
-            m_ocResource->get(QueryParamsMap(), bind(callback, _1, bind(createResponseStatement, _2), _3));
+            m_ocResource->get(OC::QueryParamsMap(),
+                    std::bind(callback, _1, std::bind(createResponseStatement, _2), _3));
         }
 
         void PrimitiveResource::requestSet(const ResourceAttributes& attrs, SetCallback callback)
         {
-            m_ocResource->put(ResourceAttributesConverter::toOCRepresentation(attrs), QueryParamsMap{},
-                    bind(callback, _1, bind(createResponseStatement, _2), _3));
+            m_ocResource->put(ResourceAttributesConverter::toOCRepresentation(attrs),
+                    OC::QueryParamsMap{},
+                    std::bind(callback, _1, std::bind(createResponseStatement, _2), _3));
         }
 
         void PrimitiveResource::requestObserve(ObserveCallback callback)
         {
-            m_ocResource->observe(ObserveType::ObserveAll, QueryParamsMap{},
+            m_ocResource->observe(OC::ObserveType::ObserveAll, OC::QueryParamsMap{},
                     bind(callback, _1, bind(createResponseStatement, _2), _3, _4));
         }
 
@@ -92,22 +84,22 @@ namespace OIC
             return m_ocResource->isObservable();
         }
 
-        string PrimitiveResource::getUri() const
+        std::string PrimitiveResource::getUri() const
         {
             return m_ocResource->uri();
         }
 
-        string PrimitiveResource::getHost() const
+        std::string PrimitiveResource::getHost() const
         {
             return m_ocResource->host();
         }
 
-        vector< string > PrimitiveResource::getTypes() const
+        std::vector< std::string > PrimitiveResource::getTypes() const
         {
             return m_ocResource->getResourceTypes();
         }
 
-        vector< string > PrimitiveResource::getInterfaces() const
+        std::vector< std::string > PrimitiveResource::getInterfaces() const
         {
             return m_ocResource->getResourceInterfaces();
         }
