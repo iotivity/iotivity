@@ -27,54 +27,63 @@
 #include <octypes.h>
 
 class ResourceAttributes;
-class RequestHandler;
 
-class PrimitiveGetResponse
+namespace OIC
 {
-public:
-    static PrimitiveGetResponse defaultAction();
+    namespace Service
+    {
+        class RequestHandler;
 
-    static PrimitiveGetResponse create(const OCEntityHandlerResult&, int errorCode);
+        class PrimitiveGetResponse
+        {
+        public:
+            static PrimitiveGetResponse defaultAction();
 
-    static PrimitiveGetResponse create(const ResourceAttributes&);
-    static PrimitiveGetResponse create(const ResourceAttributes&,
-            const OCEntityHandlerResult&, int errorCode);
+            static PrimitiveGetResponse create(const OCEntityHandlerResult&, int errorCode);
 
-    static PrimitiveGetResponse create(ResourceAttributes&&);
-    static PrimitiveGetResponse create(ResourceAttributes&&, const OCEntityHandlerResult&,
-            int errorCode);
+            static PrimitiveGetResponse create(const ResourceAttributes&);
+            static PrimitiveGetResponse create(const ResourceAttributes&,
+                    const OCEntityHandlerResult&, int errorCode);
 
-    RequestHandler* getHandler() const;
+            static PrimitiveGetResponse create(ResourceAttributes&&);
+            static PrimitiveGetResponse create(ResourceAttributes&&, const OCEntityHandlerResult&,
+                    int errorCode);
 
-private:
-    PrimitiveGetResponse(RequestHandler*);
+            RequestHandler* getHandler() const;
 
-private:
-    std::shared_ptr< RequestHandler > m_handler;
-};
+        private:
+            PrimitiveGetResponse(RequestHandler*);
 
-class PrimitiveSetResponse
-{
-public:
-    static PrimitiveSetResponse defaultAction();
+        private:
+            std::shared_ptr< RequestHandler > m_handler;
+        };
 
-    static PrimitiveSetResponse create(const OCEntityHandlerResult&, int errorCode);
+        class PrimitiveSetResponse
+        {
+        public:
+            static PrimitiveSetResponse defaultAction();
 
-    static PrimitiveSetResponse create(const ResourceAttributes&);
-    static PrimitiveSetResponse create(const ResourceAttributes&,
-            const OCEntityHandlerResult&, int errorCode);
+            static PrimitiveSetResponse create(const OCEntityHandlerResult&, int errorCode);
 
-    static PrimitiveSetResponse create(ResourceAttributes&&);
-    static PrimitiveSetResponse create(ResourceAttributes&&, const OCEntityHandlerResult&,
-            int errorCode);
+            static PrimitiveSetResponse create(const ResourceAttributes&);
+            static PrimitiveSetResponse create(const ResourceAttributes&,
+                    const OCEntityHandlerResult&, int errorCode);
 
-    RequestHandler* getHandler() const;
+            static PrimitiveSetResponse create(ResourceAttributes&&);
+            static PrimitiveSetResponse create(ResourceAttributes&&, const OCEntityHandlerResult&,
+                    int errorCode);
 
-private:
-    PrimitiveSetResponse(RequestHandler*);
+            RequestHandler* getHandler() const;
 
-private:
-    std::shared_ptr< RequestHandler > m_handler;
-};
+        private:
+            PrimitiveSetResponse(RequestHandler*);
+
+            static PrimitiveSetResponse withProxy(RequestHandler*);
+
+        private:
+            std::shared_ptr< RequestHandler > m_handler;
+        };
+    }
+}
 
 #endif

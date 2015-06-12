@@ -22,81 +22,77 @@
 #define __REQUESTHANDLER_H
 
 #include <PrimitiveServerResource.h>
-
 #include <internal/ResourceAtrributesConverter.h>
 
 #include <OCResourceResponse.h>
 
-class RequestHandler
+namespace OIC
 {
-public:
-    virtual ~RequestHandler()
+    namespace Service
     {
+        class RequestHandler
+        {
+        public:
+            using Ptr = std::shared_ptr<RequestHandler>;
+
+            virtual ~RequestHandler()
+            {
+            }
+
+            virtual std::shared_ptr< OC::OCResourceResponse > buildResponse(
+                    PrimitiveServerResource&, const ResourceAttributes& requestAttrs) = 0;
+        };
+
+        class SimpleRequestHandler: public RequestHandler
+        {
+        public:
+            SimpleRequestHandler(const OCEntityHandlerResult& result = OC_EH_OK,
+                    int errorCode = 200);
+
+            std::shared_ptr< OC::OCResourceResponse > buildResponse(
+                    PrimitiveServerResource&, const ResourceAttributes&) override;
+
+        protected:
+            virtual int getErrorCode(PrimitiveServerResource&);
+            virtual OCEntityHandlerResult getResponseResult(PrimitiveServerResource&);
+            virtual OC::OCRepresentation getOCRepresentation(PrimitiveServerResource& resource);
+
+        private:
+            OCEntityHandlerResult m_result;
+            int m_errorCode;
+        };
+
+
+        class CustomAttrRequestHandler: public SimpleRequestHandler
+        {
+        public:
+            template <typename T>
+            CustomAttrRequestHandler(T&& attrs,
+                    const OCEntityHandlerResult& result = OC_EH_OK, int errorCode = 200) :
+                SimpleRequestHandler{ result, errorCode }, m_attrs{ std::forward<T>(attrs) }
+            {
+            }
+
+        protected:
+            OC::OCRepresentation getOCRepresentation(PrimitiveServerResource& resource) override;
+
+        private:
+            ResourceAttributes m_attrs;
+        };
+
+        class SetRequestProxyHandler: public RequestHandler
+        {
+        public:
+            SetRequestProxyHandler(RequestHandler::Ptr requestHandler);
+
+            std::shared_ptr< OC::OCResourceResponse > buildResponse(
+                    PrimitiveServerResource& resource,
+                    const ResourceAttributes& requestAttrs) override;
+
+        private:
+            RequestHandler::Ptr m_requestHandler;
+        };
     }
-
-    virtual std::shared_ptr< OC::OCResourceResponse > buildResponse(PrimitiveServerResource&) = 0;
-};
-
-class SimpleRequestHandler: public RequestHandler
-{
-public:
-    SimpleRequestHandler(const OCEntityHandlerResult& result = OC_EH_OK, int errorCode = 200) :
-        m_result{ result }, m_errorCode{ errorCode }
-    {
-    }
-
-    std::shared_ptr< OC::OCResourceResponse > buildResponse(PrimitiveServerResource& resource) override
-    {
-        auto response = std::make_shared< OC::OCResourceResponse >();
-
-        response->setErrorCode(getErrorCode(resource));
-        response->setResponseResult(getResponseResult(resource));
-        response->setResourceRepresentation(getOCRepresentation(resource));
-
-        return response;
-    }
-
-protected:
-    virtual int getErrorCode(PrimitiveServerResource&)
-    {
-        return m_errorCode;
-    }
-
-    virtual OCEntityHandlerResult getResponseResult(PrimitiveServerResource&)
-    {
-        return m_result;
-    }
-
-    virtual OC::OCRepresentation getOCRepresentation(PrimitiveServerResource& resource)
-    {
-        PrimitiveServerResource::LockGuard lock{ resource };
-        return ResourceAttributesConverter::toOCRepresentation(resource.getAttributes());
-    }
-
-private:
-    OCEntityHandlerResult m_result;
-    int m_errorCode;
-};
-
-
-class CustomAttrRequestHandler: public SimpleRequestHandler
-{
-public:
-    template <typename T>
-    CustomAttrRequestHandler(T&& attrs,
-            const OCEntityHandlerResult& result = OC_EH_OK, int errorCode = 200) :
-        SimpleRequestHandler{ result, errorCode }, m_attrs{ std::forward<T>(attrs) }
-    {
-    }
-
-protected:
-    virtual OC::OCRepresentation getOCRepresentation(PrimitiveServerResource& resource) override
-    {
-        return ResourceAttributesConverter::toOCRepresentation(m_attrs);
-    }
-
-private:
-    ResourceAttributes m_attrs;
-};
+}
 
 #endif // __REQUESTHANDLER_H

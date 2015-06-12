@@ -35,150 +35,162 @@ namespace OC
     class OCResourceRequest;
 }
 
-class NoLockException : public PrimitiveException
+namespace OIC
 {
-};
-
-class DeadLockException : public PrimitiveException
-{
-};
-
-class PrimitiveServerResource
-{
-private:
-    class WeakGuard;
-
-public:
-//    enum class AutoNotifyPolicy {
-//        NEVER,
-//        ALWAYS,
-//        UPDATED
-//    };
-
-    using Ptr = std::shared_ptr<PrimitiveServerResource>;
-    using ConstPtr = std::shared_ptr<const PrimitiveServerResource>;
-
-    class Builder
+    namespace Service
     {
-    public:
-        Builder(const std::string& uri, const std::string& type, const std::string& interface);
 
-        Builder& setDiscoverable(bool discoverable);
-        Builder& setObservable(bool observable);
+        class NoLockException : public PrimitiveException
+        {
+        };
 
-        Builder& setAttributes(const ResourceAttributes&);
-        Builder& setAttributes(ResourceAttributes&&);
+        class DeadLockException : public PrimitiveException
+        {
+        };
 
-        /**
-         * @throw PlatformException
-         */
-        PrimitiveServerResource::Ptr create();
+        class PrimitiveServerResource
+        {
+        private:
+            class WeakGuard;
 
-    private:
-        std::string m_uri;
-        std::string m_type;
-        std::string m_interface;
+        public:
+        //    enum class AutoNotifyPolicy {
+        //        NEVER,
+        //        ALWAYS,
+        //        UPDATED
+        //    };
 
-        uint8_t m_properties;
+            using Ptr = std::shared_ptr<PrimitiveServerResource>;
+            using ConstPtr = std::shared_ptr<const PrimitiveServerResource>;
 
-        ResourceAttributes m_resourceAttributes;
-    };
+            class Builder
+            {
+            public:
+                Builder(const std::string& uri, const std::string& type,
+                        const std::string& interface);
 
-    class LockGuard;
+                Builder& setDiscoverable(bool discoverable);
+                Builder& setObservable(bool observable);
 
-    typedef std::function< PrimitiveGetResponse(const PrimitiveRequest&, const ResourceAttributes&) > GetRequestHandler;
-    typedef std::function< PrimitiveSetResponse(const PrimitiveRequest&, const ResourceAttributes&) > SetRequestHandler;
+                Builder& setAttributes(const ResourceAttributes&);
+                Builder& setAttributes(ResourceAttributes&&);
 
-public:
-    PrimitiveServerResource(PrimitiveServerResource&&) = delete;
-    PrimitiveServerResource(const PrimitiveServerResource&) = delete;
+                /**
+                 * @throw PlatformException
+                 */
+                PrimitiveServerResource::Ptr create();
 
-    PrimitiveServerResource& operator=(PrimitiveServerResource&&) = delete;
-    PrimitiveServerResource& operator=(const PrimitiveServerResource&) = delete;
+            private:
+                std::string m_uri;
+                std::string m_type;
+                std::string m_interface;
 
-    template< typename T >
-    void setAttribute(const std::string& key, const T &value)
-    {
-        WeakGuard lock(*this);
-        m_resourceAttributes[key] = value;
+                uint8_t m_properties;
+
+                ResourceAttributes m_resourceAttributes;
+            };
+
+            class LockGuard;
+
+            typedef std::function< PrimitiveGetResponse(const PrimitiveRequest&,
+                    ResourceAttributes&) > GetRequestHandler;
+            typedef std::function< PrimitiveSetResponse(const PrimitiveRequest&,
+                    ResourceAttributes&) > SetRequestHandler;
+
+        public:
+            PrimitiveServerResource(PrimitiveServerResource&&) = delete;
+            PrimitiveServerResource(const PrimitiveServerResource&) = delete;
+
+            PrimitiveServerResource& operator=(PrimitiveServerResource&&) = delete;
+            PrimitiveServerResource& operator=(const PrimitiveServerResource&) = delete;
+
+            template< typename T >
+            void setAttribute(const std::string& key, const T &value)
+            {
+                WeakGuard lock(*this);
+                m_resourceAttributes[key] = value;
+            }
+
+            template< typename T >
+            T getAttribute(const std::string& key) const
+            {
+                WeakGuard lock(*this);
+                return m_resourceAttributes.at(key).get< T >();
+            }
+
+            bool hasAttribute(const std::string& key) const;
+
+            ResourceAttributes& getAttributes();
+            const ResourceAttributes& getAttributes() const;
+
+            bool isObservable() const;
+            bool isDiscoverable() const;
+
+            void setGetRequestHandler(GetRequestHandler);
+            void setSetRequestHandler(SetRequestHandler);
+
+            void notify() const;
+
+        //    void setAutoNotifyPolicy(AutoNotifyPolicy);
+
+        private:
+            PrimitiveServerResource(uint8_t, ResourceAttributes&&);
+
+            OCEntityHandlerResult entityHandler(std::shared_ptr< OC::OCResourceRequest >);
+
+            OCEntityHandlerResult handleRequest(std::shared_ptr< OC::OCResourceRequest >);
+            OCEntityHandlerResult handleRequestGet(std::shared_ptr< OC::OCResourceRequest >);
+            OCEntityHandlerResult handleRequestSet(std::shared_ptr< OC::OCResourceRequest >);
+            OCEntityHandlerResult handleObserve(std::shared_ptr< OC::OCResourceRequest >);
+
+            void expectOwnLock() const;
+
+        private:
+            const uint8_t m_properties;
+
+            OCResourceHandle m_resourceHandle;
+            ResourceAttributes m_resourceAttributes;
+
+            GetRequestHandler m_getRequestHandler;
+            SetRequestHandler m_setRequestHandler;
+
+            mutable std::atomic< std::thread::id > m_lockOwner;
+            mutable std::mutex m_mutex;
+        };
+
+        class PrimitiveServerResource::LockGuard
+        {
+        public:
+            LockGuard(const PrimitiveServerResource&);
+            ~LockGuard();
+
+            LockGuard(const LockGuard&) = delete;
+            LockGuard(LockGuard&&) = delete;
+
+            LockGuard& operator=(const LockGuard&) = delete;
+            LockGuard& operator=(LockGuard&&) = delete;
+
+        private:
+            const PrimitiveServerResource& m_serverResource;
+        };
+
+        class PrimitiveServerResource::WeakGuard
+        {
+        public:
+            WeakGuard(const PrimitiveServerResource&);
+            ~WeakGuard();
+
+            WeakGuard(const WeakGuard&) = delete;
+            WeakGuard(WeakGuard&&) = delete;
+
+            WeakGuard& operator=(const WeakGuard&) = delete;
+            WeakGuard& operator=(WeakGuard&&) = delete;
+
+        private:
+            const PrimitiveServerResource& m_serverResource;
+            bool m_hasLocked;
+        };
     }
-
-    template< typename T >
-    T getAttribute(const std::string& key) const
-    {
-        WeakGuard lock(*this);
-        return m_resourceAttributes.at(key).get< T >();
-    }
-
-    bool hasAttribute(const std::string& key) const;
-
-    ResourceAttributes& getAttributes();
-    const ResourceAttributes& getAttributes() const;
-
-//    bool isObservable() const;
-//    bool isDiscoverable() const;
-
-    void setGetRequestHandler(GetRequestHandler);
-    void setSetRequestHandler(SetRequestHandler);
-
- //   void notify();
-
-//    void setAutoNotifyPolicy(AutoNotifyPolicy);
-
-private:
-    PrimitiveServerResource(ResourceAttributes&&);
-
-    OCEntityHandlerResult entityHandler(std::shared_ptr< OC::OCResourceRequest >);
-
-    OCEntityHandlerResult handleRequest(std::shared_ptr< OC::OCResourceRequest >);
-    OCEntityHandlerResult handleRequestGet(std::shared_ptr< OC::OCResourceRequest >);
-    OCEntityHandlerResult handleRequestSet(std::shared_ptr< OC::OCResourceRequest >);
-    OCEntityHandlerResult handleObserve(std::shared_ptr< OC::OCResourceRequest >);
-
-    void assertOwnLock() const;
-
-private:
-    OCResourceHandle m_resourceHandle;
-    ResourceAttributes m_resourceAttributes;
-
-    GetRequestHandler m_getRequestHandler;
-    SetRequestHandler m_setRequestHandler;
-
-    mutable std::atomic<std::thread::id> m_lockOwner;
-    mutable std::mutex m_mutex;
-};
-
-class PrimitiveServerResource::LockGuard
-{
-public:
-    LockGuard(const PrimitiveServerResource&);
-    ~LockGuard();
-
-    LockGuard(const LockGuard&) = delete;
-    LockGuard(LockGuard&&) = delete;
-
-    LockGuard& operator=(const LockGuard&) = delete;
-    LockGuard& operator=(LockGuard&&) = delete;
-
-private:
-    const PrimitiveServerResource& m_serverResource;
-};
-
-class PrimitiveServerResource::WeakGuard
-{
-public:
-    WeakGuard(const PrimitiveServerResource&);
-    ~WeakGuard();
-
-    WeakGuard(const WeakGuard&) = delete;
-    WeakGuard(WeakGuard&&) = delete;
-
-    WeakGuard& operator=(const WeakGuard&) = delete;
-    WeakGuard& operator=(WeakGuard&&) = delete;
-
-private:
-    const PrimitiveServerResource& m_serverResource;
-    bool m_hasLocked;
-};
+}
 
 #endif
