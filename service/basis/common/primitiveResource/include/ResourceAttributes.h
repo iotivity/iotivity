@@ -43,6 +43,19 @@ namespace OIC
 {
     namespace Service
     {
+        class BadGetException: public PrimitiveException
+        {
+        public:
+            BadGetException(const std::string& what) : PrimitiveException{ what } {}
+            BadGetException(std::string&& what) : PrimitiveException{ std::move(what) } {}
+        };
+
+        class InvalidKeyException: public PrimitiveException
+        {
+        public:
+            InvalidKeyException(const std::string& what) : PrimitiveException{ what } {}
+            InvalidKeyException(std::string&& what) : PrimitiveException{ std::move(what) } {}
+        };
 
         class ResourceAttributes
         {

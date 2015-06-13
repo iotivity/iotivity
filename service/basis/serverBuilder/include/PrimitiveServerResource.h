@@ -42,10 +42,14 @@ namespace OIC
 
         class NoLockException: public PrimitiveException
         {
+        public:
+            NoLockException(std::string&& what) : PrimitiveException{ std::move(what) } {}
         };
 
         class DeadLockException: public PrimitiveException
         {
+        public:
+            DeadLockException(std::string&& what) : PrimitiveException{ std::move(what) } {}
         };
 
         class PrimitiveServerResource

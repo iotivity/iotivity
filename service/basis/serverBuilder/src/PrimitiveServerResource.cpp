@@ -180,7 +180,7 @@ namespace OIC
         {
             if (m_lockOwner != std::this_thread::get_id())
             {
-                throw NoLockException{ };
+                throw NoLockException{ "Must acquire the lock first using LockGuard." };
             }
         }
 
@@ -287,7 +287,7 @@ namespace OIC
         {
             if (m_serverResource.m_lockOwner == std::this_thread::get_id())
             {
-                throw DeadLockException{ };
+                throw DeadLockException{ "Can't lock recursively in same thread." };
             }
 
             m_serverResource.m_mutex.lock();

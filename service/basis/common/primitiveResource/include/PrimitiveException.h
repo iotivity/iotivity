@@ -35,6 +35,7 @@ namespace OIC
         public:
             PrimitiveException() {}
             PrimitiveException(const std::string& what) : m_what{ what } {}
+            PrimitiveException(std::string&& what) : m_what{ std::move(what) } {}
 
             const char* what() const noexcept override
             {
@@ -56,26 +57,6 @@ namespace OIC
         private:
             OCStackResult m_reason;
         };
-
-
-        class BadGetException: public PrimitiveException
-        {
-        public:
-            BadGetException(const std::string& what)
-            {
-
-            }
-        };
-
-        class InvalidKeyException: public PrimitiveException
-        {
-        public:
-            InvalidKeyException(const std::string& what)
-            {
-
-            }
-        };
-
     }
 }
 
