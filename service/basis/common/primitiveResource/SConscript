@@ -59,10 +59,10 @@ if not release:
 # Source files and Targets
 ######################################################################
 service_common_src = env.Glob('src/*.cpp')
-service_common_static = service_common_env.StaticLibrary('ServiceCommon', service_common_src)
-service_common_shared = service_common_env.SharedLibrary('ServiceCommon', service_common_src)
+service_common_static = service_common_env.StaticLibrary('service_common', service_common_src)
+service_common_shared = service_common_env.SharedLibrary('service_common', service_common_src)
 
-service_common_env.InstallTarget([service_common_static,service_common_shared], 'libServiceCommon')
+service_common_env.InstallTarget([service_common_static,service_common_shared], 'service_common')
 
 ######################################################################
 # Build Test
@@ -79,7 +79,7 @@ service_common_test_env.PrependUnique(LIBS = [
     'oc_logger',
     'connectivity_abstraction',
     'coap',
-    'libServiceCommon',
+    'service_common',
     gtest,
     gtest_main
     ])
