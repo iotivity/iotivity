@@ -28,6 +28,8 @@ Import('env')
 lib_env = env.Clone()
 SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', exports = 'lib_env')
 
+src_dir = lib_env.get('SRC_DIR')
+
 server_builder_env = lib_env.Clone()
 target_os = env.get('TARGET_OS')
 
@@ -40,7 +42,7 @@ server_builder_env.AppendUnique(CPPPATH = [
     '../common/primitiveResource/include/',
     ])
 
-server_builder_env.AppendUnique(CPPPATH = [env.get('SRC_DIR')+'/extlibs', 'include', 'src'])
+server_builder_env.AppendUnique(CPPPATH = [env.get('SRC_DIR')+'/extlibs', 'include'])
 
 if target_os not in ['windows', 'winrt']:
     server_builder_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
@@ -61,8 +63,37 @@ if not release:
 # Source files and Targets
 ######################################################################
 server_builder_src = env.Glob('src/*.cpp')
-server_builder_static = server_builder_env.StaticLibrary('ServerBuilder', server_builder_src)
-server_builder_shared = server_builder_env.SharedLibrary('ServerBuilder', server_builder_src)
+server_builder_static = server_builder_env.StaticLibrary('server_builder', server_builder_src)
+server_builder_shared = server_builder_env.SharedLibrary('server_builder', server_builder_src)
 
-server_builder_env.InstallTarget([server_builder_static,server_builder_shared], 'libServerBuilder')
+server_builder_env.InstallTarget([server_builder_static,server_builder_shared], 'server_builder')
 
+######################################################################
+# Build Test
+######################################################################
+server_builder_test_env = server_builder_env.Clone();
+server_builder_test_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+
+server_builder_test_env.AppendUnique(CPPPATH = [env.get('SRC_DIR')+'/extlibs/hippomocks-master'])
+
+gtest = File(src_dir + '/extlibs/gtest/gtest-1.7.0/lib/.libs/libgtest.a')
+gtest_main = File(src_dir + '/extlibs/gtest/gtest-1.7.0/lib/.libs/libgtest_main.a')
+
+server_builder_test_env.PrependUnique(LIBS = [
+    gtest,
+    gtest_main,
+    'server_builder',
+    'service_common',
+    'pthread',
+    'oc',
+    'octbstack',
+    'oc_logger',
+    'connectivity_abstraction',
+    'coap',
+    ])
+
+server_builder_test_src = env.Glob('unittests/*.cpp')
+
+server_builder_test = server_builder_test_env.Program('server_builder_test', server_builder_test_src)
+Alias("server_builder_test", server_builder_test)
+env.AppendTarget('server_builder_test')

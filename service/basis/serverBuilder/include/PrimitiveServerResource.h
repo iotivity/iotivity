@@ -40,11 +40,11 @@ namespace OIC
     namespace Service
     {
 
-        class NoLockException : public PrimitiveException
+        class NoLockException: public PrimitiveException
         {
         };
 
-        class DeadLockException : public PrimitiveException
+        class DeadLockException: public PrimitiveException
         {
         };
 
