@@ -274,6 +274,11 @@ namespace OIC
             return OC_EH_OK;
         }
 
+        PrimitiveServerResource::LockGuard::LockGuard(const PrimitiveServerResource::Ptr ptr) :
+                LockGuard{ *ptr }
+        {
+        }
+
         PrimitiveServerResource::LockGuard::LockGuard(
                 const PrimitiveServerResource& serverResource) :
                 m_serverResource(serverResource)

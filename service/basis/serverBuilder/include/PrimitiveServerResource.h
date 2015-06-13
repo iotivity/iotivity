@@ -162,6 +162,7 @@ namespace OIC
         {
         public:
             LockGuard(const PrimitiveServerResource&);
+            LockGuard(const PrimitiveServerResource::Ptr);
             ~LockGuard();
 
             LockGuard(const LockGuard&) = delete;
