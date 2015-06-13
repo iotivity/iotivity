@@ -65,7 +65,6 @@ namespace OIC
 
         OC::OCRepresentation CustomAttrRequestHandler::getOCRepresentation(
                 PrimitiveServerResource& resource)
-
         {
             return ResourceAttributesConverter::toOCRepresentation(m_attrs);
         }
