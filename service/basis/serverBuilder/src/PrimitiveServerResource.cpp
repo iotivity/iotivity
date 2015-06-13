@@ -158,6 +158,21 @@ namespace OIC
             return server;
         }
 
+
+        PrimitiveServerResource::~PrimitiveServerResource()
+        {
+            if (m_resourceHandle)
+            {
+                try
+                {
+                    OC::OCPlatform::unregisterResource(m_resourceHandle);
+                }
+                catch (...)
+                {
+                }
+            }
+        }
+
         bool PrimitiveServerResource::hasAttribute(const std::string& key) const
         {
             WeakGuard lock(*this);

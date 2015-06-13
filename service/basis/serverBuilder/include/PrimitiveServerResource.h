@@ -108,6 +108,8 @@ namespace OIC
             PrimitiveServerResource& operator=(PrimitiveServerResource&&) = delete;
             PrimitiveServerResource& operator=(const PrimitiveServerResource&) = delete;
 
+            ~PrimitiveServerResource();
+
             template< typename T >
             void setAttribute(const std::string& key, const T &value)
             {
