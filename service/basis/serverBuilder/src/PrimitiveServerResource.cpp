@@ -140,9 +140,16 @@ namespace OIC
             OC::EntityHandler entityHandler{ std::bind(&PrimitiveServerResource::entityHandler,
                     server.get(), std::placeholders::_1) };
 
-            expectOCStackResultOK(
-                    OC::OCPlatform::registerResource(handle, m_uri, m_type, m_interface,
-                            entityHandler, m_properties));
+            try
+            {
+                expectOCStackResultOK(
+                        OC::OCPlatform::registerResource(handle, m_uri, m_type, m_interface,
+                                entityHandler, m_properties));
+            }
+            catch (OC::OCException& e)
+            {
+                throw PlatformException(e.code());
+            }
 
             server->m_resourceHandle = handle;
 
