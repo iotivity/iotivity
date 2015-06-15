@@ -54,6 +54,7 @@ DataCache::DataCache(
     if(pResource->isObservable())
     {
         pResource->requestObserve(pObserveCB);
+        pResource->requestGet(pGetCB);
     }
     else
     {
@@ -83,7 +84,7 @@ CacheID DataCache::addSubscriber(CacheCB func, REPORT_FREQUENCY rf, long repeatT
 
     while(1)
     {
-        if(findSubscriber(newItem.reportID).first == 0 || newItem.reportID == 0)
+        if(findSubscriber(newItem.reportID).first != 0 || newItem.reportID == 0)
         {
             newItem.reportID = rand();
         }
@@ -156,6 +157,8 @@ void DataCache::onObserve(
         return;
     }
 
+    state = CACHE_STATE::READY;
+
     ResourceAttributes att = _rep.getAttributes();
 
     // set data
@@ -165,9 +168,8 @@ void DataCache::onObserve(
     for(auto & i : att)
     {
         const std::string &key = i.key();
-//        std::string value = i.value();
-        std::string val;
-        data->insert(CachedData::value_type(key, val));
+        std::string value = i.value().toString();
+        data->insert(CachedData::value_type(key, value));
     }
 
     // notify!!
@@ -184,7 +186,26 @@ void DataCache::onObserve(
 void DataCache::onGet(const HeaderOptions& _hos,
         const ResponseStatement& _rep, int _result)
 {
+    if(state == CACHE_STATE::READY_YET)
+    {
+        state = CACHE_STATE::READY;
+        ResourceAttributes att = _rep.getAttributes();
 
+        // set data
+        data->clear();
+
+
+        for(auto & i : att)
+        {
+            const std::string &key = i.key();
+            std::string value = i.value().toString();
+            data->insert(CachedData::value_type(key, value));
+        }
+    }
+    else
+    {
+
+    }
 }
 
 CACHE_STATE DataCache::getCacheState()

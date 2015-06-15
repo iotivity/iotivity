@@ -79,7 +79,7 @@ CacheID ResourceCacheManager::requestResourceCache(
     DataCachePtr newHandler = findDataCache(pResource);
     if(newHandler == nullptr)
     {
-        DataCachePtr newHandler = std::make_shared<DataCache>(pResource, func, rf, reportTime);
+        newHandler = std::make_shared<DataCache>(pResource, func, rf, reportTime);
         s_cacheDataList->push_back(newHandler);
     }
     ret = newHandler->addSubscriber(func, rf, reportTime);
