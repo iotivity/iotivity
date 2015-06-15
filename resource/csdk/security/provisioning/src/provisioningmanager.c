@@ -823,7 +823,7 @@ static void SPRequestHandler(const CARemoteEndpoint_t *object, const CARequestIn
  */
 static SPResult findResource(unsigned short timeout)
 {
-    static char DOXM_OWNED_FALSE_MULTICAST_QUERY[] = "/oic/sec/doxm?Owned=\"FALSE\"";
+    static char DOXM_OWNED_FALSE_MULTICAST_QUERY[] = "/oic/sec/doxm?Owned=FALSE";
     CAResult_t res = CAGenerateToken(&gToken, CA_MAX_TOKEN_LEN);
     if (CA_STATUS_OK != res)
     {

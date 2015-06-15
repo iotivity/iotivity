@@ -38,6 +38,7 @@ OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr);
 void InitSecDoxmInstance(OicSecDoxm_t * doxm);
 OCEntityHandlerResult HandleDoxmPostRequest (const OCEntityHandlerRequest * ehRequest);
 void DeleteDoxmBinData(OicSecDoxm_t* doxm);
+OCEntityHandlerResult HandleDoxmGetRequest (const OCEntityHandlerRequest * ehRequest);
 #ifdef __cplusplus
 }
 #endif
@@ -97,6 +98,19 @@ TEST(DoxmEntityHandlerTest, DoxmEntityHandlerInvalidFlag)
     EXPECT_EQ(OC_EH_ERROR, DoxmEntityHandler(OCEntityHandlerFlag::OC_OBSERVE_FLAG, &req));
 }
 
+TEST(DoxmEntityHandlerTest, DoxmEntityHandlerValidRequest)
+{
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, InitDoxmResource());
+    char query[] = "oxm=0&owned=false&owner=owner1";
+    OCEntityHandlerRequest req = {};
+    req.method = OC_REST_GET;
+    req.query = (char*)OICMalloc(strlen(query) + 1);
+    strcpy((char *)req.query, query);
+    EXPECT_EQ(OC_EH_ERROR, DoxmEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, &req));
+
+    OICFree(req.query);
+}
+
 //BinToDoxmJSON Tests
 TEST(BinToDoxmJSONTest, BinToDoxmJSONNullDoxm)
 {
@@ -136,12 +150,8 @@ TEST(JSONToDoxmBinTest, JSONToDoxmBinNullJSON)
     EXPECT_TRUE(doxm == NULL);
 }
 
-//GetDoxmResourceData Test
-TEST(DoxmGetResourceDataTest, GetDoxmResourceData)
-{
-    EXPECT_TRUE(NULL == GetDoxmResourceData());
-}
 #if 0
+//HandleDoxmPostRequest Test
 TEST(HandleDoxmPostRequestTest, HandleDoxmPostRequestValidInput)
 {
     OCEntityHandlerRequest ehRequest = {};
