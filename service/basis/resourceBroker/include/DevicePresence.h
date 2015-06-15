@@ -26,25 +26,39 @@
 
 #include "BrokerTypes.h"
 #include "ResourcePresence.h"
+#include "PresenceSubscriber.h"
 
 class DevicePresence
 {
 public:
     DevicePresence(PrimitiveResourcePtr pResource, BrokerCB _cb);
+
+    DevicePresence();
     ~DevicePresence();
+
+    void createDevicePresence(PrimitiveResourcePtr pResource, BrokerCB _cb);
 
     void addPresenceResource(PrimitiveResourcePtr pResource, BrokerCB _cb);
     ResourcePresencePtr findResourcePresence(PrimitiveResourcePtr pResource, BrokerCB _cb);
+    ResourcePresencePtr findResourcePresence(PrimitiveResourcePtr pResource);
 
 private:
-
     SubscribeCallback pSubscribeRequestCB;
-    std::unique_ptr<std::list<ResourcePresencePtr>> presenceResourceList;
+
+    std::unique_ptr<std::list<ResourcePresencePtr>> resourcePresenceList;
+
 
     BasePresenceHandle presenceHandle;
-    void subscribeCB(OCStackResult ret, const unsigned int seq, const std::string& msg);
-
+    PresenceSubscriber presenceSubscriber;
+    TimeoutCallback pTimeoutCB;
+    DEVICE_STATE state;
     const std::string address;
+
+    void subscribeCB(OCStackResult ret,const unsigned int seq, const std::string& Hostaddress);
+    void requestAllResourcePresence();
+    bool isWithinTime;
+    void TimeOutCB(int msg);
+
 };
 
 #endif /* DEVICEPRESENCE_H_ */

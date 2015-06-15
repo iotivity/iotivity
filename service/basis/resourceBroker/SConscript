@@ -43,24 +43,25 @@ target_os = env.get('TARGET_OS')
 ######################################################################
 resourcebroker_env.AppendUnique(CPPPATH = ['include'])
 resourcebroker_env.AppendUnique(CPPPATH = ['../common/primitiveResource/include'])
-resourcebroker_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'libcoap'])
+resourcebroker_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+resourcebroker_env.PrependUnique(LIBS = ['ServiceCommon','oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'libcoap'])
+
 
 if target_os not in ['windows', 'winrt']:
-	resourcebroker_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
+    resourcebroker_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 
 if target_os == 'linux':
-	resourcebroker_env.AppendUnique(LIBS = ['pthread'])
+    resourcebroker_env.AppendUnique(LIBS = ['pthread'])
 
 ######################################################################
 # Source files and Targets
 ######################################################################
-CACHE_SRC_DIR = 'src/'
+BROKER_SRC_DIR = 'src/'
 resourcebroker_src = [
-        CACHE_SRC_DIR + 'ResourceBroker.cpp',
-        CACHE_SRC_DIR + 'ResourcePresence.cpp',
-        CACHE_SRC_DIR + '../../common/primitiveResource/src/PrimitiveResource.cpp',
-        CACHE_SRC_DIR + '../../common/primitiveResource/src/ResourceAttributes.cpp',
-        CACHE_SRC_DIR + 'DevicePresence.cpp']
+        BROKER_SRC_DIR + 'ResourceBroker.cpp',
+        BROKER_SRC_DIR + 'ResourcePresence.cpp',
+        BROKER_SRC_DIR + 'DevicePresence.cpp']
+
 
 if target_os in ['tizen','android'] :
     resourcebrokersdk = resourcebroker_env.SharedLibrary('ResourceBroker', resourcebroker_src)
@@ -70,5 +71,6 @@ else :
 resourcebroker_env.InstallTarget(resourcebrokersdk, 'libResouceBroker')
 
 # Go to build sample apps
-#SConscript('SampleApp/SConscript')
+SConscript('SampleApp/SConscript')
+
 

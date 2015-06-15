@@ -25,6 +25,7 @@
 #define DEFAULT_CONTEXT_VALUE 0x99
 
 ResourceBroker * ResourceBroker::s_instance = NULL;
+std::mutex ResourceBroker::s_mutexForCreation;
 std::unique_ptr<std::list< DevicePresencePtr >>  ResourceBroker::s_presenceList(nullptr);
 
 ResourceBroker::ResourceBroker()
@@ -73,9 +74,15 @@ OCStackResult ResourceBroker::hostResource(PrimitiveResourcePtr pResource, Broke
     }
 
     DevicePresencePtr presenceItem = findDevicePresence(pResource, cb);
-    if(presenceItem == NULL)
+
+    if(presenceItem == nullptr)
     {
-        DevicePresencePtr newItem = DevicePresencePtr(new DevicePresence(pResource, cb));
+        OC_LOG_V(DEBUG, BROKER_TAG, "Not found any Handled Device.");
+        OC_LOG_V(DEBUG, BROKER_TAG, "Create New Device Presence Handler.");
+
+        DevicePresencePtr newItem = DevicePresencePtr(new DevicePresence());
+        newItem->createDevicePresence(pResource, cb);
+
         s_presenceList->push_back(newItem);
     }
     else
@@ -85,6 +92,25 @@ OCStackResult ResourceBroker::hostResource(PrimitiveResourcePtr pResource, Broke
 
     return ret;
 }
+
+OCStackResult ResourceBroker::cancelHostResource(PrimitiveResourcePtr pResource)
+{
+    return OC_STACK_OK;
+}
+
+BROKER_STATE ResourceBroker::getResourceState(PrimitiveResourcePtr pResource)
+{
+    BROKER_STATE retState = BROKER_STATE::NONE;
+
+    auto foundResource = findResourcePresence(pResource);
+
+    if(foundResource != nullptr)
+    {
+        retState = foundResource->getResourceState();
+    }
+    return retState;
+}
+
 
 DevicePresencePtr ResourceBroker::findDevicePresence(PrimitiveResourcePtr pResource, BrokerCB cb)
 {
@@ -124,6 +150,28 @@ ResourcePresencePtr ResourceBroker::findResourcePresence(PrimitiveResourcePtr pR
     {
         DevicePresencePtr foundDevice = findDevicePresence(pResource, cb);
         retResource = foundDevice->findResourcePresence(pResource, cb);
+    }
+
+    return retResource;
+}
+
+ResourcePresencePtr ResourceBroker::findResourcePresence(PrimitiveResourcePtr pResource)
+{
+    ResourcePresencePtr retResource(nullptr);
+    if (s_presenceList->empty())// || pResource->isEmpty())
+    {
+        return retResource;
+    }
+    else
+    {
+        for(auto & it : * s_presenceList)
+        {
+            auto temp = it->findResourcePresence(pResource);
+            if(temp != nullptr)
+            {
+                retResource = temp;
+            }
+        }
     }
 
     return retResource;

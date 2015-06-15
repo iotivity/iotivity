@@ -39,13 +39,23 @@ public:
 
     void requestResourceState();
 
+    PrimitiveResourcePtr getPrimitiveResource();
+    BROKER_STATE getResourceState();
+    void setResourcestate(BROKER_STATE _state);
+    void executeAllBrokerCB();
+
 private:
     PrimitiveResourcePtr primitiveResource;
 
     std::unique_ptr<std::list<BrokerRequesterInfoPtr>> requesterList;
 
+    BROKER_STATE state;
     GetCallback pGetCB;
+    TimeoutCallback pTimeoutCB;
     void GetCB(const HeaderOptions &hos, const ResponseStatement& rep, int seq);
+    bool isWithinTime;
+    void TimeOutCB(int msg);
+
 };
 
 #endif /* RESOURCEPRESENCE_H_ */

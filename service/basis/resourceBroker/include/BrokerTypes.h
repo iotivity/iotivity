@@ -26,11 +26,14 @@
 
 #include "OCPlatform.h"
 #include "octypes.h"
+#include "logger.h"
 
 #include "PrimitiveResource.h"
 
 #define BROKER_TAG PCF("BROKER")
+
 #define BROKER_TRANSPORT OCConnectivityType::OC_IPV4
+
 
 struct BrokerRequesterInfo;
 class ResourcePresence;
@@ -50,19 +53,38 @@ typedef std::shared_ptr<BrokerRequesterInfo> BrokerRequesterInfoPtr;
 typedef std::shared_ptr<ResourcePresence> ResourcePresencePtr;
 typedef std::shared_ptr<DevicePresence> DevicePresencePtr;
 
-enum class DISCOVER_TRANSACTION
-{
-    KEEP = 0,
-    DELETE
-};
-
+/*
+ * @BROKER_STATE
+ * brief : resourcePresence state
+ * ALIVE       - It means that 'getCB' function receives 'OK' message
+ * REQUESTED   - It means that broker receives the request for presence checking
+ * LOST_SIGNAL - In case that 'getCB' function receives the message except 'OK'
+ * DESTROYED   - In case that the presence checking is dismissed for the resource ,
+ *               or there is no matched value in the Broker Callback list
+ * NONE        - To be determined.
+ */
 enum class BROKER_STATE
 {
     ALIVE = 0,
     REQUESTED,
     LOST_SIGNAL,
-    DESTROYED
+    DESTROYED,
+    NONE
 };
+/*
+ * @DEVICE_STATE
+ * brief : devicePresence state
+ * ALIVE       - It means that 'subscribeCB' function receives 'OK' message
+ * REQUESTED   - It means that broker receives the request for presence checking
+ * LOST_SIGNAL - In case that 'subscribeCB' function receives the message except 'OK'
+ */
+enum class DEVICE_STATE
+{
+    ALIVE = 0,
+    REQUESTED,
+    LOST_SIGNAL
+};
+
 
 struct BrokerRequesterInfo
 {
@@ -74,5 +96,6 @@ typedef std::function<void(OCStackResult, const unsigned int,
         const std::string&)> SubscribeCallback;
 
 typedef std::function<void(const HeaderOptions&, const ResponseStatement&, int)> GetCallback;
+typedef std::function<void(int)> TimeoutCallback;
 
 #endif // BROKERTYPES_H_

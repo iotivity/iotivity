@@ -26,16 +26,22 @@ ResourcePresence::ResourcePresence(PrimitiveResourcePtr pResource, BrokerCB _cb)
 
     pGetCB = std::bind(&ResourcePresence::GetCB, this,
             std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
-
+    pTimeoutCB = std::bind(&ResourcePresence::TimeOutCB, this,
+            std::placeholders::_1);
     requesterList
     = std::unique_ptr<std::list<BrokerRequesterInfoPtr>>(new std::list<BrokerRequesterInfoPtr>);
-
+    //TODO generate Timer(if(!isTimer))
+    //register pTimeroutCB
     addBrokerRequesterCB(_cb);
+    state = BROKER_STATE::REQUESTED;
+    this->isWithinTime = true;
 }
 
 ResourcePresence::~ResourcePresence()
 {
     requesterList->clear();
+
+    state = BROKER_STATE::DESTROYED;
 }
 
 void ResourcePresence::addBrokerRequesterCB(BrokerCB _cb)
@@ -48,9 +54,108 @@ void ResourcePresence::addBrokerRequesterCB(BrokerCB _cb)
 void ResourcePresence::requestResourceState()
 {
     primitiveResource->requestGet(pGetCB);
-}
 
+}
+void ResourcePresence::executeAllBrokerCB()
+{
+    OC_LOG_V(DEBUG, BROKER_TAG, "executeAllBrokerCB()");
+    for(BrokerRequesterInfoPtr & item : * requesterList)
+    {
+        item->brockerCB(this->state);
+    }
+}
+void ResourcePresence::setResourcestate(BROKER_STATE _state)
+{
+    this->state = _state;
+
+}
+void ResourcePresence::TimeOutCB(int msg)
+{
+    this->isWithinTime = false;
+    OC_LOG_V(DEBUG, BROKER_TAG, "Timeout execution. will be discard after receiving cb message");
+    this->state = BROKER_STATE::LOST_SIGNAL;
+
+}
 void ResourcePresence::GetCB(const HeaderOptions &hos, const ResponseStatement& rep, int seq)
 {
+    try
+    {
+        //TODO : cancel timer if(isTimer)
+        if(isWithinTime)
+        {
 
+            OC_LOG_V(DEBUG, BROKER_TAG, "broker state :: %d",(int)state);
+            state = BROKER_STATE::ALIVE;
+            OC_LOG_V(DEBUG, BROKER_TAG, "broker state changed :: %d",(int)state);
+            OC_LOG_V(DEBUG, BROKER_TAG, "GET request was successful");
+
+            if(!requesterList->empty())
+            {
+                executeAllBrokerCB();
+            }
+            else
+            {
+                OC_LOG_V(DEBUG, BROKER_TAG, "None exist resource for request");
+                state = BROKER_STATE::DESTROYED;
+            }
+        }
+        else
+        {
+            OC_LOG_V(DEBUG, BROKER_TAG, "its message is not available because of Timeout msg");
+            OC_LOG_V(DEBUG, BROKER_TAG, "broker state :: %d",(int)state);
+            state = BROKER_STATE::ALIVE;
+            OC_LOG_V(DEBUG, BROKER_TAG, "broker state changed :: %d",(int)state);
+            OC_LOG_V(DEBUG, BROKER_TAG, "GET request was successful");
+            //notify cb message to user.
+            if(!requesterList->empty())
+            {
+                executeAllBrokerCB();
+            }
+            else
+            {
+                OC_LOG_V(DEBUG, BROKER_TAG, "None exist resource for request");
+                state = BROKER_STATE::DESTROYED;
+            }
+            isWithinTime = true;
+        }
+    }
+    catch(std::exception& e)
+    {
+
+    }
+}
+/*
+ * TODO : getCB logic is not fixed until now. below logic will be used forwarding task.
+ *
+ * //            if(eCode == OC_STACK_OK)
+//            {
+                OC_LOG_V(DEBUG, BROKER_TAG, "broker state :: %d",(int)state);
+                state = BROKER_STATE::ALIVE;
+                OC_LOG_V(DEBUG, BROKER_TAG, "broker state changed :: %d",(int)state);
+                OC_LOG_V(DEBUG, BROKER_TAG, "GET request was successful");
+//                std::cout << "[ResourcePresence]" << "Resource URI: " << rep.getUri() << std::endl;
+//            }
+//            else
+//            {
+//                std::cout << "[ResourcePresence]" << "onGET Response error: " << eCode << std::endl;
+                if(!requesterList->empty())
+                {
+                    executeAllBrokerCB();
+                }
+                else
+                {
+                    OC_LOG_V(DEBUG, BROKER_TAG, "None exist resource for request");
+                    state = BROKER_STATE::DESTROYED;
+                }
+//            }
+ */
+
+PrimitiveResourcePtr ResourcePresence::getPrimitiveResource()
+{
+    return primitiveResource;
+}
+
+BROKER_STATE ResourcePresence::getResourceState()
+{
+    return state;
 }

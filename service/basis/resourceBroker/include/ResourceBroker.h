@@ -34,13 +34,15 @@
 class ResourceBroker
 {
 public:
-    ResourceBroker * getInstance();
+    static ResourceBroker * getInstance();
 
     OCStackResult hostResource(PrimitiveResourcePtr pResource, BrokerCB cb);
 
     OCStackResult cancelHostResource(PrimitiveResourcePtr pResource);
 
-    OCStackResult getResourceState(PrimitiveResourcePtr pResource);
+
+    BROKER_STATE getResourceState(PrimitiveResourcePtr pResource);
+
 
 private:
     ResourceBroker();
@@ -52,6 +54,10 @@ private:
 
     ResourcePresencePtr findResourcePresence(PrimitiveResourcePtr pResource, BrokerCB cb);
     DevicePresencePtr findDevicePresence(PrimitiveResourcePtr pResource, BrokerCB cb);
+
+
+    ResourcePresencePtr findResourcePresence(PrimitiveResourcePtr pResource);
+
 };
 
 #endif /* RESOURCEBROKER_H_ */
