@@ -30,7 +30,7 @@ public class TemperatureResource implements IMessageLogger
         private OcResourceHandle mResourceHandle;
         private List<Byte> mObservationIds;
 
-        private static String TAG = "SampleProvider : ";
+        private static String TAG = "NMProvider : TemperatureResource";
 
         TemperatureResource(Context context)
         {
@@ -115,7 +115,7 @@ public class TemperatureResource implements IMessageLogger
             {
                 Log.e(TAG, "go exception");
                 logMessage(TAG + "RegisterResource error. " + e.getMessage());
-                Log.e(TAG, e.getMessage());
+                Log.e(TAG, "RegisterResource error. " + e.getMessage());
             }
 
             // logMessage(TAG + "Successfully registered resource");
@@ -243,6 +243,7 @@ public class TemperatureResource implements IMessageLogger
         public void logMessage(String msg)
         {
             logMsg(msg);
+            Log.i(TAG, msg);
         }
 
         public void logMsg(final String text)

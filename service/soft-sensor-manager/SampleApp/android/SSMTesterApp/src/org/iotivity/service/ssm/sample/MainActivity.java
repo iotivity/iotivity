@@ -45,7 +45,7 @@ public class MainActivity extends Activity {
     private ArrayList<Integer> mRunningQueries           = new ArrayList<Integer>();
 
     private IQueryEngineEvent  mQueryEngineEventListener = null;
-    private final String         LOG_TAG = this.getClass().getSimpleName();
+    private final String         LOG_TAG = "SSMSampleApp : " + this.getClass().getSimpleName();
     private static MainActivity  activityObj;
 
     void PrintLog(String log) {
@@ -54,6 +54,7 @@ public class MainActivity extends Activity {
         data.putString("Log", log);
         msg.setData(data);
         logHandler.sendMessage(msg);
+        Log.i(LOG_TAG, log);
     }
 
     private Handler      logHandler         = new Handler() {
@@ -203,18 +204,22 @@ public class MainActivity extends Activity {
                 switch (v.getId()) {
                     case R.id.btClear:
                         edtQuery.setText("");
+                        Log.i(LOG_TAG, "Query textbox is cleared");
                         break;
 
                     case R.id.btLogClear:
                         tvLog.setText("");
+                        Log.i(LOG_TAG, "Log textbox is cleared");
                         break;
 
                     case R.id.btFullDevice:
                         edtQuery.setText("subscribe Device if Device.dataId != 0");
+                        Log.i(LOG_TAG, "subscribe Device if Device.dataId != 0");
                         break;
 
                     case R.id.btDiscomfortIndex:
                         edtQuery.setText("subscribe Device.DiscomfortIndexSensor if Device.DiscomfortIndexSensor.discomfortIndex > 0");
+                        Log.i(LOG_TAG, "subscribe Device.DiscomfortIndexSensor if Device.DiscomfortIndexSensor.discomfortIndex > 0");
                         break;
                 }
             }

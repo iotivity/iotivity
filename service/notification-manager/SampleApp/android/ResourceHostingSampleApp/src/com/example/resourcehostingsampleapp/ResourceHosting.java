@@ -53,7 +53,7 @@ public class ResourceHosting extends Activity implements OnClickListener
         private final int OCSTACK_ERROR = 255;
         private final int RESOURCEHOSTING_DO_NOT_THREADRUNNING = -2;
 
-        private String TAG = "ResourceHosting";
+        private final String TAG = "NMResourceHosting : " + this.getClass().getSimpleName();
         private TextView mLogTextView;
         private String mLog = "";
         /**
@@ -151,6 +151,7 @@ public class ResourceHosting extends Activity implements OnClickListener
                     catch (Exception e)
                     {
                         Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
+                        Log.d(TAG, e.getMessage() + result);
                     }
                     break;
                 case R.id.btnStopHosting:
@@ -174,6 +175,7 @@ public class ResourceHosting extends Activity implements OnClickListener
         {
             mLog = "";
             mLogTextView.setText(mLog);
+            Log.i(TAG, "Log textbox is cleared");
         }
 
         /**
@@ -186,6 +188,7 @@ public class ResourceHosting extends Activity implements OnClickListener
         {
             mLog += msg + "\n";
             mLogTextView.setText(mLog);
+            Log.i(TAG, msg);
         }
 
         /**
