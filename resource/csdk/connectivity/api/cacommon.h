@@ -49,7 +49,12 @@ extern "C"
 /**
  * @brief Max header options data length
  */
+// TODO: Check feasibility of 128 max option len on Arduino
+#ifndef WITH_ROUTING
 #define CA_MAX_HEADER_OPTION_DATA_LENGTH 16
+#else
+#define CA_MAX_HEADER_OPTION_DATA_LENGTH 128
+#endif
 
 /**
 * @brief Max token length
@@ -94,6 +99,11 @@ extern "C"
 #define CA_OPTION_URI_QUERY 15
 #define CA_OPTION_ACCEPT 17
 #define CA_OPTION_LOCATION_QUERY 20
+
+#ifdef WITH_ROUTING
+// TODO: We need to define proper Option number.
+#define CA_OPTION_MESSAGE_SWITCHING 65524
+#endif
 
 /**
  * @brief Payload information from resource model
@@ -204,10 +214,16 @@ typedef struct
 {
 
     CAURI_t resourceUri;                    /**< Resource URI information **/
-    CAAddress_t addressInfo;                /**< Remote Endpoint address **/
-    CATransportType_t transportType;  /**< Connectivity of the endpoint**/
+    CAAddress_t addressInfo;                /**< Remote Endpoint address for next hop, which is also
+                                             destination if routing is not enabled **/
+    CATransportType_t transportType;        /**< Connectivity of the endpoint at next hop**/
     bool isSecured;                         /**< Secure connection**/
     CARemoteId_t identity;                  /**< Endpoint identity **/
+#ifdef WITH_ROUTING
+    CAAddress_t destinationInfo;            /**< If this is empty, "addressInfo" is treated
+                                             as destination **/
+    CATransportType_t destinationTransportType;
+#endif
 } CARemoteEndpoint_t;
 
 

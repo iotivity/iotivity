@@ -160,6 +160,7 @@ uint32_t CAGetOptionCount(coap_opt_iterator_t opt_iter);
  * @param   buflen           [IN]    buffer length of the result
  * @return  option count
  */
+ // TODO: Remove redundant optionLen argument
 uint32_t CAGetOptionData(const uint8_t *data, uint32_t len, uint8_t *option, uint32_t buflen);
 
 /**

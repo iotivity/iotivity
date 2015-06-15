@@ -38,6 +38,9 @@
 #include "camutex.h"
 #include "oic_malloc.h"
 #include "canetworkconfigurator.h"
+#ifdef WITH_ROUTING
+#include "routingmanagerutility.h"
+#endif
 
 #define TAG PCF("CA")
 #define SINGLE_HANDLE
@@ -80,10 +83,127 @@ static CARetransmission_t g_retransmissionContext;
 // handler field
 static CARequestCallback g_requestHandler = NULL;
 static CAResponseCallback g_responseHandler = NULL;
-static CAErrorCallback g_errorHandler = NULL;
 
-static void CAErrorHandler(const CARemoteEndpoint_t *remoteEndpoint,
-                           const void *data, uint32_t dataLen, CAResult_t result);
+static CAErrorCallback g_errorHandler = NULL;
+static void CAErrorHandler(const CARemoteEndpoint_t *remoteEndpoint, const void *data,
+                           uint32_t dataLen, CAResult_t result);
+
+#ifdef WITH_ROUTING
+
+/**
+ * @var g_routeMessageHandler
+ * @brief Callback to routing manager on reception of data.
+ */
+static CARouteMessageHandler g_routeMessageHandler = NULL;
+
+/**
+ * @brief   Checks if the Address of Remote endpoint is its own address.
+ * @param   endpoint    [IN]    Endpoint address
+ * @return  True or false
+ */
+bool CACheckIsOwnAddress(CARemoteEndpoint_t *endpoint)
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "OUT");
+    return false;
+}
+
+/**
+ * @brief   This function is used for Gateway device to send the request/response message
+ *          to Routing manager callback that was registered with CA.  Based on the parsed
+ *          route options, this function forwards the packet.  In case of Endpoint device, this
+ *          function parses the route option and check for source Address.  If it is present,
+ *          it adds to the endpoint and passes to the RI layer.
+ * @param   info              [IN,OUT]    Request/response message info.
+ * @param   code              [IN]        Code of the request/response message.
+ * @param   endpoint          [IN,OUT]    Endpoint address from which the message was actually
+ *                                        received.
+ * @param   isUnicastRequest  [OUT]       Set the value as 1 if the data has to be forwarded.
+ * @return  #CA_STATUS_OK or Appropriate error code.
+ */
+CAResult_t CARouteMessageHandlerInternal(CAInfo_t *info, uint32_t code,
+                                         CARemoteEndpoint_t *endpoint, uint8_t *isUnicastRequest)
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+    if (NULL != g_routeMessageHandler)
+    {
+        OIC_LOG(DEBUG, TAG, "Routing Manager is enabled");
+        CARemoteEndpoint_t destAddr = { 0 };
+        CAResult_t result = g_routeMessageHandler(info, endpoint, &destAddr);
+        if (CA_STATUS_OK != result)
+        {
+            OIC_LOG_V(ERROR, TAG, "Routing Manager failed : %d", result);
+            return result;
+        }
+        OIC_LOG_V(INFO, TAG, "Option Value: Num of Option is %d, option Length %d",
+                  info->numOptions, info->options[0].optionLength);
+
+        coap_pdu_t *pdu = (coap_pdu_t *) CAGeneratePDU(endpoint->resourceUri, code, *info);
+        if (NULL == pdu)
+        {
+            OIC_LOG(ERROR, TAG, "Generate pdu failed");
+            return CA_STATUS_FAILED;
+        }
+
+        if (0 < destAddr.transportType)
+        {
+            OIC_LOG(DEBUG, TAG, "Destination address is present");
+            if (false == CACheckIsOwnAddress(&destAddr))
+            {
+                OIC_LOG(DEBUG, TAG, "Not own address, forwarding the packet");
+                if (CA_IPV4 == destAddr.transportType)
+                {
+                    OIC_LOG_V(INFO, TAG, "Forwarding to Address: %s Port: %d",
+                              destAddr.addressInfo.IP.ipAddress,
+                              destAddr.addressInfo.IP.port);
+                }
+                else if (CA_EDR == destAddr.transportType)
+                {
+                    OIC_LOG_V(INFO, TAG, "Forwarding to Address: %s",
+                              destAddr.addressInfo.BT.btMacAddress);
+                }
+                else if (CA_LE == destAddr.transportType)
+                {
+                    OIC_LOG_V(INFO, TAG, "Forwarding to Address: %s",
+                              destAddr.addressInfo.LE.leMacAddress);
+                }
+
+                CASendUnicastData(&destAddr, pdu->hdr, pdu->length);
+                *isUnicastRequest = 1;
+                coap_delete_pdu(pdu);
+                return CA_STATUS_OK;
+            }
+        }
+        else
+        {
+            // We need to send Multicast data to all other interfaces + send the request
+            // to RI layer as well.
+            OIC_LOG_V(INFO, TAG, "Forwarding Multicast request to all transports except %d",
+                      endpoint->transportType);
+
+            CASendMulticastData(pdu->hdr, pdu->length, endpoint->transportType);
+            coap_delete_pdu(pdu);
+        }
+    }
+    else
+    {
+        // This checks if source option is present and add to the destination address
+        OIC_LOG(DEBUG, TAG, "This is endpoint device");
+        if (CA_STATUS_OK != RMGetDestinationAddress(info->options, info->numOptions, endpoint))
+        {
+            OIC_LOG(ERROR, TAG, "Get destination address failed");
+        }
+    }
+
+    if (CA_STATUS_OK != RMRemoveRouteOption(info->options, &info->numOptions))
+    {
+        OIC_LOG(ERROR, TAG, "Failed to remove Route Option");
+        // QN: Should we return?
+    }
+    OIC_LOG(DEBUG, TAG, "OUT");
+    return CA_STATUS_OK;
+}
+#endif
 
 static bool CAIsSelectedNetworkAvailable()
 {
@@ -244,6 +364,29 @@ static void CASendThreadProcess(void *threadData)
 
     CASendDataType_t type = data->type;
 
+#ifdef WITH_ROUTING
+    res = RMAddEmptyRouteOption(&data->options, &data->numOptions);
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "Adding empty option failed");
+        return;
+    }
+
+    if (SEND_TYPE_UNICAST == type)
+    {
+        if(0 < data->remoteEndpoint->destinationTransportType)
+        {
+            // Add the destination to route option from the remoteEndpoint->destinationInfo
+            res = RMAddDestToRouteOption(data->remoteEndpoint, &data->options, &data->numOptions);
+            if (CA_STATUS_OK != res)
+            {
+                OIC_LOG(ERROR, TAG, "Add destination option failed");
+                return;
+            }
+        }
+    }
+#endif
+
     if (SEND_TYPE_UNICAST == type)
     {
         coap_pdu_t *pdu = NULL;
@@ -251,18 +394,24 @@ static void CASendThreadProcess(void *threadData)
         if (NULL != data->requestInfo)
         {
             OIC_LOG(DEBUG, TAG, "requestInfo is available..");
-
+            // TODO:why CAData has "option" when "data->requestInfo" already have it
+            CAInfo_t info = data->requestInfo->info;
+            info.options = data->options;
+            info.numOptions = data->numOptions;
             pdu = (coap_pdu_t *) CAGeneratePDU(data->remoteEndpoint->resourceUri,
                                                data->requestInfo->method,
-                                               data->requestInfo->info);
+                                               info);
         }
         else if (NULL != data->responseInfo)
         {
             OIC_LOG(DEBUG, TAG, "responseInfo is available..");
-
+            // TODO:why CAData has "option" when "data->responseInfo" already have it
+            CAInfo_t info = data->responseInfo->info;
+            info.options = data->options;
+            info.numOptions = data->numOptions;
             pdu = (coap_pdu_t *) CAGeneratePDU(data->remoteEndpoint->resourceUri,
                                                data->responseInfo->result,
-                                               data->responseInfo->info);
+                                               info);
         }
         else
         {
@@ -311,7 +460,7 @@ static void CASendThreadProcess(void *threadData)
         {
             CALogPDUInfo(pdu);
 
-            res = CASendMulticastData(pdu->hdr, pdu->length);
+            res = CASendMulticastData(pdu->hdr, pdu->length, -1);
             if(CA_STATUS_OK != res)
             {
                 OIC_LOG_V(ERROR, TAG, "send failed:%d", res);
@@ -374,8 +523,8 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data, u
             for (i = 0; i < ReqInfo->info.numOptions; i++)
             {
                 OIC_LOG_V(DEBUG, TAG, "Request- optionID: %d", ReqInfo->info.options[i].optionID);
-
                 OIC_LOG_V(DEBUG, TAG, "Request- list: %s", ReqInfo->info.options[i].optionData);
+                OIC_LOG_V(DEBUG, TAG, "Request- Length: %d", ReqInfo->info.options[i].optionLength);
             }
         }
 
@@ -410,6 +559,21 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data, u
             endpoint->resourceUri[bufLen] = '\0';
             OIC_LOG_V(DEBUG, TAG, "URI : %s", endpoint->resourceUri);
         }
+
+#ifdef WITH_ROUTING
+        uint8_t isUnicastRequest = 0;
+        CAResult_t result = CARouteMessageHandlerInternal(&ReqInfo->info, code, endpoint,
+                                                          &isUnicastRequest);
+        if((CA_STATUS_OK != result && CA_NOT_SUPPORTED != result) || isUnicastRequest)
+        {
+            OIC_LOG(DEBUG, TAG, "Returning without sending to RI layer");
+            OICFree(ReqInfo);
+            coap_delete_pdu(pdu);
+            CAAdapterFreeRemoteEndpoint(endpoint);
+            return;
+        }
+#endif
+
         // store the data at queue.
         CAData_t *cadata = NULL;
         cadata = (CAData_t *) OICCalloc(1, sizeof(CAData_t));
@@ -484,6 +648,19 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data, u
             OIC_LOG_V(DEBUG, TAG, "URI : %s", endpoint->resourceUri);
         }
 
+#ifdef WITH_ROUTING
+        uint8_t isUnicastRequest = 0;
+        CAResult_t result = CARouteMessageHandlerInternal(&ResInfo->info, code, endpoint,
+                                                          &isUnicastRequest);
+        if((CA_STATUS_OK != result && CA_NOT_SUPPORTED != result) || isUnicastRequest)
+        {
+            OIC_LOG(DEBUG, TAG, "Returning without sending to RI layer");
+            OICFree(ResInfo);
+            coap_delete_pdu(pdu);
+            CAAdapterFreeRemoteEndpoint(endpoint);
+            return;
+        }
+#endif
         // store the data at queue.
         CAData_t *cadata = (CAData_t *) OICCalloc(1, sizeof(CAData_t));
         if (NULL == cadata)
@@ -840,6 +1017,15 @@ void CASetInterfaceCallbacks(CARequestCallback ReqHandler, CAResponseCallback Re
     g_errorHandler = errroHandler;
     OIC_LOG(DEBUG, TAG, "OUT");
 }
+
+#ifdef WITH_ROUTING
+void CASetRoutingMesssageHandler(CARouteMessageHandler messageHandler)
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+    g_routeMessageHandler = messageHandler;
+    OIC_LOG(DEBUG, TAG, "OUT");
+}
+#endif // WITH_ROUTING
 
 CAResult_t CAInitializeMessageHandler()
 {

@@ -98,10 +98,13 @@ CAResult_t CASendUnicastData(const CARemoteEndpoint_t *endpoint, const void *dat
  * @brief   Sends multicast data to all endpoints in the network.
  * @param   data           [IN]    data that needs to be sent
  * @param   length         [IN]    length of the data that needs to be sent
+ * @param   skipTransport  [IN]    Transport type on which data sending will be skipped.
+ *                                 To send to all transports, the value of exceptType
+ *                                 should be passed as -1.
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
 
-CAResult_t CASendMulticastData(const void *data, uint32_t length);
+CAResult_t CASendMulticastData(const void *data, uint32_t length, CATransportType_t skipTransport);
 
 /**
  * @brief   Start listening servers to receive search requests from clients

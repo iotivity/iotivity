@@ -107,6 +107,15 @@ CAResult_t CADetachMessageResourceUri(const CAURI_t resourceUri, const CAToken_t
 void CASetInterfaceCallbacks(CARequestCallback ReqHandler, CAResponseCallback RespHandler,
                              CAErrorCallback ErrorHandler);
 
+#ifdef WITH_ROUTING
+/**
+ * @brief   Setting the Routing Manager callback.
+ * @param   messageHandler     [IN] callback for Message handling in Routing Manager.
+ * @return  NONE
+ */
+void CASetRoutingMesssageHandler(CARouteMessageHandler messageHandler);
+#endif //WITH_ROUTING
+
 /**
  * @brief   Initialize the message handler by starting thread pool and initializing the
  *          send and receive queue

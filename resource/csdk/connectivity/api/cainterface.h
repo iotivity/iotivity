@@ -145,6 +145,31 @@ void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHand
 CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSCredentialsHandler GetDTLSCredentials);
 #endif //__WITH_DTLS__
 
+#ifdef WITH_ROUTING
+/**
+ * @brief   Callback function to Routing manager on reception of data.
+ * @param   message     [IN,OUT] Received coap packet. Route option will be
+ *                               added to the coap packet.
+ * @param   sender      [IN]     RemoteEndpoint which sent the packet.
+ * @param   destination [OUT]    Populated by RM by parsing message, CA then forwards packet to
+ *                               "destination".
+ * @return  #CA_STATUS_OK
+ * @remark  A new error code "CA_ACL_FAIL" can be added in CAResult_t which is returned.
+ *          In case "Sender" or "Destination" are not authorised, packet shouldn't be
+ *          forwarded in this case.
+ */
+typedef CAResult_t (*CARouteMessageHandler)(CAInfo_t *message, const CARemoteEndpoint_t *sender,
+                                            CARemoteEndpoint_t *destination);
+
+/**
+ * @brief   Register callbacks for Routing Manager.
+ * @param   messageHandler   [IN] Routing Manager Callback.
+ * @see     CARouteMessageHandler
+ * @return  #CA_STATUS_OK
+ */
+CAResult_t CARegisterRoutingMessageHandler(CARouteMessageHandler messageHandler);
+#endif
+
 /**
  * @brief   Create a Remote endpoint if the URI is available already.
  *          This is a Helper function which can be used before calling

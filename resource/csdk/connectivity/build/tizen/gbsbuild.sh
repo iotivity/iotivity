@@ -54,6 +54,8 @@ mkdir -p $sourcedir/tmp/con/extlibs/
 cp -R ./extlibs/tinydtls/ $sourcedir/tmp/con/extlibs/
 mkdir -p $sourcedir/tmp/con/c_common
 cp -R ./resource/c_common/* $sourcedir/tmp/con/c_common/
+mkdir -p $sourcedir/tmp/con/routing
+cp -R ./resource/csdk/routing/* $sourcedir/tmp/con/routing/
 
 cd $sourcedir
 cd $cur_dir/build/tizen

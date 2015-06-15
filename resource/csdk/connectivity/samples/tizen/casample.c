@@ -27,6 +27,9 @@
 #include <pthread.h>
 #include "cacommon.h"
 #include "cainterface.h"
+#ifdef WITH_ROUTING
+#include "routingmanager.h"
+#endif
 
 #ifdef __WITH_DTLS__
 #include "ocsecurityconfig.h"
@@ -267,6 +270,29 @@ int main()
 
     // set handler.
     CARegisterHandler(request_handler, response_handler, error_handler);
+
+#ifdef WITH_ROUTING
+    printf("\n Is this Gateway Device? \n");
+    printf("        [0] No\n");
+    printf("        [1] Yes\n");
+
+    char buf[MAX_BUF_LEN] = { 0 };
+    if (CA_STATUS_OK != get_input_data(buf, MAX_BUF_LEN))
+    {
+        return;
+    }
+
+    int isGateway = buf[0] - '0';
+    if (isGateway)
+    {
+        res = RMInitialize();
+        if (CA_STATUS_OK != res)
+        {
+            printf("Routing manager initialization failed\n");
+            return -1;
+        }
+    }
+#endif
 
     process();
 
@@ -1083,15 +1109,37 @@ void request_handler(const CARemoteEndpoint_t *object, const CARequestInfo_t *re
 
     printf("##########received request from remote device #############\n");
     printf("Uri: %s\n", object->resourceUri);
+
+    printf("\n*************************************************\n");
     if (CA_IPV4 == object->transportType)
     {
-        printf("Remote Address: %s Port: %d secured:%d\n", object->addressInfo.IP.ipAddress,
+        printf("\nData received from: %s Port: %d secured:%d\n", object->addressInfo.IP.ipAddress,
                object->addressInfo.IP.port, object->isSecured);
     }
     else if (CA_EDR == object->transportType)
     {
-        printf("Remote Address: %s \n", object->addressInfo.BT.btMacAddress);
+        printf("\nData received from: %s \n", object->addressInfo.BT.btMacAddress);
     }
+
+#ifdef WITH_ROUTING
+
+    if (CA_IPV4 == object->destinationTransportType)
+    {
+        printf("\nSource Address: %s Port: %d \n", object->destinationInfo.IP.ipAddress,
+               object->destinationInfo.IP.port);
+    }
+    else if (CA_EDR == object->destinationTransportType)
+    {
+        printf("\nSource Address: %s \n", object->destinationInfo.BT.btMacAddress);
+    }
+    else if (CA_LE == object->destinationTransportType)
+    {
+        printf("\nSource Address: %s \n", object->destinationInfo.LE.leMacAddress);
+    }
+
+#endif
+    printf("\n*************************************************\n");
+
     printf("Data: %s\n", requestInfo->info.payload);
     printf("Message type: %s\n", MESSAGE_TYPE[requestInfo->info.type]);
 
@@ -1157,15 +1205,35 @@ void response_handler(const CARemoteEndpoint_t *object, const CAResponseInfo_t *
 {
     printf("##########Received response from remote device #############\n");
     printf("Uri: %s\n", object->resourceUri);
+
+    printf("\n*************************************************\n");
     if (CA_IPV4 == object->transportType)
     {
-        printf("Remote Address: %s Port: %d secured:%d\n", object->addressInfo.IP.ipAddress,
+        printf("\nData received from: %s Port: %d secured:%d\n", object->addressInfo.IP.ipAddress,
                object->addressInfo.IP.port, object->isSecured);
     }
     else if (CA_EDR == object->transportType)
     {
-        printf("Remote Address: %s \n", object->addressInfo.BT.btMacAddress);
+        printf("\nData received from: %s \n", object->addressInfo.BT.btMacAddress);
     }
+
+#ifdef WITH_ROUTING
+    if (CA_IPV4 == object->destinationTransportType)
+    {
+        printf("\nSource Address: %s Port: %d\n", object->destinationInfo.IP.ipAddress,
+               object->destinationInfo.IP.port);
+    }
+    else if (CA_EDR == object->destinationTransportType)
+    {
+        printf("\nSource Address: %s \n", object->destinationInfo.BT.btMacAddress);
+    }
+    else if (CA_LE == object->destinationTransportType)
+    {
+        printf("\nSource Address: %s \n", object->destinationInfo.LE.leMacAddress);
+    }
+#endif
+    printf("\n*************************************************\n");
+
     printf("response result : %d\n", responseInfo->result);
     printf("Data: %s\n", responseInfo->info.payload);
     printf("Message type: %s\n", MESSAGE_TYPE[responseInfo->info.type]);
@@ -1194,6 +1262,34 @@ void response_handler(const CARemoteEndpoint_t *object, const CAResponseInfo_t *
             printf("This is secure resource...\n");
         }
     }
+
+#ifdef WITH_ROUTING
+
+    if (0 < object->destinationTransportType)
+    {
+        printf("\n Do you want to send unicast data to Source address? \n");
+        printf("                [0] No \n");
+        printf("                [1] Yes \n");
+
+        char buf[MAX_BUF_LEN] = { 0 };
+        if (CA_STATUS_OK != get_input_data(buf, MAX_BUF_LEN))
+        {
+            return;
+        }
+
+        int isSendRequest = buf[0] - '0';
+        if (isSendRequest)
+        {
+            CARequestInfo_t requestInfo = { 0 };
+            requestInfo.method = CA_GET;
+            requestInfo.info = responseInfo->info;
+            requestInfo.info.messageId =
+                (responseInfo->info.type == CA_MSG_CONFIRM) ? responseInfo->info.messageId : 0;
+            CASendRequest(object, &requestInfo);
+        }
+   }
+#endif
+
 }
 
 void error_handler(const CARemoteEndpoint_t *rep, const CAErrorInfo_t* errorInfo)
@@ -1290,7 +1386,7 @@ void send_response(const CARemoteEndpoint_t *endpoint, const CAInfo_t *info)
     CAInfo_t responseData = { 0 };
     responseData.type = messageType;
 
-    responseData.messageId = (info != NULL) ? info->messageId : 0;
+    responseData.messageId = (info != NULL && info->type == CA_MSG_CONFIRM) ? info->messageId : 0;
     if(CA_MSG_RESET != messageType)
     {
         responseData.token = (info != NULL) ? info->token : NULL;

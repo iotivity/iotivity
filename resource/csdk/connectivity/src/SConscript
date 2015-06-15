@@ -3,11 +3,12 @@
 ##
 
 Import('env')
+import os
 
 ca_os = env.get('TARGET_OS')
 ca_transport = env.get('TARGET_TRANSPORT')
 secured = env.get('SECURED')
-root_dir = './../'
+root_dir =  os.path.join(Dir('.').abspath, './../')
 ca_path = './'
 if ca_os == 'tizen':
 	current_dir = root_dir
@@ -36,8 +37,16 @@ if ca_os not in ['arduino', 'windows', 'winrt']:
 if ca_os in ['darwin','ios']:
 	env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
 
-#Getting common source files
-env.SConscript('./../common/SConscript')
+if ca_os == 'tizen':
+	#Getting common source files
+	env.SConscript(root_dir + '/common/SConscript')
+	#Getting routing source files
+	env.SConscript(root_dir + '/routing/SConscript')
+else:
+	#Getting common source files
+	env.SConscript(root_dir + '/common/SConscript')
+	#Getting routing source files
+	env.SConscript(root_dir + '../routing/SConscript')
 
 if env.get('SECURED') == '1':
 	if current_dir.find('connectivity') == -1:
@@ -64,7 +73,7 @@ if ca_os == 'arduino':
 		ca_path + 'caretransmission_singlethread.c',
 		]
 else:
-	env.AppendUnique(CPPDEFINES = ['MULTI_THREAD'])
+	env.AppendUnique(CPPDEFINES = ['MULTI_THREAD','WITH_ROUTING'])
 	ca_common_src = [
 		ca_path + 'caconnectivitymanager.c',
 		ca_path + 'cainterfacecontroller.c',

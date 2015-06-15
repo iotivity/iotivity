@@ -128,6 +128,20 @@ CAResult_t CARegisterDTLSCredentialsHandler(
 }
 #endif //__WITH_DTLS__
 
+#ifdef WITH_ROUTING
+CAResult_t CARegisterRoutingMessageHandler(CARouteMessageHandler messageHandler)
+{
+    OIC_LOG(DEBUG, TAG, "IN: CARegisterRoutingMessageHandler");
+    if(!g_isInitialized)
+    {
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+    CASetRoutingMesssageHandler(messageHandler);
+    OIC_LOG_V(DEBUG, TAG, "OUT : CARegisterRoutingMessageHandler");
+    return CA_STATUS_OK;
+}
+#endif
+
 CAResult_t CACreateRemoteEndpoint(const CAURI_t uri, const CATransportType_t transportType,
                                   CARemoteEndpoint_t **remoteEndpoint)
 {

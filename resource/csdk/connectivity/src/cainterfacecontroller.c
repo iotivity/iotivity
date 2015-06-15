@@ -274,8 +274,7 @@ CAResult_t CAGetNetworkInfo(CALocalConnectivity_t **info, uint32_t *size)
     // #3. add data into result
     // memory allocation
 
-    CALocalConnectivity_t *resInfo = (CALocalConnectivity_t *)
-                                     OICCalloc(resSize, sizeof(CALocalConnectivity_t));
+    CALocalConnectivity_t * resInfo = OICCalloc(resSize, sizeof(*resInfo));
     CA_MEMORY_ALLOC_CHECK(resInfo);
 
     // #4. save data
@@ -353,7 +352,7 @@ CAResult_t CASendUnicastData(const CARemoteEndpoint_t *endpoint, const void *dat
     return res;
 }
 
-CAResult_t CASendMulticastData(const void *data, uint32_t length)
+CAResult_t CASendMulticastData(const void *data, uint32_t length, CATransportType_t skipTransport)
 {
     OIC_LOG(DEBUG, TAG, "Send multicast data to enabled interface..");
 
@@ -383,6 +382,12 @@ CAResult_t CASendMulticastData(const void *data, uint32_t length)
         if (index == -1)
         {
             OIC_LOG(DEBUG, TAG, "unknown connectivity type!");
+            continue;
+        }
+
+        if(skipTransport == connType)
+        {
+            OIC_LOG(DEBUG, TAG, "Ignore the same connectivity type");
             continue;
         }
 
