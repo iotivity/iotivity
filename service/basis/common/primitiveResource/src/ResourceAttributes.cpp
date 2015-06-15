@@ -20,7 +20,47 @@
 
 #include <ResourceAttributes.h>
 
+#include <internal/ResourceAttributesUtils.h>
 #include <internal/ResourceAtrributesConverter.h>
+
+#include <boost/lexical_cast.hpp>
+
+class ToStringVisitor : public boost::static_visitor<std::string>
+{
+public:
+    ToStringVisitor() = default;
+    ToStringVisitor(const ToStringVisitor&) = delete;
+    ToStringVisitor(ToStringVisitor&&) = delete;
+
+    ToStringVisitor& operator=(const ToStringVisitor&) = delete;
+    ToStringVisitor& operator=(ToStringVisitor&&) = delete;
+
+    template < typename T >
+    std::string operator()(const T& value) const
+    {
+        return boost::lexical_cast<std::string>(value);
+    }
+
+    std::string operator()(std::nullptr_t) const
+    {
+        return "";
+    }
+
+    std::string operator()(bool value) const
+    {
+        return value ? "true" : "false";
+    }
+
+    std::string operator()(const std::string& value) const
+    {
+        return value;
+    }
+
+    std::string operator()(const ResourceAttributes&) const
+    {
+        return "Attributes";
+    }
+};
 
 bool operator==(const char* lhs, const ResourceAttributes::Value& rhs)
 {
@@ -56,7 +96,7 @@ ResourceAttributes::Value::Value(Value&& from) :
 
 auto ResourceAttributes::Value::operator=(const Value& rhs) -> Value&
 {
-    *m_data = new ValueVariant{ *rhs.m_data };
+    *m_data = *rhs.m_data;
     return *this;
 }
 
@@ -77,10 +117,10 @@ bool ResourceAttributes::Value::operator==(const char* rhs) const
     return equals< std::string >(rhs);
 }
 
-//bool ResourceAttributes::Value::operator==(std::nullptr_t) const
-//{
-//    return isTypeOf< std::nullptr_t >();
-//}
+std::string ResourceAttributes::Value::toString() const
+{
+    return boost::apply_visitor(ToStringVisitor(), *m_data);
+}
 
 auto ResourceAttributes::KeyValuePair::KeyVisitor::operator() (iterator* iter) const
         -> result_type {
@@ -252,10 +292,14 @@ auto ResourceAttributes::end() -> iterator
     return iterator{ m_keyValues.end() };
 }
 
-
 auto ResourceAttributes::begin() const -> const_iterator
 {
     return const_iterator{ m_keyValues.begin() };
+}
+
+auto ResourceAttributes::end() const -> const_iterator
+{
+    return const_iterator{ m_keyValues.end() };
 }
 
 auto ResourceAttributes::cbegin() const -> const_iterator
@@ -274,6 +318,18 @@ auto ResourceAttributes::operator[](const std::string& key) -> Value&
 }
 
 auto ResourceAttributes::at(const std::string& key) -> Value&
+{
+    try
+    {
+        return m_keyValues.at(key);
+    }
+    catch (const std::out_of_range&)
+    {
+        throw InvalidKeyException{ "" };
+    }
+}
+
+auto ResourceAttributes::at(const std::string& key) const -> const Value&
 {
     try
     {
@@ -305,3 +361,72 @@ size_t ResourceAttributes::size() const
     return m_keyValues.size();
 }
 
+namespace OIC
+{
+    namespace Service
+    {
+        bool acceptableAttributeValue(const ResourceAttributes::Value& dest,
+                const ResourceAttributes::Value& value)
+        {
+            if (!dest.isTypeEqualWith(value))
+            {
+                return false;
+            }
+
+            static_assert(ResourceAttributes::is_supported_type< ResourceAttributes >::value,
+                    "ResourceAttributes doesn't have ResourceAttributes recursively.");
+
+            if (dest.isTypeOf< ResourceAttributes >()
+                    && !acceptableAttributes(dest.get< ResourceAttributes >(),
+                            value.get< ResourceAttributes >()))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        bool acceptableAttributes(const ResourceAttributes& dest, const ResourceAttributes& attr)
+        {
+            for (const auto& kv : attr)
+            {
+                if (!dest.contains(kv.key()))
+                {
+                    return false;
+                }
+
+                if (!acceptableAttributeValue(dest.at(kv.key()), kv.value()))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        void replaceAttributeValueRecursively(ResourceAttributes::Value& dest,
+                     const ResourceAttributes::Value& value)
+        {
+            static_assert(ResourceAttributes::is_supported_type< ResourceAttributes >::value,
+                    "ResourceAttributes doesn't have ResourceAttributes recursively.");
+
+            if (dest.isTypeOf< ResourceAttributes >())
+            {
+                replaceAttributesRecursively(dest.get< ResourceAttributes >(),
+                        value.get< ResourceAttributes >());
+            }
+            else
+            {
+                dest = value;
+            }
+        }
+
+        void replaceAttributesRecursively(ResourceAttributes& dest, const ResourceAttributes& attr)
+        {
+            for (const auto& kv : attr)
+            {
+                replaceAttributeValueRecursively(dest[kv.key()], kv.value());
+            }
+        }
+    }
+}

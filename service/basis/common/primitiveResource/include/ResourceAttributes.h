@@ -143,6 +143,8 @@ public:
             return false;
         }
 
+        std::string toString() const;
+
         friend bool operator==(const Value&, const Value&);
 
         template< typename T >
