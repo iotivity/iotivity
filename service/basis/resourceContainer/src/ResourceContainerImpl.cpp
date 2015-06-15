@@ -23,6 +23,10 @@
 #include "ResourceContainer.h"
 #include "BundleInfoInternal.h"
 #include "logger.h"
+#include "PrimitiveRequest.h"
+#include "PrimitiveResponse.h"
+#include "PrimitiveServerResource.h"
+
 
 #include <dlfcn.h>
 #include <unistd.h>
@@ -34,7 +38,8 @@
 
 using OC::oc_log_stream;
 
-auto info_logger = []() -> boost::iostreams::stream<OC::oc_log_stream>&
+/* Annother way to create a context: */
+auto info_logger = []() -> boost::iostreams::stream<OC::oc_log_stream> &
 {
     static OC::oc_log_stream ols(oc_make_ostream_logger);
     static boost::iostreams::stream<OC::oc_log_stream> os(ols);
@@ -43,7 +48,8 @@ auto info_logger = []() -> boost::iostreams::stream<OC::oc_log_stream>&
     return os;
 };
 
-auto error_logger = []() -> boost::iostreams::stream<OC::oc_log_stream>&
+/* Annother way to create a context: */
+auto error_logger = []() -> boost::iostreams::stream<OC::oc_log_stream> &
 {
     static OC::oc_log_stream ols(oc_make_ostream_logger);
     static boost::iostreams::stream<OC::oc_log_stream> os(ols);
@@ -76,11 +82,12 @@ namespace RC
 
     void ResourceContainerImpl::init(string configFile)
     {
-        Configuration config(configFile);
+        m_config = new Configuration(configFile);
         Configuration::configInfo bundles;
-        config.getConfiguredBundles(&bundles);
-        for(int i = 0; i < bundles.size(); i++){
-            BundleInfo* bundleInfo = BundleInfo::createBundleInfo();
+        m_config->getConfiguredBundles(&bundles);
+        for (int i = 0; i < bundles.size(); i++)
+        {
+            BundleInfo *bundleInfo = BundleInfo::createBundleInfo();
             bundleInfo->setPath(bundles[i]["path"]);
             bundleInfo->setVersion(bundles[i]["version"]);
             bundleInfo->setID(bundles[i]["id"]);
@@ -91,17 +98,17 @@ namespace RC
     }
 
     // loads the bundle
-    void ResourceContainerImpl::registerBundle(BundleInfo* bundleInfo)
+    void ResourceContainerImpl::registerBundle(BundleInfo *bundleInfo)
     {
         info_logger() << "Registering bundle: " << bundleInfo->getPath() << endl;
 
-        m_bundles.push_back((BundleInfoInternal*) bundleInfo);
-        ((BundleInfoInternal*) bundleInfo)->setId(m_bundles.size() - 1);
+        m_bundles.push_back((BundleInfoInternal *) bundleInfo);
+        ((BundleInfoInternal *) bundleInfo)->setId(m_bundles.size() - 1);
 
-        const char* error;
+        char *error;
 
-        activator_t* bundleActivator = NULL;
-        deactivator_t* bundleDeactivator = NULL;
+        activator_t *bundleActivator = NULL;
+        deactivator_t *bundleDeactivator = NULL;
 
         //sstream << bundleInfo.path << std::ends;
 
@@ -110,18 +117,18 @@ namespace RC
 
         if (bundleHandle != NULL)
         {
-            bundleActivator = (activator_t*) dlsym(bundleHandle, "externalActivateBundle");
-            bundleDeactivator = (deactivator_t*) dlsym(bundleHandle, "externalDeactivateBundle");
+            bundleActivator = (activator_t *) dlsym(bundleHandle, "externalActivateBundle");
+            bundleDeactivator = (deactivator_t *) dlsym(bundleHandle, "externalDeactivateBundle");
             if ((error = dlerror()) != NULL)
             {
                 error_logger() << error << endl;
             }
             else
             {
-                ((BundleInfoInternal*) bundleInfo)->setBundleActivator(bundleActivator);
-                ((BundleInfoInternal*) bundleInfo)->setBundleDeactivator(bundleDeactivator);
-                ((BundleInfoInternal*) bundleInfo)->setLoaded(true);
-                ((BundleInfoInternal*) bundleInfo)->setBundleHandle(bundleHandle);
+                ((BundleInfoInternal *) bundleInfo)->setBundleActivator(bundleActivator);
+                ((BundleInfoInternal *) bundleInfo)->setBundleDeactivator(bundleDeactivator);
+                ((BundleInfoInternal *) bundleInfo)->setLoaded(true);
+                ((BundleInfoInternal *) bundleInfo)->setBundleHandle(bundleHandle);
             }
         }
         else
@@ -135,13 +142,13 @@ namespace RC
 
     void ResourceContainerImpl::activateBundle(int id)
     {
-        activator_t* bundleActivator = m_bundles[id]->getBundleActivator();
+        activator_t *bundleActivator = m_bundles[id]->getBundleActivator();
         info_logger() << "Activating bundle: " << m_bundles[id]->getID() << ", "
-                << m_bundles[id]->getId() << endl;
+                      << m_bundles[id]->getId() << endl;
 
         if (bundleActivator != NULL)
         {
-            bundleActivator(this);
+            bundleActivator(this, m_bundles[id]->getID());
             m_bundles[id]->setActivated(true);
         }
         else
@@ -151,17 +158,17 @@ namespace RC
         }
     }
 
-    void ResourceContainerImpl::activateBundle(BundleInfo* bundleInfo)
+    void ResourceContainerImpl::activateBundle(BundleInfo *bundleInfo)
     {
-        if (((BundleInfoInternal*) bundleInfo)->isLoaded())
+        if (((BundleInfoInternal *) bundleInfo)->isLoaded())
         {
             activateBundle(bundleInfo->getId());
         }
     }
 
-    void ResourceContainerImpl::deactivateBundle(BundleInfo* bundleInfo)
+    void ResourceContainerImpl::deactivateBundle(BundleInfo *bundleInfo)
     {
-        if (((BundleInfoInternal*) bundleInfo)->isActivated())
+        if (((BundleInfoInternal *) bundleInfo)->isActivated())
         {
             deactivateBundle(bundleInfo->getId());
         }
@@ -169,9 +176,9 @@ namespace RC
 
     void ResourceContainerImpl::deactivateBundle(int id)
     {
-        deactivator_t* bundleDeactivator = m_bundles[id]->getBundleDeactivator();
+        deactivator_t *bundleDeactivator = m_bundles[id]->getBundleDeactivator();
         info_logger() << "De-activating bundle: " << m_bundles[id]->getID() << ", "
-                << m_bundles[id]->getId() << endl;
+                      << m_bundles[id]->getId() << endl;
 
         if (bundleDeactivator != NULL)
         {
@@ -195,34 +202,48 @@ namespace RC
 
     }
 
-    vector< Resource* > ResourceContainerImpl::listBundleResources(string id)
+    vector< Resource * > ResourceContainerImpl::listBundleResources(string id)
     {
-        vector< Resource* > ret;
+        vector< Resource * > ret;
         return ret;
     }
 
-    void ResourceContainerImpl::registerResource(Resource* resource)
+    void ResourceContainerImpl::registerResource(BundleResource *resource)
+    {
+        cout << "Register resource called.\n";
+        PrimitiveServerResource::Ptr server =
+            PrimitiveServerResource::Builder("/softSensors/discomfortIndex/1",
+                                             "core.softSensor",
+                                             "DEFAULT_INTERFACE").setObservable(false).setDiscoverable(true).create();
+
+        for (auto i : resource->m_mapAttributes)
+        {
+            cout << "Setting attribute " << i.first.c_str() << endl;
+            server->setAttribute(i.first.c_str(), i.second.c_str());
+        }
+
+    }
+
+    void ResourceContainerImpl::unregisterResource(BundleResource *resource)
     {
 
     }
 
-    void ResourceContainerImpl::unregisterResource(Resource* resource)
+    void ResourceContainerImpl::unregisterBundle(BundleInfo *bundleInfo)
     {
-
-    }
-
-    void ResourceContainerImpl::unregisterBundle(BundleInfo* bundleInfo){
-        if (((BundleInfoInternal*) bundleInfo)->isLoaded() && !((BundleInfoInternal*) bundleInfo)->isActivated())
+        if (((BundleInfoInternal *) bundleInfo)->isLoaded()
+            && !((BundleInfoInternal *) bundleInfo)->isActivated())
         {
             unregisterBundle(bundleInfo->getId());
         }
     }
 
-    void ResourceContainerImpl::unregisterBundle(int id){
-        void* bundleHandle = m_bundles[id]->getBundleHandle();
+    void ResourceContainerImpl::unregisterBundle(int id)
+    {
+        void *bundleHandle = m_bundles[id]->getBundleHandle();
         info_logger() << "Unregister bundle: " << m_bundles[id]->getID() << ", "
-                << m_bundles[id]->getId() << endl;
-        const char* error;
+                      << m_bundles[id]->getId() << endl;
+        char *error;
         dlclose(bundleHandle);
         if ((error = dlerror()) != NULL)
         {
@@ -230,9 +251,25 @@ namespace RC
         }
     }
 
-    ResourceContainerImpl* ResourceContainerImpl::getImplInstance()
+    ResourceContainerImpl *ResourceContainerImpl::getImplInstance()
     {
-        ResourceContainerImpl* ret = new ResourceContainerImpl();
+        ResourceContainerImpl *ret = new ResourceContainerImpl();
         return ret;
+    }
+
+    void ResourceContainerImpl::getCommonConfiguration(configInfo *configOutput)
+    {
+        m_config->getCommonConfiguration((Configuration::configInfo *) configOutput);
+    }
+
+    void ResourceContainerImpl::getBundleConfiguration(std::string bundleId, configInfo *configOutput)
+    {
+        m_config->getBundleConfiguration(bundleId, (Configuration::configInfo *) configOutput);
+    }
+
+    void ResourceContainerImpl::getResourceConfiguration(std::string bundleId,
+            std::vector<resourceInfo> *configOutput)
+    {
+        m_config->getResourceConfiguration(bundleId, configOutput);
     }
 }

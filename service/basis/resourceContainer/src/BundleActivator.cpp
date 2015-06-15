@@ -23,7 +23,8 @@
 
 using namespace RC;
 
-namespace RC{
+namespace RC
+{
     BundleActivator::BundleActivator()
     {
 
@@ -34,7 +35,8 @@ namespace RC{
 
     }
 
-    void BundleActivator::activateBundle(ResourceContainerBundleAPI* resourceContainer)
+    void BundleActivator::activateBundle(ResourceContainerBundleAPI *resourceContainer,
+                                         std::string bundleId)
     {
 
     }

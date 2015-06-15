@@ -21,6 +21,7 @@
 #ifndef BUNDLERESOURCE_H_
 #define BUNDLERESOURCE_H_
 
+#include "Configuration.h"
 #include <map>
 #include <string>
 
@@ -32,22 +33,17 @@ namespace RC
             BundleResource();
             virtual ~BundleResource();
 
-            virtual void onGetRequest() = 0;
-            virtual void onSetRequest() = 0;
+            virtual void onGetRequest(std::map <std::string, std::string> *attributes) = 0;
+            virtual void onSetRequest(std::map <std::string, std::string> attributes) = 0;
 
-            std::map <std::string, std::string> m_mapAttributes;
-    };
+            Configuration::resourceInfo getResourceInfo();
+            void setResourceInfo(Configuration::resourceInfo resourceInfo);
 
-    class SoftSensorResource : public BundleResource
-    {
         public:
-            SoftSensorResource();
-            virtual ~SoftSensorResource();
-
-            virtual void runLogic() = 0;
-
-            std::map <std::string, std::string> m_mapInputs;
+            std::map <std::string, std::string> m_mapAttributes;
+            Configuration::resourceInfo m_resourceInfo;
     };
+
 }
 
 #endif

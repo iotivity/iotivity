@@ -19,9 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "SampleBundle.h"
-#include "ResourceContainerBundleAPI.h"
-#include "Configuration.h"
-
+#include "DiscomfortIndexSensorResource.h"
 
 using namespace RC;
 
@@ -35,52 +33,71 @@ SampleBundle::~SampleBundle()
 {
 }
 
-void SampleBundle::activateBundle(ResourceContainerBundleAPI* resourceContainer)
+void SampleBundle::activateBundle(ResourceContainerBundleAPI *resourceContainer,
+                                  std::string bundleId)
 {
     std::cout << "SampleBundle::activateBundle called" << std::endl;
 
-    m_ResourceContainer = resourceContainer;
+    m_pResourceContainer = resourceContainer;
+    m_bundleId = bundleId;
 
-    // parse configuration, instantiate resource and register resources
-    Configuration::configInfo config;
-  //  m_ResourceContainer->getConfiguration(ConfigKey::CONFIG_RESOURCES, "oic.bundle.sample", &config);
+    vector<Configuration::resourceInfo> resourceConfig;
 
-    std::cout << "Resource Information" << std::endl;
-    // for (int i = 0; i < configParam.size(); i++)
-    //{
-    //     for (map <string, string>::iterator itor = configParam[i].begin(); itor != configParam[i].end();
-    //        itor++)
-    //
-    //       cout << "key : " << itor->first << " | value : " << itor->second << endl;
-    // }
+    resourceContainer->getResourceConfiguration(m_bundleId, &resourceConfig);
 
-    // createResource();
+    for (vector<Configuration::resourceInfo>::iterator itor = resourceConfig.begin();
+         itor != resourceConfig.end(); itor++)
+    {
+        createResource(*itor);
+    }
 }
 
 void SampleBundle::deactivateBundle()
 {
     std::cout << "SampleBundle::deactivateBundle called" << std::endl;
-    // unregister resources
+
+    for (std::vector<BundleResource *>::iterator itor = m_vecResources.begin();
+         itor != m_vecResources.end(); itor++)
+    {
+        destroyResource(*itor);
+    }
 }
 
-void SampleBundle::createResource()
+// TODO : has to be updated for setting the info
+void SampleBundle::createResource(Configuration::resourceInfo resourceInfo)
 {
-    //std::cout << "SampleBundle::createResource called" << std::endl;
-    //SampleBundleResource *newResource = new SampleBundleResource();
-    //m_vecResources.push_back(newResource);
-    //std::cout << "resourceContainer.registerResource()" << std::endl;
+    std::cout << "SampleBundle::createResource called" << std::endl;
+
+    DiscomfortIndexSensorResource *newResource = new DiscomfortIndexSensorResource();
+    newResource->setResourceInfo(resourceInfo);
+
+    m_pResourceContainer->registerResource(newResource);
+
+    m_vecResources.push_back(newResource);
 }
 
-void SampleBundle::destroyResource()
+void SampleBundle::destroyResource(BundleResource *resource)
 {
-    //std::cout << "SampleBundle::destroyResource called" << std::endl;
-    //std::cout << "resourceContainer.unregisterResource()" << std::endl;
+    std::cout << "SampleBundle::destroyResource called" << std::endl;
+
+    std::vector <BundleResource *>::iterator itor;
+
+    itor = std::find(m_vecResources.begin(), m_vecResources.end(), resource);
+
+    if (itor != m_vecResources.end())
+        m_vecResources.erase(itor);
+
+    // check
+    //delete resource;
+
+    m_pResourceContainer->unregisterResource(resource);
 }
 
-extern "C" void externalActivateBundle(ResourceContainerBundleAPI* resourceContainer)
+extern "C" void externalActivateBundle(ResourceContainerBundleAPI *resourceContainer,
+                                       std::string bundleId)
 {
     bundle = new SampleBundle();
-    bundle->activateBundle(resourceContainer);
+    bundle->activateBundle(resourceContainer, bundleId);
 }
 
 extern "C" void externalDeactivateBundle()

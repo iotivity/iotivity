@@ -33,11 +33,9 @@
 #include <vector>
 #include <map>
 
-struct SensorData
-{
-    std::string sensorName;
-    std::vector< std::map<std::string, std::string> > data;
-};
+// temp
+#include "BundleResource.h"
+#include "SoftSensorResource.h"
 
 namespace DiscomfortIndexSensorName
 {
@@ -76,10 +74,13 @@ namespace DiscomfortIndexSensorName
         public:
             DiscomfortIndexSensor();
 
-            int runLogic(std::vector< SensorData > &sensorData);
-            DIResult getInput(std::vector< SensorData > &contextDataList, InValue *data);
+            int runLogic(std::vector< RC::SoftSensorResource::SensorData > &sensorData);
+            DIResult getInput(std::vector< RC::SoftSensorResource::SensorData > &contextDataList,
+                              InValue *data);
             DIResult makeDiscomfortIndex(InValue *data);
-            SensorData setOutput(int property_count, InValue *data);
+            RC::SoftSensorResource::SensorData setOutput(int property_count, InValue *data);
+
+            RC::SoftSensorResource::SensorData m_output;
     };
 };
 

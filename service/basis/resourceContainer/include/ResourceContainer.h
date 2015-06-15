@@ -28,9 +28,6 @@
 
 #include "BundleInfo.h"
 
-#include "rapidxml/rapidxml.hpp"
-#include "rapidxml/rapidxml_print.hpp"
-
 using namespace std;
 
 namespace RC
@@ -44,23 +41,23 @@ namespace RC
 
     class ResourceContainer
     {
-    public:
-        ResourceContainer();
-        virtual ~ResourceContainer();
-        virtual void init() = 0;
-        virtual void init(string configFile) = 0;
-        virtual void registerBundle(BundleInfo* bundleinfo) = 0;
-        virtual void unregisterBundle(BundleInfo* bundleinfo) = 0;
-        virtual void unregisterBundle(int id) = 0;
-        virtual void activateBundle(int id) = 0;
-        virtual void deactivateBundle(int id) = 0;
-        virtual void activateBundleByName(string name) = 0;
-        virtual void deactivateBundleByName(string id) = 0;
-        virtual void activateBundle(BundleInfo* bundleInfo) = 0;
-        virtual void deactivateBundle(BundleInfo* bundleInfo) = 0;
-        virtual vector< Resource * > listBundleResources(string id) = 0;
+        public:
+            ResourceContainer();
+            virtual ~ResourceContainer();
+            virtual void init() = 0;
+            virtual void init(string configFile) = 0;
+            virtual void registerBundle(BundleInfo *bundleinfo) = 0;
+            virtual void unregisterBundle(BundleInfo *bundleinfo) = 0;
+            virtual void unregisterBundle(int id) = 0;
+            virtual void activateBundle(int id) = 0;
+            virtual void deactivateBundle(int id) = 0;
+            virtual void activateBundleByName(string name) = 0;
+            virtual void deactivateBundleByName(string id) = 0;
+            virtual void activateBundle(BundleInfo *bundleInfo) = 0;
+            virtual void deactivateBundle(BundleInfo *bundleInfo) = 0;
+            virtual vector< Resource * > listBundleResources(string id) = 0;
 
-        static ResourceContainer* getInstance();
+            static ResourceContainer *getInstance();
     };
 }
 

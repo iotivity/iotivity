@@ -26,7 +26,7 @@ using namespace RC;
 using OC::oc_log_stream;
 
 /* Annother way to create a context: */
-auto info_logger = []() -> boost::iostreams::stream<OC::oc_log_stream>&
+auto info_logger = []() -> boost::iostreams::stream<OC::oc_log_stream> &
 {
     static OC::oc_log_stream ols(oc_make_ostream_logger);
     static boost::iostreams::stream<OC::oc_log_stream> os(ols);
@@ -41,20 +41,11 @@ int main()
 
     info_logger() << "Starting container test." << std::flush;
 
-    /*BundleInfo* bundleInfo = BundleInfo::createBundleInfo();
-    bundleInfo->setPath(
-            "/home/iotivity/development/iotivity-mj/out/linux/x86/release/libSampleBundle.so");
-    bundleInfo->setVersion("1.0");
-    bundleInfo->setName("Sample Bundle");*/
-
-    ResourceContainer* container = ResourceContainer::getInstance();
+    ResourceContainer *container = ResourceContainer::getInstance();
     container->init("examples/ResourceContainerConfig.xml");
 
-    //container->registerBundle(bundleInfo);
-    //container->activateBundle(bundleInfo);
-    //container->deactivateBundle(bundleInfo);
-    //container->unregisterBundle(bundleInfo);
-
-    //bundleInfo.path = "/";
-    //bundleInfo.version = "1.0";
+    while (1)
+    {
+        ;
+    }
 }

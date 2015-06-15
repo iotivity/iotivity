@@ -30,11 +30,11 @@ namespace RC
     class BundleActivator
     {
 
-    public:
-        BundleActivator();
-        virtual ~BundleActivator();
-        virtual void activateBundle(ResourceContainerBundleAPI* resourceContainer);
-        virtual void deactivateBundle();
+        public:
+            BundleActivator();
+            virtual ~BundleActivator();
+            virtual void activateBundle(ResourceContainerBundleAPI *resourceContainer, std::string bundleId);
+            virtual void deactivateBundle();
     };
 }
 

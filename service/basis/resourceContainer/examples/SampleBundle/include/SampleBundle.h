@@ -21,10 +21,12 @@
 #ifndef SAMPLEBUNDLE_H_
 #define SAMPLEBUNDLE_H_
 
+#include <algorithm>
 #include <vector>
 
 #include "ResourceContainerBundleAPI.h"
 #include "BundleActivator.h"
+#include "BundleResource.h"
 
 using namespace RC;
 
@@ -34,22 +36,15 @@ class SampleBundle: public BundleActivator
         SampleBundle();
         ~SampleBundle();
 
-        void activateBundle(ResourceContainerBundleAPI* resourceContainer);
+        void activateBundle(ResourceContainerBundleAPI *resourceContainer, std::string bundleId);
         void deactivateBundle();
 
-        void createResource();
-        void destroyResource();
+        void createResource(Configuration::resourceInfo);
+        void destroyResource(BundleResource *);
 
-        ResourceContainerBundleAPI* m_ResourceContainer;
-        std::vector<Resource *> m_vecResources;
-};
-
-
-class SampleBundleResource: public Resource
-{
-    public:
-        SampleBundleResource();
-        ~SampleBundleResource();
+        std::string m_bundleId;
+        ResourceContainerBundleAPI *m_pResourceContainer;
+        std::vector<BundleResource *> m_vecResources;
 };
 
 #endif /* SAMPLEBUNDLE_H_ */

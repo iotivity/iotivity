@@ -32,34 +32,38 @@ namespace RC
 
     class ResourceContainerImpl: public ResourceContainer, public ResourceContainerBundleAPI
     {
-    public:
-        ResourceContainerImpl();
-        virtual ~ResourceContainerImpl();
+        public:
+            ResourceContainerImpl();
+            virtual ~ResourceContainerImpl();
 
-        // methods from ResourceContainer
-        void init();
-        void init(string configFile);
-        void activateBundle(int id);
-        void deactivateBundle(int id);
-        void activateBundleByName(string name);
-        void deactivateBundleByName(string id);
-        void activateBundle(BundleInfo* bundleInfo);
-        void deactivateBundle(BundleInfo* bundleInfo);
-        vector< Resource* > listBundleResources(string id);
+            // methods from ResourceContainer
+            void init();
+            void init(string configFile);
+            void activateBundle(int id);
+            void deactivateBundle(int id);
+            void activateBundleByName(string name);
+            void deactivateBundleByName(string id);
+            void activateBundle(BundleInfo *bundleInfo);
+            void deactivateBundle(BundleInfo *bundleInfo);
+            vector< Resource * > listBundleResources(string id);
 
-        // methods from ResourceContainerBundleAPI
-        void registerBundle(BundleInfo* bundleinfo);
-        void unregisterBundle(BundleInfo* bundleinfo);
-        void unregisterBundle(int id);
-        void registerResource(Resource* resource);
-        void unregisterResource(Resource* resource);
+            // methods from ResourceContainerBundleAPI
+            void registerBundle(BundleInfo *bundleinfo);
+            void unregisterBundle(BundleInfo *bundleinfo);
+            void unregisterBundle(int id);
+            void registerResource(BundleResource *resource);
+            void unregisterResource(BundleResource *resource);
 
-        static ResourceContainerImpl* getImplInstance();
+            void getCommonConfiguration(configInfo *configOutput);
+            void getBundleConfiguration(std::string bundleId, configInfo *configOutput);
+            void getResourceConfiguration(std::string bundleId, std::vector<resourceInfo> *configOutput);
 
-    private:
-        vector<BundleInfoInternal* > m_bundles;
-        string m_configFile;
-        Configuration m_config;
+            static ResourceContainerImpl *getImplInstance();
+
+        private:
+            vector<BundleInfoInternal * > m_bundles;
+            string m_configFile;
+            Configuration *m_config;
     };
 }
 

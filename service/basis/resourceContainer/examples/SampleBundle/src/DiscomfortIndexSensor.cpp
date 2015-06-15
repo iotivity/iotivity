@@ -21,12 +21,6 @@
 /**
  * This file contains the exported symbol.
  */
-#include <stdlib.h>
-#include <map>
-#include <string>
-#include <sstream>
-#include <iostream>
-
 #include "DiscomfortIndexSensor.h"
 #include "SysTimer.h"
 
@@ -55,7 +49,7 @@ DiscomfortIndexSensor::DiscomfortIndexSensor()
     m_result.m_discomfortIndex = "";
 }
 
-int DiscomfortIndexSensor::runLogic(std::vector< SensorData > &sensorData)
+int DiscomfortIndexSensor::runLogic(std::vector< RC::SoftSensorResource::SensorData > &sensorData)
 {
     std::cout << "[DiscomfortIndexSensor] DiscomfortIndexSensor::" << __func__ << " is called."
               << std::endl;
@@ -70,7 +64,7 @@ int DiscomfortIndexSensor::runLogic(std::vector< SensorData > &sensorData)
             return -1;
         }
 
-        //g_pSoftSensorCore->pushResults(setOutput(4, m_DI));
+        m_output = setOutput(4, m_DI);
 
         return 0;
     }
@@ -81,66 +75,67 @@ int DiscomfortIndexSensor::runLogic(std::vector< SensorData > &sensorData)
 /**
  * Get Input data (temperature, humidity) using resource Client of Iotivity base.
  */
-DIResult DiscomfortIndexSensor::getInput(std::vector< SensorData > &sensorData, InValue *data)
+DIResult DiscomfortIndexSensor::getInput(std::vector< RC::SoftSensorResource::SensorData >
+        &sensorData, InValue *data)
 {
-    //int result_flag = 0;
-    //int contextSize = 0;
+    int result_flag = 0;
+    int contextSize = 0;
 
-    //if ((contextSize = sensorData.size()) == 0)
-    //{
-    //    std::cout << "Physical Context data is not exist." << std::endl;
-    //    return ERROR;
-    //}
+    if ((contextSize = sensorData.size()) == 0)
+    {
+        std::cout << "Physical Context data is not exist." << std::endl;
+        return ERROR;
+    }
 
-    //for (int i = 0; i < contextSize; i++)
-    //{
-    //    for (int k = 0; k < PHYSICAL_EA; k++)
-    //    {
-    //        if (sensorData[i].sensorName == s_PHYSICAL_SOFTSENSORs[k].m_thingName)
-    //        {
-    //            std::vector < std::map< std::string, std::string > > lVector =
-    //                sensorData[i].data;
-    //            int requiredInputNum = s_PHYSICAL_SOFTSENSORs[k].m_inputNum;
-    //            char **pchar = (char **) (s_PHYSICAL_SOFTSENSORs[k].m_pInputStruct);
-    //            if (requiredInputNum == 0)
-    //            {
-    //                std::cout << "No input List." << std::endl;
-    //                return ERROR;
-    //            }
+    for (int i = 0; i < contextSize; i++)
+    {
+        for (int k = 0; k < PHYSICAL_EA; k++)
+        {
+            if (sensorData[i].sensorName == s_PHYSICAL_SOFTSENSORs[k].m_thingName)
+            {
+                std::vector < std::map< std::string, std::string > > lVector =
+                    sensorData[i].data;
+                int requiredInputNum = s_PHYSICAL_SOFTSENSORs[k].m_inputNum;
+                char **pchar = (char **) (s_PHYSICAL_SOFTSENSORs[k].m_pInputStruct);
+                if (requiredInputNum == 0)
+                {
+                    std::cout << "No input List." << std::endl;
+                    return ERROR;
+                }
 
-    //            for (unsigned int j = 0; j < lVector.size(); j++)
-    //            {
-    //                std::string name = lVector[j]["name"];
+                for (unsigned int j = 0; j < lVector.size(); j++)
+                {
+                    std::string name = lVector[j]["name"];
 
-    //                if (name.compare(*pchar) == 0)
-    //                {
-    //                    data->m_temperature = lVector[j]["value"];
-    //                    requiredInputNum--;
-    //                }
-    //                else if (name.compare(*(++pchar)) == 0)
-    //                {
-    //                    data->m_humidity = lVector[j]["value"];
-    //                    requiredInputNum--;
-    //                }
-    //            }
+                    if (name.compare(*pchar) == 0)
+                    {
+                        data->m_temperature = lVector[j]["value"];
+                        requiredInputNum--;
+                    }
+                    else if (name.compare(*(++pchar)) == 0)
+                    {
+                        data->m_humidity = lVector[j]["value"];
+                        requiredInputNum--;
+                    }
+                }
 
-    //            if (requiredInputNum == 0)
-    //            {
-    //                data++;
-    //                result_flag++;
-    //            }
-    //            break;
-    //        } // if
-    //    } // for
-    //}
+                if (requiredInputNum == 0)
+                {
+                    data++;
+                    result_flag++;
+                }
+                break;
+            } // if
+        } // for
+    }
 
-    //if (result_flag == PHYSICAL_EA)
-    //{
-    //    std::cout << "Success : getInput()" << std::endl;
-    //    return SUCCESS;
-    //}
+    if (result_flag == PHYSICAL_EA)
+    {
+        std::cout << "Success : getInput()" << std::endl;
+        return SUCCESS;
+    }
 
-    //return ERROR;
+    return ERROR;
 }
 
 /**
@@ -213,41 +208,42 @@ DIResult DiscomfortIndexSensor::makeDiscomfortIndex(InValue *data)
     return SUCCESS;
 }
 
-SensorData DiscomfortIndexSensor::setOutput(int property_count, InValue *data)
+RC::SoftSensorResource::SensorData DiscomfortIndexSensor::setOutput(int property_count,
+        InValue *data)
 {
-    //SensorData out;
+    RC::SoftSensorResource::SensorData out;
 
-    //std::map < std::string, std::string > output_property;
+    std::map < std::string, std::string > output_property;
 
-    //out.sensorName = SENSOR_NAME;
+    out.sensorName = SENSOR_NAME;
 
-    //output_property.insert(std::make_pair("name", "timestamp"));
-    //output_property.insert(std::make_pair("type", "string"));
-    //output_property.insert(std::make_pair("value", m_result.m_timestamp));
+    output_property.insert(std::make_pair("name", "timestamp"));
+    output_property.insert(std::make_pair("type", "string"));
+    output_property.insert(std::make_pair("value", m_result.m_timestamp));
 
-    //out.data.push_back(output_property);
+    out.data.push_back(output_property);
 
-    //output_property.clear();
-    //output_property.insert(std::make_pair("name", "temperature"));
-    //output_property.insert(std::make_pair("type", "string"));
-    //output_property.insert(std::make_pair("value", m_result.m_temperature));
+    output_property.clear();
+    output_property.insert(std::make_pair("name", "temperature"));
+    output_property.insert(std::make_pair("type", "string"));
+    output_property.insert(std::make_pair("value", m_result.m_temperature));
 
-    //out.data.push_back(output_property);
+    out.data.push_back(output_property);
 
-    //output_property.clear();
-    //output_property.insert(std::make_pair("name", "humidity"));
-    //output_property.insert(std::make_pair("type", "string"));
-    //output_property.insert(std::make_pair("value", m_result.m_humidity));
+    output_property.clear();
+    output_property.insert(std::make_pair("name", "humidity"));
+    output_property.insert(std::make_pair("type", "string"));
+    output_property.insert(std::make_pair("value", m_result.m_humidity));
 
-    //out.data.push_back(output_property);
+    out.data.push_back(output_property);
 
-    //output_property.clear();
-    //output_property.insert(std::make_pair("name", "discomfortIndex"));
-    //output_property.insert(std::make_pair("type", "int"));
-    //output_property.insert(std::make_pair("value", m_result.m_discomfortIndex));
+    output_property.clear();
+    output_property.insert(std::make_pair("name", "discomfortIndex"));
+    output_property.insert(std::make_pair("type", "int"));
+    output_property.insert(std::make_pair("value", m_result.m_discomfortIndex));
 
-    //out.data.push_back(output_property);
+    out.data.push_back(output_property);
 
-    //return out;
+    return out;
 }
 

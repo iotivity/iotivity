@@ -25,6 +25,9 @@
 #include <string.h>
 #include <fstream>
 
+#include "rapidxml/rapidxml.hpp"
+#include "rapidxml/rapidxml_print.hpp"
+
 #include "ResourceContainer.h"
 #include "BundleInfo.h"
 
@@ -34,34 +37,34 @@ namespace RC
 {
 
 
-class Configuration
-{
-    public:
-        typedef vector<std::map <std::string, std::string>> configInfo;
-        struct resourceInfo
-        {
-            std::string name;
-            std::string uri;
-            std::string resourceType;
-            std::map < std::string, std::vector< std::map< std::string, std::string > > > resourceProperty;
-        };
+    class Configuration
+    {
+        public:
+            typedef vector<std::map <std::string, std::string>> configInfo;
+            struct resourceInfo
+            {
+                std::string name;
+                std::string uri;
+                std::string resourceType;
+                std::map < std::string, std::vector< std::map< std::string, std::string > > > resourceProperty;
+            };
 
-        Configuration();
-        ~Configuration();
+            Configuration();
+            ~Configuration();
 
-        Configuration(string configFile);
+            Configuration(string configFile);
 
-        void getCommonConfiguration(configInfo *configOutput);
-        void getBundleConfiguration(std::string bundleId, configInfo *configOutput);
-        void getResourceConfiguration(std::string bundleId, std::vector<resourceInfo> *configOutput);
-        void getConfiguredBundles(configInfo *configOutput);
+            void getCommonConfiguration(configInfo *configOutput);
+            void getBundleConfiguration(std::string bundleId, configInfo *configOutput);
+            void getResourceConfiguration(std::string bundleId, std::vector<resourceInfo> *configOutput);
+            void getConfiguredBundles(configInfo *configOutput);
 
-    private:
-        void getConfigDocument(std::string pathConfigFile, std::string *pConfigData);
-        void getCurrentPath(std::string *path);
+        private:
+            void getConfigDocument(std::string pathConfigFile, std::string *pConfigData);
+            void getCurrentPath(std::string *path);
 
-        string m_pathConfigFile, m_configFile;
-};
+            string m_pathConfigFile, m_configFile;
+    };
 }
 
 #endif

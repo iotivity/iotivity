@@ -28,6 +28,7 @@
 #include "ResourceContainer.h"
 #include "BundleInfo.h"
 #include "Configuration.h"
+#include "BundleResource.h"
 
 using namespace RC;
 
@@ -39,11 +40,12 @@ namespace RC
             typedef std::map <std::string, std::string> configInfo;
             ResourceContainerBundleAPI();
             virtual ~ResourceContainerBundleAPI();
-            virtual void registerResource(Resource *resource) = 0;
-            virtual void unregisterResource(Resource *resource) = 0;
-            void getCommonConfiguration(configInfo *configOutput);
-            void getBundleConfiguration(std::string bundleId, configInfo *configOutput);
-            void getResourceConfiguration(std::string bundleId, std::vector<resourceInfo> *configOutput);
+            virtual void registerResource(BundleResource *resource) = 0;
+            virtual void unregisterResource(BundleResource *resource) = 0;
+            virtual void getCommonConfiguration(configInfo *configOutput) = 0;
+            virtual void getBundleConfiguration(std::string bundleId, configInfo *configOutput) = 0;
+            virtual void getResourceConfiguration(std::string bundleId,
+                                                  std::vector<resourceInfo> *configOutput) = 0;
 
             static ResourceContainerBundleAPI *getInstance();
     };

@@ -18,24 +18,17 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "BundleInfo.h"
-#include "BundleInfoInternal.h"
+#include "SoftSensorResource.h"
 
-namespace RC
+using namespace RC;
+SoftSensorResource::SoftSensorResource()
 {
-    BundleInfo::BundleInfo()
-    {
 
-    }
-
-    BundleInfo::~BundleInfo()
-    {
-
-    }
-
-    BundleInfo *BundleInfo::createBundleInfo()
-    {
-        BundleInfoInternal *newBundleInfo = new BundleInfoInternal();
-        return newBundleInfo;
-    }
 }
+
+SoftSensorResource::~SoftSensorResource()
+{
+
+}
+
+

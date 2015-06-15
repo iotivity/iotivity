@@ -18,24 +18,28 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "BundleInfo.h"
-#include "BundleInfoInternal.h"
+#ifndef DISCOMFORTINDEXSENSORRESOURCE_H_
+#define DISCOMFORTINDEXSENSORRESOURCE_H_
 
-namespace RC
+#include "BundleResource.h"
+#include "DiscomfortIndexSensor.h"
+
+using namespace DiscomfortIndexSensorName;
+using namespace RC;
+
+class DiscomfortIndexSensorResource : public SoftSensorResource
 {
-    BundleInfo::BundleInfo()
-    {
+    public:
+        DiscomfortIndexSensorResource();
+        ~DiscomfortIndexSensorResource();
 
-    }
+        void onGetRequest(std::map <std::string, std::string> *attributes);
+        void onSetRequest(std::map <std::string, std::string> attributes);
 
-    BundleInfo::~BundleInfo()
-    {
+        void onInputDataReceived(std::vector <SensorData> inputs);
 
-    }
+    private:
+        DiscomfortIndexSensor *m_pDiscomfortIndexSensor;
+};
 
-    BundleInfo *BundleInfo::createBundleInfo()
-    {
-        BundleInfoInternal *newBundleInfo = new BundleInfoInternal();
-        return newBundleInfo;
-    }
-}
+#endif

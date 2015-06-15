@@ -18,24 +18,35 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "BundleInfo.h"
-#include "BundleInfoInternal.h"
+#ifndef SOFTSENSORRESOURCE_H_
+#define SOFTSENSORRESOURCE_H_
+
+#include "BundleResource.h"
+#include <map>
+#include <string>
 
 namespace RC
 {
-    BundleInfo::BundleInfo()
+
+    class SoftSensorResource : public BundleResource
     {
+        public:
+            // TODO : definition of SensorData definition should be changed
+            struct SensorData
+            {
+                std::string sensorName;
+                std::vector< std::map<std::string, std::string> > data;
+            };
 
-    }
+            SoftSensorResource();
+            virtual ~SoftSensorResource();
 
-    BundleInfo::~BundleInfo()
-    {
+            virtual void onInputDataReceived(std::vector <SensorData> inputs) = 0;
 
-    }
-
-    BundleInfo *BundleInfo::createBundleInfo()
-    {
-        BundleInfoInternal *newBundleInfo = new BundleInfoInternal();
-        return newBundleInfo;
-    }
+            int inputCount;
+            std::vector < SensorData > m_vecInputs;
+            SensorData m_outputs;
+    };
 }
+
+#endif

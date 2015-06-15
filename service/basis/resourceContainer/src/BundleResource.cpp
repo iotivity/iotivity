@@ -18,24 +18,28 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "BundleInfo.h"
-#include "BundleInfoInternal.h"
+#include "BundleResource.h"
+#include "Configuration.h"
 
-namespace RC
+
+
+BundleResource::BundleResource()
 {
-    BundleInfo::BundleInfo()
-    {
 
-    }
-
-    BundleInfo::~BundleInfo()
-    {
-
-    }
-
-    BundleInfo *BundleInfo::createBundleInfo()
-    {
-        BundleInfoInternal *newBundleInfo = new BundleInfoInternal();
-        return newBundleInfo;
-    }
 }
+
+BundleResource::~BundleResource()
+{
+
+}
+
+Configuration::resourceInfo BundleResource::getResourceInfo()
+{
+    return m_resourceInfo;
+}
+
+void BundleResource::setResourceInfo(Configuration::resourceInfo resourceInfo)
+{
+    m_resourceInfo = resourceInfo;
+}
+

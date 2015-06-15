@@ -34,9 +34,9 @@ namespace RC
 
     }
 
-    ResourceContainer* ResourceContainer::getInstance()
+    ResourceContainer *ResourceContainer::getInstance()
     {
-        return (ResourceContainer*) ResourceContainerImpl::getImplInstance();
+        return (ResourceContainer *)ResourceContainerImpl::getImplInstance();
     }
 }
 

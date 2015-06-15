@@ -48,7 +48,8 @@ Configuration::Configuration()
 Configuration::~Configuration()
 {}
 
-Configuration::Configuration(string configFile){
+Configuration::Configuration(string configFile)
+{
     m_configFile = configFile;
     getCurrentPath(&m_pathConfigFile);
     m_pathConfigFile.append("/");
@@ -109,12 +110,12 @@ void Configuration::getCommonConfiguration(configInfo *configOutput)
     }
 }
 
-void Configuration::getConfiguredBundles(configInfo* configOutput){
+void Configuration::getConfiguredBundles(configInfo *configOutput)
+{
     string strConfigData;
 
     rapidxml::xml_document< char > xmlDoc;
 
-    rapidxml::xml_node< char > *root;
     rapidxml::xml_node< char > *bundle;
     rapidxml::xml_node< char > *subItem;
 
@@ -137,13 +138,14 @@ void Configuration::getConfiguredBundles(configInfo* configOutput){
             //cout << "Bundle: " << bundle->name() << endl;
             for (subItem = bundle->first_node(); subItem; subItem = subItem->next_sibling())
             {
-               strKey = subItem->name();
-               strValue = subItem->value();
-               if(strlen(subItem->value()) > 0){
-                   bundleMap.insert(std::make_pair(trim_both(strKey), trim_both(strValue)));
-                   //cout << strKey << " " << strValue << endl;
+                strKey = subItem->name();
+                strValue = subItem->value();
+                if (strlen(subItem->value()) > 0)
+                {
+                    bundleMap.insert(std::make_pair(trim_both(strKey), trim_both(strValue)));
+                    //cout << strKey << " " << strValue << endl;
 
-               }
+                }
             }
             configOutput->push_back(bundleMap);
         }

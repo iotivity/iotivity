@@ -91,32 +91,32 @@ namespace RC
         m_id = id;
     }
 
-    void BundleInfoInternal::setBundleActivator(activator_t* activator)
+    void BundleInfoInternal::setBundleActivator(activator_t *activator)
     {
         m_activator = activator;
     }
 
-    activator_t* BundleInfoInternal::getBundleActivator()
+    activator_t *BundleInfoInternal::getBundleActivator()
     {
         return m_activator;
     }
 
-    void BundleInfoInternal::setBundleDeactivator(deactivator_t* deactivator)
+    void BundleInfoInternal::setBundleDeactivator(deactivator_t *deactivator)
     {
         m_deactivator = deactivator;
     }
 
-    deactivator_t* BundleInfoInternal::getBundleDeactivator()
+    deactivator_t *BundleInfoInternal::getBundleDeactivator()
     {
         return m_deactivator;
     }
 
-    void BundleInfoInternal::setBundleHandle(void* handle)
+    void BundleInfoInternal::setBundleHandle(void *handle)
     {
         m_bundleHandle = handle;
     }
 
-    void* BundleInfoInternal::getBundleHandle()
+    void *BundleInfoInternal::getBundleHandle()
     {
         return m_bundleHandle;
     }
