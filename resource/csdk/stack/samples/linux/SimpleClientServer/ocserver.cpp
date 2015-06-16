@@ -123,20 +123,28 @@ char* constructJsonResponse (OCEntityHandlerRequest *ehRequest)
 
         // Get root of JSON payload, then the 1st resource.
         cJSON* carrier = cJSON_GetObjectItem(putJson, "oic");
-        carrier = cJSON_GetArrayItem(carrier, 0);
-        carrier = cJSON_GetObjectItem(carrier, "rep");
-
-        cJSON* prop = cJSON_GetObjectItem(carrier,"power");
-        if (prop)
+        if (carrier)
         {
-            currLightResource->power =prop->valueint;
+            carrier = cJSON_GetArrayItem(carrier, 0);
+            carrier = cJSON_GetObjectItem(carrier, "rep");
+
+            cJSON* prop = cJSON_GetObjectItem(carrier,"power");
+            if (prop)
+            {
+                currLightResource->power =prop->valueint;
+            }
+
+            prop = cJSON_GetObjectItem(carrier,"state");
+            if (prop)
+            {
+                currLightResource->state = prop->valueint;
+            }
+        }
+        else
+        {
+            OC_LOG_V(WARNING, TAG, "Failed to find oic node");
         }
 
-        prop = cJSON_GetObjectItem(carrier,"state");
-        if (prop)
-        {
-            currLightResource->state = prop->valueint;
-        }
         cJSON_Delete(putJson);
     }
 
