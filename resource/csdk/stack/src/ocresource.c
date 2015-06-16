@@ -121,8 +121,22 @@ static char* GetJSONStringFromPlatformInfo(OCPlatformInfo info)
 
     cJSON_AddItemToObject (rootObj, OC_RSRVD_REPRESENTATION, repObj = cJSON_CreateObject());
 
-    cJSON_AddItemToObject (repObj, OC_RSRVD_PLATFORM_ID, cJSON_CreateString(info.platformID));
-    cJSON_AddItemToObject (repObj, OC_RSRVD_MFG_NAME, cJSON_CreateString(info.manufacturerName));
+    if (!repObj)
+    {
+        return NULL;
+    }
+    if (info.platformID)
+    {
+        cJSON_AddItemToObject (repObj, OC_RSRVD_PLATFORM_ID,
+                cJSON_CreateString(info.platformID));
+    }
+
+    if (info.manufacturerName)
+    {
+        cJSON_AddItemToObject (repObj, OC_RSRVD_MFG_NAME,
+                cJSON_CreateString(info.manufacturerName));
+    }
+
     if (info.manufacturerUrl)
     {
         cJSON_AddItemToObject (repObj, OC_RSRVD_MFG_URL,
@@ -201,11 +215,19 @@ static char* GetJSONStringFromDeviceInfo(OCDeviceInfo info)
 
     cJSON_AddItemToObject (rootObj, OC_RSRVD_REPRESENTATION, repObj = cJSON_CreateObject());
 
+    if (!repObj)
+    {
+        return NULL;
+    }
+
     cJSON_AddItemToObject (repObj, OC_RSRVD_DEVICE_ID,
                     cJSON_CreateString(OCGetServerInstanceIDString()));
 
-    cJSON_AddItemToObject (repObj, OC_RSRVD_DEVICE_NAME,
+    if (info.deviceName)
+    {
+        cJSON_AddItemToObject (repObj, OC_RSRVD_DEVICE_NAME,
                         cJSON_CreateString(info.deviceName));
+    }
 
     cJSON_AddItemToObject (repObj, OC_RSRVD_SPEC_VERSION,
                         cJSON_CreateString(OC_SPEC_VERSION));
