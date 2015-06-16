@@ -33,16 +33,18 @@ using namespace OIC;
 PluginManager::PluginManager()
 {
 #ifdef __TIZEN__
-    char *app_id = (char *)malloc(PATH_MAX_SIZE * sizeof(char));
-    char completePath[PATH_MAX_SIZE];
+    char *app_id = NULL;
+    std::string completePath = "";
     int res = app_get_id(&app_id);
     if (APP_ERROR_NONE == res)
     {
-        strcpy(completePath, "/opt/usr/apps/");
-        strcat(completePath, app_id);
-        strcat(completePath, "/lib/libpmimpl.so");
+        completePath = "/opt/usr/apps/";
+        completePath += app_id;
+        completePath += "/lib/libpmimpl.so";
     }
-    handle = dlopen(completePath, RTLD_LAZY);
+    free(app_id);
+    app_id = NULL;
+    handle = dlopen(completePath.c_str(), RTLD_LAZY);
 #else
     handle = dlopen("./libpmimpl.so", RTLD_LAZY);
 #endif //#ifdef __TIZEN__
