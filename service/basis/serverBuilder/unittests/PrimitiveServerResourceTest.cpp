@@ -40,6 +40,7 @@ typedef OCStackResult (*registerResourceSig)(OCResourceHandle&,
                        EntityHandler,
                        uint8_t );
 
+static constexpr char RESOURCE_URI[] = "a/test";
 static constexpr char KEY[] = "key";
 
 TEST(ServerResourceBuilderTest, ThrowIfUriIsInvalid)
@@ -54,8 +55,30 @@ TEST(ServerResourceBuilderTest, RegisterResourceWhenCallCreate)
     mocks.ExpectCallFuncOverload(
             static_cast<registerResourceSig>(OCPlatform::registerResource)).Return(OC_STACK_OK);
 
-    PrimitiveServerResource::Builder("a/test", "", "").create();
+    PrimitiveServerResource::Builder(RESOURCE_URI, "", "").create();
 }
+
+TEST(ServerResourceBuilderTest, ResourceServerHasPropertiesSetByBuilder)
+{
+    auto serverResource = PrimitiveServerResource::Builder(RESOURCE_URI, "", "").
+            setDiscoverable(false).setObservable(true).create();
+
+    EXPECT_FALSE(serverResource->isDiscoverable());
+    EXPECT_TRUE(serverResource->isObservable());
+}
+
+TEST(ServerResourceBuilderTest, ResourceServerHasAttrsSetByBuilder)
+{
+    ResourceAttributes attrs;
+    attrs[KEY] = 100;
+
+    auto serverResource = PrimitiveServerResource::Builder(RESOURCE_URI, "", "").
+            setAttributes(attrs).create();
+
+    PrimitiveServerResource::LockGuard lock{ serverResource };
+    EXPECT_EQ(attrs, serverResource->getAttributes());
+}
+
 
 class ServerResourceTest: public Test
 {
@@ -67,7 +90,7 @@ protected:
     void SetUp() override
     {
         initMocks();
-        server = PrimitiveServerResource::Builder("a/test", "", "").create();
+        server = PrimitiveServerResource::Builder(RESOURCE_URI, "", "").create();
     }
 
     virtual void initMocks()
@@ -197,7 +220,7 @@ TEST_F(ServerResourceHandlingRequestTest, SendResponseWithSameHandlesPassedByReq
     ASSERT_EQ(OC_EH_OK, handler(createRequest()));
 }
 
-TEST_F(ServerResourceHandlingRequestTest, SendResponseWithPrimitiveResponseParams)
+TEST_F(ServerResourceHandlingRequestTest, SendResponseWithPrimitiveResponseResults)
 {
     constexpr int errorCode{ 1999 };
     constexpr OCEntityHandlerResult result{ OC_EH_SLOW };
@@ -218,6 +241,33 @@ TEST_F(ServerResourceHandlingRequestTest, SendResponseWithPrimitiveResponseParam
     ).Return(OC_STACK_OK);
 
     ASSERT_EQ(OC_EH_OK, handler(createRequest()));
+}
+
+TEST_F(ServerResourceHandlingRequestTest, SendSetResponseWithCustomAttrsAndResults)
+{
+    constexpr int errorCode{ 1999 };
+    constexpr OCEntityHandlerResult result{ OC_EH_SLOW };
+    constexpr char value[]{ "value" };
+
+    server->setSetRequestHandler(
+            [](const PrimitiveRequest&, ResourceAttributes&) -> PrimitiveSetResponse
+            {
+                ResourceAttributes attrs;
+                attrs[KEY] = value;
+                return PrimitiveSetResponse::create(attrs, result, errorCode);
+            }
+    );
+
+    mocks.ExpectCallFunc(OCPlatform::sendResponse).Match(
+            [](const shared_ptr<OCResourceResponse> response)
+            {
+                return value == response->getResourceRepresentation()[KEY].getValue<std::string>()
+                        && response->getErrorCode() == errorCode
+                        && response->getResponseResult() == result;
+            }
+    ).Return(OC_STACK_OK);
+
+    ASSERT_EQ(OC_EH_OK, handler(createRequest(OC_REST_PUT)));
 }
 
 

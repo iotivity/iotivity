@@ -68,6 +68,20 @@ TEST_F(SimpleRequestHandlerTest, ResponseHasSameAttrsWithServerAttrs)
     ASSERT_EQ(ORIGIN_VALUE, response->getResourceRepresentation()[EXISTING].getValue<int>());
 }
 
+TEST_F(SimpleRequestHandlerTest, ResponseHasAttrsSetByCustomAttrRequestHandler)
+{
+    constexpr char key[] { "key" };
+    constexpr int newValue{ 100 };
+
+    ResourceAttributes attrs;
+    attrs[key] = newValue;
+    CustomAttrRequestHandler handler{ attrs };
+
+    auto response = handler.buildResponse(*server, requestAttrs);
+
+    ASSERT_EQ(ORIGIN_VALUE, response->getResourceRepresentation()[key].getValue<int>());
+}
+
 
 
 class SetRequestProxyHandlerTest: public Test
@@ -100,7 +114,7 @@ TEST_F(SetRequestProxyHandlerTest, NothingHappenedWithEmptyAttrs)
 
 TEST_F(SetRequestProxyHandlerTest, ServerAttributesChangedIfOnlySameKeyExists)
 {
-    int newValue{ 100 };
+    constexpr int newValue{ 100 };
 
     requestAttrs[EXISTING] = newValue;
 
