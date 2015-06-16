@@ -35,6 +35,9 @@ namespace OIC
         public:
             using Ptr = std::shared_ptr<RequestHandler>;
 
+            static constexpr int DEFAULT_ERROR_CODE = 200;
+            static constexpr OCEntityHandlerResult DEFAULT_RESULT = OC_EH_OK;
+
             virtual ~RequestHandler()
             {
             }
@@ -46,8 +49,8 @@ namespace OIC
         class SimpleRequestHandler: public RequestHandler
         {
         public:
-            SimpleRequestHandler(const OCEntityHandlerResult& result = OC_EH_OK,
-                    int errorCode = 200);
+            SimpleRequestHandler(const OCEntityHandlerResult& result = DEFAULT_RESULT,
+                    int errorCode = DEFAULT_ERROR_CODE);
 
             std::shared_ptr< OC::OCResourceResponse > buildResponse(
                     PrimitiveServerResource&, const ResourceAttributes&) override;
@@ -68,7 +71,8 @@ namespace OIC
         public:
             template <typename T>
             CustomAttrRequestHandler(T&& attrs,
-                    const OCEntityHandlerResult& result = OC_EH_OK, int errorCode = 200) :
+                    const OCEntityHandlerResult& result = DEFAULT_RESULT,
+                    int errorCode = DEFAULT_ERROR_CODE) :
                 SimpleRequestHandler{ result, errorCode }, m_attrs{ std::forward<T>(attrs) }
             {
             }

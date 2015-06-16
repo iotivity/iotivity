@@ -27,6 +27,8 @@ namespace OIC
     namespace Service
     {
 
+        constexpr OCEntityHandlerResult RequestHandler::DEFAULT_RESULT;
+
         SimpleRequestHandler::SimpleRequestHandler(const OCEntityHandlerResult& result,
                 int errorCode) :
                 m_result{ result }, m_errorCode{ errorCode }
