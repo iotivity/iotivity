@@ -439,43 +439,45 @@ static void ProvisionDiscoveryHandler(const CAEndpoint_t *object,
             if (NULL == responseInfo->info.payload)
             {
                 OC_LOG(INFO, TAG, "Skiping Null payload");
-                return;
             }
-            // temp logic for trimming oc attribute from the json.
-            // JSONToBin should handle oc attribute.
-            char *pTempPayload = (char *)OICMalloc(strlen(responseInfo->info.payload));
-            if (NULL == pTempPayload)
+            else
             {
-                OC_LOG(ERROR, TAG, "Error while Memory allocation.");
-                gStateManager = gStateManager | SP_DISCOVERY_ERROR;
-                return;
-            }
+                // temp logic for trimming oc attribute from the json.
+                // JSONToBin should handle oc attribute.
+                char *pTempPayload = (char *)OICMalloc(strlen(responseInfo->info.payload));
+                if (NULL == pTempPayload)
+                {
+                    OC_LOG(ERROR, TAG, "Error while Memory allocation.");
+                    gStateManager = gStateManager | SP_DISCOVERY_ERROR;
+                    return;
+                }
 
-            strcpy(pTempPayload, responseInfo->info.payload + 8);
-            pTempPayload[strlen(pTempPayload) - 2] = '\0';
-            OC_LOG_V(DEBUG, TAG, "Trimmed payload: %s", pTempPayload);
-            OicSecDoxm_t *ptrDoxm = JSONToDoxmBin(pTempPayload);
-
-            if (NULL == ptrDoxm)
-            {
-                OC_LOG(ERROR, TAG, "Error while converting doxm json to binary");
+                strcpy(pTempPayload, responseInfo->info.payload + 8);
+                pTempPayload[strlen(pTempPayload) - 2] = '\0';
+                OC_LOG_V(DEBUG, TAG, "Trimmed payload: %s", pTempPayload);
+                OicSecDoxm_t *ptrDoxm = JSONToDoxmBin(pTempPayload);
                 OICFree(pTempPayload);
-                gStateManager = gStateManager | SP_DISCOVERY_ERROR;
-                return;
-            }
-            OC_LOG(DEBUG, TAG, "Successfully converted pstat json to bin.");
-            OICFree(pTempPayload);
 
-            SPResult res = addDevice(object->addr, object->port, object->adapter, ptrDoxm);
-            if (SP_RESULT_SUCCESS != res)
-            {
-                OC_LOG(ERROR, TAG, "Error while adding data to linkedlist.");
-                gStateManager = gStateManager | SP_DISCOVERY_ERROR;
-                DeleteDoxmBinData(ptrDoxm);
-                return;
+                if (NULL == ptrDoxm)
+                {
+                    OC_LOG(INFO, TAG, "Ignoring malformed JSON");
+                }
+                else
+                {
+                    OC_LOG(DEBUG, TAG, "Successfully converted doxm json to bin.");
+
+                    SPResult res = addDevice(object->addr, object->port, object->adapter, ptrDoxm);
+                    if (SP_RESULT_SUCCESS != res)
+                    {
+                        OC_LOG(ERROR, TAG, "Error while adding data to linkedlist.");
+                        gStateManager = gStateManager | SP_DISCOVERY_ERROR;
+                        DeleteDoxmBinData(ptrDoxm);
+                        return;
+                    }
+                    OC_LOG(INFO, TAG, "Exiting ProvisionDiscoveryHandler.");
+                    gStateManager |= SP_DISCOVERY_DONE;
+                }
             }
-            OC_LOG(INFO, TAG, "Exiting ProvisionDiscoveryHandler.");
-            gStateManager |= SP_DISCOVERY_DONE;
         }
     }
 }
