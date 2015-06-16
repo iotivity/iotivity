@@ -789,7 +789,7 @@ void send_notification()
     respondData.type = messageType;
 
     CAResponseInfo_t responseInfo = { 0 };
-    responseInfo.result = CA_SUCCESS;
+    responseInfo.result = CA_CONTENT;
     responseInfo.info = respondData;
 
     // send notification
@@ -1181,6 +1181,9 @@ void send_response(const CARemoteEndpoint_t *endpoint, const CAInfo_t *info)
         printf("SUCCESS                  : 200\n");
         printf("CREATED                  : 201\n");
         printf("DELETED                  : 202\n");
+        printf("VALID                    : 203\n");
+        printf("CHANGED                  : 204\n");
+        printf("CONTENT                  : 205\n");
         printf("BAD_REQ                  : 400\n");
         printf("BAD_OPT                  : 402\n");
         printf("NOT_FOUND                : 404\n");

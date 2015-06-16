@@ -99,7 +99,8 @@ static CAToken_t g_last_request_token = NULL;
 static const char SECURE_COAPS_PREFIX[] = "coaps://";
 static const char SECURE_INFO_DATA[] =
                                     "{\"oc\":[{\"href\":\"%s\",\"prop\":{\"rt\":[\"core.led\"],"
-                                     "\"if\":[\"oic.if.baseline\"],\"obs\":1,\"sec\":1,\"port\":%d}}]}";
+                                     "\"if\":[\"oic.if.baseline\"],\"obs\":1,\"sec\":1,\"port\":"
+                                     "%d}}]}";
 static const char NORMAL_INFO_DATA[] =
                                     "{\"oc\":[{\"href\":\"%s\",\"prop\":{\"rt\":[\"core.led\"],"
                                      "\"if\":[\"oic.if.baseline\"],\"obs\":1}}]}";
@@ -723,7 +724,7 @@ void send_notification()
     respondData.resourceUri = (CAURI_t)uri;
 
     CAResponseInfo_t responseInfo = { 0 };
-    responseInfo.result = CA_SUCCESS;
+    responseInfo.result = CA_CONTENT;
     responseInfo.info = respondData;
 
     // send request
@@ -1121,6 +1122,9 @@ void send_response(const CAEndpoint_t *endpoint, const CAInfo_t *info)
         printf("SUCCESS                  : 200\n");
         printf("CREATED                  : 201\n");
         printf("DELETED                  : 202\n");
+        printf("VALID                    : 203\n");
+        printf("CHANGED                  : 204\n");
+        printf("CONTENT                  : 205\n");
         printf("BAD_REQ                  : 400\n");
         printf("BAD_OPT                  : 402\n");
         printf("NOT_FOUND                : 404\n");

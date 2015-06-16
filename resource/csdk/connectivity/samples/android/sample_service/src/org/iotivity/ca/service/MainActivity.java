@@ -33,9 +33,10 @@ public class MainActivity extends Activity {
 
     private final CharSequence[] mResponseResultCheckBoxItems = {
             ResponseResult.CA_SUCCESS.name(), ResponseResult.CA_CREATED.name(),
-            ResponseResult.CA_DELETED.name(), ResponseResult.CA_EMPTY.name(),
-            ResponseResult.CA_BAD_REQ.name(), ResponseResult.CA_BAD_OPT.name(),
-            ResponseResult.CA_NOT_FOUND.name(),
+            ResponseResult.CA_DELETED.name(), ResponseResult.CA_VALID.name(),
+            ResponseResult.CA_CHANGED.name(), ResponseResult.CA_CONTENT.name(),
+            ResponseResult.CA_EMPTY.name(), ResponseResult.CA_BAD_REQ.name(),
+            ResponseResult.CA_BAD_OPT.name(), ResponseResult.CA_NOT_FOUND.name(),
             ResponseResult.CA_INTERNAL_SERVER_ERROR.name(),
             ResponseResult.CA_RETRANSMIT_TIMEOUT.name() };
 
@@ -56,8 +57,8 @@ public class MainActivity extends Activity {
     };
 
     private enum ResponseResult {
-        CA_SUCCESS, CA_CREATED, CA_DELETED, CA_EMPTY, CA_BAD_REQ, CA_BAD_OPT,
-        CA_NOT_FOUND, CA_INTERNAL_SERVER_ERROR, CA_RETRANSMIT_TIMEOUT
+        CA_SUCCESS, CA_CREATED, CA_DELETED, CA_VALID, CA_CHANGED, CA_CONTENT, CA_EMPTY,
+        CA_BAD_REQ, CA_BAD_OPT, CA_NOT_FOUND, CA_INTERNAL_SERVER_ERROR, CA_RETRANSMIT_TIMEOUT
     }
 
     private boolean mCheckedItems[] = {
@@ -703,6 +704,18 @@ public class MainActivity extends Activity {
                                 .ordinal()) {
                             responseValue = 202;
                             DLog.v(TAG, "Response Value is CA_DELETED");
+                        } else if (selectedResponseValue == ResponseResult.CA_VALID
+                                .ordinal()) {
+                            responseValue = 203;
+                            DLog.v(TAG, "Response Value is CA_VALID");
+                        } else if (selectedResponseValue == ResponseResult.CA_CHANGED
+                                .ordinal()) {
+                            responseValue = 204;
+                            DLog.v(TAG, "Response Value is CA_CHANGED");
+                        } else if (selectedResponseValue == ResponseResult.CA_CONTENT
+                                .ordinal()) {
+                            responseValue = 205;
+                            DLog.v(TAG, "Response Value is CA_CONTENT");
                         } else if (selectedResponseValue == ResponseResult.CA_EMPTY
                                 .ordinal()) {
                             responseValue = 0;

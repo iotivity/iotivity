@@ -321,7 +321,7 @@ TEST(SendResponseTest, DISABLED_TC_19_Positive_01)
     requestData.tokenLength = tokenLength;
 
     memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
-    responseInfo.result = CA_SUCCESS;
+    responseInfo.result = CA_CONTENT;
     responseInfo.info = responseData;
 
     EXPECT_EQ(CA_STATUS_OK, CASendResponse(tempRep, &responseInfo));
@@ -347,7 +347,7 @@ TEST(SendResponseTest, DISABLED_TC_20_Negative_01)
     requestData.tokenLength = tokenLength;
 
     memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
-    responseInfo.result = CA_SUCCESS;
+    responseInfo.result = CA_CONTENT;
     responseInfo.info = responseData;
 
     EXPECT_EQ(CA_STATUS_OK, CASendResponse(tempRep, &responseInfo));
@@ -391,7 +391,7 @@ TEST(SendNotificationTest, DISABLED_TC_22_Positive_01)
     requestData.tokenLength = tokenLength;
 
     memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
-    responseInfo.result = CA_SUCCESS;
+    responseInfo.result = CA_CONTENT;
     responseInfo.info = responseData;
 
     EXPECT_EQ(CA_STATUS_OK, CASendNotification(tempRep, &responseInfo));
