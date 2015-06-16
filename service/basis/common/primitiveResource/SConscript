@@ -30,6 +30,8 @@ SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', exports = 'li
 
 src_dir = lib_env.get('SRC_DIR')
 
+gtest_dir = src_dir + '/extlibs/gtest/gtest-1.7.0'
+
 service_common_env = lib_env.Clone()
 target_os = env.get('TARGET_OS')
 
@@ -68,10 +70,12 @@ service_common_env.InstallTarget([service_common_static,service_common_shared], 
 # Build Test
 ######################################################################
 service_common_test_env = service_common_env.Clone();
-service_common_test_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 
-gtest = File(src_dir + '/extlibs/gtest/gtest-1.7.0/lib/.libs/libgtest.a')
-gtest_main = File(src_dir + '/extlibs/gtest/gtest-1.7.0/lib/.libs/libgtest_main.a')
+service_common_test_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+service_common_test_env.PrependUnique(CPPPATH = [gtest_dir + '/include'])
+
+gtest = File(gtest_dir + '/lib/.libs/libgtest.a')
+gtest_main = File(gtest_dir + '/lib/.libs/libgtest_main.a')
 
 service_common_test_env.PrependUnique(LIBS = [
     'oc',
