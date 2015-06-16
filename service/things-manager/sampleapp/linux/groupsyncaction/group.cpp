@@ -118,12 +118,12 @@ int main(int argc, char* argv[])
                 cout << query.str() << endl;
                 result = OCPlatform::findResource("",
                             query.str(),
-                            OC_ALL,
+                            CT_DEFAULT,
                             onFindResource);
 
                 result = OCPlatform::findResource("",
                             "coap://224.0.1.187/oc/core?rt=core.musicplayer",
-                            OC_ALL,
+                            CT_DEFAULT,
                             onFindResource);
 
                 if (OC_STACK_OK == result)
@@ -141,7 +141,7 @@ int main(int argc, char* argv[])
                 query << OC_MULTICAST_DISCOVERY_URI << "?rt=core.speaker";
                 result = OCPlatform::findResource("",
                             query.str(),
-                            OC_ALL,
+                            CT_DEFAULT,
                             onFindResource);
 
                 if (OC_STACK_OK == result)

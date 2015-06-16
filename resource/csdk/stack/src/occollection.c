@@ -268,8 +268,7 @@ static OCStackResult BuildRootResourceJSON(OCResource *resource,
 
 
 static OCStackResult
-HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest,
-                       uint8_t filterOn, char *filterValue)
+HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest, uint8_t filterOn, char *filterValue)
 {
     if(!ehRequest)
     {
@@ -280,15 +279,15 @@ HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest,
     char jsonbuffer[MAX_RESPONSE_LENGTH] = {};
     size_t jsonbufferLength = 0;
     uint16_t remaining = 0;
-    char * ptr = NULL;
-    OCResource * collResource = (OCResource *) ehRequest->resource;
+    char *ptr = NULL;
+    OCResource *collResource = (OCResource *)ehRequest->resource;
 
     ptr = jsonbuffer;
     remaining = MAX_RESPONSE_LENGTH;
 
     ret = BuildRootResourceJSON(collResource, ptr, &remaining);
 
-    if (ret == OC_STACK_OK && remaining >= (sizeof(OC_JSON_SEPARATOR) + 1))
+    if (ret == OC_STACK_OK && remaining >= (sizeof (OC_JSON_SEPARATOR) + 1))
     {
         ptr += strlen((char*)ptr);
         *ptr = OC_JSON_SEPARATOR;
@@ -312,7 +311,7 @@ HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest,
 
                 // Function will return error if not enough space in buffer.
                 ret = BuildVirtualResourceResponse(temp, filterOn, filterValue,
-                         (char*)ptr, &remaining, CA_IPV4 );
+                                         (char*)ptr, &remaining, CA_ADAPTER_IP);
                 if (ret != OC_STACK_OK)
                 {
                     break;

@@ -449,13 +449,12 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
 #ifdef __WITH_DTLS__
                 CAResult_t pskRet;
 
-                OCServerRequest * request = (OCServerRequest *)ehRequest->requestHandle;
+                OCServerRequest *request = (OCServerRequest *)ehRequest->requestHandle;
                 uint8_t ownerPSK[OWNER_PSK_LENGTH_128] = {};
 
                 //Generating OwnerPSK
                 OC_LOG (INFO, TAG, PCF("Doxm EntityHandle  generating OwnerPSK"));
-                pskRet = CAGenerateOwnerPSK(&request->addressInfo,
-                        request->connectivityType,
+                pskRet = CAGenerateOwnerPSK((CAEndpoint_t *)&request->devAddr,
                         (uint8_t*) OXM_JUST_WORKS, strlen(OXM_JUST_WORKS),
                         newDoxm->owner.id, sizeof(newDoxm->owner.id),
                         gDoxm->deviceID.id, sizeof(gDoxm->deviceID.id),

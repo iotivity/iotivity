@@ -109,20 +109,20 @@ static CAResult_t CAIPStopServers();
 
 void CAIPNotifyNetworkChange(const char *address, uint16_t port, CANetworkStatus_t status)
 {
-    CALocalConnectivity_t *localEndpoint = CAAdapterCreateLocalEndpoint(CA_IPV4, address);
+    CAEndpoint_t *localEndpoint = CAAdapterCreateLocalEndpoint(CA_IPV4, address);
     if (!localEndpoint)
     {
         OIC_LOG(ERROR, TAG, "Out of memory!");
         return;
     }
-    localEndpoint->addressInfo.IP.port = port;
+    localEndpoint->port = port;
 
     if (NULL != g_networkChangeCallback)
     {
         g_networkChangeCallback(localEndpoint, status);
     }
 
-    CAAdapterFreeLocalEndpoint(localEndpoint);
+    CAAdapterFreeEndpoint(localEndpoint);
 }
 
 void CAIPConnectionStateCB(const char *ipAddr,
@@ -209,19 +209,18 @@ void CAIPPacketReceivedCB(const char *ipAddress, uint16_t port,
     OIC_LOG_V(DEBUG, TAG, "data:%s", data);
 
     /* CA is freeing this memory */
-    CARemoteEndpoint_t *endPoint = CAAdapterCreateRemoteEndpoint(CA_IPV4, ipAddress, NULL);
+    CAEndpoint_t *endPoint = CAAdapterCreateEndpoint(CA_DEFAULT_FLAGS, CA_IPV4, ipAddress, port);
     if (NULL == endPoint)
     {
         OIC_LOG(ERROR, TAG, "Out of memory!");
         return;
     }
-    endPoint->addressInfo.IP.port = port;
 
     if (g_networkPacketCallback)
     {
         g_networkPacketCallback(endPoint, data, dataLength);
     }
-    CAAdapterFreeRemoteEndpoint(endPoint);
+    CAAdapterFreeEndpoint(endPoint);
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
@@ -346,12 +345,11 @@ CAResult_t CAStartIPDiscoveryServer()
     return CAStartIPListeningServer();
 }
 
-int32_t CASendIPUnicastData(const CARemoteEndpoint_t *remoteEndpoint, const void *data,
-                                  uint32_t dataLength)
+int32_t CASendIPUnicastData(const CAEndpoint_t *endpoint, const void *data, uint32_t dataLength)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
-    VERIFY_NON_NULL_RET(remoteEndpoint, TAG, "remoteEndpoint", -1);
+    VERIFY_NON_NULL_RET(endpoint, TAG, "remoteEndpoint", -1);
     VERIFY_NON_NULL_RET(data, TAG, "data", -1);
     if (dataLength == 0)
     {
@@ -359,13 +357,12 @@ int32_t CASendIPUnicastData(const CARemoteEndpoint_t *remoteEndpoint, const void
         return -1;
     }
 
-    CAIPSendData(remoteEndpoint->addressInfo.IP.ipAddress,
-                       remoteEndpoint->addressInfo.IP.port, data, dataLength, false);
+    CAIPSendData(endpoint->addr, endpoint->port, data, dataLength, false);
     OIC_LOG(DEBUG, TAG, "OUT");
     return dataLength;
 }
 
-int32_t CASendIPMulticastData(const void *data, uint32_t dataLength)
+int32_t CASendIPMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t dataLength)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -381,7 +378,7 @@ int32_t CASendIPMulticastData(const void *data, uint32_t dataLength)
     return dataLength;
 }
 
-CAResult_t CAGetIPInterfaceInformation(CALocalConnectivity_t **info, uint32_t *size)
+CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     VERIFY_NON_NULL(info, TAG, "info");
@@ -415,7 +412,7 @@ CAResult_t CAGetIPInterfaceInformation(CALocalConnectivity_t **info, uint32_t *s
         return CA_MEMORY_ALLOC_FAILED;
     }
 
-    (*info)->addressInfo.IP.port = g_unicastServerport;
+    (*info)->port = g_unicastServerport;
     (*size) = 1;
 
     OICFree(ipAddress);

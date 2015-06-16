@@ -77,9 +77,9 @@ OCEntityHandlerResult defaultResourceEHandler(OCEntityHandlerFlag flag,
 }
 
 /* This method will retrieve the port at which the secure resource is hosted */
-static OCStackResult GetSecurePortInfo(CATransportType_t connType, uint16_t *port)
+static OCStackResult GetSecurePortInfo(CATransportAdapter_t connType, uint16_t *port)
 {
-    CALocalConnectivity_t* info = NULL;
+    CAEndpoint_t* info = NULL;
     uint32_t size = 0;
     OCStackResult ret = OC_STACK_ERROR;
 
@@ -88,11 +88,11 @@ static OCStackResult GetSecurePortInfo(CATransportType_t connType, uint16_t *por
     {
         while (size--)
         {
-            if (info[size].isSecured && info[size].type == connType)
+            if ((info[size].flags & CA_SECURE) && info[size].adapter == connType)
             {
-                if (info[size].type == CA_IPV4)
+                if (info[size].adapter == CA_ADAPTER_IP)
                 {
-                    *port = info[size].addressInfo.IP.port;
+                    *port = info[size].port;
                     ret = OC_STACK_OK;
                     break;
                 }
@@ -299,7 +299,7 @@ static OCStackResult ValidateUrlQuery (char *url, char *query,
 OCStackResult
 BuildVirtualResourceResponse(const OCResource *resourcePtr, uint8_t filterOn,
                        const char *filterValue, char *out, uint16_t *remaining,
-                       CATransportType_t connType )
+                       CATransportAdapter_t adapter)
 {
     if(!resourcePtr || !out  || !remaining)
     {
@@ -362,53 +362,53 @@ BuildVirtualResourceResponse(const OCResource *resourcePtr, uint8_t filterOn,
         if (encodeRes)
         {
             // Add URIs
-            cJSON_AddItemToObject (resObj, OC_RSRVD_HREF, cJSON_CreateString(resourcePtr->uri));
+            cJSON_AddItemToObject(resObj, OC_RSRVD_HREF, cJSON_CreateString(resourcePtr->uri));
 
             // Add server instance id
-            cJSON_AddItemToObject (resObj,
+            cJSON_AddItemToObject(resObj,
                                    OC_RSRVD_SERVER_INSTANCE_ID,
                                    cJSON_CreateString(OCGetServerInstanceIDString()));
 
 
             cJSON_AddItemToObject (resObj, OC_RSRVD_PROPERTY, propObj = cJSON_CreateObject());
             // Add resource types
-            cJSON_AddItemToObject (propObj, OC_RSRVD_RESOURCE_TYPE, rtArray = cJSON_CreateArray());
+            cJSON_AddItemToObject(propObj, OC_RSRVD_RESOURCE_TYPE, rtArray = cJSON_CreateArray());
             resourceTypePtr = resourcePtr->rsrcType;
             while (resourceTypePtr)
             {
-                cJSON_AddItemToArray (rtArray,
+                cJSON_AddItemToArray(rtArray,
                                       cJSON_CreateString(resourceTypePtr->resourcetypename));
                 resourceTypePtr = resourceTypePtr->next;
             }
             // Add interface types
-            cJSON_AddItemToObject (propObj, OC_RSRVD_INTERFACE, rtArray = cJSON_CreateArray());
+            cJSON_AddItemToObject(propObj, OC_RSRVD_INTERFACE, rtArray = cJSON_CreateArray());
             interfacePtr = resourcePtr->rsrcInterface;
             while (interfacePtr)
             {
-                cJSON_AddItemToArray (rtArray, cJSON_CreateString(interfacePtr->name));
+                cJSON_AddItemToArray(rtArray, cJSON_CreateString(interfacePtr->name));
                 interfacePtr = interfacePtr->next;
             }
 
             //Add Policy
-            cJSON_AddItemToObject (propObj, OC_RSRVD_POLICY, policyObj = cJSON_CreateObject());
+            cJSON_AddItemToObject(propObj, OC_RSRVD_POLICY, policyObj = cJSON_CreateObject());
 
             if (policyObj)
             {
                 // Policy Property Bitmap
                 // If resource is discoverable, set discoverability flag.
                 // Resources that are not discoverable will not have the flag.
-                cJSON_AddNumberToObject (policyObj, OC_RSRVD_BITMAP,
+                cJSON_AddNumberToObject(policyObj, OC_RSRVD_BITMAP,
                                  resourcePtr->resourceProperties & (OC_OBSERVABLE|OC_DISCOVERABLE));
 
                 // Set secure flag for secure resources
                 if (resourcePtr->resourceProperties & OC_SECURE)
                 {
-                    cJSON_AddNumberToObject (policyObj, OC_RSRVD_SECURE, OC_RESOURCE_SECURE);
+                    cJSON_AddNumberToObject(policyObj, OC_RSRVD_SECURE, OC_RESOURCE_SECURE);
                     //Set the IP port also as secure resources are hosted on a different port
                     uint16_t port = 0;
-                    if (GetSecurePortInfo (connType, &port) == OC_STACK_OK)
+                    if (GetSecurePortInfo(adapter, &port) == OC_STACK_OK)
                     {
-                        cJSON_AddNumberToObject (policyObj, OC_RSRVD_HOSTING_PORT, port);
+                        cJSON_AddNumberToObject(policyObj, OC_RSRVD_HOSTING_PORT, port);
                     }
                 }
             }
@@ -592,6 +592,8 @@ OCStackResult DetermineResourceHandling (const OCServerRequest *request,
 
     OC_LOG(INFO, TAG, PCF("Entering DetermineResourceHandling"));
 
+    const OCDevAddr *devAddr = &request->devAddr;
+
     // Check if virtual resource
     if (IsVirtualResource((const char*)request->resourceUrl))
     {
@@ -599,7 +601,7 @@ OCStackResult DetermineResourceHandling (const OCServerRequest *request,
         *resource = headResource;
         return OC_STACK_OK;
     }
-    if (NULL == request->resourceUrl || (strlen((const char*)(request->resourceUrl)) == 0))
+    if (strlen((const char*)(request->resourceUrl)) == 0)
     {
         // Resource URL not specified
         *handling = OC_RESOURCE_NOT_SPECIFIED;
@@ -625,7 +627,7 @@ OCStackResult DetermineResourceHandling (const OCServerRequest *request,
         }
 
         // secure resource will entertain only authorized requests
-        if ((resourcePtr->resourceProperties & OC_SECURE) && (request->secured == 0))
+        if ((resourcePtr->resourceProperties & OC_SECURE) && ((devAddr->flags & OC_FLAG_SECURE) == 0))
         {
             OC_LOG(ERROR, TAG, PCF("Un-authorized request. Ignoring"));
             return OC_STACK_RESOURCE_ERROR;
@@ -697,9 +699,9 @@ OCStackResult EntityHandlerCodeToOCStackCode(OCEntityHandlerResult ehResult)
 }
 
 static OCStackResult
-HandleVirtualResource (OCServerRequest *request, OCResource* resource)
+HandleVirtualResource(OCServerRequest *request, OCResource *resource)
 {
-    if(!request || !resource)
+    if (!request || !resource)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -742,8 +744,9 @@ HandleVirtualResource (OCServerRequest *request, OCResource* resource)
                         remaining--;
                     }
                     firstLoopDone = 1;
-                    result = BuildVirtualResourceResponse(resource, filterOn, filterValue,
-                            (char*)ptr, &remaining, request->connectivityType );
+                    result = BuildVirtualResourceResponse(resource, filterOn,
+                                filterValue, (char*)ptr, &remaining,
+                                (CATransportAdapter_t)request->devAddr.adapter);
 
                     if (result != OC_STACK_OK)
                     {
@@ -919,7 +922,7 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
                 (const char *)(request->query),
                 ehRequest.obsInfo.obsId, request->requestToken, request->tokenLength,
                 resource, request->qos,
-                &request->addressInfo, request->connectivityType);
+                &request->devAddr);
 
         if(result == OC_STACK_OK)
         {

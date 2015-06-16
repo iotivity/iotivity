@@ -29,17 +29,17 @@
 using namespace std;
 
 // Helper Methods
-void UTRequestHandler(const CARemoteEndpoint_t *endPoint, const CARequestInfo_t *requestInfo)
+void UTRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requestInfo)
 {
     EXPECT_TRUE(true) << "UTRequestHandler\n";
 }
 
-void UTResponseHandler(const CARemoteEndpoint_t *endPoint, const CAResponseInfo_t *responseInfo)
+void UTResponseHandler(const CAEndpoint_t *endPoint, const CAResponseInfo_t *responseInfo)
 {
      EXPECT_TRUE(true) << "UTResponseHandler\n";
 }
 
-void UTErrorHandler(const CARemoteEndpoint_t *endPoint, const CAErrorInfo_t *errorInfo)
+void UTErrorHandler(const CAEndpoint_t *endPoint, const CAErrorInfo_t *errorInfo)
 {
      EXPECT_TRUE(true) << "UTErrorHandler\n";
 }

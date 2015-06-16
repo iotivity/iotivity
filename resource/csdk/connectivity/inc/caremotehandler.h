@@ -39,34 +39,14 @@ extern "C"
  * @param   endpoint       [IN]    endpoint information where the data has to be sent
  * @return  remote endpoint created
  */
-CARemoteEndpoint_t *CACloneRemoteEndpoint(const CARemoteEndpoint_t *endpoint);
-
-/**
- * @brief   Creates a new remote endpoint from the input uri
- * @param   uri                 [IN]    absolute uri information to create remote endpoint
- * @param   transportType       [IN]    transport type of the endpoint
- * @return  remote endpoint created
- */
-CARemoteEndpoint_t *CACreateRemoteEndpointUriInternal(const CAURI_t uri,
-                                                      const CATransportType_t transportType);
-
-/**
- * @brief   Creates a new remote endpoint from the input and other information
- * @param   resourceUri         [IN]    absolute uri information to create remote endpoint
- * @param   addr                [IN]    address of the endpoint
- * @param   type                [IN]    transport  type of the endpoint
- * @return  remote endpoint created
- */
-CARemoteEndpoint_t *CACreateRemoteEndpointInternal(const CAURI_t resourceUri,
-                                                   const CAAddress_t addr,
-                                                   const CATransportType_t type);
+CAEndpoint_t *CACloneEndpoint(const CAEndpoint_t *endpoint);
 
 /**
  * @brief   Destroy remote endpoint
  * @param   endpoint       [IN]    endpoint information where the data has to be sent
  * @return  none
  */
-void CADestroyRemoteEndpointInternal(CARemoteEndpoint_t *rep);
+void CADestroyEndpointInternal(CAEndpoint_t *rep);
 
 /**
  * @brief   Creates a new request information

@@ -45,10 +45,8 @@ typedef struct OCServerRequest
     OCStackResult observeResult;
     uint8_t numResponses;
     OCEHResponseHandler ehResponseHandler;
-    /** Remote Endpoint address **/
-    CAAddress_t addressInfo;
-    /** Connectivity of the endpoint**/
-    CATransportType_t connectivityType;
+    /** Remote endpoint address **/
+    OCDevAddr devAddr;
     // token for the request
     CAToken_t requestToken;
     // token length the request
@@ -56,7 +54,6 @@ typedef struct OCServerRequest
     // The ID of CoAP pdu                                   //Kept in
     uint16_t coapID;                                        //CoAP
     uint8_t delayedResNeeded;
-    uint8_t secured;
     //////////////////////////////////////////////////////////
     // An array of the received vendor specific header options
     uint8_t numRcvdVendorSpecificHeaderOptions;
@@ -152,21 +149,20 @@ OCServerResponse * GetServerResponseUsingHandle (const OCServerRequest * handle)
  * @param tokenLength - request token length
  * @param resourceUrl - URL of resource
  * @param reqTotalSize - total size of the request
- * @param addressInfo - CA Address
- * @param connectivityType - connection type
+ * @param devAddr - OCDevAddr
  *
  * @return
  *     OCStackResult
  */
 OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
-        uint8_t delayedResNeeded, uint8_t secured, uint8_t notificationFlag, OCMethod method,
+        uint8_t delayedResNeeded, uint8_t notificationFlag, OCMethod method,
         uint8_t numRcvdVendorSpecificHeaderOptions, uint32_t observationOption,
         OCQualityOfService qos, char * query,
         OCHeaderOption * rcvdVendorSpecificHeaderOptions,
         char * reqJSONPayload, CAToken_t requestToken,
         uint8_t tokenLength,
         char * resourceUrl, size_t reqTotalSize,
-        CAAddress_t *addressInfo, CATransportType_t connectivityType);
+        const OCDevAddr *devAddr);
 
 /**
  * Form the OCEntityHandlerRequest struct that is passed to a resource's entity handler

@@ -24,6 +24,7 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "global.h"
+#include <netdb.h>
 
 /**
  * @def NET_DTLS_TAG
@@ -43,36 +44,35 @@ static stCADtlsContext_t *g_caDtlsContext = NULL;
  */
 static ca_mutex g_dtlsContextMutex = NULL;
 
-
 /**
  * @var g_getCredentialsCallback
  * @brief callback to get DTLS credentials
  */
 static CAGetDTLSCredentialsHandler g_getCredentialsCallback = NULL;
 
-static stCADtlsPeerInfo_t * GetPeerInfo(const char *peerAddr, uint32_t port)
+static CAEndpoint_t *GetPeerInfo(const CAEndpoint_t *peer)
 {
     uint32_t list_index = 0;
     uint32_t list_length = 0;
 
-    if(NULL == peerAddr || 0 == port)
+    if(NULL == peer)
     {
         OIC_LOG(ERROR, NET_DTLS_TAG, "CAPeerInfoListContains invalid parameters");
         return NULL;
     }
 
-    stCADtlsPeerInfo_t *peerInfo;
+    CAEndpoint_t *peerInfo;
     list_length = u_arraylist_length(g_caDtlsContext->peerInfoList);
     for (list_index = 0; list_index < list_length; list_index++)
     {
-        peerInfo = (stCADtlsPeerInfo_t *)u_arraylist_get(g_caDtlsContext->peerInfoList, list_index);
+        peerInfo = (CAEndpoint_t *)u_arraylist_get(g_caDtlsContext->peerInfoList, list_index);
         if (NULL == peerInfo)
         {
             continue;
         }
 
-        if((0 == strncmp(peerAddr, peerInfo->address.IP.ipAddress, CA_IPADDR_SIZE)) &&
-                (port == peerInfo->address.IP.port))
+        if((0 == strncmp(peer->addr, peerInfo->addr, MAX_ADDR_STR_SIZE_CA)) &&
+                (peer->port == peerInfo->port))
         {
             return peerInfo;
         }
@@ -81,7 +81,7 @@ static stCADtlsPeerInfo_t * GetPeerInfo(const char *peerAddr, uint32_t port)
 }
 
 static CAResult_t CAAddIdToPeerInfoList(const char *peerAddr, uint32_t port,
-       const unsigned char * id,uint16_t id_length)
+                                    const unsigned char *id, uint16_t id_length)
 {
     if(NULL == peerAddr || NULL == id || 0 == port || 0 == id_length)
     {
@@ -89,45 +89,42 @@ static CAResult_t CAAddIdToPeerInfoList(const char *peerAddr, uint32_t port,
         return CA_STATUS_INVALID_PARAM;
     }
 
-    if(NULL != GetPeerInfo(peerAddr, port))
-    {
-        OIC_LOG(ERROR, NET_DTLS_TAG, "CAAddIdToPeerInfoList peer already exist");
-        return CA_STATUS_FAILED;
-    }
-
-    stCADtlsPeerInfo_t *peerInfo = (stCADtlsPeerInfo_t *)
-                                    OICCalloc(1, sizeof(stCADtlsPeerInfo_t));
-    if (NULL == peerInfo)
+    CAEndpoint_t *peer = (CAEndpoint_t *)OICCalloc(1, sizeof (CAEndpoint_t));
+    if (NULL == peer)
     {
         OIC_LOG(ERROR, NET_DTLS_TAG, "peerInfo malloc failed!");
         return CA_MEMORY_ALLOC_FAILED;
     }
 
-    OICStrcpy(peerInfo->address.IP.ipAddress, sizeof(peerInfo->address.IP.ipAddress),
-            peerAddr);
-    peerInfo->address.IP.port = port;
-    OICStrcpyPartial(peerInfo->identity.id, sizeof(peerInfo->identity.id), id, id_length);
-    peerInfo->identity.id_length = id_length;
+    OICStrcpy(peer->addr, sizeof(peer->addr), peerAddr);
+    peer->port = port;
+    OICStrcpyPartial(peer->identity.id, sizeof(peer->identity.id), id, id_length);
+    peer->identity.id_length = id_length;
 
-    CAResult_t result = u_arraylist_add(g_caDtlsContext->peerInfoList, (void *)peerInfo);
+    if(NULL != GetPeerInfo(peer))
+    {
+        OIC_LOG(ERROR, NET_DTLS_TAG, "CAAddIdToPeerInfoList peer already exist");
+        OICFree(peer);
+        return CA_STATUS_FAILED;
+    }
 
+    CAResult_t result = u_arraylist_add(g_caDtlsContext->peerInfoList, (void *)peer);
     if (CA_STATUS_OK != result)
     {
         OIC_LOG(ERROR, NET_DTLS_TAG, "u_arraylist_add failed!");
-        OICFree(peerInfo);
+        OICFree(peer);
     }
 
     return result;
 }
-
 
 static void CAFreePeerInfoList()
 {
     uint32_t list_length = u_arraylist_length(g_caDtlsContext->peerInfoList);
     for (uint32_t list_index = 0; list_index < list_length; list_index++)
     {
-        stCADtlsPeerInfo_t * peerInfo = (stCADtlsPeerInfo_t *)u_arraylist_get(
-                                g_caDtlsContext->peerInfoList, list_index);
+        CAEndpoint_t *peerInfo = (CAEndpoint_t *)u_arraylist_get(
+                                     g_caDtlsContext->peerInfoList, list_index);
         OICFree(peerInfo);
     }
     u_arraylist_free(&(g_caDtlsContext->peerInfoList));
@@ -136,7 +133,7 @@ static void CAFreePeerInfoList()
 
 static void CARemovePeerFromPeerInfoList(const char * addr, uint32_t port)
 {
-    if(NULL == addr || 0 >= port)
+    if (NULL == addr || 0 >= port)
     {
         OIC_LOG(ERROR, NET_DTLS_TAG, "CADTLSGetPeerPSKId invalid parameters");
         return;
@@ -145,19 +142,41 @@ static void CARemovePeerFromPeerInfoList(const char * addr, uint32_t port)
     uint32_t list_length = u_arraylist_length(g_caDtlsContext->peerInfoList);
     for (uint32_t list_index = 0; list_index < list_length; list_index++)
     {
-        stCADtlsPeerInfo_t * peerInfo = (stCADtlsPeerInfo_t *)u_arraylist_get(
+        CAEndpoint_t *peerInfo = (CAEndpoint_t *)u_arraylist_get(
                                 g_caDtlsContext->peerInfoList,list_index);
         if (NULL == peerInfo)
         {
             continue;
         }
-        if((0 == strncmp(addr, peerInfo->address.IP.ipAddress, CA_IPADDR_SIZE)) &&
-                (port == peerInfo->address.IP.port))
+        if((0 == strncmp(addr, peerInfo->addr, MAX_ADDR_STR_SIZE_CA)) &&
+                (port == peerInfo->port))
         {
             OICFree(u_arraylist_remove(g_caDtlsContext->peerInfoList, list_index));
             return;
         }
     }
+}
+
+static int CASizeOfAddrInfo(stCADtlsAddrInfo_t *addrInfo)
+{
+    VERIFY_NON_NULL_RET(addrInfo, NET_DTLS_TAG, "addrInfo is NULL" , DTLS_FAIL);
+
+    switch (addrInfo->addr.st.ss_family)
+    {
+    case AF_INET:
+        {
+            return sizeof (struct sockaddr_in);
+        }
+    case AF_INET6:
+        {
+            return sizeof (struct sockaddr_in6);
+        }
+    default:
+        {
+            break;
+        }
+    }
+    return sizeof (struct sockaddr_storage);
 }
 
 static eDtlsRet_t CAAdapterNetDtlsEncryptInternal(const stCADtlsAddrInfo_t *dstSession,
@@ -282,10 +301,15 @@ static CAResult_t CADtlsCacheMsg(stCACacheMessage_t *msg)
 
 static bool CAIsAddressMatching(const stCADtlsAddrInfo_t *a,  const stCADtlsAddrInfo_t *b)
 {
-    return (a->size == b->size) &&
-           (a->addr.sa.sa_family == b->addr.sa.sa_family) &&
-           (a->addr.sin.sin_port == b->addr.sin.sin_port) &&
-           memcmp(&a->addr.sin.sin_addr, &b->addr.sin.sin_addr, sizeof(struct in_addr)) == 0;
+    if (a->size != b->size)
+    {
+        return false;
+    }
+    if (memcmp(&a->addr, &b->addr, a->size))
+    {
+        return false;
+    }
+    return true;
 }
 
 static void CASendCachedMsg(const stCADtlsAddrInfo_t *dstSession)
@@ -347,9 +371,12 @@ static int32_t CAReadDecryptedPayload(dtls_context_t *dtlsContext,
 
     stCADtlsAddrInfo_t *addrInfo = (stCADtlsAddrInfo_t *)session;
 
-    char *remoteAddress = inet_ntoa(addrInfo->addr.sin.sin_addr);
-    uint32_t port = ntohs(addrInfo->addr.sin.sin_port);
-    CATransportType_t type = (CATransportType_t)addrInfo->ifIndex;
+    CAEndpoint_t endpoint = { 0 };
+    CAConvertAddrToName(&(addrInfo->addr.st), endpoint.addr, &endpoint.port);
+    endpoint.flags = addrInfo->addr.st.ss_family == AF_INET ? CA_IPV4 : CA_IPV6;
+    endpoint.flags |= CA_SECURE;
+    endpoint.adapter = CA_ADAPTER_IP;
+    int type = 0;
 
     if (NULL == g_caDtlsContext)
     {
@@ -360,12 +387,14 @@ static int32_t CAReadDecryptedPayload(dtls_context_t *dtlsContext,
     if ((0 <= type) && (MAX_SUPPORTED_ADAPTERS > type) &&
         (NULL != g_caDtlsContext->adapterCallbacks[type].recvCallback))
     {
-        // Get identity of sthe source of packet
-        stCADtlsPeerInfo_t * peerInfo = GetPeerInfo(remoteAddress, port);
+        // Get identity of the source of packet
+        CAEndpoint_t *peerInfo = GetPeerInfo(&endpoint);
+        if (peerInfo)
+        {
+            endpoint.identity = peerInfo->identity;
+        }
 
-        g_caDtlsContext->adapterCallbacks[type].recvCallback(remoteAddress, port,
-                buf,  bufLen, true,
-                (peerInfo) ? &(peerInfo->identity) : NULL);
+        g_caDtlsContext->adapterCallbacks[type].recvCallback(&endpoint, buf, bufLen);
     }
     else
     {
@@ -394,17 +423,19 @@ static int32_t CASendSecureData(dtls_context_t *dtlsContext,
 
     stCADtlsAddrInfo_t *addrInfo = (stCADtlsAddrInfo_t *)session;
 
-    char *remoteAddress = inet_ntoa(addrInfo->addr.sin.sin_addr);
-    uint16_t port = ntohs(addrInfo->addr.sin.sin_port);
-    CATransportType_t type = (CATransportType_t)addrInfo->ifIndex;
+    CAEndpoint_t endpoint;
+    CAConvertAddrToName(&(addrInfo->addr.st), endpoint.addr, &endpoint.port);
+    endpoint.flags = addrInfo->addr.st.ss_family == AF_INET ? CA_IPV4 : CA_IPV6;
+    endpoint.flags |= CA_SECURE;
+    endpoint.adapter = CA_ADAPTER_IP;
+    int type = 0;
 
     //Mutex is not required for g_caDtlsContext. It will be called in same thread.
     int32_t sentLen = 0;
     if ((0 <= type) && (MAX_SUPPORTED_ADAPTERS > type) &&
         (NULL != g_caDtlsContext->adapterCallbacks[type].sendCallback))
     {
-        sentLen = g_caDtlsContext->adapterCallbacks[type].sendCallback(remoteAddress, port,
-                  buf,  bufLen);
+        sentLen = g_caDtlsContext->adapterCallbacks[type].sendCallback(&endpoint, buf, bufLen);
     }
     else
     {
@@ -535,7 +566,8 @@ static int32_t CAGetPskCredentials(dtls_context_t *ctx,
 }
 
 void CADTLSSetAdapterCallbacks(CAPacketReceivedCallback recvCallback,
-                               CAPacketSendCallback sendCallback, CATransportType_t type)
+                               CAPacketSendCallback sendCallback,
+                               CATransportAdapter_t type)
 {
     OIC_LOG(DEBUG, NET_DTLS_TAG, "IN");
     ca_mutex_lock(g_dtlsContextMutex);
@@ -548,8 +580,9 @@ void CADTLSSetAdapterCallbacks(CAPacketReceivedCallback recvCallback,
 
     if ((0 <= type) && (MAX_SUPPORTED_ADAPTERS > type))
     {
-        g_caDtlsContext->adapterCallbacks[type].recvCallback = recvCallback;
-        g_caDtlsContext->adapterCallbacks[type].sendCallback = sendCallback;
+        // TODO: change the zeros to better values.
+        g_caDtlsContext->adapterCallbacks[0].recvCallback = recvCallback;
+        g_caDtlsContext->adapterCallbacks[0].sendCallback = sendCallback;
     }
 
     ca_mutex_unlock(g_dtlsContextMutex);
@@ -608,28 +641,20 @@ CAResult_t CADtlsEnableAnonECDHCipherSuite(const bool enable)
     return CA_STATUS_OK ;
 }
 
-CAResult_t CADtlsInitiateHandshake(const CAAddress_t* addrInfo,
-                                   const CATransportType_t transportType)
+CAResult_t CADtlsInitiateHandshake(const CAEndpoint_t *endpoint)
 {
     stCADtlsAddrInfo_t dst = {};
 
     OIC_LOG(DEBUG, NET_DTLS_TAG, "IN CADtlsInitiateHandshake");
 
-    if(!addrInfo)
+    if(!endpoint)
     {
         return CA_STATUS_INVALID_PARAM;
     }
 
-    if(inet_aton(addrInfo->IP.ipAddress, &dst.addr.sin.sin_addr) == 0)
-    {
-        OIC_LOG(ERROR, NET_DTLS_TAG, "Failed to convert from ASCII to Network Address");
-        return CA_STATUS_FAILED;
-    }
-    dst.addr.sin.sin_family = AF_INET;
-    dst.addr.sin.sin_port = htons(addrInfo->IP.port);
-    dst.size = sizeof(dst.addr);
-
-    dst.ifIndex = transportType;
+    CAConvertNameToAddr(endpoint->addr, endpoint->port, &(dst.addr.st));
+    dst.ifIndex = 0;
+    dst.size = CASizeOfAddrInfo(&dst);
 
     ca_mutex_lock(g_dtlsContextMutex);
     if(NULL == g_caDtlsContext)
@@ -653,37 +678,30 @@ CAResult_t CADtlsInitiateHandshake(const CAAddress_t* addrInfo,
     return CA_STATUS_OK;
 }
 
-CAResult_t CADtlsClose(const CAAddress_t* addrInfo, const CATransportType_t transportType)
+CAResult_t CADtlsClose(const CAEndpoint_t *endpoint)
 {
     stCADtlsAddrInfo_t dst = {};
 
     OIC_LOG(DEBUG, NET_DTLS_TAG, "IN CADtlsDisconnect");
 
-    if(!addrInfo)
+    if(!endpoint)
     {
         return CA_STATUS_INVALID_PARAM;
     }
 
-    if(inet_aton(addrInfo->IP.ipAddress, &dst.addr.sin.sin_addr) == 0)
-    {
-        OIC_LOG(ERROR, NET_DTLS_TAG, "Failed to convert from ASCII to Network Address");
-        return CA_STATUS_FAILED;
-    }
-    dst.addr.sin.sin_family = AF_INET;
-    dst.addr.sin.sin_port = htons(addrInfo->IP.port);
-    dst.size = sizeof(dst.addr);
-
-    dst.ifIndex = transportType;
+    CAConvertNameToAddr(endpoint->addr, endpoint->port, &(dst.addr.st));
+    dst.ifIndex = 0;
+    dst.size = CASizeOfAddrInfo(&dst);
 
     ca_mutex_lock(g_dtlsContextMutex);
-    if(NULL == g_caDtlsContext)
+    if (NULL == g_caDtlsContext)
     {
         OIC_LOG(ERROR, NET_DTLS_TAG, "Context is NULL");
         ca_mutex_unlock(g_dtlsContextMutex);
         return CA_STATUS_FAILED;
     }
 
-    if(0 > dtls_close(g_caDtlsContext->dtlsContext, (session_t*)(&dst)))
+    if (0 > dtls_close(g_caDtlsContext->dtlsContext, (session_t*)(&dst)))
     {
         OIC_LOG(ERROR, NET_DTLS_TAG, "Failed to close the session");
         ca_mutex_unlock(g_dtlsContextMutex);
@@ -697,8 +715,7 @@ CAResult_t CADtlsClose(const CAAddress_t* addrInfo, const CATransportType_t tran
     return CA_STATUS_OK;
 }
 
-CAResult_t CADtlsGenerateOwnerPSK(const CAAddress_t* addrInfo,
-                    const CATransportType_t transportType,
+CAResult_t CADtlsGenerateOwnerPSK(const CAEndpoint_t *endpoint,
                     const uint8_t* label, const size_t labelLen,
                     const uint8_t* rsrcServerDeviceID, const size_t rsrcServerDeviceIDLen,
                     const uint8_t* provServerDeviceID, const size_t provServerDeviceIDLen,
@@ -706,23 +723,16 @@ CAResult_t CADtlsGenerateOwnerPSK(const CAAddress_t* addrInfo,
 {
     OIC_LOG(DEBUG, NET_DTLS_TAG, "IN CADtlsGenerateOwnerPSK");
 
-    if(!addrInfo || !label || 0 == labelLen || !ownerPSK || 0 == ownerPSKSize)
+    if(!endpoint || !label || 0 == labelLen || !ownerPSK || 0 == ownerPSKSize)
     {
         return CA_STATUS_INVALID_PARAM;
     }
 
     stCADtlsAddrInfo_t dst = {};
 
-    if(inet_aton(addrInfo->IP.ipAddress, &dst.addr.sin.sin_addr) == 0)
-    {
-        OIC_LOG(ERROR, NET_DTLS_TAG, "Failed to convert from ASCII to Network Address");
-        return CA_STATUS_FAILED;
-    }
-    dst.addr.sin.sin_family = AF_INET;
-    dst.addr.sin.sin_port = htons(addrInfo->IP.port);
-    dst.size = sizeof(dst.addr);
-
-    dst.ifIndex = transportType;
+    CAConvertNameToAddr(endpoint->addr, endpoint->port, &(dst.addr.st));
+    dst.ifIndex = 0;
+    dst.size = CASizeOfAddrInfo(&dst);
 
     ca_mutex_lock(g_dtlsContextMutex);
     if (NULL == g_caDtlsContext)
@@ -784,7 +794,7 @@ CAResult_t CAAdapterNetDtlsInit()
     if( (NULL == g_caDtlsContext->peerInfoList) ||
         (NULL == g_caDtlsContext->cacheList))
     {
-        OIC_LOG(ERROR, NET_DTLS_TAG, "peerInfoList or cacheList initialization failed!");
+    OIC_LOG(ERROR, NET_DTLS_TAG, "peerInfoList or cacheList initialization failed!");
         CAClearCacheList();
         CAFreePeerInfoList();
         OICFree(g_caDtlsContext);
@@ -849,18 +859,16 @@ void CAAdapterNetDtlsDeInit()
     OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT");
 }
 
-CAResult_t CAAdapterNetDtlsEncrypt(const char *remoteAddress,
-                                   const uint16_t port,
-                                   void *data,
-                                   uint32_t dataLen,
-                                   CATransportType_t transportType)
+CAResult_t CAAdapterNetDtlsEncrypt(const CAEndpoint_t *endpoint,
+                                   void *data, uint32_t dataLen)
 {
 
     OIC_LOG(DEBUG, NET_DTLS_TAG, "IN");
 
-    VERIFY_NON_NULL_RET(remoteAddress, NET_DTLS_TAG,"Param remoteAddress is NULL",CA_STATUS_FAILED);
-
-    VERIFY_NON_NULL_RET(data, NET_DTLS_TAG, "Param data is NULL" , CA_STATUS_FAILED);
+    VERIFY_NON_NULL_RET(endpoint, NET_DTLS_TAG,"Param remoteAddress is NULL",
+                        CA_STATUS_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(data, NET_DTLS_TAG, "Param data is NULL" ,
+                        CA_STATUS_INVALID_PARAM);
 
     if (0 == dataLen)
     {
@@ -872,16 +880,9 @@ CAResult_t CAAdapterNetDtlsEncrypt(const char *remoteAddress,
 
     stCADtlsAddrInfo_t addrInfo = {};
 
-    addrInfo.addr.sin.sin_family = AF_INET;
-    addrInfo.addr.sin.sin_port = htons(port);
-    // Conversion from ASCII format to Network format
-    if (inet_aton(remoteAddress, &addrInfo.addr.sin.sin_addr) == 0)
-    {
-        OIC_LOG(ERROR, NET_DTLS_TAG, "Failed to convert from ASCII to Network Address");
-        return CA_STATUS_FAILED;
-    }
-    addrInfo.size = sizeof(addrInfo.addr);
-    addrInfo.ifIndex = transportType;
+    CAConvertNameToAddr(endpoint->addr, endpoint->port, &(addrInfo.addr.st));
+    addrInfo.ifIndex = 0;
+    addrInfo.size = CASizeOfAddrInfo(&addrInfo);
 
     ca_mutex_lock(g_dtlsContextMutex);
     if(NULL == g_caDtlsContext)
@@ -927,41 +928,30 @@ CAResult_t CAAdapterNetDtlsEncrypt(const char *remoteAddress,
 
     ca_mutex_unlock(g_dtlsContextMutex);
 
-    if (ret == DTLS_OK)
+    if (ret != DTLS_OK)
     {
-        OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT");
-        return CA_STATUS_OK;
+        OIC_LOG(ERROR, NET_DTLS_TAG, "OUT FAILURE");
+        return CA_STATUS_FAILED;
     }
 
-    OIC_LOG(ERROR, NET_DTLS_TAG, "OUT FAILURE");
-    return CA_STATUS_FAILED;
+    OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT");
+    return CA_STATUS_OK;
 }
 
-
-CAResult_t CAAdapterNetDtlsDecrypt(const char *remoteAddress,
-                                   const uint16_t port,
-                                   uint8_t *data,
-                                   uint32_t dataLen,
-                                   CATransportType_t transportType)
+CAResult_t CAAdapterNetDtlsDecrypt(const CAEndpoint_t *endpoint,
+                                   uint8_t *data, uint32_t dataLen)
 {
     OIC_LOG(DEBUG, NET_DTLS_TAG, "IN");
+    VERIFY_NON_NULL_RET(endpoint, NET_DTLS_TAG, "endpoint is NULL" , CA_STATUS_INVALID_PARAM);
 
     stCADtlsAddrInfo_t addrInfo = {};
 
-    addrInfo.addr.sin.sin_family = AF_INET;
-    addrInfo.addr.sin.sin_port = htons(port);
-
-    // Conversion from ASCII format to Network format
-    if (inet_aton(remoteAddress, &addrInfo.addr.sin.sin_addr) == 0)
-    {
-        OIC_LOG(ERROR, NET_DTLS_TAG, "Failed to convert from ASCII to Network Address");
-        return CA_STATUS_FAILED;
-    }
-    addrInfo.size = sizeof(addrInfo.addr);
-    addrInfo.ifIndex = transportType;
+    CAConvertNameToAddr(endpoint->addr, endpoint->port, &(addrInfo.addr.st));
+    addrInfo.ifIndex = 0;
+    addrInfo.size = CASizeOfAddrInfo(&addrInfo);
 
     ca_mutex_lock(g_dtlsContextMutex);
-    if(NULL == g_caDtlsContext)
+    if (NULL == g_caDtlsContext)
     {
         OIC_LOG(ERROR, NET_DTLS_TAG, "Context is NULL");
         ca_mutex_unlock(g_dtlsContextMutex);

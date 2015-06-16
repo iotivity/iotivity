@@ -205,7 +205,7 @@ static void CAReceiveHandler(void *data)
             {
                 OIC_LOG_V(ERROR, IP_SERVER_TAG,
                           "data Received server information ip %s, port %d socket %d",
-                          info->ipAddress, info->port, sd);
+                          info->endpoint.addr, info->endpoint.port, sd);
                 memset(recvBuffer, 0, sizeof(recvBuffer));
 
                 struct sockaddr_in srcSockAddress = { 0 };
@@ -262,12 +262,17 @@ static void CAReceiveHandler(void *data)
                 }
                 OICFree(netMask);
 
-                if (info->isSecured)
+                CAEndpoint_t ep;
+                strncpy(ep.addr, srcIPAddress, MAX_ADDR_STR_SIZE_CA);
+                ep.port = srcPort;
+                ep.flags = CA_IPV4;
+                ep.adapter = CA_ADAPTER_IP;
+
+                if (info->endpoint.flags & CA_SECURE)
                 {
 #ifdef __WITH_DTLS__
-                    CAResult_t ret = CAAdapterNetDtlsDecrypt(srcIPAddress, srcPort,
-                                                             (uint8_t *)recvBuffer, recvLen,
-                                                             CA_IPV4);
+                    ep.flags |= CA_SECURE;
+                    (void)CAAdapterNetDtlsDecrypt(&ep, (uint8_t *)recvBuffer, recvLen);
                     OIC_LOG_V(DEBUG, IP_SERVER_TAG,
                               "CAAdapterNetDtlsDecrypt returns [%d]", ret);
 #endif
@@ -278,9 +283,8 @@ static void CAReceiveHandler(void *data)
 
                     if (g_adapterEthServerContext->packetReceivedCallback)
                     {
-                        g_adapterEthServerContext->packetReceivedCallback(srcIPAddress, srcPort,
-                                                                          recvBuffer, recvLen,
-                                                                          false, NULL);
+                        g_adapterEthServerContext->packetReceivedCallback(&ep,
+                                                          recvBuffer, recvLen);
                     }
 
                     ca_mutex_unlock(g_mutexAdapterServerContext);
@@ -627,10 +631,11 @@ CAResult_t CAIPStartUnicastServer(const char *localAddress, uint16_t *port,
             OICStrcpy(info->subNetMask, sizeof(info->subNetMask), netMask);
             OICFree(netMask);
         }
-        OICStrcpy(info->ipAddress, sizeof(info->ipAddress), localAddress);
-        info->port = *port;
+        OICStrcpy(info->endpoint.addr, sizeof(info->endpoint.addr), localAddress);
+        info->endpoint.port = *port;
+        info->endpoint.flags = isSecured ? CA_SECURE : 0;
+        info->endpoint.adapter = CA_ADAPTER_IP;
         info->socketFd = unicastServerFd;
-        info->isSecured = isSecured;
         info->isServerStarted = true;
         info->isMulticastServer = false;
         OICStrcpy(info->ifAddr, sizeof(info->ifAddr), localAddress);
@@ -727,10 +732,10 @@ CAResult_t CAIPStartMulticastServer(const char *localAddress, const char *multic
             OICFree(netMask);
         }
 
-        OICStrcpy(info->ipAddress, sizeof(info->ipAddress), multicastAddress);
-        info->port = multicastPort;
+        OICStrcpy(info->endpoint.addr, sizeof(info->endpoint.addr), multicastAddress);
+        info->endpoint.port = multicastPort;
+        info->endpoint.flags = 0;
         info->socketFd = mulicastServerFd;
-        info->isSecured = false;
         info->isServerStarted = true;
         info->isMulticastServer = true;
         OICStrcpy(info->ifAddr, sizeof(info->ifAddr), localAddress);
@@ -792,7 +797,7 @@ CAResult_t CAIPStopServer(const char *interfaceAddress)
                 struct ip_mreq multicastMemberReq = { { 0 }, { 0 } };
 
                 multicastMemberReq.imr_interface.s_addr = inet_addr(info->ifAddr);
-                inet_aton(info->ipAddress, &multicastMemberReq.imr_multiaddr);
+                inet_aton(info->endpoint.addr, &multicastMemberReq.imr_multiaddr);
                 if (-1 == setsockopt(info->socketFd, IPPROTO_IP, IP_DROP_MEMBERSHIP,
                                      (char *) &multicastMemberReq, sizeof(struct ip_mreq)))
                 {
@@ -812,7 +817,7 @@ CAResult_t CAIPStopServer(const char *interfaceAddress)
                 return CA_STATUS_FAILED;
             }
         }
-        else if (strncmp(interfaceAddress, info->ipAddress, strlen(info->ipAddress)) == 0)
+        else if (strncmp(interfaceAddress, info->endpoint.addr, strlen(info->endpoint.addr)) == 0)
         {
             if (u_arraylist_remove(g_serverInfoList, listIndex))
             {
@@ -865,7 +870,7 @@ CAResult_t CAIPStopAllServers()
                 struct ip_mreq multicastMemberReq = { { 0 }, { 0 } };
 
                 multicastMemberReq.imr_interface.s_addr = inet_addr(info->ifAddr);
-                inet_aton(info->ipAddress, &multicastMemberReq.imr_multiaddr);
+                inet_aton(info->endpoint.addr, &multicastMemberReq.imr_multiaddr);
                 if (-1 == setsockopt(info->socketFd, IPPROTO_IP, IP_DROP_MEMBERSHIP,
                                      (char *) &multicastMemberReq, sizeof(struct ip_mreq)))
                 {

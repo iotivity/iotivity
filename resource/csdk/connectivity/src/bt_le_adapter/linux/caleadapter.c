@@ -52,7 +52,7 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
     handler.stopAdapter = CAStopLE;
     handler.terminate = CATerminateLE;
 
-    registerCallback(handler, CA_LE);
+    registerCallback(handler, CA_ADAPTER_GATT_BTLE);
 
     return CA_STATUS_OK;
 }
@@ -78,21 +78,21 @@ CAResult_t CAStartLEDiscoveryServer()
     return CA_STATUS_OK;
 }
 
-int32_t CASendLEUnicastData(const CARemoteEndpoint_t *endpoint, const void *data, uint32_t dataLen)
+int32_t CASendLEUnicastData(const CAEndpoint_t *endpoint, const void *data, uint32_t dataLen)
 {
     OIC_LOG(DEBUG, TAG, "CASendLEUnicastData");
 
     return -1;
 }
 
-int32_t CASendLEMulticastData(const void *data, uint32_t dataLen)
+int32_t CASendLEMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t dataLen)
 {
     OIC_LOG(DEBUG, TAG, "CASendLEMulticastData");
 
     return -1;
 }
 
-CAResult_t CAGetLEInterfaceInformation(CALocalConnectivity_t **info, uint32_t *size)
+CAResult_t CAGetLEInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
 {
     OIC_LOG(DEBUG, TAG, "CAGetLEInterfaceInformation");
 

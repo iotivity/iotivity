@@ -262,10 +262,14 @@ namespace OC
         else
         {
             throw InitializeException(OC::InitException::NOT_CONFIGURED_AS_SERVER,
-                                      OC_STACK_INVALID_PARAM);
+                                         OC_STACK_INVALID_PARAM);
         }
 
-        OCStackResult result = OCInit(cfg.ipAddress.c_str(), cfg.port, initType);
+        OCTransportFlags serverFlags =
+                            static_cast<OCTransportFlags>(cfg.serverConnectivity & CT_MASK_FLAGS);
+        OCTransportFlags clientFlags =
+                            static_cast<OCTransportFlags>(cfg.clientConnectivity & CT_MASK_FLAGS);
+        OCStackResult result = OCInit1(initType, serverFlags, clientFlags);
 
         if(OC_STACK_OK != result)
         {

@@ -33,8 +33,10 @@
 #include "uarraylist.h"
 #include "cacommon.h"
 
-/** CA_IPV4, CA_EDR, CA_LE **/
-#define DEFAULT_RETRANSMISSION_TYPE     (CA_IPV4 | CA_EDR | CA_LE)
+/** IP, EDR, LE **/
+#define DEFAULT_RETRANSMISSION_TYPE (CA_ADAPTER_IP | \
+                                     CA_ADAPTER_RFCOMM_BTEDR | \
+                                     CA_ADAPTER_GATT_BTLE)
 
 /** default ACK time is 2 sec.(CoAP) **/
 #define DEFAULT_ACK_TIMEOUT_SEC     2
@@ -46,17 +48,19 @@
 #define RETRANSMISSION_CHECK_PERIOD_SEC     1
 
 /** retransmission data send method type**/
-typedef CAResult_t (*CADataSendMethod_t)(const CARemoteEndpoint_t *endpoint, const void *pdu,
+typedef CAResult_t (*CADataSendMethod_t)(const CAEndpoint_t *endpoint,
+                                         const void *pdu,
                                          uint32_t size);
 
 /** retransmission timeout callback type**/
-typedef void (*CATimeoutCallback_t)(const CARemoteEndpoint_t *endpoint, const void *pdu,
+typedef void (*CATimeoutCallback_t)(const CAEndpoint_t *endpoint,
+                                    const void *pdu,
                                     uint32_t size);
 
 typedef struct
 {
     /** retransmission support transport type **/
-    CATransportType_t supportType;
+    CATransportAdapter_t supportType;
 
     /** retransmission trying count **/
     uint8_t tryingCount;
@@ -128,8 +132,8 @@ CAResult_t CARetransmissionStart(CARetransmission_t *context);
  * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
 CAResult_t CARetransmissionSentData(CARetransmission_t* context,
-                                    const CARemoteEndpoint_t* endpoint, const void* pdu,
-                                    uint32_t size);
+                                    const CAEndpoint_t* endpoint,
+                                    const void* pdu, uint32_t size);
 
 /**
  * @brief   Pass the received pdu data. if received pdu is ACK data for the retransmission CON data,
@@ -142,7 +146,7 @@ CAResult_t CARetransmissionSentData(CARetransmission_t* context,
  * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
 CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
-                                        const CARemoteEndpoint_t *endpoint, const void *pdu,
+                                        const CAEndpoint_t *endpoint, const void *pdu,
                                         uint32_t size, void **retransmissionPdu);
 
 /**

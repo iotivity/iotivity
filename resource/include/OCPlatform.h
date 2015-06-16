@@ -470,7 +470,8 @@ namespace OC
         * @param interfaces - a collection of interfaces that the resource supports/implements
         * @return OCResource::Ptr - a shared pointer to the new resource object
         */
-        OCResource::Ptr constructResourceObject(const std::string& host, const std::string& uri,
+        OCResource::Ptr constructResourceObject(const std::string& host,
+                        const std::string& uri,
                         OCConnectivityType connectivityType, bool isObservable,
                         const std::vector<std::string>& resourceTypes,
                         const std::vector<std::string>& interfaces);

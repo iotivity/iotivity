@@ -152,7 +152,7 @@ public:
         std::cout<<"Starting Client find:"<<std::endl;
         FindCallback f (std::bind(&ClientWorker::foundResource, this, std::placeholders::_1));
         std::cout<<"result:" <<
-        OCPlatform::findResource("", requestURI.str(), OC_ALL, f)
+        OCPlatform::findResource("", requestURI.str(), CT_DEFAULT, f)
         << std::endl;
 
         std::cout<<"Finding Resource..."<<std::endl;
@@ -296,7 +296,7 @@ struct FooResource
 
 int main(int argc, char* argv[])
 {
-    OCConnectivityType connectivityType = OC_IPV4;
+    OCConnectivityType connectivityType = CT_ADAPTER_IP;
 
     if(argc == 2)
     {
@@ -309,37 +309,28 @@ int main(int argc, char* argv[])
             {
                 if(optionSelected == 0)
                 {
-                    connectivityType = OC_IPV4;
-                }
-                else if(optionSelected == 1)
-                {
-                    // TODO: re-enable IPv4/IPv6 command line selection when IPv6 is supported
-                    // connectivityType = OC_IPV6;
-                    connectivityType = OC_IPV4;
-                    std::cout << "IPv6 not currently supported. Using default IPv4" << std::endl;
+                    connectivityType = CT_ADAPTER_IP;
                 }
                 else
                 {
-                    std::cout << "Invalid connectivity type selected. Using default IPv4"
-                    << std::endl;
+                    std::cout << "Invalid connectivity type selected. Using default IP" << std::endl;
                 }
             }
             else
             {
-                std::cout << "Invalid connectivity type selected. Using default IPv4" << std::endl;
+                std::cout << "Invalid connectivity type selected. Using default IP" << std::endl;
             }
         }
         catch(std::exception& )
         {
-            std::cout << "Invalid input argument. Using IPv4 as connectivity type" << std::endl;
+            std::cout << "Invalid input argument. Using IP as connectivity type" << std::endl;
         }
     }
     else
     {
-        std::cout<< "Usage simpleclientserver <ConnectivityType(0|1)>" << std::endl;
-        std::cout<< "    ConnectivityType: Default IPv4" << std::endl;
-        std::cout << "   ConnectivityType : 0 - IPv4" << std::endl;
-        std::cout << "   ConnectivityType : 1 - IPv6 (not currently supported)" << std::endl;
+        std::cout<< "Usage simpleclientserver 0>" << std::endl;
+        std::cout<< "    ConnectivityType: Default IP" << std::endl;
+        std::cout << "   ConnectivityType : 0 - IP" << std::endl;
     }
 
     PlatformConfig cfg {

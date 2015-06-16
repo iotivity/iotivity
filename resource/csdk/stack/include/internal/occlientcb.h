@@ -62,8 +62,10 @@ typedef struct ClientCB {
     OCMethod method;
     // This is the sequence identifier the server applies to the invocation tied to 'handle'.
     uint32_t sequenceNumber;
-    // This is the request uri associated with the call back
+    // The canonical form of the request uri associated with the call back
     char * requestUri;
+    // Remote address complete
+    OCDevAddr * devAddr;
     // Struct to hold TTL info for presence
     #ifdef WITH_PRESENCE
     OCPresence * presence;
@@ -112,7 +114,8 @@ OCStackResult
 AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
              CAToken_t token, uint8_t tokenLength,
              OCDoHandle *handle, OCMethod method,
-             char * requestUri, char * resourceTypeName, OCConnectivityType conType, uint32_t ttl);
+             OCDevAddr *devAddr, char * requestUri,
+             char * resourceTypeName, uint32_t ttl);
 
 /** @ingroup ocstack
  *

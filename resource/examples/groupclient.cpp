@@ -185,7 +185,7 @@ int main(int argc, char* argv[])
         string resourceTypeName = "a.collection";
 
         OCPlatform::findResource("", requestURI.str(),
-                                 OC_ALL, &foundResource);
+                                 CT_DEFAULT, &foundResource);
 
         //Non-intensive block until foundResource callback is called by OCPlatform
         //and onGet gets resource.

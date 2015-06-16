@@ -42,9 +42,9 @@ static int TEST_CASE = 0;
 static const char UNICAST_DISCOVERY_QUERY[] = "coap://%s:6298/oic/res";
 static std::string putPayload = "{\"oic\":[{\"rep\":{\"power\":15,\"state\":true}}]}";
 
-//The following variable determines the interface protocol (IPv4, IPv6, etc)
-//to be used for sending unicast messages. Default set to IPv4.
-static OCConnectivityType OC_CONNTYPE = OC_IPV4;
+//The following variable determines the interface protocol (IP, etc)
+//to be used for sending unicast messages. Default set to IP.
+static OCConnectivityType OC_CONNTYPE = CT_ADAPTER_IP;
 static const char * MULTICAST_RESOURCE_DISCOVERY_QUERY = "/oic/res";
 
 int gQuitFlag = 0;
@@ -109,9 +109,6 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query, OCMethod method,
 OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle,
                                 OCClientResponse * clientResponse)
 {
-    uint8_t remoteIpAddr[4];
-    uint16_t remotePortNu;
-
     if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
         OC_LOG(INFO, TAG, "<====Callback Context for PUT received successfully====>");
@@ -123,13 +120,8 @@ OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle,
 
     if(clientResponse)
     {
-        OCDevAddrToIPv4Addr((OCDevAddr *) clientResponse->addr, remoteIpAddr,
-                            remoteIpAddr + 1, remoteIpAddr + 2, remoteIpAddr + 3);
-        OCDevAddrToPort((OCDevAddr *) clientResponse->addr, &remotePortNu);
-
-        OC_LOG_V(INFO, TAG,"PUT Response: %s \nFrom %d.%d.%d.%d:%d\n",
-                 clientResponse->resJSONPayload, remoteIpAddr[0], remoteIpAddr[1],
-                remoteIpAddr[2], remoteIpAddr[3], remotePortNu);
+        OC_LOG_V(INFO, TAG,"PUT Response: %s \nFrom %s:%d\n",
+                 clientResponse->resJSONPayload, clientResponse->devAddr.addr, clientResponse->devAddr.port);
     }
     else
     {
@@ -141,9 +133,6 @@ OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle,
 OCStackApplicationResult postReqCB(void *ctx, OCDoHandle handle,
                           OCClientResponse *clientResponse)
 {
-    uint8_t remoteIpAddr[4];
-    uint16_t remotePortNu;
-
     if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
         OC_LOG(INFO, TAG, "<====Callback Context for POST received successfully====>");
@@ -155,13 +144,8 @@ OCStackApplicationResult postReqCB(void *ctx, OCDoHandle handle,
 
     if(clientResponse)
     {
-        OCDevAddrToIPv4Addr((OCDevAddr *) clientResponse->addr, remoteIpAddr,
-                            remoteIpAddr + 1, remoteIpAddr + 2, remoteIpAddr + 3);
-        OCDevAddrToPort((OCDevAddr *) clientResponse->addr, &remotePortNu);
-
-        OC_LOG_V(INFO, TAG,"POST Response: %s \nFrom %d.%d.%d.%d:%d\n",
-                    clientResponse->resJSONPayload, remoteIpAddr[0], remoteIpAddr[1],
-                    remoteIpAddr[2], remoteIpAddr[3], remotePortNu);
+        OC_LOG_V(INFO, TAG,"POST Response: %s \nFrom %s:%d\n",
+                    clientResponse->resJSONPayload, clientResponse->devAddr.addr, clientResponse->devAddr.port);
     }
     else
     {
@@ -174,9 +158,6 @@ OCStackApplicationResult postReqCB(void *ctx, OCDoHandle handle,
 OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle,
                            OCClientResponse * clientResponse)
 {
-    uint8_t remoteIpAddr[4];
-    uint16_t remotePortNu;
-
     if (ctx == (void*) DEFAULT_CONTEXT_VALUE)
     {
         OC_LOG(INFO, TAG, "<====Callback Context for GET received successfully====>");
@@ -188,13 +169,8 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle,
 
     if (clientResponse)
     {
-        OCDevAddrToIPv4Addr((OCDevAddr *) clientResponse->addr, remoteIpAddr, remoteIpAddr + 1,
-                remoteIpAddr + 2, remoteIpAddr + 3);
-        OCDevAddrToPort((OCDevAddr *) clientResponse->addr, &remotePortNu);
-
-        OC_LOG_V(INFO, TAG,"Get Response: %s \nFrom %d.%d.%d.%d:%d\n",
-                clientResponse->resJSONPayload, remoteIpAddr[0], remoteIpAddr[1],
-                remoteIpAddr[2], remoteIpAddr[3], remotePortNu);
+        OC_LOG_V(INFO, TAG,"Get Response: %s \nFrom %s:%d\n",
+                clientResponse->resJSONPayload, clientResponse->devAddr.addr, clientResponse->devAddr.port);
 
         if (clientResponse->rcvdVendorSpecificHeaderOptions
                 && clientResponse->numRcvdVendorSpecificHeaderOptions)
@@ -228,8 +204,6 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle,
 OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
         OCClientResponse * clientResponse)
 {
-    uint8_t remoteIpAddr[4];
-    uint16_t remotePortNu;
     if (ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
         OC_LOG(INFO, TAG, "\n<====Callback Context for DISCOVERY query "
@@ -242,14 +216,9 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
 
     if (clientResponse)
     {
-        OCDevAddrToIPv4Addr((OCDevAddr *) clientResponse->addr, remoteIpAddr,
-                remoteIpAddr + 1, remoteIpAddr + 2, remoteIpAddr + 3);
-        OCDevAddrToPort((OCDevAddr *) clientResponse->addr, &remotePortNu);
-
         OC_LOG_V(INFO, TAG,
-                "Device Discovered %s \n @ %d.%d.%d.%d:%d\n",
-                clientResponse->resJSONPayload, remoteIpAddr[0], remoteIpAddr[1],
-                remoteIpAddr[2], remoteIpAddr[3], remotePortNu);
+                "Device Discovered %s \n @ %s:%d\n",
+                clientResponse->resJSONPayload, clientResponse->devAddr.addr, clientResponse->devAddr.port);
 
         collectUniqueResource(clientResponse);
     }
@@ -376,7 +345,7 @@ int InitDiscovery()
     }
     else
     {
-        ret = OCDoResource(NULL, OC_REST_GET, szQueryUri, 0, 0, (OC_ALL),
+        ret = OCDoResource(NULL, OC_REST_DISCOVER, szQueryUri, 0, 0, CT_DEFAULT,
                 OC_LOW_QOS, &cbData, NULL, 0);
     }
 
@@ -387,20 +356,18 @@ int InitDiscovery()
     return ret;
 }
 
-
-
-const char * getIPAddr(const OCClientResponse * clientResponse)
+const char *getIPAddr(const OCClientResponse *clientResponse)
 {
-    uint8_t a, b, c, d;
-   if(!clientResponse || 0 != OCDevAddrToIPv4Addr(clientResponse->addr, &a, &b, &c, &d))
+    if (!clientResponse)
     {
         return "";
     }
 
-    char * ipaddr = NULL;
-    if((ipaddr = (char *) OICCalloc(1, MAX_IP_ADDR_ST_SZ)))
+    const OCDevAddr *devAddr = &clientResponse->devAddr;
+    char *ipaddr = (char *) OICCalloc(1, strlen(devAddr->addr));
+    if (ipaddr)
     {
-        snprintf(ipaddr, MAX_IP_ADDR_ST_SZ, "%d.%d.%d.%d", a,b,c,d);
+        snprintf(ipaddr, MAX_IP_ADDR_ST_SZ, "%s", devAddr->addr);
     }
     else
     {
@@ -409,18 +376,17 @@ const char * getIPAddr(const OCClientResponse * clientResponse)
     return ipaddr;
 }
 
-const char * getPort(const OCClientResponse * clientResponse)
+const char *getPort(const OCClientResponse *clientResponse)
 {
-    uint16_t p = 0;
-    if(!clientResponse || 0 != OCDevAddrToPort(clientResponse->addr, &p) )
+    if(!clientResponse)
     {
         return "";
     }
 
-    char * port = NULL;
-    if((port = (char *) OICCalloc(1, MAX_PORT_ST_SZ)))
+    char *port = NULL;
+    if((port = (char *)OICCalloc(1, MAX_PORT_ST_SZ)))
     {
-        snprintf(port, MAX_PORT_ST_SZ, "%d", p);
+        snprintf(port, MAX_PORT_ST_SZ, "%d", clientResponse->devAddr.port);
     }
     else
     {
@@ -660,24 +626,17 @@ void printResourceList()
         printf("uri = %s\n", iter->uri);
         printf("ip = %s\n", iter->ip);
         printf("port = %s\n", iter->port);
-        switch (iter->connType)
+        switch (iter->connType & CT_MASK_ADAPTER)
         {
-            case OC_IPV4:
+            case CT_ADAPTER_IP:
                 printf("connType = %s\n","IPv4");
                 break;
-            case OC_IPV6:
-                // TODO: Allow IPv6 when support is added
-                printf("IPv6 not currently supported, default to IPv4\n");
-                //printf("connType = %s\n","IPv6");
-                printf("connType = %s\n","IPv4");
-                break;
-            case OC_LE:
+            case OC_ADAPTER_GATT_BTLE:
                 printf("connType = %s\n","BLE");
                 break;
-            case OC_EDR:
+            case OC_ADAPTER_RFCOMM_BTEDR:
                 printf("connType = %s\n","BT");
                 break;
-            case OC_ALL:
             default:
                 printf("connType = %s\n","Invalid connType");
                 break;
@@ -719,10 +678,7 @@ int main(int argc, char* argv[])
                 TEST_CASE = atoi(optarg);
                 break;
             case 'c':
-                // TODO: re-enable IPv4/IPv6 command line selection when IPv6 is supported
-                // OC_CONNTYPE = OCConnectivityType(atoi(optarg));
-                OC_CONNTYPE = OC_IPV4;
-                OC_LOG(INFO, TAG, "Using default IPv4, IPv6 not currently supported.");
+                OC_CONNTYPE = CT_ADAPTER_IP;
                 break;
             default:
                 PrintUsage();

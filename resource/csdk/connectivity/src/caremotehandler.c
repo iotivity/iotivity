@@ -27,7 +27,7 @@
 
 #define TAG "CA"
 
-CARemoteEndpoint_t *CACloneRemoteEndpoint(const CARemoteEndpoint_t *rep)
+CAEndpoint_t *CACloneEndpoint(const CAEndpoint_t *rep)
 {
     if (NULL == rep)
     {
@@ -36,7 +36,7 @@ CARemoteEndpoint_t *CACloneRemoteEndpoint(const CARemoteEndpoint_t *rep)
     }
 
     // allocate the remote end point structure.
-    CARemoteEndpoint_t *clone = (CARemoteEndpoint_t *) OICMalloc(sizeof(CARemoteEndpoint_t));
+    CAEndpoint_t *clone = (CAEndpoint_t *)OICMalloc(sizeof (CAEndpoint_t));
     if (NULL == clone)
     {
         OIC_LOG(ERROR, TAG, "CACloneRemoteEndpoint Out of memory");
@@ -44,249 +44,7 @@ CARemoteEndpoint_t *CACloneRemoteEndpoint(const CARemoteEndpoint_t *rep)
     }
     *clone = *rep;
 
-    if (NULL != rep->resourceUri)
-    {
-        // allocate reference uri field
-        char *temp = OICStrdup(rep->resourceUri);
-        if (NULL == temp)
-        {
-            OIC_LOG(ERROR, TAG, "CACloneRemoteEndpoint Out of memory");
-
-            CADestroyRemoteEndpointInternal(clone);
-
-            return NULL;
-        }
-
-        // save the uri
-        clone->resourceUri = temp;
-    }
-
     return clone;
-}
-
-#define COAP_PREFIX         "coap://"
-#define COAP_PREFIX_LEN     7
-#define COAPS_PREFIX         "coaps://"
-#define COAPS_PREFIX_LEN     8
-
-
-// return 1 : ip
-// return 0 : mac
-static int32_t getCAAddress(const char *pAddress, CAAddress_t *outAddress)
-{
-    if (NULL == pAddress || NULL == outAddress)
-    {
-        OIC_LOG(ERROR, TAG, "parameter is null");
-        return -1;
-    }
-
-    // simple parse, it will be change.
-    // 10.11.12.13:4545 (ip)
-    // 10:11:12:13:45:45 (mac)
-
-    int32_t len = strlen(pAddress);
-
-    int32_t isIp = 0;
-    int32_t ipLen = 0;
-
-    int i = 0;
-    for (i = 0; i < len; i++)
-    {
-        if (pAddress[i] == '.')
-        {
-            isIp = 1;
-        }
-
-        // found port number start index
-        if (isIp && pAddress[i] == ':')
-        {
-            ipLen = i;
-            break;
-        }
-    }
-
-    if (isIp)
-    {
-        if(ipLen && ipLen < sizeof(outAddress->IP.ipAddress))
-        {
-            OICStrcpyPartial(outAddress->IP.ipAddress, sizeof(outAddress->IP.ipAddress),
-                    pAddress, ipLen);
-        }
-        else if (!ipLen && len < sizeof(outAddress->IP.ipAddress))
-        {
-            OICStrcpy(outAddress->IP.ipAddress, sizeof(outAddress->IP.ipAddress),
-                    pAddress);
-        }
-        else
-        {
-            OIC_LOG_V(ERROR, TAG, "IP Address too long: %d", ipLen==0 ? len : ipLen);
-            return -1;
-        }
-
-
-        if (ipLen > 0)
-        {
-            outAddress->IP.port = atoi(pAddress + ipLen + 1);
-        }
-
-        OIC_LOG_V(DEBUG, TAG, "ip: %s, port: %d", outAddress->IP.ipAddress, outAddress->IP.port);
-    }
-    else
-    {
-        OICStrcpy(outAddress->BT.btMacAddress, sizeof(outAddress->BT.btMacAddress),
-                    pAddress);
-
-        OIC_LOG_V(DEBUG, TAG, "mac address : %s", outAddress->BT.btMacAddress);
-    }
-
-    return isIp;
-}
-
-CARemoteEndpoint_t *CACreateRemoteEndpointUriInternal(const CAURI_t uri,
-                                                      const CATransportType_t transportType)
-{
-    // support URI type
-    // coap://10.11.12.13:4545/resource_uri
-    // coap://10:11:12:13:45:45/resource_uri
-
-    if (NULL == uri)
-    {
-        OIC_LOG(ERROR, TAG, "parameter is null");
-        return NULL;
-    }
-
-    // parse uri
-    // #1. check prefix
-    int startIndex = 0;
-    bool secured = false;
-    if (strncmp(COAP_PREFIX, uri, COAP_PREFIX_LEN) == 0)
-    {
-        OIC_LOG_V(DEBUG, TAG, "uri has '%s' prefix.", COAP_PREFIX);
-        startIndex = COAP_PREFIX_LEN;
-    }
-
-    if (strncmp(COAPS_PREFIX, uri, COAPS_PREFIX_LEN) == 0)
-    {
-        OIC_LOG_V(DEBUG, TAG, "uri has '%s' prefix.", COAPS_PREFIX);
-        startIndex = COAPS_PREFIX_LEN;
-        secured = true;
-    }
-
-    // #2. copy uri for parse
-    int32_t len = strlen(uri) - startIndex;
-
-    if (len <= 0)
-    {
-        OIC_LOG(ERROR, TAG, "uri length is 0!");
-        return NULL;
-    }
-
-    char *cloneUri = (char *) OICCalloc(len + 1, sizeof(char));
-    if (NULL == cloneUri)
-    {
-        OIC_LOG(ERROR, TAG, "CACreateRemoteEndpointUriInternal Out of memory");
-        return NULL;
-    }
-
-    memcpy(cloneUri, &uri[startIndex], sizeof(char) * len);
-    cloneUri[len] = '\0';
-
-    // #3. parse address
-    // #4. parse resource uri
-    char *pAddress = cloneUri;
-    char *pResourceUri = NULL;
-
-    int32_t i = 0;
-    for (i = 0; i < len; i++)
-    {
-        if (cloneUri[i] == '/')
-        {
-            // separate
-            cloneUri[i] = 0;
-
-            pResourceUri = &cloneUri[i + 1];
-
-            break;
-        }
-
-    }
-
-    OIC_LOG_V(DEBUG, TAG, "pAddress : %s", pAddress);
-
-    OIC_LOG_V(DEBUG, TAG, "pResourceUri : %s", pResourceUri == NULL ? "" : pResourceUri);
-
-    // address
-    CAAddress_t address = {};
-
-    int resType = getCAAddress(pAddress, &address);
-    if (resType == -1)
-    {
-        OIC_LOG(DEBUG, TAG, "address parse error");
-
-        OICFree(cloneUri);
-        return NULL;
-    }
-
-    // resource uri
-    CAURI_t resourceUri = pResourceUri;
-
-    CARemoteEndpoint_t *remoteEndpoint = CACreateRemoteEndpointInternal(resourceUri, address,
-                                                                        transportType);
-    if (NULL == remoteEndpoint)
-    {
-        OIC_LOG(ERROR, TAG, "create remote endpoint fail");
-
-        OICFree(cloneUri);
-        return NULL;
-    }
-    remoteEndpoint->isSecured = secured;
-
-    OICFree(cloneUri);
-
-    OIC_LOG_V(DEBUG, TAG, "Remote endpoint successfully created [%d]!", remoteEndpoint->isSecured);
-    return remoteEndpoint;
-}
-
-CARemoteEndpoint_t *CACreateRemoteEndpointInternal(const CAURI_t resourceUri,
-                                                   const CAAddress_t addr,
-                                                   const CATransportType_t type)
-{
-    if (NULL == resourceUri)
-    {
-        OIC_LOG(ERROR, TAG, "uri is null value");
-        return NULL;
-    }
-
-    // allocate the remote end point structure.
-    CARemoteEndpoint_t *rep = (CARemoteEndpoint_t *) OICCalloc(1, sizeof(CARemoteEndpoint_t));
-
-    if (NULL == rep)
-    {
-        OIC_LOG(ERROR, TAG, "CACreateRemoteEndpointInternal of memory");
-        return NULL;
-    }
-
-    // allocate reference uri field
-    char *temp = OICStrdup(resourceUri);
-    if (NULL == temp)
-    {
-        OIC_LOG(ERROR, TAG, "CACreateRemoteEndpointInternal Out of memory");
-
-        CADestroyRemoteEndpointInternal(rep);
-
-        return NULL;
-    }
-
-    // save the uri
-    rep->resourceUri = temp;
-
-    // save the addressInfo
-    rep->addressInfo = addr;
-
-    // save the type
-    rep->transportType = type;
-
-    return rep;
 }
 
 CARequestInfo_t *CACloneRequestInfo(const CARequestInfo_t *rep)
@@ -478,18 +236,8 @@ CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *rep)
     return clone;
 }
 
-void CADestroyRemoteEndpointInternal(CARemoteEndpoint_t *rep)
+void CADestroyEndpointInternal(CAEndpoint_t *rep)
 {
-    if (NULL == rep)
-    {
-        OIC_LOG(ERROR, TAG, "parameter is null");
-        return;
-    }
-
-    // free uri field
-    OICFree((char *) rep->resourceUri);
-
-    // free remote end point structure.
     OICFree(rep);
 }
 

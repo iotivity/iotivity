@@ -370,35 +370,56 @@ void foundResource(std::shared_ptr<OCResource> resource)
 void PrintUsage()
 {
     std::cout << std::endl;
-    std::cout << "Usage : simpleclientHQ <ObserveType>" << std::endl;
+    std::cout << "Usage : simpleclientHQ <ObserveType> <ConnectivityType>" << std::endl;
     std::cout << "   ObserveType : 1 - Observe" << std::endl;
     std::cout << "   ObserveType : 2 - ObserveAll" << std::endl;
+    std::cout << "   ConnectivityType: Default IP" << std::endl;
+    std::cout << "   ConnectivityType : 0 - IP"<< std::endl;
 }
 
 int main(int argc, char* argv[]) {
 
     std::ostringstream requestURI;
 
+    OCConnectivityType connectivityType = CT_DEFAULT;
     try
     {
         if (argc == 1)
         {
             OBSERVE_TYPE_TO_USE = ObserveType::Observe;
         }
-        else if (argc == 2)
+        else if (argc ==2 || argc==3)
         {
             int value = std::stoi(argv[1]);
             if (value == 1)
-            {
                 OBSERVE_TYPE_TO_USE = ObserveType::Observe;
-            }
             else if (value == 2)
-            {
                 OBSERVE_TYPE_TO_USE = ObserveType::ObserveAll;
-            }
             else
-            {
                 OBSERVE_TYPE_TO_USE = ObserveType::Observe;
+
+            if(argc == 3)
+            {
+                std::size_t inputValLen;
+                int optionSelected = std::stoi(argv[2], &inputValLen);
+
+                if(inputValLen == strlen(argv[2]))
+                {
+                    if(optionSelected == 0)
+                    {
+                        connectivityType = CT_ADAPTER_IP;
+                    }
+                    else
+                    {
+                        std::cout << "Invalid connectivity type selected. Using default IP"
+                            << std::endl;
+                    }
+                }
+                else
+                {
+                    std::cout << "Invalid connectivity type selected. Using default IP"
+                            << std::endl;
+                }
             }
         }
         else
@@ -407,10 +428,11 @@ int main(int argc, char* argv[]) {
             return -1;
         }
     }
-    catch(std::exception&)
+    catch(std::exception& e)
     {
-        std::cout << "Invalid input argument. Using Observe as observe type" << std::endl;
+        std::cout << "Invalid input argument." << std::endl;
     }
+
 
     // Create PlatformConfig object
     PlatformConfig cfg {
@@ -429,14 +451,14 @@ int main(int argc, char* argv[]) {
         requestURI << OC_MULTICAST_DISCOVERY_URI << "?rt=core.light";
 
         OCPlatform::findResource("", requestURI.str(),
-                OC_ALL, &foundResource, OC::QualityOfService::LowQos);
+                connectivityType, &foundResource, OC::QualityOfService::LowQos);
         std::cout<< "Finding Resource... " <<std::endl;
 
         // Find resource is done twice so that we discover the original resources a second time.
         // These resources will have the same uniqueidentifier (yet be different objects), so that
         // we can verify/show the duplicate-checking code in foundResource(above);
         OCPlatform::findResource("", requestURI.str(),
-                OC_ALL, &foundResource, OC::QualityOfService::LowQos);
+                connectivityType, &foundResource, OC::QualityOfService::LowQos);
         std::cout<< "Finding Resource for second time... " <<std::endl;
 
         // A condition variable will free the mutex it is given, then do a non-

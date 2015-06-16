@@ -77,43 +77,45 @@ namespace OC
                                                 const std::vector<std::string>& resourceTypes,
                                                 const std::vector<std::string>& interfaces)
         {
-            return OCPlatform_impl::Instance().constructResourceObject(host, uri, connectivityType,
+            return OCPlatform_impl::Instance().constructResourceObject(host,
+                                                uri, connectivityType,
                                                 isObservable,
                                                 resourceTypes, interfaces);
         }
 
         OCStackResult findResource(const std::string& host,
-                                                const std::string& resourceName,
-                                                OCConnectivityType connectivityType,
-                                                FindCallback resourceHandler)
+                                            const std::string& resourceName,
+                                            OCConnectivityType connectivityType,
+                                            FindCallback resourceHandler)
         {
             return OCPlatform_impl::Instance().findResource(host, resourceName,
-                   connectivityType, resourceHandler);
+                                    connectivityType, resourceHandler);
         }
 
         OCStackResult findResource(const std::string& host,
-                                                const std::string& resourceName,
-                                                OCConnectivityType connectivityType,
-                                                FindCallback resourceHandler, QualityOfService QoS)
+                                            const std::string& resourceName,
+                                            OCConnectivityType connectivityType,
+                                            FindCallback resourceHandler,
+                                            QualityOfService QoS)
         {
-            return OCPlatform_impl::Instance().findResource(host, resourceName, connectivityType,
-                                                resourceHandler, QoS);
+            return OCPlatform_impl::Instance().findResource(host, resourceName,
+                                    connectivityType, resourceHandler, QoS);
         }
 
         OCStackResult getDeviceInfo(const std::string& host,
-                                                const std::string& deviceURI,
-                                                OCConnectivityType connectivityType,
-                                                FindDeviceCallback deviceInfoHandler)
+                                            const std::string& deviceURI,
+                                            OCConnectivityType connectivityType,
+                                            FindDeviceCallback deviceInfoHandler)
         {
             return OCPlatform_impl::Instance().getDeviceInfo(host, deviceURI,
                    connectivityType, deviceInfoHandler);
         }
 
         OCStackResult getDeviceInfo(const std::string& host,
-                                                const std::string& deviceURI,
-                                                OCConnectivityType connectivityType,
-                                                FindDeviceCallback deviceInfoHandler,
-                                                QualityOfService QoS)
+                                            const std::string& deviceURI,
+                                            OCConnectivityType connectivityType,
+                                            FindDeviceCallback deviceInfoHandler,
+                                            QualityOfService QoS)
         {
             return OCPlatform_impl::Instance().getDeviceInfo(host, deviceURI, connectivityType,
                     deviceInfoHandler, QoS);

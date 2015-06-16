@@ -239,14 +239,12 @@ OCServerResponse * GetServerResponseUsingHandle (const OCServerRequest * handle)
  *     OCStackResult
  */
 OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
-        uint8_t delayedResNeeded, uint8_t secured, uint8_t notificationFlag, OCMethod method,
+        uint8_t delayedResNeeded, uint8_t notificationFlag, OCMethod method,
         uint8_t numRcvdVendorSpecificHeaderOptions, uint32_t observationOption,
         OCQualityOfService qos, char * query,
         OCHeaderOption * rcvdVendorSpecificHeaderOptions,
-        char * reqJSONPayload, CAToken_t requestToken,
-        uint8_t tokenLength,
-        char * resourceUrl, size_t reqTotalSize,
-        CAAddress_t *addressInfo, CATransportType_t connectivityType)
+        char * reqJSONPayload, CAToken_t requestToken, uint8_t tokenLength,
+        char * resourceUrl, size_t reqTotalSize, const OCDevAddr *devAddr)
 {
     OCServerRequest * serverRequest = NULL;
 
@@ -255,11 +253,11 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
     //null terminator as well.
     serverRequest = (OCServerRequest *) OICCalloc(1, sizeof(OCServerRequest) +
         (reqTotalSize ? reqTotalSize : 1) - 1);
+    VERIFY_NON_NULL(devAddr);
     VERIFY_NON_NULL(serverRequest);
 
     serverRequest->coapID = coapID;
     serverRequest->delayedResNeeded = delayedResNeeded;
-    serverRequest->secured = secured;
     serverRequest->notificationFlag = notificationFlag;
 
     serverRequest->method = method;
@@ -305,11 +303,7 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
             resourceUrl);
     }
 
-    if (addressInfo)
-    {
-        serverRequest->addressInfo = *addressInfo;
-    }
-    serverRequest->connectivityType = connectivityType;
+    serverRequest->devAddr = *devAddr;
 
     *request = serverRequest;
     OC_LOG(INFO, TAG, PCF("Server Request Added!!"));
@@ -442,7 +436,7 @@ CAResponseResult_t ConvertEHResultToCAResult (OCEntityHandlerResult result)
 OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
 {
     OCStackResult result = OC_STACK_ERROR;
-    CARemoteEndpoint_t responseEndpoint = {};
+    CAEndpoint_t responseEndpoint = {};
     CAResponseInfo_t responseInfo = {};
     CAHeaderOption_t* optionsPointer = NULL;
 
@@ -462,12 +456,9 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
 
     OCServerRequest *serverRequest = (OCServerRequest *)ehResponse->requestHandle;
 
-    // Copy the address
-    responseEndpoint.resourceUri      = (CAURI_t) serverRequest->resourceUrl;
-    responseEndpoint.addressInfo      = serverRequest->addressInfo;
-    responseEndpoint.transportType    = serverRequest->connectivityType;
-    responseEndpoint.isSecured        = serverRequest->secured;
+    CopyDevAddrToEndpoint(&serverRequest->devAddr, &responseEndpoint);
 
+    responseInfo.info.resourceUri = serverRequest->resourceUrl;
     responseInfo.result = ConvertEHResultToCAResult(ehResponse->ehResult);
 
     if(serverRequest->notificationFlag && serverRequest->qos == OC_HIGH_QOS)
@@ -570,18 +561,18 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
 
     #ifdef WITH_PRESENCE
     //TODO: Add other connectivity types to CAConnTypes[] when enabled
-    CATransportType_t CAConnTypes[] = {CA_IPV4};
+    CATransportAdapter_t CAConnTypes[] = {CA_ADAPTER_IP};
     const char * connTypes[] = {"ip transport"};
-    int size = sizeof(CAConnTypes)/ sizeof(CATransportType_t);
-    CATransportType_t connType = responseEndpoint.transportType;
+    int size = sizeof(CAConnTypes)/ sizeof(CATransportAdapter_t);
+    CATransportAdapter_t adapter = responseEndpoint.adapter;
     CAResult_t caResult = CA_STATUS_FAILED;
     result = OC_STACK_OK;
 
     //Sending response on all n/w interfaces
     for(int i = 0; i < size; i++ )
     {
-        responseEndpoint.transportType = (CATransportType_t)(connType & CAConnTypes[i]);
-        if(responseEndpoint.transportType)
+        responseEndpoint.adapter = (CATransportAdapter_t)(adapter & CAConnTypes[i]);
+        if(responseEndpoint.adapter)
         {
             //The result is set to OC_STACK_OK only if CASendResponse succeeds in sending the
             //response on all the n/w interfaces else it is set to OC_STACK_ERROR

@@ -50,7 +50,7 @@ PEContext_t g_policyEngineContext;
  * @param   requestInfo    [IN] Information for the request.
  * @return  NONE
  */
-void SRMRequestHandler(const CARemoteEndpoint_t *endPoint, const CARequestInfo_t *requestInfo)
+void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requestInfo)
 {
     OC_LOG(INFO, TAG, PCF("Received request from remote device"));
 
@@ -65,11 +65,11 @@ void SRMRequestHandler(const CARemoteEndpoint_t *endPoint, const CARequestInfo_t
     memcpy(subjectId.id, endPoint->identity.id, sizeof(subjectId.id));
 
     //Check the URI has the query and skip it before checking the permission
-    char *uri = strstr(endPoint->resourceUri, "?");
+    char *uri = strstr(requestInfo->info.resourceUri, "?");
     int position = 0;
     if (uri)
     {
-        position = uri - endPoint->resourceUri;
+        position = uri - requestInfo->info.resourceUri;
     }
     if (position > MAX_URI_LENGTH)
     {
@@ -80,18 +80,19 @@ void SRMRequestHandler(const CARemoteEndpoint_t *endPoint, const CARequestInfo_t
     if (position > 0)
     {
         char newUri[MAX_URI_LENGTH + 1];
-        strncpy(newUri, endPoint->resourceUri, (position));
+        strncpy(newUri, requestInfo->info.resourceUri, (position));
         newUri[position] = '\0';
         //Skip query and pass the newUri.
-        response = CheckPermission(&g_policyEngineContext, &subjectId, newUri,
-                GetPermissionFromCAMethod_t(requestInfo->method));
-
+        response = CheckPermission(&g_policyEngineContext, &subjectId,
+                              newUri,
+                              GetPermissionFromCAMethod_t(requestInfo->method));
     }
     else
     {
-        //Pass endPoint->resourceUri if there is no query info.
-        response = CheckPermission(&g_policyEngineContext, &subjectId, endPoint->resourceUri,
-                GetPermissionFromCAMethod_t(requestInfo->method));
+        //Pass resourceUri if there is no query info.
+        response = CheckPermission(&g_policyEngineContext, &subjectId,
+                              requestInfo->info.resourceUri,
+                              GetPermissionFromCAMethod_t(requestInfo->method));
     }
     if (IsAccessGranted(response) && gRequestHandler)
     {
@@ -128,7 +129,7 @@ void SRMRequestHandler(const CARemoteEndpoint_t *endPoint, const CARequestInfo_t
  * @param   responseInfo [IN] Response information from the endpoint.
  * @return  NONE
  */
-void SRMResponseHandler(const CARemoteEndpoint_t *endPoint, const CAResponseInfo_t *responseInfo)
+void SRMResponseHandler(const CAEndpoint_t *endPoint, const CAResponseInfo_t *responseInfo)
 {
     OC_LOG(INFO, TAG, PCF("Received response from remote device"));
     if (gResponseHandler)
@@ -144,7 +145,7 @@ void SRMResponseHandler(const CARemoteEndpoint_t *endPoint, const CAResponseInfo
  * @param   errorInfo [IN] Error information from the endpoint.
  * @return  NONE
  */
-void SRMErrorHandler(const CARemoteEndpoint_t *endPoint, const CAErrorInfo_t *errorInfo)
+void SRMErrorHandler(const CAEndpoint_t *endPoint, const CAErrorInfo_t *errorInfo)
 {
     OC_LOG(INFO, TAG, PCF("Received error from remote device"));
     if (gErrorHandler)
