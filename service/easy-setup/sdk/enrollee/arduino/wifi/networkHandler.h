@@ -25,32 +25,41 @@
 #include "ocstack.h"
 #include <string.h>
 
-#ifdef ARDUINOWIFI
 // Arduino WiFi Shield
 #include <SPI.h>
 #include <WiFi.h>
 #include <WiFiUdp.h>
-#else
-// Arduino Ethernet Shield
-#include <EthernetServer.h>
-#include <Ethernet.h>
-#include <Dns.h>
-#include <EthernetClient.h>
-#include <util.h>
-#include <EthernetUdp.h>
-#include <Dhcp.h>
-#endif
 
 #include "common.h"
-#include "networkHandler.h"
-#include "resourceHandler.h"
 
-typedef void (*EventCallback)(ES_RESULT);
+#ifndef ES_NETWORK_HANDLER_H_
+#define ES_NETWORK_HANDLER_H_
 
-OCStackResult Init();
+#define MAXSSIDLEN 33
+#define MAXNETCREDLEN 20
+#define MAXNUMTYPE 5
+#define MAXADDRLEN 15
 
-ES_RESULT WaitingForOnboarding(NetworkType networkType, EventCallback);
-//OCStackResult WaitingForOnboarding(NetworkType networkType, char *name);
-//OCStackResult WaitingForOnboarding(NetworkType networkType, char *name, char *pass);
+typedef void (*NetworkEventCallback)(ES_RESULT);
 
-ES_RESULT PrepareToProvisioning(EventCallback);
+enum NetworkType
+{
+    ES_WIFI = 1, ES_BT = 2, ES_BLE = 3, ES_ZIGBEE = 4, ES_ETH = 5
+};
+
+typedef struct NETWORKINFO
+{
+    NetworkType type;
+
+    // for WiFI
+    IPAddress ipaddr;
+    char ssid[MAXSSIDLEN];
+
+    // for BT, BLE
+    byte mac[6];
+} NetworkInfo;
+
+ES_RESULT ConnectToWiFiNetwork(const char *ssid, const char *pass, NetworkEventCallback);
+int getCurrentNetworkInfo(NetworkType targetType, NetworkInfo *info);
+
+#endif

@@ -29,8 +29,10 @@ thinserver_env.PrependUnique(CPPPATH = [
 	        '../../../../../resource/csdk/logger/include',
                 '../../../../../resource/csdk/stack/include',
 		'../../../../../extlibs/cjson',
-		'../../../sdk/inc',
-		'../../../sdk/arduino/wifi/inc'
+		'../../../sdk/common',
+		'../../../sdk/enrollee/arduino/wifi',
+		'../../../sdk/enrollee/common/inc',
+		'../../../sdk/enrollee/common/src'
 		])
 
 thinserver_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])

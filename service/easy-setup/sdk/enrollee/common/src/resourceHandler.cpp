@@ -21,7 +21,7 @@
 #include "resourceHandler.h"
 #include "cJSON.h"
 
-PROGMEM const char TAG[] = "ArduinoServer";
+PROGMEM const char TAG[] = "resourceHandler";
 
 ProvResource g_prov;
 NetResource g_net;
@@ -46,7 +46,7 @@ void RegisterResourceEventCallBack(ResourceEventCallback cb)
     g_cbForResEvent = cb;
 }
 
-void getTargetNetworkInfoFromProvResource(char *name, char *pass)
+void GetTargetNetworkInfoFromProvResource(char *name, char *pass)
 {
     if (name != NULL && pass != NULL)
     {
@@ -55,7 +55,7 @@ void getTargetNetworkInfoFromProvResource(char *name, char *pass)
     }
 }
 
-OCStackResult createProvisioningResource()
+OCStackResult CreateProvisioningResource()
 {
     g_prov.ps = 1; // need to provisioning
     g_prov.tnt = ES_WIFI;
@@ -70,7 +70,7 @@ OCStackResult createProvisioningResource()
     return res;
 }
 
-OCStackResult createNetworkResource()
+OCStackResult CreateNetworkResource()
 {
     NetworkInfo netInfo;
 
@@ -282,9 +282,6 @@ char* constructJsonResponse(OCEntityHandlerRequest *ehRequest)
     }
 
     OC_LOG_V(INFO, TAG, "Constructed Response: %s", jsonResponse);
-
-    Serial.print("Constructed Response: ");
-    Serial.println(jsonResponse);
 
     return jsonResponse;
 }

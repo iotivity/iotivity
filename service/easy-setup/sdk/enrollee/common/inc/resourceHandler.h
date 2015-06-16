@@ -25,22 +25,6 @@
 #include "ocstack.h"
 #include <string.h>
 
-#ifdef ARDUINOWIFI
-// Arduino WiFi Shield
-#include <SPI.h>
-#include <WiFi.h>
-#include <WiFiUdp.h>
-#else
-// Arduino Ethernet Shield
-#include <EthernetServer.h>
-#include <Ethernet.h>
-#include <Dns.h>
-#include <EthernetClient.h>
-#include <util.h>
-#include <EthernetUdp.h>
-#include <Dhcp.h>
-#endif
-
 #include "common.h"
 #include "networkHandler.h"
 #include "octypes.h"
@@ -70,9 +54,9 @@ typedef struct NETRESOURCE
     char cnn[MAXSSIDLEN]; // current network name
 } NetResource;
 
-OCStackResult createProvisioningResource();
-OCStackResult createNetworkResource();
-void getTargetNetworkInfoFromProvResource(char *, char *);
+OCStackResult CreateProvisioningResource();
+OCStackResult CreateNetworkResource();
+void GetTargetNetworkInfoFromProvResource(char *, char *);
 void RegisterResourceEventCallBack(ResourceEventCallback);
 
 #endif

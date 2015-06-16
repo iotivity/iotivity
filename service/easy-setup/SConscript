@@ -38,7 +38,7 @@ if target_os == 'android':
 ######################################################################
 # Build flags
 ######################################################################
-easy_setup_env.AppendUnique(CPPPATH = ['sdk/inc', 'sdk/src'])
+easy_setup_env.AppendUnique(CPPPATH = ['sdk/inc', 'sdk/src', 'sdk/common'])
 
 if target_os not in ['windows', 'winrt']:
     easy_setup_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
@@ -64,8 +64,9 @@ if target_os == 'arduino':
    				       '../../resource/csdk/logger/include',
 				       '../../resource/csdk/stack/include',
 				       '../../extlibs/cjson',
-				       'sdk/arduino/wifi/inc', 
-				       'sdk/arduino/wifi/src' ])
+				       'sdk/enrollee/arduino/wifi',
+				       'sdk/enrollee/common/src',
+				       'sdk/enrollee/common/inc'])
 
 if target_os in ['android','linux']:					   
 	easy_setup_env.PrependUnique(CPPPATH = [
@@ -84,9 +85,9 @@ if target_os in ['android','linux']:
 
 if target_os == 'arduino':
 	es_sdk_static = easy_setup_env.StaticLibrary('ESSDKLibrary',
-					['sdk/src/easysetup.cpp',
-					'sdk/src/resourceHandler.cpp',
-					'sdk/arduino/wifi/src/networkHandler.cpp'])
+					['sdk/enrollee/common/src/easysetup.cpp',
+					'sdk/enrollee/common/src/resourceHandler.cpp',
+					'sdk/enrollee/arduino/wifi/networkHandler.cpp'])
 	easy_setup_env.InstallTarget(es_sdk_static, 'libESSDK')
 
 

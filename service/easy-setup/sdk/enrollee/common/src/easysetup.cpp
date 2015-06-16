@@ -20,8 +20,6 @@
 
 #include "easysetup.h"
 
-PROGMEM const char TAG[] = "ArduinoServer";
-
 /// WiFi network info and credentials
 char defaultSsid[] = "EasyConnect";
 char defaultPass[] = "EasyConnect";
@@ -40,8 +38,6 @@ void EventCallbackAfterProvisioning(ES_RESULT event);
 
 void EventCallbackInOnboarding(ES_RESULT event)
 {
-    Serial.println("[Callback] in onboarding process");
-
     if (event == ES_NETWORKFOUND || event == ES_NETWORKCONNECTED)
     {
         if (g_cbForOnboarding != NULL)
@@ -55,17 +51,14 @@ void EventCallbackInProvisioning(ES_RESULT event)
 {
     ES_RESULT res = ES_OK;
 
-    Serial.println("[Callback] in provisioning process");
-
     if (event == ES_RECVTRIGGEROFPROVRES)
     {
         targetSsid = (char *) malloc(MAXSSIDLEN);
         targetPass = (char *) malloc(MAXNETCREDLEN);
 
-        getTargetNetworkInfoFromProvResource(targetSsid, targetPass);
+        GetTargetNetworkInfoFromProvResource(targetSsid, targetPass);
 
-        res = ConnectToWiFiNetworkForOnboarding(targetSsid, targetPass,
-                EventCallbackAfterProvisioning);
+        res = ConnectToWiFiNetwork(targetSsid, targetPass, EventCallbackAfterProvisioning);
 
         if (g_cbForProvisioning != NULL)
         {
@@ -76,8 +69,6 @@ void EventCallbackInProvisioning(ES_RESULT event)
 
 void EventCallbackAfterProvisioning(ES_RESULT event)
 {
-    Serial.println("[Callback] after provisioning process");
-
     if (event == ES_NETWORKFOUND || event == ES_NETWORKCONNECTED)
     {
         if (g_cbForProvisioning != NULL)
@@ -87,7 +78,7 @@ void EventCallbackAfterProvisioning(ES_RESULT event)
     }
 }
 
-ES_RESULT WaitingForOnboarding(NetworkType networkType, EventCallback cb)
+ES_RESULT FindNetworkForOnboarding(NetworkType networkType, EventCallback cb)
 {
     if (networkType == ES_WIFI)
     {
@@ -96,12 +87,30 @@ ES_RESULT WaitingForOnboarding(NetworkType networkType, EventCallback cb)
             g_cbForOnboarding = cb;
         }
 
-        return ConnectToWiFiNetworkForOnboarding(defaultSsid, defaultPass,
-                EventCallbackInOnboarding);
+        return ConnectToWiFiNetwork(defaultSsid, defaultPass, EventCallbackInOnboarding);
     }
 }
 
-ES_RESULT PrepareToProvisioning(EventCallback cb)
+ES_RESULT FindNetworkForOnboarding(NetworkType networkType, const char *ssid, const char *passwd,
+        EventCallback cb)
+{
+    if (!ssid || !passwd)
+    {
+        return ES_ERROR;
+    }
+
+    if (networkType == ES_WIFI)
+    {
+        if (g_cbForOnboarding == NULL)
+        {
+            g_cbForOnboarding = cb;
+        }
+
+        return ConnectToWiFiNetwork(ssid, passwd, EventCallbackInOnboarding);
+    }
+}
+
+ES_RESULT InitializeProvisioning(EventCallback cb)
 {
     if (cb == NULL)
     {
@@ -112,12 +121,12 @@ ES_RESULT PrepareToProvisioning(EventCallback cb)
         g_cbForProvisioning = cb;
     }
 
-    if (createProvisioningResource() != OC_STACK_OK)
+    if (CreateProvisioningResource() != OC_STACK_OK)
     {
         return ES_ERROR;
     }
 
-    if (createNetworkResource() != OC_STACK_OK)
+    if (CreateNetworkResource() != OC_STACK_OK)
     {
         return ES_ERROR;
     }

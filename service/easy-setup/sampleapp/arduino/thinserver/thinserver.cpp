@@ -45,7 +45,10 @@
 
 const char *getResult(OCStackResult result);
 
-PROGMEM const char TAG[] = "ArduinoServer";
+PROGMEM const char TAG[] = "ThinServer";
+
+char ssid[] = "hub2.4G";
+char passwd[] = "09877890";
 
 void EventCallbackInApp(ES_RESULT eventFlag)
 {
@@ -78,7 +81,7 @@ void setup()
     OC_LOG_INIT();
     OC_LOG(DEBUG, TAG, PCF("OCServer is starting..."));
 
-    WaitingForOnboarding(ES_WIFI, EventCallbackInApp);
+    FindNetworkForOnboarding(ES_WIFI, ssid, passwd, EventCallbackInApp);
 
     // Initialize the OC Stack in Server mode
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
@@ -87,7 +90,7 @@ void setup()
         return;
     }
 
-    PrepareToProvisioning(EventCallbackInApp);
+    InitializeProvisioning(EventCallbackInApp);
 
     if (OCStartPresence(0) != OC_STACK_OK)
     {
@@ -112,5 +115,4 @@ void loop()
         OC_LOG(ERROR, TAG, PCF("OCStack process error"));
         return;
     }
-    //ChangeLightRepresentation(NULL);
 }
