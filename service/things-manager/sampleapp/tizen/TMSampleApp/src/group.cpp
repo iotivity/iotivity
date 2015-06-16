@@ -593,6 +593,7 @@ void onObserve(const HeaderOptions headerOptions, const OCRepresentation &rep, c
         }
         sprintf(buf, "%d", level);
         logMessage += "level:" + string(buf) + "<br>";
+        free(buf);
     }
     else
     {
