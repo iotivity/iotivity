@@ -31,6 +31,8 @@ SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', exports = 'li
 server_builder_env = lib_env.Clone()
 target_os = env.get('TARGET_OS')
 
+release = env.get('RELEASE')
+
 ######################################################################
 # Build flags
 ######################################################################
@@ -50,6 +52,10 @@ if target_os == 'android':
     server_builder_env.PrependUnique(LIBS = ['gnustl_shared', 'compatibility', 'log'])
 
 server_builder_env.AppendUnique(LIBS = ['dl'])
+
+if not release:
+    server_builder_env.AppendUnique(CXXFLAGS = ['--coverage'])
+    server_builder_env.PrependUnique(LIBS = ['gcov'])
 
 ######################################################################
 # Source files and Targets
