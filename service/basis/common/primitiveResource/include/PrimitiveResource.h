@@ -43,11 +43,14 @@ namespace OIC
         public:
             using Ptr = std::shared_ptr<PrimitiveResource>;
 
-            using GetCallback = std::function<void(const HeaderOptions&, const ResponseStatement&, int)>;
+            using GetCallback = std::function<
+                    void(const HeaderOptions&, const ResponseStatement&, int)>;
 
-            using SetCallback = std::function<void(const HeaderOptions&, const ResponseStatement&, int)>;
+            using SetCallback = std::function<
+                    void(const HeaderOptions&, const ResponseStatement&, int)>;
 
-            using ObserveCallback = std::function<void(const HeaderOptions&, const ResponseStatement&, int, int)>;
+            using ObserveCallback = std::function<
+                    void(const HeaderOptions&, const ResponseStatement&, int, int)>;
 
         private:
             using BaseResource = OC::OCResource;
