@@ -485,7 +485,7 @@ int main()
 
                     OCPlatform::findResource("",
                             query,
-                            OC_ALL,
+                            CT_DEFAULT,
                             &foundResource);
 
                     // OCPlatform::findResource("",
@@ -501,7 +501,7 @@ int main()
 
                     OCPlatform::findResource("",
                             query,
-                            OC_ALL,
+                            CT_DEFAULT,
                             &foundResource);
                     // OCPlatform::findResource("",
                     //         query,

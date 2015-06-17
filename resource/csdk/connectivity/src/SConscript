@@ -54,6 +54,8 @@ if env.get('SECURED') == '1':
 
 if ca_os == 'arduino':
 	env.AppendUnique(CPPDEFINES = ['SINGLE_THREAD'])
+	env.AppendUnique(CPPDEFINES = ['WITH_ARDUINO'])
+	print "setting WITH_ARDUINO"
 	ca_common_src = [
 		ca_path + 'caconnectivitymanager_singlethread.c',
 		ca_path + 'cainterfacecontroller_singlethread.c',

@@ -140,23 +140,14 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse
 OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
         OCClientResponse * clientResponse)
 {
-    uint8_t remoteIpAddr[4];
-    uint16_t remotePortNu;
-
     OC_LOG(INFO, TAG, "Callback Context for DISCOVER query recvd successfully");
 
     if (clientResponse)
     {
         OC_LOG_V(INFO, TAG, "StackResult: %s", getResult(clientResponse->result));
-
-        OCDevAddrToIPv4Addr((OCDevAddr *) clientResponse->addr, remoteIpAddr,
-                remoteIpAddr + 1, remoteIpAddr + 2, remoteIpAddr + 3);
-        OCDevAddrToPort((OCDevAddr *) clientResponse->addr, &remotePortNu);
-
         OC_LOG_V(INFO, TAG,
-                "Device =============> Discovered %s @ %d.%d.%d.%d:%d",
-                clientResponse->resJSONPayload, remoteIpAddr[0], remoteIpAddr[1],
-                remoteIpAddr[2], remoteIpAddr[3], remotePortNu);
+                "Device =============> Discovered %s @ %s:%d",
+                clientResponse->resJSONPayload, clientResponse->devAddr.addr, clientResponse->devAddr.port);
 
         ocConnType = clientResponse->connType;
 
@@ -239,6 +230,7 @@ int InitGetRequest(OCQualityOfService qos)
 int InitDiscovery()
 {
     OCStackResult ret;
+    OCMethod method;
     OCCallbackData cbData;
     char szQueryUri[MAX_URI_LENGTH] = { 0 };
     OCConnectivityType discoveryReqConnType;
@@ -258,13 +250,15 @@ int InitDiscovery()
             OC_LOG(ERROR, TAG, "!! Bad input for IPV4 address. !!");
             return OC_STACK_INVALID_PARAM;
         }
-        discoveryReqConnType = OC_IPV4;
+        discoveryReqConnType = CT_ADAPTER_IP;
+        method = OC_REST_GET;
     }
     else
     {
         //Send discovery request on Wifi and Ethernet interface
-        discoveryReqConnType = OC_ALL;
+        discoveryReqConnType = CT_DEFAULT;
         strcpy(szQueryUri, MULTICAST_DISCOVERY_QUERY);
+        method = OC_REST_DISCOVER;
     }
 
     cbData.cb = discoveryReqCB;
@@ -276,7 +270,7 @@ int InitDiscovery()
         (UNICAST_DISCOVERY) ? "Unicast" : "Multicast",
         szQueryUri);
 
-    ret = OCDoResource(NULL, OC_REST_GET, szQueryUri, 0, 0,
+    ret = OCDoResource(NULL, method, szQueryUri, 0, 0,
             discoveryReqConnType, OC_LOW_QOS,
             &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
@@ -364,28 +358,11 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-std::string getIPAddrTBServer(OCClientResponse * clientResponse)
-{
-    if(!clientResponse) return "";
-    if(!clientResponse->addr) return "";
-    uint8_t a, b, c, d = 0;
-    if(0 != OCDevAddrToIPv4Addr(clientResponse->addr, &a, &b, &c, &d) ) return "";
-
-    char ipaddr[16] = {'\0'};
-    // ostringstream not working correctly here, hence snprintf
-    snprintf(ipaddr,  sizeof(ipaddr), "%d.%d.%d.%d", a,b,c,d);
-    return std::string (ipaddr);
-}
-
-
 std::string getPortTBServer(OCClientResponse * clientResponse)
 {
     if(!clientResponse) return "";
-    if(!clientResponse->addr) return "";
-    uint16_t p = 0;
-    if(0 != OCDevAddrToPort(clientResponse->addr, &p) ) return "";
     std::ostringstream ss;
-    ss << p;
+    ss << clientResponse->devAddr.port;
     return ss.str();
 }
 
@@ -432,24 +409,28 @@ int parseClientResponse(OCClientResponse * clientResponse)
             cJSON * prop = cJSON_GetObjectItem(resource,"prop");
             if (prop)
             {
-                // If this is a secure resource, the info about the port at which the
-                // resource is hosted on server is embedded inside discovery JSON response
-                if (cJSON_GetObjectItem(prop, "sec"))
+                cJSON * policy = cJSON_GetObjectItem(prop,"p");
+                if (policy)
                 {
-                    if ((cJSON_GetObjectItem(prop, "sec")->valueint) == 1)
+                    // If this is a secure resource, the info about the port at which the
+                    // resource is hosted on server is embedded inside discovery JSON response
+                    if (cJSON_GetObjectItem(policy, "sec"))
                     {
-                        coapSecureResource = 1;
+                        if ((cJSON_GetObjectItem(policy, "sec")->valueint) == 1)
+                        {
+                            coapSecureResource = 1;
+                        }
                     }
-                }
-                OC_LOG_V(INFO, TAG, "Secure -- %s", coapSecureResource == 1 ? "YES" : "NO");
-                if (cJSON_GetObjectItem(prop, "port"))
-                {
-                    port = cJSON_GetObjectItem(prop, "port")->valueint;
-                    OC_LOG_V(INFO, TAG, "Hosting Server Port (embedded inside JSON) -- %u", port);
+                    OC_LOG_V(INFO, TAG, "Secure -- %s", coapSecureResource == 1 ? "YES" : "NO");
+                    if (cJSON_GetObjectItem(policy, "port"))
+                    {
+                        port = cJSON_GetObjectItem(policy, "port")->valueint;
+                        OC_LOG_V(INFO, TAG, "Hosting Server Port (embedded inside JSON) -- %u", port);
 
-                    std::ostringstream ss;
-                    ss << port;
-                    coapServerPort = ss.str();
+                        std::ostringstream ss;
+                        ss << port;
+                        coapServerPort = ss.str();
+                    }
                 }
             }
 
@@ -462,7 +443,7 @@ int parseClientResponse(OCClientResponse * clientResponse)
     }
     cJSON_Delete(root);
 
-    coapServerIP = getIPAddrTBServer(clientResponse);
+    coapServerIP = clientResponse->devAddr.addr;
     if (port == -1)
     {
         coapServerPort = getPortTBServer(clientResponse);

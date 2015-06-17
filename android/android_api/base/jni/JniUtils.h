@@ -128,18 +128,16 @@ public:
     {
         switch (type) {
         case 0:
-            return OCConnectivityType::OC_IPV4;
+            return OCConnectivityType::CT_DEFAULT;
         case 1:
-            return OCConnectivityType::OC_IPV6;
+            return OCConnectivityType::CT_ADAPTER_IP;
         case 2:
-            return OCConnectivityType::OC_EDR;
+            return OCConnectivityType::CT_ADAPTER_RFCOMM_BTEDR;
         case 3:
-            return OCConnectivityType::OC_LE;
-        case 4:
-            return OCConnectivityType::OC_ALL;
+            return OCConnectivityType::CT_ADAPTER_GATT_BTLE;
         default:
             ThrowOcException(OC_STACK_INVALID_PARAM, "Unexpected connectivity type");
-            return OCConnectivityType::OC_ALL;
+            return OCConnectivityType::CT_DEFAULT;
         };
     }
 

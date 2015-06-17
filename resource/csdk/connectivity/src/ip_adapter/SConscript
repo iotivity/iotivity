@@ -8,6 +8,7 @@ print "Reading IP adapter script"
 
 target_os = env.get('TARGET_OS')
 inc_files = env.get('CPPPATH')
+secured = env.get('SECURED')
 src_dir = './ip_adapter/'
 
 if target_os == 'tizen':
@@ -18,9 +19,9 @@ if target_os == 'arduino':
 	env.AppendUnique(CA_SRC=[src_dir+'caipadapter_singlethread.c'])
 	env.AppendUnique(CPPPATH=[src_dir+'arduino/'])
 else:
-      env.AppendUnique(CA_SRC=[src_dir+'caipadapter.c'])
-      env.AppendUnique(CA_SRC=[src_dir+'caipclient.c'])
-      env.AppendUnique(CA_SRC=[src_dir+'caipserver.c'])
+	env.AppendUnique(CA_SRC=[src_dir+'caipadapter.c'])
+	env.AppendUnique(CA_SRC=[src_dir+'caipclient.c'])
+	env.AppendUnique(CA_SRC=[src_dir+'caipserver.c'])
 
 #Source files to build in Linux platform
 if target_os in ['linux','darwin','ios']:

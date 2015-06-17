@@ -87,5 +87,11 @@ extern const char * RANDOM_DEVICE_PIN;
 extern const char * PRE_PROVISIONED_DEVICE_PIN;
 extern const char * PRE_PROVISIONED_STRONG_CREDENTIAL;
 
+extern const char * OIC_SEC_TRUE;
+extern const char * OIC_SEC_FALSE;
+
+extern const char * OIC_SEC_REST_QUERY_SEPARATOR;
+extern char OIC_SEC_REST_QUERY_DELIMETER;
+
 #endif //IOTVT_SRM_RSRC_STRINGS_H
 

@@ -2614,7 +2614,7 @@ CAResult_t CALEClientUpdateDeviceState(const char* address, uint32_t connectedSt
         return CA_STATUS_FAILED;
     }
 
-    strcpy(newstate->address, address);
+    OICStrcpy(newstate->address, sizeof(newstate->address), address);
     newstate->connectedState = connectedState;
     newstate->notificationState = notificationState;
     newstate->sendState = sendState;

@@ -51,19 +51,16 @@ typedef enum
 /**
  * @brief Callback to be notified on reception of any data from remote OIC devices.
  *
- * @param  ipAddress    [IN] IP address of remote OIC device.
- * @param  port         [IN] Port number on which data is received.
+ * @param  endpoint     [IN] network endpoint description
  * @param  data         [IN] Data received from remote OIC device.
  * @param  dataLength   [IN] Length of data in bytes.
- * @param  isSecured    [IN] Indicates the data is secure or not.
- * @param  identity     [IN] Identity of the remote OIC device.
  *
  * @return NONE
  * @pre  Callback must be registered using CAIPSetPacketReceiveCallback()
  */
-typedef void (*CAIPPacketReceivedCallback)(const char *ipAddress, uint16_t port,
-                                           const void *data, uint32_t dataLength,
-                                           bool isSecured, const CARemoteId_t *identity);
+typedef void (*CAIPPacketReceivedCallback)(const CAEndpoint_t *endpoint,
+                                           const void *data,
+                                           uint32_t dataLength);
 
 /**
  * @brief  Callback to be notified when exception occures on multicast/unicast server.
@@ -220,18 +217,18 @@ void CAIPSetExceptionCallback(CAIPExceptionCallback callback);
 /**
  * @brief  API to send unicast UDP data
  *
- * @param  remoteAddress    [IN] IP address to which data needs to be sent.
- * @param  port             [IN] Port to which data needs to be send.
+ * @param  endpoint         [IN] complete network address to send to
  * @param  data             [IN] Data to be send.
  * @param  dataLength       [IN] Length of data in bytes
  * @param  isMulticast      [IN] Whether data needs to be sent to multicast ip
- * @param  isSecured        [IN] Whether data to be sent on secured channel.
  *
  * @return  The number of bytes sent on the network. Returns 0 on error.
  * @remarks isSecure will be ignored when isMulticast is true.
  */
-uint32_t CAIPSendData(const char *remoteAddress, uint16_t port, const void *data,
-                      uint32_t dataLength, bool isMulticast, bool isSecure);
+uint32_t CAIPSendData(const CAEndpoint_t *endpoint,
+                      const void *data,
+                      uint32_t dataLength,
+                      bool isMulticast);
 
 /**
  * @brief  Callback to be notified when IP adapter connection state changes.

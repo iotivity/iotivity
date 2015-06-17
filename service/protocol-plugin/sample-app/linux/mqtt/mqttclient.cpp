@@ -395,7 +395,7 @@ int main(int argc, char *argv[])
         std::cout.setf(std::ios::boolalpha);
         // Find all resources
         requestURI << OC_MULTICAST_DISCOVERY_URI << "?rt=core.fan";
-        OCPlatform::findResource("", requestURI.str(), OC_ALL, &foundResourceFan);
+        OCPlatform::findResource("", requestURI.str(), CT_DEFAULT, &foundResourceFan);
         std::cout << "Finding Resource... " << std::endl;
         while (true)
         {

@@ -85,3 +85,8 @@ const char * OXM_RANDOM_DEVICE_PIN = "oic.sec.doxm.rdp";
 const char * OXM_PRE_PROVISIONED_DEVICE_PIN = "oic.sec.doxm.ppdp";
 const char * OXM_PRE_PROVISIONED_STRONG_CREDENTIAL = "oic.sec.doxm.ppsc";
 
+const char * OIC_SEC_TRUE = "true";
+const char * OIC_SEC_FALSE = "false";
+
+const char * OIC_SEC_REST_QUERY_SEPARATOR = "&";
+char OIC_SEC_REST_QUERY_DELIMETER = '=';

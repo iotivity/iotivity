@@ -32,8 +32,8 @@ namespace OC
         private:
         enum class OCSecureType
         {
-            IPv4Secure,
-            IPv4
+            NotSecure,
+            Secure
         };
 
         class ListenResourceContainer
@@ -186,7 +186,7 @@ namespace OC
 
             OCSecureType secureType() const
             {
-                return m_props.m_policy.m_secure?OCSecureType::IPv4Secure :OCSecureType::IPv4;
+                return m_props.m_policy.m_secure ? OCSecureType::Secure : OCSecureType::NotSecure;
             }
 
             int port() const
@@ -214,9 +214,9 @@ namespace OC
                 ar(resources);
             }
         public:
-            ListenOCContainer(std::weak_ptr<IClientWrapper> cw, const OCDevAddr& address,
-                    OCConnectivityType connectivityType, std::stringstream& json):
-                m_clientWrapper(cw), m_address(address), m_connectivityType(connectivityType)
+            ListenOCContainer(std::weak_ptr<IClientWrapper> cw,
+                    const OCDevAddr& devAddr, std::stringstream& json)
+                    : m_clientWrapper(cw), m_devAddr(devAddr)
             {
                 LoadFromJson(json);
             }
@@ -227,59 +227,6 @@ namespace OC
             }
 
         private:
-            std::string ConvertOCAddrToString(OCSecureType sec, int secureport)
-            {
-                uint16_t port;
-                std::ostringstream os;
-
-                if(sec== OCSecureType::IPv4)
-                {
-                    os<<"coap://";
-                }
-                else if(sec == OCSecureType::IPv4Secure)
-                {
-                    os<<"coaps://";
-                }
-                else
-                {
-                    oclog() << "ConvertOCAddrToString():  invalid SecureType"<<std::flush;
-                    throw ResourceInitException(false, false, false, false, false, true);
-                }
-
-                uint8_t a;
-                uint8_t b;
-                uint8_t c;
-                uint8_t d;
-                if(OCDevAddrToIPv4Addr(&m_address, &a, &b, &c, &d) != 0)
-                {
-                    oclog() << "ConvertOCAddrToString(): Invalid Ip"
-                            << std::flush;
-                    throw ResourceInitException(false, false, false, false, false, true);
-                }
-
-                os<<static_cast<int>(a)<<"."<<static_cast<int>(b)
-                        <<"."<<static_cast<int>(c)<<"."<<static_cast<int>(d);
-
-                if(sec == OCSecureType::IPv4Secure && secureport>0 && secureport<=65535)
-                {
-                    port = static_cast<uint16_t>(secureport);
-                }
-                else if(sec == OCSecureType::IPv4 && 0==OCDevAddrToPort(&m_address, &port))
-                {
-                    // nothing to do, this is a successful case
-                }
-                else
-                {
-                    oclog() << "ConvertOCAddrToString() : Invalid Port"
-                            <<std::flush;
-                    throw ResourceInitException(false, false, false, false, true, false);
-                }
-
-                os <<":"<< static_cast<int>(port);
-
-                return os.str();
-            }
-
             void LoadFromJson(std::stringstream& json)
             {
                 cereal::JSONInputArchive archive(json);
@@ -296,9 +243,8 @@ namespace OC
                         if(res.loaded())
                         {
                             m_resources.push_back(std::shared_ptr<OCResource>(
-                                new OCResource(m_clientWrapper,
-                                    ConvertOCAddrToString(res.secureType(),res.port()),
-                                    res.m_uri, res.m_serverId, m_connectivityType, res.observable(),
+                                new OCResource(m_clientWrapper, m_devAddr,
+                                    res.m_uri, res.m_serverId, res.observable(),
                                     res.resourceTypes(), res.interfaces())));
                         }
 
@@ -312,8 +258,6 @@ namespace OC
             }
             std::vector<std::shared_ptr<OC::OCResource>> m_resources;
             std::weak_ptr<IClientWrapper> m_clientWrapper;
-            OCDevAddr m_address;
-            OCConnectivityType m_connectivityType;
+            const OCDevAddr& m_devAddr;
     };
 }
-

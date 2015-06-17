@@ -256,7 +256,7 @@ static CAResult_t CAIPUpdateInterfaceInformation(u_arraylist_t **netInterfaceLis
         char interfaceSubnetMask[CA_IPADDR_SIZE] = { 0 };
         socklen_t len = sizeof(struct sockaddr_in);
 
-        strcpy(temp_ifr.ifr_name, item->ifr_name);
+        OICStrcpy(temp_ifr.ifr_name, sizeof(temp_ifr.ifr_name), item->ifr_name);
 
         if (ioctl(sck, SIOCGIFFLAGS, &temp_ifr))
         {
@@ -316,13 +316,13 @@ static CAResult_t CAIPUpdateInterfaceInformation(u_arraylist_t **netInterfaceLis
         }
 
         // set interface name
-        strncpy(netInfo->interfaceName, item->ifr_name, strlen(item->ifr_name));
+        OICStrcpy(netInfo->interfaceName, sizeof(netInfo->interfaceName), item->ifr_name);
 
         // set local ip address
-        strncpy(netInfo->ipAddress, interfaceAddress, strlen(interfaceAddress));
+        OICStrcpy(netInfo->ipAddress, sizeof(netInfo->ipAddress), interfaceAddress);
 
         // set subnet mask
-        strncpy(netInfo->subnetMask, interfaceSubnetMask, strlen(interfaceSubnetMask));
+        OICStrcpy(netInfo->subnetMask, sizeof(netInfo->subnetMask), interfaceSubnetMask);
 
         CAResult_t result = u_arraylist_add(*netInterfaceList, (void *) netInfo);
         if (CA_STATUS_OK != result)
@@ -414,7 +414,7 @@ static bool CACheckIsInterfaceInfoChanged(const CANetInfo_t *info)
         ca_mutex_unlock(g_networkMonitorContextMutex);
         return false;
     }
-    memcpy(newNetInfo, info, sizeof(*newNetInfo));
+    *newNetInfo = *info;
 
     OIC_LOG(DEBUG, IP_MONITOR_TAG, "New Interface found");
 
@@ -657,7 +657,7 @@ CAResult_t CAIPGetInterfaceInfo(u_arraylist_t **netInterfaceList)
             return CA_MEMORY_ALLOC_FAILED;
         }
 
-        memcpy(newNetinfo, info, sizeof(*info));
+        *newNetinfo = *info;
 
         CAResult_t result = u_arraylist_add(*netInterfaceList, (void *) newNetinfo);
         if (CA_STATUS_OK != result)

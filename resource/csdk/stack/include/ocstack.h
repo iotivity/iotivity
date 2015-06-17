@@ -37,6 +37,20 @@ extern "C" {
 /**
  * Initialize the OC Stack.  Must be called prior to starting the stack.
  *
+ * @param mode
+ *     Host device is client, server, or client-server.
+ * @param serverFlags
+ *     Default server transport flags.
+ * @param clientFlags
+ *     Default client transport flags.
+ *
+ * @return ::OC_STACK_OK on success, some other value upon failure.
+ */
+OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlags clientFlags);
+
+/**
+ * Initialize the OC Stack.  Must be called prior to starting the stack.
+ *
  * @param ipAddr
  *     IP Address of host device. Deprecated parameter.
  * @param port
@@ -79,11 +93,11 @@ OCStackResult OCProcess();
  *                           should not be free'd by the consumer.  A NULL handle is permitted
  *                           in the event where the caller has no use for the return value.
  * @param method             @ref OCMethod to perform on the resource.
- * @param requiredUri        URI of the resource to interact with.
- * @param referenceUri       URI of the reference resource.
+ * @param requiredUri        URI of the resource to interact with. (Address prefix
+ *                           is deprecated in favor of destination.)
+ * @param destination        Complete description of destination.
  * @param request            JSON encoded request.
- * @param conType            @ref OCConnectivityType type of connectivity indicating the
- *                           interface. Example: ::OC_WIFI, ::OC_ETHERNET, ::OC_ALL.
+ * @param connectivityType   Modifier flags when destination is not given.
  * @param qos                Quality of service. Note that if this API is called on a uri with
  *                           the well-known multicast IP address, the qos will be forced to
  *                           ::OC_LOW_QOS
@@ -100,11 +114,16 @@ OCStackResult OCProcess();
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requiredUri,
-            const char *referenceUri, const char *request, OCConnectivityType conType,
-            OCQualityOfService qos, OCCallbackData *cbData,
-            OCHeaderOption * options, uint8_t numOptions);
-
+OCStackResult OCDoResource(OCDoHandle *handle,
+                            OCMethod method,
+                            const char *requestUri,
+                            const OCDevAddr *destination,
+                            const char *request,
+                            OCConnectivityType connectivityType,
+                            OCQualityOfService qos,
+                            OCCallbackData *cbData,
+                            OCHeaderOption *options,
+                            uint8_t numOptions);
 /**
  * Cancel a request associated with a specific @ref OCDoResource invocation.
  *
@@ -168,10 +187,11 @@ OCStackResult OCStopPresence();
  * @param entityHandler Entity handler function that is called by ocstack to handle requests for
  *                      any undefined resources or default actions.
  *                      If NULL is passed it removes the device default entity handler.
+ * @param callbackParameter paramter passed back when entityHandler is called.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandler entityHandler);
+OCStackResult OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandler entityHandler, void* callbackParameter);
 
 /**
  * Set device information.
@@ -211,6 +231,7 @@ OCStackResult OCSetPlatformInfo(OCPlatformInfo platformInfo);
  * @param uri URI of the resource.  Example:  "/a/led".
  * @param entityHandler Entity handler function that is called by ocstack to handle requests, etc.
  *                      NULL for default entity handler.
+ * @param callbackParameter paramter passed back when entityHandler is called.
  * @param resourceProperties Properties supported by resource.
  *                           Example: ::OC_DISCOVERABLE|::OC_OBSERVABLE.
  *
@@ -221,6 +242,7 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
                                const char *resourceInterfaceName,
                                const char *uri,
                                OCEntityHandler entityHandler,
+                               void* callbackParam,
                                uint8_t resourceProperties);
 
 
@@ -270,9 +292,11 @@ OCStackResult OCBindResourceInterfaceToResource(OCResourceHandle handle,
  *
  * @param handle Handle to the resource that the contained resource is to be bound.
  * @param entityHandler Entity handler function that is called by ocstack to handle requests, etc.
+ * @param callbackParameter context paremeter that will be passed to entityHandler
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCBindResourceHandler(OCResourceHandle handle, OCEntityHandler entityHandler);
+OCStackResult OCBindResourceHandler(OCResourceHandle handle, OCEntityHandler entityHandler,
+                                        void *callbackParameter);
 
 /**
  * Get the number of resources that have been created in the stack.
@@ -441,37 +465,8 @@ OCNotifyListOfObservers (OCResourceHandle handle,
  */
 OCStackResult OCDoResponse(OCEntityHandlerResponse *response);
 
-
-//Utility methods
-
-/**
- * This method is used to retrieved the IPv4 address from OCDev address
- * data structure.
- *
- * @param ipAddr OCDevAddr address.
- * @param a first byte of IPv4 address.
- * @param b second byte of IPv4 address.
- * @param c third byte of IPv4 address.
- * @param d fourth byte of IPv4 address.
- * @return ::OC_STACK_OK on success, some other value upon failure.
- */
-int32_t OCDevAddrToIPv4Addr(OCDevAddr *ipAddr, uint8_t *a, uint8_t *b,
-            uint8_t *c, uint8_t *d );
-
-/**
- * This method is used to retrieve the port number from OCDev address
- * data structure.
- *
- * @param ipAddr OCDevAddr address.
- * @param port Port number.
- * @return ::OC_STACK_OK on success, some other value upon failure.
- */
-int32_t OCDevAddrToPort(OCDevAddr *ipAddr, uint16_t *port);
-
 #ifdef __cplusplus
 }
 #endif // __cplusplus
 
 #endif /* OCSTACK_H_ */
-
-
