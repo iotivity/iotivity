@@ -22,12 +22,151 @@
 #include <HippoMocks/hippomocks.h>
 
 #include <PresenceSubscriber.h>
+#include <PrimitiveException.h>
+
+#include <OCPlatform.h>
 
 using namespace testing;
 using namespace OIC::Service;
 
+typedef OCStackResult (*subscribePresenceSig1)(OC::OCPlatform::OCPresenceHandle&,
+        const std::string&, OCConnectivityType, SubscribeCallback);
+typedef OCStackResult (*subscribePresenceSig2)(OC::OCPlatform::OCPresenceHandle&,
+        const std::string&, const std::string&, OCConnectivityType, SubscribeCallback);
+
+const std::string HOST{ "host" };
+const OCConnectivityType CONTYPE{ OCConnectivityType::OC_ALL };
+
 class PresenceSubscriberNonMemberTest: public Test
 {
 public:
+    OCDoHandle handle;
     MockRepository mocks;
+
 };
+
+TEST_F(PresenceSubscriberNonMemberTest, OCPlatformSubscribePresenceWillBeCalled)
+{
+    mocks.ExpectCallFuncOverload(
+            static_cast< subscribePresenceSig1 >(OC::OCPlatform::subscribePresence))
+                        .With(_, HOST,CONTYPE, _).Return(OC_STACK_OK);
+
+    subscribePresence(handle, HOST, CONTYPE, SubscribeCallback());
+}
+
+TEST_F(PresenceSubscriberNonMemberTest, SubscribePresenceThrowsIfResultIsNotOK)
+{
+    mocks.ExpectCallFuncOverload(
+            static_cast< subscribePresenceSig1>(OC::OCPlatform::subscribePresence))
+                    .Return(OC_STACK_ERROR);
+
+    ASSERT_THROW(subscribePresence(handle, "", CONTYPE, SubscribeCallback()), PlatformException);
+}
+
+TEST_F(PresenceSubscriberNonMemberTest, OCPlatformUnsubscribePresenceWillBeCalled)
+{
+    mocks.ExpectCallFuncOverload(OC::OCPlatform::unsubscribePresence).Return(OC_STACK_OK);
+
+    unsubscribePresence(handle);
+}
+
+TEST_F(PresenceSubscriberNonMemberTest, UnsubscribePresenceThrowIfResultIsNotOK)
+{
+    mocks.ExpectCallFuncOverload(OC::OCPlatform::unsubscribePresence).Return(OC_STACK_ERROR);
+
+    ASSERT_THROW(unsubscribePresence(handle), PlatformException);
+}
+
+
+
+class PresenceSubscriberTest: public Test
+{
+public:
+    MockRepository mocks;
+
+protected:
+    void SetUp() override {
+        mocks.OnCallFuncOverload(
+                static_cast< subscribePresenceSig1 >(OC::OCPlatform::subscribePresence)).Do(
+
+            [](OC::OCPlatform::OCPresenceHandle& handle, const std::string&,
+                    OCConnectivityType, SubscribeCallback) -> OCStackResult
+            {
+                handle = reinterpret_cast<OC::OCPlatform::OCPresenceHandle>(1);
+                return OC_STACK_OK;
+            }
+        );
+
+        mocks.OnCallFunc(OC::OCPlatform::unsubscribePresence).Return(OC_STACK_OK);
+    }
+};
+
+TEST_F(PresenceSubscriberTest, IsNotSubscribingWhenCreatedWithDefaultConstructor)
+{
+    PresenceSubscriber subscriber;
+    ASSERT_FALSE(subscriber.isSubscribing());
+}
+
+TEST_F(PresenceSubscriberTest, ConstructorCallOCPlatformSubscribe)
+{
+    mocks.ExpectCallFuncOverload(
+            static_cast< subscribePresenceSig1 >(OC::OCPlatform::subscribePresence))
+                     .With(_, HOST, CONTYPE, _).Return(OC_STACK_OK);
+
+    PresenceSubscriber subscriber{ HOST, CONTYPE, SubscribeCallback() };
+}
+
+TEST_F(PresenceSubscriberTest, ConstructorWithResourceTypeCallOCPlatformSubscribe)
+{
+    const std::string resType { "resType" };
+
+    mocks.ExpectCallFuncOverload(
+            static_cast< subscribePresenceSig2 >(OC::OCPlatform::subscribePresence))
+                     .With(_, HOST, resType, CONTYPE, _).Return(OC_STACK_OK);
+
+    PresenceSubscriber subscriber{ HOST, resType, CONTYPE, SubscribeCallback() };
+}
+
+TEST_F(PresenceSubscriberTest, ConstructorThrowsIfResultIsNotOK)
+{
+    mocks.ExpectCallFuncOverload(
+            static_cast< subscribePresenceSig1 >(OC::OCPlatform::subscribePresence))
+                    .Return(OC_STACK_ERROR);
+
+    ASSERT_THROW(PresenceSubscriber(HOST, CONTYPE, SubscribeCallback()), PlatformException);
+}
+
+TEST_F(PresenceSubscriberTest, IsSubscribingIfConstructedWithoutException)
+{
+    PresenceSubscriber subscriber{ HOST, CONTYPE, SubscribeCallback() };
+
+    ASSERT_TRUE(subscriber.isSubscribing());
+}
+
+TEST_F(PresenceSubscriberTest, IsSubscribingOfMovedSubscriberReturnsFalse)
+{
+    PresenceSubscriber subscriber{ HOST, CONTYPE, SubscribeCallback() };
+
+    PresenceSubscriber newSubscriber{ std::move(subscriber) };
+
+    ASSERT_FALSE(subscriber.isSubscribing());
+}
+
+TEST_F(PresenceSubscriberTest, IsSubscribingOfMovedSubscriberWithAssignmentReturnsFalse)
+{
+    PresenceSubscriber subscriber{ HOST, CONTYPE, SubscribeCallback() };
+
+    PresenceSubscriber newSubscriber;
+
+    newSubscriber = std::move(subscriber);
+
+    ASSERT_FALSE(subscriber.isSubscribing());
+}
+
+TEST_F(PresenceSubscriberTest, UnsubscribeWillBeCalledWhenSubscriberIsDestoryed)
+{
+    mocks.ExpectCallFunc(OC::OCPlatform::unsubscribePresence).Return(OC_STACK_OK);
+    {
+        PresenceSubscriber subscriber{ HOST, CONTYPE, SubscribeCallback() };
+    }
+}

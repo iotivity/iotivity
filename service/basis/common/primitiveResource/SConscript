@@ -72,7 +72,10 @@ service_common_env.InstallTarget([service_common_static,service_common_shared], 
 service_common_test_env = service_common_env.Clone();
 
 service_common_test_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-service_common_test_env.PrependUnique(CPPPATH = [gtest_dir + '/include'])
+service_common_test_env.PrependUnique(CPPPATH = [
+    env.get('SRC_DIR')+'/extlibs/hippomocks-master',
+    gtest_dir + '/include'
+    ])
 
 gtest = File(gtest_dir + '/lib/.libs/libgtest.a')
 gtest_main = File(gtest_dir + '/lib/.libs/libgtest_main.a')
