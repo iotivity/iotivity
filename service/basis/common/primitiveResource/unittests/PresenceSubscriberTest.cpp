@@ -35,7 +35,7 @@ typedef OCStackResult (*subscribePresenceSig2)(OC::OCPlatform::OCPresenceHandle&
         const std::string&, const std::string&, OCConnectivityType, SubscribeCallback);
 
 const std::string HOST{ "host" };
-const OCConnectivityType CONTYPE{ OCConnectivityType::OC_ALL };
+const OCConnectivityType CONTYPE{ };
 
 class PresenceSubscriberNonMemberTest: public Test
 {
