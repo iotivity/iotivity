@@ -171,9 +171,9 @@ namespace OC
     OCStackResult OCPlatform_impl::findResource(const std::string& host,
                                             const std::string& resourceName,
                                             OCConnectivityType connectivityType,
-                                            FindCallback resourceHandler, QualityOfService QoS)
+                                            FindCallback resourceHandler,
+                                            QualityOfService QoS)
     {
-
         return checked_guard(m_client, &IClientWrapper::ListenForResource,
                              host, resourceName, connectivityType, resourceHandler, QoS);
     }

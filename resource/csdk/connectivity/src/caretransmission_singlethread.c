@@ -46,7 +46,7 @@ typedef struct
     uint16_t messageId;
 
     /** remote endpoint **/
-    CARemoteEndpoint_t *endpoint;
+    CAEndpoint_t *endpoint;
 
     /** coap PDU **/
     void *pdu;
@@ -145,7 +145,7 @@ void CACheckRetransmissionList()
                                                      removedData->size);
             }
 
-            CADestroyRemoteEndpointInternal(removedData->endpoint);
+            CADestroyEndpointInternal(removedData->endpoint);
             OICFree(removedData->pdu);
 
             OICFree(removedData);
@@ -190,13 +190,12 @@ CAResult_t CARetransmissionInitialize(CARetransmission_t *context,
 
     memset(context, 0, sizeof(CARetransmission_t));
 
-    CARetransmissionConfig_t cfg;
-    memset(&cfg, 0, sizeof(CARetransmissionConfig_t));
+    CARetransmissionConfig_t cfg = {};
 
     if (NULL == config)
     {
         // setDefault
-        cfg.supportType = (CATransportType_t) DEFAULT_RETRANSMISSION_TYPE;
+        cfg.supportType = (CATransportAdapter_t) DEFAULT_RETRANSMISSION_TYPE;
         cfg.tryingCount = DEFAULT_RETRANSMISSION_COUNT;
     }
     else
@@ -217,7 +216,7 @@ CAResult_t CARetransmissionInitialize(CARetransmission_t *context,
     return CA_STATUS_OK;
 }
 
-CAResult_t CARetransmissionSentData(CARetransmission_t *context, const CARemoteEndpoint_t *endpoint,
+CAResult_t CARetransmissionSentData(CARetransmission_t *context, const CAEndpoint_t *endpoint,
                                     const void *pdu, uint32_t size)
 {
     OIC_LOG(DEBUG, TAG, "IN");
@@ -228,7 +227,7 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context, const CARemoteE
     }
 
     // #0. check support connectivity type
-    if (!(context->config.supportType & endpoint->transportType))
+    if (!(context->config.supportType & endpoint->adapter))
     {
         OIC_LOG(ERROR, TAG, "error");
         OIC_LOG_V(ERROR, TAG, "not supported conntype=%d", endpoint->transportType);
@@ -268,7 +267,7 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context, const CARemoteE
     memcpy(pduData, pdu, size);
 
     // clone remote endpoint
-    CARemoteEndpoint_t *remoteEndpoint = CACloneRemoteEndpoint(endpoint);
+    CAEndpoint_t *remoteEndpoint = CACloneEndpoint(endpoint);
     if (NULL == remoteEndpoint)
     {
         OICFree(retData);
@@ -296,7 +295,7 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context, const CARemoteE
 }
 
 CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
-                                        const CARemoteEndpoint_t *endpoint, const void *pdu,
+                                        const CAEndpoint_t *endpoint, const void *pdu,
                                         uint32_t size, void **retransmissionPdu)
 {
     OIC_LOG(DEBUG, TAG, "IN");
@@ -307,9 +306,9 @@ CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
     }
 
     // #0. check support connectivity type
-    if (!(context->config.supportType & endpoint->transportType))
+    if (!(context->config.supportType & endpoint->adapter))
     {
-        OIC_LOG_V(DEBUG, TAG, "not supp conntype=%d", endpoint->transportType);
+        OIC_LOG_V(DEBUG, TAG, "not supp conntype=%d", endpoint->adapter);
         return CA_STATUS_OK;
     }
 
@@ -340,7 +339,7 @@ CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
 
         // found index
         if (NULL != retData->endpoint && retData->messageId == messageId
-            && (retData->endpoint->transportType == endpoint->transportType))
+            && (retData->endpoint->adapter == endpoint->adapter))
         {
             // get pdu data for getting token when CA_EMPTY(RST/ACK) is received from remote device
             // if retransmission was finish..token will be unavailable.
@@ -377,7 +376,7 @@ CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
 
             OIC_LOG_V(DEBUG, TAG, "remove RTCON data, msgid=%d", messageId);
 
-            CADestroyRemoteEndpointInternal(removedData->endpoint);
+            CADestroyEndpointInternal(removedData->endpoint);
             OICFree(removedData->pdu);
 
             OICFree(removedData);

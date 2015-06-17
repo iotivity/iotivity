@@ -89,13 +89,13 @@ namespace OCResourceResponseTest
         OCServerRequest request;
         request.method = OC_REST_GET;
         strncpy(request.query, query, sizeof(query));
-        request.connectivityType = CA_IPV4;
-        strncpy(request.addressInfo.IP.ipAddress, address, sizeof(query));
-        request.addressInfo.IP.port = 5364;
-        request.qos =  OC_LOW_QOS;
+        request.devAddr.flags = OC_DEFAULT_FLAGS;
+        request.devAddr.adapter = OC_DEFAULT_ADAPTER;
+        strncpy(request.devAddr.addr, address, sizeof(query));
+        request.devAddr.port = 5364;
+        request.qos = OC_LOW_QOS;
         request.coapID = 0;
         request.delayedResNeeded = 0;
-        request.secured = 0;
 
         OCRequestHandle handle = static_cast<OCRequestHandle>(&request);
         EXPECT_EQ(NULL, response.getRequestHandle());
@@ -124,7 +124,7 @@ namespace OCResourceResponseTest
         uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
 
         EXPECT_EQ(OC_STACK_OK, OCCreateResource(&resHandle, resourceURI.c_str(),
-                resourceTypeName.c_str(), resourceInterface.c_str(), nullptr,
+                resourceTypeName.c_str(), resourceInterface.c_str(), nullptr, nullptr,
                 resourceProperty));
         EXPECT_EQ(NULL, response.getResourceHandle());
         EXPECT_NO_THROW(response.setResourceHandle(resHandle));

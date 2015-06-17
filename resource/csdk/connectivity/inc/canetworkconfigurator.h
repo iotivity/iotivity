@@ -37,17 +37,17 @@ extern "C"
 
 /**
  * @brief   Add network type to the selected networks for network packets reception
- * @param   transportType       [IN]    Transport type that needs to be added
+ * @param   transportAdapter     [IN]  Adapter that needs to be added
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAAddNetworkType(CATransportType_t transportType);
+CAResult_t CAAddNetworkType(CATransportAdapter_t transportAdapter);
 
 /**
  * @brief   Remove network type from the selected configuration
- * @param   transportType       [IN]    Transport type that needs to be removed
+ * @param   transportAdapter     [IN]  Adapter that needs to be removed
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CARemoveNetworkType(CATransportType_t transportType);
+CAResult_t CARemoveNetworkType(CATransportAdapter_t transportAdapter);
 
 /**
  * @brief   Get selected network information
@@ -61,7 +61,7 @@ u_arraylist_t *CAGetSelectedNetworkList();
  * @param   size    [OUT]   No Of Array objects
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAGetNetworkInformationInternal(CALocalConnectivity_t **info, uint32_t *size);
+CAResult_t CAGetNetworkInformationInternal(CAEndpoint_t **info, uint32_t *size);
 
 /**
  * @brief   Terminate network type from selected configuration

@@ -590,14 +590,14 @@ void CABleGattRemoteCharacteristicWriteCb(char *charPath,
     OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "charPath = [%s] charValue = [%s] len [%d]", charPath,
               charValue, charValueLen);
 
-    char *data = (char *)OICMalloc(sizeof(char) * charValueLen);
+    char *data = (char *)OICMalloc(sizeof(char) * charValueLen + 1);
     if (NULL == data)
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "Malloc failed!");
         return;
     }
 
-    strncpy(data, (char *)charValue, charValueLen);
+    OICStrcpy(data, charValueLen + 1, charValue);
 
     ca_mutex_lock(g_bleReqRespCbMutex);
     if (NULL == g_bleServerDataReceivedCallback)
@@ -725,16 +725,15 @@ CAResult_t CAUpdateCharacteristicsToGattClient(const char* address, const char *
         return CA_STATUS_FAILED;
     }
 
-    char *data = (char *) OICMalloc(sizeof(char) * (charValueLen + 1));
+    char *data = (char *) OICCalloc(sizeof(char), (charValueLen + 1));
     if (NULL == data)
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "malloc failed!");
         ca_mutex_unlock(g_bleCharacteristicMutex);
         return CA_STATUS_FAILED;
     }
-    memset(data, 0x0, (charValueLen + 1));
 
-    strncpy(data, charValue, charValueLen);
+    OICStrcpy(data, charValueLen + 1, charValue);
 
     OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "updating characteristics char [%s] data [%s] dataLen [%d]",
               (const char *)g_gattReadCharPath, data, charValueLen);
@@ -780,7 +779,7 @@ CAResult_t CAUpdateCharacteristicsToAllGattClients(const char *charValue,
         return CA_STATUS_FAILED;
     }
 
-    strncpy(data, charValue, charValueLen + 1);
+    OICStrcpy(data, charValueLen + 1, charValue);
 
     OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "updating characteristics char [%s] data [%s] dataLen [%d]",
               (const char *)g_gattReadCharPath, data, charValueLen);

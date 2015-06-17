@@ -265,7 +265,8 @@ OCEntityHandlerResult handleNonExistingResourceRequest(OCEntityHandlerRequest *e
  *     OC_EH_ERROR
  */
 OCEntityHandlerResult resourceEntityHandlerCB (OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest *entityHandlerRequest);
+        OCEntityHandlerRequest *entityHandlerRequest,
+        void *callbackParam);
 
 /**
  *
@@ -343,7 +344,7 @@ OCStackResult registerResourceAsCoordinatable(OCResourceHandle *handle,
     OC_LOG_V(DEBUG, HOSTING_TAG, "requiredUri+coordinatingFlag = %s", coordinatingURI);
 
     ret = OCCreateResource(handle, resourceTypeName, resourceInterfaceName,
-            coordinatingURI, entityHandler, resourceProperties);
+            coordinatingURI, entityHandler, NULL, resourceProperties);
     free(coordinatingURI);
     return ret;
 }
@@ -409,7 +410,7 @@ int requestCoordinateeCandidateDiscovery(char *sourceResourceAddress)
     cbData.context = (void *)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-    result = OCDoResource(&handle, OC_REST_GET, queryUri, OIC_COORDINATING_FLAG, 0,
+    result = OCDoResource(&handle, OC_REST_GET, queryUri, NULL, 0,
             OC_TRANSPORT, OC_LOW_QOS, &cbData, NULL, 0);
     if (result != OC_STACK_OK)
     {
@@ -461,8 +462,6 @@ OCStackResult requestPresence(char *sourceResourceAddress)
 OCStackApplicationResult requestPresenceCB(void *context, OCDoHandle handle,
         OCClientResponse *clientResponse)
 {
-    uint8_t remoteIpAddress[4];
-    uint16_t remotePortNumber;
     char address[OIC_STRING_MAX_VALUE] = { '\0' };
 
     if (context == (void *) DEFAULT_CONTEXT_VALUE)
@@ -471,18 +470,17 @@ OCStackApplicationResult requestPresenceCB(void *context, OCDoHandle handle,
     }
     if (clientResponse)
     {
-        OCDevAddrToIPv4Addr((OCDevAddr *) clientResponse->addr, remoteIpAddress,
-                            remoteIpAddress + 1, remoteIpAddress + 2, remoteIpAddress + 3);
-        OCDevAddrToPort((OCDevAddr *) clientResponse->addr, &remotePortNumber);
         OC_LOG_V(DEBUG, HOSTING_TAG, "\tStackResult: %s",  getResultString(clientResponse->result));
         OC_LOG_V(DEBUG, HOSTING_TAG, "\tStackResult: %d",  clientResponse->result);
         OC_LOG_V(DEBUG, HOSTING_TAG,
-                 "\tPresence Device =============> Presence %s @ %d.%d.%d.%d:%d",
-                 clientResponse->resJSONPayload, remoteIpAddress[0], remoteIpAddress[1],
-                 remoteIpAddress[2], remoteIpAddress[3], remotePortNumber);
+                 "\tPresence Device =============> Presence %s @ %s:%d",
+                 clientResponse->resJSONPayload,
+                 clientResponse->devAddr.addr,
+                 clientResponse->devAddr.port);
 
-        snprintf(address, sizeof(address), "%d.%d.%d.%d:%d", remoteIpAddress[0], remoteIpAddress[1],
-                remoteIpAddress[2], remoteIpAddress[3], remotePortNumber);
+        snprintf(address, sizeof(address), "%s:%d",
+                 clientResponse->devAddr.addr,
+                 clientResponse->devAddr.port);
         if (clientResponse->result == OC_STACK_OK)
         {
             requestCoordinateeCandidateDiscovery(address);
@@ -585,16 +583,10 @@ MirrorResourceList *buildMirrorResourceList(OCDoHandle handle, OCClientResponse 
 
     MirrorResourceList *retList = createMirrorResourceList();
 
-    uint8_t remoteIpAddr[4];
-    uint16_t remotePortNum;
-
-    OCDevAddrToIPv4Addr((OCDevAddr *) clientResponse->addr, remoteIpAddr,
-                        remoteIpAddr + 1, remoteIpAddr + 2, remoteIpAddr + 3);
-    OCDevAddrToPort((OCDevAddr *) clientResponse->addr, &remotePortNum);
-
     char sourceaddr[OIC_STRING_MAX_VALUE] = {'\0'};
-    snprintf(sourceaddr, sizeof(sourceaddr), "%d.%d.%d.%d:%d", remoteIpAddr[0], remoteIpAddr[1],
-            remoteIpAddr[2], remoteIpAddr[3], remotePortNum);
+    snprintf(sourceaddr, sizeof(sourceaddr), "%s:%d",
+                                        clientResponse->devAddr.addr,
+                                        clientResponse->devAddr.port);
 
     OC_LOG_V(DEBUG, HOSTING_TAG, "Host Device =============> Discovered %s @ %s",
              clientResponse->resJSONPayload, sourceaddr);
@@ -753,6 +745,7 @@ OCStackResult registerMirrorResource(MirrorResource *mirrorResource)
                               mirrorResource->prop.resourceInterfaceName[0],
                               mirrorResource->uri,
                               resourceEntityHandlerCB,
+                              NULL,
                               OC_DISCOVERABLE | OC_OBSERVABLE);
 
     OC_LOG_V(DEBUG, HOSTING_TAG, "created mirror resource Handle : %u",mirrorResource->resourceHandle[OIC_MIRROR_HANDLE]);
@@ -1026,7 +1019,8 @@ char *buildResponsePayload (OCEntityHandlerRequest *entityHandlerRequest)
 
 OCEntityHandlerResult
 resourceEntityHandlerCB (OCEntityHandlerFlag entifyHandlerFlag,
-                         OCEntityHandlerRequest *entityHandlerRequest)
+                         OCEntityHandlerRequest *entityHandlerRequest,
+                         void* callbackParam)
 {
     OC_LOG_V(DEBUG, HOSTING_TAG, "Inside device default entity handler - flags: 0x%x",
              entifyHandlerFlag);

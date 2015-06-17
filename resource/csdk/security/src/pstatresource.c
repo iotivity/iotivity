@@ -287,7 +287,8 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
  * This internal method is the entity handler for pstat resources.
  */
 OCEntityHandlerResult PstatEntityHandler(OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest * ehRequest)
+        OCEntityHandlerRequest * ehRequest,
+        void *callbackParam)
 {
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
     // This method will handle REST request (GET/POST) for /oic/sec/pstat
@@ -323,6 +324,7 @@ OCStackResult CreatePstatResource()
                            OIC_MI_DEF,
                            OIC_RSRC_PSTAT_URI,
                            PstatEntityHandler,
+                           NULL,
                            OC_RES_PROP_NONE);
 
     if (ret != OC_STACK_OK)

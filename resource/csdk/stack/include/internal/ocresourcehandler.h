@@ -74,7 +74,7 @@ typedef enum
  * no entity handler.
  */
 OCEntityHandlerResult defaultResourceEHandler(OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest * request);
+        OCEntityHandlerRequest * request, void* callbackParam);
 
 /**
  * Get string value associated with a virtual resource type.
@@ -141,7 +141,7 @@ OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
                                            const char *filterValue,
                                            char * out,
                                            uint16_t *remaining,
-                                           CATransportType_t connType);
+                                           CATransportAdapter_t adapter);
 
 /**
  * A helper function that Maps an @ref OCEntityHandlerResult type to an

@@ -81,8 +81,7 @@ CAResult_t CACreateBLEServiceInfo(const char *bdAddress, bt_gatt_attribute_h ser
         return CA_STATUS_FAILED;
     }
 
-    size_t len = strlen(bdAddress);
-    (*bleServiceInfo)->bdAddress = (char *) OICMalloc(sizeof(char) * (len + 1));
+    (*bleServiceInfo)->bdAddress = OICStrdup(bdAddress);
 
     if (NULL == (*bleServiceInfo)->bdAddress)
     {
@@ -90,8 +89,6 @@ CAResult_t CACreateBLEServiceInfo(const char *bdAddress, bt_gatt_attribute_h ser
         OICFree(*bleServiceInfo);
         return CA_STATUS_FAILED;
     }
-
-    strncpy((*bleServiceInfo)->bdAddress, bdAddress, len + 1);
 
     if (service)
     {

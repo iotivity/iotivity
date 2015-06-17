@@ -340,7 +340,8 @@ static OCEntityHandlerResult HandleACLPostRequest (const OCEntityHandlerRequest 
  * will handle REST request (GET/PUT/POST/DEL) for them.
  */
 OCEntityHandlerResult ACLEntityHandler (OCEntityHandlerFlag flag,
-                                        OCEntityHandlerRequest * ehRequest)
+                                        OCEntityHandlerRequest * ehRequest,
+                                        void* callbackParameter)
 {
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
@@ -384,6 +385,7 @@ OCStackResult CreateACLResource()
                            OIC_MI_DEF,
                            OIC_RSRC_ACL_URI,
                            ACLEntityHandler,
+                           NULL,
                            OC_OBSERVABLE);
 
     if (OC_STACK_OK != ret)

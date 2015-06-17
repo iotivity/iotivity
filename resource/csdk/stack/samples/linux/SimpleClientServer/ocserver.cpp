@@ -490,7 +490,7 @@ void ProcessObserveDeregister (OCEntityHandlerRequest *ehRequest)
 
 OCEntityHandlerResult
 OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest *entityHandlerRequest, char* uri)
+        OCEntityHandlerRequest *entityHandlerRequest, char* uri, void* callbackParam)
 {
     OC_LOG_V (INFO, TAG, "Inside device default entity handler - flags: 0x%x, uri: %s", flag, uri);
 
@@ -580,7 +580,7 @@ OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
 
 OCEntityHandlerResult
 OCNOPEntityHandlerCb (OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest *entityHandlerRequest)
+        OCEntityHandlerRequest *entityHandlerRequest, void* callbackParam)
 {
     // This is callback is associated with the 2 presence notification
     // resources. They are non-operational.
@@ -589,7 +589,7 @@ OCNOPEntityHandlerCb (OCEntityHandlerFlag flag,
 
 OCEntityHandlerResult
 OCEntityHandlerCb (OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest *entityHandlerRequest)
+        OCEntityHandlerRequest *entityHandlerRequest, void* callback)
 {
     OC_LOG_V (INFO, TAG, "Inside entity handler - flags: 0x%x", flag);
 
@@ -819,6 +819,7 @@ void *presenceNotificationGenerator(void *param)
                     OC_RSRVD_INTERFACE_DEFAULT,
                     presenceNotificationUris.at(i).c_str(),
                     OCNOPEntityHandlerCb,
+                    NULL,
                     OC_DISCOVERABLE|OC_OBSERVABLE);
         }
         if(res != OC_STACK_OK)
@@ -866,6 +867,7 @@ int createLightResource (char *uri, LightResource *lightResource)
             "oc.mi.def",
             uri,
             OCEntityHandlerCb,
+            NULL,
             OC_DISCOVERABLE|OC_OBSERVABLE);
     OC_LOG_V(INFO, TAG, "Created Light resource with result: %s", getResult(res));
 
@@ -1049,7 +1051,7 @@ int main(int argc, char* argv[])
     }
 #endif
 
-    OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandlerCb);
+    OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandlerCb, NULL);
 
     OCStackResult registrationResult =
         SetPlatformInfo(platformID, manufacturerName, manufacturerUrl, modelNumber,

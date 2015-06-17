@@ -36,6 +36,7 @@
 #include "gtest/gtest.h"
 
 #include <oic_string.h>
+#include <oic_malloc.h>
 
 const char SENTINEL_VALUE = 127;
 TEST(StringTests, StrdupNormalDup)
@@ -50,6 +51,8 @@ TEST(StringTests, StrdupNormalDup)
     EXPECT_NE(param, result);
 
     EXPECT_STREQ(param, result);
+
+    OICFree(result);
 }
 
 // Tests a normal copy where the buffer is exactly long enough

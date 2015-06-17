@@ -50,8 +50,7 @@ TEST(RandomGeneration,OCGetRandom) {
 
 TEST(RandomGeneration,OCFillRandomMem) {
     uint16_t ARR_SIZE = 20;
-    uint8_t array[ARR_SIZE];
-    memset(array, 0, ARR_SIZE);
+    uint8_t array[ARR_SIZE]={};
     OCFillRandomMem(array + 1, ARR_SIZE - 2);
 
     for (int i = 1; i < ARR_SIZE - 2; i++) {

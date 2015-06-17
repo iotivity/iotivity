@@ -85,7 +85,6 @@ void start_discovery_server();
 void find_resource();
 void send_request();
 void send_request_all();
-void advertise_resource();
 void send_notification();
 void select_network();
 void unselect_network();
@@ -319,11 +318,6 @@ void process()
             case 'r': // send request
             case 'R':
                 send_request();
-                break;
-
-            case 'a': // advertise resource
-            case 'A':
-                advertise_resource();
                 break;
 
             case 'b': // send notification
@@ -716,93 +710,6 @@ void send_request_all()
     free(group);
 
     printf("=============================================\n");
-}
-
-void advertise_resource()
-{
-    printf("\n=============================================\n");
-    printf("uri : ");
-
-    char buf[MAX_BUF_LEN] = { 0 };
-    if (CA_STATUS_OK != get_input_data(buf, MAX_BUF_LEN))
-    {
-        return;
-    }
-
-    char optionNumBuf[MAX_BUF_LEN] = { 0 };
-    char optionData[MAX_OPT_LEN] = { 0 } ;
-
-    printf("Option Num : ");
-    if (CA_STATUS_OK != get_input_data(optionNumBuf, MAX_BUF_LEN))
-    {
-        return;
-    }
-    int optionNum = atoi(optionNumBuf);
-
-    CAHeaderOption_t * headerOpt = (CAHeaderOption_t *)
-            calloc(1, optionNum * sizeof(CAHeaderOption_t));
-    if (NULL == headerOpt)
-    {
-        printf("Memory allocation failed!\n");
-        return;
-    }
-
-    int i;
-    for (i = 0; i < optionNum; i++)
-    {
-        char getOptionID[MAX_BUF_LEN] = { 0 } ;
-
-        printf("[%d] Option ID : ", i + 1);
-        if (CA_STATUS_OK != get_input_data(getOptionID, MAX_BUF_LEN))
-        {
-            free(headerOpt);
-            return;
-        }
-        int optionID = atoi(getOptionID);
-
-        headerOpt[i].optionID = optionID;
-
-        printf("[%d] Option Data : ", i + 1);
-        if (CA_STATUS_OK != get_input_data(optionData, MAX_OPT_LEN))
-        {
-            free(headerOpt);
-            return;
-        }
-
-        memcpy(headerOpt[i].optionData, optionData, strlen(optionData));
-        printf("[%d] inputed option : ID : %d, data : %s\n", i + 1, optionID, optionData);
-
-        headerOpt[i].optionLength = (uint16_t) strlen(optionData);
-    }
-    printf("\n=============================================\n");
-
-    // create token
-    CAToken_t token = NULL;
-    uint8_t tokenLength = CA_MAX_TOKEN_LEN;
-
-    CAResult_t res = CAGenerateToken(&token, tokenLength);
-    if ((CA_STATUS_OK != res) || (!token))
-    {
-        printf("Token generate error!!\n");
-        free(headerOpt);
-        return;
-    }
-
-    printf("Generated token %s\n", token);
-
-    res = CAAdvertiseResource(buf, token, tokenLength, headerOpt, (uint8_t) optionNum);
-    if (CA_STATUS_OK != res)
-    {
-        printf("Could not start advertise resource\n");
-        CADestroyToken(token);
-    }
-    else
-    {
-        CADestroyToken(g_last_request_token);
-        g_last_request_token = token;
-    }
-
-    free(headerOpt);
 }
 
 void send_notification()

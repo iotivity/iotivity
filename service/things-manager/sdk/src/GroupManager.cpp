@@ -229,7 +229,7 @@ OCStackResult GroupManager::findCandidateResources(
 
         OCPlatform::findResource("",
                 query,
-                OC_ALL,
+                CT_DEFAULT,
                 std::function < void(std::shared_ptr < OCResource > resource)
                         > (std::bind(&GroupManager::onFoundResource, this, std::placeholders::_1,
                                 waitsec)));
@@ -362,7 +362,7 @@ void GroupManager::checkCollectionRepresentation(const OCRepresentation& rep,
             result = OCPlatform::subscribePresence(presenceHandle, hostAddress,
                     // resourceType,
                     resourceTypes.front(),
-                    OC_ALL,
+                    CT_DEFAULT,
                     std::function<
                             void(OCStackResult result, const unsigned int nonce,
                                     const std::string& hostAddress) >(

@@ -27,6 +27,7 @@
 #include "caedrclient.h"
 #include "logger.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 #include "cathreadpool.h" /* for thread pool */
 #include "camutex.h"
 #include "uarraylist.h"
@@ -120,13 +121,13 @@ typedef struct
 /**
  * implement for BT-EDR adapter common method
  */
-CAResult_t CAEDRGetInterfaceInformation(CALocalConnectivity_t **info)
+CAResult_t CAEDRGetInterfaceInformation(CAEndpoint_t **info)
 {
     OIC_LOG(DEBUG, TAG, "IN - CAEDRGetInterfaceInformation");
 
     if (!info)
     {
-        OIC_LOG(ERROR, TAG, "LocalConnectivity info is null");
+        OIC_LOG(ERROR, TAG, "endpoint info is null");
         return CA_STATUS_FAILED;
     }
 
@@ -150,7 +151,8 @@ CAResult_t CAEDRGetInterfaceInformation(CALocalConnectivity_t **info)
     }
 
     // Create local endpoint using util function
-    CALocalConnectivity_t *endpoint = CAAdapterCreateLocalEndpoint(CA_EDR, macAddress);
+    CAEndpoint_t *endpoint = CAAdapterCreateEndpoint(CA_DEFAULT_FLAGS,
+                                            CA_RFCOMM_ADAPTER, macAddress, 0);
     if (NULL == endpoint)
     {
         OIC_LOG(ERROR, TAG, "Failed to create Local Endpoint!");
@@ -159,21 +161,19 @@ CAResult_t CAEDRGetInterfaceInformation(CALocalConnectivity_t **info)
     }
 
     // copy unicast server information
-    endpoint->isSecured = false;
-    CALocalConnectivity_t *netInfo = (CALocalConnectivity_t *) OICMalloc(
-            sizeof(CALocalConnectivity_t) * netInfoSize);
+    CAEndpoint_t *netInfo = (CAEndpoint_t *)OICMalloc(sizeof(CAEndpoint_t) * netInfoSize);
     if (NULL == netInfo)
     {
         OIC_LOG(ERROR, TAG, "Invalid input..");
         OICFree(macAddress);
-        CAAdapterFreeLocalEndpoint(endpoint);
+        CAAdapterFreeEndpoint(endpoint);
         return CA_MEMORY_ALLOC_FAILED;
     }
-    memcpy(netInfo, endpoint, sizeof(CALocalConnectivity_t));
+    *netInfo = *endpoint;
     *info = netInfo;
 
     OICFree(macAddress);
-    CAAdapterFreeLocalEndpoint(endpoint);
+    CAAdapterFreeEndpoint(endpoint);
 
     OIC_LOG(DEBUG, TAG, "OUT - CAEDRGetInterfaceInformation");
     return CA_STATUS_OK;
@@ -575,7 +575,7 @@ void CAEDRGetLocalAddress(char **address)
     if (jni_address)
     {
         const char* localAddress = (*env)->GetStringUTFChars(env, jni_address, NULL);
-        *address = (char*) OICMalloc(strlen(localAddress) + 1);
+        *address = OICStrdup(localAddress);
         if (*address == NULL)
         {
             if (isAttached)
@@ -584,7 +584,7 @@ void CAEDRGetLocalAddress(char **address)
             }
             return;
         }
-        memcpy(*address, localAddress, strlen(localAddress));
+
         (*env)->ReleaseStringUTFChars(env, jni_address, localAddress);
     }
 

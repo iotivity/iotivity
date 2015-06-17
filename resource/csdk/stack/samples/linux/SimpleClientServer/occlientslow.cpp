@@ -37,11 +37,10 @@ static std::string coapServerIP = "255.255.255.255";
 static std::string coapServerPort = "5683";
 static std::string coapServerResource = "/a/led";
 
-//The following variable determines the interface protocol (IPv4, IPv6, etc)
-//to be used for sending unicast messages. Default set to IPv4.
-static OCConnectivityType OC_CONNTYPE = OC_IPV4;
+//The following variable determines the interface protocol (IP, etc)
+//to be used for sending unicast messages. Default set to IP.
+static OCConnectivityType OC_CONNTYPE = CT_ADAPTER_IP;
 static const char * MULTICAST_RESOURCE_DISCOVERY_QUERY = "/oic/res";
-
 static int IPV4_ADDR_SIZE = 16;
 void StripNewLineChar(char* str);
 
@@ -130,9 +129,6 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse
 OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
         OCClientResponse * clientResponse)
 {
-    uint8_t remoteIpAddr[4];
-    uint16_t remotePortNu;
-
     if (ctx == (void*) DEFAULT_CONTEXT_VALUE)
     {
         OC_LOG(INFO, TAG, "Callback Context for DISCOVER query recvd successfully");
@@ -142,14 +138,9 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
     {
         OC_LOG_V(INFO, TAG, "StackResult: %s", getResult(clientResponse->result));
 
-        OCDevAddrToIPv4Addr((OCDevAddr *) clientResponse->addr, remoteIpAddr,
-                remoteIpAddr + 1, remoteIpAddr + 2, remoteIpAddr + 3);
-        OCDevAddrToPort((OCDevAddr *) clientResponse->addr, &remotePortNu);
-
         OC_LOG_V(INFO, TAG,
-                "Device =============> Discovered %s @ %d.%d.%d.%d:%d",
-                clientResponse->resJSONPayload, remoteIpAddr[0], remoteIpAddr[1],
-                remoteIpAddr[2], remoteIpAddr[3], remotePortNu);
+                "Device =============> Discovered %s @ %s:%d",
+                clientResponse->resJSONPayload, clientResponse->devAddr.addr, clientResponse->devAddr.port);
 
         parseClientResponse(clientResponse);
 
@@ -217,7 +208,7 @@ int InitDiscovery()
     }
     else
     {
-        ret = OCDoResource(NULL, OC_REST_GET, szQueryUri, 0, 0, OC_ALL,
+        ret = OCDoResource(NULL, OC_REST_DISCOVER, szQueryUri, 0, 0, CT_DEFAULT,
                 OC_LOW_QOS, &cbData, NULL, 0);
     }
     if (ret != OC_STACK_OK)
@@ -242,9 +233,7 @@ int main(int argc, char* argv[])
                 TEST_CASE = atoi(optarg);
                 break;
             case 'c':
-                // TODO: re-enable IPv4/IPv6 command line selection when IPv6 is supported
-                // OC_CONNTYPE = OCConnectivityType(atoi(optarg));
-                OC_CONNTYPE = OC_IPV4;
+                OC_CONNTYPE = CT_ADAPTER_IP;
                 break;
             default:
                 PrintUsage();
@@ -291,30 +280,6 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-std::string getIPAddrTBServer(OCClientResponse * clientResponse)
-{
-    if(!clientResponse) return "";
-    if(!clientResponse->addr) return "";
-    uint8_t a, b, c, d = 0;
-    if(0 != OCDevAddrToIPv4Addr(clientResponse->addr, &a, &b, &c, &d) ) return "";
-
-    char ipaddr[16] = {'\0'};
-    // ostringstream not working correctly here, hence snprintf
-    snprintf(ipaddr,  sizeof(ipaddr), "%d.%d.%d.%d", a,b,c,d);
-    return std::string (ipaddr);
-}
-
-std::string getPortTBServer(OCClientResponse * clientResponse)
-{
-    if(!clientResponse) return "";
-    if(!clientResponse->addr) return "";
-    uint16_t p = 0;
-    if(0 != OCDevAddrToPort(clientResponse->addr, &p) ) return "";
-    std::ostringstream ss;
-    ss << p;
-    return ss.str();
-}
-
 std::string getQueryStrForGetPut(OCClientResponse * clientResponse)
 {
     return "/a/led";
@@ -322,8 +287,8 @@ std::string getQueryStrForGetPut(OCClientResponse * clientResponse)
 
 void parseClientResponse(OCClientResponse * clientResponse)
 {
-    coapServerIP = getIPAddrTBServer(clientResponse);
-    coapServerPort = getPortTBServer(clientResponse);
+    coapServerIP = clientResponse->devAddr.addr;
+    coapServerPort = clientResponse->devAddr.port;
     coapServerResource = getQueryStrForGetPut(clientResponse);
 }
 

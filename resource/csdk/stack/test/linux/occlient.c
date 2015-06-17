@@ -41,13 +41,11 @@ void handleSigInt(int signum) {
 // This is a function called back when a device is discovered
 OCStackApplicationResult applicationDiscoverCB(
         OCClientResponse * clientResponse) {
-    uint8_t remoteIpAddr[4];
-    uint16_t remotePortNu;
     OC_LOG(INFO, TAG, "Entering applicationDiscoverCB (Application Layer CB)");
-    OCDevAddrToIPv4Addr((OCDevAddr *) clientResponse->addr, remoteIpAddr,
-            remoteIpAddr + 1, remoteIpAddr + 2, remoteIpAddr + 3);
-    OCDevAddrToPort((OCDevAddr *) clientResponse->addr, &remotePortNu);
-    OC_LOG_V(INFO, TAG, "Device =============> Discovered %s @ %d.%d.%d.%d:%d",clientResponse->resJSONPayload,remoteIpAddr[0], remoteIpAddr[1], remoteIpAddr[2], remoteIpAddr[3], remotePortNu);
+    OC_LOG_V(INFO, TAG, "Device =============> Discovered %s @ %s:%d",
+                                    clientResponse->resJSONPayload,
+                                    clientResponse->devAddr.addr,
+                                    clientResponse->devAddr.port);
     //return OC_STACK_DELETE_TRANSACTION;
     return OC_STACK_KEEP_TRANSACTION;
 }

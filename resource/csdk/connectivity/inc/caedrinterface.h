@@ -68,7 +68,7 @@ typedef enum
  */
 typedef struct
 {
-    CARemoteEndpoint_t *remoteEndpoint; /**< Remote Endpoint */
+    CAEndpoint_t *remoteEndpoint;       /**< Remote Endpoint */
     void *data;                         /**< Data to be sent */
     uint32_t dataLen;                   /**< Length of the data to be sent */
 } CAEDRData;
@@ -79,7 +79,7 @@ typedef struct
  */
 typedef struct
 {
-    CALocalConnectivity_t *info; /**< Local Connectivity Information */
+    CAEndpoint_t *info;          /**< Local Connectivity Information */
     CANetworkStatus_t status;    /**< Network Status */
 } CAEDRNetworkEvent;
 
@@ -200,7 +200,7 @@ void CAEDRSetNetworkChangeCallback(CAEDRNetworkStatusCallback networkStateChange
  * @see #CALocalConnectivity_t
  *
  */
-CAResult_t CAEDRGetInterfaceInformation(CALocalConnectivity_t **info);
+CAResult_t CAEDRGetInterfaceInformation(CAEndpoint_t **info);
 
 /**
  * @brief  Start RFCOMM server for given service UUID

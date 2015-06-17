@@ -421,7 +421,7 @@ int main(int argc, char* argv[]) {
         printUsage();
         if (argc == 1)
         {
-            std::cout << "<===Setting ObserveType to Observe and ConnectivityType to IPv4===>\n\n";
+            std::cout << "<===Setting ObserveType to Observe and ConnectivityType to IP===>\n\n";
         }
         else if (argc == 2)
         {
@@ -457,14 +457,14 @@ int main(int argc, char* argv[]) {
         requestURI << OC_MULTICAST_DISCOVERY_URI << "?rt=core.light";
 
         OCPlatform::findResource("", requestURI.str(),
-                OC_ALL, &foundResource);
+                CT_DEFAULT, &foundResource);
         std::cout<< "Finding Resource... " <<std::endl;
 
         // Find resource is done twice so that we discover the original resources a second time.
         // These resources will have the same uniqueidentifier (yet be different objects), so that
         // we can verify/show the duplicate-checking code in foundResource(above);
         OCPlatform::findResource("", requestURI.str(),
-                OC_ALL, &foundResource);
+                CT_DEFAULT, &foundResource);
         std::cout<< "Finding Resource for second time..." << std::endl;
 
         // A condition variable will free the mutex it is given, then do a non-

@@ -288,6 +288,44 @@ int main(int argc, char* argv[]) {
 
     std::ostringstream requestURI;
 
+    OCConnectivityType connectivityType = CT_DEFAULT;
+
+    if(argc == 2)
+    {
+        try
+        {
+            std::size_t inputValLen;
+            int optionSelected = std::stoi(argv[1], &inputValLen);
+
+            if(inputValLen == strlen(argv[1]))
+            {
+                if(optionSelected == 0)
+                {
+                    connectivityType = CT_ADAPTER_IP;
+                }
+                else
+                {
+                    std::cout << "Invalid connectivity type selected. Using default IP"
+                        << std::endl;
+                }
+            }
+            else
+            {
+                std::cout << "Invalid connectivity type selected. Using default IP" << std::endl;
+            }
+        }
+        catch(std::exception& e)
+        {
+            std::cout << "Invalid input argument. Using IP as connectivity type" << std::endl;
+        }
+    }
+    else
+    {
+        std::cout<<"Usage: garageclient 0\n";
+        std::cout<<"ConnectivityType: Default IP\n";
+        std::cout<<"ConnectivityType 0: IP\n";
+    }
+
     // Create PlatformConfig object
     PlatformConfig cfg {
         OC::ServiceType::InProc,
@@ -304,7 +342,7 @@ int main(int argc, char* argv[]) {
         requestURI << OC_MULTICAST_DISCOVERY_URI << "?rt=core.garage";
 
         OCPlatform::findResource("", requestURI.str(),
-                OC_ALL, &foundResource);
+                connectivityType, &foundResource);
 
         std::cout<< "Finding Resource... " <<std::endl;
 

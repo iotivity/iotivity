@@ -52,8 +52,7 @@ void setup() {
     }
 
     Serial.print("Testing OCFillRandomMem ... ");
-    uint8_t array[ARR_SIZE];
-    memset(array, 0, ARR_SIZE);
+    uint8_t array[ARR_SIZE] = {};
     OCFillRandomMem(array + 1, ARR_SIZE - 2);
     uint8_t overall = 0;
     uint8_t value82 = 0;

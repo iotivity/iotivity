@@ -38,12 +38,11 @@
  */
 extern void OCGetDtlsPskCredentials(CADtlsPskCredsBlob_t **credInfo);
 
-typedef void (*CAPacketReceivedCallback)(const char *ipAddress, const uint16_t port,
-                                         const void *data, const uint32_t dataLength,
-                                         const bool isSecured, const CARemoteId_t *identity);
+typedef void (*CAPacketReceivedCallback)(const CAEndpoint_t *endpoint,
+                                         const void *data, uint32_t dataLength);
 
-typedef uint32_t (*CAPacketSendCallback)(const char *ipAddress, const uint16_t port,
-                                         const void *data, const uint32_t dataLength);
+typedef uint32_t (*CAPacketSendCallback)(const CAEndpoint_t *endpoint,
+                                         const void *data, uint32_t dataLength);
 
 /**
  * @struct stCAAdapterCallbacks_t
@@ -125,17 +124,6 @@ typedef struct CACacheMessage
 
 
 /**
- * @struct stCADtlsPeerInfo_t
- * @brief structure associates the peer psk id with peer n/w address
- */
-typedef struct stCADtlsPeerInfo
-{
-    CAAddress_t address;
-    CARemoteId_t identity;
-}stCADtlsPeerInfo_t;
-
-
-/**
  * @fn  CADTLSSetAdapterCallbacks
  * @brief  Used set send and recv callbacks for different adapters(WIFI,EtherNet)
  *
@@ -147,7 +135,8 @@ typedef struct stCADtlsPeerInfo
  *
  */
 void CADTLSSetAdapterCallbacks(CAPacketReceivedCallback recvCallback,
-                               CAPacketSendCallback sendCallback, CATransportType_t type);
+                               CAPacketSendCallback sendCallback,
+                               CATransportAdapter_t type);
 
 /**
  * @brief   Register callback to get DTLS PSK credentials.
@@ -180,24 +169,20 @@ CAResult_t CADtlsEnableAnonECDHCipherSuite(const bool enable);
 /**
  * Initiate DTLS handshake with selected cipher suite
  *
- * @param[in] addrInfo  information of network address
- * @param[in] transportType  transport type
+ * @param[in] endpoint  information of network address
  *
  * @retval  CA_STATUS_OK for success, otherwise some error value
  */
-CAResult_t CADtlsInitiateHandshake(const CAAddress_t* addrInfo,
-                                   const CATransportType_t transportType);
+CAResult_t CADtlsInitiateHandshake(const CAEndpoint_t *endpoint);
 
 /**
  * Close the DTLS session
  *
- * @param[in] addrInfo  information of network address
- * @param[in] transportType  transport type
+ * @param[in] endpoint  information of network address
  *
  * @retval  CA_STATUS_OK for success, otherwise some error value
  */
-CAResult_t CADtlsClose(const CAAddress_t* addrInfo,
-                       const CATransportType_t transportType);
+CAResult_t CADtlsClose(const CAEndpoint_t *endpoint);
 
 /**
  * Generate ownerPSK using PRF
@@ -205,8 +190,7 @@ CAResult_t CADtlsClose(const CAAddress_t* addrInfo,
  *                                    'ID of new device(Resource Server)',
  *                                    'ID of owner smart-phone(Provisioning Server)')
  *
- * @param[in] addrInfo  information of network address
- * @param[in] transportType  transport type
+ * @param[in] endpoint  information of network address
  * @param[in] label  Ownership transfer method e.g)"oic.sec.doxm.jw"
  * @param[in] labelLen  Byte length of label
  * @param[in] rsrcServerDeviceID  ID of new device(Resource Server)
@@ -218,8 +202,7 @@ CAResult_t CADtlsClose(const CAAddress_t* addrInfo,
  *
  * @retval  CA_STATUS_OK for success, otherwise some error value
  */
-CAResult_t CADtlsGenerateOwnerPSK(const CAAddress_t* addrInfo,
-                    const CATransportType_t transportType,
+CAResult_t CADtlsGenerateOwnerPSK(const CAEndpoint_t *endpoint,
                     const uint8_t* label, const size_t labelLen,
                     const uint8_t* rsrcServerDeviceID, const size_t rsrcServerDeviceIDLen,
                     const uint8_t* provServerDeviceID, const size_t provServerDeviceIDLen,
@@ -255,11 +238,10 @@ void CAAdapterNetDtlsDeInit();
  *              a new DTLS handshake is started, pdu info is
  *              cached to be send when session setup is finished.
  *
- * @param[in]  remoteAddress  address to which data will be sent.
+ * @param[in]  endpoint  address to which data will be sent.
  * @param[in]  port  port to which data will be sent.
  * @param[in]  data  length of data.
  * @param[in]  dataLen  length of given data
- * @param[in]  type  transport at which packet needs to be send
  *
  * @return  0 on success otherwise a positive error value.
  * @retval  CA_STATUS_OK  Successful
@@ -268,11 +250,9 @@ void CAAdapterNetDtlsDeInit();
  *
  */
 
-CAResult_t CAAdapterNetDtlsEncrypt(const char *remoteAddress,
-                                   const uint16_t port,
+CAResult_t CAAdapterNetDtlsEncrypt(const CAEndpoint_t *endpoint,
                                    void *data,
-                                   uint32_t dataLen,
-                                   CATransportType_t type);
+                                   uint32_t dataLen);
 
 /**
  * @fn  CAAdapterNetDtlsDecrypt
@@ -289,11 +269,9 @@ CAResult_t CAAdapterNetDtlsEncrypt(const char *remoteAddress,
  * @retval  CA_STATUS_FAILED Operation failed
  *
  */
-CAResult_t CAAdapterNetDtlsDecrypt(const char *remoteAddress,
-                                   const uint16_t port,
+CAResult_t CAAdapterNetDtlsDecrypt(const CAEndpoint_t *endpoint,
                                    uint8_t *data,
-                                   uint32_t dataLen,
-                                   CATransportType_t type);
+                                   uint32_t dataLen);
 
 #endif /* CA_ADAPTER_NET_DTLS_H_ */
 
