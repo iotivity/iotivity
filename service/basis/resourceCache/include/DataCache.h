@@ -23,7 +23,7 @@
 
 #include <list>
 #include <string>
-#include <boost/progress.hpp>
+#include <memory>
 
 #include "OCResource.h"
 #include "logger.h"
@@ -43,9 +43,9 @@ public:
     CacheID addSubscriber(CacheCB func, REPORT_FREQUENCY rf, long repeatTime);
     CacheID deleteSubscriber(CacheID id);
 
-    CachedDataPtr getCachedData();
-    CACHE_STATE getCacheState();
-    PrimitiveResourcePtr getPrimitiveResource();
+    CACHE_STATE getCacheState() const;
+    const ResourceAttributes getCachedData() const;
+    const PrimitiveResourcePtr getPrimitiveResource() const;
 
     SubscriberInfoPair findSubscriber(CacheID id);
 
@@ -59,8 +59,7 @@ private:
     std::shared_ptr<BaseResource> baseHandler;
 
     // cached data info
-    CachedDataPtr data;
-    std::shared_ptr<ResourceAttributes> attributes;
+    ResourceAttributes attributes;
     long updateTime;
     CACHE_STATE state;
 

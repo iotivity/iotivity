@@ -30,8 +30,10 @@
 #include "OCResource.h"
 
 #include "PrimitiveResource.h"
+#include "ResourceAttributes.h"
 
 #define CACHE_TAG  PCF("CACHE")
+#define DEFAULT_REPORT_TIME 30
 
 using namespace OIC::Service;
 
@@ -64,8 +66,7 @@ enum class CACHE_STATE
 
 typedef int CacheID;
 
-typedef std::map<std::string, std::string> CachedData;
-typedef std::function<OCStackResult(std::shared_ptr<PrimitiveResource>, std::shared_ptr<CachedData>)> CacheCB;
+typedef std::function<OCStackResult(std::shared_ptr<PrimitiveResource>, const ResourceAttributes &)> CacheCB;
 typedef std::map<int, std::pair<Report_Info, CacheCB>> SubscriberInfo;
 typedef std::pair<int, std::pair<Report_Info, CacheCB>> SubscriberInfoPair;
 
@@ -74,7 +75,6 @@ typedef PrimitiveResource::GetCallback GetCB;
 typedef PrimitiveResource::ObserveCallback ObserveCB;
 
 typedef std::shared_ptr<DataCache> DataCachePtr;
-typedef std::shared_ptr<CachedData> CachedDataPtr;
 typedef std::shared_ptr<PrimitiveResource> PrimitiveResourcePtr;
 
 #endif

@@ -40,7 +40,6 @@ DataCache::DataCache(
             ):sResource(pResource)
 {
     subscriberList = std::unique_ptr<SubscriberInfo>(new SubscriberInfo());
-    data = std::make_shared<CachedData>();
 
     state = CACHE_STATE::READY_YET;
     updateTime = 0l;
@@ -65,7 +64,6 @@ DataCache::DataCache(
 DataCache::~DataCache()
 {
     // TODO Auto-generated destructor stub
-    data.reset();
 
     // TODO delete all node!!
     subscriberList->clear();
@@ -128,18 +126,19 @@ SubscriberInfoPair DataCache::findSubscriber(CacheID id)
     return ret;
 }
 
-CachedDataPtr DataCache::getCachedData()
+const PrimitiveResourcePtr DataCache::getPrimitiveResource() const
+{
+    return sResource;
+}
+
+const ResourceAttributes DataCache::getCachedData() const
 {
     if(state != CACHE_STATE::READY)
     {
-        return nullptr;
+        return ResourceAttributes();
     }
-    return data;
-}
-
-std::shared_ptr<PrimitiveResource> DataCache::getPrimitiveResource()
-{
-    return sResource;
+    const ResourceAttributes retAtt = attributes;
+    return retAtt;
 }
 
 void DataCache::onObserve(
@@ -159,26 +158,15 @@ void DataCache::onObserve(
 
     state = CACHE_STATE::READY;
 
-    ResourceAttributes att = _rep.getAttributes();
-
-    // set data
-    data->clear();
-
-
-    for(auto & i : att)
-    {
-        const std::string &key = i.key();
-        std::string value = i.value().toString();
-        data->insert(CachedData::value_type(key, value));
-    }
+    attributes = _rep.getAttributes();
 
     // notify!!
-
+    ResourceAttributes retAtt = attributes;
     for(auto & i : * subscriberList)
     {
         if(i.second.first.rf == REPORT_FREQUENCY::UPTODATE)
         {
-            i.second.second(this->sResource, data);
+            i.second.second(this->sResource, retAtt);
         }
     }
 }
@@ -189,18 +177,7 @@ void DataCache::onGet(const HeaderOptions& _hos,
     if(state == CACHE_STATE::READY_YET)
     {
         state = CACHE_STATE::READY;
-        ResourceAttributes att = _rep.getAttributes();
-
-        // set data
-        data->clear();
-
-
-        for(auto & i : att)
-        {
-            const std::string &key = i.key();
-            std::string value = i.value().toString();
-            data->insert(CachedData::value_type(key, value));
-        }
+        attributes = _rep.getAttributes();
     }
     else
     {
@@ -208,7 +185,7 @@ void DataCache::onGet(const HeaderOptions& _hos,
     }
 }
 
-CACHE_STATE DataCache::getCacheState()
+CACHE_STATE DataCache::getCacheState() const
 {
     return state;
 }

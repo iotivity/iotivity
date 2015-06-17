@@ -23,6 +23,7 @@
 
 #include <list>
 #include <string>
+#include <mutex>
 
 #include "OCPlatform.h"
 #include "CacheTypes.h"
@@ -38,16 +39,14 @@ public:
     CacheID requestResourceCache(
             PrimitiveResourcePtr pResource,
                 CacheCB func = NULL, REPORT_FREQUENCY rf = REPORT_FREQUENCY::NONE, long time = 0l);
-
     OCStackResult cancelResourceCache(PrimitiveResourcePtr pResource, CacheID id);
-
     OCStackResult updateResourceCache(PrimitiveResourcePtr pResource);
 
-    CachedDataPtr getCachedData(PrimitiveResourcePtr pResource);
-    CachedDataPtr getCachedData(CacheID id);
+    const ResourceAttributes getCachedData(PrimitiveResourcePtr pResource) const;
+    const ResourceAttributes getCachedData(CacheID id) const;
 
-    CACHE_STATE getResourceCacheState(PrimitiveResourcePtr pResource);
-    CACHE_STATE getResourceCacheState(CacheID id);
+    CACHE_STATE getResourceCacheState(PrimitiveResourcePtr pResource) const;
+    CACHE_STATE getResourceCacheState(CacheID id) const;
 
     ~ResourceCacheManager();
 private:
@@ -57,8 +56,8 @@ private:
     static std::mutex s_mutexForCreation;
     static std::unique_ptr<std::list<DataCachePtr>> s_cacheDataList;
 
-    DataCachePtr findDataCache(PrimitiveResourcePtr pResource);
-    DataCachePtr findDataCache(CacheID id);
+    DataCachePtr findDataCache(PrimitiveResourcePtr pResource) const;
+    DataCachePtr findDataCache(CacheID id) const;
 };
 
 #endif /* RESOURCECACHEMANAGER_H_ */

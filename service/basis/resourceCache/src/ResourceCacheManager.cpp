@@ -50,7 +50,7 @@ ResourceCacheManager * ResourceCacheManager::getInstance()
         s_mutexForCreation.lock();
         if(s_instance == nullptr)
         {
-            s_instance = new ResourceCacheManager();;
+            s_instance = new ResourceCacheManager();
         }
         s_mutexForCreation.unlock();
     }
@@ -72,7 +72,7 @@ CacheID ResourceCacheManager::requestResourceCache(
         if(!reportTime)
         {
             // default setting
-            reportTime = 30;
+            reportTime = DEFAULT_REPORT_TIME;
         }
     }
 
@@ -116,7 +116,7 @@ OCStackResult ResourceCacheManager::cancelResourceCache(PrimitiveResourcePtr pRe
     return ret;
 }
 
-DataCachePtr ResourceCacheManager::findDataCache(PrimitiveResourcePtr pResource)
+DataCachePtr ResourceCacheManager::findDataCache(PrimitiveResourcePtr pResource) const
 {
     DataCachePtr retHandler = nullptr;
     for (auto & i : * s_cacheDataList)
@@ -131,7 +131,7 @@ DataCachePtr ResourceCacheManager::findDataCache(PrimitiveResourcePtr pResource)
     return retHandler;
 }
 
-DataCachePtr ResourceCacheManager::findDataCache(CacheID id)
+DataCachePtr ResourceCacheManager::findDataCache(CacheID id) const
 {
     DataCachePtr retHandler = nullptr;
     for (auto & i : * s_cacheDataList)
@@ -155,27 +155,27 @@ OCStackResult ResourceCacheManager::updateResourceCache(PrimitiveResourcePtr pRe
     return ret;
 }
 
-CachedDataPtr ResourceCacheManager::getCachedData(PrimitiveResourcePtr pResource)
+const ResourceAttributes ResourceCacheManager::getCachedData(PrimitiveResourcePtr pResource) const
 {
     DataCachePtr handler = findDataCache(pResource);
     if(handler == nullptr)
     {
-        return nullptr;
+        return ResourceAttributes();
     }
     return handler->getCachedData();
 }
 
-CachedDataPtr ResourceCacheManager::getCachedData(CacheID id)
+const ResourceAttributes ResourceCacheManager::getCachedData(CacheID id) const
 {
     DataCachePtr handler = findDataCache(id);
     if(handler == nullptr)
     {
-        return nullptr;
+        return ResourceAttributes();
     }
     return handler->getCachedData();
 }
 
-CACHE_STATE ResourceCacheManager::getResourceCacheState(PrimitiveResourcePtr pResource)
+CACHE_STATE ResourceCacheManager::getResourceCacheState(PrimitiveResourcePtr pResource) const
 {
     DataCachePtr handler = findDataCache(pResource);
     if(handler == nullptr)
@@ -184,7 +184,7 @@ CACHE_STATE ResourceCacheManager::getResourceCacheState(PrimitiveResourcePtr pRe
     }
     return handler->getCacheState();
 }
-CACHE_STATE ResourceCacheManager::getResourceCacheState(CacheID id)
+CACHE_STATE ResourceCacheManager::getResourceCacheState(CacheID id) const
 {
     DataCachePtr handler = findDataCache(id);
     if(handler == nullptr)
