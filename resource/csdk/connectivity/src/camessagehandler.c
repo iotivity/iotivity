@@ -493,7 +493,6 @@ static void CANetworkChangedCallback(const CAEndpoint_t *info, CANetworkStatus_t
 
 void CAHandleRequestResponseCallbacks()
 {
-    OIC_LOG(DEBUG, TAG, "CAHandleRequestResponseCallbacks IN");
 
 #ifdef SINGLE_HANDLE
     // parse the data and call the callbacks.

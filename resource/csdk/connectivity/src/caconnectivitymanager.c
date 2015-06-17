@@ -273,8 +273,6 @@ CAResult_t CAUnSelectNetwork(const uint32_t nonInterestedNetwork)
 
 CAResult_t CAHandleRequestResponse()
 {
-    OIC_LOG(DEBUG, TAG, "CAHandleRequestResponse");
-
     if (!g_isInitialized)
     {
         OIC_LOG(ERROR, TAG, "not initialized");
