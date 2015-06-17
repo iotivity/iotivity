@@ -37,6 +37,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if HAVE_STRINGS_H
+#include <strings.h>
+#endif
+
 #define TAG  PCF("SRM-DOXM")
 
 static OicSecDoxm_t        *gDoxm = NULL;
