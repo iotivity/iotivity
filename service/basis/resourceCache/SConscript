@@ -43,7 +43,7 @@ target_os = env.get('TARGET_OS')
 ######################################################################
 resourcecache_env.AppendUnique(CPPPATH = ['include'])
 resourcecache_env.AppendUnique(CPPPATH = ['../common/primitiveResource/include'])
-resourcecache_env.PrependUnique(LIBS = ['ServiceCommon', 'oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'libcoap'])
+resourcecache_env.PrependUnique(LIBS = ['service_common', 'oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'libcoap'])
 
 if target_os not in ['windows', 'winrt']:
 	resourcecache_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++11'])

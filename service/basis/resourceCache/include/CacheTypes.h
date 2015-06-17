@@ -33,6 +33,8 @@
 
 #define CACHE_TAG  PCF("CACHE")
 
+using namespace OIC::Service;
+
 class DataCache;
 
 enum class REPORT_FREQUENCY
