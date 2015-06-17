@@ -33,6 +33,8 @@ src_dir = lib_env.get('SRC_DIR')
 service_common_env = lib_env.Clone()
 target_os = env.get('TARGET_OS')
 
+release = env.get('RELEASE')
+
 ######################################################################
 # Build flags
 ######################################################################
@@ -48,6 +50,10 @@ if target_os == 'android':
     service_common_env.PrependUnique(LIBS = ['gnustl_shared', 'compatibility', 'log'])
 
 service_common_env.AppendUnique(LIBS = ['dl'])
+
+if not release:
+    service_common_env.AppendUnique(CXXFLAGS = ['--coverage'])
+    service_common_env.PrependUnique(LIBS = ['gcov'])
 
 ######################################################################
 # Source files and Targets
