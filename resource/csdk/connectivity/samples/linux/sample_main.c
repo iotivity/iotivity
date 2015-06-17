@@ -44,6 +44,11 @@
 #define SYSTEM_INVOKE_ERROR 127
 #define SYSTEM_ERROR -1
 
+#define COAP_PREFIX          "coap://"
+#define COAP_PREFIX_LEN      7
+#define COAPS_PREFIX         "coaps://"
+#define COAPS_PREFIX_LEN     8
+
 /**
  * @def RS_IDENTITY
  * @brief
@@ -58,6 +63,12 @@ int g_received;
 uint16_t g_local_secure_port = SECURE_DEFAULT_PORT;
 CATransportAdapter_t g_selected_nw_type = CA_ADAPTER_IP;
 const char *MESSAGE_TYPE[] = {"CON", "NON", "ACK", "RESET"};
+
+typedef struct
+{
+    char ipAddress[CA_IPADDR_SIZE];
+    uint16_t port;
+} addressSet_t;
 
 char get_menu();
 void process();
@@ -81,6 +92,8 @@ void error_handler(const CAEndpoint_t *object, const CAErrorInfo_t* errorInfo);
 void send_response(const CAEndpoint_t *endpoint, const CAInfo_t *info);
 void get_resource_uri(char *URI, char *resourceURI, int length);
 int get_secure_information(CAPayload_t payLoad);
+int get_address_set(const char *pAddress, addressSet_t* outAddress);
+void parsing_coap_uri(const char* uri, addressSet_t* address);
 
 static CAToken_t g_last_request_token = NULL;
 static const char SECURE_COAPS_PREFIX[] = "coaps://";
@@ -397,7 +410,13 @@ void send_request()
 
     // create remote endpoint
     CAEndpoint_t *endpoint = NULL;
-    res = CACreateEndpoint(CA_DEFAULT_FLAGS, g_selected_nw_type, uri, 0, &endpoint);
+
+    printf("URI : %s\n", uri);
+    addressSet_t address = {};
+    parsing_coap_uri(uri, &address);
+
+    res = CACreateEndpoint(CA_DEFAULT_FLAGS, g_selected_nw_type,
+                           (const char*)address.ipAddress, address.port, &endpoint);
     if (CA_STATUS_OK != res || !endpoint)
     {
         printf("Failed to create remote endpoint, error code : %d\n", res);
@@ -432,15 +451,15 @@ void send_request()
     printf("Generated token %s\n", token);
 
     // extract relative resourceuri from give uri
-    printf("URI : %s\n", uri);
-
     char resourceURI[RESOURCE_URI_LENGTH + 1] = {0};
     get_resource_uri(uri, resourceURI, RESOURCE_URI_LENGTH);
+    printf("resourceURI : %s\n", resourceURI);
 
     // create request data
     CAInfo_t requestData = { 0 };
     requestData.token = token;
     requestData.tokenLength = tokenLength;
+    requestData.resourceUri = (CAURI_t)resourceURI;
 
     if (strcmp(secureRequest, "1") == 0)
     {
@@ -473,6 +492,7 @@ void send_request()
     CARequestInfo_t requestInfo = { 0 };
     requestInfo.method = CA_GET;
     requestInfo.info = requestData;
+    requestInfo.isMulticast = false;
 
     // send request
     res = CASendRequest(endpoint, &requestInfo);
@@ -507,7 +527,7 @@ void send_secure_request()
 
     // create remote endpoint
     CAEndpoint_t *endpoint = NULL;
-    CAResult_t res = CACreateEndpoint(0, CA_ADAPTER_IP, uri, 0, &endpoint);
+    CAResult_t res = CACreateEndpoint(0, CA_ADAPTER_IP, ipv4addr, SECURE_DEFAULT_PORT, &endpoint);
     if (CA_STATUS_OK != res)
     {
         printf("Failed to create remote endpoint, error code: %d\n", res);
@@ -537,6 +557,7 @@ void send_secure_request()
     CARequestInfo_t requestInfo = { 0 };
     requestInfo.method = CA_GET;
     requestInfo.info = requestData;
+    requestInfo.isMulticast = false;
 
     // send request
     CASendRequest(endpoint, &requestInfo);
@@ -561,15 +582,15 @@ void send_request_all()
     printf("ex) /a/light\n");
     printf("resource uri : ");
 
-    char buf[MAX_BUF_LEN] = { 0 };
-    if (CA_STATUS_OK != get_input_data(buf, MAX_BUF_LEN))
+    char resourceURI[MAX_BUF_LEN] = { 0 };
+    if (CA_STATUS_OK != get_input_data(resourceURI, MAX_BUF_LEN))
     {
         return;
     }
 
     // create remote endpoint
     CAEndpoint_t *endpoint = NULL;
-    res = CACreateEndpoint(0, g_selected_nw_type, buf, 0, &endpoint);
+    res = CACreateEndpoint(0, g_selected_nw_type, NULL, 0, &endpoint);
     if (CA_STATUS_OK != res)
     {
         printf("Create remote endpoint error, error code: %d\n", res);
@@ -605,6 +626,7 @@ void send_request_all()
     requestData.tokenLength = tokenLength;
     requestData.payload = "Temp Json Payload";
     requestData.type = CA_MSG_NONCONFIRM;
+    requestData.resourceUri = (CAURI_t)resourceURI;
 
     CARequestInfo_t requestInfo = { 0 };
     requestInfo.method = CA_GET;
@@ -641,12 +663,12 @@ void send_notification()
 
     printf("\n=============================================\n");
     printf("Enter the URI like below....\n");
-    printf("10.11.12.13:4545/resource_uri ( for IP )\n");
-    printf("10:11:12:13:45:45/resource_uri ( for BT )\n");
+    printf("coap://10.11.12.13:4545/resource_uri ( for IP )\n");
+    printf("coap://10:11:12:13:45:45/resource_uri ( for BT )\n");
     printf("uri : ");
 
-    char buf[MAX_BUF_LEN] = { 0 };
-    if (CA_STATUS_OK != get_input_data(buf, MAX_BUF_LEN))
+    char uri[MAX_BUF_LEN] = { 0 };
+    if (CA_STATUS_OK != get_input_data(uri, MAX_BUF_LEN))
     {
         return;
     }
@@ -667,9 +689,12 @@ void send_notification()
 
     int messageType = messageTypeBuf[0] - '0';
 
+    addressSet_t address = {};
+    parsing_coap_uri(uri, &address);
+
     // create remote endpoint
     CAEndpoint_t *endpoint = NULL;
-    res = CACreateEndpoint(0, g_selected_nw_type, buf, 0, &endpoint);
+    res = CACreateEndpoint(0, g_selected_nw_type, address.ipAddress, address.port, &endpoint);
     if (CA_STATUS_OK != res)
     {
         printf("Create remote endpoint error, error code: %d\n", res);
@@ -692,8 +717,10 @@ void send_notification()
 
     CAInfo_t respondData = { 0 };
     respondData.token = token;
+    respondData.tokenLength = tokenLength;
     respondData.payload = "Temp Notification Data";
     respondData.type = messageType;
+    respondData.resourceUri = (CAURI_t)uri;
 
     CAResponseInfo_t responseInfo = { 0 };
     responseInfo.result = CA_SUCCESS;
@@ -722,9 +749,9 @@ void select_network()
 {
     printf("\n=============================================\n");
     printf("\tselect network\n");
-    printf("IPv4 : 0\n");
-    printf("EDR  : 2\n");
-    printf("LE   : 3\n");
+    printf("IP     : 0\n");
+    printf("GATT   : 1\n");
+    printf("RFCOMM : 2\n");
     printf("select : ");
 
     char buf[MAX_BUF_LEN] = { 0 };
@@ -758,9 +785,9 @@ void unselect_network()
 {
     printf("\n=============================================\n");
     printf("\tunselect enabled network\n");
-    printf("IPv4 : 0\n");
-    printf("EDR : 2\n");
-    printf("LE : 3\n");
+    printf("IP     : 0\n");
+    printf("GATT   : 1\n");
+    printf("RFCOMM : 2\n");
     printf("select : ");
 
     char buf[MAX_BUF_LEN] = { 0 };
@@ -796,16 +823,13 @@ char get_menu()
     printf("\t\tMenu\n");
     printf("\ts : start server\n");
     printf("\tc : start client\n");
-    printf("\tf : find resource\n");
     printf("\tr : send request\n");
     printf("\tt : send request to all\n");
-    printf("\ta : advertise resource\n");
     printf("\tb : send notification\n");
     printf("\tn : select network\n");
     printf("\tx : unselect network\n");
     printf("\tg : get network information\n");
     printf("\th : handle request response\n");
-    printf("\ty : run static client\n");
     printf("\tz : run static server\n");
     printf("\tw : send secure request\n");
     printf("\tq : quit\n");
@@ -955,7 +979,8 @@ void request_handler(const CAEndpoint_t *object, const CARequestInfo_t *requestI
                     object->port);
 
             CAEndpoint_t *endpoint = NULL;
-            if (CA_STATUS_OK != CACreateEndpoint(0, object->adapter, uri, 0, &endpoint))
+            if (CA_STATUS_OK != CACreateEndpoint(0, object->adapter, object->addr,
+                                                 object->port, &endpoint))
             {
                 printf("Failed to create duplicate of remote endpoint!\n");
                 return;
@@ -1111,6 +1136,7 @@ void send_response(const CAEndpoint_t *endpoint, const CAInfo_t *info)
     CAInfo_t responseData = { 0 };
     responseData.type = messageType;
     responseData.messageId = (info != NULL) ? info->messageId : 0;
+    responseData.resourceUri = info->resourceUri;
 
     if(CA_MSG_RESET != messageType)
     {
@@ -1128,8 +1154,8 @@ void send_response(const CAEndpoint_t *endpoint, const CAInfo_t *info)
                 printf("Memory allocation fail\n");
                 return;
             }
-            snprintf(responseData.payload, length, SECURE_INFO_DATA, info->resourceUri, g_local_secure_port);
-            return;
+            snprintf(responseData.payload, length, SECURE_INFO_DATA, info->resourceUri,
+                     g_local_secure_port);
         }
         else
         {
@@ -1143,7 +1169,6 @@ void send_response(const CAEndpoint_t *endpoint, const CAInfo_t *info)
                 return;
             }
             snprintf(responseData.payload, length, NORMAL_INFO_DATA, info->resourceUri);
-            return;
         }
     }
 
@@ -1244,9 +1269,9 @@ CAResult_t get_network_type()
 
     printf("\n=============================================\n");
     printf("\tselect network type\n");
-    printf("IP : 1\n");
-    printf("GATT : 2\n");
-    printf("RFCOMM : 3\n");
+    printf("IP     : 0\n");
+    printf("GATT   : 1\n");
+    printf("RFCOMM : 2\n");
     printf("select : ");
 
     if (CA_STATUS_OK != get_input_data(buf, MAX_BUF_LEN))
@@ -1292,4 +1317,113 @@ CAResult_t get_input_data(char *buf, int32_t length)
     }
 
     return CA_STATUS_OK;
+}
+
+void parsing_coap_uri(const char* uri, addressSet_t* address)
+{
+    if (NULL == uri)
+    {
+        printf("parameter is null\n");
+        return;
+    }
+
+    // parse uri
+    // #1. check prefix
+    uint8_t startIndex = 0;
+    if (strncmp(COAPS_PREFIX, uri, COAPS_PREFIX_LEN) == 0)
+    {
+        printf("uri has '%s' prefix\n", COAPS_PREFIX);
+        startIndex = COAPS_PREFIX_LEN;
+    }
+    else if (strncmp(COAP_PREFIX, uri, COAP_PREFIX_LEN) == 0)
+    {
+        printf("uri has '%s' prefix\n", COAP_PREFIX);
+        startIndex = COAP_PREFIX_LEN;
+    }
+
+    // #2. copy uri for parse
+    int32_t len = strlen(uri) - startIndex;
+
+    if (len <= 0)
+    {
+        printf("uri length is 0!\n");
+        return;
+    }
+
+    char *cloneUri = (char *) calloc(len + 1, sizeof(char));
+    if (NULL == cloneUri)
+    {
+        printf("Out of memory\n");
+        return;
+    }
+
+    memcpy(cloneUri, &uri[startIndex], sizeof(char) * len);
+    cloneUri[len] = '\0';
+
+    char *pAddress = cloneUri;
+    printf("pAddress : %s\n", pAddress);
+
+    int res = get_address_set(pAddress, address);
+    if (res == -1)
+    {
+        printf("address parse error\n");
+
+        free(cloneUri);
+        return;
+    }
+    return;
+}
+
+int get_address_set(const char *pAddress, addressSet_t* outAddress)
+{
+    if (NULL == pAddress)
+    {
+        printf("parameter is null !\n");
+        return -1;
+    }
+
+    int32_t len = strlen(pAddress);
+    int32_t isIp = 0;
+    int32_t ipLen = 0;
+
+    for (int i = 0; i < len; i++)
+    {
+        if (pAddress[i] == '.')
+        {
+            isIp = 1;
+        }
+
+        // found port number start index
+        if (isIp && pAddress[i] == ':')
+        {
+            ipLen = i;
+            break;
+        }
+    }
+
+    if (isIp)
+    {
+        if(ipLen && ipLen < sizeof(outAddress->ipAddress))
+        {
+            strncpy(outAddress->ipAddress, pAddress, ipLen);
+            outAddress->ipAddress[ipLen] = '\0';
+        }
+        else if (!ipLen && len < sizeof(outAddress->ipAddress))
+        {
+            strncpy(outAddress->ipAddress, pAddress, len);
+            outAddress->ipAddress[len] = '\0';
+        }
+        else
+        {
+            printf("IP Address too long: %d\n", ipLen==0 ? len : ipLen);
+            return -1;
+        }
+
+        if (ipLen > 0)
+        {
+            outAddress->port = atoi(pAddress + ipLen + 1);
+        }
+    }
+
+    return isIp;
 }
