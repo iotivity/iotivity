@@ -32,8 +32,9 @@
 
 #define BROKER_TAG PCF("BROKER")
 
-#define BROKER_TRANSPORT OCConnectivityType::OC_IPV4
+#define BROKER_TRANSPORT OCConnectivityType::CT_IP_USE_V4
 
+using namespace OIC::Service;
 
 struct BrokerRequesterInfo;
 class ResourcePresence;
