@@ -20,13 +20,14 @@
 
 #include <ResourceAttributes.h>
 #include <internal/ResourceAtrributesConverter.h>
+#include <internal/ResourceAttributesUtils.h>
 
 #include <gtest/gtest.h>
 
 using namespace testing;
 using namespace OIC::Service;
 
-#define KEY "key"
+constexpr char KEY[]{ "key" };
 
 class ResourceAttributesTest: public Test
 {
@@ -128,7 +129,19 @@ TEST_F(ResourceAttributesTest, CanHaveNestedResourceAttributes)
     ASSERT_TRUE("nested_value" == resourceAttributes[KEY].get<ResourceAttributes>()["nested"]);
 }
 
+TEST_F(ResourceAttributesTest, ToStringReturnsStringForValue)
+{
+    resourceAttributes[KEY] = true;
 
+    ASSERT_EQ("true", resourceAttributes[KEY].toString());
+}
+
+TEST_F(ResourceAttributesTest, ToStringReturnsEmptyStringForNullValue)
+{
+    resourceAttributes[KEY] = nullptr;
+
+    ASSERT_EQ("", resourceAttributes[KEY].toString());
+}
 
 
 class ResourceAttributesIteratorTest: public Test
@@ -200,15 +213,14 @@ TEST_F(ResourceAttributesIteratorTest, IteratorCanBeConvertedIntoConstIterator)
     ASSERT_TRUE(it == resourceAttributes.cend());
 }
 
-TEST_F(ResourceAttributesIteratorTest, ConstIteratesCam)
+TEST_F(ResourceAttributesIteratorTest, ConstIteratorIsUsedForConst)
 {
     resourceAttributes[KEY] = 1;
+    const ResourceAttributes& constAttrs = resourceAttributes;
 
-    for (const auto& i : resourceAttributes) {
-        i.key();
-    }
+    auto iter = constAttrs.begin();
 
-    ASSERT_EQ(1, resourceAttributes[KEY]);
+    ASSERT_TRUE((std::is_same<decltype(iter), ResourceAttributes::const_iterator>::value));
 }
 
 
@@ -218,6 +230,14 @@ TEST(ResourceAttributesValueTest, MovedValueHasNull)
     ResourceAttributes::Value another { std::move(one) };
 
     ASSERT_EQ(nullptr, one);
+}
+
+TEST(ResourceAttributesValueTest, SameValueIsEqual)
+{
+    ResourceAttributes::Value one { 1 };
+    ResourceAttributes::Value another { 1 };
+
+    ASSERT_EQ(one, another);
 }
 
 
@@ -291,4 +311,74 @@ TEST(ResourceAttributesConverterTest, OCRepresentationHasNullWhenResourceAttribu
     OC::OCRepresentation ocRep = ResourceAttributesConverter::toOCRepresentation(resourceAttributes);
 
     ASSERT_TRUE(ocRep.isNULL(KEY));
+}
+
+
+
+class ResourceAttributesUtilTest: public Test
+{
+public:
+    ResourceAttributes resourceAttributes;
+
+protected:
+    void SetUp() override
+    {
+        resourceAttributes[KEY] = 1;
+    }
+};
+
+TEST_F(ResourceAttributesUtilTest, EmptyAttributesIsAcceptable)
+{
+    ASSERT_TRUE(acceptableAttributes(resourceAttributes, ResourceAttributes()));
+}
+
+TEST_F(ResourceAttributesUtilTest, AttributesItselfIsAcceptable)
+{
+    ASSERT_TRUE(acceptableAttributes(resourceAttributes, resourceAttributes));
+}
+
+TEST_F(ResourceAttributesUtilTest, UnknownKeyIsNotAcceptable)
+{
+    ResourceAttributes newAttrs;
+    newAttrs["unknown"] = 1;
+
+    ASSERT_FALSE(acceptableAttributes(resourceAttributes, newAttrs));
+}
+
+TEST_F(ResourceAttributesUtilTest, DifferentTypeWithOriginalIsNotAcceptable)
+{
+    ResourceAttributes newAttrs;
+    newAttrs[KEY] = "";
+
+    ASSERT_FALSE(acceptableAttributes(resourceAttributes, newAttrs));
+}
+
+
+TEST_F(ResourceAttributesUtilTest, DifferentTypeOfNestedAttributeIsNotAcceptable)
+{
+    constexpr char KEY_NESTED_ATTR[]{ "nested" };
+    constexpr char KEY_NESTED_VALUE[]{ "nested_value" };
+
+    ResourceAttributes nested;
+    nested[KEY_NESTED_VALUE] = -99;
+    resourceAttributes[KEY_NESTED_ATTR] = nested;
+
+
+    ResourceAttributes newAttrs;
+    nested[KEY_NESTED_VALUE] = "abc";
+    newAttrs[KEY_NESTED_ATTR] = nested;
+
+    ASSERT_FALSE(acceptableAttributes(resourceAttributes, newAttrs));
+}
+
+TEST_F(ResourceAttributesUtilTest, ReplaceWillOverwriteOriginal)
+{
+    constexpr char NEW_VALUE[]{ "newValue" };
+
+    ResourceAttributes newAttrs;
+    newAttrs[KEY] = NEW_VALUE;
+
+    replaceAttributesRecursively(resourceAttributes, newAttrs);
+
+    ASSERT_EQ(NEW_VALUE, resourceAttributes[KEY]);
 }
