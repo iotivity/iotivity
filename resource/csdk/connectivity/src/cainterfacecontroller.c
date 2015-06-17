@@ -54,9 +54,9 @@ static int CAGetAdapterIndex(CATransportAdapter_t cType)
     {
         case CA_ADAPTER_IP:
             return 0;
-        case CA_ADAPTER_RFCOMM_BTEDR:
-            return 1;
         case CA_ADAPTER_GATT_BTLE:
+            return 1;
+        case CA_ADAPTER_RFCOMM_BTEDR:
             return 2;
         default:
             break;
