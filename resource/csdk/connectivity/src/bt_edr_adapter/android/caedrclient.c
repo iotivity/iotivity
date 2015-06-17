@@ -152,7 +152,7 @@ CAResult_t CAEDRGetInterfaceInformation(CAEndpoint_t **info)
 
     // Create local endpoint using util function
     CAEndpoint_t *endpoint = CAAdapterCreateEndpoint(CA_DEFAULT_FLAGS,
-                                            CA_RFCOMM_ADAPTER, macAddress, 0);
+                                                     CA_ADAPTER_RFCOMM_BTEDR, macAddress, 0);
     if (NULL == endpoint)
     {
         OIC_LOG(ERROR, TAG, "Failed to create Local Endpoint!");
