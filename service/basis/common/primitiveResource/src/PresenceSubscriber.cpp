@@ -32,7 +32,8 @@ namespace OIC
         void subscribePresence(OCDoHandle& handle, const std::string& host,
                 OCConnectivityType connectivityType, SubscribeCallback presenceHandler)
         {
-            OCStackResult result = OC::OCPlatform::subscribePresence(handle, host, connectivityType, presenceHandler);
+            OCStackResult result = OC::OCPlatform::subscribePresence(
+                    handle, host, connectivityType, presenceHandler);
 
             expectOCStackResultOK(result);
         }
@@ -71,8 +72,9 @@ namespace OIC
             subscribePresence(m_handle, host, connectivityType, presenceHandler);
         }
 
-        PresenceSubscriber::PresenceSubscriber(const std::string& host, const std::string& resourceType,
-                OCConnectivityType connectivityType, SubscribeCallback presenceHandler) :
+        PresenceSubscriber::PresenceSubscriber(const std::string& host,
+                const std::string& resourceType, OCConnectivityType connectivityType,
+                SubscribeCallback presenceHandler) :
                 m_handle{ nullptr }
         {
             subscribePresence(m_handle, host, resourceType, connectivityType, presenceHandler);
