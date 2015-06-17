@@ -133,7 +133,7 @@ public:
         template< typename T, enable_if_supported< T >* = nullptr >
         bool isTypeOf() const
         {
-            using iter = boost::mpl::find< ValueVariant::types, int >::type;
+            using iter = typename boost::mpl::find< ValueVariant::types, T >::type;
 
             return m_data->which()
                     == boost::mpl::distance< mpl_begin< ValueVariant::types >, iter >::value;
