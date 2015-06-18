@@ -70,6 +70,7 @@ typedef struct
     uint8_t tokenLength;                /**< token length*/
     CAData_t *sentData;                 /**< sent request or response data information */
     CAPayload_t payload;                /**< payload buffer  */
+    uint32_t payloadLength;             /**< the total payload length to be received  */
 } CABlockData_t;
 
 /**
@@ -303,13 +304,35 @@ CAResult_t CAAddBlockOption1(coap_pdu_t **pdu, CAInfo_t info, uint32_t dataLengt
 CAResult_t CAAddBlockOptionImpl(coap_pdu_t *pdu, coap_block_t *block, uint8_t blockType);
 
 /**
+ * @brief   Add the size option in pdu data
+ * @param   pdu                 [IN/OUT] pdu object
+ * @param   sizeType            [IN] size option type
+ * @param   dataLength          [IN] the total payload length to be sent
+ * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
+ */
+CAResult_t CAAddBlockSizeOption(coap_pdu_t *pdu, unsigned short sizeType, uint32_t dataLength);
+
+/**
+ * @brief   Get the size option from pdu data
+ * @param   pdu                 [IN] pdu object
+ * @param   sizeType            [IN] size option type
+ * @param   totalPayloadLen     [OUT] the total payload length to be received
+ * @return  true or false
+ */
+bool CAIsPayloadLengthInPduWithBlockSizeOption(const coap_pdu_t *pdu,
+                                               unsigned short sizeType,
+                                               uint32_t *totalPayloadLen);
+
+/**
  * @brief   update the total payload with the received payload
  * @param   currData            [IN] stored block data information
  * @param   receivedData        [IN] received CAData
  * @param   status              [IN] block-wise state
+ * @param   isSizeOption        [IN] size option
  * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAUpdatePayloadData(CABlockData_t *currData, CAData_t *receivedData, uint8_t status);
+CAResult_t CAUpdatePayloadData(CABlockData_t *currData, CAData_t *receivedData,
+                               uint8_t status, bool isSizeOption);
 
 /**
  * @brief   Generate CAData structure  from the given information.

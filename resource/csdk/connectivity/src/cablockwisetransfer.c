@@ -582,6 +582,7 @@ CAResult_t CASendErrorMessage(const coap_pdu_t *pdu, uint8_t status,
     {
         OICFree(data->payload);
         data->payload = NULL;
+        data->payloadLength = 0;
         data->block.num = 0;
     }
 
@@ -706,6 +707,11 @@ CAResult_t CASetNextBlockOption1(const coap_pdu_t *pdu, CARemoteEndpoint_t *endp
     {
         OIC_LOG_V(INFO, TAG, "num:%d, M:%d", block.num, block.m);
 
+        // check the size option
+        bool isSizeOption = CAIsPayloadLengthInPduWithBlockSizeOption((coap_pdu_t *) pdu,
+                                                                      COAP_OPTION_SIZE1,
+                                                                      &(data->payloadLength));
+
         // check if received payload is exact
         if (CA_MSG_CONFIRM == pdu->hdr->type)
         {
@@ -716,7 +722,7 @@ CAResult_t CASetNextBlockOption1(const coap_pdu_t *pdu, CARemoteEndpoint_t *endp
         if (CA_BLOCK_RECEIVED_ALREADY != blockWiseStatus)
         {
             // store the received payload and merge
-            res = CAUpdatePayloadData(data, receivedData, blockWiseStatus);
+            res = CAUpdatePayloadData(data, receivedData, blockWiseStatus, isSizeOption);
             if (CA_STATUS_OK != res)
             {
                 OIC_LOG(ERROR, TAG, "update has failed");
@@ -846,6 +852,11 @@ CAResult_t CASetNextBlockOption2(const coap_pdu_t *pdu, CARemoteEndpoint_t *endp
         {
             OIC_LOG(DEBUG, TAG, "received ACK or NON");
 
+            // check the size option
+            bool isSizeOption = CAIsPayloadLengthInPduWithBlockSizeOption((coap_pdu_t *) pdu,
+                                                                          COAP_OPTION_SIZE2,
+                                                                          &(data->payloadLength));
+
             // check if received payload is exact
             if (CA_MSG_ACKNOWLEDGE == pdu->hdr->type)
             {
@@ -856,7 +867,7 @@ CAResult_t CASetNextBlockOption2(const coap_pdu_t *pdu, CARemoteEndpoint_t *endp
             if (CA_BLOCK_RECEIVED_ALREADY != blockWiseStatus)
             {
                 // store the received payload and merge
-                res = CAUpdatePayloadData(data, receivedData, blockWiseStatus);
+                res = CAUpdatePayloadData(data, receivedData, blockWiseStatus, isSizeOption);
                 if (CA_STATUS_OK != res)
                 {
                     OIC_LOG(ERROR, TAG, "update has failed");
@@ -1260,6 +1271,18 @@ CAResult_t CAAddBlockOption2(coap_pdu_t **pdu, CAInfo_t info, uint32_t dataLengt
         }
         CALogBlockInfo(block);
 
+        // if block number is 0, add size2 option
+        if (0 == block->num)
+        {
+            res = CAAddBlockSizeOption(*pdu, COAP_OPTION_SIZE2, dataLength);
+            if (CA_STATUS_OK != res)
+            {
+                OIC_LOG(ERROR, TAG, "add has failed");
+                CARemoveBlockDataFromList((*pdu)->hdr->token);
+                return res;
+            }
+        }
+
         coap_add_block(*pdu, dataLength, (const unsigned char *) info.payload, block->num,
                        block->szx);
 
@@ -1350,6 +1373,18 @@ CAResult_t CAAddBlockOption1(coap_pdu_t **pdu, CAInfo_t info, uint32_t dataLengt
         }
         CALogBlockInfo(block);
 
+        // if block number is 0, add size1 option
+        if (0 == block->num)
+        {
+            res = CAAddBlockSizeOption(*pdu, COAP_OPTION_SIZE1, dataLength);
+            if (CA_STATUS_OK != res)
+            {
+                OIC_LOG(ERROR, TAG, "add has failed");
+                CARemoveBlockDataFromList((*pdu)->hdr->token);
+                return res;
+            }
+        }
+
         coap_add_block(*pdu, dataLength, (const unsigned char *) info.payload, block->num,
                        block->szx);
 
@@ -1406,6 +1441,73 @@ CAResult_t CAAddBlockOptionImpl(coap_pdu_t *pdu, coap_block_t *block, uint8_t bl
     return CA_STATUS_OK;
 }
 
+CAResult_t CAAddBlockSizeOption(coap_pdu_t *pdu, unsigned short sizeType, uint32_t dataLength)
+{
+    OIC_LOG(DEBUG, TAG, "IN-CAAddBlockSizeOption");
+    VERIFY_NON_NULL(pdu, TAG, "pdu");
+
+    if (sizeType != COAP_OPTION_SIZE1 && sizeType != COAP_OPTION_SIZE2)
+    {
+        OIC_LOG(ERROR, TAG, "unknown option type");
+        return CA_STATUS_FAILED;
+    }
+
+    unsigned char value[BLOCKWISE_OPTION_BUFFER] = { 0 };
+    coap_option *option = (coap_option *) OICMalloc(sizeof(coap_option));
+    if (NULL == option)
+    {
+        OIC_LOG(ERROR, TAG, "out of memory");
+        return CA_MEMORY_ALLOC_FAILED;
+    }
+
+    option->key = sizeType;
+    option->length = coap_encode_var_bytes(value, dataLength);
+
+    if (!coap_add_option(pdu, option->key, option->length, value))
+    {
+        OIC_LOG(ERROR, TAG, "failed to add size option");
+        OICFree(option);
+        return CA_STATUS_FAILED;
+    }
+
+    OIC_LOG(DEBUG, TAG, "OUT-CAAddBlockSizeOption");
+
+    return CA_STATUS_OK;
+}
+
+bool CAIsPayloadLengthInPduWithBlockSizeOption(const coap_pdu_t *pdu,
+                                               unsigned short sizeType,
+                                               uint32_t *totalPayloadLen)
+{
+    OIC_LOG(DEBUG, TAG, "IN-CAIsPayloadLengthInPduWithBlockSizeOption");
+    VERIFY_NON_NULL(pdu, TAG, "pdu");
+    VERIFY_NON_NULL(totalPayloadLen, TAG, "totalPayloadLen");
+
+    if (sizeType != COAP_OPTION_SIZE1 && sizeType != COAP_OPTION_SIZE2)
+    {
+        OIC_LOG(ERROR, TAG, "unknown option type");
+        return CA_STATUS_FAILED;
+    }
+
+    coap_opt_iterator_t opt_iter;
+    coap_opt_t *option = coap_check_option((coap_pdu_t *) pdu, sizeType, &opt_iter);
+    if (option)
+    {
+        OIC_LOG(DEBUG, TAG, "get size option from pdu");
+        *totalPayloadLen = coap_decode_var_bytes(COAP_OPT_VALUE(option),
+                                                 COAP_OPT_LENGTH(option));
+
+        OIC_LOG_V(DEBUG, TAG, "the total payload length to be received is [%d]bytes",
+                  *totalPayloadLen);
+
+        return true;
+    }
+
+    OIC_LOG(DEBUG, TAG, "OUT-CAIsPayloadLengthInPduWithBlockSizeOption");
+
+    return false;
+}
+
 uint8_t CACheckBlockErrorType(CABlockData_t *currData, coap_block_t *receivedBlock,
                               CAData_t *receivedData, unsigned short blockType, uint32_t dataLen)
 {
@@ -1416,10 +1518,10 @@ uint8_t CACheckBlockErrorType(CABlockData_t *currData, coap_block_t *receivedBlo
     VERIFY_NON_NULL(receivedData, TAG, "receivedData is NULL");
 
     // #1. check the received payload length
-    uint32_t payloadLen = 0;
-    CAPayload_t payload = CAGetPayloadInfo(receivedData, &payloadLen);
+    uint32_t blockPayloadLen = 0;
+    CAPayload_t blockPayload = CAGetPayloadInfo(receivedData, &blockPayloadLen);
 
-    OIC_LOG_V(DEBUG, TAG, "payload: %s, len:%d", payload, payloadLen);
+    OIC_LOG_V(DEBUG, TAG, "blockPayload: %s, len:%d", blockPayload, blockPayloadLen);
 
     // #2. check if the block sequence is right
     if (COAP_OPTION_BLOCK1 == blockType)
@@ -1453,8 +1555,8 @@ uint8_t CACheckBlockErrorType(CABlockData_t *currData, coap_block_t *receivedBlo
     }
 
     // #3. check if error check logic is required
-    uint32_t optionLen = dataLen - payloadLen;
-    if (receivedBlock->m && payloadLen != BLOCK_SIZE(receivedBlock->szx))
+    uint32_t optionLen = dataLen - blockPayloadLen;
+    if (receivedBlock->m && blockPayloadLen != BLOCK_SIZE(receivedBlock->szx))
     {
         // 413 Error handling of too large entity
         if (COAP_MAX_PDU_SIZE < BLOCK_SIZE(receivedBlock->szx) + optionLen)
@@ -1483,6 +1585,23 @@ uint8_t CACheckBlockErrorType(CABlockData_t *currData, coap_block_t *receivedBlo
             return CA_BLOCK_INCOMPLETE;
         }
     }
+    else if (0 == receivedBlock->m && 0 != currData->payloadLength)
+    {
+        // if the received block is last block, check the total payload length
+        uint32_t receivedPayloadLen = 0;
+        if (NULL != currData->payload)
+        {
+            receivedPayloadLen = strlen(currData->payload);
+        }
+        receivedPayloadLen += blockPayloadLen;
+
+        if (receivedPayloadLen != currData->payloadLength)
+        {
+            OIC_LOG(ERROR, TAG, "error type 4.08");
+            OIC_LOG(ERROR, TAG, "total payload length is wrong");
+            return CA_BLOCK_INCOMPLETE;
+        }
+    }
 
     OIC_LOG(DEBUG, TAG, "received all data normally");
 
@@ -1491,7 +1610,8 @@ uint8_t CACheckBlockErrorType(CABlockData_t *currData, coap_block_t *receivedBlo
     return CA_BLOCK_UNKNOWN;
 }
 
-CAResult_t CAUpdatePayloadData(CABlockData_t *currData, CAData_t *receivedData, uint8_t status)
+CAResult_t CAUpdatePayloadData(CABlockData_t *currData, CAData_t *receivedData,
+                               uint8_t status, bool isSizeOption)
 {
     OIC_LOG(DEBUG, TAG, "IN-UpdatePayloadData");
 
@@ -1505,12 +1625,12 @@ CAResult_t CAUpdatePayloadData(CABlockData_t *currData, CAData_t *receivedData, 
         return CA_STATUS_OK;
     }
 
-    uint32_t payloadLen = 0;
-    CAPayload_t payload = CAGetPayloadInfo(receivedData, &payloadLen);
+    uint32_t blockPayloadLen = 0;
+    CAPayload_t blockPayload = CAGetPayloadInfo(receivedData, &blockPayloadLen);
 
     if (CA_BLOCK_TOO_LARGE == status)
     {
-        payloadLen = BLOCK_SIZE(currData->block.szx);
+        blockPayloadLen = BLOCK_SIZE(currData->block.szx);
     }
 
     uint32_t prePayloadLen = 0;
@@ -1521,22 +1641,49 @@ CAResult_t CAUpdatePayloadData(CABlockData_t *currData, CAData_t *receivedData, 
                   strlen(currData->payload));
     }
 
-    uint32_t totalPayloadLen = prePayloadLen + payloadLen + 1;
-
-    if (NULL != payload)
+    // memory allocation for the received block payload
+    if (NULL != blockPayload)
     {
-        // memory allocation for the payload
-        void *newPayload = realloc(currData->payload, totalPayloadLen);
-        if (NULL == newPayload)
+        if (0 != currData->payloadLength)
         {
-            OIC_LOG(ERROR, TAG, "out of memory");
-            return CA_MEMORY_ALLOC_FAILED;
-        }
+            // in case the block message has the size option
+            // allocate the memory for the total payload
+            if (true == isSizeOption)
+            {
+                CAPayload_t prePayload = currData->payload;
 
-        // update the total payload
-        memset(newPayload + prePayloadLen, 0, payloadLen + 1);
-        currData->payload = newPayload;
-        strncat(currData->payload, payload, payloadLen);
+                OIC_LOG(DEBUG, TAG, "allocate memory for the total payload");
+                currData->payload = (CAPayload_t) OICCalloc(currData->payloadLength + 1,
+                                                            sizeof(char));
+                if (NULL == currData->payload)
+                {
+                    OIC_LOG(ERROR, TAG, "out of memory");
+                    return CA_MEMORY_ALLOC_FAILED;
+                }
+                strncpy(currData->payload, prePayload, prePayloadLen);
+                OICFree(prePayload);
+            }
+
+            // update the total payload
+            strncat(currData->payload, blockPayload, blockPayloadLen);
+        }
+        else
+        {
+            OIC_LOG(DEBUG, TAG, "allocate memory for the received block payload");
+
+            size_t totalPayloadLen = prePayloadLen + blockPayloadLen + 1;
+            void *newPayload = realloc(currData->payload, totalPayloadLen);
+            if (NULL == newPayload)
+            {
+                OIC_LOG(ERROR, TAG, "out of memory");
+                return CA_MEMORY_ALLOC_FAILED;
+            }
+
+            // update the total payload
+            memset(newPayload + prePayloadLen, 0, blockPayloadLen + 1);
+            currData->payload = newPayload;
+            strncat(currData->payload, blockPayload, blockPayloadLen);
+        }
 
         OIC_LOG_V(DEBUG, TAG, "updated payload: %s, len: %d", currData->payload,
                   strlen(currData->payload));
@@ -2042,6 +2189,7 @@ CABlockData_t *CACreateNewBlockData(CAData_t *sendData)
     data->type = 0;
     data->sentData = sendData;
     data->payload = NULL;
+    data->payloadLength = 0;
 
     if (data->sentData->requestInfo)
     {
