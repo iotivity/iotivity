@@ -983,6 +983,7 @@ void request_handler(const CAEndpoint_t *object, const CARequestInfo_t *requestI
                                                  object->port, &endpoint))
             {
                 printf("Failed to create duplicate of remote endpoint!\n");
+                free(uri);
                 return;
             }
             endpoint->flags = CA_SECURE;
@@ -1371,6 +1372,7 @@ void parsing_coap_uri(const char* uri, addressSet_t* address)
         free(cloneUri);
         return;
     }
+    free(cloneUri);
     return;
 }
 
