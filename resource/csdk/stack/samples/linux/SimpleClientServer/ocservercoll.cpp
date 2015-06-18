@@ -122,6 +122,7 @@ static void
 PrintReceivedMsgInfo(OCEntityHandlerFlag flag, OCEntityHandlerRequest * ehRequest)
 {
     const char* typeOfMessage;
+    const char* typeOfMethod;
 
     switch (flag)
     {
@@ -135,9 +136,21 @@ PrintReceivedMsgInfo(OCEntityHandlerFlag flag, OCEntityHandlerRequest * ehReques
             typeOfMessage = "UNKNOWN";
     }
 
-    OC_LOG_V(INFO, TAG, "Receiving message type: %s, method %s",
-            typeOfMessage,
-            (ehRequest->method == OC_REST_GET) ? "OC_REST_GET" : "OC_REST_PUT" );
+    if (ehRequest == NULL)
+    {
+        typeOfMethod = "UNKNOWN";
+    }
+    else if (ehRequest->method == OC_REST_GET)
+    {
+        typeOfMethod = "OC_REST_GET";
+    }
+    else
+    {
+        typeOfMethod = "OC_REST_PUT";
+    }
+
+    OC_LOG_V(INFO, TAG, "Receiving message type: %s, method %s", typeOfMessage,
+            typeOfMethod);
 }
 
 OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
