@@ -38,8 +38,8 @@ richclient_env.PrependUnique(CPPPATH = [
 			env.get('SRC_DIR') + '/resource/csdk/logger/include',
 			env.get('SRC_DIR') + '/resource/csdk/security/include',
 			env.get('SRC_DIR') + '/extlibs/cjson',
-			env.get('SRC_DIR') + '/service/easy-setup/sdk/inc'
-			])
+			env.get('SRC_DIR') + '/service/easy-setup/sdk/mediator/inc',
+			env.get('SRC_DIR') + '/service/easy-setup/sdk/common'])
 
 richclient_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'pthread', 'connectivity_abstraction', 'coap', 'ESSDKLibrary'])
 

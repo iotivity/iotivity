@@ -26,7 +26,6 @@
 #include <sstream>
 
 #include "easysetupmgr.h"
-#include "provisioninghandler.h"
 
 //Use ipv4addr for both InitDiscovery and InitDeviceDiscovery
 char ipv4addr[IPV4_ADDR_SIZE] = { 0 };

@@ -45,10 +45,7 @@ public class EasySetupManager {
         // Load Easy Setup JNI interface
         System.loadLibrary("gnustl_shared");
         System.loadLibrary("octbstack");
-        System.loadLibrary("oc");
         System.loadLibrary("connectivity_abstraction");
-        System.loadLibrary("ca-interface");
-        System.loadLibrary("ESSDK");
         System.loadLibrary("easysetup-jni");
     }
 

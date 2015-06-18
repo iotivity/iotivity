@@ -25,7 +25,10 @@
 #include "logger.h"
 #include "ocstack.h"
 #include "octypes.h"
-#include "easysetupcommon.h"
+#include "common.h"
+
+#include "provisioninghandler.h"
+
 
 //-----------------------------------------------------------------------------
 // Defines

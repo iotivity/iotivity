@@ -51,12 +51,10 @@ if target_os in ['android', 'linux']:
 	easy_setup_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
 	if target_os not in ['linux', 'arduino']:
 		easy_setup_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'gnustl_shared'])	
+		if not env.get('RELEASE'):
+			easy_setup_env.AppendUnique(LIBS = ['log'])
 	else:
 		easy_setup_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'pthread', 'connectivity_abstraction'])
-	
-	if not env.get('RELEASE'):
-		easy_setup_env.AppendUnique(LIBS = ['log'])
-	
 
 if target_os == 'arduino':
 	easy_setup_env.AppendUnique(CPPPATH = [
@@ -76,8 +74,9 @@ if target_os in ['android','linux']:
         env.get('SRC_DIR') + '/resource/csdk/stack/include',
         env.get('SRC_DIR') + '/resource/csdk/logger/include',
 		env.get('SRC_DIR') + '/resource/csdk/security/include',
-		env.get('SRC_DIR') + '/extlibs/cjson'		
-		])
+		env.get('SRC_DIR') + '/extlibs/cjson',
+		'sdk/common',
+		'sdk/mediator/inc'])
 
 ######################################################################
 # Source files and Targets
@@ -92,17 +91,17 @@ if target_os == 'arduino':
 
 
 if target_os == 'android':
-	es_sdk_shared = easy_setup_env.SharedLibrary('libESSDK',
-					['sdk/src/easysetupmgr.cpp',
-					'sdk/src/camutex_pthreads.c',
-					'sdk/src/provisioninghandler.cpp'])
+	es_sdk_shared = easy_setup_env.StaticLibrary('libESSDK',
+					['sdk/mediator/src/easysetupmgr.cpp',
+					'sdk/mediator/src/camutex_pthreads.c',
+					'sdk/mediator/src/provisioninghandler.cpp'])
 	easy_setup_env.InstallTarget(es_sdk_shared, 'libESSDK')
 
 if target_os == 'linux':
 	es_sdk_shared = easy_setup_env.SharedLibrary('ESSDKLibrary',
-					['sdk/src/easysetupmgr.cpp',
-					'sdk/src/camutex_pthreads.c',
-					'sdk/src/provisioninghandler.cpp'])
+					['sdk/mediator/src/easysetupmgr.cpp',
+					'sdk/mediator/src/camutex_pthreads.c',
+					'sdk/mediator/src/provisioninghandler.cpp'])
 	easy_setup_env.InstallTarget(es_sdk_shared, 'libESSDK')
 
 #Go to build sample apps
