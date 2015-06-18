@@ -52,30 +52,31 @@ namespace OIC
             using ObserveCallback = std::function<
                     void(const HeaderOptions&, const ResponseStatement&, int, int)>;
 
-        private:
-            using BaseResource = OC::OCResource;
-            using BaseResourcePtr = BaseResource::Ptr;
-
         public:
-            static PrimitiveResource::Ptr create(const BaseResourcePtr&);
+            static PrimitiveResource::Ptr create(const std::shared_ptr<OC::OCResource>&);
 
-            void requestGet(GetCallback);
-            void requestSet(const ResourceAttributes&, SetCallback);
-            void requestObserve(ObserveCallback);
-            void cancelObserve();
+            virtual ~PrimitiveResource() = default;
 
-            std::string getUri() const;
-            std::string getHost() const;
-            std::vector< std::string > getTypes() const;
-            std::vector< std::string > getInterfaces() const;
+            virtual void requestGet(GetCallback) = 0;
+            virtual void requestSet(const ResourceAttributes&, SetCallback) = 0;
+            virtual void requestObserve(ObserveCallback) = 0;
+            virtual void cancelObserve() = 0;
 
-            bool isObservable() const;
+            virtual std::string getUri() const = 0;
+            virtual std::string getHost() const = 0;
+            virtual std::vector< std::string > getTypes() const = 0;
+            virtual std::vector< std::string > getInterfaces() const = 0;
 
-        private:
-            PrimitiveResource(const BaseResourcePtr&);
+            virtual bool isObservable() const = 0;
 
-        private:
-            BaseResourcePtr m_ocResource;
+        protected:
+            PrimitiveResource() = default;
+
+            PrimitiveResource(const PrimitiveResource&) = delete;
+            PrimitiveResource(PrimitiveResource&&) = delete;
+
+            PrimitiveResource& operator=(const PrimitiveResource&) const = delete;
+            PrimitiveResource& operator=(PrimitiveResource&&) const = delete;
         };
 
         using FindCallback = std::function<void(std::shared_ptr<PrimitiveResource>)>;
@@ -85,4 +86,5 @@ namespace OIC
 
     }
 }
+
 #endif // __PRIMITIVERESOURCE_H

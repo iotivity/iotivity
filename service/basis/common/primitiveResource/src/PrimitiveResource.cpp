@@ -19,92 +19,22 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include <PrimitiveResource.h>
-#include <ResourceAttributes.h>
-#include <ResponseStatement.h>
 
-#include <internal/ResourceAtrributesConverter.h>
+#include <internal/PrimitiveResourceImpl.h>
 
 #include <OCPlatform.h>
-
-namespace
-{
-    using namespace OIC::Service;
-
-    ResponseStatement createResponseStatement(const OC::OCRepresentation& ocRepresentation)
-    {
-        return ResponseStatement::create(
-                ResourceAttributesConverter::fromOCRepresentation(ocRepresentation));
-    }
-
-} // unnamed namespace
-
 
 namespace OIC
 {
     namespace Service
     {
-        using namespace std::placeholders;
 
-        PrimitiveResource::PrimitiveResource(const BaseResourcePtr& ocResource) :
-                m_ocResource{ ocResource }
+        PrimitiveResource::Ptr PrimitiveResource::create(
+                const std::shared_ptr<OC::OCResource>& ptr)
         {
+            return std::shared_ptr< PrimitiveResource >(
+                    new PrimitiveResourceImpl< OC::OCResource >{ ptr });
         }
-
-        PrimitiveResource::Ptr PrimitiveResource::create(const BaseResourcePtr& ptr)
-        {
-            return std::shared_ptr< PrimitiveResource >(new PrimitiveResource{ ptr });
-        }
-
-        void PrimitiveResource::requestGet(GetCallback callback)
-        {
-            m_ocResource->get(OC::QueryParamsMap(),
-                    std::bind(callback, _1, std::bind(createResponseStatement, _2), _3));
-        }
-
-        void PrimitiveResource::requestSet(const ResourceAttributes& attrs, SetCallback callback)
-        {
-            m_ocResource->put(ResourceAttributesConverter::toOCRepresentation(attrs),
-                    OC::QueryParamsMap{},
-                    std::bind(callback, _1, std::bind(createResponseStatement, _2), _3));
-        }
-
-        void PrimitiveResource::requestObserve(ObserveCallback callback)
-        {
-            m_ocResource->observe(OC::ObserveType::ObserveAll, OC::QueryParamsMap{},
-                    bind(callback, _1, bind(createResponseStatement, _2), _3, _4));
-        }
-
-        void PrimitiveResource::cancelObserve()
-        {
-            m_ocResource->cancelObserve();
-        }
-
-        bool PrimitiveResource::isObservable() const
-        {
-            return m_ocResource->isObservable();
-        }
-
-        std::string PrimitiveResource::getUri() const
-        {
-            return m_ocResource->uri();
-        }
-
-        std::string PrimitiveResource::getHost() const
-        {
-            return m_ocResource->host();
-        }
-
-        std::vector< std::string > PrimitiveResource::getTypes() const
-        {
-            return m_ocResource->getResourceTypes();
-        }
-
-        std::vector< std::string > PrimitiveResource::getInterfaces() const
-        {
-            return m_ocResource->getResourceInterfaces();
-        }
-
-
 
         void discoverResource(const std::string& host, const std::string& resourceURI,
                 OCConnectivityType connectivityType, FindCallback resourceHandler)
