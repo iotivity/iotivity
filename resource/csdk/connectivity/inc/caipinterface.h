@@ -111,8 +111,6 @@ CAResult_t CAIPStartMulticastServer(const char *localAddress, const char *multic
  * @param  localAddress [IN]      Local adapter address to which server to be binded.
  * @param  port         [IN,OUT]  Port number on which server will be running. If binding
  *                                the port failed, server starts in the next available port.
- * @param  forceStart   [IN]      Indicate whether to start server forcesfully on specified port
- *                                or not.
  * @param  secured      [IN]      True if the secure server to be started, otherwise false.
  *
  * @return  #CA_STATUS_OK or Appropriate error code
@@ -121,8 +119,7 @@ CAResult_t CAIPStartMulticastServer(const char *localAddress, const char *multic
  * @retval  #CA_SERVER_STARTED_ALREADY Unicast server is already started and running.
  * @retval  #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAIPStartUnicastServer(const char *localAddress, uint16_t *port, bool forceStart,
-                                  bool secured);
+CAResult_t CAIPStartUnicastServer(const char *localAddress, uint16_t *port, bool secured);
 
 /**
  * @brief  Stop servers that are running in particular interface address.

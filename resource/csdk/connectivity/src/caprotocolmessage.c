@@ -30,14 +30,6 @@
 #define _DEFAULT_SOURCE
 #define _BSD_SOURCE
 
-// Include files from the arduino platform do not provide these conversions:
-#ifdef ARDUINO
-#define htons(x) ( ((x)<< 8 & 0xFF00) | ((x)>> 8 & 0x00FF) )
-#define ntohs(x) htons(x)
-#else
-#define HAVE_TIME_H 1
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
