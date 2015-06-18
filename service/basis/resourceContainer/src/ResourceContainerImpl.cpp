@@ -27,7 +27,6 @@
 #include "PrimitiveResponse.h"
 #include "PrimitiveServerResource.h"
 
-
 #include <dlfcn.h>
 #include <unistd.h>
 #include <string.h>
@@ -37,6 +36,7 @@
 #include "oc_logger.hpp"
 
 using OC::oc_log_stream;
+using namespace OIC::Service;
 
 /* Annother way to create a context: */
 auto info_logger = []() -> boost::iostreams::stream<OC::oc_log_stream> &

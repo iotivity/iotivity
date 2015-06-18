@@ -52,7 +52,7 @@ if target_os == 'android':
     resource_container_env.PrependUnique(LIBS = ['gnustl_shared', 'compatibility', 'log'])
 	
 #resource_container_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-resource_container_env.PrependUnique(LIBS = ['ServerBuilder', 'ServiceCommon', 'oc','octbstack', 'oc_logger', 'oc_logger_core', 'connectivity_abstraction', 'coap'])
+resource_container_env.PrependUnique(LIBS = ['server_builder', 'service_common', 'oc','octbstack', 'oc_logger', 'oc_logger_core', 'connectivity_abstraction'])
 resource_container_env.AppendUnique(LIBS = ['dl'])
 
 ######################################################################
@@ -76,7 +76,7 @@ resource_container_env.InstallTarget([res_container_static,res_container_shared]
 ######################################################################
 # build Sample Resource Bundle
 ######################################################################
-SConscript('resource-container/examples/SampleBundle/SConscript')
+#SConscript('resource-container/examples/SampleBundle/SConscript')
 
 sample_resource_bundle_env = resource_container_env.Clone()
 sample_resource_bundle_env.AppendUnique(CCFLAGS = ['-fPIC'])
