@@ -259,17 +259,24 @@ void ProcessAccessRequest(PEContext_t *context)
             }
         }
         while((NULL != currentAcl) && (false == context->matchingAclFound));
-    }
-    if(IsAccessGranted(context->retVal))
-    {
-        OC_LOG(INFO, TAG, PCF("ProcessAccessRequest(): \
-            Leaving ProcessAccessRequest(ACCESS_GRANTED)"));
+
+        if(IsAccessGranted(context->retVal))
+        {
+            OC_LOG(INFO, TAG, PCF("ProcessAccessRequest(): \
+                Leaving ProcessAccessRequest(ACCESS_GRANTED)"));
+        }
+        else
+        {
+            OC_LOG(INFO, TAG, PCF("ProcessAccessRequest(): \
+                Leaving ProcessAccessRequest(ACCESS_DENIED)"));
+        }
     }
     else
     {
         OC_LOG(INFO, TAG, PCF("ProcessAccessRequest(): \
-            Leaving ProcessAccessRequest(ACCESS_DENIED)"));
+            Leaving ProcessAccessRequest(context is NULL)"));
     }
+
 }
 
 /**
