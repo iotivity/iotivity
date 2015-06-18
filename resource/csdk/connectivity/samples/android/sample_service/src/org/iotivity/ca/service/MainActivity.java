@@ -22,8 +22,8 @@ public class MainActivity extends Activity {
 
     private final static String TAG = "MainActivity";
 
-    private final CharSequence[] mNetworkCheckBoxItems = { Network.IPV4.name(),
-            Network.IPV6.name(), Network.EDR.name(), Network.LE.name()};
+    private final CharSequence[] mNetworkCheckBoxItems = { Network.IP.name(),
+            Network.LE.name(), Network.EDR.name()};
 
     private final CharSequence[] mDTLSCheckBoxItems = { DTLS.UNSECURED.name(),
             DTLS.SECURED.name() };
@@ -44,7 +44,7 @@ public class MainActivity extends Activity {
     };
 
     private enum Network {
-        IPV4, IPV6, EDR, LE
+        IP, LE, EDR
     };
 
     private enum DTLS {
@@ -64,9 +64,9 @@ public class MainActivity extends Activity {
             false, false, false, false
     };
 
-    private int mSelectedItems[] = { 0, 0, 0, 0 };
+    private int mSelectedItems[] = { 0, 0, 0 };
 
-    private int mUnSelectedItems[] = { 0, 0, 0, 0 };
+    private int mUnSelectedItems[] = { 0, 0, 0 };
 
     private Mode mCurrentMode = Mode.UNKNOWN;
 
@@ -149,12 +149,11 @@ public class MainActivity extends Activity {
     /**
      * Defined ConnectivityType in cacommon.c
      *
-     * CA_IPV4 = (1 << 0) CA_IPV6 = (1 << 1) CA_EDR = (1 << 2) CA_LE = (1 << 3)
+     * CA_IP = (1 << 0) CA_LE = (1 << 2) CA_EDR = (1 << 3)
      */
-    private int CA_IPV4 = (1 << 0);
-    private int CA_IPV6 = (1 << 1);
+    private int CA_IP = (1 << 0);
+    private int CA_LE = (1 << 1);
     private int CA_EDR = (1 << 2);
-    private int CA_LE = (1 << 3);
     private int isSecured = 0;
     private int msgType = 1;
     private int responseValue = 0;
@@ -415,8 +414,7 @@ public class MainActivity extends Activity {
         public void onClick(View v) {
 
             DLog.v(TAG, "FindResource click");
-            RM.RMFindResource(mUri_ed.getText().toString());
-
+            RM.RMSendReqestToAll(mReqToAllData_ed.getText().toString(), selectedNetwork);
         }
     };
 
@@ -568,10 +566,7 @@ public class MainActivity extends Activity {
 
                         for (int i = 0; i < mSelectedItems.length; i++) {
                             if (mSelectedItems[i] == 1) {
-                                if(i != 1)
-                                    interestedNetwork |= (1 << i);
-                                else
-                                    checkNotSupportedTransport("Not Supported Transport");
+                                interestedNetwork |= (1 << i);
                             }
                         }
                         if(0 != interestedNetwork)
@@ -581,11 +576,7 @@ public class MainActivity extends Activity {
 
                         for (int i = 0; i < mUnSelectedItems.length; i++) {
                             if (mUnSelectedItems[i] == 1) {
-                                if (i != 1)
-                                    uninterestedNetwork |= (1 << i);
-                                else
-                                    checkNotSupportedTransport("Not Supported Transport");
-                                mUnSelectedItems[i] = 0;
+                                uninterestedNetwork |= (1 << i);
                             }
                         }
                         if(0 != uninterestedNetwork)
@@ -593,20 +584,6 @@ public class MainActivity extends Activity {
 
                     }
                 }).show();
-    }
-
-    private void checkNotSupportedTransport(String title) {
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-        builder.setTitle(title).
-        setMessage("Selected Transport Not Supported")
-        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-
-            }
-        }).show();
     }
 
     private void checkMsgSecured(String title) {
@@ -775,17 +752,16 @@ public class MainActivity extends Activity {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
 
-                        if (selectedNetworkType == Network.IPV4.ordinal()) {
-                            selectedNetwork = CA_IPV4;
-                            DLog.v(TAG, "Selected Network is CA_IPV4");
-                        } else if (selectedNetworkType == Network.EDR.ordinal()) {
-                            selectedNetwork = CA_EDR;
-                            DLog.v(TAG, "Selected Network is EDR");
+                        if (selectedNetworkType == Network.IP.ordinal()) {
+                            selectedNetwork = CA_IP;
+                            DLog.v(TAG, "Selected Network is CA_IP");
                         } else if (selectedNetworkType == Network.LE.ordinal()) {
                             selectedNetwork = CA_LE;
                             DLog.v(TAG, "Selected Network is LE");
-                        }
-                        else {
+                        } else if (selectedNetworkType == Network.EDR.ordinal()) {
+                            selectedNetwork = CA_EDR;
+                            DLog.v(TAG, "Selected Network is EDR");
+                        } else {
                             DLog.v(TAG, "Selected Network is NULL");
                             selectedNetwork = -1;
                         }
