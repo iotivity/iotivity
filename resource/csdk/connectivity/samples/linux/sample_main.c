@@ -1141,7 +1141,7 @@ void send_response(const CAEndpoint_t *endpoint, const CAInfo_t *info)
     CAInfo_t responseData = { 0 };
     responseData.type = messageType;
     responseData.messageId = (info != NULL) ? info->messageId : 0;
-    responseData.resourceUri = info->resourceUri;
+    responseData.resourceUri = (info != NULL) ? info->resourceUri : 0;
 
     if(CA_MSG_RESET != messageType)
     {
@@ -1159,7 +1159,7 @@ void send_response(const CAEndpoint_t *endpoint, const CAInfo_t *info)
                 printf("Memory allocation fail\n");
                 return;
             }
-            snprintf(responseData.payload, length, SECURE_INFO_DATA, info->resourceUri,
+            snprintf(responseData.payload, length, SECURE_INFO_DATA, responseData.resourceUri,
                      g_local_secure_port);
         }
         else
@@ -1173,7 +1173,7 @@ void send_response(const CAEndpoint_t *endpoint, const CAInfo_t *info)
                 printf("Memory allocation fail\n");
                 return;
             }
-            snprintf(responseData.payload, length, NORMAL_INFO_DATA, info->resourceUri);
+            snprintf(responseData.payload, length, NORMAL_INFO_DATA, responseData.resourceUri);
         }
     }
 
