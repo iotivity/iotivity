@@ -46,7 +46,7 @@
  * @def CA_PORT
  * @brief Port to listen for incoming data
  */
-#define CA_PORT   6298
+#define CA_PORT   0
 
 /**
  * @def CA_SECURE_PORT
@@ -208,7 +208,7 @@ void CAIPConnectionStateCB(const char *ipAddress, CANetworkStatus_t status)
     if (CA_INTERFACE_UP == status)
     {
         uint16_t port = CA_PORT;
-        CAResult_t ret = CAIPStartUnicastServer(ipAddress, &port, false, false);
+        CAResult_t ret = CAIPStartUnicastServer(ipAddress, &port, false);
         if (CA_STATUS_OK == ret)
         {
             OIC_LOG_V(DEBUG, IP_ADAPTER_TAG, "Unicast server started on %d port", port);
@@ -220,7 +220,7 @@ void CAIPConnectionStateCB(const char *ipAddress, CANetworkStatus_t status)
 
 #ifdef __WITH_DTLS__
         port = CA_SECURE_PORT;
-        ret = CAIPStartUnicastServer(ipAddress, &port, false, true);
+        ret = CAIPStartUnicastServer(ipAddress, &port, true);
         if (CA_STATUS_OK == ret)
         {
             OIC_LOG_V(DEBUG, IP_ADAPTER_TAG, "Secure Unicast server started on %d", port);
@@ -413,7 +413,7 @@ CAResult_t CAStartIP()
             continue;
         }
         uint16_t unicastPort = CA_PORT;
-        ret = CAIPStartUnicastServer(netInfo->ipAddress, &unicastPort, false, false);
+        ret = CAIPStartUnicastServer(netInfo->ipAddress, &unicastPort, false);
         if (CA_STATUS_OK == ret)
         {
             OIC_LOG_V(DEBUG, IP_ADAPTER_TAG, "Unicast server started on %d port",
@@ -422,7 +422,7 @@ CAResult_t CAStartIP()
 
 #ifdef __WITH_DTLS__
         unicastPort = CA_SECURE_PORT;
-        ret = CAIPStartUnicastServer(netInfo->ipAddress, &unicastPort, false, true);
+        ret = CAIPStartUnicastServer(netInfo->ipAddress, &unicastPort, true);
 
         if (CA_STATUS_OK == ret)
         {

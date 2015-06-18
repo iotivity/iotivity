@@ -40,7 +40,9 @@
  * @brief Unicast port number (to listen for incoming data on unicast server).
  * Note :- Actual port number may differ based on result of bind() operation.
  */
-#define CA_PORT   6298
+ // Assigning fixed number as port number as Arduino eth and wifi libraries dont have proper api to
+ // return assigned port number
+#define CA_PORT   55555
 
 /**
  * @def CA_SECURE_PORT

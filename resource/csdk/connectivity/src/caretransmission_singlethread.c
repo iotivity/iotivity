@@ -230,7 +230,7 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context, const CAEndpoin
     if (!(context->config.supportType & endpoint->adapter))
     {
         OIC_LOG(ERROR, TAG, "error");
-        OIC_LOG_V(ERROR, TAG, "not supported conntype=%d", endpoint->transportType);
+        OIC_LOG_V(ERROR, TAG, "not supported conntype=%d", context->config.supportType);
         return CA_NOT_SUPPORTED;
     }
 
