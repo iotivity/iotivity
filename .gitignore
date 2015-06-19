@@ -101,3 +101,6 @@ build_common/arduino/extlibs/arduino/arduino-1.5.8
 
 # Ignore byte-compiled Python scripts
 *.pyc
+
+# Ignore Valgrind generated files.
+*.memcheck
