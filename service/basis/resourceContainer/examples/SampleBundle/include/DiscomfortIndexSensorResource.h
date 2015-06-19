@@ -21,11 +21,13 @@
 #ifndef DISCOMFORTINDEXSENSORRESOURCE_H_
 #define DISCOMFORTINDEXSENSORRESOURCE_H_
 
-#include "BundleResource.h"
+#include <iostream>
+
+#include "SoftSensorResource.h"
 #include "DiscomfortIndexSensor.h"
 
 using namespace DiscomfortIndexSensorName;
-using namespace RC;
+using namespace OIC::Service;
 
 class DiscomfortIndexSensorResource : public SoftSensorResource
 {
@@ -33,10 +35,11 @@ class DiscomfortIndexSensorResource : public SoftSensorResource
         DiscomfortIndexSensorResource();
         ~DiscomfortIndexSensorResource();
 
-        void onGetRequest(std::map <std::string, std::string> *attributes);
-        void onSetRequest(std::map <std::string, std::string> attributes);
+        void getAttribute(string attributeName);
+        void setAttribute(string attributeName, string value);
+        virtual void initAttributes();
 
-        void onInputDataReceived(std::vector <SensorData> inputs);
+        void setInputAttributes(vector < SensorData > inputs);
 
     private:
         DiscomfortIndexSensor *m_pDiscomfortIndexSensor;

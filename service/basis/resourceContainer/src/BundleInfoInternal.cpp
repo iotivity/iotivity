@@ -20,104 +20,108 @@
 
 #include "BundleInfoInternal.h"
 
-namespace RC
+namespace OIC
 {
-    BundleInfoInternal::BundleInfoInternal()
+    namespace Service
     {
 
-    }
+        BundleInfoInternal::BundleInfoInternal()
+        {
 
-    BundleInfoInternal::~BundleInfoInternal()
-    {
+        }
 
-    }
+        BundleInfoInternal::~BundleInfoInternal()
+        {
 
-    void BundleInfoInternal::setID(string id)
-    {
-        m_ID = id;
-    }
+        }
 
-    string BundleInfoInternal::getID()
-    {
-        return m_ID;
-    }
+        void BundleInfoInternal::setID(string id)
+        {
+            m_ID = id;
+        }
 
-    void BundleInfoInternal::setPath(string path)
-    {
-        m_path = path;
-    }
-    string BundleInfoInternal::getPath()
-    {
-        return m_path;
-    }
+        string BundleInfoInternal::getID()
+        {
+            return m_ID;
+        }
 
-    void BundleInfoInternal::setVersion(string version)
-    {
-        m_version = version;
-    }
+        void BundleInfoInternal::setPath(string path)
+        {
+            m_path = path;
+        }
+        string BundleInfoInternal::getPath()
+        {
+            return m_path;
+        }
 
-    string BundleInfoInternal::getVersion()
-    {
-        return m_version;
-    }
+        void BundleInfoInternal::setVersion(string version)
+        {
+            m_version = version;
+        }
 
-    void BundleInfoInternal::setLoaded(bool loaded)
-    {
-        m_loaded = loaded;
-    }
+        string BundleInfoInternal::getVersion()
+        {
+            return m_version;
+        }
 
-    bool BundleInfoInternal::isLoaded()
-    {
-        return m_loaded;
-    }
+        void BundleInfoInternal::setLoaded(bool loaded)
+        {
+            m_loaded = loaded;
+        }
 
-    void BundleInfoInternal::setActivated(bool activated)
-    {
-        m_activated = activated;
-    }
+        bool BundleInfoInternal::isLoaded()
+        {
+            return m_loaded;
+        }
 
-    bool BundleInfoInternal::isActivated()
-    {
-        return m_activated;
-    }
+        void BundleInfoInternal::setActivated(bool activated)
+        {
+            m_activated = activated;
+        }
 
-    int BundleInfoInternal::getId()
-    {
-        return m_id;
-    }
+        bool BundleInfoInternal::isActivated()
+        {
+            return m_activated;
+        }
 
-    void BundleInfoInternal::setId(int id)
-    {
-        m_id = id;
-    }
+        int BundleInfoInternal::getId()
+        {
+            return m_id;
+        }
 
-    void BundleInfoInternal::setBundleActivator(activator_t *activator)
-    {
-        m_activator = activator;
-    }
+        void BundleInfoInternal::setId(int id)
+        {
+            m_id = id;
+        }
 
-    activator_t *BundleInfoInternal::getBundleActivator()
-    {
-        return m_activator;
-    }
+        void BundleInfoInternal::setBundleActivator(activator_t *activator)
+        {
+            m_activator = activator;
+        }
 
-    void BundleInfoInternal::setBundleDeactivator(deactivator_t *deactivator)
-    {
-        m_deactivator = deactivator;
-    }
+        activator_t *BundleInfoInternal::getBundleActivator()
+        {
+            return m_activator;
+        }
 
-    deactivator_t *BundleInfoInternal::getBundleDeactivator()
-    {
-        return m_deactivator;
-    }
+        void BundleInfoInternal::setBundleDeactivator(deactivator_t *deactivator)
+        {
+            m_deactivator = deactivator;
+        }
 
-    void BundleInfoInternal::setBundleHandle(void *handle)
-    {
-        m_bundleHandle = handle;
-    }
+        deactivator_t *BundleInfoInternal::getBundleDeactivator()
+        {
+            return m_deactivator;
+        }
 
-    void *BundleInfoInternal::getBundleHandle()
-    {
-        return m_bundleHandle;
+        void BundleInfoInternal::setBundleHandle(void *handle)
+        {
+            m_bundleHandle = handle;
+        }
+
+        void *BundleInfoInternal::getBundleHandle()
+        {
+            return m_bundleHandle;
+        }
     }
 }

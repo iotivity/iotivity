@@ -21,22 +21,22 @@
 #include "ResourceContainer.h"
 #include "ResourceContainerImpl.h"
 
-namespace RC
-{
+namespace OIC{
+    namespace Service{
+        ResourceContainer::ResourceContainer()
+        {
 
-    ResourceContainer::ResourceContainer()
-    {
+        }
 
-    }
+        ResourceContainer::~ResourceContainer()
+        {
 
-    ResourceContainer::~ResourceContainer()
-    {
+        }
 
-    }
-
-    ResourceContainer *ResourceContainer::getInstance()
-    {
-        return (ResourceContainer *)ResourceContainerImpl::getImplInstance();
+        ResourceContainer *ResourceContainer::getInstance()
+        {
+            return (ResourceContainer *)ResourceContainerImpl::getImplInstance();
+        }
     }
 }
 

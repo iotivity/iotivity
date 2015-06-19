@@ -22,31 +22,30 @@
 #define SOFTSENSORRESOURCE_H_
 
 #include "BundleResource.h"
-#include <map>
-#include <string>
 
-namespace RC
+namespace OIC
 {
-
-    class SoftSensorResource : public BundleResource
+    namespace Service
     {
+        class SoftSensorResource: public BundleResource
+        {
         public:
-            // TODO : definition of SensorData definition should be changed
             struct SensorData
             {
-                std::string sensorName;
-                std::vector< std::map<std::string, std::string> > data;
+                string sensorName;
+                vector< map< string, string > > data;
             };
 
             SoftSensorResource();
             virtual ~SoftSensorResource();
 
-            virtual void onInputDataReceived(std::vector <SensorData> inputs) = 0;
+            virtual void setInputAttributes(vector< SensorData > inputs) = 0;
 
             int inputCount;
-            std::vector < SensorData > m_vecInputs;
+            map< string, SensorData > m_mapStoredInputData;
             SensorData m_outputs;
-    };
+        };
+    }
 }
 
 #endif

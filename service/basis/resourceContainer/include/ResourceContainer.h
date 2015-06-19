@@ -30,17 +30,18 @@
 
 using namespace std;
 
-namespace RC
+namespace OIC
 {
-
-    // placeholder
-    class Resource
+    namespace Service
     {
+        // placeholder
+        class Resource
+        {
 
-    };
+        };
 
-    class ResourceContainer
-    {
+        class ResourceContainer
+        {
         public:
             ResourceContainer();
             virtual ~ResourceContainer();
@@ -58,7 +59,8 @@ namespace RC
             virtual vector< Resource * > listBundleResources(string id) = 0;
 
             static ResourceContainer *getInstance();
-    };
+        };
+    }
 }
 
 #endif /* RESOURCECONTAINER_H_ */

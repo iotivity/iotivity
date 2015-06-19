@@ -21,21 +21,24 @@
 #include "BundleInfo.h"
 #include "BundleInfoInternal.h"
 
-namespace RC
+namespace OIC
 {
-    BundleInfo::BundleInfo()
+    namespace Service
     {
+        BundleInfo::BundleInfo()
+        {
 
-    }
+        }
 
-    BundleInfo::~BundleInfo()
-    {
+        BundleInfo::~BundleInfo()
+        {
 
-    }
+        }
 
-    BundleInfo *BundleInfo::createBundleInfo()
-    {
-        BundleInfoInternal *newBundleInfo = new BundleInfoInternal();
-        return newBundleInfo;
+        BundleInfo *BundleInfo::createBundleInfo()
+        {
+            BundleInfoInternal *newBundleInfo = new BundleInfoInternal();
+            return newBundleInfo;
+        }
     }
 }

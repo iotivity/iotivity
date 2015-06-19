@@ -18,34 +18,24 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef BUNDLERESOURCE_H_
-#define BUNDLERESOURCE_H_
+#ifndef PROTOCOLBRIDGERESOURCE_H_
+#define PROTOCOLBRIDGERESOURCE_H_
 
+#include "BundleResource.h"
 #include <map>
-#include <vector>
 #include <string>
-
-using namespace std;
 
 namespace OIC
 {
     namespace Service
     {
-        class BundleResource
+        class ProtocolBridgeResource: public BundleResource
         {
         public:
-            BundleResource();
-            virtual ~BundleResource();
-
-            // TODO use type variant mechanism
+            ProtocolBridgeResource();
+            virtual ~ProtocolBridgeResource();
             virtual void getAttribute(string attributeName) = 0;
             virtual void setAttribute(string attributeName, string value) = 0;
-            virtual void initAttributes() = 0;
-
-        public:
-            string m_name, m_uri, m_resourceType, m_address;
-            map< string, vector< map< string, string > > > m_mapResourceProperty;
-            map< string, string > m_mapAttributes;
         };
     }
 }

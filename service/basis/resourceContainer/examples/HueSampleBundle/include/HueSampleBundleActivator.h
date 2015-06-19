@@ -18,36 +18,40 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef BUNDLERESOURCE_H_
-#define BUNDLERESOURCE_H_
+#ifndef HUESAMPLEBUNDLEACTIVATOR_H_
+#define HUESAMPLEBUNDLEACTIVATOR_H_
 
-#include <map>
-#include <vector>
-#include <string>
+#include "ResourceContainerBundleAPI.h"
+#include "BundleActivator.h"
+#include "BundleResource.h"
+#include "HueConnector.h"
 
-using namespace std;
+using namespace OIC::Service;
 
 namespace OIC
 {
     namespace Service
     {
-        class BundleResource
+        class HueSampleBundleActivator: public BundleActivator
         {
         public:
-            BundleResource();
-            virtual ~BundleResource();
+            HueSampleBundleActivator();
+            ~HueSampleBundleActivator();
 
-            // TODO use type variant mechanism
-            virtual void getAttribute(string attributeName) = 0;
-            virtual void setAttribute(string attributeName, string value) = 0;
-            virtual void initAttributes() = 0;
+            void activateBundle(ResourceContainerBundleAPI *resourceContainer,
+                    std::string bundleId);
+            void deactivateBundle();
 
-        public:
-            string m_name, m_uri, m_resourceType, m_address;
-            map< string, vector< map< string, string > > > m_mapResourceProperty;
-            map< string, string > m_mapAttributes;
+            void createResource(Configuration::resourceInfo);
+            void destroyResource(BundleResource *);
+
+            std::string m_bundleId;
+            ResourceContainerBundleAPI *m_pResourceContainer;
+            std::vector< BundleResource * > m_vecResources;
+        private:
+            HueConnector* m_connector;
         };
     }
 }
 
-#endif
+#endif /* SAMPLEBUNDLE_H_ */

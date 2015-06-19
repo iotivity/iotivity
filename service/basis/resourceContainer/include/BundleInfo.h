@@ -25,27 +25,30 @@
 
 using namespace std;
 
-namespace RC
+namespace OIC
 {
-    /*
-     * Describes a bundle with resources, that can be loaded dynamically.
-     */
-    class BundleInfo
+    namespace Service
     {
-    public:
-        BundleInfo();
-        virtual ~BundleInfo();
-        virtual void setID(string name) = 0;
-        virtual string getID() = 0;
-        virtual void setPath(string path) = 0;
-        virtual string getPath() = 0;
-        virtual void setVersion(string version) = 0;
-        virtual string getVersion() = 0;
-        virtual int getId() = 0; // will be set by container
-        static BundleInfo* createBundleInfo();
-    protected:
-        string m_ID, m_path, m_version;
-    };
+        /*
+         * Describes a bundle with resources, that can be loaded dynamically.
+         */
+        class BundleInfo
+        {
+        public:
+            BundleInfo();
+            virtual ~BundleInfo();
+            virtual void setID(string name) = 0;
+            virtual string getID() = 0;
+            virtual void setPath(string path) = 0;
+            virtual string getPath() = 0;
+            virtual void setVersion(string version) = 0;
+            virtual string getVersion() = 0;
+            virtual int getId() = 0; // will be set by container
+            static BundleInfo* createBundleInfo();
+        protected:
+            string m_ID, m_path, m_version;
+        };
+    }
 }
 
 #endif /* BUNDLEINFO_H_ */

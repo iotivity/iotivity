@@ -30,14 +30,16 @@
 #include "Configuration.h"
 #include "BundleResource.h"
 
-using namespace RC;
+using namespace OIC::Service;
 
-namespace RC
+namespace OIC
 {
-    class ResourceContainerBundleAPI : public Configuration
+    namespace Service
     {
+        class ResourceContainerBundleAPI: public Configuration
+        {
         public:
-            typedef std::map <std::string, std::string> configInfo;
+            typedef std::map< std::string, std::string > configInfo;
             ResourceContainerBundleAPI();
             virtual ~ResourceContainerBundleAPI();
             virtual void registerResource(BundleResource *resource) = 0;
@@ -45,10 +47,11 @@ namespace RC
             virtual void getCommonConfiguration(configInfo *configOutput) = 0;
             virtual void getBundleConfiguration(std::string bundleId, configInfo *configOutput) = 0;
             virtual void getResourceConfiguration(std::string bundleId,
-                                                  std::vector<resourceInfo> *configOutput) = 0;
+                    std::vector< resourceInfo > *configOutput) = 0;
 
             static ResourceContainerBundleAPI *getInstance();
-    };
+        };
+    }
 }
 
 #endif

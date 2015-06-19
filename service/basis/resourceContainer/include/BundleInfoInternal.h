@@ -26,49 +26,51 @@
 #include "ResourceContainerBundleAPI.h"
 
 using namespace std;
-using namespace RC;
+using namespace OIC::Service;
 
-namespace RC
-{
-    typedef void activator_t(ResourceContainerBundleAPI *, std::string bundleId);
-    typedef void deactivator_t(void);
+namespace OIC{
+    namespace Service{
 
-    class BundleInfoInternal: public BundleInfo
-    {
-        public:
-            BundleInfoInternal();
-            BundleInfoInternal(BundleInfo *info);
-            virtual ~BundleInfoInternal();
-            void setID(string id);
-            string getID();
-            void setPath(string path);
-            string getPath();
-            void setVersion(string version);
-            string getVersion();
+        typedef void activator_t(ResourceContainerBundleAPI *, std::string bundleId);
+        typedef void deactivator_t(void);
 
-            void setLoaded(bool loaded);
-            bool isLoaded();
-            void setActivated(bool activated);
-            bool isActivated();
-            int getId();
-            void setId(int id);
+        class BundleInfoInternal: public BundleInfo
+        {
+            public:
+                BundleInfoInternal();
+                BundleInfoInternal(BundleInfo *info);
+                virtual ~BundleInfoInternal();
+                void setID(string id);
+                string getID();
+                void setPath(string path);
+                string getPath();
+                void setVersion(string version);
+                string getVersion();
 
-            void setBundleActivator(activator_t *);
-            activator_t *getBundleActivator();
+                void setLoaded(bool loaded);
+                bool isLoaded();
+                void setActivated(bool activated);
+                bool isActivated();
+                int getId();
+                void setId(int id);
 
-            void setBundleDeactivator(deactivator_t *);
-            deactivator_t *getBundleDeactivator();
+                void setBundleActivator(activator_t *);
+                activator_t *getBundleActivator();
 
-            void setBundleHandle(void *);
-            void *getBundleHandle();
+                void setBundleDeactivator(deactivator_t *);
+                deactivator_t *getBundleDeactivator();
 
-        private:
-            bool m_loaded, m_activated;
-            int m_id;
-            activator_t *m_activator;
-            deactivator_t *m_deactivator;
-            void *m_bundleHandle;
-    };
+                void setBundleHandle(void *);
+                void *getBundleHandle();
+
+            private:
+                bool m_loaded, m_activated;
+                int m_id;
+                activator_t *m_activator;
+                deactivator_t *m_deactivator;
+                void *m_bundleHandle;
+        };
+    }
 }
 
 #endif /* BUNDLEINFOINTERNAL_H_ */

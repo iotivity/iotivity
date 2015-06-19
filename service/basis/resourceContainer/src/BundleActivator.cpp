@@ -21,28 +21,32 @@
 #include "BundleActivator.h"
 #include "ResourceContainer.h"
 
-using namespace RC;
+using namespace OIC::Service;
 
-namespace RC
+namespace OIC
 {
-    BundleActivator::BundleActivator()
+    namespace Service
     {
+        BundleActivator::BundleActivator()
+        {
 
-    }
+        }
 
-    BundleActivator::~BundleActivator()
-    {
+        BundleActivator::~BundleActivator()
+        {
 
-    }
+        }
 
-    void BundleActivator::activateBundle(ResourceContainerBundleAPI *resourceContainer,
-                                         std::string bundleId)
-    {
+        void BundleActivator::activateBundle(ResourceContainerBundleAPI *resourceContainer,
+                std::string bundleId)
+        {
 
-    }
+        }
 
-    void BundleActivator::deactivateBundle()
-    {
+        void BundleActivator::deactivateBundle()
+        {
 
+        }
     }
 }
+

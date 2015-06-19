@@ -1,6 +1,6 @@
 /******************************************************************
 *
-* Copyright 2014 Samsung Electronics All Rights Reserved.
+* Copyright 2015 Samsung Electronics All Rights Reserved.
 *
 *
 *
@@ -30,12 +30,10 @@
 */
 
 #include <iostream>
-#include <vector>
-#include <map>
 
-// temp
-#include "BundleResource.h"
 #include "SoftSensorResource.h"
+
+using namespace OIC::Service;
 
 namespace DiscomfortIndexSensorName
 {
@@ -74,13 +72,13 @@ namespace DiscomfortIndexSensorName
         public:
             DiscomfortIndexSensor();
 
-            int runLogic(std::vector< RC::SoftSensorResource::SensorData > &sensorData);
-            DIResult getInput(std::vector< RC::SoftSensorResource::SensorData > &contextDataList,
+            int runLogic(std::vector< SoftSensorResource::SensorData > &sensorData);
+            DIResult getInput(std::vector< SoftSensorResource::SensorData > &contextDataList,
                               InValue *data);
             DIResult makeDiscomfortIndex(InValue *data);
-            RC::SoftSensorResource::SensorData setOutput(int property_count, InValue *data);
+            SoftSensorResource::SensorData setOutput(int property_count, InValue *data);
 
-            RC::SoftSensorResource::SensorData m_output;
+            SoftSensorResource::SensorData m_output;
     };
 };
 

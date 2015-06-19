@@ -94,6 +94,27 @@ SampleBundle = sample_resource_bundle_env.SharedLibrary('SampleBundle', sample_r
 sample_resource_bundle_env.InstallTarget(SampleBundle, 'libSampleBundle')
 
 ######################################################################
+# build hue sample bundle
+######################################################################
+
+hue_resource_bundle_env = resource_container_env.Clone()
+hue_resource_bundle_env.AppendUnique(CCFLAGS = ['-fPIC'])
+
+HUE_RESOURCE_BUNDLE_DIR = 'examples/HueSampleBundle/'
+hue_resource_bundle_env.AppendUnique(CPPPATH = [
+		HUE_RESOURCE_BUNDLE_DIR + 'include',
+		'include/'
+		])		
+		
+hue_resource_bundle_env.PrependUnique(LIBS = ['curl'])
+		
+hue_resource_bundle_src = [ Glob(HUE_RESOURCE_BUNDLE_DIR + 'src/*.cpp'), Glob('src/*.cpp')]
+
+HueBundle = hue_resource_bundle_env.SharedLibrary('HueBundle', hue_resource_bundle_src)
+hue_resource_bundle_env.InstallTarget(HueBundle, 'libHueBundle')
+
+
+######################################################################
 # Build Container Test
 ######################################################################
 containertest_env = resource_container_env.Clone();

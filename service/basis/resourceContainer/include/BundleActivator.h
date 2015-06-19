@@ -23,19 +23,23 @@
 
 #include "ResourceContainerBundleAPI.h"
 
-using namespace RC;
+using namespace OIC::Service;
 
-namespace RC
+namespace OIC
 {
-    class BundleActivator
+    namespace Service
     {
+        class BundleActivator
+        {
 
         public:
             BundleActivator();
             virtual ~BundleActivator();
-            virtual void activateBundle(ResourceContainerBundleAPI *resourceContainer, std::string bundleId);
+            virtual void activateBundle(ResourceContainerBundleAPI *resourceContainer,
+                    std::string bundleId);
             virtual void deactivateBundle();
-    };
+        };
+    }
 }
 
 #endif /* RESOURCEBUNDLE_H_ */

@@ -20,15 +20,20 @@
 
 #include "SoftSensorResource.h"
 
-using namespace RC;
-SoftSensorResource::SoftSensorResource()
+using namespace OIC::Service;
+namespace OIC
 {
+    namespace Service
+    {
+        SoftSensorResource::SoftSensorResource()
+        {
 
+        }
+
+        SoftSensorResource::~SoftSensorResource()
+        {
+
+        }
+    }
 }
-
-SoftSensorResource::~SoftSensorResource()
-{
-
-}
-
 

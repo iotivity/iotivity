@@ -22,24 +22,16 @@
 #include "Configuration.h"
 
 
+namespace OIC{
+    namespace Service{
+        BundleResource::BundleResource()
+        {
+            cout << "BundleResource constructor called\n";
+        }
 
-BundleResource::BundleResource()
-{
+        BundleResource::~BundleResource()
+        {
 
+        }
+    }
 }
-
-BundleResource::~BundleResource()
-{
-
-}
-
-Configuration::resourceInfo BundleResource::getResourceInfo()
-{
-    return m_resourceInfo;
-}
-
-void BundleResource::setResourceInfo(Configuration::resourceInfo resourceInfo)
-{
-    m_resourceInfo = resourceInfo;
-}
-

@@ -3,7 +3,7 @@
     <bundle>
         <id>oic.bundle.discomfortIndexSensor</id>
         <path>libSampleBundle.so</path>
-        <version>libSampleBundle.so</version>
+        <version>1.0.0</version>
         <resources>
             <resourceInfo>
                 <name>DiscomfortIndexSensor1</name>
@@ -42,6 +42,18 @@
                   <input>Thing_TempHumSensor</input>
                   <input>Thing_TempHumSensor1</input>
                 </inputs>
+            </resourceInfo>       
+        </resources>
+    </bundle>
+    <bundle>
+        <id>oic.bundle.hueSample</id>
+        <path>libHueBundle.so</path>
+        <version>1.0.0</version>
+        <resources>
+            <resourceInfo>
+                <name>light</name>
+				<resourceType>oic.light.control</resourceType>
+                <address>http://192.168.0.2/api/newdeveloper/lights/1</address>
             </resourceInfo>       
         </resources>
     </bundle>

@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2014 Samsung Electronics All Rights Reserved.
+ * Copyright 2015 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -49,7 +49,7 @@ DiscomfortIndexSensor::DiscomfortIndexSensor()
     m_result.m_discomfortIndex = "";
 }
 
-int DiscomfortIndexSensor::runLogic(std::vector< RC::SoftSensorResource::SensorData > &sensorData)
+int DiscomfortIndexSensor::runLogic(std::vector< OIC::Service::SoftSensorResource::SensorData > &sensorData)
 {
     std::cout << "[DiscomfortIndexSensor] DiscomfortIndexSensor::" << __func__ << " is called."
               << std::endl;
@@ -75,7 +75,7 @@ int DiscomfortIndexSensor::runLogic(std::vector< RC::SoftSensorResource::SensorD
 /**
  * Get Input data (temperature, humidity) using resource Client of Iotivity base.
  */
-DIResult DiscomfortIndexSensor::getInput(std::vector< RC::SoftSensorResource::SensorData >
+DIResult DiscomfortIndexSensor::getInput(std::vector< OIC::Service::SoftSensorResource::SensorData >
         &sensorData, InValue *data)
 {
     int result_flag = 0;
@@ -208,10 +208,10 @@ DIResult DiscomfortIndexSensor::makeDiscomfortIndex(InValue *data)
     return SUCCESS;
 }
 
-RC::SoftSensorResource::SensorData DiscomfortIndexSensor::setOutput(int property_count,
+OIC::Service::SoftSensorResource::SensorData DiscomfortIndexSensor::setOutput(int property_count,
         InValue *data)
 {
-    RC::SoftSensorResource::SensorData out;
+    OIC::Service::SoftSensorResource::SensorData out;
 
     std::map < std::string, std::string > output_property;
 

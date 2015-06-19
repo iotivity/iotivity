@@ -18,36 +18,33 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef BUNDLERESOURCE_H_
-#define BUNDLERESOURCE_H_
+#ifndef HUELIGHT_H_
+#define HUELIGHT_H_
 
-#include <map>
-#include <vector>
-#include <string>
+#include "ProtocolBridgeResource.h"
+#include "HueConnector.h"
 
-using namespace std;
+using namespace OIC::Service;
 
 namespace OIC
 {
     namespace Service
     {
-        class BundleResource
+        class HueLight: public ProtocolBridgeResource
         {
-        public:
-            BundleResource();
-            virtual ~BundleResource();
-
-            // TODO use type variant mechanism
-            virtual void getAttribute(string attributeName) = 0;
-            virtual void setAttribute(string attributeName, string value) = 0;
-            virtual void initAttributes() = 0;
 
         public:
-            string m_name, m_uri, m_resourceType, m_address;
-            map< string, vector< map< string, string > > > m_mapResourceProperty;
-            map< string, string > m_mapAttributes;
+            HueLight();
+            HueLight(HueConnector* connector, std::string address);
+            virtual ~HueLight();
+            void getAttribute(string attributeName);
+            void setAttribute(string attributeName, string value);
+            virtual void initAttributes();
+        private:
+            std::string m_address;
+            HueConnector* m_connector;
         };
     }
 }
 
-#endif
+#endif /* HUEGATEWAYCLIENT_H_ */

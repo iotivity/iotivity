@@ -22,8 +22,9 @@
 #include "BundleInfo.h"
 #include "oc_logger.hpp"
 
-using namespace RC;
+using namespace OIC::Service;
 using OC::oc_log_stream;
+
 
 /* Annother way to create a context: */
 auto info_logger = []() -> boost::iostreams::stream<OC::oc_log_stream> &
@@ -49,3 +50,4 @@ int main()
         ;
     }
 }
+

@@ -20,19 +20,20 @@
 
 #include "ResourceContainerBundleAPI.h"
 
-using namespace RC;
+using namespace OIC::Service;
 
-namespace RC
-{
+namespace OIC{
+    namespace Service{
 
-    ResourceContainerBundleAPI::ResourceContainerBundleAPI()
-    {
+        ResourceContainerBundleAPI::ResourceContainerBundleAPI()
+        {
+
+        }
+
+        ResourceContainerBundleAPI::~ResourceContainerBundleAPI()
+        {
+
+        }
 
     }
-
-    ResourceContainerBundleAPI::~ResourceContainerBundleAPI()
-    {
-
-    }
-
 }

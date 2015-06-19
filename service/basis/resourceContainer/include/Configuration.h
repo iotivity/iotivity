@@ -31,22 +31,23 @@
 #include "ResourceContainer.h"
 #include "BundleInfo.h"
 
-using namespace RC;
+using namespace OIC::Service;
 
-namespace RC
+namespace OIC
 {
-
-
-    class Configuration
+    namespace Service
     {
+        class Configuration
+        {
         public:
-            typedef vector<std::map <std::string, std::string>> configInfo;
+            typedef vector< std::map< std::string, std::string > > configInfo;
             struct resourceInfo
             {
                 std::string name;
                 std::string uri;
                 std::string resourceType;
-                std::map < std::string, std::vector< std::map< std::string, std::string > > > resourceProperty;
+                std::string address;
+                std::map< std::string, std::vector< std::map< std::string, std::string > > > resourceProperty;
             };
 
             Configuration();
@@ -56,7 +57,8 @@ namespace RC
 
             void getCommonConfiguration(configInfo *configOutput);
             void getBundleConfiguration(std::string bundleId, configInfo *configOutput);
-            void getResourceConfiguration(std::string bundleId, std::vector<resourceInfo> *configOutput);
+            void getResourceConfiguration(std::string bundleId,
+                    std::vector< resourceInfo > *configOutput);
             void getConfiguredBundles(configInfo *configOutput);
 
         private:
@@ -64,7 +66,8 @@ namespace RC
             void getCurrentPath(std::string *path);
 
             string m_pathConfigFile, m_configFile;
-    };
+        };
+    }
 }
 
 #endif

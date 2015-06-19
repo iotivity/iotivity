@@ -23,11 +23,7 @@
 DiscomfortIndexSensorResource::DiscomfortIndexSensorResource()
 {
     m_pDiscomfortIndexSensor = new DiscomfortIndexSensor();
-
-    m_mapAttributes.insert(std::pair<string, string>("temperature", "23"));
-    m_mapAttributes.insert(std::pair<string, string>("humidity", "40"));
-    m_mapAttributes.insert(std::pair<string, string>("discomfortIndex", "5"));
-
+    initAttributes();
 }
 
 DiscomfortIndexSensorResource::~DiscomfortIndexSensorResource()
@@ -35,18 +31,26 @@ DiscomfortIndexSensorResource::~DiscomfortIndexSensorResource()
     delete m_pDiscomfortIndexSensor;
 }
 
-void DiscomfortIndexSensorResource::onGetRequest(std::map <std::string, std::string> *attributes)
+void DiscomfortIndexSensorResource::initAttributes()
 {
-    // TODO : make m_outputs into m_mapAttributes format
-    *attributes = m_mapAttributes;
+    m_mapAttributes.insert(std::pair<string, string>("temperature", "23"));
+    m_mapAttributes.insert(std::pair<string, string>("humidity", "40"));
+    m_mapAttributes.insert(std::pair<string, string>("discomfortIndex", "5"));
 }
 
-void DiscomfortIndexSensorResource::onSetRequest(std::map <std::string, std::string> attributes)
+void DiscomfortIndexSensorResource::getAttribute(string attributeName)
 {
+    cout << "DiscomfortIndexSensorResource::getAttribute called !!" << endl;
 }
 
-void DiscomfortIndexSensorResource::onInputDataReceived(std::vector <SensorData> inputs)
+void DiscomfortIndexSensorResource::setAttribute(string attributeName, string value)
 {
-    m_vecInputs = inputs;
-    m_pDiscomfortIndexSensor->runLogic(m_vecInputs);
+    cout << "DiscomfortIndexSensorResource::setAttribute called !!" << endl;
+
+    m_mapAttributes[attributeName] = value;
+}
+
+void DiscomfortIndexSensorResource::setInputAttributes(vector < SensorData > inputs)
+{
+    m_pDiscomfortIndexSensor->runLogic(inputs);
 }

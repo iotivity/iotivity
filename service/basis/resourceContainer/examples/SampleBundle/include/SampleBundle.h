@@ -28,7 +28,7 @@
 #include "BundleActivator.h"
 #include "BundleResource.h"
 
-using namespace RC;
+using namespace OIC::Service;
 
 class SampleBundle: public BundleActivator
 {

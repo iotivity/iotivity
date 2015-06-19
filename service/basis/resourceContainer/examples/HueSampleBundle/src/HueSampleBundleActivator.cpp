@@ -18,28 +18,32 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "SampleBundle.h"
-#include "DiscomfortIndexSensorResource.h"
+#include "HueSampleBundleActivator.h"
+#include "HueLight.h"
+
+#include <algorithm>
+#include <vector>
 
 using namespace OIC::Service;
 
-SampleBundle *bundle;
+HueSampleBundleActivator *bundle;
 
-SampleBundle::SampleBundle()
+HueSampleBundleActivator::HueSampleBundleActivator()
 {
 }
 
-SampleBundle::~SampleBundle()
+HueSampleBundleActivator::~HueSampleBundleActivator()
 {
 }
 
-void SampleBundle::activateBundle(ResourceContainerBundleAPI *resourceContainer,
+void HueSampleBundleActivator::activateBundle(ResourceContainerBundleAPI *resourceContainer,
                                   std::string bundleId)
 {
-    std::cout << "SampleBundle::activateBundle called" << std::endl;
+    std::cout << "HueSampleBundle::activateBundle called" << std::endl;
 
     m_pResourceContainer = resourceContainer;
     m_bundleId = bundleId;
+    m_connector = new HueConnector();
 
     vector<Configuration::resourceInfo> resourceConfig;
 
@@ -52,9 +56,9 @@ void SampleBundle::activateBundle(ResourceContainerBundleAPI *resourceContainer,
     }
 }
 
-void SampleBundle::deactivateBundle()
+void HueSampleBundleActivator::deactivateBundle()
 {
-    std::cout << "SampleBundle::deactivateBundle called" << std::endl;
+    std::cout << "HueSampleBundle::deactivateBundle called" << std::endl;
 
     for (std::vector<BundleResource *>::iterator itor = m_vecResources.begin();
          itor != m_vecResources.end(); itor++)
@@ -63,28 +67,29 @@ void SampleBundle::deactivateBundle()
     }
 }
 
-// TODO : has to be updated for setting the info
-void SampleBundle::createResource(Configuration::resourceInfo resourceInfo)
+
+void HueSampleBundleActivator::createResource(Configuration::resourceInfo resourceInfo)
 {
-    std::cout << "SampleBundle::createResource called" << std::endl;
-    static int discomfortIndexSensorCount = 0;
-    DiscomfortIndexSensorResource *newResource = new DiscomfortIndexSensorResource();
-    if(!resourceInfo.uri.empty()){
-        newResource->m_uri = resourceInfo.uri;
-    }
-    else{
-        newResource->m_uri = "sampleBundle/discomfortIndex/" + std::to_string(discomfortIndexSensorCount++);
-    }
-    newResource->m_resourceType = resourceInfo.resourceType;
+    std::cout << "HueSampleBundle::createResource called" << std::endl;
 
-    m_pResourceContainer->registerResource(newResource);
+    if(resourceInfo.resourceType == "oic.light.control"){
+        static int lightCount = 1;
+        HueLight* hueLight = new HueLight(m_connector, resourceInfo.address);
+        resourceInfo.uri = "/hue/light/" + std::to_string(lightCount++);
+        std::cout << "Registering resource " << resourceInfo.uri << std::endl;
+        hueLight->m_uri = resourceInfo.uri;
+        hueLight->m_resourceType = resourceInfo.resourceType;
+        hueLight->m_name = resourceInfo.name;
 
-    m_vecResources.push_back(newResource);
+        m_pResourceContainer->registerResource(hueLight);
+        m_vecResources.push_back(hueLight);
+    }
 }
 
-void SampleBundle::destroyResource(BundleResource *resource)
+
+void HueSampleBundleActivator::destroyResource(BundleResource *resource)
 {
-    std::cout << "SampleBundle::destroyResource called" << std::endl;
+    std::cout << "HueSampleBundle::destroyResource called" << std::endl;
 
     std::vector <BundleResource *>::iterator itor;
 
@@ -102,7 +107,7 @@ void SampleBundle::destroyResource(BundleResource *resource)
 extern "C" void externalActivateBundle(ResourceContainerBundleAPI *resourceContainer,
                                        std::string bundleId)
 {
-    bundle = new SampleBundle();
+    bundle = new HueSampleBundleActivator();
     bundle->activateBundle(resourceContainer, bundleId);
 }
 

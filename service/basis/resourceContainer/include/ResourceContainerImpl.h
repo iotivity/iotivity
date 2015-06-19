@@ -25,13 +25,19 @@
 #include "ResourceContainerBundleAPI.h"
 #include "BundleInfoInternal.h"
 
-using namespace RC;
+#include "PrimitiveRequest.h"
+#include "PrimitiveResponse.h"
+#include "PrimitiveServerResource.h"
 
-namespace RC
+using namespace OIC::Service;
+
+namespace OIC
 {
-
-    class ResourceContainerImpl: public ResourceContainer, public ResourceContainerBundleAPI
+    namespace Service
     {
+
+        class ResourceContainerImpl: public ResourceContainer, public ResourceContainerBundleAPI
+        {
         public:
             ResourceContainerImpl();
             virtual ~ResourceContainerImpl();
@@ -56,15 +62,24 @@ namespace RC
 
             void getCommonConfiguration(configInfo *configOutput);
             void getBundleConfiguration(std::string bundleId, configInfo *configOutput);
-            void getResourceConfiguration(std::string bundleId, std::vector<resourceInfo> *configOutput);
+            void getResourceConfiguration(std::string bundleId,
+                    std::vector< resourceInfo > *configOutput);
+
+            PrimitiveGetResponse getRequestHandler(const PrimitiveRequest &request,
+                    const ResourceAttributes &attributes);
+
+            PrimitiveSetResponse setRequestHandler(const PrimitiveRequest &request,
+                    const ResourceAttributes &attributes);
 
             static ResourceContainerImpl *getImplInstance();
 
         private:
-            vector<BundleInfoInternal * > m_bundles;
+            vector< BundleInfoInternal * > m_bundles;
+            map< std::string, PrimitiveServerResource::Ptr > m_mapServers; //<uri, serverPtr>
+            map< std::string, BundleResource * > m_mapResources; //<uri, resourcePtr>
             string m_configFile;
             Configuration *m_config;
-    };
+        };
+    }
 }
-
 #endif
