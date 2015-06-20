@@ -2508,12 +2508,12 @@ OCStackResult OCStopPresence()
     if(presenceResource.handle)
     {
         ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
-    }
 
     // make resource inactive
     result = OCChangeResourceProperty(
             &(((OCResource *) presenceResource.handle)->resourceProperties),
             OC_ACTIVE, 0);
+    }
 
     if(result != OC_STACK_OK)
     {
