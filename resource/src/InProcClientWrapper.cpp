@@ -347,8 +347,53 @@ namespace OC
         return OC_STACK_DELETE_TRANSACTION;
     }
 
+    OCStackResult InvokeDoResource(OCDoHandle *handle,
+                                    OCMethod method,
+                                    const char *requestUri,
+                                    const OCDevAddr *destination,
+                                    const char *request,
+                                    OCConnectivityType connectivityType,
+                                    OCQualityOfService qos,
+                                    OCCallbackData *cbData,
+                                    OCHeaderOption *options,
+                                    uint8_t numOptions,
+                                    bool useHostString)
+    {
+        if (useHostString)
+        {
+            ostringstream host;   
+            host << destination << requestUri;
+            connectivityType = (OCConnectivityType)
+                                ((destination->adapter << CT_ADAPTER_SHIFT)
+                                | (destination->flags & CT_MASK_FLAGS));
+            return OCDoResource(handle,
+                                method,
+                                host.str().c_str(),
+                                nullptr,
+                                request,
+                                connectivityType,
+                                qos,
+                                cbData,
+                                options,
+                                numOptions);
+        }
+        else
+        {
+            return OCDoResource(handle,
+                                method,
+                                requestUri,
+                                destination,
+                                request,
+                                connectivityType,
+                                qos,
+                                cbData,
+                                options,
+                                numOptions);
+        }
+    }
+
     OCStackResult InProcClientWrapper::GetResourceRepresentation(
-        const OCDevAddr& devAddr,
+        const OCDevAddr& devAddr, bool useHostString,
         const std::string& resourceUri,
         const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
         GetCallback& callback, QualityOfService QoS)
@@ -459,7 +504,7 @@ namespace OC
     }
 
     OCStackResult InProcClientWrapper::PostResourceRepresentation(
-        const OCDevAddr& devAddr,
+        const OCDevAddr& devAddr, bool useHostString,
         const std::string& uri,
         const OCRepresentation& rep,
         const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
@@ -505,7 +550,7 @@ namespace OC
     }
 
     OCStackResult InProcClientWrapper::PutResourceRepresentation(
-        const OCDevAddr& devAddr,
+        const OCDevAddr& devAddr, bool useHostString,
         const std::string& uri,
         const OCRepresentation& rep,
         const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
@@ -568,7 +613,7 @@ namespace OC
     }
 
     OCStackResult InProcClientWrapper::DeleteResource(
-        const OCDevAddr& devAddr,
+        const OCDevAddr& devAddr, bool useHostString,
         const std::string& uri,
         const HeaderOptions& headerOptions, DeleteCallback& callback, QualityOfService QoS)
     {
@@ -643,7 +688,7 @@ namespace OC
     }
 
     OCStackResult InProcClientWrapper::ObserveResource(ObserveType observeType, OCDoHandle* handle,
-        const OCDevAddr& devAddr,
+        const OCDevAddr& devAddr, bool useHostString,
         const std::string& uri,
         const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
         ObserveCallback& callback, QualityOfService QoS)
