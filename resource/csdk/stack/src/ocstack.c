@@ -421,6 +421,10 @@ static OCStackResult OCCreateEndpoint(OCDevAddr *devAddr, CAEndpoint_t **endpoin
     }
 
     ep->adapter = (CATransportAdapter_t)devAddr->adapter;
+    if (!ep->adapter)
+    {
+        ep->adapter = CA_ADAPTER_IP;
+    }
     ep->flags = OCToCATransportFlags(devAddr->flags);
     strncpy(ep->addr, devAddr->addr, MAX_ADDR_STR_SIZE_CA);
     ep->port = devAddr->port;
@@ -463,9 +467,14 @@ OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t stat
         observer = GetObserverUsingToken (token, tokenLength);
         if(observer)
         {
-            result = FormOCEntityHandlerRequest(&ehRequest, (OCRequestHandle) NULL,
-                    OC_REST_NOMETHOD, (OCResourceHandle) NULL, NULL, NULL, 0, 0,
-                    NULL, OC_OBSERVE_DEREGISTER, observer->observeId);
+            result = FormOCEntityHandlerRequest(&ehRequest,
+                                                (OCRequestHandle)NULL,
+                                                OC_REST_NOMETHOD,
+                                                &observer->devAddr,
+                                                (OCResourceHandle)NULL,
+                                                NULL, NULL, 0, 0, NULL,
+                                                OC_OBSERVE_DEREGISTER,
+                                                observer->observeId);
             if(result != OC_STACK_OK)
             {
                 return result;
@@ -508,9 +517,14 @@ OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t stat
         {
             if(observer->failedCommCount >= MAX_OBSERVER_FAILED_COMM)
             {
-                result = FormOCEntityHandlerRequest(&ehRequest, (OCRequestHandle) NULL,
-                        OC_REST_NOMETHOD, (OCResourceHandle) NULL, NULL, NULL, 0, 0,
-                        NULL, OC_OBSERVE_DEREGISTER, observer->observeId);
+                result = FormOCEntityHandlerRequest(&ehRequest,
+                                                    (OCRequestHandle)NULL,
+                                                    OC_REST_NOMETHOD,
+                                                    &observer->devAddr,
+                                                    (OCResourceHandle)NULL,
+                                                    NULL, NULL, 0, 0, NULL,
+                                                    OC_OBSERVE_DEREGISTER,
+                                                    observer->observeId);
                 if(result != OC_STACK_OK)
                 {
                     return OC_STACK_ERROR;
@@ -737,18 +751,38 @@ static int FormCanonicalPresenceUri(const CAEndpoint_t *endpoint, char *resource
     VERIFY_NON_NULL(presenceUri, FATAL, OC_STACK_INVALID_PARAM);
 
     const char *format;
+    CAEndpoint_t *ep = (CAEndpoint_t *)endpoint;
 
-    if ((endpoint->flags & CA_IPV6) && !(endpoint->flags & CA_IPV4))
+    if (ep->adapter == CA_ADAPTER_IP)
     {
-        format = "coap://[%s]:%u%s";
-    }
-    else
-    {
-        format = "coap://%s:%u%s";
+        if (ep->flags & CA_IPV6)
+        {
+            if ('\0' == ep->addr[0])  // multicast
+            {
+                return snprintf(presenceUri, CA_MAX_URI_LENGTH, OC_RSRVD_PRESENCE_URI);
+            }
+            else
+            {
+                format = "coap://[%s]:%u%s";
+            }
+        }
+        else
+        {
+            if ('\0' == ep->addr[0])  // multicast
+            {
+                OICStrcpy(ep->addr, sizeof(ep->addr), OC_MULTICAST_IP);
+                ep->port = OC_MULTICAST_PORT;
+            }
+            format = "coap://%s:%u%s";
+        }
+        return snprintf(presenceUri, CA_MAX_URI_LENGTH, format, ep->addr,
+                        ep->port, OC_RSRVD_PRESENCE_URI);
     }
 
-    return snprintf(presenceUri, CA_MAX_URI_LENGTH, format, endpoint->addr,
-                                               endpoint->port, OC_RSRVD_PRESENCE_URI);
+    // might work for other adapters (untested, but better than nothing)
+    format = "coap://%s%s";
+    return snprintf(presenceUri, CA_MAX_URI_LENGTH, format, ep->addr,
+                    OC_RSRVD_PRESENCE_URI);
 }
 
 
@@ -776,6 +810,7 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
         return OC_STACK_ERROR;
     }
 
+    // check for unicast presence
     uriLen = FormCanonicalPresenceUri(endpoint, OC_RSRVD_PRESENCE_URI, presenceUri);
     if (uriLen < 0 || uriLen >= sizeof (presenceUri))
     {
@@ -789,17 +824,12 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
     }
     else
     {
-        CAEndpoint_t endpointMulticast;
-        endpointMulticast.flags = endpoint->flags;
-        OICStrcpy(endpointMulticast.addr, sizeof(endpointMulticast.addr), OC_MULTICAST_IP);
-        endpointMulticast.port = OC_MULTICAST_PORT;
+        // check for multiicast presence
+        CAEndpoint_t ep = { endpoint->adapter, endpoint->flags };
+        OICStrcpy(ep.addr, sizeof(ep.addr), OC_MULTICAST_IP);
+        ep.port = OC_MULTICAST_PORT;
 
-        uriLen = FormCanonicalPresenceUri(&endpointMulticast, OC_RSRVD_PRESENCE_URI, presenceUri);
-
-        if (uriLen < 0 || uriLen >= sizeof (presenceUri))
-        {
-            return OC_STACK_INVALID_URI;
-        }
+        uriLen = FormCanonicalPresenceUri(&ep, OC_RSRVD_PRESENCE_URI, presenceUri);
 
         cbNode = GetClientCB(NULL, 0, NULL, presenceUri);
         if (cbNode)
@@ -1526,8 +1556,25 @@ OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
     }
     myStackMode = mode;
 
+    if (mode == OC_CLIENT || mode == OC_CLIENT_SERVER)
+    {
+        caglobals.client = true;
+    }
+    if (mode == OC_SERVER || mode == OC_CLIENT_SERVER)
+    {
+        caglobals.server = true;
+    }
+
     caglobals.serverFlags = (CATransportFlags_t)serverFlags;
+    if (!(caglobals.serverFlags & CA_IPFAMILY_MASK))
+    {
+        caglobals.serverFlags = (CATransportFlags_t)(caglobals.serverFlags|CA_IPV4);
+    }
     caglobals.clientFlags = (CATransportFlags_t)clientFlags;
+    if (!(caglobals.clientFlags & CA_IPFAMILY_MASK))
+    {
+        caglobals.clientFlags = (CATransportFlags_t)(caglobals.clientFlags|CA_IPV4);
+    }
 
     defaultDeviceHandler = NULL;
     defaultDeviceHandlerCallbackParameter = NULL;

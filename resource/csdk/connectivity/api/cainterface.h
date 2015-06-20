@@ -220,14 +220,14 @@ CAResult_t CASendNotification(const CAEndpoint_t *object,
  * @param   interestedNetwork   [IN] Connectivity Type enum
  * @return  #CA_STATUS_OK or #CA_NOT_SUPPORTED or #CA_STATUS_FAILED or #CA_NOT_SUPPORTED
  */
-CAResult_t CASelectNetwork(const uint32_t interestedNetwork);
+CAResult_t CASelectNetwork(CATransportAdapter_t interestedNetwork);
 
 /**
  * @brief   Select network to unuse
  * @param   nonInterestedNetwork    [IN] Connectivity Type enum
  * @return  #CA_STATUS_OK or #CA_NOT_SUPPORTED or #CA_STATUS_FAILED
  */
-CAResult_t CAUnSelectNetwork(const uint32_t nonInterestedNetwork);
+CAResult_t CAUnSelectNetwork(CATransportAdapter_t nonInterestedNetwork);
 
 /**
  * @brief   Get network information

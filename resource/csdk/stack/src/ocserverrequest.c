@@ -302,6 +302,7 @@ OCStackResult FormOCEntityHandlerRequest(
         OCEntityHandlerRequest * entityHandlerRequest,
         OCRequestHandle request,
         OCMethod method,
+        OCDevAddr *endpoint,
         OCResourceHandle resource,
         char * queryBuf,
         uint8_t * payload,
@@ -316,6 +317,7 @@ OCStackResult FormOCEntityHandlerRequest(
         entityHandlerRequest->resource = (OCResourceHandle) resource;
         entityHandlerRequest->requestHandle = request;
         entityHandlerRequest->method = method;
+        entityHandlerRequest->devAddr = *endpoint;
         entityHandlerRequest->query = queryBuf;
         entityHandlerRequest->obsInfo.action = observeAction;
         entityHandlerRequest->obsInfo.obsId = observeID;

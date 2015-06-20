@@ -149,7 +149,7 @@ void DeleteDeviceInfo();
  */
 OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
                                            OCDiscoveryPayload* payload,
-                                           CATransportAdapter_t adapter);
+                                           OCDevAddr *endpoint);
 
 /**
  * A helper function that Maps an @ref OCEntityHandlerResult type to an

@@ -34,7 +34,7 @@
 #include "caadapternetdtls.h"
 #endif
 
-CAGlobals_t caglobals;
+CAGlobals_t caglobals = { 0 };
 
 #define TAG "CA_CONN_MGR"
 
@@ -227,7 +227,7 @@ CAResult_t CASendResponse(const CAEndpoint_t *object, const CAResponseInfo_t *re
 
 }
 
-CAResult_t CASelectNetwork(const uint32_t interestedNetwork)
+CAResult_t CASelectNetwork(CATransportAdapter_t interestedNetwork)
 {
     OIC_LOG_V(DEBUG, TAG, "Selected network : %d", interestedNetwork);
 
@@ -261,7 +261,7 @@ CAResult_t CASelectNetwork(const uint32_t interestedNetwork)
     return res;
 }
 
-CAResult_t CAUnSelectNetwork(const uint32_t nonInterestedNetwork)
+CAResult_t CAUnSelectNetwork(CATransportAdapter_t nonInterestedNetwork)
 {
     OIC_LOG_V(DEBUG, TAG, "unselected network : %d", nonInterestedNetwork);
 

@@ -67,31 +67,24 @@ OCEntityHandlerResult defaultResourceEHandler(OCEntityHandlerFlag flag,
 }
 
 /* This method will retrieve the port at which the secure resource is hosted */
-static OCStackResult GetSecurePortInfo(CATransportAdapter_t connType, uint16_t *port)
+static OCStackResult GetSecurePortInfo(OCDevAddr *endpoint, uint16_t *port)
 {
-    CAEndpoint_t* info = NULL;
-    uint32_t size = 0;
-    OCStackResult ret = OC_STACK_ERROR;
+    uint16_t p = 0;
 
-    CAResult_t caResult = CAGetNetworkInformation(&info, &size);
-    if ((caResult == CA_STATUS_OK) && info && size)
+    if (endpoint->adapter == OC_ADAPTER_IP)
     {
-        while (size--)
+        if (endpoint->flags & OC_IP_USE_V6)
         {
-            if ((info[size].flags & CA_SECURE) && info[size].adapter == connType)
-            {
-                if (info[size].adapter == CA_ADAPTER_IP)
-                {
-                    *port = info[size].port;
-                    ret = OC_STACK_OK;
-                    break;
-                }
-            }
+            p = caglobals.ip.u6s.port;
+        }
+        else if (endpoint->flags & OC_IP_USE_V4)
+        {
+            p = caglobals.ip.u4s.port;
         }
     }
 
-    OICFree(info);
-    return ret;
+    *port = p;
+    return OC_STACK_OK;
 }
 
 /*
@@ -210,7 +203,7 @@ static OCStackResult getQueryParamsForFiltering (OCVirtualResources uri, char *q
 }
 
 OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
-                        OCDiscoveryPayload* payload, CATransportAdapter_t adapter )
+                        OCDiscoveryPayload *payload, OCDevAddr *devAddr)
 {
     if (!resourcePtr || !payload)
     {
@@ -219,7 +212,7 @@ OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
     uint16_t port = 0;
     if (resourcePtr->resourceProperties & OC_SECURE)
     {
-       if(GetSecurePortInfo (adapter, &port) != OC_STACK_OK)
+       if (GetSecurePortInfo(devAddr, &port) != OC_STACK_OK)
        {
            port = 0;
        }
@@ -523,7 +516,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
             {
                 discoveryResult = BuildVirtualResourceResponse(resource,
                     (OCDiscoveryPayload*)payload,
-                    (CATransportAdapter_t)request->devAddr.adapter);
+                    &request->devAddr);
             }
         }
     }
@@ -599,12 +592,17 @@ HandleDefaultDeviceEntityHandler (OCServerRequest *request)
     OCEntityHandlerRequest ehRequest = {};
 
     OC_LOG(INFO, TAG, PCF("Entering HandleResourceWithDefaultDeviceEntityHandler"));
-    result = FormOCEntityHandlerRequest(&ehRequest, (OCRequestHandle) request,
-            request->method, (OCResourceHandle) NULL, request->query,
-            request->payload, request->payloadSize,
-            request->numRcvdVendorSpecificHeaderOptions,
-            request->rcvdVendorSpecificHeaderOptions,
-            (OCObserveAction)request->observationOption, (OCObservationId)0);
+    result = FormOCEntityHandlerRequest(&ehRequest,
+                                        (OCRequestHandle) request,
+                                        request->method,
+                                        &request->devAddr,
+                                        (OCResourceHandle) NULL, request->query,
+                                        request->payload,
+                                        request->payloadSize,
+                                        request->numRcvdVendorSpecificHeaderOptions,
+                                        request->rcvdVendorSpecificHeaderOptions,
+                                        (OCObserveAction)request->observationOption,
+                                        (OCObservationId)0);
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
     // At this point we know for sure that defaultDeviceHandler exists
@@ -643,11 +641,18 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
 
     OC_LOG(INFO, TAG, PCF("Entering HandleResourceWithEntityHandler"));
 
-    result = FormOCEntityHandlerRequest(&ehRequest, (OCRequestHandle) request,
-            request->method, (OCResourceHandle) resource, request->query,
-            request->payload, request->payloadSize, request->numRcvdVendorSpecificHeaderOptions,
-            request->rcvdVendorSpecificHeaderOptions,
-            (OCObserveAction)request->observationOption, 0);
+    result = FormOCEntityHandlerRequest(&ehRequest,
+                                        (OCRequestHandle)request,
+                                        request->method,
+                                        &request->devAddr,
+                                        (OCResourceHandle)resource,
+                                        request->query,
+                                        request->payload,
+                                        request->payloadSize,
+                                        request->numRcvdVendorSpecificHeaderOptions,
+                                        request->rcvdVendorSpecificHeaderOptions,
+                                        (OCObserveAction)request->observationOption,
+                                        0);
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
     if(ehRequest.obsInfo.action == OC_OBSERVE_NO_OPTION)
@@ -750,11 +755,18 @@ HandleCollectionResourceDefaultEntityHandler (OCServerRequest *request,
     OCStackResult result = OC_STACK_ERROR;
     OCEntityHandlerRequest ehRequest = {};
 
-    result = FormOCEntityHandlerRequest(&ehRequest, (OCRequestHandle) request,
-            request->method, (OCResourceHandle) resource, request->query,
-            request->payload, request->payloadSize, request->numRcvdVendorSpecificHeaderOptions,
-            request->rcvdVendorSpecificHeaderOptions,
-            (OCObserveAction)request->observationOption, (OCObservationId) 0);
+    result = FormOCEntityHandlerRequest(&ehRequest,
+                                        (OCRequestHandle)request,
+                                        request->method,
+                                        &request->devAddr,
+                                        (OCResourceHandle)resource,
+                                        request->query,
+                                        request->payload,
+                                        request->payloadSize,
+                                        request->numRcvdVendorSpecificHeaderOptions,
+                                        request->rcvdVendorSpecificHeaderOptions,
+                                        (OCObserveAction)request->observationOption,
+                                        (OCObservationId)0);
     if(result != OC_STACK_OK)
     {
         return result;

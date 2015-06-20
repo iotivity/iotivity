@@ -178,4 +178,17 @@ bool u_arraylist_contains(const u_arraylist_t *list,const void *data)
     return false;
 }
 
-
+// Assumes elements are shallow (have no pointers to allocated memory)
+void u_arraylist_destroy(u_arraylist_t *list)
+{
+    if (!list)
+    {
+        return;
+    }
+    uint32_t len = u_arraylist_length(list);
+    for (uint32_t i = 0; i < len; i++)
+    {
+        OICFree(u_arraylist_get(list, i));
+    }
+    (void)u_arraylist_free(&list);
+}

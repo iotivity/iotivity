@@ -168,7 +168,7 @@ TEST_F(CATests, TerminateTest)
 // check return value
 TEST(StartListeningServerTest, DISABLED_TC_03_Positive_01)
 {
-    CASelectNetwork(CA_IPV4);
+    CASelectNetwork(CA_ADAPTER_IP);
     EXPECT_EQ(CA_STATUS_OK, CAStartListeningServer());
 }
 
@@ -438,14 +438,14 @@ CAResult_t checkSelectNetwork()
 TEST_F(CATests, SelectNetworkTestBad)
 {
     //Select disable network
-    EXPECT_EQ(CA_NOT_SUPPORTED, CASelectNetwork(1000));
+    EXPECT_EQ(CA_NOT_SUPPORTED, CASelectNetwork((CATransportAdapter_t)1000));
 }
 
 // check return value when selected network is disable
 TEST_F(CATests, UnSelectNetworkTest)
 {
     //UnSelect disable network
-    EXPECT_EQ(CA_STATUS_FAILED, CAUnSelectNetwork(1000));
+    EXPECT_EQ(CA_STATUS_FAILED, CAUnSelectNetwork((CATransportAdapter_t)1000));
 }
 
 // CAHandlerRequestResponse TC

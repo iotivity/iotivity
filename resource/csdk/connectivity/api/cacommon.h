@@ -134,6 +134,8 @@ typedef enum
     // IPv4 & IPv6 autoselection is the default
     CA_IPV6            = (1 << 5),   // IP adapter only
     CA_IPV4            = (1 << 6),   // IP adapter only
+    // Indication that a message was received by multicast.
+    CA_MULTICAST       = (1 << 7),
     // Link-Local multicast is the default multicast scope for IPv6.
     // These correspond in both value and position to the IPv6 address bits.
     CA_SCOPE_INTERFACE = 0x1, // IPv6 Interface-Local scope
@@ -144,6 +146,9 @@ typedef enum
     CA_SCOPE_ORG       = 0x8, // IPv6 Organization-Local scope
     CA_SCOPE_GLOBAL    = 0xE, // IPv6 Global scope
 } CATransportFlags_t;
+
+#define CA_IPFAMILY_MASK (CA_IPV6|CA_IPV4)
+#define CA_SCOPE_MASK 0xf     // mask scope bits above
 
 /**
  * @enum CANetworkStatus_t
@@ -348,8 +353,44 @@ typedef struct
  */
 typedef struct
 {
-    CATransportFlags_t serverFlags;
+    int fd;
+    uint16_t port;
+} CASocket_t;
+
+typedef struct
+{
     CATransportFlags_t clientFlags;
+    CATransportFlags_t serverFlags;
+    bool client;
+    bool server;
+
+    struct sockets
+    {
+        void *threadpool;   // threadpool between Initialize and Start
+        CASocket_t u6;      // unicast   IPv6
+        CASocket_t u6s;     // unicast   IPv6 secure
+        CASocket_t u4;      // unicast   IPv4
+        CASocket_t u4s;     // unicast   IPv4 secure
+        CASocket_t m6;      // multicast IPv6
+        CASocket_t m6s;     // multicast IPv6 secure
+        CASocket_t m4;      // multicast IPv4
+        CASocket_t m4s;     // multicast IPv4 secure
+        int netlinkFd;      // netlink
+        int shutdownFds[2]; // shutdown pipe
+        int selectTimeout;  // in seconds
+        int maxfd;          // highest fd (for select)
+        int numInterfaces;  // number of active interfaces
+        bool started;       // the IP adapter has started
+        bool terminate;     // the IP adapter needs to stop
+        bool ipv6enabled;   // IPv6 enabled by OCInit flags
+        bool ipv4enabled;   // IPv4 enabled by OCInit flags
+    } ip;
+
+    struct calayer
+    {
+        CATransportFlags_t previousRequestFlags; // address family filtering
+        uint16_t previousRequestMessageId;       // address family filtering
+    } ca;
 } CAGlobals_t;
 
 extern CAGlobals_t caglobals;

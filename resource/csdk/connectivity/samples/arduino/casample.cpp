@@ -622,7 +622,7 @@ void UnselectNetwork()
     {
         g_isLeSelected = false;
     }
-    CAUnSelectNetwork(1 << number);
+    CAUnSelectNetwork((CATransportAdapter_t)(1 << number));
     Serial.println("Terminate");
     CATerminate();
     Serial.println("============");

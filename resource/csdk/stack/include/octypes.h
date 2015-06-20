@@ -158,6 +158,8 @@ typedef enum
     OC_IP_USE_V6       = (1 << 5),   // IP adapter only
     OC_IP_USE_V4       = (1 << 6),   // IP adapter only
 
+    OC_RESERVED1       = (1 << 7),   // internal use only
+
     // Link-Local multicast is the default multicast scope for IPv6.
     // These are placed here to correspond to the IPv6 multicast address bits.
     OC_SCOPE_INTERFACE = 0x1, // IPv6 Interface-Local scope (loopback)
@@ -171,6 +173,7 @@ typedef enum
 
 #define OC_MASK_SCOPE    (0x000F)
 #define OC_MASK_MODS     (0x0FF0)
+#define OC_MASK_FAMS     (OC_IP_USE_V6|OC_IP_USE_V4)
 
 /*
  * endpoint identity
@@ -667,6 +670,8 @@ typedef struct
     OCRequestHandle requestHandle;
     // the REST method retrieved from received request PDU
     OCMethod method;
+    // description of endpoint that sent the request
+    OCDevAddr devAddr;
     // resource query send by client
     char * query;
     // Information associated with observation - valid only when OCEntityHandler

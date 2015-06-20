@@ -239,8 +239,7 @@ HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest, uint8_t filterOn, c
 
     if(ret == OC_STACK_OK)
     {
-        ret = BuildVirtualResourceResponse(collResource, payload,
-                CA_ADAPTER_IP);
+        ret = BuildVirtualResourceResponse(collResource, payload, &ehRequest->devAddr);
     }
 
     if (ret == OC_STACK_OK)
@@ -252,8 +251,7 @@ HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest, uint8_t filterOn, c
             {
                 //TODO : Add resource type filtering once collections
                 // start supporting queries.
-                ret = BuildVirtualResourceResponse(temp, payload,
-                        CA_ADAPTER_IP);
+                ret = BuildVirtualResourceResponse(temp, payload, &ehRequest->devAddr);
             }
         }
     }
@@ -287,8 +285,7 @@ HandleBatchInterface(OCEntityHandlerRequest *ehRequest)
 
     if(stackRet == OC_STACK_OK)
     {
-        stackRet = BuildVirtualResourceResponse(collResource, payload,
-                CA_ADAPTER_IP);
+        stackRet = BuildVirtualResourceResponse(collResource, payload, &ehRequest->devAddr);
     }
 
     if(stackRet == OC_STACK_OK)
@@ -492,5 +489,3 @@ OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
     }
     return result;
 }
-
-
