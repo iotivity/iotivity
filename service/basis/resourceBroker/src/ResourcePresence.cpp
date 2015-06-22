@@ -19,8 +19,10 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "ResourcePresence.h"
+#include "DeviceAssociation.h"
+#include "DevicePresence.h"
 
-ResourcePresence::ResourcePresence(PrimitiveResourcePtr pResource, BrokerCB _cb)
+ResourcePresence::ResourcePresence(PrimitiveResourcePtr pResource)
 {
     primitiveResource = pResource;
 
@@ -28,13 +30,36 @@ ResourcePresence::ResourcePresence(PrimitiveResourcePtr pResource, BrokerCB _cb)
             std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
     pTimeoutCB = std::bind(&ResourcePresence::TimeOutCB, this,
             std::placeholders::_1);
+
     requesterList
     = std::unique_ptr<std::list<BrokerRequesterInfoPtr>>(new std::list<BrokerRequesterInfoPtr>);
+
     //TODO generate Timer(if(!isTimer))
     //register pTimeroutCB
-    addBrokerRequesterCB(_cb);
+
     state = BROKER_STATE::REQUESTED;
-    this->isWithinTime = true;
+    isWithinTime = true;
+
+    mode = BROKER_MODE::NON_PRESENCE_MODE;
+    primitiveResource->requestGet(pGetCB);
+
+    registerDevicePresence();
+}
+
+void ResourcePresence::registerDevicePresence()
+{
+    // find device......
+    std::string deviceAddress = primitiveResource->getHost();
+
+    DevicePresencePtr foundDevice
+    = DeviceAssociation::getInstance()->findDevice(deviceAddress);
+
+    if(foundDevice == nullptr)
+    {
+        foundDevice = DevicePresencePtr(new DevicePresence(primitiveResource));
+        DeviceAssociation::getInstance()->addDevice(foundDevice);
+    }
+    foundDevice->addPresenceResource(this);
 }
 
 ResourcePresence::~ResourcePresence()
@@ -123,32 +148,12 @@ void ResourcePresence::GetCB(const HeaderOptions &hos, const ResponseStatement& 
     {
 
     }
+
+    if(mode == BROKER_MODE::NON_PRESENCE_MODE)
+    {
+        // TODO set timer & request get
+    }
 }
-/*
- * TODO : getCB logic is not fixed until now. below logic will be used forwarding task.
- *
- * //            if(eCode == OC_STACK_OK)
-//            {
-                OC_LOG_V(DEBUG, BROKER_TAG, "broker state :: %d",(int)state);
-                state = BROKER_STATE::ALIVE;
-                OC_LOG_V(DEBUG, BROKER_TAG, "broker state changed :: %d",(int)state);
-                OC_LOG_V(DEBUG, BROKER_TAG, "GET request was successful");
-//                std::cout << "[ResourcePresence]" << "Resource URI: " << rep.getUri() << std::endl;
-//            }
-//            else
-//            {
-//                std::cout << "[ResourcePresence]" << "onGET Response error: " << eCode << std::endl;
-                if(!requesterList->empty())
-                {
-                    executeAllBrokerCB();
-                }
-                else
-                {
-                    OC_LOG_V(DEBUG, BROKER_TAG, "None exist resource for request");
-                    state = BROKER_STATE::DESTROYED;
-                }
-//            }
- */
 
 PrimitiveResourcePtr ResourcePresence::getPrimitiveResource()
 {
@@ -158,4 +163,16 @@ PrimitiveResourcePtr ResourcePresence::getPrimitiveResource()
 BROKER_STATE ResourcePresence::getResourceState()
 {
     return state;
+}
+
+void ResourcePresence::changePresenceMode(BROKER_MODE newMode)
+{
+    if(newMode != mode)
+    {
+        if(newMode == BROKER_MODE::NON_PRESENCE_MODE)
+        {
+            requestResourceState();
+        }
+        mode = newMode;
+    }
 }

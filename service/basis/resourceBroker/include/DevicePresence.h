@@ -31,33 +31,27 @@
 class DevicePresence
 {
 public:
-    DevicePresence(PrimitiveResourcePtr pResource, BrokerCB _cb);
-
-    DevicePresence();
+    DevicePresence(PrimitiveResourcePtr pResource);
     ~DevicePresence();
 
-    void createDevicePresence(PrimitiveResourcePtr pResource, BrokerCB _cb);
-
-    void addPresenceResource(PrimitiveResourcePtr pResource, BrokerCB _cb);
-    ResourcePresencePtr findResourcePresence(PrimitiveResourcePtr pResource, BrokerCB _cb);
-    ResourcePresencePtr findResourcePresence(PrimitiveResourcePtr pResource);
+    const std::string getAddress() const;
+    void addPresenceResource(ResourcePresence * rPresence);
 
 private:
-    SubscribeCallback pSubscribeRequestCB;
-
-    std::unique_ptr<std::list<ResourcePresencePtr>> resourcePresenceList;
-
-
-    BasePresenceHandle presenceHandle;
-    PresenceSubscriber presenceSubscriber;
-    TimeoutCallback pTimeoutCB;
+    std::string address;
     DEVICE_STATE state;
-    const std::string address;
+    bool isWithinTime;
+
+    std::list<ResourcePresence * > resourcePresenceList;
+
+    SubscribeCallback pSubscribeRequestCB;
+    TimeoutCallback pTimeoutCB;
+    PresenceSubscriber presenceSubscriber;
+
+    void requestAllResourcePresence();
 
     void subscribeCB(OCStackResult ret,const unsigned int seq, const std::string& Hostaddress);
-    void requestAllResourcePresence();
-    bool isWithinTime;
-    void TimeOutCB(int msg);
+    void timeOutCB(int msg);
 
 };
 

@@ -30,7 +30,7 @@
 class ResourcePresence
 {
 public:
-    ResourcePresence(PrimitiveResourcePtr pResource, BrokerCB _cb);
+    ResourcePresence(PrimitiveResourcePtr pResource);
     ~ResourcePresence();
 
     void addBrokerRequesterCB(BrokerCB _cb);
@@ -44,17 +44,25 @@ public:
     void setResourcestate(BROKER_STATE _state);
     void executeAllBrokerCB();
 
+    void changePresenceMode(BROKER_MODE newMode);
+
 private:
     PrimitiveResourcePtr primitiveResource;
 
     std::unique_ptr<std::list<BrokerRequesterInfoPtr>> requesterList;
 
     BROKER_STATE state;
+    BROKER_MODE mode;
+
     GetCallback pGetCB;
-    TimeoutCallback pTimeoutCB;
     void GetCB(const HeaderOptions &hos, const ResponseStatement& rep, int seq);
+
+    TimeoutCallback pTimeoutCB;
+
     bool isWithinTime;
     void TimeOutCB(int msg);
+
+    void registerDevicePresence();
 
 };
 

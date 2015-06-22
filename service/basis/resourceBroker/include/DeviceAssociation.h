@@ -18,10 +18,9 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef RESOURCEBROKER_H_
-#define RESOURCEBROKER_H_
+#ifndef DEVICEASSOCIATION_H_
+#define DEVICEASSOCIATION_H_
 
-#include <functional>
 #include <list>
 #include <string>
 #include <algorithm>
@@ -29,29 +28,23 @@
 #include <condition_variable>
 
 #include "BrokerTypes.h"
-#include "ResourcePresence.h"
 
-class ResourceBroker
-{
+class DeviceAssociation {
 public:
-    static ResourceBroker * getInstance();
 
-    OCStackResult hostResource(PrimitiveResourcePtr pResource, BrokerCB cb);
+    static DeviceAssociation * getInstance();
 
-    OCStackResult cancelHostResource(PrimitiveResourcePtr pResource);
-
-    BROKER_STATE getResourceState(PrimitiveResourcePtr pResource);
+    DevicePresencePtr findDevice(const std::string & address);
+    void addDevice(DevicePresencePtr dPresence);
+    void removeDevice(DevicePresencePtr dPresence);
 
 private:
-    ResourceBroker();
-    ~ResourceBroker();
+    DeviceAssociation();
+    ~DeviceAssociation();
 
-    static ResourceBroker * s_instance;
+    static DeviceAssociation * s_instance;
     static std::mutex s_mutexForCreation;
-    static std::unique_ptr<std::list< ResourcePresencePtr >>  s_presenceList;
-
-    ResourcePresencePtr findResourcePresence(PrimitiveResourcePtr pResource);
-
+    static std::list< DevicePresencePtr > s_deviceList;
 };
 
-#endif /* RESOURCEBROKER_H_ */
+#endif /* DEVICEASSOCIATION_H_ */

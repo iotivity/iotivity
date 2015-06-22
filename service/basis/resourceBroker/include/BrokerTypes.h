@@ -32,27 +32,9 @@
 
 #define BROKER_TAG PCF("BROKER")
 
-#define BROKER_TRANSPORT OCConnectivityType::CT_IP_USE_V4
+#define BROKER_TRANSPORT OCConnectivityType::CT_ADAPTER_IP
 
 using namespace OIC::Service;
-
-struct BrokerRequesterInfo;
-class ResourcePresence;
-class DevicePresence;
-
-enum class DISCOVER_TRANSACTION;
-enum class BROKER_STATE;
-
-typedef std::function<void(std::shared_ptr<OC::OCResource>)> FindCB;
-typedef std::function<DISCOVER_TRANSACTION(std::shared_ptr<PrimitiveResource> resource)> DiscoverCB;
-
-typedef std::function<OCStackResult(BROKER_STATE)> BrokerCB;
-
-typedef std::shared_ptr<PrimitiveResource> PrimitiveResourcePtr;
-typedef std::shared_ptr<BrokerRequesterInfo> BrokerRequesterInfoPtr;
-
-typedef std::shared_ptr<ResourcePresence> ResourcePresencePtr;
-typedef std::shared_ptr<DevicePresence> DevicePresencePtr;
 
 /*
  * @BROKER_STATE
@@ -72,6 +54,7 @@ enum class BROKER_STATE
     DESTROYED,
     NONE
 };
+
 /*
  * @DEVICE_STATE
  * brief : devicePresence state
@@ -86,11 +69,28 @@ enum class DEVICE_STATE
     LOST_SIGNAL
 };
 
+enum class BROKER_MODE
+{
+    DEVICE_PRESENCE_MODE = 0,
+    NON_PRESENCE_MODE
+};
 
+typedef std::function<OCStackResult(BROKER_STATE)> BrokerCB;
 struct BrokerRequesterInfo
 {
     BrokerCB brockerCB;
 };
+typedef std::shared_ptr<BrokerRequesterInfo> BrokerRequesterInfoPtr;
+
+class ResourcePresence;
+class DevicePresence;
+
+typedef std::function<void(std::shared_ptr<OC::OCResource>)> FindCB;
+
+typedef std::shared_ptr<PrimitiveResource> PrimitiveResourcePtr;
+
+typedef std::shared_ptr<ResourcePresence> ResourcePresencePtr;
+typedef std::shared_ptr<DevicePresence> DevicePresencePtr;
 
 typedef OC::OCPlatform::OCPresenceHandle BasePresenceHandle;
 typedef std::function<void(OCStackResult, const unsigned int,
