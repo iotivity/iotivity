@@ -82,10 +82,7 @@ OCStackResult ResourceBroker::hostResource(PrimitiveResourcePtr pResource, Broke
         presenceItem = ResourcePresencePtr(new ResourcePresence(pResource));
         s_presenceList->push_back(presenceItem);
     }
-    else
-    {
-        presenceItem->addBrokerRequesterCB(cb);
-    }
+    presenceItem->addBrokerRequesterCB(cb);
 
     return ret;
 }
