@@ -31,7 +31,8 @@ namespace OIC
     namespace Service
     {
 
-        typedef std::function< void(OCStackResult, const unsigned int, const std::string&) > SubscribeCallback;
+        typedef std::function< void(OCStackResult, const unsigned int, const std::string&) >
+            SubscribeCallback;
 
         class PresenceSubscriber
         {
