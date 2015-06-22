@@ -29,7 +29,6 @@
 
 #include "caadapterinterface.h"
 
-
 #ifdef __cplusplus
 extern "C"
 {
@@ -60,18 +59,25 @@ void CASetPacketReceivedCallback(CANetworkPacketReceivedCallback callback);
 void CASetNetworkChangeCallback(CANetworkChangeCallback callback);
 
 /**
- * @brief   Starting different connectivity adapters based on the network selection.
- * @param   transportType    [IN]    network type that want to stop
+ * @brief   Set the error handler callback for message handler
+ * @param   errorCallback       [IN]    error handler callback from adapters
  * @return  none
  */
-CAResult_t CAStartAdapter(CATransportType_t transportType);
+void CASetErrorHandleCallback(CAErrorHandleCallback errorCallback);
+
+/**
+ * @brief   Starting different connectivity adapters based on the network selection.
+ * @param   transportAdapter [IN]    network type that want to stop
+ * @return  none
+ */
+CAResult_t CAStartAdapter(CATransportAdapter_t transportType);
 
 /**
  * @brief   Stopping different connectivity adapters based on the network un-selection.
- * @param   transportType    [IN]    un selected network for stopping the packets transfer
+ * @param   transportAdapter [IN]    un selected network for stopping the packets transfer
  * @return   none
  */
-void CAStopAdapter(CATransportType_t transportType);
+void CAStopAdapter(CATransportAdapter_t transportType);
 
 /**
  * @brief   Get network information such as ipaddress and mac information.  Gets the network
@@ -80,7 +86,7 @@ void CAStopAdapter(CATransportType_t transportType);
  * @param   size            [OUT]    number of connectivity information structures
  * @return   CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAGetNetworkInfo(CALocalConnectivity_t **info, uint32_t *size);
+CAResult_t CAGetNetworkInfo(CAEndpoint_t **info, uint32_t *size);
 
 /**
  * @brief   Sends unicast data to the remote endpoint
@@ -89,15 +95,16 @@ CAResult_t CAGetNetworkInfo(CALocalConnectivity_t **info, uint32_t *size);
  * @param   length          [IN]    length of the data that needs to be sent
  * @return   CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CASendUnicastData(const CARemoteEndpoint_t *endpoint, const void *data, uint32_t length);
+CAResult_t CASendUnicastData(const CAEndpoint_t *endpoint, const void *data, uint32_t length);
 
 /**
  * @brief   Sends multicast data to all endpoints in the network.
+ * @param   endpoint        [IN]    endpoint information where the data has to be sent
  * @param   data            [IN]    data that needs to be sent
  * @param   length          [IN]    length of the data that needs to be sent
  * @return   CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CASendMulticastData(const void *data, uint32_t length);
+CAResult_t CASendMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t length);
 
 /**
  * @brief   Start listening servers to receive search requests from clients

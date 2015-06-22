@@ -85,7 +85,6 @@ void start_discovery_server();
 void find_resource();
 void send_request();
 void send_request_all();
-void advertise_resource();
 void send_notification();
 void select_network();
 void unselect_network();
@@ -95,6 +94,8 @@ void get_network_info();
 
 void request_handler(const CARemoteEndpoint_t *object, const CARequestInfo_t *requestInfo);
 void response_handler(const CARemoteEndpoint_t *object, const CAResponseInfo_t *responseInfo);
+void error_handler(const CARemoteEndpoint_t *object, const CAErrorInfo_t* errorInfo);
+
 void send_response(const CARemoteEndpoint_t *endpoint, const CAInfo_t *info);
 void get_resource_uri(char *URI, char *resourceURI, int length);
 int get_secure_information(CAPayload_t payLoad);
@@ -264,7 +265,7 @@ int main()
 #endif
 
     // set handler.
-    CARegisterHandler(request_handler, response_handler);
+    CARegisterHandler(request_handler, response_handler, error_handler);
 
     process();
 
@@ -317,11 +318,6 @@ void process()
             case 'r': // send request
             case 'R':
                 send_request();
-                break;
-
-            case 'a': // advertise resource
-            case 'A':
-                advertise_resource();
                 break;
 
             case 'b': // send notification
@@ -716,93 +712,6 @@ void send_request_all()
     printf("=============================================\n");
 }
 
-void advertise_resource()
-{
-    printf("\n=============================================\n");
-    printf("uri : ");
-
-    char buf[MAX_BUF_LEN] = { 0 };
-    if (CA_STATUS_OK != get_input_data(buf, MAX_BUF_LEN))
-    {
-        return;
-    }
-
-    char optionNumBuf[MAX_BUF_LEN] = { 0 };
-    char optionData[MAX_OPT_LEN] = { 0 } ;
-
-    printf("Option Num : ");
-    if (CA_STATUS_OK != get_input_data(optionNumBuf, MAX_BUF_LEN))
-    {
-        return;
-    }
-    int optionNum = atoi(optionNumBuf);
-
-    CAHeaderOption_t * headerOpt = (CAHeaderOption_t *)
-            calloc(1, optionNum * sizeof(CAHeaderOption_t));
-    if (NULL == headerOpt)
-    {
-        printf("Memory allocation failed!\n");
-        return;
-    }
-
-    int i;
-    for (i = 0; i < optionNum; i++)
-    {
-        char getOptionID[MAX_BUF_LEN] = { 0 } ;
-
-        printf("[%d] Option ID : ", i + 1);
-        if (CA_STATUS_OK != get_input_data(getOptionID, MAX_BUF_LEN))
-        {
-            free(headerOpt);
-            return;
-        }
-        int optionID = atoi(getOptionID);
-
-        headerOpt[i].optionID = optionID;
-
-        printf("[%d] Option Data : ", i + 1);
-        if (CA_STATUS_OK != get_input_data(optionData, MAX_OPT_LEN))
-        {
-            free(headerOpt);
-            return;
-        }
-
-        memcpy(headerOpt[i].optionData, optionData, strlen(optionData));
-        printf("[%d] inputed option : ID : %d, data : %s\n", i + 1, optionID, optionData);
-
-        headerOpt[i].optionLength = (uint16_t) strlen(optionData);
-    }
-    printf("\n=============================================\n");
-
-    // create token
-    CAToken_t token = NULL;
-    uint8_t tokenLength = CA_MAX_TOKEN_LEN;
-
-    CAResult_t res = CAGenerateToken(&token, tokenLength);
-    if ((CA_STATUS_OK != res) || (!token))
-    {
-        printf("Token generate error!!\n");
-        free(headerOpt);
-        return;
-    }
-
-    printf("Generated token %s\n", token);
-
-    res = CAAdvertiseResource(buf, token, tokenLength, headerOpt, (uint8_t) optionNum);
-    if (CA_STATUS_OK != res)
-    {
-        printf("Could not start advertise resource\n");
-        CADestroyToken(token);
-    }
-    else
-    {
-        CADestroyToken(g_last_request_token);
-        g_last_request_token = token;
-    }
-
-    free(headerOpt);
-}
-
 void send_notification()
 {
     CAResult_t res = get_network_type();
@@ -1192,6 +1101,55 @@ void response_handler(const CARemoteEndpoint_t *object, const CAResponseInfo_t *
             printf("This is secure resource...\n");
         }
     }
+}
+
+void error_handler(const CARemoteEndpoint_t *rep, const CAErrorInfo_t* errorInfo)
+{
+    printf("+++++++++++++++++++++++++++++++++++ErrorInfo+++++++++++++++++++++++++++++++++++\n");
+
+    if(rep && rep->resourceUri  )
+    {
+        printf("Error Handler, RemoteEndpoint Info resourceUri : %s\n", rep->resourceUri);
+    }
+    else
+    {
+        printf("Error Handler, RemoteEndpoint is NULL");
+    }
+
+    if(errorInfo)
+    {
+        const CAInfo_t *info = &errorInfo->info;
+        printf("Error Handler, ErrorInfo :\n");
+        printf("Error Handler result    : %d\n", errorInfo->result);
+        printf("Error Handler token     : %s\n", info->token);
+        printf("Error Handler messageId : %d\n", (uint16_t) info->messageId);
+        printf("Error Handler type      : %d\n", info->type);
+        printf("Error Handler payload   : %s\n", info->payload);
+
+        if(CA_ADAPTER_NOT_ENABLED == errorInfo->result)
+        {
+            printf("CA_ADAPTER_NOT_ENABLED, enable the adapter\n");
+        }
+        else if(CA_SEND_FAILED == errorInfo->result)
+        {
+            printf("CA_SEND_FAILED, unable to send the message, check parameters\n");
+        }
+        else if(CA_MEMORY_ALLOC_FAILED == errorInfo->result)
+        {
+            printf("CA_MEMORY_ALLOC_FAILED, insufficient memory\n");
+        }
+        else if(CA_SOCKET_OPERATION_FAILED == errorInfo->result)
+        {
+            printf("CA_SOCKET_OPERATION_FAILED, socket operation failed\n");
+        }
+        else if(CA_STATUS_FAILED == errorInfo->result)
+        {
+            printf("CA_STATUS_FAILED, message could not be delivered, internal error\n");
+        }
+    }
+    printf("++++++++++++++++++++++++++++++++End of ErrorInfo++++++++++++++++++++++++++++++++\n");
+
+    return;
 }
 
 void send_response(const CARemoteEndpoint_t *endpoint, const CAInfo_t *info)

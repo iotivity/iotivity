@@ -45,11 +45,8 @@ typedef struct ResourceObserver
     uint8_t tokenLength;
     // Resource handle
     OCResource *resource;
-    //TODO bundle it in Endpoint structure(address, uri, type, secured)
-    /** Remote Endpoint address **/
-    CAAddress_t addressInfo;
-    /** Connectivity of the endpoint**/
-    CATransportType_t connectivityType;
+    /** Remote Endpoint **/
+    OCDevAddr devAddr;
     // Quality of service of the request
     OCQualityOfService qos;
     // number of times the server failed to reach the observer
@@ -128,8 +125,7 @@ OCStackResult GenerateObserverId (OCObservationId *observationId);
  * @param tokenLength Length of token.
  * @param resHandle Resource handle.
  * @param qos Quality of service of observation.
- * @param addressInfo Address of observer.
- * @param connectivityType Connection type.
+ * @param observer address
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 OCStackResult AddObserver (const char         *resUri,
@@ -139,8 +135,7 @@ OCStackResult AddObserver (const char         *resUri,
                            uint8_t            tokenLength,
                            OCResource         *resHandle,
                            OCQualityOfService qos,
-                           const CAAddress_t  *addressInfo,
-                           CATransportType_t connectivityType);
+                           const OCDevAddr    *devAddr);
 
 /**
  * Delete observer with specified token from list of observers.

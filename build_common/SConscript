@@ -54,6 +54,9 @@ target_arch = ARGUMENTS.get('TARGET_ARCH', default_arch) # target arch
 # set to 'no', 'false' or 0 for only compilation
 require_upload = ARGUMENTS.get('UPLOAD', False)
 
+# Get the device name. This name can be used as network display name wherever possible
+device_name = ARGUMENTS.get('DEVICE_NAME', "OIC-DEVICE")
+
 if ARGUMENTS.get('TEST'):
 	logging_default = False
 else:
@@ -85,6 +88,8 @@ help_vars.Add(EnumVariable('TEST', 'Run unit tests', '0', allowed_values=('0', '
 help_vars.Add(BoolVariable('LOGGING', 'Enable stack logging', logging_default))
 help_vars.Add(BoolVariable('UPLOAD', 'Upload binary ? (For Arduino)', require_upload))
 help_vars.Add(EnumVariable('BUILD_SAMPLE', 'Build with sample', 'ON', allowed_values=('ON', 'OFF')))
+help_vars.AddVariables(('DEVICE_NAME', 'Network display name for device (For Arduino)', device_name, None, None),)
+
 ######################################################################
 # Platform(build target) specific options: SDK/NDK & toolchain
 ######################################################################
@@ -127,12 +132,11 @@ if target_os in targets_support_cc:
 	prefix = env.get('TC_PREFIX')
 	tc_path = env.get('TC_PATH')
 	if prefix:
-		env.Replace(CC = prefix + 'gcc')
-		env.Replace(CXX = prefix + 'g++')
-		env.Replace(AR = prefix + 'ar')
-		env.Replace(AS = prefix + 'as')
-		env.Replace(LINK = prefix + 'ld')
-		env.Replace(RANLIB = prefix + 'ranlib')
+		env.Replace(CC = prefix + env.get('CC', 'gcc'))
+		env.Replace(CXX = prefix + env.get('CXX', 'g++'))
+		env.Replace(AR = prefix + env.get('AR', 'ar'))
+		env.Replace(AS = prefix + env.get('AS', 'as'))
+		env.Replace(RANLIB = prefix + env.get('RANLIB', 'ranlib'))
 
 	if tc_path:
 		env.PrependENVPath('PATH', tc_path)

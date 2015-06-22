@@ -54,8 +54,6 @@ public class ResourceHosting extends Activity implements OnClickListener
         private final int RESOURCEHOSTING_DO_NOT_THREADRUNNING = -2;
 
         private String TAG = "ResourceHosting";
-        private OcResourceHandle mResourceHandle;
-        private String  mIpAddress;
         private TextView mLogTextView;
         private String mLog = "";
         /**
@@ -91,7 +89,6 @@ public class ResourceHosting extends Activity implements OnClickListener
         protected void onStart()
         {
             super.onStart();
-            initOICStack();
         }
 
         /**
@@ -103,9 +100,6 @@ public class ResourceHosting extends Activity implements OnClickListener
         protected void onStop()
         {
             super.onStop();
-            int result;
-            result = ResourceHostingTerminate();
-            Log.d(TAG, "ResourceHostingTerminate : "+ result);
         }
 
         protected void onResume()
@@ -122,7 +116,6 @@ public class ResourceHosting extends Activity implements OnClickListener
         protected void onRestart()
         {
             super.onRestart();
-            initOICStack();
         }
 
         /**
@@ -132,56 +125,9 @@ public class ResourceHosting extends Activity implements OnClickListener
         protected void onDestroy()
         {
             super.onDestroy();
-        }
-
-        /**
-         * get IpAddress and execute resourceHostingInit() method.
-         * @see Class   class : com_example_resourcehostingsampleapp_ResourceHosting</br>
-         * @see Method  method : initOICStack</br>
-         */
-        private void initOICStack()
-        {
-            try
-            {
-                mIpAddress = getIpAddress();
-                int result;
-                result = ResourceHostingInit(mIpAddress);
-                Log.d(TAG, "ResourceHostingInit : " + result);
-            }
-            catch (Exception e)
-            {
-                e.printStackTrace();
-            }
-        }
-
-        /**
-         * @see Class   class :  com_example_resourcehostingsampleapp_ResourceHosting</br>
-         * @see Method  method :  getIpAddress</br>
-         */
-        private String getIpAddress()
-        {
-            try
-            {
-                for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces();
-                     en.hasMoreElements();)
-                {
-                    NetworkInterface intf = (NetworkInterface) en.nextElement();
-                    for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();)
-                    {
-                        InetAddress inetAddress = (InetAddress) enumIpAddr.nextElement();
-                        if (!inetAddress.isLoopbackAddress())
-                        {
-                            if (inetAddress instanceof Inet4Address)
-                                return inetAddress.getHostAddress().toString();
-                        }
-                    }
-                }
-            }
-            catch (SocketException e)
-            {
-                e.printStackTrace();
-            }
-            return null;
+            int result;
+            result = OICCoordinatorStop();
+            Log.d(TAG, "OICCoordinatorStop() : "+ result);
         }
 
         /**

@@ -32,7 +32,7 @@ PROJECT_NAME           = "IoTivity C SDK"
 # This could be handy for archiving the generated documentation or
 # if some version control system is used.
 
-PROJECT_NUMBER         = 
+PROJECT_NUMBER         =
 
 # Using the PROJECT_BRIEF tag one can provide an optional one line description
 # for a project that appears at the top of each page and should give viewer
@@ -662,7 +662,6 @@ WARN_LOGFILE           =
 INPUT                  = . \
 						 ../stack/include \
 						 ../ocsocket/include \
-						 ../ocmalloc/include \
 						 ../ocrandom/include \
 						 ../occoap/include \
 

@@ -33,6 +33,7 @@
 #include "uarraylist.h"
 #include "caadapterutils.h"
 #include "org_iotivity_ca_CaEdrInterface.h"
+#include "oic_string.h"
 
 //#define DEBUG_MODE
 #define TAG PCF("CA_EDR_SERVER")
@@ -822,7 +823,7 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id, CAAdapterServerType_t t
         OIC_LOG_V(DEBUG, TAG, "[EDR][Native] btReadData: read %s, %d", buf, length);
 
         char responseData[MAX_PDU_BUFFER] = { 0 };
-        memcpy(responseData, (const char*) buf, length);
+        OICStrcpyPartial(responseData, sizeof(responseData), buf, length);
 
         switch (type)
         {

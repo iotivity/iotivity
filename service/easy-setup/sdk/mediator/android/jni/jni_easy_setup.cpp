@@ -23,7 +23,7 @@
 #include "jni_easy_setup_jvm.h"
 #include "easysetupmgr.h"
 
-void JNIProvisioningStatusCallback(ProvisioningInfo provInfo) {
+void JNIProvisioningStatusCallback(ProvisioningInfo *provInfo) {
     JNIEnv *env = EasySetupJVM::getEnv();
     if (env == NULL) {
         LOGE("JNIProvisioningStatusCallback : Getting JNIEnv failed");
@@ -73,7 +73,7 @@ void JNIProvisioningStatusCallback(ProvisioningInfo provInfo) {
         LOGI("JNI method_id is VALID");
 
         jint result;
-        if (provInfo.provStatus == DEVICE_PROVISIONED) {
+        if (provInfo->provStatus == DEVICE_PROVISIONED) {
             result = 0;
         } else {
             result = -1;
@@ -143,7 +143,7 @@ JNIEXPORT void JNICALL JNIProvisionEnrollee(JNIEnv *env, jobject thisObj,
     strncpy(netInfo.netAddressInfo.WIFI.ipAddress, ipAddress, IPV4_ADDR_SIZE);
     strncpy(netInfo.netAddressInfo.WIFI.ssid, netSSID, NET_WIFI_SSID_SIZE);
     strncpy(netInfo.netAddressInfo.WIFI.pwd, netPWD, NET_WIFI_PWD_SIZE);
-    netInfo.connType = OCConnectivityType::OC_IPV4;
+    netInfo.connType = OCConnectivityType::CT_ADAPTER_IP;
     netInfo.isSecured = true;
 
     ProvisionEnrollee(&netInfo);
@@ -160,7 +160,7 @@ JNIEXPORT void JNICALL JNIStopEnrolleeProvisioning(JNIEnv *env, jobject thisObj,
 
     if(jConnectivityType == 0)
     {
-        connecitivityType = OCConnectivityType::OC_IPV4;
+        connecitivityType = OCConnectivityType::CT_ADAPTER_IP;
     }
 
     StopEnrolleeProvisioning(connecitivityType);

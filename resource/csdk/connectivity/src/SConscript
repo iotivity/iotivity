@@ -47,13 +47,15 @@ if env.get('SECURED') == '1':
 
 
 env.AppendUnique(CA_SRC=[ca_path+'adapter_util/caadapterutils.c'])
-env.AppendUnique(CA_SRC=[ca_path+'adapter_util/camsgparser.c'])
+env.AppendUnique(CA_SRC=[ca_path+'adapter_util/cafragmentation.c'])
 if env.get('SECURED') == '1':
 	env.AppendUnique(CA_SRC=[ca_path+'adapter_util/caadapternetdtls.c'])
 	env.AppendUnique(CPPPATH = [root_dir + '/external/inc/'])
 
 if ca_os == 'arduino':
 	env.AppendUnique(CPPDEFINES = ['SINGLE_THREAD'])
+	env.AppendUnique(CPPDEFINES = ['WITH_ARDUINO'])
+	print "setting WITH_ARDUINO"
 	ca_common_src = [
 		ca_path + 'caconnectivitymanager_singlethread.c',
 		ca_path + 'cainterfacecontroller_singlethread.c',
@@ -82,8 +84,6 @@ else:
 		else:
 			env.AppendUnique(CPPPATH = [extlib_dir + '/extlibs/tinydtls'])
 env.AppendUnique(CA_SRC = ca_common_src)
-
-
 
 if 'ALL' in ca_transport:
 	env.SConscript(ca_path + 'ip_adapter/SConscript')

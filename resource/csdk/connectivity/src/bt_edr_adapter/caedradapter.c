@@ -29,7 +29,7 @@
 #include "caedrinterface.h"
 #include "caadapterutils.h"
 #include "logger.h"
-#include "camsgparser.h"
+#include "cafragmentation.h"
 #include "caqueueingthread.h"
 #include "oic_malloc.h"
 
@@ -86,7 +86,7 @@ static CANetworkChangeCallback g_networkChangeCallback = NULL;
  * @var g_localConnectivity
  * @brief Information of local Bluetooth adapter.
  */
-static CALocalConnectivity_t *g_localConnectivity = NULL;
+static CAEndpoint_t *g_localConnectivity = NULL;
 
 /**
  * @var g_serverId
@@ -114,7 +114,7 @@ void CAEDRNotifyNetworkStatus(CANetworkStatus_t status);
 void CAEDROnNetworkStatusChanged(void *context);
 CAResult_t CAAdapterSendData(const char *remoteAddress, const char *serviceUUID, const void *data,
                              uint32_t dataLength, uint32_t *sentLength);
-CAEDRNetworkEvent *CAEDRCreateNetworkEvent(CALocalConnectivity_t *connectivity,
+CAEDRNetworkEvent *CAEDRCreateNetworkEvent(CAEndpoint_t *connectivity,
                                            CANetworkStatus_t status);
 CAResult_t CAEDRClientSendData(const char *remoteAddress, const char *serviceUUID,
                                const void *data, uint32_t dataLength, uint32_t *sentLength);
@@ -122,7 +122,7 @@ CAResult_t CAEDRClientSendData(const char *remoteAddress, const char *serviceUUI
  * @fn CACreateEDRData
  * @brief Helper function to create CAEDRData
  */
-static CAEDRData *CACreateEDRData(const CARemoteEndpoint_t *remoteEndpoint, const void *data,
+static CAEDRData *CACreateEDRData(const CAEndpoint_t *remoteEndpoint, const void *data,
                                   uint32_t dataLength);
 
 /**
@@ -182,7 +182,7 @@ CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
     handler.readData = CAReadEDRData;
     handler.stopAdapter = CAStopEDR;
     handler.terminate = CATerminateEDR;
-    registerCallback(handler, CA_EDR);
+    registerCallback(handler, CA_ADAPTER_RFCOMM_BTEDR);
 
     // Initialize Send/Receive data message queues
     if (CA_STATUS_OK != CAEDRInitializeQueueHandlers())
@@ -251,7 +251,7 @@ CAResult_t CAStartEDRDiscoveryServer()
     return CAStartServer();
 }
 
-int32_t CASendEDRUnicastData(const CARemoteEndpoint_t *remoteEndpoint, const void *data,
+int32_t CASendEDRUnicastData(const CAEndpoint_t *remoteEndpoint, const void *data,
                              uint32_t dataLength)
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
@@ -266,7 +266,7 @@ int32_t CASendEDRUnicastData(const CARemoteEndpoint_t *remoteEndpoint, const voi
         return -1;
     }
 
-    if (0 == strlen(remoteEndpoint->addressInfo.BT.btMacAddress))
+    if (0 == strlen(remoteEndpoint->addr))
     {
         OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Invalid input: EDR Address is empty!");
         return -1;
@@ -274,7 +274,7 @@ int32_t CASendEDRUnicastData(const CARemoteEndpoint_t *remoteEndpoint, const voi
 
     uint32_t sentLength = 0;
     const char *serviceUUID = OIC_EDR_SERVICE_ID;
-    const char *address = remoteEndpoint->addressInfo.BT.btMacAddress;
+    const char *address = remoteEndpoint->addr;
     CAResult_t err = CAAdapterSendData(address, serviceUUID, data, dataLength, &sentLength);
     if (CA_STATUS_OK != err)
     {
@@ -286,7 +286,7 @@ int32_t CASendEDRUnicastData(const CARemoteEndpoint_t *remoteEndpoint, const voi
     return sentLength;
 }
 
-int32_t CASendEDRMulticastData(const void *data, uint32_t dataLength)
+int32_t CASendEDRMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t dataLength)
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN - CASendEDRMulticastData");
 
@@ -312,8 +312,7 @@ int32_t CASendEDRMulticastData(const void *data, uint32_t dataLength)
     return sentLen;
 }
 
-
-CAResult_t CAGetEDRInterfaceInformation(CALocalConnectivity_t **info, uint32_t *size)
+CAResult_t CAGetEDRInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
@@ -392,7 +391,7 @@ void CATerminateEDR()
     CAEDRServerTerminate();
 
     // Free LocalConnectivity information
-    CAAdapterFreeLocalEndpoint(g_localConnectivity);
+    CAAdapterFreeEndpoint(g_localConnectivity);
     g_localConnectivity = NULL;
 
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
@@ -529,7 +528,7 @@ void CAAdapterDataSendHandler(void *context)
     }
 
     const char *remoteAddress = NULL;
-    const char *serviceUUID = NULL;
+    const char *serviceUUID = OIC_EDR_SERVICE_ID;
     uint32_t sentLength = 0;
 
     if (NULL == message->remoteEndpoint)
@@ -538,8 +537,7 @@ void CAAdapterDataSendHandler(void *context)
     }
     else
     {
-        remoteAddress = message->remoteEndpoint->addressInfo.BT.btMacAddress;
-        serviceUUID = message->remoteEndpoint->resourceUri;
+        remoteAddress = message->remoteEndpoint->addr;
     }
 
     uint32_t dataSegmentLength = message->dataLen + CA_HEADER_LENGTH;
@@ -665,7 +663,7 @@ void CAAdapterDataReceiverHandler(void *context)
     static uint32_t recvDataLen = 0;
     static uint32_t totalDataLen = 0;
     static char *defragData = NULL;
-    static CARemoteEndpoint_t *remoteEndpoint = NULL;
+    static CAEndpoint_t *remoteEndpoint = NULL;
 
     if (!g_isHeaderAvailable)
     {
@@ -685,10 +683,10 @@ void CAAdapterDataReceiverHandler(void *context)
             return;
         }
 
-        const char *remoteAddress = message->remoteEndpoint->addressInfo.BT.btMacAddress;
-        const char *serviceUUID = message->remoteEndpoint->resourceUri;
+        const char *remoteAddress = message->remoteEndpoint->addr;
+        uint16_t port = message->remoteEndpoint->port;
 
-        remoteEndpoint = CAAdapterCreateRemoteEndpoint(CA_EDR, remoteAddress, serviceUUID);
+        remoteEndpoint = CAAdapterCreateEndpoint(0, CA_ADAPTER_RFCOMM_BTEDR, remoteAddress, port);
 
         memcpy(defragData + recvDataLen, message->data + CA_HEADER_LENGTH,
                message->dataLen - CA_HEADER_LENGTH);
@@ -768,10 +766,11 @@ void CAAdapterRecvData(const char *remoteAddress, const void *data, uint32_t dat
     VERIFY_NON_NULL_VOID(data, EDR_ADAPTER_TAG, "Data is null");
     VERIFY_NON_NULL_VOID(sentLength, EDR_ADAPTER_TAG, "Sent data length holder is null");
 
-    static const char serviceUUID[] = OIC_EDR_SERVICE_ID;
     // Create remote endpoint
-    CARemoteEndpoint_t *remoteEndpoint = CAAdapterCreateRemoteEndpoint(CA_EDR, remoteAddress,
-                                                                       serviceUUID);
+    CAEndpoint_t *remoteEndpoint = CAAdapterCreateEndpoint(0,
+                                                        CA_ADAPTER_RFCOMM_BTEDR,
+                                                        remoteAddress,
+                                                        0);
     if (NULL == remoteEndpoint)
     {
         OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to create remote endpoint !");
@@ -784,7 +783,7 @@ void CAAdapterRecvData(const char *remoteAddress, const void *data, uint32_t dat
     *sentLength = dataLength;
 
     // Free remote endpoint
-    CAAdapterFreeRemoteEndpoint(remoteEndpoint);
+    CAAdapterFreeEndpoint(remoteEndpoint);
 
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
 }
@@ -806,8 +805,7 @@ CAResult_t CAAdapterSendData(const char *remoteAddress, const char *serviceUUID,
     VERIFY_NON_NULL(sentLength, EDR_ADAPTER_TAG, "Sent data length holder is null");
 
     // Create remote endpoint
-    CARemoteEndpoint_t *remoteEndpoint = CAAdapterCreateRemoteEndpoint(CA_EDR, remoteAddress,
-                                                                       serviceUUID);
+    CAEndpoint_t *remoteEndpoint = CAAdapterCreateEndpoint(0, CA_ADAPTER_RFCOMM_BTEDR, remoteAddress, 0);
     if (NULL == remoteEndpoint)
     {
         OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to create remote endpoint !");
@@ -816,11 +814,11 @@ CAResult_t CAAdapterSendData(const char *remoteAddress, const char *serviceUUID,
 
     // Add message to data queue
     CAEDRData *edrData =  CACreateEDRData(remoteEndpoint, data, dataLength);
-    CAQueueingThreadAddData(g_sendQueueHandle, edrData, sizeof(CAEDRData));
+    CAQueueingThreadAddData(g_sendQueueHandle, edrData, sizeof (CAEDRData));
     *sentLength = dataLength;
 
     // Free remote endpoint
-    CAAdapterFreeRemoteEndpoint(remoteEndpoint);
+    CAAdapterFreeEndpoint(remoteEndpoint);
 
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT - CAAdapterSendData");
     return CA_STATUS_OK;
@@ -913,7 +911,7 @@ void CAEDROnNetworkStatusChanged(void *context)
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
 }
 
-CAEDRNetworkEvent *CAEDRCreateNetworkEvent(CALocalConnectivity_t *connectivity,
+CAEDRNetworkEvent *CAEDRCreateNetworkEvent(CAEndpoint_t *connectivity,
                                            CANetworkStatus_t status)
 {
     VERIFY_NON_NULL_RET(connectivity, EDR_ADAPTER_TAG, "connectivity is NULL", NULL);
@@ -927,7 +925,7 @@ CAEDRNetworkEvent *CAEDRCreateNetworkEvent(CALocalConnectivity_t *connectivity,
     }
 
     // Create duplicate of Local connectivity
-    event->info = CAAdapterCopyLocalEndpoint(connectivity);
+    event->info = CAAdapterCloneEndpoint(connectivity);
     event->status = status;
     return event;
 }
@@ -936,22 +934,23 @@ void CAEDRFreeNetworkEvent(CAEDRNetworkEvent *event)
 {
     if (event)
     {
-        CAAdapterFreeLocalEndpoint(event->info);
+        CAAdapterFreeEndpoint(event->info);
         OICFree(event);
     }
 }
 
-CAEDRData *CACreateEDRData(const CARemoteEndpoint_t *remoteEndpoint, const void *data,
-                           uint32_t dataLength)
+CAEDRData *CACreateEDRData(const CAEndpoint_t *remoteEndpoint,
+                                        const void *data, uint32_t dataLength)
 {
-    CAEDRData *edrData = (CAEDRData *) OICMalloc(sizeof(CAEDRData));
+    CAEDRData *edrData = (CAEDRData *)OICMalloc(sizeof (CAEDRData));
     if (!edrData)
     {
         OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Memory allocation failed!");
         return NULL;
     }
 
-    edrData->remoteEndpoint = CAAdapterCopyRemoteEndpoint(remoteEndpoint);
+    edrData->remoteEndpoint = CAAdapterCloneEndpoint(remoteEndpoint);
+
     edrData->data = OICMalloc(dataLength);
     if (NULL == edrData->data)
     {
@@ -969,7 +968,7 @@ void CAFreeEDRData(CAEDRData *edrData)
 {
     VERIFY_NON_NULL_VOID(edrData, EDR_ADAPTER_TAG, "edrData is NULL");
 
-    CAAdapterFreeRemoteEndpoint(edrData->remoteEndpoint);
+    CAAdapterFreeEndpoint(edrData->remoteEndpoint);
     OICFree(edrData->data);
     OICFree(edrData);
 }

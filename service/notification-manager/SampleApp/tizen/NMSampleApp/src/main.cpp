@@ -46,16 +46,15 @@ static void start_hosting(int seconds)
     logMessage = logMessage + "Interface Name : " + reinterpret_cast<char *>(interfaceName) + "<br>";
     printLog(DLOG_INFO, logMessage);
 
-    if (OCInit((char *) NULL, 0, OC_CLIENT_SERVER) != OC_STACK_OK)
+    if (OICStartCoordinate() != OC_STACK_OK)
     {
-        logMessage = "OCStack init error <br>";
+        logMessage = "OICStartCoordinate FAILED <br>";
         printLog(DLOG_ERROR, logMessage);
         return;
     }
 
-    OICStartCoordinate();
     g_quitFlag = 0;
-    logMessage = "OICStartCoordinate done successfully";
+    logMessage = "OICStartCoordinate done successfully <br>";
     printLog(DLOG_INFO, logMessage);
 
     while (!g_quitFlag)
@@ -70,15 +69,13 @@ static void start_hosting(int seconds)
         sleep(seconds);
     }
 
-    OICStopCoordinate();
-    logMessage = "OICStopCoordinate done successfully <br>";
-    printLog(DLOG_INFO, logMessage);
-
-    if (OCStop() != OC_STACK_OK)
+    if (OICStopCoordinate() != OC_STACK_OK)
     {
-        logMessage = "OCStack stop error <br>";
+        logMessage = "OICStopCoordinate FAILED <br>";
         printLog(DLOG_ERROR, logMessage);
     }
+    logMessage = "OICStopCoordinate done successfully <br>";
+    printLog(DLOG_INFO, logMessage);
     LOGI("start EXIT");
 }
 
@@ -88,7 +85,15 @@ void stop_hosting()
     string logMessage = "Terminating Resource Hosting <br>";
     printLog(DLOG_INFO, logMessage);
 
-    g_quitFlag = 1;
+    if(!g_quitFlag)
+    {
+    	g_quitFlag = 1;
+    }
+    else
+    {
+    	string logMessage = "Resource Hosting already terminated <br>";
+    	printLog(DLOG_INFO, logMessage);
+    }
     LOGI("stop_hosting EXIT");
 }
 

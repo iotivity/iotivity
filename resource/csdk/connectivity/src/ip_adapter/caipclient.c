@@ -34,12 +34,12 @@
 #define IP_CLIENT_TAG "IP_CLIENT"
 #define OC_MULTICAST_IP "224.0.1.187"
 
-static uint32_t CASendData(const char *remoteAddress, uint16_t port, const void *data,
+static uint32_t CASendData(const CAEndpoint_t *endpoint, const void *data,
                            uint32_t dataLength, int sockfd)
 {
     OIC_LOG(DEBUG, IP_CLIENT_TAG, "IN");
 
-    VERIFY_NON_NULL_RET(remoteAddress, IP_CLIENT_TAG, "IP address is NULL", 0);
+    VERIFY_NON_NULL_RET(endpoint, IP_CLIENT_TAG, "IP address is NULL", 0);
     VERIFY_NON_NULL_RET(data, IP_CLIENT_TAG, "data is NULL", 0);
 
     if (0 == dataLength)
@@ -56,9 +56,9 @@ static uint32_t CASendData(const char *remoteAddress, uint16_t port, const void 
 
     struct sockaddr_in destAddr = { 0 };
     destAddr.sin_family = AF_INET;
-    destAddr.sin_port = htons(port);
+    destAddr.sin_port = htons(endpoint->port);
 
-    int ret = inet_pton(AF_INET, remoteAddress, &(destAddr.sin_addr));
+    int ret = inet_pton(AF_INET, endpoint->addr, &(destAddr.sin_addr));
     if (1 != ret)
     {
         OIC_LOG(ERROR, IP_CLIENT_TAG, "inet_pton failed!");
@@ -75,13 +75,13 @@ static uint32_t CASendData(const char *remoteAddress, uint16_t port, const void 
     }
 
     OIC_LOG_V(INFO, IP_CLIENT_TAG, "Sending data is successful, sent bytes[%d] to ip[%s:%d]",
-              sendDataLength, remoteAddress, port);
+              sendDataLength, endpoint->addr, endpoint->port);
     OIC_LOG(DEBUG, IP_CLIENT_TAG, "OUT");
     return sendDataLength;
 }
 
-uint32_t CAIPSendData(const char *remoteAddress, uint16_t remotePort, const void *data,
-                            uint32_t dataLength, bool isMulticast, bool isSecured)
+uint32_t CAIPSendData(const CAEndpoint_t *endpoint, const void *data,
+                            uint32_t dataLength, bool isMulticast)
 {
     u_arraylist_t *tempServerInfoList = u_arraylist_create();
     if (!tempServerInfoList)
@@ -99,7 +99,7 @@ uint32_t CAIPSendData(const char *remoteAddress, uint16_t remotePort, const void
     }
 
     uint32_t len = 0;
-    if (isMulticast || strcmp(remoteAddress, OC_MULTICAST_IP) == 0)
+    if (isMulticast || strcmp(endpoint->addr, OC_MULTICAST_IP) == 0)
     {
         uint32_t listIndex = 0;
         uint32_t listLength = u_arraylist_length(tempServerInfoList);
@@ -107,7 +107,7 @@ uint32_t CAIPSendData(const char *remoteAddress, uint16_t remotePort, const void
         {
             CAServerInfo_t *info = (CAServerInfo_t *) u_arraylist_get(tempServerInfoList,
                                                                       listIndex);
-            if (!info || info->isMulticastServer || info->isSecured)
+            if (!info || info->isMulticastServer || (info->endpoint.flags & CA_SECURE))
             {
                 continue;
             }
@@ -119,16 +119,14 @@ uint32_t CAIPSendData(const char *remoteAddress, uint16_t remotePort, const void
             }
 
             OIC_LOG_V(DEBUG, IP_CLIENT_TAG,
-                      "CA IP Multicast SendData with src ip %s port %d sockFd %d",
-                      info->ipAddress, info->port, info->socketFd);
-            len = CASendData(remoteAddress, remotePort, data, dataLength, info->socketFd);
+                    "CA IP Multicast SendData with src ip %s port %d sockFd %d",
+                    info->endpoint.addr, info->endpoint.port, info->socketFd);
+            len = CASendData(endpoint, data, dataLength, info->socketFd);
         }
     }
     else
     {
-        int sockFd = CAGetSocketFdForUnicastServer(tempServerInfoList, remoteAddress, isSecured,
-                                                   isMulticast, CA_IPV4);
-
+        int sockFd = CAGetSocketFdForUnicastServer(tempServerInfoList, isMulticast, endpoint);
         if (sockFd < 0)
         {
             OIC_LOG(ERROR, IP_CLIENT_TAG, "Invalid Socket Fd");
@@ -138,7 +136,7 @@ uint32_t CAIPSendData(const char *remoteAddress, uint16_t remotePort, const void
 
         OIC_LOG_V(DEBUG, IP_CLIENT_TAG, "IP unicast SendData sockFd %d", sockFd);
 
-        len = CASendData(remoteAddress, remotePort, data, dataLength, sockFd);
+        len = CASendData(endpoint, data, dataLength, sockFd);
 
     }
     CAClearServerInfoList(tempServerInfoList);

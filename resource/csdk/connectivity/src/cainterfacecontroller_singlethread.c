@@ -47,18 +47,18 @@ static CANetworkPacketReceivedCallback g_networkPacketReceivedCallback = NULL;
 
 static CANetworkChangeCallback g_networkChangeCallback = NULL;
 
-static int CAGetAdapterIndex(CATransportType_t cType)
+static CAErrorHandleCallback g_errorHandleCallback = NULL;
+
+static int CAGetAdapterIndex(CATransportAdapter_t cType)
 {
     switch (cType)
     {
-        case CA_IPV4:
+        case CA_ADAPTER_IP:
             return 0;
-        case CA_IPV6:
+        case CA_ADAPTER_GATT_BTLE:
             return 1;
-        case CA_EDR:
+        case CA_ADAPTER_RFCOMM_BTEDR:
             return 2;
-        case CA_LE:
-            return 3;
     }
 
     OIC_LOG(DEBUG, TAG, "CA_CONNECTIVITY_TYPE_NUM is not 4");
@@ -66,7 +66,7 @@ static int CAGetAdapterIndex(CATransportType_t cType)
     return -1;
 }
 
-static void CARegisterCallback(CAConnectivityHandler_t handler, CATransportType_t cType)
+static void CARegisterCallback(CAConnectivityHandler_t handler, CATransportAdapter_t cType)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -92,13 +92,13 @@ static void CARegisterCallback(CAConnectivityHandler_t handler, CATransportType_
         return;
     }
 
-    memcpy(&g_adapterHandler[index], &handler, sizeof(CAConnectivityHandler_t));
+    g_adapterHandler[index] = handler;
 
     OIC_LOG_V(DEBUG, TAG, "%d type adapter", cType);
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
-static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data,
+static void CAReceivedPacketCallback(CAEndpoint_t *endpoint, void *data,
     uint32_t dataLen)
 {
     OIC_LOG(DEBUG, TAG, "IN");
@@ -111,7 +111,13 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data,
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
-static void CANetworkChangedCallback(CALocalConnectivity_t *info, CANetworkStatus_t status)
+void CASetErrorHandleCallback(CAErrorHandleCallback errorCallback)
+{
+    OIC_LOG(DEBUG, TAG, "Set error handle callback");
+    g_errorHandleCallback = errorCallback;
+}
+
+static void CANetworkChangedCallback(CAEndpoint_t *info, CANetworkStatus_t status)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -161,7 +167,7 @@ void CASetNetworkChangeCallback(CANetworkChangeCallback callback)
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
-CAResult_t CAStartAdapter(CATransportType_t transportType)
+CAResult_t CAStartAdapter(CATransportAdapter_t transportType)
 {
     OIC_LOG_V(DEBUG, TAG, "transportType[%d]", transportType);
 
@@ -181,7 +187,7 @@ CAResult_t CAStartAdapter(CATransportType_t transportType)
     return CA_STATUS_OK;
 }
 
-void CAStopAdapter(CATransportType_t transportType)
+void CAStopAdapter(CATransportAdapter_t transportType)
 {
     OIC_LOG_V(DEBUG, TAG, "transportType[%d]", transportType);
 
@@ -200,13 +206,13 @@ void CAStopAdapter(CATransportType_t transportType)
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
-CAResult_t CAGetNetworkInfo(CALocalConnectivity_t **info, uint32_t *size)
+CAResult_t CAGetNetworkInfo(CAEndpoint_t **info, uint32_t *size)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     VERIFY_NON_NULL(info, TAG, "info");
     VERIFY_NON_NULL(size, TAG, "size");
 
-    CALocalConnectivity_t *tempInfo[CA_CONNECTIVITY_TYPE_NUM] = { 0 };
+    CAEndpoint_t *tempInfo[CA_CONNECTIVITY_TYPE_NUM] = { 0 };
     uint32_t tempSize[CA_CONNECTIVITY_TYPE_NUM] = { 0 };
 
     CAResult_t res = CA_STATUS_FAILED;
@@ -247,8 +253,7 @@ CAResult_t CAGetNetworkInfo(CALocalConnectivity_t **info, uint32_t *size)
 
     // #3. add data into result
     // memory allocation
-    CALocalConnectivity_t *resInfo =
-        (CALocalConnectivity_t *) OICCalloc(resSize, sizeof(CALocalConnectivity_t));
+    CAEndpoint_t *resInfo = (CAEndpoint_t *)OICCalloc(resSize, sizeof(CAEndpoint_t));
     CA_MEMORY_ALLOC_CHECK(resInfo);
 
     uint8_t i = 0;
@@ -260,7 +265,7 @@ CAResult_t CAGetNetworkInfo(CALocalConnectivity_t **info, uint32_t *size)
             continue;
         }
 
-        memcpy(resInfo + i, tempInfo[index], sizeof(CALocalConnectivity_t) * tempSize[index]);
+        memcpy(resInfo + i, tempInfo[index], sizeof(CAEndpoint_t) * tempSize[index]);
 
         i += tempSize[index];
 
@@ -288,7 +293,7 @@ memory_error_exit:
     return CA_MEMORY_ALLOC_FAILED;
 }
 
-CAResult_t CASendUnicastData(const CARemoteEndpoint_t *endpoint, const void *data, uint32_t length)
+CAResult_t CASendUnicastData(const CAEndpoint_t *endpoint, const void *data, uint32_t length)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -296,11 +301,11 @@ CAResult_t CASendUnicastData(const CARemoteEndpoint_t *endpoint, const void *dat
 
     if (endpoint == NULL)
     {
-        OIC_LOG(DEBUG, TAG, "RemoteEndpoint is NULL");
+        OIC_LOG(DEBUG, TAG, "Endpoint is NULL");
         return CA_STATUS_INVALID_PARAM;
     }
 
-    CATransportType_t type = endpoint->transportType;
+    CATransportAdapter_t type = endpoint->adapter;
 
     int index = CAGetAdapterIndex(type);
 
@@ -325,7 +330,7 @@ CAResult_t CASendUnicastData(const CARemoteEndpoint_t *endpoint, const void *dat
     return res;
 }
 
-CAResult_t CASendMulticastData(const void *data, uint32_t length)
+CAResult_t CASendMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t length)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -346,7 +351,7 @@ CAResult_t CASendMulticastData(const void *data, uint32_t length)
             continue;
         }
 
-        CATransportType_t connType = *(CATransportType_t *) ptrType;
+        CATransportAdapter_t connType = *(CATransportAdapter_t *) ptrType;
 
         int index = CAGetAdapterIndex(connType);
 
@@ -359,7 +364,7 @@ CAResult_t CASendMulticastData(const void *data, uint32_t length)
         uint32_t sentDataLen = 0;
         if (g_adapterHandler[index].sendDataToAll != NULL)
         {
-            sentDataLen = g_adapterHandler[index].sendDataToAll(data, length);
+            sentDataLen = g_adapterHandler[index].sendDataToAll(endpoint, data, length);
         }
 
         if (sentDataLen == length)
@@ -392,7 +397,7 @@ CAResult_t CAStartListeningServerAdapters()
             continue;
         }
 
-        CATransportType_t connType = *(CATransportType_t *) ptrType;
+        CATransportAdapter_t connType = *(CATransportAdapter_t *) ptrType;
 
         int index = CAGetAdapterIndex(connType);
 
@@ -431,7 +436,7 @@ CAResult_t CAStartDiscoveryServerAdapters()
             continue;
         }
 
-        CATransportType_t connType = *(CATransportType_t *) ptrType;
+        CATransportAdapter_t connType = *(CATransportAdapter_t *) ptrType;
 
         int index = CAGetAdapterIndex(connType);
 
@@ -490,7 +495,7 @@ CAResult_t CAReadData()
             return CA_STATUS_FAILED;
         }
 
-        CATransportType_t connType = *(CATransportType_t *) ptrType;
+        CATransportAdapter_t connType = *(CATransportAdapter_t *)ptrType;
 
         int index = CAGetAdapterIndex(connType);
 

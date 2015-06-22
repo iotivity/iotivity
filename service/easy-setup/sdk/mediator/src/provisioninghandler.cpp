@@ -130,7 +130,7 @@ void listeningFunc(void *data) {
 
 OCStackApplicationResult ProvisionEnrolleeResponse(void* ctx, OCDoHandle handle,
         OCClientResponse * clientResponse) {
-    ProvisioningInfo provInfo;
+    ProvisioningInfo *provInfo;
 
     if (clientResponse) {
         OIC_LOG_V(INFO, TAG, "Put Response JSON = %s",
@@ -138,33 +138,23 @@ OCStackApplicationResult ProvisionEnrolleeResponse(void* ctx, OCDoHandle handle,
     } else {
         OIC_LOG_V(INFO, TAG,
                 "ProvisionEnrolleeResponse received Null clientResponse");
-        PrepareProvisioingStatusCB(&provInfo, clientResponse,
+        provInfo = PrepareProvisioingStatusCB(clientResponse,
                 DEVICE_NOT_PROVISIONED);
         cbData(provInfo);
         return OC_STACK_DELETE_TRANSACTION;
     }
 
-    uint16_t remotePortNum;
-
-    OCDevAddrToPort((OCDevAddr *) clientResponse->addr, &remotePortNum);
-
-    char sourceaddr[OIC_STRING_MAX_VALUE] = { '\0' };
-    snprintf(sourceaddr, sizeof(sourceaddr), "%d.%d.%d.%d:%d%s",
-            clientResponse->addr->addr[0], clientResponse->addr->addr[1],
-            clientResponse->addr->addr[2], clientResponse->addr->addr[3],
-            remotePortNum, OIC_PROVISIONING_URI);
-
-    OIC_LOG_V(DEBUG, TAG, "ProvisionEnrolleeResponse %s @ %s",
-            clientResponse->resJSONPayload, sourceaddr);
+    OIC_LOG_V(DEBUG, TAG, "ProvisionEnrolleeResponse %s ",
+            clientResponse->resJSONPayload);
 
     if (clientResponse->resJSONPayload) {
         cJSON *observeJson = cJSON_CreateObject();
         observeJson = cJSON_Parse(clientResponse->resJSONPayload);
 
-        cJSON *ocArray = cJSON_GetObjectItem(observeJson, "oic");
+        cJSON *ocArray = cJSON_GetObjectItem(observeJson, OC_RSRVD_OC);
         cJSON *ocArray_sub = cJSON_GetArrayItem(ocArray, 0);
 
-        cJSON *representationArray = cJSON_GetObjectItem(ocArray_sub, "rep");
+        cJSON *representationArray = cJSON_GetObjectItem(ocArray_sub, OC_RSRVD_REPRESENTATION);
         char *ocArray_str = cJSON_PrintUnformatted(representationArray);
 
         if (strstr(ocArray_str, "[{}") == ocArray_str) {
@@ -179,14 +169,59 @@ OCStackApplicationResult ProvisionEnrolleeResponse(void* ctx, OCDoHandle handle,
             cJSON *arrayJSON = cJSON_GetArrayItem(representationArray, i);
             OIC_LOG_V(DEBUG, TAG, "rep#%d's name : %s", i, arrayJSON->string);
 
+            if (!strcmp(arrayJSON->string, OC_RSRVD_ES_PS))
+            {
+                if(arrayJSON->valueint == 1)
+                {
+                    OIC_LOG_V(DEBUG, TAG, "PS is proper");
+                    continue;
+                }
+                else{
+                    OIC_LOG_V(DEBUG, TAG, "PS is NOT proper");
+                    provInfo = PrepareProvisioingStatusCB(clientResponse,
+                            DEVICE_NOT_PROVISIONED);
+                    cbData(provInfo);
+                }
+            }
+
+            if (!strcmp(arrayJSON->string, OC_RSRVD_ES_TNN))
+            {
+                if(!strcmp(arrayJSON->valuestring, netProvInfo->netAddressInfo.WIFI.ssid))
+                {
+                    OIC_LOG_V(DEBUG, TAG, "SSID is proper");
+                    continue;
+                }
+                else{
+                    OIC_LOG_V(DEBUG, TAG, "SSID is NOT proper");
+                    provInfo = PrepareProvisioingStatusCB(clientResponse,
+                            DEVICE_NOT_PROVISIONED);
+                    cbData(provInfo);
+                }
+            }
+
+            if (!strcmp(arrayJSON->string, OC_RSRVD_ES_CD))
+            {
+                if(!strcmp(arrayJSON->valuestring, netProvInfo->netAddressInfo.WIFI.pwd))
+                {
+                    OIC_LOG_V(DEBUG, TAG, "Password is proper");
+                    continue;
+                }
+                else{
+                    OIC_LOG_V(DEBUG, TAG, "Password is NOT proper");
+                    provInfo = PrepareProvisioingStatusCB(clientResponse,
+                            DEVICE_NOT_PROVISIONED);
+                    cbData(provInfo);
+                }
+            }
+
             switch (arrayJSON->type) {
             case cJSON_False:
             case cJSON_True:
-                OIC_LOG_V(DEBUG, TAG, "rep#%d's value : %d", i,
+                OIC_LOG_V(DEBUG, TAG, "rep#%d's int value : %d", i,
                         arrayJSON->valueint);
                 break;
             case cJSON_Number:
-                OIC_LOG_V(DEBUG, TAG, "rep#%d's value : %f", i,
+                OIC_LOG_V(DEBUG, TAG, "rep#%d's double value : %f", i,
                         arrayJSON->valuedouble);
                 break;
             case cJSON_String:
@@ -202,7 +237,7 @@ OCStackApplicationResult ProvisionEnrolleeResponse(void* ctx, OCDoHandle handle,
 
         cJSON_Delete(observeJson);
 
-        PrepareProvisioingStatusCB(&provInfo, clientResponse,
+        provInfo = PrepareProvisioingStatusCB(clientResponse,
                 DEVICE_PROVISIONED);
         cbData(provInfo);
 
@@ -211,14 +246,14 @@ OCStackApplicationResult ProvisionEnrolleeResponse(void* ctx, OCDoHandle handle,
         OIC_LOG(INFO, TAG,
                 "ProvisionEnrolleeResponse received NULL clientResponse. \
                                 Invoking Provisioing Status Callback");
-        PrepareProvisioingStatusCB(&provInfo, clientResponse,
+        provInfo = PrepareProvisioingStatusCB(clientResponse,
                 DEVICE_NOT_PROVISIONED);
         cbData(provInfo);
         return OC_STACK_DELETE_TRANSACTION;
     }
 }
 
-OCStackResult ProvisionEnrollee(OCQualityOfService qos, const char* query) {
+OCStackResult ProvisionEnrollee(OCQualityOfService qos, const char* query, const char* resUri) {
     OIC_LOG_V(INFO, TAG, "\n\nExecuting ProvisionEnrollee%s", __func__);
 
     cJSON *jsonFinal = cJSON_CreateObject();
@@ -227,14 +262,11 @@ OCStackResult ProvisionEnrollee(OCQualityOfService qos, const char* query) {
     cJSON *format;
     char* payload = NULL;
 
-    char nodeData[OIC_STRING_MAX_VALUE] = { '\0' };
-    snprintf(nodeData, sizeof(nodeData), "%s", OIC_PROVISIONING_URI);
-
-    cJSON_AddStringToObject(json, "href", nodeData);
-    cJSON_AddItemToObject(json, "rep", format = cJSON_CreateObject());
-    cJSON_AddStringToObject(format, "tnn", netProvInfo->netAddressInfo.WIFI.ssid);
-    cJSON_AddStringToObject(format, "cd", netProvInfo->netAddressInfo.WIFI.pwd);
-    cJSON_AddItemToObject(jsonFinal, "oic", jsonArray = cJSON_CreateArray());
+    cJSON_AddStringToObject(json, OC_RSRVD_HREF, resUri);
+    cJSON_AddItemToObject(json, OC_RSRVD_REPRESENTATION, format = cJSON_CreateObject());
+    cJSON_AddStringToObject(format, OC_RSRVD_ES_TNN, netProvInfo->netAddressInfo.WIFI.ssid);
+    cJSON_AddStringToObject(format, OC_RSRVD_ES_CD, netProvInfo->netAddressInfo.WIFI.pwd);
+    cJSON_AddItemToObject(jsonFinal, OC_RSRVD_OC, jsonArray = cJSON_CreateArray());
     cJSON_AddItemToArray(jsonArray, json);
 
     OIC_LOG_V(DEBUG, TAG, "ProvisionEnrollee : %s",
@@ -251,13 +283,13 @@ OCStackResult ProvisionEnrollee(OCQualityOfService qos, const char* query) {
 
 OCStackApplicationResult GetProvisioningStatusResponse(void* ctx,
         OCDoHandle handle, OCClientResponse * clientResponse) {
-    ProvisioningInfo provInfo;
+    ProvisioningInfo *provInfo;
 
     if (clientResponse == NULL) {
         OIC_LOG(INFO, TAG,
                 "getReqCB received NULL clientResponse. \
             Invoking Provisioing Status Callback");
-        PrepareProvisioingStatusCB(&provInfo, clientResponse,
+        provInfo = PrepareProvisioingStatusCB(clientResponse,
                 DEVICE_NOT_PROVISIONED);
         cbData(provInfo);
         return OC_STACK_DELETE_TRANSACTION;
@@ -283,20 +315,30 @@ OCStackApplicationResult GetProvisioningStatusResponse(void* ctx,
         }
     }
 
-    char sourceaddr[OIC_STRING_MAX_VALUE] = { '\0' };
-    snprintf(sourceaddr, sizeof(sourceaddr), "%d.%d.%d.%d:%d%s",
-            clientResponse->addr->addr[0], clientResponse->addr->addr[1],
-            clientResponse->addr->addr[2], clientResponse->addr->addr[3],
-            6298, OIC_PROVISIONING_URI);
+    char query[OIC_STRING_MAX_VALUE] = { '\0' };
+
 
     if (clientResponse->resJSONPayload) {
         cJSON *observeJson = cJSON_CreateObject();
         observeJson = cJSON_Parse(clientResponse->resJSONPayload);
 
-        cJSON *ocArray = cJSON_GetObjectItem(observeJson, "oic");
+        cJSON *ocArray = cJSON_GetObjectItem(observeJson, OC_RSRVD_OC);
         cJSON *ocArray_sub = cJSON_GetArrayItem(ocArray, 0);
 
-        cJSON *representationArray = cJSON_GetObjectItem(ocArray_sub, "rep");
+        cJSON *resUriObj = cJSON_GetObjectItem(ocArray_sub, OC_RSRVD_HREF);
+
+        OIC_LOG_V(DEBUG, TAG, "resUriObj = %s, valueString = %s",
+            resUriObj->string, resUriObj->valuestring);
+
+        char resURI[MAX_URI_LENGTH]={'\0'};
+
+        strncpy(resURI, resUriObj->valuestring, sizeof(resURI));
+
+        snprintf(query, sizeof(query), UNICAST_PROV_STATUS_QUERY,
+                clientResponse->addr->addr,
+                IP_PORT, resURI);
+
+        cJSON *representationArray = cJSON_GetObjectItem(ocArray_sub, OC_RSRVD_REPRESENTATION);
         char *ocArray_str = cJSON_PrintUnformatted(representationArray);
 
         if (strstr(ocArray_str, "[{}") == ocArray_str) {
@@ -333,11 +375,11 @@ OCStackApplicationResult GetProvisioningStatusResponse(void* ctx,
         }
         cJSON_Delete(observeJson);
 
-        if (ProvisionEnrollee(OC_HIGH_QOS, sourceaddr) != OC_STACK_OK) {
+        if (ProvisionEnrollee(OC_HIGH_QOS, query, resURI) != OC_STACK_OK) {
             OIC_LOG(INFO, TAG,
                     "GetProvisioningStatusResponse received NULL clientResponse. \
                 Invoking Provisioing Status Callback");
-            PrepareProvisioingStatusCB(&provInfo, clientResponse,
+            provInfo = PrepareProvisioingStatusCB(clientResponse,
                     DEVICE_NOT_PROVISIONED);
             cbData(provInfo);
 
@@ -347,7 +389,7 @@ OCStackApplicationResult GetProvisioningStatusResponse(void* ctx,
         OIC_LOG(INFO, TAG,
                 "GetProvisioningStatusResponse received NULL clientResponse. \
             Invoking Provisioing Status Callback");
-        PrepareProvisioingStatusCB(&provInfo, clientResponse,
+        provInfo = PrepareProvisioingStatusCB(clientResponse,
                 DEVICE_NOT_PROVISIONED);
         cbData(provInfo);
         return OC_STACK_DELETE_TRANSACTION;
@@ -402,7 +444,6 @@ OCStackResult GetProvisioningStatus(OCQualityOfService qos, const char* query) {
 OCStackResult StartProvisioningProcess(const EnrolleeNWProvInfo_t *netInfo,
         OCProvisioningStatusCB provisioningStatusCallback) {
     OCStackResult result = OC_STACK_ERROR;
-    ProvisioningInfo provInfo;
 
     if (netInfo->netAddressInfo.WIFI.ipAddress == NULL) {
         OIC_LOG(ERROR, TAG, "Request URI is NULL");
@@ -432,40 +473,18 @@ OCStackResult StartProvisioningProcess(const EnrolleeNWProvInfo_t *netInfo,
     OIC_LOG_V(DEBUG, TAG, "Network Provisioning Info. PWD = %s",
         netProvInfo->netAddressInfo.WIFI.pwd);
 
-    /* Start a discovery query*/
-    char szQueryUri[64] = { 0 };
 
-    snprintf(szQueryUri, sizeof(szQueryUri), UNICAST_PROVISIONING_QUERY,
-            netProvInfo->netAddressInfo.WIFI.ipAddress, IP_PORT);
-
-    OIC_LOG_V(DEBUG, TAG, "szQueryUri = %s", szQueryUri);
-
-    if (FindProvisioningResource(OC_HIGH_QOS, szQueryUri) != OC_STACK_OK) {
-        OIC_LOG(ERROR, TAG,
-                "FindProvisioningResource failed. \
-            Invoking Provisioing Status Callback");
-
-        ProvDeviceInfo provDeviceIndo;
-        OCDevAddr dst = { };
-
-        dst.addr[0] = netProvInfo->netAddressInfo.WIFI.ipAddress[0];
-        dst.addr[1] = netProvInfo->netAddressInfo.WIFI.ipAddress[1];
-        dst.addr[2] = netProvInfo->netAddressInfo.WIFI.ipAddress[2];
-        dst.addr[3] = netProvInfo->netAddressInfo.WIFI.ipAddress[3];
-        dst.addr[4] = (uint8_t) IP_PORT;
-        dst.addr[5] = (uint8_t)(IP_PORT >> 8);
-
-        provInfo.provStatus = DEVICE_NOT_PROVISIONED;
-        provDeviceIndo.addr = &dst;
-        provDeviceIndo.connType = OC_IPV4;
-        provInfo.provDeviceInfo = provDeviceIndo;
-
-        cbData(provInfo);
-        return result;
+    if (CA_STATUS_OK
+            != ca_thread_pool_add_task(g_threadPoolHandle, FindProvisioningResource,
+                    (void *) "")) {
+        OIC_LOG(DEBUG, TAG, "thread_pool_add_task of FindProvisioningResource failed");
+        ca_thread_pool_free(g_threadPoolHandle);
+        ca_mutex_unlock(g_provisioningMutex);
+        ca_mutex_free(g_provisioningMutex);
+        ca_cond_free(g_provisioningCond);
+        return OC_STACK_ERROR;
     }
-    result = OC_STACK_OK;
-
-    return result;
+    return OC_STACK_OK;
 }
 
 void StopProvisioningProcess() {
@@ -479,13 +498,13 @@ OCStackApplicationResult FindProvisioningResourceResponse(void* ctx,
 
     OCStackApplicationResult response = OC_STACK_DELETE_TRANSACTION;
 
-    ProvisioningInfo provInfo;
+    ProvisioningInfo *provInfo;
 
     if (clientResponse->result != OC_STACK_OK) {
         OIC_LOG(ERROR, TAG,
                 "OCStack stop error. Calling Provisioing Status Callback");
 
-        PrepareProvisioingStatusCB(&provInfo, clientResponse,
+        provInfo = PrepareProvisioingStatusCB(clientResponse,
                 DEVICE_NOT_PROVISIONED);
 
         cbData(provInfo);
@@ -493,53 +512,43 @@ OCStackApplicationResult FindProvisioningResourceResponse(void* ctx,
     }
 
     if (clientResponse) {
-        // Parse header options from server
-        uint16_t optionID;
-        uint8_t* optionData;
-        const char* payload;
-
-        for (int i = 0; i < clientResponse->numRcvdVendorSpecificHeaderOptions;
-                i++) {
-            optionID =
-                    clientResponse->rcvdVendorSpecificHeaderOptions[i].optionID;
-            optionData =
-                    clientResponse->rcvdVendorSpecificHeaderOptions[i].optionData;
-            payload = clientResponse->resJSONPayload;
-        }
-
         cJSON *discoveryJson = cJSON_CreateObject();
         discoveryJson = cJSON_Parse((char *) clientResponse->resJSONPayload);
 
-        cJSON *ocArray = cJSON_GetObjectItem(discoveryJson, "oic");
+        cJSON *ocArray = cJSON_GetObjectItem(discoveryJson, OC_RSRVD_OC);
         char *ocArray_str = cJSON_PrintUnformatted(ocArray);
 
         if (strstr(ocArray_str, "[{}") == ocArray_str) {
             OIC_LOG_V(DEBUG, TAG, "invalid payload : %s", ocArray_str);
             cJSON_Delete(discoveryJson);
 
-            PrepareProvisioingStatusCB(&provInfo, clientResponse,
+            provInfo = PrepareProvisioingStatusCB(clientResponse,
                     DEVICE_NOT_PROVISIONED);
             cbData(provInfo);
             return response;
         }
 
-        char sourceaddr[OIC_STRING_MAX_VALUE] = { '\0' };
-        snprintf(sourceaddr, sizeof(sourceaddr), "%d.%d.%d.%d:%d%s",
-                clientResponse->addr->addr[0], clientResponse->addr->addr[1],
-                clientResponse->addr->addr[2], clientResponse->addr->addr[3],
-                IP_PORT, OIC_PROVISIONING_URI);
+        cJSON *ocArray_sub = cJSON_GetArrayItem(ocArray, 0);
+        cJSON *resUriObj = cJSON_GetObjectItem(ocArray_sub, OC_RSRVD_HREF);
 
-        OIC_LOG_V(DEBUG, TAG, "Discovered %s @ %s",
-                clientResponse->resJSONPayload, sourceaddr);
+        OIC_LOG_V(DEBUG, TAG, "resUriObj = %s, valueString = %s",
+            resUriObj->string, resUriObj->valuestring);
 
-        if (GetProvisioningStatus(OC_HIGH_QOS, sourceaddr) != OC_STACK_OK) {
+
+        char szQueryUri[64] = { 0 };
+
+        snprintf(szQueryUri, sizeof(szQueryUri), UNICAST_PROV_STATUS_QUERY,
+                clientResponse->devAddr.addr, IP_PORT, resUriObj->valuestring);
+        OIC_LOG_V(DEBUG, TAG, "query before GetProvisioningStatus call = %s", szQueryUri);
+
+        if (GetProvisioningStatus(OC_HIGH_QOS, szQueryUri) != OC_STACK_OK) {
             OIC_LOG(INFO, TAG,
                     "GetProvisioningStatus returned error. \
                                 Invoking Provisioing Status Callback");
-            PrepareProvisioingStatusCB(&provInfo, clientResponse,
+            provInfo = PrepareProvisioingStatusCB(clientResponse,
                     DEVICE_NOT_PROVISIONED);
-            cbData(provInfo);
 
+            cbData(provInfo);
             return OC_STACK_DELETE_TRANSACTION;
         }
     } else {
@@ -547,7 +556,7 @@ OCStackApplicationResult FindProvisioningResourceResponse(void* ctx,
         OIC_LOG(ERROR, TAG,
                 "Invalid response for Provisioning Discovery request. \
         Invoking Provisioing Status Callback");
-        PrepareProvisioingStatusCB(&provInfo, clientResponse,
+        provInfo = PrepareProvisioingStatusCB(clientResponse,
                 DEVICE_NOT_PROVISIONED);
         cbData(provInfo);
         return response;
@@ -555,24 +564,59 @@ OCStackApplicationResult FindProvisioningResourceResponse(void* ctx,
     return OC_STACK_KEEP_TRANSACTION;
 }
 
-OCStackResult FindProvisioningResource(OCQualityOfService qos,
-        const char* requestURI) {
+void FindProvisioningResource(void *data)
+{
     OCStackResult ret = OC_STACK_ERROR;
 
-    OCCallbackData cbData;
+    /* Start a discovery query*/
+    char szQueryUri[64] = { 0 };
 
-    cbData.cb = FindProvisioningResourceResponse;
-    cbData.context = (void*) DEFAULT_CONTEXT_VALUE;
-    cbData.cd = NULL;
+    snprintf(szQueryUri, sizeof(szQueryUri), UNICAST_PROVISIONING_QUERY,
+            netProvInfo->netAddressInfo.WIFI.ipAddress, IP_PORT);
 
-    ret = OCDoResource(NULL, OC_REST_GET, requestURI, 0, 0, OC_CONNTYPE,
-            OC_LOW_QOS, &cbData, NULL, 0);
+    OIC_LOG_V(DEBUG, TAG, "szQueryUri = %s", szQueryUri);
+
+    OCCallbackData ocCBData;
+
+    ocCBData.cb = FindProvisioningResourceResponse;
+    ocCBData.context = (void*) DEFAULT_CONTEXT_VALUE;
+    ocCBData.cd = NULL;
+
+    ret = OCDoResource(NULL, OC_REST_GET, szQueryUri, 0, 0, OC_CONNTYPE,
+            OC_LOW_QOS, &ocCBData, NULL, 0);
 
     if (ret != OC_STACK_OK) {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
-    }
 
-    return ret;
+        OIC_LOG(ERROR, TAG,
+                "FindProvisioningResource failed. \
+            Invoking Provisioing Status Callback");
+
+        ProvisioningInfo *provInfo;
+        provInfo = (ProvisioningInfo *) OICCalloc(1, sizeof(ProvisioningInfo));
+
+        if(provInfo == NULL)
+        {
+            OIC_LOG_V(ERROR, TAG, "Failed to allocate memory");
+            return;
+        }
+
+        OCDevAddr *devAddr = (OCDevAddr *) OICCalloc(1, sizeof(OCDevAddr));
+
+        if(devAddr == NULL)
+        {
+            OIC_LOG_V(ERROR, TAG, "Failed to allocate memory");
+            return;
+        }
+
+        strncpy(devAddr->addr, netProvInfo->netAddressInfo.WIFI.ipAddress, sizeof(devAddr->addr));
+        devAddr->port= IP_PORT;
+        provInfo->provDeviceInfo.addr = devAddr;
+        provInfo->provStatus = DEVICE_NOT_PROVISIONED;
+
+
+        cbData(provInfo);
+    }
 }
 
 OCStackApplicationResult SubscribeProvPresenceCallback(void* ctx, OCDoHandle handle,
@@ -588,24 +632,11 @@ OCStackApplicationResult SubscribeProvPresenceCallback(void* ctx, OCDoHandle han
 
     if (clientResponse) {
         OIC_LOG(INFO, TAG, PCF("Client Response exists"));
-        // Parse header options from server
-        uint16_t optionID;
-        uint8_t* optionData;
-        const char* payload;
-
-        for (int i = 0; i < clientResponse->numRcvdVendorSpecificHeaderOptions;
-                i++) {
-            optionID =
-                    clientResponse->rcvdVendorSpecificHeaderOptions[i].optionID;
-            optionData =
-                    clientResponse->rcvdVendorSpecificHeaderOptions[i].optionData;
-            payload = clientResponse->resJSONPayload;
-        }
 
         cJSON *discoveryJson = cJSON_CreateObject();
         discoveryJson = cJSON_Parse((char *) clientResponse->resJSONPayload);
 
-        cJSON *ocArray = cJSON_GetObjectItem(discoveryJson, "oic");
+        cJSON *ocArray = cJSON_GetObjectItem(discoveryJson, OC_RSRVD_OC);
         char *ocArray_str = cJSON_PrintUnformatted(ocArray);
 
         if (strstr(ocArray_str, "[{}") == ocArray_str) {
@@ -615,24 +646,21 @@ OCStackApplicationResult SubscribeProvPresenceCallback(void* ctx, OCDoHandle han
         }
 
         char sourceIPAddr[OIC_STRING_MAX_VALUE] = { '\0' };
-        snprintf(sourceIPAddr, sizeof(sourceIPAddr), "%d.%d.%d.%d",
-                clientResponse->addr->addr[0], clientResponse->addr->addr[1],
-                clientResponse->addr->addr[2], clientResponse->addr->addr[3]);
+        snprintf(sourceIPAddr, sizeof(sourceIPAddr), "%s", clientResponse->addr->addr);
 
         OIC_LOG_V(DEBUG, TAG, "Discovered %s @ %s",
                 clientResponse->resJSONPayload, sourceIPAddr);
 
         /* Start a discovery query*/
         char szQueryUri[64] = { 0 };
-        OCQualityOfService qos = OC_NA_QOS;
 
         snprintf(szQueryUri, sizeof(szQueryUri), UNICAST_PROVISIONING_QUERY,
                 sourceIPAddr, IP_PORT);
 
-        if (FindProvisioningResource(qos, szQueryUri) != OC_STACK_OK) {
+        /*if (FindProvisioningResource(qos, szQueryUri) != OC_STACK_OK) {
             OIC_LOG(ERROR, TAG, "FindProvisioningResource failed");
             return OC_STACK_KEEP_TRANSACTION;
-        }
+        }*/
     } else {
         // clientResponse is invalid
         OIC_LOG(ERROR, TAG, PCF("Client Response is NULL!"));
@@ -669,26 +697,31 @@ OCStackResult FindNetworkResource() {
     return ret;
 }
 
-void PrepareProvisioingStatusCB(ProvisioningInfo *provInfo,
-        OCClientResponse * clientResponse, ProvStatus provStatus) {
-    ProvDeviceInfo provDeviceIndo;
-    OCDevAddr dst = { };
+ProvisioningInfo* PrepareProvisioingStatusCB(OCClientResponse * clientResponse, ProvStatus provStatus) {
 
-    uint16_t remotePortNum;
-    OCDevAddrToPort((OCDevAddr *) clientResponse->addr, &remotePortNum);
+    ProvisioningInfo *provInfo = (ProvisioningInfo *) OICCalloc(1, sizeof(ProvisioningInfo));
 
-    dst.addr[0] = clientResponse->addr->addr[0];
-    dst.addr[1] = clientResponse->addr->addr[1];
-    dst.addr[2] = clientResponse->addr->addr[2];
-    dst.addr[3] = clientResponse->addr->addr[3];
-    dst.addr[4] = (uint8_t) remotePortNum;
-    dst.addr[5] = (uint8_t)(remotePortNum >> 8);
+    if(provInfo == NULL)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to allocate memory");
+        return NULL;
+    }
+
+    OCDevAddr *devAddr = (OCDevAddr *) OICCalloc(1, sizeof(OCDevAddr));
+
+    if(devAddr == NULL)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to allocate memory");
+        return NULL;
+    }
+
+    strncpy(devAddr->addr, clientResponse->addr->addr, sizeof(devAddr->addr));
+    devAddr->port= clientResponse->addr->port;
+
+    provInfo->provDeviceInfo.addr = devAddr;
 
     provInfo->provStatus = provStatus;
 
-    provDeviceIndo.addr = &dst;
-    provDeviceIndo.connType = OC_IPV4;
-
-    provInfo->provDeviceInfo = provDeviceIndo;
+    return provInfo;
 }
 

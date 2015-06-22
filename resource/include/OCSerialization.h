@@ -32,34 +32,35 @@ namespace OC
         private:
         enum class OCSecureType
         {
-            IPv4Secure,
-            IPv4
+            NotSecure,
+            Secure
         };
 
         class ListenResourceContainer
         {
-            class ListenResourcePropertiesContainer
+            class ListenResourcePolicyContainer
             {
                 friend class cereal::access;
                 friend class ListenResourceContainer;
+                friend class ListenResourcePropertiesContainer;
 
                 template<class Archive>
                 void serialize(Archive& ar)
                 {
                     try
                     {
-                        m_observable=false;
-                        int obsTemp;
-                        ar(cereal::make_nvp(OC::Key::OBSERVABLEKEY, obsTemp));
-                        m_observable = obsTemp != 0;
+                        m_observable = false;
+                        ar(cereal::make_nvp(OC::Key::BMKEY, m_bm));
+                        // In case of observable
+                        if(m_bm & OC_OBSERVABLE)
+                        {
+                            m_observable = true;
+                        }
                     }
                     catch(cereal::Exception&)
                     {
-                        // we swallow this exception, since it means the key
-                        // doesn't exist, allowing these to be optional
                         ar.setNextName(nullptr);
                     }
-
                     try
                     {
                         m_secure = false;
@@ -72,6 +73,35 @@ namespace OC
                     }
                     catch(cereal::Exception&)
                     {
+                       ar.setNextName(nullptr);
+                    }
+
+                 }
+
+                 bool m_observable;
+                 uint8_t m_bm;
+                 bool m_secure;
+                 int m_port;
+            };
+
+            class ListenResourcePropertiesContainer
+            {
+                friend class cereal::access;
+                friend class ListenResourceContainer;
+
+                template<class Archive>
+                void serialize(Archive& ar)
+                {
+                    try
+                    {
+                        ar(cereal::make_nvp(OC::Key::POLICYKEY, m_policy));
+
+                    }
+                    catch(cereal::Exception&)
+                    {
+                        // we swallow this exception, since it means the key
+                        // doesn't exist, allowing these to be optional
+                        oclog() << "Invalid POLICYKEY"<<std::flush;
                         ar.setNextName(nullptr);
                     }
 
@@ -93,11 +123,9 @@ namespace OC
                     }
                 }
 
-                bool m_observable;
                 std::vector<std::string> m_resourceTypes;
                 std::vector<std::string> m_interfaces;
-                bool m_secure;
-                int m_port;
+                ListenResourcePolicyContainer m_policy;
             };
 
             public:
@@ -138,8 +166,8 @@ namespace OC
                 {
                     ar.setNextName(nullptr);
                 }
-            }
 
+            }
 
             std::string m_uri;
             std::string m_serverId;
@@ -153,17 +181,17 @@ namespace OC
 
             bool observable() const
             {
-                return m_props.m_observable;
+                return m_props.m_policy.m_observable;
             }
 
             OCSecureType secureType() const
             {
-                return m_props.m_secure?OCSecureType::IPv4Secure :OCSecureType::IPv4;
+                return m_props.m_policy.m_secure ? OCSecureType::Secure : OCSecureType::NotSecure;
             }
 
             int port() const
             {
-                return m_props.m_port;
+                return m_props.m_policy.m_port;
             }
 
             std::vector<std::string> resourceTypes() const
@@ -186,9 +214,9 @@ namespace OC
                 ar(resources);
             }
         public:
-            ListenOCContainer(std::weak_ptr<IClientWrapper> cw, const OCDevAddr& address,
-                    OCConnectivityType connectivityType, std::stringstream& json):
-                m_clientWrapper(cw), m_address(address), m_connectivityType(connectivityType)
+            ListenOCContainer(std::weak_ptr<IClientWrapper> cw,
+                    const OCDevAddr& devAddr, std::stringstream& json)
+                    : m_clientWrapper(cw), m_devAddr(devAddr)
             {
                 LoadFromJson(json);
             }
@@ -199,59 +227,6 @@ namespace OC
             }
 
         private:
-            std::string ConvertOCAddrToString(OCSecureType sec, int secureport)
-            {
-                uint16_t port;
-                std::ostringstream os;
-
-                if(sec== OCSecureType::IPv4)
-                {
-                    os<<"coap://";
-                }
-                else if(sec == OCSecureType::IPv4Secure)
-                {
-                    os<<"coaps://";
-                }
-                else
-                {
-                    oclog() << "ConvertOCAddrToString():  invalid SecureType"<<std::flush;
-                    throw ResourceInitException(false, false, false, false, false, true);
-                }
-
-                uint8_t a;
-                uint8_t b;
-                uint8_t c;
-                uint8_t d;
-                if(OCDevAddrToIPv4Addr(&m_address, &a, &b, &c, &d) != 0)
-                {
-                    oclog() << "ConvertOCAddrToString(): Invalid Ip"
-                            << std::flush;
-                    throw ResourceInitException(false, false, false, false, false, true);
-                }
-
-                os<<static_cast<int>(a)<<"."<<static_cast<int>(b)
-                        <<"."<<static_cast<int>(c)<<"."<<static_cast<int>(d);
-
-                if(sec == OCSecureType::IPv4Secure && secureport>0 && secureport<=65535)
-                {
-                    port = static_cast<uint16_t>(secureport);
-                }
-                else if(sec == OCSecureType::IPv4 && 0==OCDevAddrToPort(&m_address, &port))
-                {
-                    // nothing to do, this is a successful case
-                }
-                else
-                {
-                    oclog() << "ConvertOCAddrToString() : Invalid Port"
-                            <<std::flush;
-                    throw ResourceInitException(false, false, false, false, true, false);
-                }
-
-                os <<":"<< static_cast<int>(port);
-
-                return os.str();
-            }
-
             void LoadFromJson(std::stringstream& json)
             {
                 cereal::JSONInputArchive archive(json);
@@ -268,9 +243,8 @@ namespace OC
                         if(res.loaded())
                         {
                             m_resources.push_back(std::shared_ptr<OCResource>(
-                                new OCResource(m_clientWrapper,
-                                    ConvertOCAddrToString(res.secureType(),res.port()),
-                                    res.m_uri, res.m_serverId, m_connectivityType, res.observable(),
+                                new OCResource(m_clientWrapper, m_devAddr,
+                                    res.m_uri, res.m_serverId, res.observable(),
                                     res.resourceTypes(), res.interfaces())));
                         }
 
@@ -284,8 +258,6 @@ namespace OC
             }
             std::vector<std::shared_ptr<OC::OCResource>> m_resources;
             std::weak_ptr<IClientWrapper> m_clientWrapper;
-            OCDevAddr m_address;
-            OCConnectivityType m_connectivityType;
+            const OCDevAddr& m_devAddr;
     };
 }
-

@@ -43,16 +43,18 @@ liboctbstack_env.PrependUnique(CPPPATH = [
 		'../../extlibs/timer/',
 		'logger/include',
 		'ocrandom/include',
-		'ocmalloc/include',
 		'stack/include',
 		'stack/include/internal',
 		'../oc_logger/include',
 		'connectivity/lib/libcoap-4.1.1',
 		'connectivity/inc',
 		'connectivity/api',
+		'connectivity/external/inc',
 		'security/include',
 		'security/include/internal',
 		])
+
+liboctbstack_env.AppendUnique(LIBS = ['ocsrm'])
 
 if target_os not in ['arduino', 'windows', 'winrt']:
 	liboctbstack_env.AppendUnique(CPPDEFINES  = ['WITH_POSIX'])
@@ -90,6 +92,8 @@ if env.get('SECURED') == '1':
 if env.get('LOGGING'):
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
+liboctbstack_env.Append(LIBS = ['c_common'])
+
 ######################################################################
 # Source files and Targets
 ######################################################################
@@ -104,11 +108,10 @@ liboctbstack_src = [
 	OCTBSTACK_SRC + 'ocserverrequest.c',
 	OCTBSTACK_SRC + 'occollection.c',
 	OCTBSTACK_SRC + 'oicgroup.c',
-	'security/src/ocsecurity.c',
 	'logger/src/logger.c',
-	'ocrandom/src/ocrandom.c',
-	'ocmalloc/src/ocmalloc.c'
+	'ocrandom/src/ocrandom.c'
 	]
+
 if target_os in ['arduino','darwin','ios'] :
 	static_liboctbstack = liboctbstack_env.StaticLibrary('octbstack', liboctbstack_src)
 	liboctbstack_env.InstallTarget(static_liboctbstack, 'liboctbstack')

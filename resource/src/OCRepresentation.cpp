@@ -466,7 +466,7 @@ namespace OC
                                     boost::get<std::vector<std::string>>(
                                         parseAttributeValue(itr->value)));
                         }
-                        else if(keyName == OC::Key::PROPERTYKEY)
+                        else if(keyName == OC::Key::INTERFACESKEY)
                         {
                             rep.setResourceInterfaces(
                                     boost::get<std::vector<std::string>>(

@@ -34,6 +34,8 @@
 
 #define TAG "CM_ST"
 
+CAGlobals_t caglobals;
+
 static bool g_isInitialized = false;
 
 CAResult_t CAInitialize()
@@ -60,7 +62,7 @@ void CATerminate()
 
     if (g_isInitialized)
     {
-        CASetRequestResponseCallbacks(NULL, NULL);
+        CASetInterfaceCallbacks(NULL, NULL, NULL);
         CATerminateMessageHandler();
         CATerminateNetworkType();
         g_isInitialized = false;
@@ -91,7 +93,8 @@ CAResult_t CAStartDiscoveryServer()
     return CAStartDiscoveryServerAdapters();
 }
 
-void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHandler)
+void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHandler,
+                       CAErrorCallback errorHandler)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -101,38 +104,13 @@ void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHand
         return;
     }
 
-    CASetRequestResponseCallbacks(ReqHandler, RespHandler);
+    CASetInterfaceCallbacks(ReqHandler, RespHandler, errorHandler);
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
-CAResult_t CACreateRemoteEndpoint(const CAURI_t uri, const CATransportType_t transportType,
-                                  CARemoteEndpoint_t **remoteEndpoint)
+void CADestroyEndpoint(CAEndpoint_t *rep)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
-    if (!g_isInitialized)
-    {
-        OIC_LOG(ERROR, TAG, "not initialized");
-        return CA_STATUS_NOT_INITIALIZED;
-    }
-
-    CARemoteEndpoint_t *remote = CACreateRemoteEndpointUriInternal(uri, transportType);
-
-    if (remote == NULL)
-    {
-        OIC_LOG(ERROR, TAG, "remote endpoint is NULL");
-        return CA_STATUS_FAILED;
-    }
-
-    *remoteEndpoint = remote;
-
-    OIC_LOG(DEBUG, TAG, "OUT");
-    return CA_STATUS_OK;
-}
-
-void CADestroyRemoteEndpoint(CARemoteEndpoint_t *rep)
-{
-    CADestroyRemoteEndpointInternal(rep);
+    CADestroyEndpointInternal(rep);
 }
 
 CAResult_t CAGenerateToken(CAToken_t *token, uint8_t tokenLength)
@@ -154,7 +132,7 @@ void CADestroyToken(CAToken_t token)
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
-CAResult_t CAGetNetworkInformation(CALocalConnectivity_t **info, uint32_t *size)
+CAResult_t CAGetNetworkInformation(CAEndpoint_t **info, uint32_t *size)
 {
     if (!g_isInitialized)
     {
@@ -165,78 +143,27 @@ CAResult_t CAGetNetworkInformation(CALocalConnectivity_t **info, uint32_t *size)
     return CAGetNetworkInformationInternal(info, size);
 }
 
-CAResult_t CAFindResource(const CAURI_t resourceUri, const CAToken_t token, uint8_t tokenLength)
+CAResult_t CASendRequest(const CAEndpoint_t *object,const CARequestInfo_t *requestInfo)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
-    if (!g_isInitialized)
-    {
-        OIC_LOG(ERROR, TAG, "not initialized");
-        return CA_STATUS_NOT_INITIALIZED;
-    }
-
-    return CADetachMessageResourceUri(resourceUri, token, tokenLength, NULL, 0);
-}
-
-CAResult_t CASendRequest(const CARemoteEndpoint_t *object,const CARequestInfo_t *requestInfo)
-{
-    if (!g_isInitialized)
-    {
-        OIC_LOG(ERROR, TAG, "not initialized");
-        return CA_STATUS_NOT_INITIALIZED;
-    }
+    OIC_LOG(DEBUG, TAG, "CASendGetRequest");
 
     return CADetachRequestMessage(object, requestInfo);
 }
 
-CAResult_t CASendRequestToAll(const CAGroupEndpoint_t *object,
-                              const CARequestInfo_t *requestInfo)
-{
-    OIC_LOG(DEBUG, TAG, "CASendRequestToAll");
-
-    if (!g_isInitialized)
-    {
-        OIC_LOG(ERROR, TAG, "not initialized");
-        return CA_STATUS_NOT_INITIALIZED;
-    }
-
-    return CADetachRequestToAllMessage(object, requestInfo);
-}
-
-CAResult_t CASendNotification(const CARemoteEndpoint_t *object,
+CAResult_t CASendNotification(const CAEndpoint_t *object,
     const CAResponseInfo_t *responseInfo)
 {
-    if (!g_isInitialized)
-    {
-        OIC_LOG(ERROR, TAG, "not initialized");
-        return CA_STATUS_NOT_INITIALIZED;
-    }
+    OIC_LOG(DEBUG, TAG, "CASendNotification");
 
     return CADetachResponseMessage(object, responseInfo);
 }
 
-CAResult_t CASendResponse(const CARemoteEndpoint_t *object,
+CAResult_t CASendResponse(const CAEndpoint_t *object,
     const CAResponseInfo_t *responseInfo)
 {
-    if (!g_isInitialized)
-    {
-        OIC_LOG(ERROR, TAG, "not initialized");
-        return CA_STATUS_NOT_INITIALIZED;
-    }
+    OIC_LOG(DEBUG, TAG, "CASendResponse");
 
     return CADetachResponseMessage(object, responseInfo);
-}
-
-CAResult_t CAAdvertiseResource(const CAURI_t resourceUri,const CAToken_t token,
-                               uint8_t tokenLength, const CAHeaderOption_t *options,
-                               const uint8_t numOptions)
-{
-    if (!g_isInitialized)
-    {
-        OIC_LOG(ERROR, TAG, "not initialized");
-        return CA_STATUS_NOT_INITIALIZED;
-    }
-    return CADetachMessageResourceUri(resourceUri, token, tokenLength, options, numOptions);
 }
 
 CAResult_t CASelectNetwork(const uint32_t interestedNetwork)
@@ -256,9 +183,9 @@ CAResult_t CASelectNetwork(const uint32_t interestedNetwork)
     }
     CAResult_t res = CA_STATUS_OK;
 
-    if (interestedNetwork & CA_IPV4)
+    if (interestedNetwork & CA_ADAPTER_IP)
     {
-        res = CAAddNetworkType(CA_IPV4);
+        res = CAAddNetworkType(CA_ADAPTER_IP);
         if (res != CA_STATUS_OK)
         {
             OIC_LOG(ERROR, TAG, "Failed to Add n/w type");
@@ -266,9 +193,9 @@ CAResult_t CASelectNetwork(const uint32_t interestedNetwork)
         }
     }
 
-    if (interestedNetwork & CA_EDR)
+    if (interestedNetwork & CA_ADAPTER_RFCOMM_BTEDR)
     {
-        res = CAAddNetworkType(CA_EDR);
+        res = CAAddNetworkType(CA_ADAPTER_RFCOMM_BTEDR);
         if (res != CA_STATUS_OK)
         {
             OIC_LOG(ERROR, TAG, "Failed to Add n/w type");
@@ -276,9 +203,9 @@ CAResult_t CASelectNetwork(const uint32_t interestedNetwork)
         }
     }
 
-    if (interestedNetwork & CA_LE)
+    if (interestedNetwork & CA_ADAPTER_GATT_BTLE)
     {
-        res = CAAddNetworkType(CA_LE);
+        res = CAAddNetworkType(CA_ADAPTER_GATT_BTLE);
         if (res != CA_STATUS_OK)
         {
             OIC_LOG(ERROR, TAG, "Failed to Add n/w type");
@@ -307,9 +234,9 @@ CAResult_t CAUnSelectNetwork(const uint32_t nonInterestedNetwork)
 
     CAResult_t res = CA_STATUS_OK;
 
-    if (nonInterestedNetwork & CA_IPV4)
+    if (nonInterestedNetwork & CA_ADAPTER_IP)
     {
-        res = CARemoveNetworkType(CA_IPV4);
+        res = CARemoveNetworkType(CA_ADAPTER_IP);
         if (res != CA_STATUS_OK)
         {
             OIC_LOG(ERROR, TAG, "Failed to remove n/w type");
@@ -317,9 +244,9 @@ CAResult_t CAUnSelectNetwork(const uint32_t nonInterestedNetwork)
         }
     }
 
-    if (nonInterestedNetwork & CA_EDR)
+    if (nonInterestedNetwork & CA_ADAPTER_RFCOMM_BTEDR)
     {
-        res = CARemoveNetworkType(CA_EDR);
+        res = CARemoveNetworkType(CA_ADAPTER_RFCOMM_BTEDR);
         if (res != CA_STATUS_OK)
         {
             OIC_LOG(ERROR, TAG, "Failed to remove n/w type");
@@ -327,9 +254,9 @@ CAResult_t CAUnSelectNetwork(const uint32_t nonInterestedNetwork)
         }
     }
 
-    if (nonInterestedNetwork & CA_LE)
+    if (nonInterestedNetwork & CA_ADAPTER_GATT_BTLE)
     {
-        res = CARemoveNetworkType(CA_LE);
+        res = CARemoveNetworkType(CA_ADAPTER_GATT_BTLE);
         if (res != CA_STATUS_OK)
         {
             OIC_LOG(ERROR, TAG, "Failed to remove n/w type");

@@ -19,6 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "oc_logger.h"
+#include "oic_string.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -149,7 +150,6 @@ size_t oc_log_write_level(oc_log_ctx_t *ctx, const oc_log_level loglevel, const 
 int oc_log_set_module(oc_log_ctx_t *ctx, const char *module_name)
 {
  char *mn = NULL;
- size_t len = 0;
 
  if(!ctx || !module_name)
  {
@@ -157,16 +157,12 @@ int oc_log_set_module(oc_log_ctx_t *ctx, const char *module_name)
  }
 
  /* Swap pointers so that module data's not erased in the event of failure: */
- len = strlen(module_name);
-
- mn = (char *)malloc(1 + len);
+ mn = OICStrdup(module_name);
 
  if(!mn)
  {
      return 0;
  }
-
- memcpy(mn, module_name, 1 + len);
 
  if(!ctx->module_name)
  {

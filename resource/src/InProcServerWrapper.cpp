@@ -33,7 +33,7 @@
 #include <OCResourceResponse.h>
 #include <ocstack.h>
 #include <OCApi.h>
-#include <ocmalloc.h>
+#include <oic_malloc.h>
 #include <OCPlatform.h>
 #include <OCUtilities.h>
 
@@ -137,7 +137,8 @@ void formResourceRequest(OCEntityHandlerFlag flag,
 
 OCEntityHandlerResult DefaultEntityHandlerWrapper(OCEntityHandlerFlag flag,
                                                   OCEntityHandlerRequest * entityHandlerRequest,
-                                                  char* uri)
+                                                  char* uri,
+                                                  void * callbackParam)
 {
     OCEntityHandlerResult result = OC_EH_ERROR;
 
@@ -176,7 +177,8 @@ OCEntityHandlerResult DefaultEntityHandlerWrapper(OCEntityHandlerFlag flag,
 
 
 OCEntityHandlerResult EntityHandlerWrapper(OCEntityHandlerFlag flag,
-                                           OCEntityHandlerRequest * entityHandlerRequest)
+                                           OCEntityHandlerRequest * entityHandlerRequest,
+                                           void* callbackParam)
 {
     OCEntityHandlerResult result = OC_EH_ERROR;
 
@@ -260,10 +262,14 @@ namespace OC
         else
         {
             throw InitializeException(OC::InitException::NOT_CONFIGURED_AS_SERVER,
-                                      OC_STACK_INVALID_PARAM);
+                                         OC_STACK_INVALID_PARAM);
         }
 
-        OCStackResult result = OCInit(cfg.ipAddress.c_str(), cfg.port, initType);
+        OCTransportFlags serverFlags =
+                            static_cast<OCTransportFlags>(cfg.serverConnectivity & CT_MASK_FLAGS);
+        OCTransportFlags clientFlags =
+                            static_cast<OCTransportFlags>(cfg.clientConnectivity & CT_MASK_FLAGS);
+        OCStackResult result = OCInit1(initType, serverFlags, clientFlags);
 
         if(OC_STACK_OK != result)
         {
@@ -344,6 +350,7 @@ namespace OC
                             resourceInterface.c_str(), //const char * resourceInterfaceName //TODO fix this
                             resourceURI.c_str(), // const char * uri
                             EntityHandlerWrapper, // OCEntityHandler entityHandler
+                            NULL,
                             resourceProperties // uint8_t resourceProperties
                             );
             }
@@ -354,6 +361,7 @@ namespace OC
                             resourceInterface.c_str(), //const char * resourceInterfaceName //TODO fix this
                             resourceURI.c_str(), // const char * uri
                             NULL, // OCEntityHandler entityHandler
+                            NULL,
                             resourceProperties // uint8_t resourceProperties
                             );
             }
@@ -391,12 +399,12 @@ namespace OC
 
         if(entityHandler)
         {
-            result = OCSetDefaultDeviceEntityHandler(DefaultEntityHandlerWrapper);
+            result = OCSetDefaultDeviceEntityHandler(DefaultEntityHandlerWrapper, NULL);
         }
         else
         {
             // If Null passed we unset
-            result = OCSetDefaultDeviceEntityHandler(NULL);
+            result = OCSetDefaultDeviceEntityHandler(NULL, NULL);
         }
 
         return result;
@@ -524,24 +532,22 @@ namespace OC
         else
         {
             OCEntityHandlerResponse response;
-            std::string payLoad;
-            HeaderOptions serverHeaderOptions;
-
-            payLoad = pResponse->getPayload();
-            serverHeaderOptions = pResponse->getHeaderOptions();
+            std::string payLoad = pResponse->getPayload();
+            HeaderOptions serverHeaderOptions = pResponse->getHeaderOptions();
 
             response.requestHandle = pResponse->getRequestHandle();
             response.resourceHandle = pResponse->getResourceHandle();
             response.ehResult = pResponse->getResponseResult();
 
-            response.payload = static_cast<char*>(OCMalloc(payLoad.length() + 1));
+            response.payload = static_cast<char*>(OICMalloc(payLoad.length() + 1));
             if(!response.payload)
             {
                 result = OC_STACK_NO_MEMORY;
                 throw OCException(OC::Exception::NO_MEMORY, OC_STACK_NO_MEMORY);
             }
 
-            strncpy(response.payload, payLoad.c_str(), payLoad.length()+1);
+            payLoad.copy(response.payload, payLoad.length());
+            response.payload[payLoad.length()] = '\0';
             response.payloadSize = payLoad.length() + 1;
             response.persistentBufferFlag = 0;
 
@@ -554,18 +560,19 @@ namespace OC
                     static_cast<uint16_t>(it->getOptionID());
                 response.sendVendorSpecificHeaderOptions[i].optionLength =
                     (it->getOptionData()).length() + 1;
-                memcpy(response.sendVendorSpecificHeaderOptions[i].optionData,
-                    (it->getOptionData()).c_str(),
-                    (it->getOptionData()).length() + 1);
+                std::copy(it->getOptionData().begin(),
+                         it->getOptionData().end(),
+                         response.sendVendorSpecificHeaderOptions[i].optionData);
+                response.sendVendorSpecificHeaderOptions[i].optionData[it->getOptionData().length()]
+                    = '\0';
                 i++;
             }
 
             if(OC_EH_RESOURCE_CREATED == response.ehResult)
             {
-                std::string createdUri = pResponse->getNewResourceUri();
-                strncpy(reinterpret_cast<char*>(response.resourceUri),
-                        createdUri.c_str(),
-                        createdUri.length() + 1);
+                pResponse->getNewResourceUri().copy(response.resourceUri,
+                        sizeof (response.resourceUri) - 1);
+                response.resourceUri[pResponse->getNewResourceUri().length()] = '\0';
             }
 
             if(cLock)
@@ -575,7 +582,7 @@ namespace OC
             }
             else
             {
-                OCFree(response.payload);
+                OICFree(response.payload);
                 result = OC_STACK_ERROR;
             }
 

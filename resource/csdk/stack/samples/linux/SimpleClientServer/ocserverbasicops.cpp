@@ -57,34 +57,54 @@ char* constructJsonResponse (OCEntityHandlerRequest *ehRequest)
     }
 
     cJSON *format;
-    char *jsonResponse;
+    cJSON *putJson = NULL;
+    char *jsonResponse = NULL;
     LEDResource *currLEDResource = &LED;
 
     if (ehRequest->resource == gLedInstance[0].handle)
     {
         currLEDResource = &gLedInstance[0];
-        gResourceUri = (char *) "a/led/0";
+        gResourceUri = (char *) "/a/led/0";
     }
     else if (ehRequest->resource == gLedInstance[1].handle)
     {
         currLEDResource = &gLedInstance[1];
-        gResourceUri = (char *) "a/led/1";
+        gResourceUri = (char *) "/a/led/1";
     }
 
     if(OC_REST_PUT == ehRequest->method)
     {
-        cJSON *putJson = cJSON_Parse((char *)ehRequest->reqJSONPayload);
-
-        if(!putJson)
+        cJSON* jsonObj = NULL;
+        putJson = cJSON_Parse(ehRequest->reqJSONPayload);
+        if(putJson)
         {
-            OC_LOG (ERROR, TAG, "putJson object not created properly");
-            cJSON_Delete(json);
-            return NULL;
+            jsonObj = cJSON_GetObjectItem(putJson,"oic");
+            if (jsonObj)
+            {
+                jsonObj = cJSON_GetArrayItem(jsonObj, 0);
+                if (jsonObj)
+                {
+                    jsonObj = cJSON_GetObjectItem(jsonObj, "rep");
+                }
+            }
         }
-        currLEDResource->state = ( !strcmp(cJSON_GetObjectItem(putJson,"state")->valuestring ,
-                "on") ? true:false);
-        currLEDResource->power = cJSON_GetObjectItem(putJson,"power")->valuedouble;
-        cJSON_Delete(putJson);
+        if (NULL == jsonObj)
+        {
+            OC_LOG_V(ERROR, TAG, "Failed to parse JSON: %s", ehRequest->reqJSONPayload);
+            goto exit;
+        }
+
+        cJSON* prop = cJSON_GetObjectItem(jsonObj,"power");
+        if (prop)
+        {
+            currLEDResource->power =prop->valueint;
+        }
+
+        prop = cJSON_GetObjectItem(jsonObj,"state");
+        if (prop)
+        {
+            currLEDResource->state = prop->valueint;
+        }
     }
 
     cJSON_AddStringToObject(json,"href",gResourceUri);
@@ -93,8 +113,7 @@ char* constructJsonResponse (OCEntityHandlerRequest *ehRequest)
     if(!format)
     {
         OC_LOG (ERROR, TAG, "format object not created properly");
-        cJSON_Delete(json);
-        return NULL;
+        goto exit;
     }
 
     cJSON_AddItemToObject(json, "rep", format);
@@ -102,6 +121,9 @@ char* constructJsonResponse (OCEntityHandlerRequest *ehRequest)
     cJSON_AddNumberToObject(format, "power", currLEDResource->power);
 
     jsonResponse = cJSON_Print(json);
+
+exit:
+    cJSON_Delete(putJson);
     cJSON_Delete(json);
     return jsonResponse;
 }
@@ -264,7 +286,7 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest, cha
 
 OCEntityHandlerResult
 OCEntityHandlerCb (OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest *entityHandlerRequest)
+        OCEntityHandlerRequest *entityHandlerRequest,void* callbackParam)
 {
     OC_LOG_V (INFO, TAG, "Inside entity handler - flags: 0x%x", flag);
 
@@ -386,6 +408,7 @@ int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, 
             OC_RSRVD_INTERFACE_DEFAULT,
             uri,
             OCEntityHandlerCb,
+            NULL,
             OC_DISCOVERABLE|OC_OBSERVABLE);
     OC_LOG_V(INFO, TAG, "Created LED resource with result: %s", getResult(res));
 

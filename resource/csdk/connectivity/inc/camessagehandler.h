@@ -63,7 +63,7 @@ extern "C"
  * @param   request        [IN]    request that needs to be sent
  * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
-CAResult_t CADetachRequestMessage(const CARemoteEndpoint_t *endpoint,
+CAResult_t CADetachRequestMessage(const CAEndpoint_t *endpoint,
                                   const CARequestInfo_t *request);
 
 /**
@@ -72,7 +72,7 @@ CAResult_t CADetachRequestMessage(const CARemoteEndpoint_t *endpoint,
  * @param   request        [IN]    request that needs to be sent
  * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
-CAResult_t CADetachRequestToAllMessage(const CAGroupEndpoint_t *object,
+CAResult_t CADetachRequestToAllMessage(const CAEndpoint_t *object,
                                        const CARequestInfo_t *request);
 
 /**
@@ -81,7 +81,7 @@ CAResult_t CADetachRequestToAllMessage(const CAGroupEndpoint_t *object,
  * @param   response       [IN]    response that needs to be sent
  * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
-CAResult_t CADetachResponseMessage(const CARemoteEndpoint_t *endpoint,
+CAResult_t CADetachResponseMessage(const CAEndpoint_t *endpoint,
                                    const CAResponseInfo_t *response);
 
 /**
@@ -101,9 +101,11 @@ CAResult_t CADetachMessageResourceUri(const CAURI_t resourceUri, const CAToken_t
  * @brief   Setting the request and response callbacks for network packets
  * @param   ReqHandler     [IN]    callback for receiving the requests
  * @param   RespHandler    [IN]    callback for receiving the response
+ * @param   ErrorHandler   [IN]    callback for receiving error response
  * @return  NONE
  */
-void CASetRequestResponseCallbacks(CARequestCallback ReqHandler, CAResponseCallback RespHandler);
+void CASetInterfaceCallbacks(CARequestCallback ReqHandler, CAResponseCallback RespHandler,
+                             CAErrorCallback ErrorHandler);
 
 /**
  * @brief   Initialize the message handler by starting thread pool and initializing the

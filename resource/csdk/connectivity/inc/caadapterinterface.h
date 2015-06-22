@@ -79,17 +79,19 @@ typedef CAResult_t (*CAAdapterStartDiscoveryServer)();
  * @param   dataLen     [IN]    Size of data to be sent.
  * @return The number of bytes sent on the network. Return value equal to -1 indicates error.
  */
-typedef int32_t (*CAAdapterSendUnicastData)(const CARemoteEndpoint_t *endpoint,
-        const void *data, uint32_t dataLen);
+typedef int32_t (*CAAdapterSendUnicastData)(const CAEndpoint_t *endpoint,
+                                            const void *data, uint32_t dataLen);
 
 /**
  * @brief Sends Multicast data to the endpoint using the adapter connectivity.
  * Note: length must be > 0.
+ * @param   endpoint    [IN]    Remote Endpoint information (like ipaddress , port,
  * @param   data        [IN]    Data which required to be sent.
  * @param   dataLen     [IN]    Size of data to be sent.
  * @return The number of bytes sent on the network. Return value equal to -1 indicates error.
  */
-typedef int32_t (*CAAdapterSendMulticastData)(const void *data, uint32_t dataLen);
+typedef int32_t (*CAAdapterSendMulticastData)(const CAEndpoint_t *endpoint,
+        const void *data, uint32_t dataLen);
 
 /**
  * @brief Get Network Information
@@ -97,7 +99,7 @@ typedef int32_t (*CAAdapterSendMulticastData)(const void *data, uint32_t dataLen
  * @param   size        [OUT]   Number of local connectivity structures.
  * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-typedef CAResult_t (*CAAdapterGetNetworkInfo)(CALocalConnectivity_t **info, uint32_t *size);
+typedef CAResult_t (*CAAdapterGetNetworkInfo)(CAEndpoint_t **info, uint32_t *size);
 
 /**
  * @brief Read Synchronous API callback.
@@ -157,23 +159,30 @@ typedef struct
 
 /**
  * @brief This will be used during the registration of adapters call backs to the common logic
- * @see CAConnectivityHandler_t , CATransportType_t
+ * @see CAConnectivityHandler_t , CATransportAdapter_t
  */
 typedef void (*CARegisterConnectivityCallback)(CAConnectivityHandler_t handler,
-        CATransportType_t cType);
+        CATransportAdapter_t cType);
 
 /**
  * @brief This will be used during the recive of network requests and response.
  * @see SendUnicastData(), SendMulticastData()
  */
-typedef void (*CANetworkPacketReceivedCallback)(CARemoteEndpoint_t *endPoint, void *data,
+typedef void (*CANetworkPacketReceivedCallback)(const CAEndpoint_t *endPoint, void *data,
         uint32_t dataLen);
 
 /**
  * @brief This will be used to notify network changes to the connectivity common logic layer
  * @see SendUnicastData(), SendMulticastData()
  */
-typedef void (*CANetworkChangeCallback)(CALocalConnectivity_t *info, CANetworkStatus_t status);
+typedef void (*CANetworkChangeCallback)(const CAEndpoint_t *info, CANetworkStatus_t status);
+
+/**
+ * @brief This will be used to notify error result to the connectivity common logic layer
+ */
+typedef void (*CAErrorHandleCallback)(const CAEndpoint_t *endpoint,
+                                      const void *data, uint32_t dataLen,
+                                      CAResult_t result);
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -148,7 +148,7 @@ static bool CACheckIsInterfaceInfoChanged(const CANetInfo_t *info)
         ca_mutex_unlock(g_networkMonitorContextMutex);
         return false;
     }
-    memcpy(newNetInfo, info, sizeof(*newNetInfo));
+    *newNetInfo = *info;
 
     OIC_LOG(DEBUG, IP_MONITOR_TAG, "New Interface found");
 
@@ -258,13 +258,13 @@ static void CAIPGetInterfaceInformation(u_arraylist_t **netInterfaceList)
     }
 
     // set interface name
-    strncpy(netInfo->interfaceName, interfaceName, strlen(interfaceName));
+    OICStrcpy(netInfo->interfaceName, sizeof(netInfo->interfaceName), interfaceName);
 
     // set local ip address
-    strncpy(netInfo->ipAddress, ipAddress, strlen(ipAddress));
+    OICStrcpy(netInfo->ipAddress, sizeof(netInfo->ipAddress), ipAddress);
 
     // set subnet mask
-    strncpy(netInfo->subnetMask, subnetMask, strlen(subnetMask));
+    OICStrcpy(netInfo->subnetMask, sizeof(netInfo->subnetMask), subnetMask);
 
     CAResult_t result = u_arraylist_add(*netInterfaceList, (void *)netInfo);
     if (CA_STATUS_OK != result)
@@ -309,13 +309,13 @@ void CAWIFIConnectionStateChangedCb(wifi_connection_state_e state, wifi_ap_h ap,
         }
 
         // set interface name
-        strncpy(netInfo->interfaceName, interfaceName, strlen(interfaceName));
+        OICStrcpy(netInfo->interfaceName, sizeof(netInfo->interfaceName), interfaceName);
 
         // set local ip address
-        strncpy(netInfo->ipAddress, ipAddress, strlen(ipAddress));
+        OICStrcpy(netInfo->ipAddress, sizeof(netInfo->ipAddress), ipAddress);
 
         // set subnet mask
-        strncpy(netInfo->subnetMask, subnetMask, strlen(subnetMask));
+        OICStrcpy(netInfo->subnetMask, sizeof(netInfo->subnetMask), subnetMask);
 
         bool ret = CACheckIsInterfaceInfoChanged(netInfo);
         if (ret)
@@ -541,7 +541,7 @@ CAResult_t CAIPGetInterfaceInfo(u_arraylist_t **netInterfaceList)
             return CA_MEMORY_ALLOC_FAILED;
         }
 
-        memcpy(newNetinfo, info, sizeof(*info));
+        *newNetinfo = *info;
 
         CAResult_t result = u_arraylist_add(*netInterfaceList, (void *)newNetinfo);
         if (CA_STATUS_OK != result)

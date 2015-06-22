@@ -22,7 +22,8 @@
 #include "ocstack.h"
 #include "ocserverrequest.h"
 #include "ocresourcehandler.h"
-#include "ocmalloc.h"
+#include "oic_malloc.h"
+#include "oic_string.h"
 
 #include "cacommon.h"
 #include "cainterface.h"
@@ -55,10 +56,10 @@ static OCStackResult AddServerResponse (OCServerResponse ** response, OCRequestH
 {
     OCServerResponse * serverResponse = NULL;
 
-    serverResponse = (OCServerResponse *) OCCalloc(1, sizeof(OCServerResponse));
+    serverResponse = (OCServerResponse *) OICCalloc(1, sizeof(OCServerResponse));
     VERIFY_NON_NULL(serverResponse);
 
-    serverResponse->payload = (char *) OCCalloc(1, MAX_RESPONSE_LENGTH);
+    serverResponse->payload = (char *) OICCalloc(1, MAX_RESPONSE_LENGTH);
     VERIFY_NON_NULL(serverResponse->payload);
 
     serverResponse->remainingPayloadSize = MAX_RESPONSE_LENGTH;
@@ -72,7 +73,7 @@ static OCStackResult AddServerResponse (OCServerResponse ** response, OCRequestH
 exit:
     if (serverResponse)
     {
-        OCFree(serverResponse);
+        OICFree(serverResponse);
         serverResponse = NULL;
     }
     *response = NULL;
@@ -89,8 +90,8 @@ static void DeleteServerRequest(OCServerRequest * serverRequest)
     if(serverRequest)
     {
         LL_DELETE(serverRequestList, serverRequest);
-        OCFree(serverRequest->requestToken);
-        OCFree(serverRequest);
+        OICFree(serverRequest->requestToken);
+        OICFree(serverRequest);
         serverRequest = NULL;
         OC_LOG(INFO, TAG, PCF("Server Request Removed!!"));
     }
@@ -106,8 +107,8 @@ static void DeleteServerResponse(OCServerResponse * serverResponse)
     if(serverResponse)
     {
         LL_DELETE(serverResponseList, serverResponse);
-        OCFree(serverResponse->payload);
-        OCFree(serverResponse);
+        OICFree(serverResponse->payload);
+        OICFree(serverResponse);
         OC_LOG(INFO, TAG, PCF("Server Response Removed!!"));
     }
 }
@@ -238,27 +239,25 @@ OCServerResponse * GetServerResponseUsingHandle (const OCServerRequest * handle)
  *     OCStackResult
  */
 OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
-        uint8_t delayedResNeeded, uint8_t secured, uint8_t notificationFlag, OCMethod method,
+        uint8_t delayedResNeeded, uint8_t notificationFlag, OCMethod method,
         uint8_t numRcvdVendorSpecificHeaderOptions, uint32_t observationOption,
         OCQualityOfService qos, char * query,
         OCHeaderOption * rcvdVendorSpecificHeaderOptions,
-        char * reqJSONPayload, CAToken_t requestToken,
-        uint8_t tokenLength,
-        char * resourceUrl, size_t reqTotalSize,
-        CAAddress_t *addressInfo, CATransportType_t connectivityType)
+        char * reqJSONPayload, CAToken_t requestToken, uint8_t tokenLength,
+        char * resourceUrl, size_t reqTotalSize, const OCDevAddr *devAddr)
 {
     OCServerRequest * serverRequest = NULL;
 
     //Note: OCServerRequest includes 1 byte for the JSON Payload.  payloadSize is calculated
     //as the required length of the string, so this will result in enough room for the
     //null terminator as well.
-    serverRequest = (OCServerRequest *) OCCalloc(1, sizeof(OCServerRequest) +
+    serverRequest = (OCServerRequest *) OICCalloc(1, sizeof(OCServerRequest) +
         (reqTotalSize ? reqTotalSize : 1) - 1);
+    VERIFY_NON_NULL(devAddr);
     VERIFY_NON_NULL(serverRequest);
 
     serverRequest->coapID = coapID;
     serverRequest->delayedResNeeded = delayedResNeeded;
-    serverRequest->secured = secured;
     serverRequest->notificationFlag = notificationFlag;
 
     serverRequest->method = method;
@@ -271,8 +270,7 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
 
     if(query)
     {
-        strncpy((char*)serverRequest->query,
-                (const char*)query, sizeof(serverRequest->query) - 1);
+        OICStrcpy(serverRequest->query, sizeof(serverRequest->query), query);
     }
 
     if(rcvdVendorSpecificHeaderOptions)
@@ -282,10 +280,7 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
     }
     if(reqJSONPayload && reqTotalSize)
     {
-        // destination is at least 1 greater than the source, so a NULL always exists in the
-        // last character
-        strncpy((char*)serverRequest->reqJSONPayload,
-                (const char*)reqJSONPayload, reqTotalSize - 1);
+        OICStrcpy(serverRequest->reqJSONPayload, reqTotalSize, reqJSONPayload);
     }
     serverRequest->requestComplete = 0;
     if(requestToken)
@@ -294,7 +289,7 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
         // particular library implementation (it may or may not be a null pointer).
         if (tokenLength)
         {
-            serverRequest->requestToken = (CAToken_t) OCMalloc(tokenLength);
+            serverRequest->requestToken = (CAToken_t) OICMalloc(tokenLength);
             VERIFY_NON_NULL(serverRequest->requestToken);
             memcpy(serverRequest->requestToken, requestToken, tokenLength);
         }
@@ -304,15 +299,11 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
 
     if(resourceUrl)
     {
-        strncpy((char*)serverRequest->resourceUrl,
-                (const char*)resourceUrl, sizeof(serverRequest->resourceUrl) - 1);
+        OICStrcpy(serverRequest->resourceUrl, sizeof(serverRequest->resourceUrl),
+            resourceUrl);
     }
 
-    if (addressInfo)
-    {
-        serverRequest->addressInfo = *addressInfo;
-    }
-    serverRequest->connectivityType = connectivityType;
+    serverRequest->devAddr = *devAddr;
 
     *request = serverRequest;
     OC_LOG(INFO, TAG, PCF("Server Request Added!!"));
@@ -322,7 +313,7 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
 exit:
     if (serverRequest)
     {
-        OCFree(serverRequest);
+        OICFree(serverRequest);
         serverRequest = NULL;
     }
     *request = NULL;
@@ -332,7 +323,8 @@ exit:
 /**
  * Form the OCEntityHandlerRequest struct that is passed to a resource's entity handler
  *
- * @param entityHandlerRequest - pointer to the OCEntityHandlerRequest struct that is created
+ * @param entityHandlerRequest - pointer to the OCEntityHandlerRequest struct that is created.
+ *                              Required to be zero-initialized before calling this function.
  * @param request          - request handle
  * @param method           - RESTful method
  * @param resource         - resource handle
@@ -360,17 +352,16 @@ OCStackResult FormOCEntityHandlerRequest(
 {
     if (entityHandlerRequest)
     {
-        memset(entityHandlerRequest, 0, sizeof(OCEntityHandlerRequest));
+        entityHandlerRequest->resource = (OCResourceHandle) resource;
         entityHandlerRequest->requestHandle = request;
         entityHandlerRequest->method = method;
-        entityHandlerRequest->resource = (OCResourceHandle) resource;
         entityHandlerRequest->query = queryBuf;
-        entityHandlerRequest->reqJSONPayload = bufReqPayload;
-        entityHandlerRequest->numRcvdVendorSpecificHeaderOptions = numVendorOptions;
-        entityHandlerRequest->rcvdVendorSpecificHeaderOptions = vendorOptions;
-
         entityHandlerRequest->obsInfo.action = observeAction;
         entityHandlerRequest->obsInfo.obsId = observeID;
+        entityHandlerRequest->numRcvdVendorSpecificHeaderOptions = numVendorOptions;
+        entityHandlerRequest->rcvdVendorSpecificHeaderOptions = vendorOptions;
+        entityHandlerRequest->reqJSONPayload = bufReqPayload;
+
         return OC_STACK_OK;
     }
 
@@ -420,7 +411,7 @@ CAResponseResult_t ConvertEHResultToCAResult (OCEntityHandlerResult result)
             caResult = CA_SUCCESS;
             break;
         case OC_EH_FORBIDDEN:
-            caResult = CA_BAD_REQ;
+            caResult = CA_UNAUTHORIZED_REQ;
             break;
         case OC_EH_RESOURCE_NOT_FOUND:
             caResult = CA_NOT_FOUND;
@@ -445,7 +436,7 @@ CAResponseResult_t ConvertEHResultToCAResult (OCEntityHandlerResult result)
 OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
 {
     OCStackResult result = OC_STACK_ERROR;
-    CARemoteEndpoint_t responseEndpoint = {};
+    CAEndpoint_t responseEndpoint = {};
     CAResponseInfo_t responseInfo = {};
     CAHeaderOption_t* optionsPointer = NULL;
 
@@ -465,12 +456,9 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
 
     OCServerRequest *serverRequest = (OCServerRequest *)ehResponse->requestHandle;
 
-    // Copy the address
-    responseEndpoint.resourceUri      = (CAURI_t) serverRequest->resourceUrl;
-    responseEndpoint.addressInfo      = serverRequest->addressInfo;
-    responseEndpoint.transportType    = serverRequest->connectivityType;
-    responseEndpoint.isSecured        = serverRequest->secured;
+    CopyDevAddrToEndpoint(&serverRequest->devAddr, &responseEndpoint);
 
+    responseInfo.info.resourceUri = serverRequest->resourceUrl;
     responseInfo.result = ConvertEHResultToCAResult(ehResponse->ehResult);
 
     if(serverRequest->notificationFlag && serverRequest->qos == OC_HIGH_QOS)
@@ -497,7 +485,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     }
 
     responseInfo.info.messageId = serverRequest->coapID;
-    responseInfo.info.token = (CAToken_t)OCMalloc(CA_MAX_TOKEN_LEN+1);
+    responseInfo.info.token = (CAToken_t)OICMalloc(CA_MAX_TOKEN_LEN+1);
     if (!responseInfo.info.token)
     {
         OC_LOG(FATAL, TAG, "Response Info Token is NULL");
@@ -519,13 +507,13 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     if(responseInfo.info.numOptions > 0)
     {
         responseInfo.info.options = (CAHeaderOption_t *)
-                                      OCCalloc(responseInfo.info.numOptions,
+                                      OICCalloc(responseInfo.info.numOptions,
                                               sizeof(CAHeaderOption_t));
 
         if(!responseInfo.info.options)
         {
             OC_LOG(FATAL, TAG, PCF("options is NULL"));
-            OCFree(responseInfo.info.token);
+            OICFree(responseInfo.info.token);
             return OC_STACK_NO_MEMORY;
         }
 
@@ -557,28 +545,34 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
         responseInfo.info.options = NULL;
     }
 
-    char payload[MAX_RESPONSE_LENGTH + OC_JSON_PREFIX_LEN + OC_JSON_SUFFIX_LEN] = {};
+    char payload[MAX_RESPONSE_LENGTH + OC_JSON_PREFIX_LEN + OC_JSON_SUFFIX_LEN + 1] = {};
 
     // Put the JSON prefix and suffix around the payload
-    strcpy(payload, (const char *)OC_JSON_PREFIX);
-    strncat(payload, (const char *)ehResponse->payload, ehResponse->payloadSize);
-    strcat(payload, (const char *)OC_JSON_SUFFIX);
+    OICStrcpy(payload, sizeof(payload), OC_JSON_PREFIX);
+    if(ehResponse->payloadSize)
+    {
+        OICStrcatPartial(payload, sizeof(payload),
+            ehResponse->payload,
+            ehResponse->payloadSize < MAX_RESPONSE_LENGTH ?
+            ehResponse->payloadSize : MAX_RESPONSE_LENGTH);
+    }
+    OICStrcat(payload, sizeof(payload), OC_JSON_SUFFIX);
     responseInfo.info.payload = (CAPayload_t)payload;
 
     #ifdef WITH_PRESENCE
     //TODO: Add other connectivity types to CAConnTypes[] when enabled
-    CATransportType_t CAConnTypes[] = {CA_IPV4};
+    CATransportAdapter_t CAConnTypes[] = {CA_ADAPTER_IP};
     const char * connTypes[] = {"ip transport"};
-    int size = sizeof(CAConnTypes)/ sizeof(CATransportType_t);
-    CATransportType_t connType = responseEndpoint.transportType;
+    int size = sizeof(CAConnTypes)/ sizeof(CATransportAdapter_t);
+    CATransportAdapter_t adapter = responseEndpoint.adapter;
     CAResult_t caResult = CA_STATUS_FAILED;
     result = OC_STACK_OK;
 
     //Sending response on all n/w interfaces
     for(int i = 0; i < size; i++ )
     {
-        responseEndpoint.transportType = (CATransportType_t)(connType & CAConnTypes[i]);
-        if(responseEndpoint.transportType)
+        responseEndpoint.adapter = (CATransportAdapter_t)(adapter & CAConnTypes[i]);
+        if(responseEndpoint.adapter)
         {
             //The result is set to OC_STACK_OK only if CASendResponse succeeds in sending the
             //response on all the n/w interfaces else it is set to OC_STACK_ERROR
@@ -607,8 +601,8 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     }
     #endif
 
-    OCFree(responseInfo.info.token);
-    OCFree(responseInfo.info.options);
+    OICFree(responseInfo.info.token);
+    OICFree(responseInfo.info.options);
     //Delete the request
     FindAndDeleteServerRequest(serverRequest);
     return result;
@@ -670,8 +664,11 @@ OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
         {
             OC_LOG(ERROR, TAG, PCF("There is room in response buffer"));
             // append
-            strncat((char *)serverResponse->payload,
-                    (char *)ehResponse->payload,
+            // allocated size of the payload is assumed, since a search of the code
+            // shows that it is OICCalloc'ed to this size in AddServerResponse above
+            OICStrcatPartial(serverResponse->payload,
+                    MAX_RESPONSE_LENGTH,
+                    ehResponse->payload,
                     serverResponse->remainingPayloadSize);
             OC_LOG_V(INFO, TAG, "Current aggregated response  ...%s", serverResponse->payload);
             serverResponse->remainingPayloadSize -= strlen((char *)ehResponse->payload);
@@ -689,7 +686,8 @@ OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
             else
             {
                 OC_LOG(INFO, TAG, PCF("More response fragments to come"));
-                strncat((char *)serverResponse->payload,
+                OICStrcatPartial(serverResponse->payload,
+                        MAX_RESPONSE_LENGTH,
                         OC_JSON_SEPARATOR_STR,
                         serverResponse->remainingPayloadSize);
                 OC_LOG_V(INFO, TAG, "Current aggregated response  ...%s", serverResponse->payload);

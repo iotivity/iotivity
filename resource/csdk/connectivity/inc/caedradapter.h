@@ -79,24 +79,25 @@ CAResult_t CAStartEDRDiscoveryServer();
 
 /**
  * @brief  Sends data to the peer bluetooth OIC device using the adapter connectivity.
- * @param  remoteEndpoint  [IN] Remote Endpoint information (like ipaddress, port, reference uri and
+ * @param  endpoint        [IN] Remote Endpoint information (like ipaddress, port, and
  *                              connectivity type) to which the unicast data has to be sent.
  * @param  data            [IN] Data to be sent.
  * @param  dataLength      [IN] Size of data to be sent.
  * @return The number of bytes sent on the network. Returns -1 on error.
  *
  */
-int32_t CASendEDRUnicastData(const CARemoteEndpoint_t *remoteEndpoint, const void *data,
+int32_t CASendEDRUnicastData(const CAEndpoint_t *endpoint, const void *data,
                              uint32_t dataLength);
 
 /**
  * @brief  Sends multicast data to all discovered bluetooth OIC devices using the adapter
- *         connectivity.
- * @param  data         [IN]  Data which needs to be sent to all discovered bluetooth OIC device.
- * @param  dataLength   [IN]  Length of data in bytes.
+ * @param  endpoint     [IN] Remote Endpoint information (like ipaddress, port, and connectivity.
+ * @param  data         [IN] Data which needs to be sent to all discovered bluetooth OIC device.
+ * @param  dataLength   [IN] Length of data in bytes.
  * @return Number of bytes sent on the network. Returns -1 on error.
  */
-int32_t CASendEDRMulticastData(const void *data, uint32_t dataLength);
+int32_t CASendEDRMulticastData(const CAEndpoint_t *endpoint, const void *data,
+                               uint32_t dataLength);
 
 /**
  * @brief  Get EDR Connectivity network information.
@@ -106,7 +107,7 @@ int32_t CASendEDRMulticastData(const void *data, uint32_t dataLength);
  *
  * @return CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAGetEDRInterfaceInformation(CALocalConnectivity_t **info, uint32_t *size);
+CAResult_t CAGetEDRInterfaceInformation(CAEndpoint_t **info, uint32_t *size);
 
 /**
  * @brief  Read Synchronous API callback.

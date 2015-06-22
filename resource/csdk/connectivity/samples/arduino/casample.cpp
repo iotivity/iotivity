@@ -47,18 +47,17 @@ static void Process();
 static void Initialize();
 static void StartListeningServer();
 static void StartDiscoveryServer();
-static void FindResource();
 static void SendRequest();
 static void SendRequestAll();
-static void SendResponse(CARemoteEndpoint_t *endpoint, const CAInfo_t* info);
-static void AdvertiseResource();
+static void SendResponse(CAEndpoint_t *endpoint, const CAInfo_t* info);
 static void SendNotification();
 static void SelectNetwork();
 static void UnselectNetwork();
 static void HandleRequestResponse();
 
-static void RequestHandler(const CARemoteEndpoint_t *object, const CARequestInfo_t *requestInfo);
-static void ResponseHandler(const CARemoteEndpoint_t *object, const CAResponseInfo_t *responseInfo);
+static void RequestHandler(const CAEndpoint_t *object, const CARequestInfo_t *requestInfo);
+static void ResponseHandler(const CAEndpoint_t *object, const CAResponseInfo_t *responseInfo);
+static void ErrorHandler(const CAEndpoint_t *object, const CAErrorInfo_t* errorInfo);
 static void Terminate();
 
 void GetData(char *readInput, size_t bufferLength, size_t *dataLength)
@@ -95,31 +94,56 @@ void GetData(char *readInput, size_t bufferLength, size_t *dataLength)
     (*dataLength) = len;
 }
 
-CATransportType_t GetConnectivityType()
+bool ParseData(char *buf, char *url, char *resourceUri)
+{
+    char *slash = strchr(buf, '/');
+    if (!slash)
+    {
+        return false;
+    }
+
+    strcpy(resourceUri, slash);
+
+    char *dot = strchr(buf, '.');
+    if (dot && dot < slash)
+    {
+        char *colon = strchr(buf, ':');
+        if (colon && colon < slash)
+        {
+            strncpy(url, buf, colon - buf);
+            return true;
+        }
+    }
+
+    strncpy(url, buf, slash - buf);
+    return true;
+}
+
+CATransportAdapter_t GetConnectivityType()
 {
     char type[2] = {0};
     Serial.println("Select network");
-    Serial.println("IPv4: 0");
-    Serial.println("EDR: 2");
-    Serial.println("LE: 3");
+    Serial.println("IP: 0");
+    Serial.println("RFCOMM (EDR): 1");
+    Serial.println("GATT (BLE): 2");
 
     size_t typeLen = 0;
     GetData(type, sizeof(type), &typeLen);
     if (0 >= typeLen)
     {
         Serial.println("i/p err,default ethernet");
-        return CA_IPV4;
+        return CA_ADAPTER_IP;
     }
     switch (type[0])
     {
         case '0':
-            return CA_IPV4;
+            return CA_ADAPTER_IP;
+        case '1':
+            return CA_ADAPTER_RFCOMM_BTEDR;
         case '2':
-            return CA_EDR;
-        case '3':
-            return CA_LE;
+            return CA_ADAPTER_GATT_BTLE;
     }
-    return CA_IPV4;
+    return CA_ADAPTER_IP;
 }
 
 void setup()
@@ -167,7 +191,7 @@ void loop()
                 break;
 
             case 'F': // find resource
-                FindResource();
+                SendRequestAll();
                 break;
 
             case 'R': // send request
@@ -176,10 +200,6 @@ void loop()
             case 'E': //send request to all
                 SendRequestAll();
                 break;
-            case 'A': // advertise resource
-                AdvertiseResource();
-                break;
-
             case 'B': // send notification
                 SendNotification();
                 break;
@@ -222,7 +242,7 @@ void Initialize()
     }
     SelectNetwork();
     // set handler.
-    CARegisterHandler(RequestHandler, ResponseHandler);
+    CARegisterHandler(RequestHandler, ResponseHandler, ErrorHandler);
 }
 
 void StartListeningServer()
@@ -249,51 +269,12 @@ void StartDiscoveryServer()
     }
 }
 
-void FindResource()
-{
-    char buf[MAX_BUF_LEN] = {0};
-    Serial.println("============");
-    Serial.println("ex) /a/light");
-    Serial.println("uri: ");
-    size_t len = 0;
-    GetData(buf, sizeof(buf), &len);
-    if (0 >= len)
-    {
-        Serial.println("i/p err");
-        return;
-    }
-    // create token
-    CAToken_t token = NULL;
-    uint8_t tokenLength = CA_MAX_TOKEN_LEN;
-
-    CAResult_t res = CAGenerateToken(&token, tokenLength);
-    if (res != CA_STATUS_OK || (!token))
-    {
-        Serial.println("token error");
-        return;
-    }
-
-    Serial.print("token:");
-    Serial.println(token);
-
-    res = CAFindResource(buf, token, tokenLength);
-    if (res != CA_STATUS_OK)
-    {
-        Serial.print("find error: ");
-        Serial.println(res);
-    }
-    else
-    {
-        Serial.println("success: ");
-        Serial.println(buf);
-    }
-    CADestroyToken(token);
-}
-
 void SendRequest()
 {
     char buf[MAX_BUF_LEN] = {0};
-    CATransportType_t selectedNetwork;
+    char address[MAX_BUF_LEN] = {0};
+    char resourceUri[MAX_BUF_LEN] = {0};
+    CATransportAdapter_t selectedNetwork;
     selectedNetwork = GetConnectivityType();
 
     Serial.println("============");
@@ -309,13 +290,19 @@ void SendRequest()
         return;
     }
 
+    if (!ParseData(buf, address, resourceUri))
+    {
+        Serial.println("bad uri");
+        return;
+    }
+
     // create remote endpoint
-    CARemoteEndpoint_t *endpoint = NULL;
-    CAResult_t res = CACreateRemoteEndpoint(buf,selectedNetwork,&endpoint);
+    CAEndpoint_t *endpoint = NULL;
+    CAResult_t res = CACreateEndpoint(CA_DEFAULT_FLAGS, selectedNetwork, address, 0, &endpoint);
     if (res != CA_STATUS_OK)
     {
         Serial.println("Out of memory");
-        CADestroyRemoteEndpoint(endpoint);
+        CADestroyEndpoint(endpoint);
         return;
     }
 
@@ -354,9 +341,12 @@ void SendRequest()
     requestData.payload = (CAPayload_t)"Json Payload";
 
     requestData.type = msgType;
+    requestData.resourceUri = (char *)OICMalloc(strlen(resourceUri) + 1);
+    strcpy(requestData.resourceUri, resourceUri);
 
     CARequestInfo_t requestInfo = {CA_GET, {CA_MSG_RESET}};
     requestInfo.method = CA_GET;
+    requestInfo.isMulticast = false;
     requestInfo.info = requestData;
 
     // send request
@@ -369,23 +359,25 @@ void SendRequest()
     // destroy remote endpoint
     if (endpoint != NULL)
     {
-        CADestroyRemoteEndpoint(endpoint);
+        CADestroyEndpoint(endpoint);
     }
 
-    CADestroyToken(token);
     Serial.println("============");
 }
 
 void SendRequestAll()
 {
     char buf[MAX_BUF_LEN] = {0};
+    char address[MAX_BUF_LEN] = {0};
+    char resourceUri[MAX_BUF_LEN] = {0};
 
-    CATransportType_t selectedNetwork;
+    CATransportAdapter_t selectedNetwork;
     selectedNetwork = GetConnectivityType();
 
     Serial.println("=========");
     Serial.println("10.11.12.13:4545/resource_uri ( for IP )");
     Serial.println("10:11:12:13:45:45/resource_uri ( for BT )");
+    Serial.println("/resource_uri               (any adapter)");
     Serial.println("uri : ");
 
     size_t len = 0;
@@ -396,21 +388,22 @@ void SendRequestAll()
         return;
     }
 
+    if (!ParseData(buf, address, resourceUri))
+    {
+        Serial.println("bad uri");
+        return;
+    }
+
     // create remote endpoint
-    CARemoteEndpoint_t *endpoint = NULL;
-    CAResult_t res = CACreateRemoteEndpoint(buf, selectedNetwork, &endpoint);
+    CAEndpoint_t *endpoint = NULL;
+    CAResult_t res = CACreateEndpoint(CA_DEFAULT_FLAGS, selectedNetwork, address, 0, &endpoint);
 
     if (res != CA_STATUS_OK)
     {
         Serial.println("create remote endpoint error");
-        CADestroyRemoteEndpoint(endpoint);
+        CADestroyEndpoint(endpoint);
         return;
     }
-
-    CAGroupEndpoint_t *group = NULL;
-    group = (CAGroupEndpoint_t *)OICMalloc(sizeof(CAGroupEndpoint_t));
-    group->transportType = endpoint->transportType;
-    group->resourceUri = endpoint->resourceUri;
 
     // create token
     CAToken_t token = NULL;
@@ -430,14 +423,17 @@ void SendRequestAll()
     requestData.tokenLength = tokenLength;
     requestData.payload = "Temp Json Payload";
     requestData.type = CA_MSG_NONCONFIRM;
+    requestData.resourceUri = (char *)OICMalloc(strlen(resourceUri) + 1);
+    strcpy(requestData.resourceUri, resourceUri);
 
     CARequestInfo_t requestInfo = {CA_GET, {CA_MSG_RESET}};
     requestInfo.method = CA_GET;
+    requestInfo.isMulticast = true;
     requestInfo.info = requestData;
 
     // send request
     // CASendRequest(endpoint, &requestInfo);
-    CASendRequestToAll(group, &requestInfo);
+    CASendRequest(endpoint, &requestInfo);
 
     if (NULL != token)
     {
@@ -447,115 +443,18 @@ void SendRequestAll()
     // destroy remote endpoint
     if (endpoint != NULL)
     {
-        CADestroyRemoteEndpoint(endpoint);
+        CADestroyEndpoint(endpoint);
     }
 
-    OICFree(group);
     Serial.println("==========");
-}
-
-void AdvertiseResource()
-{
-    char buf[MAX_BUF_LEN] = {0};
-
-    Serial.println("============");
-    Serial.println("uri: ");
-
-    size_t len = 0;
-    GetData(buf, sizeof(buf), &len);
-    if (0 >= len)
-    {
-        Serial.println("no i/p");
-        return;
-    }
-
-    int16_t optionNum = 0;
-    char optionData[MAX_OPT_LEN] = {0};
-    char optionNumBuf[2] = {0};
-
-    Serial.println("Option Num: ");
-    GetData(optionNumBuf, sizeof(optionNumBuf), &len);
-    if (0 >= len)
-    {
-        Serial.println("no i/p,0 option");
-    }
-    else
-    {
-        optionNum = atoi(optionNumBuf);
-        Serial.println(optionNum);
-    }
-
-    CAHeaderOption_t *headerOpt = NULL;
-    if (optionNum > 0)
-    {
-        headerOpt = (CAHeaderOption_t *) OICCalloc(optionNum, sizeof(CAHeaderOption_t));
-        if (NULL == headerOpt)
-        {
-            Serial.println("Out of memory");
-            return;
-        }
-    }
-
-    int i;
-    for (i = 0 ; i < optionNum ; i++)
-    {
-        int optionID = 0;
-        char getOptionID[4];
-        Serial.println("Opt ID:");
-        GetData(getOptionID, sizeof(getOptionID), &len);
-        if (0 >= len)
-        {
-            Serial.println("no i/p");
-            continue;
-        }
-        else
-        {
-            optionID = atoi(getOptionID);
-        }
-
-        memset(optionData, 0, sizeof(optionData));
-        Serial.println("Opt Data:");
-        GetData(optionData, sizeof(optionData), &len);
-        if (0 >= len)
-        {
-            Serial.println("no i/p");
-            continue;
-        }
-
-        headerOpt[i].optionID = optionID;
-        memcpy(headerOpt[i].optionData, optionData, strlen(optionData));
-        Serial.println("ID:");
-        Serial.println(optionID);
-        Serial.println("Data:");
-        Serial.println(optionData);
-
-        headerOpt[i].optionLength = (uint16_t)strlen(optionData);
-    }
-
-    Serial.println("============");
-    // create token
-    CAToken_t token = NULL;
-    uint8_t tokenLength = CA_MAX_TOKEN_LEN;
-
-    CAResult_t res = CAGenerateToken(&token, tokenLength);
-    if (res != CA_STATUS_OK || (!token))
-    {
-        Serial.println("token error");
-        return;
-    }
-
-    Serial.println("token");
-    Serial.println(token);
-
-    CAAdvertiseResource(buf, token, tokenLength, headerOpt, (uint8_t)optionNum);
-    OICFree(headerOpt);
-    CADestroyToken(token);
 }
 
 void SendNotification()
 {
     char buf[MAX_BUF_LEN] = {0};
-    CATransportType_t selectedNetwork;
+    char address[MAX_BUF_LEN] = {0};
+    char resourceUri[MAX_BUF_LEN] = {0};
+    CATransportAdapter_t selectedNetwork;
     selectedNetwork = GetConnectivityType();
 
     Serial.println("============");
@@ -571,13 +470,19 @@ void SendNotification()
         return;
     }
 
+    if (!ParseData(buf, address, resourceUri))
+    {
+        Serial.println("bad uri");
+        return;
+    }
+
     // create remote endpoint
-    CARemoteEndpoint_t *endpoint = NULL;
-    CAResult_t res = CACreateRemoteEndpoint(buf,selectedNetwork,&endpoint);
+    CAEndpoint_t *endpoint = NULL;
+    CAResult_t res = CACreateEndpoint(CA_DEFAULT_FLAGS, selectedNetwork, address, 0, &endpoint);
     if (CA_STATUS_OK != res)
     {
         Serial.println("Out of memory");
-        CADestroyRemoteEndpoint(endpoint);
+        CADestroyEndpoint(endpoint);
         return;
     }
 
@@ -596,6 +501,8 @@ void SendNotification()
     respondData.token = token;
     respondData.tokenLength = tokenLength;
     respondData.payload = (CAPayload_t)"Notification Data";
+    respondData.resourceUri = (char *)OICMalloc(strlen(resourceUri) + 1);
+    strcpy(respondData.resourceUri, resourceUri);
 
     CAResponseInfo_t responseInfo = {CA_BAD_REQ, {CA_MSG_RESET}};
     responseInfo.result = CA_SUCCESS;
@@ -606,7 +513,7 @@ void SendNotification()
     // destroy remote endpoint
     if (NULL != endpoint)
     {
-        CADestroyRemoteEndpoint(endpoint);
+        CADestroyEndpoint(endpoint);
     }
 
     CADestroyToken(token);
@@ -619,9 +526,9 @@ void SelectNetwork()
 
     Serial.println("============");
     Serial.println("Select network");
-    Serial.println("IPv4: 0");
-    Serial.println("EDR: 2");
-    Serial.println("LE: 3\n");
+    Serial.println("IP: 0");
+    Serial.println("EDR: 1");
+    Serial.println("LE: 2\n");
 
     size_t len = 0;
     GetData(buf, sizeof(buf), &len);
@@ -676,7 +583,7 @@ void SelectNetwork()
             break;
     }
 
-    CASelectNetwork(CATransportType_t(1<<number));
+    CASelectNetwork(CATransportAdapter_t(1<<number));
     Serial.println("============");
 }
 
@@ -734,11 +641,11 @@ void HandleRequestResponse()
     CAHandleRequestResponse();
 }
 
-void RequestHandler(const CARemoteEndpoint_t *object, const CARequestInfo_t *requestInfo)
+void RequestHandler(const CAEndpoint_t *object, const CARequestInfo_t *requestInfo)
 {
     if (!object)
     {
-        Serial.println("Remote endpoint is NULL!");
+        Serial.println("endpoint is NULL!");
         return;
     }
 
@@ -748,12 +655,12 @@ void RequestHandler(const CARemoteEndpoint_t *object, const CARequestInfo_t *req
         return;
     }
 
-    Serial.println("uri: ");
-    Serial.println(object->resourceUri);
     Serial.println("RAddr: ");
-    Serial.println(object->addressInfo.IP.ipAddress);
+    Serial.println(object->addr);
     Serial.println("Port: ");
-    Serial.println(object->addressInfo.IP.port);
+    Serial.println(object->port);
+    Serial.println("uri: ");
+    Serial.println(requestInfo->info.resourceUri);
     Serial.println("data: ");
     Serial.println(requestInfo->info.payload);
     Serial.println("Type: ");
@@ -774,19 +681,21 @@ void RequestHandler(const CARemoteEndpoint_t *object, const CARequestInfo_t *req
         }
     }
     Serial.println("send response");
-    SendResponse((CARemoteEndpoint_t *)object, (requestInfo != NULL) ? &requestInfo->info : NULL);
+    SendResponse((CAEndpoint_t *)object, (requestInfo != NULL) ? &requestInfo->info : NULL);
 }
 
-void ResponseHandler(const CARemoteEndpoint_t *object, const CAResponseInfo_t *responseInfo)
+void ResponseHandler(const CAEndpoint_t *object, const CAResponseInfo_t *responseInfo)
 {
-    if (object && object->resourceUri)
+    if (object)
     {
         Serial.print("uri: ");
-        Serial.println(object->resourceUri);
+        Serial.println(object->addr);
     }
 
     if (responseInfo)
     {
+        Serial.print("uri: ");
+        Serial.println(responseInfo->info.resourceUri);
         Serial.print("data: ");
         Serial.println(responseInfo->info.payload);
         Serial.print("Type: ");
@@ -796,31 +705,116 @@ void ResponseHandler(const CARemoteEndpoint_t *object, const CAResponseInfo_t *r
     }
 }
 
-void SendResponse(CARemoteEndpoint_t *endpoint, const CAInfo_t* info)
+void ErrorHandler(const CAEndpoint_t *rep, const CAErrorInfo_t* errorInfo)
+{
+    printf("+++++++++++++++++++++++++++++++++++ErrorInfo+++++++++++++++++++++++++++++++++++\n");
+
+    if(errorInfo)
+    {
+        const CAInfo_t *info = &errorInfo->info;
+        printf("Error Handler, ErrorInfo :\n");
+        printf("Error Handler result    : %d\n", errorInfo->result);
+        printf("Error Handler token     : %s\n", info->token);
+        printf("Error Handler messageId : %d\n", (uint16_t) info->messageId);
+        printf("Error Handler type      : %d\n", info->type);
+        printf("Error Handler resourceUri : %s\n", info->resourceUri);
+        printf("Error Handler payload   : %s\n", info->payload);
+
+        if(CA_ADAPTER_NOT_ENABLED == errorInfo->result)
+        {
+            printf("CA_ADAPTER_NOT_ENABLED, enable the adapter\n");
+        }
+        else if(CA_SEND_FAILED == errorInfo->result)
+        {
+            printf("CA_SEND_FAILED, unable to send the message, check parameters\n");
+        }
+        else if(CA_MEMORY_ALLOC_FAILED == errorInfo->result)
+        {
+            printf("CA_MEMORY_ALLOC_FAILED, insufficient memory\n");
+        }
+        else if(CA_SOCKET_OPERATION_FAILED == errorInfo->result)
+        {
+            printf("CA_SOCKET_OPERATION_FAILED, socket operation failed\n");
+        }
+        else if(CA_STATUS_FAILED == errorInfo->result)
+        {
+            printf("CA_STATUS_FAILED, message could not be delivered, internal error\n");
+        }
+    }
+    printf("++++++++++++++++++++++++++++++++End of ErrorInfo++++++++++++++++++++++++++++++++\n");
+
+    return;
+}
+
+void SendResponse(CAEndpoint_t *endpoint, const CAInfo_t* info)
 {
     char buf[MAX_BUF_LEN] = {0};
 
     Serial.println("============");
+    Serial.println("Select Message Type");
+    Serial.println("CON: 0");
+    Serial.println("NON: 1");
+    Serial.println("ACK: 2");
+    Serial.println("RESET: 3");
+
+    size_t len = 0;
+    int messageType = 0;
+    while(1)
+    {
+        GetData(buf, sizeof(buf), &len);
+        if(len >= 1)
+        {
+            messageType = buf[0] - '0';
+            if (messageType >= 0 && messageType <= 3)
+            {
+                break;
+            }
+        }
+        Serial.println("Invalid type");
+    }
+
+    int respCode = 0;
+    if(messageType != 3)
+    {
+        Serial.println("============");
+        Serial.println("Enter Resp Code:");
+        Serial.println("For Ex: Empty  : 0");
+        Serial.println("Success: 200");
+        Serial.println("Created: 201");
+        Serial.println("Deleted: 202");
+        Serial.println("BadReq : 400");
+        Serial.println("BadOpt : 402");
+        Serial.println("NotFnd : 404");
+        Serial.println("Internal Srv Err:500");
+        Serial.println("Timeout: 504");
+        while(1)
+        {
+            GetData(buf, sizeof(buf), &len);
+            if(len >= 1)
+            {
+                respCode = atoi(buf);
+                if (respCode >= 0 && respCode <= 504)
+                {
+                    break;
+                }
+            }
+            Serial.println("Invalid response");
+        }
+    }
+
     CAInfo_t responseData = {CA_MSG_RESET};
-    if(info && info->type == CA_MSG_CONFIRM)
-    {
-        responseData.type = CA_MSG_ACKNOWLEDGE;
-    }
-    else
-    {
-        responseData.type = CA_MSG_NONCONFIRM;
-    }
-
+    responseData.type = static_cast<CAMessageType_t>(messageType);
     responseData.messageId = (info != NULL) ? info->messageId : 0;
-    responseData.token = (info != NULL) ? (CAToken_t)info->token : NULL;
-    responseData.tokenLength = (info != NULL) ? info->tokenLength : 0;
-    responseData.payload = (CAPayload_t)"response payload";
-
+    if(messageType != 3)
+    {
+        responseData.token = (info != NULL) ? info->token : NULL;
+        responseData.tokenLength = (info != NULL) ? info->tokenLength : 0;
+        responseData.payload = static_cast<CAPayload_t>("response payload");
+    }
     CAResponseInfo_t responseInfo = {CA_BAD_REQ, {CA_MSG_RESET}};
-    responseInfo.result = (CAResponseResult_t)203;
+    responseInfo.result = static_cast<CAResponseResult_t>(respCode);
     responseInfo.info = responseData;
-
-    // send request (connectivityType from remoteEndpoint of request Info)
+    // send request (transportType from remoteEndpoint of request Info)
     CAResult_t res = CASendResponse(endpoint, &responseInfo);
     if(res != CA_STATUS_OK)
     {

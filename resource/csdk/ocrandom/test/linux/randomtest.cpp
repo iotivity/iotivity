@@ -35,7 +35,7 @@ int main(int argc, char* argv[]) {
 }
 
 TEST(RandomGeneration,OCSeedRandom) {
-    EXPECT_EQ((uint32_t )0, OCSeedRandom());
+    EXPECT_EQ(0, OCSeedRandom());
 }
 
 TEST(RandomGeneration,OCGetRandomByte) {
@@ -51,8 +51,7 @@ TEST(RandomGeneration,OCGetRandom) {
 }
 
 TEST(RandomGeneration,OCFillRandomMem) {
-    uint8_t array[ARR_SIZE];
-    memset(array, 0, ARR_SIZE);
+    uint8_t array[ARR_SIZE] = {};
     OCFillRandomMem(array + 1, ARR_SIZE - 2);
 
     for (int i = 1; i <= ARR_SIZE - 2; i++) {

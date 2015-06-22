@@ -22,13 +22,19 @@
 
 #include <string.h>
 #include <ctype.h>
+#include "oic_string.h"
+#include "oic_malloc.h"
+#include <errno.h>
+
+#ifndef WITH_ARDUINO
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#endif
 
 #ifdef __ANDROID__
 #include <jni.h>
 #endif
-
-#include "oic_malloc.h"
-#include "oic_string.h"
 
 #define CA_ADAPTER_UTILS_TAG "CA_ADAPTER_UTILS"
 
@@ -59,220 +65,71 @@ void CALogPDUData(coap_pdu_t *pdu)
 
     OIC_LOG_V(DEBUG, CA_ADAPTER_UTILS_TAG, "PDU Maker - token : %s", pdu->hdr->token);
 }
-
-CALocalConnectivity_t *CAAdapterCreateLocalEndpoint(CATransportType_t type, const char *address)
+CAEndpoint_t *CAAdapterCreateEndpoint(CATransportFlags_t flags,
+                                      CATransportAdapter_t adapter,
+                                      const char *address,
+                                      uint16_t port)
 {
-    CALocalConnectivity_t *info = (CALocalConnectivity_t *)
-                                  OICCalloc(1, sizeof(CALocalConnectivity_t));
+    CAEndpoint_t *info = (CAEndpoint_t *)OICCalloc(1, sizeof(CAEndpoint_t));
     if (NULL == info)
     {
         OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "Memory allocation failed !");
         return NULL;
     }
 
-    info->type = type;
-    if (address && strlen(address))
+    if (address)
     {
-        if (CA_EDR == type)
-        {
-            strncpy(info->addressInfo.BT.btMacAddress, address, CA_MACADDR_SIZE - 1);
-            info->addressInfo.BT.btMacAddress[CA_MACADDR_SIZE - 1] = '\0';
-        }
-        else if (CA_LE == type)
-        {
-            strncpy(info->addressInfo.LE.leMacAddress, address, CA_MACADDR_SIZE - 1);
-            info->addressInfo.LE.leMacAddress[CA_MACADDR_SIZE - 1] = '\0';
-        }
-        else if (CA_IPV4 == type)
-        {
-            strncpy(info->addressInfo.IP.ipAddress, address, CA_IPADDR_SIZE - 1);
-            info->addressInfo.IP.ipAddress[CA_IPADDR_SIZE - 1] = '\0';
-        }
-        else if (CA_IPV6 == type)
-        {
-            OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "Currently IPV6 is not supported");
-            OICFree(info);
-            return NULL;
-        }
-        else
-        {
-            OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "type is not matched with any transport!");
-            OICFree(info);
-            return NULL;
-        }
+        OICStrcpy(info->addr, sizeof(info->addr), address);
+        info->addr[MAX_ADDR_STR_SIZE_CA - 1] = '\0';
     }
+    info->flags = flags;
+    info->adapter = adapter;
+    info->port = port;
 
     return info;
 }
 
-CALocalConnectivity_t *CAAdapterCopyLocalEndpoint(const CALocalConnectivity_t *connectivity)
+CAEndpoint_t *CAAdapterCreateLocalEndpoint(CATransportFlags_t flags,
+                        CATransportAdapter_t adapter, const char *address)
 {
-    VERIFY_NON_NULL_RET(connectivity, CA_ADAPTER_UTILS_TAG, "connectivity is NULL", NULL);
+    return CAAdapterCreateEndpoint(flags, adapter, address, 0);
+}
 
-    CALocalConnectivity_t *info = (CALocalConnectivity_t *)
-                                  OICCalloc(1, sizeof(CALocalConnectivity_t));
+CAResult_t CACreateEndpoint(CATransportFlags_t flags,
+                            CATransportAdapter_t adapter,
+                            const char *addr,
+                            uint16_t port,
+                            CAEndpoint_t **object)
+{
+    VERIFY_NON_NULL_RET(object, CA_ADAPTER_UTILS_TAG, "Endpoint is NULL", CA_STATUS_INVALID_PARAM);
+    CAEndpoint_t *endpoint = CAAdapterCreateEndpoint(flags, adapter, addr, port);
+    if (!endpoint)
+    {
+        return CA_STATUS_FAILED;
+    }
+    *object = endpoint;
+    return CA_STATUS_OK;
+}
+
+
+CAEndpoint_t *CAAdapterCloneEndpoint(const CAEndpoint_t *endpoint)
+{
+    VERIFY_NON_NULL_RET(endpoint, CA_ADAPTER_UTILS_TAG, "endpoint is NULL", NULL);
+
+    CAEndpoint_t *info = (CAEndpoint_t *)OICCalloc(1, sizeof (CAEndpoint_t));
     if (NULL == info)
     {
         OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "Memory allocation failed !");
         return NULL;
     }
-
-    info->type = connectivity->type;
-    if (CA_EDR == info->type && strlen(connectivity->addressInfo.BT.btMacAddress))
-    {
-        strncpy(info->addressInfo.BT.btMacAddress, connectivity->addressInfo.BT.btMacAddress,
-                CA_MACADDR_SIZE - 1);
-        info->addressInfo.BT.btMacAddress[CA_MACADDR_SIZE - 1] = '\0';
-    }
-    else if (CA_LE == info->type && strlen(connectivity->addressInfo.LE.leMacAddress))
-    {
-        strncpy(info->addressInfo.LE.leMacAddress, connectivity->addressInfo.LE.leMacAddress,
-                CA_MACADDR_SIZE - 1);
-        info->addressInfo.LE.leMacAddress[CA_MACADDR_SIZE - 1] = '\0';
-    }
-    else if ((CA_IPV4 == info->type)
-
-            && strlen(connectivity->addressInfo.IP.ipAddress))
-    {
-        strncpy(info->addressInfo.IP.ipAddress, connectivity->addressInfo.IP.ipAddress,
-                CA_IPADDR_SIZE - 1);
-        info->addressInfo.IP.ipAddress[CA_IPADDR_SIZE - 1] = '\0';
-        info->addressInfo.IP.port = connectivity->addressInfo.IP.port;
-    }
-    else if (CA_IPV6 == info->type)
-    {
-        OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "Currently IPV6 is not supported");
-        OICFree(info);
-        return NULL;
-    }
-    else
-    {
-        OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "type is not matched with any transport!");
-        OICFree(info);
-        return NULL;
-    }
-
-    info->isSecured = connectivity->isSecured;
-    return info;
-}
-
-void CAAdapterFreeLocalEndpoint(CALocalConnectivity_t *localEndpoint)
-{
-    OICFree(localEndpoint);
-}
-
-CARemoteEndpoint_t *CAAdapterCreateRemoteEndpoint(CATransportType_t type, const char *address,
-                                                  const char *resourceUri)
-{
-    CARemoteEndpoint_t *info = (CARemoteEndpoint_t *)
-                               OICCalloc(1, sizeof(CARemoteEndpoint_t));
-    if (NULL == info)
-    {
-        OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "Memory allocation failed !");
-        return NULL;
-    }
-
-    info->transportType = type;
-    if (address && strlen(address))
-    {
-        if (CA_EDR == type)
-        {
-            strncpy(info->addressInfo.BT.btMacAddress, address, CA_MACADDR_SIZE - 1);
-            info->addressInfo.BT.btMacAddress[CA_MACADDR_SIZE - 1] = '\0';
-        }
-        else if (CA_LE == type)
-        {
-            strncpy(info->addressInfo.LE.leMacAddress, address, CA_MACADDR_SIZE - 1);
-            info->addressInfo.LE.leMacAddress[CA_MACADDR_SIZE - 1] = '\0';
-        }
-        else if (CA_IPV4 == type)
-        {
-            strncpy(info->addressInfo.IP.ipAddress, address, CA_IPADDR_SIZE - 1);
-            info->addressInfo.IP.ipAddress[CA_IPADDR_SIZE - 1] = '\0';
-        }
-        else if (CA_IPV6 == type)
-        {
-            OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "Currently IPV6 is not supported");
-            OICFree(info);
-            return NULL;
-        }
-        else
-        {
-            OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "type is not matched with any transport!");
-            OICFree(info);
-            return NULL;
-        }
-    }
-
-    if (resourceUri && strlen(resourceUri))
-    {
-        info->resourceUri = OICStrdup(resourceUri);
-    }
+    *info = *endpoint;
 
     return info;
 }
 
-CARemoteEndpoint_t *CAAdapterCopyRemoteEndpoint(const CARemoteEndpoint_t *remoteEndpoint)
+void CAAdapterFreeEndpoint(CAEndpoint_t *remoteEndpoint)
 {
-    VERIFY_NON_NULL_RET(remoteEndpoint, CA_ADAPTER_UTILS_TAG, "Remote endpoint is NULL", NULL);
-
-    CARemoteEndpoint_t *info = (CARemoteEndpoint_t *)
-                               OICCalloc(1, sizeof(CARemoteEndpoint_t));
-    if (NULL == info)
-    {
-        OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "Memory allocation failed !");
-        return NULL;
-    }
-
-    info->transportType = remoteEndpoint->transportType;
-    if (CA_EDR == info->transportType && ('\0' != remoteEndpoint->addressInfo.BT.btMacAddress[0]))
-    {
-        strncpy(info->addressInfo.BT.btMacAddress, remoteEndpoint->addressInfo.BT.btMacAddress,
-                CA_MACADDR_SIZE - 1);
-        info->addressInfo.BT.btMacAddress[CA_MACADDR_SIZE - 1] = '\0';
-    }
-    else if (CA_LE == info->transportType
-             && ('\0' != remoteEndpoint->addressInfo.LE.leMacAddress[0]))
-    {
-        strncpy(info->addressInfo.LE.leMacAddress, remoteEndpoint->addressInfo.LE.leMacAddress,
-                CA_MACADDR_SIZE - 1);
-        info->addressInfo.LE.leMacAddress[CA_MACADDR_SIZE - 1] = '\0';
-    }
-    else if ((CA_IPV4 == info->transportType)
-            && ('\0' != remoteEndpoint->addressInfo.IP.ipAddress[0]))
-    {
-        strncpy(info->addressInfo.IP.ipAddress, remoteEndpoint->addressInfo.IP.ipAddress,
-                CA_IPADDR_SIZE - 1);
-        info->addressInfo.IP.ipAddress[CA_IPADDR_SIZE - 1] = '\0';
-        info->addressInfo.IP.port = remoteEndpoint->addressInfo.IP.port;
-    }
-    else if (CA_IPV6 == info->transportType)
-    {
-        OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "Currently IPV6 is not supported");
-    }
-    else
-    {
-        OIC_LOG(DEBUG, CA_ADAPTER_UTILS_TAG, "Its not matching. May be multicast.");
-    }
-
-    //For Multicast, remote address will be null while resourceUri will have the service UUID
-
-    if (remoteEndpoint->resourceUri && strlen(remoteEndpoint->resourceUri))
-    {
-        info->resourceUri = OICStrdup(remoteEndpoint->resourceUri);
-    }
-
-    info->isSecured = remoteEndpoint->isSecured;
-    return info;
-}
-
-void CAAdapterFreeRemoteEndpoint(CARemoteEndpoint_t *remoteEndpoint)
-{
-    if (remoteEndpoint)
-    {
-        OICFree(remoteEndpoint->resourceUri);
-        OICFree(remoteEndpoint);
-    }
+    OICFree(remoteEndpoint);
 }
 
 CAResult_t CAParseIPv4AddressInternal(const char *ipAddrStr, uint8_t *ipAddr,
@@ -384,7 +241,6 @@ bool CAAdapterIsSameSubnet(const char *ipAddress1, const char *ipAddress2, const
            && ((ipList1[3] & maskList[3]) == (ipList2[3] & maskList[3]));
 }
 
-
 bool CAIsMulticastServerStarted(const u_arraylist_t *serverInfoList, const char *ipAddress,
                                 const char *multicastAddress, uint16_t port)
 {
@@ -402,9 +258,9 @@ bool CAIsMulticastServerStarted(const u_arraylist_t *serverInfoList, const char 
             return false;
         }
 
-        if (info->isMulticastServer && (strncmp(info->ipAddress, multicastAddress,
-                                                strlen(multicastAddress) == 0))
-            && (info->port == port) && (strncmp(info->ifAddr, ipAddress, strlen(ipAddress)) == 0))
+        if (info->isMulticastServer && (strncmp(info->endpoint.addr, multicastAddress,
+                                                strlen(multicastAddress)) == 0)
+            && (info->endpoint.port == port) && (strncmp(info->ifAddr, ipAddress, strlen(ipAddress)) == 0))
         {
             return info->isServerStarted;
         }
@@ -427,9 +283,9 @@ bool CAIsUnicastServerStarted(const u_arraylist_t *serverInfoList, const char *i
             continue;
         }
 
-        if (!info->isMulticastServer && (strncmp(info->ipAddress, ipAddress,
+        if (!info->isMulticastServer && (strncmp(info->endpoint.addr, ipAddress,
                                                  strlen(ipAddress)) == 0)
-            && (info->port == port))
+            && (info->endpoint.port == port))
         {
             return info->isServerStarted;
         }
@@ -450,21 +306,24 @@ uint16_t CAGetServerPort(const u_arraylist_t *serverInfoList, const char *ipAddr
         {
             continue;
         }
-        if ((strncmp(info->ipAddress, ipAddress, strlen(ipAddress)) == 0) &&
-                    (info->isSecured == isSecured))
+        bool ifSecured = info->endpoint.flags & CA_SECURE;
+        if ((strncmp(info->endpoint.addr, ipAddress, strlen(ipAddress)) == 0) &&
+                    (ifSecured == isSecured))
         {
-            return info->port;
+            return info->endpoint.port;
         }
     }
 
     return 0;
 }
 
-int CAGetSocketFdForUnicastServer(const u_arraylist_t *serverInfoList, const char *ipAddress,
-                                  bool isSecured, bool isMulticast, CATransportType_t type)
+int CAGetSocketFdForUnicastServer(const u_arraylist_t *serverInfoList,
+                                bool isMulticast, const CAEndpoint_t *endpoint)
 {
     VERIFY_NON_NULL_RET(serverInfoList, CA_ADAPTER_UTILS_TAG, "serverInfoList is null", -1);
-    VERIFY_NON_NULL_RET(ipAddress, CA_ADAPTER_UTILS_TAG, "ipAddress is null", -1);
+    VERIFY_NON_NULL_RET(endpoint, CA_ADAPTER_UTILS_TAG, "endpoint is null", -1);
+
+    bool isSecured = (endpoint->flags & CA_SECURE) != 0;
 
     uint32_t listLength = u_arraylist_length(serverInfoList);
 
@@ -476,12 +335,13 @@ int CAGetSocketFdForUnicastServer(const u_arraylist_t *serverInfoList, const cha
             continue;
         }
 
-        if (!CAAdapterIsSameSubnet(info->ipAddress, ipAddress, info->subNetMask))
+        if (!CAAdapterIsSameSubnet(info->endpoint.addr, endpoint->addr, info->subNetMask))
         {
             continue;
         }
 
-        if (!info->isMulticastServer && (info->isSecured == isSecured))
+        bool ifSecured = info->endpoint.flags & CA_SECURE;
+        if (!info->isMulticastServer && (ifSecured == isSecured))
         {
             OIC_LOG_V(DEBUG, CA_ADAPTER_UTILS_TAG,
                       "CAGetSocketFdForServer found socket [%d]", info->socketFd);
@@ -572,6 +432,81 @@ void CAClearServerInfoList(u_arraylist_t *serverInfoList)
     u_arraylist_free(&serverInfoList);
 }
 
+#ifndef WITH_ARDUINO
+/*
+ * These two conversion functions return void because errors can't happen
+ * (because of NI_NUMERIC), and there's nothing to do if they do happen.
+ */
+void CAConvertAddrToName(const struct sockaddr_storage *sockAddr, char *host, uint16_t *port)
+{
+    VERIFY_NON_NULL_VOID(sockAddr, CA_ADAPTER_UTILS_TAG, "sockAddr is null");
+    VERIFY_NON_NULL_VOID(host, CA_ADAPTER_UTILS_TAG, "host is null");
+    VERIFY_NON_NULL_VOID(port, CA_ADAPTER_UTILS_TAG, "port is null");
+
+    int r = getnameinfo((struct sockaddr *)sockAddr,
+                        sizeof (struct sockaddr_storage),
+                        host, CA_IPADDR_SIZE,
+                        NULL, 0,
+                        NI_NUMERICHOST|NI_NUMERICSERV);
+    if (r)
+    {
+        if (EAI_SYSTEM == r)
+        {
+            OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG,
+                            "getaddrinfo failed: errno %s", strerror(errno));
+        }
+        else
+        {
+            OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG,
+                            "getaddrinfo failed: %s", gai_strerror(r));
+        }
+        return;
+    }
+    *port = ntohs(((struct sockaddr_in *)sockAddr)->sin_port); // IPv4 and IPv6
+}
+
+void CAConvertNameToAddr(const char *host, uint16_t port, struct sockaddr_storage *sockaddr)
+{
+    VERIFY_NON_NULL_VOID(host, CA_ADAPTER_UTILS_TAG, "host is null");
+    VERIFY_NON_NULL_VOID(sockaddr, CA_ADAPTER_UTILS_TAG, "sockaddr is null");
+
+    struct addrinfo *addrs;
+    struct addrinfo hints = { 0 };
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_flags = AI_NUMERICHOST;
+
+    int r = getaddrinfo(host, NULL, &hints, &addrs);
+    if (r)
+    {
+        if (EAI_SYSTEM == r)
+        {
+            OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG,
+                            "getaddrinfo failed: errno %s", strerror(errno));
+        }
+        else
+        {
+            OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG,
+                            "getaddrinfo failed: %s", gai_strerror(r));
+        }
+        return;
+    }
+    // assumption: in this case, getaddrinfo will only return one addrinfo
+    // or first is the one we want.
+    if (addrs[0].ai_family == AF_INET6)
+    {
+        memcpy(sockaddr, addrs[0].ai_addr, sizeof (struct sockaddr_in6));
+        ((struct sockaddr_in6 *)sockaddr)->sin6_port = htons(port);
+    }
+    else
+    {
+        memcpy(sockaddr, addrs[0].ai_addr, sizeof (struct sockaddr_in));
+        ((struct sockaddr_in *)sockaddr)->sin_port = htons(port);
+    }
+    freeaddrinfo(addrs);
+}
+#endif // WITH_ARDUINO
+
 #ifdef __ANDROID__
 void CANativeJNISetContext(JNIEnv *env, jobject context)
 {
@@ -602,4 +537,3 @@ JavaVM *CANativeJNIGetJavaVM()
     return g_jvm;
 }
 #endif
-

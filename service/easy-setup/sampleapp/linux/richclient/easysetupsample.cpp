@@ -46,22 +46,16 @@ void handleSigInt(int signum) {
  * and also holds the Enrollee information for which provisioning is requested
  * This function can be used to update the application about the current provisioning status of the Enrollee
  */
-void ProvisioningStatusCallback(ProvisioningInfo provInfo) {
-    OIC_LOG_V(INFO, TAG, "Enrollee connectivity: %d", provInfo.provDeviceInfo.connType);
-    if(provInfo.provStatus == DEVICE_PROVISIONED)
+void ProvisioningStatusCallback(ProvisioningInfo *provInfo) {
+    OIC_LOG_V(INFO, TAG, "Enrollee connectivity: %d", provInfo->provDeviceInfo.connType);
+    if(provInfo->provStatus == DEVICE_PROVISIONED)
     {
-        OIC_LOG_V(INFO, TAG, "Successfully provisioned the Enrollee with IP : %d.%d.%d.%d ",
-            provInfo.provDeviceInfo.addr->addr[0],
-            provInfo.provDeviceInfo.addr->addr[1],
-            provInfo.provDeviceInfo.addr->addr[2],
-            provInfo.provDeviceInfo.addr->addr[3]);
+        OIC_LOG_V(INFO, TAG, "Successfully provisioned the Enrollee with IP : %s ",
+            provInfo->provDeviceInfo.addr->addr);
     }
     else{
-        OIC_LOG_V(INFO, TAG, "Provisioing Failed for the Enrollee with IP : %d.%d.%d.%d ",
-            provInfo.provDeviceInfo.addr->addr[0],
-            provInfo.provDeviceInfo.addr->addr[1],
-            provInfo.provDeviceInfo.addr->addr[2],
-            provInfo.provDeviceInfo.addr->addr[3]);
+        OIC_LOG_V(INFO, TAG, "Provisioing Failed for the Enrollee with IP : %s",
+            provInfo->provDeviceInfo.addr->addr);
     }
 }
 
@@ -98,7 +92,7 @@ int main (int argc, char**argv) {
         }
     }
 
-    netInfo.connType = OC_IPV4;
+    netInfo.connType = CT_ADAPTER_IP;
     OIC_LOG_V(INFO, TAG, "IP Address of the Provisioning device is =%s\n",
                         netInfo.netAddressInfo.WIFI.ipAddress);
     OIC_LOG_V(INFO, TAG, "SSID of the Enroller is =%s\n",netInfo.netAddressInfo.WIFI.ssid);
@@ -110,6 +104,8 @@ int main (int argc, char**argv) {
     while (!quitFlag) {
         sleep(1);
     }
+
+    TerminateEasySetupManager();
     OIC_LOG(INFO, TAG, "Exiting occlient main loop...");
 
     return 0;

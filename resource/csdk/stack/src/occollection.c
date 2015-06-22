@@ -31,9 +31,9 @@
 #include "ocstackinternal.h"
 #include "ocresourcehandler.h"
 #include "logger.h"
-#include "ocmalloc.h"
 #include "cJSON.h"
-#include "ocmalloc.h"
+#include "oic_malloc.h"
+#include "oic_string.h"
 
 /// Module Name
 #include <stdio.h>
@@ -249,7 +249,7 @@ static OCStackResult BuildRootResourceJSON(OCResource *resource,
         jsonLen = strlen(jsonStr);
         if (jsonLen < *remaining)
         {
-            strncpy(bufferPtr, jsonStr, jsonLen);
+            OICStrcpy(bufferPtr, *remaining, jsonStr);
             *remaining -= jsonLen;
             bufferPtr += jsonLen;
             ret = OC_STACK_OK;
@@ -261,15 +261,14 @@ static OCStackResult BuildRootResourceJSON(OCResource *resource,
     }
 
     cJSON_Delete (resObj);
-    OCFree(jsonStr);
+    OICFree(jsonStr);
 
     return ret;
 }
 
 
 static OCStackResult
-HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest,
-                       uint8_t filterOn, char *filterValue)
+HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest, uint8_t filterOn, char *filterValue)
 {
     if(!ehRequest)
     {
@@ -280,15 +279,15 @@ HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest,
     char jsonbuffer[MAX_RESPONSE_LENGTH] = {};
     size_t jsonbufferLength = 0;
     uint16_t remaining = 0;
-    char * ptr = NULL;
-    OCResource * collResource = (OCResource *) ehRequest->resource;
+    char *ptr = NULL;
+    OCResource *collResource = (OCResource *)ehRequest->resource;
 
     ptr = jsonbuffer;
     remaining = MAX_RESPONSE_LENGTH;
 
     ret = BuildRootResourceJSON(collResource, ptr, &remaining);
 
-    if (ret == OC_STACK_OK && remaining >= (sizeof(OC_JSON_SEPARATOR) + 1))
+    if (ret == OC_STACK_OK && remaining >= (sizeof (OC_JSON_SEPARATOR) + 1))
     {
         ptr += strlen((char*)ptr);
         *ptr = OC_JSON_SEPARATOR;
@@ -312,7 +311,7 @@ HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest,
 
                 // Function will return error if not enough space in buffer.
                 ret = BuildVirtualResourceResponse(temp, filterOn, filterValue,
-                         (char*)ptr, &remaining, CA_IPV4 );
+                                         (char*)ptr, &remaining, CA_ADAPTER_IP);
                 if (ret != OC_STACK_OK)
                 {
                     break;
@@ -402,7 +401,8 @@ HandleBatchInterface(OCEntityHandlerRequest *ehRequest)
                 // is ehRequest->resource
                 ehRequest->resource = (OCResourceHandle) temp;
 
-                ehResult = temp->entityHandler(OC_REQUEST_FLAG, ehRequest);
+                ehResult = temp->entityHandler(OC_REQUEST_FLAG, ehRequest,
+                                        temp->entityHandlerCallbackParam);
 
                 // The default collection handler is returning as OK
                 if(stackRet != OC_STACK_SLOW_RESOURCE)

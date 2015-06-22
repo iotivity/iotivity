@@ -148,8 +148,8 @@ get_psk_info(struct dtls_context_t *ctx UNUSED_PARAM,
 static int
 get_ecdsa_key(struct dtls_context_t *ctx,
 	      const session_t *session,
-	      const dtls_ecdsa_key_t **result) {
-  static const dtls_ecdsa_key_t ecdsa_key = {
+	      const dtls_ecc_key_t **result) {
+  static const dtls_ecc_key_t ecdsa_key = {
     .curve = DTLS_ECDH_CURVE_SECP256R1,
     .priv_key = ecdsa_priv_key,
     .pub_key_x = ecdsa_pub_key_x,
@@ -296,9 +296,9 @@ usage( const char *program, const char *version) {
   fprintf(stderr, "%s v%s -- DTLS client implementation\n"
 	  "(c) 2011-2014 Olaf Bergmann <bergmann@tzi.org>\n\n"
 #ifdef DTLS_PSK
-	  "usage: %s [-i file] [-s file] [-k file] [-o file] [-p port] [-v num] addr [port]\n"
+	  "usage: %s [-i file] [-s file] [-k file] [-o file] [-p port] [-v num] [-c num] addr [port]\n"
 #else /*  DTLS_PSK */
-	  "usage: %s [-o file] [-p port] [-v num] addr [port]\n"
+	  "usage: %s [-o file] [-p port] [-v num] [-c num] addr [port]\n"
 #endif /* DTLS_PSK */
 #ifdef DTLS_PSK
 	  "\t-i file\t\tread PSK Client identity from file\n"
@@ -307,7 +307,11 @@ usage( const char *program, const char *version) {
 #endif /* DTLS_PSK */
 	  "\t-o file\t\toutput received data to this file (use '-' for STDOUT)\n"
 	  "\t-p port\t\tlisten on specified port (default is %d)\n"
-	  "\t-v num\t\tverbosity level (default: 3)\n",
+	  "\t-v num\t\tverbosity level (default: 3)\n"
+          "\t-c num\t\tcipher suite (default: 1)\n"
+          "\t\t\t1: TLS_ECDH_anon_WITH_AES_128_CBC_SHA \n"
+          "\t\t\t2: TLS_PSK_WITH_AES_128_CCM_8\n"
+          "\t\t\t3: TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8\n",
 	   program, version, program, DEFAULT_PORT);
 }
 
@@ -333,6 +337,7 @@ static dtls_handler_t cb = {
  * Below command tests this feature.
  */
 #define DTLS_CLIENT_CMD_REHANDSHAKE "client:rehandshake"
+
 int 
 main(int argc, char **argv) {
   fd_set rfds, wfds;
@@ -342,6 +347,8 @@ main(int argc, char **argv) {
   log_t log_level = DTLS_LOG_WARN;
   int fd, result;
   int on = 1;
+  dtls_cipher_t selected_cipher = TLS_ECDH_anon_WITH_AES_128_CBC_SHA;
+  dtls_cipher_enable_t ecdh_anon_enalbe = DTLS_CIPHER_ENABLE;
   int opt, res;
   session_t dst;
 
@@ -357,7 +364,7 @@ main(int argc, char **argv) {
   memcpy(psk_key, PSK_DEFAULT_KEY, psk_key_length);
 #endif /* DTLS_PSK */
 
-  while ((opt = getopt(argc, argv, "p:o:v:" PSK_OPTIONS)) != -1) {
+  while ((opt = getopt(argc, argv, "p:o:v:c:" PSK_OPTIONS)) != -1) {
     switch (opt) {
 #ifdef DTLS_PSK
     case 'i' : {
@@ -406,6 +413,23 @@ main(int argc, char **argv) {
       break;
     case 'v' :
       log_level = strtol(optarg, NULL, 10);
+      break;
+    case 'c':
+      if( strcmp(optarg, "1") == 0)
+      {
+          selected_cipher = TLS_ECDH_anon_WITH_AES_128_CBC_SHA;
+          ecdh_anon_enalbe = DTLS_CIPHER_ENABLE;
+      }
+      else if( strcmp(optarg, "2") == 0)
+      {
+          selected_cipher = TLS_PSK_WITH_AES_128_CCM_8 ;
+          ecdh_anon_enalbe = DTLS_CIPHER_DISABLE;
+      }
+      else if( strcmp(optarg, "3") == 0)
+      {
+          selected_cipher = TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8 ;
+          ecdh_anon_enalbe = DTLS_CIPHER_DISABLE;
+      }
       break;
     default:
       usage(argv[0], dtls_package_version());
@@ -471,6 +495,13 @@ main(int argc, char **argv) {
     dtls_emerg("cannot create context\n");
     exit(-1);
   }
+
+
+  /* select cipher suite */
+  dtls_select_cipher(dtls_context, selected_cipher);
+
+  /* enable/disable tls_ecdh_anon_with_aes_128_cbc_sha */
+  dtls_enables_anon_ecdh(dtls_context, ecdh_anon_enalbe);
 
   dtls_set_handler(dtls_context, &cb);
 

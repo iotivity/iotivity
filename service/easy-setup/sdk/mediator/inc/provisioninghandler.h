@@ -50,7 +50,7 @@ void listeningFunc(void*);
 OCStackApplicationResult ProvisionEnrolleeResponse(void* ctx, OCDoHandle handle,
         OCClientResponse * clientResponse);
 
-OCStackResult ProvisionEnrollee(OCQualityOfService qos, const char* query);
+OCStackResult ProvisionEnrollee(OCQualityOfService qos, const char* query, const char* resUri);
 
 OCStackApplicationResult GetProvisioningStatusResponse(void* ctx,
         OCDoHandle handle, OCClientResponse * clientResponse);
@@ -75,12 +75,11 @@ OCStackResult SubscribeProvPresence(OCQualityOfService qos, const char* requestU
 OCStackApplicationResult FindProvisioningResourceResponse(void* ctx,
         OCDoHandle handle, OCClientResponse * clientResponse);
 
-OCStackResult FindProvisioningResource(OCQualityOfService qos,
-        const char* requestURI);
+void FindProvisioningResource(void *data);
 
 //Invoke Provisioning Status Callback
-void PrepareProvisioingStatusCB(ProvisioningInfo *provInfo,
-        OCClientResponse * clientResponse, ProvStatus provStatus);
+ProvisioningInfo* PrepareProvisioingStatusCB(OCClientResponse * clientResponse,
+            ProvStatus provStatus);
 
 #endif
 

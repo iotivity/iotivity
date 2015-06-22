@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="org.iotivity.service.easysetup"
+    package="org.iotivity.service.easysetup.mediator"
     android:versionCode="1"
     android:versionName="1.0" >
 

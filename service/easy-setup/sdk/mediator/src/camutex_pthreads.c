@@ -43,7 +43,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <assert.h>
-#include <ocmalloc.h>
+#include <oic_malloc.h>
 
 #include "camutex.h"
 #include "logger.h"

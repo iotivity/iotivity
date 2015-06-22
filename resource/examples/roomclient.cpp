@@ -215,7 +215,6 @@ void foundResource(std::shared_ptr<OCResource> resource)
     }
     catch(std::exception& e)
     {
-        std::cerr << "Exception in foundResource: "<< e.what() <<std::endl;
         //log(e.what());
     }
 }
@@ -224,6 +223,41 @@ int main(int argc, char* argv[]) {
 
     std::ostringstream requestURI;
 
+    OCConnectivityType connectivityType = CT_DEFAULT;
+    if(argc == 2)
+    {
+        try
+        {
+            std::size_t inputValLen;
+            int optionSelected = std::stoi(argv[1], &inputValLen);
+
+            if(inputValLen == strlen(argv[1]))
+            {
+                if(optionSelected == 0)
+                {
+                    connectivityType = CT_ADAPTER_IP;
+                }
+                else
+                {
+                    std::cout << "Invalid connectivity type selected. Using default IP" << std::endl;
+                }
+            }
+            else
+            {
+                std::cout << "Invalid connectivity type selected. Using default IP" << std::endl;
+            }
+        }
+        catch(std::exception& e)
+        {
+            std::cout << "Invalid input argument. Using IP as connectivity type" << std::endl;
+        }
+    }
+    else
+    {
+        std::cout << "Usage roomclient 0" << std::endl;
+        std::cout<<"connectivityType: Default" << std::endl;
+        std::cout << "connectivityType 0: IP" << std::endl;
+    }
 
     // Create PlatformConfig object
     PlatformConfig cfg {
@@ -241,7 +275,7 @@ int main(int argc, char* argv[]) {
         // Find all resources
         requestURI << OC_MULTICAST_DISCOVERY_URI;
 
-        OCPlatform::findResource("", requestURI.str(), OC_ALL, &foundResource);
+        OCPlatform::findResource("", requestURI.str(), connectivityType, &foundResource);
         std::cout<< "Finding Resource... " <<std::endl;
 
         // A condition variable will free the mutex it is given, then do a non-

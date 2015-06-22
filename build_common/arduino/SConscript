@@ -70,8 +70,15 @@ def __search_files(path, pattern, ondisk=True, source=True, strings=False, recur
 
 	matches = []
 	for root, dirnames, filenames in os.walk(path):
-		matches.extend(Glob(root + '/' + pattern, ondisk, source, strings))
+		# This is a helper function to build Arduino libraries. Scripts are using this function
+		# to add all the files in a folder as compilation targets rather than specifying each
+		# file to compile from a Arduino library folder.
 
+		# Since the function is recursive, it adds even "/library/<library-name>/examples" to the
+		# compilation list. This is an extra overhead as stack is never going to use ".o" generated
+		# for these examples.
+		if 'examples' not in root:
+			matches.extend(Glob(root + '/' + pattern, ondisk, source, strings))
 	return matches
 
 # To make sure the src is built in 'BUILD_DIR' (by default it will be built at
@@ -427,7 +434,11 @@ else:
 		env.AppendUnique(LIBS = 'm')
 	env.Replace(ARCOM = '$AR ' + platform_info.get('compiler.ar.flags') + ' $TARGET $SOURCES')
 
-
+# Make sure the .d files are removed when clean the build
+if env.GetOption('clean'):
+	dfs = __search_files(env.get('BUILD_DIR'), '*.d')
+	for df in dfs:
+		Execute(Delete(df))
 __build_core(env)
 
 env.AddMethod(__import_lib, "ImportLib") #import arduino library

@@ -38,10 +38,21 @@
 
 //The following variable determines the interface (wifi, ethernet etc.)
 //to be used for sending unicast messages. Default set to Ethernet.
-static OCConnectivityType OC_CONNTYPE = OC_IPV4;
+static OCConnectivityType OC_CONNTYPE = CT_ADAPTER_IP;
 
 static const char * UNICAST_PROVISIONING_QUERY = "coap://%s:%d/oic/res?rt=oic.prov";
-static const char * OIC_PROVISIONING_URI = "/oic/prov";
+static const char * UNICAST_PROV_STATUS_QUERY = "coap://%s:%d%s";
+
+
+/**
+ * Attributes used to form a proper easysetup conforming JSON message.
+ */
+#define OC_RSRVD_ES_PS                     "ps"
+#define OC_RSRVD_ES_TNN                    "tnn"
+#define OC_RSRVD_ES_CD                     "cd"
+
+
+
 
 typedef enum
 {
@@ -131,6 +142,6 @@ typedef struct
 /**
  * Client applications implement this callback to consume responses received from Servers.
  */
-typedef void (*OCProvisioningStatusCB)(ProvisioningInfo provInfo);
+typedef void (*OCProvisioningStatusCB)(ProvisioningInfo *provInfo);
 
 #endif

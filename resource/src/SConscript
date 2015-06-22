@@ -35,7 +35,6 @@ oclib_env.AppendUnique(CPPPATH = [
 		'../include/',
 		'../csdk/stack/include',
 		'../csdk/ocrandom/include',
-		'../csdk/ocmalloc/include',
 		'../csdk/logger/include',
 		'../oc_logger/include',
 		'../csdk/connectivity/lib/libcoap-4.1.1'

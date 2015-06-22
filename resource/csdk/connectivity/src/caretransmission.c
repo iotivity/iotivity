@@ -67,7 +67,7 @@ typedef struct
     uint64_t timeout;                   /**< timeout value. microseconds */
     uint8_t triedCount;                 /**< retransmission count */
     uint16_t messageId;                 /**< coap PDU message id */
-    CARemoteEndpoint_t *endpoint;       /**< remote endpoint */
+    CAEndpoint_t *endpoint;             /**< remote endpoint */
     void *pdu;                          /**< coap PDU */
     uint32_t size;                      /**< coap PDU size */
 } CARetransmissionData_t;
@@ -97,7 +97,7 @@ static bool CACheckTimeout(uint64_t currentTime, uint64_t timeStamp, uint64_t ti
 
     if (currentTime >= timeStamp + timeout)
     {
-        OIC_LOG_V(DEBUG, TAG, "%d microseconds time out!!, tried count(%d)", timeout, triedCount);
+        OIC_LOG_V(DEBUG, TAG, "%d microseconds time out!!, tried count(%ld)", timeout, triedCount);
         return true;
     }
 
@@ -174,7 +174,7 @@ static void CACheckRetransmissionList(CARetransmission_t *context)
                                              removedData->size);
                 }
 
-                CADestroyRemoteEndpointInternal(removedData->endpoint);
+                CADestroyEndpointInternal(removedData->endpoint);
                 OICFree(removedData->pdu);
 
                 OICFree(removedData);
@@ -227,7 +227,7 @@ static void CARetransmissionBaseRoutine(void *threadValue)
         else if (!context->isStop)
         {
             // check each RETRANSMISSION_CHECK_PERIOD_SEC time.
-            OIC_LOG_V(DEBUG, TAG, "wait..(%d)microseconds",
+            OIC_LOG_V(DEBUG, TAG, "wait..(%ld)microseconds",
                       RETRANSMISSION_CHECK_PERIOD_SEC * (uint64_t) USECS_PER_SEC);
 
             // wait
@@ -333,8 +333,8 @@ CAResult_t CARetransmissionStart(CARetransmission_t *context)
 }
 
 CAResult_t CARetransmissionSentData(CARetransmission_t *context,
-                                    const CARemoteEndpoint_t* endpoint, const void* pdu,
-                                    uint32_t size)
+                                    const CAEndpoint_t *endpoint,
+                                    const void *pdu, uint32_t size)
 {
     if (NULL == context || NULL == endpoint || NULL == pdu)
     {
@@ -343,10 +343,10 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context,
     }
 
     // #0. check support transport type
-    if (!(context->config.supportType & endpoint->transportType))
+    if (!(context->config.supportType & endpoint->adapter))
     {
         OIC_LOG_V(DEBUG, TAG, "not supported transport type for retransmission..(%d)",
-                  endpoint->transportType);
+                  endpoint->adapter);
         return CA_NOT_SUPPORTED;
     }
 
@@ -383,7 +383,7 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context,
     memcpy(pduData, pdu, size);
 
     // clone remote endpoint
-    CARemoteEndpoint_t *remoteEndpoint = CACloneRemoteEndpoint(endpoint);
+    CAEndpoint_t *remoteEndpoint = CACloneEndpoint(endpoint);
     if (NULL == remoteEndpoint)
     {
         OICFree(retData);
@@ -419,7 +419,7 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context,
 
         // found index
         if (NULL != currData->endpoint && currData->messageId == messageId
-            && (currData->endpoint->transportType == endpoint->transportType))
+            && (currData->endpoint->adapter == endpoint->adapter))
         {
             OIC_LOG(ERROR, TAG, "Duplicate message ID");
 
@@ -445,7 +445,7 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context,
 }
 
 CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
-                                        const CARemoteEndpoint_t *endpoint, const void *pdu,
+                                        const CAEndpoint_t *endpoint, const void *pdu,
                                         uint32_t size, void **retransmissionPdu)
 {
     OIC_LOG(DEBUG, TAG, "IN - CARetransmissionReceivedData");
@@ -456,10 +456,10 @@ CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
     }
 
     // #0. check support transport type
-    if (!(context->config.supportType & endpoint->transportType))
+    if (!(context->config.supportType & endpoint->adapter))
     {
         OIC_LOG_V(DEBUG, TAG, "not supported transport type for retransmission..(%d)",
-                  endpoint->transportType);
+                  endpoint->adapter);
         return CA_STATUS_OK;
     }
 
@@ -493,7 +493,7 @@ CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
 
         // found index
         if (NULL != retData->endpoint && retData->messageId == messageId
-            && (retData->endpoint->transportType == endpoint->transportType))
+            && (retData->endpoint->adapter == endpoint->adapter))
         {
             // get pdu data for getting token when CA_EMPTY(RST/ACK) is received from remote device
             // if retransmission was finish..token will be unavailable.
@@ -541,7 +541,7 @@ CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
             OIC_LOG_V(DEBUG, TAG, "remove retransmission CON data!!, message id(%d)",
                       messageId);
 
-            CADestroyRemoteEndpointInternal(removedData->endpoint);
+            CADestroyEndpointInternal(removedData->endpoint);
             OICFree(removedData->pdu);
             OICFree(removedData);
 
@@ -612,7 +612,7 @@ uint64_t getCurrentTimeInMicroSeconds()
     clock_gettime(CLOCK_MONOTONIC, &getTs);
 
     currentTime = (getTs.tv_sec * (uint64_t)1000000000 + getTs.tv_nsec)/1000;
-    OIC_LOG_V(DEBUG, TAG, "current time = %d", currentTime);
+    OIC_LOG_V(DEBUG, TAG, "current time = %ld", currentTime);
 #else
 #if _POSIX_TIMERS > 0
     struct timespec ts;

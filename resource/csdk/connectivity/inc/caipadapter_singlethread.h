@@ -80,7 +80,7 @@ CAResult_t CAStartIPDiscoveryServer();
  * @return  The number of bytes sent on the network. Return value equal to -1 indicates error.
  * @remark  dataLen must be > 0.
  */
-int32_t CASendIPUnicastData(const CARemoteEndpoint_t *endpoint, const void *data,
+int32_t CASendIPUnicastData(const CAEndpoint_t *endpoint, const void *data,
                                   uint32_t dataLen);
 
 /**
@@ -90,7 +90,7 @@ int32_t CASendIPUnicastData(const CARemoteEndpoint_t *endpoint, const void *data
  * @return  The number of bytes sent on the network. Return value equal to -1 indicates error.
  * @remark  dataLen must be > 0.
  */
-int32_t CASendIPMulticastData(const void *data, uint32_t dataLen);
+int32_t CASendIPMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t dataLen);
 
 /**
  * @brief Get IP Connectivity network information
@@ -99,7 +99,7 @@ int32_t CASendIPMulticastData(const void *data, uint32_t dataLen);
  * @return  #CA_STATUS_OK or Appropriate error code
  * @remarks info is allocated in this API and should be freed by the caller.
  */
-CAResult_t CAGetIPInterfaceInformation(CALocalConnectivity_t **info, uint32_t *size);
+CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size);
 
 /**
  * @brief Read Synchronous API callback.

@@ -46,7 +46,7 @@ extern "C"
  */
 typedef struct
 {
-    CARemoteEndpoint_t
+    CAEndpoint_t
     *remoteEndpoint;   /**< Remote endpoint contains the inforamtion of remote device */
     void *data;        /**< Data to be transmitted over LE tranport */
     uint32_t dataLen;  /**< Length of the data being transmitted */
@@ -100,17 +100,18 @@ CAResult_t CAStartLEDiscoveryServer();
  * @return  The number of bytes sent on the network. Returns -1 on error.
  * @remarks  dataLen must be > 0.
  */
-int32_t CASendLEUnicastData(const CARemoteEndpoint_t *endpoint, const void *data,
+int32_t CASendLEUnicastData(const CAEndpoint_t *endpoint, const void *data,
                              uint32_t dataLen);
 
 /**
  * @brief Sends Multicast data to the endpoint using the LE connectivity.
- * @param   data        [IN]    Data which required to be sent.
- * @param   dataLen     [IN]    Size of data to be sent.
+ * @param   endpoint    [IN]  Remote Endpoint information to which the unicast data has to be sent.
+ * @param   data        [IN]  Data which required to be sent.
+ * @param   dataLen     [IN]  Size of data to be sent.
  * @return  The number of bytes sent on the network. Returns -1 on error.
  * @remarks  dataLen must be > 0.
  */
-int32_t CASendLEMulticastData(const void *data, uint32_t dataLen);
+int32_t CASendLEMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t dataLen);
 
 /**
  * @brief Starts notification server on EDR adapters.
@@ -127,7 +128,7 @@ CAResult_t CAStartLENotifyServer();
  * @return  The number of bytes sent on the network. Returns 0 on error.
  * @remarks dataLen must be > 0.
  */
-uint32_t CASendLENotification(const CARemoteEndpoint_t *endpoint, const void *data,
+uint32_t CASendLENotification(const CAEndpoint_t *endpoint, const void *data,
                               uint32_t dataLen);
 
 /**
@@ -136,7 +137,7 @@ uint32_t CASendLENotification(const CARemoteEndpoint_t *endpoint, const void *da
  * @param  size        [OUT]   Number of local connectivity structures.
  * @return #CA_STATUS_OK or Appropriate error code
  */
-CAResult_t CAGetLEInterfaceInformation(CALocalConnectivity_t **info, uint32_t *size);
+CAResult_t CAGetLEInterfaceInformation(CAEndpoint_t **info, uint32_t *size);
 
 /**
  * @brief Read Synchronous API callback.
@@ -210,7 +211,7 @@ void CASetBLEReqRespAdapterCallback(CANetworkPacketReceivedCallback callback);
  * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
  * @retval #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CABLEServerSendData(const CARemoteEndpoint_t *remoteEndpoint,
+CAResult_t CABLEServerSendData(const CAEndpoint_t *remoteEndpoint,
                                const void *data, uint32_t dataLen);
 
 /**
@@ -225,7 +226,7 @@ CAResult_t CABLEServerSendData(const CARemoteEndpoint_t *remoteEndpoint,
  * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
  * @retval #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CABLEClientSendData(const CARemoteEndpoint_t *remoteEndpoint,
+CAResult_t CABLEClientSendData(const CAEndpoint_t *remoteEndpoint,
                                const void *data,  uint32_t dataLen);
 
 /**
@@ -383,7 +384,7 @@ CAResult_t CAInitBleClientReceiverQueue();
  * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
  * @retval #CA_STATUS_FAILED Operation failed
  */
-CALEData_t *CACreateBLEData(const CARemoteEndpoint_t *remoteEndpoint, const void *data,
+CALEData_t *CACreateBLEData(const CAEndpoint_t *remoteEndpoint, const void *data,
                            uint32_t dataLength);
 
 /**
