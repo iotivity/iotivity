@@ -92,6 +92,7 @@ TEST(CAProtocolMessage, CAParseURIBase)
 
 
     verifyParsedOptions(cases, numCases, optlist);
+    coap_delete_list(optlist);
 }
 
 // Try for multiple URI path components that still total less than 128
@@ -124,6 +125,7 @@ TEST(CAProtocolMessage, CAParseURIManyPath)
 
 
     verifyParsedOptions(cases, numCases, optlist);
+    coap_delete_list(optlist);
 }
 
 // Try for multiple URI parameters that still total less than 128
@@ -155,6 +157,7 @@ TEST(CAProtocolMessage, CAParseURIManyParams)
 
 
     verifyParsedOptions(cases, numCases, optlist);
+    coap_delete_list(optlist);
 }
 
 // Test that an initial long path component won't hide latter ones.
@@ -181,4 +184,5 @@ TEST(CAProtocolMessage, CAParseURILongPath)
 
 
     verifyParsedOptions(cases, numCases, optlist);
+    coap_delete_list(optlist);
 }
