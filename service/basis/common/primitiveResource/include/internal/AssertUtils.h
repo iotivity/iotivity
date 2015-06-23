@@ -38,27 +38,11 @@ namespace OIC
         {
             struct NotOCStackResult;
 
-            template< typename RET, typename FUNC, typename ENABLER = void, typename ...PARAMS >
-            struct EnableIfReturnTypeIs;
-
-            template< typename FUNC, typename ...PARAMS >
-            struct EnableIfReturnTypeIs< OCStackResult, FUNC,
-                    typename std::enable_if<
-                            std::is_same< typename std::result_of< FUNC(PARAMS...) >::type,
-                                    OCStackResult >::value >::type, PARAMS... >
+            template <typename FUNC, typename ...PARAMS>
+            struct ResultType
             {
-                using type = void;
+                using type = decltype(std::declval<FUNC>()(std::declval<PARAMS>()...));
             };
-
-            template< typename FUNC, typename ...PARAMS >
-            struct EnableIfReturnTypeIs< NotOCStackResult, FUNC,
-                    typename std::enable_if<
-                            !std::is_same< typename std::result_of< FUNC(PARAMS...) >::type,
-                                    OCStackResult >::value >::type, PARAMS... >
-            {
-                using type = typename std::result_of< FUNC(PARAMS...) >::type;
-            };
-
 
             template< typename A, typename B, typename ENABLER = void >
             struct EnableIfTypeIs;
@@ -105,11 +89,10 @@ namespace OIC
             expectOCStackResult(actual, OC_STACK_OK);
         }
 
-        template< typename FUNC,
-            typename = typename std::enable_if<std::is_function<FUNC>::value>::type,
-            typename ...PARAMS >
-        typename Detail::EnableIfReturnTypeIs< OCStackResult, FUNC, PARAMS... >::type
-        invokeOC(FUNC&& fn, PARAMS&& ...params)
+        template< typename FUNC, typename ...PARAMS >
+        typename Detail::EnableIfTypeIs< typename Detail::ResultType< FUNC, PARAMS... >::type,
+                OCStackResult >::type
+        invokeOCFunc(FUNC&& fn, PARAMS&& ...params)
         {
             try
             {
@@ -121,11 +104,10 @@ namespace OIC
             }
         }
 
-        template< typename FUNC,
-            typename = typename std::enable_if<std::is_function<FUNC>::value>::type,
-            typename ...PARAMS >
-        typename Detail::EnableIfReturnTypeIs< Detail::NotOCStackResult, FUNC, PARAMS... >::type
-        invokeOC(FUNC&& fn, PARAMS&& ...params)
+        template< typename FUNC, typename ...PARAMS >
+        typename Detail::EnableIfTypeIs< typename Detail::ResultType< FUNC, PARAMS... >::type,
+                        Detail::NotOCStackResult >::type
+        invokeOC(FUNC* fn, PARAMS&& ...params)
         {
             try
             {

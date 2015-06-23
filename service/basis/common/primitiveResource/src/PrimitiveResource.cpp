@@ -21,6 +21,7 @@
 #include <PrimitiveResource.h>
 
 #include <internal/PrimitiveResourceImpl.h>
+#include <internal/AssertUtils.h>
 
 #include <OCPlatform.h>
 
@@ -39,9 +40,12 @@ namespace OIC
         void discoverResource(const std::string& host, const std::string& resourceURI,
                 OCConnectivityType connectivityType, DiscoverCallback callback)
         {
-            OC::OCPlatform::findResource(host, resourceURI, connectivityType,
-                    std::bind(callback,
-                            std::bind(&PrimitiveResource::create, std::placeholders::_1)));
+            using FindResource = OCStackResult (*)(const std::string&, const std::string&,
+                    OCConnectivityType, OC::FindCallback);
+
+            invokeOCFunc(static_cast<FindResource>(OC::OCPlatform::findResource),
+                    host, resourceURI, connectivityType, (OC::FindCallback) std::bind(callback,
+                           std::bind(&PrimitiveResource::create, std::placeholders::_1)));
         }
 
     }
