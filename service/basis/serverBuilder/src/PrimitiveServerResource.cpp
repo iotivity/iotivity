@@ -27,11 +27,15 @@
 #include <internal/RequestHandler.h>
 #include <internal/AssertUtils.h>
 
+
+#include <logger.h>
 #include <OCPlatform.h>
 
 namespace
 {
     using namespace OIC::Service;
+
+    constexpr const char LOG_TAG[]{ "PrimitiveServerResource" };
 
     namespace Detail
     {
@@ -45,10 +49,18 @@ namespace
             ocResponse->setRequestHandle(ocRequest->getRequestHandle());
             ocResponse->setResourceHandle(ocRequest->getResourceHandle());
 
-            if (OC::OCPlatform::sendResponse(ocResponse) == OC_STACK_OK)
+            try
             {
-                return OC_EH_OK;
+                if (OC::OCPlatform::sendResponse(ocResponse) == OC_STACK_OK)
+                {
+                    return OC_EH_OK;
+                }
             }
+            catch (const OC::OCException& e)
+            {
+                OC_LOG(WARNING, LOG_TAG, e.what());
+            }
+
             return OC_EH_ERROR;
         }
     }
@@ -169,6 +181,7 @@ namespace OIC
                 }
                 catch (...)
                 {
+                    OC_LOG(WARNING, LOG_TAG, "Failed to unregister resource.");
                 }
             }
         }
@@ -246,6 +259,7 @@ namespace OIC
             }
             catch (...)
             {
+                OC_LOG(WARNING, LOG_TAG, "Failed to handle request.");
                 // TODO : how to notify the error?
             }
 
