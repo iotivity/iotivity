@@ -32,6 +32,7 @@
 #endif
 #include "camutex.h"
 #include "uarraylist.h"
+#include "caremotehandler.h"
 #include "logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
@@ -185,7 +186,9 @@ void CAIPNotifyNetworkChange(const char *address, uint16_t port, CANetworkStatus
 
     VERIFY_NON_NULL_VOID(address, IP_ADAPTER_TAG, "address is NULL");
 
-    CAEndpoint_t *localEndpoint = CAAdapterCreateEndpoint(0, CA_ADAPTER_IP, address, port);
+    CAEndpoint_t *localEndpoint = CACreateEndpointObject(CA_DEFAULT_FLAGS,
+                                                         CA_ADAPTER_IP,
+                                                         address, port);
     if (!localEndpoint)
     {
         OIC_LOG(ERROR, IP_ADAPTER_TAG, "localEndpoint creation failed!");
@@ -201,7 +204,7 @@ void CAIPNotifyNetworkChange(const char *address, uint16_t port, CANetworkStatus
         OIC_LOG(ERROR, IP_ADAPTER_TAG, "g_networkChangeCallback is NULL");
     }
 
-    CAAdapterFreeEndpoint(localEndpoint);
+    CAFreeEndpoint(localEndpoint);
 
     OIC_LOG(DEBUG, IP_ADAPTER_TAG, "OUT");
 }
@@ -823,7 +826,7 @@ CAIPData *CACreateIPData(const CAEndpoint_t *remoteEndpoint, const void *data,
         return NULL;
     }
 
-    ipData->remoteEndpoint = CAAdapterCloneEndpoint(remoteEndpoint);
+    ipData->remoteEndpoint = CACloneEndpoint(remoteEndpoint);
     ipData->data = (void *) OICMalloc(dataLength);
     if (!ipData->data)
     {
@@ -844,7 +847,7 @@ void CAFreeIPData(CAIPData *ipData)
 {
     VERIFY_NON_NULL_VOID(ipData, IP_ADAPTER_TAG, "ipData is NULL");
 
-    CAAdapterFreeEndpoint(ipData->remoteEndpoint);
+    CAFreeEndpoint(ipData->remoteEndpoint);
     OICFree(ipData->data);
     OICFree(ipData);
 }

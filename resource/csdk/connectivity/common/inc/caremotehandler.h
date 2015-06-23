@@ -42,11 +42,21 @@ extern "C"
 CAEndpoint_t *CACloneEndpoint(const CAEndpoint_t *endpoint);
 
 /**
+ * @brief Allocate CAEndpoint_t instance.
+ * @param   flags        [IN]  Transport flag
+ * @param   adapter      [IN]  Adapter type
+ * @param   address      [IN]  Address
+ * @param   port         [IN]  Port
+ * @return  #CA_STATUS_OK or Appropriate error code
+ */
+CAEndpoint_t *CACreateEndpointObject(CATransportFlags_t flags, CATransportAdapter_t adapter,
+                                     const char *address, uint16_t port);
+/**
  * @brief   Destroy remote endpoint
  * @param   endpoint       [IN]    endpoint information where the data has to be sent
  * @return  none
  */
-void CADestroyEndpointInternal(CAEndpoint_t *rep);
+void CAFreeEndpoint(CAEndpoint_t *rep);
 
 /**
  * @brief   Creates a new request information

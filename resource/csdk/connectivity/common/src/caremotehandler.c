@@ -239,7 +239,31 @@ CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *rep)
     return clone;
 }
 
-void CADestroyEndpointInternal(CAEndpoint_t *rep)
+CAEndpoint_t *CACreateEndpointObject(CATransportFlags_t flags,
+                                     CATransportAdapter_t adapter,
+                                     const char *address,
+                                     uint16_t port)
+{
+    CAEndpoint_t *info = (CAEndpoint_t *)OICCalloc(1, sizeof(CAEndpoint_t));
+    if (NULL == info)
+    {
+        OIC_LOG(ERROR, TAG, "Memory allocation failed !");
+        return NULL;
+    }
+
+    if (address)
+    {
+        OICStrcpy(info->addr, sizeof(info->addr), address);
+        info->addr[MAX_ADDR_STR_SIZE_CA - 1] = '\0';
+    }
+    info->flags = flags;
+    info->adapter = adapter;
+    info->port = port;
+
+    return info;
+}
+
+void CAFreeEndpoint(CAEndpoint_t *rep)
 {
     OICFree(rep);
 }

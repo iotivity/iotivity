@@ -29,6 +29,7 @@ for item in temp:
 ca_common_src = [
 		ca_common_src_path + 'uarraylist.c',
 		ca_common_src_path + 'uqueue.c',
+		ca_common_src_path + 'caremotehandler.c'
 	]
 
 if ca_os == 'arduino':
@@ -55,4 +56,3 @@ else:
 
 env.AppendUnique(CA_SRC = ca_common_src)
 env.AppendUnique(CA_SRC = platform_src)
-

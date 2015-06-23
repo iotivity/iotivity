@@ -30,6 +30,7 @@
 #include "cafragmentation.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
+#include "caremotehandler.h"
 
 /**
  * @var CALEADAPTER_TAG
@@ -1150,7 +1151,8 @@ void CABLEServerDataReceiverHandler(void *threadData)
 
             const char *remoteAddress = bleData->remoteEndpoint->addr;
 
-            remoteEndpoint = CAAdapterCreateEndpoint(0, CA_ADAPTER_GATT_BTLE, remoteAddress, 0);
+            remoteEndpoint = CACreateEndpointObject(CA_DEFAULT_FLAGS, CA_ADAPTER_GATT_BTLE,
+                                                    remoteAddress, 0);
 
             memcpy(defragData + recvDataLen, bleData->data + CA_HEADER_LENGTH,
                    bleData->dataLen - CA_HEADER_LENGTH);
@@ -1191,7 +1193,7 @@ void CABLEServerDataReceiverHandler(void *threadData)
             totalDataLen = 0;
             isHeaderAvailable = false;
             OICFree(defragData);
-            CAAdapterFreeEndpoint(remoteEndpoint);
+            CAFreeEndpoint(remoteEndpoint);
             ca_mutex_unlock(g_bleServerReceiveDataMutex);
             return;
         }
@@ -1245,7 +1247,8 @@ void CABLEClientDataReceiverHandler(void *threadData)
 
             remoteAddress = bleData->remoteEndpoint->addr;
 
-            remoteEndpoint = CAAdapterCreateEndpoint(0, CA_ADAPTER_GATT_BTLE, remoteAddress, 0);
+            remoteEndpoint = CACreateEndpointObject(CA_DEFAULT_FLAGS, CA_ADAPTER_GATT_BTLE,
+                                                    remoteAddress, 0);
 
             memcpy(defragData, bleData->data + CA_HEADER_LENGTH,
                    bleData->dataLen - CA_HEADER_LENGTH);
@@ -1283,7 +1286,7 @@ void CABLEClientDataReceiverHandler(void *threadData)
         {
             OIC_LOG(DEBUG, CALEADAPTER_TAG, "GATTClient is terminating. Cleaning up");
             OICFree(defragData);
-            CAAdapterFreeEndpoint(remoteEndpoint);
+            CAFreeEndpoint(remoteEndpoint);
             ca_mutex_unlock(g_bleClientReceiveDataMutex);
             return;
         }
@@ -1634,7 +1637,7 @@ CALEData_t *CACreateBLEData(const CAEndpoint_t *remoteEndpoint, const void *data
         return NULL;
     }
 
-    bleData->remoteEndpoint = CAAdapterCloneEndpoint(remoteEndpoint);
+    bleData->remoteEndpoint = CACloneEndpoint(remoteEndpoint);
     bleData->data = (void *)OICCalloc(dataLength + 1, 1);
     if (NULL == bleData->data)
     {
@@ -1652,7 +1655,7 @@ void CAFreeBLEData(CALEData_t *bleData)
 {
     VERIFY_NON_NULL_VOID(bleData, NULL, "Param bleData is NULL");
 
-    CAAdapterFreeEndpoint(bleData->remoteEndpoint);
+    CAFreeEndpoint(bleData->remoteEndpoint);
     OICFree(bleData->data);
     OICFree(bleData);
 }
@@ -1749,7 +1752,9 @@ CAResult_t CABLEServerReceivedData(const char *remoteAddress, const char *servic
                         CA_STATUS_FAILED);
 
     //Add message to data queue
-    CAEndpoint_t *remoteEndpoint = CAAdapterCreateEndpoint(0, CA_ADAPTER_GATT_BTLE, remoteAddress, 0);
+    CAEndpoint_t *remoteEndpoint = CACreateEndpointObject(CA_DEFAULT_FLAGS,
+                                                          CA_ADAPTER_GATT_BTLE,
+                                                          remoteAddress, 0);
     if (NULL == remoteEndpoint)
     {
         OIC_LOG(ERROR, CALEADAPTER_TAG, "Failed to create remote endpoint !");
@@ -1763,11 +1768,11 @@ CAResult_t CABLEServerReceivedData(const char *remoteAddress, const char *servic
     if (!bleData)
     {
         OIC_LOG(ERROR, CALEADAPTER_TAG, "Failed to create bledata!");
-        CAAdapterFreeEndpoint(remoteEndpoint);
+        CAFreeEndpoint(remoteEndpoint);
         return CA_MEMORY_ALLOC_FAILED;
     }
 
-    CAAdapterFreeEndpoint(remoteEndpoint);
+    CAFreeEndpoint(remoteEndpoint);
     // Add message to send queue
     CAQueueingThreadAddData(g_bleServerReceiverQueue, bleData, sizeof(CALEData_t));
 
@@ -1790,7 +1795,9 @@ CAResult_t CABLEClientReceivedData(const char *remoteAddress, const char *servic
                         CA_STATUS_FAILED);
 
     //Add message to data queue
-    CAEndpoint_t *remoteEndpoint = CAAdapterCreateEndpoint(0, CA_ADAPTER_GATT_BTLE, remoteAddress, 0);
+    CAEndpoint_t *remoteEndpoint = CACreateEndpointObject(CA_DEFAULT_FLAGS,
+                                                          CA_ADAPTER_GATT_BTLE,
+                                                          remoteAddress, 0);
     if (NULL == remoteEndpoint)
     {
         OIC_LOG(ERROR, CALEADAPTER_TAG, "Failed to create remote endpoint !");
@@ -1804,11 +1811,11 @@ CAResult_t CABLEClientReceivedData(const char *remoteAddress, const char *servic
     if (!bleData)
     {
         OIC_LOG(ERROR, CALEADAPTER_TAG, "Failed to create bledata!");
-        CAAdapterFreeEndpoint(remoteEndpoint);
+        CAFreeEndpoint(remoteEndpoint);
         return CA_MEMORY_ALLOC_FAILED;
     }
 
-    CAAdapterFreeEndpoint(remoteEndpoint);
+    CAFreeEndpoint(remoteEndpoint);
     // Add message to send queue
     CAQueueingThreadAddData(g_bleClientReceiverQueue, bleData, sizeof(CALEData_t));
 

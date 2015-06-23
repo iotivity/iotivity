@@ -60,7 +60,6 @@ if ca_os == 'arduino':
 		'camessagehandler_singlethread.c',
 		'canetworkconfigurator.c',
 		'caprotocolmessage.c',
-		'caremotehandler.c',
 		'caretransmission_singlethread.c',
 		]
 else:
@@ -72,7 +71,6 @@ else:
 		'canetworkconfigurator.c',
 		'caprotocolmessage.c',
 		'caqueueingthread.c',
-		'caremotehandler.c',
 		'caretransmission.c',
 		]
 	if secured == '1':

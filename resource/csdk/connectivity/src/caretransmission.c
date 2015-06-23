@@ -174,7 +174,7 @@ static void CACheckRetransmissionList(CARetransmission_t *context)
                                              removedData->size);
                 }
 
-                CADestroyEndpointInternal(removedData->endpoint);
+                CAFreeEndpoint(removedData->endpoint);
                 OICFree(removedData->pdu);
 
                 OICFree(removedData);
@@ -541,7 +541,7 @@ CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
             OIC_LOG_V(DEBUG, TAG, "remove retransmission CON data!!, message id(%d)",
                       messageId);
 
-            CADestroyEndpointInternal(removedData->endpoint);
+            CAFreeEndpoint(removedData->endpoint);
             OICFree(removedData->pdu);
             OICFree(removedData);
 

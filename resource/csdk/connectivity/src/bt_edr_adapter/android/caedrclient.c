@@ -32,6 +32,7 @@
 #include "camutex.h"
 #include "uarraylist.h"
 #include "caadapterutils.h"
+#include "caremotehandler.h"
 
 //#define DEBUG_MODE
 #define TAG PCF("CA_EDR_CLIENT")
@@ -157,8 +158,8 @@ CAResult_t CAEDRGetInterfaceInformation(CAEndpoint_t **info)
     }
 
     // Create local endpoint using util function
-    CAEndpoint_t *endpoint = CAAdapterCreateEndpoint(CA_DEFAULT_FLAGS,
-                                                     CA_ADAPTER_RFCOMM_BTEDR, macAddress, 0);
+    CAEndpoint_t *endpoint = CACreateEndpointObject(CA_DEFAULT_FLAGS, CA_ADAPTER_RFCOMM_BTEDR,
+                                                    macAddress, 0);
     if (NULL == endpoint)
     {
         OIC_LOG(ERROR, TAG, "Failed to create Local Endpoint!");
@@ -172,14 +173,14 @@ CAResult_t CAEDRGetInterfaceInformation(CAEndpoint_t **info)
     {
         OIC_LOG(ERROR, TAG, "Invalid input..");
         OICFree(macAddress);
-        CAAdapterFreeEndpoint(endpoint);
+        CAFreeEndpoint(endpoint);
         return CA_MEMORY_ALLOC_FAILED;
     }
     *netInfo = *endpoint;
     *info = netInfo;
 
     OICFree(macAddress);
-    CAAdapterFreeEndpoint(endpoint);
+    CAFreeEndpoint(endpoint);
 
     OIC_LOG(DEBUG, TAG, "OUT - CAEDRGetInterfaceInformation");
     return CA_STATUS_OK;

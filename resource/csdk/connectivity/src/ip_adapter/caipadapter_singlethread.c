@@ -27,6 +27,7 @@
 #include "caadapterutils.h"
 #include "logger.h"
 #include "oic_malloc.h"
+#include "caremotehandler.h"
 #include "caipinterface_singlethread.h"
 
 /**
@@ -111,8 +112,8 @@ static CAResult_t CAIPStopServers();
 
 void CAIPNotifyNetworkChange(const char *address, uint16_t port, CANetworkStatus_t status)
 {
-    CAEndpoint_t *localEndpoint = CAAdapterCreateLocalEndpoint(CA_IPV4, CA_ADAPTER_IP, address,
-            port);
+    CAEndpoint_t *localEndpoint = CACreateEndpointObject(CA_DEFAULT_FLAGS, CA_ADAPTER_IP,
+                                                         address, port);
     if (!localEndpoint)
     {
         OIC_LOG(ERROR, TAG, "Out of memory!");
@@ -125,7 +126,7 @@ void CAIPNotifyNetworkChange(const char *address, uint16_t port, CANetworkStatus
         g_networkChangeCallback(localEndpoint, status);
     }
 
-    CAAdapterFreeEndpoint(localEndpoint);
+    CAFreeEndpoint(localEndpoint);
 }
 
 void CAIPConnectionStateCB(const char *ipAddr,
@@ -212,8 +213,8 @@ void CAIPPacketReceivedCB(const char *ipAddress, uint16_t port,
     OIC_LOG_V(DEBUG, TAG, "data:%s", data);
 
     /* CA is freeing this memory */
-    CAEndpoint_t *endPoint = CAAdapterCreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, ipAddress,
-            port);
+    CAEndpoint_t *endPoint = CACreateEndpointObject(CA_DEFAULT_FLAGS, CA_ADAPTER_IP,
+                                                    ipAddress, port);
     if (NULL == endPoint)
     {
         OIC_LOG(ERROR, TAG, "Out of memory!");
@@ -224,7 +225,7 @@ void CAIPPacketReceivedCB(const char *ipAddress, uint16_t port,
     {
         g_networkPacketCallback(endPoint, data, dataLength);
     }
-    CAAdapterFreeEndpoint(endPoint);
+    CAFreeEndpoint(endPoint);
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
@@ -407,7 +408,8 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
     }
 
     // Create local endpoint using util function
-    (*info) = CAAdapterCreateLocalEndpoint(CA_IPV4, CA_ADAPTER_IP, ipAddress);
+    (*info) = CACreateEndpointObject(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, ipAddress,
+                                     g_unicastServerport);
     if (NULL == (*info))
     {
         OIC_LOG(ERROR, TAG, "malloc fail");
@@ -416,7 +418,6 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
         return CA_MEMORY_ALLOC_FAILED;
     }
 
-    (*info)->port = g_unicastServerport;
     (*size) = 1;
 
     OICFree(ipAddress);

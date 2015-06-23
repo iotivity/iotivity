@@ -24,6 +24,7 @@
 #include "logger.h"
 #include "caadapterutils.h"
 #include "cafragmentation.h"
+#include "caremotehandler.h"
 
 #define TAG "LAD"
 
@@ -212,7 +213,7 @@ CAResult_t CAGetLEInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
     /**
      * Create local endpoint using util function
      */
-    (*info) = CAAdapterCreateLocalEndpoint(CA_ADAPTER_GATT_BTLE, leAddress);
+    (*info) = CACreateEndpointObject(CA_DEFAULT_FLAGS, CA_ADAPTER_RFCOMM_BTEDR, leAddress, 0);
     if (NULL == (*info))
     {
         OIC_LOG(ERROR, TAG, "malloc fail");
@@ -294,8 +295,9 @@ void CANotifyCallback(const void *data, int32_t dataLen, const char *senderAdrs,
     {
 
         /* Cannot get Address as of now */
-        CAEndpoint_t *localEndpoint = CAAdapterCreateLocalEndpoint(CA_IPV4, CA_ADAPTER_GATT_BTLE,
-                                                                   senderAdrs, senderPort);
+        CAEndpoint_t *localEndpoint = CACreateEndpointObject(CA_DEFAULT_FLAGS,
+                                                             CA_ADAPTER_GATT_BTLE,
+                                                             senderAdrs, senderPort);
 
         g_respCallback(localEndpoint, data, dataLen);
     }

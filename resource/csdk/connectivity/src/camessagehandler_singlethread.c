@@ -75,7 +75,7 @@ static void CATimeoutCallback(const CAEndpoint_t *endpoint, const void *pdu, uin
     if (NULL == resInfo)
     {
         OIC_LOG(ERROR, TAG, "calloc failed");
-        CADestroyEndpointInternal(ep);
+        CAFreeEndpoint(ep);
         return;
     }
 
@@ -88,7 +88,7 @@ static void CATimeoutCallback(const CAEndpoint_t *endpoint, const void *pdu, uin
         g_responseHandler(ep, resInfo);
     }
 
-    CADestroyEndpointInternal(ep);
+    CAFreeEndpoint(ep);
     OICFree(resInfo);
 
     OIC_LOG(DEBUG, TAG, "OUT");

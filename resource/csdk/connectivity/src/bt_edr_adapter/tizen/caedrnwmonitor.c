@@ -32,6 +32,7 @@
 #include "caedrutils.h"
 #include "caadapterutils.h"
 #include "caqueueingthread.h"
+#include "caremotehandler.h"
 
 /**
  * @var g_edrNetworkChangeCallback
@@ -129,7 +130,7 @@ CAResult_t CAEDRGetInterfaceInformation(CALocalConnectivity_t **info)
     }
 
     // Create network info
-    *info = CAAdapterCreateLocalEndpoint(CA_EDR, localAddress);
+    *info = CACreateEndpointObject(CA_DEFAULT_FLAGS, CA_ADAPTER_RFCOMM_BTEDR, localAddress, 0);
     if (NULL == *info)
     {
         OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to create LocalConnectivity instance!");

@@ -117,7 +117,7 @@ static void CATimeoutCallback(const CAEndpoint_t *endpoint, const void *pdu, uin
     if (NULL == resInfo)
     {
         OIC_LOG(ERROR, TAG, "calloc failed");
-        CAAdapterFreeEndpoint(ep);
+        CAFreeEndpoint(ep);
         return;
     }
 
@@ -130,7 +130,7 @@ static void CATimeoutCallback(const CAEndpoint_t *endpoint, const void *pdu, uin
         OIC_LOG(ERROR, TAG, "fail to get Token from retransmission list");
         OICFree(resInfo->info.token);
         OICFree(resInfo);
-        CAAdapterFreeEndpoint(ep);
+        CAFreeEndpoint(ep);
         return;
     }
 
@@ -138,7 +138,7 @@ static void CATimeoutCallback(const CAEndpoint_t *endpoint, const void *pdu, uin
     if (NULL == cadata)
     {
         OIC_LOG(ERROR, TAG, "memory allocation failed !");
-        CAAdapterFreeEndpoint(ep);
+        CAFreeEndpoint(ep);
         OICFree(resInfo);
         return;
     }
@@ -165,7 +165,7 @@ static void CADataDestroyer(void *data, uint32_t size)
 
     if (NULL != cadata->remoteEndpoint)
     {
-        CADestroyEndpointInternal(cadata->remoteEndpoint);
+        CAFreeEndpoint(cadata->remoteEndpoint);
     }
 
     if (NULL != cadata->requestInfo)
@@ -391,7 +391,7 @@ static void CAReceivedPacketCallback(const CAEndpoint_t *endpoint, void *data, u
         }
 
         cadata->type = SEND_TYPE_UNICAST;
-        cadata->remoteEndpoint = CAAdapterCloneEndpoint(endpoint);
+        cadata->remoteEndpoint = CACloneEndpoint(endpoint);
         cadata->requestInfo = ReqInfo;
         cadata->responseInfo = NULL;
         CAQueueingThreadAddData(&g_receiveThread, cadata, sizeof(CAData_t));
@@ -450,7 +450,7 @@ static void CAReceivedPacketCallback(const CAEndpoint_t *endpoint, void *data, u
         }
 
         cadata->type = SEND_TYPE_UNICAST;
-        cadata->remoteEndpoint = CAAdapterCloneEndpoint(endpoint);
+        cadata->remoteEndpoint = CACloneEndpoint(endpoint);
         cadata->requestInfo = NULL;
 
         // for retransmission
@@ -594,7 +594,7 @@ CAResult_t CADetachRequestMessage(const CAEndpoint_t *object, const CARequestInf
 
 // memory error label.
 memory_error_exit:
-    CAAdapterFreeEndpoint(remoteEndpoint);
+    CAFreeEndpoint(remoteEndpoint);
     CADestroyRequestInfoInternal(requestInfo);
 
     OICFree(data);
@@ -658,7 +658,7 @@ CAResult_t CADetachResponseMessage(const CAEndpoint_t *object,
 
 // memory error label.
 memory_error_exit:
-    CAAdapterFreeEndpoint(remoteEndpoint);
+    CAFreeEndpoint(remoteEndpoint);
     CADestroyResponseInfoInternal(responseInfo);
     OICFree(data);
     OIC_LOG(DEBUG, TAG, "OUT");
@@ -897,7 +897,7 @@ void CAErrorHandler(const CAEndpoint_t *endpoint,
     if (NULL == cadata)
     {
         OIC_LOG(ERROR, TAG, "CAReceivedPacketCallback, Memory allocation failed !");
-        CADestroyEndpointInternal(rep);
+        CAFreeEndpoint(rep);
         OICFree(errorInfo);
         coap_delete_pdu(pdu);
         return;
