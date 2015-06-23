@@ -36,10 +36,11 @@ class ResourceBroker
 public:
     static ResourceBroker * getInstance();
 
-    OCStackResult hostResource(PrimitiveResourcePtr pResource, BrokerCB cb);
+    BrokerID hostResource(PrimitiveResourcePtr pResource, BrokerCB cb);
 
-    OCStackResult cancelHostResource(PrimitiveResourcePtr pResource);
+    BrokerID cancelHostResource(BrokerID brokerId);
 
+    BROKER_STATE getResourceState(BrokerID brokerId);
     BROKER_STATE getResourceState(PrimitiveResourcePtr pResource);
 
 private:
@@ -48,7 +49,10 @@ private:
 
     static ResourceBroker * s_instance;
     static std::mutex s_mutexForCreation;
-    static std::unique_ptr<std::list< ResourcePresencePtr >>  s_presenceList;
+    static std::unique_ptr<PresenceList>  s_presenceList;
+
+    static std::unique_ptr<BrokerIDMap> s_brokerIDMap;
+    BrokerID generateBrokerID();
 
     ResourcePresencePtr findResourcePresence(PrimitiveResourcePtr pResource);
 

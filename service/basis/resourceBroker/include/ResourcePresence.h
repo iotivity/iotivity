@@ -33,9 +33,9 @@ public:
     ResourcePresence(PrimitiveResourcePtr pResource);
     ~ResourcePresence();
 
-    void addBrokerRequesterCB(BrokerCB _cb);
-    void removeBrokerRequesterCB(BrokerCB _cb);
-    void removeAllBrokerRequesterCB();
+    void addBrokerRequester(BrokerID _id, BrokerCB _cb);
+    void removeBrokerRequester(BrokerID _id);
+    void removeAllBrokerRequester();
 
     void requestResourceState();
 
@@ -46,6 +46,8 @@ public:
 
     void changePresenceMode(BROKER_MODE newMode);
 
+    bool isEmptyRequester() const;
+
 private:
     PrimitiveResourcePtr primitiveResource;
 
@@ -54,10 +56,10 @@ private:
     BROKER_STATE state;
     BROKER_MODE mode;
 
-    GetCallback pGetCB;
+    RequestGetCB pGetCB;
     void GetCB(const HeaderOptions &hos, const ResponseStatement& rep, int seq);
 
-    TimeoutCallback pTimeoutCB;
+    TimeoutCB pTimeoutCB;
 
     bool isWithinTime;
     void TimeOutCB(int msg);

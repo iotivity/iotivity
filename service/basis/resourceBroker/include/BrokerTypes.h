@@ -23,11 +23,9 @@
 
 #include <iostream>
 #include <functional>
+#include <list>
 
-#include "OCPlatform.h"
-#include "octypes.h"
 #include "logger.h"
-
 #include "PrimitiveResource.h"
 
 #define BROKER_TAG PCF("BROKER")
@@ -75,9 +73,12 @@ enum class BROKER_MODE
     NON_PRESENCE_MODE
 };
 
-typedef std::function<OCStackResult(BROKER_STATE)> BrokerCB;
+typedef unsigned int BrokerID;
+
+typedef std::function<void(BROKER_STATE)> BrokerCB;
 struct BrokerRequesterInfo
 {
+    BrokerID brockerId;
     BrokerCB brockerCB;
 };
 typedef std::shared_ptr<BrokerRequesterInfo> BrokerRequesterInfoPtr;
@@ -91,12 +92,21 @@ typedef std::shared_ptr<PrimitiveResource> PrimitiveResourcePtr;
 
 typedef std::shared_ptr<ResourcePresence> ResourcePresencePtr;
 typedef std::shared_ptr<DevicePresence> DevicePresencePtr;
+typedef std::list< ResourcePresencePtr > PresenceList;
 
-typedef OC::OCPlatform::OCPresenceHandle BasePresenceHandle;
+struct BrokerCBResourcePair
+{
+    BrokerCBResourcePair(ResourcePresencePtr _pResource, BrokerCB _cb)
+    : pResource(_pResource), brokerCB(_cb){}
+    ResourcePresencePtr pResource;
+    BrokerCB brokerCB;
+};
+typedef std::map<BrokerID, BrokerCBResourcePair> BrokerIDMap;
+
 typedef std::function<void(OCStackResult, const unsigned int,
-        const std::string&)> SubscribeCallback;
+        const std::string&)> SubscribeCB;
 
-typedef std::function<void(const HeaderOptions&, const ResponseStatement&, int)> GetCallback;
-typedef std::function<void(int)> TimeoutCallback;
+typedef std::function<void(const HeaderOptions&, const ResponseStatement&, int)> RequestGetCB;
+typedef std::function<void(int)> TimeoutCB;
 
 #endif // BROKERTYPES_H_

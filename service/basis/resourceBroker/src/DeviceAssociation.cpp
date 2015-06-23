@@ -79,5 +79,6 @@ void DeviceAssociation::removeDevice(DevicePresencePtr dPresence)
     if(foundDevice != nullptr)
     {
         s_deviceList.remove(foundDevice);
+        foundDevice.reset();
     }
 }

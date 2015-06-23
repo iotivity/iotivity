@@ -63,12 +63,22 @@ void DevicePresence::addPresenceResource(ResourcePresence * rPresence)
     resourcePresenceList.push_back(rPresence);
 }
 
+void DevicePresence::removePresenceResource(ResourcePresence * rPresence)
+{
+    resourcePresenceList.remove(rPresence);
+}
+
 void DevicePresence::requestAllResourcePresence()
 {
     for(auto it : resourcePresenceList)
     {
         it->requestResourceState();
     }
+}
+
+bool DevicePresence::isEmptyResourcePresence() const
+{
+    return resourcePresenceList.empty();
 }
 
 void DevicePresence::subscribeCB(OCStackResult ret,

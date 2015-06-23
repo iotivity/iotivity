@@ -18,22 +18,26 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include <time.h>
+
 #include "BrokerTypes.h"
 #include "ResourceBroker.h"
 
-#define OIC_COAP "coap://"
-#define DEFAULT_CONTEXT_VALUE 0x99
-
 ResourceBroker * ResourceBroker::s_instance = NULL;
 std::mutex ResourceBroker::s_mutexForCreation;
-std::unique_ptr<std::list< ResourcePresencePtr >>  ResourceBroker::s_presenceList(nullptr);
+std::unique_ptr<PresenceList>  ResourceBroker::s_presenceList(nullptr);
+std::unique_ptr<BrokerIDMap> ResourceBroker::s_brokerIDMap(nullptr);
 
 ResourceBroker::ResourceBroker()
 {
     // TODO Auto-generated constructor stub
     if(s_presenceList == nullptr)
     {
-        s_presenceList = std::unique_ptr<std::list< ResourcePresencePtr >>(new std::list<ResourcePresencePtr>);
+        s_presenceList = std::unique_ptr<PresenceList>(new PresenceList);
+    }
+    if(s_brokerIDMap == nullptr)
+    {
+        s_brokerIDMap = std::unique_ptr<BrokerIDMap>(new BrokerIDMap);
     }
 }
 
@@ -42,7 +46,13 @@ ResourceBroker::~ResourceBroker()
     // TODO Auto-generated destructor stub
     if(s_presenceList != nullptr)
     {
+        s_presenceList->erase(s_presenceList->begin(), s_presenceList->end());
         s_presenceList->clear();
+    }
+    if(s_brokerIDMap != nullptr)
+    {
+        s_brokerIDMap->erase(s_brokerIDMap->begin(), s_brokerIDMap->end());
+        s_brokerIDMap->clear();
     }
 }
 
@@ -60,18 +70,20 @@ ResourceBroker * ResourceBroker::getInstance()
     return s_instance;
 }
 
-OCStackResult ResourceBroker::hostResource(PrimitiveResourcePtr pResource, BrokerCB cb)
+BrokerID ResourceBroker::hostResource(PrimitiveResourcePtr pResource, BrokerCB cb)
 {
-    OCStackResult ret = OC_STACK_INVALID_PARAM;
+    BrokerID retID = 0;
+
     if (pResource->getUri().empty() || pResource->getHost().empty())
     {
-        return ret;
+        return retID;
     }
     if (cb == NULL)
     {
-        ret = OC_STACK_INVALID_CALLBACK;
-        return ret;
+        return retID;
     }
+
+    retID = generateBrokerID();
 
     ResourcePresencePtr presenceItem = findResourcePresence(pResource);
     if(presenceItem == nullptr)
@@ -82,14 +94,58 @@ OCStackResult ResourceBroker::hostResource(PrimitiveResourcePtr pResource, Broke
         presenceItem = ResourcePresencePtr(new ResourcePresence(pResource));
         s_presenceList->push_back(presenceItem);
     }
-    presenceItem->addBrokerRequesterCB(cb);
+    presenceItem->addBrokerRequester(retID, cb);
 
-    return ret;
+    BrokerCBResourcePair pair(presenceItem, cb);
+    s_brokerIDMap->insert(std::pair<BrokerID, BrokerCBResourcePair>
+        (retID, BrokerCBResourcePair(presenceItem, cb)));
+
+    return retID;
 }
 
-OCStackResult ResourceBroker::cancelHostResource(PrimitiveResourcePtr pResource)
+BrokerID ResourceBroker::cancelHostResource(BrokerID brokerId)
 {
-    return OC_STACK_OK;
+    BrokerIDMap::iterator it = s_brokerIDMap->find(brokerId);
+    if(brokerId == 0)
+    {
+        // input parameter is wrong.
+        // hostResource never return value 0;
+        return brokerId;
+    }
+    else if(it == s_brokerIDMap->end())
+    {
+        // not found requested brokerId in BrokerMap;
+        return brokerId;
+    }
+    else
+    {
+        ResourcePresencePtr presenceItem = it->second.pResource;
+        presenceItem->removeBrokerRequester(brokerId);
+        s_brokerIDMap->erase(brokerId);
+
+        if(presenceItem->isEmptyRequester())
+        {
+            auto iter = std::find(s_presenceList->begin(), s_presenceList->end(), presenceItem);
+            s_presenceList->erase(iter);
+            presenceItem.reset();
+        }
+    }
+
+    return brokerId;
+}
+
+BROKER_STATE ResourceBroker::getResourceState(BrokerID brokerId)
+{
+    BROKER_STATE retState = BROKER_STATE::NONE;
+
+    BrokerIDMap::iterator it = s_brokerIDMap->find(brokerId);
+    if(it != s_brokerIDMap->end())
+    {
+        ResourcePresencePtr foundResource = it->second.pResource;
+        retState = foundResource->getResourceState();
+    }
+
+    return retState;
 }
 
 BROKER_STATE ResourceBroker::getResourceState(PrimitiveResourcePtr pResource)
@@ -97,11 +153,11 @@ BROKER_STATE ResourceBroker::getResourceState(PrimitiveResourcePtr pResource)
     BROKER_STATE retState = BROKER_STATE::NONE;
 
     ResourcePresencePtr foundResource = findResourcePresence(pResource);
-
     if(foundResource != nullptr)
     {
         retState = foundResource->getResourceState();
     }
+
     return retState;
 }
 
@@ -123,4 +179,23 @@ ResourcePresencePtr ResourceBroker::findResourcePresence(PrimitiveResourcePtr pR
     }
 
     return retResource;
+}
+
+BrokerID ResourceBroker::generateBrokerID()
+{
+    BrokerID retID = 0;
+    srand(time(NULL));
+
+    while(1)
+    {
+        if(retID == 0 || s_brokerIDMap->find(retID) != s_brokerIDMap->end())
+        {
+            retID = (unsigned int)rand();
+        }
+        else
+        {
+            break;
+        }
+    }
+    return retID;
 }

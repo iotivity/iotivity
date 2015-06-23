@@ -36,6 +36,9 @@ public:
 
     const std::string getAddress() const;
     void addPresenceResource(ResourcePresence * rPresence);
+    void removePresenceResource(ResourcePresence * rPresence);
+
+    bool isEmptyResourcePresence() const;
 
 private:
     std::string address;
@@ -44,8 +47,8 @@ private:
 
     std::list<ResourcePresence * > resourcePresenceList;
 
-    SubscribeCallback pSubscribeRequestCB;
-    TimeoutCallback pTimeoutCB;
+    SubscribeCB pSubscribeRequestCB;
+    TimeoutCB pTimeoutCB;
     PresenceSubscriber presenceSubscriber;
 
     void requestAllResourcePresence();

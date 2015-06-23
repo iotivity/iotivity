@@ -64,16 +64,55 @@ void ResourcePresence::registerDevicePresence()
 
 ResourcePresence::~ResourcePresence()
 {
+    std::string deviceAddress = primitiveResource->getHost();
+
+    DevicePresencePtr foundDevice
+    = DeviceAssociation::getInstance()->findDevice(deviceAddress);
+
+    if(foundDevice != nullptr)
+    {
+        foundDevice->removePresenceResource(this);
+
+        if(foundDevice->isEmptyResourcePresence())
+        {
+            DeviceAssociation::getInstance()->removeDevice(foundDevice);
+        }
+    }
+
     requesterList->clear();
 
     state = BROKER_STATE::DESTROYED;
 }
 
-void ResourcePresence::addBrokerRequesterCB(BrokerCB _cb)
+void ResourcePresence::addBrokerRequester(BrokerID _id, BrokerCB _cb)
 {
     BrokerRequesterInfoPtr newRequester = BrokerRequesterInfoPtr(new BrokerRequesterInfo());
+    newRequester->brockerId = _id;
     newRequester->brockerCB = _cb;
     requesterList->push_back(newRequester);
+}
+
+void ResourcePresence::removeAllBrokerRequester()
+{
+    requesterList->erase(requesterList->begin(), requesterList->end());
+}
+
+void ResourcePresence::removeBrokerRequester(BrokerID _id)
+{
+    std::list<BrokerRequesterInfoPtr>::iterator iter = requesterList->begin();
+    for(; iter != requesterList->end(); ++iter)
+    {
+        if(iter->get()->brockerId == _id)
+        {
+            requesterList->erase(iter);
+            break;
+        }
+    }
+}
+
+bool ResourcePresence::isEmptyRequester() const
+{
+    return requesterList->empty();
 }
 
 void ResourcePresence::requestResourceState()
