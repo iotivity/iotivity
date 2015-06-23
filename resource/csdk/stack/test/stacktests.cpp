@@ -423,6 +423,24 @@ TEST(StackResource, CreateResourceSuccess)
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
+TEST(StackResource, CreateResourceWithClientStackMode)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    OC_LOG(INFO, TAG, "Starting CreateResourceSuccess test");
+    InitStack(OC_CLIENT);
+
+    OCResourceHandle handle;
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCCreateResource(&handle,
+                                            "core.led",
+                                            "core.rw",
+                                            "/a/led",
+                                            0,
+                                            NULL,
+                                            OC_DISCOVERABLE|OC_OBSERVABLE));
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
 TEST(StackResource, CreateResourceFailDuplicateUri)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
@@ -504,6 +522,15 @@ TEST(StackResource, CreateResourceBadResoureType)
     OCResourceHandle handle;
     EXPECT_EQ(OC_STACK_INVALID_PARAM, OCCreateResource(&handle,
                                             NULL, //"core.led",
+                                            "core.rw",
+                                            "/a/led",
+                                            0,
+                                            NULL,
+                                            OC_DISCOVERABLE|OC_OBSERVABLE));
+
+    OCResourceHandle handle2;
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCCreateResource(&handle2,
+                                            "",
                                             "core.rw",
                                             "/a/led",
                                             0,

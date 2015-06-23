@@ -2594,7 +2594,7 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
         return OC_STACK_INVALID_URI;
     }
     // Is it presented during resource discovery?
-    if (!handle || !resourceTypeName)
+    if (!handle || !resourceTypeName || resourceTypeName[0] == '\0' )
     {
         OC_LOG(ERROR, TAG, PCF("Input parameter is NULL"));
         return OC_STACK_INVALID_PARAM;
