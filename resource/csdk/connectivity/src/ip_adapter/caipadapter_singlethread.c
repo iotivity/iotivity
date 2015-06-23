@@ -111,7 +111,8 @@ static CAResult_t CAIPStopServers();
 
 void CAIPNotifyNetworkChange(const char *address, uint16_t port, CANetworkStatus_t status)
 {
-    CAEndpoint_t *localEndpoint = CAAdapterCreateLocalEndpoint(CA_IPV4, address);
+    CAEndpoint_t *localEndpoint = CAAdapterCreateLocalEndpoint(CA_IPV4, CA_ADAPTER_IP, address,
+            port);
     if (!localEndpoint)
     {
         OIC_LOG(ERROR, TAG, "Out of memory!");
@@ -211,7 +212,8 @@ void CAIPPacketReceivedCB(const char *ipAddress, uint16_t port,
     OIC_LOG_V(DEBUG, TAG, "data:%s", data);
 
     /* CA is freeing this memory */
-    CAEndpoint_t *endPoint = CAAdapterCreateEndpoint(CA_DEFAULT_FLAGS, CA_IPV4, ipAddress, port);
+    CAEndpoint_t *endPoint = CAAdapterCreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, ipAddress,
+            port);
     if (NULL == endPoint)
     {
         OIC_LOG(ERROR, TAG, "Out of memory!");
@@ -265,7 +267,7 @@ CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
     IPHandler.readData = CAReadIPData;
     IPHandler.stopAdapter = CAStopIP;
     IPHandler.terminate = CATerminateIP;
-    registerCallback(IPHandler, CA_IPV4);
+    registerCallback(IPHandler, CA_ADAPTER_IP);
 
     OIC_LOG(INFO, TAG, "success");
     OIC_LOG(DEBUG, TAG, "OUT");
@@ -405,7 +407,7 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
     }
 
     // Create local endpoint using util function
-    (*info) = CAAdapterCreateLocalEndpoint(CA_IPV4, ipAddress);
+    (*info) = CAAdapterCreateLocalEndpoint(CA_IPV4, CA_ADAPTER_IP, ipAddress);
     if (NULL == (*info))
     {
         OIC_LOG(ERROR, TAG, "malloc fail");
