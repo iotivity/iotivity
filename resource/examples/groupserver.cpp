@@ -33,6 +33,13 @@ namespace PH = std::placeholders;
 OCResourceHandle resourceHandle;
 std::vector< OCResourceHandle > resourceHandleVector;
 
+static void printUsage()
+{
+    std::cout<<"Usage: groupclient <0|1>\n";
+    std::cout<<"ConnectivityType: Default \n";
+    std::cout<<"ConnectivityType 0: IPv4\n";
+    std::cout<<"ConnectivityType 1: IPv6\n";
+}
 void foundResource(std::shared_ptr< OCResource > resource)
 {
 
@@ -80,7 +87,7 @@ int main(int argc, char* argv[])
 {
     ostringstream requestURI;
 
-    OCConnectivityType connectivityType = CT_DEFAULT;
+    OCConnectivityType connectivityType = CT_ADAPTER_IP;
 
     if(argc == 2)
     {
@@ -93,7 +100,16 @@ int main(int argc, char* argv[])
             {
                 if(optionSelected == 0)
                 {
-                    connectivityType = CT_ADAPTER_IP;
+                    std::cout << "Using IPv4."<< std::endl;
+                    connectivityType = CT_IP_USE_V4;
+                }
+                else if(optionSelected == 1)
+                {
+                    std::cout << "IPv6 is currently not supported."<< std::endl;
+                    printUsage();
+                    return -1;
+                    //TODO: printUsage to be removed when IPv6 is available.
+                    //connectivityType = CT_IP_USE_V6;
                 }
                 else
                 {
@@ -112,9 +128,8 @@ int main(int argc, char* argv[])
     }
     else
     {
-        std::cout<<"Usage: groupclient 0\n";
-        std::cout<<"ConnectivityType: Default \n";
-        std::cout<<"ConnectivityType 0: IP\n";
+        printUsage();
+
     }
 
     PlatformConfig config

@@ -38,6 +38,7 @@
 static int IPV4_ADDR_SIZE = 16;
 static int UNICAST_DISCOVERY = 0;
 static int TEST_CASE = 0;
+static int CONNECTIVITY = 0;
 
 static const char UNICAST_DISCOVERY_QUERY[] = "coap://%s:6298/oic/res";
 static std::string putPayload = "{\"oic\":[{\"rep\":{\"power\":15,\"state\":true}}]}";
@@ -63,15 +64,16 @@ void handleSigInt(int signum)
 
 static void PrintUsage()
 {
-    OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1|2|3> -c <0|1>");
+    OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1|2|3> -c <0|1|2>");
     OC_LOG(INFO, TAG, "-u <0|1> : Perform multicast/unicast discovery of resources");
     OC_LOG(INFO, TAG, "-t 1 : Discover Resources");
     OC_LOG(INFO, TAG, "-t 2 : Discover Resources and"
             " Initiate Nonconfirmable Get/Put/Post Requests");
     OC_LOG(INFO, TAG, "-t 3 : Discover Resources and Initiate "
             "Confirmable Get/Put/Post Requests");
-    OC_LOG(INFO, TAG, "-c <0|1> : IPv4/IPv6 (IPv6 not currently supported)");
-    OC_LOG(INFO, TAG, "Default connectivityType IPv4");
+    OC_LOG(INFO, TAG, "-c 0 : Default IPv4 and IPv6 auto-selection");
+    OC_LOG(INFO, TAG, "-c 1 : IPv4 Connectivity Type");
+    OC_LOG(INFO, TAG, "-c 2 : IPv6 Connectivity Type (IPv6 not currently supported)");
 }
 
 /*
@@ -316,8 +318,8 @@ int InitDiscovery()
     if (UNICAST_DISCOVERY)
     {
         char ipv4addr[IPV4_ADDR_SIZE];
-        printf("Enter IPv4 address of the Server hosting "
-               "resource (Ex: 192.168.0.15)\n");
+        OC_LOG(INFO, TAG, "Enter IPv4 address of the Server hosting resource (Ex: 192.168.0.15) ");
+
         if (fgets(ipv4addr, IPV4_ADDR_SIZE, stdin))
         {
             //Strip newline char from ipv4addr
@@ -363,7 +365,7 @@ const char *getIPAddr(const OCClientResponse *clientResponse)
     }
 
     const OCDevAddr *devAddr = &clientResponse->devAddr;
-    char *ipaddr = (char *) OICCalloc(1, strlen(devAddr->addr));
+    char *ipaddr = (char *) OICCalloc(1, strlen(devAddr->addr) +1);
     if (ipaddr)
     {
         snprintf(ipaddr, MAX_IP_ADDR_ST_SZ, "%s", devAddr->addr);
@@ -628,7 +630,13 @@ void printResourceList()
         switch (iter->connType & CT_MASK_ADAPTER)
         {
             case CT_ADAPTER_IP:
+                printf("connType = %s\n","Default (IPv4) ");
+                break;
+            case CT_IP_USE_V4:
                 printf("connType = %s\n","IPv4");
+                break;
+            case CT_IP_USE_V6:
+                printf("connType = %s\n","IPv6");
                 break;
             case OC_ADAPTER_GATT_BTLE:
                 printf("connType = %s\n","BLE");
@@ -677,7 +685,7 @@ int main(int argc, char* argv[])
                 TEST_CASE = atoi(optarg);
                 break;
             case 'c':
-                OC_CONNTYPE = CT_ADAPTER_IP;
+                CONNECTIVITY = atoi(optarg);
                 break;
             default:
                 PrintUsage();
@@ -686,7 +694,8 @@ int main(int argc, char* argv[])
     }
 
     if ((UNICAST_DISCOVERY != 0 && UNICAST_DISCOVERY != 1) ||
-            (TEST_CASE < TEST_DISCOVER_REQ || TEST_CASE >= MAX_TESTS) )
+        (TEST_CASE < TEST_DISCOVER_REQ || TEST_CASE >= MAX_TESTS) ||
+        (CONNECTIVITY < CT_ADAPTER_DEFAULT || CONNECTIVITY >= MAX_CT))
     {
         PrintUsage();
         return -1;
@@ -697,6 +706,29 @@ int main(int argc, char* argv[])
     {
         OC_LOG(ERROR, TAG, "OCStack init error");
         return 0;
+    }
+
+    if(CONNECTIVITY == CT_ADAPTER_DEFAULT)
+    {
+        OC_CONNTYPE =  CT_ADAPTER_IP;//CT_DEFAULT;
+    }
+    else if(CONNECTIVITY == CT_IPV4)
+    {
+        OC_CONNTYPE = CT_IP_USE_V4;
+    }
+    else if(CONNECTIVITY == CT_IPV6)
+    {
+        OC_CONNTYPE = CT_IP_USE_V6;
+
+        //TODO: Remove when IPv6 is available.
+        printf("\n\nIPv6 is currently not supported !!!!\n");
+        PrintUsage();
+        return -1;
+    }
+    else
+    {
+        printf("Default Connectivity type selected \n\n");
+        OC_CONNTYPE = CT_ADAPTER_IP;
     }
 
     InitDiscovery();
