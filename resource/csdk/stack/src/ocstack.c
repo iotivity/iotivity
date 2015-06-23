@@ -1876,12 +1876,13 @@ static OCStackResult ParseRequestUri(const char *fullUri,
             }
         }
 
-        da = (OCDevAddr *)OICMalloc(sizeof (OCDevAddr));
+        da = (OCDevAddr *)OICCalloc(sizeof (OCDevAddr), 1);
         if (!da)
         {
             return OC_STACK_NO_MEMORY;
         }
-        strncpy(da->addr, start, len);
+
+        OICStrcpyPartial(da->addr, sizeof(da->addr), start, len);
         da->port = port;
         da->adapter = adapter;
         da->flags = flags;

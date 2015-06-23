@@ -58,6 +58,11 @@ extern const char * OIC_RSRC_TYPE_SEC_CRED;
 extern const char * OIC_RSRC_CRED_URI;
 extern const char * OIC_JSON_CRED_NAME;
 
+//SVC
+extern const char * OIC_RSRC_TYPE_SEC_SVC;
+extern const char * OIC_RSRC_SVC_URI;
+extern const char * OIC_JSON_SVC_NAME;
+
 extern const char * OIC_JSON_SUBJECT_NAME;
 extern const char * OIC_JSON_RESOURCES_NAME;
 extern const char * OIC_JSON_AMSS_NAME;
@@ -82,6 +87,8 @@ extern const char * OIC_JSON_CM_NAME;
 extern const char * OIC_JSON_TM_NAME;
 extern const char * OIC_JSON_OM_NAME;
 extern const char * OIC_JSON_SM_NAME;
+extern const char * OIC_JSON_SERVICE_DEVICE_ID;
+extern const char * OIC_JSON_SERVICE_TYPE;
 
 extern OicUuid_t WILDCARD_SUBJECT_ID;
 extern size_t WILDCARD_SUBJECT_ID_LEN;

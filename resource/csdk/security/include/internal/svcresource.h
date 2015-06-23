@@ -18,54 +18,41 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef IOTVT_SRM_ACLR_H
-#define IOTVT_SRM_ACLR_H
+#ifndef IOTVT_SRM_SVCR_H
+#define IOTVT_SRM_SVCR_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /**
- * Initialize ACL resource by loading data from persistent storage.
+ * Initialize SVC resource by loading data from persistent storage.
  *
  * @retval  OC_STACK_OK for Success, otherwise some error value
  */
-OCStackResult InitACLResource();
+OCStackResult InitSVCResource();
 
 /**
- * Perform cleanup for ACL resources.
+ * Perform cleanup for SVC resources.
  *
  * @retval  none
  */
-void DeInitACLResource();
+void DeInitSVCResource();
 
 /**
- * This method is used by PolicyEngine to retrieve ACL for a Subject.
- *
- * @param subjectId ID of the subject for which ACL is required.
- * @param savePtr is used internally by @ref GetACLResourceData to maintain index between
- *                successive calls for same subjectId.
- *
- * @retval  reference to @ref OicSecAcl_t if ACL is found, else NULL
- *
- * @note On the first call to @ref GetACLResourceData, savePtr should point to NULL
- */
-const OicSecAcl_t* GetACLResourceData(const OicUuid_t* subjectId, OicSecAcl_t **savePtr);
-
-/**
- * This function converts ACL data into JSON format.
+ * This function converts SVC data into JSON format.
  * Caller needs to invoke 'free' when done using
  * returned string.
- * @param acl  instance of OicSecAcl_t structure.
+ * @param svc  instance of OicSecSvc_t structure.
  *
- * @retval  pointer to ACL in json format.
+ * @retval  pointer to SVC in json format.
  */
-char* BinToAclJSON(const OicSecAcl_t * acl);
+char* BinToSvcJSON(const OicSecSvc_t * svc);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif //IOTVT_SRM_ACLR_H
+#endif //IOTVT_SRM_SVCR_H
 
 

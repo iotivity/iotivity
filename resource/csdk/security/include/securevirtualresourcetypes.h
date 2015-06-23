@@ -208,6 +208,13 @@ typedef enum OicSecDpom
     SINGLE_SERVICE_CLIENT_DRIVEN    = 0x3,
 } OicSecDpom_t;
 
+typedef enum OicSecSvcType
+{
+    SERVICE_UNKNOWN                 = 0x0,
+    ACCESS_MGMT_SERVICE             = 0x1,  //urn:oic.sec.ams
+} OicSecSvcType_t;
+
+
 //TODO: Need more clarification on deviceIDFormat field type.
 #if 0
 typedef enum
@@ -409,7 +416,11 @@ struct OicSecSacl
 struct OicSecSvc
 {
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
-    //TODO fill in from OIC Security Spec
+    OicUuid_t               svcdid;                 //0:R:S:Y:oic.uuid
+    OicSecSvcType_t         svct;                   //1:R:M:Y:OIC Service Type
+    size_t                  ownersLen;              //2:the number of elts in Owners
+    OicUuid_t               *owners;                //3:R:M:Y:oic.uuid
+    OicSecSvc_t             *next;
 };
 
 #ifdef __cplusplus

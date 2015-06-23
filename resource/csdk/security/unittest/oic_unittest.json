@@ -56,5 +56,22 @@
 				"MjIyMjIyMjIyMjIyMjIyMg=="
 			]
 		}
+	],
+
+"svc": [
+        {
+            "svcdid": "NTU1NTU1NTU1NTU1NTU1NQ==",
+			"svct": 1,
+			"ownrs" : [
+				"OTk5OTk5OTk5OTk5OTk5OQ=="
+			]
+		},
+        {
+            "svcdid": "NjY2NjY2NjY2NjY2NjY2Ng==",
+			"svct": 1,
+			"ownrs" : [
+				"OTk5OTk5OTk5OTk5OTk5OQ=="
+			]
+		}
 	]
 }

@@ -31,6 +31,7 @@
 #include "securevirtualresourcetypes.h"
 #include "srmresourcestrings.h"
 #include "aclresource.h"
+#include "srmtestcommon.h"
 
 using namespace std;
 
@@ -39,7 +40,6 @@ extern "C" {
 #endif
 extern char * BinToAclJSON(const OicSecAcl_t * acl);
 extern OicSecAcl_t * JSONToAclBin(const char * jsonStr);
-char* ReadFile(const char* filename);
 extern void DeleteACLList(OicSecAcl_t* acl);
 OCStackResult  GetDefaultACL(OicSecAcl_t** defaultAcl);
 OCEntityHandlerResult ACLEntityHandler (OCEntityHandlerFlag flag,
@@ -54,37 +54,6 @@ const char* ACL1_JSON_FILE_NAME = "oic_unittest_acl1.json";
 
 #define NUM_ACE_FOR_WILDCARD_IN_ACL1_JSON (2)
 
-char* ReadFile(const char* filename)
-{
-
-    FILE *fp = NULL;
-    char *data = NULL;
-    struct stat st;
-    // TODO: Find the location of the executable and concatenate the SVR file name
-    // before opening it.
-    fp = fopen(filename, "r");
-    if (fp)
-    {
-        if (stat(filename, &st) == 0)
-        {
-            data = (char*)OICMalloc(st.st_size);
-            if (data)
-            {
-                if (fread(data, 1, st.st_size, fp) != (size_t)st.st_size)
-                {
-                    printf("Error in reading file %s", filename);
-                }
-            }
-        }
-        fclose(fp);
-    }
-    else
-    {
-        printf("Unable to open %s file", filename);
-    }
-
-    return data;
-}
 
 void SetPersistentHandler(OCPersistentStorage *ps, bool set)
 {

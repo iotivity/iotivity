@@ -24,6 +24,7 @@
 #include "pstatresource.h"
 #include "doxmresource.h"
 #include "credresource.h"
+#include "svcresource.h"
 #include "amaclresource.h"
 #include "oic_malloc.h"
 #include "logger.h"
@@ -90,6 +91,10 @@ OCStackResult InitSecureResources( )
     }
     if(OC_STACK_OK == ret)
     {
+        ret = InitSVCResource();
+	}
+	if(OC_STACK_OK == ret)
+    {     
         ret = InitAmaclResource();
     }
     if(OC_STACK_OK != ret)
