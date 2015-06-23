@@ -22,10 +22,10 @@
 #include <HippoMocks/hippomocks.h>
 
 #include <internal/PrimitiveResourceImpl.h>
+#include <internal/AssertUtils.h>
 
 #include <OCResource.h>
-
-#include <internal/AssertUtils.h>
+#include <OCPlatform.h>
 
 using namespace testing;
 using namespace OIC::Service;
@@ -173,5 +173,46 @@ TEST_F(PrimitiveResourceTest, ResponseStatementHasSameValuesWithOCRepresentation
                 ASSERT_EQ(response.getAttributes().at(KEY).get<int>(), value);
             }
         );
+}
+
+
+class DiscoverResourceTest: public Test
+{
+public:
+    MockRepository mocks;
+
+    typedef OCStackResult (*FindResource)(const std::string&, const std::string&,
+            OCConnectivityType, OC::FindCallback);
+
+    static void discovered(std::shared_ptr< PrimitiveResource >)
+    {
+    }
+
+};
+
+
+
+TEST_F(DiscoverResourceTest, CallbackIsInvokedWhenResourceIsDiscovered)
+{
+    mocks.ExpectCallFuncOverload(static_cast<FindResource>(OC::OCPlatform::findResource)).Do(
+            [](const std::string&, const std::string&, OCConnectivityType,
+                    OC::FindCallback callback) -> OCStackResult
+            {
+                callback(nullptr);
+                return OC_STACK_OK;
+            }
+        ).Return(OC_STACK_OK);
+
+    mocks.ExpectCallFunc(discovered);
+
+    discoverResource("", "", OCConnectivityType{ }, discovered);
+}
+
+TEST_F(DiscoverResourceTest, ThrowsdWhenOCPlatformFindResourceReturnsNotOK)
+{
+    mocks.ExpectCallFuncOverload(static_cast<FindResource>(OC::OCPlatform::findResource)).
+            Return(OC_STACK_ERROR);
+
+    EXPECT_THROW(discoverResource("", "", OCConnectivityType{ }, discovered), PlatformException);
 }
 
