@@ -100,7 +100,7 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
     connHandler.readData = CAReadLEData;
     connHandler.stopAdapter = CAStopLE;
     connHandler.terminate = CATerminateLE;
-    registerCallback(connHandler, CA_LE);
+    registerCallback(connHandler, CA_ADAPTER_GATT_BTLE);
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -149,7 +149,7 @@ CAResult_t CAStartLENotifyServer()
     return CA_STATUS_OK;
 }
 
-uint32_t CASendLENotification(const CARemoteEndpoint_t *endpoint, const void *data,
+uint32_t CASendLENotification(const CAEndpoint_t *endpoint, const void *data,
                               uint32_t dataLen)
 {
     OIC_LOG(DEBUG, TAG, "IN");
@@ -157,7 +157,7 @@ uint32_t CASendLENotification(const CARemoteEndpoint_t *endpoint, const void *da
     return 1;
 }
 
-int32_t CASendLEUnicastData(const CARemoteEndpoint_t *remoteEndpoint, const void *data,
+int32_t CASendLEUnicastData(const CAEndpoint_t *remoteEndpoint, const void *data,
                             uint32_t dataLen)
 {
     OIC_LOG(DEBUG, TAG, "IN");
@@ -183,7 +183,7 @@ int32_t CASendLEMulticastData(const void *data, uint32_t dataLen)
     return CASendLEData(data, dataLen);
 }
 
-CAResult_t CAGetLEInterfaceInformation(CALocalConnectivity_t **info, uint32_t *size)
+CAResult_t CAGetLEInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -212,7 +212,7 @@ CAResult_t CAGetLEInterfaceInformation(CALocalConnectivity_t **info, uint32_t *s
     /**
      * Create local endpoint using util function
      */
-    (*info) = CAAdapterCreateLocalEndpoint(CA_LE, leAddress);
+    (*info) = CAAdapterCreateLocalEndpoint(CA_ADAPTER_GATT_BTLE, leAddress);
     if (NULL == (*info))
     {
         OIC_LOG(ERROR, TAG, "malloc fail");
@@ -294,11 +294,10 @@ void CANotifyCallback(const void *data, int32_t dataLen, const char *senderAdrs,
     {
 
         /* Cannot get Address as of now */
-        CARemoteEndpoint_t endPoint;
-        endPoint.resourceUri = "";     // will be filled by upper layer
-        endPoint.transportType= CA_LE;
+        CAEndpoint_t *localEndpoint = CAAdapterCreateLocalEndpoint(CA_IPV4, CA_ADAPTER_GATT_BTLE,
+                                                                   senderAdrs, senderPort);
 
-        g_respCallback(&endPoint, data, dataLen);
+        g_respCallback(localEndpoint, data, dataLen);
     }
     OIC_LOG(DEBUG, TAG, "OUT");
 }

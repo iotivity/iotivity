@@ -343,7 +343,7 @@ CAResult_t CADetachRequestMessage(const CAEndpoint_t *object, const CARequestInf
     CA_MEMORY_ALLOC_CHECK(data);
 
     // save data
-    data->type = SEND_TYPE_UNICAST;
+    data->type = request->isMulticast ? SEND_TYPE_MULTICAST : SEND_TYPE_UNICAST;
     data->remoteEndpoint = object;
     data->requestInfo = request;
     data->responseInfo = NULL;

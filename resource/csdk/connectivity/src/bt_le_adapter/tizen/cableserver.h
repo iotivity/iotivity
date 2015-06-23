@@ -212,7 +212,7 @@ CAResult_t CALEReadDataFromLEServer();
  * @retval #CA_STATUS_FAILED Operation failed
  */
 CAResult_t CABleServerSenderQueueEnqueueMessage
-                (const CARemoteEndpoint_t *remoteEndpoint, const void *data, uint32_t dataLen);
+                (const CAEndpoint_t *remoteEndpoint, const void *data, uint32_t dataLen);
 
 /**
  * @brief  This is the thread which will be used for processing receiver queue.

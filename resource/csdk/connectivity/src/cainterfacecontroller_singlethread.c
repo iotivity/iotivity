@@ -39,7 +39,7 @@
 #define CA_MEMORY_ALLOC_CHECK(arg) { if (arg == NULL) {OIC_LOG(ERROR, TAG, "Out of memory");\
     goto memory_error_exit;} }
 
-#define CA_CONNECTIVITY_TYPE_NUM   4
+#define CA_CONNECTIVITY_TYPE_NUM   3
 
 static CAConnectivityHandler_t g_adapterHandler[CA_CONNECTIVITY_TYPE_NUM];
 
@@ -61,7 +61,7 @@ static int CAGetAdapterIndex(CATransportAdapter_t cType)
             return 2;
     }
 
-    OIC_LOG(DEBUG, TAG, "CA_CONNECTIVITY_TYPE_NUM is not 4");
+    OIC_LOG(DEBUG, TAG, "CA_CONNECTIVITY_TYPE_NUM is not 3");
 
     return -1;
 }

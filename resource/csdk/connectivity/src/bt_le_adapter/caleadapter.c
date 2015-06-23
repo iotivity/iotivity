@@ -47,7 +47,7 @@ static CANetworkChangeCallback g_networkCallback = NULL;
  * @var g_localBLEAddress
  * @brief bleAddress of the local adapter. Value will be initialized to zero, and will be updated later.
  */
-static char g_localBLEAddress[16] = {0};
+static char g_localBLEAddress[18] = {0};
 
 /**
  * @var g_isServer
