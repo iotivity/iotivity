@@ -30,11 +30,6 @@
 #define OPTION_INFO_LENGTH 1024
 #define NETWORK_INFO_LENGTH 1024
 
-#define COAP_PREFIX          "coap://"
-#define COAP_PREFIX_LEN      7
-#define COAPS_PREFIX         "coaps://"
-#define COAPS_PREFIX_LEN     8
-
 uint16_t g_localSecurePort = SECURE_DEFAULT_PORT;
 
 void request_handler(const CAEndpoint_t* object, const CARequestInfo_t* requestInfo);
@@ -50,11 +45,15 @@ CATransportAdapter_t g_selectedNwType = CA_ADAPTER_IP;
 static CAToken_t g_lastRequestToken = NULL;
 static uint8_t g_lastRequestTokenLength;
 
-static const char SECURE_COAPS_PREFIX[] = "coaps://";
+static const char COAP_PREFIX[] =  "coap://";
+static const char COAPS_PREFIX[] = "coaps://";
+static const uint16_t COAP_PREFIX_LEN = sizeof(COAP_PREFIX) - 1;
+static const uint16_t COAPS_PREFIX_LEN = sizeof(COAPS_PREFIX) - 1;
 
 static const char SECURE_INFO_DATA[]
                                    = "{\"oc\":[{\"href\":\"%s\",\"prop\":{\"rt\":[\"core.led\"],"
-                                     "\"if\":[\"oic.if.baseline\"],\"obs\":1,\"sec\":1,\"port\":%d}}]}";
+                                     "\"if\":[\"oic.if.baseline\"],\"obs\":1,\"sec\":1,\"port\":"
+                                     "%d}}]}";
 static const char NORMAL_INFO_DATA[]
                                    = "{\"oc\":[{\"href\":\"%s\",\"prop\":{\"rt\":[\"core.led\"],"
                                      "\"if\":[\"oic.if.baseline\"],\"obs\":1}}]}";
@@ -954,7 +953,7 @@ void request_handler(const CAEndpoint_t* object, const CARequestInfo_t* requestI
             char *uri = NULL;
             uint32_t length = 0;
 
-            length = sizeof(SECURE_COAPS_PREFIX) - 1; //length of "coaps://"
+            length = COAPS_PREFIX_LEN; //length of "coaps://"
             // length of "ipaddress:port"
             length += strlen(object->addr) + PORT_LENGTH;
             length += strlen(requestInfo->info.resourceUri) + 1;
@@ -966,7 +965,7 @@ void request_handler(const CAEndpoint_t* object, const CARequestInfo_t* requestI
                 free(uri);
                 return;
             }
-            sprintf(uri, "%s%s:%d/%s", SECURE_COAPS_PREFIX, object->addr,
+            sprintf(uri, "%s%s:%d/%s", COAPS_PREFIX, object->addr,
                     securePort, requestInfo->info.resourceUri);
 
             CAEndpoint_t *endpoint = NULL;

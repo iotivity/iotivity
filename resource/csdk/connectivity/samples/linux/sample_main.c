@@ -27,7 +27,6 @@
 
 #include "cacommon.h"
 #include "cainterface.h"
-#include "oic_malloc.h"
 #ifdef __WITH_DTLS__
 #include "ocsecurityconfig.h"
 #endif
@@ -43,11 +42,6 @@
 
 #define SYSTEM_INVOKE_ERROR 127
 #define SYSTEM_ERROR -1
-
-#define COAP_PREFIX          "coap://"
-#define COAP_PREFIX_LEN      7
-#define COAPS_PREFIX         "coaps://"
-#define COAPS_PREFIX_LEN     8
 
 /**
  * @def RS_IDENTITY
@@ -96,7 +90,12 @@ int get_address_set(const char *pAddress, addressSet_t* outAddress);
 void parsing_coap_uri(const char* uri, addressSet_t* address);
 
 static CAToken_t g_last_request_token = NULL;
-static const char SECURE_COAPS_PREFIX[] = "coaps://";
+
+static const char COAP_PREFIX[] =  "coap://";
+static const char COAPS_PREFIX[] = "coaps://";
+static const uint16_t COAP_PREFIX_LEN = sizeof(COAP_PREFIX) - 1;
+static const uint16_t COAPS_PREFIX_LEN = sizeof(COAPS_PREFIX) - 1;
+
 static const char SECURE_INFO_DATA[] =
                                     "{\"oc\":[{\"href\":\"%s\",\"prop\":{\"rt\":[\"core.led\"],"
                                      "\"if\":[\"oic.if.baseline\"],\"obs\":1,\"sec\":1,\"port\":"
@@ -524,7 +523,7 @@ void send_secure_request()
     {
         return;
     }
-    snprintf(uri, MAX_BUF_LEN, "%s%s:5684/a/light", SECURE_COAPS_PREFIX, ipv4addr);
+    snprintf(uri, MAX_BUF_LEN, "%s%s:5684/a/light", COAPS_PREFIX, ipv4addr);
 
     // create remote endpoint
     CAEndpoint_t *endpoint = NULL;
@@ -964,7 +963,7 @@ void request_handler(const CAEndpoint_t *object, const CARequestInfo_t *requestI
             printf("This is secure resource...\n");
 
             //length of "coaps://"
-            size_t length = sizeof(SECURE_COAPS_PREFIX) - 1;
+            size_t length = COAPS_PREFIX_LEN;
 
             // length of "ipaddress:port"
             length += strlen(object->addr) + PORT_LENGTH;
@@ -976,7 +975,7 @@ void request_handler(const CAEndpoint_t *object, const CARequestInfo_t *requestI
                 printf("Failed to create new uri\n");
                 return;
             }
-            sprintf(uri, "%s%s:%d/", SECURE_COAPS_PREFIX, object->addr,
+            sprintf(uri, "%s%s:%d/", COAPS_PREFIX, object->addr,
                     object->port);
 
             CAEndpoint_t *endpoint = NULL;
