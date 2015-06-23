@@ -37,10 +37,11 @@ namespace OIC
         }
 
         void discoverResource(const std::string& host, const std::string& resourceURI,
-                OCConnectivityType connectivityType, FindCallback resourceHandler)
+                OCConnectivityType connectivityType, DiscoverCallback callback)
         {
             OC::OCPlatform::findResource(host, resourceURI, connectivityType,
-                    std::bind(&PrimitiveResource::create, std::placeholders::_1));
+                    std::bind(callback,
+                            std::bind(&PrimitiveResource::create, std::placeholders::_1)));
         }
 
     }

@@ -79,10 +79,10 @@ namespace OIC
             PrimitiveResource& operator=(PrimitiveResource&&) const = delete;
         };
 
-        using FindCallback = std::function<void(std::shared_ptr<PrimitiveResource>)>;
+        using DiscoverCallback = std::function<void(std::shared_ptr<PrimitiveResource>)>;
 
         void discoverResource(const std::string& host, const std::string& resourceURI,
-                OCConnectivityType connectivityType, FindCallback resourceHandler);
+                OCConnectivityType, DiscoverCallback);
 
     }
 }
