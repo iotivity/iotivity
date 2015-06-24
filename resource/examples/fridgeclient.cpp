@@ -176,7 +176,7 @@ class ClientFridge
     // however be a better fit to wrap each call in an object so a fuller context (and additional
     // requests) can be easily made inside of a simple context
     void getResponse(const std::string& resourceName, const HeaderOptions& headerOptions,
-                const OCRepresentation rep, const int eCode, OCResource::Ptr resource, int getId)
+                const OCRepresentation& rep, const int eCode, OCResource::Ptr resource, int getId)
     {
         std::cout << "Got a response from get from the " << resourceName << std::endl;
         std::cout << "Get ID is "<<getId<<" and resource URI is " << resource->uri() << std::endl;

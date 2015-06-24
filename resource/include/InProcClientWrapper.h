@@ -27,7 +27,6 @@
 #include <iostream>
 
 #include <OCApi.h>
-#include <ocstack.h>
 #include <IClientWrapper.h>
 #include <InitializeException.h>
 #include <ResourceInitException.h>

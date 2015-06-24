@@ -50,16 +50,15 @@ Config::Config(void *args)
     if (path != ".")
         path = "/data/data/" + path + "/files";
 #elif __TIZEN__
-    char *app_id = (char *)malloc(PATH_MAX_SIZE * sizeof(char));
-    char completePath[PATH_MAX_SIZE];
+    char *app_id = NULL;
     int res = app_get_id(&app_id);
     if (APP_ERROR_NONE == res)
     {
-        strcpy(completePath, "/opt/usr/apps/");
-        strcat(completePath, app_id);
-        strcat(completePath, "/lib");
+        path = "/opt/usr/apps/";
+        path += app_id;
+        path += "/lib";
     }
-    path = completePath;
+    free(app_id);
 #endif
 
     if (loadConfigFile(path + "/pluginmanager.xml") != PM_S_OK)
@@ -133,9 +132,9 @@ PMRESULT Config::parsing(char *xmlData, xml_document<> *doc)
 
 PMRESULT Config::getXmlData(xml_node<> *pluginInfo, std::string key)
 {
-    xml_attribute<> *iAttr = NULL;
     std::string value  = "";
-    if (iAttr = pluginInfo->first_attribute(key.c_str()))
+    xml_attribute<> *iAttr = pluginInfo->first_attribute(key.c_str());
+    if (iAttr)
     {
         value = iAttr->value();
         setValue(key, value);

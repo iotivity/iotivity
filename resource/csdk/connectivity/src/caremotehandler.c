@@ -147,6 +147,9 @@ CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *rep)
         case CA_SUCCESS:
         case CA_CREATED:
         case CA_DELETED:
+        case CA_VALID:
+        case CA_CHANGED:
+        case CA_CONTENT:
         case CA_BAD_REQ:
         case CA_BAD_OPT:
         case CA_NOT_FOUND:

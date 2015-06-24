@@ -45,11 +45,15 @@ CATransportAdapter_t g_selectedNwType = CA_ADAPTER_IP;
 static CAToken_t g_lastRequestToken = NULL;
 static uint8_t g_lastRequestTokenLength;
 
-static const char SECURE_COAPS_PREFIX[] = "coaps://";
+static const char COAP_PREFIX[] =  "coap://";
+static const char COAPS_PREFIX[] = "coaps://";
+static const uint16_t COAP_PREFIX_LEN = sizeof(COAP_PREFIX) - 1;
+static const uint16_t COAPS_PREFIX_LEN = sizeof(COAPS_PREFIX) - 1;
 
 static const char SECURE_INFO_DATA[]
                                    = "{\"oc\":[{\"href\":\"%s\",\"prop\":{\"rt\":[\"core.led\"],"
-                                     "\"if\":[\"oic.if.baseline\"],\"obs\":1,\"sec\":1,\"port\":%d}}]}";
+                                     "\"if\":[\"oic.if.baseline\"],\"obs\":1,\"sec\":1,\"port\":"
+                                     "%d}}]}";
 static const char NORMAL_INFO_DATA[]
                                    = "{\"oc\":[{\"href\":\"%s\",\"prop\":{\"rt\":[\"core.led\"],"
                                      "\"if\":[\"oic.if.baseline\"],\"obs\":1}}]}";
@@ -65,10 +69,16 @@ static uint8_t g_clientTokenLength = NULL;
 static uint16_t g_clientMsgId;
 static char *g_remoteAddress = NULL;
 
+typedef struct
+{
+    char ipAddress[CA_IPADDR_SIZE];
+    uint16_t port;
+} addressSet_t;
+
 // init
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_service_RMInterface_setNativeResponseListener(JNIEnv *env, jobject obj,
-                                                                jobject listener)
+                                                                   jobject listener)
 {
     LOGI("setNativeResponseListener");
     g_responseListenerObject = (*env)->NewGlobalRef(env, obj);
@@ -257,8 +267,8 @@ Java_org_iotivity_ca_service_RMInterface_RMFindResource(JNIEnv *env, jobject obj
 
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_service_RMInterface_RMSendRequest(JNIEnv *env, jobject obj, jstring uri,
-                                                    jstring payload, jint selectedNetwork,
-                                                    jint isSecured, jint msgType)
+                                                       jstring payload, jint selectedNetwork,
+                                                       jint isSecured, jint msgType)
 {
     LOGI("selectedNetwork - %d", selectedNetwork);
     CAResult_t res = get_network_type(selectedNetwork);
@@ -270,15 +280,17 @@ Java_org_iotivity_ca_service_RMInterface_RMSendRequest(JNIEnv *env, jobject obj,
     const char* strUri = (*env)->GetStringUTFChars(env, uri, NULL);
     LOGI("RMSendRequest - %s", strUri);
 
+    addressSet_t address = {};
+    parsing_coap_uri(strUri, &address);
+
     //create remote endpoint
     CAEndpoint_t* endpoint = NULL;
-    res = CACreateEndpoint(CA_DEFAULT_FLAGS, g_selectedNwType, strUri, 0, &endpoint);
-    //ReleaseStringUTFChars for strUri
-    (*env)->ReleaseStringUTFChars(env, uri, strUri);
-
+    res = CACreateEndpoint(CA_DEFAULT_FLAGS, g_selectedNwType, (const char*)address.ipAddress,
+                           address.port, &endpoint);
     if (CA_STATUS_OK != res)
     {
         LOGE("Could not create remote end point");
+        (*env)->ReleaseStringUTFChars(env, uri, strUri);
         return;
     }
 
@@ -294,12 +306,14 @@ Java_org_iotivity_ca_service_RMInterface_RMSendRequest(JNIEnv *env, jobject obj,
         LOGE("token generate error!!");
         // destroy remote endpoint
         CADestroyEndpoint(endpoint);
+        (*env)->ReleaseStringUTFChars(env, uri, strUri);
         return;
     }
 
     char resourceURI[RESOURCE_URI_LENGTH + 1] = { 0 };
 
     get_resource_uri((const CAURI_t) strUri, resourceURI, RESOURCE_URI_LENGTH);
+    (*env)->ReleaseStringUTFChars(env, uri, strUri);
 
     CAInfo_t requestData = { 0 };
     requestData.token = token;
@@ -337,6 +351,18 @@ Java_org_iotivity_ca_service_RMInterface_RMSendRequest(JNIEnv *env, jobject obj,
     }
 
     requestData.type = messageType;
+    requestData.resourceUri = (CAURI_t) malloc(sizeof(resourceURI));
+    if (NULL == requestData.resourceUri)
+    {
+        LOGE("Memory allocation failed!");
+        // destroy token
+        CADestroyToken(token);
+        // destroy remote endpoint
+        CADestroyEndpoint(endpoint);
+        free(requestData.payload);
+        return;
+    }
+    memcpy(requestData.resourceUri, resourceURI, sizeof(resourceURI));
 
     CARequestInfo_t requestInfo = { 0 };
     requestInfo.method = CA_GET;
@@ -356,11 +382,12 @@ Java_org_iotivity_ca_service_RMInterface_RMSendRequest(JNIEnv *env, jobject obj,
     CADestroyEndpoint(endpoint);
 
     free(requestData.payload);
+    free(requestData.resourceUri);
 }
 
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_service_RMInterface_RMSendReqestToAll(JNIEnv *env, jobject obj, jstring uri,
-                                                        jint selectedNetwork)
+                                                           jint selectedNetwork)
 {
     LOGI("selectedNetwork - %d", selectedNetwork);
     CAResult_t res = get_network_type(selectedNetwork);
@@ -369,15 +396,9 @@ Java_org_iotivity_ca_service_RMInterface_RMSendReqestToAll(JNIEnv *env, jobject 
         return;
     }
 
-    const char* strUri = (*env)->GetStringUTFChars(env, uri, NULL);
-    LOGI("RMSendReqestToAll - %s", strUri);
-
     // create remote endpoint
     CAEndpoint_t *endpoint = NULL;
-    res = CACreateEndpoint(CA_DEFAULT_FLAGS, g_selectedNwType, strUri, 0, &endpoint);
-
-    //ReleaseStringUTFChars for strUri
-    (*env)->ReleaseStringUTFChars(env, uri, strUri);
+    res = CACreateEndpoint(CA_DEFAULT_FLAGS, g_selectedNwType, NULL, 0, &endpoint);
 
     if (CA_STATUS_OK != res)
     {
@@ -406,6 +427,10 @@ Java_org_iotivity_ca_service_RMInterface_RMSendReqestToAll(JNIEnv *env, jobject 
     requestData.payload = "Temp Json Payload";
     requestData.type = CA_MSG_NONCONFIRM;
 
+    const char* strUri = (*env)->GetStringUTFChars(env, uri, NULL);
+    LOGI("resourceUri - %s", strUri);
+    requestData.resourceUri = (CAURI_t)strUri;
+
     CARequestInfo_t requestInfo = { 0 };
     requestInfo.method = CA_GET;
     requestInfo.isMulticast = true;
@@ -426,15 +451,18 @@ Java_org_iotivity_ca_service_RMInterface_RMSendReqestToAll(JNIEnv *env, jobject 
         g_lastRequestTokenLength = tokenLength;
     }
 
+    //ReleaseStringUTFChars for strUri
+    (*env)->ReleaseStringUTFChars(env, uri, strUri);
+
     // destroy remote endpoint
     CADestroyEndpoint(endpoint);
 }
 
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_service_RMInterface_RMSendResponse(JNIEnv *env, jobject obj,
-                                                     jint selectedNetwork,
-                                                     jint isSecured, jint msgType,
-                                                     jint responseValue)
+                                                        jint selectedNetwork,
+                                                        jint isSecured, jint msgType,
+                                                        jint responseValue)
 {
     LOGI("RMSendResponse");
 
@@ -458,6 +486,7 @@ Java_org_iotivity_ca_service_RMInterface_RMSendResponse(JNIEnv *env, jobject obj
     CAInfo_t responseData = { 0 };
     responseData.type = messageType;
     responseData.messageId = g_clientMsgId;
+    responseData.resourceUri = (CAURI_t)g_resourceUri;
 
     CAResponseInfo_t responseInfo = { 0 };
 
@@ -507,10 +536,16 @@ Java_org_iotivity_ca_service_RMInterface_RMSendResponse(JNIEnv *env, jobject obj
 }
 
 JNIEXPORT void JNICALL
+Java_org_iotivity_ca_service_RMInterface_RMAdvertiseResource(JNIEnv *env, jobject obj, jstring uri)
+{
+    LOGE("Java_org_iotivity_ca_service_RMInterface_RMAdvertiseResource not implemented");
+}
+
+JNIEXPORT void JNICALL
 Java_org_iotivity_ca_service_RMInterface_RMSendNotification(JNIEnv *env, jobject obj, jstring uri,
-                                                         jstring payload, jint selectedNetwork,
-                                                         jint isSecured, jint msgType,
-                                                         jint responseValue)
+                                                            jstring payload, jint selectedNetwork,
+                                                            jint isSecured, jint msgType,
+                                                            jint responseValue)
 {
     LOGI("selectedNetwork - %d", selectedNetwork);
 
@@ -524,9 +559,14 @@ Java_org_iotivity_ca_service_RMInterface_RMSendNotification(JNIEnv *env, jobject
     const char* strUri = (*env)->GetStringUTFChars(env, uri, NULL);
     LOGI("RMSendNotification - %s", strUri);
 
+    addressSet_t address = {};
+    parsing_coap_uri(strUri, &address);
+
     //create remote endpoint
     CAEndpoint_t* endpoint = NULL;
-    if (CA_STATUS_OK != CACreateEndpoint(CA_DEFAULT_FLAGS, g_selectedNwType, strUri, 0, &endpoint))
+    if (CA_STATUS_OK != CACreateEndpoint(CA_DEFAULT_FLAGS, g_selectedNwType,
+                                         (const char*)address.ipAddress,
+                                         address.port, &endpoint))
     {
         //ReleaseStringUTFChars for strUri
         (*env)->ReleaseStringUTFChars(env, uri, strUri);
@@ -557,6 +597,17 @@ Java_org_iotivity_ca_service_RMInterface_RMSendNotification(JNIEnv *env, jobject
     CAInfo_t responseData = { 0 };
     responseData.token = token;
     responseData.tokenLength = tokenLength;
+    responseData.resourceUri = (CAURI_t) malloc(sizeof(resourceURI));
+    if (NULL == responseData.resourceUri)
+    {
+        LOGE("Memory allocation failed!");
+        // destroy token
+        CADestroyToken(token);
+        // destroy remote endpoint
+        CADestroyEndpoint(endpoint);
+        return;
+    }
+    memcpy(responseData.resourceUri, resourceURI, sizeof(resourceURI));
 
     if (1 == isSecured)
     {
@@ -569,6 +620,8 @@ Java_org_iotivity_ca_service_RMInterface_RMSendNotification(JNIEnv *env, jobject
             CADestroyToken(token);
             // destroy remote endpoint
             CADestroyEndpoint(endpoint);
+
+            free(responseData.resourceUri);
             return;
         }
         snprintf(responseData.payload, length, SECURE_INFO_DATA, resourceURI, g_localSecurePort);
@@ -584,6 +637,8 @@ Java_org_iotivity_ca_service_RMInterface_RMSendNotification(JNIEnv *env, jobject
             CADestroyToken(token);
             // destroy remote endpoint
             CADestroyEndpoint(endpoint);
+
+            free(responseData.resourceUri);
             return;
         }
         snprintf(responseData.payload, length, NORMAL_INFO_DATA, resourceURI);
@@ -610,10 +665,12 @@ Java_org_iotivity_ca_service_RMInterface_RMSendNotification(JNIEnv *env, jobject
     CADestroyEndpoint(endpoint);
 
     free(responseData.payload);
+    free(responseData.resourceUri);
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_ca_service_RMInterface_RMSelectNetwork(JNIEnv *env, jobject obj, jint networkType)
+Java_org_iotivity_ca_service_RMInterface_RMSelectNetwork(JNIEnv *env, jobject obj,
+                                                         jint networkType)
 {
     LOGI("RMSelectNetwork Type : %d", networkType);
 
@@ -624,7 +681,8 @@ Java_org_iotivity_ca_service_RMInterface_RMSelectNetwork(JNIEnv *env, jobject ob
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_ca_service_RMInterface_RMUnSelectNetwork(JNIEnv *env, jobject obj, jint networkType)
+Java_org_iotivity_ca_service_RMInterface_RMUnSelectNetwork(JNIEnv *env, jobject obj,
+                                                           jint networkType)
 {
     LOGI("RMUnSelectNetwork Type : %d", networkType);
 
@@ -895,7 +953,7 @@ void request_handler(const CAEndpoint_t* object, const CARequestInfo_t* requestI
             char *uri = NULL;
             uint32_t length = 0;
 
-            length = sizeof(SECURE_COAPS_PREFIX) - 1; //length of "coaps://"
+            length = COAPS_PREFIX_LEN; //length of "coaps://"
             // length of "ipaddress:port"
             length += strlen(object->addr) + PORT_LENGTH;
             length += strlen(requestInfo->info.resourceUri) + 1;
@@ -907,12 +965,12 @@ void request_handler(const CAEndpoint_t* object, const CARequestInfo_t* requestI
                 free(uri);
                 return;
             }
-            sprintf(uri, "%s%s:%d/%s", SECURE_COAPS_PREFIX, object->addr,
+            sprintf(uri, "%s%s:%d/%s", COAPS_PREFIX, object->addr,
                     securePort, requestInfo->info.resourceUri);
 
             CAEndpoint_t *endpoint = NULL;
             if (CA_STATUS_OK != CACreateEndpoint(CA_SECURE,
-                        object->adapter, uri, securePort, &endpoint))
+                        object->adapter, object->addr, securePort, &endpoint))
             {
                 LOGE("Failed to create duplicate of remote endpoint!");
                 free(uri);
@@ -1217,4 +1275,133 @@ CAResult_t get_remote_address(CATransportAdapter_t transportType, const char *ad
     memcpy(g_remoteAddress, address, len + 1);
 
     return CA_STATUS_OK;
+}
+
+
+void parsing_coap_uri(const char* uri, addressSet_t* address)
+{
+    if (NULL == uri || NULL == address)
+    {
+        LOGE("parameter is null");
+        return;
+    }
+
+    // parse uri
+    // #1. check prefix
+    uint8_t startIndex = 0;
+    if (strncmp(COAPS_PREFIX, uri, COAPS_PREFIX_LEN) == 0)
+    {
+        LOGI("uri has '%s' prefix", COAPS_PREFIX);
+        startIndex = COAPS_PREFIX_LEN;
+    }
+    else if (strncmp(COAP_PREFIX, uri, COAP_PREFIX_LEN) == 0)
+    {
+        LOGI("uri has '%s' prefix", COAP_PREFIX);
+        startIndex = COAP_PREFIX_LEN;
+    }
+
+    // #2. copy uri for parse
+    int32_t len = strlen(uri) - startIndex;
+
+    if (len <= 0)
+    {
+        LOGE("uri length is 0!");
+        return;
+    }
+
+    char *cloneUri = (char *) calloc(len + 1, sizeof(char));
+    if (NULL == cloneUri)
+    {
+        LOGE("Out of memory");
+        return;
+    }
+
+    memcpy(cloneUri, &uri[startIndex], sizeof(char) * len);
+    cloneUri[len] = '\0';
+
+    char *pAddress = cloneUri;
+    char *pResourceUri = NULL;
+
+    int32_t i = 0;
+    for (i = 0; i < len; i++)
+    {
+        if (cloneUri[i] == '/')
+        {
+            // separate
+            cloneUri[i] = 0;
+            pResourceUri = &cloneUri[i + 1];
+            break;
+        }
+    }
+    LOGI("pAddress : %s", pAddress);
+
+    int res = get_address_set(pAddress, address);
+    if (res == -1)
+    {
+        LOGE("address parse error");
+
+        free(cloneUri);
+        return;
+    }
+    return;
+}
+
+int get_address_set(const char *pAddress, addressSet_t* outAddress)
+{
+    if (NULL == pAddress || NULL == outAddress)
+    {
+        LOGE("parameter is null");
+        return -1;
+    }
+
+    int32_t len = strlen(pAddress);
+    int32_t isIp = 0;
+    int32_t ipLen = 0;
+
+    int32_t i = 0;
+    for (i = 0; i < len; i++)
+    {
+        if (pAddress[i] == '.')
+        {
+            isIp = 1;
+        }
+
+        // found port number start index
+        if (isIp && pAddress[i] == ':')
+        {
+            ipLen = i;
+            break;
+        }
+    }
+
+    if (isIp)
+    {
+        if(ipLen && ipLen < sizeof(outAddress->ipAddress))
+        {
+            strncpy(outAddress->ipAddress, pAddress, ipLen);
+            outAddress->ipAddress[ipLen] = '\0';
+        }
+        else if (!ipLen && len < sizeof(outAddress->ipAddress))
+        {
+            strncpy(outAddress->ipAddress, pAddress, len);
+            outAddress->ipAddress[len] = '\0';
+        }
+        else
+        {
+            LOGE("IP Address too long: %d", ipLen==0 ? len : ipLen);
+            return -1;
+        }
+
+        if (ipLen > 0)
+        {
+            outAddress->port = atoi(pAddress + ipLen + 1);
+        }
+    }
+    else
+    {
+        strncpy(outAddress->ipAddress, pAddress, len);
+        outAddress->ipAddress[len] = '\0';
+    }
+
+    return isIp;
 }

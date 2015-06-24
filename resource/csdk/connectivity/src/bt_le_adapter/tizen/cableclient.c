@@ -34,7 +34,7 @@
 #include "uarraylist.h"
 #include "caqueueingthread.h"
 #include "caadapterutils.h"
-#include "camsgparser.h"
+#include "cafragmentation.h"
 #include "oic_string.h"
 #include "oic_malloc.h"
 

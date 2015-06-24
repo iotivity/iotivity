@@ -22,8 +22,8 @@ public class MainActivity extends Activity {
 
     private final static String TAG = "MainActivity";
 
-    private final CharSequence[] mNetworkCheckBoxItems = { Network.IPV4.name(),
-            Network.IPV6.name(), Network.EDR.name(), Network.LE.name()};
+    private final CharSequence[] mNetworkCheckBoxItems = { Network.IP.name(),
+            Network.LE.name(), Network.EDR.name()};
 
     private final CharSequence[] mDTLSCheckBoxItems = { DTLS.UNSECURED.name(),
             DTLS.SECURED.name() };
@@ -33,9 +33,10 @@ public class MainActivity extends Activity {
 
     private final CharSequence[] mResponseResultCheckBoxItems = {
             ResponseResult.CA_SUCCESS.name(), ResponseResult.CA_CREATED.name(),
-            ResponseResult.CA_DELETED.name(), ResponseResult.CA_EMPTY.name(),
-            ResponseResult.CA_BAD_REQ.name(), ResponseResult.CA_BAD_OPT.name(),
-            ResponseResult.CA_NOT_FOUND.name(),
+            ResponseResult.CA_DELETED.name(), ResponseResult.CA_VALID.name(),
+            ResponseResult.CA_CHANGED.name(), ResponseResult.CA_CONTENT.name(),
+            ResponseResult.CA_EMPTY.name(), ResponseResult.CA_BAD_REQ.name(),
+            ResponseResult.CA_BAD_OPT.name(), ResponseResult.CA_NOT_FOUND.name(),
             ResponseResult.CA_INTERNAL_SERVER_ERROR.name(),
             ResponseResult.CA_RETRANSMIT_TIMEOUT.name() };
 
@@ -44,7 +45,7 @@ public class MainActivity extends Activity {
     };
 
     private enum Network {
-        IPV4, IPV6, EDR, LE
+        IP, LE, EDR
     };
 
     private enum DTLS {
@@ -56,17 +57,17 @@ public class MainActivity extends Activity {
     };
 
     private enum ResponseResult {
-        CA_SUCCESS, CA_CREATED, CA_DELETED, CA_EMPTY, CA_BAD_REQ, CA_BAD_OPT,
-        CA_NOT_FOUND, CA_INTERNAL_SERVER_ERROR, CA_RETRANSMIT_TIMEOUT
+        CA_SUCCESS, CA_CREATED, CA_DELETED, CA_VALID, CA_CHANGED, CA_CONTENT, CA_EMPTY,
+        CA_BAD_REQ, CA_BAD_OPT, CA_NOT_FOUND, CA_INTERNAL_SERVER_ERROR, CA_RETRANSMIT_TIMEOUT
     }
 
     private boolean mCheckedItems[] = {
             false, false, false, false
     };
 
-    private int mSelectedItems[] = { 0, 0, 0, 0 };
+    private int mSelectedItems[] = { 0, 0, 0 };
 
-    private int mUnSelectedItems[] = { 0, 0, 0, 0 };
+    private int mUnSelectedItems[] = { 0, 0, 0 };
 
     private Mode mCurrentMode = Mode.UNKNOWN;
 
@@ -149,12 +150,11 @@ public class MainActivity extends Activity {
     /**
      * Defined ConnectivityType in cacommon.c
      *
-     * CA_IPV4 = (1 << 0) CA_IPV6 = (1 << 1) CA_EDR = (1 << 2) CA_LE = (1 << 3)
+     * CA_IP = (1 << 0) CA_LE = (1 << 2) CA_EDR = (1 << 3)
      */
-    private int CA_IPV4 = (1 << 0);
-    private int CA_IPV6 = (1 << 1);
+    private int CA_IP = (1 << 0);
+    private int CA_LE = (1 << 1);
     private int CA_EDR = (1 << 2);
-    private int CA_LE = (1 << 3);
     private int isSecured = 0;
     private int msgType = 1;
     private int responseValue = 0;
@@ -415,8 +415,7 @@ public class MainActivity extends Activity {
         public void onClick(View v) {
 
             DLog.v(TAG, "FindResource click");
-            RM.RMFindResource(mUri_ed.getText().toString());
-
+            RM.RMSendReqestToAll(mReqToAllData_ed.getText().toString(), selectedNetwork);
         }
     };
 
@@ -568,10 +567,7 @@ public class MainActivity extends Activity {
 
                         for (int i = 0; i < mSelectedItems.length; i++) {
                             if (mSelectedItems[i] == 1) {
-                                if(i != 1)
-                                    interestedNetwork |= (1 << i);
-                                else
-                                    checkNotSupportedTransport("Not Supported Transport");
+                                interestedNetwork |= (1 << i);
                             }
                         }
                         if(0 != interestedNetwork)
@@ -581,11 +577,7 @@ public class MainActivity extends Activity {
 
                         for (int i = 0; i < mUnSelectedItems.length; i++) {
                             if (mUnSelectedItems[i] == 1) {
-                                if (i != 1)
-                                    uninterestedNetwork |= (1 << i);
-                                else
-                                    checkNotSupportedTransport("Not Supported Transport");
-                                mUnSelectedItems[i] = 0;
+                                uninterestedNetwork |= (1 << i);
                             }
                         }
                         if(0 != uninterestedNetwork)
@@ -593,20 +585,6 @@ public class MainActivity extends Activity {
 
                     }
                 }).show();
-    }
-
-    private void checkNotSupportedTransport(String title) {
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-        builder.setTitle(title).
-        setMessage("Selected Transport Not Supported")
-        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-
-            }
-        }).show();
     }
 
     private void checkMsgSecured(String title) {
@@ -726,6 +704,18 @@ public class MainActivity extends Activity {
                                 .ordinal()) {
                             responseValue = 202;
                             DLog.v(TAG, "Response Value is CA_DELETED");
+                        } else if (selectedResponseValue == ResponseResult.CA_VALID
+                                .ordinal()) {
+                            responseValue = 203;
+                            DLog.v(TAG, "Response Value is CA_VALID");
+                        } else if (selectedResponseValue == ResponseResult.CA_CHANGED
+                                .ordinal()) {
+                            responseValue = 204;
+                            DLog.v(TAG, "Response Value is CA_CHANGED");
+                        } else if (selectedResponseValue == ResponseResult.CA_CONTENT
+                                .ordinal()) {
+                            responseValue = 205;
+                            DLog.v(TAG, "Response Value is CA_CONTENT");
                         } else if (selectedResponseValue == ResponseResult.CA_EMPTY
                                 .ordinal()) {
                             responseValue = 0;
@@ -775,17 +765,16 @@ public class MainActivity extends Activity {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
 
-                        if (selectedNetworkType == Network.IPV4.ordinal()) {
-                            selectedNetwork = CA_IPV4;
-                            DLog.v(TAG, "Selected Network is CA_IPV4");
-                        } else if (selectedNetworkType == Network.EDR.ordinal()) {
-                            selectedNetwork = CA_EDR;
-                            DLog.v(TAG, "Selected Network is EDR");
+                        if (selectedNetworkType == Network.IP.ordinal()) {
+                            selectedNetwork = CA_IP;
+                            DLog.v(TAG, "Selected Network is CA_IP");
                         } else if (selectedNetworkType == Network.LE.ordinal()) {
                             selectedNetwork = CA_LE;
                             DLog.v(TAG, "Selected Network is LE");
-                        }
-                        else {
+                        } else if (selectedNetworkType == Network.EDR.ordinal()) {
+                            selectedNetwork = CA_EDR;
+                            DLog.v(TAG, "Selected Network is EDR");
+                        } else {
                             DLog.v(TAG, "Selected Network is NULL");
                             selectedNetwork = -1;
                         }
@@ -802,5 +791,14 @@ public class MainActivity extends Activity {
         String callbackData = subject + receivedData;
         DLog.v(TAG, callbackData);
 
+        if (subject.equals(getString(R.string.remote_address))) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(getString(R.string.coap_prefix)).append(receivedData);
+            if (receivedData.contains(".")) { // IP
+                sb.append(getString(R.string.port_num));
+            }
+            sb.append(getString(R.string.uri));
+            mReqData_ed.setText(sb.toString());
+        }
     }
 }

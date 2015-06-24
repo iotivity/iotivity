@@ -35,7 +35,7 @@ import org.iotivity.base.OcResource;
 import android.util.Log;
 
 public class OnGetHuebulb implements OcResource.OnGetListener {
-    final private static String TAG = "OnGetHuebulb";
+    final private static String TAG = "PPMSampleApp : OnGetHuebulb";
 
     @Override
     public void onGetCompleted(List<OcHeaderOption> headerOptions,

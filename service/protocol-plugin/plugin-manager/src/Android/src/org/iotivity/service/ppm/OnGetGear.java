@@ -35,7 +35,7 @@ import org.iotivity.base.OcResource;
 import android.util.Log;
 
 public class OnGetGear implements OcResource.OnGetListener {
-    final private static String TAG = "OnGetGear";
+    final private static String TAG = "PPMSampleApp : OnGetGear";
 
     @Override
     public void onGetCompleted(List<OcHeaderOption> headerOptions,

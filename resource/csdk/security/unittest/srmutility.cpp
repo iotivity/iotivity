@@ -57,7 +57,7 @@ TEST(ParseRestQueryTest, ParseRestMultipleQuery)
     printf("\n");
     while(GetNextQuery(&parseIter))
     {
-        EXPECT_NE(0,  parseIter.pi.segment_length);
+        EXPECT_NE(static_cast<size_t>(0),  parseIter.pi.segment_length);
 
         strncpy(attr, (char *)parseIter.attrPos, parseIter.attrLen);
         strncpy(val, (char *)parseIter.valPos, parseIter.valLen);

@@ -35,7 +35,7 @@ import org.iotivity.base.OcResource;
 import android.util.Log;
 
 public class OnPutGear implements OcResource.OnPutListener {
-    final private static String TAG = "OnPutGear";
+    final private static String TAG = "PPMSampleApp : OnPutGear";
 
     @Override
     public void onPutCompleted(List<OcHeaderOption> options,

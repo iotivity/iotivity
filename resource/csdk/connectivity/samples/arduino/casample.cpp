@@ -505,7 +505,7 @@ void SendNotification()
     strcpy(respondData.resourceUri, resourceUri);
 
     CAResponseInfo_t responseInfo = {CA_BAD_REQ, {CA_MSG_RESET}};
-    responseInfo.result = CA_SUCCESS;
+    responseInfo.result = CA_CONTENT;
     responseInfo.info = respondData;
 
     // send request
@@ -782,6 +782,9 @@ void SendResponse(CAEndpoint_t *endpoint, const CAInfo_t* info)
         Serial.println("Success: 200");
         Serial.println("Created: 201");
         Serial.println("Deleted: 202");
+        Serial.println("Valid  : 203");
+        Serial.println("Changed: 204");
+        Serial.println("Content: 205");
         Serial.println("BadReq : 400");
         Serial.println("BadOpt : 402");
         Serial.println("NotFnd : 404");

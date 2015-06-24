@@ -70,7 +70,6 @@ CAEndpoint_t *CAAdapterCreateEndpoint(CATransportFlags_t flags,
                                       const char *address,
                                       uint16_t port)
 {
-    VERIFY_NON_NULL_RET(address, CA_ADAPTER_UTILS_TAG, "Endpoint is NULL", NULL);
     CAEndpoint_t *info = (CAEndpoint_t *)OICCalloc(1, sizeof(CAEndpoint_t));
     if (NULL == info)
     {
@@ -78,8 +77,11 @@ CAEndpoint_t *CAAdapterCreateEndpoint(CATransportFlags_t flags,
         return NULL;
     }
 
-    OICStrcpy(info->addr, sizeof(info->addr), address);
-    info->addr[MAX_ADDR_STR_SIZE_CA - 1] = '\0';
+    if (address)
+    {
+        OICStrcpy(info->addr, sizeof(info->addr), address);
+        info->addr[MAX_ADDR_STR_SIZE_CA - 1] = '\0';
+    }
     info->flags = flags;
     info->adapter = adapter;
     info->port = port;
@@ -95,12 +97,12 @@ CAEndpoint_t *CAAdapterCreateLocalEndpoint(CATransportFlags_t flags,
 
 CAResult_t CACreateEndpoint(CATransportFlags_t flags,
                             CATransportAdapter_t adapter,
-                            const CAURI_t uri,
+                            const char *addr,
                             uint16_t port,
                             CAEndpoint_t **object)
 {
     VERIFY_NON_NULL_RET(object, CA_ADAPTER_UTILS_TAG, "Endpoint is NULL", CA_STATUS_INVALID_PARAM);
-    CAEndpoint_t *endpoint = CAAdapterCreateEndpoint(flags, adapter, uri, port);
+    CAEndpoint_t *endpoint = CAAdapterCreateEndpoint(flags, adapter, addr, port);
     if (!endpoint)
     {
         return CA_STATUS_FAILED;
@@ -535,4 +537,3 @@ JavaVM *CANativeJNIGetJavaVM()
     return g_jvm;
 }
 #endif
-

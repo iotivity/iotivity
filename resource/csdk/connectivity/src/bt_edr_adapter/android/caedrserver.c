@@ -823,7 +823,7 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id, CAAdapterServerType_t t
         OIC_LOG_V(DEBUG, TAG, "[EDR][Native] btReadData: read %s, %d", buf, length);
 
         char responseData[MAX_PDU_BUFFER] = { 0 };
-        OICStrcpy(responseData, sizeof(responseData), buf, length);
+        OICStrcpyPartial(responseData, sizeof(responseData), buf, length);
 
         switch (type)
         {

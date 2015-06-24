@@ -29,7 +29,7 @@
 #include "caedrinterface.h"
 #include "caadapterutils.h"
 #include "logger.h"
-#include "camsgparser.h"
+#include "cafragmentation.h"
 #include "caqueueingthread.h"
 #include "oic_malloc.h"
 
