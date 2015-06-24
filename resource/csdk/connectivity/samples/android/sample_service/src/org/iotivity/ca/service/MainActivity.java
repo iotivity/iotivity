@@ -71,8 +71,6 @@ public class MainActivity extends Activity {
 
     private Mode mCurrentMode = Mode.UNKNOWN;
 
-    private RelativeLayout mFindResourceLayout = null;
-
     private RelativeLayout mSendNotificationLayout = null;
 
     private RelativeLayout mSendRequestLayout = null;
@@ -87,31 +85,17 @@ public class MainActivity extends Activity {
 
     private RelativeLayout mReceiveLayout = null;
 
-    private RelativeLayout mFindTitleLayout = null;
-
     private RelativeLayout mRequestTitleLayout = null;
 
     private RelativeLayout mRequestToAllTitleLayout = null;
 
     private RelativeLayout mResponseNotificationTitleLayout = null;
 
-    private RelativeLayout mAdvertiseTitleLayout = null;
-
     private RelativeLayout mHandleTitleLayout = null;
-
-    private RelativeLayout mPayLoadClientEditLayout = null;
-
-    private RelativeLayout mPayLoadServerEditLayout = null;
-
-    private RelativeLayout mAdvertiseResourceLayout = null;
-
-    private RelativeLayout mServerButtonLayout = null;
 
     private TextView mMode_tv = null;
 
     private TextView mNetwork_tv = null;
-
-    private EditText mUri_ed = null;
 
     private EditText mNotification_ed = null;
 
@@ -119,15 +103,7 @@ public class MainActivity extends Activity {
 
     private EditText mReqToAllData_ed = null;
 
-    private EditText mPayload_ed = null;
-
-    private EditText mAdvertise_ed = null;
-
-    private Button mFind_btn = null;
-
     private Button mNotify_btn = null;
-
-    private Button mAdvertiseResource_btn = null;
 
     private Button mReqeust_btn = null;
 
@@ -190,39 +166,26 @@ public class MainActivity extends Activity {
                 findViewById(R.id.layout_request_setting_for_client);
         mSendRequestToAllSettingLayout = (RelativeLayout)
                 findViewById(R.id.layout_request_to_all_setting_for_client);
-        mFindResourceLayout = (RelativeLayout) findViewById(R.id.layout_find);
-        mFindTitleLayout = (RelativeLayout) findViewById(R.id.layout_find_title);
         mRequestTitleLayout = (RelativeLayout) findViewById(R.id.layout_request_title);
         mRequestToAllTitleLayout = (RelativeLayout) findViewById(R.id.layout_request_to_all_title);
         mHandleTitleLayout = (RelativeLayout) findViewById(R.id.layout_handle_title);
-        mPayLoadClientEditLayout = (RelativeLayout) findViewById(R.id.layout_payload_client_ed);
 
         // server
         mSendNotificationLayout = (RelativeLayout) findViewById(R.id.layout_notify);
-        mPayLoadServerEditLayout = (RelativeLayout)
-                findViewById(R.id.layout_payload_server_ed);
         mSendResponseNotiSettingLayout = (RelativeLayout)
                 findViewById(R.id.layout_request_setting_for_server);
-        mServerButtonLayout = (RelativeLayout) findViewById(R.id.layout_server_bt);
         mResponseNotificationTitleLayout = (RelativeLayout)
                 findViewById(R.id.layout_Response_Noti_title);
-        mAdvertiseTitleLayout = (RelativeLayout) findViewById(R.id.layout_advertise_title);
-        mAdvertiseResourceLayout = (RelativeLayout) findViewById(R.id.layout_advertise_resource);
 
         mMode_tv = (TextView) findViewById(R.id.tv_mode);
         mNetwork_tv = (TextView) findViewById(R.id.tv_network);
 
-        mUri_ed = (EditText) findViewById(R.id.et_uri);
         mNotification_ed = (EditText) findViewById(R.id.et_notification);
         mReqData_ed = (EditText) findViewById(R.id.et_req_data);
         mReqToAllData_ed = (EditText) findViewById(R.id.et_req_to_all_data);
-        mPayload_ed = (EditText) findViewById(R.id.et_payload_data_for_server);
-        mAdvertise_ed = (EditText) findViewById(R.id.et_uri_advertise);
 
-        mFind_btn = (Button) findViewById(R.id.btn_find_resource);
         mResponse_btn = (Button) findViewById(R.id.btn_sendresponse);
         mNotify_btn = (Button) findViewById(R.id.btn_notify);
-        mAdvertiseResource_btn = (Button) findViewById(R.id.btn_advertise);
         mReqeust_btn = (Button) findViewById(R.id.btn_Request);
         mReqeust_setting_btn = (Button) findViewById(R.id.btn_Request_setting_for_client);
         mReqeustToAll_btn = (Button) findViewById(R.id.btn_request_to_all);
@@ -232,10 +195,8 @@ public class MainActivity extends Activity {
         mGetNetworkInfo_btn = (Button) findViewById(R.id.btn_get_network_info);
         mRecv_btn = (Button) findViewById(R.id.btn_receive);
 
-        mFind_btn.setOnClickListener(mFindResourceHandler);
         mResponse_btn.setOnClickListener(mSendResponseHandler);
         mNotify_btn.setOnClickListener(mNotifyHandler);
-        mAdvertiseResource_btn.setOnClickListener(mAdvertiseResourceHandler);
         mReqeust_btn.setOnClickListener(mSendRequestHandler);
         mReqeust_setting_btn.setOnClickListener(mSendRequestSettingHandler);
         mReqeustToAll_btn.setOnClickListener(mSendRequestToAllHandler);
@@ -256,23 +217,16 @@ public class MainActivity extends Activity {
 
     private void showSelectModeView() {
 
-        mFindResourceLayout.setVisibility(View.INVISIBLE);
         mSendNotificationLayout.setVisibility(View.INVISIBLE);
         mSendRequestLayout.setVisibility(View.INVISIBLE);
         mSendRequestToAllLayout.setVisibility(View.INVISIBLE);
         mSendRequestSettingLayout.setVisibility(View.INVISIBLE);
         mSendRequestToAllSettingLayout.setVisibility(View.INVISIBLE);
         mReceiveLayout.setVisibility(View.INVISIBLE);
-        mFindTitleLayout.setVisibility(View.INVISIBLE);
         mRequestTitleLayout.setVisibility(View.INVISIBLE);
         mRequestToAllTitleLayout.setVisibility(View.INVISIBLE);
         mHandleTitleLayout.setVisibility(View.INVISIBLE);
-        mPayLoadClientEditLayout.setVisibility(View.INVISIBLE);
-        mPayLoadServerEditLayout.setVisibility(View.INVISIBLE);
-        mServerButtonLayout.setVisibility(View.INVISIBLE);
         mResponseNotificationTitleLayout.setVisibility(View.INVISIBLE);
-        mAdvertiseTitleLayout.setVisibility(View.INVISIBLE);
-        mAdvertiseResourceLayout.setVisibility(View.INVISIBLE);
         mSendResponseNotiSettingLayout.setVisibility(View.INVISIBLE);
 
         mMode_tv.setText("Select Mode (Server or Client)");
@@ -287,34 +241,24 @@ public class MainActivity extends Activity {
 
         if (mCurrentMode == Mode.SERVER) {
 
-            mFindResourceLayout.setVisibility(View.INVISIBLE);
             mSendNotificationLayout.setVisibility(View.VISIBLE);
             mSendRequestLayout.setVisibility(View.INVISIBLE);
-            mSendRequestToAllLayout.setVisibility(View.INVISIBLE);
+            mSendRequestToAllLayout.setVisibility(View.VISIBLE);
             mSendRequestSettingLayout.setVisibility(View.INVISIBLE);
-            mSendRequestToAllSettingLayout.setVisibility(View.INVISIBLE);
+            mSendRequestToAllSettingLayout.setVisibility(View.VISIBLE);
             mReceiveLayout.setVisibility(View.VISIBLE);
 
-            mFindTitleLayout.setVisibility(View.INVISIBLE);
             mRequestTitleLayout.setVisibility(View.INVISIBLE);
-            mRequestToAllTitleLayout.setVisibility(View.INVISIBLE);
+            mRequestToAllTitleLayout.setVisibility(View.VISIBLE);
             mHandleTitleLayout.setVisibility(View.VISIBLE);
-            mPayLoadClientEditLayout.setVisibility(View.INVISIBLE);
-
-            mPayLoadServerEditLayout.setVisibility(View.VISIBLE);
-            mServerButtonLayout.setVisibility(View.VISIBLE);
 
             mResponseNotificationTitleLayout.setVisibility(View.VISIBLE);
-            mAdvertiseTitleLayout.setVisibility(View.VISIBLE);
-            mAdvertiseResourceLayout.setVisibility(View.VISIBLE);
-
             mSendResponseNotiSettingLayout.setVisibility(View.VISIBLE);
 
             mNetwork_tv.setText("");
 
         } else if (mCurrentMode == Mode.CLIENT) {
 
-            mFindResourceLayout.setVisibility(View.VISIBLE);
             mSendNotificationLayout.setVisibility(View.INVISIBLE);
             mSendRequestLayout.setVisibility(View.VISIBLE);
             mSendRequestToAllLayout.setVisibility(View.VISIBLE);
@@ -322,19 +266,11 @@ public class MainActivity extends Activity {
             mSendRequestToAllSettingLayout.setVisibility(View.VISIBLE);
             mReceiveLayout.setVisibility(View.VISIBLE);
 
-            mFindTitleLayout.setVisibility(View.VISIBLE);
             mRequestTitleLayout.setVisibility(View.VISIBLE);
             mRequestToAllTitleLayout.setVisibility(View.VISIBLE);
             mHandleTitleLayout.setVisibility(View.VISIBLE);
-            mPayLoadClientEditLayout.setVisibility(View.VISIBLE);
-
-            mPayLoadServerEditLayout.setVisibility(View.INVISIBLE);
-            mServerButtonLayout.setVisibility(View.INVISIBLE);
 
             mResponseNotificationTitleLayout.setVisibility(View.INVISIBLE);
-            mAdvertiseTitleLayout.setVisibility(View.INVISIBLE);
-            mAdvertiseResourceLayout.setVisibility(View.INVISIBLE);
-
             mSendResponseNotiSettingLayout.setVisibility(View.INVISIBLE);
 
             mNetwork_tv.setText("");
@@ -409,16 +345,6 @@ public class MainActivity extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
-    private OnClickListener mFindResourceHandler = new OnClickListener() {
-
-        @Override
-        public void onClick(View v) {
-
-            DLog.v(TAG, "FindResource click");
-            RM.RMSendReqestToAll(mReqToAllData_ed.getText().toString(), selectedNetwork);
-        }
-    };
-
     private OnClickListener mSendResponseHandler = new OnClickListener() {
 
         @Override
@@ -442,22 +368,11 @@ public class MainActivity extends Activity {
             DLog.v(TAG, "SendNotification click");
             if ( selectedNetwork != -1) {
                 RM.RMSendNotification(mNotification_ed.getText().toString(),
-                    mPayload_ed.getText().toString(), selectedNetwork,
-                    isSecured, msgType, responseValue);
+                    null, selectedNetwork, isSecured, msgType, responseValue);
             }
             else {
                 DLog.v(TAG, "Please Select Network Type");
             }
-        }
-    };
-
-    private OnClickListener mAdvertiseResourceHandler = new OnClickListener() {
-
-        @Override
-        public void onClick(View v) {
-
-            DLog.v(TAG, "AdvertiseResource click");
-            RM.RMAdvertiseResource(mAdvertise_ed.getText().toString());
         }
     };
 
@@ -468,8 +383,8 @@ public class MainActivity extends Activity {
 
             DLog.v(TAG, "SendRequest click");
             if ( selectedNetwork != -1) {
-                RM.RMSendRequest(mReqData_ed.getText().toString(), mPayload_ed
-                    .getText().toString(), selectedNetwork, isSecured, msgType);
+                RM.RMSendRequest(mReqData_ed.getText().toString(), null,
+                    selectedNetwork, isSecured, msgType);
             }
             else {
                 DLog.v(TAG, "Please Select Network Type");
@@ -610,23 +525,9 @@ public class MainActivity extends Activity {
                             isSecured = 1;
                             DLog.v(TAG, "Send secured message");
 
-                            mPayLoadClientEditLayout
-                                    .setVisibility(View.INVISIBLE);
-
-                            mPayLoadServerEditLayout
-                                    .setVisibility(View.INVISIBLE);
-
                         } else if (selectedMsgSecured == DTLS.UNSECURED.ordinal()) {
                             isSecured = 0;
                             DLog.v(TAG, "Send unsecured message");
-
-                            if (mCurrentMode == Mode.SERVER) {
-                                mPayLoadServerEditLayout
-                                        .setVisibility(View.VISIBLE);
-                            } else if (mCurrentMode == Mode.CLIENT) {
-                                mPayLoadClientEditLayout
-                                        .setVisibility(View.VISIBLE);
-                            }
                         }
                         checkMsgType("Select Msg Type");
                     }
@@ -799,6 +700,7 @@ public class MainActivity extends Activity {
             }
             sb.append(getString(R.string.uri));
             mReqData_ed.setText(sb.toString());
+            mNotification_ed.setText(sb.toString());
         }
     }
 }

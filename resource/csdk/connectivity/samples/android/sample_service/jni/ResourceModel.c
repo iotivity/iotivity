@@ -260,12 +260,6 @@ Java_org_iotivity_ca_service_RMInterface_RMRegisterHandler(JNIEnv *env, jobject 
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_ca_service_RMInterface_RMFindResource(JNIEnv *env, jobject obj, jstring uri)
-{
-    LOGE("Java_org_iotivity_service_RMInterface_RMFindResource not implemented");
-}
-
-JNIEXPORT void JNICALL
 Java_org_iotivity_ca_service_RMInterface_RMSendRequest(JNIEnv *env, jobject obj, jstring uri,
                                                        jstring payload, jint selectedNetwork,
                                                        jint isSecured, jint msgType)
@@ -533,12 +527,6 @@ Java_org_iotivity_ca_service_RMInterface_RMSendResponse(JNIEnv *env, jobject obj
     // destroy remote endpoint
     CADestroyEndpoint(g_clientEndpoint);
     g_clientEndpoint = NULL;
-}
-
-JNIEXPORT void JNICALL
-Java_org_iotivity_ca_service_RMInterface_RMAdvertiseResource(JNIEnv *env, jobject obj, jstring uri)
-{
-    LOGE("Java_org_iotivity_ca_service_RMInterface_RMAdvertiseResource not implemented");
 }
 
 JNIEXPORT void JNICALL

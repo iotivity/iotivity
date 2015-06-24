@@ -50,14 +50,6 @@ JNIEXPORT void JNICALL Java_org_iotivity_ca_service_RMInterface_RMRegisterHandle
 
 /*
  * Class:     org_iotivity_ca_service_RMInterface
- * Method:    RMFindResource
- * Signature: (Ljava/lang/String;)V
- */
-JNIEXPORT void JNICALL Java_org_iotivity_ca_service_RMInterface_RMFindResource
-  (JNIEnv *, jobject, jstring);
-
-/*
- * Class:     org_iotivity_ca_service_RMInterface
  * Method:    RMSendRequest
  * Signature: (Ljava/lang/String;Ljava/lang/String;III)V
  */
@@ -79,14 +71,6 @@ JNIEXPORT void JNICALL Java_org_iotivity_ca_service_RMInterface_RMSendReqestToAl
  */
 JNIEXPORT void JNICALL Java_org_iotivity_ca_service_RMInterface_RMSendResponse
   (JNIEnv *, jobject, jint, jint, jint, jint);
-
-/*
- * Class:     org_iotivity_ca_service_RMInterface
- * Method:    RMAdvertiseResource
- * Signature: (Ljava/lang/String)V
- */
-JNIEXPORT void JNICALL Java_org_iotivity_ca_service_RMInterface_RMAdvertiseResource
-  (JNIEnv *, jobject, jstring);
 
 /*
  * Class:     org_iotivity_ca_service_RMInterface
