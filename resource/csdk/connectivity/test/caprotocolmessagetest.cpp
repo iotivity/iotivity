@@ -26,8 +26,6 @@
 
 namespace {
 
-static const char COAP_HEADER[] = "coap://[::]/";
-
 class CoAPOptionCase
 {
 public:
