@@ -20,7 +20,7 @@ public class MainActivity extends Activity {
 
     static RMInterface RM = new RMInterface();
 
-    private final static String TAG = "MainActivity";
+    private final static String TAG = "Sample_Service : MainActivity";
 
     private final CharSequence[] mNetworkCheckBoxItems = { Network.IP.name(),
             Network.LE.name(), Network.EDR.name()};
@@ -230,11 +230,13 @@ public class MainActivity extends Activity {
         mSendResponseNotiSettingLayout.setVisibility(View.INVISIBLE);
 
         mMode_tv.setText("Select Mode (Server or Client)");
+        Log.i(TAG, "Select Mode (Server or Client)");
     }
 
     private void showNetworkView() {
 
         mNetwork_tv.setText("Select Network Type");
+        Log.i(TAG, "Select Network Type");
     }
 
     private void showModeView() {
@@ -308,11 +310,13 @@ public class MainActivity extends Activity {
             if (interestedNetwork == 0) {
                 mCurrentMode = Mode.SERVER;
                 mMode_tv.setText("MODE: " + mCurrentMode.toString());
+                Log.i(TAG, "MODE: " + mCurrentMode.toString());
                 showNetworkView();
 
             } else {
                 mCurrentMode = Mode.SERVER;
                 mMode_tv.setText("MODE: " + mCurrentMode.toString());
+                Log.i(TAG, "MODE: " + mCurrentMode.toString());
                 showModeView();
             }
 
@@ -325,11 +329,13 @@ public class MainActivity extends Activity {
             if (interestedNetwork == 0) {
                 mCurrentMode = Mode.CLIENT;
                 mMode_tv.setText("MODE: " + mCurrentMode.toString());
+                Log.i(TAG, "MODE: " + mCurrentMode.toString());
                 showNetworkView();
 
             } else {
                 mCurrentMode = Mode.CLIENT;
                 mMode_tv.setText("MODE: " + mCurrentMode.toString());
+                Log.i(TAG, "MODE: " + mCurrentMode.toString());
                 showModeView();
             }
 

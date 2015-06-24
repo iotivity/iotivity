@@ -41,6 +41,7 @@ import android.util.Log;
 public class CaLeClientInterface {
 
     private static String SERVICE_UUID = "713d0000-503e-4c75-ba94-3148f18d941e";
+    private static String TAG          = "Sample_Service : CaLeClientInterface";
 
     private CaLeClientInterface(Context context) {
 
@@ -121,9 +122,9 @@ public class CaLeClientInterface {
             try {
                 List<UUID> uuids = getUuids(scanRecord);
                 for (UUID uuid : uuids) {
-                    Log.d("CA", "UUID : " + uuid.toString());
+                    Log.d(TAG, "UUID : " + uuid.toString());
                     if(uuid.toString().contains(SERVICE_UUID)) {
-                        Log.d("CA", "we found that has the Device");
+                        Log.d(TAG, "we found that has the Device");
                         caLeScanCallback(device, rssi, scanRecord);
                     }
                 }
@@ -165,7 +166,7 @@ public class CaLeClientInterface {
                         long leastSigBits = buffer.getLong();
                         uuids.add(new UUID(leastSigBits, mostSigBits));
                     } catch (IndexOutOfBoundsException e) {
-                        Log.e("CA", e.toString());
+                        Log.e(TAG, e.toString());
                         continue;
                     } finally {
                         offset += 15;
