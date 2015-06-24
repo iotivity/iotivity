@@ -67,6 +67,11 @@
  */
 #define RS_CLIENT_PSK   ("AAAAAAAAAAAAAAAA")
 
+/* @def BIG_PAYLOAD_SIZE
+ * @brief Max size for big payload
+ */
+#define BIG_PAYLOAD_SIZE 15000
+
 static GMainLoop *g_mainloop = NULL;
 pthread_t thread;
 
@@ -79,6 +84,9 @@ char get_menu();
 void process();
 CAResult_t get_network_type();
 CAResult_t get_input_data(char *buf, int32_t length);
+
+bool select_payload();
+void populate_big_payload(char *bigBuffer, char *resourceURI, uint32_t bigBufferLen);
 
 void start_listening_server();
 void start_discovery_server();
@@ -501,6 +509,35 @@ void find_resource()
     printf("=============================================\n");
 }
 
+bool select_payload()
+{
+    char buf[MAX_BUF_LEN]={0};
+    printf("\n=============================================\n");
+    printf("0:Normal Payload\n1:Big Payload(~15KB)\n");
+    printf("select Payload type : ");
+
+    if (CA_STATUS_OK != get_input_data(buf, MAX_BUF_LEN))
+    {
+        printf("Payload type selection error\n");
+        printf("Default: Using normal Payload\n");
+        return false;
+    }
+
+    return (buf[0] == '1') ? true : false;
+}
+
+void populate_big_payload(char *bigBuffer, char *resourceURI, uint32_t bigBufferLen)
+{
+    sprintf(bigBuffer, NORMAL_INFO_DATA, resourceURI);
+
+    uint32_t length = strlen(bigBuffer);
+    for (length; length < bigBufferLen; length++)
+    {
+        bigBuffer[length] = '1';
+    }
+    bigBuffer[length] = '\0';
+}
+
 void send_request()
 {
     CAResult_t res = get_network_type();
@@ -602,17 +639,34 @@ void send_request()
     }
     else
     {
-        uint32_t length = sizeof(NORMAL_INFO_DATA) + strlen(resourceURI);
-        requestData.payload = (CAPayload_t) calloc(length, sizeof(char));
-        if (NULL == requestData.payload)
+        bool useBigPayload = select_payload();
+        if(useBigPayload)
         {
-            printf("Memory allocation fail\n");
-            CADestroyRemoteEndpoint(endpoint);
-            CADestroyToken(token);
-            return;
+            requestData.payload = (CAPayload_t) calloc(BIG_PAYLOAD_SIZE, sizeof(char));
+            if (NULL == requestData.payload)
+            {
+                printf("Memory allocation fail\n");
+                CADestroyRemoteEndpoint(endpoint);
+                CADestroyToken(token);
+                return;
+            }
+            populate_big_payload(requestData.payload, resourceURI, BIG_PAYLOAD_SIZE);
         }
-        snprintf(requestData.payload, length, NORMAL_INFO_DATA, resourceURI);
+        else
+        {
+            uint32_t length = sizeof(NORMAL_INFO_DATA) + strlen(resourceURI);
+            requestData.payload = (CAPayload_t) calloc(length, sizeof(char));
+            if (NULL == requestData.payload)
+            {
+                printf("Memory allocation fail\n");
+                CADestroyRemoteEndpoint(endpoint);
+                CADestroyToken(token);
+                return;
+            }
+            snprintf(requestData.payload, length, NORMAL_INFO_DATA, resourceURI);
+        }
     }
+    requestData.payloadSize = strlen(requestData.payload)+1;
     requestData.type = msgType;
 
     CARequestInfo_t requestInfo = { 0 };
@@ -692,6 +746,7 @@ void send_request_all()
     requestData.token = token;
     requestData.tokenLength = tokenLength;
     requestData.payload = "Temp Json Payload";
+    requestData.payloadSize = strlen(requestData.payload)+1;
     requestData.type = CA_MSG_NONCONFIRM;
 
     CARequestInfo_t requestInfo = {CA_GET, {CA_MSG_RESET}};
@@ -879,6 +934,7 @@ void send_notification()
     respondData.token = token;
     respondData.tokenLength = tokenLength;
     respondData.payload = "Temp Notification Data";
+    respondData.payloadSize=strlen(respondData.payload)+1;
     respondData.type = messageType;
 
     CAResponseInfo_t responseInfo = { 0 };
@@ -1314,17 +1370,31 @@ void send_response(const CARemoteEndpoint_t *endpoint, const CAInfo_t *info)
         {
             printf("Sending response on non-secure communication\n");
 
-            uint32_t length = sizeof(NORMAL_INFO_DATA) + strlen(endpoint->resourceUri);
-            responseData.payload = (CAPayload_t) calloc(length, sizeof(char));
-            if (NULL == responseData.payload)
+            bool useBigPayload = select_payload();
+            if(useBigPayload)
             {
-                printf("Memory allocation fail\n");
-                return;
+                responseData.payload = (CAPayload_t) calloc(BIG_PAYLOAD_SIZE, sizeof(char));
+                if (NULL == responseData.payload)
+                {
+                    printf("Memory allocation fail\n");
+                    return;
+                }
+                populate_big_payload(responseData.payload, endpoint->resourceUri, BIG_PAYLOAD_SIZE);
             }
-            snprintf(responseData.payload, length, NORMAL_INFO_DATA, endpoint->resourceUri);
+            else
+            {
+                uint32_t length = sizeof(NORMAL_INFO_DATA) + strlen(endpoint->resourceUri);
+                responseData.payload = (CAPayload_t) calloc(length, sizeof(char));
+                if (NULL == responseData.payload)
+                {
+                    printf("Memory allocation fail\n");
+                    return;
+                }
+                snprintf(responseData.payload, length, NORMAL_INFO_DATA, endpoint->resourceUri);
+            }
         }
     }
-
+    responseData.payloadSize = strlen(responseData.payload)+1;
     CAResponseInfo_t responseInfo = { 0 };
     responseInfo.result = responseCode;
     responseInfo.info = responseData;
