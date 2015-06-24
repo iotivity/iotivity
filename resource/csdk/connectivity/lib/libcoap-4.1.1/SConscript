@@ -69,3 +69,4 @@ libcoap_src = [
 libcoap = libcoap_env.StaticLibrary('libcoap', libcoap_src, OBJPREFIX='libcoap_')
 
 libcoap_env.InstallTarget([libcoap], 'libcoap')
+libcoap_env.UserInstallTargetLib([libcoap], 'libcoap')

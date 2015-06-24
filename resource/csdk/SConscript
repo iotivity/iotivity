@@ -115,8 +115,10 @@ liboctbstack_src = [
 if target_os in ['arduino','darwin','ios'] :
 	static_liboctbstack = liboctbstack_env.StaticLibrary('octbstack', liboctbstack_src)
 	liboctbstack_env.InstallTarget(static_liboctbstack, 'liboctbstack')
+	liboctbstack_env.UserInstallTargetLib(static_liboctbstack, 'liboctbstack')
 else:
 	static_liboctbstack = liboctbstack_env.StaticLibrary('octbstack', liboctbstack_src)
 	shared_liboctbstack = liboctbstack_env.SharedLibrary('octbstack', liboctbstack_src)
 	liboctbstack_env.InstallTarget([static_liboctbstack, shared_liboctbstack], 'liboctbstack')
+	liboctbstack_env.UserInstallTargetLib([static_liboctbstack, shared_liboctbstack], 'liboctbstack')
 

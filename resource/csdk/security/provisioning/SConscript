@@ -83,5 +83,6 @@ provisioning_src = [
 provisioningserver = provisioning_env.StaticLibrary('ocspapi', provisioning_src)
 
 provisioning_env.InstallTarget(provisioningserver, 'libocspapi')
+provisioning_env.UserInstallTargetLib(provisioningserver, 'libocspapi')
 
 SConscript('sample/SConscript')

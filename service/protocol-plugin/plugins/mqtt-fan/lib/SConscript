@@ -25,5 +25,6 @@ mosquitto_src = env.Glob('*.c')
 
 mosquitto = mosquitto_env.StaticLibrary('mosquitto', mosquitto_src)
 mosquitto_env.InstallTarget(mosquitto, 'libmosquitto')
+mosquitto_env.UserInstallTargetLib(mosquitto, 'libmosquitto')
 
 SConscript('cpp/SConscript')
