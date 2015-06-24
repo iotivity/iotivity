@@ -87,6 +87,7 @@ service_common_test_env.PrependUnique(LIBS = [
     'connectivity_abstraction',
     'coap',
     'service_common',
+    'pthread',
     gtest,
     gtest_main
     ])
