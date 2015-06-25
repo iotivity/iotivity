@@ -137,13 +137,14 @@ SSMRESULT CQueryEngine::processQueryResult(int userTriggerId,
 
         for (unsigned int j = 0; j < (result_model_data_id)[i].dataId.size(); j++)
         {
-            CModelData *pModelData = new CModelData();
+            CModelData *pModelData = NULL;
             IContextModel       *pCM = NULL;
             ModelPropertyVec    modelPropertyVec;
 
             SSM_CLEANUP_ASSERT(m_pPropagationEngine->getContextModel((result_model_data_id)[i].modelName,
                                &pCM));
             SSM_CLEANUP_ASSERT(pCM->getModelData((result_model_data_id)[i].dataId[j], &modelPropertyVec));
+            pModelData = new CModelData();
             pModelData->setDataId((result_model_data_id)[i].dataId[j]);
             for (ModelPropertyVec::iterator itor = modelPropertyVec.begin();
                  itor != modelPropertyVec.end(); ++itor)
