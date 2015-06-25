@@ -425,6 +425,28 @@ Java_org_iotivity_ca_service_RMInterface_RMSendReqestToAll(JNIEnv *env, jobject 
     LOGI("resourceUri - %s", strUri);
     requestData.resourceUri = (CAURI_t)strUri;
 
+    uint8_t optionNum = 2;
+    CAHeaderOption_t *headerOpt = (CAHeaderOption_t*) calloc(1,
+                                                             sizeof(CAHeaderOption_t) * optionNum);
+    if (NULL == headerOpt)
+    {
+        LOGE("Memory allocation failed");
+        return;
+    }
+
+    char* FirstOptionData = "Hello";
+    headerOpt[0].optionID = 3000;
+    memcpy(headerOpt[0].optionData, FirstOptionData, strlen(FirstOptionData));
+    headerOpt[0].optionLength = (uint16_t) strlen(FirstOptionData);
+
+    char* SecondOptionData2 = "World";
+    headerOpt[1].optionID = 3001;
+    memcpy(headerOpt[1].optionData, SecondOptionData2, strlen(SecondOptionData2));
+    headerOpt[1].optionLength = (uint16_t) strlen(SecondOptionData2);
+
+    requestData.numOptions = optionNum;
+    requestData.options = headerOpt;
+
     CARequestInfo_t requestInfo = { 0 };
     requestInfo.method = CA_GET;
     requestInfo.isMulticast = true;
@@ -447,6 +469,8 @@ Java_org_iotivity_ca_service_RMInterface_RMSendReqestToAll(JNIEnv *env, jobject 
 
     //ReleaseStringUTFChars for strUri
     (*env)->ReleaseStringUTFChars(env, uri, strUri);
+
+    free(headerOpt);
 
     // destroy remote endpoint
     CADestroyEndpoint(endpoint);

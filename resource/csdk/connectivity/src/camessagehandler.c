@@ -187,7 +187,6 @@ static void CADataDestroyer(void *data, uint32_t size)
        OICFree(cadata->errorInfo);
     }
 
-    OICFree(cadata->options);
     OICFree(cadata);
     OIC_LOG(DEBUG, TAG, "OUT");
 }
@@ -574,6 +573,21 @@ CAResult_t CADetachRequestMessage(const CAEndpoint_t *object, const CARequestInf
     data->remoteEndpoint = remoteEndpoint;
     data->requestInfo = requestInfo;
     data->responseInfo = NULL;
+    data->options = NULL;
+    data->numOptions = 0;
+    if (NULL != requestInfo->info.options && 0 < requestInfo->info.numOptions)
+    {
+        uint8_t numOptions = requestInfo->info.numOptions;
+        // copy data
+        CAHeaderOption_t *headerOption = (CAHeaderOption_t *) OICMalloc(sizeof(CAHeaderOption_t)
+                                                                        * numOptions);
+        CA_MEMORY_ALLOC_CHECK(headerOption);
+
+        memcpy(headerOption, requestInfo->info.options, sizeof(CAHeaderOption_t) * numOptions);
+
+        data->options = headerOption;
+        data->numOptions = numOptions;
+    }
 
     // add thread
     CAQueueingThreadAddData(&g_sendThread, data, sizeof(CAData_t));
@@ -622,6 +636,21 @@ CAResult_t CADetachResponseMessage(const CAEndpoint_t *object,
     data->remoteEndpoint = remoteEndpoint;
     data->requestInfo = NULL;
     data->responseInfo = responseInfo;
+    data->options = NULL;
+    data->numOptions = 0;
+    if (NULL != responseInfo->info.options && 0 < responseInfo->info.numOptions)
+    {
+        uint8_t numOptions = responseInfo->info.numOptions;
+        // copy data
+        CAHeaderOption_t *headerOption = (CAHeaderOption_t *) OICMalloc(sizeof(CAHeaderOption_t)
+                                                                        * numOptions);
+        CA_MEMORY_ALLOC_CHECK(headerOption);
+
+        memcpy(headerOption, responseInfo->info.options, sizeof(CAHeaderOption_t) * numOptions);
+
+        data->options = headerOption;
+        data->numOptions = numOptions;
+    }
 
     // add thread
     CAQueueingThreadAddData(&g_sendThread, data, sizeof(CAData_t));
@@ -887,4 +916,3 @@ void CAErrorHandler(const CAEndpoint_t *endpoint,
 
     return;
 }
-
