@@ -39,7 +39,7 @@ public:
     CacheID requestResourceCache(
             PrimitiveResourcePtr pResource,
                 CacheCB func = NULL, REPORT_FREQUENCY rf = REPORT_FREQUENCY::NONE, long time = 0l);
-    OCStackResult cancelResourceCache(PrimitiveResourcePtr pResource, CacheID id);
+    CacheID cancelResourceCache(CacheID id);
     OCStackResult updateResourceCache(PrimitiveResourcePtr pResource);
 
     const ResourceAttributes getCachedData(PrimitiveResourcePtr pResource) const;

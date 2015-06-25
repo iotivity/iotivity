@@ -41,8 +41,8 @@ if target_os not in ['arduino','darwin','ios']:
 	# Build notification manager project
 	SConscript('notification-manager/SConscript')
 
-        # Build resource-manipulation project
-        #SCconscript('resource-manipulation/SConscript')
+	# Build resource-manipulation project
+	#SConscript('resource-manipulation/SConscript')
 #else:
 #	SConscript('notification-manager/SampleApp/arduino/SConscript')
 

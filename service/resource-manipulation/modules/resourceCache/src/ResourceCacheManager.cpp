@@ -42,7 +42,6 @@ ResourceCacheManager::~ResourceCacheManager()
     }
 }
 
-
 ResourceCacheManager * ResourceCacheManager::getInstance()
 {
     if(s_instance == nullptr)
@@ -61,13 +60,13 @@ CacheID ResourceCacheManager::requestResourceCache(
         PrimitiveResourcePtr pResource, CacheCB func,
         REPORT_FREQUENCY rf, long reportTime)
 {
-    CacheID ret = 0;
+    CacheID retID = 0;
 
     if(rf != REPORT_FREQUENCY::NONE)
     {
         if(func == NULL)
         {
-            return ret;
+            return retID;
         }
         if(!reportTime)
         {
@@ -82,38 +81,30 @@ CacheID ResourceCacheManager::requestResourceCache(
         newHandler = std::make_shared<DataCache>(pResource, func, rf, reportTime);
         s_cacheDataList->push_back(newHandler);
     }
-    ret = newHandler->addSubscriber(func, rf, reportTime);
+    retID = newHandler->addSubscriber(func, rf, reportTime);
 
-    return ret;
+    return retID;
 }
 
-OCStackResult ResourceCacheManager::cancelResourceCache(PrimitiveResourcePtr pResource, CacheID id)
+CacheID ResourceCacheManager::cancelResourceCache(CacheID id)
 {
-    OCStackResult ret = OC_STACK_ERROR;
-
+    CacheID retID = 0;
     if(id == 0)
     {
-        return ret;
+        return retID;
     }
 
-    // TODO cancel cache
-    CacheID retID = 0;
-    DataCachePtr deleteCacheHandler = findDataCache(pResource);
-    if(deleteCacheHandler == nullptr)
+    DataCachePtr foundCacheHandler = findDataCache(id);
+    if(foundCacheHandler == nullptr)
     {
-        return ret;
+        return retID;
     }
     else
     {
-        retID = deleteCacheHandler->deleteSubscriber(id);
+        retID = foundCacheHandler->deleteSubscriber(id);
     }
 
-    if(retID == id)
-    {
-        ret = OC_STACK_OK;
-    }
-
-    return ret;
+    return retID;
 }
 
 DataCachePtr ResourceCacheManager::findDataCache(PrimitiveResourcePtr pResource) const
