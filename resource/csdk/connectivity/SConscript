@@ -63,9 +63,17 @@ else:
 env.SConscript('./src/SConscript')
 
 if build_sample == 'ON':
-	if target_os in ['linux', 'arduino', 'android', 'darwin']:
+	if target_os in ['linux', 'arduino', 'darwin']:
 		target_path = target_os
+
 		if target_os == 'darwin':
 			target_path = 'linux'
 		env.SConscript('./samples/' + target_path + '/SConscript')
 
+	elif target_os in ['android']:
+		env.SConscript('./samples/' + target_os + '/SConscript')
+
+		#to build sample apk, uncomment below line after ca libraries are built
+		#while building ca libraries comment the below line, to avoid build errors
+
+		#env.SConscript('./samples/' + target_os + '/casample/SConscript')

@@ -13,7 +13,7 @@ $(info PLATFORM=$(APP_PLATFORM))
 BUILD = debug
 
 PROJECT_ROOT_PATH           ?= ../..
-ROOT_DIR_PATH               = ../../../../../..
+ROOT_DIR_PATH               = $(PROJECT_ROOT_PATH)/../../..
 EXT_LIB_PATH                = $(ROOT_DIR_PATH)/extlibs
 PROJECT_API_PATH            = $(PROJECT_ROOT_PATH)/api
 PROJECT_INC_PATH            = $(PROJECT_ROOT_PATH)/inc
@@ -35,7 +35,7 @@ LE              = LE_ADAPTER
 
 #Add Pre processor definitions
 DEFINE_FLAG =  -DWITH_POSIX -D__ANDROID__
-DEFINE_FLAG =  -D__WITH_DTLS__
+DEFINE_FLAG +=  -D__WITH_DTLS__
 DEFINE_FLAG += -D$(EDR) -D$(LE) -D$(IP)
 
 #Add Debug flags here
