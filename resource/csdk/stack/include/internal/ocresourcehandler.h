@@ -45,18 +45,32 @@
 #define OC_RESOURCE_SECURE       1
 
 /**
- * OIC Virtual resources supported by every OIC device.
+ *  OIC Virtual resources supported by every OIC device.
  */
 typedef enum
 {
+    /** unknown URI.*/
     OC_UNKNOWN_URI =0,
-    OC_WELL_KNOWN_URI,          ///< "/oic/res"
-    OC_DEVICE_URI,              ///< "/oic/d"
-    OC_PLATFORM_URI,            ///< "/oic/p"
-    OC_RESOURCE_TYPES_URI,      ///< "/oic/res/types/d"
-#ifdef WITH_PRESENCE
-    OC_PRESENCE,                ///< "/oic/ad"
-#endif
+
+    /** "/oic/res".*/
+    OC_WELL_KNOWN_URI,
+
+    /** "/oic/d" .*/
+    OC_DEVICE_URI,
+
+    /** "/oic/p" .*/
+    OC_PLATFORM_URI,
+
+    /** "/oic/res/d/type" .*/
+    OC_RESOURCE_TYPES_URI,
+
+    #ifdef WITH_PRESENCE
+    /** "/oic/ad" .*/
+    OC_PRESENCE,
+    #endif
+
+    /** Max items in the list */
+    OC_MAX_VIRTUAL_RESOURCES    //<s Max items in the list
 } OCVirtualResources;
 
 /**
@@ -95,18 +109,21 @@ OCEntityHandlerResult defaultResourceEHandler(OCEntityHandlerFlag flag,
 /**
  * Find and retrieve pointer to a resource associated with a specific resource
  * URI.
+ * @return pointer to found resource
  */
 OCResource *FindResourceByUri(const char* resourceUri);
 
 /**
- * Returns true if the specificed resource URI aligns with a pre-existing
+ * This function checks whether the specified resource URI aligns with a pre-existing
  * virtual resource; returns false otherwise.
+ * @return true or false.
  */
 bool IsVirtualResource(const char* resourceUri);
 
 /**
  * Parameter @ref handling returns by-reference the type of resource handling
  * required by the internal stack based on the specified @ref request.
+ * @return ::OC_STACK_OK for Success, otherwise some error value
  */
 OCStackResult DetermineResourceHandling (const OCServerRequest *request,
                                          ResourceHandling *handling,
@@ -115,6 +132,7 @@ OCStackResult DetermineResourceHandling (const OCServerRequest *request,
 /**
  * Processes the specified @ref request based on the type of resource handling
  * @ref resHandling.
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
 OCStackResult ProcessRequest(ResourceHandling resHandling,
                              OCResource *resource,
@@ -123,14 +141,16 @@ OCStackResult ProcessRequest(ResourceHandling resHandling,
 /**
  * Internal API used to save all of the platform's information for use in platform
  * discovery requests.
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
 OCStackResult SavePlatformInfo(OCPlatformInfo info);
 
 /**
  * Internal API used to save all of the device's information for use in platform
  * discovery requests.
- * The device name is received from the appliation.
- * The deviceID, spec version and data model verson are initialized by the stack.
+ * @param info       Device name is received from the application.
+ *                   DeviceID, spec version and data model version are initialized by the stack.
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
 OCStackResult SaveDeviceInfo(OCDeviceInfo info);
 

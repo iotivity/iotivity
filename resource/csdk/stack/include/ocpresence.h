@@ -22,24 +22,22 @@
 #define OCPRESENCE_H_
 
 #ifdef WITH_PRESENCE
+
 /**
  * The OCPresenceTrigger enum delineates the three spec-compliant modes for
- * "Trigger." These enum values are then mapped to strings
+ * "Trigger." These enum values are then mapped to  strings
  * "create", "change", "delete", respectively, before getting encoded into
- * the payload payload.
- *
- * @enum OC_PRESENCE_TRIGGER_CREATE The creation of a resource is associated with
- *                            this invocation of @ref SendPresenceNotification.
- * @enum OC_PRESENCE_TRIGGER_CHANGE The change/update of a resource is associated
- *                            this invocation of @ref SendPresenceNotification.
- * @enum OC_PRESENCE_TRIGGER_DELETE The deletion of a resource is associated with
- *                            this invocation of @ref SendPresenceNotification.
- *
+ * the payload.
  */
 typedef enum
 {
+    /** The creation of a resource is associated with this invocation. */
     OC_PRESENCE_TRIGGER_CREATE = 0,
+
+    /** The change/update of a resource is associated this invocation. */
     OC_PRESENCE_TRIGGER_CHANGE = 1,
+
+    /** The deletion of a resource is associated with this invocation.*/
     OC_PRESENCE_TRIGGER_DELETE = 2
 } OCPresenceTrigger;
 #endif
