@@ -84,7 +84,8 @@ OCSRM_SRC = 'src/'
 libocsrm_src = [
 	OCSRM_SRC + 'secureresourcemanager.c',
 	OCSRM_SRC + 'resourcemanager.c',
-	OCSRM_SRC + 'aclresource.c',
+    OCSRM_SRC + 'aclresource.c',
+    OCSRM_SRC + 'amaclresource.c',
 	OCSRM_SRC + 'pstatresource.c',
 	OCSRM_SRC + 'doxmresource.c',
 	OCSRM_SRC + 'credresource.c',

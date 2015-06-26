@@ -302,13 +302,14 @@ struct OicSecAmacl
     size_t              resourcesLen;   // the number of elts in Resources
     char                **resources;    // 0:R:M:Y:String
     size_t              amssLen;        // the number of elts in Amss
-    OicSecSvc_t         *amss;          // 1:R:M:Y:acl
+    OicUuid_t           *amss;          // 1:R:M:Y:acl
     size_t              ownersLen;      // the number of elts in Owners
     OicUuid_t           *owners;        // 2:R:M:Y:oic.uuid
     // NOTE: we are using UUID for Owners instead of Svc type for mid-April
     // SRM version only; this will change to Svc type for full implementation.
     //TODO change Owners type to oic.sec.svc
     //OicSecSvc_t         *Owners;        // 2:R:M:Y:oic.sec.svc
+    OicSecAmacl_t         *next;
 };
 
 /**

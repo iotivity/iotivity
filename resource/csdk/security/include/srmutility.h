@@ -22,6 +22,8 @@
 #define IOTVT_SRM_UTILITY_H
 
 #include "ocstack.h"
+#include "cJSON.h"
+#include "securevirtualresourcetypes.h"
 #ifdef __cplusplus
 extern "C"
 {
@@ -96,6 +98,21 @@ void ParseQueryIterInit(unsigned char * query, OicParseQueryIter_t * parseIter);
  *     NULL                   - has no query to parse
  */
 OicParseQueryIter_t * GetNextQuery(OicParseQueryIter_t * parseIter);
+
+
+
+/**
+ * This method acts as a helper funtion for JSON unmarshalling by various SVR's.
+ *
+ * @param jsonRoot  - root JSON node containing the OicUuid array
+ * @param arrayItem - name of the JSON OicUuid array item
+ * @param numUuids  - pointer to the number of OicUuid's available in JSON array
+ * @param uuids     - pointer to the array of OicUuid's
+ *
+ * @return ::OC_STACK_OK on success, some other value upon failure.
+ */
+OCStackResult AddUuidArray(cJSON* jsonRoot, const char* arrayItem,
+                           size_t *numUuids, OicUuid_t** uuids );
 
 #ifdef __cplusplus
 }

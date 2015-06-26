@@ -32,6 +32,11 @@ extern const char * OIC_RSRC_CORE_P_URI;
 extern const char * OIC_RSRC_PRESENCE_URI;
 extern const char * OIC_RSRC_TYPES_D_URI;
 
+//AMACL
+extern const char * OIC_RSRC_TYPE_SEC_AMACL;
+extern const char * OIC_RSRC_AMACL_URI;
+extern const char * OIC_JSON_AMACL_NAME;
+
 //ACL
 extern const char * OIC_RSRC_TYPE_SEC_ACL;
 extern const char * OIC_RSRC_ACL_URI;
@@ -55,6 +60,7 @@ extern const char * OIC_JSON_CRED_NAME;
 
 extern const char * OIC_JSON_SUBJECT_NAME;
 extern const char * OIC_JSON_RESOURCES_NAME;
+extern const char * OIC_JSON_AMSS_NAME;
 extern const char * OIC_JSON_PERMISSION_NAME;
 extern const char * OIC_JSON_OWNERS_NAME;
 extern const char * OIC_JSON_OWNER_NAME;

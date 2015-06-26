@@ -30,6 +30,11 @@ const char * OIC_RSRC_CORE_P_URI =  "/oic/p";
 const char * OIC_RSRC_PRESENCE_URI =  "/oic/ad";
 const char * OIC_RSRC_TYPES_D_URI =  "/oic/res/types/d";
 
+//AMACL
+const char * OIC_RSRC_TYPE_SEC_AMACL = "oic.sec.amacl";
+const char * OIC_RSRC_AMACL_URI =  "/oic/sec/amacl";
+const char * OIC_JSON_AMACL_NAME = "amacl";
+
 //ACL
 const char * OIC_RSRC_TYPE_SEC_ACL = "oic.sec.acl";
 const char * OIC_RSRC_ACL_URI =  "/oic/sec/acl";
@@ -52,6 +57,7 @@ const char * OIC_JSON_CRED_NAME = "cred";
 
 const char * OIC_JSON_SUBJECT_NAME = "sub";
 const char * OIC_JSON_RESOURCES_NAME = "rsrc";
+const char * OIC_JSON_AMSS_NAME = "amss";
 const char * OIC_JSON_PERMISSION_NAME = "perms";
 const char * OIC_JSON_OWNERS_NAME = "ownrs";
 const char * OIC_JSON_OWNER_NAME = "ownr";
