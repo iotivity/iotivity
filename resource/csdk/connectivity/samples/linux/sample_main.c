@@ -87,7 +87,7 @@ void send_response(const CAEndpoint_t *endpoint, const CAInfo_t *info);
 void get_resource_uri(char *URI, char *resourceURI, int length);
 int get_secure_information(CAPayload_t payLoad);
 int get_address_set(const char *pAddress, addressSet_t* outAddress);
-void parsing_coap_uri(const char* uri, addressSet_t* address);
+void parsing_coap_uri(const char* uri, addressSet_t* address, CATransportFlags_t *flags);
 CAHeaderOption_t* get_option_data(CAInfo_t* requestData);
 
 static CAToken_t g_last_request_token = NULL;
@@ -411,12 +411,13 @@ void send_request()
 
     // create remote endpoint
     CAEndpoint_t *endpoint = NULL;
+    CATransportFlags_t flags;
 
     printf("URI : %s\n", uri);
     addressSet_t address = {};
-    parsing_coap_uri(uri, &address);
+    parsing_coap_uri(uri, &address, &flags);
 
-    res = CACreateEndpoint(CA_DEFAULT_FLAGS, g_selected_nw_type,
+    res = CACreateEndpoint(flags, g_selected_nw_type,
                            (const char*)address.ipAddress, address.port, &endpoint);
     if (CA_STATUS_OK != res || !endpoint)
     {
@@ -702,12 +703,13 @@ void send_notification()
 
     int messageType = messageTypeBuf[0] - '0';
 
+    CATransportFlags_t flags;
     addressSet_t address = {};
-    parsing_coap_uri(uri, &address);
+    parsing_coap_uri(uri, &address, &flags);
 
     // create remote endpoint
     CAEndpoint_t *endpoint = NULL;
-    res = CACreateEndpoint(0, g_selected_nw_type, address.ipAddress, address.port, &endpoint);
+    res = CACreateEndpoint(flags, g_selected_nw_type, address.ipAddress, address.port, &endpoint);
     if (CA_STATUS_OK != res)
     {
         printf("Create remote endpoint error, error code: %d\n", res);
@@ -1394,7 +1396,7 @@ CAHeaderOption_t* get_option_data(CAInfo_t* requestData)
     return headerOpt;
 }
 
-void parsing_coap_uri(const char* uri, addressSet_t* address)
+void parsing_coap_uri(const char* uri, addressSet_t* address, CATransportFlags_t *flags)
 {
     if (NULL == uri)
     {
@@ -1409,11 +1411,13 @@ void parsing_coap_uri(const char* uri, addressSet_t* address)
     {
         printf("uri has '%s' prefix\n", COAPS_PREFIX);
         startIndex = COAPS_PREFIX_LEN;
+        *flags = CA_SECURE;
     }
     else if (strncmp(COAP_PREFIX, uri, COAP_PREFIX_LEN) == 0)
     {
         printf("uri has '%s' prefix\n", COAP_PREFIX);
         startIndex = COAP_PREFIX_LEN;
+        *flags = CA_DEFAULT_FLAGS;
     }
 
     // #2. copy uri for parse
