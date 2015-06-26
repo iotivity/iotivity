@@ -43,7 +43,7 @@ CAResult_t get_remote_address(CATransportAdapter_t transportType, const char *ad
 
 CATransportAdapter_t g_selectedNwType = CA_ADAPTER_IP;
 static CAToken_t g_lastRequestToken = NULL;
-static uint8_t g_lastRequestTokenLength;
+static uint8_t g_lastRequestTokenLength = 0;
 
 static const char COAP_PREFIX[] =  "coap://";
 static const char COAPS_PREFIX[] = "coaps://";
@@ -62,11 +62,11 @@ static jobject g_responseListenerObject = NULL;
 static JavaVM *g_jvm;
 
 static CAEndpoint_t *g_clientEndpoint = NULL;
-static char *g_resourceUri;
-static CAToken_t g_clientToken;
-static uint8_t g_clientTokenLength = NULL;
+static char *g_resourceUri = NULL;
+static CAToken_t g_clientToken = NULL;
+static uint8_t g_clientTokenLength = 0;
 
-static uint16_t g_clientMsgId;
+static uint16_t g_clientMsgId = 0;
 static char *g_remoteAddress = NULL;
 
 typedef struct

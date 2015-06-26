@@ -582,12 +582,6 @@ CAResult_t CAIPStartUnicastServer(const char *localAddress, uint16_t *port, bool
     VERIFY_NON_NULL(localAddress, IP_SERVER_TAG, "localAddress");
     VERIFY_NON_NULL(port, IP_SERVER_TAG, "port");
 
-    if (0 > *port)
-    {
-        OIC_LOG(ERROR, IP_SERVER_TAG, "Invalid input: port is invalid!");
-        return CA_STATUS_INVALID_PARAM;
-    }
-
     ca_mutex_lock(g_mutexServerInfoList);
     bool isUnicastServerStarted = CAIsUnicastServerStarted(g_serverInfoList, localAddress, *port);
     if (!isUnicastServerStarted)
