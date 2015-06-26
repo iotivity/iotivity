@@ -612,7 +612,7 @@ ActionSet* GroupManager::getActionSetfromString(std::string description)
         token = strtok_r(NULL, ACTION_DELIMITER, &plainPtr);
     }
 
-    DELETE(plainText);
+    DELETEARRAY(plainText);
     return actionset;
 
 exit:
