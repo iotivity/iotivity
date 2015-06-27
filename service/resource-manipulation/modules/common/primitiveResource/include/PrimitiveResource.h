@@ -26,6 +26,7 @@
 #include <vector>
 
 #include <OCResource.h>
+#include <ResponseStatement.h>
 
 namespace OIC
 {
