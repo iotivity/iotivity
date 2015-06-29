@@ -423,6 +423,28 @@ TEST(StackResource, CreateResourceSuccess)
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
+TEST(StackResource, CreateResourceSuccessWithResourcePolicyPropNone)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    OC_LOG(INFO, TAG, "Starting CreateResourceSuccessWithResourcePolicyPropNone test");
+    InitStack(OC_SERVER);
+
+    OCResourceHandle handle;
+    // the resource is non-discoverable & non-observable by the client.
+    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle,
+                                            "core.led",
+                                            "core.rw",
+                                            "/a/led",
+                                            0,   
+                                            NULL,   
+                                            OC_RES_PROP_NONE));// the resource is non-discoverable &
+                                                // non-observable by the client.
+    const char* url = OCGetResourceUri(handle);
+    EXPECT_STREQ("/a/led", url);
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
 TEST(StackResource, CreateResourceWithClientStackMode)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
