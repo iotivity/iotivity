@@ -29,7 +29,7 @@
 #include "PrimitiveResource.h"
 
 #define BROKER_TAG PCF("BROKER")
-
+#define SAFE_TIME (5l)
 #define BROKER_TRANSPORT OCConnectivityType::CT_ADAPTER_IP
 
 using namespace OIC::Service;
@@ -96,8 +96,8 @@ typedef std::list< ResourcePresencePtr > PresenceList;
 
 struct BrokerCBResourcePair
 {
-    BrokerCBResourcePair(ResourcePresencePtr _pResource, BrokerCB _cb)
-    : pResource(_pResource), brokerCB(_cb){}
+    BrokerCBResourcePair(ResourcePresencePtr pResource, BrokerCB cb)
+    : pResource(pResource), brokerCB(cb){}
     ResourcePresencePtr pResource;
     BrokerCB brokerCB;
 };
@@ -107,6 +107,6 @@ typedef std::function<void(OCStackResult, const unsigned int,
         const std::string&)> SubscribeCB;
 
 typedef std::function<void(const HeaderOptions&, const ResponseStatement&, int)> RequestGetCB;
-typedef std::function<void(int)> TimeoutCB;
+typedef std::function<void * (unsigned int)> TimeoutCB;
 
 #endif // BROKERTYPES_H_

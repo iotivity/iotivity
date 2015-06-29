@@ -37,7 +37,6 @@ public:
     static ResourceBroker * getInstance();
 
     BrokerID hostResource(PrimitiveResourcePtr pResource, BrokerCB cb);
-
     BrokerID cancelHostResource(BrokerID brokerId);
 
     BROKER_STATE getResourceState(BrokerID brokerId);
@@ -47,15 +46,13 @@ private:
     ResourceBroker();
     ~ResourceBroker();
 
+    BrokerID generateBrokerID();
+    ResourcePresencePtr findResourcePresence(PrimitiveResourcePtr pResource);
+
     static ResourceBroker * s_instance;
     static std::mutex s_mutexForCreation;
     static std::unique_ptr<PresenceList>  s_presenceList;
-
     static std::unique_ptr<BrokerIDMap> s_brokerIDMap;
-    BrokerID generateBrokerID();
-
-    ResourcePresencePtr findResourcePresence(PrimitiveResourcePtr pResource);
-
 };
 
 #endif /* RESOURCEBROKER_H_ */

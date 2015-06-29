@@ -28,7 +28,6 @@ std::list< DevicePresencePtr >  DeviceAssociation::s_deviceList;
 DeviceAssociation::DeviceAssociation()
 {
     // TODO Auto-generated constructor stub
-
 }
 
 DeviceAssociation::~DeviceAssociation()

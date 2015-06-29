@@ -24,8 +24,10 @@
 #include <functional>
 #include <list>
 #include <string>
+#include <atomic>
 
 #include "BrokerTypes.h"
+#include "../../common/primitiveTimer/include/PrimitiveTimer.h"
 
 class ResourcePresence
 {
@@ -36,35 +38,38 @@ public:
     void addBrokerRequester(BrokerID _id, BrokerCB _cb);
     void removeBrokerRequester(BrokerID _id);
     void removeAllBrokerRequester();
-
     void requestResourceState();
-
-    PrimitiveResourcePtr getPrimitiveResource();
-    BROKER_STATE getResourceState();
     void setResourcestate(BROKER_STATE _state);
-    void executeAllBrokerCB();
-
+    void executeAllBrokerCB(BROKER_STATE changedState);
     void changePresenceMode(BROKER_MODE newMode);
 
     bool isEmptyRequester() const;
 
+    PrimitiveResourcePtr getPrimitiveResource();
+    BROKER_STATE getResourceState();
+
 private:
-    PrimitiveResourcePtr primitiveResource;
+    void getCB(const HeaderOptions &hos, const ResponseStatement& rep, int eCode);
+    void verifiedGetResponse(int eCode);
+    void registerDevicePresence();
+    void * timeOutCB(unsigned int msg);
+    void * pollingCB(unsigned int msg);
 
     std::unique_ptr<std::list<BrokerRequesterInfoPtr>> requesterList;
+    PrimitiveResourcePtr primitiveResource;
+    PrimitiveTimer primitiveTimer;
 
     BROKER_STATE state;
     BROKER_MODE mode;
 
-    RequestGetCB pGetCB;
-    void GetCB(const HeaderOptions &hos, const ResponseStatement& rep, int seq);
-
-    TimeoutCB pTimeoutCB;
-
     bool isWithinTime;
-    void TimeOutCB(int msg);
+    std::atomic_bool isTimeoutCB;
+    std::atomic_long receivedTime;
+    unsigned int timeoutHandle;
 
-    void registerDevicePresence();
+    RequestGetCB pGetCB;
+    TimeoutCB pTimeoutCB;
+    TimeoutCB pPollingCB;
 
 };
 

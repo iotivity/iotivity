@@ -43,8 +43,9 @@ target_os = env.get('TARGET_OS')
 ######################################################################
 resourcebroker_env.AppendUnique(CPPPATH = ['include'])
 resourcebroker_env.AppendUnique(CPPPATH = ['../common/primitiveResource/include'])
+resourcebroker_env.AppendUnique(CPPPATH = ['../common/primitiveTimer/include'])
 resourcebroker_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-resourcebroker_env.PrependUnique(LIBS = ['service_common','oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'libcoap'])
+resourcebroker_env.PrependUnique(LIBS = ['service_common', 'oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'libcoap'])
 
 
 if target_os not in ['windows', 'winrt']:
@@ -61,7 +62,9 @@ resourcebroker_src = [
         BROKER_SRC_DIR + 'DeviceAssociation.cpp',
         BROKER_SRC_DIR + 'DevicePresence.cpp',
         BROKER_SRC_DIR + 'ResourcePresence.cpp',
-        BROKER_SRC_DIR + 'ResourceBroker.cpp'
+        BROKER_SRC_DIR + 'ResourceBroker.cpp',
+        BROKER_SRC_DIR + '../../common/primitiveTimer/src/PrimitiveTimer.cpp',
+        BROKER_SRC_DIR + '../../common/primitiveTimer/src/PrimitiveTimer_Impl.cpp'
         ]
 
 
@@ -73,6 +76,6 @@ else :
 resourcebroker_env.InstallTarget(resourcebrokersdk, 'libResouceBroker')
 
 # Go to build sample apps
-#SConscript('SampleApp/SConscript')
+SConscript('SampleApp/SConscript')
 
 

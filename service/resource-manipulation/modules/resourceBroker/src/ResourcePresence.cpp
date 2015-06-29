@@ -18,24 +18,36 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "ResourcePresence.h"
+#include "../include/ResourcePresence.h"
+
+#include <bits/atomic_base.h>
+#include <bits/shared_ptr_base.h>
+#include <time.h>
+#include <unistd.h>
+#include <cstdbool>
+#include <exception>
+#include <iostream>
+#include <memory>
+#include <strstream>
+
+#include "PrimitiveResource.h"
 #include "DeviceAssociation.h"
 #include "DevicePresence.h"
 
 ResourcePresence::ResourcePresence(PrimitiveResourcePtr pResource)
 {
     primitiveResource = pResource;
-
-    pGetCB = std::bind(&ResourcePresence::GetCB, this,
+    isTimeoutCB = false;
+    receivedTime = 0L;
+    pGetCB = std::bind(&ResourcePresence::getCB, this,
             std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
-    pTimeoutCB = std::bind(&ResourcePresence::TimeOutCB, this,
-            std::placeholders::_1);
+    pTimeoutCB = std::bind(&ResourcePresence::timeOutCB, this,std::placeholders::_1);
+    pPollingCB = std::bind(&ResourcePresence::pollingCB, this,std::placeholders::_1);
 
     requesterList
     = std::unique_ptr<std::list<BrokerRequesterInfoPtr>>(new std::list<BrokerRequesterInfoPtr>);
 
-    //TODO generate Timer(if(!isTimer))
-    //register pTimeroutCB
+    timeoutHandle = primitiveTimer.requestTimer(SAFE_TIME, pTimeoutCB);
 
     state = BROKER_STATE::REQUESTED;
     isWithinTime = true;
@@ -48,7 +60,6 @@ ResourcePresence::ResourcePresence(PrimitiveResourcePtr pResource)
 
 void ResourcePresence::registerDevicePresence()
 {
-    // find device......
     std::string deviceAddress = primitiveResource->getHost();
 
     DevicePresencePtr foundDevice
@@ -117,71 +128,82 @@ bool ResourcePresence::isEmptyRequester() const
 
 void ResourcePresence::requestResourceState()
 {
+    OC_LOG_V(DEBUG, BROKER_TAG, "Request Get\n");
     primitiveResource->requestGet(pGetCB);
-
 }
-void ResourcePresence::executeAllBrokerCB()
+
+void ResourcePresence::executeAllBrokerCB(BROKER_STATE changedState)
 {
     OC_LOG_V(DEBUG, BROKER_TAG, "executeAllBrokerCB()");
-    for(BrokerRequesterInfoPtr & item : * requesterList)
+    if(state != changedState)
     {
-        item->brockerCB(this->state);
+        state = changedState;
+        for(BrokerRequesterInfoPtr & item : * requesterList)
+        {
+            item->brockerCB(state);
+        }
     }
 }
+
 void ResourcePresence::setResourcestate(BROKER_STATE _state)
 {
     this->state = _state;
 
 }
-void ResourcePresence::TimeOutCB(int msg)
+
+void * ResourcePresence::timeOutCB(unsigned int msg)
 {
+    isTimeoutCB = true;
+
+    time_t currentTime;
+    time(&currentTime);
+    currentTime+=0L;
+
+    if((receivedTime == 0L) || ((receivedTime+SAFE_TIME) > currentTime))
+    {
+        return NULL;
+    }
     this->isWithinTime = false;
     OC_LOG_V(DEBUG, BROKER_TAG, "Timeout execution. will be discard after receiving cb message");
-    this->state = BROKER_STATE::LOST_SIGNAL;
 
+    executeAllBrokerCB(BROKER_STATE::LOST_SIGNAL);
+    pollingCB(0);
+
+    isTimeoutCB = false;
+
+    return NULL;
 }
-void ResourcePresence::GetCB(const HeaderOptions &hos, const ResponseStatement& rep, int seq)
+
+void * ResourcePresence::pollingCB(unsigned int msg)
 {
+    this->requestResourceState();
+    timeoutHandle = primitiveTimer.requestTimer(SAFE_TIME,pTimeoutCB);
+
+    return NULL;
+}
+
+void ResourcePresence::getCB(const HeaderOptions &hos, const ResponseStatement& rep, int eCode)
+{
+    OC_LOG_V(DEBUG, BROKER_TAG, "response getCB\n");
+    while(isTimeoutCB)
+    {
+        OC_LOG_V(DEBUG, BROKER_TAG, "wait\n");
+        sleep(2);
+    }
+    time_t currentTime;
+    time(&currentTime);
+    receivedTime = currentTime;
     try
     {
-        //TODO : cancel timer if(isTimer)
+        state = BROKER_STATE::ALIVE;
+        verifiedGetResponse(eCode);
+
         if(isWithinTime)
         {
-
-            OC_LOG_V(DEBUG, BROKER_TAG, "broker state :: %d",(int)state);
-            state = BROKER_STATE::ALIVE;
-            OC_LOG_V(DEBUG, BROKER_TAG, "broker state changed :: %d",(int)state);
-            OC_LOG_V(DEBUG, BROKER_TAG, "GET request was successful");
-
-            if(!requesterList->empty())
-            {
-                executeAllBrokerCB();
-            }
-            else
-            {
-                OC_LOG_V(DEBUG, BROKER_TAG, "None exist resource for request");
-                state = BROKER_STATE::DESTROYED;
-            }
-        }
-        else
-        {
-            OC_LOG_V(DEBUG, BROKER_TAG, "its message is not available because of Timeout msg");
-            OC_LOG_V(DEBUG, BROKER_TAG, "broker state :: %d",(int)state);
-            state = BROKER_STATE::ALIVE;
-            OC_LOG_V(DEBUG, BROKER_TAG, "broker state changed :: %d",(int)state);
-            OC_LOG_V(DEBUG, BROKER_TAG, "GET request was successful");
-            //notify cb message to user.
-            if(!requesterList->empty())
-            {
-                executeAllBrokerCB();
-            }
-            else
-            {
-                OC_LOG_V(DEBUG, BROKER_TAG, "None exist resource for request");
-                state = BROKER_STATE::DESTROYED;
-            }
+            primitiveTimer.cancelTimer(timeoutHandle);
             isWithinTime = true;
         }
+
     }
     catch(std::exception& e)
     {
@@ -191,6 +213,47 @@ void ResourcePresence::GetCB(const HeaderOptions &hos, const ResponseStatement& 
     if(mode == BROKER_MODE::NON_PRESENCE_MODE)
     {
         // TODO set timer & request get
+        primitiveTimer.requestTimer(SAFE_TIME,pPollingCB);
+    }
+
+}
+
+void ResourcePresence::verifiedGetResponse(int eCode)
+{
+    switch(eCode)
+    {
+        case OC_STACK_OK:
+        case OC_STACK_CONTINUE:
+            state = BROKER_STATE::ALIVE;
+            OC_LOG_V(DEBUG, BROKER_TAG, "resource state : %d",(int)state);
+            break;
+
+        case OC_STACK_INVALID_REQUEST_HANDLE:
+        case OC_STACK_RESOURCE_DELETED:
+        case OC_STACK_TIMEOUT:
+        case OC_STACK_COMM_ERROR:
+        case OC_STACK_PRESENCE_STOPPED:
+        case OC_STACK_PRESENCE_TIMEOUT:
+            if(!requesterList->empty())
+            {
+                executeAllBrokerCB(BROKER_STATE::LOST_SIGNAL);
+            }
+            else
+            {
+                setResourcestate(BROKER_STATE::LOST_SIGNAL);
+            }
+            break;
+
+        default:
+            if(!requesterList->empty())
+            {
+                executeAllBrokerCB(BROKER_STATE::LOST_SIGNAL);
+            }
+            else
+            {
+                setResourcestate(BROKER_STATE::LOST_SIGNAL);
+            }
+            break;
     }
 }
 

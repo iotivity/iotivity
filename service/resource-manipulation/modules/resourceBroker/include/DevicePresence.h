@@ -34,27 +34,28 @@ public:
     DevicePresence(PrimitiveResourcePtr pResource);
     ~DevicePresence();
 
-    const std::string getAddress() const;
     void addPresenceResource(ResourcePresence * rPresence);
     void removePresenceResource(ResourcePresence * rPresence);
 
     bool isEmptyResourcePresence() const;
+    const std::string getAddress() const;
 
 private:
+    void requestAllResourcePresence();
+    void subscribeCB(OCStackResult ret,const unsigned int seq, const std::string& Hostaddress);
+    void * timeOutCB(unsigned int msg);
+
+    std::list<ResourcePresence * > resourcePresenceList;
+
     std::string address;
     DEVICE_STATE state;
     bool isWithinTime;
-
-    std::list<ResourcePresence * > resourcePresenceList;
 
     SubscribeCB pSubscribeRequestCB;
     TimeoutCB pTimeoutCB;
     PresenceSubscriber presenceSubscriber;
 
-    void requestAllResourcePresence();
 
-    void subscribeCB(OCStackResult ret,const unsigned int seq, const std::string& Hostaddress);
-    void timeOutCB(int msg);
 
 };
 

@@ -42,10 +42,8 @@ DevicePresence::DevicePresence(PrimitiveResourcePtr pResource)
 
     state = DEVICE_STATE::REQUESTED;
     pTimeoutCB = std::bind(&DevicePresence::timeOutCB, this, std::placeholders::_1);
-
     isWithinTime = true;
     //TODO generate Timer(if(!isTimer))
-    //register pTimeroutCB
 }
 
 DevicePresence::~DevicePresence()
@@ -84,11 +82,10 @@ bool DevicePresence::isEmptyResourcePresence() const
 void DevicePresence::subscribeCB(OCStackResult ret,
         const unsigned int seq, const std::string& hostAddress)
 {
-    std::cout << "Call Back Deivce's Presence\n";
     const char* log = hostAddress.c_str();
     OC_LOG_V(DEBUG, BROKER_TAG, "Received presence CB from: %s",log);
     OC_LOG_V(DEBUG, BROKER_TAG, "In subscribeCB: %d",ret);
-    //TODO : cancel timer if(isTimer)
+
     if(isWithinTime)
     {
         switch(ret)
@@ -142,14 +139,15 @@ void DevicePresence::subscribeCB(OCStackResult ret,
     {
         OC_LOG_V(DEBUG, BROKER_TAG, "This response is Timeout but device steel alive");
         this->state = DEVICE_STATE::ALIVE;
-        //notify cb message to user.
         isWithinTime = true;
     }
 }
 
-void DevicePresence::timeOutCB(int msg)
+void * DevicePresence::timeOutCB(unsigned int msg)
 {
     this->isWithinTime = false;
     OC_LOG_V(DEBUG, BROKER_TAG, "Timeout execution. will be discard after receiving cb message");
     state = DEVICE_STATE::LOST_SIGNAL;
+
+    return NULL;
 }

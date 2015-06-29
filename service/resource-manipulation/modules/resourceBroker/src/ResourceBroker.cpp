@@ -30,7 +30,6 @@ std::unique_ptr<BrokerIDMap> ResourceBroker::s_brokerIDMap(nullptr);
 
 ResourceBroker::ResourceBroker()
 {
-    // TODO Auto-generated constructor stub
     if(s_presenceList == nullptr)
     {
         s_presenceList = std::unique_ptr<PresenceList>(new PresenceList);
@@ -43,7 +42,6 @@ ResourceBroker::ResourceBroker()
 
 ResourceBroker::~ResourceBroker()
 {
-    // TODO Auto-generated destructor stub
     if(s_presenceList != nullptr)
     {
         s_presenceList->erase(s_presenceList->begin(), s_presenceList->end());
