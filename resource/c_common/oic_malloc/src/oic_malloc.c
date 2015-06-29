@@ -106,12 +106,12 @@ void *OICRealloc(void* ptr, size_t size)
         return NULL;
     }
 
+#ifdef ENABLE_MALLOC_DEBUG
     if(ptr == NULL)
     {
         return OICMalloc(size);
     }
 
-#ifdef ENABLE_MALLOC_DEBUG
     void* newptr = NULL;
     newptr = realloc(ptr, size);
     OIC_LOG_V(INFO, TAG, "realloc: ptr=%p, newptr=%p, size=%u", ptr, newptr, size);
