@@ -260,6 +260,7 @@ static void CASendThreadProcess(void *threadData)
             if (CA_STATUS_OK != res)
             {
                 OIC_LOG(INFO, TAG, "to write block option has failed");
+                CAErrorHandler(data->remoteEndpoint, pdu->hdr, pdu->length, res);
                 coap_delete_pdu(pdu);
                 return;
             }
@@ -277,6 +278,7 @@ static void CASendThreadProcess(void *threadData)
             if (CA_STATUS_OK != res)
             {
                 OIC_LOG(INFO, TAG, "to write block option has failed");
+                CAErrorHandler(data->remoteEndpoint, pdu->hdr, pdu->length, res);
                 coap_delete_pdu(pdu);
                 return;
             }
@@ -329,6 +331,8 @@ static void CASendThreadProcess(void *threadData)
         if (CA_STATUS_OK != res)
         {
             OIC_LOG(DEBUG, TAG, "CAAddBlockOption has failed");
+            CAErrorHandler(data->remoteEndpoint, pdu->hdr, pdu->length, res);
+            coap_delete_pdu(pdu);
         }
 
         if (NULL != pdu)
@@ -452,10 +456,17 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data, u
         cadata->responseInfo = NULL;
 
         res = CAReceiveBlockWiseData(pdu, endpoint, cadata, dataLen);
-        if(CA_NOT_SUPPORTED == res)
+        if (CA_STATUS_OK != res)
         {
-            OIC_LOG(ERROR, TAG, "this message don't have block option");
-            CAQueueingThreadAddData(&g_receiveThread, cadata, sizeof(CAData_t));
+            if (CA_NOT_SUPPORTED == res)
+            {
+                OIC_LOG(ERROR, TAG, "this message does not have block option");
+                CAQueueingThreadAddData(&g_receiveThread, cadata, sizeof(CAData_t));
+            }
+            else
+            {
+                OIC_LOG(ERROR, TAG, "failed to read block option");
+            }
         }
     }
     else
@@ -535,9 +546,17 @@ static void CAReceivedPacketCallback(CARemoteEndpoint_t *endpoint, void *data, u
         cadata->responseInfo = ResInfo;
 
         res = CAReceiveBlockWiseData(pdu, endpoint, cadata, dataLen);
-        if(CA_NOT_SUPPORTED == res)
+        if (CA_STATUS_OK != res)
         {
-            CAQueueingThreadAddData(&g_receiveThread, cadata, sizeof(CAData_t));
+            if (CA_NOT_SUPPORTED == res)
+            {
+                OIC_LOG(ERROR, TAG, "this message does not have block option");
+                CAQueueingThreadAddData(&g_receiveThread, cadata, sizeof(CAData_t));
+            }
+            else
+            {
+                OIC_LOG(ERROR, TAG, "failed to read block option");
+            }
         }
     }
 
@@ -649,11 +668,13 @@ CAResult_t CADetachRequestMessage(const CARemoteEndpoint_t *object, const CARequ
     CAResult_t res = CASendBlockWiseData(data);
     if(CA_NOT_SUPPORTED == res)
     {
+        OIC_LOG(DEBUG, TAG, "normal msg will be sent");
         CAQueueingThreadAddData(&g_sendThread, data, sizeof(CAData_t));
+        return CA_STATUS_OK;
     }
 
     OIC_LOG(DEBUG, TAG, "OUT");
-    return CA_STATUS_OK;
+    return res;
 
 // memory error label.
 memory_error_exit:
@@ -712,11 +733,13 @@ CAResult_t CADetachRequestToAllMessage(const CAGroupEndpoint_t *object,
     CAResult_t res = CASendBlockWiseData(data);
     if(CA_NOT_SUPPORTED == res)
     {
+        OIC_LOG(DEBUG, TAG, "normal msg will be sent");
         CAQueueingThreadAddData(&g_sendThread, data, sizeof(CAData_t));
+        return CA_STATUS_OK;
     }
 
     OIC_LOG(DEBUG, TAG, "OUT");
-    return CA_STATUS_OK;
+    return res;
 
 // memory error label.
 memory_error_exit:
@@ -765,11 +788,13 @@ CAResult_t CADetachResponseMessage(const CARemoteEndpoint_t *object,
     CAResult_t res = CASendBlockWiseData(data);
     if(CA_NOT_SUPPORTED == res)
     {
+        OIC_LOG(DEBUG, TAG, "normal msg will be sent");
         CAQueueingThreadAddData(&g_sendThread, data, sizeof(CAData_t));
+        return CA_STATUS_OK;
     }
 
     OIC_LOG(DEBUG, TAG, "OUT");
-    return CA_STATUS_OK;
+    return res;
 
 // memory error label.
 memory_error_exit:
@@ -850,11 +875,13 @@ CAResult_t CADetachMessageResourceUri(const CAURI_t resourceUri, const CAToken_t
     CAResult_t res = CASendBlockWiseData(data);
     if(CA_NOT_SUPPORTED == res)
     {
+        OIC_LOG(DEBUG, TAG, "normal msg will be sent");
         CAQueueingThreadAddData(&g_sendThread, data, sizeof(CAData_t));
+        return CA_STATUS_OK;
     }
 
     OIC_LOG(DEBUG, TAG, "OUT");
-    return CA_STATUS_OK;
+    return res;
 
 // memory error label.
 memory_error_exit:

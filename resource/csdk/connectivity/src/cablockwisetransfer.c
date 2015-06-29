@@ -148,22 +148,18 @@ CAResult_t CASendBlockWiseData(CAData_t *sendData)
 
     // #3. check request/response block option type and payload length
     res = CACheckBlockOptionType(currData);
-    if (CA_NOT_SUPPORTED == res)
-    {
-        OIC_LOG(DEBUG, TAG, "normal msg will be sent");
-    }
-    else
+    if (CA_STATUS_OK == res)
     {
         // #4. send block message
         OIC_LOG(DEBUG, TAG, "send first block msg");
         CALogBlockInfo(&currData->block);
-    }
 
-    res = CAAddSendThreadQueue(currData->sentData);
-    if (CA_STATUS_OK != res)
-    {
-        OIC_LOG(ERROR, TAG, "add has failed");
-        return res;
+        res = CAAddSendThreadQueue(currData->sentData);
+        if (CA_STATUS_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "add has failed");
+            return res;
+        }
     }
 
     return res;
