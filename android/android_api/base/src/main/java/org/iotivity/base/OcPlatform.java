@@ -342,6 +342,72 @@ public final class OcPlatform {
             int qualityOfService) throws OcException;
 
     /**
+     * API for Platform Discovery
+     *
+     * @param host                  Host IP Address. If null or empty, Multicast is performed.
+     * @param platformUri           Uri containing address to the platform
+     * @param connectivityType      a type of connectivity indicating the interface. Example: IPV4,
+     *                              IPV6, ALL
+     * @param onPlatformFoundListener Handles events, success states and failure states.
+     * @throws OcException
+     */
+
+    public static void getPlatformInfo(
+            String host,
+            String platformUri,
+            OcConnectivityType connectivityType,
+            OnPlatformFoundListener onPlatformFoundListener) throws OcException {
+        OcPlatform.initCheck();
+        OcPlatform.getPlatformInfo0(
+                host,
+                platformUri,
+                connectivityType.getValue(),
+                onPlatformFoundListener
+        );
+    }
+
+    private static native void getPlatformInfo0(
+            String host,
+            String platformUri,
+            int connectivityType,
+            OnPlatformFoundListener onPlatformInfoFoundListener) throws OcException;
+
+    /**
+     * API for Platform Discovery
+     *
+     * @param host                  Host IP Address. If null or empty, Multicast is performed.
+     * @param platformUri           Uri containing address to the platform
+     * @param connectivityType      a type of connectivity indicating the interface. Example: IPV4,
+     *                              IPV6, ALL
+     * @param onPlatformFoundListener Handles events, success states and failure states.
+     * @param qualityOfService      the quality of communication
+     * @throws OcException
+     */
+
+    public static void getPlatformInfo(
+            String host,
+            String platformUri,
+            OcConnectivityType connectivityType,
+            OnPlatformFoundListener onPlatformFoundListener,
+            QualityOfService qualityOfService) throws OcException {
+        OcPlatform.initCheck();
+        OcPlatform.getPlatformInfo1(
+                host,
+                platformUri,
+                connectivityType.getValue(),
+                onPlatformFoundListener,
+                qualityOfService.getValue()
+        );
+    }
+
+    private static native void getPlatformInfo1(
+            String host,
+            String platformUri,
+            int connectivityType,
+            OnPlatformFoundListener onPlatformFoundListener,
+            int qualityOfService) throws OcException;
+
+    /**
      * This API registers a resource with the server NOTE: This API applies to server side only.
      *
      * @param ocResource The instance of OcResource with all data filled
@@ -414,6 +480,37 @@ public final class OcPlatform {
     private static native void registerDeviceInfo0(
             String deviceName
             ) throws OcException;
+
+    /**
+     * Register Platform Info
+     *
+     * @param ocPlatformInfo object containing all the platform specific information
+     * @throws OcException
+     */
+    public static void registerPlatformInfo(
+            OcPlatformInfo ocPlatformInfo) throws OcException {
+        OcPlatform.initCheck();
+        OcPlatform.registerPlatformInfo0(
+                ocPlatformInfo.getPlatformID(),
+                ocPlatformInfo.getManufacturerName(),
+                ocPlatformInfo.getManufacturerUrl(),
+                ocPlatformInfo.getModelNumber(),
+                ocPlatformInfo.getDateOfManufacture(),
+                ocPlatformInfo.getPlatformVersion(),
+                ocPlatformInfo.getOperatingSystemVersion(),
+                ocPlatformInfo.getHardwareVersion(),
+                ocPlatformInfo.getFirmwareVersion(),
+                ocPlatformInfo.getSupportUrl(),
+                ocPlatformInfo.getSystemTime()
+        );
+    }
+
+    private static native void registerPlatformInfo0(
+            String platformId, String manufacturerName, String manufacturerUrl,
+            String modelNumber, String dateOfManufacture, String platformVersion,
+            String operatingSystemVersion, String hardwareVersion, String firmwareVersion,
+            String supportUrl, String systemTime
+    ) throws OcException;
 
     /**
      * This API unregisters a resource with the server NOTE: This API applies to server side only.
@@ -730,6 +827,14 @@ public final class OcPlatform {
      */
     public interface OnDeviceFoundListener {
         public void onDeviceFound(OcRepresentation ocRepresentation);
+    }
+
+    /**
+     * An OnPlatformFoundListener can be registered via the OcPlatform.getPlatformInfo call.
+     * Event listeners are notified asynchronously
+     */
+    public interface OnPlatformFoundListener {
+        public void onPlatformFound(OcRepresentation ocRepresentation);
     }
 
     /**

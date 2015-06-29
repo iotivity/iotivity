@@ -984,6 +984,56 @@ public class SmokeTest extends InstrumentationTestCase {
         }
     }
 
+    public void testPlatformInfo() throws InterruptedException {
+        final String resourceType = "unit.test.resource" + new Date().getTime();
+        final CountDownLatch signal = new CountDownLatch(1);
+
+        OcPlatform.OnPlatformFoundListener platformFoundListener = new OcPlatform.OnPlatformFoundListener() {
+            @Override
+            public void onPlatformFound(OcRepresentation ocRepresentation) {
+                Log.i(TAG, "Platform Info Received: ");
+                Log.i(TAG, "URI: " + ocRepresentation.getUri());
+                signal.countDown();
+            }
+        };
+
+        OcPlatformInfo platformInfo = null;
+        try {
+            platformInfo = new OcPlatformInfo("myPlatformID", "myManuName", "myManuUrl");
+        } catch (OcException e) {
+            Log.e(TAG, "Could not construct platformInfo. " + e.getMessage());
+            assertTrue(false);
+        }
+
+        platformInfo.setModelNumber("myModelNumber");
+        platformInfo.setDateOfManufacture("myDateOfManufacture");
+        platformInfo.setPlatformVersion("myPlatformVersion");
+        platformInfo.setOperatingSystemVersion("myOperatingSystemVersion");
+        platformInfo.setHardwareVersion("myHardwareVersion");
+        platformInfo.setFirmwareVersion("myFirmwareVersion");
+        platformInfo.setSupportUrl("mySupportUrl");
+        platformInfo.setSystemTime("mySystemTime");
+
+        try {
+            //server
+
+            OcPlatform.registerPlatformInfo(platformInfo);
+
+            //client
+            OcPlatform.getPlatformInfo(
+                    "",
+                    OcPlatform.MULTICAST_PREFIX + "/oic/p",
+                    OcConnectivityType.IPV4,
+                    platformFoundListener);
+
+            //wait for onPlatformFound event
+            assertTrue(signal.await(60, TimeUnit.SECONDS));
+        } catch (OcException e) {
+            Log.e(TAG, e.getMessage() + platformInfo.toString());
+            assertTrue(false);
+        }
+    }
+
 //    public void testRegisterDeviceInfoGetDeviceInfo() throws InterruptedException {
 //        final String resourceType = "unit.test.resource" + new Date().getTime();
 //        final CountDownLatch signal = new CountDownLatch(1);
