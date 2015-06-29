@@ -131,12 +131,10 @@ namespace OC
          return result_guard(OC_STACK_ERROR);
         }
 
-        std::string payload(pResponse->getResourceRepresentation().getJSONRepresentation());
-
         return result_guard(
                    OCNotifyListOfObservers(resourceHandle,
                             &observationIds[0], observationIds.size(),
-                            payload.c_str(),
+                            pResponse->getResourceRepresentation().getPayload(),
                             static_cast<OCQualityOfService>(QoS)));
     }
 

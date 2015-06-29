@@ -72,6 +72,21 @@ OCRepPayload* OCRepPayloadCreate()
     return payload;
 }
 
+void OCRepPayloadAppend(OCRepPayload* parent, OCRepPayload* child)
+{
+    if(!parent)
+    {
+        return;
+    }
+
+    while(parent->next)
+    {
+        parent = parent->next;
+    }
+
+    parent->next= child;
+}
+
 OCRepPayloadValue* OCRepPayloadFindValue(OCRepPayload* payload, const char* name)
 {
     if(!payload || !name)
@@ -132,9 +147,14 @@ OCRepPayloadValue* OCRepPayloadFindAndSetValue(OCRepPayload* payload, const char
     return NULL;
 }
 
+bool OCRepPayloadAddResourceType(OCRepPayload* payload, const char* resourceType)
+{
+    return OCRepPayloadAddResourceTypeAsOwner(payload, OICStrdup(resourceType));
+}
+
 bool OCRepPayloadAddResourceTypeAsOwner(OCRepPayload* payload, char* resourceType)
 {
-    if(!payload)
+    if(!payload || !resourceType)
     {
         return false;
     }
@@ -168,9 +188,14 @@ bool OCRepPayloadAddResourceTypeAsOwner(OCRepPayload* payload, char* resourceTyp
     }
 }
 
+bool OCRepPayloadAddInterface(OCRepPayload* payload, const char* interface)
+{
+    return OCRepPayloadAddInterfaceAsOwner(payload, OICStrdup(interface));
+}
+
 bool OCRepPayloadAddInterfaceAsOwner(OCRepPayload* payload, char* interface)
 {
-    if(!payload)
+    if(!payload || !interface)
     {
         return false;
     }

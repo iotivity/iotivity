@@ -37,37 +37,10 @@ typedef struct rsrc_t OCResource;
     #define OC_LOG_PAYLOAD(level, tag, payload) OCPayloadLog((level),(tag),(payload))
     #define UUID_SIZE (16)
     #define UUID_LENGTH (37)
-const char *convertTriggerEnumToString(OCPresenceTrigger trigger)
-{
-    if (trigger == OC_PRESENCE_TRIGGER_CREATE)
-    {
-        return OC_RSRVD_TRIGGER_CREATE;
-    }
-    else if (trigger == OC_PRESENCE_TRIGGER_CHANGE)
-    {
-        return OC_RSRVD_TRIGGER_CHANGE;
-    }
-    else
-    {
-        return OC_RSRVD_TRIGGER_DELETE;
-    }
-}
-OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr)
-{
-    if(strcmp(triggerStr, OC_RSRVD_TRIGGER_CREATE) == 0)
-    {
-        return OC_PRESENCE_TRIGGER_CREATE;
-    }
-    else if(strcmp(triggerStr, OC_RSRVD_TRIGGER_CHANGE) == 0)
-    {
-        return OC_PRESENCE_TRIGGER_CHANGE;
-    }
-    else
-    {
-        return OC_PRESENCE_TRIGGER_DELETE;
-    }
-}
-void OCPayloadLogRep(LogLevel level, const char* tag, OCRepPayload* payload)
+const char *convertTriggerEnumToString(OCPresenceTrigger trigger);
+OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr);
+
+static inline void OCPayloadLogRep(LogLevel level, const char* tag, OCRepPayload* payload)
 {
     OC_LOG(level, tag, PCF("Payload Type: Representation"));
     OCRepPayload* rep = payload;
@@ -122,7 +95,7 @@ void OCPayloadLogRep(LogLevel level, const char* tag, OCRepPayload* payload)
 
 }
 
-void OCPayloadLogDiscovery(LogLevel level, const char* tag, OCDiscoveryPayload* payload)
+static inline void OCPayloadLogDiscovery(LogLevel level, const char* tag, OCDiscoveryPayload* payload)
 {
     OC_LOG(level, tag, PCF("Payload Type: Discovery"));
     int i = 1;
@@ -164,7 +137,7 @@ void OCPayloadLogDiscovery(LogLevel level, const char* tag, OCDiscoveryPayload* 
     }
 }
 
-void OCPayloadLogDevice(LogLevel level, const char* tag, OCDevicePayload* payload)
+static inline void OCPayloadLogDevice(LogLevel level, const char* tag, OCDevicePayload* payload)
 {
     OC_LOG(level, tag, PCF("Payload Type: Device"));
     OC_LOG_V(level, tag, "\tURI:%s", payload->uri);
@@ -175,7 +148,7 @@ void OCPayloadLogDevice(LogLevel level, const char* tag, OCDevicePayload* payloa
     OC_LOG_V(level, tag, "\tData Model Version:%s", payload->dataModelVersion);
 }
 
-void OCPayloadLogPlatform(LogLevel level, const char* tag, OCPlatformPayload* payload)
+static inline void OCPayloadLogPlatform(LogLevel level, const char* tag, OCPlatformPayload* payload)
 {
     OC_LOG(level, tag, PCF("Payload Type: Platform"));
     OC_LOG_V(level, tag, "\tURI:%s", payload->uri);
@@ -192,7 +165,7 @@ void OCPayloadLogPlatform(LogLevel level, const char* tag, OCPlatformPayload* pa
     OC_LOG_V(level, tag, "\tSystem Time:%s", payload->info.systemTime);
 }
 
-void OCPayloadLogPresence(LogLevel level, const char* tag, OCPresencePayload* payload)
+static inline void OCPayloadLogPresence(LogLevel level, const char* tag, OCPresencePayload* payload)
 {
     OC_LOG(level, tag, PCF("Payload Type: Presence"));
     OC_LOG_V(level, tag, "\tSequence Number:%d", payload->sequenceNumber);
@@ -201,7 +174,7 @@ void OCPayloadLogPresence(LogLevel level, const char* tag, OCPresencePayload* pa
     OC_LOG_V(level, tag, "\tResource Type:%s", payload->resourceType);
 }
 
-void OCPayloadLog(LogLevel level, const char* tag, OCPayload* payload)
+static inline void OCPayloadLog(LogLevel level, const char* tag, OCPayload* payload)
 {
     if(!payload)
     {
@@ -238,10 +211,12 @@ void OCPayloadDestroy(OCPayload* payload);
 // Representation Payload
 OCRepPayload* OCRepPayloadCreate();
 
-bool OCRepPayloadSetUri(OCRepPayload* payload, const char*  uri);
+void OCRepPayloadAppend(OCRepPayload* parent, OCRepPayload* child);
 
-bool OCRepPayloadAddResourceType(OCRepPayload* payload, char* resourceType);
-bool OCRepPayloadAddInterface(OCRepPayload* payload, char* interface);
+bool OCRepPayloadSetUri(OCRepPayload* payload, const char* uri);
+
+bool OCRepPayloadAddResourceType(OCRepPayload* payload, const char* resourceType);
+bool OCRepPayloadAddInterface(OCRepPayload* payload, const char* interface);
 bool OCRepPayloadAddResourceTypeAsOwner(OCRepPayload* payload, char* resourceType);
 bool OCRepPayloadAddInterfaceAsOwner(OCRepPayload* payload, char* interface);
 

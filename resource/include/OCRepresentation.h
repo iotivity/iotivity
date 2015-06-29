@@ -43,11 +43,6 @@
 
 #include <OCException.h>
 
-namespace cereal
-{
-    class access;
-}
-
 namespace OC
 {
 
@@ -62,24 +57,12 @@ namespace OC
         DefaultChild
     };
 
-    // The consumer requires resource info to be printed in 2 different ways, both with the "oc":[]
-    // and without.  This enum is used to differentiate between the two situations.  When the
-    // serialize is called with Include OC, we encode OC, otherwise we skip it and return just the
-    // contents of the array.
-    enum class OCInfoFormat
-    {
-        IncludeOC,
-        ExcludeOC
-    };
-
     class MessageContainer
     {
         public:
-            void setJSONRepresentation(const std::string& payload);
+            void setPayload(const OCRepPayload* rep);
 
-            void setJSONRepresentation(const char* payload);
-
-            std::string getJSONRepresentation(OCInfoFormat f) const;
+            OCRepPayload* getPayload() const;
 
             const std::vector<OCRepresentation>& representations() const;
 
@@ -119,7 +102,7 @@ namespace OC
 
             virtual ~OCRepresentation(){}
 
-            std::string getJSONRepresentation() const;
+            OCRepPayload* getPayload() const;
 
             void addChild(const OCRepresentation&);
 
@@ -137,9 +120,13 @@ namespace OC
 
             void setResourceTypes(const std::vector<std::string>& resourceTypes);
 
+            void addResourceType(const std::string& str);
+
             const std::vector<std::string>& getResourceInterfaces() const;
 
             void setResourceInterfaces(const std::vector<std::string>& resourceInterfaces);
+
+            void addResourceInterface(const std::string& str);
 
             bool emptyData() const;
 
@@ -389,7 +376,6 @@ namespace OC
             const AttributeItem operator[](const std::string& key) const;
         private:
             friend class OCResourceResponse;
-            friend class cereal::access;
 
             // the root node has a slightly different JSON version
             // based on the interface type configured in ResourceResponse.
@@ -415,25 +401,9 @@ namespace OC
                     m_interfaces(interfaces)
                     {}*/
                 private:
-                    friend class cereal::access;
-                    template <class Archive>
-                    void save(Archive& ar) const;
-
-                    template<class Archive>
-                    void load(Archive& ar);
-
                     std::vector<std::string>& m_types;
                     std::vector<std::string>& m_interfaces;
             };
-            template<class Archive, class Val>
-            static void optional_load(Archive& ar, Val&& v);
-
-            template<class Archive>
-            void save(Archive& ar) const;
-
-            template<class Archive>
-            void load(Archive& ar);
-
         private:
             std::string m_uri;
             std::vector<OCRepresentation> m_children;

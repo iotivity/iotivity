@@ -18,15 +18,64 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include <cereal/cereal.hpp>
-#include <cereal/types/memory.hpp>
-#include <cereal/types/vector.hpp>
-#include <cereal/archives/json.hpp>
-
 #include <StringConstants.h>
+#include "ocpayload.h"
+#include "ocrandom.h"
 
 namespace OC
 {
+    class ListenOCContainer
+    {
+        private:
+            static std::vector<std::string> StringLLToVector(OCStringLL* ll)
+            {
+                std::vector<std::string> strs;
+                while(ll)
+                {
+                    strs.push_back(ll->value);
+                    ll = ll->next;
+                }
+                return strs;
+            }
+
+        public:
+            ListenOCContainer(std::weak_ptr<IClientWrapper> cw,
+                    const OCDevAddr& devAddr, OCDiscoveryPayload* payload)
+                    : m_clientWrapper(cw), m_devAddr(devAddr)
+            {
+                OCResourcePayload* res = payload->resources;
+
+                while(res)
+                {
+                    char uuidString[UUID_STRING_SIZE];
+                    if(OCConvertUuidToString(res->sid, uuidString) != RAND_UUID_OK)
+                    {
+                        uuidString[0]= '\0';
+                    }
+
+                    m_resources.push_back(std::shared_ptr<OC::OCResource>(
+                                new OC::OCResource(m_clientWrapper, m_devAddr,
+                                    std::string(res->uri),
+                                    std::string(uuidString),
+                                    (res->bitmap & OC_OBSERVABLE) == OC_OBSERVABLE,
+                                    StringLLToVector(res->types),
+                                    StringLLToVector(res->interfaces)
+                                    )));
+                    res = res->next;
+                }
+
+            }
+
+            const std::vector<std::shared_ptr<OCResource>>& Resources() const
+            {
+                return m_resources;
+            }
+        private:
+            std::vector<std::shared_ptr<OC::OCResource>> m_resources;
+            std::weak_ptr<IClientWrapper> m_clientWrapper;
+            const OCDevAddr& m_devAddr;
+    };
+    /*
     class ListenOCContainer
     {
         private:
@@ -218,7 +267,6 @@ namespace OC
                     const OCDevAddr& devAddr, std::stringstream& json)
                     : m_clientWrapper(cw), m_devAddr(devAddr)
             {
-                std::cout << "ERICH: IP is "<<ConvertOCAddrToString(OCSecureType::IPv4, 5)<<std::endl;
                 LoadFromJson(json);
             }
 
@@ -257,8 +305,6 @@ namespace OC
                     }
                 }
             }
-            std::vector<std::shared_ptr<OC::OCResource>> m_resources;
-            std::weak_ptr<IClientWrapper> m_clientWrapper;
-            const OCDevAddr& m_devAddr;
     };
+*/
 }

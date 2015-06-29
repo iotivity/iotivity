@@ -492,8 +492,8 @@ OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
 
             case STACK_IF_GROUP:
             {
-                OC_LOG_V(INFO, TAG, "IF_COLLECTION PUT with request ::\n%s\n ",
-                        OC_LOG_PAYLOAD(ehRequest->payload));
+                OC_LOG(INFO, TAG, PCF("IF_COLLECTION PUT with request ::\n"));
+                OC_LOG_PAYLOAD(INFO, TAG, ehRequest->payload);
                 return BuildCollectionGroupActionJSONResponse(OC_REST_PUT/*flag*/,
                         (OCResource *) ehRequest->resource, ehRequest);
             }
@@ -508,8 +508,8 @@ OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
         {
             case STACK_IF_GROUP:
             {
-                OC_LOG_V(INFO, TAG, "IF_COLLECTION POST with request :: \n%s\n ",
-                        OC_LOG_PAYLOAD(ehRequest->payload));
+                OC_LOG(INFO, TAG, PCF("IF_COLLECTION POST with request ::\n"));
+                OC_LOG_PAYLOAD(INFO, TAG, ehRequest->payload);
                 return BuildCollectionGroupActionJSONResponse(OC_REST_POST/*flag*/,
                         (OCResource *) ehRequest->resource, ehRequest);
             }
@@ -522,8 +522,8 @@ OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
 
         if(ifQueryParam == STACK_IF_GROUP)
         {
-            OC_LOG_V(INFO, TAG, "IF_COLLECTION POST with request :: \n%s\n ",
-                    OC_LOG_PAYLOAD(ehRequest->payload));
+            OC_LOG(INFO, TAG, PCF("IF_COLLECTION POST with request ::\n"));
+            OC_LOG_PAYLOAD(INFO, TAG, ehRequest->payload);
             return BuildCollectionGroupActionJSONResponse(OC_REST_POST/*flag*/,
                     (OCResource *) ehRequest->resource, ehRequest);
         }

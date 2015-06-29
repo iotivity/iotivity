@@ -588,8 +588,6 @@ typedef struct oc_rep_payload_t
     struct oc_rep_payload_t* next;
 } OCRepPayload;
 
-typedef struct rsrc_t OCResource;
-
 // used inside a discovery payload
 typedef struct oc_res_payload_t
 {

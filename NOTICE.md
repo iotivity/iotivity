@@ -40,20 +40,13 @@ license can be found at
 The original software is available from
   http://sourceforge.net/projects/boost/files/boost
 
-JSON serialization is provided by the cereal package,
-which is open source software, written by Philip Hazel, and copyright
-by the University of Cambridge, England. The original software is
-available from
-  ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/
-
+CBOR serialization is provided by the tinycbor package,
+which is open source software, written by Thiago Macieira and is
+copyright by the Intel Corporation.  The original software is available
+from
+  https://github.com/01org/tinycbor/
 JSON serialization is provided by the cjson package,
 which is open source software, written and copyright by Dave Gamble
 with an MIT license. The original software is available from
   http://sourceforge.net/projects/cjson/
-
-JSON serialization is provided by the rapidjson package,
-which is open source software, written and copyright by Milo Yip
-with an MIT license. The original software is available from
-  http://code.google.com/p/rapidjson/
-
 

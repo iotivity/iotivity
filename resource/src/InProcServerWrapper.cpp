@@ -104,14 +104,12 @@ void formResourceRequest(OCEntityHandlerFlag flag,
             else if(OC_REST_PUT == entityHandlerRequest->method)
             {
                 pRequest->setRequestType(OC::PlatformCommands::PUT);
-                pRequest->setPayload(std::string(reinterpret_cast<const char*>
-                                            (entityHandlerRequest->reqJSONPayload)));
+                pRequest->setPayload(entityHandlerRequest->payload);
             }
             else if(OC_REST_POST == entityHandlerRequest->method)
             {
                 pRequest->setRequestType(OC::PlatformCommands::POST);
-                pRequest->setPayload(std::string(reinterpret_cast<const char*>
-                                            (entityHandlerRequest->reqJSONPayload)));
+                pRequest->setPayload(entityHandlerRequest->payload);
             }
             else if(OC_REST_DELETE == entityHandlerRequest->method)
             {
@@ -140,7 +138,6 @@ OCEntityHandlerResult DefaultEntityHandlerWrapper(OCEntityHandlerFlag flag,
                                                   char* uri,
                                                   void * callbackParam)
 {
-    std::cout << "ERICH: Def Entity Handler: "<< entityHandlerRequest->reqJSONPayload<<std::endl;
     OCEntityHandlerResult result = OC_EH_ERROR;
 
     OC::oclog() << "In Default device entity handler wrapper";
@@ -181,7 +178,6 @@ OCEntityHandlerResult EntityHandlerWrapper(OCEntityHandlerFlag flag,
                                            OCEntityHandlerRequest * entityHandlerRequest,
                                            void* callbackParam)
 {
-    std::cout << "ERICH: Entity Handler: "<< entityHandlerRequest->reqJSONPayload<<std::endl;
     OCEntityHandlerResult result = OC_EH_ERROR;
 
     oclog() << "\nIn entity handler wrapper: " << endl;
@@ -534,24 +530,15 @@ namespace OC
         else
         {
             OCEntityHandlerResponse response;
-            std::string payLoad = pResponse->getPayload();
+//            OCRepPayload* payLoad = pResponse->getPayload();
             HeaderOptions serverHeaderOptions = pResponse->getHeaderOptions();
 
             response.requestHandle = pResponse->getRequestHandle();
             response.resourceHandle = pResponse->getResourceHandle();
             response.ehResult = pResponse->getResponseResult();
 
-            response.payload = static_cast<char*>(OICMalloc(payLoad.length() + 1));
-            if(!response.payload)
-            {
-                result = OC_STACK_NO_MEMORY;
-                throw OCException(OC::Exception::NO_MEMORY, OC_STACK_NO_MEMORY);
-            }
+            response.payload = reinterpret_cast<OCPayload*>(pResponse->getPayload());
 
-            payLoad.copy(response.payload, payLoad.length());
-            response.payload[payLoad.length()] = '\0';
-            response.payloadSize = payLoad.length() + 1;
-            std::cout << "ERICH: sendResponse: "<<response.payloadSize << "  "<< response.payload << std::endl;
             response.persistentBufferFlag = 0;
 
             response.numSendVendorSpecificHeaderOptions = serverHeaderOptions.size();
