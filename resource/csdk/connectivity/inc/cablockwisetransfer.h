@@ -71,6 +71,7 @@ typedef struct
     CAData_t *sentData;                 /**< sent request or response data information */
     CAPayload_t payload;                /**< payload buffer  */
     uint32_t payloadLength;             /**< the total payload length to be received  */
+    uint32_t receivedPayloadLen;        /**< currently received payload length  */
 } CABlockData_t;
 
 /**
@@ -389,9 +390,11 @@ CAData_t *CACloneCAData(const CAData_t *data);
  * @brief   Update payload from the input information
  * @param   data                [IN]    CAData information that needs to be updated
  * @param   payload             [IN]    received new payload from the remote endpoint
+ * @param   payloadLen          [IN]    received full payload length
  * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAUpdatePayloadToCAData(CAData_t *data, const CAPayload_t payload);
+CAResult_t CAUpdatePayloadToCAData(CAData_t *data, const CAPayload_t payload,
+                                   uint32_t payloadLen);
 
 /**
  * @brief   Get payload and payload length from the input information
@@ -459,9 +462,10 @@ coap_block_t *CAGetBlockOption(const unsigned char* token);
 /**
  * @brief   Get the full payload from block-wise list
  * @param   token               [IN] token of current message
+ * @param   fullPayloadLen      [OUT] received full payload length
  * @return  payload
  */
-CAPayload_t CAGetPayloadFromBlockDataList(const unsigned char* token);
+CAPayload_t CAGetPayloadFromBlockDataList(const unsigned char* token, uint32_t *fullPayloadLen);
 
 /**
  * @brief   Create the block data from given data and add the data in block-wise transfer list

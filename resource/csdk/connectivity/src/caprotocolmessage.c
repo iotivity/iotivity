@@ -187,8 +187,8 @@ coap_pdu_t *CAGeneratePDU(const char *uri, uint32_t code, const CAInfo_t info)
             coap_delete_list(optlist);
             return NULL;
         }
-        size_t lenPayload = info.payload ? strlen(info.payload) : 0;
-        pdu = CAGeneratePDUImpl((code_t) code, optlist, info, info.payload, lenPayload);
+
+        pdu = CAGeneratePDUImpl((code_t) code, optlist, info, info.payload, info.payloadSize);
         if (NULL == pdu)
         {
             OIC_LOG(ERROR, TAG, "pdu NULL");
@@ -715,11 +715,11 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *
     outInfo->tokenLength = pdu->hdr->token_length;
 
     // set payload data
-    if (NULL != pdu->data)
+    size_t payloadLength;
+    if (coap_get_data(pdu, &payloadLength, (unsigned char **)&outInfo->payload))
     {
-        uint32_t payloadLength = strlen((char*) pdu->data);
         OIC_LOG(DEBUG, TAG, "inside pdu->data");
-        outInfo->payload = (char *) OICMalloc(payloadLength + 1);
+        outInfo->payload = (char *) OICMalloc(payloadLength);
         if (NULL == outInfo->payload)
         {
             OIC_LOG(ERROR, TAG, "Out of memory");
@@ -728,7 +728,7 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *
             return CA_MEMORY_ALLOC_FAILED;
         }
         memcpy(outInfo->payload, pdu->data, payloadLength);
-        outInfo->payload[payloadLength] = '\0';
+        outInfo->payloadSize = payloadLength;
     }
 
     uint32_t length = strlen(optionResult);

@@ -557,6 +557,7 @@ void send_request()
             return;
         }
         snprintf(requestData.payload, length, SECURE_INFO_DATA, resourceURI, g_local_secure_port);
+        requestData.payloadSize = length;
     }
     else
     {
@@ -570,6 +571,7 @@ void send_request()
             return;
         }
         snprintf(requestData.payload, length, NORMAL_INFO_DATA, resourceURI);
+        requestData.payloadSize = length;
     }
     requestData.type = msgType;
 
@@ -1330,6 +1332,7 @@ void send_response(const CARemoteEndpoint_t *endpoint, const CAInfo_t *info)
             }
             snprintf(responseData.payload, length, SECURE_INFO_DATA, endpoint->resourceUri,
                      g_local_secure_port);
+            responseData.payloadSize = length;
         }
         else
         {
@@ -1343,6 +1346,7 @@ void send_response(const CARemoteEndpoint_t *endpoint, const CAInfo_t *info)
                 return;
             }
             snprintf(responseData.payload, length, NORMAL_INFO_DATA, endpoint->resourceUri);
+            responseData.payloadSize = length;
         }
     }
 

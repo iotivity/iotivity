@@ -601,10 +601,11 @@ CAResult_t CAReceiveLastBlock(const coap_pdu_t *pdu, CAData_t *receivedData)
     }
 
     // update payload
-    CAPayload_t fullPayload = CAGetPayloadFromBlockDataList(pdu->hdr->token);
+    uint32_t fullPayloadLen = 0;
+    CAPayload_t fullPayload = CAGetPayloadFromBlockDataList(pdu->hdr->token, &fullPayloadLen);
     if (NULL != fullPayload)
     {
-        CAResult_t res = CAUpdatePayloadToCAData(cloneData, fullPayload);
+        CAResult_t res = CAUpdatePayloadToCAData(cloneData, fullPayload, fullPayloadLen);
         if (CA_STATUS_OK != res)
         {
             OIC_LOG(ERROR, TAG, "update has failed");
@@ -1165,7 +1166,7 @@ CAResult_t CAAddBlockOption(coap_pdu_t **pdu, CAInfo_t info)
     uint32_t dataLength = 0;
     if (info.payload)
     {
-        dataLength = strlen(info.payload);
+        dataLength = info.payloadSize;
         OIC_LOG_V(DEBUG, TAG, "dataLength - %d", dataLength);
     }
 
@@ -1522,7 +1523,7 @@ uint8_t CACheckBlockErrorType(CABlockData_t *currData, coap_block_t *receivedBlo
     // #2. check if the block sequence is right
     if (COAP_OPTION_BLOCK1 == blockType)
     {
-        uint32_t prePayloadLen = (NULL != currData->payload) ? strlen(currData->payload) : 0;
+        uint32_t prePayloadLen = currData->receivedPayloadLen;
         if (prePayloadLen != BLOCK_SIZE(receivedBlock->szx) * receivedBlock->num)
         {
             if (receivedBlock->num > currData->block.num + 1)
@@ -1584,11 +1585,7 @@ uint8_t CACheckBlockErrorType(CABlockData_t *currData, coap_block_t *receivedBlo
     else if (0 == receivedBlock->m && 0 != currData->payloadLength)
     {
         // if the received block is last block, check the total payload length
-        uint32_t receivedPayloadLen = 0;
-        if (NULL != currData->payload)
-        {
-            receivedPayloadLen = strlen(currData->payload);
-        }
+        uint32_t receivedPayloadLen = currData->receivedPayloadLen;
         receivedPayloadLen += blockPayloadLen;
 
         if (receivedPayloadLen != currData->payloadLength)
@@ -1629,15 +1626,8 @@ CAResult_t CAUpdatePayloadData(CABlockData_t *currData, CAData_t *receivedData,
         blockPayloadLen = BLOCK_SIZE(currData->block.szx);
     }
 
-    uint32_t prePayloadLen = 0;
-    if (NULL != currData->payload)
-    {
-        prePayloadLen = strlen(currData->payload);
-        OIC_LOG_V(DEBUG, TAG, "prev payload: %s, len:%d", currData->payload,
-                  strlen(currData->payload));
-    }
-
     // memory allocation for the received block payload
+    uint32_t prePayloadLen = currData->receivedPayloadLen;
     if (NULL != blockPayload)
     {
         if (0 != currData->payloadLength)
@@ -1656,12 +1646,12 @@ CAResult_t CAUpdatePayloadData(CABlockData_t *currData, CAData_t *receivedData,
                     OIC_LOG(ERROR, TAG, "out of memory");
                     return CA_MEMORY_ALLOC_FAILED;
                 }
-                strncpy(currData->payload, prePayload, prePayloadLen);
+                memcpy(currData->payload, prePayload, prePayloadLen);
                 OICFree(prePayload);
             }
 
             // update the total payload
-            strncat(currData->payload, blockPayload, blockPayloadLen);
+            memcpy(currData->payload + prePayloadLen, blockPayload, blockPayloadLen);
         }
         else
         {
@@ -1678,11 +1668,14 @@ CAResult_t CAUpdatePayloadData(CABlockData_t *currData, CAData_t *receivedData,
             // update the total payload
             memset(newPayload + prePayloadLen, 0, blockPayloadLen + 1);
             currData->payload = newPayload;
-            strncat(currData->payload, blockPayload, blockPayloadLen);
+            memcpy(currData->payload + prePayloadLen, blockPayload, blockPayloadLen);
         }
 
+        // update received payload length
+        currData->receivedPayloadLen += blockPayloadLen;
+
         OIC_LOG_V(DEBUG, TAG, "updated payload: %s, len: %d", currData->payload,
-                  strlen(currData->payload));
+                  currData->receivedPayloadLen);
     }
 
     OIC_LOG(DEBUG, TAG, "OUT-UpdatePayloadData");
@@ -1769,7 +1762,8 @@ CAData_t *CACloneCAData(const CAData_t *data)
     return clone;
 }
 
-CAResult_t CAUpdatePayloadToCAData(CAData_t *data, const CAPayload_t payload)
+CAResult_t CAUpdatePayloadToCAData(CAData_t *data, const CAPayload_t payload,
+                                   uint32_t payloadLen)
 {
     OIC_LOG(DEBUG, TAG, "IN-UpdatePayload");
 
@@ -1781,20 +1775,19 @@ CAResult_t CAUpdatePayloadToCAData(CAData_t *data, const CAPayload_t payload)
         // allocate payload field
         if (NULL != data->requestInfo->info.payload)
         {
-            int32_t len = strlen(payload);
-
-            char *temp = (char *) OICCalloc(len + 1, sizeof(char));
+            char *temp = (char *) OICCalloc(payloadLen + 1, sizeof(char));
             if (NULL == temp)
             {
                 OIC_LOG(ERROR, TAG, "out of memory");
                 return CA_STATUS_FAILED;
             }
-            strncpy(temp, payload, len);
+            memcpy(temp, payload, payloadLen);
 
             // save the full payload
             OICFree(data->requestInfo->info.payload);
             data->requestInfo->info.payload = temp;
         }
+        data->requestInfo->info.payloadSize = payloadLen;
     }
 
     if (NULL != data->responseInfo)
@@ -1802,20 +1795,19 @@ CAResult_t CAUpdatePayloadToCAData(CAData_t *data, const CAPayload_t payload)
         // allocate payload field
         if (NULL != data->responseInfo->info.payload)
         {
-            int32_t len = strlen(payload);
-
-            char *temp = (char *) OICCalloc(len + 1, sizeof(char));
+            char *temp = (char *) OICCalloc(payloadLen + 1, sizeof(char));
             if (NULL == temp)
             {
                 OIC_LOG(ERROR, TAG, "out of memory");
                 return CA_STATUS_FAILED;
             }
-            strncpy(temp, payload, len);
+            memcpy(temp, payload, payloadLen);
 
             // save the full payload
             OICFree(data->responseInfo->info.payload);
             data->responseInfo->info.payload = temp;
         }
+        data->responseInfo->info.payloadSize = payloadLen;
     }
 
     OIC_LOG(DEBUG, TAG, "OUT-UpdatePayload");
@@ -1831,7 +1823,7 @@ CAPayload_t CAGetPayloadInfo(CAData_t *data, uint32_t *payloadLen)
     {
         if (NULL != data->requestInfo->info.payload)
         {
-            *payloadLen = strlen(data->requestInfo->info.payload);
+            *payloadLen = data->requestInfo->info.payloadSize;
             return data->requestInfo->info.payload;
         }
     }
@@ -1839,7 +1831,7 @@ CAPayload_t CAGetPayloadInfo(CAData_t *data, uint32_t *payloadLen)
     {
         if (NULL != data->responseInfo->info.payload)
         {
-            *payloadLen = strlen(data->responseInfo->info.payload);
+            *payloadLen = data->responseInfo->info.payloadSize;
             return data->responseInfo->info.payload;
         }
     }
@@ -2136,7 +2128,7 @@ coap_block_t *CAGetBlockOption(const unsigned char* token)
     return NULL;
 }
 
-CAPayload_t CAGetPayloadFromBlockDataList(const unsigned char* token)
+CAPayload_t CAGetPayloadFromBlockDataList(const unsigned char* token, uint32_t *fullPayloadLen)
 {
     OIC_LOG(DEBUG, TAG, "IN-GetFullPayload");
     VERIFY_NON_NULL_RET(token, TAG, "token", NULL);
@@ -2157,6 +2149,7 @@ CAPayload_t CAGetPayloadFromBlockDataList(const unsigned char* token)
         if (!strncmp(currData->token, (const char *) token, currData->tokenLength))
         {
             ca_mutex_unlock(g_blockDataListMutex);
+            *fullPayloadLen = currData->receivedPayloadLen;
             return currData->payload;
         }
     }
@@ -2186,6 +2179,7 @@ CABlockData_t *CACreateNewBlockData(CAData_t *sendData)
     data->sentData = sendData;
     data->payload = NULL;
     data->payloadLength = 0;
+    data->receivedPayloadLen = 0;
 
     if (data->sentData->requestInfo)
     {

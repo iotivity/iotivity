@@ -74,7 +74,7 @@ extern "C"
 #define COAP_MAX_PDU_SIZE           1400 /* maximum size of a CoAP PDU for big platforms*/
 #endif
 
-#define CA_DEFAULT_BLOCK_SIZE       CA_BLOCK_SIZE_1_KBYTE
+#define CA_DEFAULT_BLOCK_SIZE       CA_BLOCK_SIZE_16_BYTE
 
 /**
  *@brief Maximum length of the remoteEndpoint identity
@@ -350,6 +350,7 @@ typedef struct
     CAHeaderOption_t *options;  /** Header Options for the request */
     uint8_t numOptions;         /**< Number of Header options */
     CAPayload_t payload;        /**< payload of the request  */
+    uint32_t payloadSize;     /**< payload length*/
 } CAInfo_t;
 
 /**

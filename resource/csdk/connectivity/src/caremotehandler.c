@@ -363,9 +363,7 @@ CARequestInfo_t *CACloneRequestInfo(const CARequestInfo_t *rep)
     if (NULL != rep->info.payload)
     {
         // allocate payload field
-        size_t len = strlen(rep->info.payload);
-
-        char *temp = (char *) OICMalloc(sizeof(char) * (len + 1));
+        char *temp = (char *) OICMalloc(rep->info.payloadSize);
         if (NULL == temp)
         {
             OIC_LOG(ERROR, TAG, "CACloneRequestInfo Out of memory");
@@ -374,8 +372,7 @@ CARequestInfo_t *CACloneRequestInfo(const CARequestInfo_t *rep)
 
             return NULL;
         }
-        strncpy(temp, rep->info.payload, len);
-        temp[len] = '\0';
+        memcpy(temp, rep->info.payload, rep->info.payloadSize);
 
         // save the payload
         clone->info.payload = temp;
@@ -477,9 +474,7 @@ CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *rep)
     if (NULL != rep->info.payload)
     {
         // allocate payload field
-        int32_t len = strlen(rep->info.payload);
-
-        char *temp = (char *) OICCalloc(len + 1, sizeof(char));
+        char *temp = (char *) OICCalloc(rep->info.payloadSize, sizeof(char));
         if (NULL == temp)
         {
             OIC_LOG(ERROR, TAG, "CACloneResponseInfo Out of memory");
@@ -488,7 +483,7 @@ CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *rep)
 
             return NULL;
         }
-        strncpy(temp, rep->info.payload, len);
+        memcpy(temp, rep->info.payload, rep->info.payloadSize);
 
         // save the payload
         clone->info.payload = temp;
