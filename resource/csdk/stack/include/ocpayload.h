@@ -36,6 +36,7 @@ typedef struct rsrc_t OCResource;
 #ifdef TB_LOG
     #define OC_LOG_PAYLOAD(level, tag, payload) OCPayloadLog((level),(tag),(payload))
     #define UUID_SIZE (16)
+    #define UUID_LENGTH (37)
 const char *convertTriggerEnumToString(OCPresenceTrigger trigger)
 {
     if (trigger == OC_PRESENCE_TRIGGER_CREATE)

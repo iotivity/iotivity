@@ -24,11 +24,12 @@
 #include <unistd.h>
 #include <stdint.h>
 #include <sstream>
+#include <iostream>
 
 #include "ocstack.h"
 #include "logger.h"
 #include "occlientbasicops.h"
-#include "cJSON.h"
+#include "ocpayload.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 
@@ -40,7 +41,6 @@ static int UNICAST_DISCOVERY = 0;
 static int TEST_CASE = 0;
 
 static const char UNICAST_DISCOVERY_QUERY[] = "coap://%s:6298/oic/res";
-static std::string putPayload = "{\"oic\":[{\"rep\":{\"power\":15,\"state\":true}}]}";
 
 //The following variable determines the interface protocol (IP, etc)
 //to be used for sending unicast messages. Default set to IP.
@@ -59,6 +59,22 @@ void handleSigInt(int signum)
     {
         gQuitFlag = 1;
     }
+}
+
+OCPayload* putPayload()
+{
+    OCRepPayload* payload = OCRepPayloadCreate();
+
+    if(!payload)
+    {
+        std::cout << "Failed to create put payload object"<<std::endl;
+        std::exit(1);
+    }
+
+    OCRepPayloadSetPropInt(payload, "power", 15);
+    OCRepPayloadSetPropBool(payload, "state", true);
+
+    return (OCPayload*) payload;
 }
 
 static void PrintUsage()
@@ -94,7 +110,7 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query, OCMethod method,
     cbData.cd = NULL;
 
     ret = OCDoResource(NULL, method, query.str().c_str(), 0,
-        (method == OC_REST_PUT || method == OC_REST_POST) ? putPayload.c_str() : NULL,
+        (method == OC_REST_PUT || method == OC_REST_POST) ? putPayload() : NULL,
          connType, qos, &cbData, options, numOptions);
 
     if (ret != OC_STACK_OK)
@@ -120,8 +136,8 @@ OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle,
 
     if(clientResponse)
     {
-        OC_LOG_V(INFO, TAG,"PUT Response: %s \nFrom %s:%d\n",
-                 clientResponse->resJSONPayload, clientResponse->devAddr.addr, clientResponse->devAddr.port);
+        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+        OC_LOG(INFO, TAG, PCF("=============> Put Response"));
     }
     else
     {
@@ -144,8 +160,8 @@ OCStackApplicationResult postReqCB(void *ctx, OCDoHandle handle,
 
     if(clientResponse)
     {
-        OC_LOG_V(INFO, TAG,"POST Response: %s \nFrom %s:%d\n",
-                    clientResponse->resJSONPayload, clientResponse->devAddr.addr, clientResponse->devAddr.port);
+        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+        OC_LOG(INFO, TAG, PCF("=============> Post Response"));
     }
     else
     {
@@ -169,8 +185,10 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle,
 
     if (clientResponse)
     {
-        OC_LOG_V(INFO, TAG,"Get Response: %s \nFrom %s:%d\n",
-                clientResponse->resJSONPayload, clientResponse->devAddr.addr, clientResponse->devAddr.port);
+        OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
+        OC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
+        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+        OC_LOG(INFO, TAG, PCF("=============> Get Response"));
 
         if (clientResponse->rcvdVendorSpecificHeaderOptions
                 && clientResponse->numRcvdVendorSpecificHeaderOptions)
@@ -217,8 +235,10 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
     if (clientResponse)
     {
         OC_LOG_V(INFO, TAG,
-                "Device Discovered %s \n @ %s:%d\n",
-                clientResponse->resJSONPayload, clientResponse->devAddr.addr, clientResponse->devAddr.port);
+                "Device =============> Discovered @ %s:%d",
+                clientResponse->devAddr.addr,
+                clientResponse->devAddr.port);
+        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
 
         collectUniqueResource(clientResponse);
     }
@@ -395,99 +415,6 @@ const char *getPort(const OCClientResponse *clientResponse)
     return port;
 }
 
-int parseJSON(const char * resJSONPayload, char ** sid_c,
-              char *** uri_c, int * totalRes)
-{
-    cJSON * root = NULL;
-    cJSON * oc = NULL;
-
-    root = cJSON_Parse((char *)(resJSONPayload));
-
-    if (!root)
-    {
-        OC_LOG(ERROR, TAG, "JSON Parsing Error");
-        return OC_STACK_INVALID_JSON;
-    }
-
-    oc = cJSON_GetObjectItem(root,"oic");
-    if (!oc)
-    {
-        OC_LOG(ERROR, TAG, "Invalid JSON : Missing oc object");
-        return OC_STACK_INVALID_JSON;
-    }
-
-    * totalRes = cJSON_GetArraySize(oc);
-
-    if(oc->type == cJSON_Array)
-    {
-        cJSON * resource = cJSON_GetArrayItem(oc, 0);
-
-        if(!resource)
-        {
-            return OC_STACK_INVALID_JSON;
-        }
-
-        if (cJSON_GetObjectItem(resource, "sid"))
-        {
-            char * sid = cJSON_GetObjectItem(resource, "sid")->valuestring;
-            if((* sid_c = (char *)OICCalloc(1, strlen (sid) + 1)))
-            {
-                memcpy(* sid_c, sid, strlen(sid) + 1);
-            }
-            else
-            {
-                OC_LOG(ERROR, TAG, "Memory not allocated to sid");
-                return OC_STACK_NO_MEMORY;
-            }
-        }
-        else
-        {
-            OC_LOG(ERROR, TAG, "Invalid JSON : Missing sid object");
-            return OC_STACK_INVALID_JSON;
-        }
-
-        if(!(* uri_c =  (char ** )OICMalloc ((* totalRes) * sizeof(char *))))
-        {
-            OC_LOG(ERROR, TAG, "Memory not allocated to uri_c array");
-            return OC_STACK_NO_MEMORY;
-        }
-
-        int i = 0;
-
-        while(true)
-        {
-            if (cJSON_GetObjectItem(resource, "href"))
-            {
-                char *uri= cJSON_GetObjectItem(resource, "href")->valuestring;
-                if(((*uri_c)[i] = (char *)OICCalloc(1, strlen (uri) + 1)))
-                {
-                    memcpy((*uri_c)[i], uri, strlen(uri) + 1);
-                }
-                else
-                {
-                    OC_LOG(ERROR, TAG, "Memory not allocated to uri");
-                    return OC_STACK_NO_MEMORY;
-                }
-                i++;
-                if(i >= (* totalRes))
-                    break;
-                resource = cJSON_GetArrayItem(oc, i);
-            }
-            else
-            {
-               OC_LOG(ERROR, TAG, "Invalid JSON : Missing uri object");
-               return OC_STACK_INVALID_JSON;
-           }
-        }
-    }
-    else
-    {
-        return OC_STACK_INVALID_JSON;
-        OC_LOG(ERROR, TAG, "Invalid JSON : oc object type is not an array");
-    }
-    return OC_STACK_OK;
-}
-
 void queryResource()
 {
     printf("\n");
@@ -515,46 +442,38 @@ void queryResource()
 
 void collectUniqueResource(const OCClientResponse * clientResponse)
 {
-    char * sid = NULL;
-    char ** uri = NULL;
-    int totalRes = 0;
-    int i;
+    OCResourcePayload* res = ((OCDiscoveryPayload*)clientResponse->payload)->resources;
+    char sidStr[UUID_LENGTH];
 
-    if(parseJSON(clientResponse->resJSONPayload, & sid, & uri, &totalRes)
-            != OC_STACK_OK)
-    {
-        OC_LOG(ERROR, TAG, "Error while parsing JSON payload in OCClientResponse");
+    while(res) {
 
-        OICFree(sid);
-        for (i = 0; i < totalRes; i++)
+        int ret = snprintf(sidStr, UUID_LENGTH,
+                "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+                res->sid[0], res->sid[1], res->sid[2], res->sid[3],
+                res->sid[4], res->sid[5], res->sid[6], res->sid[7],
+                res->sid[8], res->sid[9], res->sid[10], res->sid[11],
+                res->sid[12], res->sid[13], res->sid[14], res->sid[15]
+                );
+
+        if (ret == UUID_LENGTH - 1)
         {
-            OICFree(uri[i]);
-        }
-        OICFree(uri);
-
-       return;
-    }
-
-    for(i = 0; i < totalRes; i++)
-    {
-        if(insertResource(sid, uri[i], clientResponse) == 1)
-        {
-            printf("%s%s%s%s\n",sid, ":", uri[i], " is new");
-            printResourceList();
-            queryResource();
+            if(insertResource(sidStr, res->uri, clientResponse) == 1)
+            {
+                OC_LOG_V(INFO,TAG,"%s%s%s%s\n",sidStr, ":", res->uri, " is new");
+                printResourceList();
+                queryResource();
+            }
+            else {
+                OC_LOG_V(INFO,TAG,"%s%s%s%s\n",sidStr, ":", res->uri, " is old");
+            }
         }
         else
         {
-            printf("%s%s%s%s\n\n",sid, ":", uri[i], " has been seen before");
+            OC_LOG(ERROR, TAG, "Could Not Retrieve the Server ID");
         }
-    }
 
-    OICFree(sid);
-    for (i = 0; i < totalRes; i++)
-    {
-        OICFree(uri[i]);
+        res = res->next;
     }
-    OICFree(uri);
 }
 
 /* This function searches for the resource(sid:uri) in the ResourceList.
