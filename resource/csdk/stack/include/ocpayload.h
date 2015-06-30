@@ -22,6 +22,7 @@
 #define OCPAYLOAD_H_
 
 #include <stdbool.h>
+#include <inttypes.h>
 #include "logger.h"
 #include "octypes.h"
 
@@ -34,7 +35,199 @@ typedef struct rsrc_t OCResource;
 
 #ifdef TB_LOG
     #define OC_LOG_PAYLOAD(level, tag, payload) OCPayloadLog((level),(tag),(payload))
-    void OCPayloadLog(LogLevel level, const char* tag, OCPayload* payload);
+    #define UUID_SIZE (16)
+const char *convertTriggerEnumToString(OCPresenceTrigger trigger)
+{
+    if (trigger == OC_PRESENCE_TRIGGER_CREATE)
+    {
+        return OC_RSRVD_TRIGGER_CREATE;
+    }
+    else if (trigger == OC_PRESENCE_TRIGGER_CHANGE)
+    {
+        return OC_RSRVD_TRIGGER_CHANGE;
+    }
+    else
+    {
+        return OC_RSRVD_TRIGGER_DELETE;
+    }
+}
+OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr)
+{
+    if(strcmp(triggerStr, OC_RSRVD_TRIGGER_CREATE) == 0)
+    {
+        return OC_PRESENCE_TRIGGER_CREATE;
+    }
+    else if(strcmp(triggerStr, OC_RSRVD_TRIGGER_CHANGE) == 0)
+    {
+        return OC_PRESENCE_TRIGGER_CHANGE;
+    }
+    else
+    {
+        return OC_PRESENCE_TRIGGER_DELETE;
+    }
+}
+void OCPayloadLogRep(LogLevel level, const char* tag, OCRepPayload* payload)
+{
+    OC_LOG(level, tag, PCF("Payload Type: Representation"));
+    OCRepPayload* rep = payload;
+    int i = 1;
+    while(rep)
+    {
+        OC_LOG_V(level, tag, "\tResource #%d", i);
+        OC_LOG_V(level, tag, "\tURL:%s", rep->uri);
+        OC_LOG(level, tag, PCF("\tResource Types:"));
+        OCStringLL* strll =  rep->types;
+        while(strll)
+        {
+            OC_LOG_V(level, tag, "\t\t%s", strll->value);
+            strll = strll->next;
+        }
+        OC_LOG(level, tag, PCF("\tInterfaces:"));
+        strll =  rep->interfaces;
+        while(strll)
+        {
+            OC_LOG_V(level, tag, "\t\t%s", strll->value);
+            strll = strll->next;
+        }
+
+        // TODO Finish Logging: Values
+        OCRepPayloadValue* val = rep->values;
+
+        OC_LOG(level, tag, PCF("\tValues:"));
+
+        while(val)
+        {
+            switch(val->type)
+            {
+                case OCREP_PROP_INT:
+                    OC_LOG_V(level, tag, "\t\t%s(int):%" PRId64, val->name, val->i);
+                    break;
+                case OCREP_PROP_BOOL:
+                    OC_LOG_V(level, tag, "\t\t%s(bool):%s", val->name, val->b ? "true" : "false");
+                    break;
+                case OCREP_PROP_STRING:
+                    OC_LOG_V(level, tag, "\t\t%s(string):%s", val->name, val->str);
+                    break;
+                default:
+                    OC_LOG_V(level, tag, "\t\t%s(unknown):%p", val->name, val->v);
+                    break;
+            }
+            val = val -> next;
+        }
+
+        ++i;
+        rep = rep->next;
+    }
+
+}
+
+void OCPayloadLogDiscovery(LogLevel level, const char* tag, OCDiscoveryPayload* payload)
+{
+    OC_LOG(level, tag, PCF("Payload Type: Discovery"));
+    int i = 1;
+
+    if(!payload->resources)
+    {
+        OC_LOG(level, tag, PCF("\tNO Resources"));
+        return;
+    }
+
+    OCResourcePayload* res = payload->resources;
+
+    while(res)
+    {
+        OC_LOG_V(level, tag, "\tResource #%d", i);
+        OC_LOG_V(level, tag, "\t\tURI:%s", res->uri);
+        OC_LOG(level, tag, PCF("\tSID:"));
+        OC_LOG_BUFFER(level, tag, res->sid, UUID_SIZE);
+        OC_LOG(level, tag, PCF("\tResource Types:"));
+        OCStringLL* strll =  res->types;
+        while(strll)
+        {
+            OC_LOG_V(level, tag, "\t\t%s", strll->value);
+            strll = strll->next;
+        }
+        OC_LOG(level, tag, PCF("\tInterfaces:"));
+        strll =  res->interfaces;
+        while(strll)
+        {
+            OC_LOG_V(level, tag, "\t\t%s", strll->value);
+            strll = strll->next;
+        }
+
+        OC_LOG_V(level, tag, "\tBitmap: %u", res->bitmap);
+        OC_LOG_V(level, tag, "\tSecure?: %s", res->secure ? "true" : "false");
+        OC_LOG_V(level, tag, "\tPort: %u", res->port);
+        res = res->next;
+        ++i;
+    }
+}
+
+void OCPayloadLogDevice(LogLevel level, const char* tag, OCDevicePayload* payload)
+{
+    OC_LOG(level, tag, PCF("Payload Type: Device"));
+    OC_LOG_V(level, tag, "\tURI:%s", payload->uri);
+    OC_LOG(level, tag, PCF("\tSID:"));
+    OC_LOG_BUFFER(level, tag, payload->sid, UUID_SIZE);
+    OC_LOG_V(level, tag, "\tDevice Name:%s", payload->deviceName);
+    OC_LOG_V(level, tag, "\tSpec Version%s", payload->specVersion);
+    OC_LOG_V(level, tag, "\tData Model Version:%s", payload->dataModelVersion);
+}
+
+void OCPayloadLogPlatform(LogLevel level, const char* tag, OCPlatformPayload* payload)
+{
+    OC_LOG(level, tag, PCF("Payload Type: Platform"));
+    OC_LOG_V(level, tag, "\tURI:%s", payload->uri);
+    OC_LOG_V(level, tag, "\tPlatform ID:%s", payload->info.platformID);
+    OC_LOG_V(level, tag, "\tMfg Name:%s", payload->info.manufacturerName);
+    OC_LOG_V(level, tag, "\tMfg URL:%s", payload->info.manufacturerUrl);
+    OC_LOG_V(level, tag, "\tModel Number:%s", payload->info.modelNumber);
+    OC_LOG_V(level, tag, "\tDate of Mfg:%s", payload->info.dateOfManufacture);
+    OC_LOG_V(level, tag, "\tPlatform Version:%s", payload->info.platformVersion);
+    OC_LOG_V(level, tag, "\tOS Version:%s", payload->info.operatingSystemVersion);
+    OC_LOG_V(level, tag, "\tHardware Version:%s", payload->info.hardwareVersion);
+    OC_LOG_V(level, tag, "\tFirmware Version:%s", payload->info.firmwareVersion);
+    OC_LOG_V(level, tag, "\tSupport URL:%s", payload->info.supportUrl);
+    OC_LOG_V(level, tag, "\tSystem Time:%s", payload->info.systemTime);
+}
+
+void OCPayloadLogPresence(LogLevel level, const char* tag, OCPresencePayload* payload)
+{
+    OC_LOG(level, tag, PCF("Payload Type: Presence"));
+    OC_LOG_V(level, tag, "\tSequence Number:%d", payload->sequenceNumber);
+    OC_LOG_V(level, tag, "\tMax Age:%d", payload->maxAge);
+    OC_LOG_V(level, tag, "\tTrigger:%s", convertTriggerEnumToString(payload->trigger));
+    OC_LOG_V(level, tag, "\tResource Type:%s", payload->resourceType);
+}
+
+void OCPayloadLog(LogLevel level, const char* tag, OCPayload* payload)
+{
+    if(!payload)
+    {
+        OC_LOG(level, tag, PCF("NULL Payload"));
+    }
+    switch(payload->type)
+    {
+        case PAYLOAD_TYPE_REPRESENTATION:
+            OCPayloadLogRep(level, tag, (OCRepPayload*)payload);
+            break;
+        case PAYLOAD_TYPE_DISCOVERY:
+            OCPayloadLogDiscovery(level, tag, (OCDiscoveryPayload*)payload);
+            break;
+        case PAYLOAD_TYPE_DEVICE:
+            OCPayloadLogDevice(level, tag, (OCDevicePayload*)payload);
+            break;
+        case PAYLOAD_TYPE_PLATFORM:
+            OCPayloadLogPlatform(level, tag, (OCPlatformPayload*)payload);
+            break;
+        case PAYLOAD_TYPE_PRESENCE:
+            OCPayloadLogPresence(level, tag, (OCPresencePayload*)payload);
+            break;
+        default:
+            OC_LOG_V(level, tag, "Unknown Payload Type: %d", payload->type);
+            break;
+    }
+}
 #else
     #define OC_LOG_PAYLOAD(level, tag, payload)
 #endif
