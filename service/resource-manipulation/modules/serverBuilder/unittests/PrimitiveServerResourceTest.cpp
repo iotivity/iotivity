@@ -40,8 +40,9 @@ typedef OCStackResult (*registerResourceSig)(OCResourceHandle&,
                        EntityHandler,
                        uint8_t );
 
-static constexpr char RESOURCE_URI[] = "a/test";
-static constexpr char KEY[] = "key";
+static constexpr char RESOURCE_URI[]{ "a/test" };
+static constexpr char RESOURCE_TYPE[]{ "resourceType" };
+static constexpr char KEY[]{ "key" };
 
 TEST(ServerResourceBuilderTest, ThrowIfUriIsInvalid)
 {
@@ -55,12 +56,12 @@ TEST(ServerResourceBuilderTest, RegisterResourceWhenCallCreate)
     mocks.ExpectCallFuncOverload(
             static_cast<registerResourceSig>(OCPlatform::registerResource)).Return(OC_STACK_OK);
 
-    PrimitiveServerResource::Builder(RESOURCE_URI, "", "").create();
+    PrimitiveServerResource::Builder(RESOURCE_URI, RESOURCE_TYPE, "").create();
 }
 
 TEST(ServerResourceBuilderTest, ResourceServerHasPropertiesSetByBuilder)
 {
-    auto serverResource = PrimitiveServerResource::Builder(RESOURCE_URI, "", "").
+    auto serverResource = PrimitiveServerResource::Builder(RESOURCE_URI, RESOURCE_TYPE, "").
             setDiscoverable(false).setObservable(true).create();
 
     EXPECT_FALSE(serverResource->isDiscoverable());
@@ -72,7 +73,7 @@ TEST(ServerResourceBuilderTest, ResourceServerHasAttrsSetByBuilder)
     ResourceAttributes attrs;
     attrs[KEY] = 100;
 
-    auto serverResource = PrimitiveServerResource::Builder(RESOURCE_URI, "", "").
+    auto serverResource = PrimitiveServerResource::Builder(RESOURCE_URI, RESOURCE_TYPE, "").
             setAttributes(attrs).create();
 
     PrimitiveServerResource::LockGuard lock{ serverResource };
@@ -90,7 +91,7 @@ protected:
     void SetUp() override
     {
         initMocks();
-        server = PrimitiveServerResource::Builder(RESOURCE_URI, "", "").create();
+        server = PrimitiveServerResource::Builder(RESOURCE_URI, RESOURCE_TYPE, "").create();
     }
 
     virtual void initMocks()
@@ -331,7 +332,7 @@ TEST_F(ServerResourceSynchronizationTest, MultipleAccessToServerResourceWithRequ
     int expected { 0 };
     vector<thread> threads;
 
-    mocks.ExpectCallFunc(OCPlatform::sendResponse).Return(OC_STACK_OK);
+    mocks.OnCallFunc(OCPlatform::sendResponse).Return(OC_STACK_OK);
 
     server->setAttribute(KEY, 0);
 

@@ -43,7 +43,7 @@ public:
 protected:
     void SetUp() override
     {
-        server = PrimitiveServerResource::Builder("a/test", "", "").create();
+        server = PrimitiveServerResource::Builder("a/test", "resourceType", "").create();
 
         server->setAttribute(EXISTING, ORIGIN_VALUE);
     }
@@ -97,7 +97,7 @@ protected:
         setRequestProxyHandler = make_shared<SetRequestProxyHandler>(
                 make_shared<SimpleRequestHandler>());
 
-        server = PrimitiveServerResource::Builder("a/test", "", "").create();
+        server = PrimitiveServerResource::Builder("a/test", "resourceType", "").create();
 
         server->setAttribute(EXISTING, ORIGIN_VALUE);
     }
