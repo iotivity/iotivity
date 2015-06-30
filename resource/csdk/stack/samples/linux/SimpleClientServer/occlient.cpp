@@ -227,8 +227,7 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse
     OC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
     OC_LOG_V(INFO, TAG, "JSON = %s =============> Get Response", clientResponse->resJSONPayload);
 
-    if(clientResponse->rcvdVendorSpecificHeaderOptions &&
-            clientResponse->numRcvdVendorSpecificHeaderOptions)
+    if(clientResponse->numRcvdVendorSpecificHeaderOptions > 0)
     {
         OC_LOG (INFO, TAG, "Received vendor specific options");
         uint8_t i = 0;
