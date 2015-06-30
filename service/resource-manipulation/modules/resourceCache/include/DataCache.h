@@ -29,6 +29,7 @@
 #include "logger.h"
 
 #include "CacheTypes.h"
+#include "PrimitiveTimer.h"
 
 class DataCache
 {
@@ -66,20 +67,18 @@ private:
     // subscriber info
     std::unique_ptr<SubscriberInfo> subscriberList;
 
+    PrimitiveTimer *timerInstance;
+
     // for requestCB from base
     void onObserve(const HeaderOptions& _hos,
             const ResponseStatement& _rep, int _result, int _seq);
     void onGet(const HeaderOptions& _hos, const ResponseStatement& _rep, int _result);
-
+    void *onTimer(const unsigned int timerID);
     ObserveCB pObserveCB;
     GetCB pGetCB;
+    TimerCB pTimerCB;
 
     OCStackResult updateCacheData();
-
-    // for timer
-    void setUpdateTime();
-    void onTimer();
-    bool isAvailable();
 
 };
 

@@ -31,6 +31,7 @@
 
 #include "ResponseStatement.h"
 #include "ResourceAttributes.h"
+#include "PrimitiveTimer.h"
 
 DataCache::DataCache(
             PrimitiveResourcePtr pResource,
@@ -41,6 +42,7 @@ DataCache::DataCache(
 {
     subscriberList = std::unique_ptr<SubscriberInfo>(new SubscriberInfo());
 
+    timerInstance = new PrimitiveTimer;
     state = CACHE_STATE::READY_YET;
     updateTime = 0l;
 
@@ -49,15 +51,17 @@ DataCache::DataCache(
             std::placeholders::_3, std::placeholders::_4));
     pGetCB = (GetCB)(std::bind(&DataCache::onGet, this,
             std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+    pTimerCB = (TimerCB)(std::bind(&DataCache::onTimer, this, std::placeholders::_1));
 
+    pResource->requestGet(pGetCB);
     if(pResource->isObservable())
     {
         pResource->requestObserve(pObserveCB);
-        pResource->requestGet(pGetCB);
     }
     else
     {
         // TODO set timer
+        TimerID timerId = timerInstance->requestTimer(repeatTime, pTimerCB);
     }
 }
 
@@ -181,11 +185,26 @@ void DataCache::onGet(const HeaderOptions& _hos,
     }
     else
     {
+        attributes = _rep.getAttributes();
 
+        ResourceAttributes retAtt = attributes;
+        for(auto & i : * subscriberList)
+        {
+            if(i.second.first.rf != REPORT_FREQUENCY::NONE)
+            {
+                i.second.second(this->sResource, retAtt);
+            }
+        }
     }
 }
 
 CACHE_STATE DataCache::getCacheState() const
 {
     return state;
+}
+
+void *DataCache::onTimer(const unsigned int timerID)
+{
+    sResource->requestGet(pGetCB);
+    TimerID timerId = timerInstance->requestTimer(5l, pTimerCB);
 }
