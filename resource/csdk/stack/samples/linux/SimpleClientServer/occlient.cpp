@@ -228,7 +228,6 @@ OCStackApplicationResult deleteReqCB(void *ctx,
 
 OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse)
 {
-    printf("ERICH: getReqCB!\n");
     if(clientResponse == NULL)
     {
         OC_LOG(INFO, TAG, "getReqCB received NULL clientResponse");
@@ -680,13 +679,11 @@ int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptio
     }
     if (withVendorSpecificHeaderOptions)
     {
-        printf("ERICH: Sending get request\n");
         return (InvokeOCDoResource(query, OC_REST_GET,
                 (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS, getReqCB, options, 2));
     }
     else
     {
-        printf("ERICH: Sending get request 2\n");
         return (InvokeOCDoResource(query, OC_REST_GET,
                 (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS, getReqCB, NULL, 0));
     }

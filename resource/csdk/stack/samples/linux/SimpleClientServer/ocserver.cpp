@@ -416,7 +416,6 @@ OCEntityHandlerResult
 OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
         OCEntityHandlerRequest *entityHandlerRequest, char* uri, void* callbackParam)
 {
-    printf("ERICH: Device Entity Handler CB: %s\n", uri);
     OC_LOG_V (INFO, TAG, "Inside device default entity handler - flags: 0x%x, uri: %s", flag, uri);
 
     OCEntityHandlerResult ehResult = OC_EH_OK;
@@ -514,7 +513,6 @@ OCEntityHandlerResult
 OCEntityHandlerCb (OCEntityHandlerFlag flag,
         OCEntityHandlerRequest *entityHandlerRequest, void* callback)
 {
-    printf("ERICH: Entity Handler CB\n");
     OC_LOG_V (INFO, TAG, "Inside entity handler - flags: 0x%x", flag);
 
     OCEntityHandlerResult ehResult = OC_EH_OK;
