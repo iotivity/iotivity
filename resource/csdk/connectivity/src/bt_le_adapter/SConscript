@@ -13,7 +13,7 @@ src_dir = os.path.join(os.curdir, 'bt_le_adapter')
 
 # Source files to build common for all platforms.
 common_files = None
-if target_os is not 'arduino':
+if target_os != 'arduino':
         common_files = [ os.path.join(src_dir,
                                       'caleadapter.c') ]
 else:

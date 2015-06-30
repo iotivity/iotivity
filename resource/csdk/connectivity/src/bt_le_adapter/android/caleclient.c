@@ -1010,7 +1010,7 @@ CAResult_t CALEClientStartScan()
     // scan gatt server with UUID
     if (g_leScanCallback && g_uuidList)
     {
-#ifndef FULL_SCAN
+#ifdef UUID_SCAN
         ret = CALEClientStartScanWithUUIDImpl(env, g_uuidList, g_leScanCallback);
         if(CA_STATUS_OK != ret)
         {

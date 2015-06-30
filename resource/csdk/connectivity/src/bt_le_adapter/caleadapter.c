@@ -526,7 +526,7 @@ int32_t CASendLEMulticastData(const CAEndpoint_t *endpoint, const void *data, ui
     ca_mutex_lock(g_bleIsServerMutex);
     if (true  == g_isServer)
     {
-        result = CABLEServerSendData(endpoint, data, dataLen);
+        result = CABLEServerSendData(NULL, data, dataLen);
         if (CA_STATUS_OK != result)
         {
             OIC_LOG(ERROR, CALEADAPTER_TAG,
@@ -538,7 +538,7 @@ int32_t CASendLEMulticastData(const CAEndpoint_t *endpoint, const void *data, ui
     }
     else
     {
-        result = CABLEClientSendData(endpoint, data, dataLen);
+        result = CABLEClientSendData(NULL, data, dataLen);
         if (CA_STATUS_OK != result)
         {
             OIC_LOG(ERROR, CALEADAPTER_TAG,
@@ -1410,7 +1410,7 @@ void CABLEServerSendDataThread(void *threadData)
         {
             OIC_LOG_V(ERROR, CALEADAPTER_TAG, "Update characteristics failed, result [%d]",
                       result);
-            g_errorHandler(bleData->remoteEndpoint, bleData->data, bleData->dataLen, result);
+            CALEErrorHandler(NULL, bleData->data, bleData->dataLen, result);
             OICFree(dataSegment);
             return;
         }
@@ -1426,7 +1426,7 @@ void CABLEServerSendDataThread(void *threadData)
             {
                 OIC_LOG_V(ERROR, CALEADAPTER_TAG, "Update characteristics failed, result [%d]",
                           result);
-                g_errorHandler(bleData->remoteEndpoint, bleData->data, bleData->dataLen, result);
+                CALEErrorHandler(NULL, bleData->data, bleData->dataLen, result);
                 OICFree(dataSegment);
                 return;
             }
@@ -1445,7 +1445,7 @@ void CABLEServerSendDataThread(void *threadData)
             {
                 OIC_LOG_V(ERROR, CALEADAPTER_TAG, "Update characteristics failed, result [%d]",
                           result);
-                g_errorHandler(bleData->remoteEndpoint, bleData->data, bleData->dataLen, result);
+                CALEErrorHandler(NULL, bleData->data, bleData->dataLen, result);
                 OICFree(dataSegment);
                 return;
             }
@@ -1578,7 +1578,7 @@ void CABLEClientSendDataThread(void *threadData)
         {
             OIC_LOG_V(ERROR, CALEADAPTER_TAG,
                       "Update characteristics (all) failed, result [%d]", result);
-            g_errorHandler(bleData->remoteEndpoint, bleData->data, bleData->dataLen, result);
+            CALEErrorHandler(NULL, bleData->data, bleData->dataLen, result);
             OICFree(dataSegment);
             return ;
         }
@@ -1593,7 +1593,7 @@ void CABLEClientSendDataThread(void *threadData)
             {
                 OIC_LOG_V(ERROR, CALEADAPTER_TAG, "Update characteristics (all) failed, result [%d]",
                           result);
-                g_errorHandler(bleData->remoteEndpoint, bleData->data, bleData->dataLen, result);
+                CALEErrorHandler(NULL, bleData->data, bleData->dataLen, result);
                 OICFree(dataSegment);
                 return;
             }
@@ -1613,7 +1613,7 @@ void CABLEClientSendDataThread(void *threadData)
             {
                 OIC_LOG_V(ERROR, CALEADAPTER_TAG,
                           "Update characteristics (all) failed, result [%d]", result);
-                g_errorHandler(bleData->remoteEndpoint, bleData->data, bleData->dataLen, result);
+                CALEErrorHandler(NULL, bleData->data, bleData->dataLen, result);
                 OICFree(dataSegment);
                 return;
             }
@@ -1855,25 +1855,11 @@ void CALEErrorHandler(const char *remoteAddress, const void *data, uint32_t data
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "CALEErrorHandler IN");
 
     VERIFY_NON_NULL_VOID(data, CALEADAPTER_TAG, "Data is null");
-    CAEndpoint_t *rep = OICCalloc(1, sizeof(CAEndpoint_t));
-
-    if (!rep)
-    {
-        OIC_LOG(ERROR, CALEADAPTER_TAG, "Failed to create remote endpoint !");
-        return;
-    }
-
-    if (remoteAddress)
-    {
-        OICStrcpy(rep->addr, sizeof(rep->addr), remoteAddress);
-    }
-
-    rep->adapter = CA_ADAPTER_GATT_BTLE;
-    rep->flags = CA_DEFAULT_FLAGS;
-
+    CAEndpoint_t *rep = CACreateEndpointObject(CA_DEFAULT_FLAGS, CA_ADAPTER_GATT_BTLE,
+                                               remoteAddress, 0);
     //if required, will be used to build remote end point
     g_errorHandler(rep, data, dataLen, result);
-    CAAdapterFreeEndpoint(rep);
 
+    CAFreeEndpoint(rep);
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "CALEErrorHandler OUT");
 }

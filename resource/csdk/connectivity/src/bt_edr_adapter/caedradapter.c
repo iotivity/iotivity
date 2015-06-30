@@ -832,7 +832,7 @@ void CAEDRErrorHandler(const char *remoteAddress, const char *serviceUUID, const
     VERIFY_NON_NULL_VOID(data, EDR_ADAPTER_TAG, "Data is null");
 
     // Create remote endpoint
-    CAEndpoint_t *remoteEndpoint = CAAdapterCreateEndpoint(0, CA_ADAPTER_RFCOMM_BTEDR,
+    CAEndpoint_t *remoteEndpoint = CACreateEndpointObject(0, CA_ADAPTER_RFCOMM_BTEDR,
                                                            remoteAddress, 0);
     if (!remoteEndpoint)
     {
@@ -843,7 +843,7 @@ void CAEDRErrorHandler(const char *remoteAddress, const char *serviceUUID, const
     g_errorCallback(remoteEndpoint, data, dataLength, result);
 
     // Free remote endpoint
-    CAAdapterFreeEndpoint(remoteEndpoint);
+    CAFreeEndpoint(remoteEndpoint);
 
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
 }
