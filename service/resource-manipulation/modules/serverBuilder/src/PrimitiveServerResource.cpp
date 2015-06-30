@@ -257,6 +257,10 @@ namespace OIC
                     return handleObserve(request);
                 }
             }
+            catch (const std::exception& e)
+            {
+                OC_LOG_V(WARNING, LOG_TAG, "Failed to handle request : %s", e.what());
+            }
             catch (...)
             {
                 OC_LOG(WARNING, LOG_TAG, "Failed to handle request.");

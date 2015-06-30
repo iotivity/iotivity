@@ -96,10 +96,10 @@ namespace OIC
 
             class LockGuard;
 
-            typedef std::function< PrimitiveGetResponse(const PrimitiveRequest&,
-                    ResourceAttributes&) > GetRequestHandler;
-            typedef std::function< PrimitiveSetResponse(const PrimitiveRequest&,
-                    ResourceAttributes&) > SetRequestHandler;
+            using GetRequestHandler = std::function< PrimitiveGetResponse(const PrimitiveRequest&,
+                    ResourceAttributes&) >;
+            using SetRequestHandler = std::function< PrimitiveSetResponse(const PrimitiveRequest&,
+                    ResourceAttributes&) >;
 
         public:
             PrimitiveServerResource(PrimitiveServerResource&&) = delete;
@@ -108,7 +108,7 @@ namespace OIC
             PrimitiveServerResource& operator=(PrimitiveServerResource&&) = delete;
             PrimitiveServerResource& operator=(const PrimitiveServerResource&) = delete;
 
-            ~PrimitiveServerResource();
+            virtual ~PrimitiveServerResource();
 
             template< typename T >
             void setAttribute(const std::string& key, const T &value)
@@ -129,13 +129,13 @@ namespace OIC
             ResourceAttributes& getAttributes();
             const ResourceAttributes& getAttributes() const;
 
-            bool isObservable() const;
-            bool isDiscoverable() const;
+            virtual bool isObservable() const;
+            virtual bool isDiscoverable() const;
 
-            void setGetRequestHandler(GetRequestHandler);
-            void setSetRequestHandler(SetRequestHandler);
+            virtual void setGetRequestHandler(GetRequestHandler);
+            virtual void setSetRequestHandler(SetRequestHandler);
 
-            void notify() const;
+            virtual void notify() const;
 
         //    void setAutoNotifyPolicy(AutoNotifyPolicy);
 
