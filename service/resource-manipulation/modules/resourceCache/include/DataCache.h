@@ -68,6 +68,7 @@ private:
     std::unique_ptr<SubscriberInfo> subscriberList;
 
     PrimitiveTimer *timerInstance;
+    TimerID expiredTimerId;
 
     // for requestCB from base
     void onObserve(const HeaderOptions& _hos,

@@ -34,6 +34,7 @@
 
 #define CACHE_TAG  PCF("CACHE")
 #define DEFAULT_REPORT_TIME 30
+#define DEFAULT_EXPIRED_TIME 15l
 
 using namespace OIC::Service;
 

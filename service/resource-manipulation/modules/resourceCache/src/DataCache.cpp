@@ -57,6 +57,7 @@ DataCache::DataCache(
     if(pResource->isObservable())
     {
         pResource->requestObserve(pObserveCB);
+        expiredTimerId = timerInstance->requestTimer(DEFAULT_EXPIRED_TIME, pTimerCB);
     }
     else
     {
@@ -182,10 +183,20 @@ void DataCache::onGet(const HeaderOptions& _hos,
     {
         state = CACHE_STATE::READY;
         attributes = _rep.getAttributes();
+        if(sResource->isObservable())
+        {
+            timerInstance->cancelTimer(expiredTimerId);
+            expiredTimerId = timerInstance->requestTimer(DEFAULT_EXPIRED_TIME, pTimerCB);
+        }
     }
     else
     {
         attributes = _rep.getAttributes();
+        if(sResource->isObservable())
+        {
+            timerInstance->cancelTimer(expiredTimerId);
+            expiredTimerId = timerInstance->requestTimer(DEFAULT_EXPIRED_TIME, pTimerCB);
+        }
 
         ResourceAttributes retAtt = attributes;
         for(auto & i : * subscriberList)
@@ -206,5 +217,10 @@ CACHE_STATE DataCache::getCacheState() const
 void *DataCache::onTimer(const unsigned int timerID)
 {
     sResource->requestGet(pGetCB);
-    TimerID timerId = timerInstance->requestTimer(5l, pTimerCB);
+    if(sResource->isObservable())
+    {
+        expiredTimerId = timerInstance->requestTimer(DEFAULT_EXPIRED_TIME, pTimerCB);
+    }
+    else
+        TimerID timerId = timerInstance->requestTimer(5l, pTimerCB);
 }
