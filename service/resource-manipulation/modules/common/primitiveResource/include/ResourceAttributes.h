@@ -199,8 +199,10 @@ namespace OIC
                     }
                 }
 
-            public:
+            private:
                 boost::scoped_ptr< ValueVariant > m_data;
+
+                friend class ResourceAttributes;
             };
 
             class KeyValuePair;
