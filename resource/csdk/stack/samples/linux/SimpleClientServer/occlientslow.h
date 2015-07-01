@@ -44,6 +44,8 @@ typedef enum
     TEST_DISCOVER_REQ = 1,
     TEST_NON_CON_OP,
     TEST_CON_OP,
+    TEST_NON_CON_PUT,
+    TEST_CON_PUT,
     MAX_TESTS
 } CLIENT_TEST;
 
@@ -67,6 +69,7 @@ std::string getQueryStrForGetPut(OCClientResponse * clientResponse);
  * POST & Discovery operations
  */
 int InitGetRequest(OCQualityOfService qos);
+int InitPutRequest(OCQualityOfService qos);
 int InitDiscovery();
 
 /* Function to retrieve ip address, port no. of the server
