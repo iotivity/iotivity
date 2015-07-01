@@ -588,7 +588,6 @@ typedef struct oc_rep_payload_val_t
         char* str;
         struct oc_rep_payload_t* obj;
         OCRepPayloadValueArray arr;
-        void* v;
     };
     struct oc_rep_payload_val_t* next;
 

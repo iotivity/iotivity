@@ -73,8 +73,14 @@ static inline void OCPayloadLogRep(LogLevel level, const char* tag, OCRepPayload
         {
             switch(val->type)
             {
+                case OCREP_PROP_NULL:
+                    OC_LOG_V(level, tag, "\t\t%s: NULL", val->name);
+                    break;
                 case OCREP_PROP_INT:
                     OC_LOG_V(level, tag, "\t\t%s(int):%lld", val->name, val->i);
+                    break;
+                case OCREP_PROP_DOUBLE:
+                    OC_LOG_V(level, tag, "\t\t%s(double):%f", val->name, val->d);
                     break;
                 case OCREP_PROP_BOOL:
                     OC_LOG_V(level, tag, "\t\t%s(bool):%s", val->name, val->b ? "true" : "false");
@@ -82,8 +88,52 @@ static inline void OCPayloadLogRep(LogLevel level, const char* tag, OCRepPayload
                 case OCREP_PROP_STRING:
                     OC_LOG_V(level, tag, "\t\t%s(string):%s", val->name, val->str);
                     break;
+                case OCREP_PROP_OBJECT:
+                    // Note: Only prints the URI (if available), to print further, you'll
+                    // need to dig into the object better!
+                    OC_LOG_V(level, tag, "\t\t%s(OCRep):%s", val->name, val->obj->uri);
+                    break;
+                case OCREP_PROP_ARRAY:
+                    switch(val->arr.type)
+                    {
+                        case OCREP_PROP_INT:
+                            OC_LOG_V(level, tag, "\t\t%s(int array):%lld x %lld x %lld",
+                                    val->name,
+                                    val->arr.dimensions[0], val->arr.dimensions[1],
+                                    val->arr.dimensions[2]);
+                            break;
+                        case OCREP_PROP_DOUBLE:
+                            OC_LOG_V(level, tag, "\t\t%s(double array):%lld x %lld x %lld",
+                                    val->name,
+                                    val->arr.dimensions[0], val->arr.dimensions[1],
+                                    val->arr.dimensions[2]);
+                            break;
+                        case OCREP_PROP_BOOL:
+                            OC_LOG_V(level, tag, "\t\t%s(bool array):%lld x %lld x %lld",
+                                    val->name,
+                                    val->arr.dimensions[0], val->arr.dimensions[1],
+                                    val->arr.dimensions[2]);
+                            break;
+                        case OCREP_PROP_STRING:
+                            OC_LOG_V(level, tag, "\t\t%s(string array):%lld x %lld x %lld",
+                                    val->name,
+                                    val->arr.dimensions[0], val->arr.dimensions[1],
+                                    val->arr.dimensions[2]);
+                            break;
+                        case OCREP_PROP_OBJECT:
+                            OC_LOG_V(level, tag, "\t\t%s(OCRep array):%lld x %lld x %lld",
+                                    val->name,
+                                    val->arr.dimensions[0], val->arr.dimensions[1],
+                                    val->arr.dimensions[2]);
+                            break;
+                        default:
+                            OC_LOG_V(ERROR, tag, "\t\t%s <-- Unknown/unsupported array type!",
+                                    val->name);
+                            break;
+                    }
+                    break;
                 default:
-                    OC_LOG_V(level, tag, "\t\t%s(unknown):%p", val->name, val->v);
+                    OC_LOG_V(ERROR, tag, "\t\t%s <-- Unknown type!", val->name);
                     break;
             }
             val = val -> next;
@@ -95,7 +145,8 @@ static inline void OCPayloadLogRep(LogLevel level, const char* tag, OCRepPayload
 
 }
 
-static inline void OCPayloadLogDiscovery(LogLevel level, const char* tag, OCDiscoveryPayload* payload)
+static inline void OCPayloadLogDiscovery(LogLevel level, const char* tag,
+        OCDiscoveryPayload* payload)
 {
     OC_LOG(level, tag, PCF("Payload Type: Discovery"));
     int i = 1;
