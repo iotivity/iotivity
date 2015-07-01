@@ -297,7 +297,7 @@ static void CAReceiveHandler(void *data)
     OIC_LOG(DEBUG, IP_SERVER_TAG, "OUT");
 }
 
-static CAResult_t CACreateSocket(int *socketFD, const char *localIp, uint16_t *port)
+static CAResult_t CACreateSocket(int *socketFD, const char *localIp, uint16_t *port, bool isSecured)
 {
     VERIFY_NON_NULL(socketFD, IP_SERVER_TAG, "socketFD is NULL");
     VERIFY_NON_NULL(localIp, IP_SERVER_TAG, "localIp is NULL");
@@ -331,7 +331,7 @@ static CAResult_t CACreateSocket(int *socketFD, const char *localIp, uint16_t *p
         return CA_STATUS_FAILED;
     }
 
-    if (0 != *port)
+    if (0 != *port && !isSecured)
     {
         int setOptionOn = SOCKETOPTION;
         if (-1 == setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *) &setOptionOn,
@@ -353,12 +353,28 @@ static CAResult_t CACreateSocket(int *socketFD, const char *localIp, uint16_t *p
         sockAddr.sin_addr.s_addr = inet_addr(localIp);
     }
 
+    bool isBound = false;
     if (-1 != bind(sock, (struct sockaddr *) &sockAddr, sizeof(sockAddr)))
+    {
+        isBound = true;
+    }
+    else if (isSecured)
+    {
+        //if secure port 5684 is occupied, trying for another port
+        serverPort = 0;
+        sockAddr.sin_port = htons(serverPort);
+        if (-1 != bind(sock, (struct sockaddr *) &sockAddr, sizeof(sockAddr)))
+        {
+            isBound = true;
+        }
+    }
+
+    if (true == isBound)
     {
         struct sockaddr_in sin;
         socklen_t len = sizeof(sin);
 
-        if (getsockname(sock, (struct sockaddr *)&sin, &len) == -1)
+        if (-1 == getsockname(sock, (struct sockaddr *)&sin, &len))
         {
             OIC_LOG_V(ERROR, IP_SERVER_TAG, "Failed to get socket[%s]!",
                       strerror(errno));
@@ -372,8 +388,7 @@ static CAResult_t CACreateSocket(int *socketFD, const char *localIp, uint16_t *p
     }
     else
     {
-        OIC_LOG_V(ERROR, IP_SERVER_TAG, "Failed to bind socket[%s]!",
-                  strerror(errno));
+        OIC_LOG_V(ERROR, IP_SERVER_TAG, "Failed to bind socket[%s]!", strerror(errno));
         close(sock);
         return CA_STATUS_FAILED;
     }
@@ -408,7 +423,7 @@ static CAResult_t CAStartUnicastServer(const char *localAddress, uint16_t *port,
     VERIFY_NON_NULL(localAddress, IP_SERVER_TAG, "localAddress");
     VERIFY_NON_NULL(port, IP_SERVER_TAG, "port");
 
-    CAResult_t ret = CACreateSocket(serverFD, localAddress, port);
+    CAResult_t ret = CACreateSocket(serverFD, localAddress, port, isSecured);
     if (CA_STATUS_OK != ret)
     {
         OIC_LOG(ERROR, IP_SERVER_TAG, "Failed to create unicast socket");
@@ -675,7 +690,7 @@ CAResult_t CAIPStartMulticastServer(const char *localAddress, const char *multic
     if (!isMulticastServerStarted)
     {
         int mulicastServerFd = -1;
-        CAResult_t ret = CACreateSocket(&mulicastServerFd, multicastAddress, &port);
+        CAResult_t ret = CACreateSocket(&mulicastServerFd, multicastAddress, &port, false);
         if (ret != CA_STATUS_OK)
         {
             OIC_LOG(ERROR, IP_SERVER_TAG, "Failed to create multicast socket");

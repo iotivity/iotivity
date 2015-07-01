@@ -1246,7 +1246,7 @@ int get_secure_information(CAPayload_t payLoad)
         return -1;
     }
 
-    char portStr[4] = {0};
+    char portStr[6] = {0};
     memcpy(portStr, startPos + 1, (endPos - 1) - startPos);
 
     printf("secured port is: %s\n", portStr);
