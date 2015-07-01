@@ -111,10 +111,17 @@ namespace OIC
             virtual ~PrimitiveServerResource();
 
             template< typename T >
-            void setAttribute(const std::string& key, const T &value)
+            void setAttribute(const std::string& key, T&& value)
             {
                 WeakGuard lock(*this);
-                m_resourceAttributes[key] = value;
+                m_resourceAttributes[key] = std::forward<T>(value);
+            }
+
+            template< typename T >
+            void setAttribute(std::string&& key, T&& value)
+            {
+                WeakGuard lock(*this);
+                m_resourceAttributes[std::move(key)] = std::forward<T>(value);
             }
 
             template< typename T >
@@ -123,6 +130,8 @@ namespace OIC
                 WeakGuard lock(*this);
                 return m_resourceAttributes.at(key).get< T >();
             }
+
+            bool removeAttribute(const std::string& key);
 
             bool hasAttribute(const std::string& key) const;
 

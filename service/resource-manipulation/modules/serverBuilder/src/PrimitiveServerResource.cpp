@@ -112,7 +112,8 @@ namespace OIC
 
         PrimitiveServerResource::Builder::Builder(const std::string& uri, const std::string& type,
                 const std::string& interface) :
-                m_uri{ uri }, m_type{ type }, m_interface{ interface }, m_properties{ 0 }
+                m_uri{ uri }, m_type{ type }, m_interface{ interface },
+                m_properties{ OC_DISCOVERABLE | OC_OBSERVABLE }
         {
         }
 
@@ -156,9 +157,11 @@ namespace OIC
 
             try
             {
-                expectOCStackResultOK(
-                        OC::OCPlatform::registerResource(handle, m_uri, m_type, m_interface,
-                                entityHandler, m_properties));
+                using RegisterResource = OCStackResult (*)(OCResourceHandle&, std::string&,
+                        const std::string&, const std::string&, OC::EntityHandler, uint8_t);
+
+                invokeOCFunc(static_cast<RegisterResource>(OC::OCPlatform::registerResource),
+                        handle, m_uri, m_type, m_interface, entityHandler, m_properties);
             }
             catch (OC::OCException& e)
             {
@@ -184,6 +187,12 @@ namespace OIC
                     OC_LOG(WARNING, LOG_TAG, "Failed to unregister resource.");
                 }
             }
+        }
+
+        bool PrimitiveServerResource::removeAttribute(const std::string& key)
+        {
+            WeakGuard lock(*this);
+            return m_resourceAttributes.erase(key);
         }
 
         bool PrimitiveServerResource::hasAttribute(const std::string& key) const
@@ -234,7 +243,10 @@ namespace OIC
 
         void PrimitiveServerResource::notify() const
         {
-            expectOCStackResultOK(OC::OCPlatform::notifyAllObservers(m_resourceHandle));
+            using NotifyAllObservers = OCStackResult (*)(OCResourceHandle);
+
+            invokeOCFunc(static_cast<NotifyAllObservers>(OC::OCPlatform::notifyAllObservers),
+                    m_resourceHandle);
         }
 
         OCEntityHandlerResult PrimitiveServerResource::entityHandler(
