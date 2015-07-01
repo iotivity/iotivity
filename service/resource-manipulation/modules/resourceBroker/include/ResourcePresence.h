@@ -25,53 +25,67 @@
 #include <list>
 #include <string>
 #include <atomic>
+#include <mutex>
+#include <condition_variable>
 
 #include "BrokerTypes.h"
-#include "../../common/primitiveTimer/include/PrimitiveTimer.h"
+#include "PrimitiveTimer.h"
 
-class ResourcePresence
+namespace OIC
 {
-public:
-    ResourcePresence(PrimitiveResourcePtr pResource);
-    ~ResourcePresence();
+    namespace Service
+    {
+        class ResourcePresence
+        {
+        public:
+            ResourcePresence();
+            ~ResourcePresence();
 
-    void addBrokerRequester(BrokerID _id, BrokerCB _cb);
-    void removeBrokerRequester(BrokerID _id);
-    void removeAllBrokerRequester();
-    void requestResourceState();
-    void setResourcestate(BROKER_STATE _state);
-    void executeAllBrokerCB(BROKER_STATE changedState);
-    void changePresenceMode(BROKER_MODE newMode);
+            void initializeResourcePresence(PrimitiveResourcePtr pResource);
 
-    bool isEmptyRequester() const;
+            void addBrokerRequester(BrokerID _id, BrokerCB _cb);
+            void removeBrokerRequester(BrokerID _id);
+            void removeAllBrokerRequester();
 
-    PrimitiveResourcePtr getPrimitiveResource();
-    BROKER_STATE getResourceState();
+            void requestResourceState() const;
+            void changePresenceMode(BROKER_MODE newMode);
 
-private:
-    void getCB(const HeaderOptions &hos, const ResponseStatement& rep, int eCode);
-    void verifiedGetResponse(int eCode);
-    void registerDevicePresence();
-    void * timeOutCB(unsigned int msg);
-    void * pollingCB(unsigned int msg);
+            bool isEmptyRequester() const;
 
-    std::unique_ptr<std::list<BrokerRequesterInfoPtr>> requesterList;
-    PrimitiveResourcePtr primitiveResource;
-    PrimitiveTimer primitiveTimer;
+            const PrimitiveResourcePtr getPrimitiveResource() const;
+            BROKER_STATE getResourceState() const;
 
-    BROKER_STATE state;
-    BROKER_MODE mode;
+        private:
+            std::unique_ptr<std::list<BrokerRequesterInfoPtr>> requesterList;
+            PrimitiveResourcePtr primitiveResource;
+            PrimitiveTimer primitiveTimer;
 
-    bool isWithinTime;
-    std::atomic_bool isTimeoutCB;
-    std::atomic_long receivedTime;
-    unsigned int timeoutHandle;
+            BROKER_STATE state;
+            BROKER_MODE mode;
 
-    RequestGetCB pGetCB;
-    TimeoutCB pTimeoutCB;
-    TimeoutCB pPollingCB;
+            bool isWithinTime;
+            std::atomic_bool isTimeoutCB;
+            std::atomic_long receivedTime;
+            std::mutex cbMutex;
+            std::condition_variable cbCondition;
+            unsigned int timeoutHandle;
 
-};
+            RequestGetCB pGetCB;
+            TimeoutCB pTimeoutCB;
+            TimeoutCB pPollingCB;
+
+            void registerDevicePresence();
+            void getCB(const HeaderOptions &hos, const ResponseStatement& rep, int eCode);
+            void verifiedGetResponse(int eCode);
+
+            void * timeOutCB(unsigned int msg);
+            void * pollingCB(unsigned int msg = 0);
+
+            void executeAllBrokerCB(BROKER_STATE changedState);
+            void setResourcestate(BROKER_STATE _state);
+        };
+    } // namespace Service
+} // namespace OIC
 
 #endif /* RESOURCEPRESENCE_H_ */
 

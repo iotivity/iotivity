@@ -29,22 +29,29 @@
 
 #include "BrokerTypes.h"
 
-class DeviceAssociation {
-public:
 
-    static DeviceAssociation * getInstance();
+namespace OIC
+{
+    namespace Service
+    {
+        class DeviceAssociation {
+        public:
 
-    DevicePresencePtr findDevice(const std::string & address);
-    void addDevice(DevicePresencePtr dPresence);
-    void removeDevice(DevicePresencePtr dPresence);
+            static DeviceAssociation * getInstance();
 
-private:
-    DeviceAssociation();
-    ~DeviceAssociation();
+            DevicePresencePtr findDevice(const std::string & address);
+            void addDevice(DevicePresencePtr dPresence);
+            void removeDevice(DevicePresencePtr dPresence);
 
-    static DeviceAssociation * s_instance;
-    static std::mutex s_mutexForCreation;
-    static std::list< DevicePresencePtr > s_deviceList;
-};
+        private:
+            DeviceAssociation();
+            ~DeviceAssociation();
+
+            static DeviceAssociation * s_instance;
+            static std::mutex s_mutexForCreation;
+            static std::list< DevicePresencePtr > s_deviceList;
+        };
+    } // namespace Service
+} // namespace OIC
 
 #endif /* DEVICEASSOCIATION_H_ */

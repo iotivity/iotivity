@@ -31,28 +31,46 @@
 #include "BrokerTypes.h"
 #include "ResourcePresence.h"
 
-class ResourceBroker
+namespace OIC
 {
-public:
-    static ResourceBroker * getInstance();
+    namespace Service
+    {
+        class ResourceBroker
+        {
+        public:
+            class InvalidParameter: public PrimitiveException
+            {
+            public:
+                InvalidParameter(std::string&& what) : PrimitiveException{ std::move(what) } {}
+            };
 
-    BrokerID hostResource(PrimitiveResourcePtr pResource, BrokerCB cb);
-    BrokerID cancelHostResource(BrokerID brokerId);
+            static ResourceBroker * getInstance();
 
-    BROKER_STATE getResourceState(BrokerID brokerId);
-    BROKER_STATE getResourceState(PrimitiveResourcePtr pResource);
+            const BrokerID hostResource(PrimitiveResourcePtr pResource, BrokerCB cb);
+            void cancelHostResource(BrokerID brokerId);
 
-private:
-    ResourceBroker();
-    ~ResourceBroker();
+            BROKER_STATE getResourceState(BrokerID brokerId);
+            BROKER_STATE getResourceState(PrimitiveResourcePtr pResource);
 
-    BrokerID generateBrokerID();
-    ResourcePresencePtr findResourcePresence(PrimitiveResourcePtr pResource);
+        private:
+            static ResourceBroker * s_instance;
+            static std::mutex s_mutexForCreation;
+            static std::unique_ptr<PresenceList>  s_presenceList;
+            static std::unique_ptr<BrokerIDMap> s_brokerIDMap;
 
-    static ResourceBroker * s_instance;
-    static std::mutex s_mutexForCreation;
-    static std::unique_ptr<PresenceList>  s_presenceList;
-    static std::unique_ptr<BrokerIDMap> s_brokerIDMap;
-};
+            ResourceBroker() = default;
+            ~ResourceBroker();
+            ResourceBroker(const ResourceBroker&) = delete;
+            ResourceBroker(ResourceBroker&&) = delete;
+
+            ResourceBroker& operator=(const ResourceBroker&) const = delete;
+            ResourceBroker& operator=(ResourceBroker&&) const = delete;
+
+            void initializeResourceBroker();
+            BrokerID generateBrokerID();
+            ResourcePresencePtr findResourcePresence(PrimitiveResourcePtr pResource);
+        };
+    } // namespace Service
+} // namespace OIC
 
 #endif /* RESOURCEBROKER_H_ */

@@ -28,35 +28,40 @@
 #include "ResourcePresence.h"
 #include "PresenceSubscriber.h"
 
-class DevicePresence
+namespace OIC
 {
-public:
-    DevicePresence(PrimitiveResourcePtr pResource);
-    ~DevicePresence();
+    namespace Service
+    {
+        class DevicePresence
+        {
+        public:
+            DevicePresence();
+            ~DevicePresence();
 
-    void addPresenceResource(ResourcePresence * rPresence);
-    void removePresenceResource(ResourcePresence * rPresence);
+            void initializeDevicePresence(PrimitiveResourcePtr pResource);
 
-    bool isEmptyResourcePresence() const;
-    const std::string getAddress() const;
+            void addPresenceResource(ResourcePresence * rPresence);
+            void removePresenceResource(ResourcePresence * rPresence);
 
-private:
-    void requestAllResourcePresence();
-    void subscribeCB(OCStackResult ret,const unsigned int seq, const std::string& Hostaddress);
-    void * timeOutCB(unsigned int msg);
+            bool isEmptyResourcePresence() const;
+            const std::string getAddress() const;
 
-    std::list<ResourcePresence * > resourcePresenceList;
+        private:
+            void requestAllResourcePresence();
+            void subscribeCB(OCStackResult ret,const unsigned int seq, const std::string& Hostaddress);
+            void * timeOutCB(unsigned int msg);
 
-    std::string address;
-    DEVICE_STATE state;
-    bool isWithinTime;
+            std::list<ResourcePresence * > resourcePresenceList;
 
-    SubscribeCB pSubscribeRequestCB;
-    TimeoutCB pTimeoutCB;
-    PresenceSubscriber presenceSubscriber;
+            std::string address;
+            DEVICE_STATE state;
+            bool isWithinTime;
 
-
-
-};
+            SubscribeCB pSubscribeRequestCB;
+            TimeoutCB pTimeoutCB;
+            PresenceSubscriber presenceSubscriber;
+        };
+    } // namespace Service
+} // namespace OIC
 
 #endif /* DEVICEPRESENCE_H_ */

@@ -21,63 +21,70 @@
 #include "DeviceAssociation.h"
 #include "DevicePresence.h"
 
-DeviceAssociation * DeviceAssociation::s_instance = nullptr;
-std::mutex DeviceAssociation::s_mutexForCreation;
-std::list< DevicePresencePtr >  DeviceAssociation::s_deviceList;
 
-DeviceAssociation::DeviceAssociation()
+namespace OIC
 {
-    // TODO Auto-generated constructor stub
-}
-
-DeviceAssociation::~DeviceAssociation()
-{
-    // TODO Auto-generated destructor stub
-}
-
-DeviceAssociation * DeviceAssociation::getInstance()
-{
-    if (!s_instance)
+    namespace Service
     {
-        s_mutexForCreation.lock();
-        if (!s_instance)
+        DeviceAssociation * DeviceAssociation::s_instance = nullptr;
+        std::mutex DeviceAssociation::s_mutexForCreation;
+        std::list< DevicePresencePtr >  DeviceAssociation::s_deviceList;
+
+        DeviceAssociation::DeviceAssociation()
         {
-            s_instance = new DeviceAssociation();
+            // TODO Auto-generated constructor stub
         }
-        s_mutexForCreation.unlock();
-    }
-    return s_instance;
-}
 
-DevicePresencePtr DeviceAssociation::findDevice(const std::string & address)
-{
-    DevicePresencePtr retDevice = nullptr;
-    for(auto it : s_deviceList)
-    {
-        if(address == it->getAddress())
+        DeviceAssociation::~DeviceAssociation()
         {
-            retDevice = it;
+            // TODO Auto-generated destructor stub
         }
-    }
 
-    return retDevice;
-}
+        DeviceAssociation * DeviceAssociation::getInstance()
+        {
+            if (!s_instance)
+            {
+                s_mutexForCreation.lock();
+                if (!s_instance)
+                {
+                    s_instance = new DeviceAssociation();
+                }
+                s_mutexForCreation.unlock();
+            }
+            return s_instance;
+        }
 
-void DeviceAssociation::addDevice(DevicePresencePtr dPresence)
-{
-    DevicePresencePtr foundDevice = findDevice(dPresence->getAddress());
-    if(foundDevice == nullptr)
-    {
-        s_deviceList.push_back(dPresence);
-    }
-}
+        DevicePresencePtr DeviceAssociation::findDevice(const std::string & address)
+        {
+            DevicePresencePtr retDevice = nullptr;
+            for(auto it : s_deviceList)
+            {
+                if(address == it->getAddress())
+                {
+                    retDevice = it;
+                }
+            }
 
-void DeviceAssociation::removeDevice(DevicePresencePtr dPresence)
-{
-    DevicePresencePtr foundDevice = findDevice(dPresence->getAddress());
-    if(foundDevice != nullptr)
-    {
-        s_deviceList.remove(foundDevice);
-        foundDevice.reset();
-    }
-}
+            return retDevice;
+        }
+
+        void DeviceAssociation::addDevice(DevicePresencePtr dPresence)
+        {
+            DevicePresencePtr foundDevice = findDevice(dPresence->getAddress());
+            if(foundDevice == nullptr)
+            {
+                s_deviceList.push_back(dPresence);
+            }
+        }
+
+        void DeviceAssociation::removeDevice(DevicePresencePtr dPresence)
+        {
+            DevicePresencePtr foundDevice = findDevice(dPresence->getAddress());
+            if(foundDevice != nullptr)
+            {
+                s_deviceList.remove(foundDevice);
+                foundDevice.reset();
+            }
+        }
+    } // namespace Service
+} // namespace OIC
