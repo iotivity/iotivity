@@ -33,6 +33,9 @@ using namespace OIC::Service;
 constexpr char EXISTING[]{ "ext" };
 constexpr int ORIGIN_VALUE{ 100 };
 
+using RegisterResource = OCStackResult (*)(OCResourceHandle&, std::string&,
+        const std::string&, const std::string&, OC::EntityHandler, uint8_t);
+
 class SimpleRequestHandlerTest: public Test
 {
 public:
@@ -40,9 +43,14 @@ public:
 
     ResourceAttributes requestAttrs;
 
+    MockRepository mocks;
+
 protected:
     void SetUp() override
     {
+        mocks.OnCallFuncOverload(static_cast<RegisterResource>(OC::OCPlatform::registerResource))
+                .Return(OC_STACK_OK);
+
         server = PrimitiveServerResource::Builder("a/test", "resourceType", "").create();
 
         server->setAttribute(EXISTING, ORIGIN_VALUE);
@@ -91,9 +99,14 @@ public:
     ResourceAttributes requestAttrs;
     RequestHandler::Ptr setRequestProxyHandler;
 
+    MockRepository mocks;
+
 protected:
     void SetUp() override
     {
+        mocks.OnCallFuncOverload(static_cast<RegisterResource>(OC::OCPlatform::registerResource))
+                .Return(OC_STACK_OK);
+
         setRequestProxyHandler = make_shared<SetRequestProxyHandler>(
                 make_shared<SimpleRequestHandler>());
 

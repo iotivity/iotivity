@@ -44,22 +44,32 @@ static constexpr char RESOURCE_URI[]{ "a/test" };
 static constexpr char RESOURCE_TYPE[]{ "resourceType" };
 static constexpr char KEY[]{ "key" };
 
-TEST(ServerResourceBuilderTest, ThrowIfUriIsInvalid)
+TEST(ServerResourceBuilderCreateTest, ThrowIfUriIsInvalid)
 {
     ASSERT_THROW(PrimitiveServerResource::Builder("", "", "").create(), PlatformException);
 }
 
-TEST(ServerResourceBuilderTest, RegisterResourceWhenCallCreate)
+class ServerResourceBuilderTest: public Test
 {
+public:
     MockRepository mocks;
 
-    mocks.ExpectCallFuncOverload(
-            static_cast<registerResourceSig>(OCPlatform::registerResource)).Return(OC_STACK_OK);
+protected:
+    void SetUp() override
+    {
+        mocks.OnCallFuncOverload(static_cast<registerResourceSig>(OCPlatform::registerResource))
+                .Return(OC_STACK_OK);
+    }
+};
 
+TEST_F(ServerResourceBuilderTest, RegisterResourceWhenCallCreate)
+{
+    mocks.ExpectCallFuncOverload(static_cast<registerResourceSig>(OCPlatform::registerResource))
+            .Return(OC_STACK_OK);
     PrimitiveServerResource::Builder(RESOURCE_URI, RESOURCE_TYPE, "").create();
 }
 
-TEST(ServerResourceBuilderTest, ResourceServerHasPropertiesSetByBuilder)
+TEST_F(ServerResourceBuilderTest, ResourceServerHasPropertiesSetByBuilder)
 {
     auto serverResource = PrimitiveServerResource::Builder(RESOURCE_URI, RESOURCE_TYPE, "").
             setDiscoverable(false).setObservable(true).create();
@@ -68,7 +78,7 @@ TEST(ServerResourceBuilderTest, ResourceServerHasPropertiesSetByBuilder)
     EXPECT_TRUE(serverResource->isObservable());
 }
 
-TEST(ServerResourceBuilderTest, ResourceServerHasAttrsSetByBuilder)
+TEST_F(ServerResourceBuilderTest, ResourceServerHasAttrsSetByBuilder)
 {
     ResourceAttributes attrs;
     attrs[KEY] = 100;
