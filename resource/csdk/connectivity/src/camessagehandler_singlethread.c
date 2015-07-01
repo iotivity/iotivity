@@ -231,15 +231,12 @@ static void CAReceivedPacketCallback(CAEndpoint_t *endpoint, void *data, uint32_
         OIC_LOG(DEBUG, TAG, "token:");
         OIC_LOG_BUFFER(DEBUG, TAG, (const uint8_t *) ReqInfo->info.token, CA_MAX_TOKEN_LEN);
 
-        if (ReqInfo)
+        if (g_requestHandler)
         {
-            if (g_requestHandler)
-            {
-                g_requestHandler(endpoint, ReqInfo);
-            }
-
-            CADestroyRequestInfoInternal(ReqInfo);
+            g_requestHandler(endpoint, ReqInfo);
         }
+
+        CADestroyRequestInfoInternal(ReqInfo);
     }
     else
     {
