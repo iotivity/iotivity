@@ -42,12 +42,6 @@
 #define TZ_BLE_SERVER_TAG "TZ_BLE_GATT_SERVER"
 
 /**
- * @def CA_BLE_SERVICE_UUID
- * @brief UUID of OIC service. This UUID is common across all platform for LE transport.
- */
-#define CA_BLE_SERVICE_UUID  "713D0000-503E-4C75-BA94-3148F18D941E"
-
-/**
  * @def CA_BLE_INITIAL_BUF_SIZE
  * @brief Initial buffer size for Gatt Server.
  */
@@ -213,7 +207,7 @@ void CAStartBleGattServerThread(void *data)
 
     sleep(5); // Sleep is must because of the platform issue.
 
-    char *serviceUUID = CA_BLE_SERVICE_UUID;
+    char *serviceUUID = OIC_BLE_SERVICE_ID;
 
     ret  = CAAddNewBleServiceInGattServer(serviceUUID);
     if (CA_STATUS_OK != ret )
