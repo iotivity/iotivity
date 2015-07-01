@@ -111,7 +111,7 @@ namespace OC
     *  ModeType   : indicate whether we want to do server, client or both
     *  ServerConnectivity : default flags for server
     *  ClientConnectivity : default flags for client
-    *  QoS        : Quality of Service : CONFIRMABLE or NON CONFIRMABLE.
+    *  QoS       : indicate Quality of Service : LowQos, MidQos,HighQos and NaQos(No quality Defined).
     */
     struct PlatformConfig
     {
