@@ -551,10 +551,30 @@ typedef struct
 
 typedef enum
 {
+    OCREP_PROP_NULL,
     OCREP_PROP_INT,
+    OCREP_PROP_DOUBLE,
     OCREP_PROP_BOOL,
-    OCREP_PROP_STRING
+    OCREP_PROP_STRING,
+    OCREP_PROP_OBJECT,
+    OCREP_PROP_ARRAY
 }OCRepPayloadPropType;
+
+#define MAX_REP_ARRAY_DEPTH 3
+typedef struct oc_rep_payload_val_array_t
+{
+    OCRepPayloadPropType type;
+    size_t dimensions[MAX_REP_ARRAY_DEPTH];
+
+    union
+    {
+        int64_t* iArray;
+        double* dArray;
+        bool* bArray;
+        char** strArray;
+        struct oc_rep_payload_t** objArray;
+    };
+} OCRepPayloadValueArray;
 
 typedef struct oc_rep_payload_val_t
 {
@@ -563,8 +583,11 @@ typedef struct oc_rep_payload_val_t
     union
     {
         int64_t i;
+        double d;
         bool b;
         char* str;
+        struct oc_rep_payload_t* obj;
+        OCRepPayloadValueArray arr;
         void* v;
     };
     struct oc_rep_payload_val_t* next;
@@ -580,7 +603,7 @@ typedef struct payload_str_ll
 // used for get/set/put/observe/etc representations
 typedef struct oc_rep_payload_t
 {
-    OCPayloadType type;
+    OCPayload base;
     char* uri;
     OCStringLL* types;
     OCStringLL* interfaces;
@@ -603,13 +626,13 @@ typedef struct oc_res_payload_t
 
 typedef struct
 {
-    OCPayloadType type;
+    OCPayload base;
     OCResourcePayload* resources;
 } OCDiscoveryPayload;
 
 typedef struct
 {
-    OCPayloadType type;
+    OCPayload base;
     char* uri;
     uint8_t* sid;
     char* deviceName;
@@ -619,20 +642,20 @@ typedef struct
 
 typedef struct
 {
-    OCPayloadType type;
+    OCPayload base;
     char* uri;
     OCPlatformInfo info;
 } OCPlatformPayload;
 
 typedef struct
 {
-    OCPayloadType type;
+    OCPayload base;
     char* securityData;
 } OCSecurityPayload;
 #ifdef WITH_PRESENCE
 typedef struct
 {
-    OCPayloadType type;
+    OCPayload base;
     uint32_t sequenceNumber;
     uint32_t maxAge;
     OCPresenceTrigger trigger;

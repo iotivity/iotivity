@@ -212,22 +212,60 @@ void OCPayloadDestroy(OCPayload* payload);
 // Representation Payload
 OCRepPayload* OCRepPayloadCreate();
 
+OCRepPayload* OCRepPayloadClone(const OCRepPayload* payload);
+
 void OCRepPayloadAppend(OCRepPayload* parent, OCRepPayload* child);
 
 bool OCRepPayloadSetUri(OCRepPayload* payload, const char* uri);
 
 bool OCRepPayloadAddResourceType(OCRepPayload* payload, const char* resourceType);
 bool OCRepPayloadAddInterface(OCRepPayload* payload, const char* interface);
+
 bool OCRepPayloadAddResourceTypeAsOwner(OCRepPayload* payload, char* resourceType);
 bool OCRepPayloadAddInterfaceAsOwner(OCRepPayload* payload, char* interface);
 
-bool OCRepPayloadSetPropInt(OCRepPayload* payload, const char* name, int64_t value);
-bool OCRepPayloadGetPropInt(OCRepPayload* payload, const char* name, int64_t* value);
-bool OCRepPayloadSetPropBool(OCRepPayload* payload, const char* name, bool value);
-bool OCRepPayloadGetPropBool(OCRepPayload* payload, const char* name, bool* value);
-bool OCRepPayloadSetPropString(OCRepPayload* payload, const char* name, const char* value);
+bool OCRepPayloadIsNull(const OCRepPayload* payload, const char* name);
+bool OCRepPayloadSetNull(OCRepPayload* payload, const char* name);
 
-OCRepPayload* OCRepPayloadClone (const OCRepPayload* payload);
+bool OCRepPayloadSetPropInt(OCRepPayload* payload, const char* name, int64_t value);
+bool OCRepPayloadGetPropInt(const OCRepPayload* payload, const char* name, int64_t* value);
+
+bool OCRepPayloadSetPropDouble(OCRepPayload* payload, const char* name, double value);
+bool OCRepPayloadGetPropDouble(const OCRepPayload* payload, const char* name, double* value);
+
+bool OCRepPayloadSetPropString(OCRepPayload* payload, const char* name, const char* value);
+bool OCRepPayloadGetPropString(const OCRepPayload* payload, const char* name, const char** value);
+
+bool OCRepPayloadSetPropBool(OCRepPayload* payload, const char* name, bool value);
+bool OCRepPayloadGetPropBool(const OCRepPayload* payload, const char* name, bool* value);
+
+bool OCRepPayloadSetPropObject(OCRepPayload* payload, const char* name, OCRepPayload* value);
+bool OCRepPayloadGetPropObject(const OCRepPayload* payload, const char* name, OCRepPayload** value);
+
+bool OCRepPayloadSetIntArray(OCRepPayload* payload, const char* name,
+        const int64_t* array, size_t dimensions[MAX_REP_ARRAY_DEPTH]);
+bool OCRepPayloadGetIntArray(const OCRepPayload* payload, const char* name,
+        int64_t** array, size_t dimensions[MAX_REP_ARRAY_DEPTH]);
+
+bool OCRepPayloadSetDoubleArray(OCRepPayload* payload, const char* name,
+        const double* array, size_t dimensions[MAX_REP_ARRAY_DEPTH]);
+bool OCRepPayloadGetDoubleArray(const OCRepPayload* payload, const char* name,
+        double** array, size_t dimensions[MAX_REP_ARRAY_DEPTH]);
+
+bool OCRepPayloadSetStringArray(OCRepPayload* payload, const char* name,
+        const char** array, size_t dimensions[MAX_REP_ARRAY_DEPTH]);
+bool OCRepPayloadGetStringArray(const OCRepPayload* payload, const char* name,
+        char*** array, size_t dimensions[MAX_REP_ARRAY_DEPTH]);
+
+bool OCRepPayloadSetBoolArray(OCRepPayload* payload, const char* name,
+        const bool* array, size_t dimensions[MAX_REP_ARRAY_DEPTH]);
+bool OCRepPayloadGetBoolArray(const OCRepPayload* payload, const char* name,
+        bool** array, size_t dimensions[MAX_REP_ARRAY_DEPTH]);
+
+bool OCRepPayloadSetPropObjectArray(OCRepPayload* payload, const char* name,
+        const OCRepPayload** array, size_t dimensions[MAX_REP_ARRAY_DEPTH]);
+bool OCRepPayloadGetPropObjectArray(const OCRepPayload* payload, const char* name,
+        OCRepPayload*** array, size_t dimensions[MAX_REP_ARRAY_DEPTH]);
 
 void OCRepPayloadDestroy(OCRepPayload* payload);
 
