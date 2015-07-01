@@ -74,13 +74,13 @@ namespace OIC
             template< typename T >
             using mpl_begin = typename boost::mpl::begin<T>::type;
 
-            template< typename T >
+            template< typename T, typename V = void >
             using enable_if_supported = typename std::enable_if<
-                    is_supported_type_helper< T >::type::value >::type;
+                    is_supported_type_helper< T >::type::value, V >::type;
 
-            template< typename T >
-            using disable_if_unsupported = typename std::enable_if<
-                    !is_supported_type_helper< T >::type::value >::type;
+            template< typename T, typename V = void >
+            using enable_if_unsupported = typename std::enable_if<
+                    !is_supported_type_helper< T >::type::value, V >::type;
 
             template< typename VISITOR >
             class KeyValueVisitorHelper: public boost::static_visitor< >
@@ -119,7 +119,7 @@ namespace OIC
                 }
 
                 Value& operator=(const Value&);
-                Value& operator=(Value&&) = default;
+                Value& operator=(Value&&);
 
                 template< typename T, typename = enable_if_supported< T > >
                 Value& operator=(T&& rhs)
@@ -148,8 +148,8 @@ namespace OIC
                     return m_data->which() == rhs.m_data->which();
                 }
 
-                template< typename T, enable_if_supported< T >* = nullptr >
-                bool isTypeOf() const
+                template< typename T >
+                enable_if_supported< T, bool > isTypeOf() const
                 {
                     using iter = typename boost::mpl::find< ValueVariant::types, T >::type;
 
@@ -157,8 +157,8 @@ namespace OIC
                             == boost::mpl::distance< mpl_begin< ValueVariant::types >, iter >::value;
                 }
 
-                template< typename T, disable_if_unsupported< T >* = nullptr >
-                bool isTypeOf() const
+                template< typename T >
+                enable_if_unsupported< T, bool > isTypeOf() const
                 {
                     return false;
                 }
@@ -168,7 +168,8 @@ namespace OIC
                 friend bool operator==(const Value&, const Value&);
 
                 template< typename T >
-                friend bool operator==(const Value&, const T&);
+                friend typename std::enable_if< ResourceAttributes::is_supported_type< T >::value,
+                    bool >::type operator==(const Value&, const T&);
 
                 bool operator==(const char*) const;
 
@@ -227,6 +228,7 @@ namespace OIC
             const_iterator cend() const;
 
             Value& operator[](const std::string&);
+            Value& operator[](std::string&&);
 
             Value& at(const std::string&);
             const Value& at(const std::string&) const;
@@ -264,11 +266,9 @@ namespace OIC
         };
 
         template< typename T >
-        bool operator==(const ResourceAttributes::Value& lhs, const T& rhs)
+        typename std::enable_if< ResourceAttributes::is_supported_type< T >::value, bool >::type
+        operator==(const ResourceAttributes::Value& lhs, const T& rhs)
         {
-            using TypeChecker = typename std::enable_if<
-                    ResourceAttributes::is_supported_type< T >::value >::type;
-
             return lhs.equals< T >(rhs);
         }
 

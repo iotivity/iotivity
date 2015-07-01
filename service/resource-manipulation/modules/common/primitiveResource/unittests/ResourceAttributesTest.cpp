@@ -232,7 +232,17 @@ TEST(ResourceAttributesValueTest, MovedValueHasNull)
     ASSERT_EQ(nullptr, one);
 }
 
-TEST(ResourceAttributesValueTest, SameValueIsEqual)
+TEST(ResourceAttributesValueTest, MovedValueWithAssignmentHasNull)
+{
+    ResourceAttributes::Value one { 1 };
+    ResourceAttributes::Value another;
+
+    another = std::move(one);
+
+    ASSERT_EQ(nullptr, one);
+}
+
+TEST(ResourceAttributesValueTest, SameValuesAreEqual)
 {
     ResourceAttributes::Value one { 1 };
     ResourceAttributes::Value another { 1 };

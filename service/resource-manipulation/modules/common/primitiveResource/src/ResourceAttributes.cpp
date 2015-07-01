@@ -111,6 +111,13 @@ namespace OIC
             return *this;
         }
 
+        auto ResourceAttributes::Value::operator=(Value&& rhs) -> Value&
+        {
+            *m_data = ValueVariant{};
+            m_data->swap(*rhs.m_data);
+            return *this;
+        }
+
         auto ResourceAttributes::Value::operator=(const char* rhs) -> Value&
         {
             *m_data = std::string{ rhs };
@@ -316,6 +323,11 @@ namespace OIC
         auto ResourceAttributes::operator[](const std::string& key) -> Value&
         {
             return m_keyValues[key];
+        }
+
+        auto ResourceAttributes::operator[](std::string&& key) -> Value&
+        {
+            return m_keyValues[std::move(key)];
         }
 
         auto ResourceAttributes::at(const std::string& key) -> Value&
