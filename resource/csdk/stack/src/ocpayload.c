@@ -107,6 +107,83 @@ OCRepPayloadValue* OCRepPayloadFindValue(OCRepPayload* payload, const char* name
     return NULL;
 
 }
+
+void CopyPropertyValue (OCRepPayloadValue *dest, OCRepPayloadValue *source)
+{
+    if (!source || !dest)
+    {
+        return;
+    }
+    if (source->type == OCREP_PROP_STRING)
+    {
+        dest->str = OICStrdup (source->str);
+    }
+    else
+    {
+        // TODO: Copy other types.
+    }
+}
+
+void FreeRepPayloadValue(OCRepPayloadValue* val)
+{
+    if(!val)
+    {
+        return;
+    }
+
+    if(val->type == OCREP_PROP_STRING)
+    {
+        OICFree(val->str);
+    }
+
+    OICFree(val->name);
+    FreeRepPayloadValue(val->next);
+    OICFree(val);
+
+}
+
+OCRepPayloadValue* OCRepPayloadValueClone (OCRepPayloadValue* source)
+{
+    if (!source)
+    {
+        return NULL;
+    }
+
+    OCRepPayloadValue *sourceIter = source;
+    OCRepPayloadValue *destIter = (OCRepPayloadValue*) OICCalloc(1, sizeof(OCRepPayloadValue));
+    if (!destIter)
+    {
+        return NULL;
+    }
+
+    OCRepPayloadValue *headOfClone = destIter;
+
+    // Copy payload type and non pointer types in union.
+    *destIter = *sourceIter;
+    destIter->name = OICStrdup (sourceIter->name);
+    CopyPropertyValue (destIter, sourceIter);
+
+    sourceIter = sourceIter->next;
+
+    while (sourceIter)
+    {
+        destIter->next = (OCRepPayloadValue*) OICCalloc(1, sizeof(OCRepPayloadValue));
+        if (!destIter->next)
+        {
+            FreeRepPayloadValue (headOfClone);
+            return NULL;
+        }
+
+        *(destIter->next) = *sourceIter;
+        destIter->next->name = OICStrdup (sourceIter->name);
+        CopyPropertyValue (destIter->next, sourceIter);
+
+        sourceIter = sourceIter->next;
+        destIter = destIter->next;
+    }
+    return headOfClone;
+}
+
 OCRepPayloadValue* OCRepPayloadFindAndSetValue(OCRepPayload* payload, const char* name,
         OCRepPayloadPropType type)
 {
@@ -318,23 +395,64 @@ void FreeOCStringLL(OCStringLL* ll)
     OICFree(ll);
 }
 
-void FreeRepPayloadValue(OCRepPayloadValue* val)
+OCStringLL* CloneOCStringLL (OCStringLL* ll)
 {
-    if(!val)
+    if (!ll)
     {
-        return;
+        return NULL;
     }
 
-    if(val->type == OCREP_PROP_STRING)
+    OCStringLL *sourceIter = ll;
+
+    OCStringLL *destIter = OICCalloc (1, sizeof (OCStringLL));
+    if (!destIter)
     {
-        OICFree(val->str);
+        return NULL;
     }
+    destIter->value = OICStrdup (sourceIter->value);
 
-    OICFree(val->name);
-    FreeRepPayloadValue(val->next);
-    OICFree(val);
+    OCStringLL *headOfClone = destIter;
 
+    sourceIter = sourceIter->next;
+
+    while (sourceIter)
+    {
+        destIter->next  = OICCalloc (1, sizeof (OCStringLL));
+        if (!destIter->next)
+        {
+            FreeOCStringLL (headOfClone);
+            return NULL;
+        }
+        destIter->next->value = OICStrdup (sourceIter->value);
+
+        destIter = destIter->next;
+        sourceIter = sourceIter->next;
+    }
+    return headOfClone;
 }
+
+OCRepPayload* OCRepPayloadClone (const OCRepPayload* payload)
+{
+    if (!payload)
+    {
+        return NULL;
+    }
+
+    OCRepPayload *clone = OCRepPayloadCreate();
+
+    if (!clone)
+    {
+        return NULL;
+    }
+
+    clone->uri = OICStrdup (payload->uri);
+    clone->types = CloneOCStringLL (payload->types);
+    clone->interfaces = CloneOCStringLL (payload->interfaces);
+    clone->values = OCRepPayloadValueClone (payload->values);
+
+    return clone;
+}
+
 
 void OCRepPayloadDestroy(OCRepPayload* payload)
 {

@@ -74,7 +74,7 @@ static inline void OCPayloadLogRep(LogLevel level, const char* tag, OCRepPayload
             switch(val->type)
             {
                 case OCREP_PROP_INT:
-                    OC_LOG_V(level, tag, "\t\t%s(int):%" PRId64, val->name, val->i);
+                    OC_LOG_V(level, tag, "\t\t%s(int):%lld", val->name, val->i);
                     break;
                 case OCREP_PROP_BOOL:
                     OC_LOG_V(level, tag, "\t\t%s(bool):%s", val->name, val->b ? "true" : "false");
@@ -179,6 +179,7 @@ static inline void OCPayloadLog(LogLevel level, const char* tag, OCPayload* payl
     if(!payload)
     {
         OC_LOG(level, tag, PCF("NULL Payload"));
+        return;
     }
     switch(payload->type)
     {
@@ -225,6 +226,8 @@ bool OCRepPayloadGetPropInt(OCRepPayload* payload, const char* name, int64_t* va
 bool OCRepPayloadSetPropBool(OCRepPayload* payload, const char* name, bool value);
 bool OCRepPayloadGetPropBool(OCRepPayload* payload, const char* name, bool* value);
 bool OCRepPayloadSetPropString(OCRepPayload* payload, const char* name, const char* value);
+
+OCRepPayload* OCRepPayloadClone (const OCRepPayload* payload);
 
 void OCRepPayloadDestroy(OCRepPayload* payload);
 
