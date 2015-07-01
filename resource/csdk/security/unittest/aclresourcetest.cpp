@@ -129,10 +129,7 @@ TEST(ACLResourceTest, JSONMarshallingTests)
         char * jsonStr2 = BinToAclJSON(acl);
         EXPECT_TRUE(NULL != jsonStr2);
 
-        if (jsonStr1 && jsonStr2)
-        {
-            EXPECT_STREQ(jsonStr1, jsonStr2);
-        }
+        EXPECT_STREQ(jsonStr1, jsonStr2);
 
         OICFree(jsonStr1);
         OICFree(jsonStr2);
