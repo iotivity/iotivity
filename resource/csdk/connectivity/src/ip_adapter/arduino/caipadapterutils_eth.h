@@ -36,7 +36,7 @@
 #include "logger.h"
 #include "cacommon.h"
 #include "caadapterinterface.h"
-#include "caipadapter_singlethread.h"
+#include "caipadapter.h"
 #include "caadapterutils.h"
 
 #ifdef __cplusplus

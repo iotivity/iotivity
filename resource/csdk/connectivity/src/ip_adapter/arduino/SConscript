@@ -7,14 +7,14 @@ import os.path
 
 env.AppendUnique(CPPPATH = [ os.path.join(src_dir, 'arduino') ])
 
-src_files = [ 'caipnwmonitor.cpp' ]
-
 if env.get('SHIELD') == 'WIFI':
-    src_files += [ 'caipclient_wifi.cpp',
-                   'caipserver_wifi.cpp' ]
+    src_files = [ 'caipclient_wifi.cpp',
+                   'caipserver_wifi.cpp',
+                   'caipnwmonitor_wifi.cpp' ]
 else:
-    src_files += [ 'caipadapterutils_eth.cpp',
+    src_files = [ 'caipadapterutils_eth.cpp',
                    'caipclient_eth.cpp',
-                   'caipserver_eth.cpp' ]
+                   'caipserver_eth.cpp',
+                   'caipnwmonitor_eth.cpp' ]
 
 Return('src_files')

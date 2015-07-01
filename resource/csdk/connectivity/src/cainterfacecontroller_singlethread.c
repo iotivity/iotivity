@@ -25,7 +25,7 @@
 #include <string.h>
 #include <stdint.h>
 
-#include "caipadapter_singlethread.h"
+#include "caipadapter.h"
 #include "caedradapter_singlethread.h"
 #include "caleadapter_singlethread.h"
 #include "caadapterutils.h"
@@ -137,7 +137,8 @@ void CAInitializeAdapters()
 
     // Initialize adapters and register callback.
 #ifdef IP_ADAPTER
-    CAInitializeIP(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback);
+    CAInitializeIP(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback,
+                   NULL, NULL);
 #endif /* IP_ADAPTER */
 
 #ifdef EDR_ADAPTER

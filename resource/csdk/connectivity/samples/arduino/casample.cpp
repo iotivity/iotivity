@@ -55,6 +55,7 @@ static void SendNotification();
 static void SelectNetwork();
 static void UnselectNetwork();
 static void HandleRequestResponse();
+static void GetNetworkInfo();
 
 static void RequestHandler(const CAEndpoint_t *object, const CARequestInfo_t *requestInfo);
 static void ResponseHandler(const CAEndpoint_t *object, const CAResponseInfo_t *responseInfo);
@@ -206,6 +207,9 @@ void loop()
                 break;
             case 'B': // send notification
                 SendNotification();
+                break;
+            case 'G': // Get network info
+                GetNetworkInfo();
                 break;
 
             case 'N': // select network
@@ -624,6 +628,36 @@ void UnselectNetwork()
     Serial.println("============");
 }
 
+void GetNetworkInfo()
+{
+    CAEndpoint_t *tempInfo = NULL;
+    uint32_t tempSize = 0;
+    CAResult_t res = CAGetNetworkInformation(&tempInfo, &tempSize);
+    if (CA_STATUS_OK != res || NULL == tempInfo || 0 >= tempSize)
+    {
+        Serial.println("Network not connected");
+        free(tempInfo);
+        return;
+    }
+    printf("=========");
+    printf("Network info total size is %d\n\n", tempSize);
+    int index;
+    for (index = 0; index < tempSize; index++)
+    {
+        Serial.println("Type:");
+        Serial.println(tempInfo[index].adapter);
+        if (CA_ADAPTER_IP == tempInfo[index].adapter)
+        {
+            Serial.println("Address:");
+            Serial.println(tempInfo[index].addr);
+            Serial.println("Port:");
+            Serial.println(tempInfo[index].port);
+        }
+    }
+    free(tempInfo);
+    Serial.println("=======");
+}
+
 void PrintMenu()
 {
 
@@ -634,6 +668,7 @@ void PrintMenu()
     Serial.println("r: send request");
     Serial.println("e: send request to all");
     Serial.println("b: send notification");
+    Serial.println("g: get network info");
     Serial.println("n: select network");
     Serial.println("x: unselect network");
     Serial.println("h: handle request response");

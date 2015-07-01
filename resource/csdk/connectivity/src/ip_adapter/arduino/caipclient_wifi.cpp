@@ -17,7 +17,7 @@
 * limitations under the License.
 *
 ******************************************************************/
-#include "caipinterface_singlethread.h"
+#include "caipinterface.h"
 
 #include <Arduino.h>
 #include <WiFi.h>
@@ -30,7 +30,7 @@
 #include "logger.h"
 #include "cacommon.h"
 #include "caadapterinterface.h"
-#include "caipadapter_singlethread.h"
+#include "caipadapter.h"
 #include "caadapterutils.h"
 
 /// This is the max buffer size between Arduino and WiFi Shield
@@ -49,20 +49,20 @@ void CAIPSetUnicastPort(uint16_t port)
 
 }
 
-uint32_t CAIPSendData(const char *remoteAddress, uint16_t port,
-                      const char *data, uint32_t dataLength, bool isMulticast)
+uint32_t CAIPSendData(const CAEndpoint_t *endpoint, const void *data,
+                      uint32_t dataLength, bool isMulticast)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
     VERIFY_NON_NULL_RET(data, TAG, "data", 0);
-    VERIFY_NON_NULL_RET(remoteAddress, TAG, "address", 0);
+    VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint", 0);
 
-    OIC_LOG_V(DEBUG, TAG, "remoteip: %s", remoteAddress);
-    OIC_LOG_V(DEBUG, TAG, "port: %d", port);
+    OIC_LOG_V(DEBUG, TAG, "remoteip: %s", endpoint->addr);
+    OIC_LOG_V(DEBUG, TAG, "port: %d", endpoint->port);
 
     uint8_t ip[4] = {0};
     uint16_t parsedPort = 0;
-    CAResult_t res = CAParseIPv4AddressInternal(remoteAddress, ip, sizeof(ip),
+    CAResult_t res = CAParseIPv4AddressInternal(endpoint->addr, ip, sizeof(ip),
                                                 &parsedPort);
     if (res != CA_STATUS_OK)
     {
@@ -71,7 +71,7 @@ uint32_t CAIPSendData(const char *remoteAddress, uint16_t port,
     }
 
     IPAddress remoteIp(ip);
-    Udp.beginPacket(remoteIp, (uint16_t)port);
+    Udp.beginPacket(remoteIp, endpoint->port);
 
     uint32_t bytesWritten = 0;
     while(bytesWritten < dataLength)

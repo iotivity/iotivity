@@ -184,7 +184,7 @@ static void CAReceivedPacketCallback(CAEndpoint_t *endpoint, void *data, uint32_
 
     uint32_t code = CA_NOT_FOUND;
     coap_pdu_t *pdu = (coap_pdu_t *) CAParsePDU((const char *) data, dataLen, &code);
-
+    OICFree(data);
     if (NULL == pdu)
     {
         OIC_LOG(ERROR, TAG, "Parse PDU failed");

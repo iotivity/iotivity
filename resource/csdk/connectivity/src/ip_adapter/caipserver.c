@@ -897,6 +897,12 @@ CAResult_t CAIPStopAllServers()
     return CA_STATUS_OK;
 }
 
+void CAIPPullData()
+{
+    OIC_LOG(DEBUG, IP_SERVER_TAG, "IN");
+    OIC_LOG(DEBUG, IP_SERVER_TAG, "OUT");
+}
+
 uint16_t CAGetServerPortNum(const char *ipAddress, bool isSecured)
 {
     ca_mutex_lock(g_mutexServerInfoList);

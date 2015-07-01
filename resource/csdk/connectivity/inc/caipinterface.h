@@ -43,9 +43,9 @@ extern "C"
  */
 typedef enum
 {
-    CA_UNICAST_SERVER = 0,    /**< Unicast Server */
-    CA_MULTICAST_SERVER,      /**< Multicast Server */
-    CA_SECURED_UNICAST_SERVER /**< Secured Unicast Server */
+    CA_UNICAST_SERVER = 0,      /**< Unicast Server */
+    CA_MULTICAST_SERVER,        /**< Multicast Server */
+    CA_SECURED_UNICAST_SERVER   /**< Secured Unicast Server */
 } CAAdapterServerType_t;
 
 /**
@@ -225,6 +225,22 @@ void CAIPSetPacketReceiveCallback(CAIPPacketReceivedCallback callback);
 void CAIPSetExceptionCallback(CAIPExceptionCallback callback);
 
 /**
+ * @brief  Set socket description for sending unicast UDP data. Once the Unicast server is started,
+ *         the same socket descriptor is used for sending the Unicast UDP data.
+ *
+ * @param  socketFD [IN]  Socket descriptor used for sending UDP data.
+ * @return  NONE
+ */
+void CAIPSetUnicastSocket(int socketFD);
+
+/**
+ * @brief  Set the port number for sending unicast UDP data
+ * @param  port [IN] Port number used for sending UDP data.
+ * @return NONE
+ */
+void CAIPSetUnicastPort(uint16_t port);
+
+/**
  * @brief  API to send unicast UDP data
  *
  * @param  endpoint         [IN] complete network address to send to
@@ -286,6 +302,12 @@ CAResult_t CAIPStartNetworkMonitor();
  * @retval  #CA_STATUS_FAILED Operation failed
  */
 CAResult_t CAIPStopNetworkMonitor();
+
+/**
+ * @brief  Pull the Received Data
+ * @return NONE
+ */
+void CAIPPullData();
 
 /**
  * @brief  Get local adapter network information.

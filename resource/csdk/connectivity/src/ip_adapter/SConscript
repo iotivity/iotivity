@@ -17,7 +17,7 @@ src_dir = './ip_adapter/'
 common_files = None
 if target_os == 'arduino':
     common_files = [ os.path.join(src_dir,
-                                  'caipadapter_singlethread.c') ]
+                                  'caipadapter.c') ]
 else:
     common_files = [
         os.path.join(src_dir, 'caipadapter.c'),
