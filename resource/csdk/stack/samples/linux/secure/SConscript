@@ -63,13 +63,13 @@ samples_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 ######################################################################
 # Source files and Targets
 ######################################################################
-print 'Secure Samples Disabled during WIP'
-#ocserverbasicops = samples_env.Program('ocserverbasicops', ['common.cpp', 'ocserverbasicops.cpp'])
-#occlientbasicops = samples_env.Program('occlientbasicops', ['common.cpp', 'occlientbasicops.cpp'])
 
-#Alias("samples", [ocserverbasicops, occlientbasicops])
+ocserverbasicops = samples_env.Program('ocserverbasicops', ['common.cpp', 'ocserverbasicops.cpp'])
+occlientbasicops = samples_env.Program('occlientbasicops', ['common.cpp', 'occlientbasicops.cpp'])
 
-#env.AppendTarget('samples')
+Alias("samples", [ocserverbasicops, occlientbasicops])
+
+env.AppendTarget('samples')
 
 src_dir = samples_env.get('SRC_DIR')
 sec_samples_src_dir = src_dir + '/resource/csdk/stack/samples/linux/secure/'
