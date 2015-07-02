@@ -27,6 +27,7 @@
 #include "ocstackinternal.h"
 #include "ocresource.h"
 
+#define TAG "OCPayload"
 void FreeRepPayloadValueContents(OCRepPayloadValue* val);
 
 void OCPayloadDestroy(OCPayload* payload)
@@ -608,7 +609,7 @@ bool OCRepPayloadSetIntArrayAsOwner(OCRepPayload* payload, const char* name,
     }
 
     val->arr.type = OCREP_PROP_INT;
-    memcpy(val->arr.dimensions, dimensions, MAX_REP_ARRAY_DEPTH);
+    memcpy(val->arr.dimensions, dimensions, MAX_REP_ARRAY_DEPTH * sizeof(size_t));
     val->arr.iArray = array;
 
     return true;
@@ -664,7 +665,7 @@ bool OCRepPayloadGetIntArray(const OCRepPayload* payload, const char* name,
     }
 
     memcpy(*array, val->arr.iArray, dimTotal * sizeof(int64_t));
-    memcpy(dimensions, val->arr.dimensions, MAX_REP_ARRAY_DEPTH);
+    memcpy(dimensions, val->arr.dimensions, MAX_REP_ARRAY_DEPTH * sizeof(size_t));
     return true;
 }
 
@@ -679,7 +680,7 @@ bool OCRepPayloadSetDoubleArrayAsOwner(OCRepPayload* payload, const char* name,
     }
 
     val->arr.type = OCREP_PROP_DOUBLE;
-    memcpy(val->arr.dimensions, dimensions, MAX_REP_ARRAY_DEPTH);
+    memcpy(val->arr.dimensions, dimensions, MAX_REP_ARRAY_DEPTH * sizeof(size_t));
     val->arr.dArray = array;
 
     return true;
@@ -733,7 +734,7 @@ bool OCRepPayloadGetDoubleArray(const OCRepPayload* payload, const char* name,
     }
 
     memcpy(*array, val->arr.dArray, dimTotal * sizeof(double));
-    memcpy(dimensions, val->arr.dimensions, MAX_REP_ARRAY_DEPTH);
+    memcpy(dimensions, val->arr.dimensions, MAX_REP_ARRAY_DEPTH * sizeof(size_t));
     return true;
 }
 
@@ -748,7 +749,7 @@ bool OCRepPayloadSetStringArrayAsOwner(OCRepPayload* payload, const char* name,
     }
 
     val->arr.type = OCREP_PROP_STRING;
-    memcpy(val->arr.dimensions, dimensions, MAX_REP_ARRAY_DEPTH);
+    memcpy(val->arr.dimensions, dimensions, MAX_REP_ARRAY_DEPTH * sizeof(size_t));
     val->arr.strArray = array;
 
     return true;
@@ -809,7 +810,7 @@ bool OCRepPayloadGetStringArray(const OCRepPayload* payload, const char* name,
         return false;
     }
 
-    memcpy(dimensions, val->arr.dimensions, MAX_REP_ARRAY_DEPTH);
+    memcpy(dimensions, val->arr.dimensions, MAX_REP_ARRAY_DEPTH * sizeof(size_t));
 
     for(size_t i = 0; i < dimTotal; ++i)
     {
@@ -832,7 +833,7 @@ bool OCRepPayloadSetBoolArrayAsOwner(OCRepPayload* payload, const char* name,
     }
 
     val->arr.type = OCREP_PROP_BOOL;
-    memcpy(val->arr.dimensions, dimensions, MAX_REP_ARRAY_DEPTH);
+    memcpy(val->arr.dimensions, dimensions, MAX_REP_ARRAY_DEPTH * sizeof(size_t));
     val->arr.bArray = array;
 
     return true;
@@ -887,7 +888,7 @@ bool OCRepPayloadGetBoolArray(const OCRepPayload* payload, const char* name,
     }
 
     memcpy(*array, val->arr.bArray, dimTotal * sizeof(bool));
-    memcpy(dimensions, val->arr.dimensions, MAX_REP_ARRAY_DEPTH);
+    memcpy(dimensions, val->arr.dimensions, MAX_REP_ARRAY_DEPTH * sizeof(size_t));
     return true;
 }
 
@@ -902,7 +903,7 @@ bool OCRepPayloadSetPropObjectArrayAsOwner(OCRepPayload* payload, const char* na
     }
 
     val->arr.type = OCREP_PROP_OBJECT;
-    memcpy(val->arr.dimensions, dimensions, MAX_REP_ARRAY_DEPTH);
+    memcpy(val->arr.dimensions, dimensions, MAX_REP_ARRAY_DEPTH * sizeof(size_t));
     val->arr.objArray = array;
 
     return true;
@@ -964,7 +965,7 @@ bool OCRepPayloadGetPropObjectArray(const OCRepPayload* payload, const char* nam
         return false;
     }
 
-    memcpy(dimensions, val->arr.dimensions, MAX_REP_ARRAY_DEPTH);
+    memcpy(dimensions, val->arr.dimensions, MAX_REP_ARRAY_DEPTH * sizeof(size_t));
 
     for(size_t i = 0; i < dimTotal; ++i)
     {

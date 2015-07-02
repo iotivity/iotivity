@@ -30,6 +30,7 @@
 OCStackResult ParseDiscoveryPayload(OCPayload** outPayload, CborValue* arrayVal);
 OCStackResult ParseDevicePayload(OCPayload** outPayload, CborValue* arrayVal);
 OCStackResult ParsePlatformPayload(OCPayload** outPayload, CborValue* arrayVal);
+CborError ParseSingleRepPayload(OCRepPayload** outPayload, CborValue* repParent);
 OCStackResult ParseRepPayload(OCPayload** outPayload, CborValue* arrayVal);
 OCStackResult ParsePresencePayload(OCPayload** outPayload, CborValue* arrayVal);
 
@@ -471,7 +472,7 @@ CborError ParseArray(OCRepPayload* out, const char* name, CborValue* container)
     void* arr = NULL;
     char* tempStr;
     size_t len;
-    OCPayload* pl;
+    OCRepPayload* pl;
     switch(type)
     {
         case OCREP_PROP_INT:
@@ -540,8 +541,9 @@ CborError ParseArray(OCRepPayload* out, const char* name, CborValue* container)
             for(size_t i = 0; i < dimTotal && err == CborNoError; ++i)
             {
                 pl = NULL;
-                err = err | ParseRepPayload(&pl, &insideArray);
-                ((OCRepPayload**)arr)[i] = (OCRepPayload*)pl;
+                err = err | ParseSingleRepPayload(&pl, &insideArray);
+                ((OCRepPayload**)arr)[i] = pl;
+                err = err | cbor_value_advance(&insideArray);
             }
             if(err == CborNoError &&
                 OCRepPayloadSetPropObjectArrayAsOwner(out, name, (OCRepPayload**)arr, dimensions))
@@ -560,21 +562,141 @@ CborError ParseArray(OCRepPayload* out, const char* name, CborValue* container)
     return err;
 }
 
+CborError ParseSingleRepPayload(OCRepPayload** outPayload, CborValue* repParent)
+{
+    *outPayload = OCRepPayloadCreate();
+    OCRepPayload* curPayload = *outPayload;
+    CborError err = CborNoError;
+    if(!*outPayload)
+    {
+        return CborErrorOutOfMemory;
+    }
+
+    size_t len;
+    CborValue curVal;
+    err = err | cbor_value_map_find_value(repParent, OC_RSRVD_HREF, &curVal);
+    if(cbor_value_is_valid(&curVal))
+    {
+        err = err | cbor_value_dup_text_string(&curVal, &curPayload->uri, &len,
+            NULL);
+    }
+
+    err = err | cbor_value_map_find_value(repParent, OC_RSRVD_PROPERTY, &curVal);
+    if(cbor_value_is_valid(&curVal))
+    {
+        CborValue insidePropArray;
+        err = err | cbor_value_map_find_value(&curVal, OC_RSRVD_RESOURCE_TYPE,
+                &insidePropArray);
+
+        if(cbor_value_is_array(&insidePropArray))
+        {
+            CborValue rtArray;
+            err = err | cbor_value_enter_container(&insidePropArray, &rtArray);
+
+            while(err == CborNoError && cbor_value_is_valid(&rtArray))
+            {
+                char* curRt;
+                cbor_value_dup_text_string(&rtArray, &curRt, &len, NULL);
+                OCRepPayloadAddResourceTypeAsOwner(curPayload, curRt);
+            }
+
+            err = err | cbor_value_leave_container(&insidePropArray, &rtArray);
+        }
+
+        err = err | cbor_value_map_find_value(&curVal, OC_RSRVD_INTERFACE, &insidePropArray);
+
+        if(cbor_value_is_array(&insidePropArray))
+        {
+            CborValue ifArray;
+            err = err | cbor_value_enter_container(&insidePropArray, &ifArray);
+
+            while(err == CborNoError && cbor_value_is_valid(&ifArray))
+            {
+                char* curIf;
+                err = err | cbor_value_dup_text_string(&ifArray, &curIf, &len, NULL);
+                OCRepPayloadAddInterfaceAsOwner(curPayload, curIf);
+            }
+
+            err = err | cbor_value_leave_container(&insidePropArray, &ifArray);
+        }
+    }
+    err = err | cbor_value_map_find_value(repParent, OC_RSRVD_REPRESENTATION, &curVal);
+    if(cbor_value_is_map(&curVal))
+    {
+        CborValue repMap;
+        err = err | cbor_value_enter_container(&curVal, &repMap);
+
+        while(err == CborNoError && cbor_value_is_valid(&repMap))
+        {
+            char* name;
+            err = err | cbor_value_dup_text_string(&repMap, &name, &len, NULL);
+
+            err = err | cbor_value_advance(&repMap);
+
+            int64_t intval;
+            bool boolval;
+            char* strval;
+            double doubleval;
+            OCRepPayload* pl;
+
+            switch(cbor_value_get_type(&repMap))
+            {
+                case CborNullType:
+                    OCRepPayloadSetNull(curPayload, name);
+                    break;
+                case CborIntegerType:
+                    err = err | cbor_value_get_int64(&repMap, &intval);
+                    OCRepPayloadSetPropInt(curPayload, name, intval);
+                    break;
+                case CborDoubleType:
+                    err = err | cbor_value_get_double(&repMap, &doubleval);
+                    OCRepPayloadSetPropDouble(curPayload, name, doubleval);
+                case CborBooleanType:
+                    err = err | cbor_value_get_boolean(&repMap, &boolval);
+                    OCRepPayloadSetPropBool(curPayload, name, boolval);
+                    break;
+                case CborTextStringType:
+                    err = err | cbor_value_dup_text_string(&repMap, &strval, &len, NULL);
+                    OCRepPayloadSetPropStringAsOwner(curPayload, name, strval);
+                    break;
+                case CborMapType:
+                    err = err | ParseSingleRepPayload(&pl, &repMap);
+                    OCRepPayloadSetPropObjectAsOwner(curPayload, name, pl);
+                    break;
+                case CborArrayType:
+                    err = err | ParseArray(curPayload, name, &repMap);
+                    break;
+                default:
+                    printf("ERICH: Parsing rep property, unknown type %d\n",repMap.type);
+                    exit(-1);
+
+            }
+
+            err = err | cbor_value_advance(&repMap);
+            OICFree(name);
+        }
+        err = err | cbor_value_leave_container(&curVal, &repMap);
+    }
+
+    if(err != CborNoError)
+    {
+        OCRepPayloadDestroy(*outPayload);
+    }
+
+    return err;
+}
 OCStackResult ParseRepPayload(OCPayload** outPayload, CborValue* arrayVal)
 {
     CborError err = CborNoError;
 
     OCRepPayload* rootPayload = NULL;
     OCRepPayload* curPayload = NULL;
+    OCRepPayload* temp = NULL;
     while(err == CborNoError && cbor_value_is_map(arrayVal))
     {
-        OCRepPayload* temp = OCRepPayloadCreate();
-        if(!temp)
-        {
-            return OC_STACK_NO_MEMORY;
-        }
+        err = err | ParseSingleRepPayload(&temp, arrayVal);
 
-        if(!rootPayload)
+        if(rootPayload == NULL)
         {
             rootPayload = temp;
             curPayload = temp;
@@ -585,112 +707,6 @@ OCStackResult ParseRepPayload(OCPayload** outPayload, CborValue* arrayVal)
             curPayload = curPayload->next;
         }
 
-        size_t len;
-        CborValue curVal;
-        err = err | cbor_value_map_find_value(arrayVal, OC_RSRVD_HREF, &curVal);
-        if(cbor_value_is_valid(&curVal))
-        {
-            err = err | cbor_value_dup_text_string(&curVal, &curPayload->uri, &len,
-                NULL);
-        }
-
-        err = err | cbor_value_map_find_value(arrayVal, OC_RSRVD_PROPERTY, &curVal);
-        if(cbor_value_is_valid(&curVal))
-        {
-            CborValue insidePropArray;
-            err = err | cbor_value_map_find_value(&curVal, OC_RSRVD_RESOURCE_TYPE,
-                    &insidePropArray);
-
-            if(cbor_value_is_array(&insidePropArray))
-            {
-                CborValue rtArray;
-                err = err | cbor_value_enter_container(&insidePropArray, &rtArray);
-
-                while(err == CborNoError && cbor_value_is_valid(&rtArray))
-                {
-                    char* curRt;
-                    cbor_value_dup_text_string(&rtArray, &curRt, &len, NULL);
-                    OCRepPayloadAddResourceTypeAsOwner(curPayload, curRt);
-                }
-
-                err = err | cbor_value_leave_container(&insidePropArray, &rtArray);
-            }
-
-            err = err | cbor_value_map_find_value(&curVal, OC_RSRVD_INTERFACE, &insidePropArray);
-
-            if(cbor_value_is_array(&insidePropArray))
-            {
-                CborValue ifArray;
-                err = err | cbor_value_enter_container(&insidePropArray, &ifArray);
-
-                while(err == CborNoError && cbor_value_is_valid(&ifArray))
-                {
-                    char* curIf;
-                    err = err | cbor_value_dup_text_string(&ifArray, &curIf, &len, NULL);
-                    OCRepPayloadAddInterfaceAsOwner(curPayload, curIf);
-                }
-
-                err = err | cbor_value_leave_container(&insidePropArray, &ifArray);
-            }
-        }
-
-        err = err | cbor_value_map_find_value(arrayVal, OC_RSRVD_REPRESENTATION, &curVal);
-        if(cbor_value_is_map(&curVal))
-        {
-            CborValue repMap;
-            err = err | cbor_value_enter_container(&curVal, &repMap);
-
-            while(err == CborNoError && cbor_value_is_valid(&repMap))
-            {
-                char* name;
-                err = err | cbor_value_dup_text_string(&repMap, &name, &len, NULL);
-
-                err = err | cbor_value_advance(&repMap);
-
-                int64_t intval;
-                bool boolval;
-                char* strval;
-                double doubleval;
-                OCRepPayload* pl;
-
-                switch(cbor_value_get_type(&repMap))
-                {
-                    case CborNullType:
-                        OCRepPayloadSetNull(curPayload, name);
-                        break;
-                    case CborIntegerType:
-                        err = err | cbor_value_get_int64(&repMap, &intval);
-                        OCRepPayloadSetPropInt(curPayload, name, intval);
-                        break;
-                    case CborDoubleType:
-                        err = err | cbor_value_get_double(&repMap, &doubleval);
-                        OCRepPayloadSetPropDouble(curPayload, name, doubleval);
-                    case CborBooleanType:
-                        err = err | cbor_value_get_boolean(&repMap, &boolval);
-                        OCRepPayloadSetPropBool(curPayload, name, boolval);
-                        break;
-                    case CborTextStringType:
-                        err = err | cbor_value_dup_text_string(&repMap, &strval, &len, NULL);
-                        OCRepPayloadSetPropStringAsOwner(curPayload, name, strval);
-                        break;
-                    case CborMapType:
-                        err = err | ParseRepPayload((OCPayload**)&pl, &repMap);
-                        OCRepPayloadSetPropObjectAsOwner(curPayload, name, pl);
-                        break;
-                    case CborArrayType:
-                        err = err | ParseArray(curPayload, name, &repMap);
-                        break;
-                    default:
-                        printf("ERICH: Parsing rep property, unknown type %d\n",repMap.type);
-                        exit(-1);
-
-                }
-
-                err = err | cbor_value_advance(&repMap);
-                OICFree(name);
-            }
-            err = err | cbor_value_leave_container(&curVal, &repMap);
-        }
 
         err = err | cbor_value_advance(arrayVal);
         if(err != CborNoError)

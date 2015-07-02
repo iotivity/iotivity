@@ -31,6 +31,8 @@
 #include <boost/lexical_cast.hpp>
 #include <algorithm>
 #include "ocpayload.h"
+#include "oic_malloc.h"
+#include "oic_string.h"
 
 namespace OC
 {
@@ -41,44 +43,7 @@ namespace OC
         while(pl)
         {
             OCRepresentation cur;
-            cur.setUri(pl->uri);
-
-            OCStringLL* ll = pl->types;
-            while(ll)
-            {
-                cur.addResourceType(ll->value);
-                ll = ll->next;
-            }
-
-            ll = pl->interfaces;
-            while(ll)
-            {
-                cur.addResourceInterface(ll->value);
-                ll = ll->next;
-            }
-
-            OCRepPayloadValue* val = pl->values;
-
-            while(val)
-            {
-                switch(val->type)
-                {
-                    case OCREP_PROP_INT:
-                        cur.setValue<int>(val->name, val->i);
-                        break;
-                    case OCREP_PROP_BOOL:
-                        cur.setValue<bool>(val->name, val->b);
-                        break;
-                    case OCREP_PROP_STRING:
-                        cur.setValue<std::string>(val->name, val->str);
-                        break;
-                    default:
-                        throw std::logic_error(std::string("Not Implemented!") +
-                                std::to_string((int)val->type));
-                        break;
-                }
-                val = val->next;
-            }
+            cur.setPayload(pl);
 
             pl = pl->next;
             this->addRepresentation(cur);
@@ -116,6 +81,181 @@ namespace OC
 
 namespace OC
 {
+    struct get_payload_array: boost::static_visitor<>
+    {
+        template<typename T>
+        void operator()(T& arr)
+        {
+            throw std::logic_error("Invalid calc_dimensions_visitor type");
+        }
+
+        template<typename T>
+        void operator()(std::vector<T>& arr)
+        {
+            root_size_calc<T>();
+            dimensions[0] = arr.size();
+            dimTotal = calcDimTotal(dimensions);
+
+            array = (void*)OICMalloc(dimTotal * root_size);
+
+            for(size_t i = 0; i < dimensions[0]; ++i)
+            {
+                copy_to_array(arr[i], array, i);
+            }
+
+        }
+        template<typename T>
+        void operator()(std::vector<std::vector<T>>& arr)
+        {
+            root_size_calc<T>();
+            dimensions[0] = arr.size();
+            for(size_t i = 0; i < arr.size(); ++i)
+            {
+                dimensions[1] = std::max(dimensions[1], arr[i].size());
+            }
+            dimTotal = calcDimTotal(dimensions);
+            array = (void*)OICCalloc(1, dimTotal * root_size);
+
+            for(size_t i = 0; i < dimensions[0]; ++i)
+            {
+                for(size_t j = 0; j < dimensions[1] && j < arr[i].size(); ++j)
+                {
+                    copy_to_array(arr[i][j], array, i*dimensions[1] + j);
+                }
+            }
+        }
+        template<typename T>
+        void operator()(std::vector<std::vector<std::vector<T>>>& arr)
+        {
+            root_size_calc<T>();
+            dimensions[0] = arr.size();
+            for(size_t i = 0; i < arr.size(); ++i)
+            {
+                dimensions[1] = std::max(dimensions[1], arr[i].size());
+
+                for(size_t j = 0; j < arr[i].size(); ++j)
+                {
+                    dimensions[2] = std::max(dimensions[2], arr[i][j].size());
+                }
+            }
+
+            dimTotal = calcDimTotal(dimensions);
+            array = (void*)OICCalloc(1, dimTotal * root_size);
+
+            for(size_t i = 0; i < dimensions[0]; ++i)
+            {
+                for(size_t j = 0; j < dimensions[1] && j < arr[i].size(); ++j)
+                {
+                    for(size_t k = 0; k < dimensions[2] && k < arr[i][j].size(); ++k)
+                    {
+                        copy_to_array(arr[i][j][k], array,
+                                dimensions[2] * j +
+                                dimensions[2] * dimensions[1] * i +
+                                k);
+                    }
+                }
+            }
+        }
+
+        template<typename T>
+        void root_size_calc()
+        {
+            root_size = sizeof(T);
+        }
+
+        template<typename T>
+        void copy_to_array(T item, void* array, size_t pos)
+        {
+            ((T*)array)[pos] = item;
+        }
+
+        size_t dimensions[MAX_REP_ARRAY_DEPTH] = {};
+        size_t root_size = 0;
+        size_t dimTotal = 0;
+        void* array = nullptr;
+    };
+
+    template<>
+    void get_payload_array::root_size_calc<int>()
+    {
+        root_size = sizeof(int64_t);
+    }
+
+    template<>
+    void get_payload_array::root_size_calc<std::string>()
+    {
+        root_size = sizeof(char*);
+    }
+
+    template<>
+    void get_payload_array::root_size_calc<OC::OCRepresentation>()
+    {
+        root_size = sizeof(OCRepPayload*);
+    }
+
+    template<>
+    void get_payload_array::copy_to_array(int item, void* array, size_t pos)
+    {
+        ((int64_t*)array)[pos] = item;
+    }
+
+    template<>
+    void get_payload_array::copy_to_array(std::_Bit_reference br, void* array, size_t pos)
+    {
+        ((bool*)array)[pos] = static_cast<bool>(br);
+    }
+
+    template<>
+    void get_payload_array::copy_to_array(const std::string& item, void* array, size_t pos)
+    {
+        ((char**)array)[pos] = OICStrdup(item.c_str());
+    }
+
+    template<>
+    void get_payload_array::copy_to_array(OC::OCRepresentation item, void* array, size_t pos)
+    {
+        ((OCRepPayload**)array)[pos] = item.getPayload();
+    }
+
+    void OCRepresentation::getPayloadArray(OCRepPayload* payload,
+                    const OCRepresentation::AttributeItem& item) const
+    {
+        get_payload_array vis{};
+        boost::apply_visitor(vis, m_values[item.attrname()]);
+
+
+        switch(item.base_type())
+        {
+            case AttributeType::Integer:
+                OCRepPayloadSetIntArrayAsOwner(payload, item.attrname().c_str(),
+                        (int64_t*)vis.array,
+                        vis.dimensions);
+                break;
+            case AttributeType::Double:
+                OCRepPayloadSetDoubleArrayAsOwner(payload, item.attrname().c_str(),
+                        (double*)vis.array,
+                        vis.dimensions);
+                break;
+            case AttributeType::Boolean:
+                OCRepPayloadSetBoolArrayAsOwner(payload, item.attrname().c_str(),
+                        (bool*)vis.array,
+                        vis.dimensions);
+                break;
+            case AttributeType::String:
+                OCRepPayloadSetStringArrayAsOwner(payload, item.attrname().c_str(),
+                        (char**)vis.array,
+                        vis.dimensions);
+                break;
+            case AttributeType::OCRepresentation:
+                OCRepPayloadSetPropObjectArrayAsOwner(payload, item.attrname().c_str(),
+                        (OCRepPayload**)vis.array, vis.dimensions);
+                break;
+            default:
+                throw std::logic_error(std::string("GetPayloadArray: Not Implemented") +
+                        std::to_string((int)item.base_type()));
+        }
+    }
+
     OCRepPayload* OCRepresentation::getPayload() const
     {
         OCRepPayload* root = OCRepPayloadCreate();
@@ -140,8 +280,14 @@ namespace OC
         {
             switch(val.type())
             {
+                case AttributeType::Null:
+                    OCRepPayloadSetNull(root, val.attrname().c_str());
+                    break;
                 case AttributeType::Integer:
                     OCRepPayloadSetPropInt(root, val.attrname().c_str(), static_cast<int>(val));
+                    break;
+                case AttributeType::Double:
+                    OCRepPayloadSetPropDouble(root, val.attrname().c_str(), val);
                     break;
                 case AttributeType::Boolean:
                     OCRepPayloadSetPropBool(root, val.attrname().c_str(), val);
@@ -149,6 +295,13 @@ namespace OC
                 case AttributeType::String:
                     OCRepPayloadSetPropString(root, val.attrname().c_str(),
                             static_cast<std::string>(val).c_str());
+                    break;
+                case AttributeType::OCRepresentation:
+                    OCRepPayloadSetPropObjectAsOwner(root, val.attrname().c_str(),
+                            static_cast<OCRepresentation>(val).getPayload());
+                    break;
+                case AttributeType::Vector:
+                    getPayloadArray(root, val);
                     break;
                 default:
                     throw std::logic_error(std::string("Getpayload: Not Implemented") +
@@ -165,6 +318,199 @@ namespace OC
         }
 
         return root;
+    }
+
+    size_t calcArrayDepth(const size_t dimensions[MAX_REP_ARRAY_DEPTH])
+    {
+        if(dimensions[0] == 0)
+        {
+            throw std::logic_error("invalid calcArrayDepth");
+        }
+        else if(dimensions[1] == 0)
+        {
+            return 1;
+        }
+        else if (dimensions[2] == 0)
+        {
+            return 2;
+        }
+        else
+        {
+            return 3;
+        }
+    }
+
+    template<typename T>
+    T OCRepresentation::payload_array_helper_copy(size_t index, const OCRepPayloadValue* pl)
+    {
+        throw std::logic_error("payload_array_helper_copy: unsupported type");
+    }
+    template<>
+    int OCRepresentation::payload_array_helper_copy<int>(size_t index, const OCRepPayloadValue* pl)
+    {
+        return pl->arr.iArray[index];
+    }
+    template<>
+    double OCRepresentation::payload_array_helper_copy<double>(size_t index, const OCRepPayloadValue* pl)
+    {
+        return pl->arr.dArray[index];
+    }
+    template<>
+    bool OCRepresentation::payload_array_helper_copy<bool>(size_t index, const OCRepPayloadValue* pl)
+    {
+        return pl->arr.bArray[index];
+    }
+    template<>
+    std::string OCRepresentation::payload_array_helper_copy<std::string>(
+            size_t index, const OCRepPayloadValue* pl)
+    {
+        return std::string(pl->arr.strArray[index]);
+    }
+    template<>
+    OCRepresentation OCRepresentation::payload_array_helper_copy<OCRepresentation>(
+            size_t index, const OCRepPayloadValue* pl)
+    {
+        OCRepresentation r;
+        r.setPayload(pl->arr.objArray[index]);
+        return r;
+    }
+
+    template<typename T>
+    void OCRepresentation::payload_array_helper(const OCRepPayloadValue* pl, size_t depth)
+    {
+        if(depth == 1)
+        {
+            std::vector<T> val(pl->arr.dimensions[0]);
+
+            for(size_t i = 0; i < pl->arr.dimensions[0]; ++i)
+            {
+                val[i] = payload_array_helper_copy<T>(i, pl);
+            }
+            this->setValue(std::string(pl->name), val);
+        }
+        else if (depth == 2)
+        {
+            std::vector<std::vector<T>> val(pl->arr.dimensions[0]);
+            for(size_t i = 0; i < pl->arr.dimensions[0]; ++i)
+            {
+                val[i].reserve(pl->arr.dimensions[1]);
+                for(size_t j = 0; j < pl->arr.dimensions[1]; ++j)
+                {
+                    val[i][j] = payload_array_helper_copy<T>(
+                            i * pl->arr.dimensions[1] + j, pl);
+                }
+            }
+            this->setValue(std::string(pl->name), val);
+        }
+        else if (depth == 3)
+        {
+            std::vector<std::vector<std::vector<T>>> val;
+            for(size_t i = 0; i < pl->arr.dimensions[0]; ++i)
+            {
+                val[i].reserve(pl->arr.dimensions[1]);
+                for(size_t j = 0; j < pl->arr.dimensions[1]; ++j)
+                {
+                    val[i][j].reserve(pl->arr.dimensions[2]);
+                    for(size_t k = 0; k < pl->arr.dimensions[2]; ++k)
+                    {
+                        val[i][j][k] = payload_array_helper_copy<T>(
+                                pl->arr.dimensions[2] * j +
+                                pl->arr.dimensions[2] * pl->arr.dimensions[1] * i +
+                                k,
+                                pl);
+                    }
+                }
+            }
+            this->setValue(std::string(pl->name), val);
+        }
+        else
+        {
+            throw std::logic_error("Invalid depth in payload_array_helper");
+        }
+    }
+
+    void OCRepresentation::setPayloadArray(const OCRepPayloadValue* pl)
+    {
+
+        switch(pl->arr.type)
+        {
+            case OCREP_PROP_INT:
+                payload_array_helper<int>(pl, calcArrayDepth(pl->arr.dimensions));
+                break;
+            case OCREP_PROP_DOUBLE:
+                payload_array_helper<double>(pl, calcArrayDepth(pl->arr.dimensions));
+                break;
+            case OCREP_PROP_BOOL:
+                payload_array_helper<bool>(pl, calcArrayDepth(pl->arr.dimensions));
+                break;
+            case OCREP_PROP_STRING:
+                payload_array_helper<std::string>(pl, calcArrayDepth(pl->arr.dimensions));
+                break;
+            case OCREP_PROP_OBJECT:
+                payload_array_helper<OCRepresentation>(pl, calcArrayDepth(pl->arr.dimensions));
+                break;
+            default:
+                throw std::logic_error("setPayload array invalid type");
+                break;
+        }
+    }
+
+    void OCRepresentation::setPayload(const OCRepPayload* pl)
+    {
+        setUri(pl->uri);
+
+        OCStringLL* ll = pl->types;
+        while(ll)
+        {
+            addResourceType(ll->value);
+            ll = ll->next;
+        }
+
+        ll = pl->interfaces;
+        while(ll)
+        {
+            addResourceInterface(ll->value);
+            ll = ll->next;
+        }
+
+        OCRepPayloadValue* val = pl->values;
+
+        while(val)
+        {
+            switch(val->type)
+            {
+                case OCREP_PROP_NULL:
+                    setNULL(val->name);
+                    break;
+                case OCREP_PROP_INT:
+                    setValue<int>(val->name, val->i);
+                    break;
+                case OCREP_PROP_DOUBLE:
+                    setValue<double>(val->name, val->d);
+                    break;
+                case OCREP_PROP_BOOL:
+                    setValue<bool>(val->name, val->b);
+                    break;
+                case OCREP_PROP_STRING:
+                    setValue<std::string>(val->name, val->str);
+                    break;
+                case OCREP_PROP_OBJECT:
+                    {
+                        OCRepresentation cur;
+                        cur.setPayload(val->obj);
+                        setValue<OCRepresentation>(val->name, cur);
+                    }
+                    break;
+                case OCREP_PROP_ARRAY:
+                    setPayloadArray(val);
+                    break;
+                default:
+                    throw std::logic_error(std::string("Not Implemented!") +
+                            std::to_string((int)val->type));
+                    break;
+            }
+            val = val->next;
+        }
     }
 
     void OCRepresentation::addChild(const OCRepresentation& rep)

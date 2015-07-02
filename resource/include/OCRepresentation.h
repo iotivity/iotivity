@@ -376,7 +376,16 @@ namespace OC
             const AttributeItem operator[](const std::string& key) const;
         private:
             friend class OCResourceResponse;
+            friend class MessageContainer;
 
+            template<typename T>
+            void payload_array_helper(const OCRepPayloadValue* pl, size_t depth);
+            template<typename T>
+            T payload_array_helper_copy(size_t index, const OCRepPayloadValue* pl);
+            void setPayload(const OCRepPayload* payload);
+            void setPayloadArray(const OCRepPayloadValue* pl);
+            void getPayloadArray(OCRepPayload* payload,
+                    const OCRepresentation::AttributeItem& item) const;
             // the root node has a slightly different JSON version
             // based on the interface type configured in ResourceResponse.
             // This allows ResourceResponse to set it, so that the save function
