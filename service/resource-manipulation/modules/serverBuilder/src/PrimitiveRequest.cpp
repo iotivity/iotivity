@@ -18,4 +18,22 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "PrimitiveRequest.h"
+#include <PrimitiveRequest.h>
+
+namespace OIC
+{
+    namespace Service
+    {
+
+        PrimitiveRequest::PrimitiveRequest(const std::string& resourceUri) :
+                m_resourceUri{ resourceUri }
+        {
+        }
+
+        std::string PrimitiveRequest::getResourceUri() const
+        {
+            return m_resourceUri;
+        }
+
+    }
+}

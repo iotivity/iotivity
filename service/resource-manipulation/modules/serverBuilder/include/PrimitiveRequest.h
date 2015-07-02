@@ -31,17 +31,11 @@ namespace OIC
         class PrimitiveRequest
         {
         public:
-            explicit PrimitiveRequest(const std::string& resourceUri) :
-                    m_resourceUri(resourceUri)
-            {
-            }
+            explicit PrimitiveRequest(const std::string& resourceUri);
 
             PrimitiveRequest& operator=(PrimitiveRequest&) = delete;
 
-            std::string getResourceUri() const
-            {
-                return m_resourceUri;
-            }
+            std::string getResourceUri() const;
 
         private:
             std::string m_resourceUri;
