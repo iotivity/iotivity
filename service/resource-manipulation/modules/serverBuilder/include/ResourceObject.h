@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef __PRIMITIVESERVERRESOURCE_H
-#define __PRIMITIVESERVERRESOURCE_H
+#ifndef __OIC_RESOURCEOBJECT_H
+#define __OIC_RESOURCEOBJECT_H
 
 #include <string>
 #include <mutex>
@@ -52,7 +52,7 @@ namespace OIC
             DeadLockException(std::string&& what) : PrimitiveException{ std::move(what) } {}
         };
 
-        class PrimitiveServerResource
+        class ResourceObject
         {
         private:
             class WeakGuard;
@@ -64,8 +64,8 @@ namespace OIC
         //        UPDATED
         //    };
 
-            using Ptr = std::shared_ptr<PrimitiveServerResource>;
-            using ConstPtr = std::shared_ptr<const PrimitiveServerResource>;
+            using Ptr = std::shared_ptr< ResourceObject >;
+            using ConstPtr = std::shared_ptr< const ResourceObject >;
 
             class Builder
             {
@@ -82,7 +82,7 @@ namespace OIC
                 /**
                  * @throw PlatformException
                  */
-                PrimitiveServerResource::Ptr create();
+                ResourceObject::Ptr build();
 
             private:
                 std::string m_uri;
@@ -102,13 +102,13 @@ namespace OIC
                     ResourceAttributes&) >;
 
         public:
-            PrimitiveServerResource(PrimitiveServerResource&&) = delete;
-            PrimitiveServerResource(const PrimitiveServerResource&) = delete;
+            ResourceObject(ResourceObject&&) = delete;
+            ResourceObject(const ResourceObject&) = delete;
 
-            PrimitiveServerResource& operator=(PrimitiveServerResource&&) = delete;
-            PrimitiveServerResource& operator=(const PrimitiveServerResource&) = delete;
+            ResourceObject& operator=(ResourceObject&&) = delete;
+            ResourceObject& operator=(const ResourceObject&) = delete;
 
-            virtual ~PrimitiveServerResource();
+            virtual ~ResourceObject();
 
             template< typename T >
             void setAttribute(const std::string& key, T&& value)
@@ -149,7 +149,7 @@ namespace OIC
         //    void setAutoNotifyPolicy(AutoNotifyPolicy);
 
         private:
-            PrimitiveServerResource(uint8_t, ResourceAttributes&&);
+            ResourceObject(uint8_t, ResourceAttributes&&);
 
             OCEntityHandlerResult entityHandler(std::shared_ptr< OC::OCResourceRequest >);
 
@@ -173,11 +173,11 @@ namespace OIC
             mutable std::mutex m_mutex;
         };
 
-        class PrimitiveServerResource::LockGuard
+        class ResourceObject::LockGuard
         {
         public:
-            LockGuard(const PrimitiveServerResource&);
-            LockGuard(const PrimitiveServerResource::Ptr);
+            LockGuard(const ResourceObject&);
+            LockGuard(const ResourceObject::Ptr);
             ~LockGuard();
 
             LockGuard(const LockGuard&) = delete;
@@ -187,13 +187,13 @@ namespace OIC
             LockGuard& operator=(LockGuard&&) = delete;
 
         private:
-            const PrimitiveServerResource& m_serverResource;
+            const ResourceObject& m_resourceObject;
         };
 
-        class PrimitiveServerResource::WeakGuard
+        class ResourceObject::WeakGuard
         {
         public:
-            WeakGuard(const PrimitiveServerResource&);
+            WeakGuard(const ResourceObject&);
             ~WeakGuard();
 
             WeakGuard(const WeakGuard&) = delete;
@@ -203,10 +203,10 @@ namespace OIC
             WeakGuard& operator=(WeakGuard&&) = delete;
 
         private:
-            const PrimitiveServerResource& m_serverResource;
+            const ResourceObject& m_serverResource;
             bool m_hasLocked;
         };
     }
 }
 
-#endif
+#endif // __OIC_RESOURCEOBJECT_H

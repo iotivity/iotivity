@@ -36,7 +36,7 @@ namespace OIC
         }
 
         std::shared_ptr< OC::OCResourceResponse > SimpleRequestHandler::buildResponse(
-                PrimitiveServerResource& resource, const ResourceAttributes&)
+                ResourceObject& resource, const ResourceAttributes&)
         {
             auto response = std::make_shared< OC::OCResourceResponse >();
 
@@ -47,26 +47,26 @@ namespace OIC
             return response;
         }
 
-        int SimpleRequestHandler::getErrorCode(PrimitiveServerResource&)
+        int SimpleRequestHandler::getErrorCode(ResourceObject&)
         {
             return m_errorCode;
         }
 
-        OCEntityHandlerResult SimpleRequestHandler::getResponseResult(PrimitiveServerResource&)
+        OCEntityHandlerResult SimpleRequestHandler::getResponseResult(ResourceObject&)
         {
             return m_result;
         }
 
         OC::OCRepresentation SimpleRequestHandler::getOCRepresentation(
-                PrimitiveServerResource& resource)
+                ResourceObject& resource)
         {
-            PrimitiveServerResource::LockGuard lock{ resource };
+            ResourceObject::LockGuard lock{ resource };
             return ResourceAttributesConverter::toOCRepresentation(resource.getAttributes());
         }
 
 
         OC::OCRepresentation CustomAttrRequestHandler::getOCRepresentation(
-                PrimitiveServerResource& resource)
+                ResourceObject& resource)
         {
             return ResourceAttributesConverter::toOCRepresentation(m_attrs);
         }
@@ -79,10 +79,10 @@ namespace OIC
         }
 
         std::shared_ptr< OC::OCResourceResponse > SetRequestProxyHandler::buildResponse(
-                PrimitiveServerResource& resource, const ResourceAttributes& requestAttrs)
+                ResourceObject& resource, const ResourceAttributes& requestAttrs)
         {
             {
-                PrimitiveServerResource::LockGuard lock(resource);
+                ResourceObject::LockGuard lock(resource);
 
                 if (!acceptableAttributes(resource.getAttributes(), requestAttrs))
                 {

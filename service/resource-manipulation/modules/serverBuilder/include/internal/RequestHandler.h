@@ -21,7 +21,7 @@
 #ifndef __REQUESTHANDLER_H
 #define __REQUESTHANDLER_H
 
-#include <PrimitiveServerResource.h>
+#include <ResourceObject.h>
 #include <internal/ResourceAtrributesConverter.h>
 
 #include <OCResourceResponse.h>
@@ -33,7 +33,7 @@ namespace OIC
         class RequestHandler
         {
         public:
-            using Ptr = std::shared_ptr<RequestHandler>;
+            using Ptr = std::shared_ptr< RequestHandler >;
 
             static constexpr int DEFAULT_ERROR_CODE = 200;
             static constexpr OCEntityHandlerResult DEFAULT_RESULT = OC_EH_OK;
@@ -43,7 +43,7 @@ namespace OIC
             }
 
             virtual std::shared_ptr< OC::OCResourceResponse > buildResponse(
-                    PrimitiveServerResource&, const ResourceAttributes& requestAttrs) = 0;
+                    ResourceObject&, const ResourceAttributes& requestAttrs) = 0;
         };
 
         class SimpleRequestHandler: public RequestHandler
@@ -53,12 +53,12 @@ namespace OIC
                     int errorCode = DEFAULT_ERROR_CODE);
 
             std::shared_ptr< OC::OCResourceResponse > buildResponse(
-                    PrimitiveServerResource&, const ResourceAttributes&) override;
+                    ResourceObject&, const ResourceAttributes&) override;
 
         protected:
-            virtual int getErrorCode(PrimitiveServerResource&);
-            virtual OCEntityHandlerResult getResponseResult(PrimitiveServerResource&);
-            virtual OC::OCRepresentation getOCRepresentation(PrimitiveServerResource& resource);
+            virtual int getErrorCode(ResourceObject&);
+            virtual OCEntityHandlerResult getResponseResult(ResourceObject&);
+            virtual OC::OCRepresentation getOCRepresentation(ResourceObject& resource);
 
         private:
             OCEntityHandlerResult m_result;
@@ -78,7 +78,7 @@ namespace OIC
             }
 
         protected:
-            OC::OCRepresentation getOCRepresentation(PrimitiveServerResource& resource) override;
+            OC::OCRepresentation getOCRepresentation(ResourceObject& resource) override;
 
         private:
             ResourceAttributes m_attrs;
@@ -90,7 +90,7 @@ namespace OIC
             SetRequestProxyHandler(RequestHandler::Ptr requestHandler);
 
             std::shared_ptr< OC::OCResourceResponse > buildResponse(
-                    PrimitiveServerResource& resource,
+                    ResourceObject& resource,
                     const ResourceAttributes& requestAttrs) override;
 
         private:

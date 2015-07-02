@@ -21,7 +21,7 @@
 #include <gtest/gtest.h>
 #include <HippoMocks/hippomocks.h>
 
-#include <PrimitiveServerResource.h>
+#include <ResourceObject.h>
 
 #include <OCPlatform.h>
 
@@ -44,12 +44,12 @@ static constexpr char RESOURCE_URI[]{ "a/test" };
 static constexpr char RESOURCE_TYPE[]{ "resourceType" };
 static constexpr char KEY[]{ "key" };
 
-TEST(ServerResourceBuilderCreateTest, ThrowIfUriIsInvalid)
+TEST(ResourceObjectBuilderCreateTest, ThrowIfUriIsInvalid)
 {
-    ASSERT_THROW(PrimitiveServerResource::Builder("", "", "").create(), PlatformException);
+    ASSERT_THROW(ResourceObject::Builder("", "", "").build(), PlatformException);
 }
 
-class ServerResourceBuilderTest: public Test
+class ResourceObjectBuilderTest: public Test
 {
 public:
     MockRepository mocks;
@@ -62,46 +62,46 @@ protected:
     }
 };
 
-TEST_F(ServerResourceBuilderTest, RegisterResourceWhenCallCreate)
+TEST_F(ResourceObjectBuilderTest, RegisterResourceWhenCallCreate)
 {
     mocks.ExpectCallFuncOverload(static_cast<registerResourceSig>(OCPlatform::registerResource))
             .Return(OC_STACK_OK);
-    PrimitiveServerResource::Builder(RESOURCE_URI, RESOURCE_TYPE, "").create();
+    ResourceObject::Builder(RESOURCE_URI, RESOURCE_TYPE, "").build();
 }
 
-TEST_F(ServerResourceBuilderTest, ResourceServerHasPropertiesSetByBuilder)
+TEST_F(ResourceObjectBuilderTest, ResourceServerHasPropertiesSetByBuilder)
 {
-    auto serverResource = PrimitiveServerResource::Builder(RESOURCE_URI, RESOURCE_TYPE, "").
-            setDiscoverable(false).setObservable(true).create();
+    auto serverResource = ResourceObject::Builder(RESOURCE_URI, RESOURCE_TYPE, "").
+            setDiscoverable(false).setObservable(true).build();
 
     EXPECT_FALSE(serverResource->isDiscoverable());
     EXPECT_TRUE(serverResource->isObservable());
 }
 
-TEST_F(ServerResourceBuilderTest, ResourceServerHasAttrsSetByBuilder)
+TEST_F(ResourceObjectBuilderTest, ResourceServerHasAttrsSetByBuilder)
 {
     ResourceAttributes attrs;
     attrs[KEY] = 100;
 
-    auto serverResource = PrimitiveServerResource::Builder(RESOURCE_URI, RESOURCE_TYPE, "").
-            setAttributes(attrs).create();
+    auto serverResource = ResourceObject::Builder(RESOURCE_URI, RESOURCE_TYPE, "").
+            setAttributes(attrs).build();
 
-    PrimitiveServerResource::LockGuard lock{ serverResource };
+    ResourceObject::LockGuard lock{ serverResource };
     EXPECT_EQ(attrs, serverResource->getAttributes());
 }
 
 
-class ServerResourceTest: public Test
+class ResourceObjectTest: public Test
 {
 public:
     MockRepository mocks;
-    PrimitiveServerResource::Ptr server;
+    ResourceObject::Ptr server;
 
 protected:
     void SetUp() override
     {
         initMocks();
-        server = PrimitiveServerResource::Builder(RESOURCE_URI, RESOURCE_TYPE, "").create();
+        server = ResourceObject::Builder(RESOURCE_URI, RESOURCE_TYPE, "").build();
     }
 
     virtual void initMocks()
@@ -113,12 +113,12 @@ protected:
     }
 };
 
-TEST_F(ServerResourceTest, AccessAttributesWithLock)
+TEST_F(ResourceObjectTest, AccessAttributesWithLock)
 {
     constexpr int value{ 100 };
 
     {
-        PrimitiveServerResource::LockGuard lock{ server };
+        ResourceObject::LockGuard lock{ server };
         auto& attr = server->getAttributes();
         attr[KEY] = value;
     }
@@ -126,24 +126,24 @@ TEST_F(ServerResourceTest, AccessAttributesWithLock)
     ASSERT_EQ(value, server->getAttribute<int>(KEY));
 }
 
-TEST_F(ServerResourceTest, ThrowIfTryToAccessAttributesWithoutLock)
+TEST_F(ResourceObjectTest, ThrowIfTryToAccessAttributesWithoutLock)
 {
     ASSERT_THROW(server->getAttributes(), NoLockException);
 }
 
-TEST_F(ServerResourceTest, ThrowIfLockRecursively)
+TEST_F(ResourceObjectTest, ThrowIfLockRecursively)
 {
-    PrimitiveServerResource::LockGuard lock{ server };
+    ResourceObject::LockGuard lock{ server };
 
-    ASSERT_THROW(PrimitiveServerResource::LockGuard again{ server }, DeadLockException);
+    ASSERT_THROW(ResourceObject::LockGuard again{ server }, DeadLockException);
 }
 
-TEST_F(ServerResourceTest, AccessingAttributesWithMethodsWithinLockDoesntCauseDeadLock)
+TEST_F(ResourceObjectTest, AccessingAttributesWithMethodsWithinLockDoesntCauseDeadLock)
 {
     constexpr int value{ 100 };
 
     {
-        PrimitiveServerResource::LockGuard lock{ server };
+        ResourceObject::LockGuard lock{ server };
         server->setAttribute(KEY, value);
     }
 
@@ -152,7 +152,7 @@ TEST_F(ServerResourceTest, AccessingAttributesWithMethodsWithinLockDoesntCauseDe
 
 
 
-class ServerResourceHandlingRequestTest: public ServerResourceTest
+class ResourceObjectHandlingRequestTest: public ResourceObjectTest
 {
 public:
     EntityHandler handler;
@@ -197,28 +197,28 @@ protected:
     {
         mocks.OnCallFuncOverload(
             static_cast<registerResourceSig>(OCPlatform::registerResource)).Do(
-                    bind(&ServerResourceHandlingRequestTest::registerResourceFake,
+                    bind(&ResourceObjectHandlingRequestTest::registerResourceFake,
                             this, _1, _2, _3, _4, _5, _6));
 
         mocks.OnCallFunc(OCPlatform::unregisterResource).Return(OC_STACK_OK);
     }
 };
 
-TEST_F(ServerResourceHandlingRequestTest, CallSendResponseWhenReceiveRequest)
+TEST_F(ResourceObjectHandlingRequestTest, CallSendResponseWhenReceiveRequest)
 {
     mocks.ExpectCallFunc(OCPlatform::sendResponse).Return(OC_STACK_OK);
 
     ASSERT_EQ(OC_EH_OK, handler(createRequest()));
 }
 
-TEST_F(ServerResourceHandlingRequestTest, ReturnErrorCodeWhenSendResponseFailed)
+TEST_F(ResourceObjectHandlingRequestTest, ReturnErrorCodeWhenSendResponseFailed)
 {
     mocks.ExpectCallFunc(OCPlatform::sendResponse).Return(OC_STACK_ERROR);
 
     ASSERT_EQ(OC_EH_ERROR, handler(createRequest()));
 }
 
-TEST_F(ServerResourceHandlingRequestTest, SendResponseWithSameHandlesPassedByRequest)
+TEST_F(ResourceObjectHandlingRequestTest, SendResponseWithSameHandlesPassedByRequest)
 {
     mocks.ExpectCallFunc(OCPlatform::sendResponse).Match(
             [](const shared_ptr<OCResourceResponse> response)
@@ -231,7 +231,7 @@ TEST_F(ServerResourceHandlingRequestTest, SendResponseWithSameHandlesPassedByReq
     ASSERT_EQ(OC_EH_OK, handler(createRequest()));
 }
 
-TEST_F(ServerResourceHandlingRequestTest, SendResponseWithPrimitiveResponseResults)
+TEST_F(ResourceObjectHandlingRequestTest, SendResponseWithPrimitiveResponseResults)
 {
     constexpr int errorCode{ 1999 };
     constexpr OCEntityHandlerResult result{ OC_EH_SLOW };
@@ -254,7 +254,7 @@ TEST_F(ServerResourceHandlingRequestTest, SendResponseWithPrimitiveResponseResul
     ASSERT_EQ(OC_EH_OK, handler(createRequest()));
 }
 
-TEST_F(ServerResourceHandlingRequestTest, SendSetResponseWithCustomAttrsAndResults)
+TEST_F(ResourceObjectHandlingRequestTest, SendSetResponseWithCustomAttrsAndResults)
 {
     constexpr int errorCode{ 1999 };
     constexpr OCEntityHandlerResult result{ OC_EH_SLOW };
@@ -283,15 +283,15 @@ TEST_F(ServerResourceHandlingRequestTest, SendSetResponseWithCustomAttrsAndResul
 
 
 
-class ServerResourceSynchronizationTest: public ServerResourceHandlingRequestTest
+class ResourceObjectSynchronizationTest: public ResourceObjectHandlingRequestTest
 {
 public:
 
-    static void withLock(PrimitiveServerResource::Ptr serverResource, int count)
+    static void withLock(ResourceObject::Ptr serverResource, int count)
     {
         for (int i=0; i<count; ++i)
         {
-            PrimitiveServerResource::LockGuard lock{ serverResource };
+            ResourceObject::LockGuard lock{ serverResource };
 
             auto& attrs = serverResource->getAttributes();
 
@@ -299,18 +299,18 @@ public:
         }
     }
 
-    static void withSetter(PrimitiveServerResource::Ptr serverResource, int count)
+    static void withSetter(ResourceObject::Ptr serverResource, int count)
     {
         for (int i=0; i<count; ++i)
         {
-            PrimitiveServerResource::LockGuard lock{ serverResource };
+            ResourceObject::LockGuard lock{ serverResource };
 
             serverResource->setAttribute(KEY, serverResource->getAttribute<int>(KEY) + 1);
         }
     }
 };
 
-TEST_F(ServerResourceSynchronizationTest, MultipleAccessToServerResource)
+TEST_F(ResourceObjectSynchronizationTest, MultipleAccessToServerResource)
 {
     int expected { 0 };
     vector<thread> threads;
@@ -337,7 +337,7 @@ TEST_F(ServerResourceSynchronizationTest, MultipleAccessToServerResource)
     ASSERT_EQ(expected, server->getAttribute<int>(KEY));
 }
 
-TEST_F(ServerResourceSynchronizationTest, MultipleAccessToServerResourceWithRequests)
+TEST_F(ResourceObjectSynchronizationTest, MultipleAccessToServerResourceWithRequests)
 {
     int expected { 0 };
     vector<thread> threads;

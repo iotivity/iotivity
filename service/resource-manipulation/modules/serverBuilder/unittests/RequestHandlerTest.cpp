@@ -39,7 +39,7 @@ using RegisterResource = OCStackResult (*)(OCResourceHandle&, std::string&,
 class SimpleRequestHandlerTest: public Test
 {
 public:
-    PrimitiveServerResource::Ptr server;
+    ResourceObject::Ptr server;
 
     ResourceAttributes requestAttrs;
 
@@ -51,7 +51,7 @@ protected:
         mocks.OnCallFuncOverload(static_cast<RegisterResource>(OC::OCPlatform::registerResource))
                 .Return(OC_STACK_OK);
 
-        server = PrimitiveServerResource::Builder("a/test", "resourceType", "").create();
+        server = ResourceObject::Builder("a/test", "resourceType", "").build();
 
         server->setAttribute(EXISTING, ORIGIN_VALUE);
     }
@@ -95,7 +95,7 @@ TEST_F(SimpleRequestHandlerTest, ResponseHasAttrsSetByCustomAttrRequestHandler)
 class SetRequestProxyHandlerTest: public Test
 {
 public:
-    PrimitiveServerResource::Ptr server;
+    ResourceObject::Ptr server;
     ResourceAttributes requestAttrs;
     RequestHandler::Ptr setRequestProxyHandler;
 
@@ -110,7 +110,7 @@ protected:
         setRequestProxyHandler = make_shared<SetRequestProxyHandler>(
                 make_shared<SimpleRequestHandler>());
 
-        server = PrimitiveServerResource::Builder("a/test", "resourceType", "").create();
+        server = ResourceObject::Builder("a/test", "resourceType", "").build();
 
         server->setAttribute(EXISTING, ORIGIN_VALUE);
     }

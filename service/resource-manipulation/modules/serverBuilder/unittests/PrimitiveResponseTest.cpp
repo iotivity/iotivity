@@ -22,7 +22,8 @@
 #include <HippoMocks/hippomocks.h>
 
 #include <PrimitiveResponse.h>
-#include <PrimitiveServerResource.h>
+#include <ResourceObject.h>
+
 #include <internal/RequestHandler.h>
 #include <internal/ResourceAtrributesConverter.h>
 
@@ -59,14 +60,14 @@ class PrimitiveResponseTest: public Test
 {
 public:
     MockRepository mocks;
-    PrimitiveServerResource::Ptr server;
+    ResourceObject::Ptr server;
 
 public:
     template< typename T >
     shared_ptr< OCResourceResponse > buildResponse(const T& response)
     {
-        PrimitiveServerResource::Ptr server =
-                PrimitiveServerResource::Builder("a/test", "", "").create();
+        ResourceObject::Ptr server =
+                ResourceObject::Builder("a/test", "", "").build();
 
         return response.getHandler()->buildResponse(*server, ResourceAttributes());
     }
@@ -79,7 +80,7 @@ protected:
 
         mocks.OnCallFunc(OCPlatform::unregisterResource).Return(OC_STACK_OK);
 
-        server = PrimitiveServerResource::Builder("a/test", "", "").create();
+        server = ResourceObject::Builder("a/test", "", "").build();
     }
 };
 

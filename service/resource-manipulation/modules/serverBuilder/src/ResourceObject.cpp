@@ -18,7 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include <PrimitiveServerResource.h>
+#include <ResourceObject.h>
 
 #include <string>
 #include <functional>
@@ -40,7 +40,7 @@ namespace
     namespace Detail
     {
         template <typename RESPONSE>
-        OCEntityHandlerResult sendResponse(PrimitiveServerResource& resource,
+        OCEntityHandlerResult sendResponse(ResourceObject& resource,
                 std::shared_ptr< OC::OCResourceRequest > ocRequest,
                 const ResourceAttributes& requestAttrs, RESPONSE&& response)
         {
@@ -81,7 +81,7 @@ namespace
     }
 
     template< typename HANDLER, typename RESPONSE = typename std::decay<HANDLER>::type::result_type>
-    OCEntityHandlerResult handleRequest(PrimitiveServerResource& resource,
+    OCEntityHandlerResult handleRequest(ResourceObject& resource,
             std::shared_ptr< OC::OCResourceRequest > ocRequest, HANDLER&& handler)
     {
         ResourceAttributes attrs{ ResourceAttributesConverter::fromOCRepresentation(
@@ -102,7 +102,7 @@ namespace OIC
 {
     namespace Service
     {
-        PrimitiveServerResource::PrimitiveServerResource(uint8_t properties,
+        ResourceObject::ResourceObject(uint8_t properties,
                 ResourceAttributes&& attrs) :
                 m_properties { properties }, m_resourceHandle{},
                 m_resourceAttributes{ std::move(attrs) }, m_getRequestHandler{ },
@@ -110,49 +110,49 @@ namespace OIC
         {
         }
 
-        PrimitiveServerResource::Builder::Builder(const std::string& uri, const std::string& type,
+        ResourceObject::Builder::Builder(const std::string& uri, const std::string& type,
                 const std::string& interface) :
                 m_uri{ uri }, m_type{ type }, m_interface{ interface },
                 m_properties{ OC_DISCOVERABLE | OC_OBSERVABLE }
         {
         }
 
-        PrimitiveServerResource::Builder& PrimitiveServerResource::Builder::setDiscoverable(
+        ResourceObject::Builder& ResourceObject::Builder::setDiscoverable(
                 bool discoverable)
         {
             m_properties = ::makePropertyFlags(m_properties, OC_DISCOVERABLE, discoverable);
             return *this;
         }
 
-        PrimitiveServerResource::Builder& PrimitiveServerResource::Builder::setObservable(
+        ResourceObject::Builder& ResourceObject::Builder::setObservable(
                 bool observable)
         {
             m_properties = ::makePropertyFlags(m_properties, OC_OBSERVABLE, observable);
             return *this;
         }
 
-        PrimitiveServerResource::Builder& PrimitiveServerResource::Builder::setAttributes(
+        ResourceObject::Builder& ResourceObject::Builder::setAttributes(
                 const ResourceAttributes& attrs)
         {
             m_resourceAttributes = attrs;
             return *this;
         }
 
-        PrimitiveServerResource::Builder& PrimitiveServerResource::Builder::setAttributes(
+        ResourceObject::Builder& ResourceObject::Builder::setAttributes(
                 ResourceAttributes&& attrs)
         {
             m_resourceAttributes = std::move(attrs);
             return *this;
         }
 
-        PrimitiveServerResource::Ptr PrimitiveServerResource::Builder::create()
+        ResourceObject::Ptr ResourceObject::Builder::build()
         {
             OCResourceHandle handle{ nullptr };
 
-            PrimitiveServerResource::Ptr server {
-                new PrimitiveServerResource{ m_properties, std::move(m_resourceAttributes) } };
+            ResourceObject::Ptr server {
+                new ResourceObject{ m_properties, std::move(m_resourceAttributes) } };
 
-            OC::EntityHandler entityHandler{ std::bind(&PrimitiveServerResource::entityHandler,
+            OC::EntityHandler entityHandler{ std::bind(&ResourceObject::entityHandler,
                     server.get(), std::placeholders::_1) };
 
             try
@@ -174,7 +174,7 @@ namespace OIC
         }
 
 
-        PrimitiveServerResource::~PrimitiveServerResource()
+        ResourceObject::~ResourceObject()
         {
             if (m_resourceHandle)
             {
@@ -189,31 +189,31 @@ namespace OIC
             }
         }
 
-        bool PrimitiveServerResource::removeAttribute(const std::string& key)
+        bool ResourceObject::removeAttribute(const std::string& key)
         {
             WeakGuard lock(*this);
             return m_resourceAttributes.erase(key);
         }
 
-        bool PrimitiveServerResource::hasAttribute(const std::string& key) const
+        bool ResourceObject::hasAttribute(const std::string& key) const
         {
             WeakGuard lock(*this);
             return m_resourceAttributes.contains(key);
         }
 
-        ResourceAttributes& PrimitiveServerResource::getAttributes()
+        ResourceAttributes& ResourceObject::getAttributes()
         {
             expectOwnLock();
             return m_resourceAttributes;
         }
 
-        const ResourceAttributes& PrimitiveServerResource::getAttributes() const
+        const ResourceAttributes& ResourceObject::getAttributes() const
         {
             expectOwnLock();
             return m_resourceAttributes;
         }
 
-        void PrimitiveServerResource::expectOwnLock() const
+        void ResourceObject::expectOwnLock() const
         {
             if (m_lockOwner != std::this_thread::get_id())
             {
@@ -221,27 +221,27 @@ namespace OIC
             }
         }
 
-        bool PrimitiveServerResource::isObservable() const
+        bool ResourceObject::isObservable() const
         {
             return ::hasProperty(m_properties, OC_OBSERVABLE);
         }
 
-        bool PrimitiveServerResource::isDiscoverable() const
+        bool ResourceObject::isDiscoverable() const
         {
             return ::hasProperty(m_properties, OC_DISCOVERABLE);
         }
 
-        void PrimitiveServerResource::setGetRequestHandler(GetRequestHandler h)
+        void ResourceObject::setGetRequestHandler(GetRequestHandler h)
         {
             m_getRequestHandler = h;
         }
 
-        void PrimitiveServerResource::setSetRequestHandler(SetRequestHandler h)
+        void ResourceObject::setSetRequestHandler(SetRequestHandler h)
         {
             m_setRequestHandler = h;
         }
 
-        void PrimitiveServerResource::notify() const
+        void ResourceObject::notify() const
         {
             using NotifyAllObservers = OCStackResult (*)(OCResourceHandle);
 
@@ -249,7 +249,7 @@ namespace OIC
                     m_resourceHandle);
         }
 
-        OCEntityHandlerResult PrimitiveServerResource::entityHandler(
+        OCEntityHandlerResult ResourceObject::entityHandler(
                 std::shared_ptr< OC::OCResourceRequest > request)
         {
             if (!request)
@@ -282,7 +282,7 @@ namespace OIC
             return OC_EH_ERROR;
         }
 
-        OCEntityHandlerResult PrimitiveServerResource::handleRequest(
+        OCEntityHandlerResult ResourceObject::handleRequest(
                 std::shared_ptr< OC::OCResourceRequest > request)
         {
             if (request->getRequestType() == "GET")
@@ -298,19 +298,19 @@ namespace OIC
             return OC_EH_ERROR;
         }
 
-        OCEntityHandlerResult PrimitiveServerResource::handleRequestGet(
+        OCEntityHandlerResult ResourceObject::handleRequestGet(
                 std::shared_ptr< OC::OCResourceRequest > request)
         {
             return ::handleRequest(*this, request, m_getRequestHandler);
         }
 
-        OCEntityHandlerResult PrimitiveServerResource::handleRequestSet(
+        OCEntityHandlerResult ResourceObject::handleRequestSet(
                 std::shared_ptr< OC::OCResourceRequest > request)
         {
             return ::handleRequest(*this, request, m_setRequestHandler);
         }
 
-        OCEntityHandlerResult PrimitiveServerResource::handleObserve(
+        OCEntityHandlerResult ResourceObject::handleObserve(
                 std::shared_ptr< OC::OCResourceRequest > request)
         {
             if (!isObservable())
@@ -321,32 +321,32 @@ namespace OIC
             return OC_EH_OK;
         }
 
-        PrimitiveServerResource::LockGuard::LockGuard(const PrimitiveServerResource::Ptr ptr) :
+        ResourceObject::LockGuard::LockGuard(const ResourceObject::Ptr ptr) :
                 LockGuard{ *ptr }
         {
         }
 
-        PrimitiveServerResource::LockGuard::LockGuard(
-                const PrimitiveServerResource& serverResource) :
-                m_serverResource(serverResource)
+        ResourceObject::LockGuard::LockGuard(
+                const ResourceObject& serverResource) :
+                m_resourceObject(serverResource)
         {
-            if (m_serverResource.m_lockOwner == std::this_thread::get_id())
+            if (m_resourceObject.m_lockOwner == std::this_thread::get_id())
             {
                 throw DeadLockException{ "Can't lock recursively in same thread." };
             }
 
-            m_serverResource.m_mutex.lock();
-            m_serverResource.m_lockOwner = std::this_thread::get_id();
+            m_resourceObject.m_mutex.lock();
+            m_resourceObject.m_lockOwner = std::this_thread::get_id();
         }
 
-        PrimitiveServerResource::LockGuard::~LockGuard()
+        ResourceObject::LockGuard::~LockGuard()
         {
-            m_serverResource.m_lockOwner = std::thread::id();
-            m_serverResource.m_mutex.unlock();
+            m_resourceObject.m_lockOwner = std::thread::id();
+            m_resourceObject.m_mutex.unlock();
         }
 
-        PrimitiveServerResource::WeakGuard::WeakGuard(
-                const PrimitiveServerResource& serverResource) :
+        ResourceObject::WeakGuard::WeakGuard(
+                const ResourceObject& serverResource) :
                 m_serverResource(serverResource), m_hasLocked{ false }
         {
             if (m_serverResource.m_lockOwner != std::this_thread::get_id())
@@ -356,7 +356,7 @@ namespace OIC
             }
         }
 
-        PrimitiveServerResource::WeakGuard::~WeakGuard()
+        ResourceObject::WeakGuard::~WeakGuard()
         {
             if (m_hasLocked)
             {
