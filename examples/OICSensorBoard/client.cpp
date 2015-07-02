@@ -43,7 +43,7 @@ void IoTClient::initializePlatform()
 void IoTClient::findResource()
 {
     string coap_multicast_discovery = string(OC_MULTICAST_DISCOVERY_URI "?if=" EDISON_RESOURCE_INTERFACE);
-    OCPlatform::findResource("", coap_multicast_discovery.c_str(),  OC_ALL, m_resourceDiscoveryCallback,
+    OCPlatform::findResource("", coap_multicast_discovery.c_str(),  CT_DEFAULT, m_resourceDiscoveryCallback,
                              OC::QualityOfService::LowQos);
 }
 
