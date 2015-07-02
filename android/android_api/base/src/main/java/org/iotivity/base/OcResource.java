@@ -471,6 +471,18 @@ public class OcResource {
     private native int getConnectivityTypeN();
 
     /**
+     * Method to get the connectivity flags of this resource
+     *
+     * @return OcConnectivityFlags connectivity type
+     */
+    public OcConnectivityFlags getConnectivityFlags() {
+        OcConnectivityType connType = this.getConnectivityType();
+        int connTypeN = this.getConnectivityTypeN();
+        int flag = connTypeN - connType.getValue();
+        return OcConnectivityFlags.get(flag);
+    }
+
+    /**
      * Method to provide ability to check if this resource is observable or not
      *
      * @return true indicates resource is observable; false indicates resource is not observable
