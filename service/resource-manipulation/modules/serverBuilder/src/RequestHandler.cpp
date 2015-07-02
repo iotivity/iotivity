@@ -20,6 +20,7 @@
 
 #include <internal/RequestHandler.h>
 
+#include <internal/ResourceAttributesConverter.h>
 #include <internal/ResourceAttributesUtils.h>
 
 namespace OIC
@@ -93,5 +94,6 @@ namespace OIC
             }
             return m_requestHandler->buildResponse(resource, requestAttrs);
         }
+
     }
 }

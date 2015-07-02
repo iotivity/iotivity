@@ -18,15 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/*
- * ResourceAttributesUtils.h
- *
- *  Created on: 2015. 6. 11.
- *      Author: jhyo.kim
- */
-
-#ifndef __RESOURCEATTRIBUTESUTILS_H
-#define __RESOURCEATTRIBUTESUTILS_H
+#ifndef COMMON_INTERNAL_RESOURCEATTRIBUTESUTILS_H
+#define COMMON_INTERNAL_RESOURCEATTRIBUTESUTILS_H
 
 namespace OIC
 {
@@ -44,4 +37,4 @@ namespace OIC
     }
 }
 
-#endif // __RESOURCEATTRIBUTESUTILS_H
+#endif // COMMON_INTERNAL_RESOURCEATTRIBUTESUTILS_H

@@ -19,7 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include <ResourceAttributes.h>
-#include <internal/ResourceAtrributesConverter.h>
+#include <internal/ResourceAttributesConverter.h>
 #include <internal/ResourceAttributesUtils.h>
 
 #include <gtest/gtest.h>

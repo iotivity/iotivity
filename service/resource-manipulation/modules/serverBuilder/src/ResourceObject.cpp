@@ -26,7 +26,7 @@
 
 #include <internal/RequestHandler.h>
 #include <internal/AssertUtils.h>
-
+#include <internal/ResourceAttributesConverter.h>
 
 #include <logger.h>
 #include <OCPlatform.h>
@@ -95,6 +95,7 @@ namespace
 
         return Detail::sendResponse(resource, ocRequest, attrs, RESPONSE::defaultAction());
     }
+
 } // unnamed namespace
 
 

@@ -20,7 +20,7 @@
 
 #include <ResponseStatement.h>
 
-#include <internal/ResourceAtrributesConverter.h>
+#include <internal/ResourceAttributesConverter.h>
 
 namespace OIC
 {
@@ -50,7 +50,8 @@ namespace OIC
         ResponseStatement::ResponseStatement(ResourceAttributes&& attrs, std::string&& uri,
                 std::vector< std::string >&& resourceTypes,
                 std::vector< std::string >&& resourceInterfaces) :
-                m_attrs{ std::move(attrs) }, m_uri{ std::move(uri) },
+                m_attrs{ std::move(attrs) },
+                m_uri{ std::move(uri) },
                 m_resourceTypes { std::move(resourceTypes) },
                 m_resourceInterfaces{ std::move(resourceInterfaces) }
         {

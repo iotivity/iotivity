@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef __RESOURCEATTRIBUTESCONVERTER_H
-#define __RESOURCEATTRIBUTESCONVERTER_H
+#ifndef COMMON_INTERNAL_RESOURCEATTRIBUTESCONVERTER_H
+#define COMMON_INTERNAL_RESOURCEATTRIBUTESCONVERTER_H
 
 #include <ResourceAttributes.h>
 
@@ -37,11 +37,11 @@ namespace OIC
 
             template< typename T >
             using SupportedType = typename std::enable_if<
-            ResourceAttributes::is_supported_type< T >::type::value, T >::type;
+                    ResourceAttributes::is_supported_type< T >::type::value, T >::type;
 
             template< typename T >
             using UnsupportedType = typename std::enable_if<
-            !ResourceAttributes::is_supported_type< T >::type::value, T >::type;
+                    !ResourceAttributes::is_supported_type< T >::type::value, T >::type;
 
             class ResourceAttributesBuilder
             {
@@ -105,10 +105,10 @@ namespace OIC
                 ResourceAttributes m_target;
             };
 
-            class AttrVisitor
+            class OCRepresentationBuilder
             {
             public:
-                AttrVisitor() = default;
+                OCRepresentationBuilder() = default;
 
                 template< typename T >
                 void operator()(const std::string& key, const T& value)
@@ -150,15 +150,15 @@ namespace OIC
 
             static OC::OCRepresentation toOCRepresentation(const ResourceAttributes& resourceAttributes)
             {
-                AttrVisitor visitor;
+                OCRepresentationBuilder builder;
 
-                resourceAttributes.visit(visitor);
+                resourceAttributes.visit(builder);
 
-                return visitor.extract();
+                return builder.extract();
             }
         };
 
     }
 }
 
-#endif // __RESOURCEATTRIBUTESCONVERTER_H
+#endif // COMMON_INTERNAL_RESOURCEATTRIBUTESCONVERTER_H

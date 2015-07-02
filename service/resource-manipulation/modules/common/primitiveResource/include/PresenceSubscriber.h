@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef __PRESENCESUBSCRIBER_H
-#define __PRESENCESUBSCRIBER_H
+#ifndef COMMON_PRESENCESUBSCRIBER_H
+#define COMMON_PRESENCESUBSCRIBER_H
 
 #include <string>
 #include <functional>
@@ -85,4 +85,4 @@ namespace OIC
     }
 }
 
-#endif // __PRESENCESUBSCRIBER_H
+#endif // COMMON_PRESENCESUBSCRIBER_H

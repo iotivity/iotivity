@@ -25,7 +25,7 @@
 #include <ResourceObject.h>
 
 #include <internal/RequestHandler.h>
-#include <internal/ResourceAtrributesConverter.h>
+#include <internal/ResourceAttributesConverter.h>
 
 #include <OCPlatform.h>
 

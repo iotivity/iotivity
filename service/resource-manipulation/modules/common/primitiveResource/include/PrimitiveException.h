@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef __PRIMITIVEEXCEPTION_H
-#define __PRIMITIVEEXCEPTION_H
+#ifndef RES_MANIPULATION_PRIMITIVEEXCEPTION_H
+#define RES_MANIPULATION_PRIMITIVEEXCEPTION_H
 
 #include <string>
 
@@ -34,8 +34,8 @@ namespace OIC
         {
         public:
             PrimitiveException() {}
-            PrimitiveException(const std::string& what) : m_what{ what } {}
-            PrimitiveException(std::string&& what) : m_what{ std::move(what) } {}
+            explicit PrimitiveException(const std::string& what) : m_what{ what } {}
+            explicit PrimitiveException(std::string&& what) : m_what{ std::move(what) } {}
 
             const char* what() const noexcept override
             {
@@ -49,7 +49,7 @@ namespace OIC
         class PlatformException: public PrimitiveException
         {
         public:
-            PlatformException(OCStackResult reason);
+            explicit PlatformException(OCStackResult reason);
 
             OCStackResult getReasonCode() const;
             std::string getReason() const;
@@ -60,4 +60,4 @@ namespace OIC
     }
 }
 
-#endif //__PRIMITIVEEXCEPTION_H
+#endif // RES_MANIPULATION_PRIMITIVEEXCEPTION_H

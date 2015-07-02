@@ -22,7 +22,6 @@
 #define __REQUESTHANDLER_H
 
 #include <ResourceObject.h>
-#include <internal/ResourceAtrributesConverter.h>
 
 #include <OCResourceResponse.h>
 
@@ -73,7 +72,7 @@ namespace OIC
             CustomAttrRequestHandler(T&& attrs,
                     const OCEntityHandlerResult& result = DEFAULT_RESULT,
                     int errorCode = DEFAULT_ERROR_CODE) :
-                SimpleRequestHandler{ result, errorCode }, m_attrs{ std::forward<T>(attrs) }
+                SimpleRequestHandler{ result, errorCode }, m_attrs{ std::forward< T >(attrs) }
             {
             }
 

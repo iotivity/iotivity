@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef __RESPONSESTATEMENT_H
-#define __RESPONSESTATEMENT_H
+#ifndef COMMON_RESPONSESTATEMENT_H
+#define COMMON_RESPONSESTATEMENT_H
 
 #include <string>
 #include <vector>
@@ -71,4 +71,4 @@ namespace OIC
     }
 }
 
-#endif // __RESPONSESTATEMENT_H
+#endif // COMMON_RESPONSESTATEMENT_H

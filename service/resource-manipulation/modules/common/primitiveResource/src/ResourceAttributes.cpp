@@ -21,7 +21,7 @@
 #include <ResourceAttributes.h>
 
 #include <internal/ResourceAttributesUtils.h>
-#include <internal/ResourceAtrributesConverter.h>
+#include <internal/ResourceAttributesConverter.h>
 
 #include <boost/lexical_cast.hpp>
 

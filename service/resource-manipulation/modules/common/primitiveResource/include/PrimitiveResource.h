@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef __PRIMITIVERESOURCE_H
-#define __PRIMITIVERESOURCE_H
+#ifndef COMMON_PRIMITIVERESOURCE_H
+#define COMMON_PRIMITIVERESOURCE_H
 
 #include <functional>
 #include <string>
@@ -89,4 +89,4 @@ namespace OIC
     }
 }
 
-#endif // __PRIMITIVERESOURCE_H
+#endif // COMMON_PRIMITIVERESOURCE_H

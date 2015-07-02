@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef __RESOURCEATTRIBUTES_H
-#define __RESOURCEATTRIBUTES_H
+#ifndef RES_MANIPULATION_RESOURCEATTRIBUTES_H
+#define RES_MANIPULATION_RESOURCEATTRIBUTES_H
 
 // To avoid conflict using different boost::variant configuration with OC.
 // It causes compile errors.
@@ -393,4 +393,4 @@ namespace OIC
     }
 }
 
-#endif // __RESOURCEATTRIBUTES_H
+#endif // RES_MANIPULATION_RESOURCEATTRIBUTES_H

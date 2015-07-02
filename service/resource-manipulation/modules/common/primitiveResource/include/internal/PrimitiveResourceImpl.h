@@ -18,14 +18,14 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef __PRIMITIVERESOURCEIMPL_H
-#define __PRIMITIVERESOURCEIMPL_H
+#ifndef COMMON_INTERNAL_PRIMITIVERESOURCEIMPL_H
+#define COMMON_INTERNAL_PRIMITIVERESOURCEIMPL_H
 
 #include <PrimitiveResource.h>
 #include <ResponseStatement.h>
 #include <internal/AssertUtils.h>
 
-#include <internal/ResourceAtrributesConverter.h>
+#include <internal/ResourceAttributesConverter.h>
 
 namespace OIC
 {
@@ -135,4 +135,4 @@ namespace OIC
     }
 }
 
-#endif // __PRIMITIVERESOURCEIMPL_H
+#endif // COMMON_INTERNAL_PRIMITIVERESOURCEIMPL_H

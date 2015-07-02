@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef __PRIMITIVERESOURCE_ASSERTUTILS_H
-#define __PRIMITIVERESOURCE_ASSERTUTILS_H
+#ifndef COMMON_INTERNAL_ASSERTUTILS_H
+#define COMMON_INTERNAL_ASSERTUTILS_H
 
 #include <cstdint>
 
@@ -192,4 +192,4 @@ namespace OIC
     }
 }
 
-#endif // __PRIMITIVERESOURCE_ASSERTUTILS_H
+#endif // COMMON_INTERNAL_ASSERTUTILS_H
