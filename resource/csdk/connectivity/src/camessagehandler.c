@@ -184,6 +184,7 @@ static void CADataDestroyer(void *data, uint32_t size)
        OICFree(info->token);
        OICFree(info->options);
        OICFree(info->payload);
+       OICFree(info->resourceUri);
        OICFree(cadata->errorInfo);
     }
 
@@ -536,6 +537,7 @@ void CAHandleRequestResponseCallbacks()
     }
 
     CADataDestroyer(msg, sizeof(CAData_t));
+    OICFree(item);
 
 #endif
     OIC_LOG(DEBUG, TAG, "CAHandleRequestResponseCallbacks OUT");

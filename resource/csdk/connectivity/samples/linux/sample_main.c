@@ -1206,6 +1206,11 @@ void send_response(const CAEndpoint_t *endpoint, const CAInfo_t *info)
         printf("Send response success\n");
     }
 
+    if (responseData.payload)
+    {
+        free(responseData.payload);
+    }
+
     printf("=============================================\n");
 }
 

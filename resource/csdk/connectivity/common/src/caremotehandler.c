@@ -129,6 +129,23 @@ CARequestInfo_t *CACloneRequestInfo(const CARequestInfo_t *rep)
         clone->info.payload = temp;
     }
 
+    if (NULL != rep->info.resourceUri)
+    {
+        // allocate payload field
+        char *temp = OICStrdup(rep->info.resourceUri);
+        if (NULL == temp)
+        {
+            OIC_LOG(ERROR, TAG, "CACloneRequestInfo Out of memory");
+
+            CADestroyRequestInfoInternal(clone);
+
+            return NULL;
+        }
+
+        // save the resourceUri
+        clone->info.resourceUri = temp;
+    }
+
     return clone;
 }
 
@@ -236,6 +253,23 @@ CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *rep)
         clone->info.payload = temp;
     }
 
+    if (NULL != rep->info.resourceUri)
+    {
+        // allocate payload field
+        char *temp = OICStrdup(rep->info.resourceUri);
+        if (NULL == temp)
+        {
+            OIC_LOG(ERROR, TAG, "CACloneResponseInfo Out of memory");
+
+            CADestroyResponseInfoInternal(clone);
+
+            return NULL;
+        }
+
+        // save the resourceUri
+        clone->info.resourceUri = temp;
+    }
+
     return clone;
 }
 
@@ -285,6 +319,9 @@ void CADestroyRequestInfoInternal(CARequestInfo_t *rep)
     // free payload field
     OICFree((char *) rep->info.payload);
 
+    // free uri
+    OICFree(rep->info.resourceUri);
+
     OICFree(rep);
 }
 
@@ -307,6 +344,9 @@ void CADestroyResponseInfoInternal(CAResponseInfo_t *rep)
 
     // free payload field
     OICFree((char *) rep->info.payload);
+
+    // free uri
+    OICFree(rep->info.resourceUri);
 
     OICFree(rep);
 }
