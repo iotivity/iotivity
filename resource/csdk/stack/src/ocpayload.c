@@ -28,7 +28,6 @@
 #include "ocresource.h"
 
 void FreeRepPayloadValueContents(OCRepPayloadValue* val);
-size_t calcDimTotal(size_t dimensions[MAX_REP_ARRAY_DEPTH]);
 
 void OCPayloadDestroy(OCPayload* payload)
 {
@@ -110,19 +109,64 @@ OCRepPayloadValue* OCRepPayloadFindValue(const OCRepPayload* payload, const char
 
 }
 
+void CopyPropertyValueArray(OCRepPayloadValue* dest, OCRepPayloadValue* source)
+{
+    size_t dimTotal = calcDimTotal(source->arr.dimensions);
+    switch(source->arr.type)
+    {
+        case OCREP_PROP_INT:
+            dest->arr.iArray = (int64_t*)OICMalloc(dimTotal * sizeof(int64_t));
+            memcpy(dest->arr.iArray, source->arr.iArray, dimTotal * sizeof(int64_t));
+            break;
+        case OCREP_PROP_DOUBLE:
+            dest->arr.dArray = (double*)OICMalloc(dimTotal * sizeof(double));
+            memcpy(dest->arr.dArray, source->arr.dArray, dimTotal * sizeof(double));
+            break;
+        case OCREP_PROP_BOOL:
+            dest->arr.bArray = (bool*)OICMalloc(dimTotal * sizeof(bool));
+            memcpy(dest->arr.bArray, source->arr.bArray, dimTotal * sizeof(bool));
+            break;
+        case OCREP_PROP_STRING:
+            dest->arr.strArray = (char**)OICMalloc(dimTotal * sizeof(char*));
+            for(size_t i = 0; i < dimTotal; ++i)
+            {
+                dest->arr.strArray[i] = OICStrdup(source->arr.strArray[i]);
+            }
+            break;
+        case OCREP_PROP_ARRAY:
+            dest->arr.objArray = (OCRepPayload**)OICMalloc(dimTotal * sizeof(OCRepPayload*));
+            for(size_t i = 0; i < dimTotal; ++i)
+            {
+                dest->arr.objArray[i] = OCRepPayloadClone(source->arr.objArray[i]);
+            }
+            break;
+        default:
+            OC_LOG(ERROR, TAG, PCF("CopyPropertyValueArray invalid type"));
+            break;
+    }
+}
+
 void CopyPropertyValue (OCRepPayloadValue *dest, OCRepPayloadValue *source)
 {
     if (!source || !dest)
     {
         return;
     }
-    if (source->type == OCREP_PROP_STRING)
+
+    switch(source->type)
     {
-        dest->str = OICStrdup (source->str);
-    }
-    else
-    {
-        // TODO: Copy other types.
+        case OCREP_PROP_STRING:
+            dest->str = OICStrdup(source->str);
+            break;
+        case OCREP_PROP_OBJECT:
+            dest->obj = OCRepPayloadClone(source->obj);
+            break;
+        case OCREP_PROP_ARRAY:
+            CopyPropertyValueArray(dest, source);
+            break;
+        default:
+            // Nothing to do for the trivially copyable types.
+            break;
     }
 }
 
