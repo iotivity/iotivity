@@ -1,3 +1,4 @@
+
 //******************************************************************
 //
 // Copyright 2015 Samsung Electronics All Rights Reserved.
@@ -21,8 +22,8 @@
 extern "C" {
 #include "hosting.h"
 }
-#include "resourceCoordinator_JNI.h"
-#include "android_cpp11_compat.h"
+#include "ResourceHosing_JNI.h"
+#include "OCAndroid.h"
 
 using namespace std;
 
@@ -38,54 +39,38 @@ void ocProcessFunc()
 
         if (OCProcess() != OC_STACK_OK)
         {
-            //OCProcess ERROR
+            return ;
         }
 
         sleep(2);
     }
 }
-/*
- * To callback log message from C++ to Java for android
- */
-void messageCallback(JNIEnv *env, jobject obj, const char *c_str)
-{
-      jstring jstr = (env)->NewStringUTF(c_str);
-      jclass cls = env->GetObjectClass(obj);
-      jmethodID cbMessage = env->GetMethodID(cls, "cbMessage", "(Ljava/lang/String;)V");
-      env->CallVoidMethod(obj,cbMessage, jstr);
-}
+
 /*
  *  for Hosting Device Side
  */
-JNIEXPORT jint JNICALL Java_com_example_resourcehostingsampleapp_ResourceHosting_OICCoordinatorStart
+JNIEXPORT jint JNICALL Java_org_iotivity_ResourceHosting_ResourceHosting_OICCoordinatorStart
 (JNIEnv *env, jobject obj)
 {
     jint result = 0;
     if(threadRun==true)
     {
-
-        messageCallback(env,obj,"OICCoordinatorStart already executed");
         result = (jint)HOSTING_THREAD_ERROR;
         return result;
     }
     else
     {
-        messageCallback(env,obj,"OICCoordinatorStart");
         result = (jint)OICStartCoordinate();
-        string str = "OICStartCoordinate result : ";
-        string result_str = std::to_string(result);
-        str += result_str;
-        messageCallback(env,obj,str.c_str());
+
         threadRun = true;
         ocProcessThread = thread(ocProcessFunc);
         return result;
     }
 }
 
-JNIEXPORT jint JNICALL Java_com_example_resourcehostingsampleapp_ResourceHosting_OICCoordinatorStop
+JNIEXPORT jint JNICALL Java_org_iotivity_ResourceHosting_ResourceHosting_OICCoordinatorStop
 (JNIEnv *env, jobject obj)
 {
-    messageCallback(env,obj,"OICCoordinatorStop");
     jint result = 0;
     //terminate Thread
     if (ocProcessThread.joinable())
@@ -95,22 +80,17 @@ JNIEXPORT jint JNICALL Java_com_example_resourcehostingsampleapp_ResourceHosting
     }
     else
     {
-            messageCallback(env,obj,"OICCoordinatorStop already terminated");
             result = (jint)HOSTING_THREAD_ERROR;
             return result;
     }
     result = (jint)OICStopCoordinate();
-    string str = "OICStopCoordinate result : ";
-    string result_str = std::to_string(result);
-    str += result_str;
-    messageCallback(env,obj,str.c_str());
+
     return result;
 }
 
-JNIEXPORT jint JNICALL Java_com_example_resourcehostingsampleapp_ResourceHosting_ResourceHostingInit
+JNIEXPORT jint JNICALL Java_org_iotivity_ResourceHosting_ResourceHosting_ResourceHostingInit
 (JNIEnv *env, jobject obj,jstring j_addr)
 {
-    messageCallback(env,obj,"ResourceHostingInit");
     const char* addr = env->GetStringUTFChars(j_addr,NULL);
 
     if (NULL == j_addr)
@@ -118,7 +98,6 @@ JNIEXPORT jint JNICALL Java_com_example_resourcehostingsampleapp_ResourceHosting
 
     if(OCInit(addr,USE_RANDOM_PORT,OC_CLIENT_SERVER)!=OC_STACK_OK)
     {
-        messageCallback(env,obj,"OCStack init Error");
         return (jint)OCSTACK_ERROR;
     }
 
@@ -126,14 +105,11 @@ JNIEXPORT jint JNICALL Java_com_example_resourcehostingsampleapp_ResourceHosting
     return (jint)OCSTACK_OK;
 }
 
-JNIEXPORT jint JNICALL Java_com_example_resourcehostingsampleapp_ResourceHosting_ResourceHostingTerminate
+JNIEXPORT jint JNICALL Java_org_iotivity_ResourceHosting_ResourceHosting_ResourceHostingTerminate
 (JNIEnv *env, jobject obj)
 {
-    messageCallback(env,obj,"ResourceHostingTerminate");
     if (OCStop() != OC_STACK_OK)
     {
-
-        messageCallback(env,obj,"OCStack stop error");
         return (jint)OCSTACK_ERROR;
     }
     //terminate Thread
@@ -144,7 +120,6 @@ JNIEXPORT jint JNICALL Java_com_example_resourcehostingsampleapp_ResourceHosting
     }
     else
     {
-        messageCallback(env,obj,"The thread may be not running.");
         return (jint)HOSTING_THREAD_ERROR;
     }
 

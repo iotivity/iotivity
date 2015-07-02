@@ -19,8 +19,8 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 
-#ifndef RESOURCECOORDINATOR_JNI_H_
-#define RESOURCECOORDINATOR_JNI_H_
+#ifndef RESOURCEHOSTING_JNI_H_
+#define RESOURCEHOSTING_JNI_H_
 
 #include <jni.h>
 #include <thread>
@@ -39,37 +39,37 @@ extern "C" {
 #endif
 
 /*
- * Class:     org_iotivity_service_resourcehostingsampleapp_ResourceHosting
+ * Class:     org_iotivity_service_resourcehosting_ResourceHosting
  * Method:    OICCoordinatorStart
  * Signature: ()V
  */
-JNIEXPORT jint JNICALL Java_com_example_resourcehostingsampleapp_ResourceHosting_OICCoordinatorStart
+JNIEXPORT jint JNICALL Java_org_iotivity_ResourceHosting_ResourceHosting_OICCoordinatorStart
 (JNIEnv *, jobject);
 /*
- * @Class:     org_iotivity_service_resourcehostingsampleapp_ResourceHosting
+ * @Class:     org_iotivity_service_resourcehosting_ResourceHosting
  * @Method:    OICCoordinatorStop
  * @Signature: ()V
  */
 
-JNIEXPORT jint JNICALL Java_com_example_resourcehostingsampleapp_ResourceHosting_OICCoordinatorStop
+JNIEXPORT jint JNICALL Java_org_iotivity_ResourceHosting_ResourceHosting_OICCoordinatorStop
 (JNIEnv *, jobject);
 /*
- * Class:     org_iotivity_service_resourcehostingsampleapp_ResourceHosting
+ * Class:     org_iotivity_service_resourcehosting_ResourceHosting
  * Method:    ResourceHostingInit
  * Signature: ()V
  */
-JNIEXPORT jint JNICALL Java_com_example_resourcehostingsampleapp_ResourceHosting_ResourceHostingInit
+JNIEXPORT jint JNICALL Java_org_iotivity_ResourceHosting_ResourceHosting_ResourceHostingInit
 (JNIEnv *env, jobject obj,jstring j_addr);
 /*
- * Class:     org_iotivity_service_resourcehostingsampleapp_ResourceHosting
+ * Class:     org_iotivity_service_resourcehosting_ResourceHosting
  * Method:    ResourceHostingTerminate
  * Signature: (Ljava/lang/String;)V
  */
-JNIEXPORT jint JNICALL Java_com_example_resourcehostingsampleapp_ResourceHosting_ResourceHostingTerminate
+JNIEXPORT jint JNICALL Java_org_iotivity_ResourceHosting_ResourceHosting_ResourceHostingTerminate
 (JNIEnv *env, jobject obj);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* RESOURCECOORDINATOR_JNI_H_ */
+#endif /* RESOURCEHOSTING_JNI_H_ */

@@ -19,12 +19,14 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 package com.example.resourcehostingsampleapp;
 
+import java.lang.reflect.Method;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Enumeration;
 
+import org.iotivity.ResourceHosting.ResourceHosting;
 import org.iotivity.base.ModeType;
 import org.iotivity.base.OcPlatform;
 import org.iotivity.base.OcResourceHandle;
@@ -47,15 +49,18 @@ import android.widget.Toast;
  *
  */
 
-public class ResourceHosting extends Activity implements OnClickListener
+public class ResourceHostingSampleApp extends Activity implements OnClickListener
 {
         private final int OCSTACK_OK = 0;
         private final int OCSTACK_ERROR = 255;
         private final int RESOURCEHOSTING_DO_NOT_THREADRUNNING = -2;
 
-        private final String TAG = "NMResourceHosting : " + this.getClass().getSimpleName();
+        private String TAG = "ResourceHosting";
+        private OcResourceHandle mResourceHandle;
+        private String  mIpAddress;
         private TextView mLogTextView;
         private String mLog = "";
+        private ResourceHosting resourceHosting;
         /**
          * To initialize UI Function Setting.
          * @see Class   class : com_example_resourcehostingsampleapp_ResourceHosting</br>
@@ -71,7 +76,7 @@ public class ResourceHosting extends Activity implements OnClickListener
             findViewById(R.id.btLogClear).setOnClickListener(this);
 
             PlatformConfig platformConfigObj;
-
+            resourceHosting = new ResourceHosting();
             platformConfigObj = new PlatformConfig(this,ServiceType.IN_PROC,
                     ModeType.CLIENT_SERVER, "0.0.0.0", 0, QualityOfService.LOW);
 
@@ -89,6 +94,7 @@ public class ResourceHosting extends Activity implements OnClickListener
         protected void onStart()
         {
             super.onStart();
+            initOICStack();
         }
 
         /**
@@ -100,6 +106,9 @@ public class ResourceHosting extends Activity implements OnClickListener
         protected void onStop()
         {
             super.onStop();
+            int result;
+            result = resourceHosting.ResourceHostingTerminate();
+            Log.d(TAG, "ResourceHostingTerminate : "+ result);
         }
 
         protected void onResume()
@@ -116,6 +125,7 @@ public class ResourceHosting extends Activity implements OnClickListener
         protected void onRestart()
         {
             super.onRestart();
+            initOICStack();
         }
 
         /**
@@ -125,9 +135,56 @@ public class ResourceHosting extends Activity implements OnClickListener
         protected void onDestroy()
         {
             super.onDestroy();
-            int result;
-            result = OICCoordinatorStop();
-            Log.d(TAG, "OICCoordinatorStop() : "+ result);
+        }
+
+        /**
+         * get IpAddress and execute resourceHostingInit() method.
+         * @see Class   class : com_example_resourcehostingsampleapp_ResourceHosting</br>
+         * @see Method  method : initOICStack</br>
+         */
+        private void initOICStack()
+        {
+            try
+            {
+                mIpAddress = getIpAddress();
+                int result = 0;
+                result = resourceHosting.ResourceHostingInit(mIpAddress);
+                Log.d(TAG, "ResourceHostingInit : " + result);
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
+        }
+
+        /**
+         * @see Class   class :  com_example_resourcehostingsampleapp_ResourceHosting</br>
+         * @see Method  method :  getIpAddress</br>
+         */
+        private String getIpAddress()
+        {
+            try
+            {
+                for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces();
+                     en.hasMoreElements();)
+                {
+                    NetworkInterface intf = (NetworkInterface) en.nextElement();
+                    for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();)
+                    {
+                        InetAddress inetAddress = (InetAddress) enumIpAddr.nextElement();
+                        if (!inetAddress.isLoopbackAddress())
+                        {
+                            if (inetAddress instanceof Inet4Address)
+                                return inetAddress.getHostAddress().toString();
+                        }
+                    }
+                }
+            }
+            catch (SocketException e)
+            {
+                e.printStackTrace();
+            }
+            return null;
         }
 
         /**
@@ -145,94 +202,23 @@ public class ResourceHosting extends Activity implements OnClickListener
                     try
                     {
                         int result;
-                        result = OICCoordinatorStart();
+                        result = resourceHosting.OICCoordinatorStart();
                         Log.d(TAG, "OICCoordinatorStart : " + result);
                     }
                     catch (Exception e)
                     {
                         Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
-                        Log.d(TAG, e.getMessage() + result);
                     }
                     break;
                 case R.id.btnStopHosting:
                     int result;
-                    result = OICCoordinatorStop();
+                    result = resourceHosting.OICCoordinatorStop();
                     Log.d(TAG, "OICCoordinatorStop : "+ result);
                     break;
                 case R.id.btLogClear:
-                    clearLog();
                 default:
                     break;
             }
         }
 
-        /**
-         * all clear log view
-         * @see Class   class :  com_example_resourcehostingsampleapp_ResourceHosting</br>
-         * @see Method  method :  clearLog</br>
-         */
-        private void clearLog()
-        {
-            mLog = "";
-            mLogTextView.setText(mLog);
-            Log.i(TAG, "Log textbox is cleared");
-        }
-
-        /**
-         * recieve the callback log message.
-         * @see Class   class :  com_example_resourcehostingsampleapp_ResourceHosting</br>
-         * @see Method  method :  cbMessage</br>
-         * @param msg callback log message
-         */
-        public void cbMessage(String msg)
-        {
-            mLog += msg + "\n";
-            mLogTextView.setText(mLog);
-            Log.i(TAG, msg);
-        }
-
-        /**
-         * jni function - OicCorrdinatorstart() method.
-         * @see Class   class :    com_example_resourcehostingsampleapp_ResourceHosting</br>
-         * @see Method  method :  OICCoordinatorStart</br>
-         * @see Signature signature : ()V</br>
-         */
-        public native int OICCoordinatorStart();
-
-        /**
-         * jni function - OICCoordinatorStop() method.
-         * @see Class   class :  com_example_resourcehostingsampleapp_ResourceHosting</br>
-         * @see Method  method :  OICCoordinatorStop</br>
-         * @see signature  signature : ()V</br>
-         */
-        public native int OICCoordinatorStop();
-
-        /**
-         * jni function - ResourceHostingInit() method in order to execute OICCoordinatorStart() method.
-         * @see Class   class :  com_example_resourcehostingsampleapp_ResourceHosting</br>
-         * @see Method  method :  ResourceHostingInit</br>
-         * @param addr ipAddress
-         * @see signature signature : (Ljava/lang/String;)V</br>
-         */
-        public native int ResourceHostingInit(String addr);
-
-        /**
-         * jni function - ResourceHostingTerminate() method in order to terminate resource hosting
-         * @see Class   class  : com_example_resourcehostingsampleapp_ResourceHosting</br>
-         * @see Method  method : ResourceHostingTerminate</br>
-         * @see signature signature : ()V</br>
-         */
-        public native int ResourceHostingTerminate();
-
-    static
-    {
-        System.loadLibrary("gnustl_shared");
-        System.loadLibrary("oc_logger");
-        System.loadLibrary("connectivity_abstraction");
-        System.loadLibrary("ca-interface");
-        System.loadLibrary("octbstack");
-        System.loadLibrary("oc");
-        System.loadLibrary("ocstack-jni");
-        System.loadLibrary("NotificationManager");
-    }
 }
