@@ -247,7 +247,7 @@ namespace OIC
             {
                 KeyValueVisitorHelper< VISITOR > helper{ visitor };
 
-                for (const auto& i : m_keyValues)
+                for (const auto& i : m_values)
                 {
                     boost::variant< const std::string& > key{ i.first };
                     boost::apply_visitor(helper, key, *i.second.m_data);
@@ -255,7 +255,7 @@ namespace OIC
             }
 
         private:
-            std::unordered_map< std::string, Value > m_keyValues;
+            std::unordered_map< std::string, Value > m_values;
 
             friend class ResourceAttributesConverter;
         };

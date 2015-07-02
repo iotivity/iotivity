@@ -85,7 +85,7 @@ namespace OIC
 
         bool operator==(const ResourceAttributes& lhs, const ResourceAttributes& rhs)
         {
-            return lhs.m_keyValues == rhs.m_keyValues;
+            return lhs.m_values == rhs.m_values;
         }
 
         ResourceAttributes::Value::Value() :
@@ -292,49 +292,49 @@ namespace OIC
 
         auto ResourceAttributes::begin() -> iterator
         {
-            return iterator{ m_keyValues.begin() };
+            return iterator{ m_values.begin() };
         }
 
         auto ResourceAttributes::end() -> iterator
         {
-            return iterator{ m_keyValues.end() };
+            return iterator{ m_values.end() };
         }
 
         auto ResourceAttributes::begin() const -> const_iterator
         {
-            return const_iterator{ m_keyValues.begin() };
+            return const_iterator{ m_values.begin() };
         }
 
         auto ResourceAttributes::end() const -> const_iterator
         {
-            return const_iterator{ m_keyValues.end() };
+            return const_iterator{ m_values.end() };
         }
 
         auto ResourceAttributes::cbegin() const -> const_iterator
         {
-            return const_iterator{ m_keyValues.begin() };
+            return const_iterator{ m_values.begin() };
         }
 
         auto ResourceAttributes::cend() const -> const_iterator
         {
-            return const_iterator{ m_keyValues.end() };
+            return const_iterator{ m_values.end() };
         }
 
         auto ResourceAttributes::operator[](const std::string& key) -> Value&
         {
-            return m_keyValues[key];
+            return m_values[key];
         }
 
         auto ResourceAttributes::operator[](std::string&& key) -> Value&
         {
-            return m_keyValues[std::move(key)];
+            return m_values[std::move(key)];
         }
 
         auto ResourceAttributes::at(const std::string& key) -> Value&
         {
             try
             {
-                return m_keyValues.at(key);
+                return m_values.at(key);
             }
             catch (const std::out_of_range&)
             {
@@ -346,7 +346,7 @@ namespace OIC
         {
             try
             {
-                return m_keyValues.at(key);
+                return m_values.at(key);
             }
             catch (const std::out_of_range&)
             {
@@ -356,22 +356,22 @@ namespace OIC
 
         bool ResourceAttributes::erase(const std::string& key)
         {
-            return m_keyValues.erase(key) == 1U;
+            return m_values.erase(key) == 1U;
         }
 
         bool ResourceAttributes::contains(const std::string& key) const
         {
-            return m_keyValues.find(key) != m_keyValues.end();
+            return m_values.find(key) != m_values.end();
         }
 
         bool ResourceAttributes::empty() const
         {
-            return m_keyValues.empty();
+            return m_values.empty();
         }
 
         size_t ResourceAttributes::size() const
         {
-            return m_keyValues.size();
+            return m_values.size();
         }
 
 
