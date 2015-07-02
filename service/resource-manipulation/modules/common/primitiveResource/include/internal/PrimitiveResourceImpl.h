@@ -98,6 +98,11 @@ namespace OIC
                         static_cast< CancelObserveFunc >(&BaseResource::cancelObserve));
             }
 
+            std::string getSid() const override
+            {
+                return invokeOC(m_baseResource, &BaseResource::sid);
+            }
+
             std::string getUri() const override
             {
                 return invokeOC(m_baseResource, &BaseResource::uri);

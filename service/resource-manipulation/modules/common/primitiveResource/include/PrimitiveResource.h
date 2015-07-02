@@ -63,6 +63,7 @@ namespace OIC
             virtual void requestObserve(ObserveCallback) = 0;
             virtual void cancelObserve() = 0;
 
+            virtual std::string getSid() const = 0;
             virtual std::string getUri() const = 0;
             virtual std::string getHost() const = 0;
             virtual std::vector< std::string > getTypes() const = 0;
@@ -76,8 +77,8 @@ namespace OIC
             PrimitiveResource(const PrimitiveResource&) = delete;
             PrimitiveResource(PrimitiveResource&&) = delete;
 
-            PrimitiveResource& operator=(const PrimitiveResource&) const = delete;
-            PrimitiveResource& operator=(PrimitiveResource&&) const = delete;
+            PrimitiveResource& operator=(const PrimitiveResource&) = delete;
+            PrimitiveResource& operator=(PrimitiveResource&&) = delete;
         };
 
         using DiscoverCallback = std::function<void(std::shared_ptr<PrimitiveResource>)>;

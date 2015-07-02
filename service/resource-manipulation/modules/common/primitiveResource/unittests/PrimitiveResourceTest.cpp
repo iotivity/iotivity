@@ -47,10 +47,11 @@ public:
 
     virtual OCStackResult cancelObserve() = 0;
 
+    virtual std::string sid() const = 0;
     virtual std::string uri() const = 0;
     virtual std::string host() const = 0;
     virtual std::vector<std::string> getResourceTypes() const = 0;
-    virtual std::vector<std::string> getResourceInterfaces(void) const = 0;
+    virtual std::vector<std::string> getResourceInterfaces() const = 0;
 
     virtual bool isObservable() const = 0;
 };
