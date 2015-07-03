@@ -116,6 +116,12 @@ static ca_mutex g_bleClientThreadPoolMutex = NULL;
 static CABLEClientDataReceivedCallback g_bleClientDataReceivedCallback = NULL;
 
 /**
+ * @var g_clientErrorCallback
+ * @brief callback to update the error to le adapter
+ */
+static CABLEErrorHandleCallback g_clientErrorCallback;
+
+/**
  * @var g_eventLoop
  * @brief gmainLoop to manage the threads to receive the callback from the platfrom.
  */
@@ -650,6 +656,12 @@ void CASetBLEReqRespClientCallback(CABLEClientDataReceivedCallback callback)
     ca_mutex_unlock(g_bleReqRespClientCbMutex);
 
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "OUT");
+}
+
+
+void CASetBLEClientErrorHandleCallback(CABLEErrorHandleCallback callback)
+{
+    g_clientErrorCallback = callback;
 }
 
 CAResult_t CAStartBLEGattClient()
@@ -1458,12 +1470,14 @@ CAResult_t  CAUpdateCharacteristicsToAllGattServers(const char  *data,
         /*remoteAddress will be NULL.
           Since we have to send to all destinations. pos will be used for getting remote address.
          */
-        int32_t ret = CAUpdateCharacteristicsToGattServer(NULL, data, dataLen, LE_MULTICAST, pos);
+        CAResult_t  ret = CAUpdateCharacteristicsToGattServer(NULL, data, dataLen, LE_MULTICAST, pos);
 
         if (CA_STATUS_OK != ret)
         {
             OIC_LOG_V(ERROR, TZ_BLE_CLIENT_TAG,
                       "CAUpdateCharacteristicsToGattServer Failed with return val [%d] ", ret);
+            g_clientErrorCallback(NULL, data, dataLen, ret);
+            continue;
         }
     }
 

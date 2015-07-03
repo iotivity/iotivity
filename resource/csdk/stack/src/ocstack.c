@@ -1856,7 +1856,7 @@ static OCStackResult ParseRequestUri(const char *fullUri,
             end = (colon && colon < slash) ? colon : slash;
         }
         size_t len = end - start;
-        if (len > MAX_ADDR_STR_SIZE)
+        if (len >= sizeof(da->addr))
         {
             return OC_STACK_INVALID_URI;
         }
@@ -1876,12 +1876,12 @@ static OCStackResult ParseRequestUri(const char *fullUri,
             }
         }
 
-        da = (OCDevAddr *)OICMalloc(sizeof (OCDevAddr));
+        da = (OCDevAddr *)OICCalloc(sizeof (OCDevAddr), 1);
         if (!da)
         {
             return OC_STACK_NO_MEMORY;
         }
-        strncpy(da->addr, start, len);
+        OICStrcpyPartial(da->addr, sizeof(da->addr), start, len);
         da->port = port;
         da->adapter = adapter;
         da->flags = flags;

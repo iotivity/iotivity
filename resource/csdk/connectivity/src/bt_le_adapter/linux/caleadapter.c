@@ -31,8 +31,9 @@ static CANetworkPacketReceivedCallback g_leReceivedCallback = NULL;
 static ca_thread_pool_t g_threadPoolHandle = NULL;
 
 CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
-                          CANetworkPacketReceivedCallback reqRespCallback, CANetworkChangeCallback netCallback,
-                          ca_thread_pool_t handle)
+                          CANetworkPacketReceivedCallback reqRespCallback,
+                          CANetworkChangeCallback netCallback,
+                          CAErrorHandleCallback errorCallback, ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, TAG, "CAInitializeLE");
 

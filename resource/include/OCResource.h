@@ -508,6 +508,7 @@ namespace OC
         std::string m_uri;
         OCResourceIdentifier m_resourceId;
         OCDevAddr m_devAddr;
+        bool m_useHostString;
         bool m_isObservable;
         bool m_isCollection;
         std::vector<std::string> m_resourceTypes;

@@ -30,7 +30,11 @@
 #define OPTION_INFO_LENGTH 1024
 #define NETWORK_INFO_LENGTH 1024
 
-uint16_t g_localSecurePort = SECURE_DEFAULT_PORT;
+typedef struct
+{
+    char ipAddress[CA_IPADDR_SIZE];
+    uint16_t port;
+} addressSet_t;
 
 void request_handler(const CAEndpoint_t* object, const CARequestInfo_t* requestInfo);
 void response_handler(const CAEndpoint_t* object, const CAResponseInfo_t* responseInfo);
@@ -40,10 +44,12 @@ uint32_t get_secure_information(CAPayload_t payLoad);
 CAResult_t get_network_type(uint32_t selectedNetwork);
 void callback(char *subject, char *receivedData);
 CAResult_t get_remote_address(CATransportAdapter_t transportType, const char *address);
+void parsing_coap_uri(const char* uri, addressSet_t* address, CATransportFlags_t *flags);
 
+uint16_t g_localSecurePort = SECURE_DEFAULT_PORT;
 CATransportAdapter_t g_selectedNwType = CA_ADAPTER_IP;
 static CAToken_t g_lastRequestToken = NULL;
-static uint8_t g_lastRequestTokenLength;
+static uint8_t g_lastRequestTokenLength = 0;
 
 static const char COAP_PREFIX[] =  "coap://";
 static const char COAPS_PREFIX[] = "coaps://";
@@ -62,18 +68,12 @@ static jobject g_responseListenerObject = NULL;
 static JavaVM *g_jvm;
 
 static CAEndpoint_t *g_clientEndpoint = NULL;
-static char *g_resourceUri;
-static CAToken_t g_clientToken;
-static uint8_t g_clientTokenLength = NULL;
+static char *g_resourceUri = NULL;
+static CAToken_t g_clientToken = NULL;
+static uint8_t g_clientTokenLength = 0;
 
-static uint16_t g_clientMsgId;
+static uint16_t g_clientMsgId = 0;
 static char *g_remoteAddress = NULL;
-
-typedef struct
-{
-    char ipAddress[CA_IPADDR_SIZE];
-    uint16_t port;
-} addressSet_t;
 
 // init
 JNIEXPORT void JNICALL
@@ -260,12 +260,6 @@ Java_org_iotivity_ca_service_RMInterface_RMRegisterHandler(JNIEnv *env, jobject 
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_ca_service_RMInterface_RMFindResource(JNIEnv *env, jobject obj, jstring uri)
-{
-    LOGE("Java_org_iotivity_service_RMInterface_RMFindResource not implemented");
-}
-
-JNIEXPORT void JNICALL
 Java_org_iotivity_ca_service_RMInterface_RMSendRequest(JNIEnv *env, jobject obj, jstring uri,
                                                        jstring payload, jint selectedNetwork,
                                                        jint isSecured, jint msgType)
@@ -280,12 +274,13 @@ Java_org_iotivity_ca_service_RMInterface_RMSendRequest(JNIEnv *env, jobject obj,
     const char* strUri = (*env)->GetStringUTFChars(env, uri, NULL);
     LOGI("RMSendRequest - %s", strUri);
 
+    CATransportFlags_t flags;
     addressSet_t address = {};
-    parsing_coap_uri(strUri, &address);
+    parsing_coap_uri(strUri, &address, &flags);
 
     //create remote endpoint
     CAEndpoint_t* endpoint = NULL;
-    res = CACreateEndpoint(CA_DEFAULT_FLAGS, g_selectedNwType, (const char*)address.ipAddress,
+    res = CACreateEndpoint(flags, g_selectedNwType, (const char*)address.ipAddress,
                            address.port, &endpoint);
     if (CA_STATUS_OK != res)
     {
@@ -431,6 +426,28 @@ Java_org_iotivity_ca_service_RMInterface_RMSendReqestToAll(JNIEnv *env, jobject 
     LOGI("resourceUri - %s", strUri);
     requestData.resourceUri = (CAURI_t)strUri;
 
+    uint8_t optionNum = 2;
+    CAHeaderOption_t *headerOpt = (CAHeaderOption_t*) calloc(1,
+                                                             sizeof(CAHeaderOption_t) * optionNum);
+    if (NULL == headerOpt)
+    {
+        LOGE("Memory allocation failed");
+        return;
+    }
+
+    char* FirstOptionData = "Hello";
+    headerOpt[0].optionID = 3000;
+    memcpy(headerOpt[0].optionData, FirstOptionData, strlen(FirstOptionData));
+    headerOpt[0].optionLength = (uint16_t) strlen(FirstOptionData);
+
+    char* SecondOptionData2 = "World";
+    headerOpt[1].optionID = 3001;
+    memcpy(headerOpt[1].optionData, SecondOptionData2, strlen(SecondOptionData2));
+    headerOpt[1].optionLength = (uint16_t) strlen(SecondOptionData2);
+
+    requestData.numOptions = optionNum;
+    requestData.options = headerOpt;
+
     CARequestInfo_t requestInfo = { 0 };
     requestInfo.method = CA_GET;
     requestInfo.isMulticast = true;
@@ -453,6 +470,8 @@ Java_org_iotivity_ca_service_RMInterface_RMSendReqestToAll(JNIEnv *env, jobject 
 
     //ReleaseStringUTFChars for strUri
     (*env)->ReleaseStringUTFChars(env, uri, strUri);
+
+    free(headerOpt);
 
     // destroy remote endpoint
     CADestroyEndpoint(endpoint);
@@ -536,12 +555,6 @@ Java_org_iotivity_ca_service_RMInterface_RMSendResponse(JNIEnv *env, jobject obj
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_ca_service_RMInterface_RMAdvertiseResource(JNIEnv *env, jobject obj, jstring uri)
-{
-    LOGE("Java_org_iotivity_ca_service_RMInterface_RMAdvertiseResource not implemented");
-}
-
-JNIEXPORT void JNICALL
 Java_org_iotivity_ca_service_RMInterface_RMSendNotification(JNIEnv *env, jobject obj, jstring uri,
                                                             jstring payload, jint selectedNetwork,
                                                             jint isSecured, jint msgType,
@@ -559,12 +572,13 @@ Java_org_iotivity_ca_service_RMInterface_RMSendNotification(JNIEnv *env, jobject
     const char* strUri = (*env)->GetStringUTFChars(env, uri, NULL);
     LOGI("RMSendNotification - %s", strUri);
 
+    CATransportFlags_t flags;
     addressSet_t address = {};
-    parsing_coap_uri(strUri, &address);
+    parsing_coap_uri(strUri, &address, &flags);
 
     //create remote endpoint
     CAEndpoint_t* endpoint = NULL;
-    if (CA_STATUS_OK != CACreateEndpoint(CA_DEFAULT_FLAGS, g_selectedNwType,
+    if (CA_STATUS_OK != CACreateEndpoint(flags, g_selectedNwType,
                                          (const char*)address.ipAddress,
                                          address.port, &endpoint))
     {
@@ -1278,7 +1292,7 @@ CAResult_t get_remote_address(CATransportAdapter_t transportType, const char *ad
 }
 
 
-void parsing_coap_uri(const char* uri, addressSet_t* address)
+void parsing_coap_uri(const char* uri, addressSet_t* address, CATransportFlags_t *flags)
 {
     if (NULL == uri || NULL == address)
     {
@@ -1293,11 +1307,13 @@ void parsing_coap_uri(const char* uri, addressSet_t* address)
     {
         LOGI("uri has '%s' prefix", COAPS_PREFIX);
         startIndex = COAPS_PREFIX_LEN;
+        *flags = CA_SECURE;
     }
     else if (strncmp(COAP_PREFIX, uri, COAP_PREFIX_LEN) == 0)
     {
         LOGI("uri has '%s' prefix", COAP_PREFIX);
         startIndex = COAP_PREFIX_LEN;
+        *flags = CA_DEFAULT_FLAGS;
     }
 
     // #2. copy uri for parse

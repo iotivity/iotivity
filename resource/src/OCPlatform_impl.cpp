@@ -245,7 +245,7 @@ namespace OC
         std::vector<std::string> resourceTypes = resource->getResourceTypes();
 
         return checked_guard(m_server, &IServerWrapper::registerResource,
-                std::ref(resourceHandle), resource->uri(),
+                std::ref(resourceHandle), resource->host() + resource->uri(),
                 resourceTypes[0]/*"core.remote"*/, DEFAULT_INTERFACE,
                 (EntityHandler) nullptr, resourceProperty);
     }

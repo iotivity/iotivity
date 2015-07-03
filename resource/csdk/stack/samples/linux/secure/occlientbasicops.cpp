@@ -34,10 +34,12 @@
 #define TAG "occlientbasicops"
 static int UNICAST_DISCOVERY = 0;
 static int TEST_CASE = 0;
+static int CONN_TYPE = 0;
 
 static int IPV4_ADDR_SIZE = 16;
 static char UNICAST_DISCOVERY_QUERY[] = "coap://%s:6298/oic/res";
 static char MULTICAST_DISCOVERY_QUERY[] = "/oic/res";
+OCConnectivityType discoveryReqConnType = CT_ADAPTER_IP;
 
 static std::string putPayload = "{\"oic\":[{\"rep\":{\"state\":\"off\",\"power\":10}}]}";
 static std::string coapServerIP;
@@ -66,12 +68,15 @@ void handleSigInt(int signum)
 
 static void PrintUsage()
 {
-    OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1|2|3>");
+    OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1|2|3> -c <0|1|2>");
     OC_LOG(INFO, TAG, "-u <0|1> : Perform multicast/unicast discovery of resources");
     OC_LOG(INFO, TAG, "-t 1 : Discover Resources");
     OC_LOG(INFO, TAG, "-t 2 : Discover Resources and"
             " Initiate Nonconfirmable Get/Put/Post Requests");
     OC_LOG(INFO, TAG, "-t 3 : Discover Resources and Initiate Confirmable Get/Put/Post Requests");
+    OC_LOG(INFO, TAG, "-c 0 : Default IPv4 and IPv6 auto-selection");
+    OC_LOG(INFO, TAG, "-c 1 : IPv4 Connectivity Type");
+    OC_LOG(INFO, TAG, "-c 2 : IPv6 Connectivity Type (IPv6 not currently supported)");
 }
 
 OCStackResult InvokeOCDoResource(std::ostringstream &query,
@@ -233,7 +238,6 @@ int InitDiscovery()
     OCMethod method;
     OCCallbackData cbData;
     char szQueryUri[MAX_URI_LENGTH] = { 0 };
-    OCConnectivityType discoveryReqConnType;
 
     if (UNICAST_DISCOVERY)
     {
@@ -250,7 +254,6 @@ int InitDiscovery()
             OC_LOG(ERROR, TAG, "!! Bad input for IPV4 address. !!");
             return OC_STACK_INVALID_PARAM;
         }
-        discoveryReqConnType = CT_ADAPTER_IP;
         method = OC_REST_GET;
     }
     else
@@ -291,7 +294,7 @@ int main(int argc, char* argv[])
     int opt;
     struct timespec timeout;
 
-    while ((opt = getopt(argc, argv, "u:t:")) != -1)
+    while ((opt = getopt(argc, argv, "u:t:c:")) != -1)
     {
         switch(opt)
         {
@@ -301,6 +304,9 @@ int main(int argc, char* argv[])
             case 't':
                 TEST_CASE = atoi(optarg);
                 break;
+            case 'c':
+                CONN_TYPE = atoi(optarg);
+                break;
             default:
                 PrintUsage();
                 return -1;
@@ -308,11 +314,36 @@ int main(int argc, char* argv[])
     }
 
     if ((UNICAST_DISCOVERY != 0 && UNICAST_DISCOVERY != 1) ||
-            (TEST_CASE < TEST_DISCOVER_REQ || TEST_CASE >= MAX_TESTS) )
+            (TEST_CASE < TEST_DISCOVER_REQ || TEST_CASE >= MAX_TESTS)||
+            (CONN_TYPE < CT_ADAPTER_DEFAULT || CONN_TYPE >= MAX_CT))
     {
         PrintUsage();
         return -1;
     }
+
+
+    if(CONN_TYPE == CT_ADAPTER_DEFAULT)
+    {
+        discoveryReqConnType = CT_DEFAULT;
+    }
+    else if(CONN_TYPE == CT_IPV4)
+    {
+        discoveryReqConnType = CT_IP_USE_V4;
+    }
+    else if(CONN_TYPE == CT_IPV6)
+    {
+        //TODO: Remove when IPv6 is available.
+        //discoveryReqConnType = CT_IP_USE_V6;
+        OC_LOG(ERROR, TAG, "IPv6 is currently not supported !!!!");
+        PrintUsage();
+        return -1;
+    }
+    else
+    {
+        printf("Using Default Connectivity type\n\n");
+        PrintUsage();
+    }
+
 
     // Initialize Persistent Storage for SVR database
     OCPersistentStorage ps = {};

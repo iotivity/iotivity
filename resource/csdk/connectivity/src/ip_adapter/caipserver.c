@@ -77,6 +77,7 @@ typedef struct
     ca_thread_pool_t threadPool;
     CAIPPacketReceivedCallback packetReceivedCallback;
     CAIPExceptionCallback exceptionCallback;
+    CAIPErrorHandleCallback IPErrorCallback;
 } CAAdapterIPServerContext_t;
 
 /**
@@ -92,10 +93,10 @@ static u_arraylist_t *g_serverInfoList = NULL;
 static ca_mutex g_mutexServerInfoList = NULL;
 
 /**
- * @var g_adapterEthServerContext
+ * @var g_adapterIPServerContext
  * @brief Mutex to synchronize ethenet adapter context.
  */
-static CAAdapterIPServerContext_t *g_adapterEthServerContext = NULL;
+static CAAdapterIPServerContext_t *g_adapterIPServerContext = NULL;
 
 /**
  * @var g_mutexAdapterServerContext
@@ -224,10 +225,10 @@ static void CAReceiveHandler(void *data)
                     OIC_LOG_V(ERROR, IP_SERVER_TAG, "Server socket shutdown sock fd[%d]", sd);
                     ca_mutex_lock(g_mutexAdapterServerContext);
                     // Notify upper layer this exception
-                    if (g_adapterEthServerContext->exceptionCallback)
+                    if (g_adapterIPServerContext->exceptionCallback)
                     {
                         // need to make proper exception callback.
-                        //g_adapterEthServerContext->exceptionCallback(ctx->type);
+                        //g_adapterIPServerContext->exceptionCallback(ctx->type);
                     }
                     ca_mutex_unlock(g_mutexAdapterServerContext);
                 }
@@ -281,9 +282,9 @@ static void CAReceiveHandler(void *data)
                 {
                     ca_mutex_lock(g_mutexAdapterServerContext);
 
-                    if (g_adapterEthServerContext->packetReceivedCallback)
+                    if (g_adapterIPServerContext->packetReceivedCallback)
                     {
-                        g_adapterEthServerContext->packetReceivedCallback(&ep,
+                        g_adapterIPServerContext->packetReceivedCallback(&ep,
                                                           recvBuffer, recvLen);
                     }
 
@@ -296,7 +297,7 @@ static void CAReceiveHandler(void *data)
     OIC_LOG(DEBUG, IP_SERVER_TAG, "OUT");
 }
 
-static CAResult_t CACreateSocket(int *socketFD, const char *localIp, uint16_t *port)
+static CAResult_t CACreateSocket(int *socketFD, const char *localIp, uint16_t *port, bool isSecured)
 {
     VERIFY_NON_NULL(socketFD, IP_SERVER_TAG, "socketFD is NULL");
     VERIFY_NON_NULL(localIp, IP_SERVER_TAG, "localIp is NULL");
@@ -330,7 +331,7 @@ static CAResult_t CACreateSocket(int *socketFD, const char *localIp, uint16_t *p
         return CA_STATUS_FAILED;
     }
 
-    if (0 != *port)
+    if (0 != *port && !isSecured)
     {
         int setOptionOn = SOCKETOPTION;
         if (-1 == setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *) &setOptionOn,
@@ -352,12 +353,28 @@ static CAResult_t CACreateSocket(int *socketFD, const char *localIp, uint16_t *p
         sockAddr.sin_addr.s_addr = inet_addr(localIp);
     }
 
+    bool isBound = false;
     if (-1 != bind(sock, (struct sockaddr *) &sockAddr, sizeof(sockAddr)))
+    {
+        isBound = true;
+    }
+    else if (isSecured)
+    {
+        //if secure port 5684 is occupied, trying for another port
+        serverPort = 0;
+        sockAddr.sin_port = htons(serverPort);
+        if (-1 != bind(sock, (struct sockaddr *) &sockAddr, sizeof(sockAddr)))
+        {
+            isBound = true;
+        }
+    }
+
+    if (true == isBound)
     {
         struct sockaddr_in sin;
         socklen_t len = sizeof(sin);
 
-        if (getsockname(sock, (struct sockaddr *)&sin, &len) == -1)
+        if (-1 == getsockname(sock, (struct sockaddr *)&sin, &len))
         {
             OIC_LOG_V(ERROR, IP_SERVER_TAG, "Failed to get socket[%s]!",
                       strerror(errno));
@@ -371,8 +388,7 @@ static CAResult_t CACreateSocket(int *socketFD, const char *localIp, uint16_t *p
     }
     else
     {
-        OIC_LOG_V(ERROR, IP_SERVER_TAG, "Failed to bind socket[%s]!",
-                  strerror(errno));
+        OIC_LOG_V(ERROR, IP_SERVER_TAG, "Failed to bind socket[%s]!", strerror(errno));
         close(sock);
         return CA_STATUS_FAILED;
     }
@@ -407,7 +423,7 @@ static CAResult_t CAStartUnicastServer(const char *localAddress, uint16_t *port,
     VERIFY_NON_NULL(localAddress, IP_SERVER_TAG, "localAddress");
     VERIFY_NON_NULL(port, IP_SERVER_TAG, "port");
 
-    CAResult_t ret = CACreateSocket(serverFD, localAddress, port);
+    CAResult_t ret = CACreateSocket(serverFD, localAddress, port, isSecured);
     if (CA_STATUS_OK != ret)
     {
         OIC_LOG(ERROR, IP_SERVER_TAG, "Failed to create unicast socket");
@@ -429,9 +445,9 @@ static CAResult_t CAIPStartPacketReceiverHandler()
 
     ca_mutex_lock(g_mutexAdapterServerContext);
 
-    if (!g_adapterEthServerContext)
+    if (!g_adapterIPServerContext)
     {
-        OIC_LOG(ERROR, IP_SERVER_TAG, "g_adapterEthServerContext NULL");
+        OIC_LOG(ERROR, IP_SERVER_TAG, "g_adapterIPServerContext NULL");
         ca_mutex_unlock(g_mutexAdapterServerContext);
         return CA_STATUS_FAILED;
     }
@@ -439,7 +455,7 @@ static CAResult_t CAIPStartPacketReceiverHandler()
     if (1 == listLength) //Its first time.
     {
         g_packetHandlerStopFlag = false;
-        if (CA_STATUS_OK != ca_thread_pool_add_task(g_adapterEthServerContext->threadPool,
+        if (CA_STATUS_OK != ca_thread_pool_add_task(g_adapterIPServerContext->threadPool,
                                                    CAReceiveHandler, NULL ))
         {
             OIC_LOG(ERROR, IP_SERVER_TAG, "thread_pool_add_task failed!");
@@ -517,17 +533,17 @@ CAResult_t CAIPInitializeServer(const ca_thread_pool_t threadPool)
     }
 
     ca_mutex_lock(g_mutexAdapterServerContext);
-    g_adapterEthServerContext = (CAAdapterIPServerContext_t *) OICCalloc(1,
+    g_adapterIPServerContext = (CAAdapterIPServerContext_t *) OICCalloc(1,
                                  sizeof(CAAdapterIPServerContext_t));
 
-    if (!g_adapterEthServerContext)
+    if (!g_adapterIPServerContext)
     {
         OIC_LOG(ERROR, IP_SERVER_TAG, "Malloc failed");
         ca_mutex_unlock(g_mutexAdapterServerContext);
         return CA_MEMORY_ALLOC_FAILED;
     }
 
-    g_adapterEthServerContext->threadPool = threadPool;
+    g_adapterIPServerContext->threadPool = threadPool;
 
     ca_mutex_unlock(g_mutexAdapterServerContext);
 
@@ -549,15 +565,15 @@ void CAIPTerminateServer()
 {
     OIC_LOG(DEBUG, IP_SERVER_TAG, "IN");
     ca_mutex_lock(g_mutexAdapterServerContext);
-    if (!g_adapterEthServerContext)
+    if (!g_adapterIPServerContext)
     {
-        OIC_LOG(ERROR, IP_SERVER_TAG, "g_adapterEthServerContext NULL");
+        OIC_LOG(ERROR, IP_SERVER_TAG, "g_adapterIPServerContext NULL");
         ca_mutex_unlock(g_mutexAdapterServerContext);
         return;
     }
 
-    OICFree(g_adapterEthServerContext);
-    g_adapterEthServerContext = NULL;
+    OICFree(g_adapterIPServerContext);
+    g_adapterIPServerContext = NULL;
 
     ca_mutex_unlock(g_mutexAdapterServerContext);
 
@@ -581,12 +597,6 @@ CAResult_t CAIPStartUnicastServer(const char *localAddress, uint16_t *port, bool
     // Input validation
     VERIFY_NON_NULL(localAddress, IP_SERVER_TAG, "localAddress");
     VERIFY_NON_NULL(port, IP_SERVER_TAG, "port");
-
-    if (0 > *port)
-    {
-        OIC_LOG(ERROR, IP_SERVER_TAG, "Invalid input: port is invalid!");
-        return CA_STATUS_INVALID_PARAM;
-    }
 
     ca_mutex_lock(g_mutexServerInfoList);
     bool isUnicastServerStarted = CAIsUnicastServerStarted(g_serverInfoList, localAddress, *port);
@@ -680,7 +690,7 @@ CAResult_t CAIPStartMulticastServer(const char *localAddress, const char *multic
     if (!isMulticastServerStarted)
     {
         int mulicastServerFd = -1;
-        CAResult_t ret = CACreateSocket(&mulicastServerFd, multicastAddress, &port);
+        CAResult_t ret = CACreateSocket(&mulicastServerFd, multicastAddress, &port, false);
         if (ret != CA_STATUS_OK)
         {
             OIC_LOG(ERROR, IP_SERVER_TAG, "Failed to create multicast socket");
@@ -887,6 +897,12 @@ CAResult_t CAIPStopAllServers()
     return CA_STATUS_OK;
 }
 
+void CAIPPullData()
+{
+    OIC_LOG(DEBUG, IP_SERVER_TAG, "IN");
+    OIC_LOG(DEBUG, IP_SERVER_TAG, "OUT");
+}
+
 uint16_t CAGetServerPortNum(const char *ipAddress, bool isSecured)
 {
     ca_mutex_lock(g_mutexServerInfoList);
@@ -942,13 +958,30 @@ void CAIPSetPacketReceiveCallback(CAIPPacketReceivedCallback callback)
 
     ca_mutex_lock(g_mutexAdapterServerContext);
 
-    if (!g_adapterEthServerContext)
+    if (g_adapterIPServerContext)
     {
-        OIC_LOG(ERROR, IP_SERVER_TAG, "g_adapterEthServerContext NULL");
-        ca_mutex_unlock(g_mutexAdapterServerContext);
-        return;
+        g_adapterIPServerContext->packetReceivedCallback = callback;
     }
-    g_adapterEthServerContext->packetReceivedCallback = callback;
+    else
+    {
+        OIC_LOG(ERROR, IP_SERVER_TAG, "g_adapterIPServerContext NULL");
+    }
+
+    ca_mutex_unlock(g_mutexAdapterServerContext);
+
+    OIC_LOG(DEBUG, IP_SERVER_TAG, "OUT");
+}
+
+void CAIPSetErrorHandleCallback(CAIPErrorHandleCallback ipErrorCallback)
+{
+    OIC_LOG(DEBUG, IP_SERVER_TAG, "IN");
+
+    ca_mutex_lock(g_mutexAdapterServerContext);
+
+    if (g_adapterIPServerContext)
+    {
+        g_adapterIPServerContext->IPErrorCallback = ipErrorCallback;
+    }
 
     ca_mutex_unlock(g_mutexAdapterServerContext);
 
@@ -960,13 +993,14 @@ void CAIPSetExceptionCallback(CAIPExceptionCallback callback)
     OIC_LOG(DEBUG, IP_SERVER_TAG, "IN");
     ca_mutex_lock(g_mutexAdapterServerContext);
 
-    if (!g_adapterEthServerContext)
+    if (g_adapterIPServerContext)
     {
-        OIC_LOG(ERROR, IP_SERVER_TAG, "g_adapterEthServerContext NULL");
-        ca_mutex_unlock(g_mutexAdapterServerContext);
-        return;
+        g_adapterIPServerContext->exceptionCallback = callback;
     }
-    g_adapterEthServerContext->exceptionCallback = callback;
+    else
+    {
+        OIC_LOG(ERROR, IP_SERVER_TAG, "g_adapterIPServerContext NULL");
+    }
 
     ca_mutex_unlock(g_mutexAdapterServerContext);
 

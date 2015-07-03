@@ -6,7 +6,7 @@ import android.widget.TextView;
 
 public final class DLog {
 
-    private final static String MAIN_TAG = "Sample_Service";
+    private final static String MAIN_TAG = "Sample_Service : DLog";
 
     private static TextView mLogView = null;
 

@@ -145,7 +145,7 @@ void CACheckRetransmissionList()
                                                      removedData->size);
             }
 
-            CADestroyEndpointInternal(removedData->endpoint);
+            CAFreeEndpoint(removedData->endpoint);
             OICFree(removedData->pdu);
 
             OICFree(removedData);
@@ -376,7 +376,7 @@ CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
 
             OIC_LOG_V(DEBUG, TAG, "remove RTCON data, msgid=%d", messageId);
 
-            CADestroyEndpointInternal(removedData->endpoint);
+            CAFreeEndpoint(removedData->endpoint);
             OICFree(removedData->pdu);
 
             OICFree(removedData);

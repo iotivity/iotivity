@@ -62,7 +62,6 @@ void error_handler(const CAEndpoint_t *object, const CAErrorInfo_t* errorInfo)
     return;
 }
 
-static char* uri = NULL;
 static char* addr = NULL;
 static CAEndpoint_t* tempRep = NULL;
 static CARequestInfo_t requestInfo;
@@ -71,14 +70,9 @@ static CAInfo_t responseData;
 static CAResponseInfo_t responseInfo;
 static CAToken_t tempToken = NULL;
 static uint8_t tokenLength = CA_MAX_TOKEN_LEN;
-static const char URI[] = "coap://10.11.12.13:4545/a/light";
 static const char ADDRESS[] = "10.11.12.13";
 static const uint16_t PORT = 4545;
-static const char RESOURCE_URI[] = "/a/light";
 
-static const char SECURE_INFO_DATA[] =
-                                    "{\"oc\":[{\"href\":\"%s\",\"prop\":{\"rt\":[\"core.led\"],"
-                                     "\"if\":[\"oc.mi.def\"],\"obs\":1,\"sec\":1,\"port\":%d}}]}";
 static const char NORMAL_INFO_DATA[] =
                                     "{\"oc\":[{\"href\":\"%s\",\"prop\":{\"rt\":[\"core.led\"],"
                                      "\"if\":[\"oc.mi.def\"],\"obs\":1}}]}";

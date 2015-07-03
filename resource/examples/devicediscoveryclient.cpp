@@ -32,6 +32,13 @@
 
 using namespace OC;
 
+static void printUsage()
+{
+    std::cout << "Usage devicediscoveryclient <0|1>" << std::endl;
+    std::cout << "connectivityType: Default IP" << std::endl;
+    std::cout << "connectivityType 0: IPv4" << std::endl;
+    std::cout << "connectivityType 1: IPv6 (Currently not supported !)" << std::endl;
+}
 //Callback after device information is received
 void receivedPlatformInfo(const OCRepresentation& rep)
 {
@@ -90,6 +97,7 @@ int main(int argc, char* argv[]) {
     std::string platformDiscoveryURI = "/oic/p";
     std::string deviceDiscoveryURI   = "/oic/d";
 
+    //Default Connectivity type
     OCConnectivityType connectivityType = CT_ADAPTER_IP;
 
     if(argc == 2)
@@ -103,12 +111,22 @@ int main(int argc, char* argv[]) {
             {
                 if(optionSelected == 0)
                 {
-                    connectivityType = CT_ADAPTER_IP;
+                    std::cout << "Using IPv4."<< std::endl;
+                    connectivityType = CT_IP_USE_V4;
+                }
+                else if(optionSelected == 1)
+                {
+                    std::cout << "IPv6 is currently not supported."<< std::endl;
+                    printUsage();
+                    return -1;
+                    //TODO: printUsage to be removed when IPv6 is available.
+                    //connectivityType = CT_ADAPTER_IP;
                 }
                 else
                 {
-                    std::cout << "Invalid connectivity type selected. Using default IP"
-                    << std::endl;
+                    std::cout << "Invalid connectivity type selected." << std::endl;
+                    printUsage();
+                    return -1;
                 }
             }
             else
@@ -123,9 +141,7 @@ int main(int argc, char* argv[]) {
     }
     else
     {
-        std::cout << "Usage devicediscoveryclient 0" << std::endl;
-        std::cout << "connectivityType: Default IP" << std::endl;
-        std::cout << "connectivityType 0: IP" << std::endl;
+        printUsage();
     }
     // Create PlatformConfig object
     PlatformConfig cfg {

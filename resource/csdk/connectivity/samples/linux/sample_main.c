@@ -87,7 +87,8 @@ void send_response(const CAEndpoint_t *endpoint, const CAInfo_t *info);
 void get_resource_uri(char *URI, char *resourceURI, int length);
 int get_secure_information(CAPayload_t payLoad);
 int get_address_set(const char *pAddress, addressSet_t* outAddress);
-void parsing_coap_uri(const char* uri, addressSet_t* address);
+void parsing_coap_uri(const char* uri, addressSet_t* address, CATransportFlags_t *flags);
+CAHeaderOption_t* get_option_data(CAInfo_t* requestData);
 
 static CAToken_t g_last_request_token = NULL;
 
@@ -410,12 +411,13 @@ void send_request()
 
     // create remote endpoint
     CAEndpoint_t *endpoint = NULL;
+    CATransportFlags_t flags;
 
     printf("URI : %s\n", uri);
     addressSet_t address = {};
-    parsing_coap_uri(uri, &address);
+    parsing_coap_uri(uri, &address, &flags);
 
-    res = CACreateEndpoint(CA_DEFAULT_FLAGS, g_selected_nw_type,
+    res = CACreateEndpoint(flags, g_selected_nw_type,
                            (const char*)address.ipAddress, address.port, &endpoint);
     if (CA_STATUS_OK != res || !endpoint)
     {
@@ -488,6 +490,7 @@ void send_request()
         snprintf(requestData.payload, length, NORMAL_INFO_DATA, resourceURI);
     }
     requestData.type = msgType;
+    CAHeaderOption_t* headerOpt = get_option_data(&requestData);
 
     CARequestInfo_t requestInfo = { 0 };
     requestInfo.method = CA_GET;
@@ -501,12 +504,16 @@ void send_request()
         printf("Could not send request : %d\n", res);
     }
 
+    if (headerOpt)
+    {
+        free(headerOpt);
+    }
+
     //destroy token
     CADestroyToken(token);
     // destroy remote endpoint
     CADestroyEndpoint(endpoint);
     free(requestData.payload);
-
 
     printf("=============================================\n");
 }
@@ -628,6 +635,8 @@ void send_request_all()
     requestData.type = CA_MSG_NONCONFIRM;
     requestData.resourceUri = (CAURI_t)resourceURI;
 
+    CAHeaderOption_t* headerOpt = get_option_data(&requestData);
+
     CARequestInfo_t requestInfo = { 0 };
     requestInfo.method = CA_GET;
     requestInfo.info = requestData;
@@ -644,6 +653,11 @@ void send_request_all()
     {
         CADestroyToken(g_last_request_token);
         g_last_request_token = token;
+    }
+
+    if (headerOpt)
+    {
+        free(headerOpt);
     }
 
     // destroy remote endpoint
@@ -689,12 +703,13 @@ void send_notification()
 
     int messageType = messageTypeBuf[0] - '0';
 
+    CATransportFlags_t flags;
     addressSet_t address = {};
-    parsing_coap_uri(uri, &address);
+    parsing_coap_uri(uri, &address, &flags);
 
     // create remote endpoint
     CAEndpoint_t *endpoint = NULL;
-    res = CACreateEndpoint(0, g_selected_nw_type, address.ipAddress, address.port, &endpoint);
+    res = CACreateEndpoint(flags, g_selected_nw_type, address.ipAddress, address.port, &endpoint);
     if (CA_STATUS_OK != res)
     {
         printf("Create remote endpoint error, error code: %d\n", res);
@@ -1191,6 +1206,11 @@ void send_response(const CAEndpoint_t *endpoint, const CAInfo_t *info)
         printf("Send response success\n");
     }
 
+    if (responseData.payload)
+    {
+        free(responseData.payload);
+    }
+
     printf("=============================================\n");
 }
 
@@ -1231,7 +1251,7 @@ int get_secure_information(CAPayload_t payLoad)
         return -1;
     }
 
-    char portStr[4] = {0};
+    char portStr[6] = {0};
     memcpy(portStr, startPos + 1, (endPos - 1) - startPos);
 
     printf("secured port is: %s\n", portStr);
@@ -1323,7 +1343,65 @@ CAResult_t get_input_data(char *buf, int32_t length)
     return CA_STATUS_OK;
 }
 
-void parsing_coap_uri(const char* uri, addressSet_t* address)
+CAHeaderOption_t* get_option_data(CAInfo_t* requestData)
+{
+    char optionNumBuf[MAX_BUF_LEN] = { 0 };
+    char optionData[MAX_OPT_LEN] = { 0 } ;
+
+    printf("Option Num : ");
+    if (CA_STATUS_OK != get_input_data(optionNumBuf, MAX_BUF_LEN))
+    {
+        return NULL;
+    }
+    int optionNum = atoi(optionNumBuf);
+
+    CAHeaderOption_t * headerOpt = NULL;
+    if (0 >= optionNum)
+    {
+        printf("there is no headerOption!\n");
+        return NULL;
+    }
+    else
+    {
+        headerOpt = (CAHeaderOption_t *)calloc(1, optionNum * sizeof(CAHeaderOption_t));
+        if (NULL == headerOpt)
+        {
+            printf("Memory allocation failed!\n");
+            return NULL;
+        }
+
+        int i;
+        for (i = 0; i < optionNum; i++)
+        {
+            char getOptionID[MAX_BUF_LEN] = { 0 } ;
+
+            printf("[%d] Option ID : ", i + 1);
+            if (CA_STATUS_OK != get_input_data(getOptionID, MAX_BUF_LEN))
+            {
+                free(headerOpt);
+                return NULL;
+            }
+            int optionID = atoi(getOptionID);
+            headerOpt[i].optionID = optionID;
+
+            printf("[%d] Option Data : ", i + 1);
+            if (CA_STATUS_OK != get_input_data(optionData, MAX_OPT_LEN))
+            {
+                free(headerOpt);
+                return NULL;
+            }
+
+            memcpy(headerOpt[i].optionData, optionData, strlen(optionData));
+
+            headerOpt[i].optionLength = (uint16_t) strlen(optionData);
+        }
+        requestData->numOptions = optionNum;
+        requestData->options = headerOpt;
+    }
+    return headerOpt;
+}
+
+void parsing_coap_uri(const char* uri, addressSet_t* address, CATransportFlags_t *flags)
 {
     if (NULL == uri)
     {
@@ -1338,11 +1416,13 @@ void parsing_coap_uri(const char* uri, addressSet_t* address)
     {
         printf("uri has '%s' prefix\n", COAPS_PREFIX);
         startIndex = COAPS_PREFIX_LEN;
+        *flags = CA_SECURE;
     }
     else if (strncmp(COAP_PREFIX, uri, COAP_PREFIX_LEN) == 0)
     {
         printf("uri has '%s' prefix\n", COAP_PREFIX);
         startIndex = COAP_PREFIX_LEN;
+        *flags = CA_DEFAULT_FLAGS;
     }
 
     // #2. copy uri for parse

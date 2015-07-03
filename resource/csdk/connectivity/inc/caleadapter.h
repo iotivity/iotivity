@@ -60,13 +60,15 @@ typedef struct
  *                               started at Connectivity Abstraction Layer.
  * @param  netCallback      [IN] Callback to notify the network additions to Connectivity
  *                               Abstraction Layer.
+ * @param  errorCallback    [IN] errorCallback to notify error to connectivity common logic
+ *                               layer from adapter
  * @param  handle           [IN] Threadpool Handle
  * @return #CA_STATUS_OK or Appropriate error code
  */
 CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
                           CANetworkPacketReceivedCallback reqRespCallback,
                           CANetworkChangeCallback netCallback,
-                          ca_thread_pool_t handle);
+                          CAErrorHandleCallback errorCallback, ca_thread_pool_t handle);
 
 /**
  * @brief Starting LE connectivity adapters.

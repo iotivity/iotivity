@@ -18,7 +18,7 @@
 *
 ******************************************************************/
 
-#include "caipinterface_singlethread.h"
+#include "caipinterface.h"
 
 #include <Arduino.h>
 #include <WiFi.h>
@@ -32,7 +32,7 @@
 #include "cacommon.h"
 #include "cainterface.h"
 #include "caadapterinterface.h"
-#include "caipadapter_singlethread.h"
+#include "caipadapter.h"
 #include "caadapterutils.h"
 #include "oic_malloc.h"
 
@@ -49,7 +49,6 @@
 #define IP_RECBUF_PORT_SIZE      (IP_RECBUF_PORT_OFFSET - 0)
 #define IP_RECBUF_FOOTER_SIZE    (IP_RECBUF_IPADDR_SIZE + IP_RECBUF_PORT_SIZE)
 
-static CAResult_t CAArduinoGetInterfaceAddress(char *address, int32_t addrLen);
 static void CAArduinoCheckData();
 static void CAPacketReceivedCallback(const char *ipAddress, const uint16_t port,
                                      const void *data, const uint32_t dataLength);
@@ -58,8 +57,13 @@ static CAIPPacketReceivedCallback gPacketReceivedCallback = NULL;
 static int32_t gUnicastSocket = 0;
 static bool gServerRunning = false;
 static WiFiUDP Udp;
+/**
+ * @var g_unicastPort
+ * @brief Unicast Port
+ */
+static uint16_t g_unicastPort = 0;
 
-CAResult_t CAIPInitializeServer(void)
+CAResult_t CAIPInitializeServer(const ca_thread_pool_t threadPool)
 {
     /**
      * This API is to keep design in sync with other platforms.
@@ -76,17 +80,13 @@ void CAIPTerminateServer(void)
      */
 }
 
-CAResult_t CAIPGetUnicastServerInfo(char **ipAddress, uint16_t *port, int *serverID)
+uint16_t CAGetServerPortNum(const char *ipAddress, bool isSecured)
 {
-    /*
-     * This API is to keep design in sync with other platforms.
-     * Will be implemented as and when CA layer wants this info.
-     */
-    return CA_STATUS_OK;
+    return g_unicastPort;
 }
 
 CAResult_t CAIPStartUnicastServer(const char *localAddress, uint16_t *port,
-                                  bool forceStart, int *serverFD)
+                                  bool secured)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     VERIFY_NON_NULL(port, TAG, "port");
@@ -104,21 +104,17 @@ CAResult_t CAIPStartUnicastServer(const char *localAddress, uint16_t *port,
         return CA_STATUS_FAILED;
     }
 
-    char localIpAddress[CA_IPADDR_SIZE];
-    int32_t localIpAddressLen = sizeof(localIpAddress);
-    CAArduinoGetInterfaceAddress(localIpAddress, localIpAddressLen);
-    OIC_LOG_V(DEBUG, TAG, "address: %s", localIpAddress);
     OIC_LOG_V(DEBUG, TAG, "port: %d", *port);
 
     Udp.begin((uint16_t ) *port);
     gServerRunning = true;
-
+    g_unicastPort = *port;
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t CAIPStartMulticastServer(const char *localAddress, const char *multicastAddress,
-                                      uint16_t multicastPort, int *serverFD)
+                                      uint16_t multicastPort)
 {
     // wifi shield does not support multicast
     OIC_LOG(DEBUG, TAG, "IN");
@@ -141,13 +137,45 @@ CAResult_t CAIPStopMulticastServer()
     return CAIPStopUnicastServer();
 }
 
+CAResult_t CAIPStopServer(const char *interfaceAddress)
+{
+    /* For arduino, Server will be running in only one interface */
+    return CAIPStopAllServers();
+}
+
+CAResult_t CAIPStopAllServers()
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+    CAResult_t result = CAIPStopUnicastServer();
+    if (CA_STATUS_OK != result)
+    {
+        OIC_LOG_V(ERROR, TAG, "stop ucast srv fail:%d", result);
+        return result;
+    }
+    CAIPSetUnicastSocket(-1);
+    CAIPSetUnicastPort(0);
+
+    result = CAIPStopMulticastServer();
+    if (CA_STATUS_OK != result)
+    {
+        OIC_LOG_V(ERROR, TAG, "stop mcast srv fail:%d", result);
+    }
+    OIC_LOG(DEBUG, TAG, "OUT");
+    return result;
+}
+
 void CAPacketReceivedCallback(const char *ipAddress, const uint16_t port,
                               const void *data, const uint32_t dataLength)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     if (gPacketReceivedCallback)
     {
-        gPacketReceivedCallback(ipAddress, port, data, dataLength);
+        CAEndpoint_t ep;
+        strncpy(ep.addr, ipAddress, MAX_ADDR_STR_SIZE_CA);
+        ep.port = port;
+        ep.flags = CA_IPV4;
+        ep.adapter = CA_ADAPTER_IP;
+        gPacketReceivedCallback(&ep, data, dataLength);
         OIC_LOG(DEBUG, TAG, "Notified network packet");
     }
     OIC_LOG(DEBUG, TAG, "OUT");
@@ -196,35 +224,13 @@ void CAIPSetExceptionCallback(CAIPExceptionCallback callback)
     // TODO
 }
 
+void CAIPSetErrorHandleCallback(CAIPErrorHandleCallback ipErrorCallback)
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "OUT");
+}
+
 void CAIPPullData()
 {
     CAArduinoCheckData();
 }
-
-/// Retrieves the IP address assigned to Arduino WiFi shield
-CAResult_t CAArduinoGetInterfaceAddress(char *address, int32_t addrLen)
-{
-    OIC_LOG(DEBUG, TAG, "IN");
-    if (WiFi.status() != WL_CONNECTED)
-    {
-        OIC_LOG(DEBUG, TAG, "No WIFI");
-        return CA_STATUS_FAILED;
-    }
-
-    VERIFY_NON_NULL(address, TAG, "Invalid address");
-    if (addrLen < IPNAMESIZE)
-    {
-        OIC_LOG_V(ERROR, TAG, "AddrLen MUST be atleast %d", IPNAMESIZE);
-        return CA_STATUS_FAILED;
-    }
-
-    IPAddress ip = WiFi.localIP();
-    sprintf((char *)address, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
-
-    OIC_LOG_V(DEBUG, TAG, "Wifi shield address is: %s", address);
-    OIC_LOG(DEBUG, TAG, "OUT");
-    return CA_STATUS_OK;
-}
-
-
-

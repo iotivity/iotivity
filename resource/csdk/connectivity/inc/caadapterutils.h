@@ -117,25 +117,6 @@ typedef struct
 void CALogPDUData(coap_pdu_t *pdu);
 
 /**
- * @fn CAAdapterCloneEndpoint
- * @brief Create CAEndpoint_t duplicate instance.
- */
-CAEndpoint_t *CAAdapterCloneEndpoint(const CAEndpoint_t *endpoint);
-
-/**
- * @fn CAAdapterFreeEndpoint
- * @brief Deallocate CAEndpoint_t instance.
- */
-void CAAdapterFreeEndpoint(CAEndpoint_t *localEndPoint);
-
-/**
- * @fn CAAdapterCreateEndpoint
- * @brief Allocate CAEndpoint_t instance.
- */
-CAEndpoint_t *CAAdapterCreateEndpoint(CATransportFlags_t flags,
-              CATransportAdapter_t adapter, const char *address, uint16_t port);
-
-/**
  * @fn CAParseIPv4AddressInternal
  * @brief   To parse the IP address and port from "ipaddress:port"
  * @param   ipAddrStr   [IN]   IP address to be parsed

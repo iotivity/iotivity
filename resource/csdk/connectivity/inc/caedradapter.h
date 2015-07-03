@@ -43,16 +43,19 @@ extern "C"
  * @brief   Initialize EDR Interface.
  * @param   registerCallback  [IN] Callback to register EDR interface to Connectivity
  *                                 Abstraction Layer
- * @param   reqRespCallback   [IN] Callback to notify request and response messages from server(s)
- *                                 started at Connectivity Abstraction Layer.
+ * @param   reqRespCallback   [IN] Callback to notify request and response messages from
+ *                                 server(s) started at Connectivity Abstraction Layer.
  * @param   netCallback       [IN] Callback to notify the network additions to Connectivity
  *                                 Abstraction Layer.
+ * @param   errorCallback     [IN] errorCallback to notify error to connectivity common logic
+ *                                 layer from adapter
  * @param   handle            [IN] Threadpool Handle
  * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
 CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
                            CANetworkPacketReceivedCallback reqRespCallback,
-                           CANetworkChangeCallback netCallback, ca_thread_pool_t handle);
+                           CANetworkChangeCallback netCallback,
+                           CAErrorHandleCallback errorCallback, ca_thread_pool_t handle);
 
 /**
  * @brief   Starts EDR connectivity adapters. As its peer to peer it doesnot require to start

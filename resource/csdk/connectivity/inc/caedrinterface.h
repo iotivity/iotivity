@@ -103,6 +103,19 @@ typedef void (*CAEDRDataReceivedCallback)(const char *remoteAddress, const void 
 typedef void (*CAEDRNetworkStatusCallback)(CANetworkStatus_t status);
 
 /**
+ * @brief Callback to notify the error in the EDR adapter
+ * @param  remoteAddress   [IN] Remote EDR Address
+ * @param  serviceUUID     [IN] Service UUID of the device
+ * @param  data            [IN] data containing token, uri and coap data
+ * @param  dataLength      [IN] length of data
+ * @param  result          [IN] error code as defined in CAResult_t
+ * @return NONE
+ * @pre Callback must be registered using CAEDRSetPacketReceivedCallback()
+ */
+typedef void (*CAEDRErrorHandleCallback)(const char *remoteAddress, const char *serviceUUID,
+                                         const void *data, uint32_t dataLength, CAResult_t result);
+
+/**
  * @brief  Initialize the network monitor module
  * @param  threadPool   [IN] Threadpool Handle
  * @return #CA_STATUS_OK or Appropriate error code
@@ -186,6 +199,15 @@ void CAEDRSetPacketReceivedCallback(CAEDRDataReceivedCallback packetReceivedCall
  * @return NONE
  */
 void CAEDRSetNetworkChangeCallback(CAEDRNetworkStatusCallback networkStateChangeCallback);
+
+/**
+ * @brief  set error callback to notify error in EDR adapter
+ *
+ * @param  errorHandleCallback [IN] Callback function to notify the error in the EDR adapter
+ * @return NONE
+ */
+void CAEDRSetErrorHandler(CAEDRErrorHandleCallback errorHandleCallback);
+
 
 /**
  * @brief  Get the local bluetooth adapter information.

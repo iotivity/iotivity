@@ -137,29 +137,39 @@ extern "C"
 
 /**
 * @fn CAGenerateHeader
-* @brief This function is used to generate the CA specific header to maintain the fragmentation
-*           logic. The header structure explained above will be formed and returned to the caller.
+* @brief This function is used to generate the CA specific header to
+*        maintain the fragmentation logic. The header structure
+*        explained above will be formed and returned to the caller.
 *
-* @param[in]  data    Pointer to the character data which needs to be printed.
-* @param[in]  length The total legth of the data which will be represented from 5th -16th bits
-*                              in the header.
+* @param[in,out] header Pointer to the octet array that will contain
+*                       the generated header.
+* @param[in]     length The total length of the data.  The length will
+*                       be embedded in bits 5-16 of the header,
+*                       meaning the maximum overall length of the
+*                       data to be fragmented can be no more than 4096
+*                       (2^12).
 *
-* @return  CA_STATUS_OK on success. One of theCA_STATUS_FAILED or other error values on error.
-* @retval  CA_STATUS_OK  Successful
-* @retval  CA_STATUS_INVALID_PARAM  Invalid input arguments
-* @retval  CA_STATUS_FAILED Operation failed
+* @return @c CA_STATUS_OK on success. One of the @c CA_STATUS_FAILED or
+*         other error values on error.
+* @retval @c CA_STATUS_OK             Successful
+* @retval @c CA_STATUS_INVALID_PARAM  Invalid input arguments
+* @retval @c CA_STATUS_FAILED         Operation failed
 */
 CAResult_t CAGenerateHeader(char *header, uint32_t length);
 
 /**
 * @fn CAParseHeader
-* @brief This function is used to parse the header in the receiver end. This function will
-*            provide the information of the total length of the data which has been fragmented.
+* @brief This function is used to parse the header in the receiver
+*        end. This function will provide the information of the total
+*        length of the data which has been fragmented.
 *
-* @param[in]  header  Pointer to the character data which contains the header information.
-*                                Note that pointer should point to two bytes of data header
-*                                 which needs to be parsed.
+* @param[in] header Pointer to the octet array data which contains the
+*                   header information.  Note that pointer should
+*                   point to two bytes of data header which needs to
+*                   be parsed.
 *
+* @return Overall length of the data to be reassembled, or 0 on
+*         failure.
 */
 uint32_t CAParseHeader(const char *header);
 
