@@ -780,8 +780,6 @@ list_update_region_cb(void *data, Evas_Object *obj, void *event_info)
     if (NULL == popup_fields)
     {
         dlog_print(DLOG_INFO, LOG_TAG, "#### Memory allocation failed");
-        popup_fields->popup = NULL;
-        popup_fields->entry = NULL;
     }
     else
     {
