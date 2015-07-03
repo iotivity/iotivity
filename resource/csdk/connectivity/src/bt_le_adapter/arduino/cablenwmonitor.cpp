@@ -21,14 +21,14 @@
 //logger.h included first to avoid conflict with RBL library PROGMEM attribute
 #include "logger.h"
 
-#include "caleinterface_singlethread.h"
+#include "caleinterface.h"
 
 #include <Arduino.h>
 #include <SPI.h>
 #include <boards.h>
 #include <RBL_nRF8001.h>
 
-#include "caleadapter_singlethread.h"
+#include "caleadapter.h"
 #include "caadapterutils.h"
 #include "oic_malloc.h"
 
@@ -50,17 +50,24 @@ static CALEDeviceStateChangedCallback g_caLEDeviceStateChangedCallback = NULL;
  */
 static unsigned char *g_leAddress = NULL;
 
-CAResult_t CALEInitializeNetworkMonitor()
+CAResult_t CAInitializeLENetworkMonitor()
 {
     OIC_LOG(DEBUG, TAG, "IN");
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
-void CALETerminateNetworkMonitor()
+void CATerminateLENetworkMonitor()
 {
     OIC_LOG(DEBUG, TAG, "IN");
     OIC_LOG(DEBUG, TAG, "OUT");
+}
+
+CAResult_t CAInitializeLEAdapter()
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "OUT");
+    return CA_STATUS_OK;
 }
 
 CAResult_t CAGetLEAdapterState()

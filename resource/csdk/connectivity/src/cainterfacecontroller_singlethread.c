@@ -27,7 +27,7 @@
 
 #include "caipadapter.h"
 #include "caedradapter_singlethread.h"
-#include "caleadapter_singlethread.h"
+#include "caleadapter.h"
 #include "caadapterutils.h"
 
 #include "canetworkconfigurator.h"
@@ -146,7 +146,8 @@ void CAInitializeAdapters()
 #endif /* EDR_ADAPTER */
 
 #ifdef LE_ADAPTER
-    CAInitializeLE(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback);
+    CAInitializeLE(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback,
+                   NULL, NULL);
 #endif /* LE_ADAPTER */
 
     OIC_LOG(DEBUG, TAG, "OUT");

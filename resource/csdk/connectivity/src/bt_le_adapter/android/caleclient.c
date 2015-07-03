@@ -3161,7 +3161,7 @@ void CALEClientSetTheSendRequestFlag(bool flag)
  * adapter common
  */
 
-CAResult_t CAStartBLEGattClient()
+CAResult_t CAStartLEGattClient()
 {
     CAResult_t res = CALEClientStartMulticastServer();
     if (CA_STATUS_OK != res)
@@ -3176,7 +3176,7 @@ CAResult_t CAStartBLEGattClient()
     return res;
 }
 
-void CAStopBLEGattClient()
+void CAStopLEGattClient()
 {
     OIC_LOG(DEBUG, TAG, "CAStopBLEGattClient");
 
@@ -3225,7 +3225,7 @@ void CAStopBLEGattClient()
 
 }
 
-void CATerminateBLEGattClient()
+void CATerminateLEGattClient()
 {
     OIC_LOG(DEBUG, TAG, "Terminate GATT Client");
     CALEClientTerminate();
@@ -3250,7 +3250,7 @@ CAResult_t CAUpdateCharacteristicsToAllGattServers(const char *data, uint32_t da
     return CALEClientSendMulticastMessage(data, dataLen);
 }
 
-void CASetBLEReqRespClientCallback(CABLEClientDataReceivedCallback callback)
+void CASetLEReqRespClientCallback(CABLEClientDataReceivedCallback callback)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -3261,7 +3261,7 @@ void CASetBLEReqRespClientCallback(CABLEClientDataReceivedCallback callback)
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
-void CASetBleClientThreadPoolHandle(ca_thread_pool_t handle)
+void CASetLEClientThreadPoolHandle(ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 

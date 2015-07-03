@@ -634,7 +634,7 @@ void CAPrintDiscoveryInformation(const bt_adapter_le_device_discovery_info_s *di
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "OUT");
 }
 
-void CASetBleClientThreadPoolHandle(ca_thread_pool_t handle)
+void CASetLEClientThreadPoolHandle(ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "IN");
 
@@ -645,7 +645,7 @@ void CASetBleClientThreadPoolHandle(ca_thread_pool_t handle)
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "OUT");
 }
 
-void CASetBLEReqRespClientCallback(CABLEClientDataReceivedCallback callback)
+void CASetLEReqRespClientCallback(CABLEClientDataReceivedCallback callback)
 {
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "IN");
 
@@ -664,7 +664,7 @@ void CASetBLEClientErrorHandleCallback(CABLEErrorHandleCallback callback)
     g_clientErrorCallback = callback;
 }
 
-CAResult_t CAStartBLEGattClient()
+CAResult_t CAStartLEGattClient()
 {
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "IN");
 
@@ -719,7 +719,7 @@ void CAStartBleGattClientThread(void *data)
     {
         OIC_LOG(ERROR, TZ_BLE_CLIENT_TAG, "CABleSetScanParameter Failed");
         ca_mutex_unlock(g_bleClientStateMutex);
-        CATerminateBLEGattClient();
+        CATerminateLEGattClient();
         return;
     }
 
@@ -728,7 +728,7 @@ void CAStartBleGattClientThread(void *data)
     {
         OIC_LOG(ERROR, TZ_BLE_CLIENT_TAG, "CABleGattSetCallbacks Failed");
         ca_mutex_unlock(g_bleClientStateMutex);
-        CATerminateBLEGattClient();
+        CATerminateLEGattClient();
         return;
     }
 
@@ -739,7 +739,7 @@ void CAStartBleGattClientThread(void *data)
     {
         OIC_LOG(ERROR, TZ_BLE_CLIENT_TAG, "bt_adapter_le_start_device_discovery Failed");
         ca_mutex_unlock(g_bleClientStateMutex);
-        CATerminateBLEGattClient();
+        CATerminateLEGattClient();
         return;
     }
 
@@ -760,7 +760,7 @@ void CAStartBleGattClientThread(void *data)
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "OUT");
 }
 
-void CAStopBLEGattClient()
+void CAStopLEGattClient()
 {
     OIC_LOG(DEBUG,  TZ_BLE_CLIENT_TAG, "IN");
 
@@ -805,7 +805,7 @@ void CAStopBLEGattClient()
     OIC_LOG(DEBUG,  TZ_BLE_CLIENT_TAG, "OUT");
 }
 
-void CATerminateBLEGattClient()
+void CATerminateLEGattClient()
 {
     OIC_LOG(DEBUG,  TZ_BLE_CLIENT_TAG, "IN");
     ca_mutex_lock(g_bleClientStateMutex);
