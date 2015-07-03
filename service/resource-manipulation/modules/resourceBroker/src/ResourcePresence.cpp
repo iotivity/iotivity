@@ -18,7 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "../include/ResourcePresence.h"
+#include "ResourcePresence.h"
 
 #include <bits/atomic_base.h>
 #include <bits/shared_ptr_base.h>
@@ -61,7 +61,7 @@ namespace OIC
             = std::unique_ptr<std::list<BrokerRequesterInfoPtr>>
             (new std::list<BrokerRequesterInfoPtr>);
 
-            timeoutHandle = primitiveTimer.requestTimer(SAFE_TIME, pTimeoutCB);
+            timeoutHandle = expiryTimer.requestTimer(SAFE_TIME, pTimeoutCB);
 
             primitiveResource->requestGet(pGetCB);
 
@@ -200,7 +200,7 @@ namespace OIC
         void * ResourcePresence::pollingCB(unsigned int msg)
         {
             this->requestResourceState();
-            timeoutHandle = primitiveTimer.requestTimer(SAFE_TIME,pTimeoutCB);
+            timeoutHandle = expiryTimer.requestTimer(SAFE_TIME,pTimeoutCB);
 
             return NULL;
         }
@@ -224,14 +224,14 @@ namespace OIC
 
             if(isWithinTime)
             {
-                primitiveTimer.cancelTimer(timeoutHandle);
+                expiryTimer.cancelTimer(timeoutHandle);
                 isWithinTime = true;
             }
 
             if(mode == BROKER_MODE::NON_PRESENCE_MODE)
             {
                 // TODO set timer & request get
-                primitiveTimer.requestTimer(SAFE_TIME,pPollingCB);
+                expiryTimer.requestTimer(SAFE_TIME,pPollingCB);
             }
 
         }

@@ -83,7 +83,3 @@ resourceClient_env.InstallTarget(ResourceClientsdk , 'libResourceClient')
 
 #Go to build sample apps
 SConscript('examples/SConscript')
-
-
-
-

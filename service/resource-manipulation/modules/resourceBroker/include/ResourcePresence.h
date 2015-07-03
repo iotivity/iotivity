@@ -29,7 +29,7 @@
 #include <condition_variable>
 
 #include "BrokerTypes.h"
-#include "PrimitiveTimer.h"
+#include "ExpiryTimer.h"
 
 namespace OIC
 {
@@ -58,7 +58,7 @@ namespace OIC
         private:
             std::unique_ptr<std::list<BrokerRequesterInfoPtr>> requesterList;
             PrimitiveResourcePtr primitiveResource;
-            PrimitiveTimer primitiveTimer;
+            ExpiryTimer expiryTimer;
 
             BROKER_STATE state;
             BROKER_MODE mode;
