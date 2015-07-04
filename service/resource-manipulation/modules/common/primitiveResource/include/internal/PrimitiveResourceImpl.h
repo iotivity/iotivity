@@ -60,8 +60,8 @@ namespace OIC
                         const OC::QueryParamsMap&, OC::GetCallback);
 
                 invokeOC(m_baseResource, static_cast< GetFunc >(&BaseResource::get),
-                        OC::QueryParamsMap(),
-                        std::bind(callback, _1, std::bind(createResponseStatement, _2), _3));
+                        OC::QueryParamsMap(), std::bind(std::move(callback), _1,
+                                std::bind(createResponseStatement, _2), _3));
             }
 
             void requestSet(const ResourceAttributes& attrs, SetCallback callback) override
@@ -74,8 +74,8 @@ namespace OIC
 
                 invokeOC(m_baseResource, static_cast< PutFunc >(&BaseResource::put),
                         ResourceAttributesConverter::toOCRepresentation(attrs),
-                        OC::QueryParamsMap{ },
-                        std::bind(callback, _1, std::bind(createResponseStatement, _2), _3));
+                        OC::QueryParamsMap{ }, std::bind(std::move(callback), _1,
+                                std::bind(createResponseStatement, _2), _3));
             }
 
             void requestObserve(ObserveCallback callback) override
@@ -87,7 +87,7 @@ namespace OIC
 
                 invokeOC(m_baseResource, static_cast< ObserveFunc >(&BaseResource::observe),
                         OC::ObserveType::ObserveAll, OC::QueryParamsMap{ },
-                        bind(callback, _1, bind(createResponseStatement, _2), _3, _4));
+                        bind(std::move(callback), _1, bind(createResponseStatement, _2), _3, _4));
             }
 
             void cancelObserve() override

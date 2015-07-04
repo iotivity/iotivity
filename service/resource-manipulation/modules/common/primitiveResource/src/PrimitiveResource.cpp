@@ -44,8 +44,9 @@ namespace OIC
                     OCConnectivityType, OC::FindCallback);
 
             invokeOCFunc(static_cast<FindResource>(OC::OCPlatform::findResource),
-                    host, resourceURI, connectivityType, (OC::FindCallback) std::bind(callback,
-                           std::bind(&PrimitiveResource::create, std::placeholders::_1)));
+                    host, resourceURI, connectivityType, (OC::FindCallback)
+                        std::bind(std::move(callback),
+                                std::bind(&PrimitiveResource::create, std::placeholders::_1)));
         }
 
     }

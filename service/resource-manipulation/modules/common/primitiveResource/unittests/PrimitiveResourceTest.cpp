@@ -191,8 +191,6 @@ public:
 
 };
 
-
-
 TEST_F(DiscoverResourceTest, CallbackIsInvokedWhenResourceIsDiscovered)
 {
     mocks.ExpectCallFuncOverload(static_cast<FindResource>(OC::OCPlatform::findResource)).Do(
