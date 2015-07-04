@@ -196,13 +196,44 @@ namespace OIC
             }
         }
 
+        void ResourceObject::setAttribute(const std::string& key,
+                const ResourceAttributes::Value& value)
+        {
+            WeakGuard lock(*this);
+            m_resourceAttributes[key] = value;
+        }
+
+        void ResourceObject::setAttribute(const std::string& key, ResourceAttributes::Value&& value)
+        {
+            WeakGuard lock(*this);
+            m_resourceAttributes[key] = std::move(value);
+        }
+
+        void ResourceObject::setAttribute(std::string&& key, const ResourceAttributes::Value& value)
+        {
+            WeakGuard lock(*this);
+            m_resourceAttributes[std::move(key)] = value;
+        }
+
+        void ResourceObject::setAttribute(std::string&& key, ResourceAttributes::Value&& value)
+        {
+            WeakGuard lock(*this);
+            m_resourceAttributes[std::move(key)] = std::move(value);
+        }
+
+        ResourceAttributes::Value ResourceObject::getAttributeValue(const std::string& key) const
+        {
+            WeakGuard lock(*this);
+            return m_resourceAttributes.at(key);
+        }
+
         bool ResourceObject::removeAttribute(const std::string& key)
         {
             WeakGuard lock(*this);
             return m_resourceAttributes.erase(key);
         }
 
-        bool ResourceObject::hasAttribute(const std::string& key) const
+        bool ResourceObject::containsAttribute(const std::string& key) const
         {
             WeakGuard lock(*this);
             return m_resourceAttributes.contains(key);
@@ -252,7 +283,9 @@ namespace OIC
         {
             using NotifyAllObservers = OCStackResult (*)(OCResourceHandle);
 
-            invokeOCFunc(static_cast<NotifyAllObservers>(OC::OCPlatform::notifyAllObservers),
+            invokeOCFuncWithResultExpect(
+                    { OC_STACK_OK, OC_STACK_NO_OBSERVERS },
+                    static_cast< NotifyAllObservers >(OC::OCPlatform::notifyAllObservers),
                     m_resourceHandle);
         }
 

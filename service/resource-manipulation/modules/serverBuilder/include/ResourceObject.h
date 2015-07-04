@@ -110,19 +110,13 @@ namespace OIC
 
             virtual ~ResourceObject();
 
-            template< typename T >
-            void setAttribute(const std::string& key, T&& value)
-            {
-                WeakGuard lock(*this);
-                m_resourceAttributes[key] = std::forward<T>(value);
-            }
+            void setAttribute(const std::string& key, const ResourceAttributes::Value&);
+            void setAttribute(const std::string& key, ResourceAttributes::Value&&);
 
-            template< typename T >
-            void setAttribute(std::string&& key, T&& value)
-            {
-                WeakGuard lock(*this);
-                m_resourceAttributes[std::move(key)] = std::forward<T>(value);
-            }
+            void setAttribute(std::string&& key, const ResourceAttributes::Value&);
+            void setAttribute(std::string&& key, ResourceAttributes::Value&&);
+
+            ResourceAttributes::Value getAttributeValue(const std::string& key) const;
 
             template< typename T >
             T getAttribute(const std::string& key) const
@@ -133,7 +127,7 @@ namespace OIC
 
             bool removeAttribute(const std::string& key);
 
-            bool hasAttribute(const std::string& key) const;
+            bool containsAttribute(const std::string& key) const;
 
             ResourceAttributes& getAttributes();
             const ResourceAttributes& getAttributes() const;

@@ -76,6 +76,17 @@ namespace OIC
              };
         }
 
+        inline void expectOCStackResult(OCStackResult actual,
+                std::initializer_list<OCStackResult> allowed)
+        {
+            for (auto r : allowed)
+            {
+                if (actual == r) return;
+            }
+
+            throw PlatformException(actual);
+        }
+
         inline void expectOCStackResult(OCStackResult actual, OCStackResult expected)
         {
             if (actual != expected)
@@ -92,13 +103,30 @@ namespace OIC
         template< typename FUNC, typename ...PARAMS >
         typename Detail::EnableIfTypeIs< typename Detail::ResultType< FUNC, PARAMS... >::type,
                 OCStackResult >::type
+        invokeOCFuncWithResultExpect(std::initializer_list<OCStackResult> allowed,
+                FUNC&& fn, PARAMS&& ...params)
+        {
+            try
+            {
+                expectOCStackResult(fn(std::forward< PARAMS >(params)...), std::move(allowed));
+            }
+            catch (const OC::OCException& e)
+            {
+                throw PlatformException(e.code());
+            }
+        }
+
+
+        template< typename FUNC, typename ...PARAMS >
+        typename Detail::EnableIfTypeIs< typename Detail::ResultType< FUNC, PARAMS... >::type,
+                OCStackResult >::type
         invokeOCFunc(FUNC&& fn, PARAMS&& ...params)
         {
             try
             {
                 expectOCStackResultOK(fn(std::forward< PARAMS >(params)...));
             }
-            catch (OC::OCException& e)
+            catch (const OC::OCException& e)
             {
                 throw PlatformException(e.code());
             }
@@ -107,13 +135,13 @@ namespace OIC
         template< typename FUNC, typename ...PARAMS >
         typename Detail::EnableIfTypeIs< typename Detail::ResultType< FUNC, PARAMS... >::type,
                         Detail::NotOCStackResult >::type
-        invokeOC(FUNC* fn, PARAMS&& ...params)
+        invokeOCFunc(FUNC* fn, PARAMS&& ...params)
         {
             try
             {
                 return fn(std::forward< PARAMS >(params)...);
             }
-            catch (OC::OCException& e)
+            catch (const OC::OCException& e)
             {
                 throw PlatformException(e.code());
             }
@@ -130,7 +158,7 @@ namespace OIC
             {
                 expectOCStackResultOK(obj->*fn(std::forward< PARAMS >(params)...));
             }
-            catch (OC::OCException& e)
+            catch (const OC::OCException& e)
             {
                 throw PlatformException(e.code());
             }
@@ -148,7 +176,7 @@ namespace OIC
             {
                 obj->*fn(std::forward< PARAMS >(params)...);
             }
-            catch (OC::OCException& e)
+            catch (const OC::OCException& e)
             {
                 throw PlatformException(e.code());
             }
@@ -165,7 +193,7 @@ namespace OIC
             {
                 expectOCStackResultOK((obj.get()->*fn)(std::forward< PARAMS >(params)...));
             }
-            catch (OC::OCException& e)
+            catch (const OC::OCException& e)
             {
                 throw PlatformException(e.code());
             }
@@ -183,7 +211,7 @@ namespace OIC
             {
                 return (obj.get()->*fn)(std::forward< PARAMS >(params)...);
             }
-            catch (OC::OCException& e)
+            catch (const OC::OCException& e)
             {
                 throw PlatformException(e.code());
             }
