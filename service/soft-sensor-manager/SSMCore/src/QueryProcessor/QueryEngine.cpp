@@ -163,6 +163,7 @@ SSMRESULT CQueryEngine::processQueryResult(int userTriggerId,
     pData[0] = EVENT_TYPE_OUTER;
     pData[1] = userTriggerId;
     pData[2] = reinterpret_cast<intptr_t>(pDataReader);
+    pDataReader = NULL;
 
     m_pTasker->addTask(this, (void *)pData);
 
@@ -170,6 +171,7 @@ SSMRESULT CQueryEngine::processQueryResult(int userTriggerId,
 
 CLEANUP:
     m_mtxQueries.unlock();
+    SAFE_DELETE(pDataReader);
     SAFE_RELEASE(temp_contextmodel);
     SAFE_RELEASE(temp_contextmodel2);
     return res;
