@@ -165,6 +165,8 @@ namespace OIC
 
                 std::string toString() const;
 
+                void swap(Value&);
+
                 friend bool operator==(const Value&, const Value&);
 
                 template< typename T >
@@ -265,6 +267,10 @@ namespace OIC
             using type = boost::mpl::contains<ValueVariant::types, typename std::decay< T >::type>;
         };
 
+
+
+        bool operator!=(const ResourceAttributes::Value&, const ResourceAttributes::Value&);
+
         template< typename T >
         typename std::enable_if< ResourceAttributes::is_supported_type< T >::value, bool >::type
         operator==(const ResourceAttributes::Value& lhs, const T& rhs)
@@ -273,12 +279,23 @@ namespace OIC
         }
 
         template< typename T >
+        typename std::enable_if< ResourceAttributes::is_supported_type< T >::value, bool >::type
+        operator!=(const T& lhs, const ResourceAttributes::Value& rhs)
+        {
+            return !(rhs == lhs);
+        }
+
+        bool operator!=(const char*, const ResourceAttributes::Value&);
+
+        template< typename T >
         bool operator==(const T& lhs, const ResourceAttributes::Value& rhs)
         {
             return rhs == lhs;
         }
 
         bool operator==(const char* lhs, const ResourceAttributes::Value& rhs);
+
+        bool operator!=(const ResourceAttributes&, const ResourceAttributes&);
 
         class ResourceAttributes::KeyValuePair
         {

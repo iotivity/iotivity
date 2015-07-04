@@ -28,7 +28,7 @@
 namespace
 {
 
-    class ToStringVisitor : public boost::static_visitor<std::string>
+    class ToStringVisitor: public boost::static_visitor< std::string >
     {
     public:
         ToStringVisitor() = default;
@@ -73,6 +73,17 @@ namespace OIC
     namespace Service
     {
 
+        bool operator!=(const ResourceAttributes::Value& lhs, const ResourceAttributes::Value& rhs)
+        {
+            return !(lhs == rhs);
+        }
+
+        bool operator!=(const char* lhs, const ResourceAttributes::Value& rhs)
+        {
+            return !(rhs == lhs);
+        }
+
+
         bool operator==(const char* lhs, const ResourceAttributes::Value& rhs)
         {
             return rhs == lhs;
@@ -86,6 +97,11 @@ namespace OIC
         bool operator==(const ResourceAttributes& lhs, const ResourceAttributes& rhs)
         {
             return lhs.m_values == rhs.m_values;
+        }
+
+        bool operator!=(const ResourceAttributes& lhs, const ResourceAttributes& rhs)
+        {
+            return !(lhs == rhs);
         }
 
         ResourceAttributes::Value::Value() :
@@ -140,6 +156,11 @@ namespace OIC
             return boost::apply_visitor(ToStringVisitor(), *m_data);
         }
 
+        void ResourceAttributes::Value::swap(Value& rhs)
+        {
+            m_data.swap(rhs.m_data);
+        }
+
         auto ResourceAttributes::KeyValuePair::KeyVisitor::operator() (iterator* iter) const
                 -> result_type {
             return iter->m_cur->first;
@@ -166,8 +187,8 @@ namespace OIC
             return iter->m_cur->second;
         }
 
-        auto ResourceAttributes::KeyValuePair::ConstValueVisitor::operator() (const_iterator* iter) const
-                -> result_type {
+        auto ResourceAttributes::KeyValuePair::ConstValueVisitor::operator() (const_iterator* iter)
+            const -> result_type {
             return iter->m_cur->second;
         }
 
@@ -187,7 +208,8 @@ namespace OIC
         }
 
 
-        ResourceAttributes::KeyValuePair::KeyValuePair(boost::variant<iterator*, const_iterator*>&& ref) :
+        ResourceAttributes::KeyValuePair::KeyValuePair(boost::variant<iterator*,
+                const_iterator*>&& ref) :
                 m_iterRef{ ref }
         {
         }
@@ -248,12 +270,14 @@ namespace OIC
         {
         }
 
-        ResourceAttributes::const_iterator::const_iterator(const ResourceAttributes::iterator& iter) :
+        ResourceAttributes::const_iterator::const_iterator(
+                const ResourceAttributes::iterator& iter) :
                 m_cur{ iter.m_cur }, m_keyValuePair{ this }
         {
         }
 
-        auto ResourceAttributes::const_iterator::operator=(const ResourceAttributes::iterator& iter) -> const_iterator& {
+        auto ResourceAttributes::const_iterator::operator=(const ResourceAttributes::iterator& iter)
+            -> const_iterator& {
             m_cur = iter.m_cur;
             return *this;
         }
@@ -415,7 +439,7 @@ namespace OIC
         }
 
         void replaceAttributeValueRecursively(ResourceAttributes::Value& dest,
-                     const ResourceAttributes::Value& value)
+                const ResourceAttributes::Value& value)
         {
             static_assert(ResourceAttributes::is_supported_type< ResourceAttributes >::value,
                     "ResourceAttributes doesn't have ResourceAttributes recursively.");

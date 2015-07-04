@@ -250,8 +250,13 @@ TEST(ResourceAttributesValueTest, SameValuesAreEqual)
     ASSERT_EQ(one, another);
 }
 
+TEST(ResourceAttributesValueTest, DifferentValuesAreNotEqual)
+{
+    ResourceAttributes::Value one { 1 };
+    ResourceAttributes::Value another { 2 };
 
-
+    ASSERT_NE(one, another);
+}
 
 TEST(ResourceAttributesConverterTest, OCRepresentationCanBeConvertedIntoResourceAttributes)
 {
