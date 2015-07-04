@@ -319,6 +319,7 @@ SSMRESULT CQueryEngine::executeContextQuery(std::string contextQuery, int *cqid)
     pConditionedQuery->addRef();
     m_conditionedQueries[m_cqid] = pConditionedQuery;
     m_contextQueries[m_cqid] = clsContextQuery;
+    clsContextQuery = NULL; //Mark it NULL, so that it's not freed in CLEANUP.
     m_mtxQueries.unlock();
 
     if (pConditionedQuery->hasAllConditionedModels() == true)
@@ -367,6 +368,7 @@ SSMRESULT CQueryEngine::executeContextQuery(std::string contextQuery, int *cqid)
 CLEANUP:
     SAFE_RELEASE(pConditionedQuery);
     SAFE_RELEASE(pConditionedQueryResult);
+    SAFE_DELETE(clsContextQuery);
     return res;
 }
 
