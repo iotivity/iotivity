@@ -37,33 +37,6 @@ namespace
 
     constexpr const char LOG_TAG[]{ "PrimitiveServerResource" };
 
-    namespace Detail
-    {
-        template <typename RESPONSE>
-        OCEntityHandlerResult sendResponse(ResourceObject& resource,
-                std::shared_ptr< OC::OCResourceRequest > ocRequest,
-                const ResourceAttributes& requestAttrs, RESPONSE&& response)
-        {
-            auto ocResponse = response.getHandler()->buildResponse(resource, requestAttrs);
-
-            ocResponse->setRequestHandle(ocRequest->getRequestHandle());
-            ocResponse->setResourceHandle(ocRequest->getResourceHandle());
-
-            try
-            {
-                if (OC::OCPlatform::sendResponse(ocResponse) == OC_STACK_OK)
-                {
-                    return OC_EH_OK;
-                }
-            }
-            catch (const OC::OCException& e)
-            {
-                OC_LOG(WARNING, LOG_TAG, e.what());
-            }
-
-            return OC_EH_ERROR;
-        }
-    }
 
     inline bool hasProperty(uint8_t base, uint8_t target)
     {
@@ -80,20 +53,46 @@ namespace
         return base & ~target;
     }
 
-    template< typename HANDLER, typename RESPONSE = typename std::decay<HANDLER>::type::result_type>
-    OCEntityHandlerResult handleRequest(ResourceObject& resource,
-            std::shared_ptr< OC::OCResourceRequest > ocRequest, HANDLER&& handler)
+    template <typename RESPONSE>
+    OCEntityHandlerResult sendResponse(ResourceObject& resource,
+            std::shared_ptr< OC::OCResourceRequest > ocRequest, RESPONSE&& response)
     {
-        ResourceAttributes attrs{ ResourceAttributesConverter::fromOCRepresentation(
-                ocRequest->getResourceRepresentation()) };
+        auto ocResponse = response.getHandler()->buildResponse(resource);
 
-        if (handler)
+        ocResponse->setRequestHandle(ocRequest->getRequestHandle());
+        ocResponse->setResourceHandle(ocRequest->getResourceHandle());
+
+        try
         {
-            return Detail::sendResponse(resource, ocRequest, attrs, handler(
-                    PrimitiveRequest{ ocRequest->getResourceUri() }, attrs));
+            if (OC::OCPlatform::sendResponse(ocResponse) == OC_STACK_OK)
+            {
+                return OC_EH_OK;
+            }
+        }
+        catch (const OC::OCException& e)
+        {
+            OC_LOG(WARNING, LOG_TAG, e.what());
         }
 
-        return Detail::sendResponse(resource, ocRequest, attrs, RESPONSE::defaultAction());
+        return OC_EH_ERROR;
+    }
+
+    ResourceAttributes getAttributesFromOCRequest(std::shared_ptr< OC::OCResourceRequest > request)
+    {
+        return ResourceAttributesConverter::fromOCRepresentation(
+                request->getResourceRepresentation());
+    }
+
+    template< typename HANDLER, typename RESPONSE = typename std::decay<HANDLER>::type::result_type >
+    RESPONSE invokeHandler(ResourceAttributes& attrs,
+            std::shared_ptr< OC::OCResourceRequest > ocRequest, HANDLER&& handler)
+    {
+        if (handler)
+        {
+            return handler(PrimitiveRequest{ ocRequest->getResourceUri() }, attrs);
+        }
+
+        return RESPONSE::defaultAction();
     }
 
 } // unnamed namespace
@@ -103,18 +102,14 @@ namespace OIC
 {
     namespace Service
     {
-        ResourceObject::ResourceObject(uint8_t properties,
-                ResourceAttributes&& attrs) :
-                m_properties { properties }, m_resourceHandle{},
-                m_resourceAttributes{ std::move(attrs) }, m_getRequestHandler{ },
-                m_setRequestHandler{ }, m_mutex { }
-        {
-        }
 
         ResourceObject::Builder::Builder(const std::string& uri, const std::string& type,
                 const std::string& interface) :
-                m_uri{ uri }, m_type{ type }, m_interface{ interface },
-                m_properties{ OC_DISCOVERABLE | OC_OBSERVABLE }
+                m_uri{ uri },
+                m_type{ type },
+                m_interface{ interface },
+                m_properties{ OC_DISCOVERABLE | OC_OBSERVABLE },
+                m_resourceAttributes{ }
         {
         }
 
@@ -175,6 +170,17 @@ namespace OIC
         }
 
 
+        ResourceObject::ResourceObject(uint8_t properties, ResourceAttributes&& attrs) :
+                m_properties { properties },
+                m_resourceHandle{ },
+                m_resourceAttributes{ std::move(attrs) },
+                m_getRequestHandler{ },
+                m_setRequestHandler{ },
+                m_lockOwner{ },
+                m_mutex{ }
+        {
+        }
+
         ResourceObject::~ResourceObject()
         {
             if (m_resourceHandle)
@@ -234,12 +240,12 @@ namespace OIC
 
         void ResourceObject::setGetRequestHandler(GetRequestHandler h)
         {
-            m_getRequestHandler = h;
+            m_getRequestHandler = std::move(h);
         }
 
         void ResourceObject::setSetRequestHandler(SetRequestHandler h)
         {
-            m_setRequestHandler = h;
+            m_setRequestHandler = std::move(h);
         }
 
         void ResourceObject::notify() const
@@ -273,11 +279,12 @@ namespace OIC
             catch (const std::exception& e)
             {
                 OC_LOG_V(WARNING, LOG_TAG, "Failed to handle request : %s", e.what());
+                throw;
             }
             catch (...)
             {
                 OC_LOG(WARNING, LOG_TAG, "Failed to handle request.");
-                // TODO : how to notify the error?
+                throw;
             }
 
             return OC_EH_ERROR;
@@ -286,6 +293,8 @@ namespace OIC
         OCEntityHandlerResult ResourceObject::handleRequest(
                 std::shared_ptr< OC::OCResourceRequest > request)
         {
+            assert(request != nullptr);
+
             if (request->getRequestType() == "GET")
             {
                 return handleRequestGet(request);
@@ -302,18 +311,35 @@ namespace OIC
         OCEntityHandlerResult ResourceObject::handleRequestGet(
                 std::shared_ptr< OC::OCResourceRequest > request)
         {
-            return ::handleRequest(*this, request, m_getRequestHandler);
+            assert(request != nullptr);
+
+            auto attrs = getAttributesFromOCRequest(request);
+
+            return sendResponse(*this, request, invokeHandler(attrs, request, m_getRequestHandler));
         }
 
         OCEntityHandlerResult ResourceObject::handleRequestSet(
                 std::shared_ptr< OC::OCResourceRequest > request)
         {
-            return ::handleRequest(*this, request, m_setRequestHandler);
+            assert(request != nullptr);
+
+            auto attrs = getAttributesFromOCRequest(request);
+            auto response = invokeHandler(attrs, request, m_setRequestHandler);
+            auto requestHandler = response.getHandler();
+
+            assert(requestHandler != nullptr);
+
+            AttrKeyValuePairs replaced = requestHandler->applyAcceptanceMethod(
+                    response.getAcceptanceMethod(), *this, attrs);
+
+            return sendResponse(*this, request, response);
         }
 
         OCEntityHandlerResult ResourceObject::handleObserve(
                 std::shared_ptr< OC::OCResourceRequest > request)
         {
+            assert(request != nullptr);
+
             if (!isObservable())
             {
                 return OC_EH_ERROR;

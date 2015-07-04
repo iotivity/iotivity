@@ -21,78 +21,155 @@
 #include <internal/RequestHandler.h>
 
 #include <internal/ResourceAttributesConverter.h>
-#include <internal/ResourceAttributesUtils.h>
+
+#include <OCResourceResponse.h>
+
+namespace
+{
+    using namespace OIC::Service;
+
+    using OCRepresentationGetter = std::function< OC::OCRepresentation(ResourceObject&) >;
+
+    OC::OCRepresentation getOCRepresentationFromResource(ResourceObject& resource)
+    {
+        ResourceObject::LockGuard lock{ resource };
+        return ResourceAttributesConverter::toOCRepresentation(resource.getAttributes());
+    }
+
+    OC::OCRepresentation getOCRepresentation(const ResourceAttributes& attrs)
+    {
+        return ResourceAttributesConverter::toOCRepresentation(attrs);
+    }
+
+    template< typename T >
+    OCRepresentationGetter wrapGetOCRepresentation(T&& attrs)
+    {
+        return std::bind(getOCRepresentation, std::forward<T>(attrs));
+    }
+
+    std::shared_ptr< OC::OCResourceResponse > doBuildResponse(ResourceObject& resource,
+            const OCEntityHandlerResult result, int errorCode, OCRepresentationGetter ocRepGetter)
+    {
+        auto response = std::make_shared< OC::OCResourceResponse >();
+
+        response->setResponseResult(result);
+        response->setErrorCode(errorCode);
+        response->setResourceRepresentation(ocRepGetter(resource));
+
+        return response;
+    }
+
+    AttrKeyValuePairs applyAcceptMethod(ResourceObject& resource, const ResourceAttributes& requestAttrs)
+    {
+        ResourceObject::LockGuard lock(resource);
+
+        return replaceAttributes(resource.getAttributes(), requestAttrs);
+    }
+
+    AttrKeyValuePairs applyDefaultMethod(ResourceObject& resource, const ResourceAttributes& requestAttrs)
+    {
+        ResourceObject::LockGuard lock(resource);
+
+        if (!acceptableAttributes(resource.getAttributes(), requestAttrs))
+        {
+            return AttrKeyValuePairs{ };
+        }
+
+        return replaceAttributes(resource.getAttributes(), requestAttrs);
+    }
+
+    AttrKeyValuePairs applyIgnoreMethod(ResourceObject&, const ResourceAttributes&)
+    {
+        return AttrKeyValuePairs();
+    }
+
+    std::function<AttrKeyValuePairs(ResourceObject&, const ResourceAttributes&)> getApplyAcceptanceFunc(
+            PrimitiveSetResponse::AcceptanceMethod method)
+    {
+        switch (method)
+        {
+            case PrimitiveSetResponse::AcceptanceMethod::DEFAULT:
+                return applyDefaultMethod;
+
+            case PrimitiveSetResponse::AcceptanceMethod::ACCEPT:
+                return applyAcceptMethod;
+
+            case PrimitiveSetResponse::AcceptanceMethod::IGNORE:
+                return applyIgnoreMethod;
+        }
+
+        return applyIgnoreMethod;
+    }
+
+} // unnamed namespace
 
 namespace OIC
 {
     namespace Service
     {
-
+        constexpr int RequestHandler::DEFAULT_ERROR_CODE;
         constexpr OCEntityHandlerResult RequestHandler::DEFAULT_RESULT;
 
-        SimpleRequestHandler::SimpleRequestHandler(const OCEntityHandlerResult& result,
-                int errorCode) :
-                m_result{ result }, m_errorCode{ errorCode }
+        RequestHandler::RequestHandler() :
+            RequestHandler { DEFAULT_RESULT, DEFAULT_ERROR_CODE }
         {
         }
 
-        std::shared_ptr< OC::OCResourceResponse > SimpleRequestHandler::buildResponse(
-                ResourceObject& resource, const ResourceAttributes&)
+        RequestHandler::RequestHandler(const OCEntityHandlerResult& result, int errorCode) :
+                m_holder{ std::bind(doBuildResponse, std::placeholders::_1, result, errorCode,
+                        getOCRepresentationFromResource) }
         {
-            auto response = std::make_shared< OC::OCResourceResponse >();
-
-            response->setErrorCode(getErrorCode(resource));
-            response->setResponseResult(getResponseResult(resource));
-            response->setResourceRepresentation(getOCRepresentation(resource));
-
-            return response;
         }
 
-        int SimpleRequestHandler::getErrorCode(ResourceObject&)
+        RequestHandler::RequestHandler(const ResourceAttributes& attrs,
+                const OCEntityHandlerResult& result, int errorCode) :
+                m_holder{ std::bind(doBuildResponse, std::placeholders::_1, result, errorCode,
+                        wrapGetOCRepresentation(attrs)) }
         {
-            return m_errorCode;
         }
 
-        OCEntityHandlerResult SimpleRequestHandler::getResponseResult(ResourceObject&)
+        RequestHandler::RequestHandler(ResourceAttributes&& attrs,
+                const OCEntityHandlerResult& result, int errorCode) :
+                m_holder{ std::bind(doBuildResponse, std::placeholders::_1, result, errorCode,
+                        wrapGetOCRepresentation(std::move(attrs))) }
         {
-            return m_result;
         }
 
-        OC::OCRepresentation SimpleRequestHandler::getOCRepresentation(
+        std::shared_ptr< OC::OCResourceResponse > RequestHandler::buildResponse(
                 ResourceObject& resource)
         {
-            ResourceObject::LockGuard lock{ resource };
-            return ResourceAttributesConverter::toOCRepresentation(resource.getAttributes());
+            return m_holder(resource);
         }
 
 
-        OC::OCRepresentation CustomAttrRequestHandler::getOCRepresentation(
-                ResourceObject& resource)
+        SetRequestHandler::SetRequestHandler() :
+                RequestHandler{ }
         {
-            return ResourceAttributesConverter::toOCRepresentation(m_attrs);
+        }
+
+        SetRequestHandler::SetRequestHandler(const OCEntityHandlerResult& result, int errorCode) :
+                RequestHandler{ result, errorCode }
+        {
         }
 
 
-        SetRequestProxyHandler::SetRequestProxyHandler(RequestHandler::Ptr requestHandler) :
-                m_requestHandler{ requestHandler }
+        SetRequestHandler::SetRequestHandler(const ResourceAttributes& attrs,
+                const OCEntityHandlerResult& result, int errorCode) :
+                RequestHandler{ attrs, result, errorCode }
         {
-            assert(m_requestHandler);
         }
 
-        std::shared_ptr< OC::OCResourceResponse > SetRequestProxyHandler::buildResponse(
-                ResourceObject& resource, const ResourceAttributes& requestAttrs)
+        SetRequestHandler::SetRequestHandler(ResourceAttributes&& attrs,
+                const OCEntityHandlerResult& result, int errorCode) :
+                RequestHandler{ std::move(attrs), result, errorCode }
         {
-            {
-                ResourceObject::LockGuard lock(resource);
+        }
 
-                if (!acceptableAttributes(resource.getAttributes(), requestAttrs))
-                {
-                    throw PrimitiveException("Resource can't accept request Attributes!");
-                }
-
-                replaceAttributesRecursively(resource.getAttributes(), requestAttrs);
-            }
-            return m_requestHandler->buildResponse(resource, requestAttrs);
+        AttrKeyValuePairs SetRequestHandler::applyAcceptanceMethod(
+                PrimitiveSetResponse::AcceptanceMethod method, ResourceObject& resource,
+                const ResourceAttributes& requestAttrs) const
+        {
+            return getApplyAcceptanceFunc(method)(resource, requestAttrs);
         }
 
     }

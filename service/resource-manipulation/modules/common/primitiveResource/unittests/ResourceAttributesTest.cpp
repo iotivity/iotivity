@@ -258,6 +258,20 @@ TEST(ResourceAttributesValueTest, DifferentValuesAreNotEqual)
     ASSERT_NE(one, another);
 }
 
+TEST(ResourceAttributesValueTest, ValuesCanBeSwapped)
+{
+    constexpr int i { 1 };
+    constexpr char str[]{ "abc" };
+
+    ResourceAttributes::Value intValue { i };
+    ResourceAttributes::Value strValue { str };
+
+    intValue.swap(strValue);
+
+    ASSERT_EQ(str, intValue);
+    ASSERT_EQ(i, strValue);
+}
+
 TEST(ResourceAttributesConverterTest, OCRepresentationCanBeConvertedIntoResourceAttributes)
 {
     constexpr double value = 9876;
@@ -393,7 +407,7 @@ TEST_F(ResourceAttributesUtilTest, ReplaceWillOverwriteOriginal)
     ResourceAttributes newAttrs;
     newAttrs[KEY] = NEW_VALUE;
 
-    replaceAttributesRecursively(resourceAttributes, newAttrs);
+    replaceAttributes(resourceAttributes, newAttrs);
 
     ASSERT_EQ(NEW_VALUE, resourceAttributes[KEY]);
 }

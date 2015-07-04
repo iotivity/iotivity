@@ -120,6 +120,10 @@ namespace OIC
             m_data->swap(*from.m_data);
         }
 
+        ResourceAttributes::Value::Value(const char* value) :
+                m_data{ new ValueVariant{ std::string{ value } } }
+        {
+        }
 
         auto ResourceAttributes::Value::operator=(const Value& rhs) -> Value&
         {
@@ -438,29 +442,24 @@ namespace OIC
             return true;
         }
 
-        void replaceAttributeValueRecursively(ResourceAttributes::Value& dest,
-                const ResourceAttributes::Value& value)
+        AttrKeyValuePairs replaceAttributes(ResourceAttributes& dest,
+                const ResourceAttributes& newAttrs)
         {
-            static_assert(ResourceAttributes::is_supported_type< ResourceAttributes >::value,
-                    "ResourceAttributes doesn't have ResourceAttributes recursively.");
+            AttrKeyValuePairs replacedList;
 
-            if (dest.isTypeOf< ResourceAttributes >())
+            for (const auto& kv : newAttrs)
             {
-                replaceAttributesRecursively(dest.get< ResourceAttributes >(),
-                        value.get< ResourceAttributes >());
-            }
-            else
-            {
-                dest = value;
-            }
-        }
+                if (dest[kv.key()] != kv.value())
+                {
+                    ResourceAttributes::Value replacedValue;
+                    replacedValue.swap(dest[kv.key()]);
+                    dest[kv.key()] = kv.value();
 
-        void replaceAttributesRecursively(ResourceAttributes& dest, const ResourceAttributes& attr)
-        {
-            for (const auto& kv : attr)
-            {
-                replaceAttributeValueRecursively(dest[kv.key()], kv.value());
+                    replacedList.push_back(AttrKeyValuePair{ kv.key(), std::move(replacedValue) });
+                }
             }
+
+            return replacedList;
         }
     }
 }

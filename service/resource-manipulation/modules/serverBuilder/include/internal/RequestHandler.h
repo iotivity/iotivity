@@ -22,8 +22,15 @@
 #define __REQUESTHANDLER_H
 
 #include <ResourceObject.h>
+#include <PrimitiveResponse.h>
 
-#include <OCResourceResponse.h>
+#include <internal/ResourceAttributesUtils.h>
+
+namespace OC
+{
+    class OCResourceResponse;
+    class OCRepresentation;
+}
 
 namespace OIC
 {
@@ -31,70 +38,64 @@ namespace OIC
     {
         class RequestHandler
         {
+        private:
+            using BuildResponseHolder = std::function< std::shared_ptr< OC::OCResourceResponse >(
+                    ResourceObject&) >;
+
         public:
             using Ptr = std::shared_ptr< RequestHandler >;
 
             static constexpr int DEFAULT_ERROR_CODE = 200;
             static constexpr OCEntityHandlerResult DEFAULT_RESULT = OC_EH_OK;
 
-            virtual ~RequestHandler()
-            {
-            }
+            RequestHandler();
 
-            virtual std::shared_ptr< OC::OCResourceResponse > buildResponse(
-                    ResourceObject&, const ResourceAttributes& requestAttrs) = 0;
-        };
+            RequestHandler(const RequestHandler&) = delete;
+            RequestHandler(RequestHandler&&) = default;
 
-        class SimpleRequestHandler: public RequestHandler
-        {
-        public:
-            SimpleRequestHandler(const OCEntityHandlerResult& result = DEFAULT_RESULT,
+            RequestHandler(const OCEntityHandlerResult& result, int errorCode);
+
+            RequestHandler(const ResourceAttributes&,
+                    const OCEntityHandlerResult& result = DEFAULT_RESULT,
                     int errorCode = DEFAULT_ERROR_CODE);
 
-            std::shared_ptr< OC::OCResourceResponse > buildResponse(
-                    ResourceObject&, const ResourceAttributes&) override;
-
-        protected:
-            virtual int getErrorCode(ResourceObject&);
-            virtual OCEntityHandlerResult getResponseResult(ResourceObject&);
-            virtual OC::OCRepresentation getOCRepresentation(ResourceObject& resource);
-
-        private:
-            OCEntityHandlerResult m_result;
-            int m_errorCode;
-        };
-
-
-        class CustomAttrRequestHandler: public SimpleRequestHandler
-        {
-        public:
-            template <typename T>
-            CustomAttrRequestHandler(T&& attrs,
+            RequestHandler(ResourceAttributes&&,
                     const OCEntityHandlerResult& result = DEFAULT_RESULT,
-                    int errorCode = DEFAULT_ERROR_CODE) :
-                SimpleRequestHandler{ result, errorCode }, m_attrs{ std::forward< T >(attrs) }
-            {
-            }
+                    int errorCode = DEFAULT_ERROR_CODE);
 
-        protected:
-            OC::OCRepresentation getOCRepresentation(ResourceObject& resource) override;
+
+            virtual ~RequestHandler() = default;
+
+            std::shared_ptr< OC::OCResourceResponse > buildResponse(ResourceObject&);
 
         private:
-            ResourceAttributes m_attrs;
+            const BuildResponseHolder m_holder;
         };
 
-        class SetRequestProxyHandler: public RequestHandler
+        class SetRequestHandler: public RequestHandler
         {
         public:
-            SetRequestProxyHandler(RequestHandler::Ptr requestHandler);
+            using Ptr = std::shared_ptr< SetRequestHandler >;
 
-            std::shared_ptr< OC::OCResourceResponse > buildResponse(
-                    ResourceObject& resource,
-                    const ResourceAttributes& requestAttrs) override;
+            SetRequestHandler(const SetRequestHandler&) = delete;
+            SetRequestHandler(SetRequestHandler&&) = default;
 
-        private:
-            RequestHandler::Ptr m_requestHandler;
+            SetRequestHandler();
+
+            SetRequestHandler(const OCEntityHandlerResult& result, int errorCode);
+
+            SetRequestHandler(const ResourceAttributes&,
+                    const OCEntityHandlerResult& result = DEFAULT_RESULT,
+                    int errorCode = DEFAULT_ERROR_CODE);
+
+            SetRequestHandler(ResourceAttributes&&,
+                    const OCEntityHandlerResult& result = DEFAULT_RESULT,
+                    int errorCode = DEFAULT_ERROR_CODE);
+
+            AttrKeyValuePairs applyAcceptanceMethod(PrimitiveSetResponse::AcceptanceMethod,
+                    ResourceObject&, const ResourceAttributes&) const;
         };
+
     }
 }
 

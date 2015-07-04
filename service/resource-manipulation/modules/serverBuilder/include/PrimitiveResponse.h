@@ -33,6 +33,7 @@ namespace OIC
         class ResourceAttributes;
 
         class RequestHandler;
+        class SetRequestHandler;
 
         class PrimitiveGetResponse
         {
@@ -61,7 +62,20 @@ namespace OIC
         class PrimitiveSetResponse
         {
         public:
+            enum class AcceptanceMethod
+            {
+                DEFAULT,
+                ACCEPT,
+                IGNORE
+            };
+
             static PrimitiveSetResponse defaultAction();
+
+            static PrimitiveSetResponse accept();
+            static PrimitiveSetResponse accept(const OCEntityHandlerResult&, int errorCode);
+
+            static PrimitiveSetResponse ignore();
+            static PrimitiveSetResponse ignore(const OCEntityHandlerResult&, int errorCode);
 
             static PrimitiveSetResponse create(const OCEntityHandlerResult&, int errorCode);
 
@@ -73,15 +87,19 @@ namespace OIC
             static PrimitiveSetResponse create(ResourceAttributes&&, const OCEntityHandlerResult&,
                     int errorCode);
 
-            RequestHandler* getHandler() const;
+            SetRequestHandler* getHandler() const;
+
+            AcceptanceMethod getAcceptanceMethod() const;
+
+            PrimitiveSetResponse& setAcceptanceMethod(AcceptanceMethod);
 
         private:
-            PrimitiveSetResponse(std::shared_ptr< RequestHandler >&&);
-
-            static PrimitiveSetResponse withProxy(std::shared_ptr< RequestHandler >&&);
+            PrimitiveSetResponse(std::shared_ptr< SetRequestHandler >&&);
+            PrimitiveSetResponse(std::shared_ptr< SetRequestHandler >&&, AcceptanceMethod);
 
         private:
-            std::shared_ptr< RequestHandler > m_handler;
+            AcceptanceMethod m_acceptanceMethod;
+            std::shared_ptr< SetRequestHandler > m_handler;
         };
     }
 }

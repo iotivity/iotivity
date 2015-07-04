@@ -60,7 +60,6 @@ class PrimitiveResponseTest: public Test
 {
 public:
     MockRepository mocks;
-    ResourceObject::Ptr server;
 
 public:
     template< typename T >
@@ -69,7 +68,7 @@ public:
         ResourceObject::Ptr server =
                 ResourceObject::Builder("a/test", "", "").build();
 
-        return response.getHandler()->buildResponse(*server, ResourceAttributes());
+        return response.getHandler()->buildResponse(*server);
     }
 
 protected:
@@ -79,8 +78,6 @@ protected:
                 .Return(OC_STACK_OK);
 
         mocks.OnCallFunc(OCPlatform::unregisterResource).Return(OC_STACK_OK);
-
-        server = ResourceObject::Builder("a/test", "", "").build();
     }
 };
 
@@ -174,4 +171,32 @@ TEST_F(PrimitiveResponseTest, SetResponseCanMoveAttrs)
             result, errorCode, attrsClone);
 
     EXPECT_TRUE(attrs.empty());
+}
+
+
+TEST_F(PrimitiveResponseTest, DefaultSetResponseHasDefaultMethod)
+{
+    EXPECT_EQ(PrimitiveSetResponse::AcceptanceMethod::DEFAULT,
+            PrimitiveSetResponse::defaultAction().getAcceptanceMethod());
+}
+
+TEST_F(PrimitiveResponseTest, AcceptSetResponseHasAcceptMethod)
+{
+    EXPECT_EQ(PrimitiveSetResponse::AcceptanceMethod::ACCEPT,
+            PrimitiveSetResponse::accept().getAcceptanceMethod());
+}
+
+TEST_F(PrimitiveResponseTest, IgnoreSetResponseHasIgnoreMethod)
+{
+    EXPECT_EQ(PrimitiveSetResponse::AcceptanceMethod::IGNORE,
+            PrimitiveSetResponse::ignore().getAcceptanceMethod());
+}
+
+TEST_F(PrimitiveResponseTest, SetResponseHasMethodSetBySetter)
+{
+    PrimitiveSetResponse::AcceptanceMethod method = PrimitiveSetResponse::AcceptanceMethod::ACCEPT;
+    PrimitiveSetResponse response =
+            PrimitiveSetResponse::defaultAction().setAcceptanceMethod(method);
+
+    EXPECT_EQ(method, response.getAcceptanceMethod());
 }

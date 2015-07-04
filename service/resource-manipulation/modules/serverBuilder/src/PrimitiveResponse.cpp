@@ -28,7 +28,7 @@ namespace OIC
     {
         PrimitiveGetResponse PrimitiveGetResponse::defaultAction()
         {
-            static PrimitiveGetResponse defaultRes { std::make_shared<SimpleRequestHandler>() };
+            static PrimitiveGetResponse defaultRes { std::make_shared< RequestHandler >() };
 
             return defaultRes;
         }
@@ -37,31 +37,31 @@ namespace OIC
                 int errorCode)
         {
             return PrimitiveGetResponse {
-                std::make_shared<SimpleRequestHandler>( result, errorCode) };
+                std::make_shared< RequestHandler >( result, errorCode) };
         }
 
         PrimitiveGetResponse PrimitiveGetResponse::create(const ResourceAttributes& attrs)
         {
-            return PrimitiveGetResponse { std::make_shared<CustomAttrRequestHandler>(attrs) };
+            return PrimitiveGetResponse { std::make_shared< RequestHandler >(attrs) };
         }
 
         PrimitiveGetResponse PrimitiveGetResponse::create(const ResourceAttributes& attrs,
                 const OCEntityHandlerResult& result, int errorCode)
         {
             return PrimitiveGetResponse {
-                std::make_shared<CustomAttrRequestHandler>(attrs, result, errorCode) };
+                std::make_shared< RequestHandler >(attrs, result, errorCode) };
         }
 
         PrimitiveGetResponse PrimitiveGetResponse::create(ResourceAttributes&& result)
         {
             return PrimitiveGetResponse {
-                std::make_shared<CustomAttrRequestHandler>(std::move(result)) };
+                std::make_shared< RequestHandler >(std::move(result)) };
         }
 
         PrimitiveGetResponse PrimitiveGetResponse::create(ResourceAttributes&& attrs,
                 const OCEntityHandlerResult& result, int errorCode)
         {
-            return PrimitiveGetResponse { std::make_shared<CustomAttrRequestHandler>(
+            return PrimitiveGetResponse { std::make_shared< RequestHandler >(
                 std::move(attrs), result, errorCode) };
         }
 
@@ -79,59 +79,86 @@ namespace OIC
 
         PrimitiveSetResponse PrimitiveSetResponse::defaultAction()
         {
-            static PrimitiveSetResponse defaultRes {
-                withProxy(std::make_shared<SimpleRequestHandler>()) };
+            return std::make_shared< SetRequestHandler >();
+        }
 
-            return defaultRes;
+        PrimitiveSetResponse PrimitiveSetResponse::accept()
+        {
+            return defaultAction().setAcceptanceMethod(AcceptanceMethod::ACCEPT);
+        }
+
+        PrimitiveSetResponse PrimitiveSetResponse::accept(const OCEntityHandlerResult& result,
+                int errorCode)
+        {
+            return create(result, errorCode).setAcceptanceMethod(AcceptanceMethod::ACCEPT);
+        }
+
+        PrimitiveSetResponse PrimitiveSetResponse::ignore()
+        {
+            return defaultAction().setAcceptanceMethod(AcceptanceMethod::IGNORE);
+        }
+
+        PrimitiveSetResponse PrimitiveSetResponse::ignore(const OCEntityHandlerResult& result,
+                int errorCode)
+        {
+            return create(result, errorCode).setAcceptanceMethod(AcceptanceMethod::IGNORE);
         }
 
         PrimitiveSetResponse PrimitiveSetResponse::create(const OCEntityHandlerResult& result,
                 int errorCode)
         {
-            return withProxy(std::make_shared<SimpleRequestHandler>(result, errorCode));
+            return std::make_shared< SetRequestHandler >(result, errorCode);
         }
 
         PrimitiveSetResponse PrimitiveSetResponse::create(const ResourceAttributes& attrs)
         {
-            return withProxy(std::make_shared<CustomAttrRequestHandler>(attrs));
+            return std::make_shared< SetRequestHandler >(attrs);
         }
 
         PrimitiveSetResponse PrimitiveSetResponse::create(const ResourceAttributes& attrs,
                 const OCEntityHandlerResult& result, int errorCode)
         {
-            return withProxy(std::make_shared<CustomAttrRequestHandler>(attrs, result, errorCode));
+            return std::make_shared< SetRequestHandler >(attrs, result, errorCode);
         }
 
         PrimitiveSetResponse PrimitiveSetResponse::create(ResourceAttributes&& result)
         {
-            return withProxy(std::make_shared<CustomAttrRequestHandler>(std::move(result)));
+            return std::make_shared< SetRequestHandler >(std::move(result));
         }
 
         PrimitiveSetResponse PrimitiveSetResponse::create(ResourceAttributes&& attrs,
                 const OCEntityHandlerResult& result, int errorCode)
         {
-            return withProxy(
-                std::make_shared<CustomAttrRequestHandler>(std::move(attrs), result, errorCode));
+            return std::make_shared< SetRequestHandler >(std::move(attrs), result, errorCode);
         }
 
-        PrimitiveSetResponse::PrimitiveSetResponse(std::shared_ptr< RequestHandler >&& handler) :
-                m_handler{ handler }
+        PrimitiveSetResponse::PrimitiveSetResponse(std::shared_ptr< SetRequestHandler >&& handler) :
+                PrimitiveSetResponse{ std::move(handler), AcceptanceMethod::DEFAULT }
+        {
+        }
+
+        PrimitiveSetResponse::PrimitiveSetResponse(std::shared_ptr< SetRequestHandler >&& handler,
+                AcceptanceMethod method) :
+                m_acceptanceMethod{ method },
+                m_handler{ std::move(handler) }
         {
             assert(m_handler);
         }
 
-        PrimitiveSetResponse PrimitiveSetResponse::withProxy(
-                std::shared_ptr< RequestHandler >&& handler)
-        {
-            assert(handler);
-
-            return PrimitiveSetResponse{
-                std::make_shared<SetRequestProxyHandler>(std::move(handler)) };
-        }
-
-        RequestHandler* PrimitiveSetResponse::getHandler() const
+        SetRequestHandler* PrimitiveSetResponse::getHandler() const
         {
             return m_handler.get();
+        }
+
+        auto PrimitiveSetResponse::getAcceptanceMethod() const -> AcceptanceMethod
+        {
+            return m_acceptanceMethod;
+        }
+
+        PrimitiveSetResponse& PrimitiveSetResponse::setAcceptanceMethod(AcceptanceMethod method)
+        {
+            m_acceptanceMethod = method;
+            return *this;
         }
     }
 }

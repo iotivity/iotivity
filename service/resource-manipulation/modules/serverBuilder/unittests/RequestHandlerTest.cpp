@@ -33,15 +33,15 @@ using namespace OIC::Service;
 constexpr char EXISTING[]{ "ext" };
 constexpr int ORIGIN_VALUE{ 100 };
 
+constexpr int NEW_VALUE{ 1 };
+
 using RegisterResource = OCStackResult (*)(OCResourceHandle&, std::string&,
         const std::string&, const std::string&, OC::EntityHandler, uint8_t);
 
-class SimpleRequestHandlerTest: public Test
+class RequestHandlerTest: public Test
 {
 public:
     ResourceObject::Ptr server;
-
-    ResourceAttributes requestAttrs;
 
     MockRepository mocks;
 
@@ -51,104 +51,121 @@ protected:
         mocks.OnCallFuncOverload(static_cast<RegisterResource>(OC::OCPlatform::registerResource))
                 .Return(OC_STACK_OK);
 
+        mocks.OnCallFunc(OC::OCPlatform::unregisterResource).Return(OC_STACK_OK);
+
         server = ResourceObject::Builder("a/test", "resourceType", "").build();
 
         server->setAttribute(EXISTING, ORIGIN_VALUE);
     }
 };
 
-TEST_F(SimpleRequestHandlerTest, ResponseHasSameValuesPassedToHandlerConstructor)
+TEST_F(RequestHandlerTest, ResponseHasSameValuesPassedToHandlerConstructor)
 {
-    SimpleRequestHandler handler{ OC_EH_ERROR, -1000 };
+    RequestHandler handler{ OC_EH_ERROR, -1000 };
 
-    auto response = handler.buildResponse(*server, requestAttrs);
+    auto response = handler.buildResponse(*server);
 
     ASSERT_EQ(OC_EH_ERROR, response->getResponseResult());
     ASSERT_EQ(-1000, response->getErrorCode());
 }
 
-TEST_F(SimpleRequestHandlerTest, ResponseHasSameAttrsWithServerAttrs)
+TEST_F(RequestHandlerTest, ResponseHasSameAttrsWithServerAttrs)
 {
-    SimpleRequestHandler handler{};
+    RequestHandler handler{};
 
-    auto response = handler.buildResponse(*server, requestAttrs);
+    auto response = handler.buildResponse(*server);
 
     ASSERT_EQ(ORIGIN_VALUE, response->getResourceRepresentation()[EXISTING].getValue<int>());
 }
 
-TEST_F(SimpleRequestHandlerTest, ResponseHasAttrsSetByCustomAttrRequestHandler)
+TEST_F(RequestHandlerTest, ResponseHasAttrsSetByCustomAttrRequestHandler)
 {
     constexpr char key[] { "key" };
     constexpr int newValue{ 100 };
 
     ResourceAttributes attrs;
     attrs[key] = newValue;
-    CustomAttrRequestHandler handler{ attrs };
+    RequestHandler handler{ attrs };
 
-    auto response = handler.buildResponse(*server, requestAttrs);
+    auto response = handler.buildResponse(*server);
 
     ASSERT_EQ(ORIGIN_VALUE, response->getResourceRepresentation()[key].getValue<int>());
 }
 
 
 
-class SetRequestProxyHandlerTest: public Test
+class SetRequestHandlerAcceptanceTest: public RequestHandlerTest
 {
 public:
-    ResourceObject::Ptr server;
-    ResourceAttributes requestAttrs;
-    RequestHandler::Ptr setRequestProxyHandler;
+    SetRequestHandler::Ptr setRequestHandler;
 
-    MockRepository mocks;
+    ResourceAttributes requestAttrs;
 
 protected:
     void SetUp() override
     {
-        mocks.OnCallFuncOverload(static_cast<RegisterResource>(OC::OCPlatform::registerResource))
-                .Return(OC_STACK_OK);
+        RequestHandlerTest::SetUp();
 
-        setRequestProxyHandler = make_shared<SetRequestProxyHandler>(
-                make_shared<SimpleRequestHandler>());
+        setRequestHandler = make_shared< SetRequestHandler >();
 
-        server = ResourceObject::Builder("a/test", "resourceType", "").build();
-
-        server->setAttribute(EXISTING, ORIGIN_VALUE);
+        requestAttrs[EXISTING] = NEW_VALUE;
     }
 };
 
-TEST_F(SetRequestProxyHandlerTest, NothingHappenedWithEmptyAttrs)
+TEST_F(SetRequestHandlerAcceptanceTest, NothingReplacedWithIgnoreMethod)
 {
+    auto replaced = setRequestHandler->applyAcceptanceMethod(
+            PrimitiveSetResponse::AcceptanceMethod::IGNORE, *server, requestAttrs);
 
-    setRequestProxyHandler->buildResponse(*server, requestAttrs);
+    ASSERT_TRUE(replaced.empty());
+}
+
+
+TEST_F(SetRequestHandlerAcceptanceTest, NewValueApplyedWithAcceptMethod)
+{
+    setRequestHandler->applyAcceptanceMethod(
+            PrimitiveSetResponse::AcceptanceMethod::ACCEPT, *server, requestAttrs);
+
+    ASSERT_EQ(NEW_VALUE, server->getAttribute<int>(EXISTING));
+}
+
+TEST_F(SetRequestHandlerAcceptanceTest, ReturnedAttrPairsHaveOldValue)
+{
+    auto replaced = setRequestHandler->applyAcceptanceMethod(
+            PrimitiveSetResponse::AcceptanceMethod::ACCEPT, *server, requestAttrs);
+
+    ASSERT_EQ(ORIGIN_VALUE, replaced[0].second);
+}
+
+TEST_F(SetRequestHandlerAcceptanceTest, NothingHappenedWithEmptyAttrs)
+{
+    setRequestHandler->applyAcceptanceMethod(
+            PrimitiveSetResponse::AcceptanceMethod::ACCEPT, *server, ResourceAttributes{ });
 
     ASSERT_EQ(ORIGIN_VALUE, server->getAttribute<int>(EXISTING));
 }
 
 
-TEST_F(SetRequestProxyHandlerTest, ServerAttributesChangedIfOnlySameKeyExists)
-{
-    constexpr int newValue{ 100 };
-
-    requestAttrs[EXISTING] = newValue;
-
-    setRequestProxyHandler->buildResponse(*server, requestAttrs);
-
-    ASSERT_EQ(newValue, server->getAttribute<int>(EXISTING));
-}
-
-TEST_F(SetRequestProxyHandlerTest, ThrowIfTypeMismatch)
+TEST_F(SetRequestHandlerAcceptanceTest, NothingReplacedIfTypeMismatch)
 {
     requestAttrs[EXISTING] = "";
 
-    ASSERT_THROW(setRequestProxyHandler->buildResponse(*server, requestAttrs), PrimitiveException);
+    auto replaced = setRequestHandler->applyAcceptanceMethod(
+             PrimitiveSetResponse::AcceptanceMethod::ACCEPT, *server, requestAttrs);
+
+     ASSERT_TRUE(replaced.empty());
 }
 
-TEST_F(SetRequestProxyHandlerTest, ThrowIfRequestAttrsHasUnknownKey)
+TEST_F(SetRequestHandlerAcceptanceTest, NothingReplacedIfRequestAttrsHasUnknownKey)
 {
     constexpr char unknownKey[]{ "???" };
 
     requestAttrs[EXISTING] = ORIGIN_VALUE;
     requestAttrs[unknownKey] = ORIGIN_VALUE;
 
-    ASSERT_THROW(setRequestProxyHandler->buildResponse(*server, requestAttrs), PrimitiveException);
+
+    auto replaced = setRequestHandler->applyAcceptanceMethod(
+             PrimitiveSetResponse::AcceptanceMethod::ACCEPT, *server, requestAttrs);
+
+     ASSERT_TRUE(replaced.empty());
 }

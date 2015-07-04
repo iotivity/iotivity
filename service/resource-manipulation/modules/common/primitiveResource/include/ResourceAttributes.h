@@ -118,6 +118,8 @@ namespace OIC
                 {
                 }
 
+                Value(const char* value);
+
                 Value& operator=(const Value&);
                 Value& operator=(Value&&);
 

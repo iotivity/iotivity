@@ -21,19 +21,22 @@
 #ifndef COMMON_INTERNAL_RESOURCEATTRIBUTESUTILS_H
 #define COMMON_INTERNAL_RESOURCEATTRIBUTESUTILS_H
 
+#include <vector>
+#include <string>
+
 namespace OIC
 {
     namespace Service
     {
+        using AttrKeyValuePair = std::pair< std::string, ResourceAttributes::Value >;
+        using AttrKeyValuePairs = std::vector< AttrKeyValuePair >;
+
         bool acceptableAttributes(const ResourceAttributes& dest, const ResourceAttributes& attr);
 
         bool acceptableAttributeValue(const ResourceAttributes::Value& dest,
                 const ResourceAttributes::Value& value);
 
-        void replaceAttributesRecursively(ResourceAttributes& dest, const ResourceAttributes& attr);
-
-        void replaceAttributeValueRecursively(ResourceAttributes::Value& dest,
-                const ResourceAttributes::Value& value);
+        AttrKeyValuePairs replaceAttributes(ResourceAttributes& dest, const ResourceAttributes& attrs);
     }
 }
 
