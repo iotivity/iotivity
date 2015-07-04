@@ -942,6 +942,7 @@ OCStackResult DoAction(OCResource* resource, OCActionSet* actionset,
                 actionDescPtr);
         if (result != OC_STACK_OK)
         {
+            OICFree(info);
             return result;
         }
 
