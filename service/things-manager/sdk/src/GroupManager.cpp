@@ -486,6 +486,7 @@ ActionSet* GroupManager::getActionSetfromString(std::string description)
     char *plainPtr = NULL;
     char *attr = NULL, *desc = NULL;
 
+    Action *action = NULL;
     Capability *capa = NULL;
     ActionSet *actionset = new ActionSet();
 
@@ -540,7 +541,6 @@ ActionSet* GroupManager::getActionSetfromString(std::string description)
 
         if (desc != NULL)
         {
-            Action *action = NULL;
             strcpy(desc, token);
             token = strtok_r(desc, DESC_DELIMITER, &descPtr);
 
@@ -554,7 +554,7 @@ ActionSet* GroupManager::getActionSetfromString(std::string description)
                 token = strtok_r(attr, ATTR_DELIMITER, &attrPtr);
                 while (token != NULL)
                 {
-                    if (strcmp(token, "uri") == 0)
+                    if ( (action == NULL) && strcmp(token, "uri") == 0)    //consider only first "uri" as uri, other as attribute.
                     {
                         token = strtok_r(NULL, ATTR_DELIMITER, &attrPtr);
                         if(token == NULL)
@@ -596,7 +596,10 @@ ActionSet* GroupManager::getActionSetfromString(std::string description)
             }
 
             if( action != NULL )
+            {
                 actionset->listOfAction.push_back(action);
+                action = NULL;
+            }
             else
                 goto exit;
             //delete action;
@@ -616,6 +619,7 @@ ActionSet* GroupManager::getActionSetfromString(std::string description)
     return actionset;
 
 exit:
+    DELETE(action);
     DELETE(capa)
     DELETE(actionset)
     DELETEARRAY(attr);
