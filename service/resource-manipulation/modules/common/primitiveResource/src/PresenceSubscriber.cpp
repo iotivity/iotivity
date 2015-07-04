@@ -36,7 +36,7 @@ namespace OIC
                     const std::string&, OCConnectivityType, SubscribeCallback);
 
             invokeOCFunc(static_cast<SubscribePresence>(OC::OCPlatform::subscribePresence),
-                    handle, host, connectivityType, presenceHandler);
+                    handle, host, connectivityType, std::move(presenceHandler));
         }
 
         void subscribePresence(OCDoHandle& handle, const std::string& host,
@@ -47,7 +47,7 @@ namespace OIC
                     const std::string&, const std::string&, OCConnectivityType, SubscribeCallback);
 
             invokeOCFunc(static_cast<SubscribePresence>(OC::OCPlatform::subscribePresence),
-                    handle, host, resourceType, connectivityType, presenceHandler);
+                    handle, host, resourceType, connectivityType, std::move(presenceHandler));
         }
 
         void unsubscribePresence(OCDoHandle handle)
@@ -71,7 +71,7 @@ namespace OIC
                 OCConnectivityType connectivityType, SubscribeCallback presenceHandler) :
                 m_handle{ nullptr }
         {
-            subscribePresence(m_handle, host, connectivityType, presenceHandler);
+            subscribePresence(m_handle, host, connectivityType, std::move(presenceHandler));
         }
 
         PresenceSubscriber::PresenceSubscriber(const std::string& host,
@@ -79,7 +79,8 @@ namespace OIC
                 SubscribeCallback presenceHandler) :
                 m_handle{ nullptr }
         {
-            subscribePresence(m_handle, host, resourceType, connectivityType, presenceHandler);
+            subscribePresence(m_handle, host, resourceType, connectivityType,
+                    std::move(presenceHandler));
         }
 
         PresenceSubscriber::~PresenceSubscriber()
