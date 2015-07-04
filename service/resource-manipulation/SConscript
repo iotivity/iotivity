@@ -56,6 +56,7 @@ target_os = env.get('TARGET_OS')
 ######################################################################
 resourceClient_env.AppendUnique(CPPPATH = ['include'])
 resourceClient_env.AppendUnique(CPPPATH = ['modules/common/primitiveResource/include'])
+resourceClient_env.AppendUnique(CPPPATH = ['modules/common/expiryTimer/include'])
 resourceClient_env.AppendUnique(CPPPATH = ['modules/resourceBroker/include'])
 resourceClient_env.AppendUnique(CPPPATH = ['modules/resourceCache/include'])
 
@@ -75,9 +76,7 @@ if target_os == 'linux':
 ######################################################################
 resourceClient_src = 'src/'
 client_src = [
-        resourceClient_src+ 'ReportPolicyProxy.cpp',
         resourceClient_src+ 'ResourceClient.cpp']
-
 ResourceClientsdk = resourceClient_env.StaticLibrary('ResourceClient', client_src)
 
 resourceClient_env.InstallTarget(ResourceClientsdk , 'libResourceClient')
