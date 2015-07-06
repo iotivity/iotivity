@@ -70,23 +70,23 @@ res_container_shared = resource_container_env.SharedLibrary('ResContainerLib', r
 resource_container_env.InstallTarget([res_container_static,res_container_shared], 'libResContainer')
 
 ######################################################################
-# build Sample Resource Bundle
+# build soft sensor sample bundle
 ######################################################################
 
-sample_resource_bundle_env = resource_container_env.Clone()
-sample_resource_bundle_env.AppendUnique(CCFLAGS = ['-fPIC'])
+ss_resource_bundle_env = resource_container_env.Clone()
+ss_resource_bundle_env.AppendUnique(CCFLAGS = ['-fPIC'])
 
-SAMPLE_RESOURCE_BUNDLE_DIR = 'examples/SampleBundle/'
-sample_resource_bundle_env.AppendUnique(CPPPATH = [
-		SAMPLE_RESOURCE_BUNDLE_DIR + 'include',
+SS_RESOURCE_BUNDLE_DIR = 'examples/SoftSensorSampleBundle/'
+ss_resource_bundle_env.AppendUnique(CPPPATH = [
+		SS_RESOURCE_BUNDLE_DIR + 'include',
 		'include/'
 		])		
 		
 
-sample_resource_bundle_src = [ Glob(SAMPLE_RESOURCE_BUNDLE_DIR + 'src/*.cpp'), Glob('src/*.cpp')]
+ss_resource_bundle_src = [ Glob(SS_RESOURCE_BUNDLE_DIR + 'src/*.cpp'), Glob('src/*.cpp')]
 
-SampleBundle = sample_resource_bundle_env.SharedLibrary('SampleBundle', sample_resource_bundle_src)
-sample_resource_bundle_env.InstallTarget(SampleBundle, 'libSampleBundle')
+SoftSensorBundle = ss_resource_bundle_env.SharedLibrary('SoftSensorBundle', ss_resource_bundle_src)
+ss_resource_bundle_env.InstallTarget(SoftSensorBundle, 'libSoftSensorBundle')
 
 ######################################################################
 # build hue sample bundle

@@ -18,23 +18,23 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "SampleBundle.h"
+#include "SoftSensorBundleActivator.h"
 #include "DiscomfortIndexSensorResource.h"
 
-SampleBundle *bundle;
+SoftSensorBundleActivator *bundle;
 
-SampleBundle::SampleBundle()
+SoftSensorBundleActivator::SoftSensorBundleActivator()
 {
 }
 
-SampleBundle::~SampleBundle()
+SoftSensorBundleActivator::~SoftSensorBundleActivator()
 {
 }
 
-void SampleBundle::activateBundle(ResourceContainerBundleAPI *resourceContainer,
-                                  std::string bundleId)
+void SoftSensorBundleActivator::activateBundle(ResourceContainerBundleAPI *resourceContainer,
+        std::string bundleId)
 {
-    std::cout << "SampleBundle::activateBundle called" << std::endl;
+    std::cout << "SoftSensorSampleBundle::activateBundle called" << std::endl;
 
     m_pResourceContainer = resourceContainer;
     m_bundleId = bundleId;
@@ -50,9 +50,9 @@ void SampleBundle::activateBundle(ResourceContainerBundleAPI *resourceContainer,
     }
 }
 
-void SampleBundle::deactivateBundle()
+void SoftSensorBundleActivator::deactivateBundle()
 {
-    std::cout << "SampleBundle::deactivateBundle called" << std::endl;
+    std::cout << "SoftSensorSampleBundle::deactivateBundle called" << std::endl;
 
     for (std::vector<BundleResource *>::iterator itor = m_vecResources.begin();
          itor != m_vecResources.end(); itor++)
@@ -61,9 +61,9 @@ void SampleBundle::deactivateBundle()
     }
 }
 
-void SampleBundle::createResource(resourceInfo resourceInfo)
+void SoftSensorBundleActivator::createResource(resourceInfo resourceInfo)
 {
-    std::cout << "SampleBundle::createResource called" << std::endl;
+    std::cout << "SoftSensorSampleBundle::createResource called" << std::endl;
 
     static int discomfortIndexSensorCount = 0;
 
@@ -79,11 +79,11 @@ void SampleBundle::createResource(resourceInfo resourceInfo)
             inputs.push_back(itor_map->second);
         }
     }
-    std::cout << "SampleBundle::creating new discomfort index sensor " << std::endl;
+    std::cout << "SoftSensorSampleBundle::creating new discomfort index sensor " << std::endl;
     // create DISensor resource
     DiscomfortIndexSensorResource *newResource = new DiscomfortIndexSensorResource(inputs);
 
-    newResource->m_uri = "/sampleBundle/discomfortIndex/" + std::to_string(
+    newResource->m_uri = "/softsensor/discomfortIndex/" + std::to_string(
                              discomfortIndexSensorCount++);
     newResource->m_resourceType = resourceInfo.resourceType;
     newResource->m_mapResourceProperty = resourceInfo.resourceProperty;
@@ -95,9 +95,9 @@ void SampleBundle::createResource(resourceInfo resourceInfo)
     m_vecResources.push_back(newResource);
 }
 
-void SampleBundle::destroyResource(BundleResource *resource)
+void SoftSensorBundleActivator::destroyResource(BundleResource *resource)
 {
-    std::cout << "SampleBundle::destroyResource called" << std::endl;
+    std::cout << "SoftSensorSampleBundle::destroyResource called" << std::endl;
 
     std::vector <BundleResource *>::iterator itor;
 
@@ -115,7 +115,7 @@ void SampleBundle::destroyResource(BundleResource *resource)
 extern "C" void externalActivateBundle(ResourceContainerBundleAPI *resourceContainer,
                                        std::string bundleId)
 {
-    bundle = new SampleBundle();
+    bundle = new SoftSensorBundleActivator();
     bundle->activateBundle(resourceContainer, bundleId);
 }
 

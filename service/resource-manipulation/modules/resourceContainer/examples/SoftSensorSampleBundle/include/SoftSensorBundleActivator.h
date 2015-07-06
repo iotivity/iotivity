@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef SAMPLEBUNDLE_H_
-#define SAMPLEBUNDLE_H_
+#ifndef SOFTSENSOR_SAMPLEBUNDLE_H_
+#define SOFTSENSOR_SAMPLEBUNDLE_H_
 
 #include <algorithm>
 #include <vector>
@@ -30,11 +30,11 @@
 
 using namespace OIC::Service;
 
-class SampleBundle: public BundleActivator
+class SoftSensorBundleActivator : public BundleActivator
 {
     public:
-        SampleBundle();
-        ~SampleBundle();
+        SoftSensorBundleActivator();
+        ~SoftSensorBundleActivator();
 
         void activateBundle(ResourceContainerBundleAPI *resourceContainer, std::string bundleId);
         void deactivateBundle();
@@ -47,4 +47,4 @@ class SampleBundle: public BundleActivator
         std::vector<BundleResource *> m_vecResources;
 };
 
-#endif /* SAMPLEBUNDLE_H_ */
+#endif /* SOFTSENSOR_SAMPLEBUNDLE_H_ */
