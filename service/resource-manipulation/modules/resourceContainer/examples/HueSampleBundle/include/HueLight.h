@@ -37,7 +37,7 @@ namespace OIC
             HueLight();
             HueLight(HueConnector* connector, std::string address);
             virtual ~HueLight();
-            void getAttribute(string attributeName);
+            string getAttribute(string attributeName);
             void setAttribute(string attributeName, string value);
             virtual void initAttributes();
         private:

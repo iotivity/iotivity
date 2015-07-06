@@ -33,13 +33,14 @@ class DiscomfortIndexSensorResource : public SoftSensorResource
 {
     public:
         DiscomfortIndexSensorResource();
+        DiscomfortIndexSensorResource(vector<string> inputAttributes);
         ~DiscomfortIndexSensorResource();
 
-        void getAttribute(string attributeName);
+        string getAttribute(string attributeName);
         void setAttribute(string attributeName, string value);
         virtual void initAttributes();
 
-        void setInputAttributes(vector < SensorData > inputs);
+        void setInputAttribute(SensorData input);
 
     private:
         DiscomfortIndexSensor *m_pDiscomfortIndexSensor;

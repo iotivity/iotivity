@@ -21,8 +21,6 @@
 #include "SampleBundle.h"
 #include "DiscomfortIndexSensorResource.h"
 
-using namespace OIC::Service;
-
 SampleBundle *bundle;
 
 SampleBundle::SampleBundle()
@@ -41,11 +39,11 @@ void SampleBundle::activateBundle(ResourceContainerBundleAPI *resourceContainer,
     m_pResourceContainer = resourceContainer;
     m_bundleId = bundleId;
 
-    vector<Configuration::resourceInfo> resourceConfig;
+    vector<resourceInfo> resourceConfig;
 
     resourceContainer->getResourceConfiguration(m_bundleId, &resourceConfig);
 
-    for (vector<Configuration::resourceInfo>::iterator itor = resourceConfig.begin();
+    for (vector<resourceInfo>::iterator itor = resourceConfig.begin();
          itor != resourceConfig.end(); itor++)
     {
         createResource(*itor);
@@ -63,22 +61,37 @@ void SampleBundle::deactivateBundle()
     }
 }
 
-// TODO : has to be updated for setting the info
-void SampleBundle::createResource(Configuration::resourceInfo resourceInfo)
+void SampleBundle::createResource(resourceInfo resourceInfo)
 {
     std::cout << "SampleBundle::createResource called" << std::endl;
+
     static int discomfortIndexSensorCount = 0;
-    DiscomfortIndexSensorResource *newResource = new DiscomfortIndexSensorResource();
-    if(!resourceInfo.uri.empty()){
-        newResource->m_uri = resourceInfo.uri;
+
+    std::vector< std::map< std::string, std::string > >::iterator itor_vec;
+    std::map< std::string, std::string >::iterator itor_map;
+    std::vector <std::string> inputs;
+
+    for (itor_vec = resourceInfo.resourceProperty["input"].begin();
+         itor_vec != resourceInfo.resourceProperty["input"].end(); itor_vec++)
+    {
+        for (itor_map = (*itor_vec).begin(); itor_map != (*itor_vec).end(); itor_map++)
+        {
+            inputs.push_back(itor_map->second);
+        }
     }
-    else{
-        newResource->m_uri = "sampleBundle/discomfortIndex/" + std::to_string(discomfortIndexSensorCount++);
-    }
+    std::cout << "SampleBundle::creating new discomfort index sensor " << std::endl;
+    // create DISensor resource
+    DiscomfortIndexSensorResource *newResource = new DiscomfortIndexSensorResource(inputs);
+
+    newResource->m_uri = "/sampleBundle/discomfortIndex/" + std::to_string(
+                             discomfortIndexSensorCount++);
     newResource->m_resourceType = resourceInfo.resourceType;
+    newResource->m_mapResourceProperty = resourceInfo.resourceProperty;
+
+    // setting input Attributes count
+    newResource->inputCount = newResource->m_mapResourceProperty["input"].size();
 
     m_pResourceContainer->registerResource(newResource);
-
     m_vecResources.push_back(newResource);
 }
 

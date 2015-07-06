@@ -32,27 +32,28 @@ HueLight::HueLight(HueConnector* connector, std::string address){
     m_address = address;
     m_connector = connector;
     initAttributes();
-    std::cout << "Number of Attributes: " << m_mapAttributes.size() << "" << endl;
-
 }
 
 HueLight::~HueLight(){
 
 }
 
-void HueLight::getAttribute(string attributeName){
+string HueLight::getAttribute(string attributeName){
 
 }
 
 void HueLight::initAttributes(){
-    m_mapAttributes.insert(std::pair<string, string>("on-off", "false"));
+    BundleResource::setAttribute("on-off", "false");
+    BundleResource::setAttribute("dim", "0");
+    BundleResource::setAttribute("color", "0");
+    /*m_mapAttributes.insert(std::pair<string, string>("on-off", "false"));
     m_mapAttributes.insert(std::pair<string, string>("dim", "0"));
-    m_mapAttributes.insert(std::pair<string, string>("color", "0"));
+    m_mapAttributes.insert(std::pair<string, string>("color", "0"));*/
 }
 
 void HueLight::setAttribute(string attributeName, string value){
     cout << "HueLight::setAttribute setting " << attributeName << " to " << value << std::endl;
-    this->m_mapAttributes[attributeName] = value;
+
 
     if(attributeName == "on-off"){
         m_connector->transmit(this->m_address + "/state", "{\"on\":" + value + "}");

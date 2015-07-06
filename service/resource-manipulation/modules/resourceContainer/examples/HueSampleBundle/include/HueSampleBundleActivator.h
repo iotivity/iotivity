@@ -42,7 +42,7 @@ namespace OIC
                     std::string bundleId);
             void deactivateBundle();
 
-            void createResource(Configuration::resourceInfo);
+            void createResource(resourceInfo);
             void destroyResource(BundleResource *);
 
             std::string m_bundleId;

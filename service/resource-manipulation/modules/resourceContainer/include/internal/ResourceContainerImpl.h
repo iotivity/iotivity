@@ -27,7 +27,10 @@
 
 #include "PrimitiveRequest.h"
 #include "PrimitiveResponse.h"
-#include "PrimitiveServerResource.h"
+#include "ResourceObject.h"
+
+#include "jni.h"
+#include <map>
 
 using namespace OIC::Service;
 
@@ -43,24 +46,20 @@ namespace OIC
             virtual ~ResourceContainerImpl();
 
             // methods from ResourceContainer
-            void init();
-            void init(string configFile);
-            void activateBundle(int id);
-            void deactivateBundle(int id);
-            void activateBundleByName(string name);
-            void deactivateBundleByName(string id);
+            void startContainer(string configFile);
+            void stopContainer();
+            void activateBundle(string bundleId);
+            void deactivateBundle(string bundleId);
             void activateBundle(BundleInfo *bundleInfo);
             void deactivateBundle(BundleInfo *bundleInfo);
-            vector< Resource * > listBundleResources(string id);
 
             // methods from ResourceContainerBundleAPI
             void registerBundle(BundleInfo *bundleinfo);
             void unregisterBundle(BundleInfo *bundleinfo);
-            void unregisterBundle(int id);
+            void unregisterBundle(string id);
             void registerResource(BundleResource *resource);
             void unregisterResource(BundleResource *resource);
 
-            void getCommonConfiguration(configInfo *configOutput);
             void getBundleConfiguration(std::string bundleId, configInfo *configOutput);
             void getResourceConfiguration(std::string bundleId,
                     std::vector< resourceInfo > *configOutput);
@@ -70,15 +69,41 @@ namespace OIC
 
             PrimitiveSetResponse setRequestHandler(const PrimitiveRequest &request,
                     const ResourceAttributes &attributes);
-
+			
+			void onNotificationReceived(std::string strResourceUri);
+					
             static ResourceContainerImpl *getImplInstance();
 
+            void addBundle(string bundleId, string bundleUri, string bundlePath, std::map<string, string> params);
+            void removeBundle(string bundleId);
+
+            std::list<BundleInfo*> listBundles();
+
+            void addResourceConfig(string bundleId, string resourceUri, std::map<string, string> params);
+            void removeResourceConfig(string bundleId, string resourceUri);
+
+            std::list<string> listBundleResources(string bundleId);
+
+            void startBundle(string bundleId);
+            void stopBundle(string bundleId);
+
+            JavaVM* getJavaVM(string bundleId);
+
         private:
-            vector< BundleInfoInternal * > m_bundles;
-            map< std::string, PrimitiveServerResource::Ptr > m_mapServers; //<uri, serverPtr>
+            map< std::string, BundleInfoInternal * > m_bundles; // <bundleID, bundleInfo>
+            map< std::string, ResourceObject::Ptr > m_mapServers; //<uri, serverPtr>
             map< std::string, BundleResource * > m_mapResources; //<uri, resourcePtr>
             string m_configFile;
-            Configuration *m_config;
+            Configuration *m_config = NULL;
+            map<string, JavaVM*> m_bundleVM;
+
+            void registerJavaBundle(BundleInfo *bundleInfo);
+            void registerSoBundle(BundleInfo *bundleInfo);
+            void activateJavaBundle(string bundleId);
+            void activateSoBundle(string bundleId);
+            void deactivateJavaBundle(string bundleId);
+            void deactivateSoBundle(string bundleId);
+
         };
     }
 }

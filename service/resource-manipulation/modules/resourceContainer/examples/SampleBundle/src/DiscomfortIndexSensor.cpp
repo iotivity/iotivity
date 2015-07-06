@@ -35,21 +35,22 @@ using namespace DiscomfortIndexSensorName;
 char *inputName[2] =
 { (char *)"temperature", (char *)"humidity" };
 
-physicalInput DiscomfortIndexSensor::s_PHYSICAL_SOFTSENSORs[PHYSICAL_EA] =
-{
-    { (char *)"Thing_TempHumSensor", 2, (void *) &inputName },
-    { (char *)"Thing_TempHumSensor1", 2, (void *) &inputName }
-};
-
-DiscomfortIndexSensor::DiscomfortIndexSensor()
+DiscomfortIndexSensor::DiscomfortIndexSensor(vector <string> inputs)
 {
     m_result.m_timestamp = "";
     m_result.m_humidity = "";
     m_result.m_temperature = "";
     m_result.m_discomfortIndex = "";
+
+    for (int i = 0; i < PHYSICAL_EA; i++)
+    {
+        s_PHYSICAL_SOFTSENSORs[i].m_thingName = (char *) inputs.at(i).c_str();
+        s_PHYSICAL_SOFTSENSORs[i].m_inputNum = PHYSICAL_EA;
+        s_PHYSICAL_SOFTSENSORs[i].m_pInputStruct = (void *) &inputName;
+    }
 }
 
-int DiscomfortIndexSensor::runLogic(std::vector< OIC::Service::SoftSensorResource::SensorData > &sensorData)
+int DiscomfortIndexSensor::runLogic(std::vector< SoftSensorResource::SensorData > &sensorData)
 {
     std::cout << "[DiscomfortIndexSensor] DiscomfortIndexSensor::" << __func__ << " is called."
               << std::endl;
@@ -75,7 +76,7 @@ int DiscomfortIndexSensor::runLogic(std::vector< OIC::Service::SoftSensorResourc
 /**
  * Get Input data (temperature, humidity) using resource Client of Iotivity base.
  */
-DIResult DiscomfortIndexSensor::getInput(std::vector< OIC::Service::SoftSensorResource::SensorData >
+DIResult DiscomfortIndexSensor::getInput(std::vector< SoftSensorResource::SensorData >
         &sensorData, InValue *data)
 {
     int result_flag = 0;
@@ -208,10 +209,10 @@ DIResult DiscomfortIndexSensor::makeDiscomfortIndex(InValue *data)
     return SUCCESS;
 }
 
-OIC::Service::SoftSensorResource::SensorData DiscomfortIndexSensor::setOutput(int property_count,
+SoftSensorResource::SensorData DiscomfortIndexSensor::setOutput(int property_count,
         InValue *data)
 {
-    OIC::Service::SoftSensorResource::SensorData out;
+    SoftSensorResource::SensorData out;
 
     std::map < std::string, std::string > output_property;
 

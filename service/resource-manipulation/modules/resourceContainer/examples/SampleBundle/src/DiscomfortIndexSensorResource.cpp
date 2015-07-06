@@ -18,12 +18,21 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include <algorithm>
+
 #include "DiscomfortIndexSensorResource.h"
 
 DiscomfortIndexSensorResource::DiscomfortIndexSensorResource()
 {
-    m_pDiscomfortIndexSensor = new DiscomfortIndexSensor();
+}
+
+DiscomfortIndexSensorResource::DiscomfortIndexSensorResource(vector<string> inputAttributes)
+{
+    m_pDiscomfortIndexSensor = new DiscomfortIndexSensor(inputAttributes);
+    m_vecInputAttributes = inputAttributes;
+    std::cout << "Init attributes" << endl;
     initAttributes();
+    std::cout << "Init attributes finished" << endl;
 }
 
 DiscomfortIndexSensorResource::~DiscomfortIndexSensorResource()
@@ -33,12 +42,13 @@ DiscomfortIndexSensorResource::~DiscomfortIndexSensorResource()
 
 void DiscomfortIndexSensorResource::initAttributes()
 {
-    m_mapAttributes.insert(std::pair<string, string>("temperature", "23"));
-    m_mapAttributes.insert(std::pair<string, string>("humidity", "40"));
-    m_mapAttributes.insert(std::pair<string, string>("discomfortIndex", "5"));
+
+    BundleResource::setAttribute("temperature", "23");
+    BundleResource::setAttribute("humidity", "40");
+    BundleResource::setAttribute("discomfortIndex", "5");
 }
 
-void DiscomfortIndexSensorResource::getAttribute(string attributeName)
+string DiscomfortIndexSensorResource::getAttribute(string attributeName)
 {
     cout << "DiscomfortIndexSensorResource::getAttribute called !!" << endl;
 }
@@ -46,11 +56,40 @@ void DiscomfortIndexSensorResource::getAttribute(string attributeName)
 void DiscomfortIndexSensorResource::setAttribute(string attributeName, string value)
 {
     cout << "DiscomfortIndexSensorResource::setAttribute called !!" << endl;
-
-    m_mapAttributes[attributeName] = value;
 }
 
-void DiscomfortIndexSensorResource::setInputAttributes(vector < SensorData > inputs)
+void DiscomfortIndexSensorResource::setInputAttribute(SensorData input)
 {
-    m_pDiscomfortIndexSensor->runLogic(inputs);
+    vector<string>::iterator itor = std::find(m_vecInputAttributes.begin(), m_vecInputAttributes.end(),
+                                    input.sensorName);
+    std::vector<SensorData> inData;
+
+    if (itor != m_vecInputAttributes.end())
+    {
+        m_mapStoredInputData[input.sensorName] = input;
+
+        if (inputCount == m_mapStoredInputData.size())
+        {
+            for (map< string, SensorData >::iterator mapItor = m_mapStoredInputData.begin();
+                 mapItor != m_mapStoredInputData.end(); mapItor++)
+            {
+                inData.push_back(mapItor->second);
+            }
+
+            m_pDiscomfortIndexSensor->runLogic(inData);
+            m_outputs = m_pDiscomfortIndexSensor->m_output;
+
+            for (int i = 0; i < m_outputs.data.size(); i++)
+            {
+                if (!m_outputs.data.at(i)["name"].compare("temperature"))
+                    BundleResource::setAttribute("temperature",m_outputs.data.at(i)["value"]);
+
+                else if (!m_outputs.data.at(i)["name"].compare("humidity"))
+                    BundleResource::setAttribute("humidity",m_outputs.data.at(i)["value"]);
+
+                else if (!m_outputs.data.at(i)["name"].compare("discomfortIndex"))
+                    BundleResource::setAttribute("discomfortIndex",m_outputs.data.at(i)["value"]);
+            }
+        }
+    }
 }

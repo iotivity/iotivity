@@ -28,6 +28,7 @@
 #include "ResourceContainer.h"
 #include "BundleInfo.h"
 #include "Configuration.h"
+#include "NotificationReceiver.h"
 #include "BundleResource.h"
 
 using namespace OIC::Service;
@@ -36,20 +37,18 @@ namespace OIC
 {
     namespace Service
     {
-        class ResourceContainerBundleAPI: public Configuration
+        class ResourceContainerBundleAPI: public Configuration, public NotificationReceiver
         {
-        public:
-            typedef std::map< std::string, std::string > configInfo;
-            ResourceContainerBundleAPI();
-            virtual ~ResourceContainerBundleAPI();
-            virtual void registerResource(BundleResource *resource) = 0;
-            virtual void unregisterResource(BundleResource *resource) = 0;
-            virtual void getCommonConfiguration(configInfo *configOutput) = 0;
-            virtual void getBundleConfiguration(std::string bundleId, configInfo *configOutput) = 0;
-            virtual void getResourceConfiguration(std::string bundleId,
-                    std::vector< resourceInfo > *configOutput) = 0;
+            public:
+                ResourceContainerBundleAPI();
+                virtual ~ResourceContainerBundleAPI();
+                virtual void registerResource(BundleResource *resource) = 0;
+                virtual void unregisterResource(BundleResource *resource) = 0;
+                virtual void getBundleConfiguration(std::string bundleId, configInfo *configOutput) = 0;
+                virtual void getResourceConfiguration(std::string bundleId,
+                                                      std::vector< resourceInfo > *configOutput) = 0;
 
-            static ResourceContainerBundleAPI *getInstance();
+                static ResourceContainerBundleAPI *getInstance();
         };
     }
 }

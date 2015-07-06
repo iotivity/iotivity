@@ -18,10 +18,15 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef BUNDLEINFO_H_
-#define BUNDLEINFO_H_
+#ifndef JAVABUNDLERESOURCE_H_
+#define JAVABUNDLERESOURCE_H_
 
+#include <map>
+#include <vector>
 #include <string>
+#include <jni.h>
+#include "BundleResource.h"
+#include "ResourceContainerImpl.h"
 
 using namespace std;
 
@@ -29,25 +34,27 @@ namespace OIC
 {
     namespace Service
     {
-        /*
-         * Describes a bundle with resources, that can be loaded dynamically.
-         */
-        class BundleInfo
+        class JavaBundleResource: public BundleResource
         {
         public:
-            BundleInfo();
-            virtual ~BundleInfo();
-            virtual void setID(string name) = 0;
-            virtual string getID() = 0;
-            virtual void setPath(string path) = 0;
-            virtual string getPath() = 0;
-            virtual void setVersion(string version) = 0;
-            virtual string getVersion() = 0;
-            static BundleInfo* createBundleInfo();
-        protected:
-            string m_ID, m_path, m_version;
+            JavaBundleResource();
+            JavaBundleResource(JNIEnv *env, jobject obj, jobject bundleResource, string bundleId,
+                    jobjectArray attributes);
+            virtual ~JavaBundleResource();
+
+            string getAttribute(string attributeName);
+            void setAttribute(string attributeName, string value);
+            void initAttributes();
+        private:
+            // needs to be a GlobalRef
+            jobject bundleResource;
+            jobjectArray attributes;
+            jclass bundleResourceClass;
+            jmethodID attributeSetter;
+            jmethodID attributeGetter;
+            string m_bundleId;
         };
     }
 }
 
-#endif /* BUNDLEINFO_H_ */
+#endif

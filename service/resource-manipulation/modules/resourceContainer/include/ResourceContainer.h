@@ -25,6 +25,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <list>
 
 #include "BundleInfo.h"
 
@@ -34,29 +35,28 @@ namespace OIC
 {
     namespace Service
     {
-        // placeholder
-        class Resource
-        {
-
-        };
-
         class ResourceContainer
         {
         public:
             ResourceContainer();
             virtual ~ResourceContainer();
-            virtual void init() = 0;
-            virtual void init(string configFile) = 0;
-            virtual void registerBundle(BundleInfo *bundleinfo) = 0;
-            virtual void unregisterBundle(BundleInfo *bundleinfo) = 0;
-            virtual void unregisterBundle(int id) = 0;
-            virtual void activateBundle(int id) = 0;
-            virtual void deactivateBundle(int id) = 0;
-            virtual void activateBundleByName(string name) = 0;
-            virtual void deactivateBundleByName(string id) = 0;
-            virtual void activateBundle(BundleInfo *bundleInfo) = 0;
-            virtual void deactivateBundle(BundleInfo *bundleInfo) = 0;
-            virtual vector< Resource * > listBundleResources(string id) = 0;
+            //virtual void initializeResourceContainer() = 0;
+            virtual void startContainer(string configFile) = 0;
+            virtual void stopContainer() = 0;
+
+            // list of bundle ids
+            virtual std::list<BundleInfo*> listBundles() = 0;
+            virtual void startBundle(string bundleId) = 0;
+            virtual void stopBundle(string bundleId) = 0;
+
+            // dynamic configuration
+            virtual void addBundle(string bundleId, string bundleUri, string bundlePath, std::map<string, string> params) =0;
+            virtual void removeBundle(string bundleId) = 0;
+
+            virtual void addResourceConfig(string bundleId, string resourceUri, std::map<string, string> params)  = 0;
+            virtual void removeResourceConfig(string bundleId, string resourceUri)  = 0;
+
+            virtual std::list<string> listBundleResources(string bundleId) = 0;
 
             static ResourceContainer *getInstance();
         };

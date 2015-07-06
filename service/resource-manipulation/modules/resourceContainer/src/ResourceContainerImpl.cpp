@@ -28,13 +28,13 @@
 #include <string.h>
 #include <iostream>
 #include <fstream>
+#include <jni.h>
 
 #include "oc_logger.hpp"
 
 using OC::oc_log_stream;
 using namespace OIC::Service;
 
-/* Annother way to create a context: */
 auto info_logger = []() -> boost::iostreams::stream<OC::oc_log_stream> &
 {
     static OC::oc_log_stream ols(oc_make_ostream_logger);
@@ -44,7 +44,6 @@ auto info_logger = []() -> boost::iostreams::stream<OC::oc_log_stream> &
     return os;
 };
 
-/* Annother way to create a context: */
 auto error_logger = []() -> boost::iostreams::stream<OC::oc_log_stream> &
 {
     static OC::oc_log_stream ols(oc_make_ostream_logger);
@@ -73,36 +72,119 @@ namespace OIC
             // TODO Auto-generated destructor stub
         }
 
-        void ResourceContainerImpl::init()
+        bool has_suffix(const std::string &str, const std::string &suffix)
         {
-
+            return str.size() >= suffix.size()
+                    && str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
         }
 
-        void ResourceContainerImpl::init(string configFile)
+        void ResourceContainerImpl::startContainer(string configFile)
         {
+            info_logger() << "Starting resource container" << endl;
+
             m_config = new Configuration(configFile);
-            Configuration::configInfo bundles;
+            configInfo bundles;
             m_config->getConfiguredBundles(&bundles);
+
             for (int i = 0; i < bundles.size(); i++)
             {
                 BundleInfo *bundleInfo = BundleInfo::createBundleInfo();
                 bundleInfo->setPath(bundles[i]["path"]);
                 bundleInfo->setVersion(bundles[i]["version"]);
                 bundleInfo->setID(bundles[i]["id"]);
-                cout << "Init Bundle:" << bundles[i]["id"] << ";" << bundles[i]["path"] << endl;
+                if (!bundles[i]["activator"].empty())
+                {
+                    string activatorName = bundles[i]["activator"];
+                    std::replace(activatorName.begin(), activatorName.end(), '.', '/');
+                    ((BundleInfoInternal*) bundleInfo)->setActivatorName(activatorName);
+
+                }
+                info_logger() << "Init Bundle:" << bundles[i]["id"] << ";" << bundles[i]["path"]
+                        << endl;
                 registerBundle(bundleInfo);
                 activateBundle(bundleInfo);
             }
         }
 
-        // loads the bundle
-        void ResourceContainerImpl::registerBundle(BundleInfo *bundleInfo)
+        void ResourceContainerImpl::registerJavaBundle(BundleInfo *bundleInfo)
         {
-            info_logger() << "Registering bundle: " << bundleInfo->getPath() << endl;
+            info_logger() << "Registering Java bundle " << bundleInfo->getID() << endl;
+            JavaVM * jvm;
+            JNIEnv * env;
+            JavaVMInitArgs vm_args;
+            JavaVMOption options[3];
 
-            m_bundles.push_back((BundleInfoInternal *) bundleInfo);
-            ((BundleInfoInternal *) bundleInfo)->setId(m_bundles.size() - 1);
+            BundleInfoInternal* bundleInfoInternal = (BundleInfoInternal*) bundleInfo;
 
+            options[0].optionString = "-Djava.compiler=NONE";
+            char classpath[1000];
+            strcpy(classpath, "-Djava.class.path=");
+            strcat(classpath, bundleInfo->getPath().c_str());
+
+            options[1].optionString = classpath;
+
+            options[2].optionString = "-Djava.library.path=.";
+
+            vm_args.version = JNI_VERSION_1_4;
+            vm_args.options = options;
+            vm_args.nOptions = 3;
+            vm_args.ignoreUnrecognized = 1;
+
+            JNI_CreateJavaVM(&jvm, (void **) &env, &vm_args);
+
+            m_bundleVM.insert(std::pair< string, JavaVM * >(bundleInfo->getID(), jvm));
+
+            const char *className = bundleInfoInternal->getActivatorName().c_str();
+
+            jclass bundleActivatorClass = env->FindClass(className);
+
+            if (bundleActivatorClass == NULL)
+            {
+                error_logger() << "Cannot register bundle " << bundleInfoInternal->getID()
+                        << " bundle activator(" << bundleInfoInternal->getActivatorName()
+                        << ") not found " << endl;
+                return;
+            }
+
+            jmethodID activateMethod = env->GetMethodID(bundleActivatorClass, "activateBundle",
+                    "()V");
+
+            if (activateMethod == NULL)
+            {
+                error_logger() << "Cannot register bundle " << bundleInfoInternal->getID()
+                        << " activate bundle method not found " << endl;
+                return;
+            }
+            bundleInfoInternal->setJavaBundleActivatorMethod(activateMethod);
+
+            jmethodID deactivateMethod = env->GetMethodID(bundleActivatorClass, "activateBundle",
+                    "()V");
+
+            if (deactivateMethod == NULL)
+            {
+                error_logger() << "Cannot register bundle " << bundleInfoInternal->getID()
+                        << " deactivate bundle method not found " << endl;
+                return;
+            }
+
+            bundleInfoInternal->setJavaBundleDeactivatorMethod(deactivateMethod);
+
+            jmethodID constructor;
+
+            constructor = env->GetMethodID(bundleActivatorClass, "<init>", "(Ljava/lang/String;)V");
+
+            jstring bundleID = env->NewStringUTF(bundleInfoInternal->getID().c_str());
+
+            jobject bundleActivator = env->NewObject(bundleActivatorClass, constructor, bundleID);
+
+            bundleInfoInternal->setJavaBundleActivatorObject(bundleActivator);
+
+            bundleInfoInternal->setLoaded(true);
+            info_logger() << "Bundle registered" << endl;
+        }
+
+        void ResourceContainerImpl::registerSoBundle(BundleInfo *bundleInfo)
+        {
             char *error;
 
             activator_t *bundleActivator = NULL;
@@ -139,29 +221,91 @@ namespace OIC
             }
         }
 
-        void ResourceContainerImpl::activateBundle(int id)
+        // loads the bundle
+        void ResourceContainerImpl::registerBundle(BundleInfo *bundleInfo)
         {
-            activator_t *bundleActivator = m_bundles[id]->getBundleActivator();
-            info_logger() << "Activating bundle: " << m_bundles[id]->getID() << ", "
-                    << m_bundles[id]->getId() << endl;
+            info_logger() << "Registering bundle: " << bundleInfo->getPath() << endl;
+
+            m_bundles[bundleInfo->getID()] = ((BundleInfoInternal *) bundleInfo);
+
+            if (has_suffix(bundleInfo->getPath(), ".jar"))
+            {
+                ((BundleInfoInternal *) bundleInfo)->setJavaBundle(true);
+                registerJavaBundle(bundleInfo);
+            }
+            else
+            {
+                ((BundleInfoInternal *) bundleInfo)->setJavaBundle(false);
+                registerSoBundle(bundleInfo);
+            }
+        }
+
+        void ResourceContainerImpl::activateJavaBundle(string bundleId)
+        {
+            info_logger() << "Activating java bundle" << endl;
+            JavaVM* vm = getJavaVM(bundleId);
+            BundleInfoInternal* bundleInfoInternal = (BundleInfoInternal*) m_bundles[bundleId];
+            JNIEnv * env;
+            int envStat = vm->GetEnv((void **) &env, JNI_VERSION_1_4);
+
+            if (envStat == JNI_EDETACHED)
+            {
+                if (vm->AttachCurrentThread((void**) &env, NULL) != 0)
+                {
+                    error_logger() << "Failed to attach " << endl;
+                }
+            }
+            else if (envStat == JNI_EVERSION)
+            {
+                error_logger() << "Env: version not supported " << endl;
+            }
+
+            env->CallVoidMethod(bundleInfoInternal->getJavaBundleActivatorObject(),
+                    bundleInfoInternal->getJavaBundleActivatorMethod());
+        }
+
+        void ResourceContainerImpl::activateSoBundle(string bundleId)
+        {
+            activator_t *bundleActivator = m_bundles[bundleId]->getBundleActivator();
 
             if (bundleActivator != NULL)
             {
-                bundleActivator(this, m_bundles[id]->getID());
-                m_bundles[id]->setActivated(true);
+                bundleActivator(this, m_bundles[bundleId]->getID());
+                m_bundles[bundleId]->setActivated(true);
             }
             else
             {
                 //Unload module and return error
                 error_logger() << "Activation unsuccessful." << endl;
             }
+
+            BundleInfoInternal* bundleInfoInternal = (BundleInfoInternal*) m_bundles[bundleId];
+            bundleInfoInternal->setActivated(true);
+        }
+
+        void ResourceContainerImpl::activateBundle(string id)
+        {
+
+            info_logger() << "Activating bundle: " << m_bundles[id]->getID() << endl;
+
+            if (m_bundles[id]->getJavaBundle())
+            {
+                activateJavaBundle(id);
+            }
+            else
+            {
+                activateSoBundle(id);
+            }
+
+            info_logger() << "Bundle activated: " << m_bundles[id]->getID() << endl;
+
         }
 
         void ResourceContainerImpl::activateBundle(BundleInfo *bundleInfo)
         {
             if (((BundleInfoInternal *) bundleInfo)->isLoaded())
             {
-                activateBundle(bundleInfo->getId());
+                activateBundle(bundleInfo->getID());
             }
         }
 
@@ -169,15 +313,40 @@ namespace OIC
         {
             if (((BundleInfoInternal *) bundleInfo)->isActivated())
             {
-                deactivateBundle(bundleInfo->getId());
+                deactivateBundle(bundleInfo->getID());
             }
         }
 
-        void ResourceContainerImpl::deactivateBundle(int id)
+
+        void ResourceContainerImpl::deactivateJavaBundle(string bundleId)
         {
+            info_logger() << "Deactivating java bundle" << endl;
+            JavaVM* vm = getJavaVM(bundleId);
+            BundleInfoInternal* bundleInfoInternal = (BundleInfoInternal*) m_bundles[bundleId];
+            JNIEnv * env;
+            int envStat = vm->GetEnv((void **) &env, JNI_VERSION_1_4);
+
+            if (envStat == JNI_EDETACHED)
+            {
+                if (vm->AttachCurrentThread((void**) &env, NULL) != 0)
+                {
+                    error_logger() << "Failed to attach " << endl;
+                }
+            }
+            else if (envStat == JNI_EVERSION)
+            {
+                error_logger() << "Env: version not supported " << endl;
+            }
+
+            env->CallVoidMethod(bundleInfoInternal->getJavaBundleActivatorObject(),
+                    bundleInfoInternal->getJavaBundleDeactivatorMethod());
+        }
+
+        void ResourceContainerImpl::deactivateSoBundle(string id)
+        {
+
             deactivator_t *bundleDeactivator = m_bundles[id]->getBundleDeactivator();
-            info_logger() << "De-activating bundle: " << m_bundles[id]->getID() << ", "
-                    << m_bundles[id]->getId() << endl;
+            info_logger() << "De-activating bundle: " << m_bundles[id]->getID() << endl;
 
             if (bundleDeactivator != NULL)
             {
@@ -191,40 +360,41 @@ namespace OIC
             }
         }
 
-        void ResourceContainerImpl::activateBundleByName(string name)
+        void ResourceContainerImpl::deactivateBundle(string id)
         {
 
+            if (m_bundles[id]->getJavaBundle())
+            {
+                deactivateJavaBundle(id);
+            }
+            else
+            {
+                deactivateSoBundle(id);
+            }
         }
 
-        void ResourceContainerImpl::deactivateBundleByName(string id)
+        std::list< string > ResourceContainerImpl::listBundleResources(string id)
         {
-
-        }
-
-        vector< Resource * > ResourceContainerImpl::listBundleResources(string id)
-        {
-            vector< Resource * > ret;
+            std::list< string > ret;
             return ret;
         }
 
         void ResourceContainerImpl::registerResource(BundleResource *resource)
         {
-            cout << "Register resource called. " << resource->m_uri << " "
-                    << resource->m_resourceType << endl;
 
             string strUri = resource->m_uri;
             string strResourceType = resource->m_resourceType;
 
-            PrimitiveServerResource::Ptr server =
-                    PrimitiveServerResource::Builder(strUri, strResourceType, "DEFAULT_INTERFACE").setObservable(
-                            false).setDiscoverable(true).create();
+            info_logger() << "Registration of resource " << strUri << "," << strResourceType
+                    << endl;
+
+            ResourceObject::Ptr server = ResourceObject::Builder(strUri, strResourceType,
+                    "DEFAULT_INTERFACE").setObservable(true).setDiscoverable(true).build();
 
             m_mapServers[strUri] = server;
             m_mapResources[strUri] = resource;
 
-            cout << "Registered resource has " << m_mapResources[strUri]->m_mapAttributes.size()
-                    << " attributes.\n" << endl;
-
+            resource->registerObserver(this);
             server->setGetRequestHandler(
                     std::bind(&ResourceContainerImpl::getRequestHandler, this,
                             std::placeholders::_1, std::placeholders::_2));
@@ -232,6 +402,7 @@ namespace OIC
             server->setSetRequestHandler(
                     std::bind(&ResourceContainerImpl::setRequestHandler, this,
                             std::placeholders::_1, std::placeholders::_2));
+            info_logger() << "Registration finished " << strUri << "," << strResourceType << endl;
         }
 
         PrimitiveGetResponse ResourceContainerImpl::getRequestHandler(
@@ -242,14 +413,10 @@ namespace OIC
             if (m_mapServers.find(request.getResourceUri()) != m_mapServers.end()
                     && m_mapResources.find(request.getResourceUri()) != m_mapResources.end())
             {
-                // temp
-                m_mapResources[request.getResourceUri()]->getAttribute("");
-
-                for (auto i : m_mapResources[request.getResourceUri()]->m_mapAttributes)
+                for (string attrName : m_mapResources[request.getResourceUri()]->getAttributeNames())
                 {
-                    cout << "Setting attribute " << i.first.c_str() << ", " << i.second.c_str()
-                            << endl;
-                    attr[i.first.c_str()] = i.second.c_str();
+                    attr[attrName] = m_mapResources[request.getResourceUri()]->getAttribute(
+                            attrName);
                 }
             }
 
@@ -261,28 +428,17 @@ namespace OIC
         {
             ResourceAttributes attr = attributes;
 
-            cout << "Set request handler resource called.\n";
-
             if (m_mapServers.find(request.getResourceUri()) != m_mapServers.end()
                     && m_mapResources.find(request.getResourceUri()) != m_mapResources.end())
             {
-
-                cout << "Setting the attributes of the resource." << request.getResourceUri()
-                        << " it has "
-                        << m_mapResources[request.getResourceUri()]->m_mapAttributes.size()
-                        << " attributes " << std::endl;
-
-                for (auto i : m_mapResources[request.getResourceUri()]->m_mapAttributes)
+                for (string attrName : m_mapResources[request.getResourceUri()]->getAttributeNames())
                 {
-                    if (!attr[i.first].toString().empty())
+                    if (!attr[attrName].toString().empty())
                     {
-                        cout << "Setting " << i.first << endl;
-                        m_mapResources[request.getResourceUri()]->setAttribute(i.first,
-                                attr[i.first].toString());
+                        m_mapResources[request.getResourceUri()]->setAttribute(attrName,
+                                attr[attrName].toString());
                     }
                 }
-
-                // set m_mapAttributes to attributes
             }
 
             return PrimitiveSetResponse::create(attr);
@@ -290,7 +446,7 @@ namespace OIC
 
         void ResourceContainerImpl::unregisterResource(BundleResource *resource)
         {
-
+            // To be implemented
         }
 
         void ResourceContainerImpl::unregisterBundle(BundleInfo *bundleInfo)
@@ -298,15 +454,15 @@ namespace OIC
             if (((BundleInfoInternal *) bundleInfo)->isLoaded()
                     && !((BundleInfoInternal *) bundleInfo)->isActivated())
             {
-                unregisterBundle(bundleInfo->getId());
+                unregisterBundle(bundleInfo->getID());
             }
         }
 
-        void ResourceContainerImpl::unregisterBundle(int id)
+        void ResourceContainerImpl::unregisterBundle(string id)
         {
             void *bundleHandle = m_bundles[id]->getBundleHandle();
             info_logger() << "Unregister bundle: " << m_bundles[id]->getID() << ", "
-                    << m_bundles[id]->getId() << endl;
+                    << m_bundles[id]->getID() << endl;
             char *error;
             dlclose(bundleHandle);
             if ((error = dlerror()) != NULL)
@@ -317,25 +473,79 @@ namespace OIC
 
         ResourceContainerImpl *ResourceContainerImpl::getImplInstance()
         {
-            ResourceContainerImpl *ret = new ResourceContainerImpl();
-            return ret;
-        }
-
-        void ResourceContainerImpl::getCommonConfiguration(configInfo *configOutput)
-        {
-            m_config->getCommonConfiguration((Configuration::configInfo *) configOutput);
+            static ResourceContainerImpl m_instance;
+            return &m_instance;
         }
 
         void ResourceContainerImpl::getBundleConfiguration(std::string bundleId,
                 configInfo *configOutput)
         {
-            m_config->getBundleConfiguration(bundleId, (Configuration::configInfo *) configOutput);
+            m_config->getBundleConfiguration(bundleId, (configInfo *) configOutput);
         }
 
         void ResourceContainerImpl::getResourceConfiguration(std::string bundleId,
                 std::vector< resourceInfo > *configOutput)
         {
             m_config->getResourceConfiguration(bundleId, configOutput);
+        }
+
+        void ResourceContainerImpl::onNotificationReceived(std::string strResourceUri)
+        {
+            info_logger() << "ResourceContainerImpl::onNotificationReceived\n\tnotification from "
+                    << strResourceUri << ".\n";
+
+            /*if (m_mapServers.find(strResourceUri) != m_mapServers.end())
+             {
+             //m_mapServers[strResourceUri]->notify();
+             }*/
+        }
+
+        void ResourceContainerImpl::addBundle(string bundleId, string bundleUri, string bundlePath,
+                std::map< string, string > params)
+        {
+            // To be implemented
+        }
+
+        void ResourceContainerImpl::removeBundle(string bundleId)
+        {
+            // To be implemented
+        }
+
+        std::list< BundleInfo* > ResourceContainerImpl::listBundles()
+        {
+            std::list< BundleInfo* > ret;
+            return ret;
+        }
+
+        void ResourceContainerImpl::addResourceConfig(string bundleId, string resourceUri,
+                std::map< string, string > params)
+        {
+            // To be implemented
+        }
+
+        void ResourceContainerImpl::removeResourceConfig(string bundleId, string resourceUri)
+        {
+            // To be implemented
+        }
+
+        void ResourceContainerImpl::startBundle(string bundleId)
+        {
+            activateBundle(m_bundles[bundleId]);
+        }
+
+        void ResourceContainerImpl::stopBundle(string bundleId)
+        {
+            deactivateBundle(m_bundles[bundleId]);
+        }
+
+        void ResourceContainerImpl::stopContainer()
+        {
+            // deactivate all bundles and unload them
+        }
+
+        JavaVM *ResourceContainerImpl::getJavaVM(string bundleId)
+        {
+            return m_bundleVM[bundleId];
         }
     }
 }

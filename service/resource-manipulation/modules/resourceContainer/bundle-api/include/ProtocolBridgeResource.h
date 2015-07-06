@@ -34,7 +34,7 @@ namespace OIC
         public:
             ProtocolBridgeResource();
             virtual ~ProtocolBridgeResource();
-            virtual void getAttribute(string attributeName) = 0;
+            virtual string getAttribute(string attributeName) = 0;
             virtual void setAttribute(string attributeName, string value) = 0;
         };
     }

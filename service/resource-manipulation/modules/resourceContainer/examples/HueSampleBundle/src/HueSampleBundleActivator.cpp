@@ -45,11 +45,11 @@ void HueSampleBundleActivator::activateBundle(ResourceContainerBundleAPI *resour
     m_bundleId = bundleId;
     m_connector = new HueConnector();
 
-    vector<Configuration::resourceInfo> resourceConfig;
+    vector<resourceInfo> resourceConfig;
 
     resourceContainer->getResourceConfiguration(m_bundleId, &resourceConfig);
 
-    for (vector<Configuration::resourceInfo>::iterator itor = resourceConfig.begin();
+    for (vector<resourceInfo>::iterator itor = resourceConfig.begin();
          itor != resourceConfig.end(); itor++)
     {
         createResource(*itor);
@@ -68,7 +68,7 @@ void HueSampleBundleActivator::deactivateBundle()
 }
 
 
-void HueSampleBundleActivator::createResource(Configuration::resourceInfo resourceInfo)
+void HueSampleBundleActivator::createResource(resourceInfo resourceInfo)
 {
     std::cout << "HueSampleBundle::createResource called" << std::endl;
 

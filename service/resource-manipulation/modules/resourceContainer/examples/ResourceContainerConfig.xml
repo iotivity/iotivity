@@ -57,4 +57,17 @@
             </resourceInfo>       
         </resources>
     </bundle>
+    <bundle>
+        <id>oic.bundle.hueJavaSample</id>
+        <path>/home/iotivity/development/iotivity-resource-manipulation/service/resource-manipulation/modules/resourceContainer/examples/HueJavaSampleBundle/hue/target/hue-1.0-SNAPSHOT-jar-with-dependencies.jar</path>
+        <activator>org.iotivity.bundle.hue.HueBundleActivator</activator>
+        <version>1.0.0</version>
+        <resources>
+            <resourceInfo>
+                <name>light</name>
+				<resourceType>oic.light.control</resourceType>
+                <address>http://192.168.0.2/api/newdeveloper/lights/1</address>
+            </resourceInfo>       
+        </resources>
+    </bundle>
 </container>

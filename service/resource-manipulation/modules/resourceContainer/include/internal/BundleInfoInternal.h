@@ -24,6 +24,7 @@
 #include <string>
 #include "BundleInfo.h"
 #include "ResourceContainerBundleAPI.h"
+#include "jni.h"
 
 using namespace std;
 using namespace OIC::Service;
@@ -51,8 +52,17 @@ namespace OIC{
                 bool isLoaded();
                 void setActivated(bool activated);
                 bool isActivated();
-                int getId();
-                void setId(int id);
+
+                void setActivatorName(string activatorName);
+                string getActivatorName();
+
+                void setJavaBundleActivatorMethod(jmethodID activator);
+                jmethodID getJavaBundleActivatorMethod();
+                void setJavaBundleDeactivatorMethod(jmethodID deactivator);
+                jmethodID getJavaBundleDeactivatorMethod();
+
+                void setJavaBundleActivatorObject(jobject);
+                jobject getJavaBundleActivatorObject();
 
                 void setBundleActivator(activator_t *);
                 activator_t *getBundleActivator();
@@ -63,12 +73,18 @@ namespace OIC{
                 void setBundleHandle(void *);
                 void *getBundleHandle();
 
+                void setJavaBundle(bool javaBundle);
+                bool getJavaBundle();
+
             private:
-                bool m_loaded, m_activated;
+                bool m_loaded, m_activated, m_java_bundle;
                 int m_id;
                 activator_t *m_activator;
                 deactivator_t *m_deactivator;
                 void *m_bundleHandle;
+                string m_activator_name;
+                jmethodID m_java_activator, m_java_deactivator;
+                jobject m_java_activator_object;
         };
     }
 }

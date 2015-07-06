@@ -20,18 +20,54 @@
 
 #include "BundleResource.h"
 #include "Configuration.h"
+#include <list>
+#include <string.h>
 
-
-namespace OIC{
-    namespace Service{
+namespace OIC
+{
+    namespace Service
+    {
         BundleResource::BundleResource()
         {
-            cout << "BundleResource constructor called\n";
+
         }
 
         BundleResource::~BundleResource()
         {
 
         }
+
+        void BundleResource::registerObserver(NotificationReceiver *pNotiReceiver)
+        {
+            m_pNotiReceiver = pNotiReceiver;
+        }
+
+        void BundleResource::setAttribute(string attributeName, string value)
+        {
+            this->m_mapAttributes[attributeName] = value;
+
+            if (m_pNotiReceiver != NULL && !m_uri.empty())
+            {
+                m_pNotiReceiver->onNotificationReceived(m_uri);
+            }
+
+        }
+
+        std::string BundleResource::getAttribute(string attributeName)
+        {
+            return this->m_mapAttributes[attributeName];
+        }
+
+        std::list< string > BundleResource::getAttributeNames()
+        {
+            std::list< string > ret;
+            for (map< string, string >::iterator it = m_mapAttributes.begin();
+                    it != m_mapAttributes.end(); ++it)
+            {
+                ret.push_back(it->first);
+            }
+            return ret;
+        }
+
     }
 }

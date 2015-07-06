@@ -43,103 +43,34 @@ namespace OIC
 
         Configuration::Configuration()
         {
-            // TODO: temporary path and config file name
+        }
+
+        Configuration::Configuration(string configFile)
+        {
+
             getCurrentPath(&m_pathConfigFile);
             m_pathConfigFile.append("/");
-            m_pathConfigFile.append("ResourceContainerConfig.xml");
+            m_pathConfigFile.append(configFile);
+
+            getConfigDocument(m_pathConfigFile);
         }
 
         Configuration::~Configuration()
         {
         }
 
-        Configuration::Configuration(string configFile)
-        {
-            m_configFile = configFile;
-            getCurrentPath(&m_pathConfigFile);
-            m_pathConfigFile.append("/");
-            m_pathConfigFile.append(m_configFile);
-        }
-
-        void Configuration::getCommonConfiguration(configInfo *configOutput)
-        {
-            string strConfigData;
-
-            rapidxml::xml_document< char > xmlDoc;
-
-            rapidxml::xml_node< char > *root;
-            rapidxml::xml_node< char > *item;
-            rapidxml::xml_node< char > *subItem;
-
-            string strKey, strValue;
-
-            getConfigDocument(m_pathConfigFile, &strConfigData);
-
-            try
-            {
-                xmlDoc.parse< 0 >((char *) strConfigData.c_str());
-
-                // <container>
-                root = xmlDoc.first_node();
-
-                if (!root)
-                {
-                    throw rapidxml::parse_error("No Root Element", 0);
-                }
-                std::map< std::string, std::string > bundleMap;
-                for (item = root->first_node(); item; item = item->next_sibling())
-                {
-                    strKey = item->name();
-                    strValue = item->value();
-
-                    // <config>
-                    if (!strKey.compare("config"))
-                    {
-                        for (subItem = item->first_node(); subItem; subItem =
-                                subItem->next_sibling())
-                        {
-                            strKey = subItem->name();
-                            strValue = subItem->value();
-
-                            bundleMap.insert(
-                                    std::make_pair(trim_both(strKey), trim_both(strValue)));
-                        }
-                        break;
-                    }
-                }
-                configOutput->push_back(bundleMap);
-            }
-            catch (rapidxml::parse_error &e)
-            {
-                cout << "xml parsing failed !!" << endl;
-                cout << e.what() << endl;
-            }
-        }
-
         void Configuration::getConfiguredBundles(configInfo *configOutput)
         {
-            string strConfigData;
-
-            rapidxml::xml_document< char > xmlDoc;
-
             rapidxml::xml_node< char > *bundle;
             rapidxml::xml_node< char > *subItem;
 
             string strKey, strValue;
 
-            cout << "Opening: " << m_pathConfigFile << endl;
-
-            getConfigDocument(m_pathConfigFile, &strConfigData);
-
-            //cout << strConfigData.c_str() << endl;
             try
             {
-
-                xmlDoc.parse< 0 >((char *) strConfigData.c_str());
                 //cout << "Name of first node is: " << xmlDoc.first_node()->name() << endl;
 
-                for (bundle = xmlDoc.first_node()->first_node("bundle"); bundle;
-                        bundle = bundle->next_sibling())
+                for (bundle = m_xmlDoc.first_node()->first_node("bundle"); bundle; bundle = bundle->next_sibling())
                 {
                     std::map< std::string, std::string > bundleMap;
                     //cout << "Bundle: " << bundle->name() << endl;
@@ -147,12 +78,11 @@ namespace OIC
                     {
                         strKey = subItem->name();
                         strValue = subItem->value();
+
                         if (strlen(subItem->value()) > 0)
                         {
-                            bundleMap.insert(
-                                    std::make_pair(trim_both(strKey), trim_both(strValue)));
+                            bundleMap.insert(std::make_pair(trim_both(strKey), trim_both(strValue)));
                             //cout << strKey << " " << strValue << endl;
-
                         }
                     }
                     configOutput->push_back(bundleMap);
@@ -168,58 +98,36 @@ namespace OIC
 
         void Configuration::getBundleConfiguration(string bundleId, configInfo *configOutput)
         {
-            string strConfigData;
+            rapidxml::xml_node< char > *bundle;
 
-            rapidxml::xml_document< char > xmlDoc;
-
-            rapidxml::xml_node< char > *root;
-            rapidxml::xml_node< char > *item;
-            rapidxml::xml_node< char > *subItem;
-
-            string strKey, strValue;
-
-            getConfigDocument(m_pathConfigFile, &strConfigData);
+            string strBundleId, strPath, strVersion;
 
             try
             {
-                xmlDoc.parse< 0 >((char *) strConfigData.c_str());
+                std::map< std::string, std::string > bundleConfigMap;
 
-                // <container>
-                root = xmlDoc.first_node();
-
-                if (!root)
+                // <bundle>
+                for (bundle = m_xmlDoc.first_node()->first_node("bundle"); bundle; bundle = bundle->next_sibling())
                 {
-                    throw rapidxml::parse_error("No Root Element", 0);
-                }
-                std::map< std::string, std::string > bundleMap;
-                for (item = root->first_node(); item; item = item->next_sibling())
-                {
-                    strKey = item->name();
-                    strValue = item->value();
+                    // <id>
+                    strBundleId = bundle->first_node("id")->value();
+                    bundleConfigMap.insert(std::make_pair("id", trim_both(strBundleId)));
 
-                    // <bundle>
-                    if (!strKey.compare("bundle"))
+                    if (!strBundleId.compare(bundleId))
                     {
-                        for (subItem = item->first_node(); subItem; subItem =
-                                subItem->next_sibling())
-                        {
-                            strKey = subItem->name();
-                            strValue = subItem->value();
+                        // <path>
+                        strPath = bundle->first_node("path")->value();
+                        bundleConfigMap.insert(std::make_pair("id", trim_both(strPath)));
 
-                            if (!strKey.compare("bundleID") && strValue.compare(bundleId))
-                                break;
+                        // <version>
+                        strVersion = bundle->first_node("version")->value();
+                        bundleConfigMap.insert(std::make_pair("id", trim_both(strVersion)));
 
-                            // bundle info (except resource data)
-                            if (strKey.compare("resources"))
-                            {
-                                bundleMap.insert(
-                                        std::make_pair(trim_both(strKey), trim_both(strValue)));
-                            }
-                        }
+                        break;
                     }
                 }
-                configOutput->push_back(bundleMap);
 
+                configOutput->push_back(bundleConfigMap);
             }
             catch (rapidxml::parse_error &e)
             {
@@ -228,124 +136,83 @@ namespace OIC
             }
         }
 
-        void Configuration::getResourceConfiguration(string bundleId,
-                vector< resourceInfo > *configOutput)
+        void Configuration::getResourceConfiguration(std::string bundleId,
+                std::vector< resourceInfo > *configOutput)
         {
-            string strConfigData;
+            rapidxml::xml_node< char > *bundle;
+            rapidxml::xml_node< char > *resource;
+            rapidxml::xml_node< char > *item, *subItem, *subItem2;
 
-            rapidxml::xml_document< char > xmlDoc;
-
-            rapidxml::xml_node< char > *root;
-            rapidxml::xml_node< char > *item;
-            rapidxml::xml_node< char > *subItem, *subItem2, *subItem3, *subItem4, *subItem5;
-
+            string strBundleId;
             string strKey, strValue;
-
-            getConfigDocument(m_pathConfigFile, &strConfigData);
 
             try
             {
-                xmlDoc.parse< 0 >((char *) strConfigData.c_str());
-
-                // <container>
-                root = xmlDoc.first_node();
-
-                if (!root)
+                // <bundle>
+                for (bundle = m_xmlDoc.first_node()->first_node("bundle"); bundle; bundle = bundle->next_sibling())
                 {
-                    throw rapidxml::parse_error("No Root Element", 0);
-                }
+                    // <id>
+                    strBundleId = bundle->first_node("id")->value();
 
-                for (item = root->first_node(); item; item = item->next_sibling())
-                {
-                    strKey = item->name();
-                    strValue = item->value();
-
-                    // <bundle>
-                    if (!strKey.compare("bundle"))
+                    if (!strBundleId.compare(bundleId))
                     {
-                        for (subItem = item->first_node(); subItem; subItem =
-                                subItem->next_sibling())
+                        // <resourceInfo>
+                        for (resource = bundle->first_node("resources")->first_node("resourceInfo"); resource;
+                             resource = resource->next_sibling())
                         {
-                            strKey = subItem->name();
-                            strValue = subItem->value();
+                            resourceInfo tempResourceInfo;
 
-                            if (!strKey.compare("bundleID") && strValue.compare(bundleId))
-                                break;
-
-                            // <resources>
-                            if (!strKey.compare("resources"))
+                            for (item = resource->first_node(); item; item = item->next_sibling())
                             {
-                                for (subItem2 = subItem->first_node(); subItem2;
-                                        subItem2 = subItem2->next_sibling())
+                                strKey = item->name();
+                                strValue = item->value();
+
+                                if (!strKey.compare("name"))
+                                    tempResourceInfo.name = trim_both(strValue);
+
+                                else if (!strKey.compare("uri"))
+                                    tempResourceInfo.uri = trim_both(strValue);
+
+                                else if (!strKey.compare("address"))
+                                    tempResourceInfo.address = trim_both(strValue);
+
+                                else if (!strKey.compare("resourceType"))
+                                    tempResourceInfo.resourceType = trim_both(strValue);
+
+                                else
                                 {
-                                    strKey = subItem2->name();
-                                    strValue = subItem2->value();
-
-                                    // <resourceInfo> : for 1 resource
-                                    if (!strKey.compare("resourceInfo"))
+                                    for (subItem = item->first_node(); subItem; subItem = subItem->next_sibling())
                                     {
-                                        resourceInfo tempResourceInfo;
+                                        map< string, string > propertyMap;
 
-                                        for (subItem3 = subItem2->first_node(); subItem3; subItem3 =
-                                                subItem3->next_sibling())
+                                        strKey = subItem->name();
+
+                                        for (subItem2 = subItem->first_node(); subItem2; subItem2 = subItem2->next_sibling())
                                         {
+                                            string newStrKey = subItem2->name();
+                                            string newStrValue = subItem2->value();
 
-                                            strKey = subItem3->name();
-                                            strValue = subItem3->value();
-
-                                            if (!strKey.compare("name"))
-                                                tempResourceInfo.name = trim_both(strValue);
-
-                                            else if (!strKey.compare("uri"))
-                                                tempResourceInfo.uri = trim_both(strValue);
-
-                                            else if (!strKey.compare("address"))
-                                                tempResourceInfo.address = trim_both(strValue);
-
-                                            else if (!strKey.compare("resourceType"))
-                                                tempResourceInfo.resourceType = trim_both(strValue);
-
-                                            else
-                                            {
-                                                for (subItem4 = subItem3->first_node(); subItem4;
-                                                        subItem4 = subItem4->next_sibling())
-                                                {
-                                                    map< string, string > propertyMap;
-
-                                                    strKey = subItem4->name();
-
-                                                    for (subItem5 = subItem4->first_node();
-                                                            subItem5;
-                                                            subItem5 = subItem5->next_sibling())
-                                                    {
-                                                        string newStrKey = subItem5->name();
-                                                        string newStrValue = subItem5->value();
-
-                                                        propertyMap[trim_both(newStrKey)] =
-                                                                trim_both(newStrValue);
-                                                    }
-
-                                                    tempResourceInfo.resourceProperty[trim_both(
-                                                            strKey)].push_back(propertyMap);
-                                                }
-                                            }
+                                            propertyMap[trim_both(newStrKey)] = trim_both(newStrValue);
                                         }
-                                        configOutput->push_back(tempResourceInfo);
+
+                                        tempResourceInfo.resourceProperty[trim_both(strKey)].push_back(propertyMap);
                                     }
                                 }
                             }
+                            configOutput->push_back(tempResourceInfo);
                         }
                     }
                 }
             }
             catch (rapidxml::parse_error &e)
             {
-                cout << "xml parsing failed !!" << endl;
-                cout << e.what() << endl;
+                std::cout << "xml parsing failed !!" << std::endl;
+                std::cout << e.what() << std::endl;
             }
+
         }
 
-        void Configuration::getConfigDocument(std::string pathConfigFile, std::string *pConfigData)
+        void Configuration::getConfigDocument(std::string pathConfigFile)
         {
             std::basic_ifstream< char > xmlFile(pathConfigFile.c_str());
 
@@ -360,7 +227,18 @@ namespace OIC
 
                 xmlFile.read(&xmlData.front(), (std::streamsize) size);
                 xmlFile.close();
-                *pConfigData = std::string(xmlData.data());
+                m_strConfigData = std::string(xmlData.data());
+
+                try
+                {
+                    m_xmlDoc.parse< 0 >((char *)m_strConfigData.c_str());
+
+                }
+                catch (rapidxml::parse_error &e)
+                {
+                    std::cout << "xml parsing failed !!" << std::endl;
+                    std::cout << e.what() << std::endl;
+                }
             }
             else
             {
@@ -368,7 +246,7 @@ namespace OIC
             }
         }
 
-        void Configuration::getCurrentPath(std::string *path)
+        void Configuration::getCurrentPath(std::string *pPath)
         {
             char buffer[2048];
             char *strPath = NULL;
@@ -381,7 +259,7 @@ namespace OIC
 
             *strPath = '\0';
 
-            path->append(buffer);
+            pPath->append(buffer);
         }
     }
 }

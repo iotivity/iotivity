@@ -55,7 +55,7 @@ namespace DiscomfortIndexSensorName
     {
         private:
 
-            static physicalInput s_PHYSICAL_SOFTSENSORs[PHYSICAL_EA];
+            physicalInput s_PHYSICAL_SOFTSENSORs[PHYSICAL_EA];
 
             class InValue
             {
@@ -70,7 +70,7 @@ namespace DiscomfortIndexSensorName
             InValue m_result;
 
         public:
-            DiscomfortIndexSensor();
+            DiscomfortIndexSensor(vector <string> inputs);
 
             int runLogic(std::vector< SoftSensorResource::SensorData > &sensorData);
             DIResult getInput(std::vector< SoftSensorResource::SensorData > &contextDataList,

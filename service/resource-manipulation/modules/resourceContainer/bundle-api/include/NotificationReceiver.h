@@ -18,32 +18,22 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef SOFTSENSORRESOURCE_H_
-#define SOFTSENSORRESOURCE_H_
+#ifndef NOTIFICATIONRECEIVER_H_
+#define NOTIFICATIONRECEIVER_H_
 
-#include "BundleResource.h"
+#include <string>
 
 namespace OIC
 {
     namespace Service
     {
-        class SoftSensorResource: public BundleResource
+        class NotificationReceiver
         {
-        public:
-            struct SensorData
-            {
-                string sensorName;
-                vector< map< string, string > > data;
-            };
+            public:
+                NotificationReceiver() {};
+                ~NotificationReceiver() {};
 
-            SoftSensorResource();
-            virtual ~SoftSensorResource();
-
-            virtual void setInputAttributes(vector< SensorData > inputs) = 0;
-
-            int inputCount;
-            map< string, SensorData > m_mapStoredInputData;
-            SensorData m_outputs;
+                virtual void onNotificationReceived(std::string strResourceUri) = 0;
         };
     }
 }

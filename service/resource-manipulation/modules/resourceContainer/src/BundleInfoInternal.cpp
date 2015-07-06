@@ -84,16 +84,6 @@ namespace OIC
             return m_activated;
         }
 
-        int BundleInfoInternal::getId()
-        {
-            return m_id;
-        }
-
-        void BundleInfoInternal::setId(int id)
-        {
-            m_id = id;
-        }
-
         void BundleInfoInternal::setBundleActivator(activator_t *activator)
         {
             m_activator = activator;
@@ -119,9 +109,67 @@ namespace OIC
             m_bundleHandle = handle;
         }
 
-        void *BundleInfoInternal::getBundleHandle()
+        void* BundleInfoInternal::getBundleHandle()
         {
             return m_bundleHandle;
+        }
+
+        void BundleInfoInternal::setJavaBundle(bool javaBundle)
+        {
+            m_java_bundle = javaBundle;
+        }
+
+        bool BundleInfoInternal::getJavaBundle()
+        {
+            return m_java_bundle;
+        }
+
+        void BundleInfoInternal::setActivatorName(string activatorName)
+        {
+            m_activator_name = activatorName;
+        }
+
+        string BundleInfoInternal::getActivatorName()
+        {
+            return m_activator_name;
+        }
+
+        void BundleInfoInternal::setJavaBundleActivatorMethod(jmethodID javaBundleActivator)
+        {
+            m_java_activator = javaBundleActivator;
+        }
+
+        jmethodID BundleInfoInternal::getJavaBundleActivatorMethod()
+        {
+            return m_java_activator;
+        }
+
+        void BundleInfoInternal::setJavaBundleDeactivatorMethod(jmethodID javaBundleActivator)
+        {
+            m_java_deactivator = javaBundleActivator;
+        }
+
+        jmethodID BundleInfoInternal::getJavaBundleDeactivatorMethod()
+        {
+            return m_java_deactivator;
+        }
+
+        /*void BundleInfoInternal::setJavaBundleActivatorClass(jclass activator_class)
+        {
+            m_java_activator_class = activator_class;
+        }
+
+        jclass BundleInfoInternal::getJavaBundleActivatorClass()
+        {
+            return m_java_activator_class;
+        }*/
+
+        void BundleInfoInternal::setJavaBundleActivatorObject(jobject activator_object){
+            m_java_activator_object = activator_object;
+        }
+
+        jobject BundleInfoInternal::getJavaBundleActivatorObject(){
+            return m_java_activator_object;
         }
     }
 }

@@ -25,7 +25,6 @@
 using namespace OIC::Service;
 using OC::oc_log_stream;
 
-
 /* Annother way to create a context: */
 auto info_logger = []() -> boost::iostreams::stream<OC::oc_log_stream> &
 {
@@ -35,6 +34,7 @@ auto info_logger = []() -> boost::iostreams::stream<OC::oc_log_stream> &
     return os;
 };
 
+
 int main()
 {
     info_logger()->set_module("ContainerTest");
@@ -43,11 +43,62 @@ int main()
     info_logger() << "Starting container test." << std::flush;
 
     ResourceContainer *container = ResourceContainer::getInstance();
-    container->init("examples/ResourceContainerConfig.xml");
+    container->startContainer("examples/ResourceContainerConfig.xml");
+
+    std::list<BundleInfo*> bundles = container->listBundles();
+    std::list<BundleInfo*>::iterator bundleIt;
+
+    for(bundleIt = bundles.begin(); bundleIt != bundles.end(); bundleIt++){
+        BundleInfo* bi = *bundleIt;
+        info_logger() << "Available bundle: " << bi->getID() << endl;
+    }
+
+    /*int menu;
+
+    cout << "press \'1\' to test discomfortIndexSensor" << endl;
+    cin >> menu;
+
+    if (menu == 1)
+    {
+        string testingSoftSensor = "/sampleBundle/discomfortIndex/0";
+
+        SoftSensorResource::SensorData Thing_TempHumSensor;
+        SoftSensorResource::SensorData Thing_TempHumSensor1;
+
+        map < string, string > data;
+        data["name"] = "temperature";
+        data["type"] = "int";
+        data["value"] = "25";
+
+        map < string, string > data1;
+        data1["name"] = "humidity";
+        data1["type"] = "int";
+        data1["value"] = "40";
+
+        Thing_TempHumSensor.sensorName = "Thing_TempHumSensor";
+        Thing_TempHumSensor.data.push_back(data);
+        Thing_TempHumSensor.data.push_back(data1);
+
+        Thing_TempHumSensor1.sensorName = "Thing_TempHumSensor1";
+        Thing_TempHumSensor1.data.push_back(data);
+        Thing_TempHumSensor1.data.push_back(data1);
+
+        container->setInputAttribute(testingSoftSensor, Thing_TempHumSensor);
+        container->setInputAttribute(testingSoftSensor, Thing_TempHumSensor1);
+
+        cout << endl << endl;
+
+        // TEST :: change data (change humidity data of Thing_TempHumSensor1)
+        data["value"] = "33";
+        data1["value"] = "80";
+        Thing_TempHumSensor1.data.clear();
+        Thing_TempHumSensor1.data.push_back(data);
+        Thing_TempHumSensor1.data.push_back(data1);
+        container->setInputAttribute(testingSoftSensor, Thing_TempHumSensor1);
+    }*/
 
     while (1)
     {
         ;
     }
 }
-

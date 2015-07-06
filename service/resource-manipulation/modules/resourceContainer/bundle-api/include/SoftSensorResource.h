@@ -18,34 +18,36 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef BUNDLERESOURCE_H_
-#define BUNDLERESOURCE_H_
+#ifndef SOFTSENSORRESOURCE_H_
+#define SOFTSENSORRESOURCE_H_
 
-#include <map>
-#include <vector>
-#include <string>
-
-using namespace std;
+#include "BundleResource.h"
 
 namespace OIC
 {
     namespace Service
     {
-        class BundleResource
+        class SoftSensorResource: public BundleResource
         {
-        public:
-            BundleResource();
-            virtual ~BundleResource();
+            public:
+                struct SensorData
+                {
+                    string sensorName;
+                    vector< map< string, string > > data;
+                };
 
-            // TODO use type variant mechanism
-            virtual void getAttribute(string attributeName) = 0;
-            virtual void setAttribute(string attributeName, string value) = 0;
-            virtual void initAttributes() = 0;
+                SoftSensorResource();
+                virtual ~SoftSensorResource();
 
-        public:
-            string m_name, m_uri, m_resourceType, m_address;
-            map< string, vector< map< string, string > > > m_mapResourceProperty;
-            map< string, string > m_mapAttributes;
+                virtual string getAttribute(string attributeName) = 0;
+                virtual void setAttribute(string attributeName, string value) = 0;
+
+                virtual void setInputAttribute(SensorData inputs) = 0;
+
+                int inputCount;
+                vector<string> m_vecInputAttributes;
+                map< string, SensorData > m_mapStoredInputData;
+                SensorData m_outputs;
         };
     }
 }
