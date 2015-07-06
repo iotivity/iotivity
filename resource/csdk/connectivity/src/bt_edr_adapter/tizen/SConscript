@@ -3,6 +3,7 @@
 #######################################################
 
 Import('env', 'src_dir')
+import os.path
 
 env.PrependUnique(CPPPATH = [ os.path.join(src_dir, 'tizen'),
                               './con/lib/tizen/ble/inc',
@@ -15,6 +16,6 @@ src_files = [ 'caedrclient.c',
               'caedrendpoint.c',
               'caedrnwmonitor.c',
               'caedrserver.c',
-              'caedrutils.c' ])
+              'caedrutils.c' ]
 
 Return('src_files')
