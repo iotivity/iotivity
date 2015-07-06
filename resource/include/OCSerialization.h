@@ -242,6 +242,15 @@ namespace OC
                     {
                         if(res.loaded())
                         {
+                            if (res.secureType() == OCSecureType::Secure)
+                            {
+                                m_devAddr.flags =
+                                    (OCTransportFlags)(OC_FLAG_SECURE | m_devAddr.flags);
+                            }
+                            if (res.port() != -1)
+                            {
+                                m_devAddr.port = res.port();
+                            }
                             m_resources.push_back(std::shared_ptr<OCResource>(
                                 new OCResource(m_clientWrapper, m_devAddr,
                                     res.m_uri, res.m_serverId, res.observable(),
@@ -258,6 +267,6 @@ namespace OC
             }
             std::vector<std::shared_ptr<OC::OCResource>> m_resources;
             std::weak_ptr<IClientWrapper> m_clientWrapper;
-            const OCDevAddr& m_devAddr;
+            OCDevAddr m_devAddr;
     };
 }
