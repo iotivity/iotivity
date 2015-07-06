@@ -13,12 +13,9 @@ src_dir = os.path.join(os.curdir, 'bt_le_adapter')
 
 # Source files to build common for all platforms.
 common_files = None
-if target_os != 'arduino':
-        common_files = [ os.path.join(src_dir,
+common_files = [ os.path.join(src_dir,
                                       'caleadapter.c') ]
-else:
-        common_files = [ os.path.join(src_dir,
-                                      'caleadapter_singlethread.c') ]
+
 
 # Get list of target-specific source file base names, i.e. no parent
 # directories prepended to the path.

@@ -192,7 +192,13 @@ void CResourceFinder::onExecute(void *pArg)
         case RESOURCE_DISCOVER_REQUESTPROFILE:
             pResource = (std::shared_ptr< OC::OCResource > *) pMessage[1];
             pResourceHandler = new OICResourceHandler();
-            SSM_CLEANUP_ASSERT(pResourceHandler->initHandler(*pResource, this));
+
+            res = pResourceHandler->initHandler(*pResource, this);
+            if(res != SSM_S_OK)
+            {
+                SAFE_DELETE(pResourceHandler);
+                SSM_CLEANUP_ASSERT(res);
+            }
 
             resourceFullPath = pResource->get()->host() + pResource->get()->uri();
 
