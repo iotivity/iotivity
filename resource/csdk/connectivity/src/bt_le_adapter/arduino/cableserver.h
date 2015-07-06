@@ -42,48 +42,31 @@ extern "C"
  * @brief API to initialize Arduino BLE module and advertise the service
  * @return #CA_STATUS_OK or Appropriate error code
  */
-CAResult_t CAInitializeBle();
-
-/**
- * @brief API to Terminate Arduino BLE module and advertise the service
- * @return #CA_STATUS_OK or Appropriate error code
- */
-CAResult_t CATerminateBle();
-
-/**
- * @brief Send the received data to Connectivity Abstraction layer.
- * @param data       [IN] Data received from BLE characteristics
- * @param dataLen    [IN] Received data Length
- * @param senderAdrs [IN] Sender Address.
- * @param senderPort [IN] Sender port
- * @return #CA_STATUS_OK or Appropriate error code
- */
-void CANotifyCallback(const void *data, int32_t dataLen, const char *senderAdrs,
-                      int32_t senderPort);
+CAResult_t CALEInitialize();
 
 /**
  * @brief API to check whether data is available in BLE shield
  * @return - Received buffer length
  */
-unsigned char CAIsBleDataAvailable();
+unsigned char CAIsLEDataAvailable();
 
 /**
  * @brief API to check whether client is connected with BLE Shield
  * @return - Connection state
  */
-unsigned char CAIsBleConnected();
+unsigned char CAIsLEConnected();
 
 /**
  * @brief API to read data from BLE shield
  * @return - Data read
  */
-char CAReadBleData();
+char CALEReadData();
 
 /**
  * @brief API to perform BLE events
  * @return #CA_STATUS_OK or Appropriate error code
  */
-CAResult_t CABleDoEvents();
+CAResult_t CALEDoEvents();
 
 #ifdef __cplusplus
 } /* extern "C" */

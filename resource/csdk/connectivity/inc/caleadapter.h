@@ -174,8 +174,9 @@ void CATerminateLE();
  * @retval #CA_STATUS_FAILED Operation failed
  *
  */
-CAResult_t CABLEServerReceivedData(const char *remoteAddress, const char *serviceUUID,
-                                   const void *data, uint32_t dataLength, uint32_t *sentLength);
+CAResult_t CALEAdapterServerReceivedData(const char *remoteAddress, const char *serviceUUID,
+                                         const void *data, uint32_t dataLength,
+                                         uint32_t *sentLength);
 
 /**
  * @brief  This function will receive the data from the GattClient and add the data into the
@@ -190,8 +191,9 @@ CAResult_t CABLEServerReceivedData(const char *remoteAddress, const char *servic
  * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
  * @retval #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CABLEClientReceivedData(const char *remoteAddress, const char *serviceUUID,
-                                   const void *data, uint32_t dataLength, uint32_t *sentLength);
+CAResult_t CALEAdapterClientReceivedData(const char *remoteAddress, const char *serviceUUID,
+                                         const void *data, uint32_t dataLength,
+                                         uint32_t *sentLength);
 
 /**
  * @brief  This function is used to set the NetworkPacket received callback to CA layer from
@@ -199,7 +201,7 @@ CAResult_t CABLEClientReceivedData(const char *remoteAddress, const char *servic
  * @param  callback [IN] callback handle sent from the upper layer.
  * @return NONE
  */
-void CASetBLEReqRespAdapterCallback(CANetworkPacketReceivedCallback callback);
+void CASetLEReqRespAdapterCallback(CANetworkPacketReceivedCallback callback);
 
 /**
  * @brief  This function will push the data from CA layer to the Sender processor queue.
@@ -213,8 +215,8 @@ void CASetBLEReqRespAdapterCallback(CANetworkPacketReceivedCallback callback);
  * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
  * @retval #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CABLEServerSendData(const CAEndpoint_t *remoteEndpoint,
-                               const void *data, uint32_t dataLen);
+CAResult_t CALEAdapterServerSendData(const CAEndpoint_t *remoteEndpoint,
+                                     const void *data, uint32_t dataLen);
 
 /**
  * @brief  This function will push the data from CA layer to the Sender processor queue.
@@ -228,8 +230,8 @@ CAResult_t CABLEServerSendData(const CAEndpoint_t *remoteEndpoint,
  * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
  * @retval #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CABLEClientSendData(const CAEndpoint_t *remoteEndpoint,
-                               const void *data,  uint32_t dataLen);
+CAResult_t CALEAdapterClientSendData(const CAEndpoint_t *remoteEndpoint,
+                                     const void *data,  uint32_t dataLen);
 
 /**
  * @brief  This function will be associated with the sender queue for GattServer.This function will
@@ -241,7 +243,7 @@ CAResult_t CABLEClientSendData(const CAEndpoint_t *remoteEndpoint,
  *
  * @return  NONE
  */
-void CABLEServerSendDataThread(void *threadData);
+void CALEServerSendDataThread(void *threadData);
 
 /**
  * @brief  This function will be associated with the sender queue for GattClient.This function will
@@ -253,7 +255,7 @@ void CABLEServerSendDataThread(void *threadData);
  *
  * @return NONE
  */
-void CABLEClientSendDataThread(void *threadData);
+void CALEClientSendDataThread(void *threadData);
 
 /**
  * @brief  This function will be associated with the receiver queue of GattServer. This function
@@ -266,7 +268,7 @@ void CABLEClientSendDataThread(void *threadData);
  *
  * @return  NONE
  */
-void CABLEServerDataReceiverHandler(void *threadData);
+void CALEServerDataReceiverHandler(void *threadData);
 
 /**
  * @brief  This function will be associated with the receiver queue of GattClient. This function
@@ -278,28 +280,28 @@ void CABLEServerDataReceiverHandler(void *threadData);
  *                         and Data.
  * @return NONE
  */
-void CABLEClientDataReceiverHandler(void *threadData);
+void CALEClientDataReceiverHandler(void *threadData);
 
 /**
  * @brief  This function is used to Initalize both GattServer and GattClient queues. All four
  *         queues will be initialized with this function invocations.
  * @return  NONE
  */
-void CAInitBleQueues();
+void CAInitLEQueues();
 
 /**
  * @brief  This function will stop all queues created for GattServer and GattClient. All
  *         four queues will be be stopped with this function invocations.
  * @return  NONE
  */
-void CAStopBleQueues();
+void CAStopLEQueues();
 
 /**
  * @brief  This function will terminate all queues created for GattServer and GattClient. All
  *         four queues will be be terminated with this function invocations.
  * @return  NONE
  */
-void CATerminateBleQueues();
+void CATerminateLEQueues();
 
 /**
  * @brief  This function will initalize the Receiver and Sender queues for GattServer. This
@@ -310,7 +312,7 @@ void CATerminateBleQueues();
  * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
  * @retval #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAInitBleServerQueues();
+CAResult_t CAInitLEServerQueues();
 
 /**
  * @brief  This function will initalize the Receiver and Sender queues for GattClient. This
@@ -323,7 +325,7 @@ CAResult_t CAInitBleServerQueues();
  * @retval #CA_STATUS_FAILED Operation failed
  *
  */
-CAResult_t CAInitBleClientQueues();
+CAResult_t CAInitLEClientQueues();
 
 /**
  * @brief  This function will initalize the Receiver queue for GattServer. This will initialize
@@ -335,7 +337,7 @@ CAResult_t CAInitBleClientQueues();
  * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
  * @retval #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAInitBleServerSenderQueue();
+CAResult_t CAInitLEServerSenderQueue();
 
 /**
  * @brief  This function will initalize the Receiver queue for GattClient. This will initialize
@@ -347,7 +349,7 @@ CAResult_t CAInitBleServerSenderQueue();
  * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
  * @retval #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAInitBleClientSenderQueue();
+CAResult_t CAInitLEClientSenderQueue();
 
 /**
  * @brief  This function will initalize the Receiver queue for GattServer. This will initialize
@@ -360,7 +362,7 @@ CAResult_t CAInitBleClientSenderQueue();
  * @retval #CA_STATUS_FAILED Operation failed
  *
  */
-CAResult_t CAInitBleServerReceiverQueue();
+CAResult_t CAInitLEServerReceiverQueue();
 
 /**
  * @brief  This function will initalize the Receiver queue for GattClient. This will initialize
@@ -372,7 +374,7 @@ CAResult_t CAInitBleServerReceiverQueue();
  * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
  * @retval #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAInitBleClientReceiverQueue();
+CAResult_t CAInitLEClientReceiverQueue();
 
 /**
  * @brief  This function will create the Data required to send it in the queue.
@@ -386,7 +388,7 @@ CAResult_t CAInitBleClientReceiverQueue();
  * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
  * @retval #CA_STATUS_FAILED Operation failed
  */
-CALEData_t *CACreateBLEData(const CAEndpoint_t *remoteEndpoint, const void *data,
+CALEData_t *CACreateLEData(const CAEndpoint_t *remoteEndpoint, const void *data,
                            uint32_t dataLength);
 
 /**
@@ -394,7 +396,7 @@ CALEData_t *CACreateBLEData(const CAEndpoint_t *remoteEndpoint, const void *data
  * @param bleData [IN] Structure contains the information of a particular data segment.
  * @return NONE
  */
-void CAFreeBLEData(CALEData_t *bleData);
+void CAFreeLEData(CALEData_t *bleData);
 
 /**
  * @brief This will be used to notify device status changes to the LE adapter layer

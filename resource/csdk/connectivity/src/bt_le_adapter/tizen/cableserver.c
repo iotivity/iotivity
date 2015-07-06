@@ -150,7 +150,7 @@ void CABleGattServerConnectionStateChangedCb(int result, bool connected,
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "OUT");
 }
 
-CAResult_t CAStartBleGattServer()
+CAResult_t CAStartLEGattServer()
 {
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
 
@@ -192,7 +192,7 @@ void CAStartBleGattServerThread(void *data)
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "Gatt Server is already running");
         ca_mutex_unlock(g_bleServerStateMutex);
-        CATerminateBleGattServer();
+        CATerminateLEGattServer();
         return;
     }
 
@@ -201,7 +201,7 @@ void CAStartBleGattServerThread(void *data)
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "_bt_gatt_init_service failed");
         ca_mutex_unlock(g_bleServerStateMutex);
-        CATerminateBleGattServer();
+        CATerminateLEGattServer();
         return;
     }
 
@@ -214,7 +214,7 @@ void CAStartBleGattServerThread(void *data)
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "CAAddNewBleServiceInGattServer failed");
         ca_mutex_unlock(g_bleServerStateMutex);
-        CATerminateBleGattServer();
+        CATerminateLEGattServer();
         return;
     }
 
@@ -227,7 +227,7 @@ void CAStartBleGattServerThread(void *data)
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "CAAddNewCharacteristicsToGattServer failed");
         ca_mutex_unlock(g_bleServerStateMutex);
-        CATerminateBleGattServer();
+        CATerminateLEGattServer();
         return;
     }
 
@@ -241,7 +241,7 @@ void CAStartBleGattServerThread(void *data)
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "CAAddNewCharacteristicsToGattServer failed");
         ca_mutex_unlock(g_bleServerStateMutex);
-        CATerminateBleGattServer();
+        CATerminateLEGattServer();
         return;
     }
 
@@ -250,7 +250,7 @@ void CAStartBleGattServerThread(void *data)
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "CARegisterBleServicewithGattServer failed");
         ca_mutex_unlock(g_bleServerStateMutex);
-        CATerminateBleGattServer();
+        CATerminateLEGattServer();
         return;
     }
 
@@ -269,7 +269,7 @@ void CAStartBleGattServerThread(void *data)
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "g_hAdvertiser is NULL");
         ca_mutex_unlock(g_bleServerStateMutex);
-        CATerminateBleGattServer();
+        CATerminateLEGattServer();
         return;
     }
 
@@ -279,7 +279,7 @@ void CAStartBleGattServerThread(void *data)
         OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "bt_adapter_le_start_advertising failed with ret [%d] ",
                   res);
         ca_mutex_unlock(g_bleServerStateMutex);
-        CATerminateBleGattServer();
+        CATerminateLEGattServer();
         return;
     }
 
@@ -303,7 +303,7 @@ void CAStartBleGattServerThread(void *data)
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "OUT");
 }
 
-CAResult_t CAStopBleGattServer()
+CAResult_t CAStopLEGattServer()
 {
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
 
@@ -375,7 +375,7 @@ CAResult_t CAStopBleGattServer()
     return CA_STATUS_OK;
 }
 
-void CATerminateBleGattServer()
+void CATerminateLEGattServer()
 {
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
 
@@ -496,7 +496,7 @@ CAResult_t CADeInitBleGattService()
     return CA_STATUS_OK;
 }
 
-void CASetBleServerThreadPoolHandle(ca_thread_pool_t handle)
+void CASetLEServerThreadPoolHandle(ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
     ca_mutex_lock(g_bleServerThreadPoolMutex);
@@ -755,8 +755,7 @@ CAResult_t CAUpdateCharacteristicsToGattClient(const char* address, const char *
     return CA_STATUS_OK;
 }
 
-CAResult_t CAUpdateCharacteristicsToAllGattClients(const char *charValue,
-        const uint32_t charValueLen)
+CAResult_t CAUpdateCharacteristicsToAllGattClients(const char *charValue, uint32_t charValueLen)
 {
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
 
@@ -801,7 +800,7 @@ CAResult_t CAUpdateCharacteristicsToAllGattClients(const char *charValue,
     return CA_STATUS_OK;
 }
 
-void CASetBLEReqRespServerCallback(CABLEServerDataReceivedCallback callback)
+void CASetLEReqRespServerCallback(CABLEServerDataReceivedCallback callback)
 {
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
 
