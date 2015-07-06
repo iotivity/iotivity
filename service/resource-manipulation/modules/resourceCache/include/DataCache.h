@@ -29,7 +29,7 @@
 #include "logger.h"
 
 #include "CacheTypes.h"
-#include "PrimitiveTimer.h"
+#include "ExpiryTimer.h"
 
 class DataCache
 {
@@ -51,23 +51,19 @@ public:
     SubscriberInfoPair findSubscriber(CacheID id);
 
 private:
-    // origin resource info
-    std::string uri;
-    std::string address;
-
     // resource instance
     PrimitiveResourcePtr sResource;
     std::shared_ptr<BaseResource> baseHandler;
 
     // cached data info
     ResourceAttributes attributes;
-    long updateTime;
     CACHE_STATE state;
 
     // subscriber info
     std::unique_ptr<SubscriberInfo> subscriberList;
 
-    PrimitiveTimer *timerInstance;
+    // timer info
+    ExpiryTimer *timerInstance;
     TimerID expiredTimerId;
 
     // for requestCB from base

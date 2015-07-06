@@ -31,7 +31,7 @@
 
 #include "ResponseStatement.h"
 #include "ResourceAttributes.h"
-#include "PrimitiveTimer.h"
+#include "ExpiryTimer.h"
 
 DataCache::DataCache(
             PrimitiveResourcePtr pResource,
@@ -42,9 +42,8 @@ DataCache::DataCache(
 {
     subscriberList = std::unique_ptr<SubscriberInfo>(new SubscriberInfo());
 
-    timerInstance = new PrimitiveTimer;
+    timerInstance = new ExpiryTimer;
     state = CACHE_STATE::READY_YET;
-    updateTime = 0l;
 
     pObserveCB = (ObserveCB)(std::bind(&DataCache::onObserve, this,
             std::placeholders::_1, std::placeholders::_2,
@@ -58,11 +57,6 @@ DataCache::DataCache(
     {
         pResource->requestObserve(pObserveCB);
         expiredTimerId = timerInstance->requestTimer(DEFAULT_EXPIRED_TIME, pTimerCB);
-    }
-    else
-    {
-        // TODO set timer
-        TimerID timerId = timerInstance->requestTimer(repeatTime, pTimerCB);
     }
 }
 
@@ -79,8 +73,8 @@ CacheID DataCache::addSubscriber(CacheCB func, REPORT_FREQUENCY rf, long repeatT
 {
     Report_Info newItem;
     newItem.rf = rf;
-    newItem.latestReportTime = 0l;
     newItem.repeatTime = repeatTime;
+    newItem.timerID = 0;
 
     srand(time(NULL));
     newItem.reportID = rand();
@@ -97,7 +91,11 @@ CacheID DataCache::addSubscriber(CacheCB func, REPORT_FREQUENCY rf, long repeatT
         }
     }
 
+    TimerID timerId = timerInstance->requestTimer(repeatTime, pTimerCB);
+    newItem.timerID = timerId;
+
     subscriberList->insert(std::make_pair(newItem.reportID, std::make_pair(newItem, func)));
+
 
     return newItem.reportID;
 }
@@ -143,6 +141,7 @@ const ResourceAttributes DataCache::getCachedData() const
         return ResourceAttributes();
     }
     const ResourceAttributes retAtt = attributes;
+
     return retAtt;
 }
 
@@ -164,6 +163,12 @@ void DataCache::onObserve(
     state = CACHE_STATE::READY;
 
     attributes = _rep.getAttributes();
+
+    if(sResource->isObservable())
+    {
+        timerInstance->cancelTimer(expiredTimerId);
+        expiredTimerId = timerInstance->requestTimer(DEFAULT_EXPIRED_TIME, pTimerCB);
+    }
 
     // notify!!
     ResourceAttributes retAtt = attributes;
@@ -222,5 +227,15 @@ void *DataCache::onTimer(const unsigned int timerID)
         expiredTimerId = timerInstance->requestTimer(DEFAULT_EXPIRED_TIME, pTimerCB);
     }
     else
-        TimerID timerId = timerInstance->requestTimer(5l, pTimerCB);
+    {
+        for(auto & i : * subscriberList)
+        {
+            if(i.second.first.timerID == timerID)
+            {
+                TimerID timerId = timerInstance->requestTimer(i.second.first.repeatTime, pTimerCB);
+                i.second.first.timerID = timerId;
+                break;
+            }
+        }
+    }
 }

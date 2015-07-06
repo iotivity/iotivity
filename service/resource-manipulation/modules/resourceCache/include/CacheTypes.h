@@ -51,8 +51,8 @@ struct Report_Info
 {
     REPORT_FREQUENCY rf;
     int reportID;
-    long latestReportTime;
     long repeatTime;
+    unsigned int timerID;
 };
 
 enum class CACHE_STATE

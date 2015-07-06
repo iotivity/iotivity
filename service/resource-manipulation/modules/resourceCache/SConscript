@@ -43,8 +43,8 @@ target_os = env.get('TARGET_OS')
 ######################################################################
 resourcecache_env.AppendUnique(CPPPATH = ['include'])
 resourcecache_env.AppendUnique(CPPPATH = ['../common/primitiveResource/include'])
-resourcecache_env.AppendUnique(CPPPATH = ['../common/primitiveTimer/include'])
-resourcecache_env.PrependUnique(LIBS = ['service_common', 'PrimitiveTimer', 'oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'libcoap'])
+resourcecache_env.AppendUnique(CPPPATH = ['../common/expiryTimer/include'])
+resourcecache_env.PrependUnique(LIBS = ['service_common', 'ExpiryTimer', 'oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'libcoap'])
 
 if target_os not in ['windows', 'winrt']:
 	resourcecache_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++11'])
@@ -61,13 +61,10 @@ resourcecache_src = [
         CACHE_SRC_DIR + 'ResourceCacheManager.cpp'
         ]
 
-if target_os in ['tizen','android'] :
-    resourcecachesdk = resourcecache_env.SharedLibrary('ResourceCache', resourcecache_src)
-else :
-    resourcecachesdk = resourcecache_env.StaticLibrary('ResourceCache', resourcecache_src)
+resourcecachesdk = resourcecache_env.StaticLibrary('ResourceCache', resourcecache_src)
 
 resourcecache_env.InstallTarget(resourcecachesdk, 'libResouceCache')
 
 # Go to build sample apps
-#SConscript('SampleApp/SConscript')
+SConscript('SampleApp/SConscript')
 
