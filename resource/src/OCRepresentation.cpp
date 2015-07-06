@@ -169,10 +169,10 @@ namespace OC
             ((T*)array)[pos] = item;
         }
 
-        size_t dimensions[MAX_REP_ARRAY_DEPTH] = {};
-        size_t root_size = 0;
-        size_t dimTotal = 0;
-        void* array = nullptr;
+        size_t dimensions[MAX_REP_ARRAY_DEPTH];
+        size_t root_size;
+        size_t dimTotal;
+        void* array;
     };
 
     template<>

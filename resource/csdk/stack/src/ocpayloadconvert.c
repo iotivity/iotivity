@@ -38,10 +38,10 @@ OCStackResult ConvertRepPayload(OCRepPayload* payload, uint8_t** outPayload, siz
 OCStackResult ConvertPresencePayload(OCPresencePayload* payload, uint8_t** outPayload,
         size_t* size);
 
-CborError AddTextStringToMap(CborEncoder* map, const char* key, size_t keylen,
+bool AddTextStringToMap(CborEncoder* map, const char* key, size_t keylen,
         const char* value);
 
-CborError ConditionalAddTextStringToMap(CborEncoder* map, const char* key, size_t keylen,
+bool ConditionalAddTextStringToMap(CborEncoder* map, const char* key, size_t keylen,
         const char* value);
 
 
@@ -78,109 +78,109 @@ OCStackResult ConvertDiscoveryPayload(OCDiscoveryPayload* payload, uint8_t** out
     }
 
     CborEncoder encoder = {};
-    CborError err = CborNoError;
+    bool err = false;
     size_t resourceCount =  OCDiscoveryPayloadGetResourceCount(payload);
 
     cbor_encoder_init(&encoder, *outPayload, *size, 0);
 
     CborEncoder rootArray;
-    err = err | cbor_encoder_create_array(&encoder, &rootArray, 1 + resourceCount);
-    err = err | cbor_encode_uint(&rootArray, PAYLOAD_TYPE_DISCOVERY);
+    err = err || cbor_encoder_create_array(&encoder, &rootArray, 1 + resourceCount);
+    err = err || cbor_encode_uint(&rootArray, PAYLOAD_TYPE_DISCOVERY);
 
     for(size_t i = 0; i < resourceCount; ++i)
     {
         CborEncoder map;
         OCResourcePayload* resource = OCDiscoveryPayloadGetResource(payload, i);
-        err = err | cbor_encoder_create_map(&rootArray, &map, 3);
+        err = err || cbor_encoder_create_map(&rootArray, &map, 3);
         // Uri
-        err = err | AddTextStringToMap(&map, OC_RSRVD_HREF,
+        err = err || AddTextStringToMap(&map, OC_RSRVD_HREF,
                 sizeof(OC_RSRVD_HREF) - 1,
                 resource->uri);
 
         // Server ID
-        err = err | cbor_encode_text_string(&map, OC_RSRVD_SERVER_INSTANCE_ID,
+        err = err || cbor_encode_text_string(&map, OC_RSRVD_SERVER_INSTANCE_ID,
                 sizeof(OC_RSRVD_SERVER_INSTANCE_ID) - 1);
-        err = err | cbor_encode_byte_string(&map, resource->sid, UUID_SIZE);
+        err = err || cbor_encode_byte_string(&map, resource->sid, UUID_SIZE);
         // Prop Tag
         {
             CborEncoder propMap;
-            err = err | cbor_encode_text_string(&map, OC_RSRVD_PROPERTY,
+            err = err || cbor_encode_text_string(&map, OC_RSRVD_PROPERTY,
                     sizeof(OC_RSRVD_PROPERTY) -1 );
-            err = err | cbor_encoder_create_map(&map, &propMap, 3);
+            err = err || cbor_encoder_create_map(&map, &propMap, 3);
 
             // Resource Type
             {
                 CborEncoder rtArray;
-                err = err | cbor_encode_text_string(&propMap, OC_RSRVD_RESOURCE_TYPE,
+                err = err || cbor_encode_text_string(&propMap, OC_RSRVD_RESOURCE_TYPE,
                     sizeof(OC_RSRVD_RESOURCE_TYPE) - 1);
-                err = err | cbor_encoder_create_array(&propMap, &rtArray, CborIndefiniteLength);
+                err = err || cbor_encoder_create_array(&propMap, &rtArray, CborIndefiniteLength);
 
                 OCStringLL* rtPtr = resource->types;
                 while(rtPtr)
                 {
-                    err = err | cbor_encode_text_string(&rtArray, rtPtr->value,
+                    err = err || cbor_encode_text_string(&rtArray, rtPtr->value,
                             strlen(rtPtr->value));
                     rtPtr = rtPtr->next;
                 }
 
-                err = err | cbor_encoder_close_container(&propMap, &rtArray);
+                err = err || cbor_encoder_close_container(&propMap, &rtArray);
             }
 
             // Interface Types
             {
                 CborEncoder ifArray;
-                err = err | cbor_encode_text_string(&propMap, OC_RSRVD_INTERFACE,
+                err = err || cbor_encode_text_string(&propMap, OC_RSRVD_INTERFACE,
                         sizeof(OC_RSRVD_INTERFACE) - 1);
-                err = err | cbor_encoder_create_array(&propMap, &ifArray, CborIndefiniteLength);
+                err = err || cbor_encoder_create_array(&propMap, &ifArray, CborIndefiniteLength);
                 OCStringLL* ifPtr = resource->interfaces;
 
                 while(ifPtr)
                 {
-                    err = err | cbor_encode_text_string(&ifArray, ifPtr->value,
+                    err = err || cbor_encode_text_string(&ifArray, ifPtr->value,
                         strlen(ifPtr->value));
                     ifPtr= ifPtr->next;
                 }
 
-                err = err | cbor_encoder_close_container(&propMap, &ifArray);
+                err = err || cbor_encoder_close_container(&propMap, &ifArray);
             }
             // Policy
             {
                 CborEncoder policyMap;
-                err = err | cbor_encode_text_string(&propMap, OC_RSRVD_POLICY,
+                err = err || cbor_encode_text_string(&propMap, OC_RSRVD_POLICY,
                         sizeof(OC_RSRVD_POLICY) - 1);
-                err = err | cbor_encoder_create_map(&propMap, &policyMap, CborIndefiniteLength);
+                err = err || cbor_encoder_create_map(&propMap, &policyMap, CborIndefiniteLength);
 
                 // Bitmap
-                err = err | cbor_encode_text_string(&policyMap, OC_RSRVD_BITMAP,
+                err = err || cbor_encode_text_string(&policyMap, OC_RSRVD_BITMAP,
                         sizeof(OC_RSRVD_BITMAP) - 1);
-                err = err | cbor_encode_uint(&policyMap, resource->bitmap);
+                err = err || cbor_encode_uint(&policyMap, resource->bitmap);
 
                 if(resource->secure)
                 {
-                    err = err | cbor_encode_text_string(&policyMap, OC_RSRVD_SECURE,
+                    err = err || cbor_encode_text_string(&policyMap, OC_RSRVD_SECURE,
                             sizeof(OC_RSRVD_SECURE) - 1);
-                    err = err | cbor_encode_boolean(&policyMap, OC_RESOURCE_SECURE);
+                    err = err || cbor_encode_boolean(&policyMap, OC_RESOURCE_SECURE);
 
                     if(resource->port != 0)
                     {
-                        err = err | cbor_encode_text_string(&policyMap, OC_RSRVD_HOSTING_PORT,
+                        err = err || cbor_encode_text_string(&policyMap, OC_RSRVD_HOSTING_PORT,
                                 sizeof(OC_RSRVD_HOSTING_PORT) - 1);
-                        err = err | cbor_encode_uint(&policyMap, resource->port);
+                        err = err || cbor_encode_uint(&policyMap, resource->port);
                     }
                 }
 
-                err = err | cbor_encoder_close_container(&propMap, &policyMap);
+                err = err || cbor_encoder_close_container(&propMap, &policyMap);
             }
             // Close
-            err = err | cbor_encoder_close_container(&map, &propMap);
+            err = err || cbor_encoder_close_container(&map, &propMap);
         }
         // Close Item
-        err = err | cbor_encoder_close_container(&rootArray, &map);
+        err = err || cbor_encoder_close_container(&rootArray, &map);
     }
     // Close main array
-    err = err | cbor_encoder_close_container(&encoder, &rootArray);
+    err = err || cbor_encoder_close_container(&encoder, &rootArray);
 
-    if(err != CborNoError)
+    if(err)
     {
         OC_LOG_V(ERROR, TAG, "Convert Discovery Payload failed with : %d", err);
         return OC_STACK_ERROR;
@@ -212,59 +212,59 @@ OCStackResult ConvertDevicePayload(OCDevicePayload* payload, uint8_t** outPayloa
     }
 
     CborEncoder encoder = {};
-    CborError err = CborNoError;
+    bool err = false;
 
     cbor_encoder_init(&encoder, *outPayload, *size, 0);
     CborEncoder rootArray;
-    err = err | cbor_encoder_create_array(&encoder, &rootArray, 2);
-    err = err | cbor_encode_uint(&rootArray, PAYLOAD_TYPE_DEVICE);
+    err = err || cbor_encoder_create_array(&encoder, &rootArray, 2);
+    err = err || cbor_encode_uint(&rootArray, PAYLOAD_TYPE_DEVICE);
 
     {
         CborEncoder map;
-        err = err | cbor_encoder_create_map(&rootArray, &map, 2);
+        err = err || cbor_encoder_create_map(&rootArray, &map, 2);
 
         // uri
-        err = err | AddTextStringToMap(&map, OC_RSRVD_HREF, sizeof(OC_RSRVD_HREF) - 1,
+        err = err || AddTextStringToMap(&map, OC_RSRVD_HREF, sizeof(OC_RSRVD_HREF) - 1,
                 payload->uri);
 
         // Rep Map
         {
             CborEncoder repMap;
-            err = err | cbor_encode_text_string(&map, OC_RSRVD_REPRESENTATION,
+            err = err || cbor_encode_text_string(&map, OC_RSRVD_REPRESENTATION,
                     sizeof(OC_RSRVD_REPRESENTATION) - 1);
-            err = err | cbor_encoder_create_map(&map, &repMap, 4);
+            err = err || cbor_encoder_create_map(&map, &repMap, 4);
 
             // Device ID
-            err = err | cbor_encode_text_string(&repMap, OC_RSRVD_DEVICE_ID,
+            err = err || cbor_encode_text_string(&repMap, OC_RSRVD_DEVICE_ID,
                     sizeof(OC_RSRVD_DEVICE_ID) - 1);
-            err = err | cbor_encode_byte_string(&repMap, payload->sid, UUID_SIZE);
+            err = err || cbor_encode_byte_string(&repMap, payload->sid, UUID_SIZE);
 
             // Device Name
-            err = err | AddTextStringToMap(&repMap, OC_RSRVD_DEVICE_NAME,
+            err = err || AddTextStringToMap(&repMap, OC_RSRVD_DEVICE_NAME,
                     sizeof(OC_RSRVD_DEVICE_NAME) - 1,
                     payload->deviceName);
 
             // Device Spec Version
-            err = err | AddTextStringToMap(&repMap, OC_RSRVD_SPEC_VERSION,
+            err = err || AddTextStringToMap(&repMap, OC_RSRVD_SPEC_VERSION,
                     sizeof(OC_RSRVD_SPEC_VERSION) - 1,
                     payload->specVersion);
 
             // Device data Model Version
-            err = err | AddTextStringToMap(&repMap, OC_RSRVD_DATA_MODEL_VERSION,
+            err = err || AddTextStringToMap(&repMap, OC_RSRVD_DATA_MODEL_VERSION,
                     sizeof(OC_RSRVD_DATA_MODEL_VERSION) - 1,
                     payload->dataModelVersion);
 
-            err = err | cbor_encoder_close_container(&map, &repMap);
+            err = err || cbor_encoder_close_container(&map, &repMap);
         }
 
         // Close Map
-        err = err | cbor_encoder_close_container(&rootArray, &map);
+        err = err || cbor_encoder_close_container(&rootArray, &map);
     }
 
     // Close main array
-    err = err | cbor_encoder_close_container(&encoder, &rootArray);
+    err = err || cbor_encoder_close_container(&encoder, &rootArray);
 
-    if(err != CborNoError)
+    if(err)
     {
         OC_LOG_V(ERROR, TAG, "Convert Device Payload failed with : %d", err);
         return OC_STACK_ERROR;
@@ -296,92 +296,92 @@ OCStackResult ConvertPlatformPayload(OCPlatformPayload* payload, uint8_t** outPa
     }
 
     CborEncoder encoder = {};
-    CborError err = CborNoError;
+    bool err = false;
 
     cbor_encoder_init(&encoder, *outPayload, *size, 0);
     CborEncoder rootArray;
-    err = err | cbor_encoder_create_array(&encoder, &rootArray, 2);
-    err = err | cbor_encode_uint(&rootArray, PAYLOAD_TYPE_PLATFORM);
+    err = err || cbor_encoder_create_array(&encoder, &rootArray, 2);
+    err = err || cbor_encode_uint(&rootArray, PAYLOAD_TYPE_PLATFORM);
     {
         CborEncoder map;
-        err = err | cbor_encoder_create_map(&rootArray, &map, CborIndefiniteLength);
+        err = err || cbor_encoder_create_map(&rootArray, &map, CborIndefiniteLength);
 
         // uri
-        err = err | AddTextStringToMap(&map, OC_RSRVD_HREF, sizeof(OC_RSRVD_HREF) - 1,
+        err = err || AddTextStringToMap(&map, OC_RSRVD_HREF, sizeof(OC_RSRVD_HREF) - 1,
                 payload->uri);
 
         // Rep Map
         {
             CborEncoder repMap;
-            err = err | cbor_encode_text_string(&map, OC_RSRVD_REPRESENTATION,
+            err = err || cbor_encode_text_string(&map, OC_RSRVD_REPRESENTATION,
                     sizeof(OC_RSRVD_REPRESENTATION) - 1);
-            err = err | cbor_encoder_create_map(&map, &repMap, 4);
+            err = err || cbor_encoder_create_map(&map, &repMap, 4);
 
             // Platform ID
-            err = err | AddTextStringToMap(&repMap, OC_RSRVD_PLATFORM_ID,
+            err = err || AddTextStringToMap(&repMap, OC_RSRVD_PLATFORM_ID,
                     sizeof(OC_RSRVD_PLATFORM_ID) - 1,
                     payload->info.platformID);
 
             // MFG Name
-            err = err | AddTextStringToMap(&repMap, OC_RSRVD_MFG_NAME,
+            err = err || AddTextStringToMap(&repMap, OC_RSRVD_MFG_NAME,
                     sizeof(OC_RSRVD_MFG_NAME) - 1,
                     payload->info.manufacturerName);
 
             // MFG Url
-            err = err | ConditionalAddTextStringToMap(&repMap, OC_RSRVD_MFG_URL,
+            err = err || ConditionalAddTextStringToMap(&repMap, OC_RSRVD_MFG_URL,
                     sizeof(OC_RSRVD_MFG_URL) - 1,
                     payload->info.manufacturerUrl);
 
             // Model Num
-            err = err | ConditionalAddTextStringToMap(&repMap, OC_RSRVD_MODEL_NUM,
+            err = err || ConditionalAddTextStringToMap(&repMap, OC_RSRVD_MODEL_NUM,
                     sizeof(OC_RSRVD_MODEL_NUM) - 1,
                     payload->info.modelNumber);
 
             // Date of Mfg
-            err = err | ConditionalAddTextStringToMap(&repMap, OC_RSRVD_MFG_DATE,
+            err = err || ConditionalAddTextStringToMap(&repMap, OC_RSRVD_MFG_DATE,
                     sizeof(OC_RSRVD_MFG_DATE) - 1,
                     payload->info.dateOfManufacture);
 
             // Platform Version
-            err = err | ConditionalAddTextStringToMap(&repMap, OC_RSRVD_PLATFORM_VERSION,
+            err = err || ConditionalAddTextStringToMap(&repMap, OC_RSRVD_PLATFORM_VERSION,
                     sizeof(OC_RSRVD_PLATFORM_VERSION) - 1,
                     payload->info.platformVersion);
 
             // OS Version
-            err = err | ConditionalAddTextStringToMap(&repMap, OC_RSRVD_OS_VERSION,
+            err = err || ConditionalAddTextStringToMap(&repMap, OC_RSRVD_OS_VERSION,
                     sizeof(OC_RSRVD_OS_VERSION) - 1,
                     payload->info.operatingSystemVersion);
 
             // Hardware Version
-            err = err | ConditionalAddTextStringToMap(&repMap, OC_RSRVD_HARDWARE_VERSION,
+            err = err || ConditionalAddTextStringToMap(&repMap, OC_RSRVD_HARDWARE_VERSION,
                     sizeof(OC_RSRVD_HARDWARE_VERSION) - 1,
                     payload->info.hardwareVersion);
 
             // Firmware Version
-            err = err | ConditionalAddTextStringToMap(&repMap, OC_RSRVD_FIRMWARE_VERSION,
+            err = err || ConditionalAddTextStringToMap(&repMap, OC_RSRVD_FIRMWARE_VERSION,
                     sizeof(OC_RSRVD_FIRMWARE_VERSION) - 1,
                     payload->info.firmwareVersion);
 
             // Support URL
-            err = err | ConditionalAddTextStringToMap(&repMap, OC_RSRVD_SUPPORT_URL,
+            err = err || ConditionalAddTextStringToMap(&repMap, OC_RSRVD_SUPPORT_URL,
                     sizeof(OC_RSRVD_SUPPORT_URL) - 1,
                     payload->info.supportUrl);
 
             // System Time
-            err = err | ConditionalAddTextStringToMap(&repMap, OC_RSRVD_SYSTEM_TIME,
+            err = err || ConditionalAddTextStringToMap(&repMap, OC_RSRVD_SYSTEM_TIME,
                     sizeof(OC_RSRVD_SYSTEM_TIME) - 1,
                     payload->info.systemTime);
-            err = err | cbor_encoder_close_container(&map, &repMap);
+            err = err || cbor_encoder_close_container(&map, &repMap);
         }
 
         // Close Map
-        err = err | cbor_encoder_close_container(&rootArray, &map);
+        err = err || cbor_encoder_close_container(&rootArray, &map);
     }
 
     // Close main array
-    err = err | cbor_encoder_close_container(&encoder, &rootArray);
+    err = err || cbor_encoder_close_container(&encoder, &rootArray);
 
-    if(err != CborNoError)
+    if(err)
     {
         OC_LOG_V(ERROR, TAG, "Convert Platform Payload failed with : %d", err);
         return OC_STACK_ERROR;
@@ -402,18 +402,18 @@ OCStackResult ConvertPlatformPayload(OCPlatformPayload* payload, uint8_t** outPa
     return OC_STACK_OK;
 }
 
-CborError ConvertSingleRepPayload(CborEncoder* parent, const OCRepPayload* payload);
+bool ConvertSingleRepPayload(CborEncoder* parent, const OCRepPayload* payload);
 
-CborError ConvertArray(CborEncoder* parent, const OCRepPayloadValueArray* valArray)
+bool ConvertArray(CborEncoder* parent, const OCRepPayloadValueArray* valArray)
 {
     CborEncoder array;
-    CborError err = CborNoError;
+    bool err = false;
 
-    err = err | cbor_encoder_create_array(parent, &array, CborIndefiniteLength);
-    err = err | cbor_encode_uint(&array, valArray->type);
+    err = err || cbor_encoder_create_array(parent, &array, CborIndefiniteLength);
+    err = err || cbor_encode_uint(&array, valArray->type);
     for(int i = 0; i < MAX_REP_ARRAY_DEPTH; ++i)
     {
-        err = err | cbor_encode_uint(&array, valArray->dimensions[i]);
+        err = err || cbor_encode_uint(&array, valArray->dimensions[i]);
     }
 
     size_t dimTotal = calcDimTotal(valArray->dimensions);
@@ -427,16 +427,16 @@ CborError ConvertArray(CborEncoder* parent, const OCRepPayloadValueArray* valArr
                 err = CborUnknownError;
                 break;
             case OCREP_PROP_INT:
-                err = err | cbor_encode_int(&array, valArray->iArray[i]);
+                err = err || cbor_encode_int(&array, valArray->iArray[i]);
                 break;
             case OCREP_PROP_DOUBLE:
-                err = err | cbor_encode_double(&array, valArray->dArray[i]);
+                err = err || cbor_encode_double(&array, valArray->dArray[i]);
                 break;
             case OCREP_PROP_BOOL:
-                err = err | cbor_encode_boolean(&array, valArray->bArray[i]);
+                err = err || cbor_encode_boolean(&array, valArray->bArray[i]);
                 break;
             case OCREP_PROP_STRING:
-                err = err | cbor_encode_text_string(&array, valArray->strArray[i],
+                err = err || cbor_encode_text_string(&array, valArray->strArray[i],
                         strlen(valArray->strArray[i]));
                 break;
             case OCREP_PROP_OBJECT:
@@ -449,18 +449,18 @@ CborError ConvertArray(CborEncoder* parent, const OCRepPayloadValueArray* valArr
         }
     }
 
-    err = err | cbor_encoder_close_container(parent, &array);
+    err = err || cbor_encoder_close_container(parent, &array);
     return err;
 }
 
-CborError ConvertSingleRepPayload(CborEncoder* parent, const OCRepPayload* payload)
+bool ConvertSingleRepPayload(CborEncoder* parent, const OCRepPayload* payload)
 {
-    CborError err = CborNoError;
+    bool err = false;
     CborEncoder map;
-    err = err | cbor_encoder_create_map(parent, &map, CborIndefiniteLength);
+    err = err || cbor_encoder_create_map(parent, &map, CborIndefiniteLength);
 
     // Uri
-    err = err | ConditionalAddTextStringToMap(&map, OC_RSRVD_HREF,
+    err = err || ConditionalAddTextStringToMap(&map, OC_RSRVD_HREF,
             sizeof(OC_RSRVD_HREF) - 1,
             payload->uri);
 
@@ -469,83 +469,83 @@ CborError ConvertSingleRepPayload(CborEncoder* parent, const OCRepPayload* paylo
     if(payload->types || payload->interfaces)
     {
         OC_LOG_V(INFO, TAG, "Payload has types or interfaces");
-        err = err | cbor_encode_text_string(&map,
+        err = err || cbor_encode_text_string(&map,
                 OC_RSRVD_PROPERTY,
                 sizeof(OC_RSRVD_PROPERTY) - 1);
         CborEncoder propMap;
-        err = err | cbor_encoder_create_map(&map, &propMap, 2);
+        err = err || cbor_encoder_create_map(&map, &propMap, 2);
 
         CborEncoder curArray;
         if(payload->types)
         {
-            err = err | cbor_encode_text_string(&propMap,
+            err = err || cbor_encode_text_string(&propMap,
                     OC_RSRVD_RESOURCE_TYPE,
                     sizeof(OC_RSRVD_RESOURCE_TYPE) - 1);
-            err = err | cbor_encoder_create_array(&propMap, &curArray, CborIndefiniteLength);
+            err = err || cbor_encoder_create_array(&propMap, &curArray, CborIndefiniteLength);
             OCStringLL* val = payload->types;
             while(val)
             {
-                err = err | cbor_encode_text_string(&curArray, val->value, strlen(val->value));
+                err = err || cbor_encode_text_string(&curArray, val->value, strlen(val->value));
                 val = val->next;
             }
-            err = err | cbor_encoder_close_container(&propMap, &curArray);
+            err = err || cbor_encoder_close_container(&propMap, &curArray);
         }
         if(payload->interfaces)
         {
-            err = err | cbor_encode_text_string(&propMap,
+            err = err || cbor_encode_text_string(&propMap,
                     OC_RSRVD_INTERFACE,
                     sizeof(OC_RSRVD_INTERFACE) - 1);
-            err = err | cbor_encoder_create_array(&propMap, &curArray, CborIndefiniteLength);
+            err = err || cbor_encoder_create_array(&propMap, &curArray, CborIndefiniteLength);
             OCStringLL* val = payload->interfaces;
             while(val)
             {
-                err = err | cbor_encode_text_string(&curArray, val->value, strlen(val->value));
+                err = err || cbor_encode_text_string(&curArray, val->value, strlen(val->value));
                 val = val->next;
             }
-            err = err | cbor_encoder_close_container(&propMap, &curArray);
+            err = err || cbor_encoder_close_container(&propMap, &curArray);
         }
-        err = err | cbor_encoder_close_container(&map, &propMap);
+        err = err || cbor_encoder_close_container(&map, &propMap);
     }
 
     // Rep Map
     {
         CborEncoder repMap;
-        err = err | cbor_encode_text_string(&map,
+        err = err || cbor_encode_text_string(&map,
                 OC_RSRVD_REPRESENTATION,
                 sizeof(OC_RSRVD_REPRESENTATION) - 1);
-        err = err | cbor_encoder_create_map(&map, &repMap, CborIndefiniteLength);
+        err = err || cbor_encoder_create_map(&map, &repMap, CborIndefiniteLength);
         OCRepPayloadValue* value = payload->values;
         while(value)
         {
-            err = err | cbor_encode_text_string(&repMap,
+            err = err || cbor_encode_text_string(&repMap,
                     value->name,
                     strlen(value->name));
             switch(value->type)
             {
                 case OCREP_PROP_NULL:
-                    err = err | cbor_encode_null(&repMap);
+                    err = err || cbor_encode_null(&repMap);
                     break;
                 case OCREP_PROP_INT:
-                    err = err | cbor_encode_int(&repMap,
+                    err = err || cbor_encode_int(&repMap,
                             value->i);
                     break;
                 case OCREP_PROP_DOUBLE:
-                    err = err | cbor_encode_double(&repMap,
+                    err = err || cbor_encode_double(&repMap,
                             value->d);
                     break;
                 case OCREP_PROP_BOOL:
-                    err = err | cbor_encode_boolean(&repMap,
+                    err = err || cbor_encode_boolean(&repMap,
                             value->b);
                     break;
                 case OCREP_PROP_STRING:
-                    err = err | cbor_encode_text_string(&repMap,
+                    err = err || cbor_encode_text_string(&repMap,
                             value->str, strlen(value->str));
                     break;
                 case OCREP_PROP_OBJECT:
-                    err = err | ConvertSingleRepPayload(&repMap, value->obj);
+                    err = err || ConvertSingleRepPayload(&repMap, value->obj);
                     break;
                 case OCREP_PROP_ARRAY:
-                    err = err | ConvertArray(&repMap, &value->arr);
+                    err = err || ConvertArray(&repMap, &value->arr);
                     break;
                 default:
                     OC_LOG_V(ERROR, TAG, "Invalid Prop type: %d",
@@ -555,11 +555,11 @@ CborError ConvertSingleRepPayload(CborEncoder* parent, const OCRepPayload* paylo
             value = value->next;
         }
 
-        err = err | cbor_encoder_close_container(&map, &repMap);
+        err = err || cbor_encoder_close_container(&map, &repMap);
     }
 
     // Close Map
-    err = err | cbor_encoder_close_container(parent, &map);
+    err = err || cbor_encoder_close_container(parent, &map);
 
     return err;
 }
@@ -575,23 +575,23 @@ OCStackResult ConvertRepPayload(OCRepPayload* payload, uint8_t** outPayload, siz
     }
 
     CborEncoder encoder = {};
-    CborError err = CborNoError;
+    bool err = false;
 
     cbor_encoder_init(&encoder, *outPayload, *size, 0);
     CborEncoder rootArray;
-    err = err | cbor_encoder_create_array(&encoder, &rootArray, CborIndefiniteLength);
-    err = err | cbor_encode_uint(&rootArray, PAYLOAD_TYPE_REPRESENTATION);
+    err = err || cbor_encoder_create_array(&encoder, &rootArray, CborIndefiniteLength);
+    err = err || cbor_encode_uint(&rootArray, PAYLOAD_TYPE_REPRESENTATION);
 
-    while(payload != NULL && err == CborNoError)
+    while(payload != NULL && !err)
     {
-        err = err | ConvertSingleRepPayload(&rootArray, payload);
+        err = err || ConvertSingleRepPayload(&rootArray, payload);
         payload = payload->next;
     }
 
     // Close main array
-    err = err | cbor_encoder_close_container(&encoder, &rootArray);
+    err = err || cbor_encoder_close_container(&encoder, &rootArray);
 
-    if(err != CborNoError)
+    if(err)
     {
         OC_LOG_V(ERROR, TAG, "Convert Rep Payload failed with : %d", err);
         return OC_STACK_ERROR;
@@ -625,47 +625,47 @@ OCStackResult ConvertPresencePayload(OCPresencePayload* payload, uint8_t** outPa
     }
 
     CborEncoder encoder = {};
-    CborError err = CborNoError;
+    bool err = false;
 
     cbor_encoder_init(&encoder, *outPayload, *size, 0);
     CborEncoder rootArray;
 
-    err = err | cbor_encoder_create_array(&encoder, &rootArray, 2);
-    err = err | cbor_encode_uint(&rootArray, PAYLOAD_TYPE_PRESENCE);
+    err = err || cbor_encoder_create_array(&encoder, &rootArray, 2);
+    err = err || cbor_encode_uint(&rootArray, PAYLOAD_TYPE_PRESENCE);
 
 
     CborEncoder map;
-    err = err | cbor_encoder_create_map(&rootArray, &map, CborIndefiniteLength);
+    err = err || cbor_encoder_create_map(&rootArray, &map, CborIndefiniteLength);
 
     // Sequence Number
-    err = err | cbor_encode_text_string(&map,
+    err = err || cbor_encode_text_string(&map,
             OC_RSRVD_NONCE,
             sizeof(OC_RSRVD_NONCE) - 1);
-    err = err | cbor_encode_uint(&map, payload->sequenceNumber);
+    err = err || cbor_encode_uint(&map, payload->sequenceNumber);
 
     // Max Age
-    err = err | cbor_encode_text_string(&map,
+    err = err || cbor_encode_text_string(&map,
             OC_RSRVD_TTL,
             sizeof(OC_RSRVD_TTL) - 1);
-    err = err | cbor_encode_uint(&map, payload->maxAge);
+    err = err || cbor_encode_uint(&map, payload->maxAge);
 
     // Trigger
     const char* triggerStr = convertTriggerEnumToString(payload->trigger);
-    err = err | AddTextStringToMap(&map, OC_RSRVD_TRIGGER, sizeof(OC_RSRVD_TRIGGER) - 1,
+    err = err || AddTextStringToMap(&map, OC_RSRVD_TRIGGER, sizeof(OC_RSRVD_TRIGGER) - 1,
             triggerStr);
 
     // Resource type name
     if(payload->trigger != OC_PRESENCE_TRIGGER_DELETE)
     {
-        err = err | ConditionalAddTextStringToMap(&map, OC_RSRVD_RESOURCE_TYPE,
+        err = err || ConditionalAddTextStringToMap(&map, OC_RSRVD_RESOURCE_TYPE,
                 sizeof(OC_RSRVD_RESOURCE_TYPE) - 1, payload->resourceType);
     }
 
     // Close Map
-    err = err | cbor_encoder_close_container(&rootArray, &map);
-    err = err | cbor_encoder_close_container(&encoder, &rootArray);
+    err = err || cbor_encoder_close_container(&rootArray, &map);
+    err = err || cbor_encoder_close_container(&encoder, &rootArray);
 
-    if(err != CborNoError)
+    if(err)
     {
         OC_LOG_V(ERROR, TAG, "Convert Presence Payload failed with : %d", err);
         return OC_STACK_ERROR;
@@ -686,15 +686,15 @@ OCStackResult ConvertPresencePayload(OCPresencePayload* payload, uint8_t** outPa
     return OC_STACK_OK;
 }
 
-CborError AddTextStringToMap(CborEncoder* map, const char* key, size_t keylen,
+bool AddTextStringToMap(CborEncoder* map, const char* key, size_t keylen,
         const char* value)
 {
-    return cbor_encode_text_string(map, key, keylen) |
+    return cbor_encode_text_string(map, key, keylen) ||
            cbor_encode_text_string(map, value, strlen(value));
 }
 
-CborError ConditionalAddTextStringToMap(CborEncoder* map, const char* key, size_t keylen,
+bool ConditionalAddTextStringToMap(CborEncoder* map, const char* key, size_t keylen,
         const char* value)
 {
-    return value ? AddTextStringToMap(map, key, keylen, value) : CborNoError;
+    return value ? AddTextStringToMap(map, key, keylen, value) : false;
 }

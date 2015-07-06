@@ -325,6 +325,8 @@ namespace OC
         return OC_STACK_DELETE_TRANSACTION;
     }
 
+    /*
+    Function doesn't seem to be used at all, even in master?
     OCStackResult InvokeDoResource(OCDoHandle *handle,
                                     OCMethod method,
                                     const char *requestUri,
@@ -339,7 +341,7 @@ namespace OC
     {
         if (useHostString)
         {
-            ostringstream host;   
+            ostringstream host;
             host << destination << requestUri;
             connectivityType = (OCConnectivityType)
                                 ((destination->adapter << CT_ADAPTER_SHIFT)
@@ -369,6 +371,7 @@ namespace OC
                                 numOptions);
         }
     }
+    */
 
     OCStackResult InProcClientWrapper::GetResourceRepresentation(
         const OCDevAddr& devAddr, bool useHostString,

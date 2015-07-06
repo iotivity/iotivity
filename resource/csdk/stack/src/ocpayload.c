@@ -995,7 +995,7 @@ OCStringLL* CloneOCStringLL (OCStringLL* ll)
 
     OCStringLL *sourceIter = ll;
 
-    OCStringLL *destIter = OICCalloc (1, sizeof (OCStringLL));
+    OCStringLL *destIter = (OCStringLL*)OICCalloc (1, sizeof (OCStringLL));
     if (!destIter)
     {
         return NULL;
@@ -1008,7 +1008,7 @@ OCStringLL* CloneOCStringLL (OCStringLL* ll)
 
     while (sourceIter)
     {
-        destIter->next  = OICCalloc (1, sizeof (OCStringLL));
+        destIter->next  = (OCStringLL*)OICCalloc (1, sizeof (OCStringLL));
         if (!destIter->next)
         {
             FreeOCStringLL (headOfClone);
@@ -1111,7 +1111,7 @@ OCResourcePayload* copyResource(const OCResource* res, uint16_t port)
     }
 
     pl->uri = OICStrdup(res->uri);
-    pl->sid = OICCalloc(1, UUID_SIZE);
+    pl->sid = (uint8_t*)OICCalloc(1, UUID_SIZE);
     memcpy(pl->sid, OCGetServerInstanceID(), UUID_SIZE);
 
     // types

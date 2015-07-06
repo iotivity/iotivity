@@ -456,8 +456,9 @@ HandleVirtualResource(OCServerRequest *request, OCResource *resource)
                 if((resource->resourceProperties & OC_ACTIVE)
                         && (resource->resourceProperties & OC_DISCOVERABLE))
                 {
-                    result = result | BuildVirtualResourceResponse(resource, filterOn,
-                            filterValue, payload, (CATransportAdapter_t)request->devAddr.adapter);
+                    result = (OCStackResult)(result |
+                            BuildVirtualResourceResponse(resource, filterOn,
+                            filterValue, payload, (CATransportAdapter_t)request->devAddr.adapter));
                 }
             }
 

@@ -432,7 +432,7 @@ void SendRequestAll()
     CAInfo_t requestData = {CA_MSG_RESET};
     requestData.token = token;
     requestData.tokenLength = tokenLength;
-    requestData.payload = "Temp Json Payload";
+    requestData.payload = (CAPayload_t)"Temp Json Payload";
     requestData.type = CA_MSG_NONCONFIRM;
     requestData.resourceUri = (char *)OICMalloc(strlen(resourceUri) + 1);
     strcpy(requestData.resourceUri, resourceUri);
@@ -703,7 +703,7 @@ void RequestHandler(const CAEndpoint_t *object, const CARequestInfo_t *requestIn
     Serial.println("uri: ");
     Serial.println(requestInfo->info.resourceUri);
     Serial.println("data: ");
-    Serial.println(requestInfo->info.payload);
+    Serial.println((char*)requestInfo->info.payload);
     Serial.println("Type: ");
     Serial.println(requestInfo->info.type);
 
@@ -738,7 +738,7 @@ void ResponseHandler(const CAEndpoint_t *object, const CAResponseInfo_t *respons
         Serial.print("uri: ");
         Serial.println(responseInfo->info.resourceUri);
         Serial.print("data: ");
-        Serial.println(responseInfo->info.payload);
+        Serial.println((char*)responseInfo->info.payload);
         Serial.print("Type: ");
         Serial.println(responseInfo->info.type);
         Serial.print("res result=");
@@ -854,7 +854,7 @@ void SendResponse(CAEndpoint_t *endpoint, const CAInfo_t* info)
     {
         responseData.token = (info != NULL) ? info->token : NULL;
         responseData.tokenLength = (info != NULL) ? info->tokenLength : 0;
-        responseData.payload = static_cast<CAPayload_t>("response payload");
+        responseData.payload = reinterpret_cast<CAPayload_t>(const_cast<char*>("response payload"));
     }
     CAResponseInfo_t responseInfo = {CA_BAD_REQ, {CA_MSG_RESET}};
     responseInfo.result = static_cast<CAResponseResult_t>(respCode);
