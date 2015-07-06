@@ -3435,6 +3435,12 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattConnectionStateChangeCallback(J
         }
         (*env)->ReleaseStringUTFChars(env, jni_address, address);
 
+        CAResult_t res = CALEClientGattClose(env, gatt);
+        if (CA_STATUS_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "CALEClientGattClose has failed");
+        }
+
         goto error_exit;
     }
     return;
@@ -3533,6 +3539,7 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattServicesDiscoveredCallback(JNIE
             goto error_exit;
         }
     }
+
     (*env)->ReleaseStringUTFChars(env, jni_address, address);
     return;
 
