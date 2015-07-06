@@ -26,6 +26,7 @@
 #include "oic_string.h"
 #include "ocstackinternal.h"
 #include "ocresource.h"
+#include "logger.h"
 
 #define TAG "OCPayload"
 void FreeRepPayloadValueContents(OCRepPayloadValue* val);
@@ -54,9 +55,8 @@ void OCPayloadDestroy(OCPayload* payload)
         case PAYLOAD_TYPE_PRESENCE:
             OCPresencePayloadDestroy((OCPresencePayload*)payload);
         default:
-            printf("Not supported payload type: %d\n", payload->type);
-            printf("OCPayloadDestroy default\n");
-            exit(-1);
+            OC_LOG_V(ERROR, TAG, "Unsupported payload type in destroy: %d", payload->type);
+            OICFree(payload);
             break;
     }
 }
@@ -214,8 +214,8 @@ void FreeRepPayloadValueContents(OCRepPayloadValue* val)
                 break;
             case OCREP_PROP_NULL:
             case OCREP_PROP_ARRAY:
-                printf("FreeRepPayloadValueContents: Illegal array type\n");
-                exit(-1);
+                OC_LOG_V(ERROR, TAG, "FreeRepPayloadValueContents: Illegal type\
+                        inside an array: %d", val->arr.type);
                 break;
         }
     }
@@ -311,8 +311,7 @@ OCRepPayloadValue* OCRepPayloadFindAndSetValue(OCRepPayload* payload, const char
         val = val->next;
     }
 
-    printf("Find and set value, unreachable?!");
-    exit(-1);
+    OC_LOG(ERROR, TAG, PCF("FindAndSetValue reached point after while loop, pointer corruption?"));
     return NULL;
 }
 
