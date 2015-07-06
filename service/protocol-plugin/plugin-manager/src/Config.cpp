@@ -132,6 +132,11 @@ PMRESULT Config::parsing(char *xmlData, xml_document<> *doc)
 
 PMRESULT Config::getXmlData(xml_node<> *pluginInfo, std::string key)
 {
+    if(pluginInfo == NULL)
+    {
+        return PM_S_FALSE;
+    }
+
     std::string value  = "";
     xml_attribute<> *iAttr = pluginInfo->first_attribute(key.c_str());
     if (iAttr)
