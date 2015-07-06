@@ -461,7 +461,7 @@ HandleVirtualResource(OCServerRequest *request, OCResource *resource)
                 }
             }
 
-            if(result == OC_STACK_OK)
+            if(payload->resources && result == OC_STACK_OK)
             {
                 OCEntityHandlerResponse response = {};
 
