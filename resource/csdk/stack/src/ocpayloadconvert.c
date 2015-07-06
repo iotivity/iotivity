@@ -440,7 +440,7 @@ CborError ConvertArray(CborEncoder* parent, const OCRepPayloadValueArray* valArr
                 err = err | cbor_encode_int(&array, valArray->iArray[i]);
                 break;
             case OCREP_PROP_DOUBLE:
-                err = err | cbor_encode_double(&array, &(valArray->dArray[i]));
+                err = err | cbor_encode_double(&array, valArray->dArray[i]);
                 break;
             case OCREP_PROP_BOOL:
                 err = err | cbor_encode_boolean(&array, valArray->bArray[i]);
@@ -541,7 +541,7 @@ CborError ConvertSingleRepPayload(CborEncoder* parent, const OCRepPayload* paylo
                     break;
                 case OCREP_PROP_DOUBLE:
                     err = err | cbor_encode_double(&repMap,
-                            &(value->d));
+                            value->d);
                     break;
                 case OCREP_PROP_BOOL:
                     err = err | cbor_encode_boolean(&repMap,
