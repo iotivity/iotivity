@@ -76,6 +76,8 @@ namespace OIC{
                 void setJavaBundle(bool javaBundle);
                 bool getJavaBundle();
 
+                void setBundleInfo(BundleInfo* bundleInfo);
+
             private:
                 bool m_loaded, m_activated, m_java_bundle;
                 int m_id;

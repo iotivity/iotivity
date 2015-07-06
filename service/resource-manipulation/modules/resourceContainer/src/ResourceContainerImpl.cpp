@@ -514,6 +514,11 @@ namespace OIC
         std::list< BundleInfo* > ResourceContainerImpl::listBundles()
         {
             std::list< BundleInfo* > ret;
+            for(std::map<std::string, BundleInfoInternal*>::iterator it = m_bundles.begin(); it != m_bundles.end(); ++it){
+                BundleInfo* bundleInfo = BundleInfo::createBundleInfo();
+                ((BundleInfoInternal*)bundleInfo)->setBundleInfo((BundleInfo*)it->second);
+                ret.push_back(it->second);
+            }
             return ret;
         }
 

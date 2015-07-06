@@ -171,5 +171,11 @@ namespace OIC
         jobject BundleInfoInternal::getJavaBundleActivatorObject(){
             return m_java_activator_object;
         }
+
+        void BundleInfoInternal::setBundleInfo(BundleInfo* bundleInfo){
+            m_ID = bundleInfo->getID();
+            m_path = bundleInfo->getPath();
+            m_version = bundleInfo->getPath();
+        }
     }
 }
