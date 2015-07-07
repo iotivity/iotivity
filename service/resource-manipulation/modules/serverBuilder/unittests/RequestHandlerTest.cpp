@@ -145,18 +145,28 @@ TEST_F(SetRequestHandlerAcceptanceTest, NothingHappenedWithEmptyAttrs)
     ASSERT_EQ(ORIGIN_VALUE, server->getAttribute<int>(EXISTING));
 }
 
-
-TEST_F(SetRequestHandlerAcceptanceTest, NothingReplacedIfTypeMismatch)
+TEST_F(SetRequestHandlerAcceptanceTest, EverythingAppliedIfMethodIsAccept)
 {
     requestAttrs[EXISTING] = "";
 
     auto replaced = setRequestHandler->applyAcceptanceMethod(
              PrimitiveSetResponse::AcceptanceMethod::ACCEPT, *server, requestAttrs);
 
+     ASSERT_EQ(ORIGIN_VALUE, replaced[0].second);
+}
+
+
+TEST_F(SetRequestHandlerAcceptanceTest, NoReplaceIfMethodIsDefaultAndTypeMismatch)
+{
+    requestAttrs[EXISTING] = "";
+
+    auto replaced = setRequestHandler->applyAcceptanceMethod(
+             PrimitiveSetResponse::AcceptanceMethod::DEFAULT, *server, requestAttrs);
+
      ASSERT_TRUE(replaced.empty());
 }
 
-TEST_F(SetRequestHandlerAcceptanceTest, NothingReplacedIfRequestAttrsHasUnknownKey)
+TEST_F(SetRequestHandlerAcceptanceTest, NoReplacefMethodIsDefaultAndRequestAttrsHasUnknownKey)
 {
     constexpr char unknownKey[]{ "???" };
 
@@ -165,7 +175,7 @@ TEST_F(SetRequestHandlerAcceptanceTest, NothingReplacedIfRequestAttrsHasUnknownK
 
 
     auto replaced = setRequestHandler->applyAcceptanceMethod(
-             PrimitiveSetResponse::AcceptanceMethod::ACCEPT, *server, requestAttrs);
+             PrimitiveSetResponse::AcceptanceMethod::DEFAULT, *server, requestAttrs);
 
      ASSERT_TRUE(replaced.empty());
 }
