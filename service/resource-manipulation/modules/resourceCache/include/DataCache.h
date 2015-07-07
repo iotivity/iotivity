@@ -18,65 +18,71 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef DATACACHE_H_
-#define DATACACHE_H_
+#ifndef RCM_DATACACHE_H_
+#define RCM_DATACACHE_H_
 
 #include <list>
 #include <string>
 #include <memory>
 
-#include "OCResource.h"
-#include "logger.h"
-
 #include "CacheTypes.h"
 #include "ExpiryTimer.h"
 
-class DataCache
+namespace OIC
 {
-public:
-    DataCache(
-            PrimitiveResourcePtr pResource,
-            CacheCB func,
-            REPORT_FREQUENCY rf,
-            long repeatTime);
-    ~DataCache();
+    namespace Service
+    {
+        class DataCache
+        {
+        public:
+            DataCache();
+            ~DataCache();
 
-    CacheID addSubscriber(CacheCB func, REPORT_FREQUENCY rf, long repeatTime);
-    CacheID deleteSubscriber(CacheID id);
+            void initializeDataCache(PrimitiveResourcePtr pResource);
 
-    CACHE_STATE getCacheState() const;
-    const ResourceAttributes getCachedData() const;
-    const PrimitiveResourcePtr getPrimitiveResource() const;
+            CacheID addSubscriber(CacheCB func, REPORT_FREQUENCY rf, long repeatTime);
+            CacheID deleteSubscriber(CacheID id);
 
-    SubscriberInfoPair findSubscriber(CacheID id);
+            CACHE_STATE getCacheState() const;
+            const ResourceAttributes getCachedData() const;
+            const PrimitiveResourcePtr getPrimitiveResource() const;
 
-private:
-    // resource instance
-    PrimitiveResourcePtr sResource;
-    std::shared_ptr<BaseResource> baseHandler;
+            void requestGet();
 
-    // cached data info
-    ResourceAttributes attributes;
-    CACHE_STATE state;
+        private:
+            // resource instance
+            PrimitiveResourcePtr sResource;
+            std::shared_ptr<BaseResource> baseHandler;
 
-    // subscriber info
-    std::unique_ptr<SubscriberInfo> subscriberList;
+            // cached data info
+            ResourceAttributes attributes;
+            CACHE_STATE state;
 
-    // timer info
-    ExpiryTimer *timerInstance;
-    TimerID expiredTimerId;
+            // subscriber info
+            std::unique_ptr<SubscriberInfo> subscriberList;
 
-    // for requestCB from base
-    void onObserve(const HeaderOptions& _hos,
-            const ResponseStatement& _rep, int _result, int _seq);
-    void onGet(const HeaderOptions& _hos, const ResponseStatement& _rep, int _result);
-    void *onTimer(const unsigned int timerID);
-    ObserveCB pObserveCB;
-    GetCB pGetCB;
-    TimerCB pTimerCB;
+            ExpiryTimer networkTimer;
+            ExpiryTimer pollingTimer;
+            TimerID networkTimeOutHandle;
+            TimerID pollingHandle;
 
-    OCStackResult updateCacheData();
+            ObserveCB pObserveCB;
+            GetCB pGetCB;
+            TimerCB pTimerCB;
+            TimerCB pPollingCB;
 
-};
+            // for requestCB from base
+            void onObserve(const HeaderOptions& _hos,
+                    const ResponseStatement& _rep, int _result, int _seq);
+            void onGet(const HeaderOptions& _hos, const ResponseStatement& _rep, int _result);
+            void *onTimeOut(const unsigned int timerID);
+            void *onPollingOut(const unsigned int timerID);
 
-#endif /* DATACACHE_H_ */
+            CacheID generateCacheID();
+            SubscriberInfoPair findSubscriber(CacheID id);
+            void notifyObservers(ResourceAttributes Att);
+        };
+    } // namespace Service
+} // namespace OIC
+
+#endif /* RCM_DATACACHE_H_ */

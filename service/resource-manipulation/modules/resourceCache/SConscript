@@ -44,6 +44,7 @@ target_os = env.get('TARGET_OS')
 resourcecache_env.AppendUnique(CPPPATH = ['include'])
 resourcecache_env.AppendUnique(CPPPATH = ['../common/primitiveResource/include'])
 resourcecache_env.AppendUnique(CPPPATH = ['../common/expiryTimer/include'])
+resourcecache_env.AppendUnique(CPPPATH = ['../common/expiryTimer/src'])
 resourcecache_env.PrependUnique(LIBS = ['service_common', 'ExpiryTimer', 'oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'libcoap'])
 
 if target_os not in ['windows', 'winrt']:
@@ -66,5 +67,5 @@ resourcecachesdk = resourcecache_env.StaticLibrary('ResourceCache', resourcecach
 resourcecache_env.InstallTarget(resourcecachesdk, 'libResouceCache')
 
 # Go to build sample apps
-SConscript('SampleApp/SConscript')
+#SConscript('SampleApp/SConscript')
 

@@ -18,64 +18,69 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef CACHETYPES_H
-#define CACHETYPES_H
+#ifndef RCM_CACHETYPES_H
+#define RCM_CACHETYPES_H
 
 #include <functional>
 #include <map>
 #include <memory>
 #include <string>
 
-#include "ocstack.h"
-#include "OCResource.h"
+#include "logger.h"
 
 #include "PrimitiveResource.h"
 #include "ResourceAttributes.h"
 
-#define CACHE_TAG  PCF("CACHE")
-#define DEFAULT_REPORT_TIME 30
-#define DEFAULT_EXPIRED_TIME 15l
-
-using namespace OIC::Service;
-
-class DataCache;
-
-enum class REPORT_FREQUENCY
+namespace OIC
 {
-    NONE = 0,
-    UPTODATE,
-    PERIODICTY
-};
+    namespace Service
+    {
 
-struct Report_Info
-{
-    REPORT_FREQUENCY rf;
-    int reportID;
-    long repeatTime;
-    unsigned int timerID;
-};
+        class DataCache;
 
-enum class CACHE_STATE
-{
-    READY = 0,
-    READY_YET,
-    LOST_SIGNAL,
-    DESTROYED,
-    UPDATING,
-    NONE
-};
+        #define CACHE_TAG  PCF("CACHE")
+        #define DEFAULT_REPORT_TIME 10l
+        #define DEFAULT_EXPIRED_TIME 15l
 
-typedef int CacheID;
+        enum class REPORT_FREQUENCY
+        {
+            NONE = 0,
+            UPTODATE,
+            PERIODICTY
+        };
 
-typedef std::function<OCStackResult(std::shared_ptr<PrimitiveResource>, const ResourceAttributes &)> CacheCB;
-typedef std::map<int, std::pair<Report_Info, CacheCB>> SubscriberInfo;
-typedef std::pair<int, std::pair<Report_Info, CacheCB>> SubscriberInfoPair;
+        struct Report_Info
+        {
+            REPORT_FREQUENCY rf;
+            int reportID;
+            long repeatTime;
+            unsigned int timerID;
+        };
 
-typedef OC::OCResource BaseResource;
-typedef PrimitiveResource::GetCallback GetCB;
-typedef PrimitiveResource::ObserveCallback ObserveCB;
+        enum class CACHE_STATE
+        {
+            READY = 0,
+            READY_YET,
+            LOST_SIGNAL,
+            DESTROYED,
+            UPDATING,
+            NONE
+        };
 
-typedef std::shared_ptr<DataCache> DataCachePtr;
-typedef std::shared_ptr<PrimitiveResource> PrimitiveResourcePtr;
+        typedef int CacheID;
 
-#endif
+        typedef std::function<OCStackResult(std::shared_ptr<PrimitiveResource>,
+                const ResourceAttributes &)> CacheCB;
+        typedef std::map<int, std::pair<Report_Info, CacheCB>> SubscriberInfo;
+        typedef std::pair<int, std::pair<Report_Info, CacheCB>> SubscriberInfoPair;
+
+        typedef OC::OCResource BaseResource;
+        typedef PrimitiveResource::GetCallback GetCB;
+        typedef PrimitiveResource::ObserveCallback ObserveCB;
+
+        typedef std::shared_ptr<DataCache> DataCachePtr;
+        typedef std::shared_ptr<PrimitiveResource> PrimitiveResourcePtr;
+    } // namespace Service
+} // namespace OIC
+
+#endif /* RCM_CACHETYPES_H */

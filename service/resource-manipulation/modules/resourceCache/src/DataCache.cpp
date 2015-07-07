@@ -25,7 +25,7 @@
 #include <utility>
 #include <ctime>
 
-#include "OCApi.h"
+//#include "OCApi.h"
 
 #include "DataCache.h"
 
@@ -33,209 +33,219 @@
 #include "ResourceAttributes.h"
 #include "ExpiryTimer.h"
 
-DataCache::DataCache(
-            PrimitiveResourcePtr pResource,
-            CacheCB func,
-            REPORT_FREQUENCY rf,
-            long repeatTime
-            ):sResource(pResource)
+namespace OIC
 {
-    subscriberList = std::unique_ptr<SubscriberInfo>(new SubscriberInfo());
-
-    timerInstance = new ExpiryTimer;
-    state = CACHE_STATE::READY_YET;
-
-    pObserveCB = (ObserveCB)(std::bind(&DataCache::onObserve, this,
-            std::placeholders::_1, std::placeholders::_2,
-            std::placeholders::_3, std::placeholders::_4));
-    pGetCB = (GetCB)(std::bind(&DataCache::onGet, this,
-            std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-    pTimerCB = (TimerCB)(std::bind(&DataCache::onTimer, this, std::placeholders::_1));
-
-    pResource->requestGet(pGetCB);
-    if(pResource->isObservable())
+    namespace Service
     {
-        pResource->requestObserve(pObserveCB);
-        expiredTimerId = timerInstance->requestTimer(DEFAULT_EXPIRED_TIME, pTimerCB);
-    }
-}
-
-DataCache::~DataCache()
-{
-    // TODO Auto-generated destructor stub
-
-    // TODO delete all node!!
-    subscriberList->clear();
-    subscriberList.release();
-}
-
-CacheID DataCache::addSubscriber(CacheCB func, REPORT_FREQUENCY rf, long repeatTime)
-{
-    Report_Info newItem;
-    newItem.rf = rf;
-    newItem.repeatTime = repeatTime;
-    newItem.timerID = 0;
-
-    srand(time(NULL));
-    newItem.reportID = rand();
-
-    while(1)
-    {
-        if(findSubscriber(newItem.reportID).first != 0 || newItem.reportID == 0)
+        DataCache::DataCache()
         {
-            newItem.reportID = rand();
-        }
-        else
-        {
-            break;
-        }
-    }
+            subscriberList = std::unique_ptr<SubscriberInfo>(new SubscriberInfo());
 
-    TimerID timerId = timerInstance->requestTimer(repeatTime, pTimerCB);
-    newItem.timerID = timerId;
+            sResource = nullptr;
 
-    subscriberList->insert(std::make_pair(newItem.reportID, std::make_pair(newItem, func)));
+            state = CACHE_STATE::READY_YET;
 
+            pObserveCB = (ObserveCB)(std::bind(&DataCache::onObserve, this,
+                    std::placeholders::_1, std::placeholders::_2,
+                    std::placeholders::_3, std::placeholders::_4));
+            pGetCB = (GetCB)(std::bind(&DataCache::onGet, this,
+                    std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+            pTimerCB = (TimerCB)(std::bind(&DataCache::onTimeOut, this, std::placeholders::_1));
+            pPollingCB = (TimerCB)(std::bind(&DataCache::onPollingOut, this, std::placeholders::_1));
 
-    return newItem.reportID;
-}
-
-CacheID DataCache::deleteSubscriber(CacheID id)
-{
-    CacheID ret = 0;
-
-    SubscriberInfoPair pair = findSubscriber(id);
-    if(pair.first != 0)
-    {
-        ret = pair.first;
-        subscriberList->erase(pair.first);
-    }
-
-    return ret;
-}
-
-SubscriberInfoPair DataCache::findSubscriber(CacheID id)
-{
-    SubscriberInfoPair ret;
-
-    for(auto & i : *subscriberList)
-    {
-        if(i.first == id)
-        {
-            ret = std::make_pair(i.first, std::make_pair((Report_Info)i.second.first, (CacheCB)i.second.second));
-        }
-    }
-
-    return ret;
-}
-
-const PrimitiveResourcePtr DataCache::getPrimitiveResource() const
-{
-    return sResource;
-}
-
-const ResourceAttributes DataCache::getCachedData() const
-{
-    if(state != CACHE_STATE::READY)
-    {
-        return ResourceAttributes();
-    }
-    const ResourceAttributes retAtt = attributes;
-
-    return retAtt;
-}
-
-void DataCache::onObserve(
-        const HeaderOptions& _hos, const ResponseStatement& _rep, int _result, int _seq)
-{
-
-    if(_result != OC_STACK_OK)
-    {
-        // TODO handle error
-        return;
-    }
-
-    if(_rep.getAttributes().empty())
-    {
-        return;
-    }
-
-    state = CACHE_STATE::READY;
-
-    attributes = _rep.getAttributes();
-
-    if(sResource->isObservable())
-    {
-        timerInstance->cancelTimer(expiredTimerId);
-        expiredTimerId = timerInstance->requestTimer(DEFAULT_EXPIRED_TIME, pTimerCB);
-    }
-
-    // notify!!
-    ResourceAttributes retAtt = attributes;
-    for(auto & i : * subscriberList)
-    {
-        if(i.second.first.rf == REPORT_FREQUENCY::UPTODATE)
-        {
-            i.second.second(this->sResource, retAtt);
-        }
-    }
-}
-
-void DataCache::onGet(const HeaderOptions& _hos,
-        const ResponseStatement& _rep, int _result)
-{
-    if(state == CACHE_STATE::READY_YET)
-    {
-        state = CACHE_STATE::READY;
-        attributes = _rep.getAttributes();
-        if(sResource->isObservable())
-        {
-            timerInstance->cancelTimer(expiredTimerId);
-            expiredTimerId = timerInstance->requestTimer(DEFAULT_EXPIRED_TIME, pTimerCB);
-        }
-    }
-    else
-    {
-        attributes = _rep.getAttributes();
-        if(sResource->isObservable())
-        {
-            timerInstance->cancelTimer(expiredTimerId);
-            expiredTimerId = timerInstance->requestTimer(DEFAULT_EXPIRED_TIME, pTimerCB);
         }
 
-        ResourceAttributes retAtt = attributes;
-        for(auto & i : * subscriberList)
+        DataCache::~DataCache()
         {
-            if(i.second.first.rf != REPORT_FREQUENCY::NONE)
+            state = CACHE_STATE::DESTROYED;
+            if(subscriberList != nullptr)
             {
-                i.second.second(this->sResource, retAtt);
+                subscriberList->clear();
+                subscriberList.release();
             }
         }
-    }
-}
 
-CACHE_STATE DataCache::getCacheState() const
-{
-    return state;
-}
-
-void *DataCache::onTimer(const unsigned int timerID)
-{
-    sResource->requestGet(pGetCB);
-    if(sResource->isObservable())
-    {
-        expiredTimerId = timerInstance->requestTimer(DEFAULT_EXPIRED_TIME, pTimerCB);
-    }
-    else
-    {
-        for(auto & i : * subscriberList)
+        void DataCache::initializeDataCache(PrimitiveResourcePtr pResource)
         {
-            if(i.second.first.timerID == timerID)
+            sResource = pResource;
+
+            sResource->requestGet(pGetCB);
+            if(sResource->isObservable())
             {
-                TimerID timerId = timerInstance->requestTimer(i.second.first.repeatTime, pTimerCB);
-                i.second.first.timerID = timerId;
-                break;
+                sResource->requestObserve(pObserveCB);
+            }
+            networkTimeOutHandle = networkTimer.requestTimer(DEFAULT_EXPIRED_TIME, pTimerCB);
+        }
+
+        CacheID DataCache::addSubscriber(CacheCB func, REPORT_FREQUENCY rf, long repeatTime)
+        {
+            Report_Info newItem;
+            newItem.rf = rf;
+            newItem.repeatTime = repeatTime;
+            newItem.timerID = 0;
+
+            newItem.reportID = generateCacheID();
+
+            if(subscriberList != nullptr)
+            {
+                subscriberList->insert(std::make_pair(newItem.reportID, std::make_pair(newItem, func)));
+            }
+
+            return newItem.reportID;
+        }
+
+        CacheID DataCache::deleteSubscriber(CacheID id)
+        {
+            CacheID ret = 0;
+
+            SubscriberInfoPair pair = findSubscriber(id);
+            if(pair.first != 0)
+            {
+                ret = pair.first;
+                subscriberList->erase(pair.first);
+            }
+
+            return ret;
+        }
+
+        SubscriberInfoPair DataCache::findSubscriber(CacheID id)
+        {
+            SubscriberInfoPair ret;
+
+            for(auto & i : *subscriberList)
+            {
+                if(i.first == id)
+                {
+                    ret = std::make_pair(i.first, std::make_pair((Report_Info)i.second.first,
+                            (CacheCB)i.second.second));
+                    break;
+                }
+            }
+
+            return ret;
+        }
+
+        const PrimitiveResourcePtr DataCache::getPrimitiveResource() const
+        {
+            return (sResource!=nullptr)?sResource:nullptr;
+        }
+
+        const ResourceAttributes DataCache::getCachedData() const
+        {
+            if(state != CACHE_STATE::READY || attributes.empty())
+            {
+                return ResourceAttributes();
+            }
+            const ResourceAttributes retAtt = attributes;
+            return retAtt;
+        }
+
+        void DataCache::onObserve(
+                const HeaderOptions& _hos, const ResponseStatement& _rep, int _result, int _seq)
+        {
+
+            if(_result != OC_STACK_OK || _rep.getAttributes().empty())
+            {
+                return;
+            }
+
+            if(state != CACHE_STATE::READY)
+            {
+                state = CACHE_STATE::READY;
+            }
+
+            networkTimer.cancelTimer(networkTimeOutHandle);
+            networkTimeOutHandle = networkTimer.requestTimer(DEFAULT_EXPIRED_TIME, pTimerCB);
+
+            notifyObservers(_rep.getAttributes());
+        }
+
+        void DataCache::onGet(const HeaderOptions& _hos,
+                const ResponseStatement& _rep, int _result)
+        {
+            if(_result != OC_STACK_OK || _rep.getAttributes().empty())
+            {
+                return;
+            }
+
+            if(state != CACHE_STATE::READY)
+            {
+                state = CACHE_STATE::READY;
+            }
+
+            if(!sResource->isObservable())
+            {
+                networkTimer.cancelTimer(networkTimeOutHandle);
+                networkTimeOutHandle = networkTimer.requestTimer(DEFAULT_EXPIRED_TIME, pTimerCB);
+
+                pollingHandle = pollingTimer.requestTimer(DEFAULT_REPORT_TIME, pPollingCB);
+            }
+
+            notifyObservers(_rep.getAttributes());
+        }
+
+        void DataCache::notifyObservers(ResourceAttributes Att)
+        {
+            if(attributes == Att)
+            {
+                return;
+            }
+
+            attributes = Att;
+
+            ResourceAttributes retAtt = Att;
+            for(auto & i : * subscriberList)
+            {
+                if(i.second.first.rf == REPORT_FREQUENCY::UPTODATE)
+                {
+                    i.second.second(this->sResource, retAtt);
+                }
             }
         }
-    }
-}
+
+        CACHE_STATE DataCache::getCacheState() const
+        {
+            return state;
+        }
+
+        void *DataCache::onTimeOut(unsigned int timerID)
+        {
+            state = CACHE_STATE::LOST_SIGNAL;
+            return NULL;
+        }
+        void *DataCache::onPollingOut(const unsigned int timerID)
+        {
+            if(sResource != nullptr)
+            {
+                sResource->requestGet(pGetCB);
+            }
+            return NULL;
+        }
+
+        CacheID DataCache::generateCacheID()
+        {
+            CacheID retID = 0;
+            srand(time(NULL));
+
+            while(1)
+            {
+                if(findSubscriber(retID).first == 0 && retID != 0)
+                {
+                    break;
+                }
+                retID = rand();
+            }
+
+            return retID;
+        }
+
+        void DataCache::requestGet()
+        {
+            state = CACHE_STATE::UPDATING;
+            if(sResource != nullptr)
+            {
+                sResource->requestGet(pGetCB);
+            }
+        }
+    } // namespace Service
+} // namespace OIC
