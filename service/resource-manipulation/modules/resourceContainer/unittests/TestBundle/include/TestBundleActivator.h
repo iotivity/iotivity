@@ -18,29 +18,25 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#ifndef TESTBUNDLE_H_
+#define TESTBUNDLE_H_
+
+#include <vector>
+
 #include "ResourceContainerBundleAPI.h"
-#include "ResourceContainerImpl.h"
+#include "BundleActivator.h"
+#include "BundleResource.h"
 
 using namespace OIC::Service;
 
-namespace OIC
+class TestBundleActivator : public BundleActivator
 {
-    namespace Service
-    {
+    public:
+        TestBundleActivator();
+        ~TestBundleActivator();
 
-        ResourceContainerBundleAPI::ResourceContainerBundleAPI()
-        {
+        void activateBundle(ResourceContainerBundleAPI *resourceContainer, std::string bundleId);
+        void deactivateBundle();
+};
 
-        }
-
-        ResourceContainerBundleAPI::~ResourceContainerBundleAPI()
-        {
-
-        }
-
-        ResourceContainerBundleAPI *ResourceContainerBundleAPI::getInstance()
-        {
-            return (ResourceContainerBundleAPI *)ResourceContainerImpl::getImplInstance();
-        }
-    }
-}
+#endif /* TESTBUNDLE_H_ */

@@ -2,12 +2,12 @@
 <container>      
     <bundle>
         <id>oic.bundle.discomfortIndexSensor</id>
-        <path>libSampleBundle.so</path>
+        <path>libSoftSensorBundle.so</path>
         <version>1.0.0</version>
         <resources>
             <resourceInfo>
                 <name>DiscomfortIndexSensor1</name>
-				<resourceType>core.softsensor</resourceType>
+				<resourceType>oic.softsensor</resourceType>
                 <attributes>
                   <attribute>
                     <name>version</name>	

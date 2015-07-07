@@ -108,6 +108,10 @@ hue_resource_bundle_src = [ Glob(HUE_RESOURCE_BUNDLE_DIR + 'src/*.cpp'), Glob('s
 HueBundle = hue_resource_bundle_env.SharedLibrary('HueBundle', hue_resource_bundle_src)
 hue_resource_bundle_env.InstallTarget(HueBundle, 'libHueBundle')
 
+######################################################################
+# build resource container unit tests
+######################################################################
+SConscript('unittests/SConscript')
 
 ######################################################################
 # Build Container Test

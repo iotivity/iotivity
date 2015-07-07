@@ -18,29 +18,40 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "ResourceContainerBundleAPI.h"
-#include "ResourceContainerImpl.h"
+#include "TestBundleActivator.h"
 
-using namespace OIC::Service;
+TestBundleActivator *bundle;
 
-namespace OIC
+TestBundleActivator::TestBundleActivator()
 {
-    namespace Service
+}
+
+TestBundleActivator::~TestBundleActivator()
+{
+}
+
+void TestBundleActivator::activateBundle(ResourceContainerBundleAPI *resourceContainer,
+        std::string bundleId)
+{
+    std::cout << "TestBundleActivator::activateBundle .. " << std::endl;
+}
+
+void TestBundleActivator::deactivateBundle()
+{
+    std::cout << "TestBundleActivator::deactivateBundle .. " << std::endl;
+}
+
+extern "C" void externalActivateBundle(ResourceContainerBundleAPI *resourceContainer,
+                                       std::string bundleId)
+{
+    bundle = new TestBundleActivator();
+    bundle->activateBundle(resourceContainer, bundleId);
+}
+
+extern "C" void externalDeactivateBundle()
+{
+    if (!bundle)
     {
-
-        ResourceContainerBundleAPI::ResourceContainerBundleAPI()
-        {
-
-        }
-
-        ResourceContainerBundleAPI::~ResourceContainerBundleAPI()
-        {
-
-        }
-
-        ResourceContainerBundleAPI *ResourceContainerBundleAPI::getInstance()
-        {
-            return (ResourceContainerBundleAPI *)ResourceContainerImpl::getImplInstance();
-        }
+        bundle->deactivateBundle();
     }
 }

@@ -43,10 +43,12 @@ namespace OIC
 
         Configuration::Configuration()
         {
+            m_loaded = false;
         }
 
         Configuration::Configuration(string configFile)
         {
+            m_loaded = false;
 
             getCurrentPath(&m_pathConfigFile);
             m_pathConfigFile.append("/");
@@ -59,6 +61,11 @@ namespace OIC
         {
         }
 
+        bool Configuration::isLoaded()
+        {
+            return m_loaded;
+        }
+
         void Configuration::getConfiguredBundles(configInfo *configOutput)
         {
             rapidxml::xml_node< char > *bundle;
@@ -68,7 +75,7 @@ namespace OIC
 
             try
             {
-                //cout << "Name of first node is: " << xmlDoc.first_node()->name() << endl;
+                //cout << "Name of first node is: " << m_xmlDoc.first_node()->name() << endl;
 
                 for (bundle = m_xmlDoc.first_node()->first_node("bundle"); bundle; bundle = bundle->next_sibling())
                 {
@@ -111,23 +118,24 @@ namespace OIC
                 {
                     // <id>
                     strBundleId = bundle->first_node("id")->value();
-                    bundleConfigMap.insert(std::make_pair("id", trim_both(strBundleId)));
 
                     if (!strBundleId.compare(bundleId))
                     {
+                        bundleConfigMap.insert(std::make_pair("id", trim_both(strBundleId)));
+
                         // <path>
                         strPath = bundle->first_node("path")->value();
-                        bundleConfigMap.insert(std::make_pair("id", trim_both(strPath)));
+                        bundleConfigMap.insert(std::make_pair("path", trim_both(strPath)));
 
                         // <version>
                         strVersion = bundle->first_node("version")->value();
-                        bundleConfigMap.insert(std::make_pair("id", trim_both(strVersion)));
+                        bundleConfigMap.insert(std::make_pair("version", trim_both(strVersion)));
+
+                        configOutput->push_back(bundleConfigMap);
 
                         break;
                     }
                 }
-
-                configOutput->push_back(bundleConfigMap);
             }
             catch (rapidxml::parse_error &e)
             {
@@ -209,7 +217,6 @@ namespace OIC
                 std::cout << "xml parsing failed !!" << std::endl;
                 std::cout << e.what() << std::endl;
             }
-
         }
 
         void Configuration::getConfigDocument(std::string pathConfigFile)
@@ -232,7 +239,7 @@ namespace OIC
                 try
                 {
                     m_xmlDoc.parse< 0 >((char *)m_strConfigData.c_str());
-
+                    m_loaded = true;
                 }
                 catch (rapidxml::parse_error &e)
                 {

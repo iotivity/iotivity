@@ -39,6 +39,7 @@ namespace OIC
     namespace Service
     {
         typedef vector< map< string, string > > configInfo;
+
         struct resourceInfo
         {
             string name;
@@ -47,16 +48,15 @@ namespace OIC
             string address;
             map< string, vector< map< string, string > > > resourceProperty;
         };
+
         class Configuration
         {
             public:
-
-
-
                 Configuration();
                 Configuration(string configFile);
                 ~Configuration();
 
+                bool isLoaded();
                 void getConfiguredBundles(configInfo *configOutput);
                 void getBundleConfiguration(string bundleId, configInfo *configOutput);
                 void getResourceConfiguration(string bundleId, vector< resourceInfo > *configOutput);
@@ -65,6 +65,7 @@ namespace OIC
                 void getConfigDocument(string pathConfigFile);
                 void getCurrentPath(string *pPath);
 
+                bool m_loaded;
                 string m_pathConfigFile;
                 string m_strConfigData;
                 rapidxml::xml_document< char > m_xmlDoc;

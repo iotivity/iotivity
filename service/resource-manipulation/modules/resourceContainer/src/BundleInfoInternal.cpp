@@ -27,12 +27,16 @@ namespace OIC
 
         BundleInfoInternal::BundleInfoInternal()
         {
-
+            m_activator = nullptr;
+            m_deactivator = nullptr;
+            m_bundleHandle = nullptr;
         }
 
         BundleInfoInternal::~BundleInfoInternal()
         {
-
+            m_activator = nullptr;
+            m_deactivator = nullptr;
+            m_bundleHandle = nullptr;
         }
 
         void BundleInfoInternal::setID(string id)
@@ -109,7 +113,7 @@ namespace OIC
             m_bundleHandle = handle;
         }
 
-        void* BundleInfoInternal::getBundleHandle()
+        void *BundleInfoInternal::getBundleHandle()
         {
             return m_bundleHandle;
         }
@@ -164,11 +168,13 @@ namespace OIC
             return m_java_activator_class;
         }*/
 
-        void BundleInfoInternal::setJavaBundleActivatorObject(jobject activator_object){
+        void BundleInfoInternal::setJavaBundleActivatorObject(jobject activator_object)
+        {
             m_java_activator_object = activator_object;
         }
 
-        jobject BundleInfoInternal::getJavaBundleActivatorObject(){
+        jobject BundleInfoInternal::getJavaBundleActivatorObject()
+        {
             return m_java_activator_object;
         }
 

@@ -1,0 +1,116 @@
+#******************************************************************
+#
+# Copyright 2015 Samsung Electronics All Rights Reserved.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+##
+# ResourceContainer Unit Test build script
+##
+import os
+Import('env')
+
+if env.get('RELEASE'):
+	env.AppendUnique(CCFLAGS = ['-Os'])
+	env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+else:
+	env.AppendUnique(CCFLAGS = ['-g'])
+
+if env.get('LOGGING'):
+	env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+
+# Add third party libraries
+lib_env = env.Clone()
+SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+
+container_gtest_env = lib_env.Clone()
+target_os = env.get('TARGET_OS')
+
+######################### unit test setting ##########################
+src_dir = lib_env.get('SRC_DIR')
+gtest_dir = src_dir + '/extlibs/gtest/gtest-1.7.0'
+######################################################################
+
+
+######################################################################
+# Build flags
+######################################################################
+gtest = File(gtest_dir + '/lib/.libs/libgtest.a')
+gtest_main = File(gtest_dir + '/lib/.libs/libgtest_main.a')
+
+container_gtest_env.AppendUnique(
+	CPPPATH = [
+		env.get('SRC_DIR')+'/extlibs', 
+		'../include',
+ 		'../include/internal',
+		'../bundle-api/include',
+		'../../serverBuilder/include',
+		'../../common/primitiveResource/include',
+		'/usr/lib/jvm/jdk1.8.0_40/include',
+		'/usr/lib/jvm/jdk1.8.0_40/include/linux'
+	])
+
+if target_os not in ['windows', 'winrt']:
+	container_gtest_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
+	if target_os != 'android':
+		container_gtest_env.AppendUnique(CXXFLAGS = ['-pthread'])
+		container_gtest_env.AppendUnique(LIBS = ['pthread'])
+
+if target_os == 'android':
+    container_gtest_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
+    container_gtest_env.PrependUnique(LIBS = ['gnustl_shared', 'compatibility', 'log'])
+
+container_gtest_env.PrependUnique(CPPPATH = [env.get('SRC_DIR')+'/extlibs/hippomocks-master',
+                             gtest_dir + '/include'])
+						 			 
+container_gtest_env.AppendUnique(LIBPATH = ['/usr/lib/jvm/jdk1.8.0_40/jre/lib/amd64/server/'])
+container_gtest_env.PrependUnique(LIBS = ['ResContainerLib', 'server_builder', 'service_common', 'oc','octbstack', 'oc_logger', 'oc_logger_core', 'connectivity_abstraction', gtest, gtest_main])
+container_gtest_env.AppendUnique(LIBS = ['dl', 'jvm'])	
+
+
+######################################################################
+# build test bundle
+######################################################################
+test_bundle_env = container_gtest_env.Clone()
+test_bundle_env.AppendUnique(CCFLAGS = ['-fPIC'])
+
+TEST_BUNDLE_DIR = 'TestBundle/'
+test_bundle_env.AppendUnique(CPPPATH = [
+		TEST_BUNDLE_DIR + 'include',
+		'../include/'
+		])		
+
+test_bundle_src = [ Glob(TEST_BUNDLE_DIR + 'src/*.cpp'), Glob('src/*.cpp')]
+
+TestBundle = test_bundle_env.SharedLibrary('TestBundle', test_bundle_src)
+test_bundle_env.InstallTarget(TestBundle, 'libTestBundle')
+
+
+######################################################################
+# Build Test
+######################################################################
+container_gtest_src = env.Glob('./*.cpp')
+
+container_test = container_gtest_env.Program('container_test', container_gtest_src)
+Alias("container_test", container_test)
+env.AppendTarget('container_test')
+
+# Copy test configuration
+Command("./ResourceContainerTestConfig.xml","./ResourceContainerTestConfig.xml", Copy("$TARGET", "$SOURCE"))
+Ignore("./ResourceContainerTestConfig.xml", "./ResourceContainerTestConfig.xml")
+Command("./ResourceContainerInvalidConfig.xml","./ResourceContainerInvalidConfig.xml", Copy("$TARGET", "$SOURCE"))
+Ignore("./ResourceContainerInvalidConfig.xml", "./ResourceContainerInvalidConfig.xml")
