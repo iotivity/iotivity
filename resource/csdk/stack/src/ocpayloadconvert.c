@@ -47,7 +47,7 @@ CborError ConditionalAddTextStringToMap(CborEncoder* map, const char* key, size_
 
 OCStackResult ConvertPayload(OCPayload* payload, uint8_t** outPayload, size_t* size)
 {
-    printf("Converting payload of type %d\n", payload->type);
+    OC_LOG_V(INFO, TAG, "Converting payload of type %d", payload->type);
     switch(payload->type)
     {
         case PAYLOAD_TYPE_DISCOVERY:
@@ -61,8 +61,7 @@ OCStackResult ConvertPayload(OCPayload* payload, uint8_t** outPayload, size_t* s
         case PAYLOAD_TYPE_PRESENCE:
             return ConvertPresencePayload((OCPresencePayload*)payload, outPayload, size);
         default:
-            printf("ConvertPayload default %d\n", payload->type);
-            exit(-1);
+            OC_LOG_V(INFO,TAG, "ConvertPayload default %d", payload->type);
             return OC_STACK_NOTIMPL;
     }
 }
@@ -183,10 +182,7 @@ OCStackResult ConvertDiscoveryPayload(OCDiscoveryPayload* payload, uint8_t** out
 
     if(err != CborNoError)
     {
-        printf("Convert Discovery Payload failed with : %d\n", err);
-        OC_LOG_V(ERROR, TAG, "Convert Discovery Payload failed with : %d\n", err);
-        // TODO: remove printf and exit
-        exit(-1);
+        OC_LOG_V(ERROR, TAG, "Convert Discovery Payload failed with : %d", err);
         return OC_STACK_ERROR;
     }
 
@@ -195,7 +191,7 @@ OCStackResult ConvertDiscoveryPayload(OCDiscoveryPayload* payload, uint8_t** out
 
     if(!tempPayload)
     {
-        OC_LOG_V(ERROR, TAG, PCF("Payload realloc failed!\n"));
+        OC_LOG_V(ERROR, TAG, PCF("Payload realloc failed!"));
         OICFree(*outPayload);
         return OC_STACK_ERROR;
     }
@@ -270,10 +266,7 @@ OCStackResult ConvertDevicePayload(OCDevicePayload* payload, uint8_t** outPayloa
 
     if(err != CborNoError)
     {
-        printf("Convert Device Payload failed with : %d\n", err);
-        OC_LOG_V(ERROR, TAG, "Convert Device Payload failed with : %d\n", err);
-        // TODO: remove printf and exit
-        exit(-1);
+        OC_LOG_V(ERROR, TAG, "Convert Device Payload failed with : %d", err);
         return OC_STACK_ERROR;
     }
 
@@ -282,7 +275,7 @@ OCStackResult ConvertDevicePayload(OCDevicePayload* payload, uint8_t** outPayloa
 
     if(!tempPayload)
     {
-        OC_LOG_V(ERROR, TAG, PCF("Payload realloc failed!\n"));
+        OC_LOG_V(ERROR, TAG, PCF("Payload realloc failed!"));
         OICFree(*outPayload);
         return OC_STACK_ERROR;
     }
@@ -390,10 +383,7 @@ OCStackResult ConvertPlatformPayload(OCPlatformPayload* payload, uint8_t** outPa
 
     if(err != CborNoError)
     {
-        printf("Convert Platform Payload failed with : %d\n", err);
-        OC_LOG_V(ERROR, TAG, "Convert Platform Payload failed with : %d\n", err);
-        // TODO: remove printf and exit
-        exit(-1);
+        OC_LOG_V(ERROR, TAG, "Convert Platform Payload failed with : %d", err);
         return OC_STACK_ERROR;
     }
 
@@ -402,7 +392,7 @@ OCStackResult ConvertPlatformPayload(OCPlatformPayload* payload, uint8_t** outPa
 
     if(!tempPayload)
     {
-        OC_LOG_V(ERROR, TAG, PCF("Payload realloc failed!\n"));
+        OC_LOG_V(ERROR, TAG, PCF("Payload realloc failed!"));
         OICFree(*outPayload);
         return OC_STACK_ERROR;
     }
@@ -478,7 +468,7 @@ CborError ConvertSingleRepPayload(CborEncoder* parent, const OCRepPayload* paylo
     // resource types, interfaces
     if(payload->types || payload->interfaces)
     {
-        printf("Has types or interfaces\n");
+        OC_LOG_V(INFO, TAG, "Payload has types or interfaces");
         err = err | cbor_encode_text_string(&map,
                 OC_RSRVD_PROPERTY,
                 sizeof(OC_RSRVD_PROPERTY) - 1);
@@ -560,9 +550,6 @@ CborError ConvertSingleRepPayload(CborEncoder* parent, const OCRepPayload* paylo
                 default:
                     OC_LOG_V(ERROR, TAG, "Invalid Prop type: %d",
                             value->type);
-                    printf("ERICH:Invalid prop type on convert: %d\n",
-                            value->type);
-                    exit(-1);
                     break;
             }
             value = value->next;
@@ -606,10 +593,7 @@ OCStackResult ConvertRepPayload(OCRepPayload* payload, uint8_t** outPayload, siz
 
     if(err != CborNoError)
     {
-        printf("Convert Rep Payload failed with : %d\n", err);
-        OC_LOG_V(ERROR, TAG, "Convert Rep Payload failed with : %d\n", err);
-        // TODO: remove printf and exit
-        exit(-1);
+        OC_LOG_V(ERROR, TAG, "Convert Rep Payload failed with : %d", err);
         return OC_STACK_ERROR;
     }
 
@@ -618,7 +602,7 @@ OCStackResult ConvertRepPayload(OCRepPayload* payload, uint8_t** outPayload, siz
 
     if(!tempPayload)
     {
-        OC_LOG_V(ERROR, TAG, PCF("Payload realloc failed!\n"));
+        OC_LOG_V(ERROR, TAG, PCF("Payload realloc failed!"));
         OICFree(*outPayload);
         return OC_STACK_ERROR;
     }
@@ -683,10 +667,7 @@ OCStackResult ConvertPresencePayload(OCPresencePayload* payload, uint8_t** outPa
 
     if(err != CborNoError)
     {
-        printf("Convert Presence Payload failed with : %d\n", err);
-        OC_LOG_V(ERROR, TAG, "Convert Presence Payload failed with : %d\n", err);
-        // TODO: remove printf and exit
-        exit(-1);
+        OC_LOG_V(ERROR, TAG, "Convert Presence Payload failed with : %d", err);
         return OC_STACK_ERROR;
     }
 
@@ -695,7 +676,7 @@ OCStackResult ConvertPresencePayload(OCPresencePayload* payload, uint8_t** outPa
 
     if(!tempPayload)
     {
-        OC_LOG_V(ERROR, TAG, PCF("Payload realloc failed!\n"));
+        OC_LOG_V(ERROR, TAG, PCF("Payload realloc failed!"));
         OICFree(*outPayload);
         return OC_STACK_ERROR;
     }
