@@ -61,7 +61,7 @@ const char * OIC_JSON_OXM_TYPE_NAME = "oxmtype";
 const char * OIC_JSON_OXM_SEL_NAME = "oxmsel";
 const char * OIC_JSON_DEVICE_ID_FORMAT_NAME = "dvcidfrmt";
 const char * OIC_JSON_ISOP_NAME = "isop";
-const char * OIC_JSON_COMMIT_HASH_NAME = "commithash";
+const char * OIC_JSON_COMMIT_HASH_NAME = "ch";
 const char * OIC_JSON_DEVICE_ID_NAME = "deviceid";
 const char * OIC_JSON_CM_NAME = "cm";
 const char * OIC_JSON_TM_NAME = "tm";
@@ -85,3 +85,8 @@ const char * OXM_RANDOM_DEVICE_PIN = "oic.sec.doxm.rdp";
 const char * OXM_PRE_PROVISIONED_DEVICE_PIN = "oic.sec.doxm.ppdp";
 const char * OXM_PRE_PROVISIONED_STRONG_CREDENTIAL = "oic.sec.doxm.ppsc";
 
+const char * OIC_SEC_TRUE = "true";
+const char * OIC_SEC_FALSE = "false";
+
+const char * OIC_SEC_REST_QUERY_SEPARATOR = "&";
+char OIC_SEC_REST_QUERY_DELIMETER = '=';

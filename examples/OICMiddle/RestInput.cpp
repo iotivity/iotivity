@@ -81,6 +81,7 @@ void RestInput::startAccept(int &sockfd)
                 return;
             }
             int n = read(connfd, m_data, BUFLEN);
+            close(connfd);
             if (n < 0) {
                 cerr << "Failed to read from socket" << endl;
                 return;

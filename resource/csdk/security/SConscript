@@ -40,6 +40,7 @@ if target_os == 'arduino':
 ######################################################################
 libocsrm_env.PrependUnique(CPPPATH = [
 		'../../../extlibs/cjson/',
+#		'../../../extlibs/tinydtls/',
 		'../logger/include',
 		'../ocrandom/include',
 		'../stack/include',
@@ -56,6 +57,7 @@ libocsrm_env.PrependUnique(CPPPATH = [
 if target_os not in ['arduino', 'windows', 'winrt']:
 	libocsrm_env.AppendUnique(CPPDEFINES  = ['WITH_POSIX'])
 	libocsrm_env.AppendUnique(CFLAGS = ['-std=c99'])
+	libocsrm_env.AppendUnique(CPPDEFINES = ['HAVE_STRINGS_H'])
 
 if target_os not in ['windows', 'winrt']:
 	libocsrm_env.AppendUnique(CFLAGS = ['-Wall'])
@@ -90,6 +92,7 @@ libocsrm_src = [
 	OCSRM_SRC + 'policyengine.c',
 	OCSRM_SRC + 'psinterface.c',
 	OCSRM_SRC + 'srmresourcestrings.c',
+	OCSRM_SRC + 'srmutility.c',
 	OCSRM_SRC + 'base64.c'
 	]
 

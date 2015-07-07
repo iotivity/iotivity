@@ -22,6 +22,7 @@
 
 package oic.plugin.hue;
 
+import java.util.EnumSet;
 import java.util.List;
 
 import org.iotivity.base.EntityHandlerResult;
@@ -95,22 +96,28 @@ public class EntityHandlerHue implements OcPlatform.EntityHandler {
                                 .getResourceCache().getAllLights();
                         for (PHLight light : mmyLights) {
                             PHLightState lightState = new PHLightState();
-                            String str = resourcerequest
-                                    .getResourceRepresentation()
-                                    .getValueString("power");
-                            if (str.equals("on")) {
-                                lightState.setOn(true);
-                                Activator.myLight.m_power = "on";
-                            } else if (str.equals("off")) {
-                                lightState.setOn(false);
-                                Activator.myLight.m_power = "off";
+                            try {
+                                String str = resourcerequest
+                                        .getResourceRepresentation()
+                                        .getValue("power");
+                                if (str.equals("on")) {
+                                    lightState.setOn(true);
+                                    Activator.myLight.m_power = "on";
+                                } else if (str.equals("off")) {
+                                    lightState.setOn(false);
+                                    Activator.myLight.m_power = "off";
+                                }
+                                int setHueValue = resourcerequest
+                                        .getResourceRepresentation()
+                                        .getValue("color");
+                                lightState.setHue(setHueValue);
+                                Activator.myLight.m_color = resourcerequest
+                                        .getResourceRepresentation()
+                                        .getValue("color");
+                            } catch (OcException e) {
+                                // TODO Auto-generated catch block
+                                Log.e(TAG, e.getMessage());
                             }
-                            lightState.setHue(resourcerequest
-                                    .getResourceRepresentation()
-                                    .getValueInt("color"));
-                            Activator.myLight.m_color = resourcerequest
-                                    .getResourceRepresentation()
-                                    .getValueInt("color");
                             mbridge.updateLightState(light, lightState);
                         }
                         break;
@@ -119,14 +126,19 @@ public class EntityHandlerHue implements OcPlatform.EntityHandler {
                 }
                 response.setErrorCode(200);
                 // representation.setUri("/a/huebulb");
-                representation.setValueString("name",
-                        Activator.myLight.m_name);
-                representation.setValueString("power",
-                        Activator.myLight.m_power);
-                representation.setValueInt("brightness",
-                        Activator.myLight.m_brightness);
-                representation.setValueInt("color",
-                        Activator.myLight.m_color);
+                try { 
+                    representation.setValue("name",
+                            Activator.myLight.m_name);
+                    representation.setValue("power",
+                            Activator.myLight.m_power);
+                    representation.setValue("brightness",
+                            Activator.myLight.m_brightness);
+                    representation.setValue("color",
+                            Activator.myLight.m_color);
+                } catch (OcException e) {
+                    // TODO Auto-generated catch block
+                    Log.e(TAG, e.getMessage());
+                }
                 response.setResourceRepresentation(representation);
                 try {
                     OcPlatform.sendResponse(response);

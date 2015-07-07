@@ -47,6 +47,7 @@ extern "C" {
 // Global variables
 //-----------------------------------------------------------------------------
 extern OCDeviceEntityHandler defaultDeviceHandler;
+extern void* defaultDeviceHandlerCallbackParameter;
 
 //-----------------------------------------------------------------------------
 // Defines
@@ -75,12 +76,8 @@ typedef struct
     uint8_t numRcvdVendorSpecificHeaderOptions;
     OCHeaderOption rcvdVendorSpecificHeaderOptions[MAX_HEADER_OPTIONS];
 
-    /** Remote Endpoint address **/
-    //////////////////////////////////////////////////////////
-    // TODO: bundle this up as endpoint
-    CAAddress_t addressInfo;
-    /** Connectivity of the endpoint**/
-    CATransportType_t connectivityType;
+    /** Remote endpoint address **/
+    OCDevAddr devAddr;
 
     //token for the observe request
     CAToken_t requestToken;
@@ -88,8 +85,6 @@ typedef struct
     // The ID of CoAP pdu
     uint16_t coapID;
     uint8_t delayedResNeeded;
-    uint8_t secured;
-    //////////////////////////////////////////////////////////
     uint8_t reqMorePacket;
     uint32_t reqPacketNum;
     uint16_t reqPacketSize;
@@ -135,7 +130,7 @@ OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t stat
 
 OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest);
 
-OCStackResult SendDirectStackResponse(const CARemoteEndpoint_t* endPoint, const uint16_t coapID,
+OCStackResult SendDirectStackResponse(const CAEndpoint_t* endPoint, const uint16_t coapID,
         const CAResponseResult_t responseResult, const CAMessageType_t type,
         const uint8_t numOptions, const CAHeaderOption_t *options,
         CAToken_t token, uint8_t tokenLength);
@@ -260,22 +255,13 @@ OCStackResult OCChangeResourceProperty(OCResourceProperty * inputProperty,
         OCResourceProperty resourceProperties, uint8_t enable);
 #endif
 
-/**
- * Clones a string IFF its pointer value is not NULL.
- *
- * Note: The caller to this function is responsible for calling @ref OCFree
- * for the destination parameter.
- *
- * @param dest The destination string for the string value to be cloned.
- *
- * @param src The source for the string value to be to cloned.
- */
-OCStackResult CloneStringIfNonNull(char **dest, const char *src);
-
-
 const char *convertTriggerEnumToString(OCPresenceTrigger trigger);
 
 OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr);
+
+void CopyEndpointToDevAddr(const CAEndpoint_t *in, OCDevAddr *out);
+
+void CopyDevAddrToEndpoint(const OCDevAddr *in, CAEndpoint_t *out);
 
 #ifdef __cplusplus
 }

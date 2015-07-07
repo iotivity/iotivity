@@ -68,7 +68,7 @@ typedef enum
 typedef struct
 {
     CASendDataType_t type;
-    CARemoteEndpoint_t *remoteEndpoint;
+    CAEndpoint_t *remoteEndpoint;
     CARequestInfo_t *requestInfo;
     CAResponseInfo_t *responseInfo;
     CAErrorInfo_t *errorInfo;
@@ -88,7 +88,7 @@ extern "C"
  * @param   request        [IN]    request that needs to be sent
  * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
-CAResult_t CADetachRequestMessage(const CARemoteEndpoint_t *endpoint,
+CAResult_t CADetachRequestMessage(const CAEndpoint_t *endpoint,
                                   const CARequestInfo_t *request);
 
 /**
@@ -97,7 +97,7 @@ CAResult_t CADetachRequestMessage(const CARemoteEndpoint_t *endpoint,
  * @param   request        [IN]    request that needs to be sent
  * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
-CAResult_t CADetachRequestToAllMessage(const CAGroupEndpoint_t *object,
+CAResult_t CADetachRequestToAllMessage(const CAEndpoint_t *object,
                                        const CARequestInfo_t *request);
 
 /**
@@ -106,7 +106,7 @@ CAResult_t CADetachRequestToAllMessage(const CAGroupEndpoint_t *object,
  * @param   response       [IN]    response that needs to be sent
  * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
-CAResult_t CADetachResponseMessage(const CARemoteEndpoint_t *endpoint,
+CAResult_t CADetachResponseMessage(const CAEndpoint_t *endpoint,
                                    const CAResponseInfo_t *response);
 
 /**

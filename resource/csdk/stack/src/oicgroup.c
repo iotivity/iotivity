@@ -46,7 +46,7 @@
 #define ACTIONSET               "ActionSet"
 #define DELETE_ACTIONSET        "DelActionSet"
 
-#define OIC_ACTION_PREFIX               "{\"oc\":[{\"rep\":{"
+#define OIC_ACTION_PREFIX               "{\"oic\":[{\"rep\":{"
 #define VARIFY_POINTER_NULL(pointer, result, toExit) \
     if(pointer == NULL) \
     {\
@@ -905,12 +905,8 @@ OCStackResult SendAction(OCDoHandle *handle, const char *targetUri,
     cbdata.cd = NULL;
     cbdata.context = (void*)DEFAULT_CONTEXT_VALUE;
 
-// TODO: Selecting OC_IPV4.
-// It is temporary change as OC_ALL is not working currently. Remove this code and use OC_ALL
-// once it is functioning.
-
     return OCDoResource(handle, OC_REST_PUT, targetUri,
-    NULL, (char *) action, OC_IPV4, OC_NA_QOS, &cbdata, NULL, 0);
+            NULL, (char *) action, CT_ADAPTER_IP, OC_NA_QOS, &cbdata, NULL, 0);
 }
 
 OCStackResult DoAction(OCResource* resource, OCActionSet* actionset,
@@ -946,6 +942,7 @@ OCStackResult DoAction(OCResource* resource, OCActionSet* actionset,
                 actionDescPtr);
         if (result != OC_STACK_OK)
         {
+            OICFree(info);
             return result;
         }
 

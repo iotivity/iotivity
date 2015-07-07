@@ -29,19 +29,21 @@
 #include "logger.h"
 #include "occlientslow.h"
 
+// Tracking user input
 static int UNICAST_DISCOVERY = 0;
 static int TEST_CASE = 0;
+static int CONNECTIVITY = 0;
+
 static const char * UNICAST_DISCOVERY_QUERY = "coap://%s:6298/oic/res";
 static std::string putPayload = "{\"state\":\"off\",\"power\":10}";
 static std::string coapServerIP = "255.255.255.255";
 static std::string coapServerPort = "5683";
 static std::string coapServerResource = "/a/led";
 
-//The following variable determines the interface protocol (IPv4, IPv6, etc)
-//to be used for sending unicast messages. Default set to IPv4.
-static OCConnectivityType OC_CONNTYPE = OC_IPV4;
+//The following variable determines the interface protocol (IP, etc)
+//to be used for sending unicast messages. Default set to IP.
+static OCConnectivityType OC_CONNTYPE = CT_ADAPTER_IP;
 static const char * MULTICAST_RESOURCE_DISCOVERY_QUERY = "/oic/res";
-
 static int IPV4_ADDR_SIZE = 16;
 void StripNewLineChar(char* str);
 
@@ -58,8 +60,10 @@ void handleSigInt(int signum)
 
 static void PrintUsage()
 {
-    OC_LOG(INFO, TAG, "Usage : occlient -c <0|1> -u <0|1> -t <1|2|3>");
-    OC_LOG(INFO, TAG, "-c <0|1> : IPv4/IPv6 (IPv6 not currently supported)");
+    OC_LOG(INFO, TAG, "Usage : occlient -c <0|1|2> -u <0|1> -t <1|2|3>");
+    OC_LOG(INFO, TAG, "-c 0 : Default IPv4 and IPv6 auto-selection");
+    OC_LOG(INFO, TAG, "-c 1 : IPv4 Connectivity Type");
+    OC_LOG(INFO, TAG, "-c 2 : IPv6 Connectivity Type (IPv6 not currently supported)");
     OC_LOG(INFO, TAG, "-u <0|1> : Perform multicast/unicast discovery of resources");
     OC_LOG(INFO, TAG, "-t 1 : Discover Resources");
     OC_LOG(INFO, TAG, "-t 2 : Discover Resources and Initiate Nonconfirmable Get Request");
@@ -130,9 +134,6 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse
 OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
         OCClientResponse * clientResponse)
 {
-    uint8_t remoteIpAddr[4];
-    uint16_t remotePortNu;
-
     if (ctx == (void*) DEFAULT_CONTEXT_VALUE)
     {
         OC_LOG(INFO, TAG, "Callback Context for DISCOVER query recvd successfully");
@@ -142,14 +143,9 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
     {
         OC_LOG_V(INFO, TAG, "StackResult: %s", getResult(clientResponse->result));
 
-        OCDevAddrToIPv4Addr((OCDevAddr *) clientResponse->addr, remoteIpAddr,
-                remoteIpAddr + 1, remoteIpAddr + 2, remoteIpAddr + 3);
-        OCDevAddrToPort((OCDevAddr *) clientResponse->addr, &remotePortNu);
-
         OC_LOG_V(INFO, TAG,
-                "Device =============> Discovered %s @ %d.%d.%d.%d:%d",
-                clientResponse->resJSONPayload, remoteIpAddr[0], remoteIpAddr[1],
-                remoteIpAddr[2], remoteIpAddr[3], remotePortNu);
+                "Device =============> Discovered %s @ %s:%d",
+                clientResponse->resJSONPayload, clientResponse->devAddr.addr, clientResponse->devAddr.port);
 
         parseClientResponse(clientResponse);
 
@@ -190,7 +186,7 @@ int InitDiscovery()
     if (UNICAST_DISCOVERY)
     {
         char ipv4addr[IPV4_ADDR_SIZE];
-        printf("Enter IPv4 address of the Server hosting resource (Ex: 192.168.0.15)\n");
+        OC_LOG(INFO, TAG, "Enter IPv4 address of the Server hosting resource (Ex: 192.168.0.15)");
         if (fgets(ipv4addr, IPV4_ADDR_SIZE, stdin))
         {
             //Strip newline char from ipv4addr
@@ -217,7 +213,7 @@ int InitDiscovery()
     }
     else
     {
-        ret = OCDoResource(NULL, OC_REST_GET, szQueryUri, 0, 0, OC_ALL,
+        ret = OCDoResource(NULL, OC_REST_DISCOVER, szQueryUri, 0, 0, CT_DEFAULT,
                 OC_LOW_QOS, &cbData, NULL, 0);
     }
     if (ret != OC_STACK_OK)
@@ -242,9 +238,7 @@ int main(int argc, char* argv[])
                 TEST_CASE = atoi(optarg);
                 break;
             case 'c':
-                // TODO: re-enable IPv4/IPv6 command line selection when IPv6 is supported
-                // OC_CONNTYPE = OCConnectivityType(atoi(optarg));
-                OC_CONNTYPE = OC_IPV4;
+                CONNECTIVITY = atoi(optarg);
                 break;
             default:
                 PrintUsage();
@@ -253,7 +247,8 @@ int main(int argc, char* argv[])
     }
 
     if ((UNICAST_DISCOVERY != 0 && UNICAST_DISCOVERY != 1) ||
-            (TEST_CASE < TEST_DISCOVER_REQ || TEST_CASE >= MAX_TESTS) )
+            (TEST_CASE < TEST_DISCOVER_REQ || TEST_CASE >= MAX_TESTS) ||
+            (CONNECTIVITY < CT_ADAPTER_DEFAULT || CONNECTIVITY >= MAX_CT))
     {
         PrintUsage();
         return -1;
@@ -264,6 +259,29 @@ int main(int argc, char* argv[])
     {
         OC_LOG(ERROR, TAG, "OCStack init error");
         return 0;
+    }
+
+    if(CONNECTIVITY == CT_ADAPTER_DEFAULT)
+    {
+        OC_CONNTYPE = CT_ADAPTER_IP;
+    }
+    else if(CONNECTIVITY == CT_IPV4)
+    {
+        OC_CONNTYPE = CT_IP_USE_V4;
+    }
+    else if(CONNECTIVITY == CT_IPV6)
+    {
+        OC_CONNTYPE = CT_IP_USE_V6;
+
+        //TODO: Remove when IPv6 is available.
+        OC_LOG(INFO, TAG, "Ipv6 is currently not supported...");
+        PrintUsage();
+        return -1;
+    }
+    else
+    {
+        OC_LOG(INFO, TAG, "Default Connectivity type selected...");
+        OC_CONNTYPE = CT_ADAPTER_IP;
     }
 
     InitDiscovery();
@@ -291,30 +309,6 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-std::string getIPAddrTBServer(OCClientResponse * clientResponse)
-{
-    if(!clientResponse) return "";
-    if(!clientResponse->addr) return "";
-    uint8_t a, b, c, d = 0;
-    if(0 != OCDevAddrToIPv4Addr(clientResponse->addr, &a, &b, &c, &d) ) return "";
-
-    char ipaddr[16] = {'\0'};
-    // ostringstream not working correctly here, hence snprintf
-    snprintf(ipaddr,  sizeof(ipaddr), "%d.%d.%d.%d", a,b,c,d);
-    return std::string (ipaddr);
-}
-
-std::string getPortTBServer(OCClientResponse * clientResponse)
-{
-    if(!clientResponse) return "";
-    if(!clientResponse->addr) return "";
-    uint16_t p = 0;
-    if(0 != OCDevAddrToPort(clientResponse->addr, &p) ) return "";
-    std::ostringstream ss;
-    ss << p;
-    return ss.str();
-}
-
 std::string getQueryStrForGetPut(OCClientResponse * clientResponse)
 {
     return "/a/led";
@@ -322,8 +316,8 @@ std::string getQueryStrForGetPut(OCClientResponse * clientResponse)
 
 void parseClientResponse(OCClientResponse * clientResponse)
 {
-    coapServerIP = getIPAddrTBServer(clientResponse);
-    coapServerPort = getPortTBServer(clientResponse);
+    coapServerIP = clientResponse->devAddr.addr;
+    coapServerPort = clientResponse->devAddr.port;
     coapServerResource = getQueryStrForGetPut(clientResponse);
 }
 

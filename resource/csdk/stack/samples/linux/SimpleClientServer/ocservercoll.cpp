@@ -122,6 +122,7 @@ static void
 PrintReceivedMsgInfo(OCEntityHandlerFlag flag, OCEntityHandlerRequest * ehRequest)
 {
     const char* typeOfMessage;
+    const char* typeOfMethod;
 
     switch (flag)
     {
@@ -135,13 +136,26 @@ PrintReceivedMsgInfo(OCEntityHandlerFlag flag, OCEntityHandlerRequest * ehReques
             typeOfMessage = "UNKNOWN";
     }
 
-    OC_LOG_V(INFO, TAG, "Receiving message type: %s, method %s",
-            typeOfMessage,
-            (ehRequest->method == OC_REST_GET) ? "OC_REST_GET" : "OC_REST_PUT" );
+    if (ehRequest == NULL)
+    {
+        typeOfMethod = "UNKNOWN";
+    }
+    else if (ehRequest->method == OC_REST_GET)
+    {
+        typeOfMethod = "OC_REST_GET";
+    }
+    else
+    {
+        typeOfMethod = "OC_REST_PUT";
+    }
+
+    OC_LOG_V(INFO, TAG, "Receiving message type: %s, method %s", typeOfMessage,
+            typeOfMethod);
 }
 
 OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
-                                            OCEntityHandlerRequest * ehRequest)
+                                            OCEntityHandlerRequest * ehRequest,
+                                            void* callback)
 {
     OCEntityHandlerResult ret = OC_EH_OK;
     OCEntityHandlerResponse response;
@@ -316,7 +330,7 @@ OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
 }
 
 OCEntityHandlerResult OCEntityHandlerLightCb(OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest * ehRequest)
+        OCEntityHandlerRequest * ehRequest,void* callbackParam)
 {
     OCEntityHandlerResult ret = OC_EH_OK;
     OCEntityHandlerResponse response;
@@ -376,7 +390,7 @@ OCEntityHandlerResult OCEntityHandlerLightCb(OCEntityHandlerFlag flag,
 }
 
 OCEntityHandlerResult OCEntityHandlerFanCb(OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest * ehRequest)
+        OCEntityHandlerRequest * ehRequest, void* callback)
 {
     OCEntityHandlerResult ret = OC_EH_OK;
     OCEntityHandlerResponse response;
@@ -547,6 +561,7 @@ void createResources()
             OC_RSRVD_INTERFACE_DEFAULT,
             "/a/fan",
             OCEntityHandlerFanCb,
+            NULL,
             OC_DISCOVERABLE|OC_OBSERVABLE);
     OC_LOG_V(INFO, TAG, "Created fan resource with result: %s", getResult(res));
 
@@ -556,6 +571,7 @@ void createResources()
             OC_RSRVD_INTERFACE_DEFAULT,
             "/a/light",
             OCEntityHandlerLightCb,
+            NULL,
             OC_DISCOVERABLE|OC_OBSERVABLE);
     OC_LOG_V(INFO, TAG, "Created light resource with result: %s", getResult(res));
 
@@ -568,6 +584,7 @@ void createResources()
                 OC_RSRVD_INTERFACE_BATCH,
                 "/a/room",
                 OCEntityHandlerRoomCb,
+                NULL,
                 OC_DISCOVERABLE);
     }
     else
@@ -576,6 +593,7 @@ void createResources()
                 "core.room",
                 OC_RSRVD_INTERFACE_BATCH,
                 "/a/room",
+                NULL,
                 NULL,
                 OC_DISCOVERABLE);
     }

@@ -32,7 +32,7 @@
 #include "cacommon.h"
 
 /** CA_IPV4, CA_LE **/
-#define DEFAULT_RETRANSMISSION_TYPE     (CA_IPV4 | CA_LE)
+#define DEFAULT_RETRANSMISSION_TYPE     (CA_ADAPTER_IP | CA_ADAPTER_GATT_BTLE)
 
 /** default retransmission trying count is 4. **/
 #define DEFAULT_RETRANSMISSION_COUNT    4
@@ -41,17 +41,17 @@
 #define RETRANSMISSION_CHECK_PERIOD_SEC     1
 
 /** retransmission data send method type**/
-typedef CAResult_t (*CADataSendMethod_t)(const CARemoteEndpoint_t *endpoint, const void *pdu,
+typedef CAResult_t (*CADataSendMethod_t)(const CAEndpoint_t *endpoint, const void *pdu,
                                          uint32_t size);
 
 /** retransmission timeout callback type**/
-typedef void (*CATimeoutCallback_t)(const CARemoteEndpoint_t *endpoint, const void *pdu,
+typedef void (*CATimeoutCallback_t)(const CAEndpoint_t *endpoint, const void *pdu,
                                     uint32_t size);
 
 typedef struct
 {
     /** retransmission support transport type **/
-    CATransportType_t supportType;
+    CATransportAdapter_t supportType;
 
     /** retransmission trying count **/
     uint8_t tryingCount;
@@ -105,7 +105,7 @@ CAResult_t CARetransmissionInitialize(CARetransmission_t *context,
  * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
 CAResult_t CARetransmissionSentData(CARetransmission_t *context,
-                                    const CARemoteEndpoint_t *endpoint,
+                                    const CAEndpoint_t *endpoint,
                                     const void *pdu, uint32_t size);
 
 /**
@@ -119,7 +119,7 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context,
  * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
 CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
-                                        const CARemoteEndpoint_t *endpoint, const void *pdu,
+                                        const CAEndpoint_t *endpoint, const void *pdu,
                                         uint32_t size, void **retransmissionPdu);
 
 /**

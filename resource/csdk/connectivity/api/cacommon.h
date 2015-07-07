@@ -112,17 +112,40 @@ typedef char *CAURI_t;
  */
 typedef char *CAToken_t;
 
-/**
- * @enum CATransportType_t
- * @brief Different connectivities that are handled in Connectivity Abstraction
- */
+// The following flags are the same as the equivalent OIC values in
+// octypes.h, allowing direct copying with slight fixup.
+// The CA layer should used the OC types when build allows that.
+#define MAX_ADDR_STR_SIZE_CA (40)
+
 typedef enum
 {
-    CA_IPV4 = (1 << 0),     /**< IPV4 Transport Type */
-    CA_IPV6 = (1 << 1),     /**< IPV6 Transport Type */
-    CA_EDR = (1 << 2),      /**< EDR Transport Type */
-    CA_LE = (1 << 3)        /**< LE Transport Type */
-} CATransportType_t;
+    CA_DEFAULT_ADAPTER = 0,
+
+    // value zero indicates discovery
+    CA_ADAPTER_IP           = (1 << 0),   // IPv4 and IPv6, including 6LoWPAN
+    CA_ADAPTER_GATT_BTLE    = (1 << 1),   // GATT over Bluetooth LE
+    CA_ADAPTER_RFCOMM_BTEDR = (1 << 2),   // RFCOMM over Bluetooth EDR
+} CATransportAdapter_t;
+
+typedef enum
+{
+    CA_DEFAULT_FLAGS = 0,
+
+    // Insecure transport is the default (subject to change)
+    CA_SECURE          = (1 << 4),   // secure the transport path
+    // IPv4 & IPv6 autoselection is the default
+    CA_IPV6            = (1 << 5),   // IP adapter only
+    CA_IPV4            = (1 << 6),   // IP adapter only
+    // Link-Local multicast is the default multicast scope for IPv6.
+    // These correspond in both value and position to the IPv6 address bits.
+    CA_SCOPE_INTERFACE = 0x1, // IPv6 Interface-Local scope
+    CA_SCOPE_LINK      = 0x2, // IPv6 Link-Local scope (default)
+    CA_SCOPE_REALM     = 0x3, // IPv6 Realm-Local scope
+    CA_SCOPE_ADMIN     = 0x4, // IPv6 Admin-Local scope
+    CA_SCOPE_SITE      = 0x5, // IPv6 Site-Local scope
+    CA_SCOPE_ORG       = 0x8, // IPv6 Organization-Local scope
+    CA_SCOPE_GLOBAL    = 0xE, // IPv6 Global scope
+} CATransportFlags_t;
 
 /**
  * @enum CANetworkStatus_t
@@ -134,37 +157,6 @@ typedef enum
     CA_INTERFACE_UP    /**< Connection is Available */
 } CANetworkStatus_t;
 
-/**
- * @brief  Address of the local or remote endpoint
- */
-typedef union
-{
-    /**
-     * @brief BT Mac Information
-     */
-    struct
-    {
-        char btMacAddress[CA_MACADDR_SIZE];   /**< BT mac address **/
-    } BT;
-
-    /**
-     * @brief LE MAC Information
-     */
-    struct
-    {
-        char leMacAddress[CA_MACADDR_SIZE];   /**< BLE mac address **/
-    } LE;
-
-    /**
-     * @brief IP Information
-     */
-    struct
-    {
-        char ipAddress[CA_IPADDR_SIZE]; /**< Ip address of the interface**/
-        uint16_t port;                  /**< port information**/
-    } IP;
-} CAAddress_t;
-
 /*
  * @brief remoteEndpoint identity
  */
@@ -172,7 +164,7 @@ typedef struct
 {
     uint16_t id_length;
     unsigned char id[CA_MAX_ENDPOINT_IDENTITY_LEN];
-}CARemoteId_t;
+} CARemoteId_t;
 
 /**
  * @enum CAMessageType_t
@@ -219,33 +211,13 @@ typedef enum
  */
 typedef struct
 {
-
-    CAURI_t resourceUri;                    /**< Resource URI information **/
-    CAAddress_t addressInfo;                /**< Remote Endpoint address **/
-    CATransportType_t transportType;  /**< Connectivity of the endpoint**/
-    bool isSecured;                         /**< Secure connection**/
-    CARemoteId_t identity;                  /**< Endpoint identity **/
-} CARemoteEndpoint_t;
-
-
-/**
- * @brief Group endpoint information for connectivities
- */
-typedef struct
-{
-    CAURI_t resourceUri;                    /**< Resource URI information **/
-    CATransportType_t transportType;  /**< Transport type of the endpoint**/
-} CAGroupEndpoint_t;
-
-/**
- @brief Local Connectivity information
- */
-typedef struct
-{
-    CAAddress_t addressInfo;    /**< Address of the interface  **/
-    CATransportType_t type;  /**< Transport type of local device **/
-    bool isSecured;         /**< Secure connection**/
-} CALocalConnectivity_t;
+    CATransportAdapter_t    adapter;    // adapter type
+    CATransportFlags_t      flags;      // transport modifiers
+    char                    addr[MAX_ADDR_STR_SIZE_CA]; // address for all
+    uint32_t                interface;  // usually zero for default interface
+    uint16_t                port;       // for IP
+    CARemoteId_t identity;              // endpoint identity
+} CAEndpoint_t;
 
 /**
  * @enum CAResult_t
@@ -330,7 +302,7 @@ typedef struct
     uint16_t optionID;                                      /**< The header option ID which will be
                                                             added to communication packets */
     uint16_t optionLength;                                  /**< Option Length **/
-    uint8_t optionData[CA_MAX_HEADER_OPTION_DATA_LENGTH];   /**< Optional data values**/
+    char optionData[CA_MAX_HEADER_OPTION_DATA_LENGTH];      /**< Optional data values**/
 } CAHeaderOption_t;
 
 /**
@@ -350,6 +322,7 @@ typedef struct
     CAHeaderOption_t *options;  /** Header Options for the request */
     uint8_t numOptions;         /**< Number of Header options */
     CAPayload_t payload;        /**< payload of the request  */
+    CAURI_t resourceUri;        /**< Resource URI information **/
     uint32_t payloadSize;     /**< payload length*/
 } CAInfo_t;
 
@@ -362,6 +335,7 @@ typedef struct
 {
     CAMethod_t method;  /**< Name of the Method Allowed */
     CAInfo_t info;      /**< Information of the request. */
+    bool isMulticast;   /**< is multicast request */
 } CARequestInfo_t;
 
 /**
@@ -387,6 +361,17 @@ typedef struct
     CAInfo_t info;      /**< message information such as token and payload data
                              helpful to identify the error */
 } CAErrorInfo_t;
+
+/**
+ * @brief Hold global variables for CA layer (also used by RI layer)
+ */
+typedef struct
+{
+    CATransportFlags_t serverFlags;
+    CATransportFlags_t clientFlags;
+} CAGlobals_t;
+
+extern CAGlobals_t caglobals;
 
 #ifdef __cplusplus
 } /* extern "C" */

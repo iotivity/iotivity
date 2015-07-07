@@ -38,7 +38,7 @@ OCEntityHandlerResult PstatEntityHandler (OCEntityHandlerFlag flag,
 char * BinToPstatJSON(const OicSecPstat_t * pstat);
 OicSecPstat_t * JSONToPstatBin(const char * jsonStr);
 char* ReadFile(const char* filename);
-extern char* JSON_FILE_NAME;
+const char* UNIT_TEST_JSON_FILE_NAME = "oic_unittest.json";
 #ifdef __cplusplus
 }
 #endif
@@ -125,7 +125,7 @@ TEST(MarshalingAndUnMarshalingTest, BinToPstatJSONAndJSONToPstatBin)
 
 TEST(PstatTests, JSONMarshalliingTests)
 {
-    char *jsonStr1 = ReadFile(JSON_FILE_NAME);
+    char *jsonStr1 = ReadFile(UNIT_TEST_JSON_FILE_NAME);
     if (NULL != jsonStr1)
     {
         cJSON_Minify(jsonStr1);
@@ -154,6 +154,6 @@ TEST(PstatTests, JSONMarshalliingTests)
    }
     else
     {
-        printf("Please copy %s into unittest folder\n", JSON_FILE_NAME);
+        printf("Please copy %s into unittest folder\n", UNIT_TEST_JSON_FILE_NAME);
     }
 }

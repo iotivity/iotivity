@@ -171,9 +171,9 @@ namespace OC
     OCStackResult OCPlatform_impl::findResource(const std::string& host,
                                             const std::string& resourceName,
                                             OCConnectivityType connectivityType,
-                                            FindCallback resourceHandler, QualityOfService QoS)
+                                            FindCallback resourceHandler,
+                                            QualityOfService QoS)
     {
-
         return checked_guard(m_client, &IClientWrapper::ListenForResource,
                              host, resourceName, connectivityType, resourceHandler, QoS);
     }
@@ -245,7 +245,7 @@ namespace OC
         std::vector<std::string> resourceTypes = resource->getResourceTypes();
 
         return checked_guard(m_server, &IServerWrapper::registerResource,
-                std::ref(resourceHandle), resource->uri(),
+                std::ref(resourceHandle), resource->host() + resource->uri(),
                 resourceTypes[0]/*"core.remote"*/, DEFAULT_INTERFACE,
                 (EntityHandler) nullptr, resourceProperty);
     }

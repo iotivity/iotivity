@@ -68,7 +68,7 @@ typedef enum
  */
 typedef struct
 {
-    CARemoteEndpoint_t *remoteEndpoint; /**< Remote Endpoint */
+    CAEndpoint_t *remoteEndpoint;       /**< Remote Endpoint */
     void *data;                         /**< Data to be sent */
     uint32_t dataLen;                   /**< Length of the data to be sent */
 } CAEDRData;
@@ -79,7 +79,7 @@ typedef struct
  */
 typedef struct
 {
-    CALocalConnectivity_t *info; /**< Local Connectivity Information */
+    CAEndpoint_t *info;          /**< Local Connectivity Information */
     CANetworkStatus_t status;    /**< Network Status */
 } CAEDRNetworkEvent;
 
@@ -101,6 +101,19 @@ typedef void (*CAEDRDataReceivedCallback)(const char *remoteAddress, const void 
  * @return NONE
  */
 typedef void (*CAEDRNetworkStatusCallback)(CANetworkStatus_t status);
+
+/**
+ * @brief Callback to notify the error in the EDR adapter
+ * @param  remoteAddress   [IN] Remote EDR Address
+ * @param  serviceUUID     [IN] Service UUID of the device
+ * @param  data            [IN] data containing token, uri and coap data
+ * @param  dataLength      [IN] length of data
+ * @param  result          [IN] error code as defined in CAResult_t
+ * @return NONE
+ * @pre Callback must be registered using CAEDRSetPacketReceivedCallback()
+ */
+typedef void (*CAEDRErrorHandleCallback)(const char *remoteAddress, const char *serviceUUID,
+                                         const void *data, uint32_t dataLength, CAResult_t result);
 
 /**
  * @brief  Initialize the network monitor module
@@ -188,6 +201,15 @@ void CAEDRSetPacketReceivedCallback(CAEDRDataReceivedCallback packetReceivedCall
 void CAEDRSetNetworkChangeCallback(CAEDRNetworkStatusCallback networkStateChangeCallback);
 
 /**
+ * @brief  set error callback to notify error in EDR adapter
+ *
+ * @param  errorHandleCallback [IN] Callback function to notify the error in the EDR adapter
+ * @return NONE
+ */
+void CAEDRSetErrorHandler(CAEDRErrorHandleCallback errorHandleCallback);
+
+
+/**
  * @brief  Get the local bluetooth adapter information.
  *
  * @param  info [OUT] Local bluetooth adapter information
@@ -200,7 +222,7 @@ void CAEDRSetNetworkChangeCallback(CAEDRNetworkStatusCallback networkStateChange
  * @see #CALocalConnectivity_t
  *
  */
-CAResult_t CAEDRGetInterfaceInformation(CALocalConnectivity_t **info);
+CAResult_t CAEDRGetInterfaceInformation(CAEndpoint_t **info);
 
 /**
  * @brief  Start RFCOMM server for given service UUID

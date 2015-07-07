@@ -45,7 +45,7 @@ if target_os == 'android':
 			print 'Unzipping android lib...'
 			env.UnpackAll(androidlib_dir, androidlib_zip)
 			print 'Unzipping android lib complete'
-    
+
 			# Remove downloaded file
 #			os.remove(androidlib_zip_file)
 	else:

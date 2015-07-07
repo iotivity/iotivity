@@ -45,7 +45,8 @@ OCStackResult
 AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
              CAToken_t token, uint8_t tokenLength,
              OCDoHandle *handle, OCMethod method,
-             char * requestUri, char * resourceTypeName, OCConnectivityType conType, uint32_t ttl)
+             OCDevAddr *devAddr, char * requestUri,
+             char * resourceTypeName, uint32_t ttl)
 {
     if(!clientCB || !cbData || !handle || !requestUri || tokenLength > CA_MAX_TOKEN_LEN)
     {
@@ -96,8 +97,8 @@ AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
             {
                 cbNode->TTL = ttl;
             }
-            cbNode->requestUri = requestUri;
-            cbNode->conType = conType;
+            cbNode->requestUri = requestUri;    // I own it now
+            cbNode->devAddr = devAddr;          // I own it now
             LL_APPEND(cbList, cbNode);
             *clientCB = cbNode;
         }
@@ -116,6 +117,7 @@ AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
         OICFree(token);
         OICFree(*handle);
         OICFree(requestUri);
+        OICFree(devAddr);
         *handle = cbNode->handle;
     }
 
@@ -124,6 +126,7 @@ AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
     {
         // Amend the found or created node by adding a new resourceType to it.
         return InsertResourceTypeFilter(cbNode,(char *)resourceTypeName);
+        // I own resourceTypName now.
     }
     else
     {

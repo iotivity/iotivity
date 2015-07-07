@@ -20,10 +20,10 @@ public class MainActivity extends Activity {
 
     static RMInterface RM = new RMInterface();
 
-    private final static String TAG = "MainActivity";
+    private final static String TAG = "Sample_Service : MainActivity";
 
-    private final CharSequence[] mNetworkCheckBoxItems = { Network.IPV4.name(),
-            Network.IPV6.name(), Network.EDR.name(), Network.LE.name()};
+    private final CharSequence[] mNetworkCheckBoxItems = { Network.IP.name(),
+            Network.LE.name(), Network.EDR.name()};
 
     private final CharSequence[] mDTLSCheckBoxItems = { DTLS.UNSECURED.name(),
             DTLS.SECURED.name() };
@@ -33,9 +33,10 @@ public class MainActivity extends Activity {
 
     private final CharSequence[] mResponseResultCheckBoxItems = {
             ResponseResult.CA_SUCCESS.name(), ResponseResult.CA_CREATED.name(),
-            ResponseResult.CA_DELETED.name(), ResponseResult.CA_EMPTY.name(),
-            ResponseResult.CA_BAD_REQ.name(), ResponseResult.CA_BAD_OPT.name(),
-            ResponseResult.CA_NOT_FOUND.name(),
+            ResponseResult.CA_DELETED.name(), ResponseResult.CA_VALID.name(),
+            ResponseResult.CA_CHANGED.name(), ResponseResult.CA_CONTENT.name(),
+            ResponseResult.CA_EMPTY.name(), ResponseResult.CA_BAD_REQ.name(),
+            ResponseResult.CA_BAD_OPT.name(), ResponseResult.CA_NOT_FOUND.name(),
             ResponseResult.CA_INTERNAL_SERVER_ERROR.name(),
             ResponseResult.CA_RETRANSMIT_TIMEOUT.name() };
 
@@ -44,7 +45,7 @@ public class MainActivity extends Activity {
     };
 
     private enum Network {
-        IPV4, IPV6, EDR, LE
+        IP, LE, EDR
     };
 
     private enum DTLS {
@@ -56,21 +57,19 @@ public class MainActivity extends Activity {
     };
 
     private enum ResponseResult {
-        CA_SUCCESS, CA_CREATED, CA_DELETED, CA_EMPTY, CA_BAD_REQ, CA_BAD_OPT,
-        CA_NOT_FOUND, CA_INTERNAL_SERVER_ERROR, CA_RETRANSMIT_TIMEOUT
+        CA_SUCCESS, CA_CREATED, CA_DELETED, CA_VALID, CA_CHANGED, CA_CONTENT, CA_EMPTY,
+        CA_BAD_REQ, CA_BAD_OPT, CA_NOT_FOUND, CA_INTERNAL_SERVER_ERROR, CA_RETRANSMIT_TIMEOUT
     }
 
     private boolean mCheckedItems[] = {
             false, false, false, false
     };
 
-    private int mSelectedItems[] = { 0, 0, 0, 0 };
+    private int mSelectedItems[] = { 0, 0, 0 };
 
-    private int mUnSelectedItems[] = { 0, 0, 0, 0 };
+    private int mUnSelectedItems[] = { 0, 0, 0 };
 
     private Mode mCurrentMode = Mode.UNKNOWN;
-
-    private RelativeLayout mFindResourceLayout = null;
 
     private RelativeLayout mSendNotificationLayout = null;
 
@@ -86,31 +85,17 @@ public class MainActivity extends Activity {
 
     private RelativeLayout mReceiveLayout = null;
 
-    private RelativeLayout mFindTitleLayout = null;
-
     private RelativeLayout mRequestTitleLayout = null;
 
     private RelativeLayout mRequestToAllTitleLayout = null;
 
     private RelativeLayout mResponseNotificationTitleLayout = null;
 
-    private RelativeLayout mAdvertiseTitleLayout = null;
-
     private RelativeLayout mHandleTitleLayout = null;
-
-    private RelativeLayout mPayLoadClientEditLayout = null;
-
-    private RelativeLayout mPayLoadServerEditLayout = null;
-
-    private RelativeLayout mAdvertiseResourceLayout = null;
-
-    private RelativeLayout mServerButtonLayout = null;
 
     private TextView mMode_tv = null;
 
     private TextView mNetwork_tv = null;
-
-    private EditText mUri_ed = null;
 
     private EditText mNotification_ed = null;
 
@@ -118,15 +103,7 @@ public class MainActivity extends Activity {
 
     private EditText mReqToAllData_ed = null;
 
-    private EditText mPayload_ed = null;
-
-    private EditText mAdvertise_ed = null;
-
-    private Button mFind_btn = null;
-
     private Button mNotify_btn = null;
-
-    private Button mAdvertiseResource_btn = null;
 
     private Button mReqeust_btn = null;
 
@@ -149,12 +126,11 @@ public class MainActivity extends Activity {
     /**
      * Defined ConnectivityType in cacommon.c
      *
-     * CA_IPV4 = (1 << 0) CA_IPV6 = (1 << 1) CA_EDR = (1 << 2) CA_LE = (1 << 3)
+     * CA_IP = (1 << 0) CA_LE = (1 << 2) CA_EDR = (1 << 3)
      */
-    private int CA_IPV4 = (1 << 0);
-    private int CA_IPV6 = (1 << 1);
+    private int CA_IP = (1 << 0);
+    private int CA_LE = (1 << 1);
     private int CA_EDR = (1 << 2);
-    private int CA_LE = (1 << 3);
     private int isSecured = 0;
     private int msgType = 1;
     private int responseValue = 0;
@@ -190,39 +166,26 @@ public class MainActivity extends Activity {
                 findViewById(R.id.layout_request_setting_for_client);
         mSendRequestToAllSettingLayout = (RelativeLayout)
                 findViewById(R.id.layout_request_to_all_setting_for_client);
-        mFindResourceLayout = (RelativeLayout) findViewById(R.id.layout_find);
-        mFindTitleLayout = (RelativeLayout) findViewById(R.id.layout_find_title);
         mRequestTitleLayout = (RelativeLayout) findViewById(R.id.layout_request_title);
         mRequestToAllTitleLayout = (RelativeLayout) findViewById(R.id.layout_request_to_all_title);
         mHandleTitleLayout = (RelativeLayout) findViewById(R.id.layout_handle_title);
-        mPayLoadClientEditLayout = (RelativeLayout) findViewById(R.id.layout_payload_client_ed);
 
         // server
         mSendNotificationLayout = (RelativeLayout) findViewById(R.id.layout_notify);
-        mPayLoadServerEditLayout = (RelativeLayout)
-                findViewById(R.id.layout_payload_server_ed);
         mSendResponseNotiSettingLayout = (RelativeLayout)
                 findViewById(R.id.layout_request_setting_for_server);
-        mServerButtonLayout = (RelativeLayout) findViewById(R.id.layout_server_bt);
         mResponseNotificationTitleLayout = (RelativeLayout)
                 findViewById(R.id.layout_Response_Noti_title);
-        mAdvertiseTitleLayout = (RelativeLayout) findViewById(R.id.layout_advertise_title);
-        mAdvertiseResourceLayout = (RelativeLayout) findViewById(R.id.layout_advertise_resource);
 
         mMode_tv = (TextView) findViewById(R.id.tv_mode);
         mNetwork_tv = (TextView) findViewById(R.id.tv_network);
 
-        mUri_ed = (EditText) findViewById(R.id.et_uri);
         mNotification_ed = (EditText) findViewById(R.id.et_notification);
         mReqData_ed = (EditText) findViewById(R.id.et_req_data);
         mReqToAllData_ed = (EditText) findViewById(R.id.et_req_to_all_data);
-        mPayload_ed = (EditText) findViewById(R.id.et_payload_data_for_server);
-        mAdvertise_ed = (EditText) findViewById(R.id.et_uri_advertise);
 
-        mFind_btn = (Button) findViewById(R.id.btn_find_resource);
         mResponse_btn = (Button) findViewById(R.id.btn_sendresponse);
         mNotify_btn = (Button) findViewById(R.id.btn_notify);
-        mAdvertiseResource_btn = (Button) findViewById(R.id.btn_advertise);
         mReqeust_btn = (Button) findViewById(R.id.btn_Request);
         mReqeust_setting_btn = (Button) findViewById(R.id.btn_Request_setting_for_client);
         mReqeustToAll_btn = (Button) findViewById(R.id.btn_request_to_all);
@@ -232,10 +195,8 @@ public class MainActivity extends Activity {
         mGetNetworkInfo_btn = (Button) findViewById(R.id.btn_get_network_info);
         mRecv_btn = (Button) findViewById(R.id.btn_receive);
 
-        mFind_btn.setOnClickListener(mFindResourceHandler);
         mResponse_btn.setOnClickListener(mSendResponseHandler);
         mNotify_btn.setOnClickListener(mNotifyHandler);
-        mAdvertiseResource_btn.setOnClickListener(mAdvertiseResourceHandler);
         mReqeust_btn.setOnClickListener(mSendRequestHandler);
         mReqeust_setting_btn.setOnClickListener(mSendRequestSettingHandler);
         mReqeustToAll_btn.setOnClickListener(mSendRequestToAllHandler);
@@ -256,65 +217,50 @@ public class MainActivity extends Activity {
 
     private void showSelectModeView() {
 
-        mFindResourceLayout.setVisibility(View.INVISIBLE);
         mSendNotificationLayout.setVisibility(View.INVISIBLE);
         mSendRequestLayout.setVisibility(View.INVISIBLE);
         mSendRequestToAllLayout.setVisibility(View.INVISIBLE);
         mSendRequestSettingLayout.setVisibility(View.INVISIBLE);
         mSendRequestToAllSettingLayout.setVisibility(View.INVISIBLE);
         mReceiveLayout.setVisibility(View.INVISIBLE);
-        mFindTitleLayout.setVisibility(View.INVISIBLE);
         mRequestTitleLayout.setVisibility(View.INVISIBLE);
         mRequestToAllTitleLayout.setVisibility(View.INVISIBLE);
         mHandleTitleLayout.setVisibility(View.INVISIBLE);
-        mPayLoadClientEditLayout.setVisibility(View.INVISIBLE);
-        mPayLoadServerEditLayout.setVisibility(View.INVISIBLE);
-        mServerButtonLayout.setVisibility(View.INVISIBLE);
         mResponseNotificationTitleLayout.setVisibility(View.INVISIBLE);
-        mAdvertiseTitleLayout.setVisibility(View.INVISIBLE);
-        mAdvertiseResourceLayout.setVisibility(View.INVISIBLE);
         mSendResponseNotiSettingLayout.setVisibility(View.INVISIBLE);
 
         mMode_tv.setText("Select Mode (Server or Client)");
+        Log.i(TAG, "Select Mode (Server or Client)");
     }
 
     private void showNetworkView() {
 
         mNetwork_tv.setText("Select Network Type");
+        Log.i(TAG, "Select Network Type");
     }
 
     private void showModeView() {
 
         if (mCurrentMode == Mode.SERVER) {
 
-            mFindResourceLayout.setVisibility(View.INVISIBLE);
             mSendNotificationLayout.setVisibility(View.VISIBLE);
             mSendRequestLayout.setVisibility(View.INVISIBLE);
-            mSendRequestToAllLayout.setVisibility(View.INVISIBLE);
+            mSendRequestToAllLayout.setVisibility(View.VISIBLE);
             mSendRequestSettingLayout.setVisibility(View.INVISIBLE);
-            mSendRequestToAllSettingLayout.setVisibility(View.INVISIBLE);
+            mSendRequestToAllSettingLayout.setVisibility(View.VISIBLE);
             mReceiveLayout.setVisibility(View.VISIBLE);
 
-            mFindTitleLayout.setVisibility(View.INVISIBLE);
             mRequestTitleLayout.setVisibility(View.INVISIBLE);
-            mRequestToAllTitleLayout.setVisibility(View.INVISIBLE);
+            mRequestToAllTitleLayout.setVisibility(View.VISIBLE);
             mHandleTitleLayout.setVisibility(View.VISIBLE);
-            mPayLoadClientEditLayout.setVisibility(View.INVISIBLE);
-
-            mPayLoadServerEditLayout.setVisibility(View.VISIBLE);
-            mServerButtonLayout.setVisibility(View.VISIBLE);
 
             mResponseNotificationTitleLayout.setVisibility(View.VISIBLE);
-            mAdvertiseTitleLayout.setVisibility(View.VISIBLE);
-            mAdvertiseResourceLayout.setVisibility(View.VISIBLE);
-
             mSendResponseNotiSettingLayout.setVisibility(View.VISIBLE);
 
             mNetwork_tv.setText("");
 
         } else if (mCurrentMode == Mode.CLIENT) {
 
-            mFindResourceLayout.setVisibility(View.VISIBLE);
             mSendNotificationLayout.setVisibility(View.INVISIBLE);
             mSendRequestLayout.setVisibility(View.VISIBLE);
             mSendRequestToAllLayout.setVisibility(View.VISIBLE);
@@ -322,19 +268,11 @@ public class MainActivity extends Activity {
             mSendRequestToAllSettingLayout.setVisibility(View.VISIBLE);
             mReceiveLayout.setVisibility(View.VISIBLE);
 
-            mFindTitleLayout.setVisibility(View.VISIBLE);
             mRequestTitleLayout.setVisibility(View.VISIBLE);
             mRequestToAllTitleLayout.setVisibility(View.VISIBLE);
             mHandleTitleLayout.setVisibility(View.VISIBLE);
-            mPayLoadClientEditLayout.setVisibility(View.VISIBLE);
-
-            mPayLoadServerEditLayout.setVisibility(View.INVISIBLE);
-            mServerButtonLayout.setVisibility(View.INVISIBLE);
 
             mResponseNotificationTitleLayout.setVisibility(View.INVISIBLE);
-            mAdvertiseTitleLayout.setVisibility(View.INVISIBLE);
-            mAdvertiseResourceLayout.setVisibility(View.INVISIBLE);
-
             mSendResponseNotiSettingLayout.setVisibility(View.INVISIBLE);
 
             mNetwork_tv.setText("");
@@ -372,11 +310,13 @@ public class MainActivity extends Activity {
             if (interestedNetwork == 0) {
                 mCurrentMode = Mode.SERVER;
                 mMode_tv.setText("MODE: " + mCurrentMode.toString());
+                Log.i(TAG, "MODE: " + mCurrentMode.toString());
                 showNetworkView();
 
             } else {
                 mCurrentMode = Mode.SERVER;
                 mMode_tv.setText("MODE: " + mCurrentMode.toString());
+                Log.i(TAG, "MODE: " + mCurrentMode.toString());
                 showModeView();
             }
 
@@ -389,11 +329,13 @@ public class MainActivity extends Activity {
             if (interestedNetwork == 0) {
                 mCurrentMode = Mode.CLIENT;
                 mMode_tv.setText("MODE: " + mCurrentMode.toString());
+                Log.i(TAG, "MODE: " + mCurrentMode.toString());
                 showNetworkView();
 
             } else {
                 mCurrentMode = Mode.CLIENT;
                 mMode_tv.setText("MODE: " + mCurrentMode.toString());
+                Log.i(TAG, "MODE: " + mCurrentMode.toString());
                 showModeView();
             }
 
@@ -408,17 +350,6 @@ public class MainActivity extends Activity {
 
         return super.onOptionsItemSelected(item);
     }
-
-    private OnClickListener mFindResourceHandler = new OnClickListener() {
-
-        @Override
-        public void onClick(View v) {
-
-            DLog.v(TAG, "FindResource click");
-            RM.RMFindResource(mUri_ed.getText().toString());
-
-        }
-    };
 
     private OnClickListener mSendResponseHandler = new OnClickListener() {
 
@@ -443,22 +374,11 @@ public class MainActivity extends Activity {
             DLog.v(TAG, "SendNotification click");
             if ( selectedNetwork != -1) {
                 RM.RMSendNotification(mNotification_ed.getText().toString(),
-                    mPayload_ed.getText().toString(), selectedNetwork,
-                    isSecured, msgType, responseValue);
+                    null, selectedNetwork, isSecured, msgType, responseValue);
             }
             else {
                 DLog.v(TAG, "Please Select Network Type");
             }
-        }
-    };
-
-    private OnClickListener mAdvertiseResourceHandler = new OnClickListener() {
-
-        @Override
-        public void onClick(View v) {
-
-            DLog.v(TAG, "AdvertiseResource click");
-            RM.RMAdvertiseResource(mAdvertise_ed.getText().toString());
         }
     };
 
@@ -469,8 +389,8 @@ public class MainActivity extends Activity {
 
             DLog.v(TAG, "SendRequest click");
             if ( selectedNetwork != -1) {
-                RM.RMSendRequest(mReqData_ed.getText().toString(), mPayload_ed
-                    .getText().toString(), selectedNetwork, isSecured, msgType);
+                RM.RMSendRequest(mReqData_ed.getText().toString(), null,
+                    selectedNetwork, isSecured, msgType);
             }
             else {
                 DLog.v(TAG, "Please Select Network Type");
@@ -568,10 +488,7 @@ public class MainActivity extends Activity {
 
                         for (int i = 0; i < mSelectedItems.length; i++) {
                             if (mSelectedItems[i] == 1) {
-                                if(i != 1)
-                                    interestedNetwork |= (1 << i);
-                                else
-                                    checkNotSupportedTransport("Not Supported Transport");
+                                interestedNetwork |= (1 << i);
                             }
                         }
                         if(0 != interestedNetwork)
@@ -581,11 +498,7 @@ public class MainActivity extends Activity {
 
                         for (int i = 0; i < mUnSelectedItems.length; i++) {
                             if (mUnSelectedItems[i] == 1) {
-                                if (i != 1)
-                                    uninterestedNetwork |= (1 << i);
-                                else
-                                    checkNotSupportedTransport("Not Supported Transport");
-                                mUnSelectedItems[i] = 0;
+                                uninterestedNetwork |= (1 << i);
                             }
                         }
                         if(0 != uninterestedNetwork)
@@ -593,20 +506,6 @@ public class MainActivity extends Activity {
 
                     }
                 }).show();
-    }
-
-    private void checkNotSupportedTransport(String title) {
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-        builder.setTitle(title).
-        setMessage("Selected Transport Not Supported")
-        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-
-            }
-        }).show();
     }
 
     private void checkMsgSecured(String title) {
@@ -632,23 +531,9 @@ public class MainActivity extends Activity {
                             isSecured = 1;
                             DLog.v(TAG, "Send secured message");
 
-                            mPayLoadClientEditLayout
-                                    .setVisibility(View.INVISIBLE);
-
-                            mPayLoadServerEditLayout
-                                    .setVisibility(View.INVISIBLE);
-
                         } else if (selectedMsgSecured == DTLS.UNSECURED.ordinal()) {
                             isSecured = 0;
                             DLog.v(TAG, "Send unsecured message");
-
-                            if (mCurrentMode == Mode.SERVER) {
-                                mPayLoadServerEditLayout
-                                        .setVisibility(View.VISIBLE);
-                            } else if (mCurrentMode == Mode.CLIENT) {
-                                mPayLoadClientEditLayout
-                                        .setVisibility(View.VISIBLE);
-                            }
                         }
                         checkMsgType("Select Msg Type");
                     }
@@ -726,6 +611,18 @@ public class MainActivity extends Activity {
                                 .ordinal()) {
                             responseValue = 202;
                             DLog.v(TAG, "Response Value is CA_DELETED");
+                        } else if (selectedResponseValue == ResponseResult.CA_VALID
+                                .ordinal()) {
+                            responseValue = 203;
+                            DLog.v(TAG, "Response Value is CA_VALID");
+                        } else if (selectedResponseValue == ResponseResult.CA_CHANGED
+                                .ordinal()) {
+                            responseValue = 204;
+                            DLog.v(TAG, "Response Value is CA_CHANGED");
+                        } else if (selectedResponseValue == ResponseResult.CA_CONTENT
+                                .ordinal()) {
+                            responseValue = 205;
+                            DLog.v(TAG, "Response Value is CA_CONTENT");
                         } else if (selectedResponseValue == ResponseResult.CA_EMPTY
                                 .ordinal()) {
                             responseValue = 0;
@@ -775,17 +672,16 @@ public class MainActivity extends Activity {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
 
-                        if (selectedNetworkType == Network.IPV4.ordinal()) {
-                            selectedNetwork = CA_IPV4;
-                            DLog.v(TAG, "Selected Network is CA_IPV4");
-                        } else if (selectedNetworkType == Network.EDR.ordinal()) {
-                            selectedNetwork = CA_EDR;
-                            DLog.v(TAG, "Selected Network is EDR");
+                        if (selectedNetworkType == Network.IP.ordinal()) {
+                            selectedNetwork = CA_IP;
+                            DLog.v(TAG, "Selected Network is CA_IP");
                         } else if (selectedNetworkType == Network.LE.ordinal()) {
                             selectedNetwork = CA_LE;
                             DLog.v(TAG, "Selected Network is LE");
-                        }
-                        else {
+                        } else if (selectedNetworkType == Network.EDR.ordinal()) {
+                            selectedNetwork = CA_EDR;
+                            DLog.v(TAG, "Selected Network is EDR");
+                        } else {
                             DLog.v(TAG, "Selected Network is NULL");
                             selectedNetwork = -1;
                         }
@@ -802,5 +698,15 @@ public class MainActivity extends Activity {
         String callbackData = subject + receivedData;
         DLog.v(TAG, callbackData);
 
+        if (subject.equals(getString(R.string.remote_address))) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(getString(R.string.coap_prefix)).append(receivedData);
+            if (receivedData.contains(".")) { // IP
+                sb.append(getString(R.string.port_num));
+            }
+            sb.append(getString(R.string.uri));
+            mReqData_ed.setText(sb.toString());
+            mNotification_ed.setText(sb.toString());
+        }
     }
 }

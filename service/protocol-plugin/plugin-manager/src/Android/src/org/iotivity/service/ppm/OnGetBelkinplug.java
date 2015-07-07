@@ -35,7 +35,7 @@ import org.iotivity.base.OcResource;
 import android.util.Log;
 
 public class OnGetBelkinplug implements OcResource.OnGetListener {
-    final private static String TAG = "OnGetBelkinplug";
+    final private static String TAG = "PPMSampleApp : OnGetBelkinplug";
 
     @Override
     public void onGetCompleted(List<OcHeaderOption> headerOptions,

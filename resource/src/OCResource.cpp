@@ -22,6 +22,7 @@
 #include "OCUtilities.h"
 
 #include <boost/lexical_cast.hpp>
+#include <sstream>
 
 namespace OC {
 
@@ -29,16 +30,15 @@ using OC::nil_guard;
 using OC::result_guard;
 using OC::checked_guard;
 
-OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper, const std::string& host,
-                       const std::string& uri, const std::string& serverId,
-                       OCConnectivityType connectivityType, bool observable,
-                       const std::vector<std::string>& resourceTypes,
-                       const std::vector<std::string>& interfaces)
- :  m_clientWrapper(clientWrapper), m_uri(uri), m_resourceId(serverId, m_uri),
-    m_host(host),
-    m_connectivityType(connectivityType),
-    m_isObservable(observable),
-    m_isCollection(false), m_resourceTypes(resourceTypes), m_interfaces(interfaces),
+OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
+                        const OCDevAddr& devAddr, const std::string& uri,
+                        const std::string& serverId, bool observable,
+                        const std::vector<std::string>& resourceTypes,
+                        const std::vector<std::string>& interfaces)
+ :  m_clientWrapper(clientWrapper), m_uri(uri),
+    m_resourceId(serverId, m_uri), m_devAddr(devAddr), m_useHostString(false),
+    m_isObservable(observable), m_isCollection(false),
+    m_resourceTypes(resourceTypes), m_interfaces(interfaces),
     m_observeHandle(nullptr)
 {
     m_isCollection = std::find(m_interfaces.begin(), m_interfaces.end(), LINK_INTERFACE)
@@ -54,6 +54,44 @@ OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper, const std::s
     }
 }
 
+OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
+                        const std::string& host, const std::string& uri,
+                        const std::string& serverId,
+                        OCConnectivityType connectivityType, bool observable,
+                        const std::vector<std::string>& resourceTypes,
+                        const std::vector<std::string>& interfaces)
+ :  m_clientWrapper(clientWrapper), m_uri(uri),
+    m_resourceId(serverId, m_uri),
+    m_devAddr{ OC_DEFAULT_ADAPTER },
+    m_useHostString(true),
+    m_isObservable(observable), m_isCollection(false),
+    m_resourceTypes(resourceTypes), m_interfaces(interfaces),
+    m_observeHandle(nullptr)
+{
+    m_isCollection = std::find(m_interfaces.begin(), m_interfaces.end(), LINK_INTERFACE)
+                        != m_interfaces.end();
+
+    if (m_uri.empty() ||
+        resourceTypes.empty() ||
+        interfaces.empty()||
+        m_clientWrapper.expired())
+    {
+        throw ResourceInitException(m_uri.empty(), resourceTypes.empty(),
+                interfaces.empty(), m_clientWrapper.expired(), false, false);
+    }
+
+    // construct the devAddr from the pieces we have
+    m_devAddr.adapter = static_cast<OCTransportAdapter>(connectivityType >> CT_ADAPTER_SHIFT);
+    m_devAddr.flags = static_cast<OCTransportFlags>(connectivityType & CT_MASK_FLAGS);
+    size_t len = host.length();
+    if (len >= MAX_ADDR_STR_SIZE)
+    {
+        throw std::length_error("host address is too long.");
+    }
+    host.copy(m_devAddr.addr, len);
+    m_devAddr.addr[len] = '\0';
+}
+
 OCResource::~OCResource()
 {
 }
@@ -61,9 +99,11 @@ OCResource::~OCResource()
 OCStackResult OCResource::get(const QueryParamsMap& queryParametersMap,
                               GetCallback attributeHandler, QualityOfService QoS)
 {
-    return checked_guard(m_clientWrapper.lock(), &IClientWrapper::GetResourceRepresentation,
-                         m_host, m_uri, m_connectivityType, queryParametersMap, m_headerOptions,
-                         attributeHandler, QoS);
+    return checked_guard(m_clientWrapper.lock(),
+                            &IClientWrapper::GetResourceRepresentation,
+                            m_devAddr, m_useHostString, m_uri,
+                            queryParametersMap, m_headerOptions,
+                            attributeHandler, QoS);
 }
 
 OCStackResult OCResource::get(const QueryParamsMap& queryParametersMap,
@@ -107,7 +147,7 @@ OCStackResult OCResource::put(const OCRepresentation& rep,
                               QualityOfService QoS)
 {
     return checked_guard(m_clientWrapper.lock(), &IClientWrapper::PutResourceRepresentation,
-                         m_host, m_uri, m_connectivityType, rep, queryParametersMap,
+                         m_devAddr, m_useHostString, m_uri, rep, queryParametersMap,
                          m_headerOptions, attributeHandler, QoS);
 }
 
@@ -157,7 +197,7 @@ OCStackResult OCResource::post(const OCRepresentation& rep,
                                QualityOfService QoS)
 {
     return checked_guard(m_clientWrapper.lock(), &IClientWrapper::PostResourceRepresentation,
-                         m_host, m_uri, m_connectivityType, rep, queryParametersMap,
+                         m_devAddr, m_useHostString, m_uri, rep, queryParametersMap,
                          m_headerOptions, attributeHandler, QoS);
 }
 
@@ -205,7 +245,7 @@ OCStackResult OCResource::post(const std::string& resourceType,
 OCStackResult OCResource::deleteResource(DeleteCallback deleteHandler, QualityOfService QoS)
 {
     return checked_guard(m_clientWrapper.lock(), &IClientWrapper::DeleteResource,
-                         m_host, m_uri, m_connectivityType, m_headerOptions, deleteHandler, QoS);
+                         m_devAddr, m_useHostString, m_uri, m_headerOptions, deleteHandler, QoS);
 }
 
 OCStackResult OCResource::deleteResource(DeleteCallback deleteHandler)
@@ -226,8 +266,8 @@ OCStackResult OCResource::observe(ObserveType observeType,
     }
 
     return checked_guard(m_clientWrapper.lock(), &IClientWrapper::ObserveResource,
-                         observeType, &m_observeHandle, m_host,
-                         m_uri, m_connectivityType, queryParametersMap, m_headerOptions,
+                         observeType, &m_observeHandle, m_devAddr,
+                         m_useHostString, m_uri, queryParametersMap, m_headerOptions,
                          observeHandler, QoS);
 }
 
@@ -256,7 +296,7 @@ OCStackResult OCResource::cancelObserve(QualityOfService QoS)
 
     OCStackResult result =  checked_guard(m_clientWrapper.lock(),
             &IClientWrapper::CancelObserveResource,
-            m_observeHandle, m_host, m_uri, m_headerOptions, QoS);
+            m_observeHandle, "", m_uri, m_headerOptions, QoS);
 
     if(result == OC_STACK_OK)
     {
@@ -268,7 +308,33 @@ OCStackResult OCResource::cancelObserve(QualityOfService QoS)
 
 std::string OCResource::host() const
 {
-    return m_host;
+    if (m_useHostString)
+    {
+        return std::string(m_devAddr.addr);
+    }
+
+    std::ostringstream ss;
+    if (m_devAddr.flags & OC_SECURE)
+    {
+        ss << "coaps://";
+    }
+    else
+    {
+        ss << "coap://";
+    }
+    if (m_devAddr.flags & OC_IP_USE_V6)
+    {
+        ss << '[' << m_devAddr.addr << ']';
+    }
+    else
+    {
+        ss << m_devAddr.addr;
+    }
+    if (m_devAddr.port)
+    {
+        ss << ':' << m_devAddr.port;
+    }
+    return ss.str();
 }
 
 std::string OCResource::uri() const
@@ -278,14 +344,14 @@ std::string OCResource::uri() const
 
 OCConnectivityType OCResource::connectivityType() const
 {
-    return m_connectivityType;
+    return static_cast<OCConnectivityType>(
+           (m_devAddr.adapter << CT_ADAPTER_SHIFT) | (m_devAddr.flags & CT_MASK_FLAGS));
 }
 
 bool OCResource::isObservable() const
 {
     return m_isObservable;
 }
-
 
 OCResourceIdentifier OCResource::uniqueIdentifier() const
 {
@@ -335,7 +401,6 @@ OCResourceIdentifier::OCResourceIdentifier(const std::string& wireServerIdentifi
 
 std::ostream& operator <<(std::ostream& os, const OCResourceIdentifier& ri)
 {
-
     os << ri.m_representation<<ri.m_resourceUri;
 
     return os;

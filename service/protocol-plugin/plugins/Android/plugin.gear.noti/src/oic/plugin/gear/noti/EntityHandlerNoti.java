@@ -22,6 +22,7 @@
 
 package oic.plugin.gear.noti;
 
+import java.util.EnumSet;
 import java.util.UUID;
 
 import oic.plugin.gear.noti.Activator.TemplateTypes;
@@ -69,29 +70,18 @@ public class EntityHandlerNoti implements OcPlatform.EntityHandler {
                         .getRequestHandle());
                 response.setResourceHandle(resourcerequest
                         .getResourceHandle());
-                Log.d("JUDO",
-                        "/******************************************************************************/");
-                Log.d("JUDO", "Name: "
-                        + resourcerequest.getResourceRepresentation()
-                                .getValueString("name"));
-                Log.d("JUDO", "Name: "
-                        + resourcerequest.getResourceRepresentation()
-                                .getValueString("power"));
-                Log.d("JUDO", "Name: "
-                        + resourcerequest.getResourceRepresentation()
-                                .getValueInt("brigthness"));
-                Log.d("JUDO", "Name: "
-                        + resourcerequest.getResourceRepresentation()
-                                .getValueInt("color"));
-                Log.d("JUDO",
-                        "/******************************************************************************/");
                 switch (requestType) {
                     case GET:
                         break;
                     case PUT:
+                    try {
                         textNoti = resourcerequest
                                 .getResourceRepresentation()
-                                .getValueString("power");
+                                .getValue("power");
+                    } catch (OcException e) {
+                        // TODO Auto-generated catch block
+                        Log.e(TAG, e.getMessage());
+                    }
                         perform(0);
                         break;
                     case POST:
@@ -99,13 +89,19 @@ public class EntityHandlerNoti implements OcPlatform.EntityHandler {
                 }
                 response.setErrorCode(200);
                 // representation.setUri("/a/galaxy/gear");
-                representation.setValueString("name",
-                        Activator.myNotify.m_name);
-                representation.setValueString("power",
-                        Activator.myNotify.m_power);
-                representation.setValueInt("brightness", 0);
-                representation.setValueInt("color", 0);
-                response.setResourceRepresentation(representation);
+                try {
+                    representation.setValue("name",
+                            Activator.myNotify.m_name);
+                    representation.setValue("power",
+                            Activator.myNotify.m_power);
+                    representation.setValue("brightness", 0);
+                    representation.setValue("color", 0);
+                    response.setResourceRepresentation(representation);
+                } catch (OcException e) {
+                    // TODO Auto-generated catch block
+                    Log.e(TAG, e.getMessage());
+                }
+                
                 try {
                     OcPlatform.sendResponse(response);
                 } catch (OcException e) {

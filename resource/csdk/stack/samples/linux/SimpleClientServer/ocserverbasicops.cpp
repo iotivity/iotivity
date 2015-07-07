@@ -64,12 +64,12 @@ char* constructJsonResponse (OCEntityHandlerRequest *ehRequest)
     if (ehRequest->resource == gLedInstance[0].handle)
     {
         currLEDResource = &gLedInstance[0];
-        gResourceUri = (char *) "a/led/0";
+        gResourceUri = (char *) "/a/led/0";
     }
     else if (ehRequest->resource == gLedInstance[1].handle)
     {
         currLEDResource = &gLedInstance[1];
-        gResourceUri = (char *) "a/led/1";
+        gResourceUri = (char *) "/a/led/1";
     }
 
     if(OC_REST_PUT == ehRequest->method)
@@ -286,7 +286,7 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest, cha
 
 OCEntityHandlerResult
 OCEntityHandlerCb (OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest *entityHandlerRequest)
+        OCEntityHandlerRequest *entityHandlerRequest,void* callbackParam)
 {
     OC_LOG_V (INFO, TAG, "Inside entity handler - flags: 0x%x", flag);
 
@@ -408,6 +408,7 @@ int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, 
             OC_RSRVD_INTERFACE_DEFAULT,
             uri,
             OCEntityHandlerCb,
+            NULL,
             OC_DISCOVERABLE|OC_OBSERVABLE);
     OC_LOG_V(INFO, TAG, "Created LED resource with result: %s", getResult(res));
 

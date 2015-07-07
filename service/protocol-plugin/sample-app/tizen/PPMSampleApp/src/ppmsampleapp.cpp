@@ -127,6 +127,7 @@ void onObserve(const HeaderOptions headerOptions, const OCRepresentation &rep,
         sprintf(buf, "name: = %s<br>", myfan.m_name.c_str());
         strcat(temp_string, buf);
         m_ThreadContext.log = temp_string;
+        dlog_print(DLOG_INFO, LOG_TAG, " %s", m_ThreadContext.log);
         ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateCallbackLog,
                                               &m_ThreadContext);
 
@@ -147,6 +148,7 @@ void onObserve(const HeaderOptions headerOptions, const OCRepresentation &rep,
         sprintf(buf, "onObserve Response error:  = %d<br>", eCode);
         strcpy(temp_string, buf);
         m_ThreadContext.log = temp_string;
+        dlog_print(DLOG_INFO, LOG_TAG, " %s", m_ThreadContext.log);
         ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateCallbackLog,
                                               &m_ThreadContext);
         std::exit(-1);
@@ -182,6 +184,7 @@ void onPost2(const HeaderOptions &headerOptions, const OCRepresentation &rep, co
             sprintf(buf, "name: = %s<br>", myfan.m_name.c_str());
             strcat(temp_string, buf);
             m_ThreadContext.log = temp_string;
+            dlog_print(DLOG_INFO, LOG_TAG, " %s", m_ThreadContext.log);
             ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateCallbackLog,
                                                   &m_ThreadContext);
         }
@@ -200,6 +203,7 @@ void onPost2(const HeaderOptions &headerOptions, const OCRepresentation &rep, co
         sprintf(buf, "onPost Response error:  = %d<br>", eCode);
         strcpy(temp_string, buf);
         m_ThreadContext.log = temp_string;
+        dlog_print(DLOG_INFO, LOG_TAG, " %s", m_ThreadContext.log);
         ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateCallbackLog,
                                               &m_ThreadContext);
         std::exit(-1);
@@ -235,6 +239,7 @@ void onPost(const HeaderOptions &headerOptions, const OCRepresentation &rep, con
             sprintf(buf, "name: = %s<br>", myfan.m_name.c_str());
             strcat(temp_string, buf);
             m_ThreadContext.log = temp_string;
+            dlog_print(DLOG_INFO, LOG_TAG, " %s", m_ThreadContext.log);
             ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateCallbackLog,
                                                   &m_ThreadContext);
         }
@@ -257,6 +262,7 @@ void onPost(const HeaderOptions &headerOptions, const OCRepresentation &rep, con
         sprintf(buf, "onPost Response error:  = %d<br>", eCode);
         strcpy(temp_string, buf);
         m_ThreadContext.log = temp_string;
+        dlog_print(DLOG_INFO, LOG_TAG, " %s", m_ThreadContext.log);
         ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateCallbackLog,
                                               &m_ThreadContext);
         std::exit(-1);
@@ -306,6 +312,7 @@ void onPut(const HeaderOptions &headerOptions, const OCRepresentation &rep, cons
         sprintf(buf, "name: = %s<br>", myfan.m_name.c_str());
         strcat(temp_string, buf);
         m_ThreadContext.log = temp_string;
+        dlog_print(DLOG_INFO, LOG_TAG, " %s", m_ThreadContext.log);
         ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateCallbackLog,
                                               &m_ThreadContext);
 
@@ -317,6 +324,7 @@ void onPut(const HeaderOptions &headerOptions, const OCRepresentation &rep, cons
         sprintf(buf, "onPut Response error:  = %d<br>", eCode);
         strcpy(temp_string, buf);
         m_ThreadContext.log = temp_string;
+        dlog_print(DLOG_INFO, LOG_TAG, " %s", m_ThreadContext.log);
         ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateCallbackLog,
                                               &m_ThreadContext);
         std::exit(-1);
@@ -370,6 +378,7 @@ void onFanGet(const HeaderOptions &headerOptions, const OCRepresentation &rep, c
         sprintf(buf, "name: = %s<br>", myfan.m_name.c_str());
         strcat(temp_string, buf);
         m_ThreadContext.log = temp_string;
+        dlog_print(DLOG_INFO, LOG_TAG, " %s", m_ThreadContext.log);
         ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateCallbackLog,
                                               &m_ThreadContext);
 
@@ -381,6 +390,7 @@ void onFanGet(const HeaderOptions &headerOptions, const OCRepresentation &rep, c
         sprintf(buf, "onGET Response error:  = %d<br>", eCode);
         strcpy(temp_string, buf);
         m_ThreadContext.log = temp_string;
+        dlog_print(DLOG_INFO, LOG_TAG, " %s", m_ThreadContext.log);
         ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateCallbackLog,
                                               &m_ThreadContext);
         std::exit(-1);
@@ -458,6 +468,7 @@ void foundResourceFan(std::shared_ptr<OCResource> resource)
                 putFanRepresentation(curFanResource);
             }
             m_ThreadContext.log = temp_string;
+            dlog_print(DLOG_INFO, LOG_TAG, " %s", m_ThreadContext.log);
             ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateCallbackLog,
                                                   &m_ThreadContext);
         }
@@ -467,6 +478,7 @@ void foundResourceFan(std::shared_ptr<OCResource> resource)
             std::cout << "Resource is invalid" << std::endl;
             strcpy(temp_string, "Resource is invalid");
             m_ThreadContext.log = temp_string;
+            dlog_print(DLOG_INFO, LOG_TAG, " %s", m_ThreadContext.log);
             ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateCallbackLog,
                                                   &m_ThreadContext);
         }
@@ -521,6 +533,7 @@ send_msg_clicked_cb(void *data , Evas_Object *obj , void *event_info)
                 sprintf(buf, "value ID = %s<br>", user_plugin[i].getID().c_str());
                 strcat(temp_string, buf);
                 m_ThreadContext.log = temp_string;
+                dlog_print(DLOG_INFO, LOG_TAG, " %s", m_ThreadContext.log);
                 ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateCallbackLog,
                                                       &m_ThreadContext);
                 std::cout << "value Name = " << user_plugin[i].getName() << std::endl;
@@ -532,6 +545,7 @@ send_msg_clicked_cb(void *data , Evas_Object *obj , void *event_info)
             strcpy(temp_string, "start fan Plugin<br>");
             strcat(temp_string, "fan Plugin is getting started. Please wait...<br>");
             m_ThreadContext.log = temp_string;
+            dlog_print(DLOG_INFO, LOG_TAG, " %s", m_ThreadContext.log);
             ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateCallbackLog,
                                                   &m_ThreadContext);
             m_pm->startPlugins("ResourceType", "oic.fan");

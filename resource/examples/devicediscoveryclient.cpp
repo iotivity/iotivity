@@ -32,6 +32,13 @@
 
 using namespace OC;
 
+static void printUsage()
+{
+    std::cout << "Usage devicediscoveryclient <0|1>" << std::endl;
+    std::cout << "connectivityType: Default IP" << std::endl;
+    std::cout << "connectivityType 0: IPv4" << std::endl;
+    std::cout << "connectivityType 1: IPv6 (Currently not supported !)" << std::endl;
+}
 //Callback after device information is received
 void receivedPlatformInfo(const OCRepresentation& rep)
 {
@@ -90,7 +97,8 @@ int main(int argc, char* argv[]) {
     std::string platformDiscoveryURI = "/oic/p";
     std::string deviceDiscoveryURI   = "/oic/d";
 
-    OCConnectivityType connectivityType = OC_IPV4;
+    //Default Connectivity type
+    OCConnectivityType connectivityType = CT_ADAPTER_IP;
 
     if(argc == 2)
     {
@@ -103,37 +111,37 @@ int main(int argc, char* argv[]) {
             {
                 if(optionSelected == 0)
                 {
-                    connectivityType = OC_IPV4;
+                    std::cout << "Using IPv4."<< std::endl;
+                    connectivityType = CT_IP_USE_V4;
                 }
                 else if(optionSelected == 1)
                 {
-                    // TODO: re-enable IPv4/IPv6 command line selection when IPv6 is supported
-                    //connectivityType = OC_IPV6;
-                    connectivityType = OC_IPV4;
-                    std::cout << "IPv6 not currently supported. Using default IPv4" << std::endl;
+                    std::cout << "IPv6 is currently not supported."<< std::endl;
+                    printUsage();
+                    return -1;
+                    //TODO: printUsage to be removed when IPv6 is available.
+                    //connectivityType = CT_ADAPTER_IP;
                 }
                 else
                 {
-                    std::cout << "Invalid connectivity type selected. Using default IPv4"
-                    << std::endl;
+                    std::cout << "Invalid connectivity type selected." << std::endl;
+                    printUsage();
+                    return -1;
                 }
             }
             else
             {
-                std::cout << "Invalid connectivity type selected. Using default IPv4" << std::endl;
+                std::cout << "Invalid connectivity type selected. Using default IP" << std::endl;
             }
         }
         catch(std::exception&)
         {
-            std::cout << "Invalid input argument. Using IPv4 as connectivity type" << std::endl;
+            std::cout << "Invalid input argument. Using IP as connectivity type" << std::endl;
         }
     }
     else
     {
-        std::cout << "Usage devicediscoveryclient <connectivityType(0|1)>" << std::endl;
-        std::cout << "connectivityType: Default IPv4" << std::endl;
-        std::cout << "connectivityType 0: IPv4" << std::endl;
-        std::cout << "connectivityType 1: IPv6 (not currently supported)" << std::endl;
+        printUsage();
     }
     // Create PlatformConfig object
     PlatformConfig cfg {

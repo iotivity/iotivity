@@ -161,7 +161,8 @@ std::vector<Plugin> *PluginManagerImpl::findPlugins(const std::string key,
     re_plugins = new std::vector<Plugin>;
     for (unsigned int i = 0; i < m_plugins.size(); i++)
     {
-        if (!m_plugins[i].getValueByAttribute(key).compare(value))
+        std::string attributeValue = m_plugins[i].getValueByAttribute(key);
+        if (!attributeValue.empty() && !attributeValue.compare(value))
         {
             re_plugins->push_back(m_plugins[i]);
         }

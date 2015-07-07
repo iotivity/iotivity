@@ -34,6 +34,7 @@ srmtest_env.PrependUnique(CPPPATH = [
 		'../../connectivity/inc',
 		'../../connectivity/api',
 		'../../connectivity/external/inc',
+		'../../connectivity/lib/libcoap-4.1.1',
 		'../include',
 		'../include/internal',
 		'../../logger/include',
@@ -43,6 +44,7 @@ srmtest_env.PrependUnique(CPPPATH = [
 		'../../../oc_logger/include',
 		'../../../../extlibs/gtest/gtest-1.7.0/include',
 		'../../../../extlibs/cjson/',
+#		'../../../../extlibs/tinydtls/',
 		'../include'
 		])
 srmtest_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
@@ -72,6 +74,7 @@ unittest = srmtest_env.Program('unittest', ['aclresourcetest.cpp',
                                             'policyengine.cpp',
                                             'securityresourcemanager.cpp',
                                             'credentialresource.cpp',
+                                            'srmutility.cpp',
                                             'base64tests.cpp'])
 
 Alias("test", [unittest])

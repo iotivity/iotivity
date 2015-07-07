@@ -30,14 +30,6 @@
 #define _DEFAULT_SOURCE
 #define _BSD_SOURCE
 
-// Include files from the arduino platform do not provide these conversions:
-#ifdef ARDUINO
-#define htons(x) ( ((x)<< 8 & 0xFF00) | ((x)>> 8 & 0x00FF) )
-#define ntohs(x) htons(x)
-#else
-#define HAVE_TIME_H 1
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -49,6 +41,7 @@
 #include "caprotocolmessage.h"
 #include "logger.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 
 // ARM GCC compiler doesnt define srandom function.
 #if defined(ARDUINO) && !defined(ARDUINO_ARCH_SAM)
@@ -56,6 +49,16 @@
 #endif
 
 #define TAG "CA"
+
+/**
+ * @def VERIFY_NON_NULL_RET
+ * @brief Macro to verify the validity of input argument
+ */
+#define VERIFY_NON_NULL_RET(arg, log_tag, log_message,ret) \
+    if (NULL == arg ){ \
+        OIC_LOG_V(ERROR, log_tag, "Invalid input:%s", log_message); \
+        return ret; \
+    }
 
 #define CA_BUFSIZE (128)
 #define CA_PDU_MIN_SIZE (4)
@@ -65,62 +68,59 @@ static const char COAP_URI_HEADER[] = "coap://[::]/";
 
 static uint32_t SEED = 0;
 
-CAResult_t CAGetRequestInfoFromPDU(const coap_pdu_t *pdu, CARequestInfo_t *outReqInfo,
-                                   char *outUri, uint32_t buflen)
+CAResult_t CAGetRequestInfoFromPDU(const coap_pdu_t *pdu, CARequestInfo_t *outReqInfo)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
-    if (NULL == pdu || NULL == outReqInfo || NULL == outUri)
+    if (NULL == pdu || NULL == outReqInfo)
     {
         OIC_LOG(ERROR, TAG, "parameter is null");
         return CA_STATUS_INVALID_PARAM;
     }
 
     uint32_t code = CA_NOT_FOUND;
-
-    OIC_LOG_V(DEBUG, TAG, "buffer length : %d", buflen);
-    CAResult_t ret = CAGetInfoFromPDU(pdu, &code, &(outReqInfo->info), outUri, buflen);
+    CAResult_t ret = CAGetInfoFromPDU(pdu, &code, &(outReqInfo->info));
     outReqInfo->method = code;
+
     OIC_LOG(DEBUG, TAG, "OUT");
     return ret;
 }
 
-CAResult_t CAGetResponseInfoFromPDU(const coap_pdu_t *pdu, CAResponseInfo_t *outResInfo,
-                                    char *outUri, uint32_t buflen)
+CAResult_t CAGetResponseInfoFromPDU(const coap_pdu_t *pdu, CAResponseInfo_t *outResInfo)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
-    if (NULL == pdu || NULL == outResInfo || NULL == outUri)
+    if (NULL == pdu || NULL == outResInfo)
     {
         OIC_LOG(ERROR, TAG, "parameter is null");
         return CA_STATUS_INVALID_PARAM;
     }
 
     uint32_t code = CA_NOT_FOUND;
-    CAResult_t ret = CAGetInfoFromPDU(pdu, &code, &(outResInfo->info), outUri, buflen);
+    CAResult_t ret = CAGetInfoFromPDU(pdu, &code, &(outResInfo->info));
     outResInfo->result = code;
+
     OIC_LOG(DEBUG, TAG, "OUT");
     return ret;
 }
 
-CAResult_t CAGetErrorInfoFromPDU(const coap_pdu_t *pdu, CAErrorInfo_t *errorInfo,
-                                 char *uri, uint32_t buflen)
+CAResult_t CAGetErrorInfoFromPDU(const coap_pdu_t *pdu, CAErrorInfo_t *errorInfo)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
-    if (!pdu || !errorInfo || !uri)
+    if (!pdu)
     {
         OIC_LOG(ERROR, TAG, "parameter is null");
         return CA_STATUS_INVALID_PARAM;
     }
 
     uint32_t code = 0;
-    CAResult_t ret = CAGetInfoFromPDU(pdu, &code, &errorInfo->info, uri, buflen);
+    CAResult_t ret = CAGetInfoFromPDU(pdu, &code, &errorInfo->info);
     OIC_LOG(DEBUG, TAG, "OUT");
     return ret;
 }
 
-coap_pdu_t *CAGeneratePDU(const char *uri, uint32_t code, const CAInfo_t info)
+coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -128,7 +128,7 @@ coap_pdu_t *CAGeneratePDU(const char *uri, uint32_t code, const CAInfo_t info)
 
     // RESET have to use only 4byte (empty message)
     // and ACKNOWLEDGE can use empty message when code is empty.
-    if (CA_MSG_RESET == info.type || (CA_EMPTY == code && CA_MSG_ACKNOWLEDGE == info.type))
+    if (CA_MSG_RESET == info->type || (CA_EMPTY == code && CA_MSG_ACKNOWLEDGE == info->type))
     {
         OIC_LOG(DEBUG, TAG, "code is empty");
         if (!(pdu = CAGeneratePDUImpl((code_t) code, NULL, info, NULL, 0)))
@@ -141,8 +141,9 @@ coap_pdu_t *CAGeneratePDU(const char *uri, uint32_t code, const CAInfo_t info)
     {
         coap_list_t *optlist = NULL;
 
-        if (CA_MSG_ACKNOWLEDGE != info.type)
+        if (CA_MSG_ACKNOWLEDGE != info->type)
         {
+            const char *uri = info->resourceUri;
             if (NULL == uri)
             {
                 OIC_LOG(ERROR, TAG, "uri NULL");
@@ -163,8 +164,8 @@ coap_pdu_t *CAGeneratePDU(const char *uri, uint32_t code, const CAInfo_t info)
                 OIC_LOG(ERROR, TAG, "out of memory");
                 return NULL;
             }
-            strcat(coapUri, COAP_URI_HEADER);
-            strcat(coapUri, uri);
+            OICStrcat(coapUri, uriLength, COAP_URI_HEADER);
+            OICStrcat(coapUri, uriLength, uri);
 
             // parsing options in URI
             CAResult_t res = CAParseURI(coapUri, &optlist);
@@ -188,7 +189,7 @@ coap_pdu_t *CAGeneratePDU(const char *uri, uint32_t code, const CAInfo_t info)
             return NULL;
         }
 
-        pdu = CAGeneratePDUImpl((code_t) code, optlist, info, info.payload, info.payloadSize);
+        pdu = CAGeneratePDUImpl((code_t) code, optlist, info, info->payload, info->payloadSize);
         if (NULL == pdu)
         {
             OIC_LOG(ERROR, TAG, "pdu NULL");
@@ -238,10 +239,11 @@ coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode)
     return outpdu;
 }
 
-coap_pdu_t *CAGeneratePDUImpl(code_t code, coap_list_t *options, const CAInfo_t info,
+coap_pdu_t *CAGeneratePDUImpl(code_t code, coap_list_t *options, const CAInfo_t *info,
                               const char *payload, size_t payloadSize)
 {
     OIC_LOG(DEBUG, TAG, "IN");
+    VERIFY_NON_NULL_RET(info, TAG, "info is NULL", NULL);
 
     coap_pdu_t *pdu = coap_new_pdu();
 
@@ -251,9 +253,9 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, coap_list_t *options, const CAInfo_t 
         return NULL;
     }
 
-    OIC_LOG_V(DEBUG, TAG, "msgID is %d", info.messageId);
+    OIC_LOG_V(DEBUG, TAG, "msgID is %d", info->messageId);
     uint16_t message_id;
-    if (0 == info.messageId)
+    if (0 == info->messageId)
     {
         /* initialize message id */
         prng((uint8_t * ) &message_id, sizeof(message_id));
@@ -263,21 +265,21 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, coap_list_t *options, const CAInfo_t 
     else
     {
         /* use saved message id */
-        message_id = info.messageId;
+        message_id = info->messageId;
     }
     pdu->hdr->id = message_id;
     OIC_LOG_V(DEBUG, TAG, "messageId in pdu is %d, %d", message_id, pdu->hdr->id);
 
-    pdu->hdr->type = info.type;
+    pdu->hdr->type = info->type;
     pdu->hdr->code = COAP_RESPONSE_CODE(code);
 
-    if (info.token && CA_EMPTY != code)
+    if (info->token && CA_EMPTY != code)
     {
-        uint32_t tokenLength = info.tokenLength;
+        uint32_t tokenLength = info->tokenLength;
         OIC_LOG_V(DEBUG, TAG, "token info token length: %d, token :", tokenLength);
-        OIC_LOG_BUFFER(DEBUG, TAG, (const uint8_t *)info.token, tokenLength);
+        OIC_LOG_BUFFER(DEBUG, TAG, (const uint8_t *)info->token, tokenLength);
 
-        int32_t ret = coap_add_token(pdu, tokenLength, (unsigned char *) info.token);
+        int32_t ret = coap_add_token(pdu, tokenLength, (unsigned char *)info->token);
         if (0 == ret)
         {
             OIC_LOG(ERROR, TAG, "can't add token");
@@ -328,7 +330,7 @@ CAResult_t CAParseURI(const char *uriInfo, coap_list_t **optlist)
         int ret = coap_insert(optlist,
                               CACreateNewOptionNode(COAP_OPTION_URI_PORT,
                                                     coap_encode_var_bytes(portbuf, uri.port),
-                                                    portbuf),
+                                                    (char *)portbuf),
                               CAOrderOpts);
         if (ret <= 0)
         {
@@ -338,8 +340,8 @@ CAResult_t CAParseURI(const char *uriInfo, coap_list_t **optlist)
 
     if (uri.path.s && uri.path.length)
     {
-        CAResult_t ret = CAParseUriPartial(uri.path.s, uri.path.length, COAP_OPTION_URI_PATH,
-                                           optlist);
+        CAResult_t ret = CAParseUriPartial(uri.path.s, uri.path.length,
+                                           COAP_OPTION_URI_PATH, optlist);
         if (CA_STATUS_OK != ret)
         {
             OIC_LOG(ERROR, TAG, "CAParseUriPartial failed(uri path)");
@@ -392,7 +394,7 @@ CAResult_t CAParseUriPartial(const unsigned char *str, size_t length, int target
             {
                 int ret = coap_insert(optlist,
                                       CACreateNewOptionNode(target, COAP_OPT_LENGTH(pBuf),
-                                                            COAP_OPT_VALUE(pBuf)),
+                                                            (char *)COAP_OPT_VALUE(pBuf)),
                                       CAOrderOpts);
                 if (ret <= 0)
                 {
@@ -422,11 +424,12 @@ CAResult_t CAParseUriPartial(const unsigned char *str, size_t length, int target
     return CA_STATUS_OK;
 }
 
-CAResult_t CAParseHeadOption(uint32_t code, const CAInfo_t info, coap_list_t **optlist)
+CAResult_t CAParseHeadOption(uint32_t code, const CAInfo_t *info, coap_list_t **optlist)
 {
     OIC_LOG(DEBUG, TAG, "IN");
+    VERIFY_NON_NULL_RET(info, TAG, "info is NULL", CA_STATUS_INVALID_PARAM);
 
-    OIC_LOG_V(DEBUG, TAG, "parse Head Opt: %d", info.numOptions);
+    OIC_LOG_V(DEBUG, TAG, "parse Head Opt: %d", info->numOptions);
 
     if (!optlist)
     {
@@ -434,29 +437,29 @@ CAResult_t CAParseHeadOption(uint32_t code, const CAInfo_t info, coap_list_t **o
         return CA_STATUS_INVALID_PARAM;
     }
 
-    for (uint32_t i = 0; i < info.numOptions; i++)
+    for (uint32_t i = 0; i < info->numOptions; i++)
     {
-        if(!(info.options + i))
+        if(!(info->options + i))
         {
             OIC_LOG(ERROR, TAG, "options is not available");
             return CA_STATUS_FAILED;
         }
 
-        uint32_t id = (info.options + i)->optionID;
+        uint32_t id = (info->options + i)->optionID;
         if (COAP_OPTION_URI_PATH == id || COAP_OPTION_URI_QUERY == id)
         {
             OIC_LOG_V(DEBUG, TAG, "not Header Opt: %d", id);
         }
         else
         {
-            if ((info.options + i)->optionData && (info.options + i)->optionLength > 0)
+            if ((info->options + i)->optionData && (info->options + i)->optionLength > 0)
             {
                 OIC_LOG_V(DEBUG, TAG, "Head opt ID: %d", id);
-                OIC_LOG_V(DEBUG, TAG, "Head opt data: %s", (info.options + i)->optionData);
-                OIC_LOG_V(DEBUG, TAG, "Head opt length: %d", (info.options + i)->optionLength);
+                OIC_LOG_V(DEBUG, TAG, "Head opt data: %s", (info->options + i)->optionData);
+                OIC_LOG_V(DEBUG, TAG, "Head opt length: %d", (info->options + i)->optionLength);
                 int ret = coap_insert(optlist,
-                                      CACreateNewOptionNode(id, (info.options + i)->optionLength,
-                                                            (info.options + i)->optionData),
+                                      CACreateNewOptionNode(id, (info->options + i)->optionLength,
+                                                            (info->options + i)->optionData),
                                       CAOrderOpts);
                 if (ret <= 0)
                 {
@@ -470,7 +473,7 @@ CAResult_t CAParseHeadOption(uint32_t code, const CAInfo_t info, coap_list_t **o
     return CA_STATUS_OK;
 }
 
-coap_list_t *CACreateNewOptionNode(uint16_t key, uint32_t length, const uint8_t *data)
+coap_list_t *CACreateNewOptionNode(uint16_t key, uint32_t length, const char *data)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -543,12 +546,11 @@ uint32_t CAGetOptionCount(coap_opt_iterator_t opt_iter)
     return count;
 }
 
-CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *outInfo,
-                            char *outUri, uint32_t buflen)
+CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *outInfo)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
-    if (!pdu || !outCode || !outInfo || !outUri)
+    if (!pdu || !outCode || !outInfo)
     {
         OIC_LOG(ERROR, TAG, "NULL pointer param");
         return CA_STATUS_INVALID_PARAM;
@@ -732,17 +734,20 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *
     }
 
     uint32_t length = strlen(optionResult);
-    OIC_LOG_V(DEBUG, TAG, "URL length:%d,%d,%d", length, buflen, strlen(outUri));
-    if (buflen >= length)
+    OIC_LOG_V(DEBUG, TAG, "URL length:%d", length);
+
+    outInfo->resourceUri = OICMalloc(length + 1);
+    if (!outInfo->resourceUri)
     {
-        memcpy(outUri, optionResult, length);
-        outUri[length] = '\0';
-#ifdef ARDUINO
-        OIC_LOG_V(DEBUG, TAG, "made URL:%s\n", optionResult);
-#else
-        OIC_LOG_V(DEBUG, TAG, "made URL : %s, %s", optionResult, outUri);
-#endif
+        OIC_LOG(ERROR, TAG, "Out of memory");
+        OICFree(outInfo->options);
+        OICFree(outInfo->token);
+        return CA_MEMORY_ALLOC_FAILED;
     }
+    memcpy(outInfo->resourceUri, optionResult, length);
+    outInfo->resourceUri[length] = '\0';
+    OIC_LOG_V(DEBUG, TAG, "made URL : %s, %s", optionResult, outInfo->resourceUri);
+
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 

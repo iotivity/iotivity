@@ -372,7 +372,7 @@ CAResult_t CASetCharacteristicDescriptorValue
  * @retval #CA_STATUS_FAILED Operation failed
  */
 CAResult_t CABleClientSenderQueueEnqueueMessage
-                            (const CARemoteEndpoint_t *remoteEndpoint,
+                            (const CAEndpoint_t *remoteEndpoint,
                                                 const void *data, uint32_t dataLen);
 
 /**

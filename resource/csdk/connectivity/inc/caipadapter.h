@@ -42,13 +42,15 @@ extern "C"
  *                                   started at Connectivity Abstraction Layer.
  * @param netCallback           [IN] Callback to notify the network additions to Connectivity
  *                                   Abstraction Layer.
+ * @param errorCallback         [IN] Callback to notify the network errors to Connectivity
+ *                                   Abstraction Layer
  * @param handle                [IN] Threadpool Handle
  * @return  #CA_STATUS_OK or Appropriate error code
  */
-    CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
-                              CANetworkPacketReceivedCallback networkPacketCallback,
-                              CANetworkChangeCallback netCallback, ca_thread_pool_t handle);
-
+CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
+                          CANetworkPacketReceivedCallback networkPacketCallback,
+                          CANetworkChangeCallback netCallback,
+                          CAErrorHandleCallback errorCallback, ca_thread_pool_t handle);
 
 /**
  * @brief Start IP Interface adapter.
@@ -68,7 +70,7 @@ CAResult_t CAStartIPListeningServer();
 /**
  * @brief Start discovery servers for receiving multicast advertisements
  * Transport Specific Behavior:
- * IP Starts Start multicast server on a particular interface and prefixed port
+ * IP Starts multicast server on a particular interface and prefixed port
  * number as per OIC Specification
  * @return  #CA_STATUS_OK or Appropriate error code
  */
@@ -76,24 +78,25 @@ CAResult_t CAStartIPDiscoveryServer();
 
 /**
  * @brief Sends data to the endpoint using the adapter connectivity.
- * @param   endpoint    [IN]    Remote Endpoint information (like ipaddress , port,
- * reference uri and transport type) to which the unicast data has to be sent.
+ * @param   endpoint    [IN]    Remote Endpoint information (like ipaddress , port, reference uri
+ *                              and transport type) to which the unicast data has to be sent.
  * @param   data        [IN]    Data which is required to be sent.
  * @param   dataLen     [IN]    Size of data to be sent.
- * @return The number of bytes sent on the network. Return value equal to -1 indicates error.
- * @remarks dataLen must be > 0.
+ * @return  The number of bytes sent on the network. Return value equal to -1 indicates error.
+ * @remark  dataLen must be > 0.
  */
-int32_t CASendIPUnicastData(const CARemoteEndpoint_t *endpoint, const void *data,
-                                   uint32_t dataLen);
+int32_t CASendIPUnicastData(const CAEndpoint_t *endpoint, const void *data,
+                            uint32_t dataLen);
 
 /**
- * @brief Sends Multicast data to the endpoint using the IP connectivity.
- * @param   data        [IN]    Data which required to be sent.
+ * @brief Send Multicast data to the endpoint using the IP connectivity.
+ * @param   endpoint    [IN]    Remote Endpoint information (like ipaddress , port)
+ * @param   data        [IN]    Data which is required to be sent.
  * @param   dataLen     [IN]    Size of data to be sent.
- * @return The number of bytes sent on the network. Return value equal to -1 indicates error.
- * @remarks dataLen must be > 0.
+ * @return  The number of bytes sent on the network. Return value equal to -1 indicates error.
+ * @remark  dataLen must be > 0.
  */
-int32_t CASendIPMulticastData(const void *data, uint32_t dataLen);
+int32_t CASendIPMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t dataLen);
 
 /**
  * @brief Get IP Connectivity network information
@@ -102,7 +105,7 @@ int32_t CASendIPMulticastData(const void *data, uint32_t dataLen);
  * @return  #CA_STATUS_OK or Appropriate error code
  * @remarks info is allocated in this API and should be freed by the caller.
  */
-CAResult_t CAGetIPInterfaceInformation(CALocalConnectivity_t **info, uint32_t *size);
+CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size);
 
 /**
  * @brief Read Synchronous API callback.

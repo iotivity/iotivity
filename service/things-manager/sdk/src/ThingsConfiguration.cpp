@@ -285,7 +285,7 @@ namespace OIC
                                     std::placeholders::_1, std::placeholders::_2,
                                     std::placeholders::_3, conf)));
 
-            free(newActionSet);
+            delete(newActionSet);
         }
     }
 
@@ -326,7 +326,7 @@ namespace OIC
 
             std::string host = getHostFromURI(oit->getUri());
 
-            tempResource = OCPlatform::constructResourceObject(host, uri, OC_IPV4, true,
+            tempResource = OCPlatform::constructResourceObject(host, uri, CT_ADAPTER_IP, true,
                     oit->getResourceTypes(), m_if);
 
             p_resources.push_back(tempResource);

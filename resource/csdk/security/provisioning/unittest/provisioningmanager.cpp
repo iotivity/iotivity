@@ -24,10 +24,12 @@
 
 
 static OicSecAcl_t acl;
+SPTargetDeviceInfo_t list;
+SPTargetDeviceInfo_t *ptr = &list;
 
-TEST(SPProvisioningDiscoveryTest, NullConectivity)
+TEST(SPProvisioningDiscoveryTest, NotNullList)
 {
-    EXPECT_EQ(SP_RESULT_INVALID_PARAM, SPProvisioningDiscovery(0, NULL));
+    EXPECT_EQ(SP_RESULT_INVALID_PARAM, SPProvisioningDiscovery(0, &ptr));
 }
 
 TEST(SPInitProvisionContextTest, NullDeviceInfo)

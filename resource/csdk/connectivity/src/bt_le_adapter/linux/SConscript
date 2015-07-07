@@ -1,0 +1,9 @@
+##########################################
+#       Build BLE adapter for Linux
+##########################################
+
+Import('env')
+
+src_files = [ 'caleadapter.c']
+
+Return('src_files')

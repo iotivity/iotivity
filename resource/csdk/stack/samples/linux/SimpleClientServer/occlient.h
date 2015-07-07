@@ -38,7 +38,7 @@
 //-----------------------------------------------------------------------------
 
 /**
- * List of methods that can be inititated from the client
+ * List of methods that can be initiated from the client
  */
 typedef enum {
     TEST_DISCOVER_REQ = 1,
@@ -65,6 +65,17 @@ typedef enum {
     TEST_DISCOVER_DEV_REQ,
     MAX_TESTS
 } CLIENT_TEST;
+
+/**
+ * List of connectivity types that can be initiated from the client
+ * Required for user input validation
+ */
+typedef enum {
+    CT_ADAPTER_DEFAULT = 0,
+    CT_IPV4,
+    CT_IPV6,
+    MAX_CT
+} CLIENT_CONNECTIVITY_TYPE;
 
 #ifdef WITH_PRESENCE
 int InitPresence();

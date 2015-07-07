@@ -38,6 +38,13 @@ namespace PH = std::placeholders;
 const uint16_t API_VERSION = 2048;
 const uint16_t TOKEN = 3000;
 
+static void printUsage()
+{
+    std::cout << "Usage: fridgeclient <0|1>" <<std::endl;
+    std::cout << "connectivityType: Default IP" << std::endl;
+    std::cout << "connectivityType 0: IPv4" << std::endl;
+    std::cout << "connectivityType 1: IPv6 (Currently Not Supported)" << std::endl;
+}
 class ClientFridge
 {
     public:
@@ -49,7 +56,7 @@ class ClientFridge
         std::cout << "Fridge Client has started " <<std::endl;
         FindCallback f (std::bind(&ClientFridge::foundDevice, this, PH::_1));
         OCStackResult result = OCPlatform::findResource(
-                "", requestURI.str(), OC_ALL, f);
+                "", requestURI.str(), CT_DEFAULT, f);
 
         if(OC_STACK_OK != result)
         {
@@ -176,7 +183,7 @@ class ClientFridge
     // however be a better fit to wrap each call in an object so a fuller context (and additional
     // requests) can be easily made inside of a simple context
     void getResponse(const std::string& resourceName, const HeaderOptions& headerOptions,
-                const OCRepresentation rep, const int eCode, OCResource::Ptr resource, int getId)
+                const OCRepresentation& rep, const int eCode, OCResource::Ptr resource, int getId)
     {
         std::cout << "Got a response from get from the " << resourceName << std::endl;
         std::cout << "Get ID is "<<getId<<" and resource URI is " << resource->uri() << std::endl;
@@ -267,7 +274,7 @@ class ClientFridge
 
 int main(int argc, char* argv[])
 {
-    OCConnectivityType connectivityType = OC_IPV4;
+    OCConnectivityType connectivityType = CT_ADAPTER_IP;
     if(argc == 2)
     {
         try
@@ -279,37 +286,37 @@ int main(int argc, char* argv[])
             {
                 if(optionSelected == 0)
                 {
-                    connectivityType = OC_IPV4;
+                    std::cout << "Using IPv4."<< std::endl;
+                    connectivityType = CT_IP_USE_V4;
                 }
                 else if(optionSelected == 1)
                 {
-                    // TODO: re-enable IPv4/IPv6 command line selection when IPv6 is supported
-                    //connectivityType = OC_IPV6;
-                    connectivityType = OC_IPV4;
-                    std::cout << "IPv6 not currently supported. Using default IPv4" << std::endl;
+                    std::cout << "IPv6 is currently not supported."<< std::endl;
+                    printUsage();
+                    return -1;
+                    //TODO: printUsage to be removed when IPv6 is available.
+                    //connectivityType = CT_IP_USE_V6;
                 }
                 else
                 {
-                    std::cout << "Invalid connectivity type selected. Using default IPv4"
-                        << std::endl;
+                    std::cout << "Invalid connectivity type selected. Using default IP" << std::endl;
+                    printUsage();
                 }
             }
             else
             {
-                std::cout << "Invalid connectivity type selected. Using default IPv4" << std::endl;
+                std::cout << "Invalid connectivity type selected. Using default IP" << std::endl;
             }
         }
         catch(std::exception&)
         {
-            std::cout << "Invalid input argument. Using IPv4 as connectivity type" << std::endl;
+            std::cout << "Invalid input argument. Using IP as connectivity type" << std::endl;
         }
     }
     else
     {
-        std::cout << "Usage: fridgeclient <ConnectivityType(0|1)>\n";
-        std::cout << "connectivityType: Default IPv4" << std::endl;
-        std::cout << "connectivityType 0: IPv4" << std::endl;
-        std::cout << "connectivityType 1: IPv6 (not currently supported)" << std::endl;
+        printUsage();
+        std::cout << "Default input argument. Using IP as connectivity type" << std::endl;
     }
 
     PlatformConfig cfg

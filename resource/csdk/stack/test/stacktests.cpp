@@ -79,7 +79,8 @@ extern "C"  OCStackApplicationResult asyncDoResourcesCallback(void* ctx, OCDoHan
 //-----------------------------------------------------------------------------
 // Entity handler
 //-----------------------------------------------------------------------------
-OCEntityHandlerResult entityHandler(OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest)
+OCEntityHandlerResult entityHandler(OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest,
+                                    void* callbackParam)
 {
     OC_LOG(INFO, TAG, "Entering entityHandler");
 
@@ -218,6 +219,19 @@ TEST(StackStart, SetPlatformInfoWithNoManufacturerName)
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
+TEST(StackStart, SetPlatformInfoWithZeroLengthManufacturerName)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
+
+    OCPlatformInfo info = {};
+    info.platformID = (char *) "platform_id";
+    info.manufacturerName = (char *) "";
+
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSetPlatformInfo(info));
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
 TEST(StackStart, SetPlatformInfoWithTooLongManufacName)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
@@ -266,7 +280,7 @@ TEST(StackDiscovery, DISABLED_DoResourceDeviceDiscovery)
                                         szQueryUri,
                                         0,
                                         0,
-                                        OC_IPV4,
+                                        CT_ADAPTER_IP,
                                         OC_LOW_QOS,
                                         &cbData,
                                         NULL,
@@ -275,6 +289,12 @@ TEST(StackDiscovery, DISABLED_DoResourceDeviceDiscovery)
 }
 
 TEST(StackStop, StackStopWithoutInit)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    EXPECT_EQ(OC_STACK_ERROR, OCStop());
+}
+
+TEST(StackStop, StackStopRepeated)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_CLIENT));
@@ -302,7 +322,7 @@ TEST(StackResource, DISABLED_UpdateResourceNullURI)
                                         szQueryUri,
                                         0,
                                         0,
-                                        OC_IPV4,
+                                        CT_ADAPTER_IP,
                                         OC_LOW_QOS,
                                         &cbData,
                                         NULL,
@@ -323,6 +343,7 @@ TEST(StackResource, CreateResourceBadParams)
                                             "core.rw",
                                             "/a/led",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
 
     EXPECT_EQ(OC_STACK_INVALID_PARAM, OCCreateResource(&handle,
@@ -330,6 +351,7 @@ TEST(StackResource, CreateResourceBadParams)
                                             "core.rw",
                                             "/a/led",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
 
     // Property bitmask out of range
@@ -338,6 +360,7 @@ TEST(StackResource, CreateResourceBadParams)
                                             "core.rw",
                                             "/a/led",
                                             0,
+                                            NULL,
                                             128));// invalid bitmask for OCResourceProperty
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
@@ -358,6 +381,7 @@ TEST(StackResource, CreateResourceBadUri)
                                             "core.rw",
                                             NULL, //"/a/led",
                                             0,
+                                            0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
 
     EXPECT_EQ(OC_STACK_INVALID_URI, OCCreateResource(&handle,
@@ -365,12 +389,14 @@ TEST(StackResource, CreateResourceBadUri)
                                             "core.rw",
                                             "", //"/a/led",
                                             0,
+                                            0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
 
     EXPECT_EQ(OC_STACK_INVALID_URI, OCCreateResource(&handle,
                                             "core.led",
                                             "core.rw",
                                             uri65, //"/a/led",
+                                            0,
                                             0,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
 
@@ -389,9 +415,50 @@ TEST(StackResource, CreateResourceSuccess)
                                             "core.rw",
                                             "/a/led",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     const char *url = OCGetResourceUri(handle);
     EXPECT_STREQ("/a/led", url);
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST(StackResource, CreateResourceSuccessWithResourcePolicyPropNone)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    OC_LOG(INFO, TAG, "Starting CreateResourceSuccessWithResourcePolicyPropNone test");
+    InitStack(OC_SERVER);
+
+    OCResourceHandle handle;
+    // the resource is non-discoverable & non-observable by the client.
+    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle,
+                                            "core.led",
+                                            "core.rw",
+                                            "/a/led",
+                                            0,   
+                                            NULL,   
+                                            OC_RES_PROP_NONE));// the resource is non-discoverable &
+                                                // non-observable by the client.
+    const char* url = OCGetResourceUri(handle);
+    EXPECT_STREQ("/a/led", url);
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST(StackResource, CreateResourceWithClientStackMode)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    OC_LOG(INFO, TAG, "Starting CreateResourceSuccess test");
+    InitStack(OC_CLIENT);
+
+    OCResourceHandle handle;
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCCreateResource(&handle,
+                                            "core.led",
+                                            "core.rw",
+                                            "/a/led",
+                                            0,
+                                            NULL,
+                                            OC_DISCOVERABLE|OC_OBSERVABLE));
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
@@ -408,6 +475,7 @@ TEST(StackResource, CreateResourceFailDuplicateUri)
                                             "core.rw",
                                             "/a/led",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     const char *url = OCGetResourceUri(handle);
     EXPECT_STREQ("/a/led", url);
@@ -417,6 +485,7 @@ TEST(StackResource, CreateResourceFailDuplicateUri)
                                             "core.rw",
                                             "/a/led",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
@@ -434,6 +503,7 @@ TEST(StackResource, CreateResourceMultipleResources)
                                             "core.rw",
                                             "/a/led1",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
 
     OCResourceHandle handle2;
@@ -442,6 +512,7 @@ TEST(StackResource, CreateResourceMultipleResources)
                                             "core.rw",
                                             "/a/led2",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     OCResourceHandle handle3;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle3,
@@ -449,6 +520,7 @@ TEST(StackResource, CreateResourceMultipleResources)
                                             "core.rw",
                                             "/a/led3",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
 
     const char *url = OCGetResourceUri(handle1);
@@ -475,6 +547,16 @@ TEST(StackResource, CreateResourceBadResoureType)
                                             "core.rw",
                                             "/a/led",
                                             0,
+                                            NULL,
+                                            OC_DISCOVERABLE|OC_OBSERVABLE));
+
+    OCResourceHandle handle2;
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCCreateResource(&handle2,
+                                            "",
+                                            "core.rw",
+                                            "/a/led",
+                                            0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
@@ -492,6 +574,7 @@ TEST(StackResource, CreateResourceGoodResourceType)
                                             "core.rw",
                                             "/a/led",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
@@ -509,6 +592,7 @@ TEST(StackResource, ResourceTypeName)
                                             "core.rw",
                                             "/a/led",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
 
     uint8_t numResourceTypes;
@@ -539,6 +623,7 @@ TEST(StackResource, ResourceTypeAttrRepresentation)
                                             "core.rw",
                                             "/a/led",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
 
     uint8_t numResourceTypes;
@@ -560,6 +645,7 @@ TEST(StackResource, ResourceTypeInterface)
                                             "core.rw",
                                             "/a/led",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
 
     uint8_t numResourceInterfaces;
@@ -592,6 +678,7 @@ TEST(StackResource, ResourceDefaultInterfaceAlwaysFirst)
                                             "core.rw",
                                             "/a/led",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     EXPECT_EQ(OC_STACK_OK, OCBindResourceInterfaceToResource(handle,
                                         OC_RSRVD_INTERFACE_DEFAULT));
@@ -622,6 +709,7 @@ TEST(StackResource, ResourceDuplicateDefaultInterfaces)
                                             "core.rw",
                                             "/a/led",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
 
     EXPECT_EQ(OC_STACK_OK, OCBindResourceInterfaceToResource(handle,
@@ -653,6 +741,7 @@ TEST(StackResource, ResourceDuplicateNonDefaultInterfaces)
                                             "core.rw",
                                             "/a/led",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
 
     EXPECT_EQ(OC_STACK_OK, OCBindResourceInterfaceToResource(handle,
@@ -679,6 +768,7 @@ TEST(StackResource, ResourceTypeInterfaceMethods)
                                             "core.rw",
                                             "/a/led",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
 
     uint8_t numResourceInterfaces;
@@ -700,6 +790,7 @@ TEST(StackResource, GetResourceProperties)
                                             "core.rw",
                                             "/a/led",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
 
     EXPECT_EQ(OC_ACTIVE|OC_DISCOVERABLE|OC_OBSERVABLE, OCGetResourceProperties(handle));
@@ -722,6 +813,7 @@ TEST(StackResource, StackTestResourceDiscoverOneResourceBad)
                                             "core.rw",
                                             "/a1/led",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     const char *url = OCGetResourceUri(handle);
     EXPECT_STREQ("/a1/led", url);
@@ -748,6 +840,7 @@ TEST(StackResource, StackTestResourceDiscoverOneResource)
                                             "core.rw",
                                             "/a/led",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     const char *url = OCGetResourceUri(handle);
     EXPECT_STREQ("/a/led", url);
@@ -770,6 +863,7 @@ TEST(StackResource, StackTestResourceDiscoverManyResources)
                                             "core.rw",
                                             "/a/led1",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE));
     const char *url = OCGetResourceUri(handle1);
     EXPECT_STREQ("/a/led1", url);
@@ -780,6 +874,7 @@ TEST(StackResource, StackTestResourceDiscoverManyResources)
                                             "core.rw",
                                             "/a/led2",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     url = OCGetResourceUri(handle2);
     EXPECT_STREQ("/a/led2", url);
@@ -793,6 +888,7 @@ TEST(StackResource, StackTestResourceDiscoverManyResources)
                                             "core.rw",
                                             "/a/led3",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     url = OCGetResourceUri(handle3);
     EXPECT_STREQ("/a/led3", url);
@@ -806,6 +902,7 @@ TEST(StackResource, StackTestResourceDiscoverManyResources)
                                             "core.rw",
                                             "/a/led4",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE));
     url = OCGetResourceUri(handle4);
     EXPECT_STREQ("/a/led4", url);
@@ -831,6 +928,7 @@ TEST(StackBind, BindResourceTypeNameBad)
                                             "core.rw",
                                             "/a/led",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
 
     uint8_t numResourceTypes;
@@ -856,6 +954,7 @@ TEST(StackBind, BindResourceTypeNameGood)
                                             "core.rw",
                                             "/a/led",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
 
     uint8_t numResourceTypes;
@@ -891,6 +990,7 @@ TEST(StackBind, BindResourceTypeAttribRepGood)
                                             "core.rw",
                                             "/a/led",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
 
     uint8_t numResourceTypes;
@@ -921,6 +1021,7 @@ TEST(StackBind, BindResourceInterfaceNameBad)
                                             "core.rw",
                                             "/a/led",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
 
     uint8_t numResourceInterfaces;
@@ -946,6 +1047,7 @@ TEST(StackBind, BindResourceInterfaceNameGood)
                                             "core.rw",
                                             "/a/led",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
 
     uint8_t numResourceInterfaces;
@@ -976,6 +1078,7 @@ TEST(StackBind, BindResourceInterfaceMethodsBad)
                                             "core.rw",
                                             "/a/led",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
 
     uint8_t numResourceInterfaces;
@@ -999,6 +1102,7 @@ TEST(StackBind, BindResourceInterfaceMethodsGood)
                                             "core.rw",
                                             "/a/led",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
 
     uint8_t numResourceInterfaces;
@@ -1025,6 +1129,7 @@ TEST(StackBind, BindContainedResourceBad)
                                             "core.rw",
                                             "/a/kitchen",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
 
     OCResourceHandle handle0;
@@ -1033,6 +1138,7 @@ TEST(StackBind, BindContainedResourceBad)
                                             "core.rw",
                                             "/a/led",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
 
     EXPECT_EQ(OC_STACK_INVALID_PARAM, OCBindResource(containerHandle, containerHandle));
@@ -1059,6 +1165,7 @@ TEST(StackBind, BindContainedResourceGood)
                                             "core.rw",
                                             "/a/kitchen",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numResources));
     EXPECT_EQ(++numExpectedResources, numResources);
@@ -1069,6 +1176,7 @@ TEST(StackBind, BindContainedResourceGood)
                                             "core.rw",
                                             "/a/led0",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numResources));
     EXPECT_EQ(++numExpectedResources, numResources);
@@ -1079,6 +1187,7 @@ TEST(StackBind, BindContainedResourceGood)
                                             "core.rw",
                                             "/a/led1",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numResources));
     EXPECT_EQ(++numExpectedResources, numResources);
@@ -1089,6 +1198,7 @@ TEST(StackBind, BindContainedResourceGood)
                                             "core.rw",
                                             "/a/led2",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numResources));
     EXPECT_EQ(++numExpectedResources, numResources);
@@ -1099,6 +1209,7 @@ TEST(StackBind, BindContainedResourceGood)
                                             "core.rw",
                                             "/a/led3",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numResources));
     EXPECT_EQ(++numExpectedResources, numResources);
@@ -1109,6 +1220,7 @@ TEST(StackBind, BindContainedResourceGood)
                                             "core.rw",
                                             "/a/led4",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numResources));
     EXPECT_EQ(++numExpectedResources, numResources);
@@ -1119,6 +1231,7 @@ TEST(StackBind, BindContainedResourceGood)
                                             "core.rw",
                                             "/a/led5",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numResources));
     EXPECT_EQ(++numExpectedResources, numResources);
@@ -1155,9 +1268,10 @@ TEST(StackBind, BindEntityHandlerBad)
                                             "core.rw",
                                             "/a/led",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
 
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCBindResourceHandler(NULL, NULL));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCBindResourceHandler(NULL, NULL, NULL));
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
@@ -1174,11 +1288,12 @@ TEST(StackBind, BindEntityHandlerGood)
                                             "core.rw",
                                             "/a/led",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
 
     OCEntityHandler myHandler = entityHandler;
 
-    EXPECT_EQ(OC_STACK_OK, OCBindResourceHandler(handle, myHandler));
+    EXPECT_EQ(OC_STACK_OK, OCBindResourceHandler(handle, myHandler, NULL));
 
     EXPECT_EQ(myHandler, OCGetResourceHandler(handle));
 
@@ -1203,6 +1318,7 @@ TEST(StackResourceAccess, GetResourceByIndex)
                                             "core.rw",
                                             "/a/kitchen",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numResources));
     EXPECT_EQ(++numExpectedResources, numResources);
@@ -1213,6 +1329,7 @@ TEST(StackResourceAccess, GetResourceByIndex)
                                             "core.rw",
                                             "/a/led0",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numResources));
     EXPECT_EQ(++numExpectedResources, numResources);
@@ -1223,6 +1340,7 @@ TEST(StackResourceAccess, GetResourceByIndex)
                                             "core.rw",
                                             "/a/led1",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numResources));
     EXPECT_EQ(++numExpectedResources, numResources);
@@ -1233,6 +1351,7 @@ TEST(StackResourceAccess, GetResourceByIndex)
                                             "core.rw",
                                             "/a/led2",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numResources));
     EXPECT_EQ(++numExpectedResources, numResources);
@@ -1243,6 +1362,7 @@ TEST(StackResourceAccess, GetResourceByIndex)
                                             "core.rw",
                                             "/a/led3",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numResources));
     EXPECT_EQ(++numExpectedResources, numResources);
@@ -1253,6 +1373,7 @@ TEST(StackResourceAccess, GetResourceByIndex)
                                             "core.rw",
                                             "/a/led4",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numResources));
     EXPECT_EQ(++numExpectedResources, numResources);
@@ -1263,6 +1384,7 @@ TEST(StackResourceAccess, GetResourceByIndex)
                                             "core.rw",
                                             "/a/led5",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numResources));
     EXPECT_EQ(++numExpectedResources, numResources);
@@ -1295,6 +1417,7 @@ TEST(StackResourceAccess, DeleteHeadResource)
                                             "core.rw",
                                             "/a/led0",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numResources));
     EXPECT_EQ(++numExpectedResources, numResources);
@@ -1322,6 +1445,7 @@ TEST(StackResourceAccess, DeleteHeadResource2)
                                             "core.rw",
                                             "/a/led0",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numResources));
     EXPECT_EQ(++numExpectedResources, numResources);
@@ -1332,6 +1456,7 @@ TEST(StackResourceAccess, DeleteHeadResource2)
                                             "core.rw",
                                             "/a/led1",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numResources));
     EXPECT_EQ(++numExpectedResources, numResources);
@@ -1363,6 +1488,7 @@ TEST(StackResourceAccess, DeleteLastResource)
                                             "core.rw",
                                             "/a/led0",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numResources));
     EXPECT_EQ(++numExpectedResources, numResources);
@@ -1373,6 +1499,7 @@ TEST(StackResourceAccess, DeleteLastResource)
                                             "core.rw",
                                             "/a/led1",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numResources));
     EXPECT_EQ(++numExpectedResources, numResources);
@@ -1389,6 +1516,7 @@ TEST(StackResourceAccess, DeleteLastResource)
                                             "core.rw",
                                             "/a/led2",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numResources));
     EXPECT_EQ(++numExpectedResources, numResources);
@@ -1414,6 +1542,7 @@ TEST(StackResourceAccess, DeleteMiddleResource)
                                             "core.rw",
                                             "/a/led0",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numResources));
     EXPECT_EQ(++numExpectedResources, numResources);
@@ -1424,6 +1553,7 @@ TEST(StackResourceAccess, DeleteMiddleResource)
                                             "core.rw",
                                             "/a/led1",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numResources));
     EXPECT_EQ(++numExpectedResources, numResources);
@@ -1434,6 +1564,7 @@ TEST(StackResourceAccess, DeleteMiddleResource)
                                             "core.rw",
                                             "/a/led2",
                                             0,
+                                            NULL,
                                             OC_DISCOVERABLE|OC_OBSERVABLE));
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numResources));
     EXPECT_EQ(++numExpectedResources, numResources);

@@ -35,7 +35,7 @@ std::shared_ptr<OCResource> curResource;
 std::mutex resourceLock;
 static int TEST_CASE = 0;
 
-static OCConnectivityType connectivityType = OC_IPV4;
+static OCConnectivityType connectivityType = CT_ADAPTER_IP;
 
 /**
  * List of methods that can be inititated from the client
@@ -65,7 +65,7 @@ void printUsage()
             << std::endl;
     std::cout<<"ConnectivityType: Default IPv4" << std::endl;
     std::cout << "-c 0 : Send message with IPv4" << std::endl;
-    std::cout << "-c 1 : Send message with IPv6" << std::endl;
+    std::cout << "-c 1 : Send message with IPv6 (Currently Not Supported)" << std::endl;
 }
 
 // Callback to presence
@@ -221,26 +221,26 @@ int main(int argc, char* argv[]) {
                     {
                         if(optionSelected == 0)
                         {
-                            connectivityType = OC_IPV4;
+                            std::cout << "Using IPv4."<< std::endl;
+                            connectivityType = CT_IP_USE_V4;
                         }
                         else if(optionSelected == 1)
                         {
-                            // TODO: re-enable IPv4/IPv6 command line selection when IPv6
-                            // is supported
-                            //connectivityType = OC_IPV6;
-                            connectivityType = OC_IPV4;
-                            std::cout << "IPv6 not currently supported. Using default IPv4"
-                                    << std::endl;
+                            std::cout << "IPv6 is currently not supported."<< std::endl;
+                            printUsage();
+                            return -1;
+                            //TODO: printUsage to be removed when IPv6 is available.
+                            //connectivityType = CT_IP_USE_V6;
                         }
                         else
                         {
-                            std::cout << "Invalid connectivity type selected. Using default IPv4"
+                            std::cout << "Invalid connectivity type selected. Using default IP"
                                 << std::endl;
                         }
                     }
                     else
                     {
-                        std::cout << "Invalid connectivity type selected. Using default IPv4"
+                        std::cout << "Invalid connectivity type selected. Using default IP"
                             << std::endl;
                     }
                     break;
@@ -252,7 +252,7 @@ int main(int argc, char* argv[]) {
     }
     catch(std::exception& )
     {
-        std::cout << "Invalid input argument. Using IPv4 as connectivity type"
+        std::cout << "Invalid input argument. Using IP as connectivity type"
             << std::endl;
     }
 
@@ -343,7 +343,7 @@ int main(int argc, char* argv[]) {
             requestURI << OC_MULTICAST_DISCOVERY_URI;
 
             result = OCPlatform::findResource("", requestURI.str(),
-                    OC_ALL, &foundResource);
+                    CT_DEFAULT, &foundResource);
             if(result == OC_STACK_OK)
             {
                 std::cout << "Finding Resource... " << std::endl;

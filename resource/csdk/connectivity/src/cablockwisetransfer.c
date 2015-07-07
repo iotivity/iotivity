@@ -230,7 +230,7 @@ CAResult_t CACheckBlockOptionType(CABlockData_t *currData)
     return CA_STATUS_OK;
 }
 
-CAResult_t CAReceiveBlockWiseData(const coap_pdu_t *pdu, CARemoteEndpoint_t *endpoint,
+CAResult_t CAReceiveBlockWiseData(const coap_pdu_t *pdu, CAEndpoint_t *endpoint,
                                   CAData_t *receivedData, uint32_t dataLen)
 {
     OIC_LOG(DEBUG, TAG, "CAReceiveBlockWiseData");
@@ -561,7 +561,7 @@ CAResult_t CASendErrorMessage(const coap_pdu_t *pdu, uint8_t status,
     }
     else
     {
-        cloneData = CACreateNewDataSet(pdu, CACloneRemoteEndpoint(data->sentData->remoteEndpoint));
+        cloneData = CACreateNewDataSet(pdu, CACloneEndpoint(data->sentData->remoteEndpoint));
         cloneData->responseInfo->info.type = CA_MSG_CONFIRM;
         cloneData->responseInfo->result = responseResult;
         OIC_LOG(DEBUG, TAG, "set CON message");
@@ -622,7 +622,7 @@ CAResult_t CAReceiveLastBlock(const coap_pdu_t *pdu, CAData_t *receivedData)
     return CA_STATUS_OK;
 }
 
-CAResult_t CASetNextBlockOption1(const coap_pdu_t *pdu, CARemoteEndpoint_t *endpoint,
+CAResult_t CASetNextBlockOption1(const coap_pdu_t *pdu, CAEndpoint_t *endpoint,
                                  CAData_t *receivedData, coap_block_t block, uint32_t dataLen)
 {
     OIC_LOG(INFO, TAG, "CASetNextBlockOption1");
@@ -772,7 +772,7 @@ CAResult_t CASetNextBlockOption1(const coap_pdu_t *pdu, CARemoteEndpoint_t *endp
     return CA_STATUS_OK;
 }
 
-CAResult_t CASetNextBlockOption2(const coap_pdu_t *pdu, CARemoteEndpoint_t *endpoint,
+CAResult_t CASetNextBlockOption2(const coap_pdu_t *pdu, CAEndpoint_t *endpoint,
                                  CAData_t *receivedData, coap_block_t block, uint32_t dataLen)
 {
     OIC_LOG(DEBUG, TAG, "CASetNextBlockOption2");
@@ -1682,7 +1682,7 @@ CAResult_t CAUpdatePayloadData(CABlockData_t *currData, CAData_t *receivedData,
     return CA_STATUS_OK;
 }
 
-CAData_t* CACreateNewDataSet(const coap_pdu_t *pdu, CARemoteEndpoint_t *endpoint)
+CAData_t* CACreateNewDataSet(const coap_pdu_t *pdu, CAEndpoint_t *endpoint)
 {
     VERIFY_NON_NULL_RET(pdu, TAG, "pdu", NULL);
     VERIFY_NON_NULL_RET(pdu->hdr, TAG, "pdu->hdr", NULL);
@@ -1710,7 +1710,7 @@ CAData_t* CACreateNewDataSet(const coap_pdu_t *pdu, CARemoteEndpoint_t *endpoint
 
     data->requestInfo = NULL;
     data->responseInfo = responseInfo;
-    data->remoteEndpoint = CACloneRemoteEndpoint(endpoint);
+    data->remoteEndpoint = CACloneEndpoint(endpoint);
     data->type = SEND_TYPE_UNICAST;
 
     return data;
@@ -1740,7 +1740,7 @@ CAData_t *CACloneCAData(const CAData_t *data)
 
     if (data->remoteEndpoint)
     {
-        clone->remoteEndpoint = CACloneRemoteEndpoint(data->remoteEndpoint);
+        clone->remoteEndpoint = CACloneEndpoint(data->remoteEndpoint);
     }
 
     if (NULL != data->options && 0 < data->numOptions)
@@ -1952,7 +1952,7 @@ CAData_t *CAGetDataSetFromBlockDataList(const unsigned char* token)
     return NULL;
 }
 
-CAResult_t CAGetTokenFromBlockDataList(const coap_pdu_t *pdu, const CARemoteEndpoint_t *endpoint,
+CAResult_t CAGetTokenFromBlockDataList(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                                        CAResponseInfo_t *responseInfo)
 {
     OIC_LOG(DEBUG, TAG, "IN-CAGetTokenFromBlockDataList");
@@ -1973,8 +1973,8 @@ CAResult_t CAGetTokenFromBlockDataList(const coap_pdu_t *pdu, const CARemoteEndp
 
         if (NULL != currData->sentData->requestInfo)
         {
-            if (pdu->hdr->id == currData->sentData->requestInfo->info.messageId &&
-                    endpoint->transportType == currData->sentData->remoteEndpoint->transportType)
+            if (pdu->hdr->id == currData->sentData->requestInfo->info.messageId)// &&
+                    //endpoint->transportType == currData->sentData->remoteEndpoint->transportType)
             {
                 if (NULL != currData->token)
                 {
@@ -2302,7 +2302,7 @@ void CADestroyDataSet(CAData_t* data)
 {
     VERIFY_NON_NULL_VOID(data, TAG, "data");
 
-    CADestroyRemoteEndpointInternal(data->remoteEndpoint);
+    CAFreeEndpoint(data->remoteEndpoint);
     CADestroyRequestInfoInternal(data->requestInfo);
     CADestroyResponseInfoInternal(data->responseInfo);
     OICFree(data->options);

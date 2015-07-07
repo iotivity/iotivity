@@ -34,10 +34,12 @@
 #define TAG "occlientbasicops"
 static int UNICAST_DISCOVERY = 0;
 static int TEST_CASE = 0;
+static int CONN_TYPE = 0;
 
 static int IPV4_ADDR_SIZE = 16;
 static char UNICAST_DISCOVERY_QUERY[] = "coap://%s:6298/oic/res";
 static char MULTICAST_DISCOVERY_QUERY[] = "/oic/res";
+OCConnectivityType discoveryReqConnType = CT_ADAPTER_IP;
 
 static std::string putPayload = "{\"oic\":[{\"rep\":{\"state\":\"off\",\"power\":10}}]}";
 static std::string coapServerIP;
@@ -66,12 +68,15 @@ void handleSigInt(int signum)
 
 static void PrintUsage()
 {
-    OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1|2|3>");
+    OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1|2|3> -c <0|1|2>");
     OC_LOG(INFO, TAG, "-u <0|1> : Perform multicast/unicast discovery of resources");
     OC_LOG(INFO, TAG, "-t 1 : Discover Resources");
     OC_LOG(INFO, TAG, "-t 2 : Discover Resources and"
             " Initiate Nonconfirmable Get/Put/Post Requests");
     OC_LOG(INFO, TAG, "-t 3 : Discover Resources and Initiate Confirmable Get/Put/Post Requests");
+    OC_LOG(INFO, TAG, "-c 0 : Default IPv4 and IPv6 auto-selection");
+    OC_LOG(INFO, TAG, "-c 1 : IPv4 Connectivity Type");
+    OC_LOG(INFO, TAG, "-c 2 : IPv6 Connectivity Type (IPv6 not currently supported)");
 }
 
 OCStackResult InvokeOCDoResource(std::ostringstream &query,
@@ -140,23 +145,14 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse
 OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
         OCClientResponse * clientResponse)
 {
-    uint8_t remoteIpAddr[4];
-    uint16_t remotePortNu;
-
     OC_LOG(INFO, TAG, "Callback Context for DISCOVER query recvd successfully");
 
     if (clientResponse)
     {
         OC_LOG_V(INFO, TAG, "StackResult: %s", getResult(clientResponse->result));
-
-        OCDevAddrToIPv4Addr((OCDevAddr *) clientResponse->addr, remoteIpAddr,
-                remoteIpAddr + 1, remoteIpAddr + 2, remoteIpAddr + 3);
-        OCDevAddrToPort((OCDevAddr *) clientResponse->addr, &remotePortNu);
-
         OC_LOG_V(INFO, TAG,
-                "Device =============> Discovered %s @ %d.%d.%d.%d:%d",
-                clientResponse->resJSONPayload, remoteIpAddr[0], remoteIpAddr[1],
-                remoteIpAddr[2], remoteIpAddr[3], remotePortNu);
+                "Device =============> Discovered %s @ %s:%d",
+                clientResponse->resJSONPayload, clientResponse->devAddr.addr, clientResponse->devAddr.port);
 
         ocConnType = clientResponse->connType;
 
@@ -239,9 +235,9 @@ int InitGetRequest(OCQualityOfService qos)
 int InitDiscovery()
 {
     OCStackResult ret;
+    OCMethod method;
     OCCallbackData cbData;
     char szQueryUri[MAX_URI_LENGTH] = { 0 };
-    OCConnectivityType discoveryReqConnType;
 
     if (UNICAST_DISCOVERY)
     {
@@ -258,13 +254,14 @@ int InitDiscovery()
             OC_LOG(ERROR, TAG, "!! Bad input for IPV4 address. !!");
             return OC_STACK_INVALID_PARAM;
         }
-        discoveryReqConnType = OC_IPV4;
+        method = OC_REST_GET;
     }
     else
     {
         //Send discovery request on Wifi and Ethernet interface
-        discoveryReqConnType = OC_ALL;
+        discoveryReqConnType = CT_DEFAULT;
         strcpy(szQueryUri, MULTICAST_DISCOVERY_QUERY);
+        method = OC_REST_DISCOVER;
     }
 
     cbData.cb = discoveryReqCB;
@@ -276,7 +273,7 @@ int InitDiscovery()
         (UNICAST_DISCOVERY) ? "Unicast" : "Multicast",
         szQueryUri);
 
-    ret = OCDoResource(NULL, OC_REST_GET, szQueryUri, 0, 0,
+    ret = OCDoResource(NULL, method, szQueryUri, 0, 0,
             discoveryReqConnType, OC_LOW_QOS,
             &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
@@ -297,7 +294,7 @@ int main(int argc, char* argv[])
     int opt;
     struct timespec timeout;
 
-    while ((opt = getopt(argc, argv, "u:t:")) != -1)
+    while ((opt = getopt(argc, argv, "u:t:c:")) != -1)
     {
         switch(opt)
         {
@@ -307,6 +304,9 @@ int main(int argc, char* argv[])
             case 't':
                 TEST_CASE = atoi(optarg);
                 break;
+            case 'c':
+                CONN_TYPE = atoi(optarg);
+                break;
             default:
                 PrintUsage();
                 return -1;
@@ -314,11 +314,36 @@ int main(int argc, char* argv[])
     }
 
     if ((UNICAST_DISCOVERY != 0 && UNICAST_DISCOVERY != 1) ||
-            (TEST_CASE < TEST_DISCOVER_REQ || TEST_CASE >= MAX_TESTS) )
+            (TEST_CASE < TEST_DISCOVER_REQ || TEST_CASE >= MAX_TESTS)||
+            (CONN_TYPE < CT_ADAPTER_DEFAULT || CONN_TYPE >= MAX_CT))
     {
         PrintUsage();
         return -1;
     }
+
+
+    if(CONN_TYPE == CT_ADAPTER_DEFAULT)
+    {
+        discoveryReqConnType = CT_DEFAULT;
+    }
+    else if(CONN_TYPE == CT_IPV4)
+    {
+        discoveryReqConnType = CT_IP_USE_V4;
+    }
+    else if(CONN_TYPE == CT_IPV6)
+    {
+        //TODO: Remove when IPv6 is available.
+        //discoveryReqConnType = CT_IP_USE_V6;
+        OC_LOG(ERROR, TAG, "IPv6 is currently not supported !!!!");
+        PrintUsage();
+        return -1;
+    }
+    else
+    {
+        printf("Using Default Connectivity type\n\n");
+        PrintUsage();
+    }
+
 
     // Initialize Persistent Storage for SVR database
     OCPersistentStorage ps = {};
@@ -364,28 +389,11 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-std::string getIPAddrTBServer(OCClientResponse * clientResponse)
-{
-    if(!clientResponse) return "";
-    if(!clientResponse->addr) return "";
-    uint8_t a, b, c, d = 0;
-    if(0 != OCDevAddrToIPv4Addr(clientResponse->addr, &a, &b, &c, &d) ) return "";
-
-    char ipaddr[16] = {'\0'};
-    // ostringstream not working correctly here, hence snprintf
-    snprintf(ipaddr,  sizeof(ipaddr), "%d.%d.%d.%d", a,b,c,d);
-    return std::string (ipaddr);
-}
-
-
 std::string getPortTBServer(OCClientResponse * clientResponse)
 {
     if(!clientResponse) return "";
-    if(!clientResponse->addr) return "";
-    uint16_t p = 0;
-    if(0 != OCDevAddrToPort(clientResponse->addr, &p) ) return "";
     std::ostringstream ss;
-    ss << p;
+    ss << clientResponse->devAddr.port;
     return ss.str();
 }
 
@@ -432,24 +440,28 @@ int parseClientResponse(OCClientResponse * clientResponse)
             cJSON * prop = cJSON_GetObjectItem(resource,"prop");
             if (prop)
             {
-                // If this is a secure resource, the info about the port at which the
-                // resource is hosted on server is embedded inside discovery JSON response
-                if (cJSON_GetObjectItem(prop, "sec"))
+                cJSON * policy = cJSON_GetObjectItem(prop,"p");
+                if (policy)
                 {
-                    if ((cJSON_GetObjectItem(prop, "sec")->valueint) == 1)
+                    // If this is a secure resource, the info about the port at which the
+                    // resource is hosted on server is embedded inside discovery JSON response
+                    if (cJSON_GetObjectItem(policy, "sec"))
                     {
-                        coapSecureResource = 1;
+                        if ((cJSON_GetObjectItem(policy, "sec")->valueint) == 1)
+                        {
+                            coapSecureResource = 1;
+                        }
                     }
-                }
-                OC_LOG_V(INFO, TAG, "Secure -- %s", coapSecureResource == 1 ? "YES" : "NO");
-                if (cJSON_GetObjectItem(prop, "port"))
-                {
-                    port = cJSON_GetObjectItem(prop, "port")->valueint;
-                    OC_LOG_V(INFO, TAG, "Hosting Server Port (embedded inside JSON) -- %u", port);
+                    OC_LOG_V(INFO, TAG, "Secure -- %s", coapSecureResource == 1 ? "YES" : "NO");
+                    if (cJSON_GetObjectItem(policy, "port"))
+                    {
+                        port = cJSON_GetObjectItem(policy, "port")->valueint;
+                        OC_LOG_V(INFO, TAG, "Hosting Server Port (embedded inside JSON) -- %u", port);
 
-                    std::ostringstream ss;
-                    ss << port;
-                    coapServerPort = ss.str();
+                        std::ostringstream ss;
+                        ss << port;
+                        coapServerPort = ss.str();
+                    }
                 }
             }
 
@@ -462,7 +474,7 @@ int parseClientResponse(OCClientResponse * clientResponse)
     }
     cJSON_Delete(root);
 
-    coapServerIP = getIPAddrTBServer(clientResponse);
+    coapServerIP = clientResponse->devAddr.addr;
     if (port == -1)
     {
         coapServerPort = getPortTBServer(clientResponse);

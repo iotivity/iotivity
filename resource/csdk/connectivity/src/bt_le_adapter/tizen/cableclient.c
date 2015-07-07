@@ -34,7 +34,7 @@
 #include "uarraylist.h"
 #include "caqueueingthread.h"
 #include "caadapterutils.h"
-#include "camsgparser.h"
+#include "cafragmentation.h"
 #include "oic_string.h"
 #include "oic_malloc.h"
 
@@ -114,6 +114,12 @@ static ca_mutex g_bleClientThreadPoolMutex = NULL;
  *           BLE devices
  */
 static CABLEClientDataReceivedCallback g_bleClientDataReceivedCallback = NULL;
+
+/**
+ * @var g_clientErrorCallback
+ * @brief callback to update the error to le adapter
+ */
+static CABLEErrorHandleCallback g_clientErrorCallback;
 
 /**
  * @var g_eventLoop
@@ -289,8 +295,7 @@ bool CABleGattCharacteristicsDiscoveredCb(int result,
 
         VERIFY_NON_NULL_RET(stTemp, TZ_BLE_CLIENT_TAG, "calloc failed!", false);
 
-        size_t len = strlen(bdAddress);
-        stTemp->address = (char *)OICMalloc(sizeof(char) * (len + 1));
+        stTemp->address = OICStrdup(bdAddress);
         if (NULL == stTemp->address)
         {
             OIC_LOG(ERROR, TZ_BLE_CLIENT_TAG , "Malloc failed!");
@@ -298,7 +303,6 @@ bool CABleGattCharacteristicsDiscoveredCb(int result,
             return false;
         }
 
-        strncpy(stTemp->address, bdAddress, len + 1);
         bt_gatt_clone_attribute_handle(&(stTemp->serviceInfo), characteristic);
 
         ca_mutex_lock(g_bleClientThreadPoolMutex);
@@ -376,17 +380,14 @@ bool CABleGattPrimaryServiceCb(bt_gatt_attribute_h service, int index, int count
         VERIFY_NON_NULL_RET(stTemp, TZ_BLE_CLIENT_TAG, "Calloc Failed", false);
 
         char *bdAddress = (char *)userData;
-        size_t len = strlen(bdAddress);
 
-        stTemp->address = (char *)OICMalloc(sizeof(char) * (len + 1));
+        stTemp->address = OICStrdup(bdAddress);
         if (NULL == stTemp->address)
         {
             OIC_LOG(ERROR, TZ_BLE_CLIENT_TAG , "Malloc failed!");
             OICFree(stTemp);
             return false;
         }
-
-        strncpy(stTemp->address, bdAddress, len + 1);
 
         BLEServiceInfo *bleServiceInfo = NULL;
 
@@ -567,12 +568,8 @@ void CABtAdapterLeDeviceDiscoveryStateChangedCb(int result,
                 CAResult_t res = CAVerifyOICServiceByUUID(discoveryInfo->service_uuid[i]);
                 if (CA_STATUS_OK == res)
                 {
-
-                    size_t len = strlen(discoveryInfo->remote_address);
-
-                    char *addr = (char *)OICMalloc(sizeof(char) * (len + 1));
+                    char *addr = OICStrdup(discoveryInfo->remote_address);
                     VERIFY_NON_NULL_VOID(addr, TZ_BLE_CLIENT_TAG, "Malloc failed");
-                    strncpy(addr, discoveryInfo->remote_address, len + 1);
 
                     OIC_LOG_V(DEBUG, TZ_BLE_CLIENT_TAG,
                               "Trying to do Gatt connection to [%s]", addr);
@@ -637,7 +634,7 @@ void CAPrintDiscoveryInformation(const bt_adapter_le_device_discovery_info_s *di
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "OUT");
 }
 
-void CASetBleClientThreadPoolHandle(ca_thread_pool_t handle)
+void CASetLEClientThreadPoolHandle(ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "IN");
 
@@ -648,7 +645,7 @@ void CASetBleClientThreadPoolHandle(ca_thread_pool_t handle)
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "OUT");
 }
 
-void CASetBLEReqRespClientCallback(CABLEClientDataReceivedCallback callback)
+void CASetLEReqRespClientCallback(CABLEClientDataReceivedCallback callback)
 {
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "IN");
 
@@ -661,7 +658,13 @@ void CASetBLEReqRespClientCallback(CABLEClientDataReceivedCallback callback)
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "OUT");
 }
 
-CAResult_t CAStartBLEGattClient()
+
+void CASetBLEClientErrorHandleCallback(CABLEErrorHandleCallback callback)
+{
+    g_clientErrorCallback = callback;
+}
+
+CAResult_t CAStartLEGattClient()
 {
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "IN");
 
@@ -716,7 +719,7 @@ void CAStartBleGattClientThread(void *data)
     {
         OIC_LOG(ERROR, TZ_BLE_CLIENT_TAG, "CABleSetScanParameter Failed");
         ca_mutex_unlock(g_bleClientStateMutex);
-        CATerminateBLEGattClient();
+        CATerminateLEGattClient();
         return;
     }
 
@@ -725,7 +728,7 @@ void CAStartBleGattClientThread(void *data)
     {
         OIC_LOG(ERROR, TZ_BLE_CLIENT_TAG, "CABleGattSetCallbacks Failed");
         ca_mutex_unlock(g_bleClientStateMutex);
-        CATerminateBLEGattClient();
+        CATerminateLEGattClient();
         return;
     }
 
@@ -736,7 +739,7 @@ void CAStartBleGattClientThread(void *data)
     {
         OIC_LOG(ERROR, TZ_BLE_CLIENT_TAG, "bt_adapter_le_start_device_discovery Failed");
         ca_mutex_unlock(g_bleClientStateMutex);
-        CATerminateBLEGattClient();
+        CATerminateLEGattClient();
         return;
     }
 
@@ -757,7 +760,7 @@ void CAStartBleGattClientThread(void *data)
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "OUT");
 }
 
-void CAStopBLEGattClient()
+void CAStopLEGattClient()
 {
     OIC_LOG(DEBUG,  TZ_BLE_CLIENT_TAG, "IN");
 
@@ -802,7 +805,7 @@ void CAStopBLEGattClient()
     OIC_LOG(DEBUG,  TZ_BLE_CLIENT_TAG, "OUT");
 }
 
-void CATerminateBLEGattClient()
+void CATerminateLEGattClient()
 {
     OIC_LOG(DEBUG,  TZ_BLE_CLIENT_TAG, "IN");
     ca_mutex_lock(g_bleClientStateMutex);
@@ -1192,11 +1195,8 @@ CAResult_t CABleGattDiscoverServices(const char *remoteAddress)
     VERIFY_NON_NULL_RET(remoteAddress, TZ_BLE_CLIENT_TAG,
                         "remote address is NULL", CA_STATUS_FAILED);
 
-    size_t len = strlen(remoteAddress);
-    char *addr = (char *)OICMalloc(sizeof(char) * (len + 1));
+    char *addr = OICStrdup(remoteAddress);
     VERIFY_NON_NULL_RET(addr, TZ_BLE_CLIENT_TAG, "Malloc failed", CA_STATUS_FAILED);
-
-    strncpy(addr, remoteAddress, len + 1);
 
     int32_t ret = bt_gatt_foreach_primary_services(remoteAddress, CABleGattPrimaryServiceCb,
                   (void *)addr); // addr memory will be free in callback.
@@ -1254,11 +1254,8 @@ CAResult_t CABleGattDiscoverCharacteristics(bt_gatt_attribute_h service,
 
     VERIFY_NON_NULL_RET(remoteAddress, NULL, "remoteAddress is NULL", CA_STATUS_FAILED);
 
-    size_t len = strlen(remoteAddress);
-
-    char *addr = (char *)OICMalloc(sizeof(char) * (len + 1));
+    char *addr = OICStrdup(remoteAddress);
     VERIFY_NON_NULL_RET(addr, TZ_BLE_CLIENT_TAG, "Malloc failed", CA_STATUS_FAILED);
-    strncpy(addr, remoteAddress, len + 1);
 
     int32_t ret = bt_gatt_discover_characteristics(service, CABleGattCharacteristicsDiscoveredCb,
                   (void *)addr); // addr will be freed in callback.
@@ -1473,12 +1470,14 @@ CAResult_t  CAUpdateCharacteristicsToAllGattServers(const char  *data,
         /*remoteAddress will be NULL.
           Since we have to send to all destinations. pos will be used for getting remote address.
          */
-        int32_t ret = CAUpdateCharacteristicsToGattServer(NULL, data, dataLen, LE_MULTICAST, pos);
+        CAResult_t  ret = CAUpdateCharacteristicsToGattServer(NULL, data, dataLen, LE_MULTICAST, pos);
 
         if (CA_STATUS_OK != ret)
         {
             OIC_LOG_V(ERROR, TZ_BLE_CLIENT_TAG,
                       "CAUpdateCharacteristicsToGattServer Failed with return val [%d] ", ret);
+            g_clientErrorCallback(NULL, data, dataLen, ret);
+            continue;
         }
     }
 

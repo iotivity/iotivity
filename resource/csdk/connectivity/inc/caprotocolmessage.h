@@ -40,14 +40,22 @@ typedef uint32_t code_t;
 #define CA_RESPONSE_CLASS(C) (((C) >> 5)*100)
 #define CA_RESPONSE_CODE(C) (CA_RESPONSE_CLASS(C) + (C - COAP_RESPONSE_CODE(CA_RESPONSE_CLASS(C))))
 
+
+// Include files from the arduino platform do not provide these conversions:
+#ifdef ARDUINO
+#define htons(x) ( ((x)<< 8 & 0xFF00) | ((x)>> 8 & 0x00FF) )
+#define ntohs(x) htons(x)
+#else
+#define HAVE_TIME_H 1
+#endif
+
 /**
  * @brief   generates pdu structure from the given information.
- * @param   uri              [IN]    uri information of the pdu
  * @param   code             [IN]    code of the pdu packet
  * @param   info             [IN]    pdu information
  * @return  generated pdu
  */
-coap_pdu_t *CAGeneratePDU(const char *uri, uint32_t code, const CAInfo_t info);
+coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info);
 
 /**
  * function for generating
@@ -57,34 +65,26 @@ coap_pdu_t *CAGeneratePDU(const char *uri, uint32_t code, const CAInfo_t info);
  * @brief   extracts request information from received pdu.
  * @param   pdu              [IN]     received pdu
  * @param   outReqInfo       [OUT]    request info structure made from received pdu
- * @param   outUri           [OUT]    uri received in the received pdu
- * @param   buflen           [IN]     Buffer Length for outUri parameter
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAGetRequestInfoFromPDU(const coap_pdu_t *pdu, CARequestInfo_t *outReqInfo, char *outUri,
-                                   uint32_t buflen);
+CAResult_t CAGetRequestInfoFromPDU(const coap_pdu_t *pdu, CARequestInfo_t *outReqInfo);
 
 /**
  * @brief   extracts response information from received pdu.
  * @param   pdu              [IN]     received pdu
  * @param   outResInfo       [OUT]    response info structure made from received pdu
- * @param   outUri           [OUT]    uri received in the received pdu
- * @param   buflen           [IN]     Buffer Length for outUri parameter
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAGetResponseInfoFromPDU(const coap_pdu_t *pdu, CAResponseInfo_t *outResInfo,
-                                    char *outUri, uint32_t buflen);
+CAResult_t CAGetResponseInfoFromPDU(const coap_pdu_t *pdu, CAResponseInfo_t *outResInfo);
 
 /**
  * @brief   extracts error information from received pdu.
  * @param   pdu              [IN]     received pdu
  * @param   errorInfo        [OUT]    error info structure made from received pdu
- * @param   outUri           [OUT]    uri received in the received pdu
- * @param   buflen           [IN]     length of outUri
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAGetErrorInfoFromPDU(const coap_pdu_t *pdu, CAErrorInfo_t *errorInfo,
-                                 char *outUri, uint32_t buflen);
+CAResult_t CAGetErrorInfoFromPDU(const coap_pdu_t *pdu, CAErrorInfo_t *errorInfo);
+
 /**
  * @brief   creates pdu from the request information
  * @param   code             [IN]    request or response code
@@ -93,7 +93,7 @@ CAResult_t CAGetErrorInfoFromPDU(const coap_pdu_t *pdu, CAErrorInfo_t *errorInfo
  * @param   payload          [IN]    payload for the request or response consumed
  * @return  generated pdu
  */
-coap_pdu_t *CAGeneratePDUImpl(code_t code, coap_list_t *options, const CAInfo_t info,
+coap_pdu_t *CAGeneratePDUImpl(code_t code, coap_list_t *options, const CAInfo_t *info,
                               const char *payload, size_t payloadSize);
 
 /**
@@ -125,7 +125,7 @@ CAResult_t CAParseUriPartial(const unsigned char *str, size_t length, int target
  * @param   optlist          [OUT]   options information
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAParseHeadOption(uint32_t code, const CAInfo_t info, coap_list_t **optlist);
+CAResult_t CAParseHeadOption(uint32_t code, const CAInfo_t *info, coap_list_t **optlist);
 
 /**
  * @brief   creates option node from key length and data
@@ -134,7 +134,7 @@ CAResult_t CAParseHeadOption(uint32_t code, const CAInfo_t info, coap_list_t **o
  * @param   data             [IN]    data that needs to be sent
  * @return  created list
  */
-coap_list_t *CACreateNewOptionNode(uint16_t key, uint32_t length, const uint8_t *data);
+coap_list_t *CACreateNewOptionNode(uint16_t key, uint32_t length, const char *data);
 
 /**
  * @brief   order the inserted options
@@ -167,12 +167,9 @@ uint32_t CAGetOptionData(const uint8_t *data, uint32_t len, uint8_t *option, uin
  * @param   pdu              [IN]     received pdu
  * @param   outCode          [OUT]    code of the received pdu
  * @param   outInfo          [OUT]    request info structure made from received pdu
- * @param   outUri           [OUT]    uri received in the received pdu
- * @param   buflen           [IN]     Buffer Length for outUri parameter
  * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *outInfo,
-                            char *outUri, uint32_t buflen);
+CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *outInfo);
 
 /**
  * @brief   create pdu from received data
