@@ -23,12 +23,12 @@
  *
  */
 
-#include "GroupManager.h"
 #include <algorithm>
 #include <thread>
 #include <unistd.h>
-
 #include <string.h>
+
+#include "GroupManager.h"
 
 #define PLAIN_DELIMITER "\""
 #define ACTION_DELIMITER "*"
