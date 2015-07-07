@@ -28,6 +28,7 @@ public class HueBundleActivator extends BaseActivator {
 
     public void deactivateBundle() {
         System.out.println("Deactivate bundle called.");
+        super.deactivateBundle();
     }
 
     // test call

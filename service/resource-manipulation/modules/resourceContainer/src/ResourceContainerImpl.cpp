@@ -157,7 +157,7 @@ namespace OIC
             }
             bundleInfoInternal->setJavaBundleActivatorMethod(activateMethod);
 
-            jmethodID deactivateMethod = env->GetMethodID(bundleActivatorClass, "activateBundle",
+            jmethodID deactivateMethod = env->GetMethodID(bundleActivatorClass, "deactivateBundle",
                     "()V");
 
             if (deactivateMethod == NULL)
@@ -296,6 +296,7 @@ namespace OIC
             {
                 activateSoBundle(id);
             }
+            m_bundles[id]->setActivated(true);
 
             info_logger() << "Bundle activated: " << m_bundles[id]->getID() << endl;
 
@@ -311,7 +312,8 @@ namespace OIC
 
         void ResourceContainerImpl::deactivateBundle(BundleInfo *bundleInfo)
         {
-            if (((BundleInfoInternal *) bundleInfo)->isActivated())
+            BundleInfoInternal  *bundleInfoInternal = (BundleInfoInternal *) bundleInfo;
+            if (bundleInfoInternal->isActivated())
             {
                 deactivateBundle(bundleInfo->getID());
             }
@@ -371,6 +373,7 @@ namespace OIC
             {
                 deactivateSoBundle(id);
             }
+            m_bundles[id]->setActivated(false);
         }
 
         std::list< string > ResourceContainerImpl::listBundleResources(string id)
@@ -446,7 +449,10 @@ namespace OIC
 
         void ResourceContainerImpl::unregisterResource(BundleResource *resource)
         {
-            // To be implemented
+            string strUri = resource->m_uri;
+            string strResourceType = resource->m_resourceType;
+            cout << "Resource container unregisterResource called. " << strUri <<  endl;
+            m_mapServers[strUri].reset(); // reset shared pointer
         }
 
         void ResourceContainerImpl::unregisterBundle(BundleInfo *bundleInfo)
@@ -545,7 +551,12 @@ namespace OIC
 
         void ResourceContainerImpl::stopContainer()
         {
-            // deactivate all bundles and unload them
+            info_logger() << "Stopping resource container.";
+            for(std::map<std::string, BundleInfoInternal*>::iterator it = m_bundles.begin(); it != m_bundles.end(); ++it){
+                BundleInfoInternal* bundleInfo = it->second;
+                deactivateBundle(bundleInfo);
+                unregisterBundle(bundleInfo);
+            }
         }
 
         JavaVM *ResourceContainerImpl::getJavaVM(string bundleId)

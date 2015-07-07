@@ -5,9 +5,11 @@ import java.util.Vector;
 
 public class BaseActivator implements BundleActivator {
     private String bundleId;
+    private Vector<BundleResource> bundleResources = new Vector<BundleResource>();
 
     public BaseActivator(String bundleId) {
         this.bundleId = bundleId;
+        
     }
 
     static {
@@ -23,10 +25,14 @@ public class BaseActivator implements BundleActivator {
     }
 
     public void deactivateBundle() {
-
+        System.out.println("Deactivating bundle (Base Activator).");
+        for(BundleResource bundleResource : bundleResources){
+            unregisterResource(bundleResource);
+        }
     }
 
     public void registerResource(BundleResource resource) {
+        bundleResources.add(resource);
         registerJavaResource(resource, resource.getAttributeKeys(), bundleId,
                 resource.getURI(), resource.getResourceType(),
                 resource.getName());
@@ -47,14 +53,15 @@ public class BaseActivator implements BundleActivator {
     }
 
     public void unregisterResource(BundleResource resource) {
-
+        System.out.println("Making native call.");
+        unregisterJavaResource(resource, resource.getURI());
     }
 
     public native void registerJavaResource(BundleResource resource,
             String[] attributes, String bundleId, String uri,
             String resourceType, String name);
 
-    public native void unregisterJavaResource(BundleResource resource);
+    public native void unregisterJavaResource(BundleResource resource, String uri);
 
     public native int getNumberOfConfiguredResources(String bundleId);
 

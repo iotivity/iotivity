@@ -21,7 +21,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_resourcecontainer_bundle_api_BaseActiva
  * Signature: (Lorg/iotivity/resourcecontainer/bundle/api/BundleResource;)V
  */
 JNIEXPORT void JNICALL Java_org_iotivity_resourcecontainer_bundle_api_BaseActivator_unregisterJavaResource
-  (JNIEnv *, jobject, jobject);
+  (JNIEnv *, jobject, jobject, jstring);
 
 /*
  * Class:     org_iotivity_resourcecontainer_bundle_api_BaseActivator

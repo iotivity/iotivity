@@ -37,7 +37,7 @@ HueSampleBundleActivator::~HueSampleBundleActivator()
 }
 
 void HueSampleBundleActivator::activateBundle(ResourceContainerBundleAPI *resourceContainer,
-                                  std::string bundleId)
+        std::string bundleId)
 {
     std::cout << "HueSampleBundle::activateBundle called" << std::endl;
 
@@ -45,12 +45,12 @@ void HueSampleBundleActivator::activateBundle(ResourceContainerBundleAPI *resour
     m_bundleId = bundleId;
     m_connector = new HueConnector();
 
-    vector<resourceInfo> resourceConfig;
+    vector< resourceInfo > resourceConfig;
 
     resourceContainer->getResourceConfiguration(m_bundleId, &resourceConfig);
 
-    for (vector<resourceInfo>::iterator itor = resourceConfig.begin();
-         itor != resourceConfig.end(); itor++)
+    for (vector< resourceInfo >::iterator itor = resourceConfig.begin();
+            itor != resourceConfig.end(); itor++)
     {
         createResource(*itor);
     }
@@ -60,19 +60,19 @@ void HueSampleBundleActivator::deactivateBundle()
 {
     std::cout << "HueSampleBundle::deactivateBundle called" << std::endl;
 
-    for (std::vector<BundleResource *>::iterator itor = m_vecResources.begin();
-         itor != m_vecResources.end(); itor++)
+    for (std::vector< BundleResource * >::iterator itor = m_vecResources.begin();
+            itor != m_vecResources.end(); itor++)
     {
         destroyResource(*itor);
     }
 }
 
-
 void HueSampleBundleActivator::createResource(resourceInfo resourceInfo)
 {
     std::cout << "HueSampleBundle::createResource called" << std::endl;
 
-    if(resourceInfo.resourceType == "oic.light.control"){
+    if (resourceInfo.resourceType == "oic.light.control")
+    {
         static int lightCount = 1;
         HueLight* hueLight = new HueLight(m_connector, resourceInfo.address);
         resourceInfo.uri = "/hue/light/" + std::to_string(lightCount++);
@@ -86,26 +86,30 @@ void HueSampleBundleActivator::createResource(resourceInfo resourceInfo)
     }
 }
 
-
 void HueSampleBundleActivator::destroyResource(BundleResource *resource)
 {
-    std::cout << "HueSampleBundle::destroyResource called" << std::endl;
+    std::cout << "HueSampleBundle::destroyResource called" << resource->m_uri << std::endl;
 
-    std::vector <BundleResource *>::iterator itor;
+    std::vector< BundleResource * >::iterator itor;
 
     itor = std::find(m_vecResources.begin(), m_vecResources.end(), resource);
 
+    m_pResourceContainer->unregisterResource(resource);
+
+    //TODO
+    /*std::cout << "Clearing up memory.\n";
+
     if (itor != m_vecResources.end())
-        m_vecResources.erase(itor);
+        m_vecResources.erase(itor);*/
 
     // check
     //delete resource;
 
-    m_pResourceContainer->unregisterResource(resource);
+
 }
 
 extern "C" void externalActivateBundle(ResourceContainerBundleAPI *resourceContainer,
-                                       std::string bundleId)
+        std::string bundleId)
 {
     bundle = new HueSampleBundleActivator();
     bundle->activateBundle(resourceContainer, bundleId);
@@ -113,8 +117,5 @@ extern "C" void externalActivateBundle(ResourceContainerBundleAPI *resourceConta
 
 extern "C" void externalDeactivateBundle()
 {
-    if (!bundle)
-    {
-        bundle->deactivateBundle();
-    }
+    bundle->deactivateBundle();
 }
