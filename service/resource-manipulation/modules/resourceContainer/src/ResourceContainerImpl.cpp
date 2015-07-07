@@ -35,20 +35,20 @@
 using OC::oc_log_stream;
 using namespace OIC::Service;
 
-auto info_logger = []() -> boost::iostreams::stream<OC::oc_log_stream> &
-{
-    static OC::oc_log_stream ols(oc_make_ostream_logger);
-    static boost::iostreams::stream<OC::oc_log_stream> os(ols);
-    os->set_level(OC_LOG_INFO);
-    os->set_module("ResourceContainerImpl");
-    return os;
-};
-
 auto error_logger = []() -> boost::iostreams::stream<OC::oc_log_stream> &
 {
     static OC::oc_log_stream ols(oc_make_ostream_logger);
     static boost::iostreams::stream<OC::oc_log_stream> os(ols);
     os->set_level(OC_LOG_ERROR);
+    os->set_module("ResourceContainerImpl");
+    return os;
+};
+
+auto info_logger = []() -> boost::iostreams::stream<OC::oc_log_stream> &
+{
+    static OC::oc_log_stream ols(oc_make_ostream_logger);
+    static boost::iostreams::stream<OC::oc_log_stream> os(ols);
+    os->set_level(OC_LOG_INFO);
     os->set_module("ResourceContainerImpl");
     return os;
 };
@@ -88,7 +88,7 @@ namespace OIC
 
             for (int i = 0; i < bundles.size(); i++)
             {
-                BundleInfo *bundleInfo = BundleInfo::createBundleInfo();
+                BundleInfo *bundleInfo = BundleInfo::build();
                 bundleInfo->setPath(bundles[i]["path"]);
                 bundleInfo->setVersion(bundles[i]["version"]);
                 bundleInfo->setID(bundles[i]["id"]);
@@ -515,7 +515,7 @@ namespace OIC
         {
             std::list< BundleInfo* > ret;
             for(std::map<std::string, BundleInfoInternal*>::iterator it = m_bundles.begin(); it != m_bundles.end(); ++it){
-                BundleInfo* bundleInfo = BundleInfo::createBundleInfo();
+                BundleInfo* bundleInfo = BundleInfo::build();
                 ((BundleInfoInternal*)bundleInfo)->setBundleInfo((BundleInfo*)it->second);
                 ret.push_back(it->second);
             }

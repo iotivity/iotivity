@@ -35,7 +35,7 @@ namespace OIC
 
         }
 
-        BundleInfo *BundleInfo::createBundleInfo()
+        BundleInfo *BundleInfo::build()
         {
             BundleInfoInternal *newBundleInfo = new BundleInfoInternal();
             return newBundleInfo;

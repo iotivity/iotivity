@@ -43,7 +43,7 @@ namespace OIC
             virtual string getPath() = 0;
             virtual void setVersion(string version) = 0;
             virtual string getVersion() = 0;
-            static BundleInfo* createBundleInfo();
+            static BundleInfo* build();
         protected:
             string m_ID, m_path, m_version;
         };
