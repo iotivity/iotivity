@@ -47,6 +47,9 @@ namespace OC
                 template<class Archive>
                 void serialize(Archive& ar)
                 {
+                    m_secure = false;
+                    m_port = -1;
+
                     try
                     {
                         m_observable = false;
@@ -63,17 +66,15 @@ namespace OC
                     }
                     try
                     {
-                        m_secure = false;
                         int secureTemp;
                         ar(cereal::make_nvp(OC::Key::SECUREKEY, secureTemp));
                         m_secure = secureTemp != 0;
 
-                        m_port = -1;
                         ar(cereal::make_nvp(OC::Key::PORTKEY, m_port));
                     }
                     catch(cereal::Exception&)
                     {
-                       ar.setNextName(nullptr);
+                        ar.setNextName(nullptr);
                     }
 
                  }
