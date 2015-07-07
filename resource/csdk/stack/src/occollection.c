@@ -306,12 +306,11 @@ HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest, uint8_t filterOn, c
             OCResource* temp = collResource->rsrcResources[i];
             if (temp)
             {
-                //TODO : Update needed here to get correct connectivity type
-                //from ServerRequest data structure.
+                //TODO : Add resource type filtering once collections
+                // start supporting queries.
+                ret = BuildVirtualResourceResponse(temp,
+                         (char*)ptr, &remaining, CA_ADAPTER_IP);
 
-                // Function will return error if not enough space in buffer.
-                ret = BuildVirtualResourceResponse(temp, filterOn, filterValue,
-                                         (char*)ptr, &remaining, CA_ADAPTER_IP);
                 if (ret != OC_STACK_OK)
                 {
                     break;
@@ -502,9 +501,12 @@ OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
                 OC_LOG(INFO, TAG, PCF("STACK_IF_BATCH"));
                 ((OCServerRequest *)ehRequest->requestHandle)->ehResponseHandler =
                                                                         HandleAggregateResponse;
+
                 ((OCServerRequest *)ehRequest->requestHandle)->numResponses =
                         GetNumOfResourcesInCollection((OCResource *)ehRequest->resource) + 1;
+
                 return HandleBatchInterface(ehRequest);
+
             case STACK_IF_GROUP:
                 return BuildCollectionGroupActionJSONResponse(OC_REST_GET/*flag*/,
                         (OCResource *) ehRequest->resource, ehRequest);

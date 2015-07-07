@@ -132,7 +132,9 @@ namespace OC
         static const std::string REPKEY                     = "rep";
         static const std::string SECUREKEY                  = "sec";
         static const std::string PORTKEY                    = "port";
-        static const std::string SERVERIDKEY                = "sid";
+        static const std::string DEVICEIDKEY                = "di";
+        static const std::string LINKS                      = "links";
+
     }
 
 }

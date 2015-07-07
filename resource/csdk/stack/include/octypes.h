@@ -62,6 +62,7 @@ extern "C" {
 #define OC_RSRVD_TTL                    "ttl"
 #define OC_RSRVD_NONCE                  "non"
 #define OC_RSRVD_TRIGGER                "trg"
+#define OC_RSRVD_LINKS                  "links"
 
 #define OC_RSRVD_INTERFACE_DEFAULT      "oic.if.baseline"
 #define OC_RSRVD_INTERFACE_LL           "oic.if.ll"
