@@ -100,6 +100,8 @@ namespace OIC
                     ResourceAttributes&) >;
             using SetRequestHandler = std::function< PrimitiveSetResponse(const PrimitiveRequest&,
                     ResourceAttributes&) >;
+            using AttributeUpdatedHandler = std::function< void(const ResourceAttributes::Value&,
+                    const ResourceAttributes::Value&) >;
 
         public:
             ResourceObject(ResourceObject&&) = delete;
@@ -138,6 +140,12 @@ namespace OIC
             virtual void setGetRequestHandler(GetRequestHandler);
             virtual void setSetRequestHandler(SetRequestHandler);
 
+            virtual void setAttributeUpdatedHandler(const std::string& key,
+                    AttributeUpdatedHandler );
+            virtual void setAttributeUpdatedHandler(std::string&& key, AttributeUpdatedHandler);
+            virtual bool removeAddAttributeUpdatedHandler(const std::string& key);
+
+
             virtual void notify() const;
 
         //    void setAutoNotifyPolicy(AutoNotifyPolicy);
@@ -163,8 +171,14 @@ namespace OIC
             GetRequestHandler m_getRequestHandler;
             SetRequestHandler m_setRequestHandler;
 
+            std::unordered_map< std::string, AttributeUpdatedHandler >
+                    m_keyAttributesUpdatedHandlers;
+
             mutable std::atomic< std::thread::id > m_lockOwner;
             mutable std::mutex m_mutex;
+
+            std::mutex m_mutexKeyAttributeUpdate;
+
         };
 
         class ResourceObject::LockGuard

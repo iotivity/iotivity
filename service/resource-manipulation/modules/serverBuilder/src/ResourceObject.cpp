@@ -176,8 +176,10 @@ namespace OIC
                 m_resourceAttributes{ std::move(attrs) },
                 m_getRequestHandler{ },
                 m_setRequestHandler{ },
+                m_keyAttributesUpdatedHandlers{ },
                 m_lockOwner{ },
-                m_mutex{ }
+                m_mutex{ },
+                m_mutexKeyAttributeUpdate{ }
         {
         }
 
@@ -289,6 +291,26 @@ namespace OIC
                     m_resourceHandle);
         }
 
+        void ResourceObject::setAttributeUpdatedHandler(const std::string& key,
+                AttributeUpdatedHandler h)
+        {
+            std::lock_guard<std::mutex> lock(m_mutexKeyAttributeUpdate);
+            m_keyAttributesUpdatedHandlers[key] = std::move(h);
+        }
+
+        void ResourceObject::setAttributeUpdatedHandler(std::string&& key,
+                AttributeUpdatedHandler h)
+        {
+           std::lock_guard<std::mutex> lock(m_mutexKeyAttributeUpdate);
+           m_keyAttributesUpdatedHandlers[std::move(key)] = std::move(h);
+        }
+
+        bool ResourceObject::removeAddAttributeUpdatedHandler(const std::string& key)
+        {
+           std::lock_guard<std::mutex> lock(m_mutexKeyAttributeUpdate);
+           return (bool) m_keyAttributesUpdatedHandlers.erase(key);
+        }
+
         OCEntityHandlerResult ResourceObject::entityHandler(
                 std::shared_ptr< OC::OCResourceRequest > request)
         {
@@ -364,6 +386,17 @@ namespace OIC
 
             AttrKeyValuePairs replaced = requestHandler->applyAcceptanceMethod(
                     response.getAcceptanceMethod(), *this, attrs);
+
+            for (const auto& it : replaced)
+            {
+                std::lock_guard<std::mutex> lock(m_mutexKeyAttributeUpdate);
+
+                auto keyAttribute = m_keyAttributesUpdatedHandlers.find(it.first);
+                if(keyAttribute != m_keyAttributesUpdatedHandlers.end())
+                {
+                    keyAttribute-> second(it.second, attrs[it.first]);
+                }
+            }
 
             return sendResponse(*this, request, response);
         }
