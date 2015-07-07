@@ -44,6 +44,7 @@ target_os = env.get('TARGET_OS')
 resourcebroker_env.AppendUnique(CPPPATH = ['include'])
 resourcebroker_env.AppendUnique(CPPPATH = ['../common/primitiveResource/include'])
 resourcebroker_env.AppendUnique(CPPPATH = ['../common/expiryTimer/include'])
+resourcebroker_env.AppendUnique(CPPPATH = ['../common/expiryTimer/src'])
 resourcebroker_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 resourcebroker_env.PrependUnique(LIBS = ['service_common', 'ExpiryTimer', 'oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'libcoap'])
 

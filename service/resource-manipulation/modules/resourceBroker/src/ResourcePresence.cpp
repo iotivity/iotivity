@@ -178,9 +178,10 @@ namespace OIC
 
             time_t currentTime;
             time(&currentTime);
-            currentTime+=0L;
+            currentTime += 0L;
 
-            if((receivedTime == 0L) || ((receivedTime+SAFE_TIME) > currentTime))
+            if((receivedTime.load(std::memory_order_relaxed) == 0) ||
+              ((receivedTime + SAFE_TIME) > currentTime ))
             {
                 return NULL;
             }

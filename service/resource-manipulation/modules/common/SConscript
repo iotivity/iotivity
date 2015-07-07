@@ -26,5 +26,6 @@ import platform
 Import('env')
 
 SConscript('primitiveResource/SConscript')
+SConscript('expiryTimer/SConscript')
 
 
