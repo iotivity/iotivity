@@ -1218,18 +1218,47 @@ OCDevicePayload* OCDevicePayloadCreate(const char* uri, const uint8_t* sid, cons
         return NULL;
     }
 
-    // TODO: we can likely find a way on the 'send' to not allocate memory for this, and just
-    // reuse valid pointers, just need to make sure we don't delete them after, but still do
-    // on the receiver side
     payload->base.type = PAYLOAD_TYPE_DEVICE;
+
     payload->uri = OICStrdup(uri);
-    payload->sid = (uint8_t*)OICMalloc(UUID_SIZE);
-    memcpy(payload->sid, sid, UUID_SIZE);
+    if(uri && !payload->uri)
+    {
+        goto exit;
+    }
+
+    if(sid)
+    {
+        payload->sid = (uint8_t*)OICMalloc(UUID_SIZE);
+        if(!payload->sid)
+        {
+            goto exit;
+        }
+        memcpy(payload->sid, sid, UUID_SIZE);
+    }
+
     payload->deviceName = OICStrdup(dname);
+    if(dname && !payload->deviceName)
+    {
+        goto exit;
+    }
+
     payload->specVersion = OICStrdup(specVer);
+    if(specVer && !payload->specVersion)
+    {
+        goto exit;
+    }
+
     payload->dataModelVersion = OICStrdup(dmVer);
-    // TODO: Check each allocation, return NULL and cleanup if any fail
+    if(dmVer && !payload->dataModelVersion)
+    {
+        goto exit;
+    }
+
     return payload;
+
+exit:
+    OCDevicePayloadDestroy((OCDevicePayload*)payload);
+    return NULL;
 }
 
 void OCDevicePayloadDestroy(OCDevicePayload* payload)
@@ -1286,9 +1315,6 @@ OCPlatformPayload* OCPlatformPayloadCreate(const char* uri, const OCPlatformInfo
         return NULL;
     }
 
-    // TODO: we can likely find a way on the 'send' to not allocate memory for this, and just
-    // reuse valid pointers, just need to make sure we don't delete them after, but still do
-    // on the receiver side
     payload->base.type = PAYLOAD_TYPE_PLATFORM;
     payload->uri = OICStrdup(uri);
     CopyPlatformInfo(platformInfo, payload);

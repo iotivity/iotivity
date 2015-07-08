@@ -86,8 +86,9 @@ OCStackResult ParsePayload(OCPayload** outPayload, const uint8_t* payload, size_
             result = ParsePresencePayload(outPayload, &arrayValue);
             break;
         default:
-            printf("ERICH: ParsePayload Type default: %d\n", payloadType);
-            exit(-1);
+            OC_LOG_V(ERROR, TAG, "ParsePayload Type default: %d", payloadType);
+            result = OC_STACK_ERROR;
+            break;
     }
 
     if(result == OC_STACK_OK)
@@ -100,12 +101,13 @@ OCStackResult ParsePayload(OCPayload** outPayload, const uint8_t* payload, size_
     }
     else
     {
-        printf("Erich: Finished parse payload, result is %d\n", result);
-        exit(-1);
+        OC_LOG_V(INFO, TAG, "Finished parse payload, result is %d", result);
     }
 
     return result;
 }
+
+void FreeOCStringLL(OCStringLL* ll);
 
 OCStackResult ParseDiscoveryPayload(OCPayload** outPayload, CborValue* arrayVal)
 {
@@ -125,8 +127,8 @@ OCStackResult ParseDiscoveryPayload(OCPayload** outPayload, CborValue* arrayVal)
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
         if(!resource)
         {
-            printf("Erich no mem #0\n");
-            exit(-1);
+            OC_LOG_V(ERROR, TAG, "Memory allocation failed");
+            return OC_STACK_NO_MEMORY;
         }
         CborValue curVal;
 
@@ -158,8 +160,11 @@ OCStackResult ParseDiscoveryPayload(OCPayload** outPayload, CborValue* arrayVal)
                     llPtr = resource->types;
                     if(!llPtr)
                     {
-                        printf("ERICH: alloc failed #1\n");
-                        exit(-1);
+                        OC_LOG_V(ERROR, TAG, "Memory allocation failed");
+                        OICFree(resource->uri);
+                        OICFree(resource->sid);
+                        OICFree(resource);
+                        return OC_STACK_NO_MEMORY;
                     }
                 }
                 else
@@ -168,8 +173,12 @@ OCStackResult ParseDiscoveryPayload(OCPayload** outPayload, CborValue* arrayVal)
                     llPtr = llPtr->next;
                     if(!llPtr)
                     {
-                        printf("ERICH: alloc failed #2\n");
-                        exit(-1);
+                        OC_LOG_V(ERROR, TAG, "Memory allocation failed");
+                        OICFree(resource->uri);
+                        OICFree(resource->sid);
+                        FreeOCStringLL(resource->types);
+                        OICFree(resource);
+                        return OC_STACK_NO_MEMORY;
                     }
 
                 }
@@ -195,8 +204,12 @@ OCStackResult ParseDiscoveryPayload(OCPayload** outPayload, CborValue* arrayVal)
                     llPtr = resource->interfaces;
                     if(!llPtr)
                     {
-                        printf("ERICH: alloc failed #3\n");
-                        exit(-1);
+                        OC_LOG_V(ERROR, TAG, "Memory allocation failed");
+                        OICFree(resource->uri);
+                        OICFree(resource->sid);
+                        FreeOCStringLL(resource->types);
+                        OICFree(resource);
+                        return OC_STACK_NO_MEMORY;
                     }
                 }
                 else
@@ -205,8 +218,13 @@ OCStackResult ParseDiscoveryPayload(OCPayload** outPayload, CborValue* arrayVal)
                     llPtr = llPtr->next;
                     if(!llPtr)
                     {
-                        printf("ERICH: alloc failed #4\n");
-                        exit(-1);
+                        OC_LOG_V(ERROR, TAG, "Memory allocation failed");
+                        OICFree(resource->uri);
+                        OICFree(resource->sid);
+                        FreeOCStringLL(resource->types);
+                        FreeOCStringLL(resource->interfaces);
+                        OICFree(resource);
+                        return OC_STACK_NO_MEMORY;
                     }
                 }
 
@@ -223,7 +241,7 @@ OCStackResult ParseDiscoveryPayload(OCPayload** outPayload, CborValue* arrayVal)
                 // Bitmap
                 CborValue val;
                 err= err | cbor_value_map_find_value(&policyMap, OC_RSRVD_BITMAP, &val);
-                uint64_t temp;
+                uint64_t temp = 0;
                  err = err || cbor_value_get_uint64(&val, &temp);
                 resource->bitmap = (uint8_t)temp;
                 // Secure Flag
@@ -245,8 +263,13 @@ OCStackResult ParseDiscoveryPayload(OCPayload** outPayload, CborValue* arrayVal)
          err = err || cbor_value_advance(arrayVal);
         if(err)
         {
-            // TODO: clean up payload objects
-            printf("ERICH: Cbor in error condition: %d\n", err);
+            OICFree(resource->uri);
+            OICFree(resource->sid);
+            FreeOCStringLL(resource->types);
+            FreeOCStringLL(resource->interfaces);
+            OICFree(resource);
+            OCDiscoveryPayloadDestroy(out);
+            OC_LOG_V(ERROR, TAG, "CBOR in error condition", err);
             return OC_STACK_MALFORMED_RESPONSE;
         }
         ++resourceCount;
@@ -298,14 +321,16 @@ OCStackResult ParseDevicePayload(OCPayload** outPayload, CborValue* arrayVal)
 
         if(err)
         {
-            // TODO: clean up payload objects
-            printf("ERICH: Cbor in error condition: %d\n", err);
+            OICFree(uri);
+            OICFree(sid);
+            OICFree(dname);
+            OICFree(specVer);
+            OICFree(dmVer);
+            OC_LOG_V(ERROR, TAG, "CBOR in error condition %d", err);
             return OC_STACK_MALFORMED_RESPONSE;
         }
 
-        // TODO: Find a way so that this create doesn't make copies
         *outPayload = (OCPayload*)OCDevicePayloadCreate(uri, sid, dname, specVer, dmVer);
-
 
         OICFree(uri);
         OICFree(sid);
@@ -426,8 +451,18 @@ OCStackResult ParsePlatformPayload(OCPayload** outPayload, CborValue* arrayVal)
 
         if(err)
         {
-            // TODO: clean up payload objects
-            printf("ERICH: Cbor in error condition: %d\n", err);
+            OICFree(info.dateOfManufacture);
+            OICFree(info.firmwareVersion);
+            OICFree(info.hardwareVersion);
+            OICFree(info.manufacturerName);
+            OICFree(info.manufacturerUrl);
+            OICFree(info.modelNumber);
+            OICFree(info.operatingSystemVersion);
+            OICFree(info.platformID);
+            OICFree(info.platformVersion);
+            OICFree(info.supportUrl);
+            OICFree(info.systemTime);
+            OC_LOG(ERROR, TAG, PCF("CBOR error In ParsePlatformPayload"));
             return OC_STACK_MALFORMED_RESPONSE;
         }
 
@@ -451,13 +486,13 @@ bool ParseArray(OCRepPayload* out, const char* name, CborValue* container)
 {
     CborValue insideArray;
     bool err = false;
-    uint64_t tempInt;
+    uint64_t tempInt = 0;
     OCRepPayloadPropType type;
     size_t dimensions[MAX_REP_ARRAY_DEPTH];
-     err = err || cbor_value_enter_container(container, &insideArray);
+    err = err || cbor_value_enter_container(container, &insideArray);
 
-     err = err || cbor_value_get_uint64(&insideArray, &tempInt);
-     err = err || cbor_value_advance_fixed(&insideArray);
+    err = err || cbor_value_get_uint64(&insideArray, &tempInt);
+    err = err || cbor_value_advance_fixed(&insideArray);
     type = (OCRepPayloadPropType)tempInt;
 
     for(int i = 0; i < MAX_REP_ARRAY_DEPTH; ++ i)
@@ -633,10 +668,10 @@ bool ParseSingleRepPayload(OCRepPayload** outPayload, CborValue* repParent)
 
              err = err || cbor_value_advance(&repMap);
 
-            int64_t intval;
-            bool boolval;
-            char* strval;
-            double doubleval;
+            int64_t intval = 0;
+            bool boolval = false;
+            char* strval = NULL;
+            double doubleval = 0;
             OCRepPayload* pl;
 
             switch(cbor_value_get_type(&repMap))
@@ -667,9 +702,8 @@ bool ParseSingleRepPayload(OCRepPayload** outPayload, CborValue* repParent)
                      err = err || ParseArray(curPayload, name, &repMap);
                     break;
                 default:
-                    printf("ERICH: Parsing rep property, unknown type %d\n",repMap.type);
-                    exit(-1);
-
+                    OC_LOG_V(ERROR, TAG, "Parsing rep property, unknown type %d", repMap.type);
+                    err = true;
             }
 
              err = err || cbor_value_advance(&repMap);
@@ -711,8 +745,8 @@ OCStackResult ParseRepPayload(OCPayload** outPayload, CborValue* arrayVal)
          err = err || cbor_value_advance(arrayVal);
         if(err)
         {
-            // TODO: clean up payload objects
-            printf("ERICH: Cbor in error condition: %d\n", err);
+            OCRepPayloadDestroy(rootPayload);
+            OC_LOG_V(ERROR, TAG, PCF("CBOR error in ParseRepPayload"));
             return OC_STACK_MALFORMED_RESPONSE;
         }
     }
@@ -727,11 +761,11 @@ OCStackResult ParsePresencePayload(OCPayload** outPayload, CborValue* arrayVal)
     bool err = false;
     if(cbor_value_is_map(arrayVal))
     {
-        uint64_t seqNum;
-        uint64_t maxAge;
-        OCPresenceTrigger trigger;
-        char* tempStr;
-        size_t len;
+        uint64_t seqNum = 0;
+        uint64_t maxAge = 0;
+        OCPresenceTrigger trigger = OC_PRESENCE_TRIGGER_CREATE;
+        char* tempStr = NULL;
+        size_t len = 0;
 
         CborValue curVal;
         // Sequence Number
@@ -756,16 +790,18 @@ OCStackResult ParsePresencePayload(OCPayload** outPayload, CborValue* arrayVal)
              err = err || cbor_value_dup_text_string(&curVal, &tempStr, &len, NULL);
         }
 
-        // TODO: Find a way so that this create doesn't make copies
-        *outPayload = (OCPayload*)OCPresencePayloadCreate(seqNum, maxAge, trigger, tempStr);
-        OICFree(tempStr);
+        err = err || cbor_value_advance(arrayVal);
 
-         err = err || cbor_value_advance(arrayVal);
+        if(!err)
+        {
+            *outPayload = (OCPayload*)OCPresencePayloadCreate(seqNum, maxAge, trigger, tempStr);
+        }
+        OICFree(tempStr);
 
         if(err)
         {
-            // TODO: clean up payload objects
-            printf("ERICH: Cbor in error condition: %d\n", err);
+            OCPayloadDestroy(*outPayload);
+            OC_LOG_V(ERROR, TAG, PCF("CBOR error Parse Presence Payload"));
             return OC_STACK_MALFORMED_RESPONSE;
         }
 
