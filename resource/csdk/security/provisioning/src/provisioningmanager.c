@@ -38,9 +38,11 @@
 #include <stdbool.h>
 
 #include "cJSON.h"
+#include "ocpayload.h"
 #include "oic_malloc.h"
 #include "logger.h"
 #include "cacommon.h"
+#include "ocpayload.h"
 #include "cainterface.h"
 #include "provisioningmanager.h"
 #include "credentialgenerator.h"
@@ -334,6 +336,7 @@ static CAResult_t sendCARequest(CAMethod_t method,
         return CA_STATUS_INVALID_PARAM;
     }
     requestData.payload = payload;
+    requestData.payloadSize = payloadLen;
     requestData.type = msgType;
     CARequestInfo_t requestInfo = { 0 };
     requestInfo.method = method;
@@ -421,6 +424,7 @@ static SPResult selectProvisioningMethod(OicSecOxm_t *supportedMethods, size_t n
     return SP_RESULT_SUCCESS;
 }
 
+OCStackResult ParsePayload(OCPayload** outPayload, const uint8_t* payload, size_t payloadSize);
 /**
  * Response handler for discovery.
  *
@@ -442,21 +446,16 @@ static void ProvisionDiscoveryHandler(const CAEndpoint_t *object,
             }
             else
             {
-                // temp logic for trimming oc attribute from the json.
-                // JSONToBin should handle oc attribute.
-                char *pTempPayload = (char *)OICMalloc(strlen(responseInfo->info.payload));
-                if (NULL == pTempPayload)
-                {
-                    OC_LOG(ERROR, TAG, "Error while Memory allocation.");
-                    gStateManager = gStateManager | SP_DISCOVERY_ERROR;
-                    return;
-                }
+                OCPayload* payload;
+                OCStackResult result = ParsePayload(&payload, responseInfo->info.payload,
+                        responseInfo->info.payloadSize);
 
-                strcpy(pTempPayload, responseInfo->info.payload + 8);
-                pTempPayload[strlen(pTempPayload) - 2] = '\0';
-                OC_LOG_V(DEBUG, TAG, "Trimmed payload: %s", pTempPayload);
-                OicSecDoxm_t *ptrDoxm = JSONToDoxmBin(pTempPayload);
-                OICFree(pTempPayload);
+                OicSecDoxm_t *ptrDoxm = NULL;
+
+                if(result == OC_STACK_OK && payload->type == PAYLOAD_TYPE_SECURITY)
+                {
+                    ptrDoxm = JSONToDoxmBin(((OCSecurityPayload*)payload)->securityData);
+                }
 
                 if (NULL == ptrDoxm)
                 {
@@ -781,6 +780,7 @@ static SPResult findResource(unsigned short timeout)
     requestData.token = gToken;
     requestData.tokenLength  = CA_MAX_TOKEN_LEN;
     requestData.payload = NULL;
+    requestData.payloadSize = 0;
     requestData.type = msgType;
     requestData.resourceUri = DOXM_OWNED_FALSE_MULTICAST_QUERY;
     CARequestInfo_t requestInfo = { 0 };

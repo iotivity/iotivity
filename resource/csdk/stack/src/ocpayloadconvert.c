@@ -37,6 +37,8 @@ OCStackResult ConvertPlatformPayload(OCPlatformPayload* payload, uint8_t** outPa
 OCStackResult ConvertRepPayload(OCRepPayload* payload, uint8_t** outPayload, size_t* size);
 OCStackResult ConvertPresencePayload(OCPresencePayload* payload, uint8_t** outPayload,
         size_t* size);
+OCStackResult ConvertSecurityPayload(OCSecurityPayload* payload, uint8_t** outPayload,
+        size_t* size);
 
 bool AddTextStringToMap(CborEncoder* map, const char* key, size_t keylen,
         const char* value);
@@ -60,10 +62,67 @@ OCStackResult ConvertPayload(OCPayload* payload, uint8_t** outPayload, size_t* s
             return ConvertRepPayload((OCRepPayload*)payload, outPayload, size);
         case PAYLOAD_TYPE_PRESENCE:
             return ConvertPresencePayload((OCPresencePayload*)payload, outPayload, size);
+        case PAYLOAD_TYPE_SECURITY:
+            return ConvertSecurityPayload((OCSecurityPayload*)payload, outPayload, size);
         default:
             OC_LOG_V(INFO,TAG, "ConvertPayload default %d", payload->type);
             return OC_STACK_NOTIMPL;
     }
+}
+OCStackResult ConvertSecurityPayload(OCSecurityPayload* payload, uint8_t** outPayload,
+        size_t* size)
+{
+    *outPayload = (uint8_t*)OICCalloc(1, MAX_REQUEST_LENGTH);
+    *size = MAX_REQUEST_LENGTH;
+
+    if(!*outPayload)
+    {
+        return OC_STACK_NO_MEMORY;
+    }
+
+    CborEncoder encoder = {};
+    bool err = false;
+
+    cbor_encoder_init(&encoder, *outPayload, *size, 0);
+
+    CborEncoder rootArray;
+    err = err || cbor_encoder_create_array(&encoder, &rootArray, 2);
+    err = err || cbor_encode_uint(&rootArray, PAYLOAD_TYPE_SECURITY);
+
+    CborEncoder map;
+
+    err = err || cbor_encoder_create_map(&rootArray, &map, CborIndefiniteLength);
+
+    if(payload->securityData)
+    {
+        err = err || AddTextStringToMap(&map, OC_RSRVD_REPRESENTATION,
+                sizeof(OC_RSRVD_REPRESENTATION) - 1,
+                payload->securityData);
+    }
+
+    err = err || cbor_encoder_close_container(&rootArray, &map);
+
+    err = err || cbor_encoder_close_container(&encoder, &rootArray);
+
+    if(err)
+    {
+        OC_LOG_V(ERROR, TAG, "Convert Security Payload failed", err);
+        OICFree(*outPayload);
+        return OC_STACK_ERROR;
+    }
+
+    *size = encoder.ptr - *outPayload;
+    uint8_t* tempPayload = (uint8_t*)OICRealloc(*outPayload, *size);
+
+    if(!tempPayload)
+    {
+        OC_LOG_V(ERROR, TAG, PCF("Payload realloc failed!"));
+        OICFree(*outPayload);
+        return OC_STACK_ERROR;
+    }
+
+    *outPayload = tempPayload;
+    return OC_STACK_OK;
 }
 
 OCStackResult ConvertDiscoveryPayload(OCDiscoveryPayload* payload, uint8_t** outPayload,

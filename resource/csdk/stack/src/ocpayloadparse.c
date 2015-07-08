@@ -33,6 +33,7 @@ OCStackResult ParsePlatformPayload(OCPayload** outPayload, CborValue* arrayVal);
 bool ParseSingleRepPayload(OCRepPayload** outPayload, CborValue* repParent);
 OCStackResult ParseRepPayload(OCPayload** outPayload, CborValue* arrayVal);
 OCStackResult ParsePresencePayload(OCPayload** outPayload, CborValue* arrayVal);
+OCStackResult ParseSecurityPayload(OCPayload** outPayload, CborValue* arrayVal);
 
 OCStackResult ParsePayload(OCPayload** outPayload, const uint8_t* payload, size_t payloadSize)
 {
@@ -85,6 +86,9 @@ OCStackResult ParsePayload(OCPayload** outPayload, const uint8_t* payload, size_
         case PAYLOAD_TYPE_PRESENCE:
             result = ParsePresencePayload(outPayload, &arrayValue);
             break;
+        case PAYLOAD_TYPE_SECURITY:
+            result = ParseSecurityPayload(outPayload, &arrayValue);
+            break;
         default:
             OC_LOG_V(ERROR, TAG, "ParsePayload Type default: %d", payloadType);
             result = OC_STACK_ERROR;
@@ -108,6 +112,39 @@ OCStackResult ParsePayload(OCPayload** outPayload, const uint8_t* payload, size_
 }
 
 void FreeOCStringLL(OCStringLL* ll);
+
+OCStackResult ParseSecurityPayload(OCPayload** outPayload, CborValue* arrayVal)
+{
+    bool err = false;
+    char * securityData = NULL;
+
+    if(cbor_value_is_map(arrayVal))
+    {
+        CborValue curVal;
+        err = err || cbor_value_map_find_value(arrayVal, OC_RSRVD_REPRESENTATION, &curVal);
+
+        if(cbor_value_is_valid(&curVal))
+        {
+            size_t len;
+            err = err || cbor_value_dup_text_string(&curVal, &securityData, &len, NULL);
+        }
+    }
+
+    err = err || cbor_value_advance(arrayVal);
+
+    if(err)
+    {
+        OC_LOG_V(ERROR, TAG, "Cbor in error condition");
+        OICFree(securityData);
+        return OC_STACK_MALFORMED_RESPONSE;
+    }
+
+    *outPayload = (OCPayload*)OCSecurityPayloadCreate(securityData);
+    OICFree(securityData);
+
+    return OC_STACK_OK;
+
+}
 
 OCStackResult ParseDiscoveryPayload(OCPayload** outPayload, CborValue* arrayVal)
 {

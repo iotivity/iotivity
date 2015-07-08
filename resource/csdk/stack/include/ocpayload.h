@@ -338,6 +338,9 @@ void OCRepPayloadDestroy(OCRepPayload* payload);
 // Discovery Payload
 OCDiscoveryPayload* OCDiscoveryPayloadCreate();
 
+OCSecurityPayload* OCSecurityPayloadCreate(char* securityData);
+void OCSecurityPayloadDestroy(OCSecurityPayload* payload);
+
 void OCDiscoveryPayloadAddResource(OCDiscoveryPayload* payload, const OCResource* res,
         uint16_t port);
 void OCDiscoveryPayloadAddNewResource(OCDiscoveryPayload* payload, OCResourcePayload* res);
