@@ -52,6 +52,8 @@
 #include "srmresourcestrings.h"
 #include "credresource.h"
 #include "oic_string.h"
+#include "secureresourcemanager.h"
+
 
 typedef enum
 {
@@ -89,7 +91,7 @@ typedef enum
 #define COAPS_QUERY "coaps://%s:%d%s"
 #define CA_SECURE_PORT   5684
 
-void (*handler)(const CAEndpoint_t *, const CAResponseInfo_t *);
+bool (*handler)(const CAEndpoint_t *, const CAResponseInfo_t *);
 
 /**
  * CA token to keep track of response.
@@ -423,8 +425,9 @@ static SPResult selectProvisioningMethod(OicSecOxm_t *supportedMethods, size_t n
  *
  * @param[in] object       Remote endpoint object
  * @param[in] requestInfo  Datastructure containing request information.
+ * @return true is CA token matches request token, false otherwise.
  */
-static void ProvisionDiscoveryHandler(const CAEndpoint_t *object,
+static bool ProvisionDiscoveryHandler(const CAEndpoint_t *object,
                                       const CAResponseInfo_t *responseInfo)
 {
     if ((gStateManager & SP_DISCOVERY_STARTED) && gToken)
@@ -446,7 +449,7 @@ static void ProvisionDiscoveryHandler(const CAEndpoint_t *object,
                 {
                     OC_LOG(ERROR, TAG, "Error while Memory allocation.");
                     gStateManager = gStateManager | SP_DISCOVERY_ERROR;
-                    return;
+                    return true;
                 }
 
                 strcpy(pTempPayload, responseInfo->info.payload + 8);
@@ -469,14 +472,16 @@ static void ProvisionDiscoveryHandler(const CAEndpoint_t *object,
                         OC_LOG(ERROR, TAG, "Error while adding data to linkedlist.");
                         gStateManager = gStateManager | SP_DISCOVERY_ERROR;
                         DeleteDoxmBinData(ptrDoxm);
-                        return;
+                        return true;
                     }
                     OC_LOG(INFO, TAG, "Exiting ProvisionDiscoveryHandler.");
                     gStateManager |= SP_DISCOVERY_DONE;
                 }
             }
+            return true;
         }
     }
+    return false;
 }
 
 /**
@@ -484,8 +489,9 @@ static void ProvisionDiscoveryHandler(const CAEndpoint_t *object,
  *
  * @param[in] object       Remote endpoint object
  * @param[in] requestInfo  Datastructure containing request information.
+ * @return true is CA token matches request token, false otherwise.
  */
-static void OwnerShipTransferModeHandler(const CAEndpoint_t *object,
+static bool OwnerShipTransferModeHandler(const CAEndpoint_t *object,
         const CAResponseInfo_t *responseInfo)
 {
     if ((gStateManager & SP_UP_OWN_TR_METH_STARTED) && gToken)
@@ -505,8 +511,10 @@ static void OwnerShipTransferModeHandler(const CAEndpoint_t *object,
                 gStateManager |= SP_UP_OWN_TR_METH_ERROR;
                 OC_LOG(ERROR, TAG, "Error in OwnerShipTransferModeHandler.");
             }
+            return true;
         }
     }
+    return false;
 }
 
 /**
@@ -514,8 +522,9 @@ static void OwnerShipTransferModeHandler(const CAEndpoint_t *object,
  *
  * @param[in] object       Remote endpoint object
  * @param[in] requestInfo  Datastructure containing request information.
+ * @return true is CA token matches request token, false otherwise.
  */
-static void ListMethodsHandler(const CAEndpoint_t *object,
+static bool ListMethodsHandler(const CAEndpoint_t *object,
                                const CAResponseInfo_t *responseInfo)
 {
     if ((gStateManager & SP_LIST_METHODS_STARTED) && gToken)
@@ -533,7 +542,7 @@ static void ListMethodsHandler(const CAEndpoint_t *object,
                 {
                     OC_LOG(ERROR, TAG, "response payload is null.");
                     gStateManager |= SP_LIST_METHODS_ERROR;
-                    return;
+                    return true;
                 }
 
                 char *pTempPayload = (char *)OICMalloc(strlen(responseInfo->info.payload));
@@ -541,7 +550,7 @@ static void ListMethodsHandler(const CAEndpoint_t *object,
                 {
                     OC_LOG(ERROR, TAG, "Error in memory allocation.");
                     gStateManager |= SP_LIST_METHODS_ERROR;
-                    return;
+                    return true;
                 }
 
                 strcpy(pTempPayload, responseInfo->info.payload + 8);
@@ -553,7 +562,7 @@ static void ListMethodsHandler(const CAEndpoint_t *object,
                     OC_LOG(ERROR, TAG, "Error while converting json to pstat bin");
                     OICFree(pTempPayload);
                     gStateManager |= SP_LIST_METHODS_ERROR;
-                    return;
+                    return true;
                 }
                 OICFree(pTempPayload);
                 DeletePstatBinData(gPstat);
@@ -563,8 +572,10 @@ static void ListMethodsHandler(const CAEndpoint_t *object,
 
                 OC_LOG(INFO, TAG, "Exiting ListMethodsHandler.");
             }
+            return true;
         }
     }
+    return false;
 }
 
 /**
@@ -572,8 +583,9 @@ static void ListMethodsHandler(const CAEndpoint_t *object,
  *
  * @param[in] object       Remote endpoint object
  * @param[in] requestInfo  Datastructure containing request information.
+ * @return true is CA token matches request token, false otherwise.
  */
-static void OperationModeUpdateHandler(const CAEndpoint_t *object,
+static bool OperationModeUpdateHandler(const CAEndpoint_t *object,
                                        const CAResponseInfo_t *responseInfo)
 {
     if ((gStateManager & SP_UPDATE_OP_MODE_STARTED) && gToken)
@@ -592,8 +604,10 @@ static void OperationModeUpdateHandler(const CAEndpoint_t *object,
                 gStateManager |= SP_UPDATE_OP_MODE_ERROR;
                 OC_LOG(ERROR, TAG, "Error in OperationModeUpdateHandler.");
             }
+            return true;
         }
     }
+    return false;
 }
 
 /**
@@ -601,8 +615,9 @@ static void OperationModeUpdateHandler(const CAEndpoint_t *object,
  *
  * @param[in] object       Remote endpoint object
  * @param[in] requestInfo  Datastructure containing request information.
+ * @return true is CA token matches request token, false otherwise.
  */
-static void OwnerShipUpdateHandler(const CAEndpoint_t *object,
+static bool OwnerShipUpdateHandler(const CAEndpoint_t *object,
                                    const CAResponseInfo_t *responseInfo)
 {
     if ((gStateManager & SP_UPDATE_OWNER_STARTED) && gToken)
@@ -622,8 +637,10 @@ static void OwnerShipUpdateHandler(const CAEndpoint_t *object,
                 gStateManager |= SP_UPDATE_OWNER_ERROR;
                 OC_LOG(ERROR, TAG, "Error in OwnerShipUpdateHandler.");
             }
+            return true;
         }
     }
+    return false;
 }
 
 /**
@@ -631,8 +648,9 @@ static void OwnerShipUpdateHandler(const CAEndpoint_t *object,
  *
  * @param[in] object       Remote endpoint object
  * @param[in] requestInfo  Datastructure containing request information.
+ * @return true is CA token matches request token, false otherwise.
  */
-static void ACLProvisioningHandler(const CAEndpoint_t *object,
+static bool ACLProvisioningHandler(const CAEndpoint_t *object,
                                    const CAResponseInfo_t *responseInfo)
 {
     if ((gStateManager & SP_PROV_ACL_STARTED) && gToken)
@@ -653,8 +671,10 @@ static void ACLProvisioningHandler(const CAEndpoint_t *object,
                 OC_LOG(ERROR, TAG, "Error in ACLProvisioningHandler.");
                 gStateManager |= SP_PROV_ACL_ERROR;
             }
+            return true;
         }
     }
+    return false;
 }
 
 /**
@@ -662,8 +682,9 @@ static void ACLProvisioningHandler(const CAEndpoint_t *object,
  *
  * @param[in] object       Remote endpoint object
  * @param[in] requestInfo  Datastructure containing request information.
+ * @return true is CA token matches request token, false otherwise.
  */
-static void FinalizeProvisioningHandler(const CAEndpoint_t *object,
+static bool FinalizeProvisioningHandler(const CAEndpoint_t *object,
                                         const CAResponseInfo_t *responseInfo)
 {
     if ((gStateManager & SP_UP_HASH_STARTED) && gToken)
@@ -683,8 +704,10 @@ static void FinalizeProvisioningHandler(const CAEndpoint_t *object,
                 gStateManager |= SP_UP_HASH_ERROR;
                 OC_LOG(ERROR, TAG, "Error in FinalizeProvisioningHandler.");
             }
+            return true;
         }
     }
+    return false;
 }
 
 /**
@@ -692,8 +715,9 @@ static void FinalizeProvisioningHandler(const CAEndpoint_t *object,
  *
  * @param[in] object        Remote endpoint object
  * @param[in] requestInfo   Datastructure containing request information.
+ * @return true is CA token matches request token, false otherwise.
  */
-static void CredProvisioningHandler(const CAEndpoint_t *object,
+static bool CredProvisioningHandler(const CAEndpoint_t *object,
                                     const CAResponseInfo_t *responseInfo)
 {
     if ((gStateManager & SP_PROV_CRED_STARTED) && gToken)
@@ -713,8 +737,10 @@ static void CredProvisioningHandler(const CAEndpoint_t *object,
                 gStateManager |= SP_PROV_CRED_ERROR;
                 OC_LOG(ERROR, TAG, "Error in CredProvisioningHandler.");
             }
+            return true;
         }
     }
+    return false;
 }
 
 /**
@@ -722,37 +748,17 @@ static void CredProvisioningHandler(const CAEndpoint_t *object,
  *
  * @param[in] object        Remote endpoint object
  * @param[in] responseInfo  Datastructure containing response information.
+ * @return true if received response is for provisioning API false otherwise.
  */
-static void SPResponseHandler(const CAEndpoint_t *object,
+static bool SPResponseHandler(const CAEndpoint_t *object,
                               const CAResponseInfo_t *responseInfo)
 {
+    bool isProvResponse = false;
     if ((NULL != responseInfo) && (NULL != responseInfo->info.token))
     {
-        handler(object, responseInfo);
+        isProvResponse = handler(object, responseInfo);
     }
-}
-
-/**
- * Error Handler
- *
- * @param[in] object     Remote endpoint object
- * @param[in] errorInfo  Datastructure containing error information.
- */
-static void SPErrorHandler(const CAEndpoint_t *object,
-                           const CAErrorInfo_t *errorInfo)
-{
-    OC_LOG(INFO, TAG, "Error Handler.");
-}
-
-/**
- * Request Handler
- *
- * @param[in] object       Remote endpoint object
- * @param[in] requestInfo  Datastructure containing request information.
- */
-static void SPRequestHandler(const CAEndpoint_t *object, const CARequestInfo_t *requestInfo)
-{
-    OC_LOG(INFO, TAG, "Request Handler.");
+    return isProvResponse;
 }
 
 /**
@@ -1251,8 +1257,7 @@ SPResult SPProvisioningDiscovery(unsigned short timeout,
         OC_LOG(ERROR, TAG, "List is not null can cause memory leak");
         return SP_RESULT_INVALID_PARAM;
     }
-
-    CARegisterHandler(SPRequestHandler, SPResponseHandler, SPErrorHandler);
+    SRMRegisterProvisioningResponseHandler(SPResponseHandler);
     SPResult smResponse = SP_RESULT_SUCCESS;
     smResponse = findResource(timeout);
     if (SP_RESULT_SUCCESS != smResponse)

@@ -79,6 +79,21 @@ OCStackResult SRMInitPolicyEngine();
  */
 void SRMDeInitPolicyEngine();
 
+/**
+ * @brief   Provisioning API response callback.
+ * @param object[IN]       endpoint instance.
+ * @param responseInfo[IN] instance of CAResponseInfo_t structure.
+ * @return true if received response is for provisioning API false otherwise.
+ */
+typedef bool (*SPResponseCallback) (const CAEndpoint_t *object,
+                                    const CAResponseInfo_t *responseInfo);
+
+/**
+ * @brief function to register provisoning API's response callback.
+ * @param respHandler response handler callback.
+ */
+void SRMRegisterProvisioningResponseHandler(SPResponseCallback respHandler);
+
 #ifdef __cplusplus
 }
 #endif
