@@ -225,6 +225,13 @@ static inline void OCPayloadLogPresence(LogLevel level, const char* tag, OCPrese
     OC_LOG_V(level, tag, "\tResource Type:%s", payload->resourceType);
 }
 
+static inline void OCPayloadLogSecurity(LogLevel level, const char* tag,
+                                        OCSecurityPayload* payload)
+{
+    OC_LOG(level, tag, PCF("Payload Type: Security"));
+    OC_LOG_V(level, tag, "\tSecurity Data: %s", payload->securityData);
+}
+
 static inline void OCPayloadLog(LogLevel level, const char* tag, OCPayload* payload)
 {
     if(!payload)
@@ -248,6 +255,9 @@ static inline void OCPayloadLog(LogLevel level, const char* tag, OCPayload* payl
             break;
         case PAYLOAD_TYPE_PRESENCE:
             OCPayloadLogPresence(level, tag, (OCPresencePayload*)payload);
+            break;
+        case PAYLOAD_TYPE_SECURITY:
+            OCPayloadLogSecurity(level, tag, (OCSecurityPayload*)payload);
             break;
         default:
             OC_LOG_V(level, tag, "Unknown Payload Type: %d", payload->type);
