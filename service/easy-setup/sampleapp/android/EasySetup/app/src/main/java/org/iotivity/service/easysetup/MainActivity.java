@@ -22,8 +22,12 @@ package org.iotivity.service.easysetup;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import org.iotivity.base.ModeType;
+import org.iotivity.base.OcPlatform;
+import org.iotivity.base.PlatformConfig;
+import org.iotivity.base.QualityOfService;
+import org.iotivity.base.ServiceType;
 import org.iotivity.service.easysetup.mediator.EnrolleeInfo;
-import org.iotivity.service.easysetup.mediator.EasySetupManager;
 import org.iotivity.service.easysetup.mediator.IOnBoardingStatus;
 import org.iotivity.service.easysetup.mediator.IProvisioningListener;
 import org.iotivity.service.easysetup.mediator.OnBoardEnrollee;
@@ -70,10 +74,6 @@ public class MainActivity extends Activity implements IProvisioningListener,
         onBoardingHandlerInstance = new OnBoardEnrollee(this);
         onBoardingHandlerInstance.registerOnBoardingStatusHandler(this);
 
-        // Provisioning Process
-        provisionEnrolleInstance = new ProvisionEnrollee(this);
-        provisionEnrolleInstance.registerProvisioningHandler(this);
-
         // Get intent, action and MIME type
         Intent intent = getIntent();
         String action = intent.getAction();
@@ -90,6 +90,7 @@ public class MainActivity extends Activity implements IProvisioningListener,
         addListenerForStartAP();
         addListenerForStopAP();
         addListenerOnProvisioning();
+        initOICStack();
 
         myTimer2 = new Timer();
         myTimer2.schedule(new TimerTask() {
@@ -103,7 +104,10 @@ public class MainActivity extends Activity implements IProvisioningListener,
 
     public void onDestroy() {
         super.onDestroy();
-        provisionEnrolleInstance.stopEnrolleeProvisioning(0);
+        if(provisionEnrolleInstance != null)
+        {
+            provisionEnrolleInstance.stopEnrolleeProvisioning(0);
+        }
         onBoardingHandlerInstance.disableWiFiAP();
         finish();
     }
@@ -201,14 +205,14 @@ public class MainActivity extends Activity implements IProvisioningListener,
             @Override
             public void onClick(View arg0) {
                 WifiConfiguration netConfig = new WifiConfiguration();
-                netConfig.SSID = "EasyConnect";
+                netConfig.SSID = "EasySetup123";
                 netConfig.allowedAuthAlgorithms
                         .set(WifiConfiguration.AuthAlgorithm.OPEN);
                 // netConfig.allowedProtocols.set(WifiConfiguration.Protocol.RSN);
                 // netConfig.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
                 netConfig.allowedKeyManagement
                         .set(WifiConfiguration.KeyMgmt.WPA_PSK);
-                netConfig.preSharedKey = "EasyConnect";
+                netConfig.preSharedKey = "EasySetup123";
                 // netConfig.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
                 // netConfig.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
                 // netConfig.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
@@ -236,8 +240,8 @@ public class MainActivity extends Activity implements IProvisioningListener,
             @Override
             public void onClick(View arg0) {
                 provisionEnrolleInstance.provisionEnrollee(
-                        connectedDevice.getIpAddr(), "NewAccessPoint",
-                        "NewAccessPoint", 0);
+                        connectedDevice.getIpAddr(), "EasySetup123",
+                        "EasySetup123", 0);
                 easySetupCount++;
                 Log.i("EasyConnect", "easy Setup Count-" + easySetupCount);
                 Log.i("EasyConnect",
@@ -254,6 +258,22 @@ public class MainActivity extends Activity implements IProvisioningListener,
             Bitmap imageBitmap = (Bitmap) extras.get("data");
             imageView.setImageBitmap(imageBitmap);
         }
+    }
+
+    /**
+     * configure OIC platform and call findResource
+     */
+    private void initOICStack() {
+        //create platform config
+        PlatformConfig cfg = new PlatformConfig(
+                this,
+                ServiceType.IN_PROC,
+                ModeType.CLIENT,
+                "0.0.0.0", // bind to all available interfaces
+                0,
+                QualityOfService.LOW);
+        OcPlatform.Configure(cfg);
+        Log.i("EasyConnect","OcPlatform Configure is invoked");
     }
 
     @Override
@@ -274,6 +294,11 @@ public class MainActivity extends Activity implements IProvisioningListener,
                  * "IP Address-"+enrolleStatus.getIpAddr());
                  */
                 connectedDevice = enrolleStatus;
+
+                // Only after onboarding is successful, provisioning is performed
+                provisionEnrolleInstance = new ProvisionEnrollee(this);
+                provisionEnrolleInstance.registerProvisioningHandler(this);
+
             } else {
                 finalResult = "Device Removed" + "["
                         + enrolleStatus.getIpAddr() + "]";
