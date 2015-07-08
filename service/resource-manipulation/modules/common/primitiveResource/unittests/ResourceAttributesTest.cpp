@@ -272,6 +272,22 @@ TEST(ResourceAttributesValueTest, ValuesCanBeSwapped)
     ASSERT_EQ(i, strValue);
 }
 
+TEST(ResourceAttributesTypeTest, TypeIdMatchesTypeOfValue)
+{
+    ResourceAttributes::Value intValue { 1 };
+
+    ASSERT_EQ(intValue.getType().getId(), ResourceAttributes::TypeId::INT);
+}
+
+TEST(ResourceAttributesTypeTest, TypeCanBeConstructedFromValue)
+{
+    ResourceAttributes::Value intValue { 1 };
+
+    ResourceAttributes::Type t = ResourceAttributes::Type::typeOf(0);
+
+    ASSERT_EQ(intValue.getType(), t);
+}
+
 TEST(ResourceAttributesConverterTest, OCRepresentationCanBeConvertedIntoResourceAttributes)
 {
     constexpr double value = 9876;

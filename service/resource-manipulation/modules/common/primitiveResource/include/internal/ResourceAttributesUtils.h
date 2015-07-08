@@ -36,7 +36,8 @@ namespace OIC
         bool acceptableAttributeValue(const ResourceAttributes::Value& dest,
                 const ResourceAttributes::Value& value);
 
-        AttrKeyValuePairs replaceAttributes(ResourceAttributes& dest, const ResourceAttributes& attrs);
+        AttrKeyValuePairs replaceAttributes(ResourceAttributes& dest,
+                const ResourceAttributes& attrs);
     }
 }
 

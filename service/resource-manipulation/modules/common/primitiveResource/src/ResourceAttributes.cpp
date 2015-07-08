@@ -24,9 +24,14 @@
 #include <internal/ResourceAttributesConverter.h>
 
 #include <boost/lexical_cast.hpp>
+#include <boost/mpl/advance.hpp>
+#include <boost/mpl/size.hpp>
+#include <boost/mpl/deref.hpp>
 
 namespace
 {
+
+    using namespace OIC::Service;
 
     class ToStringVisitor: public boost::static_visitor< std::string >
     {
@@ -65,6 +70,112 @@ namespace
         }
     };
 
+    class TypeVisitor: public boost::static_visitor< ResourceAttributes::Type >
+    {
+    public:
+        TypeVisitor() = default;
+        TypeVisitor(const TypeVisitor&) = delete;
+        TypeVisitor(TypeVisitor&&) = delete;
+
+        TypeVisitor& operator=(const TypeVisitor&) = delete;
+        TypeVisitor& operator=(TypeVisitor&&) = delete;
+
+        template< typename T >
+        ResourceAttributes::Type operator()(const T& value) const
+        {
+            return ResourceAttributes::Type::typeOf(value);
+        }
+
+    };
+
+    template< int >
+    struct Int2Type {};
+
+    template< typename T >
+    struct TypeInfoConverter;
+
+    template< >
+    struct TypeInfoConverter< int >
+    {
+        static constexpr ResourceAttributes::TypeId typeId = ResourceAttributes::TypeId::INT;
+    };
+
+    template< >
+    struct TypeInfoConverter< std::nullptr_t >
+    {
+        static constexpr ResourceAttributes::TypeId typeId = ResourceAttributes::TypeId::NULL_T;
+    };
+
+    template< >
+    struct TypeInfoConverter< double >
+    {
+        static constexpr ResourceAttributes::TypeId typeId = ResourceAttributes::TypeId::DOUBLE;
+    };
+
+    template< >
+    struct TypeInfoConverter< bool >
+    {
+        static constexpr ResourceAttributes::TypeId typeId = ResourceAttributes::TypeId::BOOL;
+    };
+
+    template< >
+    struct TypeInfoConverter< std::string >
+    {
+        static constexpr ResourceAttributes::TypeId typeId = ResourceAttributes::TypeId::STRING;
+    };
+
+    template< >
+    struct TypeInfoConverter< ResourceAttributes >
+    {
+        static constexpr ResourceAttributes::TypeId typeId = ResourceAttributes::TypeId::ATTRIBUTES;
+    };
+
+    struct TypeInfo
+    {
+        ResourceAttributes::TypeId typeId;
+
+        template< typename TRAIT >
+        constexpr TypeInfo(TRAIT) :
+                typeId{ TRAIT::typeId }
+        {
+        }
+
+        template< typename VARIANT, int POS >
+        static constexpr TypeInfo get()
+        {
+            return TypeInfo(
+                    TypeInfoConverter<
+                            typename boost::mpl::deref<
+                                    typename boost::mpl::advance<
+                                            typename boost::mpl::begin< typename VARIANT::types >::type,
+                                            boost::mpl::int_< POS > >::type >::type >{ });
+        }
+    };
+
+    template< typename VARIANT, int POS >
+    constexpr inline std::vector< TypeInfo > getTypeInfo(Int2Type< POS >)
+    {
+        auto&& vec = getTypeInfo< VARIANT >(Int2Type< POS - 1 >{ });
+        vec.push_back(TypeInfo::get< VARIANT, POS >());
+        return vec;
+    }
+
+    template< typename VARIANT >
+    constexpr inline std::vector< TypeInfo > getTypeInfo(Int2Type< 0 >)
+    {
+        return { TypeInfo::get< VARIANT, 0 >() };
+    }
+
+    template< typename VARIANT >
+    inline TypeInfo getTypeInfo(int which)
+    {
+        static constexpr int variantEnd = boost::mpl::size< typename VARIANT::types >::value - 1;
+        static const std::vector< TypeInfo > typeInfos = getTypeInfo< VARIANT >(
+                Int2Type< variantEnd >{ });
+
+        return typeInfos[which];
+    }
+
 } // unnamed namespace
 
 
@@ -72,6 +183,16 @@ namespace OIC
 {
     namespace Service
     {
+
+        bool operator==(const ResourceAttributes::Type& lhs, const ResourceAttributes::Type& rhs)
+        {
+            return lhs.m_which == rhs.m_which;
+        }
+
+        bool operator!=(const ResourceAttributes::Type& lhs, const ResourceAttributes::Type& rhs)
+        {
+            return !(lhs == rhs);
+        }
 
         bool operator!=(const ResourceAttributes::Value& lhs, const ResourceAttributes::Value& rhs)
         {
@@ -82,7 +203,6 @@ namespace OIC
         {
             return !(rhs == lhs);
         }
-
 
         bool operator==(const char* lhs, const ResourceAttributes::Value& rhs)
         {
@@ -102,6 +222,11 @@ namespace OIC
         bool operator!=(const ResourceAttributes& lhs, const ResourceAttributes& rhs)
         {
             return !(lhs == rhs);
+        }
+
+        auto ResourceAttributes::Type::getId() const -> TypeId
+        {
+            return ::getTypeInfo< ValueVariant >(m_which).typeId;
         }
 
         ResourceAttributes::Value::Value() :
@@ -153,6 +278,11 @@ namespace OIC
         bool ResourceAttributes::Value::operator==(const char* rhs) const
         {
             return equals< std::string >(rhs);
+        }
+
+        auto ResourceAttributes::Value::getType() const -> Type
+        {
+            return boost::apply_visitor(TypeVisitor(), *m_data);
         }
 
         std::string ResourceAttributes::Value::toString() const
@@ -210,7 +340,6 @@ namespace OIC
         {
             return boost::apply_visitor(m_valueVisitor, m_iterRef);
         }
-
 
         ResourceAttributes::KeyValuePair::KeyValuePair(boost::variant<iterator*,
                 const_iterator*>&& ref) :
@@ -406,7 +535,7 @@ namespace OIC
         bool acceptableAttributeValue(const ResourceAttributes::Value& dest,
                 const ResourceAttributes::Value& value)
         {
-            if (!dest.isTypeEqualWith(value))
+            if (dest.getType() != value.getType())
             {
                 return false;
             }
@@ -414,7 +543,7 @@ namespace OIC
             static_assert(ResourceAttributes::is_supported_type< ResourceAttributes >::value,
                     "ResourceAttributes doesn't have ResourceAttributes recursively.");
 
-            if (dest.isTypeOf< ResourceAttributes >()
+            if (dest.getType().getId() == ResourceAttributes::TypeId::ATTRIBUTES
                     && !acceptableAttributes(dest.get< ResourceAttributes >(),
                             value.get< ResourceAttributes >()))
             {

@@ -60,7 +60,7 @@ namespace OIC
         class ResourceAttributes
         {
         private:
-            template< typename T > struct is_supported_type_helper;
+            template< typename T > struct IsSupportedTypeHelper;
 
             using ValueVariant = boost::variant<
                 std::nullptr_t,
@@ -76,11 +76,11 @@ namespace OIC
 
             template< typename T, typename V = void >
             using enable_if_supported = typename std::enable_if<
-                    is_supported_type_helper< T >::type::value, V >::type;
+                    IsSupportedTypeHelper< T >::type::value, V >::type;
 
             template< typename T, typename V = void >
             using enable_if_unsupported = typename std::enable_if<
-                    !is_supported_type_helper< T >::type::value, V >::type;
+                    !IsSupportedTypeHelper< T >::type::value, V >::type;
 
             template< typename VISITOR >
             class KeyValueVisitorHelper: public boost::static_visitor< >
@@ -101,9 +101,52 @@ namespace OIC
                 VISITOR& m_visitor;
             };
 
+            template <typename T> struct IndexOfType;
+
         public:
             template< typename T >
-            using is_supported_type = typename is_supported_type_helper< T >::type;
+            using is_supported_type = typename IsSupportedTypeHelper< T >::type;
+
+            enum class TypeId
+            {
+                NULL_T,
+                INT,
+                DOUBLE,
+                BOOL,
+                STRING,
+                ATTRIBUTES,
+                VECTOR
+            };
+
+            class Type
+            {
+            public:
+                Type(const Type&) = default;
+                Type(Type&&) = default;
+
+                Type& operator=(const Type&) = default;
+                Type& operator=(Type&&) = default;
+
+                TypeId getId() const;
+
+                template < typename T >
+                static Type typeOf(const T& value)
+                {
+                    return Type(value);
+                }
+
+                friend bool operator==(const Type&, const Type&);
+
+            private:
+                template < typename T >
+                explicit Type(const T&) :
+                    m_which{ IndexOfType< T >::value }
+                {
+                }
+
+            private:
+                int m_which;
+            };
 
             class Value
             {
@@ -145,25 +188,7 @@ namespace OIC
                     return checkedGet< T >();
                 }
 
-                bool isTypeEqualWith(const Value& rhs) const
-                {
-                    return m_data->which() == rhs.m_data->which();
-                }
-
-                template< typename T >
-                enable_if_supported< T, bool > isTypeOf() const
-                {
-                    using iter = typename boost::mpl::find< ValueVariant::types, T >::type;
-
-                    return m_data->which()
-                            == boost::mpl::distance< mpl_begin< ValueVariant::types >, iter >::value;
-                }
-
-                template< typename T >
-                enable_if_unsupported< T, bool > isTypeOf() const
-                {
-                    return false;
-                }
+                Type getType() const;
 
                 std::string toString() const;
 
@@ -264,12 +289,23 @@ namespace OIC
             friend class ResourceAttributesConverter;
         };
 
-        template< typename T > struct ResourceAttributes::is_supported_type_helper
+        template< typename T >
+        struct ResourceAttributes::IsSupportedTypeHelper
         {
             using type = boost::mpl::contains<ValueVariant::types, typename std::decay< T >::type>;
         };
 
+        template <typename T>
+        struct ResourceAttributes::IndexOfType
+        {
+            using iter = typename boost::mpl::find< ValueVariant::types, T >::type;
 
+            static constexpr int value = boost::mpl::distance< mpl_begin< ValueVariant::types >,
+                    iter >::value;
+        };
+
+        bool operator==(const ResourceAttributes::Type&, const ResourceAttributes::Type&);
+        bool operator!=(const ResourceAttributes::Type&, const ResourceAttributes::Type&);
 
         bool operator!=(const ResourceAttributes::Value&, const ResourceAttributes::Value&);
 
