@@ -29,15 +29,45 @@ namespace OIC
 {
     namespace Service
     {
+
+        /**
+        * @class    BundleActivator
+        * @brief    This class represents Bundle to be activated by container
+        *
+        */
         class BundleActivator
         {
 
-        public:
-            BundleActivator();
-            virtual ~BundleActivator();
-            virtual void activateBundle(ResourceContainerBundleAPI *resourceContainer,
-                    std::string bundleId);
-            virtual void deactivateBundle();
+            public:
+
+                /**
+                * Constructor for BundleActivator
+                */
+                BundleActivator();
+
+                /**
+                * Virtual destructor for BundleActivator
+                */
+                virtual ~BundleActivator();
+
+                /**
+                * Activate the Bundle to make bundle work and create bundle resources
+                *
+                * @param resourceContainer - resourceContainer which registered the bundle
+                *
+                * @param bundleId - assigned id for the bundle
+                *
+                * @return void
+                */
+                virtual void activateBundle(ResourceContainerBundleAPI *resourceContainer,
+                                            std::string bundleId);
+
+                /**
+                * Deactivate the Bundle to stop working and destroy bundle resources
+                *
+                * @return void
+                */
+                virtual void deactivateBundle();
         };
     }
 }

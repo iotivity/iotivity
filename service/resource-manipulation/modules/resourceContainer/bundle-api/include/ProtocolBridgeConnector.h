@@ -29,13 +29,40 @@ namespace OIC
 {
     namespace Service
     {
+
+        /**
+        * @class    ProtocolBridgeConnector
+        * @brief    This class represents connector for Protocol Bridge
+        *               to
+        *
+        */
         class ProtocolBridgeConnector
         {
-        public:
-            ProtocolBridgeConnector();
-            virtual ~ProtocolBridgeConnector();
-            virtual void connect() = 0;
-            virtual void disconnect() = 0;
+            public:
+
+                /**
+                * Constructor for ProtocolBridgeConnector
+                */
+                ProtocolBridgeConnector();
+
+                /**
+                * Virtual destructor for ProtocolBridgeConnector
+                */
+                virtual ~ProtocolBridgeConnector();
+
+                /**
+                * Execute the logic needed for connection with diffrent protocol from IoTivity
+                *
+                * @return void
+                */
+                virtual void connect() = 0;
+
+                /**
+                * Execute the logic needed for disconnection with diffrent protocol from IoTivity
+                *
+                * @return void
+                */
+                virtual void disconnect() = 0;
         };
     }
 }

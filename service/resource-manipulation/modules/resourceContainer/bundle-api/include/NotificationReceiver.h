@@ -27,12 +27,32 @@ namespace OIC
 {
     namespace Service
     {
+
+        /**
+        * @class    NotificationReceiver
+        * @brief    This class represents Notification Receiver to get notification
+        *               from bundle resources if there's any changes of attribute state
+        *
+        */
         class NotificationReceiver
         {
             public:
+
+                /**
+                * Constructor for NotificationReceiver
+                */
                 NotificationReceiver() {};
+
+                /**
+                * destructor for NotificationReceiver
+                */
                 ~NotificationReceiver() {};
 
+                /**
+                * Callback method for getting notification from bundle resources
+                *
+                * @return void
+                */
                 virtual void onNotificationReceived(std::string strResourceUri) = 0;
         };
     }

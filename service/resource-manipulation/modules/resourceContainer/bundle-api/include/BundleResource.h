@@ -34,18 +34,70 @@ namespace OIC
 {
     namespace Service
     {
+
+        /**
+        * @class    BundleResource
+        * @brief    This class represents Basic bundle resource template
+        *               to be registered in the container and make resource server
+        *
+        */
         class BundleResource
         {
             public:
+
+                /**
+                * Constructor for BundleResource
+                */
                 BundleResource();
+
+                /**
+                * Virtual destructor for BundleResource
+                */
                 virtual ~BundleResource();
 
-                // TODO use type variant mechanism
+                /**
+                * Execute the logic of bundle to get the value of attribute
+                *
+                * @param attributeName - name of attribute to get
+                *
+                * @return string - return value of the attribute
+                *
+                * @todo use type variant mechanism
+                */
                 virtual string getAttribute(string attributeName);
+
+                /**
+                * Execute the logic of bundle to set the value of attribute
+                *
+                * @param attributeName - name of attribute to set
+                *
+                * @param value - value of attribute to set
+                *
+                * @return void
+                */
                 virtual void setAttribute(string attributeName, string value);
+
+                /**
+                * Return the list of attribute names of the resource
+                *
+                * @return std::list - return list of the attribute names
+                */
                 std::list<string> getAttributeNames();
+
+                /**
+                * Initialize attributes of the resource
+                *
+                * @return void
+                */
                 virtual void initAttributes() = 0;
 
+                /**
+                * Register notification receiver(resource container) to notify for the changes of attributes
+                *
+                * @param pNotiReceiver - Notification Receiver to get notification from bundle resource
+                *
+                * @return void
+                */
                 void registerObserver(NotificationReceiver *pNotiReceiver);
 
             public:

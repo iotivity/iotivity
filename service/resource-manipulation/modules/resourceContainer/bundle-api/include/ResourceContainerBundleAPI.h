@@ -40,14 +40,65 @@ namespace OIC
         class ResourceContainerBundleAPI: public NotificationReceiver
         {
             public:
+
+                /**
+                * Constructor for ResourceContainerBundleAPI
+                */
                 ResourceContainerBundleAPI();
+
+                /**
+                * Virtual destructor for ResourceContainerBundleAPI
+                */
                 virtual ~ResourceContainerBundleAPI();
+
+                /**
+                * Register bundle resource in the container
+                *   and register resource server for bundle resource
+                *
+                * @param resource - bundle resource to register
+                *
+                * @return void
+                */
                 virtual void registerResource(BundleResource *resource) = 0;
+
+                /**
+                * Unregister bundle resource from the container
+                *   and unregister resource server
+                *
+                * @param resource - bundle resource to unregister
+                *
+                * @return void
+                */
                 virtual void unregisterResource(BundleResource *resource) = 0;
+
+                /**
+                * Get Configuration data of certain bundle
+                *
+                * @param [in] bundleId - bundle id to get configuration data
+                *
+                * @param [out] configOutput - returned configuration data
+                *
+                * @return void
+                */
                 virtual void getBundleConfiguration(std::string bundleId, configInfo *configOutput) = 0;
+
+                /**
+                * Get the list of Configuration data of resources that certain bundle has
+                *
+                * @param [in] bundleId - bundle id to get configuration data
+                *
+                * @param [out] configOutput - returned resource configuration data vector
+                *
+                * @return void
+                */
                 virtual void getResourceConfiguration(std::string bundleId,
                                                       std::vector< resourceInfo > *configOutput) = 0;
 
+                /**
+                * API for getting an instance of ResourceContainerBundleAPI
+                *
+                * @return ResourceContainerBundleAPI * - return the object pointer of ResourceContainerBundleAPI
+                */
                 static ResourceContainerBundleAPI *getInstance();
         };
     }

@@ -29,13 +29,48 @@ namespace OIC
 {
     namespace Service
     {
+
+        /**
+        * @class    ProtocolBridgeResource
+        * @brief    This class represents bundle resource template for Protocol Bridge
+        *               to be registered in the container and make resource server
+        *
+        */
         class ProtocolBridgeResource: public BundleResource
         {
-        public:
-            ProtocolBridgeResource();
-            virtual ~ProtocolBridgeResource();
-            virtual string getAttribute(string attributeName) = 0;
-            virtual void setAttribute(string attributeName, string value) = 0;
+            public:
+
+                /**
+                * Constructor for ProtocolBridgeResource
+                */
+                ProtocolBridgeResource();
+
+                /**
+                * Virtual destructor for ProtocolBridgeResource
+                */
+                virtual ~ProtocolBridgeResource();
+
+                /**
+                * Execute the logic of bundle to get the value of attribute
+                *
+                * @param attributeName - name of attribute to get
+                *
+                * @return string - return value of the attribute
+                *
+                * @todo use type variant mechanism
+                */
+                virtual string getAttribute(string attributeName) = 0;
+
+                /**
+                * Execute the logic of bundle to set the value of attribute
+                *
+                * @param attributeName - name of attribute to set
+                *
+                * @param value - value of attribute to set
+                *
+                * @return void
+                */
+                virtual void setAttribute(string attributeName, string value) = 0;
         };
     }
 }
