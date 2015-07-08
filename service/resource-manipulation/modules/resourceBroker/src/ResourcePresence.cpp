@@ -142,8 +142,14 @@ namespace OIC
 
             if(foundDevice == nullptr)
             {
-                foundDevice.reset(new DevicePresence());
-                foundDevice->initializeDevicePresence(primitiveResource);
+                try
+                {
+                    foundDevice.reset(new DevicePresence());
+                    foundDevice->initializeDevicePresence(primitiveResource);
+                }catch(...)
+                {
+                    throw;
+                }
                 DeviceAssociation::getInstance()->addDevice(foundDevice);
             }
             foundDevice->addPresenceResource(this);

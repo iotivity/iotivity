@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef DEVICEASSOCIATION_H_
-#define DEVICEASSOCIATION_H_
+#ifndef RB_DEVICEASSOCIATION_H_
+#define RB_DEVICEASSOCIATION_H_
 
 #include <list>
 #include <string>
@@ -54,4 +54,4 @@ namespace OIC
     } // namespace Service
 } // namespace OIC
 
-#endif /* DEVICEASSOCIATION_H_ */
+#endif /* RB_DEVICEASSOCIATION_H_ */

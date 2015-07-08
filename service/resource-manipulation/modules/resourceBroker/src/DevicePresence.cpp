@@ -43,16 +43,19 @@ namespace OIC
         {
             OC_LOG_V(DEBUG, BROKER_TAG, "%s",pResource->getHost().c_str());
 
+            address = pResource->getHost();
+
             try
             {
                 presenceSubscriber
                 = PresenceSubscriber(pResource->getHost(), BROKER_TRANSPORT, pSubscribeRequestCB);
 
                 OC_LOG_V(DEBUG, BROKER_TAG, "subscribe Presence");
-            } catch(PrimitiveException & e)
+            } catch(PlatformException &e)
             {
-                OC_LOG_V(DEBUG, BROKER_TAG, "exception in subscribe Presence %s",e.what());
-                throw PrimitiveException(e);
+                OC_LOG_V(DEBUG, BROKER_TAG,
+                        "exception in subscribe Presence %s", e.getReason().c_str());
+                throw;
             }
             //TODO generate Timer(if(!isTimer))
         }

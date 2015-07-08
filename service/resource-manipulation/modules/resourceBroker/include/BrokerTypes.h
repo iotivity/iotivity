@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef BROKERTYPES_H_
-#define BROKERTYPES_H_
+#ifndef RB_BROKERTYPES_H_
+#define RB_BROKERTYPES_H_
 
 #include <iostream>
 #include <functional>
@@ -113,4 +113,4 @@ namespace OIC
     } // namespace Service
 } // namespace OIC
 
-#endif // BROKERTYPES_H_
+#endif // RB_BROKERTYPES_H_

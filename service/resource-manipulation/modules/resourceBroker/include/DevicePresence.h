@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef DEVICEPRESENCE_H_
-#define DEVICEPRESENCE_H_
+#ifndef RB_DEVICEPRESENCE_H_
+#define RB_DEVICEPRESENCE_H_
 
 #include <list>
 #include <string>
@@ -64,4 +64,4 @@ namespace OIC
     } // namespace Service
 } // namespace OIC
 
-#endif /* DEVICEPRESENCE_H_ */
+#endif /* RB_DEVICEPRESENCE_H_ */

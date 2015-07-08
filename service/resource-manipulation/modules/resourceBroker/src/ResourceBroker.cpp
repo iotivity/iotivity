@@ -65,7 +65,7 @@ namespace OIC
         {
             if(pResource == nullptr || cb == nullptr || cb == NULL)
             {
-                throw InvalidParameter("[hostResource] input PrimitiveResource is Invalid");
+                throw InvalidParameterException("[hostResource] input PrimitiveResource is Invalid");
             }
 
             BrokerID retID = generateBrokerID();
@@ -76,8 +76,14 @@ namespace OIC
                 OC_LOG_V(DEBUG, BROKER_TAG, "Not found any Handled Resource.");
                 OC_LOG_V(DEBUG, BROKER_TAG, "Create New Resource Presence Handler.");
 
-                presenceItem.reset(new ResourcePresence());
-                presenceItem->initializeResourcePresence(pResource);
+                try
+                {
+                    presenceItem.reset(new ResourcePresence());
+                    presenceItem->initializeResourcePresence(pResource);
+                }catch(PlatformException &e)
+                {
+                    throw FailedSubscribePresenceException(e.getReasonCode());
+                }
                 if(s_presenceList != nullptr)
                 {
                     s_presenceList->push_back(presenceItem);
@@ -98,14 +104,14 @@ namespace OIC
             {
                 // input parameter is wrong.
                 // hostResource never return value 0;
-                throw InvalidParameter("[cancelHostResource] input BrokerID is Invalid");
+                throw InvalidParameterException("[cancelHostResource] input BrokerID is Invalid");
             }
 
             BrokerIDMap::iterator it = s_brokerIDMap->find(brokerId);
             if(it == s_brokerIDMap->end())
             {
                 // not found requested brokerId in BrokerMap;
-                throw InvalidParameter("[cancelHostResource] input BrokerID is unknown ID");
+                throw InvalidParameterException("[cancelHostResource] input BrokerID is unknown ID");
             }
             else
             {
@@ -127,7 +133,7 @@ namespace OIC
         {
             if(brokerId == 0)
             {
-                throw InvalidParameter("[getResourceState] input BrokerID is Invalid");
+                throw InvalidParameterException("[getResourceState] input BrokerID is Invalid");
             }
 
             BROKER_STATE retState = BROKER_STATE::NONE;
@@ -136,7 +142,7 @@ namespace OIC
             if(it == s_brokerIDMap->end())
             {
                 // not found requested brokerId in BrokerMap;
-                throw InvalidParameter("[getResourceState] input BrokerID is unknown ID");
+                throw InvalidParameterException("[getResourceState] input BrokerID is unknown ID");
             }
             else
             {
@@ -151,7 +157,7 @@ namespace OIC
         {
             if(pResource == nullptr)
             {
-                throw InvalidParameter("[getResourceState] input PrimitiveResource is Invalid");
+                throw InvalidParameterException("[getResourceState] input PrimitiveResource is Invalid");
             }
 
             BROKER_STATE retState = BROKER_STATE::NONE;

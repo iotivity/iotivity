@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef RESOURCEPRESENCE_H_
-#define RESOURCEPRESENCE_H_
+#ifndef RB_RESOURCEPRESENCE_H_
+#define RB_RESOURCEPRESENCE_H_
 
 #include <functional>
 #include <list>
@@ -87,5 +87,5 @@ namespace OIC
     } // namespace Service
 } // namespace OIC
 
-#endif /* RESOURCEPRESENCE_H_ */
+#endif /* RB_RESOURCEPRESENCE_H_ */
 

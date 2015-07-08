@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef RESOURCEBROKER_H_
-#define RESOURCEBROKER_H_
+#ifndef RB_RESOURCEBROKER_H_
+#define RB_RESOURCEBROKER_H_
 
 #include <functional>
 #include <list>
@@ -38,10 +38,17 @@ namespace OIC
         class ResourceBroker
         {
         public:
-            class InvalidParameter: public PrimitiveException
+            class InvalidParameterException: public PrimitiveException
             {
             public:
-                InvalidParameter(std::string&& what) : PrimitiveException{ std::move(what) } {}
+                InvalidParameterException(std::string&& what)
+                : PrimitiveException{ std::move(what) } {}
+            };
+            class FailedSubscribePresenceException: public PlatformException
+            {
+            public:
+                FailedSubscribePresenceException(OCStackResult reason)
+                : PlatformException{reason} {}
             };
 
             static ResourceBroker * getInstance();
@@ -73,4 +80,4 @@ namespace OIC
     } // namespace Service
 } // namespace OIC
 
-#endif /* RESOURCEBROKER_H_ */
+#endif /* RB_RESOURCEBROKER_H_ */
