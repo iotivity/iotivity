@@ -128,4 +128,4 @@ OCRandomUuidResult OCConvertUuidToString(const uint8_t uuid[UUID_SIZE],
 }
 #endif
 
-#endif //OC_RANDOM_H
+#endif // OC_RANDOM_H

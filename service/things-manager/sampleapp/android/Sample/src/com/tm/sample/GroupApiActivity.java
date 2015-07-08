@@ -28,6 +28,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
@@ -62,6 +63,9 @@ public class GroupApiActivity extends Activity {
     // For Scheduled ActionSet
     public static Context           mcontext;
     public static Calendar          scheduleTime;
+    
+    private final String            LOG_TAG = "[TMSample] " + this.getClass()
+                                                               .getSimpleName();;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -112,6 +116,7 @@ public class GroupApiActivity extends Activity {
                     case 1:
                         logs.setText("");
                         logs.setText(logMessage);
+                        Log.i(LOG_TAG, logMessage);
                 }
             }
         };
@@ -249,5 +254,6 @@ public class GroupApiActivity extends Activity {
     public void displayToastMessage(String message) {
         Toast toast = Toast.makeText(this, message, Toast.LENGTH_SHORT);
         toast.show();
+        Log.i(LOG_TAG, message);
     }
 }

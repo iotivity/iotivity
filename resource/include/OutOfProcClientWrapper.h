@@ -50,14 +50,14 @@ namespace OC
             {return OC_STACK_NOTIMPL;}
 
         virtual OCStackResult GetResourceRepresentation(
-            const OCDevAddr& devAddr,
+            const OCDevAddr& devAddr, bool useHostString,
             const std::string& uri,
             const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
             GetCallback& callback, QualityOfService QoS)
             {return OC_STACK_NOTIMPL;}
 
         virtual OCStackResult PutResourceRepresentation(
-            const OCDevAddr& devAddr,
+            const OCDevAddr& devAddr, bool useHostString,
             const std::string& uri,
             const OCRepresentation& attributes, const QueryParamsMap& queryParams,
             const HeaderOptions& headerOptions, PutCallback& callback,
@@ -65,14 +65,14 @@ namespace OC
             {return OC_STACK_NOTIMPL;}
 
         virtual OCStackResult PostResourceRepresentation(
-            const OCDevAddr& devAddr,
+            const OCDevAddr& devAddr, bool useHostString,
             const std::string& uri,
             const OCRepresentation& attributes, const QueryParamsMap& queryParams,
             const HeaderOptions& headerOptions, PostCallback& callback, QualityOfService QoS)
             {return OC_STACK_NOTIMPL;}
 
         virtual OCStackResult DeleteResource(
-            const OCDevAddr& devAddr,
+            const OCDevAddr& devAddr, bool useHostString,
             const std::string& uri,
             const HeaderOptions& headerOptions,
             DeleteCallback& callback, QualityOfService QoS)
@@ -80,7 +80,7 @@ namespace OC
 
         virtual OCStackResult ObserveResource(
             ObserveType observeType, OCDoHandle* handle,
-            const OCDevAddr& devAddr,
+            const OCDevAddr& devAddr, bool useHostString,
             const std::string& uri,
             const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
             ObserveCallback& callback, QualityOfService QoS)

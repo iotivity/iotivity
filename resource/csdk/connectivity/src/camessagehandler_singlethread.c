@@ -28,7 +28,7 @@
 #include "caremotehandler.h"
 #include "cainterfacecontroller_singlethread.h"
 #include "caprotocolmessage.h"
-#include "caretransmission_singlethread.h"
+#include "caretransmission.h"
 #include "logger.h"
 #include "config.h" /* for coap protocol */
 #include "oic_malloc.h"
@@ -75,7 +75,7 @@ static void CATimeoutCallback(const CAEndpoint_t *endpoint, const void *pdu, uin
     if (NULL == resInfo)
     {
         OIC_LOG(ERROR, TAG, "calloc failed");
-        CADestroyEndpointInternal(ep);
+        CAFreeEndpoint(ep);
         return;
     }
 
@@ -88,7 +88,7 @@ static void CATimeoutCallback(const CAEndpoint_t *endpoint, const void *pdu, uin
         g_responseHandler(ep, resInfo);
     }
 
-    CADestroyEndpointInternal(ep);
+    CAFreeEndpoint(ep);
     OICFree(resInfo);
 
     OIC_LOG(DEBUG, TAG, "OUT");
@@ -184,7 +184,7 @@ static void CAReceivedPacketCallback(CAEndpoint_t *endpoint, void *data, uint32_
 
     uint32_t code = CA_NOT_FOUND;
     coap_pdu_t *pdu = (coap_pdu_t *) CAParsePDU((const char *) data, dataLen, &code);
-
+    OICFree(data);
     if (NULL == pdu)
     {
         OIC_LOG(ERROR, TAG, "Parse PDU failed");
@@ -231,15 +231,12 @@ static void CAReceivedPacketCallback(CAEndpoint_t *endpoint, void *data, uint32_
         OIC_LOG(DEBUG, TAG, "token:");
         OIC_LOG_BUFFER(DEBUG, TAG, (const uint8_t *) ReqInfo->info.token, CA_MAX_TOKEN_LEN);
 
-        if (ReqInfo)
+        if (g_requestHandler)
         {
-            if (g_requestHandler)
-            {
-                g_requestHandler(endpoint, ReqInfo);
-            }
-
-            CADestroyRequestInfoInternal(ReqInfo);
+            g_requestHandler(endpoint, ReqInfo);
         }
+
+        CADestroyRequestInfoInternal(ReqInfo);
     }
     else
     {
@@ -343,7 +340,7 @@ CAResult_t CADetachRequestMessage(const CAEndpoint_t *object, const CARequestInf
     CA_MEMORY_ALLOC_CHECK(data);
 
     // save data
-    data->type = SEND_TYPE_UNICAST;
+    data->type = request->isMulticast ? SEND_TYPE_MULTICAST : SEND_TYPE_UNICAST;
     data->remoteEndpoint = object;
     data->requestInfo = request;
     data->responseInfo = NULL;
@@ -409,7 +406,7 @@ CAResult_t CAInitializeMessageHandler()
     CASetNetworkChangeCallback(CANetworkChangedCallback);
 
     // retransmission initialize
-    CARetransmissionInitialize(&g_retransmissionContext, CASendUnicastData,
+    CARetransmissionInitialize(&g_retransmissionContext, NULL, CASendUnicastData,
                                CATimeoutCallback, NULL);
 
     CAInitializeAdapters();

@@ -37,6 +37,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if HAVE_STRINGS_H
+#include <strings.h>
+#endif
+
 #define TAG  PCF("SRM-DOXM")
 
 static OicSecDoxm_t        *gDoxm = NULL;
@@ -299,6 +303,10 @@ exit:
     return doxm;
 }
 
+/**
+ * @todo document this function including why code might need to call this.
+ * The current suspicion is that it's not being called as much as it should.
+ */
 static bool UpdatePersistentStorage(OicSecDoxm_t * doxm)
 {
     bool bRet = false;
@@ -590,11 +598,10 @@ OCStackResult CreateDoxmResource()
  */
 void CheckDeviceID()
 {
-    //TODO: Save this deviceID at secure location so that we can retrieve it if the
-    //JSON gets corrupted.
     if(strcmp((char *)gDoxm->deviceID.id, "") == 0 )
     {
         OCFillRandomMem(gDoxm->deviceID.id, sizeof(gDoxm->deviceID.id));
+        UpdatePersistentStorage(gDoxm);
     }
 }
 

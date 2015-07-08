@@ -131,7 +131,7 @@ uint32_t CAIPSendData(const CAEndpoint_t *endpoint, const void *data,
         {
             OIC_LOG(ERROR, IP_CLIENT_TAG, "Invalid Socket Fd");
             CAClearServerInfoList(tempServerInfoList);
-            return len;
+            return 0;
         }
 
         OIC_LOG_V(DEBUG, IP_CLIENT_TAG, "IP unicast SendData sockFd %d", sockFd);

@@ -54,9 +54,9 @@ static int CAGetAdapterIndex(CATransportAdapter_t cType)
     {
         case CA_ADAPTER_IP:
             return 0;
-        case CA_ADAPTER_RFCOMM_BTEDR:
-            return 1;
         case CA_ADAPTER_GATT_BTLE:
+            return 1;
+        case CA_ADAPTER_RFCOMM_BTEDR:
             return 2;
         default:
             break;
@@ -147,15 +147,18 @@ void CAInitializeAdapters(ca_thread_pool_t handle)
 
     // Initialize adapters and register callback.
 #ifdef IP_ADAPTER
-    CAInitializeIP(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback, handle);
+    CAInitializeIP(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback,
+                   CAAdapterErrorHandleCallback, handle);
 #endif /* IP_ADAPTER */
 
 #ifdef EDR_ADAPTER
-    CAInitializeEDR(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback, handle);
+    CAInitializeEDR(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback,
+                    CAAdapterErrorHandleCallback, handle);
 #endif /* EDR_ADAPTER */
 
 #ifdef LE_ADAPTER
-    CAInitializeLE(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback, handle);
+    CAInitializeLE(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback,
+                   CAAdapterErrorHandleCallback, handle);
 #endif /* LE_ADAPTER */
 
 }

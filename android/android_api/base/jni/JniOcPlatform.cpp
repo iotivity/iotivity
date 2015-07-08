@@ -164,6 +164,78 @@ void RemoveOnDeviceInfoListener(JNIEnv* env, jobject jListener)
     deviceInfoMapLock.unlock();
 }
 
+JniOnPlatformInfoListener* AddOnPlatformInfoListener(JNIEnv* env, jobject jListener)
+{
+    JniOnPlatformInfoListener *onPlatformInfoListener = NULL;
+
+    platformInfoMapLock.lock();
+
+    for (auto it = onPlatformInfoListenerMap.begin(); it != onPlatformInfoListenerMap.end(); ++it)
+    {
+        if (env->IsSameObject(jListener, it->first))
+        {
+            auto refPair = it->second;
+            onPlatformInfoListener = refPair.first;
+            refPair.second++;
+            it->second = refPair;
+            onPlatformInfoListenerMap.insert(*it);
+            LOGD("OnPlatformInfoListener: ref. count incremented");
+            break;
+        }
+    }
+
+    if (!onPlatformInfoListener)
+    {
+        onPlatformInfoListener = new JniOnPlatformInfoListener(env, jListener, RemoveOnPlatformInfoListener);
+        jobject jgListener = env->NewGlobalRef(jListener);
+
+        onPlatformInfoListenerMap.insert(std::pair < jobject, std::pair < JniOnPlatformInfoListener*,
+            int >> (jgListener, std::pair<JniOnPlatformInfoListener*, int>(onPlatformInfoListener, 1)));
+        LOGI("OnPlatformInfoListener: new listener");
+    }
+
+    platformInfoMapLock.unlock();
+    return onPlatformInfoListener;
+}
+
+void RemoveOnPlatformInfoListener(JNIEnv* env, jobject jListener)
+{
+    platformInfoMapLock.lock();
+    bool isFound = false;
+    for (auto it = onPlatformInfoListenerMap.begin(); it != onPlatformInfoListenerMap.end(); ++it)
+    {
+        if (env->IsSameObject(jListener, it->first))
+        {
+            auto refPair = it->second;
+            if (refPair.second > 1)
+            {
+                refPair.second--;
+                it->second = refPair;
+                onPlatformInfoListenerMap.insert(*it);
+                LOGI("OnPlatformInfoListener: ref. count decremented");
+            }
+            else
+            {
+                env->DeleteGlobalRef(it->first);
+                JniOnPlatformInfoListener* listener = refPair.first;
+                delete listener;
+                onPlatformInfoListenerMap.erase(it);
+
+                LOGI("OnPlatformInfoListener removed");
+            }
+
+            isFound = true;
+            break;
+        }
+    }
+
+    if (!isFound)
+    {
+        ThrowOcException(JNI_EXCEPTION, "OnPlatformInfoListenet not found");
+    }
+    platformInfoMapLock.unlock();
+}
+
 JniOnPresenceListener* AddOnPresenceListener(JNIEnv* env, jobject jListener)
 {
     JniOnPresenceListener *onPresenceListener = NULL;
@@ -671,6 +743,109 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getDeviceInfo1
 
 /*
 * Class:     org_iotivity_base_OcPlatform
+* Method:    getPlatformInfo0
+* Signature: (Ljava/lang/String;Ljava/lang/String;ILorg/iotivity/base/OcPlatform/OnPlatformFoundListener;)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getPlatformInfo0
+(JNIEnv *env, jclass clazz, jstring jHost, jstring jResourceUri, jint jConnectivityType, jobject jListener)
+{
+    LOGD("OcPlatform_getPlatformInfo0");
+    std::string host;
+    if (jHost)
+    {
+        host = env->GetStringUTFChars(jHost, NULL);
+    }
+    std::string resourceUri;
+    if (jResourceUri)
+    {
+        resourceUri = env->GetStringUTFChars(jResourceUri, NULL);
+    }
+    if (!jListener)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "onPlatformFoundListener cannot be null");
+        return;
+    }
+    JniOnPlatformInfoListener *onPlatformInfoListener = AddOnPlatformInfoListener(env, jListener);
+
+    FindPlatformCallback findPlatformCallback = [onPlatformInfoListener](const OCRepresentation& ocRepresentation)
+    {
+        onPlatformInfoListener->foundPlatformCallback(ocRepresentation);
+    };
+
+    try
+    {
+        OCStackResult result = OCPlatform::getPlatformInfo(
+            host,
+            resourceUri,
+            JniUtils::getConnectivityType(env, static_cast<int>(jConnectivityType)),
+            findPlatformCallback);
+
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "Find platform has failed");
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+    }
+}
+
+/*
+* Class:     org_iotivity_base_OcPlatform
+* Method:    getPlatformInfo1
+* Signature: (Ljava/lang/String;Ljava/lang/String;ILorg/iotivity/base/OcPlatform/OnPlatformFoundListener;I)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getPlatformInfo1
+(JNIEnv *env, jclass clazz, jstring jHost, jstring jResourceUri, jint jConnectivityType, jobject jListener, jint jQoS)
+{
+    LOGD("OcPlatform_getPlatformInfo1");
+    std::string host;
+    if (jHost)
+    {
+        host = env->GetStringUTFChars(jHost, NULL);
+    }
+    std::string resourceUri;
+    if (jResourceUri)
+    {
+        resourceUri = env->GetStringUTFChars(jResourceUri, NULL);
+    }
+    if (!jListener)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "onPlatformFoundListener cannot be null");
+        return;
+    }
+    JniOnDeviceInfoListener *onDeviceInfoListener = AddOnDeviceInfoListener(env, jListener);
+
+    FindDeviceCallback findDeviceCallback = [onDeviceInfoListener](const OCRepresentation& ocRepresentation)
+    {
+        onDeviceInfoListener->foundDeviceCallback(ocRepresentation);
+    };
+
+    try
+    {
+        OCStackResult result = OCPlatform::getPlatformInfo(
+            host,
+            resourceUri,
+            JniUtils::getConnectivityType(env, static_cast<int>(jConnectivityType)),
+            findDeviceCallback,
+            JniUtils::getQOS(env, static_cast<int>(jQoS)));
+
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "Find platform has failed");
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+    }
+}
+
+/*
+* Class:     org_iotivity_base_OcPlatform
 * Method:    registerResource0
 * Signature: (Lorg/iotivity/base/OcResource;)Lorg/iotivity/base/OcResourceHandle;
 */
@@ -685,13 +860,15 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_registerResource0
     }
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, jResource);
     if (!resource) return nullptr;
-
+    LOGD("OcPlatform_registerResource1");
     OCResourceHandle resourceHandle;
     try
     {
+        LOGD("OcPlatform_registerResource2");
         OCStackResult result = OCPlatform::registerResource(
             resourceHandle,
             resource->getOCResource());
+        LOGD("OcPlatform_registerResource3");
 
         if (OC_STACK_OK != result)
         {
@@ -704,10 +881,11 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_registerResource0
         ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
         return nullptr;
     }
-
+    LOGD("OcPlatform_registerResource4");
     JniOcResourceHandle* jniHandle = new JniOcResourceHandle(resourceHandle);
     jlong handle = reinterpret_cast<jlong>(jniHandle);
     jobject jResourceHandle = env->NewObject(g_cls_OcResourceHandle, g_mid_OcResourceHandle_N_ctor, handle);
+    LOGD("OcPlatform_registerResource5");
     if (!jResourceHandle)
     {
         LOGE("Failed to create OcResourceHandle");
@@ -836,6 +1014,140 @@ jstring jDeviceName)
         LOGE("%s", e.reason().c_str());
         ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
     }
+}
+
+/*
+* Class:     org_iotivity_base_OcPlatform
+* Method:    registerPlatformInfo0
+* Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_registerPlatformInfo0
+(JNIEnv *env,
+jclass clazz,
+jstring jPlatformID,
+jstring jManufacturerName,
+jstring jManufacturerUrl,
+jstring jModelNumber,
+jstring jDateOfManufacture,
+jstring jPlatformVersion,
+jstring jOperatingSystemVersion,
+jstring jHardwareVersion,
+jstring jFirmwareVersion,
+jstring jSupportUrl,
+jstring jSystemTime)
+{
+    LOGI("OcPlatform_registerPlatformInfo");
+
+
+    std::string platformID;
+        std::string manufacturerName;
+        std::string manufacturerUrl;
+        std::string modelNumber;
+        std::string dateOfManufacture;
+        std::string platformVersion;
+        std::string operatingSystemVersion;
+        std::string hardwareVersion;
+        std::string firmwareVersion;
+        std::string supportUrl;
+        std::string systemTime;
+
+        if (jPlatformID)
+        {
+            platformID = env->GetStringUTFChars(jPlatformID, NULL);
+        }
+        if (jManufacturerName)
+        {
+            manufacturerName = env->GetStringUTFChars(jManufacturerName, NULL);
+        }
+        if (jManufacturerUrl)
+        {
+            manufacturerUrl = env->GetStringUTFChars(jManufacturerUrl, NULL);
+        }
+        if (jModelNumber)
+        {
+            modelNumber = env->GetStringUTFChars(jModelNumber, NULL);
+        }
+        if (jDateOfManufacture)
+        {
+            dateOfManufacture = env->GetStringUTFChars(jDateOfManufacture, NULL);
+        }
+        if (jPlatformVersion)
+        {
+            platformVersion = env->GetStringUTFChars(jPlatformVersion, NULL);
+        }
+        if (jOperatingSystemVersion)
+        {
+            operatingSystemVersion = env->GetStringUTFChars(jOperatingSystemVersion, NULL);
+        }
+        if (jHardwareVersion)
+        {
+            hardwareVersion = env->GetStringUTFChars(jHardwareVersion, NULL);
+        }
+        if (jFirmwareVersion)
+        {
+            firmwareVersion = env->GetStringUTFChars(jFirmwareVersion, NULL);
+        }
+        if (jSupportUrl)
+        {
+            supportUrl = env->GetStringUTFChars(jSupportUrl, NULL);
+        }
+        if (jSystemTime)
+        {
+            systemTime = env->GetStringUTFChars(jSystemTime, NULL);
+        }
+
+        OCPlatformInfo platformInfo;
+        try
+        {
+            DuplicateString(&platformInfo.platformID, platformID);
+            DuplicateString(&platformInfo.manufacturerName, manufacturerName);
+            DuplicateString(&platformInfo.manufacturerUrl, manufacturerUrl);
+            DuplicateString(&platformInfo.modelNumber, modelNumber);
+            DuplicateString(&platformInfo.dateOfManufacture, dateOfManufacture);
+            DuplicateString(&platformInfo.platformVersion, platformVersion);
+            DuplicateString(&platformInfo.operatingSystemVersion, operatingSystemVersion);
+            DuplicateString(&platformInfo.hardwareVersion, hardwareVersion);
+            DuplicateString(&platformInfo.firmwareVersion, firmwareVersion);
+            DuplicateString(&platformInfo.supportUrl, supportUrl);
+            DuplicateString(&platformInfo.systemTime, systemTime);
+        }
+        catch (std::exception &e)
+        {
+            ThrowOcException(JNI_EXCEPTION, "Failed to construct platform info");
+            return;
+        }
+
+       // __android_log_print(ANDROID_LOG_INFO, "Rahul", "platformID  = %s", platformID);
+        try
+        {
+            OCStackResult result = OCPlatform::registerPlatformInfo(platformInfo);
+
+            delete platformInfo.platformID;
+            delete platformInfo.manufacturerName;
+            delete platformInfo.manufacturerUrl;
+            delete platformInfo.modelNumber;
+            delete platformInfo.dateOfManufacture;
+            delete platformInfo.platformVersion;
+            delete platformInfo.operatingSystemVersion;
+            delete platformInfo.hardwareVersion;
+            delete platformInfo.firmwareVersion;
+            delete platformInfo.supportUrl;
+            delete platformInfo.systemTime;
+
+            if (OC_STACK_OK != result)
+            {
+                ThrowOcException(result, "Failed to register platform info");
+                return;
+            }
+        }
+        catch (OCException& e)
+        {
+            LOGE("Error is due to %s", e.reason().c_str());
+            ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        }
+
+
+
 }
 
 /*
@@ -1285,7 +1597,6 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_subscribePresence0
         LOGE("Failed to create OcPresenceHandle");
         delete jniPresenceHandle;
     }
-
     return jPresenceHandle;
 }
 

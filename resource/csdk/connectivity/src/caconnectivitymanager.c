@@ -129,11 +129,32 @@ CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSCredentialsHandler GetDTLSC
 }
 #endif //__WITH_DTLS__
 
+CAResult_t CACreateEndpoint(CATransportFlags_t flags,
+                            CATransportAdapter_t adapter,
+                            const char *addr,
+                            uint16_t port,
+                            CAEndpoint_t **object)
+{
+    if (!object)
+    {
+        OIC_LOG(ERROR, TAG, "Invalid Parameter");
+        return CA_STATUS_INVALID_PARAM;
+    }
+
+    CAEndpoint_t *endpoint = CACreateEndpointObject(flags, adapter, addr, port);
+    if (!endpoint)
+    {
+        return CA_STATUS_FAILED;
+    }
+    *object = endpoint;
+    return CA_STATUS_OK;
+}
+
 void CADestroyEndpoint(CAEndpoint_t *rep)
 {
     OIC_LOG(DEBUG, TAG, "CADestroyEndpoint");
 
-    CADestroyEndpointInternal(rep);
+    CAFreeEndpoint(rep);
 }
 
 CAResult_t CAGenerateToken(CAToken_t *token, uint8_t tokenLength)
@@ -273,8 +294,6 @@ CAResult_t CAUnSelectNetwork(const uint32_t nonInterestedNetwork)
 
 CAResult_t CAHandleRequestResponse()
 {
-    OIC_LOG(DEBUG, TAG, "CAHandleRequestResponse");
-
     if (!g_isInitialized)
     {
         OIC_LOG(ERROR, TAG, "not initialized");

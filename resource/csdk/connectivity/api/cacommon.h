@@ -239,6 +239,9 @@ typedef enum
     CA_SUCCESS = 200,                /**< Success */
     CA_CREATED = 201,                /**< Created */
     CA_DELETED = 202,                /**< Deleted */
+    CA_VALID = 203,                  /**< Valid */
+    CA_CHANGED = 204,                /**< Changed */
+    CA_CONTENT = 205,                /**< Content */
     CA_BAD_REQ = 400,                /**< Bad Request */
     CA_UNAUTHORIZED_REQ = 401,       /**< Unauthorized Request */
     CA_BAD_OPT = 402,                /**< Bad Option */

@@ -43,9 +43,9 @@ extern "C"
  */
 typedef enum
 {
-    CA_UNICAST_SERVER = 0,    /**< Unicast Server */
-    CA_MULTICAST_SERVER,      /**< Multicast Server */
-    CA_SECURED_UNICAST_SERVER /**< Secured Unicast Server */
+    CA_UNICAST_SERVER = 0,      /**< Unicast Server */
+    CA_MULTICAST_SERVER,        /**< Multicast Server */
+    CA_SECURED_UNICAST_SERVER   /**< Secured Unicast Server */
 } CAAdapterServerType_t;
 
 /**
@@ -61,6 +61,19 @@ typedef enum
 typedef void (*CAIPPacketReceivedCallback)(const CAEndpoint_t *endpoint,
                                            const void *data,
                                            uint32_t dataLength);
+
+/**
+  * @brief Callback to notify error in the IP adapter
+  *
+  * @param  endpoint     [IN] [IN] network endpoint description
+  * @param  data         [IN] Data sent/received
+  * @param  dataLength   [IN] Length of data in bytes.
+  * @param  result       [IN] result of request from R.I
+  * @return NONE
+  * @pre  Callback must be registered using CAIPSetPacketReceiveCallback()
+ */
+typedef void (*CAIPErrorHandleCallback)(const CAEndpoint_t *endpoint, const void *data,
+                                        uint32_t dataLength, CAResult_t result);
 
 /**
  * @brief  Callback to be notified when exception occures on multicast/unicast server.
@@ -212,6 +225,22 @@ void CAIPSetPacketReceiveCallback(CAIPPacketReceivedCallback callback);
 void CAIPSetExceptionCallback(CAIPExceptionCallback callback);
 
 /**
+ * @brief  Set socket description for sending unicast UDP data. Once the Unicast server is started,
+ *         the same socket descriptor is used for sending the Unicast UDP data.
+ *
+ * @param  socketFD [IN]  Socket descriptor used for sending UDP data.
+ * @return  NONE
+ */
+void CAIPSetUnicastSocket(int socketFD);
+
+/**
+ * @brief  Set the port number for sending unicast UDP data
+ * @param  port [IN] Port number used for sending UDP data.
+ * @return NONE
+ */
+void CAIPSetUnicastPort(uint16_t port);
+
+/**
  * @brief  API to send unicast UDP data
  *
  * @param  endpoint         [IN] complete network address to send to
@@ -275,6 +304,12 @@ CAResult_t CAIPStartNetworkMonitor();
 CAResult_t CAIPStopNetworkMonitor();
 
 /**
+ * @brief  Pull the Received Data
+ * @return NONE
+ */
+void CAIPPullData();
+
+/**
  * @brief  Get local adapter network information.
  *
  * @param  netInterfaceList [OUT] network interface information list
@@ -315,6 +350,14 @@ CAResult_t CAIPGetInterfaceSubnetMask(const char *ipAddress, char **subnetMask);
  * @return NONE
  */
 void CAIPSetConnectionStateChangeCallback(CAIPConnectionStateChangeCallback callback);
+
+/**
+ * @brief  Set callback for error handling
+ *
+ * @param  ipErrorCallback [IN] callback to notify error to the ipadapter
+ * @return NONE
+ */
+void CAIPSetErrorHandleCallback(CAIPErrorHandleCallback ipErrorCallback);
 
 #ifdef __cplusplus
 }

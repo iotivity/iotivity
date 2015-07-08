@@ -281,7 +281,7 @@ class LightResource : public Resource
         return m_rep;
     }
 
-    void put(OCRepresentation rep)
+    void put(const OCRepresentation& rep)
     {
         rep.getValue("on", m_isOn);
     }
@@ -376,7 +376,7 @@ class DoorResource : public Resource
         return m_rep;
     }
 
-    void put(OCRepresentation rep)
+    void put(const OCRepresentation& rep)
     {
         rep.getValue("open", m_isOpen);
         // Note, we won't let the user change the door side!

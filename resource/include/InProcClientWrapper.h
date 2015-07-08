@@ -27,7 +27,6 @@
 #include <iostream>
 
 #include <OCApi.h>
-#include <ocstack.h>
 #include <IClientWrapper.h>
 #include <InitializeException.h>
 #include <ResourceInitException.h>
@@ -102,32 +101,32 @@ namespace OC
             FindDeviceCallback& callback, QualityOfService QoS);
 
         virtual OCStackResult GetResourceRepresentation(
-            const OCDevAddr& devAddr,
+            const OCDevAddr& devAddr, bool useHostString,
             const std::string& uri,
             const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
             GetCallback& callback, QualityOfService QoS);
 
         virtual OCStackResult PutResourceRepresentation(
-            const OCDevAddr& devAddr,
+            const OCDevAddr& devAddr, bool useHostString,
             const std::string& uri,
             const OCRepresentation& attributes, const QueryParamsMap& queryParams,
             const HeaderOptions& headerOptions, PutCallback& callback, QualityOfService QoS);
 
         virtual OCStackResult PostResourceRepresentation(
-            const OCDevAddr& devAddr,
+            const OCDevAddr& devAddr, bool useHostString,
             const std::string& uri,
             const OCRepresentation& attributes, const QueryParamsMap& queryParams,
             const HeaderOptions& headerOptions, PostCallback& callback, QualityOfService QoS);
 
         virtual OCStackResult DeleteResource(
-            const OCDevAddr& devAddr,
+            const OCDevAddr& devAddr, bool useHostString,
             const std::string& uri,
             const HeaderOptions& headerOptions,
             DeleteCallback& callback, QualityOfService QoS);
 
         virtual OCStackResult ObserveResource(
             ObserveType observeType, OCDoHandle* handle,
-            const OCDevAddr& devAddr,
+            const OCDevAddr& devAddr, bool useHostString,
             const std::string& uri,
             const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
             ObserveCallback& callback, QualityOfService QoS);

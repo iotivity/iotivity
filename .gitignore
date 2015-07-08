@@ -48,10 +48,15 @@ resource/unittests/debug/
 service/things-manager/build/linux/release
 service/things-manager/build/linux/debug
 service/things-manager/sdk/build/linux/
+
 # Ignore any object files
 *.o
+*.os
 *.obj
 
+# Ignore libraries
+*.a
+*.so
 
 # Ignore Eclipse workspace files
 *.settings/
@@ -61,6 +66,7 @@ proguard-project.txt
 
 # Ignore CTags default data
 tags
+
 # Ignore dependencies folder, which should be generated
 dependencies/
 
@@ -94,6 +100,8 @@ extlibs/tinycbor/tinycbor
 *.zip
 extlibs/arduino/arduino-1.5.8
 build_common/arduino/extlibs/arduino/arduino-1.5.8
+extlibs/tinydtls/dtls-client
+extlibs/tinydtls/dtls-server
 
 # Ignore editor (e.g. Emacs) backup and autosave files
 *~
@@ -102,3 +110,6 @@ build_common/arduino/extlibs/arduino/arduino-1.5.8
 
 # Ignore byte-compiled Python scripts
 *.pyc
+
+# Ignore Valgrind generated files.
+*.memcheck

@@ -43,6 +43,7 @@ LOCAL_SRC_FILES :=  JniOcStack.cpp \
                     JniEntityHandler.cpp \
                     JniOnResourceFoundListener.cpp \
                     JniOnDeviceInfoListener.cpp \
+		    JniOnPlatformInfoListener.cpp \
                     JniOnPresenceListener.cpp \
                     JniOnGetListener.cpp \
                     JniOnPutListener.cpp \

@@ -322,6 +322,7 @@ void CAWIFIConnectionStateChangedCb(wifi_connection_state_e state, wifi_ap_h ap,
         {
             OIC_LOG(DEBUG, IP_MONITOR_TAG, "CACheckIsInterfaceInfoChanged true");
         }
+        OICFree(netInfo);
 
         OICFree(interfaceName);
         OICFree(ipAddress);

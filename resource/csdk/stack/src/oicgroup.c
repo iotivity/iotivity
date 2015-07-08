@@ -46,7 +46,7 @@
 #define ACTIONSET               "ActionSet"
 #define DELETE_ACTIONSET        "DelActionSet"
 
-#define OIC_ACTION_PREFIX               "{\"oc\":[{\"rep\":{"
+#define OIC_ACTION_PREFIX               "{\"oic\":[{\"rep\":{"
 #define VARIFY_POINTER_NULL(pointer, result, toExit) \
     if(pointer == NULL) \
     {\
@@ -947,6 +947,7 @@ OCStackResult DoAction(OCResource* resource, OCActionSet* actionset,
                 actionDescPtr);
         if (result != OC_STACK_OK)
         {
+            OICFree(info);
             return result;
         }
 

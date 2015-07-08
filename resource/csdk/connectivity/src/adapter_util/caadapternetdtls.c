@@ -83,7 +83,11 @@ static CAEndpoint_t *GetPeerInfo(const CAEndpoint_t *peer)
 static CAResult_t CAAddIdToPeerInfoList(const char *peerAddr, uint32_t port,
                                     const unsigned char *id, uint16_t id_length)
 {
-    if(NULL == peerAddr || NULL == id || 0 == port || 0 == id_length)
+    if(NULL == peerAddr
+       || NULL == id
+       || 0 == port
+       || 0 == id_length
+       || CA_MAX_ENDPOINT_IDENTITY_LEN < id_length)
     {
         OIC_LOG(ERROR, NET_DTLS_TAG, "CAAddIdToPeerInfoList invalid parameters");
         return CA_STATUS_INVALID_PARAM;
@@ -98,7 +102,8 @@ static CAResult_t CAAddIdToPeerInfoList(const char *peerAddr, uint32_t port,
 
     OICStrcpy(peer->addr, sizeof(peer->addr), peerAddr);
     peer->port = port;
-    OICStrcpyPartial(peer->identity.id, sizeof(peer->identity.id), id, id_length);
+
+    memcpy(peer->identity.id, id, id_length);
     peer->identity.id_length = id_length;
 
     if(NULL != GetPeerInfo(peer))

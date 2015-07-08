@@ -285,7 +285,7 @@ namespace OIC
                                     std::placeholders::_1, std::placeholders::_2,
                                     std::placeholders::_3, conf)));
 
-            free(newActionSet);
+            delete(newActionSet);
         }
     }
 

@@ -38,8 +38,8 @@ import android.util.Log;
  */
 public class ActionListener implements IActionListener {
 
-    private final String     LOG_TAG             = this.getClass()
-                                                         .getSimpleName();
+    private final String     LOG_TAG             = "[TMSample] " + this.getClass()
+                                                                   .getSimpleName();
     private static Message   msg;
     private String           logMessage;
     private GroupApiActivity groupApiActivityObj = null;

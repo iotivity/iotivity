@@ -25,9 +25,9 @@
 #include <string.h>
 #include <stdint.h>
 
-#include "caipadapter_singlethread.h"
+#include "caipadapter.h"
 #include "caedradapter_singlethread.h"
-#include "caleadapter_singlethread.h"
+#include "caleadapter.h"
 #include "caadapterutils.h"
 
 #include "canetworkconfigurator.h"
@@ -39,7 +39,7 @@
 #define CA_MEMORY_ALLOC_CHECK(arg) { if (arg == NULL) {OIC_LOG(ERROR, TAG, "Out of memory");\
     goto memory_error_exit;} }
 
-#define CA_CONNECTIVITY_TYPE_NUM   4
+#define CA_CONNECTIVITY_TYPE_NUM   3
 
 static CAConnectivityHandler_t g_adapterHandler[CA_CONNECTIVITY_TYPE_NUM];
 
@@ -55,13 +55,13 @@ static int CAGetAdapterIndex(CATransportAdapter_t cType)
     {
         case CA_ADAPTER_IP:
             return 0;
-        case CA_ADAPTER_RFCOMM_BTEDR:
-            return 1;
         case CA_ADAPTER_GATT_BTLE:
+            return 1;
+        case CA_ADAPTER_RFCOMM_BTEDR:
             return 2;
     }
 
-    OIC_LOG(DEBUG, TAG, "CA_CONNECTIVITY_TYPE_NUM is not 4");
+    OIC_LOG(DEBUG, TAG, "CA_CONNECTIVITY_TYPE_NUM is not 3");
 
     return -1;
 }
@@ -137,7 +137,8 @@ void CAInitializeAdapters()
 
     // Initialize adapters and register callback.
 #ifdef IP_ADAPTER
-    CAInitializeIP(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback);
+    CAInitializeIP(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback,
+                   NULL, NULL);
 #endif /* IP_ADAPTER */
 
 #ifdef EDR_ADAPTER
@@ -145,7 +146,8 @@ void CAInitializeAdapters()
 #endif /* EDR_ADAPTER */
 
 #ifdef LE_ADAPTER
-    CAInitializeLE(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback);
+    CAInitializeLE(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback,
+                   NULL, NULL);
 #endif /* LE_ADAPTER */
 
     OIC_LOG(DEBUG, TAG, "OUT");

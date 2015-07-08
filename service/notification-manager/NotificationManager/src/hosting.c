@@ -1230,6 +1230,7 @@ OCStackResult requestIsAlive(const char *address)
     if (requestMirrorResourceList->headerNode == NULL)
     {
         OC_LOG_V(DEBUG, HOSTING_TAG, "Cannot found any mirror resource2");
+        destroyMirrorResourceList(requestMirrorResourceList);
         return OC_STACK_ERROR;
     }
 

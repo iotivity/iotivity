@@ -5,7 +5,7 @@
 command in this directory)
 
     Install external libraries:
-      $ sudo apt-get install libboost-dev libboost-program-options-dev libexpat1-dev libboost-thread-dev uuid-dev
+      $ sudo apt-get install libboost-dev libboost-program-options-dev libexpat1-dev libboost-thread-dev uuid-dev libssl-dev
 
     Build release binaries:
       $ scons
@@ -137,7 +137,7 @@ to skip it.
 
 1. Build IoTivity project for Linux
       $ cd <top directory of the project>
-      $ sudo apt-get install libboost-dev libexpat1-dev libboost-thread-dev
+      $ sudo apt-get install libboost-dev libexpat1-dev libboost-thread-dev libssl-dev
       $ scons
 
 2. Build IoTivity project for Android

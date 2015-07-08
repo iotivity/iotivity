@@ -56,7 +56,7 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
     OcPlatform.OnResourceFoundListener, OnGetListener, OnDeleteListener,
     OnObserveListener, OnPutListener
 {
-        private final String TAG = "sample_consumer";
+        private final String TAG = "NMConsumer : " + this.getClass().getSimpleName();
 
         public static final int OC_STACK_OK = 0;
         public static final String OBSERVE = "Observe";
@@ -169,6 +169,7 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
             OcPlatform.Configure(cfg);
             current_log_result += "Created Platform...\n";
             tv_current_log_result.setText(current_log_result);
+            Log.i(TAG, current_log_result);
             findResourceCandidate();
             PRINT();
         }
@@ -178,6 +179,7 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
             nmfindResource("", "/oc/core?rt=Resource.Hosting");
             current_log_result += "Finding Resource... \n";
             tv_current_log_result.setText(current_log_result);
+            Log.i(TAG, current_log_result);
         }
 
         public void nmfindResource(String host, String resourceName)
@@ -192,6 +194,7 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
                 e.printStackTrace();
                 current_log_result += e.getMessage() + "\n";
                 tv_current_log_result.setText(current_log_result);
+                Log.i(TAG, current_log_result);
             }
         }
 
@@ -204,6 +207,7 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
             {
                 current_log_result += "Getting Light Representation...\n";
                 tv_current_log_result.setText(current_log_result);
+                Log.i(TAG, current_log_result);
             }
         }
 
@@ -216,6 +220,7 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
             {
                 current_log_result += "Getting Light Representation...\n";
                 tv_current_log_result.setText(current_log_result);
+                Log.i(TAG, current_log_result);
 
                 try
                 {
@@ -227,6 +232,7 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
                     e.printStackTrace();
                     current_log_result += e.getMessage() + "\n";
                     tv_current_log_result.setText(current_log_result);
+                    Log.i(TAG, current_log_result);
                 }
             }
         }
@@ -248,6 +254,7 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
                 Map<String, String> queryParamsMap = new HashMap<String, String>();
                 current_log_result += "startObserve\n";
                 tv_current_log_result.setText(current_log_result);
+                Log.i(TAG, current_log_result);
 
                 try
                 {
@@ -258,6 +265,7 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
                     e.printStackTrace();
                     current_log_result += e.getMessage() + "\n";
                     tv_current_log_result.setText(current_log_result);
+                    Log.i(TAG, current_log_result);
                 }
             }
         }
@@ -269,6 +277,7 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
                 Map<String, String> queryParamsMap = new HashMap<String, String>();
                 current_log_result += "startGet\n";
                 tv_current_log_result.setText(current_log_result);
+                Log.i(TAG, current_log_result);
 
                 try
                 {
@@ -279,6 +288,7 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
                     e.printStackTrace();
                     current_log_result += e.getMessage() + "\n";
                     tv_current_log_result.setText(current_log_result);
+                    Log.i(TAG, current_log_result);
                 }
             }
         }
@@ -294,6 +304,7 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
                 Map<String, String> queryParamsMap = new HashMap<String, String>();
                 current_log_result += "startPut\n";
                 tv_current_log_result.setText(current_log_result);
+                Log.i(TAG, current_log_result);
 
                 try
                 {
@@ -304,6 +315,7 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
                     e.printStackTrace();
                     current_log_result += e.getMessage() + "\n";
                     tv_current_log_result.setText(current_log_result);
+                    Log.i(TAG, current_log_result);
                 }
             }
         }
@@ -324,16 +336,19 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
             {
                 case R.id.btn_observe:
                     tv_select_method_type.setText(OBSERVE);
+                    Log.i(TAG, "Method: " + OBSERVE);
                     startObserve(curResource);
                     btn_observe.setClickable(false);
                     break;
                 case R.id.btn_get:
                     tv_select_method_type.setText(GET);
+                    Log.i(TAG, "Method: " + GET);
                     startGet(curResource);
                     btn_get.setClickable(false);
                     break;
                 case R.id.btn_put:
                     tv_select_method_type.setText(PUT);
+                    Log.i(TAG, "Method: " + PUT);
                     startPut(curResource);
                     btn_put.setClickable(false);
                     break;
@@ -341,9 +356,11 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
                     tv_select_method_type.setText(POST);
                     Toast.makeText(this, "Not Supported Yet", Toast.LENGTH_SHORT)
                     .show();
+                    Log.i(TAG, "Method: " + POST);
                     break;
                 case R.id.btn_delete:
                     tv_select_method_type.setText(DELETE);
+                    Log.i(TAG, "Method: " + DELETE);
                 try {
                     startDelete(curResource);
                 } catch (OcException e) {
@@ -354,6 +371,7 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
                     break;
                 case R.id.btn_clean:
                     cleanLogString();
+                    Log.i(TAG, "Log textbox is cleared");
                     break;
 
                 default:
@@ -376,14 +394,17 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
                     if (receive_result != null)
                     {
                         tv_receive_result.setText(receive_result);
+                        Log.i(TAG, "Received: " + receive_result);
                     }
                     if (found_uri != null)
                     {
                         tv_found_uri.setText(found_uri);
+                        Log.i(TAG, "URI: " + found_uri);
                     }
                     if (current_log_result != null)
                     {
                         tv_current_log_result.setText(current_log_result);
+                        Log.i(TAG, current_log_result);
                     }
 
                 }
@@ -475,6 +496,7 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
                     final String message = intent
                                            .getStringExtra(MESSAGE);
                     tv_current_log_result.setText(message);
+                    Log.i(TAG, message);
                     viewText();
                 }
         }

@@ -210,7 +210,7 @@ namespace OC
     const std::string BATCH_INTERFACE = "oic.if.b";
 
     // Used in GET, PUT, POST methods on links to other remote resources of a group.
-    const std::string GROUP_INTERFACE = "oc.mi.grp";
+    const std::string GROUP_INTERFACE = "oic.mi.grp";
 
 
     typedef std::function<void(std::shared_ptr<OCResource>)> FindCallback;

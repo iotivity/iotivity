@@ -49,6 +49,7 @@ static u_arraylist_t *g_gattObjectList = NULL;
 static u_arraylist_t *g_deviceStateList = NULL;
 
 static CAPacketReceiveCallback g_packetReceiveCallback = NULL;
+static CABLEErrorHandleCallback g_clientErrorCallback;
 static ca_thread_pool_t g_threadPoolHandle = NULL;
 static jobject g_leScanCallback = NULL;
 static jobject g_leGattCallback = NULL;
@@ -487,6 +488,11 @@ void CALEClientSetCallback(CAPacketReceiveCallback callback)
     g_packetReceiveCallback = callback;
 }
 
+void CASetBLEClientErrorHandleCallback(CABLEErrorHandleCallback callback)
+{
+    g_clientErrorCallback = callback;
+}
+
 CAResult_t CALEClientGetInterfaceInfo(char **address)
 {
     OIC_LOG(INFO, TAG, "CALEClientGetInterfaceInfo is not supported");
@@ -737,6 +743,7 @@ CAResult_t CALEClientSendMulticastMessageImpl(JNIEnv *env, const char* data,
         if (CA_STATUS_OK != res)
         {
             OIC_LOG_V(INFO, TAG, "multicast : send has failed for this device[%s]", address);
+            g_clientErrorCallback(address, data, dataLen, res);
             (*env)->ReleaseStringUTFChars(env, jni_address, address);
             continue;
         }
@@ -1003,7 +1010,7 @@ CAResult_t CALEClientStartScan()
     // scan gatt server with UUID
     if (g_leScanCallback && g_uuidList)
     {
-#ifndef FULL_SCAN
+#ifdef UUID_SCAN
         ret = CALEClientStartScanWithUUIDImpl(env, g_uuidList, g_leScanCallback);
         if(CA_STATUS_OK != ret)
         {
@@ -3154,7 +3161,7 @@ void CALEClientSetTheSendRequestFlag(bool flag)
  * adapter common
  */
 
-CAResult_t CAStartBLEGattClient()
+CAResult_t CAStartLEGattClient()
 {
     CAResult_t res = CALEClientStartMulticastServer();
     if (CA_STATUS_OK != res)
@@ -3169,7 +3176,7 @@ CAResult_t CAStartBLEGattClient()
     return res;
 }
 
-void CAStopBLEGattClient()
+void CAStopLEGattClient()
 {
     OIC_LOG(DEBUG, TAG, "CAStopBLEGattClient");
 
@@ -3218,7 +3225,7 @@ void CAStopBLEGattClient()
 
 }
 
-void CATerminateBLEGattClient()
+void CATerminateLEGattClient()
 {
     OIC_LOG(DEBUG, TAG, "Terminate GATT Client");
     CALEClientTerminate();
@@ -3243,7 +3250,7 @@ CAResult_t CAUpdateCharacteristicsToAllGattServers(const char *data, uint32_t da
     return CALEClientSendMulticastMessage(data, dataLen);
 }
 
-void CASetBLEReqRespClientCallback(CABLEClientDataReceivedCallback callback)
+void CASetLEReqRespClientCallback(CABLEClientDataReceivedCallback callback)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -3254,7 +3261,7 @@ void CASetBLEReqRespClientCallback(CABLEClientDataReceivedCallback callback)
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
-void CASetBleClientThreadPoolHandle(ca_thread_pool_t handle)
+void CASetLEClientThreadPoolHandle(ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 

@@ -22,6 +22,7 @@
 #include "OCUtilities.h"
 
 #include <boost/lexical_cast.hpp>
+#include <sstream>
 
 namespace OC {
 
@@ -35,7 +36,7 @@ OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
                         const std::vector<std::string>& resourceTypes,
                         const std::vector<std::string>& interfaces)
  :  m_clientWrapper(clientWrapper), m_uri(uri),
-    m_resourceId(serverId, m_uri), m_devAddr(devAddr),
+    m_resourceId(serverId, m_uri), m_devAddr(devAddr), m_useHostString(false),
     m_isObservable(observable), m_isCollection(false),
     m_resourceTypes(resourceTypes), m_interfaces(interfaces),
     m_observeHandle(nullptr)
@@ -62,6 +63,7 @@ OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
  :  m_clientWrapper(clientWrapper), m_uri(uri),
     m_resourceId(serverId, m_uri),
     m_devAddr{ OC_DEFAULT_ADAPTER },
+    m_useHostString(true),
     m_isObservable(observable), m_isCollection(false),
     m_resourceTypes(resourceTypes), m_interfaces(interfaces),
     m_observeHandle(nullptr)
@@ -99,7 +101,7 @@ OCStackResult OCResource::get(const QueryParamsMap& queryParametersMap,
 {
     return checked_guard(m_clientWrapper.lock(),
                             &IClientWrapper::GetResourceRepresentation,
-                            m_devAddr, m_uri,
+                            m_devAddr, m_useHostString, m_uri,
                             queryParametersMap, m_headerOptions,
                             attributeHandler, QoS);
 }
@@ -145,7 +147,7 @@ OCStackResult OCResource::put(const OCRepresentation& rep,
                               QualityOfService QoS)
 {
     return checked_guard(m_clientWrapper.lock(), &IClientWrapper::PutResourceRepresentation,
-                         m_devAddr, m_uri, rep, queryParametersMap,
+                         m_devAddr, m_useHostString, m_uri, rep, queryParametersMap,
                          m_headerOptions, attributeHandler, QoS);
 }
 
@@ -195,7 +197,7 @@ OCStackResult OCResource::post(const OCRepresentation& rep,
                                QualityOfService QoS)
 {
     return checked_guard(m_clientWrapper.lock(), &IClientWrapper::PostResourceRepresentation,
-                         m_devAddr, m_uri, rep, queryParametersMap,
+                         m_devAddr, m_useHostString, m_uri, rep, queryParametersMap,
                          m_headerOptions, attributeHandler, QoS);
 }
 
@@ -243,7 +245,7 @@ OCStackResult OCResource::post(const std::string& resourceType,
 OCStackResult OCResource::deleteResource(DeleteCallback deleteHandler, QualityOfService QoS)
 {
     return checked_guard(m_clientWrapper.lock(), &IClientWrapper::DeleteResource,
-                         m_devAddr, m_uri, m_headerOptions, deleteHandler, QoS);
+                         m_devAddr, m_useHostString, m_uri, m_headerOptions, deleteHandler, QoS);
 }
 
 OCStackResult OCResource::deleteResource(DeleteCallback deleteHandler)
@@ -265,7 +267,7 @@ OCStackResult OCResource::observe(ObserveType observeType,
 
     return checked_guard(m_clientWrapper.lock(), &IClientWrapper::ObserveResource,
                          observeType, &m_observeHandle, m_devAddr,
-                         m_uri, queryParametersMap, m_headerOptions,
+                         m_useHostString, m_uri, queryParametersMap, m_headerOptions,
                          observeHandler, QoS);
 }
 
@@ -306,7 +308,33 @@ OCStackResult OCResource::cancelObserve(QualityOfService QoS)
 
 std::string OCResource::host() const
 {
-    return std::string(m_devAddr.addr);
+    if (m_useHostString)
+    {
+        return std::string(m_devAddr.addr);
+    }
+
+    std::ostringstream ss;
+    if (m_devAddr.flags & OC_SECURE)
+    {
+        ss << "coaps://";
+    }
+    else
+    {
+        ss << "coap://";
+    }
+    if (m_devAddr.flags & OC_IP_USE_V6)
+    {
+        ss << '[' << m_devAddr.addr << ']';
+    }
+    else
+    {
+        ss << m_devAddr.addr;
+    }
+    if (m_devAddr.port)
+    {
+        ss << ':' << m_devAddr.port;
+    }
+    return ss.str();
 }
 
 std::string OCResource::uri() const

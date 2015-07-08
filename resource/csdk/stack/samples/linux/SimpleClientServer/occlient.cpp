@@ -30,8 +30,10 @@
 #include "occlient.h"
 #include "ocpayload.h"
 
+// Tracking user input
 static int UNICAST_DISCOVERY = 0;
 static int TEST_CASE = 0;
+static int CONNECTIVITY = 0;
 
 static const char * UNICAST_DEVICE_DISCOVERY_QUERY = "coap://%s:6298/oic/d";
 static const char * MULTICAST_DEVICE_DISCOVERY_QUERY = "/oic/d";
@@ -92,9 +94,11 @@ OCPayload* putPayload()
 
 static void PrintUsage()
 {
-    OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1..17> -c <0|1>");
+    OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1..17> -c <0|1|2>");
     OC_LOG(INFO, TAG, "-u <0|1> : Perform multicast/unicast discovery of resources");
-    OC_LOG(INFO, TAG, "-c <0|1> : IPv4/IPv6 (IPv6 not currently supported)");
+    OC_LOG(INFO, TAG, "-c 0 : Default IPv4 and IPv6 auto-selection");
+    OC_LOG(INFO, TAG, "-c 1 : IPv4 Connectivity Type");
+    OC_LOG(INFO, TAG, "-c 2 : IPv6 Connectivity Type (IPv6 not currently supported)");
     OC_LOG(INFO, TAG, "-t 1  :  Discover Resources");
     OC_LOG(INFO, TAG, "-t 2  :  Discover Resources and Initiate Nonconfirmable Get Request");
     OC_LOG(INFO, TAG, "-t 3  :  Discover Resources and Initiate Nonconfirmable Get Request"
@@ -106,7 +110,7 @@ static void PrintUsage()
     OC_LOG(INFO, TAG, "-t 8  :  Discover Resources and Initiate Nonconfirmable Get Request "\
             "for a resource which is unavailable");
     OC_LOG(INFO, TAG, "-t 9  :  Discover Resources and Initiate Confirmable Get Request");
-    OC_LOG(INFO, TAG, "-t 10  :  Discover Resources and Initiate Confirmable Post Request");
+    OC_LOG(INFO, TAG, "-t 10 :  Discover Resources and Initiate Confirmable Post Request");
     OC_LOG(INFO, TAG, "-t 11 :  Discover Resources and Initiate Confirmable Delete Requests");
     OC_LOG(INFO, TAG, "-t 12 :  Discover Resources and Initiate Confirmable Observe Requests"\
             " and cancel with Low QoS");
@@ -244,8 +248,7 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse
     OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
     OC_LOG(INFO, TAG, PCF("=============> Get Response"));
 
-    if(clientResponse->rcvdVendorSpecificHeaderOptions &&
-            clientResponse->numRcvdVendorSpecificHeaderOptions)
+    if(clientResponse->numRcvdVendorSpecificHeaderOptions > 0)
     {
         OC_LOG (INFO, TAG, "Received vendor specific options");
         uint8_t i = 0;
@@ -718,8 +721,9 @@ int InitPlatformDiscovery(OCQualityOfService qos)
     }
     else
     {
-        ret = OCDoResource(NULL, OC_REST_DISCOVER, szQueryUri, 0, 0, CT_DEFAULT,
-                (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS, &cbData, NULL, 0);
+
+        ret = OCDoResource(NULL, OC_REST_DISCOVER, szQueryUri, 0, 0, OC_CONNTYPE,
+                        (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS, &cbData, NULL, 0);
     }
 
     if (ret != OC_STACK_OK)
@@ -759,8 +763,8 @@ int InitDeviceDiscovery(OCQualityOfService qos)
     }
     else
     {
-        ret = OCDoResource(NULL, OC_REST_DISCOVER, szQueryUri, 0, 0, CT_DEFAULT,
-                (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS, &cbData, NULL, 0);
+        ret = OCDoResource(NULL, OC_REST_DISCOVER, szQueryUri, 0, 0, OC_CONNTYPE,
+                        (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS, &cbData, NULL, 0);
     }
 
     if (ret != OC_STACK_OK)
@@ -797,8 +801,8 @@ int InitDiscovery(OCQualityOfService qos)
     }
     else
     {
-        ret = OCDoResource(NULL, OC_REST_DISCOVER, szQueryUri, 0, 0, CT_DEFAULT,
-                (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS, &cbData, NULL, 0);
+        ret = OCDoResource(NULL, OC_REST_DISCOVER, szQueryUri, 0, 0, OC_CONNTYPE,
+                        (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS, &cbData, NULL, 0);
     }
     if (ret != OC_STACK_OK)
     {
@@ -822,7 +826,7 @@ int main(int argc, char* argv[])
                 TEST_CASE = atoi(optarg);
                 break;
             case 'c':
-                OC_CONNTYPE = CT_ADAPTER_IP;
+                CONNECTIVITY = atoi(optarg);
                 break;
             default:
                 PrintUsage();
@@ -831,7 +835,8 @@ int main(int argc, char* argv[])
     }
 
     if ((UNICAST_DISCOVERY != 0 && UNICAST_DISCOVERY != 1) ||
-            (TEST_CASE < TEST_DISCOVER_REQ || TEST_CASE >= MAX_TESTS) )
+            (TEST_CASE < TEST_DISCOVER_REQ || TEST_CASE >= MAX_TESTS) ||
+            (CONNECTIVITY < CT_ADAPTER_DEFAULT || CONNECTIVITY >= MAX_CT))
     {
         PrintUsage();
         return -1;
@@ -845,7 +850,9 @@ int main(int argc, char* argv[])
     }
     if (UNICAST_DISCOVERY)
     {
-        printf("Enter IPv4 address of the Server hosting resource (Ex: 192.168.0.15)\n");
+        OC_LOG(INFO, TAG, "Enter IPv4 address of the Server hosting resource (Ex: 192.168.0.15)\n");
+        OC_LOG(INFO, TAG, "Ipv6 is currently not supported...");
+
         if (fgets(ipv4addr, IPV4_ADDR_SIZE, stdin))
         {
             //Strip newline char from ipv4addr
@@ -856,7 +863,29 @@ int main(int argc, char* argv[])
             OC_LOG(ERROR, TAG, "!! Bad input for IPV4 address. !!");
             return OC_STACK_INVALID_PARAM;
         }
-     }
+    }
+    if(CONNECTIVITY == CT_ADAPTER_DEFAULT)
+    {
+        OC_CONNTYPE = CT_DEFAULT;
+    }
+    else if(CONNECTIVITY == CT_IPV4)
+    {
+        OC_CONNTYPE = CT_IP_USE_V4;
+    }
+    else if(CONNECTIVITY == CT_IPV6)
+    {
+        OC_CONNTYPE = CT_IP_USE_V6;
+
+        //TODO: Remove when IPv6 is available.
+        OC_LOG(ERROR, TAG, "IPv6 is currently not supported !!!!");
+        PrintUsage();
+        return -1;
+    }
+    else
+    {
+        OC_LOG(INFO, TAG, "Default Connectivity type selected...");
+        PrintUsage();
+    }
 
     if(UNICAST_DISCOVERY  == 0  && TEST_CASE == TEST_DISCOVER_DEV_REQ)
     {
@@ -930,6 +959,12 @@ std::string getConnectivityType (OCConnectivityType connType)
     {
         case CT_ADAPTER_IP:
             return "IP";
+
+        case CT_IP_USE_V4:
+            return "IPv4";
+
+        case CT_IP_USE_V6:
+            return "IPv6";
 
         case CT_ADAPTER_GATT_BTLE:
             return "GATT";

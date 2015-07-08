@@ -411,12 +411,12 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     CAResponseInfo_t responseInfo = {};
     CAHeaderOption_t* optionsPointer = NULL;
 
-    OC_LOG_V(INFO, TAG, "Inside HandleSingleResponse: %s", ehResponse->payload);
-
     if(!ehResponse || !ehResponse->requestHandle)
     {
         return OC_STACK_ERROR;
     }
+
+    OC_LOG_V(INFO, TAG, "Inside HandleSingleResponse: %s", ehResponse->payload);
 
     OCServerRequest *serverRequest = (OCServerRequest *)ehResponse->requestHandle;
 

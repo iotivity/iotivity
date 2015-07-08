@@ -53,7 +53,19 @@ typedef enum
     MAX_TESTS
 } CLIENT_TEST;
 
+/**
+ * List of connectivity types that can be initiated from the client
+ * Required for user input validation
+ */
+typedef enum {
+    CT_ADAPTER_DEFAULT = 0,
+    CT_IPV4,
+    CT_IPV6,
+    MAX_CT
+} CLIENT_CONNECTIVITY_TYPE;
+
 unsigned static int TEST = TEST_INVALID;
+unsigned static int CONNECTIVITY = 0;
 
 typedef struct
 {
@@ -107,7 +119,9 @@ int InitDiscovery();
 void PrintUsage()
 {
     OC_LOG(INFO, TAG, "Usage : occlientcoll -t <Test Case> -c <CA connectivity Type>");
-    OC_LOG(INFO, TAG, "-c <0|1> : IPv4/IPv6 (IPv6 not currently supported)");
+    OC_LOG(INFO, TAG, "-c 0 : Default IPv4 and IPv6 auto-selection");
+    OC_LOG(INFO, TAG, "-c 1 : IPv4 Connectivity Type");
+    OC_LOG(INFO, TAG, "-c 2 : IPv6 Connectivity Type (IPv6 not currently supported)");
     OC_LOG(INFO, TAG, "Test Case 1 : Discover Resources && Initiate GET Request on an "\
             "available resource using default interface.");
     OC_LOG(INFO, TAG, "Test Case 2 : Discover Resources && Initiate GET Request on an "\
@@ -321,7 +335,7 @@ int InitDiscovery()
     cbData.cb = discoveryReqCB;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
-    ret = OCDoResource(NULL, OC_REST_DISCOVER, szQueryUri, 0, 0, CT_DEFAULT,
+    ret = OCDoResource(NULL, OC_REST_DISCOVER, szQueryUri, 0, 0, OC_CONNTYPE,
                         OC_LOW_QOS,
             &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
@@ -343,14 +357,15 @@ int main(int argc, char* argv[])
                 TEST = atoi(optarg);
                 break;
             case 'c':
-                OC_CONNTYPE = CT_ADAPTER_IP;
+                CONNECTIVITY = atoi(optarg);
                 break;
             default:
                 PrintUsage();
                 return -1;
         }
     }
-    if (TEST <= TEST_INVALID || TEST >= MAX_TESTS)
+    if ((TEST <= TEST_INVALID || TEST >= MAX_TESTS) ||
+        (CONNECTIVITY < CT_ADAPTER_DEFAULT || CONNECTIVITY >= MAX_CT))
     {
         PrintUsage();
         return -1;
@@ -363,6 +378,28 @@ int main(int argc, char* argv[])
         return 0;
     }
 
+    if(CONNECTIVITY == CT_ADAPTER_DEFAULT)
+    {
+        OC_CONNTYPE = CT_DEFAULT;
+    }
+    else if(CONNECTIVITY == CT_IPV4)
+    {
+        OC_CONNTYPE = CT_IP_USE_V4;
+    }
+    else if(CONNECTIVITY == CT_IPV6)
+    {
+        OC_CONNTYPE = CT_IP_USE_V6;
+
+        //TODO: Remove when IPv6 is available.
+        OC_LOG(INFO, TAG, "Ipv6 is currently not supported...");
+        PrintUsage();
+        return -1;
+    }
+    else
+    {
+        OC_LOG(INFO, TAG, "Default Connectivity type selected...");
+        OC_CONNTYPE = CT_ADAPTER_IP;
+    }
     InitDiscovery();
 
     // Break from loop with Ctrl+C
