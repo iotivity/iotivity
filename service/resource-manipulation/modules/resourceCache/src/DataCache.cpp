@@ -247,5 +247,10 @@ namespace OIC
                 sResource->requestGet(pGetCB);
             }
         }
+
+        bool DataCache::isEmptySubscriber() const
+        {
+            return (subscriberList!=nullptr)?subscriberList->empty():true;
+        }
     } // namespace Service
 } // namespace OIC

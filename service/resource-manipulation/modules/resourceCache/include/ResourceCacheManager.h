@@ -36,10 +36,11 @@ namespace OIC
         class ResourceCacheManager
         {
         public:
-            class InvalidParameter: public PrimitiveException
+            class InvalidParameterException: public PrimitiveException
             {
             public:
-                InvalidParameter(std::string&& what) : PrimitiveException{ std::move(what) } {}
+                InvalidParameterException(std::string&& what)
+                : PrimitiveException{ std::move(what) } {}
             };
 
             static ResourceCacheManager * getInstance();

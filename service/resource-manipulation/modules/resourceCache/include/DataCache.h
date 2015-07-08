@@ -48,6 +48,7 @@ namespace OIC
             const PrimitiveResourcePtr getPrimitiveResource() const;
 
             void requestGet();
+            bool isEmptySubscriber() const;
 
         private:
             // resource instance

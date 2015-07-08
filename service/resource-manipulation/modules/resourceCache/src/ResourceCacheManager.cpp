@@ -57,7 +57,7 @@ namespace OIC
         {
             if(pResource == nullptr)
             {
-                throw InvalidParameter{"[requestResourceCache] Primitive Resource is invaild"};
+                throw InvalidParameterException{"[requestResourceCache] Primitive Resource is invaild"};
             }
 
             CacheID retID = 0;
@@ -66,7 +66,7 @@ namespace OIC
             {
                 if(func == NULL || func == nullptr)
                 {
-                    throw InvalidParameter{"[requestResourceCache] CacheCB is invaild"};
+                    throw InvalidParameterException{"[requestResourceCache] CacheCB is invaild"};
                 }
                 if(!reportTime)
                 {
@@ -93,7 +93,7 @@ namespace OIC
         {
             if(id == 0 || cacheIDmap.find(id) == cacheIDmap.end())
             {
-                throw InvalidParameter{"[cancelResourceCache] CacheID is invaild"};
+                throw InvalidParameterException{"[cancelResourceCache] CacheID is invaild"};
             }
 
             DataCachePtr foundCacheHandler = findDataCache(id);
@@ -104,6 +104,11 @@ namespace OIC
                 {
                     cacheIDmap.erase(id);
                 }
+                if(foundCacheHandler->isEmptySubscriber())
+                {
+                    s_cacheDataList->remove(foundCacheHandler);
+                    foundCacheHandler.reset();
+                }
             }
         }
 
@@ -111,13 +116,15 @@ namespace OIC
         {
             if(pResource == nullptr)
             {
-                throw InvalidParameter{"[updateResourceCache] Primitive Resource is invaild"};
+                throw InvalidParameterException
+                {"[updateResourceCache] Primitive Resource is invaild"};
             }
 
             DataCachePtr foundCache = findDataCache(pResource);
             if(foundCache == nullptr)
             {
-                throw InvalidParameter{"[updateResourceCache] Primitive Resource is invaild"};
+                throw InvalidParameterException
+                {"[updateResourceCache] Primitive Resource is invaild"};
             }
             foundCache->requestGet();
         }
@@ -125,13 +132,13 @@ namespace OIC
         {
             if(updateId == 0)
             {
-                throw InvalidParameter{"[getCachedData] CacheID is invaild"};
+                throw InvalidParameterException{"[getCachedData] CacheID is invaild"};
             }
 
             DataCachePtr foundCache = findDataCache(updateId);
             if(foundCache == nullptr)
             {
-                throw InvalidParameter{"[getCachedData] CacheID is invaild"};
+                throw InvalidParameterException{"[getCachedData] CacheID is invaild"};
             }
             foundCache->requestGet();
         }
@@ -141,13 +148,13 @@ namespace OIC
         {
             if(pResource == nullptr)
             {
-                throw InvalidParameter{"[getCachedData] Primitive Resource is invaild"};
+                throw InvalidParameterException{"[getCachedData] Primitive Resource is invaild"};
             }
 
             DataCachePtr handler = findDataCache(pResource);
             if(handler == nullptr)
             {
-                throw InvalidParameter{"[getCachedData] Primitive Resource is invaild"};
+                throw InvalidParameterException{"[getCachedData] Primitive Resource is invaild"};
             }
             return handler->getCachedData();
         }
@@ -156,13 +163,13 @@ namespace OIC
         {
             if(id == 0)
             {
-                throw InvalidParameter{"[getCachedData] CacheID is invaild"};
+                throw InvalidParameterException{"[getCachedData] CacheID is invaild"};
             }
 
             DataCachePtr handler = findDataCache(id);
             if(handler == nullptr)
             {
-                throw InvalidParameter{"[getCachedData] CacheID is invaild"};
+                throw InvalidParameterException{"[getCachedData] CacheID is invaild"};
             }
             return handler->getCachedData();
         }
@@ -172,7 +179,7 @@ namespace OIC
         {
             if(pResource == nullptr)
             {
-                throw InvalidParameter{"[getResourceCacheState] Primitive Resource is invaild"};
+                throw InvalidParameterException{"[getResourceCacheState] Primitive Resource is invaild"};
             }
 
             DataCachePtr handler = findDataCache(pResource);
@@ -187,7 +194,7 @@ namespace OIC
         {
             if(id == 0)
             {
-                throw InvalidParameter{"[getResourceCacheState] CacheID is invaild"};
+                throw InvalidParameterException{"[getResourceCacheState] CacheID is invaild"};
             }
 
             DataCachePtr handler = findDataCache(id);
