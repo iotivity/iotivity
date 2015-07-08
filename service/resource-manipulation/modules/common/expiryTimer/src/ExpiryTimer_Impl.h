@@ -21,75 +21,82 @@
 #ifndef _EXPIRY_TIMER_Impl_H_
 #define _EXPIRY_TIMER_Impl_H_
 
-#include <mutex>
-#include <pthread.h>
-#include <functional>
-#include <list>
-#include <map>
+// CHECKER_WAIT_TIME : checker thread waits new request for 10000 seconds
+#define CHECKER_WAIT_TIME 10000
+
 #include <iostream>
-#include <new>
-
-#define EXPIRY_THREAD_LIST 50
-#define OVERFLOW_THREAD_NUM -1
-// Current checker thread design have to get checking interval.
-// SLEEP_TIME value will be removed later.
-#define SLEEP_TIME 50000
-
-using namespace std;
-
-typedef unsigned int TimerID;
-typedef function<void*(TimerID)> TimerCB;
+#include <functional>
+#include <map>
+#include <mutex>
+#include <thread>
+#include <chrono>
+#include <condition_variable>
 
 class ExpiryTimer_Impl
 {
+public:
+    typedef unsigned int Id;
+    typedef std::function<void*(Id)> TimerCb;
+
+    typedef long long DelayMilliSec;
+    typedef std::chrono::milliseconds milliSeconds;
+    typedef std::chrono::duration<int64_t, std::milli> milliDelayTime;
+    typedef std::chrono::duration<int64_t, std::milli> ExpiredTime;
+
 private:
-   struct timerCBInfo
+    struct TimerCBInfo
     {
-       TimerID m_id;
-       TimerCB m_pCB;
+        Id m_id;
+        TimerCb m_cb;
     };
 
-    ExpiryTimer_Impl();
-    ExpiryTimer_Impl(const ExpiryTimer_Impl & other);
-    ~ExpiryTimer_Impl();
-
 public:
-
-     static ExpiryTimer_Impl * getInstance();
-
-    TimerID requestTimer(long long sec, TimerCB);
-    void cancelTimer(TimerID timerID);
+   ~ExpiryTimer_Impl();
 
 private:
-
-   static void killTimer();
-   static void *threadExecutor(void * msg);
-   static void *threadChecker(void * msg);
-
-   void registerCBTimer(long long countSEC, TimerCB _cb, TimerID id);
-   void initThCheck();
-   void initThExecutor(timerCBInfo cbInfo);
-   void checkTimeOut();
-
-   TimerID generateTimerID();
-   long long getSeconds(long long sec);
+   ExpiryTimer_Impl();
 
 public:
+    static ExpiryTimer_Impl* getInstance();
 
-    list<TimerID> timerIDList;
+    Id postTimer(DelayMilliSec, TimerCb);
+    bool cancelTimer(Id);
 
 private:
+   Id generateID();
 
-    static ExpiryTimer_Impl * s_instance;
-    static mutex s_mutexForCreation;
-    static bool isDestroyed;
+   void insertTimerCBInfo(ExpiredTime, TimerCb ,Id);
+   ExpiredTime countExpireTime(milliSeconds);
 
-    multimap<long long, timerCBInfo> mTimerCBList;
-    bool checkThreadRun;
-    list<int> mExecutorIndexList;
-    int threadNum;
+   void createChecker();
+   void doChecker();
 
-    pthread_t checker_th;
-    pthread_mutex_t checker_mutex;
+   void doExecutor(ExpiredTime);
+
+private:
+   static ExpiryTimer_Impl* s_instance;
+   static std::once_flag mflag;
+
+   std::multimap<ExpiredTime, TimerCBInfo> mTimerCBList;
+
+   std::thread check;
+   std::mutex m_mutex;
+   std::mutex cond_mutex;
+   std::condition_variable m_cond;
+
+public:
+   class ExecutorThread
+   {
+   public:
+       ExecutorThread(TimerCBInfo);
+       ~ExecutorThread();
+
+   public:
+       void executorFunc(TimerCBInfo);
+
+   private:
+       std::thread execute;
+   };
 };
+
 #endif //_EXPIRY_TIMER_Impl_H_

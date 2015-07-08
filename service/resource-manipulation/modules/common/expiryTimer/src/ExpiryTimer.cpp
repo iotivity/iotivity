@@ -19,8 +19,9 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "ExpiryTimer.h"
+#include "ExpiryTimer_Impl.h"
 
-#include <ctime>
+ExpiryTimer_Impl* timerPtr;
 
 ExpiryTimer::ExpiryTimer()
 {
@@ -29,7 +30,6 @@ ExpiryTimer::ExpiryTimer()
 
 ExpiryTimer::~ExpiryTimer()
 {
-    // clear ExpiryTimer id
     for(auto it : mTimerIDList)
     {
         timerPtr->cancelTimer(it);
@@ -37,28 +37,22 @@ ExpiryTimer::~ExpiryTimer()
     mTimerIDList.clear();
 }
 
-TimerID ExpiryTimer::requestTimer(long long sec, TimerCB cb)
+ExpiryTimer::TimerID ExpiryTimer::postTimer(long long sec, TimerCB cb)
 {
-    TimerID retID;
-    long long expiredTime;
+    TimerID retID = 0;
 
-    expiredTime = countExpiredTime(sec);
-    retID = timerPtr->requestTimer(expiredTime, cb);
-
+    retID = timerPtr->postTimer(sec, cb);
     mTimerIDList.push_back(retID);
 
     return retID;
 }
 
-void ExpiryTimer::cancelTimer(TimerID timerID)
+bool ExpiryTimer::cancelTimer(TimerID timerID)
 {
-    timerPtr->cancelTimer(timerID);
-    mTimerIDList.remove(timerID);
-}
+    bool ret = false;
 
-long long ExpiryTimer::countExpiredTime(long long sec)
-{
-    time_t curSEC;
-    time(&curSEC);
-    return curSEC + sec;
+    ret = timerPtr->cancelTimer(timerID);
+    mTimerIDList.remove(timerID);
+
+    return ret;
 }

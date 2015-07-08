@@ -25,185 +25,139 @@
 #include <cstdlib>
 #include <utility>
 
-
-ExpiryTimer_Impl* ExpiryTimer_Impl::s_instance = nullptr;
-std::mutex ExpiryTimer_Impl::s_mutexForCreation;
-bool ExpiryTimer_Impl::isDestroyed = false;
+ExpiryTimer_Impl* ExpiryTimer_Impl::s_instance;
+std::once_flag ExpiryTimer_Impl::mflag;
 
 ExpiryTimer_Impl::ExpiryTimer_Impl()
 {
-    threadNum = 0;
-    checkThreadRun = false;
+    createChecker();
 }
 
 ExpiryTimer_Impl::~ExpiryTimer_Impl()
 {
-    isDestroyed = true;
-    int status;
-
-    pthread_join(checker_th, (void **)&status);
-    pthread_detach(checker_th);
-}
-
-void ExpiryTimer_Impl::killTimer()
-{
-    s_instance->~ExpiryTimer_Impl();
 }
 
 ExpiryTimer_Impl* ExpiryTimer_Impl::getInstance()
 {
-    if(isDestroyed)
-    {
-        new(s_instance) ExpiryTimer_Impl;
-        atexit(killTimer);
-        isDestroyed = false;
-    }
-    else if(s_instance == nullptr)
-    {
-        static ExpiryTimer_Impl tmp_instance;
-        s_instance = &tmp_instance;
-    }
+    std::call_once(mflag, [](){ s_instance = new ExpiryTimer_Impl; });
     return s_instance;
 }
 
-TimerID ExpiryTimer_Impl::requestTimer(long long sec, TimerCB cb)
+ExpiryTimer_Impl::Id ExpiryTimer_Impl::postTimer(DelayMilliSec msec, TimerCb cb)
 {
-    if(threadNum < EXPIRY_THREAD_LIST)
-    {
-        unsigned int timerID = generateTimerID();
-        ExpiryTimer_Impl::getInstance()->registerCBTimer(sec, cb, timerID);
-        return timerID;
-    }
-    else
-        return OVERFLOW_THREAD_NUM;
-}
-
-void ExpiryTimer_Impl::cancelTimer(TimerID timerID)
-{
-    for( auto it : mTimerCBList)
-    {
-        if(it.second.m_id == timerID)
-        {
-            mTimerCBList.erase(it.first);
-            timerIDList.remove(it.second.m_id);
-        }
-    }
-}
-
-void ExpiryTimer_Impl::registerCBTimer(long long countSEC, TimerCB _cb, TimerID id)
-{
-    timerCBInfo newInfo = {id, _cb};
-    mTimerCBList.insert(multimap<long long, ExpiryTimer_Impl::timerCBInfo>::value_type(countSEC, newInfo));
-
-    if (checkThreadRun == false)
-    {
-        initThCheck();
-    }
-}
-
-void ExpiryTimer_Impl::checkTimeOut()
-{
-    while (1)
-    {
-        if(mTimerCBList.empty())
-        {
-            checkThreadRun = false;
-            break;
-        }
-       else
-        {
-           long long curSEC = getSeconds(0);
-           long long expireTime;
-           expireTime = mTimerCBList.begin()->first;
-
-           if(curSEC >= expireTime)
-           {
-               initThExecutor(mTimerCBList.begin()->second);
-               mTimerCBList.erase(mTimerCBList.begin());
-           }
-        }
-       usleep(SLEEP_TIME);
-    }
-}
-
-void* ExpiryTimer_Impl::threadChecker(void * msg)
-{
-    if(s_instance != nullptr)
-        s_instance->checkTimeOut();
-    return NULL;
-}
-
-void ExpiryTimer_Impl::initThCheck()
-{
-    int retThreadCreation;
-
-    retThreadCreation = pthread_create(&checker_th, NULL, s_instance->threadChecker, NULL);
-    if (retThreadCreation != 0)
-    {
-        return;
-    }
-    else
-    {
-        checkThreadRun = true;
-    }
-}
-
-void *ExpiryTimer_Impl::threadExecutor(void * msg)
-{
-    TimerCB cb;
-    timerCBInfo *curCBInfo;
-    curCBInfo= (timerCBInfo *) msg;
-
-    cb = curCBInfo->m_pCB;
-    cb(curCBInfo->m_id);
-
-    return NULL;
-}
-
-void ExpiryTimer_Impl::initThExecutor(timerCBInfo cbInfo)
-{
-
-    int retThreadCreation;
-    int status;
-    pthread_t executor_th;
-
-    retThreadCreation = pthread_create(&executor_th, NULL, ExpiryTimer_Impl::threadExecutor, (void *)&cbInfo);
-    threadNum++;
-
-    if (retThreadCreation != 0)
-    {
-        return;
-    }
-    else
-    {
-        pthread_join(executor_th, (void **)&status);
-        pthread_detach(executor_th);
-        threadNum--;
-    }
-}
-
-TimerID ExpiryTimer_Impl::generateTimerID()
-{
-    srand(time(NULL));
-    unsigned int retID = rand();
-
-    for(auto it : timerIDList)
-     {
-       if(it == retID || retID == 0)
-        {
-            retID = rand();
-            it = s_instance->timerIDList.front();
-        }
-     }
-    timerIDList.push_back(retID);
+    Id retID;
+    retID = generateID();
+    milliSeconds delay(msec);
+    insertTimerCBInfo(countExpireTime(delay), cb, retID);
 
     return retID;
 }
 
-long long ExpiryTimer_Impl::getSeconds(long long sec)
+bool ExpiryTimer_Impl::cancelTimer(Id timerID)
 {
-    time_t curSEC;
-    time(&curSEC);
-    long long retSEC = curSEC + sec;
-    return retSEC;
+    std::lock_guard<std::mutex> lockf(m_mutex);
+    bool ret = false;
+    for(auto it: mTimerCBList)
+    {
+        if(it.second.m_id == timerID)
+        {
+            if(mTimerCBList.erase(it.first)!=0)
+                ret = true;
+            else
+                ret = false;
+        }
+    }
+    return ret;
+}
+
+void ExpiryTimer_Impl::insertTimerCBInfo(ExpiredTime msec, TimerCb cb, Id timerID)
+{
+    std::lock_guard<std::mutex> lockf(m_mutex);
+    TimerCBInfo newInfo = {timerID, cb};
+    mTimerCBList.insert(std::multimap<ExpiredTime, TimerCBInfo>::value_type(msec, newInfo));
+    m_cond.notify_all();
+}
+
+ExpiryTimer_Impl::ExpiredTime ExpiryTimer_Impl::countExpireTime(milliDelayTime msec)
+{
+    auto now = std::chrono::system_clock::now();
+    milliSeconds ret = std::chrono::duration_cast<milliSeconds>(now.time_since_epoch()) + msec;
+
+    return ret;
+}
+
+ExpiryTimer_Impl::Id ExpiryTimer_Impl::generateID()
+{
+    srand(time(NULL));
+    Id retID = rand();
+
+    for(std::multimap<ExpiredTime, TimerCBInfo>::iterator it=mTimerCBList.begin(); it!=mTimerCBList.end(); ++it)
+     {
+       if((*it).second.m_id == retID || retID == 0)
+        {
+            retID = rand();
+            it = mTimerCBList.begin();
+        }
+     }
+    return retID;
+}
+
+void ExpiryTimer_Impl::createChecker()
+{
+    check = std::thread(&ExpiryTimer_Impl::doChecker, this);
+}
+
+void ExpiryTimer_Impl::doChecker()
+{
+    while(true)
+    {
+        std::unique_lock<std::mutex> ul(cond_mutex);
+
+        if(mTimerCBList.empty())
+        {
+            m_cond.wait_for(ul, std::chrono::seconds(CHECKER_WAIT_TIME));
+        }
+        else
+        {
+            ExpiredTime expireTime;
+            expireTime = mTimerCBList.begin()->first;
+
+            auto now = std::chrono::system_clock::now();
+            milliSeconds waitTime = expireTime - std::chrono::duration_cast<milliSeconds>(now.time_since_epoch());
+            m_cond.wait_for(ul, waitTime);
+
+            auto callTime = std::chrono::system_clock::now();
+            doExecutor(std::chrono::duration_cast<milliSeconds>(callTime.time_since_epoch()));
+        }
+    }
+}
+
+void ExpiryTimer_Impl::doExecutor(ExpiredTime expireTime)
+{
+    for(auto it: mTimerCBList)
+    {
+        if(it.first <= expireTime)
+        {
+            new ExecutorThread(it.second);
+            mTimerCBList.erase(mTimerCBList.begin());
+        }
+        else
+            break;
+    }
+}
+
+// ExecuterThread Class
+ExpiryTimer_Impl::ExecutorThread::ExecutorThread(TimerCBInfo cbInfo)
+{
+    execute = std::thread(&ExpiryTimer_Impl::ExecutorThread::executorFunc, this, cbInfo);
+}
+
+ExpiryTimer_Impl::ExecutorThread::~ExecutorThread()
+{
+    execute.detach();
+}
+
+void ExpiryTimer_Impl::ExecutorThread::executorFunc(TimerCBInfo cbInfo)
+{
+    cbInfo.m_cb(cbInfo.m_id);
 }
