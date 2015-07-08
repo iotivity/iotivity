@@ -37,7 +37,7 @@ namespace OIC
 {
     namespace Service
     {
-        class ResourceContainerBundleAPI: public Configuration, public NotificationReceiver
+        class ResourceContainerBundleAPI: public NotificationReceiver
         {
             public:
                 ResourceContainerBundleAPI();

@@ -41,69 +41,70 @@ namespace OIC
 
         class ResourceContainerImpl: public ResourceContainer, public ResourceContainerBundleAPI
         {
-        public:
-            ResourceContainerImpl();
-            virtual ~ResourceContainerImpl();
+            public:
+                ResourceContainerImpl();
+                virtual ~ResourceContainerImpl();
 
-            // methods from ResourceContainer
-            void startContainer(string configFile);
-            void stopContainer();
-            void activateBundle(string bundleId);
-            void deactivateBundle(string bundleId);
-            void activateBundle(BundleInfo *bundleInfo);
-            void deactivateBundle(BundleInfo *bundleInfo);
+                // methods from ResourceContainer
+                void startContainer(string configFile);
+                void stopContainer();
+                void activateBundle(BundleInfo *bundleInfo);
+                void deactivateBundle(BundleInfo *bundleInfo);
+                void activateBundle(string bundleId);
+                void deactivateBundle(string bundleId);
+                void registerBundle(BundleInfo *bundleinfo);
+                void unregisterBundle(BundleInfo *bundleinfo);
+                void unregisterBundle(string id);
 
-            // methods from ResourceContainerBundleAPI
-            void registerBundle(BundleInfo *bundleinfo);
-            void unregisterBundle(BundleInfo *bundleinfo);
-            void unregisterBundle(string id);
-            void registerResource(BundleResource *resource);
-            void unregisterResource(BundleResource *resource);
+                // methods from ResourceContainerBundleAPI
+                void registerResource(BundleResource *resource);
+                void unregisterResource(BundleResource *resource);
 
-            void getBundleConfiguration(std::string bundleId, configInfo *configOutput);
-            void getResourceConfiguration(std::string bundleId,
-                    std::vector< resourceInfo > *configOutput);
+                void getBundleConfiguration(std::string bundleId, configInfo *configOutput);
+                void getResourceConfiguration(std::string bundleId,
+                                              std::vector< resourceInfo > *configOutput);
 
-            PrimitiveGetResponse getRequestHandler(const PrimitiveRequest &request,
-                    const ResourceAttributes &attributes);
+                PrimitiveGetResponse getRequestHandler(const PrimitiveRequest &request,
+                                                       const ResourceAttributes &attributes);
+                PrimitiveSetResponse setRequestHandler(const PrimitiveRequest &request,
+                                                       const ResourceAttributes &attributes);
 
-            PrimitiveSetResponse setRequestHandler(const PrimitiveRequest &request,
-                    const ResourceAttributes &attributes);
-			
-			void onNotificationReceived(std::string strResourceUri);
-					
-            static ResourceContainerImpl *getImplInstance();
+                void onNotificationReceived(std::string strResourceUri);
 
-            void addBundle(string bundleId, string bundleUri, string bundlePath, std::map<string, string> params);
-            void removeBundle(string bundleId);
+                static ResourceContainerImpl *getImplInstance();
+                static ResourceObject::Ptr buildResourceObject(string strUri, string strResourceType);
 
-            std::list<BundleInfo*> listBundles();
+                void startBundle(string bundleId);
+                void stopBundle(string bundleId);
 
-            void addResourceConfig(string bundleId, string resourceUri, std::map<string, string> params);
-            void removeResourceConfig(string bundleId, string resourceUri);
+                void addBundle(string bundleId, string bundleUri, string bundlePath,
+                               std::map<string, string> params);
+                void removeBundle(string bundleId);
 
-            std::list<string> listBundleResources(string bundleId);
+                std::list<BundleInfo *> listBundles();
 
-            void startBundle(string bundleId);
-            void stopBundle(string bundleId);
+                void addResourceConfig(string bundleId, string resourceUri, std::map<string, string> params);
+                void removeResourceConfig(string bundleId, string resourceUri);
 
-            JavaVM* getJavaVM(string bundleId);
+                std::list<string> listBundleResources(string bundleId);
 
-        private:
-            map< std::string, BundleInfoInternal * > m_bundles; // <bundleID, bundleInfo>
-            map< std::string, ResourceObject::Ptr > m_mapServers; //<uri, serverPtr>
-            map< std::string, BundleResource * > m_mapResources; //<uri, resourcePtr>
-            string m_configFile;
-            Configuration *m_config = NULL;
-            map<string, JavaVM*> m_bundleVM;
+                JavaVM *getJavaVM(string bundleId);
 
-            void registerJavaBundle(BundleInfo *bundleInfo);
-            void registerSoBundle(BundleInfo *bundleInfo);
-            void activateJavaBundle(string bundleId);
-            void activateSoBundle(string bundleId);
-            void deactivateJavaBundle(string bundleId);
-            void deactivateSoBundle(string bundleId);
 
+            private:
+                map< std::string, BundleInfoInternal * > m_bundles; // <bundleID, bundleInfo>
+                map< std::string, ResourceObject::Ptr > m_mapServers; //<uri, serverPtr>
+                map< std::string, BundleResource * > m_mapResources; //<uri, resourcePtr>
+                string m_configFile;
+                Configuration *m_config = NULL;
+                map<string, JavaVM *> m_bundleVM;
+
+                void registerJavaBundle(BundleInfo *bundleInfo);
+                void registerSoBundle(BundleInfo *bundleInfo);
+                void activateJavaBundle(string bundleId);
+                void activateSoBundle(string bundleId);
+                void deactivateJavaBundle(string bundleId);
+                void deactivateSoBundle(string bundleId);
         };
     }
 }

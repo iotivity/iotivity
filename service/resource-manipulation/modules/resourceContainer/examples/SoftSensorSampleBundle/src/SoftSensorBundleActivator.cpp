@@ -59,13 +59,15 @@ void SoftSensorBundleActivator::deactivateBundle()
     {
         destroyResource(*itor);
     }
+
+    m_vecResources.clear();
 }
 
 void SoftSensorBundleActivator::createResource(resourceInfo resourceInfo)
 {
     std::cout << "SoftSensorSampleBundle::createResource called" << std::endl;
 
-    static int discomfortIndexSensorCount = 0;
+    static int discomfortIndexSensorCount = 1;
 
     std::vector< std::map< std::string, std::string > >::iterator itor_vec;
     std::map< std::string, std::string >::iterator itor_map;
@@ -104,12 +106,12 @@ void SoftSensorBundleActivator::destroyResource(BundleResource *resource)
     itor = std::find(m_vecResources.begin(), m_vecResources.end(), resource);
 
     if (itor != m_vecResources.end())
-        m_vecResources.erase(itor);
+    {
+        m_pResourceContainer->unregisterResource(resource);
+    }
 
-    // check
-    //delete resource;
-
-    m_pResourceContainer->unregisterResource(resource);
+    //TODO
+    /*std::cout << "Clearing up memory.\n";*/
 }
 
 extern "C" void externalActivateBundle(ResourceContainerBundleAPI *resourceContainer,
@@ -121,8 +123,5 @@ extern "C" void externalActivateBundle(ResourceContainerBundleAPI *resourceConta
 
 extern "C" void externalDeactivateBundle()
 {
-    if (!bundle)
-    {
-        bundle->deactivateBundle();
-    }
+    bundle->deactivateBundle();
 }

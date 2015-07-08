@@ -94,7 +94,10 @@ void HueSampleBundleActivator::destroyResource(BundleResource *resource)
 
     itor = std::find(m_vecResources.begin(), m_vecResources.end(), resource);
 
-    m_pResourceContainer->unregisterResource(resource);
+    if (itor != m_vecResources.end())
+    {
+        m_pResourceContainer->unregisterResource(resource);
+    }
 
     //TODO
     /*std::cout << "Clearing up memory.\n";
