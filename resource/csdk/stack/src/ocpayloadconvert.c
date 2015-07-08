@@ -615,8 +615,6 @@ OCStackResult ConvertRepPayload(OCRepPayload* payload, uint8_t** outPayload, siz
 OCStackResult ConvertPresencePayload(OCPresencePayload* payload, uint8_t** outPayload, size_t* size)
 {
     *outPayload = (uint8_t*)OICCalloc(1, MAX_REQUEST_LENGTH);
-    // TODO: figure out how to calculate this so we only allocate the required amount,
-    // might need to just do a realloc afterwards
     *size = MAX_REQUEST_LENGTH;
 
     if(!*outPayload)

@@ -627,11 +627,17 @@ OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
             VERIFY_NON_NULL(serverResponse);
         }
 
-        printf("ERICH: Handle Aggregate Response!!!\n");
-        exit(-1);
-        // append
-        // // TODO: ERICH: What is the correct logic here?!?
-        // AppendPayload(&serverResponse->payload, ehResponse->payload);
+        if(serverResponse->payload->type != PAYLOAD_TYPE_REPRESENTATION ||
+                ehResponse->payload->type != PAYLOAD_TYPE_REPRESENTATION)
+        {
+            stackRet = OC_STACK_ERROR;
+            OC_LOG(ERROR, TAG, PCF("Error adding payload, as it was the incorrect type"));
+            goto exit;
+        }
+
+        OCRepPayloadAppend((OCRepPayload*)serverResponse->payload,
+                (OCRepPayload*)ehResponse->payload);
+
         (serverRequest->numResponses)--;
 
         if(serverRequest->numResponses == 0)
