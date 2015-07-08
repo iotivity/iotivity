@@ -33,6 +33,23 @@ target_os = env.get('TARGET_OS')
 ######################################################################
 # Build flags
 ######################################################################
+
+try:
+	print 'Java Home: ', os.environ['JAVA_HOME']
+	print 'Java Lib: ', os.environ['JAVA_LIB']
+except KeyError:
+	print '''
+*********************************** Error *************************************
+* Cannot build resource container. JAVA_HOME or JAVA_LIB are not set properly 
+* Please configure JAVA_HOME to point to your Java 7 JDK and 
+* JAVA_LIB to your folder containing libjvm
+* Example: export JAVA_HOME=/usr/lib/jvm/java-7-openjdk-i386
+*          export JAVA_LIB=/usr/lib/jvm/java-7-openjdk-i386/jre/lib/i386/server
+*******************************************************************************	
+	'''
+	Return()
+	
+
 resource_container_env.AppendUnique(
 	CPPPATH = [
 		env.get('SRC_DIR')+'/extlibs', 
@@ -42,8 +59,8 @@ resource_container_env.AppendUnique(
 		'src',
 		'../serverBuilder/include',
 		'../common/primitiveResource/include',
-		'/usr/lib/jvm/java-7-openjdk-i386/include',
-		'/usr/lib/jvm/java-7-openjdk-i386/include/linux'
+		os.environ['JAVA_HOME']+'/include',
+		os.environ['JAVA_HOME']+'/include/linux'
 	])
 
 if target_os not in ['windows', 'winrt']:
@@ -55,7 +72,22 @@ if target_os == 'android':
     resource_container_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
     resource_container_env.PrependUnique(LIBS = ['gnustl_shared', 'compatibility', 'log'])
 	
-resource_container_env.AppendUnique(LIBPATH = ['/usr/lib/jvm/java-7-openjdk-i386/jre/lib/i386/server/'])
+
+resource_container_env.AppendUnique(LIBPATH = [os.environ['JAVA_LIB']])
+	
+conf = Configure(resource_container_env)
+if not conf.CheckLib('jvm'):
+	print '''
+*********************************** Error *************************************
+* Cannot locate libjvm for resource container.
+* Please check your JAVA_LIB to point to your folder containing libjvm.
+* Example: export JAVA_LIB=/usr/lib/jvm/java-7-openjdk-i386/jre/lib/i386/server/
+*******************************************************************************	
+	'''
+	resource_container_env = conf.Finish()
+	Return()
+resource_container_env = conf.Finish()
+
 resource_container_env.PrependUnique(LIBS = ['server_builder', 'service_common', 'oc','octbstack', 'oc_logger', 'oc_logger_core', 'connectivity_abstraction'])
 resource_container_env.AppendUnique(LIBS = ['dl', 'jvm'])	
 
@@ -92,21 +124,35 @@ ss_resource_bundle_env.InstallTarget(SoftSensorBundle, 'libSoftSensorBundle')
 # build hue sample bundle
 ######################################################################
 
-hue_resource_bundle_env = resource_container_env.Clone()
-hue_resource_bundle_env.AppendUnique(CCFLAGS = ['-fPIC'])
-
-HUE_RESOURCE_BUNDLE_DIR = 'examples/HueSampleBundle/'
-hue_resource_bundle_env.AppendUnique(CPPPATH = [
-		HUE_RESOURCE_BUNDLE_DIR + 'include',
-		'include/'
-		])		
+conf2 = Configure(lib_env)
+if not conf2.CheckLib('curl'):
+	print '''X
+*********************************** Error *************************************
+* Cannot build hue sample. Please install libcurl.
+* Example (Ubuntu): 
+*	sudo apt get install libcurl4-openssl-dev
+*	sudo ldconfig
+* Hint: check with pkg-config --libc libcurl and clear scons cache.
+* Skipping hue sample build.
+*******************************************************************************	
+	'''
+else:
+	hue_resource_bundle_env = resource_container_env.Clone()
+	hue_resource_bundle_env.AppendUnique(CCFLAGS = ['-fPIC'])
 	
-hue_resource_bundle_env.PrependUnique(LIBS = ['curl'])
+	HUE_RESOURCE_BUNDLE_DIR = 'examples/HueSampleBundle/'
+	hue_resource_bundle_env.AppendUnique(CPPPATH = [
+			HUE_RESOURCE_BUNDLE_DIR + 'include',
+			'include/'
+			])		
+		
+	hue_resource_bundle_env.PrependUnique(LIBS = ['curl'])
+		
+	hue_resource_bundle_src = [ Glob(HUE_RESOURCE_BUNDLE_DIR + 'src/*.cpp'), Glob('src/*.cpp')]
 	
-hue_resource_bundle_src = [ Glob(HUE_RESOURCE_BUNDLE_DIR + 'src/*.cpp'), Glob('src/*.cpp')]
-
-HueBundle = hue_resource_bundle_env.SharedLibrary('HueBundle', hue_resource_bundle_src)
-hue_resource_bundle_env.InstallTarget(HueBundle, 'libHueBundle')
+	HueBundle = hue_resource_bundle_env.SharedLibrary('HueBundle', hue_resource_bundle_src)
+	hue_resource_bundle_env.InstallTarget(HueBundle, 'libHueBundle')
+lib_env = conf2.Finish()
 
 ######################################################################
 # build resource container unit tests

@@ -108,7 +108,7 @@ class ResourceContainerImplTest : public Test
         void SetUp() override
         {
             m_pResourceContainer = ResourceContainerImpl::getImplInstance();
-            m_pBundleInfo = BundleInfo::createBundleInfo();
+            m_pBundleInfo = BundleInfo::build();
         }
 };
 
