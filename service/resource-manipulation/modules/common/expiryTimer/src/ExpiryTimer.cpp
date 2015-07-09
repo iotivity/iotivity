@@ -34,10 +34,11 @@ ExpiryTimer::~ExpiryTimer()
     {
         timerPtr->cancelTimer(it);
     }
+    timerPtr->destroy();
     mTimerIDList.clear();
 }
 
-ExpiryTimer::TimerID ExpiryTimer::postTimer(long long sec, TimerCB cb)
+ExpiryTimer::TimerID ExpiryTimer::postTimer(DelayMilliSec sec, TimerCB cb)
 {
     TimerID retID = 0;
 

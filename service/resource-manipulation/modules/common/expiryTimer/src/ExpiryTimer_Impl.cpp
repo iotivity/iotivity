@@ -25,8 +25,8 @@
 #include <cstdlib>
 #include <utility>
 
-ExpiryTimer_Impl* ExpiryTimer_Impl::s_instance;
-std::once_flag ExpiryTimer_Impl::mflag;
+ExpiryTimer_Impl* ExpiryTimer_Impl::s_instance = nullptr;
+std::once_flag* ExpiryTimer_Impl::mflag = new std::once_flag;
 
 ExpiryTimer_Impl::ExpiryTimer_Impl()
 {
@@ -35,11 +35,29 @@ ExpiryTimer_Impl::ExpiryTimer_Impl()
 
 ExpiryTimer_Impl::~ExpiryTimer_Impl()
 {
+    check.detach();
+    delete mflag;
+    s_instance = nullptr;
+    delete s_instance;
 }
 
+void ExpiryTimer_Impl::destroy()
+{
+    if(mTimerCBList.empty())
+    {
+        try
+        {
+            s_instance->~ExpiryTimer_Impl();
+        }
+        catch(std::exception &e)
+        {
+            std::cout << e.what();
+        }
+    }
+}
 ExpiryTimer_Impl* ExpiryTimer_Impl::getInstance()
 {
-    std::call_once(mflag, [](){ s_instance = new ExpiryTimer_Impl; });
+    std::call_once((*mflag), [](){ s_instance = new ExpiryTimer_Impl(); });
     return s_instance;
 }
 
@@ -47,6 +65,7 @@ ExpiryTimer_Impl::Id ExpiryTimer_Impl::postTimer(DelayMilliSec msec, TimerCb cb)
 {
     Id retID;
     retID = generateID();
+
     milliSeconds delay(msec);
     insertTimerCBInfo(countExpireTime(delay), cb, retID);
 
@@ -55,12 +74,12 @@ ExpiryTimer_Impl::Id ExpiryTimer_Impl::postTimer(DelayMilliSec msec, TimerCb cb)
 
 bool ExpiryTimer_Impl::cancelTimer(Id timerID)
 {
-    std::lock_guard<std::mutex> lockf(m_mutex);
     bool ret = false;
     for(auto it: mTimerCBList)
     {
         if(it.second.m_id == timerID)
         {
+            std::lock_guard<std::mutex> lockf(m_mutex);
             if(mTimerCBList.erase(it.first)!=0)
                 ret = true;
             else
@@ -72,8 +91,8 @@ bool ExpiryTimer_Impl::cancelTimer(Id timerID)
 
 void ExpiryTimer_Impl::insertTimerCBInfo(ExpiredTime msec, TimerCb cb, Id timerID)
 {
-    std::lock_guard<std::mutex> lockf(m_mutex);
     TimerCBInfo newInfo = {timerID, cb};
+    std::lock_guard<std::mutex> lockf(m_mutex);
     mTimerCBList.insert(std::multimap<ExpiredTime, TimerCBInfo>::value_type(msec, newInfo));
     m_cond.notify_all();
 }
@@ -91,6 +110,7 @@ ExpiryTimer_Impl::Id ExpiryTimer_Impl::generateID()
     srand(time(NULL));
     Id retID = rand();
 
+    std::lock_guard<std::mutex> lockf(id_mutex);
     for(std::multimap<ExpiredTime, TimerCBInfo>::iterator it=mTimerCBList.begin(); it!=mTimerCBList.end(); ++it)
      {
        if((*it).second.m_id == retID || retID == 0)

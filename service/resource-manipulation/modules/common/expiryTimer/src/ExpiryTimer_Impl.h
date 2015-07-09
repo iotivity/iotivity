@@ -21,8 +21,8 @@
 #ifndef _EXPIRY_TIMER_Impl_H_
 #define _EXPIRY_TIMER_Impl_H_
 
-// CHECKER_WAIT_TIME : checker thread waits new request for 10000 seconds
-#define CHECKER_WAIT_TIME 10000
+// CHECKER_WAIT_TIME : checker thread waits new request for 10 seconds
+#define CHECKER_WAIT_TIME 10
 
 #include <iostream>
 #include <functional>
@@ -50,14 +50,15 @@ private:
         TimerCb m_cb;
     };
 
-public:
-   ~ExpiryTimer_Impl();
-
 private:
    ExpiryTimer_Impl();
+   ExpiryTimer_Impl(const ExpiryTimer_Impl&);
+   ExpiryTimer_Impl& operator=(const ExpiryTimer_Impl&);
+   ~ExpiryTimer_Impl();
 
 public:
     static ExpiryTimer_Impl* getInstance();
+    void destroy();
 
     Id postTimer(DelayMilliSec, TimerCb);
     bool cancelTimer(Id);
@@ -75,12 +76,13 @@ private:
 
 private:
    static ExpiryTimer_Impl* s_instance;
-   static std::once_flag mflag;
+   static std::once_flag* mflag;
 
    std::multimap<ExpiredTime, TimerCBInfo> mTimerCBList;
 
    std::thread check;
    std::mutex m_mutex;
+   std::mutex id_mutex;
    std::mutex cond_mutex;
    std::condition_variable m_cond;
 
