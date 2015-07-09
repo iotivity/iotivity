@@ -95,6 +95,7 @@ namespace OIC
                 map< std::string, BundleInfoInternal * > m_bundles; // <bundleID, bundleInfo>
                 map< std::string, ResourceObject::Ptr > m_mapServers; //<uri, serverPtr>
                 map< std::string, BundleResource * > m_mapResources; //<uri, resourcePtr>
+                map< std::string, list<string> > m_mapBundleResources; //<bundleID, vector<uri>>
                 string m_configFile;
                 Configuration *m_config = NULL;
                 map<string, JavaVM *> m_bundleVM;

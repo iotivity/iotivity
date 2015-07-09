@@ -101,6 +101,7 @@ namespace OIC
                 void registerObserver(NotificationReceiver *pNotiReceiver);
 
             public:
+                string m_bundleId;
                 string m_name, m_uri, m_resourceType, m_address;
                 map< string, vector< map< string, string > > > m_mapResourceProperty;
 

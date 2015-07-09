@@ -85,6 +85,8 @@ void SoftSensorBundleActivator::createResource(resourceInfo resourceInfo)
     // create DISensor resource
     DiscomfortIndexSensorResource *newResource = new DiscomfortIndexSensorResource(inputs);
 
+    newResource->m_bundleId = m_bundleId;
+
     newResource->m_uri = "/softsensor/discomfortIndex/" + std::to_string(
                              discomfortIndexSensorCount++);
     newResource->m_resourceType = resourceInfo.resourceType;

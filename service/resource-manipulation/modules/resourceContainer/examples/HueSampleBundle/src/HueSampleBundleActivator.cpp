@@ -50,7 +50,7 @@ void HueSampleBundleActivator::activateBundle(ResourceContainerBundleAPI *resour
     resourceContainer->getResourceConfiguration(m_bundleId, &resourceConfig);
 
     for (vector< resourceInfo >::iterator itor = resourceConfig.begin();
-            itor != resourceConfig.end(); itor++)
+         itor != resourceConfig.end(); itor++)
     {
         createResource(*itor);
     }
@@ -61,7 +61,7 @@ void HueSampleBundleActivator::deactivateBundle()
     std::cout << "HueSampleBundle::deactivateBundle called" << std::endl;
 
     for (std::vector< BundleResource * >::iterator itor = m_vecResources.begin();
-            itor != m_vecResources.end(); itor++)
+         itor != m_vecResources.end(); itor++)
     {
         destroyResource(*itor);
     }
@@ -74,9 +74,10 @@ void HueSampleBundleActivator::createResource(resourceInfo resourceInfo)
     if (resourceInfo.resourceType == "oic.light.control")
     {
         static int lightCount = 1;
-        HueLight* hueLight = new HueLight(m_connector, resourceInfo.address);
+        HueLight *hueLight = new HueLight(m_connector, resourceInfo.address);
         resourceInfo.uri = "/hue/light/" + std::to_string(lightCount++);
         std::cout << "Registering resource " << resourceInfo.uri << std::endl;
+        hueLight->m_bundleId = m_bundleId;
         hueLight->m_uri = resourceInfo.uri;
         hueLight->m_resourceType = resourceInfo.resourceType;
         hueLight->m_name = resourceInfo.name;
@@ -112,7 +113,7 @@ void HueSampleBundleActivator::destroyResource(BundleResource *resource)
 }
 
 extern "C" void externalActivateBundle(ResourceContainerBundleAPI *resourceContainer,
-        std::string bundleId)
+                                       std::string bundleId)
 {
     bundle = new HueSampleBundleActivator();
     bundle->activateBundle(resourceContainer, bundleId);

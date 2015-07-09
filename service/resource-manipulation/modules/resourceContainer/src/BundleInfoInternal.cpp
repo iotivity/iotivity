@@ -30,6 +30,9 @@ namespace OIC
             m_activator = nullptr;
             m_deactivator = nullptr;
             m_bundleHandle = nullptr;
+
+            m_loaded = false;
+            m_activated = false;
         }
 
         BundleInfoInternal::~BundleInfoInternal()
@@ -178,7 +181,8 @@ namespace OIC
             return m_java_activator_object;
         }
 
-        void BundleInfoInternal::setBundleInfo(BundleInfo* bundleInfo){
+        void BundleInfoInternal::setBundleInfo(BundleInfo *bundleInfo)
+        {
             m_ID = bundleInfo->getID();
             m_path = bundleInfo->getPath();
             m_version = bundleInfo->getPath();
