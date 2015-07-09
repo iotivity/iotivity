@@ -315,7 +315,6 @@ static CAResult_t sendCARequest(CAMethod_t method,
         OC_LOG(ERROR, TAG, "Error while generating token");
         return CA_MEMORY_ALLOC_FAILED;
     }
-
     CAEndpoint_t *endpoint = NULL;
     if (CA_STATUS_OK != CACreateEndpoint((CATransportFlags_t)secure,
                                          devAddr->adapter, devAddr->addr,
@@ -326,21 +325,24 @@ static CAResult_t sendCARequest(CAMethod_t method,
         return CA_STATUS_FAILED;
     }
     CAMessageType_t msgType = CA_MSG_CONFIRM;
-    CAInfo_t requestData = { 0 };
-    requestData.token = gToken;
-    requestData.tokenLength  = CA_MAX_TOKEN_LEN;
     if (payload && '\0' != (*(payload + payloadLen)))
     {
         OC_LOG(ERROR, TAG, "Payload not properly terminated.");
         CADestroyEndpoint(endpoint);
         return CA_STATUS_INVALID_PARAM;
     }
-    requestData.payload = payload;
-    requestData.payloadSize = payloadLen;
-    requestData.type = msgType;
+    OCSecurityPayload secPayload;
+    secPayload.securityData = payload;
+    secPayload.base.type = PAYLOAD_TYPE_SECURITY;
     CARequestInfo_t requestInfo = { 0 };
     requestInfo.method = method;
-    requestInfo.info = requestData;
+    requestInfo.isMulticast = false;
+    ConvertSecurityPayload(&secPayload, &requestInfo.info.payload, &requestInfo.info.payloadSize);
+    requestInfo.info.type = msgType;
+    requestInfo.info.token = gToken;
+    requestInfo.info.tokenLength  = CA_MAX_TOKEN_LEN;
+    requestInfo.info.resourceUri  = resourceUri;
+
     requestInfo.isMulticast = false;
     CAResult_t caResult = CA_STATUS_OK;
     caResult = CASendRequest(endpoint, &requestInfo);
@@ -546,7 +548,7 @@ static void ListMethodsHandler(const CAEndpoint_t *object,
 
                 if(result == OC_STACK_OK && payload->type == PAYLOAD_TYPE_SECURITY)
                 {
-                    OicSecPstat_t *pstat =  JSONToPstatBin(((OCSecurityPayload*)payload)->securityData);
+                    pstat =  JSONToPstatBin(((OCSecurityPayload*)payload)->securityData);
                 }
 
                 if (NULL == pstat)
@@ -955,7 +957,7 @@ static SPResult updateOperationMode(unsigned short timeout,
  * @param[in]  deviceInfo  Provisioning context
  * @return SP_SUCCESS on success
  */
-static SPResult initiateDtlsHandshake(const SPTargetDeviceInfo_t *deviceInfo)
+static SPResult initiateDtlsHandshake(SPTargetDeviceInfo_t *deviceInfo)
 {
     CAResult_t caresult = CASelectCipherSuite(TLS_ECDH_anon_WITH_AES_128_CBC_SHA);
 
@@ -973,6 +975,8 @@ static SPResult initiateDtlsHandshake(const SPTargetDeviceInfo_t *deviceInfo)
     }
     OC_LOG(INFO, TAG, "Anonymous cipher suite Enabled.");
 
+    //TODO: It is a temporary fix. Revisit it.
+    deviceInfo->endpoint.port = CA_SECURE_PORT;
     caresult = CAInitiateHandshake((CAEndpoint_t *)&deviceInfo->endpoint);
     if (CA_STATUS_OK != caresult)
     {
@@ -1319,7 +1323,7 @@ SPResult SPProvisionACL(unsigned short timeout, const SPTargetDeviceInfo_t *sele
     CAResult_t result = sendCARequest(CA_POST,
                                       &selectedDeviceInfo->endpoint,
                                       OC_SECURE,
-                                      OIC_RSRC_DOXM_URI,
+                                      OIC_RSRC_ACL_URI,
                                       aclString, payloadLen);
     OICFree(aclString);
     if (CA_STATUS_OK != result)
