@@ -374,7 +374,7 @@ OCStackResult ConvertPlatformPayload(OCPlatformPayload* payload, uint8_t** outPa
             CborEncoder repMap;
             err = err || cbor_encode_text_string(&map, OC_RSRVD_REPRESENTATION,
                     sizeof(OC_RSRVD_REPRESENTATION) - 1);
-            err = err || cbor_encoder_create_map(&map, &repMap, 4);
+            err = err || cbor_encoder_create_map(&map, &repMap, CborIndefiniteLength);
 
             // Platform ID
             err = err || AddTextStringToMap(&repMap, OC_RSRVD_PLATFORM_ID,
