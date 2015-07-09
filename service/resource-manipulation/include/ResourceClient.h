@@ -67,8 +67,8 @@ namespace OIC
 
         /**
          * @class   BadRequestException
-         * @brief   This class inherited from PrimitiveException class. It is used to
-         *       throw exception to the upper layer if request is invalid.
+         * @brief   It is used to throw exception to the upper layer if request is invalid.
+         *             This class inherited from PrimitiveException class.
          *
          */
         class BadRequestException: public PrimitiveException
@@ -80,9 +80,8 @@ namespace OIC
 
         /**
          * @class   InvalidParameterException
-         * @brief   This class inherited from PrimitiveException class. It is used to
-         *       throw exception to the upper layer if parameter is invalid.
-         *
+         * @brief    It is used to throw exception to the upper layer if parameter is invalid.
+         *              This class inherited from PrimitiveException class.
          */
         class InvalidParameterException: public PrimitiveException
         {
@@ -93,7 +92,7 @@ namespace OIC
 
         /**
          * @class   RemoteResourceObject
-         * @brief   RemoteResourceObject is an interaction point between Resource
+         * @brief   It is an interaction point between Resource
          *        and the developers.
          *
          */
@@ -155,15 +154,13 @@ namespace OIC
                  *
                  * @param ResourceStateChangedCallback - callback to get changed resource state.
                  *
-                 * @throw BadRequestException
+                 * @throw InvalidParameterException
                  *
                  */
                 void startWatching(ResourceStateChangedCallback);
 
                 /**
                  * API to stop watching the resource.
-                 *
-                 * @throw BadRequestException
                  */
                 void stopWatching();
 
@@ -176,8 +173,6 @@ namespace OIC
 
                 /**
                 * API to start caching for the resource.
-                *
-                * @throw BadRequestException
                 */
                 void startCaching();
 
@@ -186,7 +181,7 @@ namespace OIC
                  *
                  * @param CacheUpdatedCallback - callback to get updated resourceAttributes.
                  *
-                 * @throw BadRequestException
+                 * @throw InvalidParameterException
                  *
                  */
                 void startCaching(CacheUpdatedCallback);
@@ -199,9 +194,7 @@ namespace OIC
                 CacheState getResourceCacheState();
 
                 /**
-                 * API to stop caching data of the resource.
-                 *
-                 * @throw BadRequestException
+                 * API to stop caching the data for the resource
                  */
                 void stopCaching();
 
@@ -229,18 +222,14 @@ namespace OIC
                  *
                  * @param RemoteAttributesReceivedCallback - callback to get resourceAttributes data.
                  *
-                 * @throw InvalidParameterException
-                 *
                  */
                 void getRemoteAttributes(RemoteAttributesReceivedCallback);
 
                 /**
                  * API to set resource attributes data.
                  *
-                 * @param ResourceAttributes - resourceAttributes data to set for the resource.
+                 * @param ResourceAttributes - resourceAttributes data to set
                  * @param RemoteAttributesSetCallback - callback on setting resourceAttributes data.
-                 *
-                 * @throw InvalidParameterException
                  *
                  */
                 void setRemoteAttributes(ResourceAttributes &, RemoteAttributesSetCallback );
