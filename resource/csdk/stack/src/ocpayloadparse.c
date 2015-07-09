@@ -288,10 +288,15 @@ OCStackResult ParseDiscoveryPayload(OCPayload** outPayload, CborValue* arrayVal)
                      err = err || cbor_value_get_boolean(&val, &(resource->secure));
                     // Port
                      err = err || cbor_value_map_find_value(&policyMap, OC_RSRVD_SECURE, &val);
-                    if(cbor_value_is_valid(&val))
+                    if(cbor_value_is_valid(&val) && cbor_value_is_map(&val))
                     {
-                         err = err || cbor_value_get_uint64(&val, &temp);
-                        resource->port = (uint16_t)temp;
+                        CborValue port;
+                        cbor_value_map_find_value(&val, OC_RSRVD_HOSTING_PORT, &port);
+                        if(cbor_value_is_valid(&port))
+                        {
+                            err = err || cbor_value_get_uint64(&val, &temp);
+                            resource->port = (uint16_t)temp;
+                        }
                     }
                 }
             }

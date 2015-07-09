@@ -100,14 +100,19 @@ namespace OC
     OCRepresentation parseGetSetCallback(OCClientResponse* clientResponse)
     {
         if(clientResponse->payload == nullptr ||
-                clientResponse->payload->type != PAYLOAD_TYPE_REPRESENTATION)
+                (
+                    clientResponse->payload->type != PAYLOAD_TYPE_DEVICE &&
+                    clientResponse->payload->type != PAYLOAD_TYPE_PLATFORM &&
+                    clientResponse->payload->type != PAYLOAD_TYPE_REPRESENTATION
+                )
+          )
         {
             //OCPayloadDestroy(clientResponse->payload);
             return OCRepresentation();
         }
 
         MessageContainer oc;
-        oc.setPayload(reinterpret_cast<OCRepPayload*>(clientResponse->payload));
+        oc.setPayload(clientResponse->payload);
         //OCPayloadDestroy(clientResponse->payload);
 
         std::vector<OCRepresentation>::const_iterator it = oc.representations().begin();

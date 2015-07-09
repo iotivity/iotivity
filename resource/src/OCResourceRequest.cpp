@@ -36,7 +36,7 @@ void OCResourceRequest::setPayload(OCPayload* payload)
         return;
     }
 
-    info.setPayload(reinterpret_cast<OCRepPayload*>(payload));
+    info.setPayload(payload);
 
     const std::vector<OCRepresentation>& reps = info.representations();
     if(reps.size() >0)
