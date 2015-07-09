@@ -1111,7 +1111,7 @@ CALEData_t *CACreateLEData(const CAEndpoint_t *remoteEndpoint, const void *data,
 
 void CAFreeLEData(CALEData_t *bleData)
 {
-    VERIFY_NON_NULL_VOID(bleData, NULL, "Param bleData is NULL");
+    VERIFY_NON_NULL_VOID(bleData, CALEADAPTER_TAG, "Param bleData is NULL");
 
     CAFreeEndpoint(bleData->remoteEndpoint);
     OICFree(bleData->data);
@@ -1266,9 +1266,9 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
     //Input validation
-    VERIFY_NON_NULL(registerCallback, NULL, "RegisterConnectivity callback is null");
-    VERIFY_NON_NULL(reqRespCallback, NULL, "PacketReceived Callback is null");
-    VERIFY_NON_NULL(netCallback, NULL, "NetworkChange Callback is null");
+    VERIFY_NON_NULL(registerCallback, CALEADAPTER_TAG, "RegisterConnectivity callback is null");
+    VERIFY_NON_NULL(reqRespCallback, CALEADAPTER_TAG, "PacketReceived Callback is null");
+    VERIFY_NON_NULL(netCallback, CALEADAPTER_TAG, "NetworkChange Callback is null");
 
     CAResult_t result = CA_STATUS_OK;
     result = CAInitLEAdapterMutex();
@@ -1481,8 +1481,8 @@ int32_t CASendLEUnicastData(const CAEndpoint_t *endpoint, const void *data, uint
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
     //Input validation
-    VERIFY_NON_NULL_RET(endpoint, NULL, "Remote endpoint is null", -1);
-    VERIFY_NON_NULL_RET(data, NULL, "Data is null", -1);
+    VERIFY_NON_NULL_RET(endpoint, CALEADAPTER_TAG, "Remote endpoint is null", -1);
+    VERIFY_NON_NULL_RET(data, CALEADAPTER_TAG, "Data is null", -1);
 
     CAResult_t result = CA_STATUS_FAILED;
 
@@ -1526,7 +1526,7 @@ int32_t CASendLEMulticastData(const CAEndpoint_t *endpoint, const void *data, ui
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
     //Input validation
-    VERIFY_NON_NULL_RET(data, NULL, "Data is null", -1);
+    VERIFY_NON_NULL_RET(data, CALEADAPTER_TAG, "Data is null", -1);
 
     if (0 >= dataLen)
     {
@@ -1576,7 +1576,7 @@ CAResult_t CAGetLEInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
-    VERIFY_NON_NULL(info, NULL, "CALocalConnectivity info is null");
+    VERIFY_NON_NULL(info, CALEADAPTER_TAG, "CALocalConnectivity info is null");
 
     char *local_address = NULL;
 
@@ -1659,7 +1659,7 @@ void CALEDeviceStateChangedCb( CAAdapterState_t adapter_state)
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
-    VERIFY_NON_NULL_VOID(g_localBLEAddress, NULL, "g_localBLEAddress is null");
+    VERIFY_NON_NULL_VOID(g_localBLEAddress, CALEADAPTER_TAG, "g_localBLEAddress is null");
     CAEndpoint_t localEndpoint = {};
 
     ca_mutex_lock(g_bleLocalAddressMutex);
@@ -1700,7 +1700,7 @@ CAResult_t CALEAdapterClientSendData(const CAEndpoint_t *remoteEndpoint,
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
-    VERIFY_NON_NULL(data, NULL, "Param data is NULL");
+    VERIFY_NON_NULL(data, CALEADAPTER_TAG, "Param data is NULL");
 #ifndef SINGLE_THREAD
     VERIFY_NON_NULL_RET(g_bleClientSendQueueHandle, CALEADAPTER_TAG,
                         "g_bleClientSendQueueHandle is  NULL",
@@ -1736,7 +1736,7 @@ CAResult_t CALEAdapterServerSendData(const CAEndpoint_t *remoteEndpoint,
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
-    VERIFY_NON_NULL(data, NULL, "Param data is NULL");
+    VERIFY_NON_NULL(data, CALEADAPTER_TAG, "Param data is NULL");
 
 #ifdef SINGLE_THREAD
     char header[CA_HEADER_LENGTH] = {0};
