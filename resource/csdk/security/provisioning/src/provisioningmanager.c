@@ -538,26 +538,23 @@ static void ListMethodsHandler(const CAEndpoint_t *object,
                     return;
                 }
 
-                char *pTempPayload = (char *)OICMalloc(strlen(responseInfo->info.payload));
-                if (NULL == pTempPayload)
+                OCPayload* payload;
+                OCStackResult result = ParsePayload(&payload, responseInfo->info.payload,
+                        responseInfo->info.payloadSize);
+
+                OicSecPstat_t *pstat = NULL;
+
+                if(result == OC_STACK_OK && payload->type == PAYLOAD_TYPE_SECURITY)
                 {
-                    OC_LOG(ERROR, TAG, "Error in memory allocation.");
-                    gStateManager |= SP_LIST_METHODS_ERROR;
-                    return;
+                    OicSecPstat_t *pstat =  JSONToPstatBin(((OCSecurityPayload*)payload)->securityData);
                 }
 
-                strcpy(pTempPayload, responseInfo->info.payload + 8);
-                pTempPayload[strlen(pTempPayload) - 2] = '\0';
-
-                OicSecPstat_t *pstat =  JSONToPstatBin(pTempPayload);
                 if (NULL == pstat)
                 {
                     OC_LOG(ERROR, TAG, "Error while converting json to pstat bin");
-                    OICFree(pTempPayload);
                     gStateManager |= SP_LIST_METHODS_ERROR;
                     return;
                 }
-                OICFree(pTempPayload);
                 DeletePstatBinData(gPstat);
 
                 gPstat = pstat;
