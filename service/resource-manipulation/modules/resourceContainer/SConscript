@@ -23,6 +23,15 @@
 ##
 import os
 Import('env')
+import os.path
+
+def filtered_glob(env, pattern, omit=[],
+  ondisk=True, source=False, strings=False):
+    return filter(
+      lambda f: os.path.basename(f.path) not in omit,
+      env.Glob(pattern))
+
+env.AddMethod(filtered_glob, "FilteredGlob");
 
 # Add third party libraries
 lib_env = env.Clone()
@@ -95,7 +104,10 @@ resource_container_env.AppendUnique(LIBS = ['dl', 'jvm'])
 ######################################################################
 # Source files and Targets
 ######################################################################
-res_container_src = env.Glob('src/*.cpp')
+res_container_src = ['src/BaseActivator.cpp','src/BundleActivator.cpp','src/BundleInfo.cpp', 
+	'src/BundleInfoInternal.cpp', 'src/BundleResource.cpp', 'src/Configuration.cpp', 'src/JavaBundleResource.cpp', 'src/ProtocolBridgeResource.cpp',
+	'src/ProtocolBridgeConnector.cpp', 'src/ResourceContainer.cpp', 'src/ResourceContainerBundleAPI.cpp', 'src/ResourceContainerImpl.cpp', 
+	'src/SoftSensorResource.cpp']
 res_container_static = resource_container_env.StaticLibrary('ResContainerLib', res_container_src)
 res_container_shared = resource_container_env.SharedLibrary('ResContainerLib', res_container_src)
 
@@ -169,6 +181,8 @@ containertest_env.AppendUnique(LINKFLAGS=["-rdynamic"])
 Command("examples/ResourceContainerConfig.xml","examples/ResourceContainerConfig.xml", Copy("$TARGET", "$SOURCE"))
 Ignore("examples/ResourceContainerConfig.xml", "examples/ResourceContainerConfig.xml")
 
-containertestapp = containertest_env.Program('ContainerTest', res_container_src)
-Alias("containertest", containertestapp)
-env.AppendTarget('containertest')
+
+containersampleapp_src =  [res_container_src , 'src/ContainerSample.cpp']
+containersampleapp = containertest_env.Program('ContainerSample',containersampleapp_src)
+Alias("containersample", containersampleapp)
+env.AppendTarget('containersample')

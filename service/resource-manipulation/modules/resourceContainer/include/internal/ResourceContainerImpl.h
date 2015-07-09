@@ -54,7 +54,8 @@ namespace OIC
                 void deactivateBundle(string bundleId);
                 void registerBundle(BundleInfo *bundleinfo);
                 void unregisterBundle(BundleInfo *bundleinfo);
-                void unregisterBundle(string id);
+                void unregisterBundleSo(string id);
+                void unregisterBundleJava(string id);
 
                 // methods from ResourceContainerBundleAPI
                 void registerResource(BundleResource *resource);

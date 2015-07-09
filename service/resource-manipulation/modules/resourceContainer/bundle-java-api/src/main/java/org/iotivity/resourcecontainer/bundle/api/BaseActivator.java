@@ -99,6 +99,7 @@ public class BaseActivator implements BundleActivator {
      * Unregisters a resource from the resource container.
      */
     public void unregisterResource(BundleResource resource) {
+        bundleResources.remove(resource);
         unregisterJavaResource(resource, resource.getURI());
     }
 

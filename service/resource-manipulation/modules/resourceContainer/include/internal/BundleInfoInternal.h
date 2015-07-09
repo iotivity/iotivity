@@ -53,6 +53,9 @@ namespace OIC{
                 void setActivated(bool activated);
                 bool isActivated();
 
+                virtual void setLibraryPath(string libpath);
+                virtual string getLibraryPath();
+
                 void setActivatorName(string activatorName);
                 string getActivatorName();
 
@@ -87,6 +90,7 @@ namespace OIC{
                 string m_activator_name;
                 jmethodID m_java_activator, m_java_deactivator;
                 jobject m_java_activator_object;
+                string m_library_path;
         };
     }
 }

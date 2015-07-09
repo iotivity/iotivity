@@ -141,6 +141,14 @@ namespace OIC
             return m_activator_name;
         }
 
+        void BundleInfoInternal::setLibraryPath(string libpath){
+            m_library_path = libpath;
+        }
+
+        string BundleInfoInternal::getLibraryPath(){
+            return m_library_path;
+        }
+
         void BundleInfoInternal::setJavaBundleActivatorMethod(jmethodID javaBundleActivator)
         {
             m_java_activator = javaBundleActivator;

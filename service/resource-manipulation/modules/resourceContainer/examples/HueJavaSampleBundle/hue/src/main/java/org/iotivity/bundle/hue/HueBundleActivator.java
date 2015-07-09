@@ -20,8 +20,8 @@ public class HueBundleActivator extends BaseActivator {
         for (ResourceConfig config : resourceConfig) {
 
             HueLightResource hueLightResource = new HueLightResource(connector,
-                    config.getM_name(), config.getM_uri(),
-                    config.getM_resourceType(), config.getM_address());
+                    config.getName(), config.getURI(),
+                    config.getResourceType(), config.getAddress());
             registerResource(hueLightResource);
         }
     }

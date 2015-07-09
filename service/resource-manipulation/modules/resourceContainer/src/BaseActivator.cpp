@@ -47,9 +47,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_resourcecontainer_bundle_api_BaseActiva
     javaBundleResource->m_resourceType = string(str_resourceType, strlen(str_resourceType));
     javaBundleResource->m_name = string(str_res_name, strlen(str_res_name));
     container->registerResource(javaBundleResource);
-    cout << "JavaBundles: " << &java_resources << endl;
-    cout << "Bundle resource: " << &java_resources[str_uri] << endl;
-    cout << "Uri: " << str_uri << endl;
+
     java_resources[str_uri] = javaBundleResource;
 }
 
@@ -61,10 +59,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_resourcecontainer_bundle_api_BaseActiva
 JNIEXPORT void JNICALL Java_org_iotivity_resourcecontainer_bundle_api_BaseActivator_unregisterJavaResource
   (JNIEnv *env, jobject obj, jobject bundleResource, jstring uri){
     const char *str_uri = env->GetStringUTFChars(uri, 0);
-    cout << "unregister java resource " << endl;
-    cout << "JavaBundles: " << &java_resources << endl;
-    cout << "Bundle resource: " << &java_resources[str_uri] << endl;
-    cout << "Uri: " << str_uri << endl;
+
     if(java_resources[str_uri] != NULL){
         ResourceContainerImpl *container = ResourceContainerImpl::getImplInstance();
         container->unregisterResource(java_resources[str_uri]);

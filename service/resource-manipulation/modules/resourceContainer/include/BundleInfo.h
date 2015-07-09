@@ -41,6 +41,10 @@ namespace OIC
             virtual string getID() = 0;
             virtual void setPath(string path) = 0;
             virtual string getPath() = 0;
+            virtual void setActivatorName(string activator) = 0;
+            virtual string getActivatorName() = 0;
+            virtual void setLibraryPath(string libpath) = 0;
+            virtual string getLibraryPath() = 0;
             virtual void setVersion(string version) = 0;
             virtual string getVersion() = 0;
             static BundleInfo* build();

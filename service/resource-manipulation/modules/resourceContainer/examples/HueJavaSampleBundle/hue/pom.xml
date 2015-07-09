@@ -4,7 +4,7 @@
   <groupId>org.iotivity.bundles</groupId>
   <artifactId>hue</artifactId>
   <packaging>jar</packaging>
-  <version>1.0-SNAPSHOT</version>
+  <version>0.1</version>
   <name>hue</name>
   <url>http://maven.apache.org</url>
   <dependencies>
@@ -23,7 +23,7 @@
     <dependency>
 		<groupId>org.iotivity.resourcecontainer</groupId>
 		<artifactId>bundle-api</artifactId>
-		<version>1.0</version>
+		<version>0.1</version>
 		<scope>compile</scope>
     </dependency>
     <dependency>

@@ -4,7 +4,7 @@
   <groupId>org.iotivity.resourcecontainer</groupId>
   <artifactId>bundle-api</artifactId>
   <packaging>jar</packaging>
-  <version>1.0</version>
+  <version>0.1</version>
   <name>resource-container-api</name>
   <url>http://maven.apache.org</url>
   <dependencies>
