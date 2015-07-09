@@ -63,7 +63,6 @@ if ca_os == 'arduino':
 		'caretransmission.c',
 		]
 else:
-	env.AppendUnique(CPPDEFINES = ['MULTI_THREAD'])
 	ca_common_src = [
 		'caconnectivitymanager.c',
 		'cainterfacecontroller.c',
