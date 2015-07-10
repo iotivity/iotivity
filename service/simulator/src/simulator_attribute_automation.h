@@ -26,11 +26,11 @@
 
 class SimulatorResource;
 
-typedef enum class
+enum class AutomationType
 {
     NORMAL,
     RECURRENT
-} AutomationType;
+};
 
 class AttributeUpdateAutomation
 {

@@ -42,7 +42,7 @@ class SimulatorResource
         friend class ResourceManager;
 
     public:
-        typedef std::function<void (const std::string &uri, const std::vector<SimulatorResourceModel::Attribute> &attributes)>
+        typedef std::function<void (const std::string &uri, const SimulatorResourceModel &resModel)>
         ResourceModelChangedCB;
 
         /**

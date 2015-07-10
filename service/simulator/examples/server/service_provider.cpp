@@ -92,14 +92,14 @@ class SimLightResource
         }
 
         void onResourceModelChanged(const std::string &uri,
-                                    const std::vector<SimulatorResourceModel::Attribute> &attributes)
+                                    const SimulatorResourceModel &resModel)
         {
-            std::cout << "[callback] Resource model is changed URI: " << uri.c_str() << "Count : " <<
-                      attributes.size() << std::endl;
+            std::cout << "[callback] Resource model is changed URI: " << uri.c_str() << " Count : " <<
+                      resModel.size() << std::endl;
             std::cout << "#### Modified attributes are ####" << std::endl;
-            for (auto & attribute : attributes)
+            for (auto & attribute : resModel.getAttributes())
             {
-                std::cout << attribute.getName() << " :  " << attribute.valueToString().c_str() << std::endl;
+                std::cout << attribute.second.getName() << " :  " << attribute.second.valueToString().c_str() << std::endl;
             }
             std::cout << "########################" << std::endl;
         }

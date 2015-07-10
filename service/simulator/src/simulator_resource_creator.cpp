@@ -41,7 +41,7 @@ SimulatorResourcePtr SimulatorResourceCreator::createLightResoure()
 
     // set other properties
     lightResource->setName("Light");
-    lightResource->setURI("oic/light");
+    lightResource->setURI("/oic/light");
     lightResource->setResourceType("oic.light");
     lightResource->setInterfaceType(OC::DEFAULT_INTERFACE);
 

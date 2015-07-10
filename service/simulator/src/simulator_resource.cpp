@@ -86,6 +86,7 @@ void SimulatorResource::updateAttributeFromAllowedValues(const std::string &attr
         const int allowedValueIndex)
 {
     m_resModel.updateAttributeFromAllowedValues(attrName, allowedValueIndex);
+    notifyListOfObservers();
 }
 
 SimulatorResourceModel SimulatorResource::getModel() const
@@ -218,7 +219,8 @@ OCEntityHandlerResult SimulatorResource::entityHandler(std::shared_ptr<OC::OCRes
             errCode = OC_EH_ERROR;
         }
     }
-    else if (OC::RequestHandlerFlag::ObserverFlag & request->getRequestHandlerFlag())
+
+    if (OC::RequestHandlerFlag::ObserverFlag & request->getRequestHandlerFlag())
     {
         OC::ObservationInfo observationInfo = request->getObservationInfo();
         if (OC::ObserveAction::ObserveRegister == observationInfo.action)
@@ -240,15 +242,22 @@ OCEntityHandlerResult SimulatorResource::entityHandler(std::shared_ptr<OC::OCRes
 
 void SimulatorResource::notifyListOfObservers ()
 {
-    if (0 == m_interestedObservers.size())
-        return;
+    if(getHandle())
+    {
+        if (m_interestedObservers.size())
+        {
+            std::shared_ptr<OC::OCResourceResponse> resourceResponse =
+            {std::make_shared<OC::OCResourceResponse>()};
 
-    std::shared_ptr<OC::OCResourceResponse> resourceResponse =
-    {std::make_shared<OC::OCResourceResponse>()};
+            resourceResponse->setErrorCode(200);
+            resourceResponse->setResponseResult(OC_EH_OK);
+            resourceResponse->setResourceRepresentation(getOCRepresentation(), OC::DEFAULT_INTERFACE);
 
-    resourceResponse->setErrorCode(200);
-    resourceResponse->setResponseResult(OC_EH_OK);
-    resourceResponse->setResourceRepresentation(getOCRepresentation(), OC::DEFAULT_INTERFACE);
-
-    OC::OCPlatform::notifyListOfObservers(getHandle(), m_interestedObservers, resourceResponse);
+            OC::OCPlatform::notifyListOfObservers(getHandle(), m_interestedObservers, resourceResponse);
+        }
+        if(m_callback)
+        {
+            m_callback(getURI(),getModel());
+        }
+    }
 }
