@@ -34,6 +34,7 @@
 #include "oic_string.h"
 #include "logger.h"
 #include "cJSON.h"
+#include "ocpayload.h"
 
 #include "cacommon.h"
 #include "cainterface.h"
@@ -102,152 +103,6 @@ static OCStackResult GetSecurePortInfo(CATransportAdapter_t connType, uint16_t *
 
     OICFree(info);
     return ret;
-}
-
-/*
- * Encodes platform info into json and returns a string on the heap.
- * Caller responsible for freeing the string.
- */
-static char* GetJSONStringFromPlatformInfo(OCPlatformInfo info)
-{
-    cJSON *rootObj = cJSON_CreateObject();
-
-    if (!rootObj)
-    {
-        return NULL;
-    }
-
-    cJSON *repObj = NULL;
-    char *jsonEncodedInfo = NULL;
-
-    cJSON_AddItemToObject (rootObj, OC_RSRVD_HREF,
-            cJSON_CreateString(GetVirtualResourceUri(OC_PLATFORM_URI)));
-
-    cJSON_AddItemToObject (rootObj, OC_RSRVD_REPRESENTATION, repObj = cJSON_CreateObject());
-
-    if (!repObj)
-    {
-        return NULL;
-    }
-    if (info.platformID)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_PLATFORM_ID,
-                cJSON_CreateString(info.platformID));
-    }
-
-    if (info.manufacturerName)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_MFG_NAME,
-                cJSON_CreateString(info.manufacturerName));
-    }
-
-    if (info.manufacturerUrl)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_MFG_URL,
-                cJSON_CreateString(info.manufacturerUrl));
-    }
-
-    if (info.modelNumber)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_MODEL_NUM,
-                cJSON_CreateString(info.modelNumber));
-    }
-
-    if (info.dateOfManufacture)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_MFG_DATE,
-                cJSON_CreateString(info.dateOfManufacture));
-    }
-
-    if (info.platformVersion)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_PLATFORM_VERSION,
-                cJSON_CreateString(info.platformVersion));
-    }
-
-    if (info.operatingSystemVersion)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_OS_VERSION,
-                cJSON_CreateString(info.operatingSystemVersion));
-    }
-
-    if (info.hardwareVersion)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_HARDWARE_VERSION,
-                cJSON_CreateString(info.hardwareVersion));
-    }
-
-    if (info.firmwareVersion)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_FIRMWARE_VERSION,
-                cJSON_CreateString(info.firmwareVersion));
-    }
-
-    if (info.supportUrl)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_SUPPORT_URL,
-                cJSON_CreateString(info.supportUrl));
-    }
-
-    if (info.systemTime)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_SYSTEM_TIME,
-                cJSON_CreateString(info.systemTime));
-    }
-
-    jsonEncodedInfo = cJSON_PrintUnformatted (rootObj);
-
-    cJSON_Delete(rootObj);
-
-    return jsonEncodedInfo;
-}
-
-/*
- * Encodes device info into json and returns a string on the heap.
- * Caller responsible for freeing the string.
- */
-static char* GetJSONStringFromDeviceInfo(OCDeviceInfo info)
-{
-    cJSON *rootObj = cJSON_CreateObject();
-
-    if (!rootObj)
-    {
-        return NULL;
-    }
-
-    cJSON *repObj = NULL;
-    char *jsonEncodedInfo = NULL;
-
-    cJSON_AddItemToObject (rootObj, OC_RSRVD_HREF,
-            cJSON_CreateString(GetVirtualResourceUri(OC_DEVICE_URI)));
-
-    cJSON_AddItemToObject (rootObj, OC_RSRVD_REPRESENTATION, repObj = cJSON_CreateObject());
-
-    if (!repObj)
-    {
-        return NULL;
-    }
-
-    cJSON_AddItemToObject (repObj, OC_RSRVD_DEVICE_ID,
-                    cJSON_CreateString(OCGetServerInstanceIDString()));
-
-    if (info.deviceName)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_DEVICE_NAME,
-                        cJSON_CreateString(info.deviceName));
-    }
-
-    cJSON_AddItemToObject (repObj, OC_RSRVD_SPEC_VERSION,
-                        cJSON_CreateString(OC_SPEC_VERSION));
-
-    cJSON_AddItemToObject (repObj, OC_RSRVD_DATA_MODEL_VERSION,
-                        cJSON_CreateString(OC_DATA_MODEL_VERSION));
-
-    jsonEncodedInfo = cJSON_PrintUnformatted (rootObj);
-
-    cJSON_Delete(rootObj);
-
-    return jsonEncodedInfo;
 }
 
 /*
@@ -361,162 +216,25 @@ static OCStackResult getQueryParamsForFiltering (OCVirtualResources uri, char *q
     return result;
 }
 
-OCStackResult copyStringIfEnoughSpace(char* dest, const char *src, uint16_t *remaining)
+OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
+                        OCDiscoveryPayload* payload, CATransportAdapter_t adapter )
 {
-    if (!dest || !src || !remaining)
+    if (!resourcePtr || !payload)
     {
         return OC_STACK_INVALID_PARAM;
     }
-
-    size_t srcLen = strlen(src);
-
-    if (srcLen < *remaining)
+    uint16_t port = 0;
+    if (resourcePtr->resourceProperties & OC_SECURE)
     {
-        OICStrcpy(dest, *remaining, src);
-        *remaining = *remaining - srcLen;
-        return OC_STACK_OK;
+       if(GetSecurePortInfo (adapter, &port) != OC_STACK_OK)
+       {
+           port = 0;
+       }
     }
-    else
-    {
-        return OC_STACK_ERROR;
-    }
+
+    OCDiscoveryPayloadAddResource(payload, resourcePtr, port);
+    return OC_STACK_OK;
 }
-
-OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr, char *out,
-                        uint16_t *remaining, CATransportAdapter_t adapter )
-{
-    if(!resourcePtr || !out  || !remaining)
-    {
-        return OC_STACK_INVALID_PARAM;
-    }
-
-    OCResourceType *resourceTypePtr = NULL;
-    OCResourceInterface *interfacePtr = NULL;
-    cJSON *resObj = NULL;
-    cJSON *policyObj = NULL;
-    cJSON *rtArray = NULL;
-    char *jsonStr = NULL;
-    OCStackResult ret = OC_STACK_OK;
-
-    OC_LOG_V(INFO, TAG, PCF("Encoding resource %s"), resourcePtr->uri);
-
-    resObj = cJSON_CreateObject();
-
-    if (resourcePtr)
-    {
-        // URI
-        cJSON_AddItemToObject (resObj, OC_RSRVD_HREF, cJSON_CreateString(resourcePtr->uri));
-
-        // resource types
-        cJSON_AddItemToObject (resObj, OC_RSRVD_RESOURCE_TYPE, rtArray = cJSON_CreateArray());
-        resourceTypePtr = resourcePtr->rsrcType;
-        while (resourceTypePtr)
-        {
-            cJSON_AddItemToArray (rtArray,
-                                  cJSON_CreateString(resourceTypePtr->resourcetypename));
-            resourceTypePtr = resourceTypePtr->next;
-        }
-        // interfaces
-        cJSON_AddItemToObject (resObj, OC_RSRVD_INTERFACE, rtArray = cJSON_CreateArray());
-        interfacePtr = resourcePtr->rsrcInterface;
-        while (interfacePtr)
-        {
-            cJSON_AddItemToArray (rtArray, cJSON_CreateString(interfacePtr->name));
-            interfacePtr = interfacePtr->next;
-        }
-
-        // Policy
-        cJSON_AddItemToObject (resObj, OC_RSRVD_POLICY, policyObj = cJSON_CreateObject());
-
-        if (policyObj)
-        {
-            cJSON_AddNumberToObject (policyObj, OC_RSRVD_BITMAP,
-                             resourcePtr->resourceProperties & (OC_OBSERVABLE|OC_DISCOVERABLE));
-            // Set secure flag for secure resources
-            if (resourcePtr->resourceProperties & OC_SECURE)
-            {
-                cJSON_AddNumberToObject(policyObj, OC_RSRVD_SECURE, OC_RESOURCE_SECURE);
-                //Set the IP port also as secure resources are hosted on a different port
-                uint16_t port = 0;
-                if (GetSecurePortInfo(adapter, &port) == OC_STACK_OK)
-                {
-                    cJSON_AddNumberToObject(policyObj, OC_RSRVD_HOSTING_PORT, port);
-                }
-            }
-        }
-        else
-        {
-            cJSON_Delete(resObj);
-            return OC_STACK_NO_MEMORY;
-        }
-    }
-    jsonStr = cJSON_PrintUnformatted (resObj);
-
-    if(!jsonStr)
-    {
-        cJSON_Delete(resObj);
-        return OC_STACK_NO_MEMORY;
-    }
-
-    ret = copyStringIfEnoughSpace(out, jsonStr, remaining);
-
-    cJSON_Delete (resObj);
-    OICFree (jsonStr);
-
-    return ret;
-}
-
-OCStackResult BuildVirtualResourceResponseForDevice(char *out, uint16_t *remaining)
-{
-    if(!out || !remaining)
-    {
-        return OC_STACK_INVALID_PARAM;
-    }
-
-    OCStackResult ret = OC_STACK_ERROR;
-    char *jsonStr = NULL;
-
-    jsonStr = GetJSONStringFromDeviceInfo(savedDeviceInfo);
-
-    if(jsonStr)
-    {
-        ret = copyStringIfEnoughSpace(out, jsonStr, remaining);
-        OICFree(jsonStr);
-    }
-    else
-    {
-        OC_LOG(ERROR, TAG, PCF("Error encoding save device info."));
-        ret = OC_STACK_ERROR;
-    }
-    return ret;
-}
-
-OCStackResult BuildVirtualResourceResponseForPlatform(char *out, uint16_t *remaining)
-{
-    if(!out || !remaining)
-    {
-        return OC_STACK_INVALID_PARAM;
-    }
-
-    OCStackResult ret = OC_STACK_ERROR;
-    char *jsonStr = NULL;
-
-    jsonStr = GetJSONStringFromPlatformInfo(savedPlatformInfo);
-
-    if(jsonStr)
-    {
-        ret = copyStringIfEnoughSpace(out, jsonStr, remaining);
-        OICFree(jsonStr);
-    }
-    else
-    {
-        OC_LOG(ERROR, TAG, PCF("Error encoding save platform info."));
-        ret = OC_STACK_ERROR;
-    }
-
-    return ret;
-}
-
 const char * GetVirtualResourceUri( OCVirtualResources resource)
 {
     if (resource < OC_MAX_VIRTUAL_RESOURCES)
@@ -783,48 +501,17 @@ static bool includeThisResourceInResponse(OCResource *resource,
 }
 
 OCStackResult SendNonPersistantDiscoveryResponse(OCServerRequest *request, OCResource *resource,
-                                char *discoveryPayload)
+                                OCPayload *discoveryPayload)
 {
     OCEntityHandlerResponse response = {};
 
     response.ehResult = OC_EH_OK;
     response.payload = discoveryPayload;
-    response.payloadSize = strlen((const char *)discoveryPayload) + 1;
     response.persistentBufferFlag = 0;
     response.requestHandle = (OCRequestHandle) request;
     response.resourceHandle = (OCResourceHandle) resource;
 
     return OCDoResponse(&response);
-}
-
-static OCStackResult appendDeviceIDAndOpenLinksArray (char *out, uint16_t *remaining)
-{
-    if (!out || !remaining)
-    {
-        return OC_STACK_INVALID_PARAM;
-    }
-
-    const char *deviceID = OCGetServerInstanceIDString();
-
-    char deviceIDJSONField[MAX_RESPONSE_LENGTH] = {};
-
-    // Format is : {"di":"UUID","links":[
-    sprintf (deviceIDJSONField, "{\"%s\":\"%s\"%s\"%s\":[", OC_RSRVD_DEVICE_ID, deviceID,
-                            OC_JSON_SEPARATOR_STR, OC_RSRVD_LINKS);
-
-    uint16_t lenDeviceIDJSON = strlen(deviceIDJSONField);
-
-    if (lenDeviceIDJSON > *remaining)
-    {
-        return OC_STACK_ERROR;
-    }
-    else
-    {
-        OICStrcat(out, *remaining, deviceIDJSONField);
-        *remaining -= lenDeviceIDJSON;
-    }
-
-    return OC_STACK_OK;
 }
 
 static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource* resource)
@@ -835,99 +522,61 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
     }
 
     OCStackResult discoveryResult = OC_STACK_ERROR;
+    OCPayload* payload = NULL;
     char *filterOne = NULL;
     char *filterTwo = NULL;
-    uint16_t remaining  = 0;
-
-    char discoveryBuffer[MAX_RESPONSE_LENGTH] = {};
 
     OC_LOG(INFO, TAG, PCF("Entering HandleVirtualResource"));
 
     OCVirtualResources virtualUriInRequest = GetTypeOfVirtualURI (request->resourceUrl);
 
-    remaining = MAX_RESPONSE_LENGTH - sizeof ('\0');
 
     if (virtualUriInRequest == OC_WELL_KNOWN_URI)
     {
         discoveryResult = getQueryParamsForFiltering (virtualUriInRequest, request->query,
-                                            &filterOne, &filterTwo);
+                                                            &filterOne, &filterTwo);
         if (discoveryResult != OC_STACK_OK)
         {
             OC_LOG_V(ERROR, TAG, "Error (%d) validating query.\n", discoveryResult);
             return discoveryResult;
         }
-        char *ptrIntoBuffer = discoveryBuffer;
+        payload = (OCPayload*)OCDiscoveryPayloadCreate();
 
-        discoveryResult = appendDeviceIDAndOpenLinksArray(ptrIntoBuffer, &remaining);
+        if(!payload)
+        {
+            return OC_STACK_NO_MEMORY;
+        }
 
-        while(resource && discoveryResult == OC_STACK_OK)
+
+        for(;resource && discoveryResult == OC_STACK_OK; resource = resource->next)
         {
             if(includeThisResourceInResponse(resource, filterOne, filterTwo))
             {
-                ptrIntoBuffer += strlen(ptrIntoBuffer);
-
-                discoveryResult = BuildVirtualResourceResponse(resource, ptrIntoBuffer,
-                                        &remaining, (CATransportAdapter_t)request->devAddr.adapter);
-
-                if (discoveryResult != OC_STACK_OK)
-                {
-                    OC_LOG_V(INFO, TAG, "Error (%d) encoding %s", discoveryResult, resource->uri);
-                    break;
-                }
-
-                ptrIntoBuffer += strlen(ptrIntoBuffer);
-                if (remaining > sizeof(OC_JSON_SEPARATOR))
-                {
-                    *ptrIntoBuffer = OC_JSON_SEPARATOR;
-                    ++ptrIntoBuffer;
-                    --remaining;
-                }
-                else
-                {
-                    OC_LOG(INFO, TAG, PCF("Out of space in buffer"));
-                    break;
-                }
-
+                discoveryResult = BuildVirtualResourceResponse(resource,
+                    (OCDiscoveryPayload*)payload,
+                    (CATransportAdapter_t)request->devAddr.adapter);
             }
-            resource = resource->next;
-        }
-
-        size_t lenDiscoveryBuff = strlen (discoveryBuffer);
-
-        // Traling separator replaced with closing of "links" array.
-        // discoveryBuffer guaranteed to be null terminated as "remaining"
-        // accounts for '\0' when initialized.
-        if (lenDiscoveryBuff > 0 && discoveryBuffer[lenDiscoveryBuff - 1] == OC_JSON_SEPARATOR)
-        {
-            discoveryBuffer[lenDiscoveryBuff - 1] = ']';
-        }
-        else
-        {
-            // If No trailing separator then close links array anyway.
-            discoveryBuffer[lenDiscoveryBuff] = ']';
-        }
-        --remaining;
-        ptrIntoBuffer += strlen(ptrIntoBuffer);
-
-        // Close array element brace.
-        if (remaining > sizeof ('}'))
-        {
-            *ptrIntoBuffer = '}';
-            --remaining;
-        }
-        else
-        {
-            discoveryResult = OC_STACK_ERROR;
         }
     }
-
     else if (virtualUriInRequest == OC_DEVICE_URI)
     {
-        discoveryResult = BuildVirtualResourceResponseForDevice(discoveryBuffer, &remaining);
+            payload = (OCPayload*)OCDevicePayloadCreate(GetVirtualResourceUri(OC_DEVICE_URI),
+                        OCGetServerInstanceID(), savedDeviceInfo.deviceName,
+                        OC_SPEC_VERSION, OC_DATA_MODEL_VERSION);
+            if (!payload)
+            {
+                discoveryResult = OC_STACK_NO_MEMORY;
+            }
     }
     else if (virtualUriInRequest == OC_PLATFORM_URI)
     {
-        discoveryResult = BuildVirtualResourceResponseForPlatform(discoveryBuffer, &remaining);
+            OCPlatformPayload* payload = OCPlatformPayloadCreate(
+                    GetVirtualResourceUri(OC_PLATFORM_URI),
+                    &savedPlatformInfo);
+            if (!payload)
+            {
+                discoveryResult = OC_STACK_NO_MEMORY;
+            }
     }
 
     #ifdef WITH_PRESENCE
@@ -947,7 +596,8 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         if(discoveryResult == OC_STACK_OK)
         {
             discoveryResult = SendNonPersistantDiscoveryResponse(request, resource,
-                                                        discoveryBuffer);
+                                                        payload);
+            OCPayloadDestroy(payload);
         }
         else
         {
@@ -974,7 +624,8 @@ HandleDefaultDeviceEntityHandler (OCServerRequest *request)
     OC_LOG(INFO, TAG, PCF("Entering HandleResourceWithDefaultDeviceEntityHandler"));
     result = FormOCEntityHandlerRequest(&ehRequest, (OCRequestHandle) request,
             request->method, (OCResourceHandle) NULL, request->query,
-            request->reqJSONPayload, request->numRcvdVendorSpecificHeaderOptions,
+            request->payload, request->payloadSize,
+            request->numRcvdVendorSpecificHeaderOptions,
             request->rcvdVendorSpecificHeaderOptions,
             (OCObserveAction)request->observationOption, (OCObservationId)0);
     VERIFY_SUCCESS(result, OC_STACK_OK);
@@ -1017,7 +668,7 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
 
     result = FormOCEntityHandlerRequest(&ehRequest, (OCRequestHandle) request,
             request->method, (OCResourceHandle) resource, request->query,
-            request->reqJSONPayload, request->numRcvdVendorSpecificHeaderOptions,
+            request->payload, request->payloadSize, request->numRcvdVendorSpecificHeaderOptions,
             request->rcvdVendorSpecificHeaderOptions,
             (OCObserveAction)request->observationOption, 0);
     VERIFY_SUCCESS(result, OC_STACK_OK);
@@ -1124,7 +775,7 @@ HandleCollectionResourceDefaultEntityHandler (OCServerRequest *request,
 
     result = FormOCEntityHandlerRequest(&ehRequest, (OCRequestHandle) request,
             request->method, (OCResourceHandle) resource, request->query,
-            request->reqJSONPayload, request->numRcvdVendorSpecificHeaderOptions,
+            request->payload, request->payloadSize, request->numRcvdVendorSpecificHeaderOptions,
             request->rcvdVendorSpecificHeaderOptions,
             (OCObserveAction)request->observationOption, (OCObservationId) 0);
     if(result != OC_STACK_OK)

@@ -23,6 +23,7 @@
 
 #include "OCPlatform.h"
 #include "OCResource.h"
+#include "ocpayload.h"
 #include <OCSerialization.h>
 using namespace std;
 
@@ -98,28 +99,21 @@ namespace OC
 
     OCRepresentation parseGetSetCallback(OCClientResponse* clientResponse)
     {
-        if(clientResponse->resJSONPayload == nullptr || clientResponse->resJSONPayload[0] == '\0')
+        if(clientResponse->payload == nullptr ||
+                (
+                    clientResponse->payload->type != PAYLOAD_TYPE_DEVICE &&
+                    clientResponse->payload->type != PAYLOAD_TYPE_PLATFORM &&
+                    clientResponse->payload->type != PAYLOAD_TYPE_REPRESENTATION
+                )
+          )
         {
+            //OCPayloadDestroy(clientResponse->payload);
             return OCRepresentation();
         }
 
         MessageContainer oc;
-        try
-        {
-            oc.setJSONRepresentation(clientResponse->resJSONPayload);
-        }
-        catch (cereal::RapidJSONException& ex)
-        {
-            oclog() <<"RapidJSON Exception in parseGetSetCallback: "<<ex.what() <<std::endl<<
-                "Data was:"<< clientResponse->resJSONPayload<< ":" << std::flush;
-            throw OCException(OC::Exception::INVALID_REPRESENTATION, OC_STACK_INVALID_JSON);
-        }
-        catch (cereal::Exception& ex)
-        {
-            oclog() <<"Cereal Exception in parseGetSetCallback: "<<ex.what() <<std::endl<<
-                "Data was:"<< clientResponse->resJSONPayload<< ":" << std::flush;
-            throw OCException(OC::Exception::INVALID_REPRESENTATION, OC_STACK_INVALID_JSON);
-        }
+        oc.setPayload(clientResponse->payload);
+        //OCPayloadDestroy(clientResponse->payload);
 
         std::vector<OCRepresentation>::const_iterator it = oc.representations().begin();
         if(it == oc.representations().end())
@@ -153,6 +147,13 @@ namespace OC
             return OC_STACK_KEEP_TRANSACTION;
         }
 
+        if(!clientResponse->payload || clientResponse->payload->type != PAYLOAD_TYPE_DISCOVERY)
+        {
+            oclog() << "listenCallback(): clientResponse payload was null or the wrong type"
+                << std::flush;
+            return OC_STACK_KEEP_TRANSACTION;
+        }
+
         auto clientWrapper = context->clientWrapper.lock();
 
         if(!clientWrapper)
@@ -162,33 +163,15 @@ namespace OC
             return OC_STACK_KEEP_TRANSACTION;
         }
 
-        std::stringstream requestStream;
-        requestStream << clientResponse->resJSONPayload;
-
-        try
+        ListenOCContainer container(clientWrapper, clientResponse->devAddr,
+                                reinterpret_cast<OCDiscoveryPayload*>(clientResponse->payload));
+        // loop to ensure valid construction of all resources
+        for(auto resource : container.Resources())
         {
-
-            ListenOCContainer container(clientWrapper, clientResponse->devAddr,
-                                    requestStream);
-            // loop to ensure valid construction of all resources
-            for(auto resource : container.Resources())
-            {
-                std::thread exec(context->callback, resource);
-                exec.detach();
-            }
-
+            std::thread exec(context->callback, resource);
+            exec.detach();
         }
-        catch(const std::exception& e)
-        {
-            oclog() << "listenCallback failed to parse a malformed message: "
-                    << e.what()
-                    << std::endl
-                    << clientResponse->resJSONPayload
-                    << std::endl
-                    << clientResponse->result
-                    << std::flush;
-            return OC_STACK_KEEP_TRANSACTION;
-        }
+
 
         return OC_STACK_KEEP_TRANSACTION;
     }
@@ -452,11 +435,11 @@ namespace OC
         return ret;
     }
 
-    std::string InProcClientWrapper::assembleSetResourcePayload(const OCRepresentation& rep)
+    OCPayload* InProcClientWrapper::assembleSetResourcePayload(const OCRepresentation& rep)
     {
         MessageContainer ocInfo;
         ocInfo.addRepresentation(rep);
-        return ocInfo.getJSONRepresentation(OCInfoFormat::IncludeOC);
+        return reinterpret_cast<OCPayload*>(ocInfo.getPayload());
     }
 
     OCStackResult InProcClientWrapper::PostResourceRepresentation(
@@ -489,7 +472,7 @@ namespace OC
 
             result = OCDoResource(nullptr, OC_REST_POST,
                                   url.c_str(), &devAddr,
-                                  assembleSetResourcePayload(rep).c_str(),
+                                  assembleSetResourcePayload(rep),
                                   CT_DEFAULT,
                                   static_cast<OCQualityOfService>(QoS),
                                   &cbdata,
@@ -536,7 +519,7 @@ namespace OC
 
             result = OCDoResource(&handle, OC_REST_PUT,
                                   url.c_str(), &devAddr,
-                                  assembleSetResourcePayload(rep).c_str(),
+                                  assembleSetResourcePayload(rep),
                                   CT_DEFAULT,
                                   static_cast<OCQualityOfService>(QoS),
                                   &cbdata,

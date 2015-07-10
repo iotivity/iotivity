@@ -150,6 +150,7 @@ void DeleteClientCB(ClientCB * cbNode)
         OC_LOG(INFO, TAG, PCF("deleting tokens"));
         OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)cbNode->token, cbNode->tokenLength);
         CADestroyToken (cbNode->token);
+        OICFree(cbNode->devAddr);
         OICFree(cbNode->handle);
         OICFree(cbNode->requestUri);
         if(cbNode->deleteCallback)

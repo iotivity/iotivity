@@ -42,6 +42,7 @@
 #include "OCApi.h"
 #include "OCException.h"
 #include "OCUtilities.h"
+#include "ocpayload.h"
 
 #include "oc_logger.hpp"
 
@@ -131,13 +132,14 @@ namespace OC
          return result_guard(OC_STACK_ERROR);
         }
 
-        std::string payload(pResponse->getResourceRepresentation().getJSONRepresentation());
-
-        return result_guard(
+        OCRepPayload* pl = pResponse->getResourceRepresentation().getPayload();
+        OCStackResult result =
                    OCNotifyListOfObservers(resourceHandle,
                             &observationIds[0], observationIds.size(),
-                            payload.c_str(),
-                            static_cast<OCQualityOfService>(QoS)));
+                            pl,
+                            static_cast<OCQualityOfService>(QoS));
+        OCRepPayloadDestroy(pl);
+        return result_guard(result);
     }
 
     OCResource::Ptr OCPlatform_impl::constructResourceObject(const std::string& host,

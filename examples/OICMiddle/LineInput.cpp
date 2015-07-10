@@ -235,7 +235,7 @@ LineResult LineInput::processGet(elements_t& elems, stringstream& ss)
         return LR_Timeout;
     }
 
-    std::string jsonRep = wreq->m_rep.getJSONRepresentation();
+    std::string jsonRep ;//= wreq->m_rep.getJSONRepresentation();
     //ss << jsonRep << endl;
     printJSONAsTable(jsonRep);
         return LR_OK;
@@ -356,7 +356,7 @@ void LineInput::obsCB(token_t token, const HeaderOptions& headerOptions, const O
     if (!m_observer)
         return;
     cout << "cb " << eCode << " " << sequenceNumber << '\n';
-    cout << rep.getJSONRepresentation() << "\n";
+    //cout << rep.getJSONRepresentation() << "\n";
 }
 
 ParseState LineInput::finishElem(char*& e, elements_t& elems)

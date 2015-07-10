@@ -28,6 +28,7 @@
 #include "ocstack.h"
 #include "logger.h"
 #include "occlientslow.h"
+#include "ocpayload.h"
 
 // Tracking user input
 static int UNICAST_DISCOVERY = 0;
@@ -35,9 +36,8 @@ static int TEST_CASE = 0;
 static int CONNECTIVITY = 0;
 
 static const char * UNICAST_DISCOVERY_QUERY = "coap://%s/oic/res";
-static std::string putPayload = "{\"state\":\"off\",\"power\":10}";
 static std::string coapServerIP = "255.255.255.255";
-static std::string coapServerPort = "5683";
+static uint16_t coapServerPort = 5683;
 static std::string coapServerResource = "/a/led";
 
 //The following variable determines the interface protocol (IP, etc)
@@ -67,6 +67,24 @@ static void PrintUsage()
     OC_LOG(INFO, TAG, "-t 1 : Discover Resources");
     OC_LOG(INFO, TAG, "-t 2 : Discover Resources and Initiate Nonconfirmable Get Request");
     OC_LOG(INFO, TAG, "-t 3 : Discover Resources and Initiate Confirmable Get Request");
+    OC_LOG(INFO, TAG, "-t 4 : Discover Resources and Initiate NonConfirmable Put Request");
+    OC_LOG(INFO, TAG, "-t 5 : Discover Resources and Initiate Confirmable Put Request");
+}
+
+OCPayload* putPayload()
+{
+    OCRepPayload* payload = OCRepPayloadCreate();
+
+    if(!payload)
+    {
+        std::cout << "Failed to create put payload object"<<std::endl;
+        std::exit(1);
+    }
+
+    OCRepPayloadSetPropInt(payload, "power", 15);
+    OCRepPayloadSetPropBool(payload, "state", true);
+
+    return (OCPayload*) payload;
 }
 
 OCStackResult InvokeOCDoResource(std::ostringstream &query,
@@ -81,7 +99,8 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
     cbData.cd = NULL;
 
     ret = OCDoResource(NULL, method, query.str().c_str(), 0,
-            NULL, OC_CONNTYPE, qos, &cbData, options, numOptions);
+            (method == OC_REST_PUT) ? putPayload() : NULL,
+            OC_CONNTYPE, qos, &cbData, options, numOptions);
 
     if (ret != OC_STACK_OK)
     {
@@ -105,8 +124,8 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse
 
     OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
     OC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
-    OC_LOG_V(INFO, TAG, "JSON = %s =============> Get Response",
-            clientResponse->resJSONPayload);
+    OC_LOG(INFO, TAG, "Get Response =============> ");
+    OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
 
     if(clientResponse->rcvdVendorSpecificHeaderOptions &&
             clientResponse->numRcvdVendorSpecificHeaderOptions)
@@ -142,9 +161,9 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
     {
         OC_LOG_V(INFO, TAG, "StackResult: %s", getResult(clientResponse->result));
 
-        OC_LOG_V(INFO, TAG,
-                "Device =============> Discovered %s @ %s:%d",
-                clientResponse->resJSONPayload, clientResponse->devAddr.addr, clientResponse->devAddr.port);
+        OC_LOG_V(INFO, TAG, "Discovered @ %s:%u =============> ",
+            clientResponse->devAddr.addr, clientResponse->devAddr.port);
+        OC_LOG_PAYLOAD (INFO, TAG, clientResponse->payload);
 
         parseClientResponse(clientResponse);
 
@@ -155,6 +174,12 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
                 break;
             case TEST_CON_OP:
                 InitGetRequest(OC_HIGH_QOS);
+                break;
+            case TEST_NON_CON_PUT:
+                InitPutRequest(OC_LOW_QOS);
+                break;
+            case TEST_CON_PUT:
+                InitPutRequest(OC_HIGH_QOS);
                 break;
             default:
                 PrintUsage();
@@ -171,8 +196,18 @@ int InitGetRequest(OCQualityOfService qos)
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
     query << "coap://" << coapServerIP << ":" << coapServerPort << coapServerResource;
-
+    OC_LOG_V (INFO, TAG, "Performing GET with query : %s", query.str().c_str());
     return (InvokeOCDoResource(query, OC_REST_GET, (qos == OC_HIGH_QOS)?
+            OC_HIGH_QOS:OC_LOW_QOS, getReqCB, NULL, 0));
+}
+
+int InitPutRequest(OCQualityOfService qos)
+{
+    OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
+    std::ostringstream query;
+    query << "coap://" << coapServerIP << ":" << coapServerPort << coapServerResource;
+    OC_LOG_V (INFO, TAG, "Performing PUT with query : %s", query.str().c_str());
+    return (InvokeOCDoResource(query, OC_REST_PUT, (qos == OC_HIGH_QOS)?
             OC_HIGH_QOS:OC_LOW_QOS, getReqCB, NULL, 0));
 }
 

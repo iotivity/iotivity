@@ -68,7 +68,6 @@ oclib_src = [
 		'OCResourceRequest.cpp'
 	]
 
-oclib_env.AppendUnique(CPPPATH = [oclib_env.get('SRC_DIR') + '/extlibs/cereal/include'])
 oclib = oclib_env.SharedLibrary('oc', oclib_src)
 oclib_env.InstallTarget(oclib, 'liboc')
 oclib_env.UserInstallTargetLib(oclib, 'liboc')

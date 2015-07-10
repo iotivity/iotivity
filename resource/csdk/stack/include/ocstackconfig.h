@@ -38,9 +38,9 @@
  * They have a combined size of 10 bytes.
  */
 #ifdef WITH_ARDUINO
-#define MAX_RESPONSE_LENGTH (246)
+#define MAX_RESPONSE_LENGTH (256)
 #else
-#define MAX_RESPONSE_LENGTH (1014)
+#define MAX_RESPONSE_LENGTH (1024)
 #endif
 
 /**

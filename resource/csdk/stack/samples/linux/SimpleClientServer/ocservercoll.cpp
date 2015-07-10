@@ -28,6 +28,7 @@
 #include <pthread.h>
 #include <ocstack.h>
 #include <logger.h>
+#include "ocpayload.h"
 
 const char *getResult(OCStackResult result);
 
@@ -44,32 +45,9 @@ typedef struct LIGHTRESOURCE{
 
 static LightResource light;
 
-// TODO : hard coded for now, change after Sprint10
-const char rspGetRoomDefault[] = "{\"href\":\"/a/room\",\"rep\":{\"name\":\"John's Room\"}}";
-const char rspGetRoomCollection[] = "{\"href\":\"/a/room\"}";
-// TODO : Needs to be changed to retrieve current status of room and return that in response
-const char rspPutRoomDefault[] = "{\"href\":\"/a/room\",\"rep\":{\"name\":\"John's Room\"}}";
-const char rspPutRoomCollection[] = "{\"href\":\"/a/room\"}";
-const char rspFailureRoom[] = "{\"href\":\"/a/room\",\"rep\":{\"error\":\"ROOM_OP_FAIL\"}}";
-
-// TODO : hard coded for now, change after Sprint4
-const char rspGetLightDefault[] =
-        "{\"href\":\"/a/light\",\"rep\":{\"state\":\"false\",\"color\":\"0\"}}";
-const char rspGetLightCollection[] = "{\"href\":\"/a/light\"}";
-// TODO : Needs to be changed to retrieve current status of light and return that in response
-const char rspPutLightDefault[] =
-        "{\"href\":\"/a/light\",\"rep\":{\"state\":\"true\",\"color\":\"0\"}}";
-const char rspPutLightCollection[] = "{\"href\":\"/a/light\"}";
-const char rspFailureLight[] = "{\"href\":\"/a/light\",\"rep\":{\"error\":\"LIGHT_OP_FAIL\"}}";
-
-
-// TODO : hard coded for now, change after Sprint4
-const char rspGetFanDefault[] = "{\"href\":\"/a/fan\",\"rep\":{\"state\":\"true\",\"speed\":10}}";
-const char rspGetFanCollection[] = "{\"href\":\"/a/fan\"}";
-// TODO : Needs to be changed to retrieve current status of fan and return that in response
-const char rspPutFanDefault[] = "{\"href\":\"/a/fan\",\"rep\":{\"state\":\"false\",\"speed\":0}}";
-const char rspPutFanCollection[] = "{\"href\":\"/a/fan\"}";
-const char rspFailureFan[] = "{\"href\":\"/a/fan\",\"rep\":{\"error\":\"FAN_OP_FAIL\"}}";
+char *gLightResourceUri= (char *)"/a/light";
+char *gRoomResourceUri= (char *)"/a/room";
+char *gFanResourceUri= (char *)"/a/fan";
 
 typedef enum
 {
@@ -89,34 +67,6 @@ void PrintUsage()
 }
 
 unsigned static int TEST = TEST_INVALID;
-
-static OCEntityHandlerResult
-HandleCallback(OCEntityHandlerRequest * ehRequest,
-               const char* opStr,
-               const char* errStr,
-               char *payload,
-               uint16_t maxPayloadSize)
-{
-    OCEntityHandlerResult ret = OC_EH_OK;
-
-    // Append opStr or errStr, after making sure there is
-    // enough room in the payload
-    if (strlen(opStr) < (maxPayloadSize - strlen(payload)))
-    {
-        strncat((char*)payload, opStr, strlen(opStr));
-    }
-    else if (strlen(errStr) < (maxPayloadSize - strlen(payload)))
-    {
-        strncat((char*)payload, errStr, strlen(errStr));
-        ret = OC_EH_ERROR;
-    }
-    else
-    {
-        ret = OC_EH_ERROR;
-    }
-
-    return ret;
-}
 
 static void
 PrintReceivedMsgInfo(OCEntityHandlerFlag flag, OCEntityHandlerRequest * ehRequest)
@@ -159,7 +109,7 @@ OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
 {
     OCEntityHandlerResult ret = OC_EH_OK;
     OCEntityHandlerResponse response;
-    char payload[MAX_RESPONSE_LENGTH] = {0};
+    OCRepPayload* payload = OCRepPayloadCreate();
 
     OC_LOG_V(INFO, TAG, "Callback for Room");
     PrintReceivedMsgInfo(flag, ehRequest );
@@ -172,54 +122,45 @@ OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
         {
             if(query.find(OC_RSRVD_INTERFACE_DEFAULT) != std::string::npos)
             {
-                ret = HandleCallback(ehRequest,
-                        rspGetRoomDefault, rspFailureRoom, payload, sizeof(payload));
-                if(ret != OC_EH_ERROR)
-                {
-                    ret = HandleCallback(ehRequest, ",", ",", payload, sizeof(payload));
-                    ret = HandleCallback(ehRequest,
-                            rspGetLightCollection, rspFailureLight, payload, sizeof(payload));
-                }
-                if(ret != OC_EH_ERROR)
-                {
-                    ret = HandleCallback(ehRequest, ",", ",", payload, sizeof(payload));
-                    ret = HandleCallback(ehRequest,
-                            rspGetFanCollection, rspFailureFan, payload, sizeof(payload));
-                }
+                OCRepPayloadSetUri(payload, gRoomResourceUri);
+                OCRepPayloadSetPropString(payload, "name", "John's Room");
+
+                OCRepPayload *tempPayload = OCRepPayloadCreate();
+                OCRepPayloadSetUri(tempPayload, gLightResourceUri);
+                OCRepPayloadAppend(payload, tempPayload);
+
+                OCRepPayload *tempPayload2 = OCRepPayloadCreate();
+                OCRepPayloadSetUri(tempPayload2, gFanResourceUri);
+                OCRepPayloadAppend(payload, tempPayload2);
             }
             else if(query.find(OC_RSRVD_INTERFACE_LL) != std::string::npos)
             {
-                ret = HandleCallback(ehRequest,
-                        rspGetRoomCollection, rspFailureRoom, payload, sizeof(payload));
-                if(ret != OC_EH_ERROR)
-                {
-                    ret = HandleCallback(ehRequest, ",", ",", payload, sizeof(payload));
-                    ret = HandleCallback(ehRequest,
-                            rspGetLightCollection, rspFailureLight, payload, sizeof(payload));
-                }
-                if(ret != OC_EH_ERROR)
-                {
-                    ret = HandleCallback(ehRequest, ",", ",", payload, sizeof(payload));
-                    ret = HandleCallback(ehRequest,
-                            rspGetFanCollection, rspFailureFan, payload, sizeof(payload));
-                }
+                OCRepPayloadSetUri(payload, gRoomResourceUri);
+
+                OCRepPayload *tempPayload = OCRepPayloadCreate();
+                OCRepPayloadSetUri(tempPayload, gLightResourceUri);
+                OCRepPayloadAppend(payload, tempPayload);
+
+                OCRepPayload *tempPayload2 = OCRepPayloadCreate();
+                OCRepPayloadSetUri(tempPayload2, gFanResourceUri);
+                OCRepPayloadAppend(payload, tempPayload2);
             }
             else if(query.find(OC_RSRVD_INTERFACE_BATCH) != std::string::npos)
             {
-                ret = HandleCallback(ehRequest,
-                        rspGetRoomCollection, rspFailureRoom, payload, sizeof(payload));
-                if(ret != OC_EH_ERROR)
-                {
-                    ret = HandleCallback(ehRequest, ",", ",", payload, sizeof(payload));
-                    ret = HandleCallback(ehRequest,
-                            rspGetLightDefault, rspFailureLight, payload, sizeof(payload));
-                }
-                if(ret != OC_EH_ERROR)
-                {
-                    ret = HandleCallback(ehRequest, ",", ",", payload, sizeof(payload));
-                    ret = HandleCallback(ehRequest,
-                            rspGetFanDefault, rspFailureFan, payload, sizeof(payload));
-                }
+
+                OCRepPayloadSetUri(payload, gRoomResourceUri);
+
+                OCRepPayload *tempPayload = OCRepPayloadCreate();
+                OCRepPayloadSetUri(tempPayload, gLightResourceUri);
+                OCRepPayloadSetPropBool(tempPayload, "state", false);
+                OCRepPayloadSetPropInt(tempPayload, "color", 0);
+                OCRepPayloadAppend(payload, tempPayload);
+
+                OCRepPayload *tempPayload2 = OCRepPayloadCreate();
+                OCRepPayloadSetUri(tempPayload2, gFanResourceUri);
+                OCRepPayloadSetPropBool(tempPayload, "state", true);
+                OCRepPayloadSetPropInt(tempPayload, "speed", 10);
+                OCRepPayloadAppend(payload, tempPayload2);
             }
             if (ret == OC_EH_OK)
             {
@@ -227,8 +168,7 @@ OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
                 response.requestHandle = ehRequest->requestHandle;
                 response.resourceHandle = ehRequest->resource;
                 response.ehResult = ret;
-                response.payload = payload;
-                response.payloadSize = strlen(payload);
+                response.payload = reinterpret_cast<OCPayload*>(payload);
                 response.numSendVendorSpecificHeaderOptions = 0;
                 memset(response.sendVendorSpecificHeaderOptions,
                         0, sizeof response.sendVendorSpecificHeaderOptions);
@@ -249,48 +189,50 @@ OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
             {
                 if(ret != OC_EH_ERROR)
                 {
-                    ret = HandleCallback(ehRequest,
-                            rspPutRoomDefault, rspFailureRoom, payload, sizeof(payload));
+                    OCRepPayloadSetUri(payload, gRoomResourceUri);
+                    OCRepPayloadSetPropString(payload, "name", "John's Room");
                 }
             }
             if(query.find(OC_RSRVD_INTERFACE_LL) != std::string::npos)
             {
                 if(ret != OC_EH_ERROR)
                 {
-                    ret = HandleCallback(ehRequest,
-                            rspPutRoomCollection, rspFailureRoom, payload, sizeof(payload));
+                    OCRepPayloadSetUri(payload, gRoomResourceUri);
                 }
                 if(ret != OC_EH_ERROR)
                 {
-                    ret = HandleCallback(ehRequest, ",", ",", payload, sizeof(payload));
-                    ret = HandleCallback(ehRequest,
-                            rspPutLightCollection, rspFailureLight, payload, sizeof(payload));
+                    OCRepPayload *tempPayload = OCRepPayloadCreate();
+                    OCRepPayloadSetUri(tempPayload, gLightResourceUri);
+                    OCRepPayloadAppend(payload, tempPayload);
                 }
                 if(ret != OC_EH_ERROR)
                 {
-                    ret = HandleCallback(ehRequest, ",", ",", payload, sizeof(payload));
-                    ret = HandleCallback(ehRequest,
-                            rspPutFanCollection, rspFailureFan, payload, sizeof(payload));
+                    OCRepPayload *tempPayload = OCRepPayloadCreate();
+                    OCRepPayloadSetUri(tempPayload, gFanResourceUri);
+                    OCRepPayloadAppend(payload, tempPayload);
                 }
             }
             if(query.find(OC_RSRVD_INTERFACE_BATCH ) != std::string::npos)
             {
                 if(ret != OC_EH_ERROR)
                 {
-                    ret = HandleCallback(ehRequest,
-                            rspPutRoomCollection, rspFailureRoom, payload, sizeof(payload));
+                    OCRepPayloadSetUri(payload, gRoomResourceUri);
                 }
                 if(ret != OC_EH_ERROR)
                 {
-                    ret = HandleCallback(ehRequest, ",", ",", payload, sizeof(payload));
-                    ret = HandleCallback(ehRequest,
-                            rspPutLightDefault, rspFailureLight, payload, sizeof(payload));
+                    OCRepPayload *tempPayload = OCRepPayloadCreate();
+                    OCRepPayloadSetUri(tempPayload, gLightResourceUri);
+                    OCRepPayloadSetPropBool(tempPayload, "state", true);
+                    OCRepPayloadSetPropInt(tempPayload, "color", 0);
+                    OCRepPayloadAppend(payload, tempPayload);
                 }
                 if(ret != OC_EH_ERROR)
                 {
-                    ret = HandleCallback(ehRequest, ",", ",", payload, sizeof(payload));
-                    ret = HandleCallback(ehRequest,
-                            rspPutFanDefault, rspFailureFan, payload, sizeof(payload));
+                    OCRepPayload *tempPayload = OCRepPayloadCreate();
+                    OCRepPayloadSetUri(tempPayload, gFanResourceUri);
+                    OCRepPayloadSetPropBool(tempPayload, "state", false);
+                    OCRepPayloadSetPropInt(tempPayload, "speed", 0);
+                    OCRepPayloadAppend(payload, tempPayload);
                 }
             }
             if (ret == OC_EH_OK)
@@ -299,8 +241,7 @@ OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
                 response.requestHandle = ehRequest->requestHandle;
                 response.resourceHandle = ehRequest->resource;
                 response.ehResult = ret;
-                response.payload = payload;
-                response.payloadSize = strlen(payload);
+                response.payload = reinterpret_cast<OCPayload*>(payload);
                 response.numSendVendorSpecificHeaderOptions = 0;
                 memset(response.sendVendorSpecificHeaderOptions,
                         0, sizeof response.sendVendorSpecificHeaderOptions);
@@ -334,7 +275,7 @@ OCEntityHandlerResult OCEntityHandlerLightCb(OCEntityHandlerFlag flag,
 {
     OCEntityHandlerResult ret = OC_EH_OK;
     OCEntityHandlerResponse response;
-    char payload[MAX_RESPONSE_LENGTH] = {0};
+    OCRepPayload* payload = OCRepPayloadCreate();
 
     OC_LOG_V(INFO, TAG, "Callback for Light");
     PrintReceivedMsgInfo(flag, ehRequest );
@@ -343,13 +284,15 @@ OCEntityHandlerResult OCEntityHandlerLightCb(OCEntityHandlerFlag flag,
     {
         if(OC_REST_GET == ehRequest->method)
         {
-            ret = HandleCallback(ehRequest,
-                    rspGetLightDefault, rspFailureLight, payload, sizeof(payload));
+            OCRepPayloadSetUri(payload, gLightResourceUri);
+            OCRepPayloadSetPropBool(payload, "state", false);
+            OCRepPayloadSetPropInt(payload, "color", 0);
         }
         else if(OC_REST_PUT == ehRequest->method)
         {
-            ret = HandleCallback(ehRequest,
-                    rspPutLightDefault, rspFailureLight, payload, sizeof(payload));
+            OCRepPayloadSetUri(payload, gLightResourceUri);
+            OCRepPayloadSetPropBool(payload, "state", true);
+            OCRepPayloadSetPropInt(payload, "color", 0);
         }
         else
         {
@@ -364,8 +307,7 @@ OCEntityHandlerResult OCEntityHandlerLightCb(OCEntityHandlerFlag flag,
             response.requestHandle = ehRequest->requestHandle;
             response.resourceHandle = ehRequest->resource;
             response.ehResult = ret;
-            response.payload = payload;
-            response.payloadSize = strlen(payload);
+            response.payload = reinterpret_cast<OCPayload*>(payload);
             response.numSendVendorSpecificHeaderOptions = 0;
             memset(response.sendVendorSpecificHeaderOptions,
                     0, sizeof response.sendVendorSpecificHeaderOptions);
@@ -394,7 +336,7 @@ OCEntityHandlerResult OCEntityHandlerFanCb(OCEntityHandlerFlag flag,
 {
     OCEntityHandlerResult ret = OC_EH_OK;
     OCEntityHandlerResponse response;
-    char payload[MAX_RESPONSE_LENGTH] = {0};
+    OCRepPayload* payload = OCRepPayloadCreate();
 
     OC_LOG_V(INFO, TAG, "Callback for Fan");
     PrintReceivedMsgInfo(flag, ehRequest );
@@ -403,13 +345,15 @@ OCEntityHandlerResult OCEntityHandlerFanCb(OCEntityHandlerFlag flag,
     {
         if(OC_REST_GET == ehRequest->method)
         {
-            ret = HandleCallback(ehRequest, rspGetFanDefault,
-                    rspFailureFan, payload, sizeof(payload));
+            OCRepPayloadSetUri(payload, gFanResourceUri);
+            OCRepPayloadSetPropBool(payload, "state", true);
+            OCRepPayloadSetPropInt(payload, "speed", 10);
         }
         else if(OC_REST_PUT == ehRequest->method)
         {
-            ret = HandleCallback(ehRequest, rspPutFanDefault,
-                    rspFailureFan, payload, sizeof(payload));
+            OCRepPayloadSetUri(payload, gFanResourceUri);
+            OCRepPayloadSetPropBool(payload, "state", false);
+            OCRepPayloadSetPropInt(payload, "speed", 0);
         }
         else
         {
@@ -424,8 +368,7 @@ OCEntityHandlerResult OCEntityHandlerFanCb(OCEntityHandlerFlag flag,
             response.requestHandle = ehRequest->requestHandle;
             response.resourceHandle = ehRequest->resource;
             response.ehResult = ret;
-            response.payload = payload;
-            response.payloadSize = strlen(payload);
+            response.payload = reinterpret_cast<OCPayload*>(payload);
             response.numSendVendorSpecificHeaderOptions = 0;
             memset(response.sendVendorSpecificHeaderOptions,
                     0, sizeof response.sendVendorSpecificHeaderOptions);
@@ -551,6 +494,7 @@ int main(int argc, char* argv[])
 
     return 0;
 }
+
 void createResources()
 {
     light.state = false;

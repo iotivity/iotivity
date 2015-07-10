@@ -7,15 +7,6 @@ cd "$(dirname "$0")"
 
 EXTDIR=$(pwd)
 
-# Check for cereal existence
-if [ ! -d "cereal" ]; then
-    git clone https://github.com/USCiLab/cereal.git cereal
-    pushd cereal
-    git reset --hard 7121e91e6ab8c3e6a6516d9d9c3e6804e6f65245
-    git apply ../../resource/patches/cereal_gcc46.patch
-    popd
-fi
-
 # Pick the preferred version of boost to use
 BOOST_MAJOR=1
 BOOST_MINOR=57
@@ -44,8 +35,8 @@ function buildBoost {
     if [ ! -d "boost" ]; then
         cloneBoost
     fi
-    
-    # Determine the 
+
+    # Determine the
     TOOLCHAIN=${ANDROID_NDK}/toolchains/${TOOLSET}-${VERSION}/prebuilt/${HOST_ARCH}/bin
 
     OLDPATH=$PATH

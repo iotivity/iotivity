@@ -1481,7 +1481,7 @@ TEST(StackResourceAccess, DeleteLastResource)
     uint8_t numExpectedResources = 0;
 
     EXPECT_EQ(OC_STACK_OK, OCGetNumberOfResources(&numExpectedResources));
- 
+
     OCResourceHandle handle0;
     EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle0,
                                             "core.led",
@@ -1584,97 +1584,6 @@ TEST(StackResourceAccess, DeleteMiddleResource)
     EXPECT_STREQ("core.rw", resourceInterfaceName);
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
-}
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif // __cplusplus
-    void parsePresencePayload(char* payload, uint32_t* seqNum,
-            uint32_t* maxAge, OCPresenceTrigger* presenceTrigger, char** resType);
-#ifdef __cplusplus
-}
-#endif // __cplusplus
-
-TEST(StackPresence, ParsePresencePayload)
-{
-    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
-    OC_LOG(INFO, TAG, "Starting ParsePresencePayload test");
-
-    char payload[100];
-    uint32_t seqNum = 0, maxAge = 0;
-    OCPresenceTrigger presenceTrigger = OC_PRESENCE_TRIGGER_CHANGE;
-    char * resType = NULL;
-
-    //Good Scenario
-    strncpy(payload, "{\"oic\":[{\"ttl\":99,\"non\":100,\"trg\":"
-            "\"delete\",\"rt\":\"presence\"}]}", sizeof(payload));
-    parsePresencePayload(payload, &seqNum, &maxAge,
-            &presenceTrigger, &resType);
-    EXPECT_TRUE(100 == seqNum);
-    EXPECT_TRUE(99 == maxAge);
-    EXPECT_TRUE(OC_PRESENCE_TRIGGER_DELETE == presenceTrigger);
-    EXPECT_TRUE(NULL != resType);
-    EXPECT_STREQ("presence", resType);
-    OICFree(resType);
-
-    presenceTrigger = OC_PRESENCE_TRIGGER_CHANGE;
-
-    //Bad Scenario -- should not result in Seg Fault
-    parsePresencePayload(payload, NULL, &maxAge, &presenceTrigger, &resType);
-
-    //Bad Scenario
-    seqNum = 0; maxAge = 0; resType = NULL;
-    strncpy(payload, "{abracadabra}", sizeof(payload));
-    parsePresencePayload(payload, &seqNum, &maxAge, &presenceTrigger, &resType);
-    EXPECT_TRUE(0 == seqNum);
-    EXPECT_TRUE(0 == maxAge);
-    EXPECT_TRUE(OC_PRESENCE_TRIGGER_CHANGE == presenceTrigger);
-    EXPECT_TRUE(NULL == resType);
-    EXPECT_EQ(NULL, resType);
-    OICFree(resType);
-
-    //Bad Scenario
-    seqNum = 0; maxAge = 0; resType = NULL;
-    strncpy(payload, "{\"oic\":[100]}", sizeof(payload));
-    parsePresencePayload(payload, &seqNum, &maxAge, &presenceTrigger, &resType);
-    EXPECT_TRUE(0 == seqNum);
-    EXPECT_TRUE(0 == maxAge);
-    EXPECT_TRUE(OC_PRESENCE_TRIGGER_CHANGE == presenceTrigger);
-    EXPECT_TRUE(NULL == resType);
-    EXPECT_EQ(NULL, resType);
-    OICFree(resType);
-
-    //Bad Scenario
-    seqNum = 0; maxAge = 0; resType = NULL;
-    strncpy(payload, "{\"oic\":[]}", sizeof(payload));
-    parsePresencePayload(payload, &seqNum, &maxAge, &presenceTrigger, &resType);
-    EXPECT_TRUE(0 == seqNum);
-    EXPECT_TRUE(0 == maxAge);
-    EXPECT_TRUE(OC_PRESENCE_TRIGGER_CHANGE == presenceTrigger);
-    EXPECT_TRUE(NULL == resType);
-    EXPECT_EQ(NULL, resType);
-    OICFree(resType);
-
-    //Bad Scenario
-    strncpy(payload, "{:]}", sizeof(payload));
-    parsePresencePayload(payload, &seqNum, &maxAge, &presenceTrigger, &resType);
-    EXPECT_TRUE(0 == seqNum);
-    EXPECT_TRUE(0 == maxAge);
-    EXPECT_TRUE(OC_PRESENCE_TRIGGER_CHANGE == presenceTrigger);
-    EXPECT_TRUE(NULL == resType);
-    EXPECT_EQ(NULL, resType);
-    OICFree(resType);
-
-    //Bad Scenario
-    strncpy(payload, "{:[presence}", sizeof(payload));
-    parsePresencePayload(payload, &seqNum, &maxAge, &presenceTrigger, &resType);
-    EXPECT_TRUE(0 == seqNum);
-    EXPECT_TRUE(0 == maxAge);
-    EXPECT_TRUE(OC_PRESENCE_TRIGGER_CHANGE == presenceTrigger);
-    EXPECT_TRUE(NULL == resType);
-    EXPECT_EQ(NULL, resType);
-    OICFree(resType);
 }
 
 TEST(PODTests, OCHeaderOption)

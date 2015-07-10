@@ -174,7 +174,7 @@ namespace OC
             m_requestType = requestType;
         }
 
-        void setPayload(const std::string& requestPayload);
+        void setPayload(OCPayload* requestPayload);
 
         void setQueryParams(QueryParamsMap& queryParams)
         {

@@ -1,6 +1,6 @@
 #******************************************************************
 #
-# Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
+# Copyright 2015 Intel Mobile Communications GmbH All Rights Reserved.
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #
@@ -18,15 +18,29 @@
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-######################################################################
-# This script manages extra build options
-#
-######################################################################
 import os
-import platform
 
 Import('env')
 
-target_os = env.get('TARGET_OS')
-target_arch = env.get('TARGET_ARCH')
 src_dir = env.get('SRC_DIR')
+
+cborDir = os.path.join(src_dir, 'extlibs','tinycbor','tinycbor')
+
+if not os.path.exists(cborDir):
+    print '''
+*********************************** Error: ****************************************
+* Please download cbor using the following command:                               *
+*     $ git clone https://github.com/01org/tinycbor.git extlibs/tinycbor/tinycbor *
+***********************************************************************************
+'''
+    Exit(1)
+
+cbor_src = [
+    os.path.join(cborDir,'src/cborparser.c'),
+    os.path.join(cborDir,'src/cborencoder.c')
+    ]
+
+env['cbor_files'] = cbor_src
+env.AppendUnique(CPPPATH  = [os.path.join(cborDir, 'src')])
+
+

@@ -138,8 +138,7 @@ void DeleteDeviceInfo();
  * Prepares a JSON string for response.
  */
 OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
-                                           char * out,
-                                           uint16_t *remaining,
+                                           OCDiscoveryPayload* payload,
                                            CATransportAdapter_t adapter);
 
 /**

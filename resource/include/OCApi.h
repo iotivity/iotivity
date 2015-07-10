@@ -21,6 +21,7 @@
 #ifndef __INTEL_OCAPI_H_2014_07_10
 #define __INTEL_OCAPI_H_2014_07_10
 
+
 #include <string>
 #include <sstream>
 #include <vector>

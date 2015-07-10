@@ -28,6 +28,7 @@ provisioning_env = env.Clone()
 ######################################################################
 provisioning_env.AppendUnique(CPPPATH = [
 		'../../stack/include',
+		'../../stack/include/internal',
 		'../../ocrandom/include',
 		'../../logger/include',
 		'../../../oc_logger/include',

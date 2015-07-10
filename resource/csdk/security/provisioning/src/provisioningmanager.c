@@ -38,9 +38,12 @@
 #include <stdbool.h>
 
 #include "cJSON.h"
+#include "ocpayload.h"
+#include "ocpayloadcbor.h"
 #include "oic_malloc.h"
 #include "logger.h"
 #include "cacommon.h"
+#include "ocpayload.h"
 #include "cainterface.h"
 #include "provisioningmanager.h"
 #include "credentialgenerator.h"
@@ -313,7 +316,6 @@ static CAResult_t sendCARequest(CAMethod_t method,
         OC_LOG(ERROR, TAG, "Error while generating token");
         return CA_MEMORY_ALLOC_FAILED;
     }
-
     CAEndpoint_t *endpoint = NULL;
     if (CA_STATUS_OK != CACreateEndpoint((CATransportFlags_t)secure,
                                          devAddr->adapter, devAddr->addr,
@@ -324,20 +326,25 @@ static CAResult_t sendCARequest(CAMethod_t method,
         return CA_STATUS_FAILED;
     }
     CAMessageType_t msgType = CA_MSG_CONFIRM;
-    CAInfo_t requestData = { 0 };
-    requestData.token = gToken;
-    requestData.tokenLength  = CA_MAX_TOKEN_LEN;
     if (payload && '\0' != (*(payload + payloadLen)))
     {
         OC_LOG(ERROR, TAG, "Payload not properly terminated.");
         CADestroyEndpoint(endpoint);
         return CA_STATUS_INVALID_PARAM;
     }
-    requestData.payload = payload;
-    requestData.type = msgType;
+    OCSecurityPayload secPayload;
+    secPayload.securityData = payload;
+    secPayload.base.type = PAYLOAD_TYPE_SECURITY;
     CARequestInfo_t requestInfo = { 0 };
     requestInfo.method = method;
-    requestInfo.info = requestData;
+    requestInfo.isMulticast = false;
+    OCConvertPayload((OCPayload*)(&secPayload), &requestInfo.info.payload,
+            &requestInfo.info.payloadSize);
+    requestInfo.info.type = msgType;
+    requestInfo.info.token = gToken;
+    requestInfo.info.tokenLength  = CA_MAX_TOKEN_LEN;
+    requestInfo.info.resourceUri  = resourceUri;
+
     requestInfo.isMulticast = false;
     CAResult_t caResult = CA_STATUS_OK;
     caResult = CASendRequest(endpoint, &requestInfo);
@@ -421,6 +428,7 @@ static SPResult selectProvisioningMethod(OicSecOxm_t *supportedMethods, size_t n
     return SP_RESULT_SUCCESS;
 }
 
+OCStackResult OCParsePayload(OCPayload** outPayload, const uint8_t* payload, size_t payloadSize);
 /**
  * Response handler for discovery.
  *
@@ -442,21 +450,16 @@ static void ProvisionDiscoveryHandler(const CAEndpoint_t *object,
             }
             else
             {
-                // temp logic for trimming oc attribute from the json.
-                // JSONToBin should handle oc attribute.
-                char *pTempPayload = (char *)OICMalloc(strlen(responseInfo->info.payload));
-                if (NULL == pTempPayload)
-                {
-                    OC_LOG(ERROR, TAG, "Error while Memory allocation.");
-                    gStateManager = gStateManager | SP_DISCOVERY_ERROR;
-                    return;
-                }
+                OCPayload* payload;
+                OCStackResult result = OCParsePayload(&payload, responseInfo->info.payload,
+                        responseInfo->info.payloadSize);
 
-                strcpy(pTempPayload, responseInfo->info.payload + 8);
-                pTempPayload[strlen(pTempPayload) - 2] = '\0';
-                OC_LOG_V(DEBUG, TAG, "Trimmed payload: %s", pTempPayload);
-                OicSecDoxm_t *ptrDoxm = JSONToDoxmBin(pTempPayload);
-                OICFree(pTempPayload);
+                OicSecDoxm_t *ptrDoxm = NULL;
+
+                if(result == OC_STACK_OK && payload->type == PAYLOAD_TYPE_SECURITY)
+                {
+                    ptrDoxm = JSONToDoxmBin(((OCSecurityPayload*)payload)->securityData);
+                }
 
                 if (NULL == ptrDoxm)
                 {
@@ -539,26 +542,23 @@ static void ListMethodsHandler(const CAEndpoint_t *object,
                     return;
                 }
 
-                char *pTempPayload = (char *)OICMalloc(strlen(responseInfo->info.payload));
-                if (NULL == pTempPayload)
+                OCPayload* payload;
+                OCStackResult result = OCParsePayload(&payload, responseInfo->info.payload,
+                        responseInfo->info.payloadSize);
+
+                OicSecPstat_t *pstat = NULL;
+
+                if(result == OC_STACK_OK && payload->type == PAYLOAD_TYPE_SECURITY)
                 {
-                    OC_LOG(ERROR, TAG, "Error in memory allocation.");
-                    gStateManager |= SP_LIST_METHODS_ERROR;
-                    return;
+                    pstat =  JSONToPstatBin(((OCSecurityPayload*)payload)->securityData);
                 }
 
-                strcpy(pTempPayload, responseInfo->info.payload + 8);
-                pTempPayload[strlen(pTempPayload) - 2] = '\0';
-
-                OicSecPstat_t *pstat =  JSONToPstatBin(pTempPayload);
                 if (NULL == pstat)
                 {
                     OC_LOG(ERROR, TAG, "Error while converting json to pstat bin");
-                    OICFree(pTempPayload);
                     gStateManager |= SP_LIST_METHODS_ERROR;
                     return;
                 }
-                OICFree(pTempPayload);
                 DeletePstatBinData(gPstat);
 
                 gPstat = pstat;
@@ -781,6 +781,7 @@ static SPResult findResource(unsigned short timeout)
     requestData.token = gToken;
     requestData.tokenLength  = CA_MAX_TOKEN_LEN;
     requestData.payload = NULL;
+    requestData.payloadSize = 0;
     requestData.type = msgType;
     requestData.resourceUri = DOXM_OWNED_FALSE_MULTICAST_QUERY;
     CARequestInfo_t requestInfo = { 0 };
@@ -958,7 +959,7 @@ static SPResult updateOperationMode(unsigned short timeout,
  * @param[in]  deviceInfo  Provisioning context
  * @return SP_SUCCESS on success
  */
-static SPResult initiateDtlsHandshake(const SPTargetDeviceInfo_t *deviceInfo)
+static SPResult initiateDtlsHandshake(SPTargetDeviceInfo_t *deviceInfo)
 {
     CAResult_t caresult = CASelectCipherSuite(TLS_ECDH_anon_WITH_AES_128_CBC_SHA);
 
@@ -976,6 +977,8 @@ static SPResult initiateDtlsHandshake(const SPTargetDeviceInfo_t *deviceInfo)
     }
     OC_LOG(INFO, TAG, "Anonymous cipher suite Enabled.");
 
+    //TODO: It is a temporary fix. Revisit it.
+    deviceInfo->endpoint.port = CA_SECURE_PORT;
     caresult = CAInitiateHandshake((CAEndpoint_t *)&deviceInfo->endpoint);
     if (CA_STATUS_OK != caresult)
     {
@@ -1322,7 +1325,7 @@ SPResult SPProvisionACL(unsigned short timeout, const SPTargetDeviceInfo_t *sele
     CAResult_t result = sendCARequest(CA_POST,
                                       &selectedDeviceInfo->endpoint,
                                       OC_SECURE,
-                                      OIC_RSRC_DOXM_URI,
+                                      OIC_RSRC_ACL_URI,
                                       aclString, payloadLen);
     OICFree(aclString);
     if (CA_STATUS_OK != result)
