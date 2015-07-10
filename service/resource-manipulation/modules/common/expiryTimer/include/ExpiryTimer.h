@@ -34,11 +34,14 @@ public:
 
 public:
     ExpiryTimer();
+
+private:
     ~ExpiryTimer();
 
 public:
     TimerID postTimer(DelayMilliSec sec, TimerCB);
     bool cancelTimer(TimerID timerID);
+    void destroyTimer();
 
 private:
     std::list<TimerID> mTimerIDList;

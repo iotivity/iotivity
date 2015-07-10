@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <algorithm>
 #include <cstdlib>
+#include <random>
 #include <utility>
 
 ExpiryTimer_Impl* ExpiryTimer_Impl::s_instance = nullptr;
@@ -36,12 +37,11 @@ ExpiryTimer_Impl::ExpiryTimer_Impl()
 ExpiryTimer_Impl::~ExpiryTimer_Impl()
 {
     check.detach();
-    delete mflag;
+    mflag = new std::once_flag;
     s_instance = nullptr;
-    delete s_instance;
 }
 
-void ExpiryTimer_Impl::destroy()
+void ExpiryTimer_Impl::destroyInstance()
 {
     if(mTimerCBList.empty())
     {
@@ -55,6 +55,7 @@ void ExpiryTimer_Impl::destroy()
         }
     }
 }
+
 ExpiryTimer_Impl* ExpiryTimer_Impl::getInstance()
 {
     std::call_once((*mflag), [](){ s_instance = new ExpiryTimer_Impl(); });
@@ -75,11 +76,11 @@ ExpiryTimer_Impl::Id ExpiryTimer_Impl::postTimer(DelayMilliSec msec, TimerCb cb)
 bool ExpiryTimer_Impl::cancelTimer(Id timerID)
 {
     bool ret = false;
+    std::lock_guard<std::mutex> lockf(m_mutex);
     for(auto it: mTimerCBList)
     {
         if(it.second.m_id == timerID)
         {
-            std::lock_guard<std::mutex> lockf(m_mutex);
             if(mTimerCBList.erase(it.first)!=0)
                 ret = true;
             else
@@ -107,17 +108,20 @@ ExpiryTimer_Impl::ExpiredTime ExpiryTimer_Impl::countExpireTime(milliDelayTime m
 
 ExpiryTimer_Impl::Id ExpiryTimer_Impl::generateID()
 {
-    srand(time(NULL));
-    Id retID = rand();
+    std::srand((unsigned)std::time(NULL));
+    Id retID = std::rand();
 
-    std::lock_guard<std::mutex> lockf(id_mutex);
-    for(std::multimap<ExpiredTime, TimerCBInfo>::iterator it=mTimerCBList.begin(); it!=mTimerCBList.end(); ++it)
+    for(std::multimap<ExpiredTime, TimerCBInfo>::iterator it=mTimerCBList.begin(); it!=mTimerCBList.end(); )
      {
        if((*it).second.m_id == retID || retID == 0)
         {
-            retID = rand();
+            retID = std::rand();
             it = mTimerCBList.begin();
         }
+       else
+       {
+           ++it;
+       }
      }
     return retID;
 }
@@ -154,6 +158,7 @@ void ExpiryTimer_Impl::doChecker()
 
 void ExpiryTimer_Impl::doExecutor(ExpiredTime expireTime)
 {
+    std::lock_guard<std::mutex> lockf(m_mutex);
     for(auto it: mTimerCBList)
     {
         if(it.first <= expireTime)
@@ -166,7 +171,7 @@ void ExpiryTimer_Impl::doExecutor(ExpiredTime expireTime)
     }
 }
 
-// ExecuterThread Class
+// ExecutorThread Class
 ExpiryTimer_Impl::ExecutorThread::ExecutorThread(TimerCBInfo cbInfo)
 {
     execute = std::thread(&ExpiryTimer_Impl::ExecutorThread::executorFunc, this, cbInfo);

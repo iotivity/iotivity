@@ -58,7 +58,7 @@ private:
 
 public:
     static ExpiryTimer_Impl* getInstance();
-    void destroy();
+    void destroyInstance();
 
     Id postTimer(DelayMilliSec, TimerCb);
     bool cancelTimer(Id);
@@ -82,7 +82,6 @@ private:
 
    std::thread check;
    std::mutex m_mutex;
-   std::mutex id_mutex;
    std::mutex cond_mutex;
    std::condition_variable m_cond;
 

@@ -30,12 +30,18 @@ ExpiryTimer::ExpiryTimer()
 
 ExpiryTimer::~ExpiryTimer()
 {
+}
+
+void ExpiryTimer::destroyTimer()
+{
     for(auto it : mTimerIDList)
     {
         timerPtr->cancelTimer(it);
     }
-    timerPtr->destroy();
+    timerPtr->destroyInstance();
     mTimerIDList.clear();
+
+    this->~ExpiryTimer();
 }
 
 ExpiryTimer::TimerID ExpiryTimer::postTimer(DelayMilliSec sec, TimerCB cb)
