@@ -24,12 +24,6 @@
 const char * SVR_DB_FILE_NAME = "oic_svr_db.json";
 const char * OIC_MI_DEF = "oic.mi.def";
 
-const char * OIC_RSRC_CORE_URI =  "/oic/res";
-const char * OIC_RSRC_CORE_D_URI =  "/oic/res/d";
-const char * OIC_RSRC_CORE_P_URI =  "/oic/p";
-const char * OIC_RSRC_PRESENCE_URI =  "/oic/ad";
-const char * OIC_RSRC_TYPES_D_URI =  "/oic/res/types/d";
-
 //ACL
 const char * OIC_RSRC_TYPE_SEC_ACL = "oic.sec.acl";
 const char * OIC_RSRC_ACL_URI =  "/oic/sec/acl";

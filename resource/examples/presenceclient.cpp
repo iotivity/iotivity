@@ -340,7 +340,7 @@ int main(int argc, char* argv[]) {
         else
         {
             // Find all resources
-            requestURI << OC_MULTICAST_DISCOVERY_URI;
+            requestURI << OC_RSRVD_WELL_KNOWN_URI;
 
             result = OCPlatform::findResource("", requestURI.str(),
                     CT_DEFAULT, &foundResource);

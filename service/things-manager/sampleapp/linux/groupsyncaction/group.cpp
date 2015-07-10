@@ -119,7 +119,7 @@ int main(int argc, char* argv[])
             else if (selectedMenu == 11)
             {
                 ostringstream query;
-                query << OC_MULTICAST_DISCOVERY_URI << "?rt=core.musicplayer";
+                query << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.musicplayer";
 
                 cout << query.str() << endl;
                 result = OCPlatform::findResource("",
@@ -139,7 +139,7 @@ int main(int argc, char* argv[])
             else if (selectedMenu == 12)
             {
                 ostringstream query;
-                query << OC_MULTICAST_DISCOVERY_URI << "?rt=core.speaker";
+                query << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.speaker";
                 result = OCPlatform::findResource("",
                             query.str(),
                             CT_DEFAULT,

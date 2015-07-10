@@ -223,7 +223,7 @@ OCStackResult GroupManager::findCandidateResources(
     {
         // std::cout << "resourceTypes : " << resourceTypes.at(i) << std::endl;
 
-        std::string query = OC_MULTICAST_DISCOVERY_URI;
+        std::string query = OC_RSRVD_WELL_KNOWN_URI;
         query.append("?rt=");
         query.append(resourceTypes.at(i));
 

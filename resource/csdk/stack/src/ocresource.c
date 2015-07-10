@@ -52,17 +52,6 @@ extern OCResource *headResource;
 static OCPlatformInfo savedPlatformInfo = {};
 static OCDeviceInfo savedDeviceInfo = {};
 
-static const char * VIRTUAL_RSRCS[] =
-{
-    "/oic/res",
-    "/oic/d",
-    "/oic/p",
-    "/oic/res/types/d",
-    #ifdef WITH_PRESENCE
-    "/oic/ad"
-    #endif
-};
-
 //-----------------------------------------------------------------------------
 // Default resource entity handler function
 //-----------------------------------------------------------------------------
@@ -163,27 +152,31 @@ static OCStackResult ExtractFiltersFromQuery(char *query, char **filterOne, char
     return OC_STACK_OK;
 }
 
-static OCVirtualResources GetTypeOfVirtualURI(char *uriInRequest)
+static OCVirtualResources GetTypeOfVirtualURI(const char *uriInRequest)
 {
-    if (strcmp (uriInRequest, GetVirtualResourceUri(OC_WELL_KNOWN_URI)) == 0)
+    if (strcmp(uriInRequest, OC_RSRVD_WELL_KNOWN_URI) == 0)
     {
         return OC_WELL_KNOWN_URI;
     }
-    else if (strcmp (uriInRequest, GetVirtualResourceUri(OC_DEVICE_URI)) == 0)
+    else if (strcmp(uriInRequest, OC_RSRVD_DEVICE_URI) == 0)
     {
         return OC_DEVICE_URI;
     }
-    else if (strcmp (uriInRequest, GetVirtualResourceUri(OC_PLATFORM_URI)) == 0)
+    else if (strcmp(uriInRequest, OC_RSRVD_PLATFORM_URI) == 0)
     {
         return OC_PLATFORM_URI;
     }
-
-    #ifdef WITH_PRESENCE
-    else
+    else if (strcmp(uriInRequest, OC_RSRVD_RESOURCE_TYPES_URI) == 0)
+    {
+        return OC_RESOURCE_TYPES_URI;
+    }
+#ifdef WITH_PRESENCE
+    else if (strcmp(uriInRequest, OC_RSRVD_PRESENCE_URI) == 0)
     {
         return OC_PRESENCE;
     }
-    #endif
+#endif //WITH_PRESENCE
+    return OC_UNKNOWN_URI;
 }
 
 static OCStackResult getQueryParamsForFiltering (OCVirtualResources uri, char *query,
@@ -235,32 +228,7 @@ OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
     OCDiscoveryPayloadAddResource(payload, resourcePtr, port);
     return OC_STACK_OK;
 }
-const char * GetVirtualResourceUri( OCVirtualResources resource)
-{
-    if (resource < OC_MAX_VIRTUAL_RESOURCES)
-    {
-        return VIRTUAL_RSRCS[resource];
-    }
 
-    return NULL;
-}
-
-bool IsVirtualResource(const char* resourceUri)
-{
-    if(!resourceUri)
-    {
-        return false;
-    }
-
-    for (int i = 0; i < OC_MAX_VIRTUAL_RESOURCES; i++)
-    {
-        if (strcmp(resourceUri, GetVirtualResourceUri((OCVirtualResources)i)) == 0)
-        {
-            return true;
-        }
-    }
-    return false;
-}
 
 uint8_t IsCollectionResource (OCResource *resource)
 {
@@ -314,7 +282,7 @@ OCStackResult DetermineResourceHandling (const OCServerRequest *request,
     const OCDevAddr *devAddr = &request->devAddr;
 
     // Check if virtual resource
-    if (IsVirtualResource((const char*)request->resourceUrl))
+    if (GetTypeOfVirtualURI(request->resourceUrl) != OC_UNKNOWN_URI)
     {
         *handling = OC_RESOURCE_VIRTUAL;
         *resource = headResource;
@@ -560,7 +528,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
     }
     else if (virtualUriInRequest == OC_DEVICE_URI)
     {
-            payload = (OCPayload*)OCDevicePayloadCreate(GetVirtualResourceUri(OC_DEVICE_URI),
+            payload = (OCPayload*)OCDevicePayloadCreate(OC_RSRVD_DEVICE_URI,
                         OCGetServerInstanceID(), savedDeviceInfo.deviceName,
                         OC_SPEC_VERSION, OC_DATA_MODEL_VERSION);
             if (!payload)
@@ -571,7 +539,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
     else if (virtualUriInRequest == OC_PLATFORM_URI)
     {
             OCPlatformPayload* payload = OCPlatformPayloadCreate(
-                    GetVirtualResourceUri(OC_PLATFORM_URI),
+                    OC_RSRVD_PLATFORM_URI,
                     &savedPlatformInfo);
             if (!payload)
             {

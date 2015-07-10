@@ -378,6 +378,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
                 clientResponse->devAddr.port);
         OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
 
+        OC_CONNTYPE = clientResponse->connType;
         parseClientResponse(clientResponse);
 
         switch(TEST_CASE)
@@ -494,7 +495,7 @@ int InitPresence()
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
     std::ostringstream querySuffix;
-    query << "coap://" << coapServerIP << ":" << coapServerPort << OC_PRESENCE_URI;
+    query << "coap://" << coapServerIP << ":" << coapServerPort << OC_RSRVD_PRESENCE_URI;
     if(TEST_CASE == TEST_OBS_PRESENCE)
     {
         result = InvokeOCDoResource(query, OC_REST_PRESENCE, OC_LOW_QOS,
@@ -523,7 +524,7 @@ int InitPresence()
         {
             std::ostringstream multicastPresenceQuery;
             multicastPresenceQuery.str("");
-            multicastPresenceQuery << "coap://" << OC_MULTICAST_PREFIX << OC_PRESENCE_URI;
+            multicastPresenceQuery << "coap://" << OC_MULTICAST_PREFIX << OC_RSRVD_PRESENCE_URI;
             result = InvokeOCDoResource(multicastPresenceQuery, OC_REST_PRESENCE, OC_LOW_QOS,
                     presenceCB, NULL, 0);
         }

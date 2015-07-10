@@ -743,7 +743,7 @@ static int FormCanonicalPresenceUri(const CAEndpoint_t *endpoint, char *resource
     }
 
     return snprintf(presenceUri, CA_MAX_URI_LENGTH, format, endpoint->addr,
-                                               endpoint->port, OC_PRESENCE_URI);
+                                               endpoint->port, OC_RSRVD_PRESENCE_URI);
 }
 
 
@@ -771,7 +771,7 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
         return OC_STACK_ERROR;
     }
 
-    uriLen = FormCanonicalPresenceUri(endpoint, OC_PRESENCE_URI, presenceUri);
+    uriLen = FormCanonicalPresenceUri(endpoint, OC_RSRVD_PRESENCE_URI, presenceUri);
     if (uriLen < 0 || uriLen >= sizeof (presenceUri))
     {
         return OC_STACK_INVALID_URI;
@@ -785,7 +785,7 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
     else
     {
         snprintf (presenceUri, MAX_URI_LENGTH, "coap://[%s]:%u%s", OC_MULTICAST_IP,
-                    OC_MULTICAST_PORT, OC_PRESENCE_URI);
+                    OC_MULTICAST_PORT, OC_RSRVD_PRESENCE_URI);
         cbNode = GetClientCB(NULL, 0, NULL, presenceUri);
         if (cbNode)
         {
@@ -951,7 +951,7 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
     VERIFY_NON_NULL_NR(responseInfo->info.resourceUri, FATAL);
     OC_LOG(INFO, TAG, PCF("Enter HandleCAResponses"));
 
-    if(strcmp(responseInfo->info.resourceUri, OC_PRESENCE_URI) == 0)
+    if(strcmp(responseInfo->info.resourceUri, OC_RSRVD_PRESENCE_URI) == 0)
     {
         HandlePresenceResponse(endPoint, responseInfo);
         return;
@@ -2325,7 +2325,7 @@ OCStackResult OCProcessPresence()
         requestData.type = CA_MSG_NONCONFIRM;
         requestData.token = cbNode->token;
         requestData.tokenLength = cbNode->tokenLength;
-        requestData.resourceUri = OC_PRESENCE_URI;
+        requestData.resourceUri = OC_RSRVD_PRESENCE_URI;
         requestInfo.method = CA_GET;
         requestInfo.info = requestData;
 
@@ -2401,7 +2401,7 @@ OCStackResult OCStartPresence(const uint32_t ttl)
             return OC_STACK_ERROR;
         }
 
-        AddObserver(OC_PRESENCE_URI, NULL, 0, caToken, tokenLength,
+        AddObserver(OC_RSRVD_PRESENCE_URI, NULL, 0, caToken, tokenLength,
                 (OCResource *)presenceResource.handle, OC_LOW_QOS, &devAddr);
         CADestroyToken(caToken);
     }
@@ -3306,7 +3306,7 @@ OCStackResult initResources()
     result = OCCreateResource(&presenceResource.handle,
             OC_RSRVD_RESOURCE_TYPE_PRESENCE,
             "core.r",
-            OC_PRESENCE_URI,
+            OC_RSRVD_PRESENCE_URI,
             NULL,
             NULL,
             OC_OBSERVABLE);

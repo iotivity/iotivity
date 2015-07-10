@@ -35,16 +35,21 @@ extern "C" {
 //-----------------------------------------------------------------------------
 // Defines
 //-----------------------------------------------------------------------------
-#define OC_WELL_KNOWN_QUERY                  "/oic/res"
-#define OC_MULTICAST_DISCOVERY_URI           "/oic/res"
 
+/**
+ * OIC Virtual resources supported by every OIC device.
+ */
+#define OC_RSRVD_WELL_KNOWN_URI               "/oic/res"
+#define OC_RSRVD_DEVICE_URI                   "/oic/d"
+#define OC_RSRVD_PLATFORM_URI                 "/oic/p"
+#define OC_RSRVD_RESOURCE_TYPES_URI           "/oic/res/types/d"
 #ifdef WITH_PRESENCE
+#define OC_RSRVD_PRESENCE_URI                 "/oic/ad"
 #define OC_DEFAULT_PRESENCE_TTL_SECONDS (60)
 /// OC_MAX_PRESENCE_TTL_SECONDS sets the maximum time to live (TTL) for presence.
 /// NOTE: Changing the setting to a longer duration may lead to unsupported and untested
 /// operation.
 #define OC_MAX_PRESENCE_TTL_SECONDS     (60 * 60 * 24) // 60 sec/min * 60 min/hr * 24 hr/day
-#define OC_PRESENCE_URI                      "/oic/ad"
 #endif
 
 ///Separtor for multiple query string
@@ -238,21 +243,6 @@ typedef enum
     CT_SCOPE_ORG       = 0x8, // IPv6 Organization-Local scope
     CT_SCOPE_GLOBAL    = 0xE, // IPv6 Global scope
 } OCConnectivityType;
-
-/**
- * OC Virtual resources supported by every OC device.
- */
-typedef enum
-{
-    OC_WELL_KNOWN_URI= 0,       ///< "/oic/res"
-    OC_DEVICE_URI,              ///< "/oic/d"
-    OC_PLATFORM_URI,            ///< "/oic/p"
-    OC_RESOURCE_TYPES_URI,      ///< "/oic/res/d/type"
-    #ifdef WITH_PRESENCE
-    OC_PRESENCE,                ///< "/oic/ad"
-    #endif
-    OC_MAX_VIRTUAL_RESOURCES    ///<s Max items in the list
-} OCVirtualResources;
 
 /**
  *  OCDoResource methods

@@ -271,7 +271,7 @@ TEST(StackDiscovery, DISABLED_DoResourceDeviceDiscovery)
 
     /* Start a discovery query*/
     char szQueryUri[64] = { 0 };
-    strcpy(szQueryUri, OC_WELL_KNOWN_QUERY);
+    strcpy(szQueryUri, OC_RSRVD_WELL_KNOWN_URI);
     cbData.cb = asyncDoResourcesCallback;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
@@ -313,7 +313,7 @@ TEST(StackResource, DISABLED_UpdateResourceNullURI)
 
     /* Start a discovery query*/
     char szQueryUri[64] = { 0 };
-    strcpy(szQueryUri, OC_WELL_KNOWN_QUERY);
+    strcpy(szQueryUri, OC_RSRVD_WELL_KNOWN_URI);
     cbData.cb = asyncDoResourcesCallback;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
@@ -435,8 +435,8 @@ TEST(StackResource, CreateResourceSuccessWithResourcePolicyPropNone)
                                             "core.led",
                                             "core.rw",
                                             "/a/led",
-                                            0,   
-                                            NULL,   
+                                            0,
+                                            NULL,
                                             OC_RES_PROP_NONE));// the resource is non-discoverable &
                                                 // non-observable by the client.
     const char* url = OCGetResourceUri(handle);

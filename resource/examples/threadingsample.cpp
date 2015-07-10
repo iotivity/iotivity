@@ -330,7 +330,7 @@ void server()
 int main(int argc, char* argv[])
 {
 
-    requestURI << OC_MULTICAST_DISCOVERY_URI << "?rt=core.foo";
+    requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.foo";
 
     PlatformConfig cfg {
         OC::ServiceType::InProc,
