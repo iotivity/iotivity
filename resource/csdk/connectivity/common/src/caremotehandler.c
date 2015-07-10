@@ -158,6 +158,7 @@ CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *rep)
     }
 
     // check the result value of response info.
+    // Keep this check in sync with CAResponseResult_t
     switch (rep->result)
     {
         case CA_EMPTY:
@@ -168,14 +169,16 @@ CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *rep)
         case CA_CHANGED:
         case CA_CONTENT:
         case CA_BAD_REQ:
+        case CA_UNAUTHORIZED_REQ:
         case CA_BAD_OPT:
+        case CA_FORBIDDEN_REQ:
         case CA_NOT_FOUND:
         case CA_INTERNAL_SERVER_ERROR:
         case CA_RETRANSMIT_TIMEOUT:
             break;
 
         default:
-            OIC_LOG(ERROR, TAG, "Response status code is invalid number");
+            OIC_LOG_V(ERROR, TAG, "Response code  %u is invalid", rep->result);
             return NULL;
     }
 

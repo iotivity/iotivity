@@ -26,9 +26,9 @@
 #include "cainterface.h"
 #include "camessagehandler_singlethread.h"
 #include "caremotehandler.h"
-#include "cainterfacecontroller_singlethread.h"
+#include "cainterfacecontroller.h"
 #include "caprotocolmessage.h"
-#include "caretransmission_singlethread.h"
+#include "caretransmission.h"
 #include "logger.h"
 #include "config.h" /* for coap protocol */
 #include "oic_malloc.h"
@@ -406,10 +406,10 @@ CAResult_t CAInitializeMessageHandler()
     CASetNetworkChangeCallback(CANetworkChangedCallback);
 
     // retransmission initialize
-    CARetransmissionInitialize(&g_retransmissionContext, CASendUnicastData,
+    CARetransmissionInitialize(&g_retransmissionContext, NULL, CASendUnicastData,
                                CATimeoutCallback, NULL);
 
-    CAInitializeAdapters();
+    CAInitializeAdapters(NULL);
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }

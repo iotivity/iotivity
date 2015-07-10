@@ -28,19 +28,30 @@
 #define CA_INTERFACE_CONTROLLER_H_
 
 #include "caadapterinterface.h"
+
+#ifndef SINGLE_THREAD
 #include "cathreadpool.h" /* for thread pool */
+#endif
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
+#ifdef SINGLE_THREAD
+/**
+ * @brief   Initializes different adapters based on the compilation flags.
+ * @return   none
+ */
+void CAInitializeAdapters();
+#else
 /**
  * @brief   Initializes different adapters based on the compilation flags.
  * @param   handle         [IN]    thread pool handle created by message handler for different adapters.
  * @return  none
  */
 void CAInitializeAdapters(ca_thread_pool_t handle);
+#endif
 
 /**
  * @brief   Set the received packets callback for message handler
@@ -121,6 +132,14 @@ CAResult_t CAStartDiscoveryServerAdapters();
  * @return  none
  */
 void CATerminateAdapters();
+
+#ifdef SINGLE_THREAD
+/**
+ * @brief   Checks for available data and reads it
+ * @return   CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ */
+CAResult_t CAReadData();
+#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

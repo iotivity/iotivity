@@ -863,7 +863,7 @@ CAResult_t CAStopIP()
     // Stop IP network monitor
     CAIPStopNetworkMonitor();
 
-#ifdef MULTI_THREAD
+#ifndef SINGLE_THREAD
     // Stop send queue thread
     if (g_sendQueueHandle)
     {

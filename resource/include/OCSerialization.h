@@ -36,100 +36,155 @@ namespace OC
             Secure
         };
 
-        class ListenResourceContainer
+        class DiscoveredResources
         {
-            class ListenResourcePolicyContainer
+            class Resource
             {
                 friend class cereal::access;
-                friend class ListenResourceContainer;
-                friend class ListenResourcePropertiesContainer;
 
-                template<class Archive>
-                void serialize(Archive& ar)
+                class ResourcePolicy
                 {
-                    try
+                    friend class cereal::access;
+                    friend class Resource;
+
+                    template<class Archive>
+                    void serialize(Archive& ar)
                     {
-                        m_observable = false;
-                        ar(cereal::make_nvp(OC::Key::BMKEY, m_bm));
-                        // In case of observable
-                        if(m_bm & OC_OBSERVABLE)
+                        try
                         {
-                            m_observable = true;
+                            m_observable = false;
+                            ar(cereal::make_nvp(OC::Key::BMKEY, m_bm));
+
+                            if(m_bm & OC_OBSERVABLE)
+                            {
+                                m_observable = true;
+                            }
                         }
-                    }
-                    catch(cereal::Exception&)
-                    {
-                        ar.setNextName(nullptr);
-                    }
-                    try
-                    {
-                        m_secure = false;
-                        int secureTemp;
-                        ar(cereal::make_nvp(OC::Key::SECUREKEY, secureTemp));
-                        m_secure = secureTemp != 0;
+                        catch(cereal::Exception&)
+                        {
+                            ar.setNextName(nullptr);
+                        }
 
-                        m_port = -1;
-                        ar(cereal::make_nvp(OC::Key::PORTKEY, m_port));
-                    }
-                    catch(cereal::Exception&)
-                    {
-                       ar.setNextName(nullptr);
-                    }
+                        try
+                        {
+                            m_secure = false;
+                            int secureTemp;
+                            ar(cereal::make_nvp(OC::Key::SECUREKEY, secureTemp));
+                            m_secure = secureTemp != 0;
 
-                 }
+                            m_port = -1;
+                            ar(cereal::make_nvp(OC::Key::PORTKEY, m_port));
+                        }
+                        catch(cereal::Exception&)
+                        {
+                            ar.setNextName(nullptr);
+                        }
+                     }
 
-                 bool m_observable;
-                 uint8_t m_bm;
-                 bool m_secure;
-                 int m_port;
-            };
+                     bool m_observable;
+                     uint8_t m_bm;
+                     bool m_secure;
+                     int m_port;
+                };
 
-            class ListenResourcePropertiesContainer
-            {
-                friend class cereal::access;
-                friend class ListenResourceContainer;
-
-                template<class Archive>
+                template <class Archive>
                 void serialize(Archive& ar)
                 {
                     try
                     {
-                        ar(cereal::make_nvp(OC::Key::POLICYKEY, m_policy));
-
+                        ar(cereal::make_nvp(OC::Key::URIKEY, m_uri));
+                        m_loaded = true;
                     }
                     catch(cereal::Exception&)
                     {
-                        // we swallow this exception, since it means the key
-                        // doesn't exist, allowing these to be optional
-                        oclog() << "Invalid POLICYKEY"<<std::flush;
                         ar.setNextName(nullptr);
                     }
 
                     try
                     {
                         ar(cereal::make_nvp(OC::Key::RESOURCETYPESKEY,m_resourceTypes));
+                        m_loaded = true;
                     }
                     catch(cereal::Exception&)
                     {
                         ar.setNextName(nullptr);
                     }
+
                     try
                     {
                         ar(cereal::make_nvp(OC::Key::INTERFACESKEY, m_interfaces));
+                        m_loaded = true;
+                    }
+                    catch(cereal::Exception&)
+                    {
+                        ar.setNextName(nullptr);
+                    }
+
+                    try
+                    {
+                        ar(cereal::make_nvp(OC::Key::POLICYKEY, m_policy));
+                        m_loaded = true;
+                    }
+                    catch(cereal::Exception&)
+                    {
+                        ar.setNextName(nullptr);
+                    }
+
+                    // Although not expected, a server id as part of a resource's own
+                    // representation is legal. It may be used if needed.
+                    try
+                    {
+                        ar(cereal::make_nvp(OC::Key::DEVICEIDKEY, m_serverId));
+                        m_loaded = true;
                     }
                     catch(cereal::Exception&)
                     {
                         ar.setNextName(nullptr);
                     }
                 }
+            public:
+                Resource(): m_loaded(false)
+                {}
 
+                bool observable() const
+                {
+                    return m_policy.m_observable;
+                }
+
+                OCSecureType secureType() const
+                {
+                    return m_policy.m_secure ? OCSecureType::Secure : OCSecureType::NotSecure;
+                }
+
+                int port() const
+                {
+                    return m_policy.m_port;
+                }
+
+                std::vector<std::string> resourceTypes() const
+                {
+                    return m_resourceTypes;
+                }
+
+                std::vector<std::string> interfaces() const
+                {
+                    return m_interfaces;
+                }
+
+                bool loaded() const{
+                    return m_loaded;
+                }
+
+                std::string m_uri;
+                std::string m_serverId;
                 std::vector<std::string> m_resourceTypes;
                 std::vector<std::string> m_interfaces;
-                ListenResourcePolicyContainer m_policy;
+                ResourcePolicy m_policy;
+                bool m_loaded;
             };
 
             public:
-            ListenResourceContainer() : m_loaded(false)
+            DiscoveredResources()
             {}
 
             private:
@@ -141,68 +196,19 @@ namespace OC
             {
                 try
                 {
-                    ar(cereal::make_nvp(OC::Key::URIKEY, m_uri));
-                    m_loaded=true;
+                    ar(cereal::make_nvp(OC::Key::DEVICEIDKEY, m_serverIdOfThisDevice));
                 }
-                catch(cereal::Exception&)
-                {
-                    ar.setNextName(nullptr);
-                }
+                catch(cereal::Exception&) { ar.setNextName(nullptr); }
+
                 try
                 {
-                    ar(cereal::make_nvp(OC::Key::SERVERIDKEY, m_serverId));
-                    m_loaded=true;
+                    ar(cereal::make_nvp(OC::Key::LINKS, resources));
                 }
-                catch(cereal::Exception&)
-                {
-                    ar.setNextName(nullptr);
-                }
-                try
-                {
-                    ar(cereal::make_nvp(OC::Key::PROPERTYKEY, m_props));
-                    m_loaded=true;
-                }
-                catch(cereal::Exception&)
-                {
-                    ar.setNextName(nullptr);
-                }
-
+                catch(cereal::Exception&) { ar.setNextName(nullptr); }
             }
 
-            std::string m_uri;
-            std::string m_serverId;
-            bool m_loaded;
-            ListenResourcePropertiesContainer m_props;
-
-            bool loaded() const
-            {
-                return m_loaded;
-            }
-
-            bool observable() const
-            {
-                return m_props.m_policy.m_observable;
-            }
-
-            OCSecureType secureType() const
-            {
-                return m_props.m_policy.m_secure ? OCSecureType::Secure : OCSecureType::NotSecure;
-            }
-
-            int port() const
-            {
-                return m_props.m_policy.m_port;
-            }
-
-            std::vector<std::string> resourceTypes() const
-            {
-                return m_props.m_resourceTypes;
-            }
-
-            std::vector<std::string> interfaces() const
-            {
-                return m_props.m_interfaces;
-            }
+            std::string m_serverIdOfThisDevice;
+            std::vector<Resource> resources;
         };
 
         private:
@@ -210,13 +216,14 @@ namespace OC
             template <class Archive>
             void serialize(Archive& ar)
             {
-                std::vector<ListenResourceContainer> resources;
+                std::vector<DiscoveredResources> resources;
                 ar(resources);
             }
         public:
             ListenOCContainer(std::weak_ptr<IClientWrapper> cw,
                     const OCDevAddr& devAddr, std::stringstream& json)
                     : m_clientWrapper(cw), m_devAddr(devAddr)
+
             {
                 LoadFromJson(json);
             }
@@ -231,28 +238,41 @@ namespace OC
             {
                 cereal::JSONInputArchive archive(json);
 
-                std::vector<ListenResourceContainer> resources;
+                std::vector<DiscoveredResources> resources;
                 archive(cereal::make_nvp(OC::Key::OCKEY, resources));
 
                 m_resources.clear();
 
-                for(const auto& res : resources)
+                for(const auto& resourcesAtDevice : resources)
                 {
-                    try
-                    {
-                        if(res.loaded())
-                        {
-                            m_resources.push_back(std::shared_ptr<OCResource>(
-                                new OCResource(m_clientWrapper, m_devAddr,
-                                    res.m_uri, res.m_serverId, res.observable(),
-                                    res.resourceTypes(), res.interfaces())));
-                        }
+                    std::string serverIDForThisResourceRep = resourcesAtDevice.m_serverIdOfThisDevice;
 
-                    }
-                    catch(ResourceInitException& e)
+                    for (const auto& resource : resourcesAtDevice.resources)
                     {
-                        oclog() << "listenCallback(): failed to create resource: " << e.what()
-                                << std::flush;
+                        try
+                        {
+                            if(resource.loaded())
+                            {
+                                m_resources.push_back(std::shared_ptr<OCResource>
+                                (
+                                    new OCResource
+                                    (
+                                        m_clientWrapper,
+                                        m_devAddr,
+                                        resource.m_uri,
+                                        serverIDForThisResourceRep,
+                                        resource.observable(),
+                                        resource.resourceTypes(),
+                                        resource.interfaces()
+                                    )
+                                ));
+                            }
+                        }
+                        catch(ResourceInitException& e)
+                        {
+                            oclog() << "listenCallback(): failed to create resource: " << e.what()
+                                    << std::flush;
+                        }
                     }
                 }
             }

@@ -111,7 +111,7 @@ void CAEDRSetNetworkChangeCallback(
     g_edrNetworkChangeCallback = networkChangeCallback;
 }
 
-CAResult_t CAEDRGetInterfaceInformation(CALocalConnectivity_t **info)
+CAResult_t CAEDRGetInterfaceInformation(CAEndpoint_t **info)
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
