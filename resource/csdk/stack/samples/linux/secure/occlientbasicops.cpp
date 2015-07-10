@@ -416,17 +416,32 @@ int parseClientResponse(OCClientResponse * clientResponse)
     }
 
     oc = cJSON_GetObjectItem(root,"oic");
-    if (!oc)
+    if (!oc || oc->type != cJSON_Array)
     {
+        cJSON_Delete(root);
         return -1;
     }
 
-    if (oc->type == cJSON_Array)
+    cJSON * firstDevice = cJSON_GetArrayItem(oc, 0);
+    if (!firstDevice)
     {
-        int numRsrcs =  cJSON_GetArraySize(oc);
+        cJSON_Delete(root);
+        return -1;
+    }
+
+    cJSON * links = cJSON_GetObjectItem(firstDevice,"links");
+    if (!links)
+    {
+        cJSON_Delete(root);
+        return -1;
+    }
+
+    if (links->type == cJSON_Array)
+    {
+        int numRsrcs =  cJSON_GetArraySize(links);
         for(int i = 0; i < numRsrcs; i++)
         {
-            cJSON * resource = cJSON_GetArrayItem(oc, i);
+            cJSON * resource = cJSON_GetArrayItem(links, i);
             if (cJSON_GetObjectItem(resource, "href"))
             {
                 coapServerResource.assign(cJSON_GetObjectItem(resource, "href")->valuestring);
@@ -437,10 +452,8 @@ int parseClientResponse(OCClientResponse * clientResponse)
             }
             OC_LOG_V(INFO, TAG, "Uri -- %s", coapServerResource.c_str());
 
-            cJSON * prop = cJSON_GetObjectItem(resource,"prop");
-            if (prop)
             {
-                cJSON * policy = cJSON_GetObjectItem(prop,"p");
+                cJSON * policy = cJSON_GetObjectItem(resource,"p");
                 if (policy)
                 {
                     // If this is a secure resource, the info about the port at which the
