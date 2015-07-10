@@ -79,11 +79,10 @@ void handleSigInt(int signum)
 
 static void PrintUsage()
 {
-    OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1..17> -c <0|1|2>");
+    OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1..17> -c <0|1>");
     OC_LOG(INFO, TAG, "-u <0|1> : Perform multicast/unicast discovery of resources");
-    OC_LOG(INFO, TAG, "-c 0 : Default IPv4 and IPv6 auto-selection");
-    OC_LOG(INFO, TAG, "-c 1 : IPv4 Connectivity Type");
-    OC_LOG(INFO, TAG, "-c 2 : IPv6 Connectivity Type (IPv6 not currently supported)");
+    OC_LOG(INFO, TAG, "-c 0 : Use Default connectivity(IP)");
+    OC_LOG(INFO, TAG, "-c 1 : IP Connectivity Type");
     OC_LOG(INFO, TAG, "-t 1  :  Discover Resources");
     OC_LOG(INFO, TAG, "-t 2  :  Discover Resources and Initiate Nonconfirmable Get Request");
     OC_LOG(INFO, TAG, "-t 3  :  Discover Resources and Initiate Nonconfirmable Get Request"
@@ -833,16 +832,9 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    if(CONNECTIVITY == CT_ADAPTER_DEFAULT || CONNECTIVITY == CT_IPV4)
+    if(CONNECTIVITY == CT_ADAPTER_DEFAULT || CONNECTIVITY == CT_IP)
     {
         OC_CONNTYPE = CT_ADAPTER_IP;
-    }
-    else if(CONNECTIVITY == CT_IPV6)
-    {
-        //TODO: Remove when IPv6 is available.
-        OC_LOG(ERROR, TAG, "IPv6 is currently not supported !!!!");
-        PrintUsage();
-        return -1;
     }
     else
     {

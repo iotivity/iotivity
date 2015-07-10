@@ -36,8 +36,8 @@ static int UNICAST_DISCOVERY = 0;
 static int TEST_CASE = 0;
 static int CONN_TYPE = 0;
 
-static int IPV4_ADDR_SIZE = 16;
-static char UNICAST_DISCOVERY_QUERY[] = "coap://%s:6298/oic/res";
+static int IPV4_ADDR_SIZE = 24;
+static char UNICAST_DISCOVERY_QUERY[] = "coap://%s/oic/res";
 static char MULTICAST_DISCOVERY_QUERY[] = "/oic/res";
 OCConnectivityType discoveryReqConnType = CT_ADAPTER_IP;
 
@@ -68,15 +68,14 @@ void handleSigInt(int signum)
 
 static void PrintUsage()
 {
-    OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1|2|3> -c <0|1|2>");
+    OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1|2|3> -c <0|1>");
     OC_LOG(INFO, TAG, "-u <0|1> : Perform multicast/unicast discovery of resources");
     OC_LOG(INFO, TAG, "-t 1 : Discover Resources");
     OC_LOG(INFO, TAG, "-t 2 : Discover Resources and"
             " Initiate Nonconfirmable Get/Put/Post Requests");
     OC_LOG(INFO, TAG, "-t 3 : Discover Resources and Initiate Confirmable Get/Put/Post Requests");
-    OC_LOG(INFO, TAG, "-c 0 : Default IPv4 and IPv6 auto-selection");
+    OC_LOG(INFO, TAG, "-c 0 : Default auto-selection");
     OC_LOG(INFO, TAG, "-c 1 : IPv4 Connectivity Type");
-    OC_LOG(INFO, TAG, "-c 2 : IPv6 Connectivity Type (IPv6 not currently supported)");
 }
 
 OCStackResult InvokeOCDoResource(std::ostringstream &query,
@@ -242,7 +241,8 @@ int InitDiscovery()
     if (UNICAST_DISCOVERY)
     {
         char ipv4addr[IPV4_ADDR_SIZE];
-        printf("Enter IPv4 address of the Server hosting secure resource (Ex: 11.12.13.14)\n");
+        OC_LOG(INFO, TAG, "Enter IPv4 address:port of the Server hosting secure resource"\
+                "(Ex: 11.12.13.14:1234)\n");
         if (fgets(ipv4addr, IPV4_ADDR_SIZE, stdin))
         {
             //Strip newline char from ipv4addr
@@ -322,25 +322,13 @@ int main(int argc, char* argv[])
     }
 
 
-    if(CONN_TYPE == CT_ADAPTER_DEFAULT)
+    if(CONN_TYPE == CT_ADAPTER_DEFAULT || CONN_TYPE ==  CT_IP)
     {
         discoveryReqConnType = CT_DEFAULT;
     }
-    else if(CONN_TYPE == CT_IPV4)
-    {
-        discoveryReqConnType = CT_IP_USE_V4;
-    }
-    else if(CONN_TYPE == CT_IPV6)
-    {
-        //TODO: Remove when IPv6 is available.
-        //discoveryReqConnType = CT_IP_USE_V6;
-        OC_LOG(ERROR, TAG, "IPv6 is currently not supported !!!!");
-        PrintUsage();
-        return -1;
-    }
     else
     {
-        printf("Using Default Connectivity type\n\n");
+        OC_LOG(INFO, TAG, "Using Default Connectivity type");
         PrintUsage();
     }
 

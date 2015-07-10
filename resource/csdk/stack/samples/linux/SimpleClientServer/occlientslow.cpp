@@ -34,7 +34,7 @@ static int UNICAST_DISCOVERY = 0;
 static int TEST_CASE = 0;
 static int CONNECTIVITY = 0;
 
-static const char * UNICAST_DISCOVERY_QUERY = "coap://%s:6298/oic/res";
+static const char * UNICAST_DISCOVERY_QUERY = "coap://%s/oic/res";
 static std::string putPayload = "{\"state\":\"off\",\"power\":10}";
 static std::string coapServerIP = "255.255.255.255";
 static std::string coapServerPort = "5683";
@@ -44,7 +44,7 @@ static std::string coapServerResource = "/a/led";
 //to be used for sending unicast messages. Default set to IP.
 static OCConnectivityType OC_CONNTYPE = CT_ADAPTER_IP;
 static const char * MULTICAST_RESOURCE_DISCOVERY_QUERY = "/oic/res";
-static int IPV4_ADDR_SIZE = 16;
+static int IPV4_ADDR_SIZE = 24;
 void StripNewLineChar(char* str);
 
 int gQuitFlag = 0;
@@ -61,9 +61,8 @@ void handleSigInt(int signum)
 static void PrintUsage()
 {
     OC_LOG(INFO, TAG, "Usage : occlient -c <0|1|2> -u <0|1> -t <1|2|3>");
-    OC_LOG(INFO, TAG, "-c 0 : Default IPv4 and IPv6 auto-selection");
-    OC_LOG(INFO, TAG, "-c 1 : IPv4 Connectivity Type");
-    OC_LOG(INFO, TAG, "-c 2 : IPv6 Connectivity Type (IPv6 not currently supported)");
+    OC_LOG(INFO, TAG, "-c 0 : Default auto-selection");
+    OC_LOG(INFO, TAG, "-c 1 : IP Connectivity Type");
     OC_LOG(INFO, TAG, "-u <0|1> : Perform multicast/unicast discovery of resources");
     OC_LOG(INFO, TAG, "-t 1 : Discover Resources");
     OC_LOG(INFO, TAG, "-t 2 : Discover Resources and Initiate Nonconfirmable Get Request");
@@ -186,7 +185,8 @@ int InitDiscovery()
     if (UNICAST_DISCOVERY)
     {
         char ipv4addr[IPV4_ADDR_SIZE];
-        OC_LOG(INFO, TAG, "Enter IPv4 address of the Server hosting resource (Ex: 192.168.0.15)");
+        OC_LOG(INFO, TAG, "Enter IPv4:port of the Server hosting resource"\
+                "(Ex: 192.168.0.15:1234)");
         if (fgets(ipv4addr, IPV4_ADDR_SIZE, stdin))
         {
             //Strip newline char from ipv4addr
@@ -261,22 +261,9 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    if(CONNECTIVITY == CT_ADAPTER_DEFAULT)
+    if(CONNECTIVITY == CT_ADAPTER_DEFAULT || CONNECTIVITY == CT_IP)
     {
         OC_CONNTYPE = CT_ADAPTER_IP;
-    }
-    else if(CONNECTIVITY == CT_IPV4)
-    {
-        OC_CONNTYPE = CT_IP_USE_V4;
-    }
-    else if(CONNECTIVITY == CT_IPV6)
-    {
-        OC_CONNTYPE = CT_IP_USE_V6;
-
-        //TODO: Remove when IPv6 is available.
-        OC_LOG(INFO, TAG, "Ipv6 is currently not supported...");
-        PrintUsage();
-        return -1;
     }
     else
     {

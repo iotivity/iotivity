@@ -35,12 +35,12 @@
 #define MAX_IP_ADDR_ST_SZ  16 //string size of "155.255.255.255" (15 + 1)
 #define MAX_PORT_ST_SZ  6     //string size of "65535" (5 + 1)
 
-static int IPV4_ADDR_SIZE = 16;
+static int IPV4_ADDR_SIZE = 24;
 static int UNICAST_DISCOVERY = 0;
 static int TEST_CASE = 0;
 static int CONNECTIVITY = 0;
 
-static const char UNICAST_DISCOVERY_QUERY[] = "coap://%s:6298/oic/res";
+static const char UNICAST_DISCOVERY_QUERY[] = "coap://%s/oic/res";
 static std::string putPayload = "{\"oic\":[{\"rep\":{\"power\":15,\"state\":true}}]}";
 
 //The following variable determines the interface protocol (IP, etc)
@@ -64,16 +64,15 @@ void handleSigInt(int signum)
 
 static void PrintUsage()
 {
-    OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1|2|3> -c <0|1|2>");
+    OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1|2|3> -c <0|1>");
     OC_LOG(INFO, TAG, "-u <0|1> : Perform multicast/unicast discovery of resources");
     OC_LOG(INFO, TAG, "-t 1 : Discover Resources");
     OC_LOG(INFO, TAG, "-t 2 : Discover Resources and"
             " Initiate Nonconfirmable Get/Put/Post Requests");
     OC_LOG(INFO, TAG, "-t 3 : Discover Resources and Initiate "
             "Confirmable Get/Put/Post Requests");
-    OC_LOG(INFO, TAG, "-c 0 : Default IPv4 and IPv6 auto-selection");
-    OC_LOG(INFO, TAG, "-c 1 : IPv4 Connectivity Type");
-    OC_LOG(INFO, TAG, "-c 2 : IPv6 Connectivity Type (IPv6 not currently supported)");
+    OC_LOG(INFO, TAG, "-c 0 : Default auto-selection");
+    OC_LOG(INFO, TAG, "-c 1 : IP Connectivity Type");
 }
 
 /*
@@ -318,7 +317,8 @@ int InitDiscovery()
     if (UNICAST_DISCOVERY)
     {
         char ipv4addr[IPV4_ADDR_SIZE];
-        OC_LOG(INFO, TAG, "Enter IPv4 address of the Server hosting resource (Ex: 192.168.0.15) ");
+        OC_LOG(INFO, TAG, "Enter IP address with port of the Server hosting resource"\
+                    "(Ex: 192.168.0.15:1234) ");
 
         if (fgets(ipv4addr, IPV4_ADDR_SIZE, stdin))
         {
@@ -491,7 +491,6 @@ int parseJSON(const char * resJSONPayload, char ** sid_c,
 
 void queryResource()
 {
-    printf("\n");
     switch(TEST_CASE)
     {
         case TEST_DISCOVER_REQ:
@@ -510,7 +509,6 @@ void queryResource()
             PrintUsage();
             break;
     }
-    printf("\n");
 }
 
 
@@ -619,36 +617,30 @@ void printResourceList()
 {
     ResourceNode * iter;
     iter = resourceList;
-    printf("\nResource List\n");
+    OC_LOG(INFO, TAG, "Resource List: ");
     while(iter)
     {
-        printf("*****************************************************\n");
-        printf("sid = %s \n",iter->sid);
-        printf("uri = %s\n", iter->uri);
-        printf("ip = %s\n", iter->ip);
-        printf("port = %s\n", iter->port);
+        OC_LOG(INFO, TAG, "*****************************************************");
+        OC_LOG_V(INFO, TAG, "sid = %s",iter->sid);
+        OC_LOG_V(INFO, TAG, "uri = %s", iter->uri);
+        OC_LOG_V(INFO, TAG, "ip = %s", iter->ip);
+        OC_LOG_V(INFO, TAG, "port = %s", iter->port);
         switch (iter->connType & CT_MASK_ADAPTER)
         {
             case CT_ADAPTER_IP:
-                printf("connType = %s\n","Default (IPv4) ");
-                break;
-            case CT_IP_USE_V4:
-                printf("connType = %s\n","IPv4");
-                break;
-            case CT_IP_USE_V6:
-                printf("connType = %s\n","IPv6");
+                OC_LOG(INFO, TAG, "connType = Default (IPv4)");
                 break;
             case OC_ADAPTER_GATT_BTLE:
-                printf("connType = %s\n","BLE");
+                OC_LOG(INFO, TAG, "connType = BLE");
                 break;
             case OC_ADAPTER_RFCOMM_BTEDR:
-                printf("connType = %s\n","BT");
+                OC_LOG(INFO, TAG, "connType = BT");
                 break;
             default:
-                printf("connType = %s\n","Invalid connType");
+                OC_LOG(INFO, TAG, "connType = Invalid connType");
                 break;
         }
-        printf("*****************************************************\n");
+        OC_LOG(INFO, TAG, "*****************************************************");
         iter = iter->next;
     }
 }
@@ -659,6 +651,7 @@ void freeResourceList()
     ResourceNode * temp;
     while(resourceList)
     {
+
         temp = resourceList;
         resourceList = resourceList->next;
         OICFree((void *)temp->sid);
@@ -685,6 +678,7 @@ int main(int argc, char* argv[])
                 TEST_CASE = atoi(optarg);
                 break;
             case 'c':
+
                 CONNECTIVITY = atoi(optarg);
                 break;
             default:
@@ -708,27 +702,14 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    if(CONNECTIVITY == CT_ADAPTER_DEFAULT)
+    if(CONNECTIVITY == CT_ADAPTER_DEFAULT || CONNECTIVITY ==  CT_IP)
     {
         OC_CONNTYPE =  CT_ADAPTER_IP;//CT_DEFAULT;
     }
-    else if(CONNECTIVITY == CT_IPV4)
-    {
-        OC_CONNTYPE = CT_IP_USE_V4;
-    }
-    else if(CONNECTIVITY == CT_IPV6)
-    {
-        OC_CONNTYPE = CT_IP_USE_V6;
-
-        //TODO: Remove when IPv6 is available.
-        printf("\n\nIPv6 is currently not supported !!!!\n");
-        PrintUsage();
-        return -1;
-    }
     else
     {
-        printf("Default Connectivity type selected \n\n");
-        OC_CONNTYPE = CT_ADAPTER_IP;
+        OC_LOG(INFO, TAG, "Default Connectivity type selected");
+        PrintUsage();
     }
 
     InitDiscovery();
