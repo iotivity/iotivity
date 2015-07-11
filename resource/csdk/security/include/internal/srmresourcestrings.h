@@ -79,6 +79,7 @@ extern const char * OIC_JSON_SM_NAME;
 
 extern OicUuid_t WILDCARD_SUBJECT_ID;
 extern size_t WILDCARD_SUBJECT_ID_LEN;
+extern const char * WILDCARD_RESOURCE_URI;
 
 //Ownership Transfer Methods
 extern const char * OXM_JUST_WORKS;

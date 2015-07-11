@@ -76,7 +76,8 @@ const char * OIC_JSON_PRIVATEDATA_NAME = "pvdata";
 const char * OIC_JSON_PERIOD_NAME = "period";
 
 OicUuid_t WILDCARD_SUBJECT_ID = {"*"};
-size_t WILDCARD_SUBJECT_ID_LEN = 1 ;
+size_t WILDCARD_SUBJECT_ID_LEN = 1;
+const char * WILDCARD_RESOURCE_URI = "*";
 
 //Ownership Transfer Methods
 const char * OXM_JUST_WORKS = "oic.sec.doxm.jw";
