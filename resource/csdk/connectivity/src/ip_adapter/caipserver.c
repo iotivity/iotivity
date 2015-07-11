@@ -266,7 +266,7 @@ static void CAReceiveHandler(void *data)
                 CAEndpoint_t ep;
                 strncpy(ep.addr, srcIPAddress, MAX_ADDR_STR_SIZE_CA);
                 ep.port = srcPort;
-                ep.flags = CA_IPV4;
+                ep.flags = (CATransportFlags_t)CA_IPV4 | CA_IPV6;
                 ep.adapter = CA_ADAPTER_IP;
 
                 if (info->endpoint.flags & CA_SECURE)
