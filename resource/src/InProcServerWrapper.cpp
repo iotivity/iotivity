@@ -560,8 +560,9 @@ namespace OC
                     static_cast<uint16_t>(it->getOptionID());
                 response.sendVendorSpecificHeaderOptions[i].optionLength =
                     (it->getOptionData()).length() + 1;
-                std::copy(it->getOptionData().begin(),
-                         it->getOptionData().end(),
+                std::string optionData = it->getOptionData();
+                std::copy(optionData.begin(),
+                         optionData.end(),
                          response.sendVendorSpecificHeaderOptions[i].optionData);
                 response.sendVendorSpecificHeaderOptions[i].optionData[it->getOptionData().length()]
                     = '\0';

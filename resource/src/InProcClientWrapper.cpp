@@ -816,7 +816,7 @@ namespace OC
         auto cLock = m_csdkLock.lock();
 
         std::ostringstream os;
-        os << host << "/oc/presence";
+        os << host << OC_PRESENCE_URI;;
 
         if(!resourceType.empty())
         {

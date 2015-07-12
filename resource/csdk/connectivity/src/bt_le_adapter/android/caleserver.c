@@ -879,7 +879,7 @@ jobject CALEServerCreateGattService(JNIEnv *env)
 
     jfieldID jni_fid_readProperties = (*env)->GetStaticFieldID(env,
                                                                jni_cid_bluetoothGattCharacteristic,
-                                                               "PROPERTY_READ", "I");
+                                                               "PROPERTY_NOTIFY", "I");
     if (!jni_fid_readProperties)
     {
         OIC_LOG(ERROR, TAG, "jni_fid_readProperties is null");
@@ -978,20 +978,18 @@ jobject CALEServerCreateGattService(JNIEnv *env)
                                                              jni_cid_bluetoothGattCharacteristic,
                                                              jni_fid_readPermissions);
 
+    jint jni_int_writePermissions = (*env)->GetStaticIntField(env,
+                                                              jni_cid_bluetoothGattCharacteristic,
+                                                              jni_fid_writePermissions);
+
     jobject jni_readCharacteristic = (*env)->NewObject(env, jni_cid_bluetoothGattCharacteristic,
                                                        jni_mid_bluetoothGattCharacteristic,
                                                        jni_obj_readUuid, jni_int_readProperties,
-                                                       jni_int_readPermissions);
+                                                       jni_int_readPermissions|
+                                                       jni_int_writePermissions);
     if (!jni_readCharacteristic)
     {
         OIC_LOG(ERROR, TAG, "jni_readCharacteristic is null");
-        return NULL;
-    }
-
-    CAResult_t res = CALEServerAddDescriptor(env, jni_readCharacteristic);
-    if (CA_STATUS_OK != res)
-    {
-        OIC_LOG(ERROR, TAG, "CALEServerAddDescriptor has failed");
         return NULL;
     }
 
@@ -1014,10 +1012,6 @@ jobject CALEServerCreateGattService(JNIEnv *env)
                                                              jni_cid_bluetoothGattCharacteristic,
                                                              jni_fid_writeProperties);
 
-    jint jni_int_writePermissions = (*env)->GetStaticIntField(env,
-                                                              jni_cid_bluetoothGattCharacteristic,
-                                                              jni_fid_writePermissions);
-
     jobject jni_writeCharacteristic = (*env)->NewObject(env, jni_cid_bluetoothGattCharacteristic,
                                                         jni_mid_bluetoothGattCharacteristic,
                                                         jni_obj_writeUuid, jni_int_writeProperties,
@@ -1038,96 +1032,6 @@ jobject CALEServerCreateGattService(JNIEnv *env)
 
     OIC_LOG(DEBUG, TAG, "OUT - CALEServerCreateGattService");
     return jni_bluetoothGattService;
-}
-
-CAResult_t CALEServerAddDescriptor(JNIEnv *env, jobject characteristic)
-{
-    OIC_LOG(DEBUG, TAG, "IN - CALEServerAddDescriptor");
-    VERIFY_NON_NULL(env, TAG, "env is null");
-    VERIFY_NON_NULL(characteristic, TAG, "characteristic is null");
-
-    jclass jni_cid_bluetoothGattDescriptor = (*env)->FindClass(env, "android/bluetooth/"
-                                                               "BluetoothGattDescriptor");
-    if (!jni_cid_bluetoothGattDescriptor)
-    {
-        OIC_LOG(ERROR, TAG, "jni_cid_bluetoothGattDescriptor is null");
-        return CA_STATUS_FAILED;
-    }
-
-    jmethodID jni_mid_bluetoothGattDescriptor = (*env)->GetMethodID(env,
-                                                                    jni_cid_bluetoothGattDescriptor,
-                                                                    "<init>",
-                                                                    "(Ljava/util/UUID;I)V");
-    if (!jni_mid_bluetoothGattDescriptor)
-    {
-        OIC_LOG(ERROR, TAG, "jni_mid_bluetoothGattDescriptor is null");
-        return CA_STATUS_FAILED;
-    }
-
-    jfieldID jni_fid_readPermissions = (*env)->GetStaticFieldID(env,
-                                                                jni_cid_bluetoothGattDescriptor,
-                                                                "PERMISSION_READ", "I");
-    if (!jni_fid_readPermissions)
-    {
-        OIC_LOG(ERROR, TAG, "jni_fid_readPermissions is null");
-        return CA_STATUS_FAILED;
-    }
-
-    jobject jni_obj_readUuid = CALEGetUuidFromString(env, OIC_GATT_CHARACTERISTIC_CONFIG_UUID);
-    if (!jni_obj_readUuid)
-    {
-        OIC_LOG(ERROR, TAG, "jni_obj_readUuid is null");
-        return CA_STATUS_FAILED;
-    }
-
-    jint jni_int_readPermissions = (*env)->GetStaticIntField(env, jni_cid_bluetoothGattDescriptor,
-                                                             jni_fid_readPermissions);
-
-    OIC_LOG(DEBUG, TAG, "initialize new Descriptor");
-
-    jobject jni_readDescriptor = (*env)->NewObject(env, jni_cid_bluetoothGattDescriptor,
-                                                   jni_mid_bluetoothGattDescriptor,
-                                                   jni_obj_readUuid, jni_int_readPermissions);
-    if (!jni_readDescriptor)
-    {
-        OIC_LOG(ERROR, TAG, "jni_readDescriptor is null");
-        return CA_STATUS_FAILED;
-    }
-
-    jclass jni_cid_GattCharacteristic = (*env)->FindClass(env, "android/bluetooth/"
-                                                          "BluetoothGattCharacteristic");
-    if (!jni_cid_GattCharacteristic)
-    {
-        OIC_LOG(ERROR, TAG, "jni_cid_GattCharacteristic is null");
-        return CA_STATUS_FAILED;
-    }
-
-    jmethodID jni_mid_addDescriptor = (*env)->GetMethodID(env, jni_cid_GattCharacteristic,
-                                                          "addDescriptor",
-                                                          "(Landroid/bluetooth/"
-                                                          "BluetoothGattDescriptor;)Z");
-    if (!jni_mid_addDescriptor)
-    {
-        OIC_LOG(ERROR, TAG, "jni_mid_addDescriptor is null");
-        return CA_STATUS_FAILED;
-    }
-
-    jboolean jni_boolean_addDescriptor = (*env)->CallBooleanMethod(env, characteristic,
-                                                                   jni_mid_addDescriptor,
-                                                                   jni_readDescriptor);
-
-    if (JNI_FALSE == jni_boolean_addDescriptor)
-    {
-        OIC_LOG(ERROR, TAG, "addDescriptor has failed");
-        return CA_STATUS_FAILED;
-    }
-    else
-    {
-        OIC_LOG(DEBUG, TAG, "addDescriptor success");
-    }
-
-    OIC_LOG(DEBUG, TAG, "OUT - CALEServerAddDescriptor");
-    return CA_STATUS_OK;
 }
 
 CAResult_t CALEServerAddGattService(JNIEnv *env, jobject bluetoothGattServer,
@@ -1295,6 +1199,44 @@ CAResult_t CALEServerDisconnect(JNIEnv *env, jobject bluetoothDevice)
     }
 
     OIC_LOG(DEBUG, TAG, "OUT - CALEServerDisconnect");
+    return CA_STATUS_OK;
+}
+
+CAResult_t CALEServerGattClose(JNIEnv *env, jobject bluetoothGattServer)
+{
+    // GATT CLOSE
+    OIC_LOG(DEBUG, TAG, "GattServer Close");
+    VERIFY_NON_NULL(bluetoothGattServer, TAG, "bluetoothGattServer is null");
+    VERIFY_NON_NULL(env, TAG, "env is null");
+
+    // get BluetoothGatt class
+    OIC_LOG(DEBUG, TAG, "get BluetoothGatt class");
+    jclass jni_cid_BluetoothGatt = (*env)->FindClass(env, "android/bluetooth/BluetoothGattServer");
+    if (!jni_cid_BluetoothGatt)
+    {
+        OIC_LOG(ERROR, TAG, "jni_cid_BluetoothGatt is null");
+        return CA_STATUS_FAILED;
+    }
+
+    jmethodID jni_mid_closeGatt = (*env)->GetMethodID(env, jni_cid_BluetoothGatt, "close", "()V");
+    if (!jni_mid_closeGatt)
+    {
+        OIC_LOG(ERROR, TAG, "jni_mid_closeGatt is null");
+        return CA_STATUS_OK;
+    }
+
+    // call disconnect gatt method
+    OIC_LOG(DEBUG, TAG, "request to close GATT");
+    (*env)->CallVoidMethod(env, bluetoothGattServer, jni_mid_closeGatt);
+
+    if ((*env)->ExceptionCheck(env))
+    {
+        OIC_LOG(ERROR, TAG, "closeGATT has failed");
+        (*env)->ExceptionDescribe(env);
+        (*env)->ExceptionClear(env);
+        return CA_STATUS_FAILED;
+    }
+
     return CA_STATUS_OK;
 }
 
@@ -2135,6 +2077,11 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerConnectionStateChangeCall
     else if (newState == jni_int_state_disconnected)
     {
         OIC_LOG(DEBUG, TAG, "LE DISCONNECTED");
+        CAResult_t res = CALEServerGattClose(env, g_bluetoothGattServer);
+        if (CA_STATUS_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "CALEServerGattClose has failed");
+        }
     }
     else
     {

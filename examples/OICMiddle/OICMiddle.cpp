@@ -44,6 +44,14 @@ Middle::Middle() :
 {
 }
 
+Middle::~Middle()
+{
+    delete m_client;
+    delete m_server;
+    delete m_lineInput;
+    delete m_restInput;
+}
+
 void Middle::init()
 {
 

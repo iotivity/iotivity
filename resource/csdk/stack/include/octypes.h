@@ -111,7 +111,7 @@ extern "C" {
 // These provide backward compatibility - their use is deprecated
 #ifndef GOING_AWAY
 #define OC_MULTICAST_PREFIX                  "224.0.1.187:5683"
-#define OC_MULTICAST_IP                      "224.0.1.187:5683"
+#define OC_MULTICAST_IP                      "224.0.1.187"
 #define OC_MULTICAST_PORT                    5683
 #endif // GOING_AWAY
 

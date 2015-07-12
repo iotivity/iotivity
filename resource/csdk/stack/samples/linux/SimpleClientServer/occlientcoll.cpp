@@ -59,8 +59,7 @@ typedef enum
  */
 typedef enum {
     CT_ADAPTER_DEFAULT = 0,
-    CT_IPV4,
-    CT_IPV6,
+    CT_IP,
     MAX_CT
 } CLIENT_CONNECTIVITY_TYPE;
 
@@ -119,9 +118,8 @@ int InitDiscovery();
 void PrintUsage()
 {
     OC_LOG(INFO, TAG, "Usage : occlientcoll -t <Test Case> -c <CA connectivity Type>");
-    OC_LOG(INFO, TAG, "-c 0 : Default IPv4 and IPv6 auto-selection");
-    OC_LOG(INFO, TAG, "-c 1 : IPv4 Connectivity Type");
-    OC_LOG(INFO, TAG, "-c 2 : IPv6 Connectivity Type (IPv6 not currently supported)");
+    OC_LOG(INFO, TAG, "-c 0 : Default auto-selection");
+    OC_LOG(INFO, TAG, "-c 1 : IP Connectivity Type");
     OC_LOG(INFO, TAG, "Test Case 1 : Discover Resources && Initiate GET Request on an "\
             "available resource using default interface.");
     OC_LOG(INFO, TAG, "Test Case 2 : Discover Resources && Initiate GET Request on an "\
@@ -378,28 +376,16 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    if(CONNECTIVITY == CT_ADAPTER_DEFAULT)
+    if(CONNECTIVITY == CT_ADAPTER_DEFAULT || CONNECTIVITY == CT_IP)
     {
-        OC_CONNTYPE = CT_DEFAULT;
-    }
-    else if(CONNECTIVITY == CT_IPV4)
-    {
-        OC_CONNTYPE = CT_IP_USE_V4;
-    }
-    else if(CONNECTIVITY == CT_IPV6)
-    {
-        OC_CONNTYPE = CT_IP_USE_V6;
-
-        //TODO: Remove when IPv6 is available.
-        OC_LOG(INFO, TAG, "Ipv6 is currently not supported...");
-        PrintUsage();
-        return -1;
+        OC_CONNTYPE = CT_ADAPTER_IP;
     }
     else
     {
         OC_LOG(INFO, TAG, "Default Connectivity type selected...");
         OC_CONNTYPE = CT_ADAPTER_IP;
     }
+
     InitDiscovery();
 
     // Break from loop with Ctrl+C

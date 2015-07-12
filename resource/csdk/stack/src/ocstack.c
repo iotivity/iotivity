@@ -642,7 +642,7 @@ CATransportFlags_t OCToCATransportFlags(OCTransportFlags ocFlags)
 {
     CATransportFlags_t caFlags = (CATransportFlags_t)ocFlags;
 
-    // supply default behavior
+    // supply default behavior.
     if ((caFlags & (CA_IPV6|CA_IPV4)) == 0)
     {
         caFlags = (CATransportFlags_t)(caFlags|CA_IPV6|CA_IPV4);
@@ -752,7 +752,7 @@ OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr)
  */
 static int FormCanonicalPresenceUri(const CAEndpoint_t *endpoint, char *resourceUri, char *presenceUri)
 {
-    VERIFY_NON_NULL(endpoint, FATAL, OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL(endpoint   , FATAL, OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL(resourceUri, FATAL, OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL(presenceUri, FATAL, OC_STACK_INVALID_PARAM);
 
@@ -914,7 +914,8 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
     }
     else
     {
-        strncpy(presenceUri, responseInfo->info.resourceUri, CA_MAX_URI_LENGTH);
+        snprintf (presenceUri, MAX_URI_LENGTH, "coap://[%s]:%u%s", OC_MULTICAST_IP,
+                    OC_MULTICAST_PORT, OC_PRESENCE_URI);
         cbNode = GetClientCB(NULL, 0, NULL, presenceUri);
         if (cbNode)
         {
@@ -2028,6 +2029,7 @@ OCStackResult OCDoResource(OCDoHandle *handle,
     flags = (OCTransportFlags)(connectivityType & CT_MASK_FLAGS);
 
     result = ParseRequestUri(requestUri, adapter, flags, &devAddr, &resourceUri, &resourceType);
+
     if (result != OC_STACK_OK)
     {
         OC_LOG_V(DEBUG, TAG, "Unable to parse uri: %s", requestUri);
@@ -2147,7 +2149,10 @@ OCStackResult OCDoResource(OCDoHandle *handle,
         {
             goto exit;
         }
-        OICFree(resourceUri);
+
+        // Assign full presence uri as coap://ip:port/oic/ad to add to callback list.
+        // Presence notification will form a canonical uri to
+        // look for callbacks into the application.
         resourceUri = presenceUri;
     }
     #endif
@@ -2413,6 +2418,7 @@ OCStackResult OCProcessPresence()
         requestData.type = CA_MSG_NONCONFIRM;
         requestData.token = cbNode->token;
         requestData.tokenLength = cbNode->tokenLength;
+        requestData.resourceUri = OC_PRESENCE_URI;
         requestInfo.method = CA_GET;
         requestInfo.info = requestData;
 
