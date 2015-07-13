@@ -1012,16 +1012,6 @@ void request_handler(const CAEndpoint_t *object, const CARequestInfo_t *requestI
         {
             printf("This is secure resource...\n");
 
-            //length of "coaps://"
-            size_t length = sizeof(SECURE_COAPS_PREFIX) - 1;
-
-            // length of "ipaddress:port"
-            length += strlen(object->addr) + PORT_LENGTH;
-            length += 1;
-
-            printf("%s%s:%d/", SECURE_COAPS_PREFIX, object->addr,
-                    object->port);
-
             CAEndpoint_t *endpoint = NULL;
             if (CA_STATUS_OK != CACreateEndpoint(0, object->adapter, object->addr,
                                                  object->port, &endpoint))

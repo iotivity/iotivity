@@ -969,35 +969,15 @@ void request_handler(const CAEndpoint_t* object, const CARequestInfo_t* requestI
         if (0 < securePort) //Set the remote endpoint secure details and send response
         {
             LOGI("This is secure resource...");
-            char *uri = NULL;
-            uint32_t length = 0;
-
-            length = COAPS_PREFIX_LEN; //length of "coaps://"
-            // length of "ipaddress:port"
-            length += strlen(object->addr) + PORT_LENGTH;
-            length += strlen(requestInfo->info.resourceUri) + 1;
-
-            uri = calloc(1, sizeof(char) * length);
-            if (!uri)
-            {
-                LOGE("Failed to create new uri");
-                free(uri);
-                return;
-            }
-            sprintf(uri, "%s%s:%d/%s", COAPS_PREFIX, object->addr,
-                    securePort, requestInfo->info.resourceUri);
 
             CAEndpoint_t *endpoint = NULL;
             if (CA_STATUS_OK != CACreateEndpoint(CA_SECURE,
                         object->adapter, object->addr, securePort, &endpoint))
             {
                 LOGE("Failed to create duplicate of remote endpoint!");
-                free(uri);
                 return;
             }
             object = endpoint;
-
-            free(uri);
         }
     }
 }
