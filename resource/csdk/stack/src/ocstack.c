@@ -2266,6 +2266,8 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
                 return OC_STACK_ERROR;
             }
             requestData.numOptions = numOptions + 1;
+            requestData.resourceUri = OICStrdup (clientCB->requestUri);
+
             requestInfo.method = CA_GET;
             requestInfo.info = requestData;
 
@@ -2302,6 +2304,10 @@ Error:
     if (requestData.numOptions > 0)
     {
         OICFree(requestData.options);
+    }
+    if (requestData.resourceUri)
+    {
+        OICFree (requestData.resourceUri);
     }
 
     return ret;
