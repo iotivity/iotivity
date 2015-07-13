@@ -72,7 +72,6 @@ else:
 		'caprotocolmessage.c',
 		'caqueueingthread.c',
 		'caretransmission.c',
-		'cablockwisetransfer.c',
 		]
 	if secured == '1':
 		env.AppendUnique(CPPDEFINES = ['__WITH_DTLS__'])
@@ -87,12 +86,18 @@ if 'ALL' in ca_transport:
         transports = [ 'ip_adapter', 'bt_edr_adapter', 'bt_le_adapter' ]
         env.SConscript(dirs = [
                 os.path.join(ca_path, d) for d in transports ])
+        env.AppendUnique(CA_SRC = [os.path.join(ca_path, 'cablockwisetransfer.c')])
+        env.AppendUnique(CPPDEFINES = ['WITH_BWT'])
 
 if 'IP' in ca_transport:
 	env.SConscript(os.path.join(ca_path, 'ip_adapter/SConscript'))
+	env.AppendUnique(CA_SRC = [os.path.join(ca_path, 'cablockwisetransfer.c')])
+	env.AppendUnique(CPPDEFINES = ['WITH_BWT'])
 
 if 'BT' in ca_transport:
 	env.SConscript(os.path.join(ca_path, 'bt_edr_adapter/SConscript'))
+	env.AppendUnique(CA_SRC = [os.path.join(ca_path, 'cablockwisetransfer.c')])
+	env.AppendUnique(CPPDEFINES = ['WITH_BWT'])
 
 if 'BLE' in ca_transport:
 	env.SConscript(os.path.join(ca_path, 'bt_le_adapter/SConscript'))

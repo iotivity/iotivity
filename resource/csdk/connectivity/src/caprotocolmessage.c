@@ -298,6 +298,14 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, coap_list_t *options, const CAInfo_t 
         }
     }
 
+#ifndef WITH_BWT
+    if (NULL != payload)
+    {
+        OIC_LOG_V(DEBUG, TAG, "add data, payload:%s", payload);
+        coap_add_data(pdu, payloadSize, (const unsigned char *) payload);
+    }
+#endif
+
     OIC_LOG(DEBUG, TAG, "OUT");
     return pdu;
 }

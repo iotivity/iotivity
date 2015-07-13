@@ -74,7 +74,9 @@ extern "C"
 #define COAP_MAX_PDU_SIZE           1400 /* maximum size of a CoAP PDU for big platforms*/
 #endif
 
+#ifdef WITH_BWT
 #define CA_DEFAULT_BLOCK_SIZE       CA_BLOCK_SIZE_1_KBYTE
+#endif
 
 /**
  *@brief Maximum length of the remoteEndpoint identity

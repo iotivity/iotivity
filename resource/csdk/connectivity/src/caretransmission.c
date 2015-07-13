@@ -446,10 +446,10 @@ CAResult_t CARetransmissionSentData(CARetransmission_t *context,
 
 CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
                                         const CAEndpoint_t *endpoint, const void *pdu,
-                                        uint32_t size)
+                                        uint32_t size, void **retransmissionPdu)
 {
     OIC_LOG(DEBUG, TAG, "IN - CARetransmissionReceivedData");
-    if (NULL == context || NULL == endpoint || NULL == pdu)
+    if (NULL == context || NULL == endpoint || NULL == pdu || NULL == retransmissionPdu)
     {
         OIC_LOG(ERROR, TAG, "invalid parameter..");
         return CA_STATUS_INVALID_PARAM;
@@ -495,6 +495,37 @@ CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
         if (NULL != retData->endpoint && retData->messageId == messageId
             && (retData->endpoint->adapter == endpoint->adapter))
         {
+            // get pdu data for getting token when CA_EMPTY(RST/ACK) is received from remote device
+            // if retransmission was finish..token will be unavailable.
+            if (CA_EMPTY == CAGetCodeFromPduBinaryData(pdu, size))
+            {
+                OIC_LOG(DEBUG, TAG, "code is CA_EMPTY..");
+
+                if (NULL == retData->pdu)
+                {
+                    OIC_LOG(ERROR, TAG, "retData->pdu is null");
+                    OICFree(retData);
+                    // mutex unlock
+                    ca_mutex_unlock(context->threadMutex);
+
+                    return CA_STATUS_FAILED;
+                }
+
+                // copy PDU data
+                (*retransmissionPdu) = (void *) OICCalloc(1, retData->size);
+                if ((*retransmissionPdu) == NULL)
+                {
+                    OICFree(retData);
+                    OIC_LOG(ERROR, TAG, "memory error!!");
+
+                    // mutex unlock
+                    ca_mutex_unlock(context->threadMutex);
+
+                    return CA_MEMORY_ALLOC_FAILED;
+                }
+                memcpy((*retransmissionPdu), retData->pdu, retData->size);
+            }
+
             // #2. remove data from list
             CARetransmissionData_t *removedData = u_arraylist_remove(context->dataList, i);
             if (NULL == removedData)
