@@ -535,9 +535,9 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     }
 
     #ifdef WITH_PRESENCE
-    //TODO: Add other connectivity types to CAConnTypes[] when enabled
-    CATransportAdapter_t CAConnTypes[] = {CA_ADAPTER_IP};
-    const char * connTypes[] = {"IP"};
+    CATransportAdapter_t CAConnTypes[] = {CA_ADAPTER_IP, CA_ADAPTER_GATT_BTLE,
+                                          CA_ADAPTER_RFCOMM_BTEDR};
+    const char * connTypes[] = {"ip" , "ble",  "edr"};
     int size = sizeof(CAConnTypes)/ sizeof(CATransportAdapter_t);
     CATransportAdapter_t adapter = responseEndpoint.adapter;
     CAResult_t caResult = CA_STATUS_FAILED;

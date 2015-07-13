@@ -1723,46 +1723,65 @@ static OCStackResult ParseRequestUri(const char *fullUri,
 
     // processs url prefix, if any
     size_t urlLen = slash - start;
+    // port
+    uint16_t port = 0;
+    size_t len = 0;
     if (urlLen && devAddr)
     {   // construct OCDevAddr
-        if (start[0] == '[')
-        {   // ipv6 address
-            char *close = strchr(++start, ']');
-            if (!close || close > slash)
-            {
-                return OC_STACK_INVALID_URI;
-            }
-            end = close;
-            if (close[1] == ':')
-            {
-                colon = close + 1;
-            }
-        }
-        else
-        {   // ipv4 address
-            end = slash;
-            colon = strchr(start, ':');
-            end = (colon && colon < slash) ? colon : slash;
-        }
-        size_t len = end - start;
-        if (len >= sizeof(da->addr))
+        if (OC_ADAPTER_IP == adapter)
         {
-            return OC_STACK_INVALID_URI;
-        }
-
-        // port
-        uint16_t port = 0;      // use standard multicast port
-        if (colon && colon < slash)
-        {
-            for (colon++; colon < slash; colon++)
-            {
-                char c = colon[0];
-                if (c < '0' || c > '9')
+            if (start[0] == '[')
+            {   // ipv6 address
+                char *close = strchr(++start, ']');
+                if (!close || close > slash)
                 {
                     return OC_STACK_INVALID_URI;
                 }
-                port = 10 * port + c - '0';
+                end = close;
+                if (close[1] == ':')
+                {
+                    colon = close + 1;
+                }
             }
+            else
+            {   // ipv4 address
+                end = slash;
+                colon = strchr(start, ':');
+                end = (colon && colon < slash) ? colon : slash;
+            }
+            len = end - start;
+            if (len >= sizeof(da->addr))
+            {
+                return OC_STACK_INVALID_URI;
+            }
+            // use standard multicast port
+            if (colon && colon < slash)
+            {
+                for (colon++; colon < slash; colon++)
+                {
+                    char c = colon[0];
+                    if (c < '0' || c > '9')
+                    {
+                        return OC_STACK_INVALID_URI;
+                    }
+                    port = 10 * port + c - '0';
+                }
+            }
+        }
+        else
+        {
+            /**
+             * This is for Non-IP adapters(EDR and BLE).
+             * The address will be between "//" and "/" in the request URI.
+             * [Ex. coap://AB:BC:CD:DE:EF:FG/resource_uri]
+             */
+            end = slash;
+        }
+
+        len = end - start;
+        if (len >= sizeof(da->addr))
+        {
+            return OC_STACK_INVALID_URI;
         }
 
         da = (OCDevAddr *)OICCalloc(sizeof (OCDevAddr), 1);
