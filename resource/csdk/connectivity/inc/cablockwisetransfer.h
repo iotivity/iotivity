@@ -158,7 +158,7 @@ CAResult_t CACheckBlockOptionType(CABlockData_t *currData);
  * @param   dataLen             [IN] received data length
  * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAReceiveBlockWiseData(const coap_pdu_t *pdu, CAEndpoint_t *endpoint,
+CAResult_t CAReceiveBlockWiseData(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                                   CAData_t *receivedData, uint32_t dataLen);
 
 /**
@@ -207,7 +207,7 @@ CAResult_t CAReceiveLastBlock(const coap_pdu_t *pdu, CAData_t *receivedData);
  * @param   dataLen             [IN] received data length
  * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
-CAResult_t CASetNextBlockOption1(const coap_pdu_t *pdu, CAEndpoint_t *endpoint,
+CAResult_t CASetNextBlockOption1(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                                  CAData_t *receivedData, coap_block_t block, uint32_t dataLen);
 
 /**
@@ -219,7 +219,7 @@ CAResult_t CASetNextBlockOption1(const coap_pdu_t *pdu, CAEndpoint_t *endpoint,
  * @param   dataLen             [IN] received data length
  * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
-CAResult_t CASetNextBlockOption2(const coap_pdu_t *pdu, CAEndpoint_t *endpoint,
+CAResult_t CASetNextBlockOption2(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                                  CAData_t *receivedData, coap_block_t block, uint32_t dataLen);
 
 /**
@@ -341,7 +341,7 @@ CAResult_t CAUpdatePayloadData(CABlockData_t *currData, CAData_t *receivedData,
  * @param   endpoint            [IN] information of remote device
  * @return  generated CAData
  */
-CAData_t* CACreateNewDataSet(const coap_pdu_t *pdu, CAEndpoint_t *endpoint);
+CAData_t* CACreateNewDataSet(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint);
 
 /**
  * @brief   Update the block option items

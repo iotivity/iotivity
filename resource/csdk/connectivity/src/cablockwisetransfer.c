@@ -230,7 +230,7 @@ CAResult_t CACheckBlockOptionType(CABlockData_t *currData)
     return CA_STATUS_OK;
 }
 
-CAResult_t CAReceiveBlockWiseData(const coap_pdu_t *pdu, CAEndpoint_t *endpoint,
+CAResult_t CAReceiveBlockWiseData(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                                   CAData_t *receivedData, uint32_t dataLen)
 {
     OIC_LOG(DEBUG, TAG, "CAReceiveBlockWiseData");
@@ -622,7 +622,7 @@ CAResult_t CAReceiveLastBlock(const coap_pdu_t *pdu, CAData_t *receivedData)
     return CA_STATUS_OK;
 }
 
-CAResult_t CASetNextBlockOption1(const coap_pdu_t *pdu, CAEndpoint_t *endpoint,
+CAResult_t CASetNextBlockOption1(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                                  CAData_t *receivedData, coap_block_t block, uint32_t dataLen)
 {
     OIC_LOG(INFO, TAG, "CASetNextBlockOption1");
@@ -772,7 +772,7 @@ CAResult_t CASetNextBlockOption1(const coap_pdu_t *pdu, CAEndpoint_t *endpoint,
     return CA_STATUS_OK;
 }
 
-CAResult_t CASetNextBlockOption2(const coap_pdu_t *pdu, CAEndpoint_t *endpoint,
+CAResult_t CASetNextBlockOption2(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                                  CAData_t *receivedData, coap_block_t block, uint32_t dataLen)
 {
     OIC_LOG(DEBUG, TAG, "CASetNextBlockOption2");
@@ -1516,9 +1516,7 @@ uint8_t CACheckBlockErrorType(CABlockData_t *currData, coap_block_t *receivedBlo
 
     // #1. check the received payload length
     uint32_t blockPayloadLen = 0;
-    CAPayload_t blockPayload = CAGetPayloadInfo(receivedData, &blockPayloadLen);
-
-    OIC_LOG_V(DEBUG, TAG, "blockPayload: %s, len:%d", blockPayload, blockPayloadLen);
+    CAGetPayloadInfo(receivedData, &blockPayloadLen);
 
     // #2. check if the block sequence is right
     if (COAP_OPTION_BLOCK1 == blockType)
@@ -1682,7 +1680,7 @@ CAResult_t CAUpdatePayloadData(CABlockData_t *currData, CAData_t *receivedData,
     return CA_STATUS_OK;
 }
 
-CAData_t* CACreateNewDataSet(const coap_pdu_t *pdu, CAEndpoint_t *endpoint)
+CAData_t* CACreateNewDataSet(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint)
 {
     VERIFY_NON_NULL_RET(pdu, TAG, "pdu", NULL);
     VERIFY_NON_NULL_RET(pdu->hdr, TAG, "pdu->hdr", NULL);
