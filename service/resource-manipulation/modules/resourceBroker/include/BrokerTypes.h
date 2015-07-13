@@ -33,7 +33,8 @@ namespace OIC
     namespace Service
     {
         #define BROKER_TAG PCF("BROKER")
-        #define SAFE_TIME (5l)
+        #define SAFE_MILLISECOND (5000l)
+        #define SAFE_SECOND (5l)
         #define BROKER_TRANSPORT OCConnectivityType::CT_ADAPTER_IP
 
         /*
