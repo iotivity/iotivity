@@ -156,10 +156,12 @@ OCServerRequest * GetServerRequestUsingToken (const CAToken_t token, uint8_t tok
     }
 
     OCServerRequest * out = NULL;
+    OC_LOG(INFO, TAG,PCF("Get server request with token"));
+    OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)token, tokenLength);
+
+    OC_LOG(INFO, TAG,PCF("Found token"));
     LL_FOREACH (serverRequestList, out)
     {
-        OC_LOG(INFO, TAG,PCF("comparing tokens"));
-        OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)token, tokenLength);
         OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)out->requestToken, tokenLength);
         if(memcmp(out->requestToken, token, tokenLength) == 0)
         {
@@ -450,7 +452,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     responseInfo.info.token = (CAToken_t)OICMalloc(CA_MAX_TOKEN_LEN+1);
     if (!responseInfo.info.token)
     {
-        OC_LOG(FATAL, TAG, "Response Info Token is NULL");
+        OC_LOG(FATAL, TAG, "Memory alloc for token failed");
         return result;
     }
 
@@ -474,7 +476,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
 
         if(!responseInfo.info.options)
         {
-            OC_LOG(FATAL, TAG, PCF("options is NULL"));
+            OC_LOG(FATAL, TAG, PCF("Memory alloc for options failed"));
             OICFree(responseInfo.info.token);
             return OC_STACK_NO_MEMORY;
         }
@@ -568,6 +570,13 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
         }
     }
     #else
+
+    OC_LOG(INFO, TAG, PCF("Calling CASendResponse with:"));
+    OC_LOG_V(INFO, TAG, "\tEndpoint address: %s", responseEndpoint.addr);
+    OC_LOG_V(INFO, TAG, "\tEndpoint adapter: %s", responseEndpoint.adapter);
+    OC_LOG_V(INFO, TAG, "\tResponse result : %s", responseInfo.result);
+    OC_LOG_V(INFO, TAG, "\tResponse for uri: %s", responseInfo.info.resourceUri);
+
     CAResult_t caResult = CASendResponse(&responseEndpoint, &responseInfo);
     if(caResult != CA_STATUS_OK)
     {

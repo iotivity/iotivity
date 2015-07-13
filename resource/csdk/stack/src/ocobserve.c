@@ -436,10 +436,12 @@ ResourceObserver* GetObserverUsingToken (const CAToken_t token, uint8_t tokenLen
 
     if(token && *token)
     {
+        OC_LOG(INFO, TAG,PCF("Looking for token"));
+        OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)token, tokenLength);
+        OC_LOG(INFO, TAG,PCF("\tFound token:"));
+
         LL_FOREACH (serverObsList, out)
         {
-            OC_LOG(INFO, TAG,PCF("comparing tokens"));
-            OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)token, tokenLength);
             OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)out->token, tokenLength);
             if((memcmp(out->token, token, tokenLength) == 0))
             {
@@ -447,6 +449,11 @@ ResourceObserver* GetObserverUsingToken (const CAToken_t token, uint8_t tokenLen
             }
         }
     }
+    else
+    {
+        OC_LOG(ERROR, TAG,PCF("Passed in NULL token"));
+    }
+
     OC_LOG(INFO, TAG, PCF("Observer node not found!!"));
     return NULL;
 }
@@ -463,7 +470,7 @@ OCStackResult DeleteObserverUsingToken (CAToken_t token, uint8_t tokenLength)
     obsNode = GetObserverUsingToken (token, tokenLength);
     if (obsNode)
     {
-        OC_LOG_V(INFO, TAG, PCF("deleting tokens"));
+        OC_LOG_V(INFO, TAG, "deleting observer id  %u with token", obsNode->observeId);
         OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)obsNode->token, tokenLength);
         LL_DELETE (serverObsList, obsNode);
         OICFree(obsNode->resUri);

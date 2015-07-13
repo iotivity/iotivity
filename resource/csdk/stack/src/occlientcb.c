@@ -72,6 +72,8 @@ AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
         }
         else
         {
+            OC_LOG(INFO, TAG, PCF("Adding client callback with token"));
+            OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)token, tokenLength);
             cbNode->callBack = cbData->cb;
             cbNode->context = cbData->context;
             cbNode->deleteCallback = cbData->cd;
@@ -99,6 +101,7 @@ AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
             }
             cbNode->requestUri = requestUri;    // I own it now
             cbNode->devAddr = devAddr;          // I own it now
+            OC_LOG_V(INFO, TAG, "Added Callback for uri : %s", requestUri);
             LL_APPEND(cbList, cbNode);
             *clientCB = cbNode;
         }
@@ -147,11 +150,12 @@ void DeleteClientCB(ClientCB * cbNode)
     if(cbNode)
     {
         LL_DELETE(cbList, cbNode);
-        OC_LOG(INFO, TAG, PCF("deleting tokens"));
+        OC_LOG (INFO, TAG, PCF("Deleting token"));
         OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)cbNode->token, cbNode->tokenLength);
         CADestroyToken (cbNode->token);
         OICFree(cbNode->devAddr);
         OICFree(cbNode->handle);
+        OC_LOG_V (INFO, TAG, "Deleting callback with uri %s", cbNode->requestUri);
         OICFree(cbNode->requestUri);
         if(cbNode->deleteCallback)
         {
@@ -217,10 +221,11 @@ ClientCB* GetClientCB(const CAToken_t token, uint8_t tokenLength,
 
     if(token && *token && tokenLength <= CA_MAX_TOKEN_LEN && tokenLength > 0)
     {
+        OC_LOG (INFO, TAG, PCF ("Looking for token"));
+        OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)token, tokenLength);
+        OC_LOG(INFO, TAG, PCF("\tFound in callback list"));
         LL_FOREACH(cbList, out)
         {
-            OC_LOG(INFO, TAG, PCF("comparing tokens"));
-            OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)token, tokenLength);
             OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)out->token, tokenLength);
 
             if(memcmp(out->token, token, tokenLength) == 0)
@@ -243,8 +248,10 @@ ClientCB* GetClientCB(const CAToken_t token, uint8_t tokenLength,
     }
     else if(requestUri)
     {
+        OC_LOG_V(INFO, TAG, "Looking for uri %s", requestUri);
         LL_FOREACH(cbList, out)
         {
+            OC_LOG_V(INFO, TAG, "\tFound %s", out->requestUri);
             if(out->requestUri && strcmp(out->requestUri, requestUri ) == 0)
             {
                 return out;

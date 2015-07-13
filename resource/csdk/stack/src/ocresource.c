@@ -112,7 +112,7 @@ static OCStackResult ExtractFiltersFromQuery(char *query, char **filterOne, char
     *filterOne = NULL;
     *filterTwo = NULL;
 
-    OC_LOG_V(INFO, TAG, PCF("Received query %s for param extraction"), query);
+    OC_LOG_V(INFO, TAG, "Extracting params from %s", query);
 
     char *keyValuePair = strtok_r (query, OC_QUERY_SEPARATOR, &restOfQuery);
 
@@ -263,7 +263,7 @@ OCResource *FindResourceByUri(const char* resourceUri)
         }
         pointer = pointer->next;
     }
-    OC_LOG(INFO, TAG, PCF("Resource not found"));
+    OC_LOG_V(INFO, TAG, "Resource %s not found", resourceUri);
     return NULL;
 }
 
@@ -277,13 +277,14 @@ OCStackResult DetermineResourceHandling (const OCServerRequest *request,
         return OC_STACK_INVALID_PARAM;
     }
 
-    OC_LOG(INFO, TAG, PCF("Entering DetermineResourceHandling"));
+    OC_LOG_V(INFO, TAG, "DetermineResourceHandling for %s", request->resourceUrl);
 
     const OCDevAddr *devAddr = &request->devAddr;
 
     // Check if virtual resource
     if (GetTypeOfVirtualURI(request->resourceUrl) != OC_UNKNOWN_URI)
     {
+        OC_LOG_V (INFO, TAG, "%s is virtual", request->resourceUrl);
         *handling = OC_RESOURCE_VIRTUAL;
         *resource = headResource;
         return OC_STACK_OK;
