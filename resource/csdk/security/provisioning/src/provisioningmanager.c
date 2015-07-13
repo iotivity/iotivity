@@ -51,6 +51,7 @@
 #include "pstatresource.h"
 #include "srmresourcestrings.h"
 #include "credresource.h"
+#include "oic_string.h"
 
 typedef enum
 {
@@ -335,6 +336,8 @@ static CAResult_t sendCARequest(CAMethod_t method,
     }
     requestData.payload = payload;
     requestData.type = msgType;
+    requestData.resourceUri = (CAURI_t)resourceUri;
+
     CARequestInfo_t requestInfo = { 0 };
     requestInfo.method = method;
     requestInfo.info = requestData;
@@ -352,15 +355,13 @@ static CAResult_t sendCARequest(CAMethod_t method,
 /**
  * addDevice to list.
  *
- * @param[in] ip                    IP of target device.
- * @param[in] port                  port of remote server.
- * @param[in] adapter              adapter type of endpoint.
- * @param[in] doxm                  pointer to doxm instance.
+ * @param[in] endpoint   Endpoint information
+ * @param[in] doxm   pointer to doxm instance.
  * @return SP_RESULT_SUCCESS for success and errorcode otherwise.
  */
-static SPResult addDevice(const char *ip, int port, OCTransportAdapter adapter, OicSecDoxm_t *doxm)
+static SPResult addDevice(const CAEndpoint_t *endpoint, OicSecDoxm_t* doxm)
 {
-    if (NULL == ip || 0 >= port)
+    if (NULL == endpoint)
     {
         return SP_RESULT_INVALID_PARAM;
     }
@@ -371,12 +372,8 @@ static SPResult addDevice(const char *ip, int port, OCTransportAdapter adapter, 
         return SP_RESULT_MEM_ALLOCATION_FAIL;
     }
 
-    SPStringCopy(ptr->endpoint.addr, ip, MAX_ADDR_STR_SIZE);
-    ptr->endpoint.port = port;
-    ptr->endpoint.adapter = adapter;
-
+    memcpy(&(ptr->endpoint), endpoint, sizeof(CAEndpoint_t));
     ptr->doxm = doxm;
-
     ptr->next = NULL;
 
     if (NULL == gStartOfDiscoveredDevices)
@@ -466,7 +463,7 @@ static void ProvisionDiscoveryHandler(const CAEndpoint_t *object,
                 {
                     OC_LOG(DEBUG, TAG, "Successfully converted doxm json to bin.");
 
-                    SPResult res = addDevice(object->addr, object->port, object->adapter, ptrDoxm);
+                    SPResult res = addDevice(object, ptrDoxm);
                     if (SP_RESULT_SUCCESS != res)
                     {
                         OC_LOG(ERROR, TAG, "Error while adding data to linkedlist.");
@@ -958,17 +955,9 @@ static SPResult updateOperationMode(unsigned short timeout,
  * @param[in]  deviceInfo  Provisioning context
  * @return SP_SUCCESS on success
  */
-static SPResult initiateDtlsHandshake(const SPTargetDeviceInfo_t *deviceInfo)
+static SPResult initiateDtlsHandshake(const CAEndpoint_t *endpoint)
 {
-    CAResult_t caresult = CASelectCipherSuite(TLS_ECDH_anon_WITH_AES_128_CBC_SHA);
-
-    if (CA_STATUS_OK != caresult)
-    {
-        OC_LOG(ERROR, TAG, "Unable to select cipher suite");
-        return SP_RESULT_INTERNAL_ERROR;
-    }
-    OC_LOG(INFO, TAG, "Anonymous cipher suite selected. ");
-    caresult = CAEnableAnonECDHCipherSuite(true);
+    CAResult_t caresult = CAEnableAnonECDHCipherSuite(true);
     if (CA_STATUS_OK != caresult)
     {
         OC_LOG_V(ERROR, TAG, "Unable to enable anon cipher suite");
@@ -976,7 +965,7 @@ static SPResult initiateDtlsHandshake(const SPTargetDeviceInfo_t *deviceInfo)
     }
     OC_LOG(INFO, TAG, "Anonymous cipher suite Enabled.");
 
-    caresult = CAInitiateHandshake((CAEndpoint_t *)&deviceInfo->endpoint);
+    caresult = CAInitiateHandshake(endpoint);
     if (CA_STATUS_OK != caresult)
     {
         OC_LOG_V(ERROR, TAG, "DTLS handshake failure.");
@@ -1020,7 +1009,7 @@ static SPResult sendOwnershipInfo(unsigned short timeout,
 
     CAResult_t result = sendCARequest(CA_PUT,
                                       &selectedDeviceInfo->endpoint,
-                                      OC_SECURE,
+                                      OC_FLAG_SECURE,
                                       OIC_RSRC_DOXM_URI,
                                       payloadBuffer, payloadLen);
     if (CA_STATUS_OK != result)
@@ -1052,9 +1041,8 @@ static SPResult saveOwnerPSK(SPTargetDeviceInfo_t *selectedDeviceInfo)
 {
     SPResult result = SP_RESULT_INTERNAL_ERROR;
 
-    CAEndpoint_t endpoint = {0};
-    strncpy(endpoint.addr, selectedDeviceInfo->endpoint.addr, MAX_ADDR_STR_SIZE_CA);
-    endpoint.addr[MAX_ADDR_STR_SIZE_CA - 1] = '\0';
+    CAEndpoint_t endpoint = {};
+    OICStrcpy(endpoint.addr, MAX_ADDR_STR_SIZE_CA, selectedDeviceInfo->endpoint.addr);
     endpoint.port = CA_SECURE_PORT;
 
     OicUuid_t provTooldeviceID = {};
@@ -1169,23 +1157,39 @@ static SPResult doOwnerShipTransfer(unsigned short timeout,
     }
     if (*selectedOperationMode == SINGLE_SERVICE_CLIENT_DRIVEN)
     {
-        res = initiateDtlsHandshake(selectedDeviceInfo);
-        if (SP_RESULT_SUCCESS != res)
+        CAEndpoint_t endpoint = {0};
+        OICStrcpy(endpoint.addr, MAX_ADDR_STR_SIZE_CA, selectedDeviceInfo->endpoint.addr);
+        endpoint.port = CA_SECURE_PORT;
+
+        res = initiateDtlsHandshake(&endpoint);
+        if (SP_RESULT_SUCCESS == res)
         {
-            OC_LOG(ERROR, TAG, "Error while DTLS handshake.");
-            return SP_RESULT_INTERNAL_ERROR;
+            selectedDeviceInfo->endpoint.port = CA_SECURE_PORT;
+            res = sendOwnershipInfo(timeout, selectedDeviceInfo);
+            if (SP_RESULT_SUCCESS != res)
+            {
+                OC_LOG(ERROR, TAG, "Error while updating ownership information.");
+            }
+            res = saveOwnerPSK(selectedDeviceInfo);
+
+            //Close temporal DTLS session
+            if(CA_STATUS_OK != CACloseDtlsSession(&endpoint))
+            {
+                OC_LOG(WARNING, TAG, "doOwnerShipTransfer() : failed to close the dtls session");
+            }
+        }
+        else
+        {
+            OC_LOG(ERROR, TAG, "Error during initiating DTLS handshake.");
         }
 
-        res = sendOwnershipInfo(timeout, selectedDeviceInfo);
-        if (SP_RESULT_SUCCESS != res)
+        //Disable Anonymous ECDH cipher suite before leaving this method
+        if(CA_STATUS_OK != CAEnableAnonECDHCipherSuite(false))
         {
-            OC_LOG(ERROR, TAG, "Error while updating ownership information.");
-            return SP_RESULT_INTERNAL_ERROR;
+            OC_LOG(WARNING, TAG, "doOwnerShipTransfer() : failed to disable Anon ECDH cipher suite");
         }
-
-        saveOwnerPSK(selectedDeviceInfo);
     }
-    return SP_RESULT_SUCCESS;
+    return (res != SP_RESULT_SUCCESS) ? SP_RESULT_INTERNAL_ERROR : SP_RESULT_SUCCESS;
 
 }
 
@@ -1216,7 +1220,7 @@ SPResult provisionCredentials(unsigned short timeout, const OicSecCred_t *cred,
 
     CAResult_t result = sendCARequest(CA_POST,
                                       &deviceInfo->endpoint,
-                                      OC_SECURE,
+                                      OC_FLAG_SECURE,
                                       OIC_RSRC_CRED_URI,
                                       credJson, payloadLen);
     OICFree(credJson);
@@ -1235,6 +1239,7 @@ SPResult provisionCredentials(unsigned short timeout, const OicSecCred_t *cred,
         return SP_RESULT_TIMEOUT;
     }
     CADestroyToken(gToken);
+    gStateManager = 0;
     return res;
 }
 
@@ -1321,8 +1326,8 @@ SPResult SPProvisionACL(unsigned short timeout, const SPTargetDeviceInfo_t *sele
 
     CAResult_t result = sendCARequest(CA_POST,
                                       &selectedDeviceInfo->endpoint,
-                                      OC_SECURE,
-                                      OIC_RSRC_DOXM_URI,
+                                      OC_FLAG_SECURE,
+                                      OIC_RSRC_ACL_URI,
                                       aclString, payloadLen);
     OICFree(aclString);
     if (CA_STATUS_OK != result)
@@ -1437,7 +1442,7 @@ SPResult SPFinalizeProvisioning(unsigned short timeout,
 
     CAResult_t result = sendCARequest(CA_PUT,
                                       &selectedDeviceInfo->endpoint,
-                                      OC_SECURE,
+                                      OC_FLAG_SECURE,
                                       OIC_RSRC_PSTAT_URI,
                                       payloadBuffer, payloadLen);
     OICFree(payloadBuffer);
@@ -1456,15 +1461,14 @@ SPResult SPFinalizeProvisioning(unsigned short timeout,
         return SP_RESULT_TIMEOUT;
     }
 
-    CAEndpoint_t endpoint = {0};
-    strncpy(endpoint.addr, selectedDeviceInfo->endpoint.addr, MAX_ADDR_STR_SIZE_CA);
-    endpoint.addr[DEV_ADDR_SIZE_MAX - 1] = '\0';
+    CAEndpoint_t endpoint = {};
+    OICStrcpy(endpoint.addr, MAX_ADDR_STR_SIZE_CA, selectedDeviceInfo->endpoint.addr);
     endpoint.port = CA_SECURE_PORT;
 
     result = CACloseDtlsSession(&endpoint);
     if (CA_STATUS_OK != result)
     {
-        OC_LOG_V(ERROR, TAG, "DTLS handshake failure.");
+        OC_LOG(WARNING, TAG, "Failed to close the DTLS session.");
     }
 
     CADestroyToken(gToken);
