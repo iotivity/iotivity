@@ -58,6 +58,8 @@ namespace OIC
         DataCache::~DataCache()
         {
             state = CACHE_STATE::DESTROYED;
+
+            sResource->cancelObserve();
             if(subscriberList != nullptr)
             {
                 subscriberList->clear();
@@ -74,7 +76,7 @@ namespace OIC
             {
                 sResource->requestObserve(pObserveCB);
             }
-            networkTimeOutHandle = networkTimer.requestTimer(DEFAULT_EXPIRED_TIME, pTimerCB);
+            networkTimeOutHandle = networkTimer.postTimer(DEFAULT_EXPIRED_TIME, pTimerCB);
         }
 
         CacheID DataCache::addSubscriber(CacheCB func, REPORT_FREQUENCY rf, long repeatTime)
@@ -155,7 +157,7 @@ namespace OIC
             }
 
             networkTimer.cancelTimer(networkTimeOutHandle);
-            networkTimeOutHandle = networkTimer.requestTimer(DEFAULT_EXPIRED_TIME, pTimerCB);
+            networkTimeOutHandle = networkTimer.postTimer(DEFAULT_EXPIRED_TIME, pTimerCB);
 
             notifyObservers(_rep.getAttributes());
         }
@@ -176,9 +178,9 @@ namespace OIC
             if(!sResource->isObservable())
             {
                 networkTimer.cancelTimer(networkTimeOutHandle);
-                networkTimeOutHandle = networkTimer.requestTimer(DEFAULT_EXPIRED_TIME, pTimerCB);
+                networkTimeOutHandle = networkTimer.postTimer(DEFAULT_EXPIRED_TIME, pTimerCB);
 
-                pollingHandle = pollingTimer.requestTimer(DEFAULT_REPORT_TIME, pPollingCB);
+                pollingHandle = pollingTimer.postTimer(DEFAULT_REPORT_TIME, pPollingCB);
             }
 
             notifyObservers(_rep.getAttributes());

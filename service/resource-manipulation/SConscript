@@ -26,11 +26,11 @@ import platform
 Import('env')
 
 SConscript('modules/common/SConscript')
-#SConscript('modules/resourceBroker/SConscript')
-#SConscript('modules/resourceCache/SConscript')
+SConscript('modules/resourceBroker/SConscript')
+SConscript('modules/resourceCache/SConscript')
 SConscript('modules/serverBuilder/SConscript')
 SConscript('modules/resourceContainer/SConscript')
-#SConscript('sdk/SConscript')
+SConscript('sdk/SConscript')
 
 ######################################################################
 #building Resource client

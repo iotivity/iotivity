@@ -35,6 +35,10 @@ namespace OIC
         class DataCache
         {
         public:
+            using TimerID = unsigned int;
+            using TimerCB = std::function<void*(TimerID)>;
+
+        public:
             DataCache();
             ~DataCache();
 
