@@ -112,6 +112,7 @@ namespace OC
     *  ServerConnectivity : default flags for server
     *  ClientConnectivity : default flags for client
     *  QoS        : Quality of Service : CONFIRMABLE or NON CONFIRMABLE.
+    *  ps         : persistant storage Handler structure (open/read/write/close/unlink)
     */
     struct PlatformConfig
     {
@@ -122,6 +123,7 @@ namespace OC
         std::string                ipAddress;   // not used
         uint16_t                   port;        // not used
         QualityOfService           QoS;
+        OCPersistentStorage        *ps;
 
         public:
             PlatformConfig()
@@ -131,34 +133,39 @@ namespace OC
                 clientConnectivity(CT_DEFAULT),
                 ipAddress("0.0.0.0"),
                 port(0),
-                QoS(QualityOfService::NaQos)
+                QoS(QualityOfService::NaQos),
+                ps(nullptr)
         {}
             PlatformConfig(const ServiceType serviceType_,
             const ModeType mode_,
             OCConnectivityType serverConnectivity_,
             OCConnectivityType clientConnectivity_,
-            const QualityOfService QoS_)
+            const QualityOfService QoS_,
+            OCPersistentStorage *ps_ = nullptr)
                 : serviceType(serviceType_),
                 mode(mode_),
                 serverConnectivity(serverConnectivity_),
                 clientConnectivity(clientConnectivity_),
                 ipAddress(""),
                 port(0),
-                QoS(QoS_)
+                QoS(QoS_),
+                ps(ps_)
         {}
             // for backward compatibility
             PlatformConfig(const ServiceType serviceType_,
             const ModeType mode_,
             const std::string& ipAddress_,
             const uint16_t port_,
-            const QualityOfService QoS_)
+            const QualityOfService QoS_,
+            OCPersistentStorage *ps_ = nullptr)
                 : serviceType(serviceType_),
                 mode(mode_),
                 serverConnectivity(CT_DEFAULT),
                 clientConnectivity(CT_DEFAULT),
                 ipAddress(ipAddress_),
                 port(port_),
-                QoS(QoS_)
+                QoS(QoS_),
+                ps(ps_)
         {}
     };
 

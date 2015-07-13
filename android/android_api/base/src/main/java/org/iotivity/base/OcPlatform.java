@@ -91,7 +91,8 @@ public final class OcPlatform {
                     platformConfig.getModeType().getValue(),
                     platformConfig.getIpAddress(),
                     platformConfig.getPort(),
-                    platformConfig.getQualityOfService().getValue()
+                    platformConfig.getQualityOfService().getValue(),
+                    platformConfig.getSvrDbPath()
             );
 
             sIsPlatformInitialized = true;
@@ -102,7 +103,8 @@ public final class OcPlatform {
                                          int modeType,
                                          String ipAddress,
                                          int port,
-                                         int qualityOfService);
+                                         int qualityOfService,
+                                         String dbPath);
 
     /**
      * API for notifying base that resource's attributes have changed.

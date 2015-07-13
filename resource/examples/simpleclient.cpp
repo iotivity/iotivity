@@ -412,10 +412,15 @@ void checkObserverValue(int value)
     }
 }
 
+static FILE* client_open(const char *path, const char *mode)
+{
+    return fopen("./oic_svr_db_client.json", mode);
+}
+
 int main(int argc, char* argv[]) {
 
     std::ostringstream requestURI;
-
+    OCPersistentStorage ps {client_open, fread, fwrite, fclose, unlink };
     try
     {
         printUsage();
@@ -442,10 +447,11 @@ int main(int argc, char* argv[]) {
     // Create PlatformConfig object
     PlatformConfig cfg {
         OC::ServiceType::InProc,
-        OC::ModeType::Client,
+        OC::ModeType::Both,
         "0.0.0.0",
         0,
-        OC::QualityOfService::LowQos
+        OC::QualityOfService::LowQos,
+        &ps
     };
 
     OCPlatform::Configure(cfg);

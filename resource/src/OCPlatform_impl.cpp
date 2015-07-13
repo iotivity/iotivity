@@ -56,6 +56,7 @@ namespace OC
 
     void OCPlatform_impl::Configure(const PlatformConfig& config)
     {
+        OCRegisterPersistentStorageHandler(config.ps);
         globalConfig() = config;
     }
 
