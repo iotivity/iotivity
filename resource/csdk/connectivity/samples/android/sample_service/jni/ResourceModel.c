@@ -435,6 +435,8 @@ Java_org_iotivity_ca_service_RMInterface_RMSendReqestToAll(JNIEnv *env, jobject 
     if (NULL == headerOpt)
     {
         LOGE("Memory allocation failed");
+        // destroy remote endpoint
+        CADestroyEndpoint(endpoint);
         return;
     }
 
