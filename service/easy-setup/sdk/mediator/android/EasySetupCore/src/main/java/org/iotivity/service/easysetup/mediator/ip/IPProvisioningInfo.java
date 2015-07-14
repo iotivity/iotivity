@@ -17,46 +17,39 @@
  * limitations under the License.
  *
  ******************************************************************/
+package org.iotivity.service.easysetup.mediator.ip;
 
-package org.iotivity.service.easysetup.mediator;
+import org.iotivity.service.easysetup.mediator.common.ProvisioningInfo;
 
-public class EnrolleeInfo {
+/*
+* IPProvisioningInfo is a sub class for handling IP transport provisioning information.
+*/
+public class IPProvisioningInfo extends ProvisioningInfo {
+    private String ipAddress;
+    private String netSSID;
+    private String netPWD;
 
-    private String  IpAddr;
-    private String  HWAddr;
-    private String  Device;
-    private boolean isReachable;
-
-    public String getIpAddr() {
-        return IpAddr;
+    public String getIpAddress() {
+        return ipAddress;
     }
 
-    public void setIpAddr(String ipAddr) {
-        IpAddr = ipAddr;
+    public void setIpAddress(String ipAddress) {
+        this.ipAddress = ipAddress;
     }
 
-    public String getHWAddr() {
-        return HWAddr;
+    public String getNetSSID() {
+        return netSSID;
     }
 
-    public void setHWAddr(String hWAddr) {
-        HWAddr = hWAddr;
+    public void setNetSSID(String netSSID) {
+        this.netSSID = netSSID;
     }
 
-    public String getDevice() {
-        return Device;
+    public String getNetPWD() {
+        return netPWD;
     }
 
-    public void setDevice(String device) {
-        Device = device;
+    public void setNetPWD(String netPWD) {
+        this.netPWD = netPWD;
     }
-
-    public boolean isReachable() {
-        return isReachable;
-    }
-
-    public void setReachable(boolean isReachable) {
-        this.isReachable = isReachable;
-    }
-
 }

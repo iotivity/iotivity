@@ -20,18 +20,25 @@
 package org.iotivity.service.easysetup.mediator;
 
 import android.content.Context;
-import android.net.wifi.WifiConfiguration;
-import android.widget.Toast;
+
+import org.iotivity.base.OcConnectivityType;
+import org.iotivity.service.easysetup.mediator.common.OnBoardingConfig;
+import org.iotivity.service.easysetup.mediator.ip.WiFiSoftAPManager;
+import org.iotivity.service.easysetup.mediator.ip.WiFiSoftAPOnBoardingConfig;
 
 public class OnBoardEnrollee {
     WiFiSoftAPManager wifiSoftAPManager;
     IOnBoardingStatus deviceScanListener;
+    OcConnectivityType selectedConnectivityType;
 
     /**
-     * Constructor for OnBoardEnrollee. Constructs a new OnBoardEnrollee.
+     * Constructor for OnBoardEnrollee.
      */
-    public OnBoardEnrollee(Context context) {
-        wifiSoftAPManager = new WiFiSoftAPManager(context);
+    public OnBoardEnrollee(Context context, OcConnectivityType connectivityType) {
+        if(connectivityType == OcConnectivityType.IPV4) {
+            wifiSoftAPManager = new WiFiSoftAPManager(context);
+        }
+        this.selectedConnectivityType = connectivityType;
     }
 
     public void registerOnBoardingStatusHandler(
@@ -39,15 +46,23 @@ public class OnBoardEnrollee {
         this.deviceScanListener = deviceScanListener;
     }
 
-    public void startDeviceScan() {
-        wifiSoftAPManager.getClientList(false, this.deviceScanListener);
+    public void startDeviceScan(final int reachableTimeout) {
+        if(selectedConnectivityType == OcConnectivityType.IPV4) {
+            wifiSoftAPManager.getClientList(this.deviceScanListener, reachableTimeout);
+        }
     }
 
-    public void enableWiFiAP(WifiConfiguration netConfig, boolean enabled) {
-        wifiSoftAPManager.setWifiApEnabled(netConfig, true);
+    public void enableNetwork(OnBoardingConfig transportConfig, boolean enabled) {
+        if(selectedConnectivityType == OcConnectivityType.IPV4) {
+            wifiSoftAPManager.setWifiApEnabled(
+                    ((WiFiSoftAPOnBoardingConfig)transportConfig).getNetConfig(),
+                    true);
+        }
     }
 
     public void disableWiFiAP() {
-        wifiSoftAPManager.setWifiApEnabled(null, false);
+        if(selectedConnectivityType == OcConnectivityType.IPV4) {
+            wifiSoftAPManager.setWifiApEnabled(null, false);
+        }
     }
 }

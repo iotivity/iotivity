@@ -22,7 +22,7 @@ package org.iotivity.service.easysetup.mediator;
 import android.util.Log;
 
 public class EasySetupCallbackHandler {
-    private static final String             TAG = "EasySetupCallbackHandler";
+    private static final String             TAG = "ESCallbackHandler";
     ProvisionEnrollee                       provisioningListener;
 
     private static EasySetupCallbackHandler easySetupCallbackHandlerObj;
@@ -36,9 +36,7 @@ public class EasySetupCallbackHandler {
 
     public void ProvisioningStatusCallBack(int statuscode) {
         // TODO Auto-generated method stub
-        Log.d(TAG,
-                "onFinishProvisioning() inside Android Java application. statuscode - "
-                        + statuscode);
+        Log.d(TAG, "onFinishProvisioning(). statuscode - " + statuscode);
         if (this.provisioningListener != null) {
             this.provisioningListener.ProvisioningStatusCallBack(statuscode);
         } else {

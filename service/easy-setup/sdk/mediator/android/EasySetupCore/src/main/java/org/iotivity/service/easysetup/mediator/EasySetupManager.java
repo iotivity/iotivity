@@ -21,33 +21,14 @@ package org.iotivity.service.easysetup.mediator;
 
 import android.content.Context;
 
-//import org.iotivity.ca.CaInterface;
-
 public class EasySetupManager {
     private native void InitEasySetup();
-
     private native void TerminateEasySetup();
-
-    // TODO : "OcConnectivityType connectivityType" has to be passed as the
-    // second parameter for PerformEasySetup
-    // instead of integer
     private native void ProvisionEnrollee(String ipAddress, String netSSID,
             String netPWD, int connectivityType);
-
     private native void StopEnrolleeProvisioning(int connectivityType);
-
-    public static native void initialize(Context context);
-
     private static EasySetupManager easySetupManagerInterfaceObj = null;
     private Context                 appContext                   = null;
-
-    static {
-        // Load Easy Setup JNI interface
-        System.loadLibrary("gnustl_shared");
-        System.loadLibrary("octbstack");
-        System.loadLibrary("connectivity_abstraction");
-        System.loadLibrary("easysetup-jni");
-    }
 
     private EasySetupManager() {
 
@@ -66,12 +47,7 @@ public class EasySetupManager {
         return easySetupManagerInterfaceObj;
     }
 
-    public void setApplicationContext(Context context) {
-        appContext = context;
-    }
-
     public void initEasySetup() {
-        // CaInterface.initialize(appContext);
         InitEasySetup();
     }
 
@@ -79,7 +55,7 @@ public class EasySetupManager {
         TerminateEasySetup();
     }
 
-    public void provisionEnrollee(String ipAddress, String netSSID,
+    public void provisionIPEnrollee(String ipAddress, String netSSID,
             String netPWD, int connectivityType) {
 
         ProvisionEnrollee(ipAddress, netSSID, netPWD, connectivityType);

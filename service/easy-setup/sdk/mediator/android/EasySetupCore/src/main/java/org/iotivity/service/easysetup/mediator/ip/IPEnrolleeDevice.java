@@ -17,20 +17,31 @@
  * limitations under the License.
  *
  ******************************************************************/
-package org.iotivity.service.easysetup.mediator;
+
+package org.iotivity.service.easysetup.mediator.ip;
 
 import org.iotivity.service.easysetup.mediator.common.EnrolleeDevice;
 
-public interface IOnBoardingStatus {
+/*
+* IPEnrolleeDevice is a subclass of EnrolleeDevice for creating EnrolleeDevice for WiFi transport.
+*/
+public class IPEnrolleeDevice extends EnrolleeDevice {
+    private String  IpAddr;
+    private String  HWAddr;
 
-    /**
-     * Interface called when the scan method finishes. Network operations should
-     * not execute on UI thread
-     * 
-     * @param enrolleeDevice
-     *            of {@link EnrolleeDevice}
-     */
+    public String getIpAddr() {
+        return IpAddr;
+    }
 
-    public void deviceOnBoardingStatus(EnrolleeDevice enrolleeDevice);
+    public void setIpAddr(String ipAddr) {
+        IpAddr = ipAddr;
+    }
 
+    public String getHWAddr() {
+        return HWAddr;
+    }
+
+    public void setHWAddr(String hWAddr) {
+        HWAddr = hWAddr;
+    }
 }

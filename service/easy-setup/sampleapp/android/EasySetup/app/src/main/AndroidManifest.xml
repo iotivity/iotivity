@@ -33,40 +33,6 @@
 				<data android:mimeType="text/plain"/>
 			</intent-filter>
         </activity>
-        
-         <activity android:name="com.jwetherell.quick_response_code.CaptureActivity"
-            android:label="@string/capture_name"
-            android:icon="@drawable/icon"
-            android:screenOrientation="landscape"
-            android:clearTaskOnLaunch="true"
-            android:stateNotNeeded="true"
-            android:configChanges="orientation|keyboardHidden"
-            android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
-            android:windowSoftInputMode="stateAlwaysHidden">
-        </activity>
-
-        <activity android:name="com.jwetherell.quick_response_code.DecoderActivity"
-            android:label="@string/decoder_name"
-            android:icon="@drawable/icon"
-            android:screenOrientation="landscape"
-            android:clearTaskOnLaunch="true"
-            android:stateNotNeeded="true"
-            android:configChanges="orientation|keyboardHidden"
-            android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
-            android:windowSoftInputMode="stateAlwaysHidden">
-        </activity>
-
-        <activity android:name="com.jwetherell.quick_response_code.EncoderActivity"
-            android:label="@string/encoder_name"
-            android:icon="@drawable/icon"
-            android:screenOrientation="landscape"
-            android:clearTaskOnLaunch="true"
-            android:stateNotNeeded="true"
-            android:configChanges="orientation|keyboardHidden"
-            android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
-            android:windowSoftInputMode="stateAlwaysHidden">
-        </activity>
-
     </application>
 
 </manifest>

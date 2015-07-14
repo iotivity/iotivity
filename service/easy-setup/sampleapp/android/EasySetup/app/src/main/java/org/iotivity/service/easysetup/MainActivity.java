@@ -27,11 +27,15 @@ import org.iotivity.base.OcPlatform;
 import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.QualityOfService;
 import org.iotivity.base.ServiceType;
-import org.iotivity.service.easysetup.mediator.EnrolleeInfo;
+import org.iotivity.service.easysetup.mediator.common.EnrolleeDevice;
 import org.iotivity.service.easysetup.mediator.IOnBoardingStatus;
 import org.iotivity.service.easysetup.mediator.IProvisioningListener;
 import org.iotivity.service.easysetup.mediator.OnBoardEnrollee;
 import org.iotivity.service.easysetup.mediator.ProvisionEnrollee;
+import org.iotivity.base.OcConnectivityType;
+import org.iotivity.service.easysetup.mediator.ip.IPEnrolleeDevice;
+import org.iotivity.service.easysetup.mediator.ip.IPProvisioningInfo;
+import org.iotivity.service.easysetup.mediator.ip.WiFiSoftAPOnBoardingConfig;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -58,7 +62,7 @@ public class MainActivity extends Activity implements IProvisioningListener,
     static int        easySetupCount        = 0;
     static final int  REQUEST_IMAGE_CAPTURE = 1;
     ImageView         imageView;
-    EnrolleeInfo      connectedDevice;
+    EnrolleeDevice    connectedDevice;
 
     OnBoardEnrollee   onBoardingHandlerInstance;
     ProvisionEnrollee provisionEnrolleInstance;
@@ -71,21 +75,13 @@ public class MainActivity extends Activity implements IProvisioningListener,
         textView1 = (TextView) findViewById(R.id.textView1);
 
         // OnBoarding Process
-        onBoardingHandlerInstance = new OnBoardEnrollee(this);
+        onBoardingHandlerInstance = new OnBoardEnrollee(this, OcConnectivityType.IPV4);
         onBoardingHandlerInstance.registerOnBoardingStatusHandler(this);
 
         // Get intent, action and MIME type
         Intent intent = getIntent();
         String action = intent.getAction();
         String type = intent.getType();
-
-        if (Intent.ACTION_SEND.equals(action) && type != null) {
-            if ("text/plain".equals(type)) {
-                handleSendText(intent); // Handle text being sent
-            }
-        } else {
-            // Handle other intents, such as being started from the home screen
-        }
 
         addListenerForStartAP();
         addListenerForStopAP();
@@ -96,7 +92,7 @@ public class MainActivity extends Activity implements IProvisioningListener,
         myTimer2.schedule(new TimerTask() {
             @Override
             public void run() {
-                onBoardingHandlerInstance.startDeviceScan();
+                onBoardingHandlerInstance.startDeviceScan(300);
             }
 
         }, 0, 2000);
@@ -106,7 +102,7 @@ public class MainActivity extends Activity implements IProvisioningListener,
         super.onDestroy();
         if(provisionEnrolleInstance != null)
         {
-            provisionEnrolleInstance.stopEnrolleeProvisioning(0);
+            provisionEnrolleInstance.stopEnrolleeProvisioning(OcConnectivityType.IPV4);
         }
         onBoardingHandlerInstance.disableWiFiAP();
         finish();
@@ -133,16 +129,17 @@ public class MainActivity extends Activity implements IProvisioningListener,
                 public void run() {
                     // TODO Auto-generated method stub
                     Toast toast = null;
+                    IPEnrolleeDevice ipEnrolleeDevice = (IPEnrolleeDevice)connectedDevice;
                     if (statuscode == 0) {
                         toast = Toast.makeText(getApplicationContext(),
-                                connectedDevice.getIpAddr()
+                                ipEnrolleeDevice.getIpAddr()
                                         + " - is Provisioned",
                                 Toast.LENGTH_LONG);
                         Log.i("EasyConnect", "Provisioned statuscode-"
                                 + statuscode);
                     } else {
                         toast = Toast.makeText(getApplicationContext(),
-                                connectedDevice.getIpAddr()
+                                ipEnrolleeDevice.getIpAddr()
                                         + " - is NOT Provisioned",
                                 Toast.LENGTH_LONG);
                         Log.i("EasyConnect", "Not Provisioned statuscode-"
@@ -157,45 +154,9 @@ public class MainActivity extends Activity implements IProvisioningListener,
         }
     }
 
-    void handleSendText(Intent intent) {
-        String sharedText = intent.getStringExtra(Intent.EXTRA_TEXT);
-        if (sharedText != null) {
-            // Update UI to reflect text being shared
-            WifiConfiguration netConfig = new WifiConfiguration();
-            netConfig.SSID = "EasyConnect";
-            netConfig.allowedAuthAlgorithms
-                    .set(WifiConfiguration.AuthAlgorithm.OPEN);
-            // netConfig.allowedProtocols.set(WifiConfiguration.Protocol.RSN);
-            // netConfig.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
-            netConfig.allowedKeyManagement
-                    .set(WifiConfiguration.KeyMgmt.WPA_PSK);
-            netConfig.preSharedKey = "EasyConnect";
-            // netConfig.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
-            // netConfig.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
-            // netConfig.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
-            // netConfig.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
-            onBoardingHandlerInstance.enableWiFiAP(netConfig, true);
-
-            Toast.makeText(getApplicationContext(),
-                    "QR Code Captured. Starting Wi-Fi Access Point!",
-                    Toast.LENGTH_LONG).show();
-
-            myTimer = new Timer();
-            myTimer.schedule(new TimerTask() {
-                @Override
-                public void run() {
-                    scan();
-                    scanCount++;
-                    Log.i("EasyConnect", "Scan Count -" + scanCount);
-                }
-
-            }, 0, 5000);
-        }
-    }
-
     private void scan() {
         onBoardingHandlerInstance.registerOnBoardingStatusHandler(this);
-        onBoardingHandlerInstance.startDeviceScan();
+        onBoardingHandlerInstance.startDeviceScan(300);
     }
 
     public void addListenerForStartAP() {
@@ -204,20 +165,19 @@ public class MainActivity extends Activity implements IProvisioningListener,
         button.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View arg0) {
+                WiFiSoftAPOnBoardingConfig transportConfig = new WiFiSoftAPOnBoardingConfig();
+
                 WifiConfiguration netConfig = new WifiConfiguration();
                 netConfig.SSID = "EasySetup123";
                 netConfig.allowedAuthAlgorithms
                         .set(WifiConfiguration.AuthAlgorithm.OPEN);
-                // netConfig.allowedProtocols.set(WifiConfiguration.Protocol.RSN);
-                // netConfig.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
                 netConfig.allowedKeyManagement
                         .set(WifiConfiguration.KeyMgmt.WPA_PSK);
                 netConfig.preSharedKey = "EasySetup123";
-                // netConfig.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
-                // netConfig.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
-                // netConfig.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
-                // netConfig.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
-                onBoardingHandlerInstance.enableWiFiAP(netConfig, true);
+
+                transportConfig.setConnectivityType(OcConnectivityType.IPV4);
+                transportConfig.setNetConfig(netConfig);
+                onBoardingHandlerInstance.enableNetwork(transportConfig, true);
             }
         });
     }
@@ -239,13 +199,20 @@ public class MainActivity extends Activity implements IProvisioningListener,
         button.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View arg0) {
+                IPEnrolleeDevice ipEnrolleeDevice = (IPEnrolleeDevice)connectedDevice;
+                IPProvisioningInfo ipProvisioningInfo = new IPProvisioningInfo();
+
+                ipProvisioningInfo.setConnectivityType(OcConnectivityType.IPV4);
+                ipProvisioningInfo.setIpAddress(ipEnrolleeDevice.getIpAddr());
+                ipProvisioningInfo.setNetSSID("EasySetup123");
+                ipProvisioningInfo.setNetPWD("EasySetup123");
+
                 provisionEnrolleInstance.provisionEnrollee(
-                        connectedDevice.getIpAddr(), "EasySetup123",
-                        "EasySetup123", 0);
+                        ipProvisioningInfo, OcConnectivityType.IPV4);
                 easySetupCount++;
                 Log.i("EasyConnect", "easy Setup Count-" + easySetupCount);
                 Log.i("EasyConnect",
-                        "IP Address-" + connectedDevice.getIpAddr());
+                        "IP Address-" + ipProvisioningInfo.getIpAddress());
             }
         });
 
@@ -277,58 +244,59 @@ public class MainActivity extends Activity implements IProvisioningListener,
     }
 
     @Override
-    public void deviceOnBoardingStatus(EnrolleeInfo enrolleStatus) {
+    public void deviceOnBoardingStatus(EnrolleeDevice enrolleeDevice) {
         // TODO Auto-generated method stub
         // TODO Auto-generated method stub
-        if (enrolleStatus != null && enrolleStatus.getIpAddr() != null) {
-            String finalResult = "Easy Connect : ";
+        if(enrolleeDevice.getConnectivityType() == OcConnectivityType.IPV4) {
+            IPEnrolleeDevice ipEnrolleeDevice = (IPEnrolleeDevice)enrolleeDevice;
+            if (ipEnrolleeDevice.getIpAddr() != null) {
+                String finalResult = "Easy Connect : ";
+                if (ipEnrolleeDevice.isReachable()) {
+                    finalResult = "Device OnBoarded" + "["
+                            + ipEnrolleeDevice.getIpAddr() + "]";
 
-            if (enrolleStatus.isReachable()) {
-                finalResult = "Device OnBoarded" + "["
-                        + enrolleStatus.getIpAddr() + "]";
+                    /*
+                     * easySetupInstance.StartEasySetup(enrolleStatus.getIpAddr()) ;
+                     * easySetupCount++; Log.i("EasyConnect",
+                     * "easy Setup Count-"+easySetupCount); Log.i("EasyConnect",
+                     * "IP Address-"+enrolleStatus.getIpAddr());
+                     */
+                    connectedDevice = ipEnrolleeDevice;
+
+                    // Only after onboarding is successful, provisioning is performed
+                    provisionEnrolleInstance = new ProvisionEnrollee(this);
+                    provisionEnrolleInstance.registerProvisioningHandler(this);
+
+                } else {
+                    finalResult = "Device Removed" + "["
+                            + ipEnrolleeDevice.getIpAddr() + "]";
+                }
+
+                textView1.setText("");
+                textView1.append("Clients: \n");
+                textView1.append("####################\n");
+                textView1.append("IP Address 	: " + ipEnrolleeDevice.getIpAddr()
+                        + "\n");
+                textView1.append("HW Address 	: " + ipEnrolleeDevice.getHWAddr()
+                        + "\n");
+                textView1.append("Is OnBoarded	: " + ipEnrolleeDevice.isReachable()
+                        + "\n");
+
+                Toast.makeText(getApplicationContext(), finalResult,
+                        Toast.LENGTH_LONG).show();
 
                 /*
-                 * easySetupInstance.StartEasySetup(enrolleStatus.getIpAddr()) ;
+                 * myTimer2 = new Timer(); myTimer2.schedule(new TimerTask() {
+                 *
+                 * @Override public void run() {
+                 * easySetupInstance.StartEasySetup(enrolleStatus.getIpAddr());
                  * easySetupCount++; Log.i("EasyConnect",
                  * "easy Setup Count-"+easySetupCount); Log.i("EasyConnect",
-                 * "IP Address-"+enrolleStatus.getIpAddr());
+                 * "IP Address-"+enrolleStatus.getIpAddr()); }
+                 *
+                 * }, 0, 10000);
                  */
-                connectedDevice = enrolleStatus;
-
-                // Only after onboarding is successful, provisioning is performed
-                provisionEnrolleInstance = new ProvisionEnrollee(this);
-                provisionEnrolleInstance.registerProvisioningHandler(this);
-
-            } else {
-                finalResult = "Device Removed" + "["
-                        + enrolleStatus.getIpAddr() + "]";
             }
-
-            textView1.setText("");
-            textView1.append("Clients: \n");
-            textView1.append("####################\n");
-            textView1.append("IP Address 	: " + enrolleStatus.getIpAddr()
-                    + "\n");
-            textView1.append("Device 	 	: " + enrolleStatus.getDevice() + "\n");
-            textView1.append("HW Address 	: " + enrolleStatus.getHWAddr()
-                    + "\n");
-            textView1.append("Is OnBoarded	: " + enrolleStatus.isReachable()
-                    + "\n");
-
-            Toast.makeText(getApplicationContext(), finalResult,
-                    Toast.LENGTH_LONG).show();
-
-            /*
-             * myTimer2 = new Timer(); myTimer2.schedule(new TimerTask() {
-             *
-             * @Override public void run() {
-             * easySetupInstance.StartEasySetup(enrolleStatus.getIpAddr());
-             * easySetupCount++; Log.i("EasyConnect",
-             * "easy Setup Count-"+easySetupCount); Log.i("EasyConnect",
-             * "IP Address-"+enrolleStatus.getIpAddr()); }
-             *
-             * }, 0, 10000);
-             */
         }
     }
 
