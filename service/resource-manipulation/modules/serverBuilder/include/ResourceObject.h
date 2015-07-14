@@ -58,11 +58,16 @@ namespace OIC
             class WeakGuard;
 
         public:
-        //    enum class AutoNotifyPolicy {
-        //        NEVER,
-        //        ALWAYS,
-        //        UPDATED
-        //    };
+            enum class AutoNotifyPolicy {
+                NEVER,
+                ALWAYS,
+                UPDATED
+            };
+
+            enum class SetRequestHandlerPolicy {
+                DEFAULT,
+                ACCEPTANCE
+            };
 
             using Ptr = std::shared_ptr< ResourceObject >;
             using ConstPtr = std::shared_ptr< const ResourceObject >;
@@ -148,7 +153,11 @@ namespace OIC
 
             virtual void notify() const;
 
-        //    void setAutoNotifyPolicy(AutoNotifyPolicy);
+            void setAutoNotifyPolicy(AutoNotifyPolicy);
+            AutoNotifyPolicy getAutoNotifyPolicy() const;
+
+            void setSetRequestHandlerPolicy(SetRequestHandlerPolicy);
+            SetRequestHandlerPolicy getSetRequestHandlerPolicy() const;
 
         private:
             ResourceObject(uint8_t, ResourceAttributes&&);
@@ -161,6 +170,8 @@ namespace OIC
             OCEntityHandlerResult handleObserve(std::shared_ptr< OC::OCResourceRequest >);
 
             void expectOwnLock() const;
+            void autoNotify(bool, AutoNotifyPolicy) const;
+            void autoNotifyIfNeeded(const std::string& , const ResourceAttributes::Value& );
 
         private:
             const uint8_t m_properties;
@@ -170,6 +181,8 @@ namespace OIC
 
             GetRequestHandler m_getRequestHandler;
             SetRequestHandler m_setRequestHandler;
+            AutoNotifyPolicy m_autoNotifyPolicy;
+            SetRequestHandlerPolicy m_setRequestHandlerPolicy;
 
             std::unordered_map< std::string, AttributeUpdatedHandler >
                     m_keyAttributesUpdatedHandlers;
@@ -186,6 +199,8 @@ namespace OIC
         public:
             LockGuard(const ResourceObject&);
             LockGuard(const ResourceObject::Ptr);
+            LockGuard(const ResourceObject&, AutoNotifyPolicy);
+            LockGuard(const ResourceObject::Ptr, AutoNotifyPolicy);
             ~LockGuard();
 
             LockGuard(const LockGuard&) = delete;
@@ -196,6 +211,8 @@ namespace OIC
 
         private:
             const ResourceObject& m_resourceObject;
+            AutoNotifyPolicy m_autoNotifyPolicy;
+            std::function<void()> m_autoNotifyFunc;
         };
 
         class ResourceObject::WeakGuard
@@ -210,9 +227,11 @@ namespace OIC
             WeakGuard& operator=(const WeakGuard&) = delete;
             WeakGuard& operator=(WeakGuard&&) = delete;
 
+            bool hasLocked() const;
+
         private:
-            const ResourceObject& m_serverResource;
             bool m_hasLocked;
+            const ResourceObject& m_serverResource;
         };
     }
 }

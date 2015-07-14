@@ -58,7 +58,6 @@ namespace
             std::shared_ptr< OC::OCResourceRequest > ocRequest, RESPONSE&& response)
     {
         auto ocResponse = response.getHandler()->buildResponse(resource);
-
         ocResponse->setRequestHandle(ocRequest->getRequestHandle());
         ocResponse->setResourceHandle(ocRequest->getResourceHandle());
 
@@ -95,6 +94,28 @@ namespace
         return RESPONSE::defaultAction();
     }
 
+    typedef void (ResourceObject::* AutoNotifyFunc)(bool, ResourceObject::AutoNotifyPolicy) const;
+
+    std::function <void ()> createAutoNotifyInvoker(AutoNotifyFunc autoNotifyFunc,
+            const ResourceObject& resourceObject, const ResourceAttributes& resourceAttributes,
+            ResourceObject::AutoNotifyPolicy autoNotifyPolicy)
+    {
+        if(autoNotifyPolicy == ResourceObject::AutoNotifyPolicy::UPDATED)
+        {
+            auto&& compareAttributesFunc =
+                    std::bind(std::not_equal_to<ResourceAttributes>(),
+                                resourceAttributes,
+                                std::cref(resourceAttributes));
+            return std::bind(autoNotifyFunc,
+                    &resourceObject, std::move(compareAttributesFunc), autoNotifyPolicy);
+        }
+        else if(autoNotifyPolicy == ResourceObject::AutoNotifyPolicy::ALWAYS)
+        {
+            return std::bind(autoNotifyFunc,
+                    &resourceObject, true, autoNotifyPolicy);
+        }
+        return {};
+    }
 } // unnamed namespace
 
 
@@ -176,6 +197,8 @@ namespace OIC
                 m_resourceAttributes{ std::move(attrs) },
                 m_getRequestHandler{ },
                 m_setRequestHandler{ },
+                m_autoNotifyPolicy { AutoNotifyPolicy::ALWAYS },
+                m_setRequestHandlerPolicy { SetRequestHandlerPolicy::DEFAULT },
                 m_keyAttributesUpdatedHandlers{ },
                 m_lockOwner{ },
                 m_mutex{ },
@@ -202,24 +225,48 @@ namespace OIC
                 const ResourceAttributes::Value& value)
         {
             WeakGuard lock(*this);
+
+            if(lock.hasLocked())
+            {
+                autoNotifyIfNeeded(key, value);
+            }
+
             m_resourceAttributes[key] = value;
         }
 
         void ResourceObject::setAttribute(const std::string& key, ResourceAttributes::Value&& value)
         {
             WeakGuard lock(*this);
+
+            if(lock.hasLocked())
+            {
+                autoNotifyIfNeeded(key, value);
+            }
+
             m_resourceAttributes[key] = std::move(value);
         }
 
         void ResourceObject::setAttribute(std::string&& key, const ResourceAttributes::Value& value)
         {
             WeakGuard lock(*this);
+
+            if(lock.hasLocked())
+            {
+                autoNotifyIfNeeded(key, value);
+            }
+
             m_resourceAttributes[std::move(key)] = value;
         }
 
         void ResourceObject::setAttribute(std::string&& key, ResourceAttributes::Value&& value)
         {
             WeakGuard lock(*this);
+
+            if(lock.hasLocked())
+            {
+                autoNotifyIfNeeded(key, value);
+            }
+
             m_resourceAttributes[std::move(key)] = std::move(value);
         }
 
@@ -311,6 +358,42 @@ namespace OIC
            return (bool) m_keyAttributesUpdatedHandlers.erase(key);
         }
 
+        void ResourceObject::autoNotifyIfNeeded(const std::string& key,
+                                                const ResourceAttributes::Value& value)
+        {
+            autoNotify( m_resourceAttributes.contains(key) == false
+                        || m_resourceAttributes.at(key) != value
+                        , m_autoNotifyPolicy);
+        }
+
+        void ResourceObject::setAutoNotifyPolicy(AutoNotifyPolicy policy)
+        {
+            m_autoNotifyPolicy = policy;
+        }
+
+        ResourceObject::AutoNotifyPolicy ResourceObject::getAutoNotifyPolicy() const
+        {
+            return m_autoNotifyPolicy;
+        }
+
+        void ResourceObject::setSetRequestHandlerPolicy(SetRequestHandlerPolicy policy)
+        {
+            m_setRequestHandlerPolicy = policy;
+        }
+
+        ResourceObject::SetRequestHandlerPolicy ResourceObject::getSetRequestHandlerPolicy() const
+        {
+            return m_setRequestHandlerPolicy;
+        }
+
+        void ResourceObject::autoNotify(
+                        bool isAttributesChanged, AutoNotifyPolicy autoNotifyPolicy) const
+        {
+            if(autoNotifyPolicy == AutoNotifyPolicy::NEVER) return;
+            if(autoNotifyPolicy == AutoNotifyPolicy::UPDATED && isAttributesChanged == false) return;
+            notify();
+        }
+
         OCEntityHandlerResult ResourceObject::entityHandler(
                 std::shared_ptr< OC::OCResourceRequest > request)
         {
@@ -398,6 +481,7 @@ namespace OIC
                 }
             }
 
+            autoNotify(!replaced.empty(), m_autoNotifyPolicy);
             return sendResponse(*this, request, response);
         }
 
@@ -415,13 +499,26 @@ namespace OIC
         }
 
         ResourceObject::LockGuard::LockGuard(const ResourceObject::Ptr ptr) :
-                LockGuard{ *ptr }
+                LockGuard{ *ptr , ptr->getAutoNotifyPolicy() }
         {
         }
 
         ResourceObject::LockGuard::LockGuard(
                 const ResourceObject& serverResource) :
-                m_resourceObject(serverResource)
+                LockGuard{ serverResource, serverResource.getAutoNotifyPolicy()}
+        {
+        }
+
+        ResourceObject::LockGuard::LockGuard(
+                const ResourceObject::Ptr ptr, AutoNotifyPolicy autoNotifyPolicy) :
+                LockGuard{ *ptr, autoNotifyPolicy}
+        {
+        }
+
+        ResourceObject::LockGuard::LockGuard(
+                const ResourceObject& serverResource, AutoNotifyPolicy autoNotifyPolicy) :
+                        m_resourceObject(serverResource),
+                        m_autoNotifyPolicy(autoNotifyPolicy)
         {
             if (m_resourceObject.m_lockOwner == std::this_thread::get_id())
             {
@@ -430,17 +527,21 @@ namespace OIC
 
             m_resourceObject.m_mutex.lock();
             m_resourceObject.m_lockOwner = std::this_thread::get_id();
+
+            m_autoNotifyFunc = ::createAutoNotifyInvoker(&ResourceObject::autoNotify,
+                    m_resourceObject, m_resourceObject.m_resourceAttributes, m_autoNotifyPolicy);
         }
 
         ResourceObject::LockGuard::~LockGuard()
         {
+            if(m_autoNotifyFunc)    m_autoNotifyFunc();
             m_resourceObject.m_lockOwner = std::thread::id();
             m_resourceObject.m_mutex.unlock();
         }
 
         ResourceObject::WeakGuard::WeakGuard(
                 const ResourceObject& serverResource) :
-                m_serverResource(serverResource), m_hasLocked{ false }
+                m_hasLocked{ false }, m_serverResource(serverResource)
         {
             if (m_serverResource.m_lockOwner != std::this_thread::get_id())
             {
@@ -455,6 +556,11 @@ namespace OIC
             {
                 m_serverResource.m_mutex.unlock();
             }
+        }
+
+        bool ResourceObject::WeakGuard::hasLocked() const
+        {
+            return m_hasLocked;
         }
     }
 }

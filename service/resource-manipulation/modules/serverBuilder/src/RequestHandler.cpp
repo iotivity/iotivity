@@ -32,7 +32,7 @@ namespace
 
     OC::OCRepresentation getOCRepresentationFromResource(ResourceObject& resource)
     {
-        ResourceObject::LockGuard lock{ resource };
+        ResourceObject::LockGuard lock{ resource, ResourceObject::AutoNotifyPolicy::NEVER };
         return ResourceAttributesConverter::toOCRepresentation(resource.getAttributes());
     }
 
@@ -61,16 +61,18 @@ namespace
 
     AttrKeyValuePairs applyAcceptMethod(ResourceObject& resource, const ResourceAttributes& requestAttrs)
     {
-        ResourceObject::LockGuard lock(resource);
+        ResourceObject::LockGuard lock(resource, ResourceObject::AutoNotifyPolicy::NEVER);
 
         return replaceAttributes(resource.getAttributes(), requestAttrs);
     }
 
     AttrKeyValuePairs applyDefaultMethod(ResourceObject& resource, const ResourceAttributes& requestAttrs)
     {
-        ResourceObject::LockGuard lock(resource);
+        ResourceObject::LockGuard lock(resource,ResourceObject::AutoNotifyPolicy::NEVER);
 
-        if (!acceptableAttributes(resource.getAttributes(), requestAttrs))
+        if (resource.getSetRequestHandlerPolicy()
+            != ResourceObject::SetRequestHandlerPolicy::ACCEPTANCE
+            && !acceptableAttributes(resource.getAttributes(), requestAttrs))
         {
             return AttrKeyValuePairs{ };
         }
