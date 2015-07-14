@@ -130,11 +130,12 @@ void OCResource::setHost(const std::string& host)
             throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
                 m_interfaces.empty(), m_clientWrapper.expired(), false, false);
         }
-
-        std::string ip6Addr = host_token.substr(0, found);
+        // extract the ipaddress
+        std::string ip6Addr = host_token.substr(1, found-1);
         ip6Addr.copy(m_devAddr.addr, sizeof(m_devAddr.addr));
         m_devAddr.addr[ip6Addr.length()] = '\0';
-        host_token = host_token.substr(found + 1);
+        //skip ']' and ':' characters in host string
+        host_token = host_token.substr(found + 2);
     }
     else
     {
@@ -149,11 +150,11 @@ void OCResource::setHost(const std::string& host)
         std::string addrPart = host_token.substr(0, found);
         addrPart.copy(m_devAddr.addr, sizeof(m_devAddr.addr));
         m_devAddr.addr[addrPart.length()] = '\0';
-
+        //skip ':' character in host string
         host_token = host_token.substr(found + 1);
     }
 
-    int port = stoi(host_token);
+    int port = std::stoi(host_token);
 
     if( port < 0 || port > UINT16_MAX )
     {
