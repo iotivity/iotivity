@@ -46,12 +46,6 @@ namespace OIC
             NoLockException(std::string&& what) : PrimitiveException{ std::move(what) } {}
         };
 
-        class DeadLockException: public PrimitiveException
-        {
-        public:
-            DeadLockException(std::string&& what) : PrimitiveException{ std::move(what) } {}
-        };
-
         class ResourceObject
         {
         private:
@@ -211,7 +205,11 @@ namespace OIC
 
         private:
             const ResourceObject& m_resourceObject;
+
             AutoNotifyPolicy m_autoNotifyPolicy;
+
+            bool m_isOwningLock;
+
             std::function<void()> m_autoNotifyFunc;
         };
 
@@ -230,8 +228,8 @@ namespace OIC
             bool hasLocked() const;
 
         private:
-            bool m_hasLocked;
-            const ResourceObject& m_serverResource;
+            bool m_isOwningLock;
+            const ResourceObject& m_resourceObject;
         };
     }
 }

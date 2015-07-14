@@ -33,16 +33,19 @@ using namespace testing;
 using namespace OIC::Service;
 using namespace OC;
 
-typedef OCStackResult (*registerResourceSig)(OCResourceHandle&,
+using registerResource = OCStackResult (*)(OCResourceHandle&,
                        string&,
                        const string&,
                        const string&,
                        EntityHandler,
                        uint8_t );
 
-static constexpr char RESOURCE_URI[]{ "a/test" };
-static constexpr char RESOURCE_TYPE[]{ "resourceType" };
-static constexpr char KEY[]{ "key" };
+using NotifyAllObservers = OCStackResult (*)(OCResourceHandle);
+
+constexpr char RESOURCE_URI[]{ "a/test" };
+constexpr char RESOURCE_TYPE[]{ "resourceType" };
+constexpr char KEY[]{ "key" };
+constexpr int value{ 100 };
 
 TEST(ResourceObjectBuilderCreateTest, ThrowIfUriIsInvalid)
 {
@@ -57,15 +60,16 @@ public:
 protected:
     void SetUp() override
     {
-        mocks.OnCallFuncOverload(static_cast<registerResourceSig>(OCPlatform::registerResource))
+        mocks.OnCallFuncOverload(static_cast< registerResource >(OCPlatform::registerResource))
                 .Return(OC_STACK_OK);
     }
 };
 
 TEST_F(ResourceObjectBuilderTest, RegisterResourceWhenCallCreate)
 {
-    mocks.ExpectCallFuncOverload(static_cast<registerResourceSig>(OCPlatform::registerResource))
+    mocks.ExpectCallFuncOverload(static_cast< registerResource >(OCPlatform::registerResource))
             .Return(OC_STACK_OK);
+
     ResourceObject::Builder(RESOURCE_URI, RESOURCE_TYPE, "").build();
 }
 
@@ -86,7 +90,7 @@ TEST_F(ResourceObjectBuilderTest, ResourceServerHasAttrsSetByBuilder)
     auto serverResource = ResourceObject::Builder(RESOURCE_URI, RESOURCE_TYPE, "").
             setAttributes(attrs).build();
 
-    ResourceObject::LockGuard lock{ serverResource };
+    ResourceObject::LockGuard lock{ serverResource, ResourceObject::AutoNotifyPolicy::NEVER };
     EXPECT_EQ(attrs, serverResource->getAttributes());
 }
 
@@ -101,22 +105,27 @@ protected:
     void SetUp() override
     {
         initMocks();
+
         server = ResourceObject::Builder(RESOURCE_URI, RESOURCE_TYPE, "").build();
+
+        initResourceObject();
     }
 
     virtual void initMocks()
     {
-        mocks.OnCallFuncOverload(static_cast< registerResourceSig >(OCPlatform::registerResource)).
+        mocks.OnCallFuncOverload(static_cast< registerResource >(OCPlatform::registerResource)).
                 Return(OC_STACK_OK);
 
         mocks.OnCallFunc(OCPlatform::unregisterResource).Return(OC_STACK_OK);
+    }
+
+    virtual void initResourceObject() {
+        server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::NEVER);
     }
 };
 
 TEST_F(ResourceObjectTest, AccessAttributesWithLock)
 {
-    constexpr int value{ 100 };
-
     {
         ResourceObject::LockGuard lock{ server };
         auto& attr = server->getAttributes();
@@ -126,24 +135,15 @@ TEST_F(ResourceObjectTest, AccessAttributesWithLock)
     ASSERT_EQ(value, server->getAttribute<int>(KEY));
 }
 
-TEST_F(ResourceObjectTest, ThrowIfTryToAccessAttributesWithoutLock)
+TEST_F(ResourceObjectTest, ThrowIfTryToAccessAttributesWithoutGuard)
 {
     ASSERT_THROW(server->getAttributes(), NoLockException);
 }
 
-TEST_F(ResourceObjectTest, ThrowIfLockRecursively)
+TEST_F(ResourceObjectTest, SettingAttributesWithinGuardDoesntCauseDeadLock)
 {
-    ResourceObject::LockGuard lock{ server };
-
-    ASSERT_THROW(ResourceObject::LockGuard again{ server }, DeadLockException);
-}
-
-TEST_F(ResourceObjectTest, AccessingAttributesWithMethodsWithinLockDoesntCauseDeadLock)
-{
-    constexpr int value{ 100 };
-
     {
-        ResourceObject::LockGuard lock{ server };
+        ResourceObject::LockGuard guard{ server };
         server->setAttribute(KEY, value);
     }
 
@@ -153,31 +153,86 @@ TEST_F(ResourceObjectTest, AccessingAttributesWithMethodsWithinLockDoesntCauseDe
 
 class AutoNotifyTest: public ResourceObjectTest
 {
-
-public:
-    using NotifyAllObservers = OCStackResult (*)(OCResourceHandle);
-    int value{ 100 };
-
 protected:
     void initMocks() override
     {
-        mocks.OnCallFuncOverload(
-                static_cast< NotifyAllObservers >
-                            (OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
+        mocks.OnCallFuncOverload(static_cast< NotifyAllObservers >(
+                OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
+    }
+
+    virtual void initResourceObject() {
+        // intended blank
     }
 };
 
-TEST_F(AutoNotifyTest, DefalutAutoNotifyPolicyIsAlways)
+TEST_F(AutoNotifyTest, DefalutAutoNotifyPolicyIsUpdated)
 {
-    ASSERT_EQ(ResourceObject::AutoNotifyPolicy::ALWAYS, server->getAutoNotifyPolicy());
+    ASSERT_EQ(ResourceObject::AutoNotifyPolicy::UPDATED, server->getAutoNotifyPolicy());
 }
 
-TEST_F(AutoNotifyTest, SetAutoNotifyPolicyBySetter)
+TEST_F(AutoNotifyTest, AutoNotifyPolicyCanBeSet)
 {
     server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::NEVER);
 
-    ASSERT_EQ(ResourceObject::AutoNotifyPolicy::NEVER,server->getAutoNotifyPolicy());
+    ASSERT_EQ(ResourceObject::AutoNotifyPolicy::NEVER, server->getAutoNotifyPolicy());
 }
+
+TEST_F(AutoNotifyTest, WithUpdatedPolicy_NeverBeNotifiedIfAttributeIsNotChanged)
+{
+    server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::UPDATED);
+    server->setAttribute(KEY, value);
+
+    mocks.NeverCallFuncOverload(static_cast< NotifyAllObservers >(
+            OC::OCPlatform::notifyAllObservers));
+
+    server->setAttribute(KEY, value);
+}
+
+TEST_F(AutoNotifyTest, WithUpdatedPolicy_WillBeNotifiedIfAttributeIsChanged)
+{
+    server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::UPDATED);
+    server->setAttribute(KEY, value);
+
+    mocks.ExpectCallFuncOverload(static_cast< NotifyAllObservers >(
+            OC::OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
+
+    server->setAttribute(KEY, value + 1);
+}
+
+TEST_F(AutoNotifyTest, WithUpdatedPolicy_WillBeNotifiedIfValueIsAdded)
+{
+    constexpr char newKey[]{ "newKey" };
+    server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::UPDATED);
+
+    mocks.ExpectCallFuncOverload(static_cast< NotifyAllObservers >(
+            OC::OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
+
+    server->setAttribute(newKey, value);
+}
+
+TEST_F(AutoNotifyTest, WithNeverPolicy_NeverBeNotifiedEvenIfAttributeIsChanged)
+{
+    server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::NEVER);
+
+    mocks.NeverCallFuncOverload(static_cast< NotifyAllObservers >(
+            OC::OCPlatform::notifyAllObservers));
+
+    ResourceObject::LockGuard lock{ server };
+    server->setAttribute(KEY, value);
+}
+
+TEST_F(AutoNotifyTest, WithAlwaysPolicy_WillBeNotifiedEvenIfAttributeIsNotChanged)
+{
+    server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::ALWAYS);
+    server->setAttribute(KEY, value);
+
+    mocks.ExpectCallFuncOverload(static_cast< NotifyAllObservers >(
+            OC::OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
+
+    server->setAttribute(KEY, value);
+}
+
+
 
 TEST_F(AutoNotifyTest, WorkingWithNeverPolicyWhenAttributesNoChangeByGetAttributes)
 {
@@ -332,6 +387,52 @@ TEST_F(AutoNotifyTest, WorkingWithUpdatedPolicyWhenAttributesChangeBySetAttribut
 }
 
 
+class AutoNotifyWithGuardTest: public AutoNotifyTest
+{
+};
+
+TEST_F(AutoNotifyWithGuardTest, GuardFollowsServerPolicyByDefault)
+{
+    server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::UPDATED);
+
+    mocks.ExpectCallFuncOverload(static_cast< NotifyAllObservers >(
+            OC::OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
+
+    ResourceObject::LockGuard guard{ server };
+    server->setAttribute(KEY, value);
+}
+
+TEST_F(AutoNotifyWithGuardTest, GuardCanOverridePolicy)
+{
+    server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::ALWAYS);
+
+    mocks.NeverCallFuncOverload(static_cast< NotifyAllObservers >(
+            OC::OCPlatform::notifyAllObservers));
+
+    ResourceObject::LockGuard guard{ server, ResourceObject::AutoNotifyPolicy::NEVER };
+    server->getAttributes()[KEY] = value;
+}
+
+TEST_F(AutoNotifyWithGuardTest, GuardInvokesNotifyWhenDestroyed)
+{
+    server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::NEVER);
+
+    mocks.ExpectCallFuncOverload(static_cast< NotifyAllObservers >(
+            OC::OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
+
+    {
+        ResourceObject::LockGuard guard{ server, ResourceObject::AutoNotifyPolicy::ALWAYS };
+        server->setAttribute(KEY, value);
+    }
+
+    mocks.NeverCallFuncOverload(static_cast< NotifyAllObservers >(
+               OC::OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
+
+    server->setAttribute(KEY, value);
+}
+
+
+
 class ResourceObjectHandlingRequestTest: public ResourceObjectTest
 {
 public:
@@ -374,7 +475,7 @@ protected:
     void initMocks() override
     {
         mocks.OnCallFuncOverload(
-            static_cast<registerResourceSig>(OCPlatform::registerResource)).Do(
+            static_cast<registerResource>(OCPlatform::registerResource)).Do(
                     bind(&ResourceObjectHandlingRequestTest::registerResourceFake,
                             this, _1, _2, _3, _4, _5, _6));
         mocks.OnCallFunc(OCPlatform::unregisterResource).Return(OC_STACK_OK);
@@ -462,7 +563,6 @@ TEST_F(ResourceObjectHandlingRequestTest, SendSetResponseWithCustomAttrsAndResul
 class AutoNotifySetHandlingRequestTest: public ResourceObjectHandlingRequestTest
 {
 public:
-    using NotifyAllObservers = OCStackResult (*)(OCResourceHandle);
     using SendResponse = OCStackResult (*)(std::shared_ptr<OCResourceResponse>);
 
 public:

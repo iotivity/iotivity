@@ -197,7 +197,7 @@ namespace OIC
                 m_resourceAttributes{ std::move(attrs) },
                 m_getRequestHandler{ },
                 m_setRequestHandler{ },
-                m_autoNotifyPolicy { AutoNotifyPolicy::ALWAYS },
+                m_autoNotifyPolicy { AutoNotifyPolicy::UPDATED },
                 m_setRequestHandlerPolicy { SetRequestHandlerPolicy::DEFAULT },
                 m_keyAttributesUpdatedHandlers{ },
                 m_lockOwner{ },
@@ -438,7 +438,7 @@ namespace OIC
                 return handleRequestGet(request);
             }
 
-            if (request->getRequestType() == "PUT" || request->getRequestType() == "POST")
+            if (request->getRequestType() == "PUT")
             {
                 return handleRequestSet(request);
             }
@@ -505,7 +505,7 @@ namespace OIC
 
         ResourceObject::LockGuard::LockGuard(
                 const ResourceObject& serverResource) :
-                LockGuard{ serverResource, serverResource.getAutoNotifyPolicy()}
+                LockGuard{ serverResource, serverResource.getAutoNotifyPolicy() }
         {
         }
 
@@ -516,51 +516,55 @@ namespace OIC
         }
 
         ResourceObject::LockGuard::LockGuard(
-                const ResourceObject& serverResource, AutoNotifyPolicy autoNotifyPolicy) :
-                        m_resourceObject(serverResource),
-                        m_autoNotifyPolicy(autoNotifyPolicy)
+                const ResourceObject& resourceObject, AutoNotifyPolicy autoNotifyPolicy) :
+                        m_resourceObject(resourceObject),
+                        m_autoNotifyPolicy { autoNotifyPolicy },
+                        m_isOwningLock{ false }
         {
-            if (m_resourceObject.m_lockOwner == std::this_thread::get_id())
+            if (resourceObject.m_lockOwner != std::this_thread::get_id())
             {
-                throw DeadLockException{ "Can't lock recursively in same thread." };
+                m_resourceObject.m_mutex.lock();
+                m_resourceObject.m_lockOwner = std::this_thread::get_id();
+                m_isOwningLock = true;
             }
-
-            m_resourceObject.m_mutex.lock();
-            m_resourceObject.m_lockOwner = std::this_thread::get_id();
-
             m_autoNotifyFunc = ::createAutoNotifyInvoker(&ResourceObject::autoNotify,
                     m_resourceObject, m_resourceObject.m_resourceAttributes, m_autoNotifyPolicy);
         }
 
         ResourceObject::LockGuard::~LockGuard()
         {
-            if(m_autoNotifyFunc)    m_autoNotifyFunc();
-            m_resourceObject.m_lockOwner = std::thread::id();
-            m_resourceObject.m_mutex.unlock();
+            if (m_autoNotifyFunc) m_autoNotifyFunc();
+
+            if (m_isOwningLock)
+            {
+                m_resourceObject.m_lockOwner = std::thread::id{ };
+                m_resourceObject.m_mutex.unlock();
+            }
         }
 
         ResourceObject::WeakGuard::WeakGuard(
-                const ResourceObject& serverResource) :
-                m_hasLocked{ false }, m_serverResource(serverResource)
+                const ResourceObject& resourceObject) :
+                m_isOwningLock{ false },
+                m_resourceObject(resourceObject)
         {
-            if (m_serverResource.m_lockOwner != std::this_thread::get_id())
+            if (resourceObject.m_lockOwner != std::this_thread::get_id())
             {
-                m_serverResource.m_mutex.lock();
-                m_hasLocked = true;
+                m_resourceObject.m_mutex.lock();
+                m_isOwningLock = true;
             }
         }
 
         ResourceObject::WeakGuard::~WeakGuard()
         {
-            if (m_hasLocked)
+            if (m_isOwningLock)
             {
-                m_serverResource.m_mutex.unlock();
+                m_resourceObject.m_mutex.unlock();
             }
         }
 
         bool ResourceObject::WeakGuard::hasLocked() const
         {
-            return m_hasLocked;
+            return m_isOwningLock;
         }
     }
 }
