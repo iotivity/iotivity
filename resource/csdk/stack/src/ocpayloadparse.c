@@ -279,30 +279,27 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload** outPayload, CborValue* 
             // Policy
             {
                 CborValue policyMap;
-                 err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_POLICY, &policyMap);
+                err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_POLICY, &policyMap);
 
                 // Bitmap
                 CborValue val;
-                err= err | cbor_value_map_find_value(&policyMap, OC_RSRVD_BITMAP, &val);
+                err = err || cbor_value_map_find_value(&policyMap, OC_RSRVD_BITMAP, &val);
                 uint64_t temp = 0;
-                 err = err || cbor_value_get_uint64(&val, &temp);
+                err = err || cbor_value_get_uint64(&val, &temp);
                 resource->bitmap = (uint8_t)temp;
                 // Secure Flag
-                err= err | cbor_value_map_find_value(&policyMap, OC_RSRVD_SECURE, &val);
+                err = err || cbor_value_map_find_value(&policyMap, OC_RSRVD_SECURE, &val);
                 if(cbor_value_is_valid(&val))
                 {
-                     err = err || cbor_value_get_boolean(&val, &(resource->secure));
+                    err = err || cbor_value_get_boolean(&val, &(resource->secure));
                     // Port
-                     err = err || cbor_value_map_find_value(&policyMap, OC_RSRVD_SECURE, &val);
-                    if(cbor_value_is_valid(&val) && cbor_value_is_map(&val))
+                    CborValue port;
+                    err = err || cbor_value_map_find_value(&policyMap, OC_RSRVD_HOSTING_PORT,
+                                    &port);
+                    if(cbor_value_is_valid(&port))
                     {
-                        CborValue port;
-                        cbor_value_map_find_value(&val, OC_RSRVD_HOSTING_PORT, &port);
-                        if(cbor_value_is_valid(&port))
-                        {
-                            err = err || cbor_value_get_uint64(&val, &temp);
-                            resource->port = (uint16_t)temp;
-                        }
+                        err = err || cbor_value_get_uint64(&port, &temp);
+                        resource->port = (uint16_t)temp;
                     }
                 }
             }
