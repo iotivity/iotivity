@@ -74,6 +74,8 @@ extern const char * OIC_JSON_CREDTYPE_NAME;
 extern const char * OIC_JSON_PUBLICDATA_NAME;
 extern const char * OIC_JSON_PRIVATEDATA_NAME;
 extern const char * OIC_JSON_PERIOD_NAME;
+extern const char * OIC_JSON_PERIODS_NAME;
+extern const char * OIC_JSON_RECURRENCES_NAME;
 extern const char * OIC_JSON_ISOP_NAME;
 extern const char * OIC_JSON_COMMIT_HASH_NAME;
 extern const char * OIC_JSON_DEVICE_ID_NAME;

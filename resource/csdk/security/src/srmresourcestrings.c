@@ -79,9 +79,11 @@ const char * OIC_JSON_ROLEIDS_NAME = "roleid";
 const char * OIC_JSON_CREDTYPE_NAME = "credtyp";
 const char * OIC_JSON_PUBLICDATA_NAME = "pbdata";
 const char * OIC_JSON_PRIVATEDATA_NAME = "pvdata";
-const char * OIC_JSON_PERIOD_NAME = "period";
 const char * OIC_JSON_SERVICE_DEVICE_ID = "svcdid";
 const char * OIC_JSON_SERVICE_TYPE = "svct";
+const char * OIC_JSON_PERIOD_NAME = "prd";
+const char * OIC_JSON_PERIODS_NAME = "prds";
+const char * OIC_JSON_RECURRENCES_NAME = "recurs";
 
 OicUuid_t WILDCARD_SUBJECT_ID = {"*"};
 size_t WILDCARD_SUBJECT_ID_LEN = 1;

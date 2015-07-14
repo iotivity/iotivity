@@ -58,7 +58,9 @@ extern "C" {
 #define SUBJECT_NOT_FOUND_DEF         (1 << 3)
 #define RESOURCE_NOT_FOUND_DEF        (1 << 4)
 #define POLICY_ENGINE_ERROR_DEF       (1 << 5)
+#define INVALID_PERIOD_DEF            (1 << 6)
 #define REASON_MASK_DEF               (INSUFFICIENT_PERMISSION_DEF | \
+                                       INVALID_PERIOD_DEF | \
                                        SUBJECT_NOT_FOUND_DEF | \
                                        RESOURCE_NOT_FOUND_DEF | \
                                        POLICY_ENGINE_ERROR_DEF)
@@ -102,6 +104,8 @@ typedef enum
 {
     ACCESS_GRANTED = ACCESS_GRANTED_DEF,
     ACCESS_DENIED = ACCESS_DENIED_DEF,
+    ACCESS_DENIED_INVALID_PERIOD = ACCESS_DENIED_DEF
+        | INVALID_PERIOD_DEF,
     ACCESS_DENIED_INSUFFICIENT_PERMISSION = ACCESS_DENIED_DEF
         | INSUFFICIENT_PERMISSION_DEF,
     ACCESS_DENIED_SUBJECT_NOT_FOUND = ACCESS_DENIED_DEF
@@ -286,9 +290,9 @@ struct OicSecAcl
     size_t              resourcesLen;   // the number of elts in Resources
     char                **resources;    // 1:R:M:Y:String
     uint16_t            permission;     // 2:R:S:Y:UINT16
-    size_t              periodsLen;     // the number of elts in Periods
-    char                **periods;      // 3:R:M*:N:String (<--M*; see Spec)
-    char                *recurrences;   // 5:R:M:N:String
+    size_t              prdRecrLen;     // the number of elts in Periods
+    char                **periods;       // 3:R:M*:N:String (<--M*; see Spec)
+    char                **recurrences;   // 5:R:M:N:String
     size_t              ownersLen;      // the number of elts in Owners
     OicUuid_t           *owners;        // 8:R:M:Y:oic.uuid
     // NOTE: we are using UUID for Owners instead of Svc type for mid-April

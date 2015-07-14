@@ -23,6 +23,7 @@
 #include "ocstack.h"
 #include "logger.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 #include "cJSON.h"
 #include "base64.h"
 #include "resourcemanager.h"
@@ -57,6 +58,15 @@ void DeleteACLList(OicSecAcl_t* acl)
                 OICFree(aclTmp1->resources[i]);
             }
             OICFree(aclTmp1->resources);
+
+            //Clean Period & Recurrence
+            for(i = 0; i < aclTmp1->prdRecrLen; i++)
+            {
+                OICFree(aclTmp1->periods[i]);
+                OICFree(aclTmp1->recurrences[i]);
+            }
+            OICFree(aclTmp1->periods);
+            OICFree(aclTmp1->recurrences);
 
             // Clean Owners
             OICFree(aclTmp1->owners);
@@ -122,6 +132,34 @@ char * BinToAclJSON(const OicSecAcl_t * acl)
 
             // Permissions -- Mandatory
             cJSON_AddNumberToObject (jsonAcl, OIC_JSON_PERMISSION_NAME, acl->permission);
+
+            //Period & Recurrence -- Not Mandatory
+            if(0 != acl->prdRecrLen)
+            {
+                cJSON *jsonPeriodArray = NULL;
+                cJSON_AddItemToObject (jsonAcl, OIC_JSON_PERIODS_NAME,
+                        jsonPeriodArray = cJSON_CreateArray());
+                VERIFY_NON_NULL(TAG, jsonPeriodArray, ERROR);
+                for (size_t i = 0; i < acl->prdRecrLen; i++)
+                {
+                    cJSON_AddItemToArray (jsonPeriodArray,
+                            cJSON_CreateString(acl->periods[i]));
+                }
+            }
+
+            //Recurrence -- Not Mandatory
+            if(0 != acl->prdRecrLen && acl->recurrences)
+            {
+                cJSON *jsonRecurArray  = NULL;
+                cJSON_AddItemToObject (jsonAcl, OIC_JSON_RECURRENCES_NAME,
+                        jsonRecurArray = cJSON_CreateArray());
+                VERIFY_NON_NULL(TAG, jsonRecurArray, ERROR);
+                for (size_t i = 0; i < acl->prdRecrLen; i++)
+                {
+                    cJSON_AddItemToArray (jsonRecurArray,
+                            cJSON_CreateString(acl->recurrences[i]));
+                }
+            }
 
             // Owners -- Mandatory
             cJSON *jsonOwnrArray = NULL;
@@ -229,14 +267,70 @@ OicSecAcl_t * JSONToAclBin(const char * jsonStr)
                 jsonObjLen = strlen(jsonRsrc->valuestring) + 1;
                 acl->resources[idxx] = (char*)OICMalloc(jsonObjLen);
                 VERIFY_NON_NULL(TAG, (acl->resources[idxx]), ERROR);
-                strncpy(acl->resources[idxx], jsonRsrc->valuestring, jsonObjLen);
+                OICStrcpy(acl->resources[idxx], jsonObjLen, jsonRsrc->valuestring);
             } while ( ++idxx < acl->resourcesLen);
 
             // Permissions -- Mandatory
-            jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_PERMISSION_NAME);
+            jsonObj = cJSON_GetObjectItem(jsonAcl,
+                                OIC_JSON_PERMISSION_NAME);
             VERIFY_NON_NULL(TAG, jsonObj, ERROR);
             VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
             acl->permission = jsonObj->valueint;
+
+            //Period -- Not Mandatory
+            cJSON *jsonPeriodObj = cJSON_GetObjectItem(jsonAcl,
+                    OIC_JSON_PERIODS_NAME);
+            if(jsonPeriodObj)
+            {
+                VERIFY_SUCCESS(TAG, cJSON_Array == jsonPeriodObj->type,
+                               ERROR);
+                acl->prdRecrLen = cJSON_GetArraySize(jsonPeriodObj);
+                if(acl->prdRecrLen > 0)
+                {
+                    acl->periods = (char**)OICCalloc(acl->prdRecrLen,
+                                    sizeof(char*));
+                    VERIFY_NON_NULL(TAG, acl->periods, ERROR);
+
+                    cJSON *jsonPeriod = NULL;
+                    for(size_t i = 0; i < acl->prdRecrLen; i++)
+                    {
+                        jsonPeriod = cJSON_GetArrayItem(jsonPeriodObj, i);
+                        VERIFY_NON_NULL(TAG, jsonPeriod, ERROR);
+
+                        jsonObjLen = strlen(jsonPeriod->valuestring) + 1;
+                        acl->periods[i] = (char*)OICMalloc(jsonObjLen);
+                        VERIFY_NON_NULL(TAG, acl->periods[i], ERROR);
+                        OICStrcpy(acl->periods[i], jsonObjLen,
+                                  jsonPeriod->valuestring);
+                    }
+                }
+            }
+
+            //Recurrence -- Not mandatory
+            cJSON *jsonRecurObj = cJSON_GetObjectItem(jsonAcl,
+                                        OIC_JSON_RECURRENCES_NAME);
+            if(jsonRecurObj)
+            {
+                VERIFY_SUCCESS(TAG, cJSON_Array == jsonRecurObj->type,
+                               ERROR);
+                if(acl->prdRecrLen > 0)
+                {
+                    acl->recurrences = (char**)OICCalloc(acl->prdRecrLen,
+                                             sizeof(char*));
+                    VERIFY_NON_NULL(TAG, acl->recurrences, ERROR);
+
+                    cJSON *jsonRecur = NULL;
+                    for(size_t i = 0; i < acl->prdRecrLen; i++)
+                    {
+                        jsonRecur = cJSON_GetArrayItem(jsonRecurObj, i);
+                        jsonObjLen = strlen(jsonRecur->valuestring) + 1;
+                        acl->recurrences[i] = (char*)OICMalloc(jsonObjLen);
+                        VERIFY_NON_NULL(TAG, acl->recurrences[i], ERROR);
+                        OICStrcpy(acl->recurrences[i], jsonObjLen,
+                                  jsonRecur->valuestring);
+                    }
+                }
+            }
 
             // Owners -- Mandatory
             jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_OWNERS_NAME);
@@ -450,11 +544,11 @@ OCStackResult  GetDefaultACL(OicSecAcl_t** defaultAcl)
         size_t len = strlen(rsrcs[i]) + 1;
         acl->resources[i] = (char*)OICMalloc(len * sizeof(char));
         VERIFY_NON_NULL(TAG, (acl->resources[i]), ERROR);
-        strncpy(acl->resources[i], rsrcs[i], len);
+        OICStrcpy(acl->resources[i], len, rsrcs[i]);
     }
 
     acl->permission = PERMISSION_READ;
-    acl->periodsLen = 0;
+    acl->prdRecrLen = 0;
     acl->periods = NULL;
     acl->recurrences = NULL;
 
