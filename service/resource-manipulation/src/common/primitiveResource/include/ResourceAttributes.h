@@ -262,6 +262,7 @@ namespace OIC
             Value& at(const std::string&);
             const Value& at(const std::string&) const;
 
+            void clear();
             bool erase(const std::string&);
 
             bool contains(const std::string&) const;

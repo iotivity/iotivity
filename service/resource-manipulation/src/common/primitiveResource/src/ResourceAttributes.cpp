@@ -511,6 +511,11 @@ namespace OIC
             }
         }
 
+        void ResourceAttributes::clear()
+        {
+            return m_values.clear();
+        }
+
         bool ResourceAttributes::erase(const std::string& key)
         {
             return m_values.erase(key) == 1U;
