@@ -34,8 +34,6 @@ public:
 
 public:
     ExpiryTimer();
-
-private:
     ~ExpiryTimer();
 
 public:

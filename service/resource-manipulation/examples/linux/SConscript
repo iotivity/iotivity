@@ -36,9 +36,9 @@ ResourceServer_env = lib_env.Clone()
 
 ResourceClient_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 ResourceClient_env.AppendUnique(LIBS = ['ResourceClient','ResourceCache', 'ResourceBroker', 'ExpiryTimer','service_common','oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap', 'pthread'])
-ResourceClient_env.AppendUnique(CPPPATH = ['../../modules/resourceBroker/include'])
-ResourceClient_env.AppendUnique(CPPPATH = ['../../modules/resourceCache/include'])
-ResourceClient_env.AppendUnique(CPPPATH = ['../../modules/common/primitiveResource/include'])
+ResourceClient_env.AppendUnique(CPPPATH = ['../../src/resourceBroker/include'])
+ResourceClient_env.AppendUnique(CPPPATH = ['../../src/resourceCache/include'])
+ResourceClient_env.AppendUnique(CPPPATH = ['../../src/common/primitiveResource/include'])
 ResourceClient_env.AppendUnique(CPPPATH = ['../../include'])
 
 
@@ -48,8 +48,8 @@ ResourceClient_env.AppendUnique(CPPPATH = ['../../include'])
 
 ResourceServer_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 ResourceServer_env.AppendUnique(LIBS = ['libserver_builder', 'libservice_common','oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap', 'pthread'])
-ResourceServer_env.AppendUnique(CPPPATH = ['../../modules/common/primitiveResource/include'])
-ResourceServer_env.AppendUnique(CPPPATH = ['../../modules/serverBuilder/include'])
+ResourceServer_env.AppendUnique(CPPPATH = ['../../src/common/primitiveResource/include'])
+ResourceServer_env.AppendUnique(CPPPATH = ['../../src/serverBuilder/include'])
 
 if env.get('SECURED') == '1':
     ResourceClient_env.AppendUnique(LIBS = ['tinydtls'])

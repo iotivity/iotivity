@@ -25,11 +25,11 @@ import platform
 
 Import('env')
 
-SConscript('modules/common/SConscript')
-SConscript('modules/resourceBroker/SConscript')
-SConscript('modules/resourceCache/SConscript')
-SConscript('modules/serverBuilder/SConscript')
-SConscript('modules/resourceContainer/SConscript')
+SConscript('src/common/SConscript')
+SConscript('src/resourceBroker/SConscript')
+SConscript('src/resourceCache/SConscript')
+SConscript('src/serverBuilder/SConscript')
+SConscript('src/resourceContainer/SConscript')
 SConscript('sdk/SConscript')
 
 ######################################################################
@@ -55,10 +55,10 @@ target_os = env.get('TARGET_OS')
 # Build flags
 ######################################################################
 resourceClient_env.AppendUnique(CPPPATH = ['include'])
-resourceClient_env.AppendUnique(CPPPATH = ['modules/common/primitiveResource/include'])
-resourceClient_env.AppendUnique(CPPPATH = ['modules/common/expiryTimer/include'])
-resourceClient_env.AppendUnique(CPPPATH = ['modules/resourceBroker/include'])
-resourceClient_env.AppendUnique(CPPPATH = ['modules/resourceCache/include'])
+resourceClient_env.AppendUnique(CPPPATH = ['src/common/primitiveResource/include'])
+resourceClient_env.AppendUnique(CPPPATH = ['src/common/expiryTimer/include'])
+resourceClient_env.AppendUnique(CPPPATH = ['src/resourceBroker/include'])
+resourceClient_env.AppendUnique(CPPPATH = ['src/resourceCache/include'])
 
 
 resourceClient_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
