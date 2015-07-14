@@ -251,6 +251,7 @@ static void CASendThreadProcess(void *threadData)
     if (SEND_TYPE_UNICAST == type)
     {
 
+        OIC_LOG(DEBUG,TAG,"Unicast message");
         if (NULL != data->requestInfo)
         {
             OIC_LOG(DEBUG, TAG, "requestInfo is available..");
@@ -266,6 +267,7 @@ static void CASendThreadProcess(void *threadData)
         else
         {
             OIC_LOG(DEBUG, TAG, "request info, response info is empty");
+            return;
         }
 
         // interface controller function call.
@@ -292,30 +294,46 @@ static void CASendThreadProcess(void *threadData)
 
             coap_delete_pdu(pdu);
         }
+        else
+        {
+            OIC_LOG_V(ERROR,TAG,"Failed to generate unicast PDU");
+            return;
+        }
     }
     else if (SEND_TYPE_MULTICAST == type)
     {
-        OIC_LOG(DEBUG, TAG, "both requestInfo & responseInfo is not available");
-
-        CAInfo_t *info = &data->requestInfo->info;
-
-        info->options = data->options;
-        info->numOptions = data->numOptions;
-
-        pdu = CAGeneratePDU(CA_GET, info);
-        if (NULL != pdu)
+        OIC_LOG(DEBUG,TAG,"Multicast message");
+        if (NULL != data->requestInfo)
         {
-            CALogPDUInfo(pdu);
+            OIC_LOG(DEBUG, TAG, "requestInfo is available..");
+            CAInfo_t *info = &data->requestInfo->info;
 
-            res = CASendMulticastData(data->remoteEndpoint, pdu->hdr, pdu->length);
-            if (CA_STATUS_OK != res)
+            info->options = data->options;
+            info->numOptions = data->numOptions;
+
+            pdu = CAGeneratePDU(CA_GET, info);
+            if (NULL != pdu)
             {
-                OIC_LOG_V(ERROR, TAG, "send failed:%d", res);
-                coap_delete_pdu(pdu);
-                return;
-            }
+                CALogPDUInfo(pdu);
 
-            coap_delete_pdu(pdu);
+                res = CASendMulticastData(data->remoteEndpoint, pdu->hdr, pdu->length);
+                if (CA_STATUS_OK != res)
+                {
+                    OIC_LOG_V(ERROR, TAG, "send failed:%d", res);
+                    coap_delete_pdu(pdu);
+                    return;
+                }
+
+                coap_delete_pdu(pdu);
+            }
+            else
+            {
+                OIC_LOG_V(ERROR,TAG,"Failed to generate multicast PDU");
+            }
+        }
+        else
+        {
+            OIC_LOG_V(ERROR, TAG, "request info is empty");
         }
     }
 
