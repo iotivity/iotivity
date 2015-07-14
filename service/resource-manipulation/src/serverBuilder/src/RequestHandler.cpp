@@ -59,16 +59,18 @@ namespace
         return response;
     }
 
-    AttrKeyValuePairs applyAcceptMethod(ResourceObject& resource, const ResourceAttributes& requestAttrs)
+    AttrKeyValuePairs applyAcceptMethod(ResourceObject& resource,
+            const ResourceAttributes& requestAttrs)
     {
         ResourceObject::LockGuard lock(resource, ResourceObject::AutoNotifyPolicy::NEVER);
 
         return replaceAttributes(resource.getAttributes(), requestAttrs);
     }
 
-    AttrKeyValuePairs applyDefaultMethod(ResourceObject& resource, const ResourceAttributes& requestAttrs)
+    AttrKeyValuePairs applyDefaultMethod(ResourceObject& resource,
+            const ResourceAttributes& requestAttrs)
     {
-        ResourceObject::LockGuard lock(resource,ResourceObject::AutoNotifyPolicy::NEVER);
+        ResourceObject::LockGuard lock(resource, ResourceObject::AutoNotifyPolicy::NEVER);
 
         if (resource.getSetRequestHandlerPolicy()
             != ResourceObject::SetRequestHandlerPolicy::ACCEPTANCE
@@ -85,8 +87,8 @@ namespace
         return AttrKeyValuePairs();
     }
 
-    std::function<AttrKeyValuePairs(ResourceObject&, const ResourceAttributes&)> getApplyAcceptanceFunc(
-            PrimitiveSetResponse::AcceptanceMethod method)
+    auto getApplyAcceptanceFunc(PrimitiveSetResponse::AcceptanceMethod method) ->
+            std::function<AttrKeyValuePairs(ResourceObject&, const ResourceAttributes&)>
     {
         switch (method)
         {

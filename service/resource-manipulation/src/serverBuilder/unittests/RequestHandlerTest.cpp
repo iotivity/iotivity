@@ -55,6 +55,7 @@ protected:
 
         server = ResourceObject::Builder("a/test", "resourceType", "").build();
 
+        server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::NEVER);
         server->setAttribute(EXISTING, ORIGIN_VALUE);
     }
 };
