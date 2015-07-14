@@ -43,8 +43,7 @@ typedef enum {
  */
 typedef enum {
     CT_ADAPTER_DEFAULT = 0,
-    CT_IPV4,
-    CT_IPV6,
+    CT_IP,
     MAX_CT
 } CLIENT_CONNECTIVITY_TYPE;
 

@@ -256,7 +256,7 @@ OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr)
     if(jsonObj)
     {
         VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
-        if(jsonObj && cJSON_String == jsonObj->type)
+        if(cJSON_String == jsonObj->type)
         {
             //Check for empty string, in case DeviceId field has not been set yet
             if (jsonObj->valuestring[0])

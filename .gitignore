@@ -69,6 +69,7 @@ tags
 
 # Ignore dependencies folder, which should be generated
 dependencies/
+dep/
 
 #ignore Klocwork stuff
 .kwlp/

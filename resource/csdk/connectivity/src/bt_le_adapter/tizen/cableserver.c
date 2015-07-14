@@ -509,7 +509,7 @@ CAResult_t CAAddNewBleServiceInGattServer(const char *serviceUUID)
 {
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
 
-    VERIFY_NON_NULL(serviceUUID, NULL, "Param serviceUUID is NULL");
+    VERIFY_NON_NULL(serviceUUID, TZ_BLE_SERVER_TAG, "Param serviceUUID is NULL");
 
     OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "service uuid %s", serviceUUID);
 
@@ -547,7 +547,7 @@ CAResult_t CARemoveBleServiceFromGattServer(const char *svcPath)
 {
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
 
-    VERIFY_NON_NULL(svcPath, NULL, "Param svcPath is NULL");
+    VERIFY_NON_NULL(svcPath, TZ_BLE_SERVER_TAG, "Param svcPath is NULL");
 
     int ret = bt_gatt_remove_service(svcPath);
 
@@ -623,7 +623,7 @@ CAResult_t CARegisterBleServicewithGattServer(const char *svcPath)
 {
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
 
-    VERIFY_NON_NULL(svcPath, NULL, "Param svcPath is NULL");
+    VERIFY_NON_NULL(svcPath, TZ_BLE_SERVER_TAG, "Param svcPath is NULL");
 
     OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "svcPath:%s", svcPath);
 
@@ -710,9 +710,9 @@ CAResult_t CAUpdateCharacteristicsToGattClient(const char* address, const char *
 {
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
 
-    VERIFY_NON_NULL(charValue, NULL, "Param charValue is NULL");
+    VERIFY_NON_NULL(charValue, TZ_BLE_SERVER_TAG, "Param charValue is NULL");
 
-    VERIFY_NON_NULL(address, NULL, "Param address is NULL");
+    VERIFY_NON_NULL(address, TZ_BLE_SERVER_TAG, "Param address is NULL");
 
     OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "Client's Unicast address for sending data [%s]", address);
 
@@ -759,7 +759,7 @@ CAResult_t CAUpdateCharacteristicsToAllGattClients(const char *charValue, uint32
 {
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
 
-    VERIFY_NON_NULL(charValue, NULL, "Param charValue is NULL");
+    VERIFY_NON_NULL(charValue, TZ_BLE_SERVER_TAG, "Param charValue is NULL");
 
     ca_mutex_lock(g_bleCharacteristicMutex);
 

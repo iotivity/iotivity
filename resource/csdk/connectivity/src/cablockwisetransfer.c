@@ -121,7 +121,7 @@ void CATerminateBlockWiseMutexVaraibles()
 
 CAResult_t CASendBlockWiseData(CAData_t *sendData)
 {
-    VERIFY_NON_NULL(sendData, TAG, "sendData");
+    VERIFY_NON_NULL(sendData, TAG, "CASendBlockWiseData");
 
     // check if message type is CA_MSG_RESET
     if (NULL != sendData->responseInfo)

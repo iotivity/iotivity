@@ -34,12 +34,12 @@ static int UNICAST_DISCOVERY = 0;
 static int TEST_CASE = 0;
 static int CONNECTIVITY = 0;
 
-static const char * UNICAST_DEVICE_DISCOVERY_QUERY = "coap://%s:6298/oic/d";
+static const char * UNICAST_DEVICE_DISCOVERY_QUERY = "coap://%s/oic/d";
 static const char * MULTICAST_DEVICE_DISCOVERY_QUERY = "/oic/d";
-static const char * UNICAST_PLATFORM_DISCOVERY_QUERY = "coap://%s:6298/oic/p";
+static const char * UNICAST_PLATFORM_DISCOVERY_QUERY = "coap://%s/oic/p";
 static const char * MULTICAST_PLATFORM_DISCOVERY_QUERY = "/oic/p";
 
-static const char * UNICAST_RESOURCE_DISCOVERY_QUERY = "coap://%s:6298/oic/res";
+static const char * UNICAST_RESOURCE_DISCOVERY_QUERY = "coap://%s/oic/res";
 static const char * MULTICAST_RESOURCE_DISCOVERY_QUERY = "/oic/res";
 //The following variable determines the interface protocol (IPv4, IPv6, etc)
 //to be used for sending unicast messages. Default set to IPv4.
@@ -48,7 +48,8 @@ static std::string putPayload = "{\"oic\":[{\"rep\":{\"power\":15,\"state\":true
 static std::string coapServerIP = "255.255.255.255";
 static std::string coapServerPort = "5683";
 static std::string coapServerResource = "/a/light";
-static const int IPV4_ADDR_SIZE = 16;
+// Size to hold IPV4_ADDRESS:PORT
+static const int IPV4_ADDR_SIZE = 24;
 //Use ipv4addr for both InitDiscovery and InitPlatformOrDeviceDiscovery
 char ipv4addr[IPV4_ADDR_SIZE];
 void StripNewLineChar(char* str);
@@ -78,11 +79,10 @@ void handleSigInt(int signum)
 
 static void PrintUsage()
 {
-    OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1..17> -c <0|1|2>");
+    OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1..17> -c <0|1>");
     OC_LOG(INFO, TAG, "-u <0|1> : Perform multicast/unicast discovery of resources");
-    OC_LOG(INFO, TAG, "-c 0 : Default IPv4 and IPv6 auto-selection");
-    OC_LOG(INFO, TAG, "-c 1 : IPv4 Connectivity Type");
-    OC_LOG(INFO, TAG, "-c 2 : IPv6 Connectivity Type (IPv6 not currently supported)");
+    OC_LOG(INFO, TAG, "-c 0 : Use Default connectivity(IP)");
+    OC_LOG(INFO, TAG, "-c 1 : IP Connectivity Type");
     OC_LOG(INFO, TAG, "-t 1  :  Discover Resources");
     OC_LOG(INFO, TAG, "-t 2  :  Discover Resources and Initiate Nonconfirmable Get Request");
     OC_LOG(INFO, TAG, "-t 3  :  Discover Resources and Initiate Nonconfirmable Get Request"
@@ -831,10 +831,21 @@ int main(int argc, char* argv[])
         OC_LOG(ERROR, TAG, "OCStack init error");
         return 0;
     }
+
+    if(CONNECTIVITY == CT_ADAPTER_DEFAULT || CONNECTIVITY == CT_IP)
+    {
+        OC_CONNTYPE = CT_ADAPTER_IP;
+    }
+    else
+    {
+        OC_LOG(INFO, TAG, "Default Connectivity type selected...");
+        PrintUsage();
+    }
+
     if (UNICAST_DISCOVERY)
     {
-        OC_LOG(INFO, TAG, "Enter IPv4 address of the Server hosting resource (Ex: 192.168.0.15)\n");
-        OC_LOG(INFO, TAG, "Ipv6 is currently not supported...");
+        OC_LOG(INFO, TAG, "Enter IP address with port number of the Server hosting resource");
+        OC_LOG(INFO, TAG, "as follows - eg: 192.168.0.15:45454 (IP:Port) \n");
 
         if (fgets(ipv4addr, IPV4_ADDR_SIZE, stdin))
         {
@@ -846,28 +857,6 @@ int main(int argc, char* argv[])
             OC_LOG(ERROR, TAG, "!! Bad input for IPV4 address. !!");
             return OC_STACK_INVALID_PARAM;
         }
-    }
-    if(CONNECTIVITY == CT_ADAPTER_DEFAULT)
-    {
-        OC_CONNTYPE = CT_DEFAULT;
-    }
-    else if(CONNECTIVITY == CT_IPV4)
-    {
-        OC_CONNTYPE = CT_IP_USE_V4;
-    }
-    else if(CONNECTIVITY == CT_IPV6)
-    {
-        OC_CONNTYPE = CT_IP_USE_V6;
-
-        //TODO: Remove when IPv6 is available.
-        OC_LOG(ERROR, TAG, "IPv6 is currently not supported !!!!");
-        PrintUsage();
-        return -1;
-    }
-    else
-    {
-        OC_LOG(INFO, TAG, "Default Connectivity type selected...");
-        PrintUsage();
     }
 
     if(UNICAST_DISCOVERY  == 0  && TEST_CASE == TEST_DISCOVER_DEV_REQ)

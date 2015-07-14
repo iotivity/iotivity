@@ -62,6 +62,7 @@ extern "C" {
 #define OC_RSRVD_TTL                    "ttl"
 #define OC_RSRVD_NONCE                  "non"
 #define OC_RSRVD_TRIGGER                "trg"
+#define OC_RSRVD_LINKS                  "links"
 
 #define OC_RSRVD_INTERFACE_DEFAULT      "oic.if.baseline"
 #define OC_RSRVD_INTERFACE_LL           "oic.if.ll"
@@ -110,7 +111,7 @@ extern "C" {
 // These provide backward compatibility - their use is deprecated
 #ifndef GOING_AWAY
 #define OC_MULTICAST_PREFIX                  "224.0.1.187:5683"
-#define OC_MULTICAST_IP                      "224.0.1.187:5683"
+#define OC_MULTICAST_IP                      "224.0.1.187"
 #define OC_MULTICAST_PORT                    5683
 #endif // GOING_AWAY
 

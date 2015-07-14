@@ -562,13 +562,19 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     #ifdef WITH_PRESENCE
     //TODO: Add other connectivity types to CAConnTypes[] when enabled
     CATransportAdapter_t CAConnTypes[] = {CA_ADAPTER_IP};
-    const char * connTypes[] = {"ip transport"};
+    const char * connTypes[] = {"IP"};
     int size = sizeof(CAConnTypes)/ sizeof(CATransportAdapter_t);
     CATransportAdapter_t adapter = responseEndpoint.adapter;
     CAResult_t caResult = CA_STATUS_FAILED;
     result = OC_STACK_OK;
 
-    //Sending response on all n/w interfaces
+    // Default adapter, try to send response out on all adapters.
+    if (adapter == CA_DEFAULT_ADAPTER)
+    {
+        adapter =
+            (CATransportAdapter_t)(CA_ADAPTER_IP | CA_ADAPTER_GATT_BTLE | CA_ADAPTER_RFCOMM_BTEDR);
+    }
+
     for(int i = 0; i < size; i++ )
     {
         responseEndpoint.adapter = (CATransportAdapter_t)(adapter & CAConnTypes[i]);

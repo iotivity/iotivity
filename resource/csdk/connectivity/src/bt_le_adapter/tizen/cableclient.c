@@ -1250,9 +1250,9 @@ CAResult_t CABleGattDiscoverCharacteristics(bt_gatt_attribute_h service,
 {
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "IN");
 
-    VERIFY_NON_NULL_RET(service, NULL, "service is NULL", CA_STATUS_FAILED);
+    VERIFY_NON_NULL_RET(service, TZ_BLE_CLIENT_TAG, "service is NULL", CA_STATUS_FAILED);
 
-    VERIFY_NON_NULL_RET(remoteAddress, NULL, "remoteAddress is NULL", CA_STATUS_FAILED);
+    VERIFY_NON_NULL_RET(remoteAddress, TZ_BLE_CLIENT_TAG, "remoteAddress is NULL", CA_STATUS_FAILED);
 
     char *addr = OICStrdup(remoteAddress);
     VERIFY_NON_NULL_RET(addr, TZ_BLE_CLIENT_TAG, "Malloc failed", CA_STATUS_FAILED);
@@ -1301,7 +1301,7 @@ CAResult_t CABleGattDiscoverDescriptor(bt_gatt_attribute_h service, const char *
 {
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "IN");
 
-    VERIFY_NON_NULL_RET(service, NULL, "service is NULL", CA_STATUS_FAILED);
+    VERIFY_NON_NULL_RET(service, TZ_BLE_CLIENT_TAG, "service is NULL", CA_STATUS_FAILED);
 
     int ret = bt_gatt_discover_characteristic_descriptor(service,
                   CABleGattDescriptorDiscoveredCb, NULL);
@@ -1393,7 +1393,7 @@ CAResult_t  CAUpdateCharacteristicsToGattServer(const char *remoteAddress,
 {
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "IN");
 
-    VERIFY_NON_NULL(data, NULL, "data is NULL");
+    VERIFY_NON_NULL(data, TZ_BLE_CLIENT_TAG, "data is NULL");
 
     if (0 >= dataLen)
     {
@@ -1408,7 +1408,7 @@ CAResult_t  CAUpdateCharacteristicsToGattServer(const char *remoteAddress,
     ca_mutex_lock(g_bleServiceListMutex);
     if ( LE_UNICAST == type)
     {
-        VERIFY_NON_NULL(remoteAddress, NULL, "remoteAddress is NULL");
+        VERIFY_NON_NULL(remoteAddress, TZ_BLE_CLIENT_TAG, "remoteAddress is NULL");
 
         ret = CAGetBLEServiceInfo(g_bLEServiceList, remoteAddress, &bleServiceInfo);
     }
@@ -1424,7 +1424,7 @@ CAResult_t  CAUpdateCharacteristicsToGattServer(const char *remoteAddress,
         return CA_STATUS_FAILED;
     }
 
-    VERIFY_NON_NULL(bleServiceInfo, NULL, "bleServiceInfo is NULL");
+    VERIFY_NON_NULL(bleServiceInfo, TZ_BLE_CLIENT_TAG, "bleServiceInfo is NULL");
 
     OIC_LOG_V(DEBUG, TZ_BLE_CLIENT_TAG, "Updating the data of length [%d] to [%s] ", dataLen,
               bleServiceInfo->bdAddress);
@@ -1455,7 +1455,7 @@ CAResult_t  CAUpdateCharacteristicsToAllGattServers(const char  *data,
 {
     OIC_LOG(DEBUG,  TZ_BLE_CLIENT_TAG, "IN");
 
-    VERIFY_NON_NULL(data, NULL, "data is NULL");
+    VERIFY_NON_NULL(data, TZ_BLE_CLIENT_TAG, "data is NULL");
 
     if (0 >= dataLen)
     {

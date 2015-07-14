@@ -1359,25 +1359,15 @@ CAResult_t get_network_type()
     }
 
     int number = buf[0] - '0';
-    number = (number < 0 || number > 3) ? 0 : 1 << number;
-
-    if (number == 1)
+    if (0 > number || 2 < number)
     {
-        g_selected_nw_type = CA_ADAPTER_IP;
-        return CA_STATUS_OK;
-    }
-    if (number == 2)
-    {
-        g_selected_nw_type = CA_ADAPTER_GATT_BTLE;
-        return CA_STATUS_OK;
-    }
-    if (number == 3)
-    {
-        g_selected_nw_type = CA_ADAPTER_RFCOMM_BTEDR;
-        return CA_STATUS_OK;
+        printf("\nInvalid Network type");
+        return CA_NOT_SUPPORTED;
     }
 
-    return CA_NOT_SUPPORTED;
+    g_selected_nw_type = 1 << number;
+
+    return CA_STATUS_OK;
 }
 
 CAResult_t get_input_data(char *buf, int32_t length)

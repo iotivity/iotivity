@@ -69,9 +69,9 @@ OicSecCred_t * getCredList()
     cred->next->roleIdsLen = 0;
 #endif
     cred->next->credType = 1;
-    cred->next->privateData.data = (char *)OICCalloc(1, strlen("My private Key21") + 1);
-    OICStrcpy(cred->next->privateData.data, sizeof(cred->next->privateData.data),
-            "My private Key21");
+    size_t data_size = strlen("My private Key21") + 1;
+    cred->next->privateData.data = (char *)OICCalloc(1, data_size);
+    OICStrcpy(cred->next->privateData.data, data_size,"My private Key21");
 #if 0
     cred->next->publicData.data = (char *)OICCalloc(1, strlen("My Public Key123") + 1);
     OICStrcpy(cred->next->publicData.data, sizeof(cred->next->publicData.data),"My Public Key123");
