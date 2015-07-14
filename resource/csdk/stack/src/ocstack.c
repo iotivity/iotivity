@@ -733,7 +733,7 @@ static int FormCanonicalPresenceUri(const CAEndpoint_t *endpoint, char *resource
 
     const char *format;
 
-    if (endpoint->flags & CA_IPV6)
+    if ((endpoint->flags & CA_IPV6) && !(endpoint->flags & CA_IPV4))
     {
         format = "coap://[%s]:%u%s";
     }
@@ -784,8 +784,18 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
     }
     else
     {
-        snprintf (presenceUri, MAX_URI_LENGTH, "coap://[%s]:%u%s", OC_MULTICAST_IP,
-                    OC_MULTICAST_PORT, OC_RSRVD_PRESENCE_URI);
+        CAEndpoint_t endpointMulticast;
+        endpointMulticast.flags = endpoint->flags;
+        OICStrcpy(endpointMulticast.addr, sizeof(endpointMulticast.addr), OC_MULTICAST_IP);
+        endpointMulticast.port = OC_MULTICAST_PORT;
+
+        uriLen = FormCanonicalPresenceUri(&endpointMulticast, OC_RSRVD_PRESENCE_URI, presenceUri);
+
+        if (uriLen < 0 || uriLen >= sizeof (presenceUri))
+        {
+            return OC_STACK_INVALID_URI;
+        }
+
         cbNode = GetClientCB(NULL, 0, NULL, presenceUri);
         if (cbNode)
         {
