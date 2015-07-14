@@ -850,7 +850,6 @@ typedef enum
     PAYLOAD_TYPE_DEVICE,
     PAYLOAD_TYPE_PLATFORM,
     PAYLOAD_TYPE_REPRESENTATION,
-    PAYLOAD_TYPE_SECURITY,
     PAYLOAD_TYPE_PRESENCE
 } OCPayloadType;
 
@@ -957,11 +956,6 @@ typedef struct
     OCPlatformInfo info;
 } OCPlatformPayload;
 
-typedef struct
-{
-    OCPayload base;
-    char* securityData;
-} OCSecurityPayload;
 #ifdef WITH_PRESENCE
 typedef struct
 {

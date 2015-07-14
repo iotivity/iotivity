@@ -43,8 +43,6 @@ static int64_t OCConvertPlatformPayload(OCPlatformPayload* payload, uint8_t* out
 static int64_t OCConvertRepPayload(OCRepPayload* payload, uint8_t* outPayload, size_t* size);
 static int64_t OCConvertPresencePayload(OCPresencePayload* payload, uint8_t* outPayload,
         size_t* size);
-static int64_t OCConvertSecurityPayload(OCSecurityPayload* payload, uint8_t* outPayload,
-        size_t* size);
 static int64_t OCConvertSingleRepPayload(CborEncoder* parent, const OCRepPayload* payload);
 static int64_t OCConvertArray(CborEncoder* parent, const OCRepPayloadValueArray* valArray);
 
@@ -141,8 +139,6 @@ static int64_t OCConvertPayloadHelper(OCPayload* payload, uint8_t* outPayload, s
             return OCConvertRepPayload((OCRepPayload*)payload, outPayload, size);
         case PAYLOAD_TYPE_PRESENCE:
             return OCConvertPresencePayload((OCPresencePayload*)payload, outPayload, size);
-        case PAYLOAD_TYPE_SECURITY:
-            return OCConvertSecurityPayload((OCSecurityPayload*)payload, outPayload, size);
         default:
             OC_LOG_V(INFO,TAG, "ConvertPayload default %d", payload->type);
             return OC_STACK_NOTIMPL;
@@ -166,35 +162,6 @@ static int64_t checkError(int64_t err, CborEncoder* encoder, uint8_t* outPayload
         *size = encoder->ptr - outPayload;
         return 0;
     }
-}
-static int64_t OCConvertSecurityPayload(OCSecurityPayload* payload, uint8_t* outPayload,
-        size_t* size)
-{
-    CborEncoder encoder;
-    int64_t err = 0;
-
-    cbor_encoder_init(&encoder, outPayload, *size, 0);
-
-    CborEncoder rootArray;
-    err = err | cbor_encoder_create_array(&encoder, &rootArray, 2);
-    err = err | cbor_encode_uint(&rootArray, PAYLOAD_TYPE_SECURITY);
-
-    CborEncoder map;
-
-    err = err | cbor_encoder_create_map(&rootArray, &map, CborIndefiniteLength);
-
-    if(payload->securityData)
-    {
-        err = err | AddTextStringToMap(&map, OC_RSRVD_REPRESENTATION,
-                sizeof(OC_RSRVD_REPRESENTATION) - 1,
-                payload->securityData);
-    }
-
-    err = err | cbor_encoder_close_container(&rootArray, &map);
-
-    err = err | cbor_encoder_close_container(&encoder, &rootArray);
-    return checkError(err, &encoder, outPayload, size);
-
 }
 
 static int64_t OCConvertDiscoveryPayload(OCDiscoveryPayload* payload, uint8_t* outPayload,

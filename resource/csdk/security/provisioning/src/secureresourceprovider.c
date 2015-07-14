@@ -102,12 +102,14 @@ static void registerResultForCredProvisioning(CredentialData_t *credData,
    if(1 == cause)
    {
        memcpy(credData->resArr[(credData->numOfResults)].deviceId.id,
-              credData->deviceInfo1->doxm->deviceID.id,UUID_LENGTH);
+              credData->deviceInfo1->doxm->deviceID.id,
+              sizeof(credData->resArr[(credData->numOfResults)].deviceId.id));
    }
    else
    {
        memcpy(credData->resArr[(credData->numOfResults)].deviceId.id,
-              credData->deviceInfo2->doxm->deviceID.id,UUID_LENGTH);
+              credData->deviceInfo2->doxm->deviceID.id,
+              sizeof(credData->resArr[(credData->numOfResults)].deviceId.id));
    }
    credData->resArr[(credData->numOfResults)].res = stackresult;
    ++(credData->numOfResults);
@@ -222,7 +224,7 @@ static OCStackApplicationResult provisionCredentialCB1(void *ctx, OCDoHandle UNU
 
 
 
-/**
+/**cred->privateData.data
  * Internal function for handling credential generation and sending credential to resource server.
  *
  * @param[in] cred Instance of cred resource.
@@ -234,6 +236,8 @@ static OCStackResult provisionCredentials(const OicSecCred_t *cred,
         const OCProvisionDev_t *deviceInfo, CredentialData_t *credData,
         OCClientResponseHandler responseHandler)
 {
+/*
+ * TODO: CBOR
     OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
     if(!secPayload)
     {
@@ -250,6 +254,7 @@ static OCStackResult provisionCredentials(const OicSecCred_t *cred,
     }
 
     OC_LOG_V(INFO, TAG, "Credential for provisioning : %s",secPayload->securityData);
+*/
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!PMGenerateQuery(true,
                         deviceInfo->endpoint.addr,
@@ -269,6 +274,8 @@ static OCStackResult provisionCredentials(const OicSecCred_t *cred,
 
     OCDoHandle handle = NULL;
     OCMethod method = OC_REST_POST;
+/*
+ * TODO: CBOR
     OCStackResult ret = OCDoResource(&handle, method, query, 0, (OCPayload*)secPayload,
             deviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
     OC_LOG_V(INFO, TAG, "OCDoResource::Credential provisioning returned : %d",ret);
@@ -277,6 +284,7 @@ static OCStackResult provisionCredentials(const OicSecCred_t *cred,
         OC_LOG(ERROR, TAG, "OCStack resource error");
         return ret;
     }
+*/
     return OC_STACK_OK;
 }
 
@@ -373,7 +381,8 @@ static void registerResultForACLProvisioning(ACLData_t *aclData,
    OC_LOG_V(INFO, TAG, "Inside registerResultForACLProvisioning aclData->numOfResults is %d\n",
                        aclData->numOfResults);
    memcpy(aclData->resArr[(aclData->numOfResults)].deviceId.id,
-          aclData->deviceInfo->doxm->deviceID.id, UUID_LENGTH);
+          aclData->deviceInfo->doxm->deviceID.id,
+          sizeof(aclData->resArr[(aclData->numOfResults)].deviceId.id));
    aclData->resArr[(aclData->numOfResults)].res = stackresult;
    ++(aclData->numOfResults);
 }
@@ -426,6 +435,8 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
     VERIFY_NON_NULL(TAG, acl, ERROR,  OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL(TAG, resultCallback, ERROR,  OC_STACK_INVALID_CALLBACK);
 
+/*
+ * TODO: CBOR
     OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
     if(!secPayload)
     {
@@ -441,6 +452,7 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
         return OC_STACK_NO_MEMORY;
     }
     OC_LOG_V(INFO, TAG, "ACL : %s", secPayload->securityData);
+*/
 
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!PMGenerateQuery(true,
@@ -459,7 +471,7 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
     ACLData_t *aclData = (ACLData_t *) OICMalloc(sizeof(ACLData_t));
     if (aclData == NULL)
     {
-        OICFree(secPayload);
+        //OICFree(secPayload);
         OC_LOG(ERROR, TAG, "Unable to allocate memory");
         return OC_STACK_NO_MEMORY;
     }
@@ -473,7 +485,7 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
     aclData->resArr = (OCProvisionResult_t*)OICMalloc(sizeof(OCProvisionResult_t)*noOfRiCalls);
     if (aclData->resArr == NULL)
     {
-        OICFree(secPayload);
+        //OICFree(secPayload);
         OC_LOG(ERROR, TAG, "Unable to allocate memory");
         return OC_STACK_NO_MEMORY;
     }
@@ -483,6 +495,8 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
     OCMethod method = OC_REST_POST;
     OCDoHandle handle = NULL;
     OC_LOG(DEBUG, TAG, "Sending ACL info to resource server");
+/*
+ * TODO: CBOR
     OCStackResult ret = OCDoResource(&handle, method, query,
             &selectedDeviceInfo->endpoint, (OCPayload*)secPayload,
             selectedDeviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
@@ -492,5 +506,6 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
         OICFree(aclData);
     }
     VERIFY_SUCCESS(TAG, (OC_STACK_OK == ret), ERROR, OC_STACK_ERROR);
+*/
     return OC_STACK_OK;
 }

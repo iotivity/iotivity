@@ -76,7 +76,7 @@ sec_samples_src_dir = src_dir + '/resource/csdk/stack/samples/linux/secure/'
 sec_samples_build_dir = env.get('BUILD_DIR') +'/resource/csdk/stack/samples/linux/secure'
 
 samples_env.Alias("install", samples_env.Install( sec_samples_build_dir,
-    sec_samples_src_dir + 'oic_svr_db_server.json'))
+    sec_samples_src_dir + 'oic_svr_db_server.dat'))
 samples_env.Alias("install", samples_env.Install( sec_samples_build_dir,
-    sec_samples_src_dir + 'oic_svr_db_client.json'))
+    sec_samples_src_dir + 'oic_svr_db_client.dat'))
 

@@ -18,190 +18,204 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#ifdef WITH_ARDUINO
+#define __STDC_LIMIT_MACROS
+#endif
+
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
 #include "ocstack.h"
 #include "logger.h"
 #include "oic_malloc.h"
-#include "cJSON.h"
 #include "cainterface.h"
 #include "secureresourcemanager.h"
 #include "resourcemanager.h"
+#include "aclresource.h"
+#include "psinterface.h"
+#include "pstatresource.h"
+#include "doxmresource.h"
+#include "credresource.h"
 #include "srmresourcestrings.h"
 #include "srmutility.h"
-#include <stdlib.h>
-#include <string.h>
+#include "ocpayloadcbor.h"
 
 #define TAG  PCF("SRM-PSI")
 
-//SVR database buffer block size
-const size_t DB_FILE_SIZE_BLOCK = 1023;
-
 /**
- * Gets the Secure Virtual Database size.
+ * Writes the Secure Virtual Database to PS
  *
- * @param ps  pointer of OCPersistentStorage for the SVR name ("acl", "cred", "pstat" etc).
- *
- * @retval  total size of the SVR database.
+ * @param[in] svrData is a pointer of OicSvr_t.
+ * @retval  reference to memory buffer containing SVR databaspstat1e.
  */
-size_t GetSVRDatabaseSize(OCPersistentStorage* ps)
+OCStackResult WriteSVRDatabase(OicSvr_t* svrData)
 {
-    size_t size = 0;
+
+    OCStackResult result = OC_STACK_ERROR;
+    OCPersistentStorage* ps = SRMGetPersistentStorageHandler();
     if (!ps)
     {
-        return size;
+        return result;
     }
-    size_t bytesRead  = 0;
-    char buffer[DB_FILE_SIZE_BLOCK];
-    FILE* fp = ps->open(SVR_DB_FILE_NAME, "r");
-    if (fp)
+    FILE* fp = ps->open(SVR_DB_FILE, "wb+");
+    if (!fp)
     {
-        do
-        {
-            bytesRead = ps->read(buffer, 1, DB_FILE_SIZE_BLOCK, fp);
-            size += bytesRead;
-        } while (bytesRead > 0);
-        ps->close(fp);
+        OC_LOG (ERROR, TAG, PCF("Unable to open SVR database file!! "));
+        return result;
     }
-    return size;
-}
-
-/**
- * Reads the Secure Virtual Database from PS into dynamically allocated
- * memory buffer.
- *
- * @note Caller of this method MUST use OICFree() method to release memory
- *       referenced by return value.
- *
- * @retval  reference to memory buffer containing SVR database.
- */
-char * GetSVRDatabase()
-{
-    char * jsonStr = NULL;
-    FILE * fp = NULL;
-    OCPersistentStorage* ps = SRMGetPersistentStorageHandler();
-    int size = GetSVRDatabaseSize(ps);
-    if (0 == size)
+    size_t bytes = fwrite(&svrData->pstatSize, sizeof(size_t), 1, fp);
+    VERIFY_SUCCESS(TAG, bytes, ERROR);
+    if (svrData->pstatSize)
     {
-        OC_LOG (ERROR, TAG, PCF("FindSVRDatabaseSize failed"));
-        return NULL;
+        bytes = fwrite(svrData->pstatPayload, svrData->pstatSize, 1, fp);
+        VERIFY_SUCCESS(TAG, bytes, ERROR);
     }
-
-    if (ps && ps->open)
+    bytes = fwrite(&svrData->doxmSize, sizeof(size_t), 1, fp);
+    VERIFY_SUCCESS(TAG, bytes, ERROR);
+    if (svrData->doxmSize)
     {
-        // Open default SRM database file. An app could change the path for its server.
-        fp = ps->open(SVR_DB_FILE_NAME, "r");
-        if (fp)
-        {
-            jsonStr = (char*)OICMalloc(size + 1);
-            VERIFY_NON_NULL(TAG, jsonStr, FATAL);
-            size_t bytesRead = ps->read(jsonStr, 1, size, fp);
-            jsonStr[bytesRead] = '\0';
 
-            OC_LOG_V(INFO, TAG, PCF("Read %d bytes from SVR database file"), bytesRead);
-            ps->close(fp);
-            fp = NULL;
-        }
-        else
-        {
-            OC_LOG (ERROR, TAG, PCF("Unable to open SVR database file!!"));
-        }
+        bytes = fwrite(svrData->doxmPayload, svrData->doxmSize, 1, fp);
+        VERIFY_SUCCESS(TAG, bytes, ERROR);
     }
-
+    bytes = fwrite(&svrData->aclSize, sizeof(size_t), 1, fp);
+    VERIFY_SUCCESS(TAG, bytes, ERROR);
+    if (svrData->aclSize)
+    {
+        bytes = fwrite(svrData->aclPayload, svrData->aclSize, 1, fp);
+        VERIFY_SUCCESS(TAG, bytes, ERROR);
+    }
+    bytes = fwrite(&svrData->credSize, sizeof(size_t), 1, fp);
+    VERIFY_SUCCESS(TAG, bytes, ERROR);
+    if (svrData->credSize)
+    {
+        bytes = fwrite(svrData->credPayload, svrData->credSize, 1, fp);
+        VERIFY_SUCCESS(TAG, bytes, ERROR);
+    }
+    result = OC_STACK_OK;
 exit:
     if (ps && fp)
     {
         ps->close(fp);
     }
-    return jsonStr;
+    return result;
 }
 
+/**
+ * This method converts SVR buffers in to OCRepPayload and updates the persistent storage.
+ *
+  * @retval  OC_STACK_OK for Success, otherwise some error value
+ */
+OCStackResult UpdateSVRData()
+{
+    OCStackResult ret = OC_STACK_ERROR;
+    OicSvr_t svrData = {.aclPayload = NULL};
+
+    ret = ConvertAclData(&svrData.aclPayload, &svrData.aclSize);
+    if(ret != OC_STACK_OK)
+    {
+        OC_LOG (INFO, TAG, PCF("No Acl data!! "));
+    }
+    ret = ConvertCredData(&svrData.credPayload, &svrData.credSize);
+    if(ret != OC_STACK_OK)
+    {
+        OC_LOG (INFO, TAG, PCF("No Cred data!! "));
+    }
+    ret = ConvertDoxmData(&svrData.doxmPayload, &svrData.doxmSize);
+    if(ret != OC_STACK_OK)
+    {
+        OC_LOG (INFO, TAG, PCF("No Doxm data!! "));
+    }
+    ret = ConvertPstatData(&svrData.pstatPayload, &svrData.pstatSize);
+    if (ret != OC_STACK_OK)
+    {
+        OC_LOG (INFO, TAG, PCF("No Pstat data!! "));
+    }
+    //update persistent storage
+    ret = WriteSVRDatabase(&svrData);
+    if(ret != OC_STACK_OK)
+    {
+        OC_LOG (ERROR, TAG, PCF("UpdateSVDatabase failed!! "));
+    }
+    return ret;
+}
 
 /**
- * This method is used by a entity handlers of SVR's to update
- * SVR database.
+ * Reads the Secure Virtual Database from PS
  *
- * @param rsrcName string denoting the SVR name ("acl", "cred", "pstat" etc).
- * @param jsonObj JSON object containing the SVR contents.
+ * @note Caller of this method MUST use OCFree() method to release memory
+ *       referenced by return value.
  *
  * @retval  OC_STACK_OK for Success, otherwise some error value
  */
-OCStackResult UpdateSVRDatabase(const char* rsrcName, cJSON* jsonObj)
+OCStackResult ReadSVDataFromPS(OicSvr_t* svrData)
 {
     OCStackResult ret = OC_STACK_ERROR;
-    cJSON *jsonSVRDb = NULL;
-    OCPersistentStorage* ps = NULL;
-
-    // Read SVR database from PS
-    char* jsonSVRDbStr = GetSVRDatabase();
-    VERIFY_NON_NULL(TAG,jsonSVRDbStr, ERROR);
-
-    // Use cJSON_Parse to parse the existing SVR database
-    jsonSVRDb = cJSON_Parse(jsonSVRDbStr);
-    VERIFY_NON_NULL(TAG,jsonSVRDb, ERROR);
-
-    OICFree(jsonSVRDbStr);
-    jsonSVRDbStr = NULL;
-
-    //If Cred resource gets updated with empty list then delete the Cred
-    //object from database.
-    if(NULL == jsonObj && (0 == strcmp(rsrcName, OIC_JSON_CRED_NAME)))
+    if(!svrData)
     {
-        cJSON_DeleteItemFromObject(jsonSVRDb, rsrcName);
+        OC_LOG (ERROR, TAG, PCF("Invalid parameter "));
+        return OC_STACK_INVALID_PARAM;
     }
-    else if (jsonObj->child )
+    OCPersistentStorage* ps = SRMGetPersistentStorageHandler();
+    if (!ps)
     {
-        // Create a duplicate of the JSON object which was passed.
-        cJSON* jsonDuplicateObj = cJSON_Duplicate(jsonObj, 1);
-        VERIFY_NON_NULL(TAG,jsonDuplicateObj, ERROR);
-
-        cJSON* jsonObj = cJSON_GetObjectItem(jsonSVRDb, rsrcName);
-
-        /*
-         ACL, PStat & Doxm resources at least have default entries in the database but
-         Cred resource may have no entries. The first cred resource entry (for provisioning tool)
-         is created when the device is owned by provisioning tool and it's ownerpsk is generated.*/
-        if((strcmp(rsrcName, OIC_JSON_CRED_NAME) == 0) && (!jsonObj))
-        {
-            // Add the fist cred object in existing SVR database json
-            cJSON_AddItemToObject(jsonSVRDb, rsrcName, jsonDuplicateObj->child);
-        }
-        else
-        {
-            VERIFY_NON_NULL(TAG,jsonObj, ERROR);
-
-            // Replace the modified json object in existing SVR database json
-            cJSON_ReplaceItemInObject(jsonSVRDb, rsrcName, jsonDuplicateObj->child);
-        }
+        return ret;
     }
-
-    // Generate string representation of updated SVR database json object
-    jsonSVRDbStr = cJSON_PrintUnformatted(jsonSVRDb);
-    VERIFY_NON_NULL(TAG,jsonSVRDbStr, ERROR);
-
-    // Update the persistent storage with new SVR database
-    ps = SRMGetPersistentStorageHandler();
-    if (ps && ps->open)
+    FILE* readFile = ps->open(SVR_DB_FILE, "r");
+    if (!readFile)
     {
-        FILE* fp = ps->open(SVR_DB_FILE_NAME, "w");
-        if (fp)
-        {
-            size_t bytesWritten = ps->write(jsonSVRDbStr, 1, strlen(jsonSVRDbStr), fp);
-            if (bytesWritten == strlen(jsonSVRDbStr))
-            {
-                ret = OC_STACK_OK;
-            }
-            OC_LOG_V(INFO, TAG, PCF("Written %d bytes into SVR database file"), bytesWritten);
-            ps->close(fp);
-            fp = NULL;
-        }
-        else
-        {
-            OC_LOG (ERROR, TAG, PCF("Unable to open SVR database file!! "));
-        }
+        OC_LOG (ERROR, TAG, PCF("Unable to open SVR database file!! "));
+        return ret;
     }
-
+    size_t bytes = fread(&svrData->pstatSize, sizeof(size_t), 1, readFile);
+    if (svrData->pstatSize && svrData->pstatSize < UINT32_MAX)
+    {
+        VERIFY_SUCCESS(TAG, bytes, ERROR);
+        svrData->pstatPayload = (uint8_t*)OICMalloc(svrData->pstatSize);
+        VERIFY_NON_NULL(TAG, svrData->pstatPayload, INFO);
+        bytes = fread(svrData->pstatPayload, svrData->pstatSize, 1, readFile);
+        VERIFY_SUCCESS(TAG, bytes, ERROR);
+    }
+    bytes = fread(&svrData->doxmSize, sizeof(size_t), 1, readFile);
+    if (svrData->doxmSize && svrData->doxmSize < UINT32_MAX)
+    {
+        VERIFY_SUCCESS(TAG, bytes, ERROR);
+        svrData->doxmPayload = (uint8_t*)OICMalloc(svrData->doxmSize);
+        VERIFY_NON_NULL(TAG, svrData->doxmPayload, INFO);
+        bytes = fread(svrData->doxmPayload, svrData->doxmSize, 1, readFile);
+        VERIFY_SUCCESS(TAG, bytes, ERROR);
+    }
+    bytes = fread(&svrData->aclSize, sizeof(size_t), 1, readFile);
+    if (svrData->aclSize && svrData->aclSize < UINT32_MAX)
+    {
+        VERIFY_SUCCESS(TAG, bytes, ERROR);
+        svrData->aclPayload = (uint8_t*)OICMalloc(svrData->aclSize);
+        VERIFY_NON_NULL(TAG, svrData->aclPayload, INFO);
+        bytes = fread(svrData->aclPayload, svrData->aclSize, 1, readFile);
+        VERIFY_SUCCESS(TAG, bytes, ERROR);
+    }
+    bytes = fread(&svrData->credSize, sizeof(size_t), 1, readFile);
+    if (svrData->credSize && svrData->credSize < UINT32_MAX)
+    {
+        VERIFY_SUCCESS(TAG, bytes, ERROR);
+        svrData->credPayload = (uint8_t*)OICMalloc(svrData->credSize);
+        VERIFY_NON_NULL(TAG, svrData->credPayload, INFO);
+        bytes = fread(svrData->credPayload, svrData->credSize, 1, readFile);
+        VERIFY_SUCCESS(TAG, bytes, ERROR);
+    }
+    //All is good
+    ret = OC_STACK_OK;
 exit:
-    OICFree(jsonSVRDbStr);
-    cJSON_Delete(jsonSVRDb);
-
+    if (ps && readFile)
+    {
+        ps->close(readFile);
+    }
+    if(ret != OC_STACK_OK)
+    {
+        OICFree(svrData->aclPayload);
+        OICFree(svrData->credPayload);
+        OICFree(svrData->doxmPayload);
+        OICFree(svrData->pstatPayload);
+    }
     return ret;
 }

@@ -234,8 +234,8 @@ static OCEntityHandlerResult HandleSVCGetRequest (const OCEntityHandlerRequest *
 
     OCEntityHandlerResult ehRet = (jsonStr ? OC_EH_OK : OC_EH_ERROR);
 
-    // Send response payload to request originator
-    SendSRMResponse(ehRequest, ehRet, jsonStr);
+    // TODO: CBOR Send response payload to request originator
+    //SendSRMResponse(ehRequest, ehRet, jsonStr);
 
     OICFree(jsonStr);
 
@@ -248,6 +248,8 @@ static OCEntityHandlerResult HandleSVCPostRequest (const OCEntityHandlerRequest 
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
     // Convert JSON SVC data into binary. This will also validate the SVC data received.
+/*
+ * TODO: CBOR
     OicSecSvc_t* newSvc = JSONToSvcBin(((OCSecurityPayload*)ehRequest->payload)->securityData);
 
     if (newSvc)
@@ -270,6 +272,7 @@ static OCEntityHandlerResult HandleSVCPostRequest (const OCEntityHandlerRequest 
             cJSON_Delete(jsonSvc);
         }
     }
+*/
 
     // Send payload to request originator
     SendSRMResponse(ehRequest, ehRet, NULL);
@@ -346,6 +349,8 @@ OCStackResult InitSVCResource()
     OC_LOG_V (INFO, TAG, PCF("Begin %s "), __func__ );
 
     // Read SVC resource from PS
+/*
+ * TODO: CBOR
     char* jsonSVRDatabase = GetSVRDatabase();
 
     if (jsonSVRDatabase)
@@ -362,6 +367,7 @@ OCStackResult InitSVCResource()
     {
         DeInitSVCResource();
     }
+*/
 
     OC_LOG_V (INFO, TAG, PCF("%s RetVal %d"), __func__ , ret);
     return ret;

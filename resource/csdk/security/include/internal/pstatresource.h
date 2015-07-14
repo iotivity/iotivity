@@ -28,32 +28,40 @@ extern "C" {
 /**
  * Initialize Pstat resource by loading data from persistent storage.
  *
- * @retval  OC_STACK_OK for Success, otherwise some error value
+ * @param[in] payload is a pointer of CBOR pstat payload.
+ * @param[in] size is CBOR pstat payload size.
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
-OCStackResult InitPstatResource();
+OCStackResult InitPstatResource(uint8_t *payload,  size_t size);
 
 /**
  * Perform cleanup for Pstat resources.
  *
- * @retval  OC_STACK_OK for Success, otherwise some error value
+ * @param[in] pstat pointer to OicSecPstat_t.
+ */
+void DeletePstatBinData(OicSecPstat_t* pstat);
+/**
+ * Perform cleanup for Pstat resources.
+ *
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
 OCStackResult DeInitPstatResource();
 
 /**
- * This method converts JSON PSTAT into binary PSTAT.
+ * This method converts OCRepPayload into pstat.
  *
- * @param[in] jsonStr  pstat data in json string.
+ * @param[in] payload  for pstat.
  * @return pointer to OicSecPstat_t.
  */
-OicSecPstat_t * JSONToPstatBin(const char * jsonStr);
+OicSecPstat_t* PayloadToPstat(const OCRepPayload* payload);
 
 /**
- * This method converts pstat data into JSON format.
+ * This method converts pstat data into OCRepPayload.
  *
  * @param[in] pstat  pstat data in binary format.
- * @return pointer to pstat json string.
+ * @return pointer to OCRepPayload.
  */
-char * BinToPstatJSON(const OicSecPstat_t * pstat);
+OCRepPayload* PstatToPayload(const OicSecPstat_t * pstat);
 
 /** This function deallocates the memory for OicSecPstat_t.
  *
@@ -61,11 +69,30 @@ char * BinToPstatJSON(const OicSecPstat_t * pstat);
  */
 void DeletePstatBinData(OicSecPstat_t* pstat);
 
+/**
+ * This method converts SVR buffers in to OCRepPayload and updates the persistent storage.
+ *
+ * @param[out] payload is a pointer of CBOR pstat payload.
+ * @param[out] size is CBOR pstat payload size.
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
+ */
+OCStackResult ConvertPstatData(uint8_t **payload, size_t *size);
+
+/**
+ * This internal method is the entity handler for pstat resources.
+ *
+ * @param[in] flag  for request or observe.
+ * @param[in] ehRequest      pointer to the OCEntityHandlerRequest struct that is created.
+ * @param[in] callbackParam  Parameter passed back when entityHandler is called.
+ * @return ::OC_EH_OK for Success, otherwise some error value.
+ */
+OCEntityHandlerResult PstatEntityHandler(OCEntityHandlerFlag flag,
+            OCEntityHandlerRequest * ehRequest,
+            void* callbackParam);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif //IOTVT_SRM_PSTATR_H
-
 

@@ -19,12 +19,12 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #define _POSIX_C_SOURCE 200112L
 #include <string.h>
-
 #include "srmutility.h"
 #include "srmresourcestrings.h"
 #include "logger.h"
 #include "oic_malloc.h"
 #include "base64.h"
+#include "securevirtualresourcetypes.h"
 
 #define TAG  PCF("SRM-UTILITY")
 

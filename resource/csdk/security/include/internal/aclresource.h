@@ -28,39 +28,91 @@ extern "C" {
 /**
  * Initialize ACL resource by loading data from persistent storage.
  *
- * @retval  OC_STACK_OK for Success, otherwise some error value
+ * @param[in] payload is a pointer of CBOR acl payload.
+ * @param[in] size is CBOR acl payload size.
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
-OCStackResult InitACLResource();
+OCStackResult InitACLResource(uint8_t *payload, size_t size);
 
 /**
  * Perform cleanup for ACL resources.
  *
- * @retval  none
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
-void DeInitACLResource();
+OCStackResult DeInitACLResource();
+
+/**
+ * Perform cleanup for ACL resources.
+ *
+ * @param[in] acl  pointer to OicSecAcl_t.
+ */
+void DeleteACLList(OicSecAcl_t* acl);
 
 /**
  * This method is used by PolicyEngine to retrieve ACL for a Subject.
  *
- * @param subjectId ID of the subject for which ACL is required.
- * @param savePtr is used internally by @ref GetACLResourceData to maintain index between
+ * @param[in] subjectId ID of the subject for which ACL is required.
+ * @param[out] savePtr is used internally by @ref GetACLResourceData to maintain index between
  *                successive calls for same subjectId.
  *
- * @retval  reference to @ref OicSecAcl_t if ACL is found, else NULL
+ * @return reference to acl if ACL is found, else NULL.
  *
- * @note On the first call to @ref GetACLResourceData, savePtr should point to NULL
+ * @note On the first call to @ref GetACLResourceData, savePtr should point to NULL.
  */
 const OicSecAcl_t* GetACLResourceData(const OicUuid_t* subjectId, OicSecAcl_t **savePtr);
 
 /**
- * This function converts ACL data into JSON format.
+ * This function converts ACL data into OCRepPayload.
  * Caller needs to invoke 'free' when done using
- * returned string.
- * @param acl  instance of OicSecAcl_t structure.
+ * returned OCRepPayload pointer.
  *
- * @retval  pointer to ACL in json format.
+ * @param[in] acl  instance of OicSecAcl_t structure.
+ *
+* @return reference to acl if ACL for successful operation, otherwise NULL.
  */
-char* BinToAclJSON(const OicSecAcl_t * acl);
+
+OCRepPayload* AclToPayload(const OicSecAcl_t * acl);
+/**
+ * This function converts OCRepPayload to ACL data.
+ * Caller needs to invoke 'free' when done using
+ * returned OicSecAcl_t pointer.
+ *
+ * @param[in] payload  instance of OCRepPayload.
+ *
+ * @return  pointer to OicSecAcl_t.
+ */
+OicSecAcl_t* PayloadToAcl(const OCRepPayload* payload);
+
+/**
+ * This internal method is to retrieve the default ACL.
+ * If SVR database in persistent storage got corrupted or
+ * is not available for some reason, a default ACL is created
+ * which allows user to initiate ACL provisioning again.
+ *
+ * @param[out] defaultAcl pointer of OicSecAcl_t*.
+ */
+OCStackResult  GetDefaultACL(OicSecAcl_t** defaultAcl);
+
+/**
+ * This internal method is the entity handler for ACl resources.
+ *
+ * @param[in] flag  for request or observe.
+ * @param[in] ehRequest      pointer to the OCEntityHandlerRequest struct that is created.
+ * @param[in] callbackParam  parameter passed back when entityHandler is called.
+ * @return  OC_EH_OK for Success, otherwise some error value.
+ */
+OCEntityHandlerResult ACLEntityHandler(OCEntityHandlerFlag flag,
+            OCEntityHandlerRequest * ehRequest,
+            void* callbackParameter);
+
+/**
+ * This method converts SVR buffers into OCRepPayload and updates the persistent storage.
+ *
+ * @param[out] payload is a pointer of CBOR acl payload.
+ * @param[out] size is CBOR acl payload size.
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
+ */
+OCStackResult ConvertAclData(uint8_t **payload,  size_t *size);
 
 #ifdef __cplusplus
 }

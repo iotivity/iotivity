@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include "securevirtualresourcetypes.h"
 
+const char * SVR_DB_FILE = "oic_svr_db_server.dat";
 const char * SVR_DB_FILE_NAME = "oic_svr_db.json";
 const char * OIC_MI_DEF = "oic.mi.def";
 

@@ -21,26 +21,37 @@
 #ifndef IOTVT_SRM_PSI_H
 #define IOTVT_SRM_PSI_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /**
- * Reads the Secure Virtual Database from PS into dynamically allocated
- * memory buffer.
+ * Reads the Secure Virtual Database from PS
  *
  * @note Caller of this method MUST use OCFree() method to release memory
  *       referenced by return value.
  *
- * @retval  reference to memory buffer containing SVR database.
+ * @param[in] svrData is a pointer of OicSvr_t.
+ * @retval  OC_STACK_OK for Success, otherwise some error value
  */
-char * GetSVRDatabase();
+OCStackResult ReadSVDataFromPS(OicSvr_t* svrData);
 
 /**
- * This method is used by a entity handlers of SVR's to update
- * SVR database.
+ * Writes the Secure Virtual Database to PS
  *
- * @param rsrcName string denoting the SVR name ("acl", "cred", "pstat" etc).
- * @param jsonObj JSON object containing the SVR contents.
+ * @param[in] svrData is a pointer of OicSvr_t.
+ * @retval  OC_STACK_OK for Success, otherwise some error value
+ */
+OCStackResult WriteSVDatabase(OicSvr_t* svrData);
+
+/**
+ * This method converts SVR buffers in to OCRepPayload and updates the persistent storage.
  *
  * @retval  OC_STACK_OK for Success, otherwise some error value
  */
-OCStackResult UpdateSVRDatabase(const char* rsrcName, cJSON* jsonObj);
+OCStackResult UpdateSVRData();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //IOTVT_SRM_PSI_H

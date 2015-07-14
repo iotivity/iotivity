@@ -99,8 +99,6 @@ void ParseQueryIterInit(unsigned char * query, OicParseQueryIter_t * parseIter);
  */
 OicParseQueryIter_t * GetNextQuery(OicParseQueryIter_t * parseIter);
 
-
-
 /**
  * This method acts as a helper funtion for JSON unmarshalling by various SVR's.
  *
@@ -112,7 +110,8 @@ OicParseQueryIter_t * GetNextQuery(OicParseQueryIter_t * parseIter);
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 OCStackResult AddUuidArray(cJSON* jsonRoot, const char* arrayItem,
-                           size_t *numUuids, OicUuid_t** uuids );
+                           size_t *numUuids,
+                           OicUuid_t** uuids );
 
 #ifdef __cplusplus
 }

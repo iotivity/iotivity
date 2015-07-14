@@ -408,13 +408,15 @@ static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx, OCDoHandle UNU
         }
         else
         {
-            if (PAYLOAD_TYPE_SECURITY != clientResponse->payload->type)
+            if (PAYLOAD_TYPE_REPRESENTATION != clientResponse->payload->type)
             {
                 OC_LOG(INFO, TAG, "Unknown payload type");
                 return OC_STACK_KEEP_TRANSACTION;
             }
-            OicSecDoxm_t *ptrDoxm = JSONToDoxmBin(
-                            ((OCSecurityPayload*)clientResponse->payload)->securityData);
+            OicSecDoxm_t *ptrDoxm = NULL;
+            //TODO: CBOR
+            //JSONToDoxmBin(
+            //                ((OCSecurityPayload*)clientResponse->payload)->securityData);
             if (NULL == ptrDoxm)
             {
                 OC_LOG(INFO, TAG, "Ignoring malformed JSON");

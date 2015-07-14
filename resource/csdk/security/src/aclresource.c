@@ -18,8 +18,13 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include <stdlib.h>
+#ifdef WITH_ARDUINO
 #include <string.h>
+#else
+#include <strings.h>
+#endif
+
+#include <stdlib.h>
 #include "ocstack.h"
 #include "logger.h"
 #include "oic_malloc.h"
@@ -34,12 +39,9 @@
 #include "doxmresource.h"
 #include "srmutility.h"
 #include "ocserverrequest.h"
-#include <stdlib.h>
-#ifdef WITH_ARDUINO
-#include <string.h>
-#else
-#include <strings.h>
-#endif
+#include "ocpayload.h"
+#include "ocpayloadcbor.h"
+#include "payload_logging.h"
 
 #define TAG  PCF("SRM-ACL")
 
@@ -95,296 +97,137 @@ void DeleteACLList(OicSecAcl_t* acl)
     }
 }
 
-/*
- * This internal method converts ACL data into JSON format.
- *
- * Note: Caller needs to invoke 'free' when finished done using
- * return string.
+/**
+ * This function converts ACL data into OCRepPayload.
+ * Caller needs to invoke 'free' when done using
  */
-char * BinToAclJSON(const OicSecAcl_t * acl)
+OCRepPayload* AclToPayload(const OicSecAcl_t * acl)
 {
-    cJSON *jsonRoot = NULL;
-    char *jsonStr = NULL;
-
-    if (acl)
+    if(NULL == acl)
     {
-        jsonRoot = cJSON_CreateObject();
-        VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
-
-        cJSON *jsonAclArray = NULL;
-        cJSON_AddItemToObject (jsonRoot, OIC_JSON_ACL_NAME, jsonAclArray = cJSON_CreateArray());
-        VERIFY_NON_NULL(TAG, jsonAclArray, ERROR);
-
-        while(acl)
+        return NULL;
+    }
+    size_t dimensions[MAX_REP_ARRAY_DEPTH] = {0};
+    OCRepPayload* headPayload = NULL;
+    OCRepPayload* prevPayload = NULL;
+    bool result = false;
+    while (acl)
+    {
+        OCRepPayload* payload = OCRepPayloadCreate();
+        if (!payload)
         {
-            char base64Buff[B64ENCODE_OUT_SAFESIZE(sizeof(((OicUuid_t*)0)->id)) + 1] = {};
-            uint32_t outLen = 0;
-            size_t inLen = 0;
-            B64Result b64Ret = B64_OK;
-
-            cJSON *jsonAcl = cJSON_CreateObject();
-
-            // Subject -- Mandatory
-            outLen = 0;
-            if (memcmp(&(acl->subject), &WILDCARD_SUBJECT_ID, sizeof(OicUuid_t)) == 0)
-            {
-                inLen = WILDCARD_SUBJECT_ID_LEN;
-            }
-            else
-            {
-                inLen =  sizeof(OicUuid_t);
-            }
-            b64Ret = b64Encode(acl->subject.id, inLen, base64Buff,
-                sizeof(base64Buff), &outLen);
-            VERIFY_SUCCESS(TAG, b64Ret == B64_OK, ERROR);
-            cJSON_AddStringToObject(jsonAcl, OIC_JSON_SUBJECT_NAME, base64Buff );
-
-            // Resources -- Mandatory
-            cJSON *jsonRsrcArray = NULL;
-            cJSON_AddItemToObject (jsonAcl, OIC_JSON_RESOURCES_NAME, jsonRsrcArray = cJSON_CreateArray());
-            VERIFY_NON_NULL(TAG, jsonRsrcArray, ERROR);
-            for (size_t i = 0; i < acl->resourcesLen; i++)
-            {
-                cJSON_AddItemToArray (jsonRsrcArray, cJSON_CreateString(acl->resources[i]));
-            }
-
-            // Permissions -- Mandatory
-            cJSON_AddNumberToObject (jsonAcl, OIC_JSON_PERMISSION_NAME, acl->permission);
-
-            //Period & Recurrence -- Not Mandatory
-            if(0 != acl->prdRecrLen)
-            {
-                cJSON *jsonPeriodArray = NULL;
-                cJSON_AddItemToObject (jsonAcl, OIC_JSON_PERIODS_NAME,
-                        jsonPeriodArray = cJSON_CreateArray());
-                VERIFY_NON_NULL(TAG, jsonPeriodArray, ERROR);
-                for (size_t i = 0; i < acl->prdRecrLen; i++)
-                {
-                    cJSON_AddItemToArray (jsonPeriodArray,
-                            cJSON_CreateString(acl->periods[i]));
-                }
-            }
-
-            //Recurrence -- Not Mandatory
-            if(0 != acl->prdRecrLen && acl->recurrences)
-            {
-                cJSON *jsonRecurArray  = NULL;
-                cJSON_AddItemToObject (jsonAcl, OIC_JSON_RECURRENCES_NAME,
-                        jsonRecurArray = cJSON_CreateArray());
-                VERIFY_NON_NULL(TAG, jsonRecurArray, ERROR);
-                for (size_t i = 0; i < acl->prdRecrLen; i++)
-                {
-                    cJSON_AddItemToArray (jsonRecurArray,
-                            cJSON_CreateString(acl->recurrences[i]));
-                }
-            }
-
-            // Owners -- Mandatory
-            cJSON *jsonOwnrArray = NULL;
-            cJSON_AddItemToObject (jsonAcl, OIC_JSON_OWNERS_NAME, jsonOwnrArray = cJSON_CreateArray());
-            VERIFY_NON_NULL(TAG, jsonOwnrArray, ERROR);
-            for (size_t i = 0; i < acl->ownersLen; i++)
-            {
-                outLen = 0;
-
-                b64Ret = b64Encode(acl->owners[i].id, sizeof(((OicUuid_t*)0)->id), base64Buff,
-                    sizeof(base64Buff), &outLen);
-                VERIFY_SUCCESS(TAG, b64Ret == B64_OK, ERROR);
-
-                cJSON_AddItemToArray (jsonOwnrArray, cJSON_CreateString(base64Buff));
-            }
-
-            // Attach current acl node to Acl Array
-            cJSON_AddItemToArray(jsonAclArray, jsonAcl);
-            acl = acl->next;
+            OC_LOG(ERROR, TAG, PCF("Failed to allocate Payload"));
+            return NULL;
         }
+        payload->next = NULL;
+        headPayload = (headPayload) ? headPayload : payload;
+        OCRepPayloadAppend(prevPayload, payload);
+        size_t inLen = 0;
 
-        jsonStr = cJSON_PrintUnformatted(jsonRoot);
+        // Subject -- Mandatory
+        if (memcmp(&(acl->subject), &WILDCARD_SUBJECT_ID, sizeof(OicUuid_t)) == 0)
+        {
+            inLen = WILDCARD_SUBJECT_ID_LEN;
+        }
+        else
+        {
+            inLen = sizeof(OicUuid_t);
+        }
+        dimensions[0] = inLen;
+        dimensions[1] = 0;
+        dimensions[2] = 0;
+        result = OCRepPayloadSetIntArray(payload, OIC_JSON_SUBJECT_NAME,
+                (int64_t*) acl->subject.id, dimensions);
+        VERIFY_SUCCESS(TAG, result, ERROR);
+        //Resources
+        dimensions[0] = acl->resourcesLen;
+        dimensions[1] = 0;
+        dimensions[2] = 0;
+        OCRepPayloadSetStringArray(payload, OIC_JSON_RESOURCES_NAME, (const char**) acl->resources,
+                dimensions);
+        // Permissions -- Mandatory
+        result = OCRepPayloadSetPropInt(payload, OIC_JSON_PERMISSION_NAME, acl->permission);
+        VERIFY_SUCCESS(TAG, result, ERROR);
+        //Owners
+        dimensions[0] = acl->ownersLen;
+        dimensions[1] = SVR_UUID_LENGTH;
+        dimensions[2] = 0;
+        result = OCRepPayloadSetIntArray(payload, OIC_JSON_OWNERS_NAME, (int64_t*) &acl->owners,
+                dimensions);
+        VERIFY_SUCCESS(TAG, result, ERROR);
+        acl = acl->next;
+        prevPayload = payload;
+
     }
-
+    result = OCRepPayloadSetUri(headPayload, OIC_RSRC_ACL_URI);
+    OC_LOG_PAYLOAD(INFO, TAG, (OCPayload*)headPayload);
 exit:
-    if (jsonRoot)
+    if(!result)
     {
-        cJSON_Delete(jsonRoot);
+        OCRepPayloadDestroy(headPayload);
+        headPayload = NULL;
     }
-    return jsonStr;
+    return headPayload;
 }
 
-/*
- * This internal method converts JSON ACL into binary ACL.
+/**
+ * This function converts OCRepPayload to ACL data.
+ * Caller needs to invoke 'free' when done using
+ *
  */
-OicSecAcl_t * JSONToAclBin(const char * jsonStr)
+OicSecAcl_t* PayloadToAcl(const OCRepPayload* payload)
 {
-    OCStackResult ret = OC_STACK_ERROR;
+    if (NULL == payload)
+    {
+        return NULL;
+    }
+    OC_LOG_PAYLOAD(INFO, TAG, (OCPayload*)payload);
+
+    OicSecAcl_t *acl = NULL;
     OicSecAcl_t * headAcl = NULL;
     OicSecAcl_t * prevAcl = NULL;
-    cJSON *jsonRoot = NULL;
-    cJSON *jsonAclArray = NULL;
-
-    VERIFY_NON_NULL(TAG, jsonStr, ERROR);
-
-    jsonRoot = cJSON_Parse(jsonStr);
-    VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
-
-    jsonAclArray = cJSON_GetObjectItem(jsonRoot, OIC_JSON_ACL_NAME);
-    VERIFY_NON_NULL(TAG, jsonAclArray, ERROR);
-
-    if (cJSON_Array == jsonAclArray->type)
+    size_t dimensions[MAX_REP_ARRAY_DEPTH] = {0};
+    bool result = false;
+    do
     {
-        int numAcl = cJSON_GetArraySize(jsonAclArray);
-        int idx = 0;
+        acl = (OicSecAcl_t*) OICCalloc(1, sizeof(OicSecAcl_t));
+        VERIFY_NON_NULL(TAG, acl, ERROR);
 
-        VERIFY_SUCCESS(TAG, numAcl > 0, INFO);
-        do
+        headAcl = (headAcl) ? headAcl : acl;
+        if (prevAcl)
         {
-            cJSON *jsonAcl = cJSON_GetArrayItem(jsonAclArray, idx);
-            VERIFY_NON_NULL(TAG, jsonAcl, ERROR);
-
-            OicSecAcl_t *acl = (OicSecAcl_t*)OICCalloc(1, sizeof(OicSecAcl_t));
-            VERIFY_NON_NULL(TAG, acl, ERROR);
-
-            headAcl = (headAcl) ? headAcl : acl;
-            if (prevAcl)
-            {
-                prevAcl->next = acl;
-            }
-
-            size_t jsonObjLen = 0;
-            cJSON *jsonObj = NULL;
-
-            unsigned char base64Buff[sizeof(((OicUuid_t*)0)->id)] = {};
-            uint32_t outLen = 0;
-            B64Result b64Ret = B64_OK;
-
-            // Subject -- Mandatory
-            jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_SUBJECT_NAME);
-            VERIFY_NON_NULL(TAG, jsonObj, ERROR);
-            VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
-            outLen = 0;
-            b64Ret = b64Decode(jsonObj->valuestring, strlen(jsonObj->valuestring), base64Buff,
-                        sizeof(base64Buff), &outLen);
-            VERIFY_SUCCESS(TAG, (b64Ret == B64_OK && outLen <= sizeof(acl->subject.id)), ERROR);
-            memcpy(acl->subject.id, base64Buff, outLen);
-
-            // Resources -- Mandatory
-            jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_RESOURCES_NAME);
-            VERIFY_NON_NULL(TAG, jsonObj, ERROR);
-            VERIFY_SUCCESS(TAG, cJSON_Array == jsonObj->type, ERROR);
-
-            acl->resourcesLen = cJSON_GetArraySize(jsonObj);
-            VERIFY_SUCCESS(TAG, acl->resourcesLen > 0, ERROR);
-            acl->resources = (char**)OICCalloc(acl->resourcesLen, sizeof(char*));
-            VERIFY_NON_NULL(TAG, (acl->resources), ERROR);
-
-            size_t idxx = 0;
-            do
-            {
-                cJSON *jsonRsrc = cJSON_GetArrayItem(jsonObj, idxx);
-                VERIFY_NON_NULL(TAG, jsonRsrc, ERROR);
-
-                jsonObjLen = strlen(jsonRsrc->valuestring) + 1;
-                acl->resources[idxx] = (char*)OICMalloc(jsonObjLen);
-                VERIFY_NON_NULL(TAG, (acl->resources[idxx]), ERROR);
-                OICStrcpy(acl->resources[idxx], jsonObjLen, jsonRsrc->valuestring);
-            } while ( ++idxx < acl->resourcesLen);
-
-            // Permissions -- Mandatory
-            jsonObj = cJSON_GetObjectItem(jsonAcl,
-                                OIC_JSON_PERMISSION_NAME);
-            VERIFY_NON_NULL(TAG, jsonObj, ERROR);
-            VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
-            acl->permission = jsonObj->valueint;
-
-            //Period -- Not Mandatory
-            cJSON *jsonPeriodObj = cJSON_GetObjectItem(jsonAcl,
-                    OIC_JSON_PERIODS_NAME);
-            if(jsonPeriodObj)
-            {
-                VERIFY_SUCCESS(TAG, cJSON_Array == jsonPeriodObj->type,
-                               ERROR);
-                acl->prdRecrLen = cJSON_GetArraySize(jsonPeriodObj);
-                if(acl->prdRecrLen > 0)
-                {
-                    acl->periods = (char**)OICCalloc(acl->prdRecrLen,
-                                    sizeof(char*));
-                    VERIFY_NON_NULL(TAG, acl->periods, ERROR);
-
-                    cJSON *jsonPeriod = NULL;
-                    for(size_t i = 0; i < acl->prdRecrLen; i++)
-                    {
-                        jsonPeriod = cJSON_GetArrayItem(jsonPeriodObj, i);
-                        VERIFY_NON_NULL(TAG, jsonPeriod, ERROR);
-
-                        jsonObjLen = strlen(jsonPeriod->valuestring) + 1;
-                        acl->periods[i] = (char*)OICMalloc(jsonObjLen);
-                        VERIFY_NON_NULL(TAG, acl->periods[i], ERROR);
-                        OICStrcpy(acl->periods[i], jsonObjLen,
-                                  jsonPeriod->valuestring);
-                    }
-                }
-            }
-
-            //Recurrence -- Not mandatory
-            cJSON *jsonRecurObj = cJSON_GetObjectItem(jsonAcl,
-                                        OIC_JSON_RECURRENCES_NAME);
-            if(jsonRecurObj)
-            {
-                VERIFY_SUCCESS(TAG, cJSON_Array == jsonRecurObj->type,
-                               ERROR);
-                if(acl->prdRecrLen > 0)
-                {
-                    acl->recurrences = (char**)OICCalloc(acl->prdRecrLen,
-                                             sizeof(char*));
-                    VERIFY_NON_NULL(TAG, acl->recurrences, ERROR);
-
-                    cJSON *jsonRecur = NULL;
-                    for(size_t i = 0; i < acl->prdRecrLen; i++)
-                    {
-                        jsonRecur = cJSON_GetArrayItem(jsonRecurObj, i);
-                        jsonObjLen = strlen(jsonRecur->valuestring) + 1;
-                        acl->recurrences[i] = (char*)OICMalloc(jsonObjLen);
-                        VERIFY_NON_NULL(TAG, acl->recurrences[i], ERROR);
-                        OICStrcpy(acl->recurrences[i], jsonObjLen,
-                                  jsonRecur->valuestring);
-                    }
-                }
-            }
-
-            // Owners -- Mandatory
-            jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_OWNERS_NAME);
-            VERIFY_NON_NULL(TAG, jsonObj, ERROR);
-            VERIFY_SUCCESS(TAG, cJSON_Array == jsonObj->type, ERROR);
-
-            acl->ownersLen = cJSON_GetArraySize(jsonObj);
-            VERIFY_SUCCESS(TAG, acl->ownersLen > 0, ERROR);
-            acl->owners = (OicUuid_t*)OICCalloc(acl->ownersLen, sizeof(OicUuid_t));
-            VERIFY_NON_NULL(TAG, (acl->owners), ERROR);
-
-            idxx = 0;
-            do
-            {
-                cJSON *jsonOwnr = cJSON_GetArrayItem(jsonObj, idxx);
-                VERIFY_NON_NULL(TAG, jsonOwnr, ERROR);
-                VERIFY_SUCCESS(TAG, cJSON_String == jsonOwnr->type, ERROR);
-
-                outLen = 0;
-                b64Ret = b64Decode(jsonOwnr->valuestring, strlen(jsonOwnr->valuestring), base64Buff,
-                            sizeof(base64Buff), &outLen);
-
-                VERIFY_SUCCESS(TAG, (b64Ret == B64_OK && outLen <= sizeof(acl->owners[idxx].id)),
-                                    ERROR);
-                memcpy(acl->owners[idxx].id, base64Buff, outLen);
-            } while ( ++idxx < acl->ownersLen);
-
-            prevAcl = acl;
-        } while( ++idx < numAcl);
-    }
-
-    ret = OC_STACK_OK;
+            prevAcl->next = acl;
+        }
+        int64_t *id;
+        // Subject -- Mandatory
+        result = OCRepPayloadGetIntArray(payload, OIC_JSON_SUBJECT_NAME, (int64_t**) &id,
+                dimensions);
+        VERIFY_SUCCESS(TAG, result, ERROR);
+        memcpy(&acl->subject.id, id, dimensions[0]);
+        OICFree(id);
+        // Resources -- Mandatory
+        OCRepPayloadGetStringArray(payload, OIC_JSON_RESOURCES_NAME, &acl->resources, dimensions);
+        acl->resourcesLen = dimensions[0];
+        // Permissions -- Mandatory
+        result = OCRepPayloadGetPropInt(payload,
+                OIC_JSON_PERMISSION_NAME, (int64_t*)&acl->permission);
+        VERIFY_SUCCESS(TAG, result, ERROR);
+        // Owners -- Mandatory
+        result = OCRepPayloadGetIntArray(payload,
+                OIC_JSON_OWNERS_NAME, (int64_t**) &acl->owners, dimensions);
+        VERIFY_SUCCESS(TAG, result, ERROR);
+        acl->ownersLen = dimensions[0];
+        OC_LOG_V(INFO, TAG, "Owners [%d]", acl->ownersLen);
+        for (size_t i = 0; i < acl->ownersLen; i++)
+        {
+            OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)&acl->owners[i], SVR_UUID_LENGTH);
+        }
+        payload = payload->next;
+        prevAcl = acl;
+    } while (payload);
 
 exit:
-    cJSON_Delete(jsonRoot);
-    if (OC_STACK_OK != ret)
+    if (!result)
     {
         DeleteACLList(headAcl);
         headAcl = NULL;
@@ -395,6 +238,8 @@ exit:
 static bool UpdatePersistentStorage(const OicSecAcl_t *acl)
 {
     // Convert ACL data into JSON for update to persistent storage
+/*
+ * TODO: CBOR
     char *jsonStr = BinToAclJSON(acl);
     if (jsonStr)
     {
@@ -407,6 +252,7 @@ static bool UpdatePersistentStorage(const OicSecAcl_t *acl)
         }
         cJSON_Delete(jsonAcl);
     }
+*/
     return false;
 }
 /*
@@ -507,19 +353,13 @@ static OCStackResult RemoveACE(const OicUuid_t * subject,
 
 static OCEntityHandlerResult HandleACLGetRequest (const OCEntityHandlerRequest * ehRequest)
 {
-    // Convert ACL data into JSON for transmission
-    char* jsonStr = BinToAclJSON(gAcl);
+    OC_LOG (INFO, TAG, PCF("HandleACLGetRequest processing the request"));
+    // Convert acl data into OCRepPayload.
+    OCRepPayload* payload = AclToPayload(gAcl);
+    // A device should always have a default acl. Therefore, payload should never be NULL.
+    OCEntityHandlerResult ehRet = (payload ? OC_EH_OK : OC_EH_ERROR);
 
-    /*
-     * A device should 'always' have a default ACL. Therefore,
-     * jsonStr should never be NULL.
-     */
-    OCEntityHandlerResult ehRet = (jsonStr ? OC_EH_OK : OC_EH_ERROR);
-
-    // Send response payload to request originator
-    SendSRMResponse(ehRequest, ehRet, jsonStr);
-
-    OICFree(jsonStr);
+    SendSRMResponse(ehRequest, ehRet, payload);
 
     OC_LOG_V (INFO, TAG, PCF("%s RetVal %d"), __func__ , ehRet);
     return ehRet;
@@ -527,19 +367,29 @@ static OCEntityHandlerResult HandleACLGetRequest (const OCEntityHandlerRequest *
 
 static OCEntityHandlerResult HandleACLPostRequest (const OCEntityHandlerRequest * ehRequest)
 {
+    OC_LOG (INFO, TAG, PCF("HandleACLPostRequest processing the request"));
+    if(!ehRequest)
+    {
+        return OC_EH_ERROR;
+    }
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
     // Convert JSON ACL data into binary. This will also validate the ACL data received.
-    OicSecAcl_t* newAcl = JSONToAclBin(((OCSecurityPayload*)ehRequest->payload)->securityData);
+    OCRepPayload* payload = (OCRepPayload*)ehRequest->payload;
+    OicSecAcl_t* newAcl = PayloadToAcl(payload);
 
     if (newAcl)
     {
         // Append the new ACL to existing ACL
         LL_APPEND(gAcl, newAcl);
-
-        if(UpdatePersistentStorage(gAcl))
+        // convert data and update it into persistent storage
+        if (OC_STACK_OK == UpdateSVRData())
         {
-            ehRet = OC_EH_RESOURCE_CREATED;
+            ehRet =  OC_EH_OK;
+        }
+        else
+        {
+            OC_LOG (ERROR, TAG, PCF("UpdateSVRData Failed"));
         }
     }
 
@@ -555,7 +405,7 @@ static OCEntityHandlerResult HandleACLDeleteRequest(const OCEntityHandlerRequest
     OC_LOG (INFO, TAG, PCF("Processing ACLDeleteRequest"));
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
-    if(NULL == ehRequest->query)
+    if(!ehRequest || ehRequest->query)
     {
         return ehRet;
     }
@@ -756,29 +606,73 @@ exit:
 }
 
 /**
- * Initialize ACL resource by loading data from persistent storage.
+ * This method converts SVR buffers into OCRepPayload and updates the persistent storage.
  *
+ * @param[out] payload is a pointer of CBOR acl payload.
+ * @param[out] size is CBOR acl payload size.
  * @retval  OC_STACK_OK for Success, otherwise some error value
  */
-OCStackResult InitACLResource()
+OCStackResult ConvertAclData(uint8_t **payload,  size_t *size)
+{
+    OCStackResult result = OC_STACK_ERROR;
+    if (gAcl)
+    {
+        OCRepPayload* rePayload = AclToPayload(gAcl);
+        result = OCConvertPayload((OCPayload*) rePayload, payload,
+                size);
+        OCPayloadDestroy((OCPayload*)rePayload);
+        VERIFY_SUCCESS(TAG, result == OC_STACK_OK, ERROR);
+    }
+
+exit:
+    return result;
+}
+/**
+ * This method parses OCRepPayload into SVR buffers.
+ *
+ * @param[in] payload is a pointer of CBOR acl payload.
+ * @param[in] size is CBOR acl payload size.
+ * @retval  OC_STACK_OK for Success, otherwise some error value
+ */
+OCStackResult ParseAclPayload(uint8_t *payload,  size_t size)
+{
+    OCPayload* outPayload = NULL;
+    OCStackResult result = OC_STACK_ERROR;
+    if (size)
+    {
+        result = OCParsePayload(&outPayload, payload, size);
+        if (result == OC_STACK_OK)
+        {
+            gAcl = PayloadToAcl((const OCRepPayload*) outPayload);
+            OCPayloadDestroy(outPayload);
+        }
+    }
+    return result;
+}
+
+/**
+ * Initialize ACL resource by loading data from persistent storage.
+ *
+ * @param[in] payload CBOR acl payload pointers.
+ * @param[in] size size of CBOR acl payload.
+ * @retval  OC_STACK_OK for Success, otherwise some error value
+ */
+OCStackResult InitACLResource(uint8_t *payload,  size_t size)
 {
     OCStackResult ret = OC_STACK_ERROR;
-
-    // Read ACL resource from PS
-    char* jsonSVRDatabase = GetSVRDatabase();
-
-    if (jsonSVRDatabase)
+    ret = ParseAclPayload(payload, size);
+    if(ret != OC_STACK_OK)
     {
-        // Convert JSON ACL into binary format
-        gAcl = JSONToAclBin(jsonSVRDatabase);
-        OICFree(jsonSVRDatabase);
+        OC_LOG (ERROR, TAG, PCF("ParseAclPayload failed"));
+
     }
+    // Read ACL resource from PS
     /*
      * If SVR database in persistent storage got corrupted or
      * is not available for some reason, a default ACL is created
      * which allows user to initiate ACL provisioning again.
      */
-    if (!jsonSVRDatabase || !gAcl)
+    if (!gAcl)
     {
         GetDefaultACL(&gAcl);
         // TODO Needs to update persistent storage
@@ -799,15 +693,16 @@ exit:
 /**
  * Perform cleanup for ACL resources.
  *
- * @retval  none
+ * @retval  OC_STACK_OK for Success, otherwise some error value
  */
-void DeInitACLResource()
+OCStackResult DeInitACLResource()
 {
-    OCDeleteResource(gAclHandle);
+    OCStackResult ret = OCDeleteResource(gAclHandle);
     gAclHandle = NULL;
 
     DeleteACLList(gAcl);
     gAcl = NULL;
+    return ret;
 }
 
 /**

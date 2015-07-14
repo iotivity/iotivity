@@ -78,7 +78,8 @@ void DeleteAmaclList(OicSecAmacl_t* amacl)
  */
 char * BinToAmaclJSON(const OicSecAmacl_t * amacl)
 {
-    cJSON *jsonRoot = NULL;
+/* TODO: CBOR
+ *  cJSON *jsonRoot = NULL;
     char *jsonStr = NULL;
 
     if (amacl)
@@ -153,7 +154,7 @@ exit:
     {
         cJSON_Delete(jsonRoot);
     }
-    return jsonStr;
+    return jsonStr;*/
 }
 
 
@@ -164,6 +165,8 @@ exit:
  */
 OicSecAmacl_t * JSONToAmaclBin(const char * jsonStr)
 {
+/*
+ * TODO:CBOR
     OCStackResult ret = OC_STACK_ERROR;
     OicSecAmacl_t * headAmacl = NULL;
     OicSecAmacl_t * prevAmacl = NULL;
@@ -245,22 +248,25 @@ exit:
         headAmacl = NULL;
     }
     return headAmacl;
+*/
+    return NULL;
 }
 
 static OCEntityHandlerResult HandleAmaclGetRequest (const OCEntityHandlerRequest * ehRequest)
 {
-    // Convert Amacl data into JSON for transmission
-    char* jsonStr = BinToAmaclJSON(gAmacl);
+    OCEntityHandlerResult ehRet = OC_EH_ERROR ;
+    // TODO: CBOR
+    //Convert Amacl data into JSON for transmission
+    //char* jsonStr = BinToAmaclJSON(gAmacl);
 
-    OCEntityHandlerResult ehRet = (jsonStr ? OC_EH_OK : OC_EH_ERROR);
 
     // Send response payload to request originator
-    SendSRMResponse(ehRequest, ehRet, jsonStr);
+    //SendSRMResponse(ehRequest, ehRet, jsonStr);
 
-    OICFree(jsonStr);
+    //OICFree(jsonStr);
 
     OC_LOG_V (INFO, TAG, PCF("%s RetVal %d"), __func__ , ehRet);
-    return ehRet;
+    return OC_EH_ERROR;
 }
 
 static OCEntityHandlerResult HandleAmaclPostRequest (const OCEntityHandlerRequest * ehRequest)
@@ -268,6 +274,8 @@ static OCEntityHandlerResult HandleAmaclPostRequest (const OCEntityHandlerReques
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
     // Convert JSON Amacl data into binary. This will also validate the Amacl data received.
+/*
+ * TODO:CBOR
     OicSecAmacl_t* newAmacl = JSONToAmaclBin(((OCSecurityPayload*)ehRequest->payload)->securityData);
 
     if (newAmacl)
@@ -290,6 +298,7 @@ static OCEntityHandlerResult HandleAmaclPostRequest (const OCEntityHandlerReques
             cJSON_Delete(jsonAmacl);
         }
     }
+*/
 
     // Send payload to request originator
     SendSRMResponse(ehRequest, ehRet, NULL);
@@ -368,8 +377,9 @@ OCStackResult InitAmaclResource()
 {
     OCStackResult ret = OC_STACK_ERROR;
 
-    // Read Amacl resource from PS
-    char* jsonSVRDatabase = GetSVRDatabase();
+    // TODO: CBOR
+    //Read Amacl resource from PS
+ /*   char* jsonSVRDatabase = GetSVRDatabase();
 
     if (jsonSVRDatabase)
     {
@@ -385,7 +395,7 @@ OCStackResult InitAmaclResource()
     {
         DeInitAmaclResource();
     }
-    return ret;
+*/    return ret;
 }
 
 /**

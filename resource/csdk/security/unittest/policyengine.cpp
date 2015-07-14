@@ -68,12 +68,12 @@ TEST(PolicyEngineCore, CheckPermissionNoAcls)
 //TODO This won't work until we figure out how to OcInit() or equivalent.
 TEST(PolicyEngineCore, CheckDevOwnerRequest)
 {
-    if(OC_STACK_OK == InitDoxmResource())
+    if(OC_STACK_OK == InitDoxmResource(NULL, 0))
     {
         if(OC_STACK_OK == GetDoxmDevOwnerId(&g_devOwner))
         {
             printf("%s", PE_UT_TAG);
-            for(int i = 0; i < UUID_LENGTH; i++)
+            for(size_t i = 0; i < sizeof(g_devOwner.id); i++)
             {
                 printf("%d", g_devOwner.id[i]);
             }

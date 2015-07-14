@@ -164,15 +164,19 @@ OCStackResult OCProvisionCredentials(void *ctx, OicSecCredType_t type, size_t ke
  */
 static void UpdateLinkResults(Linkdata_t *link, int device, OCStackResult stackresult)
 {
-
     OC_LOG_V(INFO,TAG,"value of link->currentCountResults is %d",link->currentCountResults);
+
     if(1 == device)
     {
-        memcpy(link->resArr[(link->currentCountResults)].deviceId.id, link->pDev1->doxm->deviceID.id,UUID_LENGTH);
+        memcpy(link->resArr[(link->currentCountResults)].deviceId.id,
+                link->pDev1->doxm->deviceID.id,
+                sizeof(link->resArr[(link->currentCountResults)].deviceId.id));
     }
     else
     {
-        memcpy(link->resArr[(link->currentCountResults)].deviceId.id, link->pDev2->doxm->deviceID.id,UUID_LENGTH);
+        memcpy(link->resArr[(link->currentCountResults)].deviceId.id,
+                link->pDev2->doxm->deviceID.id,
+                sizeof(link->resArr[(link->currentCountResults)].deviceId.id));
     }
     link->resArr[(link->currentCountResults)].res = stackresult;
     ++(link->currentCountResults);

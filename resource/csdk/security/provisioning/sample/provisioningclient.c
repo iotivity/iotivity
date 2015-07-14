@@ -156,7 +156,7 @@ static int CalculateAclPermission(const char *temp_pms, uint16_t *pms)
 static int InputACL(OicSecAcl_t *acl)
 {
     int ret;
-    char temp_id [UUID_LENGTH + 4] = {0,};
+    char temp_id [SVR_UUID_LENGTH + 4] = {0,};
     char temp_rsc[MAX_URI_LENGTH + 1] = {0,};
     char temp_pms[MAX_PERMISSION_LENGTH + 1] = {0,};
     printf("******************************************************************************\n");
@@ -183,7 +183,7 @@ static int InputACL(OicSecAcl_t *acl)
     {
         if (DASH != temp_id[i])
         {
-            if(j>UUID_LENGTH)
+            if(j>SVR_UUID_LENGTH)
             {
                 printf("Invalid input\n");
                 return -1;
@@ -305,7 +305,7 @@ void PrintfResult(const char* procName, void* ctx, int nOfRes, OCProvisionResult
         for(int i = 0; i < nOfRes; i++)
         {
             printf("UUID : ");
-            for(int j = 0; j < UUID_LENGTH; i++)
+            for(int j = 0; j < SVR_UUID_LENGTH; i++)
             {
                 printf("%c", arr[i].deviceId.id[j]);
             }
@@ -417,7 +417,7 @@ int main()
     int i;
     while(pCurDev !=NULL)
     {
-        for(i = 0; i < UUID_LENGTH; i++)
+        for(i = 0; i < SVR_UUID_LENGTH; i++)
             printf("%c", pCurDev->doxm->deviceID.id[i]);
         printf("\n");
         pCurDev = pCurDev->next;
@@ -483,7 +483,7 @@ int main()
         {
             nOwnedDevice ++;
             printf(" %d : ", nOwnedDevice);
-            for (int i = 0; i < UUID_LENGTH; i++)
+            for (int i = 0; i < SVR_UUID_LENGTH; i++)
             {
                 printf("%c", pOwnedList->doxm->deviceID.id[i]);
             }

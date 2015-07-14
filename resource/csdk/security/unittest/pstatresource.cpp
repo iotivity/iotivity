@@ -23,31 +23,23 @@
 #include "resourcemanager.h"
 #include "pstatresource.h"
 #include "oic_malloc.h"
-#include "cJSON.h"
-#include "base64.h"
 #include "cainterface.h"
 #include "secureresourcemanager.h"
 #include "srmtestcommon.h"
 #include "ocpayload.h"
 #include <unistd.h>
-#ifdef __cplusplus
-extern "C" {
-#endif
-//Declare Provision status resource methods for testing
-OCStackResult CreatePstatResource();
-OCEntityHandlerResult PstatEntityHandler (OCEntityHandlerFlag flag,
-                                        OCEntityHandlerRequest * ehRequest);
-char * BinToPstatJSON(const OicSecPstat_t * pstat);
-OicSecPstat_t * JSONToPstatBin(const char * jsonStr);
-const char* UNIT_TEST_JSON_FILE_NAME = "oic_unittest.json";
-#ifdef __cplusplus
-}
-#endif
+#include "ocrandom.h"
+#include "psinterface.h"
+#include "ocpayload.h"
+#include <unistd.h>
+
+extern OicSecPstat_t *gPstat;
+OicSecPstat_t pstat;
 
 //InitPstatResource Tests
 TEST(InitPstatResourceTest, InitPstatResource)
 {
-    EXPECT_EQ(OC_STACK_INVALID_PARAM,  InitPstatResource());
+    EXPECT_NE(OC_STACK_OK,  InitPstatResource(NULL, 0));
 }
 
 
@@ -57,118 +49,103 @@ TEST(DeInitPstatResourceTest, DeInitPstatResource)
     EXPECT_EQ(OC_STACK_INVALID_PARAM, DeInitPstatResource());
 }
 
-//CreatePstatResource Tests
-TEST(CreatePstatResourceTest, CreatePstatResource)
-{
-    EXPECT_EQ(OC_STACK_INVALID_PARAM,  CreatePstatResource());
-}
-
 //PstatEntityHandler Tests
 TEST(PstatEntityHandlerTest, PstatEntityHandlerWithDummyRequest)
 {
-    OCEntityHandlerRequest req;
-    EXPECT_EQ(OC_EH_ERROR, PstatEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, &req));
-}
-
-TEST(PstatEntityHandlerTest, PstatEntityHandlerWithPostRequest)
-{
-    OCEntityHandlerRequest req;
-    req.method = OC_REST_POST;
-    req.payload = reinterpret_cast<OCPayload*>(
-            OCSecurityPayloadCreate("{ \"pstat\": { \"tm\": 0, \"om\": 3 }}"));
-    EXPECT_EQ(OC_EH_ERROR, PstatEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, &req));
-    OCPayloadDestroy(req.payload);
+    OCEntityHandlerRequest* req = new OCEntityHandlerRequest();
+    ASSERT_TRUE(req != NULL);
+    if(req)
+    {
+        EXPECT_EQ(OC_EH_ERROR, PstatEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, req, NULL));
+        delete req;
+    }
 }
 
 TEST(PstatEntityHandlerTest, PstatEntityHandlerInvalidRequest)
 {
-    EXPECT_EQ(OC_EH_ERROR, PstatEntityHandler(OCEntityHandlerFlag::OC_OBSERVE_FLAG, NULL));
+    EXPECT_EQ(OC_EH_ERROR, PstatEntityHandler(OCEntityHandlerFlag::OC_OBSERVE_FLAG, NULL, NULL));
 }
 
-//BinToJSON Tests
-TEST(BinToJSONTest, BinToNullJSON)
+TEST(PstatConversionTest, PstatConversionWithInvalidValues)
 {
-    char* value = BinToPstatJSON(NULL);
-    EXPECT_TRUE(value == NULL);
-}
-
-TEST(JSONToBinTest, NullJSONToBin)
-{
-    OicSecPstat_t *pstat1 = JSONToPstatBin(NULL);
+    OCRepPayload* payload = PstatToPayload(NULL);
+    EXPECT_TRUE(NULL == payload);
+    OicSecPstat_t *pstat1 = PayloadToPstat(payload);
     EXPECT_TRUE(pstat1 == NULL);
 }
 
-TEST(MarshalingAndUnMarshalingTest, BinToPstatJSONAndJSONToPstatBin)
+TEST(PstatConversionTest, PstatConversionWithValidValues)
 {
-    const char* id = "ZGV2aWNlaWQAAAAAABhanw==";
-    OicSecPstat_t pstat;
     pstat.cm = NORMAL;
     pstat.commitHash = 0;
-    uint32_t outLen = 0;
-    unsigned char base64Buff[sizeof(((OicUuid_t*) 0)->id)] = {};
-    EXPECT_EQ(B64_OK, b64Decode(id, strlen(id), base64Buff, sizeof(base64Buff), &outLen));
-    memcpy(pstat.deviceID.id, base64Buff, outLen);
-    pstat.isOp = true;
+    OCFillRandomMem(pstat.deviceID.id, sizeof(pstat.deviceID.id));
+    pstat.isOp = false;
     pstat.tm = NORMAL;
     pstat.om = SINGLE_SERVICE_CLIENT_DRIVEN;
     pstat.smLen = 2;
     pstat.sm = (OicSecDpom_t*)OICCalloc(pstat.smLen, sizeof(OicSecDpom_t));
-    if(!pstat.sm)
+    if(pstat.sm)
     {
-        FAIL() << "Failed to allocate the pstat.sm";
+        pstat.sm[0] = SINGLE_SERVICE_CLIENT_DRIVEN;
+        pstat.sm[1] = SINGLE_SERVICE_SERVER_DRIVEN;
     }
-    pstat.sm[0] = SINGLE_SERVICE_CLIENT_DRIVEN;
-    pstat.sm[1] = SINGLE_SERVICE_SERVER_DRIVEN;
-    char* jsonPstat = BinToPstatJSON(&pstat);
-    if(!jsonPstat)
+    OCRepPayload* payload = PstatToPayload(&pstat);
+    ASSERT_TRUE(payload != NULL);
+    if(payload)
     {
-        OICFree(pstat.sm);
-        FAIL() << "Failed to convert BinToPstatJSON";
-        return;
+        OicSecPstat_t *pstat1 = PayloadToPstat(payload);
+        ASSERT_TRUE(pstat1 != NULL);
+        if(pstat1 && pstat.sm)
+        {
+            EXPECT_TRUE(pstat1->cm == pstat.cm);
+            EXPECT_TRUE(pstat1->sm[1] == pstat.sm[1]);
+        }
+        OICFree(pstat1);
     }
-    printf("BinToJSON Dump:\n%s\n\n", jsonPstat);
-    EXPECT_TRUE(jsonPstat != NULL);
-    OicSecPstat_t *pstat1 = JSONToPstatBin(jsonPstat);
-    EXPECT_TRUE(pstat1 != NULL);
-    if(pstat1)
-    {
-        OICFree(pstat1->sm);
-    }
-    OICFree(pstat1);
-    OICFree(jsonPstat);
-    OICFree(pstat.sm);
+    OCRepPayloadDestroy(payload);
+
 }
 
-TEST(PstatTests, JSONMarshalliingTests)
+TEST(PstatReadWriteTests, PstatReadWriteData)
 {
-    char *jsonStr1 = ReadFile(UNIT_TEST_JSON_FILE_NAME);
-    if (NULL != jsonStr1)
+    static OCPersistentStorage ps = {fopen, fread, fwrite, fclose, unlink};
+    EXPECT_EQ(OC_STACK_OK,
+            OCRegisterPersistentStorageHandler(&ps));
+    gPstat = &pstat;
+    uint8_t *pstatPayload;
+    size_t pstatSize;
+    UpdateSVRData();
+    EXPECT_EQ(OC_STACK_OK, ConvertPstatData(&pstatPayload, &pstatSize));
+    OicSvr_t svr = {0, 0, 0, 0, 0, 0, 0, 0};
+    EXPECT_EQ(OC_STACK_OK, ReadSVDataFromPS(&svr));
+    OICFree(svr.aclPayload);
+    OICFree(svr.credPayload);
+    OICFree(svr.doxmPayload);
+    OICFree(svr.pstatPayload);
+    EXPECT_TRUE(pstat.cm == gPstat->cm);
+    EXPECT_TRUE(pstat.sm[1] == gPstat->sm[1]);
+}
+
+TEST(PstatEntityHandlerTest, PstatEntityHandlerWithPutRequest)
+{
+    OCEntityHandlerRequest* req = new OCEntityHandlerRequest();
+    ASSERT_TRUE(req != NULL);
+    if(req)
     {
-        cJSON_Minify(jsonStr1);
-        /* Workaround : cJSON_Minify does not remove all the unwanted characters
-         from the end. Here is an attempt to remove those characters */
-        int len = strlen(jsonStr1);
-        while (len > 0)
+        req->method = OC_REST_PUT;
+        pstat.isOp = true;
+        pstat.cm = NORMAL;
+        pstat.commitHash = 0;
+        OCFillRandomMem(pstat.deviceID.id, sizeof(pstat.deviceID.id));
+        OCRepPayload* payload = PstatToPayload(&pstat);
+        ASSERT_TRUE(payload != NULL);
+        if(payload)
         {
-            if (jsonStr1[--len] == '}')
-            {
-                break;
-            }
+            req->payload = (OCPayload*)payload;
+            req->payload->type = PAYLOAD_TYPE_REPRESENTATION;
+            EXPECT_EQ(OC_EH_ERROR, PstatEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, req, NULL));
+            OCRepPayloadDestroy(payload);
         }
-        jsonStr1[len + 1] = 0;
-
-        OicSecPstat_t* pstat = JSONToPstatBin(jsonStr1);
-        EXPECT_TRUE(NULL != pstat);
-
-        char* jsonStr2 = BinToPstatJSON(pstat);
-        EXPECT_STRNE(jsonStr1, jsonStr2);
-
-        OICFree(jsonStr1);
-        OICFree(jsonStr2);
-        OICFree(pstat);
-   }
-    else
-    {
-        printf("Please copy %s into unittest folder\n", UNIT_TEST_JSON_FILE_NAME);
+        delete req;
     }
 }

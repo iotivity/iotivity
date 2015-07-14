@@ -54,9 +54,11 @@ char* CreatePinBasedSelectOxmPayload(OTMContext_t* otmCtx)
         OC_LOG(ERROR, TAG, "Error while retrieving provisioning tool's device ID");
         return NULL;
     }
-    memcpy(otmCtx->selectedDeviceInfo->doxm->owner.id, uuidPT.id, UUID_LENGTH);
+    memcpy(otmCtx->selectedDeviceInfo->doxm->owner.id,
+            uuidPT.id, sizeof(otmCtx->selectedDeviceInfo->doxm->owner.id));
 
-    return BinToDoxmJSON(otmCtx->selectedDeviceInfo->doxm);
+    //BinToDoxmJSON(otmCtx->selectedDeviceInfo->doxm);
+    return NULL;
 }
 
 char* CreatePinBasedOwnerTransferPayload(OTMContext_t* otmCtx)
@@ -73,10 +75,12 @@ char* CreatePinBasedOwnerTransferPayload(OTMContext_t* otmCtx)
         OC_LOG(ERROR, TAG, "Error while retrieving provisioning tool's device ID");
         return NULL;
     }
-    memcpy(otmCtx->selectedDeviceInfo->doxm->owner.id, uuidPT.id , UUID_LENGTH);
+    memcpy(otmCtx->selectedDeviceInfo->doxm->owner.id,
+            uuidPT.id , sizeof(otmCtx->selectedDeviceInfo->doxm->owner.id));
     otmCtx->selectedDeviceInfo->doxm->owned = true;
 
-    return BinToDoxmJSON(otmCtx->selectedDeviceInfo->doxm);
+    //BinToDoxmJSON(otmCtx->selectedDeviceInfo->doxm);
+    return NULL;
 }
 
 OCStackResult InputPinCodeCallback(OTMContext_t* otmCtx)

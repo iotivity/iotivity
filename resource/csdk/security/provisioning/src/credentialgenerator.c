@@ -30,8 +30,7 @@
 #define TAG "SRPAPI-CG"
 
 /**
- * @def PM_VERIFY_SUCCESS
- * @brief Macro to verify success of operation.
+ * Macro to verify success of operation.
  *        eg: PM_VERIFY_SUCCESS(TAG, OC_STACK_OK == foo(), OC_STACK_ERROR, ERROR);
  * @note Invoking function must define "bail:" label for goto functionality to work correctly and
  *       must define "OCStackResult res" for setting error code.
@@ -39,8 +38,7 @@
 #define PM_VERIFY_SUCCESS(tag, op, errCode, logLevel) { if (!(op)) \
                        {OC_LOG((logLevel), tag, PCF(#op " failed!!")); res = errCode; goto bail;} }
 /**
- * @def PM_VERIFY_NON_NULL
- * @brief Macro to verify argument is not equal to NULL.
+ * Macro to verify argument is not equal to NULL.
  *        eg: PM_VERIFY_NON_NULL(TAG, ptrData, ERROR);
  * @note Invoking function must define "bail:" label for goto functionality to work correctly.
  * */
@@ -52,7 +50,6 @@ OCStackResult PMGeneratePairWiseCredentials(OicSecCredType_t type, size_t keySiz
                                     const OicUuid_t *firstDeviceId, const OicUuid_t *secondDeviceId,
                                     OicSecCred_t **firstCred, OicSecCred_t **secondCred)
 {
-
     if (NULL == ptDeviceId || NULL == firstDeviceId || NULL != *firstCred || \
         NULL == secondDeviceId || NULL != *secondCred)
     {

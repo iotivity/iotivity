@@ -40,7 +40,9 @@ char* CreateJustWorksSelectOxmPayload(OTMContext_t* otmCtx)
     }
 
     otmCtx->selectedDeviceInfo->doxm->oxmSel = OIC_JUST_WORKS;
-    return BinToDoxmJSON(otmCtx->selectedDeviceInfo->doxm);
+    //TODO: CBOR
+    //BinToDoxmJSON(otmCtx->selectedDeviceInfo->doxm);
+    return NULL;
 }
 
 char* CreateJustWorksOwnerTransferPayload(OTMContext_t* otmCtx)
@@ -57,10 +59,11 @@ char* CreateJustWorksOwnerTransferPayload(OTMContext_t* otmCtx)
         OC_LOG(ERROR, TAG, "Error while retrieving provisioning tool's device ID");
         return NULL;
     }
-    memcpy(otmCtx->selectedDeviceInfo->doxm->owner.id, uuidPT.id , UUID_LENGTH);
+    memcpy(otmCtx->selectedDeviceInfo->doxm->owner.id, uuidPT.id , SVR_UUID_LENGTH);
     otmCtx->selectedDeviceInfo->doxm->owned = true;
 
-    return BinToDoxmJSON(otmCtx->selectedDeviceInfo->doxm);
+    //BinToDoxmJSON(otmCtx->selectedDeviceInfo->doxm);
+    return NULL;
 }
 
 OCStackResult LoadSecretJustWorksCallback(OTMContext_t* UNUSED_PARAM)

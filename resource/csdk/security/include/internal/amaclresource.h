@@ -36,14 +36,13 @@ extern "C" {
 /**
  * Initialize Amacl resource by loading data from persistent storage.
  *
- * @retval  OC_STACK_OK for Success, otherwise some error value
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
 OCStackResult InitAmaclResource();
 
 /**
  * Perform cleanup for Amacl resources.
  *
- * @retval  none
  */
 void DeInitAmaclResource();
 
@@ -54,21 +53,11 @@ void DeInitAmaclResource();
  * @param savePtr is used internally by @ref GetAmaclResourceData to maintain index between
  *                successive calls for same subjectId.
  *
- * @retval  reference to @ref OicSecAmacl_t if Amacl is found, else NULL
+ * @return reference to Amcal_t if Amacl is found, else NULL.
  *
- * @note On the first call to @ref GetAmaclResourceData, savePtr should point to NULL
+ * @note On the first call to @ref GetAmaclResourceData, savePtr should point to NULL.
  */
 const OicSecAmacl_t* GetAmaclResourceData(const OicUuid_t* subjectId, OicSecAmacl_t **savePtr);
-
-/**
- * This function converts Amacl data into JSON format.
- * Caller needs to invoke 'free' when done using
- * returned string.
- * @param Amacl  instance of OicSecAmacl_t structure.
- *
- * @retval  pointer to Amacl in json format.
- */
-char* BinToAmaclJSON(const OicSecAmacl_t * amacl);
 
 #ifdef __cplusplus
 }

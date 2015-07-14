@@ -87,9 +87,6 @@ OCStackResult OCParsePayload(OCPayload** outPayload, const uint8_t* payload, siz
         case PAYLOAD_TYPE_PRESENCE:
             result = OCParsePresencePayload(outPayload, &arrayValue);
             break;
-        case PAYLOAD_TYPE_SECURITY:
-            result = OCParseSecurityPayload(outPayload, &arrayValue);
-            break;
         default:
             OC_LOG_V(ERROR, TAG, "ParsePayload Type default: %d", payloadType);
             result = OC_STACK_ERROR;
@@ -113,44 +110,6 @@ OCStackResult OCParsePayload(OCPayload** outPayload, const uint8_t* payload, siz
 }
 
 void OCFreeOCStringLL(OCStringLL* ll);
-
-static OCStackResult OCParseSecurityPayload(OCPayload** outPayload, CborValue* arrayVal)
-{
-    bool err = false;
-    char * securityData = NULL;
-
-    if(cbor_value_is_map(arrayVal))
-    {
-        CborValue curVal;
-        err = err || cbor_value_map_find_value(arrayVal, OC_RSRVD_REPRESENTATION, &curVal);
-
-        if(cbor_value_is_valid(&curVal))
-        {
-            size_t len;
-            err = err || cbor_value_dup_text_string(&curVal, &securityData, &len, NULL);
-        }
-    }
-    else
-    {
-        OC_LOG_V(ERROR, TAG, PCF("Cbor main value not a map"));
-        return OC_STACK_MALFORMED_RESPONSE;
-    }
-
-    err = err || cbor_value_advance(arrayVal);
-
-    if(err)
-    {
-        OC_LOG_V(ERROR, TAG, "Cbor in error condition");
-        OICFree(securityData);
-        return OC_STACK_MALFORMED_RESPONSE;
-    }
-
-    *outPayload = (OCPayload*)OCSecurityPayloadCreate(securityData);
-    OICFree(securityData);
-
-    return OC_STACK_OK;
-
-}
 
 static OCStackResult OCParseDiscoveryPayload(OCPayload** outPayload, CborValue* arrayVal)
 {

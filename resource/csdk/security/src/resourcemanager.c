@@ -26,10 +26,13 @@
 #include "credresource.h"
 #include "svcresource.h"
 #include "amaclresource.h"
+#include "psinterface.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "logger.h"
 #include "utlist.h"
+#include "srmutility.h"
+#include "ocpayload.h"
 #include <string.h>
 
 #define TAG PCF("SRM-RM")
@@ -43,27 +46,27 @@
  *
  * @retval  OC_STACK_OK for Success, otherwise some error value
  */
+
 OCStackResult SendSRMResponse(const OCEntityHandlerRequest *ehRequest,
-        OCEntityHandlerResult ehRet, const char *rspPayload)
+        OCEntityHandlerResult ehRet, const OCRepPayload *rspPayload)
 {
     OC_LOG (INFO, TAG, PCF("SRM sending SRM response"));
-    OCEntityHandlerResponse response = {.requestHandle = NULL};
+    OCEntityHandlerResponse response =
+        { ehRequest->requestHandle, ehRequest->resource, ehRet, 0, 0, { },{ 0 }, 0 };
+    OCStackResult ret = OC_STACK_ERROR;
     if (ehRequest)
     {
-        OCSecurityPayload ocPayload = {.base = {.type = PAYLOAD_TYPE_INVALID}};
-
-        response.requestHandle = ehRequest->requestHandle;
-        response.resourceHandle = ehRequest->resource;
-        response.ehResult = ehRet;
-        response.payload = (OCPayload*)(&ocPayload);
-        response.payload->type = PAYLOAD_TYPE_SECURITY;
-        ((OCSecurityPayload*)response.payload)->securityData = (char *)rspPayload;
-        response.persistentBufferFlag = 0;
-
-        return OCDoResponse(&response);
+        if (rspPayload)
+        {
+            response.payload = (OCPayload*) rspPayload;
+            response.payload->type = PAYLOAD_TYPE_REPRESENTATION;
+        }
+        ret = OCDoResponse(&response);
     }
-    return OC_STACK_ERROR;
+    OCRepPayloadDestroy((OCRepPayload*)rspPayload);
+    return ret;
 }
+
 
 /**
  * Initialize all secure resources ( /oic/sec/cred, /oic/sec/acl, /oic/sec/pstat etc).
@@ -72,40 +75,58 @@ OCStackResult SendSRMResponse(const OCEntityHandlerRequest *ehRequest,
  */
 OCStackResult InitSecureResources( )
 {
-    OCStackResult ret;
-
+    //Read data from persistent storage.
+    OicSvr_t svr = {.aclPayload = NULL};
+    OCStackResult ret = ReadSVDataFromPS(&svr);
+    if (ret != OC_STACK_OK)
+    {
+        OC_LOG (INFO, TAG, PCF("ReadSVDataFromPS failed"));
+    }
     /*
      * doxm resource should be initialized first as it contains the DeviceID
      * which MAY be used during initialization of other resources.
      */
-
-    ret = InitDoxmResource();
-
+    ret = InitDoxmResource(svr.doxmPayload, svr.doxmSize);
     if(OC_STACK_OK == ret)
     {
-        ret = InitPstatResource();
+        ret = InitPstatResource(svr.pstatPayload, svr.pstatSize);
+
     }
     if(OC_STACK_OK == ret)
     {
-        ret = InitACLResource();
+        ret = InitACLResource(svr.aclPayload, svr.aclSize);
     }
     if(OC_STACK_OK == ret)
+    {
+        ret = InitCredResource(svr.credPayload, svr.credSize);
+    }
+
+ /*
+  * TODO: CBOR
+  * if(OC_STACK_OK == ret)
     {
         ret = InitCredResource();
     }
     if(OC_STACK_OK == ret)
     {
         ret = InitSVCResource();
-	}
-	if(OC_STACK_OK == ret)
+    }
+    if(OC_STACK_OK == ret)
     {
         ret = InitAmaclResource();
     }
-    if(OC_STACK_OK != ret)
+  */
+
+    if (OC_STACK_OK != ret)
     {
         //TODO: Update the default behavior if one of the SVR fails
         DestroySecureResources();
     }
+    OICFree(svr.doxmPayload);
+    OICFree(svr.aclPayload);
+    OICFree(svr.credPayload);
+    OICFree(svr.pstatPayload);
+
     return ret;
 }
 

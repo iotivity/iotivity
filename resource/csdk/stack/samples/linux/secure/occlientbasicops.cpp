@@ -49,7 +49,7 @@ static OCConnectivityType ocConnType;
 //Secure Virtual Resource database for Iotivity Client application
 //It contains Client's Identity and the PSK credentials
 //of other devices which the client trusts
-static char CRED_FILE[] = "oic_svr_db_client.json";
+static char CRED_FILE[] = "oic_svr_db_client.dat";
 
 
 int gQuitFlag = 0;

@@ -30,14 +30,16 @@ extern "C" {
 /**
  * Initialize DOXM resource by loading data from persistent storage.
  *
- * @retval  OC_STACK_OK for Success, otherwise some error value
+ * @param[in] payload is a pointer of CBOR doxm payload.
+ * @param[in] size is CBOR doxm payload size.
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
-OCStackResult InitDoxmResource();
+OCStackResult InitDoxmResource(uint8_t *payload,  size_t size);
 
 /**
  * Perform cleanup for DOXM resources.
  *
- * @retval  OC_STACK_OK for Success, otherwise some error value
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
 OCStackResult DeInitDoxmResource();
 
@@ -49,35 +51,34 @@ OCStackResult DeInitDoxmResource();
 const OicSecDoxm_t* GetDoxmResourceData();
 
 /**
- * This method converts JSON DOXM into binary DOXM.
- * The JSON DOXM can be from persistent database or
+ * This method converts OCRepPayload into binary doxm.
+ * The OCRepPayload can be from persistent database or
  * or received as PUT/POST request.
  *
- * @param[in] jsonStr  doxm data in json string.
+ * @param[in] payload  doxm data.
  * @return pointer to OicSecDoxm_t.
  *
  * @note Caller needs to invoke OCFree after done
  *       using the return pointer
  */
-OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr);
+OicSecDoxm_t* PayloadToDoxm(const OCRepPayload* payload);
 
 /**
- * This method converts DOXM data into JSON format.
+ * This method converts DOXM data into OCRepPayload.
  * Caller needs to invoke 'free' when finished done using
- * return string
+ * return string.
  *
  * @param[in] doxm  Pointer to OicSecDoxm_t.
- * @return pointer to json string.
+ * @return pointer to OCRepPayload.
  *
  * @note Caller needs to invoke OCFree after done
  *       using the return pointer
  */
-char * BinToDoxmJSON(const OicSecDoxm_t * doxm);
-
+OCRepPayload* DoxmToPayload(const OicSecDoxm_t * doxm);
 /**
  * This method returns the SRM device ID for this device.
  *
- * @retval  OC_STACK_OK for Success, otherwise some error value
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
 OCStackResult GetDoxmDeviceID(OicUuid_t *deviceID);
 
@@ -94,6 +95,32 @@ OCStackResult GetDoxmDevOwnerId(OicUuid_t *devOwner);
  */
 void DeleteDoxmBinData(OicSecDoxm_t* doxm);
 
+/**
+ * This internal method is the entity handler for DOXM resources.
+ *
+ * @param[in] flag  for request or observe.
+ * @param[in] ehRequest      pointer to the OCEntityHandlerRequest struct that is created.
+ * @param[in] callbackParam  Parameter passed back when entityHandler is called.
+ * @retval  OC_EH_OK for Success, otherwise some error value.
+ */
+OCEntityHandlerResult DoxmEntityHandler(OCEntityHandlerFlag flag,
+            OCEntityHandlerRequest * ehRequest,
+            void* callbackParam);
+
+/**
+ * Get the default value.
+ * @retval  the gDefaultDoxm pointer;
+ */
+OicSecDoxm_t* GetDoxmDefault();
+
+/**
+ * This method converts SVR buffers into OCRepPayload and updates the persistent storage.
+ *
+ * @param[out] payload is a pointer of CBOR doxm payload.
+ * @param[out] size is CBOR doxm payload size.
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
+ */
+OCStackResult ConvertDoxmData(uint8_t **payload,  size_t *size);
 
 #ifdef __cplusplus
 }

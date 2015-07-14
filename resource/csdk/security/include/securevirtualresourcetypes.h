@@ -127,6 +127,28 @@ typedef enum
     RESOURCE_NOT_FOUND = RESOURCE_NOT_FOUND_DEF,
 } SRMAccessResponseReasonCode_t;
 
+typedef enum
+{
+    ACL,
+    PSTAT,
+    CRED,
+    DOXM,
+    ALL
+}OicSvrType_t;
+
+struct OicSvr
+{
+    uint8_t * aclPayload;
+    size_t aclSize;
+    uint8_t * pstatPayload;
+    size_t pstatSize;
+    uint8_t * doxmPayload;
+    size_t doxmSize;
+    uint8_t * credPayload;
+    size_t credSize;
+};
+
+typedef struct OicSvr OicSvr_t;
 /**
  * Extract Reason Code from Access Response.
  */
@@ -255,17 +277,17 @@ typedef struct OicUuid OicUuid_t; //TODO is UUID type defined elsewhere?
 /**
  * @brief   /oic/uuid (Universal Unique Identifier) data type.
  */
-#define UUID_LENGTH 128/8 // 128-bit GUID length
+#define SVR_UUID_LENGTH 128/8 // 128-bit GUID length
 //TODO: Confirm the length and type of ROLEID.
 #define ROLEID_LENGTH 128/8 // 128-bit ROLEID length
 #define OWNER_PSK_LENGTH_128 128/8 //byte size of 128-bit key size
 #define OWNER_PSK_LENGTH_256 256/8 //byte size of 256-bit key size
-
+#define MAX_OWNERS 4
 struct OicUuid
 {
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
     //TODO fill in unless this is defined elsewhere?
-    uint8_t             id[UUID_LENGTH];
+    uint8_t             id[SVR_UUID_LENGTH];
 };
 
 /**

@@ -18,6 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include <string.h>
 #include "oic_malloc.h"
 #include "policyengine.h"
 #include "resourcemanager.h"
@@ -28,7 +29,6 @@
 #include "srmutility.h"
 #include "doxmresource.h"
 #include "iotvticalendar.h"
-#include <string.h>
 
 #define TAG PCF("SRM-PE")
 
@@ -68,7 +68,7 @@ bool UuidCmp(OicUuid_t *firstId, OicUuid_t *secondId)
     {
         return false;
     }
-    for(int i = 0; i < UUID_LENGTH; i++)
+    for(size_t i = 0; i < sizeof(firstId->id); i++)
     {
         if(firstId->id[i] != secondId->id[i])
         {

@@ -29,13 +29,15 @@ extern "C" {
 #endif
 
 /**
- * Initialize credential resource by loading data from persistent storage.
+ * Initialize Cred resource by loading data from persistent storage.
  *
+ * @param[in] payload is a pointer of CBOR cred payload.
+ * @param[in] size is CBOR cred payload size.
  * @retval
  *     OC_STACK_OK    - no errors
  *     OC_STACK_ERROR - stack process error
  */
-OCStackResult InitCredResource();
+OCStackResult InitCredResource(uint8_t *payload, size_t size);
 
 /**
  * Perform cleanup for credential resources.
@@ -60,17 +62,28 @@ OCStackResult DeInitCredResource();
 const OicSecCred_t* GetCredResourceData(const OicUuid_t* subjectId);
 
 /**
- * This function converts credential data into JSON format.
+ * This function converts credential data into OCRepPayload.
  * Caller needs to invoke 'free' when done using
  * returned string.
+ *
  * @param cred  pointer to instance of OicSecCred_t structure.
  *
  * @retval
- *      pointer to JSON credential representation - if credential for subjectId found
- *      NULL                                      - if credential for subjectId not found
+ *      pointer to OCRepPayload credential representation - if credential for subjectId found
+ *      NULL                                              - if credential for subjectId not found
  */
-char* BinToCredJSON(const OicSecCred_t* cred);
+OCRepPayload* CredToPayload(const OicSecCred_t * cred);
 
+/**
+ * This function converts credential data from OCRepPayload.
+ *
+ * @param cred  payload to instance of OCRepPayload.
+ *
+ * @retval
+ *      pointer to instance of OicSecCred_t structure - success
+ *      NULL                                          - error
+ */
+OicSecCred_t* PayloadToCred(const OCRepPayload* payload);
 /**
  * This function generates the bin credential data.
  *
@@ -105,7 +118,7 @@ OCStackResult AddCredential(OicSecCred_t * cred);
  *
  * @param credId Credential ID to be deleted.
  *
- * @return OC_STACK_OK for success and errorcode otherwise.
+ * @return ::OC_STACK_OK for success and errorcode otherwise.
  */
 OCStackResult RemoveCredential(const OicUuid_t* credId);
 
@@ -135,11 +148,15 @@ void GetDtlsPskCredentials(CADtlsPskCredsBlob_t **credInfo);
  * @param[in] owners Array of owners
  * @param[out] tmpCredSubject Generated credential's subject.
  *
- * @return OC_STACK_OK for success and errorcode otherwise.
+ * @return ::OC_STACK_OK for success and errorcode otherwise.
  */
-OCStackResult AddTmpPskWithPIN(const OicUuid_t* tmpSubject, OicSecCredType_t credType,
-                            const char * pin, size_t pinSize,
-                            size_t ownersLen, const OicUuid_t * owners, OicUuid_t* tmpCredSubject);
+OCStackResult AddTmpPskWithPIN(const OicUuid_t* tmpSubject,
+            OicSecCredType_t credType,
+            const char * pin,
+            size_t pinSize,
+            size_t ownersLen,
+            const OicUuid_t * owners,
+            OicUuid_t* tmpCredSubject);
 
 #endif /* __WITH_DTLS__ */
 
@@ -150,6 +167,27 @@ OCStackResult AddTmpPskWithPIN(const OicUuid_t* tmpSubject, OicSecCredType_t cre
  *
  */
 void DeleteCredList(OicSecCred_t* cred);
+
+/**
+ * This internal method is the entity handler for Cred resources.
+ *
+ * @param[in] flag  for request or observe.
+ * @param[in] ehRequest      pointer to the OCEntityHandlerRequest struct that is created.
+ * @param[in] callbackParam  parameter passed back when entityHandler is called.
+ * @retval  OC_EH_OK for Success, otherwise some error value
+ */
+OCEntityHandlerResult CredEntityHandler(OCEntityHandlerFlag flag,
+            OCEntityHandlerRequest * ehRequest,
+            void* callbackParameter);
+
+/**
+ * This method converts SVR buffers into OCRepPayload and updates the persistent storage.
+ *
+ * @param[out] payload is a pointer of CBOR cred payload.
+ * @param[out] size is CBOR cred payload size.
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
+ */
+OCStackResult ConvertCredData(uint8_t **payload,  size_t *size);
 
 #ifdef __cplusplus
 }

@@ -23,6 +23,7 @@
 
 #include "securevirtualresourcetypes.h"
 
+extern char * SVR_DB_FILE;
 extern const char * SVR_DB_FILE_NAME;
 extern const char * OIC_MI_DEF;
 

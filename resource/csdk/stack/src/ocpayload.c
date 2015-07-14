@@ -56,9 +56,6 @@ void OCPayloadDestroy(OCPayload* payload)
         case PAYLOAD_TYPE_PRESENCE:
             OCPresencePayloadDestroy((OCPresencePayload*)payload);
             break;
-        case PAYLOAD_TYPE_SECURITY:
-            OCSecurityPayloadDestroy((OCSecurityPayload*)payload);
-            break;
         default:
             OC_LOG_V(ERROR, TAG, "Unsupported payload type in destroy: %d", payload->type);
             OICFree(payload);
@@ -1092,32 +1089,6 @@ OCDiscoveryPayload* OCDiscoveryPayloadCreate()
     payload->base.type = PAYLOAD_TYPE_DISCOVERY;
 
     return payload;
-}
-
-OCSecurityPayload* OCSecurityPayloadCreate(const char* securityData)
-{
-    OCSecurityPayload* payload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
-
-    if(!payload)
-    {
-        return NULL;
-    }
-
-    payload->base.type = PAYLOAD_TYPE_SECURITY;
-    payload->securityData = OICStrdup(securityData);
-
-    return payload;
-}
-
-void OCSecurityPayloadDestroy(OCSecurityPayload* payload)
-{
-    if(!payload)
-    {
-        return;
-    }
-
-    OICFree(payload->securityData);
-    OICFree(payload);
 }
 
 size_t OCDiscoveryPayloadGetResourceCount(OCDiscoveryPayload* payload)

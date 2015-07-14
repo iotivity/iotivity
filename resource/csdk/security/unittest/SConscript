@@ -31,7 +31,8 @@ src_dir = srmtest_env.get('SRC_DIR')
 ######################################################################
 srmtest_env.PrependUnique(CPPPATH = [
         '../../ocmalloc/include',
-		'../../connectivity/inc',
+        '../../ocrandom/include',
+        '../../connectivity/inc',
 		'../../connectivity/api',
 		'../../connectivity/external/inc',
 		'../../connectivity/lib/libcoap-4.1.1',
@@ -74,11 +75,7 @@ unittest = srmtest_env.Program('unittest', ['aclresourcetest.cpp',
                                             'policyengine.cpp',
                                             'securityresourcemanager.cpp',
                                             'credentialresource.cpp',
-                                            'srmutility.cpp',
-                                            'iotvticalendartest.cpp',
-                                            'base64tests.cpp',
-                                            'svcresourcetest.cpp',
-                                            'srmtestcommon.cpp'])
+                                            'srmutility.cpp'])
 
 Alias("test", [unittest])
 

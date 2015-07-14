@@ -19,6 +19,7 @@
 #include "gtest/gtest.h"
 #include "ocstack.h"
 #include "resourcemanager.h"
+#include "psinterface.h"
 #include "securevirtualresourcetypes.h"
 #include "srmresourcestrings.h"
 #include "doxmresource.h"
@@ -26,28 +27,11 @@
 #include "oic_string.h"
 #include "oic_malloc.h"
 #include "logger.h"
+#include "ocpayload.h"
 
 #define TAG  PCF("SRM-DOXM")
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
-//Declare Doxm resource methods for testing
-OCStackResult CreateDoxmResource();
-OCEntityHandlerResult DoxmEntityHandler (OCEntityHandlerFlag flag,
-                OCEntityHandlerRequest * ehRequest);
-char * BinToDoxmJSON(const OicSecDoxm_t * doxm);
-OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr);
-void InitSecDoxmInstance(OicSecDoxm_t * doxm);
-OCEntityHandlerResult HandleDoxmPostRequest (const OCEntityHandlerRequest * ehRequest);
-void DeleteDoxmBinData(OicSecDoxm_t* doxm);
-OCEntityHandlerResult HandleDoxmGetRequest (const OCEntityHandlerRequest * ehRequest);
-#ifdef __cplusplus
-}
-#endif
-
+extern OicSecDoxm_t *gDoxm;
 
 OicSecDoxm_t * getBinDoxm()
 {
@@ -60,28 +44,23 @@ OicSecDoxm_t * getBinDoxm()
     doxm->oxmType    = (OicUrn_t *)OICCalloc(doxm->oxmTypeLen, sizeof(char *));
     if(!doxm->oxmType)
     {
-        OICFree(doxm);
+        DeleteDoxmBinData(doxm);
         return NULL;
     }
     doxm->oxmType[0] = (char*)OICMalloc(strlen(OXM_JUST_WORKS) + 1);
     if(!doxm->oxmType[0])
     {
-        OICFree(doxm->oxmType);
-        OICFree(doxm);
+        DeleteDoxmBinData(doxm);
         return NULL;
     }
-
     strcpy(doxm->oxmType[0], OXM_JUST_WORKS);
     doxm->oxmLen     = 1;
     doxm->oxm        = (OicSecOxm_t *)OICCalloc(doxm->oxmLen, sizeof(OicSecOxm_t));
     if(!doxm->oxm)
     {
-        OICFree(doxm->oxmType[0]);
-        OICFree(doxm->oxmType);
-        OICFree(doxm);
+        DeleteDoxmBinData(doxm);
         return NULL;
     }
-
     doxm->oxm[0]     = OIC_JUST_WORKS;
     doxm->oxmSel     = OIC_JUST_WORKS;
     doxm->owned      = true;
@@ -95,7 +74,7 @@ OicSecDoxm_t * getBinDoxm()
  //InitDoxmResource Tests
 TEST(InitDoxmResourceTest, InitDoxmResource)
 {
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, InitDoxmResource());
+    EXPECT_NE(OC_STACK_OK, InitDoxmResource(NULL, 0));
 }
 
 //DeInitDoxmResource Tests
@@ -104,100 +83,119 @@ TEST(DeInitDoxmResourceTest, DeInitDoxmResource)
     EXPECT_EQ(OC_STACK_ERROR, DeInitDoxmResource());
 }
 
-//CreateDoxmResource Tests
-TEST(CreateDoxmResourceTest, CreateDoxmResource)
-{
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, CreateDoxmResource());
-}
-
  //DoxmEntityHandler Tests
 TEST(DoxmEntityHandlerTest, DoxmEntityHandlerWithDummyRequest)
 {
-    OCEntityHandlerRequest req;
-    EXPECT_EQ(OC_EH_ERROR, DoxmEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, &req));
+    OCEntityHandlerRequest* req = new OCEntityHandlerRequest();
+    ASSERT_TRUE(req != NULL);
+    if(req)
+    {
+        EXPECT_EQ(OC_EH_ERROR,
+                DoxmEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, req, NULL));
+        delete req;
+    }
 }
 
 TEST(DoxmEntityHandlerTest, DoxmEntityHandlerWithNULLRequest)
 {
-    EXPECT_EQ(OC_EH_ERROR, DoxmEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, NULL));
+    EXPECT_EQ(OC_EH_ERROR, DoxmEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, NULL, NULL));
 }
 
 TEST(DoxmEntityHandlerTest, DoxmEntityHandlerInvalidFlag)
 {
-    OCEntityHandlerRequest req;
-    EXPECT_EQ(OC_EH_ERROR, DoxmEntityHandler(OCEntityHandlerFlag::OC_OBSERVE_FLAG, &req));
+    OCEntityHandlerRequest* req = new OCEntityHandlerRequest();
+    if(req)
+    {
+        EXPECT_EQ(OC_EH_ERROR,
+                DoxmEntityHandler(OCEntityHandlerFlag::OC_OBSERVE_FLAG, req, NULL));
+    }
 }
 
 TEST(DoxmEntityHandlerTest, DoxmEntityHandlerValidRequest)
 {
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, InitDoxmResource());
-    char query[] = "oxm=0;owned=false;owner=owner1";
-    OCEntityHandlerRequest req = OCEntityHandlerRequest();
-    req.method = OC_REST_GET;
-    req.query = OICStrdup(query);
-    EXPECT_EQ(OC_EH_ERROR, DoxmEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, &req));
+    EXPECT_NE(OC_STACK_OK, InitDoxmResource(NULL, 0));
+    OCEntityHandlerRequest* req = new OCEntityHandlerRequest();
+    ASSERT_TRUE(req != NULL);
+    if(req)
+    {
+        req->method = OC_REST_GET;
+        EXPECT_EQ(OC_EH_ERROR, DoxmEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, req, NULL));
+        OICFree(req->query);
+        delete req;
+    }
 
-    OICFree(req.query);
 }
 
-//BinToDoxmJSON Tests
-TEST(BinToDoxmJSONTest, BinToDoxmJSONNullDoxm)
-{
-    char* value = BinToDoxmJSON(NULL);
-    EXPECT_TRUE(value == NULL);
-}
-
-TEST(BinToDoxmJSONTest, BinToDoxmJSONValidDoxm)
+TEST(DoxmConversionTest, DoxmConversionWithValidValues)
 {
     OicSecDoxm_t * doxm =  getBinDoxm();
-
-    char * json = BinToDoxmJSON(doxm);
-    OC_LOG_V(INFO, TAG, PCF("BinToDoxmJSON:%s"), json);
-    EXPECT_TRUE(json != NULL);
-
+    if(doxm)
+    {
+        OCRepPayload* payload = DoxmToPayload(doxm);
+        if(payload)
+        {
+            OicSecDoxm_t *doxm1 = PayloadToDoxm(payload);
+            if(doxm1)
+            {
+                EXPECT_TRUE(doxm1->owned == doxm->owned);
+                EXPECT_TRUE(doxm1->oxmSel == doxm->oxmSel);
+                DeleteDoxmBinData(doxm1);
+            }
+        }
+        OCRepPayloadDestroy(payload);
+    }
     DeleteDoxmBinData(doxm);
-    OICFree(json);
 }
 
-//JSONToDoxmBin Tests
-TEST(JSONToDoxmBinTest, JSONToDoxmBinValidJSON)
+TEST(DoxmEntityHandlerTest, DoxmEntityPutHandlerValidRequest)
 {
-    OicSecDoxm_t * doxm1 =  getBinDoxm();
-    char * json = BinToDoxmJSON(doxm1);
-    EXPECT_TRUE(json != NULL);
+    EXPECT_NE(OC_STACK_OK, InitDoxmResource(NULL, 0));
+    OCEntityHandlerRequest* req = new OCEntityHandlerRequest();
+    ASSERT_TRUE(req != NULL);
+    if(req)
+    {
+        req->method = OC_REST_PUT;
+        OicSecDoxm_t * doxm = getBinDoxm();
+        ASSERT_TRUE(doxm != NULL);
+        if(doxm)
+        {
+            doxm->owned = false;
+            OCRepPayload* payload = DoxmToPayload(doxm);
+            ASSERT_TRUE(payload != NULL);
+            if(payload)
+            {
+                req->payload = (OCPayload*)payload;
+                req->payload->type = PAYLOAD_TYPE_REPRESENTATION;
+                EXPECT_EQ(OC_EH_ERROR, DoxmEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, req, NULL));
+            }
+            OCRepPayloadDestroy(payload);
+        }
+        DeleteDoxmBinData(doxm);
+        delete req;
+    }
+}
 
-    OicSecDoxm_t *doxm2 = JSONToDoxmBin(json);
-    EXPECT_TRUE(doxm2 != NULL);
-
+TEST(DoxmReadWriteTest, DoxmReadWriteData)
+{
+    static OCPersistentStorage ps = {fopen, fread, fwrite, fclose, unlink};
+    EXPECT_EQ(OC_STACK_OK,
+            OCRegisterPersistentStorageHandler(&ps));
+    gDoxm = getBinDoxm();
+    EXPECT_EQ(OC_STACK_OK, UpdateSVRData());
+    OicSvr_t svr = {0, 0, 0, 0, 0, 0, 0, 0};
+    EXPECT_EQ(OC_STACK_OK, ReadSVDataFromPS(&svr));
+    OICFree(svr.aclPayload);
+    OICFree(svr.credPayload);
+    OICFree(svr.doxmPayload);
+    OICFree(svr.pstatPayload);
+    OicSecDoxm_t *doxm1 = getBinDoxm();
+    ASSERT_TRUE(doxm1 != NULL);
+    if(doxm1 && gDoxm)
+    {
+        EXPECT_TRUE(gDoxm->oxmSel == doxm1->oxmSel);
+    }
     DeleteDoxmBinData(doxm1);
-    DeleteDoxmBinData(doxm2);
-    OICFree(json);
+    DeleteDoxmBinData(gDoxm);
+
 }
 
-TEST(JSONToDoxmBinTest, JSONToDoxmBinNullJSON)
-{
-    OicSecDoxm_t *doxm = JSONToDoxmBin(NULL);
-    EXPECT_TRUE(doxm == NULL);
-}
-
-#if 0
-//HandleDoxmPostRequest Test
-TEST(HandleDoxmPostRequestTest, HandleDoxmPostRequestValidInput)
-{
-    OCEntityHandlerRequest ehRequest = {};
-    OCServerRequest svRequest = {};
-
-    OicSecDoxm_t * doxm =  getBinDoxm();
-
-    strcpy(svRequest.addressInfo.IP.ipAddress, "10.10.10.10");
-    svRequest.addressInfo.IP.port = 2345;
-    svRequest.connectivityType = CA_ETHERNET;
-
-    ehRequest.reqJSONPayload = (unsigned char *) BinToDoxmJSON(doxm);
-    ehRequest.requestHandle = (OCRequestHandle) &svRequest;
-
-    EXPECT_EQ(OC_EH_ERROR, HandleDoxmPostRequest(&ehRequest));
-    DeleteDoxmBinData(doxm);
-    OICFree(ehRequest.reqJSONPayload);
-}
-#endif
