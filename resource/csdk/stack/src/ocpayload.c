@@ -1170,7 +1170,7 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t port)
         pl->interfaces = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
         pl->interfaces->value = OICStrdup(ifPtr->name);
 
-        OCStringLL* cur = pl->types;
+        OCStringLL* cur = pl->interfaces;
         ifPtr = ifPtr->next;
         while(ifPtr)
         {
