@@ -39,8 +39,8 @@ namespace OIC
         class DataCache;
 
         #define CACHE_TAG  PCF("CACHE")
-        #define DEFAULT_REPORT_TIME 10l
-        #define DEFAULT_EXPIRED_TIME 15l
+        #define CACHE_DEFAULT_REPORT_MILLITIME 10000
+        #define CACHE_DEFAULT_EXPIRED_MILLITIME 15000
 
         enum class REPORT_FREQUENCY
         {

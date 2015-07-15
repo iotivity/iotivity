@@ -25,8 +25,6 @@
 #include <utility>
 #include <ctime>
 
-//#include "OCApi.h"
-
 #include "DataCache.h"
 
 #include "ResponseStatement.h"
@@ -76,7 +74,7 @@ namespace OIC
             {
                 sResource->requestObserve(pObserveCB);
             }
-            networkTimeOutHandle = networkTimer.postTimer(DEFAULT_EXPIRED_TIME, pTimerCB);
+            networkTimeOutHandle = networkTimer.postTimer(CACHE_DEFAULT_EXPIRED_MILLITIME, pTimerCB);
         }
 
         CacheID DataCache::addSubscriber(CacheCB func, REPORT_FREQUENCY rf, long repeatTime)
@@ -90,7 +88,8 @@ namespace OIC
 
             if(subscriberList != nullptr)
             {
-                subscriberList->insert(std::make_pair(newItem.reportID, std::make_pair(newItem, func)));
+                subscriberList->insert(
+                        std::make_pair(newItem.reportID, std::make_pair(newItem, func)));
             }
 
             return newItem.reportID;
@@ -157,7 +156,7 @@ namespace OIC
             }
 
             networkTimer.cancelTimer(networkTimeOutHandle);
-            networkTimeOutHandle = networkTimer.postTimer(DEFAULT_EXPIRED_TIME, pTimerCB);
+            networkTimeOutHandle = networkTimer.postTimer(CACHE_DEFAULT_EXPIRED_MILLITIME, pTimerCB);
 
             notifyObservers(_rep.getAttributes());
         }
@@ -178,9 +177,10 @@ namespace OIC
             if(!sResource->isObservable())
             {
                 networkTimer.cancelTimer(networkTimeOutHandle);
-                networkTimeOutHandle = networkTimer.postTimer(DEFAULT_EXPIRED_TIME, pTimerCB);
+                networkTimeOutHandle = networkTimer.postTimer(
+                        CACHE_DEFAULT_EXPIRED_MILLITIME, pTimerCB);
 
-                pollingHandle = pollingTimer.postTimer(DEFAULT_REPORT_TIME, pPollingCB);
+                pollingHandle = pollingTimer.postTimer(CACHE_DEFAULT_REPORT_MILLITIME, pPollingCB);
             }
 
             notifyObservers(_rep.getAttributes());

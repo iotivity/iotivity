@@ -71,7 +71,7 @@ namespace OIC
                 if(!reportTime)
                 {
                     // default setting
-                    reportTime = DEFAULT_REPORT_TIME;
+                    reportTime = CACHE_DEFAULT_REPORT_MILLITIME;
                 }
             }
 
