@@ -153,13 +153,13 @@ OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
                 OCRepPayload *tempPayload = OCRepPayloadCreate();
                 OCRepPayloadSetUri(tempPayload, gLightResourceUri);
                 OCRepPayloadSetPropBool(tempPayload, "state", false);
-                OCRepPayloadSetPropInt(tempPayload, "color", 0);
+                OCRepPayloadSetPropInt(tempPayload, "power", 0);
                 OCRepPayloadAppend(payload, tempPayload);
 
                 OCRepPayload *tempPayload2 = OCRepPayloadCreate();
                 OCRepPayloadSetUri(tempPayload2, gFanResourceUri);
-                OCRepPayloadSetPropBool(tempPayload, "state", true);
-                OCRepPayloadSetPropInt(tempPayload, "speed", 10);
+                OCRepPayloadSetPropBool(tempPayload2, "state", true);
+                OCRepPayloadSetPropInt(tempPayload2, "speed", 10);
                 OCRepPayloadAppend(payload, tempPayload2);
             }
             if (ret == OC_EH_OK)
@@ -223,7 +223,7 @@ OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
                     OCRepPayload *tempPayload = OCRepPayloadCreate();
                     OCRepPayloadSetUri(tempPayload, gLightResourceUri);
                     OCRepPayloadSetPropBool(tempPayload, "state", true);
-                    OCRepPayloadSetPropInt(tempPayload, "color", 0);
+                    OCRepPayloadSetPropInt(tempPayload, "power", 0);
                     OCRepPayloadAppend(payload, tempPayload);
                 }
                 if(ret != OC_EH_ERROR)
@@ -286,13 +286,13 @@ OCEntityHandlerResult OCEntityHandlerLightCb(OCEntityHandlerFlag flag,
         {
             OCRepPayloadSetUri(payload, gLightResourceUri);
             OCRepPayloadSetPropBool(payload, "state", false);
-            OCRepPayloadSetPropInt(payload, "color", 0);
+            OCRepPayloadSetPropInt(payload, "power", 0);
         }
         else if(OC_REST_PUT == ehRequest->method)
         {
             OCRepPayloadSetUri(payload, gLightResourceUri);
             OCRepPayloadSetPropBool(payload, "state", true);
-            OCRepPayloadSetPropInt(payload, "color", 0);
+            OCRepPayloadSetPropInt(payload, "power", 0);
         }
         else
         {
