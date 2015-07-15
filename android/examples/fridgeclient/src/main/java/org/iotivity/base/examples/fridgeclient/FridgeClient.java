@@ -88,7 +88,7 @@ public class FridgeClient extends Activity implements
         OcPlatform.Configure(cfg);
         try {
             OcPlatform.findResource("", OcPlatform.WELL_KNOWN_QUERY + "?rt=" + "intel.fridge",
-                    OcConnectivityType.IPV4, this);
+                    OcConnectivityType.CT_DEFAULT, this);
         } catch (OcException e) {
             logMessage(TAG + " init Error. " + e.getMessage());
             Log.e(TAG, e.getMessage());
@@ -195,18 +195,18 @@ public class FridgeClient extends Activity implements
         lightTypes.add("intel.fridge.light");
         try {
             OcResource light = OcPlatform.constructResourceObject(ocResource.getHost(),
-                    StringConstants.LIGHT, OcConnectivityType.IPV4, false, lightTypes, ifaces);
+                    StringConstants.LIGHT, OcConnectivityType.CT_DEFAULT, false, lightTypes, ifaces);
 
             List<String> doorTypes = new LinkedList<>();
             doorTypes.add("intel.fridge.door");
             OcResource leftDoor = OcPlatform.constructResourceObject(ocResource.getHost(),
-                    StringConstants.LEFT_DOOR, OcConnectivityType.IPV4, false, doorTypes, ifaces);
+                    StringConstants.LEFT_DOOR, OcConnectivityType.CT_DEFAULT, false, doorTypes, ifaces);
 
             OcResource rightDoor = OcPlatform.constructResourceObject(ocResource.getHost(),
-                    StringConstants.RIGHT_DOOR, OcConnectivityType.IPV4, false, doorTypes, ifaces);
+                    StringConstants.RIGHT_DOOR, OcConnectivityType.CT_DEFAULT, false, doorTypes, ifaces);
 
             OcResource randomDoor = OcPlatform.constructResourceObject(ocResource.getHost(),
-                    StringConstants.RANDOM_DOOR, OcConnectivityType.IPV4, false, doorTypes, ifaces);
+                    StringConstants.RANDOM_DOOR, OcConnectivityType.CT_DEFAULT, false, doorTypes, ifaces);
 
             List<OcHeaderOption> headerOptions = new LinkedList<>();
             OcHeaderOption apiVersion = new OcHeaderOption(StringConstants.API_VERSION_KEY,
