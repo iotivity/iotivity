@@ -207,6 +207,9 @@ namespace OIC
                  * API to get cached ResourceAttributes data.
                  *
                  * @return ResourceAttributes - cached ResourceAttributes data
+                 *
+                 * @throw BadRequestException
+                 *
                  */
                 ResourceAttributes getCachedAttributes() const;
 
@@ -214,6 +217,9 @@ namespace OIC
                  * API to get particular cached ResourceAttribute value
                  *
                  * @return Value - ResourceAttributes::Value class object
+                 *
+                 * @throw BadRequestException
+                 *
                  */
                 ResourceAttributes::Value getCachedAttribute( const std::string &) ;
 

@@ -28,7 +28,7 @@ using namespace OC;
 using namespace OC::OCPlatform;
 using namespace OIC::Service;
 
-std::string resourceUri = "/a/TempHumSensor";
+std::string resourceUri = "/a/TempSensor";
 std::string resourceType = "core.TemperatureSensor";
 std::string resourceInterface = "oic.if.";
 std::string attributeKey = "Temperature";
@@ -48,13 +48,14 @@ void displayMenu()
 PrimitiveGetResponse RequestHandlerForGet(const PrimitiveRequest &request,
         ResourceAttributes &attrs)
 {
-    cout << "\nRecieved a Get request from Client" << std::endl;
+    cout << "Recieved a Get request from Client" << std::endl;
     ResourceObject::LockGuard lock(*server);
     ResourceAttributes attr = server->getAttributes();
     ResourceAttributes::const_iterator iter = attr.begin();
+    cout << "\nSending response to Client : " << std::endl;
     for (unsigned int i = 0; i < attr.size(); ++i)
     {
-        std::cout << "\nkey : " << iter->key() << "\nvalue : " << iter->value().toString() << std::endl;
+        std::cout << "\tkey : " << iter->key() << "\n\tvalue : " << iter->value().toString() << std::endl;
         ++iter;
     }
     return PrimitiveGetResponse::create(attr);
@@ -64,11 +65,18 @@ PrimitiveGetResponse RequestHandlerForGet(const PrimitiveRequest &request,
 PrimitiveSetResponse RequestHandlerForSet(const PrimitiveRequest &request,
         ResourceAttributes &attrs)
 {
-    cout << "\nRecieved a Set request from Client" << std::endl;
+    cout << "Recieved a Set request from Client" << std::endl;
     ResourceAttributes::const_iterator iter = attrs.begin();
     for (unsigned int i = 0; i < attrs.size(); ++i)
     {
-        std::cout << "\nkey : " << iter->key() << "\nvalue : " << iter->value().toString() << std::endl;
+        std::cout << "\tkey : " << iter->key() << "\n\tvalue : " << iter->value().toString() << std::endl;
+        ++iter;
+    }
+    iter = attrs.begin();
+    cout << "\n\nSending response to Client : " << std::endl;
+    for (unsigned int i = 0; i < attrs.size(); ++i)
+    {
+        std::cout << "\tkey : " << iter->key() << "\n\tvalue : " << iter->value().toString() << std::endl;
         ++iter;
     }
     return PrimitiveSetResponse::create(attrs);

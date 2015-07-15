@@ -255,19 +255,26 @@ int main()
             }
             else if (userInput == 8)
             {
-                ResourceAttributes atttribute = resource->getCachedAttributes();
-                if (atttribute.empty())
+                try
                 {
-                    cout << "Received cached attribute is empty" << std::endl;
-                }
-                else
-                {
-                    ResourceAttributes::const_iterator iter = atttribute.begin();
-                    for (unsigned int i = 0; i < atttribute.size(); ++i)
+                    ResourceAttributes atttribute = resource->getCachedAttributes();
+                    if (atttribute.empty())
                     {
-                        std::cout << "\nkey : " << iter->key() << "\nvalue : " << iter->value().toString() << std::endl;
-                        ++iter;
+                        cout << "Received cached attribute is empty" << std::endl;
                     }
+                    else
+                    {
+                        ResourceAttributes::const_iterator iter = atttribute.begin();
+                        for (unsigned int i = 0; i < atttribute.size(); ++i)
+                        {
+                            std::cout << "\nkey : " << iter->key() << "\nvalue : " << iter->value().toString() << std::endl;
+                            ++iter;
+                        }
+                    }
+                }
+                catch (BadRequestException e)
+                {
+                    cout << "getCachedAttributes exception : " << e.what() << std::endl;
                 }
             }
             else if (userInput == 9)
@@ -278,6 +285,10 @@ int main()
                     ResourceAttributes::Value valueObj = resource->getCachedAttribute(key);
                     int value = valueObj.get< int >();
                     cout << "\nkey : " << key << "\nValue : " << value << std::endl;
+                }
+                catch (BadRequestException e)
+                {
+                    cout << "getCachedAttribute exception : " << e.what() << std::endl;
                 }
                 catch (BadGetException e)
                 {

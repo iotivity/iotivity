@@ -196,7 +196,7 @@ namespace OIC
                     m_watchingFlag = true;
                     m_brokerId = brokerId;
                 }
-                catch (InvalidParameterException exception )
+                catch (std::exception &exception)
                 {
                     throw InvalidParameterException {exception.what()};
                 }
@@ -214,7 +214,7 @@ namespace OIC
                     ResourceBroker::getInstance()->cancelHostResource(m_brokerId);
                     m_watchingFlag = false;
                 }
-                catch (InvalidParameterException exception )
+                catch (std::exception &exception)
                 {
                     OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::stopWatching InvalidParameterException");
                 }
@@ -236,7 +236,7 @@ namespace OIC
                 OC_LOG(DEBUG, CLIENT_W_TAG, " RemoteResourceObject::getState exit");
                 return getResourceStateFromBrokerState(brokerState);
             }
-            catch (InvalidParameterException exception)
+            catch (std::exception &exception)
             {
                 OC_LOG(DEBUG, CLIENT_W_TAG, " RemoteResourceObject::getState InvalidParameterException");
             }
@@ -260,7 +260,7 @@ namespace OIC
                     m_cachingFlag = true;
                     OC_LOG_V(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::startCaching CACHE ID %d", cacheId);
                 }
-                catch (InvalidParameterException e)
+                catch (std::exception &exception)
                 {
                     OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::startCaching InvalidParameterException");
                 }
@@ -279,7 +279,7 @@ namespace OIC
             {
                 try
                 {
-                   CacheID cacheId = ResourceCacheManager::getInstance()->requestResourceCache(m_primitiveResource,
+                  CacheID cacheId = ResourceCacheManager::getInstance()->requestResourceCache(m_primitiveResource,
                                       std::bind(cachingCallback, std::placeholders::_1, std::placeholders::_2, cb),
                                       REPORT_FREQUENCY::UPTODATE,  0);
 
@@ -287,9 +287,9 @@ namespace OIC
                     m_cachingFlag = true;
                     OC_LOG_V(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::startCaching CACHE ID %d", cacheId);
                 }
-                catch (InvalidParameterException e)
+                catch (std::exception &exception)
                 {
-                    throw InvalidParameterException { e.what() };
+                    throw InvalidParameterException {"startCaching : Callback is NULL" };
                 }
             }
         }
@@ -305,7 +305,7 @@ namespace OIC
                     ResourceCacheManager::getInstance()->cancelResourceCache(m_cacheId);
                     m_cachingFlag = false;
                 }
-                catch (InvalidParameterException exception)
+                catch (std::exception &exception)
                 {
                     OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::stopCaching InvalidParameterException");
                 }
@@ -328,7 +328,7 @@ namespace OIC
                 OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::getResourceCacheState exit");
                 return getCacheState(cacheState);
             }
-            catch (InvalidParameterException exception)
+            catch (std::exception &exception)
             {
                 OC_LOG(DEBUG, CLIENT_W_TAG,
                        "RemoteResourceObject::getResourceCacheState InvalidParameterException");
@@ -344,7 +344,7 @@ namespace OIC
                 ResourceCacheManager::getInstance()->updateResourceCache(
                     m_primitiveResource);
             }
-            catch (InvalidParameterException exception)
+            catch (std::exception &exception)
             {
                 OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::refreshCache InvalidParameterException");
             }
@@ -356,11 +356,11 @@ namespace OIC
             OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject :: getCachedAttributes ");
             try
             {
-                return  ResourceCacheManager::getInstance()->getCachedData(m_primitiveResource);
+                return ResourceCacheManager::getInstance()->getCachedData(m_primitiveResource);
             }
-            catch (InvalidParameterException e)
+            catch (std::exception &exception)
             {
-              OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::getCachedAttributes InvalidParameterException");
+                throw BadRequestException { "[getCachedAttributes]  Caching not started" };
             }
         }
 
@@ -373,9 +373,9 @@ namespace OIC
                         m_primitiveResource);
                 return Cachedattributes[key];
             }
-            catch  (InvalidParameterException e)
+            catch (std::exception &exception)
             {
-               OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::getCachedAttribute InvalidParameterException");
+                throw BadRequestException { "[getCachedAttribute]  Caching not started" };
             }
             OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject :: getCachedAttribute exit");
         }
