@@ -233,160 +233,6 @@ TEST_F(AutoNotifyTest, WithAlwaysPolicy_WillBeNotifiedEvenIfAttributeIsNotChange
 }
 
 
-
-TEST_F(AutoNotifyTest, WorkingWithNeverPolicyWhenAttributesNoChangeByGetAttributes)
-{
-    server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::NEVER);
-    {
-        ResourceObject::LockGuard lock(server);
-        server->setAttribute(KEY, value);
-    }
-
-    mocks.NeverCallFuncOverload(
-            static_cast<NotifyAllObservers>
-                        (OC::OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
-
-    ResourceObject::LockGuard lock(server);
-    server->setAttribute(KEY, value);
-}
-
-TEST_F(AutoNotifyTest, WorkingWithNeverPolicyWhenAttributesChangeByGetAttributes)
-{
-    server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::NEVER);
-
-    mocks.NeverCallFuncOverload(
-            static_cast<NotifyAllObservers>
-                       (OC::OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
-
-    ResourceObject::LockGuard lock(server);
-    server->setAttribute(KEY, value);}
-
-TEST_F(AutoNotifyTest, WorkingWithAlwaysPolicyWhenAttributesNoChangeByGetAttributes)
-{
-    server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::ALWAYS);
-    {
-        ResourceObject::LockGuard lock(server);
-        server->setAttribute(KEY, value);
-    }
-
-    mocks.ExpectCallFuncOverload(
-            static_cast<NotifyAllObservers>
-                       (OC::OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
-
-    ResourceObject::LockGuard lock(server);
-    server->setAttribute(KEY, value);
-}
-
-TEST_F(AutoNotifyTest, WorkingWithAlwaysPolicyWhenAttributesChangeByGetAttributes)
-{
-    server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::ALWAYS);
-
-    mocks.ExpectCallFuncOverload(
-            static_cast<NotifyAllObservers>
-                       (OC::OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
-
-    ResourceObject::LockGuard lock{ server };
-    server->setAttribute(KEY, value);
-}
-
-TEST_F(AutoNotifyTest, WorkingWithUpdatedPolicyWhenAttributesNoChangeByGetAttributes)
-{
-    server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::UPDATED);
-    {
-        ResourceObject::LockGuard lock(server);
-        server->setAttribute(KEY, value);
-    }
-
-    mocks.NeverCallFuncOverload(
-            static_cast<NotifyAllObservers>
-                       (OC::OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
-
-    ResourceObject::LockGuard lock{ server };
-    server->setAttribute(KEY, value);
-}
-
-TEST_F(AutoNotifyTest, WorkingWithUpdatedPolicyWhenAttributesChangeByGetAttributes)
-{
-    server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::UPDATED);
-
-    mocks.ExpectCallFuncOverload(
-            static_cast<NotifyAllObservers>
-                        (OC::OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
-
-    ResourceObject::LockGuard lock{ server };
-    server->setAttribute(KEY, value);
-}
-
-TEST_F(AutoNotifyTest, WorkingWithNeverPolicyWhenAttributesNoChangeBySetAttribute)
-{
-    server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::NEVER);
-    server->setAttribute(KEY, value);
-
-    mocks.NeverCallFuncOverload(
-            static_cast<NotifyAllObservers>
-                       (OC::OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
-
-    server->setAttribute(KEY, value);
-}
-
-TEST_F(AutoNotifyTest, WorkingWithNeverPolicyWhenAttributesChangeBySetAttribute)
-{
-    server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::NEVER);
-
-    mocks.NeverCallFuncOverload(
-            static_cast<NotifyAllObservers>
-                        (OC::OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
-
-    server->setAttribute(KEY, value);
-}
-
-TEST_F(AutoNotifyTest, WorkingWithAlwaysPolicyWhenAttributesNoChangeBySetAttribute)
-{
-    server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::ALWAYS);
-    server->setAttribute(KEY, value);
-
-    mocks.ExpectCallFuncOverload(
-            static_cast<NotifyAllObservers>
-                        (OC::OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
-
-    server->setAttribute(KEY, value);
-}
-
-TEST_F(AutoNotifyTest, WorkingWithAlwaysPolicyWhenAttributesChangeBySetAttribute)
-{
-    server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::ALWAYS);
-
-    mocks.ExpectCallFuncOverload(
-            static_cast<NotifyAllObservers>
-                       (OC::OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
-
-    server->setAttribute(KEY, value);
-}
-
-TEST_F(AutoNotifyTest, WorkingWithUpdatedPolicyWhenAttributesNoChangeBySetAttribute)
-{
-    server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::UPDATED);
-    server->setAttribute(KEY, value);
-
-    mocks.NeverCallFuncOverload(
-           static_cast<NotifyAllObservers>
-                       (OC::OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
-
-    server->setAttribute(KEY, value);
-}
-
-TEST_F(AutoNotifyTest, WorkingWithUpdatedPolicyWhenAttributesChangeBySetAttribute)
-{
-    server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::UPDATED);
-
-    mocks.ExpectCallFuncOverload(
-            static_cast<NotifyAllObservers>
-                        (OC::OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
-
-    server->setAttribute(KEY, value);
-}
-
-
 class AutoNotifyWithGuardTest: public AutoNotifyTest
 {
 };
@@ -560,7 +406,7 @@ TEST_F(ResourceObjectHandlingRequestTest, SendSetResponseWithCustomAttrsAndResul
 }
 
 
-class AutoNotifySetHandlingRequestTest: public ResourceObjectHandlingRequestTest
+class SetRequestHandlerPolicyTest: public ResourceObjectHandlingRequestTest
 {
 public:
     using SendResponse = OCStackResult (*)(std::shared_ptr<OCResourceResponse>);
@@ -570,11 +416,9 @@ public:
     {
         OCRepresentation ocRep;
 
-        constexpr int value{ 100 };
         vector<string> interface{"oic.if.baseline"};
         vector<string> type{"core.light"};
 
-        ocRep.setValue("power", value);
         ocRep.setUri(RESOURCE_URI);
         ocRep.setResourceInterfaces(interface);
         ocRep.setResourceTypes(type);
@@ -589,52 +433,42 @@ public:
     }
 };
 
-TEST_F(AutoNotifySetHandlingRequestTest, WorkingWithNeverPolicyWhenAttributesChangeBySetRequest)
+TEST_F(SetRequestHandlerPolicyTest, DefalutSetRequestHandlerPolicyIsNever)
 {
-    server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::NEVER);
-    server->setSetRequestHandlerPolicy(ResourceObject::SetRequestHandlerPolicy::ACCEPTANCE);
-
-    mocks.NeverCallFuncOverload(
-            static_cast<NotifyAllObservers>
-                        (OC::OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
-
-    handler(createRequest(OC_REST_PUT, createOCRepresentation()));
+    ASSERT_EQ(ResourceObject::SetRequestHandlerPolicy::NEVER,
+                server->getSetRequestHandlerPolicy());
 }
 
-TEST_F(AutoNotifySetHandlingRequestTest, WorkingWithAlwaysPolicyWhenAttributesNoChangeBySetRequest)
+TEST_F(SetRequestHandlerPolicyTest, SetRequestHandlerPolicyCanBeSet)
 {
-    server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::ALWAYS);
     server->setSetRequestHandlerPolicy(ResourceObject::SetRequestHandlerPolicy::ACCEPTANCE);
 
-    mocks.ExpectCallFuncOverload(
-            static_cast<NotifyAllObservers>
-                        (OC::OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
-
-    handler(createRequest(OC_REST_PUT));
+    ASSERT_EQ(ResourceObject::SetRequestHandlerPolicy::ACCEPTANCE,
+                server->getSetRequestHandlerPolicy());
 }
 
-TEST_F(AutoNotifySetHandlingRequestTest, WorkingWithUpdatedPolicyWhenAttributesChangeBySetRequest)
+TEST_F(SetRequestHandlerPolicyTest, WithNeverPolicy_NotAddedIfReceivedNewKeyValuePair)
 {
-    server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::UPDATED);
-    server->setSetRequestHandlerPolicy(ResourceObject::SetRequestHandlerPolicy::ACCEPTANCE);
+    OCRepresentation ocRep = createOCRepresentation();
+    ocRep.setValue("NewKey", value);
+    server->setSetRequestHandlerPolicy(ResourceObject::SetRequestHandlerPolicy::NEVER);
 
-    mocks.ExpectCallFuncOverload(
-                    static_cast<NotifyAllObservers>
-                                (OC::OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
+    handler(createRequest(OC_REST_PUT, ocRep));
 
-    handler(createRequest(OC_REST_PUT, createOCRepresentation()));
+    ResourceObject::LockGuard guard{ server };
+    ASSERT_FALSE((server->getAttributes()).contains("NewKey"));
 }
 
-TEST_F(AutoNotifySetHandlingRequestTest, WorkingWithUpdatedPolicyWhenAttributesNoChangeBySetRequest)
+TEST_F(SetRequestHandlerPolicyTest, WithAcceptancePolicy_WillBeAddedIfReceivedNewKeyValuePair)
 {
-    server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::UPDATED);
+    OCRepresentation ocRep = createOCRepresentation();
+    ocRep.setValue("NewKey", value);
     server->setSetRequestHandlerPolicy(ResourceObject::SetRequestHandlerPolicy::ACCEPTANCE);
 
-    mocks.NeverCallFuncOverload(
-            static_cast<NotifyAllObservers>
-                        (OC::OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
+    handler(createRequest(OC_REST_PUT, ocRep));
 
-    handler(createRequest(OC_REST_PUT));
+    ResourceObject::LockGuard guard{ server };
+    ASSERT_TRUE((server->getAttributes()).contains("NewKey"));
 }
 
 

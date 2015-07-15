@@ -198,7 +198,7 @@ namespace OIC
                 m_getRequestHandler{ },
                 m_setRequestHandler{ },
                 m_autoNotifyPolicy { AutoNotifyPolicy::UPDATED },
-                m_setRequestHandlerPolicy { SetRequestHandlerPolicy::DEFAULT },
+                m_setRequestHandlerPolicy { SetRequestHandlerPolicy::NEVER },
                 m_keyAttributesUpdatedHandlers{ },
                 m_lockOwner{ },
                 m_mutex{ },

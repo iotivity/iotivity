@@ -59,7 +59,7 @@ namespace OIC
             };
 
             enum class SetRequestHandlerPolicy {
-                DEFAULT,
+                NEVER,
                 ACCEPTANCE
             };
 
