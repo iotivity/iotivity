@@ -196,7 +196,8 @@ exit:
  {
     for(size_t n = 0; n < acl->resourcesLen; n++)
     {
-        if(0 == strcmp(resource, acl->resources[n])) // TODO null terms?
+        if(0 == strcmp(resource, acl->resources[n]) || // TODO null terms?
+         0 == strcmp(WILDCARD_RESOURCE_URI, acl->resources[n]))
         {
             return true;
         }

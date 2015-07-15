@@ -43,7 +43,6 @@
 #include "oic_malloc.h"
 #include "logger.h"
 #include "cacommon.h"
-#include "ocpayload.h"
 #include "cainterface.h"
 #include "provisioningmanager.h"
 #include "credentialgenerator.h"
@@ -54,6 +53,9 @@
 #include "pstatresource.h"
 #include "srmresourcestrings.h"
 #include "credresource.h"
+#include "oic_string.h"
+#include "secureresourcemanager.h"
+
 
 typedef enum
 {
@@ -91,7 +93,7 @@ typedef enum
 #define COAPS_QUERY "coaps://%s:%d%s"
 #define CA_SECURE_PORT   5684
 
-void (*handler)(const CAEndpoint_t *, const CAResponseInfo_t *);
+bool (*handler)(const CAEndpoint_t *, const CAResponseInfo_t *);
 
 /**
  * CA token to keep track of response.
@@ -311,11 +313,18 @@ static CAResult_t sendCARequest(CAMethod_t method,
                                 const char *resourceUri,
                                 char *payload, int payloadLen)
 {
+    if (payload && '\0' != (*(payload + payloadLen)))
+    {
+        OC_LOG(ERROR, TAG, "Payload not properly terminated.");
+        return CA_STATUS_INVALID_PARAM;
+    }
+
     if (CA_STATUS_OK != CAGenerateToken(&gToken, CA_MAX_TOKEN_LEN))
     {
         OC_LOG(ERROR, TAG, "Error while generating token");
         return CA_MEMORY_ALLOC_FAILED;
     }
+
     CAEndpoint_t *endpoint = NULL;
     if (CA_STATUS_OK != CACreateEndpoint((CATransportFlags_t)secure,
                                          devAddr->adapter, devAddr->addr,
@@ -325,27 +334,22 @@ static CAResult_t sendCARequest(CAMethod_t method,
         CADestroyEndpoint(endpoint);
         return CA_STATUS_FAILED;
     }
-    CAMessageType_t msgType = CA_MSG_CONFIRM;
-    if (payload && '\0' != (*(payload + payloadLen)))
-    {
-        OC_LOG(ERROR, TAG, "Payload not properly terminated.");
-        CADestroyEndpoint(endpoint);
-        return CA_STATUS_INVALID_PARAM;
-    }
-    OCSecurityPayload secPayload;
+
+    OCSecurityPayload secPayload = {};
     secPayload.securityData = payload;
     secPayload.base.type = PAYLOAD_TYPE_SECURITY;
-    CARequestInfo_t requestInfo = { 0 };
+
+    CARequestInfo_t requestInfo = {};
     requestInfo.method = method;
     requestInfo.isMulticast = false;
     OCConvertPayload((OCPayload*)(&secPayload), &requestInfo.info.payload,
             &requestInfo.info.payloadSize);
-    requestInfo.info.type = msgType;
+
+    requestInfo.info.type = CA_MSG_CONFIRM;
     requestInfo.info.token = gToken;
     requestInfo.info.tokenLength  = CA_MAX_TOKEN_LEN;
-    requestInfo.info.resourceUri  = resourceUri;
+    requestInfo.info.resourceUri  = (CAURI_t)resourceUri;
 
-    requestInfo.isMulticast = false;
     CAResult_t caResult = CA_STATUS_OK;
     caResult = CASendRequest(endpoint, &requestInfo);
     if (CA_STATUS_OK != caResult)
@@ -359,15 +363,13 @@ static CAResult_t sendCARequest(CAMethod_t method,
 /**
  * addDevice to list.
  *
- * @param[in] ip                    IP of target device.
- * @param[in] port                  port of remote server.
- * @param[in] adapter              adapter type of endpoint.
- * @param[in] doxm                  pointer to doxm instance.
+ * @param[in] endpoint   Endpoint information
+ * @param[in] doxm   pointer to doxm instance.
  * @return SP_RESULT_SUCCESS for success and errorcode otherwise.
  */
-static SPResult addDevice(const char *ip, int port, OCTransportAdapter adapter, OicSecDoxm_t *doxm)
+static SPResult addDevice(const CAEndpoint_t *endpoint, OicSecDoxm_t* doxm)
 {
-    if (NULL == ip || 0 >= port)
+    if (NULL == endpoint)
     {
         return SP_RESULT_INVALID_PARAM;
     }
@@ -378,10 +380,7 @@ static SPResult addDevice(const char *ip, int port, OCTransportAdapter adapter, 
         return SP_RESULT_MEM_ALLOCATION_FAIL;
     }
 
-    SPStringCopy(ptr->endpoint.addr, ip, MAX_ADDR_STR_SIZE);
-    ptr->endpoint.port = port;
-    ptr->endpoint.adapter = adapter;
-
+    memcpy(&(ptr->endpoint), endpoint, sizeof(CAEndpoint_t));
     ptr->doxm = doxm;
 
     ptr->next = NULL;
@@ -428,14 +427,14 @@ static SPResult selectProvisioningMethod(OicSecOxm_t *supportedMethods, size_t n
     return SP_RESULT_SUCCESS;
 }
 
-OCStackResult OCParsePayload(OCPayload** outPayload, const uint8_t* payload, size_t payloadSize);
 /**
  * Response handler for discovery.
  *
  * @param[in] object       Remote endpoint object
  * @param[in] requestInfo  Datastructure containing request information.
+ * @return true is CA token matches request token, false otherwise.
  */
-static void ProvisionDiscoveryHandler(const CAEndpoint_t *object,
+static bool ProvisionDiscoveryHandler(const CAEndpoint_t *object,
                                       const CAResponseInfo_t *responseInfo)
 {
     if ((gStateManager & SP_DISCOVERY_STARTED) && gToken)
@@ -469,20 +468,22 @@ static void ProvisionDiscoveryHandler(const CAEndpoint_t *object,
                 {
                     OC_LOG(DEBUG, TAG, "Successfully converted doxm json to bin.");
 
-                    SPResult res = addDevice(object->addr, object->port, object->adapter, ptrDoxm);
+                    SPResult res = addDevice(object, ptrDoxm);
                     if (SP_RESULT_SUCCESS != res)
                     {
                         OC_LOG(ERROR, TAG, "Error while adding data to linkedlist.");
                         gStateManager = gStateManager | SP_DISCOVERY_ERROR;
                         DeleteDoxmBinData(ptrDoxm);
-                        return;
+                        return true;
                     }
                     OC_LOG(INFO, TAG, "Exiting ProvisionDiscoveryHandler.");
                     gStateManager |= SP_DISCOVERY_DONE;
                 }
             }
+            return true;
         }
     }
+    return false;
 }
 
 /**
@@ -490,8 +491,9 @@ static void ProvisionDiscoveryHandler(const CAEndpoint_t *object,
  *
  * @param[in] object       Remote endpoint object
  * @param[in] requestInfo  Datastructure containing request information.
+ * @return true is CA token matches request token, false otherwise.
  */
-static void OwnerShipTransferModeHandler(const CAEndpoint_t *object,
+static bool OwnerShipTransferModeHandler(const CAEndpoint_t *object,
         const CAResponseInfo_t *responseInfo)
 {
     if ((gStateManager & SP_UP_OWN_TR_METH_STARTED) && gToken)
@@ -511,8 +513,10 @@ static void OwnerShipTransferModeHandler(const CAEndpoint_t *object,
                 gStateManager |= SP_UP_OWN_TR_METH_ERROR;
                 OC_LOG(ERROR, TAG, "Error in OwnerShipTransferModeHandler.");
             }
+            return true;
         }
     }
+    return false;
 }
 
 /**
@@ -520,8 +524,9 @@ static void OwnerShipTransferModeHandler(const CAEndpoint_t *object,
  *
  * @param[in] object       Remote endpoint object
  * @param[in] requestInfo  Datastructure containing request information.
+ * @return true is CA token matches request token, false otherwise.
  */
-static void ListMethodsHandler(const CAEndpoint_t *object,
+static bool ListMethodsHandler(const CAEndpoint_t *object,
                                const CAResponseInfo_t *responseInfo)
 {
     if ((gStateManager & SP_LIST_METHODS_STARTED) && gToken)
@@ -539,7 +544,7 @@ static void ListMethodsHandler(const CAEndpoint_t *object,
                 {
                     OC_LOG(ERROR, TAG, "response payload is null.");
                     gStateManager |= SP_LIST_METHODS_ERROR;
-                    return;
+                    return true;
                 }
 
                 OCPayload* payload;
@@ -557,7 +562,7 @@ static void ListMethodsHandler(const CAEndpoint_t *object,
                 {
                     OC_LOG(ERROR, TAG, "Error while converting json to pstat bin");
                     gStateManager |= SP_LIST_METHODS_ERROR;
-                    return;
+                    return true;
                 }
                 DeletePstatBinData(gPstat);
 
@@ -566,8 +571,10 @@ static void ListMethodsHandler(const CAEndpoint_t *object,
 
                 OC_LOG(INFO, TAG, "Exiting ListMethodsHandler.");
             }
+            return true;
         }
     }
+    return false;
 }
 
 /**
@@ -575,8 +582,9 @@ static void ListMethodsHandler(const CAEndpoint_t *object,
  *
  * @param[in] object       Remote endpoint object
  * @param[in] requestInfo  Datastructure containing request information.
+ * @return true is CA token matches request token, false otherwise.
  */
-static void OperationModeUpdateHandler(const CAEndpoint_t *object,
+static bool OperationModeUpdateHandler(const CAEndpoint_t *object,
                                        const CAResponseInfo_t *responseInfo)
 {
     if ((gStateManager & SP_UPDATE_OP_MODE_STARTED) && gToken)
@@ -595,8 +603,10 @@ static void OperationModeUpdateHandler(const CAEndpoint_t *object,
                 gStateManager |= SP_UPDATE_OP_MODE_ERROR;
                 OC_LOG(ERROR, TAG, "Error in OperationModeUpdateHandler.");
             }
+            return true;
         }
     }
+    return false;
 }
 
 /**
@@ -604,8 +614,9 @@ static void OperationModeUpdateHandler(const CAEndpoint_t *object,
  *
  * @param[in] object       Remote endpoint object
  * @param[in] requestInfo  Datastructure containing request information.
+ * @return true is CA token matches request token, false otherwise.
  */
-static void OwnerShipUpdateHandler(const CAEndpoint_t *object,
+static bool OwnerShipUpdateHandler(const CAEndpoint_t *object,
                                    const CAResponseInfo_t *responseInfo)
 {
     if ((gStateManager & SP_UPDATE_OWNER_STARTED) && gToken)
@@ -625,8 +636,10 @@ static void OwnerShipUpdateHandler(const CAEndpoint_t *object,
                 gStateManager |= SP_UPDATE_OWNER_ERROR;
                 OC_LOG(ERROR, TAG, "Error in OwnerShipUpdateHandler.");
             }
+            return true;
         }
     }
+    return false;
 }
 
 /**
@@ -634,8 +647,9 @@ static void OwnerShipUpdateHandler(const CAEndpoint_t *object,
  *
  * @param[in] object       Remote endpoint object
  * @param[in] requestInfo  Datastructure containing request information.
+ * @return true is CA token matches request token, false otherwise.
  */
-static void ACLProvisioningHandler(const CAEndpoint_t *object,
+static bool ACLProvisioningHandler(const CAEndpoint_t *object,
                                    const CAResponseInfo_t *responseInfo)
 {
     if ((gStateManager & SP_PROV_ACL_STARTED) && gToken)
@@ -656,8 +670,10 @@ static void ACLProvisioningHandler(const CAEndpoint_t *object,
                 OC_LOG(ERROR, TAG, "Error in ACLProvisioningHandler.");
                 gStateManager |= SP_PROV_ACL_ERROR;
             }
+            return true;
         }
     }
+    return false;
 }
 
 /**
@@ -665,8 +681,9 @@ static void ACLProvisioningHandler(const CAEndpoint_t *object,
  *
  * @param[in] object       Remote endpoint object
  * @param[in] requestInfo  Datastructure containing request information.
+ * @return true is CA token matches request token, false otherwise.
  */
-static void FinalizeProvisioningHandler(const CAEndpoint_t *object,
+static bool FinalizeProvisioningHandler(const CAEndpoint_t *object,
                                         const CAResponseInfo_t *responseInfo)
 {
     if ((gStateManager & SP_UP_HASH_STARTED) && gToken)
@@ -686,8 +703,10 @@ static void FinalizeProvisioningHandler(const CAEndpoint_t *object,
                 gStateManager |= SP_UP_HASH_ERROR;
                 OC_LOG(ERROR, TAG, "Error in FinalizeProvisioningHandler.");
             }
+            return true;
         }
     }
+    return false;
 }
 
 /**
@@ -695,8 +714,9 @@ static void FinalizeProvisioningHandler(const CAEndpoint_t *object,
  *
  * @param[in] object        Remote endpoint object
  * @param[in] requestInfo   Datastructure containing request information.
+ * @return true is CA token matches request token, false otherwise.
  */
-static void CredProvisioningHandler(const CAEndpoint_t *object,
+static bool CredProvisioningHandler(const CAEndpoint_t *object,
                                     const CAResponseInfo_t *responseInfo)
 {
     if ((gStateManager & SP_PROV_CRED_STARTED) && gToken)
@@ -716,8 +736,10 @@ static void CredProvisioningHandler(const CAEndpoint_t *object,
                 gStateManager |= SP_PROV_CRED_ERROR;
                 OC_LOG(ERROR, TAG, "Error in CredProvisioningHandler.");
             }
+            return true;
         }
     }
+    return false;
 }
 
 /**
@@ -725,37 +747,17 @@ static void CredProvisioningHandler(const CAEndpoint_t *object,
  *
  * @param[in] object        Remote endpoint object
  * @param[in] responseInfo  Datastructure containing response information.
+ * @return true if received response is for provisioning API false otherwise.
  */
-static void SPResponseHandler(const CAEndpoint_t *object,
+static bool SPResponseHandler(const CAEndpoint_t *object,
                               const CAResponseInfo_t *responseInfo)
 {
+    bool isProvResponse = false;
     if ((NULL != responseInfo) && (NULL != responseInfo->info.token))
     {
-        handler(object, responseInfo);
+        isProvResponse = handler(object, responseInfo);
     }
-}
-
-/**
- * Error Handler
- *
- * @param[in] object     Remote endpoint object
- * @param[in] errorInfo  Datastructure containing error information.
- */
-static void SPErrorHandler(const CAEndpoint_t *object,
-                           const CAErrorInfo_t *errorInfo)
-{
-    OC_LOG(INFO, TAG, "Error Handler.");
-}
-
-/**
- * Request Handler
- *
- * @param[in] object       Remote endpoint object
- * @param[in] requestInfo  Datastructure containing request information.
- */
-static void SPRequestHandler(const CAEndpoint_t *object, const CARequestInfo_t *requestInfo)
-{
-    OC_LOG(INFO, TAG, "Request Handler.");
+    return isProvResponse;
 }
 
 /**
@@ -959,17 +961,9 @@ static SPResult updateOperationMode(unsigned short timeout,
  * @param[in]  deviceInfo  Provisioning context
  * @return SP_SUCCESS on success
  */
-static SPResult initiateDtlsHandshake(SPTargetDeviceInfo_t *deviceInfo)
+static SPResult initiateDtlsHandshake(const CAEndpoint_t *endpoint)
 {
-    CAResult_t caresult = CASelectCipherSuite(TLS_ECDH_anon_WITH_AES_128_CBC_SHA);
-
-    if (CA_STATUS_OK != caresult)
-    {
-        OC_LOG(ERROR, TAG, "Unable to select cipher suite");
-        return SP_RESULT_INTERNAL_ERROR;
-    }
-    OC_LOG(INFO, TAG, "Anonymous cipher suite selected. ");
-    caresult = CAEnableAnonECDHCipherSuite(true);
+    CAResult_t caresult = CAEnableAnonECDHCipherSuite(true);
     if (CA_STATUS_OK != caresult)
     {
         OC_LOG_V(ERROR, TAG, "Unable to enable anon cipher suite");
@@ -977,9 +971,7 @@ static SPResult initiateDtlsHandshake(SPTargetDeviceInfo_t *deviceInfo)
     }
     OC_LOG(INFO, TAG, "Anonymous cipher suite Enabled.");
 
-    //TODO: It is a temporary fix. Revisit it.
-    deviceInfo->endpoint.port = CA_SECURE_PORT;
-    caresult = CAInitiateHandshake((CAEndpoint_t *)&deviceInfo->endpoint);
+    caresult = CAInitiateHandshake(endpoint);
     if (CA_STATUS_OK != caresult)
     {
         OC_LOG_V(ERROR, TAG, "DTLS handshake failure.");
@@ -1023,7 +1015,7 @@ static SPResult sendOwnershipInfo(unsigned short timeout,
 
     CAResult_t result = sendCARequest(CA_PUT,
                                       &selectedDeviceInfo->endpoint,
-                                      OC_SECURE,
+                                      OC_FLAG_SECURE,
                                       OIC_RSRC_DOXM_URI,
                                       payloadBuffer, payloadLen);
     if (CA_STATUS_OK != result)
@@ -1055,9 +1047,8 @@ static SPResult saveOwnerPSK(SPTargetDeviceInfo_t *selectedDeviceInfo)
 {
     SPResult result = SP_RESULT_INTERNAL_ERROR;
 
-    CAEndpoint_t endpoint = {0};
-    strncpy(endpoint.addr, selectedDeviceInfo->endpoint.addr, MAX_ADDR_STR_SIZE_CA);
-    endpoint.addr[MAX_ADDR_STR_SIZE_CA - 1] = '\0';
+    CAEndpoint_t endpoint = {};
+    OICStrcpy(endpoint.addr, MAX_ADDR_STR_SIZE_CA, selectedDeviceInfo->endpoint.addr);
     endpoint.port = CA_SECURE_PORT;
 
     OicUuid_t provTooldeviceID = {};
@@ -1172,23 +1163,39 @@ static SPResult doOwnerShipTransfer(unsigned short timeout,
     }
     if (*selectedOperationMode == SINGLE_SERVICE_CLIENT_DRIVEN)
     {
-        res = initiateDtlsHandshake(selectedDeviceInfo);
-        if (SP_RESULT_SUCCESS != res)
+        CAEndpoint_t endpoint = {0};
+        OICStrcpy(endpoint.addr, MAX_ADDR_STR_SIZE_CA, selectedDeviceInfo->endpoint.addr);
+        endpoint.port = CA_SECURE_PORT;
+
+        res = initiateDtlsHandshake(&endpoint);
+        if (SP_RESULT_SUCCESS == res)
         {
-            OC_LOG(ERROR, TAG, "Error while DTLS handshake.");
-            return SP_RESULT_INTERNAL_ERROR;
+            selectedDeviceInfo->endpoint.port = CA_SECURE_PORT;
+            res = sendOwnershipInfo(timeout, selectedDeviceInfo);
+            if (SP_RESULT_SUCCESS != res)
+            {
+                OC_LOG(ERROR, TAG, "Error while updating ownership information.");
+            }
+            res = saveOwnerPSK(selectedDeviceInfo);
+
+            //Close temporal DTLS session
+            if(CA_STATUS_OK != CACloseDtlsSession(&endpoint))
+            {
+                OC_LOG(WARNING, TAG, "doOwnerShipTransfer() : failed to close the dtls session");
+            }
+        }
+        else
+        {
+            OC_LOG(ERROR, TAG, "Error during initiating DTLS handshake.");
         }
 
-        res = sendOwnershipInfo(timeout, selectedDeviceInfo);
-        if (SP_RESULT_SUCCESS != res)
+        //Disable Anonymous ECDH cipher suite before leaving this method
+        if(CA_STATUS_OK != CAEnableAnonECDHCipherSuite(false))
         {
-            OC_LOG(ERROR, TAG, "Error while updating ownership information.");
-            return SP_RESULT_INTERNAL_ERROR;
+            OC_LOG(WARNING, TAG, "doOwnerShipTransfer() : failed to disable Anon ECDH cipher suite");
         }
-
-        saveOwnerPSK(selectedDeviceInfo);
     }
-    return SP_RESULT_SUCCESS;
+    return (res != SP_RESULT_SUCCESS) ? SP_RESULT_INTERNAL_ERROR : SP_RESULT_SUCCESS;
 
 }
 
@@ -1219,7 +1226,7 @@ SPResult provisionCredentials(unsigned short timeout, const OicSecCred_t *cred,
 
     CAResult_t result = sendCARequest(CA_POST,
                                       &deviceInfo->endpoint,
-                                      OC_SECURE,
+                                      OC_FLAG_SECURE,
                                       OIC_RSRC_CRED_URI,
                                       credJson, payloadLen);
     OICFree(credJson);
@@ -1238,6 +1245,7 @@ SPResult provisionCredentials(unsigned short timeout, const OicSecCred_t *cred,
         return SP_RESULT_TIMEOUT;
     }
     CADestroyToken(gToken);
+    gStateManager = 0;
     return res;
 }
 
@@ -1249,8 +1257,7 @@ SPResult SPProvisioningDiscovery(unsigned short timeout,
         OC_LOG(ERROR, TAG, "List is not null can cause memory leak");
         return SP_RESULT_INVALID_PARAM;
     }
-
-    CARegisterHandler(SPRequestHandler, SPResponseHandler, SPErrorHandler);
+    SRMRegisterProvisioningResponseHandler(SPResponseHandler);
     SPResult smResponse = SP_RESULT_SUCCESS;
     smResponse = findResource(timeout);
     if (SP_RESULT_SUCCESS != smResponse)
@@ -1324,7 +1331,7 @@ SPResult SPProvisionACL(unsigned short timeout, const SPTargetDeviceInfo_t *sele
 
     CAResult_t result = sendCARequest(CA_POST,
                                       &selectedDeviceInfo->endpoint,
-                                      OC_SECURE,
+                                      OC_FLAG_SECURE,
                                       OIC_RSRC_ACL_URI,
                                       aclString, payloadLen);
     OICFree(aclString);
@@ -1440,7 +1447,7 @@ SPResult SPFinalizeProvisioning(unsigned short timeout,
 
     CAResult_t result = sendCARequest(CA_PUT,
                                       &selectedDeviceInfo->endpoint,
-                                      OC_SECURE,
+                                      OC_FLAG_SECURE,
                                       OIC_RSRC_PSTAT_URI,
                                       payloadBuffer, payloadLen);
     OICFree(payloadBuffer);
@@ -1459,15 +1466,14 @@ SPResult SPFinalizeProvisioning(unsigned short timeout,
         return SP_RESULT_TIMEOUT;
     }
 
-    CAEndpoint_t endpoint = {0};
-    strncpy(endpoint.addr, selectedDeviceInfo->endpoint.addr, MAX_ADDR_STR_SIZE_CA);
-    endpoint.addr[DEV_ADDR_SIZE_MAX - 1] = '\0';
+    CAEndpoint_t endpoint = {};
+    OICStrcpy(endpoint.addr, MAX_ADDR_STR_SIZE_CA, selectedDeviceInfo->endpoint.addr);
     endpoint.port = CA_SECURE_PORT;
 
     result = CACloseDtlsSession(&endpoint);
     if (CA_STATUS_OK != result)
     {
-        OC_LOG_V(ERROR, TAG, "DTLS handshake failure.");
+        OC_LOG(WARNING, TAG, "Failed to close the DTLS session.");
     }
 
     CADestroyToken(gToken);

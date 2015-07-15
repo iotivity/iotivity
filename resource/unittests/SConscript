@@ -90,3 +90,9 @@ if env.get('TEST') == '1':
 		ut = unittests_env.Command ('ut', None,
 		 [ 'valgrind --leak-check=full --xml=yes --xml-file=resource_unittests_unittests.memcheck ' + out_dir + 'resource/unittests/unittests'])
 		AlwaysBuild ('ut')
+
+src_dir = unittests_env.get('SRC_DIR')
+svr_db_src_dir = src_dir + '/resource/examples/'
+svr_db_build_dir = env.get('BUILD_DIR') +'/resource/unittests/'
+unittests_env.Alias("install", unittests_env.Install( svr_db_build_dir,
+                                svr_db_src_dir + 'oic_svr_db_client.json'))

@@ -40,7 +40,7 @@ namespace OC
 
         public:
             ListenOCContainer(std::weak_ptr<IClientWrapper> cw,
-                    const OCDevAddr& devAddr, OCDiscoveryPayload* payload)
+                    OCDevAddr& devAddr, OCDiscoveryPayload* payload)
                     : m_clientWrapper(cw), m_devAddr(devAddr)
             {
                 OCResourcePayload* res = payload->resources;
@@ -51,6 +51,17 @@ namespace OC
                     if(OCConvertUuidToString(res->sid, uuidString) != RAND_UUID_OK)
                     {
                         uuidString[0]= '\0';
+                    }
+
+                    if (res->secure)
+                    {
+                        m_devAddr.flags =
+                              (OCTransportFlags)(OC_FLAG_SECURE | m_devAddr.flags);
+                    }
+ 
+                    if (res->port != 0)
+                    {
+                         m_devAddr.port = res->port;
                     }
 
                     m_resources.push_back(std::shared_ptr<OC::OCResource>(
@@ -73,7 +84,7 @@ namespace OC
         private:
             std::vector<std::shared_ptr<OC::OCResource>> m_resources;
             std::weak_ptr<IClientWrapper> m_clientWrapper;
-            const OCDevAddr& m_devAddr;
+            OCDevAddr& m_devAddr;
     };
     /*
     class ListenOCContainer

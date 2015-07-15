@@ -482,10 +482,15 @@ void PrintUsage()
     std::cout << "    4 - Non-secure resource, GET slow response, notify all observers\n";
 }
 
+static FILE* client_open(const char *path, const char *mode)
+{
+    return fopen("./oic_svr_db_server.json", mode);
+}
 
 int main(int argc, char* argv[])
 {
     PrintUsage();
+    OCPersistentStorage ps {client_open, fread, fwrite, fclose, unlink };
 
     if (argc == 1)
     {
@@ -527,7 +532,8 @@ int main(int argc, char* argv[])
         OC::ModeType::Server,
         "0.0.0.0", // By setting to "0.0.0.0", it binds to all available interfaces
         0,         // Uses randomly available port
-        OC::QualityOfService::LowQos
+        OC::QualityOfService::LowQos,
+        &ps
     };
 
     OCPlatform::Configure(cfg);
