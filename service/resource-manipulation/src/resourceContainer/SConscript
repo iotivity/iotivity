@@ -62,8 +62,8 @@ except KeyError:
 resource_container_env.AppendUnique(
 	CPPPATH = [
 		env.get('SRC_DIR')+'/extlibs', 
+		'../../include',
 		'include',
-		'include/internal',
 		'bundle-api/include',
 		'src',
 		'../serverBuilder/include',
@@ -123,7 +123,8 @@ ss_resource_bundle_env.AppendUnique(CCFLAGS = ['-fPIC'])
 SS_RESOURCE_BUNDLE_DIR = 'examples/SoftSensorSampleBundle/'
 ss_resource_bundle_env.AppendUnique(CPPPATH = [
 		SS_RESOURCE_BUNDLE_DIR + 'include',
-		'include/'
+		'include/',
+		'../../include',
 		])		
 		
 

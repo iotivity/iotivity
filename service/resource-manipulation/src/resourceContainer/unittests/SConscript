@@ -83,6 +83,7 @@ container_gtest_env.AppendUnique(
 	CPPPATH = [
 		env.get('SRC_DIR')+'/extlibs', 
 		'../include',
+		'../../../include',
  		'../include/internal',
 		'../bundle-api/include',
 		'../../serverBuilder/include',
