@@ -26,8 +26,11 @@ import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.res.AssetManager;
 import android.os.Bundle;
 import android.os.Message;
+import android.preference.PreferenceManager;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.widget.LinearLayout;
@@ -46,6 +49,12 @@ import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.QualityOfService;
 import org.iotivity.base.ServiceType;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.List;
 
@@ -63,6 +72,8 @@ public class SimpleClient extends Activity implements OcPlatform.OnResourceFound
         IMessageLogger {
     private static final String TAG = "SimpleClient: ";
 
+    private static final int BUFFER_SIZE = 1024;
+    private String filePath = "";
     private Light myLight;
     private OcResource curResource;
 
@@ -78,10 +89,10 @@ public class SimpleClient extends Activity implements OcPlatform.OnResourceFound
         PlatformConfig cfg = new PlatformConfig(
                 this,
                 ServiceType.IN_PROC,
-                ModeType.CLIENT,
+                ModeType.CLIENT_SERVER,
                 "0.0.0.0", // bind to all available interfaces
                 0,
-                QualityOfService.LOW);
+                QualityOfService.LOW, filePath + StringConstants.OIC_CLIENT_JSON_DB_FILE);
         OcPlatform.Configure(cfg);
         try {
             /**
@@ -111,7 +122,7 @@ public class SimpleClient extends Activity implements OcPlatform.OnResourceFound
             hostAddress = ocResource.getHost();
             logMessage(TAG + "Discovered Resource\nUri: " + resourceUri + " \n Host: " + hostAddress);
             // get the resource types
-            if (resourceUri.equals(StringConstants.RESOURCE_URI0)) {
+            if (resourceUri.contains("light")) {
                 curResource = ocResource;
                 doGetLightRepresentation();
             }
@@ -416,10 +427,70 @@ public class SimpleClient extends Activity implements OcPlatform.OnResourceFound
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f)
         );
         myLight = new Light();
+        filePath = getFilesDir().getPath() + "/"; //  data/data/<package>/files/
+        //copy json when application runs first time
+        SharedPreferences wmbPreference = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean isFirstRun = wmbPreference.getBoolean("FIRSTRUN", true);
+        if (isFirstRun) {
+            copyJsonFromAsset();
+            SharedPreferences.Editor editor = wmbPreference.edit();
+            editor.putBoolean("FIRSTRUN", false);
+            editor.commit();
+        }
+
 
         initOICStack();
     }
+/**
+     * Copy svr db json file from assets folder to app data files dir
+     */
+    private void copyJsonFromAsset() {
+        AssetManager assetManager = getAssets();
+        InputStream in = null;
+        OutputStream out = null;
+        try {
+            in = assetManager.open(StringConstants.OIC_CLIENT_JSON_DB_FILE);
+            File file = new File(filePath);
+            //check files directory exists
+            if (!(file.exists() && file.isDirectory())) {
+                file.mkdirs();
+            }
+            out = new FileOutputStream(filePath + StringConstants.OIC_CLIENT_JSON_DB_FILE);
+            copyFile(in, out);
+        } catch (NullPointerException e) {
+            logMessage(TAG + "Null pointer exception " + e.getMessage());
+            Log.e(TAG, e.getMessage());
+        } catch (FileNotFoundException e) {
+            logMessage(TAG + "Json svr db file not found " + e.getMessage());
+            Log.e(TAG, e.getMessage());
+        } catch (IOException e) {
+            logMessage(TAG + StringConstants.OIC_CLIENT_JSON_DB_FILE+ " file copy failed");
+            Log.e(TAG, e.getMessage());
+        } finally {
+            if (in != null) {
+                try {
+                    in.close();
+                } catch (IOException e) {
+                    Log.e(TAG, e.getMessage());
+                }
+            }
+            if (out != null) {
+                try {
+                    out.close();
+                } catch (IOException e) {
+                    Log.e(TAG, e.getMessage());
+                }
+            }
+        }
+    }
 
+    private void copyFile(InputStream in, OutputStream out) throws IOException {
+        byte[] buffer = new byte[BUFFER_SIZE];
+        int read;
+        while ((read = in.read(buffer)) != -1) {
+            out.write(buffer, 0, read);
+        }
+    }
     @Override
     public void logMessage(String text) {
         logMsg(text);

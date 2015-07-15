@@ -25,6 +25,7 @@
 #include "JniOcResourceHandle.h"
 #include "JniOcPresenceHandle.h"
 #include "JniOcResourceResponse.h"
+#include "JniOcSecurity.h"
 #include "JniUtils.h"
 
 using namespace OC;
@@ -308,14 +309,21 @@ void RemoveOnPresenceListener(JNIEnv* env, jobject jListener)
 * Signature: (IILjava/lang/String;II)V
 */
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_configure
-(JNIEnv *env, jclass clazz, jint jServiceType, jint jModeType, jstring jIpAddress, jint jPort, jint jQOS)
+(JNIEnv *env, jclass clazz, jint jServiceType, jint jModeType, jstring jIpAddress, jint jPort,
+                                                                 jint jQOS, jstring jDbPath)
 {
     LOGI("OcPlatform_configure");
 
     std::string ipAddress;
+    std::string dbfile;
     if (jIpAddress)
     {
         ipAddress = env->GetStringUTFChars(jIpAddress, NULL);
+    }
+    if (jDbPath)
+    {
+        dbfile = env->GetStringUTFChars(jDbPath, nullptr);
+        JniOcSecurity::StoreDbPath(dbfile);
     }
     uint16_t port;
     if (jPort > 0)
@@ -327,7 +335,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_configure
         JniUtils::getModeType(env, jModeType),
         ipAddress,
         port,
-        JniUtils::getQOS(env, static_cast<int>(jQOS))
+        JniUtils::getQOS(env, static_cast<int>(jQOS)),
+        JniOcSecurity::getOCPersistentStorage()
     };
 
     OCPlatform::Configure(cfg);

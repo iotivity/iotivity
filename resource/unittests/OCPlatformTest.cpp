@@ -31,7 +31,13 @@ namespace OCPlatformTest
     const std::string gResourceInterface = DEFAULT_INTERFACE;
     const uint8_t gResourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
     OCResourceHandle resourceHandle;
+  //OCPersistent Storage Handlers
 
+   static FILE* client_open(const char *path, const char *mode)
+   {
+       std::cout << "<===Opening SVR DB file = './oic_svr_db_client.json' with mode = '"<< mode<<"' "<<std::endl;
+               return fopen("./oic_svr_db_client.json", mode);
+   }
     // Callbacks
     OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
     {
@@ -214,6 +220,67 @@ namespace OCPlatformTest
                  resourceHandle, uri, type,
                  gResourceInterface, entityHandler, gResourceProperty));
     }
+    //PersistentStorageTest
+    TEST(ConfigureTest, ConfigureDefaultNULLPersistentStorage)
+    {
+        PlatformConfig cfg {
+             OC::ServiceType::InProc,
+             OC::ModeType::Both,
+             "0.0.0.0",
+             0,
+             OC::QualityOfService::LowQos
+         };
+         OCPlatform::Configure(cfg);
+         EXPECT_NO_THROW(OCPlatform::setDefaultDeviceEntityHandler(nullptr));
+     }
+
+    //PersistentStorageTest
+    TEST(ConfigureTest, ConfigureNULLPersistentStorage)
+    {
+        PlatformConfig cfg {
+             OC::ServiceType::InProc,
+             OC::ModeType::Both,
+             "0.0.0.0",
+             0,
+             OC::QualityOfService::LowQos,
+             nullptr
+         };
+         OCPlatform::Configure(cfg);
+         EXPECT_NO_THROW(OCPlatform::setDefaultDeviceEntityHandler(nullptr));
+     }
+
+    //PersistentStorageTest
+    TEST(ConfigureTest, ConfigurePersistentStorage)
+    {
+        OCPersistentStorage ps {client_open, fread, fwrite, fclose, unlink };
+        PlatformConfig cfg {
+             OC::ServiceType::InProc,
+             OC::ModeType::Both,
+             "0.0.0.0",
+             0,
+             OC::QualityOfService::LowQos,
+             &ps
+         };
+         OCPlatform::Configure(cfg);
+         EXPECT_NO_THROW(OCPlatform::setDefaultDeviceEntityHandler(nullptr));
+     }
+
+    //PersistentStorageTest
+    TEST(ConfigureTest, ConfigureNULLHandlersPersistentStorage)
+    {
+        OCPersistentStorage ps {client_open, nullptr, nullptr, nullptr, nullptr };
+        PlatformConfig cfg {
+             OC::ServiceType::InProc,
+             OC::ModeType::Both,
+             "0.0.0.0",
+             0,
+             OC::QualityOfService::LowQos,
+             &ps
+         };
+         OCPlatform::Configure(cfg);
+         EXPECT_NO_THROW(OCPlatform::setDefaultDeviceEntityHandler(nullptr));
+     }
+
 
     //RegisterResourceTest
     TEST(RegisterResourceTest, RegisterSingleResource)
@@ -699,5 +766,4 @@ namespace OCPlatformTest
                 OC_MULTICAST_IP, CT_DEFAULT, &presenceHandler));
         EXPECT_EQ(OC_STACK_OK, OCPlatform::unsubscribePresence(presenceHandle));
     }
-
 }

@@ -62,7 +62,7 @@ extern "C" {
     * Signature: (IILjava/lang/String;II)V
     */
     JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_configure
-        (JNIEnv *, jclass, jint, jint, jstring, jint, jint);
+        (JNIEnv *, jclass, jint, jint, jstring, jint, jint, jstring);
 
     /*
     * Class:     org_iotivity_base_OcPlatform
