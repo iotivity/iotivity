@@ -40,7 +40,7 @@
 #include "oic_string.h"
 #include "canetworkconfigurator.h"
 
-#define TAG PCF("CA")
+#define TAG PCF("CA_MSG_HNDLR")
 #define SINGLE_HANDLE
 
 #define MAX_THREAD_POOL_SIZE    20

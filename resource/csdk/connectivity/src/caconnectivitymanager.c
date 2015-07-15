@@ -36,7 +36,7 @@
 
 CAGlobals_t caglobals;
 
-#define TAG "CA"
+#define TAG "CA_CONN_MGR"
 
 static bool g_isInitialized = false;
 

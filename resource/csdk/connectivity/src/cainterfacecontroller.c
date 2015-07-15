@@ -34,7 +34,7 @@
 #include "cathreadpool.h"
 #include "caipadapter.h"
 
-#define TAG "CA"
+#define TAG "CA_INTRFC_CNTRLR"
 
 #define CA_MEMORY_ALLOC_CHECK(arg) {if (arg == NULL) \
     {OIC_LOG(ERROR, TAG, "memory error");goto memory_error_exit;} }
