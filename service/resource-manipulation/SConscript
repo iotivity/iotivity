@@ -37,13 +37,13 @@ SConscript('sdk/SConscript')
 ######################################################################
 
 if env.get('RELEASE'):
-	env.AppendUnique(CCFLAGS = ['-Os'])
-	env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+        env.AppendUnique(CCFLAGS = ['-Os'])
+        env.AppendUnique(CPPDEFINES = ['NDEBUG'])
 else:
-	env.AppendUnique(CCFLAGS = ['-g'])
+        env.AppendUnique(CCFLAGS = ['-g'])
 
 if env.get('LOGGING'):
-	env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+        env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 # Add third party libraries
 lib_env = env.Clone()
@@ -81,5 +81,12 @@ ResourceClientsdk = resourceClient_env.StaticLibrary('ResourceClient', client_sr
 
 resourceClient_env.InstallTarget(ResourceClientsdk , 'libResourceClient')
 
-#Go to build sample apps
+######################################################################
+# Build Sample App: SampleResourceClient & SampleResourceServer
+######################################################################
 SConscript('examples/SConscript')
+######################################################################
+# Build UnitTests Resource Client
+######################################################################
+SConscript('unittests/SConscript')
+
