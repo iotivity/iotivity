@@ -33,8 +33,9 @@ namespace OIC
     namespace Service
     {
         #define BROKER_TAG PCF("BROKER")
-        #define SAFE_MILLISECOND (5000l)
-        #define SAFE_SECOND (5l)
+        #define BROKER_DEVICE_PRESENCE_TIMEROUT (15000l)
+        #define BROKER_SAFE_SECOND (5l)
+        #define BROKER_SAFE_MILLISECOND (BROKER_SAFE_SECOND * (1000))
         #define BROKER_TRANSPORT OCConnectivityType::CT_ADAPTER_IP
 
         /*
@@ -110,7 +111,7 @@ namespace OIC
                 const std::string&)> SubscribeCB;
 
         typedef std::function<void(const HeaderOptions&, const ResponseStatement&, int)> RequestGetCB;
-        typedef std::function<void * (unsigned int)> TimeoutCB;
+        typedef std::function<void*(long long)> TimerCB;
     } // namespace Service
 } // namespace OIC
 

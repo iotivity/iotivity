@@ -27,6 +27,7 @@
 #include "BrokerTypes.h"
 #include "ResourcePresence.h"
 #include "PresenceSubscriber.h"
+#include "ExpiryTimer.h"
 
 namespace OIC
 {
@@ -35,6 +36,8 @@ namespace OIC
         class DevicePresence
         {
         public:
+            using TimerID = long long;
+
             DevicePresence();
             ~DevicePresence();
 
@@ -47,19 +50,24 @@ namespace OIC
             const std::string getAddress() const;
 
         private:
-            void requestAllResourcePresence();
-            void subscribeCB(OCStackResult ret,const unsigned int seq, const std::string& Hostaddress);
-            void * timeOutCB(unsigned int msg);
-
             std::list<ResourcePresence * > resourcePresenceList;
 
             std::string address;
-            DEVICE_STATE state;
-            bool isWithinTime;
+            std::atomic<DEVICE_STATE> state;
+            std::atomic_bool isRunningTimeOut;
 
+            std::mutex timeoutMutex;
+            std::condition_variable condition;
+
+            ExpiryTimer presenceTimer;
+            TimerID presenceTimerHandle;
+            TimerCB pTimeoutCB;
             SubscribeCB pSubscribeRequestCB;
-            TimeoutCB pTimeoutCB;
             PresenceSubscriber presenceSubscriber;
+
+            void changeAllPresenceMode(BROKER_MODE mode);
+            void subscribeCB(OCStackResult ret,const unsigned int seq, const std::string& Hostaddress);
+            void * timeOutCB(TimerID id);
         };
     } // namespace Service
 } // namespace OIC

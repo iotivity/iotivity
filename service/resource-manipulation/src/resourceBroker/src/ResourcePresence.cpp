@@ -61,7 +61,7 @@ namespace OIC
             = std::unique_ptr<std::list<BrokerRequesterInfoPtr>>
             (new std::list<BrokerRequesterInfoPtr>);
 
-            timeoutHandle = expiryTimer.postTimer(SAFE_MILLISECOND, pTimeoutCB);
+            timeoutHandle = expiryTimer.postTimer(BROKER_SAFE_MILLISECOND, pTimeoutCB);
 
             primitiveResource->requestGet(pGetCB);
 
@@ -187,7 +187,7 @@ namespace OIC
             currentTime += 0L;
 
             if((receivedTime.load(std::memory_order_relaxed) == 0) ||
-              ((receivedTime + SAFE_SECOND) > currentTime ))
+              ((receivedTime + BROKER_SAFE_SECOND) > currentTime ))
             {
                 this->isWithinTime = false;
                 isTimeoutCB = false;
@@ -212,7 +212,7 @@ namespace OIC
         {
             OC_LOG_V(DEBUG,BROKER_TAG,"IN PollingCB\n");
             this->requestResourceState();
-            timeoutHandle = expiryTimer.postTimer(SAFE_MILLISECOND,pTimeoutCB);
+            timeoutHandle = expiryTimer.postTimer(BROKER_SAFE_MILLISECOND,pTimeoutCB);
 
             return NULL;
         }
@@ -243,7 +243,7 @@ namespace OIC
             if(mode == BROKER_MODE::NON_PRESENCE_MODE)
             {
                 // TODO set timer & request get
-                expiryTimer.postTimer(SAFE_MILLISECOND,pPollingCB);
+                expiryTimer.postTimer(BROKER_SAFE_MILLISECOND,pPollingCB);
             }
 
         }
@@ -290,8 +290,10 @@ namespace OIC
         {
             if(newMode != mode)
             {
+                expiryTimer.cancelTimer(timeoutHandle);
                 if(newMode == BROKER_MODE::NON_PRESENCE_MODE)
                 {
+                    timeoutHandle = expiryTimer.postTimer(BROKER_SAFE_MILLISECOND,pTimeoutCB);
                     requestResourceState();
                 }
                 mode = newMode;

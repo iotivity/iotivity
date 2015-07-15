@@ -71,8 +71,8 @@ namespace OIC
             unsigned int timeoutHandle;
 
             RequestGetCB pGetCB;
-            TimeoutCB pTimeoutCB;
-            TimeoutCB pPollingCB;
+            TimerCB pTimeoutCB;
+            TimerCB pPollingCB;
 
             void registerDevicePresence();
             void getCB(const HeaderOptions &hos, const ResponseStatement& rep, int eCode);
