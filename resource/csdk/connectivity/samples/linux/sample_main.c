@@ -474,7 +474,9 @@ void send_request()
             CADestroyToken(token);
             return;
         }
-        snprintf(requestData.payload, length, SECURE_INFO_DATA, resourceURI, g_local_secure_port);
+        snprintf((char *) requestData.payload, length, SECURE_INFO_DATA,
+                 (const char *) resourceURI, g_local_secure_port);
+        requestData.payloadSize = length;
     }
     else
     {
@@ -487,7 +489,9 @@ void send_request()
             CADestroyToken(token);
             return;
         }
-        snprintf(requestData.payload, length, NORMAL_INFO_DATA, resourceURI);
+        snprintf((char *) requestData.payload, length, NORMAL_INFO_DATA,
+                 (const char *) resourceURI);
+        requestData.payloadSize = length;
     }
     requestData.type = msgType;
     CAHeaderOption_t* headerOpt = get_option_data(&requestData);
@@ -631,7 +635,8 @@ void send_request_all()
     CAInfo_t requestData = { 0 };
     requestData.token = token;
     requestData.tokenLength = tokenLength;
-    requestData.payload = "Temp Json Payload";
+    requestData.payload = (CAPayload_t) "TempJsonPayload";
+    requestData.payloadSize = strlen((const char *) requestData.payload);
     requestData.type = CA_MSG_NONCONFIRM;
     requestData.resourceUri = (CAURI_t)resourceURI;
 
@@ -733,7 +738,8 @@ void send_notification()
     CAInfo_t respondData = { 0 };
     respondData.token = token;
     respondData.tokenLength = tokenLength;
-    respondData.payload = "Temp Notification Data";
+    respondData.payload = (CAPayload_t) "TempNotificationData";
+    respondData.payloadSize = strlen((const char *) respondData.payload);
     respondData.type = messageType;
     respondData.resourceUri = (CAURI_t)uri;
 
@@ -1166,28 +1172,31 @@ void send_response(const CAEndpoint_t *endpoint, const CAInfo_t *info)
         {
             printf("Sending response on secure communication\n");
 
-            uint32_t length = sizeof(SECURE_INFO_DATA);
+            uint32_t length = sizeof(SECURE_INFO_DATA) + strlen(responseData.resourceUri);
             responseData.payload = (CAPayload_t) calloc(length,  sizeof(char));
             if (NULL == responseData.payload)
             {
                 printf("Memory allocation fail\n");
                 return;
             }
-            snprintf(responseData.payload, length, SECURE_INFO_DATA, responseData.resourceUri,
-                     g_local_secure_port);
+            snprintf((char *) responseData.payload, length, SECURE_INFO_DATA,
+                     (const char *) responseData.resourceUri, g_local_secure_port);
+            responseData.payloadSize = length;
         }
         else
         {
             printf("Sending response on non-secure communication\n");
 
-            uint32_t length = sizeof(NORMAL_INFO_DATA);
+            uint32_t length = sizeof(NORMAL_INFO_DATA) + strlen(responseData.resourceUri);
             responseData.payload = (CAPayload_t) calloc(length, sizeof(char));
             if (NULL == responseData.payload)
             {
                 printf("Memory allocation fail\n");
                 return;
             }
-            snprintf(responseData.payload, length, NORMAL_INFO_DATA, responseData.resourceUri);
+            snprintf((char *) responseData.payload, length, NORMAL_INFO_DATA,
+                     (const char *) responseData.resourceUri);
+            responseData.payloadSize = length;
         }
     }
 
@@ -1225,13 +1234,13 @@ int get_secure_information(CAPayload_t payLoad)
     }
 
     char *subString = NULL;
-    if (NULL == (subString = strstr(payLoad, "\"sec\":1")))
+    if (NULL == (subString = strstr((const char *) payLoad, "\"sec\":1")))
     {
         printf("This is not secure resource\n");
         return -1;
     }
 
-    if (NULL == (subString = strstr(payLoad, "\"port\":")))
+    if (NULL == (subString = strstr((const char *) payLoad, "\"port\":")))
     {
         printf("This secure resource does not have port information\n");
         return -1;
