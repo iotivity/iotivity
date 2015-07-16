@@ -22,3 +22,4 @@ mosquittopp_env.AppendUnique(LIBS = ['mosquitto', 'ssl', 'crypto'])
 ######################################################################
 mosquittopp = mosquittopp_env.SharedLibrary('mosquittopp', 'mosquittopp.cpp')
 mosquittopp_env.InstallTarget(mosquittopp, 'libmosquittopp')
+mosquittopp_env.UserInstallTargetLib(mosquittopp, 'libmosquittopp')

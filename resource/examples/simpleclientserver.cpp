@@ -154,7 +154,7 @@ public:
     void start()
     {
         std::ostringstream requestURI;
-        requestURI << OC_MULTICAST_DISCOVERY_URI << "?rt=core.foo";
+        requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.foo";
 
         std::cout<<"Starting Client find:"<<std::endl;
         FindCallback f (std::bind(&ClientWorker::foundResource, this, std::placeholders::_1));

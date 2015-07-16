@@ -121,6 +121,9 @@ def __install_lib(ienv, lib):
 
 SConscript('tools/UnpackAll.py')
 
+# tinycbor build/fetch
+SConscript(os.path.join(env.get('SRC_DIR'), 'extlibs', 'tinycbor', 'SConscript'))
+
 env.AddMethod(__prepare_lib, "PrepareLib")
 env.AddMethod(__configure, "Configure")
 env.AddMethod(__download, "Download")

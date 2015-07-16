@@ -23,6 +23,7 @@
 
 #include "OCPlatform.h"
 #include "OCResource.h"
+#include "ocpayload.h"
 #include <OCSerialization.h>
 using namespace std;
 
@@ -98,28 +99,21 @@ namespace OC
 
     OCRepresentation parseGetSetCallback(OCClientResponse* clientResponse)
     {
-        if(clientResponse->resJSONPayload == nullptr || clientResponse->resJSONPayload[0] == '\0')
+        if(clientResponse->payload == nullptr ||
+                (
+                    clientResponse->payload->type != PAYLOAD_TYPE_DEVICE &&
+                    clientResponse->payload->type != PAYLOAD_TYPE_PLATFORM &&
+                    clientResponse->payload->type != PAYLOAD_TYPE_REPRESENTATION
+                )
+          )
         {
+            //OCPayloadDestroy(clientResponse->payload);
             return OCRepresentation();
         }
 
         MessageContainer oc;
-        try
-        {
-            oc.setJSONRepresentation(clientResponse->resJSONPayload);
-        }
-        catch (cereal::RapidJSONException& ex)
-        {
-            oclog() <<"RapidJSON Exception in parseGetSetCallback: "<<ex.what() <<std::endl<<
-                "Data was:"<< clientResponse->resJSONPayload<< ":" << std::flush;
-            throw OCException(OC::Exception::INVALID_REPRESENTATION, OC_STACK_INVALID_JSON);
-        }
-        catch (cereal::Exception& ex)
-        {
-            oclog() <<"Cereal Exception in parseGetSetCallback: "<<ex.what() <<std::endl<<
-                "Data was:"<< clientResponse->resJSONPayload<< ":" << std::flush;
-            throw OCException(OC::Exception::INVALID_REPRESENTATION, OC_STACK_INVALID_JSON);
-        }
+        oc.setPayload(clientResponse->payload);
+        //OCPayloadDestroy(clientResponse->payload);
 
         std::vector<OCRepresentation>::const_iterator it = oc.representations().begin();
         if(it == oc.representations().end())
@@ -153,6 +147,13 @@ namespace OC
             return OC_STACK_KEEP_TRANSACTION;
         }
 
+        if(!clientResponse->payload || clientResponse->payload->type != PAYLOAD_TYPE_DISCOVERY)
+        {
+            oclog() << "listenCallback(): clientResponse payload was null or the wrong type"
+                << std::flush;
+            return OC_STACK_KEEP_TRANSACTION;
+        }
+
         auto clientWrapper = context->clientWrapper.lock();
 
         if(!clientWrapper)
@@ -162,33 +163,15 @@ namespace OC
             return OC_STACK_KEEP_TRANSACTION;
         }
 
-        std::stringstream requestStream;
-        requestStream << clientResponse->resJSONPayload;
-
-        try
+        ListenOCContainer container(clientWrapper, clientResponse->devAddr,
+                                reinterpret_cast<OCDiscoveryPayload*>(clientResponse->payload));
+        // loop to ensure valid construction of all resources
+        for(auto resource : container.Resources())
         {
-
-            ListenOCContainer container(clientWrapper, clientResponse->devAddr,
-                                    requestStream);
-            // loop to ensure valid construction of all resources
-            for(auto resource : container.Resources())
-            {
-                std::thread exec(context->callback, resource);
-                exec.detach();
-            }
-
+            std::thread exec(context->callback, resource);
+            exec.detach();
         }
-        catch(const std::exception& e)
-        {
-            oclog() << "listenCallback failed to parse a malformed message: "
-                    << e.what()
-                    << std::endl
-                    << clientResponse->resJSONPayload
-                    << std::endl
-                    << clientResponse->result
-                    << std::flush;
-            return OC_STACK_KEEP_TRANSACTION;
-        }
+
 
         return OC_STACK_KEEP_TRANSACTION;
     }
@@ -347,53 +330,8 @@ namespace OC
         return OC_STACK_DELETE_TRANSACTION;
     }
 
-    OCStackResult InvokeDoResource(OCDoHandle *handle,
-                                    OCMethod method,
-                                    const char *requestUri,
-                                    const OCDevAddr *destination,
-                                    const char *request,
-                                    OCConnectivityType connectivityType,
-                                    OCQualityOfService qos,
-                                    OCCallbackData *cbData,
-                                    OCHeaderOption *options,
-                                    uint8_t numOptions,
-                                    bool useHostString)
-    {
-        if (useHostString)
-        {
-            ostringstream host;   
-            host << destination << requestUri;
-            connectivityType = (OCConnectivityType)
-                                ((destination->adapter << CT_ADAPTER_SHIFT)
-                                | (destination->flags & CT_MASK_FLAGS));
-            return OCDoResource(handle,
-                                method,
-                                host.str().c_str(),
-                                nullptr,
-                                request,
-                                connectivityType,
-                                qos,
-                                cbData,
-                                options,
-                                numOptions);
-        }
-        else
-        {
-            return OCDoResource(handle,
-                                method,
-                                requestUri,
-                                destination,
-                                request,
-                                connectivityType,
-                                qos,
-                                cbData,
-                                options,
-                                numOptions);
-        }
-    }
-
     OCStackResult InProcClientWrapper::GetResourceRepresentation(
-        const OCDevAddr& devAddr, bool useHostString,
+        const OCDevAddr& devAddr,
         const std::string& resourceUri,
         const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
         GetCallback& callback, QualityOfService QoS)
@@ -420,7 +358,8 @@ namespace OC
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             OCHeaderOption options[MAX_HEADER_OPTIONS];
 
-            result = OCDoResource(nullptr, OC_REST_GET,
+            result = OCDoResource(
+                                  nullptr, OC_REST_GET,
                                   uri.c_str(),
                                   &devAddr, nullptr,
                                   CT_DEFAULT,
@@ -496,15 +435,15 @@ namespace OC
         return ret;
     }
 
-    std::string InProcClientWrapper::assembleSetResourcePayload(const OCRepresentation& rep)
+    OCPayload* InProcClientWrapper::assembleSetResourcePayload(const OCRepresentation& rep)
     {
         MessageContainer ocInfo;
         ocInfo.addRepresentation(rep);
-        return ocInfo.getJSONRepresentation(OCInfoFormat::IncludeOC);
+        return reinterpret_cast<OCPayload*>(ocInfo.getPayload());
     }
 
     OCStackResult InProcClientWrapper::PostResourceRepresentation(
-        const OCDevAddr& devAddr, bool useHostString,
+        const OCDevAddr& devAddr,
         const std::string& uri,
         const OCRepresentation& rep,
         const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
@@ -533,7 +472,7 @@ namespace OC
 
             result = OCDoResource(nullptr, OC_REST_POST,
                                   url.c_str(), &devAddr,
-                                  assembleSetResourcePayload(rep).c_str(),
+                                  assembleSetResourcePayload(rep),
                                   CT_DEFAULT,
                                   static_cast<OCQualityOfService>(QoS),
                                   &cbdata,
@@ -550,7 +489,7 @@ namespace OC
     }
 
     OCStackResult InProcClientWrapper::PutResourceRepresentation(
-        const OCDevAddr& devAddr, bool useHostString,
+        const OCDevAddr& devAddr,
         const std::string& uri,
         const OCRepresentation& rep,
         const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
@@ -580,7 +519,7 @@ namespace OC
 
             result = OCDoResource(&handle, OC_REST_PUT,
                                   url.c_str(), &devAddr,
-                                  assembleSetResourcePayload(rep).c_str(),
+                                  assembleSetResourcePayload(rep),
                                   CT_DEFAULT,
                                   static_cast<OCQualityOfService>(QoS),
                                   &cbdata,
@@ -613,7 +552,7 @@ namespace OC
     }
 
     OCStackResult InProcClientWrapper::DeleteResource(
-        const OCDevAddr& devAddr, bool useHostString,
+        const OCDevAddr& devAddr,
         const std::string& uri,
         const HeaderOptions& headerOptions, DeleteCallback& callback, QualityOfService QoS)
     {
@@ -688,7 +627,7 @@ namespace OC
     }
 
     OCStackResult InProcClientWrapper::ObserveResource(ObserveType observeType, OCDoHandle* handle,
-        const OCDevAddr& devAddr, bool useHostString,
+        const OCDevAddr& devAddr,
         const std::string& uri,
         const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
         ObserveCallback& callback, QualityOfService QoS)
@@ -816,7 +755,7 @@ namespace OC
         auto cLock = m_csdkLock.lock();
 
         std::ostringstream os;
-        os << host << OC_PRESENCE_URI;;
+        os << host << OC_RSRVD_PRESENCE_URI;;
 
         if(!resourceType.empty())
         {

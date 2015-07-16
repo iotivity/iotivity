@@ -328,6 +328,7 @@ Java_org_iotivity_ca_service_RMInterface_RMSendRequest(JNIEnv *env, jobject obj,
             return;
         }
         snprintf(requestData.payload, length, SECURE_INFO_DATA, resourceURI, g_localSecurePort);
+        requestData.payloadSize = length;
     }
     else
     {
@@ -343,6 +344,7 @@ Java_org_iotivity_ca_service_RMInterface_RMSendRequest(JNIEnv *env, jobject obj,
             return;
         }
         snprintf(requestData.payload, length, NORMAL_INFO_DATA, resourceURI);
+        requestData.payloadSize = length;
     }
 
     requestData.type = messageType;
@@ -419,7 +421,8 @@ Java_org_iotivity_ca_service_RMInterface_RMSendReqestToAll(JNIEnv *env, jobject 
     CAInfo_t requestData = { 0 };
     requestData.token = token;
     requestData.tokenLength = tokenLength;
-    requestData.payload = "Temp Json Payload";
+    requestData.payload = (CAPayload_t) "TempJsonPayload";
+    requestData.payloadSize = strlen((const char *) requestData.payload);
     requestData.type = CA_MSG_NONCONFIRM;
 
     const char* strUri = (*env)->GetStringUTFChars(env, uri, NULL);
@@ -521,12 +524,14 @@ Java_org_iotivity_ca_service_RMInterface_RMSendResponse(JNIEnv *env, jobject obj
             responseData.payload = (CAPayload_t) malloc(length);
             sprintf(responseData.payload, SECURE_INFO_DATA, g_resourceUri,
                     g_localSecurePort);
+            responseData.payloadSize = length;
         }
         else
         {
             uint32_t length = strlen(NORMAL_INFO_DATA) + strlen(g_resourceUri) + 1;
             responseData.payload = (CAPayload_t) malloc(length);
             sprintf(responseData.payload, NORMAL_INFO_DATA, g_resourceUri);
+            responseData.payloadSize = length;
         }
     }
     //msgType is RESET

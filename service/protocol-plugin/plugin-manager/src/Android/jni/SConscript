@@ -31,6 +31,7 @@ ppm_jni_src = ['PluginManager.cpp']
 ppm_jni = ppm_jni_env.SharedLibrary('PluginManager', ppm_jni_src)
 
 ppm_jni_env.InstallTarget(ppm_jni, 'libPluginManager')
+ppm_jni_env.UserInstallTargetLib(ppm_jni, 'libPluginManager')
 
 ######################################################################
 # Install the libraries to /libs/<TARGET_ARCH> directory
@@ -43,6 +44,7 @@ gnu_lib_paths = env.get('LIBPATH')
 for gnu_lib_path in gnu_lib_paths:
     gnu_lib_path = gnu_lib_path + '/libgnustl_shared.so'
     if os.path.exists(gnu_lib_path):
+        ppm_jni_env.Install(ppm_sdk+'/src/Android/libs/'+env.get('TARGET_ARCH'), gnu_lib_path)
         ppm_jni_env.Install(ppm_sdk+'/src/Android/libs/'+env.get('TARGET_ARCH'), gnu_lib_path)
         break
 

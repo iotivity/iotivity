@@ -26,12 +26,6 @@
 extern const char * SVR_DB_FILE_NAME;
 extern const char * OIC_MI_DEF;
 
-extern const char * OIC_RSRC_CORE_URI;
-extern const char * OIC_RSRC_CORE_D_URI;
-extern const char * OIC_RSRC_CORE_P_URI;
-extern const char * OIC_RSRC_PRESENCE_URI;
-extern const char * OIC_RSRC_TYPES_D_URI;
-
 //ACL
 extern const char * OIC_RSRC_TYPE_SEC_ACL;
 extern const char * OIC_RSRC_ACL_URI;
@@ -79,6 +73,7 @@ extern const char * OIC_JSON_SM_NAME;
 
 extern OicUuid_t WILDCARD_SUBJECT_ID;
 extern size_t WILDCARD_SUBJECT_ID_LEN;
+extern const char * WILDCARD_RESOURCE_URI;
 
 //Ownership Transfer Methods
 extern const char * OXM_JUST_WORKS;

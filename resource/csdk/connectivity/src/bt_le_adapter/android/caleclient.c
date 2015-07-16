@@ -65,19 +65,11 @@ static jbyteArray g_sendBuffer = NULL;
 static uint32_t g_targetCnt = 0;
 static uint32_t g_currentSentCnt = 0;
 static bool g_isFinishedSendData = false;
-static ca_mutex g_SendFinishMutex = false;
+static ca_mutex g_SendFinishMutex = NULL;
 static ca_mutex g_threadMutex = NULL;
 static ca_cond g_threadCond = NULL;
 
-static bool g_isRequestedSend = false;
-static bool g_isReceivedWriteCB = false;
-static ca_mutex g_writeCharacteristicCBMutex = false;
-static ca_mutex g_theSendRequestMutex = false;
-static ca_mutex g_threadSendCBMutex = NULL;
-static ca_cond g_threadSendCBCond = NULL;
-
 static ca_mutex g_threadSendMutex = NULL;
-static ca_cond g_threadSendCond = NULL;
 
 static ca_mutex g_bleReqRespClientCbMutex = NULL;
 static ca_mutex g_bleServerBDAddressMutex = NULL;
@@ -227,8 +219,6 @@ CAResult_t CALEClientInitialize(ca_thread_pool_t handle)
 
     // init mutex for send logic
     g_threadCond = ca_cond_new();
-    g_threadSendCond = ca_cond_new();
-    g_threadSendCBCond = ca_cond_new();
 
     CALEClientCreateDeviceList();
     CALEClientJNISetContext();
@@ -330,14 +320,10 @@ void CALEClientTerminate()
     g_isStartedMulticastServer = false;
     g_isStartedScan = false;
     CALEClientSetSendFinishFlag(false);
-    CALEClientSetTheSendRequestFlag(false);
-    CALEClientSetWriteCharacteristicCBFlag(false);
 
     CALEClientTerminateGattMutexVariables();
 
     ca_cond_free(g_threadCond);
-    ca_cond_free(g_threadSendCond);
-    ca_cond_free(g_threadSendCBCond);
 
     if (isAttached)
     {
@@ -585,21 +571,6 @@ CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const char* dat
                     OIC_LOG(ERROR, TAG, "CALEClientSendData in unicast is failed");
                     goto error_exit;
                 }
-                else
-                {
-                    CALEClientSetTheSendRequestFlag(true);
-                    ca_cond_signal(g_threadSendCBCond);
-
-                    if (!g_isReceivedWriteCB)
-                    {
-                        OIC_LOG(INFO, TAG, "wait..(unicast)");
-                        ca_cond_wait(g_threadSendCond, g_threadSendMutex);
-                    }
-                    else
-                    {
-                        CALEClientSetWriteCharacteristicCBFlag(false);
-                    }
-                }
 
                 OIC_LOG(INFO, TAG, "wake up");
                 break;
@@ -708,21 +679,6 @@ CAResult_t CALEClientSendMulticastMessageImpl(JNIEnv *env, const char* data,
         if (res != CA_STATUS_OK)
         {
             OIC_LOG(ERROR, TAG, "BT device[%d] - send has failed");
-        }
-        else
-        {
-            CALEClientSetTheSendRequestFlag(true);
-            ca_cond_signal(g_threadSendCBCond);
-
-            if (!g_isReceivedWriteCB)
-            {
-                OIC_LOG(INFO, TAG, "wait..(multicast)");
-                ca_cond_wait(g_threadSendCond, g_threadSendMutex);
-            }
-            else
-            {
-                CALEClientSetWriteCharacteristicCBFlag(false);
-            }
         }
 
         jstring jni_address = CALEGetAddressFromBTDevice(env, jarrayObj);
@@ -1496,7 +1452,6 @@ CAResult_t CALEClientWriteCharacteristic(JNIEnv *env, jobject gatt)
     if (!jni_obj_character)
     {
         CALEClientSendFinish(env, gatt);
-        ca_cond_signal(g_threadSendCond);
         return CA_STATUS_FAILED;
     }
 
@@ -1504,7 +1459,6 @@ CAResult_t CALEClientWriteCharacteristic(JNIEnv *env, jobject gatt)
     if (CA_STATUS_OK != ret)
     {
         CALEClientSendFinish(env, gatt);
-        ca_cond_signal(g_threadSendCond);
         return ret;
     }
 
@@ -3022,16 +2976,6 @@ CAResult_t CALEClientInitGattMutexVaraibles()
         }
     }
 
-    if (NULL == g_threadSendCBMutex)
-    {
-        g_threadSendCBMutex = ca_mutex_new();
-        if (NULL == g_threadSendCBMutex)
-        {
-            OIC_LOG(ERROR, TAG, "ca_mutex_new has failed");
-            return CA_STATUS_FAILED;
-        }
-    }
-
     if (NULL == g_deviceListMutex)
     {
         g_deviceListMutex = ca_mutex_new();
@@ -3072,26 +3016,6 @@ CAResult_t CALEClientInitGattMutexVaraibles()
         }
     }
 
-    if (NULL == g_writeCharacteristicCBMutex)
-    {
-        g_writeCharacteristicCBMutex = ca_mutex_new();
-        if (NULL == g_writeCharacteristicCBMutex)
-        {
-            OIC_LOG(ERROR, TAG, "ca_mutex_new has failed");
-            return CA_STATUS_FAILED;
-        }
-    }
-
-    if (NULL == g_theSendRequestMutex)
-    {
-        g_theSendRequestMutex = ca_mutex_new();
-        if (NULL == g_theSendRequestMutex)
-        {
-            OIC_LOG(ERROR, TAG, "ca_mutex_new has failed");
-            return CA_STATUS_FAILED;
-        }
-    }
-
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -3112,20 +3036,11 @@ void CALEClientTerminateGattMutexVariables()
     ca_mutex_free(g_threadSendMutex);
     g_threadSendMutex = NULL;
 
-    ca_mutex_free(g_threadSendCBMutex);
-    g_threadSendCBMutex = NULL;
-
     ca_mutex_free(g_deviceListMutex);
     g_deviceListMutex = NULL;
 
     ca_mutex_free(g_SendFinishMutex);
     g_SendFinishMutex = NULL;
-
-    ca_mutex_free(g_writeCharacteristicCBMutex);
-    g_writeCharacteristicCBMutex = NULL;
-
-    ca_mutex_free(g_theSendRequestMutex);
-    g_theSendRequestMutex = NULL;
 
     OIC_LOG(DEBUG, TAG, "OUT");
 }
@@ -3137,24 +3052,6 @@ void CALEClientSetSendFinishFlag(bool flag)
     ca_mutex_lock(g_SendFinishMutex);
     g_isFinishedSendData = flag;
     ca_mutex_unlock(g_SendFinishMutex);
-}
-
-void CALEClientSetWriteCharacteristicCBFlag(bool flag)
-{
-    OIC_LOG_V(DEBUG, TAG, "g_isReceivedWriteCB is %d", flag);
-
-    ca_mutex_lock(g_writeCharacteristicCBMutex);
-    g_isReceivedWriteCB = flag;
-    ca_mutex_unlock(g_writeCharacteristicCBMutex);
-}
-
-void CALEClientSetTheSendRequestFlag(bool flag)
-{
-    OIC_LOG_V(DEBUG, TAG, "g_isRequestedSend is %d", flag);
-
-    ca_mutex_lock(g_theSendRequestMutex);
-    g_isRequestedSend = flag;
-    ca_mutex_unlock(g_theSendRequestMutex);
 }
 
 /**
@@ -3215,8 +3112,6 @@ void CAStopLEGattClient()
     }
 
     ca_cond_signal(g_threadCond);
-    ca_cond_signal(g_threadSendCond);
-    g_isStartedLEClient = false;
 
     if (isAttached)
     {
@@ -3408,8 +3303,6 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattConnectionStateChangeCallback(J
         {
             OIC_LOG(ERROR, TAG, "CALEClientGattClose has failed");
         }
-
-        ca_cond_signal(g_threadSendCond);
     }
     else // error
     {
@@ -3449,7 +3342,6 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattConnectionStateChangeCallback(J
 error_exit:
 
     CALEClientSendFinish(env, gatt);
-    ca_cond_signal(g_threadSendCond);
     return;
 }
 
@@ -3471,7 +3363,6 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattServicesDiscoveredCallback(JNIE
     if (0 != status) // discovery error
     {
         CALEClientSendFinish(env, gatt);
-        ca_cond_signal(g_threadSendCond);
         return;
     }
 
@@ -3479,7 +3370,6 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattServicesDiscoveredCallback(JNIE
     if (!jni_address)
     {
         CALEClientSendFinish(env, gatt);
-        ca_cond_signal(g_threadSendCond);
         return;
     }
 
@@ -3487,7 +3377,6 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattServicesDiscoveredCallback(JNIE
     if (!address)
     {
         CALEClientSendFinish(env, gatt);
-        ca_cond_signal(g_threadSendCond);
         return;
     }
 
@@ -3539,7 +3428,6 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattServicesDiscoveredCallback(JNIE
             goto error_exit;
         }
     }
-
     (*env)->ReleaseStringUTFChars(env, jni_address, address);
     return;
 
@@ -3547,7 +3435,6 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattServicesDiscoveredCallback(JNIE
 error_exit:
     (*env)->ReleaseStringUTFChars(env, jni_address, address);
     CALEClientSendFinish(env, gatt);
-    ca_cond_signal(g_threadSendCond);
     return;
 }
 
@@ -3580,14 +3467,6 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattCharacteristicWriteCallback(
     OIC_LOG_V(DEBUG, TAG, "CALeGattCharacteristicWriteCallback - status : %d", status);
     VERIFY_NON_NULL_VOID(env, TAG, "env is null");
     VERIFY_NON_NULL_VOID(gatt, TAG, "gatt is null");
-
-    ca_mutex_lock(g_threadSendCBMutex);
-    if (!g_isRequestedSend)
-    {
-        OIC_LOG(DEBUG, TAG, "CALeGattCharacteristicWriteCallback - waiting");
-        ca_cond_wait(g_threadSendCBCond, g_threadSendCBMutex);
-    }
-    ca_mutex_unlock(g_threadSendCBMutex);
 
     jboolean isCopy;
     char* wroteData = (char*) (*env)->GetByteArrayElements(env, data, &isCopy);
@@ -3630,19 +3509,13 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattCharacteristicWriteCallback(
         CALEClientUpdateSendCnt(env);
     }
 
-    CALEClientSetWriteCharacteristicCBFlag(true);
-    CALEClientSetTheSendRequestFlag(false);
-    ca_cond_signal(g_threadSendCond);
     (*env)->ReleaseStringUTFChars(env, jni_address, address);
     return;
 
     // error label.
 error_exit:
 
-    CALEClientSetWriteCharacteristicCBFlag(true);
-    CALEClientSetTheSendRequestFlag(false);
     CALEClientSendFinish(env, gatt);
-    ca_cond_signal(g_threadSendCond);
     return;
 }
 
@@ -3749,7 +3622,6 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattDescriptorWriteCallback(JNIEnv 
 error_exit:
 
     CALEClientSendFinish(env, gatt);
-    ca_cond_signal(g_threadSendCond);
     return;
 }
 

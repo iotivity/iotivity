@@ -35,3 +35,4 @@ cpluff_src.extend(env.Glob('kazlib/*.c'))
 
 cpluff = cpluff_env.StaticLibrary('cpluff', cpluff_src)
 cpluff_env.InstallTarget(cpluff, 'libcpluff')
+cpluff_env.UserInstallTargetLib(cpluff, 'libcpluff')

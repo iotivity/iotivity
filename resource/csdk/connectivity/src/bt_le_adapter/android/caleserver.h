@@ -166,6 +166,14 @@ jobject CALEServerOpenGattServer(JNIEnv *env);
 jobject CALEServerCreateGattService(JNIEnv *env);
 
 /**
+ * @brief   add a descriptor to the characteristic
+ * @param   env                [IN] JNI interface pointer
+ * @param   characteristic     [IN] Characteristic object
+ * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
+ */
+CAResult_t CALEServerAddDescriptor(JNIEnv *env, jobject characteristic);
+
+/**
  * @brief   create gatt service
  * @param   env                  [IN] JNI interface pointer
  * @param   bluetoothGattServer  [IN] Bluetooth Gatt Server object

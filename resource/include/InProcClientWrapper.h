@@ -101,32 +101,32 @@ namespace OC
             FindDeviceCallback& callback, QualityOfService QoS);
 
         virtual OCStackResult GetResourceRepresentation(
-            const OCDevAddr& devAddr, bool useHostString,
+            const OCDevAddr& devAddr,
             const std::string& uri,
             const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
             GetCallback& callback, QualityOfService QoS);
 
         virtual OCStackResult PutResourceRepresentation(
-            const OCDevAddr& devAddr, bool useHostString,
+            const OCDevAddr& devAddr,
             const std::string& uri,
             const OCRepresentation& attributes, const QueryParamsMap& queryParams,
             const HeaderOptions& headerOptions, PutCallback& callback, QualityOfService QoS);
 
         virtual OCStackResult PostResourceRepresentation(
-            const OCDevAddr& devAddr, bool useHostString,
+            const OCDevAddr& devAddr,
             const std::string& uri,
             const OCRepresentation& attributes, const QueryParamsMap& queryParams,
             const HeaderOptions& headerOptions, PostCallback& callback, QualityOfService QoS);
 
         virtual OCStackResult DeleteResource(
-            const OCDevAddr& devAddr, bool useHostString,
+            const OCDevAddr& devAddr,
             const std::string& uri,
             const HeaderOptions& headerOptions,
             DeleteCallback& callback, QualityOfService QoS);
 
         virtual OCStackResult ObserveResource(
             ObserveType observeType, OCDoHandle* handle,
-            const OCDevAddr& devAddr, bool useHostString,
+            const OCDevAddr& devAddr,
             const std::string& uri,
             const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
             ObserveCallback& callback, QualityOfService QoS);
@@ -149,7 +149,7 @@ namespace OC
     private:
         void listeningFunc();
         std::string assembleSetResourceUri(std::string uri, const QueryParamsMap& queryParams);
-        std::string assembleSetResourcePayload(const OCRepresentation& attributes);
+        OCPayload* assembleSetResourcePayload(const OCRepresentation& attributes);
         OCHeaderOption* assembleHeaderOptions(OCHeaderOption options[],
            const HeaderOptions& headerOptions);
         std::thread m_listeningThread;

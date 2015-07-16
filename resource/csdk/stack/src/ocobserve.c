@@ -27,8 +27,8 @@
 #include "ocrandom.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
+#include "ocpayload.h"
 #include "ocserverrequest.h"
-#include "cJSON.h"
 
 #include "utlist.h"
 #include "pdu.h"
@@ -42,78 +42,6 @@
 #define VERIFY_NON_NULL(arg) { if (!arg) {OC_LOG(FATAL, TAG, #arg " is NULL"); goto exit;} }
 
 static struct ResourceObserver * serverObsList = NULL;
-#ifdef WITH_PRESENCE
-static char* GetJSONStringForPresence(uint32_t ttl, uint32_t nonce,
-        OCPresenceTrigger trigger, OCResourceType *resourceType)
-{
-    char *jsonEncodedInfo = NULL;
-    const char * triggerStr = NULL;
-
-    cJSON *rootObj = cJSON_CreateObject();
-    VERIFY_NON_NULL (rootObj);
-
-    cJSON_AddItemToObject (rootObj, OC_RSRVD_TTL, cJSON_CreateNumber(ttl));
-
-    cJSON_AddItemToObject (rootObj, OC_RSRVD_NONCE, cJSON_CreateNumber(nonce));
-
-    triggerStr = convertTriggerEnumToString(trigger);
-    cJSON_AddItemToObject (rootObj, OC_RSRVD_TRIGGER, cJSON_CreateString(triggerStr));
-
-    if(resourceType && resourceType->resourcetypename)
-    {
-        cJSON_AddItemToObject (rootObj, OC_RSRVD_RESOURCE_TYPE,
-                cJSON_CreateString(resourceType->resourcetypename));
-    }
-
-    jsonEncodedInfo = cJSON_PrintUnformatted (rootObj);
-
-exit:
-    cJSON_Delete(rootObj);
-
-    return jsonEncodedInfo;
-
-}
-
-static OCStackResult BuildPresenceResponse(char *out, uint16_t *remaining,
-        uint32_t ttl, uint32_t nonce, OCPresenceTrigger trigger,
-        OCResourceType *resourceType)
-{
-    if(!out || !remaining)
-    {
-        return OC_STACK_INVALID_PARAM;
-    }
-
-    OCStackResult ret = OC_STACK_ERROR;
-    char *jsonStr = NULL;
-    uint16_t jsonLen = 0;
-
-    jsonStr = GetJSONStringForPresence(ttl, nonce, trigger, resourceType);
-
-    if(jsonStr)
-    {
-        jsonLen = strlen(jsonStr);
-
-        if (jsonLen < *remaining)
-        {
-            OICStrcpy(out, *remaining, jsonStr);
-            *remaining = *remaining - jsonLen;
-            ret = OC_STACK_OK;
-        }
-        else
-        {
-            ret = OC_STACK_ERROR;
-        }
-
-        OICFree(jsonStr);
-    }
-    else
-    {
-        OC_LOG(ERROR, TAG, PCF("Error encoding presence payload."));
-        ret = OC_STACK_ERROR;
-    }
-    return ret;
-}
-#endif // WITH_PRESENCE
 /**
  * Determine observe QOS based on the QOS of the request.
  * The qos passed as a parameter overrides what the client requested.
@@ -215,7 +143,7 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
                     {
                         result = FormOCEntityHandlerRequest(&ehRequest, (OCRequestHandle) request,
                                     request->method, (OCResourceHandle) resPtr, request->query,
-                                    request->reqJSONPayload,
+                                    request->payload, request->payloadSize,
                                     request->numRcvdVendorSpecificHeaderOptions,
                                     request->rcvdVendorSpecificHeaderOptions,
                                     OC_OBSERVE_NO_OPTION, 0);
@@ -235,7 +163,6 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
             else
             {
                 OCEntityHandlerResponse ehResponse = {};
-                char presenceResBuf[MAX_RESPONSE_LENGTH] = {};
 
                 //This is effectively the implementation for the presence entity handler.
                 OC_LOG(DEBUG, TAG, PCF("This notification is for Presence"));
@@ -248,17 +175,19 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
 
                 if(result == OC_STACK_OK)
                 {
-                    uint16_t remaining = MAX_RESPONSE_LENGTH;
-                    // create the payload here
-                    result = BuildPresenceResponse(presenceResBuf, &remaining,
-                            maxAge, resPtr->sequenceNum, trigger,
-                            resourceType);
+                    OCPresencePayload* presenceResBuf = OCPresencePayloadCreate(
+                            resPtr->sequenceNum, maxAge, trigger,
+                            resourceType ? resourceType->resourcetypename : NULL);
 
-                    if(result == OC_STACK_OK && remaining < MAX_RESPONSE_LENGTH)
+                    if(!presenceResBuf)
+                    {
+                        return OC_STACK_NO_MEMORY;
+                    }
+
+                    if(result == OC_STACK_OK)
                     {
                         ehResponse.ehResult = OC_EH_OK;
-                        ehResponse.payload = presenceResBuf;
-                        ehResponse.payloadSize = strlen((const char *)presenceResBuf) + 1;
+                        ehResponse.payload = (OCPayload*)presenceResBuf;
                         ehResponse.persistentBufferFlag = 0;
                         ehResponse.requestHandle = (OCRequestHandle) request;
                         ehResponse.resourceHandle = (OCResourceHandle) resPtr;
@@ -266,6 +195,8 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
                                 resourceObserver->resUri);
                         result = OCDoResponse(&ehResponse);
                     }
+
+                    OCPresencePayloadDestroy(presenceResBuf);
                 }
             }
             #endif
@@ -294,10 +225,11 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
 
 OCStackResult SendListObserverNotification (OCResource * resource,
         OCObservationId  *obsIdList, uint8_t numberOfIds,
-        const char *notificationJSONPayload, uint32_t maxAge,
+        const OCRepPayload *payload,
+        uint32_t maxAge,
         OCQualityOfService qos)
 {
-    if(!resource || !obsIdList || !notificationJSONPayload)
+    if(!resource || !obsIdList || !payload)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -334,15 +266,13 @@ OCStackResult SendListObserverNotification (OCResource * resource,
                     {
                         OCEntityHandlerResponse ehResponse = {};
                         ehResponse.ehResult = OC_EH_OK;
-                        ehResponse.payload = (char *) OICMalloc(MAX_RESPONSE_LENGTH + 1);
+                        ehResponse.payload = (OCPayload*)OCRepPayloadCreate();
                         if(!ehResponse.payload)
                         {
                             FindAndDeleteServerRequest(request);
                             continue;
                         }
-                        OICStrcpy(ehResponse.payload, MAX_RESPONSE_LENGTH + 1,
-                                notificationJSONPayload);
-                        ehResponse.payloadSize = strlen(ehResponse.payload) + 1;
+                        memcpy(ehResponse.payload, payload, sizeof(*payload));
                         ehResponse.persistentBufferFlag = 0;
                         ehResponse.requestHandle = (OCRequestHandle) request;
                         ehResponse.resourceHandle = (OCResourceHandle) resource;
@@ -506,10 +436,12 @@ ResourceObserver* GetObserverUsingToken (const CAToken_t token, uint8_t tokenLen
 
     if(token && *token)
     {
+        OC_LOG(INFO, TAG,PCF("Looking for token"));
+        OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)token, tokenLength);
+        OC_LOG(INFO, TAG,PCF("\tFound token:"));
+
         LL_FOREACH (serverObsList, out)
         {
-            OC_LOG(INFO, TAG,PCF("comparing tokens"));
-            OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)token, tokenLength);
             OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)out->token, tokenLength);
             if((memcmp(out->token, token, tokenLength) == 0))
             {
@@ -517,6 +449,11 @@ ResourceObserver* GetObserverUsingToken (const CAToken_t token, uint8_t tokenLen
             }
         }
     }
+    else
+    {
+        OC_LOG(ERROR, TAG,PCF("Passed in NULL token"));
+    }
+
     OC_LOG(INFO, TAG, PCF("Observer node not found!!"));
     return NULL;
 }
@@ -533,7 +470,7 @@ OCStackResult DeleteObserverUsingToken (CAToken_t token, uint8_t tokenLength)
     obsNode = GetObserverUsingToken (token, tokenLength);
     if (obsNode)
     {
-        OC_LOG_V(INFO, TAG, PCF("deleting tokens"));
+        OC_LOG_V(INFO, TAG, "deleting observer id  %u with token", obsNode->observeId);
         OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)obsNode->token, tokenLength);
         LL_DELETE (serverObsList, obsNode);
         OICFree(obsNode->resUri);

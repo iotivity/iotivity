@@ -288,7 +288,7 @@ int main(int argc, char* argv[]) {
     try
     {
         // Find all resources
-        requestURI << OC_MULTICAST_DISCOVERY_URI;
+        requestURI << OC_RSRVD_WELL_KNOWN_URI;
 
         OCPlatform::findResource("", requestURI.str(), connectivityType, &foundResource);
         std::cout<< "Finding Resource... " <<std::endl;

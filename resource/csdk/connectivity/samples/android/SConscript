@@ -47,5 +47,6 @@ if secured == '1':
 
 libRMInterface = app_env.SharedLibrary('RMInterface', sample_src, OBJPREFIX='libRMInterface_')
 app_env.InstallTarget(libRMInterface, 'RMInterface')
+app_env.UserInstallTargetLib(libRMInterface, 'RMInterface')
 
 

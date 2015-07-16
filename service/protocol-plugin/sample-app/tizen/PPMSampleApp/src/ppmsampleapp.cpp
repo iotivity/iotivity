@@ -556,7 +556,7 @@ send_msg_clicked_cb(void *data , Evas_Object *obj , void *event_info)
 
             // Find fan resources
             std::ostringstream requestURI;
-            requestURI << OC_MULTICAST_DISCOVERY_URI << "?rt=core.fan";
+            requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.fan";
             OCPlatform::findResource("", requestURI.str(), OC_ALL, &foundResourceFan);
             std::cout << "Finding Resource... " << std::endl;
         }

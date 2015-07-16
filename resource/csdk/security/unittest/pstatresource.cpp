@@ -73,7 +73,10 @@ TEST(PstatEntityHandlerTest, PstatEntityHandlerWithPostRequest)
 {
     OCEntityHandlerRequest req;
     req.method = OC_REST_POST;
-    req.reqJSONPayload = (char*)"{ \"pstat\": { \"tm\": 0, \"om\": 3 }}";
+    req.payload = (OCPayload*)calloc(1, sizeof(OCSecurityPayload));
+    req.payload->type = PAYLOAD_TYPE_SECURITY;
+    ((OCSecurityPayload*)req.payload)->securityData =
+        (char*)"{ \"pstat\": { \"tm\": 0, \"om\": 3 }}";
     EXPECT_EQ(OC_EH_ERROR, PstatEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, &req));
 }
 

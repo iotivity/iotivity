@@ -74,6 +74,7 @@ else :
     notificationsdk = notimgr_env.StaticLibrary('NotificationManager', notimgr_src)
 
 notimgr_env.InstallTarget(notificationsdk, 'libResouceHosting')
+notimgr_env.UserInstallTargetLib(notificationsdk, 'libResouceHosting')
 
 # Go to build sample apps
 SConscript('SampleApp/SConscript')

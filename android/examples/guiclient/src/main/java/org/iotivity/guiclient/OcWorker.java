@@ -503,7 +503,7 @@ public class OcWorker extends Thread
                 Log.d(TAG, String.format("discoverResources(): Calling OcPlatform.findResource(%s)", s));
                 OcPlatform.findResource("",
                         OcPlatform.WELL_KNOWN_QUERY + "?rt=" + s,
-                        OcConnectivityType.IPV4,
+                        OcConnectivityType.CT_DEFAULT,
                         this);
             }
         } catch (OcException e) {

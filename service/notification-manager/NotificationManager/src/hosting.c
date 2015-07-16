@@ -440,7 +440,7 @@ OCStackResult requestPresence(char *sourceResourceAddress)
     cbData.cd = NULL;
 
     char queryUri[OIC_STRING_MAX_VALUE] = { '\0' };
-    snprintf(queryUri, sizeof(queryUri), "coap://%s%s", sourceResourceAddress , OC_PRESENCE_URI);
+    snprintf(queryUri, sizeof(queryUri), "coap://%s%s", sourceResourceAddress , OC_RSRVD_PRESENCE_URI);
     OC_LOG_V(DEBUG, HOSTING_TAG, "initializePresenceForCoordinating Query : %s", queryUri);
 
     result = OCDoResource(&handle, OC_REST_PRESENCE, queryUri, 0, 0,
@@ -472,11 +472,11 @@ OCStackApplicationResult requestPresenceCB(void *context, OCDoHandle handle,
     {
         OC_LOG_V(DEBUG, HOSTING_TAG, "\tStackResult: %s",  getResultString(clientResponse->result));
         OC_LOG_V(DEBUG, HOSTING_TAG, "\tStackResult: %d",  clientResponse->result);
-        OC_LOG_V(DEBUG, HOSTING_TAG,
-                 "\tPresence Device =============> Presence %s @ %s:%d",
-                 clientResponse->resJSONPayload,
-                 clientResponse->devAddr.addr,
-                 clientResponse->devAddr.port);
+        //OC_LOG_V(DEBUG, HOSTING_TAG,
+        //         "\tPresence Device =============> Presence %s @ %s:%d",
+        //         clientResponse->resJSONPayload,
+        //         clientResponse->devAddr.addr,
+        //         clientResponse->devAddr.port);
 
         snprintf(address, sizeof(address), "%s:%d",
                  clientResponse->devAddr.addr,
@@ -569,7 +569,7 @@ MirrorResourceList *buildMirrorResourceList(OCDoHandle handle, OCClientResponse 
 {
 
     cJSON *discoveryJson = cJSON_CreateObject();
-    discoveryJson = cJSON_Parse((char *)clientResponse->resJSONPayload);
+    //discoveryJson = cJSON_Parse((char *)clientResponse->resJSONPayload);
 
     cJSON *ocArray = cJSON_GetObjectItem(discoveryJson, "oc");
     char *ocArray_str = cJSON_PrintUnformatted(ocArray);
@@ -588,8 +588,8 @@ MirrorResourceList *buildMirrorResourceList(OCDoHandle handle, OCClientResponse 
                                         clientResponse->devAddr.addr,
                                         clientResponse->devAddr.port);
 
-    OC_LOG_V(DEBUG, HOSTING_TAG, "Host Device =============> Discovered %s @ %s",
-             clientResponse->resJSONPayload, sourceaddr);
+    //OC_LOG_V(DEBUG, HOSTING_TAG, "Host Device =============> Discovered %s @ %s",
+    //         clientResponse->resJSONPayload, sourceaddr);
 
     int arraySize = cJSON_GetArraySize(ocArray);
     for (int i = 0; i < arraySize; ++i)
@@ -855,10 +855,10 @@ OCStackApplicationResult requestResourceObservationCB(void *context, OCDoHandle 
         OC_LOG_V(DEBUG, HOSTING_TAG,
                  "<=============Callback Context for OBSERVE notification recvd successfully");
         OC_LOG_V(DEBUG, HOSTING_TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
-        OC_LOG_V(DEBUG, HOSTING_TAG, "JSON = %s =============> Obs Response",
-                 clientResponse->resJSONPayload);
+        //OC_LOG_V(DEBUG, HOSTING_TAG, "JSON = %s =============> Obs Response",
+        //         clientResponse->resJSONPayload);
 
-        MirrorResource *foundMirrorResource = updateMirrorResource(handle, clientResponse->resJSONPayload);
+        MirrorResource *foundMirrorResource = NULL;//updateMirrorResource(handle, clientResponse->resJSONPayload);
         if (foundMirrorResource == NULL)
         {
             OC_LOG_V(DEBUG, HOSTING_TAG, "Cannot found Mirror Resource : Fail");
@@ -993,7 +993,7 @@ char *buildResponsePayload (OCEntityHandlerRequest *entityHandlerRequest)
             mirrorResource->rep = NULL;
         }
         mirrorResource->rep = cJSON_CreateObject();
-        mirrorResource->rep = cJSON_Parse(entityHandlerRequest->reqJSONPayload);
+        //mirrorResource->rep = cJSON_Parse(entityHandlerRequest->reqJSONPayload);
     }
 
     OC_LOG_V(DEBUG, HOSTING_TAG, "node's uri : %s", mirrorResource->uri);
@@ -1107,8 +1107,8 @@ resourceEntityHandlerCB (OCEntityHandlerFlag entifyHandlerFlag,
             entityHandlerResponse.requestHandle = entityHandlerRequest->requestHandle;
             entityHandlerResponse.resourceHandle = entityHandlerRequest->resource;
             entityHandlerResponse.ehResult = entityHandlerResult;
-            entityHandlerResponse.payload = (char *)payload;
-            entityHandlerResponse.payloadSize = strlen(payload);
+            //entityHandlerResponse.payload = (char *)payload;
+            //entityHandlerResponse.payloadSize = strlen(payload);
             // Indicate that response is NOT in a persistent buffer
             entityHandlerResponse.persistentBufferFlag = 0;
 
@@ -1376,11 +1376,11 @@ OCStackResult requestQuery(RequestHandle *request, OCMethod method,
     if(method == OC_REST_PUT)
     {
         char payload[OIC_STRING_MAX_VALUE] = {'\0'};
-        snprintf(payload , sizeof(payload), "%s" ,
-         ((OCEntityHandlerRequest*)request->requestHandle[OIC_REQUEST_BY_CLIENT])->reqJSONPayload);
+        //snprintf(payload , sizeof(payload), "%s" ,
+        // ((OCEntityHandlerRequest*)request->requestHandle[OIC_REQUEST_BY_CLIENT])->reqJSONPayload);
 
-        result = OCDoResource(&request->requestHandle[OIC_REQUEST_BY_COORDINATOR],
-                method, queryFullUri, NULL, payload, OC_TRANSPORT, OC_LOW_QOS, &cbData, NULL, 0);
+        //result = OCDoResource(&request->requestHandle[OIC_REQUEST_BY_COORDINATOR],
+        //        method, queryFullUri, NULL, payload, OC_TRANSPORT, OC_LOW_QOS, &cbData, NULL, 0);
     }
     else
     {
@@ -1427,7 +1427,7 @@ OCStackApplicationResult requestQueryCB(void *context, OCDoHandle handle,
         }
         else
         {
-            OC_LOG_V(DEBUG, HOSTING_TAG, "requestCB's payload: %s", clientResponse->resJSONPayload);
+            //OC_LOG_V(DEBUG, HOSTING_TAG, "requestCB's payload: %s", clientResponse->resJSONPayload);
             OCEntityHandlerRequest *entityHandler = (OCEntityHandlerRequest *)(
                     request->requestHandle[OIC_REQUEST_BY_CLIENT]);
             OC_LOG_V(DEBUG, HOSTING_TAG, "requested resource handle : %u", entityHandler->resource
@@ -1437,8 +1437,8 @@ OCStackApplicationResult requestQueryCB(void *context, OCDoHandle handle,
             entityHandler->method = request->method;
             entityHandler->requestHandle = request->entityRequestHandle;
 
-            OCEntityHandlerResponse response = buildEntityHandlerResponse(
-                                                   entityHandler, clientResponse->resJSONPayload);
+            OCEntityHandlerResponse response; //= buildEntityHandlerResponse(
+                                                   //entityHandler, clientResponse->resJSONPayload);
             if (OCDoResponse(&response) != OC_STACK_OK)
             {
                 OC_LOG_V(DEBUG, HOSTING_TAG, "Error sending response");
@@ -1486,7 +1486,7 @@ OCEntityHandlerResponse buildEntityHandlerResponse(OCEntityHandlerRequest *entit
 
         cJSON_Delete(observeJson);
 
-        entityHandlerRequest->reqJSONPayload = temp;
+        //entityHandlerRequest->reqJSONPayload = temp;
     }
     entityHandlerResult = handleRequestPayload(entityHandlerRequest, payload, sizeof(payload) - 1);
 
@@ -1495,8 +1495,8 @@ OCEntityHandlerResponse buildEntityHandlerResponse(OCEntityHandlerRequest *entit
     response.resourceHandle = entityHandlerRequest->resource;
     response.ehResult = entityHandlerResult;
 
-    response.payload = (char *)payload;
-    response.payloadSize = strlen(payload);
+    //response.payload = (char *)payload;
+    //response.payloadSize = strlen(payload);
     // Indicate that response is NOT in a persistent buffer
     response.persistentBufferFlag = 0;
 
