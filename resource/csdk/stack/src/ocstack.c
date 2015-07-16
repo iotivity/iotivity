@@ -563,6 +563,9 @@ OCStackResult CAToOCStackResult(CAResponseResult_t caCode)
         case CA_BAD_REQ:
             ret = OC_STACK_INVALID_QUERY;
             break;
+        case CA_UNAUTHORIZED_REQ:
+            ret = OC_STACK_UNAUTHORIZED_REQ;
+            break;
         case CA_BAD_OPT:
             ret = OC_STACK_INVALID_OPTION;
             break;
@@ -604,6 +607,9 @@ CAResponseResult_t OCToCAStackResult(OCStackResult ocCode)
             break;
         case OC_STACK_COMM_ERROR:
             ret = CA_RETRANSMIT_TIMEOUT;
+            break;
+        case OC_STACK_UNAUTHORIZED_REQ:
+            ret = CA_UNAUTHORIZED_REQ;
             break;
         default:
             break;

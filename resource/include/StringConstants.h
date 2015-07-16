@@ -104,6 +104,7 @@ namespace OC
         static const char INVALID_JSON_TYPE_TAG[]      = "Invalid JSON Type Tag";
         static const char INVALID_ATTRIBUTE[]          = "Invalid Attribute: ";
         static const char INVALID_DEVICE_INFO[]        = "Invalid Device Information";
+        static const char UNAUTHORIZED_REQUEST[]       = "Unauthorized Request";
 
     }
 

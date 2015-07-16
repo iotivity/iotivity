@@ -373,6 +373,7 @@ typedef enum
     OC_STACK_INVALID_REQUEST_HANDLE,
     OC_STACK_INVALID_DEVICE_INFO,
     OC_STACK_INVALID_JSON,
+    OC_STACK_UNAUTHORIZED_REQ,          /**< Request is not authorized by Resource Server. */
     /* NOTE: Insert all new error codes here!*/
     #ifdef WITH_PRESENCE
     OC_STACK_PRESENCE_STOPPED = 128,

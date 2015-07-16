@@ -122,6 +122,7 @@ OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle, OCClientResponse
 
     if(clientResponse)
     {
+        OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
         OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
         OC_LOG(INFO, TAG, PCF("=============> Put Response"));
     }
