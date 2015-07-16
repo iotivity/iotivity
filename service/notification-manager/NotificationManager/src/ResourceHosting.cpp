@@ -161,7 +161,7 @@ void ResourceHosting::requestMulticastDiscovery()
 void ResourceHosting::requestDiscovery(std::string address)
 {
     std::string host = address;
-    std::string uri = OC_MULTICAST_DISCOVERY_URI + std::string("?rt=Resource.Hosting");
+    std::string uri = OC_RSRVD_WELL_KNOWN_URI + std::string("?rt=Resource.Hosting");
     OCConnectivityType type = OCConnectivityType::CT_DEFAULT;
     discoveryManager->discoverResource(host, uri, type, pDiscoveryCB);
 }
