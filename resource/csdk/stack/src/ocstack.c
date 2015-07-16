@@ -3375,6 +3375,11 @@ OCStackResult deleteResource(OCResource *resource)
 {
     OCResource *prev = NULL;
     OCResource *temp = NULL;
+    if(!resource)
+    {
+        OC_LOG_V(DEBUG,TAG,"resource is NULL");
+        return OC_STACK_INVALID_PARAM;
+    }
 
     OC_LOG_V (INFO, TAG, "Deleting resource %s", resource->uri);
 
