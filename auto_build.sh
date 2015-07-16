@@ -8,6 +8,7 @@ function clean()
 {
 	echo "*********** Clean build *************"
 	scons -c
+	scons -f resource/csdk/connectivity/build/tizen/SConscript TARGET_OS=tizen -c
 	rm -rf out
 }
 
@@ -46,6 +47,11 @@ function build()
 	scons resource TARGET_OS=arduino UPLOAD=false BOARD=arduino_due_x TARGET_ARCH=arm TARGET_TRANSPORT=IP SHIELD=ETH RELEASE=$3
 	scons resource TARGET_OS=arduino UPLOAD=false BOARD=arduino_due_x TARGET_ARCH=arm TARGET_TRANSPORT=IP SHIELD=WIFI RELEASE=$3
 
+	echo "*********** Build for Tizen CA lib and sample *************"
+	scons -f resource/csdk/connectivity/build/tizen/SConscript TARGET_OS=tizen TARGET_TRANSPORT=IP LOGGING=true RELEASE=$3
+
+	echo "*********** Build for Tizen CA lib and sample with Security *************"
+	scons -f resource/csdk/connectivity/build/tizen/SConscript TARGET_OS=tizen TARGET_TRANSPORT=IP LOGGING=true SECURED=1 RELEASE=$3
 
 	if [ $(uname -s) = "Darwin" ]
 	then
@@ -73,7 +79,7 @@ function  help()
 {
 	echo "Usage:"
         echo "  build:"
-        echo "     `basename $0` <path-to-android-ndk>"
+        echo "     `basename $0` <path-to-android-ndk> <path-to-arduino-sdk>"
         echo "  clean:"
         echo "     `basename $0` -c"
 }
