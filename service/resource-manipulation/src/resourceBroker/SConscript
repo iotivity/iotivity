@@ -73,6 +73,7 @@ else :
     resourcebrokersdk = resourcebroker_env.StaticLibrary('ResourceBroker', resourcebroker_src)
 
 resourcebroker_env.InstallTarget(resourcebrokersdk, 'libResouceBroker')
+resourcebroker_env.UserInstallTargetLib(resourcebrokersdk, 'libResouceBroker')
 
 # Go to build sample apps
 #SConscript('SampleApp/SConscript')
