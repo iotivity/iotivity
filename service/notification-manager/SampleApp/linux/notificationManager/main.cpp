@@ -46,13 +46,6 @@ int main()
     signal(SIGINT, handleSigInt);
     while (!g_quitFlag)
     {
-        if (OCProcess() != OC_STACK_OK)
-        {
-            OICStopCoordinate();
-            printf("OCStack process error\n");
-            return 0;
-        }
-
         sleep(2);
     }
 
