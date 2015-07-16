@@ -48,7 +48,7 @@
 #define HAVE_SRANDOM 1
 #endif
 
-#define TAG "CA"
+#define TAG "CA_PRTCL_MSG"
 
 /**
  * @def VERIFY_NON_NULL_RET

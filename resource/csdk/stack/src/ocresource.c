@@ -536,15 +536,23 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
             {
                 discoveryResult = OC_STACK_NO_MEMORY;
             }
+            else
+            {
+                discoveryResult = OC_STACK_OK;
+            }
     }
     else if (virtualUriInRequest == OC_PLATFORM_URI)
     {
-            OCPlatformPayload* payload = OCPlatformPayloadCreate(
+            payload = (OCPayload*)OCPlatformPayloadCreate(
                     OC_RSRVD_PLATFORM_URI,
                     &savedPlatformInfo);
             if (!payload)
             {
                 discoveryResult = OC_STACK_NO_MEMORY;
+            }
+            else
+            {
+                discoveryResult = OC_STACK_OK;
             }
     }
 

@@ -983,34 +983,15 @@ void request_handler(const CAEndpoint_t *object, const CARequestInfo_t *requestI
         {
             printf("This is secure resource...\n");
 
-            //length of "coaps://"
-            size_t length = COAPS_PREFIX_LEN;
-
-            // length of "ipaddress:port"
-            length += strlen(object->addr) + PORT_LENGTH;
-            length += 1;
-
-            char *uri = calloc(1, sizeof(char) * length);
-            if (!uri)
-            {
-                printf("Failed to create new uri\n");
-                return;
-            }
-            sprintf(uri, "%s%s:%d/", COAPS_PREFIX, object->addr,
-                    object->port);
-
             CAEndpoint_t *endpoint = NULL;
             if (CA_STATUS_OK != CACreateEndpoint(0, object->adapter, object->addr,
                                                  object->port, &endpoint))
             {
                 printf("Failed to create duplicate of remote endpoint!\n");
-                free(uri);
                 return;
             }
             endpoint->flags = CA_SECURE;
             object = endpoint;
-
-            free(uri);
         }
     }
 
