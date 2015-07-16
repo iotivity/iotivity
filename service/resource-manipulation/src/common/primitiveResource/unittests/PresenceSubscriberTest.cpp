@@ -85,7 +85,7 @@ public:
     MockRepository mocks;
 
 protected:
-    void SetUp() override {
+    void SetUp() {
         mocks.OnCallFuncOverload(
                 static_cast< subscribePresenceSig1 >(OC::OCPlatform::subscribePresence)).Do(
 

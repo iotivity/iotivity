@@ -28,8 +28,8 @@ namespace OIC
 {
     namespace Service
     {
-        using AttrKeyValuePair = std::pair< std::string, ResourceAttributes::Value >;
-        using AttrKeyValuePairs = std::vector< AttrKeyValuePair >;
+        typedef std::pair< std::string, ResourceAttributes::Value > AttrKeyValuePair;
+        typedef std::vector< AttrKeyValuePair > AttrKeyValuePairs;
 
         bool acceptableAttributes(const ResourceAttributes& dest, const ResourceAttributes& attr);
 

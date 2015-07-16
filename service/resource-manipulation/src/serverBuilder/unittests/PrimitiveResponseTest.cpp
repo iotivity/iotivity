@@ -72,7 +72,7 @@ public:
     }
 
 protected:
-    void SetUp() override
+    void SetUp()
     {
         mocks.OnCallFuncOverload(static_cast< registerResourceSig >(OCPlatform::registerResource))
                 .Return(OC_STACK_OK);

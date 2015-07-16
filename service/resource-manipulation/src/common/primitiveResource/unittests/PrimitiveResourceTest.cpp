@@ -35,7 +35,7 @@ const std::string KEY{ "key" };
 class FakeOCResource
 {
 public:
-    virtual ~FakeOCResource() = default;
+    virtual ~FakeOCResource() {};
 
     virtual OCStackResult get(const OC::QueryParamsMap&, OC::GetCallback) = 0;
 
@@ -64,14 +64,11 @@ public:
     FakeOCResource* fakeResource;
 
 protected:
-    void SetUp() override {
+    void SetUp() {
         fakeResource = mocks.Mock< FakeOCResource >();
 
         resource.reset(new PrimitiveResourceImpl< FakeOCResource >{
             std::shared_ptr< FakeOCResource >(fakeResource, [](FakeOCResource*) {}) });
-    }
-
-    void TearDown() override {
     }
 };
 

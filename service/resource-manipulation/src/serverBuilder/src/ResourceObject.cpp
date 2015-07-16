@@ -35,8 +35,7 @@ namespace
 {
     using namespace OIC::Service;
 
-    constexpr const char LOG_TAG[]{ "PrimitiveServerResource" };
-
+    constexpr char LOG_TAG[]{ "PrimitiveServerResource" };
 
     inline bool hasProperty(uint8_t base, uint8_t target)
     {
@@ -174,7 +173,7 @@ namespace OIC
 
             try
             {
-                using RegisterResource = OCStackResult (*)(OCResourceHandle&, std::string&,
+                typedef OCStackResult (*RegisterResource)(OCResourceHandle&, std::string&,
                         const std::string&, const std::string&, OC::EntityHandler, uint8_t);
 
                 invokeOCFunc(static_cast<RegisterResource>(OC::OCPlatform::registerResource),
@@ -330,7 +329,7 @@ namespace OIC
 
         void ResourceObject::notify() const
         {
-            using NotifyAllObservers = OCStackResult (*)(OCResourceHandle);
+            typedef OCStackResult (*NotifyAllObservers)(OCResourceHandle);
 
             invokeOCFuncWithResultExpect(
                     { OC_STACK_OK, OC_STACK_NO_OBSERVERS },
@@ -499,20 +498,29 @@ namespace OIC
         }
 
         ResourceObject::LockGuard::LockGuard(const ResourceObject::Ptr ptr) :
-                LockGuard{ *ptr , ptr->getAutoNotifyPolicy() }
+                m_resourceObject(*ptr),
+                m_autoNotifyPolicy{ ptr->getAutoNotifyPolicy() },
+                m_isOwningLock{ false }
         {
+            init();
         }
 
         ResourceObject::LockGuard::LockGuard(
                 const ResourceObject& serverResource) :
-                LockGuard{ serverResource, serverResource.getAutoNotifyPolicy() }
+                m_resourceObject(serverResource),
+                m_autoNotifyPolicy{ serverResource.getAutoNotifyPolicy() },
+                m_isOwningLock{ false }
         {
+            init();
         }
 
         ResourceObject::LockGuard::LockGuard(
                 const ResourceObject::Ptr ptr, AutoNotifyPolicy autoNotifyPolicy) :
-                LockGuard{ *ptr, autoNotifyPolicy}
+                m_resourceObject(*ptr),
+                m_autoNotifyPolicy { autoNotifyPolicy },
+                m_isOwningLock{ false }
         {
+            init();
         }
 
         ResourceObject::LockGuard::LockGuard(
@@ -521,14 +529,7 @@ namespace OIC
                         m_autoNotifyPolicy { autoNotifyPolicy },
                         m_isOwningLock{ false }
         {
-            if (resourceObject.m_lockOwner != std::this_thread::get_id())
-            {
-                m_resourceObject.m_mutex.lock();
-                m_resourceObject.m_lockOwner = std::this_thread::get_id();
-                m_isOwningLock = true;
-            }
-            m_autoNotifyFunc = ::createAutoNotifyInvoker(&ResourceObject::autoNotify,
-                    m_resourceObject, m_resourceObject.m_resourceAttributes, m_autoNotifyPolicy);
+            init();
         }
 
         ResourceObject::LockGuard::~LockGuard()
@@ -540,6 +541,18 @@ namespace OIC
                 m_resourceObject.m_lockOwner = std::thread::id{ };
                 m_resourceObject.m_mutex.unlock();
             }
+        }
+
+        void ResourceObject::LockGuard::init()
+        {
+            if (m_resourceObject.m_lockOwner != std::this_thread::get_id())
+            {
+                m_resourceObject.m_mutex.lock();
+                m_resourceObject.m_lockOwner = std::this_thread::get_id();
+                m_isOwningLock = true;
+            }
+            m_autoNotifyFunc = ::createAutoNotifyInvoker(&ResourceObject::autoNotify,
+                    m_resourceObject, m_resourceObject.m_resourceAttributes, m_autoNotifyPolicy);
         }
 
         ResourceObject::WeakGuard::WeakGuard(

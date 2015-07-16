@@ -35,7 +35,7 @@ constexpr int ORIGIN_VALUE{ 100 };
 
 constexpr int NEW_VALUE{ 1 };
 
-using RegisterResource = OCStackResult (*)(OCResourceHandle&, std::string&,
+typedef OCStackResult (*RegisterResource)(OCResourceHandle&, std::string&,
         const std::string&, const std::string&, OC::EntityHandler, uint8_t);
 
 class RequestHandlerTest: public Test
@@ -46,7 +46,7 @@ public:
     MockRepository mocks;
 
 protected:
-    void SetUp() override
+    void SetUp()
     {
         mocks.OnCallFuncOverload(static_cast<RegisterResource>(OC::OCPlatform::registerResource))
                 .Return(OC_STACK_OK);
@@ -103,7 +103,7 @@ public:
     ResourceAttributes requestAttrs;
 
 protected:
-    void SetUp() override
+    void SetUp()
     {
         RequestHandlerTest::SetUp();
 

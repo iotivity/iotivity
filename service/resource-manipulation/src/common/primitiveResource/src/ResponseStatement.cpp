@@ -43,7 +43,7 @@ namespace OIC
         }
 
         ResponseStatement::ResponseStatement(ResourceAttributes&& attrs) :
-                ResponseStatement{ std::move(attrs), "", { }, { } }
+                m_attrs{ std::move(attrs) }
         {
         }
 

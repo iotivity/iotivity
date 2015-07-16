@@ -36,7 +36,7 @@ namespace OIC
         class PrimitiveResourceImpl: public PrimitiveResource
         {
         private:
-            using BaseResourcePtr = std::shared_ptr< BaseResource >;
+            typedef std::shared_ptr< BaseResource > BaseResourcePtr;
 
         private:
             static ResponseStatement createResponseStatement(
@@ -52,11 +52,11 @@ namespace OIC
             {
             }
 
-            void requestGet(GetCallback callback) override
+            void requestGet(GetCallback callback)
             {
                 using namespace std::placeholders;
 
-                using GetFunc = OCStackResult(BaseResource::*)(
+                typedef OCStackResult(BaseResource::*GetFunc)(
                         const OC::QueryParamsMap&, OC::GetCallback);
 
                 invokeOC(m_baseResource, static_cast< GetFunc >(&BaseResource::get),
@@ -64,11 +64,11 @@ namespace OIC
                                 std::bind(createResponseStatement, _2), _3));
             }
 
-            void requestSet(const ResourceAttributes& attrs, SetCallback callback) override
+            void requestSet(const ResourceAttributes& attrs, SetCallback callback)
             {
                 using namespace std::placeholders;
 
-                using PutFunc = OCStackResult(BaseResource::*)(
+                typedef OCStackResult(BaseResource::*PutFunc)(
                         const OC::OCRepresentation&,
                         const OC::QueryParamsMap&, OC::PutCallback);
 
@@ -78,11 +78,11 @@ namespace OIC
                                 std::bind(createResponseStatement, _2), _3));
             }
 
-            void requestObserve(ObserveCallback callback) override
+            void requestObserve(ObserveCallback callback)
             {
                 using namespace std::placeholders;
 
-                using ObserveFunc = OCStackResult (BaseResource::*)(OC::ObserveType,
+                typedef OCStackResult (BaseResource::*ObserveFunc)(OC::ObserveType,
                         const OC::QueryParamsMap&, OC::ObserveCallback);
 
                 invokeOC(m_baseResource, static_cast< ObserveFunc >(&BaseResource::observe),
@@ -90,40 +90,40 @@ namespace OIC
                         bind(std::move(callback), _1, bind(createResponseStatement, _2), _3, _4));
             }
 
-            void cancelObserve() override
+            void cancelObserve()
             {
-                using CancelObserveFunc = OCStackResult (BaseResource::*)();
+                typedef OCStackResult (BaseResource::*CancelObserveFunc)();
 
                 invokeOC(m_baseResource,
                         static_cast< CancelObserveFunc >(&BaseResource::cancelObserve));
             }
 
-            std::string getSid() const override
+            std::string getSid() const
             {
                 return invokeOC(m_baseResource, &BaseResource::sid);
             }
 
-            std::string getUri() const override
+            std::string getUri() const
             {
                 return invokeOC(m_baseResource, &BaseResource::uri);
             }
 
-            std::string getHost() const override
+            std::string getHost() const
             {
                 return invokeOC(m_baseResource, &BaseResource::host);
             }
 
-            std::vector< std::string > getTypes() const override
+            std::vector< std::string > getTypes() const
             {
                 return invokeOC(m_baseResource, &BaseResource::getResourceTypes);
             }
 
-            std::vector< std::string > getInterfaces() const override
+            std::vector< std::string > getInterfaces() const
             {
                 return invokeOC(m_baseResource, &BaseResource::getResourceInterfaces);
             }
 
-            bool isObservable() const override
+            bool isObservable() const
             {
                 return invokeOC(m_baseResource, &BaseResource::isObservable);
             }

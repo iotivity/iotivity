@@ -41,7 +41,7 @@ namespace OIC
             template <typename FUNC, typename ...PARAMS>
             struct ResultType
             {
-                using type = decltype(std::declval<FUNC>()(std::declval<PARAMS>()...));
+                typedef decltype(std::declval<FUNC>()(std::declval<PARAMS>()...)) type;
             };
 
             template< typename A, typename B, typename ENABLER = void >
@@ -51,14 +51,14 @@ namespace OIC
             struct EnableIfTypeIs< A, OCStackResult,
                     typename std::enable_if< std::is_same< A, OCStackResult >::value >::type >
             {
-                using type = void;
+                typedef void type;
             };
 
             template< typename A >
             struct EnableIfTypeIs< A, NotOCStackResult,
                     typename std::enable_if< !std::is_same< A, OCStackResult >::value >::type >
             {
-                using type = A;
+                typedef A type;
             };
 
 
@@ -66,14 +66,14 @@ namespace OIC
                     std::is_class<T>::value && std::is_pointer<T>::value>::type >
             struct EnableIfClassPointer
             {
-                using type = void;
+                typedef void type;
             };
 
-            template< typename T, typename = typename std::enable_if<std::is_class<T>::value > >
-             struct EnableIfClass
-             {
-                 using type = void;
-             };
+            template< typename T, typename = typename std::enable_if< std::is_class< T >::value > >
+            struct EnableIfClass
+            {
+                typedef void type;
+            };
         }
 
         inline void expectOCStackResult(OCStackResult actual,

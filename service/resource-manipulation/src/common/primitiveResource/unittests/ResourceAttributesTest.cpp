@@ -366,7 +366,7 @@ public:
     ResourceAttributes resourceAttributes;
 
 protected:
-    void SetUp() override
+    void SetUp()
     {
         resourceAttributes[KEY] = 1;
     }

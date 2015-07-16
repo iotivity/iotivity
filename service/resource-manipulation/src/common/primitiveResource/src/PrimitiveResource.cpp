@@ -40,7 +40,7 @@ namespace OIC
         void discoverResource(const std::string& host, const std::string& resourceURI,
                 OCConnectivityType connectivityType, DiscoverCallback callback)
         {
-            using FindResource = OCStackResult (*)(const std::string&, const std::string&,
+            typedef OCStackResult (*FindResource)(const std::string&, const std::string&,
                     OCConnectivityType, OC::FindCallback);
 
             invokeOCFunc(static_cast<FindResource>(OC::OCPlatform::findResource),

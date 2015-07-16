@@ -62,25 +62,22 @@ namespace OIC
         private:
             template< typename T > struct IsSupportedTypeHelper;
 
-            using ValueVariant = boost::variant<
+            typedef boost::variant<
                 std::nullptr_t,
                 int,
                 double,
                 bool,
                 std::string,
                 ResourceAttributes
-            >;
+            > ValueVariant;
 
-            template< typename T >
-            using mpl_begin = typename boost::mpl::begin<T>::type;
-
-            template< typename T, typename V = void >
-            using enable_if_supported = typename std::enable_if<
-                    IsSupportedTypeHelper< T >::type::value, V >::type;
-
-            template< typename T, typename V = void >
-            using enable_if_unsupported = typename std::enable_if<
-                    !IsSupportedTypeHelper< T >::type::value, V >::type;
+            template< typename T, typename V = void,
+                    typename = typename std::enable_if<
+                        IsSupportedTypeHelper< T >::type::value, V >::type >
+            struct enable_if_supported
+            {
+                typedef V type;
+            };
 
             template< typename VISITOR >
             class KeyValueVisitorHelper: public boost::static_visitor< >
@@ -105,7 +102,8 @@ namespace OIC
 
         public:
             template< typename T >
-            using is_supported_type = typename IsSupportedTypeHelper< T >::type;
+            struct is_supported_type: public std::conditional<
+                IsSupportedTypeHelper< T >::type::value, std::true_type, std::false_type>::type { };
 
             enum class TypeId
             {
@@ -155,7 +153,7 @@ namespace OIC
                 Value(const Value&);
                 Value(Value&&);
 
-                template< typename T, typename = enable_if_supported< T > >
+                template< typename T, typename = typename enable_if_supported< T >::type >
                 Value(T&& value) :
                         m_data{ new ValueVariant{ std::forward< T >(value) } }
                 {
@@ -166,7 +164,7 @@ namespace OIC
                 Value& operator=(const Value&);
                 Value& operator=(Value&&);
 
-                template< typename T, typename = enable_if_supported< T > >
+                template< typename T, typename = typename enable_if_supported< T >::type >
                 Value& operator=(T&& rhs)
                 {
                     *m_data = std::forward< T >(rhs);
@@ -203,7 +201,7 @@ namespace OIC
                 bool operator==(const char*) const;
 
             private:
-                template< typename T, typename = enable_if_supported< T > >
+                template< typename T, typename = typename enable_if_supported< T >::type >
                 typename std::add_lvalue_reference< T >::type checkedGet() const
                 {
                     try
@@ -293,16 +291,16 @@ namespace OIC
         template< typename T >
         struct ResourceAttributes::IsSupportedTypeHelper
         {
-            using type = boost::mpl::contains<ValueVariant::types, typename std::decay< T >::type>;
+            typedef boost::mpl::contains<ValueVariant::types, typename std::decay< T >::type> type;
         };
 
         template <typename T>
         struct ResourceAttributes::IndexOfType
         {
-            using iter = typename boost::mpl::find< ValueVariant::types, T >::type;
+            typedef typename boost::mpl::find< ValueVariant::types, T >::type iter;
+            typedef typename boost::mpl::begin< ValueVariant::types >::type mpl_begin;
 
-            static constexpr int value = boost::mpl::distance< mpl_begin< ValueVariant::types >,
-                    iter >::value;
+            static constexpr int value = boost::mpl::distance< mpl_begin, iter >::value;
         };
 
         bool operator==(const ResourceAttributes::Type&, const ResourceAttributes::Type&);
@@ -386,7 +384,7 @@ namespace OIC
                 ResourceAttributes::KeyValuePair >
         {
         private:
-            using base_iterator = std::unordered_map< std::string, Value >::iterator;
+            typedef std::unordered_map< std::string, Value >::iterator base_iterator;
 
         public:
             iterator();
@@ -417,7 +415,7 @@ namespace OIC
                 const ResourceAttributes::KeyValuePair >
         {
         private:
-            using base_iterator = std::unordered_map< std::string, Value >::const_iterator;
+            typedef std::unordered_map< std::string, Value >::const_iterator base_iterator;
 
         public:
             const_iterator();

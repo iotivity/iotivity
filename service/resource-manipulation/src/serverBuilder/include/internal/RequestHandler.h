@@ -39,11 +39,11 @@ namespace OIC
         class RequestHandler
         {
         private:
-            using BuildResponseHolder = std::function< std::shared_ptr< OC::OCResourceResponse >(
-                    ResourceObject&) >;
+            typedef std::function< std::shared_ptr< OC::OCResourceResponse >(ResourceObject&) >
+                        BuildResponseHolder;
 
         public:
-            using Ptr = std::shared_ptr< RequestHandler >;
+            typedef std::shared_ptr< RequestHandler > Pre;
 
             static constexpr int DEFAULT_ERROR_CODE = 200;
             static constexpr OCEntityHandlerResult DEFAULT_RESULT = OC_EH_OK;
@@ -64,7 +64,7 @@ namespace OIC
                     int errorCode = DEFAULT_ERROR_CODE);
 
 
-            virtual ~RequestHandler() = default;
+            virtual ~RequestHandler() { };
 
             std::shared_ptr< OC::OCResourceResponse > buildResponse(ResourceObject&);
 
@@ -75,7 +75,7 @@ namespace OIC
         class SetRequestHandler: public RequestHandler
         {
         public:
-            using Ptr = std::shared_ptr< SetRequestHandler >;
+            typedef std::shared_ptr< SetRequestHandler > Ptr;
 
             SetRequestHandler(const SetRequestHandler&) = delete;
             SetRequestHandler(SetRequestHandler&&) = default;

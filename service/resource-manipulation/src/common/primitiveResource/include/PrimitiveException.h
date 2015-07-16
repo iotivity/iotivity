@@ -37,7 +37,9 @@ namespace OIC
             explicit PrimitiveException(const std::string& what) : m_what{ what } {}
             explicit PrimitiveException(std::string&& what) : m_what{ std::move(what) } {}
 
-            const char* what() const noexcept override
+            virtual ~PrimitiveException() noexcept {}
+
+            virtual const char* what() const noexcept
             {
                 return m_what.c_str();
             }

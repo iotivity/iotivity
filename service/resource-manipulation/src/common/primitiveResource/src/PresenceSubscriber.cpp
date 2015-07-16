@@ -32,7 +32,7 @@ namespace OIC
         void subscribePresence(OCDoHandle& handle, const std::string& host,
                 OCConnectivityType connectivityType, SubscribeCallback presenceHandler)
         {
-            using SubscribePresence = OCStackResult (*)(OC::OCPlatform::OCPresenceHandle&,
+            typedef OCStackResult (*SubscribePresence)(OC::OCPlatform::OCPresenceHandle&,
                     const std::string&, OCConnectivityType, SubscribeCallback);
 
             invokeOCFunc(static_cast<SubscribePresence>(OC::OCPlatform::subscribePresence),
@@ -43,7 +43,7 @@ namespace OIC
                 const std::string& resourceType, OCConnectivityType connectivityType,
                 SubscribeCallback presenceHandler)
         {
-            using SubscribePresence = OCStackResult (*)(OC::OCPlatform::OCPresenceHandle&,
+            typedef OCStackResult (*SubscribePresence)(OC::OCPlatform::OCPresenceHandle&,
                     const std::string&, const std::string&, OCConnectivityType, SubscribeCallback);
 
             invokeOCFunc(static_cast<SubscribePresence>(OC::OCPlatform::subscribePresence),

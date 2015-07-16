@@ -133,7 +133,8 @@ namespace OIC
         }
 
         PrimitiveSetResponse::PrimitiveSetResponse(std::shared_ptr< SetRequestHandler >&& handler) :
-                PrimitiveSetResponse{ std::move(handler), AcceptanceMethod::DEFAULT }
+                m_acceptanceMethod { AcceptanceMethod::DEFAULT },
+                m_handler{ std::move(handler) }
         {
         }
 

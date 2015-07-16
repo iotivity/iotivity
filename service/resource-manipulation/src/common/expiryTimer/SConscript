@@ -46,7 +46,7 @@ timer_env.AppendUnique(CPPPATH = ['src'])
 timer_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'libcoap'])
 
 if target_os not in ['windows', 'winrt']:
-    timer_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++11'])
+    timer_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 
 if target_os == 'linux':
     timer_env.AppendUnique(LIBS = ['pthread'])

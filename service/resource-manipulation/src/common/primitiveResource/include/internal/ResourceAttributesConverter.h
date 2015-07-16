@@ -35,14 +35,6 @@ namespace OIC
         private:
             ResourceAttributesConverter() = delete;
 
-            template< typename T >
-            using SupportedType = typename std::enable_if<
-                    ResourceAttributes::is_supported_type< T >::type::value, T >::type;
-
-            template< typename T >
-            using UnsupportedType = typename std::enable_if<
-                    !ResourceAttributes::is_supported_type< T >::type::value, T >::type;
-
             class ResourceAttributesBuilder
             {
             public:
@@ -85,19 +77,15 @@ namespace OIC
 
             private:
                 template< typename T >
-                void putValue(const std::string key, T&& value)
-                {
-                    putValue< T >(key, std::forward< T >(value));
-                }
-
-                template< typename T >
-                void putValue(const std::string key, SupportedType< T > && value)
+                typename std::enable_if<ResourceAttributes::is_supported_type< T >::value >::type
+                putValue(const std::string& key, T && value)
                 {
                     m_target[key] = std::forward< T >(value);
                 }
 
                 template< typename T >
-                void putValue(const std::string key, UnsupportedType< T > && value)
+                typename std::enable_if<!ResourceAttributes::is_supported_type< T >::value >::type
+                putValue(const std::string& key, T && value)
                 {
                 }
 
@@ -136,7 +124,8 @@ namespace OIC
             };
 
         public:
-            static ResourceAttributes fromOCRepresentation(const OC::OCRepresentation& ocRepresentation)
+            static ResourceAttributes fromOCRepresentation(
+                    const OC::OCRepresentation& ocRepresentation)
             {
                 ResourceAttributesBuilder builder;
 
@@ -148,7 +137,8 @@ namespace OIC
                 return builder.extract();
             }
 
-            static OC::OCRepresentation toOCRepresentation(const ResourceAttributes& resourceAttributes)
+            static OC::OCRepresentation toOCRepresentation(
+                    const ResourceAttributes& resourceAttributes)
             {
                 OCRepresentationBuilder builder;
 

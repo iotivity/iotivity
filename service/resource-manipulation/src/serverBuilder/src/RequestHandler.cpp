@@ -28,7 +28,7 @@ namespace
 {
     using namespace OIC::Service;
 
-    using OCRepresentationGetter = std::function< OC::OCRepresentation(ResourceObject&) >;
+    typedef std::function< OC::OCRepresentation(ResourceObject&) > OCRepresentationGetter;
 
     OC::OCRepresentation getOCRepresentationFromResource(ResourceObject& resource)
     {
@@ -115,7 +115,8 @@ namespace OIC
         constexpr OCEntityHandlerResult RequestHandler::DEFAULT_RESULT;
 
         RequestHandler::RequestHandler() :
-            RequestHandler { DEFAULT_RESULT, DEFAULT_ERROR_CODE }
+                m_holder{ std::bind(doBuildResponse, std::placeholders::_1, DEFAULT_RESULT,
+                        DEFAULT_ERROR_CODE, getOCRepresentationFromResource) }
         {
         }
 

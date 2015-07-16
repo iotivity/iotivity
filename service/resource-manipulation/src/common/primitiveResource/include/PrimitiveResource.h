@@ -33,8 +33,8 @@ namespace OIC
     namespace Service
     {
 
-        using HeaderOption = OC::HeaderOption::OCHeaderOption;
-        using HeaderOptions = std::vector<HeaderOption>;
+        typedef OC::HeaderOption::OCHeaderOption HeaderOption;
+        typedef std::vector<HeaderOption> HeaderOptions;
 
         class ResourceAttributes;
         class ResponseStatement;
@@ -42,21 +42,21 @@ namespace OIC
         class PrimitiveResource
         {
         public:
-            using Ptr = std::shared_ptr<PrimitiveResource>;
+            typedef std::shared_ptr<PrimitiveResource> Ptr;
 
-            using GetCallback = std::function<
-                    void(const HeaderOptions&, const ResponseStatement&, int)>;
+            typedef std::function<void(const HeaderOptions&, const ResponseStatement&, int)>
+                    GetCallback;
 
-            using SetCallback = std::function<
-                    void(const HeaderOptions&, const ResponseStatement&, int)>;
+            typedef std::function<void(const HeaderOptions&, const ResponseStatement&, int)>
+                    SetCallback;
 
-            using ObserveCallback = std::function<
-                    void(const HeaderOptions&, const ResponseStatement&, int, int)>;
+            typedef std::function<void(const HeaderOptions&, const ResponseStatement&, int, int)>
+                    ObserveCallback;
 
         public:
             static PrimitiveResource::Ptr create(const std::shared_ptr<OC::OCResource>&);
 
-            virtual ~PrimitiveResource() = default;
+            virtual ~PrimitiveResource() { };
 
             virtual void requestGet(GetCallback) = 0;
             virtual void requestSet(const ResourceAttributes&, SetCallback) = 0;
@@ -81,7 +81,7 @@ namespace OIC
             PrimitiveResource& operator=(PrimitiveResource&&) = delete;
         };
 
-        using DiscoverCallback = std::function<void(std::shared_ptr<PrimitiveResource>)>;
+        typedef std::function<void(std::shared_ptr<PrimitiveResource>)> DiscoverCallback;
 
         void discoverResource(const std::string& host, const std::string& resourceURI,
                 OCConnectivityType, DiscoverCallback);

@@ -349,7 +349,8 @@ namespace OIC
 
 
         ResourceAttributes::iterator::iterator() :
-                iterator{ base_iterator{} }
+                m_cur{ base_iterator{ } },
+                m_keyValuePair{ this }
         {
         }
 
@@ -394,7 +395,7 @@ namespace OIC
 
 
         ResourceAttributes::const_iterator::const_iterator() :
-                const_iterator{ base_iterator{} }
+                m_cur{ base_iterator{} }, m_keyValuePair{ this }
         {
         }
 
@@ -547,7 +548,6 @@ namespace OIC
 
             static_assert(ResourceAttributes::is_supported_type< ResourceAttributes >::value,
                     "ResourceAttributes doesn't have ResourceAttributes recursively.");
-
             if (dest.getType().getId() == ResourceAttributes::TypeId::ATTRIBUTES
                     && !acceptableAttributes(dest.get< ResourceAttributes >(),
                             value.get< ResourceAttributes >()))

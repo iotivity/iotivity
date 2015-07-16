@@ -23,8 +23,9 @@
 
 #include <string>
 #include <mutex>
-#include <atomic>
 #include <thread>
+
+#include <boost/atomic.hpp>
 
 #include <ResourceAttributes.h>
 #include <PrimitiveResponse.h>
@@ -63,8 +64,8 @@ namespace OIC
                 ACCEPTANCE
             };
 
-            using Ptr = std::shared_ptr< ResourceObject >;
-            using ConstPtr = std::shared_ptr< const ResourceObject >;
+            typedef std::shared_ptr< ResourceObject > Ptr;
+            typedef std::shared_ptr< const ResourceObject > ConstPtr;
 
             class Builder
             {
@@ -95,12 +96,12 @@ namespace OIC
 
             class LockGuard;
 
-            using GetRequestHandler = std::function< PrimitiveGetResponse(const PrimitiveRequest&,
-                    ResourceAttributes&) >;
-            using SetRequestHandler = std::function< PrimitiveSetResponse(const PrimitiveRequest&,
-                    ResourceAttributes&) >;
-            using AttributeUpdatedHandler = std::function< void(const ResourceAttributes::Value&,
-                    const ResourceAttributes::Value&) >;
+            typedef std::function< PrimitiveGetResponse(const PrimitiveRequest&,
+                        ResourceAttributes&) > GetRequestHandler;
+            typedef std::function< PrimitiveSetResponse(const PrimitiveRequest&,
+                        ResourceAttributes&) > SetRequestHandler;
+            typedef std::function< void(const ResourceAttributes::Value&,
+                    const ResourceAttributes::Value&) > AttributeUpdatedHandler;
 
         public:
             ResourceObject(ResourceObject&&) = delete;
@@ -181,7 +182,7 @@ namespace OIC
             std::unordered_map< std::string, AttributeUpdatedHandler >
                     m_keyAttributesUpdatedHandlers;
 
-            mutable std::atomic< std::thread::id > m_lockOwner;
+            mutable boost::atomic< std::thread::id > m_lockOwner;
             mutable std::mutex m_mutex;
 
             std::mutex m_mutexKeyAttributeUpdate;
@@ -202,6 +203,9 @@ namespace OIC
 
             LockGuard& operator=(const LockGuard&) = delete;
             LockGuard& operator=(LockGuard&&) = delete;
+
+        private:
+            void init();
 
         private:
             const ResourceObject& m_resourceObject;

@@ -33,14 +33,10 @@ using namespace testing;
 using namespace OIC::Service;
 using namespace OC;
 
-using registerResource = OCStackResult (*)(OCResourceHandle&,
-                       string&,
-                       const string&,
-                       const string&,
-                       EntityHandler,
-                       uint8_t );
+typedef OCStackResult (*registerResource)(OCResourceHandle&, string&, const string&, const string&,
+                           EntityHandler, uint8_t );
 
-using NotifyAllObservers = OCStackResult (*)(OCResourceHandle);
+typedef OCStackResult (*NotifyAllObservers)(OCResourceHandle);
 
 constexpr char RESOURCE_URI[]{ "a/test" };
 constexpr char RESOURCE_TYPE[]{ "resourceType" };
@@ -58,7 +54,7 @@ public:
     MockRepository mocks;
 
 protected:
-    void SetUp() override
+    void SetUp()
     {
         mocks.OnCallFuncOverload(static_cast< registerResource >(OCPlatform::registerResource))
                 .Return(OC_STACK_OK);
@@ -102,7 +98,7 @@ public:
     ResourceObject::Ptr server;
 
 protected:
-    void SetUp() override
+    void SetUp()
     {
         initMocks();
 
@@ -154,7 +150,7 @@ TEST_F(ResourceObjectTest, SettingAttributesWithinGuardDoesntCauseDeadLock)
 class AutoNotifyTest: public ResourceObjectTest
 {
 protected:
-    void initMocks() override
+    void initMocks()
     {
         mocks.OnCallFuncOverload(static_cast< NotifyAllObservers >(
                 OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
@@ -290,7 +286,8 @@ public:
             reinterpret_cast<OCResourceHandle>(0x4321);
 
 public:
-    OCResourceRequest::Ptr createRequest(OCMethod method = OC_REST_GET, OCRepresentation ocRep = {})
+    OCResourceRequest::Ptr createRequest(OCMethod method = OC_REST_GET, OCRepresentation ocRep =
+            OCRepresentation{})
     {
         auto request = make_shared<OCResourceRequest>();
 
@@ -318,7 +315,7 @@ protected:
         return OC_STACK_OK;
     }
 
-    void initMocks() override
+    void initMocks()
     {
         mocks.OnCallFuncOverload(
             static_cast<registerResource>(OCPlatform::registerResource)).Do(
@@ -409,7 +406,7 @@ TEST_F(ResourceObjectHandlingRequestTest, SendSetResponseWithCustomAttrsAndResul
 class SetRequestHandlerPolicyTest: public ResourceObjectHandlingRequestTest
 {
 public:
-    using SendResponse = OCStackResult (*)(std::shared_ptr<OCResourceResponse>);
+    typedef OCStackResult (*SendResponse)(std::shared_ptr<OCResourceResponse>);
 
 public:
     OCRepresentation createOCRepresentation()
@@ -426,7 +423,7 @@ public:
         return ocRep;
     }
 
-    void initMocks() override
+    void initMocks()
     {
         ResourceObjectHandlingRequestTest::initMocks();
         mocks.OnCallFunc(OCPlatform::sendResponse).Return(OC_STACK_OK);
