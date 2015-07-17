@@ -1048,6 +1048,7 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
             OC_LOG(INFO, TAG, PCF("Calling into application address space"));
 
             OCClientResponse response = {};
+            response.sequenceNumber = OC_OBSERVE_NO_OPTION;
             CopyEndpointToDevAddr(endPoint, &response.devAddr);
             FixUpClientResponse(&response);
             response.resourceUri = responseInfo->info.resourceUri;
