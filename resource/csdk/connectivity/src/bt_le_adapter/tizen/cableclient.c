@@ -342,6 +342,12 @@ bool CABleGattCharacteristicsDiscoveredCb(int result,
             return false;
         }
     }
+    else
+    {
+        OICFree(uuid);
+        OIC_LOG(ERROR, TZ_BLE_CLIENT_TAG , "service_uuid characteristics is UNKNOWN");
+        return false;
+    }
 
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "OUT");
     return true;
