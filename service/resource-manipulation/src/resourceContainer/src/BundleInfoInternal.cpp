@@ -111,6 +111,26 @@ namespace OIC
             return m_deactivator;
         }
 
+        void BundleInfoInternal::setResourceCreator(resourceCreator_t *resourceCreator)
+        {
+            m_resourceCreator = resourceCreator;
+        }
+
+        resourceCreator_t *BundleInfoInternal::getResourceCreator()
+        {
+            return m_resourceCreator;
+        }
+
+        void BundleInfoInternal::setResourceDestroyer(resourceDestroyer_t *resourceDestroyer)
+        {
+            m_resourceDestroyer = resourceDestroyer;
+        }
+
+        resourceDestroyer_t *BundleInfoInternal::getResourceDestroyer()
+        {
+            return m_resourceDestroyer;
+        }
+
         void BundleInfoInternal::setBundleHandle(void *handle)
         {
             m_bundleHandle = handle;
@@ -141,11 +161,13 @@ namespace OIC
             return m_activator_name;
         }
 
-        void BundleInfoInternal::setLibraryPath(string libpath){
+        void BundleInfoInternal::setLibraryPath(string libpath)
+        {
             m_library_path = libpath;
         }
 
-        string BundleInfoInternal::getLibraryPath(){
+        string BundleInfoInternal::getLibraryPath()
+        {
             return m_library_path;
         }
 

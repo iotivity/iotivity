@@ -107,6 +107,8 @@ namespace OIC
                 void activateSoBundle(string bundleId);
                 void deactivateJavaBundle(string bundleId);
                 void deactivateSoBundle(string bundleId);
+                void addSoBundleResource(string bundleId, resourceInfo newResourceInfo);
+                void removeSoBundleResource(string bundleId, string resourceUri);
         };
     }
 }

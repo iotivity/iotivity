@@ -37,6 +37,9 @@ class TestBundleActivator : public BundleActivator
 
         void activateBundle(ResourceContainerBundleAPI *resourceContainer, std::string bundleId);
         void deactivateBundle();
+
+        void createResource(resourceInfo resourceInfo);
+        void destroyResource(BundleResource *pBundleResource);
 };
 
 #endif /* TESTBUNDLE_H_ */

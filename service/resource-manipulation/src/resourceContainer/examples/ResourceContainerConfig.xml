@@ -59,7 +59,7 @@
     </bundle>
     <bundle>
         <id>oic.bundle.hueJavaSample</id>
-        <path>../../../../../../../../service/resource-manipulation/modules/resourceContainer/examples/HueJavaSampleBundle/hue/target/hue-0.1-SNAPSHOT-jar-with-dependencies.jar </path>
+        <path>../../../../../../../../service/resource-manipulation/src/resourceContainer/examples/HueJavaSampleBundle/hue/target/hue-0.1-jar-with-dependencies.jar</path>
         <libraryPath>.</libraryPath>
         <uri>/hueJava</uri>
         <activator>org.iotivity.bundle.hue.HueBundleActivator</activator>

@@ -60,11 +60,12 @@ void HueSampleBundleActivator::deactivateBundle()
 {
     std::cout << "HueSampleBundle::deactivateBundle called" << std::endl;
 
-    for (std::vector< BundleResource * >::iterator itor = m_vecResources.begin();
-         itor != m_vecResources.end(); itor++)
+    for (unsigned int i = 0; i < m_vecResources.size(); i++)
     {
-        destroyResource(*itor);
+        destroyResource(m_vecResources.at(i));
     }
+
+    delete m_connector;
 }
 
 void HueSampleBundleActivator::createResource(resourceInfo resourceInfo)
@@ -87,17 +88,18 @@ void HueSampleBundleActivator::createResource(resourceInfo resourceInfo)
     }
 }
 
-void HueSampleBundleActivator::destroyResource(BundleResource *resource)
+void HueSampleBundleActivator::destroyResource(BundleResource *pBundleResource)
 {
-    std::cout << "HueSampleBundle::destroyResource called" << resource->m_uri << std::endl;
+    std::cout << "HueSampleBundle::destroyResource called" << pBundleResource->m_uri << std::endl;
 
     std::vector< BundleResource * >::iterator itor;
 
-    itor = std::find(m_vecResources.begin(), m_vecResources.end(), resource);
+    itor = std::find(m_vecResources.begin(), m_vecResources.end(), pBundleResource);
 
     if (itor != m_vecResources.end())
     {
-        m_pResourceContainer->unregisterResource(resource);
+        m_pResourceContainer->unregisterResource(pBundleResource);
+        m_vecResources.erase(itor);
     }
 
     //TODO
@@ -108,7 +110,6 @@ void HueSampleBundleActivator::destroyResource(BundleResource *resource)
 
     // check
     //delete resource;
-
 
 }
 
@@ -122,4 +123,15 @@ extern "C" void externalActivateBundle(ResourceContainerBundleAPI *resourceConta
 extern "C" void externalDeactivateBundle()
 {
     bundle->deactivateBundle();
+    delete bundle;
+}
+
+extern "C" void externalCreateResource(resourceInfo resourceInfo)
+{
+    bundle->createResource(resourceInfo);
+}
+
+extern "C" void externalDestroyResource(BundleResource *pBundleResource)
+{
+    bundle->destroyResource(pBundleResource);
 }

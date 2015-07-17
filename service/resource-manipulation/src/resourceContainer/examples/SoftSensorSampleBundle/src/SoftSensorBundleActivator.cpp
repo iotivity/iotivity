@@ -54,49 +54,48 @@ void SoftSensorBundleActivator::deactivateBundle()
 {
     std::cout << "SoftSensorSampleBundle::deactivateBundle called" << std::endl;
 
-    for (std::vector<BundleResource *>::iterator itor = m_vecResources.begin();
-         itor != m_vecResources.end(); itor++)
+    for (unsigned int i = 0; i < m_vecResources.size(); i++)
     {
-        destroyResource(*itor);
+        destroyResource(m_vecResources.at(i));
     }
-
-    m_vecResources.clear();
 }
 
 void SoftSensorBundleActivator::createResource(resourceInfo resourceInfo)
 {
     std::cout << "SoftSensorSampleBundle::createResource called" << std::endl;
 
-    static int discomfortIndexSensorCount = 1;
-
-    std::vector< std::map< std::string, std::string > >::iterator itor_vec;
-    std::map< std::string, std::string >::iterator itor_map;
-    std::vector <std::string> inputs;
-
-    for (itor_vec = resourceInfo.resourceProperty["input"].begin();
-         itor_vec != resourceInfo.resourceProperty["input"].end(); itor_vec++)
+    if (resourceInfo.resourceType == "oic.softsensor")
     {
-        for (itor_map = (*itor_vec).begin(); itor_map != (*itor_vec).end(); itor_map++)
+        static int discomfortIndexSensorCount = 1;
+
+        std::vector< std::map< std::string, std::string > >::iterator itor_vec;
+        std::map< std::string, std::string >::iterator itor_map;
+        std::vector <std::string> inputs;
+
+        for (itor_vec = resourceInfo.resourceProperty["input"].begin();
+             itor_vec != resourceInfo.resourceProperty["input"].end(); itor_vec++)
         {
-            inputs.push_back(itor_map->second);
+            for (itor_map = (*itor_vec).begin(); itor_map != (*itor_vec).end(); itor_map++)
+            {
+                inputs.push_back(itor_map->second);
+            }
         }
+        std::cout << "SoftSensorSampleBundle::creating new discomfort index sensor " << std::endl;
+        // create DISensor resource
+        DiscomfortIndexSensorResource *newResource = new DiscomfortIndexSensorResource(inputs);
+
+        newResource->m_bundleId = m_bundleId;
+        newResource->m_uri = "/softsensor/discomfortIndex/" + std::to_string(
+                                 discomfortIndexSensorCount++);
+        newResource->m_resourceType = resourceInfo.resourceType;
+        newResource->m_mapResourceProperty = resourceInfo.resourceProperty;
+
+        // setting input Attributes count
+        newResource->inputCount = newResource->m_mapResourceProperty["input"].size();
+
+        m_pResourceContainer->registerResource(newResource);
+        m_vecResources.push_back(newResource);
     }
-    std::cout << "SoftSensorSampleBundle::creating new discomfort index sensor " << std::endl;
-    // create DISensor resource
-    DiscomfortIndexSensorResource *newResource = new DiscomfortIndexSensorResource(inputs);
-
-    newResource->m_bundleId = m_bundleId;
-
-    newResource->m_uri = "/softsensor/discomfortIndex/" + std::to_string(
-                             discomfortIndexSensorCount++);
-    newResource->m_resourceType = resourceInfo.resourceType;
-    newResource->m_mapResourceProperty = resourceInfo.resourceProperty;
-
-    // setting input Attributes count
-    newResource->inputCount = newResource->m_mapResourceProperty["input"].size();
-
-    m_pResourceContainer->registerResource(newResource);
-    m_vecResources.push_back(newResource);
 }
 
 void SoftSensorBundleActivator::destroyResource(BundleResource *resource)
@@ -110,10 +109,8 @@ void SoftSensorBundleActivator::destroyResource(BundleResource *resource)
     if (itor != m_vecResources.end())
     {
         m_pResourceContainer->unregisterResource(resource);
+        m_vecResources.erase(itor);
     }
-
-    //TODO
-    /*std::cout << "Clearing up memory.\n";*/
 }
 
 extern "C" void externalActivateBundle(ResourceContainerBundleAPI *resourceContainer,
@@ -126,4 +123,15 @@ extern "C" void externalActivateBundle(ResourceContainerBundleAPI *resourceConta
 extern "C" void externalDeactivateBundle()
 {
     bundle->deactivateBundle();
+    delete bundle;
+}
+
+extern "C" void externalCreateResource(resourceInfo resourceInfo)
+{
+    bundle->createResource(resourceInfo);
+}
+
+extern "C" void externalDestroyResource(BundleResource *pBundleResource)
+{
+    bundle->destroyResource(pBundleResource);
 }

@@ -73,33 +73,36 @@ namespace OIC
 
             string strKey, strValue;
 
-            try
+            if (m_loaded)
             {
-                //cout << "Name of first node is: " << m_xmlDoc.first_node()->name() << endl;
-
-                for (bundle = m_xmlDoc.first_node()->first_node("bundle"); bundle; bundle = bundle->next_sibling())
+                try
                 {
-                    std::map< std::string, std::string > bundleMap;
-                    //cout << "Bundle: " << bundle->name() << endl;
-                    for (subItem = bundle->first_node(); subItem; subItem = subItem->next_sibling())
+                    //cout << "Name of first node is: " << m_xmlDoc.first_node()->name() << endl;
+
+                    for (bundle = m_xmlDoc.first_node()->first_node("bundle"); bundle; bundle = bundle->next_sibling())
                     {
-                        strKey = subItem->name();
-                        strValue = subItem->value();
-
-                        if (strlen(subItem->value()) > 0)
+                        std::map< std::string, std::string > bundleMap;
+                        //cout << "Bundle: " << bundle->name() << endl;
+                        for (subItem = bundle->first_node(); subItem; subItem = subItem->next_sibling())
                         {
-                            bundleMap.insert(std::make_pair(trim_both(strKey), trim_both(strValue)));
-                            //cout << strKey << " " << strValue << endl;
-                        }
-                    }
-                    configOutput->push_back(bundleMap);
-                }
+                            strKey = subItem->name();
+                            strValue = subItem->value();
 
-            }
-            catch (rapidxml::parse_error &e)
-            {
-                cout << "xml parsing failed !!" << endl;
-                cout << e.what() << endl;
+                            if (strlen(subItem->value()) > 0)
+                            {
+                                bundleMap.insert(std::make_pair(trim_both(strKey), trim_both(strValue)));
+                                //cout << strKey << " " << strValue << endl;
+                            }
+                        }
+                        configOutput->push_back(bundleMap);
+                    }
+
+                }
+                catch (rapidxml::parse_error &e)
+                {
+                    cout << "xml parsing failed !!" << endl;
+                    cout << e.what() << endl;
+                }
             }
         }
 
@@ -109,38 +112,41 @@ namespace OIC
 
             string strBundleId, strPath, strVersion;
 
-            try
+            if (m_loaded)
             {
-                std::map< std::string, std::string > bundleConfigMap;
-
-                // <bundle>
-                for (bundle = m_xmlDoc.first_node()->first_node("bundle"); bundle; bundle = bundle->next_sibling())
+                try
                 {
-                    // <id>
-                    strBundleId = bundle->first_node("id")->value();
+                    std::map< std::string, std::string > bundleConfigMap;
 
-                    if (!strBundleId.compare(bundleId))
+                    // <bundle>
+                    for (bundle = m_xmlDoc.first_node()->first_node("bundle"); bundle; bundle = bundle->next_sibling())
                     {
-                        bundleConfigMap.insert(std::make_pair("id", trim_both(strBundleId)));
+                        // <id>
+                        strBundleId = bundle->first_node("id")->value();
 
-                        // <path>
-                        strPath = bundle->first_node("path")->value();
-                        bundleConfigMap.insert(std::make_pair("path", trim_both(strPath)));
+                        if (!strBundleId.compare(bundleId))
+                        {
+                            bundleConfigMap.insert(std::make_pair("id", trim_both(strBundleId)));
 
-                        // <version>
-                        strVersion = bundle->first_node("version")->value();
-                        bundleConfigMap.insert(std::make_pair("version", trim_both(strVersion)));
+                            // <path>
+                            strPath = bundle->first_node("path")->value();
+                            bundleConfigMap.insert(std::make_pair("path", trim_both(strPath)));
 
-                        configOutput->push_back(bundleConfigMap);
+                            // <version>
+                            strVersion = bundle->first_node("version")->value();
+                            bundleConfigMap.insert(std::make_pair("version", trim_both(strVersion)));
 
-                        break;
+                            configOutput->push_back(bundleConfigMap);
+
+                            break;
+                        }
                     }
                 }
-            }
-            catch (rapidxml::parse_error &e)
-            {
-                cout << "xml parsing failed !!" << endl;
-                cout << e.what() << endl;
+                catch (rapidxml::parse_error &e)
+                {
+                    cout << "xml parsing failed !!" << endl;
+                    cout << e.what() << endl;
+                }
             }
         }
 
@@ -154,68 +160,71 @@ namespace OIC
             string strBundleId;
             string strKey, strValue;
 
-            try
+            if (m_loaded)
             {
-                // <bundle>
-                for (bundle = m_xmlDoc.first_node()->first_node("bundle"); bundle; bundle = bundle->next_sibling())
+                try
                 {
-                    // <id>
-                    strBundleId = bundle->first_node("id")->value();
-
-                    if (!strBundleId.compare(bundleId))
+                    // <bundle>
+                    for (bundle = m_xmlDoc.first_node()->first_node("bundle"); bundle; bundle = bundle->next_sibling())
                     {
-                        // <resourceInfo>
-                        for (resource = bundle->first_node("resources")->first_node("resourceInfo"); resource;
-                             resource = resource->next_sibling())
+                        // <id>
+                        strBundleId = bundle->first_node("id")->value();
+
+                        if (!strBundleId.compare(bundleId))
                         {
-                            resourceInfo tempResourceInfo;
-
-                            for (item = resource->first_node(); item; item = item->next_sibling())
+                            // <resourceInfo>
+                            for (resource = bundle->first_node("resources")->first_node("resourceInfo"); resource;
+                                 resource = resource->next_sibling())
                             {
-                                strKey = item->name();
-                                strValue = item->value();
+                                resourceInfo tempResourceInfo;
 
-                                if (!strKey.compare("name"))
-                                    tempResourceInfo.name = trim_both(strValue);
-
-                                else if (!strKey.compare("uri"))
-                                    tempResourceInfo.uri = trim_both(strValue);
-
-                                else if (!strKey.compare("address"))
-                                    tempResourceInfo.address = trim_both(strValue);
-
-                                else if (!strKey.compare("resourceType"))
-                                    tempResourceInfo.resourceType = trim_both(strValue);
-
-                                else
+                                for (item = resource->first_node(); item; item = item->next_sibling())
                                 {
-                                    for (subItem = item->first_node(); subItem; subItem = subItem->next_sibling())
+                                    strKey = item->name();
+                                    strValue = item->value();
+
+                                    if (!strKey.compare("name"))
+                                        tempResourceInfo.name = trim_both(strValue);
+
+                                    else if (!strKey.compare("uri"))
+                                        tempResourceInfo.uri = trim_both(strValue);
+
+                                    else if (!strKey.compare("address"))
+                                        tempResourceInfo.address = trim_both(strValue);
+
+                                    else if (!strKey.compare("resourceType"))
+                                        tempResourceInfo.resourceType = trim_both(strValue);
+
+                                    else
                                     {
-                                        map< string, string > propertyMap;
-
-                                        strKey = subItem->name();
-
-                                        for (subItem2 = subItem->first_node(); subItem2; subItem2 = subItem2->next_sibling())
+                                        for (subItem = item->first_node(); subItem; subItem = subItem->next_sibling())
                                         {
-                                            string newStrKey = subItem2->name();
-                                            string newStrValue = subItem2->value();
+                                            map< string, string > propertyMap;
 
-                                            propertyMap[trim_both(newStrKey)] = trim_both(newStrValue);
+                                            strKey = subItem->name();
+
+                                            for (subItem2 = subItem->first_node(); subItem2; subItem2 = subItem2->next_sibling())
+                                            {
+                                                string newStrKey = subItem2->name();
+                                                string newStrValue = subItem2->value();
+
+                                                propertyMap[trim_both(newStrKey)] = trim_both(newStrValue);
+                                            }
+
+                                            tempResourceInfo.resourceProperty[trim_both(strKey)].push_back(propertyMap);
                                         }
-
-                                        tempResourceInfo.resourceProperty[trim_both(strKey)].push_back(propertyMap);
                                     }
                                 }
+                                configOutput->push_back(tempResourceInfo);
                             }
-                            configOutput->push_back(tempResourceInfo);
                         }
                     }
                 }
-            }
-            catch (rapidxml::parse_error &e)
-            {
-                std::cout << "xml parsing failed !!" << std::endl;
-                std::cout << e.what() << std::endl;
+                catch (rapidxml::parse_error &e)
+                {
+                    std::cout << "xml parsing failed !!" << std::endl;
+                    std::cout << e.what() << std::endl;
+                }
             }
         }
 

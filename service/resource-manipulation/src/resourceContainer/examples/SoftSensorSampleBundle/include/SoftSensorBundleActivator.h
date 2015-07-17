@@ -39,8 +39,8 @@ class SoftSensorBundleActivator : public BundleActivator
         void activateBundle(ResourceContainerBundleAPI *resourceContainer, std::string bundleId);
         void deactivateBundle();
 
-        void createResource(resourceInfo);
-        void destroyResource(BundleResource *);
+        void createResource(resourceInfo resourceInfo);
+        void destroyResource(BundleResource *pBundleResource);
 
         std::string m_bundleId;
         ResourceContainerBundleAPI *m_pResourceContainer;

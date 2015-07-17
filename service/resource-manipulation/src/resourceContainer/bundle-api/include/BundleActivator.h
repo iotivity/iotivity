@@ -68,6 +68,10 @@ namespace OIC
                 * @return void
                 */
                 virtual void deactivateBundle();
+
+                virtual void createResource(resourceInfo resourceInfo) = 0;
+
+                virtual void destroyResource(BundleResource *pBundleResource) = 0;
         };
     }
 }

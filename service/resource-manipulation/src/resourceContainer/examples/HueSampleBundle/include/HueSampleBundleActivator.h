@@ -34,24 +34,24 @@ namespace OIC
     {
         class HueSampleBundleActivator: public BundleActivator
         {
-        public:
-            HueSampleBundleActivator();
-            ~HueSampleBundleActivator();
+            public:
+                HueSampleBundleActivator();
+                ~HueSampleBundleActivator();
 
-            void activateBundle(ResourceContainerBundleAPI *resourceContainer,
-                    std::string bundleId);
-            void deactivateBundle();
+                void activateBundle(ResourceContainerBundleAPI *resourceContainer,
+                                    std::string bundleId);
+                void deactivateBundle();
 
-            void createResource(resourceInfo);
-            void destroyResource(BundleResource *);
+                void createResource(resourceInfo resourceInfo);
+                void destroyResource(BundleResource *pBundleResource);
 
-            std::string m_bundleId;
-            ResourceContainerBundleAPI *m_pResourceContainer;
-            std::vector< BundleResource * > m_vecResources;
-        private:
-            HueConnector* m_connector;
+                std::string m_bundleId;
+                ResourceContainerBundleAPI *m_pResourceContainer;
+                std::vector< BundleResource * > m_vecResources;
+            private:
+                HueConnector *m_connector;
         };
     }
 }
 
-#endif /* SAMPLEBUNDLE_H_ */
+#endif /* HUESAMPLEBUNDLEACTIVATOR_H_ */

@@ -46,37 +46,111 @@ int main()
     ResourceContainer *container = ResourceContainer::getInstance();
     container->startContainer("examples/ResourceContainerConfig.xml");
 
+    /*so bundle add test*/
+    cout << "++++++++++++++++++++++++++" << endl;
+    cout << "+++ Test for SO Bundle +++" << endl;
+    cout << "++++++++++++++++++++++++++" << endl;
+    cout << "Press enter to add SO bundle " << endl;
+    getchar();
+    std::map<string, string> bundleParams;
+    container->addBundle("oic.bundle.hueSample", "", "libHueBundle.so", bundleParams);
+
     std::list<BundleInfo *> bundles = container->listBundles();
     std::list<BundleInfo *>::iterator bundleIt;
 
+    cout << "\t>>> bundle list size : " << bundles.size() << endl;
     for (bundleIt = bundles.begin(); bundleIt != bundles.end(); bundleIt++)
     {
-        BundleInfo *bi = *bundleIt;
-        info_logger() << "Available bundle: " << bi->getID() << endl;
+        cout << "\t>>> bundle Id : " << (*bundleIt)->getID().c_str() << endl;
     }
 
-    cout << "Press enter to stop all bundles " << endl;
+    cout << "\nPress enter to start SO bundle " << endl;
     getchar();
+    container->startBundle("oic.bundle.hueSample");
 
-    for (bundleIt = bundles.begin(); bundleIt != bundles.end(); bundleIt++)
-    {
-        BundleInfo *bi = *bundleIt;
-        info_logger() << "Stopping bundle: " << bi->getID() << endl;
-        container->stopBundle(bi->getID());
-    }
-
-    cout << "Press enter to restart all bundles " << endl;
+    std::map<string, string> resourceParams;
+    cout << "Press enter to add SO bundle resource " << endl;
     getchar();
+    resourceParams["resourceType"] = "oic.light.control";
+    resourceParams["address"] = "http://192.168.0.2/api/newdeveloper/lights/1";
+    container->addResourceConfig("oic.bundle.hueSample", "", resourceParams);
+    container->addResourceConfig("oic.bundle.hueSample", "", resourceParams);
 
-    for (bundleIt = bundles.begin(); bundleIt != bundles.end(); bundleIt++)
+    std::list<string> resources = container->listBundleResources("oic.bundle.hueSample");
+    std::list<string>::iterator resourceIt;
+    cout << "\t>>> resource list size : " << resources.size() << endl;
+    for (resourceIt = resources.begin(); resourceIt != resources.end(); resourceIt++)
     {
-        BundleInfo *bi = *bundleIt;
-        info_logger() << "Starting bundle: " << bi->getID() << endl;
-        container->startBundle(bi->getID());
+        cout << "\t>>> resource uri : " << (*resourceIt).c_str() << endl;
     }
 
-    cout << "Press enter to stop container " << endl;
+    cout << "\nPress enter to remove SO bundle resource " << endl;
+    getchar();
+    container->removeResourceConfig("oic.bundle.hueSample", "/hue/light/1");
+
+    resources = container->listBundleResources("oic.bundle.hueSample");
+    cout << "\t>>> resource list size : " << resources.size() << endl;
+    for (resourceIt = resources.begin(); resourceIt != resources.end(); resourceIt++)
+    {
+        cout << "\t>>> resource uri : " << (*resourceIt).c_str() << endl;
+    }
+
+    cout << "\nPress enter to stop SO Bundle " << endl;
+    getchar();
+    container->stopBundle("oic.bundle.hueSample");
+
+    cout << "Press enter to test remove SO Bundle " << endl;
+    getchar();
+    container->removeBundle("oic.bundle.hueSample");
+
+    bundles = container->listBundles();
+    cout << "\t>>> bundle list size : " << bundles.size() << endl;
+    for (bundleIt = bundles.begin(); bundleIt != bundles.end(); bundleIt++)
+    {
+        cout << "\t>>> bundle Id : " << (*bundleIt)->getID().c_str() << endl;
+    }
+
+    /*java bundle add test*/
+    cout << "\n++++++++++++++++++++++++++++" << endl;
+    cout << "+++ Test for JAVA Bundle +++" << endl;
+    cout << "++++++++++++++++++++++++++++" << endl;
+    cout << "Press enter to add java bundle " << endl;
+    getchar();
+    bundleParams["libraryPath"] = ".";
+    bundleParams["activator"] = "org.iotivity.bundle.hue.HueBundleActivator";
+    container->addBundle("oic.bundle.hueJavaSample", "/hueJava",
+                         "../../../../../../../../service/resource-manipulation/src/resourceContainer/examples/HueJavaSampleBundle/hue/target/hue-0.1-jar-with-dependencies.jar",
+                         bundleParams);
+
+    bundles = container->listBundles();
+    cout << "\t>>> bundle list size : " << bundles.size() << endl;
+    for (bundleIt = bundles.begin(); bundleIt != bundles.end(); bundleIt++)
+    {
+        cout << "\t>>> bundle Id : " << (*bundleIt)->getID().c_str() << endl;
+    }
+
+    cout << "\nPress enter to start java bundle " << endl;
+    getchar();
+    container->startBundle("oic.bundle.hueJavaSample");
+
+    cout << "Press enter to stop java Bundle " << endl;
+    getchar();
+    container->stopBundle("oic.bundle.hueJavaSample");
+
+    cout << "Press enter to test remove java Bundle " << endl;
+    getchar();
+    container->removeBundle("oic.bundle.hueJavaSample");
+
+    bundles = container->listBundles();
+    cout << "\t>>> bundle list size : " << bundles.size() << endl;
+    for (bundleIt = bundles.begin(); bundleIt != bundles.end(); bundleIt++)
+    {
+        cout << "\t>>> bundle Id : " << (*bundleIt)->getID().c_str() << endl;
+    }
+
+    cout << "\nPress enter to stop container " << endl;
     getchar();
     container->stopContainer();
+
     cout << "Container stopped. Bye" << endl;
 }

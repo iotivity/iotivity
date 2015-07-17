@@ -29,11 +29,14 @@
 using namespace std;
 using namespace OIC::Service;
 
-namespace OIC{
-    namespace Service{
-
+namespace OIC
+{
+    namespace Service
+    {
         typedef void activator_t(ResourceContainerBundleAPI *, std::string bundleId);
         typedef void deactivator_t(void);
+        typedef void resourceCreator_t(resourceInfo resourceInfo);
+        typedef void resourceDestroyer_t(BundleResource *pBundleResource);
 
         class BundleInfoInternal: public BundleInfo
         {
@@ -73,19 +76,27 @@ namespace OIC{
                 void setBundleDeactivator(deactivator_t *);
                 deactivator_t *getBundleDeactivator();
 
+                void setResourceCreator(resourceCreator_t *);
+                resourceCreator_t *getResourceCreator();
+
+                void setResourceDestroyer(resourceDestroyer_t *);
+                resourceDestroyer_t *getResourceDestroyer();
+
                 void setBundleHandle(void *);
                 void *getBundleHandle();
 
                 void setJavaBundle(bool javaBundle);
                 bool getJavaBundle();
 
-                void setBundleInfo(BundleInfo* bundleInfo);
+                void setBundleInfo(BundleInfo *bundleInfo);
 
             private:
                 bool m_loaded, m_activated, m_java_bundle;
                 int m_id;
                 activator_t *m_activator;
                 deactivator_t *m_deactivator;
+                resourceCreator_t *m_resourceCreator;
+                resourceDestroyer_t *m_resourceDestroyer;
                 void *m_bundleHandle;
                 string m_activator_name;
                 jmethodID m_java_activator, m_java_deactivator;
