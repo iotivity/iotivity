@@ -66,7 +66,7 @@ CAResult_t RMAddEmptyRouteOption(CAHeaderOption_t **options, uint8_t *numOptions
  * @param   numOptions  [IN,OUT]    Number of options present in the message
  * @return  #CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t RMAddDestToRouteOption(const CARemoteEndpoint_t *endpoint,
+CAResult_t RMAddDestToRouteOption(const CAEndpoint_t *endpoint,
                                   CAHeaderOption_t **options, uint8_t *numOptions);
 
 /**
@@ -78,7 +78,7 @@ CAResult_t RMAddDestToRouteOption(const CARemoteEndpoint_t *endpoint,
  * @param   numOptions  [IN,OUT]    Number of options present in the message
  * @return  #CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t RMAddSourceToRouteOption(const CARemoteEndpoint_t *endpoint,
+CAResult_t RMAddSourceToRouteOption(const CAEndpoint_t *endpoint,
                                     CAHeaderOption_t **options, uint8_t *numOptions);
 
 /**
@@ -98,7 +98,7 @@ CAResult_t RMRemoveRouteOption(CAHeaderOption_t *options, uint8_t *numOptions);
  * @return  #CA_STATUS_OK or Appropriate error code.
  */
 CAResult_t RMGetDestinationAddress(const CAHeaderOption_t *options, const uint8_t numOptions,
-                                   CARemoteEndpoint_t *endpoint);
+                                   CAEndpoint_t *endpoint);
 
 /**
  * @brief   Gets the index of the routing option if present.
@@ -134,7 +134,7 @@ CAResult_t RMParseRouteOption(const CAHeaderOption_t *options, RMRouteOption_t *
  * @param   addrInfo    [OUT]  IPV4/EDR/BLE address parsed from addr.
  * @return  Transport type parsed from addr.  -1 in case of Error.
  */
-CATransportType_t RMGetAddressInfo(const char *addr, CAAddress_t *addrInfo);
+CATransportAdapter_t RMGetAddressInfo(const char *addr, char *addrInfo, uint16_t *port);
 
 #ifdef __cplusplus
 } /* extern "C" */

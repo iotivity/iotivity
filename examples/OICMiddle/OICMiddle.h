@@ -65,6 +65,7 @@ class Middle
 {
 public:
     Middle();
+    ~Middle();
     void init();
     void run(int argc, char* argv[]);
 

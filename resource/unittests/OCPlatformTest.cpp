@@ -31,7 +31,13 @@ namespace OCPlatformTest
     const std::string gResourceInterface = DEFAULT_INTERFACE;
     const uint8_t gResourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
     OCResourceHandle resourceHandle;
+  //OCPersistent Storage Handlers
 
+   static FILE* client_open(const char *path, const char *mode)
+   {
+       std::cout << "<===Opening SVR DB file = './oic_svr_db_client.json' with mode = '"<< mode<<"' "<<std::endl;
+               return fopen("./oic_svr_db_client.json", mode);
+   }
     // Callbacks
     OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
     {
@@ -214,6 +220,67 @@ namespace OCPlatformTest
                  resourceHandle, uri, type,
                  gResourceInterface, entityHandler, gResourceProperty));
     }
+    //PersistentStorageTest
+    TEST(ConfigureTest, ConfigureDefaultNULLPersistentStorage)
+    {
+        PlatformConfig cfg {
+             OC::ServiceType::InProc,
+             OC::ModeType::Both,
+             "0.0.0.0",
+             0,
+             OC::QualityOfService::LowQos
+         };
+         OCPlatform::Configure(cfg);
+         EXPECT_NO_THROW(OCPlatform::setDefaultDeviceEntityHandler(nullptr));
+     }
+
+    //PersistentStorageTest
+    TEST(ConfigureTest, ConfigureNULLPersistentStorage)
+    {
+        PlatformConfig cfg {
+             OC::ServiceType::InProc,
+             OC::ModeType::Both,
+             "0.0.0.0",
+             0,
+             OC::QualityOfService::LowQos,
+             nullptr
+         };
+         OCPlatform::Configure(cfg);
+         EXPECT_NO_THROW(OCPlatform::setDefaultDeviceEntityHandler(nullptr));
+     }
+
+    //PersistentStorageTest
+    TEST(ConfigureTest, ConfigurePersistentStorage)
+    {
+        OCPersistentStorage ps {client_open, fread, fwrite, fclose, unlink };
+        PlatformConfig cfg {
+             OC::ServiceType::InProc,
+             OC::ModeType::Both,
+             "0.0.0.0",
+             0,
+             OC::QualityOfService::LowQos,
+             &ps
+         };
+         OCPlatform::Configure(cfg);
+         EXPECT_NO_THROW(OCPlatform::setDefaultDeviceEntityHandler(nullptr));
+     }
+
+    //PersistentStorageTest
+    TEST(ConfigureTest, ConfigureNULLHandlersPersistentStorage)
+    {
+        OCPersistentStorage ps {client_open, nullptr, nullptr, nullptr, nullptr };
+        PlatformConfig cfg {
+             OC::ServiceType::InProc,
+             OC::ModeType::Both,
+             "0.0.0.0",
+             0,
+             OC::QualityOfService::LowQos,
+             &ps
+         };
+         OCPlatform::Configure(cfg);
+         EXPECT_NO_THROW(OCPlatform::setDefaultDeviceEntityHandler(nullptr));
+     }
+
 
     //RegisterResourceTest
     TEST(RegisterResourceTest, RegisterSingleResource)
@@ -466,74 +533,74 @@ namespace OCPlatformTest
     TEST(FindResourceTest, DISABLED_FindResourceValid)
     {
       std::ostringstream requestURI;
-      requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.light";
+      requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.light";
       EXPECT_EQ(OC_STACK_OK, OCPlatform::findResource("", requestURI.str(),
-              OC_IPV4, &foundResource));
+              CT_DEFAULT, &foundResource));
     }
 
     TEST(FindResourceTest, FindResourceNullResourceURI)
     {
       EXPECT_ANY_THROW(OCPlatform::findResource("", nullptr,
-              OC_IPV4, &foundResource));
+              CT_DEFAULT, &foundResource));
     }
 
     TEST(FindResourceTest, FindResourceNullResourceURI1)
     {
       std::ostringstream requestURI;
-      requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.light";
+      requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.light";
       EXPECT_ANY_THROW(OCPlatform::findResource(nullptr, requestURI.str(),
-              OC_IPV4, &foundResource));
+              CT_DEFAULT, &foundResource));
     }
 
     TEST(FindResourceTest, FindResourceNullHost)
     {
       std::ostringstream requestURI;
-      requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.light";
+      requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.light";
       EXPECT_ANY_THROW(OCPlatform::findResource(nullptr, requestURI.str(),
-              OC_IPV4, &foundResource));
+              CT_DEFAULT, &foundResource));
     }
 
     TEST(FindResourceTest, FindResourceNullresourceHandler)
     {
       std::ostringstream requestURI;
-      requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.light";
+      requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.light";
       EXPECT_THROW(OCPlatform::findResource("", requestURI.str(),
-              OC_IPV4, NULL), OC::OCException);
+              CT_DEFAULT, NULL), OC::OCException);
     }
 
     TEST(FindResourceTest, DISABLED_FindResourceWithLowQoS)
     {
         std::ostringstream requestURI;
-        requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.light";
+        requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.light";
         EXPECT_EQ(OC_STACK_OK,
-                OCPlatform::findResource("", requestURI.str(), OC_IPV4, &foundResource,
+                OCPlatform::findResource("", requestURI.str(), CT_DEFAULT, &foundResource,
                         OC::QualityOfService::LowQos));
     }
 
     TEST(FindResourceTest, DISABLED_FindResourceWithMidQos)
     {
         std::ostringstream requestURI;
-        requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.light";
+        requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.light";
         EXPECT_EQ(OC_STACK_OK,
-                OCPlatform::findResource("", requestURI.str(), OC_IPV4, &foundResource,
+                OCPlatform::findResource("", requestURI.str(), CT_DEFAULT, &foundResource,
                         OC::QualityOfService::MidQos));
     }
 
     TEST(FindResourceTest, DISABLED_FindResourceWithHighQos)
     {
         std::ostringstream requestURI;
-        requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.light";
+        requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.light";
         EXPECT_EQ(OC_STACK_OK,
-                OCPlatform::findResource("", requestURI.str(), OC_IPV4, &foundResource,
+                OCPlatform::findResource("", requestURI.str(), CT_DEFAULT, &foundResource,
                         OC::QualityOfService::HighQos));
     }
 
     TEST(FindResourceTest, DISABLED_FindResourceWithNaQos)
     {
         std::ostringstream requestURI;
-        requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.light";
+        requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.light";
         EXPECT_EQ(OC_STACK_OK,
-                OCPlatform::findResource("", requestURI.str(), OC_IPV4, &foundResource,
+                OCPlatform::findResource("", requestURI.str(), CT_DEFAULT, &foundResource,
                         OC::QualityOfService::NaQos));
     }
 
@@ -546,7 +613,7 @@ namespace OCPlatformTest
         std::ostringstream requestURI;
         requestURI << OC_MULTICAST_PREFIX << deviceDiscoveryURI;
         EXPECT_EQ(OC_STACK_OK,
-                OCPlatform::getDeviceInfo("", requestURI.str(), OC_IPV4, &receivedDeviceInfo));
+                OCPlatform::getDeviceInfo("", requestURI.str(), CT_DEFAULT, &receivedDeviceInfo));
     }
 
     TEST(GetDeviceInfoTest, GetDeviceInfoNullDeviceURI)
@@ -554,7 +621,7 @@ namespace OCPlatformTest
         PlatformConfig cfg;
         OCPlatform::Configure(cfg);
         EXPECT_ANY_THROW(
-                OCPlatform::getDeviceInfo("", nullptr, OC_IPV4, &receivedDeviceInfo));
+                OCPlatform::getDeviceInfo("", nullptr, CT_DEFAULT, &receivedDeviceInfo));
     }
 
     TEST(GetDeviceInfoTest, GetDeviceInfoWithNullDeviceInfoHandler)
@@ -565,7 +632,7 @@ namespace OCPlatformTest
         std::ostringstream requestURI;
         requestURI << OC_MULTICAST_PREFIX << deviceDiscoveryURI;
         EXPECT_THROW(
-                OCPlatform::getDeviceInfo("", requestURI.str(), OC_IPV4, NULL),
+                OCPlatform::getDeviceInfo("", requestURI.str(), CT_DEFAULT, NULL),
                 OC::OCException);
     }
 
@@ -577,7 +644,7 @@ namespace OCPlatformTest
         std::ostringstream requestURI;
         requestURI << OC_MULTICAST_PREFIX << deviceDiscoveryURI;
         EXPECT_EQ(OC_STACK_OK,
-                OCPlatform::getDeviceInfo("", requestURI.str(), OC_IPV4, &receivedDeviceInfo,
+                OCPlatform::getDeviceInfo("", requestURI.str(), CT_DEFAULT, &receivedDeviceInfo,
                         OC::QualityOfService::LowQos));
     }
 
@@ -589,7 +656,7 @@ namespace OCPlatformTest
         std::ostringstream requestURI;
         requestURI << OC_MULTICAST_PREFIX << deviceDiscoveryURI;
         EXPECT_EQ(OC_STACK_OK,
-                OCPlatform::getDeviceInfo("", requestURI.str(), OC_IPV4, &receivedDeviceInfo,
+                OCPlatform::getDeviceInfo("", requestURI.str(), CT_DEFAULT, &receivedDeviceInfo,
                         OC::QualityOfService::MidQos));
     }
 
@@ -601,7 +668,7 @@ namespace OCPlatformTest
         std::ostringstream requestURI;
         requestURI << OC_MULTICAST_PREFIX << deviceDiscoveryURI;
         EXPECT_EQ(OC_STACK_OK,
-                OCPlatform::getDeviceInfo("", requestURI.str(), OC_IPV4, &receivedDeviceInfo,
+                OCPlatform::getDeviceInfo("", requestURI.str(), CT_DEFAULT, &receivedDeviceInfo,
                         OC::QualityOfService::HighQos));
     }
 
@@ -613,7 +680,7 @@ namespace OCPlatformTest
         std::ostringstream requestURI;
         requestURI << OC_MULTICAST_PREFIX << deviceDiscoveryURI;
         EXPECT_EQ(OC_STACK_OK,
-                OCPlatform::getDeviceInfo("", requestURI.str(), OC_IPV4, &receivedDeviceInfo,
+                OCPlatform::getDeviceInfo("", requestURI.str(), CT_DEFAULT, &receivedDeviceInfo,
                         OC::QualityOfService::NaQos));
     }
 
@@ -641,7 +708,7 @@ namespace OCPlatformTest
         OCPlatform::OCPresenceHandle presenceHandle = nullptr;
 
         EXPECT_EQ(OC_STACK_OK, OCPlatform::subscribePresence(presenceHandle, hostAddress,
-                 OC_IPV4, &presenceHandler));
+                 CT_DEFAULT, &presenceHandler));
     }
 
     TEST(SubscribePresenceTest, SubscribePresenceWithNullHost)
@@ -649,7 +716,7 @@ namespace OCPlatformTest
         OCPlatform::OCPresenceHandle presenceHandle = nullptr;
 
         EXPECT_ANY_THROW(OCPlatform::subscribePresence(presenceHandle, nullptr,
-                 OC_IPV4, &presenceHandler));
+                 CT_DEFAULT, &presenceHandler));
     }
 
     TEST(SubscribePresenceTest, SubscribePresenceWithNullPresenceHandler)
@@ -657,7 +724,7 @@ namespace OCPlatformTest
         OCPlatform::OCPresenceHandle presenceHandle = nullptr;
 
         EXPECT_ANY_THROW(OCPlatform::subscribePresence(presenceHandle, nullptr,
-                 OC_IPV4, NULL));
+                 CT_DEFAULT, NULL));
     }
 
     TEST(SubscribePresenceTest, DISABLED_SubscribePresenceWithResourceType)
@@ -665,7 +732,7 @@ namespace OCPlatformTest
         OCPlatform::OCPresenceHandle presenceHandle = nullptr;
 
         EXPECT_EQ(OC_STACK_OK, OCPlatform::subscribePresence(presenceHandle,
-                OC_MULTICAST_IP, "core.light", OC_IPV4, &presenceHandler));
+                OC_MULTICAST_IP, "core.light", CT_DEFAULT, &presenceHandler));
     }
 
     TEST(SubscribePresenceTest, SubscribePresenceWithNullResourceType)
@@ -673,7 +740,7 @@ namespace OCPlatformTest
         OCPlatform::OCPresenceHandle presenceHandle = nullptr;
 
         EXPECT_ANY_THROW(OCPlatform::subscribePresence(presenceHandle,
-                OC_MULTICAST_IP, nullptr, OC_IPV4, &presenceHandler));
+                OC_MULTICAST_IP, nullptr, CT_DEFAULT, &presenceHandler));
     }
 
     TEST(SubscribePresenceTest, DISABLED_UnsubscribePresenceWithValidHandleAndRT)
@@ -681,7 +748,7 @@ namespace OCPlatformTest
         OCPlatform::OCPresenceHandle presenceHandle = nullptr;
 
         EXPECT_EQ(OC_STACK_OK, OCPlatform::subscribePresence(presenceHandle,
-                OC_MULTICAST_IP, "core.light", OC_IPV4, &presenceHandler));
+                OC_MULTICAST_IP, "core.light", CT_DEFAULT, &presenceHandler));
         EXPECT_EQ(OC_STACK_OK, OCPlatform::unsubscribePresence(presenceHandle));
     }
 
@@ -696,8 +763,7 @@ namespace OCPlatformTest
         OCPlatform::OCPresenceHandle presenceHandle = nullptr;
 
         EXPECT_EQ(OC_STACK_OK, OCPlatform::subscribePresence(presenceHandle,
-                OC_MULTICAST_IP, OC_IPV4, &presenceHandler));
+                OC_MULTICAST_IP, CT_DEFAULT, &presenceHandler));
         EXPECT_EQ(OC_STACK_OK, OCPlatform::unsubscribePresence(presenceHandle));
     }
-
 }

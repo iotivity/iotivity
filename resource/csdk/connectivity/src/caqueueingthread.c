@@ -29,7 +29,7 @@
 #include "oic_malloc.h"
 #include "logger.h"
 
-#define TAG PCF("CA")
+#define TAG PCF("CA_QING")
 
 static void CAQueueingThreadBaseRoutine(void *threadValue)
 {

@@ -50,6 +50,7 @@ public class FelixManager {
     private static Context                 m_context;
     private static final int               TRUE                       = 1;
     private static final int               FALSE                      = 0;
+    private static final String            LOG_TAG                    = "PPMSampleApp : FelixManager";
 
     static final String                    ANDROID_FRAMEWORK_PACKAGES = ("android,"
                                                                   + "android.app,"
@@ -101,7 +102,7 @@ public class FelixManager {
     }
 
     public static void LogEx(String info) {
-        Log.d("felix", info);
+        Log.d(LOG_TAG, info);
     }
 
     private FelixManager(Context ctx) {
@@ -129,7 +130,7 @@ public class FelixManager {
                 LogEx("Bundle: " + b.getSymbolicName());
             }
         } catch (Throwable ex) {
-            Log.d("Felix", "could not create framework: " + ex.getMessage(), ex);
+            Log.d(LOG_TAG, "could not create framework: " + ex.getMessage(), ex);
         }
     }
 
@@ -162,10 +163,10 @@ public class FelixManager {
             org.osgi.framework.Bundle[] bundles = bContext.getBundles();
             for (org.osgi.framework.Bundle b : bundles) {
                 if (b.getSymbolicName().equals(id)) {
-                    Log.d("Felix", "bundle: " + b.getBundleId()
+                    Log.d(LOG_TAG, "bundle: " + b.getBundleId()
                             + "   symbolicName : " + b.getSymbolicName());
                     b.uninstall();
-                    Log.d("Felix", "uninstall end");
+                    Log.d(LOG_TAG, "uninstall end");
                 }
             }
         } catch (BundleException e) {
@@ -183,10 +184,10 @@ public class FelixManager {
             org.osgi.framework.Bundle[] bundles = bContext.getBundles();
             for (org.osgi.framework.Bundle b : bundles) {
                 if (!b.getSymbolicName().equals("org.apache.felix.framework")) {
-                    Log.d("Felix", "bundle: " + b.getBundleId()
+                    Log.d(LOG_TAG, "bundle: " + b.getBundleId()
                             + "   symbolicName : " + b.getSymbolicName());
                     b.uninstall();
-                    Log.d("Felix", "uninstall end");
+                    Log.d(LOG_TAG, "uninstall end");
                 }
             }
         } catch (BundleException e) {
@@ -230,19 +231,19 @@ public class FelixManager {
 
     public static int start(String id) {
         int flag = TRUE;
-        Log.d("Felix", "String id : " + id);
+        Log.d(LOG_TAG, "String id : " + id);
         try {
             BundleContext bContext = m_felix.getBundleContext();
             bContext.registerService(Context.class.getName(), m_context, null);
 
             org.osgi.framework.Bundle[] bundles = bContext.getBundles();
             for (org.osgi.framework.Bundle b : bundles) {
-                Log.d("Felix", "symbolicName : " + b.getSymbolicName());
+                Log.d(LOG_TAG, "symbolicName : " + b.getSymbolicName());
                 if (b.getSymbolicName().equals(id)) {
-                    Log.d("Felix", "bundle: " + b.getBundleId()
+                    Log.d(LOG_TAG, "bundle: " + b.getBundleId()
                             + "   symbolicName : " + b.getSymbolicName());
                     b.start();
-                    Log.d("Felix", "start end");
+                    Log.d(LOG_TAG, "start end");
                 }
             }
         } catch (BundleException e) {
@@ -259,10 +260,10 @@ public class FelixManager {
             org.osgi.framework.Bundle[] bundles = bContext.getBundles();
             for (org.osgi.framework.Bundle b : bundles) {
                 if (b.getSymbolicName().equals(id)) {
-                    Log.d("Felix", "bundle: " + b.getBundleId()
+                    Log.d(LOG_TAG, "bundle: " + b.getBundleId()
                             + "   symbolicName : " + b.getSymbolicName());
                     b.stop();
-                    Log.d("Felix", "stop end");
+                    Log.d(LOG_TAG, "stop end");
                 }
             }
         } catch (BundleException e) {
@@ -280,20 +281,20 @@ public class FelixManager {
     }
 
     public static String getValue(String name, String key) {
-        Log.d("FELIX", "getValue");
+        Log.d(LOG_TAG, "getValue");
         BundleContext bContext = m_felix.getBundleContext();
         org.osgi.framework.Bundle[] bundles = bContext.getBundles();
         for (org.osgi.framework.Bundle b : bundles) {
             Dictionary<String, String> dic = b.getHeaders();
             String bundlename = b.getSymbolicName();
-            Log.d("FELIX", "Bundlename: " + bundlename);
+            Log.d(LOG_TAG, "Bundlename: " + bundlename);
 
             if (bundlename.equals(name)) {
                 if (dic.get("Bundle-" + key) == null) {
-                    Log.d("FELIX", name + " null");
+                    Log.d(LOG_TAG, name + " null");
                     return "";
                 }
-                Log.d("FELIX", name + " " + dic.get("Bundle-" + key));
+                Log.d(LOG_TAG, name + " " + dic.get("Bundle-" + key));
                 return dic.get("Bundle-" + key);
             }
         }
@@ -301,7 +302,7 @@ public class FelixManager {
     }
 
     public static String getState(String name) {
-        Log.d("FELIX", "getState");
+        Log.d(LOG_TAG, "getState");
         BundleContext bContext = m_felix.getBundleContext();
         org.osgi.framework.Bundle[] bundles = bContext.getBundles();
         for (org.osgi.framework.Bundle b : bundles) {
@@ -309,11 +310,11 @@ public class FelixManager {
             String bundlename = b.getSymbolicName();
 
             if (bundlename.equals(name)) {
-                Log.d("FELIX", state_to_string(b.getState()));
+                Log.d(LOG_TAG, state_to_string(b.getState()));
                 return state_to_string(b.getState());
             }
         }
-        Log.d("FELIX", "null");
+        Log.d(LOG_TAG, "null");
         return "";
     }
 
@@ -451,13 +452,13 @@ public class FelixManager {
 
     public static int ObservePluginPath(String path) {
         int flag = TRUE;
-        Log.d("FELIX", "ObservePluginPath" + path);
+        Log.d(LOG_TAG, "ObservePluginPath" + path);
 
         FileObserver observer = new FileObserver(path) {
             @Override
             public void onEvent(int event, String path) {
-                Log.d("FELIX", "Observing start : " + path);
-                Log.d("FELIX", "Observing event : " + getEventString(event));
+                Log.d(LOG_TAG, "Observing start : " + path);
+                Log.d(LOG_TAG, "Observing event : " + getEventString(event));
             }
         };
         observer.startWatching();
@@ -470,7 +471,7 @@ public class FelixManager {
         int flag = TRUE;
         if (path == "") {
             System.out.println("PluginManager path is Null\n");
-            Log.d("FELIX", "PluginManager path is Null\n");
+            Log.d(LOG_TAG, "PluginManager path is Null\n");
             flag = FALSE;
             return flag;
         }
@@ -534,7 +535,7 @@ public class FelixManager {
             } else {
                 String fullPath = "/data/data/"
                         + m_context.getPackageName() + "/" + path;
-                Log.d("FELIX", fullPath);
+                Log.d(LOG_TAG, fullPath);
                 File dir = new File(fullPath);
 
                 if (!dir.exists())
@@ -544,7 +545,7 @@ public class FelixManager {
                 }
             }
         } catch (IOException ex) {
-            Log.e("tag", "I/O Exception", ex);
+            Log.e(LOG_TAG, "I/O Exception", ex);
         }
     }
 
@@ -571,7 +572,7 @@ public class FelixManager {
             out.close();
             out = null;
         } catch (Exception e) {
-            Log.e("tag", e.getMessage());
+            Log.e(LOG_TAG, e.getMessage());
         }
     }
 }

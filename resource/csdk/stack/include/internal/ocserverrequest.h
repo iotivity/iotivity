@@ -45,10 +45,8 @@ typedef struct OCServerRequest
     OCStackResult observeResult;
     uint8_t numResponses;
     OCEHResponseHandler ehResponseHandler;
-    /** Remote Endpoint address **/
-    CAAddress_t addressInfo;
-    /** Connectivity of the endpoint**/
-    CATransportType_t connectivityType;
+    /** Remote endpoint address **/
+    OCDevAddr devAddr;
     // token for the request
     CAToken_t requestToken;
     // token length the request
@@ -56,7 +54,6 @@ typedef struct OCServerRequest
     // The ID of CoAP pdu                                   //Kept in
     uint16_t coapID;                                        //CoAP
     uint8_t delayedResNeeded;
-    uint8_t secured;
     //////////////////////////////////////////////////////////
     // An array of the received vendor specific header options
     uint8_t numRcvdVendorSpecificHeaderOptions;
@@ -66,16 +63,16 @@ typedef struct OCServerRequest
     // Flag indicating slow response
     uint8_t slowFlag;
     uint8_t notificationFlag;
-    // reqJSON is retrieved from the payload of the received request PDU
-    char reqJSONPayload[1];
+    size_t payloadSize;
+    // payload is retrieved from the payload of the received request PDU
+    uint8_t payload[1];
 } OCServerRequest;
 
 // following structure will be created in ocstack to aggregate responses (in future: for block transfer)
 typedef struct OCServerResponse {
     struct OCServerResponse * next;
     // this is the pointer to server payload data to be transferred
-    char *payload;
-    uint16_t remainingPayloadSize;
+    OCPayload* payload;
     OCRequestHandle requestHandle;
 } OCServerResponse;
 
@@ -152,21 +149,20 @@ OCServerResponse * GetServerResponseUsingHandle (const OCServerRequest * handle)
  * @param tokenLength - request token length
  * @param resourceUrl - URL of resource
  * @param reqTotalSize - total size of the request
- * @param addressInfo - CA Address
- * @param connectivityType - connection type
+ * @param devAddr - OCDevAddr
  *
  * @return
  *     OCStackResult
  */
 OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
-        uint8_t delayedResNeeded, uint8_t secured, uint8_t notificationFlag, OCMethod method,
+        uint8_t delayedResNeeded, uint8_t notificationFlag, OCMethod method,
         uint8_t numRcvdVendorSpecificHeaderOptions, uint32_t observationOption,
         OCQualityOfService qos, char * query,
         OCHeaderOption * rcvdVendorSpecificHeaderOptions,
-        char * reqJSONPayload, CAToken_t requestToken,
+        uint8_t * payload, CAToken_t requestToken,
         uint8_t tokenLength,
         char * resourceUrl, size_t reqTotalSize,
-        CAAddress_t *addressInfo, CATransportType_t connectivityType);
+        const OCDevAddr *devAddr);
 
 /**
  * Form the OCEntityHandlerRequest struct that is passed to a resource's entity handler
@@ -176,7 +172,8 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
  * @param method           - RESTful method
  * @param resource         - resource handle
  * @param queryBuf         - resource query of request
- * @param bufReqPayload    - JSON payload of request
+ * @param payload          - payload of request
+ * @param payloadSize      - size of the payload request
  * @param numVendorOptions - number of vendor options
  * @param vendorOptions    - vendor options
  * @param observeAction    - observe action flag
@@ -185,8 +182,10 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
  * @return
  *     OCStackResult
  */
-OCStackResult FormOCEntityHandlerRequest(OCEntityHandlerRequest * entityHandlerRequest, OCRequestHandle request,
-        OCMethod method, OCResourceHandle resource, char * queryBuf, char * bufReqPayload,
+OCStackResult FormOCEntityHandlerRequest(OCEntityHandlerRequest * entityHandlerRequest,
+        OCRequestHandle request,
+        OCMethod method, OCResourceHandle resource, char * queryBuf,
+        uint8_t * payload, size_t payloadSize,
         uint8_t numVendorOptions, OCHeaderOption * vendorOptions, OCObserveAction observeAction,
         OCObservationId observeID);
 

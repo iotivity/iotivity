@@ -70,6 +70,7 @@ libssmsdk = sdk_env.StaticLibrary(
 		source = [ssm_sdk_cpp_src]
 		)
 sdk_env.InstallTarget(libssmsdk, 'libSSMCORE')
+sdk_env.UserInstallTargetLib(libssmsdk, 'libSSMCORE')
 
 ######################################################################
 # build DiscomfortIndexSensor plugin
@@ -87,6 +88,7 @@ DiscomfortIndexSensor_src = [ Glob(DISCOMFORTINDEXSENSOR_DIR + 'src/*.cpp')]
 
 DiscomfortIndexSensor = DiscomfortIndexSensor_env.SharedLibrary('DiscomfortIndexSensor', DiscomfortIndexSensor_src)
 DiscomfortIndexSensor_env.InstallTarget(DiscomfortIndexSensor, 'libDiscomfortIndexSensor')
+DiscomfortIndexSensor_env.UserInstallTargetLib(DiscomfortIndexSensor, 'libDiscomfortIndexSensor')
 
 
 
@@ -107,6 +109,7 @@ BMISensor_src = [ Glob(BMISENSOR_DIR + 'src/*.cpp')]
 
 BMISensor = BMISensor_env.SharedLibrary('BMISensor', BMISensor_src)
 BMISensor_env.InstallTarget(BMISensor, 'libBMISensor')
+BMISensor_env.UserInstallTargetLib(BMISensor, 'libBMISensor')
 
 
 
@@ -162,6 +165,7 @@ shared_libssmcore = ssmcore_env.SharedLibrary(
 		)
 
 ssmcore_env.InstallTarget([shared_libssmcore, static_libssmcore], 'libSSMCORE')
+ssmcore_env.UserInstallTargetLib([shared_libssmcore, static_libssmcore], 'libSSMCORE')
 
 #######################################################################
 ## build SampleApp

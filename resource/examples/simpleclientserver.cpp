@@ -33,6 +33,13 @@
 #include "OCApi.h"
 using namespace OC;
 
+static void printUsage()
+{
+    std::cout<< "    Usage simpleclientserver <0|1>" << std::endl;
+    std::cout<< "    ConnectivityType: Default IP" << std::endl;
+    std::cout << "   ConnectivityType : 0 - IPv4" << std::endl;
+    std::cout << "   ConnectivityType : 1 - IPv6 (Currently Not Supported)" << std::endl;
+}
 
 class ClientWorker
 {
@@ -147,12 +154,12 @@ public:
     void start()
     {
         std::ostringstream requestURI;
-        requestURI << OC_MULTICAST_DISCOVERY_URI << "?rt=core.foo";
+        requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.foo";
 
         std::cout<<"Starting Client find:"<<std::endl;
         FindCallback f (std::bind(&ClientWorker::foundResource, this, std::placeholders::_1));
         std::cout<<"result:" <<
-        OCPlatform::findResource("", requestURI.str(), OC_ALL, f)
+        OCPlatform::findResource("", requestURI.str(), CT_DEFAULT, f)
         << std::endl;
 
         std::cout<<"Finding Resource..."<<std::endl;
@@ -296,7 +303,7 @@ struct FooResource
 
 int main(int argc, char* argv[])
 {
-    OCConnectivityType connectivityType = OC_IPV4;
+    OCConnectivityType connectivityType = CT_ADAPTER_IP;
 
     if(argc == 2)
     {
@@ -309,37 +316,35 @@ int main(int argc, char* argv[])
             {
                 if(optionSelected == 0)
                 {
-                    connectivityType = OC_IPV4;
+                    std::cout << "Using IPv4."<< std::endl;
+                    connectivityType = CT_IP_USE_V4;
                 }
                 else if(optionSelected == 1)
                 {
-                    // TODO: re-enable IPv4/IPv6 command line selection when IPv6 is supported
-                    // connectivityType = OC_IPV6;
-                    connectivityType = OC_IPV4;
-                    std::cout << "IPv6 not currently supported. Using default IPv4" << std::endl;
+                    std::cout << "IPv6 is currently not supported."<< std::endl;
+                    printUsage();
+                    return -1;
+                    //TODO: printUsage to be removed when IPv6 is available.
+                    //connectivityType = CT_IP_USE_V6;
                 }
                 else
                 {
-                    std::cout << "Invalid connectivity type selected. Using default IPv4"
-                    << std::endl;
+                    std::cout << "Invalid connectivity type selected. Using default IP" << std::endl;
                 }
             }
             else
             {
-                std::cout << "Invalid connectivity type selected. Using default IPv4" << std::endl;
+                std::cout << "Invalid connectivity type selected. Using default IP" << std::endl;
             }
         }
         catch(std::exception& )
         {
-            std::cout << "Invalid input argument. Using IPv4 as connectivity type" << std::endl;
+            std::cout << "Invalid input argument. Using IP as connectivity type" << std::endl;
         }
     }
     else
     {
-        std::cout<< "Usage simpleclientserver <ConnectivityType(0|1)>" << std::endl;
-        std::cout<< "    ConnectivityType: Default IPv4" << std::endl;
-        std::cout << "   ConnectivityType : 0 - IPv4" << std::endl;
-        std::cout << "   ConnectivityType : 1 - IPv6 (not currently supported)" << std::endl;
+        printUsage();
     }
 
     PlatformConfig cfg {

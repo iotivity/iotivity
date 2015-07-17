@@ -35,7 +35,7 @@ import org.iotivity.base.OcResource;
 import android.util.Log;
 
 public class OnPutHuebulb implements OcResource.OnPutListener {
-    final private static String TAG = "OnPutHuebulb";
+    final private static String TAG = "PPMSampleApp : OnPutHuebulb";
 
     @Override
     public void onPutCompleted(List<OcHeaderOption> options,

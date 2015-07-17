@@ -25,6 +25,7 @@
 #include "doxmresource.h"
 #include "credresource.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 #include "logger.h"
 #include "utlist.h"
 #include <string.h>
@@ -43,14 +44,16 @@
 OCStackResult SendSRMResponse(const OCEntityHandlerRequest *ehRequest,
         OCEntityHandlerResult ehRet, const char *rspPayload)
 {
+    OC_LOG (INFO, TAG, PCF("SRM sending SRM response"));
     OCEntityHandlerResponse response = {};
     if (ehRequest)
     {
         response.requestHandle = ehRequest->requestHandle;
         response.resourceHandle = ehRequest->resource;
         response.ehResult = ehRet;
-        response.payload = (char *)rspPayload;
-        response.payloadSize = (rspPayload ? strlen(rspPayload) : 0);
+        response.payload = (OCPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
+        response.payload->type = PAYLOAD_TYPE_SECURITY;
+        ((OCSecurityPayload*)response.payload)->securityData = OICStrdup(rspPayload);
         response.persistentBufferFlag = 0;
 
         return OCDoResponse(&response);

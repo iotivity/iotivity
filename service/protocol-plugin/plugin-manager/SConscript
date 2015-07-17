@@ -64,6 +64,7 @@ pmimpl_env.PrependUnique(LIBS = File(env.get('BUILD_DIR') + '/libcpluff.a'))
 pmimpl = pmimpl_env.SharedLibrary('pmimpl', pmimpl_src)
 
 plugin_manager_env.InstallTarget([ppm, pmimpl], 'libppm')
+plugin_manager_env.UserInstallTargetLib([ppm, pmimpl], 'libppm')
 
 # Build JNI library for android
 if env.get('TARGET_OS') == 'android':

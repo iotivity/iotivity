@@ -62,8 +62,8 @@ const char *getResult(OCStackResult result);
  */
 int createLightResource (char *uri, LightResource *lightResource);
 
-/* This method converts the payload to JSON format */
-char* constructJsonResponse (OCEntityHandlerRequest *ehRequest);
+/* This method constructs a response from the request */
+OCRepPayload* constructResponse (OCEntityHandlerRequest *ehRequest);
 
 /* This method changes the Light power using an independent thread
  * and notifies the observers of new state of the resource.
@@ -78,22 +78,15 @@ OCEntityHandlerResult ValidateQueryParams (OCEntityHandlerRequest *entityHandler
 /* Following methods process the PUT, GET, POST, Delete,
  * & Observe requests */
 OCEntityHandlerResult ProcessGetRequest (OCEntityHandlerRequest *ehRequest,
-                                         char *payload,
-                                         uint16_t maxPayloadSize);
+                                         OCRepPayload **payload);
 OCEntityHandlerResult ProcessPutRequest (OCEntityHandlerRequest *ehRequest,
-                                         char *payload,
-                                         uint16_t maxPayloadSize);
+                                         OCRepPayload **payload);
 OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest,
                                           OCEntityHandlerResponse *response,
-                                          char *payload,
-                                          uint16_t maxPayloadSize);
-OCEntityHandlerResult ProcessDeleteRequest (OCEntityHandlerRequest *ehRequest,
-                                            char *payload,
-                                            uint16_t maxPayloadSize);
+                                         OCRepPayload **payload);
+OCEntityHandlerResult ProcessDeleteRequest (OCEntityHandlerRequest *ehRequest);
 
-OCEntityHandlerResult ProcessNonExistingResourceRequest (OCEntityHandlerRequest *ehRequest,
-                                                         char *payload,
-                                                         uint16_t maxPayloadSize);
+OCEntityHandlerResult ProcessNonExistingResourceRequest (OCEntityHandlerRequest *ehRequest);
 
 void ProcessObserveRegister (OCEntityHandlerRequest *ehRequest);
 void ProcessObserveDeregister (OCEntityHandlerRequest *ehRequest);

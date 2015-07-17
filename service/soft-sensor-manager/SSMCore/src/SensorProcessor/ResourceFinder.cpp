@@ -19,6 +19,8 @@
  ******************************************************************/
 #include "ResourceFinder.h"
 
+OCConnectivityType g_connectivityType = CT_DEFAULT;
+
 SSMRESULT CResourceFinder::finalConstruct()
 {
     SSMRESULT res = SSM_E_FAIL;
@@ -76,9 +78,9 @@ void CResourceFinder::presenceHandler(OCStackResult result, const unsigned int n
     switch (result)
     {
         case OC_STACK_OK:
-            requestURI << "coap://" << hostAddress << "/oc/core?rt=SSManager.Sensor";
+            requestURI << "coap://" << hostAddress << OC_RSRVD_WELL_KNOWN_URI << "?rt=SSManager.Sensor";
 
-            ret = OC::OCPlatform::findResource("", requestURI.str(), OC_ALL,
+            ret = OC::OCPlatform::findResource("", requestURI.str(), g_connectivityType,
                                                std::bind(&CResourceFinder::onResourceFound, this, std::placeholders::_1));
 
             if (ret != OC_STACK_OK)
@@ -105,7 +107,7 @@ void CResourceFinder::presenceHandler(OCStackResult result, const unsigned int n
         case OC_STACK_PRESENCE_TIMEOUT:
             break;
 
-        case OC_STACK_VIRTUAL_DO_NOT_HANDLE:
+        case OC_STACK_PRESENCE_DO_NOT_HANDLE:
             break;
 
         default:
@@ -122,19 +124,19 @@ SSMRESULT CResourceFinder::startResourceFinder()
     OCStackResult ret = OC_STACK_ERROR;
 
     std::ostringstream requestURI;
-    requestURI << OC_MULTICAST_DISCOVERY_URI << "?rt=SSManager.Sensor";
+    requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=SSManager.Sensor";
 
     std::ostringstream multicastPresenceURI;
     multicastPresenceURI << "coap://" << OC_MULTICAST_PREFIX;
 
-    ret = OC::OCPlatform::findResource("", requestURI.str(), OC_ALL,
+    ret = OC::OCPlatform::findResource("", requestURI.str(), g_connectivityType,
                                        std::bind(&CResourceFinder::onResourceFound, this, std::placeholders::_1));
 
     if (ret != OC_STACK_OK)
         SSM_CLEANUP_ASSERT(SSM_E_FAIL);
 
     ret = OC::OCPlatform::subscribePresence(m_multicastPresenceHandle, multicastPresenceURI.str(),
-                                            "SSManager.Sensor", OC_ALL, std::bind(&CResourceFinder::presenceHandler, this,
+                                            "SSManager.Sensor", g_connectivityType, std::bind(&CResourceFinder::presenceHandler, this,
                                                     std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 
     if (ret != OC_STACK_OK)
@@ -192,7 +194,13 @@ void CResourceFinder::onExecute(void *pArg)
         case RESOURCE_DISCOVER_REQUESTPROFILE:
             pResource = (std::shared_ptr< OC::OCResource > *) pMessage[1];
             pResourceHandler = new OICResourceHandler();
-            SSM_CLEANUP_ASSERT(pResourceHandler->initHandler(*pResource, this));
+
+            res = pResourceHandler->initHandler(*pResource, this);
+            if (res != SSM_S_OK)
+            {
+                SAFE_DELETE(pResourceHandler);
+                SSM_CLEANUP_ASSERT(res);
+            }
 
             resourceFullPath = pResource->get()->host() + pResource->get()->uri();
 
@@ -216,8 +224,9 @@ void CResourceFinder::onExecute(void *pArg)
                 m_mapResourcePresenceHandles.end())
             {
                 ret = OC::OCPlatform::subscribePresence(presenceHandle, ((ISSMResource *)pMessage[1])->ip,
-                                                        "SSManager.Sensor", OC_ALL, std::bind(&CResourceFinder::presenceHandler, this,
-                                                                std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+                                                        "SSManager.Sensor", (OCConnectivityType)(((ISSMResource *)pMessage[1])->connectivityType),
+                                                        std::bind(&CResourceFinder::presenceHandler, this, std::placeholders::_1, std::placeholders::_2,
+                                                                std::placeholders::_3));
 
                 if (ret != OC_STACK_OK)
                     SSM_CLEANUP_ASSERT(SSM_E_FAIL);
@@ -226,9 +235,6 @@ void CResourceFinder::onExecute(void *pArg)
             }
 
             m_pResourceFinderEvent->onResourceFound((ISSMResource *)pMessage[1]);
-
-            if (ret != OC_STACK_OK)
-                SSM_CLEANUP_ASSERT(SSM_E_FAIL);
 
             break;
 

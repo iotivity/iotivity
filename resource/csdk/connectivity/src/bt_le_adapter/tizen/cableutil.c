@@ -70,9 +70,9 @@ CAResult_t CACreateBLEServiceInfo(const char *bdAddress, bt_gatt_attribute_h ser
 {
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_UTIL_TAG, "IN");
 
-    VERIFY_NON_NULL(bdAddress, NULL, "Param bdAddress is NULL");
-    VERIFY_NON_NULL(service, NULL, "Param service is NULL");
-    VERIFY_NON_NULL(bleServiceInfo, NULL, "Param bleServiceInfo is NULL");
+    VERIFY_NON_NULL(bdAddress, TZ_BLE_CLIENT_UTIL_TAG, "Param bdAddress is NULL");
+    VERIFY_NON_NULL(service, TZ_BLE_CLIENT_UTIL_TAG, "Param service is NULL");
+    VERIFY_NON_NULL(bleServiceInfo, TZ_BLE_CLIENT_UTIL_TAG, "Param bleServiceInfo is NULL");
 
     *bleServiceInfo = (BLEServiceInfo *) OICCalloc(1, sizeof(BLEServiceInfo));
     if (NULL == *bleServiceInfo)
@@ -81,8 +81,7 @@ CAResult_t CACreateBLEServiceInfo(const char *bdAddress, bt_gatt_attribute_h ser
         return CA_STATUS_FAILED;
     }
 
-    size_t len = strlen(bdAddress);
-    (*bleServiceInfo)->bdAddress = (char *) OICMalloc(sizeof(char) * (len + 1));
+    (*bleServiceInfo)->bdAddress = OICStrdup(bdAddress);
 
     if (NULL == (*bleServiceInfo)->bdAddress)
     {
@@ -90,8 +89,6 @@ CAResult_t CACreateBLEServiceInfo(const char *bdAddress, bt_gatt_attribute_h ser
         OICFree(*bleServiceInfo);
         return CA_STATUS_FAILED;
     }
-
-    strncpy((*bleServiceInfo)->bdAddress, bdAddress, len + 1);
 
     if (service)
     {
@@ -117,8 +114,8 @@ CAResult_t CAAppendBLECharInfo( bt_gatt_attribute_h characteristic, CHAR_TYPE ty
 {
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_UTIL_TAG, "IN");
 
-    VERIFY_NON_NULL(characteristic, NULL, "Param characteristic is NULL");
-    VERIFY_NON_NULL(bleServiceInfo, NULL, "Param bleServiceInfo is NULL");
+    VERIFY_NON_NULL(characteristic, TZ_BLE_CLIENT_UTIL_TAG, "Param characteristic is NULL");
+    VERIFY_NON_NULL(bleServiceInfo, TZ_BLE_CLIENT_UTIL_TAG, "Param bleServiceInfo is NULL");
 
     if (BLE_GATT_READ_CHAR == type )
     {
@@ -154,8 +151,8 @@ CAResult_t CAAddBLEServiceInfoToList(BLEServiceList **serviceList,
 
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_UTIL_TAG, "IN");
 
-    VERIFY_NON_NULL(serviceList, NULL, "Param serviceList is NULL");
-    VERIFY_NON_NULL(bleServiceInfo, NULL, "Param bleServiceInfo is NULL");
+    VERIFY_NON_NULL(serviceList, TZ_BLE_CLIENT_UTIL_TAG, "Param serviceList is NULL");
+    VERIFY_NON_NULL(bleServiceInfo, TZ_BLE_CLIENT_UTIL_TAG, "Param bleServiceInfo is NULL");
 
     BLEServiceList *node = (BLEServiceList *) OICCalloc(1, sizeof(BLEServiceList));
     if (NULL == node)
@@ -194,9 +191,9 @@ CAResult_t CARemoveBLEServiceInfoToList(BLEServiceList **serviceList,
 
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_UTIL_TAG, "IN");
 
-    VERIFY_NON_NULL(serviceList, NULL, "Param serviceList is NULL");
-    VERIFY_NON_NULL(*serviceList, NULL, "Param *serviceList is NULL");
-    VERIFY_NON_NULL(bdAddress, NULL, "Param bdAddress is NULL");
+    VERIFY_NON_NULL(serviceList, TZ_BLE_CLIENT_UTIL_TAG, "Param serviceList is NULL");
+    VERIFY_NON_NULL(*serviceList, TZ_BLE_CLIENT_UTIL_TAG, "Param *serviceList is NULL");
+    VERIFY_NON_NULL(bdAddress, TZ_BLE_CLIENT_UTIL_TAG, "Param bdAddress is NULL");
 
     BLEServiceList *prev = NULL;
     BLEServiceList *cur = *serviceList;
@@ -241,9 +238,9 @@ CAResult_t CAGetBLEServiceInfo(BLEServiceList *serviceList, const char *bdAddres
 
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_UTIL_TAG, "IN");
 
-    VERIFY_NON_NULL(serviceList, NULL, "Param serviceList is NULL");
-    VERIFY_NON_NULL(bleServiceInfo, NULL, "Param bleServiceInfo is NULL");
-    VERIFY_NON_NULL(bdAddress, NULL, "Param bdAddress is NULL");
+    VERIFY_NON_NULL(serviceList, TZ_BLE_CLIENT_UTIL_TAG, "Param serviceList is NULL");
+    VERIFY_NON_NULL(bleServiceInfo, TZ_BLE_CLIENT_UTIL_TAG, "Param bleServiceInfo is NULL");
+    VERIFY_NON_NULL(bdAddress, TZ_BLE_CLIENT_UTIL_TAG, "Param bdAddress is NULL");
 
 
     BLEServiceList *cur = serviceList;
@@ -269,8 +266,8 @@ CAResult_t CAGetBLEServiceInfoByPosition(BLEServiceList *serviceList, int32_t po
 {
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_UTIL_TAG, "IN");
 
-    VERIFY_NON_NULL(serviceList, NULL, "Param serviceList is NULL");
-    VERIFY_NON_NULL(bleServiceInfo, NULL, "Param bleServiceInfo is NULL");
+    VERIFY_NON_NULL(serviceList, TZ_BLE_CLIENT_UTIL_TAG, "Param serviceList is NULL");
+    VERIFY_NON_NULL(bleServiceInfo, TZ_BLE_CLIENT_UTIL_TAG, "Param bleServiceInfo is NULL");
 
     if (0 > position)
     {
@@ -330,7 +327,7 @@ CAResult_t CAVerifyOICServiceByUUID(const char* serviceUUID)
 {
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_UTIL_TAG, "IN");
 
-    VERIFY_NON_NULL(serviceUUID, NULL, "Param serviceHandle is NULL");
+    VERIFY_NON_NULL(serviceUUID, TZ_BLE_CLIENT_UTIL_TAG, "Param serviceHandle is NULL");
 
     if (strcasecmp(serviceUUID, OIC_BLE_SERVICE_ID) != 0)
     {
@@ -345,7 +342,7 @@ CAResult_t CAVerifyOICServiceByServiceHandle(bt_gatt_attribute_h serviceHandle)
 {
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_UTIL_TAG, "IN");
 
-    VERIFY_NON_NULL(serviceHandle, NULL, "Param serviceHandle is NULL");
+    VERIFY_NON_NULL(serviceHandle, TZ_BLE_CLIENT_UTIL_TAG, "Param serviceHandle is NULL");
 
     char *uuid = NULL;
     int ret = bt_gatt_get_service_uuid(serviceHandle, &uuid);

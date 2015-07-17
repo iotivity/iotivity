@@ -45,11 +45,8 @@ typedef struct ResourceObserver
     uint8_t tokenLength;
     // Resource handle
     OCResource *resource;
-    //TODO bundle it in Endpoint structure(address, uri, type, secured)
-    /** Remote Endpoint address **/
-    CAAddress_t addressInfo;
-    /** Connectivity of the endpoint**/
-    CATransportType_t connectivityType;
+    /** Remote Endpoint **/
+    OCDevAddr devAddr;
     // Quality of service of the request
     OCQualityOfService qos;
     // number of times the server failed to reach the observer
@@ -95,14 +92,14 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
  * @param resource Observed resource
  * @param obsIdList List of observation ids that need to be notified.
  * @param numberOfIds Number of observation ids included in obsIdList.
- * @param notificationJSONPayload - JSON encoded payload to send in notification.
+ * @param payload - OCRepresentationPayload object representing the message
  * @param maxAge Time To Live (in seconds) of observation.
  * @param qos Desired quality of service of the observation notifications.
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 OCStackResult SendListObserverNotification (OCResource * resource,
         OCObservationId  *obsIdList, uint8_t numberOfIds,
-        const char *notificationJSONPayload, uint32_t maxAge,
+        const OCRepPayload *payload, uint32_t maxAge,
         OCQualityOfService qos);
 
 /**
@@ -128,8 +125,7 @@ OCStackResult GenerateObserverId (OCObservationId *observationId);
  * @param tokenLength Length of token.
  * @param resHandle Resource handle.
  * @param qos Quality of service of observation.
- * @param addressInfo Address of observer.
- * @param connectivityType Connection type.
+ * @param observer address
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 OCStackResult AddObserver (const char         *resUri,
@@ -139,8 +135,7 @@ OCStackResult AddObserver (const char         *resUri,
                            uint8_t            tokenLength,
                            OCResource         *resHandle,
                            OCQualityOfService qos,
-                           const CAAddress_t  *addressInfo,
-                           CATransportType_t connectivityType);
+                           const OCDevAddr    *devAddr);
 
 /**
  * Delete observer with specified token from list of observers.

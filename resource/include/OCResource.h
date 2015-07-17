@@ -441,7 +441,7 @@ namespace OC
 
         /**
         * Function to get the connectivity type of this resource
-        * @return uint8_t connectivity type
+        * @return enum connectivity type (flags and adapter)
         */
         OCConnectivityType connectivityType() const;
 
@@ -504,11 +504,12 @@ namespace OC
         bool operator>=(const OCResource &other) const;
 
     private:
+        void setHost(const std::string& host);
         std::weak_ptr<IClientWrapper> m_clientWrapper;
         std::string m_uri;
         OCResourceIdentifier m_resourceId;
-        std::string m_host;
-        OCConnectivityType m_connectivityType;
+        OCDevAddr m_devAddr;
+        bool m_useHostString;
         bool m_isObservable;
         bool m_isCollection;
         std::vector<std::string> m_resourceTypes;
@@ -518,11 +519,18 @@ namespace OC
         HeaderOptions m_headerOptions;
 
     private:
-        OCResource(std::weak_ptr<IClientWrapper> clientWrapper, const std::string& host,
-            const std::string& uri, const std::string& serverId,
-            OCConnectivityType m_connectivityType, bool observable,
-            const std::vector<std::string>& resourceTypes,
-            const std::vector<std::string>& interfaces);
+        OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
+                    const OCDevAddr& devAddr, const std::string& uri,
+                    const std::string& serverId, bool observable,
+                    const std::vector<std::string>& resourceTypes,
+                    const std::vector<std::string>& interfaces);
+
+        OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
+                    const std::string& host, const std::string& uri,
+                    const std::string& serverId,
+                    OCConnectivityType connectivityType, bool observable,
+                    const std::vector<std::string>& resourceTypes,
+                    const std::vector<std::string>& interfaces);
     };
 
 } // namespace OC

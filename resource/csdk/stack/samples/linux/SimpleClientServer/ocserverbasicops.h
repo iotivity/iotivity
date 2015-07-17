@@ -48,21 +48,19 @@ typedef struct LEDRESOURCE{
  */
 int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, int resourcePower);
 
-/* This method converts the payload to JSON format */
-char* constructJsonResponse (OCEntityHandlerRequest *ehRequest);
+/* This method constructs a response from the request */
+OCRepPayload* constructResponse (OCEntityHandlerRequest *ehRequest);
 
 /* Following methods process the PUT, GET, POST
  * requests
  */
 OCEntityHandlerResult ProcessGetRequest (OCEntityHandlerRequest *ehRequest,
-                                         char *payload,
-                                         uint16_t maxPayloadSize);
+                                        OCRepPayload **payload);
 OCEntityHandlerResult ProcessPutRequest (OCEntityHandlerRequest *ehRequest,
-                                         char *payload,
-                                         uint16_t maxPayloadSize);
+                                        OCRepPayload **payload);
 OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest,
-                                          char *payload,
-                                          uint16_t maxPayloadSize);
+                                        OCEntityHandlerResponse *response,
+                                        OCRepPayload **payload);
 
 /* call getResult in common.cpp to get the result in string format. */
 const char *getResult(OCStackResult result);

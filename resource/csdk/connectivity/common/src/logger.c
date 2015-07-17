@@ -196,8 +196,7 @@ void OICLogv(LogLevel level, const char *tag, const char *format, ...)
     {
         return;
     }
-    char buffer[MAX_LOG_V_BUFFER_SIZE];
-    memset(buffer, 0, sizeof buffer);
+    char buffer[MAX_LOG_V_BUFFER_SIZE] = {};
     va_list args;
     va_start(args, format);
     vsnprintf(buffer, sizeof buffer - 1, format, args);
@@ -220,6 +219,8 @@ void OICLogBuffer(LogLevel level, const char *tag, const uint8_t *buffer, uint16
         return;
     }
 
+    // I've got no idea why static initialization doesn't work here.  It seems that the compiler
+    // seems to think that this is a variable-sized object
     char lineBuffer[LINE_BUFFER_SIZE];
     memset(lineBuffer, 0, sizeof lineBuffer);
     int lineIndex = 0;
@@ -272,7 +273,7 @@ void OICLogInit()
          return;
      }
 
-     char buffer[LINE_BUFFER_SIZE] = {0};
+     char buffer[LINE_BUFFER_SIZE] = {};
      strcpy_P(buffer, (char*)pgm_read_word(&(LEVEL[level])));
      Serial.print(buffer);
 

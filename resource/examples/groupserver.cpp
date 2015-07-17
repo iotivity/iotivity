@@ -33,6 +33,13 @@ namespace PH = std::placeholders;
 OCResourceHandle resourceHandle;
 std::vector< OCResourceHandle > resourceHandleVector;
 
+static void printUsage()
+{
+    std::cout<<"Usage: groupclient <0|1>\n";
+    std::cout<<"ConnectivityType: Default \n";
+    std::cout<<"ConnectivityType 0: IPv4\n";
+    std::cout<<"ConnectivityType 1: IPv6\n";
+}
 void foundResource(std::shared_ptr< OCResource > resource)
 {
 
@@ -80,6 +87,51 @@ int main(int argc, char* argv[])
 {
     ostringstream requestURI;
 
+    OCConnectivityType connectivityType = CT_ADAPTER_IP;
+
+    if(argc == 2)
+    {
+        try
+        {
+            std::size_t inputValLen;
+            int optionSelected = stoi(argv[1], &inputValLen);
+
+            if(inputValLen == strlen(argv[1]))
+            {
+                if(optionSelected == 0)
+                {
+                    std::cout << "Using IPv4."<< std::endl;
+                    connectivityType = CT_IP_USE_V4;
+                }
+                else if(optionSelected == 1)
+                {
+                    std::cout << "IPv6 is currently not supported."<< std::endl;
+                    printUsage();
+                    return -1;
+                    //TODO: printUsage to be removed when IPv6 is available.
+                    //connectivityType = CT_IP_USE_V6;
+                }
+                else
+                {
+                    std::cout << "Invalid connectivity type selected. Using default IP" << std::endl;
+                }
+            }
+            else
+            {
+                std::cout << "Invalid connectivity type selected. Using default IP" << std::endl;
+            }
+        }
+        catch(exception& e)
+        {
+            std::cout << "Invalid input argument. Using IP as connectivity type" << std::endl;
+        }
+    }
+    else
+    {
+        printUsage();
+
+    }
+
     PlatformConfig config
     { OC::ServiceType::InProc, ModeType::Both, "0.0.0.0", 0, OC::QualityOfService::LowQos };
 
@@ -100,10 +152,10 @@ int main(int argc, char* argv[])
 
         cout << "registerResource is called." << endl;
 
-        requestURI << OC_MULTICAST_DISCOVERY_URI << "?rt=core.light";
+        requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.light";
 
         OCPlatform::findResource("", requestURI.str(),
-                                 OC_ALL, &foundResource);
+                                 connectivityType, &foundResource);
 
         OCPlatform::bindInterfaceToResource(resourceHandle, GROUP_INTERFACE);
         OCPlatform::bindInterfaceToResource(resourceHandle, DEFAULT_INTERFACE);

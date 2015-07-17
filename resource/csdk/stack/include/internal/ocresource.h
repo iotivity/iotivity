@@ -126,8 +126,8 @@ typedef struct resourceinterface_t {
     /*** Future placeholder for access control and policy ***/
 } OCResourceInterface;
 
-typedef struct rsrc_t {
-    struct rsrc_t *next; // Points to next resource in list
+typedef struct OCResource {
+    struct OCResource *next; // Points to next resource in list
     // Relative path on the device; will be combined with base url to create fully qualified path
     char *uri;
     OCResourceType *rsrcType; // Resource type(s); linked list
@@ -135,7 +135,7 @@ typedef struct rsrc_t {
     OCAttribute *rsrcAttributes; // Resource interface(s); linked list
     // Array of pointers to resources; can be used to represent a container of resources
     // (i.e. hierarchies of resources) or for reference resources (i.e. for a resource collection)
-    struct rsrc_t *rsrcResources[MAX_CONTAINED_RESOURCES];
+    struct OCResource *rsrcResources[MAX_CONTAINED_RESOURCES];
     //struct rsrc_t *rsrcResources;
     // Pointer to function that handles the entity bound to the resource.
     // This handler has to be explicitly defined by the programmer

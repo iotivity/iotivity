@@ -37,6 +37,20 @@ extern "C" {
 /**
  * Initialize the OC Stack.  Must be called prior to starting the stack.
  *
+ * @param mode
+ *     Host device is client, server, or client-server.
+ * @param serverFlags
+ *     Default server transport flags.
+ * @param clientFlags
+ *     Default client transport flags.
+ *
+ * @return ::OC_STACK_OK on success, some other value upon failure.
+ */
+OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlags clientFlags);
+
+/**
+ * Initialize the OC Stack.  Must be called prior to starting the stack.
+ *
  * @param ipAddr
  *     IP Address of host device. Deprecated parameter.
  * @param port
@@ -79,11 +93,11 @@ OCStackResult OCProcess();
  *                           should not be free'd by the consumer.  A NULL handle is permitted
  *                           in the event where the caller has no use for the return value.
  * @param method             @ref OCMethod to perform on the resource.
- * @param requiredUri        URI of the resource to interact with.
- * @param referenceUri       URI of the reference resource.
+ * @param requiredUri        URI of the resource to interact with. (Address prefix
+ *                           is deprecated in favor of destination.)
+ * @param destination        Complete description of destination.
  * @param request            JSON encoded request.
- * @param conType            @ref OCConnectivityType type of connectivity indicating the
- *                           interface. Example: ::OC_WIFI, ::OC_ETHERNET, ::OC_ALL.
+ * @param connectivityType   Modifier flags when destination is not given.
  * @param qos                Quality of service. Note that if this API is called on a uri with
  *                           the well-known multicast IP address, the qos will be forced to
  *                           ::OC_LOW_QOS
@@ -100,11 +114,16 @@ OCStackResult OCProcess();
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCDoResource(OCDoHandle *handle, OCMethod method, const char *requiredUri,
-            const char *referenceUri, const char *request, OCConnectivityType conType,
-            OCQualityOfService qos, OCCallbackData *cbData,
-            OCHeaderOption * options, uint8_t numOptions);
-
+OCStackResult OCDoResource(OCDoHandle *handle,
+                            OCMethod method,
+                            const char *requestUri,
+                            const OCDevAddr *destination,
+                            OCPayload* payload,
+                            OCConnectivityType connectivityType,
+                            OCQualityOfService qos,
+                            OCCallbackData *cbData,
+                            OCHeaderOption *options,
+                            uint8_t numOptions);
 /**
  * Cancel a request associated with a specific @ref OCDoResource invocation.
  *
@@ -419,7 +438,7 @@ OCStackResult OCNotifyAllObservers(OCResourceHandle handle, OCQualityOfService q
  * @param handle Handle of resource.
  * @param obsIdList List of observation ids that need to be notified.
  * @param numberOfIds Number of observation ids included in obsIdList.
- * @param notificationJSONPayload JSON encoded payload to send in notification.
+ * @param payload OCRepresentationPayload object representing the notification
  * @param qos Desired quality of service of the observation notifications.
  * NOTE: The memory for obsIdList and notificationJSONPayload is managed by the
  * entity invoking the API. The maximum size of the notification is 1015 bytes
@@ -431,7 +450,7 @@ OCStackResult
 OCNotifyListOfObservers (OCResourceHandle handle,
                             OCObservationId  *obsIdList,
                             uint8_t          numberOfIds,
-                            const char    *notificationJSONPayload,
+                            const OCRepPayload *payload,
                             OCQualityOfService qos);
 
 
@@ -446,37 +465,8 @@ OCNotifyListOfObservers (OCResourceHandle handle,
  */
 OCStackResult OCDoResponse(OCEntityHandlerResponse *response);
 
-
-//Utility methods
-
-/**
- * This method is used to retrieved the IPv4 address from OCDev address
- * data structure.
- *
- * @param ipAddr OCDevAddr address.
- * @param a first byte of IPv4 address.
- * @param b second byte of IPv4 address.
- * @param c third byte of IPv4 address.
- * @param d fourth byte of IPv4 address.
- * @return ::OC_STACK_OK on success, some other value upon failure.
- */
-int32_t OCDevAddrToIPv4Addr(OCDevAddr *ipAddr, uint8_t *a, uint8_t *b,
-            uint8_t *c, uint8_t *d );
-
-/**
- * This method is used to retrieve the port number from OCDev address
- * data structure.
- *
- * @param ipAddr OCDevAddr address.
- * @param port Port number.
- * @return ::OC_STACK_OK on success, some other value upon failure.
- */
-int32_t OCDevAddrToPort(OCDevAddr *ipAddr, uint16_t *port);
-
 #ifdef __cplusplus
 }
 #endif // __cplusplus
 
 #endif /* OCSTACK_H_ */
-
-

@@ -220,7 +220,7 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
 
     if (ehRequest->resource)
     {
-        postJson = cJSON_Parse((char *) ehRequest->reqJSONPayload);
+        postJson = cJSON_Parse(((OCSecurityPayload*)ehRequest->payload)->securityData);
         VERIFY_NON_NULL(TAG, postJson, INFO);
         cJSON *jsonPstat = cJSON_GetObjectItem(postJson, OIC_JSON_PSTAT_NAME);
         VERIFY_NON_NULL(TAG, jsonPstat, INFO);

@@ -39,7 +39,7 @@ void MiddleClient::findResources()
 {
     m_resourceMap.clear();
 
-    OC::OCPlatform::findResource("", OC_WELL_KNOWN_QUERY, OC_ALL, m_findCB);
+    OC::OCPlatform::findResource("", OC_RSRVD_WELL_KNOWN_URI, CT_DEFAULT, m_findCB);
 }
 
 void MiddleClient::foundOCResource(shared_ptr<OCResource> resource)

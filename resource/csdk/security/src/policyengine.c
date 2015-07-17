@@ -196,7 +196,8 @@ exit:
  {
     for(size_t n = 0; n < acl->resourcesLen; n++)
     {
-        if(0 == strcmp(resource, acl->resources[n])) // TODO null terms?
+        if(0 == strcmp(resource, acl->resources[n]) || // TODO null terms?
+         0 == strcmp(WILDCARD_RESOURCE_URI, acl->resources[n]))
         {
             return true;
         }
@@ -227,9 +228,6 @@ void ProcessAccessRequest(PEContext_t *context)
         {
             OC_LOG(INFO, TAG, PCF("ProcessAccessRequest(): getting ACL..."));
             currentAcl = GetACLResourceData(context->subject, &savePtr);
-            char *tmp = (char*)OICMalloc(sizeof(OicUuid_t) +1);
-            memcpy(tmp, context->subject, sizeof(OicUuid_t));
-            tmp[sizeof(OicUuid_t) + 1] = '\0';
             if(NULL != currentAcl)
             {
                 // Found the subject, so how about resource?
@@ -259,17 +257,24 @@ void ProcessAccessRequest(PEContext_t *context)
             }
         }
         while((NULL != currentAcl) && (false == context->matchingAclFound));
-    }
-    if(IsAccessGranted(context->retVal))
-    {
-        OC_LOG(INFO, TAG, PCF("ProcessAccessRequest(): \
-            Leaving ProcessAccessRequest(ACCESS_GRANTED)"));
+
+        if(IsAccessGranted(context->retVal))
+        {
+            OC_LOG(INFO, TAG, PCF("ProcessAccessRequest(): \
+                Leaving ProcessAccessRequest(ACCESS_GRANTED)"));
+        }
+        else
+        {
+            OC_LOG(INFO, TAG, PCF("ProcessAccessRequest(): \
+                Leaving ProcessAccessRequest(ACCESS_DENIED)"));
+        }
     }
     else
     {
         OC_LOG(INFO, TAG, PCF("ProcessAccessRequest(): \
-            Leaving ProcessAccessRequest(ACCESS_DENIED)"));
+            Leaving ProcessAccessRequest(context is NULL)"));
     }
+
 }
 
 /**

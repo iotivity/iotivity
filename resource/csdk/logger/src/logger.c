@@ -117,8 +117,7 @@ void OCLogv(LogLevel level, const char * tag, const char * format, ...) {
     if (!format || !tag) {
         return;
     }
-    char buffer[MAX_LOG_V_BUFFER_SIZE];
-    memset(buffer, 0, sizeof buffer);
+    char buffer[MAX_LOG_V_BUFFER_SIZE] = {};
     va_list args;
     va_start(args, format);
     vsnprintf(buffer, sizeof buffer - 1, format, args);
@@ -200,6 +199,8 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
         return;
     }
 
+    // No idea why the static initialization won't work here, it seems the compiler is convinced
+    // that this is a variable-sized object.
     char lineBuffer[LINE_BUFFER_SIZE];
     memset(lineBuffer, 0, sizeof lineBuffer);
     int lineIndex = 0;

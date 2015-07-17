@@ -38,38 +38,44 @@ void onFindResource(std::shared_ptr< OCResource > resource)
 {
     cout << "onFindResource" << endl;
 
-    if (resource)
+    try
     {
-        OCResourceHandle resourceHandle;
-        OCStackResult result = OCPlatform::registerResource(resourceHandle, resource);
-        if (OC_STACK_OK == result)
+        if (resource)
         {
-            cout << "onFindResource : Resource creation was successful\n";
+            OCResourceHandle resourceHandle;
+            OCStackResult result = OCPlatform::registerResource(resourceHandle, resource);
+            if (OC_STACK_OK == result)
+            {
+                cout << "onFindResource : Resource creation was successful\n";
+            }
+            else
+            {
+                cout << "onFindResource : Resource creation was unsuccessful\n";
+                return;
+            }
+
+            result = gThingManager->joinGroup(collectionResourceType, resourceHandle);
+            if (OC_STACK_OK == result)
+            {
+                cout << "onFindResource : Joining group was successful\n";
+            }
+            else
+            {
+                cout << "onFindResource : Joining group was unsuccessful\n";
+
+                OCPlatform::unregisterResource(resourceHandle);
+                return;
+            }
+
+            gResourceHandleList.push_back(resourceHandle);
         }
         else
         {
-            cout << "onFindResource : Resource creation was unsuccessful\n";
-            return;
+            cout << "onFindResource : There is no found resource." << endl;
         }
-
-        result = gThingManager->joinGroup(collectionResourceType, resourceHandle);
-        if (OC_STACK_OK == result)
-        {
-            cout << "onFindResource : Joining group was successful\n";
-        }
-        else
-        {
-            cout << "onFindResource : Joining group was unsuccessful\n";
-
-            OCPlatform::unregisterResource(resourceHandle);
-            return;
-        }
-
-        gResourceHandleList.push_back(resourceHandle);
-    }
-    else
+    }catch (std::exception& e)
     {
-        cout << "onFindResource : There is no found resource." << endl;
+        std::cout << "Exception: " << e.what() << std::endl;
     }
 }
 
@@ -113,17 +119,12 @@ int main(int argc, char* argv[])
             else if (selectedMenu == 11)
             {
                 ostringstream query;
-                query << OC_MULTICAST_DISCOVERY_URI << "?rt=core.musicplayer";
+                query << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.musicplayer";
 
                 cout << query.str() << endl;
                 result = OCPlatform::findResource("",
                             query.str(),
-                            OC_ALL,
-                            onFindResource);
-
-                result = OCPlatform::findResource("",
-                            "coap://224.0.1.187/oc/core?rt=core.musicplayer",
-                            OC_ALL,
+                            CT_DEFAULT,
                             onFindResource);
 
                 if (OC_STACK_OK == result)
@@ -138,10 +139,10 @@ int main(int argc, char* argv[])
             else if (selectedMenu == 12)
             {
                 ostringstream query;
-                query << OC_MULTICAST_DISCOVERY_URI << "?rt=core.speaker";
+                query << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.speaker";
                 result = OCPlatform::findResource("",
                             query.str(),
-                            OC_ALL,
+                            CT_DEFAULT,
                             onFindResource);
 
                 if (OC_STACK_OK == result)

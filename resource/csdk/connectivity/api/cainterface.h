@@ -48,7 +48,7 @@ extern "C"
  * @param   requestInfo [OUT] Info for resource model to understand about the request.
  * @return  NONE
  */
-typedef void (*CARequestCallback)(const CARemoteEndpoint_t *object,
+typedef void (*CARequestCallback)(const CAEndpoint_t *object,
                                   const CARequestInfo_t *requestInfo);
 
 /**
@@ -57,7 +57,7 @@ typedef void (*CARequestCallback)(const CARemoteEndpoint_t *object,
  * @param   responseInfo    [OUT] Identifier which needs to be mapped with response.
  * @return  NONE
  */
-typedef void (*CAResponseCallback)(const CARemoteEndpoint_t *object,
+typedef void (*CAResponseCallback)(const CAEndpoint_t *object,
                                    const CAResponseInfo_t *responseInfo);
 /**
  * @brief   Callback function type for error
@@ -65,7 +65,7 @@ typedef void (*CAResponseCallback)(const CARemoteEndpoint_t *object,
  * @param   errorInfo       [OUT] CA Error information
  * @return  NONE
  */
-typedef void (*CAErrorCallback)(const CARemoteEndpoint_t *object,
+typedef void (*CAErrorCallback)(const CAEndpoint_t *object,
                                 const CAErrorInfo_t *errorInfo);
 
 #ifdef __WITH_DTLS__
@@ -158,8 +158,8 @@ CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSCredentialsHandler GetDTLSC
  *          In case "Sender" or "Destination" are not authorised, packet shouldn't be
  *          forwarded in this case.
  */
-typedef CAResult_t (*CARouteMessageHandler)(CAInfo_t *message, const CARemoteEndpoint_t *sender,
-                                            CARemoteEndpoint_t *destination);
+typedef CAResult_t (*CARouteMessageHandler)(CAInfo_t *message, const CAEndpoint_t *sender,
+                                            CAEndpoint_t *destination);
 
 /**
  * @brief   Register callbacks for Routing Manager.
@@ -171,29 +171,28 @@ CAResult_t CARegisterRoutingMessageHandler(CARouteMessageHandler messageHandler)
 #endif
 
 /**
- * @brief   Create a Remote endpoint if the URI is available already.
- *          This is a Helper function which can be used before calling
- *          CASendRequest / CASendNotification.
- * @param   uri                 [IN]  Absolute URI of the resource to be used to generate the
- *                                    Remote endpoint
- *                                    \n For ex : coap://10.11.12.13:4545/resource_uri ( for IP)
- *                                    \n coap://10:11:12:13:45:45/resource_uri ( for BT)
- * @param   transportType    [IN]  Transport type of the endpoint
- * @param   object              [OUT] Endpoint object which contains the above parsed data
+ * @brief   Create an endpoint description
+ * @param   flags               [IN]  how the adapter should be used
+ * @param   adapter             [IN]  which adapter to use
+ * @param   addr                [IN]  string representation of address
+ * @param   port                [IN]  port (for IP_ADAPTER)
+ * @param   endpoint            [OUT] Endpoint which contains the above
  * @return  #CA_STATUS_OK or #CA_STATUS_FAILED
- * @remark  The created Remote endpoint can be freed using CADestroyRemoteEndpoint() API.
- * @see     CADestroyRemoteEndpoint
+ * @remark  The created Remote endpoint can be freed using CADestroyEndpoint().
+ * @see     CADestroyEndpoint
  */
-CAResult_t CACreateRemoteEndpoint(const CAURI_t uri,
-                                  const CATransportType_t transportType,
-                                  CARemoteEndpoint_t **object);
+CAResult_t CACreateEndpoint(CATransportFlags_t flags,
+                            CATransportAdapter_t adapter,
+                            const char *addr,
+                            uint16_t port,
+                            CAEndpoint_t **object);
 
 /**
  * @brief   Destroy the remote endpoint created
- * @param   object  [IN] Remote Endpoint object created with CACreateRemoteEndpoint
+ * @param   object  [IN] Remote Endpoint object created with CACreateEndpoint
  * @return  NONE
  */
-void CADestroyRemoteEndpoint(CARemoteEndpoint_t *object);
+void CADestroyEndpoint(CAEndpoint_t *object);
 
 /**
  * @brief   Generating the token for matching the request and response.
@@ -214,69 +213,32 @@ CAResult_t CAGenerateToken(CAToken_t *token, uint8_t tokenLength);
 void CADestroyToken(CAToken_t token);
 
 /**
- * @brief   Find the resource in the network. This API internally sends multicast messages on all
- *          selected connectivity adapters. Responses are delivered via response callbacks.
- *
- * @param   resourceUri [IN] Uri to send multicast search request. Must contain only relative
- *                           path of Uri to be search.
- * @param   token       [IN] Token for the request
- * @param   tokenLength [IN]  length of the token
- * @return  #CA_STATUS_OK or #CA_STATUS_FAILED or #CA_STATUS_NOT_INITIALIZED
- */
-CAResult_t CAFindResource(const CAURI_t resourceUri, const CAToken_t token, uint8_t tokenLength);
-
-/**
  * @brief   Send control Request on a resource
- * @param   object      [IN] Remote Endpoint where the payload need to be sent.
- *                           This Remote endpoint is delivered with Request or response callback.
+ * @param   object      [IN] Endpoint where the payload need to be sent.
+ *                           This endpoint is delivered with Request or response callback.
  * @param   requestInfo [IN] Information for the request.
  * @return  #CA_STATUS_OK #CA_STATUS_FAILED #CA_MEMORY_ALLOC_FAILED
  */
-CAResult_t CASendRequest(const CARemoteEndpoint_t *object, const CARequestInfo_t *requestInfo);
-
-/**
- * @brief   Send control Request on a resource to multicast group
- * @param   object      [IN] Group Endpoint where the payload need to be sent.
- *                           This Remote endpoint is delivered with Request or response callback.
- * @param   requestInfo [IN] Information for the request.
- * @return  #CA_STATUS_OK or #CA_STATUS_FAILED or #CA_MEMORY_ALLOC_FAILED
- */
-CAResult_t CASendRequestToAll(const CAGroupEndpoint_t *object,
-                              const CARequestInfo_t *requestInfo);
+CAResult_t CASendRequest(const CAEndpoint_t *object, const CARequestInfo_t *requestInfo);
 
 /**
  * @brief   Send the response
- * @param   object          [IN] Remote Endpoint where the payload need to be sent.
- *                               This Remote endpoint is delivered with Request or response callback
+ * @param   object          [IN] Endpoint where the payload need to be sent.
+ *                               This endpoint is delivered with Request or response callback
  * @param   responseInfo    [IN] Information for the response
  * @return  #CA_STATUS_OK or  #CA_STATUS_FAILED or #CA_MEMORY_ALLOC_FAILED
  */
-CAResult_t CASendResponse(const CARemoteEndpoint_t *object,
-                const CAResponseInfo_t *responseInfo);
+CAResult_t CASendResponse(const CAEndpoint_t *object, const CAResponseInfo_t *responseInfo);
 
 /**
  * @brief   Send notification to the remote object
- * @param   object          [IN] Remote Endpoint where the payload need to be sent.
- *                               This Remote endpoint is delivered with Request or response callback.
+ * @param   object          [IN] Endpoint where the payload need to be sent.
+ *                               This endpoint is delivered with Request or response callback.
  * @param   responseInfo    [IN] Information for the response.
  * @return  #CA_STATUS_OK or #CA_STATUS_FAILED or #CA_MEMORY_ALLOC_FAILED
  */
-CAResult_t CASendNotification(const CARemoteEndpoint_t *object,
+CAResult_t CASendNotification(const CAEndpoint_t *object,
                       const  CAResponseInfo_t *responseInfo);
-
-/**
- * @brief   To advertise the resource
- * @param   resourceUri [IN] URI to be advertised
- * @param   token       [IN] Token for the request
- * @param   tokenLength [IN] length of the token
- * @param   options     [IN] Header options information
- * @param   numOptions  [IN] Number of options
- * @return  #CA_STATUS_OK or #CA_STATUS_FAILED or
- *          #CA_MEMORY_ALLOC_FAILED or #CA_STATUS_NOT_INITIALIZED
- */
-CAResult_t CAAdvertiseResource(const CAURI_t resourceUri,const CAToken_t token,
-                               uint8_t tokenLength, const CAHeaderOption_t *options,
-                               const uint8_t numOptions);
 
 /**
  * @brief   Select network to use
@@ -300,7 +262,7 @@ CAResult_t CAUnSelectNetwork(const uint32_t nonInterestedNetwork);
  * @return  #CA_STATUS_OK or #CA_STATUS_FAILED or #CA_STATUS_INVALID_PARAM or
 *                #CA_MEMORY_ALLOC_FAILED
  */
-CAResult_t CAGetNetworkInformation(CALocalConnectivity_t **info, uint32_t *size);
+CAResult_t CAGetNetworkInformation(CAEndpoint_t **info, uint32_t *size);
 
 /**
  * @brief    To Handle the Request or Response
@@ -344,8 +306,7 @@ CAResult_t CAEnableAnonECDHCipherSuite(const bool enable);
  *                                    'ID of new device(Resource Server)',
  *                                    'ID of owner smart-phone(Provisioning Server)')
  *
- * @param[IN] addrInfo  information of network address
- * @param[IN] transportType  transport type
+ * @param[IN] endpoint  information of network address
  * @param[IN] label  Ownership transfer method e.g)"oic.sec.doxm.jw"
  * @param[IN] labelLen  Byte length of label
  * @param[IN] rsrcServerDeviceID  ID of new device(Resource Server)
@@ -358,8 +319,7 @@ CAResult_t CAEnableAnonECDHCipherSuite(const bool enable);
  * @retval  CA_STATUS_OK    Successful
  * @retval  CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAGenerateOwnerPSK(const CAAddress_t* addrInfo,
-                              const CATransportType_t transportType,
+CAResult_t CAGenerateOwnerPSK(const CAEndpoint_t *endpoint,
                               const uint8_t* label, const size_t labelLen,
                               const uint8_t* rsrcServerDeviceID,
                               const size_t rsrcServerDeviceIDLen,
@@ -370,27 +330,22 @@ CAResult_t CAGenerateOwnerPSK(const CAAddress_t* addrInfo,
 /**
  * Initiate DTLS handshake with selected cipher suite
  *
- * @param[IN] addrInfo    information of network address
- * @param[IN] transportType  transport type
+ * @param[IN] endpoint  information of network address
  *
  * @retval  CA_STATUS_OK    Successful
  * @retval  CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAInitiateHandshake(const CAAddress_t* addrInfo,
-                               const CATransportType_t transportType);
+CAResult_t CAInitiateHandshake(const CAEndpoint_t *endpoint);
 
 /**
  * Close the DTLS session
  *
- * @param[IN] addrInfo       information of network address
- * @param[IN] transportType  transport type
+ * @param[IN] endpoint  information of network address
  *
  * @retval  CA_STATUS_OK    Successful
  * @retval  CA_STATUS_FAILED Operation failed
  */
-CAResult_t CACloseDtlsSession(const CAAddress_t* addrInfo,
-                              const CATransportType_t transportType);
-
+CAResult_t CACloseDtlsSession(const CAEndpoint_t *endpoint);
 
 #endif /* __WITH_DTLS__ */
 

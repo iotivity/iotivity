@@ -76,6 +76,7 @@ void onPut(const HeaderOptions &headerOptions, const OCRepresentation &rep, cons
         dlog_print(DLOG_INFO, LOG_TAG, "#### Invalid Parameter");
     }
     logMessage += "----------------------<br>";
+    dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
     ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog,
                                           &logMessage);
 }
@@ -127,6 +128,7 @@ void onPost(const HeaderOptions &headerOptions, const OCRepresentation &rep, con
         }
     }
     logMessage += "----------------------<br>";
+    dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
     ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog,
                                           &logMessage);
     dlog_print(DLOG_INFO, LOG_TAG, "#### onPost callback received EXIT!!!!");
@@ -146,6 +148,7 @@ static void createActionSet_AllBulbOff()
         string logMessage = "NO LIGHTSERVER FOUND <br>";
         logMessage += "----------------------<br>";
         dlog_print(DLOG_INFO, LOG_TAG, "#### NO LIGHT SERVER FOUND");
+        dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
         ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog,
                                               &logMessage);
         delete actionSet;
@@ -182,6 +185,7 @@ static void createActionSet_AllBulbOff()
 
     string logMessage = "Create actionset AllBulbOFF success <br>";
     logMessage += "----------------------<br>";
+    dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
     ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog, &logMessage);
     dlog_print(DLOG_INFO, LOG_TAG, "#### createActionSet_AllBulbOff EXIT");
 }
@@ -239,6 +243,7 @@ static void createActionSet_AllBulbOn()
 
     string logMessage = "Create actionset AllBulbON success <br>";
     logMessage += "----------------------<br>";
+    dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
     ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog, &logMessage);
     dlog_print(DLOG_INFO, LOG_TAG, "#### createActionSet_AllBulbOff OFF EXIT");
 }
@@ -392,6 +397,7 @@ static void executeActionSetOff(void *data, Evas_Object *obj, void *event_info)
 
     string logMessage = "Actionset OFF called successfully <br>";
     logMessage += "----------------------<br>";
+    dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
     ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog, &logMessage);
     dlog_print(DLOG_INFO, LOG_TAG, "#### executeActionSetOff EXIT");
 }
@@ -426,6 +432,7 @@ static void executeActionSetOn(void *data, Evas_Object *obj, void *event_info)
 
     string logMessage = "Actionset ON called successfully <br>";
     logMessage += "----------------------<br>";
+    dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
     ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog, &logMessage);
     dlog_print(DLOG_INFO, LOG_TAG, "#### executeActionSetOn EXIT");
 }
@@ -522,6 +529,7 @@ static void deleteActionSetOff(void *data, Evas_Object *obj, void *event_info)
 
     string logMessage = "Actionset OFF DELETED <br>";
     logMessage += "----------------------<br>";
+    dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
     ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog, &logMessage);
     dlog_print(DLOG_INFO, LOG_TAG, "#### deleteActionSetOff EXIT");
 }
@@ -556,6 +564,7 @@ static void deleteActionSetOn(void *data, Evas_Object *obj, void *event_info)
 
     string logMessage = "Actionset ON DELETED <br>";
     logMessage += "----------------------<br>";
+    dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
     ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog, &logMessage);
     dlog_print(DLOG_INFO, LOG_TAG, "#### deleteActionSetOn EXIT");
 }
@@ -593,12 +602,14 @@ void onObserve(const HeaderOptions headerOptions, const OCRepresentation &rep, c
         }
         sprintf(buf, "%d", level);
         logMessage += "level:" + string(buf) + "<br>";
+        free(buf);
     }
     else
     {
         logMessage = "onObserve error!!!";
     }
     logMessage += "----------------------<br>";
+    dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
     ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog,
                                           &logMessage);
 }
@@ -660,6 +671,7 @@ void foundResources(std::vector< std::shared_ptr< OC::OCResource > > listOfResou
                 (*rsrc)->observe(ObserveType::Observe, QueryParamsMap(), &onObserve);
                 dlog_print(DLOG_INFO, LOG_TAG, "#### after calling observe() for bookmark!!!!");
             }
+            dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
             ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog,
                                                   &logMessage);
         }
@@ -868,6 +880,7 @@ popup_set_clicked_cb(void *data, Evas_Object *obj, void *event_info)
         dlog_print(DLOG_INFO, LOG_TAG, "#### Read NULL DateTime Value");
         string logMessage = "DateTime should not be NULL<br>";
         logMessage += "----------------------<br>";
+        dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
         ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog, &logMessage);
     }
     else
@@ -897,6 +910,7 @@ popup_set_clicked_cb(void *data, Evas_Object *obj, void *event_info)
             dlog_print(DLOG_INFO, LOG_TAG, "#### Incorrect date/time values");
             string logMessage = "Incorrect date/time value<br>";
             logMessage += "----------------------<br>";
+            dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
             ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog,
                                                   &logMessage);
         }
@@ -940,8 +954,6 @@ list_scheduled_actionset_cb(void *data, Evas_Object *obj, void *event_info)
     if (NULL == popup_fields)
     {
         dlog_print(DLOG_INFO, LOG_TAG, "#### Memory allocation failed");
-        popup_fields->popup = NULL;
-        popup_fields->entry = NULL;
     }
     else
     {
@@ -1036,6 +1048,7 @@ void foundResource(shared_ptr< OCResource > resource)
             ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))showGroupAPIs, NULL);
 
         }
+        dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
         ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog,
                                               &logMessage);
     }

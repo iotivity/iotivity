@@ -42,6 +42,7 @@
 #include "OCApi.h"
 #include "OCException.h"
 #include "OCUtilities.h"
+#include "ocpayload.h"
 
 #include "oc_logger.hpp"
 
@@ -56,6 +57,7 @@ namespace OC
 
     void OCPlatform_impl::Configure(const PlatformConfig& config)
     {
+        OCRegisterPersistentStorageHandler(config.ps);
         globalConfig() = config;
     }
 
@@ -131,13 +133,14 @@ namespace OC
          return result_guard(OC_STACK_ERROR);
         }
 
-        std::string payload(pResponse->getResourceRepresentation().getJSONRepresentation());
-
-        return result_guard(
+        OCRepPayload* pl = pResponse->getResourceRepresentation().getPayload();
+        OCStackResult result =
                    OCNotifyListOfObservers(resourceHandle,
                             &observationIds[0], observationIds.size(),
-                            payload.c_str(),
-                            static_cast<OCQualityOfService>(QoS)));
+                            pl,
+                            static_cast<OCQualityOfService>(QoS));
+        OCRepPayloadDestroy(pl);
+        return result_guard(result);
     }
 
     OCResource::Ptr OCPlatform_impl::constructResourceObject(const std::string& host,
@@ -171,9 +174,9 @@ namespace OC
     OCStackResult OCPlatform_impl::findResource(const std::string& host,
                                             const std::string& resourceName,
                                             OCConnectivityType connectivityType,
-                                            FindCallback resourceHandler, QualityOfService QoS)
+                                            FindCallback resourceHandler,
+                                            QualityOfService QoS)
     {
-
         return checked_guard(m_client, &IClientWrapper::ListenForResource,
                              host, resourceName, connectivityType, resourceHandler, QoS);
     }
@@ -245,7 +248,7 @@ namespace OC
         std::vector<std::string> resourceTypes = resource->getResourceTypes();
 
         return checked_guard(m_server, &IServerWrapper::registerResource,
-                std::ref(resourceHandle), resource->uri(),
+                std::ref(resourceHandle), resource->host() + resource->uri(),
                 resourceTypes[0]/*"core.remote"*/, DEFAULT_INTERFACE,
                 (EntityHandler) nullptr, resourceProperty);
     }

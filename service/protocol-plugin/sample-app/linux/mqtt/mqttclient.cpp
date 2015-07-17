@@ -394,8 +394,8 @@ int main(int argc, char *argv[])
         // makes it so that all boolean values are printed as 'true/false' in this stream
         std::cout.setf(std::ios::boolalpha);
         // Find all resources
-        requestURI << OC_MULTICAST_DISCOVERY_URI << "?rt=core.fan";
-        OCPlatform::findResource("", requestURI.str(), OC_ALL, &foundResourceFan);
+        requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.fan";
+        OCPlatform::findResource("", requestURI.str(), CT_DEFAULT, &foundResourceFan);
         std::cout << "Finding Resource... " << std::endl;
         while (true)
         {

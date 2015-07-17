@@ -5,12 +5,12 @@
 command in this directory)
 
     Install external libraries:
-      $ sudo apt-get install libboost-dev libboost-program-options-dev libexpat1-dev libboost-thread-dev uuid-dev
+      $ sudo apt-get install libboost-dev libboost-program-options-dev libexpat1-dev libboost-thread-dev uuid-dev libssl-dev
 
     Build release binaries:
       $ scons
-(Note: C++ sdk requires cereal. Please follow the instruction in the build
-message to install cereal)
+(Note: C sdk requires tiny-cbor. Please follow the instruction in the build
+message to install tiny-cbor)
 
     Build debug binaries:
       $scons RELEASE=false
@@ -116,13 +116,10 @@ so you don't need to add it in command line each time. The build script will
 guide you to do that.)
 
 Tizen:
-To build for tizen platform cereal library is needed.
-Please download cereal if it is not present in extlibs/cereal folder
-and apply the patch as following:
-	$ git clone https://github.com/USCiLab/cereal.git extlibs/cereal/cereal
-	$ cd  extlibs/cereal/cereal
-	$ git reset --hard 7121e91e6ab8c3e6a6516d9d9c3e6804e6f65245
-	$ git apply ../../../resource/patches/cereal_gcc46.patch
+To build for tizen platform tiny-cbor library is needed.
+Please download tiny-cbor if it is not present in extlibs/tiny-cbor folder
+by doing the following:
+	$ git clone https://github.com/01org/tinycbor.git extlibs/tinycbor/tinycbor
 
 
 * 3. External libraries
@@ -140,7 +137,7 @@ to skip it.
 
 1. Build IoTivity project for Linux
       $ cd <top directory of the project>
-      $ sudo apt-get install libboost-dev libexpat1-dev libboost-thread-dev
+      $ sudo apt-get install libboost-dev libexpat1-dev libboost-thread-dev libssl-dev
       $ scons
 
 2. Build IoTivity project for Android

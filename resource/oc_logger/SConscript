@@ -50,6 +50,7 @@ liboc_logger = liboc_logger_env.SharedLibrary('oc_logger',
 		['c/oc_logger.c', 'c/oc_console_logger.c', 'cpp/oc_ostream_logger.cpp'])
 
 liboc_logger_env.InstallTarget([liboc_logger_core, liboc_logger], 'liboc_logger')
+liboc_logger_env.UserInstallTargetLib([liboc_logger_core, liboc_logger], 'liboc_logger')
 
 if target_os not in ['ios', 'android']:
 	SConscript('examples/SConscript')

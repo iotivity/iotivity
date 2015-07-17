@@ -24,12 +24,6 @@
 const char * SVR_DB_FILE_NAME = "oic_svr_db.json";
 const char * OIC_MI_DEF = "oic.mi.def";
 
-const char * OIC_RSRC_CORE_URI =  "/oic/res";
-const char * OIC_RSRC_CORE_D_URI =  "/oic/res/d";
-const char * OIC_RSRC_CORE_P_URI =  "/oic/p";
-const char * OIC_RSRC_PRESENCE_URI =  "/oic/ad";
-const char * OIC_RSRC_TYPES_D_URI =  "/oic/res/types/d";
-
 //ACL
 const char * OIC_RSRC_TYPE_SEC_ACL = "oic.sec.acl";
 const char * OIC_RSRC_ACL_URI =  "/oic/sec/acl";
@@ -76,7 +70,8 @@ const char * OIC_JSON_PRIVATEDATA_NAME = "pvdata";
 const char * OIC_JSON_PERIOD_NAME = "period";
 
 OicUuid_t WILDCARD_SUBJECT_ID = {"*"};
-size_t WILDCARD_SUBJECT_ID_LEN = 1 ;
+size_t WILDCARD_SUBJECT_ID_LEN = 1;
+const char * WILDCARD_RESOURCE_URI = "*";
 
 //Ownership Transfer Methods
 const char * OXM_JUST_WORKS = "oic.sec.doxm.jw";
@@ -85,3 +80,8 @@ const char * OXM_RANDOM_DEVICE_PIN = "oic.sec.doxm.rdp";
 const char * OXM_PRE_PROVISIONED_DEVICE_PIN = "oic.sec.doxm.ppdp";
 const char * OXM_PRE_PROVISIONED_STRONG_CREDENTIAL = "oic.sec.doxm.ppsc";
 
+const char * OIC_SEC_TRUE = "true";
+const char * OIC_SEC_FALSE = "false";
+
+const char * OIC_SEC_REST_QUERY_SEPARATOR = "&";
+char OIC_SEC_REST_QUERY_DELIMETER = '=';

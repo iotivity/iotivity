@@ -18,6 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#define __STDC_LIMIT_MACROS
 #include "ocstack.h"
 #include "logger.h"
 #include "oic_malloc.h"
@@ -34,6 +35,8 @@
 #include "cainterface.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
+
 
 #define TAG  PCF("SRM-CREDL")
 
@@ -233,14 +236,16 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
 
             //CredId -- Mandatory
             jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_CREDID_NAME);
-            VERIFY_NON_NULL(TAG, jsonObj, ERROR);
-            VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR)
-            cred->credId = jsonObj->valueint;
+            if(jsonObj)
+            {
+                VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
+                cred->credId = jsonObj->valueint;
+            }
 
             //subject -- Mandatory
             jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_SUBJECT_NAME);
             VERIFY_NON_NULL(TAG, jsonObj, ERROR);
-            VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR)
+            VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
             outLen = 0;
             memset(base64Buff, 0, sizeof(base64Buff));
             b64Ret = b64Decode(jsonObj->valuestring, strlen(jsonObj->valuestring),
@@ -252,7 +257,7 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
             //CredType -- Mandatory
             jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_CREDTYPE_NAME);
             VERIFY_NON_NULL(TAG, jsonObj, ERROR);
-            VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR)
+            VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
             cred->credType = jsonObj->valueint;
 
             //PrivateData is mandatory for some of the credential types listed below.
@@ -326,6 +331,7 @@ exit:
  * @param credType credential type.
  * @param publicData public data such as public key.
  * @param privateData private data such as private key.
+ *        The privateData is expected in base64 encoded format.
  * @param ownersLen length of owners array
  * @param owners array of owners.
  *
@@ -342,13 +348,15 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
     OicSecCred_t *cred = (OicSecCred_t*)OICCalloc(1, sizeof(OicSecCred_t));
     VERIFY_NON_NULL(TAG, cred, ERROR);
 
-    //TODO:Need more clarification on credId
-    OCFillRandomMem((uint8_t*)&cred->credId, sizeof(cred->credId));
+    //CredId is assigned before appending new cred to the existing
+    //credential list and updating svr database in AddCredential().
+    cred->credId = 0;
 
     VERIFY_NON_NULL(TAG, subject, ERROR);
     memcpy(cred->subject.id, subject->id , sizeof(cred->subject.id));
 
-    //TODO: check credType has one of the values {0, 1, 2, 4, 6, 8, 16}
+    VERIFY_SUCCESS(TAG, credType < (NO_SECURITY_MODE | SYMMETRIC_PAIR_WISE_KEY |
+            SYMMETRIC_GROUP_KEY | ASYMMETRIC_KEY | SIGNED_ASYMMETRIC_KEY | PIN_PASSWORD), ERROR);
     cred->credType = credType;
 
 #if 0
@@ -387,6 +395,69 @@ exit:
     return cred;
 }
 
+/*
+ * Compare function used LL_SORT for sorting credentials
+ *
+ * @param first   pointer to OicSecCred_t struct
+ * @param second  pointer to OicSecCred_t struct
+ *
+ *@retval
+ *  -1    if credId of first is less than credId of second
+ *   0    if credId of first is equal to credId of second
+ *   1    if credId of first is greater than credId of second
+ */
+static int CmpCredId(const OicSecCred_t * first, const OicSecCred_t *second)
+{
+    if(first->credId < second->credId)
+    {
+        return -1;
+    }
+    else if(first->credId > second->credId)
+    {
+        return 1;
+    }
+    else
+        return 0;
+}
+
+/**
+ * GetCredId goes through the cred list and returns the next
+ * available credId. The next credId could be the credId that is
+ * available due deletion of OicSecCred_t object or one more than
+ * credId of last credential in the list.
+ *
+ * @retval
+ *      next available credId  - success
+ *      0                      - error
+ */
+
+static uint16_t GetCredId()
+{
+    //Sorts credential list in incremental order of credId
+    LL_SORT(gCred, CmpCredId);
+
+
+    OicSecCred_t *currentCred = NULL, *credTmp = NULL;
+    uint16_t nextCredId = 1;
+
+    LL_FOREACH_SAFE(gCred, currentCred, credTmp)
+    {
+        if(currentCred->credId == nextCredId)
+        {
+            nextCredId += 1;
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    VERIFY_SUCCESS(TAG, nextCredId < UINT16_MAX, ERROR);
+    return nextCredId;
+
+exit:
+    return 0;
+}
 /**
  * This function adds the new cred to the credential list.
  *
@@ -399,17 +470,20 @@ exit:
 OCStackResult AddCredential(OicSecCred_t * newCred)
 {
     OCStackResult ret = OC_STACK_ERROR;
+    char * jsonStr = NULL;
 
-    if(NULL == newCred)
-    {
-        return OC_STACK_ERROR;
-    }
+    VERIFY_SUCCESS(TAG, NULL != newCred, ERROR);
+
+    //Assigning credId to the newCred
+    newCred->credId = GetCredId();
+
+    VERIFY_SUCCESS(TAG, newCred->credId != 0, ERROR);
 
     //Append the new Cred to existing list
     LL_APPEND(gCred, newCred);
 
     //Convert CredList to JSON and update the persistent Storage
-    char * jsonStr = BinToCredJSON(gCred);
+    jsonStr = BinToCredJSON(gCred);
 
     if(jsonStr)
     {
@@ -423,6 +497,7 @@ OCStackResult AddCredential(OicSecCred_t * newCred)
         cJSON_Delete(jsonCred);
     }
 
+exit:
     return ret;
 }
 
@@ -431,11 +506,14 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
     OCEntityHandlerResult ret = OC_EH_ERROR;
 
     //Get binary representation of json
-    OicSecCred_t * cred  = JSONToCredBin((char *)ehRequest->reqJSONPayload);
+    OicSecCred_t * cred  = JSONToCredBin(((OCSecurityPayload*)ehRequest->payload)->securityData);
 
     if(cred)
     {
-        //Append the new Cred to existing list
+        //If the Post request credential has credId, it will be
+        //discarded and the next available credId will be assigned
+        //to it before getting appended to the existing credential
+        //list and updating svr database.
         ret = (OC_STACK_OK == AddCredential(cred))? OC_EH_RESOURCE_CREATED : OC_EH_ERROR;
     }
 

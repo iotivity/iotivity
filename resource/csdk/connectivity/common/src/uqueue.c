@@ -127,7 +127,6 @@ u_queue_message_t *u_queue_get_element(u_queue_t *queue)
 
     if (NULL == element)
     {
-        OIC_LOG(DEBUG, TAG, "QueueGetElement : empty, no messages");
         return NULL;
     }
 

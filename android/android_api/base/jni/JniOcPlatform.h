@@ -22,6 +22,7 @@
 #include "JniOcStack.h"
 #include "JniOnResourceFoundListener.h"
 #include "JniOnDeviceInfoListener.h"
+#include "JniOnPlatformInfoListener.h"
 #include "JniOnPresenceListener.h"
 #include <mutex>
 
@@ -36,15 +37,20 @@ void RemoveOnResourceFoundListener(JNIEnv* env, jobject jListener);
 JniOnDeviceInfoListener* AddOnDeviceInfoListener(JNIEnv* env, jobject jListener);
 void RemoveOnDeviceInfoListener(JNIEnv* env, jobject jListener);
 
+JniOnPlatformInfoListener* AddOnPlatformInfoListener(JNIEnv* env, jobject jListener);
+void RemoveOnPlatformInfoListener(JNIEnv* env, jobject jListener);
+
 JniOnPresenceListener* AddOnPresenceListener(JNIEnv* env, jobject jListener);
 void RemoveOnPresenceListener(JNIEnv* env, jobject jListener);
 
 std::map<jobject, std::pair<JniOnResourceFoundListener*, int>> onResourceFoundListenerMap;
 std::map<jobject, std::pair<JniOnDeviceInfoListener*, int>> onDeviceInfoListenerMap;
+std::map<jobject, std::pair<JniOnPlatformInfoListener*, int>> onPlatformInfoListenerMap;
 std::map<jobject, std::pair<JniOnPresenceListener*, int>> onPresenceListenerMap;
 
 std::mutex resourceFoundMapLock;
 std::mutex deviceInfoMapLock;
+std::mutex platformInfoMapLock;
 std::mutex presenceMapLock;
 
 #ifdef __cplusplus
@@ -56,7 +62,7 @@ extern "C" {
     * Signature: (IILjava/lang/String;II)V
     */
     JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_configure
-        (JNIEnv *, jclass, jint, jint, jstring, jint, jint);
+        (JNIEnv *, jclass, jint, jint, jstring, jint, jint, jstring);
 
     /*
     * Class:     org_iotivity_base_OcPlatform
@@ -123,6 +129,22 @@ extern "C" {
         (JNIEnv *, jclass, jstring, jstring, jint, jobject, jint);
 
     /*
+     * Class:     org_iotivity_base_OcPlatform
+     * Method:    getPlatformInfo0
+     * Signature: (Ljava/lang/String;Ljava/lang/String;ILorg/iotivity/base/OcPlatform/OnPlatformFoundListener;)V
+     */
+     JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getPlatformInfo0
+        (JNIEnv *, jclass, jstring, jstring, jint, jobject);
+
+    /*
+     * Class:     org_iotivity_base_OcPlatform
+     * Method:    getPlatformInfo1
+     * Signature: (Ljava/lang/String;Ljava/lang/String;ILorg/iotivity/base/OcPlatform/OnPlatformFoundListener;I)V
+     */
+     JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getPlatformInfo1
+        (JNIEnv *, jclass, jstring, jstring, jint, jobject, jint);
+
+    /*
     * Class:     org_iotivity_base_OcPlatform
     * Method:    registerResource0
     * Signature: (Lorg/iotivity/base/OcResource;)Lorg/iotivity/base/OcResourceHandle;
@@ -141,10 +163,18 @@ extern "C" {
     /*
     * Class:     org_iotivity_base_OcPlatform
     * Method:    registerDeviceInfo0
-    * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+    * Signature: (Ljava/lang/String;)V
     */
     JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_registerDeviceInfo0
-        (JNIEnv *, jclass, jstring, jstring, jstring, jstring, jstring, jstring, jstring, jstring, jstring, jstring, jstring, jstring);
+        (JNIEnv *, jclass, jstring);
+
+    /*
+    * Class:     org_iotivity_base_OcPlatform
+    * Method:    registerPlatformInfo0
+    * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_registerPlatformInfo0
+        (JNIEnv *, jclass, jstring, jstring, jstring, jstring, jstring, jstring, jstring, jstring, jstring, jstring, jstring);
 
     /*
     * Class:     org_iotivity_base_OcPlatform
@@ -262,3 +292,4 @@ extern "C" {
 }
 #endif
 #endif
+

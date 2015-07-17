@@ -28,8 +28,10 @@ class Connection;
 
 class RestInput
 {
+    static const int MAX_CONNS = 5;
 public:
     RestInput(LineInput *lineInput);
+    ~RestInput();
     bool init();
     void startAccept(int &sockfd);
     void startThread();
@@ -43,7 +45,7 @@ protected:
     int m_sockfd, m_port, m_threadCount;
     struct sockaddr_in m_serverAddr;
     char *m_data;
-    std::thread *m_thread;
+    std::thread m_thread[MAX_CONNS];
 };
 
 #endif // RESTINPUT_H

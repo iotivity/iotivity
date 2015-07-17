@@ -19,6 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "oic_logger.h"
+#include "oic_string.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -123,24 +124,18 @@ size_t oic_log_write_level(oic_log_ctx_t *ctx, const oic_log_level ll, const cha
 int oic_log_set_module(oic_log_ctx_t *ctx, const char *module_name)
 {
     char *mn;
-    size_t l;
 
     if (0 == ctx)
         return 0;
 
     /* Swap pointers so that module data's not erased in the event of failure: */
-    l = strlen(module_name);
-
-    mn = (char *) malloc(1 + l);
-
+    mn = OICStrdup(module_name);
     if (0 == mn)
     {
         if (0 != ctx->module_name)
             free(ctx->module_name);
         return 0;
     }
-
-    memcpy(mn, module_name, 1 + l);
 
     if (0 != ctx->module_name)
         free(ctx->module_name);

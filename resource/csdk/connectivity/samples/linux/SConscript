@@ -47,6 +47,7 @@ if secured == '1':
 else:
 	casample =sample_env.Program('casample', [sample_src])
 env.InstallTarget(casample, 'casample')
+env.UserInstallTargetBin(casample, 'casample')
 
 
 

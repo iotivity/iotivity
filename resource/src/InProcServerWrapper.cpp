@@ -104,14 +104,12 @@ void formResourceRequest(OCEntityHandlerFlag flag,
             else if(OC_REST_PUT == entityHandlerRequest->method)
             {
                 pRequest->setRequestType(OC::PlatformCommands::PUT);
-                pRequest->setPayload(std::string(reinterpret_cast<const char*>
-                                            (entityHandlerRequest->reqJSONPayload)));
+                pRequest->setPayload(entityHandlerRequest->payload);
             }
             else if(OC_REST_POST == entityHandlerRequest->method)
             {
                 pRequest->setRequestType(OC::PlatformCommands::POST);
-                pRequest->setPayload(std::string(reinterpret_cast<const char*>
-                                            (entityHandlerRequest->reqJSONPayload)));
+                pRequest->setPayload(entityHandlerRequest->payload);
             }
             else if(OC_REST_DELETE == entityHandlerRequest->method)
             {
@@ -262,10 +260,14 @@ namespace OC
         else
         {
             throw InitializeException(OC::InitException::NOT_CONFIGURED_AS_SERVER,
-                                      OC_STACK_INVALID_PARAM);
+                                         OC_STACK_INVALID_PARAM);
         }
 
-        OCStackResult result = OCInit(cfg.ipAddress.c_str(), cfg.port, initType);
+        OCTransportFlags serverFlags =
+                            static_cast<OCTransportFlags>(cfg.serverConnectivity & CT_MASK_FLAGS);
+        OCTransportFlags clientFlags =
+                            static_cast<OCTransportFlags>(cfg.clientConnectivity & CT_MASK_FLAGS);
+        OCStackResult result = OCInit1(initType, serverFlags, clientFlags);
 
         if(OC_STACK_OK != result)
         {
@@ -528,25 +530,15 @@ namespace OC
         else
         {
             OCEntityHandlerResponse response;
-            std::string payLoad;
-            HeaderOptions serverHeaderOptions;
-
-            payLoad = pResponse->getPayload();
-            serverHeaderOptions = pResponse->getHeaderOptions();
+//            OCRepPayload* payLoad = pResponse->getPayload();
+            HeaderOptions serverHeaderOptions = pResponse->getHeaderOptions();
 
             response.requestHandle = pResponse->getRequestHandle();
             response.resourceHandle = pResponse->getResourceHandle();
             response.ehResult = pResponse->getResponseResult();
 
-            response.payload = static_cast<char*>(OICMalloc(payLoad.length() + 1));
-            if(!response.payload)
-            {
-                result = OC_STACK_NO_MEMORY;
-                throw OCException(OC::Exception::NO_MEMORY, OC_STACK_NO_MEMORY);
-            }
+            response.payload = reinterpret_cast<OCPayload*>(pResponse->getPayload());
 
-            strncpy(response.payload, payLoad.c_str(), payLoad.length()+1);
-            response.payloadSize = payLoad.length() + 1;
             response.persistentBufferFlag = 0;
 
             response.numSendVendorSpecificHeaderOptions = serverHeaderOptions.size();
@@ -558,18 +550,20 @@ namespace OC
                     static_cast<uint16_t>(it->getOptionID());
                 response.sendVendorSpecificHeaderOptions[i].optionLength =
                     (it->getOptionData()).length() + 1;
-                memcpy(response.sendVendorSpecificHeaderOptions[i].optionData,
-                    (it->getOptionData()).c_str(),
-                    (it->getOptionData()).length() + 1);
+                std::string optionData = it->getOptionData();
+                std::copy(optionData.begin(),
+                         optionData.end(),
+                         response.sendVendorSpecificHeaderOptions[i].optionData);
+                response.sendVendorSpecificHeaderOptions[i].optionData[it->getOptionData().length()]
+                    = '\0';
                 i++;
             }
 
             if(OC_EH_RESOURCE_CREATED == response.ehResult)
             {
-                std::string createdUri = pResponse->getNewResourceUri();
-                strncpy(reinterpret_cast<char*>(response.resourceUri),
-                        createdUri.c_str(),
-                        createdUri.length() + 1);
+                pResponse->getNewResourceUri().copy(response.resourceUri,
+                        sizeof (response.resourceUri) - 1);
+                response.resourceUri[pResponse->getNewResourceUri().length()] = '\0';
             }
 
             if(cLock)

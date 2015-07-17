@@ -43,6 +43,7 @@ LOCAL_SRC_FILES :=  JniOcStack.cpp \
                     JniEntityHandler.cpp \
                     JniOnResourceFoundListener.cpp \
                     JniOnDeviceInfoListener.cpp \
+		    JniOnPlatformInfoListener.cpp \
                     JniOnPresenceListener.cpp \
                     JniOnGetListener.cpp \
                     JniOnPutListener.cpp \
@@ -57,7 +58,8 @@ LOCAL_SRC_FILES :=  JniOcStack.cpp \
                     JniOcResourceResponse.cpp \
                     JniOcPlatform.cpp \
                     JniOcResource.cpp \
-                    JniOcResourceIdentifier.cpp
+                    JniOcResourceIdentifier.cpp \
+                    JniOcSecurity.cpp
 
 LOCAL_LDLIBS := -llog
 LOCAL_STATIC_LIBRARIES := android-oc

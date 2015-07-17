@@ -576,20 +576,6 @@ void CALEClientTerminateGattMutexVariables();
  */
 void CALEClientSetSendFinishFlag(bool flag);
 
-/**
- * @brief   set the flag whether WriteCharacteristicCB is called
- * @param   flag                  [IN] flag
- * @return  None
- */
-void CALEClientSetWriteCharacteristicCBFlag(bool flag);
-
-/**
- * @brief   set the flag whether Send Request is called
- * @param   flag                  [IN] flag
- * @return  None
- */
-void CALEClientSetTheSendRequestFlag(bool flag);
-
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

@@ -56,6 +56,11 @@ static EDRDeviceList *g_edrDeviceList = NULL;
 static CAEDRDataReceivedCallback g_edrPacketReceivedCallback = NULL;
 
 /**
+ * @var g_edrErrorHandler
+ * @brief Error callback to update error in EDR
+ */
+static CAEDRErrorHandleCallback g_edrErrorHandler = NULL;
+/**
  * @fn CAEDRManagerInitializeMutex
  * @brief This function creates mutex.
  */
@@ -138,6 +143,11 @@ static CAResult_t CAEDRClientDisconnect(const int32_t clientID);
 void CAEDRSetPacketReceivedCallback(CAEDRDataReceivedCallback packetReceivedCallback)
 {
     g_edrPacketReceivedCallback = packetReceivedCallback;
+}
+
+void CAEDRSetErrorHandler(CAEDRErrorHandleCallback errorHandleCallback)
+{
+    g_edrErrorHandler = errorHandleCallback;
 }
 
 void CAEDRSocketConnectionStateCallback(int result, bt_socket_connection_state_e state,

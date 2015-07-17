@@ -102,6 +102,9 @@ liboctbstack_src = [
 	'../../extlibs/cjson/cJSON.c',
 	'../../extlibs/timer/timer.c',
 	OCTBSTACK_SRC + 'ocstack.c',
+	OCTBSTACK_SRC + 'ocpayload.c',
+	OCTBSTACK_SRC + 'ocpayloadparse.c',
+	OCTBSTACK_SRC + 'ocpayloadconvert.c',
 	OCTBSTACK_SRC + 'occlientcb.c',
 	OCTBSTACK_SRC + 'ocresource.c',
 	OCTBSTACK_SRC + 'ocobserve.c',
@@ -112,11 +115,15 @@ liboctbstack_src = [
 	'ocrandom/src/ocrandom.c'
 	]
 
+liboctbstack_src.extend(env['cbor_files'])
+
 if target_os in ['arduino','darwin','ios'] :
 	static_liboctbstack = liboctbstack_env.StaticLibrary('octbstack', liboctbstack_src)
 	liboctbstack_env.InstallTarget(static_liboctbstack, 'liboctbstack')
+	liboctbstack_env.UserInstallTargetLib(static_liboctbstack, 'liboctbstack')
 else:
 	static_liboctbstack = liboctbstack_env.StaticLibrary('octbstack', liboctbstack_src)
 	shared_liboctbstack = liboctbstack_env.SharedLibrary('octbstack', liboctbstack_src)
 	liboctbstack_env.InstallTarget([static_liboctbstack, shared_liboctbstack], 'liboctbstack')
+	liboctbstack_env.UserInstallTargetLib([static_liboctbstack, shared_liboctbstack], 'liboctbstack')
 

@@ -135,7 +135,7 @@ CAResult_t CAGetLEAddress(char **local_address);
  * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
  * @retval #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAStartBleGattServer();
+CAResult_t CAStartLEGattServer();
 
 /**
  * @brief  Used to stop BLE Gatt Service.
@@ -145,13 +145,13 @@ CAResult_t CAStartBleGattServer();
  * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
  * @retval #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAStopBleGattServer();
+CAResult_t CAStopLEGattServer();
 
 /**
  * @brief  Used to stop Gatt Server thread and remove service registration, stop advertising.
  * @return NONE
  */
-void CATerminateBleGattServer();
+void CATerminateLEGattServer();
 
 /**
  * @brief  Used to store upper layer callback locally which will be used to send the data to
@@ -159,7 +159,7 @@ void CATerminateBleGattServer();
  * @param  callback [IN] Callback function to pass the data to CA layer.
  * @return NONE
  */
-void CASetBLEReqRespServerCallback(CABLEServerDataReceivedCallback callback);
+void CASetLEReqRespServerCallback(CABLEServerDataReceivedCallback callback);
 
 /**
  * @brief  Used to update characteristics(Read/Write) value that we want to send to particular
@@ -189,7 +189,7 @@ CAResult_t CAUpdateCharacteristicsToGattClient(const char* address, const char *
  * @retval #CA_STATUS_FAILED Operation failed
  */
 CAResult_t CAUpdateCharacteristicsToAllGattClients(const char *charValue,
-                                                   const uint32_t charValueLen);
+                                                   uint32_t charValueLen);
 
 /**
  * @brief  Used to start CAStartBleGattClientThread for initializing Gatt Client
@@ -199,7 +199,7 @@ CAResult_t CAUpdateCharacteristicsToAllGattClients(const char *charValue,
  * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
  * @retval #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAStartBLEGattClient();
+CAResult_t CAStartLEGattClient();
 
 /**
  * @brief  Used to stop Gatt Client gracefully in turn it will call CATerminateBLEGattClient
@@ -209,13 +209,19 @@ CAResult_t CAStartBLEGattClient();
  * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
  * @retval #CA_STATUS_FAILED Operation failed
  */
-void CAStopBLEGattClient();
+void CAStopLEGattClient();
 
 /**
  * @brief  Used to unset all the callbacks and stop service discovery
  * @return NONE
  */
-void CATerminateBLEGattClient();
+void CATerminateLEGattClient();
+
+/**
+ * @brief API to read the data from characteristics and invoke notifyCallback.
+ * @return - NONE
+ */
+void CACheckLEData();
 
 /**
  * @brief  Sets the value of characteristic and update the value to GATTServer(unicast).
@@ -255,7 +261,7 @@ CAResult_t  CAUpdateCharacteristicsToAllGattServers(const char  *data, uint32_t 
  *
  * @return  void
  */
-void CASetBLEReqRespClientCallback(CABLEClientDataReceivedCallback callback);
+void CASetLEReqRespClientCallback(CABLEClientDataReceivedCallback callback);
 
 /**
  * @brief  Used to Set the gThreadPool handle which is required for spawning new thread.
@@ -267,7 +273,7 @@ void CASetBLEReqRespClientCallback(CABLEClientDataReceivedCallback callback);
  * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
  * @retval #CA_STATUS_FAILED Operation failed
  */
-void CASetBleServerThreadPoolHandle(ca_thread_pool_t handle);
+void CASetLEServerThreadPoolHandle(ca_thread_pool_t handle);
 
 /**
 * @brief  Used to Set the gThreadPool handle which is required for spawning new thread.
@@ -275,7 +281,7 @@ void CASetBleServerThreadPoolHandle(ca_thread_pool_t handle);
 *                    task.
 * @return NONE
 */
-void CASetBleClientThreadPoolHandle(ca_thread_pool_t handle);
+void CASetLEClientThreadPoolHandle(ca_thread_pool_t handle);
 
 /**
  * @brief  Used to unset the callback of adapter connection state change.
@@ -286,6 +292,33 @@ void CASetBleClientThreadPoolHandle(ca_thread_pool_t handle);
  * @retval #CA_STATUS_FAILED Operation failed
  */
 CAResult_t CAUnSetLEAdapterStateChangedCb();
+
+/**
+ * @brief This will be used to notify errors in BLE adapter
+ * @param  remoteAddress    [IN] Remote endpoint Address
+ * @param  serviceUUID      [IN] Service UUID
+ * @param  data             [IN] Data received
+ * @param  dataLength       [IN] Length of the data received
+ * @param  result           [IN] error code as per CAResult_t
+ * @return NONE
+ */
+typedef void (*CABLEErrorHandleCallback)(const char *remoteAddress, const void *data,
+                                         uint32_t dataLength, CAResult_t result);
+/**
+ * @brief  sets the error handle callback
+ * @param  callback [IN] Callback function to update error to the adapter
+ * @return NONE
+ */
+void CASetBLEClientErrorHandleCallback(CABLEErrorHandleCallback callback);
+
+
+/**
+ * @brief  sets the error handle callback
+ * @param  callback [IN] Callback function to update error to the adapter
+ * @return NONE
+ */
+void CASetBLEServerErrorHandleCallback(CABLEErrorHandleCallback callback);
+
 #ifdef __cplusplus
 }
 #endif

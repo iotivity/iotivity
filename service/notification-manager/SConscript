@@ -68,15 +68,13 @@ notimgr_src = [
         NOTI_SRC_DIR + 'requestHandler.c',
         NOTI_SRC_DIR + 'virtualResource.c']
 
-if target_os == 'android':
-        notimgr_src.append(NOTI_SRC_DIR + 'resourceCoordinator_JNI.cpp')
-
 if target_os in ['tizen','android'] :
     notificationsdk = notimgr_env.SharedLibrary('NotificationManager', notimgr_src)
 else :
     notificationsdk = notimgr_env.StaticLibrary('NotificationManager', notimgr_src)
 
 notimgr_env.InstallTarget(notificationsdk, 'libResouceHosting')
+notimgr_env.UserInstallTargetLib(notificationsdk, 'libResouceHosting')
 
 # Go to build sample apps
 SConscript('SampleApp/SConscript')

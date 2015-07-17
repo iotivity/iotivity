@@ -31,7 +31,7 @@ import org.iotivity.base.OcResource;
 import android.util.Log;
 
 public class FoundResource implements OcPlatform.OnResourceFoundListener {
-    final private static String TAG = "FoundResource";
+    final private static String TAG = "PPMSampleApp : FoundResource";
 
     public void onResourceFound(OcResource resource) {
 

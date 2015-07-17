@@ -87,6 +87,8 @@ int main(int argc, char* argv[])
 
     OCPlatform::Configure(cfg);
 
+    OCPlatform::startPresence(30);
+
     int selectedMenu;
     OCStackResult result;
     OCResourceHandle speakerResourceHandle = NULL;

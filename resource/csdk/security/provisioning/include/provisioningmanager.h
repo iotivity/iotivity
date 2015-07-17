@@ -55,17 +55,6 @@ typedef enum
 
 } SPResult;
 
-/**
- * Connectivity types.
- */
-typedef enum
-{
-    SP_IPV4         = (1 << 0),
-    SP_IPV6         = (1 << 1),
-    SP_CONN_EDR     = (1 << 2),
-    SP_CONN_LE      = (1 << 3)
-} SPConnectivityType;
-
 typedef struct SPTargetDeviceInfo SPTargetDeviceInfo_t;
 typedef struct SPDevInfo SPDevInfo_t;
 
@@ -74,12 +63,10 @@ typedef struct SPDevInfo SPDevInfo_t;
  */
 struct SPTargetDeviceInfo
 {
-    char ip[DEV_ADDR_SIZE_MAX];            /**< IP address in IPv4 dot-decimal notation. **/
-    int port;                              /**< Remote endpoint port. **/
-    SPConnectivityType connType;           /**< Connectivity type. **/
-    OicSecPstat_t *pstat;                  /**< Pointer to target's pstat resource. **/
-    OicSecDoxm_t *doxm;                    /**< Pointer to target's doxm resource. **/
-    SPTargetDeviceInfo_t *next;            /**< Next pointer. **/
+    OCDevAddr endpoint;             /**< target address **/
+    OicSecPstat_t *pstat;           /**< Pointer to target's pstat resource. **/
+    OicSecDoxm_t *doxm;             /**< Pointer to target's doxm resource. **/
+    SPTargetDeviceInfo_t *next;     /**< Next pointer. **/
 };
 
 /**
@@ -87,13 +74,10 @@ struct SPTargetDeviceInfo
  */
 struct SPDevInfo
 {
-    OicUuid_t deviceId;                    /**< Device ID. **/
-    char ip[DEV_ADDR_SIZE_MAX];            /**< IP address in IPv4 dot-decimal notation. **/
-    int port;                              /**< Remote endpoint port. **/
-    SPConnectivityType connType;           /**< Connectivity type. **/
-    SPDevInfo_t *next;                     /**< Next pointer. **/
+    OCDevAddr endpoint;             /**< target address **/
+    OicUuid_t deviceId;             /**< Device ID. **/
+    SPDevInfo_t *next;              /**< Next pointer. **/
 };
-
 
 /**
  * The function is responsible for discovery of device is current subnet. It will list

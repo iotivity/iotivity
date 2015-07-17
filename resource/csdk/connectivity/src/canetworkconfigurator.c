@@ -21,19 +21,18 @@
 #include <stdlib.h>
 
 #include "canetworkconfigurator.h"
-#include "cainterfacecontroller_singlethread.h"
+#include "cainterfacecontroller.h"
 #include "uarraylist.h"
 #include "logger.h"
 
-#define TAG "CANW"
+#define TAG "CA_NW_CONFIG"
 
 static u_arraylist_t *g_selectedNetworkList = NULL;
-static uint32_t NETWORK_IP = CA_IPV4;
-static uint32_t NETWORK_EDR = CA_EDR;
-static uint32_t NETWORK_LE = CA_LE;
+static uint32_t NETWORK_IP = CA_ADAPTER_IP;
+static uint32_t NETWORK_RFCOMM = CA_ADAPTER_RFCOMM_BTEDR;
+static uint32_t NETWORK_GATT = CA_ADAPTER_GATT_BTLE;
 
-
-CAResult_t CAAddNetworkType(CATransportType_t transportType)
+CAResult_t CAAddNetworkType(CATransportAdapter_t transportType)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     if (NULL == g_selectedNetworkList)
@@ -50,9 +49,7 @@ CAResult_t CAAddNetworkType(CATransportType_t transportType)
     CAResult_t res = CA_STATUS_OK;
     switch (transportType)
     {
-        case CA_IPV4:
-        {
-
+        case CA_ADAPTER_IP:
 #ifndef IP_ADAPTER
             OIC_LOG(DEBUG, TAG, "Add network type(IP) - Not Supported");
             return CA_NOT_SUPPORTED;
@@ -64,48 +61,37 @@ CAResult_t CAAddNetworkType(CATransportType_t transportType)
                 goto exit;
             }
             res = u_arraylist_add(g_selectedNetworkList, &NETWORK_IP);
-        }
-        break;
-        case CA_IPV6:
-        {
-            OIC_LOG(ERROR, TAG, "Currently IPV6 is not supported");
-            return CA_NOT_SUPPORTED;
-        }
+            break;
 
-        case CA_EDR:
-        {
-
+        case CA_ADAPTER_RFCOMM_BTEDR:
 #ifndef EDR_ADAPTER
             OIC_LOG(DEBUG, TAG, "Add network type(EDR) - Not Supported");
             return CA_NOT_SUPPORTED;
 #endif /* EDR_ADAPTER */
 
             OIC_LOG(DEBUG, TAG, "Add network type(EDR)");
-            if (u_arraylist_contains(g_selectedNetworkList, &NETWORK_EDR))
+            if (u_arraylist_contains(g_selectedNetworkList, &NETWORK_RFCOMM))
             {
                 goto exit;
             }
-            res = u_arraylist_add(g_selectedNetworkList, &NETWORK_EDR);
-        }
-        break;
+            res = u_arraylist_add(g_selectedNetworkList, &NETWORK_RFCOMM);
+            break;
 
-        case CA_LE:
-        {
-
+        case CA_ADAPTER_GATT_BTLE:
 #ifndef LE_ADAPTER
             OIC_LOG(DEBUG, TAG, "Add network type(LE) - Not Supported");
             return CA_NOT_SUPPORTED;
 #endif /* LE_ADAPTER */
 
             OIC_LOG(DEBUG, TAG, "Add network type(LE)");
-            if (u_arraylist_contains(g_selectedNetworkList, &NETWORK_LE))
+            if (u_arraylist_contains(g_selectedNetworkList, &NETWORK_GATT))
             {
                 goto exit;
             }
-            res = u_arraylist_add(g_selectedNetworkList, &NETWORK_LE);
-        }
-        break;
-
+            res = u_arraylist_add(g_selectedNetworkList, &NETWORK_GATT);
+            break;
+        default:
+            break;
     }
 
     if (CA_STATUS_OK != res)
@@ -114,7 +100,7 @@ CAResult_t CAAddNetworkType(CATransportType_t transportType)
         return res;
     }
     // start selected interface adapter
-    res = CAStartAdapter((CATransportType_t)transportType);
+    res = CAStartAdapter(transportType);
     OIC_LOG(DEBUG, TAG, "OUT");
     return res;
 
@@ -123,7 +109,7 @@ exit:
     return CA_STATUS_OK;
 }
 
-CAResult_t CARemoveNetworkType(CATransportType_t transportType)
+CAResult_t CARemoveNetworkType(CATransportAdapter_t transportType)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -143,14 +129,13 @@ CAResult_t CARemoveNetworkType(CATransportType_t transportType)
             continue;
         }
 
-        CATransportType_t connType = *(CATransportType_t *) ptrType;
+        CATransportAdapter_t connType = *(CATransportAdapter_t *)ptrType;
 
         if (transportType == connType)
         {
             switch (transportType)
             {
-                case CA_IPV4:
-
+                case CA_ADAPTER_IP:
 #ifndef IP_ADAPTER
                     OIC_LOG(DEBUG, TAG, "Remove network type(IP) - Not Supported");
                     return CA_NOT_SUPPORTED;
@@ -161,14 +146,7 @@ CAResult_t CARemoveNetworkType(CATransportType_t transportType)
 #endif /* IP_ADAPTER */
                     break;
 
-                case CA_IPV6:
-                {
-                    OIC_LOG(ERROR, TAG, "Currently IPV6 is not supported");
-                    return CA_NOT_SUPPORTED;
-                }
-
-                case CA_EDR:
-
+                case CA_ADAPTER_RFCOMM_BTEDR:
 #ifndef EDR_ADAPTER
                     OIC_LOG(DEBUG, TAG, "Remove network type(EDR) - Not Supported");
                     return CA_NOT_SUPPORTED;
@@ -176,11 +154,9 @@ CAResult_t CARemoveNetworkType(CATransportType_t transportType)
                     OIC_LOG(DEBUG, TAG, "Remove network type(EDR)");
                     u_arraylist_remove(g_selectedNetworkList, index);
 #endif /* EDR_ADAPTER */
-
                     break;
 
-                case CA_LE:
-
+                case CA_ADAPTER_GATT_BTLE:
 #ifndef LE_ADAPTER
                     OIC_LOG(DEBUG, TAG, "Remove network type(LE) - Not Supported");
                     return CA_NOT_SUPPORTED;
@@ -188,7 +164,9 @@ CAResult_t CARemoveNetworkType(CATransportType_t transportType)
                     OIC_LOG(DEBUG, TAG, "Remove network type(LE)");
                     u_arraylist_remove(g_selectedNetworkList, index);
 #endif /* LE_ADAPTER */
+                    break;
 
+                default:
                     break;
             }
 
@@ -206,7 +184,7 @@ u_arraylist_t *CAGetSelectedNetworkList()
     return g_selectedNetworkList;
 }
 
-CAResult_t CAGetNetworkInformationInternal(CALocalConnectivity_t **info, uint32_t *size)
+CAResult_t CAGetNetworkInformationInternal(CAEndpoint_t **info, uint32_t *size)
 {
     OIC_LOG(DEBUG, TAG, "get network information.");
 

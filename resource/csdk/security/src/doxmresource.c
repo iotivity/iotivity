@@ -34,9 +34,12 @@
 #include "credresource.h"
 #include "ocserverrequest.h"
 #include "srmutility.h"
-#include "uthash.h"
 #include <stdlib.h>
 #include <string.h>
+
+#if HAVE_STRINGS_H
+#include <strings.h>
+#endif
 
 #define TAG  PCF("SRM-DOXM")
 
@@ -253,7 +256,7 @@ OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr)
     if(jsonObj)
     {
         VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
-        if(jsonObj && cJSON_String == jsonObj->type)
+        if(cJSON_String == jsonObj->type)
         {
             //Check for empty string, in case DeviceId field has not been set yet
             if (jsonObj->valuestring[0])
@@ -300,6 +303,10 @@ exit:
     return doxm;
 }
 
+/**
+ * @todo document this function including why code might need to call this.
+ * The current suspicion is that it's not being called as much as it should.
+ */
 static bool UpdatePersistentStorage(OicSecDoxm_t * doxm)
 {
     bool bRet = false;
@@ -325,21 +332,75 @@ static bool UpdatePersistentStorage(OicSecDoxm_t * doxm)
     return bRet;
 }
 
+static bool ValidateQuery(unsigned char * query)
+{
+    // Send doxm resource data if the state of doxm resource
+    // matches with the query parameters.
+    // else send doxm resource data as NULL
+    // TODO Remove this check and rely on Policy Engine
+    // and Provisioning Mode to enforce provisioning-state
+    // access rules. Eventually, the PE and PM code will
+    // not send a request to the /doxm Entity Handler at all
+    // if it should not respond.
+    OC_LOG (INFO, TAG, PCF("In ValidateQuery"));
+    if(NULL == gDoxm)
+    {
+        return false;
+    }
+
+    OicParseQueryIter_t parseIter = {};
+
+    ParseQueryIterInit(query, &parseIter);
+
+    while(GetNextQuery(&parseIter))
+    {
+        if(strncasecmp((char *)parseIter.attrPos, OIC_JSON_OWNED_NAME, parseIter.attrLen) == 0)
+        {
+            if((strncasecmp((char *)parseIter.valPos, OIC_SEC_TRUE, parseIter.valLen) == 0) &&
+                    (gDoxm->owned))
+            {
+                return true;
+            }
+            else if((strncasecmp((char *)parseIter.valPos, OIC_SEC_FALSE, parseIter.valLen) == 0)
+                    && (!gDoxm->owned))
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 static OCEntityHandlerResult HandleDoxmGetRequest (const OCEntityHandlerRequest * ehRequest)
 {
-    // Convert Doxm data into JSON for transmission
-    char* jsonStr = BinToDoxmJSON(gDoxm);
+    char* jsonStr = NULL;
+    OCEntityHandlerResult ehRet = OC_EH_OK;
+
+    OC_LOG (INFO, TAG, PCF("Doxm EntityHandle processing GET request"));
+
+    //Checking if Get request is a query.
+    if(ehRequest->query)
+    {
+        OC_LOG (INFO, TAG, PCF("HandleDoxmGetRequest processing query"));
+        if(!ValidateQuery((unsigned char *)ehRequest->query))
+        {
+            ehRet = OC_EH_ERROR;
+        }
+    }
 
     /*
-     * A device should 'always' have a default Doxm. Therefore,
-     * jsonStr should never be NULL.
+     * For GET or Valid Query request return doxm resource json payload.
+     * For non-valid query return NULL json payload.
+     * A device will 'always' have a default Doxm, so BinToDoxmJSON will
+     * return valid doxm resource json.
      */
-    OCEntityHandlerResult ehRet = (jsonStr ? OC_EH_OK : OC_EH_ERROR);
+
+    jsonStr = (ehRet == OC_EH_OK) ? BinToDoxmJSON(gDoxm) : NULL;
 
     // Send response payload to request originator
     if(OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, jsonStr))
     {
-        OC_LOG (ERROR, TAG, PCF("SendSRMResponse failed in HandlePstatGetRequest"));
+        OC_LOG (ERROR, TAG, PCF("SendSRMResponse failed in HandleDoxmGetRequest"));
     }
 
     OICFree(jsonStr);
@@ -350,6 +411,7 @@ static OCEntityHandlerResult HandleDoxmGetRequest (const OCEntityHandlerRequest 
 
 static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest * ehRequest)
 {
+    OC_LOG (INFO, TAG, PCF("Doxm EntityHandle  processing PUT request"));
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
     OicUuid_t emptyOwner = {};
 
@@ -357,7 +419,7 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
      * Convert JSON Doxm data into binary. This will also validate
      * the Doxm data received.
      */
-    OicSecDoxm_t* newDoxm = JSONToDoxmBin((char *)(ehRequest->reqJSONPayload));
+    OicSecDoxm_t* newDoxm = JSONToDoxmBin(((OCSecurityPayload*)ehRequest->payload)->securityData);
 
     if (newDoxm)
     {
@@ -371,6 +433,7 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
              */
             if ((false == gDoxm->owned) && (false == newDoxm->owned))
             {
+                OC_LOG (INFO, TAG, PCF("Doxm EntityHandle  enabling AnonECDHCipherSuite"));
 #ifdef __WITH_DTLS__
                 ehRet = (CAEnableAnonECDHCipherSuite(true) == CA_STATUS_OK) ? OC_EH_OK : OC_EH_ERROR;
 #endif //__WITH_DTLS__
@@ -394,12 +457,12 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
 #ifdef __WITH_DTLS__
                 CAResult_t pskRet;
 
-                OCServerRequest * request = (OCServerRequest *)ehRequest->requestHandle;
+                OCServerRequest *request = (OCServerRequest *)ehRequest->requestHandle;
                 uint8_t ownerPSK[OWNER_PSK_LENGTH_128] = {};
 
                 //Generating OwnerPSK
-                pskRet = CAGenerateOwnerPSK(&request->addressInfo,
-                        request->connectivityType,
+                OC_LOG (INFO, TAG, PCF("Doxm EntityHandle  generating OwnerPSK"));
+                pskRet = CAGenerateOwnerPSK((CAEndpoint_t *)&request->devAddr,
                         (uint8_t*) OXM_JUST_WORKS, strlen(OXM_JUST_WORKS),
                         newDoxm->owner.id, sizeof(newDoxm->owner.id),
                         gDoxm->deviceID.id, sizeof(gDoxm->deviceID.id),
@@ -416,6 +479,7 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
                                 sizeof(base64Buff), &outLen);
                 VERIFY_SUCCESS(TAG, b64Ret == B64_OK, ERROR);
 
+                OC_LOG (INFO, TAG, PCF("Doxm EntityHandle  generating Credential"));
                 OicSecCred_t *cred = GenerateCredential(&newDoxm->owner, SYMMETRIC_PAIR_WISE_KEY,
                                         NULL, base64Buff, ownLen, &newDoxm->owner);
                 VERIFY_NON_NULL(TAG, cred, ERROR);
@@ -534,11 +598,10 @@ OCStackResult CreateDoxmResource()
  */
 void CheckDeviceID()
 {
-    //TODO: Save this deviceID at secure location so that we can retrieve it if the
-    //JSON gets corrupted.
     if(strcmp((char *)gDoxm->deviceID.id, "") == 0 )
     {
         OCFillRandomMem(gDoxm->deviceID.id, sizeof(gDoxm->deviceID.id));
+        UpdatePersistentStorage(gDoxm);
     }
 }
 

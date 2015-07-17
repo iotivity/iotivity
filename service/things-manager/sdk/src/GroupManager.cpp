@@ -23,12 +23,12 @@
  *
  */
 
-#include "GroupManager.h"
 #include <algorithm>
 #include <thread>
 #include <unistd.h>
-
 #include <string.h>
+
+#include "GroupManager.h"
 
 #define PLAIN_DELIMITER "\""
 #define ACTION_DELIMITER "*"
@@ -223,13 +223,13 @@ OCStackResult GroupManager::findCandidateResources(
     {
         // std::cout << "resourceTypes : " << resourceTypes.at(i) << std::endl;
 
-        std::string query = OC_MULTICAST_DISCOVERY_URI;
+        std::string query = OC_RSRVD_WELL_KNOWN_URI;
         query.append("?rt=");
         query.append(resourceTypes.at(i));
 
         OCPlatform::findResource("",
                 query,
-                OC_ALL,
+                CT_DEFAULT,
                 std::function < void(std::shared_ptr < OCResource > resource)
                         > (std::bind(&GroupManager::onFoundResource, this, std::placeholders::_1,
                                 waitsec)));
@@ -362,7 +362,7 @@ void GroupManager::checkCollectionRepresentation(const OCRepresentation& rep,
             result = OCPlatform::subscribePresence(presenceHandle, hostAddress,
                     // resourceType,
                     resourceTypes.front(),
-                    OC_ALL,
+                    CT_DEFAULT,
                     std::function<
                             void(OCStackResult result, const unsigned int nonce,
                                     const std::string& hostAddress) >(
@@ -486,6 +486,7 @@ ActionSet* GroupManager::getActionSetfromString(std::string description)
     char *plainPtr = NULL;
     char *attr = NULL, *desc = NULL;
 
+    Action *action = NULL;
     Capability *capa = NULL;
     ActionSet *actionset = new ActionSet();
 
@@ -540,7 +541,6 @@ ActionSet* GroupManager::getActionSetfromString(std::string description)
 
         if (desc != NULL)
         {
-            Action *action = NULL;
             strcpy(desc, token);
             token = strtok_r(desc, DESC_DELIMITER, &descPtr);
 
@@ -554,7 +554,7 @@ ActionSet* GroupManager::getActionSetfromString(std::string description)
                 token = strtok_r(attr, ATTR_DELIMITER, &attrPtr);
                 while (token != NULL)
                 {
-                    if (strcmp(token, "uri") == 0)
+                    if ( (action == NULL) && strcmp(token, "uri") == 0)    //consider only first "uri" as uri, other as attribute.
                     {
                         token = strtok_r(NULL, ATTR_DELIMITER, &attrPtr);
                         if(token == NULL)
@@ -596,7 +596,10 @@ ActionSet* GroupManager::getActionSetfromString(std::string description)
             }
 
             if( action != NULL )
+            {
                 actionset->listOfAction.push_back(action);
+                action = NULL;
+            }
             else
                 goto exit;
             //delete action;
@@ -612,10 +615,11 @@ ActionSet* GroupManager::getActionSetfromString(std::string description)
         token = strtok_r(NULL, ACTION_DELIMITER, &plainPtr);
     }
 
-    DELETE(plainText);
+    DELETEARRAY(plainText);
     return actionset;
 
 exit:
+    DELETE(action);
     DELETE(capa)
     DELETE(actionset)
     DELETEARRAY(attr);

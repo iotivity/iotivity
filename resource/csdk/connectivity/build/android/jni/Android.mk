@@ -12,18 +12,20 @@ $(info PLATFORM=$(APP_PLATFORM))
 #define build type
 BUILD = debug
 
-PROJECT_ROOT_PATH                       ?= ../..
-EXT_LIB_PATH                            = ../../../../../../extlibs
-PROJECT_API_PATH                        = $(PROJECT_ROOT_PATH)/api
-PROJECT_INC_PATH                        = $(PROJECT_ROOT_PATH)/inc
-PROJECT_SRC_PATH                        = $(PROJECT_ROOT_PATH)/src
-PROJECT_COMMON_PATH                     = $(PROJECT_ROOT_PATH)/common
-PROJECT_COMMON_INC_PATH                 = $(PROJECT_COMMON_PATH)/inc
-PROJECT_COMMON_SRC_PATH                 = $(PROJECT_COMMON_PATH)/src
-PROJECT_LIB_PATH                        = $(PROJECT_ROOT_PATH)/lib
-PROJECT_EXTERNAL_PATH                   = $(PROJECT_ROOT_PATH)/external/inc
-DTLS_LIB                                = $(EXT_LIB_PATH)/tinydtls
-#GLIB_PATH                               = ../../../../../../extlibs/glib/glib-2.40.2
+PROJECT_ROOT_PATH           ?= ../..
+ROOT_DIR_PATH               = ../../../../../..
+EXT_LIB_PATH                = $(ROOT_DIR_PATH)/extlibs
+PROJECT_API_PATH            = $(PROJECT_ROOT_PATH)/api
+PROJECT_INC_PATH            = $(PROJECT_ROOT_PATH)/inc
+PROJECT_SRC_PATH            = $(PROJECT_ROOT_PATH)/src
+PROJECT_COMMON_PATH         = $(PROJECT_ROOT_PATH)/common
+PROJECT_COMMON_INC_PATH     = $(PROJECT_COMMON_PATH)/inc
+PROJECT_COMMON_SRC_PATH     = $(PROJECT_COMMON_PATH)/src
+PROJECT_LIB_PATH            = $(PROJECT_ROOT_PATH)/lib
+PROJECT_EXTERNAL_PATH       = $(PROJECT_ROOT_PATH)/external/inc
+DTLS_LIB                    = $(EXT_LIB_PATH)/tinydtls
+OIC_C_COMMON_PATH           = $(ROOT_DIR_PATH)/resource/c_common
+#GLIB_PATH                  = ../../../../../../extlibs/glib/glib-2.40.2
 
 #Modify below values to enable/disable the Adapter
 #Suffix "NO_" to disable given adapter
@@ -74,6 +76,24 @@ include $(CLEAR_VARS)
 include $(DTLS_LIB)/Android.mk
 
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#Build OIC C Common libraries required for CA
+
+include $(CLEAR_VARS)
+LOCAL_MODULE = OICCommon
+
+#Build Common Libraries
+LOCAL_PATH = $(OIC_C_COMMON_PATH)
+LOCAL_CFLAGS = -D__ANDROID__ $(DEBUG_FLAG)
+LOCAL_CFLAGS += -std=c99
+
+LOCAL_C_INCLUDES = $(OIC_C_COMMON_PATH)/oic_malloc/include \
+                   $(OIC_C_COMMON_PATH)/oic_string/include
+LOCAL_SRC_FILES  = oic_malloc/src/oic_malloc.c \
+                   oic_string/src/oic_string.c
+
+include $(BUILD_STATIC_LIBRARY)
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #Build CACommon
 
 include $(CLEAR_VARS)
@@ -84,17 +104,20 @@ LOCAL_MODULE = CACommon
 LOCAL_LDLIBS += -L$(SYSROOT)/usr/lib -llog
 #LOCAL_SHARED_LIBRARIES = Glib GLibThread
 LOCAL_STATIC_LIBRARIES = rt pthread
+LOCAL_STATIC_LIBRARIES += OICCommon
 
 LOCAL_CFLAGS = -D__ANDROID__ $(DEBUG_FLAG)
 LOCAL_CFLAGS += -std=c99
 
 LOCAL_C_INCLUDES = $(PROJECT_COMMON_INC_PATH)
 LOCAL_C_INCLUDES += $(PROJECT_API_PATH)
+LOCAL_C_INCLUDES += $(OIC_C_COMMON_PATH)/oic_malloc/include
+LOCAL_C_INCLUDES += $(OIC_C_COMMON_PATH)/oic_string/include
 
-LOCAL_SRC_FILES =       oic_logger.c \
-                        oic_console_logger.c logger.c oic_malloc.c \
-                        uarraylist.c uqueue.c oic_string.c \
-                        cathreadpool_pthreads.c camutex_pthreads.c
+LOCAL_SRC_FILES =       oic_logger.c oic_console_logger.c logger.c \
+                        uarraylist.c uqueue.c \
+                        cathreadpool_pthreads.c camutex_pthreads.c \
+                        caremotehandler.c
 
 include $(BUILD_STATIC_LIBRARY)
 
@@ -138,17 +161,20 @@ LOCAL_C_INCLUDES += $(PROJECT_COMMON_INC_PATH)
 LOCAL_C_INCLUDES += $(PROJECT_INC_PATH)
 LOCAL_C_INCLUDES += $(PROJECT_LIB_PATH)/libcoap-4.1.1
 LOCAL_C_INCLUDES += $(PROJECT_EXTERNAL_PATH)
+LOCAL_C_INCLUDES += $(OIC_C_COMMON_PATH)/oic_malloc/include
+LOCAL_C_INCLUDES += $(OIC_C_COMMON_PATH)/oic_string/include
+
 LOCAL_C_INCLUDES += $(DTLS_LIB)
 
 LOCAL_CFLAGS += $(BUILD_FLAG)
 LOCAL_CFLAGS += -std=c99 -DWITH_POSIX
 
 LOCAL_SRC_FILES = \
-                caconnectivitymanager.c caremotehandler.c cainterfacecontroller.c \
+                caconnectivitymanager.c cainterfacecontroller.c \
                 camessagehandler.c canetworkconfigurator.c caprotocolmessage.c \
                 caretransmission.c caqueueingthread.c \
                 $(ADAPTER_UTILS)/caadapternetdtls.c $(ADAPTER_UTILS)/caadapterutils.c \
-                $(ADAPTER_UTILS)/camsgparser.c \
+                $(ADAPTER_UTILS)/cafragmentation.c \
                 bt_le_adapter/caleadapter.c $(LE_ADAPTER_PATH)/caleclient.c \
                 $(LE_ADAPTER_PATH)/caleserver.c $(LE_ADAPTER_PATH)/caleutils.c \
                 $(LE_ADAPTER_PATH)/calenwmonitor.c \

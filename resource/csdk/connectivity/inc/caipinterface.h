@@ -43,27 +43,37 @@ extern "C"
  */
 typedef enum
 {
-    CA_UNICAST_SERVER = 0,    /**< Unicast Server */
-    CA_MULTICAST_SERVER,      /**< Multicast Server */
-    CA_SECURED_UNICAST_SERVER /**< Secured Unicast Server */
+    CA_UNICAST_SERVER = 0,      /**< Unicast Server */
+    CA_MULTICAST_SERVER,        /**< Multicast Server */
+    CA_SECURED_UNICAST_SERVER   /**< Secured Unicast Server */
 } CAAdapterServerType_t;
 
 /**
  * @brief Callback to be notified on reception of any data from remote OIC devices.
  *
- * @param  ipAddress    [IN] IP address of remote OIC device.
- * @param  port         [IN] Port number on which data is received.
+ * @param  endpoint     [IN] network endpoint description
  * @param  data         [IN] Data received from remote OIC device.
  * @param  dataLength   [IN] Length of data in bytes.
- * @param  isSecured    [IN] Indicates the data is secure or not.
- * @param  identity     [IN] Identity of the remote OIC device.
  *
  * @return NONE
  * @pre  Callback must be registered using CAIPSetPacketReceiveCallback()
  */
-typedef void (*CAIPPacketReceivedCallback)(const char *ipAddress, uint16_t port,
-                                           const void *data, uint32_t dataLength,
-                                           bool isSecured, const CARemoteId_t *identity);
+typedef void (*CAIPPacketReceivedCallback)(const CAEndpoint_t *endpoint,
+                                           const void *data,
+                                           uint32_t dataLength);
+
+/**
+  * @brief Callback to notify error in the IP adapter
+  *
+  * @param  endpoint     [IN] [IN] network endpoint description
+  * @param  data         [IN] Data sent/received
+  * @param  dataLength   [IN] Length of data in bytes.
+  * @param  result       [IN] result of request from R.I
+  * @return NONE
+  * @pre  Callback must be registered using CAIPSetPacketReceiveCallback()
+ */
+typedef void (*CAIPErrorHandleCallback)(const CAEndpoint_t *endpoint, const void *data,
+                                        uint32_t dataLength, CAResult_t result);
 
 /**
  * @brief  Callback to be notified when exception occures on multicast/unicast server.
@@ -114,8 +124,6 @@ CAResult_t CAIPStartMulticastServer(const char *localAddress, const char *multic
  * @param  localAddress [IN]      Local adapter address to which server to be binded.
  * @param  port         [IN,OUT]  Port number on which server will be running. If binding
  *                                the port failed, server starts in the next available port.
- * @param  forceStart   [IN]      Indicate whether to start server forcesfully on specified port
- *                                or not.
  * @param  secured      [IN]      True if the secure server to be started, otherwise false.
  *
  * @return  #CA_STATUS_OK or Appropriate error code
@@ -124,8 +132,7 @@ CAResult_t CAIPStartMulticastServer(const char *localAddress, const char *multic
  * @retval  #CA_SERVER_STARTED_ALREADY Unicast server is already started and running.
  * @retval  #CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAIPStartUnicastServer(const char *localAddress, uint16_t *port, bool forceStart,
-                                  bool secured);
+CAResult_t CAIPStartUnicastServer(const char *localAddress, uint16_t *port, bool secured);
 
 /**
  * @brief  Stop servers that are running in particular interface address.
@@ -218,20 +225,36 @@ void CAIPSetPacketReceiveCallback(CAIPPacketReceivedCallback callback);
 void CAIPSetExceptionCallback(CAIPExceptionCallback callback);
 
 /**
+ * @brief  Set socket description for sending unicast UDP data. Once the Unicast server is started,
+ *         the same socket descriptor is used for sending the Unicast UDP data.
+ *
+ * @param  socketFD [IN]  Socket descriptor used for sending UDP data.
+ * @return  NONE
+ */
+void CAIPSetUnicastSocket(int socketFD);
+
+/**
+ * @brief  Set the port number for sending unicast UDP data
+ * @param  port [IN] Port number used for sending UDP data.
+ * @return NONE
+ */
+void CAIPSetUnicastPort(uint16_t port);
+
+/**
  * @brief  API to send unicast UDP data
  *
- * @param  remoteAddress    [IN] IP address to which data needs to be sent.
- * @param  port             [IN] Port to which data needs to be send.
+ * @param  endpoint         [IN] complete network address to send to
  * @param  data             [IN] Data to be send.
  * @param  dataLength       [IN] Length of data in bytes
  * @param  isMulticast      [IN] Whether data needs to be sent to multicast ip
- * @param  isSecured        [IN] Whether data to be sent on secured channel.
  *
  * @return  The number of bytes sent on the network. Returns 0 on error.
  * @remarks isSecure will be ignored when isMulticast is true.
  */
-uint32_t CAIPSendData(const char *remoteAddress, uint16_t port, const void *data,
-                      uint32_t dataLength, bool isMulticast, bool isSecure);
+uint32_t CAIPSendData(const CAEndpoint_t *endpoint,
+                      const void *data,
+                      uint32_t dataLength,
+                      bool isMulticast);
 
 /**
  * @brief  Callback to be notified when IP adapter connection state changes.
@@ -281,6 +304,12 @@ CAResult_t CAIPStartNetworkMonitor();
 CAResult_t CAIPStopNetworkMonitor();
 
 /**
+ * @brief  Pull the Received Data
+ * @return NONE
+ */
+void CAIPPullData();
+
+/**
  * @brief  Get local adapter network information.
  *
  * @param  netInterfaceList [OUT] network interface information list
@@ -321,6 +350,14 @@ CAResult_t CAIPGetInterfaceSubnetMask(const char *ipAddress, char **subnetMask);
  * @return NONE
  */
 void CAIPSetConnectionStateChangeCallback(CAIPConnectionStateChangeCallback callback);
+
+/**
+ * @brief  Set callback for error handling
+ *
+ * @param  ipErrorCallback [IN] callback to notify error to the ipadapter
+ * @return NONE
+ */
+void CAIPSetErrorHandleCallback(CAIPErrorHandleCallback ipErrorCallback);
 
 #ifdef __cplusplus
 }

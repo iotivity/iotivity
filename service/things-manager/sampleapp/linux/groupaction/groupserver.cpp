@@ -479,13 +479,13 @@ int main()
 
                 if (n == 9)
                 {
-                    std::string query = OC_MULTICAST_DISCOVERY_URI;
+                    std::string query = OC_RSRVD_WELL_KNOWN_URI;
                     query.append("?rt=");
                     query.append(resourceTypeName);
 
                     OCPlatform::findResource("",
                             query,
-                            OC_ALL,
+                            CT_DEFAULT,
                             &foundResource);
 
                     // OCPlatform::findResource("",
@@ -495,13 +495,13 @@ int main()
                 }
                 else if (n == 0)
                 {
-                    std::string query = OC_MULTICAST_DISCOVERY_URI;
+                    std::string query = OC_RSRVD_WELL_KNOWN_URI;
                     query.append("?rt=");
                     query.append("core.bookmark");
 
                     OCPlatform::findResource("",
                             query,
-                            OC_ALL,
+                            CT_DEFAULT,
                             &foundResource);
                     // OCPlatform::findResource("",
                     //         query,

@@ -36,12 +36,28 @@
 #define OC_JSON_SUFFIX_LEN                 (sizeof(OC_JSON_SUFFIX) - 1)
 #define OC_JSON_SEPARATOR                  ','
 #define OC_JSON_SEPARATOR_STR              ","
+#define OC_KEY_VALUE_DELIMITER             "="
 
 /**
  * Static values for various JSON attributes.
  */
 #define OC_RESOURCE_OBSERVABLE   1
 #define OC_RESOURCE_SECURE       1
+
+/**
+ * OIC Virtual resources supported by every OIC device.
+ */
+typedef enum
+{
+    OC_UNKNOWN_URI =0,
+    OC_WELL_KNOWN_URI,          ///< "/oic/res"
+    OC_DEVICE_URI,              ///< "/oic/d"
+    OC_PLATFORM_URI,            ///< "/oic/p"
+    OC_RESOURCE_TYPES_URI,      ///< "/oic/res/types/d"
+#ifdef WITH_PRESENCE
+    OC_PRESENCE,                ///< "/oic/ad"
+#endif
+} OCVirtualResources;
 
 /**
  * The type of query a request/response message is.
@@ -75,11 +91,6 @@ typedef enum
  */
 OCEntityHandlerResult defaultResourceEHandler(OCEntityHandlerFlag flag,
         OCEntityHandlerRequest * request, void* callbackParam);
-
-/**
- * Get string value associated with a virtual resource type.
- */
-const char * GetVirtualResourceUri(OCVirtualResources resource);
 
 /**
  * Find and retrieve pointer to a resource associated with a specific resource
@@ -137,11 +148,8 @@ void DeleteDeviceInfo();
  * Prepares a JSON string for response.
  */
 OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
-                                           uint8_t filterOn,
-                                           const char *filterValue,
-                                           char * out,
-                                           uint16_t *remaining,
-                                           CATransportType_t connType);
+                                           OCDiscoveryPayload* payload,
+                                           CATransportAdapter_t adapter);
 
 /**
  * A helper function that Maps an @ref OCEntityHandlerResult type to an

@@ -109,40 +109,63 @@ namespace OC
     *  Data structure to provide the configuration.
     *  ServiceType: indicate InProc or OutOfProc
     *  ModeType   : indicate whether we want to do server, client or both
-    *  ipAddress  : ip address of server.
-    *               if you specify 0.0.0.0 : it listens on any interface.
-    *  port       : port of server.
-    *             : if you specify 0 : next available random port is used.
-    *             : if you specify 5683 : client discovery can work even if they don't specify port.
-    *  QoS        : Quality of Service : CONFIRMABLE or NON CONFIRMABLE.
+    *  ServerConnectivity : default flags for server
+    *  ClientConnectivity : default flags for client
+    *  QoS        : indicate Quality of Service : LowQos, MidQos,HighQos and NaQos(No quality Defined).
+    *  ps         : persistant storage Handler structure (open/read/write/close/unlink)
     */
     struct PlatformConfig
     {
         ServiceType                serviceType;
         ModeType                   mode;
-        std::string                ipAddress;
-        uint16_t                   port;
-
+        OCConnectivityType         serverConnectivity;
+        OCConnectivityType         clientConnectivity;
+        std::string                ipAddress;   // not used
+        uint16_t                   port;        // not used
         QualityOfService           QoS;
+        OCPersistentStorage        *ps;
 
         public:
             PlatformConfig()
                 : serviceType(ServiceType::InProc),
                 mode(ModeType::Both),
+                serverConnectivity(CT_DEFAULT),
+                clientConnectivity(CT_DEFAULT),
                 ipAddress("0.0.0.0"),
                 port(0),
-                QoS(QualityOfService::NaQos)
+                QoS(QualityOfService::NaQos),
+                ps(nullptr)
         {}
+            PlatformConfig(const ServiceType serviceType_,
+            const ModeType mode_,
+            OCConnectivityType serverConnectivity_,
+            OCConnectivityType clientConnectivity_,
+            const QualityOfService QoS_,
+            OCPersistentStorage *ps_ = nullptr)
+                : serviceType(serviceType_),
+                mode(mode_),
+                serverConnectivity(serverConnectivity_),
+                clientConnectivity(clientConnectivity_),
+                ipAddress(""),
+                port(0),
+                QoS(QoS_),
+                ps(ps_)
+        {}
+            // for backward compatibility
             PlatformConfig(const ServiceType serviceType_,
             const ModeType mode_,
             const std::string& ipAddress_,
             const uint16_t port_,
-            const QualityOfService QoS_)
+            const QualityOfService QoS_,
+            OCPersistentStorage *ps_ = nullptr)
                 : serviceType(serviceType_),
                 mode(mode_),
+                serverConnectivity(CT_DEFAULT),
+                clientConnectivity(CT_DEFAULT),
                 ipAddress(ipAddress_),
                 port(port_),
-                QoS(QoS_)
+                QoS(QoS_),
+                ps(ps_)
         {}
     };
 
@@ -194,7 +217,7 @@ namespace OC
     const std::string BATCH_INTERFACE = "oic.if.b";
 
     // Used in GET, PUT, POST methods on links to other remote resources of a group.
-    const std::string GROUP_INTERFACE = "oc.mi.grp";
+    const std::string GROUP_INTERFACE = "oic.mi.grp";
 
 
     typedef std::function<void(std::shared_ptr<OCResource>)> FindCallback;

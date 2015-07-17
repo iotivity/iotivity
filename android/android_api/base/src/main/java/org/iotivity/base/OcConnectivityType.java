@@ -25,11 +25,10 @@ package org.iotivity.base;
 import java.security.InvalidParameterException;
 
 public enum OcConnectivityType {
-    IPV4    (0),
-    IPV6    (1),
-    EDR     (2),
-    LE      (3),
-    ALL     (4),
+    CT_DEFAULT (0),
+    CT_ADAPTER_IP (1 << 16),
+    CT_ADAPTER_GATT_BTLE (1 << 17),
+    CT_ADAPTER_RFCOMM_BTEDR (1 << 18),
     ;
 
     private int value;
@@ -43,9 +42,13 @@ public enum OcConnectivityType {
     }
 
     public static OcConnectivityType get(int val) {
+        // val is a combination of OcConnectivityType and OcConnectivityFlags
         for (OcConnectivityType v : OcConnectivityType.values()) {
-            if (v.getValue() == val)
-                return v;
+            for (OcConnectivityFlags f : OcConnectivityFlags.values()) {
+                int value = v.getValue() + f.getValue();
+                if (value == val)
+                    return v;
+            }
         }
         throw new InvalidParameterException("Unexpected OcConnectivityType value:" + val);
     }

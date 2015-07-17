@@ -47,8 +47,8 @@
  *                               "destination".
  * @return  #CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t RMRouteMessageHandler(CAInfo_t *message, const CARemoteEndpoint_t *sender,
-                                 CARemoteEndpoint_t *destination);
+CAResult_t RMRouteMessageHandler(CAInfo_t *message, const CAEndpoint_t *sender,
+                                 CAEndpoint_t *destination);
 
 CAResult_t RMInitialize()
 {
@@ -67,8 +67,8 @@ CAResult_t RMTerminate()
 }
 
 // destination memory is allocated here.
-CAResult_t RMRouteMessageHandler(CAInfo_t *info, const CARemoteEndpoint_t *sender,
-                                 CARemoteEndpoint_t *destination)
+CAResult_t RMRouteMessageHandler(CAInfo_t *info, const CAEndpoint_t *sender,
+                                 CAEndpoint_t *destination)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     VERIFY_NON_NULL(info, TAG, "info");
@@ -115,8 +115,8 @@ CAResult_t RMRouteMessageHandler(CAInfo_t *info, const CARemoteEndpoint_t *sende
     {
         OIC_LOG(INFO, TAG, "Destination route info is present");
 
-        destination->transportType = RMGetAddressInfo(routeOption.destAddr,
-                                                      &destination->addressInfo);
+        destination->adapter= RMGetAddressInfo(routeOption.destAddr,
+                                                      destination->addr, &destination->port);
         memset(routeOption.destAddr, '\0', sizeof(routeOption.destAddr));
     }
 

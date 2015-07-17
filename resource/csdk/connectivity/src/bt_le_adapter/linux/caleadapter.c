@@ -31,8 +31,9 @@ static CANetworkPacketReceivedCallback g_leReceivedCallback = NULL;
 static ca_thread_pool_t g_threadPoolHandle = NULL;
 
 CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
-                          CANetworkPacketReceivedCallback reqRespCallback, CANetworkChangeCallback netCallback,
-                          ca_thread_pool_t handle)
+                          CANetworkPacketReceivedCallback reqRespCallback,
+                          CANetworkChangeCallback netCallback,
+                          CAErrorHandleCallback errorCallback, ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, TAG, "CAInitializeLE");
 
@@ -40,8 +41,7 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
     g_threadPoolHandle = handle;
 
     // register handlers
-    CAConnectivityHandler_t handler;
-    memset(&handler, 0, sizeof(CAConnectivityHandler_t));
+    CAConnectivityHandler_t handler = {};
 
     handler.startAdapter = CAStartLE;
     handler.startListenServer = CAStartLEListeningServer;
@@ -53,7 +53,7 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
     handler.stopAdapter = CAStopLE;
     handler.terminate = CATerminateLE;
 
-    registerCallback(handler, CA_LE);
+    registerCallback(handler, CA_ADAPTER_GATT_BTLE);
 
     return CA_STATUS_OK;
 }
@@ -79,21 +79,21 @@ CAResult_t CAStartLEDiscoveryServer()
     return CA_STATUS_OK;
 }
 
-int32_t CASendLEUnicastData(const CARemoteEndpoint_t *endpoint, const void *data, uint32_t dataLen)
+int32_t CASendLEUnicastData(const CAEndpoint_t *endpoint, const void *data, uint32_t dataLen)
 {
     OIC_LOG(DEBUG, TAG, "CASendLEUnicastData");
 
     return -1;
 }
 
-int32_t CASendLEMulticastData(const void *data, uint32_t dataLen)
+int32_t CASendLEMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t dataLen)
 {
     OIC_LOG(DEBUG, TAG, "CASendLEMulticastData");
 
     return -1;
 }
 
-CAResult_t CAGetLEInterfaceInformation(CALocalConnectivity_t **info, uint32_t *size)
+CAResult_t CAGetLEInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
 {
     OIC_LOG(DEBUG, TAG, "CAGetLEInterfaceInformation");
 

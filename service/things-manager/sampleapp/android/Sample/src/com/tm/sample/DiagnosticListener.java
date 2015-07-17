@@ -32,7 +32,7 @@ import android.util.Log;
  */
 public class DiagnosticListener implements IDiagnosticsListener {
 
-    private final String LOG_TAG = this.getClass().getSimpleName();
+    private final String LOG_TAG = "[TMSample] " + this.getClass().getSimpleName();
 
     @Override
     public void onRebootCallback(Vector<OcHeaderOption> headerOptions,

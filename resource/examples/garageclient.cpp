@@ -34,6 +34,14 @@ const int SUCCESS_RESPONSE = 0;
 std::shared_ptr<OCResource> curResource;
 std::mutex curResourceLock;
 
+static void printUsage()
+{
+    std::cout<<"Usage: garageclient <0|1> \n";
+    std::cout<<"ConnectivityType: Default IP\n";
+    std::cout<<"ConnectivityType 0: IPv4 \n";
+    std::cout<<"ConnectivityType 1: IPv6 \n";
+}
+
 class Garage
 {
 public:
@@ -288,6 +296,52 @@ int main(int argc, char* argv[]) {
 
     std::ostringstream requestURI;
 
+    OCConnectivityType connectivityType = CT_ADAPTER_IP;
+
+    if(argc == 2)
+    {
+        try
+        {
+            std::size_t inputValLen;
+            int optionSelected = std::stoi(argv[1], &inputValLen);
+
+            if(inputValLen == strlen(argv[1]))
+            {
+                if(optionSelected == 0)
+                {
+                    std::cout << "Using IPv4."<< std::endl;
+                    connectivityType = CT_IP_USE_V4;
+                }
+                else if(optionSelected == 1)
+                {
+                    std::cout << "IPv6 is currently not supported."<< std::endl;
+                    printUsage();
+                    return -1;
+                    //TODO: printUsage to be removed when IPv6 is available.
+                    //connectivityType = CT_IP_USE_V6;
+                }
+                else
+                {
+                    std::cout << "Invalid connectivity type selected. Using default IP"
+                        << std::endl;
+                }
+            }
+            else
+            {
+                std::cout << "Invalid connectivity type selected. Using default IP" << std::endl;
+            }
+        }
+        catch(std::exception& e)
+        {
+            std::cout << "Invalid input argument. Using IP as connectivity type" << std::endl;
+        }
+    }
+    else
+    {
+        printUsage();
+        std::cout << "Invalid input argument. Using IP as connectivity type" << std::endl;
+    }
+
     // Create PlatformConfig object
     PlatformConfig cfg {
         OC::ServiceType::InProc,
@@ -301,10 +355,10 @@ int main(int argc, char* argv[]) {
     try
     {
         // Find all resources
-        requestURI << OC_MULTICAST_DISCOVERY_URI << "?rt=core.garage";
+        requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.garage";
 
         OCPlatform::findResource("", requestURI.str(),
-                OC_ALL, &foundResource);
+                connectivityType, &foundResource);
 
         std::cout<< "Finding Resource... " <<std::endl;
 

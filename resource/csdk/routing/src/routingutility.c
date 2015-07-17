@@ -115,7 +115,7 @@ CAResult_t RMAddEmptyRouteOption(CAHeaderOption_t **options, uint8_t *numOptions
     return CA_STATUS_OK;
 }
 
-CAResult_t RMAddDestToRouteOption(const CARemoteEndpoint_t *endpoint,
+CAResult_t RMAddDestToRouteOption(const CAEndpoint_t *endpoint,
                                   CAHeaderOption_t **options, uint8_t *numOptions)
 {
     OIC_LOG(DEBUG, TAG, "IN");
@@ -160,23 +160,23 @@ CAResult_t RMAddDestToRouteOption(const CARemoteEndpoint_t *endpoint,
         RMParseRouteOption(&destOptions[index], &routeOption);
     }
 
-    if ((CA_IPV4 == endpoint->destinationTransportType)
-        && (('\0' != endpoint->destinationInfo.IP.ipAddress[0])))
+    if ((CA_ADAPTER_IP == endpoint->destAdapter)
+        && (('\0' != endpoint->destAddr[0])))
     {
         sprintf(routeOption.destAddr, "%s%s:%d", IP_ADDRESS_PREFIX,
-                endpoint->destinationInfo.IP.ipAddress, endpoint->destinationInfo.IP.port);
+                endpoint->destAddr, endpoint->destPort);
     }
-    else if (CA_EDR == endpoint->destinationTransportType
-            && ('\0' != endpoint->destinationInfo.BT.btMacAddress[0]))
+    else if (CA_ADAPTER_RFCOMM_BTEDR == endpoint->destAdapter
+            && ('\0' != endpoint->destAddr[0]))
     {
         strcpy(routeOption.destAddr, EDR_ADDRESS_PREFIX);
-        strcat(routeOption.destAddr, endpoint->destinationInfo.BT.btMacAddress);
+        strcat(routeOption.destAddr, endpoint->destAddr);
     }
-    else if (CA_LE == endpoint->destinationTransportType
-            && ('\0' != endpoint->destinationInfo.LE.leMacAddress[0]))
+    else if (CA_ADAPTER_GATT_BTLE == endpoint->destAdapter
+            && ('\0' != endpoint->destAddr[0]))
     {
         strcpy(routeOption.destAddr, BLE_ADDRESS_PREFIX);
-        strcat(routeOption.destAddr, endpoint->destinationInfo.LE.leMacAddress);
+        strcat(routeOption.destAddr, endpoint->destAddr);
     }
 
     CAResult_t res = RMCreateRouteOption(&routeOption, destOptions + index);
@@ -198,7 +198,7 @@ CAResult_t RMAddDestToRouteOption(const CARemoteEndpoint_t *endpoint,
     return CA_STATUS_OK;
 }
 
-CAResult_t RMAddSourceToRouteOption(const CARemoteEndpoint_t *endpoint,
+CAResult_t RMAddSourceToRouteOption(const CAEndpoint_t *endpoint,
                                     CAHeaderOption_t **options, uint8_t *numOptions)
 {
     OIC_LOG(DEBUG, TAG, "IN");
@@ -247,23 +247,23 @@ CAResult_t RMAddSourceToRouteOption(const CARemoteEndpoint_t *endpoint,
     OIC_LOG_V(INFO, TAG, "Option Sender addr: %s", routeOption.srcAddr);
     OIC_LOG_V(INFO, TAG, "Option destination addr: %s", routeOption.destAddr);
 
-    if ((CA_IPV4 == endpoint->transportType)
-        && (('\0' != endpoint->addressInfo.IP.ipAddress[0])))
+    if ((CA_ADAPTER_IP == endpoint->adapter)
+        && (('\0' != endpoint->addr[0])))
     {
-        sprintf(routeOption.srcAddr, "%s%s:%d", IP_ADDRESS_PREFIX, endpoint->addressInfo.IP.ipAddress,
-                endpoint->addressInfo.IP.port);
+        sprintf(routeOption.srcAddr, "%s%s:%d", IP_ADDRESS_PREFIX, endpoint->addr,
+                endpoint->port);
     }
-    else if (CA_EDR == endpoint->transportType
-            && ('\0' != endpoint->addressInfo.BT.btMacAddress[0]))
+    else if (CA_ADAPTER_RFCOMM_BTEDR == endpoint->adapter
+            && ('\0' != endpoint->addr[0]))
     {
         strcpy(routeOption.srcAddr, EDR_ADDRESS_PREFIX);
-        strcat(routeOption.srcAddr, endpoint->addressInfo.BT.btMacAddress);
+        strcat(routeOption.srcAddr, endpoint->addr);
     }
-    else if (CA_LE == endpoint->transportType
-            && ('\0' != endpoint->addressInfo.LE.leMacAddress[0]))
+    else if (CA_ADAPTER_GATT_BTLE == endpoint->adapter
+            && ('\0' != endpoint->addr[0]))
     {
         strcpy(routeOption.srcAddr, BLE_ADDRESS_PREFIX);
-        strcat(routeOption.srcAddr, endpoint->addressInfo.LE.leMacAddress);
+        strcat(routeOption.srcAddr, endpoint->addr);
     }
 
     CAResult_t res = RMCreateRouteOption(&routeOption, srcOptions + index);
@@ -314,7 +314,7 @@ CAResult_t RMRemoveRouteOption(CAHeaderOption_t *options, uint8_t *numOptions)
 }
 
 CAResult_t RMGetDestinationAddress(const CAHeaderOption_t *options, const uint8_t numOptions,
-                                   CARemoteEndpoint_t *endpoint)
+                                   CAEndpoint_t *endpoint)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -334,9 +334,9 @@ CAResult_t RMGetDestinationAddress(const CAHeaderOption_t *options, const uint8_
         return CA_STATUS_FAILED;
     }
 
-    endpoint->destinationTransportType = RMGetAddressInfo(routeOptions.srcAddr,
-                                                          &endpoint->destinationInfo);
-    if (-1 == endpoint->destinationTransportType)
+    endpoint->destAdapter = RMGetAddressInfo(routeOptions.srcAddr, endpoint->destAddr,
+                                             &endpoint->destPort);
+    if (-1 == endpoint->destAdapter)
     {
         OIC_LOG(ERROR, TAG, "Unknown transport type");
         return CA_STATUS_FAILED;
@@ -439,7 +439,7 @@ CAResult_t RMParseRouteOption(const CAHeaderOption_t *options, RMRouteOption_t *
     return CA_STATUS_OK;
 }
 
-CATransportType_t RMGetAddressInfo(const char *addr, CAAddress_t *addrInfo)
+CATransportAdapter_t RMGetAddressInfo(const char *addr, char *addrInfo, uint16_t *port)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     VERIFY_NON_NULL(addr, TAG, addr);
@@ -456,33 +456,33 @@ CATransportType_t RMGetAddressInfo(const char *addr, CAAddress_t *addrInfo)
         if (NULL == index)
         {
             OIC_LOG(ERROR, TAG, "port number is not present");
-            addrInfo->IP.port = DEFAULT_PORT; //Assign default port
-            memcpy(addrInfo->IP.ipAddress, addr + ADDRESS_PREFIX_LEN,
+            *port = DEFAULT_PORT; //Assign default port
+            memcpy(addrInfo, addr + ADDRESS_PREFIX_LEN,
                    strlen(addr) - ADDRESS_PREFIX_LEN);
         }
         else
         {
-            addrInfo->IP.port = atoi(index + 1);
-            memcpy(addrInfo->IP.ipAddress, addr + ADDRESS_PREFIX_LEN,
+            *port = atoi(index + 1);
+            memcpy(addrInfo, addr + ADDRESS_PREFIX_LEN,
                    (index - addr) - ADDRESS_PREFIX_LEN);
         }
-        OIC_LOG_V(INFO, TAG, "IP Address is %s and Port is %d", addrInfo->IP.ipAddress,
-                  addrInfo->IP.port);
-        return CA_IPV4;
+        OIC_LOG_V(INFO, TAG, "IP Address is %s and Port is %d", addrInfo,
+                  *port);
+        return CA_ADAPTER_IP;
     }
     else if (0 == strcmp(addrPrefix, EDR_ADDRESS_PREFIX))
     {
         OIC_LOG(INFO, TAG, "Address is EDR");
-        memcpy(addrInfo->BT.btMacAddress, addr + ADDRESS_PREFIX_LEN, CA_MACADDR_SIZE - 1);
-        OIC_LOG_V(INFO, TAG, "EDR Address is %s", addrInfo->BT.btMacAddress);
-        return CA_EDR;
+        memcpy(addrInfo, addr + ADDRESS_PREFIX_LEN, CA_MACADDR_SIZE - 1);
+        OIC_LOG_V(INFO, TAG, "EDR Address is %s", addrInfo);
+        return CA_ADAPTER_RFCOMM_BTEDR;
     }
     else if (0 == strcmp(addrPrefix, BLE_ADDRESS_PREFIX))
     {
         OIC_LOG(INFO, TAG, "Address is BLE");
-        memcpy(addrInfo->LE.leMacAddress, addr + ADDRESS_PREFIX_LEN, CA_MACADDR_SIZE - 1);
-        OIC_LOG_V(INFO, TAG, "BLE Address is %s", addrInfo->LE.leMacAddress);
-        return CA_LE;
+        memcpy(addrInfo, addr + ADDRESS_PREFIX_LEN, CA_MACADDR_SIZE - 1);
+        OIC_LOG_V(INFO, TAG, "BLE Address is %s", addrInfo);
+        return CA_ADAPTER_GATT_BTLE;
     }
 
     OIC_LOG(DEBUG, TAG, "OUT");

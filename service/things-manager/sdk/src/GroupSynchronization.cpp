@@ -73,12 +73,12 @@ namespace OIC
         for (unsigned int i = 0; i < collectionResourceTypes.size(); ++i)
         {
 
-            std::string query = OC_MULTICAST_DISCOVERY_URI;
+            std::string query = OC_RSRVD_WELL_KNOWN_URI;
             query.append("?rt=");
             query.append(collectionResourceTypes.at(i));
 
             OCPlatform::findResource("", query,
-                    OC_ALL,
+                    CT_DEFAULT,
                     std::bind(&GroupSynchronization::onFindGroup, this,
                         std::placeholders::_1));
         }
@@ -288,7 +288,7 @@ namespace OIC
         OCResource::Ptr groupSyncResource =
                         OCPlatform::constructResourceObject(host, uri,
 
-                            OC_ALL, false,
+                            CT_DEFAULT, false,
                             resourceTypes, resourceInterface);
 
         // OCResource::Ptr groupSyncResource = OCPlatform::constructResourceObject(host, uri,
@@ -466,7 +466,7 @@ OCStackResult GroupSynchronization::leaveGroup(
 
         OCResource::Ptr groupSyncResource;
         groupSyncResource = OCPlatform::constructResourceObject(host, uri,
-                OC_ALL, false,
+                CT_DEFAULT, false,
                 resourceTypes, resourceInterface);
         // groupSyncResource = OCPlatform::constructResourceObject(host, uri,
         //         OC_WIFI, false, resourceTypes, resourceInterface);
@@ -697,7 +697,7 @@ OCStackResult GroupSynchronization::leaveGroup(
 
                     if (methodType == "joinGroup")
                     {
-                        std::string resourceName = OC_MULTICAST_DISCOVERY_URI;
+                        std::string resourceName = OC_RSRVD_WELL_KNOWN_URI;
                         resourceName.append("?rt=");
                         resourceName.append(resourceType);
                         OC_LOG_V(DEBUG, TAG, "\t\t\tresourceName : %s", resourceName.c_str());
@@ -705,7 +705,7 @@ OCStackResult GroupSynchronization::leaveGroup(
                         resourceRequest = request;
 
                         OCPlatform::findResource("", resourceName,
-                            OC_ALL,
+                            CT_DEFAULT,
                             std::bind(&GroupSynchronization::onFindResource, this,
                                 std::placeholders::_1));
 

@@ -171,7 +171,7 @@ bool isResourceReady()
 int main(int argc, char* argv[])
 {
     ostringstream requestURI;
-    requestURI << OC_MULTICAST_DISCOVERY_URI << "?rt=a.collection";
+    requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=a.collection";
 
     PlatformConfig config
     { OC::ServiceType::InProc, ModeType::Client, "0.0.0.0", 0, OC::QualityOfService::LowQos };
@@ -185,7 +185,7 @@ int main(int argc, char* argv[])
         string resourceTypeName = "a.collection";
 
         OCPlatform::findResource("", requestURI.str(),
-                                 OC_ALL, &foundResource);
+                                 CT_DEFAULT, &foundResource);
 
         //Non-intensive block until foundResource callback is called by OCPlatform
         //and onGet gets resource.
