@@ -23,6 +23,7 @@
 
 #include <list>
 #include <string>
+#include <boost/atomic.hpp>
 
 #include "BrokerTypes.h"
 #include "ResourcePresence.h"
@@ -36,7 +37,7 @@ namespace OIC
         class DevicePresence
         {
         public:
-            using TimerID = long long;
+            typedef long long TimerID;
 
             DevicePresence();
             ~DevicePresence();
@@ -53,8 +54,8 @@ namespace OIC
             std::list<ResourcePresence * > resourcePresenceList;
 
             std::string address;
-            std::atomic<DEVICE_STATE> state;
-            std::atomic_bool isRunningTimeOut;
+            boost::atomic<DEVICE_STATE> state;
+            boost::atomic_bool isRunningTimeOut;
 
             std::mutex timeoutMutex;
             std::condition_variable condition;

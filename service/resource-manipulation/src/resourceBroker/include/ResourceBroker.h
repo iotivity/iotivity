@@ -38,11 +38,11 @@ namespace OIC
         class ResourceBroker
         {
         public:
-            class InvalidParameterException: public PrimitiveException
+            class InvalidParameterException: public RCSException
             {
             public:
                 InvalidParameterException(std::string&& what)
-                : PrimitiveException{ std::move(what) } {}
+                : RCSException{ std::move(what) } {}
             };
             class FailedSubscribePresenceException: public PlatformException
             {

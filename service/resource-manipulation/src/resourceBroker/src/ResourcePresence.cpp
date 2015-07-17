@@ -45,6 +45,7 @@ namespace OIC
             state = BROKER_STATE::REQUESTED;
             isWithinTime = true;
             mode = BROKER_MODE::NON_PRESENCE_MODE;
+            timeoutHandle = 0;
 
             requesterList = nullptr;
 
@@ -186,7 +187,7 @@ namespace OIC
             time(&currentTime);
             currentTime += 0L;
 
-            if((receivedTime.load(std::memory_order_relaxed) == 0) ||
+            if((receivedTime.load(boost::memory_order_consume) == 0) ||
               ((receivedTime + BROKER_SAFE_SECOND) > currentTime ))
             {
                 this->isWithinTime = false;

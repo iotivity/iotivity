@@ -19,7 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "DevicePresence.h"
-#include "PrimitiveException.h"
+#include "RCSException.h"
 
 namespace OIC
 {
@@ -120,7 +120,8 @@ namespace OIC
                 {
                     OC_LOG_V(DEBUG, BROKER_TAG, "SEQ# %d",seq);
                     state = DEVICE_STATE::ALIVE;
-                    OC_LOG_V(DEBUG, BROKER_TAG, "device state : %d",(int)state);
+                    OC_LOG_V(DEBUG, BROKER_TAG, "device state : %d",
+                            (int)(state.load(boost::memory_order_consume)));
                     changeAllPresenceMode(BROKER_MODE::DEVICE_PRESENCE_MODE);
                     presenceTimerHandle
                     = presenceTimer.postTimer(BROKER_DEVICE_PRESENCE_TIMEROUT, pTimeoutCB);
