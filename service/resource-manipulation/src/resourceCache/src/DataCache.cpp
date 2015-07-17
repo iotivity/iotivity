@@ -43,6 +43,9 @@ namespace OIC
 
             state = CACHE_STATE::READY_YET;
 
+            networkTimeOutHandle = 0;
+            pollingHandle = 0;
+
             pObserveCB = (ObserveCB)(std::bind(&DataCache::onObserve, this,
                     std::placeholders::_1, std::placeholders::_2,
                     std::placeholders::_3, std::placeholders::_4));
