@@ -18,72 +18,71 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef _EXPIRY_TIMER_Impl_H_
-#define _EXPIRY_TIMER_Impl_H_
+#ifndef _EXPIRY_TIMER_IMPL_H_
+#define _EXPIRY_TIMER_IMPL_H_
 
-// CHECKER_WAIT_TIME : checker thread waits new request for 10 seconds
-#define CHECKER_WAIT_TIME 10
-
-#include <iostream>
 #include <functional>
 #include <map>
 #include <mutex>
 #include <thread>
 #include <chrono>
 #include <condition_variable>
+#include <random>
 
-class ExpiryTimer_Impl
+class ExpiryTimerImpl
 {
 public:
     typedef unsigned int Id;
-    typedef std::function<void*(Id)> TimerCb;
+    typedef std::function<void(Id)> CB;
 
-    typedef long long DelayMilliSec;
-    typedef std::chrono::milliseconds milliSeconds;
-    typedef std::chrono::duration<int64_t, std::milli> milliDelayTime;
+    typedef long long DelayInMilliSec;
+    typedef std::chrono::milliseconds MilliSeconds;
+    typedef std::chrono::duration<int64_t, std::milli> MilliDelayTime;
     typedef std::chrono::duration<int64_t, std::milli> ExpiredTime;
 
 private:
     struct TimerCBInfo
     {
         Id m_id;
-        TimerCb m_cb;
+        CB m_cB;
     };
 
 private:
-   ExpiryTimer_Impl();
-   ExpiryTimer_Impl(const ExpiryTimer_Impl&);
-   ExpiryTimer_Impl& operator=(const ExpiryTimer_Impl&);
-   ~ExpiryTimer_Impl();
+   ExpiryTimerImpl();
+   ExpiryTimerImpl(const ExpiryTimerImpl&) = delete;
+   ExpiryTimerImpl& operator=(const ExpiryTimerImpl&) = delete;
+   ~ExpiryTimerImpl();
 
 public:
-    static ExpiryTimer_Impl* getInstance();
+    static ExpiryTimerImpl* getInstance();
     void destroyInstance();
 
-    Id postTimer(DelayMilliSec, TimerCb);
-    bool cancelTimer(Id);
+    Id post(DelayInMilliSec, CB);
+    bool cancel(Id);
 
 private:
-   Id generateID();
+   Id generateId();
 
-   void insertTimerCBInfo(ExpiredTime, TimerCb ,Id);
-   ExpiredTime countExpireTime(milliSeconds);
+   void insertTimerCBInfo(ExpiredTime, CB ,Id);
+   ExpiredTime countExpireTime(MilliSeconds);
 
-   void createChecker();
-   void doChecker();
+   void runChecker();
 
-   void doExecutor(ExpiredTime);
+   void runExecutor(ExpiredTime);
 
 private:
-   static ExpiryTimer_Impl* s_instance;
-   static std::once_flag* mflag;
+   static ExpiryTimerImpl* s_instance;
+   static std::once_flag* s_flag;
 
-   std::multimap<ExpiredTime, TimerCBInfo> mTimerCBList;
+   std::multimap<ExpiredTime, TimerCBInfo> m_timerCBList;
 
-   std::thread check;
+   std::thread m_checkerThread;
    std::mutex m_mutex;
-   std::mutex cond_mutex;
    std::condition_variable m_cond;
+
+   std::random_device m_device;
+   std::default_random_engine m_engine;
+   std::uniform_int_distribution<Id> m_dist;
 
 public:
    class ExecutorThread
@@ -96,8 +95,8 @@ public:
        void executorFunc(TimerCBInfo);
 
    private:
-       std::thread execute;
+       std::thread m_executorThread;
    };
 };
 
-#endif //_EXPIRY_TIMER_Impl_H_
+#endif //_EXPIRY_TIMER_IMPL_H_

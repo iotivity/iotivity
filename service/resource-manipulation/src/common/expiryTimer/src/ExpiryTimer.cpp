@@ -19,47 +19,43 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "ExpiryTimer.h"
-#include "ExpiryTimer_Impl.h"
-
-ExpiryTimer_Impl* timerPtr;
+#include "ExpiryTimerImpl.h"
 
 ExpiryTimer::ExpiryTimer()
 {
-    timerPtr = ExpiryTimer_Impl::getInstance();
+    timerPtr = ExpiryTimerImpl::getInstance();
 }
 
 ExpiryTimer::~ExpiryTimer()
 {
+    cancelAll();
 }
 
-void ExpiryTimer::destroyTimer()
+void ExpiryTimer::cancelAll()
 {
-    for(auto it : mTimerIDList)
+    for(auto id : m_timerIDList)
     {
-        timerPtr->cancelTimer(it);
+        timerPtr->cancel(id);
     }
-    timerPtr->destroyInstance();
-    mTimerIDList.clear();
-
-    this->~ExpiryTimer();
+    m_timerIDList.clear();
 }
 
-ExpiryTimer::TimerID ExpiryTimer::postTimer(DelayMilliSec sec, TimerCB cb)
+ExpiryTimer::Id ExpiryTimer::postTimer(DelayInMilliSec milliSec, CB cb)
 {
-    TimerID retID = 0;
-
-    retID = timerPtr->postTimer(sec, cb);
-    mTimerIDList.push_back(retID);
+    Id retID = timerPtr->post(milliSec, std::move(cb));
+    m_timerIDList.push_back(retID);
 
     return retID;
 }
 
-bool ExpiryTimer::cancelTimer(TimerID timerID)
+bool ExpiryTimer::cancelTimer(Id id)
 {
-    bool ret = false;
-
-    ret = timerPtr->cancelTimer(timerID);
-    mTimerIDList.remove(timerID);
+    bool ret = timerPtr->cancel(id);
+    m_timerIDList.remove(id);
 
     return ret;
+}
+
+void ExpiryTimer::destroyTimer()
+{
 }

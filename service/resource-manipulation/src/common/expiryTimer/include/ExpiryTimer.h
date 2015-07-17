@@ -22,27 +22,32 @@
 #define _EXPIRY_TIMER_H_
 
 #include <functional>
-#include <iostream>
 #include <list>
+
+class ExpiryTimerImpl;
 
 class ExpiryTimer
 {
 public:
-    typedef unsigned int TimerID;
-    typedef std::function<void*(TimerID)> TimerCB;
-    typedef long long DelayMilliSec;
+    typedef unsigned int Id;
+    typedef std::function<void(Id)> CB;
+    typedef long long DelayInMilliSec;
 
 public:
     ExpiryTimer();
     ~ExpiryTimer();
 
 public:
-    TimerID postTimer(DelayMilliSec sec, TimerCB);
-    bool cancelTimer(TimerID timerID);
-    void destroyTimer();
+    Id postTimer(DelayInMilliSec, CB); // will change name to post()
+    bool cancelTimer(Id); // will change name to cancel()
+    void destroyTimer(); // This function will be removed
 
 private:
-    std::list<TimerID> mTimerIDList;
+    void cancelAll();
+
+private:
+    std::list<Id> m_timerIDList;
+    ExpiryTimerImpl* timerPtr;
 };
 
-#endif //_TIMER_H_
+#endif //_EXPIRY_TIMER_H_

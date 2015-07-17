@@ -56,7 +56,7 @@ if target_os == 'linux':
 ######################################################################
 TIMER_SRC_DIR = 'src/'
 timer_src = [
-        TIMER_SRC_DIR + 'ExpiryTimer_Impl.cpp', TIMER_SRC_DIR + 'ExpiryTimer.cpp'
+        TIMER_SRC_DIR + 'ExpiryTimerImpl.cpp', TIMER_SRC_DIR + 'ExpiryTimer.cpp'
         ]
 
 if target_os in ['tizen','android'] :
