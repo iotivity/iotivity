@@ -456,4 +456,3 @@ void OICLogv(LogLevel level, const char *tag, const __FlashStringHelper *format,
 }
 
 #endif //ARDUINO
-

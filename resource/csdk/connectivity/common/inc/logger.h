@@ -67,7 +67,7 @@ typedef enum
 #else
 #define DEBUG DLOG_DEBUG
 #define INFO DLOG_INFO
-#define WARNING DLOG_WARNING
+#define WARNING DLOG_WARN
 #define ERROR DLOG_ERROR
 #define FATAL DLOG_ERROR
 #endif
@@ -204,4 +204,3 @@ void OICLogv(LogLevel level, PROGMEM const char *tag, const int16_t lineNum,
 }
 #endif // __cplusplus
 #endif /* U_LOGGER_H_ */
-
