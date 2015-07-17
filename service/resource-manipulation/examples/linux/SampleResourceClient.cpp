@@ -128,7 +128,7 @@ int main()
 
     try
     {
-        uri = OC_MULTICAST_DISCOVERY_URI + uri + "?rt=" + rt;
+        uri = OC_RSRVD_WELL_KNOWN_URI + uri + "?rt=" + rt;
         //discover the resource in the network
         discoveryManagerInstance->discoverResource(address, uri , CT_DEFAULT, &OnResourceDiscovered);
     }

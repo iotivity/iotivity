@@ -63,7 +63,7 @@ resourceClient_env.AppendUnique(CPPPATH = ['src/resourceCache/include'])
 
 resourceClient_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 
-resourceClient_env.PrependUnique(LIBS = ['oc', 'ResourceBroker' , 'ResourceCache', 'service_common', 'octbstack', 'gnustl_shared','oc_logger', 'compatibility', 'log'])
+resourceClient_env.PrependUnique(LIBS = ['oc', 'service_common', 'ResourceBroker' , 'ResourceCache', 'octbstack', 'gnustl_shared','oc_logger', 'compatibility', 'log'])
 
 
 if target_os not in ['windows', 'winrt']:
@@ -74,18 +74,19 @@ if target_os == 'linux':
 ######################################################################
 # Source files and Targets
 ######################################################################
-# resourceClient_src = 'src/'
-# client_src = [
-#        resourceClient_src+ 'ResourceClient.cpp']
-#ResourceClientsdk = resourceClient_env.StaticLibrary('ResourceClient', client_src)
-# resourceClient_env.InstallTarget(ResourceClientsdk , 'libResourceClient')
+resourceClient_src = 'src/'
+client_src = [
+        resourceClient_src+ 'ResourceClient.cpp']
+ResourceClientsdk = resourceClient_env.StaticLibrary('ResourceClient', client_src)
+resourceClient_env.InstallTarget(ResourceClientsdk , 'libResourceClient')
 
 ######################################################################
 # Build Sample App: SampleResourceClient & SampleResourceServer
 ######################################################################
-# SConscript('examples/SConscript')
+SConscript('examples/SConscript')
+
 ######################################################################
 # Build UnitTests Resource Client
 ################################################ ######################
-# SConscript('unittests/SConscript')
+SConscript('unittests/SConscript')
 

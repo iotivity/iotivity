@@ -45,7 +45,7 @@ void displayMenu()
 }
 
 //hander for get request (if developer choose second option for resource Creation)
-PrimitiveGetResponse RequestHandlerForGet(const PrimitiveRequest &request,
+RCSGetResponse RequestHandlerForGet(const RCSRequest &request,
         ResourceAttributes &attrs)
 {
     cout << "Recieved a Get request from Client" << std::endl;
@@ -58,11 +58,11 @@ PrimitiveGetResponse RequestHandlerForGet(const PrimitiveRequest &request,
         std::cout << "\tkey : " << iter->key() << "\n\tvalue : " << iter->value().toString() << std::endl;
         ++iter;
     }
-    return PrimitiveGetResponse::create(attr);
+    return RCSGetResponse::create(attr);
 }
 
 //hander for set request (if developer choose second option for resource Creation)
-PrimitiveSetResponse RequestHandlerForSet(const PrimitiveRequest &request,
+RCSSetResponse RequestHandlerForSet(const RCSRequest &request,
         ResourceAttributes &attrs)
 {
     cout << "Recieved a Set request from Client" << std::endl;
@@ -79,7 +79,7 @@ PrimitiveSetResponse RequestHandlerForSet(const PrimitiveRequest &request,
         std::cout << "\tkey : " << iter->key() << "\n\tvalue : " << iter->value().toString() << std::endl;
         ++iter;
     }
-    return PrimitiveSetResponse::create(attrs);
+    return RCSSetResponse::create(attrs);
 }
 
 int main(void)

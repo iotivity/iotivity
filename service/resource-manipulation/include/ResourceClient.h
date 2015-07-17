@@ -29,6 +29,7 @@
 
 #include<vector>
 #include "ResourceAttributes.h"
+#include "PrimitiveResource.h"
 
 namespace OIC
 {
@@ -62,7 +63,7 @@ namespace OIC
         /*
         * Forward Declaration of Classes
         */
-        class PrimitiveResource;
+        class RCSException;
         class RemoteResourceObject;
 
         /**
@@ -71,11 +72,11 @@ namespace OIC
          *             This class inherited from PrimitiveException class.
          *
          */
-        class BadRequestException: public PrimitiveException
+        class BadRequestException: public RCSException
         {
             public:
-                BadRequestException(const std::string &what) : PrimitiveException { what } {}
-                BadRequestException(std::string &&what) : PrimitiveException { std::move(what) } {}
+                BadRequestException(const std::string &what) : RCSException{ what } {}
+                BadRequestException(std::string &&what) : RCSException{ std::move(what) } {}
         };
 
         /**
@@ -83,11 +84,11 @@ namespace OIC
          * @brief    It is used to throw exception to the upper layer if parameter is invalid.
          *              This class inherited from PrimitiveException class.
          */
-        class InvalidParameterException: public PrimitiveException
+        class InvalidParameterException: public RCSException
         {
             public:
-                InvalidParameterException(const std::string &what) : PrimitiveException { what } {}
-                InvalidParameterException(std::string &&what) : PrimitiveException { std::move(what) } {}
+                InvalidParameterException(const std::string &what) : RCSException{ what } {}
+                InvalidParameterException(std::string &&what) : RCSException{ std::move(what) } {}
         };
 
         /**
