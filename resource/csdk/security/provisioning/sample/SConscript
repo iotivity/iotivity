@@ -72,4 +72,6 @@ sec_provisioning_src_dir = src_dir + '/resource/csdk/security/provisioning/sampl
 sec_provisioning_build_dir = env.get('BUILD_DIR') +'/resource/csdk/security/provisioning/sample/'
 
 provisioning_env.Alias("install", provisioning_env.Install( sec_provisioning_build_dir,
-    sec_provisioning_src_dir + 'oic_svr_db.json'))
+    sec_provisioning_src_dir + 'oic_svr_db_prov_tool.json'))
+provisioning_env.Alias("install", provisioning_env.Install( sec_provisioning_build_dir,
+    sec_provisioning_src_dir + 'oic_svr_db_unowned_server.json'))
