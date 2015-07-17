@@ -18,11 +18,10 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include <internal/RequestHandler.h>
-
-#include <internal/ResourceAttributesConverter.h>
+#include <RequestHandler.h>
 
 #include <OCResourceResponse.h>
+#include <ResourceAttributesConverter.h>
 
 namespace
 {
@@ -87,18 +86,18 @@ namespace
         return AttrKeyValuePairs();
     }
 
-    auto getApplyAcceptanceFunc(PrimitiveSetResponse::AcceptanceMethod method) ->
+    auto getApplyAcceptanceFunc(RCSSetResponse::AcceptanceMethod method) ->
             std::function<AttrKeyValuePairs(ResourceObject&, const ResourceAttributes&)>
     {
         switch (method)
         {
-            case PrimitiveSetResponse::AcceptanceMethod::DEFAULT:
+            case RCSSetResponse::AcceptanceMethod::DEFAULT:
                 return applyDefaultMethod;
 
-            case PrimitiveSetResponse::AcceptanceMethod::ACCEPT:
+            case RCSSetResponse::AcceptanceMethod::ACCEPT:
                 return applyAcceptMethod;
 
-            case PrimitiveSetResponse::AcceptanceMethod::IGNORE:
+            case RCSSetResponse::AcceptanceMethod::IGNORE:
                 return applyIgnoreMethod;
         }
 
@@ -171,7 +170,7 @@ namespace OIC
         }
 
         AttrKeyValuePairs SetRequestHandler::applyAcceptanceMethod(
-                PrimitiveSetResponse::AcceptanceMethod method, ResourceObject& resource,
+                RCSSetResponse::AcceptanceMethod method, ResourceObject& resource,
                 const ResourceAttributes& requestAttrs) const
         {
             return getApplyAcceptanceFunc(method)(resource, requestAttrs);

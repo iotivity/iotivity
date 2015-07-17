@@ -296,11 +296,10 @@ public:
 
         mc.addRepresentation(ocRep);
 
-        string json = mc.getJSONRepresentation(OCInfoFormat::IncludeOC);
         ocEntityHandlerRequest.requestHandle = fakeRequestHandle;
         ocEntityHandlerRequest.resource = fakeResourceHandle;
         ocEntityHandlerRequest.method = method;
-        ocEntityHandlerRequest.reqJSONPayload = &json[0];
+        ocEntityHandlerRequest.payload = reinterpret_cast<OCPayload*>(mc.getPayload());
 
         formResourceRequest(OC_REQUEST_FLAG, &ocEntityHandlerRequest, request);
 
@@ -352,15 +351,15 @@ TEST_F(ResourceObjectHandlingRequestTest, SendResponseWithSameHandlesPassedByReq
     ASSERT_EQ(OC_EH_OK, handler(createRequest()));
 }
 
-TEST_F(ResourceObjectHandlingRequestTest, SendResponseWithPrimitiveResponseResults)
+TEST_F(ResourceObjectHandlingRequestTest, SendResponseWithRCSResponseResults)
 {
     constexpr int errorCode{ 1999 };
     constexpr OCEntityHandlerResult result{ OC_EH_SLOW };
 
     server->setGetRequestHandler(
-            [](const PrimitiveRequest&, ResourceAttributes&) -> PrimitiveGetResponse
+            [](const RCSRequest&, ResourceAttributes&) -> RCSGetResponse
             {
-                return PrimitiveGetResponse::create(result, errorCode);
+                return RCSGetResponse::create(result, errorCode);
             }
     );
 
@@ -382,11 +381,11 @@ TEST_F(ResourceObjectHandlingRequestTest, SendSetResponseWithCustomAttrsAndResul
     constexpr char value[]{ "value" };
 
     server->setSetRequestHandler(
-            [](const PrimitiveRequest&, ResourceAttributes&) -> PrimitiveSetResponse
+            [](const RCSRequest&, ResourceAttributes&) -> RCSSetResponse
             {
                 ResourceAttributes attrs;
                 attrs[KEY] = value;
-                return PrimitiveSetResponse::create(attrs, result, errorCode);
+                return RCSSetResponse::create(attrs, result, errorCode);
             }
     );
 

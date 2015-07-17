@@ -18,48 +18,30 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef RES_MANIPULATION_PRIMITIVEEXCEPTION_H
-#define RES_MANIPULATION_PRIMITIVEEXCEPTION_H
+#ifndef SERVERBUILDER_PRIMITIVEREQUEST_H
+#define SERVERBUILDER_PRIMITIVEREQUEST_H
 
 #include <string>
-
-#include <octypes.h>
 
 namespace OIC
 {
     namespace Service
     {
 
-        class PrimitiveException: public std::exception
+        class RCSRequest
         {
         public:
-            PrimitiveException() {}
-            explicit PrimitiveException(const std::string& what) : m_what{ what } {}
-            explicit PrimitiveException(std::string&& what) : m_what{ std::move(what) } {}
+            explicit RCSRequest(const std::string& resourceUri);
 
-            virtual ~PrimitiveException() noexcept {}
+            RCSRequest& operator=(RCSRequest&) = delete;
 
-            virtual const char* what() const noexcept
-            {
-                return m_what.c_str();
-            }
+            std::string getResourceUri() const;
 
         private:
-            std::string m_what;
+            std::string m_resourceUri;
         };
 
-        class PlatformException: public PrimitiveException
-        {
-        public:
-            explicit PlatformException(OCStackResult reason);
-
-            OCStackResult getReasonCode() const;
-            std::string getReason() const;
-
-        private:
-            OCStackResult m_reason;
-        };
     }
 }
 
-#endif // RES_MANIPULATION_PRIMITIVEEXCEPTION_H
+#endif // SERVERBUILDER_PRIMITIVEREQUEST_H

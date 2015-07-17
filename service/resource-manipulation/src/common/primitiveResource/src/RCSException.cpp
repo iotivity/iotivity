@@ -18,7 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include <PrimitiveException.h>
+#include <RCSException.h>
 
 #include <OCException.h>
 
@@ -27,9 +27,29 @@ namespace OIC
     namespace Service
     {
 
+        RCSException::RCSException()
+        {
+        }
+
+        RCSException::RCSException(const std::string& what) :
+                m_what{ what }
+        {
+        }
+
+        RCSException::RCSException(std::string&& what) :
+                m_what{ std::move(what) }
+        {
+        }
+
+        const char* RCSException::what() const noexcept
+        {
+            return m_what.c_str();
+        }
+
+
         PlatformException::PlatformException(OCStackResult reason) :
-            PrimitiveException{ "Failed : " + OC::OCException::reason(reason) },
-            m_reason { reason }
+                RCSException{ "Failed : " + OC::OCException::reason(reason) },
+                m_reason { reason }
         {
         }
 

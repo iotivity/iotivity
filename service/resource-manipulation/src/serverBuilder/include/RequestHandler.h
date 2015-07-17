@@ -18,13 +18,12 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef __REQUESTHANDLER_H
-#define __REQUESTHANDLER_H
+#ifndef SERVERBUILDER_REQUESTHANDLER_H
+#define SERVERBUILDER_REQUESTHANDLER_H
 
 #include <ResourceObject.h>
-#include <PrimitiveResponse.h>
-
-#include <internal/ResourceAttributesUtils.h>
+#include <RCSResponse.h>
+#include <ResourceAttributesUtils.h>
 
 namespace OC
 {
@@ -36,6 +35,7 @@ namespace OIC
 {
     namespace Service
     {
+
         class RequestHandler
         {
         private:
@@ -92,11 +92,11 @@ namespace OIC
                     const OCEntityHandlerResult& result = DEFAULT_RESULT,
                     int errorCode = DEFAULT_ERROR_CODE);
 
-            AttrKeyValuePairs applyAcceptanceMethod(PrimitiveSetResponse::AcceptanceMethod,
+            AttrKeyValuePairs applyAcceptanceMethod(RCSSetResponse::AcceptanceMethod,
                     ResourceObject&, const ResourceAttributes&) const;
         };
 
     }
 }
 
-#endif // __REQUESTHANDLER_H
+#endif // SERVERBUILDER_REQUESTHANDLER_H

@@ -20,8 +20,8 @@
 
 #include <ResourceAttributes.h>
 
-#include <internal/ResourceAttributesUtils.h>
-#include <internal/ResourceAttributesConverter.h>
+#include <ResourceAttributesUtils.h>
+#include <ResourceAttributesConverter.h>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/mpl/advance.hpp>

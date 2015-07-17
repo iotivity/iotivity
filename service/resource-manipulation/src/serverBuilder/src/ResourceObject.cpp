@@ -24,9 +24,9 @@
 #include <functional>
 #include <vector>
 
-#include <internal/RequestHandler.h>
-#include <internal/AssertUtils.h>
-#include <internal/ResourceAttributesConverter.h>
+#include <RequestHandler.h>
+#include <AssertUtils.h>
+#include <ResourceAttributesConverter.h>
 
 #include <logger.h>
 #include <OCPlatform.h>
@@ -35,7 +35,7 @@ namespace
 {
     using namespace OIC::Service;
 
-    constexpr char LOG_TAG[]{ "PrimitiveServerResource" };
+    constexpr char LOG_TAG[]{ "ResourceObject" };
 
     inline bool hasProperty(uint8_t base, uint8_t target)
     {
@@ -87,7 +87,7 @@ namespace
     {
         if (handler)
         {
-            return handler(PrimitiveRequest{ ocRequest->getResourceUri() }, attrs);
+            return handler(RCSRequest{ ocRequest->getResourceUri() }, attrs);
         }
 
         return RESPONSE::defaultAction();

@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef __OIC_RESOURCEOBJECT_H
-#define __OIC_RESOURCEOBJECT_H
+#ifndef SERVERBUILDER_RESOURCEOBJECT_H
+#define SERVERBUILDER_RESOURCEOBJECT_H
 
 #include <string>
 #include <mutex>
@@ -28,8 +28,8 @@
 #include <boost/atomic.hpp>
 
 #include <ResourceAttributes.h>
-#include <PrimitiveResponse.h>
-#include <PrimitiveRequest.h>
+#include <RCSResponse.h>
+#include <RCSRequest.h>
 
 namespace OC
 {
@@ -41,10 +41,10 @@ namespace OIC
     namespace Service
     {
 
-        class NoLockException: public PrimitiveException
+        class NoLockException: public RCSException
         {
         public:
-            NoLockException(std::string&& what) : PrimitiveException{ std::move(what) } {}
+            NoLockException(std::string&& what) : RCSException{ std::move(what) } {}
         };
 
         class ResourceObject
@@ -96,9 +96,9 @@ namespace OIC
 
             class LockGuard;
 
-            typedef std::function< PrimitiveGetResponse(const PrimitiveRequest&,
+            typedef std::function< RCSGetResponse(const RCSRequest&,
                         ResourceAttributes&) > GetRequestHandler;
-            typedef std::function< PrimitiveSetResponse(const PrimitiveRequest&,
+            typedef std::function< RCSSetResponse(const RCSRequest&,
                         ResourceAttributes&) > SetRequestHandler;
             typedef std::function< void(const ResourceAttributes::Value&,
                     const ResourceAttributes::Value&) > AttributeUpdatedHandler;
@@ -238,4 +238,4 @@ namespace OIC
     }
 }
 
-#endif // __OIC_RESOURCEOBJECT_H
+#endif // SERVERBUILDER_RESOURCEOBJECT_H

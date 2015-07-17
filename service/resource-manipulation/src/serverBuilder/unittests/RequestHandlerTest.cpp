@@ -21,7 +21,7 @@
 #include <gtest/gtest.h>
 #include <HippoMocks/hippomocks.h>
 
-#include <internal/RequestHandler.h>
+#include <RequestHandler.h>
 
 #include <OCPlatform.h>
 
@@ -116,7 +116,7 @@ protected:
 TEST_F(SetRequestHandlerAcceptanceTest, NothingReplacedWithIgnoreMethod)
 {
     auto replaced = setRequestHandler->applyAcceptanceMethod(
-            PrimitiveSetResponse::AcceptanceMethod::IGNORE, *server, requestAttrs);
+            RCSSetResponse::AcceptanceMethod::IGNORE, *server, requestAttrs);
 
     ASSERT_TRUE(replaced.empty());
 }
@@ -125,7 +125,7 @@ TEST_F(SetRequestHandlerAcceptanceTest, NothingReplacedWithIgnoreMethod)
 TEST_F(SetRequestHandlerAcceptanceTest, NewValueApplyedWithAcceptMethod)
 {
     setRequestHandler->applyAcceptanceMethod(
-            PrimitiveSetResponse::AcceptanceMethod::ACCEPT, *server, requestAttrs);
+            RCSSetResponse::AcceptanceMethod::ACCEPT, *server, requestAttrs);
 
     ASSERT_EQ(NEW_VALUE, server->getAttribute<int>(EXISTING));
 }
@@ -133,7 +133,7 @@ TEST_F(SetRequestHandlerAcceptanceTest, NewValueApplyedWithAcceptMethod)
 TEST_F(SetRequestHandlerAcceptanceTest, ReturnedAttrPairsHaveOldValue)
 {
     auto replaced = setRequestHandler->applyAcceptanceMethod(
-            PrimitiveSetResponse::AcceptanceMethod::ACCEPT, *server, requestAttrs);
+            RCSSetResponse::AcceptanceMethod::ACCEPT, *server, requestAttrs);
 
     ASSERT_EQ(ORIGIN_VALUE, replaced[0].second);
 }
@@ -141,7 +141,7 @@ TEST_F(SetRequestHandlerAcceptanceTest, ReturnedAttrPairsHaveOldValue)
 TEST_F(SetRequestHandlerAcceptanceTest, NothingHappenedWithEmptyAttrs)
 {
     setRequestHandler->applyAcceptanceMethod(
-            PrimitiveSetResponse::AcceptanceMethod::ACCEPT, *server, ResourceAttributes{ });
+            RCSSetResponse::AcceptanceMethod::ACCEPT, *server, ResourceAttributes{ });
 
     ASSERT_EQ(ORIGIN_VALUE, server->getAttribute<int>(EXISTING));
 }
@@ -151,7 +151,7 @@ TEST_F(SetRequestHandlerAcceptanceTest, EverythingAppliedIfMethodIsAccept)
     requestAttrs[EXISTING] = "";
 
     auto replaced = setRequestHandler->applyAcceptanceMethod(
-             PrimitiveSetResponse::AcceptanceMethod::ACCEPT, *server, requestAttrs);
+             RCSSetResponse::AcceptanceMethod::ACCEPT, *server, requestAttrs);
 
      ASSERT_EQ(ORIGIN_VALUE, replaced[0].second);
 }
@@ -162,7 +162,7 @@ TEST_F(SetRequestHandlerAcceptanceTest, NoReplaceIfMethodIsDefaultAndTypeMismatc
     requestAttrs[EXISTING] = "";
 
     auto replaced = setRequestHandler->applyAcceptanceMethod(
-             PrimitiveSetResponse::AcceptanceMethod::DEFAULT, *server, requestAttrs);
+             RCSSetResponse::AcceptanceMethod::DEFAULT, *server, requestAttrs);
 
      ASSERT_TRUE(replaced.empty());
 }
@@ -176,7 +176,7 @@ TEST_F(SetRequestHandlerAcceptanceTest, NoReplacefMethodIsDefaultAndRequestAttrs
 
 
     auto replaced = setRequestHandler->applyAcceptanceMethod(
-             PrimitiveSetResponse::AcceptanceMethod::DEFAULT, *server, requestAttrs);
+             RCSSetResponse::AcceptanceMethod::DEFAULT, *server, requestAttrs);
 
      ASSERT_TRUE(replaced.empty());
 }

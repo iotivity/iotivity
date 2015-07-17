@@ -20,7 +20,7 @@
 
 #include <PresenceSubscriber.h>
 
-#include <internal/AssertUtils.h>
+#include <AssertUtils.h>
 
 #include <OCPlatform.h>
 

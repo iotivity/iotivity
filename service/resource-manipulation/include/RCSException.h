@@ -18,22 +18,45 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include <PrimitiveRequest.h>
+#ifndef RES_MANIPULATION_RCSEXCEPTION_H
+#define RES_MANIPULATION_RCSEXCEPTION_H
+
+#include <string>
+
+#include <octypes.h>
 
 namespace OIC
 {
     namespace Service
     {
 
-        PrimitiveRequest::PrimitiveRequest(const std::string& resourceUri) :
-                m_resourceUri{ resourceUri }
+        class RCSException: public std::exception
         {
-        }
+        public:
+            RCSException();
+            explicit RCSException(const std::string&);
+            explicit RCSException(std::string&&);
 
-        std::string PrimitiveRequest::getResourceUri() const
+            virtual ~RCSException() noexcept {}
+
+            virtual const char* what() const noexcept;
+
+        private:
+            std::string m_what;
+        };
+
+        class PlatformException: public RCSException
         {
-            return m_resourceUri;
-        }
+        public:
+            explicit PlatformException(OCStackResult reason);
 
+            OCStackResult getReasonCode() const;
+            std::string getReason() const;
+
+        private:
+            OCStackResult m_reason;
+        };
     }
 }
+
+#endif // RES_MANIPULATION_RCSEXCEPTION_H

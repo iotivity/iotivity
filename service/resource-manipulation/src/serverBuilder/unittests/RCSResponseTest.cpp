@@ -21,11 +21,11 @@
 #include <gtest/gtest.h>
 #include <HippoMocks/hippomocks.h>
 
-#include <PrimitiveResponse.h>
+#include <RCSResponse.h>
 #include <ResourceObject.h>
 
-#include <internal/RequestHandler.h>
-#include <internal/ResourceAttributesConverter.h>
+#include <RequestHandler.h>
+#include <ResourceAttributesConverter.h>
 
 #include <OCPlatform.h>
 
@@ -56,7 +56,7 @@ void EXPECT_RESPONSE(shared_ptr< OCResourceResponse > ocResponse,
 }
 
 
-class PrimitiveResponseTest: public Test
+class RCSResponseTest: public Test
 {
 public:
     MockRepository mocks;
@@ -81,23 +81,23 @@ protected:
     }
 };
 
-TEST_F(PrimitiveResponseTest, GetDefaultActionHasEmptyAttrs)
+TEST_F(RCSResponseTest, GetDefaultActionHasEmptyAttrs)
 {
-    EXPECT_RESPONSE(buildResponse(PrimitiveGetResponse::defaultAction()),
+    EXPECT_RESPONSE(buildResponse(RCSGetResponse::defaultAction()),
             RequestHandler::DEFAULT_RESULT, RequestHandler::DEFAULT_ERROR_CODE,
             ResourceAttributes());
 }
 
-TEST_F(PrimitiveResponseTest, GetResponseHasResultsPassedCodes)
+TEST_F(RCSResponseTest, GetResponseHasResultsPassedCodes)
 {
     constexpr OCEntityHandlerResult result{ OC_EH_ERROR };
     constexpr int errorCode{ -10 };
 
-    EXPECT_RESPONSE(buildResponse(PrimitiveGetResponse::create(result, errorCode)),
+    EXPECT_RESPONSE(buildResponse(RCSGetResponse::create(result, errorCode)),
             result, errorCode, ResourceAttributes());
 }
 
-TEST_F(PrimitiveResponseTest, GetResponseHasAttrsAndResultsPassedCodes)
+TEST_F(RCSResponseTest, GetResponseHasAttrsAndResultsPassedCodes)
 {
     constexpr OCEntityHandlerResult result{ OC_EH_ERROR };
     constexpr int errorCode{ -10 };
@@ -105,11 +105,11 @@ TEST_F(PrimitiveResponseTest, GetResponseHasAttrsAndResultsPassedCodes)
     ResourceAttributes attrs;
     attrs[KEY] = 100;
 
-    EXPECT_RESPONSE(buildResponse(PrimitiveGetResponse::create(attrs, result, errorCode)),
+    EXPECT_RESPONSE(buildResponse(RCSGetResponse::create(attrs, result, errorCode)),
             result, errorCode, attrs);
 }
 
-TEST_F(PrimitiveResponseTest, GetResponseCanMoveAttrs)
+TEST_F(RCSResponseTest, GetResponseCanMoveAttrs)
 {
     constexpr OCEntityHandlerResult result{ OC_EH_ERROR };
     constexpr int errorCode{ -10 };
@@ -121,29 +121,29 @@ TEST_F(PrimitiveResponseTest, GetResponseCanMoveAttrs)
     attrsClone[KEY] = 100;
 
     EXPECT_RESPONSE(
-            buildResponse(PrimitiveGetResponse::create(std::move(attrs), result, errorCode)),
+            buildResponse(RCSGetResponse::create(std::move(attrs), result, errorCode)),
             result, errorCode, attrsClone);
 
     EXPECT_TRUE(attrs.empty());
 }
 
-TEST_F(PrimitiveResponseTest, SetDefaultActionHasEmptyAttrs)
+TEST_F(RCSResponseTest, SetDefaultActionHasEmptyAttrs)
 {
-    EXPECT_RESPONSE(buildResponse(PrimitiveSetResponse::defaultAction()),
+    EXPECT_RESPONSE(buildResponse(RCSSetResponse::defaultAction()),
             RequestHandler::DEFAULT_RESULT, RequestHandler::DEFAULT_ERROR_CODE,
             ResourceAttributes());
 }
 
-TEST_F(PrimitiveResponseTest, SetResponseHasResultsPassedCodes)
+TEST_F(RCSResponseTest, SetResponseHasResultsPassedCodes)
 {
     constexpr OCEntityHandlerResult result{ OC_EH_ERROR };
     constexpr int errorCode{ -10 };
 
-    EXPECT_RESPONSE(buildResponse(PrimitiveSetResponse::create(result, errorCode)),
+    EXPECT_RESPONSE(buildResponse(RCSSetResponse::create(result, errorCode)),
             result, errorCode, ResourceAttributes());
 }
 
-TEST_F(PrimitiveResponseTest, SetResponseHasAttrsAndResultsPassedCodes)
+TEST_F(RCSResponseTest, SetResponseHasAttrsAndResultsPassedCodes)
 {
     constexpr OCEntityHandlerResult result{ OC_EH_ERROR };
     constexpr int errorCode{ -10 };
@@ -151,11 +151,11 @@ TEST_F(PrimitiveResponseTest, SetResponseHasAttrsAndResultsPassedCodes)
     ResourceAttributes attrs;
     attrs[KEY] = 100;
 
-    EXPECT_RESPONSE(buildResponse(PrimitiveSetResponse::create(attrs, result, errorCode)),
+    EXPECT_RESPONSE(buildResponse(RCSSetResponse::create(attrs, result, errorCode)),
             result, errorCode, attrs);
 }
 
-TEST_F(PrimitiveResponseTest, SetResponseCanMoveAttrs)
+TEST_F(RCSResponseTest, SetResponseCanMoveAttrs)
 {
     constexpr OCEntityHandlerResult result{ OC_EH_ERROR };
     constexpr int errorCode{ -10 };
@@ -167,36 +167,36 @@ TEST_F(PrimitiveResponseTest, SetResponseCanMoveAttrs)
     attrsClone[KEY] = 100;
 
     EXPECT_RESPONSE(
-            buildResponse(PrimitiveSetResponse::create(std::move(attrs), result, errorCode)),
+            buildResponse(RCSSetResponse::create(std::move(attrs), result, errorCode)),
             result, errorCode, attrsClone);
 
     EXPECT_TRUE(attrs.empty());
 }
 
 
-TEST_F(PrimitiveResponseTest, DefaultSetResponseHasDefaultMethod)
+TEST_F(RCSResponseTest, DefaultSetResponseHasDefaultMethod)
 {
-    EXPECT_EQ(PrimitiveSetResponse::AcceptanceMethod::DEFAULT,
-            PrimitiveSetResponse::defaultAction().getAcceptanceMethod());
+    EXPECT_EQ(RCSSetResponse::AcceptanceMethod::DEFAULT,
+            RCSSetResponse::defaultAction().getAcceptanceMethod());
 }
 
-TEST_F(PrimitiveResponseTest, AcceptSetResponseHasAcceptMethod)
+TEST_F(RCSResponseTest, AcceptSetResponseHasAcceptMethod)
 {
-    EXPECT_EQ(PrimitiveSetResponse::AcceptanceMethod::ACCEPT,
-            PrimitiveSetResponse::accept().getAcceptanceMethod());
+    EXPECT_EQ(RCSSetResponse::AcceptanceMethod::ACCEPT,
+            RCSSetResponse::accept().getAcceptanceMethod());
 }
 
-TEST_F(PrimitiveResponseTest, IgnoreSetResponseHasIgnoreMethod)
+TEST_F(RCSResponseTest, IgnoreSetResponseHasIgnoreMethod)
 {
-    EXPECT_EQ(PrimitiveSetResponse::AcceptanceMethod::IGNORE,
-            PrimitiveSetResponse::ignore().getAcceptanceMethod());
+    EXPECT_EQ(RCSSetResponse::AcceptanceMethod::IGNORE,
+            RCSSetResponse::ignore().getAcceptanceMethod());
 }
 
-TEST_F(PrimitiveResponseTest, SetResponseHasMethodSetBySetter)
+TEST_F(RCSResponseTest, SetResponseHasMethodSetBySetter)
 {
-    PrimitiveSetResponse::AcceptanceMethod method = PrimitiveSetResponse::AcceptanceMethod::ACCEPT;
-    PrimitiveSetResponse response =
-            PrimitiveSetResponse::defaultAction().setAcceptanceMethod(method);
+    RCSSetResponse::AcceptanceMethod method = RCSSetResponse::AcceptanceMethod::ACCEPT;
+    RCSSetResponse response =
+            RCSSetResponse::defaultAction().setAcceptanceMethod(method);
 
     EXPECT_EQ(method, response.getAcceptanceMethod());
 }

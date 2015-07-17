@@ -21,8 +21,8 @@
 #include <gtest/gtest.h>
 #include <HippoMocks/hippomocks.h>
 
-#include <internal/PrimitiveResourceImpl.h>
-#include <internal/AssertUtils.h>
+#include <PrimitiveResourceImpl.h>
+#include <AssertUtils.h>
 
 #include <OCResource.h>
 #include <OCPlatform.h>

@@ -20,8 +20,8 @@
 
 #include <PrimitiveResource.h>
 
-#include <internal/PrimitiveResourceImpl.h>
-#include <internal/AssertUtils.h>
+#include <PrimitiveResourceImpl.h>
+#include <AssertUtils.h>
 
 #include <OCPlatform.h>
 

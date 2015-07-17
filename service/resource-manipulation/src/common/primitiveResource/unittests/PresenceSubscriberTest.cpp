@@ -22,7 +22,7 @@
 #include <HippoMocks/hippomocks.h>
 
 #include <PresenceSubscriber.h>
-#include <PrimitiveException.h>
+#include <RCSException.h>
 
 #include <OCPlatform.h>
 

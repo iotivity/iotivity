@@ -18,127 +18,127 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include <PrimitiveResponse.h>
+#include <RCSResponse.h>
 
-#include <internal/RequestHandler.h>
+#include <RequestHandler.h>
 
 namespace OIC
 {
     namespace Service
     {
-        PrimitiveGetResponse PrimitiveGetResponse::defaultAction()
+        RCSGetResponse RCSGetResponse::defaultAction()
         {
-            static PrimitiveGetResponse defaultRes { std::make_shared< RequestHandler >() };
+            static RCSGetResponse defaultRes { std::make_shared< RequestHandler >() };
 
             return defaultRes;
         }
 
-        PrimitiveGetResponse PrimitiveGetResponse::create(const OCEntityHandlerResult& result,
+        RCSGetResponse RCSGetResponse::create(const OCEntityHandlerResult& result,
                 int errorCode)
         {
-            return PrimitiveGetResponse {
+            return RCSGetResponse {
                 std::make_shared< RequestHandler >( result, errorCode) };
         }
 
-        PrimitiveGetResponse PrimitiveGetResponse::create(const ResourceAttributes& attrs)
+        RCSGetResponse RCSGetResponse::create(const ResourceAttributes& attrs)
         {
-            return PrimitiveGetResponse { std::make_shared< RequestHandler >(attrs) };
+            return RCSGetResponse { std::make_shared< RequestHandler >(attrs) };
         }
 
-        PrimitiveGetResponse PrimitiveGetResponse::create(const ResourceAttributes& attrs,
+        RCSGetResponse RCSGetResponse::create(const ResourceAttributes& attrs,
                 const OCEntityHandlerResult& result, int errorCode)
         {
-            return PrimitiveGetResponse {
+            return RCSGetResponse {
                 std::make_shared< RequestHandler >(attrs, result, errorCode) };
         }
 
-        PrimitiveGetResponse PrimitiveGetResponse::create(ResourceAttributes&& result)
+        RCSGetResponse RCSGetResponse::create(ResourceAttributes&& result)
         {
-            return PrimitiveGetResponse {
+            return RCSGetResponse {
                 std::make_shared< RequestHandler >(std::move(result)) };
         }
 
-        PrimitiveGetResponse PrimitiveGetResponse::create(ResourceAttributes&& attrs,
+        RCSGetResponse RCSGetResponse::create(ResourceAttributes&& attrs,
                 const OCEntityHandlerResult& result, int errorCode)
         {
-            return PrimitiveGetResponse { std::make_shared< RequestHandler >(
+            return RCSGetResponse { std::make_shared< RequestHandler >(
                 std::move(attrs), result, errorCode) };
         }
 
-        PrimitiveGetResponse::PrimitiveGetResponse(std::shared_ptr< RequestHandler >&& handler) :
+        RCSGetResponse::RCSGetResponse(std::shared_ptr< RequestHandler >&& handler) :
                 m_handler{ std::move(handler) }
         {
             assert(m_handler);
         }
 
-        RequestHandler* PrimitiveGetResponse::getHandler() const
+        RequestHandler* RCSGetResponse::getHandler() const
         {
             return m_handler.get();
         }
 
 
-        PrimitiveSetResponse PrimitiveSetResponse::defaultAction()
+        RCSSetResponse RCSSetResponse::defaultAction()
         {
             return std::make_shared< SetRequestHandler >();
         }
 
-        PrimitiveSetResponse PrimitiveSetResponse::accept()
+        RCSSetResponse RCSSetResponse::accept()
         {
             return defaultAction().setAcceptanceMethod(AcceptanceMethod::ACCEPT);
         }
 
-        PrimitiveSetResponse PrimitiveSetResponse::accept(const OCEntityHandlerResult& result,
+        RCSSetResponse RCSSetResponse::accept(const OCEntityHandlerResult& result,
                 int errorCode)
         {
             return create(result, errorCode).setAcceptanceMethod(AcceptanceMethod::ACCEPT);
         }
 
-        PrimitiveSetResponse PrimitiveSetResponse::ignore()
+        RCSSetResponse RCSSetResponse::ignore()
         {
             return defaultAction().setAcceptanceMethod(AcceptanceMethod::IGNORE);
         }
 
-        PrimitiveSetResponse PrimitiveSetResponse::ignore(const OCEntityHandlerResult& result,
+        RCSSetResponse RCSSetResponse::ignore(const OCEntityHandlerResult& result,
                 int errorCode)
         {
             return create(result, errorCode).setAcceptanceMethod(AcceptanceMethod::IGNORE);
         }
 
-        PrimitiveSetResponse PrimitiveSetResponse::create(const OCEntityHandlerResult& result,
+        RCSSetResponse RCSSetResponse::create(const OCEntityHandlerResult& result,
                 int errorCode)
         {
             return std::make_shared< SetRequestHandler >(result, errorCode);
         }
 
-        PrimitiveSetResponse PrimitiveSetResponse::create(const ResourceAttributes& attrs)
+        RCSSetResponse RCSSetResponse::create(const ResourceAttributes& attrs)
         {
             return std::make_shared< SetRequestHandler >(attrs);
         }
 
-        PrimitiveSetResponse PrimitiveSetResponse::create(const ResourceAttributes& attrs,
+        RCSSetResponse RCSSetResponse::create(const ResourceAttributes& attrs,
                 const OCEntityHandlerResult& result, int errorCode)
         {
             return std::make_shared< SetRequestHandler >(attrs, result, errorCode);
         }
 
-        PrimitiveSetResponse PrimitiveSetResponse::create(ResourceAttributes&& result)
+        RCSSetResponse RCSSetResponse::create(ResourceAttributes&& result)
         {
             return std::make_shared< SetRequestHandler >(std::move(result));
         }
 
-        PrimitiveSetResponse PrimitiveSetResponse::create(ResourceAttributes&& attrs,
+        RCSSetResponse RCSSetResponse::create(ResourceAttributes&& attrs,
                 const OCEntityHandlerResult& result, int errorCode)
         {
             return std::make_shared< SetRequestHandler >(std::move(attrs), result, errorCode);
         }
 
-        PrimitiveSetResponse::PrimitiveSetResponse(std::shared_ptr< SetRequestHandler >&& handler) :
+        RCSSetResponse::RCSSetResponse(std::shared_ptr< SetRequestHandler >&& handler) :
                 m_acceptanceMethod { AcceptanceMethod::DEFAULT },
                 m_handler{ std::move(handler) }
         {
         }
 
-        PrimitiveSetResponse::PrimitiveSetResponse(std::shared_ptr< SetRequestHandler >&& handler,
+        RCSSetResponse::RCSSetResponse(std::shared_ptr< SetRequestHandler >&& handler,
                 AcceptanceMethod method) :
                 m_acceptanceMethod{ method },
                 m_handler{ std::move(handler) }
@@ -146,17 +146,17 @@ namespace OIC
             assert(m_handler);
         }
 
-        SetRequestHandler* PrimitiveSetResponse::getHandler() const
+        SetRequestHandler* RCSSetResponse::getHandler() const
         {
             return m_handler.get();
         }
 
-        auto PrimitiveSetResponse::getAcceptanceMethod() const -> AcceptanceMethod
+        auto RCSSetResponse::getAcceptanceMethod() const -> AcceptanceMethod
         {
             return m_acceptanceMethod;
         }
 
-        PrimitiveSetResponse& PrimitiveSetResponse::setAcceptanceMethod(AcceptanceMethod method)
+        RCSSetResponse& RCSSetResponse::setAcceptanceMethod(AcceptanceMethod method)
         {
             m_acceptanceMethod = method;
             return *this;

@@ -41,7 +41,8 @@ release = env.get('RELEASE')
 # Build flags
 ######################################################################
 server_builder_env.AppendUnique(CPPPATH = [
-    '../common/primitiveResource/include/',
+    '../common/primitiveResource/include',
+    '../../include',
     ])
 
 server_builder_env.AppendUnique(CPPPATH = [env.get('SRC_DIR')+'/extlibs', 'include'])

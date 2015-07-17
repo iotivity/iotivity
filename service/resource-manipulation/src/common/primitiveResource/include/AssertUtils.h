@@ -28,7 +28,7 @@
 #include <octypes.h>
 #include <OCException.h>
 
-#include <PrimitiveException.h>
+#include <RCSException.h>
 
 namespace OIC
 {
@@ -60,7 +60,6 @@ namespace OIC
             {
                 typedef A type;
             };
-
 
             template< typename T, typename = typename std::enable_if<
                     std::is_class<T>::value && std::is_pointer<T>::value>::type >

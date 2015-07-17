@@ -20,7 +20,7 @@
 
 #include <ResponseStatement.h>
 
-#include <internal/ResourceAttributesConverter.h>
+#include <ResourceAttributesConverter.h>
 
 namespace OIC
 {

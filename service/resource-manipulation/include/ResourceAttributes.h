@@ -37,24 +37,24 @@
 #include <boost/mpl/begin_end.hpp>
 #include <boost/scoped_ptr.hpp>
 
-#include <PrimitiveException.h>
+#include <RCSException.h>
 
 namespace OIC
 {
     namespace Service
     {
-        class BadGetException: public PrimitiveException
+        class BadGetException: public RCSException
         {
         public:
-            BadGetException(const std::string& what) : PrimitiveException{ what } {}
-            BadGetException(std::string&& what) : PrimitiveException{ std::move(what) } {}
+            BadGetException(const std::string& what) : RCSException{ what } {}
+            BadGetException(std::string&& what) : RCSException{ std::move(what) } {}
         };
 
-        class InvalidKeyException: public PrimitiveException
+        class InvalidKeyException: public RCSException
         {
         public:
-            InvalidKeyException(const std::string& what) : PrimitiveException{ what } {}
-            InvalidKeyException(std::string&& what) : PrimitiveException{ std::move(what) } {}
+            InvalidKeyException(const std::string& what) : RCSException{ what } {}
+            InvalidKeyException(std::string&& what) : RCSException{ std::move(what) } {}
         };
 
         class ResourceAttributes

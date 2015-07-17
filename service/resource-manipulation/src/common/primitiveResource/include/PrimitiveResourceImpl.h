@@ -23,9 +23,9 @@
 
 #include <PrimitiveResource.h>
 #include <ResponseStatement.h>
-#include <internal/AssertUtils.h>
+#include <AssertUtils.h>
 
-#include <internal/ResourceAttributesConverter.h>
+#include <ResourceAttributesConverter.h>
 
 namespace OIC
 {

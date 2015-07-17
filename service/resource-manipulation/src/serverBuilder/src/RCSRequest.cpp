@@ -18,30 +18,22 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef __PRIMITIVEREQUEST_H
-#define __PRIMITIVEREQUEST_H
-
-#include <string>
+#include <RCSRequest.h>
 
 namespace OIC
 {
     namespace Service
     {
 
-        class PrimitiveRequest
+        RCSRequest::RCSRequest(const std::string& resourceUri) :
+                m_resourceUri{ resourceUri }
         {
-        public:
-            explicit PrimitiveRequest(const std::string& resourceUri);
+        }
 
-            PrimitiveRequest& operator=(PrimitiveRequest&) = delete;
-
-            std::string getResourceUri() const;
-
-        private:
-            std::string m_resourceUri;
-        };
+        std::string RCSRequest::getResourceUri() const
+        {
+            return m_resourceUri;
+        }
 
     }
 }
-
-#endif // __PRIMITIVEREQUEST_H

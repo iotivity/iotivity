@@ -40,7 +40,10 @@ release = env.get('RELEASE')
 ######################################################################
 # Build flags
 ######################################################################
-service_common_env.AppendUnique(CPPPATH = [env.get('SRC_DIR')+'/extlibs', 'include', 'src'])
+service_common_env.AppendUnique(CPPPATH = [
+    env.get('SRC_DIR')+'/extlibs',
+    '../../../include',
+    'include'])
 
 if target_os not in ['windows', 'winrt']:
     service_common_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])

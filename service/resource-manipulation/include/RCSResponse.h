@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef __PRIMITIVERESPONSE_H
-#define __PRIMITIVERESPONSE_H
+#ifndef SERVERBUILDER_RCSRESPONSE_H
+#define SERVERBUILDER_RCSRESPONSE_H
 
 #include <cstdint>
 #include <memory>
@@ -35,31 +35,31 @@ namespace OIC
         class RequestHandler;
         class SetRequestHandler;
 
-        class PrimitiveGetResponse
+        class RCSGetResponse
         {
         public:
-            static PrimitiveGetResponse defaultAction();
+            static RCSGetResponse defaultAction();
 
-            static PrimitiveGetResponse create(const OCEntityHandlerResult&, int errorCode);
+            static RCSGetResponse create(const OCEntityHandlerResult&, int errorCode);
 
-            static PrimitiveGetResponse create(const ResourceAttributes&);
-            static PrimitiveGetResponse create(const ResourceAttributes&,
+            static RCSGetResponse create(const ResourceAttributes&);
+            static RCSGetResponse create(const ResourceAttributes&,
                     const OCEntityHandlerResult&, int errorCode);
 
-            static PrimitiveGetResponse create(ResourceAttributes&&);
-            static PrimitiveGetResponse create(ResourceAttributes&&, const OCEntityHandlerResult&,
+            static RCSGetResponse create(ResourceAttributes&&);
+            static RCSGetResponse create(ResourceAttributes&&, const OCEntityHandlerResult&,
                     int errorCode);
 
             RequestHandler* getHandler() const;
 
         private:
-            PrimitiveGetResponse(std::shared_ptr< RequestHandler >&&);
+            RCSGetResponse(std::shared_ptr< RequestHandler >&&);
 
         private:
             std::shared_ptr< RequestHandler > m_handler;
         };
 
-        class PrimitiveSetResponse
+        class RCSSetResponse
         {
         public:
             enum class AcceptanceMethod
@@ -69,33 +69,33 @@ namespace OIC
                 IGNORE
             };
 
-            static PrimitiveSetResponse defaultAction();
+            static RCSSetResponse defaultAction();
 
-            static PrimitiveSetResponse accept();
-            static PrimitiveSetResponse accept(const OCEntityHandlerResult&, int errorCode);
+            static RCSSetResponse accept();
+            static RCSSetResponse accept(const OCEntityHandlerResult&, int errorCode);
 
-            static PrimitiveSetResponse ignore();
-            static PrimitiveSetResponse ignore(const OCEntityHandlerResult&, int errorCode);
+            static RCSSetResponse ignore();
+            static RCSSetResponse ignore(const OCEntityHandlerResult&, int errorCode);
 
-            static PrimitiveSetResponse create(const OCEntityHandlerResult&, int errorCode);
+            static RCSSetResponse create(const OCEntityHandlerResult&, int errorCode);
 
-            static PrimitiveSetResponse create(const ResourceAttributes&);
-            static PrimitiveSetResponse create(const ResourceAttributes&,
+            static RCSSetResponse create(const ResourceAttributes&);
+            static RCSSetResponse create(const ResourceAttributes&,
                     const OCEntityHandlerResult&, int errorCode);
 
-            static PrimitiveSetResponse create(ResourceAttributes&&);
-            static PrimitiveSetResponse create(ResourceAttributes&&, const OCEntityHandlerResult&,
+            static RCSSetResponse create(ResourceAttributes&&);
+            static RCSSetResponse create(ResourceAttributes&&, const OCEntityHandlerResult&,
                     int errorCode);
 
             SetRequestHandler* getHandler() const;
 
             AcceptanceMethod getAcceptanceMethod() const;
 
-            PrimitiveSetResponse& setAcceptanceMethod(AcceptanceMethod);
+            RCSSetResponse& setAcceptanceMethod(AcceptanceMethod);
 
         private:
-            PrimitiveSetResponse(std::shared_ptr< SetRequestHandler >&&);
-            PrimitiveSetResponse(std::shared_ptr< SetRequestHandler >&&, AcceptanceMethod);
+            RCSSetResponse(std::shared_ptr< SetRequestHandler >&&);
+            RCSSetResponse(std::shared_ptr< SetRequestHandler >&&, AcceptanceMethod);
 
         private:
             AcceptanceMethod m_acceptanceMethod;
@@ -104,4 +104,4 @@ namespace OIC
     }
 }
 
-#endif
+#endif // SERVERBUILDER_RCSRESPONSE_H
