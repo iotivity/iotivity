@@ -74,19 +74,18 @@ if target_os == 'linux':
 ######################################################################
 # Source files and Targets
 ######################################################################
-resourceClient_src = 'src/'
-client_src = [
-        resourceClient_src+ 'ResourceClient.cpp']
-ResourceClientsdk = resourceClient_env.StaticLibrary('ResourceClient', client_src)
-
-resourceClient_env.InstallTarget(ResourceClientsdk , 'libResourceClient')
+# resourceClient_src = 'src/'
+# client_src = [
+#        resourceClient_src+ 'ResourceClient.cpp']
+#ResourceClientsdk = resourceClient_env.StaticLibrary('ResourceClient', client_src)
+# resourceClient_env.InstallTarget(ResourceClientsdk , 'libResourceClient')
 
 ######################################################################
 # Build Sample App: SampleResourceClient & SampleResourceServer
 ######################################################################
-SConscript('examples/SConscript')
+# SConscript('examples/SConscript')
 ######################################################################
 # Build UnitTests Resource Client
-######################################################################
-SConscript('unittests/SConscript')
+################################################ ######################
+# SConscript('unittests/SConscript')
 
