@@ -95,8 +95,8 @@ service_common_test_env.PrependUnique(LIBS = [
     gtest_main
     ])
 
-service_common_test_src = env.Glob('unittests/*.cpp')
+#service_common_test_src = env.Glob('unittests/*.cpp')
 
-service_common_test = service_common_test_env.Program('service_common_test', service_common_test_src)
-Alias("service_common_test", service_common_test)
-env.AppendTarget('service_common_test')
+#service_common_test = service_common_test_env.Program('service_common_test', service_common_test_src)
+#Alias("service_common_test", service_common_test)
+#env.AppendTarget('service_common_test')

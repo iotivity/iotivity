@@ -99,8 +99,8 @@ server_builder_test_env.PrependUnique(LIBS = [
     gtest_main,
     ])
 
-server_builder_test_src = env.Glob('unittests/*.cpp')
+#server_builder_test_src = env.Glob('unittests/*.cpp')
 
-server_builder_test = server_builder_test_env.Program('server_builder_test', server_builder_test_src)
-Alias("server_builder_test", server_builder_test)
-env.AppendTarget('server_builder_test')
+#server_builder_test = server_builder_test_env.Program('server_builder_test', server_builder_test_src)
+#Alias("server_builder_test", server_builder_test)
+#env.AppendTarget('server_builder_test')

@@ -30,7 +30,6 @@ SConscript('src/resourceBroker/SConscript')
 SConscript('src/resourceCache/SConscript')
 SConscript('src/serverBuilder/SConscript')
 SConscript('src/resourceContainer/SConscript')
-SConscript('sdk/SConscript')
 
 ######################################################################
 #building Resource client
@@ -88,5 +87,5 @@ SConscript('examples/SConscript')
 ######################################################################
 # Build UnitTests Resource Client
 ################################################ ######################
-SConscript('unittests/SConscript')
+#SConscript('unittests/SConscript')
 
