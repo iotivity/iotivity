@@ -23,6 +23,7 @@
 #include "oc_logger.hpp"
 #include <iostream>
 
+using namespace std;
 using namespace OIC::Service;
 using OC::oc_log_stream;
 
@@ -45,19 +46,21 @@ int main()
     ResourceContainer *container = ResourceContainer::getInstance();
     container->startContainer("examples/ResourceContainerConfig.xml");
 
-    std::list<BundleInfo*> bundles = container->listBundles();
-    std::list<BundleInfo*>::iterator bundleIt;
+    std::list<BundleInfo *> bundles = container->listBundles();
+    std::list<BundleInfo *>::iterator bundleIt;
 
-    for(bundleIt = bundles.begin(); bundleIt != bundles.end(); bundleIt++){
-        BundleInfo* bi = *bundleIt;
+    for (bundleIt = bundles.begin(); bundleIt != bundles.end(); bundleIt++)
+    {
+        BundleInfo *bi = *bundleIt;
         info_logger() << "Available bundle: " << bi->getID() << endl;
     }
 
     cout << "Press enter to stop all bundles " << endl;
     getchar();
 
-    for(bundleIt = bundles.begin(); bundleIt != bundles.end(); bundleIt++){
-        BundleInfo* bi = *bundleIt;
+    for (bundleIt = bundles.begin(); bundleIt != bundles.end(); bundleIt++)
+    {
+        BundleInfo *bi = *bundleIt;
         info_logger() << "Stopping bundle: " << bi->getID() << endl;
         container->stopBundle(bi->getID());
     }
@@ -65,8 +68,9 @@ int main()
     cout << "Press enter to restart all bundles " << endl;
     getchar();
 
-    for(bundleIt = bundles.begin(); bundleIt != bundles.end(); bundleIt++){
-        BundleInfo* bi = *bundleIt;
+    for (bundleIt = bundles.begin(); bundleIt != bundles.end(); bundleIt++)
+    {
+        BundleInfo *bi = *bundleIt;
         info_logger() << "Starting bundle: " << bi->getID() << endl;
         container->startBundle(bi->getID());
     }

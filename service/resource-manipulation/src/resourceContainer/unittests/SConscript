@@ -86,8 +86,6 @@ container_gtest_env.AppendUnique(
 		'../../../include',
  		'../include/internal',
 		'../bundle-api/include',
-		'../../serverBuilder/include',
-		'../../common/primitiveResource/include',
 		os.environ['JAVA_HOME']+'/include',
 		os.environ['JAVA_HOME']+'/include/linux'
 	])
@@ -105,7 +103,7 @@ if target_os == 'android':
 container_gtest_env.PrependUnique(CPPPATH = [env.get('SRC_DIR')+'/extlibs/hippomocks-master',
                              gtest_dir + '/include'])
 						 			 
-container_gtest_env.AppendUnique(LIBPATH = [os.environ['JAVA_HOME']+'/jre/lib/i386/server/'])
+container_gtest_env.AppendUnique(LIBPATH = [os.environ['JAVA_LIB']])
 
 conf = Configure(container_gtest_env)
 if not conf.CheckLib('jvm'):

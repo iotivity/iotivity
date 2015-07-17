@@ -29,36 +29,35 @@
 
 #include "BundleInfo.h"
 
-using namespace std;
-
 namespace OIC
 {
     namespace Service
     {
         class ResourceContainer
         {
-        public:
-            ResourceContainer();
-            virtual ~ResourceContainer();
-            //virtual void initializeResourceContainer() = 0;
-            virtual void startContainer(string configFile) = 0;
-            virtual void stopContainer() = 0;
+            public:
+                ResourceContainer();
+                virtual ~ResourceContainer();
+                virtual void startContainer(std::string configFile) = 0;
+                virtual void stopContainer() = 0;
 
-            // list of bundle ids
-            virtual std::list<BundleInfo*> listBundles() = 0;
-            virtual void startBundle(string bundleId) = 0;
-            virtual void stopBundle(string bundleId) = 0;
+                // list of bundle ids
+                virtual std::list<BundleInfo *> listBundles() = 0;
+                virtual void startBundle(std::string bundleId) = 0;
+                virtual void stopBundle(std::string bundleId) = 0;
 
-            // dynamic configuration
-            virtual void addBundle(string bundleId, string bundleUri, string bundlePath, std::map<string, string> params) =0;
-            virtual void removeBundle(string bundleId) = 0;
+                // dynamic configuration
+                virtual void addBundle(std::string bundleId, std::string bundleUri, std::string bundlePath,
+                                       std::map<std::string, std::string> params) = 0;
+                virtual void removeBundle(std::string bundleId) = 0;
 
-            virtual void addResourceConfig(string bundleId, string resourceUri, std::map<string, string> params)  = 0;
-            virtual void removeResourceConfig(string bundleId, string resourceUri)  = 0;
+                virtual void addResourceConfig(std::string bundleId, std::string resourceUri,
+                                               std::map<std::string, std::string> params) = 0;
+                virtual void removeResourceConfig(std::string bundleId, std::string resourceUri) = 0;
 
-            virtual std::list<string> listBundleResources(string bundleId) = 0;
+                virtual std::list<std::string> listBundleResources(std::string bundleId) = 0;
 
-            static ResourceContainer *getInstance();
+                static ResourceContainer *getInstance();
         };
     }
 }

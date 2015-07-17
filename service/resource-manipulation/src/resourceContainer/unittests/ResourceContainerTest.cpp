@@ -42,44 +42,44 @@ string CONFIG_FILE = "ResourceContainerTestConfig.xml";
 /*Fake bundle resource class for testing*/
 class TestBundleResource: public BundleResource
 {
-public:
-    string getAttribute(string attributeName)
-    {
-        return "test";
-    }
-    ;
-    void setAttribute(string attributeName, string value)
-    {
-    }
-    ;
-    void initAttributes()
-    {
-        BundleResource::setAttribute("attri", "test");
-    }
-    ;
+    public:
+        string getAttribute(string attributeName)
+        {
+            return "test";
+        }
+        ;
+        void setAttribute(string attributeName, string value)
+        {
+        }
+        ;
+        void initAttributes()
+        {
+            BundleResource::setAttribute("attri", "test");
+        }
+        ;
 };
 
 class ResourceContainerTest: public Test
 {
-public:
-    ResourceContainer *m_pResourceContainer;
+    public:
+        ResourceContainer *m_pResourceContainer;
 
-protected:
-    void SetUp() override
-    {
-        m_pResourceContainer = ResourceContainer::getInstance();
-    }
+    protected:
+        void SetUp() override
+        {
+            m_pResourceContainer = ResourceContainer::getInstance();
+        }
 };
 
 TEST_F(ResourceContainerTest, BundleRegisteredWhenContainerStartedWithValidConfigFile)
 {
     m_pResourceContainer->startContainer(CONFIG_FILE);
 
-    EXPECT_GT(m_pResourceContainer->listBundles().size(), 0);
+    EXPECT_GT(m_pResourceContainer->listBundles().size(), (unsigned int) 0);
     EXPECT_STREQ("oic.bundle.test",
-            (*m_pResourceContainer->listBundles().begin())->getID().c_str());
+                 (*m_pResourceContainer->listBundles().begin())->getID().c_str());
     EXPECT_STREQ("libTestBundle.so",
-            (*m_pResourceContainer->listBundles().begin())->getPath().c_str());
+                 (*m_pResourceContainer->listBundles().begin())->getPath().c_str());
     EXPECT_STREQ("1.0.0", (*m_pResourceContainer->listBundles().begin())->getVersion().c_str());
 
     m_pResourceContainer->stopContainer();
@@ -89,10 +89,10 @@ TEST_F(ResourceContainerTest, BundleLoadedWhenContainerStartedWithValidConfigFil
 {
     m_pResourceContainer->startContainer(CONFIG_FILE);
 
-    EXPECT_GT(m_pResourceContainer->listBundles().size(), 0);
+    EXPECT_GT(m_pResourceContainer->listBundles().size(), (unsigned int) 0);
     EXPECT_TRUE(((BundleInfoInternal *)(*m_pResourceContainer->listBundles().begin()))->isLoaded());
     EXPECT_NE(nullptr,
-            ((BundleInfoInternal *)( *m_pResourceContainer->listBundles().begin()))->getBundleHandle());
+              ((BundleInfoInternal *)( *m_pResourceContainer->listBundles().begin()))->getBundleHandle());
 
     m_pResourceContainer->stopContainer();
 }
@@ -101,11 +101,11 @@ TEST_F(ResourceContainerTest, BundleActivatedWhenContainerStartedWithValidConfig
 {
     m_pResourceContainer->startContainer(CONFIG_FILE);
 
-    EXPECT_GT(m_pResourceContainer->listBundles().size(), 0);
+    EXPECT_GT(m_pResourceContainer->listBundles().size(), (unsigned int) 0);
     EXPECT_TRUE(
-            ((BundleInfoInternal *)(*m_pResourceContainer->listBundles().begin()))->isActivated());
+        ((BundleInfoInternal *)(*m_pResourceContainer->listBundles().begin()))->isActivated());
     EXPECT_NE(nullptr,
-            ((BundleInfoInternal *)( *m_pResourceContainer->listBundles().begin()))->getBundleActivator());
+              ((BundleInfoInternal *)( *m_pResourceContainer->listBundles().begin()))->getBundleActivator());
 
     m_pResourceContainer->stopContainer();
 }
@@ -114,7 +114,7 @@ TEST_F(ResourceContainerTest, BundleNotRegisteredWhenContainerStartedWithInvalid
 {
     m_pResourceContainer->startContainer("invalideConfig");
 
-    EXPECT_EQ(0, m_pResourceContainer->listBundles().size());
+    EXPECT_EQ((unsigned int) 0, m_pResourceContainer->listBundles().size());
 }
 
 TEST_F(ResourceContainerTest, BundleUnregisteredWhenContainerStopped)
@@ -122,7 +122,7 @@ TEST_F(ResourceContainerTest, BundleUnregisteredWhenContainerStopped)
     m_pResourceContainer->startContainer(CONFIG_FILE);
     m_pResourceContainer->stopContainer();
 
-    EXPECT_EQ(0, m_pResourceContainer->listBundles().size());
+    EXPECT_EQ((unsigned int) 0, m_pResourceContainer->listBundles().size());
 }
 
 TEST_F(ResourceContainerTest, BundleStoppedWithStartBundleAPI)
@@ -131,7 +131,7 @@ TEST_F(ResourceContainerTest, BundleStoppedWithStartBundleAPI)
     m_pResourceContainer->stopBundle("oic.bundle.test");
 
     EXPECT_FALSE(
-            ((BundleInfoInternal *)(*m_pResourceContainer->listBundles().begin()))->isActivated());
+        ((BundleInfoInternal *)(*m_pResourceContainer->listBundles().begin()))->isActivated());
 }
 
 TEST_F(ResourceContainerTest, BundleStartedWithStartBundleAPI)
@@ -141,28 +141,28 @@ TEST_F(ResourceContainerTest, BundleStartedWithStartBundleAPI)
     m_pResourceContainer->startBundle("oic.bundle.test");
 
     EXPECT_TRUE(
-            ((BundleInfoInternal *)(*m_pResourceContainer->listBundles().begin()))->isActivated());
+        ((BundleInfoInternal *)(*m_pResourceContainer->listBundles().begin()))->isActivated());
 }
 
 class ResourceContainerBundleAPITest: public Test
 {
-public:
-    MockRepository mocks;
-    ResourceObject *m_pResourceObject;
-    ResourceContainerBundleAPI *m_pResourceContainer;
-    TestBundleResource *m_pBundleResource;
+    public:
+        MockRepository mocks;
+        ResourceObject *m_pResourceObject;
+        ResourceContainerBundleAPI *m_pResourceContainer;
+        TestBundleResource *m_pBundleResource;
 
-protected:
-    void SetUp() override
-    {
-        m_pResourceObject = mocks.Mock<ResourceObject>();
-        m_pResourceContainer = ResourceContainerBundleAPI::getInstance();
+    protected:
+        void SetUp() override
+        {
+            m_pResourceObject = mocks.Mock<ResourceObject>();
+            m_pResourceContainer = ResourceContainerBundleAPI::getInstance();
 
-        m_pBundleResource = new TestBundleResource();
-        m_pBundleResource->m_bundleId = "oic.bundle.test";
-        m_pBundleResource->m_uri = "/test_resource";
-        m_pBundleResource->m_resourceType = "oic.test";
-    }
+            m_pBundleResource = new TestBundleResource();
+            m_pBundleResource->m_bundleId = "oic.bundle.test";
+            m_pBundleResource->m_uri = "/test_resource";
+            m_pBundleResource->m_resourceType = "oic.test";
+        }
 };
 
 TEST_F(ResourceContainerBundleAPITest, ResourceServerCreatedWhenRegisterResourceCalled)
@@ -176,8 +176,8 @@ TEST_F(ResourceContainerBundleAPITest, ResourceServerCreatedWhenRegisterResource
 TEST_F(ResourceContainerBundleAPITest, RequestHandlerForResourceServerSetWhenRegisterResourceCalled)
 {
     mocks.OnCallFunc(ResourceContainerImpl::buildResourceObject).Return(
-            ResourceObject::Ptr(m_pResourceObject, [](ResourceObject *)
-            {}));
+        ResourceObject::Ptr(m_pResourceObject, [](ResourceObject *)
+    {}));
 
     mocks.ExpectCall(m_pResourceObject, ResourceObject::setGetRequestHandler);
     mocks.ExpectCall(m_pResourceObject, ResourceObject::setSetRequestHandler);
@@ -188,8 +188,8 @@ TEST_F(ResourceContainerBundleAPITest, RequestHandlerForResourceServerSetWhenReg
 TEST_F(ResourceContainerBundleAPITest, BundleResourceUnregisteredWhenUnregisterResourceCalled)
 {
     mocks.OnCallFunc(ResourceContainerImpl::buildResourceObject).Return(
-            ResourceObject::Ptr(m_pResourceObject, [](ResourceObject *)
-            {}));
+        ResourceObject::Ptr(m_pResourceObject, [](ResourceObject *)
+    {}));
 
     mocks.ExpectCall(m_pResourceObject, ResourceObject::setGetRequestHandler);
     mocks.ExpectCall(m_pResourceObject, ResourceObject::setSetRequestHandler);
@@ -197,16 +197,17 @@ TEST_F(ResourceContainerBundleAPITest, BundleResourceUnregisteredWhenUnregisterR
     m_pResourceContainer->registerResource(m_pBundleResource);
     m_pResourceContainer->unregisterResource(m_pBundleResource);
 
-    EXPECT_EQ(0,
-            ((ResourceContainerImpl *)m_pResourceContainer)->listBundleResources( m_pBundleResource->m_bundleId).size());
+    EXPECT_EQ((unsigned int) 0,
+              ((ResourceContainerImpl *)m_pResourceContainer)->listBundleResources(
+                  m_pBundleResource->m_bundleId).size());
 }
 
 TEST_F(ResourceContainerBundleAPITest,
-        ServerNotifiesToObserversWhenNotificationReceivedFromResource)
+       ServerNotifiesToObserversWhenNotificationReceivedFromResource)
 {
     mocks.OnCallFunc(ResourceContainerImpl::buildResourceObject).Return(
-            ResourceObject::Ptr(m_pResourceObject, [](ResourceObject *)
-            {}));
+        ResourceObject::Ptr(m_pResourceObject, [](ResourceObject *)
+    {}));
 
     mocks.ExpectCall(m_pResourceObject, ResourceObject::setGetRequestHandler);
     mocks.ExpectCall(m_pResourceObject, ResourceObject::setSetRequestHandler);
@@ -247,17 +248,17 @@ TEST_F(ResourceContainerBundleAPITest, BundleResourceConfigurationListParsed)
 
 class ResourceContainerImplTest: public Test
 {
-public:
-    MockRepository mocks;
-    ResourceContainerImpl *m_pResourceContainer;
-    BundleInfo *m_pBundleInfo;
+    public:
+        MockRepository mocks;
+        ResourceContainerImpl *m_pResourceContainer;
+        BundleInfo *m_pBundleInfo;
 
-protected:
-    void SetUp() override
-    {
-        m_pResourceContainer = ResourceContainerImpl::getImplInstance();
-        m_pBundleInfo = BundleInfo::build();
-    }
+    protected:
+        void SetUp() override
+        {
+            m_pResourceContainer = ResourceContainerImpl::getImplInstance();
+            m_pBundleInfo = BundleInfo::build();
+        }
 };
 
 TEST_F(ResourceContainerImplTest, SoBundleLoadedWhenRegisteredWithRegisterBundleAPI)
@@ -416,7 +417,8 @@ TEST_F(ResourceContainerImplTest, SoBundleDeactivatedWithBundleID)
 //{
 //}
 
-/* Test for Configuration */TEST(ConfigurationTest, ConfigFileLoadedWithValidPath)
+/* Test for Configuration */
+TEST(ConfigurationTest, ConfigFileLoadedWithValidPath)
 {
     Configuration *config = new Configuration(CONFIG_FILE);
 

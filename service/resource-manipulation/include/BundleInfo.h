@@ -23,8 +23,6 @@
 
 #include <string>
 
-using namespace std;
-
 namespace OIC
 {
     namespace Service
@@ -34,22 +32,22 @@ namespace OIC
          */
         class BundleInfo
         {
-        public:
-            BundleInfo();
-            virtual ~BundleInfo();
-            virtual void setID(string name) = 0;
-            virtual string getID() = 0;
-            virtual void setPath(string path) = 0;
-            virtual string getPath() = 0;
-            virtual void setActivatorName(string activator) = 0;
-            virtual string getActivatorName() = 0;
-            virtual void setLibraryPath(string libpath) = 0;
-            virtual string getLibraryPath() = 0;
-            virtual void setVersion(string version) = 0;
-            virtual string getVersion() = 0;
-            static BundleInfo* build();
-        protected:
-            string m_ID, m_path, m_version;
+            public:
+                BundleInfo();
+                virtual ~BundleInfo();
+                virtual void setID(std::string name) = 0;
+                virtual std::string getID() = 0;
+                virtual void setPath(std::string path) = 0;
+                virtual std::string getPath() = 0;
+                virtual void setActivatorName(std::string activator) = 0;
+                virtual std::string getActivatorName() = 0;
+                virtual void setLibraryPath(std::string libpath) = 0;
+                virtual std::string getLibraryPath() = 0;
+                virtual void setVersion(std::string version) = 0;
+                virtual std::string getVersion() = 0;
+                static BundleInfo *build();
+            protected:
+                std::string m_ID, m_path, m_version;
         };
     }
 }

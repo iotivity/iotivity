@@ -66,8 +66,6 @@ resource_container_env.AppendUnique(
 		'include',
 		'bundle-api/include',
 		'src',
-		'../serverBuilder/include',
-		'../common/primitiveResource/include',
 		os.environ['JAVA_HOME']+'/include',
 		os.environ['JAVA_HOME']+'/include/linux'
 	])

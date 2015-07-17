@@ -24,25 +24,30 @@
 
 using namespace OIC::Service;
 
-HueLight::HueLight(){
+HueLight::HueLight()
+{
 
 }
 
-HueLight::HueLight(HueConnector* connector, std::string address){
+HueLight::HueLight(HueConnector *connector, std::string address)
+{
     m_address = address;
     m_connector = connector;
     initAttributes();
 }
 
-HueLight::~HueLight(){
+HueLight::~HueLight()
+{
 
 }
 
-string HueLight::getAttribute(string attributeName){
-
+string HueLight::getAttribute(string attributeName)
+{
+    return BundleResource::getAttribute(attributeName);
 }
 
-void HueLight::initAttributes(){
+void HueLight::initAttributes()
+{
     BundleResource::setAttribute("on-off", "false");
     BundleResource::setAttribute("dim", "0");
     BundleResource::setAttribute("color", "0");
@@ -51,22 +56,26 @@ void HueLight::initAttributes(){
     m_mapAttributes.insert(std::pair<string, string>("color", "0"));*/
 }
 
-void HueLight::setAttribute(string attributeName, string value){
+void HueLight::setAttribute(string attributeName, string value)
+{
     cout << "HueLight::setAttribute setting " << attributeName << " to " << value << std::endl;
 
 
-    if(attributeName == "on-off"){
+    if (attributeName == "on-off")
+    {
         m_connector->transmit(this->m_address + "/state", "{\"on\":" + value + "}");
     }
 
-    if(attributeName == "dim"){
+    if (attributeName == "dim")
+    {
         //m_connector->transmit(this->m_address + "/state", "{\"bri\":" + (value * 2.5) + "}");
         m_connector->transmit(this->m_address + "/state", "{\"bri\":" + value + "}");
     }
 
-    if(attributeName == "color"){
+    if (attributeName == "color")
+    {
         //m_connector->transmit(this->m_address+ "/state", "{\"hue\":" + (value * 650)  + "}");
-        m_connector->transmit(this->m_address+ "/state", "{\"hue\":" + value   + "}");
+        m_connector->transmit(this->m_address + "/state", "{\"hue\":" + value   + "}");
     }
 }
 

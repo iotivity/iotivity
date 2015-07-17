@@ -51,6 +51,7 @@ void DiscomfortIndexSensorResource::initAttributes()
 string DiscomfortIndexSensorResource::getAttribute(string attributeName)
 {
     cout << "DiscomfortIndexSensorResource::getAttribute called !!" << endl;
+    return BundleResource::getAttribute(attributeName);
 }
 
 void DiscomfortIndexSensorResource::setAttribute(string attributeName, string value)
@@ -79,16 +80,16 @@ void DiscomfortIndexSensorResource::setInputAttribute(SensorData input)
             m_pDiscomfortIndexSensor->runLogic(inData);
             m_outputs = m_pDiscomfortIndexSensor->m_output;
 
-            for (int i = 0; i < m_outputs.data.size(); i++)
+            for (unsigned int i = 0; i < m_outputs.data.size(); i++)
             {
                 if (!m_outputs.data.at(i)["name"].compare("temperature"))
-                    BundleResource::setAttribute("temperature",m_outputs.data.at(i)["value"]);
+                    BundleResource::setAttribute("temperature", m_outputs.data.at(i)["value"]);
 
                 else if (!m_outputs.data.at(i)["name"].compare("humidity"))
-                    BundleResource::setAttribute("humidity",m_outputs.data.at(i)["value"]);
+                    BundleResource::setAttribute("humidity", m_outputs.data.at(i)["value"]);
 
                 else if (!m_outputs.data.at(i)["name"].compare("discomfortIndex"))
-                    BundleResource::setAttribute("discomfortIndex",m_outputs.data.at(i)["value"]);
+                    BundleResource::setAttribute("discomfortIndex", m_outputs.data.at(i)["value"]);
             }
         }
     }

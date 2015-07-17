@@ -85,7 +85,7 @@ namespace OIC
                 virtual void setInputAttribute(SensorData inputs) = 0;
 
 
-                int inputCount;
+                unsigned int inputCount;
                 vector<string> m_vecInputAttributes;
                 map< string, SensorData > m_mapStoredInputData;
                 SensorData m_outputs;

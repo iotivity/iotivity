@@ -25,8 +25,8 @@
 #include "ResourceContainerBundleAPI.h"
 #include "BundleInfoInternal.h"
 
-#include "PrimitiveRequest.h"
-#include "PrimitiveResponse.h"
+#include "RCSRequest.h"
+#include "RCSResponse.h"
 #include "ResourceObject.h"
 
 #include "jni.h"
@@ -65,10 +65,10 @@ namespace OIC
                 void getResourceConfiguration(std::string bundleId,
                                               std::vector< resourceInfo > *configOutput);
 
-                PrimitiveGetResponse getRequestHandler(const PrimitiveRequest &request,
-                                                       const ResourceAttributes &attributes);
-                PrimitiveSetResponse setRequestHandler(const PrimitiveRequest &request,
-                                                       const ResourceAttributes &attributes);
+                RCSGetResponse getRequestHandler(const RCSRequest &request,
+                                                 const ResourceAttributes &attributes);
+                RCSSetResponse setRequestHandler(const RCSRequest &request,
+                                                 const ResourceAttributes &attributes);
 
                 void onNotificationReceived(std::string strResourceUri);
 
