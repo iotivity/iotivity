@@ -26,7 +26,7 @@ namespace Service
 {
 
 void RequestObject::invokeRequest(RemoteObjectPtr remoteObject, RequestMethod method,
-        const PrimitiveRequest & pRequest, ResourceAttributes & resourceAttibutes)
+        const RCSRequest & pRequest, ResourceAttributes & resourceAttibutes)
 {
     try
     {

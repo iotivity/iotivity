@@ -43,16 +43,15 @@ namespace Service
 class ResourceHosting
 {
 private:
-    using HostingObjectPtr = std::shared_ptr<HostingObject>;
-    using RemoteObjectPtr =  std::shared_ptr<RemoteResourceObject>;
-    using PrimiteveResourcePtr = std::shared_ptr<PrimitiveResource>;
+    typedef std::shared_ptr<HostingObject> HostingObjectPtr;
+    typedef std::shared_ptr<RemoteResourceObject> RemoteObjectPtr;
+    typedef std::shared_ptr<PrimitiveResource> PrimiteveResourcePtr;
 
-    using SubscribeCallback
-            = std::function<void(OCStackResult, const unsigned int, const std::string&) >;
-    using DiscoveryCallback
-            = std::function<void(std::shared_ptr<RemoteResourceObject>)>;
-    using DestroyedCallback
-            = std::function<void()>;
+    typedef std::function<
+            void(OCStackResult, const unsigned int, const std::string&)> SubscribeCallback;
+    typedef std::function<
+            void(std::shared_ptr<RemoteResourceObject>)> DiscoveryCallback;
+    typedef std::function<void()> DestroyedCallback;
 
 public:
     void startHosting();

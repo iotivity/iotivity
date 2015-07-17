@@ -199,7 +199,7 @@ HostingObject::ResourceObjectPtr HostingObject::createMirroredServer(RemoteObjec
     return retResource;
 }
 
-PrimitiveSetResponse HostingObject::setRequestHandler(const PrimitiveRequest & primitiveRequest,
+RCSSetResponse HostingObject::setRequestHandler(const RCSRequest & primitiveRequest,
             ResourceAttributes & resourceAttibutes)
 {
     try
@@ -213,7 +213,7 @@ PrimitiveSetResponse HostingObject::setRequestHandler(const PrimitiveRequest & p
         throw;
     }
 
-    return PrimitiveSetResponse::create(resourceAttibutes);
+    return RCSSetResponse::create(resourceAttibutes);
 }
 
 } /* namespace Service */

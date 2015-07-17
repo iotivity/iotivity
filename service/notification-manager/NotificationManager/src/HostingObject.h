@@ -36,17 +36,17 @@ namespace Service
 class HostingObject
 {
 private:
-    using ResourceObjectPtr = std::shared_ptr<ResourceObject>;
-    using RemoteObjectPtr =  std::shared_ptr<RemoteResourceObject>;
-    using RequestObjectPtr = std::shared_ptr<RequestObject>;
-    using PrimiteveResourcePtr = std::shared_ptr<PrimitiveResource>;
+    typedef std::shared_ptr<ResourceObject> ResourceObjectPtr;
+    typedef std::shared_ptr<RemoteResourceObject> RemoteObjectPtr;
+    typedef std::shared_ptr<RequestObject> RequestObjectPtr;
+    typedef std::shared_ptr<PrimitiveResource> PrimiteveResourcePtr;
 
-    using BrokerCallback = std::function<void(ResourceState)>;
-    using CacheCallback = std::function<void(const ResourceAttributes &)>;
-    using DestroyedCallback = std::function<void()>;
+    typedef std::function<void(ResourceState)> BrokerCallback;
+    typedef std::function<void(const ResourceAttributes &)> CacheCallback;
+    typedef std::function<void()> DestroyedCallback;
 
-    using SetRequestHandler = std::function<PrimitiveSetResponse(const PrimitiveRequest&,
-            ResourceAttributes&)>;
+    typedef std::function<
+            RCSSetResponse(const RCSRequest&, ResourceAttributes&)> SetRequestHandler;
 
 public:
     HostingObject() = default;
@@ -73,8 +73,8 @@ private:
     void stateChangedCB(ResourceState state, RemoteObjectPtr rObject);
     void dataChangedCB(const ResourceAttributes & attributes, RemoteObjectPtr rObject);
 
-    PrimitiveSetResponse setRequestHandler(
-            const PrimitiveRequest & request, ResourceAttributes & attributes);
+    RCSSetResponse setRequestHandler(
+            const RCSRequest & request, ResourceAttributes & attributes);
 
     void destroyHostingObject();
 
