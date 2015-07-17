@@ -33,13 +33,26 @@
 #include "caremotehandler.h"
 #include "cathreadpool.h"
 #include "caipadapter.h"
+#include "cainterface.h"
+
+#ifdef RA_ADAPTER
+#include "caraadapter.h"
+#endif
 
 #define TAG "CA_INTRFC_CNTRLR"
+#ifdef RA_ADAPTER
+#include "caraadapter.h"
+#endif
+
 
 #define CA_MEMORY_ALLOC_CHECK(arg) {if (arg == NULL) \
     {OIC_LOG(ERROR, TAG, "memory error");goto memory_error_exit;} }
 
+#ifdef RA_ADAPTER
+#define CA_TRANSPORT_TYPE_NUM   4
+#else
 #define CA_TRANSPORT_TYPE_NUM   3
+#endif
 
 static CAConnectivityHandler_t g_adapterHandler[CA_TRANSPORT_TYPE_NUM] = {};
 
@@ -59,12 +72,15 @@ static int CAGetAdapterIndex(CATransportAdapter_t cType)
             return 1;
         case CA_ADAPTER_RFCOMM_BTEDR:
             return 2;
+
+        #ifdef RA_ADAPTER
+        case CA_ADAPTER_REMOTE_ACCESS:
+            return 3;
+        #endif
+
         default:
             break;
     }
-
-    OIC_LOG(DEBUG, TAG, "CA_TRANSPORT_TYPE_NUM is not 3");
-
     return -1;
 }
 
@@ -99,6 +115,13 @@ static void CARegisterCallback(CAConnectivityHandler_t handler, CATransportAdapt
     OIC_LOG_V(DEBUG, TAG, "%d type adapter, register complete!", cType);
     OIC_LOG(DEBUG, TAG, "OUT");
 }
+
+#ifdef RA_ADAPTER
+CAResult_t CASetAdapterRAInfo(const CARAInfo_t *caraInfo)
+{
+    return CASetRAInfo(caraInfo);
+}
+#endif
 
 static void CAReceivedPacketCallback(const CAEndpoint_t *endpoint, void *data, uint32_t dataLen)
 {
@@ -166,6 +189,12 @@ void CAInitializeAdapters(ca_thread_pool_t handle)
     CAInitializeLE(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback,
                    CAAdapterErrorHandleCallback, handle);
 #endif /* LE_ADAPTER */
+
+#ifdef RA_ADAPTER
+    CAInitializeRA(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback,
+                   handle);
+#endif /* RA_ADAPTER */
+
 
 }
 

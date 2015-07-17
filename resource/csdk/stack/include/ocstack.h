@@ -62,6 +62,16 @@ OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
  */
 OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode);
 
+#ifdef RA_ADAPTER
+/**
+ * @brief   Set Remote Access information for XMPP Client.
+ * @param   raInfo            [IN] remote access info.
+ *
+ * @return  #CA_STATUS_OK
+ */
+OCStackResult OCSetRAInfo(const OCRAInfo_t *raInfo);
+#endif
+
 /**
  * Stop the OC stack.  Use for a controlled shutdown.
  *

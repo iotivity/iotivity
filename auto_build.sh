@@ -16,11 +16,17 @@ function build()
 {
 	if [ $(uname -s) = "Linux" ]
         then
-		echo "*********** Build for linux *************"
+		echo "*********** Build for linux ************"
 		scons RELEASE=$3
 
-		echo "*********** Build for linux with Security*************"
+		echo "*********** Build for linux with Security *************"
 		scons RELEASE=$3 SECURED=1
+
+		echo "*********** Build for linux With Remote Access *************"
+		scons RELEASE=$3 WITH_RA=1
+
+		echo "*********** Build for linux With Remote Access & Security ************"
+		scons RELEASE=$3 WITH_RA=1 SECURED=1
 	fi
 
 	# Note: for android, as oic-resource uses C++11 feature stoi and to_string,

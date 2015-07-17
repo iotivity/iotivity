@@ -537,10 +537,22 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     }
 
     #ifdef WITH_PRESENCE
-    CATransportAdapter_t CAConnTypes[] = {CA_ADAPTER_IP, CA_ADAPTER_GATT_BTLE,
-                                          CA_ADAPTER_RFCOMM_BTEDR};
-    const char * connTypes[] = {"ip" , "ble",  "edr"};
+    CATransportAdapter_t CAConnTypes[] = {
+                            CA_ADAPTER_IP,
+                            CA_ADAPTER_GATT_BTLE,
+                            CA_ADAPTER_RFCOMM_BTEDR
+
+                            #ifdef RA_ADAPTER
+                            , CA_ADAPTER_REMOTE_ACCESS
+                            #endif
+                        };
+    const char * connTypes[] = {"ip" , "ble",  "edr"
+                                #ifdef RA_ADAPTER
+                                , "ra"
+                                #endif
+                            };
     int size = sizeof(CAConnTypes)/ sizeof(CATransportAdapter_t);
+
     CATransportAdapter_t adapter = responseEndpoint.adapter;
     CAResult_t caResult = CA_STATUS_FAILED;
     result = OC_STACK_OK;
@@ -549,7 +561,15 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     if (adapter == CA_DEFAULT_ADAPTER)
     {
         adapter =
-            (CATransportAdapter_t)(CA_ADAPTER_IP | CA_ADAPTER_GATT_BTLE | CA_ADAPTER_RFCOMM_BTEDR);
+            (CATransportAdapter_t)(
+                CA_ADAPTER_IP           |
+                CA_ADAPTER_GATT_BTLE    |
+                CA_ADAPTER_RFCOMM_BTEDR
+
+                #ifdef RA_ADAP
+                | CA_ADAPTER_REMOTE_ACCESS
+                #endif
+            );
     }
 
     for(int i = 0; i < size; i++ )
@@ -562,12 +582,8 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
             caResult = CASendResponse(&responseEndpoint, &responseInfo);
             if(caResult != CA_STATUS_OK)
             {
-                OC_LOG_V(ERROR, TAG, "CASendResponse failed on %s", connTypes[i]);
+                OC_LOG_V(ERROR, TAG, "CASendResponse failed with CA error %u", caResult);
                 result = CAResultToOCResult(caResult);
-            }
-            else
-            {
-                OC_LOG_V(INFO, TAG, "CASendResponse succeeded on %s", connTypes[i]);
             }
         }
     }

@@ -42,6 +42,11 @@ extern "C"
 #define CA_IPADDR_SIZE 16
 
 /**
+ * @brief Remote Access jabber ID length.
+ */
+#define CA_RAJABBERID_SIZE 256
+
+/**
  * @brief Mac address length for BT port
  */
 #define CA_MACADDR_SIZE 18
@@ -113,16 +118,24 @@ typedef char *CAToken_t;
 // The following flags are the same as the equivalent OIC values in
 // octypes.h, allowing direct copying with slight fixup.
 // The CA layer should used the OC types when build allows that.
+#ifdef RA_ADAPTER
+#define MAX_ADDR_STR_SIZE_CA (256)
+#else
 #define MAX_ADDR_STR_SIZE_CA (40)
+#endif
 
 typedef enum
 {
     CA_DEFAULT_ADAPTER = 0,
 
     // value zero indicates discovery
-    CA_ADAPTER_IP           = (1 << 0),   // IPv4 and IPv6, including 6LoWPAN
-    CA_ADAPTER_GATT_BTLE    = (1 << 1),   // GATT over Bluetooth LE
-    CA_ADAPTER_RFCOMM_BTEDR = (1 << 2),   // RFCOMM over Bluetooth EDR
+    CA_ADAPTER_IP            = (1 << 0),   // IPv4 and IPv6, including 6LoWPAN
+    CA_ADAPTER_GATT_BTLE     = (1 << 1),   // GATT over Bluetooth LE
+    CA_ADAPTER_RFCOMM_BTEDR  = (1 << 2),   // RFCOMM over Bluetooth EDR
+
+    #ifdef RA_ADAPTER
+    CA_ADAPTER_REMOTE_ACCESS = (1 << 3)   // Remote Access over XMPP.
+    #endif
 } CATransportAdapter_t;
 
 typedef enum
@@ -347,6 +360,22 @@ typedef struct
     CAInfo_t info;      /**< message information such as token and payload data
                              helpful to identify the error */
 } CAErrorInfo_t;
+
+/**
+ * @brief CA Remote Access information for XMPP Client
+ *
+ */
+typedef struct
+{
+    char *hostname;     /**< XMPP server hostname */
+    uint16_t port;      /**< XMPP server serivce port */
+    char *xmpp_domain;  /**< XMPP login domain */
+    char *username;     /**< login username */
+    char *password;     /**< login password */
+    char *resource;     /**< specific resource for login */
+    char *user_jid;     /**< specific JID for login */
+} CARAInfo_t;
+
 
 /**
  * @brief Hold global variables for CA layer (also used by RI layer)

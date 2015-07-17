@@ -126,9 +126,14 @@ extern "C" {
 //-----------------------------------------------------------------------------
 // Typedefs
 //-----------------------------------------------------------------------------
-
+#ifdef RA_ADAPTER
+#define MAX_ADDR_STR_SIZE (256)
+#else
 #define MAX_ADDR_STR_SIZE (40)
+ #endif
+
 #define MAX_IDENTITY_SIZE (32)
+
 
 /*
  * These enums (OCTransportAdapter and OCTransportFlags) must
@@ -141,9 +146,13 @@ typedef enum
     OC_DEFAULT_ADAPTER = 0,
 
     // value zero indicates discovery
-    OC_ADAPTER_IP           = (1 << 0),   // IPv4 and IPv6, including 6LoWPAN
-    OC_ADAPTER_GATT_BTLE    = (1 << 1),   // GATT over Bluetooth LE
-    OC_ADAPTER_RFCOMM_BTEDR = (1 << 2),   // RFCOMM over Bluetooth EDR
+    OC_ADAPTER_IP            = (1 << 0),   // IPv4 and IPv6, including 6LoWPAN
+    OC_ADAPTER_GATT_BTLE     = (1 << 1),   // GATT over Bluetooth LE
+    OC_ADAPTER_RFCOMM_BTEDR  = (1 << 2),   // RFCOMM over Bluetooth EDR
+
+    #ifdef RA_ADAPTER
+    OC_ADAPTER_REMOTE_ACCESS = (1 << 3)    // Remote Access over XMPP.
+    #endif
 } OCTransportAdapter;
 
 // enum layout assumes some targets have 16-bit integer (e.g., Arduino)
@@ -217,6 +226,9 @@ typedef enum
     CT_ADAPTER_IP           = (1 << 10),  // IPv4 and IPv6, including 6LoWPAN
     CT_ADAPTER_GATT_BTLE    = (1 << 11),  // GATT over Bluetooth LE
     CT_ADAPTER_RFCOMM_BTEDR = (1 << 12),  // RFCOMM over Bluetooth EDR
+    #ifdef RA_ADAPTER
+    CT_ADAPTER_REMOTE_ACCESS = (1 << 13),  // Remote Access over XMPP
+    #endif
     #define CT_ADAPTER_SHIFT 10
     #define CT_MASK_FLAGS 0x03FF
     #define CT_MASK_ADAPTER 0xFC00
@@ -224,6 +236,9 @@ typedef enum
     CT_ADAPTER_IP           = (1 << 16),  // IPv4 and IPv6, including 6LoWPAN
     CT_ADAPTER_GATT_BTLE    = (1 << 17),  // GATT over Bluetooth LE
     CT_ADAPTER_RFCOMM_BTEDR = (1 << 18),  // RFCOMM over Bluetooth EDR
+    #ifdef RA_ADAPTER
+    CT_ADAPTER_REMOTE_ACCESS = (1 << 19),  // Remote Access over XMPP
+    #endif
     #define CT_ADAPTER_SHIFT 16
     #define CT_MASK_FLAGS 0xFFFF
     #define CT_MASK_ADAPTER 0xFFFF0000
@@ -514,6 +529,23 @@ typedef struct
     char *systemTime;
 
 } OCPlatformInfo;
+
+#ifdef RA_ADAPTER
+/**
+ * @brief CA Remote Access information for XMPP Client
+ *
+ */
+typedef struct
+{
+    char *hostname;     /**< XMPP server hostname */
+    uint16_t   port;    /**< XMPP server serivce port */
+    char *xmpp_domain;  /**< XMPP login domain */
+    char *username;     /**< login username */
+    char *password;     /**< login password */
+    char *resource;     /**< specific resource for login */
+    char *user_jid;     /**< specific JID for login */
+} OCRAInfo_t;
+#endif  /* RA_ADAPTER */
 
 /**
  * This structure is expected as input for device properties.

@@ -245,6 +245,16 @@ CAResult_t CAGetNetworkInformation(CAEndpoint_t **info, uint32_t *size);
  */
 CAResult_t CAHandleRequestResponse();
 
+#ifdef RA_ADAPTER
+/**
+ * @brief   Set Remote Access information for XMPP Client.
+ * @param   caraInfo          [IN] remote access info.
+ *
+ * @return  #CA_STATUS_OK
+ */
+CAResult_t CASetRAInfo(const CARAInfo_t *caraInfo);
+#endif
+
 
 #ifdef __WITH_DTLS__
 

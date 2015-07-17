@@ -98,6 +98,10 @@ static uint32_t PresenceTimeOut[] = {50, 75, 85, 95, 100};
 #endif
 
 static OCMode myStackMode;
+#ifdef RA_ADAPTER
+//TODO: revisit this design
+static bool gRASetInfo = false;
+#endif
 OCDeviceEntityHandler defaultDeviceHandler;
 void* defaultDeviceHandlerCallbackParameter = NULL;
 
@@ -1527,12 +1531,35 @@ bool validatePlatformInfo(OCPlatformInfo info)
 //-----------------------------------------------------------------------------
 // Public APIs
 //-----------------------------------------------------------------------------
+#ifdef RA_ADAPTER
+OCStackResult OCSetRAInfo(const OCRAInfo_t *raInfo)
+{
+    if (!raInfo           ||
+        !raInfo->username ||
+        !raInfo->hostname ||
+        !raInfo->xmpp_domain)
+    {
+
+        return OC_STACK_INVALID_PARAM;
+    }
+    OCStackResult result = CAResultToOCResult(CASetRAInfo((const CARAInfo_t *) raInfo));
+    gRASetInfo = (result == OC_STACK_OK)? true : false;
+
+    return result;
+}
+#endif
 
 OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
 {
     (void) ipAddr;
     (void) port;
-
+#ifdef RA_ADAPTER
+    if(!gRASetInfo)
+    {
+        OC_LOG(ERROR, TAG, PCF("Need to call OCSetRAInfo before calling OCInit"));
+        return OC_STACK_ERROR;
+    }
+#endif
     return OCInit1(mode, OC_DEFAULT_FLAGS, OC_DEFAULT_FLAGS);
 }
 
@@ -3800,7 +3827,12 @@ CAResult_t OCSelectNetwork()
     CATransportAdapter_t connTypes[] = {
             CA_ADAPTER_IP,
             CA_ADAPTER_RFCOMM_BTEDR,
-            CA_ADAPTER_GATT_BTLE};
+            CA_ADAPTER_GATT_BTLE
+
+            #ifdef RA_ADAPTER
+            ,CA_ADAPTER_REMOTE_ACCESS
+            #endif
+        };
     int numConnTypes = sizeof(connTypes)/sizeof(connTypes[0]);
 
     for(int i = 0; i<numConnTypes; i++)

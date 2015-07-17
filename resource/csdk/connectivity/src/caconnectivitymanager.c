@@ -253,11 +253,19 @@ CAResult_t CASelectNetwork(CATransportAdapter_t interestedNetwork)
         res = CAAddNetworkType(CA_ADAPTER_GATT_BTLE);
         OIC_LOG_V(ERROR, TAG, "CAAddNetworkType(CA_GATT_ADAPTER) function returns error : %d", res);
     }
+
+    #ifdef RA_ADAPTER
+    else if (interestedNetwork & CA_ADAPTER_REMOTE_ACCESS)
+    {
+        res = CAAddNetworkType(CA_ADAPTER_REMOTE_ACCESS);
+        OIC_LOG_V(ERROR, TAG, "CAAddNetworkType(CA_ADAPTER_REMOTE_ACCESS) function returns error : %d",
+                                                                    res);
+    }
+    #endif
     else
     {
         res = CA_NOT_SUPPORTED;
     }
-
     return res;
 }
 
@@ -287,11 +295,18 @@ CAResult_t CAUnSelectNetwork(CATransportAdapter_t nonInterestedNetwork)
         res = CARemoveNetworkType(CA_ADAPTER_GATT_BTLE);
         OIC_LOG_V(ERROR, TAG, "CARemoveNetworkType(CA_GATT_ADAPTER) function returns error : %d", res);
     }
+    #ifdef RA_ADAPTER
+    else if (nonInterestedNetwork & CA_ADAPTER_REMOTE_ACCESS)
+    {
+        res = CARemoveNetworkType(CA_ADAPTER_REMOTE_ACCESS);
+        OIC_LOG_V(ERROR, TAG, "CARemoveNetworkType(CA_ADAPTER_REMOTE_ACCESS) function returns error : %d",
+                                                res);
+    }
+    #endif
     else
     {
         res = CA_STATUS_FAILED;
     }
-
     return res;
 }
 

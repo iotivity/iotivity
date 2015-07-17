@@ -949,6 +949,18 @@ int main(int argc, char* argv[])
         PrintUsage();
         return -1;
     }
+    #ifdef RA_ADAPTER
+    OCRAInfo_t rainfo;
+    rainfo.hostname = "localhost";
+    rainfo.port = 5222;
+    rainfo.xmpp_domain = "localhost";
+    rainfo.username = "test1";
+    rainfo.password = "intel123";
+    rainfo.resource = "";
+    rainfo.user_jid = "";
+
+    OCSetRAInfo(&rainfo);
+    #endif
 
     OC_LOG(DEBUG, TAG, "OCServer is starting...");
 

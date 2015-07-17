@@ -1,6 +1,6 @@
 #******************************************************************
 #
-# Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
+# Copyright 2015 Intel Mobile Communications GmbH All Rights Reserved.
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #
@@ -18,16 +18,14 @@
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-######################################################################
-# This script manages extra build options
-#
-######################################################################
-import os
-import platform
-
 Import('env')
+import os
+
+print "Reading RA adapter script"
 
 target_os = env.get('TARGET_OS')
-target_arch = env.get('TARGET_ARCH')
-src_dir = env.get('SRC_DIR')
+inc_files = env.get('CPPPATH')
+src_dir = './ra_adapter'
 
+#Source files to build in Linux platform
+env.AppendUnique(CA_SRC=[os.path.join(src_dir, 'caraadapter.c')])
