@@ -42,6 +42,7 @@ target_os = env.get('TARGET_OS')
 # Build flags
 ######################################################################
 resourcecache_env.AppendUnique(CPPPATH = ['include'])
+resourcecache_env.AppendUnique(CPPPATH = ['../../include'])
 resourcecache_env.AppendUnique(CPPPATH = ['../common/primitiveResource/include'])
 resourcecache_env.AppendUnique(CPPPATH = ['../common/expiryTimer/include'])
 resourcecache_env.AppendUnique(CPPPATH = ['../common/expiryTimer/src'])
