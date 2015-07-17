@@ -202,6 +202,58 @@ static OCStackResult getQueryParamsForFiltering (OCVirtualResources uri, char *q
     return result;
 }
 
+OCStackResult BuildResponseRepresentation(const OCResource *resourcePtr,
+                    OCRepPayload** payload)
+{
+    OCRepPayload *tempPayload = OCRepPayloadCreate();
+
+    if (!resourcePtr)
+    {
+        OCRepPayloadDestroy(tempPayload);
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    if(!tempPayload)
+    {
+        return OC_STACK_NO_MEMORY;
+    }
+
+    OCRepPayloadSetUri(tempPayload, resourcePtr->uri);
+
+    OCResourceType *resType = resourcePtr->rsrcType;
+    while(resType)
+    {
+        OCRepPayloadAddResourceType(tempPayload, resType->resourcetypename);
+        resType = resType->next;
+    }
+
+    OCResourceInterface *resInterface = resourcePtr->rsrcInterface;
+    while(resInterface)
+    {
+        OCRepPayloadAddInterface(tempPayload, resInterface->name);
+        resInterface = resInterface->next;
+    }
+
+    OCAttribute *resAttrib = resourcePtr->rsrcAttributes;
+    while(resAttrib)
+    {
+        OCRepPayloadSetPropString(tempPayload, resAttrib->attrName,
+                                resAttrib->attrValue);
+        resAttrib = resAttrib->next;
+    }
+
+    if(!*payload)
+    {
+        *payload = tempPayload;
+    }
+    else
+    {
+        OCRepPayloadAppend(*payload, tempPayload);
+    }
+
+    return OC_STACK_OK;
+}
+
 OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
                         OCDiscoveryPayload *payload, OCDevAddr *devAddr)
 {

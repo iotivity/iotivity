@@ -91,6 +91,7 @@ void OCRepPayloadAppend(OCRepPayload* parent, OCRepPayload* child)
     }
 
     parent->next= child;
+    child->next = NULL;
 }
 
 static OCRepPayloadValue* OCRepPayloadFindValue(const OCRepPayload* payload, const char* name)

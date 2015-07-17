@@ -144,8 +144,14 @@ void DeletePlatformInfo();
  */
 void DeleteDeviceInfo();
 
+/*
+ * Prepare payload for resource representation.
+ */
+OCStackResult BuildResponseRepresentation(const OCResource *resourcePtr,
+                    OCRepPayload** payload);
+
 /**
- * Prepares a JSON string for response.
+ * Prepares a Payload for response.
  */
 OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
                                            OCDiscoveryPayload* payload,
