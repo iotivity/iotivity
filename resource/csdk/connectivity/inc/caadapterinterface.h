@@ -168,8 +168,8 @@ typedef void (*CARegisterConnectivityCallback)(CAConnectivityHandler_t handler,
  * @brief This will be used during the recive of network requests and response.
  * @see SendUnicastData(), SendMulticastData()
  */
-typedef void (*CANetworkPacketReceivedCallback)(const CAEndpoint_t *endPoint, void *data,
-        uint32_t dataLen);
+typedef void (*CANetworkPacketReceivedCallback)(const CAEndpoint_t *endPoint,
+                                            const void *data, uint32_t dataLen);
 
 /**
  * @brief This will be used to notify network changes to the connectivity common logic layer

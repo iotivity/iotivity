@@ -123,7 +123,7 @@ CAResult_t CASetAdapterRAInfo(const CARAInfo_t *caraInfo)
 }
 #endif
 
-static void CAReceivedPacketCallback(const CAEndpoint_t *endpoint, void *data, uint32_t dataLen)
+static void CAReceivedPacketCallback(const CAEndpoint_t *endpoint, const void *data, uint32_t dataLen)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 

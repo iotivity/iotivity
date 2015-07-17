@@ -579,7 +579,7 @@ static bool CADropSecondRequest(const CAEndpoint_t *endpoint, uint16_t messageId
     return ret;
 }
 
-static void CAReceivedPacketCallback(const CAEndpoint_t *remoteEndpoint, void *data, uint32_t dataLen)
+static void CAReceivedPacketCallback(const CAEndpoint_t *remoteEndpoint, const void *data, uint32_t dataLen)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     VERIFY_NON_NULL_VOID(remoteEndpoint, TAG, "remoteEndpoint");
