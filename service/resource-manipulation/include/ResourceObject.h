@@ -101,7 +101,7 @@ namespace OIC
             typedef std::function< RCSSetResponse(const RCSRequest&,
                         ResourceAttributes&) > SetRequestHandler;
             typedef std::function< void(const ResourceAttributes::Value&,
-                    const ResourceAttributes::Value&) > AttributeUpdatedHandler;
+                    const ResourceAttributes::Value&) > AttributeUpdatedListener;
 
         public:
             ResourceObject(ResourceObject&&) = delete;
@@ -140,10 +140,10 @@ namespace OIC
             virtual void setGetRequestHandler(GetRequestHandler);
             virtual void setSetRequestHandler(SetRequestHandler);
 
-            virtual void setAttributeUpdatedHandler(const std::string& key,
-                    AttributeUpdatedHandler );
-            virtual void setAttributeUpdatedHandler(std::string&& key, AttributeUpdatedHandler);
-            virtual bool removeAddAttributeUpdatedHandler(const std::string& key);
+            virtual void addAttributeUpdatedListener(const std::string& key,
+                    AttributeUpdatedListener );
+            virtual void addAttributeUpdatedListener(std::string&& key, AttributeUpdatedListener);
+            virtual bool removeAttributeUpdatedListener(const std::string& key);
 
 
             virtual void notify() const;
@@ -179,8 +179,8 @@ namespace OIC
             AutoNotifyPolicy m_autoNotifyPolicy;
             SetRequestHandlerPolicy m_setRequestHandlerPolicy;
 
-            std::unordered_map< std::string, AttributeUpdatedHandler >
-                    m_keyAttributesUpdatedHandlers;
+            std::unordered_map< std::string, AttributeUpdatedListener >
+                    m_keyAttributesUpdatedListeners;
 
             mutable boost::atomic< std::thread::id > m_lockOwner;
             mutable std::mutex m_mutex;

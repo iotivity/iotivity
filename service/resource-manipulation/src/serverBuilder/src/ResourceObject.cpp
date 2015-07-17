@@ -198,7 +198,7 @@ namespace OIC
                 m_setRequestHandler{ },
                 m_autoNotifyPolicy { AutoNotifyPolicy::UPDATED },
                 m_setRequestHandlerPolicy { SetRequestHandlerPolicy::NEVER },
-                m_keyAttributesUpdatedHandlers{ },
+                m_keyAttributesUpdatedListeners{ },
                 m_lockOwner{ },
                 m_mutex{ },
                 m_mutexKeyAttributeUpdate{ }
@@ -337,24 +337,24 @@ namespace OIC
                     m_resourceHandle);
         }
 
-        void ResourceObject::setAttributeUpdatedHandler(const std::string& key,
-                AttributeUpdatedHandler h)
+        void ResourceObject::addAttributeUpdatedListener(const std::string& key,
+                AttributeUpdatedListener h)
         {
             std::lock_guard<std::mutex> lock(m_mutexKeyAttributeUpdate);
-            m_keyAttributesUpdatedHandlers[key] = std::move(h);
+            m_keyAttributesUpdatedListeners[key] = std::move(h);
         }
 
-        void ResourceObject::setAttributeUpdatedHandler(std::string&& key,
-                AttributeUpdatedHandler h)
+        void ResourceObject::addAttributeUpdatedListener(std::string&& key,
+                AttributeUpdatedListener h)
         {
            std::lock_guard<std::mutex> lock(m_mutexKeyAttributeUpdate);
-           m_keyAttributesUpdatedHandlers[std::move(key)] = std::move(h);
+           m_keyAttributesUpdatedListeners[std::move(key)] = std::move(h);
         }
 
-        bool ResourceObject::removeAddAttributeUpdatedHandler(const std::string& key)
+        bool ResourceObject::removeAttributeUpdatedListener(const std::string& key)
         {
            std::lock_guard<std::mutex> lock(m_mutexKeyAttributeUpdate);
-           return (bool) m_keyAttributesUpdatedHandlers.erase(key);
+           return (bool) m_keyAttributesUpdatedListeners.erase(key);
         }
 
         void ResourceObject::autoNotifyIfNeeded(const std::string& key,
@@ -473,8 +473,8 @@ namespace OIC
             {
                 std::lock_guard<std::mutex> lock(m_mutexKeyAttributeUpdate);
 
-                auto keyAttribute = m_keyAttributesUpdatedHandlers.find(it.first);
-                if(keyAttribute != m_keyAttributesUpdatedHandlers.end())
+                auto keyAttribute = m_keyAttributesUpdatedListeners.find(it.first);
+                if(keyAttribute != m_keyAttributesUpdatedListeners.end())
                 {
                     keyAttribute-> second(it.second, attrs[it.first]);
                 }
