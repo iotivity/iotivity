@@ -38,18 +38,33 @@
 #include <boost/scoped_ptr.hpp>
 
 #include <RCSException.h>
-
+/**
+ * @file
+ *
+ * This file contains the "ResourceAttributes" class & its helper classes
+ */
 namespace OIC
 {
     namespace Service
     {
+        /**
+         * @class   BadGetException
+         * @brief   This class is used to throw exception to the upper layer if Get request for a particular
+         *              attribute is invalid. It is  inherited from RCSException class.
+         *
+         */
         class BadGetException: public RCSException
         {
         public:
             BadGetException(const std::string& what) : RCSException{ what } {}
             BadGetException(std::string&& what) : RCSException{ std::move(what) } {}
         };
-
+        /**
+        * @class   InvalidKeyException
+        * @brief   This class is used to throw exception to the upper layer if key is invalid.
+        *              It is inherited from RCSException class.
+        *
+        */
         class InvalidKeyException: public RCSException
         {
         public:
@@ -57,6 +72,33 @@ namespace OIC
             InvalidKeyException(std::string&& what) : RCSException{ std::move(what) } {}
         };
 
+        /**
+        * @class   ResourceAttributes
+        * @brief   This class represents the attributes for a resource.
+        * It overloaded the various operators like ==, [], = etc. It provides the APIs that a std::Map provides
+        * like begin, end, size etc. Also provides two kinds of iterator to iterate over the attributes.
+        *
+        *  It has helper classes:
+        *  Value - For value of the Attribute
+        *  Type - For data type of the Attribute
+        *  iterator - For iterating over attributes
+        *  const_iterator - const iterator for attributes
+        *
+        *
+        * @see Value
+        * @see Type
+        * @see iterator
+        * @see const_iterator
+        *
+        * NOTE:  If Developer wants to get the ResourceAttributes for the resource of interest following
+        *            are the steps:
+        *            - first call the discover API of DiscoveryManager class.
+        *            - After getting the RemoteResourceObject, call getRemoteAttributes() API
+        *               of RemoteResourceObject class
+        *
+        * @see DiscoveryManager
+        * @see RemoteResourceObject
+        */
         class ResourceAttributes
         {
         private:
@@ -102,9 +144,15 @@ namespace OIC
 
         public:
             template< typename T >
+                /**
+                  * For checking whether the provided type is supported or not for a attribute.
+                */
             struct is_supported_type: public std::conditional<
                 IsSupportedTypeHelper< T >::type::value, std::true_type, std::false_type>::type { };
 
+                /**
+                * enum class for the different supported types for Attributes
+                */
             enum class TypeId
             {
                 NULL_T,
@@ -116,6 +164,12 @@ namespace OIC
                 VECTOR
             };
 
+                /**
+                * This class contains APIs for "Type" of the attribute.
+                *  All Types are specified in enum TypeId.
+                *
+                * @see TypeId
+                */
             class Type
             {
             public:
@@ -146,6 +200,9 @@ namespace OIC
                 int m_which;
             };
 
+                /**
+                * This class provides APIs for the Value of the attributes.
+                */
             class Value
             {
             public:
@@ -334,6 +391,18 @@ namespace OIC
 
         bool operator!=(const ResourceAttributes&, const ResourceAttributes&);
 
+        /**
+         * This class is for the static visitors of key-value for a attribute.
+         *
+         * It has three sub-classes
+         * - KeyVisitor : for key visitor
+         * - ValueVisitor : for value visitor
+         * - ConstValueVisitor : for const value visitor
+         * All these 3 sub-classes inheriting the boost::static_visitor which allows invocation as a function
+         * by overloading operator(),  unambiguously accepting any value of type T. All the 3 classes are
+         * inherting the  boost::static_visitor with same type  i.e. String.
+         *
+         */
         class ResourceAttributes::KeyValuePair
         {
         private:
@@ -380,6 +449,9 @@ namespace OIC
             friend class const_iterator;
         };
 
+        /**
+        * This class is an Iterator for the ResourceAttributes.
+        */
         class ResourceAttributes::iterator: public std::iterator< std::forward_iterator_tag,
                 ResourceAttributes::KeyValuePair >
         {
@@ -410,8 +482,10 @@ namespace OIC
 
             friend class ResourceAttributes;
         };
-
-        class ResourceAttributes::const_iterator: public std::iterator< std::forward_iterator_tag,
+        /**
+        * This class is an Const Iterator for the ResourceAttributes.
+        */
+        class ResourceAttributes::const_iterator: public std::iterator < std::forward_iterator_tag,
                 const ResourceAttributes::KeyValuePair >
         {
         private:

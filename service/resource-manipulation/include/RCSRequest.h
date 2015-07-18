@@ -18,6 +18,11 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+/**
+ * @file
+ *
+ * This file cotains RCSRequest class, which provide API to get resource URI from the request.
+ */
 #ifndef SERVERBUILDER_PRIMITIVEREQUEST_H
 #define SERVERBUILDER_PRIMITIVEREQUEST_H
 
@@ -27,18 +32,36 @@ namespace OIC
 {
     namespace Service
     {
-
+        /**
+        * @class  RCSRequest
+        * @brief   This class describes the resource request.
+        *              It provides API to get the resource URI from the request.
+        */
         class RCSRequest
         {
-        public:
-            explicit RCSRequest(const std::string& resourceUri);
+            public:
+                /**
+                * Constructor to set resource URI.
+                *
+                * @param resourceUri - URI of the resource for which the request is generated.
+                */
+                explicit RCSRequest(const std::string &resourceUri);
 
-            RCSRequest& operator=(RCSRequest&) = delete;
+                RCSRequest &operator=(RCSRequest &) = delete;
 
-            std::string getResourceUri() const;
+                /**
+                * API to get the URI from the request.
+                *
+                * @return string - uri of resource.
+                */
+                std::string getResourceUri() const;
 
-        private:
-            std::string m_resourceUri;
+            private:
+                /**
+                 *  resource uri value stored as a string.
+                 *  value set once during request initialization.
+                 */
+                std::string m_resourceUri;
         };
 
     }

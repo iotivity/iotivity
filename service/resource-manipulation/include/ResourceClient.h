@@ -21,7 +21,9 @@
 /**
  * @file
  *
- * This file contains the resource client APIs provided to the developers
+ * This file contains the Resource Client APIs provided to the developers.
+ * It is a common API layer for the Resource Broker and Resource Cache module of Resource
+ * Manipulation layer.
  */
 
 #ifndef RESOURCE_CLIENT_H_
@@ -67,34 +69,37 @@ namespace OIC
         class RemoteResourceObject;
 
         /**
-         * @class   BadRequestException
-         * @brief   It is used to throw exception to the upper layer if request is invalid.
-         *             This class inherited from PrimitiveException class.
+         * @class  BadRequestException
+         * @brief  This class is used to throw exception to the upper layer if request is invalid.
+         *             It is inherited from RCSException class.
          *
          */
         class BadRequestException: public RCSException
         {
             public:
-                BadRequestException(const std::string &what) : RCSException{ what } {}
-                BadRequestException(std::string &&what) : RCSException{ std::move(what) } {}
+                BadRequestException(const std::string &what) : RCSException { what } {}
+                BadRequestException(std::string &&what) : RCSException { std::move(what) } {}
         };
 
         /**
          * @class   InvalidParameterException
-         * @brief    It is used to throw exception to the upper layer if parameter is invalid.
-         *              This class inherited from PrimitiveException class.
+         * @brief   This class is used to throw exception to the upper layer if parameter is invalid.
+         *              It is  inherited from RCSException class.
          */
         class InvalidParameterException: public RCSException
         {
             public:
-                InvalidParameterException(const std::string &what) : RCSException{ what } {}
+                InvalidParameterException(const std::string &what) : RCSException { what } {}
                 InvalidParameterException(std::string &&what) : RCSException{ std::move(what) } {}
         };
 
         /**
          * @class   RemoteResourceObject
-         * @brief   It is an interaction point between Resource
-         *        and the developers.
+         * @brief   This class is an interaction point between Resource
+         *              and the developers. Developer will get the RemoteResourceObject by calling the
+         *              discoverResource() API of "DiscoveryManager" class.
+         *
+         * @see DiscoveryManager
          *
          */
         class RemoteResourceObject
@@ -108,16 +113,22 @@ namespace OIC
 
                 /**
                  *  Typedef for callback of startWatching API
+                 *
+                 * @see ResourceState
                  */
                 typedef std::function< void(ResourceState) > ResourceStateChangedCallback;
 
                 /**
                 *  Typedef for callback of startCaching API
+                *
+                * @see ResourceAttributes
                 */
                 typedef std::function< void(const ResourceAttributes &) > CacheUpdatedCallback;
 
                 /**
                 *  Typedef for callback of getRemoteAttributes API
+                *
+                *  @see ResourceAttributes
                 */
                 typedef std::function< void(const ResourceAttributes &) >
                 RemoteAttributesReceivedCallback;
@@ -125,145 +136,228 @@ namespace OIC
 
                 /**
                 *  Typedef for callback of setRemoteAttributes API
+                *
+                *  @see ResourceAttributes
                 */
                 typedef std::function< void(const ResourceAttributes &) >
                 RemoteAttributesSetCallback;
 
                 /**
-                 * API to get watching state.
+                 * Check current watching state.
                  *
-                 * @return bool - watching or not.
+                 * @details This API checks the current watching state for the resource of interest.
+                 *
+                 * @return bool - true if Watching otherwise false.
                  */
                 bool isWatching() const;
 
                 /**
-                 * API to get Caching state.
+                 * Check current Caching state.
                  *
-                 * @return bool - caching or not.
+                 * @details This API checks the current caching state for the resource of interest.
+                 *
+                 * @return bool - true if Caching started otherwise false.
                  */
+
                 bool isCaching() const;
 
                 /**
-                 * API to get observable state.
+                 * Check whether reosurce is observable or not.
                  *
-                 * @return bool - observable or not.
+                 * @details This API checks  the observable property of the resource.
+                 *
+                 * @return bool - true if observable otherwise false.
                  */
                 bool isObservable() const;
 
                 /**
-                 * API to start watching the resource.
+                 * Start watching the resource.
                  *
-                 * @param ResourceStateChangedCallback - callback to get changed resource state.
+                 * @details This API will start monitoring the resource of interest.
+                 *               Once this API is called it will check whether the particular resource
+                 *               is available or not. It will provide the changed resource state in the callback.
+                 *
+                 * @param cb - callback to get changed resource state.
                  *
                  * @throw InvalidParameterException
                  *
+                 * @see ResourceStateChangedCallback
+                 * @see ResourceState
+                 *
+                 * NOTE: Developer can call this API any number of time. Developer should take care
+                 *            of Synchronization as ResourceStateChangedCallback is asynchronous.
+                 *            This function throws the InvalidParameterException if the callback is NULL or not valid.
                  */
                 void startMonitoring(ResourceStateChangedCallback cb);
 
                 /**
-                 * API to stop watching the resource.
+                 * Stop monitoring the resource.
+                 *
+                 * @details This API will stop monitoring the resource of interest it means it will stop to look
+                 *               for the resource presence in the network.
+                 *
+                 * NOTE: If startMonitoring() is not being called & directly this API is called it will do nothing.
+                 *           Developer can call this API any number of time. It will not results in any kind of warning.
+                 *
                  */
                 void stopMonitoring();
 
                 /**
-                 * API to get resource state.
+                 * Provides the current resource state. Resource state is an enum class.
                  *
                  * @return ResourceState - current state of the resource.
+                 *
+                 * @see ResourceState
                  */
                 ResourceState getState() const ;
 
                 /**
-                * API to start caching for the resource.
-                */
+                 * Start caching data for the resource of interest.
+                 *
+                 * @details This API will start data caching for the resource of interest.
+                 *               Once caching started it will look for the data updation on the resource of interest
+                 *                & updates the cache data accordingly. It provides the cached data on demand.
+                 *
+                 * @see getCachedAttributes()
+                 * @see getCachedAttribute( const std::string &)
+                 *
+                 * NOTE: developer can get the cached data by calling getCachedAttributes()
+                 *            or getCachedAttribute() API
+                 */
                 void startCaching();
 
                 /**
-                 * API to start caching data of the resource.
+                 * Start caching data for the resource of interest.
                  *
-                 * @param CacheUpdatedCallback - callback to get updated resourceAttributes.
+                 * @details This API will start data caching for the resource of interest.
+                 *              Once caching started it look for the data updation on the resource of interest &
+                 *              updates the cached data accordingly Whenever data is updated in the cache, it
+                 *              provides the updated data to the application/caller.
                  *
-                 * @throw InvalidParameterException
+                 * @param cb - callback to get updated resourceAttributes.
+                 *
+                 * @see CacheUpdatedCallback
+                 *
+                 * NOTE: Developer can call this API any number of time. Developer should
+                 *           take care of Synchronization as CacheUpdatedCallback is asynchronous.
+                 *           This function throws the InvalidParameterException if the callback is NULL or not valid.
                  *
                  */
-                void startCaching(CacheUpdatedCallback);
+                void startCaching(CacheUpdatedCallback cb);
 
                 /**
-                 * API to get the cache State of the resource
+                 * Provides the current cache state for the resource of interest. CacheState is the enum class.
                  *
                  * @return CacheState - Current state of the Cache.
+                 *
+                 * @see CacheState
+                 *
                  */
                 CacheState getResourceCacheState();
 
                 /**
-                 * API to stop caching the data for the resource
-                 */
+                * Stop data caching for the resource of interest.
+                *
+                * @details This API will stop caching the data for the resource of interest.
+                *
+                * NOTE: If startCaching() or startCaching(CacheUpdatedCallback) is not being called &
+                *            directly this API is called it will do nothing.
+                *            Developer can call this API any number of time, it will not results in any warning.
+                *
+                */
                 void stopCaching();
 
                 /**
-                 * API to refresh the cache explicitly.
-                 */
+                * Refresh the cache.
+                *
+                * @details This API will refresh the cache, i.e. it will get the latest data from the server.
+                *
+                */
                 void refreshCache() ;
 
                 /**
-                 * API to get cached ResourceAttributes data.
+                 * Get the cached ResourceAttributes data.
                  *
-                 * @return ResourceAttributes - cached ResourceAttributes data
+                 * @pre startCaching() or startCaching(CacheUpdatedCallback) API should be called.
+                 *
+                 * @return ResourceAttributes - cached resourceAttribute
                  *
                  * @throw BadRequestException
                  *
+                 * @see startCaching()
+                 * @see startCaching(CacheUpdatedCallback)
+                 * @see ResourceAttributes
+                 *
+                 * NOTE: If startCaching() or startCaching(CacheUpdatedCallback) is not being called &
+                 *           directly this API is called it will throw the
+                 *           BadRequestException.
                  */
                 ResourceAttributes getCachedAttributes() const;
 
                 /**
-                 * API to get particular cached ResourceAttribute value
-                 *
-                 * @return Value - ResourceAttributes::Value class object
-                 *
-                 * @throw BadRequestException
-                 *
-                 */
+                * Get a particular cached ResourceAttribute value.
+                *
+                * @pre startCaching() or startCaching(CacheUpdatedCallback) API should be called.
+                *
+                * @return ResourceAttributes::Value - requested attribute Value
+                *
+                * @throw BadRequestException
+                *
+                * @see startCaching()
+                * @see startCaching(CacheUpdatedCallback)
+                * @see ResourceAttributes::Value
+                *
+                * NOTE: If startCaching() or startCaching(CacheUpdatedCallback) is not being called &
+                *           directly this API is called it will throw the BadRequestException.
+                *
+                */
                 ResourceAttributes::Value getCachedAttribute( const std::string &) ;
 
                 /**
-                 * API to get current resource attributes data.
-                 *
-                 * @param RemoteAttributesReceivedCallback - callback to get resourceAttributes data.
-                 *
-                 */
-                void getRemoteAttributes(RemoteAttributesReceivedCallback);
+                * Get resource attributes.
+                *
+                * @details This API send a get request to the resource of interest and provides the attributes
+                *               to the caller in the RemoteAttributesReceivedCallback.
+                *
+                * @see ResourceAttributes::Value
+                */
+                void getRemoteAttributes(RemoteAttributesReceivedCallback cb);
 
                 /**
-                 * API to set resource attributes data.
-                 *
-                 * @param ResourceAttributes - resourceAttributes data to set
-                 * @param RemoteAttributesSetCallback - callback on setting resourceAttributes data.
-                 *
-                 */
-                void setRemoteAttributes(ResourceAttributes &, RemoteAttributesSetCallback );
+                * Set resource attributes.
+                *
+                * @details This API send a set request to the resource of interest and provides the updated
+                *              attributes to the caller in the RemoteAttributesSetCallback.
+                *
+                * @param attributes - resourceAttributes data to set
+                * @param cb - callback on setting resourceAttributes data.
+                *
+                */
+                void setRemoteAttributes(ResourceAttributes &attributes, RemoteAttributesSetCallback cb);
 
                 /**
-                 * API to get resource uri.
+                 * Get resource uri.
                  *
                  * @return string - uri of the Resource
                  */
                 std::string getUri() const;
 
                 /**
-                 * API to get resource address.
+                 * Get resource address.
                  *
                  * @return string - address of the Resource
                  */
                 std::string getAddress() const;
 
                 /**
-                 * API to get resource types.
+                 * Get resource types.
                  *
                  * @return vector - resource types
                  */
                 std::vector< std::string > getTypes() const;
 
                 /**
-                 * API to get resource interfaces.
+                 * Get resource interfaces.
                  *
                  * @return vector - resource interfaces
                  */
@@ -315,7 +409,7 @@ namespace OIC
 
         /**
          * @class   DiscoveryManager
-         * @brief   It contains the resource discovery method.
+         * @brief   This class contains the resource discovery method.
          *
          */
         class DiscoveryManager
@@ -329,21 +423,22 @@ namespace OIC
                 OnResourceDiscoveredCallback;
 
                 /**
-                * API to get DiscoveryManager instance.
+                * API for getting DiscoveryManager instance.
                 *
-                * @return DiscoveryManager -instance.
+                * @return DiscoveryManager - Instance of DiscoveryManager class
                 */
                 static DiscoveryManager *getInstance();
 
                 /**
-                * API for discovey of resource of Interest.
+                * API for discovering the resource of Interest.
                 *
                 * @param host - host of the Resource
                 * @param resourceURI - uri of resource to be searched
                 * @param connectivityType - connection type
-                * @param cb - callback to obtain discovered resource.
+                * @param cb - callback to obtain discovered resource
                 *
-                * @throw InvalidParameterException
+                * @throw InvalidParameterException : This API throws the InvalidParameterException if any of
+                *                                                         the parameter is invalid.
                 *
                 */
                 void discoverResource(std::string host, std::string resourceURI,

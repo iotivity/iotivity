@@ -18,6 +18,12 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+/**
+ * @file
+ *
+ * This file contains BundleInfo class, which provides APIs related to Bundle information.
+ */
+
 #ifndef BUNDLEINFO_H_
 #define BUNDLEINFO_H_
 
@@ -27,24 +33,104 @@ namespace OIC
 {
     namespace Service
     {
-        /*
-         * Describes a bundle with resources, that can be loaded dynamically.
-         */
+
+        /**
+        * @class  BundleInfo
+        * @brief   This class provides APIs for creating, getting and setting the Bundle Information
+        *
+        */
         class BundleInfo
         {
             public:
                 BundleInfo();
                 virtual ~BundleInfo();
+
+                /**
+                * API for setting the Id of the bundle
+                *
+                * @param name - Id of the bundle in string form
+                *
+                */
                 virtual void setID(std::string name) = 0;
+
+                /**
+                * API for getting the Id of the bundle
+                *
+                * @return string - Id of the bundle
+                *
+                */
                 virtual std::string getID() = 0;
+
+                /**
+                * API for setting the path of the bundle
+                *
+                * @param path - path of the bundle in string form
+                *
+                */
                 virtual void setPath(std::string path) = 0;
+
+                /**
+                * API for getting the path of the bundle
+                *
+                * @return path - path of the bundle
+                *
+                */
                 virtual std::string getPath() = 0;
+
+                /**
+                * API for setting the Activator name for the bundle
+                *
+                * @param activator - Activator name in string form
+                *
+                */
                 virtual void setActivatorName(std::string activator) = 0;
+
+                /**
+                * API for setting the Activator name for the bundle
+                *
+                * @return string - Name of the activator
+                *
+                */
                 virtual std::string getActivatorName() = 0;
+
+                /**
+                * API for setting the library path for the bundle
+                *
+                * @param libpath - Library path in string form
+                *
+                */
                 virtual void setLibraryPath(std::string libpath) = 0;
+
+                /**
+                * API for getting the library path for the bundle
+                *
+                * @return string - Library path  in string form
+                *
+                */
                 virtual std::string getLibraryPath() = 0;
+
+                /**
+                * API for setting the version of the bundle
+                *
+                * @param version - version of the bundle in string form
+                *
+                */
                 virtual void setVersion(std::string version) = 0;
+
+                /**
+                * API for getting the version of the bundle
+                *
+                * @return string - version of the bundle
+                *
+                */
                 virtual std::string getVersion() = 0;
+
+                /**
+                 * API for creating new bundle information
+                 *
+                 * @return  BundleInfo - BundleInfo pointer.
+                 *
+                 */
                 static BundleInfo *build();
             protected:
                 std::string m_ID, m_path, m_version;

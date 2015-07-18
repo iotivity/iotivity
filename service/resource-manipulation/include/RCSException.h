@@ -18,6 +18,12 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+/**
+ * @file
+ *
+ * This file defines a class to handle exception thrown for resource manipulation.
+ */
+
 #ifndef RES_MANIPULATION_RCSEXCEPTION_H
 #define RES_MANIPULATION_RCSEXCEPTION_H
 
@@ -30,31 +36,85 @@ namespace OIC
     namespace Service
     {
 
+        /**
+         * @class   RCSException
+         * @brief    This class helps to throw wide range of exception to the application/developers.
+         *               It inherits the standard exception class.
+         *
+         */
         class RCSException: public std::exception
         {
-        public:
-            RCSException();
-            explicit RCSException(const std::string&);
-            explicit RCSException(std::string&&);
+            public:
+                /**
+                * Default Constructor
+                */
+                RCSException();
 
-            virtual ~RCSException() noexcept {}
+                /**
+                * Parametrized Constructor  to set exception description as a string.
+                *
+                * @param what - exception description
+                */
+                explicit RCSException(const std::string &what);
 
-            virtual const char* what() const noexcept;
+                /**
+                * Parametrized Constructor  to set exception description as a string.
+                *
+                * @param what - exception description
+                */
+                explicit RCSException(std::string &&what);
 
-        private:
-            std::string m_what;
+                /**
+                * virtual destructor
+                */
+                virtual ~RCSException() noexcept {}
+
+                /**
+                * API for returning the exception description in string format
+                *
+                * @return  const char* - exception description
+                */
+                virtual const char *what() const noexcept;
+
+            private:
+                /**
+                 *  Exception description
+                 */
+                std::string m_what;
         };
 
+        /**
+         * @class   PlatformException
+         * @brief   This class helps in throwing platform exception to the application/developers.
+         *              It inherits from RCSException class.
+         *
+         * NOTE: OCStackResult is defined in octypes.h.
+         */
         class PlatformException: public RCSException
         {
-        public:
-            explicit PlatformException(OCStackResult reason);
+            public:
+                explicit PlatformException(OCStackResult reason);
 
-            OCStackResult getReasonCode() const;
-            std::string getReason() const;
+                /**
+                 * API for getting exception code.
+                 *
+                 * @return  OCStackResult - exception code.
+                 *
+                 */
+                OCStackResult getReasonCode() const;
+                /**
+                 * API for getting exception reason.
+                 *
+                 * @return string - exception reason as a string.
+                 *
+                 */
+                std::string getReason() const;
 
-        private:
-            OCStackResult m_reason;
+            private:
+                /*
+                * reason for the exception, stored as OCStackResult value.
+                */
+                OCStackResult m_reason;
         };
     }
 }
