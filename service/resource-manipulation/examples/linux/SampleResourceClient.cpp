@@ -163,17 +163,17 @@ int main()
             {
                 try
                 {
-                    resource->startWatching(&OnResourceStateChanged);
+                    resource->startMonitoring(&OnResourceStateChanged);
                     cout << "\n\n**********  Hosting Started ***********" << std::endl;
                 }
                 catch (InvalidParameterException e)
                 {
-                    cout << "Exeception in startWatching :: " << e.what() << std::endl;
+                    cout << "Exeception in startMonitoring :: " << e.what() << std::endl;
                 }
             }
             else if (userInput == 2)
             {
-                resource->stopWatching();
+                resource->stopMonitoring();
                 cout << "\n\n******  Hosting stopped******" << std::endl;
             }
             else if (userInput == 3)

@@ -158,12 +158,12 @@ namespace OIC
                  * @throw InvalidParameterException
                  *
                  */
-                void startWatching(ResourceStateChangedCallback);
+                void startMonitoring(ResourceStateChangedCallback cb);
 
                 /**
                  * API to stop watching the resource.
                  */
-                void stopWatching();
+                void stopMonitoring();
 
                 /**
                  * API to get resource state.

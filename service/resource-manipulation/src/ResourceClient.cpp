@@ -179,7 +179,7 @@ namespace OIC
             return m_cachingFlag;
         }
 
-        void RemoteResourceObject::startWatching(ResourceStateChangedCallback cb)
+        void RemoteResourceObject::startMonitoring(ResourceStateChangedCallback cb)
         {
             OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::startWatching entry");
             if (true == m_watchingFlag)
@@ -204,7 +204,7 @@ namespace OIC
             OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::startWatching exit");
         }
 
-        void RemoteResourceObject::stopWatching()
+        void RemoteResourceObject::stopMonitoring()
         {
             OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::stopWatching entry");
             if (true == m_watchingFlag)

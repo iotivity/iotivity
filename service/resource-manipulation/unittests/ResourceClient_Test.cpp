@@ -150,9 +150,9 @@ TEST(ResourceClientTest, testStartWatchingFail)
 {
     createResource();
     object->m_watchingFlag = false;
-    object->startWatching(NULL);
+    object->startMonitoring(NULL);
     EXPECT_TRUE(object->m_watchingFlag);
-    object->stopWatching();
+    object->stopMonitoring();
     destroyResource();
 }
 
@@ -160,9 +160,9 @@ TEST(ResourceClientTest, testStartWatchingFail)
 TEST(ResourceClientTest, testStartWatchingPass)
 {
     createResource();
-    object->startWatching(&onResourceStateChanged);
+    object->startMonitoring(&onResourceStateChanged);
     EXPECT_TRUE(object->m_watchingFlag);
-    object->stopWatching();
+    object->stopMonitoring();
     destroyResource();
 }
 
@@ -170,10 +170,10 @@ TEST(ResourceClientTest, testStartWatchingPass)
 TEST(ResourceClientTest, testStopWatching)
 {
     createResource();
-    object->startWatching(&onResourceStateChanged);
-    object->stopWatching();
+    object->startMonitoring(&onResourceStateChanged);
+    object->stopMonitoring();
     EXPECT_FALSE(object->m_watchingFlag);
-    object->startWatching(&onResourceStateChanged);
+    object->startMonitoring(&onResourceStateChanged);
     destroyResource();
 }
 
@@ -341,7 +341,7 @@ TEST(ResourceClientTest, testDiscoverResourceEmptyCallback)
     DiscoveryManager *instance = DiscoveryManager::getInstance();
     EXPECT_THROW(instance->discoverResource("", uri, CT_DEFAULT, NULL), InvalidParameterException);
     destroyResource();
-    object->stopWatching();
+    object->stopMonitoring();
 }
 
 //Send invalid ResourceAttributes object to function
