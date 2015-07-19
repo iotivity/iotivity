@@ -82,8 +82,8 @@ namespace OIC
         typedef std::function<void(BROKER_STATE)> BrokerCB;
         struct BrokerRequesterInfo
         {
-            BrokerID brockerId;
-            BrokerCB brockerCB;
+            BrokerID brokerId;
+            BrokerCB brokerCB;
         };
         typedef std::shared_ptr<BrokerRequesterInfo> BrokerRequesterInfoPtr;
 

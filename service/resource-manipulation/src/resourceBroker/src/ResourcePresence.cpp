@@ -97,8 +97,8 @@ namespace OIC
             BrokerRequesterInfoPtr newRequester;
             newRequester.reset(new BrokerRequesterInfo());
 
-            newRequester->brockerId = _id;
-            newRequester->brockerCB = _cb;
+            newRequester->brokerId = _id;
+            newRequester->brokerCB = _cb;
             requesterList->push_back(newRequester);
         }
 
@@ -115,7 +115,7 @@ namespace OIC
             std::list<BrokerRequesterInfoPtr>::iterator iter = requesterList->begin();
             for(; iter != requesterList->end(); ++iter)
             {
-                if(iter->get()->brockerId == _id)
+                if(iter->get()->brokerId == _id)
                 {
                     requesterList->erase(iter);
                     break;
@@ -166,7 +166,7 @@ namespace OIC
                 {
                     for(BrokerRequesterInfoPtr & item : * requesterList)
                     {
-                        item->brockerCB(state);
+                        item->brokerCB(state);
                     }
                 }
             }

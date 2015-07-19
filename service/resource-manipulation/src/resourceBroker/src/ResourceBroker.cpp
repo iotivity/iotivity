@@ -121,10 +121,7 @@ namespace OIC
 
                 if(presenceItem->isEmptyRequester())
                 {
-                    auto iter = std::find(s_presenceList->begin(),
-                            s_presenceList->end(), presenceItem);
-                    s_presenceList->erase(iter);
-                    presenceItem.reset();
+                    s_presenceList->remove(presenceItem);
                 }
             }
         }
