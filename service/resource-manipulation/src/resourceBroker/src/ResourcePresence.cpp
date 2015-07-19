@@ -175,10 +175,9 @@ namespace OIC
         void ResourcePresence::setResourcestate(BROKER_STATE _state)
         {
             this->state = _state;
-
         }
 
-        void * ResourcePresence::timeOutCB(unsigned int msg)
+        void ResourcePresence::timeOutCB(unsigned int msg)
         {
             std::unique_lock<std::mutex> lock(cbMutex);
             isTimeoutCB = true;
@@ -194,7 +193,7 @@ namespace OIC
                 isTimeoutCB = false;
                 cbCondition.notify_all();
 
-                return NULL;
+                return;
             }
             this->isWithinTime = false;
             OC_LOG_V(DEBUG, BROKER_TAG,
@@ -205,17 +204,13 @@ namespace OIC
 
             isTimeoutCB = false;
             cbCondition.notify_all();
-
-            return NULL;
         }
 
-        void * ResourcePresence::pollingCB(unsigned int msg)
+        void ResourcePresence::pollingCB(unsigned int msg)
         {
             OC_LOG_V(DEBUG,BROKER_TAG,"IN PollingCB\n");
             this->requestResourceState();
             timeoutHandle = expiryTimer.postTimer(BROKER_SAFE_MILLISECOND,pTimeoutCB);
-
-            return NULL;
         }
 
         void ResourcePresence::getCB(const HeaderOptions &hos,

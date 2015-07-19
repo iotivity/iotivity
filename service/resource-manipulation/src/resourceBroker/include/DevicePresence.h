@@ -68,7 +68,7 @@ namespace OIC
 
             void changeAllPresenceMode(BROKER_MODE mode);
             void subscribeCB(OCStackResult ret,const unsigned int seq, const std::string& Hostaddress);
-            void * timeOutCB(TimerID id);
+            void timeOutCB(TimerID id);
         };
     } // namespace Service
 } // namespace OIC

@@ -78,8 +78,8 @@ namespace OIC
             void getCB(const HeaderOptions &hos, const ResponseStatement& rep, int eCode);
             void verifiedGetResponse(int eCode);
 
-            void * timeOutCB(unsigned int msg);
-            void * pollingCB(unsigned int msg = 0);
+            void timeOutCB(unsigned int msg);
+            void pollingCB(unsigned int msg = 0);
 
             void executeAllBrokerCB(BROKER_STATE changedState);
             void setResourcestate(BROKER_STATE _state);

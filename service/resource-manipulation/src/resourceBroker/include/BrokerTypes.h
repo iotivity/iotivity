@@ -111,7 +111,7 @@ namespace OIC
                 const std::string&)> SubscribeCB;
 
         typedef std::function<void(const HeaderOptions&, const ResponseStatement&, int)> RequestGetCB;
-        typedef std::function<void*(long long)> TimerCB;
+        typedef std::function<void(long long)> TimerCB;
     } // namespace Service
 } // namespace OIC
 

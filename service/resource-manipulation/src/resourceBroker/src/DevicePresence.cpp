@@ -149,7 +149,7 @@ namespace OIC
             }
         }
 
-        void * DevicePresence::timeOutCB(TimerID id)
+        void DevicePresence::timeOutCB(TimerID id)
         {
             std::unique_lock<std::mutex> lock(timeoutMutex);
             isRunningTimeOut = true;
@@ -161,8 +161,6 @@ namespace OIC
 
             isRunningTimeOut = false;
             condition.notify_all();
-
-            return NULL;
         }
     } // namespace Service
 } // namespace OIC
