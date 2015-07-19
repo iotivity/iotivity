@@ -676,7 +676,8 @@ static bool OCParseSingleRepPayload(OCRepPayload** outPayload, CborValue* repPar
             while(!err && cbor_value_is_valid(&rtArray))
             {
                 char* curRt;
-                cbor_value_dup_text_string(&rtArray, &curRt, &len, NULL);
+                err = err || cbor_value_dup_text_string(&rtArray, &curRt, &len, NULL);
+                err = err || cbor_value_advance(&rtArray);
                 OCRepPayloadAddResourceTypeAsOwner(curPayload, curRt);
             }
 
@@ -694,6 +695,7 @@ static bool OCParseSingleRepPayload(OCRepPayload** outPayload, CborValue* repPar
             {
                 char* curIf;
                 err = err || cbor_value_dup_text_string(&ifArray, &curIf, &len, NULL);
+                err = err || cbor_value_advance(&ifArray);
                 OCRepPayloadAddInterfaceAsOwner(curPayload, curIf);
             }
 

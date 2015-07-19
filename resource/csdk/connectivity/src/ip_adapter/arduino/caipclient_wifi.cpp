@@ -49,13 +49,13 @@ void CAIPSetUnicastPort(uint16_t port)
 
 }
 
-uint32_t CAIPSendData(const CAEndpoint_t *endpoint, const void *data,
-                      uint32_t dataLength, bool isMulticast)
+void CAIPSendData(CAEndpoint_t *endpoint,
+                  const void *data, uint32_t dataLength, bool isMulticast)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
-    VERIFY_NON_NULL_RET(data, TAG, "data", 0);
-    VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint", 0);
+    VERIFY_NON_NULL_VOID(data, TAG, "data");
+    VERIFY_NON_NULL_VOID(endpoint, TAG, "endpoint");
 
     OIC_LOG_V(DEBUG, TAG, "remoteip: %s", endpoint->addr);
     OIC_LOG_V(DEBUG, TAG, "port: %d", endpoint->port);
@@ -67,14 +67,14 @@ uint32_t CAIPSendData(const CAEndpoint_t *endpoint, const void *data,
     if (res != CA_STATUS_OK)
     {
         OIC_LOG_V(ERROR, TAG, "Remote adrs parse fail %d", res);
-        return 0;
+        return;
     }
 
     IPAddress remoteIp(ip);
     Udp.beginPacket(remoteIp, endpoint->port);
 
     uint32_t bytesWritten = 0;
-    while(bytesWritten < dataLength)
+    while (bytesWritten < dataLength)
     {
         // get remaining bytes
         size_t writeCount = dataLength - bytesWritten;
@@ -94,9 +94,9 @@ uint32_t CAIPSendData(const CAEndpoint_t *endpoint, const void *data,
     if (Udp.endPacket() == 0)
     {
         OIC_LOG(ERROR, TAG, "Failed to send");
-        return 0;
+        return;
     }
     OIC_LOG(DEBUG, TAG, "OUT");
-    return bytesWritten;
+    return;
 }
 

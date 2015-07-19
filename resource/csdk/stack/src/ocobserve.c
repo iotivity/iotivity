@@ -141,12 +141,19 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
                     request->observeResult = OC_STACK_OK;
                     if(result == OC_STACK_OK)
                     {
-                        result = FormOCEntityHandlerRequest(&ehRequest, (OCRequestHandle) request,
-                                    request->method, (OCResourceHandle) resPtr, request->query,
-                                    request->payload, request->payloadSize,
+                        result = FormOCEntityHandlerRequest(
+                                    &ehRequest,
+                                    (OCRequestHandle) request,
+                                    request->method,
+                                    &request->devAddr,
+                                    (OCResourceHandle) resPtr,
+                                    request->query,
+                                    request->payload,
+                                    request->payloadSize,
                                     request->numRcvdVendorSpecificHeaderOptions,
                                     request->rcvdVendorSpecificHeaderOptions,
-                                    OC_OBSERVE_NO_OPTION, 0);
+                                    OC_OBSERVE_NO_OPTION,
+                                    0);
                         if(result == OC_STACK_OK)
                         {
                             ehResult = resPtr->entityHandler(OC_REQUEST_FLAG, &ehRequest,

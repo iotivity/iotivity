@@ -1146,6 +1146,7 @@ CAResult_t CAInitLEAdapterMutex()
         if (NULL == g_bleNetworkCbMutex)
         {
             OIC_LOG(ERROR, CALEADAPTER_TAG, "ca_mutex_new failed");
+            CATerminateLEAdapterMutex();
             return CA_STATUS_FAILED;
         }
     }
@@ -1156,6 +1157,7 @@ CAResult_t CAInitLEAdapterMutex()
         if (NULL == g_bleLocalAddressMutex)
         {
             OIC_LOG(ERROR, CALEADAPTER_TAG, "ca_mutex_new failed");
+            CATerminateLEAdapterMutex();
             return CA_STATUS_FAILED;
         }
     }
@@ -1166,6 +1168,7 @@ CAResult_t CAInitLEAdapterMutex()
         if (NULL == g_bleAdapterThreadPoolMutex)
         {
             OIC_LOG(ERROR, CALEADAPTER_TAG, "ca_mutex_new failed");
+            CATerminateLEAdapterMutex();
             return CA_STATUS_FAILED;
         }
     }
@@ -1176,6 +1179,7 @@ CAResult_t CAInitLEAdapterMutex()
         if (NULL == g_bleClientSendDataMutex)
         {
             OIC_LOG(ERROR, CALEADAPTER_TAG, "ca_mutex_new failed");
+            CATerminateLEAdapterMutex();
             return CA_STATUS_FAILED;
         }
     }
@@ -1186,6 +1190,7 @@ CAResult_t CAInitLEAdapterMutex()
         if (NULL == g_bleClientReceiveDataMutex)
         {
             OIC_LOG(ERROR, CALEADAPTER_TAG, "ca_mutex_new failed");
+            CATerminateLEAdapterMutex();
             return CA_STATUS_FAILED;
         }
     }
@@ -1196,6 +1201,7 @@ CAResult_t CAInitLEAdapterMutex()
         if (NULL == g_bleServerSendDataMutex)
         {
             OIC_LOG(ERROR, CALEADAPTER_TAG, "ca_mutex_new failed");
+            CATerminateLEAdapterMutex();
             return CA_STATUS_FAILED;
         }
     }
@@ -1206,6 +1212,7 @@ CAResult_t CAInitLEAdapterMutex()
         if (NULL == g_bleServerReceiveDataMutex)
         {
             OIC_LOG(ERROR, CALEADAPTER_TAG, "ca_mutex_new failed");
+            CATerminateLEAdapterMutex();
             return CA_STATUS_FAILED;
         }
     }
@@ -1216,6 +1223,7 @@ CAResult_t CAInitLEAdapterMutex()
         if (NULL == g_bleAdapterReqRespCbMutex)
         {
             OIC_LOG(ERROR, CALEADAPTER_TAG, "ca_mutex_new failed");
+            CATerminateLEAdapterMutex();
             return CA_STATUS_FAILED;
         }
     }

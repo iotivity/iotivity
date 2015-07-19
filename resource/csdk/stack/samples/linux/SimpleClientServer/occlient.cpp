@@ -663,8 +663,8 @@ int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptio
     // ocserver is written to only process "power<X" query.
     if (getWithQuery)
     {
-        OC_LOG(INFO, TAG, "Using query power<30");
-        query << "?power<30";
+        OC_LOG(INFO, TAG, "Using query power<50");
+        query << "?power<50";
     }
 
     if (withVendorSpecificHeaderOptions)

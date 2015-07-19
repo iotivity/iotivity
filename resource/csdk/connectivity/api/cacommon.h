@@ -42,6 +42,11 @@ extern "C"
 #define CA_IPADDR_SIZE 16
 
 /**
+ * @brief Remote Access jabber ID length.
+ */
+#define CA_RAJABBERID_SIZE 256
+
+/**
  * @brief Mac address length for BT port
  */
 #define CA_MACADDR_SIZE 18
@@ -113,16 +118,24 @@ typedef char *CAToken_t;
 // The following flags are the same as the equivalent OIC values in
 // octypes.h, allowing direct copying with slight fixup.
 // The CA layer should used the OC types when build allows that.
+#ifdef RA_ADAPTER
+#define MAX_ADDR_STR_SIZE_CA (256)
+#else
 #define MAX_ADDR_STR_SIZE_CA (40)
+#endif
 
 typedef enum
 {
     CA_DEFAULT_ADAPTER = 0,
 
     // value zero indicates discovery
-    CA_ADAPTER_IP           = (1 << 0),   // IPv4 and IPv6, including 6LoWPAN
-    CA_ADAPTER_GATT_BTLE    = (1 << 1),   // GATT over Bluetooth LE
-    CA_ADAPTER_RFCOMM_BTEDR = (1 << 2),   // RFCOMM over Bluetooth EDR
+    CA_ADAPTER_IP            = (1 << 0),   // IPv4 and IPv6, including 6LoWPAN
+    CA_ADAPTER_GATT_BTLE     = (1 << 1),   // GATT over Bluetooth LE
+    CA_ADAPTER_RFCOMM_BTEDR  = (1 << 2),   // RFCOMM over Bluetooth EDR
+
+    #ifdef RA_ADAPTER
+    CA_ADAPTER_REMOTE_ACCESS = (1 << 3)   // Remote Access over XMPP.
+    #endif
 } CATransportAdapter_t;
 
 typedef enum
@@ -134,6 +147,8 @@ typedef enum
     // IPv4 & IPv6 autoselection is the default
     CA_IPV6            = (1 << 5),   // IP adapter only
     CA_IPV4            = (1 << 6),   // IP adapter only
+    // Indication that a message was received by multicast.
+    CA_MULTICAST       = (1 << 7),
     // Link-Local multicast is the default multicast scope for IPv6.
     // These correspond in both value and position to the IPv6 address bits.
     CA_SCOPE_INTERFACE = 0x1, // IPv6 Interface-Local scope
@@ -144,6 +159,9 @@ typedef enum
     CA_SCOPE_ORG       = 0x8, // IPv6 Organization-Local scope
     CA_SCOPE_GLOBAL    = 0xE, // IPv6 Global scope
 } CATransportFlags_t;
+
+#define CA_IPFAMILY_MASK (CA_IPV6|CA_IPV4)
+#define CA_SCOPE_MASK 0xf     // mask scope bits above
 
 /**
  * @enum CANetworkStatus_t
@@ -344,12 +362,64 @@ typedef struct
 } CAErrorInfo_t;
 
 /**
+ * @brief CA Remote Access information for XMPP Client
+ *
+ */
+typedef struct
+{
+    char *hostname;     /**< XMPP server hostname */
+    uint16_t port;      /**< XMPP server serivce port */
+    char *xmpp_domain;  /**< XMPP login domain */
+    char *username;     /**< login username */
+    char *password;     /**< login password */
+    char *resource;     /**< specific resource for login */
+    char *user_jid;     /**< specific JID for login */
+} CARAInfo_t;
+
+
+/**
  * @brief Hold global variables for CA layer (also used by RI layer)
  */
 typedef struct
 {
-    CATransportFlags_t serverFlags;
+    int fd;
+    uint16_t port;
+} CASocket_t;
+
+typedef struct
+{
     CATransportFlags_t clientFlags;
+    CATransportFlags_t serverFlags;
+    bool client;
+    bool server;
+
+    struct sockets
+    {
+        void *threadpool;   // threadpool between Initialize and Start
+        CASocket_t u6;      // unicast   IPv6
+        CASocket_t u6s;     // unicast   IPv6 secure
+        CASocket_t u4;      // unicast   IPv4
+        CASocket_t u4s;     // unicast   IPv4 secure
+        CASocket_t m6;      // multicast IPv6
+        CASocket_t m6s;     // multicast IPv6 secure
+        CASocket_t m4;      // multicast IPv4
+        CASocket_t m4s;     // multicast IPv4 secure
+        int netlinkFd;      // netlink
+        int shutdownFds[2]; // shutdown pipe
+        int selectTimeout;  // in seconds
+        int maxfd;          // highest fd (for select)
+        int numInterfaces;  // number of active interfaces
+        bool started;       // the IP adapter has started
+        bool terminate;     // the IP adapter needs to stop
+        bool ipv6enabled;   // IPv6 enabled by OCInit flags
+        bool ipv4enabled;   // IPv4 enabled by OCInit flags
+    } ip;
+
+    struct calayer
+    {
+        CATransportFlags_t previousRequestFlags; // address family filtering
+        uint16_t previousRequestMessageId;       // address family filtering
+    } ca;
 } CAGlobals_t;
 
 extern CAGlobals_t caglobals;

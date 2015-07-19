@@ -41,7 +41,7 @@
 #define TAG  "provisioningclient"
 
 static OicSecAcl_t        *gAcl = NULL;
-static char CRED_FILE[] = "oic_svr_db.json";
+static char PROV_TOOL_DB_FILE[] = "oic_svr_db_prov_tool.json";
 
 /**
  * Perform cleanup for ACL list
@@ -233,7 +233,7 @@ static SPResult InputACL(OicSecAcl_t *acl)
 FILE* client_fopen(const char *path, const char *mode)
 {
     (void)path;
-    return fopen(CRED_FILE, mode);
+    return fopen(PROV_TOOL_DB_FILE, mode);
 }
 
 /**

@@ -340,6 +340,46 @@ static void CASendThreadProcess(void *threadData)
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
+/*
+ * If a second message arrives with the same token and the other address
+ * family, drop it.  Typically, IPv6 beats IPv4, so the IPv4 message is dropped.
+ * This can be made more robust (for instance, another message could arrive
+ * in between), but it is good enough for now.
+ */
+static bool CADropSecondRequest(const CAEndpoint_t *endpoint, uint16_t messageId)
+{
+    if (!endpoint)
+    {
+        return true;
+    }
+    if (endpoint->adapter != CA_ADAPTER_IP)
+    {
+        return false;
+    }
+
+    bool ret = false;
+    CATransportFlags_t familyFlags = endpoint->flags & CA_IPFAMILY_MASK;
+
+    if (messageId == caglobals.ca.previousRequestMessageId)
+    {
+        if ((familyFlags ^ caglobals.ca.previousRequestFlags) == CA_IPFAMILY_MASK)
+        {
+            if (familyFlags & CA_IPV6)
+            {
+                OIC_LOG(INFO, TAG, PCF("IPv6 duplicate response ignored"));
+            }
+            else
+            {
+                OIC_LOG(INFO, TAG, PCF("IPv4 duplicate response ignored"));
+            }
+            ret = true;
+        }
+    }
+    caglobals.ca.previousRequestFlags = familyFlags;
+    caglobals.ca.previousRequestMessageId = messageId;
+    return ret;
+}
+
 static void CAReceivedPacketCallback(const CAEndpoint_t *endpoint, void *data, uint32_t dataLen)
 {
     OIC_LOG(DEBUG, TAG, "IN");
@@ -370,6 +410,13 @@ static void CAReceivedPacketCallback(const CAEndpoint_t *endpoint, void *data, u
         if (CA_STATUS_OK != res)
         {
             OIC_LOG_V(ERROR, TAG, "CAGetRequestInfoFromPDU failed : %d", res);
+            OICFree(ReqInfo);
+            coap_delete_pdu(pdu);
+            return;
+        }
+
+        if (CADropSecondRequest(endpoint, ReqInfo->info.messageId))
+        {
             OICFree(ReqInfo);
             coap_delete_pdu(pdu);
             return;

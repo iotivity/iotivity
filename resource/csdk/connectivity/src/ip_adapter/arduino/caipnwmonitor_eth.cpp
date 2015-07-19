@@ -20,7 +20,7 @@
 /**
  * @file caipnwmonitor.cpp
  * @brief This file is to keep design in sync with other platforms.  Right now there is no
- *        api for network monitioring in arduino.
+ *        api for network monitoring in arduino.
  */
 
 #include "caipinterface.h"
@@ -37,105 +37,69 @@
 #include "caipadapter.h"
 #include "caadapterutils.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 
 #define TAG "IPNW"
 
-CAResult_t CAIPInitializeNetworkMonitor(const ca_thread_pool_t threadPool)
-{
-    return CA_STATUS_OK;
-}
-
-CAResult_t CAIPStartNetworkMonitor(void)
-{
-    return CA_STATUS_OK;
-}
-
-void CAIPGetSubnetMask(char *subnetMask, int32_t addrLen)
-{
-    OIC_LOG(DEBUG, TAG, "IN");
-    VERIFY_NON_NULL_VOID(subnetMask, TAG, "subnetMask");
-
-    //TODO : Fix this for scenarios when this API is invoked when device is not connected
-    uint8_t rawIPAddr[4];
-    if (addrLen < CA_IPADDR_SIZE)
-    {
-        OIC_LOG(ERROR, TAG, "Invalid addrLen");
-        return;
-    }
-
-    W5100.getSubnetMask(rawIPAddr);
-    snprintf(subnetMask, addrLen, "%d.%d.%d.%d", rawIPAddr[0], rawIPAddr[1], rawIPAddr[2],
-             rawIPAddr[3]);
-
-    OIC_LOG_V(DEBUG, TAG, "subnetMask:%s", subnetMask);
-    OIC_LOG(DEBUG, TAG, "OUT");
-    return;
-}
+// Since the CA abstraction expects a value for "family", AF_INET will be
+// defined & used (as-is defined in the linux socket headers).
+#define AF_INET (2)
 
 /// Retrieves the IP address assigned to Arduino Ethernet shield
-void CAArduinoGetInterfaceAddress(char *address, int32_t addrLen)
+void CAArduinoGetInterfaceAddress(uint32_t *address)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     VERIFY_NON_NULL_VOID(address, TAG, "address");
 
     //TODO : Fix this for scenarios when this API is invoked when device is not connected
     uint8_t rawIPAddr[4];
-    if (addrLen < CA_IPADDR_SIZE)
-    {
-        OIC_LOG(ERROR, TAG, "Invalid addrLen");
-        return;
-    }
-
     W5100.getIPAddress(rawIPAddr);
-    snprintf(address, addrLen, "%d.%d.%d.%d", rawIPAddr[0], rawIPAddr[1], rawIPAddr[2],
-             rawIPAddr[3]);
+    *address = (uint32_t) rawIPAddr;
 
-    OIC_LOG_V(DEBUG, TAG, "address:%s", address);
+    OIC_LOG_V(DEBUG, TAG, "address:%d.%d.%d.%d", rawIPAddr[0], rawIPAddr[1],
+              rawIPAddr[2], rawIPAddr[3]);
     OIC_LOG(DEBUG, TAG, "OUT");
     return;
 }
 
-CAResult_t CAIPGetInterfaceInfo(u_arraylist_t **netInterfaceList)
+u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
 {
-    CANetInfo_t *netInfo = (CANetInfo_t *)OICCalloc(1, sizeof(CANetInfo_t));
-    if (!netInfo)
+    CAResult_t result;
+
+    u_arraylist_t *iflist = u_arraylist_create();
+    if (!iflist)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to create iflist: %s", strerror(errno));
+        return NULL;
+    }
+
+    CAInterface_t *ifitem = (CAInterface_t *)OICCalloc(1, sizeof(CAInterface_t));
+    if (!ifitem)
     {
         OIC_LOG(ERROR, TAG, "Malloc failed");
-        return CA_STATUS_FAILED;
+        goto exit;
     }
 
-    CAArduinoGetInterfaceAddress(netInfo->ipAddress, CA_IPADDR_SIZE);
+    // Since Arduino currently only supports one interface, the next 4 lines are sufficient.
+    OICStrcpy(ifitem->name, INTERFACE_NAME_MAX, "ETH");
+    ifitem->index = 1;
+    ifitem->family = AF_INET;
+    ifitem->flags = 0;
+    CAArduinoGetInterfaceAddress(&ifitem->ipv4addr);
 
-    CAIPGetSubnetMask(netInfo->subnetMask, CA_IPADDR_SIZE);
-
-    // set interface name
-    strncpy(netInfo->interfaceName, "ETH", strlen(netInfo->interfaceName));
-
-    CAResult_t result = u_arraylist_add(*netInterfaceList, (void *)netInfo);
+    result = u_arraylist_add(iflist, ifitem);
     if (CA_STATUS_OK != result)
     {
-        OIC_LOG(ERROR, TAG, "u_arraylist_add failed");
-        return result;
+        OIC_LOG(ERROR, TAG, "u_arraylist_add failed.");
+        goto exit;
     }
-    return CA_STATUS_OK;
+
+    OIC_LOG_V(ERROR, TAG, "Added interface: %s (%d)", ifitem->name, ifitem->family);
+
+    return iflist;
+
+exit:
+    u_arraylist_destroy(iflist);
+    return NULL;
 }
 
-bool CAIPIsConnected(void)
-{
-    return true;
-}
-
-void CAIPSetConnectionStateChangeCallback(CAIPConnectionStateChangeCallback callback)
-{
-    return;
-}
-
-CAResult_t CAIPStopNetworkMonitor(void)
-{
-    return CA_STATUS_OK;
-}
-
-void CAIPTerminateNetworkMonitor(void)
-{
-    return;
-}

@@ -38,9 +38,9 @@ unittests_env.PrependUnique(CPPPATH = [
 		'../csdk/ocsocket/include',
 		'../csdk/ocrandom/include',
 		'../csdk/logger/include',
-		'../../extlibs/gtest/gtest-1.7.0/include',
-		'../../extlibs/hippomocks-master/HippoMocks',
-		'../../extlibs/hippomocks-master/HippoMocksTest'
+		'#extlibs/gtest/gtest-1.7.0/include',
+		'#extlibs/hippomocks-master/HippoMocks',
+		'#extlibs/hippomocks-master/HippoMocksTest'
 		])
 
 unittests_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
@@ -80,19 +80,15 @@ env.AppendTarget('unittests')
 if env.get('TEST') == '1':
 	target_os = env.get('TARGET_OS')
 	if target_os == 'linux':
-		out_dir = env.get('BUILD_DIR')
-		result_dir = env.get('BUILD_DIR') + '/test_out/'
-		if not os.path.isdir(result_dir):
-			os.makedirs(result_dir)
-		unittests_env.AppendENVPath('GTEST_OUTPUT', ['xml:'+ result_dir])
-		unittests_env.AppendENVPath('LD_LIBRARY_PATH', [out_dir])
-		unittests_env.AppendENVPath('LD_LIBRARY_PATH', ['./extlibs/gtest/gtest-1.7.0/lib/.libs'])
-		ut = unittests_env.Command ('ut', None,
-		 [ 'valgrind --leak-check=full --xml=yes --xml-file=resource_unittests_unittests.memcheck ' + out_dir + 'resource/unittests/unittests'])
-		AlwaysBuild ('ut')
+                from tools.scons.RunTest import *
+                run_test(unittests_env,
+                         'resource_unittests_unittests.memcheck',
+                         'resource/unittests/unittests')
 
 src_dir = unittests_env.get('SRC_DIR')
-svr_db_src_dir = src_dir + '/resource/examples/'
-svr_db_build_dir = env.get('BUILD_DIR') +'/resource/unittests/'
-unittests_env.Alias("install", unittests_env.Install( svr_db_build_dir,
-                                svr_db_src_dir + 'oic_svr_db_client.json'))
+svr_db_src_dir = os.path.join(src_dir, 'resource/examples/')
+svr_db_build_dir = os.path.join(env.get('BUILD_DIR'), 'resource/unittests/')
+unittests_env.Alias("install",
+                    unittests_env.Install(svr_db_build_dir,
+                                          os.path.join(svr_db_src_dir,
+                                                       'oic_svr_db_client.json')))

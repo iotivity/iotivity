@@ -60,6 +60,8 @@ const char *getResult(OCStackResult result)
             return "OC_STACK_SLOW_RESOURCE";
         case OC_STACK_NO_OBSERVERS:
             return "OC_STACK_NO_OBSERVERS";
+        case OC_STACK_UNAUTHORIZED_REQ:
+            return "OC_STACK_UNAUTHORIZED_REQ";
 #ifdef WITH_PRESENCE
         case OC_STACK_PRESENCE_STOPPED:
             return "OC_STACK_PRESENCE_STOPPED";

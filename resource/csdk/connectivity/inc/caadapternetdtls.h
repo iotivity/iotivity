@@ -41,7 +41,7 @@ extern void OCGetDtlsPskCredentials(CADtlsPskCredsBlob_t **credInfo);
 typedef void (*CAPacketReceivedCallback)(const CAEndpoint_t *endpoint,
                                          const void *data, uint32_t dataLength);
 
-typedef uint32_t (*CAPacketSendCallback)(const CAEndpoint_t *endpoint,
+typedef void (*CAPacketSendCallback)(CAEndpoint_t *endpoint,
                                          const void *data, uint32_t dataLength);
 
 /**

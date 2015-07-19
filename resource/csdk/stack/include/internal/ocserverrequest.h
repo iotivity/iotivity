@@ -170,6 +170,7 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
  * @param entityHandlerRequest - pointer to the OCEntityHandlerRequest struct that is created
  * @param request          - request handle
  * @param method           - RESTful method
+ * @param endpoint         - requesting endpoint
  * @param resource         - resource handle
  * @param queryBuf         - resource query of request
  * @param payload          - payload of request
@@ -182,12 +183,19 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
  * @return
  *     OCStackResult
  */
-OCStackResult FormOCEntityHandlerRequest(OCEntityHandlerRequest * entityHandlerRequest,
-        OCRequestHandle request,
-        OCMethod method, OCResourceHandle resource, char * queryBuf,
-        uint8_t * payload, size_t payloadSize,
-        uint8_t numVendorOptions, OCHeaderOption * vendorOptions, OCObserveAction observeAction,
-        OCObservationId observeID);
+OCStackResult FormOCEntityHandlerRequest(
+                                OCEntityHandlerRequest *entityHandlerRequest,
+                                OCRequestHandle request,
+                                OCMethod method,
+                                OCDevAddr *endpoint,
+                                OCResourceHandle resource,
+                                char *queryBuf,
+                                uint8_t *payload,
+                                size_t payloadSize,
+                                uint8_t numVendorOptions,
+                                OCHeaderOption *vendorOptions,
+                                OCObserveAction observeAction,
+                                OCObservationId observeID);
 
 /**
  * Find a server request in the server request list and delete

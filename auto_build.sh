@@ -8,6 +8,7 @@ function clean()
 {
 	echo "*********** Clean build *************"
 	scons -c
+	scons -f resource/csdk/connectivity/build/tizen/SConscript TARGET_OS=tizen -c
 	rm -rf out
 }
 
@@ -15,11 +16,17 @@ function build()
 {
 	if [ $(uname -s) = "Linux" ]
         then
-		echo "*********** Build for linux *************"
+		echo "*********** Build for linux ************"
 		scons RELEASE=$3
 
-		echo "*********** Build for linux with Security*************"
+		echo "*********** Build for linux with Security *************"
 		scons RELEASE=$3 SECURED=1
+
+		echo "*********** Build for linux With Remote Access *************"
+		scons RELEASE=$3 WITH_RA=1
+
+		echo "*********** Build for linux With Remote Access & Security ************"
+		scons RELEASE=$3 WITH_RA=1 SECURED=1
 	fi
 
 	# Note: for android, as oic-resource uses C++11 feature stoi and to_string,
@@ -46,6 +53,11 @@ function build()
 	scons resource TARGET_OS=arduino UPLOAD=false BOARD=arduino_due_x TARGET_ARCH=arm TARGET_TRANSPORT=IP SHIELD=ETH RELEASE=$3
 	scons resource TARGET_OS=arduino UPLOAD=false BOARD=arduino_due_x TARGET_ARCH=arm TARGET_TRANSPORT=IP SHIELD=WIFI RELEASE=$3
 
+	echo "*********** Build for Tizen CA lib and sample *************"
+    #scons -f resource/csdk/connectivity/build/tizen/SConscript TARGET_OS=tizen TARGET_TRANSPORT=IP LOGGING=true RELEASE=$3
+
+	echo "*********** Build for Tizen CA lib and sample with Security *************"
+    #scons -f resource/csdk/connectivity/build/tizen/SConscript TARGET_OS=tizen TARGET_TRANSPORT=IP LOGGING=true SECURED=1 RELEASE=$3
 
 	if [ $(uname -s) = "Darwin" ]
 	then
@@ -73,7 +85,7 @@ function  help()
 {
 	echo "Usage:"
         echo "  build:"
-        echo "     `basename $0` <path-to-android-ndk>"
+        echo "     `basename $0` <path-to-android-ndk> <path-to-arduino-sdk>"
         echo "  clean:"
         echo "     `basename $0` -c"
 }

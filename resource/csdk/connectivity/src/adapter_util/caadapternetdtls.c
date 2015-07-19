@@ -436,23 +436,19 @@ static int32_t CASendSecureData(dtls_context_t *dtlsContext,
     int type = 0;
 
     //Mutex is not required for g_caDtlsContext. It will be called in same thread.
-    int32_t sentLen = 0;
     if ((0 <= type) && (MAX_SUPPORTED_ADAPTERS > type) &&
         (NULL != g_caDtlsContext->adapterCallbacks[type].sendCallback))
     {
-        sentLen = g_caDtlsContext->adapterCallbacks[type].sendCallback(&endpoint, buf, bufLen);
+        g_caDtlsContext->adapterCallbacks[type].sendCallback(&endpoint, buf, bufLen);
     }
     else
     {
         OIC_LOG_V(DEBUG, NET_DTLS_TAG, "send Callback or adapter type is wrong [%d]", type );
     }
 
-    OIC_LOG_V(DEBUG, NET_DTLS_TAG, "sent buffer length [%d]", sentLen);
-
     OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT");
-    return sentLen;
+    return bufLen;
 }
-
 
 static int32_t CAHandleSecureEvent(dtls_context_t *dtlsContext,
                                    session_t *session,

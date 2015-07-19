@@ -88,6 +88,16 @@ CAResult_t CAStartAdapter(CATransportAdapter_t transportType);
  */
 void CAStopAdapter(CATransportAdapter_t transportType);
 
+#ifdef RA_ADAPTER
+/**
+ * @brief   Set Remote Access information for XMPP Client.
+ * @param   caraInfo            [IN] remote access info.
+ *
+ * @return  CA_STATUS_OK
+ */
+CAResult_t CASetAdapterRAInfo(const CARAInfo_t *caraInfo);
+#endif
+
 /**
  * @brief   Get network information such as ipaddress and mac information
  * @param   info           [OUT]    connectivity information such as ipaddress and mac information
