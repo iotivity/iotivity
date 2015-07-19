@@ -49,7 +49,7 @@ private:
             RCSSetResponse(const RCSRequest&, ResourceAttributes&)> SetRequestHandler;
 
 public:
-    HostingObject() = default;
+    HostingObject();
     ~HostingObject() = default;
 
     void initializeHostingObject(RemoteObjectPtr rResource, DestroyedCallback destroyCB);

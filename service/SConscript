@@ -39,11 +39,11 @@ if target_os not in ['arduino','darwin','ios']:
 		SConscript('protocol-plugin/SConscript')
 
 	# Build notification manager project
-	#if target_os not in ['android']:
-	#	SConscript('notification-manager/SConscript')
+	if target_os not in ['android', 'tizen']:
+		SConscript('notification-manager/SConscript')
 
 	# Build resource-manipulation project
-	if target_os not in ['android']:
+	if target_os not in ['android', 'tizen']:
 		SConscript('resource-manipulation/SConscript')
 #else:
 #	SConscript('notification-manager/SampleApp/arduino/SConscript')

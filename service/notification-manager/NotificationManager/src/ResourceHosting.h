@@ -60,7 +60,7 @@ public:
     static ResourceHosting * getInstance();
 
 private:
-    ResourceHosting() = default;
+    ResourceHosting();
     ~ResourceHosting() = default;
 
     ResourceHosting(const ResourceHosting&) = delete;

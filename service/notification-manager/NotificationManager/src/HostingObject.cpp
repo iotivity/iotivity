@@ -24,6 +24,16 @@ namespace OIC
 {
 namespace Service
 {
+#define HOSTING_LOG_TAG  PCF("Hosting")
+#define OIC_HOSTING_LOG(level, tag, ...)  OCLogv((level), (HOSTING_LOG_TAG), __VA_ARGS__)
+
+HostingObject::HostingObject()
+: remoteObject(nullptr), mirroredServer(nullptr),
+  remoteState(ResourceState::NOT_WATCHING),
+  pStateChangedCB(nullptr), pDataUpdateCB(nullptr),
+  pDestroyCB(nullptr), pSetRequestHandler(nullptr)
+{
+}
 
 HostingObject::RemoteObjectPtr HostingObject::getRemoteResource() const
 {
@@ -32,8 +42,6 @@ HostingObject::RemoteObjectPtr HostingObject::getRemoteResource() const
 
 void HostingObject::initializeHostingObject(RemoteObjectPtr rResource, DestroyedCallback destroyCB)
 {
-    mirroredServer = nullptr;
-    remoteState = ResourceState::NOT_WATCHING;
 
     remoteObject = rResource;
 
@@ -48,11 +56,11 @@ void HostingObject::initializeHostingObject(RemoteObjectPtr rResource, Destroyed
 
     try
     {
-        remoteObject->startWatching(pStateChangedCB);
+        remoteObject->startMonitoring(pStateChangedCB);
         remoteObject->startCaching(pDataUpdateCB);
-    }catch(InvalidParameterException &e)
+    }catch(...)
     {
-        std::cout << e.what() << std::endl;
+        throw;
     }
 }
 
@@ -76,7 +84,9 @@ void HostingObject::stateChangedCB(ResourceState state, RemoteObjectPtr rObject)
                 rObject->startCaching(pDataUpdateCB);
             }catch(InvalidParameterException &e)
             {
-                std::cout << e.what() << std::endl;
+                OIC_HOSTING_LOG(DEBUG,
+                        "[HostingObject::stateChangedCB]startCaching InvalidParameterException:%s",
+                        e.what());
             }
         }
         break;
@@ -91,23 +101,24 @@ void HostingObject::stateChangedCB(ResourceState state, RemoteObjectPtr rObject)
                 rObject->stopCaching();
             }catch(InvalidParameterException &e)
             {
-                std::cout << e.what() << std::endl;
+                OIC_HOSTING_LOG(DEBUG,
+                        "[HostingObject::stateChangedCB]stopCaching InvalidParameterException:%s",
+                        e.what());
             }
         }
         if(rObject->isWatching() == true)
         {
             try
             {
-                std::cout << "stopWatching\n";
-//                rObject->stopWatching();
+//                rObject->stopMonitoring();
             }catch(InvalidParameterException &e)
             {
-                std::cout << e.what() << std::endl;
+                OIC_HOSTING_LOG(DEBUG,
+                        "[HostingObject::stateChangedCB]stopWatching InvalidParameterException:%s",
+                        e.what());
             }
         }
-        std::cout << "delete Mirrored Server\n";
         mirroredServer = nullptr;
-        std::cout << "delete Mirrored Server Done\n";
         destroyHostingObject();
         break;
     }
@@ -129,8 +140,11 @@ void HostingObject::dataChangedCB(const ResourceAttributes & attributes, RemoteO
         try
         {
             mirroredServer = createMirroredServer(rObject);
-        }catch(...)
+        }catch(PlatformException &e)
         {
+            OIC_HOSTING_LOG(DEBUG,
+                        "[HostingObject::dataChangedCB]createMirroredServer PlatformException:%s",
+                        e.what());
             mirroredServer = nullptr;
             return;
         }
@@ -181,18 +195,18 @@ HostingObject::ResourceObjectPtr HostingObject::createMirroredServer(RemoteObjec
             std::string interface = interfaces.begin()->c_str();
             retResource = ResourceObject::Builder(uri, type, interface).
                     setDiscoverable(true).setObservable(true).build();
+
             // TODO need to bind types and interfaces
             retResource->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::UPDATED);
             retResource->setSetRequestHandler(pSetRequestHandler);
-        }catch(PlatformException &e)
+        }catch(...)
         {
-            // TODO logging and throw
+            OIC_HOSTING_LOG(DEBUG, "[HostingObject::createMirroredServer] %s", "PlatformException");
             throw;
         }
     }
     else
     {
-        //TODO logging and throw
         throw PlatformException(OC_STACK_ERROR);
     }
 
@@ -204,12 +218,14 @@ RCSSetResponse HostingObject::setRequestHandler(const RCSRequest & primitiveRequ
 {
     try
     {
-        RequestObject newRequest;
+        RequestObject newRequest = { };
         newRequest.invokeRequest(remoteObject, RequestObject::RequestMethod::Setter,
                 primitiveRequest, resourceAttibutes);
-    }catch(...)
+    }catch(PlatformException &e)
     {
-        //TODO It is failed that setRequest send to remoteObject from mirrored server.
+        OIC_HOSTING_LOG(DEBUG,
+                "[HostingObject::setRequestHandler] PlatformException:%s",
+                e.what());
         throw;
     }
 

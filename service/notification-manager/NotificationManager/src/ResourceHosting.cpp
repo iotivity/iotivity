@@ -30,9 +30,25 @@ namespace Service
 
 #define HOSTING_TAG "/hosting"
 #define HOSTING_TAG_SIZE ((size_t)8)
+#define HOSTING_LOG_TAG  PCF("Hosting")
+#define OIC_HOSTING_LOG(level, tag, ...)  OCLogv((level), (HOSTING_LOG_TAG), __VA_ARGS__)
+
+namespace
+{
+    std::string MULTICAST_PRESENCE_ADDRESS = std::string("coap://") + OC_MULTICAST_PREFIX;
+    std::string HOSTING_RESOURSE_TYPE = "Resource.Hosting";
+}
 
 ResourceHosting * ResourceHosting::s_instance(nullptr);
 std::mutex ResourceHosting::s_mutexForCreation;
+
+ResourceHosting::ResourceHosting()
+: hostingObjectList(),
+  discoveryManager(nullptr),
+  presenceHandle(),
+  pPresenceCB(nullptr), pDiscoveryCB(nullptr)
+{
+}
 
 ResourceHosting * ResourceHosting::getInstance()
 {
@@ -57,16 +73,25 @@ void ResourceHosting::startHosting()
         requestMulticastDiscovery();
     }catch(PlatformException &e)
     {
+        OIC_HOSTING_LOG(DEBUG,
+                "[ResourceHosting::startHosting]PlatformException:%s", e.what());
         throw;
     }catch(InvalidParameterException &e)
     {
+        OIC_HOSTING_LOG(DEBUG,
+                "[ResourceHosting::startHosting]InvalidParameterException:%s", e.what());
+        throw;
+    }catch(std::exception &e)
+    {
+        OIC_HOSTING_LOG(DEBUG,
+                "[ResourceHosting::startHosting]std::exception:%s", e.what());
         throw;
     }
 }
 
 void ResourceHosting::stopHosting()
 {
-    // TODO clear list hostingObjectList
+    // clear list hostingObjectList
     if(presenceHandle.isSubscribing())
     {
         presenceHandle.unsubscribe();
@@ -91,7 +116,7 @@ void ResourceHosting::requestMulticastPresence()
 {
     try
     {
-        presenceHandle = PresenceSubscriber(std::string("coap://") + OC_MULTICAST_PREFIX,
+        presenceHandle = PresenceSubscriber(MULTICAST_PRESENCE_ADDRESS,
                 OCConnectivityType::CT_DEFAULT, pPresenceCB);
     }catch(...)
     {
@@ -161,7 +186,7 @@ void ResourceHosting::requestMulticastDiscovery()
 void ResourceHosting::requestDiscovery(std::string address)
 {
     std::string host = address;
-    std::string uri = OC_RSRVD_WELL_KNOWN_URI + std::string("?rt=Resource.Hosting");
+    std::string uri = OC_RSRVD_WELL_KNOWN_URI + std::string("?rt=") + HOSTING_RESOURSE_TYPE;
     OCConnectivityType type = OCConnectivityType::CT_DEFAULT;
     discoveryManager->discoverResource(host, uri, type, pDiscoveryCB);
 }
@@ -178,14 +203,17 @@ void ResourceHosting::discoverHandler(RemoteObjectPtr remoteResource)
     HostingObjectPtr foundHostingObject = findRemoteResource(remoteResource);
     if(foundHostingObject == nullptr)
     {
-        foundHostingObject.reset(new HostingObject());
-        foundHostingObject->initializeHostingObject(remoteResource,
-                std::bind(&ResourceHosting::destroyedHostingObject, this, foundHostingObject));
-        hostingObjectList.push_back(foundHostingObject);
-    }
-    else
-    {
-        // this resource registered
+        try
+        {
+            foundHostingObject.reset(new HostingObject());
+            foundHostingObject->initializeHostingObject(remoteResource,
+                    std::bind(&ResourceHosting::destroyedHostingObject, this, foundHostingObject));
+            hostingObjectList.push_back(foundHostingObject);
+        }catch(InvalidParameterException &e)
+        {
+            OIC_HOSTING_LOG(DEBUG,
+                    "[ResourceHosting::discoverHandler]InvalidParameterException:%s", e.what());
+        }
     }
 }
 
@@ -221,14 +249,7 @@ bool ResourceHosting::isSameRemoteResource(
 
 void ResourceHosting::destroyedHostingObject(HostingObjectPtr destroyedPtr)
 {
-    std::list<HostingObjectPtr>::iterator foundObjectIter
-    = std::find(hostingObjectList.begin(), hostingObjectList.end(), destroyedPtr);
-
-    if(foundObjectIter != hostingObjectList.end())
-    {
-        std::cout << "destroy hosting object.\n";
-        hostingObjectList.erase(foundObjectIter);
-    }
+    hostingObjectList.remove(destroyedPtr);
 }
 
 } /* namespace Service */
