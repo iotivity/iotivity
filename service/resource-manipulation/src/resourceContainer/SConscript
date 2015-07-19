@@ -168,7 +168,7 @@ lib_env = conf2.Finish()
 ######################################################################
 # build resource container unit tests
 ######################################################################
-SConscript('unittests/SConscript')
+#SConscript('unittests/SConscript')
 
 ######################################################################
 # Build Container Test
