@@ -52,7 +52,7 @@ public abstract class BundleResource {
      * @param key name of the attribute to be read
      * @return Value of the attribute
      */
-    public abstract String getAttribute(String key);
+    public abstract String getAttribute(String key);     
 
     /**
      * Attribute keys provided through by the bundle resource.

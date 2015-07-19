@@ -59,6 +59,9 @@ else:
 
 if env.get('LOGGING'):
 	env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+	
+	
+
 
 # Add third party libraries
 lib_env = env.Clone()
@@ -104,6 +107,8 @@ container_gtest_env.PrependUnique(CPPPATH = [env.get('SRC_DIR')+'/extlibs/hippom
                              gtest_dir + '/include'])
 						 			 
 container_gtest_env.AppendUnique(LIBPATH = [os.environ['JAVA_LIB']])
+
+container_gtest_env.AppendUnique(CCFLAGS = ['-Wnoexcept'])	
 
 conf = Configure(container_gtest_env)
 if not conf.CheckLib('jvm'):

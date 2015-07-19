@@ -78,10 +78,13 @@ JavaBundleResource::JavaBundleResource(JNIEnv *env, jobject obj, jobject bundleR
     this->bundleResource = env->NewGlobalRef(bundleResource);
 
     bundleResourceClass = env->GetObjectClass(bundleResource);
+
     attributeSetter = env->GetMethodID(bundleResourceClass, "setAttribute",
             "(Ljava/lang/String;Ljava/lang/String;)V");
+
     attributeGetter = env->GetMethodID(bundleResourceClass, "getAttribute",
-            "(Ljava/lang/String;)Ljava/lang/String");
+            "(Ljava/lang/String;)Ljava/lang/String;");
+
 }
 
 JavaBundleResource::~JavaBundleResource()
@@ -89,7 +92,11 @@ JavaBundleResource::~JavaBundleResource()
 
 }
 
-string JavaBundleResource::getAttribute(string attributeName)
+ResourceAttributes& JavaBundleResource::getAttributes(){
+    return BundleResource::getAttributes();
+}
+
+ResourceAttributes::Value JavaBundleResource::getAttribute(const std::string& attributeName)
 {
     JavaVM* vm = ResourceContainerImpl::getImplInstance()->getJavaVM(m_bundleId);
 
@@ -112,17 +119,17 @@ string JavaBundleResource::getAttribute(string attributeName)
 
     jstring returnString = (jstring) env->CallObjectMethod(bundleResource, attributeGetter,
             attrName);
+
     const char *js = env->GetStringUTFChars(returnString, NULL);
-    std::string value(js);
+    std::string val(js);
+    ResourceAttributes::Value newVal = val;
     env->ReleaseStringUTFChars(returnString, js);
-    BundleResource::setAttribute(attributeName, value);
-    return value;
+    BundleResource::setAttribute(attributeName, newVal.toString());
+    return BundleResource::getAttribute(attributeName);
 }
 
-void JavaBundleResource::setAttribute(string attributeName, string value)
+void JavaBundleResource::setAttribute(std::string attributeName, ResourceAttributes::Value&& value)
 {
-    BundleResource::setAttribute(attributeName, value);
-
     JavaVM* vm = ResourceContainerImpl::getImplInstance()->getJavaVM(m_bundleId);
 
     JNIEnv * env;
@@ -141,7 +148,9 @@ void JavaBundleResource::setAttribute(string attributeName, string value)
     }
 
     jstring attrName = env->NewStringUTF(attributeName.c_str());
-    jstring val = env->NewStringUTF(value.c_str());
+    jstring val = env->NewStringUTF(value.toString().c_str());
+
 
     env->CallObjectMethod(bundleResource, attributeSetter, attrName, val);
+    BundleResource::setAttribute(attributeName, std::move(value));
 }

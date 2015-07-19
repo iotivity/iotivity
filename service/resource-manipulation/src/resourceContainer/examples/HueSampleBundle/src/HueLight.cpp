@@ -41,41 +41,42 @@ HueLight::~HueLight()
 
 }
 
-string HueLight::getAttribute(string attributeName)
-{
-    return BundleResource::getAttribute(attributeName);
+void HueLight::initAttributes(){
+
+    BundleResource::setAttribute("on-off", false);
+    BundleResource::setAttribute("dim", 0);
+    BundleResource::setAttribute("color", 0);
 }
 
-void HueLight::initAttributes()
-{
-    BundleResource::setAttribute("on-off", "false");
-    BundleResource::setAttribute("dim", "0");
-    BundleResource::setAttribute("color", "0");
-    /*m_mapAttributes.insert(std::pair<string, string>("on-off", "false"));
-    m_mapAttributes.insert(std::pair<string, string>("dim", "0"));
-    m_mapAttributes.insert(std::pair<string, string>("color", "0"));*/
+ResourceAttributes& HueLight::getAttributes(){
+    return BundleResource::getAttributes();
 }
 
-void HueLight::setAttribute(string attributeName, string value)
-{
-    cout << "HueLight::setAttribute setting " << attributeName << " to " << value << std::endl;
+ResourceAttributes::Value HueLight::getAttribute(const std::string& key){
+    cout << "HueLight::getAttribute called for " << key <<  " called" << endl;
+    return BundleResource::getAttribute(key);
+}
 
+void HueLight::setAttribute(std::string attributeName, ResourceAttributes::Value&& value){
+    cout << "HueLight::setAttribute setting " << attributeName << " to " << value.toString() << std::endl;
 
     if (attributeName == "on-off")
     {
-        m_connector->transmit(this->m_address + "/state", "{\"on\":" + value + "}");
+        m_connector->transmit(this->m_address + "/state", "{\"on\":" + value.toString() + "}");
     }
 
     if (attributeName == "dim")
     {
-        //m_connector->transmit(this->m_address + "/state", "{\"bri\":" + (value * 2.5) + "}");
-        m_connector->transmit(this->m_address + "/state", "{\"bri\":" + value + "}");
+        // needs conversion * 2.5
+        m_connector->transmit(this->m_address + "/state", "{\"bri\":" + value.toString() + "}");
     }
 
     if (attributeName == "color")
     {
-        //m_connector->transmit(this->m_address+ "/state", "{\"hue\":" + (value * 650)  + "}");
-        m_connector->transmit(this->m_address + "/state", "{\"hue\":" + value   + "}");
+        // needs conversion *650
+        m_connector->transmit(this->m_address+ "/state", "{\"hue\":" + value.toString()   + "}");
     }
+
+    BundleResource::setAttribute(attributeName, std::move(value));
 }
 

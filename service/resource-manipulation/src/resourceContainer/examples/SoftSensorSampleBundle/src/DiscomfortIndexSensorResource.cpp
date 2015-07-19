@@ -45,16 +45,16 @@ void DiscomfortIndexSensorResource::initAttributes()
 
     BundleResource::setAttribute("temperature", "23");
     BundleResource::setAttribute("humidity", "40");
-    BundleResource::setAttribute("discomfortIndex", "5");
+    BundleResource::setAttribute("discomfortIndex","5");
 }
 
-string DiscomfortIndexSensorResource::getAttribute(string attributeName)
+ResourceAttributes::Value DiscomfortIndexSensorResource::getAttribute(string attributeName)
 {
     cout << "DiscomfortIndexSensorResource::getAttribute called !!" << endl;
     return BundleResource::getAttribute(attributeName);
 }
 
-void DiscomfortIndexSensorResource::setAttribute(string attributeName, string value)
+void DiscomfortIndexSensorResource::setAttribute(string attributeName, ResourceAttributes::Value value)
 {
     cout << "DiscomfortIndexSensorResource::setAttribute called !!" << endl;
 }

@@ -62,6 +62,12 @@ class TestBundleResource: public BundleResource
 class ResourceContainerTest: public Test
 {
     public:
+        ~ResourceContainerTest() noexcept(true){
+
+        }
+
+
+    public:
         ResourceContainer *m_pResourceContainer;
 
     protected:
@@ -146,6 +152,12 @@ TEST_F(ResourceContainerTest, BundleStartedWithStartBundleAPI)
 
 class ResourceContainerBundleAPITest: public Test
 {
+
+    public:
+        ~ResourceContainerBundleAPITest() noexcept(true){
+
+        }
+
     public:
         MockRepository mocks;
         ResourceObject *m_pResourceObject;
@@ -248,6 +260,11 @@ TEST_F(ResourceContainerBundleAPITest, BundleResourceConfigurationListParsed)
 
 class ResourceContainerImplTest: public Test
 {
+    public:
+        ~ResourceContainerImplTest() noexcept(true){
+
+        }
+
     public:
         MockRepository mocks;
         ResourceContainerImpl *m_pResourceContainer;

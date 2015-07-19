@@ -62,7 +62,7 @@ namespace OIC
                 *
                 * @todo use type variant mechanism
                 */
-                virtual string getAttribute(string attributeName) = 0;
+                virtual ResourceAttributes::Value getAttribute(string attributeName) = 0;
 
                 /**
                 * Execute the logic of bundle to set the value of attribute
@@ -73,7 +73,7 @@ namespace OIC
                 *
                 * @return void
                 */
-                virtual void setAttribute(string attributeName, string value) = 0;
+                virtual void setAttribute(string attributeName, ResourceAttributes::Value value) = 0;
 
                 /**
                 * Set Input data to update output value of the soft sensor

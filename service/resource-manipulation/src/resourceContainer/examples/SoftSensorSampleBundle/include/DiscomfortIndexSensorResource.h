@@ -36,8 +36,8 @@ class DiscomfortIndexSensorResource : public SoftSensorResource
         DiscomfortIndexSensorResource(vector<string> inputAttributes);
         ~DiscomfortIndexSensorResource();
 
-        string getAttribute(string attributeName);
-        void setAttribute(string attributeName, string value);
+        ResourceAttributes::Value getAttribute(string attributeName);
+        void setAttribute(string attributeName, ResourceAttributes::Value value);
         virtual void initAttributes();
 
         void setInputAttribute(SensorData input);

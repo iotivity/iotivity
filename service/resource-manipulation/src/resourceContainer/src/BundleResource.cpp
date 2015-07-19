@@ -42,31 +42,28 @@ namespace OIC
             m_pNotiReceiver = pNotiReceiver;
         }
 
-        void BundleResource::setAttribute(string attributeName, string value)
-        {
-            this->m_mapAttributes[attributeName] = value;
-
-            if (m_pNotiReceiver != NULL && !m_uri.empty())
-            {
-                m_pNotiReceiver->onNotificationReceived(m_uri);
-            }
-
-        }
-
-        std::string BundleResource::getAttribute(string attributeName)
-        {
-            return this->m_mapAttributes[attributeName];
-        }
-
         std::list< string > BundleResource::getAttributeNames()
         {
             std::list< string > ret;
-            for (map< string, string >::iterator it = m_mapAttributes.begin();
-                    it != m_mapAttributes.end(); ++it)
-            {
-                ret.push_back(it->first);
+            for (ResourceAttributes::iterator it = m_resourceAttributes.begin(); it != m_resourceAttributes.end(); ++it){
+                ret.push_back(it->key());
             }
             return ret;
+        }
+
+        ResourceAttributes& BundleResource::getAttributes(){
+            return m_resourceAttributes;
+        }
+
+        void BundleResource::setAttribute(std::string key, ResourceAttributes::Value&& value)
+        {
+            cout << "Bundle resource set attribute " << value.toString() << "|" << endl;
+            m_resourceAttributes[key] = value;
+        }
+
+        ResourceAttributes::Value BundleResource::getAttribute(const std::string& key){
+            cout << "Bundle resource get attribute " << m_resourceAttributes.at(key).toString() << "|" << endl;
+            return m_resourceAttributes.at(key);
         }
 
     }

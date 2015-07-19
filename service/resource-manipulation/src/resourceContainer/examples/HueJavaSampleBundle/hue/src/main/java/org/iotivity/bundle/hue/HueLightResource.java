@@ -15,6 +15,7 @@ public class HueLightResource extends BundleResource {
     public HueLightResource() {
         initAttributes();
         m_resourceType = "oic.light.control";
+       
     }
 
     public HueLightResource(HueConnector hueConnector, String name, String uri,
@@ -24,7 +25,7 @@ public class HueLightResource extends BundleResource {
         m_name = name;
         m_uri = uri;
         m_resourceType = resourceType;
-        m_address = address;
+        m_address = address;        
     }
 
     protected void initAttributes() {
@@ -56,13 +57,13 @@ public class HueLightResource extends BundleResource {
     }
 
     public String getAttribute(String key) {
-        System.out.println("Get attribute called - key: " + key);
+        
         // map key to hue address
         // read from Hue gateway, parse resource representation and return
         // attribute
-        m_hueConnector.read(m_address);
-        return "";
-    }
+        //m_hueConnector.read(m_address);
+        return m_attributes.get(key);
+    }     
 
     @Override
     public String toString() {

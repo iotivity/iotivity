@@ -37,14 +37,16 @@ namespace OIC
             HueLight();
             HueLight(HueConnector* connector, std::string address);
             virtual ~HueLight();
-            string getAttribute(string attributeName);
-            void setAttribute(string attributeName, string value);
             virtual void initAttributes();
+            virtual ResourceAttributes& getAttributes();
+
+            virtual void setAttribute(std::string key, ResourceAttributes::Value&&);
+
+            virtual ResourceAttributes::Value getAttribute(const std::string& key);
         private:
             std::string m_address;
             HueConnector* m_connector;
-        };
-    }
+        };}
 }
 
 #endif /* HUEGATEWAYCLIENT_H_ */

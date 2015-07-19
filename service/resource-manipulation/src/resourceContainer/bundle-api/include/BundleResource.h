@@ -27,6 +27,7 @@
 #include <vector>
 
 #include "NotificationReceiver.h"
+#include "ResourceAttributes.h"
 
 using namespace std;
 
@@ -64,7 +65,7 @@ namespace OIC
                 *
                 * @todo use type variant mechanism
                 */
-                virtual string getAttribute(string attributeName);
+                //virtual string getAttribute(string attributeName);
 
                 /**
                 * Execute the logic of bundle to set the value of attribute
@@ -75,7 +76,7 @@ namespace OIC
                 *
                 * @return void
                 */
-                virtual void setAttribute(string attributeName, string value);
+                //virtual void setAttribute(string attributeName, string value);
 
                 /**
                 * Return the list of attribute names of the resource
@@ -100,14 +101,23 @@ namespace OIC
                 */
                 void registerObserver(NotificationReceiver *pNotiReceiver);
 
+                virtual ResourceAttributes& getAttributes();
+
+                virtual void setAttribute(std::string key, ResourceAttributes::Value&&);
+
+                virtual ResourceAttributes::Value getAttribute(const std::string& key);
+
+
             public:
                 string m_bundleId;
                 string m_name, m_uri, m_resourceType, m_address;
                 map< string, vector< map< string, string > > > m_mapResourceProperty;
 
             private:
-                map< string, string > m_mapAttributes;
+                //map< string, string > m_mapAttributes;
                 NotificationReceiver *m_pNotiReceiver;
+                ResourceAttributes m_resourceAttributes;
+
         };
     }
 }

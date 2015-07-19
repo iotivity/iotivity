@@ -39,7 +39,6 @@ HueSampleBundleActivator::~HueSampleBundleActivator()
 void HueSampleBundleActivator::activateBundle(ResourceContainerBundleAPI *resourceContainer,
         std::string bundleId)
 {
-    std::cout << "HueSampleBundle::activateBundle called" << std::endl;
 
     m_pResourceContainer = resourceContainer;
     m_bundleId = bundleId;
@@ -70,7 +69,6 @@ void HueSampleBundleActivator::deactivateBundle()
 
 void HueSampleBundleActivator::createResource(resourceInfo resourceInfo)
 {
-    std::cout << "HueSampleBundle::createResource called" << std::endl;
 
     if (resourceInfo.resourceType == "oic.light.control")
     {

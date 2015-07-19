@@ -42,9 +42,12 @@ namespace OIC
                     jobjectArray attributes);
             virtual ~JavaBundleResource();
 
-            string getAttribute(string attributeName);
-            void setAttribute(string attributeName, string value);
-            void initAttributes();
+            virtual ResourceAttributes& getAttributes();
+
+            virtual void setAttribute(std::string key, ResourceAttributes::Value&&);
+
+            virtual ResourceAttributes::Value getAttribute(const std::string& key);
+            virtual void initAttributes();
         private:
             // needs to be a GlobalRef
             jobject bundleResource;

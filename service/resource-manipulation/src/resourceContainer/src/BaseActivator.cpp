@@ -25,7 +25,7 @@
 
 using namespace OIC::Service;
 
-std::map<string, JavaBundleResource*> java_resources;
+std::map< string, JavaBundleResource* > java_resources;
 
 /*
  * Class:     org_iotivity_resourcecontainer_bundle_api_BaseActivator
@@ -33,13 +33,15 @@ std::map<string, JavaBundleResource*> java_resources;
  * Signature: (Lorg/iotivity/resourcecontainer/bundle/api/BundleResource;[Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
  */
 JNIEXPORT void JNICALL Java_org_iotivity_resourcecontainer_bundle_api_BaseActivator_registerJavaResource
-  (JNIEnv *env, jobject obj, jobject bundleResource, jobjectArray attributes, jstring bundleId, jstring uri, jstring resourceType, jstring res_name){
+(JNIEnv *env, jobject obj, jobject bundleResource, jobjectArray attributes, jstring bundleId, jstring uri, jstring resourceType, jstring res_name)
+{
     //return;
     //static std::map<jobject, JavaBundleResource > javaBundles;
     const char *str_bundleId = env->GetStringUTFChars(bundleId, 0);
     const char *str_uri = env->GetStringUTFChars(uri, 0);
     const char *str_resourceType = env->GetStringUTFChars(resourceType, 0);
     const char *str_res_name = env->GetStringUTFChars(res_name, 0);
+
     JavaBundleResource *javaBundleResource = new JavaBundleResource(env, obj, bundleResource, str_bundleId, attributes);
     ResourceContainerImpl *container = ResourceContainerImpl::getImplInstance();
 
@@ -49,6 +51,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_resourcecontainer_bundle_api_BaseActiva
     container->registerResource(javaBundleResource);
 
     java_resources[str_uri] = javaBundleResource;
+
 }
 
 /*
@@ -57,10 +60,12 @@ JNIEXPORT void JNICALL Java_org_iotivity_resourcecontainer_bundle_api_BaseActiva
  * Signature: (Lorg/iotivity/resourcecontainer/bundle/api/BundleResource;)V
  */
 JNIEXPORT void JNICALL Java_org_iotivity_resourcecontainer_bundle_api_BaseActivator_unregisterJavaResource
-  (JNIEnv *env, jobject obj, jobject bundleResource, jstring uri){
+(JNIEnv *env, jobject obj, jobject bundleResource, jstring uri)
+{
     const char *str_uri = env->GetStringUTFChars(uri, 0);
 
-    if(java_resources[str_uri] != NULL){
+    if(java_resources[str_uri] != NULL)
+    {
         ResourceContainerImpl *container = ResourceContainerImpl::getImplInstance();
         container->unregisterResource(java_resources[str_uri]);
         java_resources.erase(str_uri);
@@ -72,13 +77,14 @@ JNIEXPORT void JNICALL Java_org_iotivity_resourcecontainer_bundle_api_BaseActiva
  * Method:    getNumberOfConfiguredResources
  * Signature: (Ljava/lang/String;)I
  */
-JNIEXPORT jint JNICALL Java_org_iotivity_resourcecontainer_bundle_api_BaseActivator_getNumberOfConfiguredResources
-  (JNIEnv *env, jobject obj, jstring bundleId){
+JNIEXPORT jint JNICALL Java_org_iotivity_resourcecontainer_bundle_api_BaseActivator_getNumberOfConfiguredResources(
+        JNIEnv *env, jobject obj, jstring bundleId)
+{
 
     const char *str_bundleId = env->GetStringUTFChars(bundleId, 0);
 
     ResourceContainerImpl *container = ResourceContainerImpl::getImplInstance();
-    vector<resourceInfo> resourceConfig;
+    vector< resourceInfo > resourceConfig;
     container->getResourceConfiguration(str_bundleId, &resourceConfig);
 
     return resourceConfig.size();
@@ -89,18 +95,18 @@ JNIEXPORT jint JNICALL Java_org_iotivity_resourcecontainer_bundle_api_BaseActiva
  * Method:    getConfiguredResourceParams
  * Signature: (Ljava/lang/String;I)[Ljava/lang/String;
  */
-JNIEXPORT jobjectArray JNICALL Java_org_iotivity_resourcecontainer_bundle_api_BaseActivator_getConfiguredResourceParams
-  (JNIEnv *env, jobject obj, jstring bundleId, jint resourceId){
+JNIEXPORT jobjectArray JNICALL Java_org_iotivity_resourcecontainer_bundle_api_BaseActivator_getConfiguredResourceParams(
+        JNIEnv *env, jobject obj, jstring bundleId, jint resourceId)
+{
 
     jobjectArray ret;
     const char *str_bundleId = env->GetStringUTFChars(bundleId, 0);
 
     ResourceContainerImpl *container = ResourceContainerImpl::getImplInstance();
-    vector<resourceInfo> resourceConfig;
+    vector< resourceInfo > resourceConfig;
     container->getResourceConfiguration(str_bundleId, &resourceConfig);
     resourceInfo conf = resourceConfig[resourceId];
-    ret = (jobjectArray) env->NewObjectArray(4,
-            env->FindClass("java/lang/String"),
+    ret = (jobjectArray) env->NewObjectArray(4, env->FindClass("java/lang/String"),
             env->NewStringUTF(""));
 
     env->SetObjectArrayElement(ret, 0, env->NewStringUTF(conf.name.c_str()));
