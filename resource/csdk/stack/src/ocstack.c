@@ -759,7 +759,7 @@ static int FormCanonicalPresenceUri(const CAEndpoint_t *endpoint, char *resource
 
     if (ep->adapter == CA_ADAPTER_IP)
     {
-        if (ep->flags & CA_IPV6)
+        if ((ep->flags & CA_IPV6) && !(ep->flags & CA_IPV4))
         {
             if ('\0' == ep->addr[0])  // multicast
             {
@@ -1888,8 +1888,8 @@ static OCStackResult ParseRequestUri(const char *fullUri,
         size_t tlen = 0;      // resource type length
         char *type = NULL;
 
-        static const char *strPresence = "/oc/presence?rt=";
-        static const size_t lenPresence = 15; // = strlen(presence);
+        static const char strPresence[] = "/oic/ad?rt=";
+        static const size_t lenPresence = sizeof(strPresence) - 1;
         if (!strncmp(slash, strPresence, lenPresence))
         {
             type = slash + lenPresence;
@@ -1915,7 +1915,8 @@ static OCStackResult ParseRequestUri(const char *fullUri,
                 result = OC_STACK_NO_MEMORY;
                 goto error;
             }
-            strncpy(*resourceType, type, tlen);
+
+            OICStrcpy(*resourceType, (tlen+1), type);
         }
     }
 
