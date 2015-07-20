@@ -18,6 +18,25 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+//******************************************************************
+// COPYRIGHT AND PERMISSION NOTICE
+//
+// Copyright (c) 1996 - 2015, Daniel Stenberg, daniel@haxx.se.
+//
+// All rights reserved.
+//
+// Permission to use, copy, modify, and distribute this software for any purpose with or without fee is hereby granted,
+// provided that the above copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF THIRD PARTY RIGHTS. IN NO EVENT SHALL THE AUTHORS
+// OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+// ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+//
+// Except as contained in this notice, the name of a copyright holder shall not be used in advertising or otherwise to promote the
+// sale, use or other dealings in this Software without prior written authorization of the copyright holder.
+//******************************************************************
+
 #include "HueConnector.h"
 #include <curl/curl.h>
 #include <string.h>
@@ -25,27 +44,32 @@
 
 using namespace OIC::Service;
 
-HueConnector::HueConnector(){
+HueConnector::HueConnector()
+{
 
 }
 
-HueConnector::~HueConnector(){
+HueConnector::~HueConnector()
+{
 
 }
 
-void HueConnector::connect(){
+void HueConnector::connect()
+{
 
 }
 
-void HueConnector::disconnect(){
+void HueConnector::disconnect()
+{
 
 }
 
-std::string HueConnector::transmit(std::string target, std::string payload){
-    std::cout << "Transmitting to " << target << " "  << payload << endl;
+std::string HueConnector::transmit(std::string target, std::string payload)
+{
+    std::cout << "Transmitting to " << target << " " << payload << endl;
     CURL *curl;
     CURLcode res;
-    struct curl_slist *headers = NULL;                      /* http headers to send with request */
+    struct curl_slist *headers = NULL; /* http headers to send with request */
     /* set content type */
     headers = curl_slist_append(headers, "Accept: application/json");
     headers = curl_slist_append(headers, "Content-Type: application/json");
@@ -54,13 +78,14 @@ std::string HueConnector::transmit(std::string target, std::string payload){
 
     curl = curl_easy_init();
 
-    if(curl) {
+    if (curl)
+    {
         curl_easy_setopt(curl, CURLOPT_URL, target.c_str());
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, cstr);
         curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
 
         /* if we don't provide POSTFIELDSIZE, libcurl will strlen() by
-       itself */
+         itself */
         curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long)strlen(cstr));
 
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
@@ -68,9 +93,8 @@ std::string HueConnector::transmit(std::string target, std::string payload){
         /* Perform the request, res will get the return code */
         res = curl_easy_perform(curl);
         /* Check for errors */
-        if(res != CURLE_OK)
-            fprintf(stderr, "curl_easy_perform() failed: %s\n",
-              curl_easy_strerror(res));
+        if (res != CURLE_OK)
+            fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
 
         /* always cleanup */
         curl_easy_cleanup(curl);
@@ -78,24 +102,26 @@ std::string HueConnector::transmit(std::string target, std::string payload){
     return "";
 }
 
-static int writer(char* data, size_t size, size_t nmemb, std::string *buffer_in){
+static int writer(char* data, size_t size, size_t nmemb, std::string *buffer_in)
+{
     buffer_in->append(data, size * nmemb);
     return size * nmemb;
 }
 
-std::string HueConnector::read(std::string target){
+std::string HueConnector::read(std::string target)
+{
     std::cout << "Reading from to " << target << endl;
     CURL *curl;
     CURLcode res;
-    struct curl_slist *headers = NULL;                      /* http headers to send with request */
+    struct curl_slist *headers = NULL; /* http headers to send with request */
     /* set content type */
     headers = curl_slist_append(headers, "Accept: application/json");
     headers = curl_slist_append(headers, "Content-Type: application/json");
 
-
     curl = curl_easy_init();
 
-    if(curl) {
+    if (curl)
+    {
         curl_easy_setopt(curl, CURLOPT_URL, target.c_str());
         curl_easy_setopt(curl, CURLOPT_HTTPGET, 1);
         curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
@@ -108,11 +134,12 @@ std::string HueConnector::read(std::string target){
         /* Perform the request, res will get the return code */
         res = curl_easy_perform(curl);
         /* Check for errors */
-        if(res != CURLE_OK){
-            fprintf(stderr, "curl_easy_perform() failed: %s\n",
-              curl_easy_strerror(res));
+        if (res != CURLE_OK)
+        {
+            fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
         }
-        else{
+        else
+        {
             cout << "Response is: " << response << endl;
         }
 
