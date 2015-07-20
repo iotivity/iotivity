@@ -182,7 +182,7 @@ LOCAL_SRC_FILES = \
                 $(EDR_ADAPTER_PATH)/caedrclient.c $(EDR_ADAPTER_PATH)/caedrserver.c \
                 $(EDR_ADAPTER_PATH)/caedrnwmonitor.c \
                 $(IP_ADAPTER_PATH)/caipadapter.c $(IP_ADAPTER_PATH)/caipserver.c \
-                $(IP_ADAPTER_PATH)/caipclient.c $(IP_ADAPTER_PATH)/android/caipnwmonitor.c \
+                $(IP_ADAPTER_PATH)/android/caipnwmonitor.c \
 
 include $(BUILD_STATIC_LIBRARY)
 
