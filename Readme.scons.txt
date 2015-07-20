@@ -90,7 +90,7 @@ To build for Android, Andorid NDK and SDK are required.
 Arduino:
 To build for Arduino, Arduino IDE is required.
   Arduino IDE: http://arduino.cc/en/Main/Software
-  (Note: recommend install Arduino IDE >=1.5.7)
+  (Note: recommend install Arduino IDE >=1.5.8)
 
 Arduino builds are dependent on latest Time library. Download it from here:
     http://www.pjrc.com/teensy/td_libs_Time.html
@@ -148,13 +148,14 @@ allowed value, please execute command 'scons TARGET_OS=android -Q -h')
 
 3. Build IoTivity project for Arduino
       $ cd <top directory of the project>
-      $ scons TARGET_OS=arduino TARGET_ARCH=xxx BOARD=yyy
-(xxx can be avr, arm; yyy is the name of the board, to get its allowed value
-run: scons TARGET_OS=arduino TARGET_ARCH=xxx -h. You may see a option 'CPU' in
-the output of above command line, that's due to some boards have different
-processors, to specify the processor, add 'CPU=zzz' in the command line. If no
-'CPU' option exists, that means the board only support one kind of processor,
-it's unnecessary to specify it)
+      $ sudo apt-get install dos2unix
+      $ scons TARGET_OS=arduino TARGET_ARCH=xxx BOARD=yyy SHIELD=zzz
+(xxx can be avr, arm; yyy is the name of the board, zzz is the shield type, to
+get allowed values run: scons TARGET_OS=arduino TARGET_ARCH=xxx SHIELD=zzz -h.
+You may see a option 'CPU' in the output of above command line, that's due to
+some boards have different processors, to specify the processor, add 'CPU=zzz'
+in the command line. If no 'CPU' option exists, that means the board only
+support one kind of processor, it's unnecessary to specify it)
 
 4. Build Iotivity project for Tizen
       $ cd <top directory of the project>
@@ -163,24 +164,6 @@ it's unnecessary to specify it)
 gbs is default build tool for Tizen platfrom, we can refer the following
 wiki to setup Tizen development environment:
 https://source.tizen.org/documentation/developer-guide/getting-started-guide)
-
-=== Build IoTivity project on Android ===
-
-1. Build IoTivity project for Android(It's the same as on Ubuntu)
-      $ cd <top directory of the project>
-      $ scons TARGET_OS=android TARGET_ARCH=xxx
-(xxx can be x86, armeabi, armeabi-v7a, armeabi-v7a-hard ...)
-
-2. Build IoTivity project for Arduino(It's the same as on Ubuntu)
-      $ cd <top directory of the project>
-      $ scons TARGET_OS=arduino TARGET_ARCH=xxx BOARD=yyy
-(xxx can be avr, arm; yyy is the name of the board, to get its allowed value
-run: scons TARGET_OS=arduino TARGET_ARCH=xxx -h. You may see a option 'CPU' in
-the output of above command line, that's due to some boards have different
-processor, to specify the processor, add 'CPU=zzz' in the command line. If no
-'CPU' option exists, that means the board only support one kind of processor,
-it's unnecessary to specify it)
-
 
 Note: Currently most IoTivity project doesn't support Windows, so you can't set
 TARGET_OS to 'windows' except the project support Windows.
@@ -217,6 +200,3 @@ To build:
      $ auto_build.sh <path-to-android-ndk>
 To clean:
      $ auto_build.sh -c
-
-2) For Arduino build, the Time library should >=1.3. The old can only be built
-with Arduino IDE 1.0.x
