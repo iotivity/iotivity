@@ -36,7 +36,7 @@
 
 #define TAG "IP_MONITOR"
 
-u_arraylist_t *CAIPGetInterfaceInformation()
+u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
 {
     u_arraylist_t *iflist = u_arraylist_create();
     if (!iflist)

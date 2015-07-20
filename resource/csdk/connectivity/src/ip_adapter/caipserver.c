@@ -451,12 +451,12 @@ CAResult_t CAIPStartServer(const ca_thread_pool_t threadPool)
         NEWSOCKET(AF_INET, m4s)
     }
 
-    const char f[] = "socket summary: u6=%d, u6s=%d, u4=%d, u4s=%d, m6=%d, m6s=%d, m4=%d, m4s=%d";
-    OIC_LOG_V(DEBUG, TAG, f, caglobals.ip.u6.fd, caglobals.ip.u6s.fd,
+    OIC_LOG_V(DEBUG, TAG,
+              "socket summary: u6=%d, u6s=%d, u4=%d, u4s=%d, m6=%d, m6s=%d, m4=%d, m4s=%d",
+                             caglobals.ip.u6.fd, caglobals.ip.u6s.fd,
                              caglobals.ip.u4.fd, caglobals.ip.u4s.fd,
                              caglobals.ip.m6.fd, caglobals.ip.m6s.fd,
                              caglobals.ip.m4.fd, caglobals.ip.m4s.fd);
-    (void)f;    // eliminates release warning
 
     // create pipe for fast shutdown
     CAInitializePipe();

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 1995, 1999
- *	Berkeley Software Design, Inc.  All rights reserved.
+ *  Berkeley Software Design, Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -20,28 +20,33 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	BSDI ifaddrs.h,v 2.5 2000/02/23 14:51:59 dab Exp
+ *  BSDI ifaddrs.h,v 2.5 2000/02/23 14:51:59 dab Exp
  */
 
-#ifndef	_IFADDRS_H_
-#define	_IFADDRS_H_
+#ifndef _IFADDRS_H_
+#define _IFADDRS_H_
 
 struct ifaddrs {
-	struct ifaddrs  *ifa_next;
-	char		*ifa_name;
-	unsigned int	 ifa_flags;
-	struct sockaddr	*ifa_addr;
-	struct sockaddr	*ifa_netmask;
-	struct sockaddr	*ifa_dstaddr;
-	void		*ifa_data;
+    struct ifaddrs  *ifa_next;
+    char        *ifa_name;
+    unsigned int     ifa_flags;
+    struct sockaddr *ifa_addr;
+    struct sockaddr *ifa_netmask;
+    union {
+        struct sockaddr *ifu_broadaddr; /* Broadcast address of interface */
+        struct sockaddr *ifu_dstaddr;   /* Point-to-point destination address */
+    } ifa_ifu;
+    void        *ifa_data;
 };
+#define ifa_broadaddr ifa_ifu.ifu_broadaddr
+#define ifa_dstaddr ifa_ifu.ifu_dstaddr
 
 /*
  * This may have been defined in <net/if.h>.  Note that if <net/if.h> is
  * to be included it must be included before this header file.
  */
-#ifndef	ifa_broadaddr
-#define	ifa_broadaddr	ifa_dstaddr	/* broadcast address interface */
+#ifndef ifa_broadaddr
+#define ifa_broadaddr   ifa_dstaddr /* broadcast address interface */
 #endif
 
 #include <sys/cdefs.h>
