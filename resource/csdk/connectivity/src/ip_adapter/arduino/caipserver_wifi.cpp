@@ -135,7 +135,7 @@ CAResult_t CAIPStartServer()
     ret = CAIPStartMulticastServer("0.0.0.0", "224.0.1.187", 5683);
     if (CA_STATUS_OK != ret)
     {
-        OIC_LOG_V(ERROR, IP_ADAPTER_TAG, "Start multicast failed[%d]", ret);
+        OIC_LOG_V(ERROR, TAG, "Start multicast failed[%d]", ret);
     }
     return ret;
 }
@@ -256,7 +256,7 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
     u_arraylist_t *iflist = CAIPGetInterfaceInformation(0);
     if (!iflist)
     {
-        OIC_LOG_V(ERROR, TAG, "get interface info failed: %s", strerror(errno));
+        OIC_LOG(ERROR, TAG, "get interface info failed");
         return CA_STATUS_FAILED;
     }
 
