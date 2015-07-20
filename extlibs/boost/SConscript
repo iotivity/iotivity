@@ -23,18 +23,18 @@ if 'android' == target_os :
     boost_version   = '1.58.0'
     boost_base_name  = 'boost_'+string.replace(boost_version,'.','_')
     boost_arch_name  = boost_base_name+'.zip'
+    boost_b2_name    = boost_base_name+os.sep+'b2'
     boost_url       = 'http://downloads.sourceforge.net/project/boost/boost/'+boost_version+'/'+boost_arch_name+'?r=&ts=1421801329&use_mirror=iweb'
 
     host_os = sys.platform
 
     if host_os == 'linux2' :
         boost_bootstrap = boost_base_name+os.sep+'bootstrap.sh'
-        boost_b2_name    = boost_base_name+os.sep+'b2'
     else :
         msg="Host platform (%s) is currently not supported for boost builds" % host_os
         raise SCons.Errors.EnvironmentError(msg)
 
-    if not os.path.exists(boost_arch_name):
+    if not os.path.exists(boost_arch_name) and not os.path.exists(boost_base_name):
         boost_arch_name = env.URLDownload(boost_arch_name, boost_url)
 
     if not os.path.exists(boost_base_name):
