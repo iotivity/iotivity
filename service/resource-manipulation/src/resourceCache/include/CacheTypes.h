@@ -38,9 +38,9 @@ namespace OIC
 
         class DataCache;
 
-        #define CACHE_TAG  PCF("CACHE")
-        #define CACHE_DEFAULT_REPORT_MILLITIME 10000
-        #define CACHE_DEFAULT_EXPIRED_MILLITIME 15000
+#define CACHE_TAG  PCF("CACHE")
+#define CACHE_DEFAULT_REPORT_MILLITIME 10000
+#define CACHE_DEFAULT_EXPIRED_MILLITIME 15000
 
         enum class REPORT_FREQUENCY
         {
@@ -70,7 +70,7 @@ namespace OIC
         typedef int CacheID;
 
         typedef std::function<OCStackResult(std::shared_ptr<PrimitiveResource>,
-                const ResourceAttributes &)> CacheCB;
+                                            const ResourceAttributes &)> CacheCB;
         typedef std::map<int, std::pair<Report_Info, CacheCB>> SubscriberInfo;
         typedef std::pair<int, std::pair<Report_Info, CacheCB>> SubscriberInfoPair;
 

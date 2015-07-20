@@ -35,47 +35,47 @@ namespace OIC
     {
         class ResourceCacheManager
         {
-        public:
-            class InvalidParameterException: public RCSException
-            {
             public:
-                InvalidParameterException(std::string&& what)
-                : RCSException{ std::move(what) } {}
-            };
+                class InvalidParameterException: public RCSException
+                {
+                    public:
+                        InvalidParameterException(std::string &&what)
+                            : RCSException { std::move(what) } {}
+                };
 
-            static ResourceCacheManager * getInstance();
+                static ResourceCacheManager *getInstance();
 
-            CacheID requestResourceCache(
+                CacheID requestResourceCache(
                     PrimitiveResourcePtr pResource, CacheCB func = NULL,
                     REPORT_FREQUENCY rf = REPORT_FREQUENCY::NONE, long time = 0l);
-            void cancelResourceCache(CacheID id);
+                void cancelResourceCache(CacheID id);
 
-            void updateResourceCache(PrimitiveResourcePtr pResource) const;
-            void updateResourceCache(CacheID id) const;
+                void updateResourceCache(PrimitiveResourcePtr pResource) const;
+                void updateResourceCache(CacheID id) const;
 
-            const ResourceAttributes getCachedData(PrimitiveResourcePtr pResource) const;
-            const ResourceAttributes getCachedData(CacheID id) const;
+                const ResourceAttributes getCachedData(PrimitiveResourcePtr pResource) const;
+                const ResourceAttributes getCachedData(CacheID id) const;
 
-            CACHE_STATE getResourceCacheState(PrimitiveResourcePtr pResource) const;
-            CACHE_STATE getResourceCacheState(CacheID id) const;
+                CACHE_STATE getResourceCacheState(PrimitiveResourcePtr pResource) const;
+                CACHE_STATE getResourceCacheState(CacheID id) const;
 
-        private:
-            static ResourceCacheManager * s_instance;
-            static std::mutex s_mutexForCreation;
-            static std::unique_ptr<std::list<DataCachePtr>> s_cacheDataList;
-            std::map<CacheID, DataCachePtr> cacheIDmap;
+            private:
+                static ResourceCacheManager *s_instance;
+                static std::mutex s_mutexForCreation;
+                static std::unique_ptr<std::list<DataCachePtr>> s_cacheDataList;
+                std::map<CacheID, DataCachePtr> cacheIDmap;
 
-            ResourceCacheManager() = default;
-            ~ResourceCacheManager();
-            ResourceCacheManager(const ResourceCacheManager&) = delete;
-            ResourceCacheManager(ResourceCacheManager&&) = delete;
+                ResourceCacheManager() = default;
+                ~ResourceCacheManager();
+                ResourceCacheManager(const ResourceCacheManager &) = delete;
+                ResourceCacheManager(ResourceCacheManager &&) = delete;
 
-            ResourceCacheManager& operator=(const ResourceCacheManager&) const = delete;
-            ResourceCacheManager& operator=(ResourceCacheManager&&) const = delete;
+                ResourceCacheManager &operator=(const ResourceCacheManager &) const = delete;
+                ResourceCacheManager &operator=(ResourceCacheManager && ) const = delete;
 
-            static void initializeResourceCacheManager();
-            DataCachePtr findDataCache(PrimitiveResourcePtr pResource) const;
-            DataCachePtr findDataCache(CacheID id) const;
+                static void initializeResourceCacheManager();
+                DataCachePtr findDataCache(PrimitiveResourcePtr pResource) const;
+                DataCachePtr findDataCache(CacheID id) const;
         };
     } // namespace Service
 } // namespace OIC

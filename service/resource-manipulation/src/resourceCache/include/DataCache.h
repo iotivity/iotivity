@@ -34,58 +34,58 @@ namespace OIC
     {
         class DataCache
         {
-        public:
-            typedef unsigned int TimerID;
-            typedef std::function<void *(TimerID)> TimerCB;
+            public:
+                typedef unsigned int TimerID;
+                typedef std::function<void(TimerID)> TimerCB;
 
-        public:
-            DataCache();
-            ~DataCache();
+            public:
+                DataCache();
+                ~DataCache();
 
-            void initializeDataCache(PrimitiveResourcePtr pResource);
+                void initializeDataCache(PrimitiveResourcePtr pResource);
 
-            CacheID addSubscriber(CacheCB func, REPORT_FREQUENCY rf, long repeatTime);
-            CacheID deleteSubscriber(CacheID id);
+                CacheID addSubscriber(CacheCB func, REPORT_FREQUENCY rf, long repeatTime);
+                CacheID deleteSubscriber(CacheID id);
 
-            CACHE_STATE getCacheState() const;
-            const ResourceAttributes getCachedData() const;
-            const PrimitiveResourcePtr getPrimitiveResource() const;
+                CACHE_STATE getCacheState() const;
+                const ResourceAttributes getCachedData() const;
+                const PrimitiveResourcePtr getPrimitiveResource() const;
 
-            void requestGet();
-            bool isEmptySubscriber() const;
+                void requestGet();
+                bool isEmptySubscriber() const;
 
-        private:
-            // resource instance
-            PrimitiveResourcePtr sResource;
-            std::shared_ptr<BaseResource> baseHandler;
+            private:
+                // resource instance
+                PrimitiveResourcePtr sResource;
+                std::shared_ptr<BaseResource> baseHandler;
 
-            // cached data info
-            ResourceAttributes attributes;
-            CACHE_STATE state;
+                // cached data info
+                ResourceAttributes attributes;
+                CACHE_STATE state;
 
-            // subscriber info
-            std::unique_ptr<SubscriberInfo> subscriberList;
+                // subscriber info
+                std::unique_ptr<SubscriberInfo> subscriberList;
 
-            ExpiryTimer networkTimer;
-            ExpiryTimer pollingTimer;
-            TimerID networkTimeOutHandle;
-            TimerID pollingHandle;
+                ExpiryTimer networkTimer;
+                ExpiryTimer pollingTimer;
+                TimerID networkTimeOutHandle;
+                TimerID pollingHandle;
 
-            ObserveCB pObserveCB;
-            GetCB pGetCB;
-            TimerCB pTimerCB;
-            TimerCB pPollingCB;
+                ObserveCB pObserveCB;
+                GetCB pGetCB;
+                TimerCB pTimerCB;
+                TimerCB pPollingCB;
 
-            // for requestCB from base
-            void onObserve(const HeaderOptions& _hos,
-                    const ResponseStatement& _rep, int _result, int _seq);
-            void onGet(const HeaderOptions& _hos, const ResponseStatement& _rep, int _result);
-            void *onTimeOut(const unsigned int timerID);
-            void *onPollingOut(const unsigned int timerID);
+                // for requestCB from base
+                void onObserve(const HeaderOptions &_hos,
+                               const ResponseStatement &_rep, int _result, int _seq);
+                void onGet(const HeaderOptions &_hos, const ResponseStatement &_rep, int _result);
+                void onTimeOut(const unsigned int timerID);
+                void onPollingOut(const unsigned int timerID);
 
-            CacheID generateCacheID();
-            SubscriberInfoPair findSubscriber(CacheID id);
-            void notifyObservers(ResourceAttributes Att);
+                CacheID generateCacheID();
+                SubscriberInfoPair findSubscriber(CacheID id);
+                void notifyObservers(ResourceAttributes Att);
         };
     } // namespace Service
 } // namespace OIC

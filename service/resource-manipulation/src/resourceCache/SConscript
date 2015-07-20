@@ -38,15 +38,18 @@ SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
 resourcecache_env = lib_env.Clone()
 
 target_os = env.get('TARGET_OS')
+
 ######################################################################
 # Build flags
 ######################################################################
+
 resourcecache_env.AppendUnique(CPPPATH = ['include'])
 resourcecache_env.AppendUnique(CPPPATH = ['../../include'])
 resourcecache_env.AppendUnique(CPPPATH = ['../common/primitiveResource/include'])
 resourcecache_env.AppendUnique(CPPPATH = ['../common/expiryTimer/include'])
 resourcecache_env.AppendUnique(CPPPATH = ['../common/expiryTimer/src'])
 resourcecache_env.PrependUnique(LIBS = ['service_common', 'ExpiryTimer', 'oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'libcoap'])
+
 
 if target_os not in ['windows', 'winrt']:
 	resourcecache_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
@@ -70,4 +73,7 @@ resourcecache_env.UserInstallTargetLib(resourcecachesdk, 'libResouceCache')
 
 # Go to build sample apps
 #SConscript('SampleApp/SConscript')
+
+# Go to Unit Test
+SConscript('unittests/SConscript')
 

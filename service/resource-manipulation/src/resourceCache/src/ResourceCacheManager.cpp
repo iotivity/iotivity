@@ -24,24 +24,24 @@ namespace OIC
 {
     namespace Service
     {
-        ResourceCacheManager * ResourceCacheManager::s_instance = NULL;
+        ResourceCacheManager *ResourceCacheManager::s_instance = NULL;
         std::mutex ResourceCacheManager::s_mutexForCreation;
         std::unique_ptr<std::list<DataCachePtr>> ResourceCacheManager::s_cacheDataList(nullptr);
 
         ResourceCacheManager::~ResourceCacheManager()
         {
-            if(s_cacheDataList != nullptr)
+            if (s_cacheDataList != nullptr)
             {
                 s_cacheDataList->clear();
             }
         }
 
-        ResourceCacheManager * ResourceCacheManager::getInstance()
+        ResourceCacheManager *ResourceCacheManager::getInstance()
         {
-            if(s_instance == nullptr)
+            if (s_instance == nullptr)
             {
                 s_mutexForCreation.lock();
-                if(s_instance == nullptr)
+                if (s_instance == nullptr)
                 {
                     s_instance = new ResourceCacheManager();
                     s_instance->initializeResourceCacheManager();
@@ -52,23 +52,23 @@ namespace OIC
         }
 
         CacheID ResourceCacheManager::requestResourceCache(
-                PrimitiveResourcePtr pResource, CacheCB func,
-                REPORT_FREQUENCY rf, long reportTime)
+            PrimitiveResourcePtr pResource, CacheCB func,
+            REPORT_FREQUENCY rf, long reportTime)
         {
-            if(pResource == nullptr)
+            if (pResource == nullptr)
             {
-                throw InvalidParameterException{"[requestResourceCache] Primitive Resource is invaild"};
+                throw InvalidParameterException {"[requestResourceCache] Primitive Resource is invaild"};
             }
 
             CacheID retID = 0;
 
-            if(rf != REPORT_FREQUENCY::NONE)
+            if (rf != REPORT_FREQUENCY::NONE)
             {
-                if(func == NULL || func == nullptr)
+                if (func == NULL || func == nullptr)
                 {
-                    throw InvalidParameterException{"[requestResourceCache] CacheCB is invaild"};
+                    throw InvalidParameterException {"[requestResourceCache] CacheCB is invaild"};
                 }
-                if(!reportTime)
+                if (!reportTime)
                 {
                     // default setting
                     reportTime = CACHE_DEFAULT_REPORT_MILLITIME;
@@ -76,7 +76,7 @@ namespace OIC
             }
 
             DataCachePtr newHandler = findDataCache(pResource);
-            if(newHandler == nullptr)
+            if (newHandler == nullptr)
             {
                 newHandler.reset(new DataCache());
                 newHandler->initializeDataCache(pResource);
@@ -91,20 +91,20 @@ namespace OIC
 
         void ResourceCacheManager::cancelResourceCache(CacheID id)
         {
-            if(id == 0 || cacheIDmap.find(id) == cacheIDmap.end())
+            if (id == 0 || cacheIDmap.find(id) == cacheIDmap.end())
             {
-                throw InvalidParameterException{"[cancelResourceCache] CacheID is invaild"};
+                throw InvalidParameterException {"[cancelResourceCache] CacheID is invaild"};
             }
 
             DataCachePtr foundCacheHandler = findDataCache(id);
-            if(foundCacheHandler != nullptr)
+            if (foundCacheHandler != nullptr)
             {
                 CacheID retID = foundCacheHandler->deleteSubscriber(id);
-                if(retID == id)
+                if (retID == id)
                 {
                     cacheIDmap.erase(id);
                 }
-                if(foundCacheHandler->isEmptySubscriber())
+                if (foundCacheHandler->isEmptySubscriber())
                 {
                     s_cacheDataList->remove(foundCacheHandler);
                     foundCacheHandler.reset();
@@ -114,14 +114,14 @@ namespace OIC
 
         void ResourceCacheManager::updateResourceCache(PrimitiveResourcePtr pResource) const
         {
-            if(pResource == nullptr)
+            if (pResource == nullptr)
             {
                 throw InvalidParameterException
                 {"[updateResourceCache] Primitive Resource is invaild"};
             }
 
             DataCachePtr foundCache = findDataCache(pResource);
-            if(foundCache == nullptr)
+            if (foundCache == nullptr)
             {
                 throw InvalidParameterException
                 {"[updateResourceCache] Primitive Resource is invaild"};
@@ -130,60 +130,60 @@ namespace OIC
         }
         void ResourceCacheManager::updateResourceCache(CacheID updateId) const
         {
-            if(updateId == 0)
+            if (updateId == 0)
             {
-                throw InvalidParameterException{"[getCachedData] CacheID is invaild"};
+                throw InvalidParameterException {"[getCachedData] CacheID is invaild"};
             }
 
             DataCachePtr foundCache = findDataCache(updateId);
-            if(foundCache == nullptr)
+            if (foundCache == nullptr)
             {
-                throw InvalidParameterException{"[getCachedData] CacheID is invaild"};
+                throw InvalidParameterException {"[getCachedData] CacheID is invaild"};
             }
             foundCache->requestGet();
         }
 
         const ResourceAttributes ResourceCacheManager::getCachedData(
-                PrimitiveResourcePtr pResource) const
+            PrimitiveResourcePtr pResource) const
         {
-            if(pResource == nullptr)
+            if (pResource == nullptr)
             {
-                throw InvalidParameterException{"[getCachedData] Primitive Resource is invaild"};
+                throw InvalidParameterException {"[getCachedData] Primitive Resource is invaild"};
             }
 
             DataCachePtr handler = findDataCache(pResource);
-            if(handler == nullptr)
+            if (handler == nullptr)
             {
-                throw InvalidParameterException{"[getCachedData] Primitive Resource is invaild"};
+                throw InvalidParameterException {"[getCachedData] Primitive Resource is invaild"};
             }
             return handler->getCachedData();
         }
 
         const ResourceAttributes ResourceCacheManager::getCachedData(CacheID id) const
         {
-            if(id == 0)
+            if (id == 0)
             {
-                throw InvalidParameterException{"[getCachedData] CacheID is invaild"};
+                throw InvalidParameterException {"[getCachedData] CacheID is invaild"};
             }
 
             DataCachePtr handler = findDataCache(id);
-            if(handler == nullptr)
+            if (handler == nullptr)
             {
-                throw InvalidParameterException{"[getCachedData] CacheID is invaild"};
+                throw InvalidParameterException {"[getCachedData] CacheID is invaild"};
             }
             return handler->getCachedData();
         }
 
         CACHE_STATE ResourceCacheManager::getResourceCacheState(
-                PrimitiveResourcePtr pResource) const
+            PrimitiveResourcePtr pResource) const
         {
-            if(pResource == nullptr)
+            if (pResource == nullptr)
             {
-                throw InvalidParameterException{"[getResourceCacheState] Primitive Resource is invaild"};
+                throw InvalidParameterException {"[getResourceCacheState] Primitive Resource is invaild"};
             }
 
             DataCachePtr handler = findDataCache(pResource);
-            if(handler == nullptr)
+            if (handler == nullptr)
             {
                 return CACHE_STATE::NONE;
             }
@@ -192,13 +192,13 @@ namespace OIC
 
         CACHE_STATE ResourceCacheManager::getResourceCacheState(CacheID id) const
         {
-            if(id == 0)
+            if (id == 0)
             {
-                throw InvalidParameterException{"[getResourceCacheState] CacheID is invaild"};
+                throw InvalidParameterException {"[getResourceCacheState] CacheID is invaild"};
             }
 
             DataCachePtr handler = findDataCache(id);
-            if(handler == nullptr)
+            if (handler == nullptr)
             {
                 return CACHE_STATE::NONE;
             }
@@ -207,20 +207,20 @@ namespace OIC
 
         void ResourceCacheManager::initializeResourceCacheManager()
         {
-            if(s_cacheDataList == nullptr)
+            if (s_cacheDataList == nullptr)
             {
                 s_cacheDataList
-                = std::unique_ptr<std::list<DataCachePtr>>(new std::list<DataCachePtr>);
+                    = std::unique_ptr<std::list<DataCachePtr>>(new std::list<DataCachePtr>);
             }
         }
 
         DataCachePtr ResourceCacheManager::findDataCache(PrimitiveResourcePtr pResource) const
         {
             DataCachePtr retHandler = nullptr;
-            for (auto & i : * s_cacheDataList)
+            for (auto &i : * s_cacheDataList)
             {
-                if(i->getPrimitiveResource()->getUri() == pResource->getUri() &&
-                        i->getPrimitiveResource()->getHost() == pResource->getHost())
+                if (i->getPrimitiveResource()->getUri() == pResource->getUri() &&
+                    i->getPrimitiveResource()->getHost() == pResource->getHost())
                 {
                     retHandler = i;
                     break;
@@ -232,9 +232,9 @@ namespace OIC
         DataCachePtr ResourceCacheManager::findDataCache(CacheID id) const
         {
             DataCachePtr retHandler = nullptr;
-            for(auto it : cacheIDmap)
+            for (auto it : cacheIDmap)
             {
-                if(it.first == id)
+                if (it.first == id)
                 {
                     retHandler = it.second;
                     break;
