@@ -49,11 +49,14 @@ namespace
         {
             return ResourceState::DESTROYED;
         }
-
+        else if (state == BROKER_STATE::NONE)
+        {
+            return ResourceState::NOT_MONITORING;
+        }
         OC_LOG(ERROR, CLIENT_W_TAG, "getResourceStateFromBrokerState ERROR");
 
         //Default return value
-        return ResourceState::DESTROYED;
+        return ResourceState::NOT_MONITORING;
     }
 
     CacheState getCacheState(CACHE_STATE state)
@@ -166,12 +169,12 @@ namespace OIC
     {
 
         RemoteResourceObject:: RemoteResourceObject(std::shared_ptr<PrimitiveResource>  pResource) :
-            m_watchingFlag(false), m_cachingFlag(false),  m_observableFlag(pResource->isObservable()),
+            m_monitoringFlag(false), m_cachingFlag(false),  m_observableFlag(pResource->isObservable()),
             m_primitiveResource(pResource), m_cacheId(0), m_brokerId(0) {}
 
-        bool RemoteResourceObject::isWatching() const
+        bool RemoteResourceObject::isMonitoring() const
         {
-            return m_watchingFlag;
+            return m_monitoringFlag;
         }
 
         bool RemoteResourceObject::isCaching() const
@@ -181,10 +184,10 @@ namespace OIC
 
         void RemoteResourceObject::startMonitoring(ResourceStateChangedCallback cb)
         {
-            OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::startWatching entry");
-            if (true == m_watchingFlag)
+            OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::startMonitoring entry");
+            if (true == m_monitoringFlag)
             {
-                OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::startWatching : Already started");
+                OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::startMonitoring : Already started");
             }
             else
             {
@@ -193,7 +196,7 @@ namespace OIC
                     BrokerID brokerId =  ResourceBroker::getInstance()->hostResource(m_primitiveResource,
                                          std::bind(hostingCallback, std::placeholders::_1,
                                                    cb));
-                    m_watchingFlag = true;
+                    m_monitoringFlag = true;
                     m_brokerId = brokerId;
                 }
                 catch (std::exception &exception)
@@ -201,30 +204,30 @@ namespace OIC
                     throw InvalidParameterException {exception.what()};
                 }
             }
-            OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::startWatching exit");
+            OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::startMonitoring exit");
         }
 
         void RemoteResourceObject::stopMonitoring()
         {
-            OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::stopWatching entry");
-            if (true == m_watchingFlag)
+            OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::stopMonitoring entry");
+            if (true == m_monitoringFlag)
             {
                 try
                 {
                     ResourceBroker::getInstance()->cancelHostResource(m_brokerId);
-                    m_watchingFlag = false;
+                    m_monitoringFlag = false;
                 }
                 catch (std::exception &exception)
                 {
-                    OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::stopWatching InvalidParameterException");
+                    OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::stopMonitoring InvalidParameterException");
                 }
             }
             else
             {
-                OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject:: stopWatching : already terminated");
+                OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject:: stopMonitoring : already terminated");
             }
 
-            OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::stopWatching exit");
+            OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::stopMonitoring exit");
         }
 
         ResourceState RemoteResourceObject::getState() const

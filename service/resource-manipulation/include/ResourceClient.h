@@ -31,7 +31,6 @@
 
 #include<vector>
 #include "ResourceAttributes.h"
-#include "PrimitiveResource.h"
 
 namespace OIC
 {
@@ -56,7 +55,7 @@ namespace OIC
         */
         enum class ResourceState
         {
-            NOT_WATCHING,
+            NOT_MONITORING,
             ALIVE, REQUESTED,
             LOST_SIGNAL,
             DESTROYED
@@ -67,6 +66,7 @@ namespace OIC
         */
         class RCSException;
         class RemoteResourceObject;
+        class PrimitiveResource;
 
         /**
          * @class  BadRequestException
@@ -112,7 +112,7 @@ namespace OIC
                 RemoteResourceObject(std::shared_ptr<PrimitiveResource>  pResource);
 
                 /**
-                 *  Typedef for callback of startWatching API
+                 *  Typedef for callback of startMonitoring API
                  *
                  * @see ResourceState
                  */
@@ -143,13 +143,13 @@ namespace OIC
                 RemoteAttributesSetCallback;
 
                 /**
-                 * Check current watching state.
+                 * Check monitoring state.
                  *
-                 * @details This API checks the current watching state for the resource of interest.
+                 * @details This API checks the current monitoring state for the resource of interest.
                  *
-                 * @return bool - true if Watching otherwise false.
+                 * @return bool - true if monitoring the resource otherwise false.
                  */
-                bool isWatching() const;
+                bool isMonitoring() const;
 
                 /**
                  * Check current Caching state.
@@ -171,7 +171,7 @@ namespace OIC
                 bool isObservable() const;
 
                 /**
-                 * Start watching the resource.
+                 * Start Monitoring the resource.
                  *
                  * @details This API will start monitoring the resource of interest.
                  *               Once this API is called it will check whether the particular resource
@@ -376,9 +376,9 @@ namespace OIC
                 typedef unsigned int BrokerID;
 
                 /**
-                 *  Flag to check watching state.
+                 *  Flag to check monitoring state.
                  */
-                bool m_watchingFlag;
+                bool m_monitoringFlag;
 
                 /**
                  *  Flag to check caching state.

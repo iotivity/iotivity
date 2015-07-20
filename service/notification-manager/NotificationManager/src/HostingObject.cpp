@@ -29,7 +29,7 @@ namespace Service
 
 HostingObject::HostingObject()
 : remoteObject(nullptr), mirroredServer(nullptr),
-  remoteState(ResourceState::NOT_WATCHING),
+  remoteState(ResourceState::NOT_MONITORING),
   pStateChangedCB(nullptr), pDataUpdateCB(nullptr),
   pDestroyCB(nullptr), pSetRequestHandler(nullptr)
 {
@@ -106,7 +106,7 @@ void HostingObject::stateChangedCB(ResourceState state, RemoteObjectPtr rObject)
                         e.what());
             }
         }
-        if(rObject->isWatching() == true)
+        if(rObject->isMonitoring() == true)
         {
             try
             {

@@ -29,14 +29,14 @@ void OnResourceDiscovered(std::shared_ptr<RemoteResourceObject> foundResource)
     isReady = true;
 }
 
-//callback for StartWatching()
+//callback for StartMonitoring()
 void OnResourceStateChanged(ResourceState resourceState)
 {
 
     cout << "\nOnResourceStateChanged callback" << std::endl;
 
-    if (resourceState == ResourceState::NOT_WATCHING)
-        cout << "State changed to : NOT_WATCHING" << std::endl;
+    if (resourceState == ResourceState::NOT_MONITORING)
+        cout << "State changed to : NOT_MONITORING" << std::endl;
     else if (resourceState == ResourceState::ALIVE)
         cout << "State changed to : ALIVE" << std::endl;
     else if (resourceState == ResourceState::REQUESTED)
