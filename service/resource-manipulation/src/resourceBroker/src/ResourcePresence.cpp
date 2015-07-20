@@ -128,6 +128,10 @@ namespace OIC
             return requesterList->empty();
         }
 
+        int ResourcePresence::requesterListSize() const {
+            return (requesterList!=nullptr)?requesterList->size():0;
+        }
+
         void ResourcePresence::requestResourceState() const
         {
             OC_LOG_V(DEBUG, BROKER_TAG, "Request Get\n");

@@ -86,5 +86,10 @@ namespace OIC
                 foundDevice.reset();
             }
         }
+
+        bool DeviceAssociation::isEmptyDeviceList()
+        {
+            return s_deviceList.empty();
+        }
     } // namespace Service
 } // namespace OIC

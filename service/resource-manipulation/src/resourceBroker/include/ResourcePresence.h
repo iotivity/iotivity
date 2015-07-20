@@ -51,7 +51,7 @@ namespace OIC
             void changePresenceMode(BROKER_MODE newMode);
 
             bool isEmptyRequester() const;
-
+            int  requesterListSize() const;
             const PrimitiveResourcePtr getPrimitiveResource() const;
             BROKER_STATE getResourceState() const;
 

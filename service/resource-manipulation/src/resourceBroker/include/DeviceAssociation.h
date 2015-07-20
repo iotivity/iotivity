@@ -42,6 +42,7 @@ namespace OIC
             DevicePresencePtr findDevice(const std::string & address);
             void addDevice(DevicePresencePtr dPresence);
             void removeDevice(DevicePresencePtr dPresence);
+            bool isEmptyDeviceList();
 
         private:
             DeviceAssociation();
