@@ -1,0 +1,166 @@
+//******************************************************************
+//
+// Copyright 2015 Samsung Electronics All Rights Reserved.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+#include "DevicePresence.h"
+#include "RCSException.h"
+
+namespace OIC
+{
+    namespace Service
+    {
+        DevicePresence::DevicePresence()
+        {
+            state = DEVICE_STATE::REQUESTED;
+
+            presenceTimerHandle = 0;
+            isRunningTimeOut = false;
+
+            pSubscribeRequestCB = std::bind(&DevicePresence::subscribeCB, this,
+                        std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+            pTimeoutCB = std::bind(&DevicePresence::timeOutCB, this, std::placeholders::_1);
+        }
+
+        DevicePresence::~DevicePresence()
+        {
+            if(presenceSubscriber.isSubscribing())
+            {
+                presenceSubscriber.unsubscribe();
+            }
+            resourcePresenceList.clear();
+            presenceTimer.destroyTimer();
+        }
+
+        void DevicePresence::initializeDevicePresence(PrimitiveResourcePtr pResource)
+        {
+            OC_LOG_V(DEBUG, BROKER_TAG, "%s",pResource->getHost().c_str());
+
+            address = pResource->getHost();
+
+            try
+            {
+                presenceSubscriber
+                = PresenceSubscriber(pResource->getHost(), BROKER_TRANSPORT, pSubscribeRequestCB);
+                OC_LOG_V(DEBUG, BROKER_TAG, "subscribe Presence");
+            } catch(PlatformException &e)
+            {
+                OC_LOG_V(DEBUG, BROKER_TAG,
+                        "exception in subscribe Presence %s", e.getReason().c_str());
+                throw;
+            }
+            presenceTimerHandle
+            = presenceTimer.postTimer(BROKER_DEVICE_PRESENCE_TIMEROUT, pTimeoutCB);
+        }
+
+        const std::string DevicePresence::getAddress() const
+        {
+            return address;
+        }
+
+        void DevicePresence::addPresenceResource(ResourcePresence * rPresence)
+        {
+            resourcePresenceList.push_back(rPresence);
+        }
+
+        void DevicePresence::removePresenceResource(ResourcePresence * rPresence)
+        {
+            resourcePresenceList.remove(rPresence);
+        }
+
+        void DevicePresence::changeAllPresenceMode(BROKER_MODE mode)
+        {
+            if(!resourcePresenceList.empty())
+            {
+                for(auto it : resourcePresenceList)
+                {
+                    it->changePresenceMode(mode);
+                }
+            }
+        }
+
+        bool DevicePresence::isEmptyResourcePresence() const
+        {
+            return resourcePresenceList.empty();
+        }
+
+        void DevicePresence::subscribeCB(OCStackResult ret,
+                const unsigned int seq, const std::string& hostAddress)
+        {
+            OC_LOG_V(DEBUG, BROKER_TAG, "Received presence CB from: %s",hostAddress.c_str());
+            OC_LOG_V(DEBUG, BROKER_TAG, "In subscribeCB: %d",ret);
+
+            if(isRunningTimeOut)
+            {
+                std::unique_lock<std::mutex> lock(timeoutMutex);
+                condition.wait(lock);
+            }
+            presenceTimer.cancelTimer(presenceTimerHandle);
+
+            switch(ret)
+            {
+                case OC_STACK_OK:
+                case OC_STACK_RESOURCE_CREATED:
+                case OC_STACK_CONTINUE:
+                {
+                    OC_LOG_V(DEBUG, BROKER_TAG, "SEQ# %d",seq);
+                    state = DEVICE_STATE::ALIVE;
+                    OC_LOG_V(DEBUG, BROKER_TAG, "device state : %d",
+                            (int)(state.load(boost::memory_order_consume)));
+                    changeAllPresenceMode(BROKER_MODE::DEVICE_PRESENCE_MODE);
+                    presenceTimerHandle
+                    = presenceTimer.postTimer(BROKER_DEVICE_PRESENCE_TIMEROUT, pTimeoutCB);
+                    break;
+                }
+                case OC_STACK_INVALID_REQUEST_HANDLE:
+                case OC_STACK_RESOURCE_DELETED:
+                case OC_STACK_TIMEOUT:
+                case OC_STACK_COMM_ERROR:
+                case OC_STACK_PRESENCE_STOPPED:
+                case OC_STACK_PRESENCE_TIMEOUT:
+                case OC_STACK_PRESENCE_DO_NOT_HANDLE:
+                {
+                    state = DEVICE_STATE::LOST_SIGNAL;
+                    changeAllPresenceMode(BROKER_MODE::NON_PRESENCE_MODE);
+                    break;
+                }
+                default:
+                {
+                    OC_LOG_V(DEBUG, BROKER_TAG, "Presence Lost Signal because unknown type");
+                    state = DEVICE_STATE::LOST_SIGNAL;
+                    changeAllPresenceMode(BROKER_MODE::NON_PRESENCE_MODE);
+                    break;
+                }
+            }
+        }
+
+        void DevicePresence::timeOutCB(TimerID id)
+        {
+            std::unique_lock<std::mutex> lock(timeoutMutex);
+            isRunningTimeOut = true;
+
+            OC_LOG_V(DEBUG, BROKER_TAG,
+                    "Timeout execution. will be discard after receiving cb message");
+            state = DEVICE_STATE::LOST_SIGNAL;
+            changeAllPresenceMode(BROKER_MODE::NON_PRESENCE_MODE);
+
+            isRunningTimeOut = false;
+            condition.notify_all();
+        }
+    } // namespace Service
+} // namespace OIC
