@@ -73,7 +73,7 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
     u_arraylist_t *iflist = u_arraylist_create();
     if (!iflist)
     {
-        OIC_LOG_V(ERROR, TAG, "Failed to create iflist: %s", strerror(errno));
+        OIC_LOG(ERROR, TAG, "Failed to create iflist");
         return NULL;
     }
 

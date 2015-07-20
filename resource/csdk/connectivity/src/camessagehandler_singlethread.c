@@ -152,7 +152,7 @@ static void CAProcessData(const CAData_t *data)
         }
         else
         {
-            OIC_LOG_V(ERROR,TAG,"Failed to Generate Unicast PDU");
+            OIC_LOG(ERROR,TAG, "Failed to Generate Unicast PDU");
             return;
         }
     }

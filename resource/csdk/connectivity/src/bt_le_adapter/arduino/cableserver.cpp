@@ -111,13 +111,13 @@ void CACheckLEDataInternal()
                 if (g_receivedDataLen > 0)
                 {
                     OIC_LOG_V(DEBUG, TAG, "recv dataLen=%d", g_receivedDataLen);
-                    //CANotifyCallback((void *)g_coapBuffer, g_dataLen, "", 0);
                     uint32_t sentLength = 0;
+                    // g_coapBuffer getting freed by CAMesssageHandler
                     g_bleServerDataReceivedCallback("", "", g_coapBuffer,
                                                     g_receivedDataLen, &sentLength);
                 }
+
                 g_receivedDataLen = 0;
-                OICFree(g_coapBuffer);
                 g_coapBuffer = NULL;
                 break;
             }
