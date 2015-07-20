@@ -1,0 +1,106 @@
+#******************************************************************
+#
+# Copyright 2015 Samsung Electronics All Rights Reserved.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+##
+# server_builder project build script
+##
+import os
+Import('env')
+
+# Add third party libraries
+lib_env = env.Clone()
+SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', exports = 'lib_env')
+
+src_dir = lib_env.get('SRC_DIR')
+
+gtest_dir = src_dir + '/extlibs/gtest/gtest-1.7.0'
+
+server_builder_env = lib_env.Clone()
+target_os = env.get('TARGET_OS')
+
+release = env.get('RELEASE')
+
+######################################################################
+# Build flags
+######################################################################
+server_builder_env.AppendUnique(CPPPATH = [
+    '../common/primitiveResource/include',
+    '../../include',
+    ])
+
+server_builder_env.AppendUnique(CPPPATH = [env.get('SRC_DIR')+'/extlibs', 'include'])
+
+if target_os not in ['windows', 'winrt']:
+    server_builder_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
+    if target_os != 'android':
+        server_builder_env.AppendUnique(CXXFLAGS = ['-pthread'])
+
+if target_os == 'android':
+    server_builder_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
+    server_builder_env.PrependUnique(LIBS = ['gnustl_shared', 'compatibility', 'log'])
+
+server_builder_env.AppendUnique(LIBS = ['dl'])
+
+if not release:
+    server_builder_env.AppendUnique(CXXFLAGS = ['--coverage'])
+    server_builder_env.PrependUnique(LIBS = ['gcov'])
+
+######################################################################
+# Source files and Targets
+######################################################################
+server_builder_src = env.Glob('src/*.cpp')
+
+server_builder_static = server_builder_env.StaticLibrary('server_builder', server_builder_src)
+server_builder_shared = server_builder_env.SharedLibrary('server_builder', server_builder_src)
+
+server_builder_env.InstallTarget([server_builder_static, server_builder_shared], 'server_builder')
+
+######################################################################
+# Build Test
+######################################################################
+server_builder_test_env = server_builder_env.Clone();
+
+server_builder_test_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+server_builder_test_env.AppendUnique(CPPPATH = [
+    env.get('SRC_DIR')+'/extlibs/hippomocks-master',
+    gtest_dir + '/include'
+    ])
+
+gtest = File(gtest_dir + '/lib/.libs/libgtest.a')
+gtest_main = File(gtest_dir + '/lib/.libs/libgtest_main.a')
+
+server_builder_test_env.PrependUnique(LIBS = [
+    'server_builder',
+    'service_common',
+    'pthread',
+    'oc',
+    'octbstack',
+    'oc_logger',
+    'connectivity_abstraction',
+    'coap',
+    gtest,
+    gtest_main,
+    ])
+
+#server_builder_test_src = env.Glob('unittests/*.cpp')
+
+#server_builder_test = server_builder_test_env.Program('server_builder_test', server_builder_test_src)
+#Alias("server_builder_test", server_builder_test)
+#env.AppendTarget('server_builder_test')

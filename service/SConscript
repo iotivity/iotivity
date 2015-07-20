@@ -33,14 +33,18 @@ if target_os not in ['arduino','darwin','ios']:
 	# Build soft sensor manager project
 	SConscript('soft-sensor-manager/SConscript')
 
-	# Build notification manager project
-	SConscript('notification-manager/SConscript')
-
 	# Build protocol plugin project
 	# protocol-plugin use 'inotify', this feature isn't support by MAC OSX
-	if target_os not in ['darwin', 'ios']:
+	if target_os not in ['darwin', 'ios', 'android']:
 		SConscript('protocol-plugin/SConscript')
 
+	# Build notification manager project
+	if target_os not in ['android', 'tizen']:
+		SConscript('notification-manager/SConscript')
+
+	# Build resource-manipulation project
+	if target_os not in ['android', 'tizen']:
+		SConscript('resource-manipulation/SConscript')
 #else:
 #	SConscript('notification-manager/SampleApp/arduino/SConscript')
 
