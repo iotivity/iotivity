@@ -24,7 +24,10 @@
 #include <string>
 #include "BundleInfo.h"
 #include "ResourceContainerBundleAPI.h"
-#include "jni.h"
+
+#if (JAVA_SUPPORT)
+    #include "jni.h"
+#endif
 
 using namespace std;
 using namespace OIC::Service;
@@ -62,14 +65,6 @@ namespace OIC
                 void setActivatorName(string activatorName);
                 string getActivatorName();
 
-                void setJavaBundleActivatorMethod(jmethodID activator);
-                jmethodID getJavaBundleActivatorMethod();
-                void setJavaBundleDeactivatorMethod(jmethodID deactivator);
-                jmethodID getJavaBundleDeactivatorMethod();
-
-                void setJavaBundleActivatorObject(jobject);
-                jobject getJavaBundleActivatorObject();
-
                 void setBundleActivator(activator_t *);
                 activator_t *getBundleActivator();
 
@@ -82,13 +77,23 @@ namespace OIC
                 void setResourceDestroyer(resourceDestroyer_t *);
                 resourceDestroyer_t *getResourceDestroyer();
 
+                void setBundleInfo(BundleInfo *bundleInfo);
+
                 void setBundleHandle(void *);
                 void *getBundleHandle();
 
                 void setJavaBundle(bool javaBundle);
                 bool getJavaBundle();
 
-                void setBundleInfo(BundleInfo *bundleInfo);
+#if (JAVA_SUPPORT)
+                void setJavaBundleActivatorMethod(jmethodID activator);
+                jmethodID getJavaBundleActivatorMethod();
+                void setJavaBundleDeactivatorMethod(jmethodID deactivator);
+                jmethodID getJavaBundleDeactivatorMethod();
+
+                void setJavaBundleActivatorObject(jobject);
+                jobject getJavaBundleActivatorObject();
+#endif
 
             private:
                 bool m_loaded, m_activated, m_java_bundle;
@@ -99,9 +104,12 @@ namespace OIC
                 resourceDestroyer_t *m_resourceDestroyer;
                 void *m_bundleHandle;
                 string m_activator_name;
+                string m_library_path;
+#if (JAVA_SUPPORT)
                 jmethodID m_java_activator, m_java_deactivator;
                 jobject m_java_activator_object;
-                string m_library_path;
+#endif
+
         };
     }
 }

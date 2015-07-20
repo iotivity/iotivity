@@ -290,6 +290,7 @@ TEST_F(ResourceContainerImplTest, SoBundleLoadedWhenRegisteredWithRegisterBundle
     EXPECT_NE(nullptr, ((BundleInfoInternal *)m_pBundleInfo)->getBundleHandle());
 }
 
+#if (JAVA_SUPPORT_TEST)
 TEST_F(ResourceContainerImplTest, JavaBundleLoadedWhenRegisteredWithRegisterBundleAPIWrongPath)
 {
     m_pBundleInfo->setPath("wrong_path.jar");
@@ -319,6 +320,7 @@ TEST_F(ResourceContainerImplTest, JavaBundleTest)
     m_pResourceContainer->deactivateBundle(m_pBundleInfo);
     EXPECT_FALSE(((BundleInfoInternal *) m_pBundleInfo)->isActivated());
 }
+#endif
 
 TEST_F(ResourceContainerImplTest, BundleNotRegisteredIfBundlePathIsInvalid)
 {

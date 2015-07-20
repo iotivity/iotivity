@@ -171,6 +171,7 @@ namespace OIC
             return m_library_path;
         }
 
+#if (JAVA_SUPPORT)
         void BundleInfoInternal::setJavaBundleActivatorMethod(jmethodID javaBundleActivator)
         {
             m_java_activator = javaBundleActivator;
@@ -191,16 +192,6 @@ namespace OIC
             return m_java_deactivator;
         }
 
-        /*void BundleInfoInternal::setJavaBundleActivatorClass(jclass activator_class)
-        {
-            m_java_activator_class = activator_class;
-        }
-
-        jclass BundleInfoInternal::getJavaBundleActivatorClass()
-        {
-            return m_java_activator_class;
-        }*/
-
         void BundleInfoInternal::setJavaBundleActivatorObject(jobject activator_object)
         {
             m_java_activator_object = activator_object;
@@ -210,6 +201,7 @@ namespace OIC
         {
             return m_java_activator_object;
         }
+#endif
 
         void BundleInfoInternal::setBundleInfo(BundleInfo *bundleInfo)
         {

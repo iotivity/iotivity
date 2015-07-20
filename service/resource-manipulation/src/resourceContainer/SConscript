@@ -46,17 +46,18 @@ target_os = env.get('TARGET_OS')
 try:
 	print 'Java Home: ', os.environ['JAVA_HOME']
 	print 'Java Lib: ', os.environ['JAVA_LIB']
+	resource_container_env.Append(CPPDEFINES={'JAVA_SUPPORT':1})
 except KeyError:
 	print '''
 *********************************** Error *************************************
-* Cannot build resource container. JAVA_HOME or JAVA_LIB are not set properly 
+* Building resource container without Java support. JAVA_HOME or JAVA_LIB are not set properly 
 * Please configure JAVA_HOME to point to your Java 7 JDK and 
 * JAVA_LIB to your folder containing libjvm
 * Example: export JAVA_HOME=/usr/lib/jvm/java-7-openjdk-i386
 *          export JAVA_LIB=/usr/lib/jvm/java-7-openjdk-i386/jre/lib/i386/server
 *******************************************************************************	
 	'''
-	Return()
+	resource_container_env.Append(CPPDEFINES={'JAVA_SUPPORT':0})
 	
 
 resource_container_env.AppendUnique(
@@ -65,10 +66,19 @@ resource_container_env.AppendUnique(
 		'../../include',
 		'include',
 		'bundle-api/include',
-		'src',
-		os.environ['JAVA_HOME']+'/include',
-		os.environ['JAVA_HOME']+'/include/linux'
+		'src'		
 	])
+
+try:
+	resource_container_env.AppendUnique(
+	CPPPATH = [
+		os.environ['JAVA_HOME']+'/include',
+		os.environ['JAVA_HOME']+'/include/linux'		
+	])
+except KeyError:
+	print ''
+	
+
 
 if target_os not in ['windows', 'winrt']:
     resource_container_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
@@ -79,25 +89,20 @@ if target_os == 'android':
     resource_container_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
     resource_container_env.PrependUnique(LIBS = ['gnustl_shared', 'compatibility', 'log'])
 	
-
-resource_container_env.AppendUnique(LIBPATH = [os.environ['JAVA_LIB']])
+try:
+	resource_container_env.AppendUnique(LIBPATH = [os.environ['JAVA_LIB']])
+except KeyError:
+	print ''
 	
-conf = Configure(resource_container_env)
-if not conf.CheckLib('jvm'):
-	print '''
-*********************************** Error *************************************
-* Cannot locate libjvm for resource container.
-* Please check your JAVA_LIB to point to your folder containing libjvm.
-* Example: export JAVA_LIB=/usr/lib/jvm/java-7-openjdk-i386/jre/lib/i386/server/
-*******************************************************************************	
-	'''
-	resource_container_env = conf.Finish()
-	Return()
-resource_container_env = conf.Finish()
 
 resource_container_env.PrependUnique(LIBS = ['server_builder', 'service_common', 'oc','octbstack', 'oc_logger', 'oc_logger_core', 'connectivity_abstraction'])
-resource_container_env.AppendUnique(LIBS = ['dl', 'jvm'])	
+resource_container_env.AppendUnique(LIBS = ['dl'])	
 
+try:	
+	print 'Java Lib: ', os.environ['JAVA_LIB']
+	resource_container_env.AppendUnique(LIBS = ['jvm'])		
+except KeyError:
+	print ''
 
 ######################################################################
 # Source files and Targets
@@ -106,6 +111,7 @@ res_container_src = ['src/BaseActivator.cpp','src/BundleActivator.cpp','src/Bund
 	'src/BundleInfoInternal.cpp', 'src/BundleResource.cpp', 'src/Configuration.cpp', 'src/JavaBundleResource.cpp', 'src/ProtocolBridgeResource.cpp',
 	'src/ProtocolBridgeConnector.cpp', 'src/ResourceContainer.cpp', 'src/ResourceContainerBundleAPI.cpp', 'src/ResourceContainerImpl.cpp', 
 	'src/SoftSensorResource.cpp']
+	
 res_container_static = resource_container_env.StaticLibrary('ResContainerLib', res_container_src)
 res_container_shared = resource_container_env.SharedLibrary('ResContainerLib', res_container_src)
 
@@ -181,7 +187,9 @@ containersample_env.AppendUnique(LINKFLAGS=["-rdynamic"])
 Command("examples/ResourceContainerConfig.xml","examples/ResourceContainerConfig.xml", Copy("$TARGET", "$SOURCE"))
 Ignore("examples/ResourceContainerConfig.xml", "examples/ResourceContainerConfig.xml")
 
-containersampleapp_src =  [res_container_src , 'src/ContainerSample.cpp']
+containersample_env.AppendUnique(LIBS = ['ResContainerLib'])
+
+containersampleapp_src =  ['src/ContainerSample.cpp']
 containersampleapp = containersample_env.Program('ContainerSample',containersampleapp_src)
 Alias("containersample", containersampleapp)
 env.AppendTarget('containersample')
@@ -190,8 +198,9 @@ env.AppendTarget('containersample')
 # Build Container Sample Client
 ######################################################################
 containersampleclient_env = resource_container_env.Clone();
-containersampleclient_env.AppendUnique(LINKFLAGS=["-rdynamic"])
-containersampleclient_src =  [res_container_src , 'src/ContainerSampleClient.cpp']
+
+containersample_env.AppendUnique(LIBS = ['ResContainerLib'])
+containersampleclient_src =  ['src/ContainerSampleClient.cpp']
 containersampleclientapp = containersample_env.Program('ContainerSampleClient',containersampleclient_src)
 Alias("containersampleclient", containersampleclientapp)
 env.AppendTarget('containersampleclient')

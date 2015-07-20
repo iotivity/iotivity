@@ -21,6 +21,8 @@
 #ifndef RESOURCECONTAINERIMPL_H_
 #define RESOURCECONTAINERIMPL_H_
 
+
+
 #include "ResourceContainer.h"
 #include "ResourceContainerBundleAPI.h"
 #include "BundleInfoInternal.h"
@@ -29,7 +31,10 @@
 #include "RCSResponse.h"
 #include "ResourceObject.h"
 
-#include "jni.h"
+#if(JAVA_SUPPORT)
+    #include <jni.h>
+#endif
+
 #include <map>
 
 using namespace OIC::Service;
@@ -55,7 +60,7 @@ namespace OIC
                 void registerBundle(BundleInfo *bundleinfo);
                 void unregisterBundle(BundleInfo *bundleinfo);
                 void unregisterBundleSo(string id);
-                void unregisterBundleJava(string id);
+
 
                 // methods from ResourceContainerBundleAPI
                 void registerResource(BundleResource *resource);
@@ -89,7 +94,10 @@ namespace OIC
 
                 std::list<string> listBundleResources(string bundleId);
 
+#if(JAVA_SUPPORT)
                 JavaVM *getJavaVM(string bundleId);
+                void unregisterBundleJava(string id);
+#endif
 
 
             private:
@@ -99,16 +107,23 @@ namespace OIC
                 map< std::string, list<string> > m_mapBundleResources; //<bundleID, vector<uri>>
                 string m_configFile;
                 Configuration *m_config = NULL;
-                map<string, JavaVM *> m_bundleVM;
 
-                void registerJavaBundle(BundleInfo *bundleInfo);
-                void registerSoBundle(BundleInfo *bundleInfo);
-                void activateJavaBundle(string bundleId);
+
                 void activateSoBundle(string bundleId);
-                void deactivateJavaBundle(string bundleId);
                 void deactivateSoBundle(string bundleId);
                 void addSoBundleResource(string bundleId, resourceInfo newResourceInfo);
                 void removeSoBundleResource(string bundleId, string resourceUri);
+                void registerSoBundle(BundleInfo *bundleInfo);
+
+#if(JAVA_SUPPORT)
+                map<string, JavaVM *> m_bundleVM;
+
+                void registerJavaBundle(BundleInfo *bundleInfo);
+                void activateJavaBundle(string bundleId);
+                void deactivateJavaBundle(string bundleId);
+
+#endif
+
         };
     }
 }
