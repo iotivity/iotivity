@@ -821,7 +821,6 @@ void request_handler(const CAEndpoint_t* object, const CARequestInfo_t* requestI
 
     if (NULL != g_responseListenerObject)
     {
-        callback("received request from remote device", "#######");
         char *cloneUri = NULL;
         uint32_t len = 0;
 
@@ -903,11 +902,10 @@ void request_handler(const CAEndpoint_t* object, const CARequestInfo_t* requestI
         //clone g_clientMsgId
         g_clientMsgId = requestInfo->info.messageId;
 
-        if (NULL != requestInfo->info.payload)
+        if (NULL != requestInfo->info.payload && requestInfo->info.payloadSize > 0)
         {
-            len = strlen(requestInfo->info.payload);
-            char *clonePayload = (char *) malloc(sizeof(char) * (len + 1));
-
+            len = requestInfo->info.payloadSize;
+            char *clonePayload = (char *) malloc(len + 1);
             if (NULL == clonePayload)
             {
                 LOGE("clonePayload Out of memory");
@@ -915,7 +913,8 @@ void request_handler(const CAEndpoint_t* object, const CARequestInfo_t* requestI
                 return;
             }
 
-            memcpy(clonePayload, requestInfo->info.payload, len + 1);
+            memcpy(clonePayload, requestInfo->info.payload, len);
+            clonePayload[len] = '\0';
 
             callback("Data: ", clonePayload);
             free(clonePayload);
@@ -1039,18 +1038,18 @@ void response_handler(const CAEndpoint_t* object, const CAResponseInfo_t* respon
         free(cloneRemoteAddress);
         free(g_remoteAddress);
 
-        if (NULL != responseInfo->info.payload)
+        if (NULL != responseInfo->info.payload && responseInfo->info.payloadSize)
         {
-            len = strlen(responseInfo->info.payload);
-            char *clonePayload = (char *) malloc(sizeof(char) * (len + 1));
-
+            len = responseInfo->info.payloadSize;
+            char *clonePayload = (char *) malloc(len + 1);
             if (NULL == clonePayload)
             {
                 LOGE("clonePayload Out of memory");
                 return;
             }
 
-            memcpy(clonePayload, responseInfo->info.payload, len + 1);
+            memcpy(clonePayload, responseInfo->info.payload, len);
+            clonePayload[len] = '\0';
 
             callback("Data: ", clonePayload);
             free(clonePayload);
