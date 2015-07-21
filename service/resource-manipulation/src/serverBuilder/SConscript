@@ -47,6 +47,8 @@ server_builder_env.AppendUnique(CPPPATH = [
 
 server_builder_env.AppendUnique(CPPPATH = [env.get('SRC_DIR')+'/extlibs', 'include'])
 
+server_builder_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+
 if target_os not in ['windows', 'winrt']:
     server_builder_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
     if target_os != 'android':
@@ -59,7 +61,10 @@ if target_os == 'android':
     server_builder_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
     server_builder_env.PrependUnique(LIBS = ['gnustl_shared', 'compatibility', 'log'])
 
-server_builder_env.AppendUnique(LIBS = ['dl'])
+server_builder_env.AppendUnique(LIBS = ['dl', 'oc', 'rcs_common'])
+
+if env.get('LOGGING'):
+	server_builder_env.AppendUnique(LIBS = ['octbstack'])
 
 if not release:
     server_builder_env.AppendUnique(CXXFLAGS = ['--coverage'])
@@ -80,7 +85,6 @@ server_builder_env.InstallTarget([server_builder_static, server_builder_shared],
 ######################################################################
 server_builder_test_env = server_builder_env.Clone();
 
-server_builder_test_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 server_builder_test_env.AppendUnique(CPPPATH = [
     env.get('SRC_DIR')+'/extlibs/hippomocks-master',
     gtest_dir + '/include',
@@ -92,9 +96,6 @@ gtest_main = File(gtest_dir + '/lib/.libs/libgtest_main.a')
 
 server_builder_test_env.PrependUnique(LIBS = [
     'rcs_server',
-    'rcs_common',
-    'pthread',
-    'oc',
     'octbstack',
     'oc_logger',
     'connectivity_abstraction',
