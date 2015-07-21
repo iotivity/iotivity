@@ -16,7 +16,10 @@ mosquittopp_env.AppendUnique(CPPPATH = ['./', '../'])
 if target_os not in ['windows', 'winrt']:
 	mosquittopp_env.AppendUnique(CFLAGS = ['-Wall', '-ggdb', '-O2', '-fPIC'])
 
-mosquittopp_env.AppendUnique(LIBS = ['mosquitto', 'ssl', 'crypto'])
+if target_os == 'linux':
+	mosquittopp_env.AppendUnique(LIBS = ['pthread'])
+
+mosquittopp_env.PrependUnique(LIBS = ['mosquitto', 'ssl', 'crypto'])
 ######################################################################
 # Source files and Targets
 ######################################################################
