@@ -227,6 +227,8 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
             clientResponse->devAddr.port);
     OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
 
+    OC_CONNTYPE = clientResponse->connType;
+
     if(TEST == TEST_UNKNOWN_RESOURCE_GET_DEFAULT || TEST == TEST_UNKNOWN_RESOURCE_GET_BATCH ||\
             TEST == TEST_UNKNOWN_RESOURCE_GET_LINK_LIST)
     {
