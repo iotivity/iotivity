@@ -69,6 +69,11 @@ void process();
 CAResult_t get_network_type();
 CAResult_t get_input_data(char *buf, int32_t length);
 
+bool select_payload_type();
+CAPayload_t get_binary_payload(size_t *payloadLength);
+bool read_file(const char* name, CAPayload_t* bytes, size_t* length);
+void create_file(CAPayload_t bytes, size_t length);
+
 void start_listening_server();
 void start_discovery_server();
 void send_request();
@@ -370,6 +375,36 @@ void start_discovery_server()
     }
 }
 
+bool select_payload_type()
+{
+    char buf[MAX_BUF_LEN]={0};
+    printf("\n=============================================\n");
+    printf("Normal Payload  : 0\nBig Payload   : 1\n");
+    printf("select Payload type : ");
+
+    CAResult_t res = get_input_data(buf, sizeof(buf));
+    if (CA_STATUS_OK != res)
+    {
+        printf("Payload type selection error\n");
+        printf("Default: Using normal Payload\n");
+        return false;
+    }
+
+    return (buf[0] == '1') ? true : false;
+}
+
+CAPayload_t get_binary_payload(size_t *payloadLength)
+{
+    CAPayload_t binaryPayload = NULL;
+    bool result = read_file("sample_input.txt", &binaryPayload, payloadLength);
+    if (false == result)
+    {
+        return NULL;
+    }
+
+    return binaryPayload;
+}
+
 void send_request()
 {
     CAResult_t res = get_network_type();
@@ -480,18 +515,49 @@ void send_request()
     }
     else
     {
-        size_t length = sizeof(NORMAL_INFO_DATA) + strlen(resourceURI);
-        requestData.payload = (CAPayload_t) calloc(length, sizeof(char));
-        if (NULL == requestData.payload)
+        bool useBigPayload = select_payload_type();
+        if (useBigPayload)
         {
-            printf("Memory allocation fail\n");
-            CADestroyEndpoint(endpoint);
-            CADestroyToken(token);
-            return;
+            size_t payloadLength = 0;
+            CAPayload_t binaryPayload = get_binary_payload(&payloadLength);
+            if (!binaryPayload)
+            {
+                free(binaryPayload);
+                CADestroyToken(token);
+                CADestroyEndpoint(endpoint);
+                return;
+            }
+
+            requestData.payload = (CAPayload_t) malloc(payloadLength);
+            if (NULL == requestData.payload)
+            {
+                printf("Memory allocation failed!");
+                free(binaryPayload);
+                CADestroyToken(token);
+                CADestroyEndpoint(endpoint);
+                return;
+            }
+            memcpy(requestData.payload, binaryPayload, payloadLength);
+            requestData.payloadSize = payloadLength;
+
+            // memory free
+            free(binaryPayload);
         }
-        snprintf((char *) requestData.payload, length, NORMAL_INFO_DATA,
-                 (const char *) resourceURI);
-        requestData.payloadSize = length;
+        else
+        {
+            size_t length = sizeof(NORMAL_INFO_DATA) + strlen(resourceURI);
+            requestData.payload = (CAPayload_t) calloc(length, sizeof(char));
+            if (NULL == requestData.payload)
+            {
+                printf("Memory allocation fail\n");
+                CADestroyEndpoint(endpoint);
+                CADestroyToken(token);
+                return;
+            }
+            snprintf((char *) requestData.payload, length, NORMAL_INFO_DATA,
+                     (const char *) resourceURI);
+            requestData.payloadSize = length;
+        }
     }
     requestData.type = msgType;
     CAHeaderOption_t* headerOpt = get_option_data(&requestData);
@@ -890,18 +956,10 @@ void get_network_info()
     for (index = 0; index < tempSize; index++)
     {
         printf("Type: %d\n", tempInfo[index].adapter);
+        printf("Address: %s\n", tempInfo[index].addr);
         if (CA_ADAPTER_IP == tempInfo[index].adapter)
         {
-            printf("Address: %s\n", tempInfo[index].addr);
             printf("Port: %d\n", tempInfo[index].port);
-        }
-        else if (CA_ADAPTER_RFCOMM_BTEDR == tempInfo[index].adapter)
-        {
-            printf("Address: %s\n", tempInfo[index].addr);
-        }
-        else if (CA_ADAPTER_GATT_BTLE == tempInfo[index].adapter)
-        {
-            printf("Address: %s\n", tempInfo[index].addr);
         }
         printf("Secured: %s\n\n", (tempInfo[index].flags & CA_SECURE) ? "true" : "false");
 
@@ -938,11 +996,7 @@ void request_handler(const CAEndpoint_t *object, const CARequestInfo_t *requestI
         printf("Remote Address: %s Port: %d secured:%d\n", object->addr,
                object->port, object->flags & CA_SECURE);
     }
-    else if (CA_ADAPTER_RFCOMM_BTEDR == object->adapter)
-    {
-        printf("Remote Address: %s \n", object->addr);
-    }
-    else if (CA_ADAPTER_GATT_BTLE == object->adapter)
+    else
     {
         printf("Remote Address: %s \n", object->addr);
     }
@@ -984,6 +1038,12 @@ void request_handler(const CAEndpoint_t *object, const CARequestInfo_t *requestI
         }
     }
 
+    // if received message is bulk data, create output file
+    if ((requestInfo->info.payload) && (requestInfo->info.payloadSize > CA_DEFAULT_BLOCK_SIZE))
+    {
+        create_file(requestInfo->info.payload, requestInfo->info.payloadSize);
+    }
+
     printf("Send response with URI\n");
     send_response(object, &requestInfo->info);
 
@@ -998,11 +1058,7 @@ void response_handler(const CAEndpoint_t *object, const CAResponseInfo_t *respon
         printf("Remote Address: %s Port: %d secured:%d\n", object->addr,
                object->port, object->flags & CA_SECURE);
     }
-    else if (CA_ADAPTER_RFCOMM_BTEDR == object->adapter)
-    {
-        printf("Remote Address: %s \n", object->addr);
-    }
-    else if (CA_ADAPTER_GATT_BTLE == object->adapter)
+    else
     {
         printf("Remote Address: %s \n", object->addr);
     }
@@ -1033,6 +1089,12 @@ void response_handler(const CAEndpoint_t *object, const CAResponseInfo_t *respon
         {
             printf("This is secure resource...\n");
         }
+    }
+
+    // if received message is bulk data, create output file
+    if ((responseInfo->info.payload) && (responseInfo->info.payloadSize > CA_DEFAULT_BLOCK_SIZE))
+    {
+        create_file(responseInfo->info.payload, responseInfo->info.payloadSize);
     }
 }
 
@@ -1157,16 +1219,43 @@ void send_response(const CAEndpoint_t *endpoint, const CAInfo_t *info)
         {
             printf("Sending response on non-secure communication\n");
 
-            uint32_t length = sizeof(NORMAL_INFO_DATA) + strlen(responseData.resourceUri);
-            responseData.payload = (CAPayload_t) calloc(length, sizeof(char));
-            if (NULL == responseData.payload)
+            bool useBigPayload = select_payload_type();
+            if (useBigPayload)
             {
-                printf("Memory allocation fail\n");
-                return;
+                size_t payloadLength = 0;
+                CAPayload_t binaryPayload = get_binary_payload(&payloadLength);
+                if (NULL == binaryPayload)
+                {
+                    free(binaryPayload);
+                    return;
+                }
+
+                responseData.payload = (CAPayload_t) malloc(payloadLength);
+                if (NULL == responseData.payload)
+                {
+                    printf("Memory allocation failed!");
+                    free(binaryPayload);
+                    return;
+                }
+                memcpy(responseData.payload, binaryPayload, payloadLength);
+                responseData.payloadSize = payloadLength;
+
+                // memory free
+                free(binaryPayload);
             }
-            snprintf((char *) responseData.payload, length, NORMAL_INFO_DATA,
-                     (const char *) responseData.resourceUri);
-            responseData.payloadSize = length;
+            else
+            {
+                uint32_t length = sizeof(NORMAL_INFO_DATA) + strlen(responseData.resourceUri);
+                responseData.payload = (CAPayload_t) calloc(length, sizeof(char));
+                if (NULL == responseData.payload)
+                {
+                    printf("Memory allocation fail\n");
+                    return;
+                }
+                snprintf((char *) responseData.payload, length, NORMAL_INFO_DATA,
+                         (const char *) responseData.resourceUri);
+                responseData.payloadSize = length;
+            }
         }
     }
 
@@ -1490,4 +1579,63 @@ int get_address_set(const char *pAddress, addressSet_t* outAddress)
     }
 
     return isIp;
+}
+
+void create_file(CAPayload_t bytes, size_t length)
+{
+    FILE *fp = fopen("sample_output.txt", "wb");
+    fwrite(bytes, 1, length, fp);
+    fclose(fp);
+}
+
+bool read_file(const char* name, CAPayload_t* bytes, size_t* length)
+{
+    if (NULL == name)
+    {
+        printf("parameter is null\n");
+        return false;
+    }
+
+    FILE* file = NULL;
+    CAPayload_t buffer = NULL;
+    unsigned long fileLen = 0;
+
+    // Open file
+    file = fopen(name, "rb");
+    if (!file)
+    {
+        fprintf(stderr, "Unable to open file, %s\n", name);
+        return false;
+    }
+
+    // Get file length
+    fseek(file, 0, SEEK_END);
+    fileLen = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    // Allocate memory
+    buffer = calloc(1, sizeof(uint8_t) * fileLen + 1);
+    if (!buffer)
+    {
+        fprintf(stderr, "Memory error\n");
+        fclose(file);
+        return false;
+    }
+
+    // Read file contents into buffer
+    size_t ret = fread(buffer, fileLen, 1, file);
+    if (ret < 0)
+    {
+        printf("Failed to read data from file, %s\n", name);
+        fclose(file);
+        free(buffer);
+        return false;
+    }
+
+    fclose(file);
+
+    *bytes = buffer;
+    *length = fileLen;
+
+    return true;
 }
