@@ -261,16 +261,12 @@ extern "C" {
 #define OC_MULTICAST_PORT                    5683
 #endif // GOING_AWAY
 
+/** Max Device address size. */
 #ifdef RA_ADAPTER
 #define MAX_ADDR_STR_SIZE (256)
 #else
 #define MAX_ADDR_STR_SIZE (40)
- #endif
-
-#define MAX_IDENTITY_SIZE (32)
-
-/** Max Device address size. */
-#define MAX_ADDR_STR_SIZE (40)
+#endif
 
 /** Max identity size. */
 #define MAX_IDENTITY_SIZE (32)
