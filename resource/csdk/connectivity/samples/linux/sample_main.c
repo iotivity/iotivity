@@ -600,22 +600,13 @@ void send_request_all()
     }
 
     // create remote endpoint
-    CAEndpoint_t *endpoint = NULL;
-    res = CACreateEndpoint(0, g_selected_nw_type, NULL, 0, &endpoint);
+    CAEndpoint_t *group = NULL;
+    res = CACreateEndpoint(CA_IPV4, g_selected_nw_type, NULL, 0, &group);
     if (CA_STATUS_OK != res)
     {
         printf("Create remote endpoint error, error code: %d\n", res);
         return;
     }
-
-    CAEndpoint_t *group = (CAEndpoint_t *) malloc(sizeof(CAEndpoint_t));
-    if (NULL == group)
-    {
-        printf("Memory allocation failed!\n");
-        CADestroyEndpoint(endpoint);
-        return;
-    }
-    group->adapter = endpoint->adapter;
 
     // create token
     CAToken_t token = NULL;
@@ -625,8 +616,7 @@ void send_request_all()
     if ((CA_STATUS_OK != res) || (!token))
     {
         printf("Token generate error!!\n");
-        CADestroyEndpoint(endpoint);
-        free(group);
+        CADestroyEndpoint(group);
         return;
     }
 
@@ -666,8 +656,7 @@ void send_request_all()
     }
 
     // destroy remote endpoint
-    CADestroyEndpoint(endpoint);
-    free(group);
+    CADestroyEndpoint(group);
 
     printf("=============================================\n");
 }
@@ -1412,7 +1401,7 @@ void parsing_coap_uri(const char* uri, addressSet_t* address, CATransportFlags_t
     {
         printf("uri has '%s' prefix\n", COAP_PREFIX);
         startIndex = COAP_PREFIX_LEN;
-        *flags = CA_DEFAULT_FLAGS;
+        *flags = CA_IPV4;
     }
 
     // #2. copy uri for parse

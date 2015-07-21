@@ -395,7 +395,7 @@ Java_org_iotivity_ca_service_RMInterface_RMSendReqestToAll(JNIEnv *env, jobject 
 
     // create remote endpoint
     CAEndpoint_t *endpoint = NULL;
-    res = CACreateEndpoint(CA_DEFAULT_FLAGS, g_selectedNwType, NULL, 0, &endpoint);
+    res = CACreateEndpoint(CA_IPV4, g_selectedNwType, NULL, 0, &endpoint);
 
     if (CA_STATUS_OK != res)
     {
@@ -1299,7 +1299,7 @@ void parsing_coap_uri(const char* uri, addressSet_t* address, CATransportFlags_t
     {
         LOGI("uri has '%s' prefix", COAP_PREFIX);
         startIndex = COAP_PREFIX_LEN;
-        *flags = CA_DEFAULT_FLAGS;
+        *flags = CA_IPV4;
     }
 
     // #2. copy uri for parse
