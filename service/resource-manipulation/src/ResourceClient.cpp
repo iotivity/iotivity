@@ -242,6 +242,7 @@ namespace OIC
             catch (std::exception &exception)
             {
                 OC_LOG(DEBUG, CLIENT_W_TAG, " RemoteResourceObject::getState InvalidParameterException");
+                throw BadRequestException { "[getState] Get Resource Source State from Broker Error " };
             }
         }
 
@@ -335,6 +336,7 @@ namespace OIC
             {
                 OC_LOG(DEBUG, CLIENT_W_TAG,
                        "RemoteResourceObject::getResourceCacheState InvalidParameterException");
+                throw BadRequestException { "[getResourceCacheState] Caching not started" };
             }
         }
 
