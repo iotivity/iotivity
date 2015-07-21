@@ -190,7 +190,7 @@ typedef struct resourceinterface_t {
 typedef struct OCResource {
 
     /** Points to next resource in list.*/
-    struct rsrc_t *next;
+    struct OCResource *next;
 
     /** Relative path on the device; will be combined with base url to create fully qualified path.*/
     char *uri;
@@ -207,7 +207,7 @@ typedef struct OCResource {
     /** Array of pointers to resources; can be used to represent a container of resources.
      * (i.e. hierarchies of resources) or for reference resources (i.e. for a resource collection).*/
 
-    struct rsrc_t *rsrcResources[MAX_CONTAINED_RESOURCES];
+    struct OCResource *rsrcResources[MAX_CONTAINED_RESOURCES];
 
     /** Pointer to function that handles the entity bound to the resource.
      *  This handler has to be explicitly defined by the programmer.*/
