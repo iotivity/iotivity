@@ -49,8 +49,7 @@ if target_os == 'android':
     plugins_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
     plugins_env.AppendUnique(LIBS = ['gnustl_shared'])
 
-plugins_env.AppendUnique(LIBS = [File(env.get('BUILD_DIR') + '/libmosquitto.a'),
-        'mosquitto', 'ssl', 'rt'])
+plugins_env.PrependUnique(LIBS = ['mosquitto', 'ssl', 'crypto', 'rt', 'oc'])
 
 
 ######################################################################
