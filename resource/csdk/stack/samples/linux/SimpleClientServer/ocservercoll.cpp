@@ -103,6 +103,57 @@ PrintReceivedMsgInfo(OCEntityHandlerFlag flag, OCEntityHandlerRequest * ehReques
             typeOfMethod);
 }
 
+//The only case when this entity handler is for a non-existing resource.
+OCEntityHandlerResult
+OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
+        OCEntityHandlerRequest *entityHandlerRequest, char* uri, void* callbackParam)
+{
+    OC_LOG_V(INFO, TAG, "Inside device default entity handler - flags: 0x%x, uri: %s", flag, uri);
+
+    OCEntityHandlerResult ehResult = OC_EH_OK;
+    OCEntityHandlerResponse response;
+
+    if (!entityHandlerRequest)
+    {
+        OC_LOG(ERROR, TAG, "Invalid request pointer");
+        return OC_EH_ERROR;
+    }
+
+    if (entityHandlerRequest->resource == NULL)
+    {
+        OC_LOG(INFO, TAG, "Received request from client to a non-existing resource");
+        ehResult = OC_EH_RESOURCE_NOT_FOUND;
+    }
+    else
+    {
+        OC_LOG_V(INFO, TAG, "Device Handler: Received unsupported request from client %d",
+                        entityHandlerRequest->method);
+        ehResult = OC_EH_ERROR;
+    }
+
+    if (!((ehResult == OC_EH_ERROR) || (ehResult == OC_EH_FORBIDDEN)))
+    {
+        // Format the response.  Note this requires some info about the request
+        response.requestHandle = entityHandlerRequest->requestHandle;
+        response.resourceHandle = entityHandlerRequest->resource;
+        response.ehResult = ehResult;
+        response.payload = nullptr;
+        response.numSendVendorSpecificHeaderOptions = 0;
+        memset(response.sendVendorSpecificHeaderOptions,
+                0, sizeof response.sendVendorSpecificHeaderOptions);
+        // Indicate that response is NOT in a persistent buffer
+        response.persistentBufferFlag = 0;
+
+        // Send the response
+        if (OCDoResponse(&response) != OC_STACK_OK)
+        {
+            OC_LOG(ERROR, TAG, "Error sending response");
+            ehResult = OC_EH_ERROR;
+        }
+    }
+    return ehResult;
+}
+
 OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
                                             OCEntityHandlerRequest * ehRequest,
                                             void* callback)
@@ -455,6 +506,8 @@ int main(int argc, char* argv[])
         OC_LOG(ERROR, TAG, "OCStack init error");
         return 0;
     }
+
+    OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandlerCb, NULL);
 
     /*
      * Declare and create the example resource: light
