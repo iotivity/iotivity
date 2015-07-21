@@ -152,9 +152,9 @@ if not conf2.CheckLib('curl'):
 *********************************** Error *************************************
 * Cannot build hue sample. Please install libcurl.
 * Example (Ubuntu): 
-*	sudo apt get install libcurl4-openssl-dev
+*	sudo apt-get install libcurl4-openssl-dev
 *	sudo ldconfig
-* Hint: check with pkg-config --libc libcurl and clear scons cache.
+* Hint: check with pkg-config --libs libcurl and clear scons cache.
 * Skipping hue sample build.
 *******************************************************************************	
 	'''
