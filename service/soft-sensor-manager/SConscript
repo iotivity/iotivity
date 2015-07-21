@@ -160,7 +160,7 @@ static_libssmcore = ssmcore_env.StaticLibrary(
 
 ssmcore_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 ssmcore_env.AppendUnique(LIBS = ['oc', 'octbstack', 'oc_logger',
-            'connectivity_abstraction', 'coap'])
+            'connectivity_abstraction', 'coap', 'dl'])
 
 shared_libssmcore = ssmcore_env.SharedLibrary(
 		target = 'SSMCore',
