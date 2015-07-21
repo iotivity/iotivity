@@ -120,14 +120,14 @@ TEST(ResourceClientTest, testSetRemoteAttributesPass)
     destroyResource();
 }
 
-//Check value of isWatching
-TEST(ResourceClientTest, testIsWatching)
+//Check value of isMonitoring
+TEST(ResourceClientTest, testIsMonitoring)
 {
     createResource();
     manager->DiscoveryManager::discoverResource("", uri, CT_DEFAULT, &onResourceDiscoveredCallback);
     sleep(1);
     destroyResource();
-    EXPECT_FALSE(object->isWatching());
+    EXPECT_FALSE(object->isMonitoring());
 }
 
 //Check value of isCaching
@@ -145,34 +145,34 @@ TEST(ResourceClientTest, testIsObservable)
     EXPECT_TRUE(object->isObservable());
 }
 
-//Check value of startWatching for NULL callback
-TEST(ResourceClientTest, testStartWatchingFail)
+//Check value of startMonitoring for NULL callback
+TEST(ResourceClientTest, testStartMonitoringFail)
 {
     createResource();
-    object->m_watchingFlag = false;
+    object->m_monitoringFlag = false;
     object->startMonitoring(NULL);
-    EXPECT_TRUE(object->m_watchingFlag);
+    EXPECT_TRUE(object->m_monitoringFlag);
     object->stopMonitoring();
     destroyResource();
 }
 
-//Check value of startWatching for non NULL callback
-TEST(ResourceClientTest, testStartWatchingPass)
+//Check value of startMonitoring for non NULL callback
+TEST(ResourceClientTest, testStartMonitoringPass)
 {
     createResource();
     object->startMonitoring(&onResourceStateChanged);
-    EXPECT_TRUE(object->m_watchingFlag);
+    EXPECT_TRUE(object->m_monitoringFlag);
     object->stopMonitoring();
     destroyResource();
 }
 
-//Stop watching when watching is true
-TEST(ResourceClientTest, testStopWatching)
+//Stop Monitoring when Monitoring is true
+TEST(ResourceClientTest, testStopMonitoring)
 {
     createResource();
     object->startMonitoring(&onResourceStateChanged);
     object->stopMonitoring();
-    EXPECT_FALSE(object->m_watchingFlag);
+    EXPECT_FALSE(object->m_monitoringFlag);
     object->startMonitoring(&onResourceStateChanged);
     destroyResource();
 }
@@ -182,7 +182,7 @@ TEST(ResourceClientTest, testGetStatePass)
 {
     createResource();
     ResourceState result = object->getState();
-    EXPECT_TRUE(result >= ResourceState::NOT_WATCHING && result <= ResourceState::DESTROYED);
+    EXPECT_TRUE(result >= ResourceState::NOT_MONITORING && result <= ResourceState::DESTROYED);
     destroyResource();
 }
 
