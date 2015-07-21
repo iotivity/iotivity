@@ -33,7 +33,7 @@
  */
 inline static int bits_setb(uint8_t *vec, size_t size, uint8_t bit)
 {
-    if (size <= (bit >> 3))
+    if (size <= (size_t)(bit >> 3))
         return -1;
 
     *(vec + (bit >> 3)) |= (uint8_t)(1 << (bit & 0x07));
@@ -53,7 +53,7 @@ inline static int bits_setb(uint8_t *vec, size_t size, uint8_t bit)
  */
 inline static int bits_clrb(uint8_t *vec, size_t size, uint8_t bit)
 {
-    if (size <= (bit >> 3))
+    if (size <= (size_t)(bit >> 3))
         return -1;
 
     *(vec + (bit >> 3)) &= (uint8_t)(~(1 << (bit & 0x07)));
@@ -72,7 +72,7 @@ inline static int bits_clrb(uint8_t *vec, size_t size, uint8_t bit)
  */
 inline static int bits_getb(const uint8_t *vec, size_t size, uint8_t bit)
 {
-    if (size <= (bit >> 3))
+    if (size <= (size_t)(bit >> 3))
         return -1;
 
     return (*(vec + (bit >> 3)) & (1 << (bit & 0x07))) != 0;

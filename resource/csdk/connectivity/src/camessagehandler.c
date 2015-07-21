@@ -70,7 +70,9 @@ static void CAErrorHandler(const CAEndpoint_t *endpoint,
 static CAData_t* CAGenerateHandlerData(const CAEndpoint_t *endpoint, const void *data,
                                        CADataType_t dataType);
 
+#ifdef SINGLE_THREAD
 static void CAProcessReceivedData(CAData_t *data);
+#endif
 static void CADataDestroyer(void *data, uint32_t size);
 static void CALogPayloadInfo(CAInfo_t *info);
 static bool CADropSecondRequest(const CAEndpoint_t *endpoint, uint16_t messageId);
@@ -298,6 +300,7 @@ static void CADataDestroyer(void *data, uint32_t size)
     OIC_LOG(DEBUG, TAG, "CADataDestroyer OUT");
 }
 
+#ifdef SINGLE_THREAD
 static void CAProcessReceivedData(CAData_t *data)
 {
     OIC_LOG(DEBUG, TAG, "CAProcessReceivedData IN");
@@ -330,13 +333,11 @@ static void CAProcessReceivedData(CAData_t *data)
         g_errorHandler(rep, data->errorInfo);
     }
 
-
-#ifdef SINGLE_THREAD
     CADataDestroyer(data, sizeof(CAData_t));
-#endif
 
     OIC_LOG(DEBUG, TAG, "CAProcessReceivedData OUT");
 }
+#endif
 
 #ifndef SINGLE_THREAD
 

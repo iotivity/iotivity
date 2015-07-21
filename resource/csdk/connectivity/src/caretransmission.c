@@ -28,7 +28,6 @@
 // For details on compatibility and glibc support,
 // Refer http://www.gnu.org/software/libc/manual/html_node/BSD-Random.html
 #define _DEFAULT_SOURCE
-#define _BSD_SOURCE
 
 // Defining _POSIX_C_SOURCE macro with 199309L (or greater) as value
 // causes header files to expose definitions

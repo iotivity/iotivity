@@ -28,7 +28,6 @@
 // For details on compatibility and glibc support,
 // Refer http://www.gnu.org/software/libc/manual/html_node/BSD-Random.html
 #define _DEFAULT_SOURCE
-#define _BSD_SOURCE
 
 #include <stdio.h>
 #include <stdlib.h>

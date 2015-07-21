@@ -546,11 +546,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
                             , CA_ADAPTER_REMOTE_ACCESS
                             #endif
                         };
-    const char * connTypes[] = {"ip" , "ble",  "edr"
-                                #ifdef RA_ADAPTER
-                                , "ra"
-                                #endif
-                            };
+
     int size = sizeof(CAConnTypes)/ sizeof(CATransportAdapter_t);
 
     CATransportAdapter_t adapter = responseEndpoint.adapter;

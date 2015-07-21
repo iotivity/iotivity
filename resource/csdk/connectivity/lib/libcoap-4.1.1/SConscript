@@ -28,7 +28,7 @@ if target_os == 'arduino':
 		])
 
 if target_os not in ['arduino', 'windows', 'winrt']:
-	libcoap_env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '_BSD_SOURCE'])
+	libcoap_env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '_DEFAULT_SOURCE'])
 	libcoap_env.AppendUnique(CFLAGS = ['-std=gnu99','-fPIC'])
 
 if target_os not in ['windows', 'winrt']:
