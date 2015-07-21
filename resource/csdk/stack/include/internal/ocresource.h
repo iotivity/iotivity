@@ -187,7 +187,7 @@ typedef struct resourceinterface_t {
 /**
  * Data structure for holding data type and definition for OIC resource.
  */
-typedef struct rsrc_t {
+typedef struct OCResource {
 
     /** Points to next resource in list.*/
     struct rsrc_t *next;

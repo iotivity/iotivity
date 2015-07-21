@@ -31,7 +31,7 @@ extern "C"
 {
 #endif
 
-typedef struct rsrc_t OCResource;
+typedef struct OCResource OCResource;
 
 #ifdef TB_LOG
     #define OC_LOG_PAYLOAD(level, tag, payload) OCPayloadLog((level),(tag),(payload))
