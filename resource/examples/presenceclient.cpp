@@ -63,9 +63,8 @@ void printUsage()
               << std::endl;
     std::cout << "-t 6 : Discover Resources and Initiate Multicast Presence with two Filters"
             << std::endl;
-    std::cout<<"ConnectivityType: Default IPv4" << std::endl;
-    std::cout << "-c 0 : Send message with IPv4" << std::endl;
-    std::cout << "-c 1 : Send message with IPv6 (Currently Not Supported)" << std::endl;
+    std::cout<<"ConnectivityType: Default IP" << std::endl;
+    std::cout << "-c 0 : Send message with IP" << std::endl;
 }
 
 // Callback to presence
@@ -221,16 +220,8 @@ int main(int argc, char* argv[]) {
                     {
                         if(optionSelected == 0)
                         {
-                            std::cout << "Using IPv4."<< std::endl;
-                            connectivityType = CT_IP_USE_V4;
-                        }
-                        else if(optionSelected == 1)
-                        {
-                            std::cout << "IPv6 is currently not supported."<< std::endl;
-                            printUsage();
-                            return -1;
-                            //TODO: printUsage to be removed when IPv6 is available.
-                            //connectivityType = CT_IP_USE_V6;
+                            std::cout << "Using IP."<< std::endl;
+                            connectivityType = CT_ADAPTER_IP;
                         }
                         else
                         {
