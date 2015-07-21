@@ -18,8 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include <gtest/gtest.h>
-#include <HippoMocks/hippomocks.h>
+#include <UnitTestHelper.h>
 
 #include <RequestHandler.h>
 
@@ -27,7 +26,6 @@
 
 using namespace std;
 
-using namespace testing;
 using namespace OIC::Service;
 
 constexpr char EXISTING[]{ "ext" };
@@ -38,16 +36,16 @@ constexpr int NEW_VALUE{ 1 };
 typedef OCStackResult (*RegisterResource)(OCResourceHandle&, std::string&,
         const std::string&, const std::string&, OC::EntityHandler, uint8_t);
 
-class RequestHandlerTest: public Test
+class RequestHandlerTest: public TestWithMock
 {
 public:
     ResourceObject::Ptr server;
 
-    MockRepository mocks;
-
 protected:
     void SetUp()
     {
+        TestWithMock::SetUp();
+
         mocks.OnCallFuncOverload(static_cast<RegisterResource>(OC::OCPlatform::registerResource))
                 .Return(OC_STACK_OK);
 

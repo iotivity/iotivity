@@ -18,8 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include <gtest/gtest.h>
-#include <HippoMocks/hippomocks.h>
+#include <UnitTestHelper.h>
 
 #include <ResourceObject.h>
 
@@ -27,8 +26,6 @@
 
 using namespace std;
 using namespace std::placeholders;
-
-using namespace testing;
 
 using namespace OIC::Service;
 using namespace OC;
@@ -48,14 +45,13 @@ TEST(ResourceObjectBuilderCreateTest, ThrowIfUriIsInvalid)
     ASSERT_THROW(ResourceObject::Builder("", "", "").build(), PlatformException);
 }
 
-class ResourceObjectBuilderTest: public Test
+class ResourceObjectBuilderTest: public TestWithMock
 {
-public:
-    MockRepository mocks;
-
 protected:
     void SetUp()
     {
+        TestWithMock::SetUp();
+
         mocks.OnCallFuncOverload(static_cast< registerResource >(OCPlatform::registerResource))
                 .Return(OC_STACK_OK);
     }
@@ -91,15 +87,16 @@ TEST_F(ResourceObjectBuilderTest, ResourceServerHasAttrsSetByBuilder)
 }
 
 
-class ResourceObjectTest: public Test
+class ResourceObjectTest: public TestWithMock
 {
 public:
-    MockRepository mocks;
     ResourceObject::Ptr server;
 
 protected:
     void SetUp()
     {
+        TestWithMock::SetUp();
+
         initMocks();
 
         server = ResourceObject::Builder(RESOURCE_URI, RESOURCE_TYPE, "").build();

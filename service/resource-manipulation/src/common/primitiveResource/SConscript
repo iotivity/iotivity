@@ -77,7 +77,8 @@ service_common_test_env = service_common_env.Clone();
 service_common_test_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 service_common_test_env.PrependUnique(CPPPATH = [
     env.get('SRC_DIR')+'/extlibs/hippomocks-master',
-    gtest_dir + '/include'
+    gtest_dir + '/include',
+    '../utils/include'
     ])
 
 gtest = File(gtest_dir + '/lib/.libs/libgtest.a')
@@ -90,13 +91,13 @@ service_common_test_env.PrependUnique(LIBS = [
     'connectivity_abstraction',
     'coap',
     'service_common',
-    'pthread',
     gtest,
-    gtest_main
+    gtest_main,
+    'pthread'
     ])
 
-#service_common_test_src = env.Glob('unittests/*.cpp')
+service_common_test_src = env.Glob('unittests/*.cpp')
 
-#service_common_test = service_common_test_env.Program('service_common_test', service_common_test_src)
-#Alias("service_common_test", service_common_test)
-#env.AppendTarget('service_common_test')
+service_common_test = service_common_test_env.Program('service_common_test', service_common_test_src)
+Alias("service_common_test", service_common_test)
+env.AppendTarget('service_common_test')

@@ -18,8 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include <gtest/gtest.h>
-#include <HippoMocks/hippomocks.h>
+#include <UnitTestHelper.h>
 
 #include <RCSResponse.h>
 #include <ResourceObject.h>
@@ -30,8 +29,6 @@
 #include <OCPlatform.h>
 
 using namespace std;
-
-using namespace testing;
 
 using namespace OIC::Service;
 using namespace OC;
@@ -56,11 +53,8 @@ void EXPECT_RESPONSE(shared_ptr< OCResourceResponse > ocResponse,
 }
 
 
-class RCSResponseTest: public Test
+class RCSResponseTest: public TestWithMock
 {
-public:
-    MockRepository mocks;
-
 public:
     template< typename T >
     shared_ptr< OCResourceResponse > buildResponse(const T& response)
@@ -74,6 +68,8 @@ public:
 protected:
     void SetUp()
     {
+        TestWithMock::SetUp();
+
         mocks.OnCallFuncOverload(static_cast< registerResourceSig >(OCPlatform::registerResource))
                 .Return(OC_STACK_OK);
 

@@ -18,8 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include <gtest/gtest.h>
-#include <HippoMocks/hippomocks.h>
+#include <UnitTestHelper.h>
 
 #include <PrimitiveResourceImpl.h>
 #include <AssertUtils.h>
@@ -27,7 +26,6 @@
 #include <OCResource.h>
 #include <OCPlatform.h>
 
-using namespace testing;
 using namespace OIC::Service;
 
 const std::string KEY{ "key" };
@@ -56,15 +54,16 @@ public:
     virtual bool isObservable() const = 0;
 };
 
-class PrimitiveResourceTest: public Test
+class PrimitiveResourceTest: public TestWithMock
 {
 public:
-    MockRepository mocks;
     PrimitiveResource::Ptr resource;
     FakeOCResource* fakeResource;
 
 protected:
     void SetUp() {
+        TestWithMock::SetUp();
+
         fakeResource = mocks.Mock< FakeOCResource >();
 
         resource.reset(new PrimitiveResourceImpl< FakeOCResource >{
@@ -174,18 +173,14 @@ TEST_F(PrimitiveResourceTest, ResponseStatementHasSameValuesWithOCRepresentation
 }
 
 
-class DiscoverResourceTest: public Test
+class DiscoverResourceTest: public TestWithMock
 {
 public:
-    MockRepository mocks;
-
     typedef OCStackResult (*FindResource)(const std::string&, const std::string&,
             OCConnectivityType, OC::FindCallback);
 
-    static void discovered(std::shared_ptr< PrimitiveResource >)
-    {
-    }
-
+public:
+    static void discovered(std::shared_ptr< PrimitiveResource >) {}
 };
 
 TEST_F(DiscoverResourceTest, CallbackIsInvokedWhenResourceIsDiscovered)

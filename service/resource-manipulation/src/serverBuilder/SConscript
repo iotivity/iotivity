@@ -80,7 +80,8 @@ server_builder_test_env = server_builder_env.Clone();
 server_builder_test_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 server_builder_test_env.AppendUnique(CPPPATH = [
     env.get('SRC_DIR')+'/extlibs/hippomocks-master',
-    gtest_dir + '/include'
+    gtest_dir + '/include',
+    '../common/utils/include'
     ])
 
 gtest = File(gtest_dir + '/lib/.libs/libgtest.a')
@@ -89,7 +90,6 @@ gtest_main = File(gtest_dir + '/lib/.libs/libgtest_main.a')
 server_builder_test_env.PrependUnique(LIBS = [
     'server_builder',
     'service_common',
-    'pthread',
     'oc',
     'octbstack',
     'oc_logger',
@@ -97,10 +97,11 @@ server_builder_test_env.PrependUnique(LIBS = [
     'coap',
     gtest,
     gtest_main,
+    'pthread',
     ])
 
-#server_builder_test_src = env.Glob('unittests/*.cpp')
+server_builder_test_src = env.Glob('unittests/*.cpp')
 
-#server_builder_test = server_builder_test_env.Program('server_builder_test', server_builder_test_src)
-#Alias("server_builder_test", server_builder_test)
-#env.AppendTarget('server_builder_test')
+server_builder_test = server_builder_test_env.Program('server_builder_test', server_builder_test_src)
+Alias("server_builder_test", server_builder_test)
+env.AppendTarget('server_builder_test')
