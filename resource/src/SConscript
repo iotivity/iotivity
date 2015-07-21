@@ -40,18 +40,20 @@ oclib_env.AppendUnique(CPPPATH = [
 		'../csdk/connectivity/lib/libcoap-4.1.1'
 		])
 
+oclib_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+
+oclib_env.AppendUnique(LIBS = ['octbstack', 'oc_logger'])
+
 target_os = env.get('TARGET_OS')
+if target_os == 'linux':
+	oclib_env.AppendUnique(LIBS = ['pthread'])
+
 if target_os not in ['windows', 'winrt']:
 	oclib_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-fPIC'])
 
 if target_os == 'android':
 	oclib_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-	oclib_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-	oclib_env.AppendUnique(LIBS = ['octbstack', 'oc_logger', 'boost_thread', 'gnustl_shared', 'log'])
-
-if target_os in ['darwin', 'ios']:
-	oclib_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-	oclib_env.AppendUnique(LIBS = ['octbstack', 'oc_logger'])
+	oclib_env.AppendUnique(LIBS = ['boost_thread', 'gnustl_shared', 'log'])
 
 ######################################################################
 # Source files and Targets
