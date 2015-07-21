@@ -41,7 +41,7 @@ samples_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 if target_os in ['darwin', 'ios']:
 	samples_env.PrependUnique(LIBS = ['m','octbstack', 'ocsrm', 'connectivity_abstraction','coap' ])
 elif target_os not in ['arduino']:
-	samples_env.PrependUnique(LIBS = ['m', 'octbstack', 'ocsrm', 'oc_logger', 'connectivity_abstraction', 'coap'])
+	samples_env.PrependUnique(LIBS = ['m', 'octbstack', 'ocsrm', 'connectivity_abstraction', 'coap'])
 	samples_env.AppendUnique(LIBS = ['rt'])
 
 if env.get('SECURED') == '1':
