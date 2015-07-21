@@ -39,6 +39,7 @@ print " sample src %s" % sample_src
 app_env.AppendUnique(LIBPATH = [app_env.get('BUILD_DIR'), '.',])
 app_env.AppendUnique(CPPPATH = ['lib/android'])
 app_env.PrependUnique(LIBS = ['connectivity_abstraction'])
+app_env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
 
 
 if secured == '1':

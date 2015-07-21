@@ -40,6 +40,9 @@ if target_os not in ['windows', 'winrt']:
     plugins_env.PrependUnique(CCFLAGS = ['-fPIC'])
     plugins_env.AppendUnique(LINKFLAGS = ['-fPIC'])
 
+if target_os not in ['darwin', 'ios', 'windows', 'winrt']:
+    plugins_env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
+
 #plugins_env.AppendUnique(LIBS=['libconnectivity-abstraction'])
 
     if target_os not in ['arduino', 'android']:

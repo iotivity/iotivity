@@ -51,6 +51,9 @@ if target_os == 'linux':
 if target_os not in ['windows', 'winrt']:
 	oclib_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-fPIC'])
 
+if target_os not in ['darwin', 'ios', 'windows', 'winrt']:
+	oclib_env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
+
 if target_os == 'android':
 	oclib_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
 	oclib_env.AppendUnique(LIBS = ['boost_thread', 'gnustl_shared', 'log'])

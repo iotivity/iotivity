@@ -40,6 +40,9 @@ if target_os not in ['windows', 'winrt']:
     if target_os != 'android':
         things_manager_env.AppendUnique(CXXFLAGS = ['-pthread'])
 
+if target_os not in ['darwin', 'ios', 'windows', 'winrt']:
+    things_manager_env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
+
 if target_os == 'android':
     things_manager_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
     things_manager_env.PrependUnique(LIBS = ['oc', 'octbstack', 'gnustl_shared'])

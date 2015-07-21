@@ -138,6 +138,9 @@ except KeyError:
 test_bundle_env = container_gtest_env.Clone()
 test_bundle_env.AppendUnique(CCFLAGS = ['-fPIC'])
 
+if target_os not in ['darwin', 'ios', 'windows', 'winrt']:
+    test_bundle_env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
+
 TEST_BUNDLE_DIR = 'TestBundle/'
 test_bundle_env.AppendUnique(CPPPATH = [
 		TEST_BUNDLE_DIR + 'include',

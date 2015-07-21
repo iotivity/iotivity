@@ -61,6 +61,10 @@ if target_os == 'android':
 pmimpl_env = plugin_manager_env.Clone()
 pmimpl_env.PrependUnique(CCFLAGS = ['-fPIC'])
 pmimpl_env.PrependUnique(LIBS = File(env.get('BUILD_DIR') + '/libcpluff.a'))
+
+if target_os not in ['darwin', 'ios', 'windows', 'winrt']:
+	pmimpl_env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
+
 pmimpl = pmimpl_env.SharedLibrary('pmimpl', pmimpl_src)
 
 plugin_manager_env.InstallTarget([ppm, pmimpl], 'libppm')

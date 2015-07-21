@@ -27,6 +27,9 @@ env.AppendUnique(CPPPATH = [ os.path.join(root_dir, 'inc'),
 if ca_os not in ['arduino', 'windows', 'winrt']:
 	env.AppendUnique(CPPDEFINES = ['WITH_POSIX'])
 
+if ca_os not in ['darwin', 'ios', 'windows', 'winrt']:
+	env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
+
 if ca_os in ['darwin','ios']:
 	env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
 
