@@ -106,7 +106,7 @@ namespace OIC
                 map< std::string, BundleResource * > m_mapResources; //<uri, resourcePtr>
                 map< std::string, list<string> > m_mapBundleResources; //<bundleID, vector<uri>>
                 string m_configFile;
-                Configuration *m_config = NULL;
+                Configuration *m_config;
 
 
                 void activateSoBundle(string bundleId);
