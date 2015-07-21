@@ -125,7 +125,7 @@ namespace OIC
 
         bool ResourcePresence::isEmptyRequester() const
         {
-            return requesterList->empty();
+            return (requesterList!=nullptr)?requesterList->empty():true;
         }
 
         int ResourcePresence::requesterListSize() const {
