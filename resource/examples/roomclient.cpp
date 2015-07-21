@@ -45,8 +45,7 @@ static void printUsage()
 {
     std::cout << "Usage roomclient <0|1>" << std::endl;
     std::cout<<"connectivityType: Default" << std::endl;
-    std::cout << "connectivityType 0: IPv4" << std::endl;
-    std::cout << "connectivityType 0: IPv46 (Currently Not Supported)" << std::endl;
+    std::cout << "connectivityType 0: IP" << std::endl;
 }
 // Forward declaration
 void putRoomRepresentation(std::shared_ptr<OCResource> resource);
@@ -242,16 +241,8 @@ int main(int argc, char* argv[]) {
             {
                 if(optionSelected == 0)
                 {
-                    std::cout << "Using IPv4."<< std::endl;
-                    connectivityType = CT_IP_USE_V4;
-                }
-                else if(optionSelected == 1)
-                {
-                    std::cout << "IPv6 is currently not supported."<< std::endl;
-                    printUsage();
-                    return -1;
-                    //TODO: printUsage to be removed when IPv6 is available.
-                    //connectivityType = CT_IP_USE_V6;
+                    std::cout << "Using IP."<< std::endl;
+                    connectivityType = CT_ADAPTER_IP;
                 }
                 else
                 {
