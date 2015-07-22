@@ -19,7 +19,7 @@
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 ##
-# ResourceContainer Unit Test build script
+# ResourceContainer (rcs_container) Unit Test build script
 ##
 import os
 Import('env')
@@ -121,9 +121,7 @@ except KeyError:
 
 container_gtest_env.AppendUnique(CCFLAGS = ['-Wnoexcept'])	
 
-
-
-container_gtest_env.PrependUnique(LIBS = ['ResContainerLib', 'server_builder', 'service_common', 'oc','octbstack', 'oc_logger', 'oc_logger_core', 'connectivity_abstraction', gtest, gtest_main])
+container_gtest_env.PrependUnique(LIBS = ['rcs_container', 'rcs_server', 'rcs_common', 'oc','octbstack', 'oc_logger', 'oc_logger_core', 'connectivity_abstraction', gtest, gtest_main])
 
 container_gtest_env.AppendUnique(LIBS = ['dl'])
 

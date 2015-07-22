@@ -19,7 +19,7 @@
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 ##
-# server_builder project build script
+# rcs_server (Server Builder) project build script
 ##
 import os
 Import('env')
@@ -67,10 +67,10 @@ if not release:
 ######################################################################
 server_builder_src = env.Glob('src/*.cpp')
 
-server_builder_static = server_builder_env.StaticLibrary('server_builder', server_builder_src)
-server_builder_shared = server_builder_env.SharedLibrary('server_builder', server_builder_src)
+server_builder_static = server_builder_env.StaticLibrary('rcs_server', server_builder_src)
+server_builder_shared = server_builder_env.SharedLibrary('rcs_server', server_builder_src)
 
-server_builder_env.InstallTarget([server_builder_static, server_builder_shared], 'server_builder')
+server_builder_env.InstallTarget([server_builder_static, server_builder_shared], 'rcs_server')
 
 ######################################################################
 # Build Test
@@ -88,8 +88,9 @@ gtest = File(gtest_dir + '/lib/.libs/libgtest.a')
 gtest_main = File(gtest_dir + '/lib/.libs/libgtest_main.a')
 
 server_builder_test_env.PrependUnique(LIBS = [
-    'server_builder',
-    'service_common',
+    'rcs_server',
+    'rcs_common',
+    'pthread',
     'oc',
     'octbstack',
     'oc_logger',

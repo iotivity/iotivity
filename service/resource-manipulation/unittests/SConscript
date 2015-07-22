@@ -79,7 +79,7 @@ if target_os not in ['windows', 'winrt']:
 
 ResourceClient_gtest_env.PrependUnique(CPPPATH = [env.get('SRC_DIR')+'/extlibs/hippomocks-master/HippoMocks', gtest_dir + '/include'])
 ResourceClient_gtest_env.AppendUnique(LIBPATH = ['/usr/lib/jvm/jdk1.8.0_40/jre/lib/amd64/server/'])
-ResourceClient_gtest_env.PrependUnique(LIBS = ['ResourceClient','ResourceCache', 'ResourceBroker', 'ExpiryTimer','server_builder', 'service_common', 'oc','octbstack', 'oc_logger', 'oc_logger_core', 'connectivity_abstraction', gtest, gtest_main])
+ResourceClient_gtest_env.PrependUnique(LIBS = ['rcs_client','rcs_server', 'rcs_common', 'oc','octbstack', 'oc_logger', 'oc_logger_core', 'connectivity_abstraction', gtest, gtest_main])
 ResourceClient_gtest_env.AppendUnique(LIBS = ['dl'])	
 
 ######################################################################
