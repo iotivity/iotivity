@@ -26,7 +26,9 @@
 #include <vector>
 
 #include <OCResource.h>
+
 #include <ResponseStatement.h>
+#include <RCSAddress.h>
 
 namespace OIC
 {
@@ -85,6 +87,9 @@ namespace OIC
 
         void discoverResource(const std::string& host, const std::string& resourceURI,
                 OCConnectivityType, DiscoverCallback);
+
+        void discoverResource(const RCSAddress& address, const std::string& resourceURI,
+                DiscoverCallback);
 
     }
 }
