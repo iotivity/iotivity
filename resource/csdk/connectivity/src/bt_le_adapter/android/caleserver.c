@@ -879,7 +879,7 @@ jobject CALEServerCreateGattService(JNIEnv *env)
 
     jfieldID jni_fid_readProperties = (*env)->GetStaticFieldID(env,
                                                                jni_cid_bluetoothGattCharacteristic,
-                                                               "PROPERTY_READ", "I");
+                                                               "PROPERTY_NOTIFY", "I");
     if (!jni_fid_readProperties)
     {
         OIC_LOG(ERROR, TAG, "jni_fid_readProperties is null");
@@ -978,20 +978,18 @@ jobject CALEServerCreateGattService(JNIEnv *env)
                                                              jni_cid_bluetoothGattCharacteristic,
                                                              jni_fid_readPermissions);
 
+    jint jni_int_writePermissions = (*env)->GetStaticIntField(env,
+                                                              jni_cid_bluetoothGattCharacteristic,
+                                                              jni_fid_writePermissions);
+
     jobject jni_readCharacteristic = (*env)->NewObject(env, jni_cid_bluetoothGattCharacteristic,
                                                        jni_mid_bluetoothGattCharacteristic,
                                                        jni_obj_readUuid, jni_int_readProperties,
-                                                       jni_int_readPermissions);
+                                                       jni_int_readPermissions|
+                                                       jni_int_writePermissions);
     if (!jni_readCharacteristic)
     {
         OIC_LOG(ERROR, TAG, "jni_readCharacteristic is null");
-        return NULL;
-    }
-
-    CAResult_t res = CALEServerAddDescriptor(env, jni_readCharacteristic);
-    if (CA_STATUS_OK != res)
-    {
-        OIC_LOG(ERROR, TAG, "CALEServerAddDescriptor has failed");
         return NULL;
     }
 
@@ -1013,10 +1011,6 @@ jobject CALEServerCreateGattService(JNIEnv *env)
     jint jni_int_writeProperties = (*env)->GetStaticIntField(env,
                                                              jni_cid_bluetoothGattCharacteristic,
                                                              jni_fid_writeProperties);
-
-    jint jni_int_writePermissions = (*env)->GetStaticIntField(env,
-                                                              jni_cid_bluetoothGattCharacteristic,
-                                                              jni_fid_writePermissions);
 
     jobject jni_writeCharacteristic = (*env)->NewObject(env, jni_cid_bluetoothGattCharacteristic,
                                                         jni_mid_bluetoothGattCharacteristic,

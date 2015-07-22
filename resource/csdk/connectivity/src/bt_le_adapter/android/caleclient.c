@@ -3407,8 +3407,13 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattServicesDiscoveredCallback(JNIE
         res = CALEClientSetUUIDToDescriptor(env, gatt, jni_obj_GattCharacteristic);
         if (CA_STATUS_OK != res)
         {
-            OIC_LOG(ERROR, TAG, "CALEClientSetUUIDToDescriptor has failed");
-            goto error_exit;
+            OIC_LOG(INFO, TAG, "Descriptor of the uuid is not found");
+            CAResult_t res = CALEClientWriteCharacteristic(env, gatt);
+            if (CA_STATUS_OK != res)
+            {
+                OIC_LOG(ERROR, TAG, "CALEClientWriteCharacteristic has failed");
+                goto error_exit;
+            }
         }
 
         res = CALEClientUpdateDeviceState(address, STATE_CONNECTED, STATE_CHARACTER_SET,
