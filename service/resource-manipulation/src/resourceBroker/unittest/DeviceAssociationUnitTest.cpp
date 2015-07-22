@@ -29,6 +29,7 @@ public:
     DevicePresencePtr device;
     PrimitiveResource::Ptr pResource;
 protected:
+
     void setMockingFunc()
     {
         mocks.OnCall(pResource.get(), PrimitiveResource::requestGet);
@@ -43,13 +44,14 @@ protected:
         instance->addDevice(device);
     }
 
-    void SetUp() override {
+    void SetUp()
+    {
         instance = DeviceAssociation::getInstance();
         device = (DevicePresencePtr)new DevicePresence();
         pResource = PrimitiveResource::Ptr(mocks.Mock< PrimitiveResource >(), [](PrimitiveResource*){});
     }
 
-    void TearDown() override
+    void TearDown()
     {
         device.reset();
         pResource.reset();
@@ -64,23 +66,28 @@ protected:
 
 TEST_F(DeviceAssociationTest,findDevice_ReturnNormalValueIfNormalParam)
 {
+    SetUp();
     SetAssociationDevice();
-    //pResource->getHost()
     ASSERT_NE(nullptr,instance->findDevice(pResource->getHost()));
+    TearDown();
 
 }
 
 TEST_F(DeviceAssociationTest,addDevice_NormalHandlingIfNormalParam)
 {
+    SetUp();
     SetAssociationDevice();
     ASSERT_FALSE(instance->isEmptyDeviceList());
+    TearDown();
 
 }
 
 TEST_F(DeviceAssociationTest,removeDevice_NormalHandlingIfNormalParam)
 {
+    SetUp();
     SetAssociationDevice();
     instance->removeDevice(device);
     ASSERT_TRUE(instance->isEmptyDeviceList());
+    TearDown();
 }
 

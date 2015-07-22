@@ -25,8 +25,8 @@ class ResourcePresenceTest : public Test
 {
 public:
 
-    using GetCallback = std::function<
-                        void(const OIC::Service::HeaderOptions&, const OIC::Service::ResponseStatement&, int)>;
+    typedef std::function<void(const HeaderOptions&, const ResponseStatement&, int)> GetCallback;
+
     MockRepository mocks;
     ResourcePresence * instance;
     PrimitiveResource::Ptr pResource;
@@ -34,14 +34,16 @@ public:
     BrokerID id;
 
 protected:
-    void SetUp() override {
+
+    void SetUp()
+    {
         instance = (ResourcePresence*)new ResourcePresence();
         pResource = PrimitiveResource::Ptr(mocks.Mock< PrimitiveResource >(), [](PrimitiveResource*){});
         cb = ([](BROKER_STATE)->OCStackResult{return OC_STACK_OK;});
         id = 0;
     }
 
-    void TearDown() override
+    void TearDown()
     {
         pResource.reset();
         id = 0;
@@ -60,32 +62,31 @@ protected:
 
 };
 
-TEST_F(ResourcePresenceTest,isEmptyRequester_NormalHandling)
-{
-    ASSERT_TRUE(instance->isEmptyRequester());
-}
-
 TEST_F(ResourcePresenceTest,initializeResourcePresence_NormalhandlingIfNormalResource)
 {
+    SetUp();
     MockingFunc();
 
     instance->initializeResourcePresence(pResource);
     ASSERT_NE(nullptr,instance->getPrimitiveResource());
-
+    TearDown();
 }
 
 TEST_F(ResourcePresenceTest,addBrokerRequester_ReturnNormalValueIfNormalParams)
 {
+    SetUp();
     MockingFunc();
 
     instance->initializeResourcePresence(pResource);
     id = 1;
     instance->addBrokerRequester(id,cb);
     EXPECT_FALSE(instance->isEmptyRequester());
+    TearDown();
 }
 
 TEST_F(ResourcePresenceTest,removeBrokerRequester_NormalHandlingIfNormalId)
 {
+    SetUp();
     MockingFunc();
 
     instance->initializeResourcePresence(pResource);
@@ -96,11 +97,12 @@ TEST_F(ResourcePresenceTest,removeBrokerRequester_NormalHandlingIfNormalId)
 
     instance->removeBrokerRequester(id);
     ASSERT_EQ(1,instance->requesterListSize());
-
+    TearDown();
 }
 
 TEST_F(ResourcePresenceTest,removeAllBrokerRequester_NormalHandling)
 {
+    SetUp();
     MockingFunc();
 
     instance->initializeResourcePresence(pResource);
@@ -111,60 +113,72 @@ TEST_F(ResourcePresenceTest,removeAllBrokerRequester_NormalHandling)
 
     instance->removeAllBrokerRequester();
     ASSERT_TRUE(instance->isEmptyRequester());
+    TearDown();
 }
 
 TEST_F(ResourcePresenceTest,removeAllBrokerRequester_ErrorHandlingIfListNull)
 {
+    SetUp();
     MockingFunc();
 
     instance->initializeResourcePresence(pResource);
     instance->removeAllBrokerRequester();
+    TearDown();
 }
 
 TEST_F(ResourcePresenceTest,requestResourceState_NormalHandling)
 {
+    SetUp();
     MockingFunc();
 
     instance->initializeResourcePresence(pResource);
 
     ASSERT_NO_THROW(instance->requestResourceState());
+    TearDown();
 }
 
 TEST_F(ResourcePresenceTest,changePresenceMode_NormalHandlingIfNewModeDifferent)
 {
+    SetUp();
     MockingFunc();
 
     instance->initializeResourcePresence(pResource);
 
     instance->changePresenceMode(BROKER_MODE::DEVICE_PRESENCE_MODE);
-
+    TearDown();
 }
 
 TEST_F(ResourcePresenceTest,getResourceState_NormalHandling)
 {
+    SetUp();
     ASSERT_EQ(BROKER_STATE::REQUESTED,instance->getResourceState());
+    TearDown();
 }
 
 TEST_F(ResourcePresenceTest,changePresenceMode_NormalHandlingIfNewModeSame)
 {
+    SetUp();
     MockingFunc();
 
     instance->initializeResourcePresence(pResource);
 
     instance->changePresenceMode(BROKER_MODE::NON_PRESENCE_MODE);
-
+    TearDown();
 }
 
 TEST_F(ResourcePresenceTest,getPrimitiveResource_NormalHandling)
 {
+    SetUp();
     MockingFunc();
 
     instance->initializeResourcePresence(pResource);
     ASSERT_NE(nullptr,instance->getPrimitiveResource());
+    TearDown();
 }
 
 TEST_F(ResourcePresenceTest,getCB_NormalHandlingIfMessageOC_STACK_OK)
 {
+    SetUp();
     mocks.ExpectCall(pResource.get(), PrimitiveResource::requestGet).Do(
                 [](GetCallback callback){
 
@@ -191,5 +205,18 @@ TEST_F(ResourcePresenceTest,getCB_NormalHandlingIfMessageOC_STACK_OK)
 
     instance->initializeResourcePresence(pResource);
     sleep(3);
+    TearDown();
 }
 
+TEST_F(ResourcePresenceTest,isEmptyRequester_NormalHandling)
+{
+    SetUp();
+    MockingFunc();
+
+    instance->initializeResourcePresence(pResource);
+    id = 1;
+    instance->addBrokerRequester(id,cb);
+    instance->removeAllBrokerRequester();
+    ASSERT_TRUE(instance->isEmptyRequester());
+    TearDown();
+}

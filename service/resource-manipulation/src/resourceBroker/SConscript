@@ -110,7 +110,6 @@ broker_test_env.PrependUnique(LIBS = [
     ])
 
 broker_test_src = env.Glob('unittest/*.cpp')
-#broker_test_src = ['unittest/ResourcePresenceUnitTest.cpp']
 broker_test = broker_test_env.Program('broker_test', broker_test_src)
 Alias("broker_test", broker_test)
 env.AppendTarget('broker_test')
