@@ -54,9 +54,10 @@ void SoftSensorBundleActivator::deactivateBundle()
 {
     std::cout << "SoftSensorSampleBundle::deactivateBundle called" << std::endl;
 
-    for (unsigned int i = 0; i < m_vecResources.size(); i++)
+    std::vector<BundleResource *>::iterator itor;
+    for (itor = m_vecResources.begin(); itor != m_vecResources.end();)
     {
-        destroyResource(m_vecResources.at(i));
+        destroyResource(*itor);
     }
 }
 

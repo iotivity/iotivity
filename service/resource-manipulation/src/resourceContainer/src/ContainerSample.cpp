@@ -110,6 +110,7 @@ int main()
         cout << "\t>>> bundle Id : " << (*bundleIt)->getID().c_str() << endl;
     }
 
+#if(JAVA_SUPPORT)
     /*java bundle add test*/
     cout << "\n++++++++++++++++++++++++++++" << endl;
     cout << "+++ Test for JAVA Bundle +++" << endl;
@@ -147,6 +148,7 @@ int main()
     {
         cout << "\t>>> bundle Id : " << (*bundleIt)->getID().c_str() << endl;
     }
+#endif
 
     cout << "\nPress enter to stop container " << endl;
     getchar();

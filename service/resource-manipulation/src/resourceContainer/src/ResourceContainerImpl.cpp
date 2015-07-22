@@ -404,13 +404,6 @@ namespace OIC
                     ((BundleInfoInternal *) bundleInfo)->setActivatorName(activatorName);
                     ((BundleInfoInternal *) bundleInfo)->setLibraryPath(params["libraryPath"]);
                 }
-                if (params.find("activator") != params.end())
-                {
-                    string activatorName = params["activator"];
-                    std::replace(activatorName.begin(), activatorName.end(), '.', '/');
-                    ((BundleInfoInternal *) bundleInfo)->setActivatorName(activatorName);
-                    ((BundleInfoInternal *) bundleInfo)->setLibraryPath(params["libraryPath"]);
-                }
 
                 info_logger() << "Add Bundle:" << bundleInfo->getID().c_str() << ";"
                         << bundleInfo->getPath().c_str() << endl;

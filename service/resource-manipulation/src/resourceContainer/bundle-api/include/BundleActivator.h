@@ -69,8 +69,22 @@ namespace OIC
                 */
                 virtual void deactivateBundle();
 
+                /**
+                * Create Bundle Resource instance and register the resource in the container
+                *
+                * @param resourceInfo - information to create bundle resource
+                *
+                * @return void
+                */
                 virtual void createResource(resourceInfo resourceInfo) = 0;
 
+                /**
+                * Destroy Bundle Resource instance and register the resource in the container
+                *
+                * @param pBundleResource - bundle resource to be destroyed
+                *
+                * @return void
+                */
                 virtual void destroyResource(BundleResource *pBundleResource) = 0;
         };
     }
