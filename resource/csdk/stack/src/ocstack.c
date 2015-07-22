@@ -2199,6 +2199,7 @@ exit:
 
     // This is the owner of the payload object, so we free it
     OCPayloadDestroy(payload);
+    OICFree(requestInfo.info.payload);
     OICFree(devAddr);
     OICFree(resourceUri);
     OICFree(resourceType);
