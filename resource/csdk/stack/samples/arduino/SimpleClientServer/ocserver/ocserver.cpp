@@ -211,7 +211,7 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandle
             OC_LOG (INFO, TAG, PCF("Received OC_OBSERVE_DEREGISTER from client"));
         }
     }
-
+    OCRepPayloadDestroy(payload);
     return ehRet;
 }
 
