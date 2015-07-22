@@ -18,7 +18,7 @@ ppm_sdk = env.get('SRC_DIR') + '/service/protocol-plugin/plugin-manager'
 ######################################################################
 ppm_jni_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-DLINUX', '-DNDEBUG'])
 ppm_jni_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-ppm_jni_env.PrependUnique(LIBS = ['pmimpl', 'ppm', 'expat', 'cpluff', 'boost_system', 'boost_thread', 'gnustl_shared', 'log'])
+ppm_jni_env.PrependUnique(LIBS = ['pmimpl', 'ppm', 'expat', 'cpluff', 'gnustl_shared', 'log'])
 
 ppm_jni_env.AppendUnique(CPPPATH = [ppm_sdk+'/src'])
 ppm_jni_env.AppendUnique(CPPPATH = [ppm_sdk+'/../lib/cpluff/libcpluff'])

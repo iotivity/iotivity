@@ -34,8 +34,6 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <boost/thread.hpp>
-#include <boost/bind.hpp>
 #include <internal.h>
 
 #include "Plugin.h"
@@ -196,7 +194,6 @@ namespace OIC
             cp_status_t m_status;
             cp_plugin_info_t **m_cp_plugins;
             cp_plugin_info_t *m_plugin;
-            //boost::thread_group m_thread_g;
             static CpluffAdapter *s_pinstance;
 
             /**

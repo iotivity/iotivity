@@ -28,7 +28,7 @@ if target_os not in ['windows', 'winrt']:
 
 if target_os == 'android':
 	plugin_manager_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions', '-DANDROID'])
-	plugin_manager_env.AppendUnique(LIBS = ['boost_thread', 'boost_system', 'gnustl_shared', 'log'])
+	plugin_manager_env.AppendUnique(LIBS = ['gnustl_shared', 'log'])
 
 plugin_manager_env.AppendUnique(CPPDEFINES = ['CP_C_API=CP_EXPORT',
 					'CP_HOST=\"\\"'+env.get('TARGET_OS')+'\\"\"',

@@ -34,8 +34,6 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <boost/thread.hpp>
-#include <boost/bind.hpp>
 #include <internal.h>
 #include <jni.h>
 
@@ -186,7 +184,6 @@ namespace OIC
             Config *config;
             typedef std::map<std::string, bool> File_list;
             std::vector<Plugin> m_plugins;
-            boost::thread m_file_detect_thread;
 
             static FelixAdapter *s_pinstance;
 
