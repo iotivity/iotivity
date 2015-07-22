@@ -561,3 +561,95 @@ TEST_F(ResourceObjectSynchronizationTest, MultipleAccessToServerResourceWithRequ
 
     ASSERT_EQ(expected, server->getAttribute<int>(KEY));
 }
+
+
+class AttributeUpdatedListenerTest: public ResourceObjectHandlingRequestTest
+{
+public:
+    typedef OCStackResult (*SendResponse)(std::shared_ptr<OCResourceResponse>);
+
+public:
+    OCRepresentation createOCRepresentation(void)
+    {
+        OCRepresentation ocRep;
+
+        vector<string> interface{"oic.if.baseline"};
+        vector<string> type{"core.light"};
+
+        ocRep.setUri(RESOURCE_URI);
+        ocRep.setResourceInterfaces(interface);
+        ocRep.setResourceTypes(type);
+        ocRep[KEY] = value;
+
+        return ocRep;
+    }
+
+    void initMocks()
+    {
+        ResourceObjectHandlingRequestTest::initMocks();
+        mocks.OnCallFunc(OCPlatform::sendResponse).Return(OC_STACK_OK);
+    }
+};
+
+TEST_F(AttributeUpdatedListenerTest, AddListenerReturnsTrueIfListenerIsCalled)
+{
+    bool called=false;
+
+    server->setAttribute(KEY, 0);
+    OCRepresentation ocRep = createOCRepresentation();
+
+    server->addAttributeUpdatedListener(KEY,
+        [&called](const OIC::Service::ResourceAttributes::Value&,
+        const OIC::Service::ResourceAttributes::Value& )
+        {
+            called=true;
+        } );
+
+    handler(ResourceObjectHandlingRequestTest::createRequest(OC_REST_PUT, ocRep));
+
+    ASSERT_TRUE(called);
+}
+
+TEST_F(AttributeUpdatedListenerTest, AddListenerisChangedAccordingToLastAddedFunction)
+{
+    int called=0, expected=100;
+
+    server->setAttribute(KEY,0);
+    OCRepresentation ocRep = createOCRepresentation();
+
+    server->addAttributeUpdatedListener("key",
+        [&called](const OIC::Service::ResourceAttributes::Value&,
+        const OIC::Service::ResourceAttributes::Value&)
+        {
+            called=10;
+        } );
+
+    server->addAttributeUpdatedListener(KEY,
+        [&called](const OIC::Service::ResourceAttributes::Value&,
+        const OIC::Service::ResourceAttributes::Value&)
+        {
+            called=100;
+        } );
+
+    handler(ResourceObjectHandlingRequestTest::createRequest(OC_REST_PUT, ocRep));
+
+    ASSERT_EQ(expected, called);
+}
+
+TEST_F(AttributeUpdatedListenerTest, RemoveListenerReturnsTrueIfListenerIsNotAdded)
+{
+    ASSERT_FALSE(server->removeAttributeUpdatedListener(KEY));
+}
+
+TEST_F(AttributeUpdatedListenerTest, RemoveListenerReturnsTrueIfListenerIsAdded)
+{
+    server->addAttributeUpdatedListener(KEY,
+        [](const OIC::Service::ResourceAttributes::Value&,
+        const OIC::Service::ResourceAttributes::Value&)
+        {
+        } );
+
+    ASSERT_TRUE(server->removeAttributeUpdatedListener(KEY));
+}
+
+
