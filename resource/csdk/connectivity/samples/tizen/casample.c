@@ -72,6 +72,11 @@
  */
 #define RS_CLIENT_PSK   ("AAAAAAAAAAAAAAAA")
 
+/**
+ * Max size for big payload.
+ */
+#define BIG_PAYLOAD_SIZE 15000
+
 static GMainLoop *g_mainloop = NULL;
 pthread_t thread;
 
@@ -90,6 +95,9 @@ char get_menu();
 void process();
 CAResult_t get_network_type();
 CAResult_t get_input_data(char *buf, int32_t length);
+
+bool select_payload();
+void populate_binary_payload(uint8_t *bigBuffer, size_t bigBufferLen);
 
 void start_listening_server();
 void start_discovery_server();
@@ -411,6 +419,35 @@ void start_discovery_server()
     }
 }
 
+bool select_payload()
+{
+    char buf[MAX_BUF_LEN]={0};
+    printf("\n=============================================\n");
+    printf("0:Normal Payload\n1:Big Payload(~15KB)\n");
+    printf("select Payload type : ");
+
+    CAResult_t res = get_input_data(buf, sizeof(buf));
+    if (CA_STATUS_OK != res)
+    {
+        printf("Payload type selection error\n");
+        printf("Default: Using normal Payload\n");
+        return false;
+    }
+
+    return (buf[0] == '1') ? true : false;
+}
+
+void populate_binary_payload(uint8_t *bigBuffer, size_t bigBufferLen)
+{
+/**
+ * bigBuffer to be filled with binary data. For our sample application to verify, we may fill with
+ * any arbitrary value. Hence filling with '1' here.
+ */
+    memset(bigBuffer, '1', bigBufferLen-1);
+    //Last byte making NULL
+    bigBuffer[bigBufferLen-1] = '\0';
+}
+
 void send_request()
 {
     CAResult_t res = get_network_type();
@@ -517,23 +554,38 @@ void send_request()
         }
         snprintf((char *) requestData.payload, length, SECURE_INFO_DATA,
                  (const char *) resourceURI, g_local_secure_port);
-        requestData.payloadSize = length;
     }
     else
     {
-        size_t length = sizeof(NORMAL_INFO_DATA) + strlen(resourceURI);
-        requestData.payload = (CAPayload_t) calloc(length, sizeof(char));
-        if (NULL == requestData.payload)
+        bool useBigPayload = select_payload();
+        if (useBigPayload)
         {
-            printf("Memory allocation fail\n");
-            CADestroyEndpoint(endpoint);
-            CADestroyToken(token);
-            return;
+            requestData.payload = (CAPayload_t) calloc(BIG_PAYLOAD_SIZE, sizeof(char));
+            if (NULL == requestData.payload)
+            {
+                printf("Memory allocation fail\n");
+                CADestroyEndpoint(endpoint);
+                CADestroyToken(token);
+                return;
+            }
+            populate_binary_payload(requestData.payload, BIG_PAYLOAD_SIZE);
         }
-        snprintf((char *) requestData.payload, length, NORMAL_INFO_DATA,
-                 (const char *) resourceURI);
-        requestData.payloadSize = length;
+        else
+        {
+            size_t length = sizeof(NORMAL_INFO_DATA) + strlen(resourceURI);
+            requestData.payload = (CAPayload_t) calloc(length, sizeof(char));
+            if (NULL == requestData.payload)
+            {
+                printf("Memory allocation fail\n");
+                CADestroyEndpoint(endpoint);
+                CADestroyToken(token);
+                return;
+            }
+            snprintf((char *) requestData.payload, length, NORMAL_INFO_DATA,
+                     (const char *) resourceURI);
+        }
     }
+    requestData.payloadSize = strlen((char *)requestData.payload)+1;
     requestData.type = msgType;
 
     CARequestInfo_t requestInfo = { 0 };
@@ -599,6 +651,8 @@ void send_secure_request()
     requestData.token = token;
     requestData.tokenLength = tokenLength;
     requestData.type = msgType;
+    requestData.payload = "Temp Json Payload";
+    requestData.payloadSize = strlen(requestData.payload)+1;
 
     CARequestInfo_t requestInfo = { 0 };
     requestInfo.method = CA_GET;
@@ -1179,25 +1233,37 @@ void send_response(const CAEndpoint_t *endpoint, const CAInfo_t *info)
             }
             snprintf((char *) responseData.payload, length, SECURE_INFO_DATA,
                      (const char *) responseData.resourceUri, g_local_secure_port);
-            responseData.payloadSize = length;
         }
         else
         {
             printf("Sending response on non-secure communication\n");
 
-            uint32_t length = sizeof(NORMAL_INFO_DATA) + strlen(responseData.resourceUri);
-            responseData.payload = (CAPayload_t) calloc(length, sizeof(char));
-            if (NULL == responseData.payload)
+            bool useBigPayload = select_payload();
+            if (useBigPayload)
             {
-                printf("Memory allocation fail\n");
-                return;
+                responseData.payload = (CAPayload_t) calloc(BIG_PAYLOAD_SIZE, sizeof(char));
+                if (NULL == responseData.payload)
+                {
+                    printf("Memory allocation fail\n");
+                    return;
+                }
+                populate_binary_payload(responseData.payload, BIG_PAYLOAD_SIZE);
             }
-            snprintf((char *) responseData.payload, length, NORMAL_INFO_DATA,
-                     (const char *) responseData.resourceUri);
-            responseData.payloadSize = length;
+            else
+            {
+                size_t length = sizeof(NORMAL_INFO_DATA) + strlen(responseData.resourceUri);
+                responseData.payload = (CAPayload_t) calloc(length, sizeof(char));
+                if (NULL == responseData.payload)
+                {
+                    printf("Memory allocation fail\n");
+                    return;
+                }
+                snprintf((char *) responseData.payload, length, NORMAL_INFO_DATA,
+                         (const char *) responseData.resourceUri);
+            }
         }
     }
-
+    responseData.payloadSize = strlen((char *)responseData.payload)+1;
     CAResponseInfo_t responseInfo = { 0 };
     responseInfo.result = responseCode;
     responseInfo.info = responseData;

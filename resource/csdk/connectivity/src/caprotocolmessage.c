@@ -187,7 +187,7 @@ coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info)
             coap_delete_list(optlist);
             return NULL;
         }
-        pdu = CAGeneratePDUImpl((code_t)code, optlist, info, info->payload, info->payloadSize);
+        pdu = CAGeneratePDUImpl((code_t) code, optlist, info, info->payload, info->payloadSize);
         if (NULL == pdu)
         {
             OIC_LOG(ERROR, TAG, "pdu NULL");
@@ -296,10 +296,12 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, coap_list_t *options, const CAInfo_t 
         }
     }
 
+#ifndef WITH_BWT
     if (NULL != payload)
     {
         coap_add_data(pdu, payloadSize, (const unsigned char *) payload);
     }
+#endif
 
     OIC_LOG(DEBUG, TAG, "OUT");
     return pdu;
@@ -537,7 +539,9 @@ uint32_t CAGetOptionCount(coap_opt_iterator_t opt_iter)
 
     while ((option = coap_option_next(&opt_iter)))
     {
-        if (COAP_OPTION_URI_PATH != opt_iter.type && COAP_OPTION_URI_QUERY != opt_iter.type)
+        if (COAP_OPTION_URI_PATH != opt_iter.type && COAP_OPTION_URI_QUERY != opt_iter.type
+            && COAP_OPTION_BLOCK1 != opt_iter.type && COAP_OPTION_BLOCK2 != opt_iter.type
+            && COAP_OPTION_SIZE1 != opt_iter.type && COAP_OPTION_SIZE2 != opt_iter.type)
         {
             count++;
         }
@@ -676,6 +680,11 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *
                         goto exit;
                     }
                 }
+            }
+            else if (COAP_OPTION_BLOCK1 == opt_iter.type || COAP_OPTION_BLOCK2 == opt_iter.type
+                    || COAP_OPTION_SIZE1 == opt_iter.type || COAP_OPTION_SIZE2 == opt_iter.type)
+            {
+                OIC_LOG_V(DEBUG, TAG, "option[%d] will be filtering", opt_iter.type);
             }
             else
             {

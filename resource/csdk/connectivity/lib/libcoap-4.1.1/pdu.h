@@ -74,6 +74,7 @@
 #define COAP_OPTION_PROXY_URI    35 /* C, String, 1-1034 B, (none) */
 #define COAP_OPTION_PROXY_SCHEME 39 /* C, String, 1-255 B, (none) */
 #define COAP_OPTION_SIZE1        60 /* E, uint, 0-4 B, (none) */
+#define COAP_OPTION_SIZE2        28 /* E, uint, 0-4 B, (none) */
 
 /* option types from draft-ietf-coap-observe-09 */
 
