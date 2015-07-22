@@ -515,11 +515,11 @@ static bool includeThisResourceInResponse(OCResource *resource,
 }
 
 OCStackResult SendNonPersistantDiscoveryResponse(OCServerRequest *request, OCResource *resource,
-                                OCPayload *discoveryPayload)
+                                OCPayload *discoveryPayload, OCEntityHandlerResult ehResult)
 {
     OCEntityHandlerResponse response = {};
 
-    response.ehResult = OC_EH_OK;
+    response.ehResult = ehResult;
     response.payload = discoveryPayload;
     response.persistentBufferFlag = 0;
     response.requestHandle = (OCRequestHandle) request;
@@ -536,99 +536,129 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
     }
 
     OCStackResult discoveryResult = OC_STACK_ERROR;
+
+    bool bMulticast    = false;     // Was the discovery request a multicast request?
     OCPayload* payload = NULL;
-    char *filterOne = NULL;
-    char *filterTwo = NULL;
 
     OC_LOG(INFO, TAG, PCF("Entering HandleVirtualResource"));
 
     OCVirtualResources virtualUriInRequest = GetTypeOfVirtualURI (request->resourceUrl);
 
-
+    // Step 1: Generate the response to discovery request
     if (virtualUriInRequest == OC_WELL_KNOWN_URI)
     {
+        char *filterOne = NULL;
+        char *filterTwo = NULL;
+
         discoveryResult = getQueryParamsForFiltering (virtualUriInRequest, request->query,
-                                                            &filterOne, &filterTwo);
-        if (discoveryResult != OC_STACK_OK)
-        {
-            OC_LOG_V(ERROR, TAG, "Error (%d) validating query.\n", discoveryResult);
-            return discoveryResult;
-        }
-        payload = (OCPayload*)OCDiscoveryPayloadCreate();
+                &filterOne, &filterTwo);
 
-        if(!payload)
+        if (discoveryResult == OC_STACK_OK)
         {
-            return OC_STACK_NO_MEMORY;
-        }
+            payload = (OCPayload*)OCDiscoveryPayloadCreate();
 
-
-        for(;resource && discoveryResult == OC_STACK_OK; resource = resource->next)
-        {
-            if(includeThisResourceInResponse(resource, filterOne, filterTwo))
+            if(payload)
             {
-                discoveryResult = BuildVirtualResourceResponse(resource,
-                    (OCDiscoveryPayload*)payload,
-                    &request->devAddr);
+                for(;resource && discoveryResult == OC_STACK_OK; resource = resource->next)
+                {
+                    if(includeThisResourceInResponse(resource, filterOne, filterTwo))
+                    {
+                        discoveryResult = BuildVirtualResourceResponse(resource,
+                                (OCDiscoveryPayload*)payload,
+                                &request->devAddr);
+                    }
+                }
+                // Set discoveryResult appropriately if no 'valid' resources are available.
+                if (((OCDiscoveryPayload*)payload)->resources == NULL)
+                {
+                    discoveryResult = OC_STACK_NO_RESOURCE;
+                }
             }
+            else
+            {
+                discoveryResult = OC_STACK_NO_MEMORY;
+            }
+        }
+        else
+        {
+            OC_LOG_V(ERROR, TAG, "Error (%d) parsing query.", discoveryResult);
         }
     }
     else if (virtualUriInRequest == OC_DEVICE_URI)
     {
-            payload = (OCPayload*)OCDevicePayloadCreate(OC_RSRVD_DEVICE_URI,
-                        OCGetServerInstanceID(), savedDeviceInfo.deviceName,
-                        OC_SPEC_VERSION, OC_DATA_MODEL_VERSION);
-            if (!payload)
-            {
-                discoveryResult = OC_STACK_NO_MEMORY;
-            }
-            else
-            {
-                discoveryResult = OC_STACK_OK;
-            }
-    }
-    else if (virtualUriInRequest == OC_PLATFORM_URI)
-    {
-            payload = (OCPayload*)OCPlatformPayloadCreate(
-                    OC_RSRVD_PLATFORM_URI,
-                    &savedPlatformInfo);
-            if (!payload)
-            {
-                discoveryResult = OC_STACK_NO_MEMORY;
-            }
-            else
-            {
-                discoveryResult = OC_STACK_OK;
-            }
-    }
-
-    #ifdef WITH_PRESENCE
-    else
-    {
-        if(resource->resourceProperties & OC_ACTIVE)
+        payload = (OCPayload*)OCDevicePayloadCreate(OC_RSRVD_DEVICE_URI,
+                OCGetServerInstanceID(), savedDeviceInfo.deviceName,
+                OC_SPEC_VERSION, OC_DATA_MODEL_VERSION);
+        if (!payload)
         {
-            discoveryResult = SendPresenceNotification(resource->rsrcType,
-                                                OC_PRESENCE_TRIGGER_CHANGE);
-        }
-    }
-    #endif
-
-    // Presence uses observer notification api to respond via SendPresenceNotification.
-    if (virtualUriInRequest != OC_PRESENCE)
-    {
-        if(discoveryResult == OC_STACK_OK)
-        {
-            discoveryResult = SendNonPersistantDiscoveryResponse(request, resource,
-                                                        payload);
-            OCPayloadDestroy(payload);
+            discoveryResult = OC_STACK_NO_MEMORY;
         }
         else
         {
-            OC_LOG_V(ERROR, TAG, "Error (%d) building (%d)  discovery response. "\
-                        "Not responding to request.", discoveryResult, virtualUriInRequest);
+            discoveryResult = OC_STACK_OK;
+        }
+    }
+    else if (virtualUriInRequest == OC_PLATFORM_URI)
+    {
+        payload = (OCPayload*)OCPlatformPayloadCreate(
+                OC_RSRVD_PLATFORM_URI,
+                &savedPlatformInfo);
+        if (!payload)
+        {
+            discoveryResult = OC_STACK_NO_MEMORY;
+        }
+        else
+        {
+            discoveryResult = OC_STACK_OK;
         }
     }
 
-    return discoveryResult;
+    /**
+     * Step 2: Send the discovery response
+     *
+     * Iotivity should respond to discovery requests in below manner:
+     * 1)If query filter matching fails and discovery request is multicast,
+     *   it should NOT send any response.
+     * 2)If query filter matching fails and discovery request is unicast,
+     *   it should send an error(RESOURCE_NOT_FOUND - 404) response.
+     * 3)If Server does not have any 'DISCOVERABLE' resources and discovery
+     *   request is multicast, it should NOT send any response.
+     * 4)If Server does not have any 'DISCOVERABLE' resources and discovery
+     *   request is unicast, it should send an error(RESOURCE_NOT_FOUND - 404) response.
+     */
+
+    #ifdef WITH_PRESENCE
+    if ((virtualUriInRequest == OC_PRESENCE) &&
+        (resource->resourceProperties & OC_ACTIVE))
+    {
+        // Presence uses observer notification api to respond via SendPresenceNotification.
+        SendPresenceNotification(resource->rsrcType, OC_PRESENCE_TRIGGER_CHANGE);
+    }
+    else
+    #endif
+    {
+        if(discoveryResult == OC_STACK_OK)
+        {
+            SendNonPersistantDiscoveryResponse(request, resource, payload, OC_EH_OK);
+        }
+        else if(bMulticast == false)
+        {
+            OC_LOG_V(ERROR, TAG, "Sending a (%d) error to (%d)  \
+                discovery request", discoveryResult, virtualUriInRequest);
+            SendNonPersistantDiscoveryResponse(request, resource, NULL,
+                (discoveryResult == OC_STACK_NO_RESOURCE) ? OC_EH_RESOURCE_NOT_FOUND : OC_EH_ERROR);
+        }
+        else
+        {
+            // Ignoring the discovery request as per RFC 7252, Section #8.2
+            OC_LOG_V(INFO, TAG, "Silently ignoring the request since device does not have \
+                any useful data to send");
+        }
+    }
+
+    OCPayloadDestroy(payload);
+
+    return OC_STACK_OK;
 }
 
 static OCStackResult
