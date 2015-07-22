@@ -114,6 +114,11 @@ if 'BLE' in ca_transport:
 print "Include path is %s" % env.get('CPPPATH')
 print "Files path is %s" % env.get('CA_SRC')
 if ca_os in ['android', 'tizen']:
+	env.AppendUnique(LIBS = ['coap'])
+	if env.get('SECURED') == '1':
+		env.AppendUnique(LIBS = ['tinydtls'])
+	if ca_os != 'android':
+		env.AppendUnique(LIBS = ['rt'])
 	calib = env.SharedLibrary('connectivity_abstraction', env.get('CA_SRC'))
 else:
 	calib = env.StaticLibrary('connectivity_abstraction', env.get('CA_SRC'))
