@@ -450,13 +450,9 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
         responseInfo.info.type = CA_MSG_NONCONFIRM;
     }
 
+    char rspToken[CA_MAX_TOKEN_LEN + 1] = {};
     responseInfo.info.messageId = serverRequest->coapID;
-    responseInfo.info.token = (CAToken_t)OICMalloc(CA_MAX_TOKEN_LEN+1);
-    if (!responseInfo.info.token)
-    {
-        OC_LOG(FATAL, TAG, "Memory alloc for token failed");
-        return result;
-    }
+    responseInfo.info.token = (CAToken_t)rspToken;
 
     memcpy(responseInfo.info.token, serverRequest->requestToken, serverRequest->tokenLength);
     responseInfo.info.tokenLength = serverRequest->tokenLength;
@@ -479,7 +475,6 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
         if(!responseInfo.info.options)
         {
             OC_LOG(FATAL, TAG, PCF("Memory alloc for options failed"));
-            OICFree(responseInfo.info.token);
             return OC_STACK_NO_MEMORY;
         }
 
@@ -608,7 +603,6 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     #endif
 
     OICFree(responseInfo.info.payload);
-    OICFree(responseInfo.info.token);
     OICFree(responseInfo.info.options);
     //Delete the request
     FindAndDeleteServerRequest(serverRequest);
