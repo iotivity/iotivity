@@ -169,24 +169,28 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
                 "Device =============> Discovered @ %s:%d",
                 clientResponse->devAddr.addr,
                 clientResponse->devAddr.port);
-        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
 
-        ocConnType = clientResponse->connType;
-
-        if (parseClientResponse(clientResponse) != -1)
+        if (clientResponse->result == OC_STACK_OK)
         {
-            switch(TEST_CASE)
+            OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+
+            ocConnType = clientResponse->connType;
+
+            if (parseClientResponse(clientResponse) != -1)
             {
-                case TEST_NON_CON_OP:
-                    InitGetRequest(OC_LOW_QOS);
-                    InitPutRequest(OC_LOW_QOS);
-                    //InitPostRequest(OC_LOW_QOS);
-                    break;
-                case TEST_CON_OP:
-                    InitGetRequest(OC_HIGH_QOS);
-                    InitPutRequest(OC_HIGH_QOS);
-                    //InitPostRequest(OC_HIGH_QOS);
-                    break;
+                switch(TEST_CASE)
+                {
+                    case TEST_NON_CON_OP:
+                        InitGetRequest(OC_LOW_QOS);
+                        InitPutRequest(OC_LOW_QOS);
+                        //InitPostRequest(OC_LOW_QOS);
+                        break;
+                    case TEST_CON_OP:
+                        InitGetRequest(OC_HIGH_QOS);
+                        InitPutRequest(OC_HIGH_QOS);
+                        //InitPostRequest(OC_HIGH_QOS);
+                        break;
+                }
             }
         }
     }
