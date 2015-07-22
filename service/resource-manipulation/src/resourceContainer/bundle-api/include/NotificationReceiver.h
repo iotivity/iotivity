@@ -51,6 +51,8 @@ namespace OIC
                 /**
                 * Callback method for getting notification from bundle resources
                 *
+                * @param strResourceUri - uri of attribute updated bundle resource
+                *
                 * @return void
                 */
                 virtual void onNotificationReceived(std::string strResourceUri) = 0;

@@ -25,7 +25,6 @@
 #include <string.h>
 #include <fstream>
 
-//#include "ResourceContainer.h"
 #include "BundleInfo.h"
 #include "Configuration.h"
 #include "NotificationReceiver.h"

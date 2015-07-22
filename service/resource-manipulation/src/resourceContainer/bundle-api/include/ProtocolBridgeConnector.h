@@ -32,8 +32,8 @@ namespace OIC
 
         /**
         * @class    ProtocolBridgeConnector
-        * @brief    This class represents connector for Protocol Bridge
-        *               to
+        * @brief    This class represents connector
+        *               to bridge non-IoTivity protocol and IoTivity for Protocol Bridge
         *
         */
         class ProtocolBridgeConnector
@@ -51,14 +51,14 @@ namespace OIC
                 virtual ~ProtocolBridgeConnector();
 
                 /**
-                * Execute the logic needed for connection with diffrent protocol from IoTivity
+                * Execute the logic needed for connection with different protocol from IoTivity
                 *
                 * @return void
                 */
                 virtual void connect() = 0;
 
                 /**
-                * Execute the logic needed for disconnection with diffrent protocol from IoTivity
+                * Execute the logic needed for disconnection with different protocol from IoTivity
                 *
                 * @return void
                 */

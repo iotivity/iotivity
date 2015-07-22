@@ -59,9 +59,10 @@ void HueSampleBundleActivator::deactivateBundle()
 {
     std::cout << "HueSampleBundle::deactivateBundle called" << std::endl;
 
-    for (unsigned int i = 0; i < m_vecResources.size(); i++)
+    std::vector<BundleResource *>::iterator itor;
+    for (itor = m_vecResources.begin(); itor != m_vecResources.end();)
     {
-        destroyResource(m_vecResources.at(i));
+        destroyResource(*itor);
     }
 
     delete m_connector;
@@ -99,16 +100,6 @@ void HueSampleBundleActivator::destroyResource(BundleResource *pBundleResource)
         m_pResourceContainer->unregisterResource(pBundleResource);
         m_vecResources.erase(itor);
     }
-
-    //TODO
-    /*std::cout << "Clearing up memory.\n";
-
-    if (itor != m_vecResources.end())
-        m_vecResources.erase(itor);*/
-
-    // check
-    //delete resource;
-
 }
 
 extern "C" void externalActivateBundle(ResourceContainerBundleAPI *resourceContainer,

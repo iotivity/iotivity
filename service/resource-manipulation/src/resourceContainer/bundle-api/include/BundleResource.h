@@ -57,28 +57,6 @@ namespace OIC
                 virtual ~BundleResource();
 
                 /**
-                * Execute the logic of bundle to get the value of attribute
-                *
-                * @param attributeName - name of attribute to get
-                *
-                * @return string - return value of the attribute
-                *
-                * @todo use type variant mechanism
-                */
-                //virtual string getAttribute(string attributeName);
-
-                /**
-                * Execute the logic of bundle to set the value of attribute
-                *
-                * @param attributeName - name of attribute to set
-                *
-                * @param value - value of attribute to set
-                *
-                * @return void
-                */
-                //virtual void setAttribute(string attributeName, string value);
-
-                /**
                 * Return the list of attribute names of the resource
                 *
                 * @return std::list - return list of the attribute names
@@ -101,11 +79,32 @@ namespace OIC
                 */
                 void registerObserver(NotificationReceiver *pNotiReceiver);
 
-                virtual ResourceAttributes& getAttributes();
+                /**
+                * Return all attributes of the resource
+                *
+                * @return ResourceAttributes - attributes of the resource
+                */
+                virtual ResourceAttributes &getAttributes();
 
-                virtual void setAttribute(std::string key, ResourceAttributes::Value&&);
+                /**
+                * Execute the logic of bundle to set the value of attribute
+                *
+                * @param key - name of attribute to set
+                *
+                * @param value - value of attribute to set
+                *
+                * @return void
+                */
+                virtual void setAttribute(std::string key, ResourceAttributes::Value &&value);
 
-                virtual ResourceAttributes::Value getAttribute(const std::string& key);
+                /**
+                * Execute the logic of bundle to get the value of attribute
+                *
+                * @param key - key of attribute to get
+                *
+                * @return ResourceAttributes::Value - return value of the attribute
+                */
+                virtual ResourceAttributes::Value getAttribute(const std::string &key);
 
 
             public:
@@ -114,7 +113,6 @@ namespace OIC
                 map< string, vector< map< string, string > > > m_mapResourceProperty;
 
             private:
-                //map< string, string > m_mapAttributes;
                 NotificationReceiver *m_pNotiReceiver;
                 ResourceAttributes m_resourceAttributes;
 

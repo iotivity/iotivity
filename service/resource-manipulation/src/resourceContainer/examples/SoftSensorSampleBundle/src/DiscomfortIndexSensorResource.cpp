@@ -45,18 +45,25 @@ void DiscomfortIndexSensorResource::initAttributes()
 
     BundleResource::setAttribute("temperature", "23");
     BundleResource::setAttribute("humidity", "40");
-    BundleResource::setAttribute("discomfortIndex","5");
+    BundleResource::setAttribute("discomfortIndex", "5");
 }
 
-ResourceAttributes::Value DiscomfortIndexSensorResource::getAttribute(string attributeName)
+ResourceAttributes &DiscomfortIndexSensorResource::getAttributes()
 {
-    cout << "DiscomfortIndexSensorResource::getAttribute called !!" << endl;
-    return BundleResource::getAttribute(attributeName);
+    return BundleResource::getAttributes();
 }
 
-void DiscomfortIndexSensorResource::setAttribute(string attributeName, ResourceAttributes::Value value)
+ResourceAttributes::Value DiscomfortIndexSensorResource::getAttribute(const std::string &key)
 {
-    cout << "DiscomfortIndexSensorResource::setAttribute called !!" << endl;
+    cout << "DiscomfortIndexSensorResource::getAttribute called for " << key << " called" << endl;
+    return BundleResource::getAttribute(key);
+}
+
+void DiscomfortIndexSensorResource::setAttribute(std::string key, ResourceAttributes::Value &&value)
+{
+    cout << "DiscomfortIndexSensorResource::setAttribute setting " << key << " to " << value.toString()
+         << std::endl;
+    BundleResource::setAttribute(key, std::move(value));
 }
 
 void DiscomfortIndexSensorResource::setInputAttribute(SensorData input)
@@ -83,13 +90,16 @@ void DiscomfortIndexSensorResource::setInputAttribute(SensorData input)
             for (unsigned int i = 0; i < m_outputs.data.size(); i++)
             {
                 if (!m_outputs.data.at(i)["name"].compare("temperature"))
-                    BundleResource::setAttribute("temperature", m_outputs.data.at(i)["value"]);
+                    BundleResource::setAttribute("temperature",
+                                                 ResourceAttributes::Value(m_outputs.data.at(i)["value"].c_str()));
 
                 else if (!m_outputs.data.at(i)["name"].compare("humidity"))
-                    BundleResource::setAttribute("humidity", m_outputs.data.at(i)["value"]);
+                    BundleResource::setAttribute("humidity",
+                                                 ResourceAttributes::Value(m_outputs.data.at(i)["value"].c_str()));
 
                 else if (!m_outputs.data.at(i)["name"].compare("discomfortIndex"))
-                    BundleResource::setAttribute("discomfortIndex", m_outputs.data.at(i)["value"]);
+                    BundleResource::setAttribute("discomfortIndex",
+                                                 ResourceAttributes::Value(m_outputs.data.at(i)["value"].c_str()));
             }
         }
     }

@@ -50,11 +50,32 @@ namespace OIC
                 */
                 virtual ~ProtocolBridgeResource();
 
-                virtual ResourceAttributes& getAttributes()=0;
+                /**
+                * Return all attributes of the resource
+                *
+                * @return ResourceAttributes - attributes of the resource
+                */
+                virtual ResourceAttributes &getAttributes() = 0;
 
-                virtual void setAttribute(std::string key, ResourceAttributes::Value&&)=0;
+                /**
+                * Execute the logic of bundle to set the value of attribute
+                *
+                * @param key - name of attribute to set
+                *
+                * @param value - value of attribute to set
+                *
+                * @return void
+                */
+                virtual void setAttribute(std::string key, ResourceAttributes::Value &&value) = 0;
 
-                virtual ResourceAttributes::Value getAttribute(const std::string& key)=0;
+                /**
+                * Execute the logic of bundle to get the value of attribute
+                *
+                * @param key - key of attribute to get
+                *
+                * @return ResourceAttributes::Value - return value of the attribute
+                */
+                virtual ResourceAttributes::Value getAttribute(const std::string &key) = 0;
         };
     }
 }
