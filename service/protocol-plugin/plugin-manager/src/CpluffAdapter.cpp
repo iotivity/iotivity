@@ -194,20 +194,6 @@ int CpluffAdapter::loadPluginInfoToManager(const std::string path)
         }
         if (plugin_compare_flag)
         {
-            //Auto plugin detection is disabled
-            /*
-            try
-            {
-                boost::thread *t = new boost::thread(boost::bind(&CpluffAdapter::observePluginPath,
-                                                     //this, (void *)path.c_str()));
-                                                     this, (void *)m_cp_plugins[i]->plugin_path));
-                m_thread_g.add_thread(t);
-            }
-            catch (...)
-            {
-                printf("thread throw exception\n");
-            }
-            */
             m_plugins.push_back(*plugin);
             delete(plugin);
         }
