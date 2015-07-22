@@ -140,7 +140,7 @@ public class MainActivity extends Activity implements
         try {
             FoundResource foundResource = new FoundResource();
             OcPlatform.findResource("", OcPlatform.WELL_KNOWN_QUERY,
-                    OcConnectivityType.ALL, foundResource);
+                    OcConnectivityType.CT_ADAPTER_IP, foundResource);
         } catch (Exception e) {
             Log.e(LOG_TAG, "Exception : " + e);
         }
@@ -208,7 +208,7 @@ public class MainActivity extends Activity implements
                             OcPlatform
                                     .findResource(
                                             "", OcPlatform.WELL_KNOWN_QUERY + "?rt=" + "device.smartplug",
-                                            OcConnectivityType.ALL, foundResource);
+                                            OcConnectivityType.CT_ADAPTER_IP, foundResource);
                         } catch (OcException e) {
                             e.printStackTrace();
                         }
@@ -328,7 +328,7 @@ public class MainActivity extends Activity implements
                             OcPlatform
                             .findResource(
                                     "", OcPlatform.WELL_KNOWN_QUERY + "?rt=" + "device.notify",
-                                    OcConnectivityType.ALL, foundResource);
+                                    OcConnectivityType.CT_ADAPTER_IP, foundResource);
                         } catch (OcException e) {
                             e.printStackTrace();
                         }
@@ -486,7 +486,7 @@ public class MainActivity extends Activity implements
                             OcPlatform
                             .findResource(
                                     "", OcPlatform.WELL_KNOWN_QUERY + "?rt=" + "device.light",
-                                    OcConnectivityType.ALL, foundResource);
+                                    OcConnectivityType.CT_ADAPTER_IP, foundResource);
                         } catch (OcException e) {
                             e.printStackTrace();
                         }
