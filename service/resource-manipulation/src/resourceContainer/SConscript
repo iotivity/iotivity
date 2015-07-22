@@ -95,7 +95,7 @@ except KeyError:
 	print ''
 	
 
-resource_container_env.PrependUnique(LIBS = ['server_builder', 'service_common', 'oc','octbstack', 'oc_logger', 'oc_logger_core', 'connectivity_abstraction'])
+resource_container_env.PrependUnique(LIBS = ['rcs_server', 'rcs_common', 'oc','octbstack', 'oc_logger', 'oc_logger_core', 'connectivity_abstraction'])
 resource_container_env.AppendUnique(LIBS = ['dl'])	
 
 try:	
@@ -112,8 +112,8 @@ res_container_src = ['src/BaseActivator.cpp','src/BundleActivator.cpp','src/Bund
 	'src/ProtocolBridgeConnector.cpp', 'src/ResourceContainer.cpp', 'src/ResourceContainerBundleAPI.cpp', 'src/ResourceContainerImpl.cpp', 
 	'src/SoftSensorResource.cpp']
 	
-res_container_static = resource_container_env.StaticLibrary('ResContainerLib', res_container_src)
-res_container_shared = resource_container_env.SharedLibrary('ResContainerLib', res_container_src)
+res_container_static = resource_container_env.StaticLibrary('rcs_container', res_container_src)
+res_container_shared = resource_container_env.SharedLibrary('rcs_container', res_container_src)
 
 resource_container_env.InstallTarget([res_container_static,res_container_shared], 'libResContainer')
 
@@ -131,7 +131,7 @@ ss_resource_bundle_env.AppendUnique(CPPPATH = [
 		'../../include',
 		])		
 		
-ss_resource_bundle_env.PrependUnique(LIBS = ['ResContainerLib'])
+ss_resource_bundle_env.PrependUnique(LIBS = ['rcs_container'])
 
 ss_resource_bundle_src = [ Glob(SS_RESOURCE_BUNDLE_DIR + 'src/*.cpp')]
 
@@ -164,7 +164,7 @@ else:
 			'include/'
 			])		
 		
-	hue_resource_bundle_env.PrependUnique(LIBS = ['curl', 'ResContainerLib'])
+	hue_resource_bundle_env.PrependUnique(LIBS = ['curl', 'rcs_container'])
 		
 	hue_resource_bundle_src = [ Glob(HUE_RESOURCE_BUNDLE_DIR + 'src/*.cpp')]
 	
@@ -187,7 +187,7 @@ containersample_env.AppendUnique(LINKFLAGS=["-rdynamic"])
 Command("examples/ResourceContainerConfig.xml","examples/ResourceContainerConfig.xml", Copy("$TARGET", "$SOURCE"))
 Ignore("examples/ResourceContainerConfig.xml", "examples/ResourceContainerConfig.xml")
 
-containersample_env.AppendUnique(LIBS = ['ResContainerLib'])
+containersample_env.AppendUnique(LIBS = ['rcs_container'])
 
 containersampleapp_src =  ['src/ContainerSample.cpp']
 containersampleapp = containersample_env.Program('ContainerSample',containersampleapp_src)
@@ -199,7 +199,7 @@ env.AppendTarget('containersample')
 ######################################################################
 containersampleclient_env = resource_container_env.Clone();
 
-containersample_env.AppendUnique(LIBS = ['ResContainerLib'])
+containersample_env.AppendUnique(LIBS = ['rcs_container'])
 containersampleclient_src =  ['src/ContainerSampleClient.cpp']
 containersampleclientapp = containersample_env.Program('ContainerSampleClient',containersampleclient_src)
 Alias("containersampleclient", containersampleclientapp)

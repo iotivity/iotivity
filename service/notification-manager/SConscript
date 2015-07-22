@@ -52,12 +52,9 @@ notimgr_env.AppendUnique(CPPPATH = ['../resource-manipulation/src/common/expiryT
 #notimgr_env.AppendUnique(CPPPATH = ['../../extlibs/cjson'])
 #notimgr_env.AppendUnique(CPPPATH = ['../../resource/csdk/logger/include'])
 notimgr_env.PrependUnique(LIBS = [
-	'ResourceClient',
-	'ResourceCache',
-	'ResourceBroker',
-	'ExpiryTimer',
-	'server_builder',
-	'service_common',
+	'rcs_client',
+	'rcs_server',
+	'rcs_common',
 	'oc',
 	'octbstack',
 	'oc_logger',

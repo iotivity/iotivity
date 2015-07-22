@@ -82,7 +82,7 @@ TEST(ResourceClientTest, testDiscoverResourcePass)
     destroyResource();
 }
 
-//Get remote attributes when callback is not NULL
+//Get remote attributes when callback is valid
 TEST(ResourceClientTest, testGetRemoteAttributesPass)
 {
     createResource();
@@ -95,7 +95,7 @@ TEST(ResourceClientTest, testGetRemoteAttributesPass)
     destroyResource();
 }
 
-//Set remote attributes when callback is not NULL
+//Set remote attributes when callback is valid
 TEST(ResourceClientTest, testSetRemoteAttributesPass)
 {
     createResource();
@@ -156,7 +156,7 @@ TEST(ResourceClientTest, testStartMonitoringFail)
     destroyResource();
 }
 
-//Check value of startMonitoring for non NULL callback
+//Check value of startMonitoring for valid callback
 TEST(ResourceClientTest, testStartMonitoringPass)
 {
     createResource();
@@ -216,7 +216,7 @@ TEST(ResourceClientTest, testRefreshCache)
     destroyResource();
 }
 
-//Callback for start caching is not NULL
+//Callback for start caching is valid
 TEST(ResourceClientTest, testStartCachingCbPass)
 {
     createResource();
