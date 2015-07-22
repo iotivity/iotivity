@@ -22,6 +22,7 @@
 
 #include <PrimitiveResourceImpl.h>
 #include <AssertUtils.h>
+#include <RCSAddressDetail.h>
 
 #include <OCPlatform.h>
 
@@ -43,10 +44,19 @@ namespace OIC
             typedef OCStackResult (*FindResource)(const std::string&, const std::string&,
                     OCConnectivityType, OC::FindCallback);
 
-            invokeOCFunc(static_cast<FindResource>(OC::OCPlatform::findResource),
-                    host, resourceURI, connectivityType, (OC::FindCallback)
+            invokeOCFunc(static_cast< FindResource >(OC::OCPlatform::findResource),
+                    host, resourceURI, connectivityType, static_cast < OC::FindCallback >(
                         std::bind(std::move(callback),
-                                std::bind(&PrimitiveResource::create, std::placeholders::_1)));
+                                std::bind(&PrimitiveResource::create, std::placeholders::_1))));
+        }
+
+        void discoverResource(const RCSAddress& address, const std::string& resourceURI,
+                DiscoverCallback callback)
+        {
+            const RCSAddressDetail* addressDetail = RCSAddressDetail::getDetail(address);
+
+            discoverResource(addressDetail->getAddress(), resourceURI, OCConnectivityType{ },
+                    std::move(callback));
         }
 
     }
