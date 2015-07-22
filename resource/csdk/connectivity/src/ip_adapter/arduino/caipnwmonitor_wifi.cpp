@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
 *
 * Copyright 2014 Samsung Electronics All Rights Reserved.
 *
@@ -18,9 +18,9 @@
 *
 ******************************************************************/
 /**
- * @file caipnwmonitor.cpp
- * @brief This file is to keep design in sync with other platforms.  Right now there is no
- *        api for network monitoring in arduino.
+ * @file
+ * This file is to keep design in sync with other platforms.  Right now
+ * there is no api for network monitoring in arduino.
  */
 
 #include "caipinterface.h"
