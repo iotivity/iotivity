@@ -214,7 +214,7 @@ OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr)
         doxm->oxmLen = cJSON_GetArraySize(jsonObj);
         VERIFY_SUCCESS(TAG, doxm->oxmLen > 0, ERROR);
 
-        doxm->oxm = (OicSecOxm_t*)OICCalloc(doxm->oxmLen, sizeof(short));
+        doxm->oxm = (OicSecOxm_t*)OICCalloc(doxm->oxmLen, sizeof(OicSecOxm_t));
         VERIFY_NON_NULL(TAG, doxm->oxm, ERROR);
 
         for(int i  = 0; i < doxm->oxmLen ; i++)
