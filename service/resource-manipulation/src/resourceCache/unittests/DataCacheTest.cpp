@@ -37,7 +37,7 @@ class DataCacheTest : public ::testing::Test
 
         }
 
-        virtual void SetUp() override
+        virtual void SetUp()
         {
             pResource = PrimitiveResource::Ptr(mocks.Mock< PrimitiveResource >(), [](PrimitiveResource *) {});
             cacheHandler = new DataCache();
