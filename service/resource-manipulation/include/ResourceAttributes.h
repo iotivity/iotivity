@@ -48,10 +48,7 @@ namespace OIC
     namespace Service
     {
         /**
-         * @class   BadGetException
-         * @brief   This class is used to throw exception to the upper layer if Get request for a particular
-         *              attribute is invalid. It is  inherited from RCSException class.
-         *
+         * Thrown when getting value with wrong template parameter.
          */
         class BadGetException: public RCSException
         {
@@ -59,11 +56,9 @@ namespace OIC
             BadGetException(const std::string& what) : RCSException{ what } {}
             BadGetException(std::string&& what) : RCSException{ std::move(what) } {}
         };
+
         /**
-        * @class   InvalidKeyException
-        * @brief   This class is used to throw exception to the upper layer if key is invalid.
-        *              It is inherited from RCSException class.
-        *
+        * Thrown when a key is invalid.
         */
         class InvalidKeyException: public RCSException
         {
@@ -73,31 +68,25 @@ namespace OIC
         };
 
         /**
-        * @class   ResourceAttributes
-        * @brief   This class represents the attributes for a resource.
-        * It overloaded the various operators like ==, [], = etc. It provides the APIs that a std::Map provides
-        * like begin, end, size etc. Also provides two kinds of iterator to iterate over the attributes.
+        * ResourceAttributes represents the attributes for a resource.
         *
-        *  It has helper classes:
-        *  Value - For value of the Attribute
-        *  Type - For data type of the Attribute
-        *  iterator - For iterating over attributes
-        *  const_iterator - const iterator for attributes
+        * It provides similar usage to c++ standard containers. (iterator,
+        * operators and accessors)<br/>
+        * An attribute value can be one of various types. <br/>
         *
+        * @note If client developer wants to get the ResourceAttributes for the resource of
+        *            interest following are the steps:
+        *            - first call the discover API of DiscoveryManager class.
+        *            - After getting the RemoteResourceObject, call getRemoteAttributes() API
+        *               of RemoteResourceObject class
         *
         * @see Value
         * @see Type
         * @see iterator
         * @see const_iterator
-        *
-        * NOTE:  If Developer wants to get the ResourceAttributes for the resource of interest following
-        *            are the steps:
-        *            - first call the discover API of DiscoveryManager class.
-        *            - After getting the RemoteResourceObject, call getRemoteAttributes() API
-        *               of RemoteResourceObject class
-        *
         * @see DiscoveryManager
         * @see RemoteResourceObject
+        * @see ResourceObject
         */
         class ResourceAttributes
         {
@@ -143,33 +132,37 @@ namespace OIC
             template <typename T> struct IndexOfType;
 
         public:
+
+            /**
+             * Trait class that identifies whether T is supported by the Value.
+             */
             template< typename T >
-                /**
-                  * For checking whether the provided type is supported or not for a attribute.
-                */
             struct is_supported_type: public std::conditional<
                 IsSupportedTypeHelper< T >::type::value, std::true_type, std::false_type>::type { };
 
-                /**
-                * enum class for the different supported types for Attributes
-                */
+            /**
+             * Identifier for types of Value.
+             *
+             * @see Type
+             */
             enum class TypeId
             {
-                NULL_T,
-                INT,
-                DOUBLE,
-                BOOL,
-                STRING,
-                ATTRIBUTES,
-                VECTOR
+                NULL_T, /**< nullptr_t */
+                INT, /**< int */
+                DOUBLE, /**< double */
+                BOOL, /**< bool */
+                STRING, /**< std::string */
+                ATTRIBUTES, /**< ResourceAttributes */
+                VECTOR /**< std::vector */
             };
 
-                /**
-                * This class contains APIs for "Type" of the attribute.
-                *  All Types are specified in enum TypeId.
-                *
-                * @see TypeId
-                */
+            /**
+             * A Helper class to identify types of Value.
+             *
+             * @see ResourceAttributes
+             * @see Value
+             * @see TypeId
+             */
             class Type
             {
             public:
@@ -179,15 +172,31 @@ namespace OIC
                 Type& operator=(const Type&) = default;
                 Type& operator=(Type&&) = default;
 
+                /**
+                 * Returns type identifier.
+                 *
+                 * @return Identifier of type.
+                 */
                 TypeId getId() const;
 
+                /**
+                 * Factory method to create Type instance from T.
+                 *
+                 * @return An instance that has TypeId for T.
+                 *
+                 * @note T must be supported by Value. Otherwise, it won't be compiled.
+                 *
+                 * @see is_supported_type
+                 */
                 template < typename T >
                 static Type typeOf(const T& value)
                 {
                     return Type(value);
                 }
 
+                //! @cond
                 friend bool operator==(const Type&, const Type&);
+                //! @endcond
 
             private:
                 template < typename T >
@@ -200,9 +209,15 @@ namespace OIC
                 int m_which;
             };
 
-                /**
-                * This class provides APIs for the Value of the attributes.
-                */
+            /**
+             * Value holds a value among various types at a time.
+             *
+             * Type helps identify type information of Value.
+             *
+             * @see ResourceAttributes
+             * @see Type
+             * @see is_supported_type
+             */
             class Value
             {
             public:
@@ -210,6 +225,10 @@ namespace OIC
                 Value(const Value&);
                 Value(Value&&);
 
+                /**
+                 * Constructs a Value if T is a supported type.<br/>
+                 *       Otherwise it won't be compiled.
+                 */
                 template< typename T, typename = typename enable_if_supported< T >::type >
                 Value(T&& value) :
                         m_data{ new ValueVariant{ std::forward< T >(value) } }
@@ -231,24 +250,51 @@ namespace OIC
                 Value& operator=(const char*);
                 Value& operator=(std::nullptr_t);
 
+                /**
+                 * Returns the underlying value as T.
+                 *
+                 * @return const reference to the underlying value.
+                 *
+                 * @throws BadGetException If type of the underlying value is not T.
+                 */
                 template< typename T >
                 typename std::add_lvalue_reference< const T >::type get() const
                 {
                     return checkedGet< T >();
                 }
 
+                /**
+                 * Returns the underlying value as T.
+                 *
+                 * @return reference to the underlying value.
+                 *
+                 * @throws BadGetException If type of the underlying value is not T.
+                 */
                 template< typename T >
                 typename std::add_lvalue_reference< T >::type get()
                 {
                     return checkedGet< T >();
                 }
 
+                /**
+                 * Returns Type information.
+                 *
+                 * @see Type
+                 */
                 Type getType() const;
 
+                /**
+                 * Returns a string representation.
+                 *
+                 */
                 std::string toString() const;
 
+                /**
+                 * Exchanges the content of the object by the content of the parameter.
+                 */
                 void swap(Value&);
 
+                //! @cond
                 friend bool operator==(const Value&, const Value&);
 
                 template< typename T >
@@ -256,6 +302,9 @@ namespace OIC
                     bool >::type operator==(const Value&, const T&);
 
                 bool operator==(const char*) const;
+
+                friend class ResourceAttributes;
+                //! @endcond
 
             private:
                 template< typename T, typename = typename enable_if_supported< T >::type >
@@ -286,8 +335,6 @@ namespace OIC
 
             private:
                 boost::scoped_ptr< ValueVariant > m_data;
-
-                friend class ResourceAttributes;
             };
 
             class KeyValuePair;
@@ -302,29 +349,141 @@ namespace OIC
             ResourceAttributes& operator=(const ResourceAttributes&) = default;
             ResourceAttributes& operator=(ResourceAttributes&&) = default;
 
+            /**
+             * Returns an {@link iterator} referring to the first element.
+             */
             iterator begin();
+
+            /**
+             * Returns an {@link iterator} referring to the <i>past-the-end element</i>.
+             */
             iterator end();
 
+            /**
+             * @copydoc cbegin()
+             */
             const_iterator begin() const;
+
+            /**
+             * @copydoc cend()
+             */
             const_iterator end() const;
 
+            /**
+             * Returns a const_iterator referring to the first element.
+             */
             const_iterator cbegin() const;
+
+            /**
+             * Returns a const_iterator referring to the <i>past-the-end element</i>.
+             */
             const_iterator cend() const;
 
-            Value& operator[](const std::string&);
-            Value& operator[](std::string&&);
+            /**
+             * Accesses a value.
+             *
+             * If @a key matches the key of a value,
+             * returns a reference to its mapped value. <br/>
+             * If @a key doesn't match the key of any value,
+             * inserts a new value with that key and returns a reference to it.
+             * The element is a Value that has null.
+             *
+             * @param key Key of the element whose mapped value is accessed.
+             *
+             * @return A reference to the mapped value with @a key.
+             *
+             * @see at
+             */
+            Value& operator[](const std::string& key);
 
-            Value& at(const std::string&);
-            const Value& at(const std::string&) const;
+            /**
+             * Accesses a value.
+             *
+             * If @a key matches the key of a value,
+             * returns a reference to its mapped value. <br/>
+             * If @a key doesn't match the key of any value,
+             * inserts a new value with that key and returns a reference to it.
+             * The value has null.
+             *
+             * @param key Key of the element whose mapped value is accessed.
+             *        This is moved instead of copied when a new value is inserted.
+             *
+             * @return A reference to the mapped value with @a key.
+             *
+             * @see at
+             */
+            Value& operator[](std::string&& key);
 
+            /**
+             * Accesses a value.
+             *
+             * If @a key matches the key of a value,
+             * returns a reference to its mapped value. <br/>
+             * If @a key doesn't match the key of any value, throws InvalidKeyException.
+             *
+             * @param key Key of the element whose mapped value is accessed.
+             *
+             * @throws InvalidKeyException If @a key doesn't match the key of any value.
+             *
+             * @return A reference to the mapped value with @a key.
+             *
+             * @see operator[]
+             */
+            Value& at(const std::string& key);
+
+            /**
+              * Accesses a value.
+              *
+              * If @a key matches the key of a value,
+              * returns a reference to its mapped value. <br/>
+              * If @a key doesn't match the key of any value, throws InvalidKeyException.
+              *
+              * @param key Key of the element whose mapped value is accessed.
+              *
+              * @throws InvalidKeyException If @a key doesn't match the key of any value.
+              *
+              * @return A const reference to the mapped value with @a key.
+              *
+              * @see operator[]
+              */
+            const Value& at(const std::string& key) const;
+
+            /**
+             * Removes all elements.
+             */
             void clear();
-            bool erase(const std::string&);
 
-            bool contains(const std::string&) const;
+            /**
+             * Removes a single element.
+             *
+             * @param key Key of the element to be removed.
+             *
+             * @return true if an element is erased, false otherwise.
+             */
+            bool erase(const std::string& key);
+
+            /**
+             * Checks the container has an element with a Key equivalent to key.
+             *
+             * @param key Key to check.
+             *
+             * @return true if an element exists, false otherwise.
+             */
+            bool contains(const std::string& key) const;
+
+            /**
+             * Returns whether it is empty.
+             *
+             * @see size
+             */
             bool empty() const;
-            size_t size() const;
 
-            friend bool operator==(const ResourceAttributes&, const ResourceAttributes&);
+            /**
+             * Returns the number of elements.
+             *
+             * @see empty
+             */
+            size_t size() const;
 
         private:
             template< typename VISITOR >
@@ -342,7 +501,11 @@ namespace OIC
         private:
             std::unordered_map< std::string, Value > m_values;
 
+            //! @cond
             friend class ResourceAttributesConverter;
+
+            friend bool operator==(const ResourceAttributes&, const ResourceAttributes&);
+            //! @endcond
         };
 
         template< typename T >
@@ -360,16 +523,57 @@ namespace OIC
             static constexpr int value = boost::mpl::distance< mpl_begin, iter >::value;
         };
 
+        /**
+         * @relates ResourceAttributes::Type
+         *
+         * Checks if the objects are equal, that is, whether types are exactly same.
+         *
+         * @return true if the objects are equal, false otherwise.
+         */
         bool operator==(const ResourceAttributes::Type&, const ResourceAttributes::Type&);
+
+        /**
+         * @relates ResourceAttributes::Type
+         *
+         * Checks if the objects are not equal, that is, whether types are not exactly same.
+         *
+         * @return true if the objects are not equal, false otherwise.
+         */
         bool operator!=(const ResourceAttributes::Type&, const ResourceAttributes::Type&);
 
+
+        /**
+         * @relates ResourceAttributes::Value
+         *
+         * Checks if the contents are equal, that is,
+         * whether types are matched and underlying values are equal.
+         *
+         * @return true if the contents are equal, false otherwise.
+         */
+        bool operator==(const ResourceAttributes::Value&, const ResourceAttributes::Value&);
+
+        /**
+         * @relates ResourceAttributes::Value
+         *
+         * Checks if the contents are not equal, that is,
+         * whether types are not matched or underlying values are not equal.
+         *
+         * @return true if the contents are not equal, false otherwise.
+         */
         bool operator!=(const ResourceAttributes::Value&, const ResourceAttributes::Value&);
 
+        //! @cond
         template< typename T >
         typename std::enable_if< ResourceAttributes::is_supported_type< T >::value, bool >::type
         operator==(const ResourceAttributes::Value& lhs, const T& rhs)
         {
             return lhs.equals< T >(rhs);
+        }
+
+        template< typename T >
+        bool operator==(const T& lhs, const ResourceAttributes::Value& rhs)
+        {
+            return rhs == lhs;
         }
 
         template< typename T >
@@ -381,27 +585,35 @@ namespace OIC
 
         bool operator!=(const char*, const ResourceAttributes::Value&);
 
-        template< typename T >
-        bool operator==(const T& lhs, const ResourceAttributes::Value& rhs)
-        {
-            return rhs == lhs;
-        }
-
         bool operator==(const char* lhs, const ResourceAttributes::Value& rhs);
+        //! @endcond
 
+        /**
+          * @relates ResourceAttributes
+          *
+          * Checks if the attributes are equal, that is, whether contents are equal.
+          *
+          * @return true if the attributes are equal, false otherwise.
+          */
+        bool operator==(const ResourceAttributes& lhs, const ResourceAttributes& rhs);
+
+        /**
+          * @relates ResourceAttributes
+          *
+          * Checks if the attributes are not equal, that is, whether contents are not equal.
+          *
+          * @return true if the attributes are not equal, false otherwise.
+          */
         bool operator!=(const ResourceAttributes&, const ResourceAttributes&);
 
         /**
-         * This class is for the static visitors of key-value for a attribute.
+         * KeyValuePair is a class to access attribute's key and value of an element pointed by
+         * iterators of ResourceAttributes.
          *
-         * It has three sub-classes
-         * - KeyVisitor : for key visitor
-         * - ValueVisitor : for value visitor
-         * - ConstValueVisitor : for const value visitor
-         * All these 3 sub-classes inheriting the boost::static_visitor which allows invocation as a function
-         * by overloading operator(),  unambiguously accepting any value of type T. All the 3 classes are
-         * inherting the  boost::static_visitor with same type  i.e. String.
          *
+         * @see ResourceAttributes
+         * @see iterator
+         * @see const_iterator
          */
         class ResourceAttributes::KeyValuePair
         {
@@ -445,15 +657,21 @@ namespace OIC
             ValueVisitor m_valueVisitor;
             ConstValueVisitor m_constValueVisitor;
 
+            //! @cond
             friend class iterator;
             friend class const_iterator;
+            //! @endcond
         };
 
         /**
-        * This class is an Iterator for the ResourceAttributes.
-        */
-        class ResourceAttributes::iterator: public std::iterator< std::forward_iterator_tag,
-                ResourceAttributes::KeyValuePair >
+         * A forward iterator to KeyValuePair.
+         *
+         * @see ResourceAttributes
+         * @see KeyValuePair
+         * @see const_iterator
+         */
+        class ResourceAttributes::iterator:
+                public std::iterator< std::forward_iterator_tag, ResourceAttributes::KeyValuePair >
         {
         private:
             typedef std::unordered_map< std::string, Value >::iterator base_iterator;
@@ -480,13 +698,22 @@ namespace OIC
             base_iterator m_cur;
             ResourceAttributes::KeyValuePair m_keyValuePair;
 
+            //! @cond
             friend class ResourceAttributes;
+            //! @endcond
         };
+
+
         /**
-        * This class is an Const Iterator for the ResourceAttributes.
-        */
-        class ResourceAttributes::const_iterator: public std::iterator < std::forward_iterator_tag,
-                const ResourceAttributes::KeyValuePair >
+         * A forward iterator to const KeyValuePair.
+         *
+         * @see ResourceAttributes
+         * @see KeyValuePair
+         * @see iterator
+         */
+        class ResourceAttributes::const_iterator:
+                public std::iterator < std::forward_iterator_tag,
+                                       const ResourceAttributes::KeyValuePair >
         {
         private:
             typedef std::unordered_map< std::string, Value >::const_iterator base_iterator;
@@ -515,7 +742,9 @@ namespace OIC
             base_iterator m_cur;
             ResourceAttributes::KeyValuePair m_keyValuePair;
 
+            //! @cond
             friend class ResourceAttributes;
+            //! @endcond
         };
 
     }
