@@ -35,7 +35,7 @@ namespace OIC
 {
     namespace Service
     {
-        class ResourcePresence
+        class ResourcePresence : public std::enable_shared_from_this<ResourcePresence>
         {
         public:
             ResourcePresence();
@@ -64,10 +64,8 @@ namespace OIC
             BROKER_MODE mode;
 
             bool isWithinTime;
-            boost::atomic_bool isTimeoutCB;
             boost::atomic_long receivedTime;
             std::mutex cbMutex;
-            std::condition_variable cbCondition;
             unsigned int timeoutHandle;
 
             RequestGetCB pGetCB;
@@ -75,10 +73,12 @@ namespace OIC
             TimerCB pPollingCB;
 
             void registerDevicePresence();
+        public:
             void getCB(const HeaderOptions &hos, const ResponseStatement& rep, int eCode);
+            void timeOutCB(unsigned int msg);
+        private:
             void verifiedGetResponse(int eCode);
 
-            void timeOutCB(unsigned int msg);
             void pollingCB(unsigned int msg = 0);
 
             void executeAllBrokerCB(BROKER_STATE changedState);
