@@ -10,6 +10,7 @@
 #include "ResourcePresence.h"
 #include "PrimitiveResource.h"
 #include "ResponseStatement.h"
+#include "UnitTestHelper.h"
 
 using namespace testing;
 using namespace OIC::Service;
@@ -20,7 +21,7 @@ using namespace OC;
 typedef OCStackResult (*subscribePresenceSig1)(OC::OCPlatform::OCPresenceHandle&,
         const std::string&, OCConnectivityType, SubscribeCallback);
 
-class DeviceAssociationTest : public Test
+class DeviceAssociationTest : public TestWithMock
 {
 public:
 
@@ -44,50 +45,42 @@ protected:
         instance->addDevice(device);
     }
 
-    void SetUp()
+    void SetUp() override
     {
         instance = DeviceAssociation::getInstance();
         device = (DevicePresencePtr)new DevicePresence();
         pResource = PrimitiveResource::Ptr(mocks.Mock< PrimitiveResource >(), [](PrimitiveResource*){});
     }
 
-    void TearDown()
+    void TearDown() override
     {
         device.reset();
         pResource.reset();
 
     }
-    virtual ~DeviceAssociationTest() noexcept(true)
-    {
-    }
-
-
 };
 
 TEST_F(DeviceAssociationTest,findDevice_ReturnNormalValueIfNormalParam)
 {
-    SetUp();
+
     SetAssociationDevice();
     ASSERT_NE(nullptr,instance->findDevice(pResource->getHost()));
-    TearDown();
+
 
 }
 
 TEST_F(DeviceAssociationTest,addDevice_NormalHandlingIfNormalParam)
 {
-    SetUp();
+
     SetAssociationDevice();
     ASSERT_FALSE(instance->isEmptyDeviceList());
-    TearDown();
-
 }
 
 TEST_F(DeviceAssociationTest,removeDevice_NormalHandlingIfNormalParam)
 {
-    SetUp();
+
     SetAssociationDevice();
     instance->removeDevice(device);
     ASSERT_TRUE(instance->isEmptyDeviceList());
-    TearDown();
 }
 

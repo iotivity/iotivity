@@ -56,6 +56,8 @@ broker_test_env.AppendUnique(CPPPATH = ['../../../include'])
 broker_test_env.AppendUnique(CPPPATH = ['../../common/primitiveResource/include'])
 broker_test_env.AppendUnique(CPPPATH = ['../../common/expiryTimer/include'])
 broker_test_env.AppendUnique(CPPPATH = ['../../common/expiryTimer/src'])
+broker_test_env.AppendUnique(CPPPATH = ['../../common/utils/include'])
+
 broker_test_env.PrependUnique(CPPPATH = [env.get('SRC_DIR')+'/extlibs/hippomocks-master',
                              gtest_dir + '/include'])
 broker_test_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])

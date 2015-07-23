@@ -99,5 +99,5 @@ SConscript('examples/SConscript')
 ################################################ ######################
 SConscript('unittests/SConscript')
 SConscript('src/resourceCache/unittests/SConscript')
-SConscript('src/resourceBroker/unittest/SConscript')
+#SConscript('src/resourceBroker/unittest/SConscript')
 
