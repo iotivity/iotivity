@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -38,15 +38,13 @@
 #include "oic_string.h"
 
 /**
- * @def TAG
- * @brief Logging tag for module name
+ * Logging tag for module name.
  */
 #define TAG "IP_ADAP"
 
 #ifndef SINGLE_THREAD
 /**
- * @var CAIPData
- * @brief Holds inter thread ip data information.
+ * Holds inter thread ip data information.
  */
 typedef struct
 {
@@ -57,27 +55,23 @@ typedef struct
 } CAIPData;
 
 /**
- * @var g_sendQueueHandle
- * @brief Queue handle for Send Data
+ * Queue handle for Send Data.
  */
 static CAQueueingThread_t *g_sendQueueHandle = NULL;
 #endif
 
 /**
- * @var g_networkPacketCallback
- * @brief Network Packet Received Callback to CA
+ * Network Packet Received Callback to CA.
  */
 static CANetworkPacketReceivedCallback g_networkPacketCallback = NULL;
 
 /**
- * @var g_networkChangeCallback
- * @brief Network Changed Callback to CA
+ * Network Changed Callback to CA.
  */
 static CANetworkChangeCallback g_networkChangeCallback = NULL;
 
 /**
- * @var g_errorCallback
- * @brief error Callback to CA adapter
+ * error Callback to CA adapter.
  */
 static CAErrorHandleCallback g_errorCallback = NULL;
 
@@ -539,4 +533,3 @@ void CADataDestroyer(void *data, uint32_t size)
 }
 
 #endif // SINGLE_THREAD
-

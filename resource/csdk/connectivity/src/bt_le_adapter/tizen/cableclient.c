@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
 *
 * Copyright 2014 Samsung Electronics All Rights Reserved.
 *
@@ -39,103 +39,87 @@
 #include "oic_malloc.h"
 
 /**
- * @def TZ_BLE_CLIENT_TAG
- * @brief Logging tag for module name
+ * Logging tag for module name.
  */
 #define TZ_BLE_CLIENT_TAG "TZ_BLE_GATT_CLIENT"
 
 /**
- * @var BLE_UUID_DESCRIPTOR_CLIENT_CHAR_CONFIG
- * @brief Its the constant value for characteristic descriptor from spec.
+ * Its the constant value for characteristic descriptor from spec.
  */
 #define BLE_UUID_DESCRIPTOR_CLIENT_CHAR_CONFIG "2902"
 
 /**
- * @var g_bLEServiceList
- * @brief This contains the list of OIC services a client connect tot.
+ * This contains the list of OIC services a client connect tot.
  */
 static BLEServiceList *g_bLEServiceList = NULL;
 
 /**
- * @var g_isBleGattClientStarted
- * @brief Boolean variable to keep the state of the GATT Client.
+ * Boolean variable to keep the state of the GATT Client.
  */
 static bool g_isBleGattClientStarted = false;
 
 /**
- * @var g_bleServiceListMutex
- * @brief Mutex to synchronize access to BleServiceList.
+ * Mutex to synchronize access to BleServiceList.
  */
 static ca_mutex g_bleServiceListMutex = NULL;
 
 /**
- * @var g_bleReqRespClientCbMutex
- * @brief Mutex to synchronize access to the requestResponse callback to be called
- *           when the data needs to be sent from GATTClient.
+ * Mutex to synchronize access to the requestResponse callback to be called
+ *    when the data needs to be sent from GATTClient.
  */
 static ca_mutex g_bleReqRespClientCbMutex = NULL;
 
 /**
- * @var g_bleReqRespClientCbMutex
- * @brief Mutex to synchronize access to the requestResponse callback to be called
- *           when the data needs to be sent from GATTClient.
+ * Mutex to synchronize access to the requestResponse callback to be called
+ *    when the data needs to be sent from GATTClient.
  */
 static ca_mutex g_bleClientConnectMutex = NULL;
 
 
 /**
- * @var g_bleClientStateMutex
- * @brief Mutex to synchronize the calls to be done to the platform from GATTClient
- *           interfaces from different threads.
+ * Mutex to synchronize the calls to be done to the platform from GATTClient
+ *    interfaces from different threads.
  */
 static ca_mutex g_bleClientStateMutex = NULL;
 
 /**
- * @var g_bleServerBDAddressMutex
- * @brief Mutex to synchronize the Server BD Address update on client side.
+ * Mutex to synchronize the Server BD Address update on client side.
  */
 static ca_mutex g_bleServerBDAddressMutex = NULL;
 
 /**
- * @var g_bleClientSendCondWait
- * @brief Condition used for notifying handler the presence of data in send queue.
+ * Condition used for notifying handler the presence of data in send queue.
  */
 static ca_cond g_bleClientSendCondWait = NULL;
 
 /**
- * @var g_bleClientThreadPoolMutex
- * @brief Mutex to synchronize the task to be pushed to thread pool.
+ * Mutex to synchronize the task to be pushed to thread pool.
  */
 static ca_mutex g_bleClientThreadPoolMutex = NULL;
 
 /**
- * @var gNetworkPacketReceivedClientCallback
- * @brief Maintains the callback to be notified on receival of network packets from other
- *           BLE devices
+ * Maintains the callback to be notified on receival of network packets
+ *    from other BLE devices
  */
 static CABLEClientDataReceivedCallback g_bleClientDataReceivedCallback = NULL;
 
 /**
- * @var g_clientErrorCallback
- * @brief callback to update the error to le adapter
+ * callback to update the error to le adapter
  */
 static CABLEErrorHandleCallback g_clientErrorCallback;
 
 /**
- * @var g_eventLoop
- * @brief gmainLoop to manage the threads to receive the callback from the platfrom.
+ * gmainLoop to manage the threads to receive the callback from the platfrom.
  */
 static GMainLoop *g_eventLoop = NULL;
 
 /**
- * @var g_bleClientThreadPool
- * @brief reference to threadpool
+ * reference to threadpool.
  */
 static ca_thread_pool_t g_bleClientThreadPool = NULL;
 
 /**
- * @struct stGattServiceInfo_t
- * @brief structure to map the service attribute to BD Address.
+ * structure to map the service attribute to BD Address.
  */
 typedef struct gattService
 {
@@ -144,8 +128,7 @@ typedef struct gattService
 } stGattServiceInfo_t;
 
 /**
- * @var g_remoteAddress
- * @brief Remote address of Gatt Server
+ * Remote address of Gatt Server.
  */
 static char *g_remoteAddress = NULL;
 
@@ -1490,5 +1473,3 @@ CAResult_t  CAUpdateCharacteristicsToAllGattServers(const char  *data,
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "OUT ");
     return CA_STATUS_OK;
 }
-
-

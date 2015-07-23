@@ -38,74 +38,64 @@
 #include "caedrdevicelist.h"
 
 /**
- * @var g_edrDeviceListMutex
- * @brief Mutex to synchronize the access to Bluetooth device information list.
+ * Mutex to synchronize the access to Bluetooth device information list.
  */
 static ca_mutex g_edrDeviceListMutex = NULL;
 
 /**
- * @var g_edrDeviceList
- * @brief Peer Bluetooth device information list.
+ * Peer Bluetooth device information list.
  */
 static EDRDeviceList *g_edrDeviceList = NULL;
 
 /**
- * @var gEDRNetworkChangeCallback
- * @brief Maintains the callback to be notified when data received from remote Bluetooth device
+ * Maintains the callback to be notified when data received from remote
+ * Bluetooth device.
  */
 static CAEDRDataReceivedCallback g_edrPacketReceivedCallback = NULL;
 
 /**
- * @var g_edrErrorHandler
- * @brief Error callback to update error in EDR
+ * Error callback to update error in EDR.
  */
 static CAEDRErrorHandleCallback g_edrErrorHandler = NULL;
+
 /**
- * @fn CAEDRManagerInitializeMutex
- * @brief This function creates mutex.
+ * This function creates mutex.
  */
 static void CAEDRManagerInitializeMutex(void);
 
 /**
- * @fn CAEDRManagerTerminateMutex
- * @brief This function frees mutex.
+ * This function frees mutex.
  */
 static void CAEDRManagerTerminateMutex(void);
 
 /**
- * @fn CAEDRDataRecvCallback
- * @brief This callback is registered to recieve data on any open RFCOMM connection.
+ * This callback is registered to recieve data on any open RFCOMM connection.
  */
 static void CAEDRDataRecvCallback(bt_socket_received_data_s *data, void *userData);
 
 /**
- * @brief This function starts device discovery.
- * @return NONE
+ * This function starts device discovery.
  */
 static CAResult_t CAEDRStartDeviceDiscovery(void);
 
 /**
- * @fn CAEDRStopServiceSearch
- * @brief This function stops any ongoing service sevice search.
+ * This function stops any ongoing service sevice search.
  */
 static CAResult_t CAEDRStopServiceSearch(void);
 
 /**
- * @fn CAEDRStopDeviceDiscovery
- * @brief This function stops device discovery.
+ * This function stops device discovery.
  */
 static CAResult_t CAEDRStopDeviceDiscovery(void);
 
 /**
- * @fn CAEDRStartServiceSearch
- * @brief This function searches for OIC service for remote Bluetooth device.
+ * This function searches for OIC service for remote Bluetooth device.
  */
 static CAResult_t CAEDRStartServiceSearch(const char *remoteAddress);
 
 /**
- * @fn CAEDRDeviceDiscoveryCallback
- * @brief This callback is registered to recieve all bluetooth nearby devices when device
- *           scan is initiated.
+ * This callback is registered to recieve all bluetooth nearby devices
+ * when device scan is initiated.
  */
 static void CAEDRDeviceDiscoveryCallback(int result,
                                          bt_adapter_device_discovery_state_e state,
@@ -113,30 +103,27 @@ static void CAEDRDeviceDiscoveryCallback(int result,
                                          void *userData);
 
 /**
- * @fn CAEDRServiceSearchedCallback
- * @brief This callback is registered to recieve all the services remote bluetooth device supports
- *           when service search initiated.
+ * This callback is registered to recieve all the services remote
+ * bluetooth device supports when service search initiated.
  */
 static void CAEDRServiceSearchedCallback(int result, bt_device_sdp_info_s *sdpInfo,
                                         void *userData);
 
 /**
- * @fn CAEDRSocketConnectionStateCallback
- * @brief This callback is registered to receive bluetooth RFCOMM connection state changes.
+ * This callback is registered to receive bluetooth RFCOMM connection
+ * state changes.
  */
 static void CAEDRSocketConnectionStateCallback(int result,
                                     bt_socket_connection_state_e state,
                                               bt_socket_connection_s *connection, void *userData);
 
 /**
- * @fn CAEDRClientConnect
- * @brief Establishes RFCOMM connection with remote bluetooth device
+ * Establishes RFCOMM connection with remote bluetooth device.
  */
 static CAResult_t CAEDRClientConnect(const char *remoteAddress, const char *serviceUUID);
 
 /**
- * @fn CAEDRClientDisconnect
- * @brief  Disconnect RFCOMM client socket connection
+ * Disconnect RFCOMM client socket connection.
  */
 static CAResult_t CAEDRClientDisconnect(const int32_t clientID);
 
@@ -873,5 +860,3 @@ void CAEDRDataRecvCallback(bt_socket_received_data_s *data, void *userData)
 
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
 }
-
-

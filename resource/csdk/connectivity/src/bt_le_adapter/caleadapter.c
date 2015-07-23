@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -35,113 +35,97 @@
 #include "caremotehandler.h"
 
 /**
- * @var CALEADAPTER_TAG
- * @brief Logging tag for module name.
+ * Logging tag for module name.
  */
 #define CALEADAPTER_TAG "LAD"
 
 /**
- * @var g_networkCallback
- * @brief Callback to provide the status of the network change to CA layer.
+ * Callback to provide the status of the network change to CA layer.
  */
 static CANetworkChangeCallback g_networkCallback = NULL;
 
 /**
- * @var g_localBLEAddress
- * @brief bleAddress of the local adapter. Value will be initialized to zero, and will
+ * bleAddress of the local adapter. Value will be initialized to zero, and will
  *        be updated later.
  */
 static char g_localBLEAddress[18] = {0};
 
 /**
- * @var g_isServer
- * @brief Variable to differentiate btw GattServer and GattClient.
+ * Variable to differentiate btw GattServer and GattClient.
  */
 static bool g_isServer = false;
 
 /**
- * @var g_bleIsServerMutex
- * @brief Mutex to synchronize the task to be executed on the GattServer function calls.
+ * Mutex to synchronize the task to be executed on the GattServer function
+ * calls.
  */
 static ca_mutex g_bleIsServerMutex = NULL;
 
 /**
- * @var g_bleNetworkCbMutex
- * @brief Mutex to synchronize the callback to be called for the network changes.
+ * Mutex to synchronize the callback to be called for the network changes.
  */
 static ca_mutex g_bleNetworkCbMutex = NULL;
 
 /**
- * @var g_bleLocalAddressMutex
- * @brief Mutex to synchronize the updation of the local LE address of the adapter.
+ * Mutex to synchronize the updation of the local LE address of the adapter.
  */
 static ca_mutex g_bleLocalAddressMutex = NULL;
 
 /**
- * @var g_bleAdapterThreadPool
- * @brief reference to threadpool
+ * reference to threadpool.
  */
 static ca_thread_pool_t g_bleAdapterThreadPool = NULL;
 
 /**
- * @var g_bleAdapterThreadPoolMutex
- * @brief Mutex to synchronize the task to be pushed to thread pool.
+ * Mutex to synchronize the task to be pushed to thread pool.
  */
 static ca_mutex g_bleAdapterThreadPoolMutex = NULL;
 
 /**
- * @var g_bleClientSendDataMutex
- * @brief Mutex to synchronize the queing of the data from SenderQueue.
+ * Mutex to synchronize the queing of the data from SenderQueue.
  */
 static ca_mutex g_bleClientSendDataMutex = NULL;
 
 /**
- * @var g_bleClientReceiveDataMutex
- * @brief Mutex to synchronize the queing of the data from ReceiverQueue.
+ * Mutex to synchronize the queing of the data from ReceiverQueue.
  */
 static ca_mutex g_bleClientReceiveDataMutex = NULL;
 
 
 /**
- * @var g_bleServerSendDataMutex
- * @brief Mutex to synchronize the queing of the data from SenderQueue.
+ * Mutex to synchronize the queing of the data from SenderQueue.
  */
 static ca_mutex g_bleServerSendDataMutex = NULL;
 
 /**
- * @var g_bleServerReceiveDataMutex
- * @brief Mutex to synchronize the queing of the data from ReceiverQueue.
+ * Mutex to synchronize the queing of the data from ReceiverQueue.
  */
 static ca_mutex g_bleServerReceiveDataMutex = NULL;
 
 /**
- * @var g_bleAdapterReqRespCbMutex
- * @brief Mutex to synchronize the callback to be called for the adapterReqResponse.
+ * Mutex to synchronize the callback to be called for the adapterReqResponse.
  */
 static ca_mutex g_bleAdapterReqRespCbMutex = NULL;
 
 /**
- * @var g_networkPacketReceivedCallback
- * @brief Callback to be called when network packet recieved from either GattServer or GattClient.
+ * Callback to be called when network packet recieved from either
+ * GattServer or GattClient.
  */
 static CANetworkPacketReceivedCallback g_networkPacketReceivedCallback = NULL;
 
 /**
- * @var g_errorHandler
- * @brief Callback to notify error from the BLE adapter
+ * Callback to notify error from the BLE adapter.
  */
 static CAErrorHandleCallback g_errorHandler = NULL;
 
 /**
- * @var g_bleAdapterState
- * @brief Storing Adapter state information
+ * Storing Adapter state information.
  */
 static CAAdapterState_t g_bleAdapterState = CA_ADAPTER_DISABLED;
 
 /**
- * @ENUM CALeServerStatus
- * @brief status of BLE Server Status
- *  This ENUM provides information of LE Adapter Server status
+ * status of BLE Server Status.
+ * This ENUM provides information of LE Adapter Server status.
  */
 typedef enum
 {
@@ -151,114 +135,96 @@ typedef enum
 } CALeServerStatus;
 
 /**
- * @var gLeServerStatus
- * @brief structure to maintain the status of the server.
+ * structure to maintain the status of the server.
  */
 static CALeServerStatus gLeServerStatus = CA_SERVER_NOTSTARTED;
 
 /**
-* @fn  CALERegisterNetworkNotifications
-* @brief  This function is used to register network change notification callback.
+* This function is used to register network change notification callback.
 *
-* @param[in]  netCallback CANetworkChangeCallback callback which will be set for the change in nwk.
+* @param[in]  netCallback CANetworkChangeCallback callback which will be
+* set for the change in nwk.
 *
 * @return  0 on success otherwise a positive error value.
-* @retval  CA_STATUS_OK  Successful
-* @retval  CA_STATUS_INVALID_PARAM  Invalid input argumets
-* @retval  CA_STATUS_FAILED Operation failed
+* @retval  CA_STATUS_OK  Successful.
+* @retval  CA_STATUS_INVALID_PARAM  Invalid input argumets.
+* @retval  CA_STATUS_FAILED Operation failed.
 *
 */
 CAResult_t CALERegisterNetworkNotifications(CANetworkChangeCallback netCallback);
 
 /**
-* @fn  CASetBleAdapterThreadPoolHandle
-* @brief  Used to Set the gThreadPool handle which is required for spawning new thread.
+* Used to Set the gThreadPool handle which is required for spawning new thread.
 *
-* @param[in] handle - Thread pool handle which is given by above layer for using thread
-*                     creation task.
-*
-* @return  void
+* @param[in] handle - Thread pool handle which is given by above layer for
+* using thread creation task.
 *
 */
 void CASetLEAdapterThreadPoolHandle(ca_thread_pool_t handle);
 
 /**
-* @fn  CALEDeviceStateChangedCb
-* @brief  This function is used to call the callback to the upper layer when the device state gets
-*         changed.
+* This function is used to call the callback to the upper layer when the
+* device state gets changed.
 *
-* @param[in]  adapter_state New state of the adapter to be notified to the upper layer.
-*
-* @return  None.
+* @param[in]  adapter_state New state of the adapter to be notified to the
+* upper layer.
 *
 */
 void CALEDeviceStateChangedCb( CAAdapterState_t adapter_state);
 
 /**
-* @fn  CAInitBleAdapterMutex
-* @brief  Used to initialize all required mutex variable for LE Adapter implementation.
+* Used to initialize all required mutex variable for LE Adapter implementation.
 *
 * @return  0 on success otherwise a positive error value.
-* @retval  CA_STATUS_OK  Successful
-* @retval  CA_STATUS_INVALID_PARAM  Invalid input argumets
-* @retval  CA_STATUS_FAILED Operation failed
+* @retval  CA_STATUS_OK  Successful.
+* @retval  CA_STATUS_INVALID_PARAM  Invalid input argumets.
+* @retval  CA_STATUS_FAILED Operation failed.
 *
 */
 CAResult_t CAInitLEAdapterMutex();
 
 /**
-* @fn  CATerminateBleAdapterMutex
-* @brief  Used to terminate all required mutex variable for LE adapter implementation.
+* Used to terminate all required mutex variable for LE adapter implementation.
 *
-* @return  void
 */
 void CATerminateLEAdapterMutex();
 
 /**
-* @fn  CALEErrorHandler
-* @brief  prepares and notify error through error callback
+* prepares and notify error through error callback.
 *
-* @return  void
 */
 static void CALEErrorHandler(const char *remoteAddress, const void *data, uint32_t dataLen,
                              CAResult_t result);
 
 #ifndef SINGLE_THREAD
 /**
- * @var g_dataReceiverHandlerState
- * @brief Stop condition of recvhandler.
+ * Stop condition of recvhandler.
  */
 static bool g_dataReceiverHandlerState = false;
 
 /**
- * @var g_bleClientSendQueueHandle
- * @brief Queue to process the outgoing packets from GATTClient.
+ * Queue to process the outgoing packets from GATTClient.
  */
 static CAQueueingThread_t *g_bleClientSendQueueHandle = NULL;
 
 /**
- * @var g_bleClientReceiverQueue
- * @brief Queue to process the incoming packets to GATT Client.
+ * Queue to process the incoming packets to GATT Client.
  */
 static CAQueueingThread_t *g_bleClientReceiverQueue = NULL;
 
 /**
- * @var g_bleServerSendQueueHandle
- * @brief Queue to process the outgoing packets from GATTServer.
+ * Queue to process the outgoing packets from GATTServer.
  */
 static CAQueueingThread_t *g_bleServerSendQueueHandle = NULL;
 
 /**
- * @var g_bleServerReceiverQueue
- * @brief Queue to process the incoming packets to GATTServer
+ * Queue to process the incoming packets to GATTServer.
  */
 static CAQueueingThread_t *g_bleServerReceiverQueue = NULL;
 
 /**
-* @fn  CALEDataDestroyer
-* @brief  Used to free data
+* Used to free data.
 *
-* @return  void
 */
 static void CALEDataDestroyer(void *data, uint32_t size);
 
