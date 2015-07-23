@@ -680,7 +680,6 @@ static void CANetworkChangedCallback(const CAEndpoint_t *info, CANetworkStatus_t
 
 void CAHandleRequestResponseCallbacks()
 {
-    OIC_LOG(DEBUG, TAG, "CAHandleRequestResponseCallbacks IN");
 #ifdef SINGLE_THREAD
     CAReadData();
     CARetransmissionBaseRoutine((void *)&g_retransmissionContext);
@@ -733,7 +732,6 @@ void CAHandleRequestResponseCallbacks()
 
 #endif /* SINGLE_HANDLE */
 #endif
-    OIC_LOG(DEBUG, TAG, "CAHandleRequestResponseCallbacks OUT");
 }
 
 static CAData_t* CAPrepareSendData(const CAEndpoint_t *endpoint, const void *sendData,

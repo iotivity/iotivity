@@ -120,9 +120,11 @@ function build_darwin() # Mac OSx and iOS
 
 function unit_tests()
 {
+	echo "*********** Unit test Start *************"
 	scons resource RELEASE=false -c
 	scons resource LOGGING=false RELEASE=false
 	scons resource TEST=1 RELEASE=false
+	echo "*********** Unit test Stop *************"
 }
 
 function  help()
