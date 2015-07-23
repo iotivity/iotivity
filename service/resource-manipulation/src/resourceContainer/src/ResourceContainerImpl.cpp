@@ -79,7 +79,7 @@ namespace OIC
                    && str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
         }
 
-        void ResourceContainerImpl::startContainer(string configFile)
+        void ResourceContainerImpl::startContainer(const std::string &configFile)
         {
             info_logger() << "Starting resource container " << endl;
 #if (JAVA_SUPPORT)
@@ -167,7 +167,7 @@ namespace OIC
             }
         }
 
-        void ResourceContainerImpl::activateBundle(string id)
+        void ResourceContainerImpl::activateBundle(const std::string &id)
         {
 
             info_logger() << "Activating bundle: " << m_bundles[id]->getID() << endl;
@@ -187,7 +187,7 @@ namespace OIC
 
         }
 
-        void ResourceContainerImpl::deactivateBundle(string id)
+        void ResourceContainerImpl::deactivateBundle(const std::string &id)
         {
 
             if (m_bundles[id]->getJavaBundle())
@@ -239,7 +239,7 @@ namespace OIC
             }
         }
 
-        void ResourceContainerImpl::unregisterBundleSo(string id)
+        void ResourceContainerImpl::unregisterBundleSo(const std::string &id)
         {
             void *bundleHandle = m_bundles[id]->getBundleHandle();
             info_logger() << "Unregister bundle: " << m_bundles[id]->getID() << ", "
@@ -312,7 +312,7 @@ namespace OIC
             }
         }
 
-        void ResourceContainerImpl::getBundleConfiguration(std::string bundleId,
+        void ResourceContainerImpl::getBundleConfiguration(const std::string &bundleId,
                 configInfo *configOutput)
         {
             if (m_config)
@@ -321,7 +321,7 @@ namespace OIC
             }
         }
 
-        void ResourceContainerImpl::getResourceConfiguration(std::string bundleId,
+        void ResourceContainerImpl::getResourceConfiguration(const std::string &bundleId,
                 std::vector< resourceInfo > *configOutput)
         {
             if (m_config)
@@ -369,7 +369,7 @@ namespace OIC
             return RCSSetResponse::create(attr);
         }
 
-        void ResourceContainerImpl::onNotificationReceived(std::string strResourceUri)
+        void ResourceContainerImpl::onNotificationReceived(const std::string &strResourceUri)
         {
             info_logger() << "ResourceContainerImpl::onNotificationReceived\n\tnotification from "
                           << strResourceUri << ".\n";
@@ -386,14 +386,14 @@ namespace OIC
             return &m_instance;
         }
 
-        ResourceObject::Ptr ResourceContainerImpl::buildResourceObject(string strUri,
-                string strResourceType)
+        ResourceObject::Ptr ResourceContainerImpl::buildResourceObject(const std::string & strUri,
+                const std::string & strResourceType)
         {
             return ResourceObject::Builder(strUri, strResourceType, "DEFAULT_INTERFACE").setObservable(
                        true).setDiscoverable(true).build();
         }
 
-        void ResourceContainerImpl::startBundle(string bundleId)
+        void ResourceContainerImpl::startBundle(const std::string &bundleId)
         {
             if (m_bundles.find(bundleId) != m_bundles.end())
             {
@@ -408,7 +408,7 @@ namespace OIC
             }
         }
 
-        void ResourceContainerImpl::stopBundle(string bundleId)
+        void ResourceContainerImpl::stopBundle(const std::string &bundleId)
         {
             if (m_bundles.find(bundleId) != m_bundles.end())
             {
@@ -423,7 +423,7 @@ namespace OIC
             }
         }
 
-        void ResourceContainerImpl::addBundle(string bundleId, string bundleUri, string bundlePath,
+        void ResourceContainerImpl::addBundle(const std::string &bundleId, const std::string &bundleUri, const std::string &bundlePath,
                                               std::map< string, string > params)
         {
             if (m_bundles.find(bundleId) != m_bundles.end())
@@ -449,7 +449,7 @@ namespace OIC
             }
         }
 
-        void ResourceContainerImpl::removeBundle(string bundleId)
+        void ResourceContainerImpl::removeBundle(const std::string &bundleId)
         {
             if (m_bundles.find(bundleId) != m_bundles.end())
             {
@@ -482,7 +482,7 @@ namespace OIC
             return ret;
         }
 
-        void ResourceContainerImpl::addResourceConfig(string bundleId, string resourceUri,
+        void ResourceContainerImpl::addResourceConfig(const std::string &bundleId, const std::string &resourceUri,
                 std::map< string, string > params)
         {
             if (m_bundles.find(bundleId) != m_bundles.end())
@@ -509,7 +509,7 @@ namespace OIC
             }
         }
 
-        void ResourceContainerImpl::removeResourceConfig(string bundleId, string resourceUri)
+        void ResourceContainerImpl::removeResourceConfig(const std::string &bundleId, const std::string &resourceUri)
         {
             if (m_bundles.find(bundleId) != m_bundles.end())
             {
@@ -525,7 +525,7 @@ namespace OIC
             }
         }
 
-        std::list< string > ResourceContainerImpl::listBundleResources(string bundleId)
+        std::list< string > ResourceContainerImpl::listBundleResources(const std::string &bundleId)
         {
             std::list< string > ret;
 
@@ -587,7 +587,7 @@ namespace OIC
             }
         }
 
-        void ResourceContainerImpl::activateSoBundle(string bundleId)
+        void ResourceContainerImpl::activateSoBundle(const std::string &bundleId)
         {
             activator_t *bundleActivator = m_bundles[bundleId]->getBundleActivator();
 
@@ -606,7 +606,7 @@ namespace OIC
             bundleInfoInternal->setActivated(true);
         }
 
-        void ResourceContainerImpl::deactivateSoBundle(string id)
+        void ResourceContainerImpl::deactivateSoBundle(const std::string &id)
         {
             deactivator_t *bundleDeactivator = m_bundles[id]->getBundleDeactivator();
             info_logger() << "De-activating bundle: " << m_bundles[id]->getID() << endl;
@@ -623,7 +623,7 @@ namespace OIC
             }
         }
 
-        void ResourceContainerImpl::addSoBundleResource(string bundleId,
+        void ResourceContainerImpl::addSoBundleResource(const std::string &bundleId,
                 resourceInfo newResourceInfo)
         {
             resourceCreator_t *resourceCreator;
@@ -640,7 +640,7 @@ namespace OIC
             }
         }
 
-        void ResourceContainerImpl::removeSoBundleResource(string bundleId, string resourceUri)
+        void ResourceContainerImpl::removeSoBundleResource(const std::string &bundleId, const std::string &resourceUri)
         {
             if (m_mapResources.find(resourceUri) != m_mapResources.end())
             {

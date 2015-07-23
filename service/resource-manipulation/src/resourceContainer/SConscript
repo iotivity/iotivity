@@ -25,6 +25,8 @@ import os
 Import('env')
 import os.path
 
+containerJavaSupport = ARGUMENTS.get('containerJavaSupport',0)
+
 def filtered_glob(env, pattern, omit=[],
   ondisk=True, source=False, strings=False):
     return filter(
@@ -43,21 +45,22 @@ target_os = env.get('TARGET_OS')
 # Build flags
 ######################################################################
 
-try:
-	print 'Java Home: ', os.environ['JAVA_HOME']
-	print 'Java Lib: ', os.environ['JAVA_LIB']
-	resource_container_env.Append(CPPDEFINES={'JAVA_SUPPORT':1})
-except KeyError:
-	print '''
-*********************************** Error *************************************
-* Building resource container without Java support. JAVA_HOME or JAVA_LIB are not set properly 
-* Please configure JAVA_HOME to point to your Java 7 JDK and 
-* JAVA_LIB to your folder containing libjvm
-* Example: export JAVA_HOME=/usr/lib/jvm/java-7-openjdk-i386
-*          export JAVA_LIB=/usr/lib/jvm/java-7-openjdk-i386/jre/lib/i386/server
-*******************************************************************************	
-	'''
-	resource_container_env.Append(CPPDEFINES={'JAVA_SUPPORT':0})
+if int(containerJavaSupport):
+	try:
+		print 'Java Home: ', os.environ['JAVA_HOME']
+		print 'Java Lib: ', os.environ['JAVA_LIB']
+		resource_container_env.Append(CPPDEFINES={'JAVA_SUPPORT':1})
+	except KeyError:
+		print '''
+	*********************************** Error *************************************
+	* Building resource container without Java support. JAVA_HOME or JAVA_LIB are not set properly 
+	* Please configure JAVA_HOME to point to your Java 7 JDK and 
+	* JAVA_LIB to your folder containing libjvm
+	* Example: export JAVA_HOME=/usr/lib/jvm/java-7-openjdk-i386
+	*          export JAVA_LIB=/usr/lib/jvm/java-7-openjdk-i386/jre/lib/i386/server
+	*******************************************************************************	
+		'''
+		resource_container_env.Append(CPPDEFINES={'JAVA_SUPPORT':0})
 	
 
 resource_container_env.AppendUnique(
@@ -69,16 +72,16 @@ resource_container_env.AppendUnique(
 		'src'		
 	])
 
-try:
-	resource_container_env.AppendUnique(
-	CPPPATH = [
-		os.environ['JAVA_HOME']+'/include',
-		os.environ['JAVA_HOME']+'/include/linux'		
-	])
-except KeyError:
-	print ''
-	
-
+if int(containerJavaSupport):
+	try:
+		resource_container_env.AppendUnique(
+		CPPPATH = [
+			os.environ['JAVA_HOME']+'/include',
+			os.environ['JAVA_HOME']+'/include/linux'		
+		])
+	except KeyError:
+		print ''
+		
 
 if target_os not in ['windows', 'winrt']:
     resource_container_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
@@ -101,11 +104,12 @@ except KeyError:
 resource_container_env.PrependUnique(LIBS = ['rcs_server', 'rcs_common', 'oc','octbstack', 'oc_logger', 'oc_logger_core', 'connectivity_abstraction'])
 resource_container_env.AppendUnique(LIBS = ['dl'])	
 
-try:	
-	print 'Java Lib: ', os.environ['JAVA_LIB']
-	resource_container_env.AppendUnique(LIBS = ['jvm'])		
-except KeyError:
-	print ''
+if int(containerJavaSupport):
+	try:	
+		print 'Java Lib: ', os.environ['JAVA_LIB']
+		resource_container_env.AppendUnique(LIBS = ['jvm'])		
+	except KeyError:
+		print ''
 
 ######################################################################
 # Source files and Targets

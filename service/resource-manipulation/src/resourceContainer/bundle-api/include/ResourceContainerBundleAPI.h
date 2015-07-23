@@ -79,7 +79,7 @@ namespace OIC
                 *
                 * @return void
                 */
-                virtual void getBundleConfiguration(std::string bundleId, configInfo *configOutput) = 0;
+                virtual void getBundleConfiguration(const std::string &bundleId, configInfo *configOutput) = 0;
 
                 /**
                 * Get the list of Configuration data of resources that certain bundle has
@@ -90,7 +90,7 @@ namespace OIC
                 *
                 * @return void
                 */
-                virtual void getResourceConfiguration(std::string bundleId,
+                virtual void getResourceConfiguration(const std::string &bundleId,
                                                       std::vector< resourceInfo > *configOutput) = 0;
 
                 /**

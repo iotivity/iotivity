@@ -42,31 +42,31 @@ namespace OIC
             m_bundleHandle = nullptr;
         }
 
-        void BundleInfoInternal::setID(string id)
+        void BundleInfoInternal::setID(const std::string &id)
         {
             m_ID = id;
         }
 
-        string BundleInfoInternal::getID()
+        const std::string &BundleInfoInternal::getID()
         {
             return m_ID;
         }
 
-        void BundleInfoInternal::setPath(string path)
+        void BundleInfoInternal::setPath( const std::string &path)
         {
             m_path = path;
         }
-        string BundleInfoInternal::getPath()
+        const std::string &BundleInfoInternal::getPath()
         {
             return m_path;
         }
 
-        void BundleInfoInternal::setVersion(string version)
+        void BundleInfoInternal::setVersion( const std::string &version)
         {
             m_version = version;
         }
 
-        string BundleInfoInternal::getVersion()
+        const std::string &BundleInfoInternal::getVersion()
         {
             return m_version;
         }
@@ -151,22 +151,22 @@ namespace OIC
             return m_java_bundle;
         }
 
-        void BundleInfoInternal::setActivatorName(string activatorName)
+        void BundleInfoInternal::setActivatorName( const std::string &activatorName)
         {
             m_activator_name = activatorName;
         }
 
-        string BundleInfoInternal::getActivatorName()
+        const std::string &BundleInfoInternal::getActivatorName()
         {
             return m_activator_name;
         }
 
-        void BundleInfoInternal::setLibraryPath(string libpath)
+        void BundleInfoInternal::setLibraryPath( const std::string &libpath)
         {
             m_library_path = libpath;
         }
 
-        string BundleInfoInternal::getLibraryPath()
+        const std::string &BundleInfoInternal::getLibraryPath()
         {
             return m_library_path;
         }

@@ -22,6 +22,8 @@
 #include <map>
 #include <vector>
 
+#include <UnitTestHelper.h>
+
 #include <gtest/gtest.h>
 #include <HippoMocks/hippomocks.h>
 
@@ -39,6 +41,7 @@ using namespace testing;
 using namespace OIC::Service;
 
 string CONFIG_FILE = "ResourceContainerTestConfig.xml";
+
 
 /*Fake bundle resource class for testing*/
 class TestBundleResource: public BundleResource
@@ -60,22 +63,23 @@ class TestBundleResource: public BundleResource
         ;
 };
 
-class ResourceContainerTest: public Test
+class ResourceContainerTest: public TestWithMock
 {
+
     public:
         ~ResourceContainerTest() noexcept(true)
         {
 
         }
 
-
     public:
         MockRepository mocks;
         ResourceContainer *m_pResourceContainer;
 
     protected:
-        void SetUp() override
+        void SetUp()
         {
+            TestWithMock::SetUp();
             m_pResourceContainer = ResourceContainer::getInstance();
         }
 };
@@ -222,14 +226,14 @@ TEST_F(ResourceContainerTest, TryAddingSoBundleResourceToNotRegisteredBundle)
     m_pResourceContainer->addResourceConfig("unvalidBundleId", "", resourceParams);
 }
 
-class ResourceContainerBundleAPITest: public Test
+class ResourceContainerBundleAPITest: public TestWithMock
 {
-
     public:
         ~ResourceContainerBundleAPITest() noexcept(true)
         {
 
         }
+
 
     public:
         MockRepository mocks;
@@ -238,8 +242,9 @@ class ResourceContainerBundleAPITest: public Test
         TestBundleResource *m_pBundleResource;
 
     protected:
-        void SetUp() override
+        void SetUp()
         {
+            TestWithMock::SetUp();
             m_pResourceObject = mocks.Mock<ResourceObject>();
             m_pResourceContainer = ResourceContainerBundleAPI::getInstance();
 
@@ -346,8 +351,9 @@ TEST_F(ResourceContainerBundleAPITest, BundleResourceConfigurationListParsed)
     ((ResourceContainerImpl *)m_pResourceContainer)->stopContainer();
 }
 
-class ResourceContainerImplTest: public Test
+class ResourceContainerImplTest: public TestWithMock
 {
+
     public:
         ~ResourceContainerImplTest() noexcept(true)
         {
@@ -360,8 +366,9 @@ class ResourceContainerImplTest: public Test
         BundleInfo *m_pBundleInfo;
 
     protected:
-        void SetUp() override
+        void SetUp()
         {
+            TestWithMock::SetUp();
             m_pResourceContainer = ResourceContainerImpl::getImplInstance();
             m_pBundleInfo = BundleInfo::build();
         }
