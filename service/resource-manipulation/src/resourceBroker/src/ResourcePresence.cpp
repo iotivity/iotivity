@@ -33,30 +33,48 @@
 #include "DeviceAssociation.h"
 #include "DevicePresence.h"
 
+namespace
+{
+using namespace OIC::Service;
+
+    void getCallback(const HeaderOptions &hos, const ResponseStatement& rep,
+            int eCode, std::weak_ptr<ResourcePresence> this_ptr)
+    {
+        std::shared_ptr<ResourcePresence> Ptr = this_ptr.lock();
+        if(Ptr)
+        {
+            Ptr->getCB(hos, rep, eCode);
+        }
+    }
+    void timeOutCallback(unsigned int msg, std::weak_ptr<ResourcePresence> this_ptr)
+    {
+        std::shared_ptr<ResourcePresence> Ptr = this_ptr.lock();
+        if(Ptr)
+        {
+            Ptr->timeOutCB(msg);
+        }
+    }
+}
+
 namespace OIC
 {
     namespace Service
     {
         ResourcePresence::ResourcePresence()
+        : requesterList(nullptr), primitiveResource(nullptr),
+          state(BROKER_STATE::REQUESTED), mode(BROKER_MODE::NON_PRESENCE_MODE),
+          isWithinTime(true), receivedTime(0L), timeoutHandle(0)
         {
-            primitiveResource = nullptr;
-            isTimeoutCB = false;
-            receivedTime = 0L;
-            state = BROKER_STATE::REQUESTED;
-            isWithinTime = true;
-            mode = BROKER_MODE::NON_PRESENCE_MODE;
-            timeoutHandle = 0;
-
-            requesterList = nullptr;
-
-            pGetCB = std::bind(&ResourcePresence::getCB, this,
-                    std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
-            pTimeoutCB = std::bind(&ResourcePresence::timeOutCB, this,std::placeholders::_1);
-            pPollingCB = std::bind(&ResourcePresence::pollingCB, this,std::placeholders::_1);
         }
 
         void ResourcePresence::initializeResourcePresence(PrimitiveResourcePtr pResource)
         {
+            pGetCB = std::bind(getCallback, std::placeholders::_1, std::placeholders::_2,
+                    std::placeholders::_3, std::weak_ptr<ResourcePresence>(shared_from_this()));
+            pTimeoutCB = std::bind(timeOutCallback, std::placeholders::_1,
+                    std::weak_ptr<ResourcePresence>(shared_from_this()));
+            pPollingCB = std::bind(&ResourcePresence::pollingCB, this, std::placeholders::_1);
+
             primitiveResource = pResource;
             requesterList
             = std::unique_ptr<std::list<BrokerRequesterInfoPtr>>
@@ -94,12 +112,8 @@ namespace OIC
 
         void ResourcePresence::addBrokerRequester(BrokerID _id, BrokerCB _cb)
         {
-            BrokerRequesterInfoPtr newRequester;
-            newRequester.reset(new BrokerRequesterInfo());
-
-            newRequester->brokerId = _id;
-            newRequester->brokerCB = _cb;
-            requesterList->push_back(newRequester);
+            requesterList->push_back(
+                    std::make_shared<BrokerRequesterInfo>(BrokerRequesterInfo(_id, _cb)));
         }
 
         void ResourcePresence::removeAllBrokerRequester()
@@ -168,7 +182,8 @@ namespace OIC
                 setResourcestate(changedState);
                 if(requesterList->empty() != true)
                 {
-                    for(BrokerRequesterInfoPtr & item : * requesterList)
+                    std::list<BrokerRequesterInfoPtr> list = * requesterList;
+                    for(BrokerRequesterInfoPtr item : list)
                     {
                         item->brokerCB(state);
                     }
@@ -184,7 +199,6 @@ namespace OIC
         void ResourcePresence::timeOutCB(unsigned int msg)
         {
             std::unique_lock<std::mutex> lock(cbMutex);
-            isTimeoutCB = true;
 
             time_t currentTime;
             time(&currentTime);
@@ -193,10 +207,7 @@ namespace OIC
             if((receivedTime.load(boost::memory_order_consume) == 0) ||
               ((receivedTime + BROKER_SAFE_SECOND) > currentTime ))
             {
-                this->isWithinTime = false;
-                isTimeoutCB = false;
-                cbCondition.notify_all();
-
+                this->isWithinTime = true;
                 return;
             }
             this->isWithinTime = false;
@@ -205,28 +216,24 @@ namespace OIC
 
             executeAllBrokerCB(BROKER_STATE::LOST_SIGNAL);
             pollingCB();
-
-            isTimeoutCB = false;
-            cbCondition.notify_all();
         }
 
         void ResourcePresence::pollingCB(unsigned int msg)
         {
-            OC_LOG_V(DEBUG,BROKER_TAG,"IN PollingCB\n");
-            this->requestResourceState();
-            timeoutHandle = expiryTimer.postTimer(BROKER_SAFE_MILLISECOND,pTimeoutCB);
+            if(this->requesterList->size() != 0)
+            {
+                OC_LOG_V(DEBUG,BROKER_TAG,"IN PollingCB\n");
+                this->requestResourceState();
+                timeoutHandle = expiryTimer.postTimer(BROKER_SAFE_MILLISECOND,pTimeoutCB);
+            }
         }
 
         void ResourcePresence::getCB(const HeaderOptions &hos,
                 const ResponseStatement& rep, int eCode)
         {
             OC_LOG_V(DEBUG, BROKER_TAG, "response getCB\n");
-            while(isTimeoutCB)
-            {
-                OC_LOG_V(DEBUG, BROKER_TAG, "waiting for terminate TimeoutCB\n");
-                std::unique_lock<std::mutex> lock(cbMutex);
-                cbCondition.wait(lock);
-            }
+            OC_LOG_V(DEBUG, BROKER_TAG, "waiting for terminate TimeoutCB\n");
+            std::unique_lock<std::mutex> lock(cbMutex);
 
             time_t currentTime;
             time(&currentTime);
@@ -242,7 +249,6 @@ namespace OIC
 
             if(mode == BROKER_MODE::NON_PRESENCE_MODE)
             {
-                // TODO set timer & request get
                 expiryTimer.postTimer(BROKER_SAFE_MILLISECOND,pPollingCB);
             }
 

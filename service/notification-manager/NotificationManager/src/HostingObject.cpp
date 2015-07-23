@@ -110,7 +110,7 @@ void HostingObject::stateChangedCB(ResourceState state, RemoteObjectPtr rObject)
         {
             try
             {
-//                rObject->stopMonitoring();
+                rObject->stopMonitoring();
             }catch(InvalidParameterException &e)
             {
                 OIC_HOSTING_LOG(DEBUG,
