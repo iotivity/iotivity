@@ -40,6 +40,17 @@ class TestBundleActivator : public BundleActivator
 
         void createResource(resourceInfo resourceInfo);
         void destroyResource(BundleResource *pBundleResource);
+
+        ResourceContainerBundleAPI *m_pResourceContainer;
+        std::string m_bundleId;
+        BundleResource *m_pTestResource;
+};
+
+/*Fake bundle resource class for testing*/
+class TestBundleResource : public BundleResource
+{
+    public:
+        void initAttributes() { };
 };
 
 #endif /* TESTBUNDLE_H_ */

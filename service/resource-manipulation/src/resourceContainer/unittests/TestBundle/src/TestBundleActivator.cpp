@@ -24,31 +24,48 @@ TestBundleActivator *bundle;
 
 TestBundleActivator::TestBundleActivator()
 {
+    m_pResourceContainer = nullptr;
+    m_pTestResource = nullptr;
 }
 
 TestBundleActivator::~TestBundleActivator()
 {
+    m_pResourceContainer = nullptr;
+    m_pTestResource = nullptr;
 }
 
 void TestBundleActivator::activateBundle(ResourceContainerBundleAPI *resourceContainer,
         std::string bundleId)
 {
     std::cout << "TestBundleActivator::activateBundle .. " << std::endl;
+    m_pResourceContainer = resourceContainer;
+    m_bundleId = bundleId;
 }
 
 void TestBundleActivator::deactivateBundle()
 {
     std::cout << "TestBundleActivator::deactivateBundle .. " << std::endl;
+    m_pResourceContainer = nullptr;
 }
 
 void TestBundleActivator::createResource(resourceInfo resourceInfo)
 {
     std::cout << "TestBundleActivator::createResource .. " << std::endl;
+
+    TestBundleResource *m_pTestResource = new TestBundleResource();
+
+    m_pTestResource->m_bundleId = m_bundleId;
+    m_pTestResource->m_uri = resourceInfo.uri;
+    m_pTestResource->m_resourceType = resourceInfo.resourceType;
+
+    m_pResourceContainer->registerResource(m_pTestResource);
 }
 
 void TestBundleActivator::destroyResource(BundleResource *pBundleResource)
 {
     std::cout << "TestBundleActivator::destroyResource .. " << std::endl;
+
+    m_pResourceContainer->unregisterResource(pBundleResource);
 }
 
 extern "C" void externalActivateBundle(ResourceContainerBundleAPI *resourceContainer,
@@ -60,10 +77,8 @@ extern "C" void externalActivateBundle(ResourceContainerBundleAPI *resourceConta
 
 extern "C" void externalDeactivateBundle()
 {
-    if (!bundle)
-    {
-        bundle->deactivateBundle();
-    }
+    bundle->deactivateBundle();
+    delete bundle;
 }
 
 extern "C" void externalCreateResource(resourceInfo resourceInfo)
