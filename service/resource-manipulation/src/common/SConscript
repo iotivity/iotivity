@@ -91,7 +91,8 @@ rcs_common_test_env = rcs_common_env.Clone();
 rcs_common_test_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 rcs_common_test_env.PrependUnique(CPPPATH = [
     env.get('SRC_DIR')+'/extlibs/hippomocks-master',
-    gtest_dir + '/include'
+    gtest_dir + '/include',
+    'utils/include'
     ])
 
 gtest = File(gtest_dir + '/lib/.libs/libgtest.a')
@@ -104,13 +105,13 @@ rcs_common_test_env.PrependUnique(LIBS = [
     'connectivity_abstraction',
     'coap',
     'rcs_common',
-    'pthread',
     gtest,
-    gtest_main
+    gtest_main,
+    'pthread'
     ])
 
-#rcs_common_test_src = env.Glob('primitiveResource/unittests/*.cpp')
+rcs_common_test_src = env.Glob('primitiveResource/unittests/*.cpp')
 
-#rcs_common_test = rcs_common_test_env.Program('rcs_common_test', rcs_common_test_src)
-#Alias("rcs_common_test", rcs_common_test)
-#env.AppendTarget('rcs_common_test')
+rcs_common_test = rcs_common_test_env.Program('rcs_common_test', rcs_common_test_src)
+Alias("rcs_common_test", rcs_common_test)
+env.AppendTarget('rcs_common_test')
