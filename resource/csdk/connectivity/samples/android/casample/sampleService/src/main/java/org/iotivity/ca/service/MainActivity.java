@@ -702,8 +702,14 @@ public class MainActivity extends Activity {
         if (subject.equals(getString(R.string.remote_address))) {
             StringBuilder sb = new StringBuilder();
             sb.append(getString(R.string.coap_prefix)).append(receivedData);
-            if (receivedData.contains(".")) { // IP
-                sb.append(getString(R.string.port_num));
+            mReqData_ed.setText(sb.toString());
+            mNotification_ed.setText(sb.toString());
+        } else if (subject.equals(getString(R.string.remote_port))) {
+            StringBuilder sb = new StringBuilder();
+            String uri = mReqData_ed.getText().toString();
+            if (null != receivedData && uri.contains("."))
+            {
+                sb.append(uri).append(":").append(receivedData);
             }
             sb.append(getString(R.string.uri));
             mReqData_ed.setText(sb.toString());

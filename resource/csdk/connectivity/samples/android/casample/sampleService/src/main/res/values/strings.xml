@@ -10,7 +10,6 @@
     <string name="response">Response</string>
     <string name="uri">/a/light</string>
     <string name="coap_prefix">coap://</string>
-    <string name="port_num">:6298</string>
     <string name="notification"></string>
     <string name="req_data"></string>
     <string name="resp_data">resourceUri/response</string>
@@ -18,5 +17,6 @@
     <string name="receive">Receive</string>
     <string name="received">Received Message</string>
     <string name="remote_address">"Remote Address: "</string>
+    <string name="remote_port">"Remote Port: "</string>
     <string name="action_settings">Settings</string>
 </resources>

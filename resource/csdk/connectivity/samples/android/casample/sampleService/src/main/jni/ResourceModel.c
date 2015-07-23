@@ -813,6 +813,7 @@ void request_handler(const CAEndpoint_t* object, const CARequestInfo_t* requestI
 
     LOGI("##########received request from remote device #############");
     LOGI("Remote Address: %s", g_remoteAddress);
+    LOGI("Remote Port: %d", object->port);
     LOGI("Uri: %s", requestInfo->info.resourceUri);
     LOGI("Data: %s", requestInfo->info.payload);
     LOGI("Token: %s", requestInfo->info.token);
@@ -856,6 +857,10 @@ void request_handler(const CAEndpoint_t* object, const CARequestInfo_t* requestI
         callback("Remote Address: ", cloneRemoteAddress);
         free(cloneRemoteAddress);
         free(g_remoteAddress);
+
+        char portInfo[PORT_LENGTH] = { 0, };
+        sprintf(portInfo, "%d", object->port);
+        callback("Remote Port: ", portInfo);
 
         //clone g_clientEndpoint
         g_clientEndpoint = (CAEndpoint_t *) malloc(sizeof(CAEndpoint_t));
@@ -995,6 +1000,7 @@ void response_handler(const CAEndpoint_t* object, const CAResponseInfo_t* respon
     LOGI("##########Received response from remote device #############");
     LOGI("Uri: %s", responseInfo->info.resourceUri);
     LOGI("Remote Address: %s", g_remoteAddress);
+    LOGI("Remote Port: %d", object->port);
     LOGI("response result: %d", responseInfo->result);
     LOGI("Data: %s", responseInfo->info.payload);
     LOGI("Token: %s", responseInfo->info.token);
@@ -1037,6 +1043,10 @@ void response_handler(const CAEndpoint_t* object, const CAResponseInfo_t* respon
         callback("Remote Address: ", cloneRemoteAddress);
         free(cloneRemoteAddress);
         free(g_remoteAddress);
+
+        char portInfo[PORT_LENGTH] = { 0, };
+        sprintf(portInfo, "%d", object->port);
+        callback("Remote Port: ", portInfo);
 
         if (NULL != responseInfo->info.payload && responseInfo->info.payloadSize)
         {
