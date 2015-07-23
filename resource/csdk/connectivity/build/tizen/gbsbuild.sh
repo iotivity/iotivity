@@ -35,6 +35,7 @@ sourcedir=`pwd`
 
 echo `pwd`
 
+rm -rf ./tmp
 mkdir ./tmp
 mkdir ./tmp/con/
 cp -R $cur_dir/* $sourcedir/tmp/con
