@@ -48,7 +48,7 @@ static inline void OCPayloadLogRep(LogLevel level, const char* tag, OCRepPayload
     while(rep)
     {
         OC_LOG_V(level, tag, "\tResource #%d", i);
-        OC_LOG_V(level, tag, "\tURL:%s", rep->uri);
+        OC_LOG_V(level, tag, "\tURI:%s", rep->uri);
         OC_LOG(level, tag, PCF("\tResource Types:"));
         OCStringLL* strll =  rep->types;
         while(strll)
