@@ -43,6 +43,8 @@
 #define SYSTEM_INVOKE_ERROR 127
 #define SYSTEM_ERROR -1
 
+#define BLOCK_SIZE(arg) (1 << ((arg) + 4))
+
 /**
  * @def RS_IDENTITY
  * @brief
@@ -1039,7 +1041,8 @@ void request_handler(const CAEndpoint_t *object, const CARequestInfo_t *requestI
     }
 
     // if received message is bulk data, create output file
-    if ((requestInfo->info.payload) && (requestInfo->info.payloadSize > CA_DEFAULT_BLOCK_SIZE))
+    if ((requestInfo->info.payload) &&
+            (requestInfo->info.payloadSize > BLOCK_SIZE(CA_DEFAULT_BLOCK_SIZE)))
     {
         create_file(requestInfo->info.payload, requestInfo->info.payloadSize);
     }
@@ -1092,7 +1095,8 @@ void response_handler(const CAEndpoint_t *object, const CAResponseInfo_t *respon
     }
 
     // if received message is bulk data, create output file
-    if ((responseInfo->info.payload) && (responseInfo->info.payloadSize > CA_DEFAULT_BLOCK_SIZE))
+    if ((responseInfo->info.payload) &&
+            (responseInfo->info.payloadSize > BLOCK_SIZE(CA_DEFAULT_BLOCK_SIZE)))
     {
         create_file(responseInfo->info.payload, responseInfo->info.payloadSize);
     }
@@ -1584,7 +1588,10 @@ int get_address_set(const char *pAddress, addressSet_t* outAddress)
 void create_file(CAPayload_t bytes, size_t length)
 {
     FILE *fp = fopen("sample_output.txt", "wb");
-    fwrite(bytes, 1, length, fp);
+    if (!fp)
+    {
+        fwrite(bytes, 1, length, fp);
+    }
     fclose(fp);
 }
 
