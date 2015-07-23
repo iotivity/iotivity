@@ -204,12 +204,7 @@ then
 	unit_tests
 else
 	help
-#This is temporarily changed to support the transition on the Jenkins Build Server so that current work is not hindered.
-#	exit -1
-####DELETE THE FOLLOWING 3 LINES!! And uncomment the line directly above this line!
-	build_all true
-	build_all false
-	unit_tests
+	exit -1
 fi
 
 echo "===================== done ====================="
