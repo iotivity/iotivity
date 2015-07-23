@@ -47,23 +47,23 @@ namespace OIC
                 BundleInfoInternal();
                 BundleInfoInternal(BundleInfo *info);
                 virtual ~BundleInfoInternal();
-                void setID(string id);
-                string getID();
-                void setPath(string path);
-                string getPath();
-                void setVersion(string version);
-                string getVersion();
+                void setID(const std::string &id);
+                const std::string &getID();
+                void setPath(const std::string &path);
+                const std::string &getPath();
+                void setVersion(const std::string &version);
+                const std::string &getVersion();
 
                 void setLoaded(bool loaded);
                 bool isLoaded();
                 void setActivated(bool activated);
                 bool isActivated();
 
-                virtual void setLibraryPath(string libpath);
-                virtual string getLibraryPath();
+                virtual void setLibraryPath(const std::string &libpath);
+                virtual const std::string &getLibraryPath();
 
-                void setActivatorName(string activatorName);
-                string getActivatorName();
+                void setActivatorName(const std::string &activatorName);
+                const std::string &getActivatorName();
 
                 void setBundleActivator(activator_t *);
                 activator_t *getBundleActivator();

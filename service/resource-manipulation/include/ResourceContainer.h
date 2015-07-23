@@ -66,7 +66,7 @@ namespace OIC
                  * @param configFile - configuration File that contains the Bundle/Bundles information.
                  *
                  */
-                virtual void startContainer(std::string configFile) = 0;
+                virtual void startContainer(const std::string &configFile) = 0;
                 /**
                 * API for stopping the Container
                 */
@@ -86,14 +86,14 @@ namespace OIC
                  * @param bundleId - Id of the Bundle
                  *
                  */
-                virtual void startBundle(std::string bundleId) = 0;
+                virtual void startBundle(const std::string &bundleId) = 0;
                 /**
                 * API for Stopping the bundle
                 *
                 * @param bundleId - Id of the Bundle
                 *
                 */
-                virtual void stopBundle(std::string bundleId) = 0;
+                virtual void stopBundle(const std::string &bundleId) = 0;
 
                 // dynamic configuration
                 /**
@@ -105,7 +105,7 @@ namespace OIC
                  * @param params  - key-value pairs in string form for other Bundle parameters
                  *
                  */
-                virtual void addBundle(std::string bundleId, std::string bundleUri, std::string bundlePath,
+                virtual void addBundle(const std::string &bundleId, const std::string &bundleUri, const std::string &bundlePath,
                                        std::map<std::string, std::string> params) = 0;
                 /**
                  * API for removing the bundle from the container
@@ -113,7 +113,7 @@ namespace OIC
                  * @param bundleId - Id of the Bundle
                  *
                  */
-                virtual void removeBundle(std::string bundleId) = 0;
+                virtual void removeBundle(const std::string &bundleId) = 0;
 
                 /**
                 * API for adding the Resource configuration information to the bundle
@@ -123,7 +123,7 @@ namespace OIC
                 * @param params  - key-value pairs in string form for other Bundle parameters
                 *
                 */
-                virtual void addResourceConfig(std::string bundleId, std::string resourceUri,
+                virtual void addResourceConfig(const std::string &bundleId, const std::string &esourceUri,
                                                std::map<std::string, std::string> params) = 0;
                 /**
                 * API for removing the Resource configuration information from the bundle
@@ -132,7 +132,7 @@ namespace OIC
                 * @param resourceUri - URI of the resource
                 *
                 */
-                virtual void removeResourceConfig(std::string bundleId, std::string resourceUri) = 0;
+                virtual void removeResourceConfig(const std::string &bundleId, const std::string &resourceUri) = 0;
 
                 /**
                 * API for getting the list of Bundle Resources
@@ -140,7 +140,7 @@ namespace OIC
                 * @param bundleId - Id of the Bundle
                 *
                 */
-                virtual std::list<std::string> listBundleResources(std::string bundleId) = 0;
+                virtual std::list<std::string> listBundleResources(const std::string &bundleId) = 0;
 
                 /**
                  * API for getting the Instance of ResourceContainer class

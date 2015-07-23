@@ -26,6 +26,8 @@ Import('env')
 
 import os.path
 
+containerJavaSupport = ARGUMENTS.get('containerJavaSupport',0)
+
 def filtered_glob(env, pattern, omit=[],
   ondisk=True, source=False, strings=False):
     return filter(
@@ -52,21 +54,22 @@ SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
 
 container_gtest_env = lib_env.Clone()
 
-try:
-	print 'Java Home: ', os.environ['JAVA_HOME']
-	print 'Java Lib: ', os.environ['JAVA_LIB']
-	container_gtest_env.Append(CPPDEFINES={'JAVA_SUPPORT_TEST':1})
-except KeyError:
-	print '''
-*********************************** Error *************************************
-* Building resource container without Java support. JAVA_HOME or JAVA_LIB are not set properly 
-* Please configure JAVA_HOME to point to your Java 7 JDK and 
-* JAVA_LIB to your folder containing libjvm
-* Example: export JAVA_HOME=/usr/lib/jvm/java-7-openjdk-i386
-*          export JAVA_LIB=/usr/lib/jvm/java-7-openjdk-i386/jre/lib/i386/server/
-*******************************************************************************	
-	'''
-	container_gtest_env.Append(CPPDEFINES={'JAVA_SUPPORT_TEST':0})
+if int(containerJavaSupport):
+	try:
+		print 'Java Home: ', os.environ['JAVA_HOME']
+		print 'Java Lib: ', os.environ['JAVA_LIB']
+		container_gtest_env.Append(CPPDEFINES={'JAVA_SUPPORT_TEST':1})
+	except KeyError:
+		print '''
+	*********************************** Error *************************************
+	* Building resource container without Java support. JAVA_HOME or JAVA_LIB are not set properly 
+	* Please configure JAVA_HOME to point to your Java 7 JDK and 
+	* JAVA_LIB to your folder containing libjvm
+	* Example: export JAVA_HOME=/usr/lib/jvm/java-7-openjdk-i386
+	*          export JAVA_LIB=/usr/lib/jvm/java-7-openjdk-i386/jre/lib/i386/server/
+	*******************************************************************************	
+		'''
+		container_gtest_env.Append(CPPDEFINES={'JAVA_SUPPORT_TEST':0})
 	
 
 target_os = env.get('TARGET_OS')
@@ -89,17 +92,19 @@ container_gtest_env.AppendUnique(
 		'../include',
 		'../../../include',
  		'../include/internal',
+ 		'../../common/utils/include',
 		'../bundle-api/include'		
 	])
-	
-try:
-	container_gtest_env.AppendUnique(
-	CPPPATH = [
-		os.environ['JAVA_HOME']+'/include',
-		os.environ['JAVA_HOME']+'/include/linux'		
-	])
-except KeyError:
-	print ''
+
+if int(containerJavaSupport):	
+	try:
+		container_gtest_env.AppendUnique(
+		CPPPATH = [
+			os.environ['JAVA_HOME']+'/include',
+			os.environ['JAVA_HOME']+'/include/linux'		
+		])
+	except KeyError:
+		print ''
 
 if target_os not in ['windows', 'winrt']:
 	container_gtest_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
@@ -113,11 +118,12 @@ if target_os == 'android':
 
 container_gtest_env.PrependUnique(CPPPATH = [env.get('SRC_DIR')+'/extlibs/hippomocks-master',
                              gtest_dir + '/include'])
-						 			 
-try:
-	container_gtest_env.AppendUnique(LIBPATH = [os.environ['JAVA_LIB']])
-except KeyError:
-	print ''
+			
+if int(containerJavaSupport):
+	try:
+		container_gtest_env.AppendUnique(LIBPATH = [os.environ['JAVA_LIB']])
+	except KeyError:
+		print ''
 
 container_gtest_env.AppendUnique(CCFLAGS = ['-Wnoexcept'])	
 
@@ -125,12 +131,12 @@ container_gtest_env.PrependUnique(LIBS = ['rcs_container', 'rcs_server', 'rcs_co
 
 container_gtest_env.AppendUnique(LIBS = ['dl'])
 
-
-try:	
-	print 'Java Lib: ', os.environ['JAVA_LIB']
-	container_gtest_env.AppendUnique(LIBS = ['jvm'])		
-except KeyError:
-	print ''
+if int(containerJavaSupport):
+	try:	
+		print 'Java Lib: ', os.environ['JAVA_LIB']
+		container_gtest_env.AppendUnique(LIBS = ['jvm'])		
+	except KeyError:
+		print ''
 
 ######################################################################
 # build test bundle

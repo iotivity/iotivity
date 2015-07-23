@@ -55,7 +55,7 @@ namespace OIC
                 *
                 * @return void
                 */
-                virtual void onNotificationReceived(std::string strResourceUri) = 0;
+                virtual void onNotificationReceived(const std::string &strResourceUri) = 0;
         };
     }
 }

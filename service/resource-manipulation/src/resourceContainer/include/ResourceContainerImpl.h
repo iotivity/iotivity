@@ -51,23 +51,23 @@ namespace OIC
                 virtual ~ResourceContainerImpl();
 
                 // methods from ResourceContainer
-                void startContainer(string configFile);
+                void startContainer(const std::string &configFile);
                 void stopContainer();
                 void activateBundle(BundleInfo *bundleInfo);
                 void deactivateBundle(BundleInfo *bundleInfo);
-                void activateBundle(string bundleId);
-                void deactivateBundle(string bundleId);
+                void activateBundle(const std::string &bundleId);
+                void deactivateBundle(const std::string &bundleId);
                 void registerBundle(BundleInfo *bundleinfo);
                 void unregisterBundle(BundleInfo *bundleinfo);
-                void unregisterBundleSo(string id);
+                void unregisterBundleSo(const std::string &id);
 
 
                 // methods from ResourceContainerBundleAPI
                 void registerResource(BundleResource *resource);
                 void unregisterResource(BundleResource *resource);
 
-                void getBundleConfiguration(std::string bundleId, configInfo *configOutput);
-                void getResourceConfiguration(std::string bundleId,
+                void getBundleConfiguration(const std::string &bundleId, configInfo *configOutput);
+                void getResourceConfiguration(const std::string &bundleId,
                                               std::vector< resourceInfo > *configOutput);
 
                 RCSGetResponse getRequestHandler(const RCSRequest &request,
@@ -75,24 +75,24 @@ namespace OIC
                 RCSSetResponse setRequestHandler(const RCSRequest &request,
                                                  const ResourceAttributes &attributes);
 
-                void onNotificationReceived(std::string strResourceUri);
+                void onNotificationReceived(const std::string &strResourceUri);
 
                 static ResourceContainerImpl *getImplInstance();
-                static ResourceObject::Ptr buildResourceObject(string strUri, string strResourceType);
+                static ResourceObject::Ptr buildResourceObject(const std::string &strUri, const std::string &strResourceType);
 
-                void startBundle(string bundleId);
-                void stopBundle(string bundleId);
+                void startBundle(const std::string &bundleId);
+                void stopBundle(const std::string &bundleId);
 
-                void addBundle(string bundleId, string bundleUri, string bundlePath,
+                void addBundle(const std::string &bundleId, const std::string &bundleUri, const std::string &bundlePath,
                                std::map<string, string> params);
-                void removeBundle(string bundleId);
+                void removeBundle(const std::string &bundleId);
 
                 std::list<BundleInfo *> listBundles();
 
-                void addResourceConfig(string bundleId, string resourceUri, std::map<string, string> params);
-                void removeResourceConfig(string bundleId, string resourceUri);
+                void addResourceConfig(const std::string &bundleId, const std::string &resourceUri, std::map<string, string> params);
+                void removeResourceConfig(const std::string &bundleId, const std::string &resourceUri);
 
-                std::list<string> listBundleResources(string bundleId);
+                std::list<string> listBundleResources(const std::string &bundleId);
 
 #if(JAVA_SUPPORT)
                 JavaVM *getJavaVM(string bundleId);
@@ -109,10 +109,10 @@ namespace OIC
                 Configuration *m_config;
 
 
-                void activateSoBundle(string bundleId);
-                void deactivateSoBundle(string bundleId);
-                void addSoBundleResource(string bundleId, resourceInfo newResourceInfo);
-                void removeSoBundleResource(string bundleId, string resourceUri);
+                void activateSoBundle(const std::string &bundleId);
+                void deactivateSoBundle(const std::string &bundleId);
+                void addSoBundleResource(const std::string &bundleId, resourceInfo newResourceInfo);
+                void removeSoBundleResource(const std::string &bundleId, const std::string &resourceUri);
                 void registerSoBundle(BundleInfo *bundleInfo);
 
 #if(JAVA_SUPPORT)
