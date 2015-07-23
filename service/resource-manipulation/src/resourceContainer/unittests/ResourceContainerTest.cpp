@@ -26,6 +26,7 @@
 #include <HippoMocks/hippomocks.h>
 
 #include "Configuration.h"
+#include "BundleActivator.h"
 #include "BundleResource.h"
 #include "ResourceContainer.h"
 #include "ResourceContainerBundleAPI.h"
@@ -62,12 +63,14 @@ class TestBundleResource: public BundleResource
 class ResourceContainerTest: public Test
 {
     public:
-        ~ResourceContainerTest() noexcept(true){
+        ~ResourceContainerTest() noexcept(true)
+        {
 
         }
 
 
     public:
+        MockRepository mocks;
         ResourceContainer *m_pResourceContainer;
 
     protected:
@@ -138,6 +141,8 @@ TEST_F(ResourceContainerTest, BundleStoppedWithStartBundleAPI)
 
     EXPECT_FALSE(
         ((BundleInfoInternal *)(*m_pResourceContainer->listBundles().begin()))->isActivated());
+
+    m_pResourceContainer->stopContainer();
 }
 
 TEST_F(ResourceContainerTest, BundleStartedWithStartBundleAPI)
@@ -148,13 +153,81 @@ TEST_F(ResourceContainerTest, BundleStartedWithStartBundleAPI)
 
     EXPECT_TRUE(
         ((BundleInfoInternal *)(*m_pResourceContainer->listBundles().begin()))->isActivated());
+
+    m_pResourceContainer->stopContainer();
+}
+
+TEST_F(ResourceContainerTest, AddNewSoBundleToContainer)
+{
+    std::map<string, string> bundleParams;
+    std::list<BundleInfo *> bundles;
+
+    bundles = m_pResourceContainer->listBundles();
+    m_pResourceContainer->addBundle("oic.bundle.test", "", "libTestBundle.so", bundleParams);
+
+    EXPECT_EQ(bundles.size() + 1, m_pResourceContainer->listBundles().size());
+    EXPECT_TRUE(((BundleInfoInternal *)(*m_pResourceContainer->listBundles().begin()))->isLoaded());
+}
+
+TEST_F(ResourceContainerTest, RemoveSoBundleFromContainer)
+{
+    std::map<string, string> bundleParams;
+    std::list<BundleInfo *> bundles;
+
+    bundles = m_pResourceContainer->listBundles();
+    m_pResourceContainer->removeBundle("oic.bundle.test");
+
+    EXPECT_EQ(bundles.size() - 1, m_pResourceContainer->listBundles().size());
+}
+
+TEST_F(ResourceContainerTest, AddBundleAlreadyRegistered)
+{
+    std::map<string, string> bundleParams;
+    std::list<BundleInfo *> bundles;
+
+    m_pResourceContainer->addBundle("oic.bundle.test", "", "libTestBundle.so", bundleParams);
+    bundles = m_pResourceContainer->listBundles();
+    m_pResourceContainer->addBundle("oic.bundle.test", "", "libTestBundle.so", bundleParams);
+
+    EXPECT_EQ(bundles.size(), m_pResourceContainer->listBundles().size());
+}
+
+TEST_F(ResourceContainerTest, AddAndRemoveSoBundleResource)
+{
+    std::list<string> resources;
+    std::map<string, string> resourceParams;
+    resourceParams["resourceType"] = "oic.test";
+
+    m_pResourceContainer->startContainer(CONFIG_FILE);
+    resources = m_pResourceContainer->listBundleResources("oic.bundle.test");
+
+    m_pResourceContainer->addResourceConfig("oic.bundle.test", "/test_resource", resourceParams);
+
+    EXPECT_EQ(resources.size() + 1,
+              m_pResourceContainer->listBundleResources("oic.bundle.test").size());
+
+    m_pResourceContainer->removeResourceConfig("oic.bundle.test", "/test_resource");
+
+    EXPECT_EQ(resources.size(), m_pResourceContainer->listBundleResources("oic.bundle.test").size());
+
+    m_pResourceContainer->stopContainer();
+}
+
+TEST_F(ResourceContainerTest, TryAddingSoBundleResourceToNotRegisteredBundle)
+{
+    std::map<string, string> resourceParams;
+
+    mocks.NeverCallFunc(ResourceContainerImpl::buildResourceObject);
+
+    m_pResourceContainer->addResourceConfig("unvalidBundleId", "", resourceParams);
 }
 
 class ResourceContainerBundleAPITest: public Test
 {
 
     public:
-        ~ResourceContainerBundleAPITest() noexcept(true){
+        ~ResourceContainerBundleAPITest() noexcept(true)
+        {
 
         }
 
@@ -179,6 +252,11 @@ class ResourceContainerBundleAPITest: public Test
 
 TEST_F(ResourceContainerBundleAPITest, ResourceServerCreatedWhenRegisterResourceCalled)
 {
+    m_pBundleResource = new TestBundleResource();
+    m_pBundleResource->m_bundleId = "oic.bundle.test";
+    m_pBundleResource->m_uri = "/test_resource/test";
+    m_pBundleResource->m_resourceType = "oic.test";
+
     mocks.ExpectCallFunc(ResourceContainerImpl::buildResourceObject).With(m_pBundleResource->m_uri,
             m_pBundleResource->m_resourceType).Return(nullptr);
 
@@ -195,6 +273,8 @@ TEST_F(ResourceContainerBundleAPITest, RequestHandlerForResourceServerSetWhenReg
     mocks.ExpectCall(m_pResourceObject, ResourceObject::setSetRequestHandler);
 
     m_pResourceContainer->registerResource(m_pBundleResource);
+
+    m_pResourceContainer->unregisterResource(m_pBundleResource);
 }
 
 TEST_F(ResourceContainerBundleAPITest, BundleResourceUnregisteredWhenUnregisterResourceCalled)
@@ -229,6 +309,8 @@ TEST_F(ResourceContainerBundleAPITest,
     mocks.ExpectCall(m_pResourceObject, ResourceObject::notify);
 
     m_pResourceContainer->onNotificationReceived(m_pBundleResource->m_uri);
+
+    m_pResourceContainer->unregisterResource(m_pBundleResource);
 }
 
 TEST_F(ResourceContainerBundleAPITest, BundleConfigurationParsedWithValidBundleId)
@@ -236,6 +318,7 @@ TEST_F(ResourceContainerBundleAPITest, BundleConfigurationParsedWithValidBundleI
     configInfo bundle;
     map< string, string > results;
 
+    ((ResourceContainerImpl *)m_pResourceContainer)->startContainer(CONFIG_FILE);
     m_pResourceContainer->getBundleConfiguration("oic.bundle.test", &bundle);
 
     results = *bundle.begin();
@@ -243,6 +326,8 @@ TEST_F(ResourceContainerBundleAPITest, BundleConfigurationParsedWithValidBundleI
     EXPECT_STREQ("oic.bundle.test", results["id"].c_str());
     EXPECT_STREQ("libTestBundle.so", results["path"].c_str());
     EXPECT_STREQ("1.0.0", results["version"].c_str());
+
+    ((ResourceContainerImpl *)m_pResourceContainer)->stopContainer();
 }
 
 TEST_F(ResourceContainerBundleAPITest, BundleResourceConfigurationListParsed)
@@ -250,18 +335,22 @@ TEST_F(ResourceContainerBundleAPITest, BundleResourceConfigurationListParsed)
     vector< resourceInfo > resourceConfig;
     resourceInfo result;
 
+    ((ResourceContainerImpl *)m_pResourceContainer)->startContainer(CONFIG_FILE);
     m_pResourceContainer->getResourceConfiguration("oic.bundle.test", &resourceConfig);
 
     result = *resourceConfig.begin();
 
     EXPECT_STREQ("test_resource", result.name.c_str());
     EXPECT_STREQ("oic.test", result.resourceType.c_str());
+
+    ((ResourceContainerImpl *)m_pResourceContainer)->stopContainer();
 }
 
 class ResourceContainerImplTest: public Test
 {
     public:
-        ~ResourceContainerImplTest() noexcept(true){
+        ~ResourceContainerImplTest() noexcept(true)
+        {
 
         }
 
@@ -348,20 +437,6 @@ TEST_F(ResourceContainerImplTest, SoBundleActivatedWithValidBundleInfo)
     EXPECT_NE(nullptr, ((BundleInfoInternal *)m_pBundleInfo)->getBundleActivator());
 }
 
-/*TEST_F(ResourceContainerImplTest, JavaBundleActivatedWithValidBundleInfo)
-{
-    m_pBundleInfo->setPath("TestBundleJava/hue-0.1-jar-with-dependencies.jar");
-    m_pBundleInfo->setActivatorName("org/iotivity/bundle/hue/HueBundleActivator");
-    m_pBundleInfo->setLibraryPath("../.");
-    m_pBundleInfo->setVersion("1.0");
-    m_pBundleInfo->setID("oic.bundle.java.test2");
-
-    m_pResourceContainer->registerBundle(m_pBundleInfo);
-    m_pResourceContainer->activateBundle(m_pBundleInfo);
-    EXPECT_TRUE(((BundleInfoInternal *) m_pBundleInfo)->isActivated());
-
-}*/
-
 TEST_F(ResourceContainerImplTest, BundleNotActivatedWhenNotRegistered)
 {
     m_pBundleInfo->setPath("libTestBundle.so");
@@ -431,10 +506,6 @@ TEST_F(ResourceContainerImplTest, SoBundleDeactivatedWithBundleID)
 
     EXPECT_FALSE(((BundleInfoInternal *)m_pBundleInfo)->isActivated());
 }
-
-//TEST_F(ResourceContainerImplTest, JavaBundleDeactivatedWithBundleID)
-//{
-//}
 
 /* Test for Configuration */
 TEST(ConfigurationTest, ConfigFileLoadedWithValidPath)
