@@ -28,7 +28,7 @@ class ResourceCacheManagerTest : public ::testing::Test
 
         }
 
-        virtual void SetUp() override
+        virtual void SetUp()
         {
             cacheInstance = ResourceCacheManager::getInstance();
             pResource = PrimitiveResource::Ptr(mocks.Mock< PrimitiveResource >(), [](PrimitiveResource *) {});
