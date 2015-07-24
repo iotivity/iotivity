@@ -29,7 +29,6 @@
 #include "caedrinterface.h"
 #include "caadapterutils.h"
 #include "logger.h"
-#include "cafragmentation.h"
 #include "caqueueingthread.h"
 #include "oic_malloc.h"
 #include "caremotehandler.h"
@@ -562,92 +561,13 @@ void CAAdapterDataSendHandler(void *context)
         return;
     }
 
-    uint32_t dataSegmentLength = message->dataLen + CA_HEADER_LENGTH;
-    uint32_t dataLen = message->dataLen;
-    OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "checking for fragmentation and the dataLen is %d",
-              message->dataLen);
-
-    char *header = (char *) OICCalloc(CA_HEADER_LENGTH, sizeof(char));
-    VERIFY_NON_NULL_VOID(header, EDR_ADAPTER_TAG, "Memory allocation failed");
-
-    char* dataSegment = (char *) OICCalloc(dataSegmentLength, sizeof(char));
-    if (NULL == dataSegment)
-    {
-        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Memory allocation failed");
-        CAEDRErrorHandler(remoteAddress, serviceUUID, message->data, message->dataLen, CA_SEND_FAILED);
-        OICFree(header);
-        return;
-    }
-
-    CAResult_t result = CAGenerateHeader(header, dataLen);
-    if (CA_STATUS_OK != result)
-    {
-        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Generate header failed");
-        OICFree(header);
-        OICFree(dataSegment);
-        CAEDRErrorHandler(remoteAddress, serviceUUID, message->data, message->dataLen, CA_SEND_FAILED);
-        return ;
-    }
-
-    memcpy(dataSegment, header, CA_HEADER_LENGTH);
-    OICFree(header);
-    uint32_t length = 0;
-    if (CA_SUPPORTED_EDR_MTU_SIZE > dataSegmentLength)
-    {
-        length = dataSegmentLength;
-        memcpy(dataSegment + CA_HEADER_LENGTH, message->data, dataLen);
-    }
-    else
-    {
-        length =  CA_SUPPORTED_EDR_MTU_SIZE;
-        memcpy(dataSegment + CA_HEADER_LENGTH, message->data,
-               CA_SUPPORTED_EDR_MTU_SIZE - CA_HEADER_LENGTH);
-    }
-
-    uint32_t iter = dataSegmentLength / CA_SUPPORTED_EDR_MTU_SIZE;
-    uint32_t index = 0;
-    result = CAEDRClientSendData(remoteAddress, serviceUUID, dataSegment, length,
-                                 &sentLength);
+    CAResult_t result = CAEDRClientSendData(remoteAddress, serviceUUID, message->data,
+                                            message->dataLen, &sentLength);
     if(CA_STATUS_OK != result)
     {
         OIC_LOG(ERROR, EDR_ADAPTER_TAG, "CAEDRClientSendData API failed");
-        OICFree(dataSegment);
         CAEDRErrorHandler(remoteAddress, serviceUUID, message->data, message->dataLen, result);
         return;
-    }
-
-    OICFree(dataSegment);
-
-    for (index = 1; index < iter; index++)
-    {
-        // Send the remaining header.
-        OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "Sending the chunk number [%d]", index);
-
-        void *dataPtr = message->data + ((index * CA_SUPPORTED_EDR_MTU_SIZE) - CA_HEADER_LENGTH);
-        result = CAEDRClientSendData(remoteAddress, serviceUUID,
-                                     dataPtr, CA_SUPPORTED_EDR_MTU_SIZE, &sentLength);
-        if(CA_STATUS_OK != result)
-        {
-            OIC_LOG(ERROR, EDR_ADAPTER_TAG, "CAEDRClientSendData API failed");
-            CAEDRErrorHandler(remoteAddress, serviceUUID, message->data, message->dataLen, result);
-            return;
-        }
-    }
-
-    uint32_t remainingLen = dataSegmentLength % CA_SUPPORTED_EDR_MTU_SIZE;
-    if (remainingLen &&  (dataSegmentLength > CA_SUPPORTED_EDR_MTU_SIZE))
-    {
-        // send the last segment of the data (Ex: 22 bytes of 622 bytes of data when MTU is 200)
-        OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "Sending the last chunk");
-        void *dataPtr = message->data + ((index * CA_SUPPORTED_EDR_MTU_SIZE) - CA_HEADER_LENGTH);
-        result = CAEDRClientSendData(remoteAddress, serviceUUID, dataPtr,
-                                     remainingLen, &sentLength);
-        if(CA_STATUS_OK != result)
-        {
-            OIC_LOG(ERROR, EDR_ADAPTER_TAG, "CAEDRClientSendData API failed");
-            CAEDRErrorHandler(remoteAddress, serviceUUID, message->data, message->dataLen, result);
-            return;
-        }
     }
 
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
@@ -690,65 +610,21 @@ void CAAdapterDataReceiverHandler(void *context)
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN_CAAdapterDataReceiverHandler");
 
     CAEDRData *message = (CAEDRData *) context;
-    if (NULL == message)
+    if (NULL == message || NULL == message->remoteEndpoint)
     {
         OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to get message!");
         return;
     }
 
-    static uint32_t recvDataLen = 0;
-    static uint32_t totalDataLen = 0;
-    static char *defragData = NULL;
-    static CAEndpoint_t *remoteEndpoint = NULL;
+    CAEndpoint_t *remoteEndpoint = CACreateEndpointObject(CA_DEFAULT_FLAGS,
+                                                          CA_ADAPTER_RFCOMM_BTEDR,
+                                                          message->remoteEndpoint->addr,
+                                                          0);
 
-    if (!g_isHeaderAvailable)
-    {
-        totalDataLen = CAParseHeader((char*)message->data);
-        if (0 == totalDataLen)
-        {
-            OIC_LOG(ERROR, EDR_ADAPTER_TAG, "totalDataLen is zero");
-            return;
-        }
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "Sending data up !");
+    g_networkPacketReceivedCallback(remoteEndpoint, message->data, message->dataLen);
 
-        OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "Total data to be accumulated [%d] bytes", totalDataLen);
-
-        defragData = (char *) OICMalloc(sizeof(char) * totalDataLen);
-        if (!defragData)
-        {
-            OIC_LOG(ERROR, EDR_ADAPTER_TAG, "defragData is null");
-            return;
-        }
-
-        const char *remoteAddress = message->remoteEndpoint->addr;
-
-        remoteEndpoint = CACreateEndpointObject(CA_DEFAULT_FLAGS, CA_ADAPTER_RFCOMM_BTEDR,
-                                                remoteAddress, 0);
-
-        memcpy(defragData + recvDataLen, message->data + CA_HEADER_LENGTH,
-               message->dataLen - CA_HEADER_LENGTH);
-        recvDataLen += message->dataLen - CA_HEADER_LENGTH;
-        g_isHeaderAvailable = true;
-    }
-    else
-    {
-        memcpy(defragData + recvDataLen, message->data, message->dataLen);
-        recvDataLen += message->dataLen ;
-    }
-
-    if (totalDataLen == recvDataLen)
-    {
-        OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "Sending data up !");
-        g_networkPacketReceivedCallback(remoteEndpoint, defragData, recvDataLen);
-
-        OICFree(defragData);
-        CAFreeEndpoint(remoteEndpoint);
-
-        recvDataLen = 0;
-        totalDataLen = 0;
-        defragData = NULL;
-        remoteEndpoint = NULL;
-        g_isHeaderAvailable = false;
-    }
+    CAFreeEndpoint(remoteEndpoint);
 
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT_CAAdapterDataReceiverHandler");
 }
