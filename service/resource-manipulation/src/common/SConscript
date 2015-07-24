@@ -49,10 +49,13 @@ rcs_common_env.AppendUnique(CPPPATH = [
     'expiryTimer/include',
     'expiryTimer/src'])
 
+rcs_common_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+
 if target_os not in ['windows', 'winrt']:
     rcs_common_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
     if target_os != 'android':
         rcs_common_env.AppendUnique(CXXFLAGS = ['-pthread'])
+        rcs_common_env.AppendUnique(LIBS = ['pthread'])
 
 if target_os not in ['darwin', 'ios', 'windows', 'winrt']:
     rcs_common_env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
@@ -61,7 +64,7 @@ if target_os == 'android':
     rcs_common_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
     rcs_common_env.PrependUnique(LIBS = ['gnustl_shared', 'compatibility', 'log'])
 
-rcs_common_env.AppendUnique(LIBS = ['dl'])
+rcs_common_env.AppendUnique(LIBS = ['dl', 'oc'])
 
 if not release:
     rcs_common_env.AppendUnique(CXXFLAGS = ['--coverage'])
@@ -92,7 +95,6 @@ rcs_common_env.InstallTarget([rcs_common_static,rcs_common_shared], 'rcs_common'
 ######################################################################
 rcs_common_test_env = rcs_common_env.Clone();
 
-rcs_common_test_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 rcs_common_test_env.PrependUnique(CPPPATH = [
     env.get('SRC_DIR')+'/extlibs/hippomocks-master',
     gtest_dir + '/include',
@@ -103,7 +105,6 @@ gtest = File(gtest_dir + '/lib/.libs/libgtest.a')
 gtest_main = File(gtest_dir + '/lib/.libs/libgtest_main.a')
 
 rcs_common_test_env.PrependUnique(LIBS = [
-    'oc',
     'octbstack',
     'oc_logger',
     'connectivity_abstraction',
