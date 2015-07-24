@@ -24,8 +24,20 @@ namespace OIC
 {
 namespace Service
 {
-#define HOSTING_LOG_TAG  PCF("Hosting")
-#define OIC_HOSTING_LOG(level, tag, ...)  OCLogv((level), (HOSTING_LOG_TAG), __VA_ARGS__)
+
+void OIC_HOSTING_LOG(LogLevel level, const char * format, ...)
+{
+    if (!format)
+    {
+        return;
+    }
+    char buffer[MAX_LOG_V_BUFFER_SIZE] = {};
+    va_list args;
+    va_start(args, format);
+    vsnprintf(buffer, sizeof buffer - 1, format, args);
+    va_end(args);
+    OCLog(level, PCF("Hosting"), buffer);
+}
 
 HostingObject::HostingObject()
 : remoteObject(nullptr), mirroredServer(nullptr),

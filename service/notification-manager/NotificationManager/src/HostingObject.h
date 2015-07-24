@@ -33,6 +33,8 @@ namespace OIC
 namespace Service
 {
 
+void OIC_HOSTING_LOG(LogLevel level, const char * format, ...);
+
 class HostingObject
 {
 private:
