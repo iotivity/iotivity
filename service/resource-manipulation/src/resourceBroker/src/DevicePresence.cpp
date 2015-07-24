@@ -49,14 +49,14 @@ namespace OIC
 
         void DevicePresence::initializeDevicePresence(PrimitiveResourcePtr pResource)
         {
-            OC_LOG_V(DEBUG, BROKER_TAG, "%s",pResource->getHost().c_str());
-
             address = pResource->getHost();
+
+            OC_LOG_V(DEBUG, BROKER_TAG, "%s",address.c_str());
 
             try
             {
                 presenceSubscriber
-                = PresenceSubscriber(pResource->getHost(), BROKER_TRANSPORT, pSubscribeRequestCB);
+                = PresenceSubscriber(address, BROKER_TRANSPORT, pSubscribeRequestCB);
                 OC_LOG_V(DEBUG, BROKER_TAG, "subscribe Presence");
             } catch(PlatformException &e)
             {

@@ -10,6 +10,7 @@
 #include "ResourcePresence.h"
 #include "PrimitiveResource.h"
 #include "ResponseStatement.h"
+#include "UnitTestHelper.h"
 
 using namespace testing;
 using namespace OIC::Service;
@@ -20,15 +21,15 @@ using namespace OC;
 typedef OCStackResult (*subscribePresenceSig1)(OC::OCPlatform::OCPresenceHandle&,
         const std::string&, OCConnectivityType, SubscribeCallback);
 
-class DeviceAssociationTest : public Test
+class DeviceAssociationTest : public TestWithMock
 {
 public:
 
-    MockRepository mocks;
     DeviceAssociation * instance;
     DevicePresencePtr device;
     PrimitiveResource::Ptr pResource;
 protected:
+
     void setMockingFunc()
     {
         mocks.OnCall(pResource.get(), PrimitiveResource::requestGet);
@@ -43,42 +44,42 @@ protected:
         instance->addDevice(device);
     }
 
-    void SetUp() override {
+    void SetUp() 
+    {
+        TestWithMock::SetUp();
         instance = DeviceAssociation::getInstance();
         device = (DevicePresencePtr)new DevicePresence();
         pResource = PrimitiveResource::Ptr(mocks.Mock< PrimitiveResource >(), [](PrimitiveResource*){});
     }
 
-    void TearDown() override
+    void TearDown() 
     {
+        TestWithMock::TearDown();
         device.reset();
         pResource.reset();
 
     }
-    virtual ~DeviceAssociationTest() noexcept(true)
-    {
-    }
-
-
 };
 
 TEST_F(DeviceAssociationTest,findDevice_ReturnNormalValueIfNormalParam)
 {
+
     SetAssociationDevice();
-    //pResource->getHost()
     ASSERT_NE(nullptr,instance->findDevice(pResource->getHost()));
+
 
 }
 
 TEST_F(DeviceAssociationTest,addDevice_NormalHandlingIfNormalParam)
 {
+
     SetAssociationDevice();
     ASSERT_FALSE(instance->isEmptyDeviceList());
-
 }
 
 TEST_F(DeviceAssociationTest,removeDevice_NormalHandlingIfNormalParam)
 {
+
     SetAssociationDevice();
     instance->removeDevice(device);
     ASSERT_TRUE(instance->isEmptyDeviceList());
