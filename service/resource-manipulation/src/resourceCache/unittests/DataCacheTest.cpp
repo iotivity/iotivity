@@ -6,10 +6,11 @@
 #include "DataCache.h"
 #include "ResourceAttributes.h"
 #include "ResponseStatement.h"
+#include "UnitTestHelper.h"
 
 using namespace OIC::Service;
 
-class DataCacheTest : public ::testing::Test
+class DataCacheTest : public TestWithMock
 {
     public:
         typedef std::function <
@@ -20,7 +21,6 @@ class DataCacheTest : public ::testing::Test
         void(const OIC::Service::HeaderOptions &, const OIC::Service::ResponseStatement &, int,
              int) > ObserveCallback;
     public:
-        MockRepository mocks;
         DataCache *cacheHandler;
         PrimitiveResource::Ptr pResource;
         CacheCB cb;
@@ -39,6 +39,7 @@ class DataCacheTest : public ::testing::Test
 
         virtual void SetUp()
         {
+            TestWithMock::SetUp();
             pResource = PrimitiveResource::Ptr(mocks.Mock< PrimitiveResource >(), [](PrimitiveResource *) {});
             cacheHandler = new DataCache();
             cb = ([](std::shared_ptr<PrimitiveResource >, const ResourceAttributes &)->OCStackResult {return OC_STACK_OK;});
@@ -47,6 +48,7 @@ class DataCacheTest : public ::testing::Test
         virtual void TearDown()
         {
             delete cacheHandler;
+            TestWithMock::TearDown();
         }
 };
 
