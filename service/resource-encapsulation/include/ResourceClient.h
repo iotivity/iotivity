@@ -23,7 +23,7 @@
  *
  * This file contains the Resource Client APIs provided to the developers.
  * It is a common API layer for the Resource Broker and Resource Cache module of Resource
- * Manipulation layer.
+ * Encapsulation layer.
  */
 
 #ifndef RESOURCE_CLIENT_H_

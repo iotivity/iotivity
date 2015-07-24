@@ -1,6 +1,6 @@
 == Brief Guide to Service Basis 
 
-Service Basis provides common functions such as resource broker, cache, resource container.
+resource encapsulation provides common functions such as resource broker, cache, resource container.
 
 1. resourceBroker 
 resourceBroker checks and monitors the status of resources. 
@@ -8,7 +8,7 @@ This module notifies the change of reachability of selected resource to users.
 
 2. resourceCache
 resourceCache provides the up-to-date "DATA" of remote resource to users.
-It tracks the most recent value of the selected resource and notifies to users according to the request notifying policy.
+It tracks the most recent value of the selected resource and notifies to users according to called API
 
 3. resourceContainer
 Need to be updated.
