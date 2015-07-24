@@ -442,6 +442,7 @@ CAResult_t CAIPStartServer(const ca_thread_pool_t threadPool)
         NEWSOCKET(AF_INET6, u6s)
         NEWSOCKET(AF_INET6, m6)
         NEWSOCKET(AF_INET6, m6s)
+        OIC_LOG_V(INFO, TAG, "IPv6 unicast port: %u", caglobals.ip.u6.port);
     }
     if (caglobals.ip.ipv4enabled)
     {
@@ -449,6 +450,7 @@ CAResult_t CAIPStartServer(const ca_thread_pool_t threadPool)
         NEWSOCKET(AF_INET, u4s)
         NEWSOCKET(AF_INET, m4)
         NEWSOCKET(AF_INET, m4s)
+        OIC_LOG_V(INFO, TAG, "IPv4 unicast port: %u", caglobals.ip.u4.port);
     }
 
     OIC_LOG_V(DEBUG, TAG,
@@ -798,8 +800,13 @@ void CAIPSendData(CAEndpoint_t *endpoint, const void *data, uint32_t datalen,
     }
     else
     {
+        if (!endpoint->port)    // unicast discovery
+        {
+            endpoint->port = isSecure ? CA_SECURE_COAP : CA_COAP;
+        }
+
         int fd;
-        if (endpoint->flags & CA_IPV6)
+        if (caglobals.ip.ipv6enabled && (endpoint->flags & CA_IPV6))
         {
             fd = isSecure ? caglobals.ip.u6s.fd : caglobals.ip.u6.fd;
             #ifndef __WITH_DTLS__
@@ -807,7 +814,7 @@ void CAIPSendData(CAEndpoint_t *endpoint, const void *data, uint32_t datalen,
             #endif
             sendData(fd, endpoint, data, datalen, "unicast", "ipv6");
         }
-        if (endpoint->flags & CA_IPV4)
+        if (caglobals.ip.ipv4enabled && (endpoint->flags & CA_IPV4))
         {
             fd = isSecure ? caglobals.ip.u4s.fd : caglobals.ip.u4.fd;
             #ifndef __WITH_DTLS__

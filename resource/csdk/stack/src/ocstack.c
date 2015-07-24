@@ -1835,7 +1835,7 @@ static OCStackResult ParseRequestUri(const char *fullUri,
             {
                 return OC_STACK_INVALID_URI;
             }
-            // use standard multicast port
+            // collect port, if any
             if (colon && colon < slash)
             {
                 for (colon++; colon < slash; colon++)
@@ -2038,13 +2038,17 @@ OCStackResult OCDoResource(OCDoHandle *handle,
         break;
     case OC_REST_DISCOVER:
         qos = OC_LOW_QOS;
-        if (!destination && !devAddr)
+        if (destination || devAddr)
+        {
+            requestInfo.isMulticast = false;
+        }
+        else
         {
             destination = &tmpDevAddr;
+            requestInfo.isMulticast = true;
         }
         // CA_DISCOVER will become GET and isMulticast
         requestInfo.method = CA_GET;
-        requestInfo.isMulticast = true;
         break;
     #ifdef WITH_PRESENCE
     case OC_REST_PRESENCE:
