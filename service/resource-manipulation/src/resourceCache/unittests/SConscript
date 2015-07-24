@@ -56,6 +56,7 @@ cache_test_env.AppendUnique(CPPPATH = ['../../../include'])
 cache_test_env.AppendUnique(CPPPATH = ['../../common/primitiveResource/include'])
 cache_test_env.AppendUnique(CPPPATH = ['../../common/expiryTimer/include'])
 cache_test_env.AppendUnique(CPPPATH = ['../../common/expiryTimer/src'])
+cache_test_env.AppendUnique(CPPPATH = ['../../common/utils/include'])
 cache_test_env.PrependUnique(CPPPATH = [env.get('SRC_DIR')+'/extlibs/hippomocks-master',
                              gtest_dir + '/include'])
 cache_test_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])

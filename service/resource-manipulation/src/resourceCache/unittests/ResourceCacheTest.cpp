@@ -3,15 +3,13 @@
 #include <HippoMocks/hippomocks.h>
 
 #include "ResourceCacheManager.h"
+#include "UnitTestHelper.h"
 
 using namespace OIC::Service;
 
-
-
-class ResourceCacheManagerTest : public ::testing::Test
+class ResourceCacheManagerTest : public TestWithMock
 {
     public:
-        MockRepository mocks;
         ResourceCacheManager *cacheInstance;
         PrimitiveResource::Ptr pResource;
         CacheCB cb;
@@ -30,6 +28,7 @@ class ResourceCacheManagerTest : public ::testing::Test
 
         virtual void SetUp()
         {
+            TestWithMock::SetUp();
             cacheInstance = ResourceCacheManager::getInstance();
             pResource = PrimitiveResource::Ptr(mocks.Mock< PrimitiveResource >(), [](PrimitiveResource *) {});
             cb = ([](std::shared_ptr<PrimitiveResource >, const ResourceAttributes &)->OCStackResult {return OC_STACK_OK;});
@@ -37,7 +36,7 @@ class ResourceCacheManagerTest : public ::testing::Test
 
         virtual void TearDown()
         {
-
+            TestWithMock::TearDown();
         }
 };
 
