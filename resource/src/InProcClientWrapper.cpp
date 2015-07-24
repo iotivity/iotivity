@@ -177,7 +177,7 @@ namespace OC
     }
 
     OCStackResult InProcClientWrapper::ListenForResource(
-            const std::string& serviceUrl,  // unused
+            const std::string& serviceUrl,
             const std::string& resourceType,
             OCConnectivityType connectivityType,
             FindCallback& callback, QualityOfService QoS)
@@ -188,6 +188,8 @@ namespace OC
         }
 
         OCStackResult result;
+        ostringstream resourceUri;
+        resourceUri << serviceUrl << resourceType;
 
         ClientCallbackContext::ListenContext* context =
             new ClientCallbackContext::ListenContext(callback, shared_from_this());
@@ -202,7 +204,7 @@ namespace OC
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             result = OCDoResource(nullptr, OC_REST_DISCOVER,
-                                  resourceType.c_str(),
+                                  resourceUri.str().c_str(),
                                   nullptr, nullptr, connectivityType,
                                   static_cast<OCQualityOfService>(QoS),
                                   &cbdata,
@@ -238,7 +240,7 @@ namespace OC
     }
 
     OCStackResult InProcClientWrapper::ListenForDevice(
-            const std::string& serviceUrl,  // unused
+            const std::string& serviceUrl,
             const std::string& deviceURI,
             OCConnectivityType connectivityType,
             FindDeviceCallback& callback,
@@ -249,6 +251,8 @@ namespace OC
             return OC_STACK_INVALID_PARAM;
         }
         OCStackResult result;
+        ostringstream deviceUri;
+        deviceUri << serviceUrl << deviceURI;
 
         ClientCallbackContext::DeviceListenContext* context =
             new ClientCallbackContext::DeviceListenContext(callback, shared_from_this());
@@ -263,7 +267,7 @@ namespace OC
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             result = OCDoResource(nullptr, OC_REST_DISCOVER,
-                                  deviceURI.c_str(),
+                                  deviceUri.str().c_str(),
                                   nullptr, nullptr, connectivityType,
                                   static_cast<OCQualityOfService>(QoS),
                                   &cbdata,
