@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include "ResourceClient.h"
-#include "ResourceObject.h"
+#include "RCSResourceObject.h"
 #include "OCPlatform.h"
 
 #define RESOURCEURI "/a/TemperatureSensor"
@@ -18,11 +18,11 @@ std::shared_ptr<RemoteResourceObject> object;
 DiscoveryManager *manager = DiscoveryManager::getInstance();
 ResourceState receivedResourceState;
 ResourceAttributes receivedResourceAttributes;
-ResourceObject::Ptr server;
+RCSResourceObject::Ptr server;
 
 void createResource()
 {
-    server = ResourceObject::Builder(RESOURCEURI, RESOURCETYPE,
+    server = RCSResourceObject::Builder(RESOURCEURI, RESOURCETYPE,
                                      RESOURCEINTERFACE).setDiscoverable(true).setObservable(true).build();
     std::cout << "Resource created successfully " << std::endl;
     server->setAttribute("Temperature", 0);

@@ -34,7 +34,7 @@
 #include "ResourceContainerBundleAPI.h"
 #include "ResourceContainerImpl.h"
 
-#include "ResourceObject.h"
+#include "RCSResourceObject.h"
 
 using namespace std;
 using namespace testing;
@@ -237,7 +237,7 @@ class ResourceContainerBundleAPITest: public TestWithMock
 
     public:
         MockRepository mocks;
-        ResourceObject *m_pResourceObject;
+        RCSResourceObject *m_pResourceObject;
         ResourceContainerBundleAPI *m_pResourceContainer;
         TestBundleResource *m_pBundleResource;
 
@@ -245,7 +245,7 @@ class ResourceContainerBundleAPITest: public TestWithMock
         void SetUp()
         {
             TestWithMock::SetUp();
-            m_pResourceObject = mocks.Mock<ResourceObject>();
+            m_pResourceObject = mocks.Mock<RCSResourceObject>();
             m_pResourceContainer = ResourceContainerBundleAPI::getInstance();
 
             m_pBundleResource = new TestBundleResource();
@@ -271,11 +271,11 @@ TEST_F(ResourceContainerBundleAPITest, ResourceServerCreatedWhenRegisterResource
 TEST_F(ResourceContainerBundleAPITest, RequestHandlerForResourceServerSetWhenRegisterResourceCalled)
 {
     mocks.OnCallFunc(ResourceContainerImpl::buildResourceObject).Return(
-        ResourceObject::Ptr(m_pResourceObject, [](ResourceObject *)
+        RCSResourceObject::Ptr(m_pResourceObject, [](RCSResourceObject *)
     {}));
 
-    mocks.ExpectCall(m_pResourceObject, ResourceObject::setGetRequestHandler);
-    mocks.ExpectCall(m_pResourceObject, ResourceObject::setSetRequestHandler);
+    mocks.ExpectCall(m_pResourceObject, RCSResourceObject::setGetRequestHandler);
+    mocks.ExpectCall(m_pResourceObject, RCSResourceObject::setSetRequestHandler);
 
     m_pResourceContainer->registerResource(m_pBundleResource);
 
@@ -285,11 +285,11 @@ TEST_F(ResourceContainerBundleAPITest, RequestHandlerForResourceServerSetWhenReg
 TEST_F(ResourceContainerBundleAPITest, BundleResourceUnregisteredWhenUnregisterResourceCalled)
 {
     mocks.OnCallFunc(ResourceContainerImpl::buildResourceObject).Return(
-        ResourceObject::Ptr(m_pResourceObject, [](ResourceObject *)
+        RCSResourceObject::Ptr(m_pResourceObject, [](RCSResourceObject *)
     {}));
 
-    mocks.ExpectCall(m_pResourceObject, ResourceObject::setGetRequestHandler);
-    mocks.ExpectCall(m_pResourceObject, ResourceObject::setSetRequestHandler);
+    mocks.ExpectCall(m_pResourceObject, RCSResourceObject::setGetRequestHandler);
+    mocks.ExpectCall(m_pResourceObject, RCSResourceObject::setSetRequestHandler);
 
     m_pResourceContainer->registerResource(m_pBundleResource);
     m_pResourceContainer->unregisterResource(m_pBundleResource);
@@ -303,15 +303,15 @@ TEST_F(ResourceContainerBundleAPITest,
        ServerNotifiesToObserversWhenNotificationReceivedFromResource)
 {
     mocks.OnCallFunc(ResourceContainerImpl::buildResourceObject).Return(
-        ResourceObject::Ptr(m_pResourceObject, [](ResourceObject *)
+        RCSResourceObject::Ptr(m_pResourceObject, [](RCSResourceObject *)
     {}));
 
-    mocks.ExpectCall(m_pResourceObject, ResourceObject::setGetRequestHandler);
-    mocks.ExpectCall(m_pResourceObject, ResourceObject::setSetRequestHandler);
+    mocks.ExpectCall(m_pResourceObject, RCSResourceObject::setGetRequestHandler);
+    mocks.ExpectCall(m_pResourceObject, RCSResourceObject::setSetRequestHandler);
 
     m_pResourceContainer->registerResource(m_pBundleResource);
 
-    mocks.ExpectCall(m_pResourceObject, ResourceObject::notify);
+    mocks.ExpectCall(m_pResourceObject, RCSResourceObject::notify);
 
     m_pResourceContainer->onNotificationReceived(m_pBundleResource->m_uri);
 

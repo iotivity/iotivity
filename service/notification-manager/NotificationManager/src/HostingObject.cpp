@@ -164,13 +164,13 @@ void HostingObject::dataChangedCB(const ResourceAttributes & attributes, RemoteO
 
     ResourceAttributes rData;
     {
-        ResourceObject::LockGuard guard(mirroredServer);
+        RCSResourceObject::LockGuard guard(mirroredServer);
         rData = mirroredServer->getAttributes();
     }
     if(rData.empty() || rData != attributes)
     {
         {
-            ResourceObject::LockGuard guard(mirroredServer);
+            RCSResourceObject::LockGuard guard(mirroredServer);
             for(auto it = rData.begin(); ; ++it)
             {
                 if(it == rData.end())
@@ -205,11 +205,11 @@ HostingObject::ResourceObjectPtr HostingObject::createMirroredServer(RemoteObjec
         {
             std::string type = types.begin()->c_str();
             std::string interface = interfaces.begin()->c_str();
-            retResource = ResourceObject::Builder(uri, type, interface).
+            retResource = RCSResourceObject::Builder(uri, type, interface).
                     setDiscoverable(true).setObservable(true).build();
 
             // TODO need to bind types and interfaces
-            retResource->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::UPDATED);
+            retResource->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy::UPDATED);
             retResource->setSetRequestHandler(pSetRequestHandler);
         }catch(...)
         {

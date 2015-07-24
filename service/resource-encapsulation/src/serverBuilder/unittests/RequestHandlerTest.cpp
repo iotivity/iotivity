@@ -21,6 +21,7 @@
 #include <UnitTestHelper.h>
 
 #include <RequestHandler.h>
+#include <RCSResourceObject.h>
 
 #include <OCPlatform.h>
 
@@ -39,7 +40,7 @@ typedef OCStackResult (*RegisterResource)(OCResourceHandle&, std::string&,
 class RequestHandlerTest: public TestWithMock
 {
 public:
-    ResourceObject::Ptr server;
+    RCSResourceObject::Ptr server;
 
 protected:
     void SetUp()
@@ -51,9 +52,9 @@ protected:
 
         mocks.OnCallFunc(OC::OCPlatform::unregisterResource).Return(OC_STACK_OK);
 
-        server = ResourceObject::Builder("a/test", "resourceType", "").build();
+        server = RCSResourceObject::Builder("a/test", "resourceType", "").build();
 
-        server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::NEVER);
+        server->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy::NEVER);
         server->setAttribute(EXISTING, ORIGIN_VALUE);
     }
 };

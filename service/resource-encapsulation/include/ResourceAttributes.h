@@ -86,7 +86,7 @@ namespace OIC
         * @see const_iterator
         * @see DiscoveryManager
         * @see RemoteResourceObject
-        * @see ResourceObject
+        * @see RCSResourceObject
         */
         class ResourceAttributes
         {

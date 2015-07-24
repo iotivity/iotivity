@@ -22,7 +22,7 @@
 #define RH_HOSTINGOBJECT_H_
 
 #include "ResourceClient.h"
-#include "ResourceObject.h"
+#include "RCSResourceObject.h"
 #include "RequestObject.h"
 #include "ResourceBroker.h"
 #include "ResourceCacheManager.h"
@@ -38,7 +38,7 @@ void OIC_HOSTING_LOG(LogLevel level, const char * format, ...);
 class HostingObject
 {
 private:
-    typedef std::shared_ptr<ResourceObject> ResourceObjectPtr;
+    typedef std::shared_ptr<RCSResourceObject> ResourceObjectPtr;
     typedef std::shared_ptr<RemoteResourceObject> RemoteObjectPtr;
     typedef std::shared_ptr<RequestObject> RequestObjectPtr;
     typedef std::shared_ptr<PrimitiveResource> PrimiteveResourcePtr;

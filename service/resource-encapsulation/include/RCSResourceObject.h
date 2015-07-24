@@ -22,10 +22,10 @@
  * @file
  *
  * This file contains the resource object APIs provided to the developers.
- * ResourceObject is a part of the server builder module.
+ * RCSResourceObject is a part of the server builder module.
  */
-#ifndef SERVERBUILDER_RESOURCEOBJECT_H
-#define SERVERBUILDER_RESOURCEOBJECT_H
+#ifndef SERVER_RCSRESOURCEOBJECT_H
+#define SERVER_RCSRESOURCEOBJECT_H
 
 #include <string>
 #include <mutex>
@@ -50,8 +50,8 @@ namespace OIC
         /**
          * @brief Thrown when lock has not been acquired.
          *
-         * @see ResourceObject::LockGuard
-         * @see ResourceObject::getAttributes
+         * @see RCSResourceObject::LockGuard
+         * @see RCSResourceObject::getAttributes
          */
         class NoLockException: public RCSException
         {
@@ -60,7 +60,7 @@ namespace OIC
         };
 
         /**
-         * @brief  ResourceObject represents a resource. ResourceObject handles any requests from
+         * @brief  RCSResourceObject represents a resource. It handles any requests from
          *        clients automatically with attributes.
          *        It also provides an auto notification mechanism that notifies to the observers.
          *        <br/>
@@ -71,21 +71,20 @@ namespace OIC
          *        by a set request. In this case, add an AttributeUpdatedListener
          *        with a key interested in instead of overriding SetRequestHandler.
          */
-        class ResourceObject
+        class RCSResourceObject
         {
             private:
                 class WeakGuard;
 
             public:
-
                 /**
                  * @brief represents the policy of AutoNotify function.
                  *        In accord with this policy, observers are notified of attributes that
                  *        are changed or updated.
                  * @note Attributes are changed or updated according to execution of some functions
                  *       or receipt of 'set-request'.
-                 *       (functions - ResourceObject::setAttribute, ResourceObject::removeAttribute,
-                 *        ResourceObject::getAttributes)
+                 *       (functions - RCSResourceObject::setAttribute,
+                 *       RCSResourceObject::removeAttribute, RCSResourceObject::getAttributes)
                  */
                 enum class AutoNotifyPolicy
                 {
@@ -107,15 +106,15 @@ namespace OIC
                                     set-request of attributes of the new key. */
                 };
 
-                typedef std::shared_ptr< ResourceObject > Ptr;
-                typedef std::shared_ptr< const ResourceObject > ConstPtr;
+                typedef std::shared_ptr< RCSResourceObject > Ptr;
+                typedef std::shared_ptr< const RCSResourceObject > ConstPtr;
 
                 /**
                  * @class   Builder
                  * @brief   This class provides APIs for resource creation, setting properties &
                  *          attributes for the constructed resource.
-                 *          It is a subclass of ResourceObject. It provides the build() API
-                 *          which builds a resource and return pointer to ResourceObject class.
+                 *          It provides the build() API
+                 *          which builds a resource and return pointer to RCSResourceObject class.
                  *
                  *@see build()
                  */
@@ -178,16 +177,16 @@ namespace OIC
                         Builder &setAttributes(ResourceAttributes &&attributes);
 
                         /**
-                         * API for constructing a new ResourceObject.
+                         * API for constructing a new RCSResourceObject.
                          *
-                         * @return Pointer to ResourceObject instance created.
+                         * @return Pointer to RCSResourceObject instance created.
                          *
                          * @throw PlatformException
                          *       It catches exception from registerResource API of OCPlatform and
                          *       throws it to developer.
                          *
                          */
-                        ResourceObject::Ptr build();
+                        RCSResourceObject::Ptr build();
 
                     private:
                         std::string m_uri;
@@ -208,13 +207,13 @@ namespace OIC
                                      const ResourceAttributes::Value &) > AttributeUpdatedListener;
 
             public:
-                ResourceObject(ResourceObject&&) = delete;
-                ResourceObject(const ResourceObject &) = delete;
+                RCSResourceObject(RCSResourceObject&&) = delete;
+                RCSResourceObject(const RCSResourceObject &) = delete;
 
-                ResourceObject &operator=(ResourceObject && ) = delete;
-                ResourceObject &operator=(const ResourceObject &) = delete;
+                RCSResourceObject &operator=(RCSResourceObject && ) = delete;
+                RCSResourceObject &operator=(const RCSResourceObject &) = delete;
 
-                virtual ~ResourceObject();
+                virtual ~RCSResourceObject();
 
                 /**
                  * API for setting a particular attribute value.
@@ -294,12 +293,12 @@ namespace OIC
                 bool containsAttribute(const std::string &key) const;
 
                 /**
-                 * API for getting all the attributes of the ResourceObject.
+                 * API for getting all the attributes of the RCSResourceObject.
                  * It invokes the expectOwnLock() API to check the owner of the lock using the
                  * thread id.
                  * If it is not the owner then it throws exception.
                  *
-                 * @return reference of the attributes of this ResourceObject.
+                 * @return reference of the attributes of this RCSResourceObject.
                  *
                  * @see expectOwnLock()
                  *
@@ -377,7 +376,7 @@ namespace OIC
                 virtual bool removeAttributeUpdatedListener(const std::string &key);
 
                 /**
-                 * API for notifying all observers of the ResourceObject
+                 * API for notifying all observers of the RCSResourceObject
                  * with the updated attributes value
                  */
                 virtual void notify() const;
@@ -423,7 +422,7 @@ namespace OIC
                 SetRequestHandlerPolicy getSetRequestHandlerPolicy() const;
 
         private:
-            ResourceObject(uint8_t, ResourceAttributes&&);
+            RCSResourceObject(uint8_t, ResourceAttributes&&);
 
             OCEntityHandlerResult entityHandler(std::shared_ptr< OC::OCResourceRequest >);
 
@@ -457,13 +456,13 @@ namespace OIC
 
         };
 
-        class ResourceObject::LockGuard
+        class RCSResourceObject::LockGuard
         {
         public:
-            LockGuard(const ResourceObject&);
-            LockGuard(const ResourceObject::Ptr);
-            LockGuard(const ResourceObject&, AutoNotifyPolicy);
-            LockGuard(const ResourceObject::Ptr, AutoNotifyPolicy);
+            LockGuard(const RCSResourceObject&);
+            LockGuard(const RCSResourceObject::Ptr);
+            LockGuard(const RCSResourceObject&, AutoNotifyPolicy);
+            LockGuard(const RCSResourceObject::Ptr, AutoNotifyPolicy);
             ~LockGuard();
 
             LockGuard(const LockGuard&) = delete;
@@ -476,7 +475,7 @@ namespace OIC
             void init();
 
         private:
-            const ResourceObject& m_resourceObject;
+            const RCSResourceObject& m_resourceObject;
 
             AutoNotifyPolicy m_autoNotifyPolicy;
 
@@ -485,10 +484,10 @@ namespace OIC
             std::function<void()> m_autoNotifyFunc;
         };
 
-        class ResourceObject::WeakGuard
+        class RCSResourceObject::WeakGuard
         {
         public:
-            WeakGuard(const ResourceObject&);
+            WeakGuard(const RCSResourceObject&);
             ~WeakGuard();
 
             WeakGuard(const WeakGuard&) = delete;
@@ -501,9 +500,9 @@ namespace OIC
 
         private:
             bool m_isOwningLock;
-            const ResourceObject& m_resourceObject;
+            const RCSResourceObject& m_resourceObject;
         };
     }
 }
 
-#endif // SERVERBUILDER_RESOURCEOBJECT_H
+#endif // SERVER_RCSRESOURCEOBJECT_H

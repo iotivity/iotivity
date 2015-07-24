@@ -22,6 +22,8 @@
 
 #include <RequestHandler.h>
 
+#include <cassert>
+
 namespace OIC
 {
     namespace Service

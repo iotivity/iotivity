@@ -22,7 +22,7 @@
 #define RH_REQUESTOBJECT_H_
 
 #include "ResourceClient.h"
-#include "ResourceObject.h"
+#include "RCSResourceObject.h"
 
 namespace OIC
 {
