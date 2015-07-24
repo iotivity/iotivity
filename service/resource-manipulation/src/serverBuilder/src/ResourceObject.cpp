@@ -278,7 +278,12 @@ namespace OIC
         bool ResourceObject::removeAttribute(const std::string& key)
         {
             WeakGuard lock(*this);
-            return m_resourceAttributes.erase(key);
+            if (m_resourceAttributes.erase(key))
+            {
+                autoNotify(true, getAutoNotifyPolicy());
+                return true;
+            }
+            return false;
         }
 
         bool ResourceObject::containsAttribute(const std::string& key) const
