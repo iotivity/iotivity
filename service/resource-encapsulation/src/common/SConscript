@@ -82,7 +82,7 @@ rcs_common_src = [
 		RESOURCE_SRC + 'PrimitiveResource.cpp',
 		RESOURCE_SRC + 'RCSException.cpp',
 		RESOURCE_SRC + 'RCSAddress.cpp',
-		RESOURCE_SRC + 'ResourceAttributes.cpp',
+		RESOURCE_SRC + 'RCSResourceAttributes.cpp',
 		RESOURCE_SRC + 'ResponseStatement.cpp'
         ]
 		

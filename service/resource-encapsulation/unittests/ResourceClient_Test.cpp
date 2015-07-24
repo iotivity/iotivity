@@ -17,7 +17,7 @@ std::string uri = "/oic/res?rt=Resource.Hosting";
 std::shared_ptr<RemoteResourceObject> object;
 DiscoveryManager *manager = DiscoveryManager::getInstance();
 ResourceState receivedResourceState;
-ResourceAttributes receivedResourceAttributes;
+RCSResourceAttributes receivedResourceAttributes;
 RCSResourceObject::Ptr server;
 
 void createResource()
@@ -39,7 +39,7 @@ void destroyResource()
 }
 
 //Callbacks
-void onRemoteAttrReceived(const ResourceAttributes &attributes)
+void onRemoteAttrReceived(const RCSResourceAttributes &attributes)
 {
     cbresult = true;
     receivedResourceAttributes = attributes;
@@ -59,12 +59,12 @@ void onResourceStateChanged(ResourceState state)
     receivedResourceState = state;
 }
 
-void onCacheUpdated(const ResourceAttributes attribute)
+void onCacheUpdated(const RCSResourceAttributes attribute)
 {
     receivedResourceAttributes = attribute;
 }
 
-void OnRemoteAttributesSetCallback(const ResourceAttributes &attributes)
+void OnRemoteAttributesSetCallback(const RCSResourceAttributes &attributes)
 {
     cbresult = true;
 }
@@ -104,7 +104,7 @@ TEST(ResourceClientTest, testSetRemoteAttributesPass)
     cbresult = false;
     object->getRemoteAttributes(&onRemoteAttrReceived);
     sleep(2);
-    ResourceAttributes::const_iterator iter = receivedResourceAttributes.begin();
+    RCSResourceAttributes::const_iterator iter = receivedResourceAttributes.begin();
     for (unsigned int i = 0; i < receivedResourceAttributes.size(); ++i)
     {
         if ( iter->key() == "Temperature")
@@ -249,7 +249,7 @@ TEST(ResourceClientTest, testGetResourceCacheState)
 TEST(ResourceClientTest, testGetCachedAttributesWithoutCallback)
 {
     createResource();
-    ResourceAttributes result = object->getCachedAttributes();
+    RCSResourceAttributes result = object->getCachedAttributes();
     EXPECT_TRUE(result.empty());
     destroyResource();
 }
@@ -258,7 +258,7 @@ TEST(ResourceClientTest, testGetCachedAttributesWithoutCallback)
 TEST(ResourceClientTest, testGetCachedAttributeWithInvalidAttribute)
 {
     createResource();
-    ResourceAttributes::Value result = object->getCachedAttribute("");
+    RCSResourceAttributes::Value result = object->getCachedAttribute("");
     EXPECT_TRUE(result == nullptr);
     destroyResource();
 }
@@ -309,7 +309,7 @@ TEST(ResourceClientTest, testGetInterfaces)
 TEST(ResourceClientTest, testGetCachedAttribute)
 {
     createResource();
-    ResourceAttributes::Value result = object->getCachedAttribute("Temperature");
+    RCSResourceAttributes::Value result = object->getCachedAttribute("Temperature");
     EXPECT_TRUE(result != nullptr);
     destroyResource();
 }
@@ -343,12 +343,12 @@ TEST(ResourceClientTest, testDiscoverResourceEmptyCallback)
     object->stopMonitoring();
 }
 
-//Send invalid ResourceAttributes object to function
+//Send invalid RCSResourceAttributes object to function
 TEST(ResourceClientTest, testSetRemoteAttributesInvalidAttributes)
 {
     createResource();
     cbresult = false;
-    ResourceAttributes attr;
+    RCSResourceAttributes attr;
     //object->getRemoteAttributes(&onRemoteAttrReceived);
     object->setRemoteAttributes(attr, &OnRemoteAttributesSetCallback);
     EXPECT_FALSE(cbresult);

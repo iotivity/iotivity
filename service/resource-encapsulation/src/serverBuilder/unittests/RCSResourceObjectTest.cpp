@@ -76,7 +76,7 @@ TEST_F(ResourceObjectBuilderTest, ResourceServerHasPropertiesSetByBuilder)
 
 TEST_F(ResourceObjectBuilderTest, ResourceServerHasAttrsSetByBuilder)
 {
-    ResourceAttributes attrs;
+    RCSResourceAttributes attrs;
     attrs[KEY] = 100;
 
     auto serverResource = RCSResourceObject::Builder(RESOURCE_URI, RESOURCE_TYPE, "").
@@ -353,7 +353,7 @@ TEST_F(ResourceObjectHandlingRequestTest, SendResponseWithRCSResponseResults)
     constexpr OCEntityHandlerResult result{ OC_EH_SLOW };
 
     server->setGetRequestHandler(
-            [](const RCSRequest&, ResourceAttributes&) -> RCSGetResponse
+            [](const RCSRequest&, RCSResourceAttributes&) -> RCSGetResponse
             {
                 return RCSGetResponse::create(result, errorCode);
             }
@@ -377,9 +377,9 @@ TEST_F(ResourceObjectHandlingRequestTest, SendSetResponseWithCustomAttrsAndResul
     constexpr char value[]{ "value" };
 
     server->setSetRequestHandler(
-            [](const RCSRequest&, ResourceAttributes&) -> RCSSetResponse
+            [](const RCSRequest&, RCSResourceAttributes&) -> RCSSetResponse
             {
-                ResourceAttributes attrs;
+                RCSResourceAttributes attrs;
                 attrs[KEY] = value;
                 return RCSSetResponse::create(attrs, result, errorCode);
             }
@@ -595,8 +595,8 @@ TEST_F(AttributeUpdatedListenerTest, AddListenerReturnsTrueIfListenerIsCalled)
     OCRepresentation ocRep = createOCRepresentation();
 
     server->addAttributeUpdatedListener(KEY,
-        [&called](const OIC::Service::ResourceAttributes::Value&,
-        const OIC::Service::ResourceAttributes::Value& )
+        [&called](const OIC::Service::RCSResourceAttributes::Value&,
+        const OIC::Service::RCSResourceAttributes::Value& )
         {
             called=true;
         } );
@@ -614,15 +614,15 @@ TEST_F(AttributeUpdatedListenerTest, AddListenerisChangedAccordingToLastAddedFun
     OCRepresentation ocRep = createOCRepresentation();
 
     server->addAttributeUpdatedListener("key",
-        [&called](const OIC::Service::ResourceAttributes::Value&,
-        const OIC::Service::ResourceAttributes::Value&)
+        [&called](const OIC::Service::RCSResourceAttributes::Value&,
+        const OIC::Service::RCSResourceAttributes::Value&)
         {
             called=10;
         } );
 
     server->addAttributeUpdatedListener(KEY,
-        [&called](const OIC::Service::ResourceAttributes::Value&,
-        const OIC::Service::ResourceAttributes::Value&)
+        [&called](const OIC::Service::RCSResourceAttributes::Value&,
+        const OIC::Service::RCSResourceAttributes::Value&)
         {
             called=100;
         } );
@@ -640,8 +640,8 @@ TEST_F(AttributeUpdatedListenerTest, RemoveListenerReturnsTrueIfListenerIsNotAdd
 TEST_F(AttributeUpdatedListenerTest, RemoveListenerReturnsTrueIfListenerIsAdded)
 {
     server->addAttributeUpdatedListener(KEY,
-        [](const OIC::Service::ResourceAttributes::Value&,
-        const OIC::Service::ResourceAttributes::Value&)
+        [](const OIC::Service::RCSResourceAttributes::Value&,
+        const OIC::Service::RCSResourceAttributes::Value&)
         {
         } );
 

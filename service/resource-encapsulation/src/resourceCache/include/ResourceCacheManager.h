@@ -53,8 +53,8 @@ namespace OIC
                 void updateResourceCache(PrimitiveResourcePtr pResource) const;
                 void updateResourceCache(CacheID id) const;
 
-                const ResourceAttributes getCachedData(PrimitiveResourcePtr pResource) const;
-                const ResourceAttributes getCachedData(CacheID id) const;
+                const RCSResourceAttributes getCachedData(PrimitiveResourcePtr pResource) const;
+                const RCSResourceAttributes getCachedData(CacheID id) const;
 
                 CACHE_STATE getResourceCacheState(PrimitiveResourcePtr pResource) const;
                 CACHE_STATE getResourceCacheState(CacheID id) const;

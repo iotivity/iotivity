@@ -33,7 +33,7 @@
 
 #include <boost/atomic.hpp>
 
-#include <ResourceAttributes.h>
+#include <RCSResourceAttributes.h>
 #include <RCSResponse.h>
 #include <RCSRequest.h>
 
@@ -165,7 +165,7 @@ namespace OIC
                         *
                         * @return reference of this Builder
                         */
-                        Builder &setAttributes(const ResourceAttributes &attributes);
+                        Builder &setAttributes(const RCSResourceAttributes &attributes);
 
                         /**
                         * API for setting attributes of the resource.
@@ -174,7 +174,7 @@ namespace OIC
                         *
                         * @return reference of this Builder
                         */
-                        Builder &setAttributes(ResourceAttributes &&attributes);
+                        Builder &setAttributes(RCSResourceAttributes &&attributes);
 
                         /**
                          * API for constructing a new RCSResourceObject.
@@ -193,18 +193,18 @@ namespace OIC
                         std::string m_type;
                         std::string m_interface;
                         uint8_t m_properties;
-                        ResourceAttributes m_resourceAttributes;
+                        RCSResourceAttributes m_resourceAttributes;
                 };
 
                 class LockGuard;
 
                 typedef std::function < RCSGetResponse(const RCSRequest &,
-                                                       ResourceAttributes &) > GetRequestHandler;
+                                                       RCSResourceAttributes &) > GetRequestHandler;
                 typedef std::function < RCSSetResponse(const RCSRequest &,
-                                                       ResourceAttributes &) > SetRequestHandler;
+                                                       RCSResourceAttributes &) > SetRequestHandler;
 
-                typedef std::function < void(const ResourceAttributes::Value &,
-                                     const ResourceAttributes::Value &) > AttributeUpdatedListener;
+                typedef std::function < void(const RCSResourceAttributes::Value &,
+                                     const RCSResourceAttributes::Value &) > AttributeUpdatedListener;
 
             public:
                 RCSResourceObject(RCSResourceObject&&) = delete;
@@ -223,22 +223,22 @@ namespace OIC
                  *
                  * @note It is guaranteed thread-safety about attributes.
                  */
-                void setAttribute(const std::string &key, const ResourceAttributes::Value & value);
+                void setAttribute(const std::string &key, const RCSResourceAttributes::Value & value);
 
                 /**
                  * @overload
                  */
-                void setAttribute(const std::string &key, ResourceAttributes::Value&& value);
+                void setAttribute(const std::string &key, RCSResourceAttributes::Value&& value);
 
                 /**
                  * @overload
                  */
-                void setAttribute(std::string&& key, const ResourceAttributes::Value & value);
+                void setAttribute(std::string&& key, const RCSResourceAttributes::Value & value);
 
                 /**
                  * @overload
                  */
-                void setAttribute(std::string&& key, ResourceAttributes::Value&& value);
+                void setAttribute(std::string&& key, RCSResourceAttributes::Value&& value);
 
                 /**
                  * API for getting attribute value corresponding to a key(name of that attribute).
@@ -252,7 +252,7 @@ namespace OIC
                  * @throw InvalidKeyException
                  *              Throw exception when empty string is provided as Attribute key.
                  */
-                ResourceAttributes::Value getAttributeValue(const std::string &key) const;
+                RCSResourceAttributes::Value getAttributeValue(const std::string &key) const;
 
                 /**
                  * API for retrieving the attribute value associated with the supplied name.
@@ -305,12 +305,12 @@ namespace OIC
                  * @throw NoLockException
                  *              If you don't do lock with LockGuard, throw exception.
                  */
-                ResourceAttributes &getAttributes();
+                RCSResourceAttributes &getAttributes();
 
                 /**
                  * @overload
                  */
-                const ResourceAttributes &getAttributes() const;
+                const RCSResourceAttributes &getAttributes() const;
 
                 /**
                 * API for checking whether the particular resource is observable or not
@@ -422,7 +422,7 @@ namespace OIC
                 SetRequestHandlerPolicy getSetRequestHandlerPolicy() const;
 
         private:
-            RCSResourceObject(uint8_t, ResourceAttributes&&);
+            RCSResourceObject(uint8_t, RCSResourceAttributes&&);
 
             OCEntityHandlerResult entityHandler(std::shared_ptr< OC::OCResourceRequest >);
 
@@ -433,13 +433,13 @@ namespace OIC
 
             void expectOwnLock() const;
             void autoNotify(bool, AutoNotifyPolicy) const;
-            void autoNotifyIfNeeded(const std::string& , const ResourceAttributes::Value& );
+            void autoNotifyIfNeeded(const std::string& , const RCSResourceAttributes::Value& );
 
         private:
             const uint8_t m_properties;
 
             OCResourceHandle m_resourceHandle;
-            ResourceAttributes m_resourceAttributes;
+            RCSResourceAttributes m_resourceAttributes;
 
             GetRequestHandler m_getRequestHandler;
             SetRequestHandler m_setRequestHandler;

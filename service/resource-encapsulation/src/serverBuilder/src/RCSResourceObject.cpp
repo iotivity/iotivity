@@ -75,14 +75,16 @@ namespace
         return OC_EH_ERROR;
     }
 
-    ResourceAttributes getAttributesFromOCRequest(std::shared_ptr< OC::OCResourceRequest > request)
+    RCSResourceAttributes getAttributesFromOCRequest(
+            std::shared_ptr< OC::OCResourceRequest > request)
     {
         return ResourceAttributesConverter::fromOCRepresentation(
                 request->getResourceRepresentation());
     }
 
-    template< typename HANDLER, typename RESPONSE = typename std::decay<HANDLER>::type::result_type >
-    RESPONSE invokeHandler(ResourceAttributes& attrs,
+    template< typename HANDLER, typename RESPONSE =
+            typename std::decay<HANDLER>::type::result_type >
+    RESPONSE invokeHandler(RCSResourceAttributes& attrs,
             std::shared_ptr< OC::OCResourceRequest > ocRequest, HANDLER&& handler)
     {
         if (handler)
@@ -93,16 +95,17 @@ namespace
         return RESPONSE::defaultAction();
     }
 
-    typedef void (RCSResourceObject::* AutoNotifyFunc)(bool, RCSResourceObject::AutoNotifyPolicy) const;
+    typedef void (RCSResourceObject::* AutoNotifyFunc)
+            (bool, RCSResourceObject::AutoNotifyPolicy) const;
 
     std::function <void ()> createAutoNotifyInvoker(AutoNotifyFunc autoNotifyFunc,
-            const RCSResourceObject& resourceObject, const ResourceAttributes& resourceAttributes,
+            const RCSResourceObject& resourceObject, const RCSResourceAttributes& resourceAttributes,
             RCSResourceObject::AutoNotifyPolicy autoNotifyPolicy)
     {
         if(autoNotifyPolicy == RCSResourceObject::AutoNotifyPolicy::UPDATED)
         {
             auto&& compareAttributesFunc =
-                    std::bind(std::not_equal_to<ResourceAttributes>(),
+                    std::bind(std::not_equal_to<RCSResourceAttributes>(),
                                 resourceAttributes,
                                 std::cref(resourceAttributes));
             return std::bind(autoNotifyFunc,
@@ -148,14 +151,14 @@ namespace OIC
         }
 
         RCSResourceObject::Builder& RCSResourceObject::Builder::setAttributes(
-                const ResourceAttributes& attrs)
+                const RCSResourceAttributes& attrs)
         {
             m_resourceAttributes = attrs;
             return *this;
         }
 
         RCSResourceObject::Builder& RCSResourceObject::Builder::setAttributes(
-                ResourceAttributes&& attrs)
+                RCSResourceAttributes&& attrs)
         {
             m_resourceAttributes = std::move(attrs);
             return *this;
@@ -190,7 +193,7 @@ namespace OIC
         }
 
 
-        RCSResourceObject::RCSResourceObject(uint8_t properties, ResourceAttributes&& attrs) :
+        RCSResourceObject::RCSResourceObject(uint8_t properties, RCSResourceAttributes&& attrs) :
                 m_properties { properties },
                 m_resourceHandle{ },
                 m_resourceAttributes{ std::move(attrs) },
@@ -221,7 +224,7 @@ namespace OIC
         }
 
         void RCSResourceObject::setAttribute(const std::string& key,
-                const ResourceAttributes::Value& value)
+                const RCSResourceAttributes::Value& value)
         {
             WeakGuard lock(*this);
 
@@ -233,7 +236,8 @@ namespace OIC
             m_resourceAttributes[key] = value;
         }
 
-        void RCSResourceObject::setAttribute(const std::string& key, ResourceAttributes::Value&& value)
+        void RCSResourceObject::setAttribute(const std::string& key,
+                RCSResourceAttributes::Value&& value)
         {
             WeakGuard lock(*this);
 
@@ -245,7 +249,8 @@ namespace OIC
             m_resourceAttributes[key] = std::move(value);
         }
 
-        void RCSResourceObject::setAttribute(std::string&& key, const ResourceAttributes::Value& value)
+        void RCSResourceObject::setAttribute(std::string&& key,
+                const RCSResourceAttributes::Value& value)
         {
             WeakGuard lock(*this);
 
@@ -257,7 +262,8 @@ namespace OIC
             m_resourceAttributes[std::move(key)] = value;
         }
 
-        void RCSResourceObject::setAttribute(std::string&& key, ResourceAttributes::Value&& value)
+        void RCSResourceObject::setAttribute(std::string&& key,
+                RCSResourceAttributes::Value&& value)
         {
             WeakGuard lock(*this);
 
@@ -269,7 +275,8 @@ namespace OIC
             m_resourceAttributes[std::move(key)] = std::move(value);
         }
 
-        ResourceAttributes::Value RCSResourceObject::getAttributeValue(const std::string& key) const
+        RCSResourceAttributes::Value RCSResourceObject::getAttributeValue(
+                const std::string& key) const
         {
             WeakGuard lock(*this);
             return m_resourceAttributes.at(key);
@@ -292,13 +299,13 @@ namespace OIC
             return m_resourceAttributes.contains(key);
         }
 
-        ResourceAttributes& RCSResourceObject::getAttributes()
+        RCSResourceAttributes& RCSResourceObject::getAttributes()
         {
             expectOwnLock();
             return m_resourceAttributes;
         }
 
-        const ResourceAttributes& RCSResourceObject::getAttributes() const
+        const RCSResourceAttributes& RCSResourceObject::getAttributes() const
         {
             expectOwnLock();
             return m_resourceAttributes;
@@ -363,7 +370,7 @@ namespace OIC
         }
 
         void RCSResourceObject::autoNotifyIfNeeded(const std::string& key,
-                                                const ResourceAttributes::Value& value)
+                                                const RCSResourceAttributes::Value& value)
         {
             autoNotify( m_resourceAttributes.contains(key) == false
                         || m_resourceAttributes.at(key) != value
@@ -385,7 +392,7 @@ namespace OIC
             m_setRequestHandlerPolicy = policy;
         }
 
-        RCSResourceObject::SetRequestHandlerPolicy RCSResourceObject::getSetRequestHandlerPolicy() const
+        auto RCSResourceObject::getSetRequestHandlerPolicy() const -> SetRequestHandlerPolicy
         {
             return m_setRequestHandlerPolicy;
         }

@@ -89,14 +89,14 @@ TEST_F(PrimitiveResourceTest, RequestSetInvokesOCResourcePut)
 {
     mocks.ExpectCall(fakeResource, FakeOCResource::put).Return(OC_STACK_OK);
 
-    resource->requestSet(ResourceAttributes(), PrimitiveResource::SetCallback());
+    resource->requestSet(RCSResourceAttributes{ }, PrimitiveResource::SetCallback());
 }
 
 TEST_F(PrimitiveResourceTest, RequestSetThrowsOCResourcePutReturnsNotOK)
 {
     mocks.OnCall(fakeResource, FakeOCResource::put).Return(OC_STACK_ERROR);
 
-    ASSERT_THROW(resource->requestSet(ResourceAttributes(), PrimitiveResource::SetCallback()),
+    ASSERT_THROW(resource->requestSet(RCSResourceAttributes{ }, PrimitiveResource::SetCallback()),
             PlatformException);
 }
 
@@ -104,7 +104,7 @@ TEST_F(PrimitiveResourceTest, RequestSetPassResourceAttributesToOCResourcePut)
 {
     constexpr int value{ -200 };
 
-    ResourceAttributes attrs;
+    RCSResourceAttributes attrs;
 
     mocks.ExpectCall(fakeResource, FakeOCResource::put).Match(
             [](const OC::OCRepresentation& ocRep, const OC::QueryParamsMap&, OC::PutCallback)

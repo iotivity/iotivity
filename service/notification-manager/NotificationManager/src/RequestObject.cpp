@@ -26,7 +26,7 @@ namespace Service
 {
 
 void RequestObject::invokeRequest(RemoteObjectPtr remoteObject, RequestMethod method,
-        const RCSRequest & pRequest, ResourceAttributes & resourceAttibutes)
+        const RCSRequest & pRequest, RCSResourceAttributes & resourceAttibutes)
 {
     try
     {
@@ -49,8 +49,8 @@ void RequestObject::invokeRequest(RemoteObjectPtr remoteObject, RequestMethod me
     }
 }
 
-void RequestObject::setRequestCB(const ResourceAttributes & returnedAttributes,
-        ResourceAttributes & putAttibutes)
+void RequestObject::setRequestCB(const RCSResourceAttributes & returnedAttributes,
+        RCSResourceAttributes & putAttibutes)
 {
     if(putAttibutes != returnedAttributes)
     {

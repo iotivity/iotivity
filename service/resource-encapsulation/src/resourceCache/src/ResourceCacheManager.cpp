@@ -143,7 +143,7 @@ namespace OIC
             foundCache->requestGet();
         }
 
-        const ResourceAttributes ResourceCacheManager::getCachedData(
+        const RCSResourceAttributes ResourceCacheManager::getCachedData(
             PrimitiveResourcePtr pResource) const
         {
             if (pResource == nullptr)
@@ -159,7 +159,7 @@ namespace OIC
             return handler->getCachedData();
         }
 
-        const ResourceAttributes ResourceCacheManager::getCachedData(CacheID id) const
+        const RCSResourceAttributes ResourceCacheManager::getCachedData(CacheID id) const
         {
             if (id == 0)
             {

@@ -140,7 +140,7 @@ void HostingObject::stateChangedCB(ResourceState state, RemoteObjectPtr rObject)
     }
 }
 
-void HostingObject::dataChangedCB(const ResourceAttributes & attributes, RemoteObjectPtr rObject)
+void HostingObject::dataChangedCB(const RCSResourceAttributes & attributes, RemoteObjectPtr rObject)
 {
     if(attributes.empty())
     {
@@ -162,7 +162,7 @@ void HostingObject::dataChangedCB(const ResourceAttributes & attributes, RemoteO
         }
     }
 
-    ResourceAttributes rData;
+    RCSResourceAttributes rData;
     {
         RCSResourceObject::LockGuard guard(mirroredServer);
         rData = mirroredServer->getAttributes();
@@ -226,7 +226,7 @@ HostingObject::ResourceObjectPtr HostingObject::createMirroredServer(RemoteObjec
 }
 
 RCSSetResponse HostingObject::setRequestHandler(const RCSRequest & primitiveRequest,
-            ResourceAttributes & resourceAttibutes)
+            RCSResourceAttributes & resourceAttibutes)
 {
     try
     {

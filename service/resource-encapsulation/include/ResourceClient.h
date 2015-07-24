@@ -30,7 +30,7 @@
 #define RESOURCE_CLIENT_H_
 
 #include<vector>
-#include "ResourceAttributes.h"
+#include "RCSResourceAttributes.h"
 
 namespace OIC
 {
@@ -121,25 +121,25 @@ namespace OIC
                 /**
                 *  Typedef for callback of startCaching API
                 *
-                * @see ResourceAttributes
+                * @see RCSResourceAttributes
                 */
-                typedef std::function< void(const ResourceAttributes &) > CacheUpdatedCallback;
+                typedef std::function< void(const RCSResourceAttributes &) > CacheUpdatedCallback;
 
                 /**
                 *  Typedef for callback of getRemoteAttributes API
                 *
-                *  @see ResourceAttributes
+                *  @see RCSResourceAttributes
                 */
-                typedef std::function< void(const ResourceAttributes &) >
+                typedef std::function< void(const RCSResourceAttributes &) >
                 RemoteAttributesReceivedCallback;
 
 
                 /**
                 *  Typedef for callback of setRemoteAttributes API
                 *
-                *  @see ResourceAttributes
+                *  @see RCSResourceAttributes
                 */
-                typedef std::function< void(const ResourceAttributes &) >
+                typedef std::function< void(const RCSResourceAttributes &) >
                 RemoteAttributesSetCallback;
 
                 /**
@@ -276,42 +276,42 @@ namespace OIC
                 void refreshCache() ;
 
                 /**
-                 * Get the cached ResourceAttributes data.
+                 * Get the cached RCSResourceAttributes data.
                  *
                  * @pre startCaching() or startCaching(CacheUpdatedCallback) API should be called.
                  *
-                 * @return ResourceAttributes - cached resourceAttribute
+                 * @return RCSResourceAttributes - cached resourceAttribute
                  *
                  * @throw BadRequestException
                  *
                  * @see startCaching()
                  * @see startCaching(CacheUpdatedCallback)
-                 * @see ResourceAttributes
+                 * @see RCSResourceAttributes
                  *
                  * NOTE: If startCaching() or startCaching(CacheUpdatedCallback) is not being called &
                  *           directly this API is called it will throw the
                  *           BadRequestException.
                  */
-                ResourceAttributes getCachedAttributes() const;
+                RCSResourceAttributes getCachedAttributes() const;
 
                 /**
                 * Get a particular cached ResourceAttribute value.
                 *
                 * @pre startCaching() or startCaching(CacheUpdatedCallback) API should be called.
                 *
-                * @return ResourceAttributes::Value - requested attribute Value
+                * @return RCSResourceAttributes::Value - requested attribute Value
                 *
                 * @throw BadRequestException
                 *
                 * @see startCaching()
                 * @see startCaching(CacheUpdatedCallback)
-                * @see ResourceAttributes::Value
+                * @see RCSResourceAttributes::Value
                 *
                 * NOTE: If startCaching() or startCaching(CacheUpdatedCallback) is not being called &
                 *           directly this API is called it will throw the BadRequestException.
                 *
                 */
-                ResourceAttributes::Value getCachedAttribute( const std::string &) ;
+                RCSResourceAttributes::Value getCachedAttribute( const std::string &) ;
 
                 /**
                 * Get resource attributes.
@@ -319,7 +319,7 @@ namespace OIC
                 * @details This API send a get request to the resource of interest and provides the attributes
                 *               to the caller in the RemoteAttributesReceivedCallback.
                 *
-                * @see ResourceAttributes::Value
+                * @see RCSResourceAttributes::Value
                 */
                 void getRemoteAttributes(RemoteAttributesReceivedCallback cb);
 
@@ -333,7 +333,7 @@ namespace OIC
                 * @param cb - callback on setting resourceAttributes data.
                 *
                 */
-                void setRemoteAttributes(ResourceAttributes &attributes, RemoteAttributesSetCallback cb);
+                void setRemoteAttributes(const RCSResourceAttributes &attributes, RemoteAttributesSetCallback cb);
 
                 /**
                  * Get resource uri.

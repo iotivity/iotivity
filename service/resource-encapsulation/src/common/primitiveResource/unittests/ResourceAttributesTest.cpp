@@ -18,7 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include <ResourceAttributes.h>
+#include <RCSResourceAttributes.h>
 #include <ResourceAttributesConverter.h>
 #include <ResourceAttributesUtils.h>
 
@@ -32,7 +32,7 @@ constexpr char KEY[]{ "key" };
 class ResourceAttributesTest: public Test
 {
 public:
-    ResourceAttributes resourceAttributes;
+    RCSResourceAttributes resourceAttributes;
 };
 
 TEST_F(ResourceAttributesTest, InitialSizeIsZero)
@@ -66,7 +66,7 @@ TEST_F(ResourceAttributesTest, CopyingValueDoesNotShareState)
     const char arbitraryStr[] { "ftryb457" };
     resourceAttributes[KEY] = 1;
 
-    ResourceAttributes::Value copied { resourceAttributes[KEY] };
+    RCSResourceAttributes::Value copied { resourceAttributes[KEY] };
     copied = arbitraryStr;
 
     ASSERT_TRUE(resourceAttributes[KEY] == 1);
@@ -92,7 +92,7 @@ TEST_F(ResourceAttributesTest, ObjectIsEmptyAfterMoved)
 {
     resourceAttributes[KEY] = 1;
 
-    ResourceAttributes moved{ std::move(resourceAttributes) };
+    RCSResourceAttributes moved{ std::move(resourceAttributes) };
 
     ASSERT_TRUE(resourceAttributes.empty());
 }
@@ -122,11 +122,11 @@ TEST_F(ResourceAttributesTest, ChangeValueWithAtGetter)
 
 TEST_F(ResourceAttributesTest, CanHaveNestedResourceAttributes)
 {
-    ResourceAttributes nested;
+    RCSResourceAttributes nested;
     nested["nested"] = "nested_value";
     resourceAttributes[KEY] = nested;
 
-    ASSERT_TRUE("nested_value" == resourceAttributes[KEY].get<ResourceAttributes>()["nested"]);
+    ASSERT_TRUE("nested_value" == resourceAttributes[KEY].get<RCSResourceAttributes>()["nested"]);
 }
 
 TEST_F(ResourceAttributesTest, ToStringReturnsStringForValue)
@@ -147,7 +147,7 @@ TEST_F(ResourceAttributesTest, ToStringReturnsEmptyStringForNullValue)
 class ResourceAttributesIteratorTest: public Test
 {
 public:
-    ResourceAttributes resourceAttributes;
+    RCSResourceAttributes resourceAttributes;
 };
 
 TEST_F(ResourceAttributesIteratorTest, BeginEqualsEndWhenEmpty)
@@ -184,7 +184,7 @@ TEST_F(ResourceAttributesIteratorTest, IteratesWithRef)
 
 TEST_F(ResourceAttributesIteratorTest, IteratorIsCopyable)
 {
-    ResourceAttributes::iterator it;
+    RCSResourceAttributes::iterator it;
 
     it = resourceAttributes.begin();
 
@@ -195,7 +195,7 @@ TEST_F(ResourceAttributesIteratorTest, IteratorIndicateNextItemAfterIncreased)
 {
     resourceAttributes[KEY] = 1;
 
-    ResourceAttributes::iterator it = resourceAttributes.begin();
+    RCSResourceAttributes::iterator it = resourceAttributes.begin();
 
     it++;
 
@@ -205,7 +205,7 @@ TEST_F(ResourceAttributesIteratorTest, IteratorIndicateNextItemAfterIncreased)
 TEST_F(ResourceAttributesIteratorTest, IteratorCanBeConvertedIntoConstIterator)
 {
     resourceAttributes[KEY] = 1;
-    ResourceAttributes::const_iterator it { resourceAttributes.begin() };
+    RCSResourceAttributes::const_iterator it { resourceAttributes.begin() };
     it = resourceAttributes.cbegin();
 
     it++;
@@ -216,26 +216,26 @@ TEST_F(ResourceAttributesIteratorTest, IteratorCanBeConvertedIntoConstIterator)
 TEST_F(ResourceAttributesIteratorTest, ConstIteratorIsUsedForConst)
 {
     resourceAttributes[KEY] = 1;
-    const ResourceAttributes& constAttrs = resourceAttributes;
+    const RCSResourceAttributes& constAttrs = resourceAttributes;
 
     auto iter = constAttrs.begin();
 
-    ASSERT_TRUE((std::is_same<decltype(iter), ResourceAttributes::const_iterator>::value));
+    ASSERT_TRUE((std::is_same<decltype(iter), RCSResourceAttributes::const_iterator>::value));
 }
 
 
 TEST(ResourceAttributesValueTest, MovedValueHasNull)
 {
-    ResourceAttributes::Value one { 1 };
-    ResourceAttributes::Value another { std::move(one) };
+    RCSResourceAttributes::Value one { 1 };
+    RCSResourceAttributes::Value another { std::move(one) };
 
     ASSERT_EQ(nullptr, one);
 }
 
 TEST(ResourceAttributesValueTest, MovedValueWithAssignmentHasNull)
 {
-    ResourceAttributes::Value one { 1 };
-    ResourceAttributes::Value another;
+    RCSResourceAttributes::Value one { 1 };
+    RCSResourceAttributes::Value another;
 
     another = std::move(one);
 
@@ -244,16 +244,16 @@ TEST(ResourceAttributesValueTest, MovedValueWithAssignmentHasNull)
 
 TEST(ResourceAttributesValueTest, SameValuesAreEqual)
 {
-    ResourceAttributes::Value one { 1 };
-    ResourceAttributes::Value another { 1 };
+    RCSResourceAttributes::Value one { 1 };
+    RCSResourceAttributes::Value another { 1 };
 
     ASSERT_EQ(one, another);
 }
 
 TEST(ResourceAttributesValueTest, DifferentValuesAreNotEqual)
 {
-    ResourceAttributes::Value one { 1 };
-    ResourceAttributes::Value another { 2 };
+    RCSResourceAttributes::Value one { 1 };
+    RCSResourceAttributes::Value another { 2 };
 
     ASSERT_NE(one, another);
 }
@@ -263,8 +263,8 @@ TEST(ResourceAttributesValueTest, ValuesCanBeSwapped)
     constexpr int i { 1 };
     constexpr char str[]{ "abc" };
 
-    ResourceAttributes::Value intValue { i };
-    ResourceAttributes::Value strValue { str };
+    RCSResourceAttributes::Value intValue { i };
+    RCSResourceAttributes::Value strValue { str };
 
     intValue.swap(strValue);
 
@@ -274,16 +274,16 @@ TEST(ResourceAttributesValueTest, ValuesCanBeSwapped)
 
 TEST(ResourceAttributesTypeTest, TypeIdMatchesTypeOfValue)
 {
-    ResourceAttributes::Value intValue { 1 };
+    RCSResourceAttributes::Value intValue { 1 };
 
-    ASSERT_EQ(intValue.getType().getId(), ResourceAttributes::TypeId::INT);
+    ASSERT_EQ(intValue.getType().getId(), RCSResourceAttributes::TypeId::INT);
 }
 
 TEST(ResourceAttributesTypeTest, TypeCanBeConstructedFromValue)
 {
-    ResourceAttributes::Value intValue { 1 };
+    RCSResourceAttributes::Value intValue { 1 };
 
-    ResourceAttributes::Type t = ResourceAttributes::Type::typeOf(0);
+    RCSResourceAttributes::Type t = RCSResourceAttributes::Type::typeOf(0);
 
     ASSERT_EQ(intValue.getType(), t);
 }
@@ -294,7 +294,8 @@ TEST(ResourceAttributesConverterTest, OCRepresentationCanBeConvertedIntoResource
     OC::OCRepresentation ocRep;
     ocRep[KEY] = value;
 
-    ResourceAttributes resourceAttributes = ResourceAttributesConverter::fromOCRepresentation(ocRep);
+    RCSResourceAttributes resourceAttributes{
+        ResourceAttributesConverter::fromOCRepresentation(ocRep) };
 
     ASSERT_TRUE(value == resourceAttributes[KEY]);
 }
@@ -308,19 +309,21 @@ TEST(ResourceAttributesConverterTest, NestedOCRepresentationCanBeConvertedIntoRe
     nested[KEY] = nested_value;
     ocRep[KEY] = nested;
 
-    ResourceAttributes resourceAttributes = ResourceAttributesConverter::fromOCRepresentation(ocRep);
+    RCSResourceAttributes resourceAttributes{
+        ResourceAttributesConverter::fromOCRepresentation(ocRep) };
 
-    ASSERT_TRUE(nested_value == resourceAttributes[KEY].get<ResourceAttributes>()[KEY]);
+    ASSERT_TRUE(nested_value == resourceAttributes[KEY].get<RCSResourceAttributes>()[KEY]);
 }
 
 
 TEST(ResourceAttributesConverterTest, ResourceAttributesCanBeConvertedIntoOCRepresentation)
 {
     double value { 3453453 };
-    ResourceAttributes resourceAttributes;
+    RCSResourceAttributes resourceAttributes;
     resourceAttributes[KEY] = value;
 
-    OC::OCRepresentation ocRep = ResourceAttributesConverter::toOCRepresentation(resourceAttributes);
+    OC::OCRepresentation ocRep{
+        ResourceAttributesConverter::toOCRepresentation(resourceAttributes) };
 
     ASSERT_TRUE(value == ocRep[KEY].getValue<double>());
 }
@@ -328,14 +331,16 @@ TEST(ResourceAttributesConverterTest, ResourceAttributesCanBeConvertedIntoOCRepr
 TEST(ResourceAttributesConverterTest, NestedResourceAttributesCanBeConvertedIntoOCRepresentation)
 {
     std::string nested_value { "nested" };
-    ResourceAttributes resourceAttributes;
-    ResourceAttributes nested;
+    RCSResourceAttributes resourceAttributes;
+    RCSResourceAttributes nested;
     nested[KEY] = nested_value;
     resourceAttributes[KEY] = nested;
 
-    OC::OCRepresentation ocRep = ResourceAttributesConverter::toOCRepresentation(resourceAttributes);
+    OC::OCRepresentation ocRep{
+        ResourceAttributesConverter::toOCRepresentation(resourceAttributes) };
 
-    ASSERT_TRUE(nested_value == ocRep[KEY].getValue<OC::OCRepresentation>()[KEY].getValue<std::string>());
+    ASSERT_EQ(nested_value,
+            ocRep[KEY].getValue<OC::OCRepresentation>()[KEY].getValue<std::string>());
 }
 
 TEST(ResourceAttributesConverterTest, OCRepresentationNullTypeIsNullptrInResourceAttributes)
@@ -343,17 +348,19 @@ TEST(ResourceAttributesConverterTest, OCRepresentationNullTypeIsNullptrInResourc
     OC::OCRepresentation ocRep;
     ocRep.setNULL(KEY);
 
-    ResourceAttributes resourceAttributes = ResourceAttributesConverter::fromOCRepresentation(ocRep);
+    RCSResourceAttributes resourceAttributes{
+        ResourceAttributesConverter::fromOCRepresentation(ocRep) };
 
     ASSERT_EQ(nullptr, resourceAttributes[KEY]);
 }
 
 TEST(ResourceAttributesConverterTest, OCRepresentationHasNullWhenResourceAttributeIsNullptr)
 {
-    ResourceAttributes resourceAttributes;
+    RCSResourceAttributes resourceAttributes;
     resourceAttributes[KEY] = nullptr;
 
-    OC::OCRepresentation ocRep = ResourceAttributesConverter::toOCRepresentation(resourceAttributes);
+    OC::OCRepresentation ocRep{
+        ResourceAttributesConverter::toOCRepresentation(resourceAttributes) };
 
     ASSERT_TRUE(ocRep.isNULL(KEY));
 }
@@ -363,7 +370,7 @@ TEST(ResourceAttributesConverterTest, OCRepresentationHasNullWhenResourceAttribu
 class ResourceAttributesUtilTest: public Test
 {
 public:
-    ResourceAttributes resourceAttributes;
+    RCSResourceAttributes resourceAttributes;
 
 protected:
     void SetUp()
@@ -374,7 +381,7 @@ protected:
 
 TEST_F(ResourceAttributesUtilTest, EmptyAttributesIsAcceptable)
 {
-    ASSERT_TRUE(acceptableAttributes(resourceAttributes, ResourceAttributes()));
+    ASSERT_TRUE(acceptableAttributes(resourceAttributes, RCSResourceAttributes()));
 }
 
 TEST_F(ResourceAttributesUtilTest, AttributesItselfIsAcceptable)
@@ -384,7 +391,7 @@ TEST_F(ResourceAttributesUtilTest, AttributesItselfIsAcceptable)
 
 TEST_F(ResourceAttributesUtilTest, UnknownKeyIsNotAcceptable)
 {
-    ResourceAttributes newAttrs;
+    RCSResourceAttributes newAttrs;
     newAttrs["unknown"] = 1;
 
     ASSERT_FALSE(acceptableAttributes(resourceAttributes, newAttrs));
@@ -392,7 +399,7 @@ TEST_F(ResourceAttributesUtilTest, UnknownKeyIsNotAcceptable)
 
 TEST_F(ResourceAttributesUtilTest, DifferentTypeWithOriginalIsNotAcceptable)
 {
-    ResourceAttributes newAttrs;
+    RCSResourceAttributes newAttrs;
     newAttrs[KEY] = "";
 
     ASSERT_FALSE(acceptableAttributes(resourceAttributes, newAttrs));
@@ -404,12 +411,12 @@ TEST_F(ResourceAttributesUtilTest, DifferentTypeOfNestedAttributeIsNotAcceptable
     constexpr char KEY_NESTED_ATTR[]{ "nested" };
     constexpr char KEY_NESTED_VALUE[]{ "nested_value" };
 
-    ResourceAttributes nested;
+    RCSResourceAttributes nested;
     nested[KEY_NESTED_VALUE] = -99;
     resourceAttributes[KEY_NESTED_ATTR] = nested;
 
 
-    ResourceAttributes newAttrs;
+    RCSResourceAttributes newAttrs;
     nested[KEY_NESTED_VALUE] = "abc";
     newAttrs[KEY_NESTED_ATTR] = nested;
 
@@ -420,7 +427,7 @@ TEST_F(ResourceAttributesUtilTest, ReplaceWillOverwriteOriginal)
 {
     constexpr char NEW_VALUE[]{ "newValue" };
 
-    ResourceAttributes newAttrs;
+    RCSResourceAttributes newAttrs;
     newAttrs[KEY] = NEW_VALUE;
 
     replaceAttributes(resourceAttributes, newAttrs);

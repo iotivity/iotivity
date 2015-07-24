@@ -46,12 +46,12 @@ void displayMenu()
 
 //hander for get request (if developer choose second option for resource Creation)
 RCSGetResponse RequestHandlerForGet(const RCSRequest &request,
-        ResourceAttributes &attrs)
+        RCSResourceAttributes &attrs)
 {
     cout << "Recieved a Get request from Client" << std::endl;
     RCSResourceObject::LockGuard lock(*server);
-    ResourceAttributes attr = server->getAttributes();
-    ResourceAttributes::const_iterator iter = attr.begin();
+    RCSResourceAttributes attr = server->getAttributes();
+    RCSResourceAttributes::const_iterator iter = attr.begin();
     cout << "\nSending response to Client : " << std::endl;
     for (unsigned int i = 0; i < attr.size(); ++i)
     {
@@ -63,10 +63,10 @@ RCSGetResponse RequestHandlerForGet(const RCSRequest &request,
 
 //hander for set request (if developer choose second option for resource Creation)
 RCSSetResponse RequestHandlerForSet(const RCSRequest &request,
-        ResourceAttributes &attrs)
+        RCSResourceAttributes &attrs)
 {
     cout << "Recieved a Set request from Client" << std::endl;
-    ResourceAttributes::const_iterator iter = attrs.begin();
+    RCSResourceAttributes::const_iterator iter = attrs.begin();
     for (unsigned int i = 0; i < attrs.size(); ++i)
     {
         std::cout << "\tkey : " << iter->key() << "\n\tvalue : " << iter->value().toString() << std::endl;
@@ -170,7 +170,7 @@ int main(void)
                 case 1:
                     {
                         RCSResourceObject::LockGuard lock(*server);
-                        ResourceAttributes attrs = server->getAttributes();
+                        RCSResourceAttributes attrs = server->getAttributes();
 
                         attrs[attributeKey] =  (server->getAttribute<int>(attributeKey)  + 10);
                         server->setAttribute(attributeKey, attrs[attributeKey]);
@@ -179,7 +179,7 @@ int main(void)
                         //getting the current attribute and priniting it on the console
                         attrs = server->getAttributes();
                         cout << "\nCurrent Temperature : ";
-                        ResourceAttributes::const_iterator iter = attrs.begin();
+                        RCSResourceAttributes::const_iterator iter = attrs.begin();
                         for (unsigned int i = 0; i < attrs.size(); ++i)
                         {
                             std::cout << iter->value().toString() << std::endl;
@@ -190,7 +190,7 @@ int main(void)
                 case 2:
                     {
                         RCSResourceObject::LockGuard lock(*server);
-                        ResourceAttributes attrs = server->getAttributes();
+                        RCSResourceAttributes attrs = server->getAttributes();
                         attrs[attributeKey] =  (server->getAttribute<int>(attributeKey)  - 10);
                         server->setAttribute(attributeKey, attrs[attributeKey]);
                         cout << "\nTemperature decreased by 10 degree" << endl;
@@ -198,7 +198,7 @@ int main(void)
                         //getting the current attribute and priniting it on the console
                         attrs = server->getAttributes();
                         cout << "\nCurrent Temperature : ";
-                        ResourceAttributes::const_iterator iter = attrs.begin();
+                        RCSResourceAttributes::const_iterator iter = attrs.begin();
                         for (unsigned int i = 0; i < attrs.size(); ++i)
                         {
                             std::cout << iter->value().toString() << std::endl;

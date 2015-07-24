@@ -331,9 +331,9 @@ namespace OIC
         }
 
         RCSGetResponse ResourceContainerImpl::getRequestHandler(const RCSRequest &request,
-                const ResourceAttributes &attributes)
+                const RCSResourceAttributes &attributes)
         {
-            ResourceAttributes attr;
+            RCSResourceAttributes attr;
 
             if (m_mapServers.find(request.getResourceUri()) != m_mapServers.end()
                 && m_mapResources.find(request.getResourceUri()) != m_mapResources.end())
@@ -349,9 +349,9 @@ namespace OIC
         }
 
         RCSSetResponse ResourceContainerImpl::setRequestHandler(const RCSRequest &request,
-                const ResourceAttributes &attributes)
+                const RCSResourceAttributes &attributes)
         {
-            ResourceAttributes attr = attributes;
+            RCSResourceAttributes attr = attributes;
 
             if (m_mapServers.find(request.getResourceUri()) != m_mapServers.end()
                 && m_mapResources.find(request.getResourceUri()) != m_mapResources.end())

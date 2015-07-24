@@ -48,18 +48,18 @@ void DiscomfortIndexSensorResource::initAttributes()
     BundleResource::setAttribute("discomfortIndex", "5");
 }
 
-ResourceAttributes &DiscomfortIndexSensorResource::getAttributes()
+RCSResourceAttributes &DiscomfortIndexSensorResource::getAttributes()
 {
     return BundleResource::getAttributes();
 }
 
-ResourceAttributes::Value DiscomfortIndexSensorResource::getAttribute(const std::string &key)
+RCSResourceAttributes::Value DiscomfortIndexSensorResource::getAttribute(const std::string &key)
 {
     cout << "DiscomfortIndexSensorResource::getAttribute called for " << key << " called" << endl;
     return BundleResource::getAttribute(key);
 }
 
-void DiscomfortIndexSensorResource::setAttribute(std::string key, ResourceAttributes::Value &&value)
+void DiscomfortIndexSensorResource::setAttribute(std::string key, RCSResourceAttributes::Value &&value)
 {
     cout << "DiscomfortIndexSensorResource::setAttribute setting " << key << " to " << value.toString()
          << std::endl;
@@ -91,15 +91,15 @@ void DiscomfortIndexSensorResource::setInputAttribute(SensorData input)
             {
                 if (!m_outputs.data.at(i)["name"].compare("temperature"))
                     BundleResource::setAttribute("temperature",
-                                                 ResourceAttributes::Value(m_outputs.data.at(i)["value"].c_str()));
+                                                 RCSResourceAttributes::Value(m_outputs.data.at(i)["value"].c_str()));
 
                 else if (!m_outputs.data.at(i)["name"].compare("humidity"))
                     BundleResource::setAttribute("humidity",
-                                                 ResourceAttributes::Value(m_outputs.data.at(i)["value"].c_str()));
+                                                 RCSResourceAttributes::Value(m_outputs.data.at(i)["value"].c_str()));
 
                 else if (!m_outputs.data.at(i)["name"].compare("discomfortIndex"))
                     BundleResource::setAttribute("discomfortIndex",
-                                                 ResourceAttributes::Value(m_outputs.data.at(i)["value"].c_str()));
+                                                 RCSResourceAttributes::Value(m_outputs.data.at(i)["value"].c_str()));
             }
         }
     }

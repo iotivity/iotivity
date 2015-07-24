@@ -44,11 +44,11 @@ private:
     typedef std::shared_ptr<PrimitiveResource> PrimiteveResourcePtr;
 
     typedef std::function<void(ResourceState)> BrokerCallback;
-    typedef std::function<void(const ResourceAttributes &)> CacheCallback;
+    typedef std::function<void(const RCSResourceAttributes &)> CacheCallback;
     typedef std::function<void()> DestroyedCallback;
 
     typedef std::function<
-            RCSSetResponse(const RCSRequest&, ResourceAttributes&)> SetRequestHandler;
+            RCSSetResponse(const RCSRequest&, RCSResourceAttributes&)> SetRequestHandler;
 
 public:
     HostingObject();
@@ -73,10 +73,10 @@ private:
     ResourceObjectPtr createMirroredServer(RemoteObjectPtr rObject);
 
     void stateChangedCB(ResourceState state, RemoteObjectPtr rObject);
-    void dataChangedCB(const ResourceAttributes & attributes, RemoteObjectPtr rObject);
+    void dataChangedCB(const RCSResourceAttributes & attributes, RemoteObjectPtr rObject);
 
     RCSSetResponse setRequestHandler(
-            const RCSRequest & request, ResourceAttributes & attributes);
+            const RCSRequest & request, RCSResourceAttributes & attributes);
 
     void destroyHostingObject();
 

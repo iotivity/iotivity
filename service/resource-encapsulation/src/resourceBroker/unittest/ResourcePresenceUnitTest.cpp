@@ -11,7 +11,7 @@
 
 #include "PrimitiveResource.h"
 #include "ResponseStatement.h"
-#include "ResourceAttributes.h"
+#include "RCSResourceAttributes.h"
 #include "ResourcePresence.h"
 #include "UnitTestHelper.h"
 
@@ -183,7 +183,7 @@ TEST_F(ResourcePresenceTest,getCB_NormalHandlingIfMessageOC_STACK_OK)
                 [](GetCallback callback){
 
         OIC::Service::HeaderOptions op;
-        ResourceAttributes attr;
+        RCSResourceAttributes attr;
         OIC::Service::ResponseStatement res(attr);
         callback(op,res,OC_STACK_OK);
 
