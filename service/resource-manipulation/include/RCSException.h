@@ -21,11 +21,11 @@
 /**
  * @file
  *
- * This file defines a class to handle exception thrown for resource encapsulation.
+ * This file defines a class to handle exception thrown for resource manipulation.
  */
 
-#ifndef RES_ENCAPSULATION_RCSEXCEPTION_H
-#define RES_ENCAPSULATION_RCSEXCEPTION_H
+#ifndef RES_MANIPULATION_RCSEXCEPTION_H
+#define RES_MANIPULATION_RCSEXCEPTION_H
 
 #include <string>
 
@@ -119,4 +119,4 @@ namespace OIC
     }
 }
 
-#endif // RES_ENCAPSULATION_RCSEXCEPTION_H
+#endif // RES_MANIPULATION_RCSEXCEPTION_H
