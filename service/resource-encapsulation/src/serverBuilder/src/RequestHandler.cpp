@@ -22,16 +22,17 @@
 
 #include <OCResourceResponse.h>
 #include <ResourceAttributesConverter.h>
+#include <RCSResourceObject.h>
 
 namespace
 {
     using namespace OIC::Service;
 
-    typedef std::function< OC::OCRepresentation(ResourceObject&) > OCRepresentationGetter;
+    typedef std::function< OC::OCRepresentation(RCSResourceObject&) > OCRepresentationGetter;
 
-    OC::OCRepresentation getOCRepresentationFromResource(ResourceObject& resource)
+    OC::OCRepresentation getOCRepresentationFromResource(RCSResourceObject& resource)
     {
-        ResourceObject::LockGuard lock{ resource, ResourceObject::AutoNotifyPolicy::NEVER };
+        RCSResourceObject::LockGuard lock{ resource, RCSResourceObject::AutoNotifyPolicy::NEVER };
         return ResourceAttributesConverter::toOCRepresentation(resource.getAttributes());
     }
 
@@ -46,7 +47,7 @@ namespace
         return std::bind(getOCRepresentation, std::forward<T>(attrs));
     }
 
-    std::shared_ptr< OC::OCResourceResponse > doBuildResponse(ResourceObject& resource,
+    std::shared_ptr< OC::OCResourceResponse > doBuildResponse(RCSResourceObject& resource,
             const OCEntityHandlerResult result, int errorCode, OCRepresentationGetter ocRepGetter)
     {
         auto response = std::make_shared< OC::OCResourceResponse >();
@@ -58,21 +59,21 @@ namespace
         return response;
     }
 
-    AttrKeyValuePairs applyAcceptMethod(ResourceObject& resource,
+    AttrKeyValuePairs applyAcceptMethod(RCSResourceObject& resource,
             const ResourceAttributes& requestAttrs)
     {
-        ResourceObject::LockGuard lock(resource, ResourceObject::AutoNotifyPolicy::NEVER);
+        RCSResourceObject::LockGuard lock(resource, RCSResourceObject::AutoNotifyPolicy::NEVER);
 
         return replaceAttributes(resource.getAttributes(), requestAttrs);
     }
 
-    AttrKeyValuePairs applyDefaultMethod(ResourceObject& resource,
+    AttrKeyValuePairs applyDefaultMethod(RCSResourceObject& resource,
             const ResourceAttributes& requestAttrs)
     {
-        ResourceObject::LockGuard lock(resource, ResourceObject::AutoNotifyPolicy::NEVER);
+        RCSResourceObject::LockGuard lock(resource, RCSResourceObject::AutoNotifyPolicy::NEVER);
 
         if (resource.getSetRequestHandlerPolicy()
-            != ResourceObject::SetRequestHandlerPolicy::ACCEPTANCE
+            != RCSResourceObject::SetRequestHandlerPolicy::ACCEPTANCE
             && !acceptableAttributes(resource.getAttributes(), requestAttrs))
         {
             return AttrKeyValuePairs{ };
@@ -81,13 +82,13 @@ namespace
         return replaceAttributes(resource.getAttributes(), requestAttrs);
     }
 
-    AttrKeyValuePairs applyIgnoreMethod(ResourceObject&, const ResourceAttributes&)
+    AttrKeyValuePairs applyIgnoreMethod(RCSResourceObject&, const ResourceAttributes&)
     {
         return AttrKeyValuePairs();
     }
 
     auto getApplyAcceptanceFunc(RCSSetResponse::AcceptanceMethod method) ->
-            std::function<AttrKeyValuePairs(ResourceObject&, const ResourceAttributes&)>
+            std::function<AttrKeyValuePairs(RCSResourceObject&, const ResourceAttributes&)>
     {
         switch (method)
         {
@@ -140,7 +141,7 @@ namespace OIC
         }
 
         std::shared_ptr< OC::OCResourceResponse > RequestHandler::buildResponse(
-                ResourceObject& resource)
+                RCSResourceObject& resource)
         {
             return m_holder(resource);
         }
@@ -170,7 +171,7 @@ namespace OIC
         }
 
         AttrKeyValuePairs SetRequestHandler::applyAcceptanceMethod(
-                RCSSetResponse::AcceptanceMethod method, ResourceObject& resource,
+                RCSSetResponse::AcceptanceMethod method, RCSResourceObject& resource,
                 const ResourceAttributes& requestAttrs) const
         {
             return getApplyAcceptanceFunc(method)(resource, requestAttrs);

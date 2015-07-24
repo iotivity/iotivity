@@ -20,7 +20,7 @@
 
 #include <UnitTestHelper.h>
 
-#include <ResourceObject.h>
+#include <RCSResourceObject.h>
 
 #include <OCPlatform.h>
 
@@ -42,7 +42,7 @@ constexpr int value{ 100 };
 
 TEST(ResourceObjectBuilderCreateTest, ThrowIfUriIsInvalid)
 {
-    ASSERT_THROW(ResourceObject::Builder("", "", "").build(), PlatformException);
+    ASSERT_THROW(RCSResourceObject::Builder("", "", "").build(), PlatformException);
 }
 
 class ResourceObjectBuilderTest: public TestWithMock
@@ -62,12 +62,12 @@ TEST_F(ResourceObjectBuilderTest, RegisterResourceWhenCallCreate)
     mocks.ExpectCallFuncOverload(static_cast< registerResource >(OCPlatform::registerResource))
             .Return(OC_STACK_OK);
 
-    ResourceObject::Builder(RESOURCE_URI, RESOURCE_TYPE, "").build();
+    RCSResourceObject::Builder(RESOURCE_URI, RESOURCE_TYPE, "").build();
 }
 
 TEST_F(ResourceObjectBuilderTest, ResourceServerHasPropertiesSetByBuilder)
 {
-    auto serverResource = ResourceObject::Builder(RESOURCE_URI, RESOURCE_TYPE, "").
+    auto serverResource = RCSResourceObject::Builder(RESOURCE_URI, RESOURCE_TYPE, "").
             setDiscoverable(false).setObservable(true).build();
 
     EXPECT_FALSE(serverResource->isDiscoverable());
@@ -79,10 +79,10 @@ TEST_F(ResourceObjectBuilderTest, ResourceServerHasAttrsSetByBuilder)
     ResourceAttributes attrs;
     attrs[KEY] = 100;
 
-    auto serverResource = ResourceObject::Builder(RESOURCE_URI, RESOURCE_TYPE, "").
+    auto serverResource = RCSResourceObject::Builder(RESOURCE_URI, RESOURCE_TYPE, "").
             setAttributes(attrs).build();
 
-    ResourceObject::LockGuard lock{ serverResource, ResourceObject::AutoNotifyPolicy::NEVER };
+    RCSResourceObject::LockGuard lock{ serverResource, RCSResourceObject::AutoNotifyPolicy::NEVER };
     EXPECT_EQ(attrs, serverResource->getAttributes());
 }
 
@@ -90,7 +90,7 @@ TEST_F(ResourceObjectBuilderTest, ResourceServerHasAttrsSetByBuilder)
 class ResourceObjectTest: public TestWithMock
 {
 public:
-    ResourceObject::Ptr server;
+    RCSResourceObject::Ptr server;
 
 protected:
     void SetUp()
@@ -99,7 +99,7 @@ protected:
 
         initMocks();
 
-        server = ResourceObject::Builder(RESOURCE_URI, RESOURCE_TYPE, "").build();
+        server = RCSResourceObject::Builder(RESOURCE_URI, RESOURCE_TYPE, "").build();
 
         initResourceObject();
     }
@@ -113,14 +113,14 @@ protected:
     }
 
     virtual void initResourceObject() {
-        server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::NEVER);
+        server->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy::NEVER);
     }
 };
 
 TEST_F(ResourceObjectTest, AccessAttributesWithLock)
 {
     {
-        ResourceObject::LockGuard lock{ server };
+        RCSResourceObject::LockGuard lock{ server };
         auto& attr = server->getAttributes();
         attr[KEY] = value;
     }
@@ -136,7 +136,7 @@ TEST_F(ResourceObjectTest, ThrowIfTryToAccessAttributesWithoutGuard)
 TEST_F(ResourceObjectTest, SettingAttributesWithinGuardDoesntCauseDeadLock)
 {
     {
-        ResourceObject::LockGuard guard{ server };
+        RCSResourceObject::LockGuard guard{ server };
         server->setAttribute(KEY, value);
     }
 
@@ -160,19 +160,19 @@ protected:
 
 TEST_F(AutoNotifyTest, DefalutAutoNotifyPolicyIsUpdated)
 {
-    ASSERT_EQ(ResourceObject::AutoNotifyPolicy::UPDATED, server->getAutoNotifyPolicy());
+    ASSERT_EQ(RCSResourceObject::AutoNotifyPolicy::UPDATED, server->getAutoNotifyPolicy());
 }
 
 TEST_F(AutoNotifyTest, AutoNotifyPolicyCanBeSet)
 {
-    server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::NEVER);
+    server->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy::NEVER);
 
-    ASSERT_EQ(ResourceObject::AutoNotifyPolicy::NEVER, server->getAutoNotifyPolicy());
+    ASSERT_EQ(RCSResourceObject::AutoNotifyPolicy::NEVER, server->getAutoNotifyPolicy());
 }
 
 TEST_F(AutoNotifyTest, WithUpdatedPolicy_NeverBeNotifiedIfAttributeIsNotChanged)
 {
-    server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::UPDATED);
+    server->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy::UPDATED);
     server->setAttribute(KEY, value);
 
     mocks.NeverCallFuncOverload(static_cast< NotifyAllObservers >(
@@ -183,7 +183,7 @@ TEST_F(AutoNotifyTest, WithUpdatedPolicy_NeverBeNotifiedIfAttributeIsNotChanged)
 
 TEST_F(AutoNotifyTest, WithUpdatedPolicy_WillBeNotifiedIfAttributeIsChanged)
 {
-    server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::UPDATED);
+    server->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy::UPDATED);
     server->setAttribute(KEY, value);
 
     mocks.ExpectCallFuncOverload(static_cast< NotifyAllObservers >(
@@ -195,7 +195,7 @@ TEST_F(AutoNotifyTest, WithUpdatedPolicy_WillBeNotifiedIfAttributeIsChanged)
 TEST_F(AutoNotifyTest, WithUpdatedPolicy_WillBeNotifiedIfValueIsAdded)
 {
     constexpr char newKey[]{ "newKey" };
-    server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::UPDATED);
+    server->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy::UPDATED);
 
     mocks.ExpectCallFuncOverload(static_cast< NotifyAllObservers >(
             OC::OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
@@ -205,18 +205,18 @@ TEST_F(AutoNotifyTest, WithUpdatedPolicy_WillBeNotifiedIfValueIsAdded)
 
 TEST_F(AutoNotifyTest, WithNeverPolicy_NeverBeNotifiedEvenIfAttributeIsChanged)
 {
-    server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::NEVER);
+    server->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy::NEVER);
 
     mocks.NeverCallFuncOverload(static_cast< NotifyAllObservers >(
             OC::OCPlatform::notifyAllObservers));
 
-    ResourceObject::LockGuard lock{ server };
+    RCSResourceObject::LockGuard lock{ server };
     server->setAttribute(KEY, value);
 }
 
 TEST_F(AutoNotifyTest, WithUpdatePolicy_WillBeNotifiedIfAttributeIsDeleted)
 {
-    server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::UPDATED);
+    server->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy::UPDATED);
     server->setAttribute(KEY, value);
 
     mocks.ExpectCallFuncOverload(static_cast< NotifyAllObservers >(
@@ -231,35 +231,35 @@ class AutoNotifyWithGuardTest: public AutoNotifyTest
 
 TEST_F(AutoNotifyWithGuardTest, GuardFollowsServerPolicyByDefault)
 {
-    server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::UPDATED);
+    server->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy::UPDATED);
 
     mocks.ExpectCallFuncOverload(static_cast< NotifyAllObservers >(
             OC::OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
 
-    ResourceObject::LockGuard guard{ server };
+    RCSResourceObject::LockGuard guard{ server };
     server->setAttribute(KEY, value);
 }
 
 TEST_F(AutoNotifyWithGuardTest, GuardCanOverridePolicy)
 {
-    server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::ALWAYS);
+    server->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy::ALWAYS);
 
     mocks.NeverCallFuncOverload(static_cast< NotifyAllObservers >(
             OC::OCPlatform::notifyAllObservers));
 
-    ResourceObject::LockGuard guard{ server, ResourceObject::AutoNotifyPolicy::NEVER };
+    RCSResourceObject::LockGuard guard{ server, RCSResourceObject::AutoNotifyPolicy::NEVER };
     server->getAttributes()[KEY] = value;
 }
 
 TEST_F(AutoNotifyWithGuardTest, GuardInvokesNotifyWhenDestroyed)
 {
-    server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::NEVER);
+    server->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy::NEVER);
 
     mocks.ExpectCallFuncOverload(static_cast< NotifyAllObservers >(
             OC::OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
 
     {
-        ResourceObject::LockGuard guard{ server, ResourceObject::AutoNotifyPolicy::ALWAYS };
+        RCSResourceObject::LockGuard guard{ server, RCSResourceObject::AutoNotifyPolicy::ALWAYS };
         server->setAttribute(KEY, value);
     }
 
@@ -427,15 +427,15 @@ public:
 
 TEST_F(SetRequestHandlerPolicyTest, DefalutSetRequestHandlerPolicyIsNever)
 {
-    ASSERT_EQ(ResourceObject::SetRequestHandlerPolicy::NEVER,
+    ASSERT_EQ(RCSResourceObject::SetRequestHandlerPolicy::NEVER,
                 server->getSetRequestHandlerPolicy());
 }
 
 TEST_F(SetRequestHandlerPolicyTest, SetRequestHandlerPolicyCanBeSet)
 {
-    server->setSetRequestHandlerPolicy(ResourceObject::SetRequestHandlerPolicy::ACCEPTANCE);
+    server->setSetRequestHandlerPolicy(RCSResourceObject::SetRequestHandlerPolicy::ACCEPTANCE);
 
-    ASSERT_EQ(ResourceObject::SetRequestHandlerPolicy::ACCEPTANCE,
+    ASSERT_EQ(RCSResourceObject::SetRequestHandlerPolicy::ACCEPTANCE,
                 server->getSetRequestHandlerPolicy());
 }
 
@@ -443,11 +443,11 @@ TEST_F(SetRequestHandlerPolicyTest, WithNeverPolicy_NotAddedIfReceivedNewKeyValu
 {
     OCRepresentation ocRep = createOCRepresentation();
     ocRep.setValue("NewKey", value);
-    server->setSetRequestHandlerPolicy(ResourceObject::SetRequestHandlerPolicy::NEVER);
+    server->setSetRequestHandlerPolicy(RCSResourceObject::SetRequestHandlerPolicy::NEVER);
 
     handler(createRequest(OC_REST_PUT, ocRep));
 
-    ResourceObject::LockGuard guard{ server };
+    RCSResourceObject::LockGuard guard{ server };
     ASSERT_FALSE((server->getAttributes()).contains("NewKey"));
 }
 
@@ -455,11 +455,11 @@ TEST_F(SetRequestHandlerPolicyTest, WithAcceptancePolicy_WillBeAddedIfReceivedNe
 {
     OCRepresentation ocRep = createOCRepresentation();
     ocRep.setValue("NewKey", value);
-    server->setSetRequestHandlerPolicy(ResourceObject::SetRequestHandlerPolicy::ACCEPTANCE);
+    server->setSetRequestHandlerPolicy(RCSResourceObject::SetRequestHandlerPolicy::ACCEPTANCE);
 
     handler(createRequest(OC_REST_PUT, ocRep));
 
-    ResourceObject::LockGuard guard{ server };
+    RCSResourceObject::LockGuard guard{ server };
     ASSERT_TRUE((server->getAttributes()).contains("NewKey"));
 }
 
@@ -468,11 +468,11 @@ class ResourceObjectSynchronizationTest: public ResourceObjectHandlingRequestTes
 {
 public:
 
-    static void withLock(ResourceObject::Ptr serverResource, int count)
+    static void withLock(RCSResourceObject::Ptr serverResource, int count)
     {
         for (int i=0; i<count; ++i)
         {
-            ResourceObject::LockGuard lock{ serverResource };
+            RCSResourceObject::LockGuard lock{ serverResource };
 
             auto& attrs = serverResource->getAttributes();
 
@@ -480,11 +480,11 @@ public:
         }
     }
 
-    static void withSetter(ResourceObject::Ptr serverResource, int count)
+    static void withSetter(RCSResourceObject::Ptr serverResource, int count)
     {
         for (int i=0; i<count; ++i)
         {
-            ResourceObject::LockGuard lock{ serverResource };
+            RCSResourceObject::LockGuard lock{ serverResource };
 
             serverResource->setAttribute(KEY, serverResource->getAttribute<int>(KEY) + 1);
         }

@@ -19,7 +19,7 @@
  ******************************************************************/
 
 #include "PrimitiveResource.h"
-#include "ResourceObject.h"
+#include "RCSResourceObject.h"
 #include "OCPlatform.h"
 #include "OCApi.h"
 
@@ -32,7 +32,7 @@ std::string resourceUri = "/a/TempSensor";
 std::string resourceType = "core.TemperatureSensor";
 std::string resourceInterface = "oic.if.";
 std::string attributeKey = "Temperature";
-ResourceObject::Ptr server;
+RCSResourceObject::Ptr server;
 
 //display the menu on the screen
 void displayMenu()
@@ -49,7 +49,7 @@ RCSGetResponse RequestHandlerForGet(const RCSRequest &request,
         ResourceAttributes &attrs)
 {
     cout << "Recieved a Get request from Client" << std::endl;
-    ResourceObject::LockGuard lock(*server);
+    RCSResourceObject::LockGuard lock(*server);
     ResourceAttributes attr = server->getAttributes();
     ResourceAttributes::const_iterator iter = attr.begin();
     cout << "\nSending response to Client : " << std::endl;
@@ -109,7 +109,7 @@ int main(void)
                //Creation of Resource & Auto control for all requests from Client
                     {
                         //creation of Resource
-                        server = ResourceObject::Builder(resourceUri, resourceType,
+                        server = RCSResourceObject::Builder(resourceUri, resourceType,
                                                          resourceInterface).setDiscoverable(true).setObservable(false).build();
                         std::cout << "Resource created successfully " << std::endl;
 
@@ -122,7 +122,7 @@ int main(void)
                 case 2:
             //Creation of Resource & setting get and set handler for handling get and set request from client in application
                     {
-                        server = ResourceObject::Builder(resourceUri, resourceType,
+                        server = RCSResourceObject::Builder(resourceUri, resourceType,
                                                          resourceInterface).setDiscoverable(true).setObservable(false).build();
                         std::cout << "Resource created successfully " << std::endl;
 
@@ -169,7 +169,7 @@ int main(void)
             {
                 case 1:
                     {
-                        ResourceObject::LockGuard lock(*server);
+                        RCSResourceObject::LockGuard lock(*server);
                         ResourceAttributes attrs = server->getAttributes();
 
                         attrs[attributeKey] =  (server->getAttribute<int>(attributeKey)  + 10);
@@ -189,7 +189,7 @@ int main(void)
                     }
                 case 2:
                     {
-                        ResourceObject::LockGuard lock(*server);
+                        RCSResourceObject::LockGuard lock(*server);
                         ResourceAttributes attrs = server->getAttributes();
                         attrs[attributeKey] =  (server->getAttribute<int>(attributeKey)  - 10);
                         server->setAttribute(attributeKey, attrs[attributeKey]);

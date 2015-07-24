@@ -18,11 +18,13 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef COMMON_INTERNAL_RESOURCEATTRIBUTESUTILS_H
-#define COMMON_INTERNAL_RESOURCEATTRIBUTESUTILS_H
+#ifndef COMMON_RESOURCEATTRIBUTESUTILS_H
+#define COMMON_RESOURCEATTRIBUTESUTILS_H
 
 #include <vector>
 #include <string>
+
+#include <ResourceAttributes.h>
 
 namespace OIC
 {
@@ -41,4 +43,4 @@ namespace OIC
     }
 }
 
-#endif // COMMON_INTERNAL_RESOURCEATTRIBUTESUTILS_H
+#endif // COMMON_RESOURCEATTRIBUTESUTILS_H

@@ -135,7 +135,7 @@ namespace OIC
 
             if (!m_mapServers.empty())
             {
-                map< std::string, ResourceObject::Ptr >::iterator itor = m_mapServers.begin();
+                map< std::string, RCSResourceObject::Ptr >::iterator itor = m_mapServers.begin();
 
                 while (itor != m_mapServers.end())
                 {
@@ -261,7 +261,7 @@ namespace OIC
         {
             string strUri = resource->m_uri;
             string strResourceType = resource->m_resourceType;
-            ResourceObject::Ptr server = nullptr;
+            RCSResourceObject::Ptr server = nullptr;
 
             info_logger() << "Registration of resource " << strUri << "," << strResourceType << endl;
 
@@ -386,10 +386,10 @@ namespace OIC
             return &m_instance;
         }
 
-        ResourceObject::Ptr ResourceContainerImpl::buildResourceObject(const std::string & strUri,
+        RCSResourceObject::Ptr ResourceContainerImpl::buildResourceObject(const std::string & strUri,
                 const std::string & strResourceType)
         {
-            return ResourceObject::Builder(strUri, strResourceType, "DEFAULT_INTERFACE").setObservable(
+            return RCSResourceObject::Builder(strUri, strResourceType, "DEFAULT_INTERFACE").setObservable(
                        true).setDiscoverable(true).build();
         }
 

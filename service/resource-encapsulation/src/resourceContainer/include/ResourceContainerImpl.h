@@ -29,7 +29,7 @@
 
 #include "RCSRequest.h"
 #include "RCSResponse.h"
-#include "ResourceObject.h"
+#include "RCSResourceObject.h"
 
 #if(JAVA_SUPPORT)
     #include <jni.h>
@@ -78,7 +78,7 @@ namespace OIC
                 void onNotificationReceived(const std::string &strResourceUri);
 
                 static ResourceContainerImpl *getImplInstance();
-                static ResourceObject::Ptr buildResourceObject(const std::string &strUri, const std::string &strResourceType);
+                static RCSResourceObject::Ptr buildResourceObject(const std::string &strUri, const std::string &strResourceType);
 
                 void startBundle(const std::string &bundleId);
                 void stopBundle(const std::string &bundleId);
@@ -102,7 +102,7 @@ namespace OIC
 
             private:
                 map< std::string, BundleInfoInternal * > m_bundles; // <bundleID, bundleInfo>
-                map< std::string, ResourceObject::Ptr > m_mapServers; //<uri, serverPtr>
+                map< std::string, RCSResourceObject::Ptr > m_mapServers; //<uri, serverPtr>
                 map< std::string, BundleResource * > m_mapResources; //<uri, resourcePtr>
                 map< std::string, list<string> > m_mapBundleResources; //<bundleID, vector<uri>>
                 string m_configFile;

@@ -21,7 +21,7 @@
 #include <UnitTestHelper.h>
 
 #include <RCSResponse.h>
-#include <ResourceObject.h>
+#include <RCSResourceObject.h>
 
 #include <RequestHandler.h>
 #include <ResourceAttributesConverter.h>
@@ -59,8 +59,8 @@ public:
     template< typename T >
     shared_ptr< OCResourceResponse > buildResponse(const T& response)
     {
-        ResourceObject::Ptr server =
-                ResourceObject::Builder("a/test", "", "").build();
+        RCSResourceObject::Ptr server =
+                RCSResourceObject::Builder("a/test", "", "").build();
 
         return response.getHandler()->buildResponse(*server);
     }

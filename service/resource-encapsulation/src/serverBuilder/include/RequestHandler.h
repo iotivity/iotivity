@@ -21,7 +21,6 @@
 #ifndef SERVERBUILDER_REQUESTHANDLER_H
 #define SERVERBUILDER_REQUESTHANDLER_H
 
-#include <ResourceObject.h>
 #include <RCSResponse.h>
 #include <ResourceAttributesUtils.h>
 
@@ -36,10 +35,12 @@ namespace OIC
     namespace Service
     {
 
+        class RCSResourceObject;
+
         class RequestHandler
         {
         private:
-            typedef std::function< std::shared_ptr< OC::OCResourceResponse >(ResourceObject&) >
+            typedef std::function< std::shared_ptr< OC::OCResourceResponse >(RCSResourceObject&) >
                         BuildResponseHolder;
 
         public:
@@ -66,7 +67,7 @@ namespace OIC
 
             virtual ~RequestHandler() { };
 
-            std::shared_ptr< OC::OCResourceResponse > buildResponse(ResourceObject&);
+            std::shared_ptr< OC::OCResourceResponse > buildResponse(RCSResourceObject&);
 
         private:
             const BuildResponseHolder m_holder;
@@ -93,7 +94,7 @@ namespace OIC
                     int errorCode = DEFAULT_ERROR_CODE);
 
             AttrKeyValuePairs applyAcceptanceMethod(RCSSetResponse::AcceptanceMethod,
-                    ResourceObject&, const ResourceAttributes&) const;
+                    RCSResourceObject&, const ResourceAttributes&) const;
         };
 
     }
