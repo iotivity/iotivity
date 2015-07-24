@@ -214,17 +214,16 @@ TEST_F(AutoNotifyTest, WithNeverPolicy_NeverBeNotifiedEvenIfAttributeIsChanged)
     server->setAttribute(KEY, value);
 }
 
-TEST_F(AutoNotifyTest, WithAlwaysPolicy_WillBeNotifiedEvenIfAttributeIsNotChanged)
+TEST_F(AutoNotifyTest, WithUpdatePolicy_WillBeNotifiedIfAttributeIsDeleted)
 {
-    server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::ALWAYS);
+    server->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::UPDATED);
     server->setAttribute(KEY, value);
 
     mocks.ExpectCallFuncOverload(static_cast< NotifyAllObservers >(
             OC::OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
 
-    server->setAttribute(KEY, value);
+    server->removeAttribute(KEY);
 }
-
 
 class AutoNotifyWithGuardTest: public AutoNotifyTest
 {

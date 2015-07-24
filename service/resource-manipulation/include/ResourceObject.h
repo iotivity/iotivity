@@ -39,9 +39,6 @@
 
 namespace OC
 {
-    /**
-     * Forward declaration
-     */
     class OCResourceRequest;
 }
 
@@ -51,10 +48,10 @@ namespace OIC
     {
 
         /**
-         * @class   NoLockException
-         * @brief   This class is  used to throw exception to the upper layer if lock has not been acquired.
-         *              It is inherited from PrimitiveException class.
+         * @brief Thrown when lock has not been acquired.
          *
+         * @see ResourceObject::LockGuard
+         * @see ResourceObject::getAttributes
          */
         class NoLockException: public RCSException
         {
@@ -63,13 +60,16 @@ namespace OIC
         };
 
         /**
-         * @class ResourceObject
-         * @brief This class provides APIs and subclasses for creation of resource(s), setting and getting
-         *            resource properties and attributes, and for handling of requests.
-         *            It provides resource locking feature for synchronized operations. On creating a resouce
-         *            using the build() API, the developer gets a ResourceObject pointer
-         *
-         *@see build()
+         * @brief  ResourceObject represents a resource. ResourceObject handles any requests from
+         *        clients automatically with attributes.
+         *        It also provides an auto notification mechanism that notifies to the observers.
+         *        <br/>
+         *         Requests are handled automatically by defaultAction of RCSGetResponse and
+         *        RCSSetResponse. You can override them and send your own response.
+         *        <br/>
+         *         For simple resources, you may want to know whenever attributes are changed
+         *        by a set request. In this case, add an AttributeUpdatedListener
+         *        with a key interested in instead of overriding SetRequestHandler.
          */
         class ResourceObject
         {
@@ -79,38 +79,43 @@ namespace OIC
             public:
 
                 /**
-                * enum class contains the different Auto notify policy
-                */
+                 * @brief represents the policy of AutoNotify function.
+                 *        In accord with this policy, observers are notified of attributes that
+                 *        are changed or updated.
+                 * @note Attributes are changed or updated according to execution of some functions
+                 *       or receipt of 'set-request'.
+                 *       (functions - ResourceObject::setAttribute, ResourceObject::removeAttribute,
+                 *        ResourceObject::getAttributes)
+                 */
                 enum class AutoNotifyPolicy
                 {
-                    NEVER,
-                    ALWAYS,
-                    UPDATED
+                    NEVER,  /**< Never notify.*/
+                    ALWAYS, /**< Always notify.*/
+                    UPDATED /**< When attributes are changed, notify.*/
                 };
 
                 /**
-                * enum class contains the different Request Handler policies
-                */
+                 * @brief represents the policy of Set-Request Handler.
+                 *        In accord with this policy, attributes of 'set-request' are created or
+                 *        ignored.
+                 */
                 enum class SetRequestHandlerPolicy
                 {
-                    NEVER,
-                    ACCEPTANCE
+                    NEVER,     /**< Server ignore when server is received set-request of attributes
+                                    of the new key. */
+                    ACCEPTANCE /**< Server creates attributes of the new key When server is received
+                                    set-request of attributes of the new key. */
                 };
 
-                /**
-                  * declaring member as a shared pointer to object of own class.
-                  */
                 typedef std::shared_ptr< ResourceObject > Ptr;
-                /**
-                  * declaring member as a shared pointer to constant object of own class.
-                  */
                 typedef std::shared_ptr< const ResourceObject > ConstPtr;
 
                 /**
                  * @class   Builder
-                 * @brief   This class provides APIs for resource creation, setting properties & attributes for the
-                 *              constructed resource. It is a subclass of ResourceObject. It provides the build() API
-                 *              which builds a resource and return pointer to ResourceObject class.
+                 * @brief   This class provides APIs for resource creation, setting properties &
+                 *          attributes for the constructed resource.
+                 *          It is a subclass of ResourceObject. It provides the build() API
+                 *          which builds a resource and return pointer to ResourceObject class.
                  *
                  *@see build()
                  */
@@ -121,12 +126,13 @@ namespace OIC
                          * @brief Constructor.
                          *           Sets the resource property values using initializers list.
                          *
-                         * @param uri - Resource URI value to be set
-                         * @param type - Resource type value to be set
-                         * @param interface - Interface value to be set
+                         * @param uri Resource URI value to be set
+                         * @param type Resource type value to be set
+                         * @param interface Interface value to be set
                          *
-                         *NOTE : m_properties value is by default set to OC_DISCOVERABLE | OC_OBSERVABLE.
-                         *           OC_DISCOVERABLE and OC_OBSERVABLE are defined in octypes.h.
+                         *NOTE : m_properties value is by default set to
+                         *       OC_DISCOVERABLE | OC_OBSERVABLE.
+                         *       OC_DISCOVERABLE and OC_OBSERVABLE are defined in octypes.h.
                          */
                         Builder(const std::string &uri, const std::string &type,
                                 const std::string &interface);
@@ -134,187 +140,129 @@ namespace OIC
                         /**
                         * Sets the discoverable(OC_DISCOVERABLE) property for the resource.
                         *
-                        * @param discoverable - true or false
+                        * @param discoverable Whether to be discovered.
                         *
-                        * @return Builder& -reference of the builder class
+                        * @return reference of this Builder
                         *
-                        *NOTE : OC_DISCOVERABLE is defined in octypes.h
+                        *@see OC_DISCOVERABLE
                         */
                         Builder &setDiscoverable(bool discoverable);
+
                         /**
                         * Sets the observable(OC_OBSERVABLE) property of the resource.
                         *
-                        * @param observable - true or false
+                        * @param observable Whether to be observed.
                         *
-                        * @return Builder& - reference of the builder class
+                        * @return reference of this Builder
                         *
-                        *NOTE : OC_DISCOVERABLE is defined in octypes.h
+                        *@see  OC_OBSERVABLE
                         */
                         Builder &setObservable(bool observable);
 
                         /**
                         * Sets attribute of the resource.
                         *
-                        * @param attributes - Resource attributes to set
+                        * @param attributes Resource attributes to set
                         *
-                        * @return Builder& - reference of the builder class
+                        * @return reference of this Builder
                         */
                         Builder &setAttributes(const ResourceAttributes &attributes);
+
                         /**
                         * API for setting attributes of the resource.
                         *
-                        * @param attributes - Resource Attributes to set
+                        * @param attributes Resource Attributes to set
                         *
-                        * @return Builder& - reference of the builder class
+                        * @return reference of this Builder
                         */
                         Builder &setAttributes(ResourceAttributes &&attributes);
 
                         /**
-                         * API for constructing a new resource.
-                         * It internally invokes the ResourceObject constructor to create a
-                         * new ResourceObject instance. It also binds an entity handler to the ResourceObject created.
-                         * Then it registers a resource with set properties to obtain a resource handle.
-                         * This handle is set as the handle of ResourceObject created.
-                         * On successful execution the pointer to this object is returned.
+                         * API for constructing a new ResourceObject.
                          *
-                         * @return ResourceObject::Ptr - Pointer to ResourceObject instance created.
+                         * @return Pointer to ResourceObject instance created.
                          *
                          * @throw PlatformException
-                         *       It catches exception from registerResource API of OCPlatform and throws it to developer.
+                         *       It catches exception from registerResource API of OCPlatform and
+                         *       throws it to developer.
                          *
                          */
                         ResourceObject::Ptr build();
 
                     private:
-
-                        /**
-                         *  Resource URI.
-                         */
                         std::string m_uri;
-
-                        /**
-                         *  Resource type.
-                         */
                         std::string m_type;
-
-                        /**
-                         *  Resource interface.
-                         */
                         std::string m_interface;
-
-                        /**
-                         *  Resource property.
-                         */
                         uint8_t m_properties;
-
-                        /**
-                         *  Attributes of the resource.
-                         */
                         ResourceAttributes m_resourceAttributes;
                 };
 
                 class LockGuard;
 
-                /**
-                * Request handler for get requests
-                */
                 typedef std::function < RCSGetResponse(const RCSRequest &,
                                                        ResourceAttributes &) > GetRequestHandler;
-                /**
-                * Request handler for set requests
-                */
                 typedef std::function < RCSSetResponse(const RCSRequest &,
                                                        ResourceAttributes &) > SetRequestHandler;
-                /**
-                *  Listener for update of attribute
-                */
+
                 typedef std::function < void(const ResourceAttributes::Value &,
-                                             const ResourceAttributes::Value &) > AttributeUpdatedListener;
+                                     const ResourceAttributes::Value &) > AttributeUpdatedListener;
 
             public:
-                /**
-                * Constructor
-                */
                 ResourceObject(ResourceObject&&) = delete;
                 ResourceObject(const ResourceObject &) = delete;
 
-                /**
-                * overloading = operator
-                */
                 ResourceObject &operator=(ResourceObject && ) = delete;
                 ResourceObject &operator=(const ResourceObject &) = delete;
 
-                /**
-                 * Virtual destructor.
-                 */
                 virtual ~ResourceObject();
 
                 /**
                  * API for setting a particular attribute value.
-                 * It uses mutex to invoke autoNotifyIfNeeded on updating the value. This notifies all observers
-                 * with updated attributes value as per the notification policy(AutoNotifyPolicy).
                  *
-                 * @param key - name of attribute(used to map the attribute value).
+                 * @param key name of attribute(used to map the attribute value).
+                 * @param value attribute value to be mapped against the key.
                  *
-                 * @param value - attribute value to be mapped against the key.
-                 *
-                 *NOTE : AutoNotifyPolicy enum class is defined in ResourceObject class.
+                 * @note It is guaranteed thread-safety about attributes.
                  */
                 void setAttribute(const std::string &key, const ResourceAttributes::Value & value);
+
                 /**
-                 * API for setting a particular attribute value.
-                 * It uses mutex to invoke autoNotifyIfNeeded on updating the value. This notifies all observers
-                 * with updated attributes value as per the notification policy(AutoNotifyPolicy).
-                 *
-                 * @param key - name of attribute(used to map the attribute value).
-                 *
-                 * @param value - attribute value to be mapped against the key.
-                 *
-                 *NOTE : AutoNotifyPolicy enum class is defined in ResourceObject class.
+                 * @overload
                  */
                 void setAttribute(const std::string &key, ResourceAttributes::Value&& value);
 
                 /**
-                 * API for setting a particular attribute value.
-                 * It uses mutex to invoke autoNotifyIfNeeded on updating the value. This notifies all observers
-                 * with updated attributes value as per the notification policy(AutoNotifyPolicy).
-                 *
-                 * @param key - name of attribute(used to map the attribute value).
-                 *
-                 * @param value - attribute value to be mapped against the key.
-                 *
-                 *NOTE : AutoNotifyPolicy enum class is defined in ResourceObject class.
+                 * @overload
                  */
                 void setAttribute(std::string&& key, const ResourceAttributes::Value & value);
+
                 /**
-                 * API for setting a particular attribute value.
-                 * It uses mutex to invoke autoNotifyIfNeeded on updating the value. This notifies all observers
-                 * with updated attributes value as per the notification policy(AutoNotifyPolicy).
-                 *
-                 * @param key - name of attribute(used to map the attribute value).
-                 *
-                 * @param value - attribute value to be mapped against the key.
-                 *
-                 *NOTE : AutoNotifyPolicy enum class is defined in ResourceObject class.
+                 * @overload
                  */
                 void setAttribute(std::string&& key, ResourceAttributes::Value&& value);
 
                 /**
-                 * API for getting attribute value corresponding to a key(name of that attribute). Uses mutex.
+                 * API for getting attribute value corresponding to a key(name of that attribute).
                  *
-                 *@param key - name of the attribute value to look for.
+                 * @param key name of the attribute value to look for.
                  *
-                 * @return ResourceAttributes::Value -value of the resource attribute.
+                 * @return value of the resource attribute.
                  *
+                 * @note It is guaranteed thread-safety about attributes.
+                 *
+                 * @throw InvalidKeyException
+                 *              Throw exception when empty string is provided as Attribute key.
                  */
                 ResourceAttributes::Value getAttributeValue(const std::string &key) const;
 
                 /**
-                 *  API for retrieving the attribute value associated with the supplied name. Uses mutex.
+                 * API for retrieving the attribute value associated with the supplied name.
                  *
-                 *  @param key - Name of the attribute
+                 * @param key Name of the attribute
                  *
-                 *  @return  typename - resource attributes value.
+                 * @return resource attributes value.
+                 *
+                 * It is guaranteed thread-safety about attributes.
                  */
                 template< typename T >
                 T getAttribute(const std::string &key) const
@@ -325,84 +273,75 @@ namespace OIC
 
                 /**
                  * API for removing a particular attribute of the resource.
-                 * Uses mutex.
                  *
-                 * @param key - Name of the attribute.
+                 * @param key Name of the attribute.
                  *
-                 * @return bool - true or false
+                 * @return If the key exist and matched attribute is deleted, return true.
                  *
+                 * It is guaranteed thread-safety about attributes.
                  */
                 bool removeAttribute(const std::string &key);
 
                 /**
                  * API for checking whether a particular attribute is there for a resource or not.
                  *
-                 * @param key - Name of the attribute.
+                 * @param key Name of the attribute.
                  *
-                 * @return bool - true or false.
+                 * @return If the key exist, return true.
                  *
+                 * It is guaranteed thread-safety about attributes.
                  */
                 bool containsAttribute(const std::string &key) const;
 
                 /**
-                 * API for getting all the attributes of the resource.
-                 * It invokes the expectOwnLock() API to check the owner of the lock using the thread id.
+                 * API for getting all the attributes of the ResourceObject.
+                 * It invokes the expectOwnLock() API to check the owner of the lock using the
+                 * thread id.
                  * If it is not the owner then it throws exception.
                  *
-                 * @return ResourceAttributes& - reference of the attributes of the resource.
+                 * @return reference of the attributes of this ResourceObject.
                  *
-                 *@see expectOwnLock()
+                 * @see expectOwnLock()
                  *
                  * @throw NoLockException
-                 *              It catches exception thrown from expectOwnLock() API and throws it to the developer.
+                 *              If you don't do lock with LockGuard, throw exception.
                  */
                 ResourceAttributes &getAttributes();
+
                 /**
-                 * API for getting all the attributes of the resource.
-                 * It invokes the expectOwnLock() API to check the owner of the lock using the thread id.
-                 * If it is not the owner then it throws exception.
-                 *
-                 * @return ResourceAttributes& - reference of the attributes of the resource.
-                 *
-                 *@see expectOwnLock()
-                 *
-                 * @throw NoLockException
-                 *              It catches exception thrown from expectOwnLock() API and throws it to the developer.
+                 * @overload
                  */
                 const ResourceAttributes &getAttributes() const;
 
                 /**
                 * API for checking whether the particular resource is observable or not
-                *
-                * @return bool - true or false.
-                *
                 */
                 virtual bool isObservable() const;
+
                 /**
                 * API for checking whether the particular resource is discoverable or not
-                *
-                * @return bool - true or false.
-                *
                 */
                 virtual bool isDiscoverable() const;
 
                 /**
                  * API for setting the resource's get request handler by the developer/application.
-                 * If developer set this handler then all get request will come to the application & developer can
-                 * send the response to the client using APIs of RCSGetResponse class.
+                 * If developer set this handler then all get request will come to the application &
+                 * developer can send the response to the client using APIs of RCSGetResponse class.
                  *
-                 * @param handler - Request handler for get requests
+                 * @param handler Request handler for get requests
                  *
                  * @see RCSGetResponse
                  *
                  */
                 virtual void setGetRequestHandler(GetRequestHandler handler);
+
                 /**
                  * API for setting the resource's set request handler by the developer/application.
-                 * If developer set this handler then all set request for the resource  will come to the application
-                 * & developer can send the response to the client using APIs of RCSSetResponse class.
+                 * If developer set this handler then all set request for the resource
+                 * will come to the application & developer can send the response to the client
+                 * using APIs of RCSSetResponse class.
                  *
-                 * @param handler - Request handler for set requests
+                 * @param handler Request handler for set requests
                  *
                  * @see RCSSetResponse
                  *
@@ -412,63 +351,63 @@ namespace OIC
                 /**
                  * API for setting the Listener for a particular attribute update.
                  *
-                 * @param key  - The intersted attribute's key
-                 * @param listener - Listener for updation of the interested attribute
+                 * @param key The interested attribute's key
+                 * @param listener Listener for updation of the interested attribute
                  *
                  */
                 virtual void addAttributeUpdatedListener(const std::string &key,
                         AttributeUpdatedListener listener);
+
                 /**
                  * API for setting the Listener for a particular attribute update.
                  *
-                 * @param key  - The intersted attribute's key
-                 * @param listener - Listener for updation of the interested attribute
+                 * @param key The interested attribute's key
+                 * @param listener Listener for updation of the interested attribute
                  *
                  */
-                virtual void addAttributeUpdatedListener(std::string &&key, AttributeUpdatedListener listener);
+                virtual void addAttributeUpdatedListener(std::string &&key,
+                        AttributeUpdatedListener listener);
+
                 /**
                 * API for removing the handler for a particular attribute update.
                 *
-                * @param key - The intersted attribute's key
+                * @param key The interested attribute's key
                 *
                 */
                 virtual bool removeAttributeUpdatedListener(const std::string &key);
 
                 /**
-                 * API for notifying all observers of the resource with the updated attributes value
+                 * API for notifying all observers of the ResourceObject
+                 * with the updated attributes value
                  */
                 virtual void notify() const;
 
                 /**
                 * API for setting Auto notify policy
                 *
-                * @param policy - Policy to be set
-                *
-                * Note: AutoNotifyPolicy is an enum class
+                * @param policy policy to be set
                 *
                 * @see AutoNotifyPolicy
                 *
                 */
                 void setAutoNotifyPolicy(AutoNotifyPolicy policy);
+
                 /**
                 * API for getting auto notify policy
                 *
-                * @returns AutoNotifyPolicy - AntoNotify policy
-                *
-                * Note: AutoNotifyPolicy is an enum class
+                * @returns AntoNotify policy
                 *
                 * @see AutoNotifyPolicy
+                *
                 */
                 AutoNotifyPolicy getAutoNotifyPolicy() const;
 
                 /**
                 * API for setting the policy for a setRequestHandler.
                 *
-                * @param policy - policy to be set
+                * @param policy policy to be set
                 *
                 * @see SetRequestHandlerPolicy
-                *
-                * Note: SetRequestHandlerPolicy is the enum class with two values : DEFAULT & ACCEPTANCE
                 *
                 */
                 void setSetRequestHandlerPolicy(SetRequestHandlerPolicy policy);
@@ -476,11 +415,9 @@ namespace OIC
                 /**
                 * API for getting the SetRequestHandler Policy.
                 *
-                * @returns  SetRequestHandlerPolicy - Property of setRequesthandler
+                * @returns Property of setRequesthandler
                 *
                 * @see SetRequestHandlerPolicy
-                *
-                * Note: SetRequestHandlerPolicy is the enum class with two values : DEFAULT & ACCEPTANCE
                 *
                 */
                 SetRequestHandlerPolicy getSetRequestHandlerPolicy() const;
@@ -519,9 +456,7 @@ namespace OIC
             std::mutex m_mutexKeyAttributeUpdate;
 
         };
-        /**
-         * This class enables mutex functionality for the ResourceObject instances.
-         */
+
         class ResourceObject::LockGuard
         {
         public:
@@ -549,9 +484,7 @@ namespace OIC
 
             std::function<void()> m_autoNotifyFunc;
         };
-        /**
-         * This class manages weak guard for the ResourceObject.
-         */
+
         class ResourceObject::WeakGuard
         {
         public:
