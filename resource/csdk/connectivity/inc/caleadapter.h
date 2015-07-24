@@ -50,6 +50,18 @@ typedef struct
 } CALEData_t;
 
 /**
+ * Stores information of all the senders.
+ * This structure will be used to track and defragment all incoming data packets.
+ */
+typedef struct
+{
+    uint32_t recvDataLen;
+    uint32_t totalDataLen;
+    char *defragData;
+    CAEndpoint_t *remoteEndpoint;
+}CABLESenderInfo_t;
+
+/**
  * Initialize LE connectivity interface.
  * @param[in]  registerCallback Callback to register LE interfaces to
  *                               Connectivity Abstraction Layer.
@@ -262,28 +274,14 @@ void CALEServerSendDataThread(void *threadData);
 void CALEClientSendDataThread(void *threadData);
 
 /**
- * This function will be associated with the receiver queue of GattServer.
- * This function will defragment the data received and will send the data
- * UP to the CA layer only after it collects all the data from the adapter
- * layer. Adapter Header will provide the length of the data sent from the
- * server.
+ * This function will be associated with the receiver queue. This function will defragment
+ * the received data from each sender respectively and will send it up to CA layer.
+ * Respective sender's header will provide the length of the data sent.
  *
- * @param[in]  threadData Data pushed to the queue which contains the info
- * about RemoteEndpoint and Data.
+ * @param [IN]  threadData Data pushed to the queue which contains the info about RemoteEndpoint
+ * and Data.
  */
-void CALEServerDataReceiverHandler(void *threadData);
-
-/**
- * This function will be associated with the receiver queue of GattClient.
- * This function will defragment the data received and will send the data
- * UP to the CA layer only after it collects all the data from the adapter
- * layer. Adapter Header will provide the length of the data sent from the
- * server.
- *
- * @param[in]  threadData Data pushed to the queue which contains the info
- * about RemoteEndpoint and Data.
- */
-void CALEClientDataReceiverHandler(void *threadData);
+void CALEDataReceiverHandler(void *threadData);
 
 /**
  * This function is used to Initalize both GattServer and GattClient
@@ -355,29 +353,17 @@ CAResult_t CAInitLEServerSenderQueue();
 CAResult_t CAInitLEClientSenderQueue();
 
 /**
- * This function will initalize the Receiver queue for GattServer. This
- * will initialize the queue to process the function
- * CABLEServerDataReceiverHandler() when ever the task is added to this queue.
+ * This function will initalize the Receiver queue for LEAdapter. This will initialize
+ * the queue to process the function CABLEDataReceiverHandler() when ever the task
+ * is added to this queue.
  *
- * @return ::CA_STATUS_OK or Appropriate error code.
- * @retval ::CA_STATUS_OK  Successful.
- * @retval ::CA_STATUS_INVALID_PARAM  Invalid input argumets.
- * @retval ::CA_STATUS_FAILED Operation failed.
+ * @return ::CA_STATUS_OK or Appropriate error code
+ * @retval ::CA_STATUS_OK  Successful
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input argumets
+ * @retval ::CA_STATUS_FAILED Operation failed
  *
  */
-CAResult_t CAInitLEServerReceiverQueue();
-
-/**
- * This function will initalize the Receiver queue for GattClient. This
- * will initialize the queue to process the function
- * CABLEClientDataReceiverHandler() when ever the task is added to this queue.
- *
- * @return ::CA_STATUS_OK or Appropriate error code.
- * @retval ::CA_STATUS_OK  Successful.
- * @retval ::CA_STATUS_INVALID_PARAM  Invalid input argumets.
- * @retval ::CA_STATUS_FAILED Operation failed.
- */
-CAResult_t CAInitLEClientReceiverQueue();
+CAResult_t CAInitLEReceiverQueue();
 
 /**
  * This function will create the Data required to send it in the queue.
