@@ -24,22 +24,22 @@
 #include <vector>
 #include <string>
 
-#include <ResourceAttributes.h>
+#include <RCSResourceAttributes.h>
 
 namespace OIC
 {
     namespace Service
     {
-        typedef std::pair< std::string, ResourceAttributes::Value > AttrKeyValuePair;
+        typedef std::pair< std::string, RCSResourceAttributes::Value > AttrKeyValuePair;
         typedef std::vector< AttrKeyValuePair > AttrKeyValuePairs;
 
-        bool acceptableAttributes(const ResourceAttributes& dest, const ResourceAttributes& attr);
+        bool acceptableAttributes(const RCSResourceAttributes& dest, const RCSResourceAttributes& attr);
 
-        bool acceptableAttributeValue(const ResourceAttributes::Value& dest,
-                const ResourceAttributes::Value& value);
+        bool acceptableAttributeValue(const RCSResourceAttributes::Value& dest,
+                const RCSResourceAttributes::Value& value);
 
-        AttrKeyValuePairs replaceAttributes(ResourceAttributes& dest,
-                const ResourceAttributes& attrs);
+        AttrKeyValuePairs replaceAttributes(RCSResourceAttributes& dest,
+                const RCSResourceAttributes& attrs);
     }
 }
 

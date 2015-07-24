@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef RES_ENCAPSULATION_RESOURCEATTRIBUTES_H
-#define RES_ENCAPSULATION_RESOURCEATTRIBUTES_H
+#ifndef RES_MANIPULATION_RESOURCEATTRIBUTES_H
+#define RES_MANIPULATION_RESOURCEATTRIBUTES_H
 
 // To avoid conflict using different boost::variant configuration with OC.
 // It causes compile errors.
@@ -41,7 +41,7 @@
 /**
  * @file
  *
- * This file contains the "ResourceAttributes" class & its helper classes
+ * This file contains the "RCSResourceAttributes" class & its helper classes
  */
 namespace OIC
 {
@@ -68,13 +68,13 @@ namespace OIC
         };
 
         /**
-        * ResourceAttributes represents the attributes for a resource.
+        * RCSResourceAttributes represents the attributes for a resource.
         *
         * It provides similar usage to c++ standard containers. (iterator,
         * operators and accessors)<br/>
         * An attribute value can be one of various types. <br/>
         *
-        * @note If client developer wants to get the ResourceAttributes for the resource of
+        * @note If client developer wants to get the RCSResourceAttributes for the resource of
         *            interest following are the steps:
         *            - first call the discover API of DiscoveryManager class.
         *            - After getting the RemoteResourceObject, call getRemoteAttributes() API
@@ -88,7 +88,7 @@ namespace OIC
         * @see RemoteResourceObject
         * @see RCSResourceObject
         */
-        class ResourceAttributes
+        class RCSResourceAttributes
         {
         private:
             template< typename T > struct IsSupportedTypeHelper;
@@ -99,7 +99,7 @@ namespace OIC
                 double,
                 bool,
                 std::string,
-                ResourceAttributes
+                RCSResourceAttributes
             > ValueVariant;
 
             template< typename T, typename V = void,
@@ -152,14 +152,14 @@ namespace OIC
                 DOUBLE, /**< double */
                 BOOL, /**< bool */
                 STRING, /**< std::string */
-                ATTRIBUTES, /**< ResourceAttributes */
+                ATTRIBUTES, /**< RCSResourceAttributes */
                 VECTOR /**< std::vector */
             };
 
             /**
              * A Helper class to identify types of Value.
              *
-             * @see ResourceAttributes
+             * @see RCSResourceAttributes
              * @see Value
              * @see TypeId
              */
@@ -214,7 +214,7 @@ namespace OIC
              *
              * Type helps identify type information of Value.
              *
-             * @see ResourceAttributes
+             * @see RCSResourceAttributes
              * @see Type
              * @see is_supported_type
              */
@@ -297,7 +297,7 @@ namespace OIC
                 void swap(Value&);
 
                 //! @cond
-                friend class ResourceAttributes;
+                friend class RCSResourceAttributes;
                 //! @endcond
 
             private:
@@ -336,12 +336,12 @@ namespace OIC
             class const_iterator;
 
         public:
-            ResourceAttributes() = default;
-            ResourceAttributes(const ResourceAttributes&) = default;
-            ResourceAttributes(ResourceAttributes&&) = default;
+            RCSResourceAttributes() = default;
+            RCSResourceAttributes(const RCSResourceAttributes&) = default;
+            RCSResourceAttributes(RCSResourceAttributes&&) = default;
 
-            ResourceAttributes& operator=(const ResourceAttributes&) = default;
-            ResourceAttributes& operator=(ResourceAttributes&&) = default;
+            RCSResourceAttributes& operator=(const RCSResourceAttributes&) = default;
+            RCSResourceAttributes& operator=(RCSResourceAttributes&&) = default;
 
             /**
              * Returns an {@link iterator} referring to the first element.
@@ -498,20 +498,20 @@ namespace OIC
             //! @cond
             friend class ResourceAttributesConverter;
 
-            friend bool operator==(const ResourceAttributes&, const ResourceAttributes&);
+            friend bool operator==(const RCSResourceAttributes&, const RCSResourceAttributes&);
             //! @endcond
         };
 
         /**
          * A helper class to avoid obscure comparisons of values which are supported
-         * by ResourceAttributes::Value caused by implicitly converting a value
-         * to a ResourceAttributes::Value.
+         * by RCSResourceAttributes::Value caused by implicitly converting a value
+         * to a RCSResourceAttributes::Value.
          *
          * @see Value
-         * @see ResourceAttributes
+         * @see RCSResourceAttributes
          * @see is_supported_type
          */
-        class ResourceAttributes::Value::ComparisonHelper
+        class RCSResourceAttributes::Value::ComparisonHelper
         {
         public:
             ComparisonHelper(const Value&);
@@ -535,13 +535,13 @@ namespace OIC
         };
 
         template< typename T >
-        struct ResourceAttributes::IsSupportedTypeHelper
+        struct RCSResourceAttributes::IsSupportedTypeHelper
         {
             typedef boost::mpl::contains<ValueVariant::types, typename std::decay< T >::type> type;
         };
 
         template <typename T>
-        struct ResourceAttributes::IndexOfType
+        struct RCSResourceAttributes::IndexOfType
         {
             typedef typename boost::mpl::find< ValueVariant::types, T >::type iter;
             typedef typename boost::mpl::begin< ValueVariant::types >::type mpl_begin;
@@ -550,107 +550,107 @@ namespace OIC
         };
 
         /**
-         * @relates ResourceAttributes::Type
+         * @relates RCSResourceAttributes::Type
          *
          * Checks if the objects are equal, that is, whether types are exactly same.
          *
          * @return true if the objects are equal, false otherwise.
          */
-        bool operator==(const ResourceAttributes::Type&, const ResourceAttributes::Type&);
+        bool operator==(const RCSResourceAttributes::Type&, const RCSResourceAttributes::Type&);
 
         /**
-         * @relates ResourceAttributes::Type
+         * @relates RCSResourceAttributes::Type
          *
          * Checks if the objects are not equal, that is, whether types are not exactly same.
          *
          * @return true if the objects are not equal, false otherwise.
          */
-        bool operator!=(const ResourceAttributes::Type&, const ResourceAttributes::Type&);
+        bool operator!=(const RCSResourceAttributes::Type&, const RCSResourceAttributes::Type&);
 
         /**
-         * @relates ResourceAttributes::Value
+         * @relates RCSResourceAttributes::Value
          *
          * Checks if the contents are equal, that is,
          * whether types are matched and underlying values are equal.
          *
          * @return true if the contents are equal, false otherwise.
          */
-        bool operator==(const ResourceAttributes::Value::ComparisonHelper&,
-                const ResourceAttributes::Value::ComparisonHelper&);
+        bool operator==(const RCSResourceAttributes::Value::ComparisonHelper&,
+                const RCSResourceAttributes::Value::ComparisonHelper&);
 
         /**
-         * @relates ResourceAttributes::Value
+         * @relates RCSResourceAttributes::Value
          *
          * Checks if the contents are not equal, that is,
          * whether types are not matched or underlying values are not equal.
          *
          * @return true if the contents are not equal, false otherwise.
          */
-        bool operator!=(const ResourceAttributes::Value::ComparisonHelper&,
-                const ResourceAttributes::Value::ComparisonHelper&);
+        bool operator!=(const RCSResourceAttributes::Value::ComparisonHelper&,
+                const RCSResourceAttributes::Value::ComparisonHelper&);
 
         //! @cond
         template< typename T >
-        typename std::enable_if< ResourceAttributes::is_supported_type< T >::value ||
+        typename std::enable_if< RCSResourceAttributes::is_supported_type< T >::value ||
             std::is_constructible< std::string, T >::value, bool >::type
-        operator==(const ResourceAttributes::Value::ComparisonHelper& lhs, const T& rhs)
+        operator==(const RCSResourceAttributes::Value::ComparisonHelper& lhs, const T& rhs)
         {
             return lhs.equals(rhs);
         }
 
         template< typename T >
-        typename std::enable_if< ResourceAttributes::is_supported_type< T >::value ||
+        typename std::enable_if< RCSResourceAttributes::is_supported_type< T >::value ||
                     std::is_constructible< std::string, T >::value, bool >::type
-        operator==(const T& lhs, const ResourceAttributes::Value::ComparisonHelper& rhs)
+        operator==(const T& lhs, const RCSResourceAttributes::Value::ComparisonHelper& rhs)
         {
             return rhs == lhs;
         }
 
         template< typename T >
-        typename std::enable_if< ResourceAttributes::is_supported_type< T >::value ||
+        typename std::enable_if< RCSResourceAttributes::is_supported_type< T >::value ||
                     std::is_constructible< std::string, T >::value, bool >::type
-        operator!=(const ResourceAttributes::Value::ComparisonHelper& lhs, const T& rhs)
+        operator!=(const RCSResourceAttributes::Value::ComparisonHelper& lhs, const T& rhs)
         {
             return !(lhs == rhs);
         }
 
         template< typename T >
-        typename std::enable_if< ResourceAttributes::is_supported_type< T >::value ||
+        typename std::enable_if< RCSResourceAttributes::is_supported_type< T >::value ||
                     std::is_constructible< std::string, T >::value, bool >::type
-        operator!=(const T& lhs, const ResourceAttributes::Value::ComparisonHelper& rhs)
+        operator!=(const T& lhs, const RCSResourceAttributes::Value::ComparisonHelper& rhs)
         {
             return !(rhs == lhs);
         }
         //! @endcond
 
         /**
-          * @relates ResourceAttributes
+          * @relates RCSResourceAttributes
           *
           * Checks if the attributes are equal, that is, whether contents are equal.
           *
           * @return true if the attributes are equal, false otherwise.
           */
-        bool operator==(const ResourceAttributes& lhs, const ResourceAttributes& rhs);
+        bool operator==(const RCSResourceAttributes& lhs, const RCSResourceAttributes& rhs);
 
         /**
-          * @relates ResourceAttributes
+          * @relates RCSResourceAttributes
           *
           * Checks if the attributes are not equal, that is, whether contents are not equal.
           *
           * @return true if the attributes are not equal, false otherwise.
           */
-        bool operator!=(const ResourceAttributes&, const ResourceAttributes&);
+        bool operator!=(const RCSResourceAttributes&, const RCSResourceAttributes&);
 
         /**
          * KeyValuePair is a class to access attribute's key and value of an element pointed by
-         * iterators of ResourceAttributes.
+         * iterators of RCSResourceAttributes.
          *
          *
-         * @see ResourceAttributes
+         * @see RCSResourceAttributes
          * @see iterator
          * @see const_iterator
          */
-        class ResourceAttributes::KeyValuePair
+        class RCSResourceAttributes::KeyValuePair
         {
         private:
             class KeyVisitor: public boost::static_visitor< const std::string& >
@@ -676,8 +676,8 @@ namespace OIC
 
         public:
             const std::string& key() const;
-            const ResourceAttributes::Value& value() const;
-            ResourceAttributes::Value& value();
+            const RCSResourceAttributes::Value& value() const;
+            RCSResourceAttributes::Value& value();
 
         private:
             KeyValuePair(const KeyValuePair&) = default;
@@ -701,12 +701,12 @@ namespace OIC
         /**
          * A forward iterator to KeyValuePair.
          *
-         * @see ResourceAttributes
+         * @see RCSResourceAttributes
          * @see KeyValuePair
          * @see const_iterator
          */
-        class ResourceAttributes::iterator:
-                public std::iterator< std::forward_iterator_tag, ResourceAttributes::KeyValuePair >
+        class RCSResourceAttributes::iterator:
+                public std::iterator< std::forward_iterator_tag, RCSResourceAttributes::KeyValuePair >
         {
         private:
             typedef std::unordered_map< std::string, Value >::iterator base_iterator;
@@ -731,10 +731,10 @@ namespace OIC
 
         private:
             base_iterator m_cur;
-            ResourceAttributes::KeyValuePair m_keyValuePair;
+            RCSResourceAttributes::KeyValuePair m_keyValuePair;
 
             //! @cond
-            friend class ResourceAttributes;
+            friend class RCSResourceAttributes;
             //! @endcond
         };
 
@@ -742,13 +742,13 @@ namespace OIC
         /**
          * A forward iterator to const KeyValuePair.
          *
-         * @see ResourceAttributes
+         * @see RCSResourceAttributes
          * @see KeyValuePair
          * @see iterator
          */
-        class ResourceAttributes::const_iterator:
+        class RCSResourceAttributes::const_iterator:
                 public std::iterator < std::forward_iterator_tag,
-                                       const ResourceAttributes::KeyValuePair >
+                                       const RCSResourceAttributes::KeyValuePair >
         {
         private:
             typedef std::unordered_map< std::string, Value >::const_iterator base_iterator;
@@ -756,10 +756,10 @@ namespace OIC
         public:
             const_iterator();
             const_iterator(const const_iterator&) = default;
-            const_iterator(const ResourceAttributes::iterator&);
+            const_iterator(const RCSResourceAttributes::iterator&);
 
             const_iterator& operator=(const const_iterator&) = default;
-            const_iterator& operator=(const ResourceAttributes::iterator&);
+            const_iterator& operator=(const RCSResourceAttributes::iterator&);
 
             reference operator*() const;
             pointer operator->() const;
@@ -775,14 +775,14 @@ namespace OIC
 
         private:
             base_iterator m_cur;
-            ResourceAttributes::KeyValuePair m_keyValuePair;
+            RCSResourceAttributes::KeyValuePair m_keyValuePair;
 
             //! @cond
-            friend class ResourceAttributes;
+            friend class RCSResourceAttributes;
             //! @endcond
         };
 
     }
 }
 
-#endif // RES_ENCAPSULATION_RESOURCEATTRIBUTES_H
+#endif // RES_MANIPULATION_RESOURCEATTRIBUTES_H

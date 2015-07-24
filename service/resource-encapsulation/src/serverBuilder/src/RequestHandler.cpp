@@ -36,7 +36,7 @@ namespace
         return ResourceAttributesConverter::toOCRepresentation(resource.getAttributes());
     }
 
-    OC::OCRepresentation getOCRepresentation(const ResourceAttributes& attrs)
+    OC::OCRepresentation getOCRepresentation(const RCSResourceAttributes& attrs)
     {
         return ResourceAttributesConverter::toOCRepresentation(attrs);
     }
@@ -60,7 +60,7 @@ namespace
     }
 
     AttrKeyValuePairs applyAcceptMethod(RCSResourceObject& resource,
-            const ResourceAttributes& requestAttrs)
+            const RCSResourceAttributes& requestAttrs)
     {
         RCSResourceObject::LockGuard lock(resource, RCSResourceObject::AutoNotifyPolicy::NEVER);
 
@@ -68,7 +68,7 @@ namespace
     }
 
     AttrKeyValuePairs applyDefaultMethod(RCSResourceObject& resource,
-            const ResourceAttributes& requestAttrs)
+            const RCSResourceAttributes& requestAttrs)
     {
         RCSResourceObject::LockGuard lock(resource, RCSResourceObject::AutoNotifyPolicy::NEVER);
 
@@ -82,13 +82,13 @@ namespace
         return replaceAttributes(resource.getAttributes(), requestAttrs);
     }
 
-    AttrKeyValuePairs applyIgnoreMethod(RCSResourceObject&, const ResourceAttributes&)
+    AttrKeyValuePairs applyIgnoreMethod(RCSResourceObject&, const RCSResourceAttributes&)
     {
         return AttrKeyValuePairs();
     }
 
     auto getApplyAcceptanceFunc(RCSSetResponse::AcceptanceMethod method) ->
-            std::function<AttrKeyValuePairs(RCSResourceObject&, const ResourceAttributes&)>
+            std::function<AttrKeyValuePairs(RCSResourceObject&, const RCSResourceAttributes&)>
     {
         switch (method)
         {
@@ -126,14 +126,14 @@ namespace OIC
         {
         }
 
-        RequestHandler::RequestHandler(const ResourceAttributes& attrs,
+        RequestHandler::RequestHandler(const RCSResourceAttributes& attrs,
                 const OCEntityHandlerResult& result, int errorCode) :
                 m_holder{ std::bind(doBuildResponse, std::placeholders::_1, result, errorCode,
                         wrapGetOCRepresentation(attrs)) }
         {
         }
 
-        RequestHandler::RequestHandler(ResourceAttributes&& attrs,
+        RequestHandler::RequestHandler(RCSResourceAttributes&& attrs,
                 const OCEntityHandlerResult& result, int errorCode) :
                 m_holder{ std::bind(doBuildResponse, std::placeholders::_1, result, errorCode,
                         wrapGetOCRepresentation(std::move(attrs))) }
@@ -158,13 +158,13 @@ namespace OIC
         }
 
 
-        SetRequestHandler::SetRequestHandler(const ResourceAttributes& attrs,
+        SetRequestHandler::SetRequestHandler(const RCSResourceAttributes& attrs,
                 const OCEntityHandlerResult& result, int errorCode) :
                 RequestHandler{ attrs, result, errorCode }
         {
         }
 
-        SetRequestHandler::SetRequestHandler(ResourceAttributes&& attrs,
+        SetRequestHandler::SetRequestHandler(RCSResourceAttributes&& attrs,
                 const OCEntityHandlerResult& result, int errorCode) :
                 RequestHandler{ std::move(attrs), result, errorCode }
         {
@@ -172,7 +172,7 @@ namespace OIC
 
         AttrKeyValuePairs SetRequestHandler::applyAcceptanceMethod(
                 RCSSetResponse::AcceptanceMethod method, RCSResourceObject& resource,
-                const ResourceAttributes& requestAttrs) const
+                const RCSResourceAttributes& requestAttrs) const
         {
             return getApplyAcceptanceFunc(method)(resource, requestAttrs);
         }

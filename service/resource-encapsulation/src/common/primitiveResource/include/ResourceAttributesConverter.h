@@ -21,7 +21,7 @@
 #ifndef COMMON_INTERNAL_RESOURCEATTRIBUTESCONVERTER_H
 #define COMMON_INTERNAL_RESOURCEATTRIBUTESCONVERTER_H
 
-#include <ResourceAttributes.h>
+#include <RCSResourceAttributes.h>
 
 #include <OCRepresentation.h>
 
@@ -65,32 +65,32 @@ namespace OIC
                                             item.getValue< OC::OCRepresentation >()));
 
                         case OC::AttributeType::Vector:
-                            // ResourceAttributes doesn't support vector yet!
+                            // RCSResourceAttributes doesn't support vector yet!
                             return;
                     }
                 }
 
-                ResourceAttributes&& extract()
+                RCSResourceAttributes&& extract()
                 {
                     return std::move(m_target);
                 }
 
             private:
                 template< typename T >
-                typename std::enable_if<ResourceAttributes::is_supported_type< T >::value >::type
+                typename std::enable_if<RCSResourceAttributes::is_supported_type< T >::value >::type
                 putValue(const std::string& key, T && value)
                 {
                     m_target[key] = std::forward< T >(value);
                 }
 
                 template< typename T >
-                typename std::enable_if<!ResourceAttributes::is_supported_type< T >::value >::type
+                typename std::enable_if<!RCSResourceAttributes::is_supported_type< T >::value >::type
                 putValue(const std::string& key, T && value)
                 {
                 }
 
             private:
-                ResourceAttributes m_target;
+                RCSResourceAttributes m_target;
             };
 
             class OCRepresentationBuilder
@@ -109,7 +109,7 @@ namespace OIC
                     m_target.setNULL(key);
                 }
 
-                void operator()(const std::string& key, const ResourceAttributes& value)
+                void operator()(const std::string& key, const RCSResourceAttributes& value)
                 {
                     m_target[key] = ResourceAttributesConverter::toOCRepresentation(value);
                 }
@@ -124,7 +124,7 @@ namespace OIC
             };
 
         public:
-            static ResourceAttributes fromOCRepresentation(
+            static RCSResourceAttributes fromOCRepresentation(
                     const OC::OCRepresentation& ocRepresentation)
             {
                 ResourceAttributesBuilder builder;
@@ -138,7 +138,7 @@ namespace OIC
             }
 
             static OC::OCRepresentation toOCRepresentation(
-                    const ResourceAttributes& resourceAttributes)
+                    const RCSResourceAttributes& resourceAttributes)
             {
                 OCRepresentationBuilder builder;
 

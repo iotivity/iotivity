@@ -56,11 +56,11 @@ namespace OIC
 
             RequestHandler(const OCEntityHandlerResult& result, int errorCode);
 
-            RequestHandler(const ResourceAttributes&,
+            RequestHandler(const RCSResourceAttributes&,
                     const OCEntityHandlerResult& result = DEFAULT_RESULT,
                     int errorCode = DEFAULT_ERROR_CODE);
 
-            RequestHandler(ResourceAttributes&&,
+            RequestHandler(RCSResourceAttributes&&,
                     const OCEntityHandlerResult& result = DEFAULT_RESULT,
                     int errorCode = DEFAULT_ERROR_CODE);
 
@@ -85,16 +85,16 @@ namespace OIC
 
             SetRequestHandler(const OCEntityHandlerResult& result, int errorCode);
 
-            SetRequestHandler(const ResourceAttributes&,
+            SetRequestHandler(const RCSResourceAttributes&,
                     const OCEntityHandlerResult& result = DEFAULT_RESULT,
                     int errorCode = DEFAULT_ERROR_CODE);
 
-            SetRequestHandler(ResourceAttributes&&,
+            SetRequestHandler(RCSResourceAttributes&&,
                     const OCEntityHandlerResult& result = DEFAULT_RESULT,
                     int errorCode = DEFAULT_ERROR_CODE);
 
             AttrKeyValuePairs applyAcceptanceMethod(RCSSetResponse::AcceptanceMethod,
-                    RCSResourceObject&, const ResourceAttributes&) const;
+                    RCSResourceObject&, const RCSResourceAttributes&) const;
         };
 
     }

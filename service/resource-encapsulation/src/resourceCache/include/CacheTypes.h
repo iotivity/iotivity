@@ -29,7 +29,7 @@
 #include "logger.h"
 
 #include "PrimitiveResource.h"
-#include "ResourceAttributes.h"
+#include "RCSResourceAttributes.h"
 
 namespace OIC
 {
@@ -70,7 +70,7 @@ namespace OIC
         typedef int CacheID;
 
         typedef std::function<OCStackResult(std::shared_ptr<PrimitiveResource>,
-                                            const ResourceAttributes &)> CacheCB;
+                                            const RCSResourceAttributes &)> CacheCB;
         typedef std::map<int, std::pair<Report_Info, CacheCB>> SubscriberInfo;
         typedef std::pair<int, std::pair<Report_Info, CacheCB>> SubscriberInfoPair;
 

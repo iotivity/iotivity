@@ -48,7 +48,7 @@ namespace OIC
                 CacheID deleteSubscriber(CacheID id);
 
                 CACHE_STATE getCacheState() const;
-                const ResourceAttributes getCachedData() const;
+                const RCSResourceAttributes getCachedData() const;
                 const PrimitiveResourcePtr getPrimitiveResource() const;
 
                 void requestGet();
@@ -60,7 +60,7 @@ namespace OIC
                 std::shared_ptr<BaseResource> baseHandler;
 
                 // cached data info
-                ResourceAttributes attributes;
+                RCSResourceAttributes attributes;
                 CACHE_STATE state;
 
                 // subscriber info
@@ -85,7 +85,7 @@ namespace OIC
 
                 CacheID generateCacheID();
                 SubscriberInfoPair findSubscriber(CacheID id);
-                void notifyObservers(ResourceAttributes Att);
+                void notifyObservers(RCSResourceAttributes Att);
         };
     } // namespace Service
 } // namespace OIC

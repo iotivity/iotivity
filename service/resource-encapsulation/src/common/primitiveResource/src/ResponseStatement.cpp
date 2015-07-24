@@ -32,22 +32,22 @@ namespace OIC
                     ResourceAttributesConverter::fromOCRepresentation(ocRepresentation));
         }
 
-        ResponseStatement ResponseStatement::create(ResourceAttributes&& attrs)
+        ResponseStatement ResponseStatement::create(RCSResourceAttributes&& attrs)
         {
             return ResponseStatement(std::move(attrs));
         }
 
-        ResponseStatement::ResponseStatement(const ResourceAttributes& attrs) :
+        ResponseStatement::ResponseStatement(const RCSResourceAttributes& attrs) :
                 m_attrs{ attrs }
         {
         }
 
-        ResponseStatement::ResponseStatement(ResourceAttributes&& attrs) :
+        ResponseStatement::ResponseStatement(RCSResourceAttributes&& attrs) :
                 m_attrs{ std::move(attrs) }
         {
         }
 
-        ResponseStatement::ResponseStatement(ResourceAttributes&& attrs, std::string&& uri,
+        ResponseStatement::ResponseStatement(RCSResourceAttributes&& attrs, std::string&& uri,
                 std::vector< std::string >&& resourceTypes,
                 std::vector< std::string >&& resourceInterfaces) :
                 m_attrs{ std::move(attrs) },
@@ -72,7 +72,7 @@ namespace OIC
             return m_resourceInterfaces;
         }
 
-        const ResourceAttributes& ResponseStatement::getAttributes() const
+        const RCSResourceAttributes& ResponseStatement::getAttributes() const
         {
             return m_attrs;
         }

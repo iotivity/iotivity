@@ -18,7 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include <ResourceAttributes.h>
+#include <RCSResourceAttributes.h>
 
 #include <ResourceAttributesUtils.h>
 #include <ResourceAttributesConverter.h>
@@ -64,13 +64,13 @@ namespace
             return value;
         }
 
-        std::string operator()(const OIC::Service::ResourceAttributes&) const
+        std::string operator()(const OIC::Service::RCSResourceAttributes&) const
         {
             return "Attributes";
         }
     };
 
-    class TypeVisitor: public boost::static_visitor< ResourceAttributes::Type >
+    class TypeVisitor: public boost::static_visitor< RCSResourceAttributes::Type >
     {
     public:
         TypeVisitor() = default;
@@ -81,9 +81,9 @@ namespace
         TypeVisitor& operator=(TypeVisitor&&) = delete;
 
         template< typename T >
-        ResourceAttributes::Type operator()(const T& value) const
+        RCSResourceAttributes::Type operator()(const T& value) const
         {
-            return ResourceAttributes::Type::typeOf(value);
+            return RCSResourceAttributes::Type::typeOf(value);
         }
 
     };
@@ -97,42 +97,42 @@ namespace
     template< >
     struct TypeInfoConverter< int >
     {
-        static constexpr ResourceAttributes::TypeId typeId = ResourceAttributes::TypeId::INT;
+        static constexpr RCSResourceAttributes::TypeId typeId = RCSResourceAttributes::TypeId::INT;
     };
 
     template< >
     struct TypeInfoConverter< std::nullptr_t >
     {
-        static constexpr ResourceAttributes::TypeId typeId = ResourceAttributes::TypeId::NULL_T;
+        static constexpr RCSResourceAttributes::TypeId typeId = RCSResourceAttributes::TypeId::NULL_T;
     };
 
     template< >
     struct TypeInfoConverter< double >
     {
-        static constexpr ResourceAttributes::TypeId typeId = ResourceAttributes::TypeId::DOUBLE;
+        static constexpr RCSResourceAttributes::TypeId typeId = RCSResourceAttributes::TypeId::DOUBLE;
     };
 
     template< >
     struct TypeInfoConverter< bool >
     {
-        static constexpr ResourceAttributes::TypeId typeId = ResourceAttributes::TypeId::BOOL;
+        static constexpr RCSResourceAttributes::TypeId typeId = RCSResourceAttributes::TypeId::BOOL;
     };
 
     template< >
     struct TypeInfoConverter< std::string >
     {
-        static constexpr ResourceAttributes::TypeId typeId = ResourceAttributes::TypeId::STRING;
+        static constexpr RCSResourceAttributes::TypeId typeId = RCSResourceAttributes::TypeId::STRING;
     };
 
     template< >
-    struct TypeInfoConverter< ResourceAttributes >
+    struct TypeInfoConverter< RCSResourceAttributes >
     {
-        static constexpr ResourceAttributes::TypeId typeId = ResourceAttributes::TypeId::ATTRIBUTES;
+        static constexpr RCSResourceAttributes::TypeId typeId = RCSResourceAttributes::TypeId::ATTRIBUTES;
     };
 
     struct TypeInfo
     {
-        ResourceAttributes::TypeId typeId;
+        RCSResourceAttributes::TypeId typeId;
 
         template< typename TRAIT >
         constexpr TypeInfo(TRAIT) :
@@ -185,309 +185,309 @@ namespace OIC
     namespace Service
     {
 
-        ResourceAttributes::Value::ComparisonHelper::ComparisonHelper(const Value& v) :
+        RCSResourceAttributes::Value::ComparisonHelper::ComparisonHelper(const Value& v) :
                 m_valueRef(v)
         {
         }
 
-        bool ResourceAttributes::Value::ComparisonHelper::operator==
+        bool RCSResourceAttributes::Value::ComparisonHelper::operator==
                 (const Value::ComparisonHelper& rhs) const
         {
             return *m_valueRef.m_data == *rhs.m_valueRef.m_data;
         }
 
-        bool operator==(const ResourceAttributes::Type& lhs, const ResourceAttributes::Type& rhs)
+        bool operator==(const RCSResourceAttributes::Type& lhs, const RCSResourceAttributes::Type& rhs)
         {
             return lhs.m_which == rhs.m_which;
         }
 
-        bool operator!=(const ResourceAttributes::Type& lhs, const ResourceAttributes::Type& rhs)
+        bool operator!=(const RCSResourceAttributes::Type& lhs, const RCSResourceAttributes::Type& rhs)
         {
             return !(lhs == rhs);
         }
 
-        bool operator==(const ResourceAttributes::Value::ComparisonHelper& lhs,
-                const ResourceAttributes::Value::ComparisonHelper& rhs)
+        bool operator==(const RCSResourceAttributes::Value::ComparisonHelper& lhs,
+                const RCSResourceAttributes::Value::ComparisonHelper& rhs)
         {
             return lhs.operator==(rhs);
         }
 
-        bool operator!=(const ResourceAttributes::Value::ComparisonHelper& lhs,
-                const ResourceAttributes::Value::ComparisonHelper& rhs)
+        bool operator!=(const RCSResourceAttributes::Value::ComparisonHelper& lhs,
+                const RCSResourceAttributes::Value::ComparisonHelper& rhs)
         {
             return !lhs.operator==(rhs);
         }
 
-        bool operator==(const ResourceAttributes& lhs, const ResourceAttributes& rhs)
+        bool operator==(const RCSResourceAttributes& lhs, const RCSResourceAttributes& rhs)
         {
             return lhs.m_values == rhs.m_values;
         }
 
-        bool operator!=(const ResourceAttributes& lhs, const ResourceAttributes& rhs)
+        bool operator!=(const RCSResourceAttributes& lhs, const RCSResourceAttributes& rhs)
         {
             return !(lhs == rhs);
         }
 
-        auto ResourceAttributes::Type::getId() const -> TypeId
+        auto RCSResourceAttributes::Type::getId() const -> TypeId
         {
             return ::getTypeInfo< ValueVariant >(m_which).typeId;
         }
 
-        ResourceAttributes::Value::Value() :
+        RCSResourceAttributes::Value::Value() :
                 m_data{ new ValueVariant{} }
         {
         }
 
-        ResourceAttributes::Value::Value(const Value& from) :
+        RCSResourceAttributes::Value::Value(const Value& from) :
                 m_data{ new ValueVariant{ *from.m_data } }
         {
         }
 
-        ResourceAttributes::Value::Value(Value&& from) :
+        RCSResourceAttributes::Value::Value(Value&& from) :
                 m_data{ new ValueVariant{} }
         {
             m_data->swap(*from.m_data);
         }
 
-        ResourceAttributes::Value::Value(const char* value) :
+        RCSResourceAttributes::Value::Value(const char* value) :
                 m_data{ new ValueVariant{ std::string{ value } } }
         {
         }
 
-        auto ResourceAttributes::Value::operator=(const Value& rhs) -> Value&
+        auto RCSResourceAttributes::Value::operator=(const Value& rhs) -> Value&
         {
             *m_data = *rhs.m_data;
             return *this;
         }
 
-        auto ResourceAttributes::Value::operator=(Value&& rhs) -> Value&
+        auto RCSResourceAttributes::Value::operator=(Value&& rhs) -> Value&
         {
             *m_data = ValueVariant{};
             m_data->swap(*rhs.m_data);
             return *this;
         }
 
-        auto ResourceAttributes::Value::operator=(const char* rhs) -> Value&
+        auto RCSResourceAttributes::Value::operator=(const char* rhs) -> Value&
         {
             *m_data = std::string{ rhs };
             return *this;
         }
 
-        auto ResourceAttributes::Value::operator=(std::nullptr_t) -> Value&
+        auto RCSResourceAttributes::Value::operator=(std::nullptr_t) -> Value&
         {
             *m_data = nullptr;
             return *this;
         }
 
-        auto ResourceAttributes::Value::getType() const -> Type
+        auto RCSResourceAttributes::Value::getType() const -> Type
         {
             return boost::apply_visitor(TypeVisitor(), *m_data);
         }
 
-        std::string ResourceAttributes::Value::toString() const
+        std::string RCSResourceAttributes::Value::toString() const
         {
             return boost::apply_visitor(ToStringVisitor(), *m_data);
         }
 
-        void ResourceAttributes::Value::swap(Value& rhs)
+        void RCSResourceAttributes::Value::swap(Value& rhs)
         {
             m_data.swap(rhs.m_data);
         }
 
-        auto ResourceAttributes::KeyValuePair::KeyVisitor::operator() (iterator* iter) const
+        auto RCSResourceAttributes::KeyValuePair::KeyVisitor::operator() (iterator* iter) const
                 -> result_type {
             return iter->m_cur->first;
         }
 
-        auto ResourceAttributes::KeyValuePair::KeyVisitor::operator() (const_iterator* iter) const
+        auto RCSResourceAttributes::KeyValuePair::KeyVisitor::operator() (const_iterator* iter) const
                 -> result_type {
             return iter->m_cur->first;
         }
 
-        auto ResourceAttributes::KeyValuePair::ValueVisitor::operator() (iterator* iter)
+        auto RCSResourceAttributes::KeyValuePair::ValueVisitor::operator() (iterator* iter)
                 -> result_type {
             return iter->m_cur->second;
         }
 
-        auto ResourceAttributes::KeyValuePair::ValueVisitor::operator() (const_iterator* iter)
+        auto RCSResourceAttributes::KeyValuePair::ValueVisitor::operator() (const_iterator* iter)
                 -> result_type {
             // should not reach here.
             throw BadGetException("");
         }
 
-        auto ResourceAttributes::KeyValuePair::ConstValueVisitor::operator() (iterator*iter) const
+        auto RCSResourceAttributes::KeyValuePair::ConstValueVisitor::operator() (iterator*iter) const
                 -> result_type {
             return iter->m_cur->second;
         }
 
-        auto ResourceAttributes::KeyValuePair::ConstValueVisitor::operator() (const_iterator* iter)
+        auto RCSResourceAttributes::KeyValuePair::ConstValueVisitor::operator() (const_iterator* iter)
             const -> result_type {
             return iter->m_cur->second;
         }
 
-        auto ResourceAttributes::KeyValuePair::key() const -> const std::string&
+        auto RCSResourceAttributes::KeyValuePair::key() const -> const std::string&
         {
             return boost::apply_visitor(m_keyVisitor, m_iterRef);
         }
 
-        auto ResourceAttributes::KeyValuePair::value() const -> const Value&
+        auto RCSResourceAttributes::KeyValuePair::value() const -> const Value&
         {
             return boost::apply_visitor(m_constValueVisitor, m_iterRef);
         }
 
-        auto ResourceAttributes::KeyValuePair::value() -> Value&
+        auto RCSResourceAttributes::KeyValuePair::value() -> Value&
         {
             return boost::apply_visitor(m_valueVisitor, m_iterRef);
         }
 
-        ResourceAttributes::KeyValuePair::KeyValuePair(boost::variant<iterator*,
+        RCSResourceAttributes::KeyValuePair::KeyValuePair(boost::variant<iterator*,
                 const_iterator*>&& ref) :
                 m_iterRef{ ref }
         {
         }
 
 
-        ResourceAttributes::iterator::iterator() :
+        RCSResourceAttributes::iterator::iterator() :
                 m_cur{ base_iterator{ } },
                 m_keyValuePair{ this }
         {
         }
 
-        ResourceAttributes::iterator::iterator(base_iterator&& iter) :
+        RCSResourceAttributes::iterator::iterator(base_iterator&& iter) :
                 m_cur{ std::move(iter) },
                 m_keyValuePair{ this }
         {
         }
 
-        auto ResourceAttributes::iterator::operator*() -> KeyValuePair&
+        auto RCSResourceAttributes::iterator::operator*() -> KeyValuePair&
         {
             return m_keyValuePair;
         }
 
-        auto ResourceAttributes::iterator::iterator::operator->() -> KeyValuePair*
+        auto RCSResourceAttributes::iterator::iterator::operator->() -> KeyValuePair*
         {
             return &m_keyValuePair;
         }
 
-        auto ResourceAttributes::iterator::operator++() -> iterator&
+        auto RCSResourceAttributes::iterator::operator++() -> iterator&
         {
             ++m_cur;
             return *this;
         }
 
-        auto ResourceAttributes::iterator::operator++(int) -> iterator
+        auto RCSResourceAttributes::iterator::operator++(int) -> iterator
         {
             iterator iter(*this);
             ++(*this);
             return iter;
         }
 
-        bool ResourceAttributes::iterator::operator==(const iterator& rhs) const
+        bool RCSResourceAttributes::iterator::operator==(const iterator& rhs) const
         {
             return m_cur == rhs.m_cur;
         }
 
-        bool ResourceAttributes::iterator::operator!=(const iterator& rhs) const
+        bool RCSResourceAttributes::iterator::operator!=(const iterator& rhs) const
         {
             return !(*this == rhs);
         }
 
 
-        ResourceAttributes::const_iterator::const_iterator() :
+        RCSResourceAttributes::const_iterator::const_iterator() :
                 m_cur{ base_iterator{} }, m_keyValuePair{ this }
         {
         }
 
-        ResourceAttributes::const_iterator::const_iterator(base_iterator&& iter) :
+        RCSResourceAttributes::const_iterator::const_iterator(base_iterator&& iter) :
                 m_cur{ iter }, m_keyValuePair{ this }
         {
         }
 
-        ResourceAttributes::const_iterator::const_iterator(
-                const ResourceAttributes::iterator& iter) :
+        RCSResourceAttributes::const_iterator::const_iterator(
+                const RCSResourceAttributes::iterator& iter) :
                 m_cur{ iter.m_cur }, m_keyValuePair{ this }
         {
         }
 
-        auto ResourceAttributes::const_iterator::operator=(const ResourceAttributes::iterator& iter)
+        auto RCSResourceAttributes::const_iterator::operator=(const RCSResourceAttributes::iterator& iter)
             -> const_iterator& {
             m_cur = iter.m_cur;
             return *this;
         }
 
-        auto ResourceAttributes::const_iterator::operator*() const -> reference
+        auto RCSResourceAttributes::const_iterator::operator*() const -> reference
         {
             return m_keyValuePair;
         }
-        auto ResourceAttributes::const_iterator::operator->() const -> pointer
+        auto RCSResourceAttributes::const_iterator::operator->() const -> pointer
         {
             return &m_keyValuePair;
         }
 
-        auto ResourceAttributes::const_iterator::operator++() -> const_iterator&
+        auto RCSResourceAttributes::const_iterator::operator++() -> const_iterator&
         {
             ++m_cur;
             return *this;
         }
 
-        auto ResourceAttributes::const_iterator::operator++(int) -> const_iterator
+        auto RCSResourceAttributes::const_iterator::operator++(int) -> const_iterator
         {
             const_iterator iter(*this);
             ++(*this);
             return iter;
         }
 
-        bool ResourceAttributes::const_iterator::operator==(const const_iterator& rhs) const
+        bool RCSResourceAttributes::const_iterator::operator==(const const_iterator& rhs) const
         {
             return m_cur == rhs.m_cur;
         }
 
-        bool ResourceAttributes::const_iterator::operator!=(const const_iterator& rhs) const
+        bool RCSResourceAttributes::const_iterator::operator!=(const const_iterator& rhs) const
         {
             return !(*this == rhs);
         }
 
-        auto ResourceAttributes::begin() -> iterator
+        auto RCSResourceAttributes::begin() -> iterator
         {
             return iterator{ m_values.begin() };
         }
 
-        auto ResourceAttributes::end() -> iterator
+        auto RCSResourceAttributes::end() -> iterator
         {
             return iterator{ m_values.end() };
         }
 
-        auto ResourceAttributes::begin() const -> const_iterator
+        auto RCSResourceAttributes::begin() const -> const_iterator
         {
             return const_iterator{ m_values.begin() };
         }
 
-        auto ResourceAttributes::end() const -> const_iterator
+        auto RCSResourceAttributes::end() const -> const_iterator
         {
             return const_iterator{ m_values.end() };
         }
 
-        auto ResourceAttributes::cbegin() const -> const_iterator
+        auto RCSResourceAttributes::cbegin() const -> const_iterator
         {
             return const_iterator{ m_values.begin() };
         }
 
-        auto ResourceAttributes::cend() const -> const_iterator
+        auto RCSResourceAttributes::cend() const -> const_iterator
         {
             return const_iterator{ m_values.end() };
         }
 
-        auto ResourceAttributes::operator[](const std::string& key) -> Value&
+        auto RCSResourceAttributes::operator[](const std::string& key) -> Value&
         {
             return m_values[key];
         }
 
-        auto ResourceAttributes::operator[](std::string&& key) -> Value&
+        auto RCSResourceAttributes::operator[](std::string&& key) -> Value&
         {
             return m_values[std::move(key)];
         }
 
-        auto ResourceAttributes::at(const std::string& key) -> Value&
+        auto RCSResourceAttributes::at(const std::string& key) -> Value&
         {
             try
             {
@@ -499,7 +499,7 @@ namespace OIC
             }
         }
 
-        auto ResourceAttributes::at(const std::string& key) const -> const Value&
+        auto RCSResourceAttributes::at(const std::string& key) const -> const Value&
         {
             try
             {
@@ -511,45 +511,45 @@ namespace OIC
             }
         }
 
-        void ResourceAttributes::clear()
+        void RCSResourceAttributes::clear()
         {
             return m_values.clear();
         }
 
-        bool ResourceAttributes::erase(const std::string& key)
+        bool RCSResourceAttributes::erase(const std::string& key)
         {
             return m_values.erase(key) == 1U;
         }
 
-        bool ResourceAttributes::contains(const std::string& key) const
+        bool RCSResourceAttributes::contains(const std::string& key) const
         {
             return m_values.find(key) != m_values.end();
         }
 
-        bool ResourceAttributes::empty() const
+        bool RCSResourceAttributes::empty() const
         {
             return m_values.empty();
         }
 
-        size_t ResourceAttributes::size() const
+        size_t RCSResourceAttributes::size() const
         {
             return m_values.size();
         }
 
 
-        bool acceptableAttributeValue(const ResourceAttributes::Value& dest,
-                const ResourceAttributes::Value& value)
+        bool acceptableAttributeValue(const RCSResourceAttributes::Value& dest,
+                const RCSResourceAttributes::Value& value)
         {
             if (dest.getType() != value.getType())
             {
                 return false;
             }
 
-            static_assert(ResourceAttributes::is_supported_type< ResourceAttributes >::value,
-                    "ResourceAttributes doesn't have ResourceAttributes recursively.");
-            if (dest.getType().getId() == ResourceAttributes::TypeId::ATTRIBUTES
-                    && !acceptableAttributes(dest.get< ResourceAttributes >(),
-                            value.get< ResourceAttributes >()))
+            static_assert(RCSResourceAttributes::is_supported_type< RCSResourceAttributes >::value,
+                    "RCSResourceAttributes doesn't have RCSResourceAttributes recursively.");
+            if (dest.getType().getId() == RCSResourceAttributes::TypeId::ATTRIBUTES
+                    && !acceptableAttributes(dest.get< RCSResourceAttributes >(),
+                            value.get< RCSResourceAttributes >()))
             {
                 return false;
             }
@@ -557,7 +557,7 @@ namespace OIC
             return true;
         }
 
-        bool acceptableAttributes(const ResourceAttributes& dest, const ResourceAttributes& attr)
+        bool acceptableAttributes(const RCSResourceAttributes& dest, const RCSResourceAttributes& attr)
         {
             for (const auto& kv : attr)
             {
@@ -575,8 +575,8 @@ namespace OIC
             return true;
         }
 
-        AttrKeyValuePairs replaceAttributes(ResourceAttributes& dest,
-                const ResourceAttributes& newAttrs)
+        AttrKeyValuePairs replaceAttributes(RCSResourceAttributes& dest,
+                const RCSResourceAttributes& newAttrs)
         {
             AttrKeyValuePairs replacedList;
 
@@ -584,7 +584,7 @@ namespace OIC
             {
                 if (dest[kv.key()] != kv.value())
                 {
-                    ResourceAttributes::Value replacedValue;
+                    RCSResourceAttributes::Value replacedValue;
                     replacedValue.swap(dest[kv.key()]);
                     dest[kv.key()] = kv.value();
 

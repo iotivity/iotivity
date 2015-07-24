@@ -107,12 +107,12 @@ namespace
     }
 
     OCStackResult cachingCallback(std::shared_ptr<PrimitiveResource> resource,
-                                  const ResourceAttributes &data,
+                                  const RCSResourceAttributes &data,
                                   RemoteResourceObject::CacheUpdatedCallback onCacheUpdated)
     {
         OC_LOG(DEBUG, CLIENT_W_TAG, "cachingCallback entry");
 
-        onCacheUpdated(data); //passing ResourceAttributes to application
+        onCacheUpdated(data); //passing RCSResourceAttributes to application
 
         OC_LOG(DEBUG, CLIENT_W_TAG, "cachingCallback exit");
         return OC_STACK_OK;
@@ -123,8 +123,8 @@ namespace
     {
         OC_LOG(DEBUG, CLIENT_W_TAG, "setCallback entry");
 
-        const ResourceAttributes &attributes = response.getAttributes();
-        onRemoteAttributesSet(attributes); //passing ResourceAttributes to application
+        const RCSResourceAttributes &attributes = response.getAttributes();
+        onRemoteAttributesSet(attributes); //passing RCSResourceAttributes to application
 
         OC_LOG(DEBUG, CLIENT_W_TAG, "setCallback exit");
     }
@@ -134,8 +134,8 @@ namespace
     {
         OC_LOG(DEBUG, CLIENT_W_TAG, "getCallback entry");
 
-        const ResourceAttributes &attributes = response.getAttributes();
-        onRemoteAttributesReceived(attributes); //passing ResourceAttributes to application
+        const RCSResourceAttributes &attributes = response.getAttributes();
+        onRemoteAttributesReceived(attributes); //passing RCSResourceAttributes to application
 
         OC_LOG(DEBUG, CLIENT_W_TAG, "getCallback exit");
     }
@@ -363,7 +363,7 @@ namespace OIC
             OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::refreshCache exit");
         }
 
-        ResourceAttributes RemoteResourceObject:: getCachedAttributes() const
+        RCSResourceAttributes RemoteResourceObject:: getCachedAttributes() const
         {
             OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject :: getCachedAttributes ");
             try
@@ -376,12 +376,12 @@ namespace OIC
             }
         }
 
-        ResourceAttributes::Value  RemoteResourceObject:: getCachedAttribute( const std::string &key)
+        RCSResourceAttributes::Value  RemoteResourceObject:: getCachedAttribute( const std::string &key)
         {
             OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject :: getCachedAttribute entry");
             try
             {
-                ResourceAttributes  Cachedattributes = ResourceCacheManager::getInstance()->getCachedData(
+                RCSResourceAttributes  Cachedattributes = ResourceCacheManager::getInstance()->getCachedData(
                         m_primitiveResource);
                 return Cachedattributes[key];
             }
@@ -427,7 +427,7 @@ namespace OIC
             OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::getRemoteAttributes exit");
         }
 
-        void RemoteResourceObject::setRemoteAttributes(ResourceAttributes &attribute,
+        void RemoteResourceObject::setRemoteAttributes(const RCSResourceAttributes &attribute,
                 RemoteAttributesSetCallback cb)
         {
             OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::setRemoteAttributes entry");

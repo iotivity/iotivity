@@ -27,7 +27,7 @@
 #include <vector>
 
 #include "NotificationReceiver.h"
-#include "ResourceAttributes.h"
+#include "RCSResourceAttributes.h"
 
 using namespace std;
 
@@ -82,9 +82,9 @@ namespace OIC
                 /**
                 * Return all attributes of the resource
                 *
-                * @return ResourceAttributes - attributes of the resource
+                * @return RCSResourceAttributes - attributes of the resource
                 */
-                virtual ResourceAttributes &getAttributes();
+                virtual RCSResourceAttributes &getAttributes();
 
                 /**
                 * Execute the logic of bundle to set the value of attribute
@@ -95,16 +95,16 @@ namespace OIC
                 *
                 * @return void
                 */
-                virtual void setAttribute(std::string key, ResourceAttributes::Value &&value);
+                virtual void setAttribute(std::string key, RCSResourceAttributes::Value &&value);
 
                 /**
                 * Execute the logic of bundle to get the value of attribute
                 *
                 * @param key - key of attribute to get
                 *
-                * @return ResourceAttributes::Value - return value of the attribute
+                * @return RCSResourceAttributes::Value - return value of the attribute
                 */
-                virtual ResourceAttributes::Value getAttribute(const std::string &key);
+                virtual RCSResourceAttributes::Value getAttribute(const std::string &key);
 
 
             public:
@@ -114,7 +114,7 @@ namespace OIC
 
             private:
                 NotificationReceiver *m_pNotiReceiver;
-                ResourceAttributes m_resourceAttributes;
+                RCSResourceAttributes m_resourceAttributes;
 
         };
     }

@@ -28,7 +28,7 @@
 #include "DataCache.h"
 
 #include "ResponseStatement.h"
-#include "ResourceAttributes.h"
+#include "RCSResourceAttributes.h"
 #include "ExpiryTimer.h"
 
 namespace OIC
@@ -134,13 +134,13 @@ namespace OIC
             return (sResource != nullptr) ? sResource : nullptr;
         }
 
-        const ResourceAttributes DataCache::getCachedData() const
+        const RCSResourceAttributes DataCache::getCachedData() const
         {
             if (state != CACHE_STATE::READY || attributes.empty())
             {
-                return ResourceAttributes();
+                return RCSResourceAttributes();
             }
-            const ResourceAttributes retAtt = attributes;
+            const RCSResourceAttributes retAtt = attributes;
             return retAtt;
         }
 
@@ -189,7 +189,7 @@ namespace OIC
             notifyObservers(_rep.getAttributes());
         }
 
-        void DataCache::notifyObservers(ResourceAttributes Att)
+        void DataCache::notifyObservers(RCSResourceAttributes Att)
         {
             if (attributes == Att)
             {
@@ -198,7 +198,7 @@ namespace OIC
 
             attributes = Att;
 
-            ResourceAttributes retAtt = Att;
+            RCSResourceAttributes retAtt = Att;
             for (auto &i : * subscriberList)
             {
                 if (i.second.first.rf == REPORT_FREQUENCY::UPTODATE)

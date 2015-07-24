@@ -1,7 +1,7 @@
 #include<iostream>
 
 #include "ResourceClient.h"
-#include "ResourceAttributes.h"
+#include "RCSResourceAttributes.h"
 #include "OCPlatform.h"
 #include "RCSAddress.h"
 
@@ -10,7 +10,7 @@ using namespace OC;
 using namespace OIC::Service;
 
 std::shared_ptr<RemoteResourceObject>  resource;
-ResourceAttributes resourceAttributes;
+RCSResourceAttributes resourceAttributes;
 bool startCachingFlag;
 bool isReady;
 
@@ -49,7 +49,7 @@ void OnResourceStateChanged(ResourceState resourceState)
 }
 
 //callback for startCaching() [uptodate]
-void OnCacheUpdated(const ResourceAttributes atttribute )
+void OnCacheUpdated(const RCSResourceAttributes atttribute )
 {
     cout << "\nOnCacheUpdated callback" << std::endl;
     if (atttribute.empty())
@@ -58,7 +58,7 @@ void OnCacheUpdated(const ResourceAttributes atttribute )
     }
     else
     {
-        ResourceAttributes::const_iterator iter = atttribute.begin();
+        RCSResourceAttributes::const_iterator iter = atttribute.begin();
         for (unsigned int i = 0; i < atttribute.size(); ++i)
         {
             std::cout << "key : " << iter->key() << "\nvalue : " << iter->value().toString() << std::endl;
@@ -68,7 +68,7 @@ void OnCacheUpdated(const ResourceAttributes atttribute )
 
 }
 //callback for getRemoteAttributes()
-void OnRemoteAttributesReceivedCallback(const ResourceAttributes &atttribute)
+void OnRemoteAttributesReceivedCallback(const RCSResourceAttributes &atttribute)
 {
 
     std::cout << "\nOnRemoteAttributesReceivedCallback callback" << std::endl;
@@ -79,7 +79,7 @@ void OnRemoteAttributesReceivedCallback(const ResourceAttributes &atttribute)
     else
     {
         resourceAttributes = atttribute;
-        ResourceAttributes::const_iterator iter = atttribute.begin();
+        RCSResourceAttributes::const_iterator iter = atttribute.begin();
         for (unsigned int i = 0; i < atttribute.size(); ++i)
         {
             std::cout << "key : " << iter->key() << "\nvalue : " << iter->value().toString() << std::endl;
@@ -89,7 +89,7 @@ void OnRemoteAttributesReceivedCallback(const ResourceAttributes &atttribute)
 }
 
 //callback for setRemoteAttributes()
-void OnRemoteAttributesSetCallback(const ResourceAttributes &atttribute)
+void OnRemoteAttributesSetCallback(const RCSResourceAttributes &atttribute)
 {
 
     std::cout << "\nOnRemoteAttributesSetCallback callback" << std::endl;
@@ -100,7 +100,7 @@ void OnRemoteAttributesSetCallback(const ResourceAttributes &atttribute)
     else
     {
         resourceAttributes = atttribute;
-        ResourceAttributes::const_iterator iter = atttribute.begin();
+        RCSResourceAttributes::const_iterator iter = atttribute.begin();
         for (unsigned int i = 0; i < atttribute.size(); ++i)
         {
             std::cout << "key : " << iter->key() << "\nvalue : " << iter->value().toString() << std::endl;
@@ -196,7 +196,7 @@ int main()
                 }
                 else
                 {
-                    ResourceAttributes::const_iterator iter = resourceAttributes.begin();
+                    RCSResourceAttributes::const_iterator iter = resourceAttributes.begin();
                     for (unsigned int i = 0; i < resourceAttributes.size(); ++i)
                     {
                         if ( iter->key() == "Temperature")
@@ -263,14 +263,14 @@ int main()
             {
                 try
                 {
-                    ResourceAttributes atttribute = resource->getCachedAttributes();
+                    RCSResourceAttributes atttribute = resource->getCachedAttributes();
                     if (atttribute.empty())
                     {
                         cout << "Received cached attribute is empty" << std::endl;
                     }
                     else
                     {
-                        ResourceAttributes::const_iterator iter = atttribute.begin();
+                        RCSResourceAttributes::const_iterator iter = atttribute.begin();
                         for (unsigned int i = 0; i < atttribute.size(); ++i)
                         {
                             std::cout << "\nkey : " << iter->key() << "\nvalue : " << iter->value().toString() << std::endl;
@@ -288,7 +288,7 @@ int main()
                 std::string key = "Temperature";
                 try
                 {
-                    ResourceAttributes::Value valueObj = resource->getCachedAttribute(key);
+                    RCSResourceAttributes::Value valueObj = resource->getCachedAttribute(key);
                     int value = valueObj.get< int >();
                     cout << "\nkey : " << key << "\nValue : " << value << std::endl;
                 }

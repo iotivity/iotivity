@@ -71,9 +71,9 @@ namespace OIC
                                               std::vector< resourceInfo > *configOutput);
 
                 RCSGetResponse getRequestHandler(const RCSRequest &request,
-                                                 const ResourceAttributes &attributes);
+                                                 const RCSResourceAttributes &attributes);
                 RCSSetResponse setRequestHandler(const RCSRequest &request,
-                                                 const ResourceAttributes &attributes);
+                                                 const RCSResourceAttributes &attributes);
 
                 void onNotificationReceived(const std::string &strResourceUri);
 

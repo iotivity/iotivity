@@ -94,11 +94,11 @@
 
     }
 
-    ResourceAttributes& JavaBundleResource::getAttributes(){
+    RCSResourceAttributes& JavaBundleResource::getAttributes(){
         return BundleResource::getAttributes();
     }
 
-    ResourceAttributes::Value JavaBundleResource::getAttribute(const std::string& attributeName)
+    RCSResourceAttributes::Value JavaBundleResource::getAttribute(const std::string& attributeName)
     {
         JavaVM* vm = ResourceContainerImpl::getImplInstance()->getJavaVM(m_bundleId);
 
@@ -124,13 +124,13 @@
 
         const char *js = env->GetStringUTFChars(returnString, NULL);
         std::string val(js);
-        ResourceAttributes::Value newVal = val;
+        RCSResourceAttributes::Value newVal = val;
         env->ReleaseStringUTFChars(returnString, js);
         BundleResource::setAttribute(attributeName, newVal.toString());
         return BundleResource::getAttribute(attributeName);
     }
 
-    void JavaBundleResource::setAttribute(std::string attributeName, ResourceAttributes::Value&& value)
+    void JavaBundleResource::setAttribute(std::string attributeName, RCSResourceAttributes::Value&& value)
     {
         JavaVM* vm = ResourceContainerImpl::getImplInstance()->getJavaVM(m_bundleId);
 

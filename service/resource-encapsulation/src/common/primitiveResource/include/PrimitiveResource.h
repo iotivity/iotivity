@@ -38,7 +38,7 @@ namespace OIC
         typedef OC::HeaderOption::OCHeaderOption HeaderOption;
         typedef std::vector<HeaderOption> HeaderOptions;
 
-        class ResourceAttributes;
+        class RCSResourceAttributes;
         class ResponseStatement;
 
         class PrimitiveResource
@@ -61,7 +61,7 @@ namespace OIC
             virtual ~PrimitiveResource() { };
 
             virtual void requestGet(GetCallback) = 0;
-            virtual void requestSet(const ResourceAttributes&, SetCallback) = 0;
+            virtual void requestSet(const RCSResourceAttributes&, SetCallback) = 0;
             virtual void requestObserve(ObserveCallback) = 0;
             virtual void cancelObserve() = 0;
 

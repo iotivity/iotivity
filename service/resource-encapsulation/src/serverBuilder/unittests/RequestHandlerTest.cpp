@@ -83,7 +83,7 @@ TEST_F(RequestHandlerTest, ResponseHasAttrsSetByCustomAttrRequestHandler)
     constexpr char key[] { "key" };
     constexpr int newValue{ 100 };
 
-    ResourceAttributes attrs;
+    RCSResourceAttributes attrs;
     attrs[key] = newValue;
     RequestHandler handler{ attrs };
 
@@ -99,7 +99,7 @@ class SetRequestHandlerAcceptanceTest: public RequestHandlerTest
 public:
     SetRequestHandler::Ptr setRequestHandler;
 
-    ResourceAttributes requestAttrs;
+    RCSResourceAttributes requestAttrs;
 
 protected:
     void SetUp()
@@ -140,7 +140,7 @@ TEST_F(SetRequestHandlerAcceptanceTest, ReturnedAttrPairsHaveOldValue)
 TEST_F(SetRequestHandlerAcceptanceTest, NothingHappenedWithEmptyAttrs)
 {
     setRequestHandler->applyAcceptanceMethod(
-            RCSSetResponse::AcceptanceMethod::ACCEPT, *server, ResourceAttributes{ });
+            RCSSetResponse::AcceptanceMethod::ACCEPT, *server, RCSResourceAttributes{ });
 
     ASSERT_EQ(ORIGIN_VALUE, server->getAttribute<int>(EXISTING));
 }

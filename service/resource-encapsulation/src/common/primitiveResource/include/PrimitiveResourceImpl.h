@@ -64,7 +64,7 @@ namespace OIC
                                 std::bind(createResponseStatement, _2), _3));
             }
 
-            void requestSet(const ResourceAttributes& attrs, SetCallback callback)
+            void requestSet(const RCSResourceAttributes& attrs, SetCallback callback)
             {
                 using namespace std::placeholders;
 

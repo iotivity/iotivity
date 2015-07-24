@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 
-#include <ResourceAttributes.h>
+#include <RCSResourceAttributes.h>
 
 namespace OC
 {
@@ -35,18 +35,18 @@ namespace OIC
 {
     namespace Service
     {
-        class ResourceAttributes;
+        class RCSResourceAttributes;
 
         class ResponseStatement
         {
         public:
             static ResponseStatement create(const OC::OCRepresentation&);
-            static ResponseStatement create(ResourceAttributes&&);
+            static ResponseStatement create(RCSResourceAttributes&&);
 
-            explicit ResponseStatement(const ResourceAttributes&);
-            explicit ResponseStatement(ResourceAttributes&&);
+            explicit ResponseStatement(const RCSResourceAttributes&);
+            explicit ResponseStatement(RCSResourceAttributes&&);
 
-            ResponseStatement(ResourceAttributes&&, std::string&& uri,
+            ResponseStatement(RCSResourceAttributes&&, std::string&& uri,
                     std::vector< std::string >&& resourceTypes,
                     std::vector< std::string >&& resourceInterfaces);
 
@@ -58,10 +58,10 @@ namespace OIC
             std::vector< std::string > getResourceTypes() const;
             std::vector< std::string > getResourceInterfaces() const;
 
-            const ResourceAttributes& getAttributes() const;
+            const RCSResourceAttributes& getAttributes() const;
 
         private:
-            ResourceAttributes m_attrs;
+            RCSResourceAttributes m_attrs;
 
             std::string m_uri;
             std::vector< std::string > m_resourceTypes;

@@ -48,16 +48,16 @@ void HueLight::initAttributes(){
     BundleResource::setAttribute("color", 0);
 }
 
-ResourceAttributes& HueLight::getAttributes(){
+RCSResourceAttributes& HueLight::getAttributes(){
     return BundleResource::getAttributes();
 }
 
-ResourceAttributes::Value HueLight::getAttribute(const std::string& key){
+RCSResourceAttributes::Value HueLight::getAttribute(const std::string& key){
     cout << "HueLight::getAttribute called for " << key <<  " called" << endl;
     return BundleResource::getAttribute(key);
 }
 
-void HueLight::setAttribute(std::string attributeName, ResourceAttributes::Value&& value){
+void HueLight::setAttribute(std::string attributeName, RCSResourceAttributes::Value&& value){
     cout << "HueLight::setAttribute setting " << attributeName << " to " << value.toString() << std::endl;
 
     if (attributeName == "on-off")

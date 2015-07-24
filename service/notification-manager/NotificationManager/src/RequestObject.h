@@ -45,11 +45,11 @@ public:
     ~RequestObject() = default;
 
     void invokeRequest(RemoteObjectPtr remoteObject, RequestMethod method,
-            const RCSRequest & pRequest, ResourceAttributes & resourceAttibutes);
+            const RCSRequest & pRequest, RCSResourceAttributes & resourceAttibutes);
 
 private:
-    void setRequestCB(const ResourceAttributes & returnedAttributes,
-            ResourceAttributes & putAttibutes);
+    void setRequestCB(const RCSResourceAttributes & returnedAttributes,
+            RCSResourceAttributes & putAttibutes);
 };
 
 } /* namespace Service */

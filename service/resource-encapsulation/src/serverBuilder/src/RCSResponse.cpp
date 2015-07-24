@@ -42,25 +42,25 @@ namespace OIC
                 std::make_shared< RequestHandler >( result, errorCode) };
         }
 
-        RCSGetResponse RCSGetResponse::create(const ResourceAttributes& attrs)
+        RCSGetResponse RCSGetResponse::create(const RCSResourceAttributes& attrs)
         {
             return RCSGetResponse { std::make_shared< RequestHandler >(attrs) };
         }
 
-        RCSGetResponse RCSGetResponse::create(const ResourceAttributes& attrs,
+        RCSGetResponse RCSGetResponse::create(const RCSResourceAttributes& attrs,
                 const OCEntityHandlerResult& result, int errorCode)
         {
             return RCSGetResponse {
                 std::make_shared< RequestHandler >(attrs, result, errorCode) };
         }
 
-        RCSGetResponse RCSGetResponse::create(ResourceAttributes&& result)
+        RCSGetResponse RCSGetResponse::create(RCSResourceAttributes&& result)
         {
             return RCSGetResponse {
                 std::make_shared< RequestHandler >(std::move(result)) };
         }
 
-        RCSGetResponse RCSGetResponse::create(ResourceAttributes&& attrs,
+        RCSGetResponse RCSGetResponse::create(RCSResourceAttributes&& attrs,
                 const OCEntityHandlerResult& result, int errorCode)
         {
             return RCSGetResponse { std::make_shared< RequestHandler >(
@@ -112,23 +112,23 @@ namespace OIC
             return std::make_shared< SetRequestHandler >(result, errorCode);
         }
 
-        RCSSetResponse RCSSetResponse::create(const ResourceAttributes& attrs)
+        RCSSetResponse RCSSetResponse::create(const RCSResourceAttributes& attrs)
         {
             return std::make_shared< SetRequestHandler >(attrs);
         }
 
-        RCSSetResponse RCSSetResponse::create(const ResourceAttributes& attrs,
+        RCSSetResponse RCSSetResponse::create(const RCSResourceAttributes& attrs,
                 const OCEntityHandlerResult& result, int errorCode)
         {
             return std::make_shared< SetRequestHandler >(attrs, result, errorCode);
         }
 
-        RCSSetResponse RCSSetResponse::create(ResourceAttributes&& result)
+        RCSSetResponse RCSSetResponse::create(RCSResourceAttributes&& result)
         {
             return std::make_shared< SetRequestHandler >(std::move(result));
         }
 
-        RCSSetResponse RCSSetResponse::create(ResourceAttributes&& attrs,
+        RCSSetResponse RCSSetResponse::create(RCSResourceAttributes&& attrs,
                 const OCEntityHandlerResult& result, int errorCode)
         {
             return std::make_shared< SetRequestHandler >(std::move(attrs), result, errorCode);
