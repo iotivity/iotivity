@@ -19,7 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "BundleActivator.h"
-#include "ResourceContainer.h"
+#include "RCSResourceContainer.h"
 
 using namespace OIC::Service;
 

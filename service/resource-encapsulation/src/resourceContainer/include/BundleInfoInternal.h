@@ -22,7 +22,7 @@
 #define BUNDLEINFOINTERNAL_H_
 
 #include <string>
-#include "BundleInfo.h"
+#include "RCSBundleInfo.h"
 #include "ResourceContainerBundleAPI.h"
 
 #if (JAVA_SUPPORT)
@@ -41,11 +41,11 @@ namespace OIC
         typedef void resourceCreator_t(resourceInfo resourceInfo);
         typedef void resourceDestroyer_t(BundleResource *pBundleResource);
 
-        class BundleInfoInternal: public BundleInfo
+        class BundleInfoInternal: public RCSBundleInfo
         {
             public:
                 BundleInfoInternal();
-                BundleInfoInternal(BundleInfo *info);
+                BundleInfoInternal(RCSBundleInfo *info);
                 virtual ~BundleInfoInternal();
                 void setID(const std::string &id);
                 const std::string &getID();
@@ -77,7 +77,7 @@ namespace OIC
                 void setResourceDestroyer(resourceDestroyer_t *);
                 resourceDestroyer_t *getResourceDestroyer();
 
-                void setBundleInfo(BundleInfo *bundleInfo);
+                void setBundleInfo(RCSBundleInfo *bundleInfo);
 
                 void setBundleHandle(void *);
                 void *getBundleHandle();

@@ -25,7 +25,7 @@
 #include <string.h>
 #include <fstream>
 
-#include "BundleInfo.h"
+#include "RCSBundleInfo.h"
 #include "Configuration.h"
 #include "NotificationReceiver.h"
 #include "BundleResource.h"

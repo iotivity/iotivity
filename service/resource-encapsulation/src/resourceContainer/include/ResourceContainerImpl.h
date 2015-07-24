@@ -23,7 +23,7 @@
 
 
 
-#include "ResourceContainer.h"
+#include "RCSResourceContainer.h"
 #include "ResourceContainerBundleAPI.h"
 #include "BundleInfoInternal.h"
 
@@ -53,12 +53,12 @@ namespace OIC
                 // methods from ResourceContainer
                 void startContainer(const std::string &configFile);
                 void stopContainer();
-                void activateBundle(BundleInfo *bundleInfo);
-                void deactivateBundle(BundleInfo *bundleInfo);
+                void activateBundle(RCSBundleInfo *bundleInfo);
+                void deactivateBundle(RCSBundleInfo *bundleInfo);
                 void activateBundle(const std::string &bundleId);
                 void deactivateBundle(const std::string &bundleId);
-                void registerBundle(BundleInfo *bundleinfo);
-                void unregisterBundle(BundleInfo *bundleinfo);
+                void registerBundle(RCSBundleInfo *bundleinfo);
+                void unregisterBundle(RCSBundleInfo *bundleinfo);
                 void unregisterBundleSo(const std::string &id);
 
 
@@ -87,7 +87,7 @@ namespace OIC
                                std::map<string, string> params);
                 void removeBundle(const std::string &bundleId);
 
-                std::list<BundleInfo *> listBundles();
+                std::list<RCSBundleInfo *> listBundles();
 
                 void addResourceConfig(const std::string &bundleId, const std::string &resourceUri, std::map<string, string> params);
                 void removeResourceConfig(const std::string &bundleId, const std::string &resourceUri);
@@ -113,12 +113,12 @@ namespace OIC
                 void deactivateSoBundle(const std::string &bundleId);
                 void addSoBundleResource(const std::string &bundleId, resourceInfo newResourceInfo);
                 void removeSoBundleResource(const std::string &bundleId, const std::string &resourceUri);
-                void registerSoBundle(BundleInfo *bundleInfo);
+                void registerSoBundle(RCSBundleInfo *bundleInfo);
 
 #if(JAVA_SUPPORT)
                 map<string, JavaVM *> m_bundleVM;
 
-                void registerJavaBundle(BundleInfo *bundleInfo);
+                void registerJavaBundle(RCSBundleInfo *bundleInfo);
                 void activateJavaBundle(string bundleId);
                 void deactivateJavaBundle(string bundleId);
 

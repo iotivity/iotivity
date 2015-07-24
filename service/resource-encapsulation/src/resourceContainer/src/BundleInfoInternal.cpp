@@ -203,7 +203,7 @@ namespace OIC
         }
 #endif
 
-        void BundleInfoInternal::setBundleInfo(BundleInfo *bundleInfo)
+        void BundleInfoInternal::setBundleInfo(RCSBundleInfo *bundleInfo)
         {
             m_ID = bundleInfo->getID();
             m_path = bundleInfo->getPath();

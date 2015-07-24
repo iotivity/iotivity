@@ -114,7 +114,7 @@ if int(containerJavaSupport):
 ######################################################################
 # Source files and Targets
 ######################################################################
-res_container_src = ['src/BaseActivator.cpp','src/BundleActivator.cpp','src/BundleInfo.cpp', 
+res_container_src = ['src/BaseActivator.cpp','src/BundleActivator.cpp','src/RCSBundleInfo.cpp', 
 	'src/BundleInfoInternal.cpp', 'src/BundleResource.cpp', 'src/Configuration.cpp', 'src/JavaBundleResource.cpp', 'src/ProtocolBridgeResource.cpp',
 	'src/ProtocolBridgeConnector.cpp', 'src/ResourceContainer.cpp', 'src/ResourceContainerBundleAPI.cpp', 'src/ResourceContainerImpl.cpp', 
 	'src/SoftSensorResource.cpp']
