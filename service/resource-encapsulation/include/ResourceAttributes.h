@@ -221,6 +221,8 @@ namespace OIC
             class Value
             {
             public:
+                class ComparisonHelper;
+
                 Value();
                 Value(const Value&);
                 Value(Value&&);
@@ -295,14 +297,6 @@ namespace OIC
                 void swap(Value&);
 
                 //! @cond
-                friend bool operator==(const Value&, const Value&);
-
-                template< typename T >
-                friend typename std::enable_if< ResourceAttributes::is_supported_type< T >::value,
-                    bool >::type operator==(const Value&, const T&);
-
-                bool operator==(const char*) const;
-
                 friend class ResourceAttributes;
                 //! @endcond
 
@@ -508,6 +502,38 @@ namespace OIC
             //! @endcond
         };
 
+        /**
+         * A helper class to avoid obscure comparisons of values which are supported
+         * by ResourceAttributes::Value caused by implicitly converting a value
+         * to a ResourceAttributes::Value.
+         *
+         * @see Value
+         * @see ResourceAttributes
+         * @see is_supported_type
+         */
+        class ResourceAttributes::Value::ComparisonHelper
+        {
+        public:
+            ComparisonHelper(const Value&);
+
+            template< typename T >
+            typename std::enable_if< is_supported_type< T >::value, bool >::type equals(
+                    const T& v) const
+            {
+                return m_valueRef.equals< T >(v);
+            }
+
+            bool equals(const std::string& v) const
+            {
+                return m_valueRef.equals< std::string >(v);
+            }
+
+            bool operator==(const ComparisonHelper&) const;
+
+        private:
+            const Value& m_valueRef;
+        };
+
         template< typename T >
         struct ResourceAttributes::IsSupportedTypeHelper
         {
@@ -541,7 +567,6 @@ namespace OIC
          */
         bool operator!=(const ResourceAttributes::Type&, const ResourceAttributes::Type&);
 
-
         /**
          * @relates ResourceAttributes::Value
          *
@@ -550,7 +575,8 @@ namespace OIC
          *
          * @return true if the contents are equal, false otherwise.
          */
-        bool operator==(const ResourceAttributes::Value&, const ResourceAttributes::Value&);
+        bool operator==(const ResourceAttributes::Value::ComparisonHelper&,
+                const ResourceAttributes::Value::ComparisonHelper&);
 
         /**
          * @relates ResourceAttributes::Value
@@ -560,32 +586,41 @@ namespace OIC
          *
          * @return true if the contents are not equal, false otherwise.
          */
-        bool operator!=(const ResourceAttributes::Value&, const ResourceAttributes::Value&);
+        bool operator!=(const ResourceAttributes::Value::ComparisonHelper&,
+                const ResourceAttributes::Value::ComparisonHelper&);
 
         //! @cond
         template< typename T >
-        typename std::enable_if< ResourceAttributes::is_supported_type< T >::value, bool >::type
-        operator==(const ResourceAttributes::Value& lhs, const T& rhs)
+        typename std::enable_if< ResourceAttributes::is_supported_type< T >::value ||
+            std::is_constructible< std::string, T >::value, bool >::type
+        operator==(const ResourceAttributes::Value::ComparisonHelper& lhs, const T& rhs)
         {
-            return lhs.equals< T >(rhs);
+            return lhs.equals(rhs);
         }
 
         template< typename T >
-        bool operator==(const T& lhs, const ResourceAttributes::Value& rhs)
+        typename std::enable_if< ResourceAttributes::is_supported_type< T >::value ||
+                    std::is_constructible< std::string, T >::value, bool >::type
+        operator==(const T& lhs, const ResourceAttributes::Value::ComparisonHelper& rhs)
         {
             return rhs == lhs;
         }
 
         template< typename T >
-        typename std::enable_if< ResourceAttributes::is_supported_type< T >::value, bool >::type
-        operator!=(const T& lhs, const ResourceAttributes::Value& rhs)
+        typename std::enable_if< ResourceAttributes::is_supported_type< T >::value ||
+                    std::is_constructible< std::string, T >::value, bool >::type
+        operator!=(const ResourceAttributes::Value::ComparisonHelper& lhs, const T& rhs)
+        {
+            return !(lhs == rhs);
+        }
+
+        template< typename T >
+        typename std::enable_if< ResourceAttributes::is_supported_type< T >::value ||
+                    std::is_constructible< std::string, T >::value, bool >::type
+        operator!=(const T& lhs, const ResourceAttributes::Value::ComparisonHelper& rhs)
         {
             return !(rhs == lhs);
         }
-
-        bool operator!=(const char*, const ResourceAttributes::Value&);
-
-        bool operator==(const char* lhs, const ResourceAttributes::Value& rhs);
         //! @endcond
 
         /**

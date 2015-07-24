@@ -143,12 +143,13 @@ namespace
         template< typename VARIANT, int POS >
         static constexpr TypeInfo get()
         {
-            return TypeInfo(
-                    TypeInfoConverter<
-                            typename boost::mpl::deref<
-                                    typename boost::mpl::advance<
-                                            typename boost::mpl::begin< typename VARIANT::types >::type,
-                                            boost::mpl::int_< POS > >::type >::type >{ });
+            return TypeInfo(TypeInfoConverter<
+                        typename boost::mpl::deref<
+                            typename boost::mpl::advance<
+                                typename boost::mpl::begin< typename VARIANT::types>::type,
+                                boost::mpl::int_< POS >
+                            >::type
+                        >::type >{ });
         }
     };
 
@@ -184,6 +185,17 @@ namespace OIC
     namespace Service
     {
 
+        ResourceAttributes::Value::ComparisonHelper::ComparisonHelper(const Value& v) :
+                m_valueRef(v)
+        {
+        }
+
+        bool ResourceAttributes::Value::ComparisonHelper::operator==
+                (const Value::ComparisonHelper& rhs) const
+        {
+            return *m_valueRef.m_data == *rhs.m_valueRef.m_data;
+        }
+
         bool operator==(const ResourceAttributes::Type& lhs, const ResourceAttributes::Type& rhs)
         {
             return lhs.m_which == rhs.m_which;
@@ -194,24 +206,16 @@ namespace OIC
             return !(lhs == rhs);
         }
 
-        bool operator!=(const ResourceAttributes::Value& lhs, const ResourceAttributes::Value& rhs)
+        bool operator==(const ResourceAttributes::Value::ComparisonHelper& lhs,
+                const ResourceAttributes::Value::ComparisonHelper& rhs)
         {
-            return !(lhs == rhs);
+            return lhs.operator==(rhs);
         }
 
-        bool operator!=(const char* lhs, const ResourceAttributes::Value& rhs)
+        bool operator!=(const ResourceAttributes::Value::ComparisonHelper& lhs,
+                const ResourceAttributes::Value::ComparisonHelper& rhs)
         {
-            return !(rhs == lhs);
-        }
-
-        bool operator==(const char* lhs, const ResourceAttributes::Value& rhs)
-        {
-            return rhs == lhs;
-        }
-
-        bool operator==(const ResourceAttributes::Value& lhs, const ResourceAttributes::Value& rhs)
-        {
-            return *lhs.m_data == *rhs.m_data;
+            return !lhs.operator==(rhs);
         }
 
         bool operator==(const ResourceAttributes& lhs, const ResourceAttributes& rhs)
@@ -273,11 +277,6 @@ namespace OIC
         {
             *m_data = nullptr;
             return *this;
-        }
-
-        bool ResourceAttributes::Value::operator==(const char* rhs) const
-        {
-            return equals< std::string >(rhs);
         }
 
         auto ResourceAttributes::Value::getType() const -> Type

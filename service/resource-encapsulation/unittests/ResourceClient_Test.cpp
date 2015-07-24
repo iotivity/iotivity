@@ -250,7 +250,7 @@ TEST(ResourceClientTest, testGetCachedAttributesWithoutCallback)
 {
     createResource();
     ResourceAttributes result = object->getCachedAttributes();
-    EXPECT_TRUE(result != NULL);
+    EXPECT_TRUE(result.empty());
     destroyResource();
 }
 
@@ -259,8 +259,7 @@ TEST(ResourceClientTest, testGetCachedAttributeWithInvalidAttribute)
 {
     createResource();
     ResourceAttributes::Value result = object->getCachedAttribute("");
-    std::nullptr_t null;
-    EXPECT_TRUE(result == null);
+    EXPECT_TRUE(result == nullptr);
     destroyResource();
 }
 
@@ -278,7 +277,7 @@ TEST(ResourceClientTest, testGetUri)
 {
     createResource();
     std::string result = object->getUri();
-    EXPECT_TRUE(result != NULL);
+    EXPECT_TRUE(!result.empty());
     destroyResource();
 }
 
@@ -286,7 +285,7 @@ TEST(ResourceClientTest, testGetAddress)
 {
     createResource();
     std::string result = object->getAddress();
-    EXPECT_TRUE(result != NULL);
+    EXPECT_TRUE(!result.empty());
     destroyResource();
 }
 
@@ -311,7 +310,7 @@ TEST(ResourceClientTest, testGetCachedAttribute)
 {
     createResource();
     ResourceAttributes::Value result = object->getCachedAttribute("Temperature");
-    EXPECT_TRUE(result != NULL);
+    EXPECT_TRUE(result != nullptr);
     destroyResource();
 }
 
