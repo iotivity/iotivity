@@ -21,7 +21,7 @@
 /**
  * @file
  *
- * This file contains BundleInfo class, which provides APIs related to Bundle information.
+ * This file contains RCSBundleInfo class, which provides APIs related to Bundle information.
  */
 
 #ifndef BUNDLEINFO_H_
@@ -35,15 +35,15 @@ namespace OIC
     {
 
         /**
-        * @class  BundleInfo
+        * @class  RCSBundleInfo
         * @brief   This class provides APIs for creating, getting and setting the Bundle Information
         *
         */
-        class BundleInfo
+        class RCSBundleInfo
         {
             public:
-                BundleInfo();
-                virtual ~BundleInfo();
+                RCSBundleInfo();
+                virtual ~RCSBundleInfo();
 
                 /**
                 * API for setting the Id of the bundle
@@ -128,10 +128,10 @@ namespace OIC
                 /**
                  * API for creating new bundle information
                  *
-                 * @return  BundleInfo - BundleInfo pointer.
+                 * @return  RCSBundleInfo - RCSBundleInfo pointer.
                  *
                  */
-                static BundleInfo *build();
+                static RCSBundleInfo *build();
             protected:
                 std::string m_ID, m_path, m_version;
         };

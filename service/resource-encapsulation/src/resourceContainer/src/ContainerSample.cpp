@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "ResourceContainer.h"
-#include "BundleInfo.h"
+#include "RCSResourceContainer.h"
+#include "RCSBundleInfo.h"
 #include "oc_logger.hpp"
 #include <iostream>
 
@@ -55,8 +55,8 @@ int main()
     std::map<string, string> bundleParams;
     container->addBundle("oic.bundle.hueSample", "", "libHueBundle.so", bundleParams);
 
-    std::list<BundleInfo *> bundles = container->listBundles();
-    std::list<BundleInfo *>::iterator bundleIt;
+    std::list<RCSBundleInfo *> bundles = container->listBundles();
+    std::list<RCSBundleInfo *>::iterator bundleIt;
 
     cout << "\t>>> bundle list size : " << bundles.size() << endl;
     for (bundleIt = bundles.begin(); bundleIt != bundles.end(); bundleIt++)

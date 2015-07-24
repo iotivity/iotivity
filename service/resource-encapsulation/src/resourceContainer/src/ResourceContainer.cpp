@@ -18,7 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "ResourceContainer.h"
+#include "RCSResourceContainer.h"
 #include "ResourceContainerImpl.h"
 
 namespace OIC{

@@ -18,24 +18,24 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "BundleInfo.h"
+#include "RCSBundleInfo.h"
 #include "BundleInfoInternal.h"
 
 namespace OIC
 {
     namespace Service
     {
-        BundleInfo::BundleInfo()
+        RCSBundleInfo::RCSBundleInfo()
         {
 
         }
 
-        BundleInfo::~BundleInfo()
+        RCSBundleInfo::~RCSBundleInfo()
         {
 
         }
 
-        BundleInfo *BundleInfo::build()
+        RCSBundleInfo *RCSBundleInfo::build()
         {
             BundleInfoInternal *newBundleInfo = new BundleInfoInternal();
             return newBundleInfo;

@@ -33,7 +33,7 @@
 #include <map>
 #include <list>
 
-#include "BundleInfo.h"
+#include "RCSBundleInfo.h"
 
 namespace OIC
 {
@@ -79,7 +79,7 @@ namespace OIC
                 * @return  list<BundleInfo*> -List of BundleInfo pointer each associated with a bundle
                 *
                 */
-                virtual std::list<BundleInfo *> listBundles() = 0;
+                virtual std::list<RCSBundleInfo *> listBundles() = 0;
                 /**
                  * API for starting the bundle.
                  *

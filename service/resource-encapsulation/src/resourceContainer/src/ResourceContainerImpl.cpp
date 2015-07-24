@@ -29,7 +29,7 @@
 
 #include "ResourceContainerImpl.h"
 #include "BundleActivator.h"
-#include "ResourceContainer.h"
+#include "RCSResourceContainer.h"
 #include "BundleInfoInternal.h"
 #include "logger.h"
 #include "oc_logger.hpp"
@@ -97,7 +97,7 @@ namespace OIC
 
                 for (unsigned int i = 0; i < bundles.size(); i++)
                 {
-                    BundleInfo *bundleInfo = BundleInfo::build();
+                    RCSBundleInfo *bundleInfo = RCSBundleInfo::build();
                     bundleInfo->setPath(bundles[i]["path"]);
                     bundleInfo->setVersion(bundles[i]["version"]);
                     bundleInfo->setID(bundles[i]["id"]);
@@ -149,7 +149,7 @@ namespace OIC
             delete m_config;
         }
 
-        void ResourceContainerImpl::activateBundle(BundleInfo *bundleInfo)
+        void ResourceContainerImpl::activateBundle(RCSBundleInfo *bundleInfo)
         {
             BundleInfoInternal *bundleInfoInternal = (BundleInfoInternal *) bundleInfo;
 
@@ -159,7 +159,7 @@ namespace OIC
             }
         }
 
-        void ResourceContainerImpl::deactivateBundle(BundleInfo *bundleInfo)
+        void ResourceContainerImpl::deactivateBundle(RCSBundleInfo *bundleInfo)
         {
             if (((BundleInfoInternal *) bundleInfo)->isActivated())
             {
@@ -203,7 +203,7 @@ namespace OIC
         }
 
         // loads the bundle
-        void ResourceContainerImpl::registerBundle(BundleInfo *bundleInfo)
+        void ResourceContainerImpl::registerBundle(RCSBundleInfo *bundleInfo)
         {
             info_logger() << "Registering bundle: " << bundleInfo->getPath() << endl;
 
@@ -221,7 +221,7 @@ namespace OIC
             }
         }
 
-        void ResourceContainerImpl::unregisterBundle(BundleInfo *bundleInfo)
+        void ResourceContainerImpl::unregisterBundle(RCSBundleInfo *bundleInfo)
         {
             BundleInfoInternal *bundleInfoInternal = (BundleInfoInternal *) bundleInfo;
             if (bundleInfoInternal->isLoaded() && !bundleInfoInternal->isActivated())
@@ -431,7 +431,7 @@ namespace OIC
 
             else
             {
-                BundleInfo *bundleInfo = BundleInfo::build();
+                RCSBundleInfo *bundleInfo = RCSBundleInfo::build();
                 bundleInfo->setID(bundleId);
                 bundleInfo->setPath(bundlePath);
                 if (params.find("activator") != params.end())
@@ -467,15 +467,15 @@ namespace OIC
             }
         }
 
-        std::list< BundleInfo * > ResourceContainerImpl::listBundles()
+        std::list< RCSBundleInfo * > ResourceContainerImpl::listBundles()
         {
-            std::list< BundleInfo * > ret;
+            std::list< RCSBundleInfo * > ret;
             for (std::map< std::string, BundleInfoInternal * >::iterator it = m_bundles.begin();
                  it != m_bundles.end(); ++it)
             {
                 {
-                    BundleInfo *bundleInfo = BundleInfo::build();
-                    ((BundleInfoInternal *) bundleInfo)->setBundleInfo((BundleInfo *) it->second);
+                    RCSBundleInfo *bundleInfo = RCSBundleInfo::build();
+                    ((BundleInfoInternal *) bundleInfo)->setBundleInfo((RCSBundleInfo *) it->second);
                     ret.push_back(it->second);
                 }
             }
@@ -538,7 +538,7 @@ namespace OIC
 
         }
 
-        void ResourceContainerImpl::registerSoBundle(BundleInfo *bundleInfo)
+        void ResourceContainerImpl::registerSoBundle(RCSBundleInfo *bundleInfo)
         {
             char *error;
 
@@ -664,7 +664,7 @@ namespace OIC
             return m_bundleVM[bundleId];
         }
 
-        void ResourceContainerImpl::registerJavaBundle(BundleInfo *bundleInfo)
+        void ResourceContainerImpl::registerJavaBundle(RCSBundleInfo *bundleInfo)
         {
             info_logger() << "Registering Java bundle " << bundleInfo->getID() << endl;
             JavaVM *jvm;

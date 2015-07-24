@@ -30,7 +30,7 @@
 #include "Configuration.h"
 #include "BundleActivator.h"
 #include "BundleResource.h"
-#include "ResourceContainer.h"
+#include "RCSResourceContainer.h"
 #include "ResourceContainerBundleAPI.h"
 #include "ResourceContainerImpl.h"
 
@@ -164,7 +164,7 @@ TEST_F(ResourceContainerTest, BundleStartedWithStartBundleAPI)
 TEST_F(ResourceContainerTest, AddNewSoBundleToContainer)
 {
     std::map<string, string> bundleParams;
-    std::list<BundleInfo *> bundles;
+    std::list<RCSBundleInfo *> bundles;
 
     bundles = m_pResourceContainer->listBundles();
     m_pResourceContainer->addBundle("oic.bundle.test", "", "libTestBundle.so", bundleParams);
@@ -176,7 +176,7 @@ TEST_F(ResourceContainerTest, AddNewSoBundleToContainer)
 TEST_F(ResourceContainerTest, RemoveSoBundleFromContainer)
 {
     std::map<string, string> bundleParams;
-    std::list<BundleInfo *> bundles;
+    std::list<RCSBundleInfo *> bundles;
 
     bundles = m_pResourceContainer->listBundles();
     m_pResourceContainer->removeBundle("oic.bundle.test");
@@ -187,7 +187,7 @@ TEST_F(ResourceContainerTest, RemoveSoBundleFromContainer)
 TEST_F(ResourceContainerTest, AddBundleAlreadyRegistered)
 {
     std::map<string, string> bundleParams;
-    std::list<BundleInfo *> bundles;
+    std::list<RCSBundleInfo *> bundles;
 
     m_pResourceContainer->addBundle("oic.bundle.test", "", "libTestBundle.so", bundleParams);
     bundles = m_pResourceContainer->listBundles();
@@ -363,14 +363,14 @@ class ResourceContainerImplTest: public TestWithMock
     public:
         MockRepository mocks;
         ResourceContainerImpl *m_pResourceContainer;
-        BundleInfo *m_pBundleInfo;
+        RCSBundleInfo *m_pBundleInfo;
 
     protected:
         void SetUp()
         {
             TestWithMock::SetUp();
             m_pResourceContainer = ResourceContainerImpl::getImplInstance();
-            m_pBundleInfo = BundleInfo::build();
+            m_pBundleInfo = RCSBundleInfo::build();
         }
 };
 
