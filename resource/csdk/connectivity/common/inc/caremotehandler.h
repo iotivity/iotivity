@@ -59,9 +59,17 @@ CAEndpoint_t *CACreateEndpointObject(CATransportFlags_t flags, CATransportAdapte
 void CAFreeEndpoint(CAEndpoint_t *rep);
 
 /**
+ * @brief       duplicates the given info.
+ * @param[in]   info    info object to be duplicated.
+ * @param[out]  clone   info object to be modified.
+ * @return      #CA_STATUS_OK or Appropriate error code if fail to clone.
+ */
+CAResult_t CACloneInfo(const CAInfo_t *info, CAInfo_t *clone);
+
+/**
  * @brief   Creates a new request information
  * @param   request       [IN]    request information that needs to be duplicated
- * @return  remote endpoint created
+ * @return  duplicated request info object
  */
 CARequestInfo_t *CACloneRequestInfo(const CARequestInfo_t *request);
 
@@ -75,7 +83,7 @@ void CADestroyRequestInfoInternal(CARequestInfo_t *request);
 /**
  * @brief   Creates a new response information
  * @param   response       [IN]    response information that needs to be duplicated
- * @return  remote endpoint created
+ * @return  duplicated response info object
  */
 CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *response);
 

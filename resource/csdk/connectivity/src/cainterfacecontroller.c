@@ -352,8 +352,6 @@ CAResult_t CASendUnicastData(const CAEndpoint_t *endpoint, const void *data, uin
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
-    CAResult_t res = CA_STATUS_FAILED;
-
     if (endpoint == NULL)
     {
         OIC_LOG(DEBUG, TAG, "Invalid endpoint");
@@ -377,20 +375,23 @@ CAResult_t CASendUnicastData(const CAEndpoint_t *endpoint, const void *data, uin
         sentDataLen = g_adapterHandler[index].sendData(endpoint, data, length);
     }
 
-    if (sentDataLen != -1)
+    if (sentDataLen != length)
     {
-        res = CA_STATUS_OK;
+        OIC_LOG(ERROR, TAG, "error in sending data. Error will be reported in adapter");
+#ifdef SINGLE_THREAD
+        //in case of single thread, no error handler. Report error immediately
+        return CA_SEND_FAILED;
+#endif
     }
 
     OIC_LOG(DEBUG, TAG, "OUT");
-    return res;
+    return CA_STATUS_OK;
 }
 
 CAResult_t CASendMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t length)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
-    CAResult_t res = CA_SEND_FAILED;
     u_arraylist_t *list = CAGetSelectedNetworkList();
 
     if (!list)
@@ -434,19 +435,19 @@ CAResult_t CASendMulticastData(const CAEndpoint_t *endpoint, const void *data, u
             OICFree(payload);
         }
 
-        if (sentDataLen == length)
+        if (sentDataLen != length)
         {
-           res = CA_STATUS_OK;
-        }
-        else
-        {
-            OIC_LOG(ERROR, TAG, "sendDataToAll failed!");
+            OIC_LOG(ERROR, TAG, "sendDataToAll failed! Error will be reported from adapter");
+#ifdef SINGLE_THREAD
+            //in case of single thread, no error handler. Report error immediately
+            return CA_SEND_FAILED;
+#endif
         }
     }
 
     OIC_LOG(DEBUG, TAG, "OUT");
 
-    return res;
+    return CA_STATUS_OK;
 }
 
 CAResult_t CAStartListeningServerAdapters()

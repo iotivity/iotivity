@@ -369,10 +369,10 @@ static int32_t CAQueueIPData(bool isMulticast, const CAEndpoint_t *endpoint,
     // Add message to send queue
     CAQueueingThreadAddData(g_sendQueueHandle, ipData, sizeof(CAIPData));
 
+#endif // SINGLE_THREAD
+
     OIC_LOG(DEBUG, TAG, "OUT");
     return dataLength;
-
-#endif // SINGLE_THREAD
 }
 
 int32_t CASendIPUnicastData(const CAEndpoint_t *endpoint,

@@ -314,15 +314,23 @@ static void CADestroyInfoInternal(CAInfo_t *info)
 {
     // free token field
     OICFree(info->token);
+    info->token = NULL;
+    info->tokenLength = 0;
 
     // free options field
     OICFree(info->options);
+    info->options = NULL;
+    info->numOptions = 0;
+
 
     // free payload field
     OICFree((char *) info->payload);
+    info->payload = NULL;
+    info->payloadSize = 0;
 
     // free uri
     OICFree(info->resourceUri);
+    info->resourceUri = NULL;
 }
 
 void CADestroyRequestInfoInternal(CARequestInfo_t *rep)
@@ -361,3 +369,81 @@ void CADestroyErrorInfoInternal(CAErrorInfo_t *errorInfo)
     OICFree(errorInfo);
 }
 
+CAResult_t CACloneInfo(const CAInfo_t *info, CAInfo_t *clone)
+{
+    if (!info || !clone)
+    {
+        OIC_LOG(ERROR, TAG, "input parameter invalid");
+        return CA_STATUS_INVALID_PARAM;
+    }
+
+    //Do not free clone. we cannot declare it const, as the content is modified
+    if ((info->token) && (0 < info->tokenLength))
+    {
+        char *temp = NULL;
+
+        // allocate token field
+        uint8_t len = info->tokenLength;
+
+        temp = (char *) OICMalloc(len * sizeof(char));
+        if (!temp)
+        {
+            OIC_LOG(ERROR, TAG, "CAClonePayloadInfo Out of memory");
+            return CA_MEMORY_ALLOC_FAILED;
+        }
+
+        memcpy(temp, info->token, len);
+        // save the token
+        clone->token = temp;
+        clone->tokenLength = len;
+    }
+
+    if (info->options && (0 < info->numOptions))
+    {
+        // save the options
+        clone->options =
+            (CAHeaderOption_t *) OICMalloc(sizeof(CAHeaderOption_t) * info->numOptions);
+
+        if (!clone->options)
+        {
+            OIC_LOG(ERROR, TAG, "CAClonePayloadInfo Out of memory");
+            CADestroyInfoInternal(clone);
+            return CA_MEMORY_ALLOC_FAILED;
+        }
+        memcpy(clone->options, info->options, sizeof(CAHeaderOption_t) * info->numOptions);
+    }
+
+    if (info->payload)
+    {
+        // allocate payload field
+        uint8_t *temp = OICMalloc(info->payloadSize);
+        if (!temp)
+        {
+            OIC_LOG(ERROR, TAG, "CAClonePayloadInfo Out of memory");
+            CADestroyInfoInternal(clone);
+            return CA_MEMORY_ALLOC_FAILED;
+        }
+        memcpy(temp, info->payload, info->payloadSize);
+
+        // save the payload
+        clone->payload = temp;
+    }
+
+    if (info->resourceUri)
+    {
+        // allocate payload field
+        char *temp = OICStrdup(info->resourceUri);
+        if (!temp)
+        {
+            OIC_LOG(ERROR, TAG, "CAClonePayloadInfo Out of memory");
+            CADestroyInfoInternal(clone);
+            return CA_MEMORY_ALLOC_FAILED;
+        }
+
+        // save the resourceUri
+        clone->resourceUri = temp;
+    }
+
+    return CA_STATUS_OK;
+
+}
