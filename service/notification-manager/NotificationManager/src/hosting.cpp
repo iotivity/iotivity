@@ -29,27 +29,22 @@
 #include "octypes.h"
 #include "logger.h"
 #include "ResourceHosting.h"
-
-namespace
-{
-    #define OC_TRANSPORT CT_ADAPTER_IP
-    #define HOSTING_TAG  PCF("Hosting")
-    #define OIC_HOSTING_LOG(level, tag, ...)  OCLogv((level), (HOSTING_TAG), __VA_ARGS__)
-    OIC::Service::ResourceHosting * rhInstance = OIC::Service::ResourceHosting::getInstance();
-}
+#include "HostingObject.h"
 
 OCStackResult OICStartCoordinate()
 {
+    using namespace OIC::Service;
     OCStackResult retResult = OC_STACK_OK;
     try
     {
-        rhInstance->startHosting();
-    }catch(OIC::Service::PlatformException &e)
+        ResourceHosting::getInstance()->startHosting();
+    }catch(PlatformException &e)
     {
-        OIC_HOSTING_LOG(DEBUG, "[OICStartCoordinate] platformException, reason:%s", e.what());
+        OIC_HOSTING_LOG(DEBUG,
+                "[OICStartCoordinate] platformException, reason:%s", e.what());
         retResult = OC_STACK_ERROR;
         throw;
-    }catch(OIC::Service::InvalidParameterException &e)
+    }catch(InvalidParameterException &e)
     {
         OIC_HOSTING_LOG(DEBUG,
                 "[OICStartCoordinate] InvalidParameterException, reason:%s", e.what());
@@ -57,7 +52,7 @@ OCStackResult OICStartCoordinate()
         throw;
     }catch(...)
     {
-        OIC_HOSTING_LOG(DEBUG, "[OICStartCoordinate] Unknown Exception", "");
+        OIC_HOSTING_LOG(DEBUG, "[OICStartCoordinate] Unknown Exception");
         retResult = OC_STACK_ERROR;
     }
 
@@ -67,7 +62,7 @@ OCStackResult OICStartCoordinate()
 OCStackResult OICStopCoordinate()
 {
     OCStackResult retResult = OC_STACK_OK;
-    rhInstance->stopHosting();
+    OIC::Service::ResourceHosting::getInstance()->stopHosting();
 
     return retResult;
 }
