@@ -20,7 +20,6 @@ class DevicePresenceTest : public TestWithMock
 {
 public:
 
-    MockRepository mocks;
     DevicePresence * instance;
     PrimitiveResource::Ptr pResource;
     BrokerCB cb;
@@ -28,16 +27,18 @@ public:
 
 protected:
 
-    void SetUp() override
+    void SetUp() 
     {
+        TestWithMock::SetUp();
         instance = (DevicePresence*)new DevicePresence();
         pResource = PrimitiveResource::Ptr(mocks.Mock< PrimitiveResource >(), [](PrimitiveResource*){});
         cb = ([](BROKER_STATE)->OCStackResult{return OC_STACK_OK;});
         id = 0;
     }
 
-    void TearDown() override
+    void TearDown() 
     {
+        TestWithMock::TearDown();
         pResource.reset();
         id = 0;
         cb = nullptr;

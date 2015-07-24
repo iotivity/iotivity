@@ -25,7 +25,6 @@ class DeviceAssociationTest : public TestWithMock
 {
 public:
 
-    MockRepository mocks;
     DeviceAssociation * instance;
     DevicePresencePtr device;
     PrimitiveResource::Ptr pResource;
@@ -45,15 +44,17 @@ protected:
         instance->addDevice(device);
     }
 
-    void SetUp() override
+    void SetUp() 
     {
+        TestWithMock::SetUp();
         instance = DeviceAssociation::getInstance();
         device = (DevicePresencePtr)new DevicePresence();
         pResource = PrimitiveResource::Ptr(mocks.Mock< PrimitiveResource >(), [](PrimitiveResource*){});
     }
 
-    void TearDown() override
+    void TearDown() 
     {
+        TestWithMock::TearDown();
         device.reset();
         pResource.reset();
 

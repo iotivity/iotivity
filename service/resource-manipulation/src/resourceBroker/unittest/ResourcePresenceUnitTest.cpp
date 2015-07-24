@@ -28,7 +28,6 @@ public:
 
     typedef std::function<void(const HeaderOptions&, const ResponseStatement&, int)> GetCallback;
 
-    MockRepository mocks;
     ResourcePresence * instance;
     PrimitiveResource::Ptr pResource;
     BrokerCB cb;
@@ -36,16 +35,19 @@ public:
 
 protected:
 
-    void SetUp() override
+    void SetUp() 
     {
+        TestWithMock::SetUp();
+
         instance = (ResourcePresence*)new ResourcePresence();
         pResource = PrimitiveResource::Ptr(mocks.Mock< PrimitiveResource >(), [](PrimitiveResource*){});
         cb = ([](BROKER_STATE)->OCStackResult{return OC_STACK_OK;});
         id = 0;
     }
 
-    void TearDown() override
+    void TearDown() 
     {
+        TestWithMock::TearDown();
         pResource.reset();
         id = 0;
         cb = nullptr;
