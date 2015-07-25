@@ -25,7 +25,7 @@ public:
 
 protected:
 
-    void SetUp() 
+    void SetUp()
     {
         TestWithMock::SetUp();
         brokerInstance = ResourceBroker::getInstance();
@@ -34,7 +34,7 @@ protected:
         id = 0;
     }
 
-    void TearDown() 
+    void TearDown()
     {
         TestWithMock::TearDown();
         pResource.reset();
@@ -50,14 +50,14 @@ protected:
     }
 
 };
- 
+
 TEST_F(ResourceBrokerTest,HostResource_ReturnNormalValueIfNormalParams)
 {
 
     MockingFunc();
 
-    BrokerID ret;
-    ASSERT_NE(ret = brokerInstance->hostResource(pResource,cb),0);
+    BrokerID ret = brokerInstance->hostResource(pResource, cb);
+    ASSERT_NE(BrokerID(0), ret);
 
     brokerInstance->cancelHostResource(ret);
 
@@ -184,4 +184,3 @@ TEST_F(ResourceBrokerTest,getResourceState_NormalErrorHandlingIfAbnormalId)
     ASSERT_THROW(brokerInstance->getResourceState(id),ResourceBroker::InvalidParameterException);
 
 }
-
