@@ -67,6 +67,7 @@ namespace OIC
         class RCSException;
         class RemoteResourceObject;
         class PrimitiveResource;
+        class RCSAddress;
 
         /**
          * @class  BadRequestException
@@ -207,6 +208,8 @@ namespace OIC
                  *
                  * @return ResourceState - current state of the resource.
                  *
+                 * @throw BadRequestException
+                 *
                  * @see ResourceState
                  */
                 ResourceState getState() const ;
@@ -236,6 +239,8 @@ namespace OIC
                  *
                  * @param cb - callback to get updated resourceAttributes.
                  *
+                 * @throw InvalidParameterException
+                 *
                  * @see CacheUpdatedCallback
                  *
                  * NOTE: Developer can call this API any number of time. Developer should
@@ -249,6 +254,8 @@ namespace OIC
                  * Provides the current cache state for the resource of interest. CacheState is the enum class.
                  *
                  * @return CacheState - Current state of the Cache.
+                 *
+                 * @throw BadRequestException
                  *
                  * @see CacheState
                  *
@@ -319,6 +326,9 @@ namespace OIC
                 * @details This API send a get request to the resource of interest and provides the attributes
                 *               to the caller in the RemoteAttributesReceivedCallback.
                 *
+                *
+                * @throw InvalidParameterException
+                *
                 * @see RCSResourceAttributes::Value
                 */
                 void getRemoteAttributes(RemoteAttributesReceivedCallback cb);
@@ -331,6 +341,8 @@ namespace OIC
                 *
                 * @param attributes - resourceAttributes data to set
                 * @param cb - callback on setting resourceAttributes data.
+                *
+                * @throw InvalidParameterException
                 *
                 */
                 void setRemoteAttributes(const RCSResourceAttributes &attributes, RemoteAttributesSetCallback cb);
@@ -432,19 +444,16 @@ namespace OIC
                 /**
                 * API for discovering the resource of Interest.
                 *
-                * @param host - host of the Resource
+                * @param address - RCSAddress object
                 * @param resourceURI - uri of resource to be searched
-                * @param connectivityType - connection type
                 * @param cb - callback to obtain discovered resource
                 *
                 * @throw InvalidParameterException : This API throws the InvalidParameterException if any of
                 *                                                         the parameter is invalid.
-                *
+                * @RCSAddress
                 */
-                void discoverResource(std::string host, std::string resourceURI,
-                                      OCConnectivityType connectivityType,
+                void discoverResource(const RCSAddress &address, const std::string &resourceURI,
                                       OnResourceDiscoveredCallback cb);
-
             private:
 
                 /**

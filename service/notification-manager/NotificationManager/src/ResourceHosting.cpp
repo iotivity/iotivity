@@ -184,8 +184,8 @@ void ResourceHosting::requestDiscovery(std::string address)
 {
     std::string host = address;
     std::string uri = OC_RSRVD_WELL_KNOWN_URI + std::string("?rt=") + HOSTING_RESOURSE_TYPE;
-    OCConnectivityType type = OCConnectivityType::CT_DEFAULT;
-    discoveryManager->discoverResource(host, uri, type, pDiscoveryCB);
+    RCSAddress rcsAddress = RCSAddress::unicast(host);
+    discoveryManager->discoverResource(rcsAddress, uri, pDiscoveryCB);
 }
 
 void ResourceHosting::discoverHandler(RemoteObjectPtr remoteResource)

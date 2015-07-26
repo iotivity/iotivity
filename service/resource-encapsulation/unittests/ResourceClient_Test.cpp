@@ -4,6 +4,7 @@
 #include "ResourceClient.h"
 #include "RCSResourceObject.h"
 #include "OCPlatform.h"
+#include "RCSAddress.h"
 
 #define RESOURCEURI "/a/TemperatureSensor"
 #define RESOURCETYPE "Resource.Hosting"
@@ -75,8 +76,8 @@ TEST(ResourceClientTest, testDiscoverResourcePass)
     createResource();
     DiscoveryManager *instance = DiscoveryManager::getInstance();
     cbresult = false;
-
-    instance->discoverResource("", uri, CT_DEFAULT, &onResourceDiscoveredCallback);
+    RCSAddress rcsAddress = RCSAddress::multicast();
+    instance->discoverResource(rcsAddress, uri , &onResourceDiscoveredCallback);
     sleep(2);
     EXPECT_TRUE(object != NULL);
     destroyResource();
@@ -124,7 +125,8 @@ TEST(ResourceClientTest, testSetRemoteAttributesPass)
 TEST(ResourceClientTest, testIsMonitoring)
 {
     createResource();
-    manager->DiscoveryManager::discoverResource("", uri, CT_DEFAULT, &onResourceDiscoveredCallback);
+    RCSAddress rcsAddress = RCSAddress::multicast();
+    manager->DiscoveryManager::discoverResource(rcsAddress, uri , &onResourceDiscoveredCallback);
     sleep(1);
     destroyResource();
     EXPECT_FALSE(object->isMonitoring());
@@ -328,7 +330,8 @@ TEST(ResourceClientTest, testDiscoverResourceEmptyResource)
 {
     createResource();
     DiscoveryManager *instance = DiscoveryManager::getInstance();
-    EXPECT_THROW(instance->discoverResource("", "", CT_DEFAULT, &onResourceDiscoveredCallback),
+    RCSAddress rcsAddress = RCSAddress::multicast();
+    EXPECT_THROW(instance->discoverResource(rcsAddress, "", &onResourceDiscoveredCallback),
                  InvalidParameterException);
     destroyResource();
 }
@@ -338,7 +341,8 @@ TEST(ResourceClientTest, testDiscoverResourceEmptyCallback)
 {
     createResource();
     DiscoveryManager *instance = DiscoveryManager::getInstance();
-    EXPECT_THROW(instance->discoverResource("", uri, CT_DEFAULT, NULL), InvalidParameterException);
+    RCSAddress rcsAddress = RCSAddress::multicast();
+    EXPECT_THROW(instance->discoverResource(rcsAddress, uri , NULL), InvalidParameterException);
     destroyResource();
     object->stopMonitoring();
 }
