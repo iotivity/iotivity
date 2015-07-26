@@ -42,6 +42,7 @@ namespace OIC
             sResource = nullptr;
 
             state = CACHE_STATE::READY_YET;
+            mode = CACHE_MODE::FREQUENCY;
 
             networkTimeOutHandle = 0;
             pollingHandle = 0;
@@ -60,7 +61,10 @@ namespace OIC
         {
             state = CACHE_STATE::DESTROYED;
 
-            sResource->cancelObserve();
+            if(mode == CACHE_MODE::OBSERVE)
+            {
+                sResource->cancelObserve();
+            }
             if (subscriberList != nullptr)
             {
                 subscriberList->clear();
@@ -158,6 +162,11 @@ namespace OIC
                 state = CACHE_STATE::READY;
             }
 
+            if (mode != CACHE_MODE::OBSERVE)
+            {
+                mode = CACHE_MODE::OBSERVE;
+            }
+
             networkTimer.cancelTimer(networkTimeOutHandle);
             networkTimeOutHandle = networkTimer.postTimer(CACHE_DEFAULT_EXPIRED_MILLITIME, pTimerCB);
 
@@ -222,6 +231,7 @@ namespace OIC
         {
             if (sResource != nullptr)
             {
+                mode = CACHE_MODE::FREQUENCY;
                 sResource->requestGet(pGetCB);
             }
             return;
