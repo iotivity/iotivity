@@ -67,6 +67,12 @@ namespace OIC
             NONE
         };
 
+        enum class CACHE_MODE
+        {
+            OBSERVE = 0,
+            FREQUENCY
+        };
+
         typedef int CacheID;
 
         typedef std::function<OCStackResult(std::shared_ptr<PrimitiveResource>,

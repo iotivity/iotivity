@@ -107,7 +107,7 @@ namespace OIC
                 if (foundCacheHandler->isEmptySubscriber())
                 {
                     s_cacheDataList->remove(foundCacheHandler);
-                    foundCacheHandler.reset();
+//                    foundCacheHandler.reset();
                 }
             }
         }
