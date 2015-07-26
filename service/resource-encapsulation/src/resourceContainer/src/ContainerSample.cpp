@@ -120,7 +120,7 @@ int main()
     bundleParams["libraryPath"] = ".";
     bundleParams["activator"] = "org.iotivity.bundle.hue.HueBundleActivator";
     container->addBundle("oic.bundle.hueJavaSample", "/hueJava",
-                         "../../../../../../../../service/resource-manipulation/src/resourceContainer/examples/HueJavaSampleBundle/hue/target/hue-0.1-jar-with-dependencies.jar",
+                         "../../../../../../../../service/resource-encapsulation/src/resourceContainer/examples/HueJavaSampleBundle/hue/target/hue-0.1-jar-with-dependencies.jar",
                          bundleParams);
 
     bundles = container->listBundles();
