@@ -3,6 +3,7 @@
 #include "ResourceClient.h"
 #include "ResourceAttributes.h"
 #include "OCPlatform.h"
+#include "RCSAddress.h"
 
 using namespace std;
 using namespace OC;
@@ -128,9 +129,14 @@ int main()
 
     try
     {
+
         uri = OC_RSRVD_WELL_KNOWN_URI + uri + "?rt=" + rt;
+
+        //getting the object of RCSAddress for multicast discovery
+        RCSAddress rcsAddress = RCSAddress::multicast();
+
         //discover the resource in the network
-        discoveryManagerInstance->discoverResource(address, uri , CT_DEFAULT, &OnResourceDiscovered);
+        discoveryManagerInstance->discoverResource(rcsAddress, uri , &OnResourceDiscovered);
     }
     catch (InvalidParameterException e)
     {

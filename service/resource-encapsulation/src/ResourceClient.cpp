@@ -275,25 +275,32 @@ namespace OIC
         void RemoteResourceObject::startCaching(CacheUpdatedCallback cb)
         {
             OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::startCaching entry");
-            if (true == m_cachingFlag)
+            if (!cb)
             {
-                OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::startCaching : already Started");
+                throw InvalidParameterException {"startCaching : Callback is NULL" };
             }
             else
             {
-                try
+                if (true == m_cachingFlag)
                 {
-                  CacheID cacheId = ResourceCacheManager::getInstance()->requestResourceCache(m_primitiveResource,
-                                      std::bind(cachingCallback, std::placeholders::_1, std::placeholders::_2, cb),
-                                      REPORT_FREQUENCY::UPTODATE,  0);
-
-                    m_cacheId = cacheId;
-                    m_cachingFlag = true;
-                    OC_LOG_V(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::startCaching CACHE ID %d", cacheId);
+                    OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::startCaching : already Started");
                 }
-                catch (std::exception &exception)
+                else
                 {
-                    throw InvalidParameterException {"startCaching : Callback is NULL" };
+                    try
+                    {
+                        CacheID cacheId = ResourceCacheManager::getInstance()->requestResourceCache(m_primitiveResource,
+                                          std::bind(cachingCallback, std::placeholders::_1, std::placeholders::_2, cb),
+                                          REPORT_FREQUENCY::UPTODATE,  0);
+
+                        m_cacheId = cacheId;
+                        m_cachingFlag = true;
+                        OC_LOG_V(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::startCaching CACHE ID %d", cacheId);
+                    }
+                    catch (std::exception &exception)
+                    {
+                        throw InvalidParameterException {"startCaching : error" };
+                    }
                 }
             }
         }
@@ -408,10 +415,15 @@ namespace OIC
         void RemoteResourceObject::getRemoteAttributes(RemoteAttributesReceivedCallback cb)
         {
             OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::getRemoteAttributes entry");
-
-            m_primitiveResource->requestGet(std::bind(getCallback, std::placeholders::_1,
-                                            std::placeholders::_2, std::placeholders::_3, cb));
-
+            if (!cb)
+            {
+                throw InvalidParameterException {"getRemoteAttributes : Callback is NULL" };
+            }
+            else
+            {
+                m_primitiveResource->requestGet(std::bind(getCallback, std::placeholders::_1,
+                                                std::placeholders::_2, std::placeholders::_3, cb));
+            }
             OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::getRemoteAttributes exit");
         }
 
@@ -419,10 +431,15 @@ namespace OIC
                 RemoteAttributesSetCallback cb)
         {
             OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::setRemoteAttributes entry");
-
-            m_primitiveResource->requestSet(attribute, std::bind(setCallback, std::placeholders::_1,
-                                            std::placeholders::_2, std::placeholders::_3, cb));
-
+            if (!cb)
+            {
+                throw InvalidParameterException {"setRemoteAttributes : Callback is NULL" };
+            }
+            else
+            {
+                m_primitiveResource->requestSet(attribute, std::bind(setCallback, std::placeholders::_1,
+                                                std::placeholders::_2, std::placeholders::_3, cb));
+            }
             OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::setRemoteAttributes exit");
         }
 
@@ -450,8 +467,7 @@ namespace OIC
             return s_instance;
         }
 
-        void DiscoveryManager::discoverResource(std::string host, std::string resourceURI,
-                                                OCConnectivityType connectivityType,
+        void DiscoveryManager::discoverResource(const RCSAddress &address, const std::string &resourceURI,
                                                 OnResourceDiscoveredCallback cb)
         {
 
@@ -467,7 +483,7 @@ namespace OIC
                 OC_LOG(ERROR, CLIENT_W_TAG, "discoverResource NULL Callback");
                 throw InvalidParameterException { "discoverResource NULL Callback'" };
             }
-            OIC::Service::discoverResource(host, resourceURI, connectivityType, std::bind(findCallback,
+            OIC::Service::discoverResource(address, resourceURI, std::bind(findCallback,
                                            std::placeholders::_1,
                                            cb));
 

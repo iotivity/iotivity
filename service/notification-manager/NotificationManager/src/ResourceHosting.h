@@ -30,7 +30,7 @@
 #include <atomic>
 
 #include "octypes.h"
-#include "ResourceClient.h"
+#include "RCSAddress.h"
 #include "PresenceSubscriber.h"
 #include "HostingObject.h"
 #include "PrimitiveResource.h"
