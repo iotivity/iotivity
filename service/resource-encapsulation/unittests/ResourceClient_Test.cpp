@@ -1,7 +1,8 @@
 #define private public
 #include <gtest/gtest.h>
 #include <iostream>
-#include "ResourceClient.h"
+#include "RCSDiscoveryManager.h"
+#include "RCSRemoteResourceObject.h"
 #include "RCSResourceObject.h"
 #include "OCPlatform.h"
 #include "RCSAddress.h"
@@ -15,8 +16,8 @@ using namespace OC;
 
 bool cbresult = false;
 std::string uri = "/oic/res?rt=Resource.Hosting";
-std::shared_ptr<RemoteResourceObject> object;
-DiscoveryManager *manager = DiscoveryManager::getInstance();
+std::shared_ptr<RCSRemoteResourceObject> object;
+RCSDiscoveryManager*manager = RCSDiscoveryManager::getInstance();
 ResourceState receivedResourceState;
 RCSResourceAttributes receivedResourceAttributes;
 RCSResourceObject::Ptr server;
@@ -46,7 +47,7 @@ void onRemoteAttrReceived(const RCSResourceAttributes &attributes)
     receivedResourceAttributes = attributes;
 }
 
-void onResourceDiscoveredCallback(std::shared_ptr<RemoteResourceObject> receivedObject)
+void onResourceDiscoveredCallback(std::shared_ptr<RCSRemoteResourceObject> receivedObject)
 {
     std::cout << "Resource discovered" << std::endl;
     object = receivedObject;
@@ -74,7 +75,7 @@ void OnRemoteAttributesSetCallback(const RCSResourceAttributes &attributes)
 TEST(ResourceClientTest, testDiscoverResourcePass)
 {
     createResource();
-    DiscoveryManager *instance = DiscoveryManager::getInstance();
+    RCSDiscoveryManager *instance = RCSDiscoveryManager::getInstance();
     cbresult = false;
     RCSAddress rcsAddress = RCSAddress::multicast();
     instance->discoverResource(rcsAddress, uri , &onResourceDiscoveredCallback);
@@ -126,7 +127,7 @@ TEST(ResourceClientTest, testIsMonitoring)
 {
     createResource();
     RCSAddress rcsAddress = RCSAddress::multicast();
-    manager->DiscoveryManager::discoverResource(rcsAddress, uri , &onResourceDiscoveredCallback);
+    manager->RCSDiscoveryManager::discoverResource(rcsAddress, uri , &onResourceDiscoveredCallback);
     sleep(1);
     destroyResource();
     EXPECT_FALSE(object->isMonitoring());
@@ -320,7 +321,7 @@ TEST(ResourceClientTest, testGetCachedAttribute)
 TEST(ResourceClientTest, testGetInstance)
 {
     createResource();
-    DiscoveryManager *instance = DiscoveryManager::getInstance();
+    RCSDiscoveryManager *instance = RCSDiscoveryManager::getInstance();
     EXPECT_TRUE(instance != NULL);
     destroyResource();
 }
@@ -329,7 +330,7 @@ TEST(ResourceClientTest, testGetInstance)
 TEST(ResourceClientTest, testDiscoverResourceEmptyResource)
 {
     createResource();
-    DiscoveryManager *instance = DiscoveryManager::getInstance();
+    RCSDiscoveryManager *instance = RCSDiscoveryManager::getInstance();
     RCSAddress rcsAddress = RCSAddress::multicast();
     EXPECT_THROW(instance->discoverResource(rcsAddress, "", &onResourceDiscoveredCallback),
                  InvalidParameterException);
@@ -340,7 +341,7 @@ TEST(ResourceClientTest, testDiscoverResourceEmptyResource)
 TEST(ResourceClientTest, testDiscoverResourceEmptyCallback)
 {
     createResource();
-    DiscoveryManager *instance = DiscoveryManager::getInstance();
+    RCSDiscoveryManager *instance = RCSDiscoveryManager::getInstance();
     RCSAddress rcsAddress = RCSAddress::multicast();
     EXPECT_THROW(instance->discoverResource(rcsAddress, uri , NULL), InvalidParameterException);
     destroyResource();

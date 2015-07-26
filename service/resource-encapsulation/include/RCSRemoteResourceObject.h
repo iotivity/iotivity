@@ -23,11 +23,11 @@
  *
  * This file contains the Resource Client APIs provided to the developers.
  * It is a common API layer for the Resource Broker and Resource Cache module of Resource
- * Encapsulation layer.
+ * Manipulation layer.
  */
 
-#ifndef RESOURCE_CLIENT_H_
-#define RESOURCE_CLIENT_H_
+#ifndef RCS_RemoteResourceObject_H
+#define RCS_RemoteResourceObject_H
 
 #include<vector>
 #include "RCSResourceAttributes.h"
@@ -36,7 +36,6 @@ namespace OIC
 {
     namespace Service
     {
-
         /**
         * Cache State enum specify the state of the Cache.
         */
@@ -65,9 +64,8 @@ namespace OIC
         * Forward Declaration of Classes
         */
         class RCSException;
-        class RemoteResourceObject;
+        class RCSRemoteResourceObject;
         class PrimitiveResource;
-        class RCSAddress;
 
         /**
          * @class  BadRequestException
@@ -91,26 +89,26 @@ namespace OIC
         {
             public:
                 InvalidParameterException(const std::string &what) : RCSException { what } {}
-                InvalidParameterException(std::string &&what) : RCSException{ std::move(what) } {}
+                InvalidParameterException(std::string &&what) : RCSException { std::move(what) } {}
         };
 
         /**
-         * @class   RemoteResourceObject
+         * @class   RCSRemoteResourceObject
          * @brief   This class is an interaction point between Resource
-         *              and the developers. Developer will get the RemoteResourceObject by calling the
-         *              discoverResource() API of "DiscoveryManager" class.
+         *              and the developers. Developer will get the RCSRemoteResourceObject by calling the
+         *              discoverResource() API of "RCSDiscoveryManager" class.
          *
          * @see DiscoveryManager
          *
          */
-        class RemoteResourceObject
+        class RCSRemoteResourceObject
         {
             public:
 
                 /**
-                 * Constructor for RemoteResourceObject
+                 * Constructor for RCSRemoteResourceObject
                 */
-                RemoteResourceObject(std::shared_ptr<PrimitiveResource>  pResource);
+                RCSRemoteResourceObject(std::shared_ptr<PrimitiveResource>  pResource);
 
                 /**
                  *  Typedef for callback of startMonitoring API
@@ -326,6 +324,9 @@ namespace OIC
                 * @details This API send a get request to the resource of interest and provides the attributes
                 *               to the caller in the RemoteAttributesReceivedCallback.
                 *
+                *
+                * @throw InvalidParameterException
+                *
                 * @see RCSResourceAttributes::Value
                 */
                 void getRemoteAttributes(RemoteAttributesReceivedCallback cb);
@@ -413,57 +414,7 @@ namespace OIC
                 *  Broker  identification number.
                 */
                 BrokerID m_brokerId;
-
-        };
-
-        /**
-         * @class   DiscoveryManager
-         * @brief   This class contains the resource discovery method.
-         *
-         */
-        class DiscoveryManager
-        {
-            public:
-
-                /**
-                 *  Typedef for callback of discoverResource API
-                 */
-                typedef std::function< void( std::shared_ptr< RemoteResourceObject>) >
-                OnResourceDiscoveredCallback;
-
-                /**
-                * API for getting DiscoveryManager instance.
-                *
-                * @return DiscoveryManager - Instance of DiscoveryManager class
-                */
-                static DiscoveryManager *getInstance();
-
-                /**
-                * API for discovering the resource of Interest.
-                *
-                * @param address - RCSAddress object
-                * @param resourceURI - uri of resource to be searched
-                * @param cb - callback to obtain discovered resource
-                *
-                * @throw InvalidParameterException : This API throws the InvalidParameterException if any of
-                *                                                         the parameter is invalid.
-                * @RCSAddress
-                */
-                void discoverResource(const RCSAddress &address, const std::string &resourceURI,
-                                      OnResourceDiscoveredCallback cb);
-            private:
-
-                /**
-                 * Constructor for DiscoveryManager.
-                */
-                DiscoveryManager() = default;
-
-                /**
-                * Destructor for DiscoveryManager.
-                */
-                ~DiscoveryManager() = default;
-
         };
     }
 }
-#endif //RESOURCE_CLIENT_H_
+#endif //RCS_RemoteResourceObject_H

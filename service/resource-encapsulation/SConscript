@@ -76,7 +76,7 @@ resourceClient_env.AppendUnique(LIBS = ['dl'])
 ######################################################################
 BROKER_SRC_DIR = 'src/resourceBroker/src/'
 CACHE_SRC_DIR = 'src/resourceCache/src/'
-RESOURCECLIENT_DIR = 'src/'
+RESOURCECLIENT_DIR = 'src/resourceClient/'
 client_src = [
         BROKER_SRC_DIR + 'DeviceAssociation.cpp',
         BROKER_SRC_DIR + 'DevicePresence.cpp',
@@ -84,7 +84,8 @@ client_src = [
         BROKER_SRC_DIR + 'ResourceBroker.cpp',
         CACHE_SRC_DIR + 'DataCache.cpp',
         CACHE_SRC_DIR + 'ResourceCacheManager.cpp',
-        RESOURCECLIENT_DIR + 'ResourceClient.cpp'
+        RESOURCECLIENT_DIR + 'RCSDiscoveryManager.cpp',
+	RESOURCECLIENT_DIR + 'RCSRemoteResourceObject.cpp'
 		]
 ResourceClientsdk = resourceClient_env.StaticLibrary('rcs_client', client_src)
 resourceClient_env.InstallTarget(ResourceClientsdk , 'librcs_client')

@@ -21,7 +21,7 @@
 #ifndef RH_HOSTINGOBJECT_H_
 #define RH_HOSTINGOBJECT_H_
 
-#include "ResourceClient.h"
+#include "RCSRemoteResourceObject.h"
 #include "RCSResourceObject.h"
 #include "RequestObject.h"
 #include "ResourceBroker.h"
@@ -39,7 +39,7 @@ class HostingObject
 {
 private:
     typedef std::shared_ptr<RCSResourceObject> ResourceObjectPtr;
-    typedef std::shared_ptr<RemoteResourceObject> RemoteObjectPtr;
+    typedef std::shared_ptr<RCSRemoteResourceObject> RemoteObjectPtr;
     typedef std::shared_ptr<RequestObject> RequestObjectPtr;
     typedef std::shared_ptr<PrimitiveResource> PrimiteveResourcePtr;
 

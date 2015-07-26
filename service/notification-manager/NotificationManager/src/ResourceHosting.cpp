@@ -22,6 +22,7 @@
 
 #include "PresenceSubscriber.h"
 #include "OCPlatform.h"
+#include "RCSDiscoveryManager.h"
 
 namespace OIC
 {
@@ -106,7 +107,7 @@ void ResourceHosting::initializeResourceHosting()
     pDiscoveryCB = std::bind(&ResourceHosting::discoverHandler, this,
             std::placeholders::_1);
 
-    discoveryManager = DiscoveryManager::getInstance();
+    discoveryManager = RCSDiscoveryManager::getInstance();
 }
 
 void ResourceHosting::requestMulticastPresence()
