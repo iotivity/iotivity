@@ -67,13 +67,6 @@ class ResourceContainerTest: public TestWithMock
 {
 
     public:
-        ~ResourceContainerTest() noexcept(true)
-        {
-
-        }
-
-    public:
-        MockRepository mocks;
         ResourceContainer *m_pResourceContainer;
 
     protected:
@@ -228,15 +221,8 @@ TEST_F(ResourceContainerTest, TryAddingSoBundleResourceToNotRegisteredBundle)
 
 class ResourceContainerBundleAPITest: public TestWithMock
 {
-    public:
-        ~ResourceContainerBundleAPITest() noexcept(true)
-        {
-
-        }
-
 
     public:
-        MockRepository mocks;
         RCSResourceObject *m_pResourceObject;
         ResourceContainerBundleAPI *m_pResourceContainer;
         TestBundleResource *m_pBundleResource;
@@ -355,13 +341,6 @@ class ResourceContainerImplTest: public TestWithMock
 {
 
     public:
-        ~ResourceContainerImplTest() noexcept(true)
-        {
-
-        }
-
-    public:
-        MockRepository mocks;
         ResourceContainerImpl *m_pResourceContainer;
         RCSBundleInfo *m_pBundleInfo;
 
