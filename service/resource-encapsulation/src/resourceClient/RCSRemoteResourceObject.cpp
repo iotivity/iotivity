@@ -18,11 +18,11 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "ResourceClient.h"
+#include "RCSRemoteResourceObject.h"
 #include "ResourceBroker.h"
 #include "ResourceCacheManager.h"
 
-#define CLIENT_W_TAG  PCF("ResourceClient")
+#define CLIENT_W_TAG  PCF("RCSRemoteResourceObject")
 
 using namespace OIC::Service;
 
@@ -95,7 +95,7 @@ namespace
     }
 
     OCStackResult hostingCallback(BROKER_STATE state,
-                                  RemoteResourceObject::ResourceStateChangedCallback onResourceStateChanged)
+                                  RCSRemoteResourceObject::ResourceStateChangedCallback onResourceStateChanged)
     {
         OC_LOG(DEBUG, CLIENT_W_TAG, "hostingCallback entry");
 
@@ -108,86 +108,65 @@ namespace
 
     OCStackResult cachingCallback(std::shared_ptr<PrimitiveResource> resource,
                                   const RCSResourceAttributes &data,
-                                  RemoteResourceObject::CacheUpdatedCallback onCacheUpdated)
+                                  RCSRemoteResourceObject::CacheUpdatedCallback onCacheUpdated)
     {
         OC_LOG(DEBUG, CLIENT_W_TAG, "cachingCallback entry");
 
-        onCacheUpdated(data); //passing RCSResourceAttributes to application
+        onCacheUpdated(data); //passing ResourceAttributes to application
 
         OC_LOG(DEBUG, CLIENT_W_TAG, "cachingCallback exit");
         return OC_STACK_OK;
     }
 
     void setCallback(const HeaderOptions &header, const ResponseStatement &response, int n,
-                     RemoteResourceObject::RemoteAttributesSetCallback onRemoteAttributesSet)
+                     RCSRemoteResourceObject::RemoteAttributesSetCallback onRemoteAttributesSet)
     {
         OC_LOG(DEBUG, CLIENT_W_TAG, "setCallback entry");
 
         const RCSResourceAttributes &attributes = response.getAttributes();
-        onRemoteAttributesSet(attributes); //passing RCSResourceAttributes to application
+        onRemoteAttributesSet(attributes); //passing ResourceAttributes to application
 
         OC_LOG(DEBUG, CLIENT_W_TAG, "setCallback exit");
     }
 
     void getCallback(const HeaderOptions &headerOption, const ResponseStatement &response, int n,
-                     RemoteResourceObject::RemoteAttributesReceivedCallback onRemoteAttributesReceived)
+                     RCSRemoteResourceObject::RemoteAttributesReceivedCallback onRemoteAttributesReceived)
     {
         OC_LOG(DEBUG, CLIENT_W_TAG, "getCallback entry");
 
         const RCSResourceAttributes &attributes = response.getAttributes();
-        onRemoteAttributesReceived(attributes); //passing RCSResourceAttributes to application
+        onRemoteAttributesReceived(attributes); //passing ResourceAttributes to application
 
         OC_LOG(DEBUG, CLIENT_W_TAG, "getCallback exit");
     }
-
-    void findCallback(std::shared_ptr<PrimitiveResource> primitiveResource,
-                      DiscoveryManager::OnResourceDiscoveredCallback OnResourceDiscovered )
-    {
-        OC_LOG(DEBUG, CLIENT_W_TAG, "findCallback entry");
-
-        if (nullptr == primitiveResource)
-        {
-            OC_LOG(ERROR, CLIENT_W_TAG, "findCallback::primitiveResource NULL Parameter");
-            return ;
-        }
-
-        std::shared_ptr< RemoteResourceObject>  primitiveClientResource =
-            std::shared_ptr< RemoteResourceObject>(new RemoteResourceObject(primitiveResource));
-
-        OnResourceDiscovered(primitiveClientResource); //passing PrimitiveClientResource to application
-
-        OC_LOG(DEBUG, CLIENT_W_TAG, "findcb exit");
-    }
-
 }
 
-//*******************************Primitive Client Resource*************************************
+//******************************* RCSRemoteResourceObject *************************************
 
 namespace OIC
 {
     namespace Service
     {
-
-        RemoteResourceObject:: RemoteResourceObject(std::shared_ptr<PrimitiveResource>  pResource) :
+        RCSRemoteResourceObject:: RCSRemoteResourceObject(std::shared_ptr<PrimitiveResource>  pResource) :
             m_monitoringFlag(false), m_cachingFlag(false),  m_observableFlag(pResource->isObservable()),
             m_primitiveResource(pResource), m_cacheId(0), m_brokerId(0) {}
 
-        bool RemoteResourceObject::isMonitoring() const
+        bool RCSRemoteResourceObject::isMonitoring() const
         {
             return m_monitoringFlag;
         }
 
-        bool RemoteResourceObject::isCaching() const
+        bool RCSRemoteResourceObject::isCaching() const
         {
             return m_cachingFlag;
         }
 
-        void RemoteResourceObject::startMonitoring(ResourceStateChangedCallback cb)
+        void RCSRemoteResourceObject::startMonitoring(ResourceStateChangedCallback cb)
         {
-            OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::startMonitoring entry");
+            OC_LOG(DEBUG, CLIENT_W_TAG, "RCSRemoteResourceObject::startMonitoring entry");
             if (true == m_monitoringFlag)
             {
-                OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::startMonitoring : Already started");
+                OC_LOG(DEBUG, CLIENT_W_TAG, "RCSRemoteResourceObject::startMonitoring : Already started");
             }
             else
             {
@@ -204,12 +183,12 @@ namespace OIC
                     throw InvalidParameterException {exception.what()};
                 }
             }
-            OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::startMonitoring exit");
+            OC_LOG(DEBUG, CLIENT_W_TAG, "RCSRemoteResourceObject::startMonitoring exit");
         }
 
-        void RemoteResourceObject::stopMonitoring()
+        void RCSRemoteResourceObject::stopMonitoring()
         {
-            OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::stopMonitoring entry");
+            OC_LOG(DEBUG, CLIENT_W_TAG, "RCSRemoteResourceObject::stopMonitoring entry");
             if (true == m_monitoringFlag)
             {
                 try
@@ -219,62 +198,62 @@ namespace OIC
                 }
                 catch (std::exception &exception)
                 {
-                    OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::stopMonitoring InvalidParameterException");
+                    OC_LOG(DEBUG, CLIENT_W_TAG, "RCSRemoteResourceObject::stopMonitoring InvalidParameterException");
                 }
             }
             else
             {
-                OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject:: stopMonitoring : already terminated");
+                OC_LOG(DEBUG, CLIENT_W_TAG, "RCSRemoteResourceObject:: stopMonitoring : already terminated");
             }
 
-            OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::stopMonitoring exit");
+            OC_LOG(DEBUG, CLIENT_W_TAG, "RCSRemoteResourceObject::stopMonitoring exit");
         }
 
-        ResourceState RemoteResourceObject::getState() const
+        ResourceState RCSRemoteResourceObject::getState() const
         {
-            OC_LOG(DEBUG, CLIENT_W_TAG, " RemoteResourceObject::getState entry");
+            OC_LOG(DEBUG, CLIENT_W_TAG, " RCSRemoteResourceObject::getState entry");
             try
             {
                 BROKER_STATE brokerState = ResourceBroker::getInstance()->getResourceState(m_primitiveResource);
-                OC_LOG(DEBUG, CLIENT_W_TAG, " RemoteResourceObject::getState exit");
+                OC_LOG(DEBUG, CLIENT_W_TAG, " RCSRemoteResourceObject::getState exit");
                 return getResourceStateFromBrokerState(brokerState);
             }
             catch (std::exception &exception)
             {
-                OC_LOG(DEBUG, CLIENT_W_TAG, " RemoteResourceObject::getState InvalidParameterException");
+                OC_LOG(DEBUG, CLIENT_W_TAG, " RCSRemoteResourceObject::getState InvalidParameterException");
                 throw BadRequestException { "[getState] Get Resource Source State from Broker Error " };
             }
         }
 
-        void RemoteResourceObject::startCaching()
+        void RCSRemoteResourceObject::startCaching()
         {
-            OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::startCaching entry");
+            OC_LOG(DEBUG, CLIENT_W_TAG, "RCSRemoteResourceObject::startCaching entry");
             if (true == m_cachingFlag)
             {
-                OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::startCaching : already Started");
+                OC_LOG(DEBUG, CLIENT_W_TAG, "RCSRemoteResourceObject::startCaching : already Started");
             }
             else
             {
                 try
                 {
-                  CacheID cacheId = ResourceCacheManager::getInstance()->requestResourceCache(m_primitiveResource,
+                    CacheID cacheId = ResourceCacheManager::getInstance()->requestResourceCache(m_primitiveResource,
                                       NULL, REPORT_FREQUENCY::NONE,  0);
 
                     m_cacheId = cacheId;
                     m_cachingFlag = true;
-                    OC_LOG_V(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::startCaching CACHE ID %d", cacheId);
+                    OC_LOG_V(DEBUG, CLIENT_W_TAG, "RCSRemoteResourceObject::startCaching CACHE ID %d", cacheId);
                 }
                 catch (std::exception &exception)
                 {
-                    OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::startCaching InvalidParameterException");
+                    OC_LOG(DEBUG, CLIENT_W_TAG, "RCSRemoteResourceObject::startCaching InvalidParameterException");
                 }
             }
-            OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::startCaching exit");
+            OC_LOG(DEBUG, CLIENT_W_TAG, "RCSRemoteResourceObject::startCaching exit");
         }
 
-        void RemoteResourceObject::startCaching(CacheUpdatedCallback cb)
+        void RCSRemoteResourceObject::startCaching(CacheUpdatedCallback cb)
         {
-            OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::startCaching entry");
+            OC_LOG(DEBUG, CLIENT_W_TAG, "RCSRemoteResourceObject::startCaching entry");
             if (!cb)
             {
                 throw InvalidParameterException {"startCaching : Callback is NULL" };
@@ -305,9 +284,9 @@ namespace OIC
             }
         }
 
-        void RemoteResourceObject::stopCaching()
+        void RCSRemoteResourceObject::stopCaching()
         {
-            OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::stopCaching entry");
+            OC_LOG(DEBUG, CLIENT_W_TAG, "RCSRemoteResourceObject::stopCaching entry");
 
             if (true == m_cachingFlag)
             {
@@ -318,38 +297,38 @@ namespace OIC
                 }
                 catch (std::exception &exception)
                 {
-                    OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::stopCaching InvalidParameterException");
+                    OC_LOG(DEBUG, CLIENT_W_TAG, "RCSRemoteResourceObject::stopCaching InvalidParameterException");
                 }
             }
             else
             {
-                OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject:: Caching already terminated");
+                OC_LOG(DEBUG, CLIENT_W_TAG, "RCSRemoteResourceObject:: Caching already terminated");
             }
 
-            OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::stopCaching exit");
+            OC_LOG(DEBUG, CLIENT_W_TAG, "RCSRemoteResourceObject::stopCaching exit");
         }
 
-        CacheState  RemoteResourceObject::getResourceCacheState()
+        CacheState  RCSRemoteResourceObject::getResourceCacheState()
         {
-            OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::getResourceCacheState entry");
+            OC_LOG(DEBUG, CLIENT_W_TAG, "RCSRemoteResourceObject::getResourceCacheState entry");
             try
             {
                 CACHE_STATE cacheState = ResourceCacheManager::getInstance()->getResourceCacheState(
                                              m_primitiveResource);
-                OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::getResourceCacheState exit");
+                OC_LOG(DEBUG, CLIENT_W_TAG, "RCSRemoteResourceObject::getResourceCacheState exit");
                 return getCacheState(cacheState);
             }
             catch (std::exception &exception)
             {
                 OC_LOG(DEBUG, CLIENT_W_TAG,
-                       "RemoteResourceObject::getResourceCacheState InvalidParameterException");
+                       "RCSRemoteResourceObject::getResourceCacheState InvalidParameterException");
                 throw BadRequestException { "[getResourceCacheState] Caching not started" };
             }
         }
 
-        void RemoteResourceObject::refreshCache()
+        void RCSRemoteResourceObject::refreshCache()
         {
-            OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::refreshCache entry");
+            OC_LOG(DEBUG, CLIENT_W_TAG, "RCSRemoteResourceObject::refreshCache entry");
             try
             {
 
@@ -358,14 +337,14 @@ namespace OIC
             }
             catch (std::exception &exception)
             {
-                OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::refreshCache InvalidParameterException");
+                OC_LOG(DEBUG, CLIENT_W_TAG, "RCSRemoteResourceObject::refreshCache InvalidParameterException");
             }
-            OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::refreshCache exit");
+            OC_LOG(DEBUG, CLIENT_W_TAG, "RCSRemoteResourceObject::refreshCache exit");
         }
 
-        RCSResourceAttributes RemoteResourceObject:: getCachedAttributes() const
+        RCSResourceAttributes RCSRemoteResourceObject:: getCachedAttributes() const
         {
-            OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject :: getCachedAttributes ");
+            OC_LOG(DEBUG, CLIENT_W_TAG, "RCSRemoteResourceObject :: getCachedAttributes ");
             try
             {
                 return ResourceCacheManager::getInstance()->getCachedData(m_primitiveResource);
@@ -376,43 +355,43 @@ namespace OIC
             }
         }
 
-        RCSResourceAttributes::Value  RemoteResourceObject:: getCachedAttribute( const std::string &key)
+        RCSResourceAttributes::Value  RCSRemoteResourceObject:: getCachedAttribute( const std::string &key)
         {
-            OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject :: getCachedAttribute entry");
+            OC_LOG(DEBUG, CLIENT_W_TAG, "RCSRemoteResourceObject :: getCachedAttribute entry");
             try
             {
                 RCSResourceAttributes  Cachedattributes = ResourceCacheManager::getInstance()->getCachedData(
-                        m_primitiveResource);
+                            m_primitiveResource);
                 return Cachedattributes[key];
             }
             catch (std::exception &exception)
             {
                 throw BadRequestException { "[getCachedAttribute]  Caching not started" };
             }
-            OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject :: getCachedAttribute exit");
+            OC_LOG(DEBUG, CLIENT_W_TAG, "RCSRemoteResourceObject :: getCachedAttribute exit");
         }
 
-        std::string RemoteResourceObject::getUri() const
+        std::string RCSRemoteResourceObject::getUri() const
         {
             return m_primitiveResource->getUri();
         }
 
-        std::string RemoteResourceObject::getAddress() const
+        std::string RCSRemoteResourceObject::getAddress() const
         {
             return m_primitiveResource->getHost();
         }
 
-        std::vector < std::string > RemoteResourceObject::getTypes() const
+        std::vector < std::string > RCSRemoteResourceObject::getTypes() const
         {
             return m_primitiveResource->getTypes();
         }
 
-        std::vector < std::string > RemoteResourceObject::getInterfaces() const
+        std::vector < std::string > RCSRemoteResourceObject::getInterfaces() const
         {
             return m_primitiveResource->getInterfaces();
         }
 
-        void RemoteResourceObject::getRemoteAttributes(RemoteAttributesReceivedCallback cb)
+        void RCSRemoteResourceObject::getRemoteAttributes(RemoteAttributesReceivedCallback cb)
         {
             OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::getRemoteAttributes entry");
             if (!cb)
@@ -427,7 +406,7 @@ namespace OIC
             OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::getRemoteAttributes exit");
         }
 
-        void RemoteResourceObject::setRemoteAttributes(const RCSResourceAttributes &attribute,
+        void RCSRemoteResourceObject::setRemoteAttributes(const RCSResourceAttributes &attribute,
                 RemoteAttributesSetCallback cb)
         {
             OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::setRemoteAttributes entry");
@@ -443,51 +422,10 @@ namespace OIC
             OC_LOG(DEBUG, CLIENT_W_TAG, "RemoteResourceObject::setRemoteAttributes exit");
         }
 
-        bool RemoteResourceObject::isObservable() const
+
+        bool RCSRemoteResourceObject::isObservable() const
         {
             return m_observableFlag;
-        }
-
-//*******************************Discovery Manager****************************************
-
-        DiscoveryManager *DiscoveryManager:: getInstance()
-        {
-            OC_LOG(DEBUG, CLIENT_W_TAG, "DiscoveryManager:: getInstance entry");
-            static DiscoveryManager *s_instance;
-            static std::mutex s_mutex;
-            if (!s_instance)
-            {
-                std::lock_guard<std::mutex> lock(s_mutex);
-                if (!s_instance)
-                {
-                    s_instance = new DiscoveryManager();
-                }
-            }
-            OC_LOG(DEBUG, CLIENT_W_TAG, "DiscoveryManager:: getInstance exit");
-            return s_instance;
-        }
-
-        void DiscoveryManager::discoverResource(const RCSAddress &address, const std::string &resourceURI,
-                                                OnResourceDiscoveredCallback cb)
-        {
-
-            OC_LOG(DEBUG, CLIENT_W_TAG, "DiscoveryManager::discoverResource entry");
-
-            if ( resourceURI.empty() )
-            {
-                OC_LOG(ERROR, CLIENT_W_TAG, "discoverResource NULL resourceURI");
-                throw InvalidParameterException { "discoverResource NULL resourceURI'" };
-            }
-            else if ( !cb )
-            {
-                OC_LOG(ERROR, CLIENT_W_TAG, "discoverResource NULL Callback");
-                throw InvalidParameterException { "discoverResource NULL Callback'" };
-            }
-            OIC::Service::discoverResource(address, resourceURI, std::bind(findCallback,
-                                           std::placeholders::_1,
-                                           cb));
-
-            OC_LOG(DEBUG, CLIENT_W_TAG, "DiscoveryManager::discoverResource exit");
         }
     }
 }

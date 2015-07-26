@@ -1,6 +1,7 @@
 #include<iostream>
 
-#include "ResourceClient.h"
+#include "RCSDiscoveryManager.h"
+#include "RCSRemoteResourceObject.h"
 #include "RCSResourceAttributes.h"
 #include "OCPlatform.h"
 #include "RCSAddress.h"
@@ -9,13 +10,13 @@ using namespace std;
 using namespace OC;
 using namespace OIC::Service;
 
-std::shared_ptr<RemoteResourceObject>  resource;
+std::shared_ptr<RCSRemoteResourceObject>  resource;
 RCSResourceAttributes resourceAttributes;
 bool startCachingFlag;
 bool isReady;
 
 //callback function for discoverResource()
-void OnResourceDiscovered(std::shared_ptr<RemoteResourceObject> foundResource)
+void OnResourceDiscovered(std::shared_ptr<RCSRemoteResourceObject> foundResource)
 {
 
     cout << "\nOnResourceDiscovered callback" << std::endl;
@@ -112,7 +113,7 @@ void OnRemoteAttributesSetCallback(const RCSResourceAttributes &atttribute)
 int main()
 {
 
-    DiscoveryManager *discoveryManagerInstance =  DiscoveryManager::getInstance();
+    RCSDiscoveryManager *discoveryManagerInstance =  RCSDiscoveryManager::getInstance();
     bool cachingFlag = false;
 
     //configuring the platform
