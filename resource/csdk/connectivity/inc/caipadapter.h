@@ -46,7 +46,7 @@ extern "C"
  * @param[in] errorCallback         Callback to notify the network errors to
  *                                   Connectivity Abstraction Layer.
  * @param[in] handle                Threadpool Handle.
- * @return  #CA_STATUS_OK or Appropriate error code
+ * @return  ::CA_STATUS_OK or Appropriate error code
  */
 CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
                           CANetworkPacketReceivedCallback networkPacketCallback,
@@ -55,7 +55,7 @@ CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
 
 /**
  * Start IP Interface adapter.
- * @return  #CA_STATUS_OK or Appropriate error code.
+ * @return  ::CA_STATUS_OK or Appropriate error code.
  */
 CAResult_t CAStartIP();
 
@@ -64,7 +64,7 @@ CAResult_t CAStartIP();
  * Transport Specific Behavior:
  * IP Starts Multicast Server on a particular interface and prefixed port
  * number and as per OIC Specification.
- * @return  #CA_STATUS_OK or Appropriate error code.
+ * @return  ::CA_STATUS_OK or Appropriate error code.
  */
 CAResult_t CAStartIPListeningServer();
 
@@ -73,7 +73,7 @@ CAResult_t CAStartIPListeningServer();
  * Transport Specific Behavior:
  * IP Starts multicast server on a particular interface and prefixed port
  * number as per OIC Specification.
- * @return  #CA_STATUS_OK or Appropriate error code.
+ * @return  ::CA_STATUS_OK or Appropriate error code.
  */
 CAResult_t CAStartIPDiscoveryServer();
 
@@ -106,19 +106,19 @@ int32_t CASendIPMulticastData(const CAEndpoint_t *endpoint, const void *data, ui
  * @param[out]   info        Local connectivity information structures.
  * @note info is allocated in this API and should be freed by the caller.
  * @param[out]   size        Number of local connectivity structures.
- * @return  #CA_STATUS_OK or Appropriate error code.
+ * @return  ::CA_STATUS_OK or Appropriate error code.
  */
 CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size);
 
 /**
  * Read Synchronous API callback.
- * @return  #CA_STATUS_OK or Appropriate error code.
+ * @return  ::CA_STATUS_OK or Appropriate error code.
  */
 CAResult_t CAReadIPData();
 
 /**
  * Stops Unicast, Multicast servers and close the sockets.
- * @return  #CA_STATUS_OK or Appropriate error code.
+ * @return  ::CA_STATUS_OK or Appropriate error code.
  */
 CAResult_t CAStopIP();
 

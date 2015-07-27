@@ -81,7 +81,7 @@ typedef struct
 } CAEDRNetworkEvent;
 
 /**
- * This will be used during the recive of network requests and response.
+ * This will be used during the Receiver of network requests and response.
  * @param[in] remoteAddress EDR address of remote OIC device from which data received.
  * @param[in] data          Data received.
  * @param[in] dataLength    Length of the Data received.

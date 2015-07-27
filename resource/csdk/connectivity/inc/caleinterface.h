@@ -38,9 +38,8 @@ extern "C"
 #endif
 
 /**
- * @enum CALETransferType_t
- * @brief Provide info about different mode of data transfer
- *        This enum is used to differentiate between unicast and multicast data transfer.
+ * Provide info about different mode of data transfer.
+ * This enum is used to differentiate between unicast and multicast data transfer.
  */
 typedef enum
 {
@@ -50,272 +49,260 @@ typedef enum
 
 
 /**
- * @brief  Initialize the LE adapter layer. This will be invoked from the CA layer.
+ * Initialize the LE adapter layer. This will be invoked from the CA layer.
  *
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
- * @retval #CA_STATUS_FAILED Operation failed
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CAInitializeLEAdapter();
 
 /**
- * @brief  Used to get the current state of the LE adapter.
+ * Used to get the current state of the LE adapter.
  *
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_ADAPTER_NOT_ENABLED  adapter not enabled
- * @retval #CA_STATUS_FAILED Operation failed
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_ADAPTER_NOT_ENABLED  adapter not enabled.
+ * @retval ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CAGetLEAdapterState();
 
 /**
- * @brief  Used to initialize the network monitor layer of the LE adapter. Mutex variables required
- *         to operate in this layer and other paramters can be initialized in this function.
+ * Used to initialize the network monitor layer of the LE adapter. Mutex variables required
+ * to operate in this layer and other paramters can be initialized in this function.
  *
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
- * @retval #CA_STATUS_FAILED Operation failed
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CAInitializeLENetworkMonitor();
 
 /**
- * @brief  Used to terminate the network monitor layer of the LE adapter. The variables intialized
- *         in CAInitializeLEAdapterController() must be cleared in this function.
- * @return NONE
+ * Used to terminate the network monitor layer of the LE adapter. The variables intialized
+ * in CAInitializeLEAdapterController() must be cleared in this function.
  */
 void CATerminateLENetworkMonitor();
 
 /**
- * @brief  This function is used to set the callback for the Device state changes in the adapter.
+ * This function is used to set the callback for the Device state changes in the adapter.
  *
- * @param  callback  [IN] Callback to notify the Device state change to the CA Layer
+ * @param[in]  callback  Callback to notify the Device state change to the CA Layer.
  *
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
- * @retval #CA_STATUS_FAILED Operation failed
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CASetLEAdapterStateChangedCb(CALEDeviceStateChangedCallback callback);
 
 /**
- * @brief  Used to initilaze all the mutex variables required to operate the LE network monitor
- *         layer.
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
- * @retval #CA_STATUS_FAILED Operation failed
+ * Used to initilaze all the mutex variables required.
+ * to operate the LE network monitor layer.
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CAInitLENetworkMonitorMutexVariables();
 
 /**
- * @brief  Used to terminate all the mutex variables required to operate the LE network monitor
- *         layer.
- * @return NONE
+ * Used to terminate all the mutex variables required
+ * to operate the LE network monitor layer.
  */
 void CATerminateLENetworkMonitorMutexVariables();
 
 /**
- * @brief  Provides the BD address of the local adapter.
- * @param  local_address [OUT] pointer to the location where bd address needs to be stored.
+ * Provides the BD address of the local adapter.
+ * @param[out]  local_address    pointer to the location where bd address needs to be stored.
  *
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
- * @retval #CA_STATUS_FAILED Operation failed
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CAGetLEAddress(char **local_address);
 
 /**
- * @brief  Used to start Gatt Server thread for service creation and advertise ble service.
+ * Used to start Gatt Server thread for service creation and advertise ble service.
  *
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
- * @retval #CA_STATUS_FAILED Operation failed
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CAStartLEGattServer();
 
 /**
- * @brief  Used to stop BLE Gatt Service.
+ * Used to stop BLE Gatt Service.
  *
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
- * @retval #CA_STATUS_FAILED Operation failed
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CAStopLEGattServer();
 
 /**
- * @brief  Used to stop Gatt Server thread and remove service registration, stop advertising.
- * @return NONE
+ * Used to stop Gatt Server thread and remove service registration, stop advertising.
  */
 void CATerminateLEGattServer();
 
 /**
- * @brief  Used to store upper layer callback locally which will be used to send the data to
- *         application
- * @param  callback [IN] Callback function to pass the data to CA layer.
- * @return NONE
+ * Used to store upper layer callback locally
+ * which will be used to send the data to application.
+ * @param[in]  callback Callback function to pass the data to CA layer.
  */
 void CASetLEReqRespServerCallback(CABLEServerDataReceivedCallback callback);
 
 /**
- * @brief  Used to update characteristics(Read/Write) value that we want to send to particular
- *         client.
+ * Used to update characteristics(Read/Write) value
+ * that we want to send to particular client.
  *
- * @param  address     [IN] BD address of Gatt client
- * @param  charValue     [IN] Data that we want to send to client(unicast)
- * @param  charValueLen  [IN] Length of the data.
+ * @param[in]  address       BD address of Gatt client.
+ * @param[in]  charValue     Data that we want to send to client(unicast).
+ * @param[in]  charValueLen  Length of the data.
  *
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
- * @retval #CA_STATUS_FAILED Operation failed
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CAUpdateCharacteristicsToGattClient(const char* address, const char *charValue,
                                                const uint32_t charValueLen);
 
 /**
- * @brief  Used to update characteristics(Read/Write) value that we want to multicast to all clients
+ * Used to update characteristics(Read/Write) value that we want to multicast to all clients.
  *
- * @param  charValue     [IN] Data that we want to send to clients(multicast)
- * @param  charValueLen  [IN] Length of the data.
+ * @param[in]  charValue     Data that we want to send to clients(multicast).
+ * @param[in]  charValueLen  Length of the data.
  *
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
- * @retval #CA_STATUS_FAILED Operation failed
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CAUpdateCharacteristicsToAllGattClients(const char *charValue,
                                                    uint32_t charValueLen);
 
 /**
- * @brief  Used to start CAStartBleGattClientThread for initializing Gatt Client
+ * Used to start CAStartBleGattClientThread for initializing Gatt Client.
  *
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
- * @retval #CA_STATUS_FAILED Operation failed
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CAStartLEGattClient();
 
 /**
- * @brief  Used to stop Gatt Client gracefully in turn it will call CATerminateBLEGattClient
- *         function.
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
- * @retval #CA_STATUS_FAILED Operation failed
+ * Used to stop Gatt Client gracefully in turn it will
+ * call CATerminateBLEGattClient function.
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval ::CA_STATUS_FAILED Operation failed.
  */
 void CAStopLEGattClient();
 
 /**
- * @brief  Used to unset all the callbacks and stop service discovery
- * @return NONE
+ * Used to unset all the callbacks and stop service discovery.
  */
 void CATerminateLEGattClient();
 
 /**
- * @brief API to read the data from characteristics and invoke notifyCallback.
- * @return - NONE
+ * API to read the data from characteristics and invoke notifyCallback.
  */
 void CACheckLEData();
 
 /**
- * @brief  Sets the value of characteristic and update the value to GATTServer(unicast).
+ * Sets the value of characteristic and update the value to GATTServer(unicast).
  *
- * @param  remoteAddress [IN] The address of the remote device
- * @param  data          [IN] The value of characteristic (byte array)
- * @param  dataLen       [IN] The length of value
- * @param  type          [IN] Type of the transfer(#CALETransferType_t)
- * @param  position      [IN] The unique index of each ble server. Used for multicast feature.
+ * @param[in]  remoteAddress   The address of the remote device.
+ * @param[in]  data            The value of characteristic (byte array).
+ * @param[in]  dataLen         The length of value.
+ * @param[in]  type            Type of the transfer(::CALETransferType_t).
+ * @param[in]  position        The unique index of each ble server. Used for multicast feature.
  *
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
- * @retval #CA_STATUS_FAILED Operation failed
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t  CAUpdateCharacteristicsToGattServer(const char *remoteAddress, const char  *data,
                                                 const uint32_t dataLen, CALETransferType_t type,
                                                 const int32_t position);
 
 /**
- * @brief  Sets the value of characteristic and update the value to all registered
- *         GATTServer -> Multicast
- * @param  data     [IN] The value of characteristic (byte array)
- * @param  dataLen  [IN] The length of value
+ * Sets the value of characteristic and update the value to all registered.
+ * GATTServer -> Multicast.
+ * @param[in]  data          The value of characteristic (byte array).
+ * @param[in]  dataLen       The length of value.
  *
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
- * @retval #CA_STATUS_FAILED Operation failed
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t  CAUpdateCharacteristicsToAllGattServers(const char  *data, uint32_t dataLen);
 
 /**
- * @brief  Used to store upper layer callback locally which will be used to send the data to
- *         application
- * @param  callback  [IN] Callback function to pass the data to CA layer.
- *
- * @return  void
+ * Used to store upper layer callback locally which will be used
+ * to send the data to application.
+ * @param[in]  callback  Callback function to pass the data to CA layer.
  */
 void CASetLEReqRespClientCallback(CABLEClientDataReceivedCallback callback);
 
 /**
- * @brief  Used to Set the gThreadPool handle which is required for spawning new thread.
+ * Used to Set the gThreadPool handle which is required for spawning new thread.
  *
- * @param handle [IN] Thread pool handle which is given by above layer for using thread
- *                    creation task.
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
- * @retval #CA_STATUS_FAILED Operation failed
+ * @param[in] handle     Thread pool handle which is given by above layer
+ *                       for using thread creation task.
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval ::CA_STATUS_FAILED Operation failed.
  */
 void CASetLEServerThreadPoolHandle(ca_thread_pool_t handle);
 
 /**
-* @brief  Used to Set the gThreadPool handle which is required for spawning new thread.
-* @param handle [IN] Thread pool handle which is given by above layer for using thread creation
-*                    task.
-* @return NONE
+* Used to Set the gThreadPool handle which is required for spawning new thread.
+* @param[in] handle      Thread pool handle which is given by above layer
+*                        for using thread creation task.
 */
 void CASetLEClientThreadPoolHandle(ca_thread_pool_t handle);
 
 /**
- * @brief  Used to unset the callback of adapter connection state change.
+ * Used to unset the callback of adapter connection state change.
  *
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
- * @retval #CA_STATUS_FAILED Operation failed
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CAUnSetLEAdapterStateChangedCb();
 
 /**
- * @brief This will be used to notify errors in BLE adapter
- * @param  remoteAddress    [IN] Remote endpoint Address
- * @param  serviceUUID      [IN] Service UUID
- * @param  data             [IN] Data received
- * @param  dataLength       [IN] Length of the data received
- * @param  result           [IN] error code as per CAResult_t
- * @return NONE
+ * This will be used to notify errors in BLE adapter
+ * @param[in]  remoteAddress    Remote endpoint Address.
+ * @param[in]  serviceUUID      Service UUID.
+ * @param[in]  data             Data received.
+ * @param[in]  dataLength       Length of the data received.
+ * @param[in]  result           error code as per CAResult_t.
  */
 typedef void (*CABLEErrorHandleCallback)(const char *remoteAddress, const void *data,
                                          uint32_t dataLength, CAResult_t result);
 /**
- * @brief  sets the error handle callback
- * @param  callback [IN] Callback function to update error to the adapter
- * @return NONE
+ * sets the error handle callback.
+ * @param[in]  callback     Callback function to update error to the adapter.
  */
 void CASetBLEClientErrorHandleCallback(CABLEErrorHandleCallback callback);
 
 
 /**
- * @brief  sets the error handle callback
- * @param  callback [IN] Callback function to update error to the adapter
- * @return NONE
+ * sets the error handle callback.
+ * @param[in]  callback     Callback function to update error to the adapter.
  */
 void CASetBLEServerErrorHandleCallback(CABLEErrorHandleCallback callback);
 

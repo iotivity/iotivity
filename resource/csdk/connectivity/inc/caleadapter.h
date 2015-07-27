@@ -45,13 +45,13 @@ typedef struct
 {
     CAEndpoint_t *remoteEndpoint;   /**< Remote endpoint contains the
                                        information of remote device. */
-    void *data;        /**< Data to be transmitted over LE tranport. */
+    void *data;        /**< Data to be transmitted over LE transport. */
     uint32_t dataLen;  /**< Length of the data being transmitted. */
 } CALEData_t;
 
 /**
  * Stores information of all the senders.
- * This structure will be used to track and defragment all incoming data packets.
+ * This structure will be used to track and de-fragmentation all incoming data packets.
  */
 typedef struct
 {
@@ -182,12 +182,12 @@ void CATerminateLE();
  *                            is received.
  * @param[in]  serviceUUID   Uuid of the OIC service running on the remote
  *                            device.
- * @param[in]  data          Actual data recevied from the remote device.
+ * @param[in]  data          Actual data Received from the remote device.
  * @param[in]  dataLength    Length of the data received from the remote device.
  * @param[in]  sentLength    Length of the data sent from the remote device.
  * @return ::CA_STATUS_OK or Appropriate error code.
  * @retval ::CA_STATUS_OK  Successful.
- * @retval ::CA_STATUS_INVALID_PARAM  Invalid input argumets.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
  * @retval ::CA_STATUS_FAILED Operation failed.
  *
  */
@@ -202,12 +202,12 @@ CAResult_t CALEAdapterServerReceivedData(const char *remoteAddress, const char *
  *                            is received.
  * @param[in]  serviceUUID   Uuid of the OIC service running on the remote
  *                            device.
- * @param[in]  data          Actual data recevied from the remote device.
+ * @param[in]  data          Actual data received from the remote device.
  * @param[in]  dataLength    Length of the data received from the remote device.
  * @param[in]  sentLength    Length of the data sent from the remote device.
  * @return ::CA_STATUS_OK or Appropriate error code.
  * @retval ::CA_STATUS_OK  Successful.
- * @retval ::CA_STATUS_INVALID_PARAM  Invalid input argumets.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input  arguments.
  * @retval ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CALEAdapterClientReceivedData(const char *remoteAddress, const char *serviceUUID,
@@ -230,7 +230,7 @@ void CASetLEReqRespAdapterCallback(CANetworkPacketReceivedCallback callback);
  *
  * @return ::CA_STATUS_OK or Appropriate error code.
  * @retval ::CA_STATUS_OK  Successful.
- * @retval ::CA_STATUS_INVALID_PARAM  Invalid input argumets.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input  arguments.
  * @retval ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CALEAdapterServerSendData(const CAEndpoint_t *remoteEndpoint,
@@ -245,7 +245,7 @@ CAResult_t CALEAdapterServerSendData(const CAEndpoint_t *remoteEndpoint,
  *
  * @return ::CA_STATUS_OK or Appropriate error code.
  * @retval ::CA_STATUS_OK  Successful.
- * @retval ::CA_STATUS_INVALID_PARAM  Invalid input argumets.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input  arguments.
  * @retval ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CALEAdapterClientSendData(const CAEndpoint_t *remoteEndpoint,
@@ -266,7 +266,7 @@ void CALEServerSendDataThread(void *threadData);
  * This function will be associated with the sender queue for GattClient.
  * This function will fragment the data to the MTU of the transport and
  * send the data in fragments to the adapters. The function will be
- * blocked untill all data is sent out from the adapter.
+ * blocked until all data is sent out from the adapter.
  *
  * @param[in]  threadData Data pushed to the queue which contains the info
  * about RemoteEndpoint and Data.
@@ -274,7 +274,7 @@ void CALEServerSendDataThread(void *threadData);
 void CALEClientSendDataThread(void *threadData);
 
 /**
- * This function will be associated with the receiver queue. This function will defragment
+ * This function will be associated with the receiver queue. This function will reassemble
  * the received data from each sender respectively and will send it up to CA layer.
  * Respective sender's header will provide the length of the data sent.
  *
@@ -284,7 +284,7 @@ void CALEClientSendDataThread(void *threadData);
 void CALEDataReceiverHandler(void *threadData);
 
 /**
- * This function is used to Initalize both GattServer and GattClient
+ * This function is used to initialize both GattServer and GattClient
  * queues. All four queues will be initialized with this function invocations.
  */
 void CAInitLEQueues();
@@ -303,64 +303,64 @@ void CAStopLEQueues();
 void CATerminateLEQueues();
 
 /**
- * This function will initalize the Receiver and Sender queues for
+ * This function will initialize the Receiver and Sender queues for
  * GattServer. This function will inturn call the functions
  * CAInitBleServerReceiverQueue() and  CAInitBleServerSenderQueue() to
  * initialize the queues.
  * @return ::CA_STATUS_OK or Appropriate error code.
  * @retval ::CA_STATUS_OK  Successful.
- * @retval ::CA_STATUS_INVALID_PARAM  Invalid input argumets.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
  * @retval ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CAInitLEServerQueues();
 
 /**
- * This function will initalize the Receiver and Sender queues for
+ * This function will initialize the Receiver and Sender queues for
  * GattClient. This function will inturn call the functions
  * CAInitBleClientReceiverQueue() and CAInitBleClientSenderQueue() to
  * initialize the queues.
  *
  * @return ::CA_STATUS_OK or Appropriate error code.
  * @retval ::CA_STATUS_OK  Successful.
- * @retval ::CA_STATUS_INVALID_PARAM  Invalid input argumets.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
  * @retval ::CA_STATUS_FAILED Operation failed.
  *
  */
 CAResult_t CAInitLEClientQueues();
 
 /**
- * This function will initalize the Receiver queue for GattServer. This
+ * This function will initialize the Receiver queue for GattServer. This
  * will initialize the queue to process the function
  * CABLEServerSendDataThread() when ever the task is added to this queue.
  *
  * @return ::CA_STATUS_OK or Appropriate error code.
  * @retval ::CA_STATUS_OK  Successful.
- * @retval ::CA_STATUS_INVALID_PARAM  Invalid input argumets.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
  * @retval ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CAInitLEServerSenderQueue();
 
 /**
- * This function will initalize the Receiver queue for GattClient. This
+ * This function will initialize the Receiver queue for GattClient. This
  * will initialize the queue to process the function
  * CABLEClientSendDataThread() when ever the task is added to this queue.
  *
  * @return ::CA_STATUS_OK or Appropriate error code.
  * @retval ::CA_STATUS_OK  Successful.
- * @retval ::CA_STATUS_INVALID_PARAM  Invalid input argumets.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
  * @retval ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CAInitLEClientSenderQueue();
 
 /**
- * This function will initalize the Receiver queue for LEAdapter. This will initialize
+ * This function will initialize the Receiver queue for LEAdapter. This will initialize
  * the queue to process the function CABLEDataReceiverHandler() when ever the task
  * is added to this queue.
  *
- * @return ::CA_STATUS_OK or Appropriate error code.
- * @retval ::CA_STATUS_OK  Successful.
- * @retval ::CA_STATUS_INVALID_PARAM  Invalid input argumets.
- * @retval ::CA_STATUS_FAILED Operation failed.
+ * @return ::CA_STATUS_OK or Appropriate error code
+ * @retval ::CA_STATUS_OK  Successful
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments
+ * @retval ::CA_STATUS_FAILED Operation failed
  *
  */
 CAResult_t CAInitLEReceiverQueue();
@@ -374,7 +374,7 @@ CAResult_t CAInitLEReceiverQueue();
  *
  * @return ::CA_STATUS_OK or Appropriate error code.
  * @retval ::CA_STATUS_OK  Successful.
- * @retval ::CA_STATUS_INVALID_PARAM  Invalid input argumets.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
  * @retval ::CA_STATUS_FAILED Operation failed.
  */
 CALEData_t *CACreateLEData(const CAEndpoint_t *remoteEndpoint, const void *data,
@@ -394,7 +394,7 @@ void CAFreeLEData(CALEData_t *bleData);
 typedef void (*CALEDeviceStateChangedCallback)(CAAdapterState_t adapter_state);
 
 /**
- * This will be used to notify that network packet recieved from
+ * This will be used to notify that network packet received from
  * GATTClient to adapter layer.
  * @param[in]  remoteAddress  Remote endpoint Address.
  * @param[in]  serviceUUID    Service UUID.
@@ -403,7 +403,7 @@ typedef void (*CALEDeviceStateChangedCallback)(CAAdapterState_t adapter_state);
  * @param[in]  sentLength     Length of the data sent.
  * @return ::CA_STATUS_OK or Appropriate error code.
  * @retval ::CA_STATUS_OK  Successful.
- * @retval ::CA_STATUS_INVALID_PARAM  Invalid input argumets.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
  * @retval ::CA_STATUS_FAILED Operation failed.
  */
 typedef CAResult_t (*CABLEClientDataReceivedCallback)(const char *remoteAddress,
@@ -411,7 +411,7 @@ typedef CAResult_t (*CABLEClientDataReceivedCallback)(const char *remoteAddress,
                                                       uint32_t dataLength, uint32_t *sentLength);
 
 /**
- * This will be used to notify that network packet recieved from
+ * This will be used to notify that network packet received from
  * GATTServer to adapter layer.
  * @param[in]  remoteAddress  Remote endpoint Address.
  * @param[in]  serviceUUID    Service UUID.
@@ -420,7 +420,7 @@ typedef CAResult_t (*CABLEClientDataReceivedCallback)(const char *remoteAddress,
  * @param[in]  sentLength     Length of the data sent.
  * @return ::CA_STATUS_OK or Appropriate error code.
  * @retval ::CA_STATUS_OK  Successful.
- * @retval ::CA_STATUS_INVALID_PARAM  Invalid input argumets.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
  * @retval ::CA_STATUS_FAILED Operation failed.
  */
 typedef CAResult_t (*CABLEServerDataReceivedCallback)(const char *remoteAddress,
