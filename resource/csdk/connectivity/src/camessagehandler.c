@@ -396,51 +396,22 @@ static void CAProcessSendData(const CAData_t *data)
 
     if (SEND_TYPE_UNICAST == type)
     {
+        CAInfo_t *info = NULL;
 
         OIC_LOG(DEBUG,TAG,"Unicast message");
         if (NULL != data->requestInfo)
         {
             OIC_LOG(DEBUG, TAG, "requestInfo is available..");
 
-            pdu = CAGeneratePDU(data->requestInfo->method, &data->requestInfo->info);
-
-#ifdef WITH_BWT
-            if (CA_ADAPTER_GATT_BTLE != data->remoteEndpoint->adapter)
-            {
-                // Blockwise transfer
-                CAResult_t res = CAAddBlockOption(&pdu,
-                                                  data->requestInfo->info);
-                if (CA_STATUS_OK != res)
-                {
-                    OIC_LOG(INFO, TAG, "to write block option has failed");
-                    CAErrorHandler(data->remoteEndpoint, pdu->hdr, pdu->length, res);
-                    coap_delete_pdu(pdu);
-                    return;
-                }
-            }
-#endif
+            info = &data->requestInfo->info;
+            pdu = CAGeneratePDU(data->requestInfo->method, info);
         }
         else if (NULL != data->responseInfo)
         {
             OIC_LOG(DEBUG, TAG, "responseInfo is available..");
 
-            pdu = CAGeneratePDU(data->responseInfo->result, &data->responseInfo->info);
-
-#ifdef WITH_BWT
-            if (CA_ADAPTER_GATT_BTLE != data->remoteEndpoint->adapter)
-            {
-                // Blockwise transfer
-                CAResult_t res = CAAddBlockOption(&pdu,
-                                                  data->responseInfo->info);
-                if (CA_STATUS_OK != res)
-                {
-                    OIC_LOG(INFO, TAG, "to write block option has failed");
-                    CAErrorHandler(data->remoteEndpoint, pdu->hdr, pdu->length, res);
-                    coap_delete_pdu(pdu);
-                    return;
-                }
-            }
-#endif
+            info = &data->responseInfo->info;
+            pdu = CAGeneratePDU(data->responseInfo->result, info);
         }
         else
         {
@@ -451,6 +422,23 @@ static void CAProcessSendData(const CAData_t *data)
         // interface controller function call.
         if (NULL != pdu)
         {
+#ifdef WITH_BWT
+            if (CA_ADAPTER_GATT_BTLE != data->remoteEndpoint->adapter)
+            {
+                // Blockwise transfer
+                if (NULL != info)
+                {
+                    CAResult_t res = CAAddBlockOption(&pdu, *info);
+                    if (CA_STATUS_OK != res)
+                    {
+                        OIC_LOG(INFO, TAG, "to write block option has failed");
+                        CAErrorHandler(data->remoteEndpoint, pdu->hdr, pdu->length, res);
+                        coap_delete_pdu(pdu);
+                        return;
+                    }
+                }
+            }
+#endif
             CALogPDUInfo(pdu);
 
             res = CASendUnicastData(data->remoteEndpoint, pdu->hdr, pdu->length);
