@@ -89,18 +89,13 @@ static ca_mutex g_bleClientSendDataMutex = NULL;
 /**
  * Mutex to synchronize the queing of the data from ReceiverQueue.
  */
-static ca_mutex g_bleClientReceiveDataMutex = NULL;
+static ca_mutex g_bleReceiveDataMutex = NULL;
 
 
 /**
  * Mutex to synchronize the queing of the data from SenderQueue.
  */
 static ca_mutex g_bleServerSendDataMutex = NULL;
-
-/**
- * Mutex to synchronize the queing of the data from ReceiverQueue.
- */
-static ca_mutex g_bleServerReceiveDataMutex = NULL;
 
 /**
  * Mutex to synchronize the callback to be called for the adapterReqResponse.
@@ -221,11 +216,6 @@ static CAQueueingThread_t *g_bleReceiverQueue = NULL;
  * Queue to process the outgoing packets from GATTServer.
  */
 static CAQueueingThread_t *g_bleServerSendQueueHandle = NULL;
-
-/**
- * Mutex to synchronize the incoming data packets to receiver
- */
-static ca_mutex g_bleReceiveDataMutex = NULL;
 
 /**
 * Used to free data.
@@ -1127,32 +1117,10 @@ CAResult_t CAInitLEAdapterMutex()
         }
     }
 
-    if (NULL == g_bleClientReceiveDataMutex)
-    {
-        g_bleClientReceiveDataMutex = ca_mutex_new();
-        if (NULL == g_bleClientReceiveDataMutex)
-        {
-            OIC_LOG(ERROR, CALEADAPTER_TAG, "ca_mutex_new failed");
-            CATerminateLEAdapterMutex();
-            return CA_STATUS_FAILED;
-        }
-    }
-
     if (NULL == g_bleServerSendDataMutex)
     {
         g_bleServerSendDataMutex = ca_mutex_new();
         if (NULL == g_bleServerSendDataMutex)
-        {
-            OIC_LOG(ERROR, CALEADAPTER_TAG, "ca_mutex_new failed");
-            CATerminateLEAdapterMutex();
-            return CA_STATUS_FAILED;
-        }
-    }
-
-    if (NULL == g_bleServerReceiveDataMutex)
-    {
-        g_bleServerReceiveDataMutex = ca_mutex_new();
-        if (NULL == g_bleServerReceiveDataMutex)
         {
             OIC_LOG(ERROR, CALEADAPTER_TAG, "ca_mutex_new failed");
             CATerminateLEAdapterMutex();
@@ -1204,14 +1172,8 @@ void CATerminateLEAdapterMutex()
     ca_mutex_free(g_bleClientSendDataMutex);
     g_bleClientSendDataMutex = NULL;
 
-    ca_mutex_free(g_bleClientReceiveDataMutex);
-    g_bleClientReceiveDataMutex = NULL;
-
     ca_mutex_free(g_bleServerSendDataMutex);
     g_bleServerSendDataMutex = NULL;
-
-    ca_mutex_free(g_bleServerReceiveDataMutex);
-    g_bleServerReceiveDataMutex = NULL;
 
     ca_mutex_free(g_bleAdapterReqRespCbMutex);
     g_bleAdapterReqRespCbMutex = NULL;
