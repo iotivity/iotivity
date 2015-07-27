@@ -57,7 +57,6 @@ namespace OIC
             private:
                 // resource instance
                 PrimitiveResourcePtr sResource;
-//                std::shared_ptr<BaseResource> baseHandler;
 
                 // cached data info
                 RCSResourceAttributes attributes;
