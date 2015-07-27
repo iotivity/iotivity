@@ -71,7 +71,7 @@ namespace OIC
                 *
                 * @throw InvalidParameterException : This API throws the InvalidParameterException if any of
                 *                                                         the parameter is invalid.
-                * @RCSAddress
+                * @see RCSAddress
                 */
                 void discoverResource(const RCSAddress &address, const std::string &resourceURI,
                                       OnResourceDiscoveredCallback cb);

@@ -98,7 +98,7 @@ namespace OIC
          *              and the developers. Developer will get the RCSRemoteResourceObject by calling the
          *              discoverResource() API of "RCSDiscoveryManager" class.
          *
-         * @see DiscoveryManager
+         * @see RCSDiscoveryManager
          *
          */
         class RCSRemoteResourceObject

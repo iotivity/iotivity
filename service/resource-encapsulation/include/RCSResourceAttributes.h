@@ -84,8 +84,8 @@ namespace OIC
         * @see Type
         * @see iterator
         * @see const_iterator
-        * @see DiscoveryManager
-        * @see RemoteResourceObject
+        * @see RCSDiscoveryManager
+        * @see RCSRemoteResourceObject
         * @see RCSResourceObject
         */
         class RCSResourceAttributes
