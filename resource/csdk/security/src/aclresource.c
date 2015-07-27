@@ -386,7 +386,7 @@ OCStackResult CreateACLResource()
                            OIC_RSRC_ACL_URI,
                            ACLEntityHandler,
                            NULL,
-                           OC_OBSERVABLE);
+                           OC_OBSERVABLE | OC_SECURE | OC_EXPLICIT_DISCOVERABLE);
 
     if (OC_STACK_OK != ret)
     {

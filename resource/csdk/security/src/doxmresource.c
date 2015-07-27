@@ -580,7 +580,7 @@ OCStackResult CreateDoxmResource()
                            OIC_RSRC_DOXM_URI,
                            DoxmEntityHandler,
                            NULL,
-                           OC_OBSERVABLE);
+                           OC_OBSERVABLE | OC_SECURE | OC_EXPLICIT_DISCOVERABLE);
 
     if (OC_STACK_OK != ret)
     {

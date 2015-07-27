@@ -333,6 +333,9 @@ typedef enum
  *                    signifies that responses from this resource can expect delays in
  *                    processing its requests from clients.
  * ::OC_SECURE        When this bit is set, the resource is a secure resource.
+ * ::OC_EXPLICIT_DISCOVERABLE   When this bit is set, the resource is allowed to be discovered only
+ *                              if discovery request contains an explicit querystring.
+ *                              Ex: GET /oic/res?rt=oic.sec.acl
  */
 typedef enum
 {
@@ -341,7 +344,8 @@ typedef enum
     OC_OBSERVABLE    = (1 << 1),
     OC_ACTIVE        = (1 << 2),
     OC_SLOW          = (1 << 3),
-    OC_SECURE        = (1 << 4)
+    OC_SECURE        = (1 << 4),
+    OC_EXPLICIT_DISCOVERABLE   = (1 << 5)
 } OCResourceProperty;
 
 /**
