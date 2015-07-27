@@ -554,11 +554,6 @@ typedef enum
  * The LSB represents OC_DISCOVERABLE and Second LSB bit represents OC_OBSERVABLE and so on.
  * Not including the policy property is equivalent to zero.
  *
- * ::OC_RES_PROP_NONE When none of the bits are set, the resource is non-discoverable &
- *                    non-observable by the client.
- * ::OC_DISCOVERABLE  When this bit is set, the resource is allowed to be discovered by clients.
- * ::OC_OBSERVABLE    When this bit is set, the resource is allowed to be observed by clients.
-
  */
 typedef enum
 {
@@ -583,7 +578,12 @@ typedef enum
     OC_SLOW          = (1 << 3),
 
     /** When this bit is set, the resource is a secure resource.*/
-    OC_SECURE        = (1 << 4)
+    OC_SECURE        = (1 << 4),
+
+    /** When this bit is set, the resource is allowed to be discovered only
+     *  if discovery request contains an explicit querystring.
+     *  Ex: GET /oic/res?rt=oic.sec.acl */
+    OC_EXPLICIT_DISCOVERABLE   = (1 << 5)
 } OCResourceProperty;
 
 /**

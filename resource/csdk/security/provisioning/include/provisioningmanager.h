@@ -66,6 +66,7 @@ struct SPTargetDeviceInfo
     OCDevAddr endpoint;             /**< target address **/
     OicSecPstat_t *pstat;           /**< Pointer to target's pstat resource. **/
     OicSecDoxm_t *doxm;             /**< Pointer to target's doxm resource. **/
+    uint16_t securePort;            /**< Secure port **/
     SPTargetDeviceInfo_t *next;     /**< Next pointer. **/
 };
 

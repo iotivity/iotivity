@@ -324,8 +324,6 @@ OCStackResult DetermineResourceHandling (const OCServerRequest *request,
 
     OC_LOG_V(INFO, TAG, "DetermineResourceHandling for %s", request->resourceUrl);
 
-    const OCDevAddr *devAddr = &request->devAddr;
-
     // Check if virtual resource
     if (GetTypeOfVirtualURI(request->resourceUrl) != OC_UNKNOWN_URI)
     {
@@ -357,13 +355,6 @@ OCStackResult DetermineResourceHandling (const OCServerRequest *request,
             // and default device handler does not exist
             *handling = OC_RESOURCE_NOT_SPECIFIED;
             return OC_STACK_NO_RESOURCE;
-        }
-
-        // secure resource will entertain only authorized requests
-        if ((resourcePtr->resourceProperties & OC_SECURE) && ((devAddr->flags & OC_FLAG_SECURE) == 0))
-        {
-            OC_LOG(ERROR, TAG, PCF("Un-authorized request. Ignoring"));
-            return OC_STACK_RESOURCE_ERROR;
         }
 
         if (IsCollectionResource (resourcePtr))
@@ -502,7 +493,21 @@ static bool includeThisResourceInResponse(OCResource *resource,
         return false;
     }
 
-    if ( !(resource->resourceProperties & OC_ACTIVE) ||
+    if ( resource->resourceProperties & OC_EXPLICIT_DISCOVERABLE)
+    {
+        /*
+         * At least one valid filter should be available to
+         * include the resource in discovery response
+         */
+        if (!((interfaceFilter && *interfaceFilter ) ||
+              (resourceTypeFilter && *resourceTypeFilter)))
+        {
+            OC_LOG_V(INFO, TAG, PCF("%s no query string for EXPLICIT_DISCOVERABLE \
+                resource"), resource->uri);
+            return false;
+        }
+    }
+    else if ( !(resource->resourceProperties & OC_ACTIVE) ||
          !(resource->resourceProperties & OC_DISCOVERABLE))
     {
         OC_LOG_V(INFO, TAG, PCF("%s not ACTIVE or DISCOVERABLE"), resource->uri);
