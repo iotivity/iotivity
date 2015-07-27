@@ -609,18 +609,19 @@ TEST_F(AttributeUpdatedListenerTest, AddListenerReturnsTrueIfListenerIsCalled)
 TEST_F(AttributeUpdatedListenerTest, AddListenerisChangedAccordingToLastAddedFunction)
 {
     int called=0, expected=100;
+    const char Key[]={"newKey"};
 
-    server->setAttribute(KEY,0);
+    server->setAttribute(Key,0);
     OCRepresentation ocRep = createOCRepresentation();
 
-    server->addAttributeUpdatedListener("key",
+    server->addAttributeUpdatedListener(Key,
         [&called](const OIC::Service::RCSResourceAttributes::Value&,
         const OIC::Service::RCSResourceAttributes::Value&)
         {
             called=10;
         } );
 
-    server->addAttributeUpdatedListener(KEY,
+    server->addAttributeUpdatedListener("newKey",
         [&called](const OIC::Service::RCSResourceAttributes::Value&,
         const OIC::Service::RCSResourceAttributes::Value&)
         {
