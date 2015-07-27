@@ -68,7 +68,7 @@ TEST_F(ResourceCacheManagerTest, requestResourceCache_reportTimeIsNULL)
     mocks.ExpectCall(pResource.get(), PrimitiveResource::requestGet);
     mocks.ExpectCall(pResource.get(), PrimitiveResource::isObservable).Return(true);
     mocks.ExpectCall(pResource.get(), PrimitiveResource::requestObserve);
-    mocks.ExpectCall(pResource.get(), PrimitiveResource::cancelObserve);
+    mocks.OnCall(pResource.get(), PrimitiveResource::cancelObserve);
 
     CacheCB func = cb;
     REPORT_FREQUENCY rf = REPORT_FREQUENCY::UPTODATE;
@@ -86,7 +86,7 @@ TEST_F(ResourceCacheManagerTest, requestResourceCache_normalCase)
     mocks.ExpectCall(pResource.get(), PrimitiveResource::requestGet);
     mocks.ExpectCall(pResource.get(), PrimitiveResource::isObservable).Return(true);
     mocks.ExpectCall(pResource.get(), PrimitiveResource::requestObserve);
-    mocks.ExpectCall(pResource.get(), PrimitiveResource::cancelObserve);
+    mocks.OnCall(pResource.get(), PrimitiveResource::cancelObserve);
 
     CacheCB func = cb;
     REPORT_FREQUENCY rf = REPORT_FREQUENCY::UPTODATE;
@@ -111,7 +111,7 @@ TEST_F(ResourceCacheManagerTest, cancelResourceCache_normalCase)
     mocks.ExpectCall(pResource.get(), PrimitiveResource::requestGet);
     mocks.ExpectCall(pResource.get(), PrimitiveResource::isObservable).Return(true);
     mocks.ExpectCall(pResource.get(), PrimitiveResource::requestObserve);
-    mocks.ExpectCall(pResource.get(), PrimitiveResource::cancelObserve);
+    mocks.OnCall(pResource.get(), PrimitiveResource::cancelObserve);
 
     CacheCB func = cb;
     REPORT_FREQUENCY rf = REPORT_FREQUENCY::UPTODATE;
