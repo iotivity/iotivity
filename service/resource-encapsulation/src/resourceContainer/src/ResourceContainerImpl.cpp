@@ -88,37 +88,42 @@ namespace OIC
             info_logger() << "Resource container without Java support" << endl;
 #endif
 
-            m_config = new Configuration(configFile);
+            if(!configFile.empty()){
+                m_config = new Configuration(configFile);
 
-            if (m_config->isLoaded())
-            {
-                configInfo bundles;
-                m_config->getConfiguredBundles(&bundles);
-
-                for (unsigned int i = 0; i < bundles.size(); i++)
+                if (m_config->isLoaded())
                 {
-                    RCSBundleInfo *bundleInfo = RCSBundleInfo::build();
-                    bundleInfo->setPath(bundles[i]["path"]);
-                    bundleInfo->setVersion(bundles[i]["version"]);
-                    bundleInfo->setID(bundles[i]["id"]);
-                    if (!bundles[i]["activator"].empty())
-                    {
-                        string activatorName = bundles[i]["activator"];
-                        std::replace(activatorName.begin(), activatorName.end(), '.', '/');
-                        ((BundleInfoInternal *) bundleInfo)->setActivatorName(activatorName);
-                        ((BundleInfoInternal *) bundleInfo)->setLibraryPath(
-                            bundles[i]["libraryPath"]);
+                    configInfo bundles;
+                    m_config->getConfiguredBundles(&bundles);
 
+                    for (unsigned int i = 0; i < bundles.size(); i++)
+                    {
+                        RCSBundleInfo *bundleInfo = RCSBundleInfo::build();
+                        bundleInfo->setPath(bundles[i]["path"]);
+                        bundleInfo->setVersion(bundles[i]["version"]);
+                        bundleInfo->setID(bundles[i]["id"]);
+                        if (!bundles[i]["activator"].empty())
+                        {
+                            string activatorName = bundles[i]["activator"];
+                            std::replace(activatorName.begin(), activatorName.end(), '.', '/');
+                            ((BundleInfoInternal *) bundleInfo)->setActivatorName(activatorName);
+                            ((BundleInfoInternal *) bundleInfo)->setLibraryPath(
+                                bundles[i]["libraryPath"]);
+
+                        }
+                        info_logger() << "Init Bundle:" << bundles[i]["id"] << ";" << bundles[i]["path"]
+                                      << endl;
+                        registerBundle(bundleInfo);
+                        activateBundle(bundleInfo);
                     }
-                    info_logger() << "Init Bundle:" << bundles[i]["id"] << ";" << bundles[i]["path"]
-                                  << endl;
-                    registerBundle(bundleInfo);
-                    activateBundle(bundleInfo);
+                }
+                else
+                {
+                    error_logger() << "Container started with invalid configfile path" << endl;
                 }
             }
-            else
-            {
-                error_logger() << "Container started with invalid configfile path" << endl;
+            else{
+                info_logger() << "No configuration file for the container provided" << endl;
             }
         }
 

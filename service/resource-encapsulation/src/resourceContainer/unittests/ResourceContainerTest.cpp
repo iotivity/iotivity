@@ -118,7 +118,14 @@ TEST_F(ResourceContainerTest, BundleActivatedWhenContainerStartedWithValidConfig
 
 TEST_F(ResourceContainerTest, BundleNotRegisteredWhenContainerStartedWithInvalidConfigFile)
 {
-    m_pResourceContainer->startContainer("invalideConfig");
+    m_pResourceContainer->startContainer("invalidConfig");
+
+    EXPECT_EQ((unsigned int) 0, m_pResourceContainer->listBundles().size());
+}
+
+TEST_F(ResourceContainerTest, BundleNotRegisteredWhenContainerStartedWithEmptyConfigFile)
+{
+    m_pResourceContainer->startContainer("");
 
     EXPECT_EQ((unsigned int) 0, m_pResourceContainer->listBundles().size());
 }
