@@ -357,10 +357,10 @@ CAResult_t CAInitLEClientSenderQueue();
  * the queue to process the function CABLEDataReceiverHandler() when ever the task
  * is added to this queue.
  *
- * @return ::CA_STATUS_OK or Appropriate error code
- * @retval ::CA_STATUS_OK  Successful
- * @retval ::CA_STATUS_INVALID_PARAM  Invalid input argumets
- * @retval ::CA_STATUS_FAILED Operation failed
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input argumets.
+ * @retval ::CA_STATUS_FAILED Operation failed.
  *
  */
 CAResult_t CAInitLEReceiverQueue();
