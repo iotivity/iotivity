@@ -2,6 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <unistd.h>
+#include <memory>
 
 #include "gtest/gtest.h"
 #include "HippoMocks/hippomocks.h"
@@ -28,7 +29,7 @@ public:
 
     typedef std::function<void(const HeaderOptions&, const ResponseStatement&, int)> GetCallback;
 
-    ResourcePresence * instance;
+    std::shared_ptr<ResourcePresence> instance;
     PrimitiveResource::Ptr pResource;
     BrokerCB cb;
     BrokerID id;
@@ -38,8 +39,7 @@ protected:
     void SetUp() 
     {
         TestWithMock::SetUp();
-
-        instance = (ResourcePresence*)new ResourcePresence();
+        instance.reset(new ResourcePresence());
         pResource = PrimitiveResource::Ptr(mocks.Mock< PrimitiveResource >(), [](PrimitiveResource*){});
         cb = ([](BROKER_STATE)->OCStackResult{return OC_STACK_OK;});
         id = 0;
@@ -48,6 +48,7 @@ protected:
     void TearDown() 
     {
         TestWithMock::TearDown();
+        instance.reset();
         pResource.reset();
         id = 0;
         cb = nullptr;
@@ -64,19 +65,14 @@ protected:
 
 TEST_F(ResourcePresenceTest,initializeResourcePresence_NormalhandlingIfNormalResource)
 {
-
     MockingFunc();
-
     instance->initializeResourcePresence(pResource);
     ASSERT_NE(nullptr,instance->getPrimitiveResource());
-
 }
 
 TEST_F(ResourcePresenceTest,addBrokerRequester_ReturnNormalValueIfNormalParams)
 {
-
     MockingFunc();
-
     instance->initializeResourcePresence(pResource);
     id = 1;
     instance->addBrokerRequester(id,cb);
@@ -118,7 +114,6 @@ TEST_F(ResourcePresenceTest,removeAllBrokerRequester_NormalHandling)
 
 TEST_F(ResourcePresenceTest,removeAllBrokerRequester_ErrorHandlingIfListNull)
 {
-
     MockingFunc();
 
     instance->initializeResourcePresence(pResource);
@@ -150,7 +145,8 @@ TEST_F(ResourcePresenceTest,changePresenceMode_NormalHandlingIfNewModeDifferent)
 
 TEST_F(ResourcePresenceTest,getResourceState_NormalHandling)
 {
-
+    MockingFunc();
+    instance->initializeResourcePresence(pResource);
     ASSERT_EQ(BROKER_STATE::REQUESTED,instance->getResourceState());
 
 }
@@ -176,6 +172,19 @@ TEST_F(ResourcePresenceTest,getPrimitiveResource_NormalHandling)
 
 }
 
+TEST_F(ResourcePresenceTest,isEmptyRequester_NormalHandling)
+{
+
+    MockingFunc();
+
+    instance->initializeResourcePresence(pResource);
+    id = 1;
+    instance->addBrokerRequester(id,cb);
+    instance->removeAllBrokerRequester();
+    ASSERT_TRUE(instance->isEmptyRequester());
+
+}
+
 TEST_F(ResourcePresenceTest,getCB_NormalHandlingIfMessageOC_STACK_OK)
 {
 
@@ -185,15 +194,17 @@ TEST_F(ResourcePresenceTest,getCB_NormalHandlingIfMessageOC_STACK_OK)
         OIC::Service::HeaderOptions op;
         RCSResourceAttributes attr;
         OIC::Service::ResponseStatement res(attr);
+
         callback(op,res,OC_STACK_OK);
 
     });
+
     mocks.OnCall(pResource.get(), PrimitiveResource::requestGet).Do(
                                 [](GetCallback callback){
         std::cout <<"End call requestGetFunc()\n";
                     });
-    mocks.ExpectCall(pResource.get(), PrimitiveResource::getHost).Return("address1");
-    mocks.ExpectCall(pResource.get(), PrimitiveResource::getHost).Return("address2");
+    mocks.OnCall(pResource.get(), PrimitiveResource::getHost).Return("address1");
+
     mocks.OnCallFuncOverload(static_cast< subscribePresenceSig1 >(OC::OCPlatform::subscribePresence)).Do(
             [](OC::OCPlatform::OCPresenceHandle&,
                     const std::string&, OCConnectivityType, SubscribeCallback callback)->OCStackResult{
@@ -208,15 +219,5 @@ TEST_F(ResourcePresenceTest,getCB_NormalHandlingIfMessageOC_STACK_OK)
 
 }
 
-TEST_F(ResourcePresenceTest,isEmptyRequester_NormalHandling)
-{
 
-    MockingFunc();
 
-    instance->initializeResourcePresence(pResource);
-    id = 1;
-    instance->addBrokerRequester(id,cb);
-    instance->removeAllBrokerRequester();
-    ASSERT_TRUE(instance->isEmptyRequester());
-
-}
