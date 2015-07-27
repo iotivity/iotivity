@@ -61,14 +61,21 @@ namespace OIC
         {
             state = CACHE_STATE::DESTROYED;
 
-            if(mode == CACHE_MODE::OBSERVE)
-            {
-                sResource->cancelObserve();
-            }
             if (subscriberList != nullptr)
             {
                 subscriberList->clear();
                 subscriberList.release();
+            }
+
+            if(mode == CACHE_MODE::OBSERVE)
+            {
+                try
+                {
+                    sResource->cancelObserve();
+                } catch (...)
+                {
+                    // ignore the exception because data cache was released.
+                }
             }
         }
 

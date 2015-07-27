@@ -107,7 +107,6 @@ namespace OIC
                 if (foundCacheHandler->isEmptySubscriber())
                 {
                     s_cacheDataList->remove(foundCacheHandler);
-//                    foundCacheHandler.reset();
                 }
             }
         }
@@ -132,7 +131,7 @@ namespace OIC
         {
             if (updateId == 0)
             {
-                throw InvalidParameterException {"[getCachedData] CacheID is invaild"};
+                throw InvalidParameterException {"[getCachedData] CacheID is NULL"};
             }
 
             DataCachePtr foundCache = findDataCache(updateId);
@@ -148,7 +147,7 @@ namespace OIC
         {
             if (pResource == nullptr)
             {
-                throw InvalidParameterException {"[getCachedData] Primitive Resource is invaild"};
+                throw InvalidParameterException {"[getCachedData] Primitive Resource is nullptr"};
             }
 
             DataCachePtr handler = findDataCache(pResource);
@@ -163,7 +162,7 @@ namespace OIC
         {
             if (id == 0)
             {
-                throw InvalidParameterException {"[getCachedData] CacheID is invaild"};
+                throw InvalidParameterException {"[getCachedData] CacheID is NULL"};
             }
 
             DataCachePtr handler = findDataCache(id);
@@ -179,7 +178,7 @@ namespace OIC
         {
             if (pResource == nullptr)
             {
-                throw InvalidParameterException {"[getResourceCacheState] Primitive Resource is invaild"};
+                throw InvalidParameterException {"[getResourceCacheState] Primitive Resource is nullptr"};
             }
 
             DataCachePtr handler = findDataCache(pResource);
@@ -194,7 +193,7 @@ namespace OIC
         {
             if (id == 0)
             {
-                throw InvalidParameterException {"[getResourceCacheState] CacheID is invaild"};
+                throw InvalidParameterException {"[getResourceCacheState] CacheID is NULL"};
             }
 
             DataCachePtr handler = findDataCache(id);
