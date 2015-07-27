@@ -44,7 +44,10 @@ void OnResourceStateChanged(ResourceState resourceState)
     else if (resourceState == ResourceState::REQUESTED)
         cout << "State changed to : REQUESTED" << std::endl;
     else if (resourceState == ResourceState::LOST_SIGNAL)
+    {
         cout << "State changed to : LOST_SIGNAL" << std::endl;
+        resource = NULL;
+    }
     else if (resourceState == ResourceState::DESTROYED)
         cout << "State changed to : DESTROYED" << std::endl;
 }
@@ -115,6 +118,7 @@ int main()
 
     RCSDiscoveryManager *discoveryManagerInstance =  RCSDiscoveryManager::getInstance();
     bool cachingFlag = false;
+    bool startMonitoringFlag= false;
 
     //configuring the platform
     PlatformConfig config
@@ -168,145 +172,240 @@ int main()
 
             if (userInput == 1)
             {
-                try
-                {
-                    resource->startMonitoring(&OnResourceStateChanged);
-                    cout << "\n\n**********  Hosting Started ***********" << std::endl;
-                }
-                catch (InvalidParameterException e)
-                {
-                    cout << "Exeception in startMonitoring :: " << e.what() << std::endl;
-                }
+                      if(NULL == resource)
+                    {
+                            cout << "\n\n******No Resource found :-> Run the Server and Restart this App******" << std::endl;
+                    }
+                   else
+                   {
+                        try
+                        {
+                                if(false == startMonitoringFlag)
+                                {
+                                     resource->startMonitoring(&OnResourceStateChanged);
+                                     startMonitoringFlag = true;
+                                     cout << "\n\n**********  Hosting Started ***********" << std::endl;
+                                }
+                                else
+                               {
+                                   cout << "\n\n**********  Already Started ***********" << std::endl;    
+                               }
+                          } 
+                    
+                        catch (InvalidParameterException e)
+                        {
+                            cout << "Exeception in startMonitoring :: " << e.what() << std::endl;
+                        }
+                 }
             }
             else if (userInput == 2)
             {
-                resource->stopMonitoring();
-                cout << "\n\n******  Hosting stopped******" << std::endl;
+                     if(NULL == resource)
+                    {
+                            cout << "\n\n******No Resource found :-> Run the Server and Restart this App******" << std::endl;
+                    }
+                    else
+                   {
+                        if(true == startMonitoringFlag)
+                        {
+                             resource->stopMonitoring();
+                             cout << "\n\n******  Hosting stopped******" << std::endl;
+                             startMonitoringFlag = false;
+                        }
+                        else
+                       {
+                                 cout << "\n\n******Hosting not started : press 1 to start Hosting******" << std::endl;
+                       }
+                  }
             }
             else if (userInput == 3)
             {
-                resource->getRemoteAttributes(&OnRemoteAttributesReceivedCallback);
+                     if(NULL == resource)
+                    {
+                            cout << "\n\n******No Resource found :-> Run the Server and Restart this App******" << std::endl;
+                    }
+                    else
+                   {
+                        resource->getRemoteAttributes(&OnRemoteAttributesReceivedCallback);
+                   }
             }
             else if (userInput == 4)
             {
-                int temperatureValue;
-                if (0 == resourceAttributes.size())
-                {
-                    cout << "\n***First Get the Attributes from Remote Device : press 3 to get attributes***" <<
-                         std::endl;
-                }
-                else
-                {
-                    RCSResourceAttributes::const_iterator iter = resourceAttributes.begin();
-                    for (unsigned int i = 0; i < resourceAttributes.size(); ++i)
+                 int temperatureValue;
+                     if(NULL == resource)
                     {
-                        if ( iter->key() == "Temperature")
-                        {
-                            cout << "Enter the value you want to set :";
-                            cin >> temperatureValue;
-                            resourceAttributes["Temperature"]  = temperatureValue;
-                            resource->setRemoteAttributes(resourceAttributes, &OnRemoteAttributesSetCallback);
-                        }
-                        ++iter;
+                            cout << "\n\n******No Resource found :-> Run the Server and Restart this App******" << std::endl;
                     }
-                }
+                    else
+                   {
+                        if (0 == resourceAttributes.size())
+                        {
+                            cout << "\n***First Get the Attributes from Remote Device : press 3 to get attributes***" <<
+                                 std::endl;
+                        }
+                        else
+                        {
+                            RCSResourceAttributes::const_iterator iter = resourceAttributes.begin();
+                            for (unsigned int i = 0; i < resourceAttributes.size(); ++i)
+                            {
+                                if ( iter->key() == "Temperature")
+                                {
+                                    cout << "Enter the value you want to set :";
+                                    cin >> temperatureValue;
+                                    resourceAttributes["Temperature"]  = temperatureValue;
+                                    resource->setRemoteAttributes(resourceAttributes, &OnRemoteAttributesSetCallback);
+                                }
+                                ++iter;
+                            }
+                        }
+                  }
             }
             else if (userInput == 5)
             {
-                if (false == cachingFlag)
+                 if(NULL == resource)
                 {
-                    resource->startCaching();
-                    cout << "**********  caching Started ***********" << std::endl;
-                    cachingFlag = true;
+                            cout << "\n\n******No Resource found :-> Run the Server and Restart this app******" << std::endl;
                 }
-                else
-                {
-                    cout << "***  Already Started... To start it again first stop it : press 10 ***" << std::endl;
-                }
-            }
-            else if (userInput == 6)
-            {
-                try
-                {
+               else
+               {
                     if (false == cachingFlag)
                     {
-                        resource->startCaching(&OnCacheUpdated);
+                        resource->startCaching();
                         cout << "**********  caching Started ***********" << std::endl;
+                        cachingFlag = true;
                     }
                     else
                     {
                         cout << "***  Already Started... To start it again first stop it : press 10 ***" << std::endl;
                     }
-                }
-                catch (InvalidParameterException e)
-                {
-                    cout << "Exeception in startCaching :: " << e.what() << std::endl;
-                }
+              }
             }
-            else if (userInput == 7)
+            else if (userInput == 6)
             {
 
-                CacheState state = resource->getResourceCacheState();
-                if (state == CacheState ::READY)
-                    cout << "Current Cache State : " << "CACHE_STATE ::READY" << std::endl;
-                else if (state == CacheState ::READY_YET)
-                    cout << "Current Cache State : " << "CACHE_STATE ::READY_YET" << std::endl;
-                else if (state == CacheState ::LOST_SIGNAL)
-                    cout << "Current Cache State : " << "CACHE_STATE ::LOST_SIGNAL" << std::endl;
-                else if (state == CacheState ::DESTROYED)
-                    cout << "Current Cache State : " << "CACHE_STATE ::DESTROYED" << std::endl;
-                else if (state == CacheState ::UPDATING)
-                    cout << "Current Cache State : " << "CACHE_STATE ::UPDATING" << std::endl;
-                else if (state == CacheState ::NONE)
-                    cout << "Current Cache State : " << "CACHE_STATE ::NONE" << std::endl;
+                 if(NULL == resource)
+                {
+                            cout << "\n\n******No Resource found :-> Run the Server and Restart this app******" << std::endl;
+                }
+               else
+               {
+                   try
+                    {
+                        if (false == cachingFlag)
+                        {
+                            resource->startCaching(&OnCacheUpdated);
+                            cout << "**********  caching Started ***********" << std::endl;
+                            cachingFlag = true;
+                        }
+                        else
+                        {
+                            cout << "***  Already Started... To start it again first stop it : press 10 ***" << std::endl;
+                        }
+                    }
+                    catch (InvalidParameterException e)
+                    {
+                        cout << "Exeception in startCaching :: " << e.what() << std::endl;
+                    }
+              }
+         }
+            else if (userInput == 7)
+            {
+                 if(NULL == resource)
+                {
+                            cout << "\n\n******No Resource found :-> Run the Server and Restart this app******" << std::endl;
+                }
+               else
+               {
+                    CacheState state = resource->getResourceCacheState();
+                    if (state == CacheState ::READY)
+                        cout << "Current Cache State : " << "CACHE_STATE ::READY" << std::endl;
+                    else if (state == CacheState ::READY_YET)
+                        cout << "Current Cache State : " << "CACHE_STATE ::READY_YET" << std::endl;
+                    else if (state == CacheState ::LOST_SIGNAL)
+                        cout << "Current Cache State : " << "CACHE_STATE ::LOST_SIGNAL" << std::endl;
+                    else if (state == CacheState ::DESTROYED)
+                        cout << "Current Cache State : " << "CACHE_STATE ::DESTROYED" << std::endl;
+                    else if (state == CacheState ::UPDATING)
+                        cout << "Current Cache State : " << "CACHE_STATE ::UPDATING" << std::endl;
+                    else if (state == CacheState ::NONE)
+                        cout << "Current Cache State : " << "CACHE_STATE ::NONE" << std::endl;
+               }
             }
             else if (userInput == 8)
             {
-                try
+                 if(NULL == resource)
                 {
-                    RCSResourceAttributes atttribute = resource->getCachedAttributes();
-                    if (atttribute.empty())
+                            cout << "\n\n******No Resource found :-> Run the Server and Restart this app******" << std::endl;
+                }
+               else
+               {
+                    try
                     {
-                        cout << "Received cached attribute is empty" << std::endl;
-                    }
-                    else
-                    {
-                        RCSResourceAttributes::const_iterator iter = atttribute.begin();
-                        for (unsigned int i = 0; i < atttribute.size(); ++i)
+                        RCSResourceAttributes atttribute = resource->getCachedAttributes();
+                        if (atttribute.empty())
                         {
-                            std::cout << "\nkey : " << iter->key() << "\nvalue : " << iter->value().toString() << std::endl;
-                            ++iter;
+                            cout << "Received cached attribute is empty" << std::endl;
+                        }
+                        else
+                        {
+                            RCSResourceAttributes::const_iterator iter = atttribute.begin();
+                            for (unsigned int i = 0; i < atttribute.size(); ++i)
+                            {
+                                std::cout << "\nkey : " << iter->key() << "\nvalue : " << iter->value().toString() << std::endl;
+                                ++iter;
+                            }
                         }
                     }
-                }
-                catch (BadRequestException e)
-                {
-                    cout << "getCachedAttributes exception : " << e.what() << std::endl;
-                }
-            }
+                    catch (BadRequestException e)
+                    {
+                        cout << "getCachedAttributes exception : " << e.what() << std::endl;
+                    }
+               }
+         }
             else if (userInput == 9)
             {
                 std::string key = "Temperature";
-                try
+                 if(NULL == resource)
                 {
-                    RCSResourceAttributes::Value valueObj = resource->getCachedAttribute(key);
-                    int value = valueObj.get< int >();
-                    cout << "\nkey : " << key << "\nValue : " << value << std::endl;
+                            cout << "\n\n******No Resource found :-> Run the Server and Restart this app******" << std::endl;
                 }
-                catch (BadRequestException e)
-                {
-                    cout << "getCachedAttribute exception : " << e.what() << std::endl;
-                }
-                catch (BadGetException e)
-                {
-                    cout << "Exeception in getCachedAttribute  BadGetException:: " << e.what() << std::endl;
-                }
+               else
+               {
+                    try
+                    {
+                        RCSResourceAttributes::Value valueObj = resource->getCachedAttribute(key);
+                        int value = valueObj.get< int >();
+                        cout << "\nkey : " << key << "\nValue : " << value << std::endl;
+                    }
+                    catch (BadRequestException e)
+                    {
+                        cout << "getCachedAttribute exception : " << e.what() << std::endl;
+                    }
+                    catch (BadGetException e)
+                    {
+                        cout << "Exeception in getCachedAttribute  BadGetException:: " << e.what() << std::endl;
+                    }
+              }
             }
             else if (userInput == 10)
             {
-                resource->stopCaching();
-                cachingFlag = false;
-                cout << "****** Caching stopped ******" << std::endl;
+                 if(NULL == resource)
+                {
+                            cout << "\n\n******No Resource found :-> Run the Server and Restart this app******" << std::endl;
+                }
+               else
+               {
+                    if(true == cachingFlag)
+                    {
+                        resource->stopCaching();
+                        cachingFlag = false;
+                        cout << "****** Caching stopped ******" << std::endl;
+                    }
+                    else
+                    {   
+                        cout << "****** Caching not started :  press 5 or 6 to start Caching ******" << std::endl;
+                    }
+              }
             }
             else if (userInput == 11)
             {

@@ -220,6 +220,7 @@ int main(void)
             }
             if (end == true)
             {
+                server=NULL;
                 break;
             }
         }
