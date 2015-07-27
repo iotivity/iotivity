@@ -58,7 +58,7 @@ TEST_F(DataCacheTest, initializeDataCache_normalCase)
     mocks.ExpectCall(pResource.get(), PrimitiveResource::requestGet);
     mocks.ExpectCall(pResource.get(), PrimitiveResource::isObservable).Return(true);
     mocks.ExpectCall(pResource.get(), PrimitiveResource::requestObserve);
-    mocks.ExpectCall(pResource.get(), PrimitiveResource::cancelObserve);
+    mocks.OnCall(pResource.get(), PrimitiveResource::cancelObserve);
 
     cacheHandler->initializeDataCache(pResource);
 }
@@ -122,7 +122,7 @@ TEST_F(DataCacheTest, initializeDataCache_normalCaseTimeOut)
     mocks.ExpectCall(pResource.get(), PrimitiveResource::requestGet);
     mocks.ExpectCall(pResource.get(), PrimitiveResource::isObservable).Return(true);
     mocks.ExpectCall(pResource.get(), PrimitiveResource::requestObserve);
-    mocks.ExpectCall(pResource.get(), PrimitiveResource::cancelObserve);
+    mocks.OnCall(pResource.get(), PrimitiveResource::cancelObserve);
 
     cacheHandler->initializeDataCache(pResource);
 
@@ -135,7 +135,7 @@ TEST_F(DataCacheTest, addSubscriber_normalCase)
     mocks.ExpectCall(pResource.get(), PrimitiveResource::requestGet);
     mocks.ExpectCall(pResource.get(), PrimitiveResource::isObservable).Return(true);
     mocks.ExpectCall(pResource.get(), PrimitiveResource::requestObserve);
-    mocks.ExpectCall(pResource.get(), PrimitiveResource::cancelObserve);
+    mocks.OnCall(pResource.get(), PrimitiveResource::cancelObserve);
 
     cacheHandler->initializeDataCache(pResource);
     REPORT_FREQUENCY rf = REPORT_FREQUENCY::UPTODATE;
@@ -150,7 +150,7 @@ TEST_F(DataCacheTest, deleteSubsciber_normalCase)
     mocks.ExpectCall(pResource.get(), PrimitiveResource::requestGet);
     mocks.ExpectCall(pResource.get(), PrimitiveResource::isObservable).Return(true);
     mocks.ExpectCall(pResource.get(), PrimitiveResource::requestObserve);
-    mocks.ExpectCall(pResource.get(), PrimitiveResource::cancelObserve);
+    mocks.OnCall(pResource.get(), PrimitiveResource::cancelObserve);
 
     cacheHandler->initializeDataCache(pResource);
 
@@ -168,7 +168,7 @@ TEST_F(DataCacheTest, getCacheState_normalCase)
     mocks.ExpectCall(pResource.get(), PrimitiveResource::requestGet);
     mocks.ExpectCall(pResource.get(), PrimitiveResource::isObservable).Return(true);
     mocks.ExpectCall(pResource.get(), PrimitiveResource::requestObserve);
-    mocks.ExpectCall(pResource.get(), PrimitiveResource::cancelObserve);
+    mocks.OnCall(pResource.get(), PrimitiveResource::cancelObserve);
 
     cacheHandler->initializeDataCache(pResource);
 
@@ -181,7 +181,7 @@ TEST_F(DataCacheTest, getCachedData_normalCase)
     mocks.ExpectCall(pResource.get(), PrimitiveResource::requestGet);
     mocks.ExpectCall(pResource.get(), PrimitiveResource::isObservable).Return(true);
     mocks.ExpectCall(pResource.get(), PrimitiveResource::requestObserve);
-    mocks.ExpectCall(pResource.get(), PrimitiveResource::cancelObserve);
+    mocks.OnCall(pResource.get(), PrimitiveResource::cancelObserve);
 
     cacheHandler->initializeDataCache(pResource);
 
@@ -194,7 +194,7 @@ TEST_F(DataCacheTest, getPrimitiveResource_normalCase)
     mocks.ExpectCall(pResource.get(), PrimitiveResource::requestGet);
     mocks.ExpectCall(pResource.get(), PrimitiveResource::isObservable).Return(true);
     mocks.ExpectCall(pResource.get(), PrimitiveResource::requestObserve);
-    mocks.ExpectCall(pResource.get(), PrimitiveResource::cancelObserve);
+    mocks.OnCall(pResource.get(), PrimitiveResource::cancelObserve);
 
     cacheHandler->initializeDataCache(pResource);
 
@@ -208,7 +208,7 @@ TEST_F(DataCacheTest, requestGet_normalCase)
     mocks.ExpectCall(pResource.get(), PrimitiveResource::isObservable).Return(true);
     mocks.ExpectCall(pResource.get(), PrimitiveResource::requestObserve);
     mocks.ExpectCall(pResource.get(), PrimitiveResource::requestGet);
-    mocks.ExpectCall(pResource.get(), PrimitiveResource::cancelObserve);
+    mocks.OnCall(pResource.get(), PrimitiveResource::cancelObserve);
 
     cacheHandler->initializeDataCache(pResource);
 
@@ -221,7 +221,7 @@ TEST_F(DataCacheTest, isEmptySubscriber_normalCase)
     mocks.ExpectCall(pResource.get(), PrimitiveResource::requestGet);
     mocks.ExpectCall(pResource.get(), PrimitiveResource::isObservable).Return(true);
     mocks.ExpectCall(pResource.get(), PrimitiveResource::requestObserve);
-    mocks.ExpectCall(pResource.get(), PrimitiveResource::cancelObserve);
+    mocks.OnCall(pResource.get(), PrimitiveResource::cancelObserve);
 
     cacheHandler->initializeDataCache(pResource);
 
@@ -250,7 +250,7 @@ TEST_F(DataCacheTest, requestGet_normalCasetest)
         return;
     }
     );
-    mocks.ExpectCall(pResource.get(), PrimitiveResource::cancelObserve);
+    mocks.OnCall(pResource.get(), PrimitiveResource::cancelObserve);
 
     cacheHandler->initializeDataCache(pResource);
 
