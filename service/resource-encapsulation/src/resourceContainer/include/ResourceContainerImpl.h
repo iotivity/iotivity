@@ -44,7 +44,7 @@ namespace OIC
     namespace Service
     {
 
-        class ResourceContainerImpl: public ResourceContainer, public ResourceContainerBundleAPI
+        class ResourceContainerImpl: public RCSResourceContainer, public ResourceContainerBundleAPI
         {
             public:
                 ResourceContainerImpl();

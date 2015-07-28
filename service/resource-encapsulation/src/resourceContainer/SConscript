@@ -116,7 +116,7 @@ if int(containerJavaSupport):
 ######################################################################
 res_container_src = ['src/BaseActivator.cpp','src/BundleActivator.cpp','src/RCSBundleInfo.cpp', 
 	'src/BundleInfoInternal.cpp', 'src/BundleResource.cpp', 'src/Configuration.cpp', 'src/JavaBundleResource.cpp', 'src/ProtocolBridgeResource.cpp',
-	'src/ProtocolBridgeConnector.cpp', 'src/ResourceContainer.cpp', 'src/ResourceContainerBundleAPI.cpp', 'src/ResourceContainerImpl.cpp', 
+	'src/ProtocolBridgeConnector.cpp', 'src/RCSResourceContainer.cpp', 'src/ResourceContainerBundleAPI.cpp', 'src/ResourceContainerImpl.cpp', 
 	'src/SoftSensorResource.cpp']
 	
 res_container_static = resource_container_env.StaticLibrary('rcs_container', res_container_src)

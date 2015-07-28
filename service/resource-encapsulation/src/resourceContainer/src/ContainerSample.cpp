@@ -43,7 +43,7 @@ int main()
 
     info_logger() << "Starting container test." << std::flush;
 
-    ResourceContainer *container = ResourceContainer::getInstance();
+    RCSResourceContainer *container = RCSResourceContainer::getInstance();
     container->startContainer("examples/ResourceContainerConfig.xml");
 
     /*so bundle add test*/

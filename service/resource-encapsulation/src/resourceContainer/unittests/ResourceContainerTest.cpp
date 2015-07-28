@@ -67,13 +67,13 @@ class ResourceContainerTest: public TestWithMock
 {
 
     public:
-        ResourceContainer *m_pResourceContainer;
+        RCSResourceContainer *m_pResourceContainer;
 
     protected:
         void SetUp()
         {
             TestWithMock::SetUp();
-            m_pResourceContainer = ResourceContainer::getInstance();
+            m_pResourceContainer = RCSResourceContainer::getInstance();
         }
 };
 

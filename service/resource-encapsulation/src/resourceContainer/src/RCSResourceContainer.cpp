@@ -23,19 +23,19 @@
 
 namespace OIC{
     namespace Service{
-        ResourceContainer::ResourceContainer()
+        RCSResourceContainer::RCSResourceContainer()
         {
 
         }
 
-        ResourceContainer::~ResourceContainer()
+        RCSResourceContainer::~RCSResourceContainer()
         {
 
         }
 
-        ResourceContainer *ResourceContainer::getInstance()
+        RCSResourceContainer *RCSResourceContainer::getInstance()
         {
-            return (ResourceContainer *)ResourceContainerImpl::getImplInstance();
+            return (RCSResourceContainer *)ResourceContainerImpl::getImplInstance();
         }
     }
 }
