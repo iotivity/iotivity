@@ -419,9 +419,10 @@ void CopyEndpointToDevAddr(const CAEndpoint_t *in, OCDevAddr *out)
 
     out->adapter = (OCTransportAdapter)in->adapter;
     out->flags = CAToOCTransportFlags(in->flags);
-    strncpy(out->addr, in->addr, MAX_ADDR_STR_SIZE);
-    out->addr[MAX_ADDR_STR_SIZE - 1] = '\0';
+    OICStrcpy(out->addr, sizeof(out->addr), in->addr);
     out->port = in->port;
+    memcpy(&out->identity.id, &in->identity.id, sizeof(out->identity.id));
+    out->identity.id_length = in->identity.id_length;
 }
 
 void CopyDevAddrToEndpoint(const OCDevAddr *in, CAEndpoint_t *out)
