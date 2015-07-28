@@ -402,21 +402,6 @@ typedef enum
     /** use when defaults are ok. */
     CT_DEFAULT = 0,
 
-    /** 16-bit int. */
-    #if defined (__UINT32_MAX__) && (__UINT32_MAX__ == 65535)
-
-    /** IPv4 and IPv6, including 6LoWPAN.*/
-    CT_ADAPTER_IP           = (1 << 10),
-
-    /** GATT over Bluetooth LE.*/
-    CT_ADAPTER_GATT_BTLE    = (1 << 11),
-
-    /** RFCOMM over Bluetooth EDR.*/
-    CT_ADAPTER_RFCOMM_BTEDR = (1 << 12),
-
-    /** assume 32-bit int. */
-    #else
-
     /** IPv4 and IPv6, including 6LoWPAN.*/
     CT_ADAPTER_IP           = (1 << 16),
 
@@ -429,17 +414,6 @@ typedef enum
     #ifdef RA_ADAPTER
     /** Remote Access over XMPP.*/
     CT_ADAPTER_REMOTE_ACCESS = (1 << 19),
-    #endif
-
-    /** bit shift required for connectivity adapter.*/
-    #define CT_ADAPTER_SHIFT 10
-
-    /** Mask Flag.*/
-    #define CT_MASK_FLAGS 0x03FF
-
-    /** Mask Adapter.*/
-    #define CT_MASK_ADAPTER 0xFC00
-
     #endif
 
     /** Insecure transport is the default (subject to change).*/
@@ -479,6 +453,15 @@ typedef enum
     /** IPv6 Global scope.*/
     CT_SCOPE_GLOBAL    = 0xE,
 } OCConnectivityType;
+
+/** bit shift required for connectivity adapter.*/
+#define CT_ADAPTER_SHIFT 16
+
+/** Mask Flag.*/
+#define CT_MASK_FLAGS 0xFFFF
+
+/** Mask Adapter.*/
+#define CT_MASK_ADAPTER 0xFFFF0000
 
 /**
  *  OCDoResource methods to dispatch the request
