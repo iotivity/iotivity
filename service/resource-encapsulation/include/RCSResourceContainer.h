@@ -24,8 +24,8 @@
  * This file contains the resource container APIs provided to the developers.
  */
 
-#ifndef RESOURCECONTAINER_H_
-#define RESOURCECONTAINER_H_
+#ifndef RCSRESOURCECONTAINER_H_
+#define RCSRESOURCECONTAINER_H_
 
 #include <iostream>
 #include <string>
@@ -45,18 +45,18 @@ namespace OIC
          * @brief    This class provides APIs for managing the container and bundles in the container.
          *
          */
-        class ResourceContainer
+        class RCSResourceContainer
         {
             public:
                 /**
                 * Constructor
                 */
-                ResourceContainer();
+                RCSResourceContainer();
 
                 /**
                 *virtual Destructor
                 */
-                virtual ~ResourceContainer();
+                virtual ~RCSResourceContainer();
 
                 /**
                  * API for starting the Container
@@ -145,12 +145,12 @@ namespace OIC
                 /**
                  * API for getting the Instance of ResourceContainer class
                  *
-                 * @return ResourceContainer - Instance of the "ResourceContainer" class
+                 * @return RCSResourceContainer - Instance of the "RCSResourceContainer" class
                  *
                  */
-                static ResourceContainer *getInstance();
+                static RCSResourceContainer *getInstance();
         };
     }
 }
 
-#endif /* RESOURCECONTAINER_H_ */
+#endif /* RCSRESOURCECONTAINER_H_ */
