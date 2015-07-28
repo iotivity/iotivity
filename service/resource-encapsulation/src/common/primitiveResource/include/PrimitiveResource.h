@@ -41,10 +41,11 @@ namespace OIC
         class RCSResourceAttributes;
         class ResponseStatement;
 
-        class PrimitiveResource
+        class PrimitiveResource: public std::enable_shared_from_this< PrimitiveResource >
         {
         public:
-            typedef std::shared_ptr<PrimitiveResource> Ptr;
+            typedef std::shared_ptr< PrimitiveResource > Ptr;
+            typedef std::shared_ptr< const PrimitiveResource > ConstPtr;
 
             typedef std::function<void(const HeaderOptions&, const ResponseStatement&, int)>
                     GetCallback;

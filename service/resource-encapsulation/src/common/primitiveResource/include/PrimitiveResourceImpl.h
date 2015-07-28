@@ -40,10 +40,48 @@ namespace OIC
 
         private:
             static ResponseStatement createResponseStatement(
-                    const OC::OCRepresentation& ocRepresentation)
+                    const OC::OCRepresentation& rep)
             {
                 return ResponseStatement::create(
-                        ResourceAttributesConverter::fromOCRepresentation(ocRepresentation));
+                        ResourceAttributesConverter::fromOCRepresentation(rep));
+            }
+
+            template< typename CALLBACK, typename ...ARGS >
+            static inline void checkedCall(const std::weak_ptr< const PrimitiveResource >& resource,
+                    const CALLBACK& cb, ARGS&&... args)
+            {
+                auto checkedRes = resource.lock();
+
+                if (!checkedRes) return;
+
+                cb(std::forward< ARGS >(args)...);
+            }
+
+            template< typename CALLBACK >
+            static void safeCallback(const std::weak_ptr< const PrimitiveResource >& resource,
+                    const CALLBACK& cb, const HeaderOptions& headerOptions,
+                    const OC::OCRepresentation& rep, int errorCode)
+            {
+                checkedCall(resource, cb, headerOptions, createResponseStatement(rep), errorCode);
+            }
+
+            static void safeObserveCallback(const std::weak_ptr< const PrimitiveResource >& res,
+                    const PrimitiveResource::ObserveCallback& cb,
+                    const HeaderOptions& headerOptions, const OC::OCRepresentation& rep,
+                    int errorCode, int sequenceNumber)
+            {
+                checkedCall(res, cb, headerOptions, createResponseStatement(rep), errorCode,
+                        sequenceNumber);
+            }
+
+            std::weak_ptr< PrimitiveResource > WeakFromThis()
+            {
+                return shared_from_this();
+            }
+
+            std::weak_ptr< const PrimitiveResource > WeakFromThis() const
+            {
+                return shared_from_this();
             }
 
         public:
@@ -60,8 +98,9 @@ namespace OIC
                         const OC::QueryParamsMap&, OC::GetCallback);
 
                 invokeOC(m_baseResource, static_cast< GetFunc >(&BaseResource::get),
-                        OC::QueryParamsMap(), std::bind(std::move(callback), _1,
-                                std::bind(createResponseStatement, _2), _3));
+                        OC::QueryParamsMap{ },
+                        std::bind(safeCallback< GetCallback >, WeakFromThis(),
+                                std::move(callback), _1, _2, _3));
             }
 
             void requestSet(const RCSResourceAttributes& attrs, SetCallback callback)
@@ -74,8 +113,9 @@ namespace OIC
 
                 invokeOC(m_baseResource, static_cast< PutFunc >(&BaseResource::put),
                         ResourceAttributesConverter::toOCRepresentation(attrs),
-                        OC::QueryParamsMap{ }, std::bind(std::move(callback), _1,
-                                std::bind(createResponseStatement, _2), _3));
+                        OC::QueryParamsMap{ },
+                        std::bind(safeCallback< SetCallback >, WeakFromThis(),
+                                std::move(callback), _1, _2, _3));
             }
 
             void requestObserve(ObserveCallback callback)
@@ -87,7 +127,8 @@ namespace OIC
 
                 invokeOC(m_baseResource, static_cast< ObserveFunc >(&BaseResource::observe),
                         OC::ObserveType::ObserveAll, OC::QueryParamsMap{ },
-                        bind(std::move(callback), _1, bind(createResponseStatement, _2), _3, _4));
+                        std::bind(safeObserveCallback, WeakFromThis(),
+                                                       std::move(callback), _1, _2, _3, _4));
             }
 
             void cancelObserve()
