@@ -1569,13 +1569,6 @@ OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
 {
     (void) ipAddr;
     (void) port;
-#ifdef RA_ADAPTER
-    if(!gRASetInfo)
-    {
-        OC_LOG(ERROR, TAG, PCF("Need to call OCSetRAInfo before calling OCInit"));
-        return OC_STACK_ERROR;
-    }
-#endif
     return OCInit1(mode, OC_DEFAULT_FLAGS, OC_DEFAULT_FLAGS);
 }
 
@@ -1587,6 +1580,14 @@ OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
                 OCStop() between them are ignored."));
         return OC_STACK_OK;
     }
+
+#ifdef RA_ADAPTER
+    if(!gRASetInfo)
+    {
+        OC_LOG(ERROR, TAG, PCF("Need to call OCSetRAInfo before calling OCInit"));
+        return OC_STACK_ERROR;
+    }
+#endif
 
     OCStackResult result = OC_STACK_ERROR;
     OC_LOG(INFO, TAG, PCF("Entering OCInit"));
@@ -1611,12 +1612,12 @@ OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
     caglobals.serverFlags = (CATransportFlags_t)serverFlags;
     if (!(caglobals.serverFlags & CA_IPFAMILY_MASK))
     {
-        caglobals.serverFlags = (CATransportFlags_t)(caglobals.serverFlags|CA_IPV4);
+        caglobals.serverFlags = (CATransportFlags_t)(caglobals.serverFlags|CA_IPV4|CA_IPV6);
     }
     caglobals.clientFlags = (CATransportFlags_t)clientFlags;
     if (!(caglobals.clientFlags & CA_IPFAMILY_MASK))
     {
-        caglobals.clientFlags = (CATransportFlags_t)(caglobals.clientFlags|CA_IPV4);
+        caglobals.clientFlags = (CATransportFlags_t)(caglobals.clientFlags|CA_IPV4|CA_IPV6);
     }
 
     defaultDeviceHandler = NULL;
