@@ -35,6 +35,47 @@ namespace OIC
 {
     namespace Service
     {
+
+        namespace
+        {
+            std::mutex cbMutex;
+            void vertifyObserveCB(
+                const HeaderOptions &_hos, const ResponseStatement &_rep,
+                int _result, int _seq, std::weak_ptr<DataCache> rpPtr)
+            {
+                std::lock_guard<std::mutex> lock(cbMutex);
+                std::shared_ptr<DataCache> Ptr = rpPtr.lock();
+                if(Ptr)
+                {
+                    Ptr->onObserve(_hos, _rep, _result, _seq);
+                }
+            }
+            ObserveCB vertifiedObserveCB(std::weak_ptr<DataCache> rpPtr)
+            {
+                return std::bind(vertifyObserveCB,
+                        std::placeholders::_1, std::placeholders::_2,
+                        std::placeholders::_3, std::placeholders::_4, rpPtr);
+            }
+
+            void vertifyGetCB(
+                    const HeaderOptions &_hos, const ResponseStatement &_rep,
+                    int _result, std::weak_ptr<DataCache> rpPtr)
+            {
+                std::lock_guard<std::mutex> lock(cbMutex);
+                std::shared_ptr<DataCache> Ptr = rpPtr.lock();
+                if(Ptr)
+                {
+                    Ptr->onGet(_hos, _rep, _result);
+                }
+            }
+            GetCB vertifiedGetCB(std::weak_ptr<DataCache> rpPtr)
+            {
+                return std::bind(vertifyGetCB,
+                        std::placeholders::_1, std::placeholders::_2,
+                        std::placeholders::_3, rpPtr);
+            }
+        }
+
         DataCache::DataCache()
         {
             subscriberList = std::unique_ptr<SubscriberInfo>(new SubscriberInfo());
@@ -46,15 +87,6 @@ namespace OIC
 
             networkTimeOutHandle = 0;
             pollingHandle = 0;
-
-            pObserveCB = (ObserveCB)(std::bind(&DataCache::onObserve, this,
-                                               std::placeholders::_1, std::placeholders::_2,
-                                               std::placeholders::_3, std::placeholders::_4));
-            pGetCB = (GetCB)(std::bind(&DataCache::onGet, this,
-                                       std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-            pTimerCB = (TimerCB)(std::bind(&DataCache::onTimeOut, this, std::placeholders::_1));
-            pPollingCB = (TimerCB)(std::bind(&DataCache::onPollingOut, this, std::placeholders::_1));
-
         }
 
         DataCache::~DataCache()
@@ -82,6 +114,10 @@ namespace OIC
         void DataCache::initializeDataCache(PrimitiveResourcePtr pResource)
         {
             sResource = pResource;
+            pObserveCB = vertifiedObserveCB(std::weak_ptr<DataCache>(shared_from_this()));
+            pGetCB = vertifiedGetCB(std::weak_ptr<DataCache>(shared_from_this()));
+            pTimerCB = (TimerCB)(std::bind(&DataCache::onTimeOut, this, std::placeholders::_1));
+            pPollingCB = (TimerCB)(std::bind(&DataCache::onPollingOut, this, std::placeholders::_1));
 
             sResource->requestGet(pGetCB);
             if (sResource->isObservable())
@@ -197,7 +233,7 @@ namespace OIC
                 state = CACHE_STATE::READY;
             }
 
-            if (!sResource->isObservable())
+            if (mode != CACHE_MODE::OBSERVE)
             {
                 networkTimer.cancelTimer(networkTimeOutHandle);
                 networkTimeOutHandle = networkTimer.postTimer(
@@ -235,8 +271,20 @@ namespace OIC
 
         void DataCache::onTimeOut(unsigned int timerID)
         {
+            if(mode == CACHE_MODE::OBSERVE)
+            {
+                sResource->cancelObserve();
+                mode = CACHE_MODE::FREQUENCY;
+
+                networkTimer.cancelTimer(networkTimeOutHandle);
+                networkTimeOutHandle = networkTimer.postTimer(
+                        CACHE_DEFAULT_EXPIRED_MILLITIME, pTimerCB);
+
+                pollingHandle = pollingTimer.postTimer(CACHE_DEFAULT_REPORT_MILLITIME, pPollingCB);
+                return;
+            }
+
             state = CACHE_STATE::LOST_SIGNAL;
-            return;
         }
         void DataCache::onPollingOut(const unsigned int timerID)
         {
