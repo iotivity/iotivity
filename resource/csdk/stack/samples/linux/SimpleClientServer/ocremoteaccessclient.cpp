@@ -437,30 +437,40 @@ int InitDiscovery(OCQualityOfService qos)
     return ret;
 }
 
-OCStackResult initRemoteAccessAdapter ()
-{
-    OCRAInfo_t rainfo;
-    rainfo.hostname = "localhost";
-    rainfo.port = 5222;
-    rainfo.xmpp_domain = "localhost";
-    rainfo.username = "test1";
-    rainfo.password = "intel123";
-    rainfo.resource = "";
-    rainfo.user_jid = "";
-
-    return OCSetRAInfo(&rainfo);
-}
-
 int main(int argc, char* argv[])
 {
-    int opt;
+    OCRAInfo_t rainfo = {.hostname = "localhost", .port = 5222,
+        .xmpp_domain = "localhost", .username = "test1", .password = "intel123",
+        .resource = "", .user_jid = ""};
 
-    while ((opt = getopt(argc, argv, "t:")) != -1)
+    int opt = 0;
+    while ((opt = getopt(argc, argv, "t:s:p:d:u:w:r:j:")) != -1)
     {
         switch(opt)
         {
             case 't':
                 TEST_CASE = atoi(optarg);
+                break;
+            case 's':
+                rainfo.hostname = optarg;
+                break;
+            case 'p':
+                rainfo.port = atoi(optarg);
+                break;
+            case 'd':
+                rainfo.xmpp_domain = optarg;
+                break;
+            case 'u':
+                rainfo.username = optarg;
+                break;
+            case 'w':
+                rainfo.password = optarg;
+                break;
+            case 'j':
+                rainfo.user_jid = optarg;
+                break;
+            case 'r':
+                rainfo.resource = optarg;
                 break;
             default:
                 PrintUsage();
@@ -468,7 +478,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    if (initRemoteAccessAdapter() != OC_STACK_OK)
+    if (OCSetRAInfo(&rainfo) != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "Error initiating remote access adapter");
         return 0;
