@@ -36,16 +36,6 @@ class ResourceCacheManagerTest : public TestWithMock
         CacheID id;
 
     protected:
-        ResourceCacheManagerTest()
-        {
-
-        }
-
-        virtual ~ResourceCacheManagerTest() noexcept(true)
-        {
-
-        }
-
         virtual void SetUp()
         {
             TestWithMock::SetUp();

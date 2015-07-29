@@ -47,16 +47,6 @@ class DataCacheTest : public TestWithMock
         CacheID id;
 
     protected:
-        DataCacheTest()
-        {
-
-        }
-
-        virtual ~DataCacheTest() noexcept(true)
-        {
-
-        }
-
         virtual void SetUp()
         {
             TestWithMock::SetUp();
