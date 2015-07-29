@@ -24,6 +24,7 @@
 #include <list>
 #include <string>
 #include <memory>
+#include <mutex>
 
 #include "CacheTypes.h"
 #include "ExpiryTimer.h"
@@ -85,7 +86,9 @@ namespace OIC
 
                 CacheID generateCacheID();
                 SubscriberInfoPair findSubscriber(CacheID id);
-                void notifyObservers(RCSResourceAttributes Att);
+                void notifyObservers(const RCSResourceAttributes Att);
+
+                mutable std::mutex m_mutex;
         };
     } // namespace Service
 } // namespace OIC

@@ -100,6 +100,7 @@ namespace OIC
 
             newItem.reportID = generateCacheID();
 
+            std::lock_guard<std::mutex> lock(m_mutex);
             if (subscriberList != nullptr)
             {
                 subscriberList->insert(
@@ -114,6 +115,8 @@ namespace OIC
             CacheID ret = 0;
 
             SubscriberInfoPair pair = findSubscriber(id);
+
+            std::lock_guard<std::mutex> lock(m_mutex);
             if (pair.first != 0)
             {
                 ret = pair.first;
@@ -127,6 +130,7 @@ namespace OIC
         {
             SubscriberInfoPair ret;
 
+            std::lock_guard<std::mutex> lock(m_mutex);
             for (auto &i : *subscriberList)
             {
                 if (i.first == id)
@@ -205,7 +209,7 @@ namespace OIC
             notifyObservers(_rep.getAttributes());
         }
 
-        void DataCache::notifyObservers(RCSResourceAttributes Att)
+        void DataCache::notifyObservers(const RCSResourceAttributes Att)
         {
             if (attributes == Att)
             {
@@ -214,12 +218,12 @@ namespace OIC
 
             attributes = Att;
 
-            RCSResourceAttributes retAtt = Att;
+            std::lock_guard<std::mutex> lock(m_mutex);
             for (auto &i : * subscriberList)
             {
                 if (i.second.first.rf == REPORT_FREQUENCY::UPTODATE)
                 {
-                    i.second.second(this->sResource, retAtt);
+                    i.second.second(this->sResource, Att);
                 }
             }
         }
@@ -272,6 +276,7 @@ namespace OIC
 
         bool DataCache::isEmptySubscriber() const
         {
+            std::lock_guard<std::mutex> lock(m_mutex);
             return (subscriberList != nullptr) ? subscriberList->empty() : true;
         }
     } // namespace Service
