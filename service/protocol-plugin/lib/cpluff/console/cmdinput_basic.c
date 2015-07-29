@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  * C-Pluff, a plug-in framework for C
  * Copyright 2007 Johannes Lehtinen
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *-----------------------------------------------------------------------*/
 
-// Basic command line input functionality 
+// Basic command line input functionality
 
 #include <stdio.h>
 #include <string.h>
@@ -34,7 +34,7 @@ CP_HIDDEN void cmdline_init(void) {}
 CP_HIDDEN char *cmdline_input(const char *prompt) {
 	static char cmdline[CMDLINE_SIZE];
 	int i, success = 0;
-	
+
 	do {
 		fputs(prompt, stdout);
 		if (fgets(cmdline, CMDLINE_SIZE, stdin) == NULL) {

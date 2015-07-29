@@ -104,7 +104,7 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
                     ehRet  = OC_EH_ERROR;
                 }
             }
-    
+
         }
         else if (flag & OC_OBSERVE_FLAG)
         {

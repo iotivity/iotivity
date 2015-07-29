@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  * C-Pluff, a plug-in framework for C
  * Copyright 2007 Johannes Lehtinen
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -43,7 +43,7 @@ static void *create(cp_context_t *ctx) {
 
 static int start(void *d) {
 	plugin_data_t *data = d;
-	
+
 	if ((data->str = malloc(sizeof(char) * 16)) == NULL) {
 		return CP_ERR_RESOURCE;
 	}
@@ -54,12 +54,12 @@ static int start(void *d) {
 
 static void destroy(void *d) {
 	plugin_data_t *data = d;
-	
+
 	if (data->str != NULL) {
 		strcpy(data->str, "Cleared string");
 		free(data->str);
 	}
-	free(d);	
+	free(d);
 }
 
 CP_EXPORT cp_plugin_runtime_t sp_runtime = {

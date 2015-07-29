@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  * C-Pluff, a plug-in framework for C
  * Copyright 2007 Johannes Lehtinen
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -31,17 +31,17 @@ void symbolusage(void) {
 	cp_status_t status;
 	int errors;
 	const char *str;
-	
+
 	ctx = init_context(CP_LOG_ERROR, &errors);
 	check(cp_register_pcollection(ctx, "tmp/install/plugins") == CP_OK);
 	check(cp_scan_plugins(ctx, 0) == CP_OK);
-	
+
 	// Start plug-in implicitly by resolving a symbol
 	check((str = cp_resolve_symbol(ctx, "symuser", "used_string", &status)) != NULL && status == CP_OK);
-	
+
 	// Compare used string to the provided string
 	check(strcmp(str, "Provided string") == 0);
-	
+
 	// Release string
 	cp_release_symbol(ctx, str);
 

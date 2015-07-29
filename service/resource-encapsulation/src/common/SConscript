@@ -44,7 +44,7 @@ rcs_common_env.AppendUnique(CPPPATH = [
     env.get('SRC_DIR')+'/extlibs',
     '../../include',
     'primitiveResource/include'])
-	
+
 rcs_common_env.AppendUnique(CPPPATH = [
     'expiryTimer/include',
     'expiryTimer/src'])
@@ -76,7 +76,7 @@ if not release:
 TIMER_SRC_DIR = 'expiryTimer/src/'
 RESOURCE_SRC = 'primitiveResource/src/'
 rcs_common_src = [
-        TIMER_SRC_DIR + 'ExpiryTimerImpl.cpp', 
+        TIMER_SRC_DIR + 'ExpiryTimerImpl.cpp',
 		TIMER_SRC_DIR + 'ExpiryTimer.cpp',
 		RESOURCE_SRC + 'PresenceSubscriber.cpp',
 		RESOURCE_SRC + 'PrimitiveResource.cpp',
@@ -85,7 +85,7 @@ rcs_common_src = [
 		RESOURCE_SRC + 'RCSResourceAttributes.cpp',
 		RESOURCE_SRC + 'ResponseStatement.cpp'
         ]
-		
+
 rcs_common_static = rcs_common_env.StaticLibrary('rcs_common', rcs_common_src)
 rcs_common_shared = rcs_common_env.SharedLibrary('rcs_common', rcs_common_src)
 rcs_common_env.InstallTarget([rcs_common_static,rcs_common_shared], 'rcs_common')

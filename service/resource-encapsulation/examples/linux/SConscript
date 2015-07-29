@@ -54,7 +54,7 @@ ResourceServer_env.AppendUnique(CPPPATH = ['../../src/serverBuilder/include'])
 if env.get('SECURED') == '1':
     ResourceClient_env.AppendUnique(LIBS = ['tinydtls'])
     ResourceServer_env.AppendUnique(LIBS = ['tinydtls'])
-	
+
 if 'rt' in ResourceClient_env.get('LIBS'):
     ResourceClient_env.Append(LIBS = ['rt'])
 if 'rt' in ResourceServer_env.get('LIBS'):
