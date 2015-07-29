@@ -33,7 +33,7 @@ namespace OIC
 {
     namespace Service
     {
-        class DataCache
+        class DataCache : public std::enable_shared_from_this<DataCache>
         {
             public:
                 typedef unsigned int TimerID;
@@ -66,6 +66,7 @@ namespace OIC
 
                 // subscriber info
                 std::unique_ptr<SubscriberInfo> subscriberList;
+                mutable std::mutex m_mutex;
 
                 ExpiryTimer networkTimer;
                 ExpiryTimer pollingTimer;
@@ -77,18 +78,17 @@ namespace OIC
                 TimerCB pTimerCB;
                 TimerCB pPollingCB;
 
-                // for requestCB from base
+            public:
                 void onObserve(const HeaderOptions &_hos,
                                const ResponseStatement &_rep, int _result, int _seq);
                 void onGet(const HeaderOptions &_hos, const ResponseStatement &_rep, int _result);
+            private:
                 void onTimeOut(const unsigned int timerID);
                 void onPollingOut(const unsigned int timerID);
 
                 CacheID generateCacheID();
                 SubscriberInfoPair findSubscriber(CacheID id);
                 void notifyObservers(const RCSResourceAttributes Att);
-
-                mutable std::mutex m_mutex;
         };
     } // namespace Service
 } // namespace OIC
