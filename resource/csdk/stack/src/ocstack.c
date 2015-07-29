@@ -1824,54 +1824,53 @@ static OCStackResult ParseRequestUri(const char *fullUri,
     size_t len = 0;
     if (urlLen && devAddr)
     {   // construct OCDevAddr
-        if (OC_ADAPTER_IP == adapter)
-        {
-            if (start[0] == '[')
-            {   // ipv6 address
-                char *close = strchr(++start, ']');
-                if (!close || close > slash)
-                {
-                    return OC_STACK_INVALID_URI;
-                }
-                end = close;
-                if (close[1] == ':')
-                {
-                    colon = close + 1;
-                }
-            }
-            else
-            {   // ipv4 address
-                end = slash;
-                colon = strchr(start, ':');
-                end = (colon && colon < slash) ? colon : slash;
-            }
-            len = end - start;
-            if (len >= sizeof(da->addr))
+        if (start[0] == '[')
+        {   // ipv6 address
+            char *close = strchr(++start, ']');
+            if (!close || close > slash)
             {
                 return OC_STACK_INVALID_URI;
             }
-            // collect port, if any
-            if (colon && colon < slash)
+            end = close;
+            if (close[1] == ':')
             {
-                for (colon++; colon < slash; colon++)
-                {
-                    char c = colon[0];
-                    if (c < '0' || c > '9')
-                    {
-                        return OC_STACK_INVALID_URI;
-                    }
-                    port = 10 * port + c - '0';
-                }
+                colon = close + 1;
             }
+            adapter = (OCTransportAdapter)(adapter | OC_ADAPTER_IP);
+            flags = (OCTransportFlags)(flags | OC_IP_USE_V6);
         }
         else
         {
-            /**
-             * This is for Non-IP adapters(EDR and BLE).
-             * The address will be between "//" and "/" in the request URI.
-             * [Ex. coap://AB:BC:CD:DE:EF:FG/resource_uri]
-             */
-            end = slash;
+            char *dot = strchr(start, '.');
+            if (dot && dot < slash)
+            {   // ipv4 address
+                colon = strchr(start, ':');
+                end = (colon && colon < slash) ? colon : slash;
+                adapter = (OCTransportAdapter)(adapter | OC_ADAPTER_IP);
+                flags = (OCTransportFlags)(flags | OC_IP_USE_V4);
+            }
+            else
+            {   // MAC address
+                end = slash;
+            }
+        }
+        len = end - start;
+        if (len >= sizeof(da->addr))
+        {
+            return OC_STACK_INVALID_URI;
+        }
+        // collect port, if any
+        if (colon && colon < slash)
+        {
+            for (colon++; colon < slash; colon++)
+            {
+                char c = colon[0];
+                if (c < '0' || c > '9')
+                {
+                    return OC_STACK_INVALID_URI;
+                }
+                port = 10 * port + c - '0';
+            }
         }
 
         len = end - start;
