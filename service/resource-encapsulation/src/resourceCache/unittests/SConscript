@@ -64,7 +64,6 @@ cache_test_env.PrependUnique(LIBS = ['rcs_client', 'rcs_common', 'oc', 'octbstac
 
 if target_os not in ['windows', 'winrt']:
     cache_test_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
-    cache_test_env.AppendUnique(CCFLAGS = ['-Wnoexcept'])
 
 if target_os == 'linux':
     cache_test_env.AppendUnique(LIBS = ['pthread'])
