@@ -428,7 +428,8 @@ static void CAProcessSendData(const CAData_t *data)
                 // Blockwise transfer
                 if (NULL != info)
                 {
-                    CAResult_t res = CAAddBlockOption(&pdu, *info);
+                    CAResult_t res = CAAddBlockOption(&pdu, *info,
+                                                      data->remoteEndpoint);
                     if (CA_STATUS_OK != res)
                     {
                         OIC_LOG(INFO, TAG, "to write block option has failed");
@@ -481,8 +482,8 @@ static void CAProcessSendData(const CAData_t *data)
                 if (CA_ADAPTER_GATT_BTLE != data->remoteEndpoint->adapter)
                 {
                     // Blockwise transfer
-                    CAResult_t res = CAAddBlockOption(&pdu,
-                                                      data->requestInfo->info);
+                    CAResult_t res = CAAddBlockOption(&pdu, data->requestInfo->info,
+                                                      data->remoteEndpoint);
                     if (CA_STATUS_OK != res)
                     {
                         OIC_LOG(DEBUG, TAG, "CAAddBlockOption has failed");
