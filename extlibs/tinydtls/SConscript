@@ -78,7 +78,7 @@ libtinydtls = env.StaticLibrary('libtinydtls', env.get('TINYDTLS_SRC'), OBJPREFI
 #
 # Note:
 # Currently there is a bug in debug.h/debug.c which fails compilation
-# of tinydtls samples in release mode. This bug is being tracked in 
+# of tinydtls samples in release mode. This bug is being tracked in
 # IOT-395
 ######################################################################
 if not env.get('RELEASE'):

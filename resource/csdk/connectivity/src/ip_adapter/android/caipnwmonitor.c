@@ -78,7 +78,7 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
         OIC_LOG_V(ERROR, TAG, "Failed to get ifaddrs: %s", strerror(errno));
         u_arraylist_destroy(iflist);
         return NULL;
-    } 
+    }
     OIC_LOG_V(DEBUG, TAG, "Got ifaddrs:: %s", ipAddr);
 
     struct in_addr inaddr;

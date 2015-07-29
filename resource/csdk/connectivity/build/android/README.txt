@@ -16,7 +16,7 @@ Edit connectivity/SConscript to build the APK
 uncomment the below line to build the sample :
 env.SConscript('./samples/' + target_os + '/casample/SConscript')
 
-Note : If this is enabled before building the SO files, Build will fail. 
+Note : If this is enabled before building the SO files, Build will fail.
 Ensure to disable the script whenever not required
 
 Installing the APK :

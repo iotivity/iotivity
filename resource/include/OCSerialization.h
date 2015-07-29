@@ -58,7 +58,7 @@ namespace OC
                         m_devAddr.flags =
                               (OCTransportFlags)(OC_FLAG_SECURE | m_devAddr.flags);
                     }
- 
+
                     if (res->port != 0)
                     {
                          m_devAddr.port = res->port;

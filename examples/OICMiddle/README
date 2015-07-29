@@ -20,7 +20,7 @@ editing capabilities, like the additions of various filters.
 
 Running OICMiddle with no arguments on a console shows the various capabilities
 it offers.  The most important are:
- -client.   Act as an OIC client. 
+ -client.   Act as an OIC client.
  -console.  Accept command lines from console input to drive the OIC client.
  -server.   Advertise resources found by the OIC client as OIC resources.
 

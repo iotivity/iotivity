@@ -64,7 +64,7 @@ public class MainActivity
     private List<OcResourceInfo> mResourceList;
 
     /**
-     * The custom adapter for displaying the ResourceListItem List 
+     * The custom adapter for displaying the ResourceListItem List
      */
     private ExpandableResourceListAdapter mResourceListAdapter;
 
