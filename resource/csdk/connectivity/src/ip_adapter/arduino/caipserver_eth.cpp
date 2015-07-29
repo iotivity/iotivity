@@ -102,7 +102,7 @@ CAResult_t CAIPStartUnicastServer(const char *localAddress, uint16_t *port,
     g_unicastSocket = serverFD;
     CAIPSetUnicastSocket(g_unicastSocket);
     CAIPSetUnicastPort(g_unicastPort);
-    OIC_LOG_V(DEBUG, TAG, "g_unicastPort: %d", g_unicastPort);
+    OIC_LOG_V(DEBUG, TAG, "g_unicastPort: %u", g_unicastPort);
     OIC_LOG_V(DEBUG, TAG, "g_unicastSocket: %d", g_unicastSocket);
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;

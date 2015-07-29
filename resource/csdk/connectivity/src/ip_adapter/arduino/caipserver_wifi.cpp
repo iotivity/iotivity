@@ -105,7 +105,7 @@ CAResult_t CAIPStartUnicastServer(const char *localAddress, uint16_t *port,
         return CA_STATUS_FAILED;
     }
 
-    OIC_LOG_V(DEBUG, TAG, "port: %d", *port);
+    OIC_LOG_V(DEBUG, TAG, "port: %u", *port);
 
     Udp.begin((uint16_t ) *port);
     gServerRunning = true;

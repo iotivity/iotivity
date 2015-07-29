@@ -33,6 +33,7 @@
 #include "caipadapterutils_eth.h"
 #include "caadapterutils.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 
 #define TAG "IPC"
 
@@ -43,6 +44,8 @@ static int g_sockID = 0;
  * @brief Unicast Port
  */
 static uint16_t g_unicastPort = 0;
+
+#define IPv4_MULTICAST     "224.0.1.187"
 
 void CAIPSetUnicastSocket(int socketID)
 {
@@ -83,14 +86,16 @@ void CAIPSendData(CAEndpoint_t *endpoint, const void *buf,
     uint16_t port = endpoint->port;
     if (isMulticast)
     {
+        port = CA_COAP;
+        OICStrcpy(endpoint->addr, sizeof(endpoint->addr), IPv4_MULTICAST);
         if (CAArduinoInitMulticastUdpSocket(endpoint->addr, port,
                                             g_unicastPort, &socketID) != CA_STATUS_OK)
         {
             OIC_LOG(ERROR, TAG, "init mcast err");
             return;
         }
-        OIC_LOG_V(DEBUG, TAG, "MPORT:%d", port);
-        OIC_LOG_V(DEBUG, TAG, "LPORT:%d", g_unicastPort);
+        OIC_LOG_V(DEBUG, TAG, "MPORT:%u", port);
+        OIC_LOG_V(DEBUG, TAG, "LPORT:%u", g_unicastPort);
         OIC_LOG_V(DEBUG, TAG, "SOCKET ID:%d", socketID);
     }
     else

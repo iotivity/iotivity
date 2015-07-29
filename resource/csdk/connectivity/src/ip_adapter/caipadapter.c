@@ -354,6 +354,7 @@ static int32_t CAQueueIPData(bool isMulticast, const CAEndpoint_t *endpoint,
 #ifdef SINGLE_THREAD
 
     CAIPSendData(endpoint, data, dataLength, isMulticast);
+    return dataLength;
 
 #else
 
