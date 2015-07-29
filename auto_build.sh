@@ -12,6 +12,8 @@ function build_all()
 		build_linux_secured $1 $2
 		build_linux_unsecured_with_ra $1 $2
 		build_linux_secured_with_ra $1 $2
+		build_linux_unsecured_with_rd $1 $2
+		build_linux_secured_with_rd $1 $2
 	fi
 
 	build_android $1 $2
@@ -56,6 +58,18 @@ function build_linux_secured_with_ra()
 {
 	echo "*********** Build for linux With Remote Access & Security ************"
 	scons RELEASE=$1 WITH_RA=1 SECURED=1 $2
+}
+
+function build_linux_unsecured_with_rd()
+{
+	echo "*********** Build for linux With Resource Directory *************"
+	scons RELEASE=$1 WITH_RD=1 $2
+}
+
+function build_linux_secured_with_rd()
+{
+	echo "*********** Build for linux With Resource Directory & Security ************"
+	scons RELEASE=$1 WITH_RD=1 SECURED=1 $2
 }
 
 function build_android()
@@ -132,8 +146,8 @@ function  help()
 	echo "Usage:"
         echo "  build:"
         echo "     `basename $0` <target_build>"
-	echo "      Allowed values for <target_build>: all, linux_unsecured, linux_secured, linux_unsecured_with_ra, linux_secured_with_ra, android, arduino, tizen, darwin"
-	echo "      Note: \"linux\" will build \"linux_unsecured\", \"linux_secured\", \"linux_unsecured_with_ra\" & \"linux_secured_with_ra\"."
+	echo "      Allowed values for <target_build>: all, linux_unsecured, linux_secured, linux_unsecured_with_ra, linux_secured_with_ra, linux_unsecured_with_rd, linux_secured_with_rd, android, arduino, tizen, darwin"
+	echo "      Note: \"linux\" will build \"linux_unsecured\", \"linux_secured\", \"linux_unsecured_with_ra\", \"linux_secured_with_ra\", \"linux_secured_with_rd\" & \"linux_unsecured_with_rd\"."
 	echo "      Any selection will build both debug and release versions of all available targets in the scope you've"
 	echo "      selected. To choose any specific command, please use the SCons commandline directly. Please refer"
 	echo "      to [IOTIVITY_REPO]/Readme.scons.txt."
@@ -176,6 +190,14 @@ then
 	then
 		build_linux_secured_with_ra true
 		build_linux_secured_with_ra false
+	elif [ $1 = 'linux_unsecured_with_rd' ]
+	then
+		build_linux_unsecured_with_rd true
+		build_linux_unsecured_with_rd false
+	elif [ $1 = 'linux_secured_with_rd' ]
+	then
+		build_linux_secured_with_rd true
+		build_linux_secured_with_rd false
 	elif [ $1 = 'android' ]
 	then
 		build_android true

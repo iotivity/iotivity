@@ -45,6 +45,9 @@ if target_os not in ['arduino','darwin','ios']:
 	# Build resource-encapsulation project
 	if target_os not in ['android', 'tizen']:
 		SConscript('resource-encapsulation/SConscript')
+
+	# Build resource directory project
+	if env.get('WITH_RD') == '1':
+		SConscript('resource-directory/SConscript')
 #else:
 #	SConscript('notification-manager/SampleApp/arduino/SConscript')
-

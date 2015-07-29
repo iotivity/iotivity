@@ -253,6 +253,11 @@ static inline void OCPayloadLog(LogLevel level, const char* tag, OCPayload* payl
         case PAYLOAD_TYPE_SECURITY:
             OCPayloadLogSecurity(level, tag, (OCSecurityPayload*)payload);
             break;
+#ifdef WITH_RD
+        case PAYLOAD_TYPE_RD:
+            OCRDPayloadLog(level, tag, (OCRDPayload*)payload);
+            break;
+#endif
         default:
             OC_LOG_V(level, tag, "Unknown Payload Type: %d", payload->type);
             break;

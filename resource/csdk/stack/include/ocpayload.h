@@ -26,6 +26,10 @@
 #include "logger.h"
 #include "octypes.h"
 
+#ifdef WITH_RD
+#include "rd_payload.h"
+#endif
+
 #ifdef __cplusplus
 extern "C"
 {

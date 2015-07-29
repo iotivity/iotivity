@@ -42,7 +42,7 @@ OCStackResult OCParsePayload(OCPayload** outPayload, const uint8_t* payload, siz
     CborValue rootValue;
     bool err = false;
 
-    OC_LOG_V(INFO, TAG, "CBOR Parsing size: %d", payloadSize, payload);
+    OC_LOG_V(INFO, TAG, "CBOR Parsing size: %d", payloadSize);
     if((err = cbor_parser_init(payload, payloadSize, 0, &parser, &rootValue)) != false)
     {
         OC_LOG_V(ERROR, TAG, "CBOR Parser init failed: %d", err);
@@ -90,6 +90,11 @@ OCStackResult OCParsePayload(OCPayload** outPayload, const uint8_t* payload, siz
         case PAYLOAD_TYPE_SECURITY:
             result = OCParseSecurityPayload(outPayload, &arrayValue);
             break;
+#ifdef WITH_RD
+        case PAYLOAD_TYPE_RD:
+            result = OCRDCborToPayload(&arrayValue, outPayload);
+            break;
+#endif
         default:
             OC_LOG_V(ERROR, TAG, "ParsePayload Type default: %d", payloadType);
             result = OC_STACK_ERROR;

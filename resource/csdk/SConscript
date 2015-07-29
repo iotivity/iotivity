@@ -96,6 +96,11 @@ if env.get('SECURED') == '1':
 if env.get('LOGGING'):
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
+if env.get('WITH_RD') == '1':
+	liboctbstack_env.PrependUnique(CPPPATH = ['../../service/resource-directory/include'])
+	liboctbstack_env.AppendUnique(CPPDEFINES = ['-DWITH_RD'])
+	liboctbstack_env.AppendUnique(LIBS = ['resource_directory'])
+
 liboctbstack_env.Append(LIBS = ['c_common'])
 
 ######################################################################

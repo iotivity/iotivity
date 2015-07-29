@@ -65,6 +65,10 @@ OCStackResult OCConvertPayload(OCPayload* payload, uint8_t** outPayload, size_t*
             return OCConvertPresencePayload((OCPresencePayload*)payload, outPayload, size);
         case PAYLOAD_TYPE_SECURITY:
             return OCConvertSecurityPayload((OCSecurityPayload*)payload, outPayload, size);
+#ifdef WITH_RD
+        case PAYLOAD_TYPE_RD:
+            return OCRDPayloadToCbor((OCRDPayload*)payload, outPayload, size);
+#endif
         default:
             OC_LOG_V(INFO,TAG, "ConvertPayload default %d", payload->type);
             return OC_STACK_NOTIMPL;
