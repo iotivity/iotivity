@@ -397,8 +397,7 @@ void CopyEndpointToDevAddr(const CAEndpoint_t *in, OCDevAddr *out)
 
     out->adapter = (OCTransportAdapter)in->adapter;
     out->flags = CAToOCTransportFlags(in->flags);
-    strncpy(out->addr, in->addr, MAX_ADDR_STR_SIZE);
-    out->addr[MAX_ADDR_STR_SIZE - 1] = '\0';
+    OICStrcpy(out->addr, sizeof(out->addr), in->addr);
     out->port = in->port;
 }
 
@@ -409,7 +408,7 @@ void CopyDevAddrToEndpoint(const OCDevAddr *in, CAEndpoint_t *out)
 
     out->adapter = (CATransportAdapter_t)in->adapter;
     out->flags = OCToCATransportFlags(in->flags);
-    strncpy(out->addr, in->addr, MAX_ADDR_STR_SIZE);
+    OICStrcpy(out->addr, sizeof(out->addr), in->addr);
     out->port = in->port;
 }
 
@@ -430,7 +429,7 @@ static OCStackResult OCCreateEndpoint(OCDevAddr *devAddr, CAEndpoint_t **endpoin
         ep->adapter = CA_ADAPTER_IP;
     }
     ep->flags = OCToCATransportFlags(devAddr->flags);
-    strncpy(ep->addr, devAddr->addr, MAX_ADDR_STR_SIZE_CA);
+    OICStrcpy(ep->addr, sizeof(ep->addr), devAddr->addr);
     ep->port = devAddr->port;
 
     *endpoint = ep;
@@ -728,7 +727,11 @@ const char *convertTriggerEnumToString(OCPresenceTrigger trigger)
 
 OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr)
 {
-    if(strcmp(triggerStr, OC_RSRVD_TRIGGER_CREATE) == 0)
+    if(!triggerStr)
+    {
+        return OC_PRESENCE_TRIGGER_CREATE;
+    }
+    else if(strcmp(triggerStr, OC_RSRVD_TRIGGER_CREATE) == 0)
     {
         return OC_PRESENCE_TRIGGER_CREATE;
     }
@@ -754,7 +757,6 @@ static int FormCanonicalPresenceUri(const CAEndpoint_t *endpoint, char *resource
     VERIFY_NON_NULL(resourceUri, FATAL, OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL(presenceUri, FATAL, OC_STACK_INVALID_PARAM);
 
-    const char *format;
     CAEndpoint_t *ep = (CAEndpoint_t *)endpoint;
 
     if (ep->adapter == CA_ADAPTER_IP)
@@ -767,7 +769,8 @@ static int FormCanonicalPresenceUri(const CAEndpoint_t *endpoint, char *resource
             }
             else
             {
-                format = "coap://[%s]:%u%s";
+                return snprintf(presenceUri, CA_MAX_URI_LENGTH, "coap://[%s]:%u%s",
+                        ep->addr, ep->port, OC_RSRVD_PRESENCE_URI);
             }
         }
         else
@@ -777,15 +780,13 @@ static int FormCanonicalPresenceUri(const CAEndpoint_t *endpoint, char *resource
                 OICStrcpy(ep->addr, sizeof(ep->addr), OC_MULTICAST_IP);
                 ep->port = OC_MULTICAST_PORT;
             }
-            format = "coap://%s:%u%s";
+            return snprintf(presenceUri, CA_MAX_URI_LENGTH, "coap://%s:%u%s",
+                    ep->addr, ep->port, OC_RSRVD_PRESENCE_URI);
         }
-        return snprintf(presenceUri, CA_MAX_URI_LENGTH, format, ep->addr,
-                        ep->port, OC_RSRVD_PRESENCE_URI);
     }
 
     // might work for other adapters (untested, but better than nothing)
-    format = "coap://%s%s";
-    return snprintf(presenceUri, CA_MAX_URI_LENGTH, format, ep->addr,
+    return snprintf(presenceUri, CA_MAX_URI_LENGTH, "coap://%s%s", ep->addr,
                     OC_RSRVD_PRESENCE_URI);
 }
 
@@ -799,7 +800,7 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
     OCStackApplicationResult cbResult = OC_STACK_DELETE_TRANSACTION;
     ClientCB * cbNode = NULL;
     char *resourceTypeName = NULL;
-    OCClientResponse response;
+    OCClientResponse response = {};
     OCStackResult result = OC_STACK_ERROR;
     uint32_t maxAge = 0;
     int uriLen;
@@ -859,9 +860,15 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
         result = OCParsePayload(&response.payload,  responseInfo->info.payload,
                 responseInfo->info.payloadSize);
 
-        if(result != OC_STACK_OK || response.payload->type != PAYLOAD_TYPE_PRESENCE)
+        if(result != OC_STACK_OK)
         {
             OC_LOG(ERROR, TAG, PCF("Presence parse failed"));
+            goto exit;
+        }
+        if(!response.payload || response.payload->type != PAYLOAD_TYPE_PRESENCE)
+        {
+            OC_LOG(ERROR, TAG, PCF("Presence payload was wrong type"));
+            result = OC_STACK_ERROR;
             goto exit;
         }
         response.sequenceNumber = ((OCPresencePayload*)response.payload)->sequenceNumber;
@@ -990,6 +997,7 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
 
 exit:
     OICFree(resourceTypeName);
+    OCPayloadDestroy(response.payload);
     return result;
 }
 
@@ -1061,6 +1069,7 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
                                            responseInfo->info.payloadSize))
             {
                 OC_LOG(ERROR, TAG, PCF("Error converting payload"));
+                OCPayloadDestroy(response.payload);
                 return;
             }
 
@@ -1084,6 +1093,7 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
                 if(response.numRcvdVendorSpecificHeaderOptions > MAX_HEADER_OPTIONS)
                 {
                     OC_LOG(ERROR, TAG, PCF("#header options are more than MAX_HEADER_OPTIONS"));
+                    OCPayloadDestroy(response.payload);
                     return;
                 }
 
@@ -1118,7 +1128,6 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
                     cbNode->TTL = GetTicks(MAX_CB_TIMEOUT_SECONDS *
                                             MILLISECONDS_PER_SECOND);
                 }
-                OCPayloadDestroy(response.payload);
             }
 
             //Need to send ACK when the response is CON
@@ -1127,6 +1136,8 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
                 SendDirectStackResponse(endPoint, responseInfo->info.messageId, CA_EMPTY,
                         CA_MSG_ACKNOWLEDGE, 0, NULL, NULL, 0);
             }
+
+            OCPayloadDestroy(response.payload);
         }
         return;
     }
@@ -1190,6 +1201,7 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
                                             responseInfo->info.messageId);
             }
         }
+
         return;
     }
 
@@ -1280,7 +1292,7 @@ void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
 
     requestResult = getQueryFromUri(requestInfo->info.resourceUri, &query, &uriWithoutQuery);
 
-    if (requestResult != OC_STACK_OK)
+    if (requestResult != OC_STACK_OK || !uriWithoutQuery)
     {
         OC_LOG_V(ERROR, TAG, "getQueryFromUri() failed with OC error code %d\n", requestResult);
         return;
@@ -1946,13 +1958,12 @@ static OCStackResult OCPreparePresence(CAEndpoint_t *endpoint,
 
     FormCanonicalPresenceUri(endpoint, resourceUri, uri);
 
-    *requestUri = (char *)OICMalloc(strlen(uri) + 1);
+    *requestUri = OICStrdup(uri);
     if (!*requestUri)
     {
         return OC_STACK_NO_MEMORY;
     }
 
-    strcpy(*requestUri, uri);
     return OC_STACK_OK;
 }
 
@@ -2088,6 +2099,7 @@ OCStackResult OCDoResource(OCDoHandle *handle,
     if (caResult != CA_STATUS_OK)
     {
         OC_LOG(ERROR, TAG, PCF("CAGenerateToken error"));
+        result= OC_STACK_ERROR;
         goto exit;
     }
 

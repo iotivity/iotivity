@@ -29,6 +29,7 @@
 #include "logger.h"
 #include "occlientbasicops.h"
 #include "ocpayload.h"
+#include "oic_string.h"
 #include "common.h"
 
 #define TAG "occlientbasicops"
@@ -282,7 +283,7 @@ int InitDiscovery()
     {
         //Send discovery request on Wifi and Ethernet interface
         discoveryReqConnType = CT_DEFAULT;
-        strcpy(szQueryUri, MULTICAST_DISCOVERY_QUERY);
+        OICStrcpy(szQueryUri, sizeof(szQueryUri), MULTICAST_DISCOVERY_QUERY);
         method = OC_REST_DISCOVER;
     }
 

@@ -977,8 +977,9 @@ static void CALEDataReceiverHandler(void *threadData)
                 CALEGetSenderInfo(newSender->remoteEndpoint->addr, NULL, &senderIndex))
             {
                 OIC_LOG(ERROR, CALEADAPTER_TAG, "Existing sender index not found!!");
-                OICFree(senderInfo->defragData);
-                OICFree(senderInfo);
+                OICFree(newSender->defragData);
+                CAFreeEndpoint(newSender->remoteEndpoint);
+                OICFree(newSender);
                 ca_mutex_unlock(g_bleReceiveDataMutex);
                 return;
             }

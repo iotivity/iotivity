@@ -750,8 +750,7 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *
         OICFree(outInfo->token);
         return CA_MEMORY_ALLOC_FAILED;
     }
-    memcpy(outInfo->resourceUri, optionResult, length);
-    outInfo->resourceUri[length] = '\0';
+    OICStrcpy(outInfo->resourceUri, length + 1, optionResult);
     OIC_LOG_V(DEBUG, TAG, "made URL : %s, %s", optionResult, outInfo->resourceUri);
 
     OIC_LOG(DEBUG, TAG, "OUT");

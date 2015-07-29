@@ -152,6 +152,13 @@ static OCStackResult OCConvertDiscoveryPayload(OCDiscoveryPayload* payload, uint
     {
         CborEncoder map;
         OCResourcePayload* resource = OCDiscoveryPayloadGetResource(payload, i);
+
+        if(!resource)
+        {
+            OICFree(*outPayload);
+            return OC_STACK_INVALID_PARAM;
+        }
+
         err = err || cbor_encoder_create_map(&rootArray, &map, 3);
         // Uri
         err = err || AddTextStringToMap(&map, OC_RSRVD_HREF,

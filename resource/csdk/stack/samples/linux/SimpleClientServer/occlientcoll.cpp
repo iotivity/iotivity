@@ -276,7 +276,9 @@ int InitObserveRequest(OCClientResponse * clientResponse)
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
     OC_LOG_V(INFO, TAG, "OBSERVE payload from client =");
-    OC_LOG_PAYLOAD(INFO, TAG, putPayload());
+    OCPayload* payload = putPayload();
+    OC_LOG_PAYLOAD(INFO, TAG, payload);
+    OCPayloadDestroy(payload);
 
     ret = OCDoResource(&handle, OC_REST_OBSERVE, obsReg.str().c_str(), 0, 0, OC_CONNTYPE,
             OC_LOW_QOS, &cbData, NULL, 0);
@@ -305,7 +307,9 @@ int InitPutRequest(OCClientResponse * clientResponse)
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
     OC_LOG_V(INFO, TAG, "PUT payload from client = ");
-    OC_LOG_PAYLOAD(INFO, TAG, putPayload());
+    OCPayload* payload = putPayload();
+    OC_LOG_PAYLOAD(INFO, TAG, payload);
+    OCPayloadDestroy(payload);
 
     ret = OCDoResource(NULL, OC_REST_PUT, getQuery.str().c_str(), 0, putPayload(),
                         OC_CONNTYPE, OC_LOW_QOS, &cbData, NULL, 0);
@@ -385,7 +389,7 @@ int main(int argc, char* argv[])
         }
     }
     if ((TEST <= TEST_INVALID || TEST >= MAX_TESTS) ||
-        (CONNECTIVITY < CT_ADAPTER_DEFAULT || CONNECTIVITY >= MAX_CT))
+        CONNECTIVITY >= MAX_CT)
     {
         PrintUsage();
         return -1;

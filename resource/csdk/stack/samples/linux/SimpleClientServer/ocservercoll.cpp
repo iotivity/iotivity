@@ -160,7 +160,6 @@ OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
 {
     OCEntityHandlerResult ret = OC_EH_OK;
     OCEntityHandlerResponse response;
-    OCRepPayload* payload = OCRepPayloadCreate();
 
     OC_LOG_V(INFO, TAG, "Callback for Room");
     PrintReceivedMsgInfo(flag, ehRequest );
@@ -168,6 +167,7 @@ OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
     if(ehRequest && flag == OC_REQUEST_FLAG )
     {
         std::string query = (const char*)ehRequest->query;
+        OCRepPayload* payload = OCRepPayloadCreate();
 
         if(OC_REST_GET == ehRequest->method)
         {
@@ -311,6 +311,7 @@ OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
         {
             OC_LOG_V (INFO, TAG, "Received unsupported method %d from client",
                     ehRequest->method);
+            OCRepPayloadDestroy(payload);
             ret = OC_EH_ERROR;
         }
     }
@@ -326,13 +327,13 @@ OCEntityHandlerResult OCEntityHandlerLightCb(OCEntityHandlerFlag flag,
 {
     OCEntityHandlerResult ret = OC_EH_OK;
     OCEntityHandlerResponse response;
-    OCRepPayload* payload = OCRepPayloadCreate();
 
     OC_LOG_V(INFO, TAG, "Callback for Light");
     PrintReceivedMsgInfo(flag, ehRequest );
 
     if(ehRequest && flag == OC_REQUEST_FLAG)
     {
+        OCRepPayload* payload = OCRepPayloadCreate();
         if(OC_REST_GET == ehRequest->method)
         {
             OCRepPayloadSetUri(payload, gLightResourceUri);
@@ -373,6 +374,10 @@ OCEntityHandlerResult OCEntityHandlerLightCb(OCEntityHandlerFlag flag,
                 ret = OC_EH_ERROR;
             }
         }
+        else
+        {
+            OCRepPayloadDestroy(payload);
+        }
     }
     else if (ehRequest && flag == OC_OBSERVE_FLAG)
     {
@@ -387,13 +392,14 @@ OCEntityHandlerResult OCEntityHandlerFanCb(OCEntityHandlerFlag flag,
 {
     OCEntityHandlerResult ret = OC_EH_OK;
     OCEntityHandlerResponse response;
-    OCRepPayload* payload = OCRepPayloadCreate();
 
     OC_LOG_V(INFO, TAG, "Callback for Fan");
     PrintReceivedMsgInfo(flag, ehRequest );
 
     if(ehRequest && flag == OC_REQUEST_FLAG)
     {
+        OCRepPayload* payload = OCRepPayloadCreate();
+
         if(OC_REST_GET == ehRequest->method)
         {
             OCRepPayloadSetUri(payload, gFanResourceUri);
@@ -434,6 +440,7 @@ OCEntityHandlerResult OCEntityHandlerFanCb(OCEntityHandlerFlag flag,
                 ret = OC_EH_ERROR;
             }
         }
+        OCRepPayloadDestroy(payload);
 
     }
     else if (ehRequest && flag == OC_OBSERVE_FLAG)

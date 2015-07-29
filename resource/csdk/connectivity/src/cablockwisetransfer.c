@@ -45,7 +45,7 @@
 
 #define TAG "CA_BWT"
 
-#define BLOCKWISE_OPTION_BUFFER    3
+#define BLOCKWISE_OPTION_BUFFER    (sizeof(unsigned int))
 #define BLOCK_NUMBER_IDX           4
 #define BLOCK_M_BIT_IDX            3
 #define PORT_LENGTH                2
@@ -211,6 +211,10 @@ CAResult_t CAAddSendThreadQueue(const CAData_t *sendData, const CABlockDataID_t 
         ca_mutex_lock(g_context.blockDataSenderMutex);
         g_context.sendThreadFunc(cloneData);
         ca_mutex_unlock(g_context.blockDataSenderMutex);
+    }
+    else
+    {
+        CADestroyDataSet(cloneData);
     }
     return CA_STATUS_OK;
 }
@@ -644,12 +648,24 @@ CAResult_t CASendErrorMessage(const coap_pdu_t *pdu, uint8_t status,
         }
         OIC_LOG(DEBUG, TAG, "set ACK message");
     }
-    else
+    else if (data->sentData)
     {
-        cloneData = CACreateNewDataSet(pdu, CACloneEndpoint(data->sentData->remoteEndpoint));
+        cloneData = CACreateNewDataSet(pdu, data->sentData->remoteEndpoint);
+
+        if(!cloneData)
+        {
+            OIC_LOG(ERROR, TAG, PCF("CACreateNewDataSet failed"));
+            return CA_MEMORY_ALLOC_FAILED;
+        }
+
         cloneData->responseInfo->info.type = CA_MSG_CONFIRM;
         cloneData->responseInfo->result = responseResult;
         OIC_LOG(DEBUG, TAG, "set CON message");
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "data has no sent-data");
+        return CA_MEMORY_ALLOC_FAILED;
     }
 
     // add data to send thread
@@ -658,6 +674,10 @@ CAResult_t CASendErrorMessage(const coap_pdu_t *pdu, uint8_t status,
         ca_mutex_lock(g_context.blockDataSenderMutex);
         g_context.sendThreadFunc(cloneData);
         ca_mutex_unlock(g_context.blockDataSenderMutex);
+    }
+    else
+    {
+        CADestroyDataSet(cloneData);
     }
 
     // if error code is 4.08, remove the stored payload and initialize block number
@@ -698,6 +718,7 @@ CAResult_t CAReceiveLastBlock(const CABlockDataID_t *blockID,
         if (CA_STATUS_OK != res)
         {
             OIC_LOG(ERROR, TAG, "update has failed");
+            CADestroyDataSet(cloneData);
             return CA_STATUS_FAILED;
         }
     }
@@ -705,6 +726,10 @@ CAResult_t CAReceiveLastBlock(const CABlockDataID_t *blockID,
     if (g_context.receivedThreadFunc)
     {
         g_context.receivedThreadFunc(cloneData);
+    }
+    else
+    {
+        CADestroyDataSet(cloneData);
     }
 
     return CA_STATUS_OK;
@@ -1518,8 +1543,13 @@ CAResult_t CAAddBlockOption2(coap_pdu_t **pdu, const CAInfo_t info, size_t dataL
 
 error:
     OIC_LOG_V(ERROR, TAG, "error : %d", code);
-    coap_add_data(*pdu, strlen(coap_response_phrase(code)),
-                  (unsigned char *) coap_response_phrase(code));
+
+    char* phrase = coap_response_phrase(code);
+    if(phrase)
+    {
+        coap_add_data(*pdu, strlen(phrase),
+                      (unsigned char *) phrase);
+    }
     return CA_STATUS_FAILED;
 }
 
@@ -1919,6 +1949,7 @@ CAData_t* CACreateNewDataSet(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint
     if (NULL == responseInfo)
     {
         OIC_LOG(ERROR, TAG, "out of memory");
+        OICFree(responseData.token);
         return NULL;
     }
     responseInfo->info = responseData;
@@ -1949,7 +1980,7 @@ CAData_t *CACloneCAData(const CAData_t *data)
         OIC_LOG(ERROR, TAG, "out of memory");
         return NULL;
     }
-    memcpy(clone, data, sizeof(CAData_t));
+    *clone = *data;
 
     if (data->requestInfo)
     {
@@ -2403,6 +2434,12 @@ CABlockData_t *CACreateNewBlockData(const CAData_t *sendData)
     data->block1.szx = CA_DEFAULT_BLOCK_SIZE;
     data->block2.szx = CA_DEFAULT_BLOCK_SIZE;
     data->sentData = CACloneCAData(sendData);
+    if(!data->sentData)
+    {
+        OIC_LOG(ERROR, TAG, PCF("memory alloc has failed"));
+        OICFree(data);
+        return NULL;
+    }
 
     CAToken_t token = NULL;
     uint8_t tokenLength = 0;

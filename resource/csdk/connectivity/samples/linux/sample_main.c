@@ -27,6 +27,7 @@
 
 #include "cacommon.h"
 #include "cainterface.h"
+#include "oic_string.h"
 #ifdef __WITH_DTLS__
 #include "ocsecurityconfig.h"
 #endif
@@ -618,7 +619,7 @@ void send_secure_request()
     uint8_t tokenLength = CA_MAX_TOKEN_LEN;
 
     res = CAGenerateToken(&token, tokenLength);
-    if ((CA_STATUS_OK != res) || (!token))
+    if (CA_STATUS_OK != res)
     {
         printf("Token generate error, error code : %d\n", res);
         goto exit;
@@ -1206,6 +1207,11 @@ void send_response(const CAEndpoint_t *endpoint, const CAInfo_t *info)
 
         if (endpoint->flags & CA_SECURE)
         {
+            if(!responseData.resourceUri)
+            {
+               printf("resourceUri not available in SECURE\n");
+               return;
+            }
             printf("Sending response on secure communication\n");
 
             uint32_t length = sizeof(SECURE_INFO_DATA) + strlen(responseData.resourceUri);
@@ -1249,6 +1255,11 @@ void send_response(const CAEndpoint_t *endpoint, const CAInfo_t *info)
             }
             else
             {
+                if(!responseData.resourceUri)
+                {
+                   printf("resourceUri not available in NON-SECURE\n");
+                   return;
+                }
                 uint32_t length = sizeof(NORMAL_INFO_DATA) + strlen(responseData.resourceUri);
                 responseData.payload = (CAPayload_t) calloc(length, sizeof(char));
                 if (NULL == responseData.payload)
@@ -1324,8 +1335,7 @@ int get_secure_information(CAPayload_t payLoad)
     }
 
     char portStr[6] = {0};
-    memcpy(portStr, startPos + 1, (endPos - 1) - startPos);
-
+    OICStrcpyPartial(portStr, sizeof(portStr), startPos + 1, (endPos - 1) - startPos);
     printf("secured port is: %s\n", portStr);
     return atoi(portStr);
 }
@@ -1353,7 +1363,7 @@ void get_resource_uri(char *URI, char *resourceURI, int length)
 
     if (endPos - startPos <= length)
     {
-        memcpy(resourceURI, startPos + 1, endPos - startPos);
+        OICStrcpyPartial(resourceURI, length, startPos + 1, endPos - startPos);
     }
 
     printf("URI: %s, ResourceURI:%s\n", URI, resourceURI);
@@ -1433,9 +1443,14 @@ CAHeaderOption_t* get_option_data(CAInfo_t* requestData)
         printf("there is no headerOption!\n");
         return NULL;
     }
+    else if (optionNum > MAX_OPT_LEN)
+    {
+        printf("Too many header options!\n");
+        return NULL;
+    }
     else
     {
-        headerOpt = (CAHeaderOption_t *)calloc(1, optionNum * sizeof(CAHeaderOption_t));
+        headerOpt = (CAHeaderOption_t *)calloc(optionNum, sizeof(CAHeaderOption_t));
         if (NULL == headerOpt)
         {
             printf("Memory allocation failed!\n");
@@ -1463,7 +1478,7 @@ CAHeaderOption_t* get_option_data(CAInfo_t* requestData)
                 return NULL;
             }
 
-            memcpy(headerOpt[i].optionData, optionData, strlen(optionData));
+            OICStrcpy(headerOpt[i].optionData, sizeof(headerOpt[i].optionData), optionData);
 
             headerOpt[i].optionLength = (uint16_t) strlen(optionData);
         }
@@ -1562,13 +1577,11 @@ int get_address_set(const char *pAddress, addressSet_t* outAddress)
     {
         if(ipLen && ipLen < sizeof(outAddress->ipAddress))
         {
-            strncpy(outAddress->ipAddress, pAddress, ipLen);
-            outAddress->ipAddress[ipLen] = '\0';
+            OICStrcpy(outAddress->ipAddress, sizeof(outAddress->ipAddress), pAddress);
         }
         else if (!ipLen && len < sizeof(outAddress->ipAddress))
         {
-            strncpy(outAddress->ipAddress, pAddress, len);
-            outAddress->ipAddress[len] = '\0';
+            OICStrcpy(outAddress->ipAddress, sizeof(outAddress->ipAddress), pAddress);
         }
         else
         {
@@ -1588,11 +1601,11 @@ int get_address_set(const char *pAddress, addressSet_t* outAddress)
 void create_file(CAPayload_t bytes, size_t length)
 {
     FILE *fp = fopen("sample_output.txt", "wb");
-    if (!fp)
+    if (fp)
     {
         fwrite(bytes, 1, length, fp);
+        fclose(fp);
     }
-    fclose(fp);
 }
 
 bool read_file(const char* name, CAPayload_t* bytes, size_t* length)
@@ -1631,7 +1644,7 @@ bool read_file(const char* name, CAPayload_t* bytes, size_t* length)
 
     // Read file contents into buffer
     size_t ret = fread(buffer, fileLen, 1, file);
-    if (ret < 0)
+    if (ret != 1)
     {
         printf("Failed to read data from file, %s\n", name);
         fclose(file);

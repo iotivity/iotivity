@@ -30,6 +30,7 @@
 
 #define TAG "OCPayload"
 static void OCFreeRepPayloadValueContents(OCRepPayloadValue* val);
+static void FreeOCDiscoveryResource(OCResourcePayload* payload);
 
 void OCPayloadDestroy(OCPayload* payload)
 {
@@ -292,7 +293,17 @@ static OCRepPayloadValue* OCRepPayloadFindAndSetValue(OCRepPayload* payload, con
     if(val == NULL)
     {
         payload->values = (OCRepPayloadValue*)OICCalloc(1, sizeof(OCRepPayloadValue));
+        if(!payload->values)
+        {
+            return NULL;
+        }
         payload->values->name = OICStrdup(name);
+        if(!payload->values->name)
+        {
+            OICFree(payload->values);
+            payload->values = NULL;
+            return NULL;
+        }
         payload->values->type =type;
         return payload->values;
     }
@@ -308,7 +319,17 @@ static OCRepPayloadValue* OCRepPayloadFindAndSetValue(OCRepPayload* payload, con
         else if(val->next == NULL)
         {
             val->next = (OCRepPayloadValue*)OICCalloc(1, sizeof(OCRepPayloadValue));
+            if(!val->next)
+            {
+                return NULL;
+            }
             val->next->name = OICStrdup(name);
+            if(!val->next->name)
+            {
+                OICFree(val->next);
+                val->next = NULL;
+                return NULL;
+            }
             val->next->type =type;
             return val->next;
         }
@@ -1079,7 +1100,7 @@ OCDiscoveryPayload* OCDiscoveryPayloadCreate()
     return payload;
 }
 
-OCSecurityPayload* OCSecurityPayloadCreate(char* securityData)
+OCSecurityPayload* OCSecurityPayloadCreate(const char* securityData)
 {
     OCSecurityPayload* payload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
 
@@ -1143,6 +1164,11 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t port)
 
     pl->uri = OICStrdup(res->uri);
     pl->sid = (uint8_t*)OICCalloc(1, UUID_SIZE);
+    if(!pl->uri || ! pl->sid)
+    {
+        FreeOCDiscoveryResource(pl);
+        return NULL;
+    }
     memcpy(pl->sid, OCGetServerInstanceID(), UUID_SIZE);
 
     // types
@@ -1151,14 +1177,34 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t port)
     if(typePtr != NULL)
     {
         pl->types = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
+        if(!pl->types)
+        {
+            FreeOCDiscoveryResource(pl);
+            return NULL;
+        }
         pl->types->value = OICStrdup(typePtr->resourcetypename);
+        if(!pl->types->value)
+        {
+            FreeOCDiscoveryResource(pl);
+            return NULL;
+        }
 
         OCStringLL* cur = pl->types;
         typePtr = typePtr->next;
         while(typePtr)
         {
             cur->next = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
+            if(!cur->next)
+            {
+                FreeOCDiscoveryResource(pl);
+                return NULL;
+            }
             cur->next->value = OICStrdup(typePtr->resourcetypename);
+            if(!cur->next->value)
+            {
+                FreeOCDiscoveryResource(pl);
+                return NULL;
+            }
             cur = cur->next;
             typePtr = typePtr->next;
         }
@@ -1169,14 +1215,34 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t port)
     if(ifPtr != NULL)
     {
         pl->interfaces = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
+        if(!pl->interfaces)
+        {
+            FreeOCDiscoveryResource(pl);
+            return NULL;
+        }
         pl->interfaces->value = OICStrdup(ifPtr->name);
+        if(!pl->interfaces->value)
+        {
+            FreeOCDiscoveryResource(pl);
+            return NULL;
+        }
 
         OCStringLL* cur = pl->interfaces;
         ifPtr = ifPtr->next;
         while(ifPtr)
         {
             cur->next = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
+            if(!cur->next)
+            {
+                FreeOCDiscoveryResource(pl);
+                return NULL;
+            }
             cur->next->value = OICStrdup(ifPtr->name);
+            if(!cur->next->value)
+            {
+                FreeOCDiscoveryResource(pl);
+                return NULL;
+            }
             cur = cur->next;
             ifPtr = ifPtr->next;
         }
@@ -1212,7 +1278,7 @@ void OCDiscoveryPayloadAddNewResource(OCDiscoveryPayload* payload, OCResourcePay
     }
 }
 
-void FreeOCDiscoveryResource(OCResourcePayload* payload)
+static void FreeOCDiscoveryResource(OCResourcePayload* payload)
 {
     if(!payload)
     {

@@ -577,6 +577,10 @@ static void CAApplyInterfaces()
     {
         CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
 
+        if (!ifitem)
+        {
+            continue;
+        }
         if ((ifitem->flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
         {
             continue;
@@ -631,6 +635,11 @@ for (nh = (struct nlmsghdr *)buf; NLMSG_OK(nh, len); nh = NLMSG_NEXT(nh, len))
         for (uint32_t i = 0; i < len; i++)
         {
             CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
+            if (!ifitem)
+            {
+                continue;
+            }
+
             if (ifitem->index != newIndex)
             {
                 continue;
@@ -708,13 +717,17 @@ static void sendMulticastData6(const u_arraylist_t *iflist,
         OIC_LOG_V(INFO, TAG, "IPv6 multicast scope invalid: %d", scope);
         return;
     }
-    strncpy(endpoint->addr, ipv6mcname, MAX_ADDR_STR_SIZE_CA);
+    OICStrcpy(endpoint->addr, sizeof(endpoint->addr), ipv6mcname);
     int fd = caglobals.ip.u6.fd;
 
     uint32_t len = u_arraylist_length(iflist);
     for (uint32_t i = 0; i < len; i++)
     {
         CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
+        if (!ifitem)
+        {
+            continue;
+        }
         if ((ifitem->flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
         {
             continue;
@@ -739,13 +752,17 @@ static void sendMulticastData4(const u_arraylist_t *iflist,
                                const void *data, uint32_t datalen)
 {
     struct ip_mreq mreq = { IPv4MulticastAddress };
-    strncpy(endpoint->addr, IPv4_MULTICAST, MAX_ADDR_STR_SIZE_CA);
+    OICStrcpy(endpoint->addr, sizeof(endpoint->addr), IPv4_MULTICAST);
     int fd = caglobals.ip.u4.fd;
 
     uint32_t len = u_arraylist_length(iflist);
     for (uint32_t i = 0; i < len; i++)
     {
         CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
+        if (!ifitem)
+        {
+            continue;
+        }
         if ((ifitem->flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
         {
             continue;
@@ -760,7 +777,8 @@ static void sendMulticastData4(const u_arraylist_t *iflist,
         mreq.imr_interface = inaddr;
         if (setsockopt(fd, IPPROTO_IP, IP_MULTICAST_IF, &mreq, sizeof (mreq)))
         {
-            OIC_LOG_V(ERROR, TAG, "send IP_MULTICAST_IF failed: %s (using defualt)", strerror(errno));
+            OIC_LOG_V(ERROR, TAG, "send IP_MULTICAST_IF failed: %s (using defualt)",
+                    strerror(errno));
         }
         sendData(fd, endpoint, data, datalen, "multicast", "ipv4");
     }
@@ -845,6 +863,10 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
     for (uint32_t i = 0, j = 0; i < len; i++)
     {
         CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
+        if(!ifitem)
+        {
+            continue;
+        }
 
         OICStrcpy(eps[j].addr, CA_INTERFACE_NAME_SIZE, ifitem->name);
         eps[j].flags = ifitem->family == AF_INET6 ? CA_IPV6 : CA_IPV4;

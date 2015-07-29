@@ -515,6 +515,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
                 != OC_STACK_OK)
         {
             OC_LOG(ERROR, TAG, "Error converting payload");
+            OICFree(responseInfo.info.options);
             return result;
         }
 
@@ -522,6 +523,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
         {
             OICFree(responseInfo.info.payload);
             OC_LOG(ERROR, TAG, "Payload too long!");
+            OICFree(responseInfo.info.options);
             return OC_STACK_INVALID_PARAM;
         }
     }
@@ -657,7 +659,6 @@ OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
 
         if(!serverResponse->payload)
         {
-            serverResponse->payload = (OCPayload*)OCRepPayloadCreate();
             serverResponse->payload = ehResponse->payload;
         }
         else

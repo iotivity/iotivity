@@ -706,6 +706,7 @@ HandleDefaultDeviceEntityHandler (OCServerRequest *request)
     }
     result = EntityHandlerCodeToOCStackCode(ehResult);
 exit:
+    OCPayloadDestroy(ehRequest.payload);
     return result;
 }
 
@@ -827,6 +828,7 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
     }
     result = EntityHandlerCodeToOCStackCode(ehResult);
 exit:
+    OCPayloadDestroy(ehRequest.payload);
     return result;
 }
 
@@ -854,12 +856,13 @@ HandleCollectionResourceDefaultEntityHandler (OCServerRequest *request,
                                         request->rcvdVendorSpecificHeaderOptions,
                                         (OCObserveAction)request->observationOption,
                                         (OCObservationId)0);
-    if(result != OC_STACK_OK)
+    if(result == OC_STACK_OK)
     {
-        return result;
+        result = DefaultCollectionEntityHandler (OC_REQUEST_FLAG, &ehRequest);
     }
 
-    return (DefaultCollectionEntityHandler (OC_REQUEST_FLAG, &ehRequest));
+    OCPayloadDestroy(ehRequest.payload);
+    return result;
 }
 
 OCStackResult

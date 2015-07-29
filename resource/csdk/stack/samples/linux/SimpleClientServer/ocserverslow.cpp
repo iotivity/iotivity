@@ -28,6 +28,7 @@
 #include <list>
 #include "ocstack.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 #include "logger.h"
 #include "cJSON.h"
 #include "ocserverslow.h"
@@ -154,11 +155,13 @@ OCEntityHandlerRequest *CopyRequest(OCEntityHandlerRequest *entityHandlerRequest
 
         if (copyOfRequest->query)
         {
-            // Do deep copy of query
-            copyOfRequest->query = (char *) OICMalloc(
-                    strlen((const char *)entityHandlerRequest->query) + 1);
-
-            strcpy((char *)copyOfRequest->query, (const char *)entityHandlerRequest->query);
+            copyOfRequest->query = OICStrdup(entityHandlerRequest->query);
+            if(!copyOfRequest->query)
+            {
+                OC_LOG(ERROR, TAG, "Copy failed due to allocation failure");
+                OICFree(copyOfRequest);
+                return NULL;
+            }
         }
 
         if (entityHandlerRequest->payload)

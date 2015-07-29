@@ -779,6 +779,12 @@ static CAData_t* CAPrepareSendData(const CAEndpoint_t *endpoint, const void *sen
         info = &response->info;
         cadata->responseInfo = response;
     }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "CAPrepareSendData unknown data type");
+        OICFree(cadata);
+        return NULL;
+    }
 
     if (NULL != info->options && 0 < info->numOptions)
     {
