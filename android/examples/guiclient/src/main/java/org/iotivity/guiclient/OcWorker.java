@@ -35,6 +35,7 @@ import org.iotivity.base.QualityOfService;
 import org.iotivity.base.ServiceType;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 
 import static org.iotivity.guiclient.OcProtocolStrings.COAP_CORE;
@@ -503,7 +504,7 @@ public class OcWorker extends Thread
                 Log.d(TAG, String.format("discoverResources(): Calling OcPlatform.findResource(%s)", s));
                 OcPlatform.findResource("",
                         OcPlatform.WELL_KNOWN_QUERY + "?rt=" + s,
-                        OcConnectivityType.CT_DEFAULT,
+                        EnumSet.of(OcConnectivityType.CT_DEFAULT),
                         this);
             }
         } catch (OcException e) {

@@ -57,16 +57,13 @@ void JniUtils::convertJavaHeaderOptionsArrToVector(JNIEnv *env, jobjectArray jHe
     OC::HeaderOptions &headerOptions)
 {
     if (!jHeaderOptions) return;
-
     jsize len = env->GetArrayLength(jHeaderOptions);
     for (jsize i = 0; i < len; ++i)
     {
         jobject header = env->GetObjectArrayElement(jHeaderOptions, i);
-        if (!header) nullptr;
+        if (!header) return;
         jint jId = env->CallIntMethod(header, g_mid_OcHeaderOption_get_id);
         jstring jData = (jstring)env->CallObjectMethod(header, g_mid_OcHeaderOption_get_data);
-        if (jData) return;
-
         OC::HeaderOption::OCHeaderOption hopt(
             static_cast<int>(jId),
             env->GetStringUTFChars(jData, NULL));

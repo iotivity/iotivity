@@ -227,13 +227,21 @@ public final class OcPlatform {
     public static void findResource(
             String host,
             String resourceUri,
-            OcConnectivityType connectivityType,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
             OnResourceFoundListener onResourceFoundListener) throws OcException {
         OcPlatform.initCheck();
+
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType))
+                connTypeInt |= connType.getValue();
+        }
+
         OcPlatform.findResource0(
                 host,
                 resourceUri,
-                connectivityType.getValue(),
+                connTypeInt,
                 onResourceFoundListener
         );
     }
@@ -260,13 +268,21 @@ public final class OcPlatform {
     public static void findResource(
             String host,
             String resourceUri,
-            OcConnectivityType connectivityType,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
             OnResourceFoundListener onResourceFoundListener,
             QualityOfService qualityOfService) throws OcException {
         OcPlatform.initCheck();
+
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType))
+                connTypeInt |= connType.getValue();
+        }
+
         OcPlatform.findResource1(host,
                 resourceUri,
-                connectivityType.getValue(),
+                connTypeInt,
                 onResourceFoundListener,
                 qualityOfService.getValue()
         );
@@ -292,13 +308,19 @@ public final class OcPlatform {
     public static void getDeviceInfo(
             String host,
             String deviceUri,
-            OcConnectivityType connectivityType,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
             OnDeviceFoundListener onDeviceFoundListener) throws OcException {
         OcPlatform.initCheck();
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType))
+                connTypeInt |= connType.getValue();
+        }
         OcPlatform.getDeviceInfo0(
                 host,
                 deviceUri,
-                connectivityType.getValue(),
+                connTypeInt,
                 onDeviceFoundListener
         );
     }
@@ -323,14 +345,20 @@ public final class OcPlatform {
     public static void getDeviceInfo(
             String host,
             String deviceUri,
-            OcConnectivityType connectivityType,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
             OnDeviceFoundListener onDeviceFoundListener,
             QualityOfService qualityOfService) throws OcException {
         OcPlatform.initCheck();
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType))
+                connTypeInt |= connType.getValue();
+        }
         OcPlatform.getDeviceInfo1(
                 host,
                 deviceUri,
-                connectivityType.getValue(),
+                connTypeInt,
                 onDeviceFoundListener,
                 qualityOfService.getValue()
         );
@@ -346,10 +374,10 @@ public final class OcPlatform {
     /**
      * API for Platform Discovery
      *
-     * @param host                  Host IP Address. If null or empty, Multicast is performed.
-     * @param platformUri           Uri containing address to the platform
-     * @param connectivityType      a type of connectivity indicating the interface. Example: IPV4,
-     *                              IPV6, ALL
+     * @param host                    Host IP Address. If null or empty, Multicast is performed.
+     * @param platformUri             Uri containing address to the platform
+     * @param connectivityType        a type of connectivity indicating the interface. Example: IPV4,
+     *                                IPV6, ALL
      * @param onPlatformFoundListener Handles events, success states and failure states.
      * @throws OcException
      */
@@ -357,13 +385,19 @@ public final class OcPlatform {
     public static void getPlatformInfo(
             String host,
             String platformUri,
-            OcConnectivityType connectivityType,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
             OnPlatformFoundListener onPlatformFoundListener) throws OcException {
         OcPlatform.initCheck();
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType))
+                connTypeInt |= connType.getValue();
+        }
         OcPlatform.getPlatformInfo0(
                 host,
                 platformUri,
-                connectivityType.getValue(),
+                connTypeInt,
                 onPlatformFoundListener
         );
     }
@@ -377,26 +411,32 @@ public final class OcPlatform {
     /**
      * API for Platform Discovery
      *
-     * @param host                  Host IP Address. If null or empty, Multicast is performed.
-     * @param platformUri           Uri containing address to the platform
-     * @param connectivityType      a type of connectivity indicating the interface. Example: IPV4,
-     *                              IPV6, ALL
+     * @param host                    Host IP Address. If null or empty, Multicast is performed.
+     * @param platformUri             Uri containing address to the platform
+     * @param connectivityType        a type of connectivity indicating the interface. Example: IPV4,
+     *                                IPV6, ALL
      * @param onPlatformFoundListener Handles events, success states and failure states.
-     * @param qualityOfService      the quality of communication
+     * @param qualityOfService        the quality of communication
      * @throws OcException
      */
 
     public static void getPlatformInfo(
             String host,
             String platformUri,
-            OcConnectivityType connectivityType,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
             OnPlatformFoundListener onPlatformFoundListener,
             QualityOfService qualityOfService) throws OcException {
         OcPlatform.initCheck();
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType))
+                connTypeInt |= connType.getValue();
+        }
         OcPlatform.getPlatformInfo1(
                 host,
                 platformUri,
-                connectivityType.getValue(),
+                connTypeInt,
                 onPlatformFoundListener,
                 qualityOfService.getValue()
         );
@@ -481,7 +521,7 @@ public final class OcPlatform {
 
     private static native void registerDeviceInfo0(
             String deviceName
-            ) throws OcException;
+    ) throws OcException;
 
     /**
      * Register Platform Info
@@ -688,12 +728,18 @@ public final class OcPlatform {
      */
     public static OcPresenceHandle subscribePresence(
             String host,
-            OcConnectivityType connectivityType,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
             OnPresenceListener onPresenceListener) throws OcException {
         OcPlatform.initCheck();
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType))
+                connTypeInt |= connType.getValue();
+        }
         return OcPlatform.subscribePresence0(
                 host,
-                connectivityType.getValue(),
+                connTypeInt,
                 onPresenceListener
         );
     }
@@ -719,13 +765,19 @@ public final class OcPlatform {
     public static OcPresenceHandle subscribePresence(
             String host,
             String resourceType,
-            OcConnectivityType connectivityType,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
             OnPresenceListener onPresenceListener) throws OcException {
         OcPlatform.initCheck();
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType))
+                connTypeInt |= connType.getValue();
+        }
         return OcPlatform.subscribePresence1(
                 host,
                 resourceType,
-                connectivityType.getValue(),
+                connTypeInt,
                 onPresenceListener);
     }
 
@@ -777,15 +829,21 @@ public final class OcPlatform {
     public static OcResource constructResourceObject(
             String host,
             String uri,
-            OcConnectivityType connectivityType,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
             boolean isObservable,
             List<String> resourceTypeList,
             List<String> interfaceList) throws OcException {
         OcPlatform.initCheck();
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType))
+                connTypeInt |= connType.getValue();
+        }
         return OcPlatform.constructResourceObject0(
                 host,
                 uri,
-                connectivityType.getValue(),
+                connTypeInt,
                 isObservable,
                 resourceTypeList.toArray(new String[resourceTypeList.size()]),
                 interfaceList.toArray(new String[interfaceList.size()])

@@ -22,6 +22,7 @@
 
 package org.iotivity.base;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 
@@ -460,27 +461,15 @@ public class OcResource {
     /**
      * Method to get the connectivity type of this resource
      *
-     * @return OcConnectivityType connectivity type
+     * @return EnumSet<OcConnectivityType></OcConnectivityType> connectivity type set
      */
-    public OcConnectivityType getConnectivityType() {
-        return OcConnectivityType.get(
+    public EnumSet<OcConnectivityType> getConnectivityTypeSet() {
+        return OcConnectivityType.convertToEnumSet(
                 this.getConnectivityTypeN()
         );
     }
 
     private native int getConnectivityTypeN();
-
-    /**
-     * Method to get the connectivity flags of this resource
-     *
-     * @return OcConnectivityFlags connectivity type
-     */
-    public OcConnectivityFlags getConnectivityFlags() {
-        OcConnectivityType connType = this.getConnectivityType();
-        int connTypeN = this.getConnectivityTypeN();
-        int flag = connTypeN - connType.getValue();
-        return OcConnectivityFlags.get(flag);
-    }
 
     /**
      * Method to provide ability to check if this resource is observable or not
