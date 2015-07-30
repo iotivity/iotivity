@@ -63,6 +63,10 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
     struct ifaddrs *ifa = NULL;
     for (ifa = ifp; ifa; ifa = ifa->ifa_next)
     {
+        if (!ifa->ifa_addr)
+        {
+            continue;
+        }
         int family = ifa->ifa_addr->sa_family;
         if ((ifa->ifa_flags & IFF_LOOPBACK) || (AF_INET != family && AF_INET6 != family))
         {
