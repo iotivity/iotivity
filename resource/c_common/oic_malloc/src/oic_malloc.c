@@ -59,38 +59,30 @@ static uint32_t count;
 
 void *OICMalloc(size_t size)
 {
-#ifdef ENABLE_MALLOC_DEBUG
-    void *ptr = 0;
-
     if (0 == size)
     {
         return NULL;
     }
 
-    ptr = malloc(size);
+#ifdef ENABLE_MALLOC_DEBUG
+    void *ptr = malloc(size);
     count++;
     OIC_LOG_V(INFO, TAG, "malloc: ptr=%p, size=%u, count=%u", ptr, size, count);
     return ptr;
 #else
-    if (0 == size)
-    {
-        return NULL;
-    }
     return malloc(size);
 #endif
 }
 
 void *OICCalloc(size_t num, size_t size)
 {
-    if(0 == size || 0 == num)
+    if (0 == size || 0 == num)
     {
         return NULL;
     }
 
 #ifdef ENABLE_MALLOC_DEBUG
-    void *ptr = 0;
-
-    ptr = calloc(num, size);
+    void *ptr = calloc(num, size);
     OIC_LOG_V(INFO, TAG, "calloc: ptr=%p, num=%u, size=%u", ptr, num, size);
     return ptr;
 #else
@@ -100,22 +92,22 @@ void *OICCalloc(size_t num, size_t size)
 
 void *OICRealloc(void* ptr, size_t size)
 {
-    if(size == 0)
-    {
-        OICFree(ptr);
-        return NULL;
-    }
-
-#ifdef ENABLE_MALLOC_DEBUG
-    if(ptr == NULL)
+    // Override realloc() behavior for NULL pointer which normally would
+    // work as per malloc(), however we suppress the behavior of possibly
+    // returning a non-null unique pointer.
+    if (ptr == NULL)
     {
         return OICMalloc(size);
     }
 
-    void* newptr = NULL;
-    newptr = realloc(ptr, size);
+    // Otherwise leave the behavior up to realloc() itself:
+
+#ifdef ENABLE_MALLOC_DEBUG
+    void* newptr = realloc(ptr, size);
     OIC_LOG_V(INFO, TAG, "realloc: ptr=%p, newptr=%p, size=%u", ptr, newptr, size);
-    return ptr;
+    // Very important to return the correct pointer here, as it only *somtimes*
+    // differs and thus can be hard to notice/test:
+    return newptr;
 #else
     return realloc(ptr, size);
 #endif
@@ -124,10 +116,14 @@ void *OICRealloc(void* ptr, size_t size)
 void OICFree(void *ptr)
 {
 #ifdef ENABLE_MALLOC_DEBUG
-    OIC_LOG_V(INFO, TAG, "free: ptr=%p, count=%u", ptr, --count);
+    // Since OICMalloc() did not increment count if it returned NULL,
+    // guard the decrement:
+    if (ptr)
+    {
+        count--;
+    }
+    OIC_LOG_V(INFO, TAG, "free: ptr=%p, count=%u", ptr, count);
 #endif
 
     free(ptr);
 }
-
-
