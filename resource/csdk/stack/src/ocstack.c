@@ -844,7 +844,7 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
 
     if (!presenceSubscribe && !multicastPresenceSubscribe)
     {
-         OC_LOG(ERROR, TAG, PCF("Received a presence notification, but no callback, ignoring"));
+        OC_LOG(ERROR, TAG, PCF("Received a presence notification, but no callback, ignoring"));
         goto exit;
     }
 
@@ -997,10 +997,11 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
 {
     VERIFY_NON_NULL_NR(endPoint, FATAL);
     VERIFY_NON_NULL_NR(responseInfo, FATAL);
-    VERIFY_NON_NULL_NR(responseInfo->info.resourceUri, FATAL);
+
     OC_LOG(INFO, TAG, PCF("Enter HandleCAResponses"));
 
-    if(strcmp(responseInfo->info.resourceUri, OC_RSRVD_PRESENCE_URI) == 0)
+    if(responseInfo->info.resourceUri &&
+        strcmp(responseInfo->info.resourceUri, OC_RSRVD_PRESENCE_URI) == 0)
     {
         HandlePresenceResponse(endPoint, responseInfo);
         return;
@@ -1169,8 +1170,7 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
             }
             else
             {
-                OC_LOG(INFO, TAG, PCF("Received a response or notification,\
-                        but I do not have callback. Sending RESET"));
+                OC_LOG(INFO, TAG, PCF("Received a message without callbacks. Sending RESET"));
                 SendDirectStackResponse(endPoint, responseInfo->info.messageId, CA_EMPTY,
                         CA_MSG_RESET, 0, NULL, NULL, 0);
             }
