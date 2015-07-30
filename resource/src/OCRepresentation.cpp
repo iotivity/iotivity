@@ -619,6 +619,10 @@ namespace OC
     {
         m_children = children;
     }
+    void OCRepresentation::setUri(const char* uri)
+    {
+        m_uri = uri ? uri : "";
+    }
 
     void OCRepresentation::setUri(const std::string& uri)
     {
