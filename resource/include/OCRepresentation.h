@@ -118,6 +118,8 @@ namespace OC
 
             void setChildren(const std::vector<OCRepresentation>& children);
 
+            void setUri(const char* uri);
+
             void setUri(const std::string& uri);
 
             std::string getUri() const;

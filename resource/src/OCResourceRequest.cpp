@@ -30,7 +30,11 @@ void OCResourceRequest::setPayload(OCPayload* payload)
 {
     MessageContainer info;
 
-    if(payload == nullptr || payload->type != PAYLOAD_TYPE_REPRESENTATION)
+    if(payload == nullptr)
+    {
+        return;
+    }
+    if(payload->type != PAYLOAD_TYPE_REPRESENTATION)
     {
         throw std::logic_error("Wrong payload type");
         return;
