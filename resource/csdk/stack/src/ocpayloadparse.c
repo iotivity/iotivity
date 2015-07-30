@@ -604,9 +604,9 @@ static bool OCParseArray(OCRepPayload* out, const char* name, CborValue* contain
             arr = (char**)OICMalloc(dimTotal * sizeof(char*));
             for(size_t i = 0; i < dimTotal && !err; ++i)
             {
-                 err = err || cbor_value_dup_text_string(&insideArray, &tempStr,
-                        &len, NULL);
-                ((char**)arr)[i] = tempStr;
+                err = err || cbor_value_dup_text_string(&insideArray, &tempStr, &len, NULL);
+                ((char**) arr)[i] = tempStr;
+                err = err || cbor_value_advance(&insideArray);
             }
             if(!err &&
                 OCRepPayloadSetStringArrayAsOwner(out, name, (char**)arr, dimensions))
