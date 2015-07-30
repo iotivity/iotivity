@@ -41,23 +41,26 @@ namespace OIC
         {
             if(presenceSubscriber.isSubscribing())
             {
+                OC_LOG_V(DEBUG,BROKER_TAG,"unsubscribed presence.");
                 presenceSubscriber.unsubscribe();
             }
             resourcePresenceList.clear();
+            OC_LOG_V(DEBUG,BROKER_TAG,"destroy Timer.");
             presenceTimer.destroyTimer();
         }
 
         void DevicePresence::initializeDevicePresence(PrimitiveResourcePtr pResource)
         {
+            OC_LOG_V(DEBUG, BROKER_TAG, "initializeDevicePresence()");
             address = pResource->getHost();
 
             OC_LOG_V(DEBUG, BROKER_TAG, "%s",address.c_str());
 
             try
             {
+                OC_LOG_V(DEBUG, BROKER_TAG, "subscribe Presence");
                 presenceSubscriber
                 = PresenceSubscriber(address, BROKER_TRANSPORT, pSubscribeRequestCB);
-                OC_LOG_V(DEBUG, BROKER_TAG, "subscribe Presence");
             } catch(PlatformException &e)
             {
                 OC_LOG_V(DEBUG, BROKER_TAG,
@@ -73,21 +76,25 @@ namespace OIC
         }
         const std::string DevicePresence::getAddress() const
         {
+            OC_LOG_V(DEBUG, BROKER_TAG, "getAddress()");
             return address;
         }
 
         void DevicePresence::addPresenceResource(ResourcePresence * rPresence)
         {
+            OC_LOG_V(DEBUG, BROKER_TAG, "addPresenceResource()");
             resourcePresenceList.push_back(rPresence);
         }
 
         void DevicePresence::removePresenceResource(ResourcePresence * rPresence)
         {
+            OC_LOG_V(DEBUG, BROKER_TAG, "removePresenceResource()");
             resourcePresenceList.remove(rPresence);
         }
 
         void DevicePresence::changeAllPresenceMode(BROKER_MODE mode)
         {
+            OC_LOG_V(DEBUG, BROKER_TAG, "changeAllPresenceMode()");
             if(!resourcePresenceList.empty())
             {
                 for(auto it : resourcePresenceList)
@@ -99,12 +106,14 @@ namespace OIC
 
         bool DevicePresence::isEmptyResourcePresence() const
         {
+            OC_LOG_V(DEBUG, BROKER_TAG, "isEmptyResourcePresence()");
             return resourcePresenceList.empty();
         }
 
         void DevicePresence::subscribeCB(OCStackResult ret,
                 const unsigned int seq, const std::string & hostAddress)
         {
+            OC_LOG_V(DEBUG, BROKER_TAG, "subscribeCB()");
             OC_LOG_V(DEBUG, BROKER_TAG, "Received presence CB from: %s",hostAddress.c_str());
             OC_LOG_V(DEBUG, BROKER_TAG, "In subscribeCB: %d",ret);
 
@@ -154,6 +163,7 @@ namespace OIC
 
         void DevicePresence::timeOutCB(TimerID /*id*/)
         {
+            OC_LOG_V(DEBUG,BROKER_TAG,"timeOutCB()");
             std::unique_lock<std::mutex> lock(timeoutMutex);
             isRunningTimeOut = true;
 

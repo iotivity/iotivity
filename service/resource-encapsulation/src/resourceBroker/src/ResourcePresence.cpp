@@ -40,6 +40,7 @@ using namespace OIC::Service;
     void getCallback(const HeaderOptions &hos, const ResponseStatement& rep,
             int eCode, std::weak_ptr<ResourcePresence> this_ptr)
     {
+        OC_LOG_V(DEBUG,BROKER_TAG,"getCallback().\n");
         std::shared_ptr<ResourcePresence> Ptr = this_ptr.lock();
         if(Ptr)
         {
@@ -48,6 +49,7 @@ using namespace OIC::Service;
     }
     void timeOutCallback(unsigned int msg, std::weak_ptr<ResourcePresence> this_ptr)
     {
+        OC_LOG_V(DEBUG,BROKER_TAG,"timeOutCallback().\n");
         std::shared_ptr<ResourcePresence> Ptr = this_ptr.lock();
         if(Ptr)
         {
@@ -69,6 +71,7 @@ namespace OIC
 
         void ResourcePresence::initializeResourcePresence(PrimitiveResourcePtr pResource)
         {
+            OC_LOG_V(DEBUG,BROKER_TAG,"initializeResourcePresence().\n");
             pGetCB = std::bind(getCallback, std::placeholders::_1, std::placeholders::_2,
                     std::placeholders::_3, std::weak_ptr<ResourcePresence>(shared_from_this()));
             pTimeoutCB = std::bind(timeOutCallback, std::placeholders::_1,
@@ -81,7 +84,7 @@ namespace OIC
             (new std::list<BrokerRequesterInfoPtr>);
 
             timeoutHandle = expiryTimer.postTimer(BROKER_SAFE_MILLISECOND, pTimeoutCB);
-
+            OC_LOG_V(DEBUG,BROKER_TAG,"initializeResourcePresence::requestGet.\n");
             primitiveResource->requestGet(pGetCB);
 
             registerDevicePresence();
@@ -112,12 +115,14 @@ namespace OIC
 
         void ResourcePresence::addBrokerRequester(BrokerID _id, BrokerCB _cb)
         {
+            OC_LOG_V(DEBUG,BROKER_TAG,"addBrokerRequester().\n");
             requesterList->push_back(
                     std::make_shared<BrokerRequesterInfo>(BrokerRequesterInfo(_id, _cb)));
         }
 
         void ResourcePresence::removeAllBrokerRequester()
         {
+            OC_LOG_V(DEBUG,BROKER_TAG,"removeAllBrokerRequester().\n");
             if(requesterList != nullptr)
             {
                 requesterList->erase(requesterList->begin(), requesterList->end());
@@ -126,11 +131,13 @@ namespace OIC
 
         void ResourcePresence::removeBrokerRequester(BrokerID _id)
         {
+            OC_LOG_V(DEBUG,BROKER_TAG,"removeBrokerRequester().\n");
             std::list<BrokerRequesterInfoPtr>::iterator iter = requesterList->begin();
             for(; iter != requesterList->end(); ++iter)
             {
                 if(iter->get()->brokerId == _id)
                 {
+                    OC_LOG_V(DEBUG,BROKER_TAG,"find broker-id in requesterList.\n");
                     requesterList->erase(iter);
                     break;
                 }
@@ -139,21 +146,25 @@ namespace OIC
 
         bool ResourcePresence::isEmptyRequester() const
         {
+            OC_LOG_V(DEBUG,BROKER_TAG,"isEmptyRequester().\n");
             return (requesterList!=nullptr)?requesterList->empty():true;
         }
 
         int ResourcePresence::requesterListSize() const {
+            OC_LOG_V(DEBUG,BROKER_TAG,"requesterListSize().\n");
             return (requesterList!=nullptr)?requesterList->size():0;
         }
 
         void ResourcePresence::requestResourceState() const
         {
-            OC_LOG_V(DEBUG, BROKER_TAG, "Request Get\n");
+            OC_LOG_V(DEBUG,BROKER_TAG,"requestResourceState().\n");
             primitiveResource->requestGet(pGetCB);
+            OC_LOG_V(DEBUG, BROKER_TAG, "Request Get\n");
         }
 
         void ResourcePresence::registerDevicePresence()
         {
+            OC_LOG_V(DEBUG,BROKER_TAG,"registerDevicePresence().\n");
             std::string deviceAddress = primitiveResource->getHost();
 
             DevicePresencePtr foundDevice
@@ -176,7 +187,7 @@ namespace OIC
 
         void ResourcePresence::executeAllBrokerCB(BROKER_STATE changedState)
         {
-            OC_LOG_V(DEBUG, BROKER_TAG, "executeAllBrokerCB()");
+            OC_LOG_V(DEBUG, BROKER_TAG, "executeAllBrokerCB().\n");
             if(state != changedState)
             {
                 setResourcestate(changedState);
@@ -193,11 +204,14 @@ namespace OIC
 
         void ResourcePresence::setResourcestate(BROKER_STATE _state)
         {
+            OC_LOG_V(DEBUG, BROKER_TAG, "setResourcestate().\n");
             this->state = _state;
         }
 
         void ResourcePresence::timeOutCB(unsigned int /*msg*/)
         {
+            OC_LOG_V(DEBUG, BROKER_TAG, "timeOutCB()");
+            OC_LOG_V(DEBUG, BROKER_TAG, "waiting for terminate getCB\n");
             std::unique_lock<std::mutex> lock(cbMutex);
 
             time_t currentTime;
@@ -212,7 +226,7 @@ namespace OIC
             }
             this->isWithinTime = false;
             OC_LOG_V(DEBUG, BROKER_TAG,
-                    "Timeout execution. will be discard after receiving cb message");
+                    "Timeout execution. will be discard after receiving cb message.\n");
 
             executeAllBrokerCB(BROKER_STATE::LOST_SIGNAL);
             pollingCB();
@@ -220,9 +234,9 @@ namespace OIC
 
         void ResourcePresence::pollingCB(unsigned int /*msg*/)
         {
+            OC_LOG_V(DEBUG, BROKER_TAG, "pollingCB().\n");
             if(this->requesterList->size() != 0)
             {
-                OC_LOG_V(DEBUG,BROKER_TAG,"IN PollingCB\n");
                 this->requestResourceState();
                 timeoutHandle = expiryTimer.postTimer(BROKER_SAFE_MILLISECOND,pTimeoutCB);
             }
@@ -231,8 +245,8 @@ namespace OIC
         void ResourcePresence::getCB(const HeaderOptions & /*hos*/,
                 const ResponseStatement & /*rep*/, int eCode)
         {
-            OC_LOG_V(DEBUG, BROKER_TAG, "response getCB\n");
-            OC_LOG_V(DEBUG, BROKER_TAG, "waiting for terminate TimeoutCB\n");
+            OC_LOG_V(DEBUG, BROKER_TAG, "getCB().\n");
+            OC_LOG_V(DEBUG, BROKER_TAG, "waiting for terminate TimeoutCB.\n");
             std::unique_lock<std::mutex> lock(cbMutex);
 
             time_t currentTime;
@@ -256,6 +270,7 @@ namespace OIC
 
         void ResourcePresence::verifiedGetResponse(int eCode)
         {
+            OC_LOG_V(DEBUG, BROKER_TAG, "verifiedGetResponse().\n");
             BROKER_STATE verifiedState = BROKER_STATE::NONE;
             switch(eCode)
             {
@@ -284,16 +299,19 @@ namespace OIC
 
         const PrimitiveResourcePtr ResourcePresence::getPrimitiveResource() const
         {
+            OC_LOG_V(DEBUG, BROKER_TAG, "getPrimitiveResource()\n");
             return primitiveResource;
         }
 
         BROKER_STATE ResourcePresence::getResourceState() const
         {
+            OC_LOG_V(DEBUG, BROKER_TAG, "getResourceState()\n");
             return state;
         }
 
         void ResourcePresence::changePresenceMode(BROKER_MODE newMode)
         {
+            OC_LOG_V(DEBUG, BROKER_TAG, "changePresenceMode()\n");
             if(newMode != mode)
             {
                 expiryTimer.cancelTimer(timeoutHandle);
