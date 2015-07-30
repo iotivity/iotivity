@@ -290,6 +290,8 @@ static int CACreateSocket(int family, uint16_t *port)
     #endif
 
     struct sockaddr_storage sa = { .ss_family = family };
+    socklen_t socklen;
+
     if (family == AF_INET6)
     {
         int on = 1;
@@ -298,10 +300,12 @@ static int CACreateSocket(int family, uint16_t *port)
             OIC_LOG_V(ERROR, TAG, "IPV6_V6ONLY failed: %s", strerror(errno));
         }
         ((struct sockaddr_in6 *)&sa)->sin6_port = htons(*port);
+        socklen = sizeof (struct sockaddr_in6);
     }
     else
     {
         ((struct sockaddr_in *)&sa)->sin_port = htons(*port);
+        socklen = sizeof (struct sockaddr_in);
     }
 
     if (*port)  // use the given port
@@ -315,7 +319,7 @@ static int CACreateSocket(int family, uint16_t *port)
         }
     }
 
-    if (-1 == bind(fd, (struct sockaddr *)&sa, sizeof(sa)))
+    if (-1 == bind(fd, (struct sockaddr *)&sa, socklen))
     {
         OIC_LOG_V(ERROR, TAG, "bind socket failed: %s", strerror(errno));
         close(fd);
@@ -324,8 +328,6 @@ static int CACreateSocket(int family, uint16_t *port)
 
     if (!*port)  // return the assigned port
     {
-        struct sockaddr_storage sa;
-        socklen_t socklen = sizeof (sa);
         if (-1 == getsockname(fd, (struct sockaddr *)&sa, &socklen))
         {
             OIC_LOG_V(ERROR, TAG, "getsockname failed: %s", strerror(errno));
