@@ -17,7 +17,6 @@
 // limitations under the License.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
 #include <iostream>
 #include <vector>
 #include <unistd.h>
@@ -30,6 +29,7 @@
 #include "OCPlatform.h"
 
 #include "PrimitiveResource.h"
+#include "BrokerTypes.h"
 #include "ResponseStatement.h"
 #include "RCSResourceAttributes.h"
 #include "ResourcePresence.h"
@@ -55,7 +55,7 @@ public:
 
 protected:
 
-    void SetUp() 
+    void SetUp()
     {
         TestWithMock::SetUp();
         instance.reset(new ResourcePresence());
@@ -64,7 +64,7 @@ protected:
         id = 0;
     }
 
-    void TearDown() 
+    void TearDown()
     {
         TestWithMock::TearDown();
         instance.reset();
@@ -81,6 +81,16 @@ protected:
     }
 
 };
+TEST_F(ResourcePresenceTest,timeoutCB_TimeOverWhenIsRequestGet)
+{
+    MockingFunc();
+    instance->initializeResourcePresence(pResource);
+    std::cout<<"wait while done timeout requestGet\n";
+    BROKER_STATE state;
+    state = instance->getResourceState();
+    sleep((BROKER_DEVICE_PRESENCE_TIMEROUT/1000)+1);
+    ASSERT_EQ(state,instance->getResourceState());
+}
 
 TEST_F(ResourcePresenceTest,initializeResourcePresence_NormalhandlingIfNormalResource)
 {

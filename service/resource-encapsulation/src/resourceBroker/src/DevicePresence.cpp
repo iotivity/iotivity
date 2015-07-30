@@ -67,7 +67,10 @@ namespace OIC
             presenceTimerHandle
             = presenceTimer.postTimer(BROKER_DEVICE_PRESENCE_TIMEROUT, pTimeoutCB);
         }
-
+        DEVICE_STATE DevicePresence::getDeviceState() const
+        {
+            return state;
+        }
         const std::string DevicePresence::getAddress() const
         {
             return address;

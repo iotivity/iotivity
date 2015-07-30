@@ -17,10 +17,12 @@
 // limitations under the License.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#include <unistd.h>
 
 #include "gtest/gtest.h"
 #include "HippoMocks/hippomocks.h"
 
+#include "BrokerTypes.h"
 #include "PrimitiveResource.h"
 #include "ResponseStatement.h"
 #include "OCPlatform.h"
@@ -38,7 +40,7 @@ typedef OCStackResult (*subscribePresenceSig1)(OC::OCPlatform::OCPresenceHandle&
 class DevicePresenceTest : public TestWithMock
 {
 public:
-
+    typedef std::function<void(OCStackResult,const unsigned int, const std::string&)> subscribeCallback;
     DevicePresence * instance;
     PrimitiveResource::Ptr pResource;
     BrokerCB cb;
@@ -46,7 +48,7 @@ public:
 
 protected:
 
-    void SetUp() 
+    void SetUp()
     {
         TestWithMock::SetUp();
         instance = (DevicePresence*)new DevicePresence();
@@ -55,7 +57,7 @@ protected:
         id = 0;
     }
 
-    void TearDown() 
+    void TearDown()
     {
         TestWithMock::TearDown();
         pResource.reset();
@@ -65,11 +67,33 @@ protected:
 
     void MockingFunc()
     {
-        mocks.OnCall(pResource.get(), PrimitiveResource::requestGet);
         mocks.OnCall(pResource.get(), PrimitiveResource::getHost).Return(std::string());
         mocks.OnCallFuncOverload(static_cast< subscribePresenceSig1 >(OC::OCPlatform::subscribePresence)).Return(OC_STACK_OK);
     }
 };
+TEST_F(DevicePresenceTest,timeoutCB_TimeOverWhenIsSubscribe)
+{
+   MockingFunc();
+   instance->initializeDevicePresence(pResource);
+   std::cout<<"wait while done timeout device presence\n";
+   sleep((BROKER_DEVICE_PRESENCE_TIMEROUT/1000)+1);
+   ASSERT_EQ(DEVICE_STATE::LOST_SIGNAL,instance->getDeviceState());
+}
+
+TEST_F(DevicePresenceTest,SubscribeCB_NormalHandlingIfMessageOC_STACK_OK)
+{
+   mocks.OnCall(pResource.get(), PrimitiveResource::getHost).Return(std::string());
+   mocks.OnCallFuncOverload(static_cast< subscribePresenceSig1 >(OC::OCPlatform::subscribePresence)).Do(
+            [](OC::OCPlatform::OCPresenceHandle&,
+                    const std::string&, OCConnectivityType, SubscribeCallback callback)->OCStackResult{
+
+        callback(OC_STACK_OK,0,std::string());
+        return OC_STACK_OK;
+
+    }).Return(OC_STACK_OK);
+   instance->initializeDevicePresence(pResource);
+   ASSERT_NE(DEVICE_STATE::LOST_SIGNAL,instance->getDeviceState());
+}
 
 TEST_F(DevicePresenceTest,initializeDevicePresence_NormalHandlingIfNormalResource)
 {
