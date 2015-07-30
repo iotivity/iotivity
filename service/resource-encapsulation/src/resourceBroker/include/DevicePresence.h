@@ -49,7 +49,7 @@ namespace OIC
 
             bool isEmptyResourcePresence() const;
             const std::string getAddress() const;
-
+            DEVICE_STATE getDeviceState() const;
         private:
             std::list<ResourcePresence * > resourcePresenceList;
 
