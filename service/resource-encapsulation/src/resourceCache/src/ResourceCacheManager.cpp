@@ -160,6 +160,12 @@ namespace OIC
             {
                 throw InvalidParameterException {"[getCachedData] Primitive Resource is invaild"};
             }
+
+            if(handler->isCachedData() == false)
+            {
+                throw HasNoCachedDataException {"[getCachedData] Cached Data is not stored"};
+            }
+
             return handler->getCachedData();
         }
 
@@ -175,6 +181,12 @@ namespace OIC
             {
                 throw InvalidParameterException {"[getCachedData] CacheID is invaild"};
             }
+
+            if(handler->isCachedData() == false)
+            {
+                throw HasNoCachedDataException {"[getCachedData] Cached Data is not stored"};
+            }
+
             return handler->getCachedData();
         }
 
@@ -207,6 +219,36 @@ namespace OIC
                 return CACHE_STATE::NONE;
             }
             return handler->getCacheState();
+        }
+
+        bool ResourceCacheManager::isCachedData(PrimitiveResourcePtr pResource) const
+        {
+            if (pResource == nullptr)
+            {
+                throw InvalidParameterException {"[isCachedData] Primitive Resource is nullptr"};
+            }
+
+            DataCachePtr handler = findDataCache(pResource);
+            if (handler == nullptr)
+            {
+                throw InvalidParameterException {"[isCachedData] Primitive Resource is invaild"};
+            }
+            return handler->isCachedData();
+        }
+
+        bool ResourceCacheManager::isCachedData(CacheID id) const
+        {
+            if (id == 0)
+            {
+                throw InvalidParameterException {"[isCachedData] CacheID is NULL"};
+            }
+
+            DataCachePtr handler = findDataCache(id);
+            if (handler == nullptr)
+            {
+                throw InvalidParameterException {"[isCachedData] CacheID is invaild"};
+            }
+            return handler->isCachedData();
         }
 
         void ResourceCacheManager::initializeResourceCacheManager()

@@ -54,6 +54,7 @@ namespace OIC
 
                 void requestGet();
                 bool isEmptySubscriber() const;
+                bool isCachedData() const;
 
             private:
                 // resource instance
@@ -63,10 +64,12 @@ namespace OIC
                 RCSResourceAttributes attributes;
                 CACHE_STATE state;
                 CACHE_MODE mode;
+                bool isReady;
 
                 // subscriber info
                 std::unique_ptr<SubscriberInfo> subscriberList;
                 mutable std::mutex m_mutex;
+                mutable std::mutex att_mutex;
 
                 ExpiryTimer networkTimer;
                 ExpiryTimer pollingTimer;
