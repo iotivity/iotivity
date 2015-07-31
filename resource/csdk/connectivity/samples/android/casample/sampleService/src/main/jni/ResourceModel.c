@@ -646,6 +646,7 @@ Java_org_iotivity_ca_service_RMInterface_RMSendNotification(JNIEnv *env, jobject
             return;
         }
         snprintf(responseData.payload, length, SECURE_INFO_DATA, resourceURI, g_localSecurePort);
+        responseData.payloadSize = length;
     }
     else
     {
@@ -663,6 +664,7 @@ Java_org_iotivity_ca_service_RMInterface_RMSendNotification(JNIEnv *env, jobject
             return;
         }
         snprintf(responseData.payload, length, NORMAL_INFO_DATA, resourceURI);
+        responseData.payloadSize = length;
     }
 
     responseData.type = messageType;
