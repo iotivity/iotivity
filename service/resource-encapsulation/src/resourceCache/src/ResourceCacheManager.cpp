@@ -26,10 +26,12 @@ namespace OIC
     {
         ResourceCacheManager *ResourceCacheManager::s_instance = NULL;
         std::mutex ResourceCacheManager::s_mutexForCreation;
+        std::mutex ResourceCacheManager::s_mutex;
         std::unique_ptr<std::list<DataCachePtr>> ResourceCacheManager::s_cacheDataList(nullptr);
 
         ResourceCacheManager::~ResourceCacheManager()
         {
+            std::lock_guard<std::mutex> lock(s_mutex);
             if (s_cacheDataList != nullptr)
             {
                 s_cacheDataList->clear();
@@ -78,6 +80,7 @@ namespace OIC
             DataCachePtr newHandler = findDataCache(pResource);
             if (newHandler == nullptr)
             {
+                std::lock_guard<std::mutex> lock(s_mutex);
                 newHandler.reset(new DataCache());
                 newHandler->initializeDataCache(pResource);
                 s_cacheDataList->push_back(newHandler);
@@ -104,6 +107,7 @@ namespace OIC
                 {
                     cacheIDmap.erase(id);
                 }
+                std::lock_guard<std::mutex> lock(s_mutex);
                 if (foundCacheHandler->isEmptySubscriber())
                 {
                     s_cacheDataList->remove(foundCacheHandler);
@@ -127,6 +131,7 @@ namespace OIC
             }
             foundCache->requestGet();
         }
+
         void ResourceCacheManager::updateResourceCache(CacheID updateId) const
         {
             if (updateId == 0)
@@ -206,6 +211,7 @@ namespace OIC
 
         void ResourceCacheManager::initializeResourceCacheManager()
         {
+            std::lock_guard<std::mutex> lock(s_mutex);
             if (s_cacheDataList == nullptr)
             {
                 s_cacheDataList
@@ -216,6 +222,7 @@ namespace OIC
         DataCachePtr ResourceCacheManager::findDataCache(PrimitiveResourcePtr pResource) const
         {
             DataCachePtr retHandler = nullptr;
+            std::lock_guard<std::mutex> lock(s_mutex);
             for (auto &i : * s_cacheDataList)
             {
                 if (i->getPrimitiveResource()->getUri() == pResource->getUri() &&

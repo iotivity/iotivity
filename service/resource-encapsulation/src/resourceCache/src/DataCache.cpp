@@ -87,6 +87,7 @@ namespace OIC
 
             networkTimeOutHandle = 0;
             pollingHandle = 0;
+            lastSequenceNum = 0;
         }
 
         DataCache::~DataCache()
@@ -199,9 +200,13 @@ namespace OIC
             const HeaderOptions &_hos, const ResponseStatement &_rep, int _result, int _seq)
         {
 
-            if (_result != OC_STACK_OK || _rep.getAttributes().empty())
+            if (_result != OC_STACK_OK || _rep.getAttributes().empty() || lastSequenceNum > _seq)
             {
                 return;
+            }
+            else
+            {
+                lastSequenceNum = _seq;
             }
 
             if (state != CACHE_STATE::READY)
