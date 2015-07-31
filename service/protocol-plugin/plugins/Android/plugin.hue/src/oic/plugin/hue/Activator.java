@@ -230,7 +230,7 @@ public class Activator extends Activity implements BundleActivator {
                                                            System.currentTimeMillis());
 
                                            PlatformConfig cfg = new PlatformConfig(
-                                                   getApplicationContext(),
+                                                   getBaseContext(),
                                                    ServiceType.IN_PROC,
                                                    ModeType.CLIENT_SERVER,
                                                    "0.0.0.0", 0,
@@ -244,7 +244,7 @@ public class Activator extends Activity implements BundleActivator {
                                                        .registerResource(
                                                                "/a/huebulb",
                                                                "device.light",
-                                                               "oc.mi.def",
+                                                               OcPlatform.DEFAULT_INTERFACE,
                                                                entitycb,
                                                                EnumSet.of(ResourceProperty.DISCOVERABLE));
                                            } catch (OcException e) {
