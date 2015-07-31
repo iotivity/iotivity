@@ -106,6 +106,11 @@ static ca_mutex g_mutexStateList = NULL;
  */
 static ca_mutex g_mutexObjectList = NULL;
 
+/**
+ * Mutex to synchronize input stream.
+ */
+static ca_mutex g_mutexInputStream = NULL;
+
 typedef struct send_data
 {
     char* address;
@@ -396,6 +401,12 @@ static void CAEDRServerDestroyMutex()
         g_mutexObjectList = NULL;
     }
 
+    if (g_mutexInputStream)
+    {
+        ca_mutex_free(g_mutexInputStream);
+        g_mutexInputStream = NULL;
+    }
+
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
@@ -462,6 +473,15 @@ static CAResult_t CAEDRServerCreateMutex()
     if (!g_mutexObjectList)
     {
         OIC_LOG(ERROR, TAG, "Failed to created mutex!");
+
+        CAEDRServerDestroyMutex();
+        return CA_STATUS_FAILED;
+    }
+
+    g_mutexInputStream = ca_mutex_new();
+    if (!g_mutexInputStream)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to created g_mutexInputStream.");
 
         CAEDRServerDestroyMutex();
         return CA_STATUS_FAILED;
@@ -760,8 +780,6 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id, CAAdapterServerType_t t
                                                                jni_mid_getInputStream);
         OIC_LOG(DEBUG, TAG, "[EDR][Native] btReadData:  ready inputStream..");
 
-        g_inputStream = (*env)->NewGlobalRef(env, jni_obj_inputStream);
-
         jclass jni_cid_InputStream = (*env)->FindClass(env, "java/io/InputStream");
         if (!jni_cid_InputStream)
         {
@@ -778,8 +796,15 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id, CAAdapterServerType_t t
             return CA_STATUS_FAILED;
         }
 
+        ca_mutex_lock(g_mutexInputStream);
+        if (!g_inputStream)
+        {
+            g_inputStream = (*env)->NewGlobalRef(env, jni_obj_inputStream);
+        }
+
         jint length = (*env)->CallIntMethod(env, g_inputStream, jni_mid_read, jbuf, (jint) 0,
                                             MAX_PDU_BUFFER);
+        ca_mutex_unlock(g_mutexInputStream);
 
         OIC_LOG(DEBUG, TAG, "[EDR][Native] read something from InputStream");
 
