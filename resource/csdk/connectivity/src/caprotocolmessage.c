@@ -119,7 +119,7 @@ CAResult_t CAGetErrorInfoFromPDU(const coap_pdu_t *pdu, CAErrorInfo_t *errorInfo
     return ret;
 }
 
-coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info)
+coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info, const CAEndpoint_t *endpoint)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -130,7 +130,7 @@ coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info)
     if (CA_MSG_RESET == info->type || (CA_EMPTY == code && CA_MSG_ACKNOWLEDGE == info->type))
     {
         OIC_LOG(DEBUG, TAG, "code is empty");
-        if (!(pdu = CAGeneratePDUImpl((code_t) code, NULL, info, NULL, 0)))
+        if (!(pdu = CAGeneratePDUImpl((code_t) code, NULL, info, endpoint)))
         {
             OIC_LOG(ERROR, TAG, "pdu NULL");
             return NULL;
@@ -187,7 +187,8 @@ coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info)
             coap_delete_list(optlist);
             return NULL;
         }
-        pdu = CAGeneratePDUImpl((code_t) code, optlist, info, info->payload, info->payloadSize);
+
+        pdu = CAGeneratePDUImpl((code_t) code, optlist, info, endpoint);
         if (NULL == pdu)
         {
             OIC_LOG(ERROR, TAG, "pdu NULL");
@@ -238,7 +239,7 @@ coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode)
 }
 
 coap_pdu_t *CAGeneratePDUImpl(code_t code, coap_list_t *options, const CAInfo_t *info,
-                              const uint8_t *payload, size_t payloadSize)
+                              const CAEndpoint_t *endpoint)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     VERIFY_NON_NULL_RET(info, TAG, "info is NULL", NULL);
@@ -296,15 +297,19 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, coap_list_t *options, const CAInfo_t 
         }
     }
 
+    bool enabledPayload = false;
 #ifndef WITH_BWT
-    if (NULL != payload)
-    {
-        coap_add_data(pdu, payloadSize, (const unsigned char *) payload);
-    }
-#else
-    (void)payload;
-    (void)payloadSize;
+    enabledPayload = true;
 #endif
+
+    if (enabledPayload || CA_ADAPTER_GATT_BTLE == endpoint->adapter)
+    {
+        if (NULL != info->payload)
+        {
+            OIC_LOG(DEBUG, TAG, "payload is added");
+            coap_add_data(pdu, info->payloadSize, (const unsigned char *) info->payload);
+        }
+    }
 
     OIC_LOG(DEBUG, TAG, "OUT");
     return pdu;
