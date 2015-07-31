@@ -123,6 +123,7 @@ static CAResult_t CAReceiveMessage(int fd, CATransportFlags_t flags);
 
 static void CAReceiveHandler(void *data)
 {
+    (void)data;
     OIC_LOG(DEBUG, TAG, "IN");
 
     while (!caglobals.ip.terminate)
@@ -181,6 +182,7 @@ static void CAFindReadyMessage()
 
 static void CASelectReturned(fd_set *readFds, int ret)
 {
+    (void)ret;
     int fd = -1;
     CATransportFlags_t flags = CA_DEFAULT_FLAGS;
 
@@ -228,7 +230,8 @@ static CAResult_t CAReceiveMessage(int fd, CATransportFlags_t flags)
         return CA_STATUS_FAILED;
     }
 
-    CAEndpoint_t ep = { CA_ADAPTER_IP, flags };
+    CAEndpoint_t ep = { .adapter = CA_ADAPTER_IP,
+                        .flags = flags };
 
     if (flags & CA_IPV6)
     {
@@ -286,7 +289,7 @@ static int CACreateSocket(int family, uint16_t *port)
     }
     #endif
 
-    struct sockaddr_storage sa = { family };
+    struct sockaddr_storage sa = { .ss_family = family };
     if (family == AF_INET6)
     {
         int on = 1;
@@ -507,8 +510,8 @@ static void applyMulticastToInterface4(struct in_addr inaddr)
         return;
     }
 
-    struct ip_mreq mreq = { IPv4MulticastAddress };
-    mreq.imr_interface = inaddr;
+    struct ip_mreq mreq = { .imr_multiaddr = IPv4MulticastAddress,
+                            .imr_interface = inaddr};
     if (setsockopt(caglobals.ip.m4.fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof (mreq)))
     {
         if (EADDRINUSE != errno)
@@ -640,7 +643,7 @@ for (nh = (struct nlmsghdr *)buf; NLMSG_OK(nh, len); nh = NLMSG_NEXT(nh, len))
                 continue;
             }
 
-            if (ifitem->index != newIndex)
+            if ((int)ifitem->index != newIndex)
             {
                 continue;
             }
@@ -698,6 +701,9 @@ static void sendData(int fd, const CAEndpoint_t *endpoint,
     ssize_t len = sendto(fd, data, dlen, 0, (struct sockaddr *)&sock, sizeof (sock));
     if (-1 == len)
     {
+         // If logging is not defined/enabled.
+        (void)cast;
+        (void)fam;
         OIC_LOG_V(ERROR, TAG, "%s%s %s sendTo failed: %s", secure, cast, fam, strerror(errno));
     }
     else
@@ -751,7 +757,7 @@ static void sendMulticastData4(const u_arraylist_t *iflist,
                                CAEndpoint_t *endpoint,
                                const void *data, uint32_t datalen)
 {
-    struct ip_mreq mreq = { IPv4MulticastAddress };
+    struct ip_mreq mreq = { .imr_multiaddr = IPv4MulticastAddress };
     OICStrcpy(endpoint->addr, sizeof(endpoint->addr), IPv4_MULTICAST);
     int fd = caglobals.ip.u4.fd;
 

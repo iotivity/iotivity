@@ -254,7 +254,7 @@ namespace OC
                         return *this;
                     }
 
-                    AttributeItem& operator=(std::nullptr_t rhs)
+                    AttributeItem& operator=(std::nullptr_t /*rhs*/)
                     {
                         NullType t;
                         m_values[m_attrName] = t;

@@ -1402,6 +1402,11 @@ static void CAFreeLEData(CALEData_t *bleData)
 
 static void CALEDataDestroyer(void *data, uint32_t size)
 {
+    if ((size_t)size < sizeof(CALEData_t *))
+    {
+        OIC_LOG_V(ERROR, CALEADAPTER_TAG,
+                  "Destroy data too small %p %d", data, size);
+    }
     CALEData_t *ledata = (CALEData_t *) data;
 
     CAFreeLEData(ledata);
@@ -1925,7 +1930,7 @@ static void CALEDeviceStateChangedCb( CAAdapterState_t adapter_state)
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
 
     VERIFY_NON_NULL_VOID(g_localBLEAddress, CALEADAPTER_TAG, "g_localBLEAddress is null");
-    CAEndpoint_t localEndpoint = {};
+    CAEndpoint_t localEndpoint = {.adapter = CA_DEFAULT_ADAPTER};
 
     ca_mutex_lock(g_bleLocalAddressMutex);
     OICStrcpy(localEndpoint.addr, sizeof(localEndpoint.addr), g_localBLEAddress);

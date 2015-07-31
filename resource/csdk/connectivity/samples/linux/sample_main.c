@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -94,7 +94,7 @@ void error_handler(const CAEndpoint_t *object, const CAErrorInfo_t* errorInfo);
 void send_response(const CAEndpoint_t *endpoint, const CAInfo_t *info);
 void get_resource_uri(char *URI, char *resourceURI, int length);
 int get_secure_information(CAPayload_t payLoad);
-int get_address_set(const char *pAddress, addressSet_t* outAddress);
+bool get_address_set(const char *pAddress, addressSet_t* outAddress);
 void parsing_coap_uri(const char* uri, addressSet_t* address, CATransportFlags_t *flags);
 CAHeaderOption_t* get_option_data(CAInfo_t* requestData);
 
@@ -452,7 +452,7 @@ void send_request()
     CATransportFlags_t flags;
 
     printf("URI : %s\n", uri);
-    addressSet_t address = {};
+    addressSet_t address = {{}, 0};
     parsing_coap_uri(uri, &address, &flags);
 
     res = CACreateEndpoint(flags, g_selected_nw_type,
@@ -767,7 +767,7 @@ void send_notification()
     int messageType = messageTypeBuf[0] - '0';
 
     CATransportFlags_t flags;
-    addressSet_t address = {};
+    addressSet_t address = {{}, 0};
     parsing_coap_uri(uri, &address, &flags);
 
     // create remote endpoint
@@ -955,8 +955,7 @@ void get_network_info()
     printf("################## Network Information #######################\n");
     printf("Network info total size is %d\n\n", tempSize);
 
-    int index;
-    for (index = 0; index < tempSize; index++)
+    for (uint32_t index = 0; index  < tempSize; index++)
     {
         printf("Type: %d\n", tempInfo[index].adapter);
         printf("Address: %s\n", tempInfo[index].addr);
@@ -1105,6 +1104,7 @@ void response_handler(const CAEndpoint_t *object, const CAResponseInfo_t *respon
 
 void error_handler(const CAEndpoint_t *rep, const CAErrorInfo_t* errorInfo)
 {
+    (void)rep;
     printf("+++++++++++++++++++++++++++++++++++ErrorInfo+++++++++++++++++++++++++++++++++++\n");
 
     if(errorInfo)
@@ -1534,8 +1534,7 @@ void parsing_coap_uri(const char* uri, addressSet_t* address, CATransportFlags_t
     char *pAddress = cloneUri;
     printf("pAddress : %s\n", pAddress);
 
-    int res = get_address_set(pAddress, address);
-    if (res == -1)
+    if (!get_address_set(pAddress, address))
     {
         printf("address parse error\n");
 
@@ -1546,23 +1545,23 @@ void parsing_coap_uri(const char* uri, addressSet_t* address, CATransportFlags_t
     return;
 }
 
-int get_address_set(const char *pAddress, addressSet_t* outAddress)
+bool get_address_set(const char *pAddress, addressSet_t* outAddress)
 {
     if (NULL == pAddress)
     {
         printf("parameter is null !\n");
-        return -1;
+        return false;
     }
 
-    int32_t len = strlen(pAddress);
-    int32_t isIp = 0;
-    int32_t ipLen = 0;
+    size_t len = strlen(pAddress);
+    bool isIp = false;
+    size_t ipLen = 0;
 
-    for (int i = 0; i < len; i++)
+    for (size_t i = 0; i < len; i++)
     {
         if (pAddress[i] == '.')
         {
-            isIp = 1;
+            isIp = true;
         }
 
         // found port number start index
@@ -1585,17 +1584,20 @@ int get_address_set(const char *pAddress, addressSet_t* outAddress)
         }
         else
         {
-            printf("IP Address too long: %d\n", ipLen==0 ? len : ipLen);
-            return -1;
+            printf("IP Address too long: %zu\n", (ipLen == 0) ? len : ipLen);
+            return false;
         }
 
         if (ipLen > 0)
         {
             outAddress->port = atoi(pAddress + ipLen + 1);
         }
+        return true;
     }
-
-    return isIp;
+    else
+    {
+        return false;
+    }
 }
 
 void create_file(CAPayload_t bytes, size_t length)

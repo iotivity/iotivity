@@ -368,14 +368,14 @@ CAResult_t CASendUnicastData(const CAEndpoint_t *endpoint, const void *data, uin
         return CA_STATUS_INVALID_PARAM;
     }
 
-    uint32_t sentDataLen = 0;
+    int32_t sentDataLen = 0;
 
     if (g_adapterHandler[index].sendData != NULL)
     {
         sentDataLen = g_adapterHandler[index].sendData(endpoint, data, length);
     }
 
-    if (sentDataLen != length)
+    if (sentDataLen != (int)length)
     {
         OIC_LOG(ERROR, TAG, "error in sending data. Error will be reported in adapter");
 #ifdef SINGLE_THREAD
@@ -400,8 +400,7 @@ CAResult_t CASendMulticastData(const CAEndpoint_t *endpoint, const void *data, u
         return CA_SEND_FAILED;
     }
 
-    int i = 0;
-    for (i = 0; i < u_arraylist_length(list); i++)
+    for (uint32_t i = 0; i < u_arraylist_length(list); i++)
     {
         void* ptrType = u_arraylist_get(list, i);
 
@@ -461,8 +460,7 @@ CAResult_t CAStartListeningServerAdapters()
         return CA_STATUS_FAILED;
     }
 
-    int i = 0;
-    for (i = 0; i < u_arraylist_length(list); i++)
+    for (uint32_t i = 0; i < u_arraylist_length(list); i++)
     {
         void* ptrType = u_arraylist_get(list, i);
 
@@ -502,8 +500,7 @@ CAResult_t CAStartDiscoveryServerAdapters()
         return CA_STATUS_FAILED;
     }
 
-    int i = 0;
-    for (i = 0; i < u_arraylist_length(list); i++)
+    for (uint32_t i = 0; i < u_arraylist_length(list); i++)
     {
         void* ptrType = u_arraylist_get(list, i);
 

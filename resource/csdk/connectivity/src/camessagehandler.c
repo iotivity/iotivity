@@ -298,6 +298,10 @@ static void CATimeoutCallback(const CAEndpoint_t *endpoint, const void *pdu, uin
 static void CADestroyData(void *data, uint32_t size)
 {
     OIC_LOG(DEBUG, TAG, "CADestroyData IN");
+    if ((size_t)size < sizeof(CAData_t))
+    {
+        OIC_LOG_V(ERROR, TAG, "Destroy data too small %p %d", data, size);
+    }
     CAData_t *cadata = (CAData_t *) data;
 
     if (NULL == cadata)
@@ -380,6 +384,8 @@ static void CAReceiveThreadProcess(void *threadData)
 #ifndef SINGLE_HANDLE
     CAData_t *data = (CAData_t *) threadData;
     CAProcessReceivedData(data);
+#else
+    (void)threadData;
 #endif
     OIC_LOG(DEBUG, TAG, "OUT");
 }
@@ -673,6 +679,8 @@ static void CAReceivedPacketCallback(const CAEndpoint_t *remoteEndpoint, const v
 
 static void CANetworkChangedCallback(const CAEndpoint_t *info, CANetworkStatus_t status)
 {
+    (void)info;
+    (void)status;
     OIC_LOG(DEBUG, TAG, "IN");
 
     OIC_LOG(DEBUG, TAG, "OUT");
@@ -945,6 +953,11 @@ CAResult_t CADetachMessageResourceUri(const CAURI_t resourceUri, const CAToken_t
                                       uint8_t tokenLength, const CAHeaderOption_t *options,
                                       uint8_t numOptions)
 {
+    (void)resourceUri;
+    (void)token;
+    (void)tokenLength;
+    (void)options;
+    (void)numOptions;
     return CA_NOT_SUPPORTED;
 }
 

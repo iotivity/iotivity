@@ -267,7 +267,7 @@ namespace OC
         *
         * @return OCEntityHandler result value
         */
-        const OCEntityHandlerResult getResponseResult() const
+        OCEntityHandlerResult getResponseResult() const
         {
             return m_responseResult;
         }
@@ -276,4 +276,3 @@ namespace OC
 } // namespace OC
 
 #endif //__OCRESOURCERESPONSE_H
-

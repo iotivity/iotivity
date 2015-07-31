@@ -707,6 +707,7 @@ void CAAdapterRecvData(const char *remoteAddress, const void *data, uint32_t dat
 void CAEDRErrorHandler(const char *remoteAddress, const char *serviceUUID, const void *data,
                        uint32_t dataLength, CAResult_t result)
 {
+    (void)serviceUUID;
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     // Input validation
@@ -918,8 +919,12 @@ void CAFreeEDRData(CAEDRData *edrData)
 
 void CAEDRDataDestroyer(void *data, uint32_t size)
 {
+    if ((size_t)size < sizeof(CAEDRData))
+    {
+        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Destroy data too small %p %d",
+                  data, size);
+    }
     CAEDRData *edrdata = (CAEDRData *) data;
 
     CAFreeEDRData(edrdata);
 }
-

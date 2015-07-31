@@ -145,6 +145,8 @@ void CAIPDeinitializeQueueHandles()
 
 void CAIPConnectionStateCB(const char *ipAddress, CANetworkStatus_t status)
 {
+    (void)ipAddress;
+    (void)status;
     OIC_LOG(DEBUG, TAG, "IN");
 }
 
@@ -528,6 +530,10 @@ void CAFreeIPData(CAIPData *ipData)
 
 void CADataDestroyer(void *data, uint32_t size)
 {
+    if (size < sizeof(CAIPData))
+    {
+        OIC_LOG_V(ERROR, TAG, "Destroy data too small %p %d", data, size);
+    }
     CAIPData *etdata = (CAIPData *) data;
 
     CAFreeIPData(etdata);

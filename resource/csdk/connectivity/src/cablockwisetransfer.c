@@ -248,6 +248,7 @@ CAResult_t CACheckBlockOptionType(CABlockData_t *currData)
     return CA_STATUS_OK;
 }
 
+// TODO make pdu const after libcoap is updated to support that.
 CAResult_t CAReceiveBlockWiseData(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                                   const CAData_t *receivedData, size_t dataLen)
 {
@@ -735,6 +736,7 @@ CAResult_t CAReceiveLastBlock(const CABlockDataID_t *blockID,
     return CA_STATUS_OK;
 }
 
+// TODO make pdu const after libcoap is updated to support that.
 CAResult_t CASetNextBlockOption1(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                                  const CAData_t *receivedData, coap_block_t block,
                                  size_t dataLen)
@@ -910,6 +912,7 @@ CAResult_t CASetNextBlockOption1(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
     return res;
 }
 
+// TODO make pdu const after libcoap is updated to support that.
 CAResult_t CASetNextBlockOption2(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                                  const CAData_t *receivedData, coap_block_t block,
                                  size_t dataLen)
@@ -1204,7 +1207,8 @@ CAResult_t CAGetMoreBitFromBlock(size_t payloadLen, coap_block_t *block)
 {
     VERIFY_NON_NULL(block, TAG, "block");
 
-    if (((block->num + 1) << (block->szx + BLOCK_NUMBER_IDX)) < payloadLen)
+    if ((size_t)((block->num + 1) << (block->szx + BLOCK_NUMBER_IDX))
+        < payloadLen)
     {
         OIC_LOG(DEBUG, TAG, "Set the M-bit(1)");
         block->m = 1;
@@ -1713,6 +1717,7 @@ CAResult_t CAAddBlockSizeOption(coap_pdu_t *pdu, uint16_t sizeType, size_t dataL
     return CA_STATUS_OK;
 }
 
+// TODO make pdu const after libcoap is updated to support that.
 bool CAIsPayloadLengthInPduWithBlockSizeOption(coap_pdu_t *pdu,
                                                uint16_t sizeType,
                                                size_t *totalPayloadLen)
@@ -1764,7 +1769,8 @@ uint8_t CACheckBlockErrorType(CABlockData_t *currData, coap_block_t *receivedBlo
     if (COAP_OPTION_BLOCK1 == blockType)
     {
         size_t prePayloadLen = currData->receivedPayloadLen;
-        if (prePayloadLen != BLOCK_SIZE(receivedBlock->szx) * receivedBlock->num)
+        if (prePayloadLen != (size_t)BLOCK_SIZE(receivedBlock->szx)
+            * receivedBlock->num)
         {
             if (receivedBlock->num > currData->block1.num + 1)
             {
@@ -1793,7 +1799,8 @@ uint8_t CACheckBlockErrorType(CABlockData_t *currData, coap_block_t *receivedBlo
 
     // #3. check if error check logic is required
     size_t optionLen = dataLen - blockPayloadLen;
-    if (receivedBlock->m && blockPayloadLen != BLOCK_SIZE(receivedBlock->szx))
+    if (receivedBlock->m && blockPayloadLen !=
+        (size_t)BLOCK_SIZE(receivedBlock->szx))
     {
         // 413 Error handling of too large entity
         if (COAP_MAX_PDU_SIZE < BLOCK_SIZE(receivedBlock->szx) + optionLen)
@@ -2458,7 +2465,7 @@ CABlockData_t *CACreateNewBlockData(const CAData_t *sendData)
     CABlockDataID_t* blockDataID = CACreateBlockDatablockId(
             token, tokenLength,
             data->sentData->remoteEndpoint->port);
-    if (NULL == blockDataID && NULL == blockDataID->id && blockDataID->idLength < 0)
+    if (NULL == blockDataID || NULL == blockDataID->id || blockDataID->idLength < 1)
     {
         OIC_LOG(ERROR, TAG, "blockId is null");
         CADestroyBlockID(blockDataID);
