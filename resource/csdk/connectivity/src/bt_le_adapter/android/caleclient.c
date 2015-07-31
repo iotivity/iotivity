@@ -348,19 +348,21 @@ void CALEClientSendFinish(JNIEnv *env, jobject gatt)
     CALEClientUpdateSendCnt(env);
 }
 
-CAResult_t CALEClientSendUnicastMessage(const char* address, const char* data,
+CAResult_t CALEClientSendUnicastMessage(const char* address,
+                                        const uint8_t* data,
                                         const uint32_t dataLen)
 {
-    OIC_LOG_V(DEBUG, TAG, "CALEClientSendUnicastMessage(%s, %s)", address, data);
+    OIC_LOG_V(DEBUG, TAG, "CALEClientSendUnicastMessage(%s, %p)", address, data);
     VERIFY_NON_NULL(address, TAG, "address is null");
     VERIFY_NON_NULL(data, TAG, "data is null");
 
     return CALEClientSendUnicastMessageImpl(address, data, dataLen);
 }
 
-CAResult_t CALEClientSendMulticastMessage(const char* data, const uint32_t dataLen)
+CAResult_t CALEClientSendMulticastMessage(const uint8_t* data,
+                                          const uint32_t dataLen)
 {
-    OIC_LOG_V(DEBUG, TAG, "CALEClientSendMulticastMessage(%s)", data);
+    OIC_LOG_V(DEBUG, TAG, "CALEClientSendMulticastMessage(%p)", data);
     VERIFY_NON_NULL(data, TAG, "data is null");
 
     if (!g_jvm)
@@ -480,10 +482,10 @@ void CASetBLEClientErrorHandleCallback(CABLEErrorHandleCallback callback)
     g_clientErrorCallback = callback;
 }
 
-CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const char* data,
+CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* data,
                                       const uint32_t dataLen)
 {
-    OIC_LOG_V(DEBUG, TAG, "CALEClientSendUnicastMessageImpl, address: %s, data: %s", address,
+    OIC_LOG_V(DEBUG, TAG, "CALEClientSendUnicastMessageImpl, address: %s, data: %p", address,
               data);
     VERIFY_NON_NULL(address, TAG, "address is null");
     VERIFY_NON_NULL(data, TAG, "data is null");
@@ -619,10 +621,10 @@ error_exit:
     return CA_SEND_FAILED;
 }
 
-CAResult_t CALEClientSendMulticastMessageImpl(JNIEnv *env, const char* data,
+CAResult_t CALEClientSendMulticastMessageImpl(JNIEnv *env, const uint8_t* data,
                                               const uint32_t dataLen)
 {
-    OIC_LOG_V(DEBUG, TAG, "CASendMulticastMessageImpl, send to, data: %s, %d", data, dataLen);
+    OIC_LOG_V(DEBUG, TAG, "CASendMulticastMessageImpl, send to, data: %p, %u", data, dataLen);
     VERIFY_NON_NULL(data, TAG, "data is null");
     VERIFY_NON_NULL(env, TAG, "env is null");
 
@@ -673,7 +675,7 @@ CAResult_t CALEClientSendMulticastMessageImpl(JNIEnv *env, const char* data,
         res = CALEClientSendData(env, jarrayObj);
         if (res != CA_STATUS_OK)
         {
-            OIC_LOG(ERROR, TAG, "BT device[%d] - send has failed");
+            OIC_LOG(ERROR, TAG, "BT device - send has failed");
         }
 
         jstring jni_address = CALEGetAddressFromBTDevice(env, jarrayObj);
@@ -3121,7 +3123,7 @@ void CATerminateLEGattClient()
     CALEClientTerminate();
 }
 
-CAResult_t  CAUpdateCharacteristicsToGattServer(const char *remoteAddress, const char  *data,
+CAResult_t  CAUpdateCharacteristicsToGattServer(const char *remoteAddress, const uint8_t  *data,
                                                 uint32_t dataLen, CALETransferType_t type,
                                                 int32_t position)
 {
@@ -3138,7 +3140,7 @@ CAResult_t  CAUpdateCharacteristicsToGattServer(const char *remoteAddress, const
     return CALEClientSendUnicastMessage(remoteAddress, data, dataLen);
 }
 
-CAResult_t CAUpdateCharacteristicsToAllGattServers(const char *data, uint32_t dataLen)
+CAResult_t CAUpdateCharacteristicsToAllGattServers(const uint8_t *data, uint32_t dataLen)
 {
     OIC_LOG(DEBUG, TAG, "call CALEClientSendMulticastMessage");
     VERIFY_NON_NULL(data, TAG, "data is null");
@@ -3521,24 +3523,23 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattCharacteristicChangedCallback(
     VERIFY_NON_NULL_VOID(gatt, TAG, "gatt is null");
     VERIFY_NON_NULL_VOID(data, TAG, "data is null");
 
-    // get Byte Array and covert to char*
+    // get Byte Array and convert to uint8_t*
     jint length = (*env)->GetArrayLength(env, data);
 
     jboolean isCopy;
     jbyte *jni_byte_responseData = (jbyte*) (*env)->GetByteArrayElements(env, data, &isCopy);
 
-    OIC_LOG_V(DEBUG, TAG, "CALeGattCharacteristicChangedCallback - raw data received : %s",
+    OIC_LOG_V(DEBUG, TAG, "CALeGattCharacteristicChangedCallback - raw data received : %p",
             jni_byte_responseData);
 
-    char* receivedData = (char*) OICMalloc(sizeof(char) * length + 1);
+    uint8_t* receivedData = OICMalloc(length);
     if (!receivedData)
     {
-        OIC_LOG(ERROR, TAG, "recevicedData is null");
+        OIC_LOG(ERROR, TAG, "receivedData is null");
         return;
     }
 
-    memcpy(receivedData, (const char*) jni_byte_responseData, length);
-    receivedData[length] = '\0';
+    memcpy(receivedData, jni_byte_responseData, length);
     (*env)->ReleaseByteArrayElements(env, data, jni_byte_responseData, JNI_ABORT);
 
     jstring jni_address = CALEClientGetAddressFromGattObj(env, gatt);
@@ -3557,7 +3558,7 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattCharacteristicChangedCallback(
         return;
     }
 
-    OIC_LOG_V(DEBUG, TAG, "CALeGattCharacteristicChangedCallback - data. : %s, %d",
+    OIC_LOG_V(DEBUG, TAG, "CALeGattCharacteristicChangedCallback - data. : %p, %d",
               receivedData, length);
 
     ca_mutex_lock(g_bleServerBDAddressMutex);

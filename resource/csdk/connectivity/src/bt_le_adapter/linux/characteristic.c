@@ -76,11 +76,10 @@ static gboolean CAGattCharacteristicHandleWriteValue(
       the server, and the server is handling that write request.
     */
 
+    // GLib maps an octet to a guchar, which is of size 1.
     gsize len = 0;
     gconstpointer const data =
-        g_variant_get_fixed_array(value,
-                                  &len,
-                                  1);  // sizeof(guchar) == 1
+        g_variant_get_fixed_array(value, &len, 1);
 
     CAGattCharacteristic * const c = user_data;
 

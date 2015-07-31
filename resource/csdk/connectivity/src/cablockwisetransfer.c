@@ -1913,7 +1913,7 @@ CAResult_t CAUpdatePayloadData(CABlockData_t *currData, const CAData_t *received
             OIC_LOG(DEBUG, TAG, "allocate memory for the received block payload");
 
             size_t totalPayloadLen = prePayloadLen + blockPayloadLen + 1;
-            void *newPayload = realloc(currData->payload, totalPayloadLen);
+            CAPayload_t newPayload = OICRealloc(currData->payload, totalPayloadLen);
             if (NULL == newPayload)
             {
                 OIC_LOG(ERROR, TAG, "out of memory");

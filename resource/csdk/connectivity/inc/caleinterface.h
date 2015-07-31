@@ -19,6 +19,8 @@
 ******************************************************************/
 
 /**
+ * @file
+ *
  * This file provides APIs for BLE modules.
  */
 
@@ -68,7 +70,7 @@ typedef void (*CALEDeviceStateChangedCallback)(CAAdapterState_t adapter_state);
  * @retval ::CA_STATUS_FAILED Operation failed.
  */
 typedef CAResult_t (*CABLEDataReceivedCallback)(const char *remoteAddress,
-                                                const void *data,
+                                                const uint8_t *data,
                                                 uint32_t dataLength,
                                                 uint32_t *sentLength);
 
@@ -207,9 +209,9 @@ void CASetLEReqRespServerCallback(CABLEDataReceivedCallback callback);
  * Update characteristics(Read/Write) value that we want to send to
  * particular client.
  *
- * @param[in] address      BD address of Gatt client
- * @param[in] charValue    Data that we want to send to client(unicast)
- * @param[in] charValueLen Length of the data.
+ * @param[in] address  BD address of Gatt client
+ * @param[in] value    Data that we want to send to client(unicast)
+ * @param[in] valueLen Length of the data.
  *
  * @return ::CA_STATUS_OK or Appropriate error code
  * @retval ::CA_STATUS_OK  Successful
@@ -217,23 +219,23 @@ void CASetLEReqRespServerCallback(CABLEDataReceivedCallback callback);
  * @retval ::CA_STATUS_FAILED Operation failed
  */
 CAResult_t CAUpdateCharacteristicsToGattClient(const char *address,
-                                               const char *charValue,
-                                               uint32_t charValueLen);
+                                               const uint8_t *value,
+                                               uint32_t valueLen);
 
 /**
  * Update characteristics(Read/Write) value that we want to multicast
  * to all clients.
  *
- * @param[in] charValue    Data that we want to send to clients(multicast)
- * @param[in] charValueLen Length of the data.
+ * @param[in] value    Data that we want to send to clients(multicast)
+ * @param[in] valueLen Length of the data.
  *
  * @return ::CA_STATUS_OK or Appropriate error code
  * @retval ::CA_STATUS_OK  Successful
  * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments
  * @retval ::CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAUpdateCharacteristicsToAllGattClients(const char *charValue,
-                                                   uint32_t charValueLen);
+CAResult_t CAUpdateCharacteristicsToAllGattClients(const uint8_t *value,
+                                                   uint32_t valueLen);
 
 /**
  * Start @c CAStartBleGattClientThread for initializing Gatt Client.
@@ -283,7 +285,7 @@ void CACheckLEData();
  * @retval ::CA_STATUS_FAILED Operation failed
  */
 CAResult_t  CAUpdateCharacteristicsToGattServer(const char *remoteAddress,
-                                                const char  *data,
+                                                const uint8_t *data,
                                                 uint32_t dataLen,
                                                 CALETransferType_t type,
                                                 int32_t position);
@@ -300,7 +302,7 @@ CAResult_t  CAUpdateCharacteristicsToGattServer(const char *remoteAddress,
  * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments
  * @retval ::CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAUpdateCharacteristicsToAllGattServers(const char *data,
+CAResult_t CAUpdateCharacteristicsToAllGattServers(const uint8_t *data,
                                                    uint32_t dataLen);
 
 /**
@@ -353,7 +355,7 @@ CAResult_t CAUnSetLEAdapterStateChangedCb();
  * @param[in] result        error code as per CAResult_t
  */
 typedef void (*CABLEErrorHandleCallback)(const char *remoteAddress,
-                                         const void *data,
+                                         const uint8_t *data,
                                          uint32_t dataLength,
                                          CAResult_t result);
 /**

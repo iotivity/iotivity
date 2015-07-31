@@ -577,8 +577,10 @@ CAResult_t CARemoveAllBleServicesFromGattServer()
 }
 
 void CABleGattRemoteCharacteristicWriteCb(char *charPath,
-        unsigned char *charValue,
-        int charValueLen, const char *remoteAddress, void *userData)
+                                          unsigned char *charValue,
+                                          int charValueLen,
+                                          const char *remoteAddress,
+                                          void *userData)
 {
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
 
@@ -588,17 +590,21 @@ void CABleGattRemoteCharacteristicWriteCb(char *charPath,
         return;
     }
 
-    OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "charPath = [%s] charValue = [%s] len [%d]", charPath,
-              charValue, charValueLen);
+    OIC_LOG_V(DEBUG,
+              TZ_BLE_SERVER_TAG,
+              "charPath = [%s] charValue = [%x] len [%d]",
+              charPath,
+              charValue,
+              charValueLen);
 
-    char *data = (char *)OICMalloc(sizeof(char) * charValueLen + 1);
+    uint8_t *data = OICMalloc(charValueLen);
     if (NULL == data)
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "Malloc failed!");
         return;
     }
 
-    OICStrcpy(data, charValueLen + 1, charValue);
+    memcpy(data, charValue, charValueLen);
 
     ca_mutex_lock(g_bleReqRespCbMutex);
     if (NULL == g_bleServerDataReceivedCallback)

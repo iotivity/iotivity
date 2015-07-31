@@ -583,7 +583,8 @@ void CAEDRClientDisconnectAll(void)
 }
 
 
-CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const void *data,
+CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress,
+                                      const uint8_t *data,
                                       uint32_t dataLength)
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
@@ -681,7 +682,8 @@ CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const void *dat
     return CA_STATUS_OK;
 }
 
-CAResult_t CAEDRClientSendMulticastData(const void *data, uint32_t dataLength)
+CAResult_t CAEDRClientSendMulticastData(const uint8_t *data,
+                                        uint32_t dataLength)
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
@@ -846,8 +848,10 @@ void CAEDRDataRecvCallback(bt_socket_received_data_s *data, void *userData)
 
     uint32_t sentLength = 0;
 
-    g_edrPacketReceivedCallback(device->remoteAddress, data->data,
-                                (uint32_t)data->data_size, &sentLength);
+    g_edrPacketReceivedCallback(device->remoteAddress,
+                                (uint8_t *) data->data,
+                                (uint32_t) data->data_size,
+                                &sentLength);
 
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
 }

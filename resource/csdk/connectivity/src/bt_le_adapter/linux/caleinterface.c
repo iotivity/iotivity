@@ -361,7 +361,9 @@ static void CALEOnInterfacesRemoved(GDBusConnection * connection,
     }
 
     if (iter != NULL)
+    {
         g_variant_iter_free(iter);
+    }
 }
 
 static void CALEOnPropertiesChanged(GDBusConnection * connection,
@@ -652,13 +654,12 @@ static bool CALEDeviceFilter(GDBusProxy * device)
     gsize length = 0;
     char const ** const UUIDs = g_variant_get_strv(prop, &length);
 
-    /**
-     * @note It would have been nice to use @c g_strv_contains() here,
-     *       but we would need to run it twice: once for the uppercase
-     *       form of the UUID and once for for the lowercase form.
-     *       Just run the loop manually, and use @c strcasecmp()
-     *       instead.
-     */
+    /*
+      It would have been nice to use g_strv_contains() here, but we
+      would need to run it twice: once for the uppercase form of the
+      UUID and once for for the lowercase form.  Just run the loop
+      manually, and use strcasecmp() instead.
+    */
     char const * const * const end = UUIDs + length;
     for (char const * const * u = UUIDs; u != end; ++u)
     {
@@ -840,7 +841,9 @@ static CAResult_t CALEStop()
 
     // Only stop if we were previously started.
     if (!CALECheckStarted())
+    {
         return result;
+    }
 
     // Stop the event loop thread regardless of previous errors.
     CALEStopEventLoop(&g_context);
@@ -907,7 +910,9 @@ CAResult_t CAStartLEAdapter()
 
     // Only start if we were previously stopped.
     if (CALECheckStarted())
+    {
       return result;
+    }
 
     /**
      * Spawn a thread to run the GLib event loop that will drive D-Bus
@@ -930,7 +935,9 @@ CAResult_t CAStartLEAdapter()
                                      &g_context);
 
     if (result != CA_STATUS_OK)
+    {
         return result;
+    }
 
     /*
       Wait until initialization completes before continuing, basically
@@ -1140,12 +1147,12 @@ void CASetLEReqRespServerCallback(CABLEDataReceivedCallback callback)
 }
 
 CAResult_t CAUpdateCharacteristicsToGattClient(char const * address,
-                                               char const * charValue,
-                                               uint32_t charValueLen)
+                                               uint8_t const * value,
+                                               uint32_t valueLen)
 {
     (void)address;
-    (void)charValue;
-    (void)charValueLen;
+    (void)value;
+    (void)valueLen;
     /**
      * @todo To be implemented shortly as part of the effort to
      *       address a critical code review that stated this BLE
@@ -1155,11 +1162,11 @@ CAResult_t CAUpdateCharacteristicsToGattClient(char const * address,
     return CA_NOT_SUPPORTED;
 }
 
-CAResult_t CAUpdateCharacteristicsToAllGattClients(char const * charValue,
-                                                   uint32_t charValueLen)
+CAResult_t CAUpdateCharacteristicsToAllGattClients(uint8_t const * value,
+                                                   uint32_t valueLen)
 {
-    (void)charValue;
-    (void)charValueLen;
+    (void)value;
+    (void)valueLen;
     /**
      * @todo To be implemented shortly as part of the effort to
      *       address a critical code review that stated this BLE
@@ -1196,7 +1203,7 @@ void CACheckLEData()
 
 CAResult_t CAUpdateCharacteristicsToGattServer(
     char const * remoteAddress,
-    char const * data,
+    uint8_t const * data,
     uint32_t dataLen,
     CALETransferType_t type,
     int32_t position)
@@ -1215,7 +1222,7 @@ CAResult_t CAUpdateCharacteristicsToGattServer(
     return CA_NOT_SUPPORTED;
 }
 
-CAResult_t CAUpdateCharacteristicsToAllGattServers(char const * data,
+CAResult_t CAUpdateCharacteristicsToAllGattServers(uint8_t const * data,
                                                    uint32_t length)
 {
     OIC_LOG(DEBUG, TAG, "Send data to all");

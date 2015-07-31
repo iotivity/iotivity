@@ -1506,9 +1506,9 @@ void CALEServerTerminate()
     OIC_LOG(DEBUG, TAG, "OUT - CALEServerTerminate");
 }
 
-CAResult_t CALEServerSendUnicastMessage(const char* address, const char* data, uint32_t dataLen)
+CAResult_t CALEServerSendUnicastMessage(const char* address, const uint8_t* data, uint32_t dataLen)
 {
-    OIC_LOG_V(DEBUG, TAG, "IN - CALEServerSendUnicastMessage(%s, %s)", address, data);
+    OIC_LOG_V(DEBUG, TAG, "IN - CALEServerSendUnicastMessage(%s, %p)", address, data);
     VERIFY_NON_NULL(address, TAG, "address is null");
     VERIFY_NON_NULL(data, TAG, "data is null");
 
@@ -1549,9 +1549,9 @@ CAResult_t CALEServerSendUnicastMessage(const char* address, const char* data, u
     return ret;
 }
 
-CAResult_t CALEServerSendMulticastMessage(const char* data, uint32_t dataLen)
+CAResult_t CALEServerSendMulticastMessage(const uint8_t* data, uint32_t dataLen)
 {
-    OIC_LOG_V(DEBUG, TAG, "IN - CALEServerSendMulticastMessage(%s)", data);
+    OIC_LOG_V(DEBUG, TAG, "IN - CALEServerSendMulticastMessage(%p)", data);
     VERIFY_NON_NULL(data, TAG, "data is null");
 
     if (!g_jvm)
@@ -1710,10 +1710,10 @@ void CALEServerSetCallback(CAPacketReceiveCallback callback)
     g_packetReceiveCallback = callback;
 }
 
-CAResult_t CALEServerSendUnicastMessageImpl(JNIEnv *env, const char* address, const char* data,
+CAResult_t CALEServerSendUnicastMessageImpl(JNIEnv *env, const char* address, const uint8_t* data,
                                             uint32_t dataLen)
 {
-    OIC_LOG_V(DEBUG, TAG, "IN - CALEServerSendUnicastMessageImpl, address: %s, data: %s",
+    OIC_LOG_V(DEBUG, TAG, "IN - CALEServerSendUnicastMessageImpl, address: %s, data: %p",
             address, data);
     VERIFY_NON_NULL(env, TAG, "env is null");
     VERIFY_NON_NULL(address, TAG, "address is null");
@@ -1785,7 +1785,7 @@ CAResult_t CALEServerSendUnicastMessageImpl(JNIEnv *env, const char* address, co
     return CA_STATUS_OK;
 }
 
-CAResult_t CALEServerSendMulticastMessageImpl(JNIEnv *env, const char *data, uint32_t dataLen)
+CAResult_t CALEServerSendMulticastMessageImpl(JNIEnv *env, const uint8_t *data, uint32_t dataLen)
 {
     OIC_LOG_V(DEBUG, TAG, "IN - CALEServerSendMulticastMessageImpl, send to, data: %s", data);
     VERIFY_NON_NULL(env, TAG, "env is null");
@@ -2210,22 +2210,21 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerCharacteristicWriteReques
     VERIFY_NON_NULL_VOID(device, TAG, "device");
     VERIFY_NON_NULL_VOID(data, TAG, "data");
 
-    // get Byte Array and covert to char*
+    // get Byte Array and covert to uint8_t*
     jint length = (*env)->GetArrayLength(env, data);
 
     jboolean isCopy;
     jbyte *jni_byte_requestData = (jbyte *) (*env)->GetByteArrayElements(env, data, &isCopy);
 
-    char* requestData = NULL;
-    requestData = (char*) OICMalloc(sizeof(char) * length + 1);
+    uint8_t* requestData = NULL;
+    requestData = OICMalloc(length);
     if (!requestData)
     {
         OIC_LOG(ERROR, TAG, "requestData is null");
         return;
     }
 
-    memcpy(requestData, (const char*) jni_byte_requestData, length);
-    requestData[length] = '\0';
+    memcpy(requestData, jni_byte_requestData, length);
     (*env)->ReleaseByteArrayElements(env, data, jni_byte_requestData, JNI_ABORT);
 
     jstring jni_address = CALEGetAddressFromBTDevice(env, device);
@@ -2244,7 +2243,7 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerCharacteristicWriteReques
         return;
     }
 
-    OIC_LOG_V(DEBUG, TAG, "remote device address : %s, %s, %d", address, requestData, length);
+    OIC_LOG_V(DEBUG, TAG, "remote device address : %s, %p, %d", address, requestData, length);
 
     ca_mutex_lock(g_bleClientBDAddressMutex);
     uint32_t sentLength = 0;
@@ -2359,7 +2358,7 @@ void CASetBLEServerErrorHandleCallback(CABLEErrorHandleCallback callback)
 }
 
 CAResult_t CAUpdateCharacteristicsToGattClient(const char *address,
-                                               const char *charValue,
+                                               const uint8_t *charValue,
                                                uint32_t charValueLen)
 {
     CAResult_t result = CA_SEND_FAILED;
@@ -2378,7 +2377,7 @@ CAResult_t CAUpdateCharacteristicsToGattClient(const char *address,
     return result;
 }
 
-CAResult_t CAUpdateCharacteristicsToAllGattClients(const char *charValue,
+CAResult_t CAUpdateCharacteristicsToAllGattClients(const uint8_t *charValue,
                                                    uint32_t charValueLen)
 {
     OIC_LOG(DEBUG, TAG, "IN");
