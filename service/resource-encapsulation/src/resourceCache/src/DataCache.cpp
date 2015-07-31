@@ -39,7 +39,8 @@ namespace OIC
         namespace
         {
             std::mutex cbMutex;
-            void vertifyObserveCB(
+
+            void verifyObserveCB(
                 const HeaderOptions &_hos, const ResponseStatement &_rep,
                 int _result, int _seq, std::weak_ptr<DataCache> rpPtr)
             {
@@ -50,14 +51,15 @@ namespace OIC
                     Ptr->onObserve(_hos, _rep, _result, _seq);
                 }
             }
-            ObserveCB vertifiedObserveCB(std::weak_ptr<DataCache> rpPtr)
+
+            ObserveCB verifiedObserveCB(std::weak_ptr<DataCache> rpPtr)
             {
-                return std::bind(vertifyObserveCB,
+                return std::bind(verifyObserveCB,
                         std::placeholders::_1, std::placeholders::_2,
                         std::placeholders::_3, std::placeholders::_4, rpPtr);
             }
 
-            void vertifyGetCB(
+            void verifyGetCB(
                     const HeaderOptions &_hos, const ResponseStatement &_rep,
                     int _result, std::weak_ptr<DataCache> rpPtr)
             {
@@ -68,9 +70,10 @@ namespace OIC
                     Ptr->onGet(_hos, _rep, _result);
                 }
             }
-            GetCB vertifiedGetCB(std::weak_ptr<DataCache> rpPtr)
+
+            GetCB verifiedGetCB(std::weak_ptr<DataCache> rpPtr)
             {
-                return std::bind(vertifyGetCB,
+                return std::bind(verifyGetCB,
                         std::placeholders::_1, std::placeholders::_2,
                         std::placeholders::_3, rpPtr);
             }
@@ -115,8 +118,8 @@ namespace OIC
         void DataCache::initializeDataCache(PrimitiveResourcePtr pResource)
         {
             sResource = pResource;
-            pObserveCB = vertifiedObserveCB(std::weak_ptr<DataCache>(shared_from_this()));
-            pGetCB = vertifiedGetCB(std::weak_ptr<DataCache>(shared_from_this()));
+            pObserveCB = verifiedObserveCB(std::weak_ptr<DataCache>(shared_from_this()));
+            pGetCB = verifiedGetCB(std::weak_ptr<DataCache>(shared_from_this()));
             pTimerCB = (TimerCB)(std::bind(&DataCache::onTimeOut, this, std::placeholders::_1));
             pPollingCB = (TimerCB)(std::bind(&DataCache::onPollingOut, this, std::placeholders::_1));
 
