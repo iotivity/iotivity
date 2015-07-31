@@ -99,5 +99,6 @@ const char * OXM_PRE_PROVISIONED_STRONG_CREDENTIAL = "oic.sec.doxm.ppsc";
 const char * OIC_SEC_TRUE = "true";
 const char * OIC_SEC_FALSE = "false";
 
-const char * OIC_SEC_REST_QUERY_SEPARATOR = "&";
+const char * OIC_SEC_REST_QUERY_SEPARATOR = ";";
 char OIC_SEC_REST_QUERY_DELIMETER = '=';
+

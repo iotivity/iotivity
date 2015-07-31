@@ -22,6 +22,6 @@
 #define IOTVT_SRM_TEST_COMMON_H
 
 char* ReadFile(const char* filename);
+void SetPersistentHandler(OCPersistentStorage *ps, bool set);
 
 #endif //IOTVT_SRM_TEST_COMMON_H
-

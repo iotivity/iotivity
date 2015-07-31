@@ -25,6 +25,13 @@
         },
         {
             "sub": "MjIyMjIyMjIyMjIyMjIyMg==",
+            "rsrc": ["/oic/sec/acl",
+                      "/oic/sec/cred"],
+            "perms": 8,
+            "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
+        },
+        {
+            "sub": "MjIyMjIyMjIyMjIyMjIyMg==",
             "rsrc": ["/a/led"],
             "perms": 6,
             "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]

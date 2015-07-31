@@ -20,6 +20,7 @@
 
 #include "gtest/gtest.h"
 #include "oic_malloc.h"
+#include "ocstack.h"
 
 char* ReadFile(const char* filename)
 {
@@ -53,3 +54,20 @@ char* ReadFile(const char* filename)
     return data;
 }
 
+void SetPersistentHandler(OCPersistentStorage *ps, bool set)
+{
+    if (set)
+    {
+        ps->open = fopen;
+        ps->read = fread;
+        ps->write = fwrite;
+        ps->close = fclose;
+        ps->unlink = unlink;
+    }
+    else
+    {
+        memset(ps, 0, sizeof(OCPersistentStorage));
+    }
+    EXPECT_EQ(OC_STACK_OK,
+            OCRegisterPersistentStorageHandler(ps));
+}

@@ -25,6 +25,9 @@
 #include "ocserverrequest.h"
 #include "oic_string.h"
 #include "oic_malloc.h"
+#include "logger.h"
+
+#define TAG  PCF("SRM-DOXM")
 
 #ifdef __cplusplus
 extern "C" {
@@ -126,7 +129,7 @@ TEST(DoxmEntityHandlerTest, DoxmEntityHandlerInvalidFlag)
 TEST(DoxmEntityHandlerTest, DoxmEntityHandlerValidRequest)
 {
     EXPECT_EQ(OC_STACK_INVALID_PARAM, InitDoxmResource());
-    char query[] = "oxm=0&owned=false&owner=owner1";
+    char query[] = "oxm=0;owned=false;owner=owner1";
     OCEntityHandlerRequest req = {};
     req.method = OC_REST_GET;
     req.query = OICStrdup(query);
@@ -147,6 +150,7 @@ TEST(BinToDoxmJSONTest, BinToDoxmJSONValidDoxm)
     OicSecDoxm_t * doxm =  getBinDoxm();
 
     char * json = BinToDoxmJSON(doxm);
+    OC_LOG_V(INFO, TAG, PCF("BinToDoxmJSON:%s"), json);
     EXPECT_TRUE(json != NULL);
 
     DeleteDoxmBinData(doxm);

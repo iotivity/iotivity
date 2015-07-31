@@ -34,7 +34,11 @@
 #include "srmutility.h"
 #include "cainterface.h"
 #include <stdlib.h>
+#ifdef WITH_ARDUINO
 #include <string.h>
+#else
+#include <strings.h>
+#endif
 #include <stdint.h>
 
 
@@ -42,6 +46,38 @@
 
 static OicSecCred_t        *gCred = NULL;
 static OCResourceHandle    gCredHandle = NULL;
+
+/**
+ * This function frees OicSecCred_t object's fields and object itself.
+ */
+static void FreeCred(OicSecCred_t *cred)
+{
+    if(NULL == cred)
+    {
+        OC_LOG (INFO, TAG, PCF("Invalid Parameter"));
+        return;
+    }
+    //Note: Need further clarification on roleID data type
+#if 0
+    //Clean roleIds
+    OICFree(cred->roleIds);
+#endif
+
+    //Clean PublicData
+    OICFree(cred->publicData.data);
+
+    //Clean PrivateData
+    OICFree(cred->privateData.data);
+
+    //Clean Period
+    OICFree(cred->period);
+
+    //Clean Owners
+    OICFree(cred->owners);
+
+    //Clean Cred node itself
+    OICFree(cred);
+}
 
 void DeleteCredList(OicSecCred_t* cred)
 {
@@ -51,27 +87,7 @@ void DeleteCredList(OicSecCred_t* cred)
         LL_FOREACH_SAFE(cred, credTmp1, credTmp2)
         {
             LL_DELETE(cred, credTmp1);
-
-            //Note: Need further clarification on roleID data type
-#if 0
-            //Clean roleIds
-            OICFree(credTmp1->roleIds);
-#endif
-
-            //Clean PublicData
-            OICFree(credTmp1->publicData.data);
-
-            //Clean PrivateData
-            OICFree(credTmp1->privateData.data);
-
-            //Clean Period
-            OICFree(credTmp1->period);
-
-            //Clean Owners
-            OICFree(credTmp1->owners);
-
-            //Clean Cred node itself
-            OICFree(credTmp1);
+            FreeCred(credTmp1);
         }
     }
 }
@@ -395,7 +411,35 @@ exit:
     return cred;
 }
 
-/*
+static bool UpdatePersistentStorage(const OicSecCred_t *cred)
+{
+    bool ret = false;
+
+    // Convert Cred data into JSON for update to persistent storage
+    char *jsonStr = BinToCredJSON(cred);
+    if (jsonStr)
+    {
+        cJSON *jsonCred = cJSON_Parse(jsonStr);
+        OICFree(jsonStr);
+
+        if ((jsonCred) &&
+          (OC_STACK_OK == UpdateSVRDatabase(OIC_JSON_CRED_NAME, jsonCred)))
+        {
+            ret = true;
+        }
+        cJSON_Delete(jsonCred );
+    }
+    else //Empty cred list
+    {
+        if (OC_STACK_OK == UpdateSVRDatabase(OIC_JSON_CRED_NAME, NULL))
+        {
+            ret = true;
+        }
+    }
+    return ret;
+}
+
+/**
  * Compare function used LL_SORT for sorting credentials
  *
  * @param first   pointer to OicSecCred_t struct
@@ -458,6 +502,8 @@ static uint16_t GetCredId()
 exit:
     return 0;
 }
+
+
 /**
  * This function adds the new cred to the credential list.
  *
@@ -482,23 +528,41 @@ OCStackResult AddCredential(OicSecCred_t * newCred)
     //Append the new Cred to existing list
     LL_APPEND(gCred, newCred);
 
-    //Convert CredList to JSON and update the persistent Storage
-    jsonStr = BinToCredJSON(gCred);
-
-    if(jsonStr)
+    if(UpdatePersistentStorage(gCred))
     {
-        cJSON *jsonCred = cJSON_Parse(jsonStr);
-        OICFree(jsonStr);
-
-        if((jsonCred) && (OC_STACK_OK == UpdateSVRDatabase(OIC_JSON_CRED_NAME, jsonCred)))
-        {
-            ret = OC_STACK_OK;
-        }
-        cJSON_Delete(jsonCred);
+        ret = OC_STACK_OK;
     }
 
 exit:
     return ret;
+}
+
+OCStackResult RemoveCredential(const OicUuid_t *subject)
+{
+    OCStackResult ret = OC_STACK_ERROR;
+    OicSecCred_t *cred = NULL;
+    OicSecCred_t *tempCred = NULL;
+    bool deleteFlag = false;
+
+    LL_FOREACH_SAFE(gCred, cred, tempCred)
+    {
+        if(memcmp(cred->subject.id, subject->id, sizeof(subject->id)) == 0)
+        {
+            LL_DELETE(gCred, cred);
+            FreeCred(cred);
+            deleteFlag = 1;
+        }
+    }
+
+    if(deleteFlag)
+    {
+        if(UpdatePersistentStorage(gCred))
+        {
+            ret = OC_STACK_RESOURCE_DELETED;
+        }
+    }
+    return ret;
+
 }
 
 static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * ehRequest)
@@ -519,6 +583,49 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
 
     return ret;
 }
+
+static OCEntityHandlerResult HandleDeleteRequest(const OCEntityHandlerRequest *ehRequest)
+{
+    OC_LOG_V (INFO, TAG, PCF("Processing CredDeleteRequest"));
+
+    OCEntityHandlerResult ehRet = OC_EH_ERROR;
+
+    if(NULL == ehRequest->query)
+   {
+       return ehRet;
+   }
+
+   OicParseQueryIter_t parseIter = {.attrPos=NULL};
+   OicUuid_t subject = {.id={0}};
+
+   //Parsing REST query to get the subject
+   ParseQueryIterInit((unsigned char *)ehRequest->query, &parseIter);
+   while(GetNextQuery(&parseIter))
+   {
+       if(strncasecmp((char *)parseIter.attrPos, OIC_JSON_SUBJECT_NAME,
+               parseIter.attrLen) == 0)
+       {
+           unsigned char base64Buff[sizeof(((OicUuid_t*)0)->id)] = {};
+           uint32_t outLen = 0;
+           B64Result b64Ret = B64_OK;
+
+           b64Ret = b64Decode((char *)parseIter.valPos, parseIter.valLen,
+                   base64Buff, sizeof(base64Buff), &outLen);
+
+           VERIFY_SUCCESS(TAG, (b64Ret == B64_OK && outLen <= sizeof(subject.id)), ERROR);
+           memcpy(subject.id, base64Buff, outLen);
+       }
+   }
+
+   if(OC_STACK_RESOURCE_DELETED == RemoveCredential(&subject))
+   {
+       ehRet = OC_EH_RESOURCE_DELETED;
+   }
+
+exit:
+    return ehRet;
+}
+
 
 /*
  * This internal method is the entity handler for Cred resources
@@ -545,6 +652,9 @@ OCEntityHandlerResult CredEntityHandler (OCEntityHandlerFlag flag,
                 break;
             case OC_REST_POST:
                 ret = HandlePostRequest(ehRequest);
+                break;
+            case OC_REST_DELETE:
+                ret = HandleDeleteRequest(ehRequest);
                 break;
             default:
                 ret = OC_EH_ERROR;
@@ -655,16 +765,16 @@ const OicSecCred_t* GetCredResourceData(const OicUuid_t* subject)
 {
     OicSecCred_t *cred = NULL;
 
-    if ( NULL == subject)
+   if ( NULL == subject)
     {
-        return NULL;
+       return NULL;
     }
 
     LL_FOREACH(gCred, cred)
     {
         if(memcmp(cred->subject.id, subject->id, sizeof(subject->id)) == 0)
         {
-             return cred;
+            return cred;
         }
     }
     return NULL;

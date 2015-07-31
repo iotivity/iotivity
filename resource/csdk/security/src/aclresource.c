@@ -33,13 +33,53 @@
 #include "srmresourcestrings.h"
 #include "doxmresource.h"
 #include "srmutility.h"
+#include "ocserverrequest.h"
 #include <stdlib.h>
+#ifdef WITH_ARDUINO
 #include <string.h>
+#else
+#include <strings.h>
+#endif
 
 #define TAG  PCF("SRM-ACL")
 
 OicSecAcl_t        *gAcl = NULL;
 static OCResourceHandle    gAclHandle = NULL;
+
+/**
+ * This function frees OicSecAcl_t object's fields and object itself.
+ */
+static void FreeACE(OicSecAcl_t *ace)
+{
+    size_t i;
+    if(NULL == ace)
+    {
+        OC_LOG (INFO, TAG, PCF("Invalid Parameter"));
+        return;
+    }
+
+    // Clean Resources
+    for (i = 0; i < ace->resourcesLen; i++)
+    {
+        OICFree(ace->resources[i]);
+    }
+    OICFree(ace->resources);
+
+    //Clean Period & Recurrence
+    for(i = 0; i < ace->prdRecrLen; i++)
+    {
+        OICFree(ace->periods[i]);
+        OICFree(ace->recurrences[i]);
+    }
+    OICFree(ace->periods);
+    OICFree(ace->recurrences);
+
+    // Clean Owners
+    OICFree(ace->owners);
+
+    // Clean ACL node itself
+    OICFree(ace);
+}
 
 void DeleteACLList(OicSecAcl_t* acl)
 {
@@ -48,31 +88,8 @@ void DeleteACLList(OicSecAcl_t* acl)
         OicSecAcl_t *aclTmp1 = NULL, *aclTmp2 = NULL;
         LL_FOREACH_SAFE(acl, aclTmp1, aclTmp2)
         {
-            int i = 0;
-
             LL_DELETE(acl, aclTmp1);
-
-            // Clean Resources
-            for (i = 0; i < aclTmp1->resourcesLen; i++)
-            {
-                OICFree(aclTmp1->resources[i]);
-            }
-            OICFree(aclTmp1->resources);
-
-            //Clean Period & Recurrence
-            for(i = 0; i < aclTmp1->prdRecrLen; i++)
-            {
-                OICFree(aclTmp1->periods[i]);
-                OICFree(aclTmp1->recurrences[i]);
-            }
-            OICFree(aclTmp1->periods);
-            OICFree(aclTmp1->recurrences);
-
-            // Clean Owners
-            OICFree(aclTmp1->owners);
-
-            // Clean ACL node itself
-            OICFree(aclTmp1);
+            FreeACE(aclTmp1);
         }
     }
 }
@@ -125,7 +142,7 @@ char * BinToAclJSON(const OicSecAcl_t * acl)
             cJSON *jsonRsrcArray = NULL;
             cJSON_AddItemToObject (jsonAcl, OIC_JSON_RESOURCES_NAME, jsonRsrcArray = cJSON_CreateArray());
             VERIFY_NON_NULL(TAG, jsonRsrcArray, ERROR);
-            for (int i = 0; i < acl->resourcesLen; i++)
+            for (size_t i = 0; i < acl->resourcesLen; i++)
             {
                 cJSON_AddItemToArray (jsonRsrcArray, cJSON_CreateString(acl->resources[i]));
             }
@@ -165,7 +182,7 @@ char * BinToAclJSON(const OicSecAcl_t * acl)
             cJSON *jsonOwnrArray = NULL;
             cJSON_AddItemToObject (jsonAcl, OIC_JSON_OWNERS_NAME, jsonOwnrArray = cJSON_CreateArray());
             VERIFY_NON_NULL(TAG, jsonOwnrArray, ERROR);
-            for (int i = 0; i < acl->ownersLen; i++)
+            for (size_t i = 0; i < acl->ownersLen; i++)
             {
                 outLen = 0;
 
@@ -258,7 +275,7 @@ OicSecAcl_t * JSONToAclBin(const char * jsonStr)
             acl->resources = (char**)OICCalloc(acl->resourcesLen, sizeof(char*));
             VERIFY_NON_NULL(TAG, (acl->resources), ERROR);
 
-            int idxx = 0;
+            size_t idxx = 0;
             do
             {
                 cJSON *jsonRsrc = cJSON_GetArrayItem(jsonObj, idxx);
@@ -374,6 +391,119 @@ exit:
     return headAcl;
 }
 
+static bool UpdatePersistentStorage(const OicSecAcl_t *acl)
+{
+    // Convert ACL data into JSON for update to persistent storage
+    char *jsonStr = BinToAclJSON(acl);
+    if (jsonStr)
+    {
+        cJSON *jsonAcl = cJSON_Parse(jsonStr);
+        OICFree(jsonStr);
+
+        if ((jsonAcl) && (OC_STACK_OK == UpdateSVRDatabase(OIC_JSON_ACL_NAME, jsonAcl)))
+        {
+            return true;
+        }
+        cJSON_Delete(jsonAcl);
+    }
+    return false;
+}
+/*
+ * This method removes ACE for the subject and resource from the ACL
+ *
+ * @param subject  - subject of the ACE
+ * @param resource - resource of the ACE
+ *
+ * @return
+ *     OC_STACK_RESOURCE_DELETED on success
+ *     OC_STACK_NO_RESOURC on failure to find the appropriate ACE
+ *     OC_STACK_INVALID_PARAM on invalid parameter
+ */
+static OCStackResult RemoveACE(const OicUuid_t * subject,
+                               const char * resource)
+{
+    OC_LOG(INFO, TAG, PCF("IN RemoveACE"));
+
+    OicSecAcl_t *acl = NULL;
+    OicSecAcl_t *tempAcl = NULL;
+    bool deleteFlag = false;
+    OCStackResult ret = OC_STACK_NO_RESOURCE;
+
+    if(memcmp(subject->id, &WILDCARD_SUBJECT_ID, sizeof(subject->id)) == 0)
+    {
+        OC_LOG_V (INFO, TAG, PCF("%s received invalid parameter"), __func__ );
+        return  OC_STACK_INVALID_PARAM;
+    }
+
+    //If resource is NULL then delete all the ACE for the subject.
+    if(NULL == resource)
+    {
+        LL_FOREACH_SAFE(gAcl, acl, tempAcl)
+        {
+            if(memcmp(acl->subject.id, subject->id, sizeof(subject->id)) == 0)
+            {
+                LL_DELETE(gAcl, acl);
+                FreeACE(acl);
+                deleteFlag = true;
+            }
+        }
+    }
+    else
+    {
+        //Looping through ACL to find the right ACE to delete. If the required resource is the only
+        //resource in the ACE for the subject then delete the whole ACE. If there are more resources
+        //than the required resource in the ACE, for the subject then just delete the resource from
+        //the resource array
+        LL_FOREACH_SAFE(gAcl, acl, tempAcl)
+        {
+            if(memcmp(acl->subject.id, subject->id, sizeof(subject->id)) == 0)
+            {
+                if(1 == acl->resourcesLen && strcmp(acl->resources[0],  resource) == 0)
+                {
+                    LL_DELETE(gAcl, acl);
+                    FreeACE(acl);
+                    deleteFlag = true;
+                    break;
+                }
+                else
+                {
+                    int resPos = -1;
+                    size_t i;
+                    for(i = 0; i < acl->resourcesLen; i++)
+                    {
+                        if(strcmp(acl->resources[i],  resource) == 0)
+                        {
+                            resPos = i;
+                            break;
+                        }
+                    }
+                    if((0 <= resPos))
+                    {
+                        OICFree(acl->resources[resPos]);
+                        acl->resources[resPos] = NULL;
+                        acl->resourcesLen -= 1;
+                        for(i = resPos; i < acl->resourcesLen; i++)
+                        {
+                            acl->resources[i] = acl->resources[i+1];
+                        }
+                        deleteFlag = true;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    if(deleteFlag)
+    {
+        if(UpdatePersistentStorage(gAcl))
+        {
+            ret = OC_STACK_RESOURCE_DELETED;
+        }
+    }
+    return ret;
+}
+
 static OCEntityHandlerResult HandleACLGetRequest (const OCEntityHandlerRequest * ehRequest)
 {
     // Convert ACL data into JSON for transmission
@@ -406,19 +536,9 @@ static OCEntityHandlerResult HandleACLPostRequest (const OCEntityHandlerRequest 
         // Append the new ACL to existing ACL
         LL_APPEND(gAcl, newAcl);
 
-        // Convert ACL data into JSON for update to persistent storage
-        char *jsonStr = BinToAclJSON(gAcl);
-        if (jsonStr)
+        if(UpdatePersistentStorage(gAcl))
         {
-            cJSON *jsonAcl = cJSON_Parse(jsonStr);
-            OICFree(jsonStr);
-
-            if ((jsonAcl) &&
-                (OC_STACK_OK == UpdateSVRDatabase(OIC_JSON_ACL_NAME, jsonAcl)))
-            {
-                ehRet = OC_EH_RESOURCE_CREATED;
-            }
-            cJSON_Delete(jsonAcl);
+            ehRet = OC_EH_RESOURCE_CREATED;
         }
     }
 
@@ -426,6 +546,57 @@ static OCEntityHandlerResult HandleACLPostRequest (const OCEntityHandlerRequest 
     SendSRMResponse(ehRequest, ehRet, NULL);
 
     OC_LOG_V (INFO, TAG, PCF("%s RetVal %d"), __func__ , ehRet);
+    return ehRet;
+}
+
+static OCEntityHandlerResult HandleACLDeleteRequest(const OCEntityHandlerRequest *ehRequest)
+{
+    OC_LOG (INFO, TAG, PCF("Processing ACLDeleteRequest"));
+    OCEntityHandlerResult ehRet = OC_EH_ERROR;
+
+    if(NULL == ehRequest->query)
+    {
+        return ehRet;
+    }
+    OicParseQueryIter_t parseIter = {.attrPos=NULL};
+    OicUuid_t subject = {.id={0}};
+    char * resource = NULL;
+
+    //Parsing REST query to get subject & resource
+    ParseQueryIterInit((unsigned char *)ehRequest->query, &parseIter);
+
+    while(GetNextQuery(&parseIter))
+    {
+        if(strncasecmp((char *)parseIter.attrPos, OIC_JSON_SUBJECT_NAME, parseIter.attrLen) == 0)
+        {
+            unsigned char base64Buff[sizeof(((OicUuid_t*)0)->id)] = {};
+            uint32_t outLen = 0;
+            B64Result b64Ret = B64_OK;
+
+           b64Ret = b64Decode((char *)parseIter.valPos, parseIter.valLen, base64Buff,
+                               sizeof(base64Buff), &outLen);
+
+           VERIFY_SUCCESS(TAG, (b64Ret == B64_OK && outLen <= sizeof(subject.id)), ERROR);
+           memcpy(subject.id, base64Buff, outLen);
+        }
+        if(strncasecmp((char *)parseIter.attrPos, OIC_JSON_RESOURCES_NAME, parseIter.attrLen) == 0)
+        {
+            resource = (char *)OICMalloc(parseIter.valLen);
+            VERIFY_NON_NULL(TAG, resource, ERROR);
+            OICStrcpy(resource, sizeof(resource), (char *)parseIter.valPos);
+        }
+    }
+
+    if(OC_STACK_RESOURCE_DELETED == RemoveACE(&subject, resource))
+    {
+        ehRet = OC_EH_RESOURCE_DELETED;
+    }
+    OICFree(resource);
+
+    // Send payload to request originator
+    SendSRMResponse(ehRequest, ehRet, NULL);
+
+exit:
     return ehRet;
 }
 
@@ -437,6 +608,7 @@ OCEntityHandlerResult ACLEntityHandler (OCEntityHandlerFlag flag,
                                         OCEntityHandlerRequest * ehRequest,
                                         void* callbackParameter)
 {
+    OC_LOG(INFO, TAG, PCF("Received request ACLEntityHandler\n"));
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
     if (!ehRequest)
@@ -456,6 +628,10 @@ OCEntityHandlerResult ACLEntityHandler (OCEntityHandlerFlag flag,
 
             case OC_REST_POST:
                 ehRet = HandleACLPostRequest(ehRequest);
+                break;
+
+            case OC_REST_DELETE:
+                ehRet = HandleACLDeleteRequest(ehRequest);
                 break;
 
             default:
@@ -500,7 +676,7 @@ OCStackResult  GetDefaultACL(OicSecAcl_t** defaultAcl)
 {
     OCStackResult ret = OC_STACK_ERROR;
 
-    OicUuid_t ownerId = {};
+    OicUuid_t ownerId = {.id={}};
 
     /*
      * TODO In future, when new virtual resources will be added in OIC
@@ -539,7 +715,7 @@ OCStackResult  GetDefaultACL(OicSecAcl_t** defaultAcl)
     acl->resources = (char**)OICCalloc(acl->resourcesLen, sizeof(char*));
     VERIFY_NON_NULL(TAG, (acl->resources), ERROR);
 
-    for (int i = 0; i <  acl->resourcesLen; i++)
+    for (size_t i = 0; i <  acl->resourcesLen; i++)
     {
         size_t len = strlen(rsrcs[i]) + 1;
         acl->resources[i] = (char*)OICMalloc(len * sizeof(char));

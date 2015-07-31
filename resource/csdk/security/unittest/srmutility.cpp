@@ -21,7 +21,6 @@
 #include "srmutility.h"
 #include "oic_string.h"
 
-
 //ParseRestQuery Tests
 TEST(ParseRestQueryTest, ParseRestQueryEmpty)
 {
@@ -43,13 +42,12 @@ TEST(ParseRestQueryTest, ParseSingleRestQuery)
     OICStrcpyPartial(attr, sizeof(attr), (char *)parseIter.attrPos, parseIter.attrLen);
     OICStrcpyPartial(val, sizeof(val), (char *)parseIter.valPos, parseIter.valLen);
     printf("\nAttribute: %s  value: %s\n\n", attr, val);
-
 }
 
 TEST(ParseRestQueryTest, ParseRestMultipleQuery)
 {
     char attr[10], val[10];
-    unsigned char query[] = "oxm=0&owned=true&owner=owner1";
+    unsigned char query[] = "oxm=0;owned=true;owner=owner1";
 
     OicParseQueryIter_t parseIter = {};
     ParseQueryIterInit(query, &parseIter);
