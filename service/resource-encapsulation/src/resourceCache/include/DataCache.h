@@ -78,6 +78,8 @@ namespace OIC
                 TimerCB pTimerCB;
                 TimerCB pPollingCB;
 
+                unsigned int lastSequenceNum;
+
             public:
                 void onObserve(const HeaderOptions &_hos,
                                const ResponseStatement &_rep, int _result, int _seq);
