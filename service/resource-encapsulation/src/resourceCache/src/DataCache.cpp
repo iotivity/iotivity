@@ -38,13 +38,10 @@ namespace OIC
 
         namespace
         {
-            std::mutex cbMutex;
-
             void verifyObserveCB(
                 const HeaderOptions &_hos, const ResponseStatement &_rep,
                 int _result, int _seq, std::weak_ptr<DataCache> rpPtr)
             {
-                std::lock_guard<std::mutex> lock(cbMutex);
                 std::shared_ptr<DataCache> Ptr = rpPtr.lock();
                 if(Ptr)
                 {
@@ -63,7 +60,6 @@ namespace OIC
                     const HeaderOptions &_hos, const ResponseStatement &_rep,
                     int _result, std::weak_ptr<DataCache> rpPtr)
             {
-                std::lock_guard<std::mutex> lock(cbMutex);
                 std::shared_ptr<DataCache> Ptr = rpPtr.lock();
                 if(Ptr)
                 {
@@ -91,6 +87,7 @@ namespace OIC
             networkTimeOutHandle = 0;
             pollingHandle = 0;
             lastSequenceNum = 0;
+            isReady = false;
         }
 
         DataCache::~DataCache()
@@ -191,16 +188,21 @@ namespace OIC
 
         const RCSResourceAttributes DataCache::getCachedData() const
         {
-            if (state != CACHE_STATE::READY || attributes.empty())
+            std::lock_guard<std::mutex> lock(att_mutex);
+            if (state != CACHE_STATE::READY)
             {
                 return RCSResourceAttributes();
             }
-            const RCSResourceAttributes retAtt = attributes;
-            return retAtt;
+            return attributes;
         }
 
-        void DataCache::onObserve(
-            const HeaderOptions &_hos, const ResponseStatement &_rep, int _result, int _seq)
+        bool DataCache::isCachedData() const
+        {
+            return isReady;
+        }
+
+        void DataCache::onObserve(const HeaderOptions & /*_hos*/,
+                const ResponseStatement & _rep, int _result, int _seq)
         {
 
             if (_result != OC_STACK_OK || _rep.getAttributes().empty() || lastSequenceNum > _seq)
@@ -215,6 +217,7 @@ namespace OIC
             if (state != CACHE_STATE::READY)
             {
                 state = CACHE_STATE::READY;
+                isReady = true;
             }
 
             if (mode != CACHE_MODE::OBSERVE)
@@ -228,7 +231,7 @@ namespace OIC
             notifyObservers(_rep.getAttributes());
         }
 
-        void DataCache::onGet(const HeaderOptions &_hos,
+        void DataCache::onGet(const HeaderOptions & /*_hos*/,
                               const ResponseStatement &_rep, int _result)
         {
             if (_result != OC_STACK_OK || _rep.getAttributes().empty())
@@ -239,6 +242,7 @@ namespace OIC
             if (state != CACHE_STATE::READY)
             {
                 state = CACHE_STATE::READY;
+                isReady = true;
             }
 
             if (mode != CACHE_MODE::OBSERVE)
@@ -255,12 +259,14 @@ namespace OIC
 
         void DataCache::notifyObservers(const RCSResourceAttributes Att)
         {
-            if (attributes == Att)
             {
-                return;
+                std::lock_guard<std::mutex> lock(att_mutex);
+                if (attributes == Att)
+                {
+                    return;
+                }
+                attributes = Att;
             }
-
-            attributes = Att;
 
             std::lock_guard<std::mutex> lock(m_mutex);
             for (auto &i : * subscriberList)
@@ -277,7 +283,7 @@ namespace OIC
             return state;
         }
 
-        void DataCache::onTimeOut(unsigned int timerID)
+        void DataCache::onTimeOut(unsigned int /*timerID*/)
         {
             if(mode == CACHE_MODE::OBSERVE)
             {
@@ -294,7 +300,7 @@ namespace OIC
 
             state = CACHE_STATE::LOST_SIGNAL;
         }
-        void DataCache::onPollingOut(const unsigned int timerID)
+        void DataCache::onPollingOut(const unsigned int /*timerID*/)
         {
             if (sResource != nullptr)
             {
