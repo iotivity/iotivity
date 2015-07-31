@@ -325,7 +325,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_configure
         dbfile = env->GetStringUTFChars(jDbPath, nullptr);
         JniOcSecurity::StoreDbPath(dbfile);
     }
-    uint16_t port;
+    uint16_t port = 0;
     if (jPort > 0)
     {
         port = static_cast<uint16_t>(jPort);
