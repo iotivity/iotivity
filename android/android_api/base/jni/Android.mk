@@ -72,6 +72,7 @@ LOCAL_STATIC_LIBRARIES += android_cpp11_compat
 LOCAL_CPPFLAGS += -std=c++0x
 LOCAL_CPP_FEATURES := rtti exceptions
 LOCAL_C_INCLUDES := $(OIC_SRC_PATH)/include
+LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/c_common
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/stack/include
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/ocsocket/include
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/oc_logger/include
