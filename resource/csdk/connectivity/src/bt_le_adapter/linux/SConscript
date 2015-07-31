@@ -22,12 +22,6 @@ Import('env')
 
 import os.path
 
-# Make sure the <bluetooth/bluetooth.h> and <bluetooth/hci.h> headers
-# necessary for use of the kernel Bluetooth management API are
-# available.  Only those headers are required.  There is no need to
-# build BlueZ in order to build IoTivity's BLE transport for Linux.
-env.SConscript('#extlibs/bluez/SConscript')
-
 # Top-level build (variant) directory.
 root_build_dir = env['BUILD_DIR']
 
