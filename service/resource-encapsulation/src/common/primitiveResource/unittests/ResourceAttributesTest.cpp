@@ -260,7 +260,7 @@ TEST(ResourceAttributesValueTest, DifferentValuesAreNotEqual)
 
 TEST(ResourceAttributesValueTest, ValuesCanBeSwapped)
 {
-    constexpr int i { 1 };
+    constexpr int i { 0 };
     constexpr char str[]{ "abc" };
 
     RCSResourceAttributes::Value intValue { i };
@@ -274,7 +274,7 @@ TEST(ResourceAttributesValueTest, ValuesCanBeSwapped)
 
 TEST(ResourceAttributesTypeTest, TypeIdMatchesTypeOfValue)
 {
-    RCSResourceAttributes::Value intValue { 1 };
+    RCSResourceAttributes::Value intValue { 0 };
 
     ASSERT_EQ(intValue.getType().getId(), RCSResourceAttributes::TypeId::INT);
 }

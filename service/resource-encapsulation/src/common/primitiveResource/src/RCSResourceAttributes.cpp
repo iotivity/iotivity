@@ -294,34 +294,40 @@ namespace OIC
             m_data.swap(rhs.m_data);
         }
 
-        auto RCSResourceAttributes::KeyValuePair::KeyVisitor::operator() (iterator* iter) const
-                -> result_type {
+        auto RCSResourceAttributes::KeyValuePair::KeyVisitor::operator()(
+                iterator* iter) const -> result_type
+        {
             return iter->m_cur->first;
         }
 
-        auto RCSResourceAttributes::KeyValuePair::KeyVisitor::operator() (const_iterator* iter) const
-                -> result_type {
+        auto RCSResourceAttributes::KeyValuePair::KeyVisitor::operator()(
+                const_iterator* iter) const -> result_type
+        {
             return iter->m_cur->first;
         }
 
         auto RCSResourceAttributes::KeyValuePair::ValueVisitor::operator() (iterator* iter)
-                -> result_type {
+                -> result_type
+        {
             return iter->m_cur->second;
         }
 
-        auto RCSResourceAttributes::KeyValuePair::ValueVisitor::operator() (const_iterator* iter)
-                -> result_type {
+        auto RCSResourceAttributes::KeyValuePair::ValueVisitor::operator() (const_iterator*)
+                -> result_type
+        {
             // should not reach here.
             throw BadGetException("");
         }
 
-        auto RCSResourceAttributes::KeyValuePair::ConstValueVisitor::operator() (iterator*iter) const
-                -> result_type {
+        auto RCSResourceAttributes::KeyValuePair::ConstValueVisitor::operator()(
+                iterator*iter) const -> result_type
+        {
             return iter->m_cur->second;
         }
 
-        auto RCSResourceAttributes::KeyValuePair::ConstValueVisitor::operator() (const_iterator* iter)
-            const -> result_type {
+        auto RCSResourceAttributes::KeyValuePair::ConstValueVisitor::operator()(
+                const_iterator* iter) const -> result_type
+        {
             return iter->m_cur->second;
         }
 

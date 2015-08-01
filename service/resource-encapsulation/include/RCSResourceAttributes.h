@@ -18,6 +18,11 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+/**
+ * @file
+ *
+ * This file contains the "RCSResourceAttributes" class & its helper classes
+ */
 #ifndef RES_ENCAPSULATION_RESOURCEATTRIBUTES_H
 #define RES_ENCAPSULATION_RESOURCEATTRIBUTES_H
 
@@ -38,34 +43,11 @@
 #include <boost/scoped_ptr.hpp>
 
 #include <RCSException.h>
-/**
- * @file
- *
- * This file contains the "RCSResourceAttributes" class & its helper classes
- */
+
 namespace OIC
 {
     namespace Service
     {
-        /**
-         * Thrown when getting value with wrong template parameter.
-         */
-        class BadGetException: public RCSException
-        {
-        public:
-            BadGetException(const std::string& what) : RCSException{ what } {}
-            BadGetException(std::string&& what) : RCSException{ std::move(what) } {}
-        };
-
-        /**
-        * Thrown when a key is invalid.
-        */
-        class InvalidKeyException: public RCSException
-        {
-        public:
-            InvalidKeyException(const std::string& what) : RCSException{ what } {}
-            InvalidKeyException(std::string&& what) : RCSException{ std::move(what) } {}
-        };
 
         /**
         * RCSResourceAttributes represents the attributes for a resource.

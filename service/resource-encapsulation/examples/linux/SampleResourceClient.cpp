@@ -37,8 +37,8 @@ void OnResourceStateChanged(ResourceState resourceState)
 
     cout << "\nOnResourceStateChanged callback" << std::endl;
 
-    if (resourceState == ResourceState::NOT_MONITORING)
-        cout << "State changed to : NOT_MONITORING" << std::endl;
+    if (resourceState == ResourceState::NONE)
+        cout << "State changed to : NONE" << std::endl;
     else if (resourceState == ResourceState::ALIVE)
         cout << "State changed to : ALIVE" << std::endl;
     else if (resourceState == ResourceState::REQUESTED)
@@ -316,17 +316,13 @@ int main()
                 }
                else
                {
-                    CacheState state = resource->getResourceCacheState();
+                    CacheState state = resource->getCacheState();
                     if (state == CacheState ::READY)
                         cout << "Current Cache State : " << "CACHE_STATE ::READY" << std::endl;
-                    else if (state == CacheState ::READY_YET)
-                        cout << "Current Cache State : " << "CACHE_STATE ::READY_YET" << std::endl;
+                    else if (state == CacheState ::UNREADY)
+                        cout << "Current Cache State : " << "CACHE_STATE ::UNREADY" << std::endl;
                     else if (state == CacheState ::LOST_SIGNAL)
                         cout << "Current Cache State : " << "CACHE_STATE ::LOST_SIGNAL" << std::endl;
-                    else if (state == CacheState ::DESTROYED)
-                        cout << "Current Cache State : " << "CACHE_STATE ::DESTROYED" << std::endl;
-                    else if (state == CacheState ::UPDATING)
-                        cout << "Current Cache State : " << "CACHE_STATE ::UPDATING" << std::endl;
                     else if (state == CacheState ::NONE)
                         cout << "Current Cache State : " << "CACHE_STATE ::NONE" << std::endl;
                }
