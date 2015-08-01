@@ -41,6 +41,10 @@ namespace OIC
         {
         }
 
+        RCSException::~RCSException() noexcept
+        {
+        }
+
         const char* RCSException::what() const noexcept
         {
             return m_what.c_str();
@@ -63,5 +67,48 @@ namespace OIC
             return  OC::OCException::reason(m_reason);
         }
 
+
+        BadRequestException::BadRequestException(const std::string& what) :
+                RCSException{ what }
+        {
+        }
+
+        BadRequestException::BadRequestException(std::string&& what) :
+                RCSException{ std::move(what) }
+        {
+        }
+
+
+        InvalidParameterException::InvalidParameterException(const std::string& what) :
+                RCSException{ what }
+        {
+        }
+
+        InvalidParameterException::InvalidParameterException(std::string&& what) :
+                RCSException{ std::move(what) }
+        {
+        }
+
+
+        BadGetException::BadGetException(const std::string& what) :
+                RCSException{ what }
+        {
+        }
+
+        BadGetException::BadGetException(std::string&& what) :
+                RCSException{ std::move(what) }
+        {
+        }
+
+
+        InvalidKeyException::InvalidKeyException(const std::string& what) :
+                RCSException{ what }
+        {
+        }
+
+        InvalidKeyException::InvalidKeyException(std::string&& what) :
+                RCSException{ std::move(what) }
+        {
+        }
     }
 }

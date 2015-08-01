@@ -41,7 +41,7 @@ void OIC_HOSTING_LOG(LogLevel level, const char * format, ...)
 
 HostingObject::HostingObject()
 : remoteObject(nullptr), mirroredServer(nullptr),
-  remoteState(ResourceState::NOT_MONITORING),
+  remoteState(ResourceState::NONE),
   pStateChangedCB(nullptr), pDataUpdateCB(nullptr),
   pDestroyCB(nullptr), pSetRequestHandler(nullptr)
 {

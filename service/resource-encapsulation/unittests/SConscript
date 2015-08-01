@@ -63,9 +63,10 @@ gtest_main = File(gtest_dir + '/lib/.libs/libgtest_main.a')
 
 ResourceClient_gtest_env.AppendUnique(
         CPPPATH = [
-                env.get('SRC_DIR')+'/extlibs', 
+                src_dir + '/extlibs/hippomocks-master', 
+                src_dir + '/extlibs/gtest/gtest-1.7.0/include',
                 '../include',
-                '..src/serverBuilder/include/internal',
+                '../src/common/utils/include',
                 '../src/serverBuilder/include',
                 '../src/common/primitiveResource/include',
                 '../src/common/include/expiryTimer'
@@ -77,9 +78,18 @@ if target_os not in ['windows', 'winrt']:
                 ResourceClient_gtest_env.AppendUnique(CXXFLAGS = ['-pthread'])
                 ResourceClient_gtest_env.AppendUnique(LIBS = ['pthread'])
 
-ResourceClient_gtest_env.PrependUnique(CPPPATH = [env.get('SRC_DIR')+'/extlibs/hippomocks-master/HippoMocks', gtest_dir + '/include'])
-ResourceClient_gtest_env.AppendUnique(LIBPATH = ['/usr/lib/jvm/jdk1.8.0_40/jre/lib/amd64/server/'])
-ResourceClient_gtest_env.PrependUnique(LIBS = ['rcs_client','rcs_server', 'rcs_common', 'oc','octbstack', 'oc_logger', 'oc_logger_core', 'connectivity_abstraction', gtest, gtest_main])
+ResourceClient_gtest_env.PrependUnique(LIBS = [
+    'rcs_client',
+    'rcs_server',
+    'rcs_common',
+    'oc',
+    'octbstack',
+    'oc_logger',
+    'oc_logger_core',
+    'connectivity_abstraction',
+    gtest,
+    gtest_main])
+
 ResourceClient_gtest_env.AppendUnique(LIBS = ['dl'])	
 
 ######################################################################
@@ -87,7 +97,7 @@ ResourceClient_gtest_env.AppendUnique(LIBS = ['dl'])
 ######################################################################
 ResourceClient_gtest_src = env.Glob('./*.cpp')
 
-ResourceClient_test = ResourceClient_gtest_env.Program('ResourceClient_Test', ResourceClient_gtest_src)
+ResourceClient_test = ResourceClient_gtest_env.Program('ResourceClientTest', ResourceClient_gtest_src)
 Alias("ResourceClient_Test", ResourceClient_test)
 env.AppendTarget('ResourceClient_test')
 

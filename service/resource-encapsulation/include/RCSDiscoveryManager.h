@@ -25,69 +25,65 @@
  *
  */
 
-#ifndef RCS_DISCOVERYMANAGER_H_
-#define RCS_DISCOVERYMANAGER_H_
+#ifndef RCSDISCOVERYMANAGER_H
+#define RCSDISCOVERYMANAGER_H
 
-#include "RCSRemoteResourceObject.h"
+#include <memory>
+#include <functional>
 
 namespace OIC
 {
     namespace Service
     {
 
-        /*
-        * Forward Declaration of RCSAddress Class
-        */
+        class RCSRemoteResourceObject;
         class RCSAddress;
 
         /**
-             * @class   RCSDiscoveryManager
-             * @brief   This class contains the resource discovery method.
-             *
-             */
+         * This class contains the resource discovery method.
+         *
+         * @see RCSRemoteResourceObject
+         */
         class RCSDiscoveryManager
         {
-            public:
+        public:
 
-                /**
-                 *  Typedef for callback of discoverResource API
-                 */
-                typedef std::function< void( std::shared_ptr< RCSRemoteResourceObject>) >
-                OnResourceDiscoveredCallback;
+            /**
+             * Typedef for callback of discoverResource API
+             *
+             * @see discoverResource
+             */
+            typedef std::function< void(std::shared_ptr< RCSRemoteResourceObject >) >
+                ResourceDiscoveredCallback;
 
-                /**
-                * API for getting RCSDiscoveryManager instance.
-                *
-                * @return RCSDiscoveryManager - Instance of RCSDiscoveryManager class
-                */
-                static RCSDiscoveryManager *getInstance();
+            /**
+             * Returns RCSDiscoveryManager instance.
+             *
+             */
+            static RCSDiscoveryManager* getInstance();
 
-                /**
-                * API for discovering the resource of Interest.
-                *
-                * @param address - RCSAddress object
-                * @param resourceURI - uri of resource to be searched
-                * @param cb - callback to obtain discovered resource
-                *
-                * @throw InvalidParameterException : This API throws the InvalidParameterException if any of
-                *                                                         the parameter is invalid.
-                * @see RCSAddress
-                */
-                void discoverResource(const RCSAddress &address, const std::string &resourceURI,
-                                      OnResourceDiscoveredCallback cb);
-            private:
+            /**
+             * API for discovering the resource of Interest.
+             *
+             * @param address A RCSAddress object
+             * @param resourceURI The uri of resource to be searched
+             * @param cb A callback to obtain discovered resource
+             *
+             * @throws InvalidParameterException If any parameter is invalid.
+             *
+             * @note The callback will be invoked in an internal thread.
+             *
+             * @see RCSAddress
+             *
+             */
+            void discoverResource(const RCSAddress& address, const std::string& resourceURI,
+                    ResourceDiscoveredCallback cb);
 
-                /**
-                 * Constructor for RCSDiscoveryManager.
-                */
-                RCSDiscoveryManager() = default;
-
-                /**
-                * Destructor for RCSDiscoveryManager.
-                */
-                ~RCSDiscoveryManager() = default;
+        private:
+            RCSDiscoveryManager() = default;
+            ~RCSDiscoveryManager() = default;
 
         };
     }
 }
-#endif //RCS_DISCOVERYMANAGER_H_
+#endif // RCSDISCOVERYMANAGER_H
