@@ -20,6 +20,7 @@
 
 #include "SoftSensorBundleActivator.h"
 #include "DiscomfortIndexSensorResource.h"
+#include <algorithm>
 
 SoftSensorBundleActivator *bundle;
 

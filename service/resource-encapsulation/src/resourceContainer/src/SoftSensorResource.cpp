@@ -19,6 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "SoftSensorResource.h"
+#include <algorithm>
 
 using namespace OIC::Service;
 namespace OIC
@@ -60,11 +61,9 @@ namespace OIC
 
         void SoftSensorResource::setAttribute(std::string key, RCSResourceAttributes::Value &&value)
         {
-            std::list<std::string>::iterator itor = std::find(m_inputList.begin(), m_inputList.end(), key);
-
             BundleResource::setAttribute(key, value.toString());
 
-            if (itor != m_inputList.end())
+            if (std::find(m_inputList.begin(), m_inputList.end(), key) != m_inputList.end())
                 executeLogic();
         }
 
