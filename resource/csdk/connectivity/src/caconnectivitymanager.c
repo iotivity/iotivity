@@ -161,10 +161,6 @@ CAResult_t CAGenerateToken(CAToken_t *token, uint8_t tokenLength)
 {
     OIC_LOG(DEBUG, TAG, "CAGenerateToken");
 
-    if(!g_isInitialized)
-    {
-        return CA_STATUS_NOT_INITIALIZED;
-    }
     return CAGenerateTokenInternal(token, tokenLength);
 }
 
@@ -211,7 +207,6 @@ CAResult_t CASendNotification(const CAEndpoint_t *object, const CAResponseInfo_t
     }
 
     return CADetachResponseMessage(object, responseInfo);
-
 }
 
 CAResult_t CASendResponse(const CAEndpoint_t *object, const CAResponseInfo_t *responseInfo)
@@ -224,7 +219,6 @@ CAResult_t CASendResponse(const CAEndpoint_t *object, const CAResponseInfo_t *re
     }
 
     return CADetachResponseMessage(object, responseInfo);
-
 }
 
 CAResult_t CASelectNetwork(CATransportAdapter_t interestedNetwork)
