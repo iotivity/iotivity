@@ -208,7 +208,7 @@ namespace OIC
             this->state = _state;
         }
 
-        void ResourcePresence::timeOutCB(unsigned int msg)
+        void ResourcePresence::timeOutCB(unsigned int /*msg*/)
         {
             OC_LOG_V(DEBUG, BROKER_TAG, "timeOutCB()");
             OC_LOG_V(DEBUG, BROKER_TAG, "waiting for terminate getCB\n");
@@ -232,7 +232,7 @@ namespace OIC
             pollingCB();
         }
 
-        void ResourcePresence::pollingCB(unsigned int msg)
+        void ResourcePresence::pollingCB(unsigned int /*msg*/)
         {
             OC_LOG_V(DEBUG, BROKER_TAG, "pollingCB().\n");
             if(this->requesterList->size() != 0)
@@ -242,8 +242,8 @@ namespace OIC
             }
         }
 
-        void ResourcePresence::getCB(const HeaderOptions &hos,
-                const ResponseStatement& rep, int eCode)
+        void ResourcePresence::getCB(const HeaderOptions & /*hos*/,
+                const ResponseStatement & /*rep*/, int eCode)
         {
             OC_LOG_V(DEBUG, BROKER_TAG, "getCB().\n");
             OC_LOG_V(DEBUG, BROKER_TAG, "waiting for terminate TimeoutCB.\n");

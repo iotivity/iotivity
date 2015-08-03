@@ -110,7 +110,7 @@ namespace OIC
         }
 
         void DevicePresence::subscribeCB(OCStackResult ret,
-                const unsigned int seq, const std::string& hostAddress)
+                const unsigned int seq, const std::string & hostAddress)
         {
             OC_LOG_V(DEBUG, BROKER_TAG, "subscribeCB()");
             OC_LOG_V(DEBUG, BROKER_TAG, "Received presence CB from: %s",hostAddress.c_str());
@@ -160,7 +160,7 @@ namespace OIC
             }
         }
 
-        void DevicePresence::timeOutCB(TimerID id)
+        void DevicePresence::timeOutCB(TimerID /*id*/)
         {
             OC_LOG_V(DEBUG,BROKER_TAG,"timeOutCB()");
             std::unique_lock<std::mutex> lock(timeoutMutex);

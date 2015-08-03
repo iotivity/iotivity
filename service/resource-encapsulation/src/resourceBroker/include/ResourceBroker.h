@@ -53,7 +53,7 @@ namespace OIC
 
             static ResourceBroker * getInstance();
 
-            const BrokerID hostResource(PrimitiveResourcePtr pResource, BrokerCB cb);
+            BrokerID hostResource(PrimitiveResourcePtr pResource, BrokerCB cb);
             void cancelHostResource(BrokerID brokerId);
 
             BROKER_STATE getResourceState(BrokerID brokerId);
