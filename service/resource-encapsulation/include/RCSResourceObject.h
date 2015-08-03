@@ -198,20 +198,20 @@ namespace OIC
 
                 class LockGuard;
 
-                typedef std::function < RCSGetResponse(const RCSRequest &,
-                                                       RCSResourceAttributes &) > GetRequestHandler;
-                typedef std::function < RCSSetResponse(const RCSRequest &,
-                                                       RCSResourceAttributes &) > SetRequestHandler;
+                typedef std::function < RCSGetResponse(const RCSRequest&,
+                                                       RCSResourceAttributes&) > GetRequestHandler;
+                typedef std::function < RCSSetResponse(const RCSRequest&,
+                                                       RCSResourceAttributes&) > SetRequestHandler;
 
-                typedef std::function < void(const RCSResourceAttributes::Value &,
+                typedef std::function < void(const RCSResourceAttributes::Value&,
                                      const RCSResourceAttributes::Value &) > AttributeUpdatedListener;
 
             public:
                 RCSResourceObject(RCSResourceObject&&) = delete;
-                RCSResourceObject(const RCSResourceObject &) = delete;
+                RCSResourceObject(const RCSResourceObject&) = delete;
 
-                RCSResourceObject &operator=(RCSResourceObject && ) = delete;
-                RCSResourceObject &operator=(const RCSResourceObject &) = delete;
+                RCSResourceObject& operator=(RCSResourceObject&&) = delete;
+                RCSResourceObject& operator=(const RCSResourceObject&) = delete;
 
                 virtual ~RCSResourceObject();
 
@@ -223,17 +223,17 @@ namespace OIC
                  *
                  * @note It is guaranteed thread-safety about attributes.
                  */
-                void setAttribute(const std::string &key, const RCSResourceAttributes::Value & value);
+                void setAttribute(const std::string& key, const RCSResourceAttributes::Value& value);
 
                 /**
                  * @overload
                  */
-                void setAttribute(const std::string &key, RCSResourceAttributes::Value&& value);
+                void setAttribute(const std::string& key, RCSResourceAttributes::Value&& value);
 
                 /**
                  * @overload
                  */
-                void setAttribute(std::string&& key, const RCSResourceAttributes::Value & value);
+                void setAttribute(std::string&& key, const RCSResourceAttributes::Value& value);
 
                 /**
                  * @overload
@@ -252,7 +252,7 @@ namespace OIC
                  * @throw InvalidKeyException
                  *              Throw exception when empty string is provided as Attribute key.
                  */
-                RCSResourceAttributes::Value getAttributeValue(const std::string &key) const;
+                RCSResourceAttributes::Value getAttributeValue(const std::string& key) const;
 
                 /**
                  * API for retrieving the attribute value associated with the supplied name.
@@ -264,7 +264,7 @@ namespace OIC
                  * It is guaranteed thread-safety about attributes.
                  */
                 template< typename T >
-                T getAttribute(const std::string &key) const
+                T getAttribute(const std::string& key) const
                 {
                     WeakGuard lock(*this);
                     return m_resourceAttributes.at(key).get< T >();
@@ -279,7 +279,7 @@ namespace OIC
                  *
                  * It is guaranteed thread-safety about attributes.
                  */
-                bool removeAttribute(const std::string &key);
+                bool removeAttribute(const std::string& key);
 
                 /**
                  * API for checking whether a particular attribute is there for a resource or not.
@@ -290,7 +290,7 @@ namespace OIC
                  *
                  * It is guaranteed thread-safety about attributes.
                  */
-                bool containsAttribute(const std::string &key) const;
+                bool containsAttribute(const std::string& key) const;
 
                 /**
                  * API for getting all the attributes of the RCSResourceObject.
@@ -305,12 +305,12 @@ namespace OIC
                  * @throw NoLockException
                  *              If you don't do lock with LockGuard, throw exception.
                  */
-                RCSResourceAttributes &getAttributes();
+                RCSResourceAttributes& getAttributes();
 
                 /**
                  * @overload
                  */
-                const RCSResourceAttributes &getAttributes() const;
+                const RCSResourceAttributes& getAttributes() const;
 
                 /**
                 * API for checking whether the particular resource is observable or not
@@ -354,7 +354,7 @@ namespace OIC
                  * @param listener Listener for updation of the interested attribute
                  *
                  */
-                virtual void addAttributeUpdatedListener(const std::string &key,
+                virtual void addAttributeUpdatedListener(const std::string& key,
                         AttributeUpdatedListener listener);
 
                 /**
@@ -364,7 +364,7 @@ namespace OIC
                  * @param listener Listener for updation of the interested attribute
                  *
                  */
-                virtual void addAttributeUpdatedListener(std::string &&key,
+                virtual void addAttributeUpdatedListener(std::string&& key,
                         AttributeUpdatedListener listener);
 
                 /**
@@ -373,7 +373,7 @@ namespace OIC
                 * @param key The interested attribute's key
                 *
                 */
-                virtual bool removeAttributeUpdatedListener(const std::string &key);
+                virtual bool removeAttributeUpdatedListener(const std::string& key);
 
                 /**
                  * API for notifying all observers of the RCSResourceObject
@@ -432,8 +432,14 @@ namespace OIC
             OCEntityHandlerResult handleObserve(std::shared_ptr< OC::OCResourceRequest >);
 
             void expectOwnLock() const;
+
             void autoNotify(bool, AutoNotifyPolicy) const;
-            void autoNotifyIfNeeded(const std::string& , const RCSResourceAttributes::Value& );
+            void autoNotify(bool) const;
+
+            bool testValueUpdated(const std::string&, const RCSResourceAttributes::Value&) const;
+
+            template< typename K, typename V >
+            void setAttributeInternal(K&&, V&&);
 
         private:
             const uint8_t m_properties;
