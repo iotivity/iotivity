@@ -161,7 +161,7 @@ namespace OIC
                 throw InvalidParameterException {"[getCachedData] Primitive Resource is invaild"};
             }
 
-            if(handler->isCachedData() == false)
+            if (handler->isCachedData() == false)
             {
                 throw HasNoCachedDataException {"[getCachedData] Cached Data is not stored"};
             }
@@ -182,7 +182,7 @@ namespace OIC
                 throw InvalidParameterException {"[getCachedData] CacheID is invaild"};
             }
 
-            if(handler->isCachedData() == false)
+            if (handler->isCachedData() == false)
             {
                 throw HasNoCachedDataException {"[getCachedData] Cached Data is not stored"};
             }
