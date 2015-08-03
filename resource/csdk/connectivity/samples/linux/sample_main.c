@@ -1576,11 +1576,13 @@ bool get_address_set(const char *pAddress, addressSet_t* outAddress)
     {
         if(ipLen && ipLen < sizeof(outAddress->ipAddress))
         {
-            OICStrcpy(outAddress->ipAddress, sizeof(outAddress->ipAddress), pAddress);
+            OICStrcpyPartial(outAddress->ipAddress, sizeof(outAddress->ipAddress),
+                             pAddress, ipLen);
         }
         else if (!ipLen && len < sizeof(outAddress->ipAddress))
         {
-            OICStrcpy(outAddress->ipAddress, sizeof(outAddress->ipAddress), pAddress);
+            OICStrcpyPartial(outAddress->ipAddress, sizeof(outAddress->ipAddress),
+                             pAddress, len);
         }
         else
         {
