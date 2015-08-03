@@ -78,8 +78,11 @@ namespace OC {
             throw OCException(OC::Exception::NIL_GUARD_NULL, OC_STACK_INVALID_PARAM);
         }
 
-        // Note that although parameters are being forwarded, std::bind() will make a single copy:
-        return std::bind(fn, p, std::forward<ParamTs>(params)...)();
+        // Note that the parameters are being passed by reference to std::bind. This is not an
+        // issue, as it is this function's parameters that are being passed by reference.  So,
+        // unless the parameters are being passed by reference to here (or to checked_guard),
+        // they won't be modified.
+        return std::bind(fn, p, std::ref(params)...)();
     }
 
     /* Check for nullptr and forward the result of an OC function call on success; raise
