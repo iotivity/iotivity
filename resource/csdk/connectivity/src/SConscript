@@ -27,6 +27,9 @@ env.AppendUnique(CPPPATH = [ os.path.join(root_dir, 'inc'),
 if ca_os not in ['arduino', 'windows', 'winrt']:
 	env.AppendUnique(CPPDEFINES = ['WITH_POSIX'])
 
+if ca_os not in ['darwin', 'ios', 'windows', 'winrt']:
+	env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
+
 if ca_os in ['darwin','ios']:
 	env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
 
@@ -77,7 +80,7 @@ else:
 		'caqueueingthread.c',
 		'caretransmission.c',
 		]
-	if not 'BLE' in ca_transport:
+	if (('BT' in ca_transport) or ('IP' in ca_transport) or ('ALL' in ca_transport)):
 		env.AppendUnique(CA_SRC = [os.path.join(ca_path, 'cablockwisetransfer.c') ])
 		env.AppendUnique(CPPDEFINES = ['WITH_BWT'])
 	if secured == '1':
@@ -111,6 +114,11 @@ if 'BLE' in ca_transport:
 print "Include path is %s" % env.get('CPPPATH')
 print "Files path is %s" % env.get('CA_SRC')
 if ca_os in ['android', 'tizen']:
+	env.AppendUnique(LIBS = ['coap'])
+	if env.get('SECURED') == '1':
+		env.AppendUnique(LIBS = ['tinydtls'])
+	if ca_os != 'android':
+		env.AppendUnique(LIBS = ['rt'])
 	calib = env.SharedLibrary('connectivity_abstraction', env.get('CA_SRC'))
 else:
 	calib = env.StaticLibrary('connectivity_abstraction', env.get('CA_SRC'))

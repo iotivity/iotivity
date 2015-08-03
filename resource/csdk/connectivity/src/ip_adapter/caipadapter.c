@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -38,15 +38,13 @@
 #include "oic_string.h"
 
 /**
- * @def TAG
- * @brief Logging tag for module name
+ * Logging tag for module name.
  */
 #define TAG "IP_ADAP"
 
 #ifndef SINGLE_THREAD
 /**
- * @var CAIPData
- * @brief Holds inter thread ip data information.
+ * Holds inter thread ip data information.
  */
 typedef struct
 {
@@ -57,27 +55,23 @@ typedef struct
 } CAIPData;
 
 /**
- * @var g_sendQueueHandle
- * @brief Queue handle for Send Data
+ * Queue handle for Send Data.
  */
 static CAQueueingThread_t *g_sendQueueHandle = NULL;
 #endif
 
 /**
- * @var g_networkPacketCallback
- * @brief Network Packet Received Callback to CA
+ * Network Packet Received Callback to CA.
  */
 static CANetworkPacketReceivedCallback g_networkPacketCallback = NULL;
 
 /**
- * @var g_networkChangeCallback
- * @brief Network Changed Callback to CA
+ * Network Changed Callback to CA.
  */
 static CANetworkChangeCallback g_networkChangeCallback = NULL;
 
 /**
- * @var g_errorCallback
- * @brief error Callback to CA adapter
+ * error Callback to CA adapter.
  */
 static CAErrorHandleCallback g_errorCallback = NULL;
 
@@ -151,6 +145,8 @@ void CAIPDeinitializeQueueHandles()
 
 void CAIPConnectionStateCB(const char *ipAddress, CANetworkStatus_t status)
 {
+    (void)ipAddress;
+    (void)status;
     OIC_LOG(DEBUG, TAG, "IN");
 }
 
@@ -360,6 +356,7 @@ static int32_t CAQueueIPData(bool isMulticast, const CAEndpoint_t *endpoint,
 #ifdef SINGLE_THREAD
 
     CAIPSendData(endpoint, data, dataLength, isMulticast);
+    return dataLength;
 
 #else
 
@@ -374,10 +371,10 @@ static int32_t CAQueueIPData(bool isMulticast, const CAEndpoint_t *endpoint,
     // Add message to send queue
     CAQueueingThreadAddData(g_sendQueueHandle, ipData, sizeof(CAIPData));
 
+#endif // SINGLE_THREAD
+
     OIC_LOG(DEBUG, TAG, "OUT");
     return dataLength;
-
-#endif // SINGLE_THREAD
 }
 
 int32_t CASendIPUnicastData(const CAEndpoint_t *endpoint,
@@ -533,10 +530,13 @@ void CAFreeIPData(CAIPData *ipData)
 
 void CADataDestroyer(void *data, uint32_t size)
 {
+    if (size < sizeof(CAIPData))
+    {
+        OIC_LOG_V(ERROR, TAG, "Destroy data too small %p %d", data, size);
+    }
     CAIPData *etdata = (CAIPData *) data;
 
     CAFreeIPData(etdata);
 }
 
 #endif // SINGLE_THREAD
-

@@ -30,7 +30,7 @@
 #include <atomic>
 
 #include "octypes.h"
-#include "ResourceClient.h"
+#include "RCSAddress.h"
 #include "PresenceSubscriber.h"
 #include "HostingObject.h"
 #include "PrimitiveResource.h"
@@ -40,17 +40,18 @@ namespace OIC
 namespace Service
 {
 
+class RCSDiscoveryManager;
 class ResourceHosting
 {
 private:
     typedef std::shared_ptr<HostingObject> HostingObjectPtr;
-    typedef std::shared_ptr<RemoteResourceObject> RemoteObjectPtr;
+    typedef std::shared_ptr<RCSRemoteResourceObject> RemoteObjectPtr;
     typedef std::shared_ptr<PrimitiveResource> PrimiteveResourcePtr;
 
     typedef std::function<
             void(OCStackResult, const unsigned int, const std::string&)> SubscribeCallback;
     typedef std::function<
-            void(std::shared_ptr<RemoteResourceObject>)> DiscoveryCallback;
+            void(std::shared_ptr<RCSRemoteResourceObject>)> DiscoveryCallback;
     typedef std::function<void()> DestroyedCallback;
 
 public:
@@ -73,7 +74,7 @@ private:
 
     std::list<HostingObjectPtr> hostingObjectList;
 
-    DiscoveryManager * discoveryManager;
+    RCSDiscoveryManager * discoveryManager;
     PresenceSubscriber presenceHandle;
 
     SubscribeCallback pPresenceCB;

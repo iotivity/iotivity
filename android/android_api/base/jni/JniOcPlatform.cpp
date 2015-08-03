@@ -325,7 +325,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_configure
         dbfile = env->GetStringUTFChars(jDbPath, nullptr);
         JniOcSecurity::StoreDbPath(dbfile);
     }
-    uint16_t port;
+    uint16_t port = 0;
     if (jPort > 0)
     {
         port = static_cast<uint16_t>(jPort);
@@ -578,7 +578,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findResource0
         OCStackResult result = OCPlatform::findResource(
             host,
             resourceUri,
-            JniUtils::getConnectivityType(env, static_cast<int>(jConnectivityType)),
+            static_cast<OCConnectivityType>(jConnectivityType),
             findCallback);
 
         if (OC_STACK_OK != result)
@@ -630,7 +630,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findResource1
         OCStackResult result = OCPlatform::findResource(
             host,
             resourceUri,
-            JniUtils::getConnectivityType(env, static_cast<int>(jConnectivityType)),
+            static_cast<OCConnectivityType>(jConnectivityType),
             findCallback,
             JniUtils::getQOS(env, static_cast<int>(jQoS)));
 
@@ -683,7 +683,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getDeviceInfo0
         OCStackResult result = OCPlatform::getDeviceInfo(
             host,
             resourceUri,
-            JniUtils::getConnectivityType(env, static_cast<int>(jConnectivityType)),
+            static_cast<OCConnectivityType>(jConnectivityType),
             findDeviceCallback);
 
         if (OC_STACK_OK != result)
@@ -734,7 +734,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getDeviceInfo1
         OCStackResult result = OCPlatform::getDeviceInfo(
             host,
             resourceUri,
-            JniUtils::getConnectivityType(env, static_cast<int>(jConnectivityType)),
+            static_cast<OCConnectivityType>(jConnectivityType),
             findDeviceCallback,
             JniUtils::getQOS(env, static_cast<int>(jQoS)));
 
@@ -786,7 +786,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getPlatformInfo0
         OCStackResult result = OCPlatform::getPlatformInfo(
             host,
             resourceUri,
-            JniUtils::getConnectivityType(env, static_cast<int>(jConnectivityType)),
+            static_cast<OCConnectivityType>(jConnectivityType),
             findPlatformCallback);
 
         if (OC_STACK_OK != result)
@@ -837,7 +837,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getPlatformInfo1
         OCStackResult result = OCPlatform::getPlatformInfo(
             host,
             resourceUri,
-            JniUtils::getConnectivityType(env, static_cast<int>(jConnectivityType)),
+            static_cast<OCConnectivityType>(jConnectivityType),
             findDeviceCallback,
             JniUtils::getQOS(env, static_cast<int>(jQoS)));
 
@@ -869,15 +869,13 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_registerResource0
     }
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, jResource);
     if (!resource) return nullptr;
-    LOGD("OcPlatform_registerResource1");
+
     OCResourceHandle resourceHandle;
     try
     {
-        LOGD("OcPlatform_registerResource2");
         OCStackResult result = OCPlatform::registerResource(
             resourceHandle,
             resource->getOCResource());
-        LOGD("OcPlatform_registerResource3");
 
         if (OC_STACK_OK != result)
         {
@@ -890,11 +888,10 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_registerResource0
         ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
         return nullptr;
     }
-    LOGD("OcPlatform_registerResource4");
     JniOcResourceHandle* jniHandle = new JniOcResourceHandle(resourceHandle);
     jlong handle = reinterpret_cast<jlong>(jniHandle);
     jobject jResourceHandle = env->NewObject(g_cls_OcResourceHandle, g_mid_OcResourceHandle_N_ctor, handle);
-    LOGD("OcPlatform_registerResource5");
+
     if (!jResourceHandle)
     {
         LOGE("Failed to create OcResourceHandle");
@@ -1583,7 +1580,7 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_subscribePresence0
         OCStackResult result = OCPlatform::subscribePresence(
             presenceHandle,
             host,
-            JniUtils::getConnectivityType(env, static_cast<int>(jConnectivityType)),
+            static_cast<OCConnectivityType>(jConnectivityType),
             subscribeCallback);
 
         if (OC_STACK_OK != result)
@@ -1650,7 +1647,7 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_subscribePresence1
             presenceHandle,
             host,
             resourceType,
-            JniUtils::getConnectivityType(env, static_cast<int>(jConnectivityType)),
+            static_cast<OCConnectivityType>(jConnectivityType),
             subscribeCallback);
 
         if (OC_STACK_OK != result)
@@ -1758,7 +1755,7 @@ jboolean jIsObservable, jobjectArray jResourceTypeArray, jobjectArray jInterface
     std::shared_ptr<OCResource> resource = OCPlatform::constructResourceObject(
         host,
         uri,
-        JniUtils::getConnectivityType(env, static_cast<int>(jConnectivityType)),
+        static_cast<OCConnectivityType>(jConnectivityType),
         static_cast<bool>(jIsObservable),
         resourceTypes,
         interfaces);

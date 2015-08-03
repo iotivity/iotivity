@@ -310,6 +310,14 @@ TEST(SendResponseTest, DISABLED_TC_19_Positive_01)
     responseData.type = CA_MSG_NONCONFIRM;
     responseData.messageId = 1;
     responseData.payload = (CAPayload_t)malloc(sizeof("response payload"));
+
+    EXPECT_TRUE(responseData.payload != NULL);
+    if(!responseData.payload)
+    {
+        CADestroyEndpoint(tempRep);
+        return;
+    }
+
     memcpy(responseData.payload, "response payload", sizeof("response payload"));
     responseData.payloadSize = sizeof("response payload");
 
@@ -339,6 +347,14 @@ TEST(SendResponseTest, DISABLED_TC_20_Negative_01)
     responseData.type = CA_MSG_NONCONFIRM;
     responseData.messageId = 1;
     responseData.payload = (CAPayload_t)malloc(sizeof("response payload"));
+    EXPECT_TRUE(responseData.payload != NULL);
+
+    if(!responseData.payload)
+    {
+        CADestroyEndpoint(tempRep);
+        return;
+    }
+
     memcpy(responseData.payload, "response payload", sizeof("response payload"));
     responseData.payloadSize = sizeof("response payload");
 
@@ -386,6 +402,14 @@ TEST(SendNotificationTest, DISABLED_TC_22_Positive_01)
     memset(&responseData, 0, sizeof(CAInfo_t));
     responseData.type = CA_MSG_NONCONFIRM;
     responseData.payload = (CAPayload_t)malloc(sizeof("Temp Notification Data"));
+
+    EXPECT_TRUE(responseData.payload != NULL);
+    if(!responseData.payload)
+    {
+        CADestroyEndpoint(tempRep);
+        return;
+    }
+
     memcpy(responseData.payload, "Temp Notification Data", sizeof("Temp Notification Data"));
     responseData.payloadSize = sizeof("Temp Notification Data");
 

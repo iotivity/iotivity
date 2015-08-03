@@ -22,19 +22,17 @@
 
 #include "PresenceSubscriber.h"
 #include "OCPlatform.h"
+#include "RCSDiscoveryManager.h"
 
 namespace OIC
 {
 namespace Service
 {
 
-#define HOSTING_TAG "/hosting"
-#define HOSTING_TAG_SIZE ((size_t)8)
-#define HOSTING_LOG_TAG  PCF("Hosting")
-#define OIC_HOSTING_LOG(level, tag, ...)  OCLogv((level), (HOSTING_LOG_TAG), __VA_ARGS__)
-
 namespace
 {
+    std::string HOSTING_TAG = "/hosting";
+    size_t HOSTING_TAG_SIZE = (size_t)HOSTING_TAG.size();
     std::string MULTICAST_PRESENCE_ADDRESS = std::string("coap://") + OC_MULTICAST_PREFIX;
     std::string HOSTING_RESOURSE_TYPE = "Resource.Hosting";
 }
@@ -109,7 +107,7 @@ void ResourceHosting::initializeResourceHosting()
     pDiscoveryCB = std::bind(&ResourceHosting::discoverHandler, this,
             std::placeholders::_1);
 
-    discoveryManager = DiscoveryManager::getInstance();
+    discoveryManager = RCSDiscoveryManager::getInstance();
 }
 
 void ResourceHosting::requestMulticastPresence()
@@ -124,7 +122,7 @@ void ResourceHosting::requestMulticastPresence()
     }
 }
 
-void ResourceHosting::presenceHandler(OCStackResult ret, const unsigned int seq,
+void ResourceHosting::presenceHandler(OCStackResult ret, const unsigned int /*seq*/,
         const std::string & address)
 {
     switch(ret)
@@ -187,8 +185,8 @@ void ResourceHosting::requestDiscovery(std::string address)
 {
     std::string host = address;
     std::string uri = OC_RSRVD_WELL_KNOWN_URI + std::string("?rt=") + HOSTING_RESOURSE_TYPE;
-    OCConnectivityType type = OCConnectivityType::CT_DEFAULT;
-    discoveryManager->discoverResource(host, uri, type, pDiscoveryCB);
+    RCSAddress rcsAddress = RCSAddress::unicast(host);
+    discoveryManager->discoverResource(rcsAddress, uri, pDiscoveryCB);
 }
 
 void ResourceHosting::discoverHandler(RemoteObjectPtr remoteResource)

@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -27,6 +27,7 @@
 
 #include "cacommon.h"
 #include "cainterface.h"
+#include "oic_string.h"
 #ifdef __WITH_DTLS__
 #include "ocsecurityconfig.h"
 #endif
@@ -93,7 +94,7 @@ void error_handler(const CAEndpoint_t *object, const CAErrorInfo_t* errorInfo);
 void send_response(const CAEndpoint_t *endpoint, const CAInfo_t *info);
 void get_resource_uri(char *URI, char *resourceURI, int length);
 int get_secure_information(CAPayload_t payLoad);
-int get_address_set(const char *pAddress, addressSet_t* outAddress);
+bool get_address_set(const char *pAddress, addressSet_t* outAddress);
 void parsing_coap_uri(const char* uri, addressSet_t* address, CATransportFlags_t *flags);
 CAHeaderOption_t* get_option_data(CAInfo_t* requestData);
 
@@ -451,7 +452,7 @@ void send_request()
     CATransportFlags_t flags;
 
     printf("URI : %s\n", uri);
-    addressSet_t address = {};
+    addressSet_t address = {{}, 0};
     parsing_coap_uri(uri, &address, &flags);
 
     res = CACreateEndpoint(flags, g_selected_nw_type,
@@ -618,7 +619,7 @@ void send_secure_request()
     uint8_t tokenLength = CA_MAX_TOKEN_LEN;
 
     res = CAGenerateToken(&token, tokenLength);
-    if ((CA_STATUS_OK != res) || (!token))
+    if (CA_STATUS_OK != res)
     {
         printf("Token generate error, error code : %d\n", res);
         goto exit;
@@ -766,7 +767,7 @@ void send_notification()
     int messageType = messageTypeBuf[0] - '0';
 
     CATransportFlags_t flags;
-    addressSet_t address = {};
+    addressSet_t address = {{}, 0};
     parsing_coap_uri(uri, &address, &flags);
 
     // create remote endpoint
@@ -954,8 +955,7 @@ void get_network_info()
     printf("################## Network Information #######################\n");
     printf("Network info total size is %d\n\n", tempSize);
 
-    int index;
-    for (index = 0; index < tempSize; index++)
+    for (uint32_t index = 0; index  < tempSize; index++)
     {
         printf("Type: %d\n", tempInfo[index].adapter);
         printf("Address: %s\n", tempInfo[index].addr);
@@ -1104,6 +1104,7 @@ void response_handler(const CAEndpoint_t *object, const CAResponseInfo_t *respon
 
 void error_handler(const CAEndpoint_t *rep, const CAErrorInfo_t* errorInfo)
 {
+    (void)rep;
     printf("+++++++++++++++++++++++++++++++++++ErrorInfo+++++++++++++++++++++++++++++++++++\n");
 
     if(errorInfo)
@@ -1206,6 +1207,11 @@ void send_response(const CAEndpoint_t *endpoint, const CAInfo_t *info)
 
         if (endpoint->flags & CA_SECURE)
         {
+            if(!responseData.resourceUri)
+            {
+               printf("resourceUri not available in SECURE\n");
+               return;
+            }
             printf("Sending response on secure communication\n");
 
             uint32_t length = sizeof(SECURE_INFO_DATA) + strlen(responseData.resourceUri);
@@ -1249,6 +1255,11 @@ void send_response(const CAEndpoint_t *endpoint, const CAInfo_t *info)
             }
             else
             {
+                if(!responseData.resourceUri)
+                {
+                   printf("resourceUri not available in NON-SECURE\n");
+                   return;
+                }
                 uint32_t length = sizeof(NORMAL_INFO_DATA) + strlen(responseData.resourceUri);
                 responseData.payload = (CAPayload_t) calloc(length, sizeof(char));
                 if (NULL == responseData.payload)
@@ -1324,8 +1335,7 @@ int get_secure_information(CAPayload_t payLoad)
     }
 
     char portStr[6] = {0};
-    memcpy(portStr, startPos + 1, (endPos - 1) - startPos);
-
+    OICStrcpyPartial(portStr, sizeof(portStr), startPos + 1, (endPos - 1) - startPos);
     printf("secured port is: %s\n", portStr);
     return atoi(portStr);
 }
@@ -1353,7 +1363,7 @@ void get_resource_uri(char *URI, char *resourceURI, int length)
 
     if (endPos - startPos <= length)
     {
-        memcpy(resourceURI, startPos + 1, endPos - startPos);
+        OICStrcpyPartial(resourceURI, length, startPos + 1, endPos - startPos);
     }
 
     printf("URI: %s, ResourceURI:%s\n", URI, resourceURI);
@@ -1433,9 +1443,14 @@ CAHeaderOption_t* get_option_data(CAInfo_t* requestData)
         printf("there is no headerOption!\n");
         return NULL;
     }
+    else if (optionNum > MAX_OPT_LEN)
+    {
+        printf("Too many header options!\n");
+        return NULL;
+    }
     else
     {
-        headerOpt = (CAHeaderOption_t *)calloc(1, optionNum * sizeof(CAHeaderOption_t));
+        headerOpt = (CAHeaderOption_t *)calloc(optionNum, sizeof(CAHeaderOption_t));
         if (NULL == headerOpt)
         {
             printf("Memory allocation failed!\n");
@@ -1463,7 +1478,7 @@ CAHeaderOption_t* get_option_data(CAInfo_t* requestData)
                 return NULL;
             }
 
-            memcpy(headerOpt[i].optionData, optionData, strlen(optionData));
+            OICStrcpy(headerOpt[i].optionData, sizeof(headerOpt[i].optionData), optionData);
 
             headerOpt[i].optionLength = (uint16_t) strlen(optionData);
         }
@@ -1519,8 +1534,7 @@ void parsing_coap_uri(const char* uri, addressSet_t* address, CATransportFlags_t
     char *pAddress = cloneUri;
     printf("pAddress : %s\n", pAddress);
 
-    int res = get_address_set(pAddress, address);
-    if (res == -1)
+    if (!get_address_set(pAddress, address))
     {
         printf("address parse error\n");
 
@@ -1531,23 +1545,23 @@ void parsing_coap_uri(const char* uri, addressSet_t* address, CATransportFlags_t
     return;
 }
 
-int get_address_set(const char *pAddress, addressSet_t* outAddress)
+bool get_address_set(const char *pAddress, addressSet_t* outAddress)
 {
     if (NULL == pAddress)
     {
         printf("parameter is null !\n");
-        return -1;
+        return false;
     }
 
-    int32_t len = strlen(pAddress);
-    int32_t isIp = 0;
-    int32_t ipLen = 0;
+    size_t len = strlen(pAddress);
+    bool isIp = false;
+    size_t ipLen = 0;
 
-    for (int i = 0; i < len; i++)
+    for (size_t i = 0; i < len; i++)
     {
         if (pAddress[i] == '.')
         {
-            isIp = 1;
+            isIp = true;
         }
 
         // found port number start index
@@ -1562,37 +1576,38 @@ int get_address_set(const char *pAddress, addressSet_t* outAddress)
     {
         if(ipLen && ipLen < sizeof(outAddress->ipAddress))
         {
-            strncpy(outAddress->ipAddress, pAddress, ipLen);
-            outAddress->ipAddress[ipLen] = '\0';
+            OICStrcpy(outAddress->ipAddress, sizeof(outAddress->ipAddress), pAddress);
         }
         else if (!ipLen && len < sizeof(outAddress->ipAddress))
         {
-            strncpy(outAddress->ipAddress, pAddress, len);
-            outAddress->ipAddress[len] = '\0';
+            OICStrcpy(outAddress->ipAddress, sizeof(outAddress->ipAddress), pAddress);
         }
         else
         {
-            printf("IP Address too long: %d\n", ipLen==0 ? len : ipLen);
-            return -1;
+            printf("IP Address too long: %zu\n", (ipLen == 0) ? len : ipLen);
+            return false;
         }
 
         if (ipLen > 0)
         {
             outAddress->port = atoi(pAddress + ipLen + 1);
         }
+        return true;
     }
-
-    return isIp;
+    else
+    {
+        return false;
+    }
 }
 
 void create_file(CAPayload_t bytes, size_t length)
 {
     FILE *fp = fopen("sample_output.txt", "wb");
-    if (!fp)
+    if (fp)
     {
         fwrite(bytes, 1, length, fp);
+        fclose(fp);
     }
-    fclose(fp);
 }
 
 bool read_file(const char* name, CAPayload_t* bytes, size_t* length)
@@ -1631,7 +1646,7 @@ bool read_file(const char* name, CAPayload_t* bytes, size_t* length)
 
     // Read file contents into buffer
     size_t ret = fread(buffer, fileLen, 1, file);
-    if (ret < 0)
+    if (ret != 1)
     {
         printf("Failed to read data from file, %s\n", name);
         fclose(file);

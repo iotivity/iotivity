@@ -132,7 +132,7 @@ PMRESULT Config::parsing(char *xmlData, xml_document<> *doc)
 
 PMRESULT Config::getXmlData(xml_node<> *pluginInfo, std::string key)
 {
-    if(pluginInfo == NULL)
+    if (pluginInfo == NULL)
     {
         return PM_S_FALSE;
     }

@@ -165,7 +165,7 @@ if target_os == 'arduino':
 
 			os.system("find . -type f -exec dos2unix {} \;")
 			os.system("patch -p1 < " + src_dir + "/resource/csdk/connectivity/lib/arduino/arduino_due_ble.patch")
-		
+
 			# Remove downloaded file
 			os.remove(nordiclib_zip_file)
 		else:

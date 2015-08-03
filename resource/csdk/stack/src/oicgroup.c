@@ -25,6 +25,7 @@
 #include "oicgroup.h"
 #include "cJSON.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 #include "occollection.h"
 #include "logger.h"
 #include "timer.h"
@@ -623,7 +624,7 @@ OCStackResult BuildActionSetFromString(OCActionSet **set, char* actiondesc)
     iterToken = (char *) strtok_r(NULL, ACTION_DELIMITER, &iterTokenPtr);
     VARIFY_PARAM_NULL(iterToken, result, exit)
 #ifndef WITH_ARDUINO
-    sscanf(iterToken, "%ld %d", &(*set)->timesteps, &(*set)->type);
+    sscanf(iterToken, "%ld %u", &(*set)->timesteps, &(*set)->type);
 #endif
 
     OC_LOG_V(INFO, TAG, "ActionSet Name : %s", (*set)->actionsetName);
@@ -662,6 +663,11 @@ OCStackResult BuildActionSetFromString(OCActionSet **set, char* actiondesc)
             {
                 OC_LOG(INFO, TAG, PCF("Build OCAction Instance."));
 
+                if(action)
+                {
+                    OICFree(action->resourceUri);
+                    OICFree(action);
+                }
                 action = (OCAction*) OICMalloc(sizeof(OCAction));
                 VARIFY_POINTER_NULL(action, result, exit)
                 memset(action, 0, sizeof(OCAction));
@@ -903,15 +909,8 @@ unsigned int GetNumOfTargetResource(OCAction *actionset)
 OCStackResult SendAction(OCDoHandle *handle, const char *targetUri,
         const unsigned char *action)
 {
-    OCCallbackData cbdata;
-    cbdata.cb = &ActionSetCB;
-    cbdata.cd = NULL;
-    cbdata.context = (void*)DEFAULT_CONTEXT_VALUE;
-
     // TODO: disabled since this is no longer compatible
     return OC_STACK_NOTIMPL;
-    //return OCDoResource(handle, OC_REST_PUT, targetUri,
-    //        NULL, (char *) action, CT_ADAPTER_IP, OC_NA_QOS, &cbdata, NULL, 0);
 }
 
 OCStackResult DoAction(OCResource* resource, OCActionSet* actionset,
@@ -1022,6 +1021,10 @@ void DoScheduledGroupAction()
 #endif
                 AddScheduledResource(&scheduleResourceList, schedule);
             }
+            else
+            {
+                OICFree(schedule);
+            }
         }
     }
 
@@ -1046,9 +1049,6 @@ OCStackResult BuildCollectionGroupActionJSONResponse(
 
         size_t bufferLength = 0;
         unsigned char buffer[MAX_RESPONSE_LENGTH] = { 0 };
-        unsigned char *bufferPtr = NULL;
-
-        bufferPtr = buffer;
 
         OCResource * collResource = (OCResource *) ehRequest->resource;
 
@@ -1120,7 +1120,7 @@ OCStackResult BuildCollectionGroupActionJSONResponse(
             jsonResponse = cJSON_Print(json);
             cJSON_Delete(json);
 
-            strcat((char *) bufferPtr, jsonResponse);
+            OICStrcat((char*)buffer, sizeof(buffer), jsonResponse);
 
             bufferLength = strlen((const char *) buffer);
             if (bufferLength > 0)
@@ -1288,7 +1288,7 @@ OCStackResult BuildCollectionGroupActionJSONResponse(
             jsonResponse = cJSON_Print(json);
             cJSON_Delete(json);
 
-            strcat((char *) bufferPtr, jsonResponse);
+            OICStrcat((char*)buffer, sizeof(buffer), jsonResponse);
 
             bufferLength = strlen((const char *) buffer);
             if (bufferLength > 0)

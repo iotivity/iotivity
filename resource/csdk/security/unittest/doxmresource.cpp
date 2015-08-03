@@ -23,6 +23,7 @@
 #include "srmresourcestrings.h"
 #include "doxmresource.h"
 #include "ocserverrequest.h"
+#include "oic_string.h"
 #include "oic_malloc.h"
 
 #ifdef __cplusplus
@@ -46,12 +47,36 @@ OCEntityHandlerResult HandleDoxmGetRequest (const OCEntityHandlerRequest * ehReq
 OicSecDoxm_t * getBinDoxm()
 {
     OicSecDoxm_t * doxm = (OicSecDoxm_t*)OICCalloc(1, sizeof(OicSecDoxm_t));
+    if(!doxm)
+    {
+        return NULL;
+    }
     doxm->oxmTypeLen =  1;
     doxm->oxmType    = (OicUrn_t *)OICCalloc(doxm->oxmTypeLen, sizeof(char *));
+    if(!doxm->oxmType)
+    {
+        OICFree(doxm);
+        return NULL;
+    }
     doxm->oxmType[0] = (char*)OICMalloc(strlen(OXM_JUST_WORKS) + 1);
+    if(!doxm->oxmType[0])
+    {
+        OICFree(doxm->oxmType);
+        OICFree(doxm);
+        return NULL;
+    }
+
     strcpy(doxm->oxmType[0], OXM_JUST_WORKS);
     doxm->oxmLen     = 1;
-    doxm->oxm        = (OicSecOxm_t *)OICCalloc(doxm->oxmLen, sizeof(short));
+    doxm->oxm        = (OicSecOxm_t *)OICCalloc(doxm->oxmLen, sizeof(OicSecOxm_t));
+    if(!doxm->oxm)
+    {
+        OICFree(doxm->oxmType[0]);
+        OICFree(doxm->oxmType);
+        OICFree(doxm);
+        return NULL;
+    }
+
     doxm->oxm[0]     = OIC_JUST_WORKS;
     doxm->oxmSel     = OIC_JUST_WORKS;
     doxm->owned      = true;
@@ -104,8 +129,7 @@ TEST(DoxmEntityHandlerTest, DoxmEntityHandlerValidRequest)
     char query[] = "oxm=0&owned=false&owner=owner1";
     OCEntityHandlerRequest req = {};
     req.method = OC_REST_GET;
-    req.query = (char*)OICMalloc(strlen(query) + 1);
-    strcpy((char *)req.query, query);
+    req.query = OICStrdup(query);
     EXPECT_EQ(OC_EH_ERROR, DoxmEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, &req));
 
     OICFree(req.query);
@@ -123,7 +147,6 @@ TEST(BinToDoxmJSONTest, BinToDoxmJSONValidDoxm)
     OicSecDoxm_t * doxm =  getBinDoxm();
 
     char * json = BinToDoxmJSON(doxm);
-    printf("BinToDoxmJSON:%s\n", json);
     EXPECT_TRUE(json != NULL);
 
     DeleteDoxmBinData(doxm);
@@ -141,6 +164,7 @@ TEST(JSONToDoxmBinTest, JSONToDoxmBinValidJSON)
     EXPECT_TRUE(doxm2 != NULL);
 
     DeleteDoxmBinData(doxm1);
+    DeleteDoxmBinData(doxm2);
     OICFree(json);
 }
 

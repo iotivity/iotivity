@@ -429,7 +429,7 @@ int main(int argc, char* argv[]) {
             return -1;
         }
     }
-    catch(std::exception& e)
+    catch(std::exception&)
     {
         std::cout << "Invalid input argument." << std::endl;
         PrintUsage();

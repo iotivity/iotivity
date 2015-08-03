@@ -28,6 +28,7 @@
 #ifndef OCTYPES_H_
 #define OCTYPES_H_
 
+#include "platform_features.h"
 #include "ocstackconfig.h"
 #include <stdbool.h>
 #include <stdint.h>
@@ -402,21 +403,6 @@ typedef enum
     /** use when defaults are ok. */
     CT_DEFAULT = 0,
 
-    /** 16-bit int. */
-    #if defined (__UINT32_MAX__) && (__UINT32_MAX__ == 65535)
-
-    /** IPv4 and IPv6, including 6LoWPAN.*/
-    CT_ADAPTER_IP           = (1 << 10),
-
-    /** GATT over Bluetooth LE.*/
-    CT_ADAPTER_GATT_BTLE    = (1 << 11),
-
-    /** RFCOMM over Bluetooth EDR.*/
-    CT_ADAPTER_RFCOMM_BTEDR = (1 << 12),
-
-    /** assume 32-bit int. */
-    #else
-
     /** IPv4 and IPv6, including 6LoWPAN.*/
     CT_ADAPTER_IP           = (1 << 16),
 
@@ -429,17 +415,6 @@ typedef enum
     #ifdef RA_ADAPTER
     /** Remote Access over XMPP.*/
     CT_ADAPTER_REMOTE_ACCESS = (1 << 19),
-    #endif
-
-    /** bit shift required for connectivity adapter.*/
-    #define CT_ADAPTER_SHIFT 10
-
-    /** Mask Flag.*/
-    #define CT_MASK_FLAGS 0x03FF
-
-    /** Mask Adapter.*/
-    #define CT_MASK_ADAPTER 0xFC00
-
     #endif
 
     /** Insecure transport is the default (subject to change).*/
@@ -479,6 +454,15 @@ typedef enum
     /** IPv6 Global scope.*/
     CT_SCOPE_GLOBAL    = 0xE,
 } OCConnectivityType;
+
+/** bit shift required for connectivity adapter.*/
+#define CT_ADAPTER_SHIFT 16
+
+/** Mask Flag.*/
+#define CT_MASK_FLAGS 0xFFFF
+
+/** Mask Adapter.*/
+#define CT_MASK_ADAPTER 0xFFFF0000
 
 /**
  *  OCDoResource methods to dispatch the request
@@ -554,11 +538,6 @@ typedef enum
  * The LSB represents OC_DISCOVERABLE and Second LSB bit represents OC_OBSERVABLE and so on.
  * Not including the policy property is equivalent to zero.
  *
- * ::OC_RES_PROP_NONE When none of the bits are set, the resource is non-discoverable &
- *                    non-observable by the client.
- * ::OC_DISCOVERABLE  When this bit is set, the resource is allowed to be discovered by clients.
- * ::OC_OBSERVABLE    When this bit is set, the resource is allowed to be observed by clients.
-
  */
 typedef enum
 {
@@ -583,7 +562,12 @@ typedef enum
     OC_SLOW          = (1 << 3),
 
     /** When this bit is set, the resource is a secure resource.*/
-    OC_SECURE        = (1 << 4)
+    OC_SECURE        = (1 << 4),
+
+    /** When this bit is set, the resource is allowed to be discovered only
+     *  if discovery request contains an explicit querystring.
+     *  Ex: GET /oic/res?rt=oic.sec.acl */
+    OC_EXPLICIT_DISCOVERABLE   = (1 << 5)
 } OCResourceProperty;
 
 /**
@@ -768,7 +752,7 @@ typedef struct OCHeaderOption
     /** pointer to its data.*/
     uint8_t optionData[MAX_HEADER_OPTION_DATA_LENGTH];
 
-#ifdef __cplusplus
+#ifdef SUPPORTS_DEFAULT_CTOR
     OCHeaderOption() = default;
     OCHeaderOption(OCTransportProtocolID pid,
                    uint16_t optId,
@@ -1148,7 +1132,7 @@ typedef struct OCCallbackData
     /** A pointer to a function to delete the context when this callback is removed.*/
     OCClientContextDeleter cd;
 
-#ifdef __cplusplus
+#ifdef SUPPORTS_DEFAULT_CTOR
     OCCallbackData() = default;
     OCCallbackData(void* ctx, OCClientResponseHandler callback, OCClientContextDeleter deleter)
         :context(ctx), cb(callback), cd(deleter){}

@@ -21,8 +21,8 @@
 #ifndef RH_HOSTINGOBJECT_H_
 #define RH_HOSTINGOBJECT_H_
 
-#include "ResourceClient.h"
-#include "ResourceObject.h"
+#include "RCSRemoteResourceObject.h"
+#include "RCSResourceObject.h"
 #include "RequestObject.h"
 #include "ResourceBroker.h"
 #include "ResourceCacheManager.h"
@@ -33,20 +33,22 @@ namespace OIC
 namespace Service
 {
 
+void OIC_HOSTING_LOG(LogLevel level, const char * format, ...);
+
 class HostingObject
 {
 private:
-    typedef std::shared_ptr<ResourceObject> ResourceObjectPtr;
-    typedef std::shared_ptr<RemoteResourceObject> RemoteObjectPtr;
+    typedef std::shared_ptr<RCSResourceObject> ResourceObjectPtr;
+    typedef std::shared_ptr<RCSRemoteResourceObject> RemoteObjectPtr;
     typedef std::shared_ptr<RequestObject> RequestObjectPtr;
     typedef std::shared_ptr<PrimitiveResource> PrimiteveResourcePtr;
 
     typedef std::function<void(ResourceState)> BrokerCallback;
-    typedef std::function<void(const ResourceAttributes &)> CacheCallback;
+    typedef std::function<void(const RCSResourceAttributes &)> CacheCallback;
     typedef std::function<void()> DestroyedCallback;
 
     typedef std::function<
-            RCSSetResponse(const RCSRequest&, ResourceAttributes&)> SetRequestHandler;
+            RCSSetResponse(const RCSRequest&, RCSResourceAttributes&)> SetRequestHandler;
 
 public:
     HostingObject();
@@ -71,10 +73,10 @@ private:
     ResourceObjectPtr createMirroredServer(RemoteObjectPtr rObject);
 
     void stateChangedCB(ResourceState state, RemoteObjectPtr rObject);
-    void dataChangedCB(const ResourceAttributes & attributes, RemoteObjectPtr rObject);
+    void dataChangedCB(const RCSResourceAttributes & attributes, RemoteObjectPtr rObject);
 
     RCSSetResponse setRequestHandler(
-            const RCSRequest & request, ResourceAttributes & attributes);
+            const RCSRequest & request, RCSResourceAttributes & attributes);
 
     void destroyHostingObject();
 

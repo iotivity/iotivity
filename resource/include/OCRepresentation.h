@@ -118,6 +118,8 @@ namespace OC
 
             void setChildren(const std::vector<OCRepresentation>& children);
 
+            void setUri(const char* uri);
+
             void setUri(const std::string& uri);
 
             std::string getUri() const;
@@ -252,7 +254,7 @@ namespace OC
                         return *this;
                     }
 
-                    AttributeItem& operator=(std::nullptr_t rhs)
+                    AttributeItem& operator=(std::nullptr_t /*rhs*/)
                     {
                         NullType t;
                         m_values[m_attrName] = t;

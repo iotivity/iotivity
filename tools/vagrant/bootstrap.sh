@@ -1,5 +1,5 @@
 apt-get update
-apt-get install -y git build-essential ia32-libs scons make g++ unzip 
+apt-get install -y git build-essential ia32-libs scons make g++ unzip
 apt-get install -y libboost-dev libboost-program-options-dev libcurl4-nss-dev
 
 # for Android development

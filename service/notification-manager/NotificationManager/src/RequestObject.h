@@ -21,8 +21,8 @@
 #ifndef RH_REQUESTOBJECT_H_
 #define RH_REQUESTOBJECT_H_
 
-#include "ResourceClient.h"
-#include "ResourceObject.h"
+#include "RCSRemoteResourceObject.h"
+#include "RCSResourceObject.h"
 
 namespace OIC
 {
@@ -32,7 +32,7 @@ namespace Service
 class RequestObject
 {
 public:
-    typedef std::shared_ptr<RemoteResourceObject> RemoteObjectPtr;
+    typedef std::shared_ptr<RCSRemoteResourceObject> RemoteObjectPtr;
 
     enum class RequestMethod
     {
@@ -45,11 +45,11 @@ public:
     ~RequestObject() = default;
 
     void invokeRequest(RemoteObjectPtr remoteObject, RequestMethod method,
-            const RCSRequest & pRequest, ResourceAttributes & resourceAttibutes);
+            RCSResourceAttributes & resourceAttibutes);
 
 private:
-    void setRequestCB(const ResourceAttributes & returnedAttributes,
-            ResourceAttributes & putAttibutes);
+    void setRequestCB(const RCSResourceAttributes & returnedAttributes,
+            RCSResourceAttributes & putAttibutes);
 };
 
 } /* namespace Service */

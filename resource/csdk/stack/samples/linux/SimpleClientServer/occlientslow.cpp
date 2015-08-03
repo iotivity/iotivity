@@ -28,6 +28,7 @@
 #include "ocstack.h"
 #include "logger.h"
 #include "occlientslow.h"
+#include "oic_string.h"
 #include "ocpayload.h"
 
 // Tracking user input
@@ -236,7 +237,7 @@ int InitDiscovery()
     }
     else
     {
-        strcpy(szQueryUri, MULTICAST_RESOURCE_DISCOVERY_QUERY);
+        OICStrcpy(szQueryUri, sizeof(szQueryUri), MULTICAST_RESOURCE_DISCOVERY_QUERY);
     }
     cbData.cb = discoveryReqCB;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;

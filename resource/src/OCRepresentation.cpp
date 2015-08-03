@@ -171,7 +171,7 @@ namespace OC
     struct get_payload_array: boost::static_visitor<>
     {
         template<typename T>
-        void operator()(T& arr)
+        void operator()(T& /*arr*/)
         {
             throw std::logic_error("Invalid calc_dimensions_visitor type");
         }
@@ -619,6 +619,10 @@ namespace OC
     {
         m_children = children;
     }
+    void OCRepresentation::setUri(const char* uri)
+    {
+        m_uri = uri ? uri : "";
+    }
 
     void OCRepresentation::setUri(const std::string& uri)
     {
@@ -825,7 +829,7 @@ namespace OC
             type(AttributeType::Null), base_type(AttributeType::Null), depth(0){}
 
         template <typename T>
-        void operator()(T const& item)
+        void operator()(T const& /*item*/)
         {
             type = type_info<T>::enum_type;
             base_type = type_info<T>::enum_base_type;
@@ -1019,13 +1023,13 @@ namespace OC
     }
 
     template<>
-    void to_string_visitor::operator()(NullType const& item)
+    void to_string_visitor::operator()(NullType const& /*item*/)
     {
         str = "(null)";
     }
 
     template<>
-    void to_string_visitor::operator()(OCRepresentation const& item)
+    void to_string_visitor::operator()(OCRepresentation const& /*item*/)
     {
         str = "OC::OCRepresentation";
     }

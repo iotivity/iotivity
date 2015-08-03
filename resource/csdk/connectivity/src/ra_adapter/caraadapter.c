@@ -1,4 +1,4 @@
-/******************************************************************
+//*****************************************************************
 //
 // Copyright 2015 Intel Mobile Communications GmbH All Rights Reserved.
 //
@@ -16,7 +16,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-******************************************************************/
+//****************************************************************
 
 #include "caraadapter.h"
 
@@ -36,26 +36,22 @@
 #include "cacommon.h"
 
 /**
- * @def RA_ADAPTER_TAG
- * @brief Logging tag for module name
+ * Logging tag for module name.
  */
 #define RA_ADAPTER_TAG "RA_ADAP"
 
 /**
- * @var g_networkPacketCallback
- * @brief Network Packet Received Callback to CA
+ * Network Packet Received Callback to CA.
  */
 static CANetworkPacketReceivedCallback g_networkPacketCallback = NULL;
 
 /**
- * @var g_networkChangeCallback
- * @brief Network Changed Callback to CA
+ * Network Changed Callback to CA.
  */
 static CANetworkChangeCallback g_networkChangeCallback = NULL;
 
 /**
- * @var CARAXmppData
- * @brief Holds XMPP data information.
+ * Holds XMPP data information.
  */
 typedef struct
 {

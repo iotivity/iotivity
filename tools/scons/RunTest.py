@@ -48,6 +48,11 @@ def run_test(env, xml_file, test):
         # Valgrind run.
         valgrind_environment = ''
 
+        # GLib uses a custom memory allocation scheme that can
+        # sometimes confuse Valgrind.  Configure GLib to be Valgrind
+        # friendly.
+        valgrind_environment += 'G_DEBUG=gc-friendly G_SLICE=always-malloc'
+
         # Valgrind suppressions file.
         suppression_file = env.File('#tools/valgrind/iotivity.supp').srcnode().path
 

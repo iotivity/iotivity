@@ -25,6 +25,7 @@
 #include "resourcemanager.h"
 #include "credresource.h"
 #include "policyengine.h"
+#include "oic_string.h"
 #include <string.h>
 
 #define TAG  PCF("SRM")
@@ -90,8 +91,7 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
     if (position > 0)
     {
         char newUri[MAX_URI_LENGTH + 1];
-        strncpy(newUri, requestInfo->info.resourceUri, (position));
-        newUri[position] = '\0';
+        OICStrcpyPartial(newUri, MAX_URI_LENGTH + 1, requestInfo->info.resourceUri, position);
         //Skip query and pass the newUri.
         response = CheckPermission(&g_policyEngineContext, &subjectId,
                               newUri,

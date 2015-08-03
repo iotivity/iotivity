@@ -52,7 +52,7 @@ static ca_thread_pool_t g_threadPoolHandle = NULL;
 static bool g_isStartServer = false;
 static bool g_isInitializedServer = false;
 
-static CABLEServerDataReceivedCallback g_CABLEServerDataReceivedCallback = NULL;
+static CABLEDataReceivedCallback g_CABLEServerDataReceivedCallback = NULL;
 static ca_mutex g_bleReqRespCbMutex = NULL;
 static ca_mutex g_bleClientBDAddressMutex = NULL;
 static ca_mutex g_connectedDeviceListMutex = NULL;
@@ -879,7 +879,7 @@ jobject CALEServerCreateGattService(JNIEnv *env)
 
     jfieldID jni_fid_readProperties = (*env)->GetStaticFieldID(env,
                                                                jni_cid_bluetoothGattCharacteristic,
-                                                               "PROPERTY_READ", "I");
+                                                               "PROPERTY_NOTIFY", "I");
     if (!jni_fid_readProperties)
     {
         OIC_LOG(ERROR, TAG, "jni_fid_readProperties is null");
@@ -978,20 +978,18 @@ jobject CALEServerCreateGattService(JNIEnv *env)
                                                              jni_cid_bluetoothGattCharacteristic,
                                                              jni_fid_readPermissions);
 
+    jint jni_int_writePermissions = (*env)->GetStaticIntField(env,
+                                                              jni_cid_bluetoothGattCharacteristic,
+                                                              jni_fid_writePermissions);
+
     jobject jni_readCharacteristic = (*env)->NewObject(env, jni_cid_bluetoothGattCharacteristic,
                                                        jni_mid_bluetoothGattCharacteristic,
                                                        jni_obj_readUuid, jni_int_readProperties,
-                                                       jni_int_readPermissions);
+                                                       jni_int_readPermissions|
+                                                       jni_int_writePermissions);
     if (!jni_readCharacteristic)
     {
         OIC_LOG(ERROR, TAG, "jni_readCharacteristic is null");
-        return NULL;
-    }
-
-    CAResult_t res = CALEServerAddDescriptor(env, jni_readCharacteristic);
-    if (CA_STATUS_OK != res)
-    {
-        OIC_LOG(ERROR, TAG, "CALEServerAddDescriptor has failed");
         return NULL;
     }
 
@@ -1013,10 +1011,6 @@ jobject CALEServerCreateGattService(JNIEnv *env)
     jint jni_int_writeProperties = (*env)->GetStaticIntField(env,
                                                              jni_cid_bluetoothGattCharacteristic,
                                                              jni_fid_writeProperties);
-
-    jint jni_int_writePermissions = (*env)->GetStaticIntField(env,
-                                                              jni_cid_bluetoothGattCharacteristic,
-                                                              jni_fid_writePermissions);
 
     jobject jni_writeCharacteristic = (*env)->NewObject(env, jni_cid_bluetoothGattCharacteristic,
                                                         jni_mid_bluetoothGattCharacteristic,
@@ -2264,7 +2258,7 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerCharacteristicWriteReques
 
     ca_mutex_lock(g_bleClientBDAddressMutex);
     uint32_t sentLength = 0;
-    g_CABLEServerDataReceivedCallback(address, OIC_GATT_SERVICE_UUID, requestData, length,
+    g_CABLEServerDataReceivedCallback(address, requestData, length,
                                       &sentLength);
     ca_mutex_unlock(g_bleClientBDAddressMutex);
 
@@ -2374,7 +2368,7 @@ void CATerminateLEGattServer()
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
-void CASetLEReqRespServerCallback(CABLEServerDataReceivedCallback callback)
+void CASetLEReqRespServerCallback(CABLEDataReceivedCallback callback)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -2390,8 +2384,9 @@ void CASetBLEServerErrorHandleCallback(CABLEErrorHandleCallback callback)
     g_serverErrorCallback = callback;
 }
 
-CAResult_t CAUpdateCharacteristicsToGattClient(const char* address, const char *charValue,
-                                               const uint32_t charValueLen)
+CAResult_t CAUpdateCharacteristicsToGattClient(const char *address,
+                                               const char *charValue,
+                                               uint32_t charValueLen)
 {
     CAResult_t result = CA_SEND_FAILED;
     OIC_LOG(DEBUG, TAG, "IN");

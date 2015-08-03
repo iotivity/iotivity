@@ -74,7 +74,10 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
         for (int i = length-1; i >= 0; i--)
         {
             CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
-            if (ifitem->index == ifindex && ifitem->family == family)
+
+            if (ifitem
+                && (int)ifitem->index == ifindex
+                && ifitem->family == (uint16_t)family)
             {
                 already = true;
                 break;

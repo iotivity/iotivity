@@ -65,7 +65,7 @@
 
 static const char COAP_URI_HEADER[] = "coap://[::]/";
 
-static uint32_t SEED = 0;
+static unsigned int SEED = 0;
 
 CAResult_t CAGetRequestInfoFromPDU(const coap_pdu_t *pdu, CARequestInfo_t *outReqInfo)
 {
@@ -301,6 +301,9 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, coap_list_t *options, const CAInfo_t 
     {
         coap_add_data(pdu, payloadSize, (const unsigned char *) payload);
     }
+#else
+    (void)payload;
+    (void)payloadSize;
 #endif
 
     OIC_LOG(DEBUG, TAG, "OUT");
@@ -431,6 +434,7 @@ CAResult_t CAParseUriPartial(const unsigned char *str, size_t length, int target
 
 CAResult_t CAParseHeadOption(uint32_t code, const CAInfo_t *info, coap_list_t **optlist)
 {
+    (void)code;
     OIC_LOG(DEBUG, TAG, "IN");
     VERIFY_NON_NULL_RET(info, TAG, "info is NULL", CA_STATUS_INVALID_PARAM);
 
@@ -750,8 +754,7 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *
         OICFree(outInfo->token);
         return CA_MEMORY_ALLOC_FAILED;
     }
-    memcpy(outInfo->resourceUri, optionResult, length);
-    outInfo->resourceUri[length] = '\0';
+    OICStrcpy(outInfo->resourceUri, length + 1, optionResult);
     OIC_LOG_V(DEBUG, TAG, "made URL : %s, %s", optionResult, outInfo->resourceUri);
 
     OIC_LOG(DEBUG, TAG, "OUT");
@@ -821,7 +824,7 @@ CAResult_t CAGenerateTokenInternal(CAToken_t *token, uint8_t tokenLength)
 #else
         SEED = time(NULL);
 #endif
-        if (SEED == -1)
+        if (SEED == (unsigned int)((time_t)-1))
         {
             OIC_LOG(ERROR, TAG, "seed is not made");
             SEED = 0;

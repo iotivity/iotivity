@@ -23,6 +23,7 @@ ppm_jni_env.PrependUnique(LIBS = ['pmimpl', 'ppm', 'expat', 'cpluff', 'gnustl_sh
 ppm_jni_env.AppendUnique(CPPPATH = [ppm_sdk+'/src'])
 ppm_jni_env.AppendUnique(CPPPATH = [ppm_sdk+'/../lib/cpluff/libcpluff'])
 ppm_jni_env.AppendUnique(CPPPATH = [env.get('SRC_DIR')+'/extlibs/rapidxml'])
+ppm_jni_env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
 
 ######################################################################
 # Source files and Targets

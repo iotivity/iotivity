@@ -24,12 +24,24 @@ namespace OIC
 {
 namespace Service
 {
-#define HOSTING_LOG_TAG  PCF("Hosting")
-#define OIC_HOSTING_LOG(level, tag, ...)  OCLogv((level), (HOSTING_LOG_TAG), __VA_ARGS__)
+
+void OIC_HOSTING_LOG(LogLevel level, const char * format, ...)
+{
+    if (!format)
+    {
+        return;
+    }
+    char buffer[MAX_LOG_V_BUFFER_SIZE] = {};
+    va_list args;
+    va_start(args, format);
+    vsnprintf(buffer, sizeof buffer - 1, format, args);
+    va_end(args);
+    OCLog(level, PCF("Hosting"), buffer);
+}
 
 HostingObject::HostingObject()
 : remoteObject(nullptr), mirroredServer(nullptr),
-  remoteState(ResourceState::NOT_MONITORING),
+  remoteState(ResourceState::NONE),
   pStateChangedCB(nullptr), pDataUpdateCB(nullptr),
   pDestroyCB(nullptr), pSetRequestHandler(nullptr)
 {
@@ -110,7 +122,7 @@ void HostingObject::stateChangedCB(ResourceState state, RemoteObjectPtr rObject)
         {
             try
             {
-//                rObject->stopMonitoring();
+                rObject->stopMonitoring();
             }catch(InvalidParameterException &e)
             {
                 OIC_HOSTING_LOG(DEBUG,
@@ -128,7 +140,7 @@ void HostingObject::stateChangedCB(ResourceState state, RemoteObjectPtr rObject)
     }
 }
 
-void HostingObject::dataChangedCB(const ResourceAttributes & attributes, RemoteObjectPtr rObject)
+void HostingObject::dataChangedCB(const RCSResourceAttributes & attributes, RemoteObjectPtr rObject)
 {
     if(attributes.empty())
     {
@@ -150,15 +162,15 @@ void HostingObject::dataChangedCB(const ResourceAttributes & attributes, RemoteO
         }
     }
 
-    ResourceAttributes rData;
+    RCSResourceAttributes rData;
     {
-        ResourceObject::LockGuard guard(mirroredServer);
+        RCSResourceObject::LockGuard guard(mirroredServer);
         rData = mirroredServer->getAttributes();
     }
     if(rData.empty() || rData != attributes)
     {
         {
-            ResourceObject::LockGuard guard(mirroredServer);
+            RCSResourceObject::LockGuard guard(mirroredServer);
             for(auto it = rData.begin(); ; ++it)
             {
                 if(it == rData.end())
@@ -193,11 +205,11 @@ HostingObject::ResourceObjectPtr HostingObject::createMirroredServer(RemoteObjec
         {
             std::string type = types.begin()->c_str();
             std::string interface = interfaces.begin()->c_str();
-            retResource = ResourceObject::Builder(uri, type, interface).
+            retResource = RCSResourceObject::Builder(uri, type, interface).
                     setDiscoverable(true).setObservable(true).build();
 
             // TODO need to bind types and interfaces
-            retResource->setAutoNotifyPolicy(ResourceObject::AutoNotifyPolicy::UPDATED);
+            retResource->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy::UPDATED);
             retResource->setSetRequestHandler(pSetRequestHandler);
         }catch(...)
         {
@@ -214,13 +226,13 @@ HostingObject::ResourceObjectPtr HostingObject::createMirroredServer(RemoteObjec
 }
 
 RCSSetResponse HostingObject::setRequestHandler(const RCSRequest & primitiveRequest,
-            ResourceAttributes & resourceAttibutes)
+            RCSResourceAttributes & resourceAttibutes)
 {
     try
     {
         RequestObject newRequest = { };
         newRequest.invokeRequest(remoteObject, RequestObject::RequestMethod::Setter,
-                primitiveRequest, resourceAttibutes);
+                resourceAttibutes);
     }catch(PlatformException &e)
     {
         OIC_HOSTING_LOG(DEBUG,

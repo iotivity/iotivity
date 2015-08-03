@@ -163,6 +163,7 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
                                 FindAndDeleteServerRequest(request);
                             }
                         }
+                        OCPayloadDestroy(ehRequest.payload);
                     }
                 }
             #ifdef WITH_PRESENCE

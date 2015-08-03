@@ -221,7 +221,7 @@ void foundResource(std::shared_ptr<OCResource> resource)
     }
     catch(std::exception& e)
     {
-        //log(e.what());
+        std::cerr << "Exception caught in Found Resource: "<< e.what() <<std::endl;
     }
 }
 
@@ -254,7 +254,7 @@ int main(int argc, char* argv[]) {
                 std::cout << "Invalid connectivity type selected. Using default IP" << std::endl;
             }
         }
-        catch(std::exception& e)
+        catch(std::exception&)
         {
             std::cout << "Invalid input argument. Using IP as connectivity type" << std::endl;
         }

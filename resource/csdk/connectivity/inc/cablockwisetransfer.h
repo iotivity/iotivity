@@ -67,10 +67,16 @@ typedef struct
 
 typedef struct
 {
-    coap_block_t block;                 /**< block option */
+    uint8_t* id;                       /**< blockData ID for CA */
+    size_t idLength;                   /**< length of blockData ID */
+} CABlockDataID_t;
+
+typedef struct
+{
+    coap_block_t block1;                /**< block1 option */
+    coap_block_t block2;                /**< block2 option */
     uint16_t type;                      /**< block option type */
-    CAToken_t token;                    /**< token for CA */
-    uint8_t tokenLength;                /**< token length*/
+    CABlockDataID_t* blockDataId;        /**< ID set of CABlockData */
     CAData_t *sentData;                 /**< sent request or response data information */
     CAPayload_t payload;                /**< payload buffer  */
     size_t payloadLength;               /**< the total payload length to be received  */
@@ -140,10 +146,10 @@ CAResult_t CASendBlockWiseData(const CAData_t *data);
 /**
  * Add the data to send thread queue
  * @param[in]   sendData    data for sending
- * @param[in]   token   token of current message
+ * @param[in]   blockID     ID set of CABlockData
  * @return CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAAddSendThreadQueue(const CAData_t *sendData, const unsigned char* token);
+CAResult_t CAAddSendThreadQueue(const CAData_t *sendData, const CABlockDataID_t *blockID);
 
 /**
  * Check the block option type. If it has to be sent to a block,
@@ -155,51 +161,57 @@ CAResult_t CACheckBlockOptionType(CABlockData_t *currData);
 
 /**
  * Pass the received pdu data. and check if block option is set.
- * @param[in]   pdu received pdu binary data
+ * @param[in]   pdu    received pdu binary data
  * @param[in]   endpoint    information of remote device
  * @param[in]   receivedData    received CAData
  * @param[in]   dataLen    received data length
  * @return CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAReceiveBlockWiseData(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
+CAResult_t CAReceiveBlockWiseData(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                                   const CAData_t *receivedData, size_t dataLen);
 
 /**
  * process next step by block-wise state
- * @param[in]   pdu received pdu binary data
+ * @param[in]   pdu    received pdu binary data
  * @param[in]   receivedData    received CAData
  * @param[in]   blockWiseStatus    block-wise state to move next step
+ * @param[in]   blockID     ID set of CABlockData
  * @return CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
 CAResult_t CAProcessNextStep(const coap_pdu_t *pdu, const CAData_t *receivedData,
-                             uint8_t blockWiseStatus);
+                             uint8_t blockWiseStatus, const CABlockDataID_t *blockID);
 
 /**
  * send block message to remote device
- * @param[in]   pdu received pdu binary data
- * @param[in]   msgType the message type of the block
- * @param[in]   status  block-wise state to move next step
+ * @param[in]   pdu    received pdu binary data
+ * @param[in]   msgType    the message type of the block
+ * @param[in]   status    block-wise state to move next step
+ * @param[in]   blockID     ID set of CABlockData
  * @return CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
-CAResult_t CASendBlockMessage(const coap_pdu_t *pdu, CAMessageType_t msgType, uint8_t status);
+CAResult_t CASendBlockMessage(const coap_pdu_t *pdu, CAMessageType_t msgType,
+                              uint8_t status, const CABlockDataID_t *blockID);
 
 /**
  * send error message to remote device
- * @param[in]   pdu received pdu binary data
- * @param[in]   status  block-wise state to move next step
- * @param[in]   responseResult  response result code
+ * @param[in]   pdu    received pdu binary data
+ * @param[in]   status    block-wise state to move next step
+ * @param[in]   responseResult   response result code
+ * @param[in]   blockID     ID set of CABlockData
  * @return CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
 CAResult_t CASendErrorMessage(const coap_pdu_t *pdu, uint8_t status,
-                              CAResponseResult_t responseResult);
+                              CAResponseResult_t responseResult,
+                              const CABlockDataID_t *blockID);
 
 /**
  * receive last block data
- * @param[in]   pdu received pdu binary data
+ * @param[in]   blockID     ID set of CABlockData
  * @param[in]   receivedData    received CAData
  * @return CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAReceiveLastBlock(const coap_pdu_t *pdu, const CAData_t *receivedData);
+CAResult_t CAReceiveLastBlock(const CABlockDataID_t *blockID,
+                              const CAData_t *receivedData);
 
 /**
  * set next block option 1
@@ -210,7 +222,7 @@ CAResult_t CAReceiveLastBlock(const coap_pdu_t *pdu, const CAData_t *receivedDat
  * @param[in]   dataLen received data length
  * @return CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
-CAResult_t CASetNextBlockOption1(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
+CAResult_t CASetNextBlockOption1(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                                  const CAData_t *receivedData, coap_block_t block,
                                  size_t dataLen);
 
@@ -223,7 +235,7 @@ CAResult_t CASetNextBlockOption1(const coap_pdu_t *pdu, const CAEndpoint_t *endp
  * @param[in]   dataLen received data length
  * @return CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
-CAResult_t CASetNextBlockOption2(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
+CAResult_t CASetNextBlockOption2(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                                  const CAData_t *receivedData, coap_block_t block,
                                  size_t dataLen);
 
@@ -242,17 +254,19 @@ CAResult_t CANegotiateBlockSize(CABlockData_t *currData, coap_block_t *block,
  * Update the block option in block-wise transfer list
  * @param[in]   currData    stored block data information
  * @param[in]   block   block option of current message
+ * @param[in]   blockType   block option type
  * @return CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAUpdateBlockData(CABlockData_t *currData, coap_block_t block);
+CAResult_t CAUpdateBlockData(CABlockData_t *currData, coap_block_t block,
+                             uint16_t blockType);
 
 /**
  * Update the messageId in block-wise transfer list
- * @param[in]   currData    stored block data information
- * @param[in]   block block option of current message
+ * @param[in]   pdu   received pdu binary data
+ * @param[in]   blockID     ID set of CABlockData
  * @return CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAUpdateMessageId(coap_pdu_t *pdu);
+CAResult_t CAUpdateMessageId(coap_pdu_t *pdu, const CABlockDataID_t *blockID);
 
 /**
  * Update the block option items
@@ -278,32 +292,38 @@ CAResult_t CAGetMoreBitFromBlock(size_t payloadLen, coap_block_t *block);
  * check the block option what kind of option have to set.
  * @param[out]  pdu pdu object
  * @param[in]   info    information of the request/response
+ * @param[in]   endpoint    port of transport
  * @return CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAAddBlockOption(coap_pdu_t **pdu, CAInfo_t info);
+CAResult_t CAAddBlockOption(coap_pdu_t **pdu, const CAInfo_t info,
+                            const CAEndpoint_t *endpoint);
 
 /**
  * Write the block option2 in pdu binary data.
- * @param[out]  pdu pdu object
+ * @param[out]  pdu   pdu object
  * @param[in]   info    information of the request/response
  * @param[in]   dataLength  length of payload
+ * @param[in]   blockID     ID set of CABlockData
  * @return CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAAddBlockOption2(coap_pdu_t **pdu, CAInfo_t info, size_t dataLength);
+CAResult_t CAAddBlockOption2(coap_pdu_t **pdu, const CAInfo_t info, size_t dataLength,
+                             const CABlockDataID_t *blockID);
 
 /**
  * Write the block option1 in pdu binary data.
- * @param[out]  pdu pdu object
+ * @param[out]  pdu    pdu object
  * @param[in]   info    information of the request/response
  * @param[in]   dataLength length of payload
+ * @param[in]   blockID     ID set of CABlockData
  * @return CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAAddBlockOption1(coap_pdu_t **pdu, CAInfo_t info, size_t dataLength);
+CAResult_t CAAddBlockOption1(coap_pdu_t **pdu, const CAInfo_t info, size_t dataLength,
+                             const CABlockDataID_t *blockID);
 
 /**
  * Add the block option in pdu data
- * @param[in]   pdu pdu object
- * @param[out]  block block data
+ * @param[in]   pdu    pdu object
+ * @param[out]  block    block data
  * @param[in]   blockType   block option type
  * @return CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
@@ -311,7 +331,7 @@ CAResult_t CAAddBlockOptionImpl(coap_pdu_t *pdu, coap_block_t *block, uint8_t bl
 
 /**
  * Add the size option in pdu data
- * @param[in/out]   pdu pdu object
+ * @param[in/out]   pdu    pdu object
  * @param[in]   sizeType    size option type
  * @param[in]   dataLength the total payload length to be sent
  * @return CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
@@ -320,12 +340,12 @@ CAResult_t CAAddBlockSizeOption(coap_pdu_t *pdu, uint16_t sizeType, size_t dataL
 
 /**
  * Get the size option from pdu data
- * @param[in]   pdu pdu object
+ * @param[in]   pdu    pdu object
  * @param[in]   sizeType    size option type
  * @param[out]  totalPayloadLen the total payload length to be received
  * @return true or false
  */
-bool CAIsPayloadLengthInPduWithBlockSizeOption(const coap_pdu_t *pdu,
+bool CAIsPayloadLengthInPduWithBlockSizeOption(coap_pdu_t *pdu,
                                                uint16_t sizeType,
                                                size_t *totalPayloadLen);
 
@@ -335,14 +355,15 @@ bool CAIsPayloadLengthInPduWithBlockSizeOption(const coap_pdu_t *pdu,
  * @param[in]   receivedData    received CAData
  * @param[in]   status  block-wise state
  * @param[in]   isSizeOption    size option
+ * @param[in]   blockType    block option type
  * @return CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
 CAResult_t CAUpdatePayloadData(CABlockData_t *currData, const CAData_t *receivedData,
-                               uint8_t status, bool isSizeOption);
+                               uint8_t status, bool isSizeOption, uint16_t blockType);
 
 /**
  * Generate CAData structure  from the given information.
- * @param[in]   pdu pdu object
+ * @param[in]   pdu    pdu object
  * @param[in]   endpoint    information of remote device
  * @return generated CAData
  */
@@ -379,6 +400,29 @@ uint8_t CACheckBlockErrorType(CABlockData_t *currData, coap_block_t *receivedBlo
 void CADestroyDataSet(CAData_t* data);
 
 /**
+ * Create the blockId for CABlockData
+ * @param[in]   token   token of current message
+ * @param[in]   tokenLength   token length of current message
+ * @param[in]   portNumber   port
+ * @return ID set of CABlockData
+ */
+CABlockDataID_t* CACreateBlockDatablockId(const CAToken_t token, uint8_t tokenLength,
+                                          uint16_t portNumber);
+
+/**
+ * Destroy the blockId set
+ * @param[in]   blockID     ID set of CABlockData
+ */
+void CADestroyBlockID(CABlockDataID_t *blockID);
+
+/**
+ * check whether Block ID is matched or not
+ * @param[in]   currData    block data
+ * @param[in]   blockID     ID set of CABlockData
+ * @return true or false
+ */
+bool CABlockidMatches(const CABlockData_t *currData, const CABlockDataID_t *blockID);
+/**
  * Print the given block option information
  * @param[in]   block   block option information
  */
@@ -411,29 +455,30 @@ CAPayload_t CAGetPayloadInfo(const CAData_t *data, size_t *payloadLen);
 
 /**
  * Set the block option type
- * @param[in]   token   token of current message
+ * @param[in]   blockID     ID set of CABlockData
  * @param[in]   blockType   block option type
  * @return CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
-CAResult_t CAUpdateBlockOptionType(const unsigned char* token, uint8_t blockType);
+CAResult_t CAUpdateBlockOptionType(const CABlockDataID_t *blockID,
+                                   uint8_t blockType);
 
 /**
  * Get the block option type from block-wise transfer list
- * @param[in]   token   token of current message
+ * @param[in]   blockID     ID set of CABlockData
  * @return block option type
  */
-uint8_t CAGetBlockOptionType(const unsigned char* token);
+uint8_t CAGetBlockOptionType(const CABlockDataID_t *blockID);
 
 /**
  * Get the block data from block-wise transfer list
- * @param[in]   token   token of current message
+ * @param[in]   blockID     ID set of CABlockData
  * @return CAData structure
  */
-CAData_t *CAGetDataSetFromBlockDataList(const unsigned char* token);
+CAData_t *CAGetDataSetFromBlockDataList(const CABlockDataID_t *blockID);
 
 /**
  * Get token from block-wise transfer list
- * @param[in]   pdu received pdu binary data
+ * @param[in]   pdu    received pdu binary data
  * @param[in]   endpoint    remote endpoint information
  * @param[in]   responseInfo    received response information
  * @return CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
@@ -451,25 +496,28 @@ CAResult_t CACheckBlockDataValidation(const CAData_t *sendData, CABlockData_t **
 
 /**
  * Get the block data from block-wise transfer list
- * @param[in]   token   token of current message
+ * @param[in]   blockID     ID set of CABlockData
  * @return CABlockData_t structure
  */
-CABlockData_t *CAGetBlockDataFromBlockDataList(const unsigned char* token);
+CABlockData_t *CAGetBlockDataFromBlockDataList(const CABlockDataID_t *blockID);
 
 /**
  * Get the block option from block-wise transfer list
- * @param[in]   token   token of current message
+ * @param[in]   blockID     ID set of CABlockData
+ * @param[in]   blockType    block option type
  * @return coap_block_t structure
  */
-coap_block_t *CAGetBlockOption(const unsigned char* token);
+coap_block_t *CAGetBlockOption(const CABlockDataID_t *blockID,
+                               uint16_t blockType);
 
 /**
  * Get the full payload from block-wise list
- * @param[in]   token   token of current message
+ * @param[in]   blockID     ID set of CABlockData
  * @param[out]  fullPayloadLen  received full payload length
  * @return payload
  */
-CAPayload_t CAGetPayloadFromBlockDataList(const unsigned char* token, size_t *fullPayloadLen);
+CAPayload_t CAGetPayloadFromBlockDataList(const CABlockDataID_t *blockID,
+                                          size_t *fullPayloadLen);
 
 /**
  * Create the block data from given data and add the data in block-wise transfer list
@@ -481,17 +529,17 @@ CABlockData_t *CACreateNewBlockData(const CAData_t *sendData);
 
 /**
  * Remove the block data in block-wise transfer list
- * @param[in]   token   token of current message
+ * @param[in]   blockID     ID set of CABlockData
  * @return CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
  */
-CAResult_t CARemoveBlockDataFromList(const unsigned char* token);
+CAResult_t CARemoveBlockDataFromList(const CABlockDataID_t *blockID);
 
 /**
  * Check if data exist in block-wise transfer list.
- * @param[in]   pdu pdu object
+ * @param[in]   blockID     ID set of CABlockData
  * @return true or false
  */
-bool CAIsBlockDataInList(const coap_pdu_t *pdu);
+bool CAIsBlockDataInList(const CABlockDataID_t *blockID);
 
 
 #ifdef __cplusplus

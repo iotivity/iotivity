@@ -354,7 +354,7 @@ int InitDiscovery()
     }
     else
     {
-        strcpy(szQueryUri, MULTICAST_RESOURCE_DISCOVERY_QUERY);
+        OICStrcpy(szQueryUri, sizeof(szQueryUri), MULTICAST_RESOURCE_DISCOVERY_QUERY);
     }
     cbData.cb = discoveryReqCB;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
@@ -546,7 +546,7 @@ void printResourceList()
         OC_LOG_V(INFO, TAG, "port = %s", iter->port);
         switch (iter->connType & CT_MASK_ADAPTER)
         {
-            case CT_ADAPTER_IP:
+            case OC_ADAPTER_IP:
                 OC_LOG(INFO, TAG, "connType = Default (IPv4)");
                 break;
             case OC_ADAPTER_GATT_BTLE:

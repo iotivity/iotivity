@@ -18,7 +18,7 @@ if env.get('LOGGING'):
 
 env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '__linux__'])
 env.AppendUnique(CFLAGS = ['-std=gnu99'])
-env.AppendUnique(CCFLAGS = ['-Wall', '-fPIC'])
+env.AppendUnique(CCFLAGS = ['-Wall', '-Wextra', '-fPIC'])
 env.AppendUnique(LIBS = ['uuid'])
 env.AppendUnique(LINKFLAGS = ['-ldl', '-lpthread'])
 

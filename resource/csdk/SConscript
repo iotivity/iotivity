@@ -66,10 +66,11 @@ if target_os not in ['windows', 'winrt']:
 
 liboctbstack_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 
-if target_os in ['android', 'linux','tizen']:
-	liboctbstack_env.AppendUnique(LIBS = ['connectivity_abstraction'])
+if target_os in ['android', 'linux', 'tizen']:
+	liboctbstack_env.PrependUnique(LIBS = ['connectivity_abstraction'])
 	if with_ra:
 		liboctbstack_env.AppendUnique(LIBS = ['ra_xmpp'])
+
 liboctbstack_env.AppendUnique(LIBS = ['coap', 'm'])
 
 if target_os == 'tizen':
