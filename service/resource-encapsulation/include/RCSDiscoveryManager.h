@@ -69,7 +69,7 @@ namespace OIC
              * @param resourceURI The uri of resource to be searched
              * @param cb A callback to obtain discovered resource
              *
-             * @throws InvalidParameterException If any parameter is invalid.
+             * @throws InvalidParameterException If cb is empty.
              *
              * @note The callback will be invoked in an internal thread.
              *
