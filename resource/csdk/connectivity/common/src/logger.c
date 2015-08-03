@@ -122,6 +122,26 @@ void OICLogShutdown()
 #endif
 }
 
+#ifdef __TIZEN__
+int OCGetTizenLogLevel(LogLevel level)
+{
+    switch(level)
+    {
+        case DEBUG:
+            return DLOG_DEBUG;
+        case INFO:
+            return DLOG_INFO;
+        case WARNING:
+            return DLOG_WARN;
+        case ERROR:
+            return DLOG_ERROR;
+        case FATAL:
+            return DLOG_ERROR;
+    }
+    return DLOG_DEBUG;
+}
+#endif
+
 /**
  * Output a log string with the specified priority level.
  * Only defined for Linux and Android
@@ -456,4 +476,3 @@ void OICLogv(LogLevel level, const char *tag, const __FlashStringHelper *format,
 }
 
 #endif //ARDUINO
-

@@ -93,6 +93,7 @@ if env.get('LOGGING'):
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 liboctbstack_env.Append(LIBS = ['c_common'])
+liboctbstack_env.Append(LIBS = ['routingmanager'])
 
 ######################################################################
 # Source files and Targets

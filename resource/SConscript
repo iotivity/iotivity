@@ -42,6 +42,9 @@ SConscript('c_common/SConscript')
 # Build connectivity
 SConscript('csdk/connectivity/SConscript')
 
+# Build Routing
+SConscript('csdk/routing/SConscript')
+
 # Build libocsrm
 SConscript('csdk/security/SConscript')
 
@@ -55,7 +58,7 @@ if target_os not in ['arduino','darwin','ios']:
 	# Build liboc
 	SConscript('src/SConscript')
 
-if target_os not in ['arduino','darwin','ios','android']:
+if target_os not in ['arduino','darwin','ios','android', 'tizen']:
 	# Build examples
 	SConscript('examples/SConscript')
 

@@ -59,18 +59,19 @@ extern "C"
 #define MAX_LOG_V_BUFFER_SIZE (256)
 
 // Log levels
-#ifndef __TIZEN__
 typedef enum
 {
     DEBUG = 0, INFO, WARNING, ERROR, FATAL
 } LogLevel;
-#else
-#define DEBUG DLOG_DEBUG
-#define INFO DLOG_INFO
-#define WARNING DLOG_WARNING
-#define ERROR DLOG_ERROR
-#define FATAL DLOG_ERROR
+
+#ifdef __TIZEN__
+#define OC_LOG(level,tag,mes) LOG_(LOG_ID_MAIN, OCGetTizenLogLevel(level), tag, mes)
+#define OC_LOG_V(level,tag,fmt,args...) LOG_(LOG_ID_MAIN, OCGetTizenLogLevel(level), tag, fmt,##args)
+#define OC_LOG_BUFFER(level, tag, buffer, bufferSize)
+
+int OCGetTizenLogLevel(LogLevel level);
 #endif
+
 
 #ifdef __TIZEN__
 #define OICLog(level,tag,mes) LOG(level,tag,mes)
@@ -166,8 +167,8 @@ void OICLogv(LogLevel level, PROGMEM const char *tag, const int16_t lineNum,
 #ifdef TB_LOG
 
 #ifdef __TIZEN__
-#define OIC_LOG(level,tag,mes) LOG_(LOG_ID_MAIN, level, tag, mes)
-#define OIC_LOG_V(level,tag,fmt,args...) LOG_(LOG_ID_MAIN, level, tag, fmt,##args)
+#define OIC_LOG(level,tag,mes) LOG_(LOG_ID_MAIN, OCGetTizenLogLevel(level), tag, mes)
+#define OIC_LOG_V(level,tag,fmt,args...) LOG_(LOG_ID_MAIN, OCGetTizenLogLevel(level), tag, fmt,##args)
 #define OIC_LOG_BUFFER(level, tag, buffer, bufferSize)
 #else // These macros are defined for Linux, Android, and Arduino
 #define OIC_LOG_INIT()    OICLogInit()
@@ -204,4 +205,3 @@ void OICLogv(LogLevel level, PROGMEM const char *tag, const int16_t lineNum,
 }
 #endif // __cplusplus
 #endif /* U_LOGGER_H_ */
-

@@ -24,6 +24,9 @@
 #include <stdbool.h>
 #include <inttypes.h>
 #include "logger.h"
+#ifdef __TIZEN__
+#include <dlog.h>
+#endif
 #include "octypes.h"
 
 #ifdef __cplusplus

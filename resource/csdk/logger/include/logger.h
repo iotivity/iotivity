@@ -29,6 +29,8 @@
 
 #ifdef __ANDROID__
     #include <android/log.h>
+#elif defined(__TIZEN__)
+#include <dlog.h>
 #elif defined ARDUINO
     #include "Arduino.h"
     #include <avr/pgmspace.h>
@@ -58,9 +60,16 @@ typedef enum {
     FATAL
 } LogLevel;
 
+#ifdef __TIZEN__
 
-#ifndef ARDUINO
+int OCGetTizenLogLevel(LogLevel level);
 
+#endif
+
+#ifdef __TIZEN__
+#define OCLog(level,tag,mes)
+#define OCLogv(level,tag,fmt,args...)
+#elif defined(ANDROID) || defined(__linux__) || defined(__APPLE__)
     /**
      * Configure logger to use a context that defines a custom logger function
      *
@@ -147,7 +156,11 @@ typedef enum {
 #endif
 
 #ifdef TB_LOG
-    // These macros are defined for Linux, Android, and Arduino
+#ifdef __TIZEN__
+    #define OC_LOG(level,tag,mes) LOG_(LOG_ID_MAIN, OCGetTizenLogLevel(level), tag, mes)
+    #define OC_LOG_V(level,tag,fmt,args...) LOG_(LOG_ID_MAIN, OCGetTizenLogLevel(level), tag, fmt,##args)
+    #define OC_LOG_BUFFER(level, tag, buffer, bufferSize)
+#else // These macros are defined for Linux, Android, and Arduino
     #define OC_LOG_INIT()    OCLogInit()
     #define OC_LOG(level, tag, logStr)  OCLog((level), (tag), (logStr))
     #define OC_LOG_BUFFER(level, tag, buffer, bufferSize)  OCLogBuffer((level), (tag), (buffer), (bufferSize))
@@ -165,7 +178,7 @@ typedef enum {
         // Define variable argument log function for Linux and Android
         #define OC_LOG_V(level, tag, ...)  OCLogv((level), (tag), __VA_ARGS__)
     #endif
-
+#endif
 #else
     #define OC_LOG_CONFIG(ctx)
     #define OC_LOG_SHUTDOWN()

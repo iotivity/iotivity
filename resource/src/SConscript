@@ -52,6 +52,9 @@ if target_os == 'android':
 if target_os in ['darwin', 'ios']:
 	oclib_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 	oclib_env.AppendUnique(LIBS = ['octbstack', 'oc_logger'])
+	
+if target_os == 'tizen':
+	oclib_env.AppendUnique(CPPDEFINES = ['__TIZEN__'])
 
 ######################################################################
 # Source files and Targets
