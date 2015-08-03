@@ -43,19 +43,22 @@ simulator_env.AppendUnique(CPPPATH = [
 		])
 
 # Including Java path for building JNI files
-java_home = ARGUMENTS.get('JAVA_HOME', 0)
-if not java_home:
+try:
+	os.environ['JAVA_HOME']
+except KeyError:
 	print '''
-	*************************************** Error *********************************
-	* JAVA_HOME variable not set in scons command                                 *
-	*******************************************************************************
+*************************************** Error *********************************
+* JAVA_HOME environment variable not set                                      
+* Simulator has dependency on java, Please set environment variable JAVA_HOME
+*******************************************************************************
 	'''
-else:	
-	java_headers = [os.path.join(java_home, 'include')]
-	java_headers.append(os.path.join(java_headers[0], 'win32'))
-	java_headers.append(os.path.join(java_headers[0], 'linux'))
-	java_headers.append(os.path.join(java_headers[0], 'solaris'))
-	simulator_env.AppendUnique(CPPPATH = java_headers)
+	sys.exit(1)
+	
+java_headers = [os.path.join(os.environ['JAVA_HOME'], 'include')]
+java_headers.append(os.path.join(java_headers[0], 'win32'))
+java_headers.append(os.path.join(java_headers[0], 'linux'))
+java_headers.append(os.path.join(java_headers[0], 'solaris'))
+simulator_env.AppendUnique(CPPPATH = java_headers)
 
 simulator_env.AppendUnique(CPPPATH = ['../../extlibs/cjson'])
 simulator_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'libcoap'])

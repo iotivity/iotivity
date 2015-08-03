@@ -305,7 +305,7 @@ static OCEntityHandlerResult HandleACLPostRequest (const OCEntityHandlerRequest 
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
     // Convert JSON ACL data into binary. This will also validate the ACL data received.
-    OicSecAcl_t* newAcl = JSONToAclBin((char *)(ehRequest->reqJSONPayload));
+    OicSecAcl_t* newAcl = JSONToAclBin(((OCSecurityPayload*)ehRequest->payload)->securityData);
 
     if (newAcl)
     {
@@ -386,7 +386,7 @@ OCStackResult CreateACLResource()
                            OIC_RSRC_ACL_URI,
                            ACLEntityHandler,
                            NULL,
-                           OC_OBSERVABLE);
+                           OC_OBSERVABLE | OC_SECURE | OC_EXPLICIT_DISCOVERABLE);
 
     if (OC_STACK_OK != ret)
     {
@@ -416,11 +416,13 @@ OCStackResult  GetDefaultACL(OicSecAcl_t** defaultAcl)
      */
 
     const char *rsrcs[] = {
-        OIC_RSRC_CORE_URI,
-        OIC_RSRC_CORE_D_URI,
-        OIC_RSRC_CORE_P_URI,
-        OIC_RSRC_TYPES_D_URI,
-        OIC_RSRC_PRESENCE_URI,
+        OC_RSRVD_WELL_KNOWN_URI,
+        OC_RSRVD_DEVICE_URI,
+        OC_RSRVD_PLATFORM_URI,
+        OC_RSRVD_RESOURCE_TYPES_URI,
+#ifdef WITH_PRESENCE
+        OC_RSRVD_PRESENCE_URI,
+#endif //WITH_PRESENCE
         OIC_RSRC_ACL_URI,
         OIC_RSRC_DOXM_URI,
         OIC_RSRC_PSTAT_URI,

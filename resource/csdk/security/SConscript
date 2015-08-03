@@ -57,6 +57,7 @@ libocsrm_env.PrependUnique(CPPPATH = [
 if target_os not in ['arduino', 'windows', 'winrt']:
 	libocsrm_env.AppendUnique(CPPDEFINES  = ['WITH_POSIX'])
 	libocsrm_env.AppendUnique(CFLAGS = ['-std=c99'])
+	libocsrm_env.AppendUnique(CPPDEFINES = ['HAVE_STRINGS_H'])
 
 if target_os not in ['windows', 'winrt']:
 	libocsrm_env.AppendUnique(CFLAGS = ['-Wall'])
@@ -98,6 +99,7 @@ libocsrm_src = [
 libocsrm = libocsrm_env.StaticLibrary('libocsrm', libocsrm_src)
 
 libocsrm_env.InstallTarget(libocsrm, 'libocsrm')
+libocsrm_env.UserInstallTargetLib(libocsrm, 'libocsrm')
 
 if env.get('SECURED') == '1':
         SConscript('provisioning/SConscript')

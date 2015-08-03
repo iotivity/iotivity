@@ -55,6 +55,14 @@ public enum ErrorCode {
     PERSISTENT_BUFFER_REQUIRED("PERSISTENT_BUFFER_REQUIRED", ""),
     INVALID_REQUEST_HANDLE("INVALID_REQUEST_HANDLE", ""),
     INVALID_DEVICE_INFO("INVALID_DEVICE_INFO", ""),
+    INVALID_PLATFORM_INFO_PLATFORMID("INVALID_PLATFORM_INFO_PLATFORMID",
+            "PlatformID cannot be null or empty"),
+    INVALID_PLATFORM_INFO_MANUFACTURER_NAME("INVALID_PLATFORM_INFO_MANUFACTURER_NAME",
+            "ManufacturerName cannot be null, empty or greater than " +
+                    OcStackConfig.MAX_MANUFACTURER_NAME_LENGTH + " characters long"),
+    INVALID_PLATFORM_INFO_PLATFORMID_MANUFACTURER_URL("INVALID_PLATFORM_INFO_MANUFACTURER_URL",
+            "MANUFACTURER_URL cannot be null, empty or greater than " +
+                    OcStackConfig.MAX_MANUFACTURER_URL_LENGTH + " characters long"),
     ERROR("ERROR", "Generic error"),
 
     JNI_EXCEPTION("JNI_EXCEPTION", "Generic Java binder error"),

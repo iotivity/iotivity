@@ -20,7 +20,7 @@ mkdir ./tmp/extlibs/
 mkdir ./tmp/packaging
 cp -R ./build_common $sourcedir/tmp
 cp -R ./examples $sourcedir/tmp
-cp -R ./extlibs/cereal $sourcedir/tmp/extlibs
+cp -R ./extlibs/tinycbor $sourcedir/tmp/extlibs
 cp -R ./extlibs/cjson $sourcedir/tmp/extlibs
 cp -R ./extlibs/tinydtls $sourcedir/tmp/extlibs
 cp -R ./extlibs/timer $sourcedir/tmp/extlibs
@@ -35,7 +35,7 @@ cp ./tools/tizen/.gbs.conf ./tmp
 cd $sourcedir/tmp
 
 echo `pwd`
-rm -rf ./extlibs/cereal/cereal/.git*
+rm -rf ./extlibs/tinycbor/tinycbor/.git*
 
 # Initialize Git repository
 if [ ! -d .git ]; then

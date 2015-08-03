@@ -34,9 +34,9 @@
 #include "caadapternetdtls.h"
 #endif
 
-CAGlobals_t caglobals;
+CAGlobals_t caglobals = { 0 };
 
-#define TAG PCF("CA")
+#define TAG "CA_CONN_MGR"
 
 static bool g_isInitialized = false;
 
@@ -129,11 +129,32 @@ CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSCredentialsHandler GetDTLSC
 }
 #endif //__WITH_DTLS__
 
+CAResult_t CACreateEndpoint(CATransportFlags_t flags,
+                            CATransportAdapter_t adapter,
+                            const char *addr,
+                            uint16_t port,
+                            CAEndpoint_t **object)
+{
+    if (!object)
+    {
+        OIC_LOG(ERROR, TAG, "Invalid Parameter");
+        return CA_STATUS_INVALID_PARAM;
+    }
+
+    CAEndpoint_t *endpoint = CACreateEndpointObject(flags, adapter, addr, port);
+    if (!endpoint)
+    {
+        return CA_STATUS_FAILED;
+    }
+    *object = endpoint;
+    return CA_STATUS_OK;
+}
+
 void CADestroyEndpoint(CAEndpoint_t *rep)
 {
     OIC_LOG(DEBUG, TAG, "CADestroyEndpoint");
 
-    CADestroyEndpointInternal(rep);
+    CAFreeEndpoint(rep);
 }
 
 CAResult_t CAGenerateToken(CAToken_t *token, uint8_t tokenLength)
@@ -150,7 +171,10 @@ CAResult_t CAGenerateToken(CAToken_t *token, uint8_t tokenLength)
 void CADestroyToken(CAToken_t token)
 {
     OIC_LOG(DEBUG, TAG, "CADestroyToken");
+
     CADestroyTokenInternal(token);
+
+    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 CAResult_t CAGetNetworkInformation(CAEndpoint_t **info, uint32_t *size)
@@ -203,7 +227,7 @@ CAResult_t CASendResponse(const CAEndpoint_t *object, const CAResponseInfo_t *re
 
 }
 
-CAResult_t CASelectNetwork(const uint32_t interestedNetwork)
+CAResult_t CASelectNetwork(CATransportAdapter_t interestedNetwork)
 {
     OIC_LOG_V(DEBUG, TAG, "Selected network : %d", interestedNetwork);
 
@@ -229,15 +253,23 @@ CAResult_t CASelectNetwork(const uint32_t interestedNetwork)
         res = CAAddNetworkType(CA_ADAPTER_GATT_BTLE);
         OIC_LOG_V(ERROR, TAG, "CAAddNetworkType(CA_GATT_ADAPTER) function returns error : %d", res);
     }
+
+    #ifdef RA_ADAPTER
+    else if (interestedNetwork & CA_ADAPTER_REMOTE_ACCESS)
+    {
+        res = CAAddNetworkType(CA_ADAPTER_REMOTE_ACCESS);
+        OIC_LOG_V(ERROR, TAG, "CAAddNetworkType(CA_ADAPTER_REMOTE_ACCESS) function returns error : %d",
+                                                                    res);
+    }
+    #endif
     else
     {
         res = CA_NOT_SUPPORTED;
     }
-
     return res;
 }
 
-CAResult_t CAUnSelectNetwork(const uint32_t nonInterestedNetwork)
+CAResult_t CAUnSelectNetwork(CATransportAdapter_t nonInterestedNetwork)
 {
     OIC_LOG_V(DEBUG, TAG, "unselected network : %d", nonInterestedNetwork);
 
@@ -263,11 +295,18 @@ CAResult_t CAUnSelectNetwork(const uint32_t nonInterestedNetwork)
         res = CARemoveNetworkType(CA_ADAPTER_GATT_BTLE);
         OIC_LOG_V(ERROR, TAG, "CARemoveNetworkType(CA_GATT_ADAPTER) function returns error : %d", res);
     }
+    #ifdef RA_ADAPTER
+    else if (nonInterestedNetwork & CA_ADAPTER_REMOTE_ACCESS)
+    {
+        res = CARemoveNetworkType(CA_ADAPTER_REMOTE_ACCESS);
+        OIC_LOG_V(ERROR, TAG, "CARemoveNetworkType(CA_ADAPTER_REMOTE_ACCESS) function returns error : %d",
+                                                res);
+    }
+    #endif
     else
     {
         res = CA_STATUS_FAILED;
     }
-
     return res;
 }
 

@@ -34,7 +34,7 @@ using namespace OC;
 
 const int SUCCESS_RESPONSE = OC_STACK_OK;
 
-#define OC_WELL_KNOWN_COORDINATING_QUERY "/oc/core?rt=Resource.Hosting"
+#define OC_WELL_KNOWN_COORDINATING_QUERY "/oic/res?rt=Resource.Hosting"
 
 #define OBSERVE 1
 #define GET     2
@@ -150,7 +150,7 @@ int observe_count()
     return ++oc;
 }
 
-void onObserve(const HeaderOptions &headerOption , const OCRepresentation &rep , const int &eCode,
+void onObserve(const HeaderOptions &/*headerOption*/, const OCRepresentation &rep , const int &eCode,
                const int &sequenceNumber)
 {
     std::cout << "onObserve" << std::endl;
@@ -236,7 +236,7 @@ void getRepresentation(std::shared_ptr< OCResource > resource)
     }
 }
 
-void onPut(const HeaderOptions &headerOption, const OCRepresentation &rep, const int eCode)
+void onPut(const HeaderOptions &/*headerOption*/, const OCRepresentation &rep, const int eCode)
 {
     try
     {
@@ -265,7 +265,7 @@ void onPut(const HeaderOptions &headerOption, const OCRepresentation &rep, const
 }
 
 //callback hadnler on DELETE request
-void onDelete(const HeaderOptions &headerOption , const int eCode)
+void onDelete(const HeaderOptions &/*headerOption*/, const int eCode)
 {
     try
     {
@@ -286,7 +286,7 @@ void onDelete(const HeaderOptions &headerOption , const int eCode)
 }
 
 // callback handler on GET request
-void onGet(const HeaderOptions &headerOption , const OCRepresentation &rep , const int eCode)
+void onGet(const HeaderOptions &/*headerOption*/, const OCRepresentation &rep , const int eCode)
 {
     std::cout << "GET request was successful1" << std::endl;
     if (eCode == SUCCESS_RESPONSE)
@@ -334,7 +334,7 @@ void PRINT()
     std::cout << std::endl;
 }
 
-int main(int argc , char *argv[])
+int main()
 {
 
     int in;
@@ -388,7 +388,7 @@ int main(int argc , char *argv[])
                     std::cout << "Invalid input, please try again" << std::endl;
                     break;
             }
-        }catch(OCException e) {
+        }catch(OCException & e) {
             std::cout<< "Caught OCException [Code: "<<e.code()<<" Reason: "<<e.reason()<<std::endl;
         }
     }

@@ -722,22 +722,6 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueRepresent
 
 /*
 * Class:     org_iotivity_base_OcRepresentation
-* Method:    getJSONRepresentation
-* Signature: ()Ljava/lang/String;
-*/
-JNIEXPORT jstring JNICALL Java_org_iotivity_base_OcRepresentation_getJSONRepresentation
-(JNIEnv *env, jobject thiz)
-{
-    LOGD("OcRepresentation_getJSONRepresentation");
-    OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-    if (!rep) return nullptr;
-
-    std::string jsonStr = rep->getJSONRepresentation();
-    return env->NewStringUTF(jsonStr.c_str());
-}
-
-/*
-* Class:     org_iotivity_base_OcRepresentation
 * Method:    addChild
 * Signature: (Lorg/iotivity/base/OcRepresentation;)V
 */

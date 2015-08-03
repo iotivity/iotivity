@@ -504,10 +504,12 @@ namespace OC
         bool operator>=(const OCResource &other) const;
 
     private:
+        void setHost(const std::string& host);
         std::weak_ptr<IClientWrapper> m_clientWrapper;
         std::string m_uri;
         OCResourceIdentifier m_resourceId;
         OCDevAddr m_devAddr;
+        bool m_useHostString;
         bool m_isObservable;
         bool m_isCollection;
         std::vector<std::string> m_resourceTypes;

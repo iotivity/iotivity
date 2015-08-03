@@ -22,8 +22,10 @@
 
 package org.iotivity.service.ppm;
 
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
+
 import org.iotivity.base.ModeType;
 import org.iotivity.base.OcConnectivityType;
 import org.iotivity.base.OcException;
@@ -33,7 +35,6 @@ import org.iotivity.base.OcResource;
 import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.QualityOfService;
 import org.iotivity.base.ServiceType;
-import org.iotivity.service.ppm.R;
 
 import android.app.Activity;
 import android.content.Context;
@@ -68,6 +69,7 @@ public class MainActivity extends Activity implements
     static ToggleButton                Hue;
     static android.widget.NumberPicker hue_color;
     static Activity                    mActivity;
+    final private static String LOG_TAG = "PPMSampleApp : MainActivity";
 
     PluginManager                      m_pm;
 
@@ -101,6 +103,7 @@ public class MainActivity extends Activity implements
     Map<Integer, Integer>              onValueChangefinalVal    = new HashMap<Integer, Integer>();
     Map<Integer, Boolean>              onValueChangeThreadStart = new HashMap<Integer, Boolean>();
     String[]                           np_h                     = new String[11];
+    
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -138,31 +141,31 @@ public class MainActivity extends Activity implements
         try {
             FoundResource foundResource = new FoundResource();
             OcPlatform.findResource("", OcPlatform.WELL_KNOWN_QUERY,
-                    OcConnectivityType.ALL, foundResource);
+                    EnumSet.of(OcConnectivityType.CT_DEFAULT), foundResource);
         } catch (Exception e) {
-            Log.e("Felix", "Exception : " + e);
+            Log.e(LOG_TAG, "Exception : " + e);
         }
 
         Belkin = (Button) findViewById(R.id.btn_belkin);
         Belkin.setOnClickListener(new Button.OnClickListener() {
             public void onClick(View v) {
-                Log.i("Felix", "Belkin button click listener");
+                Log.i(LOG_TAG, "Belkin button click listener");
                 OcRepresentation rep = new OcRepresentation();
                 try {
                     if (belkinplug.m_power == null) {
-                        Log.i("Felix", "m_power is null");
+                        Log.i(LOG_TAG, "m_power is null");
                         belkinplug.m_power = "on";
                         rep.setValue("power", "on");
                     }
                     if (belkinplug.m_power.equals("on")) {
                         Toast.makeText(getApplicationContext(), "Off",
                                 Toast.LENGTH_SHORT).show();
-                        Log.i("Felix", "belkin wemo off");
+                        Log.i(LOG_TAG, "belkin wemo off");
                         rep.setValue("power", "off");
                     } else if (belkinplug.m_power.equals("off")) {
                         Toast.makeText(getApplicationContext(), "On",
                                 Toast.LENGTH_SHORT).show();
-                        Log.i("Felix", "belkin wemo on");
+                        Log.i(LOG_TAG, "belkin wemo on");
                         rep.setValue("power", "on");
                     } else {
                         rep.setValue("power", "on");
@@ -172,7 +175,7 @@ public class MainActivity extends Activity implements
                     rep.setValue("brightness", 0);
                     rep.setValue("color", 0);
                 } catch (OcException e) {
-                    Log.e("Felix", e.getMessage());
+                    Log.e(LOG_TAG, e.getMessage());
                 }
                 OnPutBelkinplug onPut = new OnPutBelkinplug();
                 if (belkinResource != null) {
@@ -185,6 +188,7 @@ public class MainActivity extends Activity implements
                 } else {
                     Toast.makeText(getApplicationContext(), "Belkinplug null",
                             Toast.LENGTH_SHORT).show();
+                    Log.i(LOG_TAG, "Belkinplug null");
                 }
             }
         });
@@ -192,20 +196,20 @@ public class MainActivity extends Activity implements
         belkinstart = (Button) findViewById(R.id.Button01);
         belkinstart.setOnClickListener(new Button.OnClickListener() {
             public void onClick(View v) {
-                Log.i("Felix", "start button click listener");
+                Log.i(LOG_TAG, "start button click listener");
                 m_pm.startPlugins("ResourceType", "device.smartplug");
 
                 Handler handler = new Handler();
                 handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        Log.i("Felix", "run called!!!");
+                        Log.i(LOG_TAG, "run called!!!");
                         FoundResource foundResource = new FoundResource();
                         try {
                             OcPlatform
                                     .findResource(
                                             "", OcPlatform.WELL_KNOWN_QUERY + "?rt=" + "device.smartplug",
-                                            OcConnectivityType.ALL, foundResource);
+                                            EnumSet.of(OcConnectivityType.CT_DEFAULT), foundResource);
                         } catch (OcException e) {
                             e.printStackTrace();
                         }
@@ -217,7 +221,7 @@ public class MainActivity extends Activity implements
         belkinstop = (Button) findViewById(R.id.Button02);
         belkinstop.setOnClickListener(new Button.OnClickListener() {
             public void onClick(View v) {
-                Log.i("Felix", "stop button click listener");
+                Log.i(LOG_TAG, "stop button click listener");
                 m_pm.stopPlugins("ResourceType", "device.smartplug");
                 belkinResource = null;
                 try {
@@ -231,7 +235,7 @@ public class MainActivity extends Activity implements
         belkingetPlugins = (Button) findViewById(R.id.Button03);
         belkingetPlugins.setOnClickListener(new Button.OnClickListener() {
             public void onClick(View v) {
-                Log.i("Felix", "getPlugins button click listener");
+                Log.i(LOG_TAG, "getPlugins button click listener");
                 user_plugin = m_pm.getPlugins();
                 // key = "name";
                 state = "";
@@ -248,7 +252,7 @@ public class MainActivity extends Activity implements
         belkingetPlugins = (Button) findViewById(R.id.Button04);
         belkingetPlugins.setOnClickListener(new Button.OnClickListener() {
             public void onClick(View v) {
-                Log.i("Felix", "getState click listener");
+                Log.i(LOG_TAG, "getState click listener");
                 state = m_pm.getState("wemo");
                 if (state == "")
                     state = "null";
@@ -264,7 +268,7 @@ public class MainActivity extends Activity implements
         belkinrescan = (Button) findViewById(R.id.Button05);
         belkinrescan.setOnClickListener(new Button.OnClickListener() {
             public void onClick(View v) {
-                Log.i("Felix", "Rescan Plugin click listener");
+                Log.i(LOG_TAG, "Rescan Plugin click listener");
                 m_pm.rescanPlugin();
                 try {
                     Thread.sleep(2000);
@@ -277,7 +281,7 @@ public class MainActivity extends Activity implements
         Gear = (Button) findViewById(R.id.btn_gear);
         Gear.setOnClickListener(new Button.OnClickListener() {
             public void onClick(View v) {
-                Log.i("Felix", "Gear button click listener");
+                Log.i(LOG_TAG, "Gear button click listener");
                 OcRepresentation rep = new OcRepresentation();
                 
                 try{   
@@ -287,12 +291,13 @@ public class MainActivity extends Activity implements
                     rep.setValue("brightness", 0);
                     rep.setValue("color", 0);
                 } catch (OcException e) {
-                    Log.e("Felix", e.getMessage());
+                    Log.e(LOG_TAG, e.getMessage());
                 }
                 
                 if (gearResource != null) {
                     Toast.makeText(getApplicationContext(),
                             "Send Noti. to Gear", Toast.LENGTH_SHORT).show();
+                    Log.i(LOG_TAG, "Send Noti. to Gear");
                     try {
                         OnPutGear onPut = new OnPutGear();
                         gearResource.put(rep, new HashMap<String, String>(),
@@ -303,6 +308,7 @@ public class MainActivity extends Activity implements
                 } else {
                     Toast.makeText(getApplicationContext(), "Gear is null",
                             Toast.LENGTH_SHORT).show();
+                    Log.i(LOG_TAG, "Gear is null");
                 }
             }
         });
@@ -310,20 +316,20 @@ public class MainActivity extends Activity implements
         gearstart = (Button) findViewById(R.id.Button06);
         gearstart.setOnClickListener(new Button.OnClickListener() {
             public void onClick(View v) {
-                Log.i("Felix", "start button click listener");
+                Log.i(LOG_TAG, "start button click listener");
                 m_pm.startPlugins("ResourceType", "device.notify");
 
                 Handler handler = new Handler();
                 handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        Log.i("Felix", "run called!!!");
+                        Log.i(LOG_TAG, "run called!!!");
                         FoundResource foundResource = new FoundResource();
                         try {
                             OcPlatform
                             .findResource(
                                     "", OcPlatform.WELL_KNOWN_QUERY + "?rt=" + "device.notify",
-                                    OcConnectivityType.ALL, foundResource);
+                                    EnumSet.of(OcConnectivityType.CT_DEFAULT), foundResource);
                         } catch (OcException e) {
                             e.printStackTrace();
                         }
@@ -335,7 +341,7 @@ public class MainActivity extends Activity implements
         gearstop = (Button) findViewById(R.id.Button07);
         gearstop.setOnClickListener(new Button.OnClickListener() {
             public void onClick(View v) {
-                Log.i("Felix", "stop button click listener");
+                Log.i(LOG_TAG, "stop button click listener");
                 m_pm.stopPlugins("ResourceType", "device.notify");
                 gearResource = null;
                 try {
@@ -349,7 +355,7 @@ public class MainActivity extends Activity implements
         geargetPlugins = (Button) findViewById(R.id.Button08);
         geargetPlugins.setOnClickListener(new Button.OnClickListener() {
             public void onClick(View v) {
-                Log.i("Felix", "getPlugins button click listener");
+                Log.i(LOG_TAG, "getPlugins button click listener");
                 user_plugin = m_pm.getPlugins();
                 state = "";
                 id = "";
@@ -365,7 +371,7 @@ public class MainActivity extends Activity implements
         geargetPlugins = (Button) findViewById(R.id.Button09);
         geargetPlugins.setOnClickListener(new Button.OnClickListener() {
             public void onClick(View v) {
-                Log.i("Felix", "getState click listener");
+                Log.i(LOG_TAG, "getState click listener");
                 state = m_pm.getState("gearnoti");
                 if (state == "")
                     state = "null";
@@ -381,7 +387,7 @@ public class MainActivity extends Activity implements
         gearrescan = (Button) findViewById(R.id.Button10);
         gearrescan.setOnClickListener(new Button.OnClickListener() {
             public void onClick(View v) {
-                Log.i("Felix", "Rescan Plugin click listener");
+                Log.i(LOG_TAG, "Rescan Plugin click listener");
                 m_pm.rescanPlugin();
                 try {
                     Thread.sleep(2000);
@@ -394,14 +400,15 @@ public class MainActivity extends Activity implements
         Hue = (ToggleButton) findViewById(R.id.tbtn_hue_power);
         Hue.setOnClickListener(new ToggleButton.OnClickListener() {
             public void onClick(View v) {
-                Log.i("Felix", "Hue button click listener");
+                Log.i(LOG_TAG, "Hue button click listener");
                 OcRepresentation rep = new OcRepresentation();
                 ToggleButton t = (ToggleButton) v;
                 if (t.isChecked()) {
                     Toast.makeText(getApplicationContext(), "Hue ON",
                             Toast.LENGTH_SHORT).show();
+                    Log.i(LOG_TAG, "Hue ON");
                     if (hueplug.m_bright == 0) {
-                        Log.e("Felix", "hueplug m_bright is 0");
+                        Log.e(LOG_TAG, "hueplug m_bright is 0");
                         hueplug.m_bright = 128;
                     }
                     try {
@@ -411,7 +418,7 @@ public class MainActivity extends Activity implements
                         rep.setValue("brightness", hueplug.m_bright);
                         rep.setValue("color", hueplug.m_color);
                     } catch (OcException e) {
-                        Log.e("Felix", e.getMessage());
+                        Log.e(LOG_TAG, e.getMessage());
                     }
 
                     OnPutHuebulb onPut = new OnPutHuebulb();
@@ -425,12 +432,14 @@ public class MainActivity extends Activity implements
                     } else {
                         Toast.makeText(getApplicationContext(),
                                 "HueResource null", Toast.LENGTH_SHORT).show();
+                        Log.i(LOG_TAG, "HueResource null");
                     }
                 } else {
                     Toast.makeText(getApplicationContext(), "Hue OFF",
                             Toast.LENGTH_SHORT).show();
+                    Log.i(LOG_TAG, "Hue OFF");
                     if (hueplug.m_bright == 0) {
-                        Log.e("Felix", "hueplug m_bright is 0");
+                        Log.e(LOG_TAG, "hueplug m_bright is 0");
                         hueplug.m_bright = 128;
                     }
                     try {
@@ -440,7 +449,7 @@ public class MainActivity extends Activity implements
                         rep.setValue("brightness", hueplug.m_bright);
                         rep.setValue("color", hueplug.m_color);
                     } catch (OcException e) {
-                        Log.e("Felix", e.getMessage());
+                        Log.e(LOG_TAG, e.getMessage());
                     }
 
                     OnPutHuebulb onPut = new OnPutHuebulb();
@@ -451,10 +460,12 @@ public class MainActivity extends Activity implements
                                     onPut);
                         } catch (OcException e) {
                             e.printStackTrace();
+                            Log.e(LOG_TAG, e.getMessage());
                         }
                     } else {
                         Toast.makeText(getApplicationContext(),
                                 "HueResource null", Toast.LENGTH_SHORT).show();
+                        Log.i(LOG_TAG, "HueResource null");
                     }
                 }
             }
@@ -463,20 +474,20 @@ public class MainActivity extends Activity implements
         huestart = (Button) findViewById(R.id.Button11);
         huestart.setOnClickListener(new Button.OnClickListener() {
             public void onClick(View v) {
-                Log.i("Felix", "start button click listener");
+                Log.i(LOG_TAG, "start button click listener");
                 m_pm.startPlugins("ResourceType", "device.light");
 
                 Handler handler = new Handler();
                 handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        Log.i("Felix", "run called!!!");
+                        Log.i(LOG_TAG, "run called!!!");
                         FoundResource foundResource = new FoundResource();
                         try {
                             OcPlatform
                             .findResource(
                                     "", OcPlatform.WELL_KNOWN_QUERY + "?rt=" + "device.light",
-                                    OcConnectivityType.ALL, foundResource);
+                                    EnumSet.of(OcConnectivityType.CT_DEFAULT), foundResource);
                         } catch (OcException e) {
                             e.printStackTrace();
                         }
@@ -488,7 +499,7 @@ public class MainActivity extends Activity implements
         huestop = (Button) findViewById(R.id.Button12);
         huestop.setOnClickListener(new Button.OnClickListener() {
             public void onClick(View v) {
-                Log.i("Felix", "stop button click listener");
+                Log.i(LOG_TAG, "stop button click listener");
                 m_pm.stopPlugins("ResourceType", "device.light");
                 hueResource = null;
                 try {
@@ -502,7 +513,7 @@ public class MainActivity extends Activity implements
         huegetPlugins = (Button) findViewById(R.id.Button13);
         huegetPlugins.setOnClickListener(new Button.OnClickListener() {
             public void onClick(View v) {
-                Log.i("Felix", "getPlugins button click listener");
+                Log.i(LOG_TAG, "getPlugins button click listener");
                 user_plugin = m_pm.getPlugins();
                 key = "name";
                 state = "";
@@ -519,7 +530,7 @@ public class MainActivity extends Activity implements
         huegetPlugins = (Button) findViewById(R.id.Button14);
         huegetPlugins.setOnClickListener(new Button.OnClickListener() {
             public void onClick(View v) {
-                Log.i("Felix", "getState click listener");
+                Log.i(LOG_TAG, "getState click listener");
                 state = m_pm.getState("hue");
                 if (state == "")
                     state = "null";
@@ -535,7 +546,7 @@ public class MainActivity extends Activity implements
         huerescan = (Button) findViewById(R.id.Button15);
         huerescan.setOnClickListener(new Button.OnClickListener() {
             public void onClick(View v) {
-                Log.i("Felix", "Rescan Plugin click listener");
+                Log.i(LOG_TAG, "Rescan Plugin click listener");
                 m_pm.rescanPlugin();
                 try {
                     Thread.sleep(2000);
@@ -549,33 +560,39 @@ public class MainActivity extends Activity implements
     static public void updateConnectStatus(String device, boolean status) {
         if (device.equals("belkinplug")) {
             if (status) {
-                Log.i("Felix", "belkingplug status green");
+                Log.i(LOG_TAG, "belkingplug status green");
                 Toast.makeText(mActivity.getApplicationContext(),
                         "Belkin Connected", Toast.LENGTH_SHORT).show();
+                Log.i(LOG_TAG, "Belkin Connected");
             } else {
-                Log.i("Felix", "belkingplug status gray");
+                Log.i(LOG_TAG, "belkingplug status gray");
                 Toast.makeText(mActivity.getApplicationContext(),
                         "Belkin Disonnected", Toast.LENGTH_SHORT).show();
+                Log.i(LOG_TAG, "Belkin Disonnected");
             }
         } else if (device.equals("gear")) {
             if (status) {
-                Log.i("Felix", "gear status green");
+                Log.i(LOG_TAG, "gear status green");
                 Toast.makeText(mActivity.getApplicationContext(),
                         "Gear Connected", Toast.LENGTH_SHORT).show();
+                Log.i(LOG_TAG, "Gear Connected");
             } else {
-                Log.i("Felix", "gear status gray");
+                Log.i(LOG_TAG, "gear status gray");
                 Toast.makeText(mActivity.getApplicationContext(),
                         "Gear Disconnected", Toast.LENGTH_SHORT).show();
+                Log.i(LOG_TAG, "Gear Disonnected");
             }
         } else if (device.equals("huebulb")) {
             if (status) {
-                Log.i("Felix", "huebulb status green");
+                Log.i(LOG_TAG, "huebulb status green");
                 Toast.makeText(mActivity.getApplicationContext(),
                         "Hue Connected", Toast.LENGTH_SHORT).show();
+                Log.i(LOG_TAG, "Hue Connected");
             } else {
-                Log.i("Felix", "huebulb status gray");
+                Log.i(LOG_TAG, "huebulb status gray");
                 Toast.makeText(mActivity.getApplicationContext(),
                         "Hue Disconnected", Toast.LENGTH_SHORT).show();
+                Log.i(LOG_TAG, "Hue Disconnected");
             }
 
             if (hueplug.m_power.equals("on")) {
@@ -600,26 +617,26 @@ public class MainActivity extends Activity implements
 
     @Override
     protected void onResume() {
-        Log.i("Felix", "onResume()");
+        Log.i(LOG_TAG, "onResume()");
         super.onResume();
     }
 
     @Override
     protected void onPause() {
-        Log.i("Felix", "onPause()");
+        Log.i(LOG_TAG, "onPause()");
         super.onPause();
         finish();
     }
 
     @Override
     protected void onStop() {
-        Log.i("Felix", "onStop()");
+        Log.i(LOG_TAG, "onStop()");
         super.onStop();
     }
 
     @Override
     protected void onDestroy() {
-        Log.i("Felix", "onDestroy()");
+        Log.i(LOG_TAG, "onDestroy()");
         System.exit(1);
         super.onDestroy();
     }
@@ -636,14 +653,14 @@ public class MainActivity extends Activity implements
             try {
                 sleep(1000, 0);
             } catch (Exception e) {
-                Log.i("Felix", "waitForFinal exception : " + e);
+                Log.i(LOG_TAG, "waitForFinal exception : " + e);
             }
-            Log.i("Felix", "Final Value for NUMBERPICKER[" + idx + "] : "
+            Log.i(LOG_TAG, "Final Value for NUMBERPICKER[" + idx + "] : "
                     + onValueChangefinalVal.get(idx));
 
             if (idx == R.id.np_hue_color) {
                 hueplug.m_color = 6300 * onValueChangefinalVal.get(idx);
-                Log.i("Felix", "m_color = " + hueplug.m_color);
+                Log.i(LOG_TAG, "m_color = " + hueplug.m_color);
 
                 OcRepresentation rep = new OcRepresentation();
                 if (hueplug.m_power == null) {
@@ -659,12 +676,12 @@ public class MainActivity extends Activity implements
                     rep.setValue("brightness", hueplug.m_bright = 180);
                     rep.setValue("color", hueplug.m_color);
                 } catch (OcException e) {
-                    Log.e("Felix", e.getMessage());
+                    Log.e(LOG_TAG, e.getMessage());
                 }
 
                 OnPutHuebulb onPut = new OnPutHuebulb();
                 if (hueResource != null) {
-                    Log.i("Felix", "huebulbResource is not null");
+                    Log.i(LOG_TAG, "huebulbResource is not null");
                     try {
                         hueResource.put(rep, new HashMap<String, String>(),
                                 onPut);
@@ -672,7 +689,7 @@ public class MainActivity extends Activity implements
                         e.printStackTrace();
                     }
                 } else {
-                    Log.i("Felix", "huebulbResource is null");
+                    Log.i(LOG_TAG, "huebulbResource is null");
                 }
             }
             onValueChangeThreadStart.put(idx, false);

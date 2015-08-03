@@ -23,6 +23,7 @@ Import('env')
 import os
 
 env.AppendUnique(CPPPATH = [
+            os.path.join(Dir('.').abspath),
             os.path.join(Dir('.').abspath, 'oic_malloc/include'),
             os.path.join(Dir('.').abspath, 'oic_string/include')
         ])
@@ -50,3 +51,4 @@ common_src = [
 
 commonlib = common_env.StaticLibrary('c_common', common_src)
 common_env.InstallTarget(commonlib, 'c_common')
+common_env.UserInstallTargetLib(commonlib, 'c_common')

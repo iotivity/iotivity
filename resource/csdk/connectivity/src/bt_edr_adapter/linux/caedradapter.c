@@ -31,26 +31,29 @@ static CANetworkPacketReceivedCallback g_edrReceivedCallback = NULL;
 static ca_thread_pool_t g_threadPoolHandle = NULL;
 
 CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
-        CANetworkPacketReceivedCallback reqRespCallback, CANetworkChangeCallback netCallback,
-        ca_thread_pool_t handle)
+                           CANetworkPacketReceivedCallback reqRespCallback,
+                           CANetworkChangeCallback networkStateChangeCallback,
+                           CAErrorHandleCallback errorCallback, ca_thread_pool_t handle)
 {
+    (void)networkStateChangeCallback;
+    (void)errorCallback;
     OIC_LOG(DEBUG, TAG, "CAInitializeEDR");
 
     g_edrReceivedCallback = reqRespCallback;
     g_threadPoolHandle = handle;
 
     // register handlers
-    CAConnectivityHandler_t handler = {};
-
-    handler.startAdapter = CAStartEDR;
-    handler.startListenServer = CAStartEDRListeningServer;
-    handler.startDiscoveryServer = CAStartEDRDiscoveryServer;
-    handler.sendData = CASendEDRUnicastData;
-    handler.sendDataToAll = CASendEDRMulticastData;
-    handler.GetnetInfo = CAGetEDRInterfaceInformation;
-    handler.readData = CAReadEDRData;
-    handler.stopAdapter = CAStopEDR;
-    handler.terminate = CATerminateEDR;
+    CAConnectivityHandler_t handler = {
+        .startAdapter = CAStartEDR,
+        .startListenServer = CAStartEDRListeningServer,
+        .startDiscoveryServer = CAStartEDRDiscoveryServer,
+        .sendData = CASendEDRUnicastData,
+        .sendDataToAll = CASendEDRMulticastData,
+        .GetnetInfo = CAGetEDRInterfaceInformation,
+        .readData = CAReadEDRData,
+        .stopAdapter = CAStopEDR,
+        .terminate = CATerminateEDR
+    };
 
     registerCallback(handler, CA_ADAPTER_RFCOMM_BTEDR);
 
@@ -81,6 +84,9 @@ CAResult_t CAStartEDRDiscoveryServer()
 int32_t CASendEDRUnicastData(const CAEndpoint_t *endpoint, const void *data,
     uint32_t dataLen)
 {
+    (void)endpoint;
+    (void)data;
+    (void)dataLen;
     OIC_LOG(DEBUG, TAG, "CASendEDRUnicastData");
 
     return -1;
@@ -88,6 +94,9 @@ int32_t CASendEDRUnicastData(const CAEndpoint_t *endpoint, const void *data,
 
 int32_t CASendEDRMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t dataLen)
 {
+    (void)endpoint;
+    (void)data;
+    (void)dataLen;
     OIC_LOG(DEBUG, TAG, "CASendEDRMulticastData");
 
     return -1;
@@ -95,6 +104,8 @@ int32_t CASendEDRMulticastData(const CAEndpoint_t *endpoint, const void *data, u
 
 CAResult_t CAGetEDRInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
 {
+    (void)info;
+    (void)size;
     OIC_LOG(DEBUG, TAG, "CAGetEDRInterfaceInformation");
 
     return CA_STATUS_OK;

@@ -336,7 +336,7 @@ static inline unsigned short coap_new_message_id(coap_context_t *context)
     /**
      * Calculates a unique transaction id from given arguments @p peer and
      * @p pdu. The id is returned in @p id.
-     * 
+     *
      * @param peer The remote party who sent @p pdu.
      * @param pdu  The message that initiated the transaction.
      * @param id   Set to the new id.
@@ -427,7 +427,7 @@ static inline unsigned short coap_new_message_id(coap_context_t *context)
      * @code
      coap_opt_filter_t f = COAP_OPT_NONE;
      coap_opt_iterator_t opt_iter;
-     
+
      if (coap_option_check_critical(ctx, pdu, f) == 0) {
      coap_option_iterator_init(pdu, &opt_iter, f);
 

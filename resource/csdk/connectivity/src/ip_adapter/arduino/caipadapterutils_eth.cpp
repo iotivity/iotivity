@@ -29,7 +29,6 @@
 #include "logger.h"
 #include "cacommon.h"
 #include "caadapterinterface.h"
-#include "caipadapter_singlethread.h"
 #include "caadapterutils.h"
 
 #define TAG "IPU"

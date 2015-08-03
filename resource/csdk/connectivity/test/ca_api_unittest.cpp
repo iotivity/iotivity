@@ -62,7 +62,6 @@ void error_handler(const CAEndpoint_t *object, const CAErrorInfo_t* errorInfo)
     return;
 }
 
-static char* uri = NULL;
 static char* addr = NULL;
 static CAEndpoint_t* tempRep = NULL;
 static CARequestInfo_t requestInfo;
@@ -71,14 +70,9 @@ static CAInfo_t responseData;
 static CAResponseInfo_t responseInfo;
 static CAToken_t tempToken = NULL;
 static uint8_t tokenLength = CA_MAX_TOKEN_LEN;
-static const char URI[] = "coap://10.11.12.13:4545/a/light";
 static const char ADDRESS[] = "10.11.12.13";
 static const uint16_t PORT = 4545;
-static const char RESOURCE_URI[] = "/a/light";
 
-static const char SECURE_INFO_DATA[] =
-                                    "{\"oc\":[{\"href\":\"%s\",\"prop\":{\"rt\":[\"core.led\"],"
-                                     "\"if\":[\"oc.mi.def\"],\"obs\":1,\"sec\":1,\"port\":%d}}]}";
 static const char NORMAL_INFO_DATA[] =
                                     "{\"oc\":[{\"href\":\"%s\",\"prop\":{\"rt\":[\"core.led\"],"
                                      "\"if\":[\"oc.mi.def\"],\"obs\":1}}]}";
@@ -174,7 +168,7 @@ TEST_F(CATests, TerminateTest)
 // check return value
 TEST(StartListeningServerTest, DISABLED_TC_03_Positive_01)
 {
-    CASelectNetwork(CA_IPV4);
+    CASelectNetwork(CA_ADAPTER_IP);
     EXPECT_EQ(CA_STATUS_OK, CAStartListeningServer());
 }
 
@@ -271,7 +265,8 @@ TEST(SendRequestTest, DISABLED_TC_16_Positive_01)
         CADestroyToken(tempToken);
         FAIL() << "requestData.payload allocation failed";
     }
-    snprintf(requestData.payload, length, NORMAL_INFO_DATA, "a/light");
+    snprintf((char*)requestData.payload, length, NORMAL_INFO_DATA, "a/light");
+    requestData.payloadSize = length + 1;
     requestData.type = CA_MSG_NONCONFIRM;
 
     memset(&requestInfo, 0, sizeof(CARequestInfo_t));
@@ -314,20 +309,31 @@ TEST(SendResponseTest, DISABLED_TC_19_Positive_01)
     memset(&responseData, 0, sizeof(CAInfo_t));
     responseData.type = CA_MSG_NONCONFIRM;
     responseData.messageId = 1;
-    responseData.payload = (char *) "response payload";
+    responseData.payload = (CAPayload_t)malloc(sizeof("response payload"));
+
+    EXPECT_TRUE(responseData.payload != NULL);
+    if(!responseData.payload)
+    {
+        CADestroyEndpoint(tempRep);
+        return;
+    }
+
+    memcpy(responseData.payload, "response payload", sizeof("response payload"));
+    responseData.payloadSize = sizeof("response payload");
 
     CAGenerateToken(&tempToken, tokenLength);
     requestData.token = tempToken;
     requestData.tokenLength = tokenLength;
 
     memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
-    responseInfo.result = CA_SUCCESS;
+    responseInfo.result = CA_CONTENT;
     responseInfo.info = responseData;
 
     EXPECT_EQ(CA_STATUS_OK, CASendResponse(tempRep, &responseInfo));
 
     CADestroyToken(tempToken);
     CADestroyEndpoint(tempRep);
+    free(responseData.payload);
     tempRep = NULL;
 }
 
@@ -340,14 +346,24 @@ TEST(SendResponseTest, DISABLED_TC_20_Negative_01)
     memset(&responseData, 0, sizeof(CAInfo_t));
     responseData.type = CA_MSG_NONCONFIRM;
     responseData.messageId = 1;
-    responseData.payload = (char *) "response payload";
+    responseData.payload = (CAPayload_t)malloc(sizeof("response payload"));
+    EXPECT_TRUE(responseData.payload != NULL);
+
+    if(!responseData.payload)
+    {
+        CADestroyEndpoint(tempRep);
+        return;
+    }
+
+    memcpy(responseData.payload, "response payload", sizeof("response payload"));
+    responseData.payloadSize = sizeof("response payload");
 
     CAGenerateToken(&tempToken, tokenLength);
     requestData.token = tempToken;
     requestData.tokenLength = tokenLength;
 
     memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
-    responseInfo.result = CA_SUCCESS;
+    responseInfo.result = CA_CONTENT;
     responseInfo.info = responseData;
 
     EXPECT_EQ(CA_STATUS_OK, CASendResponse(tempRep, &responseInfo));
@@ -358,6 +374,7 @@ TEST(SendResponseTest, DISABLED_TC_20_Negative_01)
         CADestroyEndpoint(tempRep);
         tempRep = NULL;
     }
+    free (responseData.payload);
 }
 
 // check return value NULL is passed instead of a valid CAResponseInfo_t address
@@ -384,14 +401,24 @@ TEST(SendNotificationTest, DISABLED_TC_22_Positive_01)
 
     memset(&responseData, 0, sizeof(CAInfo_t));
     responseData.type = CA_MSG_NONCONFIRM;
-    responseData.payload = (char *) "Temp Notification Data";
+    responseData.payload = (CAPayload_t)malloc(sizeof("Temp Notification Data"));
+
+    EXPECT_TRUE(responseData.payload != NULL);
+    if(!responseData.payload)
+    {
+        CADestroyEndpoint(tempRep);
+        return;
+    }
+
+    memcpy(responseData.payload, "Temp Notification Data", sizeof("Temp Notification Data"));
+    responseData.payloadSize = sizeof("Temp Notification Data");
 
     CAGenerateToken(&tempToken, tokenLength);
     requestData.token = tempToken;
     requestData.tokenLength = tokenLength;
 
     memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
-    responseInfo.result = CA_SUCCESS;
+    responseInfo.result = CA_CONTENT;
     responseInfo.info = responseData;
 
     EXPECT_EQ(CA_STATUS_OK, CASendNotification(tempRep, &responseInfo));
@@ -402,6 +429,7 @@ TEST(SendNotificationTest, DISABLED_TC_22_Positive_01)
         CADestroyEndpoint(tempRep);
         tempRep = NULL;
     }
+    free(responseData.payload);
 }
 
 // CASelectNewwork TC
@@ -434,14 +462,14 @@ CAResult_t checkSelectNetwork()
 TEST_F(CATests, SelectNetworkTestBad)
 {
     //Select disable network
-    EXPECT_EQ(CA_NOT_SUPPORTED, CASelectNetwork(1000));
+    EXPECT_EQ(CA_NOT_SUPPORTED, CASelectNetwork((CATransportAdapter_t)1000));
 }
 
 // check return value when selected network is disable
 TEST_F(CATests, UnSelectNetworkTest)
 {
     //UnSelect disable network
-    EXPECT_EQ(CA_STATUS_FAILED, CAUnSelectNetwork(1000));
+    EXPECT_EQ(CA_STATUS_FAILED, CAUnSelectNetwork((CATransportAdapter_t)1000));
 }
 
 // CAHandlerRequestResponse TC

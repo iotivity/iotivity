@@ -32,6 +32,12 @@
 
 using namespace OC;
 
+static void printUsage()
+{
+    std::cout << "Usage devicediscoveryclient <0|1>" << std::endl;
+    std::cout << "connectivityType: Default IP" << std::endl;
+    std::cout << "connectivityType 0: IP" << std::endl;
+}
 //Callback after device information is received
 void receivedPlatformInfo(const OCRepresentation& rep)
 {
@@ -90,6 +96,7 @@ int main(int argc, char* argv[]) {
     std::string platformDiscoveryURI = "/oic/p";
     std::string deviceDiscoveryURI   = "/oic/d";
 
+    //Default Connectivity type
     OCConnectivityType connectivityType = CT_ADAPTER_IP;
 
     if(argc == 2)
@@ -103,12 +110,14 @@ int main(int argc, char* argv[]) {
             {
                 if(optionSelected == 0)
                 {
+                    std::cout << "Using IP."<< std::endl;
                     connectivityType = CT_ADAPTER_IP;
                 }
                 else
                 {
-                    std::cout << "Invalid connectivity type selected. Using default IP"
-                    << std::endl;
+                    std::cout << "Invalid connectivity type selected." << std::endl;
+                    printUsage();
+                    return -1;
                 }
             }
             else
@@ -123,9 +132,7 @@ int main(int argc, char* argv[]) {
     }
     else
     {
-        std::cout << "Usage devicediscoveryclient 0" << std::endl;
-        std::cout << "connectivityType: Default IP" << std::endl;
-        std::cout << "connectivityType 0: IP" << std::endl;
+        printUsage();
     }
     // Create PlatformConfig object
     PlatformConfig cfg {

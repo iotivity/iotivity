@@ -80,11 +80,11 @@ extern "C" void asyncDoResourcesCallback(OCStackResult result, OCRepresentationH
 //  Tests
 //-----------------------------------------------------------------------------
 void test0() {
-    EXPECT_EQ(OC_STACK_OK, OCInit(0, 5683, OC_SERVER));  
+    EXPECT_EQ(OC_STACK_OK, OCInit(0, 5683, OC_SERVER));
 }
 
 void test1() {
-  EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 0, OC_SERVER));  
+  EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 0, OC_SERVER));
 }
 
 void test2() {

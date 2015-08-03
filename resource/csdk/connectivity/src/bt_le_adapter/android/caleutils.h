@@ -27,6 +27,7 @@
 
 #include "cacommon.h"
 #include "cathreadpool.h"
+#include "cagattservice.h"
 #include "uarraylist.h"
 #include "jni.h"
 
@@ -36,9 +37,9 @@ extern "C"
 #endif
 
 /* Service UUID */
-static const char OIC_GATT_SERVICE_UUID[] = "713d0000-503e-4c75-ba94-3148f18d941e";
-static const char OIC_GATT_CHARACTERISTIC_RESPONSE_UUID[] = "713d0002-503e-4c75-ba94-3148f18d941e";
-static const char OIC_GATT_CHARACTERISTIC_REQUEST_UUID[] = "713d0003-503e-4c75-ba94-3148f18d941e";
+static const char OIC_GATT_SERVICE_UUID[] = CA_GATT_SERVICE_UUID;
+static const char OIC_GATT_CHARACTERISTIC_REQUEST_UUID[] = CA_GATT_REQUEST_CHRC_UUID;
+static const char OIC_GATT_CHARACTERISTIC_RESPONSE_UUID[] = CA_GATT_RESPONSE_CHRC_UUID;
 static const char OIC_GATT_CHARACTERISTIC_CONFIG_UUID[] = "00002902-0000-1000-8000-00805f9b34fb";
 
 static const uint32_t GATT_SUCCESS = 0;

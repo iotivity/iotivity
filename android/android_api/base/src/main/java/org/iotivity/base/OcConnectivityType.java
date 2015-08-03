@@ -23,13 +23,60 @@
 package org.iotivity.base;
 
 import java.security.InvalidParameterException;
+import java.util.EnumSet;
 
 public enum OcConnectivityType {
-    IPV4    (0),
-    IPV6    (1),
-    EDR     (2),
-    LE      (3),
-    ALL     (4),
+    /** use when defaults are ok. */
+    CT_DEFAULT              (0),
+
+    /** IPv4 and IPv6, including 6LoWPAN.*/
+    CT_ADAPTER_IP           (1 << 16),
+
+    /** GATT over Bluetooth LE.*/
+    CT_ADAPTER_GATT_BTLE    (1 << 17),
+
+    /** RFCOMM over Bluetooth EDR.*/
+    CT_ADAPTER_RFCOMM_BTEDR (1 << 18),
+
+    /** Remote Access over XMPP.*/
+    CT_ADAPTER_REMOTE_ACCESS(1 << 19),
+
+    /** Insecure transport is the default (subject to change).*/
+
+    /** secure the transport path.*/
+    CT_FLAG_SECURE          (1 << 4),
+
+    /** IPv4 & IPv6 autoselection is the default.*/
+
+    /** IP adapter only.*/
+    CT_IP_USE_V6            (1 << 5),
+
+    /** IP adapter only.*/
+    CT_IP_USE_V4            (1 << 6),
+
+    /** Link-Local multicast is the default multicast scope for IPv6.
+     * These are placed here to correspond to the IPv6 address bits.*/
+
+    /** IPv6 Interface-Local scope(loopback).*/
+    CT_SCOPE_INTERFACE      (0x1),
+
+    /** IPv6 Link-Local scope (default).*/
+    CT_SCOPE_LINK           (0x2),
+
+    /** IPv6 Realm-Local scope.*/
+    CT_SCOPE_REALM          (0x3),
+
+    /** IPv6 Admin-Local scope.*/
+    CT_SCOPE_ADMIN          (0x4),
+
+    /** IPv6 Site-Local scope.*/
+    CT_SCOPE_SITE           (0x5),
+
+    /** IPv6 Organization-Local scope.*/
+    CT_SCOPE_ORG            (0x8),
+
+    /** IPv6 Global scope.*/
+    CT_SCOPE_GLOBAL         (0xE),
     ;
 
     private int value;
@@ -42,11 +89,23 @@ public enum OcConnectivityType {
         return this.value;
     }
 
-    public static OcConnectivityType get(int val) {
-        for (OcConnectivityType v : OcConnectivityType.values()) {
-            if (v.getValue() == val)
-                return v;
+    public static EnumSet<OcConnectivityType> convertToEnumSet(int value) {
+        EnumSet<OcConnectivityType> typeSet = null;
+
+        for (OcConnectivityType v : values()) {
+            if (0 != (value & v.getValue())) {
+                if (null == typeSet) {
+                    typeSet = EnumSet.of(v);
+                } else {
+                    typeSet.add(v);
+                }
+            }
         }
-        throw new InvalidParameterException("Unexpected OcConnectivityType value:" + val);
+
+        if (null == typeSet || typeSet.isEmpty()) {
+            throw new InvalidParameterException("Unexpected OcConnectivityType value:" + value);
+        }
+
+        return typeSet;
     }
 }

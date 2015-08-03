@@ -37,6 +37,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if HAVE_STRINGS_H
+#include <strings.h>
+#endif
+
 #define TAG  PCF("SRM-DOXM")
 
 static OicSecDoxm_t        *gDoxm = NULL;
@@ -210,7 +214,7 @@ OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr)
         doxm->oxmLen = cJSON_GetArraySize(jsonObj);
         VERIFY_SUCCESS(TAG, doxm->oxmLen > 0, ERROR);
 
-        doxm->oxm = (OicSecOxm_t*)OICCalloc(doxm->oxmLen, sizeof(short));
+        doxm->oxm = (OicSecOxm_t*)OICCalloc(doxm->oxmLen, sizeof(OicSecOxm_t));
         VERIFY_NON_NULL(TAG, doxm->oxm, ERROR);
 
         for(int i  = 0; i < doxm->oxmLen ; i++)
@@ -252,7 +256,7 @@ OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr)
     if(jsonObj)
     {
         VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
-        if(jsonObj && cJSON_String == jsonObj->type)
+        if(cJSON_String == jsonObj->type)
         {
             //Check for empty string, in case DeviceId field has not been set yet
             if (jsonObj->valuestring[0])
@@ -299,6 +303,10 @@ exit:
     return doxm;
 }
 
+/**
+ * @todo document this function including why code might need to call this.
+ * The current suspicion is that it's not being called as much as it should.
+ */
 static bool UpdatePersistentStorage(OicSecDoxm_t * doxm)
 {
     bool bRet = false;
@@ -411,7 +419,7 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
      * Convert JSON Doxm data into binary. This will also validate
      * the Doxm data received.
      */
-    OicSecDoxm_t* newDoxm = JSONToDoxmBin((char *)(ehRequest->reqJSONPayload));
+    OicSecDoxm_t* newDoxm = JSONToDoxmBin(((OCSecurityPayload*)ehRequest->payload)->securityData);
 
     if (newDoxm)
     {
@@ -572,7 +580,7 @@ OCStackResult CreateDoxmResource()
                            OIC_RSRC_DOXM_URI,
                            DoxmEntityHandler,
                            NULL,
-                           OC_OBSERVABLE);
+                           OC_OBSERVABLE | OC_SECURE | OC_EXPLICIT_DISCOVERABLE);
 
     if (OC_STACK_OK != ret)
     {
@@ -590,11 +598,10 @@ OCStackResult CreateDoxmResource()
  */
 void CheckDeviceID()
 {
-    //TODO: Save this deviceID at secure location so that we can retrieve it if the
-    //JSON gets corrupted.
     if(strcmp((char *)gDoxm->deviceID.id, "") == 0 )
     {
         OCFillRandomMem(gDoxm->deviceID.id, sizeof(gDoxm->deviceID.id));
+        UpdatePersistentStorage(gDoxm);
     }
 }
 

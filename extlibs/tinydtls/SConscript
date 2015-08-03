@@ -62,8 +62,10 @@ tinydtls_src = [
 env.AppendUnique(TINYDTLS_SRC = tinydtls_src)
 
 if not env.get('RELEASE'):
-	if(target_os) not in ['android', 'arduino']:
+	if(target_os) not in ['arduino']:
 		env.AppendUnique(TINYDTLS_SRC = ['debug.c'])
+	else:
+		env.AppendUnique(CPPDEFINES = ['NDEBUG'])
 else:
 	env.AppendUnique(CPPDEFINES = ['NDEBUG'])
 
@@ -76,7 +78,7 @@ libtinydtls = env.StaticLibrary('libtinydtls', env.get('TINYDTLS_SRC'), OBJPREFI
 #
 # Note:
 # Currently there is a bug in debug.h/debug.c which fails compilation
-# of tinydtls samples in release mode. This bug is being tracked in 
+# of tinydtls samples in release mode. This bug is being tracked in
 # IOT-395
 ######################################################################
 if not env.get('RELEASE'):
@@ -95,4 +97,5 @@ if not env.get('RELEASE'):
 	samples_env.AppendTarget('samples')
 
 env.InstallTarget(libtinydtls, 'libtinydtls');
+env.UserInstallTargetLib(libtinydtls, 'libtinydtls');
 

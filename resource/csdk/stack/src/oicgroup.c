@@ -25,6 +25,7 @@
 #include "oicgroup.h"
 #include "cJSON.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 #include "occollection.h"
 #include "logger.h"
 #include "timer.h"
@@ -46,7 +47,7 @@
 #define ACTIONSET               "ActionSet"
 #define DELETE_ACTIONSET        "DelActionSet"
 
-#define OIC_ACTION_PREFIX               "{\"oc\":[{\"rep\":{"
+#define OIC_ACTION_PREFIX               "{\"oic\":[{\"rep\":{"
 #define VARIFY_POINTER_NULL(pointer, result, toExit) \
     if(pointer == NULL) \
     {\
@@ -623,7 +624,7 @@ OCStackResult BuildActionSetFromString(OCActionSet **set, char* actiondesc)
     iterToken = (char *) strtok_r(NULL, ACTION_DELIMITER, &iterTokenPtr);
     VARIFY_PARAM_NULL(iterToken, result, exit)
 #ifndef WITH_ARDUINO
-    sscanf(iterToken, "%ld %d", &(*set)->timesteps, &(*set)->type);
+    sscanf(iterToken, "%ld %u", &(*set)->timesteps, &(*set)->type);
 #endif
 
     OC_LOG_V(INFO, TAG, "ActionSet Name : %s", (*set)->actionsetName);
@@ -662,6 +663,11 @@ OCStackResult BuildActionSetFromString(OCActionSet **set, char* actiondesc)
             {
                 OC_LOG(INFO, TAG, PCF("Build OCAction Instance."));
 
+                if(action)
+                {
+                    OICFree(action->resourceUri);
+                    OICFree(action);
+                }
                 action = (OCAction*) OICMalloc(sizeof(OCAction));
                 VARIFY_POINTER_NULL(action, result, exit)
                 memset(action, 0, sizeof(OCAction));
@@ -801,26 +807,29 @@ OCStackApplicationResult ActionSetCB(void* context, OCDoHandle handle,
     {
         int idx;
 
-        unsigned char *responseJson;
-        responseJson = (unsigned char *) OICMalloc(
-                (unsigned int) (strlen((char *) clientResponse->resJSONPayload)
-                        + 1));
+        unsigned char *responseJson = NULL;
+        // TODO: Figure out what this does, change implementation
+        //responseJson = (unsigned char *) OICMalloc(
+        //        (unsigned int) (strlen((char *) clientResponse->resJSONPayload)
+        //                + 1));
 
         if( responseJson == NULL )
             return OC_STACK_DELETE_TRANSACTION;
 
         // We need the body of response.
         // Copy the body from the response
-        strcpy((char *) responseJson,
-                ((char *) clientResponse->resJSONPayload + OC_JSON_PREFIX_LEN));
-        idx = strlen((char *) responseJson) - OC_JSON_SUFFIX_LEN;
+        // TODO: Taken out
+        //strcpy((char *) responseJson,
+        //        ((char *) clientResponse->resJSONPayload + OC_JSON_PREFIX_LEN));
+        //idx = strlen((char *) responseJson) - OC_JSON_SUFFIX_LEN;
         // And insert NULL at the end of body.
         (responseJson[idx]) = 0;
 
         OCEntityHandlerResponse response = { 0 };
         response.ehResult = OC_EH_OK;
-        response.payload = (char*)responseJson;
-        response.payloadSize = (unsigned int) strlen((char *) responseJson) + 1;
+        // TODO: Removing payload size, waht goes here?
+        // response.payload = (char*)responseJson;
+        //response.payloadSize = (unsigned int) strlen((char *) responseJson) + 1;
         response.persistentBufferFlag = 0;
         response.requestHandle = (OCRequestHandle) info->ehRequest;
         response.resourceHandle = (OCResourceHandle) info->collResource;
@@ -900,13 +909,8 @@ unsigned int GetNumOfTargetResource(OCAction *actionset)
 OCStackResult SendAction(OCDoHandle *handle, const char *targetUri,
         const unsigned char *action)
 {
-    OCCallbackData cbdata;
-    cbdata.cb = &ActionSetCB;
-    cbdata.cd = NULL;
-    cbdata.context = (void*)DEFAULT_CONTEXT_VALUE;
-
-    return OCDoResource(handle, OC_REST_PUT, targetUri,
-            NULL, (char *) action, CT_ADAPTER_IP, OC_NA_QOS, &cbdata, NULL, 0);
+    // TODO: disabled since this is no longer compatible
+    return OC_STACK_NOTIMPL;
 }
 
 OCStackResult DoAction(OCResource* resource, OCActionSet* actionset,
@@ -942,6 +946,7 @@ OCStackResult DoAction(OCResource* resource, OCActionSet* actionset,
                 actionDescPtr);
         if (result != OC_STACK_OK)
         {
+            OICFree(info);
             return result;
         }
 
@@ -1016,6 +1021,10 @@ void DoScheduledGroupAction()
 #endif
                 AddScheduledResource(&scheduleResourceList, schedule);
             }
+            else
+            {
+                OICFree(schedule);
+            }
         }
     }
 
@@ -1040,16 +1049,15 @@ OCStackResult BuildCollectionGroupActionJSONResponse(
 
         size_t bufferLength = 0;
         unsigned char buffer[MAX_RESPONSE_LENGTH] = { 0 };
-        unsigned char *bufferPtr = NULL;
-
-        bufferPtr = buffer;
 
         OCResource * collResource = (OCResource *) ehRequest->resource;
 
         char *jsonResponse;
 
-        stackRet = ExtractKeyValueFromRequest((char *) ehRequest->reqJSONPayload,
-                &doWhat, &details);
+        stackRet = OC_STACK_NOTIMPL;
+        // TODO: Fix?
+        //stackRet = ExtractKeyValueFromRequest((char *) ehRequest->reqJSONPayload,
+        //        &doWhat, &details);
 
         if(stackRet != OC_STACK_OK)
         {
@@ -1112,7 +1120,7 @@ OCStackResult BuildCollectionGroupActionJSONResponse(
             jsonResponse = cJSON_Print(json);
             cJSON_Delete(json);
 
-            strcat((char *) bufferPtr, jsonResponse);
+            OICStrcat((char*)buffer, sizeof(buffer), jsonResponse);
 
             bufferLength = strlen((const char *) buffer);
             if (bufferLength > 0)
@@ -1122,8 +1130,9 @@ OCStackResult BuildCollectionGroupActionJSONResponse(
                     response.ehResult = OC_EH_OK;
                 else
                     response.ehResult = OC_EH_ERROR;
-                response.payload = (char*)buffer;
-                response.payloadSize = bufferLength + 1;
+                // TODO: Fix
+                //response.payload = (char*)buffer;
+                //response.payloadSize = bufferLength + 1;
                 response.persistentBufferFlag = 0;
                 response.requestHandle =
                         (OCRequestHandle) ehRequest->requestHandle;
@@ -1279,7 +1288,7 @@ OCStackResult BuildCollectionGroupActionJSONResponse(
             jsonResponse = cJSON_Print(json);
             cJSON_Delete(json);
 
-            strcat((char *) bufferPtr, jsonResponse);
+            OICStrcat((char*)buffer, sizeof(buffer), jsonResponse);
 
             bufferLength = strlen((const char *) buffer);
             if (bufferLength > 0)
@@ -1289,8 +1298,9 @@ OCStackResult BuildCollectionGroupActionJSONResponse(
                     response.ehResult = OC_EH_OK;
                 else
                     response.ehResult = OC_EH_ERROR;
-                response.payload = (char *)buffer;
-                response.payloadSize = bufferLength + 1;
+                // TODO: Implement
+                //response.payload = (char *)buffer;
+                //response.payloadSize = bufferLength + 1;
                 response.persistentBufferFlag = 0;
                 response.requestHandle =
                         (OCRequestHandle) ehRequest->requestHandle;

@@ -32,7 +32,7 @@ import android.util.Log;
  */
 public class ConfigurationListener implements IConfigurationListener {
 
-    private final String LOG_TAG = this.getClass().getSimpleName();
+    private final String LOG_TAG = "[TMSample] " + this.getClass().getSimpleName();
 
     @Override
     public void onBootStrapCallback(Vector<OcHeaderOption> headerOptions,

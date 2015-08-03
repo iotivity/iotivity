@@ -58,7 +58,7 @@ uint32_t CAParseHeader(const char *header)
 {
     OIC_LOG(DEBUG, CA_FRAGMENTATION_TAG, "IN");
 
-    VERIFY_NON_NULL(header, CA_FRAGMENTATION_TAG, "header is NULL");
+    VERIFY_NON_NULL_RET(header, CA_FRAGMENTATION_TAG, "header is NULL", 0);
 
     uint32_t dataLen = ((header[0] & 0x0F) << 8) | (header[1] & 0xFF);
 

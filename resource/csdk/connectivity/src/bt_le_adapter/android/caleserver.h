@@ -193,6 +193,13 @@ CAResult_t CALEServerAddGattService(JNIEnv *env, jobject bluetoothGattServer,
 CAResult_t CALEServerStartGattServer(JNIEnv *env, jobject gattServerCallback);
 
 /**
+ * @brief   close gatt server
+ * @param   env                  [IN] JNI interface pointer
+ * @param   bluetoothGattServer  [IN] Gatt Server object
+ * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
+ */
+CAResult_t CALEServerGattClose(JNIEnv *env, jobject bluetoothGattServer);
+/**
  * @brief   send data
  * @param   env                  [IN] JNI interface pointer
  * @param   bluetoothDevice      [IN] bluetooth device object

@@ -42,8 +42,8 @@ void IoTClient::initializePlatform()
 
 void IoTClient::findResource()
 {
-    string coap_multicast_discovery = string(OC_WELL_KNOWN_QUERY "?if=" EDISON_RESOURCE_INTERFACE);
-    OCPlatform::findResource("", coap_multicast_discovery.c_str(),  OC_ALL, m_resourceDiscoveryCallback,
+    string coap_multicast_discovery = string(OC_RSRVD_WELL_KNOWN_URI "?if=" EDISON_RESOURCE_INTERFACE);
+    OCPlatform::findResource("", coap_multicast_discovery.c_str(),  CT_DEFAULT, m_resourceDiscoveryCallback,
                              OC::QualityOfService::LowQos);
 }
 
@@ -148,7 +148,7 @@ void TemperatureSensor::onObserve(const HeaderOptions headerOptions, const OCRep
     {
         double value;
         rep.getValue(TEMPERATURE_RESOURCE_KEY, value);
-        cout << "Observing TemperatureSensor: Current temperature reading is " << value << endl;
+        cout << "Observing TemperatureSensor: Current temperature reading in Celsius is " << value << endl;
         cout << "Sequence number: " << sequenceNumber << endl;
     }
     else
@@ -170,7 +170,7 @@ void TemperatureSensor::onGet(const HeaderOptions& headerOptions,
     {
         double value;
         representation.getValue(TEMPERATURE_RESOURCE_KEY, value);
-        cout << endl << endl << "Current temperature reading: " << value << endl;
+        cout << endl << endl << "Current temperature reading in Celsius: " << value << endl;
     }
     else {
         cerr << endl << endl << "Error in GET response from temperature sensor resource" << endl;

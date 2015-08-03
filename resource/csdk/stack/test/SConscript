@@ -39,7 +39,7 @@ stacktest_env.PrependUnique(CPPPATH = [
 		'../../connectivity/external/inc',
 		'../../extlibs/cjson',
 		'../../../oc_logger/include',
-		'../../../../extlibs/gtest/gtest-1.7.0/include'
+		'#extlibs/gtest/gtest-1.7.0/include'
 		])
 
 stacktest_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
@@ -76,12 +76,7 @@ env.AppendTarget('test')
 if env.get('TEST') == '1':
 	target_os = env.get('TARGET_OS')
 	if target_os == 'linux':
-		out_dir = env.get('BUILD_DIR')
-		result_dir = env.get('BUILD_DIR') + '/test_out/'
-		if not os.path.isdir(result_dir):
-			os.makedirs(result_dir)
-		stacktest_env.AppendENVPath('GTEST_OUTPUT', ['xml:'+ result_dir])
-		stacktest_env.AppendENVPath('LD_LIBRARY_PATH', [out_dir])
-		stacktest_env.AppendENVPath('LD_LIBRARY_PATH', ['./extlibs/gtest/gtest-1.7.0/lib/.libs'])
-		ut = stacktest_env.Command ('ut', None, 'valgrind -q --leak-check=full --xml=yes --xml-file=resource_csdk_stack_test.memcheck ' + out_dir + 'resource/csdk/stack/test/stacktests')
-		AlwaysBuild ('ut')
+                from tools.scons.RunTest import *
+                run_test(stacktest_env,
+                         'resource_csdk_stack_test.memcheck',
+                         'resource/csdk/stack/test/stacktests')

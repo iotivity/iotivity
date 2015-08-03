@@ -4,18 +4,18 @@ Build notes
 // NOTICE - Transition to SCONS
 //-------------------------------------------------
 
-The IoTivity build system is transitioning to SCONS. Although the 
-makefiles are still available (until v1.0) and some developers are 
-still using them, they are currently no longer supported. To learn more 
-about building using SCONS see Readme.scons.txt in the repository root 
+The IoTivity build system is transitioning to SCONS. Although the
+makefiles are still available (until v1.0) and some developers are
+still using them, they are currently no longer supported. To learn more
+about building using SCONS see Readme.scons.txt in the repository root
 directory. The build steps used in continuous integration can be found
 in auto_build.sh which is also in the the repository root directory.
 
 //-------------------------------------------------
 // Linux
 //-------------------------------------------------
-To enable logging, ensure that 
-	-D TB_LOG 
+To enable logging, ensure that
+	-D TB_LOG
 is set in the compiler flags
 
 //-------------------------------------------------
@@ -28,7 +28,7 @@ LOCAL_CFLAGS := -DTB_LOG
 //-------------------------------------------------
 // Arduino
 //-------------------------------------------------
-To enable the logger for Arduino, TB_LOG should be defined in 
+To enable the logger for Arduino, TB_LOG should be defined in
 Properties|C/C++ Build|Settings|Tool Settings|AVR Compiler|Symbols
 and
 Properties|C/C++ Build|Settings|Tool Settings|AVR C++ Compiler|Symbols

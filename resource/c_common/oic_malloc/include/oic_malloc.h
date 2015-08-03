@@ -68,6 +68,26 @@ extern "C"
 void *OICMalloc(size_t size);
 
 /**
+ * Re-allocates a block of memory, pointed to by ptr to the size specified
+ * in size.  The returned value contains a pointer to the new location, with
+ * all data copied into it.  If the new size of the memory-object require movement,
+ * the previous space is freed.  If the new size is larger, the newly allocated
+ * area has non-deterministic content. If the space cannot be allocated, the value
+ * ptr is left unchanged.
+ *
+ * @param ptr - Pointer to a block of memory previously allocated by OICCalloc,
+ *              OICMalloc, or a previous call to this function.  If this value is
+ *              NULL, this function will work identically to a call to OICMalloc.
+ *
+ * @param size - Size of the new memory block in bytes, where size > 0
+ *
+ * @return
+ *      on success, a pointer to the newly sized memory block
+ *      on failure, a null pointer is returned, and the memory pointed to by *ptr is untouched
+ */
+void *OICRealloc(void *ptr, size_t size);
+
+/**
  * Allocates a block of memory for an array of num elements, each of them
  * size bytes long and initializes all its bits to zero.
  *
@@ -86,7 +106,7 @@ void *OICCalloc(size_t num, size_t size);
  * NOTE: This function is intended to be used internally by the TB Stack.
  *       It is not intended to be used by applications.
  *
- * @param ptr - Pointer to block of memory previously allocated by OCMalloc.
+ * @param ptr - Pointer to block of memory previously allocated by OICMalloc.
  *              If ptr is a null pointer, the function does nothing.
  */
 void OICFree(void *ptr);

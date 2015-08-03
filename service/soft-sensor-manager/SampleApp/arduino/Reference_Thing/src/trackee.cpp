@@ -41,8 +41,6 @@ PROGMEM const char TAG[] = "TrackeeSensor";
 
 OCResourceHandle m_handle;
 
-
-
 Cble ble;
 char trackeeID[13] = "9059AF16FEF7";
 int slaver_num = 0;
@@ -50,20 +48,14 @@ int slaver_num = 0;
 char slaveList[SLAVER_EA][13] = {"9059AF1700EE", "34B1F7D004D2"};
 int g_PROXIUnderObservation = 0;
 
-
-
 const char *getResult(OCStackResult result);
 void createResource();
-
 
 #define LENGTH_VAR      50
 bool JsonGenerator( char *jsonBuf, uint16_t buf_length )
 {
-
     return true;
-
 }
-
 
 // On Arduino Atmel boards with Harvard memory architecture, the stack grows
 // downwards from the top and the heap grows upwards. This method will print
@@ -91,49 +83,48 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
 {
     OCEntityHandlerResult ehRet = OC_EH_OK;
 
-    if (entityHandlerRequest && (flag & OC_REQUEST_FLAG))
+    if (entityHandlerRequest )
     {
-        OC_LOG (INFO, TAG, PCF("Flag includes OC_REQUEST_FLAG"));
-        if (OC_REST_GET == entityHandlerRequest->method)
+        if (flag & OC_REQUEST_FLAG)
         {
-            if ( JsonGenerator( (char *)entityHandlerRequest->resJSONPayload,
-                                entityHandlerRequest->resJSONPayloadLen ) == false )
+            OC_LOG (INFO, TAG, PCF("Flag includes OC_REQUEST_FLAG"));
+            if (OC_REST_GET == entityHandlerRequest->method)
             {
-                ehRet  = OC_EH_ERROR;
+                if ( JsonGenerator( (char *)entityHandlerRequest->resJSONPayload,
+                                    entityHandlerRequest->resJSONPayloadLen ) == false )
+                {
+                    ehRet  = OC_EH_ERROR;
+                }
+            }
+            if (OC_REST_PUT == entityHandlerRequest->method)
+            {
+                if (JsonGenerator( (char *)entityHandlerRequest->resJSONPayload,
+                                   entityHandlerRequest->resJSONPayloadLen ) == false )
+                {
+                    ehRet  = OC_EH_ERROR;
+                }
+            }
+    
+        }
+        else if (flag & OC_OBSERVE_FLAG)
+        {
+            OC_LOG (INFO, TAG, PCF("Flag includes OC_OBSERVE_FLAG"));
+            if (OC_OBSERVE_REGISTER == entityHandlerRequest->obsInfo->action)
+            {
+                OC_LOG (INFO, TAG, PCF("Received OC_OBSERVE_REGISTER from client"));
+                g_PROXIUnderObservation = 1;
+            }
+            else if (OC_OBSERVE_DEREGISTER == entityHandlerRequest->obsInfo->action)
+            {
+                OC_LOG (INFO, TAG, PCF("Received OC_OBSERVE_DEREGISTER from client"));
             }
         }
-        if (OC_REST_PUT == entityHandlerRequest->method)
-        {
-            if (JsonGenerator( (char *)entityHandlerRequest->resJSONPayload,
-                               entityHandlerRequest->resJSONPayloadLen ) == false )
-            {
-                ehRet  = OC_EH_ERROR;
-            }
-        }
-    }
-    else if (entityHandlerRequest && (flag & OC_OBSERVE_FLAG))
-    {
-        if (OC_OBSERVE_REGISTER == entityHandlerRequest->obsInfo->action)
-        {
-            OC_LOG (INFO, TAG, PCF("Received OC_OBSERVE_REGISTER from client"));
-            g_PROXIUnderObservation = 1;
-        }
-        else if (OC_OBSERVE_DEREGISTER == entityHandlerRequest->obsInfo->action)
-        {
-            OC_LOG (INFO, TAG, PCF("Received OC_OBSERVE_DEREGISTER from client"));
-        }
-    }
 
-    Serial.println((char *)entityHandlerRequest->resJSONPayload);
+        Serial.println((char *)entityHandlerRequest->resJSONPayload);
+    }
 
     return ehRet;
 }
-
-
-
-
-
-
 
 //The setup function is called once at startup of the sketch
 void setup()
@@ -168,7 +159,6 @@ void setup()
 
     ble.init( (long)115200, BLE_SLAVER, slaveList[0]);
 
-
 //  ble.StatusRead();
 
     OC_LOG_V(INFO, TAG, "Program Start-\r\n");
@@ -180,7 +170,6 @@ void loop()
 {
     // This artificial delay is kept here to avoid endless spinning
     // of Arduino microcontroller. Modify it as per specfic application needs.
-
     if (OCProcess() != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, PCF("OCStack process error"));
@@ -201,12 +190,6 @@ void loop()
     }
 
 }
-
-
-
-
-
-
 
 void createResource()
 {

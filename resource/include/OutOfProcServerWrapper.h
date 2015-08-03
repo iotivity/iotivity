@@ -28,73 +28,72 @@ namespace OC
     class OutOfProcServerWrapper : public IServerWrapper
     {
     public:
-        OutOfProcServerWrapper(PlatformConfig cfg)
+        OutOfProcServerWrapper(PlatformConfig /*cfg*/)
         {}
 
         virtual OCStackResult registerResource(
-                    OCResourceHandle& resourceHandle,
-                    std::string& resourceURI,
-                    const std::string& resourceTypeName,
-                    const std::string& resourceInterface,
-                    EntityHandler& entityHandler,
-                    uint8_t resourceProperty)
-
+            OCResourceHandle& /*resourceHandle*/,
+            std::string& /*resourceURI*/,
+            const std::string& /*resourceTypeName*/,
+            const std::string& /*resourceInterface*/,
+            EntityHandler& /*entityHandler*/,
+            uint8_t /*resourceProperty*/)
         {
             // Not implemented
             return OC_STACK_NOTIMPL;
         }
 
         virtual OCStackResult registerDeviceInfo(
-                    const OCDeviceInfo deviceInfo)
+            const OCDeviceInfo /*deviceInfo*/)
         {
             // Not implemented
             return OC_STACK_NOTIMPL;
         }
 
         virtual OCStackResult registerPlatformInfo(
-                    const OCPlatformInfo deviceInfo)
+            const OCPlatformInfo /*deviceInfo*/)
         {
             // Not implemented
             return OC_STACK_NOTIMPL;
         }
 
         virtual OCStackResult registerResourceWithHost(
-                    OCResourceHandle& resourceHandle,
-                    std::string& resourceHOST,
-                    std::string& resourceURI,
-                    const std::string& resourceTypeName,
-                    const std::string& resourceInterface,
-                    EntityHandler& entityHandler,
-                    uint8_t resourceProperty)
+            OCResourceHandle& /*resourceHandle*/,
+            std::string& /*resourceHOST*/,
+            std::string& /*resourceURI*/,
+            const std::string& /*resourceTypeName*/,
+            const std::string& /*resourceInterface*/,
+            EntityHandler& /*entityHandler*/,
+            uint8_t /*resourceProperty*/)
         {
             // Not implemented
             return OC_STACK_NOTIMPL;
         }
 
         virtual OCStackResult unregisterResource(
-                     const OCResourceHandle& resourceHandle)
+            const OCResourceHandle& /*resourceHandle*/)
         {
             //Not implemented yet
             return OC_STACK_ERROR;
         }
 
        virtual OCStackResult bindTypeToResource(
-                     const OCResourceHandle& resourceHandle,
-                     const std::string& resourceTypeName)
+           const OCResourceHandle& /*resourceHandle*/,
+           const std::string& /*resourceTypeName*/)
         {
             //Not implemented yet
             return OC_STACK_NOTIMPL;
         }
 
         virtual OCStackResult bindInterfaceToResource(
-                     const OCResourceHandle& resourceHandle,
-                     const std::string& resourceInterfaceName)
+            const OCResourceHandle& /*resourceHandle*/,
+            const std::string& /*resourceInterfaceName*/)
         {
             //Not implemented yet
             return OC_STACK_NOTIMPL;
         }
 
-        virtual OCStackResult startPresence(const unsigned int seconds)
+        virtual OCStackResult startPresence(const unsigned int /*seconds*/)
         {
             //Not implemented yet
             return OC_STACK_NOTIMPL;
@@ -106,13 +105,15 @@ namespace OC
             return OC_STACK_NOTIMPL;
         }
 
-        virtual OCStackResult setDefaultDeviceEntityHandler(EntityHandler entityHandler)
+        virtual OCStackResult setDefaultDeviceEntityHandler(
+            EntityHandler /*entityHandler*/)
         {
             //Not implemented yet
             return OC_STACK_NOTIMPL;
         }
 
-        virtual OCStackResult sendResponse(const std::shared_ptr<OCResourceResponse> pResponse)
+        virtual OCStackResult sendResponse(
+            const std::shared_ptr<OCResourceResponse> /*pResponse*/)
         {
            //Not implemented yet
            return OC_STACK_NOTIMPL;

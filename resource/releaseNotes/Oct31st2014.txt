@@ -14,25 +14,25 @@ What is new?
 --------------------------------------------
 Class OCPlatform (Header file: OCPlatform.h)
 --------------------------------------------
-This release includes support for using OCPlatform instance in multiple threads. 
+This release includes support for using OCPlatform instance in multiple threads.
 OCPlatform functions are now supported to be called from multiple threads.
-Applications need not create OCPlatform object explicitly. 
+Applications need not create OCPlatform object explicitly.
 
 
 ***************
 Configure API
 ***************
-Applications can set the PlatformConfig and then invoke new API "Configure" in OCPlatform.h. 
+Applications can set the PlatformConfig and then invoke new API "Configure" in OCPlatform.h.
 NOTE: This API is optional. First time an OCPlatform API is called, stack creates the singleton
 instance internally. After which, setting the configuration will have no effect.
 
-NOTE: OCPlatform functions can be called without OCPlatform instance. 
-Sample: 
+NOTE: OCPlatform functions can be called without OCPlatform instance.
+Sample:
 
-OCStackResult result = OCPlatform::registerResource(... ); 
+OCStackResult result = OCPlatform::registerResource(... );
 
 NOTE: For clarity, registerResource parameters are not shown above.
-NOTE: Iotivity stack internally creates a singleton instance. 
+NOTE: Iotivity stack internally creates a singleton instance.
 NOTE: C++ sample applications are updated accordingly. Please refer oic-resource/examples
 
 ------------
@@ -50,11 +50,11 @@ OIC base supports Arduino WiFi shield.
 This support has been tested with Arduino Mega 2560 and with Arduino 1.0.5 WiFi library.
 Please refer to oic-resource/csdk/README file for building OIC base with WiFi support.
 
-Minor bug fixes done. 
+Minor bug fixes done.
 
 Simple attribute sample update:
 This release has updates to roomserver and roomclient applications to demonstrate simple
-attribute support in collections. 
+attribute support in collections.
 
 C++ unit test infrastructure:
 This release includes infrastructure for C++ unit tests (oic-resource/unittests)

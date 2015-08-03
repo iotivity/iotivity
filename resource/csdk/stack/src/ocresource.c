@@ -34,6 +34,7 @@
 #include "oic_string.h"
 #include "logger.h"
 #include "cJSON.h"
+#include "ocpayload.h"
 
 #include "cacommon.h"
 #include "cainterface.h"
@@ -51,17 +52,6 @@ extern OCResource *headResource;
 static OCPlatformInfo savedPlatformInfo = {};
 static OCDeviceInfo savedDeviceInfo = {};
 
-static const char * VIRTUAL_RSRCS[] =
-{
-    "/oic/res",
-    "/oic/d",
-    "/oic/p",
-    "/oic/res/types/d",
-    #ifdef WITH_PRESENCE
-    "/oic/ad"
-    #endif
-};
-
 //-----------------------------------------------------------------------------
 // Default resource entity handler function
 //-----------------------------------------------------------------------------
@@ -77,493 +67,213 @@ OCEntityHandlerResult defaultResourceEHandler(OCEntityHandlerFlag flag,
 }
 
 /* This method will retrieve the port at which the secure resource is hosted */
-static OCStackResult GetSecurePortInfo(CATransportAdapter_t connType, uint16_t *port)
+static OCStackResult GetSecurePortInfo(OCDevAddr *endpoint, uint16_t *port)
 {
-    CAEndpoint_t* info = NULL;
-    uint32_t size = 0;
-    OCStackResult ret = OC_STACK_ERROR;
+    uint16_t p = 0;
 
-    CAResult_t caResult = CAGetNetworkInformation(&info, &size);
-    if ((caResult == CA_STATUS_OK) && info && size)
+    if (endpoint->adapter == OC_ADAPTER_IP)
     {
-        while (size--)
+        if (endpoint->flags & OC_IP_USE_V6)
         {
-            if ((info[size].flags & CA_SECURE) && info[size].adapter == connType)
-            {
-                if (info[size].adapter == CA_ADAPTER_IP)
-                {
-                    *port = info[size].port;
-                    ret = OC_STACK_OK;
-                    break;
-                }
-            }
+            p = caglobals.ip.u6s.port;
+        }
+        else if (endpoint->flags & OC_IP_USE_V4)
+        {
+            p = caglobals.ip.u4s.port;
         }
     }
 
-    OICFree(info);
-    return ret;
-}
-
-static char* GetJSONStringFromPlatformInfo(OCPlatformInfo info)
-{
-    cJSON *rootObj = cJSON_CreateObject();
-
-    if (!rootObj)
-    {
-        return NULL;
-    }
-
-    cJSON *repObj = NULL;
-    char *jsonEncodedInfo = NULL;
-
-    cJSON_AddItemToObject (rootObj, OC_RSRVD_HREF,
-            cJSON_CreateString(GetVirtualResourceUri(OC_PLATFORM_URI)));
-
-    cJSON_AddItemToObject (rootObj, OC_RSRVD_REPRESENTATION, repObj = cJSON_CreateObject());
-
-    if (!repObj)
-    {
-        return NULL;
-    }
-    if (info.platformID)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_PLATFORM_ID,
-                cJSON_CreateString(info.platformID));
-    }
-
-    if (info.manufacturerName)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_MFG_NAME,
-                cJSON_CreateString(info.manufacturerName));
-    }
-
-    if (info.manufacturerUrl)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_MFG_URL,
-                cJSON_CreateString(info.manufacturerUrl));
-    }
-
-    if (info.modelNumber)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_MODEL_NUM,
-                cJSON_CreateString(info.modelNumber));
-    }
-
-    if (info.dateOfManufacture)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_MFG_DATE,
-                cJSON_CreateString(info.dateOfManufacture));
-    }
-
-    if (info.platformVersion)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_PLATFORM_VERSION,
-                cJSON_CreateString(info.platformVersion));
-    }
-
-    if (info.operatingSystemVersion)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_OS_VERSION,
-                cJSON_CreateString(info.operatingSystemVersion));
-    }
-
-    if (info.hardwareVersion)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_HARDWARE_VERSION,
-                cJSON_CreateString(info.hardwareVersion));
-    }
-
-    if (info.firmwareVersion)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_FIRMWARE_VERSION,
-                cJSON_CreateString(info.firmwareVersion));
-    }
-
-    if (info.supportUrl)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_SUPPORT_URL,
-                cJSON_CreateString(info.supportUrl));
-    }
-
-    if (info.systemTime)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_SYSTEM_TIME,
-                cJSON_CreateString(info.systemTime));
-    }
-
-    jsonEncodedInfo = cJSON_PrintUnformatted (rootObj);
-
-    cJSON_Delete(rootObj);
-
-    return jsonEncodedInfo;
-}
-
-static char* GetJSONStringFromDeviceInfo(OCDeviceInfo info)
-{
-    cJSON *rootObj = cJSON_CreateObject();
-
-    if (!rootObj)
-    {
-        return NULL;
-    }
-
-    cJSON *repObj = NULL;
-    char *jsonEncodedInfo = NULL;
-
-    cJSON_AddItemToObject (rootObj, OC_RSRVD_HREF,
-            cJSON_CreateString(GetVirtualResourceUri(OC_DEVICE_URI)));
-
-    cJSON_AddItemToObject (rootObj, OC_RSRVD_REPRESENTATION, repObj = cJSON_CreateObject());
-
-    if (!repObj)
-    {
-        return NULL;
-    }
-
-    cJSON_AddItemToObject (repObj, OC_RSRVD_DEVICE_ID,
-                    cJSON_CreateString(OCGetServerInstanceIDString()));
-
-    if (info.deviceName)
-    {
-        cJSON_AddItemToObject (repObj, OC_RSRVD_DEVICE_NAME,
-                        cJSON_CreateString(info.deviceName));
-    }
-
-    cJSON_AddItemToObject (repObj, OC_RSRVD_SPEC_VERSION,
-                        cJSON_CreateString(OC_SPEC_VERSION));
-
-    cJSON_AddItemToObject (repObj, OC_RSRVD_DATA_MODEL_VERSION,
-                        cJSON_CreateString(OC_DATA_MODEL_VERSION));
-
-    jsonEncodedInfo = cJSON_PrintUnformatted (rootObj);
-
-    cJSON_Delete(rootObj);
-
-    return jsonEncodedInfo;
-}
-
-static OCStackResult ValidateUrlQuery (char *url, char *query,
-                                uint8_t *filterOn, char **filterValue)
-{
-    if(!filterOn || !filterValue)
-    {
-        return OC_STACK_INVALID_PARAM;
-    }
-
-    char *filterParam = NULL;
-
-    OC_LOG(INFO, TAG, PCF("Entering ValidateUrlQuery"));
-    if (!url)
-    {
-        return OC_STACK_INVALID_URI;
-    }
-
-    if (strcmp ((char *)url, GetVirtualResourceUri(OC_WELL_KNOWN_URI)) == 0 ||
-                strcmp ((char *)url, GetVirtualResourceUri(OC_DEVICE_URI)) == 0 ||
-                strcmp((char *)url, GetVirtualResourceUri(OC_PLATFORM_URI)) == 0)
-    {
-        *filterOn = STACK_RES_DISCOVERY_NOFILTER;
-        if (query && *query)
-        {
-            char* strTokPtr = NULL;
-            filterParam = strtok_r((char *)query, "=", &strTokPtr);
-            *filterValue = strtok_r(NULL, " ", &strTokPtr);
-
-            if (!(*filterValue) || ! filterParam)
-            {
-                return OC_STACK_INVALID_QUERY;
-            }
-            else if (strcmp (filterParam, OC_RSRVD_INTERFACE) == 0)
-            {
-                // Resource discovery with interface filter
-                *filterOn = STACK_RES_DISCOVERY_IF_FILTER;
-            }
-            else if (strcmp (filterParam, OC_RSRVD_RESOURCE_TYPE) == 0)
-            {
-                // Resource discovery with resource type filter
-                *filterOn = STACK_RES_DISCOVERY_RT_FILTER;
-            }
-            else if (strcmp (filterParam, OC_RSRVD_DEVICE_ID) == 0)
-            {
-                //Device ID filter
-                *filterOn = STACK_DEVICE_DISCOVERY_DI_FILTER;
-            }
-            else if (strcmp (filterParam, OC_RSRVD_DEVICE_NAME) == 0)
-            {
-                //Device Name filter
-                *filterOn = STACK_DEVICE_DISCOVERY_DN_FILTER;
-            }
-            else
-            {
-                // Other filter types not supported
-                return OC_STACK_INVALID_QUERY;
-            }
-        }
-    }
-    #ifdef WITH_PRESENCE
-    else if (strcmp((char *)url, GetVirtualResourceUri(OC_PRESENCE)) == 0)
-    {
-        //Nothing needs to be done, except for pass a OC_PRESENCE query through as OC_STACK_OK.
-        OC_LOG(INFO, TAG, PCF("OC_PRESENCE Request"));
-        *filterOn = STACK_RES_DISCOVERY_NOFILTER;
-    }
-    #endif
-    else
-    {
-        // Other URIs not yet supported
-        return OC_STACK_INVALID_URI;
-    }
-    OC_LOG(INFO, TAG, PCF("Exiting ValidateUrlQuery"));
+    *port = p;
     return OC_STACK_OK;
 }
 
-
-OCStackResult
-BuildVirtualResourceResponse(const OCResource *resourcePtr, uint8_t filterOn,
-                       const char *filterValue, char *out, uint16_t *remaining,
-                       CATransportAdapter_t adapter)
+/*
+ * Function will extract 0, 1 or 2 filters from query.
+ * More than 2 filters or unsupported filters will result in error.
+ * If both filters are of the same supported type, the 2nd one will be picked.
+ * Resource and device filters in the SAME query are NOT validated
+ * and resources will likely not clear filters.
+ */
+static OCStackResult ExtractFiltersFromQuery(char *query, char **filterOne, char **filterTwo)
 {
-    if(!resourcePtr || !out  || !remaining)
+
+    char *key = NULL;
+    char *value = NULL;
+    char *restOfQuery = NULL;
+    int numKeyValuePairsParsed = 0;
+
+    *filterOne = NULL;
+    *filterTwo = NULL;
+
+    OC_LOG_V(INFO, TAG, "Extracting params from %s", query);
+
+    char *keyValuePair = strtok_r (query, OC_QUERY_SEPARATOR, &restOfQuery);
+
+    while(keyValuePair)
     {
-        return OC_STACK_INVALID_PARAM;
-    }
-
-    OCResourceType *resourceTypePtr = NULL;
-    OCResourceInterface *interfacePtr = NULL;
-    cJSON *resObj = NULL;
-    cJSON *propObj = NULL;
-    cJSON *policyObj = NULL;
-    cJSON *rtArray = NULL;
-    char *jsonStr = NULL;
-    uint8_t encodeRes = 0;
-    OCStackResult ret = OC_STACK_OK;
-    uint16_t jsonLen = 0;
-
-    OC_LOG(INFO, TAG, PCF("Entering BuildVirtualResourceResponse"));
-    resObj = cJSON_CreateObject();
-
-    if (resourcePtr)
-    {
-        encodeRes = 0;
-        if ((filterOn == STACK_RES_DISCOVERY_RT_FILTER) && filterValue)
+        if (numKeyValuePairsParsed >= 2)
         {
-            resourceTypePtr = resourcePtr->rsrcType;
-            while (resourceTypePtr)
-            {
-                if (strcmp (resourceTypePtr->resourcetypename, filterValue) == 0)
-                {
-                    encodeRes = 1;
-                    break;
-                }
-                resourceTypePtr = resourceTypePtr->next;
-            }
-        }
-        else if ((filterOn == STACK_RES_DISCOVERY_IF_FILTER) && filterValue)
-        {
-            interfacePtr = resourcePtr->rsrcInterface;
-            while (interfacePtr)
-            {
-                if (strcmp (interfacePtr->name, filterValue) == 0)
-                {
-                    encodeRes = 1;
-                    break;
-                }
-                interfacePtr = interfacePtr->next;
-            }
-        }
-        else if (filterOn == STACK_RES_DISCOVERY_NOFILTER)
-        {
-            encodeRes = 1;
-        }
-        else
-        {
-            //TODO: Unsupported query filter
+            OC_LOG(ERROR, TAG, PCF("More than 2 queries params in URI."));
             return OC_STACK_INVALID_QUERY;
         }
 
-        if (encodeRes)
+        key = strtok_r(keyValuePair, OC_KEY_VALUE_DELIMITER, &value);
+
+        if (!key || !value)
         {
-            // Add URIs
-            cJSON_AddItemToObject(resObj, OC_RSRVD_HREF, cJSON_CreateString(resourcePtr->uri));
-
-            // Add server instance id
-            cJSON_AddItemToObject(resObj,
-                                   OC_RSRVD_SERVER_INSTANCE_ID,
-                                   cJSON_CreateString(OCGetServerInstanceIDString()));
-
-
-            cJSON_AddItemToObject (resObj, OC_RSRVD_PROPERTY, propObj = cJSON_CreateObject());
-            // Add resource types
-            cJSON_AddItemToObject(propObj, OC_RSRVD_RESOURCE_TYPE, rtArray = cJSON_CreateArray());
-            resourceTypePtr = resourcePtr->rsrcType;
-            while (resourceTypePtr)
-            {
-                cJSON_AddItemToArray(rtArray,
-                                      cJSON_CreateString(resourceTypePtr->resourcetypename));
-                resourceTypePtr = resourceTypePtr->next;
-            }
-            // Add interface types
-            cJSON_AddItemToObject(propObj, OC_RSRVD_INTERFACE, rtArray = cJSON_CreateArray());
-            interfacePtr = resourcePtr->rsrcInterface;
-            while (interfacePtr)
-            {
-                cJSON_AddItemToArray(rtArray, cJSON_CreateString(interfacePtr->name));
-                interfacePtr = interfacePtr->next;
-            }
-
-            //Add Policy
-            cJSON_AddItemToObject(propObj, OC_RSRVD_POLICY, policyObj = cJSON_CreateObject());
-
-            if (policyObj)
-            {
-                // Policy Property Bitmap
-                // If resource is discoverable, set discoverability flag.
-                // Resources that are not discoverable will not have the flag.
-                cJSON_AddNumberToObject(policyObj, OC_RSRVD_BITMAP,
-                                 resourcePtr->resourceProperties & (OC_OBSERVABLE|OC_DISCOVERABLE));
-
-                // Set secure flag for secure resources
-                if (resourcePtr->resourceProperties & OC_SECURE)
-                {
-                    cJSON_AddNumberToObject(policyObj, OC_RSRVD_SECURE, OC_RESOURCE_SECURE);
-                    //Set the IP port also as secure resources are hosted on a different port
-                    uint16_t port = 0;
-                    if (GetSecurePortInfo(adapter, &port) == OC_STACK_OK)
-                    {
-                        cJSON_AddNumberToObject(policyObj, OC_RSRVD_HOSTING_PORT, port);
-                    }
-                }
-            }
-            else
-            {
-                cJSON_Delete(resObj);
-                return OC_STACK_NO_MEMORY;
-            }
+            return OC_STACK_INVALID_QUERY;
         }
-    }
-    jsonStr = cJSON_PrintUnformatted (resObj);
+        else if (strcmp (key, OC_RSRVD_INTERFACE) == 0)
+        {
+            *filterOne = value;     // if
+        }
+        else if (strcmp (key, OC_RSRVD_RESOURCE_TYPE) == 0)
+        {
+            *filterTwo = value;     // rt
+        }
+        else
+        {
+            OC_LOG_V(ERROR, TAG, "Unsupported query key: %s", key);
+            return OC_STACK_INVALID_QUERY;
+        }
+        ++numKeyValuePairsParsed;
 
-    if(!jsonStr)
-    {
-        cJSON_Delete(resObj);
-        return OC_STACK_NO_MEMORY;
+        keyValuePair = strtok_r(NULL, OC_QUERY_SEPARATOR, &restOfQuery);
     }
 
-    jsonLen = strlen(jsonStr);
-    if (jsonLen < *remaining)
-    {
-        OICStrcpy(out, *remaining, jsonStr);
-        *remaining = *remaining - jsonLen;
-    }
-    else
-    {
-        ret = OC_STACK_ERROR;
-    }
-    cJSON_Delete (resObj);
-    OICFree (jsonStr);
-
-    OC_LOG(INFO, TAG, PCF("Exiting BuildVirtualResourceResponse"));
-    return ret;
+    OC_LOG_V(INFO, TAG, "Extracted params %s and %s.", *filterOne, *filterTwo);
+    return OC_STACK_OK;
 }
 
-OCStackResult BuildVirtualResourceResponseForDevice(uint8_t filterOn, char *filterValue,
-                                                    char *out, uint16_t *remaining)
+static OCVirtualResources GetTypeOfVirtualURI(const char *uriInRequest)
 {
-    if(!out || !remaining)
+    if (strcmp(uriInRequest, OC_RSRVD_WELL_KNOWN_URI) == 0)
+    {
+        return OC_WELL_KNOWN_URI;
+    }
+    else if (strcmp(uriInRequest, OC_RSRVD_DEVICE_URI) == 0)
+    {
+        return OC_DEVICE_URI;
+    }
+    else if (strcmp(uriInRequest, OC_RSRVD_PLATFORM_URI) == 0)
+    {
+        return OC_PLATFORM_URI;
+    }
+    else if (strcmp(uriInRequest, OC_RSRVD_RESOURCE_TYPES_URI) == 0)
+    {
+        return OC_RESOURCE_TYPES_URI;
+    }
+#ifdef WITH_PRESENCE
+    else if (strcmp(uriInRequest, OC_RSRVD_PRESENCE_URI) == 0)
+    {
+        return OC_PRESENCE;
+    }
+#endif //WITH_PRESENCE
+    return OC_UNKNOWN_URI;
+}
+
+static OCStackResult getQueryParamsForFiltering (OCVirtualResources uri, char *query,
+                                            char **filterOne, char **filterTwo)
+{
+    if(!filterOne || !filterTwo)
     {
         return OC_STACK_INVALID_PARAM;
     }
 
-    OCStackResult ret = OC_STACK_ERROR;
-    char *jsonStr = NULL;
-    uint16_t jsonLen = 0;
+    *filterOne = NULL;
+    *filterTwo = NULL;
 
-    jsonStr = GetJSONStringFromDeviceInfo(savedDeviceInfo);
-
-    if(jsonStr)
+    #ifdef WITH_PRESENCE
+    if (uri == OC_PRESENCE)
     {
-        jsonLen = strlen(jsonStr);
+        //Nothing needs to be done, except for pass a OC_PRESENCE query through as OC_STACK_OK.
+        OC_LOG(INFO, TAG, PCF("OC_PRESENCE Request for virtual resource."));
+        return OC_STACK_OK;
+    }
+    #endif
 
-        if (jsonLen < *remaining)
-        {
-            OICStrcpy(out, *remaining, jsonStr);
-            *remaining = *remaining - jsonLen;
-            ret = OC_STACK_OK;
-        }
-        else
-        {
-            ret = OC_STACK_ERROR;
-        }
+    OCStackResult result = OC_STACK_OK;
 
-        OICFree(jsonStr);
+    if (query && *query)
+    {
+        result = ExtractFiltersFromQuery(query, filterOne, filterTwo);
+    }
+
+    return result;
+}
+
+OCStackResult BuildResponseRepresentation(const OCResource *resourcePtr,
+                    OCRepPayload** payload)
+{
+    OCRepPayload *tempPayload = OCRepPayloadCreate();
+
+    if (!resourcePtr)
+    {
+        OCRepPayloadDestroy(tempPayload);
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    if(!tempPayload)
+    {
+        return OC_STACK_NO_MEMORY;
+    }
+
+    OCRepPayloadSetUri(tempPayload, resourcePtr->uri);
+
+    OCResourceType *resType = resourcePtr->rsrcType;
+    while(resType)
+    {
+        OCRepPayloadAddResourceType(tempPayload, resType->resourcetypename);
+        resType = resType->next;
+    }
+
+    OCResourceInterface *resInterface = resourcePtr->rsrcInterface;
+    while(resInterface)
+    {
+        OCRepPayloadAddInterface(tempPayload, resInterface->name);
+        resInterface = resInterface->next;
+    }
+
+    OCAttribute *resAttrib = resourcePtr->rsrcAttributes;
+    while(resAttrib)
+    {
+        OCRepPayloadSetPropString(tempPayload, resAttrib->attrName,
+                                resAttrib->attrValue);
+        resAttrib = resAttrib->next;
+    }
+
+    if(!*payload)
+    {
+        *payload = tempPayload;
     }
     else
     {
-        OC_LOG(ERROR, TAG, PCF("Error encoding save device info."));
-        ret = OC_STACK_ERROR;
+        OCRepPayloadAppend(*payload, tempPayload);
     }
-    return ret;
+
+    return OC_STACK_OK;
 }
 
-OCStackResult BuildVirtualResourceResponseForPlatform(char *out, uint16_t *remaining)
+OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
+                        OCDiscoveryPayload *payload, OCDevAddr *devAddr)
 {
-    OCStackResult ret = OC_STACK_OK;
-
-    char *jsonStr = GetJSONStringFromPlatformInfo(savedPlatformInfo);
-
-    if(jsonStr)
+    if (!resourcePtr || !payload)
     {
-        size_t jsonLen = strlen(jsonStr);
-
-        if (jsonLen < *remaining)
-        {
-            OICStrcpy(out, *remaining, jsonStr);
-            *remaining = *remaining - jsonLen;
-            ret = OC_STACK_OK;
-        }
-        else
-        {
-            OC_LOG_V(ERROR, TAG, PCF("Platform info string too big. len: %u"), jsonLen);
-            ret = OC_STACK_ERROR;
-        }
-        OICFree(jsonStr);
+        return OC_STACK_INVALID_PARAM;
     }
-    else
+    uint16_t port = 0;
+    if (resourcePtr->resourceProperties & OC_SECURE)
     {
-        OC_LOG(ERROR, TAG, PCF("Error encoding save platform info."));
-        ret = OC_STACK_ERROR;
+       if (GetSecurePortInfo(devAddr, &port) != OC_STACK_OK)
+       {
+           port = 0;
+       }
     }
 
-
-    return ret;
-
-}
-const char * GetVirtualResourceUri( OCVirtualResources resource)
-{
-    if (resource < OC_MAX_VIRTUAL_RESOURCES)
-    {
-        return VIRTUAL_RSRCS[resource];
-    }
-
-    return NULL;
+    OCDiscoveryPayloadAddResource(payload, resourcePtr, port);
+    return OC_STACK_OK;
 }
 
-bool IsVirtualResource(const char* resourceUri)
-{
-    if(!resourceUri)
-    {
-        return false;
-    }
-
-    for (int i = 0; i < OC_MAX_VIRTUAL_RESOURCES; i++)
-    {
-        if (strcmp(resourceUri, GetVirtualResourceUri((OCVirtualResources)i)) == 0)
-        {
-            return true;
-        }
-    }
-    return false;
-}
 
 uint8_t IsCollectionResource (OCResource *resource)
 {
@@ -598,7 +308,7 @@ OCResource *FindResourceByUri(const char* resourceUri)
         }
         pointer = pointer->next;
     }
-    OC_LOG(INFO, TAG, PCF("Resource not found"));
+    OC_LOG_V(INFO, TAG, "Resource %s not found", resourceUri);
     return NULL;
 }
 
@@ -612,13 +322,12 @@ OCStackResult DetermineResourceHandling (const OCServerRequest *request,
         return OC_STACK_INVALID_PARAM;
     }
 
-    OC_LOG(INFO, TAG, PCF("Entering DetermineResourceHandling"));
-
-    const OCDevAddr *devAddr = &request->devAddr;
+    OC_LOG_V(INFO, TAG, "DetermineResourceHandling for %s", request->resourceUrl);
 
     // Check if virtual resource
-    if (IsVirtualResource((const char*)request->resourceUrl))
+    if (GetTypeOfVirtualURI(request->resourceUrl) != OC_UNKNOWN_URI)
     {
+        OC_LOG_V (INFO, TAG, "%s is virtual", request->resourceUrl);
         *handling = OC_RESOURCE_VIRTUAL;
         *resource = headResource;
         return OC_STACK_OK;
@@ -646,13 +355,6 @@ OCStackResult DetermineResourceHandling (const OCServerRequest *request,
             // and default device handler does not exist
             *handling = OC_RESOURCE_NOT_SPECIFIED;
             return OC_STACK_NO_RESOURCE;
-        }
-
-        // secure resource will entertain only authorized requests
-        if ((resourcePtr->resourceProperties & OC_SECURE) && ((devAddr->flags & OC_FLAG_SECURE) == 0))
-        {
-            OC_LOG(ERROR, TAG, PCF("Un-authorized request. Ignoring"));
-            return OC_STACK_RESOURCE_ERROR;
         }
 
         if (IsCollectionResource (resourcePtr))
@@ -720,150 +422,248 @@ OCStackResult EntityHandlerCodeToOCStackCode(OCEntityHandlerResult ehResult)
     return result;
 }
 
-static OCStackResult
-HandleVirtualResource(OCServerRequest *request, OCResource *resource)
+static bool resourceMatchesRTFilter(OCResource *resource, char *resourceTypeFilter)
+{
+    if (!resource)
+    {
+        return false;
+    }
+
+    // Null or empty is analogous to no filter.
+    if (resourceTypeFilter == NULL || *resourceTypeFilter == 0)
+    {
+        return true;
+    }
+
+    OCResourceType *resourceTypePtr = resource->rsrcType;
+
+    while (resourceTypePtr)
+    {
+        if (strcmp (resourceTypePtr->resourcetypename, resourceTypeFilter) == 0)
+        {
+            return true;
+        }
+        resourceTypePtr = resourceTypePtr->next;
+    }
+
+    OC_LOG_V(INFO, TAG, PCF("%s does not contain rt=%s."), resource->uri, resourceTypeFilter);
+    return false;
+}
+
+static bool resourceMatchesIFFilter(OCResource *resource, char *interfaceFilter)
+{
+    if (!resource)
+    {
+        return false;
+    }
+
+    // Null or empty is analogous to no filter.
+    if (interfaceFilter == NULL || *interfaceFilter == 0)
+    {
+        return true;
+    }
+
+    OCResourceInterface *interfacePtr = resource->rsrcInterface;
+
+    while (interfacePtr)
+    {
+        if (strcmp (interfacePtr->name, interfaceFilter) == 0)
+        {
+            return true;
+        }
+        interfacePtr = interfacePtr->next;
+    }
+
+    OC_LOG_V(INFO, TAG, PCF("%s does not contain if=%s."), resource->uri, interfaceFilter);
+    return false;
+}
+
+/*
+ * If the filters are null, they will be assumed to NOT be present
+ * and the resource will not be matched against them.
+ * Function will return true if all non null AND non empty filters passed in find a match.
+ */
+static bool includeThisResourceInResponse(OCResource *resource,
+                                                 char *interfaceFilter,
+                                                 char *resourceTypeFilter)
+{
+    if (!resource)
+    {
+        OC_LOG(ERROR, TAG, PCF("Invalid resource"));
+        return false;
+    }
+
+    if ( resource->resourceProperties & OC_EXPLICIT_DISCOVERABLE)
+    {
+        /*
+         * At least one valid filter should be available to
+         * include the resource in discovery response
+         */
+        if (!((interfaceFilter && *interfaceFilter ) ||
+              (resourceTypeFilter && *resourceTypeFilter)))
+        {
+            OC_LOG_V(INFO, TAG, PCF("%s no query string for EXPLICIT_DISCOVERABLE \
+                resource"), resource->uri);
+            return false;
+        }
+    }
+    else if ( !(resource->resourceProperties & OC_ACTIVE) ||
+         !(resource->resourceProperties & OC_DISCOVERABLE))
+    {
+        OC_LOG_V(INFO, TAG, PCF("%s not ACTIVE or DISCOVERABLE"), resource->uri);
+        return false;
+    }
+
+    return resourceMatchesIFFilter(resource, interfaceFilter) &&
+           resourceMatchesRTFilter(resource, resourceTypeFilter);
+
+}
+
+OCStackResult SendNonPersistantDiscoveryResponse(OCServerRequest *request, OCResource *resource,
+                                OCPayload *discoveryPayload, OCEntityHandlerResult ehResult)
+{
+    OCEntityHandlerResponse response = {};
+
+    response.ehResult = ehResult;
+    response.payload = discoveryPayload;
+    response.persistentBufferFlag = 0;
+    response.requestHandle = (OCRequestHandle) request;
+    response.resourceHandle = (OCResourceHandle) resource;
+
+    return OCDoResponse(&response);
+}
+
+static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource* resource)
 {
     if (!request || !resource)
     {
         return OC_STACK_INVALID_PARAM;
     }
 
-    OCStackResult result = OC_STACK_ERROR;
-    char *filterValue = NULL;
-    uint8_t filterOn = 0;
-    uint16_t remaining = 0;
-    char * ptr = NULL;
-    uint8_t firstLoopDone = 0;
-    char discoveryResBuf[MAX_RESPONSE_LENGTH] = {};
+    OCStackResult discoveryResult = OC_STACK_ERROR;
+
+    bool bMulticast    = false;     // Was the discovery request a multicast request?
+    OCPayload* payload = NULL;
 
     OC_LOG(INFO, TAG, PCF("Entering HandleVirtualResource"));
 
-    result = ValidateUrlQuery (request->resourceUrl,
-            request->query, &filterOn,
-            &filterValue);
+    OCVirtualResources virtualUriInRequest = GetTypeOfVirtualURI (request->resourceUrl);
 
-    if (result == OC_STACK_OK)
+    // Step 1: Generate the response to discovery request
+    if (virtualUriInRequest == OC_WELL_KNOWN_URI)
     {
-        if (strcmp ((char *)request->resourceUrl, GetVirtualResourceUri(OC_WELL_KNOWN_URI)) == 0)
-        {
-            ptr = discoveryResBuf;
-            remaining = MAX_RESPONSE_LENGTH;
+        char *filterOne = NULL;
+        char *filterTwo = NULL;
 
-            // Check if valid resource and enough space in buffer for atleast
-            // the null character.
-            while(resource && (remaining > 1))
+        discoveryResult = getQueryParamsForFiltering (virtualUriInRequest, request->query,
+                &filterOne, &filterTwo);
+
+        if (discoveryResult == OC_STACK_OK)
+        {
+            payload = (OCPayload*)OCDiscoveryPayloadCreate();
+
+            if(payload)
             {
-                if((resource->resourceProperties & OC_ACTIVE)
-                        && (resource->resourceProperties & OC_DISCOVERABLE))
+                for(;resource && discoveryResult == OC_STACK_OK; resource = resource->next)
                 {
-                    // if there is data on the buffer, we have already added a response,
-                    // so we need to add a comma before we do anything
-                    if(firstLoopDone
-                            && remaining >= (sizeof(OC_JSON_SEPARATOR)+1))
+                    if(includeThisResourceInResponse(resource, filterOne, filterTwo))
                     {
-                        *ptr = OC_JSON_SEPARATOR;
-                        ptr++;
-                        remaining--;
+                        discoveryResult = BuildVirtualResourceResponse(resource,
+                                (OCDiscoveryPayload*)payload,
+                                &request->devAddr);
                     }
-                    firstLoopDone = 1;
-                    result = BuildVirtualResourceResponse(resource, filterOn,
-                                filterValue, (char*)ptr, &remaining,
-                                (CATransportAdapter_t)request->devAddr.adapter);
-
-                    if (result != OC_STACK_OK)
-                    {
-                        // if this failed, we need to remove the comma added above.
-                        if(firstLoopDone)
-                        {
-                            ptr--;
-                            *ptr = '\0';
-                            remaining++;
-                        }
-                        break;
-                    }
-                    ptr += strlen((char *)ptr);
                 }
-                resource = resource->next;
+                // Set discoveryResult appropriately if no 'valid' resources are available.
+                if (((OCDiscoveryPayload*)payload)->resources == NULL)
+                {
+                    discoveryResult = OC_STACK_NO_RESOURCE;
+                }
             }
-
-            if(strlen((const char *)discoveryResBuf) > 0)
+            else
             {
-                OCEntityHandlerResponse response = {};
-
-                response.ehResult = OC_EH_OK;
-                response.payload = discoveryResBuf;
-                response.payloadSize = strlen((const char *)discoveryResBuf) + 1;
-                response.persistentBufferFlag = 0;
-                response.requestHandle = (OCRequestHandle) request;
-                response.resourceHandle = (OCResourceHandle) resource;
-
-                result = OCDoResponse(&response);
+                discoveryResult = OC_STACK_NO_MEMORY;
             }
         }
-        else if (strcmp ((char *)request->resourceUrl, GetVirtualResourceUri(OC_DEVICE_URI)) == 0)
-        {
-            remaining = MAX_RESPONSE_LENGTH;
-            ptr = discoveryResBuf;
-
-            result = BuildVirtualResourceResponseForDevice(filterOn, filterValue,
-                    (char*)ptr, &remaining);
-
-            if(result == OC_STACK_OK)
-            {
-                ptr += strlen((char*)ptr);
-            }
-
-            if(remaining < MAX_RESPONSE_LENGTH)
-            {
-                OCEntityHandlerResponse response = {0};
-
-                response.ehResult = OC_EH_OK;
-                response.payload = discoveryResBuf;
-                response.payloadSize = strlen((const char *)discoveryResBuf) + 1;
-                response.persistentBufferFlag = 0;
-                response.requestHandle = (OCRequestHandle) request;
-                response.resourceHandle = (OCResourceHandle) resource;
-
-                result = OCDoResponse(&response);
-            }
-        }
-        else if (strcmp ((char *)request->resourceUrl, GetVirtualResourceUri(OC_PLATFORM_URI)) == 0)
-        {
-            remaining = MAX_RESPONSE_LENGTH;
-            ptr = discoveryResBuf;
-
-            result = BuildVirtualResourceResponseForPlatform((char*)ptr, &remaining);
-
-            if(result == OC_STACK_OK)
-            {
-                ptr += strlen((char*)ptr);
-            }
-
-            if(remaining < MAX_RESPONSE_LENGTH)
-            {
-                OCEntityHandlerResponse response = {0};
-
-                response.ehResult = OC_EH_OK;
-                response.payload = discoveryResBuf;
-                response.payloadSize = strlen((const char *)discoveryResBuf) + 1;
-                response.persistentBufferFlag = 0;
-                response.requestHandle = (OCRequestHandle) request;
-                response.resourceHandle = (OCResourceHandle) resource;
-
-                result = OCDoResponse(&response);
-            }
-        }
-        #ifdef WITH_PRESENCE
         else
         {
-            if(resource->resourceProperties & OC_ACTIVE){
-                SendPresenceNotification(resource->rsrcType, OC_PRESENCE_TRIGGER_CHANGE);
-            }
+            OC_LOG_V(ERROR, TAG, "Error (%d) parsing query.", discoveryResult);
         }
-        #endif
     }
-    result = OC_STACK_OK;
-    return result;
+    else if (virtualUriInRequest == OC_DEVICE_URI)
+    {
+        payload = (OCPayload*)OCDevicePayloadCreate(OC_RSRVD_DEVICE_URI,
+                OCGetServerInstanceID(), savedDeviceInfo.deviceName,
+                OC_SPEC_VERSION, OC_DATA_MODEL_VERSION);
+        if (!payload)
+        {
+            discoveryResult = OC_STACK_NO_MEMORY;
+        }
+        else
+        {
+            discoveryResult = OC_STACK_OK;
+        }
+    }
+    else if (virtualUriInRequest == OC_PLATFORM_URI)
+    {
+        payload = (OCPayload*)OCPlatformPayloadCreate(
+                OC_RSRVD_PLATFORM_URI,
+                &savedPlatformInfo);
+        if (!payload)
+        {
+            discoveryResult = OC_STACK_NO_MEMORY;
+        }
+        else
+        {
+            discoveryResult = OC_STACK_OK;
+        }
+    }
+
+    /**
+     * Step 2: Send the discovery response
+     *
+     * Iotivity should respond to discovery requests in below manner:
+     * 1)If query filter matching fails and discovery request is multicast,
+     *   it should NOT send any response.
+     * 2)If query filter matching fails and discovery request is unicast,
+     *   it should send an error(RESOURCE_NOT_FOUND - 404) response.
+     * 3)If Server does not have any 'DISCOVERABLE' resources and discovery
+     *   request is multicast, it should NOT send any response.
+     * 4)If Server does not have any 'DISCOVERABLE' resources and discovery
+     *   request is unicast, it should send an error(RESOURCE_NOT_FOUND - 404) response.
+     */
+
+    #ifdef WITH_PRESENCE
+    if ((virtualUriInRequest == OC_PRESENCE) &&
+        (resource->resourceProperties & OC_ACTIVE))
+    {
+        // Presence uses observer notification api to respond via SendPresenceNotification.
+        SendPresenceNotification(resource->rsrcType, OC_PRESENCE_TRIGGER_CHANGE);
+    }
+    else
+    #endif
+    {
+        if(discoveryResult == OC_STACK_OK)
+        {
+            SendNonPersistantDiscoveryResponse(request, resource, payload, OC_EH_OK);
+        }
+        else if(bMulticast == false)
+        {
+            OC_LOG_V(ERROR, TAG, "Sending a (%d) error to (%d)  \
+                discovery request", discoveryResult, virtualUriInRequest);
+            SendNonPersistantDiscoveryResponse(request, resource, NULL,
+                (discoveryResult == OC_STACK_NO_RESOURCE) ? OC_EH_RESOURCE_NOT_FOUND : OC_EH_ERROR);
+        }
+        else
+        {
+            // Ignoring the discovery request as per RFC 7252, Section #8.2
+            OC_LOG_V(INFO, TAG, "Silently ignoring the request since device does not have \
+                any useful data to send");
+        }
+    }
+
+    OCPayloadDestroy(payload);
+
+    return OC_STACK_OK;
 }
 
 static OCStackResult
@@ -879,11 +679,17 @@ HandleDefaultDeviceEntityHandler (OCServerRequest *request)
     OCEntityHandlerRequest ehRequest = {};
 
     OC_LOG(INFO, TAG, PCF("Entering HandleResourceWithDefaultDeviceEntityHandler"));
-    result = FormOCEntityHandlerRequest(&ehRequest, (OCRequestHandle) request,
-            request->method, (OCResourceHandle) NULL, request->query,
-            request->reqJSONPayload, request->numRcvdVendorSpecificHeaderOptions,
-            request->rcvdVendorSpecificHeaderOptions,
-            (OCObserveAction)request->observationOption, (OCObservationId)0);
+    result = FormOCEntityHandlerRequest(&ehRequest,
+                                        (OCRequestHandle) request,
+                                        request->method,
+                                        &request->devAddr,
+                                        (OCResourceHandle) NULL, request->query,
+                                        request->payload,
+                                        request->payloadSize,
+                                        request->numRcvdVendorSpecificHeaderOptions,
+                                        request->rcvdVendorSpecificHeaderOptions,
+                                        (OCObserveAction)request->observationOption,
+                                        (OCObservationId)0);
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
     // At this point we know for sure that defaultDeviceHandler exists
@@ -900,6 +706,7 @@ HandleDefaultDeviceEntityHandler (OCServerRequest *request)
     }
     result = EntityHandlerCodeToOCStackCode(ehResult);
 exit:
+    OCPayloadDestroy(ehRequest.payload);
     return result;
 }
 
@@ -921,11 +728,19 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
     OCEntityHandlerRequest ehRequest = {};
 
     OC_LOG(INFO, TAG, PCF("Entering HandleResourceWithEntityHandler"));
-    result = FormOCEntityHandlerRequest(&ehRequest, (OCRequestHandle) request,
-            request->method, (OCResourceHandle) resource, request->query,
-            request->reqJSONPayload, request->numRcvdVendorSpecificHeaderOptions,
-            request->rcvdVendorSpecificHeaderOptions,
-            (OCObserveAction)request->observationOption, 0);
+
+    result = FormOCEntityHandlerRequest(&ehRequest,
+                                        (OCRequestHandle)request,
+                                        request->method,
+                                        &request->devAddr,
+                                        (OCResourceHandle)resource,
+                                        request->query,
+                                        request->payload,
+                                        request->payloadSize,
+                                        request->numRcvdVendorSpecificHeaderOptions,
+                                        request->rcvdVendorSpecificHeaderOptions,
+                                        (OCObserveAction)request->observationOption,
+                                        0);
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
     if(ehRequest.obsInfo.action == OC_OBSERVE_NO_OPTION)
@@ -933,10 +748,10 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
         OC_LOG(INFO, TAG, PCF("No observation requested"));
         ehFlag = OC_REQUEST_FLAG;
     }
-    else if(ehRequest.obsInfo.action == OC_OBSERVE_REGISTER &&
-            !collectionResource)
+    else if(ehRequest.obsInfo.action == OC_OBSERVE_REGISTER && !collectionResource)
     {
-        OC_LOG(INFO, TAG, PCF("Registering observation requested"));
+        OC_LOG(INFO, TAG, PCF("Observation registration requested"));
+
         result = GenerateObserverId(&ehRequest.obsInfo.obsId);
         VERIFY_SUCCESS(result, OC_STACK_OK);
 
@@ -955,9 +770,9 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
         else
         {
             result = OC_STACK_OK;
-            // The error in observeResult for the request will be
-            // used when responding to this request by omitting
-            // the observation option/sequence number.
+
+            // The error in observeResult for the request will be used when responding to this
+            // request by omitting the observation option/sequence number.
             request->observeResult = OC_STACK_ERROR;
             OC_LOG(ERROR, TAG, PCF("Observer Addition failed"));
             ehFlag = OC_REQUEST_FLAG;
@@ -1013,6 +828,7 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
     }
     result = EntityHandlerCodeToOCStackCode(ehResult);
 exit:
+    OCPayloadDestroy(ehRequest.payload);
     return result;
 }
 
@@ -1028,17 +844,25 @@ HandleCollectionResourceDefaultEntityHandler (OCServerRequest *request,
     OCStackResult result = OC_STACK_ERROR;
     OCEntityHandlerRequest ehRequest = {};
 
-    result = FormOCEntityHandlerRequest(&ehRequest, (OCRequestHandle) request,
-            request->method, (OCResourceHandle) resource, request->query,
-            request->reqJSONPayload, request->numRcvdVendorSpecificHeaderOptions,
-            request->rcvdVendorSpecificHeaderOptions,
-            (OCObserveAction)request->observationOption, (OCObservationId) 0);
-    if(result != OC_STACK_OK)
+    result = FormOCEntityHandlerRequest(&ehRequest,
+                                        (OCRequestHandle)request,
+                                        request->method,
+                                        &request->devAddr,
+                                        (OCResourceHandle)resource,
+                                        request->query,
+                                        request->payload,
+                                        request->payloadSize,
+                                        request->numRcvdVendorSpecificHeaderOptions,
+                                        request->rcvdVendorSpecificHeaderOptions,
+                                        (OCObserveAction)request->observationOption,
+                                        (OCObservationId)0);
+    if(result == OC_STACK_OK)
     {
-        return result;
+        result = DefaultCollectionEntityHandler (OC_REQUEST_FLAG, &ehRequest);
     }
 
-    return (DefaultCollectionEntityHandler (OC_REQUEST_FLAG, &ehRequest));
+    OCPayloadDestroy(ehRequest.payload);
+    return result;
 }
 
 OCStackResult

@@ -28,18 +28,14 @@ then
 	scp -p -P 29418 ${GIT_USER}@gerrit.iotivity.org:hooks/commit-msg iotivity/.git/hooks/
 fi
 
-export CEREAL_DIR=iotivity/extlibs/cereal
+export TINYCBOR_DIR=iotivity/extlibs/tinycbor
 if [ ! -d ${CEREAL_DIR} ]
 then
-	git clone https://github.com/USCiLab/cereal.git ${CEREAL_DIR}
-	pushd ${CEREAL_DIR}
-	git reset --hard 7121e91e6ab8c3e6a6516d9d9c3e6804e6f65245
-	git apply ../../resource/patches/cereal_gcc46.patch
-	popd
+	git clone https://github.com/01org/tinycbor ${CEREAL_DIR}
 fi
 
 #######################################
-# Android 
+# Android
 #######################################
 
 echo "Set up Android NDK"

@@ -92,6 +92,8 @@ public class PluginManager {
         System.loadLibrary("PluginManager");
     }
 
+    private static final String LOG_TAG = "PPMSampleApp : PluginManager";
+
     private native int jniStartPlugins(String key, String value);
 
     private native int jniStopPlugins(String key, String value);
@@ -103,6 +105,6 @@ public class PluginManager {
     private native String jniGetState(String plugID);
 
     private static void LogEx(String info) {
-        Log.d("PluginManager.java", info);
+        Log.d(LOG_TAG, info);
     }
 }

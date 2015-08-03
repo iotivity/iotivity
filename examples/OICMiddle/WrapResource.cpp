@@ -164,7 +164,7 @@ void WrapResource::parseJSON(WrapRequest *wreq)
 {
     string sep = "\":";
     string anchor = "\"rep\":{";
-    string json = wreq->m_rep.getJSONRepresentation();
+    string json;// = wreq->m_rep.getJSONRepresentation();
     string name, type, value, next;
     size_t r, e, e1, s, c;
 

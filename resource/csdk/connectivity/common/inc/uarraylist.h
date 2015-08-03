@@ -105,6 +105,13 @@ uint32_t u_arraylist_length(const u_arraylist_t *list);
  */
 bool u_arraylist_contains(const u_arraylist_t *list,const void *data);
 
+/**
+ * @brief Destroys array list and elements (assuming elements are shallow)
+ * @param list
+ *    [IN] pointer of array list
+ */
+void u_arraylist_destroy(u_arraylist_t *list);
+
 #ifdef __cplusplus
 }
 #endif

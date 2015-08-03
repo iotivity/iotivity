@@ -26,7 +26,6 @@
 using namespace std;
 
 #define BUFLEN 10000
-#define MAX_CONNS 5
 
 static bool enableDebug = false; // set to true to print debug messages
 
@@ -40,8 +39,13 @@ void printDebugMessage(std::string message)
 RestInput::RestInput(LineInput *lineInput) : m_lineInput(lineInput)
 {
     m_data = (char*)malloc(BUFLEN);
-    m_thread = new std::thread[MAX_CONNS];
     m_threadCount = 0;
+}
+
+RestInput::~RestInput()
+{
+    free(m_data);
+    close(m_sockfd);
 }
 
 bool RestInput::init()
@@ -81,6 +85,7 @@ void RestInput::startAccept(int &sockfd)
                 return;
             }
             int n = read(connfd, m_data, BUFLEN);
+            close(connfd);
             if (n < 0) {
                 cerr << "Failed to read from socket" << endl;
                 return;

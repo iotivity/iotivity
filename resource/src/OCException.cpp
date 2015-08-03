@@ -95,6 +95,8 @@ std::string OC::OCException::reason(const OCStackResult sr)
             return OC::Exception::INVALID_DEVICE_INFO;
         case OC_STACK_INVALID_JSON:
             return OC::Exception::INVALID_REPRESENTATION;
+        case OC_STACK_UNAUTHORIZED_REQ:
+            return OC::Exception::UNAUTHORIZED_REQUEST;
     }
 
     return OC::Exception::UNKNOWN_ERROR;

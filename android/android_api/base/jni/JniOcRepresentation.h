@@ -621,14 +621,6 @@ extern "C" {
 
     /*
     * Class:     org_iotivity_base_OcRepresentation
-    * Method:    getJSONRepresentation
-    * Signature: ()Ljava/lang/String;
-    */
-    JNIEXPORT jstring JNICALL Java_org_iotivity_base_OcRepresentation_getJSONRepresentation
-        (JNIEnv *, jobject);
-
-    /*
-    * Class:     org_iotivity_base_OcRepresentation
     * Method:    addChild
     * Signature: (Lorg/iotivity/base/OcRepresentation;)V
     */

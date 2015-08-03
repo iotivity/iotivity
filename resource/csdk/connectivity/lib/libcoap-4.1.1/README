@@ -2,7 +2,7 @@ libcoap: A C implementation of IETF Core Application protocol
 
 Copyright (C) 2010--2013 by Olaf Bergmann <bergmann@tzi.org>
 
-ABOUT LIBCOAP 
+ABOUT LIBCOAP
 
 libcoap is a C implementation of a lightweight application-protocol
 for devices that are constrained their resources such as computing
@@ -15,7 +15,7 @@ PACKAGE CONTENTS
 This directory contains a protocol parser and basic networking
 functions for platform with support for malloc() and BSD-style
 sockets. The examples directory contains a client and a server to
-demonstrate the use of this library. 
+demonstrate the use of this library.
 
 LICENSE INFORMATION
 

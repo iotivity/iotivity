@@ -115,7 +115,7 @@ LineResult LineInput::processLine(string command, stringstream& result, observec
     return processUnrecognized(elems, result);
 }
 
-LineResult LineInput::processHelp(elements_t& elems, stringstream& ss)
+LineResult LineInput::processHelp(elements_t& /*elems*/, stringstream& ss)
 {
     ss << "\nUsage:\n"
                 "\tfind\t\tFind resources\n"
@@ -138,7 +138,7 @@ LineResult LineInput::processUnrecognized(elements_t& elems, stringstream& ss)
     return LR_Unrecognized;
 }
 
-LineResult LineInput::processFind(elements_t& elems, stringstream& ss)
+LineResult LineInput::processFind(elements_t& /*elems*/, stringstream& /*ss*/)
 {
     m_client->findResources();
     return LR_OK;
@@ -155,7 +155,7 @@ void LineInput::registerResourceWithServer(std::string & url) {
     m_server->registerResource(url, resType, iface);
 }
 
-LineResult LineInput::processShow(elements_t& elems, stringstream& ss)
+LineResult LineInput::processShow(elements_t& /*elems*/, stringstream& ss)
 {
     int index = 0;
     m_resourceList.clear();
@@ -235,7 +235,7 @@ LineResult LineInput::processGet(elements_t& elems, stringstream& ss)
         return LR_Timeout;
     }
 
-    std::string jsonRep = wreq->m_rep.getJSONRepresentation();
+    std::string jsonRep ;//= wreq->m_rep.getJSONRepresentation();
     //ss << jsonRep << endl;
     printJSONAsTable(jsonRep);
         return LR_OK;
@@ -328,7 +328,7 @@ LineResult LineInput::processCancel(elements_t& elems, stringstream& ss)
     return LR_OK;
 }
 
-WrapResource *LineInput::resolveResource(string resID, stringstream& ss)
+WrapResource *LineInput::resolveResource(string resID, stringstream& /*ss*/)
 {
     size_t len;
     string useID = resID;
@@ -351,12 +351,16 @@ WrapResource *LineInput::resolveResource(string resID, stringstream& ss)
     return it->second;
 }
 
-void LineInput::obsCB(token_t token, const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode, const int sequenceNumber)
+void LineInput::obsCB(token_t /*token*/,
+                      const HeaderOptions& /*headerOptions*/,
+                      const OCRepresentation& /*rep*/,
+                      const int eCode,
+                      const int sequenceNumber)
 {
     if (!m_observer)
         return;
     cout << "cb " << eCode << " " << sequenceNumber << '\n';
-    cout << rep.getJSONRepresentation() << "\n";
+    //cout << rep.getJSONRepresentation() << "\n";
 }
 
 ParseState LineInput::finishElem(char*& e, elements_t& elems)

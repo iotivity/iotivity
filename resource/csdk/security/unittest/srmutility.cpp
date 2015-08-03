@@ -19,6 +19,7 @@
 #include "gtest/gtest.h"
 #include "ocstack.h"
 #include "srmutility.h"
+#include "oic_string.h"
 
 
 //ParseRestQuery Tests
@@ -39,10 +40,8 @@ TEST(ParseRestQueryTest, ParseSingleRestQuery)
     ParseQueryIterInit(query, &parseIter);
     EXPECT_NE((OicParseQueryIter_t *)NULL,  GetNextQuery(&parseIter));
 
-    strncpy(attr, (char *)parseIter.attrPos, parseIter.attrLen);
-    strncpy(val, (char *)parseIter.valPos, parseIter.valLen);
-    attr[parseIter.attrLen] = '\0';
-    val[parseIter.valLen] = '\0';
+    OICStrcpyPartial(attr, sizeof(attr), (char *)parseIter.attrPos, parseIter.attrLen);
+    OICStrcpyPartial(val, sizeof(val), (char *)parseIter.valPos, parseIter.valLen);
     printf("\nAttribute: %s  value: %s\n\n", attr, val);
 
 }
@@ -59,10 +58,8 @@ TEST(ParseRestQueryTest, ParseRestMultipleQuery)
     {
         EXPECT_NE(static_cast<size_t>(0),  parseIter.pi.segment_length);
 
-        strncpy(attr, (char *)parseIter.attrPos, parseIter.attrLen);
-        strncpy(val, (char *)parseIter.valPos, parseIter.valLen);
-        attr[parseIter.attrLen] = '\0';
-        val[parseIter.valLen] = '\0';
+        OICStrcpyPartial(attr, sizeof(attr), (char *)parseIter.attrPos, parseIter.attrLen);
+        OICStrcpyPartial(val, sizeof(val), (char *)parseIter.valPos, parseIter.valLen);
         printf("Attribute: %s  value: %s\n", attr, val);
 
     }

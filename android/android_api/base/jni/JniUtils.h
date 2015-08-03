@@ -124,23 +124,6 @@ public:
         };
     }
 
-    static OCConnectivityType getConnectivityType(JNIEnv *env, int type)
-    {
-        switch (type) {
-        case 0:
-            return OCConnectivityType::CT_DEFAULT;
-        case 1:
-            return OCConnectivityType::CT_ADAPTER_IP;
-        case 2:
-            return OCConnectivityType::CT_ADAPTER_RFCOMM_BTEDR;
-        case 3:
-            return OCConnectivityType::CT_ADAPTER_GATT_BTLE;
-        default:
-            ThrowOcException(OC_STACK_INVALID_PARAM, "Unexpected connectivity type");
-            return OCConnectivityType::CT_DEFAULT;
-        };
-    }
-
     static std::string stackResultToStr(const int result)
     {
         switch (result)

@@ -23,7 +23,6 @@
 
 #include <thread>
 #include <mutex>
-#include <ocstack.h>
 
 #include <IServerWrapper.h>
 

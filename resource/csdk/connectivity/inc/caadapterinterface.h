@@ -1,22 +1,22 @@
-/* ****************************************************************
- *
- * Copyright 2014 Samsung Electronics All Rights Reserved.
- *
- *
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- ******************************************************************/
+//* ****************************************************************
+//
+// Copyright 2014 Samsung Electronics All Rights Reserved.
+//
+//
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+//******************************************************************/
 
 /**
  * @file
@@ -168,8 +168,8 @@ typedef void (*CARegisterConnectivityCallback)(CAConnectivityHandler_t handler,
  * @brief This will be used during the recive of network requests and response.
  * @see SendUnicastData(), SendMulticastData()
  */
-typedef void (*CANetworkPacketReceivedCallback)(const CAEndpoint_t *endPoint, void *data,
-        uint32_t dataLen);
+typedef void (*CANetworkPacketReceivedCallback)(const CAEndpoint_t *endPoint,
+                                            const void *data, uint32_t dataLen);
 
 /**
  * @brief This will be used to notify network changes to the connectivity common logic layer

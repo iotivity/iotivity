@@ -648,7 +648,7 @@ WARN_FORMAT            = "$file:$line: $text"
 # and error messages should be written. If left blank the output is written
 # to stderr.
 
-WARN_LOGFILE           =
+WARN_LOGFILE           = ./doxygen.log
 
 #---------------------------------------------------------------------------
 # configuration options related to the input files
@@ -666,13 +666,14 @@ INPUT                  = . \
                          ../include/OCResourceRequest.h \
                          ../include/OCResourceResponse.h \
                          ../include/OCResource.h \
-                         ../resource/csdk/stack/include/octypes.h \
-                         ../resource/csdk/stack/include/ocstackconfig.h \
+                         ../csdk/stack/include/octypes.h \
+                         ../csdk/stack/include/ocstackconfig.h \
                          guides \
                          ../../service/things-manager/sdk/inc \
                          ../../service/soft-sensor-manager/SDK/cpp/include \
                          ../../service/protocol-plugin/plugin-manager/src/PluginManager.h \
-                         ../../service/noification-manager/NotificationManager/include/hosting.h 
+                         ../../service/notification-manager/NotificationManager/include/hosting.h \
+                         ../../service/resource-encapsulation/include \
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding, which is

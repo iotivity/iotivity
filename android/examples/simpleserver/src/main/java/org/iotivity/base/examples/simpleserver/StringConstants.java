@@ -8,9 +8,10 @@ import org.iotivity.base.OcPlatform;
  * the newly-supported type there.
  */
 public interface StringConstants {
-    public static final String RESOURCE_URI0 = "/light0";
-    public static final String RESOURCE_URI1 = "/light1";
+    public static final String RESOURCE_URI0 = "/a/light";
+    public static final String RESOURCE_URI1 = "/a/light2";
     public static final String RESOURCE_TYPENAME = "core.light";
+    public static final String OIC_SERVER_JSON_DB_FILE =  "oic_svr_db_server.json";
     public static final String RESOURCE_INTERFACE = OcPlatform.DEFAULT_INTERFACE; //resource interface
     public static final String CREATED_URI = "createduri";
     public static final String STATE = "state";

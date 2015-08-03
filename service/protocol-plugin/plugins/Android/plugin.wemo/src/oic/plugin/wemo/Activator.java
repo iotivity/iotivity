@@ -150,7 +150,7 @@ public class Activator extends Activity implements BundleActivator,
                                 .getWeMoDeviceByUDN(udn);
                         if ((listDevice != null) && (listDevice.isAvailable())) {
                             PlatformConfig cfg = new PlatformConfig(
-                                    getApplicationContext(),
+                                    getBaseContext(),
                                     ServiceType.IN_PROC,
                                     ModeType.CLIENT_SERVER, "0.0.0.0", 0,
                                     QualityOfService.LOW);
@@ -163,7 +163,7 @@ public class Activator extends Activity implements BundleActivator,
                                         .registerResource(
                                                 "/a/wemo",
                                                 "device.smartplug",
-                                                "oc.mi.def",
+                                                OcPlatform.DEFAULT_INTERFACE,
                                                 entitycb,
                                                 EnumSet.of(ResourceProperty.DISCOVERABLE));
                             } catch (OcException e) {

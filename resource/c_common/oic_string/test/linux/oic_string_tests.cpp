@@ -45,7 +45,7 @@ TEST(StringTests, StrdupNormalDup)
 
     char* result = OICStrdup(param);
 
-    ASSERT_TRUE(result != NULL);
+    EXPECT_TRUE(result != NULL);
 
     // ensure not the same pointer
     EXPECT_NE(param, result);
@@ -80,6 +80,11 @@ TEST(StringTests, StrcpyExactSizeSentinel)
 
     char* result = OICStrcpy(target, sizeof(target) - 5, source);
 
+    if (!result)
+    {
+        FAIL() << "OICStrcpy returned NULL";
+    }
+
     EXPECT_EQ(target, result);
     EXPECT_EQ(sizeof(target) - 1 - 5, strlen(target));
     EXPECT_STREQ(source, result);
@@ -98,6 +103,11 @@ TEST(StringTests, StrcpyShorterSource)
     char source[] = "12345";
 
     char* result = OICStrcpy(target, sizeof(target), source);
+
+    if (!result)
+    {
+        FAIL() << "OICStrcpy returned NULL";
+    }
 
     EXPECT_EQ(target, result);
     EXPECT_EQ(sizeof(source) - 1, strlen(result));
@@ -118,6 +128,11 @@ TEST(StringTests, StrcpyShorterDestination)
 
     char *result = OICStrcpy(target, sizeof(target), source);
 
+    if (!result)
+    {
+        FAIL() << "OICStrcpy returned NULL";
+    }
+
     EXPECT_EQ(target, result);
     EXPECT_EQ(sizeof(target) - 1, strlen(result));
     EXPECT_STREQ("123456789", result);
@@ -133,6 +148,11 @@ TEST(StringTests, StrcpyShorterDestinationSentinel)
     char source[] = "123456789012345";
 
     char *result = OICStrcpy(target, sizeof(target) - 5, source);
+
+    if (!result)
+    {
+        FAIL() << "OICStrcpy returned NULL";
+    }
 
     EXPECT_EQ(target, result);
     EXPECT_EQ(sizeof(target) - 1 - 5, strlen(result));
@@ -152,6 +172,11 @@ TEST(StringTests, StrcpyZeroSource)
     char source[] = "";
 
     char *result = OICStrcpy(target, sizeof(target), source);
+
+    if (!result)
+    {
+        FAIL() << "OICStrcpy returned NULL";
+    }
 
     EXPECT_EQ(target, result);
     EXPECT_EQ(sizeof(source) - 1, strlen(result));
@@ -184,6 +209,11 @@ TEST(StringTests, StrcpyZeroDestinationSentinel)
     char source[] = "123456789";
 
     char *result = OICStrcpy(target, sizeof(target) - 5, source);
+
+    if (!result)
+    {
+        FAIL() << "OICStrcpy returned NULL";
+    }
 
     EXPECT_EQ(target, result);
 

@@ -146,7 +146,7 @@ CLEANUP: return res;
                 }
 
                 void onGetResourceProfile(const OC::HeaderOptions &headerOptions,
-                                          const OC::OCRepresentation &representation, const int &eCode)
+                                          const OC::OCRepresentation &representation, const int eCode)
                 {
                     //unpack attributeMap
 
@@ -156,6 +156,7 @@ CLEANUP: return res;
                     m_SSMResource.name = m_pResource->host() + m_pResource->uri();
                     m_SSMResource.type = m_pResource->uri().substr(1);
                     m_SSMResource.ip = m_pResource->host();
+                    m_SSMResource.connectivityType = m_pResource->connectivityType();
 
                     //bind default properties
                     outputProperty["name"] = "lifetime";

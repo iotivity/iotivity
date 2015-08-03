@@ -68,8 +68,6 @@ class TemphumidResource
 
             printf("Running thing as %s\n", m_resourceUri.c_str());
             m_resourceRep.setUri(m_resourceUri);
-            m_resourceRep.setResourceTypes(m_resourceTypes);
-            m_resourceRep.setResourceInterfaces(m_resourceInterfaces);
         }
 
         ~TemphumidResource()
