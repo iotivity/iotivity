@@ -996,7 +996,6 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
     }
 
 exit:
-    OICFree(resourceTypeName);
     OCPayloadDestroy(response.payload);
     return result;
 }
