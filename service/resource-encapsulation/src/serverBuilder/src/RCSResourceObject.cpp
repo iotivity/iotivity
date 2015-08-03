@@ -174,18 +174,11 @@ namespace OIC
             OC::EntityHandler entityHandler{ std::bind(&RCSResourceObject::entityHandler,
                     server.get(), std::placeholders::_1) };
 
-            try
-            {
-                typedef OCStackResult (*RegisterResource)(OCResourceHandle&, std::string&,
-                        const std::string&, const std::string&, OC::EntityHandler, uint8_t);
+            typedef OCStackResult (*RegisterResource)(OCResourceHandle&, std::string&,
+                    const std::string&, const std::string&, OC::EntityHandler, uint8_t);
 
-                invokeOCFunc(static_cast<RegisterResource>(OC::OCPlatform::registerResource),
-                        handle, m_uri, m_type, m_interface, entityHandler, m_properties);
-            }
-            catch (OC::OCException& e)
-            {
-                throw PlatformException(e.code());
-            }
+            invokeOCFunc(static_cast<RegisterResource>(OC::OCPlatform::registerResource),
+                    handle, m_uri, m_type, m_interface, entityHandler, m_properties);
 
             server->m_resourceHandle = handle;
 
@@ -223,56 +216,48 @@ namespace OIC
             }
         }
 
+        template< typename K, typename V >
+        void RCSResourceObject::setAttributeInternal(K&& key, V&& value)
+        {
+            bool needToNotify = false;
+            bool valueUpdated = false;
+
+            {
+                WeakGuard lock(*this);
+
+                if (lock.hasLocked())
+                {
+                    needToNotify = true;
+                    valueUpdated = testValueUpdated(key, value);
+                }
+
+                m_resourceAttributes[std::forward< K >(key)] = std::forward< V >(value);
+            }
+
+            if (needToNotify) autoNotify(valueUpdated);
+        }
         void RCSResourceObject::setAttribute(const std::string& key,
                 const RCSResourceAttributes::Value& value)
         {
-            WeakGuard lock(*this);
-
-            if(lock.hasLocked())
-            {
-                autoNotifyIfNeeded(key, value);
-            }
-
-            m_resourceAttributes[key] = value;
+            setAttributeInternal(key, value);
         }
 
         void RCSResourceObject::setAttribute(const std::string& key,
                 RCSResourceAttributes::Value&& value)
         {
-            WeakGuard lock(*this);
-
-            if(lock.hasLocked())
-            {
-                autoNotifyIfNeeded(key, value);
-            }
-
-            m_resourceAttributes[key] = std::move(value);
+            setAttributeInternal(key, std::move(value));
         }
 
         void RCSResourceObject::setAttribute(std::string&& key,
                 const RCSResourceAttributes::Value& value)
         {
-            WeakGuard lock(*this);
-
-            if(lock.hasLocked())
-            {
-                autoNotifyIfNeeded(key, value);
-            }
-
-            m_resourceAttributes[std::move(key)] = value;
+            setAttributeInternal(std::move(key), value);
         }
 
         void RCSResourceObject::setAttribute(std::string&& key,
                 RCSResourceAttributes::Value&& value)
         {
-            WeakGuard lock(*this);
-
-            if(lock.hasLocked())
-            {
-                autoNotifyIfNeeded(key, value);
-            }
-
-            m_resourceAttributes[std::move(key)] = std::move(value);
+            setAttributeInternal(std::move(key), std::move(value));
         }
 
         RCSResourceAttributes::Value RCSResourceObject::getAttributeValue(
@@ -284,13 +269,21 @@ namespace OIC
 
         bool RCSResourceObject::removeAttribute(const std::string& key)
         {
-            WeakGuard lock(*this);
-            if (m_resourceAttributes.erase(key))
+            bool needToNotify = false;
+            bool erased = false;
             {
-                autoNotify(true, getAutoNotifyPolicy());
-                return true;
+                WeakGuard lock(*this);
+
+                if (m_resourceAttributes.erase(key))
+                {
+                    erased = true;
+                    needToNotify = lock.hasLocked();
+                }
             }
-            return false;
+
+            if (needToNotify) autoNotify(true);
+
+            return erased;
         }
 
         bool RCSResourceObject::containsAttribute(const std::string& key) const
@@ -343,8 +336,7 @@ namespace OIC
         {
             typedef OCStackResult (*NotifyAllObservers)(OCResourceHandle);
 
-            invokeOCFuncWithResultExpect(
-                    { OC_STACK_OK, OC_STACK_NO_OBSERVERS },
+            invokeOCFuncWithResultExpect({ OC_STACK_OK, OC_STACK_NO_OBSERVERS },
                     static_cast< NotifyAllObservers >(OC::OCPlatform::notifyAllObservers),
                     m_resourceHandle);
         }
@@ -366,15 +358,15 @@ namespace OIC
         bool RCSResourceObject::removeAttributeUpdatedListener(const std::string& key)
         {
            std::lock_guard<std::mutex> lock(m_mutexKeyAttributeUpdate);
-           return (bool) m_keyAttributesUpdatedListeners.erase(key);
+
+           return m_keyAttributesUpdatedListeners.erase(key) != 0;
         }
 
-        void RCSResourceObject::autoNotifyIfNeeded(const std::string& key,
-                                                const RCSResourceAttributes::Value& value)
+        bool RCSResourceObject::testValueUpdated(const std::string& key,
+                const RCSResourceAttributes::Value& value) const
         {
-            autoNotify( m_resourceAttributes.contains(key) == false
-                        || m_resourceAttributes.at(key) != value
-                        , m_autoNotifyPolicy);
+            return m_resourceAttributes.contains(key) == false
+                    || m_resourceAttributes.at(key) != value;
         }
 
         void RCSResourceObject::setAutoNotifyPolicy(AutoNotifyPolicy policy)
@@ -397,11 +389,18 @@ namespace OIC
             return m_setRequestHandlerPolicy;
         }
 
+        void RCSResourceObject::autoNotify(bool isAttributesChanged) const
+        {
+            autoNotify(isAttributesChanged, m_autoNotifyPolicy);
+        }
+
         void RCSResourceObject::autoNotify(
                         bool isAttributesChanged, AutoNotifyPolicy autoNotifyPolicy) const
         {
             if(autoNotifyPolicy == AutoNotifyPolicy::NEVER) return;
-            if(autoNotifyPolicy == AutoNotifyPolicy::UPDATED && isAttributesChanged == false) return;
+            if(autoNotifyPolicy == AutoNotifyPolicy::UPDATED &&
+                    isAttributesChanged == false) return;
+
             notify();
         }
 
@@ -537,9 +536,9 @@ namespace OIC
 
         RCSResourceObject::LockGuard::LockGuard(
                 const RCSResourceObject& resourceObject, AutoNotifyPolicy autoNotifyPolicy) :
-                        m_resourceObject(resourceObject),
-                        m_autoNotifyPolicy { autoNotifyPolicy },
-                        m_isOwningLock{ false }
+                m_resourceObject(resourceObject),
+                m_autoNotifyPolicy { autoNotifyPolicy },
+                m_isOwningLock{ false }
         {
             init();
         }
@@ -575,6 +574,7 @@ namespace OIC
             if (resourceObject.m_lockOwner != std::this_thread::get_id())
             {
                 m_resourceObject.m_mutex.lock();
+                m_resourceObject.m_lockOwner = std::this_thread::get_id();
                 m_isOwningLock = true;
             }
         }
@@ -583,6 +583,7 @@ namespace OIC
         {
             if (m_isOwningLock)
             {
+                m_resourceObject.m_lockOwner = std::thread::id{ };
                 m_resourceObject.m_mutex.unlock();
             }
         }
