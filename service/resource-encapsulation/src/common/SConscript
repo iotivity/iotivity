@@ -49,10 +49,13 @@ rcs_common_env.AppendUnique(CPPPATH = [
     'expiryTimer/include',
     'expiryTimer/src'])
 
+rcs_common_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+
 if target_os not in ['windows', 'winrt']:
     rcs_common_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
     if target_os != 'android':
         rcs_common_env.AppendUnique(CXXFLAGS = ['-pthread'])
+        rcs_common_env.AppendUnique(LIBS = ['pthread'])
 
 if target_os == 'android':
     rcs_common_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
@@ -89,7 +92,6 @@ rcs_common_env.InstallTarget([rcs_common_static,rcs_common_shared], 'rcs_common'
 ######################################################################
 rcs_common_test_env = rcs_common_env.Clone();
 
-rcs_common_test_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 rcs_common_test_env.PrependUnique(CPPPATH = [
     env.get('SRC_DIR')+'/extlibs/hippomocks-master',
     gtest_dir + '/include',
@@ -100,7 +102,7 @@ gtest = File(gtest_dir + '/lib/.libs/libgtest.a')
 gtest_main = File(gtest_dir + '/lib/.libs/libgtest_main.a')
 
 rcs_common_test_env.PrependUnique(LIBS = [
-    'oc',
+	'oc',
     'octbstack',
     'oc_logger',
     'connectivity_abstraction',
@@ -111,7 +113,10 @@ rcs_common_test_env.PrependUnique(LIBS = [
     'pthread'
     ])
 
-rcs_common_test_src = env.Glob('primitiveResource/unittests/*.cpp')
+rcs_common_test_src = [
+    env.Glob('primitiveResource/unittests/*.cpp'),
+    'expiryTimer/unittests/ExpiryTimerTest.cpp'
+    ]
 
 rcs_common_test = rcs_common_test_env.Program('rcs_common_test', rcs_common_test_src)
 Alias("rcs_common_test", rcs_common_test)

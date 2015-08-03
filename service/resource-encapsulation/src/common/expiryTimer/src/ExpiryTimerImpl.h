@@ -28,75 +28,101 @@
 #include <chrono>
 #include <condition_variable>
 #include <random>
+#include <unordered_set>
+#include <atomic>
 
-class ExpiryTimerImpl
+namespace OIC
 {
-public:
-    typedef unsigned int Id;
-    typedef std::function<void(Id)> CB;
-
-    typedef long long DelayInMilliSec;
-    typedef std::chrono::milliseconds MilliSeconds;
-    typedef std::chrono::duration<int64_t, std::milli> MilliDelayTime;
-    typedef std::chrono::duration<int64_t, std::milli> ExpiredTime;
-
-private:
-    struct TimerCBInfo
+    namespace Service
     {
-        Id m_id;
-        CB m_cB;
-    };
+        class TimerTask;
 
-private:
-   ExpiryTimerImpl();
-   ExpiryTimerImpl(const ExpiryTimerImpl&) = delete;
-   ExpiryTimerImpl& operator=(const ExpiryTimerImpl&) = delete;
-   ~ExpiryTimerImpl();
+        class ExpiryTimerImpl
+        {
+        public:
+            typedef unsigned int Id;
+            typedef std::function< void(Id) > Callback;
 
-public:
-    static ExpiryTimerImpl* getInstance();
-    void destroyInstance();
+            typedef long long DelayInMillis;
 
-    Id post(DelayInMilliSec, CB);
-    bool cancel(Id);
+        private:
+            typedef std::chrono::milliseconds Milliseconds;
 
-private:
-   Id generateId();
+        private:
+            ExpiryTimerImpl();
+            ~ExpiryTimerImpl();
 
-   void insertTimerCBInfo(ExpiredTime, CB ,Id);
-   ExpiredTime countExpireTime(MilliSeconds);
+            ExpiryTimerImpl(const ExpiryTimerImpl&) = delete;
+            ExpiryTimerImpl& operator=(const ExpiryTimerImpl&) = delete;
 
-   void runChecker();
+        public:
+            static ExpiryTimerImpl* getInstance();
 
-   void runExecutor(ExpiredTime);
+            std::shared_ptr< TimerTask > post(DelayInMillis, Callback);
 
-private:
-   static ExpiryTimerImpl* s_instance;
-   static std::once_flag* s_flag;
+            bool cancel(Id);
+            size_t cancelAll(const std::unordered_set< std::shared_ptr<TimerTask > >&);
 
-   std::multimap<ExpiredTime, TimerCBInfo> m_timerCBList;
+        private:
+            static Milliseconds convertToTime(Milliseconds);
 
-   std::thread m_checkerThread;
-   std::mutex m_mutex;
-   std::condition_variable m_cond;
+            std::shared_ptr< TimerTask > addTask(Milliseconds, Callback, Id);
 
-   std::random_device m_device;
-   std::default_random_engine m_engine;
-   std::uniform_int_distribution<Id> m_dist;
+            /**
+             * @pre The lock must be acquired with m_mutex.
+             */
+            bool containsId(Id) const;
+            Id generateId();
 
-public:
-   class ExecutorThread
-   {
-   public:
-       ExecutorThread(TimerCBInfo);
-       ~ExecutorThread();
+            /**
+             * @pre The lock must be acquired with m_mutex.
+             */
+            void executeExpired();
 
-   public:
-       void executorFunc(TimerCBInfo);
+            /**
+             * @pre The lock must be acquired with m_mutex.
+             */
+            Milliseconds remainingTimeForNext() const;
 
-   private:
-       std::thread m_executorThread;
-   };
-};
+            void run();
 
+        private:
+            std::multimap< Milliseconds, std::shared_ptr< TimerTask > > m_tasks;
+
+            std::thread m_thread;
+            std::mutex m_mutex;
+            std::condition_variable m_cond;
+            bool m_stop;
+
+            std::mt19937 m_mt;
+            std::uniform_int_distribution< Id > m_dist;
+
+        };
+
+        class TimerTask
+        {
+        public:
+            TimerTask(ExpiryTimerImpl::Id, ExpiryTimerImpl::Callback);
+
+            TimerTask(const TimerTask&) = delete;
+            TimerTask(TimerTask&&) = delete;
+
+            TimerTask& operator=(const TimerTask&) = delete;
+            TimerTask& operator=(TimerTask&&) = delete;
+
+            bool isExecuted() const;
+            ExpiryTimerImpl::Id getId() const;
+
+        private:
+            void execute();
+
+        private:
+            std::atomic< ExpiryTimerImpl::Id > m_id;
+            ExpiryTimerImpl::Callback m_callback;
+
+            friend class ExpiryTimerImpl;
+        };
+
+    }
+}
 #endif //_EXPIRY_TIMER_IMPL_H_
