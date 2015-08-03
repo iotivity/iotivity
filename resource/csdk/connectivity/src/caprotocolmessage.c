@@ -743,19 +743,18 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *
         outInfo->payloadSize = dataSize;
     }
 
-    uint32_t length = strlen(optionResult);
-    OIC_LOG_V(DEBUG, TAG, "URL length:%d", length);
-
-    outInfo->resourceUri = OICMalloc(length + 1);
-    if (!outInfo->resourceUri)
+    if (optionResult[0] != '\0')
     {
-        OIC_LOG(ERROR, TAG, "Out of memory");
-        OICFree(outInfo->options);
-        OICFree(outInfo->token);
-        return CA_MEMORY_ALLOC_FAILED;
+        OIC_LOG_V(DEBUG, TAG, "URL length:%d", strlen(optionResult));
+        outInfo->resourceUri = OICStrdup(optionResult);
+        if (!outInfo->resourceUri)
+        {
+            OIC_LOG(ERROR, TAG, "Out of memory");
+            OICFree(outInfo->options);
+            OICFree(outInfo->token);
+            return CA_MEMORY_ALLOC_FAILED;
+        }
     }
-    OICStrcpy(outInfo->resourceUri, length + 1, optionResult);
-    OIC_LOG_V(DEBUG, TAG, "made URL : %s, %s", optionResult, outInfo->resourceUri);
 
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
