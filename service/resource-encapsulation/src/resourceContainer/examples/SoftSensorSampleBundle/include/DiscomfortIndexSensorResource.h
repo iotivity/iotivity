@@ -21,8 +21,6 @@
 #ifndef DISCOMFORTINDEXSENSORRESOURCE_H_
 #define DISCOMFORTINDEXSENSORRESOURCE_H_
 
-#include <iostream>
-
 #include "SoftSensorResource.h"
 #include "DiscomfortIndexSensor.h"
 
@@ -33,15 +31,14 @@ class DiscomfortIndexSensorResource : public SoftSensorResource
 {
     public:
         DiscomfortIndexSensorResource();
-        DiscomfortIndexSensorResource(vector<string> inputAttributes);
         ~DiscomfortIndexSensorResource();
 
-        virtual void initAttributes();
+        void initAttributes();
         virtual RCSResourceAttributes &getAttributes();
         virtual void setAttribute(std::string key, RCSResourceAttributes::Value &&value);
         virtual RCSResourceAttributes::Value getAttribute(const std::string &key);
 
-        void setInputAttribute(SensorData input);
+        virtual void executeLogic();
 
     private:
         DiscomfortIndexSensor *m_pDiscomfortIndexSensor;

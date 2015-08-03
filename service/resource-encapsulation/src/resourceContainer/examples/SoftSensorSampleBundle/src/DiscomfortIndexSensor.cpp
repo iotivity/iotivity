@@ -21,6 +21,9 @@
 /**
  * This file contains the exported symbol.
  */
+
+#include <iostream>
+
 #include "DiscomfortIndexSensor.h"
 #include "SysTimer.h"
 
@@ -30,221 +33,84 @@
 
 using namespace DiscomfortIndexSensorName;
 
-#define SENSOR_NAME "DiscomfortIndexSensor"
-
-char *inputName[2] =
-{ (char *)"temperature", (char *)"humidity" };
-
-DiscomfortIndexSensor::DiscomfortIndexSensor(vector <string> inputs)
+DiscomfortIndexSensor::DiscomfortIndexSensor()
 {
-    m_result.m_timestamp = "";
-    m_result.m_humidity = "";
-    m_result.m_temperature = "";
-    m_result.m_discomfortIndex = "";
-
-    for (int i = 0; i < PHYSICAL_EA; i++)
-    {
-        s_PHYSICAL_SOFTSENSORs[i].m_thingName = (char *) inputs.at(i).c_str();
-        s_PHYSICAL_SOFTSENSORs[i].m_inputNum = PHYSICAL_EA;
-        s_PHYSICAL_SOFTSENSORs[i].m_pInputStruct = (void *) &inputName;
-    }
+    m_humidity = "";
+    m_temperature = "";
+    m_discomfortIndex = "";
 }
 
-int DiscomfortIndexSensor::runLogic(std::vector< SoftSensorResource::SensorData > &sensorData)
+DiscomfortIndexSensor::~DiscomfortIndexSensor()
+{
+
+}
+
+int DiscomfortIndexSensor::executeDISensorLogic(std::map<std::string, std::string> *pInputData,
+        std::string *pOutput)
 {
     std::cout << "[DiscomfortIndexSensor] DiscomfortIndexSensor::" << __func__ << " is called."
               << std::endl;
 
     DIResult result;
 
-    if (getInput(sensorData, m_DI) == SUCCESS)
+    m_temperature = pInputData->at("temperature");
+    m_humidity = pInputData->at("humidity");
+
+    if ((result = makeDiscomfortIndex()) != SUCCESS)
     {
-        if ((result = makeDiscomfortIndex(m_DI)) != SUCCESS)
-        {
-            std::cout << "Error : makeDiscomfortIndex() result = " << result << std::endl;
-            return -1;
-        }
-
-        m_output = setOutput(4, m_DI);
-
-        return 0;
+        std::cout << "Error : makeDiscomfortIndex() result = " << result << std::endl;
+        return -1;
     }
 
-    return -1;
+    (*pOutput) = m_discomfortIndex;
+
+    return 0;
 }
 
 /**
- * Get Input data (temperature, humidity) using resource Client of Iotivity base.
+ * Calculation of DiscomfortIndex with TEMP&HUMI.
  */
-DIResult DiscomfortIndexSensor::getInput(std::vector< SoftSensorResource::SensorData >
-        &sensorData, InValue *data)
+DIResult DiscomfortIndexSensor::makeDiscomfortIndex()
 {
-    int result_flag = 0;
-    int contextSize = 0;
+    int DILevel = (int) ERROR;
+    double dDI = 0.0;
 
-    if ((contextSize = sensorData.size()) == 0)
+    int t = std::stoi(m_temperature);
+    int h = std::stoi(m_humidity);
+    double F = (9.0 * (double) t) / 5.0 + 32.0;
+
+    // calculation of discomfortIndex
+    dDI = F - (F - 58.0) * (double)((100 - h) * 55) / 10000.0;
+
+    std::cout << "Discomfort level : " << dDI << ", Temperature :" << t << ", Humidity :" << h <<
+              std::endl;
+
+    m_discomfortIndex = std::to_string(DILevel);
+    std::cout << "[result] Discomfort Index : " << m_discomfortIndex << std::endl;
+    if (dDI >= 80.0)
     {
-        std::cout << "Physical Context data is not exist." << std::endl;
-        return ERROR;
-    }
-
-    for (int i = 0; i < contextSize; i++)
-    {
-        for (int k = 0; k < PHYSICAL_EA; k++)
-        {
-            if (sensorData[i].sensorName == s_PHYSICAL_SOFTSENSORs[k].m_thingName)
-            {
-                std::vector < std::map< std::string, std::string > > lVector =
-                    sensorData[i].data;
-                int requiredInputNum = s_PHYSICAL_SOFTSENSORs[k].m_inputNum;
-                char **pchar = (char **) (s_PHYSICAL_SOFTSENSORs[k].m_pInputStruct);
-                if (requiredInputNum == 0)
-                {
-                    std::cout << "No input List." << std::endl;
-                    return ERROR;
-                }
-
-                for (unsigned int j = 0; j < lVector.size(); j++)
-                {
-                    std::string name = lVector[j]["name"];
-
-                    if (name.compare(*pchar) == 0)
-                    {
-                        data->m_temperature = lVector[j]["value"];
-                        requiredInputNum--;
-                    }
-                    else if (name.compare(*(++pchar)) == 0)
-                    {
-                        data->m_humidity = lVector[j]["value"];
-                        requiredInputNum--;
-                    }
-                }
-
-                if (requiredInputNum == 0)
-                {
-                    data++;
-                    result_flag++;
-                }
-                break;
-            } // if
-        } // for
-    }
-
-    if (result_flag == PHYSICAL_EA)
-    {
-        std::cout << "Success : getInput()" << std::endl;
-        return SUCCESS;
-    }
-
-    return ERROR;
-}
-
-/**
- * Calculation of DiscomfortIndex with TEMP&HUMI of InValue.
- */
-DIResult DiscomfortIndexSensor::makeDiscomfortIndex(InValue *data)
-{
-    int discomfortIndex = (int) ERROR;
-    double sumDI = 0.0;
-
-    m_result.m_temperature = "";
-    m_result.m_humidity = "";
-
-    for (int i = 0; i < PHYSICAL_EA; i++)
-    {
-        if (i != 0)
-        {
-            m_result.m_temperature += ", ";
-            m_result.m_humidity += ", ";
-        }
-
-        double dI = 0.0;
-        int t = std::stoi((data + i)->m_temperature);
-        int h = std::stoi((data + i)->m_humidity);
-        double F = (9.0 * (double) t) / 5.0 + 32.0;
-
-        std::cout << "Device Number : " << i << std::endl;
-
-        dI = F - (F - 58.0) * (double) ((100 - h) * 55) / 10000.0;
-
-        std::cout << "Discomfort level : " << dI << ", Temperature :" << t << ", Humidity :" << h
-                  << std::endl;
-
-        (data + i)->m_discomfortIndex = std::to_string(0);
-        m_result.m_temperature += std::to_string(t) + ", ";
-        m_result.m_humidity += std::to_string(h) + ", ";
-        sumDI += dI;
-    }
-
-    sumDI = sumDI / PHYSICAL_EA;
-    std::cout << "[result] Avg. DI level : " << sumDI << std::endl;
-    if (sumDI >= 80.0)
-    {
-        discomfortIndex = (int) ALL_DISCOMPORT;
-        std::cout << "DI : " << discomfortIndex << " : All person discomfort. : " << sumDI
+        DILevel = (int)ALL_DISCOMPORT;
+        std::cout << "DI : " << DILevel << " : All person discomfort. : " << dDI
                   << std::endl;
     }
-    else if (sumDI >= 75.0)
+    else if (dDI >= 75.0)
     {
-        discomfortIndex = (int) HALF_DISCOMPORT;
-        std::cout << "DI : " << discomfortIndex << " : Half of person discomfort. : " << sumDI
+        DILevel = (int)HALF_DISCOMPORT;
+        std::cout << "DI : " << DILevel << " : Half of person discomfort. : " << dDI
                   << std::endl;
     }
-    else if (sumDI >= 68.0)
+    else if (dDI >= 68.0)
     {
-        discomfortIndex = (int) LITTLE_DISCOMPORT;
-        std::cout << "DI : " << discomfortIndex << " : A little person discomfort. : " << sumDI
+        DILevel = (int)LITTLE_DISCOMPORT;
+        std::cout << "DI : " << DILevel << " : A little person discomfort. : " << dDI
                   << std::endl;
     }
     else
     {
-        discomfortIndex = (int) ALL_COMPORT;
-        std::cout << "DI : " << discomfortIndex << " : All person comfort. : " << sumDI
+        DILevel = (int)ALL_COMPORT;
+        std::cout << "DI : " << DILevel << " : All person comfort. : " << dDI
                   << std::endl;
     }
 
-    m_result.m_discomfortIndex = std::to_string(discomfortIndex);
-    std::cout << "[result] Discomfort Index : " << m_result.m_discomfortIndex << std::endl;
-
     return SUCCESS;
 }
-
-SoftSensorResource::SensorData DiscomfortIndexSensor::setOutput(int property_count,
-        InValue *data)
-{
-    SoftSensorResource::SensorData out;
-
-    std::map < std::string, std::string > output_property;
-
-    out.sensorName = SENSOR_NAME;
-
-    output_property.insert(std::make_pair("name", "timestamp"));
-    output_property.insert(std::make_pair("type", "string"));
-    output_property.insert(std::make_pair("value", m_result.m_timestamp));
-
-    out.data.push_back(output_property);
-
-    output_property.clear();
-    output_property.insert(std::make_pair("name", "temperature"));
-    output_property.insert(std::make_pair("type", "string"));
-    output_property.insert(std::make_pair("value", m_result.m_temperature));
-
-    out.data.push_back(output_property);
-
-    output_property.clear();
-    output_property.insert(std::make_pair("name", "humidity"));
-    output_property.insert(std::make_pair("type", "string"));
-    output_property.insert(std::make_pair("value", m_result.m_humidity));
-
-    out.data.push_back(output_property);
-
-    output_property.clear();
-    output_property.insert(std::make_pair("name", "discomfortIndex"));
-    output_property.insert(std::make_pair("type", "int"));
-    output_property.insert(std::make_pair("value", m_result.m_discomfortIndex));
-
-    out.data.push_back(output_property);
-
-    return out;
-}
-

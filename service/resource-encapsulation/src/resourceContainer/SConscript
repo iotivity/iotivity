@@ -193,7 +193,7 @@ Ignore("examples/ResourceContainerConfig.xml", "examples/ResourceContainerConfig
 
 containersample_env.AppendUnique(LIBS = ['rcs_container'])
 
-containersampleapp_src =  ['src/ContainerSample.cpp']
+containersampleapp_src =  ['examples/ContainerSample.cpp']
 containersampleapp = containersample_env.Program('ContainerSample',containersampleapp_src)
 Alias("containersample", containersampleapp)
 env.AppendTarget('containersample')
@@ -204,7 +204,7 @@ env.AppendTarget('containersample')
 containersampleclient_env = resource_container_env.Clone();
 
 containersample_env.AppendUnique(LIBS = ['rcs_container'])
-containersampleclient_src =  ['src/ContainerSampleClient.cpp']
+containersampleclient_src =  ['examples/ContainerSampleClient.cpp']
 containersampleclientapp = containersample_env.Program('ContainerSampleClient',containersampleclient_src)
 Alias("containersampleclient", containersampleclientapp)
 env.AppendTarget('containersampleclient')

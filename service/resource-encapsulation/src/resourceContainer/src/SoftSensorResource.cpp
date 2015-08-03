@@ -34,6 +34,44 @@ namespace OIC
         {
 
         }
+
+        void SoftSensorResource::initAttributes()
+        {
+            std::vector< std::map< std::string, std::string > >::iterator itor;
+
+            // initialize input attributes
+            for (itor = m_mapResourceProperty["input"].begin(); itor != m_mapResourceProperty["input"].end();
+                 itor++)
+            {
+                m_inputList.push_back((*itor)["name"]);
+                BundleResource::setAttribute((*itor)["name"], nullptr);
+            }
+
+            // initialize output attributes
+            for (itor = m_mapResourceProperty["output"].begin(); itor != m_mapResourceProperty["output"].end();
+                 itor++)
+                BundleResource::setAttribute((*itor)["name"], nullptr);
+        }
+
+        RCSResourceAttributes &SoftSensorResource::getAttributes()
+        {
+            return BundleResource::getAttributes();
+        }
+
+        void SoftSensorResource::setAttribute(std::string key, RCSResourceAttributes::Value &&value)
+        {
+            std::list<std::string>::iterator itor = std::find(m_inputList.begin(), m_inputList.end(), key);
+
+            BundleResource::setAttribute(key, value.toString());
+
+            if (itor != m_inputList.end())
+                executeLogic();
+        }
+
+        RCSResourceAttributes::Value SoftSensorResource::getAttribute(const std::string &key)
+        {
+            return BundleResource::getAttribute(key);
+        }
     }
 }
 
