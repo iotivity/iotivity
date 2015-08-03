@@ -45,7 +45,7 @@ public:
     ~RequestObject() = default;
 
     void invokeRequest(RemoteObjectPtr remoteObject, RequestMethod method,
-            const RCSRequest & pRequest, RCSResourceAttributes & resourceAttibutes);
+            RCSResourceAttributes & resourceAttibutes);
 
 private:
     void setRequestCB(const RCSResourceAttributes & returnedAttributes,

@@ -122,7 +122,7 @@ void ResourceHosting::requestMulticastPresence()
     }
 }
 
-void ResourceHosting::presenceHandler(OCStackResult ret, const unsigned int seq,
+void ResourceHosting::presenceHandler(OCStackResult ret, const unsigned int /*seq*/,
         const std::string & address)
 {
     switch(ret)
