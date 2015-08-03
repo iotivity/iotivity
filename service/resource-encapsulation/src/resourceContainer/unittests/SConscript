@@ -172,3 +172,11 @@ Command("./ResourceContainerInvalidConfig.xml","./ResourceContainerInvalidConfig
 Ignore("./ResourceContainerInvalidConfig.xml", "./ResourceContainerInvalidConfig.xml")
 Command("./TestBundleJava/hue-0.1-jar-with-dependencies.jar","./TestBundleJava/hue-0.1-jar-with-dependencies.jar", Copy("$TARGET", "$SOURCE"))
 Ignore("./TestBundleJava/hue-0.1-jar-with-dependencies.jar", "./TestBundleJava/hue-0.1-jar-with-dependencies.jar")
+
+if env.get('TEST') == '1':
+	target_os = env.get('TARGET_OS')
+	if target_os == 'linux':
+		from tools.scons.RunTest import *
+		run_test(container_gtest_env,
+			'',
+			'service/resource-encapsulation/src/resourceContainer/unittests/container_test')

@@ -269,13 +269,16 @@ namespace OIC
 
             int length = readlink("/proc/self/exe", buffer, 2047);
 
-            buffer[length] = '\0';
+            if (length > 0 && length < 2047)
+            {
+                buffer[length] = '\0';
 
-            strPath = strrchr(buffer, '/');
+                strPath = strrchr(buffer, '/');
 
-            *strPath = '\0';
+                *strPath = '\0';
 
-            pPath->append(buffer);
+                pPath->append(buffer);
+            }
         }
     }
 }

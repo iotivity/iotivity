@@ -26,10 +26,12 @@ SoftSensorBundleActivator *bundle;
 
 SoftSensorBundleActivator::SoftSensorBundleActivator()
 {
+    m_pResourceContainer = nullptr;
 }
 
 SoftSensorBundleActivator::~SoftSensorBundleActivator()
 {
+    m_pResourceContainer = nullptr;
 }
 
 void SoftSensorBundleActivator::activateBundle(ResourceContainerBundleAPI *resourceContainer,
