@@ -32,12 +32,13 @@
  * Method:    startPlugins
  * Signature: (Ljava/lang/String;Ljava/lang/String;)I
  */
-JNIEXPORT jint JNICALL Java_org_iotivity_service_ppm_PluginManager_jniStartPlugins(JNIEnv *env, jobject jobj,
+JNIEXPORT jint JNICALL Java_org_iotivity_service_ppm_PluginManager_jniStartPlugins(JNIEnv *env,
+        jobject jobj,
         jstring jkey, jstring jvalue)
 {
     LOGD("jniStartPlugins() Called.");
 
-    if((!jkey)||(!jvalue))
+    if ((!jkey) || (!jvalue))
         return 0;
     std::string ckey = env->GetStringUTFChars(jkey, 0);
     std::string cvalue = env->GetStringUTFChars(jvalue, 0);
@@ -50,12 +51,13 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ppm_PluginManager_jniStartPlugi
  * Method:    stopPlugins
  * Signature: (Ljava/lang/String;Ljava/lang/String;)I
  */
-JNIEXPORT jint JNICALL Java_org_iotivity_service_ppm_PluginManager_jniStopPlugins(JNIEnv *env, jobject jobj,
+JNIEXPORT jint JNICALL Java_org_iotivity_service_ppm_PluginManager_jniStopPlugins(JNIEnv *env,
+        jobject jobj,
         jstring jkey, jstring jvalue)
 {
     LOGD("jniStopPlugins() Called.");
 
-    if((!jkey)||(!jvalue))
+    if ((!jkey) || (!jvalue))
         return 0;
     std::string ckey = env->GetStringUTFChars(jkey, 0);
     std::string cvalue = env->GetStringUTFChars(jvalue, 0);
@@ -68,7 +70,8 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ppm_PluginManager_jniStopPlugin
  * Method:    jniRescanPlugin
  * Signature: (V)I
  */
-JNIEXPORT jint JNICALL Java_org_iotivity_service_ppm_PluginManager_jniRescanPlugin(JNIEnv *env, jobject jobj)
+JNIEXPORT jint JNICALL Java_org_iotivity_service_ppm_PluginManager_jniRescanPlugin(JNIEnv *env,
+        jobject jobj)
 {
     LOGD("jniRescanPlugin() Called.");
 
@@ -81,8 +84,9 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ppm_PluginManager_jniRescanPlug
  * Method:    getPlugins
  * Signature: (V)[Lorg/iotivity/service/ppm/Plugin;
  */
-JNIEXPORT jobjectArray JNICALL Java_org_iotivity_service_ppm_PluginManager_jniGetPlugins(JNIEnv *env,
-        jobject jobj)
+JNIEXPORT jobjectArray JNICALL Java_org_iotivity_service_ppm_PluginManager_jniGetPlugins(
+    JNIEnv *env,
+    jobject jobj)
 {
     LOGD("jniGetPlugins() Called.");
 
@@ -110,7 +114,8 @@ JNIEXPORT jobjectArray JNICALL Java_org_iotivity_service_ppm_PluginManager_jniGe
  * Method:    getState
  * Signature: (Ljava/lang/String;)Ljava/lang/String;
  */
-JNIEXPORT jstring JNICALL Java_org_iotivity_service_ppm_PluginManager_jniGetState(JNIEnv *env, jobject jobj,
+JNIEXPORT jstring JNICALL Java_org_iotivity_service_ppm_PluginManager_jniGetState(JNIEnv *env,
+        jobject jobj,
         jstring jplugID)
 {
     LOGD("jniGetState() Called.");
