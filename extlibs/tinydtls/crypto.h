@@ -46,6 +46,7 @@
 #define DTLS_BLK_LENGTH        16 /* AES-128 */
 #define DTLS_MAC_LENGTH        DTLS_HMAC_DIGEST_SIZE
 #define DTLS_IV_LENGTH         4  /* length of nonce_explicit */
+#define DTLS_CBC_IV_LENGTH     16
 
 /** 
  * Maximum size of the generated keyblock. Note that MAX_KEYBLOCK_LENGTH must 

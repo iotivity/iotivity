@@ -309,7 +309,7 @@ usage( const char *program, const char *version) {
 	  "\t-p port\t\tlisten on specified port (default is %d)\n"
 	  "\t-v num\t\tverbosity level (default: 3)\n"
           "\t-c num\t\tcipher suite (default: 1)\n"
-          "\t\t\t1: TLS_ECDH_anon_WITH_AES_128_CBC_SHA \n"
+          "\t\t\t1: TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256 \n"
           "\t\t\t2: TLS_PSK_WITH_AES_128_CCM_8\n"
           "\t\t\t3: TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8\n",
 	   program, version, program, DEFAULT_PORT);
@@ -347,7 +347,7 @@ main(int argc, char **argv) {
   log_t log_level = DTLS_LOG_WARN;
   int fd, result;
   int on = 1;
-  dtls_cipher_t selected_cipher = TLS_ECDH_anon_WITH_AES_128_CBC_SHA;
+  dtls_cipher_t selected_cipher = TLS_NULL_WITH_NULL_NULL;
   dtls_cipher_enable_t ecdh_anon_enalbe = DTLS_CIPHER_ENABLE;
   int opt, res;
   session_t dst;
@@ -417,7 +417,7 @@ main(int argc, char **argv) {
     case 'c':
       if( strcmp(optarg, "1") == 0)
       {
-          selected_cipher = TLS_ECDH_anon_WITH_AES_128_CBC_SHA;
+          selected_cipher = TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256;
           ecdh_anon_enalbe = DTLS_CIPHER_ENABLE;
       }
       else if( strcmp(optarg, "2") == 0)
@@ -500,7 +500,7 @@ main(int argc, char **argv) {
   /* select cipher suite */
   dtls_select_cipher(dtls_context, selected_cipher);
 
-  /* enable/disable tls_ecdh_anon_with_aes_128_cbc_sha */
+  /* enable/disable tls_ecdh_anon_with_aes_128_cbc_sha_256 */
   dtls_enables_anon_ecdh(dtls_context, ecdh_anon_enalbe);
 
   dtls_set_handler(dtls_context, &cb);

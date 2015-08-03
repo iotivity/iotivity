@@ -252,7 +252,7 @@ CAResult_t CAHandleRequestResponse();
  * Select the cipher suite for dtls handshake
  *
  * @param[IN] cipher  cipher suite (Note : Make sure endianness)
- *                               0xC018 : TLS_ECDH_anon_WITH_AES_128_CBC_SHA
+ *                               0xC018 : TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256
  *                               0xC0A8 : TLS_PSK_WITH_AES_128_CCM_8
  *                               0xC0AE : TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8
  *
@@ -263,7 +263,7 @@ CAResult_t CAHandleRequestResponse();
 CAResult_t CASelectCipherSuite(const uint16_t cipher);
 
 /**
- * Enable TLS_ECDH_anon_WITH_AES_128_CBC_SHA cipher suite in dtls
+ * Enable TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256 cipher suite in dtls
  *
  * @param[IN] enable  TRUE/FALSE enables/disables anonymous cipher suite
  *
