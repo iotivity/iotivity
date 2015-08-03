@@ -43,8 +43,8 @@ extern "C" void destroy_object( PluginManagerImpl *object )
 PluginManagerImpl::PluginManagerImpl(void *args)
 {
 #ifndef ANDROID
-        m_args = args;
-        cppm = CpluffAdapter::Getinstance();
+    m_args = args;
+    cppm = CpluffAdapter::Getinstance();
 #endif
 #ifdef ANDROID
     m_args = args;

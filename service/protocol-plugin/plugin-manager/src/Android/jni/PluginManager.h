@@ -55,7 +55,8 @@ JavaVM *jvm;
  * Method:    jniStartPlugins
  * Signature: (Ljava/lang/String;Ljava/lang/String;)I
  */
-JNIEXPORT jint JNICALL Java_org_iotivity_service_ppm_PluginManager_jniStartPlugins(JNIEnv *, jobject,
+JNIEXPORT jint JNICALL Java_org_iotivity_service_ppm_PluginManager_jniStartPlugins(JNIEnv *,
+        jobject,
         jstring, jstring);
 
 /*
@@ -63,7 +64,8 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ppm_PluginManager_jniStartPlugi
  * Method:    jniStopPlugins
  * Signature: (Ljava/lang/String;Ljava/lang/String;)I
  */
-JNIEXPORT jint JNICALL Java_org_iotivity_service_ppm_PluginManager_jniStopPlugins(JNIEnv *, jobject, jstring,
+JNIEXPORT jint JNICALL Java_org_iotivity_service_ppm_PluginManager_jniStopPlugins(JNIEnv *, jobject,
+        jstring,
         jstring);
 
 /*
@@ -71,14 +73,16 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ppm_PluginManager_jniStopPlugin
  * Method:    jniRescanPlugin
  * Signature: (V)I
  */
-JNIEXPORT jint JNICALL Java_org_iotivity_service_ppm_PluginManager_jniRescanPlugin(JNIEnv *, jobject);
+JNIEXPORT jint JNICALL Java_org_iotivity_service_ppm_PluginManager_jniRescanPlugin(JNIEnv *,
+        jobject);
 
 /*
  * Class:     org_iotivity_service_ppm_PluginManager
  * Method:    jniGetPlugins
  * Signature: (V)[Lorg/iotivity/service/ppm/Plugin;
  */
-JNIEXPORT jobjectArray JNICALL Java_org_iotivity_service_ppm_PluginManager_jniGetPlugins(JNIEnv *, jobject);
+JNIEXPORT jobjectArray JNICALL Java_org_iotivity_service_ppm_PluginManager_jniGetPlugins(JNIEnv *,
+        jobject);
 
 /*
  * Class:     org_iotivity_service_ppm_PluginManager
