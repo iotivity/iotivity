@@ -22,8 +22,10 @@
 
 package org.iotivity.service.ppm;
 
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
+
 import org.iotivity.base.ModeType;
 import org.iotivity.base.OcConnectivityType;
 import org.iotivity.base.OcException;
@@ -33,7 +35,6 @@ import org.iotivity.base.OcResource;
 import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.QualityOfService;
 import org.iotivity.base.ServiceType;
-import org.iotivity.service.ppm.R;
 
 import android.app.Activity;
 import android.content.Context;
@@ -140,7 +141,7 @@ public class MainActivity extends Activity implements
         try {
             FoundResource foundResource = new FoundResource();
             OcPlatform.findResource("", OcPlatform.WELL_KNOWN_QUERY,
-                    OcConnectivityType.CT_DEFAULT, foundResource);
+                    EnumSet.of(OcConnectivityType.CT_DEFAULT), foundResource);
         } catch (Exception e) {
             Log.e(LOG_TAG, "Exception : " + e);
         }
@@ -208,7 +209,7 @@ public class MainActivity extends Activity implements
                             OcPlatform
                                     .findResource(
                                             "", OcPlatform.WELL_KNOWN_QUERY + "?rt=" + "device.smartplug",
-                                            OcConnectivityType.CT_DEFAULT, foundResource);
+                                            EnumSet.of(OcConnectivityType.CT_DEFAULT), foundResource);
                         } catch (OcException e) {
                             e.printStackTrace();
                         }
@@ -328,7 +329,7 @@ public class MainActivity extends Activity implements
                             OcPlatform
                             .findResource(
                                     "", OcPlatform.WELL_KNOWN_QUERY + "?rt=" + "device.notify",
-                                    OcConnectivityType.CT_DEFAULT, foundResource);
+                                    EnumSet.of(OcConnectivityType.CT_DEFAULT), foundResource);
                         } catch (OcException e) {
                             e.printStackTrace();
                         }
@@ -486,7 +487,7 @@ public class MainActivity extends Activity implements
                             OcPlatform
                             .findResource(
                                     "", OcPlatform.WELL_KNOWN_QUERY + "?rt=" + "device.light",
-                                    OcConnectivityType.CT_DEFAULT, foundResource);
+                                    EnumSet.of(OcConnectivityType.CT_DEFAULT), foundResource);
                         } catch (OcException e) {
                             e.printStackTrace();
                         }
