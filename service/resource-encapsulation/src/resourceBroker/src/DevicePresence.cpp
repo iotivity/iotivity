@@ -46,7 +46,6 @@ namespace OIC
             }
             resourcePresenceList.clear();
             OC_LOG_V(DEBUG,BROKER_TAG,"destroy Timer.");
-            presenceTimer.destroyTimer();
         }
 
         void DevicePresence::initializeDevicePresence(PrimitiveResourcePtr pResource)
@@ -68,7 +67,7 @@ namespace OIC
                 throw;
             }
             presenceTimerHandle
-            = presenceTimer.postTimer(BROKER_DEVICE_PRESENCE_TIMEROUT, pTimeoutCB);
+            = presenceTimer.post(BROKER_DEVICE_PRESENCE_TIMEROUT, pTimeoutCB);
         }
         DEVICE_STATE DevicePresence::getDeviceState() const
         {
@@ -122,7 +121,7 @@ namespace OIC
                 std::unique_lock<std::mutex> lock(timeoutMutex);
                 condition.wait(lock);
             }
-            presenceTimer.cancelTimer(presenceTimerHandle);
+            presenceTimer.cancel(presenceTimerHandle);
 
             switch(ret)
             {
@@ -136,7 +135,7 @@ namespace OIC
                             (int)(state.load(boost::memory_order_consume)));
                     changeAllPresenceMode(BROKER_MODE::DEVICE_PRESENCE_MODE);
                     presenceTimerHandle
-                    = presenceTimer.postTimer(BROKER_DEVICE_PRESENCE_TIMEROUT, pTimeoutCB);
+                    = presenceTimer.post(BROKER_DEVICE_PRESENCE_TIMEROUT, pTimeoutCB);
                     break;
                 }
                 case OC_STACK_INVALID_REQUEST_HANDLE:

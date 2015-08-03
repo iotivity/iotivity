@@ -115,7 +115,10 @@ rcs_common_test_env.PrependUnique(LIBS = [
     'pthread'
     ])
 
-rcs_common_test_src = env.Glob('primitiveResource/unittests/*.cpp')
+rcs_common_test_src = [
+    env.Glob('primitiveResource/unittests/*.cpp'),
+    'expiryTimer/unittests/ExpiryTimerTest.cpp'
+    ]
 
 rcs_common_test = rcs_common_test_env.Program('rcs_common_test', rcs_common_test_src)
 Alias("rcs_common_test", rcs_common_test)
