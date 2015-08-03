@@ -41,7 +41,7 @@ class DataCacheTest : public TestWithMock
         void(const OIC::Service::HeaderOptions &, const OIC::Service::ResponseStatement &, int,
              int) > ObserveCallback;
     public:
-        DataCache *cacheHandler;
+        std::shared_ptr<DataCache> cacheHandler;
         PrimitiveResource::Ptr pResource;
         CacheCB cb;
         CacheID id;
@@ -51,13 +51,14 @@ class DataCacheTest : public TestWithMock
         {
             TestWithMock::SetUp();
             pResource = PrimitiveResource::Ptr(mocks.Mock< PrimitiveResource >(), [](PrimitiveResource *) {});
-            cacheHandler = new DataCache();
+            cacheHandler.reset(new DataCache());
             cb = ([](std::shared_ptr<PrimitiveResource >, const RCSResourceAttributes &)->OCStackResult {return OC_STACK_OK;});
         }
 
         virtual void TearDown()
         {
-            delete cacheHandler;
+            cacheHandler.reset();
+            pResource.reset();
             TestWithMock::TearDown();
         }
 };
@@ -247,19 +248,12 @@ TEST_F(DataCacheTest, requestGet_normalCasetest)
     mocks.OnCall(pResource.get(), PrimitiveResource::requestGet).Do(
         [](GetCallback callback)
     {
-        std::cout << "HelloWorld" << std::endl;
         OIC::Service::HeaderOptions hos;
-
         OIC::Service::RCSResourceAttributes attr;
-        //attr = mocks.Mcok< OIC::Service::RCSResourceAttributes >();
         OIC::Service::ResponseStatement rep(attr);
-        //rep = mocks.Mock< OIC::Service::ResponseStatement >(attr);
-        //fakeResource = mocks.Mock< FakeOCResource >();
-        //mocks.OnCallFunc(RCSResourceAttributes::empty()).Return(false);
         callback(hos, rep, OC_STACK_OK);
         return;
-    }
-    );
+    });
     mocks.OnCall(pResource.get(), PrimitiveResource::cancelObserve);
 
     cacheHandler->initializeDataCache(pResource);

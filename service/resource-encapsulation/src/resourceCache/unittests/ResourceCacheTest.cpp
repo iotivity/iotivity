@@ -46,6 +46,7 @@ class ResourceCacheManagerTest : public TestWithMock
 
         virtual void TearDown()
         {
+            pResource.reset();
             TestWithMock::TearDown();
         }
 };
@@ -279,6 +280,7 @@ TEST_F(ResourceCacheManagerTest, getResourceCacheStateCacheID_cacheIDIsZero)
 TEST_F(ResourceCacheManagerTest, getResourceCacheStateCacheID_handlerIsNULL)
 {
 
+    id = 1;
     ASSERT_EQ(cacheInstance->getResourceCacheState(id), CACHE_STATE::NONE);
 }
 
