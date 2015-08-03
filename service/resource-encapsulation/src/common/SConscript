@@ -121,3 +121,10 @@ rcs_common_test_src = [
 rcs_common_test = rcs_common_test_env.Program('rcs_common_test', rcs_common_test_src)
 Alias("rcs_common_test", rcs_common_test)
 env.AppendTarget('rcs_common_test')
+
+if env.get('TEST') == '1':
+    target_os = env.get('TARGET_OS')
+    if target_os == 'linux':
+        from tools.scons.RunTest import *
+        run_test(rcs_common_test_env, '',
+                'service/resource-encapsulation/src/common/rcs_common_test')
