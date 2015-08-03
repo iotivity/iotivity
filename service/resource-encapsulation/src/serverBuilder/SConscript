@@ -110,3 +110,10 @@ server_builder_test_src = env.Glob('unittests/*.cpp')
 server_builder_test = server_builder_test_env.Program('rcs_server_test', server_builder_test_src)
 Alias("rcs_server_test", server_builder_test)
 env.AppendTarget('rcs_server_test')
+
+if env.get('TEST') == '1':
+    target_os = env.get('TARGET_OS')
+    if target_os == 'linux':
+        from tools.scons.RunTest import *
+        run_test(server_builder_test_env, '',
+                'service/resource-encapsulation/src/serverBuilder/rcs_server_test')
