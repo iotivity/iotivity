@@ -196,7 +196,7 @@ namespace OIC
             this->state = _state;
         }
 
-        void ResourcePresence::timeOutCB(unsigned int msg)
+        void ResourcePresence::timeOutCB(unsigned int /*msg*/)
         {
             std::unique_lock<std::mutex> lock(cbMutex);
 
@@ -218,7 +218,7 @@ namespace OIC
             pollingCB();
         }
 
-        void ResourcePresence::pollingCB(unsigned int msg)
+        void ResourcePresence::pollingCB(unsigned int /*msg*/)
         {
             if(this->requesterList->size() != 0)
             {
@@ -228,8 +228,8 @@ namespace OIC
             }
         }
 
-        void ResourcePresence::getCB(const HeaderOptions &hos,
-                const ResponseStatement& rep, int eCode)
+        void ResourcePresence::getCB(const HeaderOptions & /*hos*/,
+                const ResponseStatement & /*rep*/, int eCode)
         {
             OC_LOG_V(DEBUG, BROKER_TAG, "response getCB\n");
             OC_LOG_V(DEBUG, BROKER_TAG, "waiting for terminate TimeoutCB\n");

@@ -61,7 +61,7 @@ namespace OIC
             return s_instance;
         }
 
-        const BrokerID ResourceBroker::hostResource(PrimitiveResourcePtr pResource, BrokerCB cb)
+        BrokerID ResourceBroker::hostResource(PrimitiveResourcePtr pResource, BrokerCB cb)
         {
             if(pResource == nullptr || cb == nullptr || cb == NULL)
             {
