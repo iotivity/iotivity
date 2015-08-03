@@ -40,8 +40,6 @@ if target_os not in ['windows', 'winrt']:
     plugins_env.PrependUnique(CCFLAGS = ['-fPIC'])
     plugins_env.AppendUnique(LINKFLAGS = ['-fPIC'])
 
-#plugins_env.AppendUnique(LIBS=['libconnectivity-abstraction'])
-
     if target_os not in ['arduino', 'android']:
         plugins_env.AppendUnique(LIBS = ['pthread'])
 
@@ -60,8 +58,10 @@ plugins_env['LIBPREFIX'] = ''
 
 mqtt_fan_src = Glob('mqtt-fan/src/' + '*.cpp')
 fanserver = plugins_env.SharedLibrary('mqtt-fan/fanserver_mqtt_plugin', mqtt_fan_src)
+Command("mqtt-fan/plugin.xml","mqtt-fan/build/linux/plugin.xml", Copy("$TARGET", "$SOURCE"))
 
 mqtt_light_src = Glob('mqtt-light/src/' + '*.cpp')
 lightserver = plugins_env.SharedLibrary('mqtt-light/lightserver_mqtt_plugin', mqtt_light_src)
+Command("mqtt-light/plugin.xml","mqtt-light/build/linux/plugin.xml", Copy("$TARGET", "$SOURCE"))
 
 SConscript('mqtt-fan/lib/SConscript')

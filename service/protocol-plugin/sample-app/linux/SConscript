@@ -57,5 +57,8 @@ sample_env.AppendUnique(LIBS = ['pthread'])
 ######################################################################
 mqttclient = sample_env.Program('mqtt/mqttclient', 'mqtt/mqttclient.cpp')
 
+Command("mqtt/pluginmanager.xml","../../plugin-manager/src/pluginmanager.xml", Copy("$TARGET", "$SOURCE"))
+Command("mqtt/libpmimpl.so","../../../../libpmimpl.so", Copy("$TARGET", "$SOURCE"))
+
 Alias('mqttclient', mqttclient)
 env.AppendTarget('mqttclient')
