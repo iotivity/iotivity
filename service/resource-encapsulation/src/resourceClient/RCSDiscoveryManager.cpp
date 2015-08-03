@@ -61,12 +61,6 @@ namespace OIC
         {
             SCOPE_LOG_F(DEBUG, TAG);
 
-            if (resourceURI.empty())
-            {
-                OC_LOG(ERROR, TAG, "discoverResource NULL resourceURI");
-                throw InvalidParameterException{ "discoverResource NULL resourceURI'" };
-            }
-
             if (!cb)
             {
                 OC_LOG(ERROR, TAG, "discoverResource NULL Callback");
