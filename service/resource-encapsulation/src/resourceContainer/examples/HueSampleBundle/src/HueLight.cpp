@@ -27,7 +27,7 @@ using namespace OIC::Service;
 
 HueLight::HueLight()
 {
-
+    m_connector = nullptr;
 }
 
 HueLight::HueLight(HueConnector *connector, std::string address)
@@ -39,7 +39,7 @@ HueLight::HueLight(HueConnector *connector, std::string address)
 
 HueLight::~HueLight()
 {
-
+    m_connector = nullptr;
 }
 
 void HueLight::initAttributes()

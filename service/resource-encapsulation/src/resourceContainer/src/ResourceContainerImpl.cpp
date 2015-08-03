@@ -88,7 +88,8 @@ namespace OIC
             info_logger() << "Resource container without Java support" << endl;
 #endif
 
-            if(!configFile.empty()){
+            if (!configFile.empty())
+            {
                 m_config = new Configuration(configFile);
 
                 if (m_config->isLoaded())
@@ -122,7 +123,8 @@ namespace OIC
                     error_logger() << "Container started with invalid configfile path" << endl;
                 }
             }
-            else{
+            else
+            {
                 info_logger() << "No configuration file for the container provided" << endl;
             }
         }
@@ -391,8 +393,8 @@ namespace OIC
             return &m_instance;
         }
 
-        RCSResourceObject::Ptr ResourceContainerImpl::buildResourceObject(const std::string & strUri,
-                const std::string & strResourceType)
+        RCSResourceObject::Ptr ResourceContainerImpl::buildResourceObject(const std::string &strUri,
+                const std::string &strResourceType)
         {
             return RCSResourceObject::Builder(strUri, strResourceType, "DEFAULT_INTERFACE").setObservable(
                        true).setDiscoverable(true).build();
@@ -428,7 +430,8 @@ namespace OIC
             }
         }
 
-        void ResourceContainerImpl::addBundle(const std::string &bundleId, const std::string &bundleUri, const std::string &bundlePath,
+        void ResourceContainerImpl::addBundle(const std::string &bundleId, const std::string &bundleUri,
+                                              const std::string &bundlePath,
                                               std::map< string, string > params)
         {
             if (m_bundles.find(bundleId) != m_bundles.end())
@@ -481,13 +484,14 @@ namespace OIC
                 {
                     RCSBundleInfo *bundleInfo = RCSBundleInfo::build();
                     ((BundleInfoInternal *) bundleInfo)->setBundleInfo((RCSBundleInfo *) it->second);
-                    ret.push_back(it->second);
+                    ret.push_back(bundleInfo);
                 }
             }
             return ret;
         }
 
-        void ResourceContainerImpl::addResourceConfig(const std::string &bundleId, const std::string &resourceUri,
+        void ResourceContainerImpl::addResourceConfig(const std::string &bundleId,
+                const std::string &resourceUri,
                 std::map< string, string > params)
         {
             if (m_bundles.find(bundleId) != m_bundles.end())
@@ -514,7 +518,8 @@ namespace OIC
             }
         }
 
-        void ResourceContainerImpl::removeResourceConfig(const std::string &bundleId, const std::string &resourceUri)
+        void ResourceContainerImpl::removeResourceConfig(const std::string &bundleId,
+                const std::string &resourceUri)
         {
             if (m_bundles.find(bundleId) != m_bundles.end())
             {
@@ -645,7 +650,8 @@ namespace OIC
             }
         }
 
-        void ResourceContainerImpl::removeSoBundleResource(const std::string &bundleId, const std::string &resourceUri)
+        void ResourceContainerImpl::removeSoBundleResource(const std::string &bundleId,
+                const std::string &resourceUri)
         {
             if (m_mapResources.find(resourceUri) != m_mapResources.end())
             {
