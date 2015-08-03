@@ -23,6 +23,7 @@
 #include "RCSDiscoveryManager.h"
 #include "RCSResourceObject.h"
 #include "PrimitiveResource.h"
+#include <condition_variable>
 
 #include <mutex>
 
