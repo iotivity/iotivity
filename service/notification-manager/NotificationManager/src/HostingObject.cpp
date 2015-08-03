@@ -232,7 +232,7 @@ RCSSetResponse HostingObject::setRequestHandler(const RCSRequest & primitiveRequ
     {
         RequestObject newRequest = { };
         newRequest.invokeRequest(remoteObject, RequestObject::RequestMethod::Setter,
-                primitiveRequest, resourceAttibutes);
+                resourceAttibutes);
     }catch(PlatformException &e)
     {
         OIC_HOSTING_LOG(DEBUG,
