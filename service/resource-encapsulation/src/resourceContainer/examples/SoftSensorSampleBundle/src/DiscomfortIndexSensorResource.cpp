@@ -18,21 +18,12 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include <algorithm>
-
 #include "DiscomfortIndexSensorResource.h"
+
 
 DiscomfortIndexSensorResource::DiscomfortIndexSensorResource()
 {
-}
-
-DiscomfortIndexSensorResource::DiscomfortIndexSensorResource(vector<string> inputAttributes)
-{
-    m_pDiscomfortIndexSensor = new DiscomfortIndexSensor(inputAttributes);
-    m_vecInputAttributes = inputAttributes;
-    std::cout << "Init attributes" << endl;
-    initAttributes();
-    std::cout << "Init attributes finished" << endl;
+    m_pDiscomfortIndexSensor = new DiscomfortIndexSensor();
 }
 
 DiscomfortIndexSensorResource::~DiscomfortIndexSensorResource()
@@ -42,65 +33,39 @@ DiscomfortIndexSensorResource::~DiscomfortIndexSensorResource()
 
 void DiscomfortIndexSensorResource::initAttributes()
 {
-
-    BundleResource::setAttribute("temperature", "23");
-    BundleResource::setAttribute("humidity", "40");
-    BundleResource::setAttribute("discomfortIndex", "5");
+    SoftSensorResource::initAttributes();
 }
 
 RCSResourceAttributes &DiscomfortIndexSensorResource::getAttributes()
 {
-    return BundleResource::getAttributes();
+    return SoftSensorResource::getAttributes();
+}
+
+void DiscomfortIndexSensorResource::setAttribute(std::string key,
+        RCSResourceAttributes::Value &&value)
+{
+    SoftSensorResource::setAttribute(key, std::move(value));
 }
 
 RCSResourceAttributes::Value DiscomfortIndexSensorResource::getAttribute(const std::string &key)
 {
-    cout << "DiscomfortIndexSensorResource::getAttribute called for " << key << " called" << endl;
-    return BundleResource::getAttribute(key);
+    return SoftSensorResource::getAttribute(key);
 }
 
-void DiscomfortIndexSensorResource::setAttribute(std::string key, RCSResourceAttributes::Value &&value)
+void DiscomfortIndexSensorResource::executeLogic()
 {
-    cout << "DiscomfortIndexSensorResource::setAttribute setting " << key << " to " << value.toString()
-         << std::endl;
-    BundleResource::setAttribute(key, std::move(value));
-}
+    std::map<std::string, std::string> mapInputData;
+    std::string strTemp = getAttribute("temperature").toString();
+    std::string strHumid = getAttribute("humidity").toString();
+    std::string strDiscomfortIndex;
 
-void DiscomfortIndexSensorResource::setInputAttribute(SensorData input)
-{
-    vector<string>::iterator itor = std::find(m_vecInputAttributes.begin(), m_vecInputAttributes.end(),
-                                    input.sensorName);
-    std::vector<SensorData> inData;
-
-    if (itor != m_vecInputAttributes.end())
+    if (!strTemp.empty() && !strHumid.empty())
     {
-        m_mapStoredInputData[input.sensorName] = input;
+        mapInputData.insert(std::make_pair("temperature", strTemp));
+        mapInputData.insert(std::make_pair("humidity", strHumid));
 
-        if (inputCount == m_mapStoredInputData.size())
-        {
-            for (map< string, SensorData >::iterator mapItor = m_mapStoredInputData.begin();
-                 mapItor != m_mapStoredInputData.end(); mapItor++)
-            {
-                inData.push_back(mapItor->second);
-            }
+        m_pDiscomfortIndexSensor->executeDISensorLogic(&mapInputData, &strDiscomfortIndex);
 
-            m_pDiscomfortIndexSensor->runLogic(inData);
-            m_outputs = m_pDiscomfortIndexSensor->m_output;
-
-            for (unsigned int i = 0; i < m_outputs.data.size(); i++)
-            {
-                if (!m_outputs.data.at(i)["name"].compare("temperature"))
-                    BundleResource::setAttribute("temperature",
-                                                 RCSResourceAttributes::Value(m_outputs.data.at(i)["value"].c_str()));
-
-                else if (!m_outputs.data.at(i)["name"].compare("humidity"))
-                    BundleResource::setAttribute("humidity",
-                                                 RCSResourceAttributes::Value(m_outputs.data.at(i)["value"].c_str()));
-
-                else if (!m_outputs.data.at(i)["name"].compare("discomfortIndex"))
-                    BundleResource::setAttribute("discomfortIndex",
-                                                 RCSResourceAttributes::Value(m_outputs.data.at(i)["value"].c_str()));
-            }
-        }
+        setAttribute("discomfortIndex", RCSResourceAttributes::Value(strDiscomfortIndex.c_str()));
     }
 }

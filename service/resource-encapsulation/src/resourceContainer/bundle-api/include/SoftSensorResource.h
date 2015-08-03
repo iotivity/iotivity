@@ -37,12 +37,6 @@ namespace OIC
         class SoftSensorResource: public BundleResource
         {
             public:
-                struct SensorData
-                {
-                    string sensorName;
-                    vector< map< string, string > > data;
-                };
-
                 /**
                 * Constructor for SoftSensorResource
                 */
@@ -54,11 +48,18 @@ namespace OIC
                 virtual ~SoftSensorResource();
 
                 /**
+                * Initialize input and output attributes for the resource
+                *
+                * @return void
+                */
+                virtual void initAttributes();
+
+                /**
                 * Return all attributes of the resource
                 *
                 * @return RCSResourceAttributes - attributes of the resource
                 */
-                virtual RCSResourceAttributes &getAttributes() = 0;
+                virtual RCSResourceAttributes &getAttributes();
 
                 /**
                 * Execute the logic of bundle to set the value of attribute
@@ -69,8 +70,7 @@ namespace OIC
                 *
                 * @return void
                 */
-                virtual void setAttribute(std::string key,
-                        RCSResourceAttributes::Value &&value) = 0;
+                virtual void setAttribute(std::string key, RCSResourceAttributes::Value &&value);
 
                 /**
                 * Execute the logic of bundle to get the value of attribute
@@ -79,23 +79,19 @@ namespace OIC
                 *
                 * @return RCSResourceAttributes::Value - return value of the attribute
                 */
-                virtual RCSResourceAttributes::Value getAttribute(const std::string &key) = 0;
+                virtual RCSResourceAttributes::Value getAttribute(const std::string &key);
 
                 /**
-                * Set Input data to update output value of the soft sensor
-                *
-                * @param inputs - input data which soft sensor needed
+                * SoftSensor logic. Has to be provided by the soft sensor developer.
+                * This function will be executed if an input attribute is updated.
                 *
                 * @return void
                 */
-                virtual void setInputAttribute(SensorData inputs) = 0;
+                virtual void executeLogic() = 0;
 
 
             public:
-                unsigned int inputCount;
-                vector<string> m_vecInputAttributes;
-                map< string, SensorData > m_mapStoredInputData;
-                SensorData m_outputs;
+                std::list<std::string> m_inputList;
         };
     }
 }

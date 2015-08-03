@@ -29,23 +29,12 @@
 * This header file is included to define _EXPORT_.
 */
 
-#include <iostream>
-
 #include "SoftSensorResource.h"
 
 using namespace OIC::Service;
 
 namespace DiscomfortIndexSensorName
 {
-#define PHYSICAL_EA 2
-
-    typedef struct _physicalInput_
-    {
-        char *m_thingName;
-        int m_inputNum;
-        void *m_pInputStruct;
-    } physicalInput;
-
     typedef enum
     {
         SUCCESS = 0, ERROR, ALL_DISCOMPORT, HALF_DISCOMPORT, LITTLE_DISCOMPORT, ALL_COMPORT
@@ -53,32 +42,17 @@ namespace DiscomfortIndexSensorName
 
     class DiscomfortIndexSensor
     {
-        private:
-
-            physicalInput s_PHYSICAL_SOFTSENSORs[PHYSICAL_EA];
-
-            class InValue
-            {
-                public:
-                    std::string m_timestamp; // .
-                    std::string m_discomfortIndex; // Discomfort Index. ( 2 ~ 5 )
-                    std::string m_humidity; // relative humidity.
-                    std::string m_temperature; // celsius temperature.
-            };
-
-            InValue m_DI[PHYSICAL_EA];
-            InValue m_result;
-
         public:
-            DiscomfortIndexSensor(vector <string> inputs);
+            DiscomfortIndexSensor();
+            ~DiscomfortIndexSensor();
 
-            int runLogic(std::vector< SoftSensorResource::SensorData > &sensorData);
-            DIResult getInput(std::vector< SoftSensorResource::SensorData > &contextDataList,
-                              InValue *data);
-            DIResult makeDiscomfortIndex(InValue *data);
-            SoftSensorResource::SensorData setOutput(int property_count, InValue *data);
+            int executeDISensorLogic(std::map<std::string, std::string> *pInputData, std::string *pOutput);
+            DIResult makeDiscomfortIndex();
 
-            SoftSensorResource::SensorData m_output;
+        private:
+            std::string m_humidity;
+            std::string m_temperature;
+            std::string m_discomfortIndex;
     };
 };
 
