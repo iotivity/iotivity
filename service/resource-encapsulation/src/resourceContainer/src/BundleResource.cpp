@@ -60,7 +60,6 @@ namespace OIC
 
         void BundleResource::setAttribute(std::string key, RCSResourceAttributes::Value &&value)
         {
-            cout << "Bundle resource set attribute " << value.toString() << "|" << endl;
             m_resourceAttributes[key] = value;
         }
 
