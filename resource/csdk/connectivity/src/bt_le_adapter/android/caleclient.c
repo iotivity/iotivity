@@ -31,6 +31,7 @@
 
 #include "logger.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 #include "cathreadpool.h" /* for thread pool */
 #include "camutex.h"
 #include "uarraylist.h"
@@ -477,12 +478,6 @@ void CALEClientSetCallback(CAPacketReceiveCallback callback)
 void CASetBLEClientErrorHandleCallback(CABLEErrorHandleCallback callback)
 {
     g_clientErrorCallback = callback;
-}
-
-CAResult_t CALEClientGetInterfaceInfo(char **address)
-{
-    OIC_LOG(INFO, TAG, "CALEClientGetInterfaceInfo is not supported");
-    return CA_NOT_SUPPORTED;
 }
 
 CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const char* data,
@@ -3134,6 +3129,12 @@ CAResult_t  CAUpdateCharacteristicsToGattServer(const char *remoteAddress, const
     VERIFY_NON_NULL(data, TAG, "data is null");
     VERIFY_NON_NULL(remoteAddress, TAG, "remoteAddress is null");
 
+    if (LE_UNICAST != type || position < 0)
+    {
+        OIC_LOG(ERROR, TAG, "this request is not unicast");
+        return CA_STATUS_INVALID_PARAM;
+    }
+
     return CALEClientSendUnicastMessage(remoteAddress, data, dataLen);
 }
 
@@ -3167,17 +3168,9 @@ void CASetLEClientThreadPoolHandle(ca_thread_pool_t handle)
 
 CAResult_t CAGetLEAddress(char **local_address)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
-    VERIFY_NON_NULL(local_address, TAG, "local_address is null");
-    CAResult_t res = CALEClientGetInterfaceInfo(local_address);
-    if (CA_STATUS_OK != res)
-    {
-        OIC_LOG(INFO, TAG, "it didn't get local address");
-    }
-
-    OIC_LOG(DEBUG, TAG, "OUT");
-    return CA_STATUS_OK;
+    VERIFY_NON_NULL(local_address, TAG, "local_address");
+    OIC_LOG(INFO, TAG, "CAGetLEAddress is not support");
+    return CA_NOT_SUPPORTED;
 }
 
 JNIEXPORT void JNICALL
@@ -3186,6 +3179,7 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeRegisterLeScanCallback(JNIEnv *env,
 {
     OIC_LOG(DEBUG, TAG, "CaLeRegisterLeScanCallback");
     VERIFY_NON_NULL_VOID(env, TAG, "env is null");
+    VERIFY_NON_NULL_VOID(obj, TAG, "obj is null");
     VERIFY_NON_NULL_VOID(callback, TAG, "callback is null");
 
     g_leScanCallback = (*env)->NewGlobalRef(env, callback);
@@ -3197,6 +3191,7 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeRegisterGattCallback(JNIEnv *env, j
 {
     OIC_LOG(DEBUG, TAG, "CaLeRegisterGattCallback");
     VERIFY_NON_NULL_VOID(env, TAG, "env is null");
+    VERIFY_NON_NULL_VOID(obj, TAG, "obj is null");
     VERIFY_NON_NULL_VOID(callback, TAG, "callback is null");
 
     g_leGattCallback = (*env)->NewGlobalRef(env, callback);
@@ -3204,10 +3199,10 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeRegisterGattCallback(JNIEnv *env, j
 
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaLeClientInterface_caLeScanCallback(JNIEnv *env, jobject obj,
-                                                           jobject device, jint rssi,
-                                                           jbyteArray scanRecord)
+                                                          jobject device)
 {
     VERIFY_NON_NULL_VOID(env, TAG, "env is null");
+    VERIFY_NON_NULL_VOID(obj, TAG, "obj is null");
     VERIFY_NON_NULL_VOID(device, TAG, "device is null");
 
     CAResult_t res = CALEClientAddScanDeviceToList(env, device);
@@ -3232,6 +3227,7 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattConnectionStateChangeCallback(J
     OIC_LOG_V(DEBUG, TAG, "CALeGattConnectionStateChangeCallback - status %d, newstate %d", status,
             newstate);
     VERIFY_NON_NULL_VOID(env, TAG, "env is null");
+    VERIFY_NON_NULL_VOID(obj, TAG, "obj is null");
     VERIFY_NON_NULL_VOID(gatt, TAG, "gatt is null");
 
     if (GATT_SUCCESS == status && STATE_CONNECTED == newstate) // le connected
@@ -3358,6 +3354,7 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattServicesDiscoveredCallback(JNIE
 {
     OIC_LOG_V(DEBUG, TAG, "CALeGattServicesDiscoveredCallback - status %d: ", status);
     VERIFY_NON_NULL_VOID(env, TAG, "env is null");
+    VERIFY_NON_NULL_VOID(obj, TAG, "obj is null");
     VERIFY_NON_NULL_VOID(gatt, TAG, "gatt is null");
 
     if (0 != status) // discovery error
@@ -3445,32 +3442,17 @@ error_exit:
 
 /*
  * Class:     org_iotivity_ca_jar_caleinterface
- * Method:    CALeGattCharacteristicReadCallback
- * Signature: (Landroid/bluetooth/BluetoothGatt;Landroid/bluetooth/BluetoothGattCharacteristic;I)V
- */
-JNIEXPORT void JNICALL
-Java_org_iotivity_ca_CaLeClientInterface_caLeGattCharacteristicReadCallback(JNIEnv *env,
-                                                                             jobject obj,
-                                                                             jobject gatt,
-                                                                             jobject characteristic,
-                                                                             jbyteArray data,
-                                                                             jint status)
-{
-    OIC_LOG_V(DEBUG, TAG, "CALeGattCharacteristicReadCallback - status : %d", status);
-}
-
-/*
- * Class:     org_iotivity_ca_jar_caleinterface
  * Method:    CALeGattCharacteristicWritjclasseCallback
  * Signature: (Landroid/bluetooth/BluetoothGatt;Landroid/bluetooth/BluetoothGattCharacteristic;I)V
  */
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaLeClientInterface_caLeGattCharacteristicWriteCallback(
-        JNIEnv *env, jobject obj, jobject gatt, jobject characteristic, jbyteArray data,
+        JNIEnv *env, jobject obj, jobject gatt, jbyteArray data,
         jint status)
 {
     OIC_LOG_V(DEBUG, TAG, "CALeGattCharacteristicWriteCallback - status : %d", status);
     VERIFY_NON_NULL_VOID(env, TAG, "env is null");
+    VERIFY_NON_NULL_VOID(obj, TAG, "obj is null");
     VERIFY_NON_NULL_VOID(gatt, TAG, "gatt is null");
 
     jboolean isCopy;
@@ -3531,10 +3513,11 @@ error_exit:
  */
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaLeClientInterface_caLeGattCharacteristicChangedCallback(
-        JNIEnv *env, jobject obj, jobject gatt, jobject characteristic, jbyteArray data)
+        JNIEnv *env, jobject obj, jobject gatt, jbyteArray data)
 {
     OIC_LOG(DEBUG, TAG, "CALeGattCharacteristicChangedCallback");
     VERIFY_NON_NULL_VOID(env, TAG, "env is null");
+    VERIFY_NON_NULL_VOID(obj, TAG, "obj is null");
     VERIFY_NON_NULL_VOID(gatt, TAG, "gatt is null");
     VERIFY_NON_NULL_VOID(data, TAG, "data is null");
 
@@ -3588,31 +3571,17 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattCharacteristicChangedCallback(
 
 /*
  * Class:     org_iotivity_ca_jar_caleinterface
- * Method:    CALeGattDescriptorReadCallback
- * Signature: (Landroid/bluetooth/BluetoothGatt;Landroid/bluetooth/BluetoothGattDescriptor;I)V
- */
-JNIEXPORT void JNICALL
-Java_org_iotivity_ca_CaLeClientInterface_caLeGattDescriptorReadCallback(JNIEnv *env, jobject obj,
-                                                                         jobject gatt,
-                                                                         jobject descriptor,
-                                                                         jint status)
-{
-    OIC_LOG_V(DEBUG, TAG, "CALeGattDescriptorReadCallback - status %d: ", status);
-}
-
-/*
- * Class:     org_iotivity_ca_jar_caleinterface
  * Method:    CALeGattDescriptorWriteCallback
  * Signature: (Landroid/bluetooth/BluetoothGatt;Landroid/bluetooth/BluetoothGattDescriptor;I)V
  */
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaLeClientInterface_caLeGattDescriptorWriteCallback(JNIEnv *env, jobject obj,
-                                                                          jobject gatt,
-                                                                          jobject descriptor,
-                                                                          jint status)
+                                                                         jobject gatt,
+                                                                         jint status)
 {
     OIC_LOG_V(DEBUG, TAG, "CALeGattDescriptorWriteCallback - status %d: ", status);
     VERIFY_NON_NULL_VOID(env, TAG, "env is null");
+    VERIFY_NON_NULL_VOID(obj, TAG, "obj is null");
     VERIFY_NON_NULL_VOID(gatt, TAG, "gatt is null");
 
     CAResult_t res = CALEClientWriteCharacteristic(env, gatt);
@@ -3628,31 +3597,4 @@ error_exit:
 
     CALEClientSendFinish(env, gatt);
     return;
-}
-
-/*
- * Class:     org_iotivity_ca_jar_caleinterface
- * Method:    CALeGattReliableWriteCompletedCallback
- * Signature: (Landroid/bluetooth/BluetoothGatt;I)V
- */
-JNIEXPORT void JNICALL
-Java_org_iotivity_ca_CaLeClientInterface_caLeGattReliableWriteCompletedCallback(JNIEnv *env,
-                                                                                 jobject obj,
-                                                                                 jobject gatt,
-                                                                                 jint status)
-{
-    OIC_LOG_V(DEBUG, TAG, "CALeGattReliableWriteCompletedCallback - status %d: ", status);
-}
-
-/*
- * Class:     org_iotivity_ca_jar_caleinterface
- * Method:    CALeGattReadRemoteRssiCallback
- * Signature: (Landroid/bluetooth/BluetoothGatt;II)V
- */
-JNIEXPORT void JNICALL
-Java_org_iotivity_ca_CaLeClientInterface_caLeGattReadRemoteRssiCallback(JNIEnv *env, jobject obj,
-                                                                         jobject gatt, jint rssi,
-                                                                         jint status)
-{
-    OIC_LOG_V(DEBUG, TAG, "CALeGattReadRemoteRssiCallback - rssi %d,  status %d: ", rssi, status);
 }

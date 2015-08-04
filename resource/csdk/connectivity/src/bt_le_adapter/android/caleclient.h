@@ -43,13 +43,13 @@ static const uint16_t STATE_SEND_NONE = 0;
 static const uint16_t STATE_SEND_SUCCESS = 1;
 static const uint16_t STATE_SEND_FAILED = 2;
 
-static const uint32_t STATE_CONNECTED = 2;
-static const uint32_t STATE_DISCONNECTED = 0;
+static const jint STATE_CONNECTED = 2;
+static const jint STATE_DISCONNECTED = 0;
 
 typedef struct le_state_info
 {
     char address[CA_MACADDR_SIZE];
-    uint32_t connectedState;
+    jint connectedState;
     uint16_t notificationState;
     uint16_t sendState;
 } CALEState_t;
@@ -152,13 +152,6 @@ void CALEClientStopMulticastServer();
  * @return  None
  */
 void CALEClientSetCallback(CAPacketReceiveCallback callback);
-
-/**
- * @brief   get local address (interface)
- * @param   address               [OUT] local address
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
- */
-CAResult_t CALEClientGetInterfaceInfo(char **address);
 
 /**
  * @brief   get local address (implement)
