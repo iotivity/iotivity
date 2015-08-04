@@ -836,6 +836,7 @@ static bool OCParseSingleRepPayload(OCRepPayload** outPayload, CborValue* repPar
     if(err)
     {
         OCRepPayloadDestroy(*outPayload);
+        *outPayload = NULL;
     }
 
     return err;
