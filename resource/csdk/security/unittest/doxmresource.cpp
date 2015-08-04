@@ -127,7 +127,7 @@ TEST(DoxmEntityHandlerTest, DoxmEntityHandlerValidRequest)
 {
     EXPECT_EQ(OC_STACK_INVALID_PARAM, InitDoxmResource());
     char query[] = "oxm=0&owned=false&owner=owner1";
-    OCEntityHandlerRequest req = {};
+    OCEntityHandlerRequest req = {0};
     req.method = OC_REST_GET;
     req.query = OICStrdup(query);
     EXPECT_EQ(OC_EH_ERROR, DoxmEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, &req));

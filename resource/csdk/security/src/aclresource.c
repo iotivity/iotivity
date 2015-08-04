@@ -44,15 +44,14 @@ void DeleteACLList(OicSecAcl_t* acl)
 {
     if (acl)
     {
-        OicSecAcl_t *aclTmp1 = NULL, *aclTmp2 = NULL;
+        OicSecAcl_t *aclTmp1 = NULL;
+        OicSecAcl_t *aclTmp2 = NULL;
         LL_FOREACH_SAFE(acl, aclTmp1, aclTmp2)
         {
-            int i = 0;
-
             LL_DELETE(acl, aclTmp1);
 
             // Clean Resources
-            for (i = 0; i < aclTmp1->resourcesLen; i++)
+            for (size_t i = 0; i < aclTmp1->resourcesLen; i++)
             {
                 OICFree(aclTmp1->resources[i]);
             }
@@ -115,7 +114,7 @@ char * BinToAclJSON(const OicSecAcl_t * acl)
             cJSON *jsonRsrcArray = NULL;
             cJSON_AddItemToObject (jsonAcl, OIC_JSON_RESOURCES_NAME, jsonRsrcArray = cJSON_CreateArray());
             VERIFY_NON_NULL(TAG, jsonRsrcArray, ERROR);
-            for (int i = 0; i < acl->resourcesLen; i++)
+            for (size_t i = 0; i < acl->resourcesLen; i++)
             {
                 cJSON_AddItemToArray (jsonRsrcArray, cJSON_CreateString(acl->resources[i]));
             }
@@ -127,7 +126,7 @@ char * BinToAclJSON(const OicSecAcl_t * acl)
             cJSON *jsonOwnrArray = NULL;
             cJSON_AddItemToObject (jsonAcl, OIC_JSON_OWNERS_NAME, jsonOwnrArray = cJSON_CreateArray());
             VERIFY_NON_NULL(TAG, jsonOwnrArray, ERROR);
-            for (int i = 0; i < acl->ownersLen; i++)
+            for (size_t i = 0; i < acl->ownersLen; i++)
             {
                 outLen = 0;
 
@@ -220,7 +219,7 @@ OicSecAcl_t * JSONToAclBin(const char * jsonStr)
             acl->resources = (char**)OICCalloc(acl->resourcesLen, sizeof(char*));
             VERIFY_NON_NULL(TAG, (acl->resources), ERROR);
 
-            int idxx = 0;
+            size_t idxx = 0;
             do
             {
                 cJSON *jsonRsrc = cJSON_GetArrayItem(jsonObj, idxx);
@@ -343,6 +342,7 @@ OCEntityHandlerResult ACLEntityHandler (OCEntityHandlerFlag flag,
                                         OCEntityHandlerRequest * ehRequest,
                                         void* callbackParameter)
 {
+    (void)callbackParameter;
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
     if (!ehRequest)
@@ -406,7 +406,7 @@ OCStackResult  GetDefaultACL(OicSecAcl_t** defaultAcl)
 {
     OCStackResult ret = OC_STACK_ERROR;
 
-    OicUuid_t ownerId = {};
+    OicUuid_t ownerId = {.id = {0}};
 
     /*
      * TODO In future, when new virtual resources will be added in OIC
@@ -445,7 +445,7 @@ OCStackResult  GetDefaultACL(OicSecAcl_t** defaultAcl)
     acl->resources = (char**)OICCalloc(acl->resourcesLen, sizeof(char*));
     VERIFY_NON_NULL(TAG, (acl->resources), ERROR);
 
-    for (int i = 0; i <  acl->resourcesLen; i++)
+    for (size_t i = 0; i <  acl->resourcesLen; i++)
     {
         size_t len = strlen(rsrcs[i]) + 1;
         acl->resources[i] = (char*)OICMalloc(len * sizeof(char));

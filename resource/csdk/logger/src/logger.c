@@ -152,7 +152,7 @@ static void osalGetTime(int *min,int *sec, int *ms)
     if (min && sec && ms)
     {
 #if defined(_POSIX_TIMERS) && _POSIX_TIMERS > 0
-        struct timespec when = {};
+        struct timespec when = {0};
         clockid_t clk = CLOCK_REALTIME;
 #ifdef CLOCK_REALTIME_COARSE
         clk = CLOCK_REALTIME_COARSE;

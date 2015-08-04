@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2015 Intel Corporation All Rights Reserved.
  *
@@ -403,6 +403,9 @@ static void CAPeripheralOnNameAcquired(GDBusConnection * connection,
                                        gchar const * name,
                                        gpointer user_data)
 {
+    (void)connection;
+    (void)name; // needed when logging is a noop
+    (void)user_data;
     OIC_LOG_V(DEBUG,
               TAG,
               "Name \"%s\" acquired on D-Bus.", name);
@@ -421,6 +424,9 @@ static void CAPeripheralOnNameLost(GDBusConnection * connection,
                                    gchar const * name,
                                    gpointer user_data)
 {
+    (void)connection;
+    (void)name; // needed when logging is a noop
+    (void)user_data;
     /*
       This can happen if the appropriate D-Bus policy is not
       installed, for example.

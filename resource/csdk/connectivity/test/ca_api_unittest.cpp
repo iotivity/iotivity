@@ -41,12 +41,14 @@ void error_handler(const CAEndpoint_t *object, const CAErrorInfo_t* errorInfo);
 CAResult_t checkGetNetworkInfo();
 CAResult_t checkSelectNetwork();
 
-void request_handler(const CAEndpoint_t *object, const CARequestInfo_t *requestInfo)
+void request_handler(const CAEndpoint_t * /*object*/,
+                     const CARequestInfo_t * /*requestInfo*/)
 {
 
 }
 
-void response_handler(const CAEndpoint_t *object, const CAResponseInfo_t *responseInfo)
+void response_handler(const CAEndpoint_t * /*object*/,
+                      const CAResponseInfo_t * /*responseInfo*/)
 {
 
 }

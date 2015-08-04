@@ -26,7 +26,7 @@
 TEST(ParseRestQueryTest, ParseRestQueryEmpty)
 {
     unsigned char query[] = "";
-    OicParseQueryIter_t parseIter = {};
+    OicParseQueryIter_t parseIter = {0};
     ParseQueryIterInit(query, &parseIter);
     EXPECT_EQ(NULL,  GetNextQuery(&parseIter));
 }
@@ -36,7 +36,7 @@ TEST(ParseRestQueryTest, ParseSingleRestQuery)
     char attr[10], val[10];
     unsigned char query[] = "owned=false";
 
-    OicParseQueryIter_t parseIter = {};
+    OicParseQueryIter_t parseIter = {0};
     ParseQueryIterInit(query, &parseIter);
     EXPECT_NE((OicParseQueryIter_t *)NULL,  GetNextQuery(&parseIter));
 
@@ -51,7 +51,7 @@ TEST(ParseRestQueryTest, ParseRestMultipleQuery)
     char attr[10], val[10];
     unsigned char query[] = "oxm=0&owned=true&owner=owner1";
 
-    OicParseQueryIter_t parseIter = {};
+    OicParseQueryIter_t parseIter = {0};
     ParseQueryIterInit(query, &parseIter);
     printf("\n");
     while(GetNextQuery(&parseIter))
@@ -65,4 +65,3 @@ TEST(ParseRestQueryTest, ParseRestMultipleQuery)
     }
     printf("\n");
 }
-

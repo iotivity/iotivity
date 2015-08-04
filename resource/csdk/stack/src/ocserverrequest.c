@@ -411,8 +411,8 @@ CAResponseResult_t ConvertEHResultToCAResult (OCEntityHandlerResult result)
 OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
 {
     OCStackResult result = OC_STACK_ERROR;
-    CAEndpoint_t responseEndpoint = {};
-    CAResponseInfo_t responseInfo = {};
+    CAEndpoint_t responseEndpoint = {.adapter = CA_DEFAULT_ADAPTER};
+    CAResponseInfo_t responseInfo = {.result = CA_EMPTY};
     CAHeaderOption_t* optionsPointer = NULL;
 
     if(!ehResponse || !ehResponse->requestHandle)

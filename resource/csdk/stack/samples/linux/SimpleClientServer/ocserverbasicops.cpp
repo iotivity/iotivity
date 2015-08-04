@@ -220,12 +220,13 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest,
 
 OCEntityHandlerResult
 OCEntityHandlerCb (OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest *entityHandlerRequest,void* callbackParam)
+                   OCEntityHandlerRequest *entityHandlerRequest,
+                   void* /*callbackParam*/)
 {
     OC_LOG_V (INFO, TAG, "Inside entity handler - flags: 0x%x", flag);
 
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
-    OCEntityHandlerResponse response = {};
+    OCEntityHandlerResponse response = {0};
 
     // Validate pointer
     if (!entityHandlerRequest)
@@ -298,7 +299,7 @@ void handleSigInt(int signum)
     }
 }
 
-int main(int argc, char* argv[])
+int main(int /*argc*/, char* /*argv*/[])
 {
     OC_LOG(DEBUG, TAG, "OCServer is starting...");
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)

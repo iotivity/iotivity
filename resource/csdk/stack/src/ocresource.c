@@ -49,8 +49,8 @@
              TAG, PCF(#arg " is NULL")); return (retVal); } }
 
 extern OCResource *headResource;
-static OCPlatformInfo savedPlatformInfo = {};
-static OCDeviceInfo savedDeviceInfo = {};
+static OCPlatformInfo savedPlatformInfo = {0};
+static OCDeviceInfo savedDeviceInfo = {0};
 
 //-----------------------------------------------------------------------------
 // Default resource entity handler function
@@ -522,7 +522,7 @@ static bool includeThisResourceInResponse(OCResource *resource,
 OCStackResult SendNonPersistantDiscoveryResponse(OCServerRequest *request, OCResource *resource,
                                 OCPayload *discoveryPayload, OCEntityHandlerResult ehResult)
 {
-    OCEntityHandlerResponse response = {};
+    OCEntityHandlerResponse response = {0};
 
     response.ehResult = ehResult;
     response.payload = discoveryPayload;
@@ -676,7 +676,7 @@ HandleDefaultDeviceEntityHandler (OCServerRequest *request)
 
     OCStackResult result = OC_STACK_OK;
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
-    OCEntityHandlerRequest ehRequest = {};
+    OCEntityHandlerRequest ehRequest = {0};
 
     OC_LOG(INFO, TAG, PCF("Entering HandleResourceWithDefaultDeviceEntityHandler"));
     result = FormOCEntityHandlerRequest(&ehRequest,
@@ -725,7 +725,7 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
     OCEntityHandlerFlag ehFlag = OC_REQUEST_FLAG;
     ResourceObserver *resObs = NULL;
 
-    OCEntityHandlerRequest ehRequest = {};
+    OCEntityHandlerRequest ehRequest = {0};
 
     OC_LOG(INFO, TAG, PCF("Entering HandleResourceWithEntityHandler"));
 
@@ -842,7 +842,7 @@ HandleCollectionResourceDefaultEntityHandler (OCServerRequest *request,
     }
 
     OCStackResult result = OC_STACK_ERROR;
-    OCEntityHandlerRequest ehRequest = {};
+    OCEntityHandlerRequest ehRequest = {0};
 
     result = FormOCEntityHandlerRequest(&ehRequest,
                                         (OCRequestHandle)request,

@@ -55,8 +55,8 @@ static OicSecDoxm_t gDefaultDoxm =
     1,                      /* size_t oxmLen */
     OIC_JUST_WORKS,         /* uint16_t oxmSel */
     false,                  /* bool owned */
-    {},                     /* OicUuid_t deviceID */
-    {},                     /* OicUuid_t owner */
+    {.id = {0}},            /* OicUuid_t deviceID */
+    {.id = {0}},            /* OicUuid_t owner */
 };
 
 void DeleteDoxmBinData(OicSecDoxm_t* doxm)
@@ -64,7 +64,7 @@ void DeleteDoxmBinData(OicSecDoxm_t* doxm)
     if (doxm)
     {
         //Clean oxmType
-        for(int i = 0; i < doxm->oxmTypeLen; i++)
+        for (size_t i = 0; i < doxm->oxmTypeLen; i++)
         {
             OICFree(doxm->oxmType[i]);
         }
@@ -195,7 +195,7 @@ OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr)
         doxm->oxmType = (OicUrn_t *)OICCalloc(doxm->oxmTypeLen, sizeof(char *));
         VERIFY_NON_NULL(TAG, (doxm->oxmType), ERROR);
 
-        for(int i  = 0; i < doxm->oxmTypeLen ; i++)
+        for (size_t i  = 0; i < doxm->oxmTypeLen ; i++)
         {
             cJSON *jsonOxmTy = cJSON_GetArrayItem(jsonObj, i);
             VERIFY_NON_NULL(TAG, jsonOxmTy, ERROR);
@@ -217,7 +217,7 @@ OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr)
         doxm->oxm = (OicSecOxm_t*)OICCalloc(doxm->oxmLen, sizeof(OicSecOxm_t));
         VERIFY_NON_NULL(TAG, doxm->oxm, ERROR);
 
-        for(int i  = 0; i < doxm->oxmLen ; i++)
+        for (size_t i  = 0; i < doxm->oxmLen ; i++)
         {
             cJSON *jsonOxm = cJSON_GetArrayItem(jsonObj, i);
             VERIFY_NON_NULL(TAG, jsonOxm, ERROR);
@@ -348,7 +348,7 @@ static bool ValidateQuery(unsigned char * query)
         return false;
     }
 
-    OicParseQueryIter_t parseIter = {};
+    OicParseQueryIter_t parseIter = {0};
 
     ParseQueryIterInit(query, &parseIter);
 
@@ -413,7 +413,7 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
 {
     OC_LOG (INFO, TAG, PCF("Doxm EntityHandle  processing PUT request"));
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
-    OicUuid_t emptyOwner = {};
+    OicUuid_t emptyOwner = {.id = {0}};
 
     /*
      * Convert JSON Doxm data into binary. This will also validate
@@ -536,6 +536,7 @@ OCEntityHandlerResult DoxmEntityHandler (OCEntityHandlerFlag flag,
                                         OCEntityHandlerRequest * ehRequest,
                                         void* callbackParam)
 {
+    (void)callbackParam;
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
     if(NULL == ehRequest)

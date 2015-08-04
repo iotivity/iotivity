@@ -132,7 +132,7 @@ namespace OC
 
     }
 
-    OCStackApplicationResult listenCallback(void* ctx, OCDoHandle handle,
+    OCStackApplicationResult listenCallback(void* ctx, OCDoHandle /*handle*/,
         OCClientResponse* clientResponse)
     {
         ClientCallbackContext::ListenContext* context =
@@ -218,7 +218,8 @@ namespace OC
         return result;
     }
 
-    OCStackApplicationResult listenDeviceCallback(void* ctx, OCDoHandle handle,
+    OCStackApplicationResult listenDeviceCallback(void* ctx,
+                                                  OCDoHandle /*handle*/,
             OCClientResponse* clientResponse)
     {
         ClientCallbackContext::DeviceListenContext* context =
@@ -307,7 +308,8 @@ namespace OC
         }
     }
 
-    OCStackApplicationResult getResourceCallback(void* ctx, OCDoHandle handle,
+    OCStackApplicationResult getResourceCallback(void* ctx,
+                                                 OCDoHandle /*handle*/,
         OCClientResponse* clientResponse)
     {
         ClientCallbackContext::GetContext* context =
@@ -381,7 +383,8 @@ namespace OC
     }
 
 
-    OCStackApplicationResult setResourceCallback(void* ctx, OCDoHandle handle,
+    OCStackApplicationResult setResourceCallback(void* ctx,
+                                                 OCDoHandle /*handle*/,
         OCClientResponse* clientResponse)
     {
         ClientCallbackContext::SetContext* context =
@@ -539,7 +542,8 @@ namespace OC
         return result;
     }
 
-    OCStackApplicationResult deleteResourceCallback(void* ctx, OCDoHandle handle,
+    OCStackApplicationResult deleteResourceCallback(void* ctx,
+                                                    OCDoHandle /*handle*/,
         OCClientResponse* clientResponse)
     {
         ClientCallbackContext::DeleteContext* context =
@@ -558,7 +562,9 @@ namespace OC
     OCStackResult InProcClientWrapper::DeleteResource(
         const OCDevAddr& devAddr,
         const std::string& uri,
-        const HeaderOptions& headerOptions, DeleteCallback& callback, QualityOfService QoS)
+        const HeaderOptions& headerOptions,
+        DeleteCallback& callback,
+        QualityOfService /*QoS*/)
     {
         if(!callback)
         {
@@ -599,7 +605,8 @@ namespace OC
         return result;
     }
 
-    OCStackApplicationResult observeResourceCallback(void* ctx, OCDoHandle handle,
+    OCStackApplicationResult observeResourceCallback(void* ctx,
+                                                     OCDoHandle /*handle*/,
         OCClientResponse* clientResponse)
     {
         ClientCallbackContext::ObserveContext* context =
@@ -693,8 +700,8 @@ namespace OC
 
     OCStackResult InProcClientWrapper::CancelObserveResource(
             OCDoHandle handle,
-            const std::string& host, // unused
-            const std::string& uri,  // unused
+            const std::string& /*host*/,
+            const std::string& /*uri*/,
             const HeaderOptions& headerOptions,
             QualityOfService QoS)
     {
@@ -719,7 +726,8 @@ namespace OC
         return result;
     }
 
-    OCStackApplicationResult subscribePresenceCallback(void* ctx, OCDoHandle handle,
+    OCStackApplicationResult subscribePresenceCallback(void* ctx,
+                                                       OCDoHandle /*handle*/,
             OCClientResponse* clientResponse)
     {
         ClientCallbackContext::SubscribePresenceContext* context =

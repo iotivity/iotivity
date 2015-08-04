@@ -461,7 +461,7 @@ OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t stat
 {
     OCStackResult result = OC_STACK_ERROR;
     ResourceObserver * observer = NULL;
-    OCEntityHandlerRequest ehRequest = {};
+    OCEntityHandlerRequest ehRequest = {0};
 
     switch(status)
     {
@@ -800,7 +800,7 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
     OCStackApplicationResult cbResult = OC_STACK_DELETE_TRANSACTION;
     ClientCB * cbNode = NULL;
     char *resourceTypeName = NULL;
-    OCClientResponse response = {};
+    OCClientResponse response = {.devAddr = {.adapter = OC_DEFAULT_ADAPTER}};
     OCStackResult result = OC_STACK_ERROR;
     uint32_t maxAge = 0;
     int uriLen;
@@ -830,7 +830,8 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
     else
     {
         // check for multiicast presence
-        CAEndpoint_t ep = { endpoint->adapter, endpoint->flags };
+        CAEndpoint_t ep = { .adapter = endpoint->adapter,
+                            .flags = endpoint->flags };
         OICStrcpy(ep.addr, sizeof(ep.addr), OC_MULTICAST_IP);
         ep.port = OC_MULTICAST_PORT;
 
@@ -1040,7 +1041,8 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
             OC_LOG(INFO, TAG, PCF("Receiving A Timeout for this token"));
             OC_LOG(INFO, TAG, PCF("Calling into application address space"));
 
-            OCClientResponse response = {};
+            OCClientResponse response =
+                {.devAddr = {.adapter = OC_DEFAULT_ADAPTER}};
             CopyEndpointToDevAddr(endPoint, &response.devAddr);
             FixUpClientResponse(&response);
             response.resourceUri = responseInfo->info.resourceUri;
@@ -1055,7 +1057,8 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
             OC_LOG(INFO, TAG, PCF("This is a regular response, A client call back is found"));
             OC_LOG(INFO, TAG, PCF("Calling into application address space"));
 
-            OCClientResponse response = {};
+            OCClientResponse response =
+                {.devAddr = {.adapter = OC_DEFAULT_ADAPTER}};
             response.sequenceNumber = OC_OBSERVE_NO_OPTION;
             CopyEndpointToDevAddr(endPoint, &response.devAddr);
             FixUpClientResponse(&response);
@@ -1239,8 +1242,9 @@ OCStackResult SendDirectStackResponse(const CAEndpoint_t* endPoint, const uint16
         const uint8_t numOptions, const CAHeaderOption_t *options,
         CAToken_t token, uint8_t tokenLength)
 {
-    CAResponseInfo_t respInfo = {};
-    respInfo.result = responseResult;
+    CAResponseInfo_t respInfo = {
+        .result = responseResult
+    };
     respInfo.info.messageId = coapID;
     respInfo.info.numOptions = numOptions;
     respInfo.info.options = (CAHeaderOption_t*)options;
@@ -1282,7 +1286,7 @@ void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
         return;
     }
 
-    OCServerProtocolRequest serverRequest = {};
+    OCServerProtocolRequest serverRequest = {0};
 
     OC_LOG_V(INFO, TAG, PCF("Endpoint URI : %s"), requestInfo->info.resourceUri);
 
@@ -1999,7 +2003,7 @@ OCStackResult OCDoResource(OCDoHandle *handle,
     OCTransportAdapter adapter;
     OCTransportFlags flags;
     // the request contents are put here
-    CARequestInfo_t requestInfo = { CA_GET };
+    CARequestInfo_t requestInfo = {.method = CA_GET};
     // requestUri  will be parsed into the following three variables
     OCDevAddr *devAddr = NULL;
     char *resourceUri = NULL;
@@ -2249,8 +2253,8 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
     OCStackResult ret = OC_STACK_OK;
     CAEndpoint_t* endpoint = NULL;
     CAResult_t caResult;
-    CAInfo_t requestData = {};
-    CARequestInfo_t requestInfo = {};
+    CAInfo_t requestData = {.type = CA_MSG_CONFIRM};
+    CARequestInfo_t requestInfo = {.method = CA_GET};
 
     if(!handle)
     {
@@ -2432,8 +2436,8 @@ OCStackResult OCProcessPresence()
 
         CAResult_t caResult = CA_STATUS_OK;
         CAEndpoint_t* endpoint = NULL;
-        CAInfo_t requestData ={};
-        CARequestInfo_t requestInfo = {};
+        CAInfo_t requestData = {.type = CA_MSG_CONFIRM};
+        CARequestInfo_t requestInfo = {.method = CA_GET};
 
         OC_LOG(DEBUG, TAG, PCF("time to test server presence"));
 
