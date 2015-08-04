@@ -50,8 +50,6 @@ namespace OIC
         {
             m_loaded = false;
 
-            getCurrentPath(&m_pathConfigFile);
-            m_pathConfigFile.append("/");
             m_pathConfigFile.append(configFile);
 
             getConfigDocument(m_pathConfigFile);
@@ -79,18 +77,21 @@ namespace OIC
                 {
                     //cout << "Name of first node is: " << m_xmlDoc.first_node()->name() << endl;
 
-                    for (bundle = m_xmlDoc.first_node()->first_node("bundle"); bundle; bundle = bundle->next_sibling())
+                    for (bundle = m_xmlDoc.first_node()->first_node("bundle"); bundle; bundle =
+                            bundle->next_sibling())
                     {
                         std::map< std::string, std::string > bundleMap;
                         //cout << "Bundle: " << bundle->name() << endl;
-                        for (subItem = bundle->first_node(); subItem; subItem = subItem->next_sibling())
+                        for (subItem = bundle->first_node(); subItem;
+                                subItem = subItem->next_sibling())
                         {
                             strKey = subItem->name();
                             strValue = subItem->value();
 
                             if (strlen(subItem->value()) > 0)
                             {
-                                bundleMap.insert(std::make_pair(trim_both(strKey), trim_both(strValue)));
+                                bundleMap.insert(
+                                        std::make_pair(trim_both(strKey), trim_both(strValue)));
                                 //cout << strKey << " " << strValue << endl;
                             }
                         }
@@ -119,7 +120,8 @@ namespace OIC
                     std::map< std::string, std::string > bundleConfigMap;
 
                     // <bundle>
-                    for (bundle = m_xmlDoc.first_node()->first_node("bundle"); bundle; bundle = bundle->next_sibling())
+                    for (bundle = m_xmlDoc.first_node()->first_node("bundle"); bundle; bundle =
+                            bundle->next_sibling())
                     {
                         // <id>
                         strBundleId = bundle->first_node("id")->value();
@@ -134,7 +136,8 @@ namespace OIC
 
                             // <version>
                             strVersion = bundle->first_node("version")->value();
-                            bundleConfigMap.insert(std::make_pair("version", trim_both(strVersion)));
+                            bundleConfigMap.insert(
+                                    std::make_pair("version", trim_both(strVersion)));
 
                             configOutput->push_back(bundleConfigMap);
 
@@ -165,7 +168,8 @@ namespace OIC
                 try
                 {
                     // <bundle>
-                    for (bundle = m_xmlDoc.first_node()->first_node("bundle"); bundle; bundle = bundle->next_sibling())
+                    for (bundle = m_xmlDoc.first_node()->first_node("bundle"); bundle; bundle =
+                            bundle->next_sibling())
                     {
                         // <id>
                         strBundleId = bundle->first_node("id")->value();
@@ -173,12 +177,13 @@ namespace OIC
                         if (!strBundleId.compare(bundleId))
                         {
                             // <resourceInfo>
-                            for (resource = bundle->first_node("resources")->first_node("resourceInfo"); resource;
-                                 resource = resource->next_sibling())
+                            for (resource = bundle->first_node("resources")->first_node(
+                                    "resourceInfo"); resource; resource = resource->next_sibling())
                             {
                                 resourceInfo tempResourceInfo;
 
-                                for (item = resource->first_node(); item; item = item->next_sibling())
+                                for (item = resource->first_node(); item; item =
+                                        item->next_sibling())
                                 {
                                     strKey = item->name();
                                     strValue = item->value();
@@ -197,21 +202,25 @@ namespace OIC
 
                                     else
                                     {
-                                        for (subItem = item->first_node(); subItem; subItem = subItem->next_sibling())
+                                        for (subItem = item->first_node(); subItem; subItem =
+                                                subItem->next_sibling())
                                         {
                                             map< string, string > propertyMap;
 
                                             strKey = subItem->name();
 
-                                            for (subItem2 = subItem->first_node(); subItem2; subItem2 = subItem2->next_sibling())
+                                            for (subItem2 = subItem->first_node(); subItem2;
+                                                    subItem2 = subItem2->next_sibling())
                                             {
                                                 string newStrKey = subItem2->name();
                                                 string newStrValue = subItem2->value();
 
-                                                propertyMap[trim_both(newStrKey)] = trim_both(newStrValue);
+                                                propertyMap[trim_both(newStrKey)] = trim_both(
+                                                        newStrValue);
                                             }
 
-                                            tempResourceInfo.resourceProperty[trim_both(strKey)].push_back(propertyMap);
+                                            tempResourceInfo.resourceProperty[trim_both(strKey)].push_back(
+                                                    propertyMap);
                                         }
                                     }
                                 }
@@ -247,7 +256,7 @@ namespace OIC
 
                 try
                 {
-                    m_xmlDoc.parse< 0 >((char *)m_strConfigData.c_str());
+                    m_xmlDoc.parse< 0 >((char *) m_strConfigData.c_str());
                     m_loaded = true;
                 }
                 catch (rapidxml::parse_error &e)
@@ -259,25 +268,6 @@ namespace OIC
             else
             {
                 std::cout << "Configuration File load failed !!" << std::endl;
-            }
-        }
-
-        void Configuration::getCurrentPath(std::string *pPath)
-        {
-            char buffer[2048];
-            char *strPath = NULL;
-
-            int length = readlink("/proc/self/exe", buffer, 2047);
-
-            if (length > 0 && length < 2047)
-            {
-                buffer[length] = '\0';
-
-                strPath = strrchr(buffer, '/');
-
-                *strPath = '\0';
-
-                pPath->append(buffer);
             }
         }
     }
