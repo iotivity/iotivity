@@ -132,4 +132,4 @@ void CATerminateIP();
 } /* extern "C" */
 #endif
 
-#endif  // #ifndef CA_IP_ADAPTER_H_
+#endif  // CA_IP_ADAPTER_H_

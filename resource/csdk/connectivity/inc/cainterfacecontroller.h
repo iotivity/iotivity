@@ -75,7 +75,7 @@ void CASetNetworkChangeCallback(CANetworkChangeCallback callback);
 /**
  * Starting different connectivity adapters based on the network selection.
  * @param[in]   transportType    interested network for starting.
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CAStartAdapter(CATransportAdapter_t transportType);
 
@@ -100,7 +100,7 @@ CAResult_t CASetAdapterRAInfo(const CARAInfo_t *caraInfo);
  * @param[out]   info           connectivity information
  *                                  such as ipaddress and mac information.
  * @param[out]   size           number of connectivity information structures.
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CAGetNetworkInfo(CAEndpoint_t **info, uint32_t *size);
 
@@ -109,7 +109,7 @@ CAResult_t CAGetNetworkInfo(CAEndpoint_t **info, uint32_t *size);
  * @param[in]   endpoint       endpoint information where the data has to be sent.
  * @param[in]   data           data that needs to be sent.
  * @param[in]   length         length of the data that needs to be sent.
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CASendUnicastData(const CAEndpoint_t *endpoint, const void *data, uint32_t length);
 
@@ -118,20 +118,20 @@ CAResult_t CASendUnicastData(const CAEndpoint_t *endpoint, const void *data, uin
  * @param[in]   endpoint       endpoint information where the data has to be sent.
  * @param[in]   data           data that needs to be sent.
  * @param[in]   length         length of the data that needs to be sent.
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 
 CAResult_t CASendMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t length);
 
 /**
  * Start listening servers to receive search requests from clients.
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CAStartListeningServerAdapters();
 
 /**
  * Start discovery servers to receive advertisements from server.
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CAStartDiscoveryServerAdapters();
 
@@ -143,7 +143,7 @@ void CATerminateAdapters();
 #ifdef SINGLE_THREAD
 /**
  * Checks for available data and reads it.
- * @return   CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
+ * @return   ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CAReadData();
 #endif

@@ -42,7 +42,7 @@ extern "C"
 typedef enum
 {
     STATE_DISCONNECTED, /**< State is Disconnected. */
-    STATE_CONNECTED /**< State is Connected. */
+    STATE_CONNECTED     /**< State is Connected. */
 } CAConnectedState_t;
 
 typedef struct connected_state
@@ -205,7 +205,7 @@ void CAEDRSetErrorHandler(CAEDRErrorHandleCallback errorHandleCallback);
  *
  * @return ::CA_STATUS_OK or Appropriate error code.
  * @retval ::CA_STATUS_OK  Successful.
- * @retval ::CA_STATUS_INVALID_PARAM  Invalid input argumets.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
  * @retval ::CA_STATUS_FAILED Operation failed.
  *
  * @see CALocalConnectivity_t
@@ -223,7 +223,7 @@ CAResult_t CAEDRGetInterfaceInformation(CAEndpoint_t **info);
  *
  * @return ::CA_STATUS_OK or Appropriate error code.
  * @retval ::CA_STATUS_OK  Successful.
- * @retval ::CA_STATUS_INVALID_PARAM  Invalid input argumets.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
  * @retval ::CA_STATUS_FAILED Operation failed.
  *
  */

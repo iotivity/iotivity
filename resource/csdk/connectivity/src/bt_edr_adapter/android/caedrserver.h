@@ -79,8 +79,6 @@ CAResult_t CAEDRStopUnicastServer();
  */
 CAResult_t CAEDRStopMulticastServer();
 
-// EDR Method
-
 /**
  * This function will read the data from remote device.
  * @param[in]  env              JNI interface pointer.

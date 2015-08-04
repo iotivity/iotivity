@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief This file contains the APIs for BT LE communications.
+ * This file contains the APIs for BT LE communications.
  */
 #ifndef CA_EDR_NW_MONITOR_H_
 #define CA_EDR_NW_MONITOR_H_
@@ -33,14 +33,12 @@ extern "C"
 #endif
 
 /**
- * @brief   Set context of application
- * @return  None
+ * Set context of application.
  */
 void CAEDRNetworkMonitorJNISetContext();
 
 /**
- * @brief   Initialize JNI object
- * @return  None
+ * Initialize JNI object.
  */
 void CAEDRNetworkMonitorJniInit();
 

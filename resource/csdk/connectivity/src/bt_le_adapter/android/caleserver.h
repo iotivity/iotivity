@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -19,8 +19,8 @@
  ******************************************************************/
 
 /**
- * @file caleserver.h
- * @brief This file contains the APIs for BT LE communications.
+ * @file
+ * This file contains the APIs for BT LE communications.
  */
 #ifndef CA_LESERVER_H_
 #define CA_LESERVER_H_
@@ -36,297 +36,287 @@ extern "C"
 #endif
 
 /**
- * @brief Callback to be notified on reception of any data from remote devices.
- * @param  address           [IN] MAC address of remote device.
- * @param  data              [IN] Data received from remote device.
- * @return None
- * @pre  Callback must be registered using CALEServerSetCallback(CAPacketReceiveCallback callback)
+ * Callback to be notified on reception of any data from remote devices.
+ * @param[in]  address           MAC address of remote device.
+ * @param[in]  data              Data received from remote device.
+ * @pre  Callback must be registered using CALEServerSetCallback(CAPacketReceiveCallback callback).
  */
 typedef void (*CAPacketReceiveCallback)(const char *address, const char *data);
 
 /**
- * @brief   initialize server for BLE
- * @param   handle           [IN] thread pool handle object
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
+ * initialize server for BLE.
+ * @param[in]   handle           thread pool handle object.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CALEServerInitialize(ca_thread_pool_t handle);
 
 /**
- * @brief   terminate client for BLE
- * @return  None
+ * terminate client for BLE.
  */
 void CALEServerTerminate();
 
 /**
- * @brief   send data for unicast (interface)
- * @param   address          [IN] remote address
- * @param   data             [IN] data for transmission
- * @param   dataLen          [IN] data length
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
+ * send data for unicast (interface).
+ * @param[in]   address          remote address.
+ * @param[in]   data             data for transmission.
+ * @param[in]   dataLen          data length.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CALEServerSendUnicastMessage(const char *address, const char *data, uint32_t dataLen);
 
 /**
- * @brief   send data for multicast (interface)
- * @param   data             [IN] data for transmission
- * @param   dataLen          [IN] data length
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
+ * send data for multicast (interface).
+ * @param[in]   data             data for transmission.
+ * @param[in]   dataLen          data length.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CALEServerSendMulticastMessage(const char *data, uint32_t dataLen);
 
 /**
- * @brief   start multicast server (start advertise)
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
+ * start multicast server (start advertise).
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CALEServerStartMulticastServer();
 
 /**
- * @brief   stop multicast server (stop discovery)
+ * stop multicast server (stop discovery).
  * @return  None
  */
 CAResult_t CALEServerStopMulticastServer();
 
 /**
- * @brief   set this callback for receiving data packets from peer devices.
- * @param   callback         [IN] callback to be notified on reception of
- *                                unicast/multicast data packets.
- * @return  None
+ * set this callback for receiving data packets from peer devices.
+ * @param[in]   callback         callback to be notified on reception of
+ *                               unicast/multicast data packets.
  */
 void CALEServerSetCallback(CAPacketReceiveCallback callback);
 
 /**
- * @brief   send data for unicast (implement)
- * @param   env              [IN] JNI interface pointer
- * @param   address          [IN] remote address
- * @param   data             [IN] data for transmission
- * @param   dataLen          [IN] data length
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
+ * send data for unicast (implement).
+ * @param[in]   env              JNI interface pointer.
+ * @param[in]   address          remote address.
+ * @param[in]   data             data for transmission.
+ * @param[in]   dataLen          data length.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CALEServerSendUnicastMessageImpl(JNIEnv *env, const char *address, const char *data,
                                             uint32_t dataLen);
 
 /**
- * @brief   send data for multicast (implement)
- * @param   env              [IN] JNI interface pointer
- * @param   data             [IN] data for transmission
- * @param   dataLen          [IN] data length
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
+ * send data for multicast (implement)
+ * @param[in]   env              JNI interface pointer
+ * @param[in]   data             data for transmission
+ * @param[in]   dataLen          data length
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CALEServerSendMulticastMessageImpl(JNIEnv *env, const char *data, uint32_t dataLen);
 
-/* Android BLE Server Functions */
 /**
- * @brief   set context of application
- * @return  None
+ * set context of application.
  */
 void CALEServerJNISetContext();
 
 /**
- * @brief   initialize JNI object
- * @return  None
+ * initialize JNI object.
  */
 void CALeServerJniInit();
 
 /**
- * @brief   create interface object and initialize the object
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
+ * create interface object and initialize the object.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CALEServerCreateJniInterfaceObject();
 
 /**
- * @brief   start advertise in gatt server
- * @param   env                [IN] JNI interface pointer
- * @param   advertiseCallback  [IN] callback to be notified on reception of
- *                                advertisement result
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
+ * start advertise in gatt server.
+ * @param[in]   env                JNI interface pointer.
+ * @param[in]   advertiseCallback  callback to be notified on reception of
+ *                                 advertisement result.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CALEServerStartAdvertise(JNIEnv *env, jobject advertiseCallback);
 
 /**
- * @brief   stop advertise in gatt server
- * @param   env                [IN] JNI interface pointer
- * @param   advertiseCallback  [IN] callback to be notified on reception of
- *                                advertisement result
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
+ * stop advertise in gatt server.
+ * @param[in]   env                JNI interface pointer.
+ * @param[in]   advertiseCallback  callback to be notified on reception of
+ *                                 advertisement result.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CALEServerStopAdvertise(JNIEnv *env, jobject advertiseCallback);
 
 /**
- * @brief   open a gatt server
- * @param   env                [IN] JNI interface pointer
- * @return  gatt server object
+ * open a gatt server.
+ * @param[in]   env                JNI interface pointer.
+ * @return  gatt server object.
  */
 jobject CALEServerOpenGattServer(JNIEnv *env);
 
 /**
- * @brief   create gatt service
- * @param   env                [IN] JNI interface pointer
+ * create gatt service
+ * @param[in]   env                JNI interface pointer
  * @return  gatt service object
  */
 jobject CALEServerCreateGattService(JNIEnv *env);
 
 /**
- * @brief   add a descriptor to the characteristic
- * @param   env                [IN] JNI interface pointer
- * @param   characteristic     [IN] Characteristic object
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
+ * add a descriptor to the characteristic.
+ * @param[in]   env                JNI interface pointer.
+ * @param[in]   characteristic     Characteristic object.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CALEServerAddDescriptor(JNIEnv *env, jobject characteristic);
 
 /**
- * @brief   create gatt service
- * @param   env                  [IN] JNI interface pointer
- * @param   bluetoothGattServer  [IN] Bluetooth Gatt Server object
- * @param   bluetoothGattService [IN] Bluetooth Gatt Service object
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
+ * create gatt service.
+ * @param[in]   env                  JNI interface pointer.
+ * @param[in]   bluetoothGattServer  Bluetooth Gatt Server object.
+ * @param[in]   bluetoothGattService Bluetooth Gatt Service object.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CALEServerAddGattService(JNIEnv *env, jobject bluetoothGattServer,
                                     jobject bluetoothGattService);
 
 /**
- * @brief   start gatt server
- * @param   env                  [IN] JNI interface pointer
- * @param   gattServerCallback   [IN] callback to be notified on reception of
- *                                state change of gatt server
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
+ * start gatt server.
+ * @param[in]   env                  JNI interface pointer.
+ * @param[in]   gattServerCallback   callback to be notified on reception of
+ *                                   state change of gatt server.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CALEServerStartGattServer(JNIEnv *env, jobject gattServerCallback);
 
 /**
- * @brief   close gatt server
- * @param   env                  [IN] JNI interface pointer
- * @param   bluetoothGattServer  [IN] Gatt Server object
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
+ * close gatt server.
+ * @param[in]   env                  JNI interface pointer.
+ * @param[in]   bluetoothGattServer  Gatt Server object.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CALEServerGattClose(JNIEnv *env, jobject bluetoothGattServer);
 /**
- * @brief   send data
- * @param   env                  [IN] JNI interface pointer
- * @param   bluetoothDevice      [IN] bluetooth device object
- * @param   data                 [IN] data which send
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
+ * send data.
+ * @param[in]   env                  JNI interface pointer.
+ * @param[in]   bluetoothDevice      bluetooth device object.
+ * @param[in]   data                 data which send.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CALEServerSend(JNIEnv *env, jobject bluetoothDevice, jstring data);
 
 /**
- * @brief   set data in BluetoothGattCharacteristic
- * @param   env                  [IN] JNI interface pointer
- * @param   responseData         [IN] data to set in characteristic object
- * @return  BluetoothGattCharacteristic object
+ * set data in BluetoothGattCharacteristic.
+ * @param[in]   env                  JNI interface pointer.
+ * @param[in]   responseData         data to set in characteristic object.
+ * @return  BluetoothGattCharacteristic object.
  */
 jobject CALEServerSetResponseData(JNIEnv *env, jbyteArray responseData);
 
 /**
- * @brief   send data through notifyCharacteristicChanged api of android
- * @param   env                  [IN] JNI interface pointer
- * @param   device               [IN] bluetooth device object
- * @param   responseData         [IN] data which send
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
+ * send data through notifyCharacteristicChanged api of android.
+ * @param[in]   env                  JNI interface pointer.
+ * @param[in]   device               bluetooth device object.
+ * @param[in]   responseData         data which send.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CALEServerSendResponseData(JNIEnv *env, jobject device, jobject responseData);
 
 /**
- * @brief   send a response to a write request to a remote device
- * @param   env                  [IN] JNI interface pointer
- * @param   device               [IN] bluetooth device object
- * @param   requestId            [IN] the id of request
- * @param   status               [IN] the status of the request to be sent to the remote devices
- * @param   offset               [IN] value offset for partial write response
- * @param   value                [IN] the value of the attribute that written (optional)
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
+ * send a response to a write request to a remote device.
+ * @param[in]   env                  JNI interface pointer.
+ * @param[in]   device               bluetooth device object.
+ * @param[in]   requestId            the id of request.
+ * @param[in]   status               the status of the request to be sent to the remote devices.
+ * @param[in]   offset               value offset for partial write response.
+ * @param[in]   value                the value of the attribute that written (optional).
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CALEServerSendResponse(JNIEnv *env, jobject device, jint requestId, jint status,
                                   jint offset, jbyteArray value);
 
 /**
- * @brief   connect BLE to remote device form gatt server
- * @param   env                  [IN] JNI interface pointer
- * @param   bluetoothDevice      [IN] bluetooth device object
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
+ * connect BLE to remote device form gatt server.
+ * @param[in]   env                  JNI interface pointer.
+ * @param[in]   bluetoothDevice      bluetooth device object.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CALEServerConnect(JNIEnv *env, jobject bluetoothDevice);
 
 /**
- * @brief   disconnect LE for all devices
- * @param   env                  [IN] JNI interface pointer
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
+ * disconnect LE for all devices.
+ * @param[in]   env                  JNI interface pointer.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CALEServerDisconnectAllDevices(JNIEnv *env);
 
 /**
- * @brief   disconnect LE to remote device form gatt server
- * @param   env                  [IN] JNI interface pointer
- * @param   bluetoothDevice      [IN] bluetooth device object
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
+ * disconnect LE to remote device form gatt server.
+ * @param[in]   env                  JNI interface pointer.
+ * @param[in]   bluetoothDevice      bluetooth device object.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CALEServerDisconnect(JNIEnv *env, jobject bluetoothDevice);
 
-/* BLE Server Utils */
 /**
- * @brief   create connected device list
- * @return  None
+ * create connected device list.
  */
 void CALEServerCreateCachedDeviceList();
 
 /**
- * @brief   check whether the device exist in the list or not
- * @param   env                   [IN] JNI interface pointer
- * @param   remoteAddress         [IN] remote address
- * @return  true or false
+ * check whether the device exist in the list or not.
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   remoteAddress         remote address.
+ * @return  true or false.
  */
 bool CALEServerIsDeviceInList(JNIEnv *env, const char* remoteAddress);
 
 /**
- * @brief   add device object to the list (connected device list)
- * @param   env                   [IN] JNI interface pointer
- * @param   device                [IN] bluetooth device object
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
+ * add device object to the list (connected device list).
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   device                bluetooth device object.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CALEServerAddDeviceToList(JNIEnv *env, jobject device);
 
 /**
- * @brief   remove all devices objects in the list (connected device list)
- * @param   env                   [IN] JNI interface pointer
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
+ * remove all devices objects in the list (connected device list).
+ * @param[in]   env                   JNI interface pointer.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CALEServerRemoveAllDevices(JNIEnv *env);
 
 /**
- * @brief   remove target device in the list (connected device list)
- * @param   env                   [IN] JNI interface pointer
- * @param   address               [IN] target address to remove
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
+ * remove target device in the list (connected device list).
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   address               target address to remove.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CALEServerRemoveDevice(JNIEnv *env, jstring address);
 
 /**
- * @brief   Reordering for the list (connected device list)
- * @param   index                 [IN] index of device list that want to reordering
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
+ * Reordering for the list (connected device list).
+ * @param[in]   index                 index of device list that want to reordering.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CALEServerReorderinglist(uint32_t index);
 
 /**
- * @brief   initialize mutex
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
+ * initialize mutex.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CALEServerInitMutexVaraibles();
 
 /**
- * @brief   terminate mutex
- * @return  None
+ * terminate mutex.
  */
 void CALEServerTerminateMutexVaraibles();
 
 /**
- * @brief   initialize condition
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
+ * initialize condition.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CALEServerInitConditionVaraibles();
 
 /**
- * @brief   terminate condition
- * @return  None
+ * terminate condition.
  */
 void CALEServerTerminateConditionVaraibles();
 

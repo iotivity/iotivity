@@ -18,8 +18,8 @@
  *
  ******************************************************************/
 /**
- * @file caprotocolmessage.h
- * @brief This file contains common function for handling protocol messages.
+ * @file
+ * This file contains common function for handling protocol messages.
  */
 
 #ifndef CA_PROTOCOL_MESSAGE_H_
@@ -56,10 +56,6 @@ typedef uint32_t code_t;
  * @return  generated pdu.
  */
 coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info);
-
-/**
- * function for generating
- */
 
 /**
  * extracts request information from received pdu.
@@ -181,7 +177,7 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *
 coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode);
 
 /**
- * get Token fromn received data(pdu).
+ * get Token from received data(pdu).
  * @param[in]    pdu_hdr             header of received pdu.
  * @param[out]   outInfo             information with token received.
  * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
