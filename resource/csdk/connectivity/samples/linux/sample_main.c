@@ -496,10 +496,15 @@ void send_request()
     printf("resourceURI : %s\n", resourceURI);
 
     // create request data
-    CAInfo_t requestData = { 0 };
-    requestData.token = token;
-    requestData.tokenLength = tokenLength;
-    requestData.resourceUri = (CAURI_t)resourceURI;
+    CAInfo_t requestData = { .type = msgType,
+                             .messageId = 0,
+                             .token = token,
+                             .tokenLength = tokenLength,
+                             .options = NULL,
+                             .numOptions = 0,
+                             .payload = NULL,
+                             .payloadSize = 0,
+                             .resourceUri = (CAURI_t)resourceURI };
 
     if (strcmp(secureRequest, "1") == 0)
     {
@@ -562,13 +567,12 @@ void send_request()
             requestData.payloadSize = length;
         }
     }
-    requestData.type = msgType;
+
     CAHeaderOption_t* headerOpt = get_option_data(&requestData);
 
-    CARequestInfo_t requestInfo = { 0 };
-    requestInfo.method = CA_GET;
-    requestInfo.info = requestData;
-    requestInfo.isMulticast = false;
+    CARequestInfo_t requestInfo = { .method = CA_GET,
+                                    .info = requestData,
+                                    .isMulticast = false };
 
     // send request
     res = CASendRequest(endpoint, &requestInfo);
@@ -628,16 +632,19 @@ void send_secure_request()
     printf("Generated token %s\n", token);
 
     // create request data
-    CAMessageType_t msgType = CA_MSG_NONCONFIRM;
-    CAInfo_t requestData = { 0 };
-    requestData.token = token;
-    requestData.tokenLength = tokenLength;
-    requestData.type = msgType;
+    CAInfo_t requestData = { .type = CA_MSG_NONCONFIRM,
+                             .messageId = 0,
+                             .token = token,
+                             .tokenLength = tokenLength,
+                             .options = NULL,
+                             .numOptions = 0,
+                             .payload = NULL,
+                             .payloadSize = 0,
+                             .resourceUri = NULL };
 
-    CARequestInfo_t requestInfo = { 0 };
-    requestInfo.method = CA_GET;
-    requestInfo.info = requestData;
-    requestInfo.isMulticast = false;
+    CARequestInfo_t requestInfo = { .method = CA_GET,
+                                    .info = requestData,
+                                    .isMulticast = false };
 
     // send request
     CASendRequest(endpoint, &requestInfo);
@@ -691,20 +698,25 @@ void send_request_all()
 
     printf("generated token %s\n", token);
 
-    CAInfo_t requestData = { 0 };
-    requestData.token = token;
-    requestData.tokenLength = tokenLength;
-    requestData.payload = (CAPayload_t) "TempJsonPayload";
-    requestData.payloadSize = strlen((const char *) requestData.payload);
-    requestData.type = CA_MSG_NONCONFIRM;
-    requestData.resourceUri = (CAURI_t)resourceURI;
+    // create request data
+    CAPayload_t payload = (CAPayload_t) "TempJsonPayload";
+    size_t payloadSize = strlen((const char *) payload);
+
+    CAInfo_t requestData = { .type = CA_MSG_NONCONFIRM,
+                             .messageId = 0,
+                             .token = token,
+                             .tokenLength = tokenLength,
+                             .options = NULL,
+                             .numOptions = 0,
+                             .payload = payload,
+                             .payloadSize = payloadSize,
+                             .resourceUri = (CAURI_t) resourceURI };
+
+    CARequestInfo_t requestInfo = { .method = CA_GET,
+                                    .info = requestData,
+                                    .isMulticast = true };
 
     CAHeaderOption_t* headerOpt = get_option_data(&requestData);
-
-    CARequestInfo_t requestInfo = { 0 };
-    requestInfo.method = CA_GET;
-    requestInfo.info = requestData;
-    requestInfo.isMulticast = true;
 
     // send request
     res = CASendRequest(group, &requestInfo);
@@ -793,17 +805,22 @@ void send_notification()
 
     printf("Generated token %s\n", token);
 
-    CAInfo_t respondData = { 0 };
-    respondData.token = token;
-    respondData.tokenLength = tokenLength;
-    respondData.payload = (CAPayload_t) "TempNotificationData";
-    respondData.payloadSize = strlen((const char *) respondData.payload);
-    respondData.type = messageType;
-    respondData.resourceUri = (CAURI_t)uri;
+    // create response data
+    CAPayload_t payload = (CAPayload_t) "TempNotificationData";
+    size_t payloadSize = strlen((const char *) payload);
 
-    CAResponseInfo_t responseInfo = { 0 };
-    responseInfo.result = CA_CONTENT;
-    responseInfo.info = respondData;
+    CAInfo_t respondData = { .type = messageType,
+                             .messageId = 0,
+                             .token = token,
+                             .tokenLength = tokenLength,
+                             .options = NULL,
+                             .numOptions = 0,
+                             .payload = payload,
+                             .payloadSize = payloadSize,
+                             .resourceUri = (CAURI_t)uri };
+
+    CAResponseInfo_t responseInfo = { .result = CA_CONTENT,
+                                      .info = respondData };
 
     // send request
     res = CASendNotification(endpoint, &responseInfo);
@@ -1195,10 +1212,20 @@ void send_response(const CAEndpoint_t *endpoint, const CAInfo_t *info)
         }
         responseCode = atoi(responseCodeBuf);
     }
-    CAInfo_t responseData = { 0 };
-    responseData.type = messageType;
-    responseData.messageId = (info != NULL) ? info->messageId : 0;
-    responseData.resourceUri = (info != NULL) ? info->resourceUri : 0;
+
+    // create response data
+    uint16_t messageId = (info != NULL) ? info->messageId : 0;
+    CAURI_t resourceUri = (info != NULL) ? info->resourceUri : 0;
+
+    CAInfo_t responseData = { .type = messageType,
+                              .messageId = messageId,
+                              .token = NULL,
+                              .tokenLength = 0,
+                              .options = NULL,
+                              .numOptions = 0,
+                              .payload = NULL,
+                              .payloadSize = 0,
+                              .resourceUri = resourceUri };
 
     if(CA_MSG_RESET != messageType)
     {
@@ -1274,9 +1301,8 @@ void send_response(const CAEndpoint_t *endpoint, const CAInfo_t *info)
         }
     }
 
-    CAResponseInfo_t responseInfo = { 0 };
-    responseInfo.result = responseCode;
-    responseInfo.info = responseData;
+    CAResponseInfo_t responseInfo = { .result = responseCode,
+                                      .info = responseData };
 
     // send response (transportType from remoteEndpoint of request Info)
     CAResult_t res = CASendResponse(endpoint, &responseInfo);
