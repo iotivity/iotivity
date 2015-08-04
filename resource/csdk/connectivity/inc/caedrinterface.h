@@ -269,22 +269,20 @@ CAResult_t CAEDRGetAdapterEnableState(bool *state);
  * @param[in]  serviceUUID     Service UUID of the device.
  * @param[in]  data            Data to be sent.
  * @param[in]  dataLength      Length of the data to be sent.
- * @param[out]  sentLength      Length of the actual sent data.
  * @return ::CA_STATUS_OK or Appropriate error code.
  */
 CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const char *serviceUUID,
-                                      const void *data, uint32_t dataLength, uint32_t *sentLength);
+                                      const void *data, uint32_t dataLength);
 
 /**
  * This function sends data to all bluetooth devices running OIC service.
  * @param[in]  serviceUUID     Service UUID of the device.
  * @param[in]  data            Data to be sent.
  * @param[in]  dataLength      Length of the data to be sent.
- * @param[out]  sentLength      Length of the actual sent data.
  * @return ::CA_STATUS_OK or Appropriate error code.
  */
 CAResult_t CAEDRClientSendMulticastData(const char *serviceUUID, const void *data,
-                                        uint32_t dataLength, uint32_t *sentLength);
+                                        uint32_t dataLength);
 
 /**
  * This function gets bonded bluetooth device list

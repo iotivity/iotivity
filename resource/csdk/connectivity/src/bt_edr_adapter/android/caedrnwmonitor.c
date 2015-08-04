@@ -107,8 +107,14 @@ CAResult_t CAEDRClientSetCallbacks(void)
 
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaEdrInterface_caEdrStateChangedCallback(JNIEnv *env, jobject obj,
-                                                               jint status)
+                                                              jint status)
 {
+    if (!env || !obj)
+    {
+        OIC_LOG(ERROR, TAG, "parameter is null");
+        return;
+    }
+
     // STATE_ON:12, STATE_OFF:10
     OIC_LOG(DEBUG, TAG, "CaEdrInterface - Network State Changed");
 
@@ -158,8 +164,14 @@ Java_org_iotivity_ca_CaEdrInterface_caEdrStateChangedCallback(JNIEnv *env, jobje
 
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaEdrInterface_caEdrBondStateChangedCallback(JNIEnv *env, jobject obj,
-                                                                   jstring addr)
+                                                                  jstring addr)
 {
+    if (!env || !obj)
+    {
+        OIC_LOG(ERROR, TAG, "parameter is null");
+        return;
+    }
+
     OIC_LOG(DEBUG, TAG, "CaEdrInterface - Bond State Changed");
 
     if (addr)

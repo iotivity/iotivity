@@ -646,7 +646,7 @@ CAResult_t CAEDRStartUnicastServer(bool isSecured)
     return CA_STATUS_OK;
 }
 
-CAResult_t CAEDRStartMulticastServer(bool isSecured)
+CAResult_t CAEDRStartMulticastServer()
 {
     OIC_LOG(DEBUG, TAG, "CAEDRStartMulticastServer");
 
@@ -689,7 +689,7 @@ CAResult_t CAEDRStartMulticastServer(bool isSecured)
     return CA_STATUS_OK;
 }
 
-CAResult_t CAEDRStopUnicastServer(int32_t serverID)
+CAResult_t CAEDRStopUnicastServer()
 {
     OIC_LOG(DEBUG, TAG, "CAEDRStopUnicastServer");
 
@@ -700,7 +700,7 @@ CAResult_t CAEDRStopUnicastServer(int32_t serverID)
     return CA_STATUS_OK;
 }
 
-CAResult_t CAEDRStopMulticastServer(int32_t serverID)
+CAResult_t CAEDRStopMulticastServer()
 {
     OIC_LOG(DEBUG, TAG, "CAEDRStopMulticastServer");
 

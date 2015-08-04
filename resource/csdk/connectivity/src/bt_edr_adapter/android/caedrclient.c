@@ -202,7 +202,7 @@ CAResult_t CAEDRManagerReadData(void)
 }
 
 CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const char *serviceUUID,
-                                      const void *data, uint32_t dataLength, uint32_t *sentLength)
+                                      const void *data, uint32_t dataLength)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     CAResult_t result = CAEDRSendUnicastMessage(remoteAddress, (const char*) data, dataLength);
@@ -211,7 +211,7 @@ CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const char *ser
 }
 
 CAResult_t CAEDRClientSendMulticastData(const char *serviceUUID, const void *data,
-                                        uint32_t dataLength, uint32_t *sentLength)
+                                        uint32_t dataLength)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     CAResult_t result = CAEDRSendMulticastMessage((const char*) data, dataLength);
@@ -689,7 +689,7 @@ CAResult_t CAEDRSendUnicastMessageImpl(const char* address, const char* data, ui
         // find address
         if (!strcmp(remoteAddress, address))
         {
-            CAResult_t res = CAEDRNativeSendData(env, remoteAddress, data, dataLen, i);
+            CAResult_t res = CAEDRNativeSendData(env, remoteAddress, data, dataLen);
             if (CA_STATUS_OK != res)
             {
                 (*env)->ReleaseStringUTFChars(env, j_str_address, remoteAddress);
@@ -746,7 +746,7 @@ CAResult_t CAEDRSendMulticastMessageImpl(JNIEnv *env, const char* data, uint32_t
                   "[EDR][Native] getBondedDevices: ~~device address is %s", remoteAddress);
 
         // find address
-        CAResult_t res = CAEDRNativeSendData(env, remoteAddress, data, dataLen, i);
+        CAResult_t res = CAEDRNativeSendData(env, remoteAddress, data, dataLen);
         (*env)->ReleaseStringUTFChars(env, j_str_address, remoteAddress);
         if (CA_STATUS_OK != res)
         {
@@ -764,7 +764,7 @@ CAResult_t CAEDRSendMulticastMessageImpl(JNIEnv *env, const char* data, uint32_t
  * EDR Method
  */
 CAResult_t CAEDRNativeSendData(JNIEnv *env, const char *address, const char *data,
-                               uint32_t dataLength, uint32_t id)
+                               uint32_t dataLength)
 {
     OIC_LOG_V(DEBUG, TAG, "[EDR][Native] btSendData logic start : %s, %d", data, dataLength);
 
@@ -786,7 +786,7 @@ CAResult_t CAEDRNativeSendData(JNIEnv *env, const char *address, const char *dat
         }
         else
         {
-            CAResult_t res = CAEDRNativeConnect(env, address, id);
+            CAResult_t res = CAEDRNativeConnect(env, address);
             if (CA_STATUS_OK != res)
             {
                 return res;
@@ -881,7 +881,7 @@ CAResult_t CAEDRNativeSendData(JNIEnv *env, const char *address, const char *dat
     return CA_STATUS_OK;
 }
 
-CAResult_t CAEDRNativeConnect(JNIEnv *env, const char *address, uint32_t id)
+CAResult_t CAEDRNativeConnect(JNIEnv *env, const char *address)
 {
     OIC_LOG(DEBUG, TAG, "[EDR][Native] btConnect..");
 
@@ -1037,7 +1037,7 @@ CAResult_t CAEDRNativeConnect(JNIEnv *env, const char *address, uint32_t id)
     return CA_STATUS_OK;
 }
 
-void CAEDRNativeSocketClose(JNIEnv *env, const char *address, uint32_t id)
+void CAEDRNativeSocketClose(JNIEnv *env, const char *address)
 {
 
     jclass jni_cid_BTSocket = (*env)->FindClass(env, "android/bluetooth/BluetoothSocket");

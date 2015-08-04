@@ -63,24 +63,21 @@ CAResult_t CAEDRStartUnicastServer(bool isSecured);
 
 /**
  * Start multicast server.
- * @param[in]   isSecured       multicst server type.
  * @return ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAEDRStartMulticastServer(bool isSecured);
+CAResult_t CAEDRStartMulticastServer();
 
 /**
  * Stop unicast server.
- * @param[in]   serverID        unicast server id.
  * @return ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAEDRStopUnicastServer(int32_t serverID);
+CAResult_t CAEDRStopUnicastServer();
 
 /**
  * Stop multicast server.
- * @param[in]   serverID        multicast server id.
  * @return ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAEDRStopMulticastServer(int32_t serverID);
+CAResult_t CAEDRStopMulticastServer();
 
 // EDR Method
 

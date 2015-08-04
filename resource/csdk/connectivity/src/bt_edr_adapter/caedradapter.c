@@ -58,12 +58,6 @@ static CAQueueingThread_t *g_sendQueueHandle = NULL;
 static CAQueueingThread_t *g_recvQueueHandle = NULL;
 
 /**
- * @var g_isHeaderAvailable
- * @brief to differentiate btw header and data packet.
- */
-static bool g_isHeaderAvailable = false;
-
-/**
  * @var g_adapterState
  * @brief Storing Adapter state information
  */
@@ -123,7 +117,7 @@ CAResult_t CAAdapterSendData(const char *remoteAddress, const char *serviceUUID,
 CAEDRNetworkEvent *CAEDRCreateNetworkEvent(CAEndpoint_t *connectivity,
                                            CANetworkStatus_t status);
 CAResult_t CAEDRClientSendData(const char *remoteAddress, const char *serviceUUID,
-                               const void *data, uint32_t dataLength, uint32_t *sentLength);
+                               const void *data, uint32_t dataLength);
 /**
  * @fn CACreateEDRData
  * @brief Helper function to create CAEDRData
@@ -542,7 +536,6 @@ void CAAdapterDataSendHandler(void *context)
 
     const char *remoteAddress = NULL;
     const char *serviceUUID = OIC_EDR_SERVICE_ID;
-    uint32_t sentLength = 0;
 
     if (NULL == message->remoteEndpoint)
     {
@@ -562,7 +555,7 @@ void CAAdapterDataSendHandler(void *context)
     }
 
     CAResult_t result = CAEDRClientSendData(remoteAddress, serviceUUID, message->data,
-                                            message->dataLen, &sentLength);
+                                            message->dataLen);
     if(CA_STATUS_OK != result)
     {
         OIC_LOG(ERROR, EDR_ADAPTER_TAG, "CAEDRClientSendData API failed");
@@ -574,7 +567,7 @@ void CAAdapterDataSendHandler(void *context)
 }
 
 CAResult_t CAEDRClientSendData(const char *remoteAddress, const char *serviceUUID,
-                               const void *data, uint32_t dataLength, uint32_t *sentLength)
+                               const void *data, uint32_t dataLength)
 {
 
     CAResult_t result = CA_SEND_FAILED;
@@ -583,7 +576,7 @@ CAResult_t CAEDRClientSendData(const char *remoteAddress, const char *serviceUUI
     if ((NULL != remoteAddress) && (0 < strlen(remoteAddress))) //Unicast data
     {
         result = CAEDRClientSendUnicastData(remoteAddress, serviceUUID, data,
-                                            dataLength, sentLength);
+                                            dataLength);
         if (CA_STATUS_OK != result)
         {
             OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to send unicast data !");
@@ -593,8 +586,7 @@ CAResult_t CAEDRClientSendData(const char *remoteAddress, const char *serviceUUI
     else
     {
         OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "sending multicast data : %s", data);
-        result = CAEDRClientSendMulticastData(serviceUUID, data, dataLength,
-                                              sentLength);
+        result = CAEDRClientSendMulticastData(serviceUUID, data, dataLength);
 
         if (CA_STATUS_OK != result)
         {

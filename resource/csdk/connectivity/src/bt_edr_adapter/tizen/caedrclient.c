@@ -191,10 +191,9 @@ void CAEDRSocketConnectionStateCallback(int result, bt_socket_connection_state_e
                 device->socketFD = connection->socket_fd;
                 while (device->pendingDataList)
                 {
-                    uint32_t sentData = 0;
                     EDRData *edrData = device->pendingDataList->data;
                     res = CAEDRSendData(device->socketFD, edrData->data,
-                                                     edrData->dataLength, &sentData);
+                                        edrData->dataLength);
                     if (CA_STATUS_OK != res)
                     {
                         OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Failed to send pending data [%s]",
@@ -585,7 +584,7 @@ void CAEDRClientDisconnectAll(void)
 
 
 CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const char *serviceUUID,
-                                      const void *data, uint32_t dataLength, uint32_t *sentLength)
+                                      const void *data, uint32_t dataLength)
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
@@ -595,7 +594,6 @@ CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const char *ser
     VERIFY_NON_NULL(remoteAddress, EDR_ADAPTER_TAG, "Remote address is null");
     VERIFY_NON_NULL(serviceUUID, EDR_ADAPTER_TAG, "service UUID is null");
     VERIFY_NON_NULL(data, EDR_ADAPTER_TAG, "Data is null");
-    VERIFY_NON_NULL(sentLength, EDR_ADAPTER_TAG, "Sent data length holder is null");
 
     if (0 >= dataLength)
     {
@@ -669,11 +667,10 @@ CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const char *ser
             CARemoveEDRDeviceFromList(&g_edrDeviceList, remoteAddress);
             return CA_STATUS_FAILED;
         }
-        *sentLength = dataLength;
     }
     else
     {
-        result = CAEDRSendData(device->socketFD, data, dataLength, sentLength);
+        result = CAEDRSendData(device->socketFD, data, dataLength);
         if (CA_STATUS_OK != result)
         {
             OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to send data!");
@@ -686,22 +683,19 @@ CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const char *ser
 }
 
 CAResult_t CAEDRClientSendMulticastData(const char *serviceUUID, const void *data,
-                                        uint32_t dataLength, uint32_t *sentLength)
+                                        uint32_t dataLength)
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     // Input validation
     VERIFY_NON_NULL(serviceUUID, EDR_ADAPTER_TAG, "service UUID is null");
     VERIFY_NON_NULL(data, EDR_ADAPTER_TAG, "Data is null");
-    VERIFY_NON_NULL(sentLength, EDR_ADAPTER_TAG, "Sent data length holder is null");
 
     if (0 >= dataLength)
     {
         OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Invalid input: Negative data length!");
         return CA_STATUS_INVALID_PARAM;
     }
-
-    *sentLength = dataLength;
 
     // Send the packet to all OIC devices
     ca_mutex_lock(g_edrDeviceListMutex);
@@ -752,7 +746,7 @@ CAResult_t CAEDRClientSendMulticastData(const char *serviceUUID, const void *dat
         else
         {
             OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN3");
-            result = CAEDRSendData(device->socketFD, data, dataLength, sentLength);
+            result = CAEDRSendData(device->socketFD, data, dataLength);
             if (CA_STATUS_OK != result)
             {
                 OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Failed to send data to [%s] !",
