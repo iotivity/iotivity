@@ -23,6 +23,9 @@ app_env.PrependUnique(CPPDEFINES = ['__ANDROID__'])
 print"Reading ca script %s"%ca_transport
 
 app_env.AppendUnique(CPPPATH = [root_dir + '/api/'])
+app_env.AppendUnique(CPPPATH = [root_dir + '/inc/'])
+app_env.AppendUnique(CPPPATH = [root_dir + '/common/inc/'])
+app_env.AppendUnique(CPPPATH = [root_dir + 'lib/libcoap-4.1.1'])
 
 print "Reading sample application build script"
 

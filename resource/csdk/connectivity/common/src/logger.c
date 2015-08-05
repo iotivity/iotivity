@@ -54,8 +54,10 @@
 #ifndef __TIZEN__
 static oic_log_ctx_t *logCtx = 0;
 
+#ifndef __ANDROID__
 static oic_log_level LEVEL_XTABLE[] =
 { OIC_LOG_DEBUG, OIC_LOG_INFO, OIC_LOG_WARNING, OIC_LOG_ERROR, OIC_LOG_FATAL };
+#endif
 
 #endif
 
@@ -157,7 +159,7 @@ void OICLog(LogLevel level, const char *tag, const char *logStr)
         int sec = 0;
         int ms = 0;
 #ifdef _POSIX_TIMERS
-        struct timespec when = {0};
+        struct timespec when = { 0, 0 };
         clockid_t clk = CLOCK_REALTIME;
 #ifdef CLOCK_REALTIME_COARSE
         clk = CLOCK_REALTIME_COARSE;

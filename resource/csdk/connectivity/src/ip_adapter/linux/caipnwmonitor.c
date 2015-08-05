@@ -38,6 +38,12 @@
 
 u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
 {
+    if (desiredIndex < 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "invalid index : %d", desiredIndex);
+        return NULL;
+    }
+
     u_arraylist_t *iflist = u_arraylist_create();
     if (!iflist)
     {

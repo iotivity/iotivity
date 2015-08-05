@@ -612,55 +612,56 @@ static void CAApplyInterfaces()
 static void CAHandleNetlink()
 {
 #ifdef __linux__
-char buf[4096];
-struct nlmsghdr *nh;
-struct sockaddr_nl sa;
-struct iovec iov = { buf, sizeof(buf) };
-struct msghdr msg = { (void *)&sa, sizeof(sa), &iov, 1, NULL, 0, 0 };
+    char buf[4096];
+    struct nlmsghdr *nh;
+    struct sockaddr_nl sa;
+    struct iovec iov = { buf, sizeof(buf) };
+    struct msghdr msg = { (void *)&sa, sizeof(sa), &iov, 1, NULL, 0, 0 };
 
-int len = recvmsg(caglobals.ip.netlinkFd, &msg, 0);
-for (nh = (struct nlmsghdr *)buf; NLMSG_OK(nh, len); nh = NLMSG_NEXT(nh, len))
-{
-    if (nh->nlmsg_type == RTM_NEWLINK)
+    size_t len = recvmsg(caglobals.ip.netlinkFd, &msg, 0);
+
+    for (nh = (struct nlmsghdr *)buf; NLMSG_OK(nh, len); nh = NLMSG_NEXT(nh, len))
     {
-        struct ifinfomsg *ifi = (struct ifinfomsg *)NLMSG_DATA(nh);
-        if ((ifi->ifi_flags & IFF_LOOPBACK) || !(ifi->ifi_flags & IFF_RUNNING))
+        if (nh->nlmsg_type == RTM_NEWLINK)
         {
-            continue;
-        }
-
-        int newIndex = ifi->ifi_index;
-
-        u_arraylist_t *iflist = CAIPGetInterfaceInformation(newIndex);
-        if (!iflist)
-        {
-            OIC_LOG_V(ERROR, TAG, "get interface info failed: %s", strerror(errno));
-            return;
-        }
-
-        uint32_t len = u_arraylist_length(iflist);
-        for (uint32_t i = 0; i < len; i++)
-        {
-            CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
-            if (!ifitem)
+            struct ifinfomsg *ifi = (struct ifinfomsg *)NLMSG_DATA(nh);
+            if ((ifi->ifi_flags & IFF_LOOPBACK) || !(ifi->ifi_flags & IFF_RUNNING))
             {
                 continue;
             }
 
-            if ((int)ifitem->index != newIndex)
+            int newIndex = ifi->ifi_index;
+
+            u_arraylist_t *iflist = CAIPGetInterfaceInformation(newIndex);
+            if (!iflist)
             {
-                continue;
+                OIC_LOG_V(ERROR, TAG, "get interface info failed: %s", strerror(errno));
+                return;
             }
 
-            applyMulticastToInterface6(newIndex);
-            struct in_addr inaddr;
-            inaddr.s_addr = ifitem->ipv4addr;
-            applyMulticastToInterface4(inaddr);
-            break;  // we found the one we were looking for
+            uint32_t listLength = u_arraylist_length(iflist);
+            for (uint32_t i = 0; i < listLength; i++)
+            {
+                CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
+                if (!ifitem)
+                {
+                    continue;
+                }
+
+                if ((int)ifitem->index != newIndex)
+                {
+                    continue;
+                }
+
+                applyMulticastToInterface6(newIndex);
+                struct in_addr inaddr;
+                inaddr.s_addr = ifitem->ipv4addr;
+                applyMulticastToInterface4(inaddr);
+                break; // we found the one we were looking for
+            }
+            u_arraylist_destroy(iflist);
         }
-        u_arraylist_destroy(iflist);
     }
-}
 #endif // __linux__
 }
 
