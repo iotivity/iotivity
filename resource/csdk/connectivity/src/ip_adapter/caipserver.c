@@ -633,7 +633,6 @@ static void CAProcessNewInterface(CAInterface_t *ifitem)
     inaddr.s_addr = ifitem->ipv4addr;
     applyMulticastToInterface4(inaddr);
 }
-
 static void CAHandleNetlink()
 {
 #ifdef __linux__

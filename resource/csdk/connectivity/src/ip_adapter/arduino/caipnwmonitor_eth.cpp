@@ -45,12 +45,12 @@
 // defined & used (as-is defined in the linux socket headers).
 #define AF_INET (2)
 
-CAResult_t CAIPInitializeNetworkMonitor()
+CAResult_t CAIPStartNetworkMonitor()
 {
     return CA_STATUS_OK;
 }
 
-CAResult_t CAIPTerminateNetworkMonitor()
+CAResult_t CAIPStopNetworkMonitor()
 {
     return CA_STATUS_OK;
 }

@@ -49,12 +49,12 @@ CAResult_t CAIPJniInit();
 
 #define MAX_INTERFACE_INFO_LENGTH 1024 // allows 32 interfaces from SIOCGIFCONF
 
-CAResult_t CAIPInitializeNetworkMonitor()
+CAResult_t CAIPStartNetworkMonitor()
 {
     return CAIPJniInit();
 }
 
-CAResult_t CAIPTerminateNetworkMonitor()
+CAResult_t CAIPStopNetworkMonitor()
 {
     return CA_STATUS_OK;
 }

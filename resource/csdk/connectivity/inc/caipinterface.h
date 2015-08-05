@@ -193,18 +193,18 @@ int CAGetPollingInterval(int interval);
 void CAWakeUpForChange();
 
 /**
- * @brief   Initializes network monitor.
+ * Start network monitor.
  *
  * @return ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAIPInitializeNetworkMonitor();
+CAResult_t CAIPStartNetworkMonitor();
 
 /**
- * @brief   Terminates network monitor.
+ * Stops network monitor.
  *
  * @return ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAIPTerminateNetworkMonitor();
+CAResult_t CAIPStopNetworkMonitor();
 
 /**
  * @brief  Set callback for error handling.
