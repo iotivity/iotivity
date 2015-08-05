@@ -227,6 +227,7 @@ public class ConfigurationApiActivity extends Activity {
                     case 0:
                         logs.setText("");
                         logs.setText(logMessage);
+                        Log.i(LOG_TAG, logMessage);
                 }
             }
         };
@@ -239,11 +240,9 @@ public class ConfigurationApiActivity extends Activity {
                 .get(CONFIGURATION_COLLECTION_RESOURCE_URI);
         if (null == configurationCollection
                 || null == configurationCollection.resource) {
-            Log.e(LOG_TAG, "configuration collection resource doest not exist!");
             displayToastMessage("Configuration collection resource does not exist!");
         }
         if (false == configurationResourceFlag) {
-            Log.e(LOG_TAG, "configuration resource doest not exist!");
             displayToastMessage("Configuration resource does not exist!");
         } else {
             final Dialog dialog = new Dialog(mcontext);
@@ -465,13 +464,11 @@ public class ConfigurationApiActivity extends Activity {
                 .get(CONFIGURATION_COLLECTION_RESOURCE_URI);
         if (null == configurationCollection
                 || null == configurationCollection.resource) {
-            Log.e(LOG_TAG, "configuration collection resource doest not exist!");
             displayToastMessage("Configuration collection resource does not exist!");
             return;
         }
         if (false == configurationResourceFlag) {
 
-            Log.e(LOG_TAG, "configuration resource doest not exist!");
             displayToastMessage("Configuration resource does not exist!");
             return;
         }
@@ -547,13 +544,11 @@ public class ConfigurationApiActivity extends Activity {
                 .get(DIAGNOSTIC_COLLECTION_RESOURCE_URI);
         if (null == diagnosticsCollection
                 || null == diagnosticsCollection.resource) {
-            Log.e(LOG_TAG, "Diagnostic collection doest not exist!");
             displayToastMessage("Diagnostic collection does not exist!");
             return;
         }
 
         if (false == diagnosticsResourceFlag) {
-            Log.e(LOG_TAG, "Diagnostic resource doest not exist!");
             displayToastMessage("Diagnostic resource does not exist!");
             return;
         }
@@ -587,12 +582,10 @@ public class ConfigurationApiActivity extends Activity {
                 .get(DIAGNOSTIC_COLLECTION_RESOURCE_URI);
         if (null == diagnosticsCollection
                 || null == diagnosticsCollection.resource) {
-            Log.e(LOG_TAG, "Diagnostic collection doest not exist!");
             displayToastMessage("Diagnostic collection does not exist!");
             return;
         }
         if (false == diagnosticsResourceFlag) {
-            Log.e(LOG_TAG, "Diagnostic resource doest not exist!");
             displayToastMessage("Diagnostic resource does not exist!");
             return;
         }
@@ -626,6 +619,7 @@ public class ConfigurationApiActivity extends Activity {
     private void displayToastMessage(String message) {
         Toast toast = Toast.makeText(this, message, Toast.LENGTH_SHORT);
         toast.show();
+        Log.i(LOG_TAG, message);
     }
 
     private void collectionFound(OcResource resource) {

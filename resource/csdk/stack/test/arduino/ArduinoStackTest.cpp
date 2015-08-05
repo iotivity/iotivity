@@ -135,7 +135,7 @@ extern "C" void asyncDoResourcesCallback(OCStackResult result, OCRepresentationH
 
 void test0() {
     OC_LOG(INFO, TAG, PCF("test0"));
-    EXPECT_EQ(OC_STACK_OK, OCInit(0, 5683, OC_SERVER)); 
+    EXPECT_EQ(OC_STACK_OK, OCInit(0, 5683, OC_SERVER));
 }
 
 void test1() {

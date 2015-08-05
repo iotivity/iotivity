@@ -27,6 +27,7 @@
 #include "svcresource.h"
 #include "amaclresource.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 #include "logger.h"
 #include "utlist.h"
 #include <string.h>
@@ -49,11 +50,14 @@ OCStackResult SendSRMResponse(const OCEntityHandlerRequest *ehRequest,
     OCEntityHandlerResponse response = {};
     if (ehRequest)
     {
+        OCSecurityPayload ocPayload = {};
+
         response.requestHandle = ehRequest->requestHandle;
         response.resourceHandle = ehRequest->resource;
         response.ehResult = ehRet;
-        response.payload = (char *)rspPayload;
-        response.payloadSize = (rspPayload ? strlen(rspPayload) : 0);
+        response.payload = (OCPayload*)(&ocPayload);
+        response.payload->type = PAYLOAD_TYPE_SECURITY;
+        ((OCSecurityPayload*)response.payload)->securityData = (char *)rspPayload;
         response.persistentBufferFlag = 0;
 
         return OCDoResponse(&response);

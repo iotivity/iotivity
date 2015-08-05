@@ -33,6 +33,12 @@ namespace PH = std::placeholders;
 OCResourceHandle resourceHandle;
 std::vector< OCResourceHandle > resourceHandleVector;
 
+static void printUsage()
+{
+    std::cout<<"Usage: groupclient <0|1>\n";
+    std::cout<<"ConnectivityType: Default \n";
+    std::cout<<"ConnectivityType 0: IP\n";
+}
 void foundResource(std::shared_ptr< OCResource > resource)
 {
 
@@ -80,7 +86,7 @@ int main(int argc, char* argv[])
 {
     ostringstream requestURI;
 
-    OCConnectivityType connectivityType = CT_DEFAULT;
+    OCConnectivityType connectivityType = CT_ADAPTER_IP;
 
     if(argc == 2)
     {
@@ -93,6 +99,7 @@ int main(int argc, char* argv[])
             {
                 if(optionSelected == 0)
                 {
+                    std::cout << "Using IP."<< std::endl;
                     connectivityType = CT_ADAPTER_IP;
                 }
                 else
@@ -105,16 +112,15 @@ int main(int argc, char* argv[])
                 std::cout << "Invalid connectivity type selected. Using default IP" << std::endl;
             }
         }
-        catch(exception& e)
+        catch(exception&)
         {
             std::cout << "Invalid input argument. Using IP as connectivity type" << std::endl;
         }
     }
     else
     {
-        std::cout<<"Usage: groupclient 0\n";
-        std::cout<<"ConnectivityType: Default \n";
-        std::cout<<"ConnectivityType 0: IP\n";
+        printUsage();
+
     }
 
     PlatformConfig config
@@ -137,7 +143,7 @@ int main(int argc, char* argv[])
 
         cout << "registerResource is called." << endl;
 
-        requestURI << OC_MULTICAST_DISCOVERY_URI << "?rt=core.light";
+        requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.light";
 
         OCPlatform::findResource("", requestURI.str(),
                                  connectivityType, &foundResource);

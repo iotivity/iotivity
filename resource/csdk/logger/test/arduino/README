@@ -8,7 +8,7 @@ log outputs.
 
 arduinologgertestoutput.txt contains the output captured after running ArduinoLoggerTest.cpp
 
-Note: to enable the logger for Arduino, TB_LOG should be defined in 
+Note: to enable the logger for Arduino, TB_LOG should be defined in
 Properties|C/C++ Build|Settings|Tool Settings|AVR Compiler|Symbols
 and
 Properties|C/C++ Build|Settings|Tool Settings|AVR C++ Compiler|Symbols

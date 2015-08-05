@@ -336,7 +336,7 @@ void CAEDRUpdateDeviceState(CAConnectedState_t state, const char *address)
         OIC_LOG(ERROR, TAG, "[EDR][Native] newstate is null");
         return;
     }
-    OICStrcpy(newstate->address, sizeof(newstate->address), address);
+    OICStrcpy((char*) newstate->address, sizeof(newstate->address), address);
     newstate->state = state;
 
     CAEDRNativeAddDeviceStateToList(newstate);
@@ -356,9 +356,10 @@ void CAEDRNativeAddDeviceStateToList(state_t *state)
         return;
     }
 
-    if (CAEDRNativeIsDeviceInList(state->address))
+    if (CAEDRNativeIsDeviceInList((const char*) state->address))
     {
-        CAEDRNativeRemoveDevice(state->address); // delete previous state for update new state
+        // delete previous state for update new state
+        CAEDRNativeRemoveDevice((const char*) state->address);
     }
     u_arraylist_add(g_deviceStateList, state); // update new state
     OIC_LOG_V(DEBUG, TAG, "Set State Info to List : %d", state->state);
@@ -383,7 +384,7 @@ bool CAEDRNativeIsDeviceInList(const char* remoteAddress)
             return false;
         }
 
-        if (!strcmp(remoteAddress, state->address))
+        if (!strcmp(remoteAddress, (const char*) state->address))
         {
             OIC_LOG(DEBUG, TAG, "the device is already set");
             return true;
@@ -452,7 +453,7 @@ void CAEDRNativeRemoveDevice(const char *remoteAddress)
             continue;
         }
 
-        if (!strcmp(state->address, remoteAddress))
+        if (!strcmp((const char*) state->address, remoteAddress))
         {
             OIC_LOG_V(DEBUG, TAG, "[EDR][Native] remove state : %s", remoteAddress);
             OICFree(state);
@@ -491,7 +492,7 @@ CAConnectedState_t CAEDRIsConnectedDevice(const char *remoteAddress)
             continue;
         }
 
-        if (!strcmp(state->address, remoteAddress))
+        if (!strcmp((const char*) state->address, remoteAddress))
         {
             OIC_LOG(DEBUG, TAG, "[EDR][Native] check whether it is connected or not");
 

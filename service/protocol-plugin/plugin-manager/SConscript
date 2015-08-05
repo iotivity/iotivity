@@ -28,7 +28,7 @@ if target_os not in ['windows', 'winrt']:
 
 if target_os == 'android':
 	plugin_manager_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions', '-DANDROID'])
-	plugin_manager_env.AppendUnique(LIBS = ['boost_thread', 'boost_system', 'gnustl_shared', 'log'])
+	plugin_manager_env.AppendUnique(LIBS = ['gnustl_shared', 'log'])
 
 plugin_manager_env.AppendUnique(CPPDEFINES = ['CP_C_API=CP_EXPORT',
 					'CP_HOST=\"\\"'+env.get('TARGET_OS')+'\\"\"',
@@ -61,9 +61,14 @@ if target_os == 'android':
 pmimpl_env = plugin_manager_env.Clone()
 pmimpl_env.PrependUnique(CCFLAGS = ['-fPIC'])
 pmimpl_env.PrependUnique(LIBS = File(env.get('BUILD_DIR') + '/libcpluff.a'))
+
+if target_os not in ['darwin', 'ios', 'windows', 'winrt']:
+	pmimpl_env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
+
 pmimpl = pmimpl_env.SharedLibrary('pmimpl', pmimpl_src)
 
 plugin_manager_env.InstallTarget([ppm, pmimpl], 'libppm')
+plugin_manager_env.UserInstallTargetLib([ppm, pmimpl], 'libppm')
 
 # Build JNI library for android
 if env.get('TARGET_OS') == 'android':

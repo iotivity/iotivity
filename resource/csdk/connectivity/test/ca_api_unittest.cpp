@@ -62,7 +62,7 @@ void error_handler(const CAEndpoint_t *object, const CAErrorInfo_t* errorInfo)
     return;
 }
 
-static char* uri = NULL;
+static char* addr = NULL;
 static CAEndpoint_t* tempRep = NULL;
 static CARequestInfo_t requestInfo;
 static CAInfo_t requestData;
@@ -70,12 +70,9 @@ static CAInfo_t responseData;
 static CAResponseInfo_t responseInfo;
 static CAToken_t tempToken = NULL;
 static uint8_t tokenLength = CA_MAX_TOKEN_LEN;
-static const char URI[] = "coap://10.11.12.13:4545/a/light";
-static const char RESOURCE_URI[] = "/a/light";
+static const char ADDRESS[] = "10.11.12.13";
+static const uint16_t PORT = 4545;
 
-static const char SECURE_INFO_DATA[] =
-                                    "{\"oc\":[{\"href\":\"%s\",\"prop\":{\"rt\":[\"core.led\"],"
-                                     "\"if\":[\"oc.mi.def\"],\"obs\":1,\"sec\":1,\"port\":%d}}]}";
 static const char NORMAL_INFO_DATA[] =
                                     "{\"oc\":[{\"href\":\"%s\",\"prop\":{\"rt\":[\"core.led\"],"
                                      "\"if\":[\"oc.mi.def\"],\"obs\":1}}]}";
@@ -171,7 +168,7 @@ TEST_F(CATests, TerminateTest)
 // check return value
 TEST(StartListeningServerTest, DISABLED_TC_03_Positive_01)
 {
-    CASelectNetwork(CA_IPV4);
+    CASelectNetwork(CA_ADAPTER_IP);
     EXPECT_EQ(CA_STATUS_OK, CAStartListeningServer());
 }
 
@@ -195,9 +192,10 @@ TEST_F(CATests, RegisterHandlerTest)
 // check return value
 TEST_F(CATests, CreateRemoteEndpointTestGood)
 {
-    uri = (char *) URI;
+    addr = (char *) ADDRESS;
 
-    EXPECT_EQ(CA_STATUS_OK, CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, uri, 0, &tempRep));
+    EXPECT_EQ(CA_STATUS_OK, CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, addr,
+                                             PORT, &tempRep));
 
     if (tempRep != NULL)
     {
@@ -209,25 +207,11 @@ TEST_F(CATests, CreateRemoteEndpointTestGood)
 // check remoteEndpoint and values of remoteEndpoint
 TEST_F(CATests, CreateRemoteEndpointTestValues)
 {
-    uri = (char *) URI;
+    addr = (char *) ADDRESS;
 
-    CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, uri, 0, &tempRep);
+    CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, addr, PORT, &tempRep);
 
     EXPECT_TRUE(tempRep != NULL);
-
-    if (tempRep != NULL)
-    {
-        CADestroyEndpoint(tempRep);
-        tempRep = NULL;
-    }
-}
-
-// check return value when uri is NULL
-TEST_F(CATests, CreateRemoteEndpointTestBad)
-{
-    uri = NULL;
-
-    EXPECT_EQ(CA_STATUS_FAILED, CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, uri, 0, &tempRep));
 
     if (tempRep != NULL)
     {
@@ -266,8 +250,8 @@ TEST_F(CATests, DestroyTokenTest)
 // check return value
 TEST(SendRequestTest, DISABLED_TC_16_Positive_01)
 {
-    uri = (char *) URI;
-    CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, uri, 0, &tempRep);
+    addr = (char *) ADDRESS;
+    CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, addr, PORT, &tempRep);
 
     memset(&requestData, 0, sizeof(CAInfo_t));
     CAGenerateToken(&tempToken, tokenLength);
@@ -281,7 +265,8 @@ TEST(SendRequestTest, DISABLED_TC_16_Positive_01)
         CADestroyToken(tempToken);
         FAIL() << "requestData.payload allocation failed";
     }
-    snprintf(requestData.payload, length, NORMAL_INFO_DATA, "a/light");
+    snprintf((char*)requestData.payload, length, NORMAL_INFO_DATA, "a/light");
+    requestData.payloadSize = length + 1;
     requestData.type = CA_MSG_NONCONFIRM;
 
     memset(&requestInfo, 0, sizeof(CARequestInfo_t));
@@ -299,49 +284,11 @@ TEST(SendRequestTest, DISABLED_TC_16_Positive_01)
 
 }
 
-// check return value when uri is NULL
-TEST_F(CATests, SendRequestTestWithNullURI)
-{
-    uri = NULL;
-    CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, uri, 0, &tempRep);
-
-    memset(&requestData, 0, sizeof(CAInfo_t));
-    CAGenerateToken(&tempToken, tokenLength);
-    requestData.token = tempToken;
-    requestData.tokenLength = tokenLength;
-
-    int length = strlen(NORMAL_INFO_DATA) + strlen("a/light");
-    requestData.payload = (CAPayload_t) calloc(length, sizeof(char));
-    if(!requestData.payload)
-    {
-        CADestroyToken(tempToken);
-        FAIL() << "requestData.payload allocation failed";
-    }
-    snprintf(requestData.payload, length, NORMAL_INFO_DATA, "a/light");
-    requestData.type = CA_MSG_NONCONFIRM;
-
-    memset(&requestInfo, 0, sizeof(CARequestInfo_t));
-    requestInfo.method = CA_GET;
-    requestInfo.info = requestData;
-
-    EXPECT_EQ(CA_STATUS_INVALID_PARAM, CASendRequest(tempRep, &requestInfo));
-
-    CADestroyToken(tempToken);
-
-    free(requestData.payload);
-
-    if (tempRep != NULL)
-    {
-        CADestroyEndpoint(tempRep);
-        tempRep = NULL;
-    }
-}
-
 // check return value when a NULL is passed instead of a valid CARequestInfo_t address
 TEST_F(CATests, SendRequestTestWithNullAddr)
 {
-    uri = (char *) URI;
-    CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, uri, 0, &tempRep);
+    addr = (char *) ADDRESS;
+    CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, addr, PORT, &tempRep);
 
     EXPECT_EQ(CA_STATUS_INVALID_PARAM, CASendRequest(tempRep, NULL));
 
@@ -356,49 +303,70 @@ TEST_F(CATests, SendRequestTestWithNullAddr)
 // check return value
 TEST(SendResponseTest, DISABLED_TC_19_Positive_01)
 {
-    uri = (char *) URI;
-    CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, uri, 0, &tempRep);
+    addr = (char *) ADDRESS;
+    CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, addr, PORT, &tempRep);
 
     memset(&responseData, 0, sizeof(CAInfo_t));
     responseData.type = CA_MSG_NONCONFIRM;
     responseData.messageId = 1;
-    responseData.payload = (char *) "response payload";
+    responseData.payload = (CAPayload_t)malloc(sizeof("response payload"));
+
+    EXPECT_TRUE(responseData.payload != NULL);
+    if(!responseData.payload)
+    {
+        CADestroyEndpoint(tempRep);
+        return;
+    }
+
+    memcpy(responseData.payload, "response payload", sizeof("response payload"));
+    responseData.payloadSize = sizeof("response payload");
 
     CAGenerateToken(&tempToken, tokenLength);
     requestData.token = tempToken;
     requestData.tokenLength = tokenLength;
 
     memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
-    responseInfo.result = CA_SUCCESS;
+    responseInfo.result = CA_CONTENT;
     responseInfo.info = responseData;
 
     EXPECT_EQ(CA_STATUS_OK, CASendResponse(tempRep, &responseInfo));
 
     CADestroyToken(tempToken);
     CADestroyEndpoint(tempRep);
+    free(responseData.payload);
     tempRep = NULL;
 }
 
-// check return value when uri is NULL
+// check return value when address is NULL as multicast
 TEST(SendResponseTest, DISABLED_TC_20_Negative_01)
 {
-    uri = NULL;
-    CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, uri, 0, &tempRep);
+    addr = NULL;
+    CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, addr, 0, &tempRep);
 
     memset(&responseData, 0, sizeof(CAInfo_t));
     responseData.type = CA_MSG_NONCONFIRM;
     responseData.messageId = 1;
-    responseData.payload = (char *) "response payload";
+    responseData.payload = (CAPayload_t)malloc(sizeof("response payload"));
+    EXPECT_TRUE(responseData.payload != NULL);
+
+    if(!responseData.payload)
+    {
+        CADestroyEndpoint(tempRep);
+        return;
+    }
+
+    memcpy(responseData.payload, "response payload", sizeof("response payload"));
+    responseData.payloadSize = sizeof("response payload");
 
     CAGenerateToken(&tempToken, tokenLength);
     requestData.token = tempToken;
     requestData.tokenLength = tokenLength;
 
     memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
-    responseInfo.result = CA_SUCCESS;
+    responseInfo.result = CA_CONTENT;
     responseInfo.info = responseData;
 
-    EXPECT_EQ(CA_STATUS_INVALID_PARAM, CASendResponse(tempRep, &responseInfo));
+    EXPECT_EQ(CA_STATUS_OK, CASendResponse(tempRep, &responseInfo));
 
     CADestroyToken(tempToken);
     if (tempRep != NULL)
@@ -406,13 +374,14 @@ TEST(SendResponseTest, DISABLED_TC_20_Negative_01)
         CADestroyEndpoint(tempRep);
         tempRep = NULL;
     }
+    free (responseData.payload);
 }
 
 // check return value NULL is passed instead of a valid CAResponseInfo_t address
 TEST_F(CATests, SendResponseTest)
 {
-    uri = (char *) URI;
-    CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, uri, 0, &tempRep);
+    addr = (char *) ADDRESS;
+    CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, addr, PORT, &tempRep);
 
     EXPECT_EQ(CA_STATUS_INVALID_PARAM, CASendResponse(tempRep, NULL));
 
@@ -427,19 +396,29 @@ TEST_F(CATests, SendResponseTest)
 // check return value
 TEST(SendNotificationTest, DISABLED_TC_22_Positive_01)
 {
-    uri = (char *) URI;
-    CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, uri, 0, &tempRep);
+    addr = (char *) ADDRESS;
+    CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, addr, PORT, &tempRep);
 
     memset(&responseData, 0, sizeof(CAInfo_t));
     responseData.type = CA_MSG_NONCONFIRM;
-    responseData.payload = (char *) "Temp Notification Data";
+    responseData.payload = (CAPayload_t)malloc(sizeof("Temp Notification Data"));
+
+    EXPECT_TRUE(responseData.payload != NULL);
+    if(!responseData.payload)
+    {
+        CADestroyEndpoint(tempRep);
+        return;
+    }
+
+    memcpy(responseData.payload, "Temp Notification Data", sizeof("Temp Notification Data"));
+    responseData.payloadSize = sizeof("Temp Notification Data");
 
     CAGenerateToken(&tempToken, tokenLength);
     requestData.token = tempToken;
     requestData.tokenLength = tokenLength;
 
     memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
-    responseInfo.result = CA_SUCCESS;
+    responseInfo.result = CA_CONTENT;
     responseInfo.info = responseData;
 
     EXPECT_EQ(CA_STATUS_OK, CASendNotification(tempRep, &responseInfo));
@@ -450,34 +429,7 @@ TEST(SendNotificationTest, DISABLED_TC_22_Positive_01)
         CADestroyEndpoint(tempRep);
         tempRep = NULL;
     }
-}
-
-// check return value when uri is NULL
-TEST_F(CATests, SendNotificationTest)
-{
-    uri = NULL;
-    CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, uri, 0, &tempRep);
-
-    memset(&responseData, 0, sizeof(CAInfo_t));
-    responseData.type = CA_MSG_NONCONFIRM;
-    responseData.payload = (char *) "Temp Notification Data";
-
-    CAGenerateToken(&tempToken, tokenLength);
-    requestData.token = tempToken;
-    requestData.tokenLength = tokenLength;
-
-    memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
-    responseInfo.result = CA_SUCCESS;
-    responseInfo.info = responseData;
-
-    EXPECT_EQ(CA_STATUS_INVALID_PARAM, CASendNotification(tempRep, &responseInfo));
-
-    CADestroyToken(tempToken);
-    if (tempRep != NULL)
-    {
-        CADestroyEndpoint(tempRep);
-        tempRep = NULL;
-    }
+    free(responseData.payload);
 }
 
 // CASelectNewwork TC
@@ -510,14 +462,14 @@ CAResult_t checkSelectNetwork()
 TEST_F(CATests, SelectNetworkTestBad)
 {
     //Select disable network
-    EXPECT_EQ(CA_NOT_SUPPORTED, CASelectNetwork(1000));
+    EXPECT_EQ(CA_NOT_SUPPORTED, CASelectNetwork((CATransportAdapter_t)1000));
 }
 
 // check return value when selected network is disable
 TEST_F(CATests, UnSelectNetworkTest)
 {
     //UnSelect disable network
-    EXPECT_EQ(CA_STATUS_FAILED, CAUnSelectNetwork(1000));
+    EXPECT_EQ(CA_STATUS_FAILED, CAUnSelectNetwork((CATransportAdapter_t)1000));
 }
 
 // CAHandlerRequestResponse TC

@@ -166,7 +166,7 @@ class CQueryEngineEvent : public OIC::IQueryEngineEvent
             OIC::IModelData      *pModelData = NULL;
             std::vector<std::string>        affectedModels;
 
-            dlog_print(DLOG_ERROR, LOG_TAG, "Event received!");
+            dlog_print(DLOG_INFO, LOG_TAG, "Event received! cqid = %d", cqid);
 
             sprintf(buf, "Event received! cqid = %d<br>", cqid);
             strcpy(log, buf);
@@ -183,10 +183,14 @@ class CQueryEngineEvent : public OIC::IQueryEngineEvent
                 for (int i = 0; i < dataCount; i++)
                 {
                     pResult->getModelData(*itor, i, &pModelData);
+                    dlog_print(DLOG_INFO, LOG_TAG, "dataId: %d<br>", pModelData->getDataId());
                     sprintf(buf, "dataId: %d<br>", pModelData->getDataId());
                     strcat(log, buf);
                     for (int j = 0; j < pModelData->getPropertyCount(); j++)
                     {
+                    	dlog_print(DLOG_INFO, LOG_TAG, "Type: %s Value: %s<br>",
+                                (pModelData->getPropertyName(j)).c_str(),
+                                (pModelData->getPropertyValue(j)).c_str());
                         sprintf(buf, "Type: %s Value: %s<br>",
                                 (pModelData->getPropertyName(j)).c_str(),
                                 (pModelData->getPropertyValue(j)).c_str());
@@ -246,11 +250,13 @@ register_cb(void *data , Evas_Object *obj , void *event_info)
     if (res == OIC::SSM_S_OK)
     {
         updateLog(ad, "The query has been registered!<br>");
+        dlog_print(DLOG_INFO, LOG_TAG, "QID : %d\n", qid);
         sprintf(log, "QID : %d<br>", qid);
         updateLog(ad, log);
     }
     else
     {
+    	dlog_print(DLOG_INFO, LOG_TAG, "Error occured(%d)\n", res);
         sprintf(log, "Error occured(%d)<br>", res);
         updateLog(ad, log);
     }
@@ -286,6 +292,7 @@ minus_cb(void *data , Evas_Object *obj , void *event_info)
     try
     {
         int val = atoi(query_id_str);
+        dlog_print(DLOG_INFO, LOG_TAG, "%d", val - 1);
         sprintf(output, "%d", val - 1);
         elm_entry_entry_set(ad->unregister_query_id, output);
     }
@@ -306,6 +313,7 @@ plus_cb(void *data , Evas_Object *obj , void *event_info)
     try
     {
         int val = atoi(query_id_str);
+        dlog_print(DLOG_INFO, LOG_TAG, "%d", val + 1);
         sprintf(output, "%d", val + 1);
         elm_entry_entry_set(ad->unregister_query_id, output);
     }
@@ -335,11 +343,13 @@ unregister_cb(void *data , Evas_Object *obj , void *event_info)
         if (res == OIC::SSM_S_OK)
         {
             updateLog(ad, "The query has been unregistered!<br>");
+            dlog_print(DLOG_INFO, LOG_TAG, "QID : %d\n", qid);
             sprintf(log, "QID : %d<br>", qid);
             updateLog(ad, log);
         }
         else
         {
+        	dlog_print(DLOG_INFO, LOG_TAG, "Error occured(%d)\n", res);
             sprintf(log, "Error occured(%d)<br>", res);
             updateLog(ad, log);
         }

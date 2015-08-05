@@ -58,7 +58,9 @@ public:
 
             if (jgListener)
             {
-                m_listenerMap.insert(std::pair<jobject, std::pair<T*, int>>(jgListener, std::pair<T*, int>(onEventListener, 1)));
+                m_listenerMap.insert(
+                        std::pair<jobject,
+                        std::pair<T*, int>>(jgListener, std::pair<T*, int>(onEventListener, 1)));
             }
             else
             {
@@ -105,14 +107,13 @@ public:
     {
         m_mapMutex.lock();
 
-        for (auto it = m_listenerMap.begin(); it != m_listenerMap.end(); ++it)
+        for (auto& pair : m_listenerMap)
         {
-            env->DeleteGlobalRef(it->first);
-            auto refPair = it->second;
-            T* listener = refPair.first;
-            delete listener;
-            m_listenerMap.erase(it);
+            env->DeleteGlobalRef(pair.first);
+            auto refPair = pair.second;
+            delete refPair.first;
         }
+        m_listenerMap.clear();
 
         m_mapMutex.unlock();
     }

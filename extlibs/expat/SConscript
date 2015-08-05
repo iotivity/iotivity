@@ -35,6 +35,9 @@ if target_os not in ['windows', 'winrt']:
 			'-fexceptions', '-fno-common'])
 	expat_env.AppendUnique(CPPDEFINES = ['HAVE_EXPAT_CONFIG_H'])
 
+if target_os not in ['darwin', 'ios', 'windows', 'winrt']:
+	expat_env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
+
 ######################################################################
 # Source files and Targets
 ######################################################################

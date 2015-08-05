@@ -46,7 +46,7 @@ import android.widget.EditText;
  */
 public class MainActivity extends Activity {
 
-    private final String         LOG_TAG = this.getClass().getSimpleName();
+    private final String         LOG_TAG = "[CON-SERVER]" + this.getClass().getSimpleName();
     private Handler              mHandler;
     private static MainActivity  mainActivityObj;
     private ConfigurationServer  conServerObj;
@@ -72,6 +72,7 @@ public class MainActivity extends Activity {
                 switch (msg.what) {
                     case 0:
                         editText.setText(message);
+                        Log.i(LOG_TAG, message);
                 }
             }
         };
@@ -124,6 +125,7 @@ public class MainActivity extends Activity {
 
             AlertDialog dialog = dialogBuilder.create();
             dialog.show();
+            Log.i(LOG_TAG, "WiFi is not enabled/connected! Please connect the WiFi and start application again...");
             return;
         }
 
@@ -162,6 +164,7 @@ public class MainActivity extends Activity {
         dialog.setProgress(0);
         dialog.setMax(100);
         dialog.show();
+        Log.i(LOG_TAG, "Rebooting.. Please wait ...");
         Thread thread = new Thread() {
             @Override
             public void run() {

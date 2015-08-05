@@ -207,14 +207,14 @@ typedef unsigned int coap_print_status_t;
  *         the lower 28 bits will indicate the number of characters that
  *         have actually been output into @p buffer. The flag
  *         COAP_PRINT_STATUS_TRUNC indicates that the output has been
- *         truncated. 
+ *         truncated.
  */
 coap_print_status_t coap_print_link(const coap_resource_t *resource, unsigned char *buf,
         size_t *len, size_t *offset);
 
 /**
  * Registers the specified @p handler as message handler for the request type
- * @p method 
+ * @p method
  *
  * @param resource The resource for which the handler shall be registered.
  * @param method   The CoAP request method to handle.
@@ -245,7 +245,7 @@ coap_resource_t *coap_get_resource_from_key(coap_context_t *context, coap_key_t 
 /**
  * Calculates the hash key for the resource requested by the
  * Uri-Options of @p request.  This function calls coap_hash() for
- * every path segment. 
+ * every path segment.
  *
  * @param request The requesting pdu.
  * @param key     The resulting hash is stored in @p key
@@ -253,7 +253,7 @@ coap_resource_t *coap_get_resource_from_key(coap_context_t *context, coap_key_t 
 void coap_hash_request_uri(const coap_pdu_t *request, coap_key_t key);
 
 /**
- * @addtogroup observe 
+ * @addtogroup observe
  */
 
 /**

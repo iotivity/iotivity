@@ -29,8 +29,7 @@ src_dir = stringtest_env.get('SRC_DIR')
 ######################################################################
 stringtest_env.PrependUnique(CPPPATH = [
         '../include',
-		'../../../../extlibs/gtest/gtest-1.7.0/include'
-        ])
+        '#extlibs/gtest/gtest-1.7.0/include' ])
 
 stringtest_env.AppendUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource/c_common')])
 stringtest_env.AppendUnique(LIBPATH = [src_dir + '/extlibs/gtest/gtest-1.7.0/lib/.libs'])
@@ -50,12 +49,7 @@ env.AppendTarget('test')
 if env.get('TEST') == '1':
 	target_os = env.get('TARGET_OS')
 	if target_os == 'linux':
-		out_dir = env.get('BUILD_DIR')
-		result_dir = env.get('BUILD_DIR') + '/test_out/'
-		if not os.path.isdir(result_dir):
-			os.makedirs(result_dir)
-		stringtest_env.AppendENVPath('GTEST_OUTPUT', ['xml:'+ result_dir])
-		stringtest_env.AppendENVPath('LD_LIBRARY_PATH', [out_dir])
-		stringtest_env.AppendENVPath('LD_LIBRARY_PATH', ['./extlibs/gtest/gtest-1.7.0/lib/.libs'])
-		ut = stringtest_env.Command ('ut', None, 'valgrind -q --leak-check=full --xml=yes --xml-file=resource_ccommon_string_test.memcheck ' + out_dir + 'resource/c_common/oic_string/test/stringtests')
-		AlwaysBuild ('ut')
+                from tools.scons.RunTest import *
+                run_test(stringtest_env,
+                         'resource_ccommon_string_test.memcheck',
+                         'resource/c_common/oic_string/test/stringtests')

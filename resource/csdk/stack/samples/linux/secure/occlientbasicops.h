@@ -37,6 +37,16 @@ typedef enum {
     MAX_TESTS
 } CLIENT_TEST;
 
+/**
+ * List of connectivity types that can be initiated from the client
+ * Required for user input validation
+ */
+typedef enum {
+    CT_ADAPTER_DEFAULT = 0,
+    CT_IP,
+    MAX_CT
+} CLIENT_CONNECTIVITY_TYPE;
+
 //-----------------------------------------------------------------------------
 // Function prototype
 //-----------------------------------------------------------------------------

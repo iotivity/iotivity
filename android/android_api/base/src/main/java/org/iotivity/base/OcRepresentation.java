@@ -265,8 +265,6 @@ public class OcRepresentation {
         }
     }
 
-    public native String getJSONRepresentation();
-
     public native void addChild(OcRepresentation representation);
 
     public native void clearChildren();

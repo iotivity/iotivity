@@ -28,99 +28,125 @@
 #define CA_INTERFACE_CONTROLLER_H_
 
 #include "caadapterinterface.h"
+
+#ifndef SINGLE_THREAD
 #include "cathreadpool.h" /* for thread pool */
+#endif
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
+#ifdef SINGLE_THREAD
 /**
- * @brief   Initializes different adapters based on the compilation flags.
- * @param   handle         [IN]    thread pool handle created by message handler for different adapters.
- * @return  none
+ * Initializes different adapters based on the compilation flags.
+ */
+void CAInitializeAdapters();
+#else
+/**
+ * Initializes different adapters based on the compilation flags.
+ * @param[in]   handle           thread pool handle created by message handler
+ *                               for different adapters.
  */
 void CAInitializeAdapters(ca_thread_pool_t handle);
+#endif
 
 /**
- * @brief   Set the received packets callback for message handler
- * @param   callback       [IN]    message handler callback to receive packets from different adapters.
- * @return  none
+ * Set the received packets callback for message handler.
+ * @param[in]   callback         message handler callback to receive packets
+ *                               from different adapters.
  */
 void CASetPacketReceivedCallback(CANetworkPacketReceivedCallback callback);
 
 /**
- * @brief   Set the error handler callback for message handler
- * @param   errorCallback       [IN]    error handler callback from adapters
- * @return  none
+ * Set the error handler callback for message handler.
+ * @param[in]   errorCallback    error handler callback from adapters
  */
 void CASetErrorHandleCallback(CAErrorHandleCallback errorCallback);
 
 /**
- * @brief   Set the network status changed callback for message handler
- * @param   callback       [IN]    message handler network status callback to receive network changes.
- * @return  none
+ * Set the network status changed callback for message handler.
+ * @param[in]   callback         message handler network status callback
+ *                               to receive network changes.
  */
 void CASetNetworkChangeCallback(CANetworkChangeCallback callback);
 
 /**
- * @brief   Starting different connectivity adapters based on the network selection.
- * @param   transportType   [IN]    interested network for starting
- * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * Starting different connectivity adapters based on the network selection.
+ * @param[in]   transportType    interested network for starting.
+ * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
  */
 CAResult_t CAStartAdapter(CATransportAdapter_t transportType);
 
 /**
- * @brief   Stopping different connectivity adapters based on the network un-selection.
- * @param   transportType   [IN]    network type that want to stop
- * @return  none
+ * Stopping different connectivity adapters based on the network un-selection.
+ * @param[in]   transportType    network type that want to stop.
  */
 void CAStopAdapter(CATransportAdapter_t transportType);
 
+#ifdef RA_ADAPTER
 /**
- * @brief   Get network information such as ipaddress and mac information
- * @param   info           [OUT]    connectivity information such as ipaddress and mac information
- * @param   size           [OUT]    number of connectivity information structures
- * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * Set Remote Access information for XMPP Client.
+ * @param[in]   caraInfo         remote access info..
+ *
+ * @return  CA_STATUS_OK
+ */
+CAResult_t CASetAdapterRAInfo(const CARAInfo_t *caraInfo);
+#endif
+
+/**
+ * Get network information such as ipaddress and mac information.
+ * @param[out]   info           connectivity information
+ *                                  such as ipaddress and mac information.
+ * @param[out]   size           number of connectivity information structures.
+ * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
  */
 CAResult_t CAGetNetworkInfo(CAEndpoint_t **info, uint32_t *size);
 
 /**
- * @brief   Sends unicast data to the remote endpoint
- * @param   endpoint       [IN]    endpoint information where the data has to be sent
- * @param   data           [IN]    data that needs to be sent
- * @param   length         [IN]    length of the data that needs to be sent
- * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * Sends unicast data to the remote endpoint.
+ * @param[in]   endpoint       endpoint information where the data has to be sent.
+ * @param[in]   data           data that needs to be sent.
+ * @param[in]   length         length of the data that needs to be sent.
+ * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
  */
 CAResult_t CASendUnicastData(const CAEndpoint_t *endpoint, const void *data, uint32_t length);
 
 /**
- * @brief   Sends multicast data to all endpoints in the network.
- * @param   endpoint       [IN]    endpoint information where the data has to be sent
- * @param   data           [IN]    data that needs to be sent
- * @param   length         [IN]    length of the data that needs to be sent
- * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * Sends multicast data to all endpoints in the network.
+ * @param[in]   endpoint       endpoint information where the data has to be sent.
+ * @param[in]   data           data that needs to be sent.
+ * @param[in]   length         length of the data that needs to be sent.
+ * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
  */
 
 CAResult_t CASendMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t length);
 
 /**
- * @brief   Start listening servers to receive search requests from clients
- * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * Start listening servers to receive search requests from clients.
+ * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
  */
 CAResult_t CAStartListeningServerAdapters();
 
 /**
- * @brief   Start discovery servers to receive advertisements from server
- * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * Start discovery servers to receive advertisements from server.
+ * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
  */
 CAResult_t CAStartDiscoveryServerAdapters();
 
 /**
- * @brief   Terminates  the adapters which are initialized during the initialization
- * @return  none
+ * Terminates the adapters which are initialized during the initialization.
  */
 void CATerminateAdapters();
+
+#ifdef SINGLE_THREAD
+/**
+ * Checks for available data and reads it.
+ * @return   CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CAReadData();
+#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -111,7 +111,7 @@ namespace OC
     *  ModeType   : indicate whether we want to do server, client or both
     *  ServerConnectivity : default flags for server
     *  ClientConnectivity : default flags for client
-    *  QoS        : Quality of Service : CONFIRMABLE or NON CONFIRMABLE.
+    *  QoS        : indicate Quality of Service : LowQos, MidQos,HighQos and NaQos(No quality Defined).
     *  ps         : persistant storage Handler structure (open/read/write/close/unlink)
     */
     struct PlatformConfig
@@ -217,7 +217,7 @@ namespace OC
     const std::string BATCH_INTERFACE = "oic.if.b";
 
     // Used in GET, PUT, POST methods on links to other remote resources of a group.
-    const std::string GROUP_INTERFACE = "oc.mi.grp";
+    const std::string GROUP_INTERFACE = "oic.mi.grp";
 
 
     typedef std::function<void(std::shared_ptr<OCResource>)> FindCallback;

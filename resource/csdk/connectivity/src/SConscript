@@ -2,22 +2,16 @@
 # CA build script
 ##
 
+import os.path
+
 Import('env')
 
 ca_os = env.get('TARGET_OS')
 ca_transport = env.get('TARGET_TRANSPORT')
 secured = env.get('SECURED')
-root_dir = './../'
-ca_path = './'
-if ca_os == 'tizen':
-	current_dir = root_dir
-else:
-	current_dir=env.get('SRC_DIR')
-
-# The tinydtls library location is ~/iotivity/extlibs. When scons run from connectivity folder,
-# the build folder is ~/iotivity/resource/csdk/connectivity/out/linux/x86_64/release/.
-# To include  ~/iotivity/extlibs/tinyDTLS, it should go seven level up from the build folder.
-extlib_dir ='../../../../../../../../'
+with_ra = env.get ('WITH_RA')
+root_dir = os.pardir
+ca_path = os.curdir
 
 #####################################################################
 # Source files and Target(s)
@@ -25,85 +19,109 @@ extlib_dir ='../../../../../../../../'
 
 print"Reading ca script %s"%ca_transport
 
-env.PrependUnique(CPPPATH = [root_dir + '/api/'])
-env.AppendUnique(CPPPATH = [root_dir + '/inc/'])
-env.AppendUnique(CPPPATH = [root_dir + '/lib/libcoap-4.1.1/'])
-env.AppendUnique(CPPPATH = [root_dir + '/common/inc/'])
+env.PrependUnique(CPPPATH = [ os.path.join(root_dir, 'api') ])
+env.AppendUnique(CPPPATH = [ os.path.join(root_dir, 'inc'),
+                             os.path.join(root_dir, 'lib/libcoap-4.1.1'),
+                             os.path.join(root_dir, 'common/inc') ])
 
 if ca_os not in ['arduino', 'windows', 'winrt']:
 	env.AppendUnique(CPPDEFINES = ['WITH_POSIX'])
 
+if ca_os not in ['darwin', 'ios', 'windows', 'winrt']:
+	env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
+
 if ca_os in ['darwin','ios']:
 	env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
 
-#Getting common source files
+# Getting common source files
 env.SConscript('./../common/SConscript')
 
+# The tinydtls library is found in '#extlibs/tinydtls', where the '#'
+# is interpreted by SCons as the top-level iotivity directory where
+# the SConscruct file is found.
 if env.get('SECURED') == '1':
-	if current_dir.find('connectivity') == -1:
-		env.SConscript(current_dir +'/extlibs/tinydtls/SConscript')
-	else:
-		env.SConscript(extlib_dir + '/extlibs/tinydtls/SConscript')
+        if ca_os == 'tizen':
+                env.SConscript(os.path.join(root_dir, 'extlibs/tinydtls/SConscript'))
+        else:
+                env.SConscript('#extlibs/tinydtls/SConscript')
 
-
-env.AppendUnique(CA_SRC=[ca_path+'adapter_util/caadapterutils.c'])
-env.AppendUnique(CA_SRC=[ca_path+'adapter_util/camsgparser.c'])
+env.AppendUnique(CA_SRC = [os.path.join(ca_path,
+                                        'adapter_util/caadapterutils.c')])
+env.AppendUnique(CA_SRC = [os.path.join(ca_path,
+                                        'adapter_util/cafragmentation.c')])
+if ca_os in ['android', 'tizen']:
+	env.AppendUnique(CA_SRC=[os.path.join(ca_path, 'adapter_util/ifaddrs.c')])
 if env.get('SECURED') == '1':
-	env.AppendUnique(CA_SRC=[ca_path+'adapter_util/caadapternetdtls.c'])
-	env.AppendUnique(CPPPATH = [root_dir + '/external/inc/'])
+	env.AppendUnique(CA_SRC = [os.path.join(ca_path,
+                                                'adapter_util/caadapternetdtls.c')])
+	env.AppendUnique(CPPPATH = [os.path.join(root_dir,
+                                                 'external/inc')])
 
+ca_common_src = None
 if ca_os == 'arduino':
 	env.AppendUnique(CPPDEFINES = ['SINGLE_THREAD'])
 	env.AppendUnique(CPPDEFINES = ['WITH_ARDUINO'])
 	print "setting WITH_ARDUINO"
 	ca_common_src = [
-		ca_path + 'caconnectivitymanager_singlethread.c',
-		ca_path + 'cainterfacecontroller_singlethread.c',
-		ca_path + 'camessagehandler_singlethread.c',
-		ca_path + 'canetworkconfigurator.c',
-		ca_path + 'caprotocolmessage.c',
-		ca_path + 'caremotehandler.c',
-		ca_path + 'caretransmission_singlethread.c',
+		'caconnectivitymanager.c',
+		'cainterfacecontroller.c',
+		'camessagehandler.c',
+		'canetworkconfigurator.c',
+		'caprotocolmessage.c',
+		'caretransmission.c',
 		]
 else:
-	env.AppendUnique(CPPDEFINES = ['MULTI_THREAD'])
 	ca_common_src = [
-		ca_path + 'caconnectivitymanager.c',
-		ca_path + 'cainterfacecontroller.c',
-		ca_path + 'camessagehandler.c',
-		ca_path + 'canetworkconfigurator.c',
-		ca_path + 'caprotocolmessage.c',
-		ca_path + 'caqueueingthread.c',
-		ca_path + 'caremotehandler.c',
-		ca_path + 'caretransmission.c',
+		'caconnectivitymanager.c',
+		'cainterfacecontroller.c',
+		'camessagehandler.c',
+		'canetworkconfigurator.c',
+		'caprotocolmessage.c',
+		'caqueueingthread.c',
+		'caretransmission.c',
 		]
+	if (('BT' in ca_transport) or ('IP' in ca_transport) or ('ALL' in ca_transport)):
+		env.AppendUnique(CA_SRC = [os.path.join(ca_path, 'cablockwisetransfer.c') ])
+		env.AppendUnique(CPPDEFINES = ['WITH_BWT'])
 	if secured == '1':
 		env.AppendUnique(CPPDEFINES = ['__WITH_DTLS__'])
-		if current_dir.find('connectivity') == -1:
-			env.AppendUnique(CPPPATH = [current_dir + '/extlibs/tinydtls'])
-		else:
-			env.AppendUnique(CPPPATH = [extlib_dir + '/extlibs/tinydtls'])
+                if ca_os == 'tizen':
+                        env.AppendUnique(CPPPATH = [os.path.join(root_dir, 'extlibs/tinydtls')])
+                else:
+                        env.AppendUnique(CPPPATH = ['#extlibs/tinydtls'])
+
+ca_common_src = [
+        os.path.join(ca_path, d) for d in ca_common_src ]
+
 env.AppendUnique(CA_SRC = ca_common_src)
 
 if 'ALL' in ca_transport:
-	env.SConscript(ca_path + 'ip_adapter/SConscript')
-	env.SConscript(ca_path + 'bt_edr_adapter/SConscript')
-	env.SConscript(ca_path + 'bt_le_adapter/SConscript')
+		transports = [ 'ip_adapter', 'bt_edr_adapter', 'bt_le_adapter' ]
+		if with_ra:
+				transports.append ('ra_adapter')
+		env.SConscript(dirs = [
+				os.path.join(ca_path, d) for d in transports ])
 
 if 'IP' in ca_transport:
-	env.SConscript(ca_path + 'ip_adapter/SConscript')
+	env.SConscript(os.path.join(ca_path, 'ip_adapter/SConscript'))
 
 if 'BT' in ca_transport:
-	env.SConscript(ca_path + 'bt_edr_adapter/SConscript')
+	env.SConscript(os.path.join(ca_path, 'bt_edr_adapter/SConscript'))
 
 if 'BLE' in ca_transport:
-	env.SConscript(ca_path + 'bt_le_adapter/SConscript')
+	env.SConscript(os.path.join(ca_path, 'bt_le_adapter/SConscript'))
 
-print "Include path is %s" %env.get('CPPPATH')
-print "Files path is %s" %env.get('CA_SRC')
+print "Include path is %s" % env.get('CPPPATH')
+print "Files path is %s" % env.get('CA_SRC')
 if ca_os in ['android', 'tizen']:
+	env.AppendUnique(LIBS = ['coap'])
+	if env.get('SECURED') == '1':
+		env.AppendUnique(LIBS = ['tinydtls'])
+	if ca_os != 'android':
+		env.AppendUnique(LIBS = ['rt'])
 	calib = env.SharedLibrary('connectivity_abstraction', env.get('CA_SRC'))
 else:
 	calib = env.StaticLibrary('connectivity_abstraction', env.get('CA_SRC'))
 env.InstallTarget(calib, 'libconnectivity_abstraction')
+env.UserInstallTargetLib(calib, 'libconnectivity_abstraction')
 

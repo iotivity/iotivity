@@ -171,7 +171,7 @@ bool isResourceReady()
 int main(int argc, char* argv[])
 {
     ostringstream requestURI;
-    requestURI << OC_MULTICAST_DISCOVERY_URI << "?rt=a.collection";
+    requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=a.collection";
 
     PlatformConfig config
     { OC::ServiceType::InProc, ModeType::Client, "0.0.0.0", 0, OC::QualityOfService::LowQos };

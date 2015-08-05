@@ -26,11 +26,12 @@
 #include <ocstack.h>
 #include <iostream>
 #include <sstream>
+#include "ocpayload.h"
 #include "logger.h"
 const char *getResult(OCStackResult result);
 std::string getIPAddrTBServer(OCClientResponse * clientResponse);
 std::string getPortTBServer(OCClientResponse * clientResponse);
-std::string getQueryStrForGetPut(const char * responsePayload);
+std::string getQueryStrForGetPut();
 
 #define TAG PCF("occlient")
 #define DEFAULT_CONTEXT_VALUE 0x99
@@ -53,7 +54,18 @@ typedef enum
     MAX_TESTS
 } CLIENT_TEST;
 
+/**
+ * List of connectivity types that can be initiated from the client
+ * Required for user input validation
+ */
+typedef enum {
+    CT_ADAPTER_DEFAULT = 0,
+    CT_IP,
+    MAX_CT
+} CLIENT_CONNECTIVITY_TYPE;
+
 unsigned static int TEST = TEST_INVALID;
+unsigned static int CONNECTIVITY = 0;
 
 typedef struct
 {
@@ -74,7 +86,6 @@ testToTextMap queryInterface[] = {
         {"?if=oic.if.ll", TEST_PUT_LINK_LIST},
 };
 
-static std::string putPayload = "{\"state\":\"off\",\"power\":\"0\"}";
 
 //The following variable determines the interface protocol (IP, etc)
 //to be used for sending unicast messages. Default set to IP.
@@ -104,10 +115,27 @@ int InitPutRequest(OCClientResponse * clientResponse);
 int InitGetRequest(OCClientResponse * clientResponse);
 int InitDiscovery();
 
+OCPayload* putPayload()
+{
+    OCRepPayload* payload = OCRepPayloadCreate();
+
+    if(!payload)
+    {
+        std::cout << "Failed to create put payload object"<<std::endl;
+        std::exit(1);
+    }
+
+    OCRepPayloadSetPropInt(payload, "power", 15);
+    OCRepPayloadSetPropBool(payload, "state", true);
+
+    return (OCPayload*) payload;
+}
+
 void PrintUsage()
 {
     OC_LOG(INFO, TAG, "Usage : occlientcoll -t <Test Case> -c <CA connectivity Type>");
-    OC_LOG(INFO, TAG, "-c <0|1> : IPv4/IPv6 (IPv6 not currently supported)");
+    OC_LOG(INFO, TAG, "-c 0 : Default auto-selection");
+    OC_LOG(INFO, TAG, "-c 1 : IP Connectivity Type");
     OC_LOG(INFO, TAG, "Test Case 1 : Discover Resources && Initiate GET Request on an "\
             "available resource using default interface.");
     OC_LOG(INFO, TAG, "Test Case 2 : Discover Resources && Initiate GET Request on an "\
@@ -138,7 +166,7 @@ OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle, OCClientResponse
     if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
         OC_LOG_V(INFO, TAG, "Callback Context for PUT query recvd successfully");
-        OC_LOG_V(INFO, TAG, "JSON = %s =============> Discovered", clientResponse->resJSONPayload);
+        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
     }
 
     return OC_STACK_KEEP_TRANSACTION;
@@ -154,13 +182,13 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse
         if(clientResponse->sequenceNumber == 0)
         {
             OC_LOG_V(INFO, TAG, "Callback Context for GET query recvd successfully");
-            OC_LOG_V(INFO, TAG, "Fnd' Rsrc': %s", clientResponse->resJSONPayload);
+            OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
         }
         else
         {
             OC_LOG_V(INFO, TAG, "Callback Context for Get recvd successfully %d",
                     gNumObserveNotifies);
-            OC_LOG_V(INFO, TAG, "Fnd' Rsrc': %s", clientResponse->resJSONPayload);
+            OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);;
             gNumObserveNotifies++;
             if (gNumObserveNotifies == 3)
             {
@@ -194,8 +222,12 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
     }
 
     OC_LOG_V(INFO, TAG,
-            "Device =============> Discovered %s @ %d.%d.%d.%d:%d",
-            clientResponse->resJSONPayload, clientResponse->devAddr.addr, clientResponse->devAddr.port);
+            "Device =============> Discovered @ %s:%d",
+            clientResponse->devAddr.addr,
+            clientResponse->devAddr.port);
+    OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+
+    OC_CONNTYPE = clientResponse->connType;
 
     if(TEST == TEST_UNKNOWN_RESOURCE_GET_DEFAULT || TEST == TEST_UNKNOWN_RESOURCE_GET_BATCH ||\
             TEST == TEST_UNKNOWN_RESOURCE_GET_LINK_LIST)
@@ -239,11 +271,14 @@ int InitObserveRequest(OCClientResponse * clientResponse)
     std::ostringstream obsReg;
     obsReg << "coap://" << clientResponse->devAddr.addr << ":" <<
             clientResponse->devAddr.addr <<
-            getQueryStrForGetPut(clientResponse->resJSONPayload);
+            getQueryStrForGetPut();
     cbData.cb = getReqCB;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
-    OC_LOG_V(INFO, TAG, "OBSERVE payload from client = %s ", putPayload.c_str());
+    OC_LOG_V(INFO, TAG, "OBSERVE payload from client =");
+    OCPayload* payload = putPayload();
+    OC_LOG_PAYLOAD(INFO, TAG, payload);
+    OCPayloadDestroy(payload);
 
     ret = OCDoResource(&handle, OC_REST_OBSERVE, obsReg.str().c_str(), 0, 0, OC_CONNTYPE,
             OC_LOW_QOS, &cbData, NULL, 0);
@@ -271,9 +306,12 @@ int InitPutRequest(OCClientResponse * clientResponse)
     cbData.cb = putReqCB;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
-    OC_LOG_V(INFO, TAG, "PUT payload from client = %s ", putPayload.c_str());
+    OC_LOG_V(INFO, TAG, "PUT payload from client = ");
+    OCPayload* payload = putPayload();
+    OC_LOG_PAYLOAD(INFO, TAG, payload);
+    OCPayloadDestroy(payload);
 
-    ret = OCDoResource(NULL, OC_REST_PUT, getQuery.str().c_str(), 0, putPayload.c_str(),
+    ret = OCDoResource(NULL, OC_REST_PUT, getQuery.str().c_str(), 0, putPayload(),
                         OC_CONNTYPE, OC_LOW_QOS, &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
@@ -321,7 +359,7 @@ int InitDiscovery()
     cbData.cb = discoveryReqCB;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
-    ret = OCDoResource(NULL, OC_REST_DISCOVER, szQueryUri, 0, 0, CT_DEFAULT,
+    ret = OCDoResource(NULL, OC_REST_DISCOVER, szQueryUri, 0, 0, OC_CONNTYPE,
                         OC_LOW_QOS,
             &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
@@ -343,14 +381,15 @@ int main(int argc, char* argv[])
                 TEST = atoi(optarg);
                 break;
             case 'c':
-                OC_CONNTYPE = CT_ADAPTER_IP;
+                CONNECTIVITY = atoi(optarg);
                 break;
             default:
                 PrintUsage();
                 return -1;
         }
     }
-    if (TEST <= TEST_INVALID || TEST >= MAX_TESTS)
+    if ((TEST <= TEST_INVALID || TEST >= MAX_TESTS) ||
+        CONNECTIVITY >= MAX_CT)
     {
         PrintUsage();
         return -1;
@@ -361,6 +400,16 @@ int main(int argc, char* argv[])
     {
         OC_LOG(ERROR, TAG, "OCStack init error");
         return 0;
+    }
+
+    if(CONNECTIVITY == CT_ADAPTER_DEFAULT || CONNECTIVITY == CT_IP)
+    {
+        OC_CONNTYPE = CT_ADAPTER_IP;
+    }
+    else
+    {
+        OC_LOG(INFO, TAG, "Default Connectivity type selected...");
+        OC_CONNTYPE = CT_ADAPTER_IP;
     }
 
     InitDiscovery();
@@ -388,11 +437,8 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-std::string getQueryStrForGetPut(const char * responsePayload)
+std::string getQueryStrForGetPut()
 {
-
-    std::string jsonPayload(responsePayload);
-
     return "/a/room";
 }
 

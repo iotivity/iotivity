@@ -26,12 +26,6 @@
 extern const char * SVR_DB_FILE_NAME;
 extern const char * OIC_MI_DEF;
 
-extern const char * OIC_RSRC_CORE_URI;
-extern const char * OIC_RSRC_CORE_D_URI;
-extern const char * OIC_RSRC_CORE_P_URI;
-extern const char * OIC_RSRC_PRESENCE_URI;
-extern const char * OIC_RSRC_TYPES_D_URI;
-
 //AMACL
 extern const char * OIC_RSRC_TYPE_SEC_AMACL;
 extern const char * OIC_RSRC_AMACL_URI;

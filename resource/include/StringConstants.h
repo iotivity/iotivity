@@ -104,6 +104,7 @@ namespace OC
         static const char INVALID_JSON_TYPE_TAG[]      = "Invalid JSON Type Tag";
         static const char INVALID_ATTRIBUTE[]          = "Invalid Attribute: ";
         static const char INVALID_DEVICE_INFO[]        = "Invalid Device Information";
+        static const char UNAUTHORIZED_REQUEST[]       = "Unauthorized Request";
 
     }
 
@@ -132,7 +133,9 @@ namespace OC
         static const std::string REPKEY                     = "rep";
         static const std::string SECUREKEY                  = "sec";
         static const std::string PORTKEY                    = "port";
-        static const std::string SERVERIDKEY                = "sid";
+        static const std::string DEVICEIDKEY                = "di";
+        static const std::string LINKS                      = "links";
+
     }
 
 }

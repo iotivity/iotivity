@@ -47,7 +47,7 @@ import android.widget.TextView;
 public class SampleProvider extends Activity implements OnClickListener,
     IMessageLogger
 {
-        private final static String TAG = "SampleProvider : ";
+        private final static String TAG = "NMProvider : SampleProvider";
         private TextView mLogTextView;
         private TextView mTempValue;
         private TextView mHumValue;
@@ -253,6 +253,7 @@ public class SampleProvider extends Activity implements OnClickListener,
                     break;
                 case R.id.btnLogClear:
                     mLogTextView.setText("");
+                    Log.i(TAG, "Log message cleared");
                     break;
             }
 

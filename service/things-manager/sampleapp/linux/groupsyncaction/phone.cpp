@@ -40,6 +40,11 @@ static ActionSet* gPlayStart;
 
 static ActionSet* gPlayStop;
 
+void presenceCallback(std::string msg, OCStackResult res)
+{
+    std::cout << "Presence Callback: " << msg << "(" << res << ")" << std::endl;
+}
+
 void onFindGroup(std::shared_ptr< OCResource > resource)
 {
     if (resource)
@@ -60,6 +65,12 @@ void onFindGroup(std::shared_ptr< OCResource > resource)
         {
             cout << "onFindGroup : Found group is saved now." << endl;
             gFindGroup = resource;
+            {
+                OCStackResult res;
+                res = gThingManager->subscribeCollectionPresence( resource, &presenceCallback);
+
+                std::cout << "Return Value: " << res << std::endl;
+            }
         }
 
         gThingManager->joinGroup(gFindGroup, gPhoneResourceHandle);

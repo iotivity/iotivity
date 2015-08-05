@@ -174,7 +174,7 @@ namespace OC
     private:
         friend class InProcServerWrapper;
 
-        std::string getPayload() const
+        OCRepPayload* getPayload() const
         {
             MessageContainer inf;
             OCRepresentation first(m_representation);
@@ -215,7 +215,7 @@ namespace OC
 
             }
 
-            return inf.getJSONRepresentation(OCInfoFormat::ExcludeOC);
+            return inf.getPayload();
         }
     public:
 
@@ -267,7 +267,7 @@ namespace OC
         *
         * @return OCEntityHandler result value
         */
-        const OCEntityHandlerResult getResponseResult() const
+        OCEntityHandlerResult getResponseResult() const
         {
             return m_responseResult;
         }
@@ -276,4 +276,3 @@ namespace OC
 } // namespace OC
 
 #endif //__OCRESOURCERESPONSE_H
-

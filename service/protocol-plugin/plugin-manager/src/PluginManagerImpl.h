@@ -27,6 +27,7 @@
 
 #include "Plugin.h"
 #include "CpluffAdapter.h"
+#include <algorithm>
 
 #ifdef ANDROID
 #include "FelixAdapter.h"

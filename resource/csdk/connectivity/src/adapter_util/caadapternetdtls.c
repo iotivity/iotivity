@@ -83,7 +83,11 @@ static CAEndpoint_t *GetPeerInfo(const CAEndpoint_t *peer)
 static CAResult_t CAAddIdToPeerInfoList(const char *peerAddr, uint32_t port,
                                     const unsigned char *id, uint16_t id_length)
 {
-    if(NULL == peerAddr || NULL == id || 0 == port || 0 == id_length)
+    if(NULL == peerAddr
+       || NULL == id
+       || 0 == port
+       || 0 == id_length
+       || CA_MAX_ENDPOINT_IDENTITY_LEN < id_length)
     {
         OIC_LOG(ERROR, NET_DTLS_TAG, "CAAddIdToPeerInfoList invalid parameters");
         return CA_STATUS_INVALID_PARAM;
@@ -98,7 +102,8 @@ static CAResult_t CAAddIdToPeerInfoList(const char *peerAddr, uint32_t port,
 
     OICStrcpy(peer->addr, sizeof(peer->addr), peerAddr);
     peer->port = port;
-    OICStrcpyPartial(peer->identity.id, sizeof(peer->identity.id), id, id_length);
+
+    memcpy(peer->identity.id, id, id_length);
     peer->identity.id_length = id_length;
 
     if(NULL != GetPeerInfo(peer))
@@ -431,23 +436,19 @@ static int32_t CASendSecureData(dtls_context_t *dtlsContext,
     int type = 0;
 
     //Mutex is not required for g_caDtlsContext. It will be called in same thread.
-    int32_t sentLen = 0;
     if ((0 <= type) && (MAX_SUPPORTED_ADAPTERS > type) &&
         (NULL != g_caDtlsContext->adapterCallbacks[type].sendCallback))
     {
-        sentLen = g_caDtlsContext->adapterCallbacks[type].sendCallback(&endpoint, buf, bufLen);
+        g_caDtlsContext->adapterCallbacks[type].sendCallback(&endpoint, buf, bufLen);
     }
     else
     {
         OIC_LOG_V(DEBUG, NET_DTLS_TAG, "send Callback or adapter type is wrong [%d]", type );
     }
 
-    OIC_LOG_V(DEBUG, NET_DTLS_TAG, "sent buffer length [%d]", sentLen);
-
     OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT");
-    return sentLen;
+    return bufLen;
 }
-
 
 static int32_t CAHandleSecureEvent(dtls_context_t *dtlsContext,
                                    session_t *session,

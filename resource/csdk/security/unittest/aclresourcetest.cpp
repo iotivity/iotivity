@@ -24,6 +24,7 @@
 #include <linux/limits.h>
 #include <sys/stat.h>
 #include "ocstack.h"
+#include "ocpayload.h"
 #include "oic_malloc.h"
 #include "cJSON.h"
 #include "cainterface.h"
@@ -98,10 +99,7 @@ TEST(ACLResourceTest, JSONMarshallingTests)
         char * jsonStr2 = BinToAclJSON(acl);
         EXPECT_TRUE(NULL != jsonStr2);
 
-        if (jsonStr1 && jsonStr2)
-        {
-            EXPECT_STREQ(jsonStr1, jsonStr2);
-        }
+        EXPECT_STREQ(jsonStr1, jsonStr2);
 
         OICFree(jsonStr1);
         OICFree(jsonStr2);
@@ -164,7 +162,7 @@ TEST(ACLResourceTest, ACLPostTest)
 
         // Create Entity Handler POST request payload
         ehReq.method = OC_REST_POST;
-        ehReq.reqJSONPayload = jsonStr;
+        ehReq.payload = (OCPayload*)OCSecurityPayloadCreate(jsonStr);
 
         OCEntityHandlerResult ehRet = ACLEntityHandler(OC_REQUEST_FLAG, &ehReq);
         EXPECT_TRUE(OC_EH_ERROR == ehRet);
@@ -181,6 +179,7 @@ TEST(ACLResourceTest, ACLPostTest)
         // Perform cleanup
         DeleteACLList(acl);
         DeInitACLResource();
+        OCPayloadDestroy(ehReq.payload);
         OICFree(jsonStr);
     }
 }

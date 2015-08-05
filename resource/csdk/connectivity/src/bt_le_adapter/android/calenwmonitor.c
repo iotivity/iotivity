@@ -83,6 +83,13 @@ CAResult_t CAInitializeLEAdapter()
     return CA_STATUS_OK;
 }
 
+CAResult_t CAStartLEAdapter()
+{
+    // Nothing to do.
+
+    return CA_STATUS_OK;
+}
+
 CAResult_t CAInitLENwkMonitorMutexVaraibles()
 {
     OIC_LOG(DEBUG, TAG, "IN");
@@ -207,7 +214,7 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeStateChangedCallback(JNIEnv *env, j
                                                                    jint status)
 {
     VERIFY_NON_NULL_VOID(env, TAG, "env is null");
-
+    VERIFY_NON_NULL_VOID(obj, TAG, "obj is null");
 
     OIC_LOG(DEBUG, TAG, "CaLeClientInterface - Network State Changed");
 
@@ -254,6 +261,7 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeBondStateChangedCallback(JNIEnv *en
 {
     OIC_LOG(DEBUG, TAG, "CaLeClientInterface - Bond State Changed");
     VERIFY_NON_NULL_VOID(env, TAG, "env is null");
+    VERIFY_NON_NULL_VOID(obj, TAG, "obj is null");
     VERIFY_NON_NULL_VOID(addr, TAG, "addr is null");
 
     // remove obj for client

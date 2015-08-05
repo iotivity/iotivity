@@ -27,6 +27,9 @@ tm_jni_env.AppendUnique(CPPPATH = [tm_sdk+'/inc'])
 tm_jni_env.AppendUnique(CPPPATH = [base_jni])
 tm_jni_env.AppendUnique(CPPPATH = ['tm/inc', 'jniutil/inc', extlibs+'/timer/'])
 
+if target_os not in ['darwin', 'ios', 'windows', 'winrt']:
+    tm_jni_env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
+
 ######################################################################
 # Source files and Targets
 ######################################################################
@@ -34,6 +37,7 @@ tm_jni_src = [tm_jni_env.Glob('tm/src/*.cpp'), tm_jni_env.Glob('jniutil/src/*.cp
 tm_jni = tm_jni_env.SharedLibrary('things-manager-jni', tm_jni_src)
 
 tm_jni_env.InstallTarget(tm_jni, 'libthings-manager-jni')
+tm_jni_env.UserInstallTargetLib(tm_jni, 'libthings-manager-jni')
 
 # Install the libraries to /libs/<TARGET_ARCH> directory
 tm_jni_env.Install(tm_sdk+'/java/libs/'+tm_jni_env.get('TARGET_ARCH'),tm_jni_env.get('BUILD_DIR')+'/liboc_logger.so')

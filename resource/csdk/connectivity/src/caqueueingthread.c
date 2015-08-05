@@ -29,7 +29,7 @@
 #include "oic_malloc.h"
 #include "logger.h"
 
-#define TAG PCF("CA")
+#define TAG PCF("CA_QING")
 
 static void CAQueueingThreadBaseRoutine(void *threadValue)
 {
@@ -146,8 +146,28 @@ CAResult_t CAQueueingThreadInitialize(CAQueueingThread_t *thread, ca_thread_pool
     thread->isStop = true;
     thread->threadTask = task;
     thread->destroy = destroy;
+    if(NULL == thread->dataQueue || NULL == thread->threadMutex || NULL == thread->threadCond)
+        goto ERROR_MEM_FAILURE;
 
     return CA_STATUS_OK;
+    ERROR_MEM_FAILURE:
+    if(thread->dataQueue)
+    {
+        u_queue_delete(thread->dataQueue);
+        thread->dataQueue = NULL;
+    }
+    if(thread->threadMutex)
+    {
+        ca_mutex_free(thread->threadMutex);
+        thread->threadMutex = NULL;
+    }
+    if(thread->threadCond)
+    {
+        ca_cond_free(thread->threadCond);
+        thread->threadCond = NULL;
+    }
+    return CA_MEMORY_ALLOC_FAILED;
+
 }
 
 CAResult_t CAQueueingThreadStart(CAQueueingThread_t *thread)

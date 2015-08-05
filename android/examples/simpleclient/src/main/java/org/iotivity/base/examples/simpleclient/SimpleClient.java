@@ -55,6 +55,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 
@@ -99,7 +100,7 @@ public class SimpleClient extends Activity implements OcPlatform.OnResourceFound
              * find all resources
              */
             OcPlatform.findResource("", OcPlatform.WELL_KNOWN_QUERY + "?rt=" + "core.light",
-                    OcConnectivityType.IPV4, this);
+                    EnumSet.of(OcConnectivityType.CT_DEFAULT), this);
         } catch (OcException e) {
             logMessage(TAG + "findResource error: " + e.getMessage());
             Log.e(TAG, e.getMessage());

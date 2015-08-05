@@ -48,7 +48,7 @@ void DeleteAmaclList(OicSecAmacl_t* amacl)
         OicSecAmacl_t *amaclTmp1 = NULL, *amaclTmp2 = NULL;
         LL_FOREACH_SAFE(amacl, amaclTmp1, amaclTmp2)
         {
-            int i = 0;
+            unsigned int i = 0;
 
             LL_DELETE(amacl, amaclTmp1);
 
@@ -103,7 +103,7 @@ char * BinToAmaclJSON(const OicSecAmacl_t * amacl)
             cJSON_AddItemToObject(jsonAmacl, OIC_JSON_RESOURCES_NAME, jsonRsrcArray =
                     cJSON_CreateArray());
             VERIFY_NON_NULL(TAG, jsonRsrcArray, ERROR);
-            for (int i = 0; i < amacl->resourcesLen; i++)
+            for (unsigned int i = 0; i < amacl->resourcesLen; i++)
             {
                 cJSON_AddItemToArray(jsonRsrcArray, cJSON_CreateString(amacl->resources[i]));
             }
@@ -113,7 +113,7 @@ char * BinToAmaclJSON(const OicSecAmacl_t * amacl)
             cJSON_AddItemToObject(jsonAmacl, OIC_JSON_AMSS_NAME, jsonAmsArray =
                     cJSON_CreateArray());
             VERIFY_NON_NULL(TAG, jsonAmsArray, ERROR);
-            for (int i = 0; i < amacl->amssLen; i++)
+            for (unsigned int i = 0; i < amacl->amssLen; i++)
             {
                 outLen = 0;
 
@@ -129,7 +129,7 @@ char * BinToAmaclJSON(const OicSecAmacl_t * amacl)
             cJSON_AddItemToObject(jsonAmacl, OIC_JSON_OWNERS_NAME, jsonOwnrArray =
                     cJSON_CreateArray());
             VERIFY_NON_NULL(TAG, jsonOwnrArray, ERROR);
-            for (int i = 0; i < amacl->ownersLen; i++)
+            for (unsigned int i = 0; i < amacl->ownersLen; i++)
             {
                 outLen = 0;
 
@@ -176,7 +176,7 @@ OicSecAmacl_t * JSONToAmaclBin(const char * jsonStr)
     VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
 
     jsonAmaclArray = cJSON_GetObjectItem(jsonRoot, OIC_JSON_AMACL_NAME);
-    VERIFY_NON_NULL(TAG, jsonAmaclArray, ERROR);
+    VERIFY_NON_NULL(TAG, jsonAmaclArray, INFO);
 
     if (cJSON_Array == jsonAmaclArray->type)
     {
@@ -268,7 +268,7 @@ static OCEntityHandlerResult HandleAmaclPostRequest (const OCEntityHandlerReques
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
     // Convert JSON Amacl data into binary. This will also validate the Amacl data received.
-    OicSecAmacl_t* newAmacl = JSONToAmaclBin((char *)(ehRequest->reqJSONPayload));
+    OicSecAmacl_t* newAmacl = JSONToAmaclBin(((OCSecurityPayload*)ehRequest->payload)->securityData);
 
     if (newAmacl)
     {
@@ -306,6 +306,7 @@ OCEntityHandlerResult AmaclEntityHandler (OCEntityHandlerFlag flag,
                                           OCEntityHandlerRequest * ehRequest,
                                           void* callbackParameter)
 {
+    (void) callbackParameter;
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
     if (!ehRequest)

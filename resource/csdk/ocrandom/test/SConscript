@@ -60,12 +60,7 @@ env.AppendTarget('test')
 if env.get('TEST') == '1':
 	target_os = env.get('TARGET_OS')
 	if target_os == 'linux':
-		out_dir = env.get('BUILD_DIR')
-		result_dir = env.get('BUILD_DIR') + '/test_out/'
-		if not os.path.isdir(result_dir):
-			os.makedirs(result_dir)
-		randomtest_env.AppendENVPath('GTEST_OUTPUT', ['xml:'+ result_dir])
-		randomtest_env.AppendENVPath('LD_LIBRARY_PATH', [out_dir])
-		randomtest_env.AppendENVPath('LD_LIBRARY_PATH', ['./extlibs/gtest/gtest-1.7.0/lib/.libs'])
-		ut = randomtest_env.Command ('ut', None, 'valgrind -q --leak-check=full --xml=yes --xml-file=resource_csdk_random_test.memcheck ' + out_dir + 'resource/csdk/ocrandom/test/randomtests')
-		AlwaysBuild ('ut')
+                from tools.scons.RunTest import *
+                run_test(randomtest_env,
+                         'resource_csdk_random_test.memcheck',
+                         'resource/csdk/ocrandom/test/randomtests')

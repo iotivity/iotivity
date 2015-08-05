@@ -74,6 +74,7 @@
 #define COAP_OPTION_PROXY_URI    35 /* C, String, 1-1034 B, (none) */
 #define COAP_OPTION_PROXY_SCHEME 39 /* C, String, 1-255 B, (none) */
 #define COAP_OPTION_SIZE1        60 /* E, uint, 0-4 B, (none) */
+#define COAP_OPTION_SIZE2        28 /* E, uint, 0-4 B, (none) */
 
 /* option types from draft-ietf-coap-observe-09 */
 
@@ -346,6 +347,6 @@ int coap_add_data(coap_pdu_t *pdu, unsigned int len, const unsigned char *data);
  * or 1 if *len and *data have correct values. Note that these values are
  * destroyed with the pdu.
  */
-int coap_get_data(coap_pdu_t *pdu, size_t *len, unsigned char **data);
+int coap_get_data(const coap_pdu_t *pdu, size_t *len, unsigned char **data);
 
 #endif /* _PDU_H_ */

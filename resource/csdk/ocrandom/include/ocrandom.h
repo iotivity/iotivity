@@ -19,8 +19,8 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 
-#ifndef _RANDOM_H
-#define _RANDOM_H
+#ifndef OC_RANDOM_H
+#define OC_RANDOM_H
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -128,4 +128,4 @@ OCRandomUuidResult OCConvertUuidToString(const uint8_t uuid[UUID_SIZE],
 }
 #endif
 
-#endif //_RANDOM_H
+#endif // OC_RANDOM_H

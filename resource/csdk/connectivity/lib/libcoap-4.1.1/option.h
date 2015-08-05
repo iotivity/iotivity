@@ -240,7 +240,7 @@ coap_opt_t *coap_check_option(coap_pdu_t *pdu, unsigned char type, coap_opt_iter
  * indicates by how many bytes @p opt must be advanced to encode the
  * option value.
  *
- * @param opt    The option buffer space where @p delta and @p length are 
+ * @param opt    The option buffer space where @p delta and @p length are
  *               written
  * @param maxlen The maximum length of @p opt
  * @param delta The actual delta value to encode.

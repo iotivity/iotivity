@@ -29,8 +29,7 @@
 #include "caedrutils.h"
 #include "logger.h"
 
-CAResult_t CAEDRSendData(int serverFD, const void *data, uint32_t dataLength,
-                         uint32_t *sentDataLen)
+CAResult_t CAEDRSendData(int serverFD, const void *data, uint32_t dataLength)
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
@@ -47,11 +46,9 @@ CAResult_t CAEDRSendData(int serverFD, const void *data, uint32_t dataLength,
     if (dataLen == -1)
     {
         OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "sending data failed!, soketid [%d]", serverFD);
-        *sentDataLen = 0;
-        return CA_STATUS_FAILED;
+        return CA_SOCKET_OPERATION_FAILED;
     }
 
-    *sentDataLen = dataLen;
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }

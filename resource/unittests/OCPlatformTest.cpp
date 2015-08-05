@@ -533,7 +533,7 @@ namespace OCPlatformTest
     TEST(FindResourceTest, DISABLED_FindResourceValid)
     {
       std::ostringstream requestURI;
-      requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.light";
+      requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.light";
       EXPECT_EQ(OC_STACK_OK, OCPlatform::findResource("", requestURI.str(),
               CT_DEFAULT, &foundResource));
     }
@@ -547,7 +547,7 @@ namespace OCPlatformTest
     TEST(FindResourceTest, FindResourceNullResourceURI1)
     {
       std::ostringstream requestURI;
-      requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.light";
+      requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.light";
       EXPECT_ANY_THROW(OCPlatform::findResource(nullptr, requestURI.str(),
               CT_DEFAULT, &foundResource));
     }
@@ -555,7 +555,7 @@ namespace OCPlatformTest
     TEST(FindResourceTest, FindResourceNullHost)
     {
       std::ostringstream requestURI;
-      requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.light";
+      requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.light";
       EXPECT_ANY_THROW(OCPlatform::findResource(nullptr, requestURI.str(),
               CT_DEFAULT, &foundResource));
     }
@@ -563,7 +563,7 @@ namespace OCPlatformTest
     TEST(FindResourceTest, FindResourceNullresourceHandler)
     {
       std::ostringstream requestURI;
-      requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.light";
+      requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.light";
       EXPECT_THROW(OCPlatform::findResource("", requestURI.str(),
               CT_DEFAULT, NULL), OC::OCException);
     }
@@ -571,7 +571,7 @@ namespace OCPlatformTest
     TEST(FindResourceTest, DISABLED_FindResourceWithLowQoS)
     {
         std::ostringstream requestURI;
-        requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.light";
+        requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.light";
         EXPECT_EQ(OC_STACK_OK,
                 OCPlatform::findResource("", requestURI.str(), CT_DEFAULT, &foundResource,
                         OC::QualityOfService::LowQos));
@@ -580,7 +580,7 @@ namespace OCPlatformTest
     TEST(FindResourceTest, DISABLED_FindResourceWithMidQos)
     {
         std::ostringstream requestURI;
-        requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.light";
+        requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.light";
         EXPECT_EQ(OC_STACK_OK,
                 OCPlatform::findResource("", requestURI.str(), CT_DEFAULT, &foundResource,
                         OC::QualityOfService::MidQos));
@@ -589,7 +589,7 @@ namespace OCPlatformTest
     TEST(FindResourceTest, DISABLED_FindResourceWithHighQos)
     {
         std::ostringstream requestURI;
-        requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.light";
+        requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.light";
         EXPECT_EQ(OC_STACK_OK,
                 OCPlatform::findResource("", requestURI.str(), CT_DEFAULT, &foundResource,
                         OC::QualityOfService::HighQos));
@@ -598,7 +598,7 @@ namespace OCPlatformTest
     TEST(FindResourceTest, DISABLED_FindResourceWithNaQos)
     {
         std::ostringstream requestURI;
-        requestURI << OC_WELL_KNOWN_QUERY << "?rt=core.light";
+        requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.light";
         EXPECT_EQ(OC_STACK_OK,
                 OCPlatform::findResource("", requestURI.str(), CT_DEFAULT, &foundResource,
                         OC::QualityOfService::NaQos));

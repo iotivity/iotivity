@@ -99,6 +99,7 @@ void onFoundCollectionResource(std::vector< std::shared_ptr< OCResource > > reso
                 logMessage += "----------------------<br>";
                 dlog_print(DLOG_INFO, LOG_TAG, "FoundHost: %s", resourceURI.c_str());
                 dlog_print(DLOG_INFO, LOG_TAG, "FoundUri : %s", hostAddress.c_str());
+                dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
                 ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateConfigLog,
                                                       &logMessage);
 
@@ -117,7 +118,9 @@ void onFoundCollectionResource(std::vector< std::shared_ptr< OCResource > > reso
             else
             {
                 // Resource is invalid
+
                 logMessage = "Found Resource invalid!";
+                dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
                 ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateConfigLog,
                                                       &logMessage);
             }
@@ -168,6 +171,7 @@ void onFoundCandidateResource(std::vector< std::shared_ptr< OCResource > > resou
                         logMessage += "----------------------<br>";
                         dlog_print(DLOG_INFO, LOG_TAG, "Host: %s", resourceURI.c_str());
                         dlog_print(DLOG_INFO, LOG_TAG, "Uri : %s", hostAddress.c_str());
+                        dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
                         ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateConfigLog,
                                                               &logMessage);
 
@@ -294,6 +298,7 @@ static void onUpdateConfigurationsCallback(const HeaderOptions &headerOptions,
         logMessage = logMessage + "Region : " + rep.getValue< std::string >("r") + "<br>";
     }
     logMessage += "----------------------<br>";
+    dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
     ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateConfigLog,
                                           &logMessage);
     dlog_print(DLOG_INFO, LOG_TAG, "#### onUpdateConfigurationsCallback: EXIT!!!!");
@@ -343,6 +348,7 @@ static void onGetConfigurationsCallback(const HeaderOptions &headerOptions,
     }
 
     logMessage += "----------------------<br>";
+    dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
     ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateConfigLog, &logMessage);
     dlog_print(DLOG_INFO, LOG_TAG, "#### onGetConfigurationsCallback: exit!!!!");
 }
@@ -366,6 +372,7 @@ static void onFactoryReset(const HeaderOptions &headerOptions, const OCRepresent
     logMessage = logMessage + "FactoryReset : " +
                  rep.getValue< std::string >("value") + "<br>";
     logMessage += "----------------------<br>";
+    dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
     ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateConfigLog, &logMessage);
     dlog_print(DLOG_INFO, LOG_TAG, "#### onFactoryReset: exit!!!!");
 }
@@ -389,6 +396,7 @@ static void onReboot(const HeaderOptions &headerOptions, const OCRepresentation 
     logMessage = logMessage + "Reboot : " +
                  rep.getValue< std::string >("value") + "<br>";
     logMessage += "----------------------<br>";
+    dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
     ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateConfigLog, &logMessage);
     dlog_print(DLOG_INFO, LOG_TAG, "#### onReboot: exit!!!!");
 }
@@ -412,6 +420,7 @@ static void createResourceCollection(string uri, string typeName, OCResourceHand
     string logMessage;
     logMessage = "Resource created : <br>" + typeName + "<br>";
     logMessage += "----------------------<br>";
+    dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
     ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateConfigLog, &logMessage);
     dlog_print(DLOG_INFO, LOG_TAG, "#### createResourceCollection: exit!!!!");
 }
@@ -514,6 +523,7 @@ static void getConfiguration(void *data, Evas_Object *obj, void *event_info)
     {
         dlog_print(DLOG_ERROR, LOG_TAG, "Note that you first create a group to use this command");
         string logMessage = "FIRST CREATE GROUP <br>";
+        dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
         ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateConfigLog, &logMessage);
         return;
     }
@@ -547,6 +557,7 @@ static void updateConfiguration(std::string newRegionValue)
         dlog_print(DLOG_ERROR, LOG_TAG, "Note that you first create a group to use this command");
         string logMessage = "FIRST CREATE GROUP <br>";
         logMessage += "----------------------<br>";
+        dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
         ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateConfigLog, &logMessage);
         return;
     }
@@ -572,6 +583,7 @@ static void updateConfiguration(std::string newRegionValue)
     {
         string logMessage = "UpdateConfigurations called successfully<br>";
         logMessage += "----------------------<br>";
+        dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
         ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateConfigLog, &logMessage);
     }
 
@@ -587,6 +599,7 @@ static void factoryReset(void *data, Evas_Object *obj, void *event_info)
         dlog_print(DLOG_ERROR, LOG_TAG, "Note that you first create a group to use this command");
         string logMessage = "FIRST CREATE GROUP <br>";
         logMessage += "----------------------<br>";
+        dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
         ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateConfigLog, &logMessage);
         return;
     }
@@ -606,6 +619,7 @@ static void factoryReset(void *data, Evas_Object *obj, void *event_info)
     {
         string logMessage = "FactoryReset called successfully<br>";
         logMessage += "----------------------<br>";
+        dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
         ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateConfigLog, &logMessage);
     }
 
@@ -621,6 +635,7 @@ static void reboot(void *data, Evas_Object *obj, void *event_info)
         dlog_print(DLOG_INFO, LOG_TAG, "Note that you first create a group to use this command");
         string logMessage = "FIRST CREATE GROUP <br>";
         logMessage += "----------------------<br>";
+        dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
         ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateConfigLog, &logMessage);
         return;
     }
@@ -640,6 +655,7 @@ static void reboot(void *data, Evas_Object *obj, void *event_info)
     {
         string logMessage = "Reboot called successfully<br>";
         logMessage += "----------------------<br>";
+        dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
         ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateConfigLog, &logMessage);
     }
     dlog_print(DLOG_INFO, LOG_TAG, "#### reboot EXIT!!!!");
@@ -657,6 +673,7 @@ static void getListOfSupportedConfigurationUnits(void *data, Evas_Object *obj, v
     string logMessage;
     logMessage = "Supported Configuration List :<br>" + listOfSupportedConfigurationUnits + "<br>";
     logMessage += "----------------------<br>";
+    dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
     ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateConfigLog, &logMessage);
     dlog_print(DLOG_INFO, LOG_TAG, "#### getListOfSupportedConfigurationUnits EXIT!!!!");
 }
@@ -708,6 +725,7 @@ popup_set_clicked_cb(void *data, Evas_Object *obj, void *event_info)
         dlog_print(DLOG_INFO, LOG_TAG, "#### Read NULL RegionValue");
         string logMessage = "Region Value should not be NULL<br>";
         logMessage += "----------------------<br>";
+        dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
         ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateConfigLog, &logMessage);
     }
     else
@@ -726,6 +744,7 @@ list_update_region_cb(void *data, Evas_Object *obj, void *event_info)
     {
         dlog_print(DLOG_ERROR, LOG_TAG, "Note that you first create a group to use this command");
         string logMessage = "FIRST CREATE GROUP <br>";
+        dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
         ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateConfigLog, &logMessage);
         return;
     }
@@ -761,8 +780,6 @@ list_update_region_cb(void *data, Evas_Object *obj, void *event_info)
     if (NULL == popup_fields)
     {
         dlog_print(DLOG_INFO, LOG_TAG, "#### Memory allocation failed");
-        popup_fields->popup = NULL;
-        popup_fields->entry = NULL;
     }
     else
     {

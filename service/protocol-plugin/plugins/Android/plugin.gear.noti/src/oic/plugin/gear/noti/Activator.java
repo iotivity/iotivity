@@ -122,7 +122,7 @@ public class Activator extends Activity implements BundleActivator,
             EntityHandlerNoti entitycb = new EntityHandlerNoti();
 
             resourceHandle = OcPlatform.registerResource("/a/galaxy/gear",
-                    "device.notify", "oc.mi.def", entitycb,
+                    "device.notify", OcPlatform.DEFAULT_INTERFACE, entitycb,
                     EnumSet.of(ResourceProperty.DISCOVERABLE));
         }
         else{

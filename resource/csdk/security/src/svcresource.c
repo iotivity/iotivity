@@ -97,7 +97,7 @@ char * BinToSvcJSON(const OicSecSvc_t * svc)
             cJSON *jsonOwnrArray = NULL;
             cJSON_AddItemToObject (jsonSvc, OIC_JSON_OWNERS_NAME, jsonOwnrArray = cJSON_CreateArray());
             VERIFY_NON_NULL(TAG, jsonOwnrArray, ERROR);
-            for (int i = 0; i < svc->ownersLen; i++)
+            for (unsigned int i = 0; i < svc->ownersLen; i++)
             {
                 outLen = 0;
 
@@ -141,7 +141,7 @@ OicSecSvc_t * JSONToSvcBin(const char * jsonStr)
     VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
 
     jsonSvcArray = cJSON_GetObjectItem(jsonRoot, OIC_JSON_SVC_NAME);
-    VERIFY_NON_NULL(TAG, jsonSvcArray, ERROR);
+    VERIFY_NON_NULL(TAG, jsonSvcArray, INFO);
 
     if (cJSON_Array == jsonSvcArray->type)
     {
@@ -248,7 +248,7 @@ static OCEntityHandlerResult HandleSVCPostRequest (const OCEntityHandlerRequest 
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
     // Convert JSON SVC data into binary. This will also validate the SVC data received.
-    OicSecSvc_t* newSvc = JSONToSvcBin((char *)(ehRequest->reqJSONPayload));
+    OicSecSvc_t* newSvc = JSONToSvcBin(((OCSecurityPayload*)ehRequest->payload)->securityData);
 
     if (newSvc)
     {
@@ -286,6 +286,7 @@ OCEntityHandlerResult SVCEntityHandler (OCEntityHandlerFlag flag,
                                         OCEntityHandlerRequest * ehRequest,
                                         void* callbackParameter)
 {
+    (void) callbackParameter;
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
     if (!ehRequest)

@@ -38,6 +38,12 @@ namespace PH = std::placeholders;
 const uint16_t API_VERSION = 2048;
 const uint16_t TOKEN = 3000;
 
+static void printUsage()
+{
+    std::cout << "Usage: fridgeclient <0|1>" <<std::endl;
+    std::cout << "connectivityType: Default IP" << std::endl;
+    std::cout << "connectivityType 0: IP" << std::endl;
+}
 class ClientFridge
 {
     public:
@@ -45,7 +51,7 @@ class ClientFridge
         m_callsMade(0),m_connectivityType(ct)
     {
         std::ostringstream requestURI;
-        requestURI << OC_MULTICAST_DISCOVERY_URI << "?rt=intel.fridge";
+        requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=intel.fridge";
         std::cout << "Fridge Client has started " <<std::endl;
         FindCallback f (std::bind(&ClientFridge::foundDevice, this, PH::_1));
         OCStackResult result = OCPlatform::findResource(
@@ -176,7 +182,7 @@ class ClientFridge
     // however be a better fit to wrap each call in an object so a fuller context (and additional
     // requests) can be easily made inside of a simple context
     void getResponse(const std::string& resourceName, const HeaderOptions& headerOptions,
-                const OCRepresentation rep, const int eCode, OCResource::Ptr resource, int getId)
+                const OCRepresentation& rep, const int eCode, OCResource::Ptr resource, int getId)
     {
         std::cout << "Got a response from get from the " << resourceName << std::endl;
         std::cout << "Get ID is "<<getId<<" and resource URI is " << resource->uri() << std::endl;
@@ -279,12 +285,13 @@ int main(int argc, char* argv[])
             {
                 if(optionSelected == 0)
                 {
+                    std::cout << "Using IP."<< std::endl;
                     connectivityType = CT_ADAPTER_IP;
                 }
                 else
                 {
-                    std::cout << "Invalid connectivity type selected. Using default IP"
-                        << std::endl;
+                    std::cout << "Invalid connectivity type selected. Using default IP" << std::endl;
+                    printUsage();
                 }
             }
             else
@@ -299,9 +306,8 @@ int main(int argc, char* argv[])
     }
     else
     {
-        std::cout << "Usage: fridgeclient 0\n";
-        std::cout << "connectivityType: Default IP" << std::endl;
-        std::cout << "connectivityType 0: IP" << std::endl;
+        printUsage();
+        std::cout << "Default input argument. Using IP as connectivity type" << std::endl;
     }
 
     PlatformConfig cfg

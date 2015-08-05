@@ -276,7 +276,7 @@ int coap_add_data(coap_pdu_t *pdu, unsigned int len, const unsigned char *data)
     return 1;
 }
 
-int coap_get_data(coap_pdu_t *pdu, size_t *len, unsigned char **data)
+int coap_get_data(const coap_pdu_t *pdu, size_t *len, unsigned char **data)
 {
     assert(pdu);
     assert(len);

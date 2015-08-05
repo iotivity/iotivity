@@ -23,7 +23,7 @@
 
 #include <stdexcept>
 #include <string>
-#include <ocstack.h>
+#include <octypes.h>
 
 namespace OC {
 

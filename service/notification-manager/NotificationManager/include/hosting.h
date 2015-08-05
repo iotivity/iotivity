@@ -30,7 +30,6 @@
 #include "ocstack.h"
 #include "logger.h"
 
-//#define OC_TRANSPORT CT_DEFAULT
 #define OC_TRANSPORT CT_ADAPTER_IP
 
 #ifdef __cplusplus
@@ -40,16 +39,16 @@ extern "C" {
 #define HOSTING_TAG  PCF("Hosting")
 
 /**
- * Start resource coordinator.
- * This function will create mirrorResourceList and start to discover coordinatee candidate.
+ * Start resource hosting.
+ * This function will start the resource hosting and the discovery for remote resource which want to be hosted.
  *
  * @return ::OC_STACK_OK upon success, ::OC_STACK_ERROR is returned except the case that OC_STACK_SUCCESS is returned.
  */
 OCStackResult OICStartCoordinate();
 
 /**
- * Stop resource coordinator.
- * This function will stop the resource hosting and delete mirrorResourceList used.
+ * Stop resource hosting.
+ * This function will stop the resource hosting and delete all hosting resource.
  *
  * @return ::OC_STACK_OK upon success, ::OC_STACK_ERROR is returned except the case that OC_STACK_SUCCESS is returned.
  */

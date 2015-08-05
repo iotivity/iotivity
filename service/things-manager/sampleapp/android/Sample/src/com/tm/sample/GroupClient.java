@@ -50,7 +50,7 @@ import android.util.Log;
  */
 public class GroupClient {
 
-    private static final String     LOG_TAG             = "GroupClient";
+    private static final String     LOG_TAG             = "[TMSample] GroupClient";
     private static Message          msg;
     public String                   logMessage;
 
@@ -99,8 +99,8 @@ public class GroupClient {
                 String uri = resource.getUri();
                 if (uri.equals("/b/collection") == true) {
                     String hostAddress = resource.getHost();
-                    Log.d("URI: onGroupFindCallback", uri);
-                    Log.d("HOST: onGroupFindCallback", hostAddress);
+                    Log.d(LOG_TAG, "onGroupFindCallback URI : " + uri);
+                    Log.d(LOG_TAG, "onGroupFindCallback HOST : " + hostAddress);
 
                     groupResource = resource;
                     Message msg = Message.obtain();
@@ -115,7 +115,7 @@ public class GroupClient {
                     msg.what = 1;
                     groupApiActivityObj.getHandler().sendMessage(msg);
                 } else {
-                    Log.d("onGroupFindCallback URI : ", uri);
+                    Log.d(LOG_TAG, "onGroupFindCallback URI : " + uri);
                 }
             } else {
                 Log.i(LOG_TAG, "Resource is NULL");

@@ -22,6 +22,7 @@
 
 package org.iotivity.base;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 
@@ -460,10 +461,10 @@ public class OcResource {
     /**
      * Method to get the connectivity type of this resource
      *
-     * @return OcConnectivityType connectivity type
+     * @return EnumSet<OcConnectivityType></OcConnectivityType> connectivity type set
      */
-    public OcConnectivityType getConnectivityType() {
-        return OcConnectivityType.get(
+    public EnumSet<OcConnectivityType> getConnectivityTypeSet() {
+        return OcConnectivityType.convertToEnumSet(
                 this.getConnectivityTypeN()
         );
     }

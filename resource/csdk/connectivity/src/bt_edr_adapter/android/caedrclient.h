@@ -137,29 +137,26 @@ CAResult_t CAEDRSendMulticastMessageImpl(JNIEnv *env, const char *data, uint32_t
  * @param  address          [IN] Remote Address
  * @param  data             [IN] Data to be transmitted from EDR
  * @param  dataLength       [IN] Length of data
- * @param  id               [IN] index of remote address
  * @return #CA_STATUS_OK or Appropriate error code
  */
 CAResult_t CAEDRNativeSendData(JNIEnv *env, const char* address, const char* data,
-                               uint32_t dataLength, uint32_t id);
+                               uint32_t dataLength);
 
 /**
  * @brief  This function will connect to remote device.
  * @param  env              [IN] JNI interface pointer
  * @param  address          [IN] Remote Address
- * @param  id               [IN] index of remote address
  * @return #CA_STATUS_OK or Appropriate error code
  */
-CAResult_t CAEDRNativeConnect(JNIEnv *env, const char *address, uint32_t id);
+CAResult_t CAEDRNativeConnect(JNIEnv *env, const char *address);
 
 /**
  * @brief  This function will close socket.
  * @param  env              [IN] JNI interface pointer
  * @param  address          [IN] Remote Address
- * @param  id               [IN] index of remote address
  * @return None
  */
-void CAEDRNativeSocketClose(JNIEnv *env, const char *address, uint32_t id);
+void CAEDRNativeSocketClose(JNIEnv *env, const char *address);
 
 #ifdef __cplusplus
 } /* extern "C" */
