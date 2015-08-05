@@ -288,7 +288,7 @@ CAResult_t CAReceiveBlockWiseData(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
     }
 
     // check if block option is set and get block data
-    coap_block_t block = {0};
+    coap_block_t block = {0, 0, 0};
 
     // get block1 option
     int isBlock1 = coap_get_block(pdu, COAP_OPTION_BLOCK1, &block);
@@ -1943,15 +1943,15 @@ CAData_t* CACreateNewDataSet(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint
     VERIFY_NON_NULL_RET(pdu->hdr, TAG, "pdu->hdr", NULL);
     VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint", NULL);
 
-    CAInfo_t responseData = { 0 };
-    responseData.token = (CAToken_t) OICMalloc(pdu->hdr->token_length);
+    CAInfo_t responseData = { .tokenLength = pdu->hdr->token_length };
+    responseData.token = (CAToken_t) OICMalloc(responseData.tokenLength);
     if (NULL == responseData.token)
     {
         OIC_LOG(ERROR, TAG, "out of memory");
         return NULL;
     }
-    memcpy(responseData.token, pdu->hdr->token, pdu->hdr->token_length);
-    responseData.tokenLength = pdu->hdr->token_length;
+    memcpy(responseData.token, pdu->hdr->token, responseData.tokenLength);
+
     CAResponseInfo_t* responseInfo = (CAResponseInfo_t*) OICCalloc(1, sizeof(CAResponseInfo_t));
     if (NULL == responseInfo)
     {
