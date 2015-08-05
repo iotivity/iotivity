@@ -33,7 +33,7 @@
 //                allow another instance to occur within the same program space
 //                and will even return a soft success when we try (ie.
 //                OC_STACK_OK).
-OCStackResult PIStartPlugin(PIPluginBase * plugin)
+OCStackResult PIStartPlugin(PIPluginType pluginType, PIPluginBase** plugin)
 {
     return OC_STACK_NOTIMPL;
 }
