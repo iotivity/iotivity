@@ -81,7 +81,7 @@ static CAEndpoint_t *GetPeerInfo(const CAEndpoint_t *peer)
 }
 
 static CAResult_t CAAddIdToPeerInfoList(const char *peerAddr, uint32_t port,
-                                    const unsigned char *id, uint16_t id_length)
+        const unsigned char *id, uint16_t id_length, CATransportFlags_t flag)
 {
     if(NULL == peerAddr
        || NULL == id
@@ -102,6 +102,9 @@ static CAResult_t CAAddIdToPeerInfoList(const char *peerAddr, uint32_t port,
 
     OICStrcpy(peer->addr, sizeof(peer->addr), peerAddr);
     peer->port = port;
+    peer->flags = flag;
+    peer->flags |= CA_SECURE;
+    peer->adapter = CA_ADAPTER_IP;
 
     memcpy(peer->identity.id, id, id_length);
     peer->identity.id_length = id_length;
@@ -480,9 +483,9 @@ static int32_t CAHandleSecureEvent(dtls_context_t *context,
         OIC_LOG(INFO, NET_DTLS_TAG, "Peer closing connection");
 
         stCADtlsAddrInfo_t *addrInfo = (stCADtlsAddrInfo_t *)session;
-        char *peerAddr = inet_ntoa(addrInfo->addr.sin.sin_addr);
-        uint32_t port = ntohs(addrInfo->addr.sin.sin_port);
-
+        char *peerAddr = NULL;
+        uint32_t port = 0;
+        CAConvertAddrToName(&(addrInfo->addr.st), peerAddr, port);
         CARemovePeerFromPeerInfoList(peerAddr, port);
     }
 
@@ -547,10 +550,15 @@ static int32_t CAGetPskCredentials(dtls_context_t *ctx,
                     // data structure when handshake completes. Therefore, currently this is a
                     // workaround to cache remote end-point identity when tinyDTLS asks for PSK.
                     stCADtlsAddrInfo_t *addrInfo = (stCADtlsAddrInfo_t *)session;
-                    char *peerAddress = inet_ntoa(addrInfo->addr.sin.sin_addr);
-                    uint32_t port = ntohs(addrInfo->addr.sin.sin_port);
+                    char *peerAddress = NULL;
+                    uint32_t port = 0;
+                    CAConvertAddrToName(&(addrInfo->addr.st), peerAddress, port);
 
-                    CAResult_t result = CAAddIdToPeerInfoList(peerAddress, port, desc, descLen);
+                    CATransportFlags_t flag =
+                            addrInfo->addr.st.ss_family == AF_INET ? CA_IPV4 : CA_IPV6;
+
+                    CAResult_t result = CAAddIdToPeerInfoList(peerAddress,
+                            port, desc, descLen, flag);
                     if(CA_STATUS_OK != result )
                     {
                         OIC_LOG(ERROR, NET_DTLS_TAG, "Fail to add peer id to gDtlsPeerInfoList");
