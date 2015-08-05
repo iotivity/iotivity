@@ -1,0 +1,40 @@
+##
+# Plugin Interface build script
+##
+
+import os.path
+
+Import('env')
+
+target_os = env.get('TARGET_OS')
+src_dir = env.get('SRC_DIR')
+tw_path = os.path.join(src_dir, 'plugins')
+
+#####################################################################
+# Source files and Target(s)
+######################################################################
+
+print"Reading Telegesis Wrapper (TW) script"
+
+env.AppendUnique(CPPPATH = [ os.path.join(tw_path, 'include'),
+                             os.path.join(tw_path, 'include', 'internal')
+                             os.path.join(tw_path, 'zigbee_wrapper', 'telegesis_wrapper', 'include' ])
+
+if target_os not in ['arduino', 'windows', 'winrt']:
+	env.AppendUnique(CPPDEFINES = ['WITH_POSIX'])
+
+if target_os in ['darwin','ios']:
+	env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
+
+tw_src = [
+	'telegesis_wrapper.c',
+	]
+
+env.AppendUnique(TW_SRC = tw_src)
+
+if target_os in ['android', 'tizen']:
+	calib = env.SharedLibrary('telegesis_wrapper', env.get('TW_SRC'))
+else:
+	calib = env.StaticLibrary('telegesis_wrapper', env.get('TW_SRC'))
+env.InstallTarget(calib, 'libtelegesis_wrapper')
+env.UserInstallTargetLib(calib, 'libtelegesis_wrapper')

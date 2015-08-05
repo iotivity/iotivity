@@ -1,0 +1,21 @@
+##
+# Plugin Interface build script
+##
+
+Import('env')
+
+target_os = env.get('TARGET_OS')
+transport = env.get('TARGET_TRANSPORT')
+build_sample = env.get('BUILD_SAMPLE')
+
+env.SConscript('./src/SConscript')
+
+env.SConscript('./unittests/SConscript')
+
+if build_sample == 'ON':
+	if target_os in ['linux', 'darwin']:
+		target_path = target_os
+		if target_os == 'darwin':
+			target_path = 'linux'
+		env.SConscript('./samples/' + target_path + '/SConscript')
+
