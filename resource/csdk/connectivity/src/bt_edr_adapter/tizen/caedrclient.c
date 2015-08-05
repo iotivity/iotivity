@@ -583,8 +583,8 @@ void CAEDRClientDisconnectAll(void)
 }
 
 
-CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const char *serviceUUID,
-                                      const void *data, uint32_t dataLength)
+CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const void *data,
+                                      uint32_t dataLength)
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
@@ -592,7 +592,6 @@ CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const char *ser
 
     // Input validation
     VERIFY_NON_NULL(remoteAddress, EDR_ADAPTER_TAG, "Remote address is null");
-    VERIFY_NON_NULL(serviceUUID, EDR_ADAPTER_TAG, "service UUID is null");
     VERIFY_NON_NULL(data, EDR_ADAPTER_TAG, "Data is null");
 
     if (0 >= dataLength)
@@ -659,7 +658,7 @@ CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const char *ser
 
         // Make a rfcomm connection with remote BT Device
         if (device->serviceSearched &&
-            CA_STATUS_OK != CAEDRClientConnect(remoteAddress, serviceUUID))
+            CA_STATUS_OK != CAEDRClientConnect(remoteAddress, OIC_EDR_SERVICE_ID))
         {
             OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to make RFCOMM connection!");
 
@@ -682,13 +681,11 @@ CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const char *ser
     return CA_STATUS_OK;
 }
 
-CAResult_t CAEDRClientSendMulticastData(const char *serviceUUID, const void *data,
-                                        uint32_t dataLength)
+CAResult_t CAEDRClientSendMulticastData(const void *data, uint32_t dataLength)
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     // Input validation
-    VERIFY_NON_NULL(serviceUUID, EDR_ADAPTER_TAG, "service UUID is null");
     VERIFY_NON_NULL(data, EDR_ADAPTER_TAG, "Data is null");
 
     if (0 >= dataLength)

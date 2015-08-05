@@ -146,13 +146,6 @@ void CALEClientStopMulticastServer();
 void CALEClientSetCallback(CAPacketReceiveCallback callback);
 
 /**
- * get local address (implement).
- * @param[out]   address              local address.
- * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
- */
-CAResult_t CALEClientGetLocalAddress(char** address);
-
-/**
  * send data for unicast (implement).
  * @param[in]   address               remote address.
  * @param[in]   data                  data for transmission.

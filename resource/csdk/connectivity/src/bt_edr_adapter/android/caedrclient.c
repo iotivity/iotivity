@@ -201,19 +201,20 @@ CAResult_t CAEDRManagerReadData(void)
     return CA_NOT_SUPPORTED;
 }
 
-CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const char *serviceUUID,
-                                      const void *data, uint32_t dataLength)
+CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const void *data,
+                                      uint32_t dataLength)
 {
     OIC_LOG(DEBUG, TAG, "IN");
+
     CAResult_t result = CAEDRSendUnicastMessage(remoteAddress, (const char*) data, dataLength);
     OIC_LOG(DEBUG, TAG, "OUT");
     return result;
 }
 
-CAResult_t CAEDRClientSendMulticastData(const char *serviceUUID, const void *data,
-                                        uint32_t dataLength)
+CAResult_t CAEDRClientSendMulticastData(const void *data, uint32_t dataLength)
 {
     OIC_LOG(DEBUG, TAG, "IN");
+
     CAResult_t result = CAEDRSendMulticastMessage((const char*) data, dataLength);
     OIC_LOG(DEBUG, TAG, "OUT");
     return result;
@@ -752,7 +753,7 @@ CAResult_t CAEDRSendMulticastMessageImpl(JNIEnv *env, const char* data, uint32_t
         {
             OIC_LOG_V(ERROR, TAG, "CASendMulticastMessageImpl, failed to send message to : %s",
                       remoteAddress);
-            g_edrErrorHandler(remoteAddress, OIC_EDR_SERVICE_ID, data, dataLen, res);
+            g_edrErrorHandler(remoteAddress, data, dataLen, res);
             continue;
         }
     }

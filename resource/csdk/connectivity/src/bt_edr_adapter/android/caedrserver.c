@@ -288,7 +288,7 @@ static void CAAcceptHandler(void *data)
 /**
  * implement for adapter common method.
  */
-CAResult_t CAEDRServerStart(const char *serviceUUID, int32_t *serverFD, ca_thread_pool_t handle)
+CAResult_t CAEDRServerStart(ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     CAEDRServerInitialize(handle);
@@ -299,16 +299,15 @@ CAResult_t CAEDRServerStart(const char *serviceUUID, int32_t *serverFD, ca_threa
         return CA_STATUS_FAILED;
     }
 
-    *serverFD = 1;
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
-CAResult_t CAEDRServerStop(int serverFD)
+CAResult_t CAEDRServerStop()
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    CAEDRStopUnicastServer(-1);
-    CAEDRStopMulticastServer(-1);
+    CAEDRStopUnicastServer();
+    CAEDRStopMulticastServer();
 
     ca_mutex_lock(g_mutexAcceptServer);
     g_stopAccept = true;

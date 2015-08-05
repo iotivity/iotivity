@@ -100,14 +100,13 @@ typedef void (*CAEDRNetworkStatusCallback)(CANetworkStatus_t status);
 /**
  * Callback to notify the error in the EDR adapter.
  * @param[in]  remoteAddress   Remote EDR Address.
- * @param[in]  serviceUUID     Service UUID of the device.
  * @param[in]  data            data containing token, uri and coap data.
  * @param[in]  dataLength      length of data.
  * @param[in]  result          error code as defined in ::CAResult_t.
  * @pre Callback must be registered using CAEDRSetPacketReceivedCallback().
  */
-typedef void (*CAEDRErrorHandleCallback)(const char *remoteAddress, const char *serviceUUID,
-                                         const void *data, uint32_t dataLength, CAResult_t result);
+typedef void (*CAEDRErrorHandleCallback)(const char *remoteAddress, const void *data,
+        uint32_t dataLength, CAResult_t result);
 
 /**
  * Initialize the network monitor module
@@ -216,9 +215,6 @@ CAResult_t CAEDRGetInterfaceInformation(CAEndpoint_t **info);
 /**
  * Start RFCOMM server for given service UUID
  *
- * @param[in]  serviceUUID  The UUID of service with which RFCOMM server
- * needs to be started.
- * @param[in]  serverFD     The RFCOMM server socket file descriptor.
  * @param[in]  handle       Threadpool Handle.
  *
  * @return ::CA_STATUS_OK or Appropriate error code.
@@ -227,19 +223,16 @@ CAResult_t CAEDRGetInterfaceInformation(CAEndpoint_t **info);
  * @retval ::CA_STATUS_FAILED Operation failed.
  *
  */
-CAResult_t CAEDRServerStart(const char *serviceUUID, int *serverFD, ca_thread_pool_t handle);
+CAResult_t CAEDRServerStart(ca_thread_pool_t handle);
 
 /**
  * Stop RFCOMM server
- *
- * @param[in]  serverFD The RFCOMM server socket file descriptor which
- * needs to be stopped.
  *
  * @return ::CA_STATUS_OK or Appropriate error code.
  * @retval ::CA_STATUS_OK  Successful.
  * @retval ::CA_STATUS_FAILED Operation failed.
  */
-CAResult_t CAEDRServerStop(int serverFD);
+CAResult_t CAEDRServerStop();
 
 /**
  * Terminate server for EDR.
@@ -266,23 +259,20 @@ CAResult_t CAEDRGetAdapterEnableState(bool *state);
 /**
  * This function sends data to specified remote bluetooth device.
  * @param[in]  remoteAddress   Remote EDR Address.
- * @param[in]  serviceUUID     Service UUID of the device.
  * @param[in]  data            Data to be sent.
  * @param[in]  dataLength      Length of the data to be sent.
  * @return ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const char *serviceUUID,
-                                      const void *data, uint32_t dataLength);
+CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const void *data,
+                                      uint32_t dataLength);
 
 /**
  * This function sends data to all bluetooth devices running OIC service.
- * @param[in]  serviceUUID     Service UUID of the device.
  * @param[in]  data            Data to be sent.
  * @param[in]  dataLength      Length of the data to be sent.
  * @return ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAEDRClientSendMulticastData(const char *serviceUUID, const void *data,
-                                        uint32_t dataLength);
+CAResult_t CAEDRClientSendMulticastData(const void *data, uint32_t dataLength);
 
 /**
  * This function gets bonded bluetooth device list

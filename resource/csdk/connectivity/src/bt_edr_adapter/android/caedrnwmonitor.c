@@ -61,8 +61,15 @@ CAResult_t CAEDRInitializeNetworkMonitor(const ca_thread_pool_t threadPool)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
-    CAEDRNetworkMonitorJniInit();
-    CANativeJNIGetJavaVM();
+    if (!threadPool)
+    {
+        return CA_STATUS_FAILED;
+    }
+    else
+    {
+        CAEDRNetworkMonitorJniInit();
+        CANativeJNIGetJavaVM();
+    }
 
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
