@@ -23,6 +23,34 @@
 
 #include <jni.h>
 
+typedef struct
+{
+    jclass classInteger;
+    jclass classDouble;
+    jclass classString;
+    jclass classHashMap;
+    jclass classVector;
+    jclass classSimulatorResource;
+    jclass classSimulatorResourceModel;
+    jclass classSimulatorResourceAttribute;
+    jclass classSimulatorRemoteResource;
+    jclass classSimulatorCallback;
+
+    jmethodID classIntegerCtor;
+    jmethodID classDoubleCtor;
+    jmethodID classHashMapCtor;
+    jmethodID classHashMapPut;
+    jmethodID classVectorCtor;
+    jmethodID classVectorAddElement;
+    jmethodID classSimulatorResourceCtor;
+    jmethodID classSimulatorResourceSetURI;
+    jmethodID classSimulatorResourceSetResourceType;
+    jmethodID classSimulatorResourceSetInterfaceType;
+    jmethodID classSimulatorResourceSetName;
+    jmethodID classSimulatorResourceModelCtor;
+    jmethodID classSimulatorResourceAttributeCtor;
+} SimulatorClassRefs;
+
 static jfieldID GetHandleField(JNIEnv *env, jobject jobj)
 {
     jclass cls = env->GetObjectClass(jobj);
@@ -44,27 +72,7 @@ static void SetHandle(JNIEnv *env, jobject jobj, T *type)
     env->SetLongField(jobj, GetHandleField(env, jobj), handle);
 }
 
-typedef struct
-{
-    jclass classInteger;
-    jclass classDouble;
-    jclass classString;
-    jclass classHashMap;
-    jclass classSimulatorResource;
-    jclass classSimulatorResourceModel;
-    jclass classSimulatorResourceAttribute;
-
-    jmethodID classIntegerCtor;
-    jmethodID classDoubleCtor;
-    jmethodID classHashMapCtor;
-    jmethodID classHashMapPut;
-    jmethodID classSimulatorResourceCtor;
-    jmethodID classSimulatorResourceSetURI;
-    jmethodID classSimulatorResourceSetResourceType;
-    jmethodID classSimulatorResourceSetInterfaceType;
-    jmethodID classSimulatorResourceSetName;
-    jmethodID classSimulatorResourceModelCtor;
-    jmethodID classSimulatorResourceAttributeCtor;
-} SimulatorClassRefs;
+JNIEnv *getEnv();
+void releaseEnv();
 
 #endif

@@ -55,6 +55,10 @@ JNIEXPORT void JNICALL
 Java_org_iotivity_simulator_SimulatorManagerNativeInterface_deleteResources
 (JNIEnv *env, jclass object, jstring resourceType);
 
+JNIEXPORT void JNICALL
+Java_org_iotivity_simulator_SimulatorManagerNativeInterface_setLogger
+(JNIEnv *env, jclass object, jobject logger);
+
 #ifdef __cplusplus
 }
 #endif

@@ -20,6 +20,16 @@
 
 #include "simulator_manager.h"
 
+class AppLogger : public ILogger
+{
+    public:
+        void write(std::string time, ILogger::Level level, std::string message)
+        {
+            std::cout << "[APPLogger] " << time << " " << ILogger::getString(level) << " " << message;
+        }
+};
+std::shared_ptr<AppLogger> gAppLogger(new AppLogger());
+
 class SimLightResource
 {
     public:
@@ -72,6 +82,12 @@ class SimLightResource
 
         int selectResource()
         {
+            if (0 == m_resources.size())
+            {
+                std::cout << "No resouces!" << std::endl;
+                return -1;
+            }
+
             int index = 1;
             for (auto & resource : m_resources)
             {
@@ -99,7 +115,8 @@ class SimLightResource
             std::cout << "#### Modified attributes are ####" << std::endl;
             for (auto & attribute : resModel.getAttributes())
             {
-                std::cout << attribute.second.getName() << " :  " << attribute.second.valueToString().c_str() << std::endl;
+                std::cout << attribute.second.getName() << " :  " << attribute.second.valueToString().c_str() <<
+                          std::endl;
             }
             std::cout << "########################" << std::endl;
         }
@@ -287,7 +304,7 @@ class SimLightResource
             int choice = -1;
             std::cout << "Select the attribute which you want to automate for updation: " << std::endl;
             std::cin >> choice;
-            if (choice == -1 || choice > size)
+            if (choice < 0 || choice > size)
             {
                 std::cout << "Invalid selection!" << std::endl;
                 return;
@@ -335,9 +352,43 @@ void printMainMenu()
 {
     std::cout << "############### MAIN MENU###############" << std::endl;
     std::cout << "1. Test simulation of light resource" << std::endl;
-    std::cout << "2. Help" << std::endl;
+    std::cout << "2. Set Logger" << std::endl;
+    std::cout << "3. Help" << std::endl;
     std::cout << "0. Exit" << std::endl;
     std::cout << "######################################" << std::endl;
+}
+
+void setLogger()
+{
+    std::cout << "1. Default console logger" << std::endl;
+    std::cout << "2. Default file logger" << std::endl;
+    std::cout << "3. custom logger" << std::endl;
+
+    int choice = -1;
+    std::cin >> choice;
+    if (choice <= 0 || choice > 3)
+    {
+        std::cout << "Invalid selection !" << std::endl;
+        return;
+    }
+
+    switch (choice)
+    {
+        case 1:
+            {
+                if (false == SimulatorManager::getInstance()->setDefaultConsoleLogger())
+                    std::cout << "Failed to set the default console logger" << std::endl;
+            } break;
+        case 2:
+            {
+                std::string filePath;
+                std::cout << "Enter the file path (without file name) : ";
+                std::cin >> filePath;
+                if (false == SimulatorManager::getInstance()->setDefaultFileLogger(filePath))
+                    std::cout << "Failed to set default file logger" << std::endl;
+            } break;
+        case 3: SimulatorManager::getInstance()->setLogger(gAppLogger);
+    }
 }
 
 int main(void)
@@ -351,7 +402,7 @@ int main(void)
         int choice = -1;
         std::cout << "Enter your choice: ";
         std::cin >> choice;
-        if (choice < 0 || choice > 2)
+        if (choice < 0 || choice > 3)
         {
             std::cout << "Invaild choice !" << std::endl; continue;
         }
@@ -361,7 +412,8 @@ int main(void)
             case 1: lightResource.startTest();
                 std::cout << "Welcome back to main menu !" << std::endl;
                 break;
-            case 2: printMainMenu(); break;
+            case 2: setLogger(); break;
+            case 3: printMainMenu(); break;
             case 0: cont = false;
         }
     }

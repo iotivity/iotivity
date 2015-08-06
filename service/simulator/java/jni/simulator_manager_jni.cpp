@@ -23,16 +23,86 @@
 #include "simulator_common_jni.h"
 #include "simulator_manager.h"
 
-#define SIMULATOR_RESOURCE_PATH "org/iotivity/simulator/SimulatorResourceServer"
-#define SIMULATOR_RESOURCE_TYPE "Lorg/iotivity/simulator/SimulatorResourceServer;"
-
-#define SIMULATOR_RESOURCE_MODEL_PATH "org/iotivity/simulator/SimulatorResourceModel"
-#define SIMULATOR_RESOURCE_MODEL_TYPE "Lorg/iotivity/simulator/SimulatorResourceModel;"
-
-#define SIMULATOR_RESOURCE_ATTRIBUTE_PATH "org/iotivity/simulator/SimulatorResourceAttribute"
-#define SIMULATOR_RESOURCE_ATTRIBUTE_TYPE "Lorg/iotivity/simulator/SimulatorResourceAttribute;"
-
 SimulatorClassRefs gSimulatorClassRefs;
+std::mutex gEnvMutex;
+JavaVM *gvm;
+
+JNIEnv *getEnv()
+{
+    std::unique_lock<std::mutex> lock(gEnvMutex);
+    if (nullptr == gvm)
+        return NULL;
+
+    JNIEnv *env = NULL;
+    jint ret = gvm->GetEnv((void **)&env, JNI_VERSION_1_6);
+    switch (ret)
+    {
+        case JNI_OK:
+            return env;
+        case JNI_EDETACHED:
+            if (0 == gvm->AttachCurrentThread((void **)&env, NULL))
+                return env;
+    }
+
+    return NULL;
+}
+
+void releaseEnv()
+{
+    std::unique_lock<std::mutex> lock(gEnvMutex);
+    if (nullptr == gvm)
+        return;
+    gvm->DetachCurrentThread();
+}
+
+class JNILogger : public ILogger
+{
+    public:
+        void setJavaLogger(JNIEnv *env, jobject logger)
+        {
+            m_logger = env->NewWeakGlobalRef(logger);
+        }
+
+        void write(std::string time, ILogger::Level level, std::string message)
+        {
+            JNIEnv *env = getEnv();
+            if (nullptr == env)
+                return;
+
+            jobject logger = env->NewLocalRef(m_logger);
+            if (!logger)
+            {
+                releaseEnv();
+                return;
+            }
+
+            jclass loggerCls = env->GetObjectClass(logger);
+            if (!loggerCls)
+            {
+                releaseEnv();
+                return;
+            }
+
+            jmethodID writeMId = env->GetMethodID(loggerCls, "write",
+                                                  "(Ljava/lang/String;ILjava/lang/String;)V");
+            if (!writeMId)
+            {
+                releaseEnv();
+                return;
+            }
+
+            jstring msg = env->NewStringUTF(message.c_str());
+            jstring timeStr = env->NewStringUTF(time.c_str());
+            env->CallVoidMethod(logger, writeMId, timeStr, static_cast<jint>(level), msg);
+            env->DeleteLocalRef(msg);
+            env->DeleteLocalRef(timeStr);
+            releaseEnv();
+        }
+
+    private:
+        jweak m_logger;
+};
+
 
 JNIEXPORT jobject JNICALL
 Java_org_iotivity_simulator_SimulatorManagerNativeInterface_createResource
@@ -114,6 +184,15 @@ Java_org_iotivity_simulator_SimulatorManagerNativeInterface_deleteResources
 }
 
 
+JNIEXPORT void JNICALL
+Java_org_iotivity_simulator_SimulatorManagerNativeInterface_setLogger
+(JNIEnv *env, jclass object, jobject logger)
+{
+    static std::shared_ptr<ILogger> target(new JNILogger());
+    dynamic_cast<JNILogger *>(target.get())->setJavaLogger(env, logger);
+    SimulatorManager::getInstance()->setLogger(target);
+}
+
 static bool getClassRef(JNIEnv *env, const char *className, jclass &classRef)
 {
     jclass localClassRef = nullptr;
@@ -142,7 +221,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
         return JNI_ERR;
     }
 
-    // Get the class references and constructor methods
+    // Get the class references
     if (false == getClassRef(env, "java/lang/Integer", gSimulatorClassRefs.classInteger))
     {
         return JNI_ERR;
@@ -163,24 +242,37 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
         return JNI_ERR;
     }
 
-    if (false == getClassRef(env, SIMULATOR_RESOURCE_PATH, gSimulatorClassRefs.classSimulatorResource))
+    if (false == getClassRef(env, "java/util/Vector", gSimulatorClassRefs.classVector))
     {
         return JNI_ERR;
     }
 
-    if (false == getClassRef(env, SIMULATOR_RESOURCE_MODEL_PATH,
+    if (false == getClassRef(env, "org/oic/simulator/serviceprovider/SimulatorResourceServer",
+                             gSimulatorClassRefs.classSimulatorResource))
+    {
+        return JNI_ERR;
+    }
+
+    if (false == getClassRef(env, "org/oic/simulator/serviceprovider/SimulatorResourceModel",
                              gSimulatorClassRefs.classSimulatorResourceModel))
     {
         return JNI_ERR;
     }
 
-    if (false == getClassRef(env, SIMULATOR_RESOURCE_ATTRIBUTE_PATH,
+    if (false == getClassRef(env, "org/oic/simulator/SimulatorResourceAttribute",
                              gSimulatorClassRefs.classSimulatorResourceAttribute))
     {
         return JNI_ERR;
     }
 
-    // Get the constructor methods
+    if (false == getClassRef(env, "org/oic/simulator/clientcontroller/SimulatorRemoteResource",
+                             gSimulatorClassRefs.classSimulatorRemoteResource))
+    {
+        return JNI_ERR;
+    }
+
+
+    // Get the reference to methods
     gSimulatorClassRefs.classIntegerCtor = env->GetMethodID(gSimulatorClassRefs.classInteger, "<init>",
                                            "(I)V");
     if (!gSimulatorClassRefs.classIntegerCtor)
@@ -199,6 +291,17 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
     gSimulatorClassRefs.classHashMapPut = env->GetMethodID(gSimulatorClassRefs.classHashMap, "put",
                                           "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
     if (!gSimulatorClassRefs.classHashMapPut)
+        return JNI_ERR;
+
+    gSimulatorClassRefs.classVectorCtor = env->GetMethodID(gSimulatorClassRefs.classVector, "<init>",
+                                          "()V");
+    if (!gSimulatorClassRefs.classVectorCtor)
+        return JNI_ERR;
+
+    gSimulatorClassRefs.classVectorAddElement = env->GetMethodID(gSimulatorClassRefs.classVector,
+            "addElement",
+            "(Ljava/lang/Object;)V");
+    if (!gSimulatorClassRefs.classVectorAddElement)
         return JNI_ERR;
 
     gSimulatorClassRefs.classSimulatorResourceCtor = env->GetMethodID(
@@ -236,16 +339,12 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
     if (!gSimulatorClassRefs.classSimulatorResourceAttributeCtor)
         return JNI_ERR;
 
+    gvm = vm;
     return JNI_VERSION_1_6;
 }
 
 JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved)
 {
-    JNIEnv *env = NULL;
-    if (JNI_OK != vm->GetEnv((void **)&env, JNI_VERSION_1_6))
-    {
-        return;
-    }
 }
 
 #ifdef __cplusplus

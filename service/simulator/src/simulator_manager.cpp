@@ -69,3 +69,18 @@ SimulatorResult SimulatorManager::deleteResources(const std::string &resourceTyp
 {
     return ResourceManager::getInstance()->deleteResources(resourceType);
 }
+
+void SimulatorManager::setLogger(std::shared_ptr<ILogger> logger)
+{
+    simLogger().setCustomTarget(logger);
+}
+
+bool SimulatorManager::setDefaultConsoleLogger()
+{
+    return simLogger().setDefaultConsoleTarget();
+}
+
+bool SimulatorManager::setDefaultFileLogger(std::string &path)
+{
+    return simLogger().setDefaultFileTarget(path);
+}

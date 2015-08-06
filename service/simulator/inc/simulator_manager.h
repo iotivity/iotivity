@@ -31,6 +31,7 @@
 #include <vector>
 #include "simulator_error_codes.h"
 #include "simulator_resource.h"
+#include "simulator_logger.h"
 
 /**
  * @class   SimulatorManager
@@ -95,6 +96,34 @@ class SimulatorManager
           * @return SimulatorResult
           */
         SimulatorResult deleteResources(const std::string &resourceType = "");
+
+        /**
+         * API for setting logger target for receiving the log messages.
+         *
+         * @param logger - ILogger interface for handling the log messages.
+         *
+         */
+        void setLogger(std::shared_ptr<ILogger> logger);
+
+        /**
+         * API for setting console as logger target.
+         *
+         * @return true if console set as logger target,
+         *         otherwise false.
+         *
+         */
+        bool setDefaultConsoleLogger();
+
+        /**
+         * API for setting file as logger target.
+         *
+         * @param path - File to which log messages to be saved.
+         *
+         * @return true if console set as logger target,
+         *         otherwise false.
+         *
+         */
+        bool setDefaultFileLogger(std::string &path);
 
     private:
         SimulatorManager();
