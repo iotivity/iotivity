@@ -20,6 +20,7 @@
 
 #include "simulator_manager.h"
 #include "resource_manager.h"
+#include "simulator_client.h"
 
 using namespace OC;
 
@@ -68,6 +69,18 @@ SimulatorResult SimulatorManager::deleteResource(SimulatorResourcePtr &resource)
 SimulatorResult SimulatorManager::deleteResources(const std::string &resourceType)
 {
     return ResourceManager::getInstance()->deleteResources(resourceType);
+}
+
+SimulatorResult SimulatorManager::findResource(const std::string &resourceType,
+        ResourceFindCallback callback)
+{
+    return SimulatorClient::getInstance()->findResource(resourceType, callback);
+}
+
+std::vector<SimulatorRemoteResourcePtr> SimulatorManager::getFoundResources(
+    const std::string resourceType)
+{
+    return SimulatorClient::getInstance()->getFoundResources(resourceType);
 }
 
 void SimulatorManager::setLogger(std::shared_ptr<ILogger> logger)

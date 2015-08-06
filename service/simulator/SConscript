@@ -76,3 +76,4 @@ simulator_env.InstallTarget(simulatorsdk, 'libSimulator')
 
 #Build sample application
 SConscript('examples/server/SConscript')
+SConscript('examples/client-controller/SConscript')

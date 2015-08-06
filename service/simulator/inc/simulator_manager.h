@@ -29,6 +29,7 @@
 #define SIMULATOR_MANAGER_H_
 
 #include <vector>
+#include "simulator_remote_resource.h"
 #include "simulator_error_codes.h"
 #include "simulator_resource.h"
 #include "simulator_logger.h"
@@ -96,6 +97,31 @@ class SimulatorManager
           * @return SimulatorResult
           */
         SimulatorResult deleteResources(const std::string &resourceType = "");
+
+        /**
+         * API for discovering resources of a particular resource type.
+         * Callback is called when a resource is found.
+         *
+         * @param resourceType - required resource type
+         * @param callback - Returns SimulatorRemoteResource.
+         *
+         * @return SimulatorResult - return value of this API.
+         *                         It returns SIMULATOR_SUCCESS if success.
+         *
+         * NOTE: SimulatorResult is defined in simulator_error_codes.h.
+         */
+        SimulatorResult findResource(const std::string &resourceType, ResourceFindCallback callback);
+
+        /**
+         * API for getting list of already found resources.
+         *
+         * @param resourceType - resource type
+         *
+         * @return List of SimulatorRemoteResource
+         *
+         */
+        std::vector<SimulatorRemoteResourcePtr> getFoundResources(
+            const std::string resourceType = "");
 
         /**
          * API for setting logger target for receiving the log messages.

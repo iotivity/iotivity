@@ -18,25 +18,38 @@
  *
  ******************************************************************/
 
-#ifndef SIMULATOR_ERROR_CODES_H_
-#define SIMULATOR_ERROR_CODES_H_
+#ifndef SIMULATOR_REMOTE_RESOURCE_JNI_H_
+#define SIMULATOR_REMOTE_RESOURCE_JNI_H_
 
-#include <iostream>
+#include <jni.h>
+#include "simulator_remote_resource.h"
+#include "simulator_client.h"
 
-typedef enum
+class JniSimulatorRemoteResource
 {
-    SIMULATOR_SUCCESS = 0,
-    SIMULATOR_BAD_INPUT,
-    SIMULATOR_RESOURCE_NOT_FOUND,
-    SIMULATOR_RESOURCE_BUSY,
-    SIMULATOR_RESOURCE_ALREADY_REGISTERED,
-    SIMULATOR_RESOURCE_NOT_REGISTERED,
-    SIMULATOR_OPERATION_NOT_ALLOWED,
-    SIMULATOR_RESOURCE_ALREADY_OBSERVING,
+    public:
 
-    // Attribute udpate automation related
-    SIMULATOR_AUTOMATION_ALREADY_STARTED,
+        JniSimulatorRemoteResource(SimulatorRemoteResourcePtr &resource);
+        ~JniSimulatorRemoteResource();
+        static JniSimulatorRemoteResource *getJniSimulatorResourcePtr(JNIEnv *env, jobject thiz);
+        std::string getURI();
 
-    SIMULATOR_ERROR = 255
-} SimulatorResult;
-#endif //SIMULATOR_ERROR_CODES_H_
+    private:
+        std::shared_ptr<SimulatorRemoteResource> m_sharedResource;
+};
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+JNIEXPORT jstring JNICALL
+Java_org_iotivity_simulator_SimulatorRemoteResource_getURI
+(JNIEnv *, jobject);
+
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif //SIMULATOR_REMOTE_RESOURCE_JNI_H_
+
