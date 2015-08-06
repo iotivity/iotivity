@@ -641,6 +641,41 @@ dtls_ecdsa_verify_sig(const unsigned char *pub_key_x,
 }
 #endif /* DTLS_ECC */
 
+#if defined(DTLS_PSK) && defined(DTLS_ECC)
+int dtls_ecdhe_psk_pre_master_secret(unsigned char *psk, size_t psklen,
+                                     unsigned char *ecc_priv_key,
+                                     unsigned char *ecc_pub_key_x,
+                                     unsigned char *ecc_pub_key_y,
+                                     size_t ecc_key_size,
+                                     unsigned char *result,
+                                     size_t result_len)
+{
+  uint8_t eccPublicKey[64];
+  uint8_t eccPrivateKey[32];
+  unsigned char *p = result;
+
+  if (result_len < uECC_BYTES + psklen + (sizeof(uint16) * 2)) {
+    return -1;
+  }
+
+  dtls_int_to_uint16(p, uECC_BYTES);
+  p += sizeof(uint16);
+
+  memcpy(eccPublicKey, ecc_pub_key_x, 32);
+  memcpy(eccPublicKey + 32, ecc_pub_key_y, 32);
+  memcpy(eccPrivateKey, ecc_priv_key, 32);
+  uECC_shared_secret(eccPublicKey, eccPrivateKey, p);
+  p += uECC_BYTES;
+
+  dtls_int_to_uint16(p, psklen);
+  p += sizeof(uint16);
+
+  memcpy(p, psk, psklen);
+
+  return uECC_BYTES + psklen + (sizeof(uint16) * 2);
+}
+#endif /* defined(DTLS_PSK) && defined(DTLS_ECC) */
+
 int
 dtls_encrypt(const unsigned char *src, size_t length,
 	     unsigned char *buf,
@@ -665,7 +700,8 @@ dtls_encrypt(const unsigned char *src, size_t length,
         memmove(buf, src, length);
       ret = dtls_ccm_encrypt(&ctx->data, src, length, buf, nounce, aad, la);
   }
-  if(cipher == TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256) {
+  if(cipher == TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256 ||
+     cipher == TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256) {
       ret = rijndael_set_key(&ctx->data.ctx, key, 8 * keylen);
       if (ret < 0) {
         /* cleanup everything in case the key has the wrong size */
@@ -708,7 +744,8 @@ dtls_decrypt(const unsigned char *src, size_t length,
       ret = dtls_ccm_decrypt(&ctx->data, src, length, buf, nounce, aad, la);
   }
 
-  if(cipher == TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256) {
+  if(cipher == TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256 ||
+     cipher == TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256) {
       ret = rijndael_set_key(&ctx->data.ctx, key, 8 * keylen);
       if (ret < 0) {
         /* cleanup everything in case the key has the wrong size */

@@ -311,7 +311,8 @@ usage( const char *program, const char *version) {
           "\t-c num\t\tcipher suite (default: 1)\n"
           "\t\t\t1: TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256 \n"
           "\t\t\t2: TLS_PSK_WITH_AES_128_CCM_8\n"
-          "\t\t\t3: TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8\n",
+          "\t\t\t3: TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8\n"
+          "\t\t\t4: TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256\n",
 	   program, version, program, DEFAULT_PORT);
 }
 
@@ -428,6 +429,11 @@ main(int argc, char **argv) {
       else if( strcmp(optarg, "3") == 0)
       {
           selected_cipher = TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8 ;
+          ecdh_anon_enalbe = DTLS_CIPHER_DISABLE;
+      }
+      else if( strcmp(optarg, "4") == 0)
+      {
+          selected_cipher = TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256;
           ecdh_anon_enalbe = DTLS_CIPHER_DISABLE;
       }
       break;
