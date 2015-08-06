@@ -27,6 +27,7 @@
 #include <iostream>
 #include <sstream>
 #include "ocpayload.h"
+#include "payload_logging.h"
 #include "logger.h"
 const char *getResult(OCStackResult result);
 std::string getIPAddrTBServer(OCClientResponse * clientResponse);

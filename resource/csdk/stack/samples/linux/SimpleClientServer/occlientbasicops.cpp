@@ -30,6 +30,7 @@
 #include "logger.h"
 #include "occlientbasicops.h"
 #include "ocpayload.h"
+#include "payload_logging.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 

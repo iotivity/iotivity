@@ -35,6 +35,7 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "ocpayload.h"
+#include "payload_logging.h"
 
 /// Module Name
 #include <stdio.h>

@@ -29,6 +29,7 @@
 #include "logger.h"
 #include "occlient.h"
 #include "ocpayload.h"
+#include "payload_logging.h"
 
 // Tracking user input
 static int UNICAST_DISCOVERY = 0;

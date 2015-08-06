@@ -33,6 +33,7 @@
 #include "cJSON.h"
 #include "ocserverslow.h"
 #include "ocpayload.h"
+#include "payload_logging.h"
 
 volatile sig_atomic_t gQuitFlag = 0;
 
