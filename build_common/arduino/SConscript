@@ -78,7 +78,7 @@ def __search_files(path, pattern, ondisk=True, source=True, strings=False, recur
 		# compilation list. This is an extra overhead as stack is never going to use ".o" generated
 		# for these examples.
 		if 'examples' not in root:
-			matches.extend(Glob(root + '/' + pattern, ondisk, source, strings))
+			matches.extend(Glob(os.path.join(root, pattern), ondisk, source, strings))
 	return matches
 
 # To make sure the src is built in 'BUILD_DIR' (by default it will be built at
@@ -89,9 +89,12 @@ def __src_to_obj(env, srcs):
 	if env.get('CPU'):
 		prefix += env.get('CPU') + '_'
 
-	build_dir = env.get('BUILD_DIR') + '/arduino/'
+	build_dir = os.path.join(env.get('BUILD_DIR'), 'arduino')
 	for src in srcs:
-		obj = src.path.replace(arduino_home, build_dir)
+		if (os.path.isabs(src.path)):
+			obj = src.path.replace(arduino_home, build_dir)
+		else:
+			obj = os.path.join(build_dir, src.path)
 		i = obj.rfind('.')
 		obj = obj[0:i]
 		if env.get('OBJSUFFIX'):
@@ -100,20 +103,20 @@ def __src_to_obj(env, srcs):
 	return objs
 
 def __import_lib(env, lib):
-	lib_path = arduino_home + '/libraries/' + lib
+	lib_path = os.path.join(arduino_home, 'libraries', lib)
 	if not os.path.exists(lib_path):
 		if target_arch == 'avr':
-			lib_path = arduino_home + '/hardware/arduino/avr/libraries/' + lib
+			lib_path = os.path.join(arduino_home, 'hardware', 'arduino', 'avr', 'libraries', lib)
 		else:
-			lib_path = arduino_home + '/hardware/arduino/sam/libraries/' + lib
+			lib_path = os.path.join(arduino_home, 'hardware', 'arduino', 'sam', 'libraries', lib)
 
-	if os.path.exists(lib_path + '/src'):
-		lib_path = lib_path + '/src'
+	if os.path.exists(os.path.join(lib_path, 'src')):
+		lib_path = os.path.join(lib_path, 'src')
 
 	env.AppendUnique(CPPPATH = [lib_path])
 
-	if os.path.exists(lib_path + '/utility'):
-		env.AppendUnique(CPPPATH = [lib_path + '/utility'])
+	if os.path.exists(os.path.join(lib_path, 'utility')):
+		env.AppendUnique(CPPPATH = [os.path.join(lib_path, 'utility')])
 
 	lib_src = []
 	lib_src.extend(__search_files(lib_path, '*.S'))
@@ -158,7 +161,7 @@ def __build_core(env):
 	if env.get('CPU'):
 		prefix += env.get('CPU') + '_'
 
-	core = env.get('BUILD_DIR', '.') + '/arduino/' + prefix + 'core'
+	core = os.path.join(env.get('BUILD_DIR', '.'), 'arduino', prefix + 'core')
 	s_core = env.StaticLibrary(core, core_obj)
 
 	env.AppendUnique(LIBS = [File(s_core[0])])
@@ -230,7 +233,7 @@ target_arch = env.get('TARGET_ARCH')
 
 # Verify that the arduino, time, red bear, and nordic libraries are
 # installed.  If not, get them and install them.
-SConscript(env.get('SRC_DIR') + '/extlibs/arduino/SConscript')
+SConscript(os.path.join(env.get('SRC_DIR'), 'extlibs', 'arduino', 'SConscript'))
 arduino_home = env.get('ARDUINO_HOME')
 print 'ARDUINO_HOME = ' + env.get('ARDUINO_HOME')
 
@@ -260,8 +263,8 @@ else:
 # BOARD / CPU option
 
 # Get IDE version
-if os.path.exists(arduino_home + '/lib/version.txt'):
-	vf = open(arduino_home + '/lib/version.txt', 'r')
+if os.path.exists(os.path.join(arduino_home, 'lib', 'version.txt')):
+	vf = open(os.path.join(arduino_home, 'lib', 'version.txt'), 'r')
 	version = vf.readline().replace('.', '').strip()
 else:
 	print '''
@@ -274,8 +277,8 @@ else:
 
 if version[0:2] == '10':
 	is_1_0_x = True
-	boards_info = __parse_config(arduino_home + '/hardware/arduino/boards.txt')
-	env.PrependENVPath('PATH', arduino_home + '/hardware/tools/avr/bin/')
+	boards_info = __parse_config(os.path.join(arduino_home, 'hardware', 'arduino', 'boards.txt'))
+	env.PrependENVPath('PATH', os.path.join(arduino_home, 'hardware', 'tools', 'avr', 'bin'))
 	env.Replace(CC = 'avr-gcc')
 	env.Replace(CXX = 'avr-g++')
 	env.Replace(AR = 'avr-ar')
@@ -293,11 +296,11 @@ if version[0:2] == '10':
 else:
 	is_1_0_x = False
 	if target_arch == 'avr':
-		boards_info = __parse_config(arduino_home + '/hardware/arduino/avr/boards.txt')
-		platform_info = __parse_config(arduino_home + '/hardware/arduino/avr/platform.txt')
+		boards_info = __parse_config(os.path.join(arduino_home, 'hardware', 'arduino', 'avr', 'boards.txt'))
+		platform_info = __parse_config(os.path.join(arduino_home, 'hardware', 'arduino', 'avr', 'platform.txt'))
 	elif target_arch == 'arm':
-		boards_info = __parse_config(arduino_home + '/hardware/arduino/sam/boards.txt')
-		platform_info = __parse_config(arduino_home + '/hardware/arduino/sam/platform.txt')
+		boards_info = __parse_config(os.path.join(arduino_home, 'hardware', 'arduino', 'sam', 'boards.txt'))
+		platform_info = __parse_config(os.path.join(arduino_home, 'hardware', 'arduino', 'sam', 'platform.txt'))
 	else:
 		print '''
 ************************************* Error ***********************************
@@ -336,18 +339,18 @@ if not usb_pid:
 	usb_pid = __get_board_info(board, '.pid.0')
 
 if is_1_0_x:
-	core_base = arduino_home + '/hardware/arduino/'
+	core_base = os.path.join(arduino_home, 'hardware', 'arduino')
 else:
 	if target_arch == 'avr':
-		core_base = arduino_home + '/hardware/arduino/avr/'
+		core_base = os.path.join(arduino_home, 'hardware', 'arduino', 'avr')
 	else:
-		core_base = arduino_home + '/hardware/arduino/sam/'
+		core_base = os.path.join(arduino_home, 'hardware', 'arduino', 'sam')
 
-variant_folder = core_base + 'variants/' + variant
+variant_folder = os.path.join(core_base, 'variants', variant)
 env.AppendUnique(CPPPATH = [variant_folder])
 
 core = __get_board_info(board, '.build.core')
-core_folder = core_base + 'cores/' + core + '/'
+core_folder = os.path.join(core_base, 'cores', core)
 env.AppendUnique(CPPPATH = [core_folder])
 
 if is_1_0_x:
@@ -398,9 +401,9 @@ else:
 	env.Replace(CXX = platform_info.get('compiler.cpp.cmd'))
 	env.Replace(AR = platform_info.get('compiler.ar.cmd'))
 	if target_arch == 'arm':
-		env.AppendUnique(CPPPATH = [arduino_home + '/hardware/arduino/sam/system/libsam',
-							arduino_home + '/hardware/arduino/sam/system/CMSIS/CMSIS/Include/',
-							arduino_home + '/hardware/arduino/sam/system//CMSIS/Device/ATMEL'])
+		env.AppendUnique(CPPPATH = [os.path.join(arduino_home, 'hardware', 'arduino', 'sam', 'system', 'libsam'),
+							os.path.join(arduino_home, 'hardware', 'arduino', 'sam', 'system', 'CMSIS', 'CMSIS', 'Include'),
+							os.path.join(arduino_home, 'hardware', 'arduino', 'sam', 'system', '', 'CMSIS', 'Device', 'ATMEL')])
 	env.AppendUnique(ASFLAGS = ['-x', 'assembler-with-cpp'])
 	env.AppendUnique(ASFLAGS = comm_flag)
 	env.AppendUnique(CFLAGS = Split(platform_info.get('compiler.c.flags')))
@@ -417,7 +420,7 @@ else:
 
 	if target_arch == 'arm':
 		env.AppendUnique(LINKFLAGS = ['-Os', '-Wl,--gc-sections', cpu_flag,
-					'-T' + variant_folder + '/' + __get_board_info(board, '.build.ldscript')])
+					'-T' + os.path.join(variant_folder,  __get_board_info(board, '.build.ldscript'))])
 		env.AppendUnique(LINKFLAGS = Split('-lm -lgcc -mthumb -Wl,--check-sections -Wl,--gc-sections -Wl,--entry=Reset_Handler -Wl,--unresolved-symbols=report-all -Wl,--warn-common -Wl,--warn-section-align -Wl,--warn-unresolved-symbols -Wl,--start-group'))
 
 		variant_system_lib = __get_board_info(board, '.build.variant_system_lib')
@@ -425,7 +428,7 @@ else:
 			if variant_folder.find(' ') >= 0:
 				variant_folder = '"' + variant_folder + '"'
 			env.Replace(LINKCOM = '$LINK -o $TARGET $_LIBDIRFLAGS $LINKFLAGS $SOURCES $_LIBFLAGS '
-					+ variant_folder + '/' + variant_system_lib + ' -Wl,--end-group')
+					+ os.path.join(variant_folder, variant_system_lib) + ' -Wl,--end-group')
 		else:
 			env.Replace(LINKCOM = '$LINK -o $TARGET $_LIBDIRFLAGS $LINKFLAGS $SOURCES $_LIBFLAGS -Wl,--end-group')
 	else:
