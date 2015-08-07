@@ -35,31 +35,31 @@ extern "C" {
 #endif
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_simulator_SimulatorResourceAttribute_create
+Java_org_oic_simulator_SimulatorResourceAttribute_create
 (JNIEnv *, jobject, jstring);
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_simulator_SimulatorResourceAttribute_dispose
+Java_org_oic_simulator_SimulatorResourceAttribute_dispose
 (JNIEnv *, jobject);
 
 JNIEXPORT int JNICALL
-Java_org_iotivity_simulator_SimulatorResourceAttribute_allowedValuesSize
+Java_org_oic_simulator_SimulatorResourceAttribute_allowedValuesSize
 (JNIEnv *, jobject);
 
 JNIEXPORT jstring JNICALL
-Java_org_iotivity_simulator_SimulatorResourceAttribute_valueToString
+Java_org_oic_simulator_SimulatorResourceAttribute_valueToString
 (JNIEnv *, jobject);
 
 JNIEXPORT jstring JNICALL
-Java_org_iotivity_simulator_SimulatorResourceAttribute_allowedValuesToString
+Java_org_oic_simulator_SimulatorResourceAttribute_allowedValuesToString
 (JNIEnv *, jobject);
 
 JNIEXPORT jstring JNICALL
-Java_org_iotivity_simulator_SimulatorResourceAttribute_getName
+Java_org_oic_simulator_SimulatorResourceAttribute_getName
 (JNIEnv *, jobject);
 
 JNIEXPORT jobject JNICALL
-Java_org_iotivity_simulator_SimulatorResourceAttribute_getValue
+Java_org_oic_simulator_SimulatorResourceAttribute_getValue
 (JNIEnv *, jobject);
 
 #ifdef __cplusplus

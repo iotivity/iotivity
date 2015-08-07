@@ -35,7 +35,7 @@ std::vector<int> convertIntegerVector(JNIEnv *env, jobject jVectorInt)
         return vectorInt;
     }
 
-    jmethodID get = env->GetMethodID(vectorClass, "get", "(I)I");
+    jmethodID get = env->GetMethodID(vectorClass, "get", "(I)""Ljava/lang/Object;");
     if (NULL == get)
     {
         return vectorInt;
@@ -70,7 +70,7 @@ std::vector<double> convertDoubleVector(JNIEnv *env, jobject jVectorDouble)
         return vectorDouble;
     }
 
-    jmethodID get = env->GetMethodID(vectorClass, "get", "(I)D");
+    jmethodID get = env->GetMethodID(vectorClass, "get", "(I)""Ljava/lang/Object;");
     if (NULL == get)
     {
         return vectorDouble;

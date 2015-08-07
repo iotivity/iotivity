@@ -35,6 +35,10 @@ typedef struct
     jclass classSimulatorResourceAttribute;
     jclass classSimulatorRemoteResource;
     jclass classSimulatorCallback;
+    jclass classMap;
+    jclass classMapEntry;
+    jclass classSet;
+    jclass classIterator;
 
     jmethodID classIntegerCtor;
     jmethodID classDoubleCtor;
@@ -49,6 +53,13 @@ typedef struct
     jmethodID classSimulatorResourceSetName;
     jmethodID classSimulatorResourceModelCtor;
     jmethodID classSimulatorResourceAttributeCtor;
+    jmethodID classSimulatorResourceModelId;
+    jmethodID classMapEntrySet;
+    jmethodID classMapGetKey;
+    jmethodID classMapGetValue;
+    jmethodID classIteratorId;
+    jmethodID classHasNextId;
+    jmethodID classNextId;
 } SimulatorClassRefs;
 
 static jfieldID GetHandleField(JNIEnv *env, jobject jobj)

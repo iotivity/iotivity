@@ -28,27 +28,27 @@ extern "C" {
 #endif
 
 JNIEXPORT jobject JNICALL
-Java_org_iotivity_simulator_SimulatorManagerNativeInterface_createResource
-(JNIEnv *env, jclass object, jstring jConfigPath);
+Java_org_oic_simulator_SimulatorManagerNativeInterface_createResource
+(JNIEnv *env, jclass object, jstring jConfigPath, jobject jListener);
 
 JNIEXPORT jobjectArray JNICALL
-Java_org_iotivity_simulator_SimulatorManagerNativeInterface_createResources
-(JNIEnv *env, jclass object, jstring jConfigPath, jint count);
+Java_org_oic_simulator_SimulatorManagerNativeInterface_createResources
+(JNIEnv *env, jclass object, jstring jConfigPath, jint count, jobject jListener);
 
 JNIEXPORT jobjectArray JNICALL
-Java_org_iotivity_simulator_SimulatorManageNativeInterfacer_getResources
+Java_org_oic_simulator_SimulatorManageNativeInterface_getResources
 (JNIEnv *env, jclass object);
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_simulator_SimulatorManagerNativeInterface_deleteResource
+Java_org_oic_simulator_SimulatorManagerNativeInterface_deleteResource
 (JNIEnv *env, jclass object, jobject jResource);
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_simulator_SimulatorManagerNativeInterface_deleteResources
+Java_org_oic_simulator_SimulatorManagerNativeInterface_deleteResources
 (JNIEnv *env, jclass object, jstring resourceType);
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_simulator_SimulatorManagerNativeInterface_setLogger
+Java_org_oic_simulator_SimulatorManagerNativeInterface_setLogger
 (JNIEnv *env, jclass object, jobject logger);
 
 JNIEXPORT jint JNICALL

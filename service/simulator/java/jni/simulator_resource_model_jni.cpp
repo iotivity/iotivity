@@ -73,7 +73,7 @@ static void addEntryToHashMap(JNIEnv *env, jobject mapobj, jobject key, jobject 
 }
 
 JNIEXPORT jint JNICALL
-Java_org_iotivity_simulator_SimulatorResourceModel_size
+Java_org_oic_simulator_serviceprovider_SimulatorResourceModel_size
 (JNIEnv *env, jobject thiz)
 {
     SimulatorResourceModel resourceModel;
@@ -87,7 +87,7 @@ Java_org_iotivity_simulator_SimulatorResourceModel_size
 }
 
 JNIEXPORT jobject JNICALL
-Java_org_iotivity_simulator_SimulatorResourceModel_getAttributes
+Java_org_oic_simulator_serviceprovider_SimulatorResourceModel_getAttributes
 (JNIEnv *env, jobject thiz)
 {
     SimulatorResourceModel resourceModel;
@@ -126,7 +126,7 @@ Java_org_iotivity_simulator_SimulatorResourceModel_getAttributes
 }
 
 JNIEXPORT jobject JNICALL
-Java_org_iotivity_simulator_SimulatorResourceModel_getAttribute
+Java_org_oic_simulator_serviceprovider_SimulatorResourceModel_getAttribute
 (JNIEnv *env, jobject thiz, jstring jAttrName)
 {
     if (!jAttrName)
@@ -170,7 +170,7 @@ Java_org_iotivity_simulator_SimulatorResourceModel_getAttribute
 }
 
 JNIEXPORT jobjectArray JNICALL
-Java_org_iotivity_simulator_SimulatorResourceModel_getAllowedValues
+Java_org_oic_simulator_serviceprovider_SimulatorResourceModel_getAllowedValues
 (JNIEnv *env, jobject thiz, jstring jAttrName)
 {
     if (!jAttrName)
@@ -225,7 +225,7 @@ Java_org_iotivity_simulator_SimulatorResourceModel_getAllowedValues
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_simulator_SimulatorResourceModel_dispose
+Java_org_oic_simulator_serviceprovider_SimulatorResourceModel_dispose
 (JNIEnv *env, jobject thiz)
 {
     JniSimulatorResourceModel *resourceModel = GetHandle<JniSimulatorResourceModel>(env, thiz);

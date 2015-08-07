@@ -42,23 +42,23 @@ extern "C" {
 #endif
 
 JNIEXPORT jint JNICALL
-Java_org_iotivity_simulator_SimulatorResourceModel_size
+Java_org_oic_simulator_serviceprovider_SimulatorResourceModel_size
 (JNIEnv *, jobject);
 
 JNIEXPORT jobject JNICALL
-Java_org_iotivity_simulator_SimulatorResourceModel_getAttributes
+Java_org_oic_simulator_serviceprovider_SimulatorResourceModel_getAttributes
 (JNIEnv *, jobject);
 
 JNIEXPORT jobject JNICALL
-Java_org_iotivity_simulator_SimulatorResourceModel_getAttribute
+Java_org_oic_simulator_serviceprovider_SimulatorResourceModel_getAttribute
 (JNIEnv *, jobject, jstring);
 
 JNIEXPORT jobjectArray JNICALL
-Java_org_iotivity_simulator_SimulatorResourceModel_getAllowedValues
+Java_org_oic_simulator_serviceprovider_SimulatorResourceModel_getAllowedValues
 (JNIEnv *, jobject, jstring);
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_simulator_SimulatorResourceModel_dispose
+Java_org_oic_simulator_serviceprovider_SimulatorResourceModel_dispose
 (JNIEnv *, jobject);
 
 

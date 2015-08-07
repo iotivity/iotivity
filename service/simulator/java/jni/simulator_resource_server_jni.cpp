@@ -18,17 +18,18 @@
  *
  ******************************************************************/
 
-#include "simulator_resource_jni.h"
+#include "simulator_resource_server_jni.h"
 #include "simulator_resource_jni_util.h"
 #include "simulator_common_jni.h"
 #include "simulator_resource_model_jni.h"
 
 extern SimulatorClassRefs gSimulatorClassRefs;
 
-JniSimulatorResource::JniSimulatorResource(SimulatorResourcePtr &resource)
+JniSimulatorResource::JniSimulatorResource(SimulatorResourceServerPtr &resource)
     : m_sharedResource(resource) {}
 
-SimulatorResourcePtr JniSimulatorResource::getJniSimulatorResourcePtr(JNIEnv *env, jobject thiz)
+SimulatorResourceServerPtr JniSimulatorResource::getJniSimulatorResourcePtr(JNIEnv *env,
+        jobject thiz)
 {
     JniSimulatorResource *resource = GetHandle<JniSimulatorResource>(env, thiz);
     if (env->ExceptionCheck())
@@ -49,51 +50,95 @@ jobject JniSimulatorResource::toJava(JNIEnv *env, jlong resource)
     return resourceObj;
 }
 
-void JniSimulatorResource::setUri(JNIEnv *env, jobject jobj, const std::string &uri)
+void JniSimulatorResource::setResourceInfo(JNIEnv *env, jobject jobj)
 {
     if (!env || !jobj)
         return;
+
+    std::string uri = m_sharedResource->getURI();
+    std::string resourceType = m_sharedResource->getResourceType();
+    std::string name = m_sharedResource->getName();
+    std::string interfaceType = m_sharedResource->getInterfaceType();
 
     jstring jURI = env->NewStringUTF(uri.c_str());
-    if (!jURI)
-        return;
-
-    env->CallVoidMethod(jobj, gSimulatorClassRefs.classSimulatorResourceSetURI, jURI);
-    env->DeleteLocalRef(jURI);
-}
-
-void JniSimulatorResource::setResourceType(JNIEnv *env, jobject jobj,
-        const std::string &resourceType)
-{
-    if (!env || !jobj)
-        return;
+    if (jURI)
+    {
+        env->CallVoidMethod(jobj, gSimulatorClassRefs.classSimulatorResourceSetURI, jURI);
+        env->DeleteLocalRef(jURI);
+    }
 
     jstring jResourceType = env->NewStringUTF(resourceType.c_str());
-    if (!jResourceType)
-        return;
-
-    env->CallVoidMethod(jobj, gSimulatorClassRefs.classSimulatorResourceSetResourceType, jResourceType);
-    env->DeleteLocalRef(jResourceType);
-}
-
-void JniSimulatorResource::setResourceName(JNIEnv *env, jobject jobj, const std::string &name)
-{
-    if (!env || !jobj)
-        return;
+    if (jResourceType)
+    {
+        env->CallVoidMethod(jobj, gSimulatorClassRefs.classSimulatorResourceSetResourceType, jResourceType);
+        env->DeleteLocalRef(jResourceType);
+    }
 
     jstring jName = env->NewStringUTF(name.c_str());
-    if (!jName)
+    if (jName)
+    {
+        env->CallVoidMethod(jobj, gSimulatorClassRefs.classSimulatorResourceSetName, jName);
+        env->DeleteLocalRef(jName);
+    }
+
+    jstring jInterfaceType = env->NewStringUTF(interfaceType.c_str());
+    if (jInterfaceType)
+    {
+        env->CallVoidMethod(jobj, gSimulatorClassRefs.classSimulatorResourceSetInterfaceType,
+                            jInterfaceType);
+        env->DeleteLocalRef(jInterfaceType);
+    }
+}
+
+void onAutomationComplete(jweak jlistenerRef, const std::string &uri,
+                          const int automationID)
+{
+    std::cout << "onAutomationComplete JNI entry" << std::endl;
+    JNIEnv *env = getEnv();
+    if (nullptr == env)
         return;
 
-    env->CallVoidMethod(jobj, gSimulatorClassRefs.classSimulatorResourceSetName, jName);
-    env->DeleteLocalRef(jName);
+    jobject autoCompleteListener = env->NewLocalRef(jlistenerRef);
+    if (!autoCompleteListener)
+    {
+        releaseEnv();
+        return;
+    }
+
+    jclass autoCompleteCls = env->GetObjectClass(autoCompleteListener);
+    if (!autoCompleteCls)
+    {
+        releaseEnv();
+        return;
+    }
+
+    jmethodID autoCompleteMId = env->GetMethodID(autoCompleteCls, "onAutomationComplete",
+                                "(Ljava/lang/String;I)V");
+    if (!autoCompleteMId)
+    {
+        releaseEnv();
+        return;
+    }
+
+    jstring jUri = env->NewStringUTF(uri.c_str());
+
+    env->CallVoidMethod(autoCompleteListener, autoCompleteMId, jUri, automationID);
+    if ((env)->ExceptionCheck())
+    {
+        releaseEnv();
+        return;
+    }
+
+    env->DeleteLocalRef(jUri);
+
+    releaseEnv();
 }
 
 JNIEXPORT jobject JNICALL
-Java_org_iotivity_simulator_SimulatorResourceServer_getModel
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_getModel
 (JNIEnv *env, jobject object)
 {
-    SimulatorResourcePtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env, object);
+    SimulatorResourceServerPtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env, object);
     if (nullptr == resource.get())
     {
         std::cout << "getModel: Resource is NULL";
@@ -107,10 +152,10 @@ Java_org_iotivity_simulator_SimulatorResourceServer_getModel
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_simulator_SimulatorResourceServer_updateAttributeFromAllowedValues
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_updateAttributeFromAllowedValues
 (JNIEnv *env, jobject object, jstring attrName, jint index)
 {
-    SimulatorResourcePtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env, object);
+    SimulatorResourceServerPtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env, object);
     if (nullptr == resource.get())
     {
         std::cout << "updateAttributeFromAllowedValues: Resource is NULL";
@@ -129,10 +174,10 @@ Java_org_iotivity_simulator_SimulatorResourceServer_updateAttributeFromAllowedVa
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_simulator_SimulatorResourceServer_setRange
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_setRange
 (JNIEnv *env, jobject object, jstring attrName, jint min, jint max)
 {
-    SimulatorResourcePtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env, object);
+    SimulatorResourceServerPtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env, object);
     if (nullptr == resource.get())
     {
         std::cout << "setRange: Resource is NULL";
@@ -151,7 +196,7 @@ Java_org_iotivity_simulator_SimulatorResourceServer_setRange
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_simulator_SimulatorResourceServer_setInterfaceType
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_setInterfaceType
 (JNIEnv *env, jobject jobject, const std::string &interfaceType)
 {
     jstring jInterfaceType = env->NewStringUTF(interfaceType.c_str());
@@ -166,7 +211,8 @@ Java_org_iotivity_simulator_SimulatorResourceServer_setInterfaceType
     env->DeleteLocalRef(jInterfaceType);
 }
 
-JNIEXPORT void JNICALL Java_org_iotivity_simulator_SimulatorResourceServer_addAttributeInteger
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_addAttributeInteger
 (JNIEnv *env, jobject jobject, jstring jKey, jint jValue)
 {
     if (!jKey)
@@ -175,7 +221,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_simulator_SimulatorResourceServer_addAt
         return;
     }
 
-    SimulatorResourcePtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env, jobject);
+    SimulatorResourceServerPtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env,
+                                          jobject);
     if (nullptr == resource.get())
     {
         std::cout << "addAttributeInteger: Resource is NULL";
@@ -186,7 +233,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_simulator_SimulatorResourceServer_addAt
     resource->addAttribute(str, static_cast<int>(jValue));
 }
 
-JNIEXPORT void JNICALL Java_org_iotivity_simulator_SimulatorResourceServer_addAttributeDouble
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_addAttributeDouble
 (JNIEnv *env, jobject jobject, jstring jKey, jdouble jValue)
 {
     if (!jKey)
@@ -195,7 +243,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_simulator_SimulatorResourceServer_addAt
         return;
     }
 
-    SimulatorResourcePtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env, jobject);
+    SimulatorResourceServerPtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env,
+                                          jobject);
     if (nullptr == resource.get())
     {
         std::cout << "addAttributeDouble: Resource is NULL";
@@ -206,7 +255,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_simulator_SimulatorResourceServer_addAt
     resource->addAttribute(str, static_cast<double>(jValue));
 }
 
-JNIEXPORT void JNICALL Java_org_iotivity_simulator_SimulatorResourceServer_addAttributeBoolean
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_addAttributeBoolean
 (JNIEnv *env, jobject jobject, jstring jKey, jboolean jValue)
 {
     if (!jKey)
@@ -215,7 +265,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_simulator_SimulatorResourceServer_addAt
         return;
     }
 
-    SimulatorResourcePtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env, jobject);
+    SimulatorResourceServerPtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env,
+                                          jobject);
     if (nullptr == resource.get())
     {
         std::cout << "addAttributeBoolean: Resource is NULL";
@@ -226,7 +277,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_simulator_SimulatorResourceServer_addAt
     resource->addAttribute(str, static_cast<bool>(jValue));
 }
 
-JNIEXPORT void JNICALL Java_org_iotivity_simulator_SimulatorResourceServer_addAttributeStringN
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_addAttributeStringN
 (JNIEnv *env, jobject jobject, jstring jKey, jstring jValue)
 {
     if (!jKey)
@@ -235,7 +287,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_simulator_SimulatorResourceServer_addAt
         return;
     }
 
-    SimulatorResourcePtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env, jobject);
+    SimulatorResourceServerPtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env,
+                                          jobject);
     if (nullptr == resource.get())
     {
         std::cout << "addAttributeStringN: Resource is NULL";
@@ -248,7 +301,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_simulator_SimulatorResourceServer_addAt
     resource->addAttribute(key, value);
 }
 
-JNIEXPORT void JNICALL Java_org_iotivity_simulator_SimulatorResourceServer_updateAttributeInteger
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_updateAttributeInteger
 (JNIEnv *env, jobject jobject, jstring jKey, jint jValue)
 {
     if (!jKey)
@@ -257,7 +311,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_simulator_SimulatorResourceServer_updat
         return;
     }
 
-    SimulatorResourcePtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env, jobject);
+    SimulatorResourceServerPtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env,
+                                          jobject);
     if (nullptr == resource.get())
     {
         std::cout << "updateAttributeInteger: Resource is NULL";
@@ -268,7 +323,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_simulator_SimulatorResourceServer_updat
     resource->updateAttribute(str, static_cast<int>(jValue));
 }
 
-JNIEXPORT void JNICALL Java_org_iotivity_simulator_SimulatorResourceServer_updateAttributeDouble
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_updateAttributeDouble
 (JNIEnv *env, jobject jobject, jstring jKey, jdouble jValue)
 {
     if (!jKey)
@@ -277,7 +333,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_simulator_SimulatorResourceServer_updat
         return;
     }
 
-    SimulatorResourcePtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env, jobject);
+    SimulatorResourceServerPtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env,
+                                          jobject);
     if (nullptr == resource.get())
     {
         std::cout << "updateAttributeDouble: Resource is NULL";
@@ -288,7 +345,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_simulator_SimulatorResourceServer_updat
     resource->updateAttribute(str, static_cast<double>(jValue));
 }
 
-JNIEXPORT void JNICALL Java_org_iotivity_simulator_SimulatorResourceServer_updateAttributeBoolean
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_updateAttributeBoolean
 (JNIEnv *env, jobject jobject, jstring jKey, jboolean jValue)
 {
     if (!jKey)
@@ -297,7 +355,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_simulator_SimulatorResourceServer_updat
         return;
     }
 
-    SimulatorResourcePtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env, jobject);
+    SimulatorResourceServerPtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env,
+                                          jobject);
     if (nullptr == resource.get())
     {
         std::cout << "updateAttributeBoolean: Resource is NULL";
@@ -308,7 +367,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_simulator_SimulatorResourceServer_updat
     resource->updateAttribute(str, static_cast<bool>(jValue));
 }
 
-JNIEXPORT void JNICALL Java_org_iotivity_simulator_SimulatorResourceServer_updateAttributeStringN
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_updateAttributeStringN
 (JNIEnv *env, jobject jobject, jstring jKey, jstring jValue)
 {
     if (!jKey)
@@ -317,7 +377,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_simulator_SimulatorResourceServer_updat
         return;
     }
 
-    SimulatorResourcePtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env, jobject);
+    SimulatorResourceServerPtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env,
+                                          jobject);
     if (nullptr == resource.get())
     {
         std::cout << "updateAttributeStringN: Resource is NULL";
@@ -330,7 +391,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_simulator_SimulatorResourceServer_updat
     resource->updateAttribute(key, value);
 }
 
-JNIEXPORT void JNICALL Java_org_iotivity_simulator_SimulatorResourceServer_setAllowedValuesInteger
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_setAllowedValuesInteger
 (JNIEnv *env, jobject object, jstring jKey, jobject jAllowedValues)
 {
     if (!jKey)
@@ -339,7 +401,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_simulator_SimulatorResourceServer_setAl
         return;
     }
 
-    SimulatorResourcePtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env, object);
+    SimulatorResourceServerPtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env, object);
     if (nullptr == resource.get())
     {
         std::cout << "setAllowedValuesInteger: Resource is NULL";
@@ -350,7 +412,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_simulator_SimulatorResourceServer_setAl
     resource->setAllowedValues(str, convertIntegerVector(env, jAllowedValues));
 }
 
-JNIEXPORT void JNICALL Java_org_iotivity_simulator_SimulatorResourceServer_setAllowedValuesDouble
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_setAllowedValuesDouble
 (JNIEnv *env, jobject object, jstring jKey, jobject jAllowedValues)
 {
     if (!jKey)
@@ -359,7 +422,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_simulator_SimulatorResourceServer_setAl
         return;
     }
 
-    SimulatorResourcePtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env, object);
+    SimulatorResourceServerPtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env, object);
     if (nullptr == resource.get())
     {
         std::cout << "setAllowedValuesDouble: Resource is NULL";
@@ -370,7 +433,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_simulator_SimulatorResourceServer_setAl
     resource->setAllowedValues(str, convertDoubleVector(env, jAllowedValues));
 }
 
-JNIEXPORT void JNICALL Java_org_iotivity_simulator_SimulatorResourceServer_setAllowedValuesStringN
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_setAllowedValuesStringN
 (JNIEnv *env, jobject object, jstring jKey, jobject jAllowedValues)
 {
     if (!jKey)
@@ -379,7 +443,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_simulator_SimulatorResourceServer_setAl
         return;
     }
 
-    SimulatorResourcePtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env, object);
+    SimulatorResourceServerPtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env, object);
     if (nullptr == resource.get())
     {
         std::cout << "setAllowedValuesStringN: Resource is NULL";
@@ -391,46 +455,87 @@ JNIEXPORT void JNICALL Java_org_iotivity_simulator_SimulatorResourceServer_setAl
 }
 
 JNIEXPORT jint JNICALL
-Java_org_iotivity_simulator_SimulatorResourceServer_startResourceAutomation
-(JNIEnv *env, jobject object)
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_startResourceAutomation
+(JNIEnv *env, jobject object, jint automationType, jobject listener)
 {
-    SimulatorResourcePtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env, object);
+    SimulatorResourceServerPtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env, object);
     if (nullptr == resource.get())
     {
         return -1;
     }
 
+    if (!listener)
+    {
+        return -1;
+    }
+
+    jweak jlistenerRef = env->NewWeakGlobalRef(listener);
+    updateCompleteCallback callback =  [jlistenerRef](const std::string & uri, const int automationID)
+    {
+        onAutomationComplete(jlistenerRef, uri, automationID);
+    };
+
+    AutomationType type = AutomationType::NORMAL;
+    if (1 == automationType)
+    {
+        type = AutomationType::RECURRENT;
+    }
+
     int automationId;
-    if (SIMULATOR_SUCCESS != resource->startUpdateAutomation(AutomationType::NORMAL, automationId))
+    if (SIMULATOR_SUCCESS != resource->startUpdateAutomation(type, callback,
+            automationId))
         return -1;
 
     return automationId;
 }
 
 JNIEXPORT jint JNICALL
-Java_org_iotivity_simulator_SimulatorResourceServer_startAttributeAutomation
-(JNIEnv *env, jobject object, jstring attrName)
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_startAttributeAutomation
+(JNIEnv *env, jobject object, jstring attrName, jint automationType, jobject listener)
 {
-    SimulatorResourcePtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env, object);
+    std::cout << "starAttributeAutomation JNI" << std::endl;
+    SimulatorResourceServerPtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env, object);
     if (nullptr == resource.get())
     {
         return -1;
     }
 
+    if (!attrName)
+    {
+        return -1;
+    }
+
+    if (!listener)
+    {
+        return -1;
+    }
+
+    jweak jlistenerRef = env->NewWeakGlobalRef(listener);
+    updateCompleteCallback callback =  [jlistenerRef](const std::string & uri, const int automationID)
+    {
+        onAutomationComplete(jlistenerRef, uri, automationID);
+    };
+
     const char *attrNamePtr = env->GetStringUTFChars(attrName, NULL);
 
+    AutomationType type = AutomationType::NORMAL;
+    if (1 == automationType)
+    {
+        type = AutomationType::RECURRENT;
+    }
+
     int automationId = -1;
-    resource->startUpdateAutomation(AutomationType::NORMAL, automationId);
+    resource->startUpdateAutomation(attrNamePtr, type, callback, automationId);
 
     env->ReleaseStringUTFChars(attrName, attrNamePtr);
     return automationId;
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_simulator_SimulatorResourceServer_startAutomation
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_stopAutomation
 (JNIEnv *env, jobject object, jint automationId)
 {
-    SimulatorResourcePtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env, object);
+    SimulatorResourceServerPtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env, object);
     if (nullptr == resource.get())
     {
         return;
@@ -439,7 +544,8 @@ Java_org_iotivity_simulator_SimulatorResourceServer_startAutomation
     resource->stopUpdateAutomation(automationId);
 }
 
-JNIEXPORT void JNICALL Java_org_iotivity_simulator_SimulatorResourceServer_removeAttribute
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_removeAttribute
 (JNIEnv *env, jobject jobject, jstring jKey)
 {
     if (!jKey)
@@ -448,7 +554,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_simulator_SimulatorResourceServer_remov
         return;
     }
 
-    SimulatorResourcePtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env, jobject);
+    SimulatorResourceServerPtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env,
+                                          jobject);
     if (nullptr == resource.get())
     {
         std::cout << "removeAttribute: Resource is NULL";
@@ -459,7 +566,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_simulator_SimulatorResourceServer_remov
     resource->removeAttribute(str);
 }
 
-JNIEXPORT void JNICALL Java_org_iotivity_simulator_SimulatorResourceServer_dispose
+JNIEXPORT void JNICALL Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_dispose
 (JNIEnv *env, jobject thiz)
 {
     JniSimulatorResource *resource = GetHandle<JniSimulatorResource>(env, thiz);

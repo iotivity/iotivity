@@ -67,7 +67,7 @@ class attribute_value_visitor : public boost::static_visitor<jobject>
 };
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_simulator_SimulatorResourceAttribute_create
+Java_org_oic_simulator_SimulatorResourceAttribute_create
 (JNIEnv *env, jobject object, jstring attrName)
 {
     if (!attrName)
@@ -92,7 +92,7 @@ Java_org_iotivity_simulator_SimulatorResourceAttribute_create
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_simulator_SimulatorResourceAttribute_dispose
+Java_org_oic_simulator_SimulatorResourceAttribute_dispose
 (JNIEnv *env, jobject object)
 {
     SimulatorResourceModel::Attribute *attribute = GetHandle<SimulatorResourceModel::Attribute>(env,
@@ -101,7 +101,7 @@ Java_org_iotivity_simulator_SimulatorResourceAttribute_dispose
 }
 
 JNIEXPORT int JNICALL
-Java_org_iotivity_simulator_SimulatorResourceAttribute_allowedValuesSize
+Java_org_oic_simulator_SimulatorResourceAttribute_allowedValuesSize
 (JNIEnv *env, jobject object)
 {
     SimulatorResourceModel::Attribute *attribute = GetHandle<SimulatorResourceModel::Attribute>(env,
@@ -115,7 +115,7 @@ Java_org_iotivity_simulator_SimulatorResourceAttribute_allowedValuesSize
 }
 
 JNIEXPORT jstring JNICALL
-Java_org_iotivity_simulator_SimulatorResourceAttribute_valueToString
+Java_org_oic_simulator_SimulatorResourceAttribute_valueToString
 (JNIEnv *env, jobject object)
 {
     SimulatorResourceModel::Attribute *attribute = GetHandle<SimulatorResourceModel::Attribute>(env,
@@ -130,7 +130,7 @@ Java_org_iotivity_simulator_SimulatorResourceAttribute_valueToString
 }
 
 JNIEXPORT jstring JNICALL
-Java_org_iotivity_simulator_SimulatorResourceAttribute_allowedValuesToString
+Java_org_oic_simulator_SimulatorResourceAttribute_allowedValuesToString
 (JNIEnv *env, jobject object)
 {
     SimulatorResourceModel::Attribute *attribute = GetHandle<SimulatorResourceModel::Attribute>(env,
@@ -145,7 +145,7 @@ Java_org_iotivity_simulator_SimulatorResourceAttribute_allowedValuesToString
 }
 
 JNIEXPORT jstring JNICALL
-Java_org_iotivity_simulator_SimulatorResourceAttribute_getName
+Java_org_oic_simulator_SimulatorResourceAttribute_getName
 (JNIEnv *env, jobject object)
 {
     SimulatorResourceModel::Attribute *attribute = GetHandle<SimulatorResourceModel::Attribute>(env,
@@ -160,7 +160,7 @@ Java_org_iotivity_simulator_SimulatorResourceAttribute_getName
 }
 
 JNIEXPORT jobject JNICALL
-Java_org_iotivity_simulator_SimulatorResourceAttribute_getValue
+Java_org_oic_simulator_SimulatorResourceAttribute_getValue
 (JNIEnv *env, jobject object)
 {
     SimulatorResourceModel::Attribute *attribute = GetHandle<SimulatorResourceModel::Attribute>(env,

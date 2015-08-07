@@ -22,21 +22,18 @@
 #define SIMULATOR_RESOURCE_JNI_H_
 
 #include <jni.h>
-#include "simulator_resource.h"
+#include "simulator_resource_server.h"
 
 class JniSimulatorResource
 {
     public:
-        JniSimulatorResource(SimulatorResourcePtr &resource);
+        JniSimulatorResource(SimulatorResourceServerPtr &resource);
 
         static jobject toJava(JNIEnv *env, jlong resource);
-        static void setUri(JNIEnv *env, jobject jobj, const std::string &uri);
-        static void setResourceType(JNIEnv *env, jobject jobj, const std::string &resourceType);
-        static void setResourceName(JNIEnv *env, jobject jobj, const std::string &name);
-        static void setInterfaceType(JNIEnv *env, jobject jobject, const std::string &interfaceType);
-        static SimulatorResourcePtr getJniSimulatorResourcePtr(JNIEnv *env, jobject thiz);
+        void setResourceInfo(JNIEnv *env, jobject jobj);
+        static SimulatorResourceServerPtr getJniSimulatorResourcePtr(JNIEnv *env, jobject thiz);
     private:
-        SimulatorResourcePtr m_sharedResource;
+        SimulatorResourceServerPtr m_sharedResource;
 };
 
 
@@ -44,79 +41,79 @@ class JniSimulatorResource
 extern "C" {
 
 JNIEXPORT jobject JNICALL
-Java_org_iotivity_simulator_SimulatorResourceServer_getModel
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_getModel
 (JNIEnv *, jobject);
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_simulator_SimulatorResourceServer_updateAttributeFromAllowedValues
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_updateAttributeFromAllowedValues
 (JNIEnv *, jobject, jstring, jint);
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_simulator_SimulatorResourceServer_setRange
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_setRange
 (JNIEnv *, jobject, jstring, jint, jint);
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_simulator_SimulatorResourceServer_addAttributeInteger
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_addAttributeInteger
 (JNIEnv *, jobject, jstring, jint);
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_simulator_SimulatorResourceServer_addAttributeDouble
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_addAttributeDouble
 (JNIEnv *, jobject, jstring, jdouble);
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_simulator_SimulatorResourceServer_addAttributeBoolean
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_addAttributeBoolean
 (JNIEnv *, jobject, jstring, jboolean);
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_simulator_SimulatorResourceServer_addAttributeStringN
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_addAttributeStringN
 (JNIEnv *, jobject, jstring, jstring);
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_simulator_SimulatorResourceServer_updateAttributeInteger
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_updateAttributeInteger
 (JNIEnv *, jobject, jstring, jint);
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_simulator_SimulatorResourceServer_updateAttributeDouble
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_updateAttributeDouble
 (JNIEnv *, jobject, jstring, jdouble);
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_simulator_SimulatorResourceServer_updateAttributeBoolean
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_updateAttributeBoolean
 (JNIEnv *, jobject, jstring, jboolean);
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_simulator_SimulatorResourceServer_updateAttributeStringN
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_updateAttributeStringN
 (JNIEnv *, jobject, jstring, jstring);
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_simulator_SimulatorResourceServer_setAllowedValuesInteger
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_setAllowedValuesInteger
 (JNIEnv *, jobject, jstring, jobject);
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_simulator_SimulatorResourceServer_setAllowedValuesDouble
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_setAllowedValuesDouble
 (JNIEnv *, jobject, jstring, jobject);
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_simulator_SimulatorResourceServer_setAllowedValuesStringN
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_setAllowedValuesStringN
 (JNIEnv *, jobject, jstring, jobject);
 
 JNIEXPORT jint JNICALL
-Java_org_iotivity_simulator_SimulatorResourceServer_startResourceAutomation
-(JNIEnv *, jobject);
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_startResourceAutomation
+(JNIEnv *, jobject, jint, jobject);
 
 JNIEXPORT jint JNICALL
-Java_org_iotivity_simulator_SimulatorResourceServer_startAttributeAutomation
-(JNIEnv *, jobject, jstring);
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_startAttributeAutomation
+(JNIEnv *, jobject, jstring, jint, jobject);
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_simulator_SimulatorResourceServer_startAutomation
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_stopAutomation
 (JNIEnv *, jobject, jint);
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_simulator_SimulatorResourceServer_removeAttribute
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_removeAttribute
 (JNIEnv *, jobject, jstring);
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_simulator_SimulatorResourceServer_dispose
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_dispose
 (JNIEnv *, jobject);
 
 }
