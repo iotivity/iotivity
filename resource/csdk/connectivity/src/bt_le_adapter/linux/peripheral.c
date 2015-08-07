@@ -647,7 +647,7 @@ CAResult_t CAPeripheralStart(CALEContext * context)
      * advertising actually exists.
      */
     if (result == CA_STATUS_OK
-        && !(CAPeripheralRegisterGattServices(context)
+        && !(CAPeripheralRegisterGattServices(&g_context)
              && CAPeripheralRegisterAdvertisements(&g_context)))
     {
         result = CA_STATUS_FAILED;
