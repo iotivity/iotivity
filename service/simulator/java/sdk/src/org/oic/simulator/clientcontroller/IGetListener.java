@@ -14,30 +14,19 @@
  * limitations under the License.
  */
 
-package org.iotivity.simulator;
+/**
+ * This file provides interface for get callback information.
+ */
+package org.oic.simulator.clientcontroller;
 
-import java.util.Map;
+import org.oic.simulator.serviceprovider.SimulatorResourceModel;
 
-public class SimulatorResourceModel {
+/**
+ * An OnGetListener can be registered via the resource get call. Event listeners
+ * are notified asynchronously
+ */
+public interface IGetListener {
+    public void onGetCompleted(SimulatorResourceModel representation);
 
-    private long nativeHandle;
-
-    private SimulatorResourceModel(long nativeHandle) {
-        this.nativeHandle = nativeHandle;
-    }
-
-    @Override
-    protected void finalize() throws Throwable {
-        dispose();
-    }
-
-    public native int size();
-
-    public native Map<String, SimulatorResourceAttribute> getAttributes();
-
-    public native SimulatorResourceAttribute getAttribute();
-
-    public native String[] getAllowedValues(String key);
-
-    public native void dispose();
+    public void onGetFailed(Throwable ex);
 }

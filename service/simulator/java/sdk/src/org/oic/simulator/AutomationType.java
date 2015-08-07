@@ -14,11 +14,15 @@
  * limitations under the License.
  */
 
-package org.iotivity.simulator;
+/**
+ * This file provides a enum which contains the automation types.
+ */
+package org.oic.simulator;
 
-import java.util.Vector;
-
-public interface IResourceModelChangedListener {
-    public void onResourceModelChanged(String resourceURI,
-            Vector<SimulatorResourceAttribute> attributes);
+/**
+ * This Enum contains the different types of automation which are supported by
+ * the simulator.
+ */
+public enum AutomationType {
+    NORMAL, RECURRENT
 }

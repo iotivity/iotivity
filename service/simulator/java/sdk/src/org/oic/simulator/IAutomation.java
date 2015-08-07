@@ -14,9 +14,19 @@
  * limitations under the License.
  */
 
-package org.iotivity.simulator;
+/**
+ * This file provides an interface for receiving notification when an automation completes.
+ */
+package org.oic.simulator;
 
-public interface ILogMessageListener {
-    public void onLogMessageHandler(int level, String tag, String location,
-            int lineNumber, String log);
+/**
+ * Interface for receiving automation complete notifications.
+ * 
+ * @param resourceURI
+ *            URI of the resource on which the automation has occurred.
+ * @param automationId
+ *            Unique Id of the automation.
+ */
+public interface IAutomation {
+    public void onAutomationComplete(String resourceURI, int automationId);
 }
