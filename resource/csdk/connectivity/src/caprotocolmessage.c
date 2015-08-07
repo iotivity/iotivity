@@ -304,7 +304,7 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, coap_list_t *options, const CAInfo_t 
 
     if (enabledPayload || CA_ADAPTER_GATT_BTLE == endpoint->adapter)
     {
-        if (NULL != info->payload)
+        if (NULL != info->payload && 0 < info->payloadSize)
         {
             OIC_LOG(DEBUG, TAG, "payload is added");
             coap_add_data(pdu, info->payloadSize, (const unsigned char *) info->payload);

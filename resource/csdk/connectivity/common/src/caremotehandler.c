@@ -112,7 +112,7 @@ CARequestInfo_t *CACloneRequestInfo(const CARequestInfo_t *rep)
         clone->info.numOptions = 0;
     }
 
-    if (NULL != rep->info.payload)
+    if (NULL != rep->info.payload && 0 < rep->info.payloadSize)
     {
         // allocate payload field
         uint8_t *temp = OICMalloc(rep->info.payloadSize);
@@ -128,6 +128,11 @@ CARequestInfo_t *CACloneRequestInfo(const CARequestInfo_t *rep)
 
         // save the payload
         clone->info.payload = temp;
+    }
+    else
+    {
+        clone->info.payload = NULL;
+        clone->info.payloadSize = 0;
     }
 
     if (NULL != rep->info.resourceUri)
@@ -243,7 +248,7 @@ CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *rep)
         clone->info.numOptions = 0;
     }
 
-    if (NULL != rep->info.payload)
+    if (NULL != rep->info.payload && 0 < rep->info.payloadSize)
     {
         // allocate payload field
         uint8_t *temp = (uint8_t *) OICMalloc(rep->info.payloadSize);
@@ -259,6 +264,11 @@ CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *rep)
 
         // save the payload
         clone->info.payload = temp;
+    }
+    else
+    {
+        clone->info.payload = NULL;
+        clone->info.payloadSize = 0;
     }
 
     if (NULL != rep->info.resourceUri)
@@ -321,7 +331,6 @@ static void CADestroyInfoInternal(CAInfo_t *info)
     OICFree(info->options);
     info->options = NULL;
     info->numOptions = 0;
-
 
     // free payload field
     OICFree((char *) info->payload);
@@ -413,7 +422,7 @@ CAResult_t CACloneInfo(const CAInfo_t *info, CAInfo_t *clone)
         memcpy(clone->options, info->options, sizeof(CAHeaderOption_t) * info->numOptions);
     }
 
-    if (info->payload)
+    if (info->payload && 0 < info->payloadSize)
     {
         // allocate payload field
         uint8_t *temp = OICMalloc(info->payloadSize);
@@ -427,6 +436,11 @@ CAResult_t CACloneInfo(const CAInfo_t *info, CAInfo_t *clone)
 
         // save the payload
         clone->payload = temp;
+    }
+    else
+    {
+        clone->payload = NULL;
+        clone->payloadSize = 0;
     }
 
     if (info->resourceUri)
