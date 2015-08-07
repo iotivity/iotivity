@@ -649,7 +649,8 @@ static bool CALEDeviceFilter(GDBusProxy * device)
         return accepted;
     }
 
-    char const ** const UUIDs = g_variant_get_strv(prop, NULL);
+    gsize length = 0;
+    char const ** const UUIDs = g_variant_get_strv(prop, &length);
 
     /**
      * @note It would have been nice to use @c g_strv_contains() here,
@@ -658,7 +659,8 @@ static bool CALEDeviceFilter(GDBusProxy * device)
      *       Just run the loop manually, and use @c strcasecmp()
      *       instead.
      */
-    for (char const * const * u = UUIDs; u != NULL; ++u)
+    char const * const * const end = UUIDs + length;
+    for (char const * const * u = UUIDs; u != end; ++u)
     {
         if (strcasecmp(*u, CA_GATT_SERVICE_UUID) == 0)
         {
