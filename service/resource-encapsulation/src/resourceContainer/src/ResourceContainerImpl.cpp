@@ -153,7 +153,8 @@ namespace OIC
                 m_mapBundleResources.clear();
             }
 
-            delete m_config;
+            if (m_config)
+                delete m_config;
         }
 
         void ResourceContainerImpl::activateBundle(RCSBundleInfo *bundleInfo)
