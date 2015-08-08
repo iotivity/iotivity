@@ -80,7 +80,7 @@ static CAEndpoint_t *GetPeerInfo(const CAEndpoint_t *peer)
     return NULL;
 }
 
-static CAResult_t CAAddIdToPeerInfoList(const char *peerAddr, uint32_t port,
+static CAResult_t CAAddIdToPeerInfoList(const char *peerAddr, uint16_t port,
         const unsigned char *id, uint16_t id_length, CATransportFlags_t flag)
 {
     if(NULL == peerAddr
@@ -139,7 +139,7 @@ static void CAFreePeerInfoList()
     g_caDtlsContext->peerInfoList = NULL;
 }
 
-static void CARemovePeerFromPeerInfoList(const char * addr, uint32_t port)
+static void CARemovePeerFromPeerInfoList(const char * addr, uint16_t port)
 {
     if (NULL == addr || 0 >= port)
     {
@@ -483,9 +483,9 @@ static int32_t CAHandleSecureEvent(dtls_context_t *context,
         OIC_LOG(INFO, NET_DTLS_TAG, "Peer closing connection");
 
         stCADtlsAddrInfo_t *addrInfo = (stCADtlsAddrInfo_t *)session;
-        char *peerAddr = NULL;
-        uint32_t port = 0;
-        CAConvertAddrToName(&(addrInfo->addr.st), peerAddr, port);
+        char peerAddr[MAX_ADDR_STR_SIZE_CA] = {0};
+        uint16_t port = 0;
+        CAConvertAddrToName(&(addrInfo->addr.st), peerAddr, &port);
         CARemovePeerFromPeerInfoList(peerAddr, port);
     }
 
@@ -550,9 +550,9 @@ static int32_t CAGetPskCredentials(dtls_context_t *ctx,
                     // data structure when handshake completes. Therefore, currently this is a
                     // workaround to cache remote end-point identity when tinyDTLS asks for PSK.
                     stCADtlsAddrInfo_t *addrInfo = (stCADtlsAddrInfo_t *)session;
-                    char *peerAddress = NULL;
-                    uint32_t port = 0;
-                    CAConvertAddrToName(&(addrInfo->addr.st), peerAddress, port);
+                    char peerAddress[MAX_ADDR_STR_SIZE_CA] = {0};
+                    uint16_t port = 0;
+                    CAConvertAddrToName(&(addrInfo->addr.st), peerAddress, &port);
 
                     CATransportFlags_t flag =
                             addrInfo->addr.st.ss_family == AF_INET ? CA_IPV4 : CA_IPV6;
