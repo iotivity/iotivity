@@ -27,6 +27,7 @@
 #include <iostream>
 #include <sstream>
 #include "ocpayload.h"
+#include "payload_logging.h"
 #include "logger.h"
 const char *getResult(OCStackResult result);
 std::string getIPAddrTBServer(OCClientResponse * clientResponse);
@@ -156,7 +157,8 @@ void PrintUsage()
                  "unavailable resource using link list interface.");
 }
 
-OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse)
+OCStackApplicationResult putReqCB(void* ctx, OCDoHandle /*handle*/,
+                                  OCClientResponse * clientResponse)
 {
     if(clientResponse == NULL)
     {
@@ -172,7 +174,8 @@ OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle, OCClientResponse
     return OC_STACK_KEEP_TRANSACTION;
 }
 
-OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse)
+OCStackApplicationResult getReqCB(void* ctx, OCDoHandle /*handle*/,
+                                  OCClientResponse * clientResponse)
 {
     OC_LOG_V(INFO, TAG, "StackResult: %s",
             getResult(clientResponse->result));
@@ -208,7 +211,7 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse
 
 
 // This is a function called back when a device is discovered
-OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
+OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle /*handle*/,
         OCClientResponse * clientResponse)
 {
     OC_LOG(INFO, TAG,

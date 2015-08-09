@@ -85,7 +85,8 @@ void DeleteACLList(OicSecAcl_t* acl)
 {
     if (acl)
     {
-        OicSecAcl_t *aclTmp1 = NULL, *aclTmp2 = NULL;
+        OicSecAcl_t *aclTmp1 = NULL;
+        OicSecAcl_t *aclTmp2 = NULL;
         LL_FOREACH_SAFE(acl, aclTmp1, aclTmp2)
         {
             LL_DELETE(acl, aclTmp1);
@@ -608,7 +609,8 @@ OCEntityHandlerResult ACLEntityHandler (OCEntityHandlerFlag flag,
                                         OCEntityHandlerRequest * ehRequest,
                                         void* callbackParameter)
 {
-    OC_LOG(INFO, TAG, PCF("Received request ACLEntityHandler\n"));
+    OC_LOG(INFO, TAG, PCF("Received request ACLEntityHandler"));
+    (void)callbackParameter;
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
     if (!ehRequest)
@@ -676,7 +678,7 @@ OCStackResult  GetDefaultACL(OicSecAcl_t** defaultAcl)
 {
     OCStackResult ret = OC_STACK_ERROR;
 
-    OicUuid_t ownerId = {.id={}};
+    OicUuid_t ownerId = {.id = {0}};
 
     /*
      * TODO In future, when new virtual resources will be added in OIC

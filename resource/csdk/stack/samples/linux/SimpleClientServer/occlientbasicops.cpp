@@ -30,6 +30,7 @@
 #include "logger.h"
 #include "occlientbasicops.h"
 #include "ocpayload.h"
+#include "payload_logging.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 
@@ -123,7 +124,7 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query, OCMethod method,
     return ret;
 }
 
-OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle,
+OCStackApplicationResult putReqCB(void* ctx, OCDoHandle /*handle*/,
                                 OCClientResponse * clientResponse)
 {
     if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
@@ -147,7 +148,7 @@ OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle,
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-OCStackApplicationResult postReqCB(void *ctx, OCDoHandle handle,
+OCStackApplicationResult postReqCB(void *ctx, OCDoHandle /*handle*/,
                           OCClientResponse *clientResponse)
 {
     if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
@@ -172,7 +173,7 @@ OCStackApplicationResult postReqCB(void *ctx, OCDoHandle handle,
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle,
+OCStackApplicationResult getReqCB(void* ctx, OCDoHandle /*handle*/,
                            OCClientResponse * clientResponse)
 {
     if (ctx == (void*) DEFAULT_CONTEXT_VALUE)
@@ -219,7 +220,7 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle,
 /*
  * This is a function called back when a device is discovered
  */
-OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
+OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle /*handle*/,
         OCClientResponse * clientResponse)
 {
     if (ctx == (void*)DEFAULT_CONTEXT_VALUE)

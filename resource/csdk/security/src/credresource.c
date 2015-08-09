@@ -359,6 +359,7 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
                                  const char * publicData, const char * privateData,
                                  size_t ownersLen, const OicUuid_t * owners)
 {
+    (void)publicData;
     OCStackResult ret = OC_STACK_ERROR;
 
     OicSecCred_t *cred = (OicSecCred_t*)OICCalloc(1, sizeof(OicSecCred_t));
@@ -635,6 +636,7 @@ OCEntityHandlerResult CredEntityHandler (OCEntityHandlerFlag flag,
                                         OCEntityHandlerRequest * ehRequest,
                                         void* callbackParameter)
 {
+    (void)callbackParameter;
     OCEntityHandlerResult ret = OC_EH_ERROR;
 
     if(!ehRequest)

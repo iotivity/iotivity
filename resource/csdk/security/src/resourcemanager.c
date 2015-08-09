@@ -47,10 +47,10 @@ OCStackResult SendSRMResponse(const OCEntityHandlerRequest *ehRequest,
         OCEntityHandlerResult ehRet, const char *rspPayload)
 {
     OC_LOG (INFO, TAG, PCF("SRM sending SRM response"));
-    OCEntityHandlerResponse response = {};
+    OCEntityHandlerResponse response = {0};
     if (ehRequest)
     {
-        OCSecurityPayload ocPayload = {};
+        OCSecurityPayload ocPayload = {.base = {.type = PAYLOAD_TYPE_INVALID}};
 
         response.requestHandle = ehRequest->requestHandle;
         response.resourceHandle = ehRequest->resource;

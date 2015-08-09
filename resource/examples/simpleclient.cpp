@@ -64,8 +64,17 @@ void onObserve(const HeaderOptions headerOptions, const OCRepresentation& rep,
 {
     try
     {
-        if(eCode == OC_STACK_OK)
+        if(eCode == OC_STACK_OK && sequenceNumber != OC_OBSERVE_NO_OPTION)
         {
+            if(sequenceNumber == OC_OBSERVE_REGISTER)
+            {
+                std::cout << "Observe registration action is successful" << std::endl;
+            }
+            else if(sequenceNumber == OC_OBSERVE_DEREGISTER)
+            {
+                std::cout << "Observe De-registration action is successful" << std::endl;
+            }
+
             std::cout << "OBSERVE RESULT:"<<std::endl;
             std::cout << "\tSequenceNumber: "<< sequenceNumber << std::endl;
             rep.getValue("state", mylight.m_state);
@@ -89,8 +98,15 @@ void onObserve(const HeaderOptions headerOptions, const OCRepresentation& rep,
         }
         else
         {
-            std::cout << "onObserve Response error: " << eCode << std::endl;
-            std::exit(-1);
+            if(sequenceNumber == OC_OBSERVE_NO_OPTION)
+            {
+                std::cout << "Observe registration or de-registration action is failed" << std::endl;
+            }
+            else
+            {
+                std::cout << "onObserve Response error: " << eCode << std::endl;
+                std::exit(-1);
+            }
         }
     }
     catch(std::exception& e)

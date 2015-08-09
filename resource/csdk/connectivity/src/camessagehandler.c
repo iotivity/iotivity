@@ -413,14 +413,14 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
             OIC_LOG(DEBUG, TAG, "requestInfo is available..");
 
             info = &data->requestInfo->info;
-            pdu = CAGeneratePDU(data->requestInfo->method, info);
+            pdu = CAGeneratePDU(data->requestInfo->method, info, data->remoteEndpoint);
         }
         else if (NULL != data->responseInfo)
         {
             OIC_LOG(DEBUG, TAG, "responseInfo is available..");
 
             info = &data->responseInfo->info;
-            pdu = CAGeneratePDU(data->responseInfo->result, info);
+            pdu = CAGeneratePDU(data->responseInfo->result, info, data->remoteEndpoint);
         }
         else
         {
@@ -487,7 +487,7 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
             OIC_LOG(DEBUG, TAG, "requestInfo is available..");
 
             info = &data->requestInfo->info;
-            pdu = CAGeneratePDU(CA_GET, info);
+            pdu = CAGeneratePDU(CA_GET, info, data->remoteEndpoint);
             if (NULL != pdu)
             {
 #ifdef WITH_BWT

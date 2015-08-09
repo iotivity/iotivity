@@ -123,6 +123,7 @@ bool CAGattClientsInitialize(CALEContext * context)
 
 bool CAGattClientsDestroy(CALEContext * context)
 {
+    (void)context;
     /* g_hash_table_destroy(...); */   // FIXME
     return false;
 }
@@ -252,6 +253,11 @@ void CAGattReceiveResponse(GDBusConnection * connection,
                            GVariant   * parameters,
                            gpointer     user_data)
 {
+    (void)connection;
+    (void)sender_name;
+    (void)object_path;
+    (void)interface_name;
+    (void)signal_name;
     /*
       This handler is only trigged in a GATT client when receiving
       data sent by a GATT server through a notification, e.g. such as

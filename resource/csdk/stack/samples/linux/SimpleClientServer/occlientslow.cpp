@@ -30,6 +30,7 @@
 #include "occlientslow.h"
 #include "oic_string.h"
 #include "ocpayload.h"
+#include "payload_logging.h"
 
 // Tracking user input
 static int UNICAST_DISCOVERY = 0;

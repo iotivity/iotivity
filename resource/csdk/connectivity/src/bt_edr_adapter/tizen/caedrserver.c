@@ -37,21 +37,17 @@
 
 static int32_t g_maxPendingConnections = 10;
 
-CAResult_t CAEDRServerStart(const char *serviceUUID, int *serverFD, ca_thread_pool_t handle)
+/**
+ * Storing RfcommserverUUID
+ */
+static int g_serverFD = -1;
+
+CAResult_t CAEDRServerStart(ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
-    VERIFY_NON_NULL(serviceUUID, EDR_ADAPTER_TAG, "Service UUID is null");
-    VERIFY_NON_NULL(serverFD, EDR_ADAPTER_TAG, "Server fd holder is null");
-
-    if (!serviceUUID[0])
-    {
-        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Invalid input: Empty service uuid!");
-        return CA_STATUS_INVALID_PARAM;
-    }
-
     bool isRunning = false;
-    bt_error_e err = bt_adapter_is_service_used(serviceUUID, &isRunning);
+    bt_error_e err = bt_adapter_is_service_used(OIC_EDR_SERVICE_ID, &isRunning);
     if (BT_ERROR_NONE != err)
     {
         OIC_LOG_V(ERROR, EDR_ADAPTER_TAG,
@@ -67,7 +63,7 @@ CAResult_t CAEDRServerStart(const char *serviceUUID, int *serverFD, ca_thread_po
 
     int socketFD = 0;
     // Registers a rfcomm socket with a specific service_uuid.
-    err = bt_socket_create_rfcomm(serviceUUID, &socketFD);
+    err = bt_socket_create_rfcomm(OIC_EDR_SERVICE_ID, &socketFD);
     if (BT_ERROR_NONE != err)
     {
         OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Failed to create rfcomm socket!, error num [%x]", err);
@@ -84,21 +80,26 @@ CAResult_t CAEDRServerStart(const char *serviceUUID, int *serverFD, ca_thread_po
         return CA_STATUS_FAILED;
     }
 
-    *serverFD = socketFD;
+    g_serverFD = socketFD;
 
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
-CAResult_t CAEDRServerStop(int serverFD)
+CAResult_t CAEDRServerStop()
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
-    bt_error_e err = bt_socket_destroy_rfcomm(serverFD);
-    if (BT_ERROR_NONE != err)
+    if (-1 < g_serverFD)
     {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Failed close server socket!, error num [%x]", err);
-        return CA_STATUS_FAILED;
+        bt_error_e err = bt_socket_destroy_rfcomm(g_serverFD);
+
+        if (BT_ERROR_NONE != err)
+        {
+            OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Failed close server socket!, error num [%x]", err);
+            return CA_STATUS_FAILED;
+        }
+        g_serverFD = -1;
     }
 
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
@@ -117,4 +118,3 @@ CAResult_t CAEDRManagerReadData(void)
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_NOT_SUPPORTED;
 }
-

@@ -138,7 +138,7 @@ static OCStackResult OCConvertDiscoveryPayload(OCDiscoveryPayload* payload, uint
         return OC_STACK_NO_MEMORY;
     }
 
-    CborEncoder encoder = {};
+    CborEncoder encoder = {0};
     bool err = false;
     size_t resourceCount =  OCDiscoveryPayloadGetResourceCount(payload);
 
@@ -279,7 +279,7 @@ static OCStackResult OCConvertDevicePayload(OCDevicePayload* payload, uint8_t** 
         return OC_STACK_NO_MEMORY;
     }
 
-    CborEncoder encoder = {};
+    CborEncoder encoder = {0};
     bool err = false;
 
     cbor_encoder_init(&encoder, *outPayload, *size, 0);
@@ -363,7 +363,7 @@ static OCStackResult OCConvertPlatformPayload(OCPlatformPayload* payload, uint8_
         return OC_STACK_NO_MEMORY;
     }
 
-    CborEncoder encoder = {};
+    CborEncoder encoder = {0};
     bool err = false;
 
     cbor_encoder_init(&encoder, *outPayload, *size, 0);
@@ -642,7 +642,7 @@ static OCStackResult OCConvertRepPayload(OCRepPayload* payload, uint8_t** outPay
         return OC_STACK_NO_MEMORY;
     }
 
-    CborEncoder encoder = {};
+    CborEncoder encoder = {0};
     bool err = false;
 
     cbor_encoder_init(&encoder, *outPayload, *size, 0);
@@ -691,7 +691,7 @@ static OCStackResult OCConvertPresencePayload(OCPresencePayload* payload,
         return OC_STACK_NO_MEMORY;
     }
 
-    CborEncoder encoder = {};
+    CborEncoder encoder = {0};
     bool err = false;
 
     cbor_encoder_init(&encoder, *outPayload, *size, 0);

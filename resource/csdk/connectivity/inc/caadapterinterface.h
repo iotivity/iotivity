@@ -1,22 +1,22 @@
-//* ****************************************************************
-//
-// Copyright 2014 Samsung Electronics All Rights Reserved.
-//
-//
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-//******************************************************************/
+/* *****************************************************************
+ *
+ * Copyright 2015 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************/
 
 /**
  * @file
@@ -35,80 +35,80 @@ extern "C"
 #endif
 
 /**
- * @brief Starting connectivity adapters and each adapter have transport specific behavior.
+ * Starting connectivity adapters and each adapter have transport specific behavior.
  * Transport Specific Behavior:
  * WIFI/ETH connectivity Starts unicast server on  all available IPs and defined
  * port number as per specification.
  * EDR will not start any specific servers.
  * LE will not start any specific servers.
- * @return CA_STATUS_OK or CA_STATUS_FAILED
- *  ERROR CODES (CAResult_t error codes in cacommon.h)
+ * @return ::CA_STATUS_OK or ::CA_STATUS_FAILED
+ *  ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 typedef CAResult_t (*CAAdapterStart)();
 
 /**
- * @brief Starting listening server for receiving multicast search requests
+ * Starting listening server for receiving multicast search requests
  * Transport Specific Behavior:
  * WIFI/ETH Starts multicast server on  all available IPs and defined
  * port number and as per specification.
  * EDR  Starts RFCOMM Server with prefixed UUID as per specification.
  * LE Start GATT Server with prefixed UUID and Characteristics as per OIC Specification.
- * @return CA_STATUS_OK or CA_STATUS_FAILED
- * ERROR CODES (CAResult_t error codes in cacommon.h)
+ * @return ::CA_STATUS_OK or ::CA_STATUS_FAILED
+ * ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 typedef CAResult_t (*CAAdapterStartListeningServer)();
 
 /**
- * @brief for starting discovery servers for receiving multicast advertisements
+ * for starting discovery servers for receiving multicast advertisements
  * Transport Specific Behavior:
  * WIFI/ETH Starts multicast server on all available IPs and defined port
  * number as per OIC Specification.
  * EDR Starts RFCOMM Server with prefixed UUID as per OIC Specification.
  * LE Starts GATT Server with prefixed UUID and Characteristics as per OIC Specification.
- * @return CA_STATUS_OK or CA_STATUS_FAILED
- * ERROR CODES (CAResult_t error codes in cacommon.h)
+ * @return ::CA_STATUS_OK or ::CA_STATUS_FAILED
+ * ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 typedef CAResult_t (*CAAdapterStartDiscoveryServer)();
 
 /**
- * @brief Sends data to the endpoint using the adapter connectivity.
+ * Sends data to the endpoint using the adapter connectivity.
  * Note: length must be > 0.
- * @param   endpoint    [IN]    Remote Endpoint information (like ipaddress , port,
+ * @param[in]   endpoint        Remote Endpoint information (like ipaddress , port,
  * reference uri and connectivity type) to which the unicast data has to be sent.
- * @param   data        [IN]    Data which required to be sent.
- * @param   dataLen     [IN]    Size of data to be sent.
+ * @param[in]   data            Data which required to be sent.
+ * @param[in]   dataLen         Size of data to be sent.
  * @return The number of bytes sent on the network. Return value equal to -1 indicates error.
  */
 typedef int32_t (*CAAdapterSendUnicastData)(const CAEndpoint_t *endpoint,
                                             const void *data, uint32_t dataLen);
 
 /**
- * @brief Sends Multicast data to the endpoint using the adapter connectivity.
+ * Sends Multicast data to the endpoint using the adapter connectivity.
  * Note: length must be > 0.
- * @param   endpoint    [IN]    Remote Endpoint information (like ipaddress , port,
- * @param   data        [IN]    Data which required to be sent.
- * @param   dataLen     [IN]    Size of data to be sent.
+ * @param[in]   endpoint        Remote Endpoint information (like ipaddress , port,
+ * @param[in]   data            Data which required to be sent.
+ * @param[in]   dataLen         Size of data to be sent.
  * @return The number of bytes sent on the network. Return value equal to -1 indicates error.
  */
 typedef int32_t (*CAAdapterSendMulticastData)(const CAEndpoint_t *endpoint,
         const void *data, uint32_t dataLen);
 
 /**
- * @brief Get Network Information
- * @param   info        [OUT]   Local connectivity information structures
- * @param   size        [OUT]   Number of local connectivity structures.
- * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * Get Network Information.
+ * @param[out]   info           Local connectivity information structures
+ * @param[out]   size           Number of local connectivity structures.
+ * @return ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h)
  */
 typedef CAResult_t (*CAAdapterGetNetworkInfo)(CAEndpoint_t **info, uint32_t *size);
 
 /**
- * @brief Read Synchronous API callback.
- * @return CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * Read Synchronous API callback.
+ * @return ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h)
  */
 typedef CAResult_t (*CAAdapterReadData)();
 
 /**
- * @brief Stopping the adapters and close socket connections
+ * Stopping the adapters and close socket connections.
  * Transport Specific Behavior:
  * WIFI/ETH Stops all listening servers and close sockets.
  * EDR Stops all RFCOMM servers and close sockets.
@@ -118,67 +118,67 @@ typedef CAResult_t (*CAAdapterReadData)();
 typedef CAResult_t (*CAAdapterStop)();
 
 /**
- * @brief Terminate the connectivity adapter.Configuration information will be deleted from
+ * Terminate the connectivity adapter.Configuration information will be deleted from
  * further use. Freeing Memory of threadpool and mutexs and cleanup will be done.
  */
 typedef void (*CAAdapterTerminate)();
 
 /**
- * @brief Connectivity handler information for adapter
+ * Connectivity handler information for adapter.
  */
 typedef struct
 {
-    /** Start Transport specific functions*/
+    /** Start Transport specific functions. */
     CAAdapterStart startAdapter;
 
-    /** Listening Server function address*/
+    /** Listening Server function address. */
     CAAdapterStartListeningServer startListenServer;
 
-    /** Discovery Server function address **/
+    /** Discovery Server function address. **/
     CAAdapterStartDiscoveryServer startDiscoveryServer;
 
-    /** Unicast data function address**/
+    /** Unicast data function address. **/
     CAAdapterSendUnicastData sendData;
 
-    /** Multicast data function address**/
+    /** Multicast data function address. **/
     CAAdapterSendMulticastData sendDataToAll;
 
-    /** Get Networking information  **/
+    /** Get Networking information. **/
     CAAdapterGetNetworkInfo GetnetInfo;
 
-    /** Read Data function address**/
+    /** Read Data function address. **/
     CAAdapterReadData readData;
 
-    /** Stop Transport specific functions*/
+    /** Stop Transport specific functions. */
     CAAdapterStop stopAdapter;
 
-    /** Terminate function address stored in this pointer**/
+    /** Terminate function address stored in this pointer. **/
     CAAdapterTerminate terminate;
 
 } CAConnectivityHandler_t;
 
 /**
- * @brief This will be used during the registration of adapters call backs to the common logic
- * @see CAConnectivityHandler_t , CATransportAdapter_t
+ * This will be used during the registration of adapters call backs to the common logic.
+ * @see ::CAConnectivityHandler_t , ::CATransportAdapter_t
  */
 typedef void (*CARegisterConnectivityCallback)(CAConnectivityHandler_t handler,
         CATransportAdapter_t cType);
 
 /**
- * @brief This will be used during the recive of network requests and response.
+ * This will be used during the receive of network requests and response.
  * @see SendUnicastData(), SendMulticastData()
  */
 typedef void (*CANetworkPacketReceivedCallback)(const CAEndpoint_t *endPoint,
                                             const void *data, uint32_t dataLen);
 
 /**
- * @brief This will be used to notify network changes to the connectivity common logic layer
+ * This will be used to notify network changes to the connectivity common logic layer.
  * @see SendUnicastData(), SendMulticastData()
  */
 typedef void (*CANetworkChangeCallback)(const CAEndpoint_t *info, CANetworkStatus_t status);
 
 /**
- * @brief This will be used to notify error result to the connectivity common logic layer
+ * This will be used to notify error result to the connectivity common logic layer.
  */
 typedef void (*CAErrorHandleCallback)(const CAEndpoint_t *endpoint,
                                       const void *data, uint32_t dataLen,

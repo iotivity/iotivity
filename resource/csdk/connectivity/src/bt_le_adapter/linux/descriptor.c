@@ -54,6 +54,7 @@ static gboolean CAGattDescriptorReadValue(
     GDBusMethodInvocation * invocation,
     gpointer user_data)
 {
+    (void)user_data;
     /**
      * @todo The @c GattDescriptor1 object still owns the returned
      *       variant when using the below call.  Should be we use
@@ -97,6 +98,7 @@ static bool CAGattDescriptorInitialize(CAGattCharacteristic * c,
                                        char const * descriptor_path,
                                        char const * value)
 {
+    (void)s;
     CAGattDescriptor * const d = &c->descriptor;
 
     // Path of the form /org/iotivity/gatt/hci0/service0/char0/desc0.

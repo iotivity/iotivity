@@ -72,7 +72,7 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
     }
 
     // Copy the subjectID
-    OicUuid_t subjectId = {};
+    OicUuid_t subjectId = {.id = {0}};
     memcpy(subjectId.id, endPoint->identity.id, sizeof(subjectId.id));
 
     //Check the URI has the query and skip it before checking the permission
@@ -110,7 +110,7 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
     }
 
     // Form a 'access deny' or 'Error' response and send to peer
-    CAResponseInfo_t responseInfo = {};
+    CAResponseInfo_t responseInfo = {.result = CA_EMPTY};
     memcpy(&responseInfo.info, &(requestInfo->info), sizeof(responseInfo.info));
     responseInfo.info.payload = NULL;
     if (!gRequestHandler)

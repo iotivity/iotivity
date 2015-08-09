@@ -284,7 +284,7 @@ TEST(CredGenerateCredentialTest, GenerateCredentialValidInput)
     OicUuid_t owners[1];
     OICStrcpy((char *)owners[0].id, sizeof(owners[0].id), "ownersId21");
 
-    OicUuid_t subject = {};
+    OicUuid_t subject = {0};
     OICStrcpy((char *)subject.id, sizeof(subject.id), "subject11");
 
     char privateKey[] = "My private Key11";
@@ -304,7 +304,7 @@ TEST(GenerateAndAddCredentialTest, GenerateAndAddCredentialValidInput)
     OicUuid_t owners[1];
     OICStrcpy((char *)owners[0].id, sizeof(owners[0].id), "ownersId11");
 
-    OicUuid_t subject = {};
+    OicUuid_t subject = {0};
     OICStrcpy((char *)subject.id, sizeof(subject.id), "subject11");
 
     char privateKey[] = "My private Key11";

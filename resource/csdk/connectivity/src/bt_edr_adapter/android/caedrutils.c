@@ -60,6 +60,8 @@ jstring CAEDRNativeGetAddressFromDeviceSocket(JNIEnv *env, jobject bluetoothSock
             env, jni_cid_BTSocket, "getRemoteDevice", "()Landroid/bluetooth/BluetoothDevice;");
     if (!jni_mid_getRemoteDevice)
     {
+        (*env)->DeleteLocalRef(env, jni_cid_BTSocket);
+
         OIC_LOG(ERROR, TAG, "[EDR] getRemoteAddress: jni_mid_getRemoteDevice is null");
         return NULL;
     }
@@ -68,6 +70,8 @@ jstring CAEDRNativeGetAddressFromDeviceSocket(JNIEnv *env, jobject bluetoothSock
                                                               jni_mid_getRemoteDevice);
     if (!jni_obj_remoteBTDevice)
     {
+        (*env)->DeleteLocalRef(env, jni_cid_BTSocket);
+
         OIC_LOG(ERROR, TAG, "[EDR] getRemoteAddress: jni_obj_remoteBTDevice is null");
         return NULL;
     }
@@ -75,6 +79,9 @@ jstring CAEDRNativeGetAddressFromDeviceSocket(JNIEnv *env, jobject bluetoothSock
     jclass jni_cid_BTDevice = (*env)->FindClass(env, CLASSPATH_BT_DEVICE);
     if (!jni_cid_BTDevice)
     {
+        (*env)->DeleteLocalRef(env, jni_obj_remoteBTDevice);
+        (*env)->DeleteLocalRef(env, jni_cid_BTSocket);
+
         OIC_LOG(ERROR, TAG, "[EDR] getRemoteAddress: jni_cid_BTDevice is null");
         return NULL;
     }
@@ -82,6 +89,10 @@ jstring CAEDRNativeGetAddressFromDeviceSocket(JNIEnv *env, jobject bluetoothSock
                                                      METHODID_STRINGNONPARAM);
     if (!j_mid_getAddress)
     {
+        (*env)->DeleteLocalRef(env, jni_obj_remoteBTDevice);
+        (*env)->DeleteLocalRef(env, jni_cid_BTDevice);
+        (*env)->DeleteLocalRef(env, jni_cid_BTSocket);
+
         OIC_LOG(ERROR, TAG, "[EDR] getRemoteAddress: j_mid_getAddress is null");
         return NULL;
     }
@@ -89,9 +100,17 @@ jstring CAEDRNativeGetAddressFromDeviceSocket(JNIEnv *env, jobject bluetoothSock
     jstring j_str_address = (*env)->CallObjectMethod(env, jni_obj_remoteBTDevice, j_mid_getAddress);
     if (!j_str_address)
     {
+        (*env)->DeleteLocalRef(env, jni_obj_remoteBTDevice);
+        (*env)->DeleteLocalRef(env, jni_cid_BTDevice);
+        (*env)->DeleteLocalRef(env, jni_cid_BTSocket);
+
         OIC_LOG(ERROR, TAG, "[EDR] getRemoteAddress: j_str_address is null");
         return NULL;
     }
+
+    (*env)->DeleteLocalRef(env, jni_obj_remoteBTDevice);
+    (*env)->DeleteLocalRef(env, jni_cid_BTDevice);
+    (*env)->DeleteLocalRef(env, jni_cid_BTSocket);
 
     return j_str_address;
 }
@@ -110,6 +129,8 @@ jstring CAEDRNativeGetLocalDeviceAddress(JNIEnv* env)
                                                                     METHODID_OBJECTNONPARAM);
     if (!jni_mid_getDefaultAdapter)
     {
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+
         OIC_LOG(ERROR, TAG, "[EDR][Native] getAddress: jni_mid_getDefaultAdapter is null");
         return NULL;
     }
@@ -118,6 +139,8 @@ jstring CAEDRNativeGetLocalDeviceAddress(JNIEnv* env)
                                                        METHODID_STRINGNONPARAM);
     if (!jni_mid_getAddress)
     {
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+
         OIC_LOG(ERROR, TAG, "[EDR][Native] getAddress: jni_mid_getAddress is null");
         return NULL;
     }
@@ -126,6 +149,8 @@ jstring CAEDRNativeGetLocalDeviceAddress(JNIEnv* env)
                                                                jni_mid_getDefaultAdapter);
     if (!jni_obj_BTAdapter)
     {
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+
         OIC_LOG(ERROR, TAG, "[EDR][Native] getAddress: jni_obj_BTAdapter is null");
         return NULL;
     }
@@ -134,9 +159,15 @@ jstring CAEDRNativeGetLocalDeviceAddress(JNIEnv* env)
                                                                 jni_mid_getAddress);
     if (!jni_str_address)
     {
+        (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+
         OIC_LOG(ERROR, TAG, "[EDR][Native] getAddress: jni_str_address is null");
         return NULL;
     }
+
+    (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
+    (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
 
     return jni_str_address;
 }
@@ -155,6 +186,8 @@ jobjectArray CAEDRNativeGetBondedDevices(JNIEnv *env)
                                                                     METHODID_OBJECTNONPARAM);
     if (!jni_mid_getDefaultAdapter)
     {
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+
         OIC_LOG(ERROR, TAG, "[EDR][Native] getBondedDevices: default adapter is null");
         return NULL;
     }
@@ -163,6 +196,8 @@ jobjectArray CAEDRNativeGetBondedDevices(JNIEnv *env)
                                                                jni_mid_getDefaultAdapter);
     if (!jni_obj_BTAdapter)
     {
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+
         OIC_LOG(ERROR, TAG, "[EDR][Native] getBondedDevices: bluetooth adapter is null");
         return NULL;
     }
@@ -173,6 +208,9 @@ jobjectArray CAEDRNativeGetBondedDevices(JNIEnv *env)
                                                              "()Ljava/util/Set;");
     if (!jni_mid_getBondedDevices)
     {
+        (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+
         OIC_LOG(ERROR, TAG, "[EDR][Native] getBondedDevices: jni_mid_getBondedDevicesr is null");
         return NULL;
     }
@@ -181,6 +219,9 @@ jobjectArray CAEDRNativeGetBondedDevices(JNIEnv *env)
                                                                 jni_mid_getBondedDevices);
     if (!jni_obj_setPairedDevices)
     {
+        (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+
         OIC_LOG(ERROR, TAG, "[EDR][Native] getBondedDevices: jni_obj_setPairedDevices is null");
         return NULL;
     }
@@ -190,6 +231,9 @@ jobjectArray CAEDRNativeGetBondedDevices(JNIEnv *env)
     jclass jni_cid_Set = (*env)->FindClass(env, "java/util/Set");
     if (!jni_cid_Set)
     {
+        (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+
         OIC_LOG(ERROR, TAG, "[EDR][Native] getBondedDevices: jni_cid_Set is null");
         return NULL;
     }
@@ -198,6 +242,9 @@ jobjectArray CAEDRNativeGetBondedDevices(JNIEnv *env)
 
     if (!jni_mid_toArray)
     {
+        (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+
         OIC_LOG(ERROR, TAG, "[EDR][Native] getBondedDevices: jni_mid_toArray is null");
         return NULL;
     }
@@ -206,9 +253,15 @@ jobjectArray CAEDRNativeGetBondedDevices(JNIEnv *env)
             (*env)->CallObjectMethod(env, jni_obj_setPairedDevices, jni_mid_toArray));
     if (!jni_arrayPairedDevices)
     {
+        (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+
         OIC_LOG(ERROR, TAG, "[EDR][Native] getBondedDevices: jni_arrayPairedDevices is null");
         return NULL;
     }
+
+    (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
+    (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
 
     return jni_arrayPairedDevices;
 }
@@ -225,12 +278,16 @@ jint CAEDRNativeGetBTStateOnInfo(JNIEnv *env)
     jfieldID jni_fid_stateon = (*env)->GetStaticFieldID(env, jni_cid_BTAdapter, "STATE_ON", "I");
     if (jni_fid_stateon == 0)
     {
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+
         OIC_LOG(ERROR, TAG, "[EDR][Native] get_field_state is 0");
         return ERROR_CODE;
     }
     jint jni_int_val = (*env)->GetStaticIntField(env, jni_cid_BTAdapter, jni_fid_stateon);
 
     OIC_LOG_V(DEBUG, TAG, "[EDR][Native] bluetooth state integer value : %d", jni_int_val);
+
+    (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
 
     return jni_int_val;
 }
@@ -249,6 +306,8 @@ jboolean CAEDRNativeIsEnableBTAdapter(JNIEnv *env)
                                                                     METHODID_OBJECTNONPARAM);
     if (!jni_mid_getDefaultAdapter)
     {
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+
         OIC_LOG(ERROR, TAG, "[EDR][Native] jni_mid_getDefaultAdapter is null");
         return JNI_FALSE;
     }
@@ -257,6 +316,8 @@ jboolean CAEDRNativeIsEnableBTAdapter(JNIEnv *env)
                                                                jni_mid_getDefaultAdapter);
     if (!jni_obj_BTAdapter)
     {
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+
         OIC_LOG(ERROR, TAG, "[EDR][Native] jni_obj_BTAdapter is null");
         return JNI_FALSE;
     }
@@ -265,12 +326,18 @@ jboolean CAEDRNativeIsEnableBTAdapter(JNIEnv *env)
     jmethodID jni_mid_isEnable = (*env)->GetMethodID(env, jni_cid_BTAdapter, "isEnabled", "()Z");
     if (!jni_mid_isEnable)
     {
+        (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+        (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
+
         OIC_LOG(ERROR, TAG, "[EDR][Native] jni_mid_isEnable is null");
         return JNI_FALSE;
     }
 
     jboolean jni_isEnable = (*env)->CallBooleanMethod(env, jni_obj_BTAdapter, jni_mid_isEnable);
     OIC_LOG_V(DEBUG, TAG, "[EDR][Native] adapter state is %d", jni_isEnable);
+
+    (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
+    (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
 
     return jni_isEnable;
 }

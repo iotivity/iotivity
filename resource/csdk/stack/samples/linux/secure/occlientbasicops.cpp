@@ -29,6 +29,7 @@
 #include "logger.h"
 #include "occlientbasicops.h"
 #include "ocpayload.h"
+#include "payload_logging.h"
 #include "oic_string.h"
 #include "common.h"
 

@@ -75,6 +75,11 @@ static void CALEDumpDBusSignalParameters(char const * sender_name,
                                          char const * signal_name,
                                          GVariant   * parameters)
 {
+    (void)sender_name;
+    (void)object_path;
+    (void)interface_name;
+    (void)signal_name;
+    (void)parameters;
 #ifdef TB_LOG
     gchar * const param_dump =
         g_variant_print(parameters, TRUE);
@@ -106,6 +111,9 @@ static void CALEOnInterfaceProxyPropertiesChanged(
     gchar const * const      * invalidated_properties,
     gpointer                   user_data)
 {
+    (void)manager;
+    (void)object_proxy;
+    (void)invalidated_properties;
     OIC_LOG_V(DEBUG,
               TAG,
               "Properties Changed on %s:\n",
@@ -242,6 +250,8 @@ static void CALEOnInterfacesAdded(GDBusConnection * connection,
                                   GVariant   * parameters,
                                   gpointer     user_data)
 {
+    (void)connection;
+    (void)user_data;
     CALEDumpDBusSignalParameters(sender_name,
                                  object_path,
                                  interface_name,
@@ -270,6 +280,8 @@ static void CALEOnInterfacesRemoved(GDBusConnection * connection,
                                     GVariant   * parameters,
                                     gpointer     user_data)
 {
+    (void)connection;
+    (void)user_data;
     CALEDumpDBusSignalParameters(sender_name,
                                  object_path,
                                  interface_name,
@@ -360,6 +372,8 @@ static void CALEOnPropertiesChanged(GDBusConnection * connection,
                                     GVariant   * parameters,
                                     gpointer     user_data)
 {
+    (void)connection;
+    (void)user_data;
     CALEDumpDBusSignalParameters(sender_name,
                                  object_path,
                                  interface_name,
@@ -375,6 +389,8 @@ static void CALEOnPropertyChanged(GDBusConnection * connection,
                                   GVariant   * parameters,
                                   gpointer     user_data)
 {
+    (void)connection;
+    (void)user_data;
     CALEDumpDBusSignalParameters(sender_name,
                                  object_path,
                                  interface_name,
@@ -633,7 +649,8 @@ static bool CALEDeviceFilter(GDBusProxy * device)
         return accepted;
     }
 
-    char const ** const UUIDs = g_variant_get_strv(prop, NULL);
+    gsize length = 0;
+    char const ** const UUIDs = g_variant_get_strv(prop, &length);
 
     /**
      * @note It would have been nice to use @c g_strv_contains() here,
@@ -642,7 +659,8 @@ static bool CALEDeviceFilter(GDBusProxy * device)
      *       Just run the loop manually, and use @c strcasecmp()
      *       instead.
      */
-    for (char const * const * u = UUIDs; u != NULL; ++u)
+    char const * const * const end = UUIDs + length;
+    for (char const * const * u = UUIDs; u != end; ++u)
     {
         if (strcasecmp(*u, CA_GATT_SERVICE_UUID) == 0)
         {
@@ -1125,6 +1143,9 @@ CAResult_t CAUpdateCharacteristicsToGattClient(char const * address,
                                                char const * charValue,
                                                uint32_t charValueLen)
 {
+    (void)address;
+    (void)charValue;
+    (void)charValueLen;
     /**
      * @todo To be implemented shortly as part of the effort to
      *       address a critical code review that stated this BLE
@@ -1137,6 +1158,8 @@ CAResult_t CAUpdateCharacteristicsToGattClient(char const * address,
 CAResult_t CAUpdateCharacteristicsToAllGattClients(char const * charValue,
                                                    uint32_t charValueLen)
 {
+    (void)charValue;
+    (void)charValueLen;
     /**
      * @todo To be implemented shortly as part of the effort to
      *       address a critical code review that stated this BLE
@@ -1178,6 +1201,11 @@ CAResult_t CAUpdateCharacteristicsToGattServer(
     CALETransferType_t type,
     int32_t position)
 {
+    (void)remoteAddress;
+    (void)data;
+    (void)dataLen;
+    (void)type;
+    (void)position;
     /**
      * @todo To be implemented shortly as part of the effort to
      *       address a critical code review that stated this BLE

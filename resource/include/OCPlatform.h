@@ -179,7 +179,7 @@ namespace OC
         *
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
         * NOTE: "a/light" is a relative URI.
-        * Above relative URI will be prepended (by core) with a host IP + namespace "oc"
+        * Above relative URI will be prepended (by core) with a host IP + namespace "oic"
         * Therefore, fully qualified URI format would be //HostIP-Address/namespace/relativeURI"
         * Example, a relative URI: 'a/light' will result in a fully qualified URI:
         *   //192.168.1.1/oic/a/light"
@@ -259,7 +259,7 @@ namespace OC
         * Add a resource to a collection resource.
         *
         * @param collectionHandle - handle to the collection resource
-        * @param addedResourceHandle - handle to resource to be added to the collection resource
+        * @param resourceHandle - handle to resource to be added to the collection resource
         *
         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.<br>
         * NOTE: OCStackResult is defined in ocstack.h. <br>
@@ -369,7 +369,7 @@ namespace OC
         /**
         * Binds an interface to a particular resource
         * @param resourceHandle - handle to the resource
-        * @param resourceTypeName - new interface  to bind to the resource
+        * @param resourceInterfaceName - new interface  to bind to the resource
 
         * @return OCStackResult - return value of the API. Returns OCSTACK_OK if success <br>
         */

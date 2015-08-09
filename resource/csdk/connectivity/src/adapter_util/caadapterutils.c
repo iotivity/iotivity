@@ -170,10 +170,9 @@ void CAConvertNameToAddr(const char *host, uint16_t port, struct sockaddr_storag
     VERIFY_NON_NULL_VOID(sockaddr, CA_ADAPTER_UTILS_TAG, "sockaddr is null");
 
     struct addrinfo *addrs;
-    struct addrinfo hints = { 0 };
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_DGRAM;
-    hints.ai_flags = AI_NUMERICHOST;
+    struct addrinfo hints = { .ai_family = AF_UNSPEC,
+                              .ai_socktype = SOCK_DGRAM,
+                              .ai_flags = AI_NUMERICHOST };
 
     int r = getaddrinfo(host, NULL, &hints, &addrs);
     if (r)

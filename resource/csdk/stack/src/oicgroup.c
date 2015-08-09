@@ -799,6 +799,8 @@ exit:
 OCStackApplicationResult ActionSetCB(void* context, OCDoHandle handle,
         OCClientResponse* clientResponse)
 {
+    (void)context;
+    (void)clientResponse;
     OC_LOG(INFO, TAG, PCF("Entering BuildActionJSON"));
 
     ClientRequestInfo *info = GetClientRequestInfo(clientRequstList, handle);
@@ -846,6 +848,7 @@ OCStackApplicationResult ActionSetCB(void* context, OCDoHandle handle,
 
 void ActionSetCD(void *context)
 {
+    (void)context;
 }
 
 OCStackResult BuildActionJSON(OCAction* action, unsigned char* bufferPtr,
@@ -909,6 +912,9 @@ unsigned int GetNumOfTargetResource(OCAction *actionset)
 OCStackResult SendAction(OCDoHandle *handle, const char *targetUri,
         const unsigned char *action)
 {
+    (void)handle;
+    (void)targetUri;
+    (void)action;
     // TODO: disabled since this is no longer compatible
     return OC_STACK_NOTIMPL;
 }

@@ -19,7 +19,7 @@
  ******************************************************************/
 
 /**
- * @file camessagehandler.h
+ * @file
  * This file contains message functionality.
  */
 
@@ -63,87 +63,87 @@ extern "C"
 #endif
 
 /**
- * Detaches control from the caller for sending unicast request
- * @param[IN] endpoint    endpoint information where the data has to be sent
- * @param[IN] request     request that needs to be sent
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
+ * Detaches control from the caller for sending unicast request.
+ * @param[in] endpoint    endpoint information where the data has to be sent.
+ * @param[in] request     request that needs to be sent.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CADetachRequestMessage(const CAEndpoint_t *endpoint,
                                   const CARequestInfo_t *request);
 
 /**
- * Detaches control from the caller for sending multicast request
- * @param[IN] object     Group endpoint information where the data has to be sent
- * @param[IN] request    request that needs to be sent
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
+ * Detaches control from the caller for sending multicast request.
+ * @param[in] object     Group endpoint information where the data has to be sent.
+ * @param[in] request    request that needs to be sent.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CADetachRequestToAllMessage(const CAEndpoint_t *object,
                                        const CARequestInfo_t *request);
 
 /**
- * Detaches control from the caller for sending response
- * @param[IN] endpoint    endpoint information where the data has to be sent
- * @param[IN] response    response that needs to be sent
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
+ * Detaches control from the caller for sending response.
+ * @param[in] endpoint    endpoint information where the data has to be sent.
+ * @param[in] response    response that needs to be sent.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CADetachResponseMessage(const CAEndpoint_t *endpoint,
                                    const CAResponseInfo_t *response);
 
 /**
- * Detaches control from the caller for sending request
- * @param[IN] resourceUri    resource uri that needs to  be sent in the request
- * @param[IN] token          token information of the request
- * @param[IN] tokenLength    length of the token
- * @param[IN] options        header options that need to be append in the request
- * @param[IN] numOptions     number of options be appended
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
+ * Detaches control from the caller for sending request.
+ * @param[in] resourceUri    resource uri that needs to  be sent in the request.
+ * @param[in] token          token information of the request.
+ * @param[in] tokenLength    length of the token.
+ * @param[in] options        header options that need to be append in the request.
+ * @param[in] numOptions     number of options be appended.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CADetachMessageResourceUri(const CAURI_t resourceUri, const CAToken_t token,
                                       uint8_t tokenLength, const CAHeaderOption_t *options,
                                       uint8_t numOptions);
 
 /**
- * Setting the request and response callbacks for network packets
- * @param[IN] ReqHandler      callback for receiving the requests
- * @param[IN] RespHandler     callback for receiving the response
- * @param[IN] ErrorHandler    callback for receiving error response
+ * Setting the request and response callbacks for network packets.
+ * @param[in] ReqHandler      callback for receiving the requests.
+ * @param[in] RespHandler     callback for receiving the response.
+ * @param[in] ErrorHandler    callback for receiving error response.
  */
 void CASetInterfaceCallbacks(CARequestCallback ReqHandler, CAResponseCallback RespHandler,
                              CAErrorCallback ErrorHandler);
 
 /**
  * Initialize the message handler by starting thread pool and initializing the
- * send and receive queue
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
+ * send and receive queue.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CAInitializeMessageHandler();
 
 /**
- * Terminate the message handler by stopping  the thread pool and destroying the queues
+ * Terminate the message handler by stopping  the thread pool and destroying the queues.
  */
 void CATerminateMessageHandler();
 
 /**
- * Handler for receiving request and response callback in single thread model
+ * Handler for receiving request and response callback in single thread model.
  */
 void CAHandleRequestResponseCallbacks();
 
 /**
- * To log the PDU data
- * @param[IN] pdu    pdu data
+ * To log the PDU data.
+ * @param[in] pdu    pdu data.
  */
 void CALogPDUInfo(coap_pdu_t *pdu);
 
 #ifdef WITH_BWT
 /**
- * Add the data to the send queue thread
- * @param[IN] data    send data
+ * Add the data to the send queue thread.
+ * @param[in] data    send data.
  */
 void CAAddDataToSendThread(CAData_t *data);
 
 /**
- * Add the data to the receive queue thread to notify received data
- * @param[IN] data    received data
+ * Add the data to the receive queue thread to notify received data.
+ * @param[in] data    received data.
  */
 void CAAddDataToReceiveThread(CAData_t *data);
 #endif

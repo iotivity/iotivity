@@ -288,7 +288,7 @@ static void CAAcceptHandler(void *data)
 /**
  * implement for adapter common method.
  */
-CAResult_t CAEDRServerStart(const char *serviceUUID, int32_t *serverFD, ca_thread_pool_t handle)
+CAResult_t CAEDRServerStart(ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     CAEDRServerInitialize(handle);
@@ -299,16 +299,15 @@ CAResult_t CAEDRServerStart(const char *serviceUUID, int32_t *serverFD, ca_threa
         return CA_STATUS_FAILED;
     }
 
-    *serverFD = 1;
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
-CAResult_t CAEDRServerStop(int serverFD)
+CAResult_t CAEDRServerStop()
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    CAEDRStopUnicastServer(-1);
-    CAEDRStopMulticastServer(-1);
+    CAEDRStopUnicastServer();
+    CAEDRStopMulticastServer();
 
     ca_mutex_lock(g_mutexAcceptServer);
     g_stopAccept = true;
@@ -755,6 +754,8 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id, CAAdapterServerType_t t
             CAEDRNativeRemoveDeviceSocket(env, jni_obj_socket);
             (*env)->ReleaseStringUTFChars(env, jni_str_address, address);
 
+            (*env)->DeleteLocalRef(env, jni_str_address);
+
             return CA_STATUS_FAILED;
         }
 
@@ -762,6 +763,8 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id, CAAdapterServerType_t t
         jclass jni_cid_BTsocket = (*env)->FindClass(env, "android/bluetooth/BluetoothSocket");
         if (!jni_cid_BTsocket)
         {
+            (*env)->DeleteLocalRef(env, jni_str_address);
+
             OIC_LOG(ERROR, TAG, "[EDR][Native] btReadData: jni_cid_BTsocket is null");
             return CA_STATUS_FAILED;
         }
@@ -772,6 +775,9 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id, CAAdapterServerType_t t
 
         if (!jni_obj_socket)
         {
+            (*env)->DeleteLocalRef(env, jni_cid_BTsocket);
+            (*env)->DeleteLocalRef(env, jni_str_address);
+
             OIC_LOG(ERROR, TAG, "[EDR][Native] jni_obj_socket is not available anymore..");
             return CA_STATUS_FAILED;
         }
@@ -783,6 +789,10 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id, CAAdapterServerType_t t
         jclass jni_cid_InputStream = (*env)->FindClass(env, "java/io/InputStream");
         if (!jni_cid_InputStream)
         {
+            (*env)->DeleteLocalRef(env, jni_obj_inputStream);
+            (*env)->DeleteLocalRef(env, jni_cid_BTsocket);
+            (*env)->DeleteLocalRef(env, jni_str_address);
+
             OIC_LOG(ERROR, TAG, "[EDR][Native] btReadData: jni_cid_InputStream is null");
             return CA_STATUS_FAILED;
         }
@@ -792,6 +802,11 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id, CAAdapterServerType_t t
 
         if (!jni_obj_socket)
         {
+            (*env)->DeleteLocalRef(env, jni_cid_InputStream);
+            (*env)->DeleteLocalRef(env, jni_obj_inputStream);
+            (*env)->DeleteLocalRef(env, jni_cid_BTsocket);
+            (*env)->DeleteLocalRef(env, jni_str_address);
+
             OIC_LOG(ERROR, TAG, "[EDR][Native] jni_obj_socket is not available anymore...");
             return CA_STATUS_FAILED;
         }
@@ -810,6 +825,12 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id, CAAdapterServerType_t t
 
         if (-1 == length)
         {
+            (*env)->DeleteLocalRef(env, jni_cid_InputStream);
+            (*env)->DeleteLocalRef(env, jbuf);
+            (*env)->DeleteLocalRef(env, jni_obj_inputStream);
+            (*env)->DeleteLocalRef(env, jni_cid_BTsocket);
+            (*env)->DeleteLocalRef(env, jni_str_address);
+
             OIC_LOG(ERROR, TAG, "[EDR][Native] read buffer is empty...");
             return CA_STATUS_FAILED;
         }
@@ -826,6 +847,13 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id, CAAdapterServerType_t t
             CAEDRUpdateDeviceState(STATE_DISCONNECTED, address);
             ca_mutex_unlock(g_mutexStateList);
             (*env)->ReleaseStringUTFChars(env, jni_str_address, address);
+
+            (*env)->DeleteLocalRef(env, jbuf);
+            (*env)->DeleteLocalRef(env, jni_cid_InputStream);
+            (*env)->DeleteLocalRef(env, jni_obj_inputStream);
+            (*env)->DeleteLocalRef(env, jni_cid_BTsocket);
+            (*env)->DeleteLocalRef(env, jni_str_address);
+
             return CA_STATUS_FAILED;
         }
 
@@ -833,6 +861,12 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id, CAAdapterServerType_t t
         jbyte* buf = (*env)->GetByteArrayElements(env, jbuf, NULL);
         if (NULL == buf)
         {
+            (*env)->DeleteLocalRef(env, jni_cid_InputStream);
+            (*env)->DeleteLocalRef(env, jbuf);
+            (*env)->DeleteLocalRef(env, jni_obj_inputStream);
+            (*env)->DeleteLocalRef(env, jni_cid_BTsocket);
+            (*env)->DeleteLocalRef(env, jni_str_address);
+
             OIC_LOG(ERROR, TAG, "[EDR][Native] btReadData: buf is null");
             return CA_STATUS_FAILED;
         }
@@ -863,6 +897,12 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id, CAAdapterServerType_t t
         }
         (*env)->ReleaseByteArrayElements(env, jbuf, buf, 0);
         (*env)->ReleaseStringUTFChars(env, jni_str_address, address);
+
+        (*env)->DeleteLocalRef(env, jni_cid_InputStream);
+        (*env)->DeleteLocalRef(env, jbuf);
+        (*env)->DeleteLocalRef(env, jni_obj_inputStream);
+        (*env)->DeleteLocalRef(env, jni_cid_BTsocket);
+        (*env)->DeleteLocalRef(env, jni_str_address);
     }
     else
     {
@@ -902,12 +942,16 @@ jboolean CAEDRIsConnectedForSocket(JNIEnv *env, jobject socket)
                                                         "()Z");
     if (!jni_mid_isConnected)
     {
+        (*env)->DeleteLocalRef(env, jni_cid_BTsocket);
+
         OIC_LOG(ERROR, TAG, "[EDR][Native] CAEDRIsConnectedForSocket \
                 - jni_mid_isConnected is null.");
         return JNI_FALSE;
     }
 
     jboolean jni_isConnected = (*env)->CallBooleanMethod(env, socket, jni_mid_isConnected);
+
+    (*env)->DeleteLocalRef(env, jni_cid_BTsocket);
 
     return jni_isConnected;
 }

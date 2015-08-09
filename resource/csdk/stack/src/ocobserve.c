@@ -113,7 +113,7 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
     ResourceObserver * resourceObserver = serverObsList;
     uint8_t numObs = 0;
     OCServerRequest * request = NULL;
-    OCEntityHandlerRequest ehRequest = {};
+    OCEntityHandlerRequest ehRequest = {0};
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
     bool observeErrorFlag = false;
 
@@ -170,7 +170,7 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
             }
             else
             {
-                OCEntityHandlerResponse ehResponse = {};
+                OCEntityHandlerResponse ehResponse = {0};
 
                 //This is effectively the implementation for the presence entity handler.
                 OC_LOG(DEBUG, TAG, PCF("This notification is for Presence"));
@@ -237,6 +237,7 @@ OCStackResult SendListObserverNotification (OCResource * resource,
         uint32_t maxAge,
         OCQualityOfService qos)
 {
+    (void)maxAge;
     if(!resource || !obsIdList || !payload)
     {
         return OC_STACK_INVALID_PARAM;
@@ -272,7 +273,7 @@ OCStackResult SendListObserverNotification (OCResource * resource,
                     request->observeResult = OC_STACK_OK;
                     if(result == OC_STACK_OK)
                     {
-                        OCEntityHandlerResponse ehResponse = {};
+                        OCEntityHandlerResponse ehResponse = {0};
                         ehResponse.ehResult = OC_EH_OK;
                         ehResponse.payload = (OCPayload*)OCRepPayloadCreate();
                         if(!ehResponse.payload)

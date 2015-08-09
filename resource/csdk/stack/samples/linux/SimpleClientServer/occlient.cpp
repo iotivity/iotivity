@@ -29,6 +29,7 @@
 #include "logger.h"
 #include "occlient.h"
 #include "ocpayload.h"
+#include "payload_logging.h"
 
 // Tracking user input
 static int UNICAST_DISCOVERY = 0;
@@ -169,7 +170,8 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
     return ret;
 }
 
-OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse)
+OCStackApplicationResult putReqCB(void* ctx, OCDoHandle /*handle*/,
+                                  OCClientResponse * clientResponse)
 {
     if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
@@ -189,7 +191,8 @@ OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle, OCClientResponse
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-OCStackApplicationResult postReqCB(void *ctx, OCDoHandle handle, OCClientResponse *clientResponse)
+OCStackApplicationResult postReqCB(void *ctx, OCDoHandle /*handle*/,
+                                   OCClientResponse *clientResponse)
 {
     if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
@@ -210,7 +213,8 @@ OCStackApplicationResult postReqCB(void *ctx, OCDoHandle handle, OCClientRespons
 }
 
 OCStackApplicationResult deleteReqCB(void *ctx,
-        OCDoHandle handle, OCClientResponse *clientResponse)
+                                     OCDoHandle /*handle*/,
+                                     OCClientResponse *clientResponse)
 {
     if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
@@ -230,7 +234,8 @@ OCStackApplicationResult deleteReqCB(void *ctx,
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse)
+OCStackApplicationResult getReqCB(void* ctx, OCDoHandle /*handle*/,
+                                  OCClientResponse * clientResponse)
 {
     if(clientResponse == NULL)
     {
@@ -268,7 +273,8 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse)
+OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle /*handle*/,
+                                  OCClientResponse * clientResponse)
 {
     if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
@@ -324,7 +330,8 @@ OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle handle, OCClientResponse
     return OC_STACK_KEEP_TRANSACTION;
 }
 #ifdef WITH_PRESENCE
-OCStackApplicationResult presenceCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse)
+OCStackApplicationResult presenceCB(void* ctx, OCDoHandle /*handle*/,
+                                    OCClientResponse * clientResponse)
 {
     if (ctx == (void*) DEFAULT_CONTEXT_VALUE)
     {
@@ -358,7 +365,7 @@ OCStackApplicationResult presenceCB(void* ctx, OCDoHandle handle, OCClientRespon
 #endif
 
 // This is a function called back when a device is discovered
-OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
+OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle /*handle*/,
         OCClientResponse * clientResponse)
 {
     if (ctx == (void*) DEFAULT_CONTEXT_VALUE)
@@ -446,7 +453,8 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
     return OC_STACK_KEEP_TRANSACTION;
 }
 
-OCStackApplicationResult PlatformDiscoveryReqCB (void* ctx, OCDoHandle handle,
+OCStackApplicationResult PlatformDiscoveryReqCB (void* ctx,
+                                                 OCDoHandle /*handle*/,
         OCClientResponse * clientResponse)
 {
     if (ctx == (void*) DEFAULT_CONTEXT_VALUE)
@@ -467,7 +475,7 @@ OCStackApplicationResult PlatformDiscoveryReqCB (void* ctx, OCDoHandle handle,
     return (UNICAST_DISCOVERY) ? OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION;
 }
 
-OCStackApplicationResult DeviceDiscoveryReqCB (void* ctx, OCDoHandle handle,
+OCStackApplicationResult DeviceDiscoveryReqCB (void* ctx, OCDoHandle /*handle*/,
         OCClientResponse * clientResponse)
 {
     if (ctx == (void*) DEFAULT_CONTEXT_VALUE)
@@ -967,7 +975,7 @@ std::string getConnectivityType (OCConnectivityType connType)
     }
 }
 
-std::string getQueryStrForGetPut(OCClientResponse * clientResponse)
+std::string getQueryStrForGetPut(OCClientResponse * /*clientResponse*/)
 {
 
     return "/a/light";
@@ -979,4 +987,3 @@ void parseClientResponse(OCClientResponse * clientResponse)
     coapServerPort = getPortTBServer(clientResponse);
     coapServerResource = getQueryStrForGetPut(clientResponse);
 }
-

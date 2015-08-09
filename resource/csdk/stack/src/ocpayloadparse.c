@@ -435,7 +435,7 @@ static OCStackResult OCParsePlatformPayload(OCPayload** outPayload, CborValue* a
     if(cbor_value_is_map(arrayVal))
     {
         char* uri = NULL;
-        OCPlatformInfo info = {};
+        OCPlatformInfo info = {0};
         CborValue curVal;
          err = err || cbor_value_map_find_value(arrayVal, OC_RSRVD_HREF, &curVal);
         size_t len;
@@ -722,7 +722,7 @@ static bool OCParseSingleRepPayload(OCRepPayload** outPayload, CborValue* repPar
     err = err || cbor_value_map_find_value(repParent, OC_RSRVD_PROPERTY, &curVal);
     if(cbor_value_is_valid(&curVal))
     {
-        CborValue insidePropArray = {};
+        CborValue insidePropArray = {0};
         err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_RESOURCE_TYPE,
                 &insidePropArray);
 

@@ -19,8 +19,8 @@
  ******************************************************************/
 
 /**
- * @file caretransmission.h
- * @brief This file contains common function for retransmission messages.
+ * @file
+ * This file contains common function for retransmission messages.
  */
 
 #ifndef CA_RETRANSMISSION_H_
@@ -108,7 +108,7 @@ extern "C"
  * @param[in]   timeoutCallback              callback for retransmit timeout.
  * @param[in]   config                       configuration for retransmission.
  *                                           if NULL is coming, it will set default values.
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CARetransmissionInitialize(CARetransmission_t *context,
                                       ca_thread_pool_t handle,
@@ -119,7 +119,7 @@ CAResult_t CARetransmissionInitialize(CARetransmission_t *context,
 /**
  * Starting the retransmission context.
  * @param[in]   context      context for retransmission.
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CARetransmissionStart(CARetransmission_t *context);
 
@@ -130,7 +130,7 @@ CAResult_t CARetransmissionStart(CARetransmission_t *context);
  * @param[in]   endpoint     endpoint information.
  * @param[in]   pdu          sent pdu binary data.
  * @param[in]   size         sent pdu binary data size.
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CARetransmissionSentData(CARetransmission_t* context,
                                     const CAEndpoint_t* endpoint,
@@ -144,7 +144,7 @@ CAResult_t CARetransmissionSentData(CARetransmission_t* context,
  * @param[in]   pdu                  received pdu binary data.
  * @param[in]   size                 received pdu binary data size.
  * @param[out]  retransmissionPdu    pdu data of the request for reset and ack.
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
                                         const CAEndpoint_t *endpoint, const void *pdu,
@@ -153,14 +153,14 @@ CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
 /**
  * Stopping the retransmission context.
  * @param[in]   context         context for retransmission.
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CARetransmissionStop(CARetransmission_t *context);
 
 /**
  * Terminating the retransmission context.
  * @param[in]   context         context for retransmission.
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CARetransmissionDestroy(CARetransmission_t *context);
 
