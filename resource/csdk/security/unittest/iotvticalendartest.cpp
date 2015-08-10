@@ -27,6 +27,11 @@
 
 static void printPeriod(IotvtICalPeriod_t *period)
 {
+    if(NULL == period)
+    {
+        return;
+    }
+
     OC_LOG_V(INFO, TAG, PCF("period->startDateTime.tm_year = %d"),period->startDateTime.tm_year);
     OC_LOG_V(INFO, TAG, PCF("period->startDateTime.tm_mon = %d"),period->startDateTime.tm_mon);
     OC_LOG_V(INFO, TAG, PCF("period->startDateTime.tm_mday = %d"),period->startDateTime.tm_mday);
@@ -41,6 +46,7 @@ static void printPeriod(IotvtICalPeriod_t *period)
     OC_LOG_V(INFO, TAG, PCF("period->endDateTime.tm_min = %d"),period->endDateTime.tm_min);
     OC_LOG_V(INFO, TAG, PCF("period->startDateTime.tm_sec = %d"),period->endDateTime.tm_sec);
 }
+
 
 static void printRecur(IotvtICalRecur_t *recur)
 {
@@ -83,7 +89,7 @@ static void printRecur(IotvtICalRecur_t *recur)
 TEST(ParsePeriodTest, ParsePeriodValidDateTime)
 {
     char periodStr[] = "20150629T153050/20150630T233055";
-    IotvtICalPeriod_t period = {};
+    IotvtICalPeriod_t period = IotvtICalPeriod_t();
     EXPECT_EQ(IOTVTICAL_SUCCESS, ParsePeriod(periodStr,&period));
     printPeriod(&period);
 }
@@ -91,7 +97,7 @@ TEST(ParsePeriodTest, ParsePeriodValidDateTime)
 TEST(ParsePeriodTest, ParsePeriodValidDate)
 {
     char periodStr[] = "20150629/20150630";
-    IotvtICalPeriod_t period = {};
+    IotvtICalPeriod_t period = IotvtICalPeriod_t();
     EXPECT_EQ(IOTVTICAL_SUCCESS, ParsePeriod(periodStr,&period));
     printPeriod(&period);
 }
@@ -99,62 +105,62 @@ TEST(ParsePeriodTest, ParsePeriodValidDate)
 TEST(ParsePeriodTest, ParsePeriodMismatchStartDTEndDT1)
 {
     char periodStr[] = "20150629T153050/20150630";
-    IotvtICalPeriod_t period = {};
+    IotvtICalPeriod_t period = IotvtICalPeriod_t();
     EXPECT_EQ(IOTVTICAL_INVALID_PERIOD, ParsePeriod(periodStr,&period));
 }
 
 TEST(ParsePeriodTest, ParsePeriodMismatchStartDTEndDT2)
 {
     char periodStr[] = "20150629/20150630T203055";
-    IotvtICalPeriod_t period = {};
+    IotvtICalPeriod_t period = IotvtICalPeriod_t();
     EXPECT_EQ(IOTVTICAL_INVALID_PERIOD, ParsePeriod(periodStr,&period));
 }
 
 TEST(ParsePeriodTest, ParsePeriodInvalidStartDT1)
 {
     char periodStr[] = "20150629T1530/20150630T203055";
-    IotvtICalPeriod_t period = {};
+    IotvtICalPeriod_t period = IotvtICalPeriod_t();
     EXPECT_EQ(IOTVTICAL_INVALID_PERIOD, ParsePeriod(periodStr,&period));
 }
 
 TEST(ParsePeriodTest, ParsePeriodInvalidEndtDT2)
 {
     char periodStr[] = "20150629T153050/20150630203055";
-    IotvtICalPeriod_t period = {};
+    IotvtICalPeriod_t period = IotvtICalPeriod_t();
     EXPECT_EQ(IOTVTICAL_INVALID_PERIOD, ParsePeriod(periodStr,&period));
 }
 
 TEST(ParsePeriodTest, ParsePeriodInvalidStartD3)
 {
     char periodStr[] = "201506/20150630";
-    IotvtICalPeriod_t period = {};
+    IotvtICalPeriod_t period = IotvtICalPeriod_t();
     EXPECT_EQ(IOTVTICAL_INVALID_PERIOD, ParsePeriod(periodStr,&period));
 }
 
 TEST(ParsePeriodTest, ParsePeriodInvalidEndD4)
 {
     char periodStr[] = "20150629/201530";
-    IotvtICalPeriod_t period = {};
+    IotvtICalPeriod_t period = IotvtICalPeriod_t();
     EXPECT_EQ(IOTVTICAL_INVALID_PERIOD, ParsePeriod(periodStr,&period));
 }
 
 TEST(ParsePeriodTest, ParsePeriodEndDTBeforeStartDT)
 {
     char periodStr[] = "20150630T203055/20150629T153050";
-    IotvtICalPeriod_t period = {};
+    IotvtICalPeriod_t period = IotvtICalPeriod_t();
     EXPECT_EQ(IOTVTICAL_INVALID_PERIOD, ParsePeriod(periodStr,&period));
 }
 TEST(ParsePeriodTest, ParsePeriodEndDBeforeStartD)
 {
     char periodStr[] = "20150630/20150629";
-    IotvtICalPeriod_t period = {};
+    IotvtICalPeriod_t period = IotvtICalPeriod_t();
     EXPECT_EQ(IOTVTICAL_INVALID_PERIOD, ParsePeriod(periodStr,&period));
 }
 
 TEST(ParseRecurTest, ParseRecurValid1)
 {
     char recurStr[] = "FREQ=DAILY; UNTIL=20150703; BYDAY=MO, WE, FR";
-    IotvtICalRecur_t recur = {};
+    IotvtICalRecur_t recur = IotvtICalRecur_t();
     EXPECT_EQ(IOTVTICAL_SUCCESS, ParseRecur(recurStr, &recur));
     printRecur(&recur);
 }
@@ -162,7 +168,7 @@ TEST(ParseRecurTest, ParseRecurValid1)
 TEST(ParseRecurTest, ParseRecurValid2)
 {
     char recurStr[] = "FREQ=DAILY";
-    IotvtICalRecur_t recur = {};
+    IotvtICalRecur_t recur =  IotvtICalRecur_t();
     EXPECT_EQ(IOTVTICAL_SUCCESS, ParseRecur(recurStr, &recur));
     printRecur(&recur);
 }
@@ -170,28 +176,28 @@ TEST(ParseRecurTest, ParseRecurValid2)
 TEST(ParseRecurTest, ParseRecurInValidFreq1)
 {
     char recurStr[] = "FREQ=WEEKLY; UNTIL=20150703; BYDAY=TU";
-    IotvtICalRecur_t recur = {};
+    IotvtICalRecur_t recur = IotvtICalRecur_t();
     EXPECT_EQ(IOTVTICAL_INVALID_RRULE, ParseRecur(recurStr, &recur));
 }
 
 TEST(ParseRecurTest, ParseRecurInValidFreq2)
 {
     char recurStr[] = "UNTIL=20150703; BYDAY=TU";
-    IotvtICalRecur_t recur = {};
+    IotvtICalRecur_t recur =  IotvtICalRecur_t();
     EXPECT_EQ(IOTVTICAL_INVALID_RRULE, ParseRecur(recurStr, &recur));
 }
 
 TEST(ParseRecurTest, ParseRecurInValidUntil)
 {
     char recurStr[] = "FREQ=DAILY; UNTIL=20150703T095055; BYDAY=MO, WE, FR";
-    IotvtICalRecur_t recur = {};
+    IotvtICalRecur_t recur = IotvtICalRecur_t();
     EXPECT_EQ(IOTVTICAL_INVALID_RRULE, ParseRecur(recurStr, &recur));
 }
 
 TEST(ParseRecurTest, ParseRecurInValidByday)
 {
     char recurStr[] = "FREQ=DAILY; UNTIL=20150703; BYDAY=";
-    IotvtICalRecur_t recur = {};
+    IotvtICalRecur_t recur = IotvtICalRecur_t();
     EXPECT_EQ(IOTVTICAL_INVALID_RRULE, ParseRecur(recurStr, &recur));
 }
 

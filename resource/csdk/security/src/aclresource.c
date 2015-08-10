@@ -43,7 +43,7 @@
 
 #define TAG  PCF("SRM-ACL")
 
-OicSecAcl_t        *gAcl = NULL;
+OicSecAcl_t               *gAcl = NULL;
 static OCResourceHandle    gAclHandle = NULL;
 
 /**

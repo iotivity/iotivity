@@ -41,8 +41,8 @@
 #endif
 #include <stdint.h>
 
-
 #define TAG  PCF("SRM-CREDL")
+
 
 static OicSecCred_t        *gCred = NULL;
 static OCResourceHandle    gCredHandle = NULL;
@@ -517,7 +517,6 @@ exit:
 OCStackResult AddCredential(OicSecCred_t * newCred)
 {
     OCStackResult ret = OC_STACK_ERROR;
-    char * jsonStr = NULL;
 
     VERIFY_SUCCESS(TAG, NULL != newCred, ERROR);
 
@@ -804,7 +803,7 @@ void GetDtlsPskCredentials(CADtlsPskCredsBlob_t **credInfo)
         caBlob = (CADtlsPskCredsBlob_t *)OICCalloc(sizeof(CADtlsPskCredsBlob_t), 1);
         if (caBlob)
         {
-            OicUuid_t deviceID = {};
+            OicUuid_t deviceID = {.id={}};
 
             // Retrieve Device ID from doxm resource and copy in PSK creds blob
             VERIFY_SUCCESS(TAG, GetDoxmDeviceID(&deviceID) == OC_STACK_OK, ERROR);

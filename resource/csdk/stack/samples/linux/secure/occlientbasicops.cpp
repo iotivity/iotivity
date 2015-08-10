@@ -33,6 +33,7 @@
 #include "oic_string.h"
 #include "common.h"
 
+
 #define TAG "occlientbasicops"
 static int UNICAST_DISCOVERY = 0;
 static int TEST_CASE = 0;
@@ -118,9 +119,12 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
     return ret;
 }
 
-OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse)
+OCStackApplicationResult putReqCB(void* ctx, OCDoHandle /*handle*/, OCClientResponse * clientResponse)
 {
-    OC_LOG(INFO, TAG, "Callback Context for PUT recvd successfully");
+    if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
+    {
+        OC_LOG(INFO, TAG, "Callback Context for PUT recvd successfully");
+    }
 
     if(clientResponse)
     {
@@ -131,9 +135,12 @@ OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle, OCClientResponse
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-OCStackApplicationResult postReqCB(void *ctx, OCDoHandle handle, OCClientResponse *clientResponse)
+OCStackApplicationResult postReqCB(void *ctx, OCDoHandle /*handle*/, OCClientResponse *clientResponse)
 {
-    OC_LOG(INFO, TAG, "Callback Context for POST recvd successfully");
+    if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
+    {
+        OC_LOG(INFO, TAG, "Callback Context for POST recvd successfully");
+    }
 
     if(clientResponse)
     {
@@ -144,9 +151,12 @@ OCStackApplicationResult postReqCB(void *ctx, OCDoHandle handle, OCClientRespons
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse)
+OCStackApplicationResult getReqCB(void* ctx, OCDoHandle /*handle*/, OCClientResponse * clientResponse)
 {
-    OC_LOG(INFO, TAG, "Callback Context for GET query recvd successfully");
+    if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
+    {
+        OC_LOG(INFO, TAG, "Callback Context for GET recvd successfully");
+    }
 
     if(clientResponse)
     {
@@ -159,10 +169,13 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse
 }
 
 // This is a function called back when a device is discovered
-OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
+OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle /*handle*/,
         OCClientResponse * clientResponse)
 {
-    OC_LOG(INFO, TAG, "Callback Context for DISCOVER query recvd successfully");
+    if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
+    {
+        OC_LOG(INFO, TAG, "Callback Context for DISCOVER recvd successfully");
+    }
 
     if (clientResponse)
     {
@@ -358,7 +371,7 @@ int main(int argc, char* argv[])
 
 
     // Initialize Persistent Storage for SVR database
-    OCPersistentStorage ps = {};
+    OCPersistentStorage ps = OCPersistentStorage();
     ps.open = client_fopen;
     ps.read = fread;
     ps.write = fwrite;

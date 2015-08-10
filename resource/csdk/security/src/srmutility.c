@@ -49,7 +49,6 @@ void ParseQueryIterInit(unsigned char * query, OicParseQueryIter_t * parseIter)
           (unsigned char *)OIC_SEC_REST_QUERY_SEPARATOR, (unsigned char *) "", 0, &parseIter->pi);
 }
 
-
 /**
  * This method fills the OicParseQueryIter_t struct with next REST query's
  * attribute's and value's information
@@ -94,7 +93,7 @@ OicParseQueryIter_t * GetNextQuery(OicParseQueryIter_t * parseIter)
 OCStackResult AddUuidArray(cJSON* jsonRoot, const char* arrayItem,
                            size_t *numUuids, OicUuid_t** uuids )
 {
-    int idxx = 0;
+    size_t idxx = 0;
     cJSON* jsonObj = cJSON_GetObjectItem(jsonRoot, arrayItem);
     VERIFY_NON_NULL(TAG, jsonObj, ERROR);
     VERIFY_SUCCESS(TAG, cJSON_Array == jsonObj->type, ERROR);

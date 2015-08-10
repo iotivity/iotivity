@@ -195,7 +195,7 @@ OicSecSvc_t * JSONToSvcBin(const char * jsonStr)
             svc->owners = (OicUuid_t*)OICCalloc(svc->ownersLen, sizeof(OicUuid_t));
             VERIFY_NON_NULL(TAG, (svc->owners), ERROR);
 
-            int idxx = 0;
+            size_t idxx = 0;
             do
             {
                 cJSON *jsonOwnr = cJSON_GetArrayItem(jsonObj, idxx);

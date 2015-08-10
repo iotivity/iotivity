@@ -137,14 +137,14 @@ TEST(ACLResourceTest, GetDefaultACLTests)
 // 'POST' ACL tests
 TEST(ACLResourceTest, ACLPostTest)
 {
-    OCEntityHandlerRequest ehReq = {};
+    OCEntityHandlerRequest ehReq =  OCEntityHandlerRequest();
 
     // Read an ACL from the file
     char *jsonStr = ReadFile(ACL1_JSON_FILE_NAME);
     if (jsonStr)
     {
-        static OCPersistentStorage ps =
-        { };
+        static OCPersistentStorage ps = OCPersistentStorage();
+
         SetPersistentHandler(&ps, true);
 
         // Create Entity Handler POST request payload
@@ -208,10 +208,10 @@ TEST(ACLResourceTest, GetACLResourceTests)
 //'DELETE' ACL test
 TEST(ACLResourceTest, ACLDeleteWithSingleResourceTest)
 {
-    OCEntityHandlerRequest ehReq = {};
-    static OCPersistentStorage ps = {};
+    OCEntityHandlerRequest ehReq = OCEntityHandlerRequest();
+    static OCPersistentStorage ps = OCPersistentStorage();
     char *jsonStr = NULL;
-    OicSecAcl_t acl = {};
+    OicSecAcl_t acl = OicSecAcl_t();
     OicSecAcl_t* savePtr = NULL;
     const OicSecAcl_t* subjectAcl1 = NULL;
     const OicSecAcl_t* subjectAcl2 = NULL;
@@ -276,9 +276,9 @@ exit:
 
 TEST(ACLResourceTest, ACLDeleteWithMultiResourceTest)
 {
-    OCEntityHandlerRequest ehReq = {};
-    static OCPersistentStorage ps = {};
-    OicSecAcl_t acl = {};
+    OCEntityHandlerRequest ehReq = OCEntityHandlerRequest();
+    static OCPersistentStorage ps = OCPersistentStorage();
+    OicSecAcl_t acl = OicSecAcl_t();
     char *jsonStr = NULL;
     OicSecAcl_t* savePtr = NULL;
     const OicSecAcl_t* subjectAcl1 = NULL;

@@ -49,7 +49,6 @@ const OicSecCred_t* GetCredResourceData(const OicUuid_t* subject);
 #endif
 
 
-
 OicSecCred_t * getCredList()
 {
 
@@ -182,8 +181,8 @@ TEST(CredEntityHandlerTest, CredEntityHandlerInvalidFlag)
 //Cred DELETE request
 TEST(CredEntityHandlerTest, CredEntityHandlerDeleteTest)
 {
-    OCEntityHandlerRequest ehReq = {};
-    static OCPersistentStorage ps = {};
+    OCEntityHandlerRequest ehReq =  OCEntityHandlerRequest();
+    static OCPersistentStorage ps =  OCPersistentStorage();
     const OicSecCred_t* subjectCred1 = NULL;
     const OicSecCred_t* subjectCred2 = NULL;
     char *jsonStr = NULL;

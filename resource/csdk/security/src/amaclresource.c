@@ -211,7 +211,7 @@ OicSecAmacl_t * JSONToAmaclBin(const char * jsonStr)
             amacl->resources = (char**)OICCalloc(amacl->resourcesLen, sizeof(char*));
             VERIFY_NON_NULL(TAG, (amacl->resources), ERROR);
 
-            int idxx = 0;
+            size_t idxx = 0;
             do
             {
                 cJSON *jsonRsrc = cJSON_GetArrayItem(jsonObj, idxx);

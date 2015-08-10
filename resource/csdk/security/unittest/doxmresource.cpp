@@ -33,6 +33,7 @@
 extern "C" {
 #endif
 
+
 //Declare Doxm resource methods for testing
 OCStackResult CreateDoxmResource();
 OCEntityHandlerResult DoxmEntityHandler (OCEntityHandlerFlag flag,
@@ -46,6 +47,7 @@ OCEntityHandlerResult HandleDoxmGetRequest (const OCEntityHandlerRequest * ehReq
 #ifdef __cplusplus
 }
 #endif
+
 
 OicSecDoxm_t * getBinDoxm()
 {
@@ -130,7 +132,7 @@ TEST(DoxmEntityHandlerTest, DoxmEntityHandlerValidRequest)
 {
     EXPECT_EQ(OC_STACK_INVALID_PARAM, InitDoxmResource());
     char query[] = "oxm=0;owned=false;owner=owner1";
-    OCEntityHandlerRequest req = {0};
+    OCEntityHandlerRequest req = OCEntityHandlerRequest();
     req.method = OC_REST_GET;
     req.query = OICStrdup(query);
     EXPECT_EQ(OC_EH_ERROR, DoxmEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, &req));

@@ -274,7 +274,6 @@ IotvtICalResult_t ParseRecur(const char *recurStr, IotvtICalRecur_t *recur)
     return IOTVTICAL_SUCCESS;
 }
 
-
 /**
  * Computes number of days between two dates.
  *
@@ -346,8 +345,8 @@ IotvtICalResult_t IsRequestWithinValidTime(char *periodStr, char *recurStr)
         return IOTVTICAL_INVALID_PARAMETER;
     }
 
-    IotvtICalPeriod_t period = {};
-    IotvtICalRecur_t recur = {};
+    IotvtICalPeriod_t period = {.startDateTime={.tm_sec=0}};
+    IotvtICalRecur_t recur = {.freq=0};
     IotvtICalResult_t ret = IOTVTICAL_INVALID_ACCESS;
 
     time_t rawTime = time(0);
@@ -386,7 +385,7 @@ IotvtICalResult_t IsRequestWithinValidTime(char *periodStr, char *recurStr)
            (0 <= DiffSecs(currentTime, &period.endDateTime)) &&
            (0 <= DiffDays(&period.startDateTime, currentTime)))
         {
-            IotvtICalDateTime_t emptyDT = {};
+            IotvtICalDateTime_t emptyDT = {.tm_sec=0};
             ret = IOTVTICAL_VALID_ACCESS;
 
             //"UNTIL" is an optional parameter of RRULE, checking if until present in recur
