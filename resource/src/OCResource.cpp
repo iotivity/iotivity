@@ -125,7 +125,7 @@ void OCResource::setHost(const std::string& host)
 
         size_t found = host_token.find(']');
 
-        if(found == std::string::npos)
+        if(found == std::string::npos || found == 0)
         {
             throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
                 m_interfaces.empty(), m_clientWrapper.expired(), false, false);
@@ -141,7 +141,7 @@ void OCResource::setHost(const std::string& host)
     {
         size_t found = host_token.find(':');
 
-        if(found == std::string::npos)
+        if(found == std::string::npos || found == 0)
         {
             throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
                 m_interfaces.empty(), m_clientWrapper.expired(), false, false);
