@@ -51,10 +51,9 @@ static CAEDRNetworkStatusCallback g_edrNetworkChangeCallback = NULL;
 static void CAEDRAdapterStateChangeCallback(int result, bt_adapter_state_e adapterState,
                                             void *userData);
 
-void *GMainLoopThread (void *param)
+void GMainLoopThread (void *param)
 {
     g_main_loop_run(g_mainloop);
-    return NULL;
 }
 
 CAResult_t CAEDRInitializeNetworkMonitor(const ca_thread_pool_t threadPool)
