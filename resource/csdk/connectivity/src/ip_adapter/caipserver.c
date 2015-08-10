@@ -694,6 +694,7 @@ static void sendData(int fd, const CAEndpoint_t *endpoint,
     struct sockaddr_storage sock;
     CAConvertNameToAddr(endpoint->addr, endpoint->port, &sock);
 
+    socklen_t socklen;
     if (sock.ss_family == AF_INET6)
     {
         struct sockaddr_in6 *sock6 = (struct sockaddr_in6 *)&sock;
@@ -701,9 +702,14 @@ static void sendData(int fd, const CAEndpoint_t *endpoint,
         {
             sock6->sin6_scope_id = endpoint->interface;
         }
+        socklen = sizeof(struct sockaddr_in6);
+    }
+    else
+    {
+        socklen = sizeof(struct sockaddr_in);
     }
 
-    ssize_t len = sendto(fd, data, dlen, 0, (struct sockaddr *)&sock, sizeof (sock));
+    ssize_t len = sendto(fd, data, dlen, 0, (struct sockaddr *)&sock, socklen);
     if (-1 == len)
     {
          // If logging is not defined/enabled.
