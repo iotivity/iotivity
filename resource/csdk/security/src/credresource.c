@@ -33,6 +33,7 @@
 #include "base64.h"
 #include "srmutility.h"
 #include "cainterface.h"
+#include "pbkdf2.h"
 #include <stdlib.h>
 #ifdef WITH_ARDUINO
 #include <string.h>
@@ -306,7 +307,7 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
             //Owners -- Mandatory
             jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_OWNERS_NAME);
             VERIFY_NON_NULL(TAG, jsonObj, ERROR);
-            VERIFY_SUCCESS(TAG, cJSON_Array == jsonObj->type, ERROR)
+            VERIFY_SUCCESS(TAG, cJSON_Array == jsonObj->type, ERROR);
             cred->ownersLen = cJSON_GetArraySize(jsonObj);
             VERIFY_SUCCESS(TAG, cred->ownersLen > 0, ERROR);
             cred->owners = (OicUuid_t*)OICCalloc(cred->ownersLen, sizeof(OicUuid_t));
@@ -861,4 +862,61 @@ exit:
     }
     OICFree(caBlob);
 }
+
+/**
+ * Add temporal PSK to PIN based OxM
+ *
+ * @param[in] tmpSubject UUID of target device
+ * @param[in] credType Type of credential to be added
+ * @param[in] pin numeric characters
+ * @param[in] pinSize length of 'pin'
+ * @param[in] ownersLen Number of owners
+ * @param[in] owners Array of owners
+ * @param[out] tmpCredSubject Generated credential's subject.
+ *
+ * @return OC_STACK_OK for success and errorcode otherwise.
+ */
+OCStackResult AddTmpPskWithPIN(const OicUuid_t* tmpSubject, OicSecCredType_t credType,
+                            const char * pin, size_t pinSize,
+                            size_t ownersLen, const OicUuid_t * owners, OicUuid_t* tmpCredSubject)
+{
+    OCStackResult ret = OC_STACK_ERROR;
+
+    if(tmpSubject == NULL || pin == NULL || pinSize == 0 || tmpCredSubject == NULL)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    uint8_t privData[OWNER_PSK_LENGTH_128] = {0,};
+    int dtlsRes = DeriveCryptoKeyFromPassword((const unsigned char *)pin, pinSize, owners->id,
+                                              UUID_LENGTH, PBKDF_ITERATIONS,
+                                              OWNER_PSK_LENGTH_128, privData);
+    VERIFY_SUCCESS(TAG, (dtlsRes == 0) , ERROR);
+
+    uint32_t outLen = 0;
+    char base64Buff[B64ENCODE_OUT_SAFESIZE(OWNER_PSK_LENGTH_128) + 1] = {};
+    B64Result b64Ret = b64Encode(privData, OWNER_PSK_LENGTH_128, base64Buff,
+                                sizeof(base64Buff), &outLen);
+    VERIFY_SUCCESS(TAG, (B64_OK == b64Ret), ERROR);
+
+    OicSecCred_t* cred = GenerateCredential(tmpSubject, credType, NULL,
+                                            base64Buff, ownersLen, owners);
+    if(NULL == cred)
+    {
+        OC_LOG(ERROR, TAG, "GeneratePskWithPIN() : Failed to generate credential");
+        return OC_STACK_ERROR;
+    }
+
+    memcpy(tmpCredSubject->id, cred->subject.id, UUID_LENGTH);
+
+    ret = AddCredential(cred);
+    if( OC_STACK_OK != ret)
+    {
+        OC_LOG(ERROR, TAG, "GeneratePskWithPIN() : Failed to add credential");
+    }
+
+exit:
+    return ret;
+}
+
 #endif /* __WITH_DTLS__ */

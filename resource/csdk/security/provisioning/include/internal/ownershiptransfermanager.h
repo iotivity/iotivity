@@ -39,7 +39,7 @@ extern "C" {
 typedef struct OTMContext{
     void* userCtx; /**< Context for user**/
     OCProvisionDev_t* selectedDeviceInfo; /**< Selected device info for OT */
-    uint16_t tempCredId;
+    OicUuid_t tempCredId;
 }OTMContext_t;
 
 /**

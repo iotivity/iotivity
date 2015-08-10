@@ -17,7 +17,6 @@
  * limitations under the License.
  *
  * *****************************************************************/
-
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
@@ -118,12 +117,12 @@ static void registerResultForCredProvisioning(CredentialData_t *credData,
  * Callback handler for handling callback of provisioning device 2.
  *
  * @param[in] ctx             ctx value passed to callback from calling function.
- * @param[in] handle          handle to an invocation
+ * @param[in] UNUSED          handle to an invocation
  * @param[in] clientResponse  Response from queries to remote servers.
  * @return  OC_STACK_DELETE_TRANSACTION to delete the transaction
  *          and  OC_STACK_KEEP_TRANSACTION to keep it.
  */
-static OCStackApplicationResult provisionCredentialCB2(void *ctx, OCDoHandle handle,
+static OCStackApplicationResult provisionCredentialCB2(void *ctx, OCDoHandle UNUSED,
         OCClientResponse *clientResponse)
 {
     VERIFY_NON_NULL(TAG, ctx, ERROR, OC_STACK_DELETE_TRANSACTION);
@@ -159,12 +158,12 @@ static OCStackApplicationResult provisionCredentialCB2(void *ctx, OCDoHandle han
  * Callback handler for handling callback of provisioning device 1.
  *
  * @param[in] ctx             ctx value passed to callback from calling function.
- * @param[in] handle          handle to an invocation
+ * @param[in] UNUSED          handle to an invocation
  * @param[in] clientResponse  Response from queries to remote servers.
  * @return  OC_STACK_DELETE_TRANSACTION to delete the transaction
  *          and  OC_STACK_KEEP_TRANSACTION to keep it.
  */
-static OCStackApplicationResult provisionCredentialCB1(void *ctx, OCDoHandle handle,
+static OCStackApplicationResult provisionCredentialCB1(void *ctx, OCDoHandle UNUSED,
         OCClientResponse *clientResponse)
 {
     VERIFY_NON_NULL(TAG, ctx, ERROR, OC_STACK_DELETE_TRANSACTION);
@@ -241,7 +240,13 @@ static OCStackResult provisionCredentials(const OicSecCred_t *cred,
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
     secPayload->securityData = BinToCredJSON(cred);
-    VERIFY_NON_NULL(TAG, secPayload->securityData, ERROR, OC_STACK_NO_MEMORY);
+    if(NULL == secPayload->securityData)
+    {
+        OICFree(secPayload);
+        OC_LOG(ERROR, TAG, "Failed to BinToCredJSON");
+        return OC_STACK_NO_MEMORY;
+    }
+
     OC_LOG_V(INFO, TAG, "Credential for provisioning : %s",secPayload->securityData);
     char uri[SRP_MAX_URI_LENGTH] = { 0 };
 
@@ -251,7 +256,7 @@ static OCStackResult provisionCredentials(const OicSecCred_t *cred,
 
     uri[uriLen - 1] = '\0';
     OC_LOG_V(INFO, TAG, "URI for Credential provisioning : %s",uri);
-    OCCallbackData cbData = { };
+    OCCallbackData cbData = {.context=NULL, .cb=NULL, .cd=NULL};
     cbData.cb = responseHandler;
     cbData.context = (void *) credData;
     cbData.cd = NULL;
@@ -259,7 +264,7 @@ static OCStackResult provisionCredentials(const OicSecCred_t *cred,
     OCDoHandle handle = NULL;
     OCMethod method = OC_REST_POST;
     // TODO replace CT_ADAPTER_IP with value from discovery
-    OCStackResult ret = OCDoResource(&handle, method, uri, 0, secPayload,
+    OCStackResult ret = OCDoResource(&handle, method, uri, 0, (OCPayload*)secPayload,
             CT_ADAPTER_IP, OC_HIGH_QOS, &cbData, NULL, 0);
     OC_LOG_V(INFO, TAG, "OCDoResource::Credential provisioning returned : %d",ret);
     if (ret != OC_STACK_OK)
@@ -372,12 +377,12 @@ static void registerResultForACLProvisioning(ACLData_t *aclData,
  * Callback handler of SRPProvisionACL.
  *
  * @param[in] ctx             ctx value passed to callback from calling function.
- * @param[in] handle          handle to an invocation
+ * @param[in] UNUSED          handle to an invocation
  * @param[in] clientResponse  Response from queries to remote servers.
  * @return  OC_STACK_DELETE_TRANSACTION to delete the transaction
  *          and  OC_STACK_KEEP_TRANSACTION to keep it.
  */
-static OCStackApplicationResult SRPProvisionACLCB(void *ctx, OCDoHandle handle,
+static OCStackApplicationResult SRPProvisionACLCB(void *ctx, OCDoHandle UNUSED,
         OCClientResponse *clientResponse)
 {
     OC_LOG_V(INFO, TAG, "Inside SRPProvisionACLCB.");
@@ -423,7 +428,12 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
     secPayload->securityData = BinToAclJSON(acl);
-    VERIFY_NON_NULL(TAG, secPayload->securityData, ERROR, OC_STACK_NO_MEMORY);
+    if(NULL == secPayload->securityData)
+    {
+        OICFree(secPayload);
+        OC_LOG(ERROR, TAG, "Failed to BinToAclJSON");
+        return OC_STACK_NO_MEMORY;
+    }
     OC_LOG_V(INFO, TAG, "ACL : %s", secPayload->securityData);
 
     char uri[SRP_MAX_URI_LENGTH] = {0};
@@ -434,11 +444,12 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
     uri[uriLen - 1] = '\0';
 
     OC_LOG_V(INFO, TAG, "URI : %s", uri);
-    OCCallbackData cbData =  {0,};
+    OCCallbackData cbData =  {.context=NULL, .cb=NULL, .cd=NULL};
     cbData.cb = &SRPProvisionACLCB;
     ACLData_t *aclData = (ACLData_t *) OICMalloc(sizeof(ACLData_t));
     if (aclData == NULL)
     {
+        OICFree(secPayload);
         OC_LOG(ERROR, TAG, "Unable to allocate memory");
         return OC_STACK_NO_MEMORY;
     }
@@ -452,6 +463,7 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
     aclData->resArr = (OCProvisionResult_t*)OICMalloc(sizeof(OCProvisionResult_t)*noOfRiCalls);
     if (aclData->resArr == NULL)
     {
+        OICFree(secPayload);
         OC_LOG(ERROR, TAG, "Unable to allocate memory");
         return OC_STACK_NO_MEMORY;
     }
@@ -464,9 +476,8 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
     // TODO replace CT_ADAPTER_IP with value from discovery
 
     OCStackResult ret = OCDoResource(&handle, method, uri,
-            &selectedDeviceInfo->endpoint, secPayload,
+            &selectedDeviceInfo->endpoint, (OCPayload*)secPayload,
             CT_ADAPTER_IP, OC_HIGH_QOS, &cbData, NULL, 0);
-
     if (ret != OC_STACK_OK)
     {
         OICFree(aclData->resArr);

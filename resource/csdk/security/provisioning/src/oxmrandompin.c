@@ -19,31 +19,47 @@
  * *****************************************************************/
 
 #include <memory.h>
+
 #include "ocstack.h"
+#include "ocsecurityconfig.h"
 #include "securevirtualresourcetypes.h"
 #include "doxmresource.h"
+#include "credresource.h"
 #include "cacommon.h"
 #include "cainterface.h"
+#include "ocrandom.h"
 #include "oic_malloc.h"
 #include "logger.h"
+#include "pbkdf2.h"
 #include "global.h"
-#include "pmtypes.h"
+#include "base64.h"
+#include "oxmrandompin.h"
 #include "ownershiptransfermanager.h"
+#include "pinoxmcommon.h"
 
-#define TAG "OXM_JustWorks"
+#define TAG "OXM_RandomPIN"
 
-char* CreateJustWorksSelectOxmPayload(OTMContext_t* otmCtx)
+char* CreatePinBasedSelectOxmPayload(OTMContext_t* otmCtx)
 {
     if(!otmCtx || !otmCtx->selectedDeviceInfo)
     {
         return NULL;
     }
 
-    otmCtx->selectedDeviceInfo->doxm->oxmSel = OIC_JUST_WORKS;
+    otmCtx->selectedDeviceInfo->doxm->oxmSel = OIC_RANDOM_DEVICE_PIN;
+
+    OicUuid_t uuidPT = {.id={0}};
+    if (OC_STACK_OK != GetDoxmDeviceID(&uuidPT))
+    {
+        OC_LOG(ERROR, TAG, "Error while retrieving provisioning tool's device ID");
+        return NULL;
+    }
+    memcpy(otmCtx->selectedDeviceInfo->doxm->owner.id, uuidPT.id, UUID_LENGTH);
+
     return BinToDoxmJSON(otmCtx->selectedDeviceInfo->doxm);
 }
 
-char* CreateJustWorksOwnerTransferPayload(OTMContext_t* otmCtx)
+char* CreatePinBasedOwnerTransferPayload(OTMContext_t* otmCtx)
 {
     if(!otmCtx || !otmCtx->selectedDeviceInfo)
     {
@@ -63,27 +79,49 @@ char* CreateJustWorksOwnerTransferPayload(OTMContext_t* otmCtx)
     return BinToDoxmJSON(otmCtx->selectedDeviceInfo->doxm);
 }
 
-OCStackResult LoadSecretJustWorksCallback(OTMContext_t* UNUSED_PARAM)
+OCStackResult InputPinCodeCallback(OTMContext_t* otmCtx)
 {
-    //In case of 'just works', secret data not required
-    return OC_STACK_OK;
-}
-
-OCStackResult CreateSecureSessionJustWorksCallback(OTMContext_t* otmCtx)
-{
-    OC_LOG(INFO, TAG, "IN CreateSecureSessionJustWorksCallback");
     if(!otmCtx || !otmCtx->selectedDeviceInfo)
     {
         return OC_STACK_INVALID_PARAM;
     }
 
-    CAResult_t caresult = CAEnableAnonECDHCipherSuite(true);
-    if (CA_STATUS_OK != caresult)
+    uint8_t pinData[OXM_RANDOM_PIN_SIZE + 1];
+
+    OCStackResult res = InputPin((char*)pinData, OXM_RANDOM_PIN_SIZE + 1);
+    if(OC_STACK_OK != res)
     {
-        OC_LOG_V(ERROR, TAG, "Unable to enable anon cipher suite");
+        OC_LOG(ERROR, TAG, "Failed to input PIN");
+        return res;
+    }
+
+    OicUuid_t deviceUUID = {.id={0}};
+    if (OC_STACK_OK != GetDoxmDeviceID(&deviceUUID))
+    {
+        OC_LOG(ERROR, TAG, "Error while retrieving provisioning tool's device ID");
         return OC_STACK_ERROR;
     }
-    OC_LOG(INFO, TAG, "Anonymous cipher suite Enabled.");
+
+    res = AddTmpPskWithPIN(&otmCtx->selectedDeviceInfo->doxm->deviceID,
+                           SYMMETRIC_PAIR_WISE_KEY,
+                           (char*)pinData, OXM_RANDOM_PIN_SIZE,
+                           1, &deviceUUID, &otmCtx->tempCredId);
+    if(res != OC_STACK_OK)
+    {
+        OC_LOG_V(ERROR, TAG, "Failed to save the temporal PSK : %d", res);
+    }
+
+    return res;
+}
+
+OCStackResult CreateSecureSessionRandomPinCallbak(OTMContext_t* otmCtx)
+{
+    OC_LOG(INFO, TAG, "IN CreateSecureSessionRandomPinCallbak");
+
+    if(!otmCtx || !otmCtx->selectedDeviceInfo)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
 
     OCProvisionDev_t* selDevInfo = otmCtx->selectedDeviceInfo;
     CAEndpoint_t *endpoint = (CAEndpoint_t *)OICCalloc(1, sizeof (CAEndpoint_t));
@@ -93,8 +131,7 @@ OCStackResult CreateSecureSessionJustWorksCallback(OTMContext_t* otmCtx)
     }
     memcpy(endpoint,&selDevInfo->endpoint,sizeof(CAEndpoint_t));
     endpoint->port = selDevInfo->securePort;
-
-    caresult = CAInitiateHandshake(endpoint);
+    CAResult_t caresult = CAInitiateHandshake(endpoint);
     OICFree(endpoint);
     if (CA_STATUS_OK != caresult)
     {
@@ -102,6 +139,7 @@ OCStackResult CreateSecureSessionJustWorksCallback(OTMContext_t* otmCtx)
         return OC_STACK_ERROR;
     }
 
-    OC_LOG(INFO, TAG, "OUT CreateSecureSessionJustWorksCallback");
+    OC_LOG(INFO, TAG, "OUT CreateSecureSessionRandomPinCallbak");
+
     return OC_STACK_OK;
 }

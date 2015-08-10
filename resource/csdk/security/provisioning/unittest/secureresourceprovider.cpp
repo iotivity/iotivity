@@ -26,7 +26,8 @@ static OCProvisionDev_t pDev1;
 static OCProvisionDev_t pDev2;
 static OicSecCredType_t credType;
 
-static void provisioningCB (void* ctx, int nOfRes, OCProvisionResult_t *arr, bool hasError)
+static void provisioningCB (void* UNUSED1, int UNUSED2,
+                            OCProvisionResult_t *UNUSED3, bool UNUSED4)
 {
     //dummy callback
 }
@@ -48,15 +49,21 @@ TEST(SRPProvisionACLTest, NullACL)
 
 TEST(SRPProvisionCredentialsTest, NullDevice1)
 {
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPProvisionCredentials(NULL, credType, OWNER_PSK_LENGTH_128, NULL, &pDev2, &provisioningCB));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPProvisionCredentials(NULL, credType,
+                                                              OWNER_PSK_LENGTH_128, NULL,
+                                                              &pDev2, &provisioningCB));
 }
 
 TEST(SRPProvisionCredentialsTest, NullCallback)
 {
-    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, SRPProvisionCredentials(NULL, credType, OWNER_PSK_LENGTH_128, &pDev1, &pDev2, NULL));
+    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, SRPProvisionCredentials(NULL, credType,
+                                                                 OWNER_PSK_LENGTH_128,
+                                                                 &pDev1, &pDev2, NULL));
 }
 
 TEST(SRPProvisionCredentialsTest, InvalidKeySize)
 {
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPProvisionCredentials(NULL, credType, 0, &pDev1, &pDev2, &provisioningCB));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPProvisionCredentials(NULL, credType,
+                                                                0, &pDev1, &pDev2,
+                                                                &provisioningCB));
 }

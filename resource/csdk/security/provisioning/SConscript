@@ -42,6 +42,7 @@ provisioning_env.AppendUnique(CPPPATH = [
 		'../../connectivity/inc',
 		'../../connectivity/external/inc',
 		'../../connectivity/common/inc',
+		'../../connectivity/lib/libcoap-4.1.1',
 		'../../connectivity/api',
 		'../include',
 		'../include/internal'
@@ -80,11 +81,12 @@ if target_os in ['darwin', 'ios']:
 ######################################################################
 provisioning_src = [
 	'src/pmutility.c',
-    'src/credentialgenerator.c',
-    'src/ownershiptransfermanager.c',
-    'src/secureresourceprovider.c',
-    'src/ocprovisioningmanager.c',
-    'src/oxmjustworks.c' ]
+	'src/credentialgenerator.c',
+	'src/ownershiptransfermanager.c',
+	'src/secureresourceprovider.c',
+	'src/ocprovisioningmanager.c',
+	'src/oxmjustworks.c',
+	'src/oxmrandompin.c' ]
 provisioningserver = provisioning_env.StaticLibrary('ocpmapi', provisioning_src)
 
 provisioning_env.InstallTarget(provisioningserver, 'libocpmapi')

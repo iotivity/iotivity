@@ -172,8 +172,8 @@ void DeleteDeviceList(OCProvisionDev_t **ppDevicesList)
  */
 OCStackResult PMTimeout(unsigned short waittime)
 {
-    struct timespec startTime = {};
-    struct timespec currTime  = {};
+    struct timespec startTime = {.tv_sec=0, .tv_nsec=0};
+    struct timespec currTime  = {.tv_sec=0, .tv_nsec=0};
 
     OCStackResult res = OC_STACK_OK;
 #ifdef _POSIX_MONOTONIC_CLOCK
@@ -268,7 +268,7 @@ uint16_t GetSecurePortFromJSON(char* jsonStr)
  *         OC_STACK_DELETE_TRANSACTION to delete it.
  */
 static OCStackApplicationResult SecurePortDiscoveryHandler(void *ctx,
-                                OCDoHandle handle, OCClientResponse *clientResponse)
+                                OCDoHandle UNUSED, OCClientResponse *clientResponse)
 {
     if (ctx == NULL)
     {
@@ -334,7 +334,7 @@ static OCStackApplicationResult SecurePortDiscoveryHandler(void *ctx,
  *         OC_STACK_DELETE_TRANSACTION to delete it.
  */
 static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx,
-                                OCDoHandle handle, OCClientResponse *clientResponse)
+                                OCDoHandle UNUSED, OCClientResponse *clientResponse)
 {
     if (ctx == NULL)
     {
@@ -472,4 +472,3 @@ OCStackResult PMDeviceDiscovery(unsigned short waittime, bool isOwned, OCProvisi
 exit:
     return res;
 }
-

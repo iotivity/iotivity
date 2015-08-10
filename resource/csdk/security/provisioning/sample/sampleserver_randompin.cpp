@@ -29,8 +29,9 @@
 #include "ocstack.h"
 #include "logger.h"
 #include "ocpayload.h"
+#include "pinoxmcommon.h"
 
-#define TAG "SAMPLE_JUSTWORKS"
+#define TAG "SAMPLE_RANDOMPIN"
 
 int gQuitFlag = 0;
 
@@ -53,7 +54,7 @@ char *gResourceUri= (char *)"/a/led";
 //Secure Virtual Resource database for Iotivity Server
 //It contains Server's Identity and the PSK credentials
 //of other devices which the server trusts
-static char CRED_FILE[] = "oic_svr_db_server_justworks.json";
+static char CRED_FILE[] = "oic_svr_db_server_randompin.json";
 
 /* Function that creates a new LED resource by calling the
  * OCCreateResource() method.
@@ -393,6 +394,19 @@ FILE* server_fopen(const char *path, const char *mode)
     return fopen(CRED_FILE, mode);
 }
 
+void GeneratePinCB(char* pin, size_t pinSize)
+{
+    if(NULL == pin || pinSize <= 0)
+    {
+        OC_LOG(INFO, TAG, "Invalid PIN");
+        return;
+    }
+
+    OC_LOG(INFO, TAG, "============================");
+    OC_LOG_V(INFO, TAG, "    PIN CODE : %s", pin);
+    OC_LOG(INFO, TAG, "============================");
+}
+
 int main(int argc, char* argv[])
 {
     struct timespec timeout;
@@ -413,6 +427,12 @@ int main(int argc, char* argv[])
         OC_LOG(ERROR, TAG, "OCStack init error");
         return 0;
     }
+
+   /**
+     * If server supported random pin based ownership transfer,
+     * callback of print PIN should be registered before runing server.
+     */
+    SetGeneratePinCB(&GeneratePinCB);
 
     /*
      * Declare and create the example resource: LED

@@ -28,8 +28,8 @@
 #include "ocprovisioningmanager.h"
 #include "secureresourceprovider.h"
 #include "oxmjustworks.h"
-// TODO: PIN based OxM implementation is required.
-//#include "oxmrandompin.h"
+#include "oxmrandompin.h"
+#include "pinoxmcommon.h"
 #include "oic_string.h"
 
 #define MAX_URI_LENGTH (64)
@@ -67,7 +67,7 @@ static void deleteACL(OicSecAcl_t *acl)
     if (acl)
     {
         /* Clean Resources */
-        for (int i = 0; i < (acl)->resourcesLen; i++)
+        for (size_t i = 0; i < (acl)->resourcesLen; i++)
         {
             OICFree((acl)->resources[i]);
         }
@@ -185,9 +185,9 @@ static int InputACL(OicSecAcl_t *acl)
         OC_LOG(ERROR, TAG, "Error while memory allocation");
         return -1;
     }
-    for (int i = 0; i < acl->resourcesLen; i++)
+    for (size_t i = 0; i < acl->resourcesLen; i++)
     {
-        printf("[%d]Resource : ", i + 1);
+        printf("[%zu]Resource : ", i + 1);
         unused = scanf("%64s", temp_rsc);
         acl->resources[i] = OICStrdup(temp_rsc);
 
@@ -219,9 +219,9 @@ static int InputACL(OicSecAcl_t *acl)
         OC_LOG(ERROR, TAG, "Error while memory allocation");
         return -1;
     }
-    for (int i = 0; i < acl->ownersLen; i++)
+    for (size_t i = 0; i < acl->ownersLen; i++)
     {
-        printf("[%d]Rowner : ", i + 1);
+        printf("[%zu]Rowner : ", i + 1);
         unused = scanf("%19s", temp_id);
         j = 0;
         for (int k = 0; temp_id[k] != '\0'; k++)
@@ -237,17 +237,45 @@ static int InputACL(OicSecAcl_t *acl)
 
 
 //FILE *client_fopen(const char *path, const char *mode)
-FILE *client_fopen(const char *path, const char *mode)
+FILE *client_fopen(const char *UNUSED_PARAM, const char *mode)
 {
     return fopen(CRED_FILE, mode);
+}
+
+void PrintfResult(const char* procName, void* ctx, int nOfRes, OCProvisionResult_t *arr, bool hasError)
+{
+    printf("-----------------------------------------------------------\n");
+    if(!hasError)
+    {
+        printf("%s was successfully done.\n", procName);
+    }
+    else
+    {
+        for(int i = 0; i < nOfRes; i++)
+        {
+            printf("UUID : ");
+            for(int j = 0; j < UUID_LENGTH; i++)
+            {
+                printf("%c", arr[i].deviceId.id[j]);
+            }
+            printf("\t");
+            printf("Result=%d\n", arr[i].res);
+        }
+    }
+
+    if(ctx)
+    {
+        printf("Context is %s\n", (char*)ctx);
+    }
+    printf("-----------------------------------------------------------\n");
 }
 
 void ProvisionCredCB(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool hasError)
 {
     if(!hasError)
     {
-        OC_LOG(INFO, TAG, "Provision Credential IS DONE~~!!");
         gOwnershipState = 1;
+        PrintfResult("Provision Credential", ctx, nOfRes, arr, hasError);
     }
 }
 
@@ -255,8 +283,8 @@ void ProvisionAclCB(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool hasErr
 {
     if(!hasError)
     {
-        OC_LOG(INFO, TAG, "Provision Acl IS DONE~~!!");
         gOwnershipState = 1;
+        PrintfResult("Provision ACL", ctx, nOfRes, arr, hasError);
     }
 }
 
@@ -264,9 +292,8 @@ void ProvisionPairwiseCB(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool h
 {
     if(!hasError)
     {
-        OC_LOG_V(INFO, TAG, "Context is %s", (char*)ctx);
-        OC_LOG(INFO, TAG, "Provision Pairwise IS DONE~~!!");
         gOwnershipState = 1;
+        PrintfResult("Provision Pairwise Credential", ctx, nOfRes, arr, hasError);
     }
 }
 
@@ -274,9 +301,8 @@ void OwnershipTransferCB(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool h
 {
     if(!hasError)
     {
-        OC_LOG_V(INFO, TAG, "Context is %s", (char*)ctx);
-        OC_LOG(INFO, TAG, "OWNERSHIP TRANSFER IS DONE~~!!");
         gOwnershipState = 1;
+        PrintfResult("Ownership transfer", ctx, nOfRes, arr, hasError);
     }
 }
 
@@ -284,7 +310,8 @@ void InputPinCB(char* pinBuf, size_t bufSize)
 {
     if(pinBuf)
     {
-        scanf("%s", pinBuf);
+        printf("INPUT PIN : ");
+        int unused = scanf("%s", pinBuf);
         pinBuf[bufSize - 1] = '\0';
     }
 }
@@ -305,7 +332,11 @@ int main(int argc, char **argv)
     }
 
     // Initialize Persistent Storage for SVR database
-    OCPersistentStorage ps = {};
+    OCPersistentStorage ps = { .open = NULL,
+                               .read = NULL,
+                               .write = NULL,
+                               .close = NULL,
+                               .unlink = NULL };
     ps.open = client_fopen;
     ps.read = fread;
     ps.write = fwrite;
@@ -338,20 +369,27 @@ int main(int argc, char **argv)
     }
 
     //Register callback function to each OxM
-    OTMCallbackData_t justWorksCBData = {};
+    OTMCallbackData_t justWorksCBData = {.loadSecretCB=NULL,
+                                         .createSecureSessionCB=NULL,
+                                         .createSelectOxmPayloadCB=NULL,
+                                         .createOwnerTransferPayloadCB=NULL};
     justWorksCBData.loadSecretCB = LoadSecretJustWorksCallback;
     justWorksCBData.createSecureSessionCB = CreateSecureSessionJustWorksCallback;
     justWorksCBData.createSelectOxmPayloadCB = CreateJustWorksSelectOxmPayload;
     justWorksCBData.createOwnerTransferPayloadCB = CreateJustWorksOwnerTransferPayload;
     OTMSetOwnershipTransferCallbackData(OIC_JUST_WORKS, &justWorksCBData);
 
-    // TODO: PIN based OxM implementation is required.
-    //OTMCallbackData_t pinBasedCBData = {};
-    //pinBasedCBData.loadSecretCB = InputPinCodeCallback;
-    //pinBasedCBData.createSecureSessionCB = CreateSecureSessionRandomPinCallbak;
-    //pinBasedCBData.createSelectOxmPayloadCB = CreatePinBasedSelectOxmPayload;
-    //pinBasedCBData.createOwnerTransferPayloadCB = CreatePinBasedOwnerTransferPayload;
-    //OTMSetOwnershipTransferCallbackData(OIC_RANDOM_DEVICE_PIN, &pinBasedCBData);
+    OTMCallbackData_t pinBasedCBData = {.loadSecretCB=NULL,
+                                         .createSecureSessionCB=NULL,
+                                         .createSelectOxmPayloadCB=NULL,
+                                         .createOwnerTransferPayloadCB=NULL};
+    pinBasedCBData.loadSecretCB = InputPinCodeCallback;
+    pinBasedCBData.createSecureSessionCB = CreateSecureSessionRandomPinCallbak;
+    pinBasedCBData.createSelectOxmPayloadCB = CreatePinBasedSelectOxmPayload;
+    pinBasedCBData.createOwnerTransferPayloadCB = CreatePinBasedOwnerTransferPayload;
+    OTMSetOwnershipTransferCallbackData(OIC_RANDOM_DEVICE_PIN, &pinBasedCBData);
+
+    SetInputPinCB(&InputPinCB);
 
     char* myContext = "OTM Context";
     //Perform ownership transfer

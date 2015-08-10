@@ -38,21 +38,6 @@ extern "C"
 #define COAP_QUERY "coap://%s:%d%s"
 
 /**
- * Macro to verify argument is not equal to NULL.
- * eg: VERIFY_NON_NULL(TAG, ptrData, ERROR,OC_STACK_ERROR);
- */
-#define VERIFY_NON_NULL(tag, arg, logLevel, retValue) { if (NULL == (arg)) \
-            { OC_LOG((logLevel), tag, (#arg " is NULL")); return retValue; } }
-
-/**
- * Macro to verify success of operation.
- * eg: VERIFY_SUCCESS(TAG, OC_STACK_OK == foo(), ERROR, OC_STACK_ERROR);
- */
-#define VERIFY_SUCCESS(tag, op, logLevel, retValue) { if (!(op)) \
-            {OC_LOG((logLevel), tag, (#op " failed!!")); return retValue;} }
-
-
-/**
  * Discover owned/unowned devices in the same IP subnet. .
  *
  * @param[in] waittime      Timeout in seconds.

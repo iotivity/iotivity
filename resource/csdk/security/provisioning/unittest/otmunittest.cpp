@@ -19,8 +19,7 @@
  * *****************************************************************/
 #include "gtest/gtest.h"
 #include "oxmjustworks.h"
-// TODO: PIN based OxM implementation is required.
-//#include "oxmrandompin.h"
+#include "oxmrandompin.h"
 #include "ownershiptransfermanager.h"
 #include "ocstack.h"
 #include "utlist.h"
@@ -64,8 +63,6 @@ TEST(JustWorksOxMTest, NullParam)
     EXPECT_TRUE(NULL == payloadRes);
 }
 
-// TODO: PIN based OxM implementation is required
-/*
 TEST(RandomPinOxMTest, NullParam)
 {
     OTMContext_t* otmCtx = NULL;
@@ -100,5 +97,4 @@ TEST(RandomPinOxMTest, NullParam)
 
     payloadRes = CreatePinBasedOwnerTransferPayload(&otmCtx2);
     EXPECT_TRUE(NULL == payloadRes);
-}*/
-
+}

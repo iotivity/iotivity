@@ -350,13 +350,14 @@ OCStackResult OCProvisionPairwiseDevices(void* ctx, OicSecCredType_t type, size_
                                          OCProvisionResultCB resultCallback)
 {
 
-    VERIFY_NON_NULL(TAG, pDev1, ERROR,  OC_STACK_INVALID_PARAM);
-    VERIFY_NON_NULL(TAG, pDev2, ERROR,  OC_STACK_INVALID_PARAM);
-    VERIFY_NON_NULL(TAG, resultCallback, ERROR,  OC_STACK_INVALID_CALLBACK);
-
+    if(!pDev1 || !pDev2 || !resultCallback)
+    {
+        OC_LOG(ERROR, TAG, "OCProvisionPairwiseDevices : Invalid parameters");
+        return OC_STACK_INVALID_PARAM;
+    }
     if (!(keySize == OWNER_PSK_LENGTH_128 || keySize == OWNER_PSK_LENGTH_256))
     {
-        OC_LOG(INFO, TAG, "Invalid key size");
+        OC_LOG(INFO, TAG, "OCProvisionPairwiseDevices : Invalid key size");
         return OC_STACK_INVALID_PARAM;
     }
     int noOfResults = 2; // Initial Value

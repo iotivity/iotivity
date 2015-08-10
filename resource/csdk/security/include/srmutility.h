@@ -64,8 +64,8 @@ struct OicParseQueryIter
  * @note Invoking function must define "exit:" label for goto functionality to work correctly.
  *
  */
-#define VERIFY_SUCCESS(tag, op, logLevel) { if (!(op)) \
-            {OC_LOG((logLevel), tag, PCF(#op " failed!!")); goto exit;} }
+#define VERIFY_SUCCESS(tag, op, logLevel) do{ if (!(op)) \
+            {OC_LOG((logLevel), tag, PCF(#op " failed!!")); goto exit; } }while(0)
 
 /**
  * @def VERIFY_NON_NULL
@@ -74,8 +74,8 @@ struct OicParseQueryIter
  * @note Invoking function must define "exit:" label for goto functionality to work correctly.
  *
  */
-#define VERIFY_NON_NULL(tag, arg, logLevel) { if (NULL == (arg)) \
-            { OC_LOG((logLevel), tag, PCF(#arg " is NULL")); goto exit; } }
+#define VERIFY_NON_NULL(tag, arg, logLevel) do{ if (NULL == (arg)) \
+            { OC_LOG((logLevel), tag, PCF(#arg " is NULL")); goto exit; } }while(0)
 
 /**
  * This method initializes the OicParseQueryIter_t struct
