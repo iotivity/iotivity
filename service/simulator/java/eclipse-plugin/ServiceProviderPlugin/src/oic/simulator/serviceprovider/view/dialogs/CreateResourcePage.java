@@ -1,5 +1,7 @@
 package oic.simulator.serviceprovider.view.dialogs;
 
+import oic.simulator.serviceprovider.utils.Constants;
+
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CCombo;
@@ -44,8 +46,8 @@ public class CreateResourcePage extends WizardPage {
     @Override
     public void createControl(Composite parent) {
         setPageComplete(false);
-        setTitle("Create Resource");
-        setMessage("Select a standard resource or custom resource to be created");
+        setTitle(Constants.CREATE_PAGE_TITLE);
+        setMessage(Constants.CREATE_PAGE_MESSAGE);
         Composite compContent = new Composite(parent, SWT.NONE);
         GridLayout gridLayout = new GridLayout(1, false);
         compContent.setLayout(gridLayout);
@@ -140,7 +142,7 @@ public class CreateResourcePage extends WizardPage {
     }
 
     private void populateDataInUI() {
-        // Populate Resourcetype in Combo
+        // Populate Resource-type in Combo
         populateResourceTypeCombo();
     }
 
@@ -211,6 +213,8 @@ public class CreateResourcePage extends WizardPage {
             public void widgetSelected(SelectionEvent e) {
                 FileDialog fileDialog = new FileDialog(PlatformUI
                         .getWorkbench().getDisplay().getActiveShell(), SWT.NONE);
+                fileDialog
+                        .setFilterExtensions(Constants.BROWSE_RAML_FILTER_EXTENSIONS);
                 String configFileAbsolutePath = fileDialog.open();
                 locationTxt.setText(configFileAbsolutePath);
             }
@@ -265,7 +269,7 @@ public class CreateResourcePage extends WizardPage {
         });
     }
 
-    public boolean isSelectionDone() {
+    private boolean isSelectionDone() {
         boolean done = false;
         try {
             resourceCount = Integer.parseInt(noOfInstancesText.getText());
@@ -277,7 +281,7 @@ public class CreateResourcePage extends WizardPage {
         }
 
         if (null != configFilePath && configFilePath.length() > 0
-                && resourceCount >= 0) {
+                && resourceCount >= 1) {
             done = true;
         }
         return done;
@@ -290,5 +294,4 @@ public class CreateResourcePage extends WizardPage {
     public int getResourceCount() {
         return resourceCount;
     }
-
 }

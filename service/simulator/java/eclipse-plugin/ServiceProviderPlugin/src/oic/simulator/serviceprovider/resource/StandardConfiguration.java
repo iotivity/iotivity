@@ -8,8 +8,7 @@ public class StandardConfiguration {
     private String      configuration_directory_path;
 
     // A map of resourceType of standard resources as the key and the complete
-    // location of the file as
-    // the value
+    // location of the file as the value
     Map<String, String> standardResourceConfigurationMap;
 
     public StandardConfiguration() {

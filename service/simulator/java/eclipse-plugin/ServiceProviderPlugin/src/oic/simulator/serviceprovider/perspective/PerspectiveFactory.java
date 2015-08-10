@@ -2,6 +2,7 @@ package oic.simulator.serviceprovider.perspective;
 
 import oic.simulator.serviceprovider.view.AttributeView;
 import oic.simulator.serviceprovider.view.LogView;
+import oic.simulator.serviceprovider.view.MetaPropertiesView;
 import oic.simulator.serviceprovider.view.MultiResourceOrchestrationView;
 import oic.simulator.serviceprovider.view.ResourceManagerView;
 
@@ -24,13 +25,13 @@ public class PerspectiveFactory implements IPerspectiveFactory {
     private void addViews() {
         factory.addView(ResourceManagerView.VIEW_ID, IPageLayout.LEFT, 0.3f,
                 factory.getEditorArea());
-        factory.addView(IPageLayout.ID_PROP_SHEET, IPageLayout.BOTTOM, 0.6f,
+        factory.addView(MetaPropertiesView.VIEW_ID, IPageLayout.BOTTOM, 0.65f,
                 ResourceManagerView.VIEW_ID);
-        factory.addView(AttributeView.VIEW_ID, IPageLayout.LEFT, 0.5f,
+        factory.addView(AttributeView.VIEW_ID, IPageLayout.LEFT, 0.7f,
                 factory.getEditorArea());
-        factory.addView(LogView.VIEW_ID, IPageLayout.BOTTOM, 0.6f,
+        factory.addView(LogView.VIEW_ID, IPageLayout.BOTTOM, 0.65f,
                 AttributeView.VIEW_ID);
         factory.addView(MultiResourceOrchestrationView.VIEW_ID,
-                IPageLayout.RIGHT, 0.5f, AttributeView.VIEW_ID);
+                IPageLayout.RIGHT, 0.6f, AttributeView.VIEW_ID);
     }
 }

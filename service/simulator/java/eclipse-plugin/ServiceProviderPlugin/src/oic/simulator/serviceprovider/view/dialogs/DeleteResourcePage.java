@@ -4,6 +4,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import oic.simulator.serviceprovider.Activator;
+import oic.simulator.serviceprovider.utils.Constants;
 
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
@@ -39,10 +40,9 @@ public class DeleteResourcePage extends WizardPage {
 
     @Override
     public void createControl(Composite parent) {
-        System.out.println("delete wizard open");
         setPageComplete(false);
-        setTitle("Delete Resource");
-        setMessage("Select the resource(s) to be deleted");
+        setTitle(Constants.DELETE_PAGE_TITLE);
+        setMessage(Constants.DELETE_PAGE_MESSAGE);
 
         Composite compContent = new Composite(parent, SWT.NONE);
         compContent.setLayout(new GridLayout(1, false));
@@ -113,7 +113,8 @@ public class DeleteResourcePage extends WizardPage {
     private void populateResourceTypeCombo() {
 
         List<String> resourceTypeList;
-        resourceTypeList = Activator.getManager().getResourceTypeList();
+        resourceTypeList = Activator.getDefault().getResourceManager()
+                .getResourceTypeList();
         if (null != resourceTypeList) {
             Iterator<String> itr = resourceTypeList.iterator();
             while (itr.hasNext()) {
@@ -160,6 +161,7 @@ public class DeleteResourcePage extends WizardPage {
             public void widgetSelected(SelectionEvent e) {
                 // Update the visibility of controls
                 resourceUriTxt.setEnabled(true);
+                resourceUriTxt.setFocus();
                 resourceTypeCmb.setEnabled(false);
 
                 deleteCategory = DeleteCategory.BY_URI;

@@ -31,5 +31,4 @@ public class ResourceWizardDialog extends WizardDialog {
             finishButton.setText(IDialogConstants.OK_LABEL);
         }
     }
-
 }

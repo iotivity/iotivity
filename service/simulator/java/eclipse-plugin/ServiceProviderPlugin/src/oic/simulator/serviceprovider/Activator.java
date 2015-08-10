@@ -1,5 +1,6 @@
 package oic.simulator.serviceprovider;
 
+import oic.simulator.serviceprovider.manager.LogManager;
 import oic.simulator.serviceprovider.manager.ResourceManager;
 
 import org.eclipse.ui.plugin.AbstractUIPlugin;
@@ -16,54 +17,53 @@ public class Activator extends AbstractUIPlugin {
     // The shared instance
     private static Activator       plugin;
 
-    private static ResourceManager manager;
+    private static ResourceManager resourceManager;
 
-    /**
-     * The constructor
-     */
+    private static LogManager      logManager;
+
     public Activator() {
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.eclipse.ui.plugin.AbstractUIPlugin#start(org.osgi.framework.BundleContext
-     * )
-     */
     public void start(BundleContext context) throws Exception {
         super.start(context);
         plugin = this;
-        setManager(new ResourceManager());
+        setResourceManager(new ResourceManager());
+        setLogManager(new LogManager());
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.eclipse.ui.plugin.AbstractUIPlugin#stop(org.osgi.framework.BundleContext
-     * )
-     */
     public void stop(BundleContext context) throws Exception {
         plugin = null;
+
+        // Stopping Resource Manager
+        if (null != resourceManager) {
+            resourceManager.shutdown();
+            resourceManager = null;
+        }
+        // Stopping Log Manager
+        if (null != logManager) {
+            logManager.shutdown();
+            logManager = null;
+        }
         super.stop(context);
     }
 
-    /**
-     * Returns the shared instance
-     *
-     * @return the shared instance
-     */
     public static Activator getDefault() {
         return plugin;
     }
 
-    public static ResourceManager getManager() {
-        return manager;
+    public ResourceManager getResourceManager() {
+        return resourceManager;
     }
 
-    public static void setManager(ResourceManager manager) {
-        Activator.manager = manager;
+    private static void setResourceManager(ResourceManager manager) {
+        Activator.resourceManager = manager;
     }
 
+    public LogManager getLogManager() {
+        return logManager;
+    }
+
+    private static void setLogManager(LogManager logManager) {
+        Activator.logManager = logManager;
+    }
 }

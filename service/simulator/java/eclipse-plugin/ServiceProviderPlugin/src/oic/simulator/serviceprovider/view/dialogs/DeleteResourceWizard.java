@@ -1,9 +1,15 @@
 package oic.simulator.serviceprovider.view.dialogs;
 
-import oic.simulator.serviceprovider.Activator;
-import oic.simulator.serviceprovider.utils.Convertion;
+import java.net.URL;
 
+import oic.simulator.serviceprovider.Activator;
+import oic.simulator.serviceprovider.utils.Utility;
+
+import org.eclipse.core.runtime.FileLocator;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
@@ -14,6 +20,10 @@ public class DeleteResourceWizard extends Wizard {
 
     public DeleteResourceWizard() {
         setWindowTitle("Delete resources");
+        IPath path = new Path("/icons/oic_logo_64x64.png");
+        URL find = FileLocator.find(Activator.getDefault().getBundle(), path,
+                null);
+        setDefaultPageImageDescriptor(ImageDescriptor.createFromURL(find));
     }
 
     @Override
@@ -29,11 +39,12 @@ public class DeleteResourceWizard extends Wizard {
             // Check whether the uri is in full form or short form
             // If it is in short form, expand it to its full form.
             String uri = page.getDeleteCandidate();
-            boolean uriComplete = Convertion.isUriComplete(uri);
+            boolean uriComplete = Utility.isUriComplete(uri);
             if (!uriComplete) {
-                uri = Convertion.displayNameToUri(uri);
+                uri = Utility.displayNameToUri(uri);
             }
-            boolean exist = Activator.getManager().isResourceExist(uri);
+            boolean exist = Activator.getDefault().getResourceManager()
+                    .isResourceExist(uri);
             if (!exist) {
                 Shell activeShell = PlatformUI.getWorkbench().getDisplay()
                         .getActiveShell();

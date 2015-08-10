@@ -2,8 +2,9 @@ package oic.simulator.serviceprovider.resource;
 
 import java.util.Map;
 
-import org.iotivity.simulator.SimulatorResourceModel;
-import org.iotivity.simulator.SimulatorResourceServer;
+import org.oic.simulator.AutomationType;
+import org.oic.simulator.serviceprovider.SimulatorResourceModel;
+import org.oic.simulator.serviceprovider.SimulatorResourceServer;
 
 public class SimulatorResource {
     private String                         resourceURI;
@@ -11,10 +12,19 @@ public class SimulatorResource {
     private String                         resourceType;
     private String                         resourceInterface;
 
-    // Reference to objects created in native layer
-    // Native methods can be invoked using these object references
+    // Native Object references
     private SimulatorResourceServer        resourceServer;
     private SimulatorResourceModel         resourceModel;
+
+    private int                            automationId;
+
+    private boolean                        resourceAutomationInProgress;
+
+    private boolean                        attributeAutomationInProgress;
+
+    private int                            automationUpdateInterval;
+
+    private AutomationType                 automationType;
 
     private Map<String, ResourceAttribute> resourceAttributesMap;
 
@@ -75,4 +85,45 @@ public class SimulatorResource {
         this.resourceAttributesMap = resourceAttributesMap;
     }
 
+    public int getAutomationUpdateInterval() {
+        return automationUpdateInterval;
+    }
+
+    public void setAutomationUpdateInterval(int automationUpdateInterval) {
+        this.automationUpdateInterval = automationUpdateInterval;
+    }
+
+    public AutomationType getAutomationType() {
+        return automationType;
+    }
+
+    public void setAutomationType(AutomationType automationType) {
+        this.automationType = automationType;
+    }
+
+    public int getAutomationId() {
+        return automationId;
+    }
+
+    public void setAutomationId(int automationId) {
+        this.automationId = automationId;
+    }
+
+    public boolean isResourceAutomationInProgress() {
+        return resourceAutomationInProgress;
+    }
+
+    public void setResourceAutomationInProgress(
+            boolean resourceAutomationInProgress) {
+        this.resourceAutomationInProgress = resourceAutomationInProgress;
+    }
+
+    public boolean isAttributeAutomationInProgress() {
+        return attributeAutomationInProgress;
+    }
+
+    public void setAttributeAutomationInProgress(
+            boolean attributeAutomationInProgress) {
+        this.attributeAutomationInProgress = attributeAutomationInProgress;
+    }
 }

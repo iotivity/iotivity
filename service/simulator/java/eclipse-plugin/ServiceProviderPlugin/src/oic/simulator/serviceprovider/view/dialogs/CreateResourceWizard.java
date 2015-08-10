@@ -1,5 +1,13 @@
 package oic.simulator.serviceprovider.view.dialogs;
 
+import java.net.URL;
+
+import oic.simulator.serviceprovider.Activator;
+
+import org.eclipse.core.runtime.FileLocator;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.wizard.Wizard;
 
 public class CreateResourceWizard extends Wizard {
@@ -8,6 +16,10 @@ public class CreateResourceWizard extends Wizard {
 
     public CreateResourceWizard() {
         setWindowTitle("Create resources");
+        IPath path = new Path("/icons/oic_logo_64x64.png");
+        URL find = FileLocator.find(Activator.getDefault().getBundle(), path,
+                null);
+        setDefaultPageImageDescriptor(ImageDescriptor.createFromURL(find));
     }
 
     @Override
@@ -28,5 +40,4 @@ public class CreateResourceWizard extends Wizard {
     public boolean performFinish() {
         return true;
     }
-
 }
