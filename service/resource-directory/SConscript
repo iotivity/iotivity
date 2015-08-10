@@ -66,6 +66,7 @@ RD_SRC_DIR = 'src/'
 rd_src = [
 		RD_SRC_DIR + 'rd_server.c',
 		RD_SRC_DIR + 'rd_payload.c',
+		RD_SRC_DIR + 'rd_client.c',
         ]
 
 if target_os in ['tizen'] :

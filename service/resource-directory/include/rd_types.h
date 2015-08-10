@@ -32,7 +32,23 @@ extern "C" {
 /** To represent resource type with rd.*/
 #define OC_RSRVD_RESOURCE_TYPE_RD        "oic.wk.rd"
 
+/** RD Discovery bias factor type. */
 #define OC_RSRVD_RD_DISCOVERY_SEL        "sel"
+
+/** Max ADDR SIZE */
+#define MAX_ADDR_STR_SIZE (40)
+
+/** Callback function for returning RDDiscovery Result. */
+typedef int (* OCRDBiasFactorCB)(char addr[MAX_ADDR_STR_SIZE], uint16_t port);
+
+/** Context structure used sending it as part of the callback context. */
+typedef struct
+{
+    /** Stores the context value of the message sent. */
+    void *context;
+    /** Pointing to the callback function that OCRDDiscover() received. */
+    OCRDBiasFactorCB cbFunc;
+} OCRDClientContextCB;
 
 /**
  * Structure holding discovery payload.
