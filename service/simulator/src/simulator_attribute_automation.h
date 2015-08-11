@@ -24,7 +24,7 @@
 #include "simulator_resource_model.h"
 #include "simulator_error_codes.h"
 
-class SimulatorResource;
+class SimulatorResourceServer;
 
 enum class AutomationType
 {
@@ -32,11 +32,15 @@ enum class AutomationType
     RECURRENT
 };
 
+typedef std::function<void (const std::string &, const int)> updateCompleteCallback;
+
 class AttributeUpdateAutomation
 {
     public:
-        AttributeUpdateAutomation(SimulatorResource *resource,
-                                  const std::string &attrName, AutomationType type = AutomationType::NORMAL, int interval = -1);
+        AttributeUpdateAutomation(SimulatorResourceServer *resource,
+                                  const std::string &attrName, updateCompleteCallback callback, int automationId,
+                                  std::function<void (const int)> finishedCallback, AutomationType type = AutomationType::NORMAL,
+                                  int interval = -1);
         SimulatorResult start();
         void stop();
 
@@ -44,14 +48,17 @@ class AttributeUpdateAutomation
         void updateAttribute();
         void setAttributeValue();
 
-        SimulatorResource *m_resource;
+        SimulatorResourceServer *m_resource;
         std::string m_attrName;
         AutomationType m_type;
+        int m_id;
         bool m_status;
         std::thread *m_thread;
         bool m_stopRequested;
         int m_updateInterval;
         SimulatorResourceModel::Attribute m_attribute;
+        updateCompleteCallback m_callback;
+        std::function<void (const int)> m_finishedCallback;
 };
 
 typedef std::shared_ptr<AttributeUpdateAutomation> AttributeUpdateAutomationPtr;
@@ -59,22 +66,27 @@ typedef std::shared_ptr<AttributeUpdateAutomation> AttributeUpdateAutomationPtr;
 class ResourceUpdateAutomation
 {
     public:
-        ResourceUpdateAutomation(SimulatorResource *resource,
+        ResourceUpdateAutomation(SimulatorResourceServer *resource, updateCompleteCallback callback,
+                                 int automationId, std::function<void (const int)> finishedCallback,
                                  AutomationType type = AutomationType::NORMAL, int interval = -1);
         SimulatorResult start();
         void stop();
+        void finished(int id);
 
     private:
         void updateAttribute();
         void setAttributeValue();
 
-        SimulatorResource *m_resource;
+        SimulatorResourceServer *m_resource;
         AutomationType m_type;
+        int m_id;
         bool m_status;
         std::thread *m_thread;
         int m_updateInterval;
         SimulatorResourceModel m_resModel;
-        std::vector<AttributeUpdateAutomationPtr> m_attrUpdationList;
+        std::map<int, AttributeUpdateAutomationPtr> m_attrUpdationList;
+        updateCompleteCallback m_callback;
+        std::function<void (const int)> m_finishedCallback;
 };
 
 typedef std::shared_ptr<ResourceUpdateAutomation> ResourceUpdateAutomationPtr;
@@ -83,13 +95,17 @@ class UpdateAutomationManager
 {
     public:
         UpdateAutomationManager();
-        SimulatorResult startResourceAutomation(SimulatorResource *resource,
-                                                int &id, AutomationType type = AutomationType::NORMAL, int interval = -1);
-        SimulatorResult startAttributeAutomation(SimulatorResource *resource,
-                const std::string &attrName, int &id, AutomationType type = AutomationType::NORMAL,
-                int interval = -1);
+        SimulatorResult startResourceAutomation(SimulatorResourceServer *resource,
+                                                int &id, updateCompleteCallback callback,
+                                                AutomationType type = AutomationType::NORMAL, int interval = -1);
+        SimulatorResult startAttributeAutomation(SimulatorResourceServer *resource,
+                const std::string &attrName, int &id, updateCompleteCallback callback,
+                AutomationType type = AutomationType::NORMAL, int interval = -1);
+        std::vector<int> getResourceAutomationIds();
+        std::vector<int> getAttributeAutomationIds();
         void stop(int automationId);
         void stopAll();
+        void automationFinished(int id);
 
     private:
         std::map<int, ResourceUpdateAutomationPtr> m_resourceUpdationList;

@@ -29,9 +29,9 @@
 #define SIMULATOR_MANAGER_H_
 
 #include <vector>
+#include "simulator_resource_server.h"
 #include "simulator_remote_resource.h"
 #include "simulator_error_codes.h"
-#include "simulator_resource.h"
 #include "simulator_logger.h"
 
 /**
@@ -52,10 +52,10 @@ class SimulatorManager
          * @param configPath - RAML configuration file path.
          * @param callback - Callback method for receive notifications when resource model changes.
          *
-         * @return SimulatorResourcePtr - Shared pointer of SimulatorResource on success, otherwise NULL.
+         * @return SimulatorResourceServerPtr - Shared pointer of SimulatorResourceServer on success, otherwise NULL.
          */
-        SimulatorResourcePtr createResource(const std::string &configPath,
-                                            SimulatorResource::ResourceModelChangedCB callback);
+        SimulatorResourceServerPtr createResource(const std::string &configPath,
+                SimulatorResourceServer::ResourceModelChangedCB callback);
 
         /**
          * This method is called for creating a collection of resources from RAML configuration file.
@@ -64,27 +64,27 @@ class SimulatorManager
          * @param count - Number of resource to be created.
          * @param callback - Callback method for receive notifications when resource model changes.
          *
-         * @return SimulatorResourcePtr - A vector of Shared pointers of SimulatorResource Objects.
+         * @return SimulatorResourceServerPtr - A vector of Shared pointers of SimulatorResourceServer Objects.
          */
-        std::vector<SimulatorResourcePtr> createResource(const std::string &configPath,
+        std::vector<SimulatorResourceServerPtr> createResource(const std::string &configPath,
                 const int count,
-                SimulatorResource::ResourceModelChangedCB callback);
+                SimulatorResourceServer::ResourceModelChangedCB callback);
 
         /**
          * This method is called for obtaining a list of created resources.
          *
-         * @return SimulatorResourcePtr - A vector of Shared pointers of SimulatorResource Objects.
+         * @return SimulatorResourceServerPtr - A vector of Shared pointers of SimulatorResourceServer Objects.
          */
-        std::vector<SimulatorResourcePtr> getResources(void);
+        std::vector<SimulatorResourceServerPtr> getResources(const std::string &resourceType = "");
 
         /**
           * This method is called for deleting a single resource.
           *
-          * @param resource - Shared pointer of the SimulatorResource to be deleted.
+          * @param resource - Shared pointer of the SimulatorResourceServer to be deleted.
           *
           * @return SimulatorResult
           */
-        SimulatorResult deleteResource(std::shared_ptr<SimulatorResource> &resource);
+        SimulatorResult deleteResource(SimulatorResourceServerPtr &resource);
 
         /**
           * This method is called for deleting multiple resources.
@@ -153,6 +153,7 @@ class SimulatorManager
 
     private:
         SimulatorManager();
+        ~SimulatorManager() = default;
 };
 
 #endif

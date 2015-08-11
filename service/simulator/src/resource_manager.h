@@ -31,7 +31,8 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "simulator_resource.h"
+#include <mutex>
+#include "simulator_resource_server.h"
 #include "simulator_resource_creator.h"
 #include "simulator_error_codes.h"
 
@@ -55,10 +56,10 @@ class ResourceManager
          * @param configPath - RAML configuration file path.
          * @param callback - Callback method for receive notifications when resource model changes.
          *
-         * @return SimulatorResourcePtr - Shared pointer of SimulatorResource on success, otherwise NULL.
+         * @return SimulatorResourceServerPtr - Shared pointer of SimulatorResourceServer on success, otherwise NULL.
          */
-        SimulatorResourcePtr createResource(const std::string &configPath,
-                                            SimulatorResource::ResourceModelChangedCB callback);
+        SimulatorResourceServerPtr createResource(const std::string &configPath,
+                SimulatorResourceServer::ResourceModelChangedCB callback);
 
         /**
          * This method is called for creating a collection of resources from the configuration file.
@@ -67,26 +68,27 @@ class ResourceManager
          * @param count - Number of resource to be created.
          * @param callback - Callback method for receive notifications when resource model changes.
          *
-         * @return SimulatorResourcePtr - A vector of Shared pointers of SimulatorResource Objects.
+         * @return SimulatorResourceServerPtr - A vector of Shared pointers of SimulatorResourceServer Objects.
          */
-        std::vector<SimulatorResourcePtr> createResource(const std::string &configPath, const int count,
-                SimulatorResource::ResourceModelChangedCB callback);
+        std::vector<SimulatorResourceServerPtr> createResource(const std::string &configPath,
+                const int count,
+                SimulatorResourceServer::ResourceModelChangedCB callback);
 
         /**
          * This method is called for obtaining a list of created resources.
          *
-         * @return SimulatorResourcePtr - A vector of Shared pointers of SimulatorResource Objects.
+         * @return SimulatorResourceServerPtr - A vector of Shared pointers of SimulatorResourceServer Objects.
          */
-        std::vector<SimulatorResourcePtr> getResources(void) const;
+        std::vector<SimulatorResourceServerPtr> getResources(const std::string &resourceType = "");
 
         /**
          * This method is called for deleting a single resource.
          *
-         * @param resource - Shared pointer of the SimulatorResource to be deleted.
+         * @param resource - Shared pointer of the SimulatorResourceServer to be deleted.
          *
          * @return SimulatorResult
          */
-        SimulatorResult deleteResource(SimulatorResourcePtr &resource);
+        SimulatorResult deleteResource(SimulatorResourceServerPtr &resource);
 
         /**
          * This method is called for deleting multiple resources.
@@ -123,9 +125,10 @@ class ResourceManager
          * This multi-level map organizes the resources in the form of ResourceType as the key
          * and a set of resources of that resourceType as the value.
          * The value is another map which has the ResourceURI as the key and the shared pointer
-         * of the SimulatorResource object as the value.
+         * of the SimulatorResourceServer object as the value.
          */
-        std::map<std::string, std::map<std::string, SimulatorResourcePtr>> m_resourceList;
+        std::map<std::string, std::map<std::string, SimulatorResourceServerPtr>> m_resourceList;
+        std::recursive_mutex m_listMutex;
 };
 
 #endif

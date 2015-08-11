@@ -123,9 +123,9 @@ class SimLightResource
 
         void simulateResource()
         {
-            SimulatorResource::ResourceModelChangedCB callback = std::bind(
+            SimulatorResourceServer::ResourceModelChangedCB callback = std::bind(
                         &SimLightResource::onResourceModelChanged, this, std::placeholders::_1, std::placeholders::_2);
-            SimulatorResourcePtr resource = SimulatorManager::getInstance()->createResource("", callback);
+            SimulatorResourceServerPtr resource = SimulatorManager::getInstance()->createResource("", callback);
             if (NULL == resource.get())
                 std::cout << "Failed to create resource" << std::endl;
 
@@ -135,12 +135,82 @@ class SimLightResource
 
         void deleteResource()
         {
-            int index = selectResource();
-            if (-1 == index)
-                return;
+            int choice = -1;
+            std::cout << "1. Delete single resource" << std::endl;
+            std::cout << "2. Delete resources on resource types" << std::endl;
+            std::cout << "3. Delete all resources" << std::endl;
 
-            SimulatorManager::getInstance()->deleteResource(m_resources[index - 1]);
-            std::cout << "Resource deleted successfully! " << std::endl;
+            std::cout << "Enter your choice: ";
+            std::cin >> choice;
+            if (choice < 1 || choice > 3)
+            {
+                std::cout << "Invalid choice !" << std::endl;
+                return;
+            }
+
+            switch (choice)
+            {
+                case 1:
+                    {
+                        int index = selectResource();
+                        if (-1 == index)
+                            return;
+
+                        if (SIMULATOR_SUCCESS == SimulatorManager::getInstance()->deleteResource(m_resources[index - 1]))
+                        {
+                            std::cout << "Resource deleted successfully! " << std::endl;
+                            m_resources.erase(m_resources.begin() + (index - 1));
+                        }
+                        else
+                        {
+                            std::cout << "Failed to delete resource!" << std::endl;
+                        }
+                    } break;
+                case 2:
+                    {
+                        std::string resourceType;
+                        std::cout  << "Enter resource type:  ";
+                        std::cin >> resourceType;
+                        if (resourceType.empty())
+                        {
+                            std::cout << "Invalid resource type!" << std::endl;
+                            break;
+                        }
+
+                        if (SIMULATOR_SUCCESS == SimulatorManager::getInstance()->deleteResources(resourceType))
+                        {
+                            std::cout << "Resources of type \"" << resourceType << "\"" << " deleted successfully! " <<
+                                      std::endl;
+                            std::vector<SimulatorResourceServerPtr>::iterator ite = m_resources.begin();
+                            while (ite != m_resources.end())
+                            {
+                                if (!resourceType.compare((*ite)->getResourceType()))
+                                {
+                                    ite = m_resources.erase(ite);
+                                    continue;
+                                }
+                                ite++;
+                            }
+                        }
+                        else
+                        {
+                            std::cout << "Failed to delete resources of type \"" << resourceType << "\"!" << std::endl;
+                        }
+                    } break;
+                case 3:
+                    {
+                        if (SIMULATOR_SUCCESS == SimulatorManager::getInstance()->deleteResources())
+                        {
+                            std::cout << "All resources deleted successfully! " << std::endl;
+                            m_resources.clear();
+                        }
+                        else
+                        {
+                            std::cout << "Failed to delete all resources!" << std::endl;
+                        }
+                    } break;
+            }
+
         }
 
         void updateAttributePower()
@@ -149,7 +219,7 @@ class SimLightResource
             if (-1 == index)
                 return;
 
-            SimulatorResourcePtr resource = m_resources[index - 1];
+            SimulatorResourceServerPtr resource = m_resources[index - 1];
             SimulatorResourceModel resModel = resource->getModel();
             SimulatorResourceModel::Attribute powerAttribute;
             resModel.getAttribute("power", powerAttribute);
@@ -193,7 +263,7 @@ class SimLightResource
             if (-1 == index)
                 return;
 
-            SimulatorResourcePtr resource = m_resources[index - 1];
+            SimulatorResourceServerPtr resource = m_resources[index - 1];
             SimulatorResourceModel resModel = resource->getModel();
             SimulatorResourceModel::Attribute intensityAttribute;
             resModel.getAttribute("intensity", intensityAttribute);
@@ -237,11 +307,11 @@ class SimLightResource
             if (-1 == index)
                 return;
 
-            SimulatorResourcePtr resource = m_resources[index - 1];
+            SimulatorResourceServerPtr resource = m_resources[index - 1];
             displayResource(resource);
         }
 
-        void displayResource(SimulatorResourcePtr resource)
+        void displayResource(SimulatorResourceServerPtr resource)
         {
             std::cout << "#############################" << std::endl;
             std::cout << "Name: " << resource->getName().c_str() << std::endl;
@@ -267,14 +337,31 @@ class SimLightResource
             std::cout << "#############################" << std::endl;
         }
 
+        void onUpdateAutomationCompleted(const std::string &uri,
+                                         const int id)
+        {
+            std::cout << "Update automation is completed [URI: " << uri.c_str() << "  AutomationID: " <<
+                      id << "] ###" << std::endl;
+        }
+
         void automateResourceUpdate()
         {
             int index = selectResource();
             if (-1 == index)
                 return;
 
+            AutomationType type = AutomationType::NORMAL;
+            int choice = 0;
+            std::cout << "Press 1 if you want recurrent automation: ";
+            std::cin >> choice;
+            if (1 == choice)
+                type = AutomationType::RECURRENT;
+
             int id;
-            if (SIMULATOR_SUCCESS != m_resources[index - 1]->startUpdateAutomation(AutomationType::NORMAL, id))
+            if (SIMULATOR_SUCCESS != m_resources[index - 1]->startUpdateAutomation(type,
+                    std::bind(&SimLightResource::onUpdateAutomationCompleted, this, std::placeholders::_1,
+                              std::placeholders::_2),
+                    id))
                 std::cout << "startUpdateAutomation() returned error!" << std::endl;
             else
                 std::cout << "startUpdateAutomation() returned succces : " << id << std::endl;
@@ -286,7 +373,7 @@ class SimLightResource
             if (-1 == index)
                 return;
 
-            SimulatorResourcePtr resource = m_resources[index - 1];
+            SimulatorResourceServerPtr resource = m_resources[index - 1];
             SimulatorResourceModel resModel = resource->getModel();
             std::map<std::string, SimulatorResourceModel::Attribute> attributes = resModel.getAttributes();
             int size = 0;
@@ -323,9 +410,18 @@ class SimLightResource
                 count++;
             }
 
+            AutomationType type = AutomationType::NORMAL;
+            std::cout << "Press 1 if you want recurrent automation: ";
+            std::cin >> choice;
+            if (1 == choice)
+                type = AutomationType::RECURRENT;
+
             std::cout << "Requesting attribute automation for " << attributeName.c_str() << std::endl;
             int id;
-            if (SIMULATOR_SUCCESS != resource->startUpdateAutomation(attributeName, AutomationType::NORMAL, id))
+            if (SIMULATOR_SUCCESS != resource->startUpdateAutomation(attributeName, type,
+                    std::bind(&SimLightResource::onUpdateAutomationCompleted, this, std::placeholders::_1,
+                              std::placeholders::_2),
+                    id))
                 std::cout << "startUpdateAutomation() returned error!" << std::endl;
             else
                 std::cout << "startUpdateAutomation() returned succces : " << id << std::endl;
@@ -337,15 +433,34 @@ class SimLightResource
             if (-1 == index)
                 return;
 
-            SimulatorResourcePtr resource = m_resources[index - 1];
+            SimulatorResourceServerPtr resource = m_resources[index - 1];
+
+            // Select the automation to stop
+            std::vector<int> ids;
+            {
+                std::vector<int> rids = resource->getResourceAutomationIds();
+                std::vector<int> aids = resource->getAttributeAutomationIds();
+                ids.insert(ids.end(), rids.begin(), rids.end());
+                ids.insert(ids.end(), aids.begin(), aids.end());
+            }
+
+            if (!ids.size())
+            {
+                std::cout << "No automation operation is going on this resource right now!" << std::endl;
+                return;
+            }
+
+            for (auto & id : ids)
+                std::cout <<  id  << " ";
+
             int automationid;
-            std::cout << "Enter automation id: " << std::endl;
+            std::cout << "\nEnter automation id: " << std::endl;
             std::cin >> automationid;
             resource->stopUpdateAutomation(automationid);
         }
 
     private:
-        std::vector<SimulatorResourcePtr> m_resources;
+        std::vector<SimulatorResourceServerPtr> m_resources;
 };
 
 void printMainMenu()

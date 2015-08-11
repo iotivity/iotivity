@@ -100,28 +100,6 @@ class range_validation : public boost::static_visitor<bool>
         SimulatorResourceModel::Attribute &m_attrItem;
 };
 
-class Converter
-{
-    public:
-        void convert(const OC::OCRepresentation::AttributeItem &attrItem)
-        {
-            if (attrItem.type() == OC::AttributeType::Integer)
-                m_attribute.setValue(attrItem.getValue<int>());
-            if (attrItem.type() == OC::AttributeType::Double)
-                m_attribute.setValue(attrItem.getValue<double>());
-            if (attrItem.type() == OC::AttributeType::String)
-                m_attribute.setValue(attrItem.getValue<std::string>());
-        }
-
-        SimulatorResourceModel::Attribute &&get()
-        {
-            return std::move(m_attribute);
-        }
-
-    private:
-        SimulatorResourceModel::Attribute m_attribute;
-};
-
 SimulatorResourceModel::Attribute::ValueVariant
 &SimulatorResourceModel::Attribute::AllowedValues::at(int index)
 {
@@ -213,7 +191,7 @@ std::vector<std::string> SimulatorResourceModel::Attribute::allowedValuesToVecto
 }
 
 void SimulatorResourceModel::Attribute::addValuetoRepresentation(OC::OCRepresentation &rep,
-        const std::string &key)
+        const std::string &key) const
 {
     add_to_representation visitor(rep, key);
     boost::apply_visitor(visitor, m_value);
@@ -281,7 +259,7 @@ void SimulatorResourceModel::removeAttribute(const std::string &attrName)
     return;
 }
 
-OC::OCRepresentation SimulatorResourceModel::getOCRepresentation()
+OC::OCRepresentation SimulatorResourceModel::getOCRepresentation() const
 {
     OC::OCRepresentation rep;
     for (auto & attribute : m_attributes)
@@ -292,70 +270,57 @@ OC::OCRepresentation SimulatorResourceModel::getOCRepresentation()
     return rep;
 }
 
-bool SimulatorResourceModel::update(OC::OCRepresentation &ocRep, UpdateType type)
+bool SimulatorResourceModel::update(OC::OCRepresentation &ocRep)
 {
     if (0 == ocRep.size())
         return true;
 
     // Convert OCRepresentation to SimulatorResourceModel
-    SimulatorResourceModel resModel;
-    for (auto & attributeItem : ocRep)
-    {
-        Converter converter;
-        converter.convert(attributeItem);
-        SimulatorResourceModel::Attribute attribute = converter.get();
-        attribute.setName(attributeItem.attrname());
-        resModel.m_attributes[attributeItem.attrname()] = attribute;
-    }
+    SimulatorResourceModel resModel = create(ocRep);
 
-    return update(resModel, type);
+    return update(resModel);
 }
 
-bool SimulatorResourceModel::update(SimulatorResourceModel &repModel, UpdateType type)
+bool SimulatorResourceModel::update(SimulatorResourceModel &repModel)
 {
     std::map<std::string, SimulatorResourceModel::Attribute> attributes = repModel.getAttributes();
     for (auto & attributeItem : attributes)
     {
         // Check the attribute presence
         SimulatorResourceModel::Attribute attribute;
-        if (type == PUT)
+        if (false == getAttribute((attributeItem.second).getName(), attribute))
         {
-            if (false == getAttribute((attributeItem.second).getName(), attribute))
-            {
-                return false;
-            }
+            return false;
+        }
 
-            // Check the validity of the value to be set
-            if (false == attribute.compare(attributeItem.second))
-            {
-                return false;
-            }
-            m_attributes[(attributeItem.second).getName()].setValue((attributeItem.second).getValue());
-        }
-        else if (type == POST)
+        // Check the validity of the value to be set
+        if (false == attribute.compare(attributeItem.second))
         {
-            if (false == getAttribute((attributeItem.second).getName(), attribute))
-            {
-                addAttribute(((attributeItem.second).getName()) , ((attributeItem.second).getValue()));
-                continue;
-            }
-            else
-            {
-                // Check the validity of the value to be set
-                if (false == attribute.compare(attributeItem.second))
-                {
-                    return false;
-                }
-                m_attributes[(attributeItem.second).getName()].setValue((attributeItem.second).getValue());
-            }
+            return false;
         }
-        else if (type == DELETE )
-        {
-            if (true == getAttribute((attributeItem.second).getName(), attribute))
-            {
-                removeAttribute((attributeItem.second).getName());
-            }
-        }
+        m_attributes[(attributeItem.second).getName()].setValue((attributeItem.second).getValue());
     }
+
     return true;
 }
+
+SimulatorResourceModel SimulatorResourceModel::create(const OC::OCRepresentation &ocRep)
+{
+    SimulatorResourceModel resModel;
+    for (auto & attributeItem : ocRep)
+    {
+        SimulatorResourceModel::Attribute attribute;
+        if (attributeItem.type() == OC::AttributeType::Integer)
+            attribute.setValue(attributeItem.getValue<int>());
+        if (attributeItem.type() == OC::AttributeType::Double)
+            attribute.setValue(attributeItem.getValue<double>());
+        if (attributeItem.type() == OC::AttributeType::String)
+            attribute.setValue(attributeItem.getValue<std::string>());
+
+        attribute.setName(attributeItem.attrname());
+        resModel.m_attributes[attributeItem.attrname()] = attribute;
+    }
+
+    return resModel;
+}
+

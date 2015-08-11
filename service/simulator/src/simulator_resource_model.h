@@ -33,16 +33,25 @@
 #include "OCPlatform.h"
 #include "OCApi.h"
 
-class SimulatorResource;
+class SimulatorResourceServer;
 /**
  * @class   SimulatorResourceModel
  * @brief   This class provides a set of functions for accessing and manipulating the resource model.
  */
 class SimulatorResourceModel
 {
-        friend class SimulatorResource;
+        friend class SimulatorResourceServer;
 
     public:
+
+        SimulatorResourceModel() = default;
+        SimulatorResourceModel(SimulatorResourceModel &&) = default;
+        SimulatorResourceModel(const SimulatorResourceModel &) = default;
+        SimulatorResourceModel &operator=(const SimulatorResourceModel &) = default;
+        SimulatorResourceModel &operator=(SimulatorResourceModel &&) = default;
+
+        virtual ~SimulatorResourceModel() {}
+
         /**
           * @class   Attribute
           * @brief   This class represents a resource attribute whose values can be generic.
@@ -126,7 +135,8 @@ class SimulatorResourceModel
                 std::string allowedValuesToString() const;
                 std::vector<std::string> allowedValuesToVectorString() const;
 
-                void addValuetoRepresentation(OC::OCRepresentation &rep, const std::string &key);
+                void addValuetoRepresentation(OC::OCRepresentation &rep,
+                                              const std::string &key) const;
 
                 bool compare(Attribute &attribute);
 
@@ -173,8 +183,6 @@ class SimulatorResourceModel
                 int m_updateInterval;
         };
 
-        typedef enum { POST, PUT, DELETE } UpdateType;
-
         /**
          * This method is used to get the number of attributes in the resource.
          *
@@ -200,7 +208,8 @@ class SimulatorResourceModel
           */
         std::map<std::string, Attribute> getAttributes() const;
 
-    private:
+        static SimulatorResourceModel create(const OC::OCRepresentation &ocRep);
+
         template <typename T>
         void addAttribute(const std::string &attrName, const T &attrValue)
         {
@@ -211,6 +220,7 @@ class SimulatorResourceModel
             }
         }
 
+    private:
         void setRange(const std::string &attrName, const int min, const int max);
 
         template <typename T>
@@ -233,11 +243,11 @@ class SimulatorResourceModel
 
         void removeAttribute(const std::string &attrName);
 
-        OC::OCRepresentation getOCRepresentation();
+        OC::OCRepresentation getOCRepresentation() const;
 
-        bool update(OC::OCRepresentation &ocRep, UpdateType type);
+        bool update(OC::OCRepresentation &ocRep);
 
-        bool update(SimulatorResourceModel &repModel, UpdateType type);
+        bool update(SimulatorResourceModel &repModel);
 
         std::map<std::string, Attribute> m_attributes;
 };

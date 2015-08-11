@@ -19,19 +19,24 @@
  ******************************************************************/
 
 #include "simulator_attribute_automation.h"
-#include "simulator_resource.h"
+#include "simulator_resource_server.h"
 #include <thread>
 
 #define SLEEP_FOR(X) if (X > 0) std::this_thread::sleep_for(std::chrono::milliseconds(X));
 
 AttributeUpdateAutomation::AttributeUpdateAutomation(
-    SimulatorResource *resource, const std::string &attrName, AutomationType type, int interval)
+    SimulatorResourceServer *resource, const std::string &attrName, updateCompleteCallback callback,
+    int automationId, std::function<void (const int)> finishedCallback, AutomationType type,
+    int interval)
     : m_resource(resource),
       m_attrName(attrName),
       m_type(type),
+      m_id(automationId),
       m_status(false),
       m_stopRequested(false),
-      m_updateInterval(interval) {}
+      m_updateInterval(interval),
+      m_callback(callback),
+      m_finishedCallback(finishedCallback) {}
 
 SimulatorResult AttributeUpdateAutomation::start()
 {
@@ -74,6 +79,12 @@ void AttributeUpdateAutomation::updateAttribute()
     while (AutomationType::RECURRENT == m_type);
 
     m_status = false;
+
+    // Notify application through callback
+    if (m_callback)
+        m_callback(m_resource->getURI(), m_id);
+    if (m_finishedCallback && !m_stopRequested)
+        m_finishedCallback(m_id);
 }
 
 void AttributeUpdateAutomation::setAttributeValue()
@@ -85,6 +96,8 @@ void AttributeUpdateAutomation::setAttributeValue()
         m_attribute.getRange(min, max);
         for (int value = min; value <= max; value++)
         {
+            if (m_stopRequested)
+                break;
             m_resource->updateAttribute(m_attribute.getName(), value);
             SLEEP_FOR(m_updateInterval);
         }
@@ -93,6 +106,8 @@ void AttributeUpdateAutomation::setAttributeValue()
     {
         for (int index = 0; index < m_attribute.getAllowedValuesSize(); index++)
         {
+            if (m_stopRequested)
+                break;
             m_resource->updateAttributeFromAllowedValues(m_attribute.getName(), index);
             SLEEP_FOR(m_updateInterval);
         }
@@ -101,11 +116,16 @@ void AttributeUpdateAutomation::setAttributeValue()
 
 
 ResourceUpdateAutomation::ResourceUpdateAutomation(
-    SimulatorResource *resource, AutomationType type, int interval)
+    SimulatorResourceServer *resource, updateCompleteCallback callback,
+    int automationId, std::function<void (const int)> finishedCallback, AutomationType type,
+    int interval)
     : m_resource(resource),
       m_type(type),
+      m_id(automationId),
       m_status(false),
-      m_updateInterval(interval) {}
+      m_updateInterval(interval),
+      m_callback(callback),
+      m_finishedCallback(finishedCallback) {}
 
 SimulatorResult ResourceUpdateAutomation::start()
 {
@@ -120,11 +140,14 @@ SimulatorResult ResourceUpdateAutomation::start()
         return SIMULATOR_ERROR;
     }
 
+    int id = 0;
     for (auto & attribute : attributes)
     {
         AttributeUpdateAutomationPtr attributeAutomation = std::make_shared<AttributeUpdateAutomation>
-                (m_resource, attribute.first, m_type, m_updateInterval);
-        m_attrUpdationList.push_back(attributeAutomation);
+                (m_resource, attribute.first, nullptr, id,
+                 std::bind(&ResourceUpdateAutomation::finished, this, std::placeholders::_1),
+                 m_type, m_updateInterval);
+        m_attrUpdationList[id++] = attributeAutomation;
         if (SIMULATOR_SUCCESS != attributeAutomation->start())
         {
             m_status = false;
@@ -137,12 +160,28 @@ SimulatorResult ResourceUpdateAutomation::start()
     return SIMULATOR_SUCCESS;
 }
 
+void ResourceUpdateAutomation::finished(int id)
+{
+    if (m_attrUpdationList.end() != m_attrUpdationList.find(id))
+    {
+        m_attrUpdationList.erase(m_attrUpdationList.find(id));
+    }
+
+    if (!m_attrUpdationList.size())
+    {
+        // Notify application through callback
+        if (m_callback)
+            m_callback(m_resource->getURI(), m_id);
+        if (m_finishedCallback)
+            m_finishedCallback(m_id);
+    }
+}
 void ResourceUpdateAutomation::stop()
 {
     // Stop all the attributes updation
     for (auto & attrAutomation : m_attrUpdationList)
     {
-        attrAutomation->stop();
+        (attrAutomation.second)->stop();
     }
 
     m_attrUpdationList.clear();
@@ -152,29 +191,37 @@ void ResourceUpdateAutomation::stop()
 UpdateAutomationManager::UpdateAutomationManager()
     : m_automationId(0) {}
 
-SimulatorResult UpdateAutomationManager::startResourceAutomation(SimulatorResource *resource,
-        int &id, AutomationType type, int interval)
+SimulatorResult UpdateAutomationManager::startResourceAutomation(SimulatorResourceServer *resource,
+        int &id, updateCompleteCallback callback, AutomationType type, int interval)
 {
-    ResourceUpdateAutomationPtr resoureceAutomation(new ResourceUpdateAutomation(resource, type,
-            interval));
-    SimulatorResult result = resoureceAutomation->start();
+    std::lock_guard<std::mutex> lock(m_mutex);
+
+    ResourceUpdateAutomationPtr resourceAutomation(new ResourceUpdateAutomation(
+                resource, callback, m_automationId,
+                std::bind(&UpdateAutomationManager::automationFinished, this, std::placeholders::_1),
+                type, interval));
+    SimulatorResult result = resourceAutomation->start();
     if (SIMULATOR_SUCCESS != result)
     {
         id = -1;
         return result;
     }
 
-    std::lock_guard<std::mutex> lock(m_mutex);
-    m_resourceUpdationList[m_automationId++] = resoureceAutomation;
-    id = m_automationId - 1;
+    m_resourceUpdationList[m_automationId] = resourceAutomation;
+    id = m_automationId++;
     return result;
 }
 
-SimulatorResult UpdateAutomationManager::startAttributeAutomation(SimulatorResource *resource,
-        const std::string &attrName, int &id, AutomationType type, int interval)
+SimulatorResult UpdateAutomationManager::startAttributeAutomation(SimulatorResourceServer *resource,
+        const std::string &attrName, int &id, updateCompleteCallback callback, AutomationType type,
+        int interval)
 {
-    AttributeUpdateAutomationPtr attributeAutomation(new AttributeUpdateAutomation(resource, attrName,
-            type, interval));
+    std::lock_guard<std::mutex> lock(m_mutex);
+
+    AttributeUpdateAutomationPtr attributeAutomation(new AttributeUpdateAutomation(
+                resource, attrName, callback, m_automationId,
+                std::bind(&UpdateAutomationManager::automationFinished, this, std::placeholders::_1),
+                type, interval));
     SimulatorResult result = attributeAutomation->start();
     if (SIMULATOR_SUCCESS != result)
     {
@@ -182,10 +229,29 @@ SimulatorResult UpdateAutomationManager::startAttributeAutomation(SimulatorResou
         return result;
     }
 
-    std::lock_guard<std::mutex> lock(m_mutex);
-    m_attrUpdationList[m_automationId++] = attributeAutomation;
-    id = m_automationId - 1;
+    m_attrUpdationList[m_automationId] = attributeAutomation;
+    id = m_automationId++;
     return result;
+}
+
+std::vector<int> UpdateAutomationManager::getResourceAutomationIds()
+{
+    std::vector<int> ids;
+    std::lock_guard<std::mutex> lock(m_mutex);
+    for (auto & automation : m_resourceUpdationList)
+        ids.push_back(automation.first);
+
+    return ids;
+}
+
+std::vector<int> UpdateAutomationManager::getAttributeAutomationIds()
+{
+    std::vector<int> ids;
+    std::lock_guard<std::mutex> lock(m_mutex);
+    for (auto & automation : m_attrUpdationList)
+        ids.push_back(automation.first);
+
+    return ids;
 }
 
 void UpdateAutomationManager::stop(int automationId)
@@ -219,4 +285,17 @@ void UpdateAutomationManager::stopAll()
         element.second->stop();
     });
     m_attrUpdationList.clear();
+}
+
+void UpdateAutomationManager::automationFinished(int id)
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
+    if (m_resourceUpdationList.end() != m_resourceUpdationList.find(id))
+    {
+        m_resourceUpdationList.erase(m_resourceUpdationList.find(id));
+    }
+    else if (m_attrUpdationList.end() != m_attrUpdationList.find(id))
+    {
+        m_attrUpdationList.erase(m_attrUpdationList.find(id));
+    }
 }

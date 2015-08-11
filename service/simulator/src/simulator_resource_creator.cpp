@@ -19,24 +19,25 @@
  ******************************************************************/
 
 #include "simulator_resource_creator.h"
+#include "simulator_logger.h"
 
-SimulatorResourcePtr SimulatorResourceCreator::createLightResoure()
+SimulatorResourceServerPtr SimulatorResourceCreator::createLightResoure()
 {
-    std::shared_ptr<SimulatorResource> lightResource(new SimulatorResource);
+    std::shared_ptr<SimulatorResourceServer> lightResource(new SimulatorResourceServer);
 
     // set power attribute with its properties
     {
         lightResource->addAttribute("power", std::string("on"));
         std::vector<std::string> values {"on", "off"};
         lightResource->setAllowedValues("power", values);
-        lightResource->setUpdateInterval("power", 1000);
+        lightResource->setUpdateInterval("power", 2000);
     }
 
     // set intensity attributes with its properties
     {
         lightResource->addAttribute("intensity", int(1));
         lightResource->setRange("intensity", 1, 10);
-        lightResource->setUpdateInterval("intensity", 2000);
+        lightResource->setUpdateInterval("intensity", 3000);
     }
 
     // set other properties
@@ -45,6 +46,7 @@ SimulatorResourcePtr SimulatorResourceCreator::createLightResoure()
     lightResource->setResourceType("oic.light");
     lightResource->setInterfaceType(OC::DEFAULT_INTERFACE);
 
+    SIM_LOG(ILogger::INFO, "Created sample light resource");
     return lightResource;
 }
 

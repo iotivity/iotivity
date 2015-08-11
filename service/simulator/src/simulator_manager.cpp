@@ -44,24 +44,26 @@ SimulatorManager::SimulatorManager()
     OC::OCPlatform::Configure(conf);
 }
 
-SimulatorResourcePtr SimulatorManager::createResource(const std::string &configPath,
-        SimulatorResource::ResourceModelChangedCB callback)
+SimulatorResourceServerPtr SimulatorManager::createResource(const std::string &configPath,
+        SimulatorResourceServer::ResourceModelChangedCB callback)
 {
     return ResourceManager::getInstance()->createResource(configPath, callback);
 }
 
-std::vector<SimulatorResourcePtr> SimulatorManager::createResource(const std::string &configPath,
-        const int count, SimulatorResource::ResourceModelChangedCB callback)
+std::vector<SimulatorResourceServerPtr> SimulatorManager::createResource(
+    const std::string &configPath,
+    const int count, SimulatorResourceServer::ResourceModelChangedCB callback)
 {
     return ResourceManager::getInstance()->createResource(configPath, count, callback);
 }
 
-std::vector<SimulatorResourcePtr> SimulatorManager::getResources(void)
+std::vector<SimulatorResourceServerPtr> SimulatorManager::getResources(
+    const std::string &resourceType)
 {
-    return ResourceManager::getInstance()->getResources();
+    return ResourceManager::getInstance()->getResources(resourceType);
 }
 
-SimulatorResult SimulatorManager::deleteResource(SimulatorResourcePtr &resource)
+SimulatorResult SimulatorManager::deleteResource(SimulatorResourceServerPtr &resource)
 {
     return ResourceManager::getInstance()->deleteResource(resource);
 }

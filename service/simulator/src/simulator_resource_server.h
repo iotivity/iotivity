@@ -19,14 +19,14 @@
  ******************************************************************/
 
 /**
- * @file   simulator_resource.h
+ * @file   simulator_resource_server.h
  *
  * @brief   This file contains a class which represents a simulator resource that provides a set
  *             of functions for operating a resource and performing automation on attribute values.
  */
 
-#ifndef SIMULATOR_RESOURCE_H_
-#define SIMULATOR_RESOURCE_H_
+#ifndef SIMULATOR_RESOURCE_SERVER_H_
+#define SIMULATOR_RESOURCE_SERVER_H_
 
 #include "simulator_resource_model.h"
 #include "simulator_attribute_automation.h"
@@ -34,10 +34,10 @@
 
 class ResourceManager;
 /**
- * @class   SimulatorResource
+ * @class   SimulatorResourceServer
  * @brief   This class provides a set of functions for operating and automating a resource.
  */
-class SimulatorResource
+class SimulatorResourceServer
 {
         friend class ResourceManager;
 
@@ -45,14 +45,16 @@ class SimulatorResource
         typedef std::function<void (const std::string &uri, const SimulatorResourceModel &resModel)>
         ResourceModelChangedCB;
 
+        SimulatorResourceServer();
+
         /**
          * This method is used to set the resource URI.
          *
          * @param uri - Resource URI
          *
-         * @return void
+         * @return SimulatorResult
          */
-        void setURI(const std::string &uri);
+        SimulatorResult setURI(const std::string &uri);
 
         /**
          * This method is used to get the resource URI.
@@ -66,9 +68,9 @@ class SimulatorResource
          *
          * @param resourceType - Resource Type
          *
-         * @return void
+         * @return SimulatorResult
          */
-        void setResourceType(const std::string &resourceType);
+        SimulatorResult setResourceType(const std::string &resourceType);
 
         /**
          * This method is used to get the resource URI.
@@ -82,9 +84,9 @@ class SimulatorResource
          *
          * @param interfaceType - Interface Type of the resource
          *
-         * @return void
+         * @return SimulatorResult
          */
-        void setInterfaceType(const std::string &interfaceType);
+        SimulatorResult setInterfaceType(const std::string &interfaceType);
 
         /**
          * This method is used to get the interface type of the resource.
@@ -110,6 +112,22 @@ class SimulatorResource
         std::string getName() const;
 
         /**
+         * This method is used to set whether resource can be observable or not.
+         *
+         * @param state - true for resource observable, otherwise false.
+         *
+         * @return SimulatorResult
+         */
+        SimulatorResult setObservable(bool state);
+
+        /**
+         * This method is used to get the observable state of resource.
+         *
+         * @return bool - true if resource is observable, otherwise false.
+         */
+        bool isObservable() const;
+
+        /**
          * This method is used to start the attribute value automation for all attributes.
          * Once started, values for the attributes will be selected randomly from their allowed range
          * and the updated values will be notified to all the observers of the resource.
@@ -118,7 +136,8 @@ class SimulatorResource
          *
          * @return SimulatorResult
          */
-        SimulatorResult startUpdateAutomation(AutomationType type, int &id);
+        SimulatorResult startUpdateAutomation(AutomationType type,
+                                              updateCompleteCallback callback, int &id);
 
         /**
          * This method is used to start the attribute value automation for a specific attribute.
@@ -130,7 +149,22 @@ class SimulatorResource
          *
          * @return SimulatorResult
          */
-        SimulatorResult startUpdateAutomation(const std::string &attrName, AutomationType type, int &id);
+        SimulatorResult startUpdateAutomation(const std::string &attrName, AutomationType type,
+                                              updateCompleteCallback callback, int &id);
+
+        /**
+         * This method is used to get the Ids of all ongoing resource update automation .
+         *
+         * @return Ids as vector of int
+         */
+        std::vector<int> getResourceAutomationIds();
+
+        /**
+         * This method is used to get the Ids of all ongoing attribute update automation .
+         *
+         * @return Ids as vector of int
+         */
+        std::vector<int> getAttributeAutomationIds();
 
         /**
         * This method is used to stop the automation.
@@ -244,23 +278,26 @@ class SimulatorResource
         void setModelChangeCallback(ResourceModelChangedCB callback);
 
     private:
-        OCResourceHandle getHandle() const;
+        SimulatorResult start();
+        SimulatorResult stop();
         OC::OCRepresentation getOCRepresentation();
-        bool modifyResourceModel(OC::OCRepresentation &ocRep, SimulatorResourceModel::UpdateType type);
+        bool modifyResourceModel(OC::OCRepresentation &ocRep);
         OCEntityHandlerResult entityHandler(std::shared_ptr<OC::OCResourceRequest> request);
         void notifyListOfObservers ();
 
         SimulatorResourceModel m_resModel;
-        OCResourceHandle m_resourceHandle;
         std::string m_uri;
         std::string m_resourceType;
         std::string m_interfaceType;
         std::string m_name;
-        OC::ObservationIds m_interestedObservers;
         ResourceModelChangedCB m_callback;
         UpdateAutomationManager m_updateAutomationMgr;
+
+        OCResourceHandle m_resourceHandle;
+        OCResourceProperty m_property;
+        OC::ObservationIds m_interestedObservers;
 };
 
-typedef std::shared_ptr<SimulatorResource> SimulatorResourcePtr;
+typedef std::shared_ptr<SimulatorResourceServer> SimulatorResourceServerPtr;
 
 #endif

@@ -21,7 +21,7 @@
 #ifndef SIMULATOR_RESOURCE_CREATOR_H_
 #define SIMULATOR_RESOURCE_CREATOR_H_
 
-#include "simulator_resource.h"
+#include "simulator_resource_server.h"
 
 class SimulatorResourceCreator
 {
@@ -30,7 +30,7 @@ class SimulatorResourceCreator
          * This is temporary method to get the light resource as parser
          * needs to implemented/integrated
          */
-        SimulatorResourcePtr createLightResoure();
+        SimulatorResourceServerPtr createLightResoure();
 };
 
 #endif
