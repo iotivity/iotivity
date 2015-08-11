@@ -21,13 +21,9 @@
 #ifndef _RESOURCE_DIRECTORY_PAYLOAD_H_
 #define _RESOURCE_DIRECTORY_PAYLOAD_H_
 
-#include "rd_types.h"
-
 #include <cbor.h>
 
-#include "octypes.h"
-#include "ocstack.h"
-#include "logger.h"
+#include "rd_types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -80,6 +76,30 @@ OCRDPayload *OCRDPayloadCreate(OCRDPayloadType payloadType);
  * failed to allocate memory.
  */
 OCRDDiscoveryPayload *OCRDDiscoveryPayloadCreate(int biasFactor);
+
+/**
+ * Creates the links payload, which is then embedded inside OCRDPublishPayload.
+ *
+ * @param uri  The Web Link Address of the resource.
+ * @param rt   The resource type of the published resource.
+ * @param itf  The interface type of the published resource.
+ * @param linkPayload The address of the allocated memory or NULL in case if failed
+ *                    to allocate memory.
+ */
+void OCRDLinksPayloadCreate(const char *uri, const char *rt, const char *itf,
+        OCRDLinksPayload **linkPayload);
+
+/**
+ * Creates the links payload, which is then embedded inside OCRDPublishPayload.
+ *
+ * @param ttl  Time to live of the published resource..
+ * @param linkPayload  The link payload with uri, rt and itf.
+ *
+ * @return  Allocated memory of OCRDPublishPayload or NULL in case if failed
+ *          to allocate memory.
+ */
+OCRDPublishPayload *OCRDPublishPayloadCreate(const int ttl,
+        OCRDLinksPayload *linkPayload);
 
 /**
  * Free memory allocation of the RDPayload and its internal structure.

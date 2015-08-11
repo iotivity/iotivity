@@ -28,13 +28,23 @@
 // This is temporary hardcoded value for bias factor.
 #define OC_RD_DISC_SEL 100
 
-static OCResourceHandle gRDHandle = NULL;
+static OCStackResult sendResponse(const OCEntityHandlerRequest *ehRequest, OCRDPayload *rdPayload)
+{
+    OCEntityHandlerResponse response = { 0 };
+    response.requestHandle = ehRequest->requestHandle;
+    response.resourceHandle = ehRequest->resource;
+    response.ehResult = OC_EH_OK;
+    response.payload = (OCPayload*)(&rdPayload);
+    response.payload->type = PAYLOAD_TYPE_RD;
+
+    return OCDoResponse(&response);
+}
 
 /**
  * This internal method handles RD discovery request.
  * Responds with the RD discovery payload message.
  */
-static OCEntityHandlerResult HandleRDGetRequest(const OCEntityHandlerRequest *ehRequest)
+static OCEntityHandlerResult handleGetRequest(const OCEntityHandlerRequest *ehRequest)
 {
     if (!ehRequest)
     {
@@ -60,13 +70,7 @@ static OCEntityHandlerResult HandleRDGetRequest(const OCEntityHandlerRequest *eh
 
     OCRDPayloadLog(DEBUG, TAG, rdPayload);
 
-    OCEntityHandlerResponse ehResponse = {};
-    ehResponse.requestHandle = ehRequest->requestHandle;
-    ehResponse.resourceHandle = ehRequest->resource;
-    ehResponse.payload = (OCPayload *)rdPayload;
-    ehResponse.ehResult = ehResult;
-
-    if (OCDoResponse(&ehResponse) != OC_STACK_OK)
+    if (sendResponse(ehRequest, rdPayload) != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "Sending response failed.");
         ehResult = OC_EH_ERROR;
@@ -77,6 +81,40 @@ static OCEntityHandlerResult HandleRDGetRequest(const OCEntityHandlerRequest *eh
     return ehResult;
 }
 
+/**
+ * This internal method handles RD publish request.
+ * Responds with the RD success message.
+ */
+static OCEntityHandlerResult handlePublishRequest(const OCEntityHandlerRequest *ehRequest)
+{
+    OCEntityHandlerResult ehResult = OC_EH_OK;
+
+    OC_LOG_V(DEBUG, TAG, "Received OC_REST_PUT from client with query: %s.", ehRequest->query);
+
+    if (!ehRequest)
+    {
+        OC_LOG_V(DEBUG, TAG, "Invalid request pointer");
+        return OC_EH_ERROR;
+    }
+
+    OCRDPayload *payload = (OCRDPayload*)ehRequest->payload;
+    if (payload->payloadType == RD_PAYLOAD_TYPE_PUBLISH)
+    {
+        // TODO STORE RESOURCE...
+    }
+
+    OC_LOG_V(DEBUG, TAG, "Sending success response");
+    OCRDPayload *rdPayload = OCRDPayloadCreate(RD_PAYLOAD_TYPE_PUBLISH);
+    if (sendResponse(ehRequest, rdPayload) != OC_STACK_OK)
+    {
+        OC_LOG(ERROR, TAG, "Sending response failed.");
+        ehResult = OC_EH_ERROR;
+    }
+
+    OCRDPayloadDestroy(rdPayload);
+
+    return ehResult;
+}
 /*
  * This internal method is the entity handler for RD resources and
  * will handle REST request (GET/PUT/POST/DEL) for them.
@@ -98,9 +136,11 @@ static OCEntityHandlerResult RDEntityHandler(OCEntityHandlerFlag flag,
         {
             case OC_REST_GET:
             case OC_REST_DISCOVER:
-                HandleRDGetRequest(ehRequest);
+                handleGetRequest(ehRequest);
                 break;
             case OC_REST_POST:
+                handlePublishRequest(ehRequest);
+                break;
             case OC_REST_PUT:
             case OC_REST_DELETE:
             case OC_REST_OBSERVE:
@@ -121,10 +161,11 @@ static OCEntityHandlerResult RDEntityHandler(OCEntityHandlerFlag flag,
 OCStackResult OCRDStart()
 {
     OCStackResult result = OCInit(NULL, 0, OC_CLIENT_SERVER);
+    OCResourceHandle rdHandle = NULL;
 
     if (result == OC_STACK_OK)
     {
-        result = OCCreateResource(&gRDHandle,
+        result = OCCreateResource(&rdHandle,
                                   OC_RSRVD_RESOURCE_TYPE_RD,
                                   OC_RSRVD_INTERFACE_DEFAULT,
                                   OC_RSRVD_RD_URI,

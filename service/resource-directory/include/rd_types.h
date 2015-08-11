@@ -35,6 +35,9 @@ extern "C" {
 /** RD Discovery bias factor type. */
 #define OC_RSRVD_RD_DISCOVERY_SEL        "sel"
 
+/** To represent resource type with Publish RD.*/
+#define OC_RSRVD_RESOURCE_TYPE_RDPUBLISH "oic.wk.rdPub"
+
 /** Max ADDR SIZE */
 #define MAX_ADDR_STR_SIZE (40)
 
@@ -60,12 +63,45 @@ typedef struct
 } OCRDDiscoveryPayload;
 
 /**
+ * Structure holding RD Links Payload. It is a sub-structure used in
+ * OCRDPublishPayload.
+ */
+typedef struct OCRDLinksPayload
+{
+    /** Web Link Address of the resource. */
+    char *href;
+    /** Resource type of the resource. */
+    char *rt;
+    /** Interace type of the resource. */
+    char *itf;
+    /** Holding address of the next resource. */
+    struct OCRDLinksPayload *next;
+} OCRDLinksPayload;
+
+/**
+ * Structure holding RD Publish payload.
+ */
+typedef struct
+{
+    /** Device Name. */
+    OCDeviceInfo deviceName;
+    /** Device id. */
+    OCIdentity deviceId;
+    /** Time to keep holding resource.*/
+    uint32_t ttl;
+    /** List of resource information that will be stored at RD.*/
+    OCRDLinksPayload *links;
+} OCRDPublishPayload;
+
+/**
  * Enum values of multiple RD type payload.
  */
 typedef enum
 {
     /** Value pf the RD discovery payload. */
-    RD_PAYLOAD_TYPE_DISCOVERY
+    RD_PAYLOAD_TYPE_DISCOVERY,
+    /** Value of the RD publish payload. */
+    RD_PAYLOAD_TYPE_PUBLISH
 } OCRDPayloadType;
 
 /**
@@ -79,6 +115,8 @@ typedef struct
     OCRDPayloadType payloadType;
     /** Pointer to the discovery response payload.*/
     OCRDDiscoveryPayload *rdDiscovery;
+    /** Pointer to the publish payload.*/
+    OCRDPublishPayload *rdPublish;
 } OCRDPayload;
 
 #ifdef __cplusplus
