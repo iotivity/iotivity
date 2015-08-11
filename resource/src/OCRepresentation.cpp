@@ -374,10 +374,11 @@ namespace OC
                     OCRepPayloadSetPropInt(root, val.attrname().c_str(), static_cast<int>(val));
                     break;
                 case AttributeType::Double:
-                    OCRepPayloadSetPropDouble(root, val.attrname().c_str(), val);
+                    OCRepPayloadSetPropDouble(root, val.attrname().c_str(),
+                            val.getValue<double>());
                     break;
                 case AttributeType::Boolean:
-                    OCRepPayloadSetPropBool(root, val.attrname().c_str(), val);
+                    OCRepPayloadSetPropBool(root, val.attrname().c_str(), val.getValue<bool>());
                     break;
                 case AttributeType::String:
                     OCRepPayloadSetPropString(root, val.attrname().c_str(),
