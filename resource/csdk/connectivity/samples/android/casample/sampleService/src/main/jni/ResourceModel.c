@@ -1372,6 +1372,13 @@ void callback(char *subject, char *receivedData)
 {
     bool isAttached = false;
     JNIEnv* env;
+
+    if (!g_responseListenerObject)
+    {
+        LOGE("g_responseListenerObject is NULL, cannot have callback");
+        return;
+    }
+
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -1387,6 +1394,12 @@ void callback(char *subject, char *receivedData)
     }
 
     jclass cls = (*env)->GetObjectClass(env, g_responseListenerObject);
+    if (!cls)
+    {
+        LOGE("could not get class");
+        goto detach_thread;
+    }
+
     jmethodID mid = (*env)->GetMethodID(env, cls, "OnResponseReceived",
                                         "(Ljava/lang/String;Ljava/lang/String;)V");
     if (!mid)
@@ -1461,7 +1474,7 @@ void parsing_coap_uri(const char* uri, addressSet_t* address, CATransportFlags_t
     }
 
     // #2. copy uri for parse
-    int32_t len = strlen(uri) - startIndex;
+    size_t len = strlen(uri) - startIndex;
 
     if (len <= 0)
     {
@@ -1476,19 +1489,26 @@ void parsing_coap_uri(const char* uri, addressSet_t* address, CATransportFlags_t
         return;
     }
 
-    memcpy(cloneUri, &uri[startIndex], sizeof(char) * len);
-    cloneUri[len] = '\0';
+    OICStrcpy(cloneUri, len+1, &uri[startIndex]);
 
-    char *pAddress = cloneUri;
-    LOGI("pAddress : %s", pAddress);
+    char *pstr = NULL;
+    //filter out the resource uri
+    char *pUrl = strtok_r(cloneUri, "/", &pstr);
 
-    int res = get_address_set(pAddress, address);
-    if (res == -1)
+    if (pUrl)
     {
-        LOGE("address parse error");
+        LOGI("pAddress : %s", pUrl);
+        int res = get_address_set(pUrl, address);
+        if (res == -1)
+        {
+            LOGE("address parse error");
 
-        free(cloneUri);
-        return;
+            return;
+        }
+    }
+    else
+    {
+        LOGE("strtok_r error, could not get the address");
     }
 
     return;
