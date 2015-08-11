@@ -2057,6 +2057,8 @@ OCStackResult OCDoResource(OCDoHandle *handle,
         }
         else
         {
+            tmpDevAddr.adapter = adapter;
+            tmpDevAddr.flags = flags;
             destination = &tmpDevAddr;
             requestInfo.isMulticast = true;
         }
