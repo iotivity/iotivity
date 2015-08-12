@@ -345,7 +345,6 @@ static void CADestroyData(void *data, uint32_t size)
         CADestroyErrorInfoInternal(cadata->errorInfo);
     }
 
-    OICFree(cadata->options);
     OICFree(cadata);
     OIC_LOG(DEBUG, TAG, "CADestroyData OUT");
 }
@@ -769,7 +768,6 @@ static CAData_t* CAPrepareSendData(const CAEndpoint_t *endpoint, const void *sen
                                    CADataType_t dataType)
 {
     OIC_LOG(DEBUG, TAG, "CAPrepareSendData IN");
-    CAInfo_t *info = NULL;
 
     CAData_t *cadata = (CAData_t *) OICCalloc(1, sizeof(CAData_t));
     if (!cadata)
@@ -791,7 +789,6 @@ static CAData_t* CAPrepareSendData(const CAEndpoint_t *endpoint, const void *sen
         }
 
         cadata->type = request->isMulticast ? SEND_TYPE_MULTICAST : SEND_TYPE_UNICAST;
-        info = &request->info;
         cadata->requestInfo =  request;
     }
     else if(CA_RESPONSE_DATA == dataType)
@@ -807,7 +804,6 @@ static CAData_t* CAPrepareSendData(const CAEndpoint_t *endpoint, const void *sen
         }
 
         cadata->type = SEND_TYPE_UNICAST;
-        info = &response->info;
         cadata->responseInfo = response;
     }
     else
@@ -815,25 +811,6 @@ static CAData_t* CAPrepareSendData(const CAEndpoint_t *endpoint, const void *sen
         OIC_LOG(ERROR, TAG, "CAPrepareSendData unknown data type");
         OICFree(cadata);
         return NULL;
-    }
-
-    if (NULL != info->options && 0 < info->numOptions)
-    {
-        uint8_t numOptions = info->numOptions;
-        // copy data
-        CAHeaderOption_t *headerOption = (CAHeaderOption_t *) OICMalloc(sizeof(CAHeaderOption_t)
-                                                                        * numOptions);
-        if(!headerOption)
-        {
-            OIC_LOG(ERROR, TAG, "memory allocation failed");
-            CADestroyData(cadata, sizeof(CAData_t));
-            return NULL;
-        }
-
-        memcpy(headerOption, info->options, sizeof(CAHeaderOption_t) * numOptions);
-
-        cadata->options = headerOption;
-        cadata->numOptions = numOptions;
     }
 
     CAEndpoint_t* ep = CACloneEndpoint(endpoint);

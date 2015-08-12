@@ -52,9 +52,7 @@ typedef struct
     CARequestInfo_t *requestInfo;
     CAResponseInfo_t *responseInfo;
     CAErrorInfo_t *errorInfo;
-    CAHeaderOption_t *options;
     CADataType_t dataType;
-    uint8_t numOptions;
 } CAData_t;
 
 #ifdef __cplusplus
