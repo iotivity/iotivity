@@ -71,7 +71,8 @@ namespace OIC
         }
         DEVICE_STATE DevicePresence::getDeviceState() const
         {
-            return state;
+            int ret=state;
+            return (DEVICE_STATE)ret;
         }
         const std::string DevicePresence::getAddress() const
         {
@@ -132,7 +133,7 @@ namespace OIC
                     OC_LOG_V(DEBUG, BROKER_TAG, "SEQ# %d",seq);
                     state = DEVICE_STATE::ALIVE;
                     OC_LOG_V(DEBUG, BROKER_TAG, "device state : %d",
-                            (int)(state.load(boost::memory_order_consume)));
+                            (int)getDeviceState());
                     changeAllPresenceMode(BROKER_MODE::DEVICE_PRESENCE_MODE);
                     presenceTimerHandle
                     = presenceTimer.post(BROKER_DEVICE_PRESENCE_TIMEROUT, pTimeoutCB);

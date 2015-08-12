@@ -64,7 +64,7 @@ namespace OIC
          * REQUESTED   - It means that broker receives the request for presence checking
          * LOST_SIGNAL - In case that 'subscribeCB' function receives the message except 'OK'
          */
-        enum class DEVICE_STATE
+        enum DEVICE_STATE
         {
             ALIVE = 0,
             REQUESTED,

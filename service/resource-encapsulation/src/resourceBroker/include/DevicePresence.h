@@ -23,7 +23,7 @@
 
 #include <list>
 #include <string>
-#include <boost/atomic.hpp>
+#include <atomic>
 
 #include "BrokerTypes.h"
 #include "ResourcePresence.h"
@@ -54,7 +54,7 @@ namespace OIC
             std::list<ResourcePresence * > resourcePresenceList;
 
             std::string address;
-            boost::atomic<DEVICE_STATE> state;
+            std::atomic_int state;
             boost::atomic_bool isRunningTimeOut;
 
             std::mutex timeoutMutex;
