@@ -1149,7 +1149,7 @@ static void CALogPayloadInfo(CAInfo_t *info)
 {
     if(info)
     {
-        if (!info->options)
+        if (info->options)
         {
             for (uint32_t i = 0; i < info->numOptions; i++)
             {
@@ -1159,13 +1159,13 @@ static void CALogPayloadInfo(CAInfo_t *info)
             }
         }
 
-        if (!info->payload)
+        if (info->payload)
         {
             OIC_LOG_V(DEBUG, TAG, "payload: %p(%u)", info->payload,
                       info->payloadSize);
         }
 
-        if (!info->token)
+        if (info->token)
         {
             OIC_LOG(DEBUG, TAG, "token:");
             OIC_LOG_BUFFER(DEBUG, TAG, (const uint8_t *) info->token,
