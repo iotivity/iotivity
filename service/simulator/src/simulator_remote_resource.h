@@ -38,11 +38,27 @@
 
 /**
  * @class   SimulatorRemoteResource
- * @brief   This class provides a set of functions for the client to hande the resources currently running on the servers.
+ * @brief   This class represents the resource discovered in the network and provides APIs
+ *          for sending requests to discovered resource.
  */
 class SimulatorRemoteResource
 {
     public:
+        typedef enum
+        {
+            OBSERVE,
+            OBSERVE_ALL
+        } ObserveType;
+
+        // Typedef for query parameter map
+        typedef std::map<std::string, std::string> QueryParamsMap;
+
+        typedef std::function<void (int, const SimulatorResourceModel &, int)>
+        RepresentationChangeCallback;
+
+        typedef std::function<void (int, const SimulatorResourceModel &)>
+        ResponseCallback;
+
         SimulatorRemoteResource(std::shared_ptr<OC::OCResource> resource);
 
         std::string getURI() const;
@@ -59,9 +75,35 @@ class SimulatorRemoteResource
 
         bool isObservable() const;
 
+        SimulatorResult observe(ObserveType type,
+                                const QueryParamsMap &queryParams, RepresentationChangeCallback callback);
+
+        SimulatorResult cancelObserve();
+
+        SimulatorResult get(const QueryParamsMap &queryParams,
+                            ResponseCallback callback);
+
+        SimulatorResult get(const std::string &resourceType, const std::string &interfaceType,
+                            const QueryParamsMap &queryParams, ResponseCallback callback);
+
+        SimulatorResult put(const SimulatorResourceModel &representation,
+                            const QueryParamsMap &queryParams, ResponseCallback callback);
+
+        SimulatorResult put(const std::string &resourceType, const std::string &interfaceType,
+                            const SimulatorResourceModel &representation,
+                            const QueryParamsMap &queryParams, ResponseCallback callback);
+
+        SimulatorResult post(const SimulatorResourceModel &representation,
+                             const QueryParamsMap &queryParams, ResponseCallback callback);
+
+        SimulatorResult post(const std::string &resourceType, const std::string &interfaceType,
+                             const SimulatorResourceModel &representation,
+                             const QueryParamsMap &queryParams, ResponseCallback callback);
+
     private:
 
         std::shared_ptr<OC::OCResource> m_ocResource;
+        std::mutex m_observeMutex;
 };
 
 typedef std::shared_ptr<SimulatorRemoteResource> SimulatorRemoteResourcePtr;

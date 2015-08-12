@@ -42,7 +42,7 @@ class ClientController
                 int choice = -1;
                 std::cout << "Enter your choice: ";
                 std::cin >> choice;
-                if (choice < 0 || choice > 3)
+                if (choice < 0 || choice > 8)
                 {
                     std::cout << "Invaild choice !" << std::endl; continue;
                 }
@@ -51,7 +51,12 @@ class ClientController
                 {
                     case 1: findResource(); break;
                     case 2: displayResource(); break;
-                    case 3: printMenu(); break;
+                    case 3: observeResource(); break;
+                    case 4: cancelObserving(); break;
+                    case 5: sendGet(); break;
+                    case 6: sendPut(); break;
+                    case 7: sendPost(); break;
+                    case 8: printMenu(); break;
                     case 0: cont = false;
                 }
             }
@@ -63,7 +68,12 @@ class ClientController
             std::cout << "########### SIMULATOR CLIENT CONTROLLER ###########" << std::endl;
             std::cout << "1. Find resource" << std::endl;
             std::cout << "2. Display resource information" << std::endl;
-            std::cout << "3: Help" << std::endl;
+            std::cout << "3. Observe for resource change" << std::endl;
+            std::cout << "4. Cancel observation" << std::endl;
+            std::cout << "5. Send GET message" << std::endl;
+            std::cout << "6. Send PUT message" << std::endl;
+            std::cout << "7. Send POST message" << std::endl;
+            std::cout << "8: Help" << std::endl;
             std::cout << "0. Exit" << std::endl;
             std::cout << "###################################################" << std::endl;
         }
@@ -79,7 +89,7 @@ class ClientController
             int index = 1;
             for (auto & resource : resourceList)
             {
-                std::cout << index++ << ": " << resource->getURI().c_str() << std::endl;
+                std::cout << index++ << ": " << resource->getURI() << "[" << resource->getHost()  << "]" << std::endl;
             }
 
             int choice = -1;
@@ -129,6 +139,7 @@ class ClientController
         {
             std::cout << "#############################" << std::endl;
             std::cout << "URI: " << resource->getURI().c_str() << std::endl;
+            std::cout << "Host: " << resource->getHost().c_str() << std::endl;
             std::cout << "Resource Types: ";
             for (auto &type : resource->getResourceTypes())
                 std::cout << type << " ";
@@ -137,6 +148,170 @@ class ClientController
                 std::cout << type << " ";
             std::cout << std::boolalpha << "\nisObservable : " << resource->isObservable() << std::endl;
             std::cout << "#############################" << std::endl;
+        }
+
+        void observeResource()
+        {
+            std::vector<SimulatorRemoteResourcePtr> resourceList =
+                SimulatorManager::getInstance()->getFoundResources();
+
+            int index = selectResource(resourceList);
+            if (-1 == index)
+                return;
+
+            SimulatorRemoteResourcePtr resource = resourceList[index - 1];
+
+            // callback implementaion
+            SimulatorRemoteResource::RepresentationChangeCallback callback =
+            [](int errorCode, const SimulatorResourceModel &rep, int seq)
+            {
+                std::cout << "\nObserve notificatoin received ###[errorcode:  " << errorCode << " seq:  " << seq << "]" << std::endl;
+                std::map<std::string, SimulatorResourceModel::Attribute> attributes = rep.getAttributes();
+                for (auto & attribute : attributes)
+                {
+                    std::cout << (attribute.second).getName() << " :  {" << std::endl;
+                    std::cout << "value: " << (attribute.second).valueToString().c_str() << std::endl;
+                    std::cout << "}" << std::endl;
+                }
+                std::cout << std::endl;
+            };
+
+            std::map <std::string, std::string> queryParams;
+            SimulatorResult result = resource->observe(SimulatorRemoteResource::OBSERVE, queryParams, callback);
+            if ( SIMULATOR_SUCCESS == result)
+                std::cout << "Observe is successfull!" << std::endl;
+            else
+                std::cout << "Observe is failed!error: " << result << std::endl;
+        }
+
+        void cancelObserving()
+        {
+            std::vector<SimulatorRemoteResourcePtr> resourceList =
+                SimulatorManager::getInstance()->getFoundResources();
+
+            int index = selectResource(resourceList);
+            if (-1 == index)
+                return;
+
+            SimulatorRemoteResourcePtr resource = resourceList[index - 1];
+            SimulatorResult result = resource->cancelObserve();
+            if ( SIMULATOR_SUCCESS == result)
+                std::cout << "Cancelling observe is successfull!" << std::endl;
+            else
+                std::cout << "Cancelling observe is failed!error: " << result << std::endl;
+        }
+
+        void sendGet()
+        {
+            std::vector<SimulatorRemoteResourcePtr> resourceList =
+                SimulatorManager::getInstance()->getFoundResources();
+
+            int index = selectResource(resourceList);
+            if (-1 == index)
+                return;
+
+            SimulatorRemoteResourcePtr resource = resourceList[index - 1];
+
+            // callback implementaion
+            SimulatorRemoteResource::ResponseCallback callback =
+            [](int errorCode, const SimulatorResourceModel & rep)
+            {
+                std::cout << "\nGET Response received ### [errorcode:  " << errorCode << "]" << std::endl;
+                std::cout << "Representation is: " << std::endl;
+                std::map<std::string, SimulatorResourceModel::Attribute> attributes = rep.getAttributes();
+                for (auto & attribute : attributes)
+                {
+                    std::cout << (attribute.second).getName() << " :  {" << std::endl;
+                    std::cout << "value: " << (attribute.second).valueToString().c_str() << std::endl;
+                    std::cout << "}" << std::endl;
+                }
+                std::cout << std::endl;
+            };
+
+            std::map <std::string, std::string> queryParams;
+            SimulatorResult result = resource->get(queryParams, callback);
+            if ( SIMULATOR_SUCCESS == result)
+                std::cout << "GET is successfull!" << std::endl;
+            else
+                std::cout << "GET is failed!error: " << result << std::endl;
+        }
+
+        void sendPut()
+        {
+            std::vector<SimulatorRemoteResourcePtr> resourceList =
+                SimulatorManager::getInstance()->getFoundResources();
+
+            int index = selectResource(resourceList);
+            if (-1 == index)
+                return;
+
+            SimulatorRemoteResourcePtr resource = resourceList[index - 1];
+
+            // callback implementaion
+            SimulatorRemoteResource::ResponseCallback callback =
+            [](int errorCode, const SimulatorResourceModel & rep)
+            {
+                std::cout << "\nPUT Response received ![errorcode:  " << errorCode << "]" << std::endl;
+                std::cout << "Representation is: " << std::endl;
+                std::map<std::string, SimulatorResourceModel::Attribute> attributes = rep.getAttributes();
+                for (auto & attribute : attributes)
+                {
+                    std::cout << (attribute.second).getName() << " :  {" << std::endl;
+                    std::cout << "value: " << (attribute.second).valueToString().c_str() << std::endl;
+                    std::cout << "}" << std::endl;
+                }
+                std::cout << std::endl;
+            };
+
+            std::map <std::string, std::string> queryParams;
+            SimulatorResourceModel rep;
+            rep.addAttribute("power", "off");
+            rep.addAttribute("intensity", 5);
+
+            SimulatorResult result = resource->put(rep, queryParams, callback);
+            if ( SIMULATOR_SUCCESS == result)
+                std::cout << "PUT is successfull!" << std::endl;
+            else
+                std::cout << "PUT is failed!error: " << result << std::endl;
+        }
+
+        void sendPost()
+        {
+            std::vector<SimulatorRemoteResourcePtr> resourceList =
+                SimulatorManager::getInstance()->getFoundResources();
+
+            int index = selectResource(resourceList);
+            if (-1 == index)
+                return;
+
+            SimulatorRemoteResourcePtr resource = resourceList[index - 1];
+
+            // callback implementaion
+            SimulatorRemoteResource::ResponseCallback callback =
+            [](int errorCode, const SimulatorResourceModel & rep)
+            {
+                std::cout << "\nPOST Response received ![errorcode:  " << errorCode << "]" << std::endl;
+                std::cout << "Representation is: " << std::endl;
+                std::map<std::string, SimulatorResourceModel::Attribute> attributes = rep.getAttributes();
+                for (auto & attribute : attributes)
+                {
+                    std::cout << (attribute.second).getName() << " :  {" << std::endl;
+                    std::cout << "value: " << (attribute.second).valueToString().c_str() << std::endl;
+                    std::cout << "}" << std::endl;
+                }
+                std::cout << std::endl;
+            };
+
+            std::map <std::string, std::string> queryParams;
+            SimulatorResourceModel rep;
+            rep.addAttribute("power", "on");
+            rep.addAttribute("intensity", 7);
+
+            SimulatorResult result = resource->post(rep, queryParams, callback);
+            if ( SIMULATOR_SUCCESS == result)
+                std::cout << "POST is successfull!" << std::endl;
+            else
+                std::cout << "POST is failed!error: " << result << std::endl;
         }
 };
 

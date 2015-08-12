@@ -34,6 +34,7 @@
 #include "OCApi.h"
 
 class SimulatorResourceServer;
+class SimulatorRemoteResource;
 /**
  * @class   SimulatorResourceModel
  * @brief   This class provides a set of functions for accessing and manipulating the resource model.
@@ -41,6 +42,7 @@ class SimulatorResourceServer;
 class SimulatorResourceModel
 {
         friend class SimulatorResourceServer;
+        friend class SimulatorRemoteResource;
 
     public:
 
