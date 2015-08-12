@@ -218,8 +218,7 @@ namespace OIC
             time(&currentTime);
             currentTime += 0L;
 
-            if((receivedTime.load(boost::memory_order_consume) == 0) ||
-              ((receivedTime + BROKER_SAFE_SECOND) > currentTime ))
+            if((receivedTime == 0) || ((receivedTime + BROKER_SAFE_SECOND) > currentTime ))
             {
                 this->isWithinTime = true;
                 return;
