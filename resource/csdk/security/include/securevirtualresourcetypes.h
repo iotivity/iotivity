@@ -233,7 +233,8 @@ typedef enum
     OIC_MODE_SWITCH                         = 0x1,
     OIC_RANDOM_DEVICE_PIN                   = 0x2,
     OIC_PRE_PROVISIONED_DEVICE_PIN          = 0x3,
-    OIC_PRE_PROVISION_STRONG_CREDENTIAL     = 0x4
+    OIC_PRE_PROVISION_STRONG_CREDENTIAL     = 0x4,
+    OIC_OXM_COUNT
 }OicSecOxm_t;
 
 typedef struct OicSecJwk OicSecJwk_t;

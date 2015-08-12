@@ -32,8 +32,10 @@ provisioning_env.AppendUnique(CPPPATH = [
 		'../../../logger/include',
 		'../../../stack/include',
 		'../../../security/include',
+		'../../../security/provisioning/include/internal',
 		'../../../../oc_logger/include',
 		'../include',
+		'../include/oxm',
 		'../../include',
 		'../../../../../extlibs/tinydtls',
 		'../../../../../extlibs/cjson',
@@ -49,7 +51,7 @@ provisioning_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread', '-f
 provisioning_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
 provisioning_env.AppendUnique(LIBS = ['-lpthread'])
 provisioning_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-provisioning_env.PrependUnique(LIBS = ['ocspapi','oc', 'oc_logger', 'ocsrm','m', 'octbstack', 'connectivity_abstraction', 'coap'])
+provisioning_env.PrependUnique(LIBS = ['ocpmapi','oc', 'oc_logger', 'ocsrm','m', 'octbstack', 'connectivity_abstraction', 'coap'])
 
 if env.get('SECURED') == '1':
     provisioning_env.AppendUnique(LIBS = ['tinydtls'])
@@ -62,8 +64,9 @@ provisioning_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 ######################################################################
 
 provisioningclient = provisioning_env.Program('provisioningclient', 'provisioningclient.c')
+sampleserver_justworks = provisioning_env.Program('sampleserver_justworks', 'sampleserver_justworks.cpp')
 
-Alias("sample", [provisioningclient])
+Alias("samples", [provisioningclient, sampleserver_justworks])
 
 provisioning_env.AppendTarget('samples')
 
@@ -72,6 +75,7 @@ sec_provisioning_src_dir = src_dir + '/resource/csdk/security/provisioning/sampl
 sec_provisioning_build_dir = env.get('BUILD_DIR') +'/resource/csdk/security/provisioning/sample/'
 
 provisioning_env.Alias("install", provisioning_env.Install( sec_provisioning_build_dir,
-    sec_provisioning_src_dir + 'oic_svr_db_prov_tool.json'))
+    sec_provisioning_src_dir + 'oic_svr_db_client.json'))
 provisioning_env.Alias("install", provisioning_env.Install( sec_provisioning_build_dir,
-    sec_provisioning_src_dir + 'oic_svr_db_unowned_server.json'))
+    sec_provisioning_src_dir + 'oic_svr_db_server_justworks.json'))
+

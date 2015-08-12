@@ -93,9 +93,9 @@ extern const char * WILDCARD_RESOURCE_URI;
 //Ownership Transfer Methods
 extern const char * OXM_JUST_WORKS;
 extern const char * OXM_MODE_SWITCH;
-extern const char * RANDOM_DEVICE_PIN;
-extern const char * PRE_PROVISIONED_DEVICE_PIN;
-extern const char * PRE_PROVISIONED_STRONG_CREDENTIAL;
+extern const char * OXM_RANDOM_DEVICE_PIN;
+extern const char * OXM_PRE_PROVISIONED_DEVICE_PIN;
+extern const char * OXM_PRE_PROVISIONED_STRONG_CREDENTIAL;
 
 extern const char * OIC_SEC_TRUE;
 extern const char * OIC_SEC_FALSE;
