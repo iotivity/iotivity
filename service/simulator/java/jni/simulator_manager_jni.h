@@ -52,11 +52,11 @@ Java_org_oic_simulator_SimulatorManagerNativeInterface_setLogger
 (JNIEnv *env, jclass object, jobject logger);
 
 JNIEXPORT jint JNICALL
-Java_org_iotivity_simulator_SimulatorManagerNativeInterface_findResource
+Java_org_oic_simulator_SimulatorManagerNativeInterface_findResource
 (JNIEnv *env, jobject interfaceObject, jstring jResourceType, jobject jListener);
 
 JNIEXPORT jobject JNICALL
-Java_org_iotivity_simulator_SimulatorManagerNativeInterface_getFoundResources
+Java_org_oic_simulator_SimulatorManagerNativeInterface_getFoundResources
 (JNIEnv *env, jobject interfaceObject, jstring jResourceType);
 
 #ifdef __cplusplus

@@ -18,6 +18,9 @@
  *
  ******************************************************************/
 #include "simulator_resource_jni_util.h"
+#include "simulator_common_jni.h"
+
+extern SimulatorClassRefs gSimulatorClassRefs;
 
 std::vector<int> convertIntegerVector(JNIEnv *env, jobject jVectorInt)
 {
@@ -134,3 +137,32 @@ std::vector<std::string> convertStringVector(JNIEnv *env, jobject jVectorString)
 
     return vectorString;
 }
+
+void convertJavaMapToQueryParamsMap(JNIEnv *env, jobject hashMap,
+                                    std::map<std::string, std::string> &queryParams)
+{
+    if (!hashMap) return;
+
+    jobject jEntrySet = env->CallObjectMethod(hashMap, gSimulatorClassRefs.classMapEntrySet);
+    jobject jIterator = env->CallObjectMethod(jEntrySet, gSimulatorClassRefs.classIteratorId);
+    if (!jEntrySet || !jIterator || env->ExceptionCheck()) return;
+
+    while (env->CallBooleanMethod(jIterator, gSimulatorClassRefs.classHasNextId))
+    {
+        jobject jEntry = env->CallObjectMethod(jIterator, gSimulatorClassRefs.classNextId);
+        if (!jEntry) return;
+        jstring jKey = (jstring)env->CallObjectMethod(jEntry, gSimulatorClassRefs.classMapGetKey);
+        if (!jKey) return;
+        jstring jValue = (jstring)env->CallObjectMethod(jEntry, gSimulatorClassRefs.classMapGetValue);
+        if (!jValue) return;
+
+        queryParams.insert(std::make_pair(env->GetStringUTFChars(jKey, NULL),
+                                  env->GetStringUTFChars(jValue, NULL)));
+
+        if (env->ExceptionCheck()) return;
+        env->DeleteLocalRef(jEntry);
+        env->DeleteLocalRef(jKey);
+        env->DeleteLocalRef(jValue);
+    }
+}
+

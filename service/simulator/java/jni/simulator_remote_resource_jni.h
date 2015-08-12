@@ -23,33 +23,48 @@
 
 #include <jni.h>
 #include "simulator_remote_resource.h"
-#include "simulator_client.h"
 
 class JniSimulatorRemoteResource
 {
     public:
-
-        JniSimulatorRemoteResource(SimulatorRemoteResourcePtr &resource);
-        ~JniSimulatorRemoteResource();
-        static JniSimulatorRemoteResource *getJniSimulatorResourcePtr(JNIEnv *env, jobject thiz);
-        std::string getURI();
-
+        JniSimulatorRemoteResource(SimulatorRemoteResourcePtr &resource)
+        : m_resource(resource) {};
+        static SimulatorRemoteResourcePtr getResourceHandle(JNIEnv *env, jobject object);
     private:
-        std::shared_ptr<SimulatorRemoteResource> m_sharedResource;
+        SimulatorRemoteResourcePtr m_resource;
 };
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-JNIEXPORT jstring JNICALL
-Java_org_iotivity_simulator_SimulatorRemoteResource_getURI
-(JNIEnv *, jobject);
+JNIEXPORT jint JNICALL
+Java_org_oic_simulator_SimulatorRemoteResource_observe
+(JNIEnv *env, jobject thiz, jint observeType, jobject jQueryParamsMap, jobject jListener);
+
+JNIEXPORT jint JNICALL
+Java_org_oic_simulator_SimulatorRemoteResource_cancelObserve
+(JNIEnv *env, jobject thiz);
+
+JNIEXPORT jint JNICALL
+Java_org_oic_simulator_SimulatorRemoteResource_get
+(JNIEnv *env, jobject thiz, jstring jResourceType, jstring jResourceInterface,
+ jobject jQueryParamsMap, jobject jListener);
+
+JNIEXPORT jint JNICALL
+Java_org_oic_simulator_SimulatorRemoteResource_put
+(JNIEnv *env, jobject thiz, jstring jResourceType, jstring jResourceInterface,
+ jobject jRepresentation, jobject jQueryParamsMap, jobject jListener);
+
+JNIEXPORT jint JNICALL
+Java_org_oic_simulator_SimulatorRemoteResource_post
+(JNIEnv *env, jobject thiz, jstring jResourceType, jstring jResourceInterface,
+ jobject jRepresentation, jobject jQueryParamsMap, jobject jListener);
 
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif //SIMULATOR_REMOTE_RESOURCE_JNI_H_
+#endif
 

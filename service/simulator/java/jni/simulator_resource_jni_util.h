@@ -33,6 +33,8 @@
 #include <vector>
 #include <map>
 
+#include "simulator_remote_resource.h"
+
 /**
   * Utility function for converting a Java Vector of Strings to CPP Vector of Strings
   *
@@ -62,6 +64,9 @@ std::vector<double> convertDoubleVector(JNIEnv *env, jobject jVectorDouble);
   * @return void
   */
 std::vector<std::string> convertStringVector(JNIEnv *env, jobject jVectorString);
+
+void convertJavaMapToQueryParamsMap(JNIEnv *env, jobject hashMap,
+                            std::map<std::string, std::string> &map);
 
 #endif //__SIMULATOR_RESOURCE_JNI_UTIL_H_
 
