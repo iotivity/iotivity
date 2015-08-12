@@ -493,7 +493,7 @@ dtls_psk_pre_master_secret(unsigned char *key, size_t keylen,
 }
 #endif /* DTLS_PSK */
 
-#ifdef DTLS_ECC
+#if defined(DTLS_ECC) || defined(DTLS_X509)
 
 int dtls_ec_key_from_uint32_asn1(const uint32_t *key, size_t key_size,
 				 unsigned char *buf) {
