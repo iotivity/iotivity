@@ -85,7 +85,7 @@ void onObserve(const HeaderOptions headerOptions, const OCRepresentation& rep,
             std::cout << "\tpower: " << mylight.m_power << std::endl;
             std::cout << "\tname: " << mylight.m_name << std::endl;
 
-            if(observe_count() > 10)
+            if(observe_count() == 11)
             {
                 std::cout<<"Cancelling Observe..."<<std::endl;
                 OCStackResult result = curResource->cancelObserve();
