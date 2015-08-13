@@ -230,20 +230,20 @@ static CAResult_t CAReceiveMessage(int fd, CATransportFlags_t flags)
         return CA_STATUS_FAILED;
     }
 
-    CAEndpoint_t ep = { .adapter = CA_ADAPTER_IP,
-                        .flags = flags };
+    CASecureEndpoint_t sep =
+    {.endpoint = {.adapter = CA_ADAPTER_IP, .flags = flags}};
 
     if (flags & CA_IPV6)
     {
-        ep.interface = ((struct sockaddr_in6 *)&srcAddr)->sin6_scope_id;
+        sep.endpoint.interface = ((struct sockaddr_in6 *)&srcAddr)->sin6_scope_id;
         ((struct sockaddr_in6 *)&srcAddr)->sin6_scope_id = 0;
     }
-    CAConvertAddrToName(&srcAddr, ep.addr, &ep.port);
+    CAConvertAddrToName(&srcAddr, sep.endpoint.addr, &sep.endpoint.port);
 
     if (flags & CA_SECURE)
     {
 #ifdef __WITH_DTLS__
-        int ret = CAAdapterNetDtlsDecrypt(&ep, (uint8_t *)recvBuffer, recvLen);
+        int ret = CAAdapterNetDtlsDecrypt(&sep, (uint8_t *)recvBuffer, recvLen);
         OIC_LOG_V(DEBUG, TAG, "CAAdapterNetDtlsDecrypt returns [%d]", ret);
 #else
         OIC_LOG(ERROR, TAG, "Encrypted message but no DTLS");
@@ -253,7 +253,7 @@ static CAResult_t CAReceiveMessage(int fd, CATransportFlags_t flags)
     {
         if (g_packetReceivedCallback)
         {
-            g_packetReceivedCallback(&ep, recvBuffer, recvLen);
+            g_packetReceivedCallback(&sep, recvBuffer, recvLen);
         }
     }
 
@@ -667,16 +667,16 @@ static void CAHandleNetlink()
 
 void CAIPSetPacketReceiveCallback(CAIPPacketReceivedCallback callback)
 {
-OIC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
 
-g_packetReceivedCallback = callback;
+    g_packetReceivedCallback = callback;
 
-OIC_LOG(DEBUG, TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 void CAIPSetExceptionCallback(CAIPExceptionCallback callback)
 {
-OIC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
 
     g_exceptionCallback = callback;
 

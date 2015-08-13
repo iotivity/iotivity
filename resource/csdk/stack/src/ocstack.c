@@ -669,7 +669,7 @@ static OCStackResult ResetPresenceTTL(ClientCB *cbNode, uint32_t maxAgeSeconds)
 
     cbNode->presence->TTL = maxAgeSeconds;
 
-    for(int index = 0; index < PresenceTimeOutSize; index++)
+    for (int index = 0; index < PresenceTimeOutSize; index++)
     {
         // Guard against overflow
         if (cbNode->presence->TTL < (UINT32_MAX/(MILLISECONDS_PER_SECOND*PresenceTimeOut[index]))
@@ -817,7 +817,7 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
 
     // check for unicast presence
     uriLen = FormCanonicalPresenceUri(endpoint, OC_RSRVD_PRESENCE_URI, presenceUri);
-    if (uriLen < 0 || uriLen >= sizeof (presenceUri))
+    if (uriLen < 0 || (size_t)uriLen >= sizeof (presenceUri))
     {
         return OC_STACK_INVALID_URI;
     }
@@ -1046,6 +1046,9 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
             CopyEndpointToDevAddr(endPoint, &response.devAddr);
             FixUpClientResponse(&response);
             response.resourceUri = responseInfo->info.resourceUri;
+            memcpy(response.identity.id, responseInfo->info.identity.id,
+                                                sizeof (response.identity.id));
+            response.identity.id_length = responseInfo->info.identity.id_length;
 
             response.result = CAToOCStackResult(responseInfo->result);
             cbNode->callBack(cbNode->context,
@@ -1063,6 +1066,9 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
             CopyEndpointToDevAddr(endPoint, &response.devAddr);
             FixUpClientResponse(&response);
             response.resourceUri = responseInfo->info.resourceUri;
+            memcpy(response.identity.id, responseInfo->info.identity.id,
+                                                sizeof (response.identity.id));
+            response.identity.id_length = responseInfo->info.identity.id_length;
 
             response.result = CAToOCStackResult(responseInfo->result);
             if(responseInfo->info.payload &&
@@ -1654,7 +1660,7 @@ OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
 #ifdef WITH_PRESENCE
-    PresenceTimeOutSize = sizeof(PresenceTimeOut)/sizeof(PresenceTimeOut[0]) - 1;
+    PresenceTimeOutSize = sizeof (PresenceTimeOut) / sizeof (PresenceTimeOut[0]) - 1;
 #endif // WITH_PRESENCE
 
     //Update Stack state to initialized
@@ -2397,7 +2403,7 @@ OCStackResult OCProcessPresence()
                                                 cbNode->presence->TTLlevel);
         OC_LOG_V(DEBUG, TAG, "current ticks %d", now);
 
-        if(cbNode->presence->TTLlevel >= (PresenceTimeOutSize + 1))
+        if (cbNode->presence->TTLlevel > PresenceTimeOutSize)
         {
             goto exit;
         }
@@ -2407,7 +2413,6 @@ OCStackResult OCProcessPresence()
             OC_LOG_V(DEBUG, TAG, "timeout ticks %d",
                     cbNode->presence->timeOut[cbNode->presence->TTLlevel]);
         }
-
         if (cbNode->presence->TTLlevel >= PresenceTimeOutSize)
         {
             OC_LOG(DEBUG, TAG, PCF("No more timeout ticks"));
@@ -3774,7 +3779,7 @@ OCStackResult getQueryFromUri(const char * uri, char** query, char ** uriWithout
 
     char *pointerToDelimiter = strstr(uri, "?");
 
-    uriWithoutQueryLen = pointerToDelimiter == NULL ? uriLen : pointerToDelimiter - uri;
+    uriWithoutQueryLen = pointerToDelimiter == NULL ? uriLen : (size_t)(pointerToDelimiter - uri);
     queryLen = pointerToDelimiter == NULL ? 0 : uriLen - uriWithoutQueryLen - 1;
 
     if (uriWithoutQueryLen)

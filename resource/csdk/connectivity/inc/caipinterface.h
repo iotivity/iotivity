@@ -50,12 +50,12 @@ typedef enum
 /**
  * Callback to be notified on reception of any data from remote OIC devices.
  *
- * @param[in]  endpoint      network endpoint description.
+ * @param[in]  sep         network endpoint description.
  * @param[in]  data          Data received from remote OIC device.
  * @param[in]  dataLength    Length of data in bytes.
  * @pre  Callback must be registered using CAIPSetPacketReceiveCallback().
  */
-typedef void (*CAIPPacketReceivedCallback)(const CAEndpoint_t *endpoint,
+typedef void (*CAIPPacketReceivedCallback)(const CASecureEndpoint_t *sep,
                                            const void *data,
                                            uint32_t dataLength);
 
