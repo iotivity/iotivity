@@ -62,25 +62,31 @@ coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info, const CAEndpoint_
  * extracts request information from received pdu.
  * @param[in]   pdu                   received pdu.
  * @param[out]  outReqInfo            request info structure made from received pdu.
+ * @param[in]   flags                 transport type.
  * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAGetRequestInfoFromPDU(const coap_pdu_t *pdu, CARequestInfo_t *outReqInfo);
+CAResult_t CAGetRequestInfoFromPDU(const coap_pdu_t *pdu, CARequestInfo_t *outReqInfo,
+                                   CATransportFlags_t flags);
 
 /**
  * extracts response information from received pdu.
  * @param[in]   pdu                   received pdu.
  * @param[out]  outResInfo            response info structure made from received pdu.
+ * @param[in]   flags                 transport type.
  * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAGetResponseInfoFromPDU(const coap_pdu_t *pdu, CAResponseInfo_t *outResInfo);
+CAResult_t CAGetResponseInfoFromPDU(const coap_pdu_t *pdu, CAResponseInfo_t *outResInfo,
+                                    CATransportFlags_t flags);
 
 /**
  * extracts error information from received pdu.
  * @param[in]   pdu                   received pdu.
  * @param[out]  errorInfo             error info structure made from received pdu.
+ * @param[in]   flags                 transport type.
  * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAGetErrorInfoFromPDU(const coap_pdu_t *pdu, CAErrorInfo_t *errorInfo);
+CAResult_t CAGetErrorInfoFromPDU(const coap_pdu_t *pdu, CAErrorInfo_t *errorInfo,
+                                 CATransportFlags_t flags);
 
 /**
  * creates pdu from the request information.
@@ -164,26 +170,32 @@ uint32_t CAGetOptionData(const uint8_t *data, uint32_t len, uint8_t *option, uin
  * @param[in]    pdu                  received pdu.
  * @param[out]   outCode              code of the received pdu.
  * @param[out]   outInfo              request info structure made from received pdu.
+ * @param[in]    flags                transport type.
  * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *outInfo);
+CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *outInfo,
+                            CATransportFlags_t flags);
 
 /**
  * create pdu from received data.
  * @param[in]   data                received data.
  * @param[in]   length              length of the data received.
  * @param[out]  outCode             code received.
+ * @param[in]   flags               transport type.
  * @return  coap_pdu_t value.
  */
-coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode);
+coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode,
+                       CATransportFlags_t flags);
 
 /**
  * get Token from received data(pdu).
  * @param[in]    pdu_hdr             header of received pdu.
  * @param[out]   outInfo             information with token received.
+ * @param[in]    flags               transport type.
  * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAGetTokenFromPDU(const coap_hdr_t *pdu_hdr, CAInfo_t *outInfo);
+CAResult_t CAGetTokenFromPDU(const coap_hdr_t *pdu_hdr, CAInfo_t *outInfo,
+                             CATransportFlags_t flags);
 
 /**
  * generates the token.

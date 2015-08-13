@@ -129,8 +129,9 @@ void CAHandleRequestResponseCallbacks();
 /**
  * To log the PDU data.
  * @param[in] pdu    pdu data.
+ * @param[in] flags  transport type.
  */
-void CALogPDUInfo(coap_pdu_t *pdu);
+void CALogPDUInfo(coap_pdu_t *pdu, CATransportFlags_t flags);
 
 #ifdef WITH_BWT
 /**

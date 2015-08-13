@@ -259,7 +259,7 @@ CAResult_t CAReceiveBlockWiseData(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
     VERIFY_NON_NULL(receivedData, TAG, "receivedData");
 
     // check if received message type is CA_MSG_RESET
-    if (CA_EMPTY == pdu->hdr->code)
+    if (CA_EMPTY == pdu->hdr->coap_hdr_udp_t.code)
     {
         OIC_LOG(DEBUG, TAG, "code is CA_EMPTY..");
 
@@ -317,12 +317,12 @@ CAResult_t CAReceiveBlockWiseData(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
     // check if there is error code
     if (!isBlock1 && !isBlock2)
     {
-        uint32_t code = CA_RESPONSE_CODE(pdu->hdr->code);
+        uint32_t code = CA_RESPONSE_CODE(pdu->hdr->coap_hdr_udp_t.code);
         if (CA_REQUEST_ENTITY_INCOMPLETE == code)
         {
             CABlockDataID_t* blockDataID = CACreateBlockDatablockId(
-                    (CAToken_t)pdu->hdr->token,
-                     pdu->hdr->token_length,
+                    (CAToken_t)pdu->hdr->coap_hdr_udp_t.token,
+                     pdu->hdr->coap_hdr_udp_t.token_length,
                      endpoint->port);
 
             if(NULL == blockDataID || NULL == blockDataID->id || blockDataID->idLength < 1)
@@ -438,12 +438,12 @@ CAResult_t CAProcessNextStep(const coap_pdu_t *pdu, const CAData_t *receivedData
 
             if (data->requestInfo)
             {
-                data->requestInfo->info.messageId = pdu->hdr->id;
+                data->requestInfo->info.messageId = pdu->hdr->coap_hdr_udp_t.id;
             }
 
             if (data->responseInfo)
             {
-                data->responseInfo->info.messageId = pdu->hdr->id;
+                data->responseInfo->info.messageId = pdu->hdr->coap_hdr_udp_t.id;
             }
 
             res = CAAddSendThreadQueue(data, blockID);
@@ -494,7 +494,7 @@ CAResult_t CAProcessNextStep(const coap_pdu_t *pdu, const CAData_t *receivedData
                 return res;
             }
 
-            if (CA_MSG_NONCONFIRM == pdu->hdr->type)
+            if (CA_MSG_NONCONFIRM == pdu->hdr->coap_hdr_udp_t.type)
             {
                 // remove data from list
                 res = CARemoveBlockDataFromList(blockID);
@@ -507,7 +507,7 @@ CAResult_t CAProcessNextStep(const coap_pdu_t *pdu, const CAData_t *receivedData
             break;
 
         case CA_OPTION1_NO_ACK_BLOCK:
-            if (CA_MSG_CONFIRM == pdu->hdr->type)
+            if (CA_MSG_CONFIRM == pdu->hdr->coap_hdr_udp_t.type)
             {
                 // add data to send thread
                 res = CASendBlockMessage(pdu, CA_MSG_ACKNOWLEDGE, blockWiseStatus,
@@ -521,7 +521,8 @@ CAResult_t CAProcessNextStep(const coap_pdu_t *pdu, const CAData_t *receivedData
             break;
 
         case CA_BLOCK_INCOMPLETE:
-            if (CA_MSG_CONFIRM == pdu->hdr->type || CA_MSG_ACKNOWLEDGE == pdu->hdr->type)
+            if (CA_MSG_CONFIRM == pdu->hdr->coap_hdr_udp_t.type ||
+                    CA_MSG_ACKNOWLEDGE == pdu->hdr->coap_hdr_udp_t.type)
             {
                 // add data to send thread
                 res = CASendErrorMessage(pdu, blockWiseStatus,
@@ -536,7 +537,7 @@ CAResult_t CAProcessNextStep(const coap_pdu_t *pdu, const CAData_t *receivedData
             break;
 
         case CA_BLOCK_TOO_LARGE:
-            if (CA_MSG_ACKNOWLEDGE == pdu->hdr->type)
+            if (CA_MSG_ACKNOWLEDGE == pdu->hdr->coap_hdr_udp_t.type)
             {
                 res = CASendBlockMessage(pdu, CA_MSG_CONFIRM, blockWiseStatus,
                                          blockID);
@@ -546,7 +547,7 @@ CAResult_t CAProcessNextStep(const coap_pdu_t *pdu, const CAData_t *receivedData
                     return res;
                 }
             }
-            else if (CA_MSG_CONFIRM == pdu->hdr->type)
+            else if (CA_MSG_CONFIRM == pdu->hdr->coap_hdr_udp_t.type)
             {
                 res = CASendErrorMessage(pdu, blockWiseStatus,
                                          CA_REQUEST_ENTITY_TOO_LARGE,
@@ -596,7 +597,7 @@ CAResult_t CASendBlockMessage(const coap_pdu_t *pdu, CAMessageType_t msgType,
         if (data->responseInfo)
         {
             OIC_LOG(DEBUG, TAG, "set ACK message");
-            data->responseInfo->info.messageId = pdu->hdr->id;
+            data->responseInfo->info.messageId = pdu->hdr->coap_hdr_udp_t.id;
             data->responseInfo->info.type = CA_MSG_ACKNOWLEDGE;
             if (CA_OPTION1_NO_ACK_LAST_BLOCK == status)
             {
@@ -638,7 +639,7 @@ CAResult_t CASendErrorMessage(const coap_pdu_t *pdu, uint8_t status,
     CAData_t *cloneData = NULL;
     if (data->sentData && data->sentData->responseInfo)
     {
-        data->sentData->responseInfo->info.messageId = pdu->hdr->id;
+        data->sentData->responseInfo->info.messageId = pdu->hdr->coap_hdr_udp_t.id;
         data->sentData->responseInfo->info.type = CA_MSG_ACKNOWLEDGE;
         data->sentData->responseInfo->result = responseResult;
         cloneData = CACloneCAData(data->sentData);
@@ -750,8 +751,8 @@ CAResult_t CASetNextBlockOption1(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
     OIC_LOG_V(INFO, TAG, "num:%d, M:%d, sze:%d", block.num, block.m, block.szx);
 
     CABlockDataID_t* blockDataID = CACreateBlockDatablockId(
-            (CAToken_t)pdu->hdr->token,
-            pdu->hdr->token_length,
+            (CAToken_t)pdu->hdr->coap_hdr_udp_t.token,
+            pdu->hdr->coap_hdr_udp_t.token_length,
             endpoint->port);
 
     if(NULL == blockDataID || NULL == blockDataID->id || blockDataID->idLength < 1)
@@ -805,9 +806,9 @@ CAResult_t CASetNextBlockOption1(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
 
     uint8_t blockWiseStatus = CA_BLOCK_UNKNOWN;
     // received type from remote device
-    if (CA_MSG_ACKNOWLEDGE == pdu->hdr->type)
+    if (CA_MSG_ACKNOWLEDGE == pdu->hdr->coap_hdr_udp_t.type)
     {
-        uint32_t code = CA_RESPONSE_CODE(pdu->hdr->code);
+        uint32_t code = CA_RESPONSE_CODE(pdu->hdr->coap_hdr_udp_t.code);
         if (0 == block.m &&
                 (CA_REQUEST_ENTITY_INCOMPLETE != code && CA_REQUEST_ENTITY_TOO_LARGE != code))
         {
@@ -846,7 +847,7 @@ CAResult_t CASetNextBlockOption1(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                                                                       &(data->payloadLength));
 
         // check if received payload is exact
-        if (CA_MSG_CONFIRM == pdu->hdr->type)
+        if (CA_MSG_CONFIRM == pdu->hdr->coap_hdr_udp_t.type)
         {
             blockWiseStatus = CACheckBlockErrorType(data, &block, receivedData,
                                                     COAP_OPTION_BLOCK1, dataLen);
@@ -926,8 +927,8 @@ CAResult_t CASetNextBlockOption2(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
     VERIFY_NON_NULL(receivedData, TAG, "receivedData");
 
     CABlockDataID_t* blockDataID = CACreateBlockDatablockId(
-            (CAToken_t)pdu->hdr->token,
-            pdu->hdr->token_length,
+            (CAToken_t)pdu->hdr->coap_hdr_udp_t.token,
+            pdu->hdr->coap_hdr_udp_t.token_length,
             endpoint->port);
 
     if(NULL == blockDataID || NULL == blockDataID->id || blockDataID->idLength < 1)
@@ -981,7 +982,7 @@ CAResult_t CASetNextBlockOption2(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
     }
 
     uint8_t blockWiseStatus = CA_BLOCK_UNKNOWN;
-    if (0 == block.num && CA_GET == pdu->hdr->code && 0 == block.m)
+    if (0 == block.num && CA_GET == pdu->hdr->coap_hdr_udp_t.code && 0 == block.m)
     {
         OIC_LOG(INFO, TAG, "first block number");
 
@@ -1008,8 +1009,9 @@ CAResult_t CASetNextBlockOption2(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
     else
     {
         // received type from remote device
-        if (CA_MSG_ACKNOWLEDGE == pdu->hdr->type ||
-                (CA_MSG_NONCONFIRM == pdu->hdr->type && NULL != receivedData->responseInfo))
+        if (CA_MSG_ACKNOWLEDGE == pdu->hdr->coap_hdr_udp_t.type ||
+                (CA_MSG_NONCONFIRM == pdu->hdr->coap_hdr_udp_t.type &&
+                        NULL != receivedData->responseInfo))
         {
             OIC_LOG(DEBUG, TAG, "received ACK or NON");
 
@@ -1019,7 +1021,7 @@ CAResult_t CASetNextBlockOption2(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                                                                           &(data->payloadLength));
 
             // check if received payload is exact
-            if (CA_MSG_ACKNOWLEDGE == pdu->hdr->type)
+            if (CA_MSG_ACKNOWLEDGE == pdu->hdr->coap_hdr_udp_t.type)
             {
                 blockWiseStatus = CACheckBlockErrorType(data, &block, receivedData,
                                                         COAP_OPTION_BLOCK2, dataLen);
@@ -1051,7 +1053,7 @@ CAResult_t CASetNextBlockOption2(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                 {
                     OIC_LOG(DEBUG, TAG, "M bit is 1");
 
-                    if (CA_MSG_ACKNOWLEDGE == pdu->hdr->type)
+                    if (CA_MSG_ACKNOWLEDGE == pdu->hdr->coap_hdr_udp_t.type)
                     {
                         blockWiseStatus = CA_OPTION2_ACK;
                     }
@@ -1130,7 +1132,7 @@ CAResult_t CAUpdateBlockOptionItems(CABlockData_t *currData, const coap_pdu_t *p
 
     // update block data
     CAResult_t res = CA_STATUS_OK;
-    uint32_t code = CA_RESPONSE_CODE(pdu->hdr->code);
+    uint32_t code = CA_RESPONSE_CODE(pdu->hdr->coap_hdr_udp_t.code);
 
     if (CA_REQUEST_ENTITY_INCOMPLETE == code || CA_REQUEST_ENTITY_TOO_LARGE == code)
     {
@@ -1192,7 +1194,7 @@ CAResult_t CAUpdateBlockOptionItems(CABlockData_t *currData, const coap_pdu_t *p
         if (CA_BLOCK_INCOMPLETE != status && CA_BLOCK_TOO_LARGE != status)
         {
             // negotiate block size
-            res = CANegotiateBlockSize(currData, block, pdu->hdr->type, blockType);
+            res = CANegotiateBlockSize(currData, block, pdu->hdr->coap_hdr_udp_t.type, blockType);
             if (CA_STATUS_OK != res)
             {
                 OIC_LOG(ERROR, TAG, "negotiation has failed");
@@ -1324,7 +1326,7 @@ CAResult_t CAUpdateMessageId(coap_pdu_t *pdu, const CABlockDataID_t *blockID)
     VERIFY_NON_NULL(blockID, TAG, "blockID");
 
     // if CON message is sent, update messageId in block-wise transfer list
-    if (CA_MSG_CONFIRM == pdu->hdr->type)
+    if (CA_MSG_CONFIRM == pdu->hdr->coap_hdr_udp_t.type)
     {
         CAData_t * cadata = CAGetDataSetFromBlockDataList(blockID);
         if (NULL == cadata)
@@ -1335,7 +1337,7 @@ CAResult_t CAUpdateMessageId(coap_pdu_t *pdu, const CABlockDataID_t *blockID)
 
         if (NULL != cadata->requestInfo)
         {
-            cadata->requestInfo->info.messageId = pdu->hdr->id;
+            cadata->requestInfo->info.messageId = pdu->hdr->coap_hdr_udp_t.id;
         }
     }
 
@@ -1360,7 +1362,7 @@ CAResult_t CAAddBlockOption(coap_pdu_t **pdu, const CAInfo_t info,
 
     OIC_LOG_V(DEBUG, TAG, "previous payload - %s", (*pdu)->data);
 
-    uint32_t code = CA_RESPONSE_CODE((*pdu)->hdr->code);
+    uint32_t code = CA_RESPONSE_CODE((*pdu)->hdr->coap_hdr_udp_t.code);
     if (CA_REQUEST_ENTITY_INCOMPLETE == code)
     {
         OIC_LOG(INFO, TAG, "don't use option");
@@ -1368,8 +1370,8 @@ CAResult_t CAAddBlockOption(coap_pdu_t **pdu, const CAInfo_t info,
     }
 
     CABlockDataID_t* blockDataID = CACreateBlockDatablockId(
-            (CAToken_t)(*pdu)->hdr->token,
-            (*pdu)->hdr->token_length,
+            (CAToken_t)(*pdu)->hdr->coap_hdr_udp_t.token,
+            (*pdu)->hdr->coap_hdr_udp_t.token_length,
             endpoint->port);
 
     if(NULL == blockDataID || NULL == blockDataID->id || blockDataID->idLength < 1)
@@ -1452,8 +1454,9 @@ CAResult_t CAAddBlockOption2(coap_pdu_t **pdu, const CAInfo_t info, size_t dataL
     CALogBlockInfo(block2);
 
     uint8_t code = 0;
-    if (CA_MSG_ACKNOWLEDGE == (*pdu)->hdr->type ||
-            (CA_MSG_NONCONFIRM == (*pdu)->hdr->type && CA_GET != (*pdu)->hdr->code))
+    if (CA_MSG_ACKNOWLEDGE == (*pdu)->hdr->coap_hdr_udp_t.type ||
+            (CA_MSG_NONCONFIRM == (*pdu)->hdr->coap_hdr_udp_t.type &&
+                    CA_GET != (*pdu)->hdr->coap_hdr_udp_t.code))
     {
         int32_t res = coap_write_block_opt(block2, COAP_OPTION_BLOCK2, *pdu, dataLength);
         switch (res)
@@ -1514,7 +1517,7 @@ CAResult_t CAAddBlockOption2(coap_pdu_t **pdu, const CAInfo_t info, size_t dataL
         }
         else
         {
-            if (CA_MSG_NONCONFIRM == (*pdu)->hdr->type)
+            if (CA_MSG_NONCONFIRM == (*pdu)->hdr->coap_hdr_udp_t.type)
             {
                 OIC_LOG(DEBUG, TAG, "NON, send next block..");
                 // update block data
@@ -1577,7 +1580,7 @@ CAResult_t CAAddBlockOption1(coap_pdu_t **pdu, const CAInfo_t info, size_t dataL
 
     CALogBlockInfo(block1);
 
-    if (CA_MSG_ACKNOWLEDGE == (*pdu)->hdr->type)
+    if (CA_MSG_ACKNOWLEDGE == (*pdu)->hdr->coap_hdr_udp_t.type)
     {
         OIC_LOG(DEBUG, TAG, "option1 and ACK msg..");
         CAResult_t res = CAAddBlockOptionImpl(*pdu, block1, COAP_OPTION_BLOCK1);
@@ -1632,7 +1635,7 @@ CAResult_t CAAddBlockOption1(coap_pdu_t **pdu, const CAInfo_t info, size_t dataL
         }
 
         // check the message type and if message type is NON, next block message will be sent
-        if (CA_MSG_NONCONFIRM == (*pdu)->hdr->type)
+        if (CA_MSG_NONCONFIRM == (*pdu)->hdr->coap_hdr_udp_t.type)
         {
             if (block1->m)
             {
@@ -1679,7 +1682,7 @@ CAResult_t CAAddBlockOptionImpl(coap_pdu_t *pdu, coap_block_t *block, uint8_t bl
     option->length = coap_encode_var_bytes(buf,
                                            ((block->num << BLOCK_NUMBER_IDX)
                                             | (block->m << BLOCK_M_BIT_IDX) | block->szx));
-    if (!coap_add_option(pdu, option->key, option->length, buf))
+    if (!coap_add_option(pdu, option->key, option->length, buf, coap_udp))
     {
         OIC_LOG(ERROR, TAG, "coap_add_option has failed");
         OICFree(option);
@@ -1706,7 +1709,7 @@ CAResult_t CAAddBlockSizeOption(coap_pdu_t *pdu, uint16_t sizeType, size_t dataL
     unsigned char value[BLOCKWISE_OPTION_BUFFER] = { 0 };
     unsigned int optionLength = coap_encode_var_bytes(value, dataLength);
 
-    if (!coap_add_option(pdu, sizeType, optionLength, value))
+    if (!coap_add_option(pdu, sizeType, optionLength, value, coap_udp))
     {
         OIC_LOG(ERROR, TAG, "failed to add size option");
         return CA_STATUS_FAILED;
@@ -1943,14 +1946,14 @@ CAData_t* CACreateNewDataSet(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint
     VERIFY_NON_NULL_RET(pdu->hdr, TAG, "pdu->hdr", NULL);
     VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint", NULL);
 
-    CAInfo_t responseData = { .tokenLength = pdu->hdr->token_length };
+    CAInfo_t responseData = { .tokenLength = pdu->hdr->coap_hdr_udp_t.token_length };
     responseData.token = (CAToken_t) OICMalloc(responseData.tokenLength);
     if (NULL == responseData.token)
     {
         OIC_LOG(ERROR, TAG, "out of memory");
         return NULL;
     }
-    memcpy(responseData.token, pdu->hdr->token, responseData.tokenLength);
+    memcpy(responseData.token, pdu->hdr->coap_hdr_udp_t.token, responseData.tokenLength);
 
     CAResponseInfo_t* responseInfo = (CAResponseInfo_t*) OICCalloc(1, sizeof(CAResponseInfo_t));
     if (NULL == responseInfo)
@@ -2204,7 +2207,7 @@ CAResult_t CAGetTokenFromBlockDataList(const coap_pdu_t *pdu, const CAEndpoint_t
 
         if (NULL != currData->sentData && NULL != currData->sentData->requestInfo)
         {
-            if (pdu->hdr->id == currData->sentData->requestInfo->info.messageId &&
+            if (pdu->hdr->coap_hdr_udp_t.id == currData->sentData->requestInfo->info.messageId &&
                     endpoint->adapter == currData->sentData->remoteEndpoint->adapter)
             {
                 if (NULL != currData->sentData->requestInfo->info.token)

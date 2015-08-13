@@ -141,6 +141,10 @@ typedef enum
     CA_ADAPTER_REMOTE_ACCESS = (1 << 3),   // Remote Access over XMPP.
     #endif
 
+    #ifdef CI_ADAPTER
+    CA_ADAPTER_CLOUD_INTERFACE = (1 << 4),   // CoAP over TCP for Cloud Interface
+    #endif
+
     CA_ALL_ADAPTERS          = 0xffffffff
 } CATransportAdapter_t;
 
@@ -155,6 +159,9 @@ typedef enum
     CA_IPV4            = (1 << 6),   // IP adapter only
     // Indication that a message was received by multicast.
     CA_MULTICAST       = (1 << 7),
+    #ifdef CI_ADAPTER
+    CA_IPV4_TCP        = (1 << 8),
+    #endif
     // Link-Local multicast is the default multicast scope for IPv6.
     // These correspond in both value and position to the IPv6 address bits.
     CA_SCOPE_INTERFACE = 0x1, // IPv6 Interface-Local scope
