@@ -433,9 +433,12 @@ typedef struct
     CAHistoryItem_t items[HISTORYSIZE];
 } CAHistory_t;
 
+/**
+ * Hold interface index for keeping track of comings and goings
+ */
 typedef struct
 {
-    int ifindex; /**< network interface index */
+    int32_t ifIndex; /**< network interface index */
 } CAIfItem_t;
 
 typedef struct
@@ -468,8 +471,9 @@ typedef struct
 
         struct networkmonitors
         {
-            CAIfItem_t *ifitems; /**< current network interface index list */
-            int numifitems;      /**< number of current network interfaces */
+            CAIfItem_t *ifItems; /**< current network interface index list */
+            size_t sizeIfItems;  /**< size of network interface index array */
+            size_t numIfItems;   /**< number of valid network interfaces */
         } nm;
     } ip;
 
@@ -477,6 +481,8 @@ typedef struct
     {
         CAHistory_t requestHistory;  /**< filter IP family in requests */
         CAHistory_t responseHistory; /**< filter IP family in responses */
+        CATransportFlags_t previousRequestFlags;/**< address family filtering */
+        uint16_t previousRequestMessageId;      /**< address family filtering */
     } ca;
 } CAGlobals_t;
 

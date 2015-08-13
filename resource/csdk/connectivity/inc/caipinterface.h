@@ -173,7 +173,41 @@ typedef struct
 u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex);
 
 /**
- * Set callback for error handling.
+ * @brief   Find a new network interface.
+ *
+ * @return  Description of interface (or NULL if no change)
+ */
+CAInterface_t *CAFindInterfaceChange();
+
+/**
+ * @brief   Let the network monitor update the polling interval.
+ * @param   [in] current polling interval
+ *
+ * @return  desired polling interval
+ */
+int CAGetPollingInterval(int interval);
+
+/**
+ * @brief   Tell the IP server an interface has been added.
+ */
+void CAWakeUpForChange();
+
+/**
+ * @brief   Initializes network monitor.
+ *
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ */
+CAResult_t CAIPInitializeNetworkMonitor();
+
+/**
+ * @brief   Terminates network monitor.
+ *
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ */
+CAResult_t CAIPTerminateNetworkMonitor();
+
+/**
+ * @brief  Set callback for error handling.
  *
  * @param[in]  ipErrorCallback  callback to notify error to the ipadapter.
  */

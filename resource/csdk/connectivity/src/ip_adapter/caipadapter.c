@@ -264,6 +264,7 @@ CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
     caglobals.ip.threadpool = handle;
 
     CAIPSetPacketReceiveCallback(CAIPPacketReceivedCB);
+    CAIPInitializeNetworkMonitor();
 #ifdef __WITH_DTLS__
     CAAdapterNetDtlsInit();
 
@@ -426,6 +427,8 @@ CAResult_t CAStopIP()
 void CATerminateIP()
 {
     OIC_LOG(DEBUG, TAG, "IN");
+
+    CAIPTerminateNetworkMonitor();
 
 #ifdef __WITH_DTLS__
     CADTLSSetAdapterCallbacks(NULL, NULL, 0);

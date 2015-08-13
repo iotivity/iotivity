@@ -581,7 +581,7 @@ static bool CADropSecondMessage(CAHistory_t *history, const CAEndpoint_t *ep, ui
     bool ret = false;
     CATransportFlags_t familyFlags = ep->flags & CA_IPFAMILY_MASK;
 
-    for (int i = 0; i < sizeof(history->items) / sizeof(history->items[0]); i++)
+    for (size_t i = 0; i < sizeof(history->items) / sizeof(history->items[0]); i++)
     {
         CAHistoryItem_t *item = &(history->items[i]);
         if (id == item->messageId)

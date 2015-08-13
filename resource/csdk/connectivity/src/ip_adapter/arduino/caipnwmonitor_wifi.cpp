@@ -46,6 +46,16 @@
 // defined & used (as-is defined in the linux socket headers).
 #define AF_INET (2)
 
+CAResult_t CAIPInitializeNetworkMonitor()
+{
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAIPTerminateNetworkMonitor()
+{
+    return CA_STATUS_OK;
+}
+
 /// Retrieves the IP address assigned to Arduino WiFi shield
 void CAArduinoGetInterfaceAddress(uint32_t *address)
 {
