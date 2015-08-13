@@ -177,7 +177,7 @@ else:
 
 	HueBundle = hue_resource_bundle_env.SharedLibrary('HueBundle', hue_resource_bundle_src)
 	hue_resource_bundle_env.InstallTarget(HueBundle, 'libHueBundle')
-	lib_env = conf2.Finish()
+lib_env = conf2.Finish()
 
 ######################################################################
 # build resource container unit tests
