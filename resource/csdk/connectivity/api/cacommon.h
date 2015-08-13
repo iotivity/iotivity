@@ -410,6 +410,20 @@ typedef struct
     uint16_t port;
 } CASocket_t;
 
+#define HISTORYSIZE (4)
+
+typedef struct
+{
+    CATransportFlags_t flags;
+    uint16_t messageId;
+} CAHistoryItem_t;
+
+typedef struct
+{
+    int nextIndex;
+    CAHistoryItem_t items[HISTORYSIZE];
+} CAHistory_t;
+
 typedef struct
 {
     CATransportFlags_t clientFlags;
@@ -437,12 +451,13 @@ typedef struct
         bool terminate;     /**< the IP adapter needs to stop */
         bool ipv6enabled;   /**< IPv6 enabled by OCInit flags */
         bool ipv4enabled;   /**< IPv4 enabled by OCInit flags */
+        bool dualstack;     /**< IPv6 and IPv4 enabled */
     } ip;
 
     struct calayer
     {
-        CATransportFlags_t previousRequestFlags; /**< address family filtering */
-        uint16_t previousRequestMessageId;       /**< address family filtering */
+        CAHistory_t requestHistory;  /**< filter IP family in requests */
+        CAHistory_t responseHistory; /**< filter IP family in responses */
     } ca;
 } CAGlobals_t;
 

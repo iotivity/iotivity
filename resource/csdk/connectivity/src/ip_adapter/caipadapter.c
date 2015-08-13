@@ -239,6 +239,7 @@ static void CAInitializeIPGlobals()
     }
     caglobals.ip.ipv6enabled = flags & CA_IPV6;
     caglobals.ip.ipv4enabled = flags & CA_IPV4;
+    caglobals.ip.dualstack = caglobals.ip.ipv6enabled && caglobals.ip.ipv4enabled;
 }
 
 CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,

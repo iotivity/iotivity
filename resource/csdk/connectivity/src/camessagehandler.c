@@ -82,7 +82,7 @@ static void CAProcessReceivedData(CAData_t *data);
 #endif
 static void CADestroyData(void *data, uint32_t size);
 static void CALogPayloadInfo(CAInfo_t *info);
-static bool CADropSecondRequest(const CAEndpoint_t *endpoint, uint16_t messageId);
+static bool CADropSecondMessage(CAHistory_t *history, const CAEndpoint_t *endpoint, uint16_t id);
 
 #ifdef WITH_BWT
 void CAAddDataToSendThread(CAData_t *data)
@@ -123,8 +123,12 @@ static bool CAIsSelectedNetworkAvailable()
 static CAData_t* CAGenerateHandlerData(const CAEndpoint_t *endpoint, const void *data, CADataType_t dataType)
 {
     OIC_LOG(DEBUG, TAG, "CAGenerateHandlerData IN");
-    CAInfo_t *info = NULL;
-    CAData_t *cadata = (CAData_t *) OICCalloc(1, sizeof(CAData_t));
+
+    CAResponseInfo_t* resInfo = NULL;
+    CARequestInfo_t* reqInfo = NULL;
+    CAErrorInfo_t *errorInfo = NULL;
+
+    CAData_t *cadata = (CAData_t *) OICCalloc(1, sizeof (CAData_t));
     if (!cadata)
     {
         OIC_LOG(ERROR, TAG, "memory allocation failed");
@@ -135,8 +139,7 @@ static CAData_t* CAGenerateHandlerData(const CAEndpoint_t *endpoint, const void 
     if (!ep)
     {
         OIC_LOG(ERROR, TAG, "endpoint clone failed");
-        OICFree(cadata);
-        return NULL;
+        goto errorexit;
     }
 
     OIC_LOG_V(DEBUG, TAG, "address : %s", ep->addr);
@@ -144,97 +147,96 @@ static CAData_t* CAGenerateHandlerData(const CAEndpoint_t *endpoint, const void 
 
     if(CA_RESPONSE_DATA == dataType)
     {
-        CAResponseInfo_t* resInfo = (CAResponseInfo_t*)OICCalloc(1, sizeof(CAResponseInfo_t));
+        resInfo = (CAResponseInfo_t*)OICCalloc(1, sizeof (CAResponseInfo_t));
         if (!resInfo)
         {
             OIC_LOG(ERROR, TAG, "memory allocation failed");
-            OICFree(cadata);
-            CAFreeEndpoint(ep);
-            return NULL;
+            goto errorexit;
         }
 
         result = CAGetResponseInfoFromPDU(data, resInfo);
         if (CA_STATUS_OK != result)
         {
             OIC_LOG(ERROR, TAG, "CAGetResponseInfoFromPDU Failed");
-            CAFreeEndpoint(ep);
-            CADestroyResponseInfoInternal(resInfo);
-            OICFree(cadata);
-            return NULL;
+            goto errorexit;
         }
+
+        if (CADropSecondMessage(&caglobals.ca.responseHistory, endpoint, resInfo->info.messageId))
+        {
+            OIC_LOG(ERROR, TAG, "Second Response with same messageID, Drop it");
+            goto errorexit;
+        }
+
         cadata->responseInfo = resInfo;
-        info = &resInfo->info;
         OIC_LOG(DEBUG, TAG, "Response Info :");
-        CALogPayloadInfo(info);
+        CALogPayloadInfo(&resInfo->info);
     }
     else if (CA_REQUEST_DATA == dataType)
     {
-        CARequestInfo_t* reqInfo = (CARequestInfo_t*)OICCalloc(1, sizeof(CARequestInfo_t));
+        reqInfo = (CARequestInfo_t*)OICCalloc(1, sizeof (CARequestInfo_t));
         if (!reqInfo)
         {
             OIC_LOG(ERROR, TAG, "memory allocation failed");
-            OICFree(cadata);
-            CAFreeEndpoint(ep);
-            return NULL;
+            goto errorexit;
         }
 
         result = CAGetRequestInfoFromPDU(data, reqInfo);
         if (CA_STATUS_OK != result)
         {
             OIC_LOG(ERROR, TAG, "CAGetRequestInfoFromPDU failed");
-            CAFreeEndpoint(ep);
-            CADestroyRequestInfoInternal(reqInfo);
-            OICFree(cadata);
-            return NULL;
+            goto errorexit;
         }
 
-        if (CADropSecondRequest(endpoint, reqInfo->info.messageId))
+        if (CADropSecondMessage(&caglobals.ca.requestHistory, endpoint, reqInfo->info.messageId))
         {
-            OIC_LOG(ERROR, TAG, "Second Request with same Token, Drop it");
-            CAFreeEndpoint(ep);
-            CADestroyRequestInfoInternal(reqInfo);
-            OICFree(cadata);
-            return NULL;
+            OIC_LOG(ERROR, TAG, "Second Request with same messageID, Drop it");
+            goto errorexit;
         }
 
         cadata->requestInfo = reqInfo;
-        info = &reqInfo->info;
         OIC_LOG(DEBUG, TAG, "Request Info :");
-        CALogPayloadInfo(info);
-   }
+        CALogPayloadInfo(&reqInfo->info);
+    }
     else if (CA_ERROR_DATA == dataType)
     {
-        CAErrorInfo_t *errorInfo = (CAErrorInfo_t *)OICCalloc(1, sizeof (CAErrorInfo_t));
+        errorInfo = (CAErrorInfo_t *)OICCalloc(1, sizeof (CAErrorInfo_t));
         if (!errorInfo)
         {
             OIC_LOG(ERROR, TAG, "Memory allocation failed!");
-            OICFree(cadata);
-            CAFreeEndpoint(ep);
-            return NULL;
+            goto errorexit;
         }
 
-        CAResult_t result = CAGetErrorInfoFromPDU(data, errorInfo);
+        result = CAGetErrorInfoFromPDU(data, errorInfo);
         if (CA_STATUS_OK != result)
         {
             OIC_LOG(ERROR, TAG, "CAGetErrorInfoFromPDU failed");
-            CAFreeEndpoint(ep);
-            OICFree(errorInfo);
-            OICFree(cadata);
-            return NULL;
+            goto errorexit;
         }
 
         cadata->errorInfo = errorInfo;
-        info = &errorInfo->info;
         OIC_LOG(DEBUG, TAG, "error Info :");
-        CALogPayloadInfo(info);
+        CALogPayloadInfo(&errorInfo->info);
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, TAG, "bad dataType: %d", dataType);
+        goto errorexit;
     }
 
     cadata->remoteEndpoint = ep;
     cadata->dataType = dataType;
 
+    OIC_LOG(DEBUG, TAG, "CAGenerateHandlerData OUT");
+
     return cadata;
 
-    OIC_LOG(DEBUG, TAG, "CAGenerateHandlerData OUT");
+errorexit:
+    CAFreeEndpoint(ep);
+    OICFree(cadata);
+    OICFree(resInfo);
+    OICFree(reqInfo);
+    OICFree(errorInfo);
+    return NULL;
 }
 
 static void CATimeoutCallback(const CAEndpoint_t *endpoint, const void *pdu, uint32_t size)
@@ -548,44 +550,52 @@ static void CASendThreadProcess(void *threadData)
 /*
  * If a second message arrives with the same token and the other address
  * family, drop it.  Typically, IPv6 beats IPv4, so the IPv4 message is dropped.
- * This can be made more robust (for instance, another message could arrive
- * in between), but it is good enough for now.
  */
-static bool CADropSecondRequest(const CAEndpoint_t *endpoint, uint16_t messageId)
+static bool CADropSecondMessage(CAHistory_t *history, const CAEndpoint_t *ep, uint16_t id)
 {
-    if (!endpoint)
+    if (!ep)
     {
         return true;
     }
-    if (endpoint->adapter != CA_ADAPTER_IP)
+    if (ep->adapter != CA_ADAPTER_IP)
+    {
+        return false;
+    }
+    if (!caglobals.ip.dualstack)
     {
         return false;
     }
 
     bool ret = false;
-    CATransportFlags_t familyFlags = endpoint->flags & CA_IPFAMILY_MASK;
+    CATransportFlags_t familyFlags = ep->flags & CA_IPFAMILY_MASK;
 
-    if (messageId == caglobals.ca.previousRequestMessageId)
+    for (int i = 0; i < sizeof(history->items) / sizeof(history->items[0]); i++)
     {
-        if ((familyFlags ^ caglobals.ca.previousRequestFlags) == CA_IPFAMILY_MASK)
+        CAHistoryItem_t *item = &(history->items[i]);
+        if (id == item->messageId)
         {
-            if (familyFlags & CA_IPV6)
+            if ((familyFlags ^ item->flags) == CA_IPFAMILY_MASK)
             {
-                OIC_LOG(INFO, TAG, "IPv6 duplicate response ignored");
+                OIC_LOG_V(INFO, TAG, "IPv%c duplicate message ignored",
+                                            familyFlags & CA_IPV6 ? '6' : '4');
+                ret = true;
+                break;
             }
-            else
-            {
-                OIC_LOG(INFO, TAG, "IPv4 duplicate response ignored");
-            }
-            ret = true;
         }
     }
-    caglobals.ca.previousRequestFlags = familyFlags;
-    caglobals.ca.previousRequestMessageId = messageId;
+
+    history->items[history->nextIndex].flags = familyFlags;
+    history->items[history->nextIndex].messageId = id;
+    if (++history->nextIndex >= HISTORYSIZE)
+    {
+        history->nextIndex = 0;
+    }
+
     return ret;
 }
 
-static void CAReceivedPacketCallback(const CAEndpoint_t *remoteEndpoint, const void *data, uint32_t dataLen)
+static void CAReceivedPacketCallback(const CAEndpoint_t *remoteEndpoint, const void *data,
+        uint32_t dataLen)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     VERIFY_NON_NULL_VOID(remoteEndpoint, TAG, "remoteEndpoint");
