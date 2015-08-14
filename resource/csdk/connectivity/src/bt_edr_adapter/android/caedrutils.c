@@ -571,19 +571,7 @@ CAConnectedState_t CAEDRIsConnectedDevice(const char *remoteAddress)
 
 void CAEDRReorderingDeviceList(uint32_t index)
 {
-    if (index >= g_deviceStateList->length)
-    {
-        return;
-    }
-
-    if (index < g_deviceStateList->length - 1)
-    {
-        memmove(&g_deviceStateList->data[index], &g_deviceStateList->data[index + 1],
-                (g_deviceStateList->length - index - 1) * sizeof(void *));
-    }
-
-    g_deviceStateList->size--;
-    g_deviceStateList->length--;
+    u_arraylist_remove(g_deviceStateList, index);
 }
 
 /**
@@ -942,17 +930,5 @@ uint32_t CAEDRGetSocketListLength()
 
 void CAEDRReorderingDeviceSocketList(uint32_t index)
 {
-    if (index >= g_deviceObjectList->length)
-    {
-        return;
-    }
-
-    if (index < g_deviceObjectList->length - 1)
-    {
-        memmove(&g_deviceObjectList->data[index], &g_deviceObjectList->data[index + 1],
-                (g_deviceObjectList->length - index - 1) * sizeof(void *));
-    }
-
-    g_deviceObjectList->size--;
-    g_deviceObjectList->length--;
+    u_arraylist_remove(g_deviceObjectList, index);
 }

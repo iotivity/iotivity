@@ -112,7 +112,7 @@ void CAAddDataToReceiveThread(CAData_t *data)
 static bool CAIsSelectedNetworkAvailable()
 {
     u_arraylist_t *list = CAGetSelectedNetworkList();
-    if (!list || list->length == 0)
+    if (!list || u_arraylist_length(list) == 0)
     {
         OIC_LOG(ERROR, TAG, "No selected network");
         return false;

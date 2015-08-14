@@ -2043,28 +2043,15 @@ CAResult_t CALEServerRemoveDevice(JNIEnv *env, jstring address)
 
 CAResult_t CALEServerReorderinglist(uint32_t index)
 {
-    if (!g_connectedDeviceList)
+    if (u_arraylist_remove(g_connectedDeviceList, index) == NULL)
     {
-        OIC_LOG(ERROR, TAG, "g_connectedDeviceList is null");
+        OIC_LOG(ERROR, TAG, "List removal failed.");
         return CA_STATUS_FAILED;
     }
-
-    if (index >= g_connectedDeviceList->length)
+    else
     {
-        OIC_LOG(ERROR, TAG, "index is not available");
-        return CA_STATUS_FAILED;
+        return CA_STATUS_OK;
     }
-
-    if (index < g_connectedDeviceList->length - 1)
-    {
-        memmove(&g_connectedDeviceList->data[index], &g_connectedDeviceList->data[index + 1],
-                (g_connectedDeviceList->length - index - 1) * sizeof(void *));
-    }
-
-    g_connectedDeviceList->size--;
-    g_connectedDeviceList->length--;
-
-    return CA_STATUS_OK;
 }
 
 JNIEXPORT void JNICALL

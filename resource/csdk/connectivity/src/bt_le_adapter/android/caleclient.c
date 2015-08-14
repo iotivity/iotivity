@@ -2875,28 +2875,15 @@ void CALEClientCreateDeviceList()
 
 CAResult_t CALEClientReorderingList(uint32_t index, u_arraylist_t *list)
 {
-    if (!list)
+    if (u_arraylist_remove(list, index) == NULL)
     {
-        OIC_LOG(ERROR, TAG, "list is null");
+        OIC_LOG(ERROR, TAG, "List removal failed.");
         return CA_STATUS_FAILED;
     }
-
-    if (index >= list->length)
+    else
     {
-        OIC_LOG(ERROR, TAG, "index is not available");
-        return CA_STATUS_FAILED;
+        return CA_STATUS_OK;
     }
-
-    if (index < list->length - 1)
-    {
-        memmove(&list->data[index], &list->data[index + 1],
-                (list->length - index - 1) * sizeof(void *));
-    }
-
-    list->size--;
-    list->length--;
-
-    return CA_STATUS_OK;
 }
 
 /**

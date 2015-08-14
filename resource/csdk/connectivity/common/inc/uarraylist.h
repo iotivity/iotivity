@@ -31,6 +31,10 @@ extern "C"
 
 /**
  * array list structure.
+ *
+ * @note
+ * Members should be treated as private and not accessed directly. Instead
+ * all access should be through the defined u_arraylist_*() functions.
  */
 typedef struct u_arraylist_t
 {
