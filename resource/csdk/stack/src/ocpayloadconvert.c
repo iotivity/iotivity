@@ -700,5 +700,5 @@ static int64_t AddTextStringToMap(CborEncoder* map, const char* key, size_t keyl
 static int64_t ConditionalAddTextStringToMap(CborEncoder* map, const char* key, size_t keylen,
         const char* value)
 {
-    return value ? AddTextStringToMap(map, key, keylen, value) : 0 - OC_STACK_INVALID_PARAM;
+    return value ? AddTextStringToMap(map, key, keylen, value) : 0;
 }
