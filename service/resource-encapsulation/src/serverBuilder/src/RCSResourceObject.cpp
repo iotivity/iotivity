@@ -480,14 +480,14 @@ namespace OIC
             AttrKeyValuePairs replaced = requestHandler->applyAcceptanceMethod(
                     response.getAcceptanceMethod(), *this, attrs);
 
-            for (const auto& it : replaced)
+            for (const auto& attrKeyValPair : replaced)
             {
                 std::lock_guard<std::mutex> lock(m_mutexKeyAttributeUpdate);
 
-                auto keyAttribute = m_keyAttributesUpdatedListeners.find(it.first);
-                if(keyAttribute != m_keyAttributesUpdatedListeners.end())
+                auto keyAttrListener = m_keyAttributesUpdatedListeners.find(attrKeyValPair.first);
+                if(keyAttrListener != m_keyAttributesUpdatedListeners.end())
                 {
-                    keyAttribute-> second(it.second, attrs[it.first]);
+                    keyAttrListener-> second(attrKeyValPair.second, attrs[attrKeyValPair.first]);
                 }
             }
 
