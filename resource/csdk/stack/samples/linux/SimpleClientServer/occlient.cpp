@@ -336,7 +336,6 @@ OCStackApplicationResult presenceCB(void* ctx, OCDoHandle /*handle*/,
     if (clientResponse)
     {
         OC_LOG_V(INFO, TAG, "StackResult: %s", getResult(clientResponse->result));
-        OC_LOG_V(INFO, TAG, "NONCE NUMBER: %u", clientResponse->sequenceNumber);
         OC_LOG_V(INFO, TAG, "Callback Context for Presence notification recvd successfully %d",
                 gNumPresenceNotifies);
         OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
