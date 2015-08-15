@@ -107,6 +107,61 @@ TEST_F(UArrayListF, LengthMulti)
     ASSERT_EQ(static_cast<uint32_t>(1000), u_arraylist_length(list));
 }
 
+TEST_F(UArrayListF, NoReserve)
+{
+    static const int PAD_SIZE = 10000;
+
+    int dummy = 0;
+
+    //u_arraylist_reserve(list, PAD_SIZE);
+
+    for (int i = 0; i < PAD_SIZE; ++i)
+    {
+        bool rc = u_arraylist_add(list, &dummy);
+        ASSERT_TRUE(rc);
+    }
+}
+
+TEST_F(UArrayListF, Reserve)
+{
+    static const int PAD_SIZE = 10000;
+
+    int dummy = 0;
+
+    u_arraylist_reserve(list, PAD_SIZE);
+
+    for (int i = 0; i < PAD_SIZE; ++i)
+    {
+        bool rc = u_arraylist_add(list, &dummy);
+        ASSERT_TRUE(rc);
+    }
+}
+
+
+TEST_F(UArrayListF, ShrinkToFit)
+{
+    static const int PAD_SIZE = 100;
+
+    int dummy = 0;
+
+    u_arraylist_reserve(list, PAD_SIZE);
+
+    for (int i = 0; i < PAD_SIZE; ++i)
+    {
+        bool rc = u_arraylist_add(list, &dummy);
+        ASSERT_TRUE(rc);
+    }
+
+    for (int i = PAD_SIZE; i > 0; --i)
+    {
+        u_arraylist_remove(list, i);
+    }
+
+    EXPECT_GT(list->size, list->length);
+    u_arraylist_shrink_to_fit(list);
+    EXPECT_EQ(list->size, list->length);
+}
+
 TEST_F(UArrayListF, Get)
 {
     ASSERT_EQ(static_cast<uint32_t>(0), u_arraylist_length(list));
@@ -144,16 +199,13 @@ TEST_F(UArrayListF, Remove)
     ASSERT_EQ(static_cast<uint32_t>(1000), u_arraylist_length(list));
 
     // Remove walking forward so as to have a non-trivial case.
-    uint32_t idx = 0;
-    uint32_t old = 0;
-    while (idx < u_arraylist_length(list))
+    for (uint32_t idx = 0, old = 0;
+         idx < u_arraylist_length(list);
+         ++idx, old += 2)
     {
         void *value = u_arraylist_remove(list, idx);
         ASSERT_TRUE(value != NULL);
         ASSERT_EQ(value, &dummy[old]);
-
-        old += 2;
-        idx++; // remove call reduces by one, so this makes two.
     }
     ASSERT_EQ(static_cast<uint32_t>(500), u_arraylist_length(list));
 }
@@ -173,16 +225,13 @@ TEST_F(UArrayListF, Contains)
     ASSERT_EQ(static_cast<uint32_t>(1000), u_arraylist_length(list));
 
     // Remove walking forward so as to have a non-trivial case.
-    uint32_t idx = 0;
-    uint32_t old = 0;
-    while (idx < u_arraylist_length(list))
+    for (uint32_t idx = 0, old = 0;
+         idx < u_arraylist_length(list);
+         ++idx, old += 2)
     {
         void *value = u_arraylist_remove(list, idx);
         ASSERT_TRUE(value != NULL);
         ASSERT_EQ(value, &dummy[old]);
-
-        old += 2;
-        idx++; // remove call reduces by one, so this makes two.
     }
     ASSERT_EQ(static_cast<uint32_t>(500), u_arraylist_length(list));
 

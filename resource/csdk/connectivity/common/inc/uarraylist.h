@@ -58,6 +58,28 @@ u_arraylist_t *u_arraylist_create();
 void u_arraylist_free(u_arraylist_t **list);
 
 /**
+ * Request that the list prepare room for the specified number of entries.
+ * If count is greater than the current internal storage size then an
+ * an attempt will be made to reallocate room for at least count items.
+ *
+ * In other cases there will be no effect.
+ *
+ * This call will not affect the length used and cannot be used to remove
+ * entries.
+ * @param list the list to operate on.
+ * @param count the size to attempt to reserve room for.
+ */
+void u_arraylist_reserve(u_arraylist_t *list, size_t count);
+
+/**
+ * Request that the storage in the list be reduced to fit its current length.
+ *
+ * The request is non-binding, and may not affect the entries in the list.
+ * @param list the list to operate on.
+ */
+void u_arraylist_shrink_to_fit(u_arraylist_t *list);
+
+/**
  * Returns the data of the index from the array list.
  * @param[in] list         pointer of array list.
  * @param[in] index        index of array list.
