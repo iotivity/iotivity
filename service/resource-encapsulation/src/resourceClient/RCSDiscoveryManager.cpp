@@ -57,18 +57,39 @@ namespace OIC
         }
 
         void RCSDiscoveryManager::discoverResource(const RCSAddress& address,
-                const std::string& resourceURI, ResourceDiscoveredCallback cb)
+                ResourceDiscoveredCallback cb)
         {
-            SCOPE_LOG_F(DEBUG, TAG);
+            discoverResourceByType(address, OC_RSRVD_WELL_KNOWN_URI, "", std::move(cb));
+        }
 
+        void RCSDiscoveryManager::discoverResource(const RCSAddress& address,
+                const std::string& relativeURI, ResourceDiscoveredCallback cb)
+        {
+            discoverResourceByType(address, relativeURI, "", std::move(cb));
+        }
+
+        void RCSDiscoveryManager::discoverResourceByType(const RCSAddress& address,
+                const std::string& resourceType,
+                ResourceDiscoveredCallback cb)
+        {
+            discoverResourceByType(address, OC_RSRVD_WELL_KNOWN_URI, resourceType, std::move(cb));
+        }
+
+        void RCSDiscoveryManager::discoverResourceByType(const RCSAddress& address,
+                const std::string& relativeURI, const std::string& resourceType,
+                ResourceDiscoveredCallback cb)
+        {
             if (!cb)
             {
-                OC_LOG(ERROR, TAG, "discoverResource NULL Callback");
-                throw InvalidParameterException{ "discoverResource NULL Callback'" };
+                OC_LOG(ERROR, TAG, "discoverResourceByType NULL Callback");
+                throw InvalidParameterException { "discoverResourceByType NULL Callback'" };
             }
-
-            OIC::Service::discoverResource(address, resourceURI,
+            else
+            {
+                std::string resourceURI = relativeURI + "?rt=" + resourceType;
+                OIC::Service::discoverResource(address, resourceURI,
                     std::bind(findCallback, std::placeholders::_1, std::move(cb)));
+            }
         }
     }
 }
