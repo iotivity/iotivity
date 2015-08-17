@@ -60,7 +60,7 @@ resourceClient_env.AppendUnique(CPPPATH = [
     'src/resourceCache/include'
 ])
 
-resourceClient_env.PrependUnique(LIBS = ['oc', 'rcs_common', 'octbstack', 'gnustl_shared','oc_logger', 'compatibility', 'log'])
+resourceClient_env.PrependUnique(LIBS = ['oc', 'rcs_common', 'octbstack','oc_logger'])
 
 if target_os not in ['windows', 'winrt']:
     resourceClient_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
@@ -69,7 +69,7 @@ if target_os == 'linux':
 
 if target_os == 'android':
     resourceClient_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-    resourceClient_env.PrependUnique(LIBS = ['gnustl_shared', 'compatibility', 'log'])
+    resourceClient_env.PrependUnique(LIBS = ['gnustl_shared', 'log'])
 
 resourceClient_env.AppendUnique(LIBS = ['dl'])
 
@@ -90,8 +90,11 @@ client_src = [
         RESOURCECLIENT_DIR + 'RCSDiscoveryManager.cpp',
         RESOURCECLIENT_DIR + 'RCSRemoteResourceObject.cpp'
 		]
-ResourceClientsdk = resourceClient_env.StaticLibrary('rcs_client', client_src)
-resourceClient_env.InstallTarget(ResourceClientsdk , 'librcs_client')
+ResourceClientsdk_static = resourceClient_env.StaticLibrary('rcs_client', client_src)
+ResourceClientsdk_shared = resourceClient_env.SharedLibrary('rcs_client', client_src)
+
+resourceClient_env.InstallTarget([ResourceClientsdk_static,ResourceClientsdk_shared], 'librcs_client')
+resourceClient_env.UserInstallTargetLib([ResourceClientsdk_static,ResourceClientsdk_shared], 'librcs_client')
 
 ######################################################################
 # Build Sample App: SampleResourceClient & SampleResourceServer
@@ -101,7 +104,8 @@ SConscript('examples/SConscript')
 ######################################################################
 # Build UnitTests Resource Client , resourceCache and resourceBroker
 ################################################ ######################
-SConscript('unittests/SConscript')
-SConscript('src/resourceCache/unittests/SConscript')
-SConscript('src/resourceBroker/unittest/SConscript')
+if target_os == 'linux':
+    SConscript('unittests/SConscript')
+    SConscript('src/resourceCache/unittests/SConscript')
+    SConscript('src/resourceBroker/unittest/SConscript')
 
