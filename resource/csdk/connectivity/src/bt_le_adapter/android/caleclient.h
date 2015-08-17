@@ -509,14 +509,6 @@ bool CALEClientIsSetCharacteristic(const char* remoteAddress);
 void CALEClientCreateDeviceList();
 
 /**
- * Reordering for device state list.
- * @param[in]   index                 index of device list that want to reordering.
- * @param[in]   list                  the list to reorder.
- * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
- */
-CAResult_t CALEClientReorderingList(uint32_t index, u_arraylist_t *list);
-
-/**
  * update the counter which data is sent to remote device.
  * @param[in]   env                   JNI interface pointer.
  */

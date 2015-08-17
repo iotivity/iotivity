@@ -2221,7 +2221,12 @@ CAResult_t CALEClientRemoveDeviceInScanDeviceList(JNIEnv *env, jstring address)
             (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
             (*env)->ReleaseStringUTFChars(env, address, remoteAddress);
 
-            CALEClientReorderingList(index, g_deviceList);
+            if (NULL == u_arraylist_remove(g_deviceList, index))
+            {
+                OIC_LOG(ERROR, TAG, "List removal failed.");
+                ca_mutex_unlock(g_deviceListMutex);
+                return CA_STATUS_FAILED;
+            }
             ca_mutex_unlock(g_deviceListMutex);
             return CA_STATUS_OK;
         }
@@ -2468,8 +2473,15 @@ CAResult_t CALEClientRemoveGattObj(JNIEnv *env, jobject gatt)
             (*env)->DeleteGlobalRef(env, jarrayObj);
             (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
             (*env)->ReleaseStringUTFChars(env, jni_remoteAddress, remoteAddress);
+
+            if (NULL == u_arraylist_remove(g_gattObjectList, index))
+            {
+                OIC_LOG(ERROR, TAG, "List removal failed.");
+                ca_mutex_unlock(g_gattObjectMutex);
+                return CA_STATUS_FAILED;
+            }
             ca_mutex_unlock(g_gattObjectMutex);
-            return CALEClientReorderingList(index, g_gattObjectList);
+            return CA_STATUS_OK;
         }
         (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
         (*env)->ReleaseStringUTFChars(env, jni_remoteAddress, remoteAddress);
@@ -2537,8 +2549,14 @@ CAResult_t CALEClientRemoveGattObjForAddr(JNIEnv *env, jstring addr)
 
             (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
             (*env)->ReleaseStringUTFChars(env, addr, remoteAddress);
+            if (NULL == u_arraylist_remove(g_gattObjectList, index))
+            {
+                OIC_LOG(ERROR, TAG, "List removal failed.");
+                ca_mutex_unlock(g_gattObjectMutex);
+                return CA_STATUS_FAILED;
+            }
             ca_mutex_unlock(g_gattObjectMutex);
-            return CALEClientReorderingList(index, g_gattObjectList);
+            return CA_STATUS_OK;
         }
         (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
         (*env)->ReleaseStringUTFChars(env, addr, remoteAddress);
@@ -2716,12 +2734,12 @@ CAResult_t CALEClientRemoveDeviceState(const char* remoteAddress)
             OIC_LOG_V(DEBUG, TAG, "remove state : %s", remoteAddress);
             OICFree(state);
 
-            CAResult_t res = CALEClientReorderingList(index, g_deviceStateList);
-            if(CA_STATUS_OK != res)
+            if (NULL == u_arraylist_remove(g_deviceStateList, index))
             {
-                OIC_LOG(ERROR, TAG, "CALEClientReorderingList has failed");
-                return res;
+                OIC_LOG(ERROR, TAG, "List removal failed.");
+                return CA_STATUS_FAILED;
             }
+
             return CA_STATUS_OK;
         }
     }
@@ -2870,19 +2888,6 @@ void CALEClientCreateDeviceList()
         OIC_LOG(DEBUG, TAG, "Create g_deviceList");
 
         g_deviceList = u_arraylist_create();
-    }
-}
-
-CAResult_t CALEClientReorderingList(uint32_t index, u_arraylist_t *list)
-{
-    if (u_arraylist_remove(list, index) == NULL)
-    {
-        OIC_LOG(ERROR, TAG, "List removal failed.");
-        return CA_STATUS_FAILED;
-    }
-    else
-    {
-        return CA_STATUS_OK;
     }
 }
 
