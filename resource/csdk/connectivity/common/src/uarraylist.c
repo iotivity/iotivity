@@ -54,19 +54,17 @@ u_arraylist_t *u_arraylist_create()
     return list;
 }
 
-CAResult_t u_arraylist_free(u_arraylist_t **list)
+void u_arraylist_free(u_arraylist_t **list)
 {
     if (!list || !(*list))
     {
-        return CA_STATUS_INVALID_PARAM;
+        return;
     }
 
     OICFree((*list)->data);
     OICFree(*list);
 
     *list = NULL;
-
-    return CA_STATUS_OK;
 }
 
 void *u_arraylist_get(const u_arraylist_t *list, uint32_t index)
@@ -84,20 +82,20 @@ void *u_arraylist_get(const u_arraylist_t *list, uint32_t index)
     return NULL;
 }
 
-CAResult_t u_arraylist_add(u_arraylist_t *list, void *data)
+bool u_arraylist_add(u_arraylist_t *list, void *data)
 {
     if (!list)
     {
-        return CA_STATUS_INVALID_PARAM;
+        return false;
     }
 
     if (list->size <= list->length)
     {
-
-    	uint32_t new_size = list->size + 1;
+        uint32_t new_size = list->size + 1;
         if (!(list->data = (void **) realloc(list->data, new_size * sizeof(void *))))
         {
-            return CA_MEMORY_ALLOC_FAILED;
+            OIC_LOG(ERROR, TAG, "Failed to re-allocation memory");
+            return false;
         }
 
         memset(list->data + list->size, 0, (new_size - list->size) * sizeof(void *));
@@ -107,7 +105,7 @@ CAResult_t u_arraylist_add(u_arraylist_t *list, void *data)
     list->data[list->length] = data;
     list->length++;
 
-    return CA_STATUS_OK;
+    return true;
 }
 
 void *u_arraylist_remove(u_arraylist_t *list, uint32_t index)

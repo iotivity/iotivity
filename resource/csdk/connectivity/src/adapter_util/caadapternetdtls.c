@@ -113,8 +113,8 @@ static CAResult_t CAAddIdToPeerInfoList(const char *peerAddr, uint32_t port,
         return CA_STATUS_FAILED;
     }
 
-    CAResult_t result = u_arraylist_add(g_caDtlsContext->peerInfoList, (void *)peer);
-    if (CA_STATUS_OK != result)
+    bool result = u_arraylist_add(g_caDtlsContext->peerInfoList, (void *)peer);
+    if (!result)
     {
         OIC_LOG(ERROR, NET_DTLS_TAG, "u_arraylist_add failed!");
         OICFree(peer);
@@ -298,8 +298,8 @@ static CAResult_t CADtlsCacheMsg(stCACacheMessage_t *msg)
         return CA_STATUS_FAILED;
     }
 
-    CAResult_t result = u_arraylist_add(g_caDtlsContext->cacheList, (void *)msg);
-    if (CA_STATUS_OK != result)
+    bool result = u_arraylist_add(g_caDtlsContext->cacheList, (void *)msg);
+    if (!result)
     {
         OIC_LOG(ERROR, NET_DTLS_TAG, "u_arraylist_add failed!");
     }

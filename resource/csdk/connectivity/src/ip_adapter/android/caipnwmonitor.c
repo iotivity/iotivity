@@ -261,8 +261,8 @@ static CAResult_t CAAddInterfaceItem(u_arraylist_t *iflist, int index,
     {
         return CA_STATUS_FAILED;
     }
-    CAResult_t result = u_arraylist_add(iflist, ifitem);
-    if (CA_STATUS_OK != result)
+    bool result = u_arraylist_add(iflist, ifitem);
+    if (!result)
     {
         OIC_LOG(ERROR, TAG, "u_arraylist_add failed.");
         OICFree(ifitem);
