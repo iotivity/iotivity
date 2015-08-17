@@ -525,7 +525,7 @@ void CAEDRNativeRemoveDevice(const char *remoteAddress)
             OIC_LOG_V(DEBUG, TAG, "[EDR][Native] remove state : %s", remoteAddress);
             OICFree(state);
 
-            CAEDRReorderingDeviceList(index);
+            u_arraylist_remove(g_deviceStateList, index);
             break;
         }
     }
@@ -567,11 +567,6 @@ CAConnectedState_t CAEDRIsConnectedDevice(const char *remoteAddress)
         }
     }
     return STATE_DISCONNECTED;
-}
-
-void CAEDRReorderingDeviceList(uint32_t index)
-{
-    u_arraylist_remove(g_deviceStateList, index);
 }
 
 /**
@@ -796,7 +791,7 @@ void CAEDRNativeRemoveDeviceSocket(JNIEnv *env, jobject deviceSocket)
             (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
             (*env)->ReleaseStringUTFChars(env, jni_remoteAddress, remoteAddress);
 
-            CAEDRReorderingDeviceSocketList(index);
+            u_arraylist_remove(g_deviceObjectList, index);
             break;
         }
         (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
@@ -844,7 +839,7 @@ void CAEDRNativeRemoveDeviceSocketBaseAddr(JNIEnv *env, jstring address)
             (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
             (*env)->ReleaseStringUTFChars(env, address, remoteAddress);
 
-            CAEDRReorderingDeviceSocketList(index);
+            u_arraylist_remove(g_deviceObjectList, index);
             break;
         }
         (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
@@ -926,9 +921,4 @@ uint32_t CAEDRGetSocketListLength()
     uint32_t length = u_arraylist_length(g_deviceObjectList);
 
     return length;
-}
-
-void CAEDRReorderingDeviceSocketList(uint32_t index)
-{
-    u_arraylist_remove(g_deviceObjectList, index);
 }
