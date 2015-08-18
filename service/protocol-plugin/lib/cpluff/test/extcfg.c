@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  * C-Pluff, a plug-in framework for C
  * Copyright 2007 Johannes Lehtinen
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -33,7 +33,7 @@ void extcfgutils(void) {
 	int errors;
 	cp_status_t status;
 	int i;
-	
+
 	ctx = init_context(CP_LOG_ERROR, &errors);
 	check((plugin = cp_load_plugin_descriptor(ctx, plugindir("maximal"), &status)) != NULL && status == CP_OK);
 	for (i = 0, ext = NULL; ext == NULL && i < plugin->num_extensions; i++) {
@@ -43,17 +43,17 @@ void extcfgutils(void) {
 		}
 	}
 	check(ext != NULL);
-	
+
 	// Look up using forward path
 	check((ce = cp_lookup_cfg_element(ext->configuration, "structure/parameter")) != NULL && ce->value != NULL && strcmp(ce->value, "parameter") == 0);
 	check((ce = cebase = cp_lookup_cfg_element(ext->configuration, "structure/deeper/struct/is")) != NULL && ce->value != NULL && strcmp(ce->value, "here") == 0);
 	check((str = cp_lookup_cfg_value(ext->configuration, "structure/parameter")) != NULL && strcmp(str, "parameter") == 0);
 	check((str = cp_lookup_cfg_value(ext->configuration, "@name")) != NULL && strcmp(str, "Extension 1") == 0);
-	
+
 	// Look up using reverse path
 	check((ce = cp_lookup_cfg_element(cebase, "../../../parameter/../deeper")) != NULL && strcmp(ce->name, "deeper") == 0);
 	check((str = cp_lookup_cfg_value(cebase, "../../../../@name")) != NULL && strcmp(str, "Extension 1") == 0);
-	
+
 	// Look up nonexisting components
 	check(cp_lookup_cfg_element(ext->configuration, "non/existing") == NULL);
 	check(cp_lookup_cfg_element(ext->configuration, "structure/../..") == NULL);
@@ -63,5 +63,5 @@ void extcfgutils(void) {
 
 	cp_release_info(ctx, plugin);
 	cp_destroy_context(ctx);
-	check(errors == 0); 
+	check(errors == 0);
 }

@@ -26,7 +26,7 @@ public interface StringConstants {
 
     public static final int WAIT_TIME = 1000;
     public static final int API_VERSION_KEY = 2048;
-    public static final int CLIENT_VERSION_KEY = 3000;
+    public static final int CLIENT_TOKEN_KEY = 3000;
 
     public static final boolean ENABLE_PRINTING = true; // change to false to disable printing
                                                         // of messages on the console and the screen

@@ -36,36 +36,36 @@ extern "C"
 #endif
 
 /**
- * @brief   Add network type to the selected networks for network packets reception
- * @param   transportAdapter     [IN]  Adapter that needs to be added
- * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * Add network type to the selected networks for network packets reception.
+ * @param[in]   transportAdapter      Adapter that needs to be added.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CAAddNetworkType(CATransportAdapter_t transportAdapter);
 
 /**
- * @brief   Remove network type from the selected configuration
- * @param   transportAdapter     [IN]  Adapter that needs to be removed
- * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * Remove network type from the selected configuration.
+ * @param[in]   transportAdapter       Adapter that needs to be removed.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CARemoveNetworkType(CATransportAdapter_t transportAdapter);
 
 /**
- * @brief   Get selected network information
- * @return array list having the connectivity types
+ * Get selected network information.
+ * @return array list having the connectivity types.
  */
 u_arraylist_t *CAGetSelectedNetworkList();
 
 /**
- * @brief  Getnetwork informations of the selected networks
- * @param   info    [OUT]   LocalConnectivity objects
- * @param   size    [OUT]   No Of Array objects
- * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * Get network informations of the selected networks.
+ * @param[out]   info       LocalConnectivity objects.
+ * @param[out]   size       No Of Array objects.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CAGetNetworkInformationInternal(CAEndpoint_t **info, uint32_t *size);
 
 /**
- * @brief   Terminate network type from selected configuration
- * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * Terminate network type from selected configuration.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CATerminateNetworkType();
 

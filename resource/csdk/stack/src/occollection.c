@@ -35,6 +35,7 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "ocpayload.h"
+#include "payload_logging.h"
 
 /// Module Name
 #include <stdio.h>
@@ -221,8 +222,12 @@ ValidateQuery (const char *query, OCResourceHandle resource,
 }
 
 static OCStackResult
-HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest, uint8_t filterOn, char *filterValue)
+HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest,
+                          uint8_t filterOn,
+                          char *filterValue)
 {
+    (void)filterOn;
+    (void)filterValue;
     if(!ehRequest)
     {
         return OC_STACK_INVALID_PARAM;
@@ -231,16 +236,11 @@ HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest, uint8_t filterOn, c
     OCStackResult ret = OC_STACK_OK;
     OCResource *collResource = (OCResource *)ehRequest->resource;
 
-    OCDiscoveryPayload* payload = OCDiscoveryPayloadCreate();
-    if(!payload)
-    {
-        ret = OC_STACK_NO_MEMORY;
-    }
+    OCRepPayload* payload = NULL;
 
     if(ret == OC_STACK_OK)
     {
-        ret = BuildVirtualResourceResponse(collResource, payload,
-                CA_ADAPTER_IP);
+        ret = BuildResponseRepresentation(collResource, &payload);
     }
 
     if (ret == OC_STACK_OK)
@@ -252,15 +252,14 @@ HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest, uint8_t filterOn, c
             {
                 //TODO : Add resource type filtering once collections
                 // start supporting queries.
-                ret = BuildVirtualResourceResponse(temp, payload,
-                        CA_ADAPTER_IP);
+                ret = BuildResponseRepresentation(temp, &payload);
             }
         }
     }
 
     if(ret == OC_STACK_OK)
     {
-        OCEntityHandlerResponse response = {};
+        OCEntityHandlerResponse response = {0};
         response.ehResult = OC_EH_OK;
         response.payload = (OCPayload*)payload;
         response.persistentBufferFlag = 0;
@@ -268,18 +267,18 @@ HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest, uint8_t filterOn, c
         response.resourceHandle = (OCResourceHandle) collResource;
         ret = OCDoResponse(&response);
     }
-    OCDiscoveryPayloadDestroy(payload);
+    OCRepPayloadDestroy(payload);
     return ret;
 }
 
 static OCStackResult
 HandleBatchInterface(OCEntityHandlerRequest *ehRequest)
 {
-    OCStackResult stackRet = OC_STACK_ERROR;
+    OCStackResult stackRet = OC_STACK_OK;
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
     OCResource * collResource = (OCResource *) ehRequest->resource;
 
-    OCDiscoveryPayload* payload = OCDiscoveryPayloadCreate();
+    OCRepPayload* payload = OCRepPayloadCreate();
     if(!payload)
     {
         stackRet = OC_STACK_NO_MEMORY;
@@ -287,13 +286,12 @@ HandleBatchInterface(OCEntityHandlerRequest *ehRequest)
 
     if(stackRet == OC_STACK_OK)
     {
-        stackRet = BuildVirtualResourceResponse(collResource, payload,
-                CA_ADAPTER_IP);
+        OCRepPayloadSetUri(payload, collResource->uri);
     }
 
     if(stackRet == OC_STACK_OK)
     {
-        OCEntityHandlerResponse response = {};
+        OCEntityHandlerResponse response = {0};
         response.ehResult = OC_EH_OK;
         response.payload = (OCPayload*)payload;
         response.persistentBufferFlag = 0;
@@ -301,7 +299,6 @@ HandleBatchInterface(OCEntityHandlerRequest *ehRequest)
         response.resourceHandle = (OCResourceHandle) collResource;
         stackRet = OCDoResponse(&response);
     }
-    OCDiscoveryPayloadDestroy(payload);
 
     if (stackRet == OC_STACK_OK)
     {
@@ -492,5 +489,3 @@ OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
     }
     return result;
 }
-
-

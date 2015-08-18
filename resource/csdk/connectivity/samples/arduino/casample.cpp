@@ -349,6 +349,7 @@ void SendRequest()
     requestData.token = token;
     requestData.tokenLength = tokenLength;
     requestData.payload = (CAPayload_t)"Json Payload";
+    requestData.payloadSize = strlen((const char *) requestData.payload);
 
     requestData.type = msgType;
     requestData.resourceUri = (char *)OICMalloc(strlen(resourceUri) + 1);
@@ -406,7 +407,7 @@ void SendRequestAll()
 
     // create remote endpoint
     CAEndpoint_t *endpoint = NULL;
-    CAResult_t res = CACreateEndpoint(CA_DEFAULT_FLAGS, selectedNetwork, address, atoi(port),
+    CAResult_t res = CACreateEndpoint(CA_IPV4, selectedNetwork, address, atoi(port),
                                         &endpoint);
 
     if (res != CA_STATUS_OK)
@@ -433,6 +434,7 @@ void SendRequestAll()
     requestData.token = token;
     requestData.tokenLength = tokenLength;
     requestData.payload = (CAPayload_t)"Temp Json Payload";
+    requestData.payloadSize = strlen((const char *) requestData.payload);
     requestData.type = CA_MSG_NONCONFIRM;
     requestData.resourceUri = (char *)OICMalloc(strlen(resourceUri) + 1);
     strcpy(requestData.resourceUri, resourceUri);
@@ -513,6 +515,7 @@ void SendNotification()
     respondData.token = token;
     respondData.tokenLength = tokenLength;
     respondData.payload = (CAPayload_t)"Notification Data";
+    respondData.payloadSize = strlen((const char *) respondData.payload);
     respondData.resourceUri = (char *)OICMalloc(strlen(resourceUri) + 1);
     strcpy(respondData.resourceUri, resourceUri);
 
@@ -622,7 +625,7 @@ void UnselectNetwork()
     {
         g_isLeSelected = false;
     }
-    CAUnSelectNetwork(1 << number);
+    CAUnSelectNetwork((CATransportAdapter_t)(1 << number));
     Serial.println("Terminate");
     CATerminate();
     Serial.println("============");
@@ -705,6 +708,8 @@ void RequestHandler(const CAEndpoint_t *object, const CARequestInfo_t *requestIn
     Serial.println(requestInfo->info.resourceUri);
     Serial.print("data: ");
     Serial.println((char*)requestInfo->info.payload);
+    Serial.print("data size: ");
+    Serial.println(requestInfo->info.payloadSize);
     Serial.print("Type: ");
     Serial.println(requestInfo->info.type);
 
@@ -740,6 +745,8 @@ void ResponseHandler(const CAEndpoint_t *object, const CAResponseInfo_t *respons
         Serial.println(responseInfo->info.resourceUri);
         Serial.print("data: ");
         Serial.println((char*)responseInfo->info.payload);
+        Serial.print("data size: ");
+        Serial.println(responseInfo->info.payloadSize);
         Serial.print("Type: ");
         Serial.println(responseInfo->info.type);
         Serial.print("res result=");
@@ -839,6 +846,7 @@ void SendResponse(CAEndpoint_t *endpoint, const CAInfo_t* info)
         responseData.token = (info != NULL) ? info->token : NULL;
         responseData.tokenLength = (info != NULL) ? info->tokenLength : 0;
         responseData.payload = reinterpret_cast<CAPayload_t>(const_cast<char*>("response payload"));
+        responseData.payloadSize = strlen((const char *) responseData.payload);
     }
     CAResponseInfo_t responseInfo = {CA_BAD_REQ, {CA_MSG_RESET}};
     responseInfo.result = static_cast<CAResponseResult_t>(respCode);

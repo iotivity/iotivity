@@ -45,6 +45,9 @@ if target_os not in ['windows', 'winrt']:
 		soft_sensor_manager_env.AppendUnique(LIBS = ['pthread'])
 		soft_sensor_manager_env.AppendUnique(CXXFLAGS = ['-pthread'])
 
+if target_os not in ['darwin', 'ios', 'windows', 'winrt']:
+	soft_sensor_manager_env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
+
 if target_os == 'android':
 	soft_sensor_manager_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
 	soft_sensor_manager_env.AppendUnique(LIBS = ['gnustl_shared'])
@@ -157,7 +160,7 @@ static_libssmcore = ssmcore_env.StaticLibrary(
 
 ssmcore_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 ssmcore_env.AppendUnique(LIBS = ['oc', 'octbstack', 'oc_logger',
-            'connectivity_abstraction', 'coap'])
+            'connectivity_abstraction', 'coap', 'dl'])
 
 shared_libssmcore = ssmcore_env.SharedLibrary(
 		target = 'SSMCore',

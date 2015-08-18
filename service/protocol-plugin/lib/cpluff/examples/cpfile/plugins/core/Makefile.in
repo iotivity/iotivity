@@ -319,7 +319,7 @@ clean-pluginLTLIBRARIES:
 	  echo "rm -f \"$${dir}/so_locations\""; \
 	  rm -f "$${dir}/so_locations"; \
 	done
-libcore.la: $(libcore_la_OBJECTS) $(libcore_la_DEPENDENCIES) $(EXTRA_libcore_la_DEPENDENCIES) 
+libcore.la: $(libcore_la_OBJECTS) $(libcore_la_DEPENDENCIES) $(EXTRA_libcore_la_DEPENDENCIES)
 	$(libcore_la_LINK) -rpath $(plugindir) $(libcore_la_OBJECTS) $(libcore_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:

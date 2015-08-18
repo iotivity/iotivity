@@ -77,10 +77,13 @@ help_vars.Add(BoolVariable('VERBOSE', 'Show compilation', False))
 help_vars.Add(BoolVariable('RELEASE', 'Build for release?', True)) # set to 'no', 'false' or 0 for debug
 help_vars.Add(EnumVariable('TARGET_OS', 'Target platform', host, host_target_map[host]))
 
+
+help_vars.Add(BoolVariable('WITH_RA', 'Build with Remote Access module', False))
+
 if target_os in targets_disallow_multitransport:
-    help_vars.Add(ListVariable('TARGET_TRANSPORT', 'Target transport', 'IP', ['BT', 'BLE', 'IP']))
+	help_vars.Add(ListVariable('TARGET_TRANSPORT', 'Target transport', 'IP', ['BT', 'BLE', 'IP']))
 else:
-    help_vars.Add(ListVariable('TARGET_TRANSPORT', 'Target transport', 'ALL', ['ALL', 'BT', 'BLE', 'IP']))
+	help_vars.Add(ListVariable('TARGET_TRANSPORT', 'Target transport', 'ALL', ['ALL', 'BT', 'BLE', 'IP']))
 
 help_vars.Add(EnumVariable('TARGET_ARCH', 'Target architecture', default_arch, os_arch_map[target_os]))
 help_vars.Add(EnumVariable('SECURED', 'Build with DTLS', '0', allowed_values=('0', '1')))
@@ -89,6 +92,9 @@ help_vars.Add(BoolVariable('LOGGING', 'Enable stack logging', logging_default))
 help_vars.Add(BoolVariable('UPLOAD', 'Upload binary ? (For Arduino)', require_upload))
 help_vars.Add(EnumVariable('BUILD_SAMPLE', 'Build with sample', 'ON', allowed_values=('ON', 'OFF')))
 help_vars.AddVariables(('DEVICE_NAME', 'Network display name for device (For Arduino)', device_name, None, None),)
+help_vars.Add(PathVariable('ANDROID_NDK', 'Android NDK path', None, PathVariable.PathAccept))
+help_vars.Add(PathVariable('ANDROID_HOME', 'Android SDK path', None, PathVariable.PathAccept))
+help_vars.Add(PathVariable('ANDROID_GRADLE', 'Gradle binary file', None, PathVariable.PathIsFile))
 
 AddOption('--prefix',
                   dest='prefix',
@@ -299,7 +305,7 @@ if target_os == "yocto":
         env.AppendUnique(CPPDEFINES = ['TB_LOG'])
     env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '__linux__', '_GNU_SOURCE'])
     env.AppendUnique(CFLAGS = ['-std=gnu99'])
-    env.AppendUnique(CCFLAGS = ['-Wall', '-fPIC'])
+    env.AppendUnique(CCFLAGS = ['-Wall', '-Wextra', '-fPIC'])
     env.AppendUnique(LINKFLAGS = ['-ldl', '-lpthread'])
     env.AppendUnique(LIBS = ['uuid'])
     Export('env')

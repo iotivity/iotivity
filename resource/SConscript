@@ -42,9 +42,6 @@ SConscript('c_common/SConscript')
 # Build connectivity
 SConscript('csdk/connectivity/SConscript')
 
-# Build Routing
-SConscript('csdk/routing/SConscript')
-
 # Build libocsrm
 SConscript('csdk/security/SConscript')
 

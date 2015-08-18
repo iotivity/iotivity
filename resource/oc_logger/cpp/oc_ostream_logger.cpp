@@ -112,7 +112,7 @@ catch(...)
 {
 }
 
-void oc_ostream_log_set_level(oc_log_ctx_t *ctx, const int level)
+void oc_ostream_log_set_level(oc_log_ctx_t * /*ctx*/, const int /*level*/)
 try
 {
  /* We don't have any special thing we need to do when a log level changes. */
@@ -147,7 +147,8 @@ catch(...)
  return 0;
 }
 
-int oc_ostream_log_set_module(oc_log_ctx_t *ctx, const char *module_name)
+int oc_ostream_log_set_module(oc_log_ctx_t * /*ctx*/,
+                              const char * /*module_name*/)
 try
 {
  // Nothing special needs to happen for a module name change:

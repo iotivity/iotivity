@@ -1,22 +1,22 @@
 /* ****************************************************************
-*
-* Copyright 2014 Samsung Electronics All Rights Reserved.
-*
-*
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*      http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-******************************************************************/
+ *
+ * Copyright 2014 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************/
 
 /**
  * @file
@@ -37,186 +37,181 @@
 #include "caleinterface.h"
 
 /**
- * @brief  This is thread which will be used for creating ble service and advertise ble service.
- *         1. Create New OIC Service 2. Add two read & write characteristics to service.
- *         3. Register Service     4. Advertise service.
+ * This is thread which will be used for creating ble service and advertise ble service.
+ * 1. Create New OIC Service 2. Add two read & write characteristics to service.
+ * 3. Register Service     4. Advertise service.
  *
- * @param data [IN] Currently it will be NULL.
- * @return  NONE
+ * @param[in] data  Currently it will be NULL.
  */
 void CAStartBleGattServerThread(void *data);
 
 /**
- * @brief  Used to initialize gatt service using _bt_gatt_init_service api.
+ * Used to initialize gatt service using _bt_gatt_init_service api.
  *
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
- * @retval #CA_STATUS_FAILED Operation failed
+ * @return  ::CA_STATUS_OK or Appropriate error code.
+ * @retval  ::CA_STATUS_OK  Successful.
+ * @retval  ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval  ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CAInitBleGattService();
 
 /**
- * @brief  Used to de-initialize gatt service using _bt_gatt_deinit_service api.
+ * Used to de-initialize gatt service using _bt_gatt_deinit_service api.
  *
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
- * @retval #CA_STATUS_FAILED Operation failed
+ * @return  ::CA_STATUS_OK or Appropriate error code.
+ * @retval  ::CA_STATUS_OK  Successful.
+ * @retval  ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval  ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CADeInitBleGattService();
 
 /**
- * @brief  Used to initialize all required mutex variables for GATT server implementation.
+ * Used to initialize all required mutex variables for GATT server implementation.
  *
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
- * @retval #CA_STATUS_FAILED Operation failed
+ * @return  ::CA_STATUS_OK or Appropriate error code.
+ * @retval  ::CA_STATUS_OK  Successful.
+ * @retval  ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval  ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CAInitGattServerMutexVariables();
 
 
 /**
- * @brief  Used to terminate all required mutex variables for GATT server implementation.
- * @return NONE
+ * Used to terminate all required mutex variables for GATT server implementation.
  */
 void CATerminateGattServerMutexVariables();
 
 /**
- * @brief  Used to add new OIC service in GATT server using bt_gatt_add_service api and
- *         internally store service path(outparam) in global variable.
+ * Used to add new OIC service in GATT server using bt_gatt_add_service api and
+ * internally store service path(outparam) in global variable.
  *
- * @param  serviceUUID [IN] unique identifier for BLE OIC service.
+ * @param[in]  serviceUUID  unique identifier for BLE OIC service.
  *
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
- * @retval #CA_STATUS_FAILED Operation failed
+ * @return  ::CA_STATUS_OK or Appropriate error code.
+ * @retval  ::CA_STATUS_OK  Successful.
+ * @retval  ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval  ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CAAddNewBleServiceInGattServer(const char *serviceUUID);
 
 /**
- * @brief  Used to remove already registered service from Gatt Server using
- *         bt_gatt_remove_service api.
- * @param svcPath [IN] unique identifier for BLE OIC service which is outparam of
+ * Used to remove already registered service from Gatt Server using
+ * bt_gatt_remove_service api.
+ * @param[in] svcPath  unique identifier for BLE OIC service which is outparam of
  *                     bt_gatt_add_service api.
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
- * @retval #CA_STATUS_FAILED Operation failed
+ * @return  ::CA_STATUS_OK or Appropriate error code.
+ * @retval  ::CA_STATUS_OK  Successful.
+ * @retval  ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval  ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CARemoveBleServiceFromGattServer(const char *svcPath);
 
 /**
- * @brief  Used to remove all the registered service from Gatt Server using
- *         bt_gatt_delete_services api.
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
- * @retval #CA_STATUS_FAILED Operation failed
+ * Used to remove all the registered service from Gatt Server using
+ * bt_gatt_delete_services api.
+ * @return  ::CA_STATUS_OK or Appropriate error code.
+ * @retval  ::CA_STATUS_OK  Successful.
+ * @retval  ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval  ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CARemoveAllBleServicesFromGattServer();
 
 /**
- * @brief  Used to register the service in Gatt Server using bt_gatt_register_service api.
+ * Used to register the service in Gatt Server using bt_gatt_register_service api.
  *
- * @param svcPath [IN] unique identifier for BLE OIC service which is outparam of
+ * @param[in] svcPath  unique identifier for BLE OIC service which is outparam of
  *                     bt_gatt_add_service api.
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
- * @retval #CA_STATUS_FAILED Operation failed
+ * @return  ::CA_STATUS_OK or Appropriate error code.
+ * @retval  ::CA_STATUS_OK  Successful.
+ * @retval  ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval  ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CARegisterBleServicewithGattServer(const char *svcPath);
 
 /**
- * @brief  Used to add new characteristics(Read/Write) to the service in Gatt Server using
- *         bt_gatt_add_characteristic api.
- * @param svcPath        [IN] Service path to which this characteristic belongs to.
- * @param charUUID       [IN] Gatt characteristic uuid.
- * @param charValue      [IN] Gatt characteristic value.
- * @param charValueLen   [IN] Characteristic value length.
- * @param read           [IN] Boolean variable for checking whether read characteristics or
+ * Used to add new characteristics(Read/Write) to the service in Gatt Server using
+ * bt_gatt_add_characteristic api.
+ * @param[in] svcPath         Service path to which this characteristic belongs to.
+ * @param[in] charUUID        Gatt characteristic uuid.
+ * @param[in] charValue       Gatt characteristic value.
+ * @param[in] charValueLen    Characteristic value length.
+ * @param[in] read            Boolean variable for checking whether read characteristics or
  *                            write characteristics.
- * @return #CA_STATUS_OK or Appropriate error code
+ * @return  ::CA_STATUS_OK or Appropriate error code.
  */
 CAResult_t CAAddNewCharacteristicsToGattServer(const char *svcPath, const char *charUUID,
-                                               const char *charValue, int charValueLen,
+                                               const uint8_t *charValue, int charValueLen,
                                                bool read);
 
 /**
- * @brief  Used to remove characteristics(Read/Write) from the service in Gatt Server.
+ * Used to remove characteristics(Read/Write) from the service in Gatt Server.
  *
- * @param  charPath  [IN] Characteristic path registered on the interface and unique identifier
+ * @param[in]  charPath   Characteristic path registered on the interface and unique identifier
  *                        for added characteristics.
  *
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
- * @retval #CA_STATUS_FAILED Operation failed
+ * @return  ::CA_STATUS_OK or Appropriate error code.
+ * @retval  ::CA_STATUS_OK  Successful.
+ * @retval  ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval  ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CARemoveCharacteristicsFromGattServer(const char *charPath);
 
 /**
- * @brief  This is the callback which will be called when client update one of the characteristics
- *         with data.
- * @param  charPath      [IN] characteristic path registered on the interface and unique
+ * This is the callback which will be called when client update one of the characteristics
+ * with data.
+ * @param[in]  charPath       characteristic path registered on the interface and unique
  *                            identifier for added characteristics.
- * @param  charValue     [IN] data which is send by client.
- * @param  charValueLen  [IN] length of the data.
- * @param  remoteAddress [IN] remote device bluetooth address in which data is received.
- * @param  userData      [IN] user data
- *
- * @return NONE
+ * @param[in]  charValue      data which is send by client.
+ * @param[in]  charValueLen   length of the data.
+ * @param[in]  remoteAddress  remote device bluetooth address in which data is received.
+ * @param[in]  userData       user data.
+
  */
 void CABleGattRemoteCharacteristicWriteCb(char *charPath, unsigned char *charValue,
                                           int charValueLen, const char  *remoteAddress,
                                           void *userData);
 
 /**
- * @brief  This is the callback which will be called whenever there is change in gatt connection
- *         with Client(Connected/Disconnected).
+ * This is the callback which will be called whenever there is change in gatt connection
+ * with Client(Connected/Disconnected).
  *
- * @param  result        [IN] The result of discovering.
- * @param  connected     [IN] State of connection.
- * @param  remoteAddress [IN] Mac address of the remote device in which we made connection.
- * @param  userData      [IN] The user data passed from the request function.
- *
- * @return  NONE
+ * @param[in]  result         The result of discovering.
+ * @param[in]  connected      State of connection.
+ * @param[in]  remoteAddress  Mac address of the remote device in which we made connection.
+ * @param[in]  userData       The user data passed from the request function.
+
  */
 void CABleGattServerConnectionStateChangedCb(int result, bool connected,
                                              const char *remoteAddress, void *userData);
 
 /**
- * @brief  Synchronous function for reading characteristic value.
+ * Synchronous function for reading characteristic value.
  *
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
- * @retval #CA_STATUS_FAILED Operation failed
+ * @return  ::CA_STATUS_OK or Appropriate error code.
+ * @retval  ::CA_STATUS_OK  Successful.
+ * @retval  ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval  ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CALEReadDataFromLEServer();
 
 /**
- * @brief  Used to enqueue the message into sender queue using CAAdapterEnqueueMessage and make
- *         signal to the thread to process.
+ * Used to enqueue the message into sender queue using CAAdapterEnqueueMessage and make
+ * signal to the thread to process.
  *
- * @param  remoteEndpoint [IN] Remote device information.
- * @param  data           [IN] Data to be sent to remote device.
- * @param  dataLen        [IN] Length of data.
+ * @param[in]  remoteEndpoint  Remote device information.
+ * @param[in]  data            Data to be sent to remote device.
+ * @param[in]  dataLen         Length of data.
  *
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
- * @retval #CA_STATUS_FAILED Operation failed
+ * @return  ::CA_STATUS_OK or Appropriate error code.
+ * @retval  ::CA_STATUS_OK  Successful.
+ * @retval  ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval  ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CABleServerSenderQueueEnqueueMessage
-                (const CAEndpoint_t *remoteEndpoint, const void *data, uint32_t dataLen);
+                (const CAEndpoint_t *remoteEndpoint, const uint8_t *data, uint32_t dataLen);
 
 /**
- * @brief  This is the thread which will be used for processing receiver queue.
- * @return NONE
+ * This is the thread which will be used for processing receiver queue.
  */
 void *CABleServerSenderQueueProcessor();
 

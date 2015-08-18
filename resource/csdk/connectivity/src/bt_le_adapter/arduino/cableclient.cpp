@@ -30,7 +30,7 @@ void CASetLEClientThreadPoolHandle(ca_thread_pool_t handle)
     OIC_LOG(DEBUG, TAG, "IN");
     OIC_LOG(DEBUG, TAG, "OUT");
 }
-void CASetLEReqRespClientCallback(CABLEClientDataReceivedCallback callback)
+void CASetLEReqRespClientCallback(CABLEDataReceivedCallback callback)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     OIC_LOG(DEBUG, TAG, "OUT");

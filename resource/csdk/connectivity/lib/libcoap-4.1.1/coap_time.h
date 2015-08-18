@@ -31,6 +31,9 @@ extern "C"
      * @{
      */
 
+#ifdef HAVE_TIME_H
+#include <time.h>
+#endif
 #ifdef WITH_LWIP
 
 #include <stdint.h>

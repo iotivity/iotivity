@@ -31,16 +31,16 @@ static int classify(void *dummy, const char *path) {
 #ifdef STAT
 	struct stat s;
 	const char *type;
-	
+
 	// Stat the file
 	if (STAT(path, &s)) {
 		fflush(stdout);
 		perror("stat failed");
-		
+
 		// No point for other classifiers to classify this
 		return 1;
 	}
-	
+
 	// Check if this is a special file
 	if ((s.st_mode & S_IFMT) == S_IFDIR) {
 		type = "directory";
@@ -57,11 +57,11 @@ static int classify(void *dummy, const char *path) {
 		type = "symbolic link";
 #endif
 	} else {
-		
+
 		// Did not recognize it, let other plug-ins try
 		return 0;
 	}
-		
+
 	// Print recognized file type
 	fputs(type, stdout);
 	putchar('\n');

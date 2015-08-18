@@ -14,12 +14,12 @@ root_dir = env.get('ROOT_DIR')
 build_dir = env.get('BUILD_DIR')
 sample_dir = build_dir
 
-env.AppendUnique(CFLAGS = ['-std=c99', '-fPIC', '-D__TIZEN__','-DWITH_POSIX', '-Wall', '-DSLP_SDK_LOG', '-g','-D_GNU_SOURCE','-DTIZEN_DEBUG_ENABLE', '-DWITH_ROUTING', '-DTB_LOG','`pkg-config', '--cflags', '--libs','dlog', 'com.oic.ca', 'capi-network-wifi',
+env.AppendUnique(CFLAGS = ['-std=c99', '-fPIC', '-D__TIZEN__','-DWITH_POSIX', '-Wall', '-DSLP_SDK_LOG', '-g','-D_GNU_SOURCE','-DTIZEN_DEBUG_ENABLE', '-DTB_LOG','`pkg-config', '--cflags', '--libs','dlog', 'com.oic.ca', 'capi-network-wifi',
 				'gobject-2.0','glib-2.0`'])
 
 env.Append(LIBPATH=[root_dir +'/lib/tizen/ble/libs/',])
 env.Append(LIBS=[
-  '-lm', '-lpthread', '-lrt', '-ldl', '-lstdc++', '-lgobject-2.0', '-lgio-2.0', '-lglib-2.0', '-lcapi-network-wifi', '-ldlog', '-lcapi-network-bluetooth', '-lconnectivity_abstraction', 'coap', '-lroutingmanager'
+  '-lm', '-lpthread', '-lrt', '-ldl', '-lstdc++', '-lgobject-2.0', '-lgio-2.0', '-lglib-2.0', '-lcapi-network-wifi', '-ldlog', '-lcapi-network-bluetooth', '-lconnectivity_abstraction', 'coap',
 ])
 
 if secured == '1':
@@ -37,7 +37,7 @@ else:
 		print "CA Transport is BT"
 	else:
 		env.AppendUnique(CPPDEFINES = ['NO_EDR_ADAPTER'])
-		
+
 	if 'BLE' in transport:
 		env.AppendUnique(CPPDEFINES = ['LE_ADAPTER','BLE_ADAPTER_TEST'])
 		print "CA Transport is BLE"
@@ -49,7 +49,7 @@ else:
 		print "CA Transport is IP"
 	else:
 		env.AppendUnique(CPPDEFINES = ['NO_IP_ADAPTER'])
-		
+
 
 ca_sample_src = [sample_dir + '/casample.c']
 

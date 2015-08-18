@@ -90,6 +90,9 @@ namespace OC
         OutOfProc
     };
 
+    /**
+     * Host Mode of Operation.
+     */
     enum class ModeType
     {
         Server,
@@ -97,32 +100,54 @@ namespace OC
         Both
     };
 
+    /**
+     * Quality of Service attempts to abstract the guarantees provided by the underlying transport
+     * protocol. The precise definitions of each quality of service level depend on the
+     * implementation. In descriptions below are for the current implementation and may changed
+     * over time.
+     */
     enum class QualityOfService : uint8_t
     {
+        /** Packet delivery is best effort. */
         LowQos      = OC_LOW_QOS,
+
+        /** Packet delivery is best effort. */
         MidQos      = OC_MEDIUM_QOS,
+
+        /** Acknowledgments are used to confirm delivery. */
         HighQos     = OC_HIGH_QOS,
-        NaQos       = OC_NA_QOS // No Quality is defined, let the stack decide
+
+        /** No Quality is defined, let the stack decide. */
+        NaQos       = OC_NA_QOS
     };
 
     /**
-    *  Data structure to provide the configuration.
-    *  ServiceType: indicate InProc or OutOfProc
-    *  ModeType   : indicate whether we want to do server, client or both
-    *  ServerConnectivity : default flags for server
-    *  ClientConnectivity : default flags for client
-    *  QoS        : indicate Quality of Service : LowQos, MidQos,HighQos and NaQos(No quality Defined).
-    *  ps         : persistant storage Handler structure (open/read/write/close/unlink)
-    */
+     *  Data structure to provide the configuration.
+     */
     struct PlatformConfig
     {
+        /** indicate InProc or OutOfProc. */
         ServiceType                serviceType;
+
+        /** indicate whether we want to do server, client or both. */
         ModeType                   mode;
+
+        /** default flags for server. */
         OCConnectivityType         serverConnectivity;
+
+        /** default flags for client. */
         OCConnectivityType         clientConnectivity;
-        std::string                ipAddress;   // not used
-        uint16_t                   port;        // not used
+
+        /** not used. */
+        std::string                ipAddress;
+
+        /** not used. */
+        uint16_t                   port;
+
+        /** indicate Quality of Service : LowQos, MidQos,HighQos and NaQos(No quality Defined). */
         QualityOfService           QoS;
+
+        /** persistant storage Handler structure (open/read/write/close/unlink). */
         OCPersistentStorage        *ps;
 
         public:

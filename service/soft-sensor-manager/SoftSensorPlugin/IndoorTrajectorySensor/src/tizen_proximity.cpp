@@ -334,7 +334,7 @@ void CProximity::GetProximity(CbleDevice *pdevice)
         }
     } // for
 
-    delete avg;
+    delete[] avg;
 }
 
 bool CProximity::set_threadFunc(workfunc func)

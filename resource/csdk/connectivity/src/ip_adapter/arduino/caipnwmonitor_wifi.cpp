@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
 *
 * Copyright 2014 Samsung Electronics All Rights Reserved.
 *
@@ -18,9 +18,9 @@
 *
 ******************************************************************/
 /**
- * @file caipnwmonitor.cpp
- * @brief This file is to keep design in sync with other platforms.  Right now there is no
- *        api for network monitioring in arduino.
+ * @file
+ * This file is to keep design in sync with other platforms.  Right now
+ * there is no api for network monitoring in arduino.
  */
 
 #include "caipinterface.h"
@@ -38,45 +38,26 @@
 #include "caipadapter.h"
 #include "caadapterutils.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 
 #define TAG "IPNW"
 
-CAResult_t CAIPInitializeNetworkMonitor(const ca_thread_pool_t threadPool)
+// Since the CA abstraction expects a value for "family", AF_INET will be
+// defined & used (as-is defined in the linux socket headers).
+#define AF_INET (2)
+
+CAResult_t CAIPInitializeNetworkMonitor()
 {
     return CA_STATUS_OK;
 }
 
-CAResult_t CAIPStartNetworkMonitor(void)
+CAResult_t CAIPTerminateNetworkMonitor()
 {
     return CA_STATUS_OK;
-}
-
-void CAIPGetSubnetMask(char *subnetMaskAddr, int32_t addrLen)
-{
-    OIC_LOG(DEBUG, TAG, "IN");
-    if (WiFi.status() != WL_CONNECTED)
-    {
-        OIC_LOG(DEBUG, TAG, "No WIFI");
-        return;
-    }
-
-    VERIFY_NON_NULL_VOID(subnetMaskAddr, TAG, "Invalid Input");
-    if (addrLen < CA_IPADDR_SIZE)
-    {
-        OIC_LOG_V(ERROR, TAG, "AddrLen MUST be atleast %d", CA_IPADDR_SIZE);
-        return;
-    }
-
-    IPAddress ip = WiFi.subnetMask();
-    snprintf((char *)subnetMaskAddr, addrLen, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
-
-    OIC_LOG_V(DEBUG, TAG, "Wifi shield subnet mask is: %s", subnetMaskAddr);
-    OIC_LOG(DEBUG, TAG, "OUT");
-    return;
 }
 
 /// Retrieves the IP address assigned to Arduino WiFi shield
-void CAArduinoGetInterfaceAddress(char *address, int32_t addrLen)
+void CAArduinoGetInterfaceAddress(uint32_t *address)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     if (WiFi.status() != WL_CONNECTED)
@@ -86,61 +67,53 @@ void CAArduinoGetInterfaceAddress(char *address, int32_t addrLen)
     }
 
     VERIFY_NON_NULL_VOID(address, TAG, "Invalid address");
-    if (addrLen < CA_IPADDR_SIZE)
-    {
-        OIC_LOG_V(ERROR, TAG, "AddrLen MUST be atleast %d", CA_IPADDR_SIZE);
-        return;
-    }
 
     IPAddress ip = WiFi.localIP();
-    snprintf((char *)address, addrLen, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
+    *address = (uint32_t) ip;
 
-    OIC_LOG_V(DEBUG, TAG, "Wifi shield address is: %s", address);
+    OIC_LOG_V(DEBUG, TAG, "Wifi shield address is: %d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
     OIC_LOG(DEBUG, TAG, "OUT");
     return;
 }
 
-CAResult_t CAIPGetInterfaceInfo(u_arraylist_t **netInterfaceList)
+u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
 {
-    CANetInfo_t *netInfo = (CANetInfo_t *)OICCalloc(1, sizeof(CANetInfo_t));
-    if (!netInfo)
+    CAResult_t result = CA_STATUS_OK;
+
+    u_arraylist_t *iflist = u_arraylist_create();
+    if (!iflist)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to create iflist");
+        return NULL;
+    }
+
+    CAInterface_t *ifitem = (CAInterface_t *)OICCalloc(1, sizeof(CAInterface_t));
+    if (!ifitem)
     {
         OIC_LOG(ERROR, TAG, "Malloc failed");
-        return CA_STATUS_FAILED;
+        goto exit;
     }
 
-    CAArduinoGetInterfaceAddress(netInfo->ipAddress, CA_IPADDR_SIZE);
+    // Since Arduino currently only supports one interface, the next 4 lines are sufficient.
+    OICStrcpy(ifitem->name, INTERFACE_NAME_MAX, "WIFI");
+    ifitem->index = 1;
+    ifitem->family = AF_INET;
+    ifitem->flags = 0;
+    CAArduinoGetInterfaceAddress(&ifitem->ipv4addr);
 
-    CAIPGetSubnetMask(netInfo->subnetMask, CA_IPADDR_SIZE);
-
-    // set interface name
-    strncpy(netInfo->interfaceName, "WIFI", strlen(netInfo->interfaceName));
-
-    CAResult_t result = u_arraylist_add(*netInterfaceList, (void *)netInfo);
+    result = u_arraylist_add(iflist, ifitem);
     if (CA_STATUS_OK != result)
     {
-        OIC_LOG(ERROR, TAG, "u_arraylist_add failed");
-        return result;
+        OIC_LOG(ERROR, TAG, "u_arraylist_add failed.");
+        goto exit;
     }
-    return CA_STATUS_OK;
+
+    OIC_LOG_V(ERROR, TAG, "Added interface: %s (%d)", ifitem->name, ifitem->family);
+
+    return iflist;
+
+exit:
+    u_arraylist_destroy(iflist);
+    return NULL;
 }
 
-bool CAIPIsConnected(void)
-{
-    return true;
-}
-
-void CAIPSetConnectionStateChangeCallback(CAIPConnectionStateChangeCallback callback)
-{
-    return;
-}
-
-CAResult_t CAIPStopNetworkMonitor(void)
-{
-    return CA_STATUS_OK;
-}
-
-void CAIPTerminateNetworkMonitor(void)
-{
-    return;
-}

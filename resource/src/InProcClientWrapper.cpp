@@ -132,7 +132,7 @@ namespace OC
 
     }
 
-    OCStackApplicationResult listenCallback(void* ctx, OCDoHandle handle,
+    OCStackApplicationResult listenCallback(void* ctx, OCDoHandle /*handle*/,
         OCClientResponse* clientResponse)
     {
         ClientCallbackContext::ListenContext* context =
@@ -177,7 +177,7 @@ namespace OC
     }
 
     OCStackResult InProcClientWrapper::ListenForResource(
-            const std::string& serviceUrl,  // unused
+            const std::string& serviceUrl,
             const std::string& resourceType,
             OCConnectivityType connectivityType,
             FindCallback& callback, QualityOfService QoS)
@@ -188,6 +188,8 @@ namespace OC
         }
 
         OCStackResult result;
+        ostringstream resourceUri;
+        resourceUri << serviceUrl << resourceType;
 
         ClientCallbackContext::ListenContext* context =
             new ClientCallbackContext::ListenContext(callback, shared_from_this());
@@ -202,7 +204,7 @@ namespace OC
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             result = OCDoResource(nullptr, OC_REST_DISCOVER,
-                                  resourceType.c_str(),
+                                  resourceUri.str().c_str(),
                                   nullptr, nullptr, connectivityType,
                                   static_cast<OCQualityOfService>(QoS),
                                   &cbdata,
@@ -216,7 +218,8 @@ namespace OC
         return result;
     }
 
-    OCStackApplicationResult listenDeviceCallback(void* ctx, OCDoHandle handle,
+    OCStackApplicationResult listenDeviceCallback(void* ctx,
+                                                  OCDoHandle /*handle*/,
             OCClientResponse* clientResponse)
     {
         ClientCallbackContext::DeviceListenContext* context =
@@ -238,7 +241,7 @@ namespace OC
     }
 
     OCStackResult InProcClientWrapper::ListenForDevice(
-            const std::string& serviceUrl,  // unused
+            const std::string& serviceUrl,
             const std::string& deviceURI,
             OCConnectivityType connectivityType,
             FindDeviceCallback& callback,
@@ -249,6 +252,8 @@ namespace OC
             return OC_STACK_INVALID_PARAM;
         }
         OCStackResult result;
+        ostringstream deviceUri;
+        deviceUri << serviceUrl << deviceURI;
 
         ClientCallbackContext::DeviceListenContext* context =
             new ClientCallbackContext::DeviceListenContext(callback, shared_from_this());
@@ -263,7 +268,7 @@ namespace OC
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             result = OCDoResource(nullptr, OC_REST_DISCOVER,
-                                  deviceURI.c_str(),
+                                  deviceUri.str().c_str(),
                                   nullptr, nullptr, connectivityType,
                                   static_cast<OCQualityOfService>(QoS),
                                   &cbdata,
@@ -303,7 +308,8 @@ namespace OC
         }
     }
 
-    OCStackApplicationResult getResourceCallback(void* ctx, OCDoHandle handle,
+    OCStackApplicationResult getResourceCallback(void* ctx,
+                                                 OCDoHandle /*handle*/,
         OCClientResponse* clientResponse)
     {
         ClientCallbackContext::GetContext* context =
@@ -377,7 +383,8 @@ namespace OC
     }
 
 
-    OCStackApplicationResult setResourceCallback(void* ctx, OCDoHandle handle,
+    OCStackApplicationResult setResourceCallback(void* ctx,
+                                                 OCDoHandle /*handle*/,
         OCClientResponse* clientResponse)
     {
         ClientCallbackContext::SetContext* context =
@@ -535,7 +542,8 @@ namespace OC
         return result;
     }
 
-    OCStackApplicationResult deleteResourceCallback(void* ctx, OCDoHandle handle,
+    OCStackApplicationResult deleteResourceCallback(void* ctx,
+                                                    OCDoHandle /*handle*/,
         OCClientResponse* clientResponse)
     {
         ClientCallbackContext::DeleteContext* context =
@@ -554,7 +562,9 @@ namespace OC
     OCStackResult InProcClientWrapper::DeleteResource(
         const OCDevAddr& devAddr,
         const std::string& uri,
-        const HeaderOptions& headerOptions, DeleteCallback& callback, QualityOfService QoS)
+        const HeaderOptions& headerOptions,
+        DeleteCallback& callback,
+        QualityOfService /*QoS*/)
     {
         if(!callback)
         {
@@ -595,7 +605,8 @@ namespace OC
         return result;
     }
 
-    OCStackApplicationResult observeResourceCallback(void* ctx, OCDoHandle handle,
+    OCStackApplicationResult observeResourceCallback(void* ctx,
+                                                     OCDoHandle /*handle*/,
         OCClientResponse* clientResponse)
     {
         ClientCallbackContext::ObserveContext* context =
@@ -689,8 +700,8 @@ namespace OC
 
     OCStackResult InProcClientWrapper::CancelObserveResource(
             OCDoHandle handle,
-            const std::string& host, // unused
-            const std::string& uri,  // unused
+            const std::string& /*host*/,
+            const std::string& /*uri*/,
             const HeaderOptions& headerOptions,
             QualityOfService QoS)
     {
@@ -715,7 +726,8 @@ namespace OC
         return result;
     }
 
-    OCStackApplicationResult subscribePresenceCallback(void* ctx, OCDoHandle handle,
+    OCStackApplicationResult subscribePresenceCallback(void* ctx,
+                                                       OCDoHandle /*handle*/,
             OCClientResponse* clientResponse)
     {
         ClientCallbackContext::SubscribePresenceContext* context =
@@ -755,7 +767,7 @@ namespace OC
         auto cLock = m_csdkLock.lock();
 
         std::ostringstream os;
-        os << host << OC_RSRVD_PRESENCE_URI;;
+        os << host << OC_RSRVD_PRESENCE_URI;
 
         if(!resourceType.empty())
         {

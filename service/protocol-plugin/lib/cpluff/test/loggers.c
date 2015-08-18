@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  * C-Pluff, a plug-in framework for C
  * Copyright 2007 Johannes Lehtinen
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -30,7 +30,7 @@ void errorlogger(void) {
 	cp_context_t *ctx;
 	cp_status_t status;
 	int errors;
-	
+
 	ctx = init_context(CP_LOG_ERROR + 1, &errors);
 	check(cp_load_plugin_descriptor(ctx, "nonexisting", &status) == NULL && status != CP_OK);
 	cp_destroy();
@@ -45,7 +45,7 @@ struct log_count_t {
 
 static void counting_logger(cp_log_severity_t severity, const char *msg, const char *apid, void *user_data) {
 	struct log_count_t *lc = user_data;
-	
+
 	if (severity <= lc->max_severity) {
 		lc->count_max++;
 	} else {
@@ -56,7 +56,7 @@ static void counting_logger(cp_log_severity_t severity, const char *msg, const c
 void warninglogger(void) {
 	cp_context_t *ctx;
 	struct log_count_t lc = { CP_LOG_WARNING, 0, 0 };
-	
+
 	ctx = init_context(CP_LOG_ERROR, NULL);
 	check(cp_register_logger(ctx, counting_logger, &lc, CP_LOG_WARNING) == CP_OK);
 	check(cp_start_plugin(ctx, "nonexisting") == CP_ERR_UNKNOWN);
@@ -82,7 +82,7 @@ void infologger(void) {
 void debuglogger(void) {
 	cp_context_t *ctx;
 	struct log_count_t lc = { CP_LOG_DEBUG, 0, 0 };
-	
+
 	ctx = init_context(CP_LOG_INFO, NULL);
 	check(cp_register_logger(ctx, counting_logger, &lc, CP_LOG_DEBUG) == CP_OK);
 	cp_destroy();
@@ -100,7 +100,7 @@ void twologgers(void) {
 	struct log_count_t lc = { CP_LOG_DEBUG, 0, 0 };
 	int count = 0;
 	int errors;
-	
+
 	ctx = init_context(CP_LOG_ERROR, &errors);
 	check(cp_register_logger(ctx, counting_logger, &lc, CP_LOG_DEBUG) == CP_OK);
 	check(count == 0 && lc.count_max > 0 && lc.count_above_max == 0);
@@ -121,7 +121,7 @@ void unreglogger(void) {
 	struct log_count_t lc = { CP_LOG_DEBUG, 0, 0 };
 	int count = 0;
 	int errors;
-	
+
 	ctx = init_context(CP_LOG_ERROR, &errors);
 	check(cp_register_logger(ctx, counting_logger, &lc, CP_LOG_DEBUG) == CP_OK);
 	check(count == 0 && lc.count_max > 0 && lc.count_above_max == 0);
@@ -144,7 +144,7 @@ void updatelogger(void) {
 	struct log_count_t lc2 = { CP_LOG_INFO, 0, 0 };
 	int count = 0;
 	int errors;
-	
+
 	ctx = init_context(CP_LOG_ERROR, &errors);
 	check(cp_register_logger(ctx, counting_logger, &lc, CP_LOG_DEBUG) == CP_OK);
 	check(count == 0 && lc.count_max > 0 && lc.count_above_max == 0);
@@ -167,7 +167,7 @@ struct log_info_t {
 
 static void store_logger(cp_log_severity_t severity, const char *msg, const char *apid, void *user_data) {
 	struct log_info_t *li = user_data;
-	
+
 	// Free previous data
 	if (li->msg != NULL) {
 		free(li->msg);
@@ -177,7 +177,7 @@ static void store_logger(cp_log_severity_t severity, const char *msg, const char
 		free(li->apid);
 		li->apid = NULL;
 	}
-	
+
 	// Copy information
 	li->severity = severity;
 	if (msg != NULL) {
@@ -203,7 +203,7 @@ static void logmsg_sev(cp_context_t *ctx, cp_log_severity_t severity, const char
 
 void logmsg(void) {
 	cp_context_t *ctx;
-	
+
 	ctx = init_context(CP_LOG_ERROR + 1, NULL);
 	logmsg_sev(ctx, CP_LOG_DEBUG, "debug");
 	logmsg_sev(ctx, CP_LOG_INFO, "info");
@@ -214,7 +214,7 @@ void logmsg(void) {
 
 static void islogged_sev(cp_context_t *ctx, cp_log_severity_t severity) {
 	int count = 0;
-	
+
 	check(!cp_is_logged(ctx, severity));
 	check(cp_register_logger(ctx, increment_logger, &count, severity) == CP_OK);
 	check(cp_is_logged(ctx, CP_LOG_ERROR));
@@ -237,7 +237,7 @@ static void islogged_sev(cp_context_t *ctx, cp_log_severity_t severity) {
 
 void islogged(void) {
 	cp_context_t *ctx;
-	
+
 	ctx = init_context(CP_LOG_ERROR + 1, NULL);
 	islogged_sev(ctx, CP_LOG_DEBUG);
 	islogged_sev(ctx, CP_LOG_INFO);

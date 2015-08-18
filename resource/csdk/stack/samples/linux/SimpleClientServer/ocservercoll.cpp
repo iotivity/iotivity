@@ -103,13 +103,63 @@ PrintReceivedMsgInfo(OCEntityHandlerFlag flag, OCEntityHandlerRequest * ehReques
             typeOfMethod);
 }
 
+//The only case when this entity handler is for a non-existing resource.
+OCEntityHandlerResult
+OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
+        OCEntityHandlerRequest *entityHandlerRequest, char* uri, void* callbackParam)
+{
+    OC_LOG_V(INFO, TAG, "Inside device default entity handler - flags: 0x%x, uri: %s", flag, uri);
+
+    OCEntityHandlerResult ehResult = OC_EH_OK;
+    OCEntityHandlerResponse response;
+
+    if (!entityHandlerRequest)
+    {
+        OC_LOG(ERROR, TAG, "Invalid request pointer");
+        return OC_EH_ERROR;
+    }
+
+    if (entityHandlerRequest->resource == NULL)
+    {
+        OC_LOG(INFO, TAG, "Received request from client to a non-existing resource");
+        ehResult = OC_EH_RESOURCE_NOT_FOUND;
+    }
+    else
+    {
+        OC_LOG_V(INFO, TAG, "Device Handler: Received unsupported request from client %d",
+                        entityHandlerRequest->method);
+        ehResult = OC_EH_ERROR;
+    }
+
+    if (!((ehResult == OC_EH_ERROR) || (ehResult == OC_EH_FORBIDDEN)))
+    {
+        // Format the response.  Note this requires some info about the request
+        response.requestHandle = entityHandlerRequest->requestHandle;
+        response.resourceHandle = entityHandlerRequest->resource;
+        response.ehResult = ehResult;
+        response.payload = nullptr;
+        response.numSendVendorSpecificHeaderOptions = 0;
+        memset(response.sendVendorSpecificHeaderOptions,
+                0, sizeof response.sendVendorSpecificHeaderOptions);
+        // Indicate that response is NOT in a persistent buffer
+        response.persistentBufferFlag = 0;
+
+        // Send the response
+        if (OCDoResponse(&response) != OC_STACK_OK)
+        {
+            OC_LOG(ERROR, TAG, "Error sending response");
+            ehResult = OC_EH_ERROR;
+        }
+    }
+    return ehResult;
+}
+
 OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
                                             OCEntityHandlerRequest * ehRequest,
                                             void* callback)
 {
     OCEntityHandlerResult ret = OC_EH_OK;
     OCEntityHandlerResponse response;
-    OCRepPayload* payload = OCRepPayloadCreate();
 
     OC_LOG_V(INFO, TAG, "Callback for Room");
     PrintReceivedMsgInfo(flag, ehRequest );
@@ -117,6 +167,7 @@ OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
     if(ehRequest && flag == OC_REQUEST_FLAG )
     {
         std::string query = (const char*)ehRequest->query;
+        OCRepPayload* payload = OCRepPayloadCreate();
 
         if(OC_REST_GET == ehRequest->method)
         {
@@ -260,6 +311,7 @@ OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
         {
             OC_LOG_V (INFO, TAG, "Received unsupported method %d from client",
                     ehRequest->method);
+            OCRepPayloadDestroy(payload);
             ret = OC_EH_ERROR;
         }
     }
@@ -275,13 +327,13 @@ OCEntityHandlerResult OCEntityHandlerLightCb(OCEntityHandlerFlag flag,
 {
     OCEntityHandlerResult ret = OC_EH_OK;
     OCEntityHandlerResponse response;
-    OCRepPayload* payload = OCRepPayloadCreate();
 
     OC_LOG_V(INFO, TAG, "Callback for Light");
     PrintReceivedMsgInfo(flag, ehRequest );
 
     if(ehRequest && flag == OC_REQUEST_FLAG)
     {
+        OCRepPayload* payload = OCRepPayloadCreate();
         if(OC_REST_GET == ehRequest->method)
         {
             OCRepPayloadSetUri(payload, gLightResourceUri);
@@ -322,6 +374,10 @@ OCEntityHandlerResult OCEntityHandlerLightCb(OCEntityHandlerFlag flag,
                 ret = OC_EH_ERROR;
             }
         }
+        else
+        {
+            OCRepPayloadDestroy(payload);
+        }
     }
     else if (ehRequest && flag == OC_OBSERVE_FLAG)
     {
@@ -336,13 +392,14 @@ OCEntityHandlerResult OCEntityHandlerFanCb(OCEntityHandlerFlag flag,
 {
     OCEntityHandlerResult ret = OC_EH_OK;
     OCEntityHandlerResponse response;
-    OCRepPayload* payload = OCRepPayloadCreate();
 
     OC_LOG_V(INFO, TAG, "Callback for Fan");
     PrintReceivedMsgInfo(flag, ehRequest );
 
     if(ehRequest && flag == OC_REQUEST_FLAG)
     {
+        OCRepPayload* payload = OCRepPayloadCreate();
+
         if(OC_REST_GET == ehRequest->method)
         {
             OCRepPayloadSetUri(payload, gFanResourceUri);
@@ -383,6 +440,7 @@ OCEntityHandlerResult OCEntityHandlerFanCb(OCEntityHandlerFlag flag,
                 ret = OC_EH_ERROR;
             }
         }
+        OCRepPayloadDestroy(payload);
 
     }
     else if (ehRequest && flag == OC_OBSERVE_FLAG)
@@ -455,6 +513,8 @@ int main(int argc, char* argv[])
         OC_LOG(ERROR, TAG, "OCStack init error");
         return 0;
     }
+
+    OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandlerCb, NULL);
 
     /*
      * Declare and create the example resource: light

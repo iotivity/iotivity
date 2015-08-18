@@ -17,6 +17,13 @@
 // limitations under the License.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//
+
+/**
+ * @file
+ *
+ * This file contains APIs for OIC Stack to be implemented.
+ */
 
 #ifndef OCSTACK_H_
 #define OCSTACK_H_
@@ -28,44 +35,50 @@
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
+
+/** Macro to use Random port.*/
 #define USE_RANDOM_PORT (0)
 
-//-----------------------------------------------------------------------------
-// Function prototypes
-//-----------------------------------------------------------------------------
+/*
+ * Function prototypes
+ */
 
 /**
- * Initialize the OC Stack.  Must be called prior to starting the stack.
+ * This function Initializes the OC Stack.  Must be called prior to starting the stack.
  *
- * @param mode
- *     Host device is client, server, or client-server.
- * @param serverFlags
- *     Default server transport flags.
- * @param clientFlags
- *     Default client transport flags.
+ * @param mode            OCMode Host device is client, server, or client-server.
+ * @param serverFlags     OCTransportFlags Default server transport flags.
+ * @param clientFlags     OCTransportFlags Default client transport flags.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlags clientFlags);
 
 /**
- * Initialize the OC Stack.  Must be called prior to starting the stack.
+ * This function Initializes the OC Stack.  Must be called prior to starting the stack.
  *
- * @param ipAddr
- *     IP Address of host device. Deprecated parameter.
- * @param port
- *     Port of host device. Deprecated parameter.
- * @param mode
- *     Host device is client, server, or client-server.
+ * @param ipAddr      IP Address of host device. Deprecated parameter.
+ * @param port        Port of host device. Deprecated parameter.
+ * @param mode        OCMode Host device is client, server, or client-server.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode);
 
+#ifdef RA_ADAPTER
 /**
- * Stop the OC stack.  Use for a controlled shutdown.
+ * @brief   Set Remote Access information for XMPP Client.
+ * @param   raInfo            [IN] remote access info.
  *
- * Note: OCStop() performs operations similar to OCStopPresence(), as well as OCDeleteResource() on
+ * @return  #CA_STATUS_OK
+ */
+OCStackResult OCSetRAInfo(const OCRAInfo_t *raInfo);
+#endif
+
+/**
+ * This function Stops the OC stack.  Use for a controlled shutdown.
+ *
+ * @note: OCStop() performs operations similar to OCStopPresence(), as well as OCDeleteResource() on
  * all resources this server is hosting. OCDeleteResource() performs operations similar to
  * OCNotifyAllObservers() to notify all client observers that the respective resource is being
  * deleted.
@@ -75,40 +88,39 @@ OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode);
 OCStackResult OCStop();
 
 /**
- * Called in main loop of OC client or server.  Allows low-level processing of
- * stack services.
+ * This function is Called in main loop of OC client or server.
+ * Allows low-level processing of stack services.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 OCStackResult OCProcess();
 
 /**
- * Discover or Perform requests on a specified resource (specified by that Resource's respective
- * URI).
+ * This function discovers or Perform requests on a specified resource
+ * (specified by that Resource's respective URI).
  *
- * @param handle             @ref OCDoHandle to refer to the request sent out on behalf of
- *                           calling this API. This handle can be used to cancel this operation
- *                           via the OCCancel API.
- *                           Note: This reference is handled internally, and
- *                           should not be free'd by the consumer.  A NULL handle is permitted
- *                           in the event where the caller has no use for the return value.
- * @param method             @ref OCMethod to perform on the resource.
- * @param requiredUri        URI of the resource to interact with. (Address prefix
- *                           is deprecated in favor of destination.)
- * @param destination        Complete description of destination.
- * @param request            JSON encoded request.
- * @param connectivityType   Modifier flags when destination is not given.
- * @param qos                Quality of service. Note that if this API is called on a uri with
- *                           the well-known multicast IP address, the qos will be forced to
- *                           ::OC_LOW_QOS
- *                           since it is impractical to send other QOS levels on such addresses.
- * @param cbData             Asynchronous callback function that is invoked
- *                           by the stack when discovery or resource interaction is complete.
- * @param options            The address of an array containing the vendor specific
- *                           header options to be sent with the request.
- * @param numOptions         Number of header options to be included.
+ * @param handle            To refer to the request sent out on behalf of
+ *                          calling this API. This handle can be used to cancel this operation
+ *                          via the OCCancel API.
+ *                          @note: This reference is handled internally, and should not be free'd by
+ *                          the consumer.  A NULL handle is permitted in the event where the caller
+ *                          has no use for the return value.
+ * @param method            To perform on the resource.
+ * @param requestUri       URI of the resource to interact with. (Address prefix is deprecated in
+ *                          favor of destination.)
+ * @param destination       Complete description of destination.
+ * @param payload           Encoded request payload.
+ * @param connectivityType  Modifier flags when destination is not given.
+ * @param qos               Quality of service. Note that if this API is called on a uri with the
+ *                          well-known multicast IP address, the qos will be forced to ::OC_LOW_QOS
+ *                          since it is impractical to send other QOS levels on such addresses.
+ * @param cbData            Asynchronous callback function that is invoked by the stack when
+ *                          discovery or resource interaction is complete.
+ * @param options           The address of an array containing the vendor specific header options
+ *                          to be sent with the request.
+ * @param numOptions        Number of header options to be included.
  *
- * Note: Presence subscription amendments (ie. adding additional resource type filters by calling
+ * @note: Presence subscription amendments (i.e. adding additional resource type filters by calling
  * this API again) require the use of the same base URI as the original request to successfully
  * amend the presence filters.
  *
@@ -125,13 +137,13 @@ OCStackResult OCDoResource(OCDoHandle *handle,
                             OCHeaderOption *options,
                             uint8_t numOptions);
 /**
- * Cancel a request associated with a specific @ref OCDoResource invocation.
+ * This function cancels a request associated with a specific @ref OCDoResource invocation.
  *
- * @param handle - Used to identify a specific OCDoResource invocation.
- * @param qos    - used to specify Quality of Service (read below for more info)
- * @param options- used to specify vendor specific header options when sending
- *                 explicit observe cancellation
- * @param numOptions- Number of header options to be included
+ * @param handle       Used to identify a specific OCDoResource invocation.
+ * @param qos          Used to specify Quality of Service(read below).
+ * @param options      Used to specify vendor specific header options when sending
+ *                     explicit observe cancellation.
+ * @param numOptions   Number of header options to be included.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
@@ -139,37 +151,39 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
         uint8_t numOptions);
 
 /**
- * @brief   Register Persistent storage callback.
- * @param   persistentStorageHandler [IN] Pointers to open, read, write, close & unlink handlers.
+ * Register Persistent storage callback.
+ * @param   persistentStorageHandler  Pointers to open, read, write, close & unlink handlers.
+ *
  * @return
- *     OC_STACK_OK    - No errors; Success
- *     OC_STACK_INVALID_PARAM - Invalid parameter
+ *     OC_STACK_OK                    No errors; Success.
+ *     OC_STACK_INVALID_PARAM         Invalid parameter.
  */
 OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler);
 
 #ifdef WITH_PRESENCE
 /**
- * When operating in @ref OCServer or @ref OCClientServer mode, this API will start sending out
- * presence notifications to clients via multicast. Once this API has been called with a success,
- * clients may query for this server's presence and this server's stack will respond via multicast.
+ * When operating in  OCServer or  OCClientServer mode,
+ * this API will start sending out presence notifications to clients via multicast.
+ * Once this API has been called with a success, clients may query for this server's presence and
+ * this server's stack will respond via multicast.
  *
  * Server can call this function when it comes online for the first time, or when it comes back
  * online from offline mode, or when it re enters network.
  *
- * @param ttl Time To Live in seconds.
- * Note: If ttl is '0', then the default stack value will be used (60 Seconds).
- *
- *       If ttl is greater than OC_MAX_PRESENCE_TTL_SECONDS, then the ttl will be set to
- *       OC_MAX_PRESENCE_TTL_SECONDS.
+ * @param ttl         Time To Live in seconds.
+ *                    @note: If ttl is '0', then the default stack value will be used (60 Seconds).
+ *                    If ttl is greater than ::OC_MAX_PRESENCE_TTL_SECONDS, then the ttl will be
+ *                    set to ::OC_MAX_PRESENCE_TTL_SECONDS.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 OCStackResult OCStartPresence(const uint32_t ttl);
 
 /**
- * When operating in @ref OCServer or @ref OCClientServer mode, this API will stop sending out
- * presence notifications to clients via multicast. Once this API has been called with a success,
- * this server's stack will not respond to clients querying for this server's presence.
+ * When operating in OCServer or OCClientServer mode, this API will stop sending
+ * out presence notifications to clients via multicast.
+ * Once this API has been called with a success this server's stack will not respond to clients
+ * querying for this server's presence.
  *
  * Server can call this function when it is terminating, going offline, or when going
  * away from network.
@@ -182,58 +196,57 @@ OCStackResult OCStopPresence();
 
 
 /**
- * Set default device entity handler.
+ * This function sets default device entity handler.
  *
- * @param entityHandler Entity handler function that is called by ocstack to handle requests for
- *                      any undefined resources or default actions.
- *                      If NULL is passed it removes the device default entity handler.
- * @param callbackParameter paramter passed back when entityHandler is called.
+ * @param entityHandler      Entity handler function that is called by ocstack to handle requests
+ *                           for any undefined resources or default actions.If NULL is passed it
+ *                           removes the device default entity handler.
+ * @param callbackParameter  Parameter passed back when entityHandler is called.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 OCStackResult OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandler entityHandler, void* callbackParameter);
 
 /**
- * Set device information.
+ * This function sets device information.
  *
- * @param deviceInfo - Structure passed by the server application containing
- *                     the device information.
- *
+ * @param deviceInfo   Structure passed by the server application containing the device information.
  *
  * @return
- *     OC_STACK_OK              - no errors
- *     OC_STACK_INVALID_PARAM   - invalid paramerter
- *     OC_STACK_ERROR           - stack process error
+ *     ::OC_STACK_OK               no errors.
+ *     ::OC_STACK_INVALID_PARAM    invalid parameter.
+ *     ::OC_STACK_ERROR            stack process error.
  */
 OCStackResult OCSetDeviceInfo(OCDeviceInfo deviceInfo);
 
 /**
- * Set platform information.
+ * This function sets platform information.
  *
- * @param platformInfo - Structure passed by the server application containing
- *                     the platform information.
+ * @param platformInfo   Structure passed by the server application containing
+ *                       the platform information.
  *
  *
  * @return
- *     OC_STACK_OK              - no errors
- *     OC_STACK_INVALID_PARAM   - invalid paramerter
- *     OC_STACK_ERROR           - stack process error
+ *     ::OC_STACK_OK               no errors.
+ *     ::OC_STACK_INVALID_PARAM    invalid parameter.
+ *     ::OC_STACK_ERROR            stack process error.
  */
 OCStackResult OCSetPlatformInfo(OCPlatformInfo platformInfo);
 
 /**
- * Create a resource.
+ * This function creates a resource.
  *
- * @param handle Pointer to handle to newly created resource.  Set by ocstack and
- *               used to refer to resource.
- * @param resourceTypeName Name of resource type.  Example: "core.led".
+ * @param handle                Pointer to handle to newly created resource. Set by ocstack and
+ *                              used to refer to resource.
+ * @param resourceTypeName      Name of resource type.  Example: "core.led".
  * @param resourceInterfaceName Name of resource interface.  Example: "core.rw".
- * @param uri URI of the resource.  Example:  "/a/led".
- * @param entityHandler Entity handler function that is called by ocstack to handle requests, etc.
- *                      NULL for default entity handler.
- * @param callbackParameter paramter passed back when entityHandler is called.
- * @param resourceProperties Properties supported by resource.
- *                           Example: ::OC_DISCOVERABLE|::OC_OBSERVABLE.
+ * @param uri                   URI of the resource.  Example:  "/a/led".
+ * @param entityHandler         Entity handler function that is called by ocstack to handle
+ *                              requests, etc.
+ *                              NULL for default entity handler.
+ * @param callbackParam     parameter passed back when entityHandler is called.
+ * @param resourceProperties    Properties supported by resource.
+ *                              Example: ::OC_DISCOVERABLE|::OC_OBSERVABLE.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
@@ -247,40 +260,40 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
 
 
 /**
- * Add a resource to a collection resource.
+ * This function adds a resource to a collection resource.
  *
- * @param collectionHandle Handle to the collection resource.
- * @param resourceHandle Handle to resource to be added to the collection resource.
+ * @param collectionHandle    Handle to the collection resource.
+ * @param resourceHandle      Handle to resource to be added to the collection resource.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 OCStackResult OCBindResource(OCResourceHandle collectionHandle, OCResourceHandle resourceHandle);
 
 /**
- * Remove a resource from a collection resource.
+ * This function removes a resource from a collection resource.
  *
- * @param collectionHandle Handle to the collection resource.
- * @param resourceHandle Handle to resource to be removed from the collection resource.
+ * @param collectionHandle   Handle to the collection resource.
+ * @param resourceHandle     Handle to resource to be removed from the collection resource.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 OCStackResult OCUnBindResource(OCResourceHandle collectionHandle, OCResourceHandle resourceHandle);
 
 /**
- * Bind a resourcetype to a resource.
+ * This function binds a resource type to a resource.
  *
- * @param handle Handle to the resource.
- * @param resourceTypeName Name of resource type.  Example: "core.led".
+ * @param handle            Handle to the resource.
+ * @param resourceTypeName  Name of resource type.  Example: "core.led".
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 OCStackResult OCBindResourceTypeToResource(OCResourceHandle handle,
                                            const char *resourceTypeName);
 /**
- * Bind a resource interface to a resource.
+ * This function binds a resource interface to a resource.
  *
- * @param handle Handle to the resource.
- * @param resourceInterfaceName Name of resource interface.  Example: "core.rw".
+ * @param handle                  Handle to the resource.
+ * @param resourceInterfaceName   Name of resource interface.  Example: "core.rw".
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
@@ -288,90 +301,94 @@ OCStackResult OCBindResourceInterfaceToResource(OCResourceHandle handle,
                                                 const char *resourceInterfaceName);
 
 /**
- * Bind an entity handler to the resource.
+ * This function binds an entity handler to the resource.
  *
- * @param handle Handle to the resource that the contained resource is to be bound.
- * @param entityHandler Entity handler function that is called by ocstack to handle requests, etc.
- * @param callbackParameter context paremeter that will be passed to entityHandler
+ * @param handle            Handle to the resource that the contained resource is to be bound.
+ * @param entityHandler     Entity handler function that is called by ocstack to handle requests.
+ * @param callbackParameter Context parameter that will be passed to entityHandler.
+ *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 OCStackResult OCBindResourceHandler(OCResourceHandle handle, OCEntityHandler entityHandler,
                                         void *callbackParameter);
 
 /**
- * Get the number of resources that have been created in the stack.
+ * This function gets the number of resources that have been created in the stack.
  *
- * @param numResources Pointer to count variable.
+ * @param numResources    Pointer to count variable.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 OCStackResult OCGetNumberOfResources(uint8_t *numResources);
 
 /**
- * Get a resource handle by index.
+ * This function gets a resource handle by index.
  *
- * @param index Index of resource, 0 to Count - 1.
+ * @param index   Index of resource, 0 to Count - 1.
  *
- * @return Found resource handle or NULL if not found.
+ * @return Found  resource handle or NULL if not found.
  */
 OCResourceHandle OCGetResourceHandle(uint8_t index);
 
 /**
- * Delete resource specified by handle.  Deletes resource and all resourcetype and resourceinterface
- * linked lists.
+ * This function deletes resource specified by handle.  Deletes resource and all
+ * resource type and resource interface linked lists.
  *
- * Note: OCDeleteResource() performs operations similar to OCNotifyAllObservers() to notify all
+ * @note: OCDeleteResource() performs operations similar to OCNotifyAllObservers() to notify all
  * client observers that "this" resource is being deleted.
  *
- * @param handle Handle of resource to be deleted.
+ * @param handle          Handle of resource to be deleted.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 OCStackResult OCDeleteResource(OCResourceHandle handle);
 
 /**
- * Get the URI of the resource specified by handle.
+ * This function gets the URI of the resource specified by handle.
  *
- * @param handle Handle of resource.
+ * @param handle     Handle of resource.
+ *
  * @return URI string if resource found or NULL if not found.
  */
 const char *OCGetResourceUri(OCResourceHandle handle);
 
 /**
- * Get the properties of the resource specified by handle.
- * NOTE: that after a resource is created, the OC_ACTIVE property is set
- * for the resource by the stack.
+ * This function gets the properties of the resource specified by handle.
  *
- * @param handle Handle of resource.
- * @return OCResourceProperty Bitmask or -1 if resource is not found.
+ * @param handle                Handle of resource.
+ *
+ * @return OCResourceProperty   Bitmask or -1 if resource is not found.
+ *
+ * @note that after a resource is created, the OC_ACTIVE property is set for the resource by the
+ * stack.
  */
 OCResourceProperty OCGetResourceProperties(OCResourceHandle handle);
 
 /**
- * Get the number of resource types of the resource.
+ * This function gets the number of resource types of the resource.
  *
- * @param handle Handle of resource.
- * @param numResourceTypes Pointer to count variable.
+ * @param handle            Handle of resource.
+ * @param numResourceTypes  Pointer to count variable.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 OCStackResult OCGetNumberOfResourceTypes(OCResourceHandle handle, uint8_t *numResourceTypes);
 
 /**
- * Get name of resource type of the resource.
+ * This function gets name of resource type of the resource.
  *
- * @param handle Handle of resource.
- * @param index Index of resource, 0 to Count - 1.
+ * @param handle       Handle of resource.
+ * @param index        Index of resource, 0 to Count - 1.
  *
  * @return Resource type name if resource found or NULL if resource not found.
  */
 const char *OCGetResourceTypeName(OCResourceHandle handle, uint8_t index);
 
 /**
- * Get the number of resource interfaces of the resource.
+ * This function gets the number of resource interfaces of the resource.
  *
- * @param handle Handle of resource.
- * @param numResourceInterfaces Pointer to count variable.
+ * @param handle                 Handle of resource.
+ * @param numResourceInterfaces  Pointer to count variable.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
@@ -379,30 +396,30 @@ OCStackResult OCGetNumberOfResourceInterfaces(OCResourceHandle handle,
         uint8_t *numResourceInterfaces);
 
 /**
- * Get name of resource interface of the resource.
+ * This function gets name of resource interface of the resource.
  *
- * @param handle Handle of resource.
- * @param index Index of resource, 0 to Count - 1.
+ * @param handle      Handle of resource.
+ * @param index       Index of resource, 0 to Count - 1.
  *
  * @return Resource interface name if resource found or NULL if resource not found.
  */
 const char *OCGetResourceInterfaceName(OCResourceHandle handle, uint8_t index);
 
 /**
- * Get methods of resource interface of the resource.
+ * This function gets methods of resource interface of the resource.
  *
- * @param handle Handle of resource.
- * @param index Index of resource, 0 to Count - 1.
+ * @param handle      Handle of resource.
+ * @param index       Index of resource, 0 to Count - 1.
  *
  * @return Allowed methods if resource found or NULL if resource not found.
  */
 uint8_t OCGetResourceInterfaceAllowedMethods(OCResourceHandle handle, uint8_t index);
 
 /**
- * Get resource handle from the collection resource by index.
+ * This function gets resource handle from the collection resource by index.
  *
- * @param collectionHandle Handle of collection resource.
- * @param index Index of contained resource, 0 to Count - 1.
+ * @param collectionHandle   Handle of collection resource.
+ * @param index              Index of contained resource, 0 to Count - 1.
  *
  * @return Handle to contained resource if resource found or NULL if resource not found.
  */
@@ -410,21 +427,21 @@ OCResourceHandle OCGetResourceHandleFromCollection(OCResourceHandle collectionHa
         uint8_t index);
 
 /**
- * Get the entity handler for a resource.
+ * This function gets the entity handler for a resource.
  *
- * @param handle Handle of resource.
+ * @param handle            Handle of resource.
  *
  * @return Entity handler if resource found or NULL resource not found.
  */
 OCEntityHandler OCGetResourceHandler(OCResourceHandle handle);
 
 /**
- * Notify all registered observers that the resource representation has
- * changed. If observation includes a query the client is notified only
- * if the query is valid after the resource representation has changed.
+ * This function notify all registered observers that the resource representation has
+ * changed. If observation includes a query the client is notified only if the query is valid after
+ * the resource representation has changed.
  *
- * @param handle Handle of resource.
- * @param qos    Desired quality of service for the observation notifications.
+ * @param handle   Handle of resource.
+ * @param qos      Desired quality of service for the observation notifications.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
@@ -435,14 +452,15 @@ OCStackResult OCNotifyAllObservers(OCResourceHandle handle, OCQualityOfService q
  * Before this API is invoked by entity handler it has finished processing
  * queries for the associated observers.
  *
- * @param handle Handle of resource.
- * @param obsIdList List of observation ids that need to be notified.
- * @param numberOfIds Number of observation ids included in obsIdList.
- * @param payload OCRepresentationPayload object representing the notification
- * @param qos Desired quality of service of the observation notifications.
- * NOTE: The memory for obsIdList and notificationJSONPayload is managed by the
- * entity invoking the API. The maximum size of the notification is 1015 bytes
- * for non-Arduino platforms. For Arduino the maximum size is 247 bytes.
+ * @param handle                    Handle of resource.
+ * @param obsIdList                 List of observation IDs that need to be notified.
+ * @param numberOfIds               Number of observation IDs included in obsIdList.
+ * @param payload                   Object representing the notification
+ * @param qos                       Desired quality of service of the observation notifications.
+ *
+ * @note: The memory for obsIdList and payload is managed by the entity invoking the API.
+ * The maximum size of the notification is 1015 bytes for non-Arduino platforms. For Arduino
+ * the maximum size is 247 bytes.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
@@ -455,11 +473,11 @@ OCNotifyListOfObservers (OCResourceHandle handle,
 
 
 /**
- * Send a response to a request.
+ * This function sends a response to a request.
  * The response can be a normal, slow, or block (i.e. a response that
  * is too large to be sent in a single PDU and must span multiple transmissions).
  *
- * @param response Pointer to structure that contains response parameters.
+ * @param response   Pointer to structure that contains response parameters.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */

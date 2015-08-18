@@ -18,10 +18,10 @@ setDefaultDeviceEntityHandler API
 *****************
 
 This new API allows the server side app developer to provide a default device entity handler.
-If server receives a request in which the resource URI does not match any of the existing 
-resource URIs, base will invoke this default entity handler. It is app developer's responsibility 
+If server receives a request in which the resource URI does not match any of the existing
+resource URIs, base will invoke this default entity handler. It is app developer's responsibility
 to handle the implementation of default device entity handler accordingly.
-If the default device entity handler is not configured and the URI in the request does not match 
+If the default device entity handler is not configured and the URI in the request does not match
 any of the existing resource URIs, server will return OC_STACK_NO_RESOURCE.
 
 
@@ -35,7 +35,7 @@ Class OCResource (Header file: OCResource.h)
 post API
 *****************
 
-This new API allows the client to perform POST operation on a resource. 
+This new API allows the client to perform POST operation on a resource.
 
 NOTE: This applies to client side functionality.
 
@@ -44,7 +44,7 @@ Class OCRepresentation (Header file: OCApi.h)
 --------------------------------------------
 
 OCRepresentation has modifications which provides
-- Ability to get/set OCRepresenation (JSON object) in the OCRepresentation. 
+- Ability to get/set OCRepresenation (JSON object) in the OCRepresentation.
 - Ability to get/set vector of strings, booleans, double, integers, null.
 - Has additional functions
 
@@ -82,10 +82,10 @@ OCSetDefaultDeviceEntityHandler API
 *****************
 
 This new API allows the server side app developer to provide a default device entity handler.
-If server receives a request in which the resource URI does not match any of the existing 
-resource URIs, base will invoke this default entity handler. It is app developer's responsibility 
+If server receives a request in which the resource URI does not match any of the existing
+resource URIs, base will invoke this default entity handler. It is app developer's responsibility
 to handle the implementation of default device entity handler accordingly.
-If the default device entity handler is not configured and the URI in the request does not match 
+If the default device entity handler is not configured and the URI in the request does not match
 any of the existing resource URIs, server will return OC_STACK_NO_RESOURCE.
 
 NOTE: This applies to server side functionality only.
@@ -112,8 +112,8 @@ Minor bugs fixed
 
 Known issues:
 1. POST operation does not create new resources
-2. Header options from client to server and vice-versa is not available. 
-3. Setting CON/NON-CON option is possible only during initialization configuration. 
+2. Header options from client to server and vice-versa is not available.
+3. Setting CON/NON-CON option is possible only during initialization configuration.
 -------------
 How to build:
 -------------

@@ -38,8 +38,7 @@ static void printUsage()
 {
     std::cout<<"Usage: garageclient <0|1> \n";
     std::cout<<"ConnectivityType: Default IP\n";
-    std::cout<<"ConnectivityType 0: IPv4 \n";
-    std::cout<<"ConnectivityType 1: IPv6 \n";
+    std::cout<<"ConnectivityType 0: IP \n";
 }
 
 class Garage
@@ -309,16 +308,8 @@ int main(int argc, char* argv[]) {
             {
                 if(optionSelected == 0)
                 {
-                    std::cout << "Using IPv4."<< std::endl;
-                    connectivityType = CT_IP_USE_V4;
-                }
-                else if(optionSelected == 1)
-                {
-                    std::cout << "IPv6 is currently not supported."<< std::endl;
-                    printUsage();
-                    return -1;
-                    //TODO: printUsage to be removed when IPv6 is available.
-                    //connectivityType = CT_IP_USE_V6;
+                    std::cout << "Using IP."<< std::endl;
+                    connectivityType = CT_ADAPTER_IP;
                 }
                 else
                 {
@@ -331,7 +322,7 @@ int main(int argc, char* argv[]) {
                 std::cout << "Invalid connectivity type selected. Using default IP" << std::endl;
             }
         }
-        catch(std::exception& e)
+        catch(std::exception&)
         {
             std::cout << "Invalid input argument. Using IP as connectivity type" << std::endl;
         }

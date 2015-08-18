@@ -54,8 +54,10 @@
 #ifndef __TIZEN__
 static oic_log_ctx_t *logCtx = 0;
 
+#ifndef __ANDROID__
 static oic_log_level LEVEL_XTABLE[] =
 { OIC_LOG_DEBUG, OIC_LOG_INFO, OIC_LOG_WARNING, OIC_LOG_ERROR, OIC_LOG_FATAL };
+#endif
 
 #endif
 
@@ -101,7 +103,25 @@ static void OICLogString(LogLevel level, PROGMEM const char *tag, PROGMEM const 
 #endif // __ANDROID__
 
 #ifndef ARDUINO
-#ifndef __TIZEN__
+#ifdef __TIZEN__
+int OCGetTizenLogLevel(LogLevel level)
+{
+    switch(level)
+    {
+        case DEBUG:
+            return DLOG_DEBUG;
+        case INFO:
+            return DLOG_INFO;
+        case WARNING:
+            return DLOG_WARN;
+        case ERROR:
+            return DLOG_ERROR;
+        case FATAL:
+            return DLOG_ERROR;
+    }
+    return DLOG_DEBUG;
+}
+#else
 void OICLogConfig(oic_log_ctx_t *ctx)
 {
     logCtx = ctx;
@@ -121,26 +141,6 @@ void OICLogShutdown()
     }
 #endif
 }
-
-#ifdef __TIZEN__
-int OCGetTizenLogLevel(LogLevel level)
-{
-    switch(level)
-    {
-        case DEBUG:
-            return DLOG_DEBUG;
-        case INFO:
-            return DLOG_INFO;
-        case WARNING:
-            return DLOG_WARN;
-        case ERROR:
-            return DLOG_ERROR;
-        case FATAL:
-            return DLOG_ERROR;
-    }
-    return DLOG_DEBUG;
-}
-#endif
 
 /**
  * Output a log string with the specified priority level.
@@ -177,7 +177,7 @@ void OICLog(LogLevel level, const char *tag, const char *logStr)
         int sec = 0;
         int ms = 0;
 #ifdef _POSIX_TIMERS
-        struct timespec when = {};
+        struct timespec when = { 0, 0 };
         clockid_t clk = CLOCK_REALTIME;
 #ifdef CLOCK_REALTIME_COARSE
         clk = CLOCK_REALTIME_COARSE;

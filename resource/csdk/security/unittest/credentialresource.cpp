@@ -47,6 +47,10 @@ const OicSecCred_t* GetCredResourceData(const OicUuid_t* subject);
 OicSecCred_t * getCredList()
 {
     OicSecCred_t * cred = (OicSecCred_t*)OICCalloc(1, sizeof(OicSecCred_t));
+    if(!cred)
+    {
+        return NULL;
+    }
     cred->credId = 1234;
     OICStrcpy((char *)cred->subject.id, sizeof(cred->subject.id), "subject1");
 
@@ -60,9 +64,20 @@ OicSecCred_t * getCredList()
     cred->credType = 1;
     cred->ownersLen = 1;
     cred->owners = (OicUuid_t*)OICCalloc(cred->ownersLen, sizeof(OicUuid_t));
+    if(!cred->owners)
+    {
+        OICFree(cred);
+        return NULL;
+    }
     OICStrcpy((char *)cred->owners[0].id, sizeof(cred->owners[0].id), "ownersId11");
 
     cred->next = (OicSecCred_t*)OICCalloc(1, sizeof(OicSecCred_t));
+    if(!cred->next)
+    {
+        OICFree(cred->owners);
+        OICFree(cred);
+        return NULL;
+    }
     cred->next->credId = 5678;
     OICStrcpy((char *)cred->next->subject.id, sizeof(cred->next->subject.id), "subject2");
 #if 0
@@ -71,6 +86,13 @@ OicSecCred_t * getCredList()
     cred->next->credType = 1;
     size_t data_size = strlen("My private Key21") + 1;
     cred->next->privateData.data = (char *)OICCalloc(1, data_size);
+    if(!cred->next->privateData.data)
+    {
+        OICFree(cred->next);
+        OICFree(cred->owners);
+        OICFree(cred);
+        return NULL;
+    }
     OICStrcpy(cred->next->privateData.data, data_size,"My private Key21");
 #if 0
     cred->next->publicData.data = (char *)OICCalloc(1, strlen("My Public Key123") + 1);
@@ -78,6 +100,14 @@ OicSecCred_t * getCredList()
 #endif
     cred->next->ownersLen = 2;
     cred->next->owners = (OicUuid_t*)OICCalloc(cred->next->ownersLen, sizeof(OicUuid_t));
+    if(!cred->next->owners)
+    {
+        OICFree(cred->next->privateData.data);
+        OICFree(cred->next);
+        OICFree(cred->owners);
+        OICFree(cred);
+        return NULL;
+    }
     OICStrcpy((char *)cred->next->owners[0].id, sizeof(cred->next->owners[0].id), "ownersId21");
     OICStrcpy((char *)cred->next->owners[1].id, sizeof(cred->next->owners[1].id), "ownersId22");
     return cred;
@@ -159,7 +189,6 @@ TEST(BinToCredJSONTest, BinToCredJSONValidCred)
 
     json = BinToCredJSON(cred);
 
-    printf("BinToCredJSON:%s\n", json);
     EXPECT_TRUE(json != NULL);
     DeleteCredList(cred);
     OICFree(json);
@@ -196,7 +225,7 @@ TEST(CredGenerateCredentialTest, GenerateCredentialValidInput)
     OicUuid_t owners[1];
     OICStrcpy((char *)owners[0].id, sizeof(owners[0].id), "ownersId21");
 
-    OicUuid_t subject = {};
+    OicUuid_t subject = {0};
     OICStrcpy((char *)subject.id, sizeof(subject.id), "subject11");
 
     char privateKey[] = "My private Key11";
@@ -215,7 +244,7 @@ TEST(GenerateAndAddCredentialTest, GenerateAndAddCredentialValidInput)
     OicUuid_t owners[1];
     OICStrcpy((char *)owners[0].id, sizeof(owners[0].id), "ownersId11");
 
-    OicUuid_t subject = {};
+    OicUuid_t subject = {0};
     OICStrcpy((char *)subject.id, sizeof(subject.id), "subject11");
 
     char privateKey[] = "My private Key11";

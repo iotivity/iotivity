@@ -209,9 +209,10 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandle
         else if (OC_OBSERVE_DEREGISTER == entityHandlerRequest->obsInfo.action)
         {
             OC_LOG (INFO, TAG, PCF("Received OC_OBSERVE_DEREGISTER from client"));
+            gLightUnderObservation = 0;
         }
     }
-
+    OCRepPayloadDestroy(payload);
     return ehRet;
 }
 

@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -19,14 +19,15 @@
  ******************************************************************/
 
 /**
- * @file caleutils.h
- * @brief This file contains the APIs for BT LE communications.
+ * @file
+ * This file contains the APIs for BT LE communications.
  */
 #ifndef CA_LE_UTILS_H_
 #define CA_LE_UTILS_H_
 
 #include "cacommon.h"
 #include "cathreadpool.h"
+#include "cagattservice.h"
 #include "uarraylist.h"
 #include "jni.h"
 
@@ -36,89 +37,89 @@ extern "C"
 #endif
 
 /* Service UUID */
-static const char OIC_GATT_SERVICE_UUID[] = "ADE3D529-C784-4F63-A987-EB69F70EE816";
-static const char OIC_GATT_CHARACTERISTIC_REQUEST_UUID[] = "AD7B334F-4637-4B86-90B6-9D787F03D218";
-static const char OIC_GATT_CHARACTERISTIC_RESPONSE_UUID[] = "E9241982-4580-42C4-8831-95048216B256";
+static const char OIC_GATT_SERVICE_UUID[] = CA_GATT_SERVICE_UUID;
+static const char OIC_GATT_CHARACTERISTIC_REQUEST_UUID[] = CA_GATT_REQUEST_CHRC_UUID;
+static const char OIC_GATT_CHARACTERISTIC_RESPONSE_UUID[] = CA_GATT_RESPONSE_CHRC_UUID;
 static const char OIC_GATT_CHARACTERISTIC_CONFIG_UUID[] = "00002902-0000-1000-8000-00805f9b34fb";
 
-static const uint32_t GATT_SUCCESS = 0;
+static const jint GATT_SUCCESS = 0;
 
-static const uint32_t BOND_BONDED = 12;
-static const uint32_t BOND_BONDING = 11;
-static const uint32_t BOND_NONE = 10;
+static const jint BOND_BONDED = 12;
+static const jint BOND_BONDING = 11;
+static const jint BOND_NONE = 10;
 
 /**
- * @brief   get uuid(jni object) from uuid(character)
- * @param   env              [IN] JNI interface pointer
- * @param   uuid             [IN] uuid(character)
- * @return  uuid(jni object)
+ * get uuid(jni object) from uuid(character).
+ * @param[in]   env              JNI interface pointer.
+ * @param[in]   uuid             uuid(character).
+ * @return  uuid(jni object).
  */
 jobject CALEGetUuidFromString(JNIEnv *env, const char* uuid);
 
 /**
- * @brief   get parcel uuid object
- * @param   env              [IN] JNI interface pointer
- * @param   uuid             [IN] uuid (jni object)
- * @return  parcel uuid object
+ * get parcel uuid object.
+ * @param[in]   env              JNI interface pointer.
+ * @param[in]   uuid             uuid (jni object).
+ * @return  parcel uuid object.
  */
 jobject CALEGetParcelUuid(JNIEnv *env, jobject uuid);
 
 /**
- * @brief   get address from a local device
- * @param   env              [IN] JNI interface pointer
- * @return  local address
+ * get address from a local device.
+ * @param[in]   env              JNI interface pointer.
+ * @return  local address.
  */
 jstring CALEGetLocalDeviceAddress(JNIEnv *env);
 
 /**
- * @brief   get bonded list
- * @param   env              [IN] JNI interface pointer
- * @return  bonded list
+ * get bonded list.
+ * @param[in]   env              JNI interface pointer.
+ * @return  bonded list.
  */
 jobjectArray CALEGetBondedDevices(JNIEnv *env);
 
 /**
- * @brief   get constants information of bluetooth state-on
- * @param   env              [IN] JNI interface pointer
- * @return  constants information of bluetooth state-on
+ * get constants information of bluetooth state-on.
+ * @param[in]   env              JNI interface pointer.
+ * @return  constants information of bluetooth state-on.
  */
 jint CALEGetBTStateOnInfo(JNIEnv *env);
 
 /**
- * @brief   check this device can be supported as BLE client or server
- * @param   env              [IN] JNI interface pointer
- * @param   level            [IN] Android API Level to support
- * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h)
+ * check this device can be supported as BLE client or server.
+ * @param[in]   env              JNI interface pointer.
+ * @param[in]   level            Android API Level to support.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CALECheckPlatformVersion(JNIEnv *env, uint16_t level);
 
 /**
- * @brief   get constants information of android.os.Build.VERSION.SDK_INT
- * @param   env              [IN] JNI interface pointer
- * @return  constants information of android.os.Build.VERSION.SDK_INT
+ * get constants information of android.os.Build.VERSION.SDK_INT.
+ * @param[in]   env              JNI interface pointer.
+ * @return  constants information of android.os.Build.VERSION.SDK_INT.
  */
 jint CALEGetBuildVersion(JNIEnv *env);
 
 /**
- * @brief   get constants information of android.os.Build.VERSION_CODES.[VersionName]
- * @param   env              [IN] JNI interface pointer
- * @param   versionName      [IN] version name (.., KITKAT, LOLLIPOP, ..)
- * @return  constants information of android.os.Build.VERSION_CODES.[VersionName]
+ * get constants information of android.os.Build.VERSION_CODES.[VersionName].
+ * @param[in]   env              JNI interface pointer.
+ * @param[in]   versionName      version name (.., KITKAT, LOLLIPOP, ..).
+ * @return  constants information of android.os.Build.VERSION_CODES.[VersionName].
  */
 jint CALEGetBuildVersionCodeForName(JNIEnv *env, const char* versionName);
 
 /**
- * @brief   get bluetooth adapter state information
- * @param   env              [IN] JNI interface pointer
- * @return  JNI_TRUE if the local adapter is turned on
+ * get bluetooth adapter state information.
+ * @param[in]   env              JNI interface pointer.
+ * @return  JNI_TRUE if the local adapter is turned on.
  */
 jboolean CALEIsEnableBTAdapter(JNIEnv *env);
 
 /**
- * @brief   get address from remote device
- * @param   env              [IN] JNI interface pointer
- * @param   bluetoothDevice  [IN] bluetooth device object
- * @return  remote address
+ * get address from remote device.
+ * @param[in]   env              JNI interface pointer.
+ * @param[in]   bluetoothDevice  bluetooth device object.
+ * @return  remote address.
  */
 jstring CALEGetAddressFromBTDevice(JNIEnv *env, jobject bluetoothDevice);
 

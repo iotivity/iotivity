@@ -81,6 +81,12 @@ OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
                 interfaces.empty(), m_clientWrapper.expired(), false, false);
     }
 
+    if (uri.length() == 1 && uri[0] == '/')
+    {
+        throw ResourceInitException(m_uri.empty(), resourceTypes.empty(),
+                interfaces.empty(), m_clientWrapper.expired(), false, false);
+    }
+
     // construct the devAddr from the pieces we have
     m_devAddr.adapter = static_cast<OCTransportAdapter>(connectivityType >> CT_ADAPTER_SHIFT);
     m_devAddr.flags = static_cast<OCTransportFlags>(connectivityType & CT_MASK_FLAGS);
@@ -125,7 +131,7 @@ void OCResource::setHost(const std::string& host)
 
         size_t found = host_token.find(']');
 
-        if(found == std::string::npos)
+        if(found == std::string::npos || found == 0)
         {
             throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
                 m_interfaces.empty(), m_clientWrapper.expired(), false, false);
@@ -141,7 +147,7 @@ void OCResource::setHost(const std::string& host)
     {
         size_t found = host_token.find(':');
 
-        if(found == std::string::npos)
+        if(found == std::string::npos || found == 0)
         {
             throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
                 m_interfaces.empty(), m_clientWrapper.expired(), false, false);

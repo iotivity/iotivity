@@ -25,6 +25,7 @@
 #include "resourcemanager.h"
 #include "credresource.h"
 #include "policyengine.h"
+#include "oic_string.h"
 #include <string.h>
 
 #define TAG  PCF("SRM")
@@ -71,8 +72,8 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
     }
 
     // Copy the subjectID
-    OicUuid_t subjectId = {};
-    memcpy(subjectId.id, endPoint->identity.id, sizeof(subjectId.id));
+    OicUuid_t subjectId = {.id = {0}};
+    memcpy(subjectId.id, requestInfo->info.identity.id, sizeof(subjectId.id));
 
     //Check the URI has the query and skip it before checking the permission
     char *uri = strstr(requestInfo->info.resourceUri, "?");
@@ -90,8 +91,7 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
     if (position > 0)
     {
         char newUri[MAX_URI_LENGTH + 1];
-        strncpy(newUri, requestInfo->info.resourceUri, (position));
-        newUri[position] = '\0';
+        OICStrcpyPartial(newUri, MAX_URI_LENGTH + 1, requestInfo->info.resourceUri, position);
         //Skip query and pass the newUri.
         response = CheckPermission(&g_policyEngineContext, &subjectId,
                               newUri,
@@ -110,7 +110,7 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
     }
 
     // Form a 'access deny' or 'Error' response and send to peer
-    CAResponseInfo_t responseInfo = {};
+    CAResponseInfo_t responseInfo = {.result = CA_EMPTY};
     memcpy(&responseInfo.info, &(requestInfo->info), sizeof(responseInfo.info));
     responseInfo.info.payload = NULL;
     if (!gRequestHandler)

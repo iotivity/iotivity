@@ -6,14 +6,20 @@ import platform
 import subprocess
 
 Import('env')
-SConscript('../external_libs.scons')
-SConscript('../../extlibs/android/ndk/SConscript')
-SConscript('../../extlibs/android/gradle/SConscript')
-SConscript('../../extlibs/android/sdk/SConscript')
 
+SConscript('../external_libs.scons')
 help_vars = Variables()
-help_vars.Add(PathVariable('ANDROID_GRADLE', 'Android Gradle directory', os.path.join(env.get('SRC_DIR'), 'extlibs', 'android', 'gradle', 'gradle-2.2.1/bin/gradle')))
-help_vars.Add(PathVariable('ANDROID_NDK', 'Android NDK root directory', os.path.join(env.get('SRC_DIR'), 'extlibs', 'android', 'ndk', 'android-ndk-r10d')))
+if not env.get('ANDROID_NDK'):
+    SConscript('../../extlibs/android/ndk/SConscript')
+    help_vars.Add(PathVariable('ANDROID_NDK', 'Android NDK root directory', os.path.join(env.get('SRC_DIR'), 'extlibs', 'android', 'ndk', 'android-ndk-r10d')))
+
+if not env.get('ANDROID_GRADLE'):
+    SConscript('../../extlibs/android/gradle/SConscript')
+    help_vars.Add(PathVariable('ANDROID_GRADLE', 'Android Gradle directory', os.path.join(env.get('SRC_DIR'), 'extlibs', 'android', 'gradle', 'gradle-2.2.1/bin/gradle')))
+
+if not env.get('ANDROID_HOME'):
+    SConscript('../../extlibs/android/sdk/SConscript')
+
 
 if env.get('ANDROID_NDK'):
 	android_ndk = env.get('ANDROID_NDK')
@@ -87,12 +93,14 @@ if not os.path.isfile(ndk_build_cmd):
 	Exit(1)
 
 # ANDROID_HOME build option
-help_vars = Variables()
-help_vars.Add(PathVariable('ANDROID_HOME', 'ANDROID SDK root directory', os.environ.get('ANDROID_HOME')))
-help_vars.Update(env)
-Help(help_vars.GenerateHelpText(env))
-
-print '''
+if env.get('ANDROID_HOME'):
+        android_gradle = env.get('ANDROID_HOME')
+else:
+        help_vars = Variables()
+        help_vars.Add(PathVariable('ANDROID_HOME', 'ANDROID SDK root directory', os.environ.get('ANDROID_HOME')))
+        help_vars.Update(env)
+        Help(help_vars.GenerateHelpText(env))
+        print '''
 *************************************** Info **********************************
 *   Environment variable ANDROID_HOME will use default value. To override     *
 * root directory of android sdk, please specify ANDROID_HOME as follows:      *
@@ -206,7 +214,7 @@ if env.get('LOGGING'):
 
 
 env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '__ANDROID__'])
-env.AppendUnique(CCFLAGS = ['-Wall', '-fPIC'])
+env.AppendUnique(CCFLAGS = ['-Wall', '-Wextra', '-fPIC'])
 #env.AppendUnique(LINKFLAGS = ['-ldl', '-lpthread'])
 
 env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])

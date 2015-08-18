@@ -41,7 +41,7 @@
  * @brief  Maintains the callback to be notified on receival of network packets from other
  *           BLE devices
  */
-static CABLEServerDataReceivedCallback g_bleServerDataReceivedCallback = NULL;
+static CABLEDataReceivedCallback g_bleServerDataReceivedCallback = NULL;
 
 /**
  * @def MAX_EVENT_COUNT
@@ -50,7 +50,7 @@ static CABLEServerDataReceivedCallback g_bleServerDataReceivedCallback = NULL;
 #define MAX_EVENT_COUNT 20
 
 static bool g_serverRunning = false;
-static char *g_coapBuffer = NULL;
+static uint8_t *g_coapBuffer = NULL;
 
 /**
  * @var g_receivedDataLen
@@ -74,13 +74,13 @@ void CACheckLEDataInternal()
         if (NULL == g_coapBuffer)
         {
             OIC_LOG(DEBUG, TAG, "IN");
-            char headerArray[CA_HEADER_LENGTH] = "";
+            uint8_t headerArray[CA_HEADER_LENGTH];
             while (CAIsLEDataAvailable() && g_receivedDataLen < CA_HEADER_LENGTH)
             {
                 headerArray[g_receivedDataLen++] = CALEReadData();
             }
 
-            g_packetDataLen = CAParseHeader(headerArray);
+            g_packetDataLen = CAParseHeader(headerArray, CA_HEADER_LENGTH);
 
             if (g_packetDataLen > COAP_MAX_PDU_SIZE)
             {
@@ -88,7 +88,7 @@ void CACheckLEDataInternal()
                 return;
             }
 
-            g_coapBuffer = (char *)OICCalloc((size_t)g_packetDataLen, sizeof(char));
+            g_coapBuffer = (uint8_t *)OICCalloc((size_t)g_packetDataLen, 1);
             if (NULL == g_coapBuffer)
             {
                 OIC_LOG(ERROR, TAG, "malloc");
@@ -107,17 +107,16 @@ void CACheckLEDataInternal()
             if (g_receivedDataLen == g_packetDataLen)
             {
                 OIC_LOG(DEBUG, TAG, "Read Comp BLE Pckt");
-                g_coapBuffer[g_receivedDataLen] = '\0';
                 if (g_receivedDataLen > 0)
                 {
-                    OIC_LOG_V(DEBUG, TAG, "recv dataLen=%d", g_receivedDataLen);
-                    //CANotifyCallback((void *)g_coapBuffer, g_dataLen, "", 0);
+                    OIC_LOG_V(DEBUG, TAG, "recv dataLen=%u", g_receivedDataLen);
                     uint32_t sentLength = 0;
-                    g_bleServerDataReceivedCallback("", "", g_coapBuffer,
+                    // g_coapBuffer getting freed by CAMesssageHandler
+                    g_bleServerDataReceivedCallback("", g_coapBuffer,
                                                     g_receivedDataLen, &sentLength);
                 }
+
                 g_receivedDataLen = 0;
-                OICFree(g_coapBuffer);
                 g_coapBuffer = NULL;
                 break;
             }
@@ -167,9 +166,10 @@ unsigned char CAIsLEConnected()
 {
     return ble_connected();
 }
-char CALEReadData()
+
+uint8_t CALEReadData()
 {
-    return (char)ble_read();
+    return (uint8_t)ble_read();
 }
 
 CAResult_t CALEDoEvents()
@@ -178,7 +178,7 @@ CAResult_t CALEDoEvents()
     return CA_STATUS_OK;
 }
 
-CAResult_t CAUpdateCharacteristicsToAllGattClients(const char *char_value,
+CAResult_t CAUpdateCharacteristicsToAllGattClients(const uint8_t *char_value,
                                                    uint32_t valueLength)
 {
     // ble_write_bytes() api can send only max of 255 bytes at a time
@@ -188,7 +188,7 @@ CAResult_t CAUpdateCharacteristicsToAllGattClients(const char *char_value,
     return CA_STATUS_OK;
 }
 
-void CASetLEReqRespServerCallback(CABLEServerDataReceivedCallback callback)
+void CASetLEReqRespServerCallback(CABLEDataReceivedCallback callback)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     g_bleServerDataReceivedCallback = callback;

@@ -52,7 +52,7 @@ namespace OC
             m_queryParameters{},
             m_requestHandlerFlag{},
             m_representation{},
-            m_observationInfo{},
+            m_observationInfo{ObserveAction::ObserveRegister, 0},
             m_headerOptions{},
             m_requestHandle{nullptr},
             m_resourceHandle{nullptr}

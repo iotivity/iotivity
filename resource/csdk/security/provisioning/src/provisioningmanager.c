@@ -56,42 +56,42 @@
 #include "oic_string.h"
 #include "secureresourcemanager.h"
 
-
 typedef enum
 {
     SP_NO_MASK                = (0       ),
     SP_DISCOVERY_STARTED      = (0x1 << 1),
     SP_DISCOVERY_ERROR        = (0x1 << 2),
     SP_DISCOVERY_DONE         = (0x1 << 3),
-    SP_UP_OWN_TR_METH_STARTED = (0x1 << 4),
-    SP_UP_OWN_TR_METH_ERROR   = (0x1 << 5),
-    SP_UP_OWN_TR_METH_DONE    = (0x1 << 6),
-    SP_LIST_METHODS_STARTED   = (0x1 << 7),
-    SP_LIST_METHODS_ERROR     = (0x1 << 8),
-    SP_LIST_METHODS_DONE      = (0x1 << 9),
-    SP_UPDATE_OP_MODE_STARTED = (0x1 << 10),
-    SP_UPDATE_OP_MODE_ERROR   = (0x1 << 11),
-    SP_UPDATE_OP_MODE_DONE    = (0x1 << 12),
-    SP_UPDATE_OWNER_STARTED   = (0x1 << 13),
-    SP_UPDATE_OWNER_ERROR     = (0x1 << 14),
-    SP_UPDATE_OWNER_DONE      = (0x1 << 15),
-    SP_PROV_ACL_STARTED       = (0x1 << 16),
-    SP_PROV_ACL_ERROR         = (0x1 << 17),
-    SP_PROV_ACL_DONE          = (0x1 << 18),
-    SP_UP_HASH_STARTED        = (0x1 << 19),
-    SP_UP_HASH_ERROR          = (0x1 << 20),
-    SP_UP_HASH_DONE           = (0x1 << 21),
-    SP_PROV_CRED_STARTED      = (0x1 << 22),
-    SP_PROV_CRED_ERROR        = (0x1 << 23),
-    SP_PROV_CRED_DONE         = (0x1 << 24)
-
+    SP_SEC_RES_INFO_STARTED   = (0x1 << 4),
+    SP_SEC_RES_INFO_ERROR     = (0x1 << 5),
+    SP_SEC_RES_INFO_DONE      = (0x1 << 6),
+    SP_UP_OWN_TR_METH_STARTED = (0x1 << 7),
+    SP_UP_OWN_TR_METH_ERROR   = (0x1 << 8),
+    SP_UP_OWN_TR_METH_DONE    = (0x1 << 9),
+    SP_LIST_METHODS_STARTED   = (0x1 << 10),
+    SP_LIST_METHODS_ERROR     = (0x1 << 11),
+    SP_LIST_METHODS_DONE      = (0x1 << 12),
+    SP_UPDATE_OP_MODE_STARTED = (0x1 << 13),
+    SP_UPDATE_OP_MODE_ERROR   = (0x1 << 14),
+    SP_UPDATE_OP_MODE_DONE    = (0x1 << 15),
+    SP_UPDATE_OWNER_STARTED   = (0x1 << 16),
+    SP_UPDATE_OWNER_ERROR     = (0x1 << 17),
+    SP_UPDATE_OWNER_DONE      = (0x1 << 18),
+    SP_PROV_ACL_STARTED       = (0x1 << 19),
+    SP_PROV_ACL_ERROR         = (0x1 << 20),
+    SP_PROV_ACL_DONE          = (0x1 << 21),
+    SP_UP_HASH_STARTED        = (0x1 << 22),
+    SP_UP_HASH_ERROR          = (0x1 << 23),
+    SP_UP_HASH_DONE           = (0x1 << 24),
+    SP_PROV_CRED_STARTED      = (0x1 << 25),
+    SP_PROV_CRED_ERROR        = (0x1 << 26),
+    SP_PROV_CRED_DONE         = (0x1 << 27)
 } SPProvisioningStates;
 
 #define SP_MAX_BUF_LEN 1024
 #define TAG "SPProvisionAPI"
 #define COAP_QUERY "coap://%s:%d%s"
 #define COAPS_QUERY "coaps://%s:%d%s"
-#define CA_SECURE_PORT   5684
 
 bool (*handler)(const CAEndpoint_t *, const CAResponseInfo_t *);
 
@@ -326,7 +326,7 @@ static CAResult_t sendCARequest(CAMethod_t method,
     }
 
     CAEndpoint_t *endpoint = NULL;
-    if (CA_STATUS_OK != CACreateEndpoint((CATransportFlags_t)secure,
+    if (CA_STATUS_OK != CACreateEndpoint(devAddr->flags | (CATransportFlags_t)secure,
                                          devAddr->adapter, devAddr->addr,
                                          devAddr->port, &endpoint))
     {
@@ -399,6 +399,34 @@ static SPResult addDevice(const CAEndpoint_t *endpoint, OicSecDoxm_t* doxm)
 }
 
 /**
+ * updateDevice to update resource info for the endpoint.
+ *
+ * @param[in] endpoint   Endpoint information
+ * @param[in] port   secure port.
+ * @return SP_RESULT_SUCCESS for success and errorcode otherwise.
+ */
+
+static SPResult updateDevice(const CAEndpoint_t *endpoint, uint16_t port)
+{
+    if (NULL == endpoint)
+    {
+        return SP_RESULT_INVALID_PARAM;
+    }
+    SPTargetDeviceInfo_t *ptr = gStartOfDiscoveredDevices;
+    while(ptr)
+    {
+        if(0 == strcmp(ptr->endpoint.addr, endpoint->addr) &&
+                ptr->endpoint.port == endpoint->port)
+        {
+            ptr->securePort = port;
+            return SP_RESULT_SUCCESS;
+        }
+        ptr = ptr->next;
+    }
+    return SP_RESULT_INTERNAL_ERROR;
+}
+
+/**
  * Function to provide timeframe in which response can be received.
  *
  * @param[in]  timeout   Timeout in seconds.
@@ -449,7 +477,7 @@ static bool ProvisionDiscoveryHandler(const CAEndpoint_t *object,
             }
             else
             {
-                OCPayload* payload;
+                OCPayload* payload = NULL;
                 OCStackResult result = OCParsePayload(&payload, responseInfo->info.payload,
                         responseInfo->info.payloadSize);
 
@@ -459,6 +487,8 @@ static bool ProvisionDiscoveryHandler(const CAEndpoint_t *object,
                 {
                     ptrDoxm = JSONToDoxmBin(((OCSecurityPayload*)payload)->securityData);
                 }
+
+                OCPayloadDestroy(payload);
 
                 if (NULL == ptrDoxm)
                 {
@@ -481,6 +511,69 @@ static bool ProvisionDiscoveryHandler(const CAEndpoint_t *object,
                 }
             }
             return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * Response handler for discovery.
+ *
+ * @param[in] object       Remote endpoint object
+ * @param[in] requestInfo  Datastructure containing request information.
+ * @return true is CA token matches request token, false otherwise.
+ */
+
+static bool ProvisionSecureResourceInfoHandler(const CAEndpoint_t *object,
+                                      const CAResponseInfo_t *responseInfo)
+{
+    if (!object || !responseInfo)
+    {
+        return false;
+    }
+
+    if ((gStateManager & SP_SEC_RES_INFO_STARTED) && gToken)
+    {
+        // Response handler for discovery.
+        if (0 == memcmp(gToken, responseInfo->info.token, CA_MAX_TOKEN_LEN))
+        {
+            OC_LOG(INFO, TAG, "Inside ProvisionSecureResourceInfoHandler.");
+            if (NULL == responseInfo->info.payload)
+            {
+                OC_LOG(ERROR, TAG, "Exiting ProvisionSecureResourceInfoHandler.");
+                gStateManager |= SP_SEC_RES_INFO_ERROR;
+            }
+            else
+            {
+                OCPayload* payload = NULL;
+                OCStackResult result = OCParsePayload(&payload, responseInfo->info.payload,
+                        responseInfo->info.payloadSize);
+
+                OCDiscoveryPayload* discover = (OCDiscoveryPayload*) payload;
+                // Discovered secure resource payload contains secure port; update the device
+                // with the secure port using endpoint.
+                if (result == OC_STACK_OK && discover)
+                {
+                    if (updateDevice(object, discover->resources->port) == SP_RESULT_SUCCESS)
+                    {
+                        gStateManager |= SP_SEC_RES_INFO_DONE;
+                    }
+                    else
+                    {
+                        gStateManager |= SP_SEC_RES_INFO_ERROR;
+                    }
+                    OC_LOG(INFO, TAG, "Exiting ProvisionSecureResourceInfoHandler.");
+                }
+
+                OCPayloadDestroy(payload);
+            }
+            return true;
+        }
+        else
+        {
+            OC_LOG(ERROR, TAG, "Error in ProvisionSecureResourceInfoHandler.");
+            gStateManager |= SP_SEC_RES_INFO_ERROR;
+            return false;
         }
     }
     return false;
@@ -547,7 +640,7 @@ static bool ListMethodsHandler(const CAEndpoint_t *object,
                     return true;
                 }
 
-                OCPayload* payload;
+                OCPayload* payload = NULL;
                 OCStackResult result = OCParsePayload(&payload, responseInfo->info.payload,
                         responseInfo->info.payloadSize);
 
@@ -557,6 +650,8 @@ static bool ListMethodsHandler(const CAEndpoint_t *object,
                 {
                     pstat =  JSONToPstatBin(((OCSecurityPayload*)payload)->securityData);
                 }
+
+                OCPayloadDestroy(payload);
 
                 if (NULL == pstat)
                 {
@@ -776,7 +871,11 @@ static SPResult findResource(unsigned short timeout)
         return SP_RESULT_INTERNAL_ERROR;
     }
 
-    CAEndpoint_t endpoint = { CA_DEFAULT_FLAGS };
+    CAEndpoint_t endpoint = {};
+
+    // Only IP is supported currently for provisioning and ownership transfer
+    endpoint.adapter = CA_ADAPTER_IP;
+    endpoint.flags   = CA_IPV4 | CA_IPV6 | CA_SCOPE_LINK;
 
     CAMessageType_t msgType = CA_MSG_NONCONFIRM;
     CAInfo_t requestData = { 0 };
@@ -802,6 +901,50 @@ static SPResult findResource(unsigned short timeout)
     else
     {
         OC_LOG(INFO, TAG, "Discovery Request sent successfully");
+    }
+    return SPWaitForResponse(timeout);
+}
+
+/**
+ * Function to get the secure resource info.
+ *
+ * @param[in]   devAddr     Device address for the destination
+ * @param[in]   timeout     timeout in secs
+ * @return  SP_RESULT_SUCCESS normally otherwise error code.
+ */
+static SPResult getSecureResourceInfo(OCDevAddr *devAddr, unsigned short timeout)
+{
+    char OIC_UNICAST_SEC_QUERY[] = "/oic/res?rt=oic.sec.doxm";
+    CAResult_t res = CAGenerateToken(&gToken, CA_MAX_TOKEN_LEN);
+    if (CA_STATUS_OK != res)
+    {
+        OC_LOG(ERROR, TAG, "Error while generating token.");
+        return SP_RESULT_INTERNAL_ERROR;
+    }
+
+    CAInfo_t requestData = {};
+    requestData.token = gToken;
+    requestData.tokenLength  = CA_MAX_TOKEN_LEN;
+    requestData.payload = NULL;
+    requestData.payloadSize = 0;
+    requestData.type = CA_MSG_NONCONFIRM;
+    requestData.resourceUri = OIC_UNICAST_SEC_QUERY;
+    CARequestInfo_t requestInfo = { 0 };
+    requestInfo.method = CA_GET;
+    requestInfo.info = requestData;
+    requestInfo.isMulticast = false;
+    handler = &ProvisionSecureResourceInfoHandler;
+    res = CASendRequest((CAEndpoint_t*)devAddr, &requestInfo);
+
+    gStateManager |= SP_SEC_RES_INFO_STARTED;
+    if (CA_STATUS_OK != res)
+    {
+        OC_LOG(ERROR, TAG, "Error while finding secure resource.");
+        return convertCAResultToSPResult(res);
+    }
+    else
+    {
+        OC_LOG(INFO, TAG, "Secure resource info request sent successfully");
     }
     return SPWaitForResponse(timeout);
 }
@@ -1049,7 +1192,7 @@ static SPResult saveOwnerPSK(SPTargetDeviceInfo_t *selectedDeviceInfo)
 
     CAEndpoint_t endpoint = {};
     OICStrcpy(endpoint.addr, MAX_ADDR_STR_SIZE_CA, selectedDeviceInfo->endpoint.addr);
-    endpoint.port = CA_SECURE_PORT;
+    endpoint.port = selectedDeviceInfo->securePort;
 
     OicUuid_t provTooldeviceID = {};
     if (OC_STACK_OK != GetDoxmDeviceID(&provTooldeviceID))
@@ -1165,12 +1308,12 @@ static SPResult doOwnerShipTransfer(unsigned short timeout,
     {
         CAEndpoint_t endpoint = {0};
         OICStrcpy(endpoint.addr, MAX_ADDR_STR_SIZE_CA, selectedDeviceInfo->endpoint.addr);
-        endpoint.port = CA_SECURE_PORT;
+        endpoint.port = selectedDeviceInfo->securePort;
 
         res = initiateDtlsHandshake(&endpoint);
         if (SP_RESULT_SUCCESS == res)
         {
-            selectedDeviceInfo->endpoint.port = CA_SECURE_PORT;
+            selectedDeviceInfo->endpoint.port = selectedDeviceInfo->securePort;
             res = sendOwnershipInfo(timeout, selectedDeviceInfo);
             if (SP_RESULT_SUCCESS != res)
             {
@@ -1197,6 +1340,39 @@ static SPResult doOwnerShipTransfer(unsigned short timeout,
     }
     return (res != SP_RESULT_SUCCESS) ? SP_RESULT_INTERNAL_ERROR : SP_RESULT_SUCCESS;
 
+}
+/**
+ * The function is responsible for discovering secure resources(such as, /oic/sec/doxm etc) with
+ * OC_EXPLICIT_DISCOVERABLE on a OIC device which needs to be provisioned.
+ *
+ * @param[in] timeout Timeout in seconds, value till which function will listen to responses from
+ *                    client before returning the list of devices.
+ * @param[in] selectedDeviceInfo Device information.
+ * @return SP_SUCCESS in case of success and other value otherwise.
+ */
+static SPResult discoverSecureResource(unsigned short timeout,
+        SPTargetDeviceInfo_t *selectedDeviceInfo)
+{
+    if (NULL == selectedDeviceInfo)
+    {
+        OC_LOG(ERROR, TAG, "List is not null can cause memory leak");
+        return SP_RESULT_INVALID_PARAM;
+    }
+    SPResult smResponse = SP_RESULT_SUCCESS;
+    smResponse = getSecureResourceInfo(&selectedDeviceInfo->endpoint, timeout);
+    if (SP_RESULT_SUCCESS != smResponse)
+    {
+        return SP_RESULT_INTERNAL_ERROR;
+    }
+    if (gStateManager & SP_SEC_RES_INFO_DONE)
+    {
+        if (gStateManager & SP_SEC_RES_INFO_ERROR)
+        {
+            return SP_RESULT_INTERNAL_ERROR;
+        }
+        return SP_RESULT_SUCCESS;
+    }
+    return SP_RESULT_INTERNAL_ERROR;
 }
 
 /**
@@ -1283,8 +1459,16 @@ SPResult SPInitProvisionContext(unsigned short timeout,
     {
         return SP_RESULT_INVALID_PARAM;
     }
-
     SPResult res = SP_RESULT_SUCCESS;
+
+    //Discover secure resource and update the device info.
+    res = discoverSecureResource(timeout, selectedDeviceInfo);
+    if (SP_RESULT_SUCCESS != res)
+    {
+        OC_LOG(ERROR, TAG, "Error in discoverSecureResource");
+        return SP_RESULT_INTERNAL_ERROR;
+    }
+
     OicSecOxm_t selectedMethod = OIC_JUST_WORKS;
 
     selectProvisioningMethod(selectedDeviceInfo->doxm->oxm, selectedDeviceInfo->doxm->oxmLen,
@@ -1466,11 +1650,7 @@ SPResult SPFinalizeProvisioning(unsigned short timeout,
         return SP_RESULT_TIMEOUT;
     }
 
-    CAEndpoint_t endpoint = {};
-    OICStrcpy(endpoint.addr, MAX_ADDR_STR_SIZE_CA, selectedDeviceInfo->endpoint.addr);
-    endpoint.port = CA_SECURE_PORT;
-
-    result = CACloseDtlsSession(&endpoint);
+    result = CACloseDtlsSession((CAEndpoint_t*)&selectedDeviceInfo->endpoint);
     if (CA_STATUS_OK != result)
     {
         OC_LOG(WARNING, TAG, "Failed to close the DTLS session.");

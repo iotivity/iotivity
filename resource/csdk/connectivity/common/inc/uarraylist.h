@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -30,8 +30,11 @@ extern "C"
 #endif
 
 /**
- * @struct u_arraylist_t
- * @brief array list structure
+ * array list structure.
+ *
+ * @note
+ * Members should be treated as private and not accessed directly. Instead
+ * all access should be through the defined u_arraylist_*() functions.
  */
 typedef struct u_arraylist_t
 {
@@ -41,69 +44,66 @@ typedef struct u_arraylist_t
 } u_arraylist_t;
 
 /**
- * @brief API to creates array list and initializes the elements.
- * @return  u_arraylist_t if Success, NULL otherwise
+ * API to creates array list and initializes the elements.
+ * @return  u_arraylist_t if Success, NULL otherwise.
  */
 u_arraylist_t *u_arraylist_create();
 
 /**
- * @brief Resets and deletes the array list
+ * Resets and deletes the array list.
  * Arraylist elements are deleted. Calling function must take care of free
- * dynamic memory allocated before freeing the arraylist
- * @param list- u_arraylist pointer
- * @return CAResult_t
- * CA_STATUS_OK if Success, CA_STATUS_INVALID_PARAM if pointer to list is NULL
+ * dynamic memory allocated before freeing the arraylist.
+ * @param[in] list       u_arraylist pointer
+ * @return ::CAResult_t.
+ * ::CA_STATUS_OK if Success, ::CA_STATUS_INVALID_PARAM if pointer to list is NULL.
  */
 CAResult_t u_arraylist_free(u_arraylist_t **list);
 
 /**
- * @brief Returns the data of the index from the array list
- * @param list
- *     [IN] pointer of array list
- * @param index
- *     [IN] index of array list
- * @return void pointer of data if success or NULL pointer otherwise
+ * Returns the data of the index from the array list.
+ * @param[in] list         pointer of array list.
+ * @param[in] index        index of array list.
+ * @return void pointer of data if success or NULL pointer otherwise.
  */
 void *u_arraylist_get(const u_arraylist_t *list, uint32_t index);
 
 /**
- * @brief Add data in the array list
- * @param list
- *     [IN] pointer of array list
- * @param data
- *     [IN] pointer of data
- * @return CAResult_t
- * CA_STATUS_OK if Success, CA_MEMORY_ALLOC_FAILED if memory allocation fails
+ * Add data in the array list.
+ * @param[in] list        pointer of array list.
+ * @param[in] data        pointer of data.
+ * @return CAResult_t.
+ * ::CA_STATUS_OK if Success, ::CA_MEMORY_ALLOC_FAILED if memory allocation fails.
  */
 CAResult_t u_arraylist_add(u_arraylist_t *list, void *data);
 
 /**
- * @brief Remove the data of the index from the array list
- * @param list
- *     [IN] pointer of array list
- * @param index
- *     [IN] index of array list
- * @return void pointer of the data if success or NULL pointer otherwise
+ * Remove the data of the index from the array list.
+ * @param[in] list       pointer of array list.
+ * @param[in] index      index of array list.
+ * @return void pointer of the data if success or NULL pointer otherwise.
  */
 void *u_arraylist_remove(u_arraylist_t *list, uint32_t index);
 
 /**
- * @brief Returns the length of the array list
- * @param list
- *     [IN] pointer of array list
- * @return length of the array list
+ * Returns the length of the array list.
+ * @param[in] list       pointer of array list.
+ * @return length of the array list.
  */
 uint32_t u_arraylist_length(const u_arraylist_t *list);
 
 /**
- * @brief Returns whether the data exists or not
- * @param list
- *     [IN] pointer of array list
- * @param data
- *     [IN] pointer of data
- * @return true if exists, false otherwise
+ * Returns whether the data exists or not.
+ * @param[in] list       pointer of array list.
+ * @param[in] data       pointer of data.
+ * @return true if exists, false otherwise.
  */
 bool u_arraylist_contains(const u_arraylist_t *list,const void *data);
+
+/**
+ * Destroys array list and elements (assuming elements are shallow).
+ * @param[in] list       pointer of array list.
+ */
+void u_arraylist_destroy(u_arraylist_t *list);
 
 #ifdef __cplusplus
 }

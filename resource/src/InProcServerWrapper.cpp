@@ -136,7 +136,7 @@ void formResourceRequest(OCEntityHandlerFlag flag,
 OCEntityHandlerResult DefaultEntityHandlerWrapper(OCEntityHandlerFlag flag,
                                                   OCEntityHandlerRequest * entityHandlerRequest,
                                                   char* uri,
-                                                  void * callbackParam)
+                                                  void * /*callbackParam*/)
 {
     OCEntityHandlerResult result = OC_EH_ERROR;
 
@@ -176,7 +176,7 @@ OCEntityHandlerResult DefaultEntityHandlerWrapper(OCEntityHandlerFlag flag,
 
 OCEntityHandlerResult EntityHandlerWrapper(OCEntityHandlerFlag flag,
                                            OCEntityHandlerRequest * entityHandlerRequest,
-                                           void* callbackParam)
+                                           void* /*callbackParam*/)
 {
     OCEntityHandlerResult result = OC_EH_ERROR;
 

@@ -23,6 +23,9 @@ app_env.PrependUnique(CPPDEFINES = ['__ANDROID__'])
 print"Reading ca script %s"%ca_transport
 
 app_env.AppendUnique(CPPPATH = [root_dir + '/api/'])
+app_env.AppendUnique(CPPPATH = [root_dir + '/inc/'])
+app_env.AppendUnique(CPPPATH = [root_dir + '/common/inc/'])
+app_env.AppendUnique(CPPPATH = [root_dir + 'lib/libcoap-4.1.1'])
 
 print "Reading sample application build script"
 
@@ -31,7 +34,7 @@ secured = app_env.get('SECURED')
 
 print "Sample secured flag is %s" % secured
 
-sample_dir = 'sample_service/jni/'
+sample_dir = 'casample/sampleService/src/main/jni/'
 sample_src = [sample_dir + 'ResourceModel.c',]
 
 print " sample src %s" % sample_src
@@ -39,6 +42,7 @@ print " sample src %s" % sample_src
 app_env.AppendUnique(LIBPATH = [app_env.get('BUILD_DIR'), '.',])
 app_env.AppendUnique(CPPPATH = ['lib/android'])
 app_env.PrependUnique(LIBS = ['connectivity_abstraction'])
+app_env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
 
 
 if secured == '1':

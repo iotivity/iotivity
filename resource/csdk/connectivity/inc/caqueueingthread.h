@@ -38,69 +38,69 @@ extern "C"
 {
 #endif
 
-/**Thread function to be invoked**/
+/** Thread function to be invoked. **/
 typedef void (*CAThreadTask)(void *threadData);
 
-/**Data destroy function**/
+/** Data destroy function. **/
 typedef void (*CADataDestroyFunction)(void *data, uint32_t size);
 
 typedef struct
 {
-    /** Thread pool of the thread started **/
+    /** Thread pool of the thread started. **/
     ca_thread_pool_t threadPool;
-    /** mutex for synchrnoization **/
+    /** mutex for synchronization. **/
     ca_mutex threadMutex;
-    /** conditional mutex for synchrnoization **/
+    /** conditional mutex for synchronization. **/
     ca_cond threadCond;
-    /**Thread function to be invoked**/
+    /** Thread function to be invoked. **/
     CAThreadTask threadTask;
-    /**Data destroy function**/
+    /** Data destroy function. **/
     CADataDestroyFunction destroy;
-    /** Variable to inform the thread to stop **/
+    /** Variable to inform the thread to stop. **/
     bool isStop;
     /** Que on which the thread is operating. **/
     u_queue_t *dataQueue;
 } CAQueueingThread_t;
 
 /**
- * @brief   Initializes the queing thread
- * @param   thread      [IN] thread data for each thread
- * @param   handle      [IN] thread pool handle created
- * @param   task        [IN] function to be called for each data
- * @param   destroy     [IN] function to data destroy
- * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * Initializes the queuing thread.
+ * @param[in]   thread       thread data for each thread.
+ * @param[in]   handle       thread pool handle created.
+ * @param[in]   task         function to be called for each data.
+ * @param[in]   destroy      function to data destroy.
+ * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
  */
 CAResult_t CAQueueingThreadInitialize(CAQueueingThread_t *thread, ca_thread_pool_t handle,
                                       CAThreadTask task, CADataDestroyFunction destroy);
 
 /**
- * @brief   Starting the queueing thread
- * @param   thread       [IN] thread data that needs to be started
- * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * Start the queuing thread.
+ * @param[in]   thread        thread data that needs to be started.
+ * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
  */
 CAResult_t CAQueueingThreadStart(CAQueueingThread_t *thread);
 
 /**
- * @brief   Add queueing thread data for new thread
- * @param   thread      [IN] thread data for new thread control
- * @param   data        [IN] data that needs to be given for each thread
- * @param   size        [IN] length of the data
- * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * Add queuing thread data for new thread.
+ * @param[in]   thread       thread data for new thread control.
+ * @param[in]   data         data that needs to be given for each thread.
+ * @param[in]   size         length of the data.
+ * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
  */
 CAResult_t CAQueueingThreadAddData(CAQueueingThread_t *thread, void *data, uint32_t size);
 
 /**
- * @brief   Stopping the queueing thread
- * @param   thread      [IN] thread data that needs to be started
- * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * Stop the queuing thread.
+ * @param[in]   thread       thread data that needs to be started.
+ * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
  */
 
 CAResult_t CAQueueingThreadStop(CAQueueingThread_t *thread);
 
 /**
- * @brief   Terminating  the queing thread
- * @param   thread      [IN] thread data for each thread
- * @return  CA_STATUS_OK or ERROR CODES ( CAResult_t error codes in cacommon.h)
+ * Terminate the queuing thread.
+ * @param[in]   thread       thread data for each thread.
+ * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
  */
 
 CAResult_t CAQueueingThreadDestroy(CAQueueingThread_t *thread);

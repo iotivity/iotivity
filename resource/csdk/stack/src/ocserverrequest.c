@@ -302,6 +302,7 @@ OCStackResult FormOCEntityHandlerRequest(
         OCEntityHandlerRequest * entityHandlerRequest,
         OCRequestHandle request,
         OCMethod method,
+        OCDevAddr *endpoint,
         OCResourceHandle resource,
         char * queryBuf,
         uint8_t * payload,
@@ -316,6 +317,7 @@ OCStackResult FormOCEntityHandlerRequest(
         entityHandlerRequest->resource = (OCResourceHandle) resource;
         entityHandlerRequest->requestHandle = request;
         entityHandlerRequest->method = method;
+        entityHandlerRequest->devAddr = *endpoint;
         entityHandlerRequest->query = queryBuf;
         entityHandlerRequest->obsInfo.action = observeAction;
         entityHandlerRequest->obsInfo.obsId = observeID;
@@ -409,8 +411,8 @@ CAResponseResult_t ConvertEHResultToCAResult (OCEntityHandlerResult result)
 OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
 {
     OCStackResult result = OC_STACK_ERROR;
-    CAEndpoint_t responseEndpoint = {};
-    CAResponseInfo_t responseInfo = {};
+    CAEndpoint_t responseEndpoint = {.adapter = CA_DEFAULT_ADAPTER};
+    CAResponseInfo_t responseInfo = {.result = CA_EMPTY};
     CAHeaderOption_t* optionsPointer = NULL;
 
     if(!ehResponse || !ehResponse->requestHandle)
@@ -448,13 +450,9 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
         responseInfo.info.type = CA_MSG_NONCONFIRM;
     }
 
+    char rspToken[CA_MAX_TOKEN_LEN + 1] = {};
     responseInfo.info.messageId = serverRequest->coapID;
-    responseInfo.info.token = (CAToken_t)OICMalloc(CA_MAX_TOKEN_LEN+1);
-    if (!responseInfo.info.token)
-    {
-        OC_LOG(FATAL, TAG, "Memory alloc for token failed");
-        return result;
-    }
+    responseInfo.info.token = (CAToken_t)rspToken;
 
     memcpy(responseInfo.info.token, serverRequest->requestToken, serverRequest->tokenLength);
     responseInfo.info.tokenLength = serverRequest->tokenLength;
@@ -477,7 +475,6 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
         if(!responseInfo.info.options)
         {
             OC_LOG(FATAL, TAG, PCF("Memory alloc for options failed"));
-            OICFree(responseInfo.info.token);
             return OC_STACK_NO_MEMORY;
         }
 
@@ -518,6 +515,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
                 != OC_STACK_OK)
         {
             OC_LOG(ERROR, TAG, "Error converting payload");
+            OICFree(responseInfo.info.options);
             return result;
         }
 
@@ -525,6 +523,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
         {
             OICFree(responseInfo.info.payload);
             OC_LOG(ERROR, TAG, "Payload too long!");
+            OICFree(responseInfo.info.options);
             return OC_STACK_INVALID_PARAM;
         }
     }
@@ -535,10 +534,18 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     }
 
     #ifdef WITH_PRESENCE
-    CATransportAdapter_t CAConnTypes[] = {CA_ADAPTER_IP, CA_ADAPTER_GATT_BTLE,
-                                          CA_ADAPTER_RFCOMM_BTEDR};
-    const char * connTypes[] = {"ip" , "ble",  "edr"};
+    CATransportAdapter_t CAConnTypes[] = {
+                            CA_ADAPTER_IP,
+                            CA_ADAPTER_GATT_BTLE,
+                            CA_ADAPTER_RFCOMM_BTEDR
+
+                            #ifdef RA_ADAPTER
+                            , CA_ADAPTER_REMOTE_ACCESS
+                            #endif
+                        };
+
     int size = sizeof(CAConnTypes)/ sizeof(CATransportAdapter_t);
+
     CATransportAdapter_t adapter = responseEndpoint.adapter;
     CAResult_t caResult = CA_STATUS_FAILED;
     result = OC_STACK_OK;
@@ -547,7 +554,15 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     if (adapter == CA_DEFAULT_ADAPTER)
     {
         adapter =
-            (CATransportAdapter_t)(CA_ADAPTER_IP | CA_ADAPTER_GATT_BTLE | CA_ADAPTER_RFCOMM_BTEDR);
+            (CATransportAdapter_t)(
+                CA_ADAPTER_IP           |
+                CA_ADAPTER_GATT_BTLE    |
+                CA_ADAPTER_RFCOMM_BTEDR
+
+                #ifdef RA_ADAP
+                | CA_ADAPTER_REMOTE_ACCESS
+                #endif
+            );
     }
 
     for(int i = 0; i < size; i++ )
@@ -560,12 +575,8 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
             caResult = CASendResponse(&responseEndpoint, &responseInfo);
             if(caResult != CA_STATUS_OK)
             {
-                OC_LOG_V(ERROR, TAG, "CASendResponse failed on %s", connTypes[i]);
+                OC_LOG_V(ERROR, TAG, "CASendResponse failed with CA error %u", caResult);
                 result = CAResultToOCResult(caResult);
-            }
-            else
-            {
-                OC_LOG_V(INFO, TAG, "CASendResponse succeeded on %s", connTypes[i]);
             }
         }
     }
@@ -590,7 +601,6 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     #endif
 
     OICFree(responseInfo.info.payload);
-    OICFree(responseInfo.info.token);
     OICFree(responseInfo.info.options);
     //Delete the request
     FindAndDeleteServerRequest(serverRequest);
@@ -640,16 +650,23 @@ OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
             VERIFY_NON_NULL(serverResponse);
         }
 
-        if(serverResponse->payload->type != PAYLOAD_TYPE_REPRESENTATION ||
-                ehResponse->payload->type != PAYLOAD_TYPE_REPRESENTATION)
+        if(ehResponse->payload->type != PAYLOAD_TYPE_REPRESENTATION)
         {
             stackRet = OC_STACK_ERROR;
             OC_LOG(ERROR, TAG, PCF("Error adding payload, as it was the incorrect type"));
             goto exit;
         }
 
-        OCRepPayloadAppend((OCRepPayload*)serverResponse->payload,
-                (OCRepPayload*)ehResponse->payload);
+        if(!serverResponse->payload)
+        {
+            serverResponse->payload = ehResponse->payload;
+        }
+        else
+        {
+            OCRepPayloadAppend((OCRepPayload*)serverResponse->payload,
+                    (OCRepPayload*)ehResponse->payload);
+        }
+
 
         (serverRequest->numResponses)--;
 

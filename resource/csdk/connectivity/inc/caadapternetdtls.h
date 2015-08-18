@@ -1,22 +1,22 @@
-/******************************************************************
-*
-* Copyright 2014 Samsung Electronics All Rights Reserved.
-*
-*
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*      http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-******************************************************************/
+/* *****************************************************************
+ *
+ * Copyright 2015 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************/
 #ifndef CA_ADAPTER_NET_DTLS_H_
 #define CA_ADAPTER_NET_DTLS_H_
 
@@ -29,24 +29,23 @@
 #include "cacommon.h"
 
 /**
- *   Currently DTLS supported adapters(2) WIFI and ETHENET for linux platform.
+ * Currently DTLS supported adapters(2) WIFI and ETHENET for linux platform.
  */
 #define MAX_SUPPORTED_ADAPTERS 2
 
 /**
- * @brief The implementation will be provided by OIC RI layer.
+ * The implementation will be provided by OIC RI layer.
  */
 extern void OCGetDtlsPskCredentials(CADtlsPskCredsBlob_t **credInfo);
 
-typedef void (*CAPacketReceivedCallback)(const CAEndpoint_t *endpoint,
+typedef void (*CAPacketReceivedCallback)(const CASecureEndpoint_t *sep,
                                          const void *data, uint32_t dataLength);
 
-typedef uint32_t (*CAPacketSendCallback)(const CAEndpoint_t *endpoint,
+typedef void (*CAPacketSendCallback)(CAEndpoint_t *endpoint,
                                          const void *data, uint32_t dataLength);
 
 /**
- * @struct stCAAdapterCallbacks_t
- * @brief  Data structure for holding the send and recv callbacks.
+ * Data structure for holding the send and recv callbacks.
  */
 typedef struct CAAdapterCallbacks
 {
@@ -55,26 +54,23 @@ typedef struct CAAdapterCallbacks
 } stCAAdapterCallbacks_t;
 
 /**
- * @struct stCADtlsContext_t
- * @brief  Data structure for holding the tinyDTLS interface
- *              related info.
+ * Data structure for holding the tinyDTLS interface related info.
  */
 typedef struct stCADtlsContext
 {
-    u_arraylist_t *peerInfoList;        /**< peerInfo list which holds the mapping between
-                                             peer id to it's n/w address */
+    u_arraylist_t *peerInfoList;         /**< peerInfo list which holds the mapping between
+                                              peer id to it's n/w address. */
     u_arraylist_t *cacheList;            /**< PDU's are cached until DTLS session is formed. */
     struct dtls_context_t *dtlsContext;  /**< Pointer to tinyDTLS context. */
     struct stPacketInfo *packetInfo;     /**< used by callback during
-                                             decryption to hold address/length. */
+                                              decryption to hold address/length. */
     dtls_handler_t callbacks;            /**< Pointer to callbacks needed by tinyDTLS. */
     stCAAdapterCallbacks_t adapterCallbacks[MAX_SUPPORTED_ADAPTERS];
 } stCADtlsContext_t;
 
 /**
- * @struct stPacketInfo_t
- * @brief  Data structure for holding the decrypted data address
- *              and length provided by tinyDTLS callback interface.
+ * Data structure for holding the decrypted data address
+ * and length provided by tinyDTLS callback interface.
  */
 typedef struct stPacketInfo
 {
@@ -83,8 +79,7 @@ typedef struct stPacketInfo
 } stPacketInfo_t;
 
 /**
- * @enum eDtlsRet_t
- * @brief tinyDTLS library error codes.
+ * tinyDTLS library error codes.
  *
  */
 typedef enum
@@ -96,7 +91,7 @@ typedef enum
 } eDtlsRet_t;
 
 
-/** Structure to have address information which will match with DTLS session_t struct.*/
+/** Structure to have address information which will match with DTLS session_t structure.*/
 typedef struct
 {
     socklen_t size;                 /**< Size of address. */
@@ -107,13 +102,11 @@ typedef struct
         struct sockaddr_in  sin;
         struct sockaddr_in6 sin6;
     } addr;                         /**< Address information. */
-    uint8_t ifIndex;                /**< Holds adpater index to get callback info. */
+    uint8_t ifIndex;                /**< Holds adapter index to get callback info. */
 } stCADtlsAddrInfo_t;
 
 /**
- * @struct stCACacheMessage_t
- * @brief structure to holds the information of cachemessage and address info.
- *
+ * structure to holds the information of cache message and address info.
  */
 typedef struct CACacheMessage
 {
@@ -124,14 +117,11 @@ typedef struct CACacheMessage
 
 
 /**
- * @fn  CADTLSSetAdapterCallbacks
- * @brief  Used set send and recv callbacks for different adapters(WIFI,EtherNet)
+ * Used set send and recv callbacks for different adapters(WIFI,EtherNet).
  *
- * @param[in]  recvCallback  packet received callback
- * @param[in]  sendCallback  packet sent callback
- * @param[in]  type  type of adapter
- *
- * @retval  void
+ * @param[in]  recvCallback    packet received callback.
+ * @param[in]  sendCallback    packet sent callback.
+ * @param[in]  type  type of adapter.
  *
  */
 void CADTLSSetAdapterCallbacks(CAPacketReceivedCallback recvCallback,
@@ -139,9 +129,8 @@ void CADTLSSetAdapterCallbacks(CAPacketReceivedCallback recvCallback,
                                CATransportAdapter_t type);
 
 /**
- * @brief   Register callback to get DTLS PSK credentials.
- * @param   credCallback   [IN] callback to get DTLS credentials
- * @retval  void
+ * Register callback to get DTLS PSK credentials.
+ * @param[in]  credCallback    callback to get DTLS credentials.
  */
 void CADTLSSetCredentialsCallback(CAGetDTLSCredentialsHandler credCallback);
 
@@ -153,7 +142,7 @@ void CADTLSSetCredentialsCallback(CAGetDTLSCredentialsHandler credCallback);
  *                             0xC0A8 : TLS_PSK_WITH_AES_128_CCM_8
  *                             0xC0AE : TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8
  *
- * @retval  CA_STATUS_OK for success, otherwise some error value
+ * @retval  ::CA_STATUS_OK for success, otherwise some error value
  */
 CAResult_t CADtlsSelectCipherSuite(const dtls_cipher_t cipher);
 
@@ -162,7 +151,7 @@ CAResult_t CADtlsSelectCipherSuite(const dtls_cipher_t cipher);
  *
  * @param[in] enable  TRUE/FALSE enables/disables anonymous cipher suite
  *
- * @retval  CA_STATUS_OK for success, otherwise some error value
+ * @retval  ::CA_STATUS_OK for success, otherwise some error value
  */
 CAResult_t CADtlsEnableAnonECDHCipherSuite(const bool enable);
 
@@ -171,7 +160,7 @@ CAResult_t CADtlsEnableAnonECDHCipherSuite(const bool enable);
  *
  * @param[in] endpoint  information of network address
  *
- * @retval  CA_STATUS_OK for success, otherwise some error value
+ * @retval  ::CA_STATUS_OK for success, otherwise some error value
  */
 CAResult_t CADtlsInitiateHandshake(const CAEndpoint_t *endpoint);
 
@@ -180,7 +169,7 @@ CAResult_t CADtlsInitiateHandshake(const CAEndpoint_t *endpoint);
  *
  * @param[in] endpoint  information of network address
  *
- * @retval  CA_STATUS_OK for success, otherwise some error value
+ * @retval  ::CA_STATUS_OK for success, otherwise some error value
  */
 CAResult_t CADtlsClose(const CAEndpoint_t *endpoint);
 
@@ -200,7 +189,7 @@ CAResult_t CADtlsClose(const CAEndpoint_t *endpoint);
  * @param[in,out] ownerPSK  Output buffer for owner PSK
  * @param[in] ownerPSKSize  Byte length of the ownerPSK to be generated
  *
- * @retval  CA_STATUS_OK for success, otherwise some error value
+ * @retval  ::CA_STATUS_OK for success, otherwise some error value
  */
 CAResult_t CADtlsGenerateOwnerPSK(const CAEndpoint_t *endpoint,
                     const uint8_t* label, const size_t labelLen,
@@ -210,33 +199,25 @@ CAResult_t CADtlsGenerateOwnerPSK(const CAEndpoint_t *endpoint,
 ;
 
 /**
- * @fn  CAAdapterNetDtlsInit
- * @brief  initialize tinyDTLS library and other necessary intialization.
+ * initialize tinyDTLS library and other necessary initialization.
  *
  * @return  0 on success otherwise a positive error value.
- * @retval  CA_STATUS_OK  Successful
- * @retval  CA_STATUS_INVALID_PARAM  Invalid input argumets
- * @retval  CA_STATUS_FAILED Operation failed
+ * @retval  ::CA_STATUS_OK  Successful.
+ * @retval  ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval  ::CA_STATUS_FAILED Operation failed.
  *
  */
 CAResult_t CAAdapterNetDtlsInit();
 
 /**
- * @fn  CAAdapterNetDtlsDeInit
- * @brief  de-inits tinyDTLS library and free the allocated memory.
- *
- * @return  void
- *
+ * de-inits tinyDTLS library and free the allocated memory.
  */
 void CAAdapterNetDtlsDeInit();
 
 /**
- * @fn  CAAdapterNetDtlsEncrypt
- * @brief  Performs DTLS encryption of the CoAP PDU. If a
- *              DTLS session does not exist yet with the @dst,
- *              a DTLS handshake will be started. In case where
- *              a new DTLS handshake is started, pdu info is
- *              cached to be send when session setup is finished.
+ * Performs DTLS encryption of the CoAP PDU. If a DTLS session does not exist yet
+ * with the @dst, a DTLS handshake will be started. In case where a new DTLS handshake
+ * is started, pdu info is cached to be send when session setup is finished.
  *
  * @param[in]  endpoint  address to which data will be sent.
  * @param[in]  port  port to which data will be sent.
@@ -244,9 +225,9 @@ void CAAdapterNetDtlsDeInit();
  * @param[in]  dataLen  length of given data
  *
  * @return  0 on success otherwise a positive error value.
- * @retval  CA_STATUS_OK  Successful
- * @retval  CA_STATUS_INVALID_PARAM  Invalid input argumets
- * @retval  CA_STATUS_FAILED Operation failed
+ * @retval  ::CA_STATUS_OK  Successful.
+ * @retval  ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval  ::CA_STATUS_FAILED Operation failed.
  *
  */
 
@@ -255,21 +236,20 @@ CAResult_t CAAdapterNetDtlsEncrypt(const CAEndpoint_t *endpoint,
                                    uint32_t dataLen);
 
 /**
- * @fn  CAAdapterNetDtlsDecrypt
- * @brief  Performs DTLS decryption of the data received on
- *            secure port. This method performs in-place decryption
- *            of the cipher-text buffer. If a DTLS handshake message
- *            is received or decryption failure happens, this method
- *            returns -1. If a valid application PDU is decrypted, it
- *            returns the length of the decrypted pdu.
+ * Performs DTLS decryption of the data received on
+ * secure port. This method performs in-place decryption
+ * of the cipher-text buffer. If a DTLS handshake message
+ * is received or decryption failure happens, this method
+ * returns -1. If a valid application PDU is decrypted, it
+ * returns the length of the decrypted pdu.
  *
  * @return  0 on success otherwise a positive error value.
- * @retval  CA_STATUS_OK  Successful
- * @retval  CA_STATUS_INVALID_PARAM  Invalid input argumets
- * @retval  CA_STATUS_FAILED Operation failed
+ * @retval  ::CA_STATUS_OK  Successful.
+ * @retval  ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval  ::CA_STATUS_FAILED Operation failed.
  *
  */
-CAResult_t CAAdapterNetDtlsDecrypt(const CAEndpoint_t *endpoint,
+CAResult_t CAAdapterNetDtlsDecrypt(const CASecureEndpoint_t *sep,
                                    uint8_t *data,
                                    uint32_t dataLen);
 

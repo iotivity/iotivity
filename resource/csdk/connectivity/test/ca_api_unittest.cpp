@@ -41,12 +41,14 @@ void error_handler(const CAEndpoint_t *object, const CAErrorInfo_t* errorInfo);
 CAResult_t checkGetNetworkInfo();
 CAResult_t checkSelectNetwork();
 
-void request_handler(const CAEndpoint_t *object, const CARequestInfo_t *requestInfo)
+void request_handler(const CAEndpoint_t * /*object*/,
+                     const CARequestInfo_t * /*requestInfo*/)
 {
 
 }
 
-void response_handler(const CAEndpoint_t *object, const CAResponseInfo_t *responseInfo)
+void response_handler(const CAEndpoint_t * /*object*/,
+                      const CAResponseInfo_t * /*responseInfo*/)
 {
 
 }
@@ -168,7 +170,7 @@ TEST_F(CATests, TerminateTest)
 // check return value
 TEST(StartListeningServerTest, DISABLED_TC_03_Positive_01)
 {
-    CASelectNetwork(CA_IPV4);
+    CASelectNetwork(CA_ADAPTER_IP);
     EXPECT_EQ(CA_STATUS_OK, CAStartListeningServer());
 }
 
@@ -310,6 +312,14 @@ TEST(SendResponseTest, DISABLED_TC_19_Positive_01)
     responseData.type = CA_MSG_NONCONFIRM;
     responseData.messageId = 1;
     responseData.payload = (CAPayload_t)malloc(sizeof("response payload"));
+
+    EXPECT_TRUE(responseData.payload != NULL);
+    if(!responseData.payload)
+    {
+        CADestroyEndpoint(tempRep);
+        return;
+    }
+
     memcpy(responseData.payload, "response payload", sizeof("response payload"));
     responseData.payloadSize = sizeof("response payload");
 
@@ -339,6 +349,14 @@ TEST(SendResponseTest, DISABLED_TC_20_Negative_01)
     responseData.type = CA_MSG_NONCONFIRM;
     responseData.messageId = 1;
     responseData.payload = (CAPayload_t)malloc(sizeof("response payload"));
+    EXPECT_TRUE(responseData.payload != NULL);
+
+    if(!responseData.payload)
+    {
+        CADestroyEndpoint(tempRep);
+        return;
+    }
+
     memcpy(responseData.payload, "response payload", sizeof("response payload"));
     responseData.payloadSize = sizeof("response payload");
 
@@ -386,6 +404,14 @@ TEST(SendNotificationTest, DISABLED_TC_22_Positive_01)
     memset(&responseData, 0, sizeof(CAInfo_t));
     responseData.type = CA_MSG_NONCONFIRM;
     responseData.payload = (CAPayload_t)malloc(sizeof("Temp Notification Data"));
+
+    EXPECT_TRUE(responseData.payload != NULL);
+    if(!responseData.payload)
+    {
+        CADestroyEndpoint(tempRep);
+        return;
+    }
+
     memcpy(responseData.payload, "Temp Notification Data", sizeof("Temp Notification Data"));
     responseData.payloadSize = sizeof("Temp Notification Data");
 
@@ -438,14 +464,14 @@ CAResult_t checkSelectNetwork()
 TEST_F(CATests, SelectNetworkTestBad)
 {
     //Select disable network
-    EXPECT_EQ(CA_NOT_SUPPORTED, CASelectNetwork(1000));
+    EXPECT_EQ(CA_NOT_SUPPORTED, CASelectNetwork((CATransportAdapter_t)1000));
 }
 
 // check return value when selected network is disable
 TEST_F(CATests, UnSelectNetworkTest)
 {
     //UnSelect disable network
-    EXPECT_EQ(CA_STATUS_FAILED, CAUnSelectNetwork(1000));
+    EXPECT_EQ(CA_STATUS_FAILED, CAUnSelectNetwork((CATransportAdapter_t)1000));
 }
 
 // CAHandlerRequestResponse TC

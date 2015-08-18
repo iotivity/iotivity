@@ -21,7 +21,6 @@ if target_os == 'arduino':
 else:
     common_files = [
         os.path.join(src_dir, 'caipadapter.c'),
-	os.path.join(src_dir, 'caipclient.c'),
 	os.path.join(src_dir, 'caipserver.c') ]
 
 # Get list of target-specific source file base names, i.e. no parent
@@ -52,5 +51,3 @@ if target_os in ['linux','darwin','ios']:
 # The list of BLE adapter source files is a combination of both the
 # common and target-specific source file lists.
 env.AppendUnique(CA_SRC = common_files + target_files)
-
-

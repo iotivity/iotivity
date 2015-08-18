@@ -59,7 +59,7 @@ OCStackResult OCParsePayload(OCPayload** outPayload, const uint8_t* payload, siz
     // enter the array
     err = err || cbor_value_enter_container(&rootValue, &arrayValue);
 
-    int payloadType;
+    int payloadType = 0;
     err = err || cbor_value_get_int(&arrayValue, &payloadType);
     err = err || cbor_value_advance_fixed(&arrayValue);
 
@@ -171,6 +171,7 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload** outPayload, CborValue* 
         if(!resource)
         {
             OC_LOG_V(ERROR, TAG, "Memory allocation failed");
+            OCDiscoveryPayloadDestroy(out);
             return OC_STACK_NO_MEMORY;
         }
         CborValue curVal;
@@ -203,27 +204,38 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload** outPayload, CborValue* 
                     llPtr = resource->types;
                     if(!llPtr)
                     {
-                        OC_LOG_V(ERROR, TAG, "Memory allocation failed");
+                        OC_LOG(ERROR, TAG, PCF("Memory allocation failed"));
                         OICFree(resource->uri);
                         OICFree(resource->sid);
                         OICFree(resource);
+                        OCDiscoveryPayloadDestroy(out);
                         return OC_STACK_NO_MEMORY;
                     }
                 }
-                else
+                else if(llPtr)
                 {
                     llPtr->next = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
                     llPtr = llPtr->next;
                     if(!llPtr)
                     {
-                        OC_LOG_V(ERROR, TAG, "Memory allocation failed");
+                        OC_LOG(ERROR, TAG, PCF("Memory allocation failed"));
                         OICFree(resource->uri);
                         OICFree(resource->sid);
                         OCFreeOCStringLL(resource->types);
                         OICFree(resource);
+                        OCDiscoveryPayloadDestroy(out);
                         return OC_STACK_NO_MEMORY;
                     }
-
+                }
+                else
+                {
+                        OC_LOG(ERROR, TAG, PCF("Unknown state in resource type copying"));
+                        OICFree(resource->uri);
+                        OICFree(resource->sid);
+                        OCFreeOCStringLL(resource->types);
+                        OICFree(resource);
+                        OCDiscoveryPayloadDestroy(out);
+                        return OC_STACK_NO_MEMORY;
                 }
 
                  err = err || cbor_value_dup_text_string(&rtVal, &(llPtr->value), &len, NULL);
@@ -252,10 +264,11 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload** outPayload, CborValue* 
                         OICFree(resource->sid);
                         OCFreeOCStringLL(resource->types);
                         OICFree(resource);
+                        OCDiscoveryPayloadDestroy(out);
                         return OC_STACK_NO_MEMORY;
                     }
                 }
-                else
+                else if (llPtr)
                 {
                     llPtr->next = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
                     llPtr = llPtr->next;
@@ -267,8 +280,19 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload** outPayload, CborValue* 
                         OCFreeOCStringLL(resource->types);
                         OCFreeOCStringLL(resource->interfaces);
                         OICFree(resource);
+                        OCDiscoveryPayloadDestroy(out);
                         return OC_STACK_NO_MEMORY;
                     }
+                }
+                else
+                {
+                        OC_LOG(ERROR, TAG, PCF("Unknown state in resource interfaces copying"));
+                        OICFree(resource->uri);
+                        OICFree(resource->sid);
+                        OCFreeOCStringLL(resource->types);
+                        OICFree(resource);
+                        OCDiscoveryPayloadDestroy(out);
+                        return OC_STACK_NO_MEMORY;
                 }
 
                  err = err || cbor_value_dup_text_string(&ifVal, &(llPtr->value), &len, NULL);
@@ -305,7 +329,7 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload** outPayload, CborValue* 
             }
         }
 
-         err = err || cbor_value_advance(arrayVal);
+        err = err || cbor_value_advance(arrayVal);
         if(err)
         {
             OICFree(resource->uri);
@@ -321,9 +345,16 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload** outPayload, CborValue* 
         OCDiscoveryPayloadAddNewResource(out, resource);
     }
 
-    *outPayload = (OCPayload*)out;
-
-    return OC_STACK_OK;
+    if(err)
+    {
+        OCDiscoveryPayloadDestroy(out);
+        return OC_STACK_MALFORMED_RESPONSE;
+    }
+    else
+    {
+        *outPayload = (OCPayload*)out;
+        return OC_STACK_OK;
+    }
 }
 
 static OCStackResult OCParseDevicePayload(OCPayload** outPayload, CborValue* arrayVal)
@@ -404,7 +435,7 @@ static OCStackResult OCParsePlatformPayload(OCPayload** outPayload, CborValue* a
     if(cbor_value_is_map(arrayVal))
     {
         char* uri = NULL;
-        OCPlatformInfo info = {};
+        OCPlatformInfo info = {0};
         CborValue curVal;
          err = err || cbor_value_map_find_value(arrayVal, OC_RSRVD_HREF, &curVal);
         size_t len;
@@ -557,85 +588,112 @@ static bool OCParseArray(OCRepPayload* out, const char* name, CborValue* contain
     {
         case OCREP_PROP_INT:
             arr = (int64_t*)OICMalloc(dimTotal * sizeof(int64_t));
-            for(size_t i = 0; i < dimTotal && !err; ++i)
+            if (arr)
             {
-                 err = err || cbor_value_get_int64(&insideArray, &(((int64_t*)arr)[i]));
-                 err = err || cbor_value_advance_fixed(&insideArray);
+                for(size_t i = 0; i < dimTotal && !err; ++i)
+                {
+                     err = err || cbor_value_get_int64(&insideArray, &(((int64_t*)arr)[i]));
+                     err = err || cbor_value_advance_fixed(&insideArray);
+                }
+                if(err || !OCRepPayloadSetIntArrayAsOwner(out, name, (int64_t*)arr, dimensions))
+                {
+                    OICFree(arr);
+                    err = true;
+                }
             }
-            if(!err &&
-                OCRepPayloadSetIntArrayAsOwner(out, name, (int64_t*)arr, dimensions))
-            {}
             else
             {
-                err = CborUnknownError;
+                err = true;
             }
             break;
         case OCREP_PROP_DOUBLE:
             arr = (double*)OICMalloc(dimTotal * sizeof(double));
-            for(size_t i = 0; i < dimTotal && !err; ++i)
+            if(arr)
             {
-                 err = err || cbor_value_get_double(&insideArray, &(((double*)arr)[i]));
-                 err = err || cbor_value_advance_fixed(&insideArray);
+                for(size_t i = 0; i < dimTotal && !err; ++i)
+                {
+                     err = err || cbor_value_get_double(&insideArray, &(((double*)arr)[i]));
+                     err = err || cbor_value_advance_fixed(&insideArray);
+                }
+                if(err || !OCRepPayloadSetDoubleArrayAsOwner(out, name, (double*)arr, dimensions))
+                {
+                    OICFree(arr);
+                    err = true;
+                }
             }
-            if(!err &&
-                OCRepPayloadSetDoubleArrayAsOwner(out, name, (double*)arr, dimensions))
-            {}
             else
             {
-                err = CborUnknownError;
+                err = true;
             }
             break;
         case OCREP_PROP_BOOL:
             arr = (bool*)OICMalloc(dimTotal * sizeof(bool));
-            for(size_t i = 0; i < dimTotal && !err; ++i)
+            if(arr)
             {
-                 err = err || cbor_value_get_boolean(&insideArray, &(((bool*)arr)[i]));
-                 err = err || cbor_value_advance_fixed(&insideArray);
+                for(size_t i = 0; i < dimTotal && !err; ++i)
+                {
+                     err = err || cbor_value_get_boolean(&insideArray, &(((bool*)arr)[i]));
+                     err = err || cbor_value_advance_fixed(&insideArray);
+                }
+                if(err || !OCRepPayloadSetBoolArrayAsOwner(out, name, (bool*)arr, dimensions))
+                {
+                    OICFree(arr);
+                    err = true;
+                }
             }
-            if(!err &&
-                OCRepPayloadSetBoolArrayAsOwner(out, name, (bool*)arr, dimensions))
-            {}
             else
             {
-                err = CborUnknownError;
+                err = true;
             }
             break;
         case OCREP_PROP_STRING:
             arr = (char**)OICMalloc(dimTotal * sizeof(char*));
-            for(size_t i = 0; i < dimTotal && !err; ++i)
+            if(arr)
             {
-                 err = err || cbor_value_dup_text_string(&insideArray, &tempStr,
-                        &len, NULL);
-                ((char**)arr)[i] = tempStr;
+                for(size_t i = 0; i < dimTotal && !err; ++i)
+                {
+                    err = err || cbor_value_dup_text_string(&insideArray, &tempStr,
+                            &len, NULL);
+                    err = err || cbor_value_advance(&insideArray);
+                    ((char**)arr)[i] = tempStr;
+                }
+                if(err || !OCRepPayloadSetStringArrayAsOwner(out, name, (char**)arr, dimensions))
+                {
+                    OICFree(arr);
+                    err = true;
+                }
             }
-            if(!err &&
-                OCRepPayloadSetStringArrayAsOwner(out, name, (char**)arr, dimensions))
-            {}
             else
             {
-                err = CborUnknownError;
+                err = true;
             }
             break;
         case OCREP_PROP_OBJECT:
             arr = (OCRepPayload**)OICMalloc(dimTotal * sizeof(OCRepPayload*));
-            for(size_t i = 0; i < dimTotal && !err; ++i)
+            if(arr)
             {
-                pl = NULL;
-                 err = err || OCParseSingleRepPayload(&pl, &insideArray);
-                ((OCRepPayload**)arr)[i] = pl;
-                 err = err || cbor_value_advance(&insideArray);
+                for(size_t i = 0; i < dimTotal && !err; ++i)
+                {
+                    pl = NULL;
+                    err = err || OCParseSingleRepPayload(&pl, &insideArray);
+                    err = err || cbor_value_advance(&insideArray);
+                    ((OCRepPayload**)arr)[i] = pl;
+                }
+                if(err || !OCRepPayloadSetPropObjectArrayAsOwner(out, name,
+                        (OCRepPayload**)arr, dimensions))
+                {
+                    OICFree(arr);
+                    err = true;
+                }
             }
-            if(!err &&
-                OCRepPayloadSetPropObjectArrayAsOwner(out, name, (OCRepPayload**)arr, dimensions))
-            {}
             else
             {
-                err = CborUnknownError;
+                err = true;
             }
             break;
         default:
             OC_LOG(ERROR, TAG, "Invalid Array type in Parse Array");
-            err = CborUnknownError;
+            err = true;
             break;
     }
 
@@ -664,7 +722,7 @@ static bool OCParseSingleRepPayload(OCRepPayload** outPayload, CborValue* repPar
     err = err || cbor_value_map_find_value(repParent, OC_RSRVD_PROPERTY, &curVal);
     if(cbor_value_is_valid(&curVal))
     {
-        CborValue insidePropArray;
+        CborValue insidePropArray = {0};
         err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_RESOURCE_TYPE,
                 &insidePropArray);
 
@@ -676,7 +734,8 @@ static bool OCParseSingleRepPayload(OCRepPayload** outPayload, CborValue* repPar
             while(!err && cbor_value_is_valid(&rtArray))
             {
                 char* curRt;
-                cbor_value_dup_text_string(&rtArray, &curRt, &len, NULL);
+                err = err || cbor_value_dup_text_string(&rtArray, &curRt, &len, NULL);
+                err = err || cbor_value_advance(&rtArray);
                 OCRepPayloadAddResourceTypeAsOwner(curPayload, curRt);
             }
 
@@ -694,6 +753,7 @@ static bool OCParseSingleRepPayload(OCRepPayload** outPayload, CborValue* repPar
             {
                 char* curIf;
                 err = err || cbor_value_dup_text_string(&ifArray, &curIf, &len, NULL);
+                err = err || cbor_value_advance(&ifArray);
                 OCRepPayloadAddInterfaceAsOwner(curPayload, curIf);
             }
 
@@ -722,27 +782,42 @@ static bool OCParseSingleRepPayload(OCRepPayload** outPayload, CborValue* repPar
             switch(cbor_value_get_type(&repMap))
             {
                 case CborNullType:
-                    OCRepPayloadSetNull(curPayload, name);
+                    err = !OCRepPayloadSetNull(curPayload, name);
                     break;
                 case CborIntegerType:
                     err = err || cbor_value_get_int64(&repMap, &intval);
-                    OCRepPayloadSetPropInt(curPayload, name, intval);
+                    if (!err)
+                    {
+                        err = !OCRepPayloadSetPropInt(curPayload, name, intval);
+                    }
                     break;
                 case CborDoubleType:
                     err = err || cbor_value_get_double(&repMap, &doubleval);
-                    OCRepPayloadSetPropDouble(curPayload, name, doubleval);
+                    if (!err)
+                    {
+                        err = !OCRepPayloadSetPropDouble(curPayload, name, doubleval);
+                    }
                     break;
                 case CborBooleanType:
                     err = err || cbor_value_get_boolean(&repMap, &boolval);
-                    OCRepPayloadSetPropBool(curPayload, name, boolval);
+                    if (!err)
+                    {
+                        err = !OCRepPayloadSetPropBool(curPayload, name, boolval);
+                    }
                     break;
                 case CborTextStringType:
                     err = err || cbor_value_dup_text_string(&repMap, &strval, &len, NULL);
-                    OCRepPayloadSetPropStringAsOwner(curPayload, name, strval);
+                    if (!err)
+                    {
+                        err = !OCRepPayloadSetPropStringAsOwner(curPayload, name, strval);
+                    }
                     break;
                 case CborMapType:
                     err = err || OCParseSingleRepPayload(&pl, &repMap);
-                    OCRepPayloadSetPropObjectAsOwner(curPayload, name, pl);
+                    if (!err)
+                    {
+                        err = !OCRepPayloadSetPropObjectAsOwner(curPayload, name, pl);
+                    }
                     break;
                 case CborArrayType:
                     err = err || OCParseArray(curPayload, name, &repMap);
@@ -761,6 +836,7 @@ static bool OCParseSingleRepPayload(OCRepPayload** outPayload, CborValue* repPar
     if(err)
     {
         OCRepPayloadDestroy(*outPayload);
+        *outPayload = NULL;
     }
 
     return err;
@@ -815,16 +891,16 @@ static OCStackResult OCParsePresencePayload(OCPayload** outPayload, CborValue* a
 
         CborValue curVal;
         // Sequence Number
-         err = err || cbor_value_map_find_value(arrayVal, OC_RSRVD_NONCE, &curVal);
-         err = err || cbor_value_get_uint64(&curVal, &seqNum);
+        err = err || cbor_value_map_find_value(arrayVal, OC_RSRVD_NONCE, &curVal);
+        err = err || cbor_value_get_uint64(&curVal, &seqNum);
 
         // Max Age
-         err = err || cbor_value_map_find_value(arrayVal, OC_RSRVD_TTL, &curVal);
-         err = err || cbor_value_get_uint64(&curVal, &maxAge);
+        err = err || cbor_value_map_find_value(arrayVal, OC_RSRVD_TTL, &curVal);
+        err = err || cbor_value_get_uint64(&curVal, &maxAge);
 
         // Trigger
-         err = err || cbor_value_map_find_value(arrayVal, OC_RSRVD_TRIGGER, &curVal);
-         err = err || cbor_value_dup_text_string(&curVal, &tempStr, &len, NULL);
+        err = err || cbor_value_map_find_value(arrayVal, OC_RSRVD_TRIGGER, &curVal);
+        err = err || cbor_value_dup_text_string(&curVal, &tempStr, &len, NULL);
         trigger = convertTriggerStringToEnum(tempStr);
         OICFree(tempStr);
         tempStr = NULL;

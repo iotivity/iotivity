@@ -173,7 +173,7 @@ std::vector<Plugin> &FelixAdapter::getAllPlugins(void)
         mid = env->GetStaticMethodID(cls, "getValue",
                                      "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
         std::string key = "Name";
-        jstring jname = (jstring)env->CallStaticObjectMethod(cls, mid, jid, 
+        jstring jname = (jstring)env->CallStaticObjectMethod(cls, mid, jid,
                         env->NewStringUTF(key.c_str()));
         std::string name = env->GetStringUTFChars(jname, 0);
         plugin->setValue("Name", name);
@@ -187,7 +187,7 @@ std::vector<Plugin> &FelixAdapter::getAllPlugins(void)
         // set ResourceURL value
         key = "Url";
         jstring juritype = (jstring)env->CallStaticObjectMethod(cls, mid, jid,
-                                env->NewStringUTF(key.c_str()));
+                           env->NewStringUTF(key.c_str()));
         std::string url = env->GetStringUTFChars(juritype, 0);
         plugin->setValue("Url", url);
 
@@ -208,7 +208,7 @@ std::vector<Plugin> *FelixAdapter::findPlugins(const std::string key, const std:
 
     jclass cls = env->FindClass("org/iotivity/service/ppm/FelixManager");
     jmethodID mid = env->GetStaticMethodID(cls, "findPlugins",
-                        "(Ljava/lang/String;Ljava/lang/String;)[Lorg/osgi/framework/Bundle;");
+                                           "(Ljava/lang/String;Ljava/lang/String;)[Lorg/osgi/framework/Bundle;");
 
     // call findPlugins() function
     jobjectArray jresultArray = (jobjectArray)env->CallStaticObjectMethod(cls, mid, (jstring)jkey,
@@ -243,9 +243,9 @@ std::vector<Plugin> *FelixAdapter::findPlugins(const std::string key, const std:
         // set Name value
         cls = env->FindClass("org/iotivity/service/ppm/FelixManager");
         mid = env->GetStaticMethodID(cls, "getValue",
-                    "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
+                                     "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
         std::string key = "Name";
-        jstring jname = (jstring)env->CallStaticObjectMethod(cls, mid, jid, 
+        jstring jname = (jstring)env->CallStaticObjectMethod(cls, mid, jid,
                         env->NewStringUTF(key.c_str()));
         std::string name = env->GetStringUTFChars(jname, 0);
         plugin->setValue("Name", name);
@@ -334,8 +334,8 @@ const std::string FelixAdapter::getState(const std::string plugID)
 
     jstring jplugID = env->NewStringUTF(plugID.c_str());
     jclass cls = env->FindClass("org/iotivity/service/ppm/FelixManager");
-    jmethodID mid = env->GetStaticMethodID(cls, "getState", 
-                    "(Ljava/lang/String;)Ljava/lang/String;");
+    jmethodID mid = env->GetStaticMethodID(cls, "getState",
+                                           "(Ljava/lang/String;)Ljava/lang/String;");
 
     // call getState() function
     jstring jresult = (jstring)env->CallStaticObjectMethod(cls, mid, jplugID);

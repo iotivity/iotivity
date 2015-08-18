@@ -51,7 +51,7 @@ ICtxDelegate *g_pDelegate;
 
 void InitializeContext(ICtxDelegate *pDelegate)
 {
- 
+
     std::cout << "[BMISensor] Sensor::" << __func__ << " is called."
               << std::endl;
 

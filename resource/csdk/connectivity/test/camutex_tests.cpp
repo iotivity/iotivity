@@ -144,7 +144,7 @@ TEST(MutexTests, TC_03_THREAD_LOCKING)
 
     EXPECT_EQ(CA_STATUS_OK, ca_thread_pool_init(3, &mythreadpool));
 
-    _func1_struct pData = {};
+    _func1_struct pData = {0, false, false};
 
     pData.mutex = ca_mutex_new();
 

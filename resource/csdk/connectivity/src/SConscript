@@ -9,7 +9,8 @@ Import('env')
 ca_os = env.get('TARGET_OS')
 ca_transport = env.get('TARGET_TRANSPORT')
 secured = env.get('SECURED')
-root_dir =  os.path.join(Dir('.').abspath, './../')
+with_ra = env.get ('WITH_RA')
+root_dir = os.pardir
 ca_path = os.curdir
 
 #####################################################################
@@ -26,18 +27,14 @@ env.AppendUnique(CPPPATH = [ os.path.join(root_dir, 'inc'),
 if ca_os not in ['arduino', 'windows', 'winrt']:
 	env.AppendUnique(CPPDEFINES = ['WITH_POSIX'])
 
+if ca_os not in ['darwin', 'ios', 'windows', 'winrt']:
+	env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
+
 if ca_os in ['darwin','ios']:
 	env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
-	
-#Getting common source files
-env.SConscript(root_dir + '/common/SConscript')
 
-if ca_os == 'tizen':
-	#Getting routing source files
-	env.SConscript(root_dir + '/routing/SConscript')
-else:
-	#Getting routing source files
-	env.SConscript(os.path.join(root_dir, '../routing/SConscript'))
+# Getting common source files
+env.SConscript('./../common/SConscript')
 
 # The tinydtls library is found in '#extlibs/tinydtls', where the '#'
 # is interpreted by SCons as the top-level iotivity directory where
@@ -52,7 +49,8 @@ env.AppendUnique(CA_SRC = [os.path.join(ca_path,
                                         'adapter_util/caadapterutils.c')])
 env.AppendUnique(CA_SRC = [os.path.join(ca_path,
                                         'adapter_util/cafragmentation.c')])
-
+if ca_os in ['android', 'tizen']:
+	env.AppendUnique(CA_SRC=[os.path.join(ca_path, 'adapter_util/ifaddrs.c')])
 if env.get('SECURED') == '1':
 	env.AppendUnique(CA_SRC = [os.path.join(ca_path,
                                                 'adapter_util/caadapternetdtls.c')])
@@ -67,13 +65,12 @@ if ca_os == 'arduino':
 	ca_common_src = [
 		'caconnectivitymanager.c',
 		'cainterfacecontroller.c',
-		'camessagehandler_singlethread.c',
+		'camessagehandler.c',
 		'canetworkconfigurator.c',
 		'caprotocolmessage.c',
 		'caretransmission.c',
 		]
 else:
-	env.AppendUnique(CPPDEFINES = ['WITH_ROUTING'])
 	ca_common_src = [
 		'caconnectivitymanager.c',
 		'cainterfacecontroller.c',
@@ -83,6 +80,9 @@ else:
 		'caqueueingthread.c',
 		'caretransmission.c',
 		]
+	if (('BT' in ca_transport) or ('IP' in ca_transport) or ('ALL' in ca_transport)):
+		env.AppendUnique(CA_SRC = [os.path.join(ca_path, 'cablockwisetransfer.c') ])
+		env.AppendUnique(CPPDEFINES = ['WITH_BWT'])
 	if secured == '1':
 		env.AppendUnique(CPPDEFINES = ['__WITH_DTLS__'])
                 if ca_os == 'tizen':
@@ -96,9 +96,11 @@ ca_common_src = [
 env.AppendUnique(CA_SRC = ca_common_src)
 
 if 'ALL' in ca_transport:
-        transports = [ 'ip_adapter', 'bt_edr_adapter', 'bt_le_adapter' ]
-        env.SConscript(dirs = [
-                os.path.join(ca_path, d) for d in transports ])
+		transports = [ 'ip_adapter', 'bt_edr_adapter', 'bt_le_adapter' ]
+		if with_ra:
+				transports.append ('ra_adapter')
+		env.SConscript(dirs = [
+				os.path.join(ca_path, d) for d in transports ])
 
 if 'IP' in ca_transport:
 	env.SConscript(os.path.join(ca_path, 'ip_adapter/SConscript'))
@@ -112,6 +114,11 @@ if 'BLE' in ca_transport:
 print "Include path is %s" % env.get('CPPPATH')
 print "Files path is %s" % env.get('CA_SRC')
 if ca_os in ['android', 'tizen']:
+	env.AppendUnique(LIBS = ['coap'])
+	if env.get('SECURED') == '1':
+		env.AppendUnique(LIBS = ['tinydtls'])
+	if ca_os != 'android':
+		env.AppendUnique(LIBS = ['rt'])
 	calib = env.SharedLibrary('connectivity_abstraction', env.get('CA_SRC'))
 else:
 	calib = env.StaticLibrary('connectivity_abstraction', env.get('CA_SRC'))

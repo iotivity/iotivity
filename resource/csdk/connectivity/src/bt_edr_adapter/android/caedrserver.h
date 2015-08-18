@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief This file contains the APIs for BT EDR communications.
+ * This file contains the APIs for BT EDR communications.
  */
 #ifndef CA_EDR_SERVER_H_
 #define CA_EDR_SERVER_H_
@@ -39,98 +39,86 @@ extern "C"
 typedef void (*CAPacketReceiveCallback)(const char *address, const char *data);
 
 /**
- * @brief   Initialize JNI object
- * @return  None
+ * Initialize JNI object.
  */
 void CAEDRServerJniInit();
 
 /**
- * @brief   Initialize server for EDR
- * @param   handle           [IN] thread pool handle object
- * @return  None
+ * Initialize server for EDR.
+ * @param[in]   handle           thread pool handle object.
  */
 void CAEDRServerInitialize(ca_thread_pool_t handle);
 
-/*
- * @brief   Start Accept Thread
- * @return  None
+/**
+ * Start Accept Thread.
  */
 void CAEDRServerStartAcceptThread();
+
 /**
- * @brief   Start unicast server
- * @param   isSecured       [IN] unicast server type
- * @return #CA_STATUS_OK or Appropriate error code
+ * Start unicast server.
+ * @param[in]   isSecured       unicast server type.
+ * @return ::CA_STATUS_OK or Appropriate error code.
  */
 CAResult_t CAEDRStartUnicastServer(bool isSecured);
 
 /**
- * @brief   Start multicast server
- * @param   isSecured       [IN] multicst server type
- * @return #CA_STATUS_OK or Appropriate error code
+ * Start multicast server.
+ * @return ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAEDRStartMulticastServer(bool isSecured);
+CAResult_t CAEDRStartMulticastServer();
 
 /**
- * @brief   Stop unicast server
- * @param   serverID        [IN] unicast server id
- * @return #CA_STATUS_OK or Appropriate error code
+ * Stop unicast server.
+ * @return ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAEDRStopUnicastServer(int32_t serverID);
+CAResult_t CAEDRStopUnicastServer();
 
 /**
- * @brief   Stop multicast server
- * @param   serverID        [IN] multicast server id
- * @return #CA_STATUS_OK or Appropriate error code
+ * Stop multicast server.
+ * @return ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAEDRStopMulticastServer(int32_t serverID);
+CAResult_t CAEDRStopMulticastServer();
 
 /**
- * EDR Method
- */
-
-/**
- * @brief  This function will read the data from remote device.
- * @param  env              [IN] JNI interface pointer
- * @param  id               [IN] index of remote address
- * @param  type             [IN] EDR server type
- * @return #CA_STATUS_OK or Appropriate error code
+ * This function will read the data from remote device.
+ * @param[in]  env              JNI interface pointer.
+ * @param[in]  id               index of remote address.
+ * @param[in]  type             EDR server type.
+ * @return ::CA_STATUS_OK or Appropriate error code.
  */
 CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id, CAAdapterServerType_t type);
 
-/*
- * @brief   Start Listen Task
- * @param   env             [IN] JNI interface pointer
- * @return  None
+/**
+ * Start Listen Task.
+ * @param[in]   env             JNI interface pointer.
  */
 void CANativeStartListenTask(JNIEnv *env);
 
 /**
- * @brief  This function will listen the connection from remote device.
- * @param  env              [IN] JNI interface pointer
- * @return server socket object or NULL
+ * This function will listen the connection from remote device.
+ * @param[in]  env              JNI interface pointer.
+ * @return server socket object or NULL.
  */
 jobject CAEDRNativeListen(JNIEnv *env);
 
 /**
- * @brief  This function will listen the connection from remote device.
- * @param  env              [IN] JNI interface pointer
- * @param  socket           [IN] server socket object
- * @return JNI_TRUE or JNI_FALSE
+ * This function will listen the connection from remote device.
+ * @param[in]  env              JNI interface pointer.
+ * @param[in]  socket           server socket object.
+ * @return JNI_TRUE or JNI_FALSE.
  */
 jboolean CAEDRIsConnectedForSocket(JNIEnv *env, jobject socket);
 
 /**
- * @brief  This function will accept the connection from remote device.
- * @param  env                  [IN] JNI interface pointer
- * @param  severSocketObject    [IN] server socket object
- * @return None
+ * This function will accept the connection from remote device.
+ * @param[in]  env                  JNI interface pointer.
+ * @param[in]  severSocketObject    server socket object.
  */
 void CAEDRNativeAccept(JNIEnv *env, jobject severSocketObject);
 
 /**
- * @brief   Remove all device objects in the list
- * @param   env    [IN] JNI interface pointer
- * @return  None
+ * Remove all device objects in the list.
+ * @param[in]   env    JNI interface pointer.
  */
 void CAEDRNatvieCloseServerTask(JNIEnv* env);
 
@@ -139,4 +127,3 @@ void CAEDRNatvieCloseServerTask(JNIEnv* env);
 #endif
 
 #endif /* CA_EDR_SERVER_H_ */
-

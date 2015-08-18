@@ -113,7 +113,7 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
     ResourceObserver * resourceObserver = serverObsList;
     uint8_t numObs = 0;
     OCServerRequest * request = NULL;
-    OCEntityHandlerRequest ehRequest = {};
+    OCEntityHandlerRequest ehRequest = {0};
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
     bool observeErrorFlag = false;
 
@@ -141,12 +141,19 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
                     request->observeResult = OC_STACK_OK;
                     if(result == OC_STACK_OK)
                     {
-                        result = FormOCEntityHandlerRequest(&ehRequest, (OCRequestHandle) request,
-                                    request->method, (OCResourceHandle) resPtr, request->query,
-                                    request->payload, request->payloadSize,
+                        result = FormOCEntityHandlerRequest(
+                                    &ehRequest,
+                                    (OCRequestHandle) request,
+                                    request->method,
+                                    &request->devAddr,
+                                    (OCResourceHandle) resPtr,
+                                    request->query,
+                                    request->payload,
+                                    request->payloadSize,
                                     request->numRcvdVendorSpecificHeaderOptions,
                                     request->rcvdVendorSpecificHeaderOptions,
-                                    OC_OBSERVE_NO_OPTION, 0);
+                                    OC_OBSERVE_NO_OPTION,
+                                    0);
                         if(result == OC_STACK_OK)
                         {
                             ehResult = resPtr->entityHandler(OC_REQUEST_FLAG, &ehRequest,
@@ -156,13 +163,14 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
                                 FindAndDeleteServerRequest(request);
                             }
                         }
+                        OCPayloadDestroy(ehRequest.payload);
                     }
                 }
             #ifdef WITH_PRESENCE
             }
             else
             {
-                OCEntityHandlerResponse ehResponse = {};
+                OCEntityHandlerResponse ehResponse = {0};
 
                 //This is effectively the implementation for the presence entity handler.
                 OC_LOG(DEBUG, TAG, PCF("This notification is for Presence"));
@@ -229,6 +237,7 @@ OCStackResult SendListObserverNotification (OCResource * resource,
         uint32_t maxAge,
         OCQualityOfService qos)
 {
+    (void)maxAge;
     if(!resource || !obsIdList || !payload)
     {
         return OC_STACK_INVALID_PARAM;
@@ -264,7 +273,7 @@ OCStackResult SendListObserverNotification (OCResource * resource,
                     request->observeResult = OC_STACK_OK;
                     if(result == OC_STACK_OK)
                     {
-                        OCEntityHandlerResponse ehResponse = {};
+                        OCEntityHandlerResponse ehResponse = {0};
                         ehResponse.ehResult = OC_EH_OK;
                         ehResponse.payload = (OCPayload*)OCRepPayloadCreate();
                         if(!ehResponse.payload)
