@@ -123,6 +123,9 @@ coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info, const CAEndpoint_
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
+    VERIFY_NON_NULL_RET(info, TAG, "info", NULL);
+    VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint", NULL);
+
     coap_pdu_t *pdu = NULL;
 
     // RESET have to use only 4byte (empty message)
@@ -250,7 +253,8 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, coap_list_t *options, const CAInfo_t 
                               const CAEndpoint_t *endpoint)
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    VERIFY_NON_NULL_RET(info, TAG, "info is NULL", NULL);
+    VERIFY_NON_NULL_RET(info, TAG, "info", NULL);
+    VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint", NULL);
 
     coap_pdu_t *pdu = coap_new_pdu();
 

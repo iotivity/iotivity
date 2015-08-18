@@ -107,11 +107,6 @@ typedef struct
 } CAServerInfo_t;
 
 /**
- * To log the PDU data.
- */
-void CALogPDUData(coap_pdu_t *pdu);
-
-/**
  * To parse the IP address and port from "ipaddress:port".
  * @param[in]   ipAddrStr       IP address to be parsed.
  * @param[out]  ipAddr          Parsed IP address.
