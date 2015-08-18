@@ -18,8 +18,10 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #include "rd_server.h"
+
 #include "rd_types.h"
 #include "rd_payload.h"
+#include "rd_storage.h"
 
 #include "logger.h"
 
@@ -97,10 +99,10 @@ static OCEntityHandlerResult handlePublishRequest(const OCEntityHandlerRequest *
         return OC_EH_ERROR;
     }
 
-    OCRDPayload *payload = (OCRDPayload*)ehRequest->payload;
+    OCRDPayload *payload = (OCRDPayload *)ehRequest->payload;
     if (payload->payloadType == RD_PAYLOAD_TYPE_PUBLISH)
     {
-        // TODO STORE RESOURCE...
+        OCRDStorePublishedResources(payload->rdPublish);
     }
 
     OC_LOG_V(DEBUG, TAG, "Sending success response");
@@ -115,11 +117,12 @@ static OCEntityHandlerResult handlePublishRequest(const OCEntityHandlerRequest *
 
     return ehResult;
 }
+
 /*
  * This internal method is the entity handler for RD resources and
  * will handle REST request (GET/PUT/POST/DEL) for them.
  */
-static OCEntityHandlerResult RDEntityHandler(OCEntityHandlerFlag flag,
+static OCEntityHandlerResult rdEntityHandler(OCEntityHandlerFlag flag,
         OCEntityHandlerRequest *ehRequest, void *callbackParameter)
 {
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
@@ -169,7 +172,7 @@ OCStackResult OCRDStart()
                                   OC_RSRVD_RESOURCE_TYPE_RD,
                                   OC_RSRVD_INTERFACE_DEFAULT,
                                   OC_RSRVD_RD_URI,
-                                  RDEntityHandler,
+                                  rdEntityHandler,
                                   NULL,
                                   (OC_ACTIVE | OC_DISCOVERABLE | OC_OBSERVABLE));
 

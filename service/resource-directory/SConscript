@@ -25,13 +25,13 @@
 Import('env')
 
 if env.get('RELEASE'):
-	env.AppendUnique(CCFLAGS = ['-Os'])
-	env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+    env.AppendUnique(CCFLAGS = ['-Os'])
+    env.AppendUnique(CPPDEFINES = ['NDEBUG'])
 else:
-	env.AppendUnique(CCFLAGS = ['-g'])
+    env.AppendUnique(CCFLAGS = ['-g'])
 
 if env.get('LOGGING'):
-	env.AppendUnique(CPPDEFINES = ['-DTB_LOG'])
+    env.AppendUnique(CPPDEFINES = ['-DTB_LOG'])
 
 lib_env = env.Clone()
 SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
@@ -47,27 +47,28 @@ rd_env.AppendUnique(CPPPATH = ['../../resource/csdk/logger/include'])
 rd_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'libcoap'])
 
 if target_os not in ['windows', 'winrt']:
-	rd_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-Wextra'])
+    rd_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-Wextra'])
 
 if target_os == 'linux':
-	rd_env.AppendUnique(LIBS = ['pthread'])
+    rd_env.AppendUnique(LIBS = ['pthread'])
 
 if target_os == 'android':
-	rd_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-	rd_env.AppendUnique(LIBS = ['gnustl_static'])
+    rd_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
+    rd_env.AppendUnique(LIBS = ['gnustl_static'])
 
-	if not env.get('RELEASE'):
-		rd_env.AppendUnique(LIBS = ['log'])
+    if not env.get('RELEASE'):
+        rd_env.AppendUnique(LIBS = ['log'])
 
 ######################################################################
 # Source files and Targets
 ######################################################################
 RD_SRC_DIR = 'src/'
 rd_src = [
-		RD_SRC_DIR + 'rd_server.c',
-		RD_SRC_DIR + 'rd_payload.c',
-		RD_SRC_DIR + 'rd_client.c',
-        ]
+        RD_SRC_DIR + '/internal/rd_storage.c',
+        RD_SRC_DIR + 'rd_server.c',
+        RD_SRC_DIR + 'rd_payload.c',
+        RD_SRC_DIR + 'rd_client.c',
+         ]
 
 if target_os in ['tizen'] :
     rdsdk = rd_env.SharedLibrary('resource_directory', rd_src)

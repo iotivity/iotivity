@@ -117,6 +117,16 @@ void OCRDPayloadDestroy(OCRDPayload *payload);
  */
 void OCRDPayloadLog(LogLevel level, const char *tag, const OCRDPayload *payload);
 
+/**
+ * Logs the subset of the OCRDPayload, prints separately OCRDPublish.
+ *
+ * @param level Log level DEBUG or INFO or ERROR.
+ * @param tag File specific tag to use.
+ * @param payload Pointer to already allocated memory for OCRDPublish.
+ */
+void OCRDPublishPayloadLog(LogLevel level, const char *tag,
+        const OCRDPublishPayload *rdPublish);
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus

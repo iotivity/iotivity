@@ -43,7 +43,6 @@ static void linksPayloadDestroy(OCRDLinksPayload *linkPayload)
         links = links->next;
         OICFree(tmp);
     }
-
 }
 
 OCStackResult OCRDPayloadToCbor(const OCRDPayload *rdPayload, uint8_t **outPayload, size_t *size)
@@ -128,6 +127,7 @@ OCStackResult OCRDPayloadToCbor(const OCRDPayload *rdPayload, uint8_t **outPaylo
             OC_LOG_V(DEBUG, TAG, "RD Payload bias factor: %d", rdPayload->rdDiscovery->sel);
         }
     }
+
     cborEncoderResult = cbor_encoder_close_container(&rootArray, &map);
     if (CborNoError != cborEncoderResult)
     {
@@ -378,7 +378,6 @@ void OCRDLinksPayloadCreate(const char *uri, const char *rt, const char *itf,
         OCRDLinksPayload **linksPayload)
 {
     OCRDLinksPayload *payload = OICCalloc(1, sizeof(OCRDLinksPayload));
-
     if (!payload)
     {
         goto no_memory;
@@ -442,7 +441,6 @@ OCRDPublishPayload* OCRDPublishPayloadCreate(int ttl,
         OCRDLinksPayload *linksPayload)
 {
     OCRDPublishPayload *rdPublish = OICCalloc(1, sizeof(OCRDPublishPayload));
-
     if (!rdPublish)
     {
         return NULL;
@@ -504,8 +502,12 @@ void OCRDPayloadLog(LogLevel level, const char *tag, const OCRDPayload *payload)
     {
         OC_LOG_V(level, tag, "RD Payload Discovery BIAS : %d", payload->rdDiscovery->sel);
     }
+    OCRDPublishPayloadLog(level, tag, payload->rdPublish);
+}
 
-    if (payload->rdPublish)
+void OCRDPublishPayloadLog(LogLevel level, const char *tag, const OCRDPublishPayload *rdPublish)
+{
+    if (rdPublish)
     {
         if (payload->rdPublish->deviceName.deviceName)
         {
@@ -517,9 +519,9 @@ void OCRDPayloadLog(LogLevel level, const char *tag, const OCRDPayload *payload)
             OC_LOG_V(level, tag, "RD Payload Publish ID : %s",  payload->rdPublish->deviceId.id);
         }
 
-        OC_LOG_V(level, tag, "RD Payload Publish TTL : %d", payload->rdPublish->ttl);
+        OC_LOG_V(level, tag, "RD Payload Publish TTL : %d", rdPublish->ttl);
 
-        if (payload->rdPublish->links)
+        if (rdPublish->links)
         {
             for (OCRDLinksPayload *temp = payload->rdPublish->links; temp; temp = temp->next)
             {
