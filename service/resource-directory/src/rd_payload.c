@@ -29,6 +29,7 @@
 #define TAG PCF("OCRDPayload")
 
 #define CBOR_ROOT_ARRAY_LENGTH 2
+#define CBOR_LINK_ARRAY_LENGTH 3
 
 static void linksPayloadDestroy(OCRDLinksPayload *linkPayload)
 {
@@ -126,12 +127,125 @@ OCStackResult OCRDPayloadToCbor(const OCRDPayload *rdPayload, uint8_t **outPaylo
             }
             OC_LOG_V(DEBUG, TAG, "RD Payload bias factor: %d", rdPayload->rdDiscovery->sel);
         }
+        else
+        {
+            OC_LOG_V(ERROR, TAG, "Missing sel parameter in the discovery payload.");
+            goto exit;
+        }
+    }
+    else if (rdPayload->payloadType == RD_PAYLOAD_TYPE_PUBLISH)
+    {
+        cborEncoderResult = cbor_encode_text_string(&map, OC_RSRVD_TTL, sizeof(OC_RSRVD_TTL) - 1);
+        if (CborNoError != cborEncoderResult)
+        {
+            OC_LOG_V(ERROR, TAG, "Failed setting publish ttl type.");
+            goto exit;
+        }
+
+        cborEncoderResult = cbor_encode_uint(&map, rdPayload->rdPublish->ttl);
+        if (CborNoError != cborEncoderResult)
+        {
+            OC_LOG_V(ERROR, TAG, "Failed setting publish ttl value.");
+            goto exit;
+        }
+
+        CborEncoder linksArray;
+        cborEncoderResult = cbor_encode_text_string(&map, OC_RSRVD_LINKS, sizeof(OC_RSRVD_LINKS) - 1);
+        if (CborNoError != cborEncoderResult)
+        {
+            OC_LOG_V(ERROR, TAG, "Failed setting publish links type.");
+            goto exit;
+        }
+
+        cborEncoderResult = cbor_encoder_create_array(&map, &linksArray, CborIndefiniteLength);
+        if (CborNoError != cborEncoderResult)
+        {
+            OC_LOG_V(ERROR, TAG, "Failed setting publish links array.");
+            goto exit;
+        }
+
+        {
+            OCRDLinksPayload *rtPtr = rdPayload->rdPublish->links;
+            while(rtPtr)
+            {
+                CborEncoder linksMap;
+                cborEncoderResult = cbor_encoder_create_map(&linksArray, &linksMap, CBOR_LINK_ARRAY_LENGTH);
+                if (CborNoError != cborEncoderResult)
+                {
+                    OC_LOG_V(ERROR, TAG, "Failed setting publish map.");
+                    goto exit;
+                }
+
+                cborEncoderResult = cbor_encode_text_string(&linksMap, OC_RSRVD_HREF,
+                        sizeof(OC_RSRVD_HREF) - 1);
+                if (CborNoError != cborEncoderResult)
+                {
+                    OC_LOG_V(ERROR, TAG, "Failed setting publish href type.");
+                    goto exit;
+                }
+
+                cborEncoderResult = cbor_encode_text_string(&linksMap, rtPtr->href,
+                        strlen(rtPtr->href));
+                if (CborNoError != cborEncoderResult)
+                {
+                    OC_LOG_V(ERROR, TAG, "Failed setting publish href value.");
+                    goto exit;
+                }
+
+                cborEncoderResult = cbor_encode_text_string(&linksMap, OC_RSRVD_INTERFACE,
+                        sizeof(OC_RSRVD_INTERFACE) - 1);
+                if (CborNoError != cborEncoderResult)
+                {
+                    OC_LOG_V(ERROR, TAG, "Failed setting publish itf type.");
+                    goto exit;
+                }
+
+                cborEncoderResult = cbor_encode_text_string(&linksMap, rtPtr->itf,
+                        strlen(rtPtr->itf));
+                if (CborNoError != cborEncoderResult)
+                {
+                    OC_LOG_V(ERROR, TAG, "Failed setting publish itf value.");
+                    goto exit;
+                }
+
+                cborEncoderResult = cbor_encode_text_string(&linksMap, OC_RSRVD_RESOURCE_TYPE,
+                        sizeof(OC_RSRVD_RESOURCE_TYPE) - 1);
+                if (CborNoError != cborEncoderResult)
+                {
+                    OC_LOG_V(ERROR, TAG, "Failed setting publish rt type.");
+                    goto exit;
+                }
+
+                cborEncoderResult = cbor_encode_text_string(&linksMap, rtPtr->rt,
+                        strlen(rtPtr->rt));
+                if (CborNoError != cborEncoderResult)
+                {
+                    OC_LOG_V(ERROR, TAG, "Failed setting publish rt value.");
+                    goto exit;
+                }
+
+                cborEncoderResult = cbor_encoder_close_container(&linksArray, &linksMap);
+                if (CborNoError != cborEncoderResult)
+                {
+                    OC_LOG_V(ERROR, TAG, "Failed closing linksMap publish map.");
+                    goto exit;
+                }
+
+                rtPtr = rtPtr->next;
+            }
+        }
+        cborEncoderResult = cbor_encoder_close_container(&map, &linksArray);
+        if (CborNoError != cborEncoderResult)
+        {
+            OC_LOG_V(ERROR, TAG, "Failed closing linksArray container.");
+            goto exit;
+        }
     }
 
     cborEncoderResult = cbor_encoder_close_container(&rootArray, &map);
     if (CborNoError != cborEncoderResult)
     {
-        OC_LOG_V(ERROR, TAG, "Failed closing rootArray container.");
+        OC_LOG_V(ERROR, TAG, "Failed closing map container.");
         goto exit;
     }
 

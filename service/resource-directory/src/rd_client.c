@@ -17,28 +17,69 @@
 // limitations under the License.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-#include "logger.h"
-#include "oic_malloc.h"
+#include <stdarg.h>
 
 #include "rd_client.h"
+
+#include "logger.h"
+#include "oic_malloc.h"
+#include "oic_string.h"
+
 #include "rd_payload.h"
 
 #define DEFAULT_CONTEXT_VALUE 0x99
+#define OC_RD_PUBLISH_TTL 86400
 
 #define TAG  PCF("RDClient")
 
+static OCStackResult sendRequest(OCMethod method, char *uri, OCDevAddr *addr,
+        OCPayload *payload, OCCallbackData cbData)
+{
+    OCDoHandle handle;
+    OCStackResult result;
+
+    result = OCDoResource(handle,
+        method,
+        uri,
+        addr,
+        payload,
+        CT_ADAPTER_IP,
+        OC_LOW_QOS,
+        &cbData,
+        NULL,
+        0);
+
+    if (result == OC_STACK_OK)
+    {
+        OC_LOG_V(DEBUG, TAG, "Resource Directory send successful...");
+    }
+    else
+    {
+        OC_LOG_V(ERROR, TAG, "Resource Directory send failed...");
+    }
+
+    return result;
+}
+
+static OCStackApplicationResult handlePublishCB(void *ctx,
+        OCDoHandle handle, OCClientResponse *clientResponse)
+{
+    OCStackApplicationResult ret = OC_STACK_DELETE_TRANSACTION;
+    OC_LOG_V(DEBUG, TAG, "Successfully published resources.");
+
+    // TOOO: Stop multicast traffic on the client.
+
+    return ret;
+}
+
 static void retreiveRDDetails(OCClientResponse *clientResponse, OCRDBiasFactorCB clientCB)
 {
-    OC_LOG_V(DEBUG, TAG, "\tAddress: %s : %d",  clientResponse->devAddr.addr,
-             clientResponse->devAddr.port);
+    OC_LOG_V(DEBUG, TAG, "\tAddress of the RD: %s : %d",  clientResponse->devAddr.addr,
+            clientResponse->devAddr.port);
 
     OCRDPayload *payload = (OCRDPayload *) clientResponse->payload;
-    if (payload)
-    {
-        OC_LOG_V(DEBUG, TAG, "\tType: %d",  payload->base.type);
-        OC_LOG_V(DEBUG, TAG, "\tPayloadType: %d",  payload->payloadType);
-        OC_LOG_V(DEBUG, TAG, "\tBiasFactor: %d",  payload->rdDiscovery->sel);
-    }
+    OCRDPayloadLog(DEBUG, TAG, payload);
+
     // TODO: Multiple Resource Directory will have different biasFactor,
     // needs to cache here detail
     // and after certain timeout then decide based on the biasFactor.
@@ -47,13 +88,13 @@ static void retreiveRDDetails(OCClientResponse *clientResponse, OCRDBiasFactorCB
 
 }
 
-static OCStackApplicationResult discoverRDCB(void *ctx,
+static OCStackApplicationResult handleDiscoverCB(void *ctx,
         OCDoHandle handle, OCClientResponse *clientResponse)
 {
     OC_LOG(DEBUG, TAG, "Found Resource Directory");
     OCStackApplicationResult ret = OC_STACK_DELETE_TRANSACTION;
 
-    OCRDClientContextCB *cb = (OCRDClientContextCB*) ctx;
+    OCRDClientContextCB *cb = (OCRDClientContextCB *) ctx;
     if (!cb)
     {
         OC_LOG(ERROR, TAG, "RD Context Invalid Parameters.");
@@ -82,10 +123,6 @@ static OCStackApplicationResult discoverRDCB(void *ctx,
 
 OCStackResult OCRDDiscover(OCRDBiasFactorCB cbBiasFactor)
 {
-    OCStackResult result = OC_STACK_ERROR;
-    OCCallbackData cbData;
-    OCDoHandle handle;
-
     if (!cbBiasFactor)
     {
         OC_LOG(DEBUG, TAG, "No callback function specified.");
@@ -102,29 +139,72 @@ OCStackResult OCRDDiscover(OCRDBiasFactorCB cbBiasFactor)
     cbContext.context = (void *)DEFAULT_CONTEXT_VALUE;
     cbContext.cbFunc = cbBiasFactor;
 
-    cbData.cb = discoverRDCB;
+    OCCallbackData cbData;
+    cbData.cb = handleDiscoverCB;
     cbData.context = (void *)(&cbContext);
     cbData.cd = NULL;
 
-    result = OCDoResource(&handle,
-                          OC_REST_DISCOVER,
-                          queryUri,
-                          0,
-                          0,
-                          CT_ADAPTER_IP,
-                          OC_LOW_QOS,
-                          &cbData,
-                          NULL,
-                          0);
+    return sendRequest(OC_REST_DISCOVER, queryUri, NULL, NULL, cbData);
+}
 
-    if (result == OC_STACK_OK)
+OCStackResult OCRDPublish(char *addr, uint16_t port, int numArg, ... )
+{
+    if (!addr)
     {
-        OC_LOG_V(DEBUG, TAG, "Resource Directory finding query send successful...");
-    }
-    else
-    {
-        OC_LOG_V(ERROR, TAG, "Resource Directory finding query send failed...");
+        OC_LOG_V(ERROR, TAG, "RD address not specified.");
+        return OC_STACK_INVALID_PARAM;
     }
 
-    return result;
+    char targetUri[MAX_URI_LENGTH];
+    snprintf(targetUri, MAX_URI_LENGTH, "coap://%s:%d%s?rt=%s", addr, port,
+            OC_RSRVD_RD_URI, OC_RSRVD_RESOURCE_TYPE_RDPUBLISH);
+    OC_LOG_V(DEBUG, TAG, "Target URI : %s", targetUri);
+
+    // Gather all resources locally and do publish
+    OCCallbackData cbData = { 0 };
+    cbData.cb = &handlePublishCB;
+    cbData.cd = NULL;
+    cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
+
+    OCRDLinksPayload* linksPayload = NULL;
+
+    va_list arguments;
+    va_start (arguments, numArg);
+
+    for (int j = 0 ; j < numArg; j++)
+    {
+        OCResourceHandle handle = va_arg(arguments, OCResourceHandle);
+        if (handle)
+        {
+            const char* uri = OCGetResourceUri(handle);
+            const char* rt  = OCGetResourceTypeName(handle, 0);
+            const char* itf = OCGetResourceInterfaceName(handle, 0);
+            if (uri && rt && itf)
+            {
+                OCRDLinksPayloadCreate(uri, rt, itf, &linksPayload);
+            }
+        }
+    }
+    va_end(arguments);
+
+    OCRDPayload *rdPayload = OCRDPayloadCreate(RD_PAYLOAD_TYPE_PUBLISH);
+    if (!rdPayload)
+    {
+        OC_LOG_V(ERROR, TAG, "Failed allocating memory.");
+        return OC_STACK_NO_MEMORY;
+    }
+    rdPayload->rdPublish = OCRDPublishPayloadCreate(OC_RD_PUBLISH_TTL, linksPayload);
+    if (!rdPayload->rdPublish)
+    {
+        OC_LOG_V(ERROR, TAG, "Failed allocating memory.");
+        return OC_STACK_NO_MEMORY;
+    }
+
+    OCDevAddr rdAddr = { 0 };
+    OICStrcpy(rdAddr.addr, MAX_ADDR_STR_SIZE, addr);
+    rdAddr.port = port;
+
+    OCRDPayloadLog(DEBUG, TAG, rdPayload);
+
+    return sendRequest(OC_REST_POST, targetUri, &rdAddr, (OCPayload *)rdPayload, cbData);
 }

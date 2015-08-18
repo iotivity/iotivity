@@ -41,6 +41,18 @@ extern "C" {
  */
 OCStackResult OCRDDiscover(OCRDBiasFactorCB cbBiasFactor);
 
+/*
+* Publish resource on the RD.
+*
+* @param addr The IP address of the RD, it could be either retrieved via OCRDDiscover().
+* @param port The port of the RD.
+* @param num This denotes the number of registered resource handles being passed
+*            for the remaining arguments.
+*
+* @returns ::OC_STACK_OK when successful and OC_STACK_ERROR when query failed.
+*/
+OCStackResult OCRDPublish(char *addr, uint16_t port, int num, ...);
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus
