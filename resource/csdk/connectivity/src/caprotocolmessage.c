@@ -240,6 +240,14 @@ coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode)
         return NULL;
     }
 
+    if (outpdu->hdr->token_length > CA_MAX_TOKEN_LEN)
+    {
+        OIC_LOG_V(ERROR, TAG, "token length has been exceed : %d",
+                  outpdu->hdr->token_length);
+        coap_delete_pdu(outpdu);
+        return NULL;
+    }
+
     if (outCode)
     {
         (*outCode) = (uint32_t) CA_RESPONSE_CODE(outpdu->hdr->code);
