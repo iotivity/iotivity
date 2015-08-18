@@ -72,11 +72,6 @@ function build_android()
 	scons TARGET_OS=android TARGET_ARCH=x86 RELEASE=$1 TARGET_TRANSPORT=BT $2
 	scons TARGET_OS=android TARGET_ARCH=x86 RELEASE=$1 TARGET_TRANSPORT=BLE $2
 
-	echo "*********** Build for android x86_64 *************"
-	scons TARGET_OS=android TARGET_ARCH=x86_64 RELEASE=$1 TARGET_TRANSPORT=IP $2
-	scons TARGET_OS=android TARGET_ARCH=x86_64 RELEASE=$1 TARGET_TRANSPORT=BT $2
-	scons TARGET_OS=android TARGET_ARCH=x86_64 RELEASE=$1 TARGET_TRANSPORT=BLE $2
-
 	echo "*********** Build for android armeabi *************"
 	scons TARGET_OS=android TARGET_ARCH=armeabi RELEASE=$1 TARGET_TRANSPORT=IP $2
 	scons TARGET_OS=android TARGET_ARCH=armeabi RELEASE=$1 TARGET_TRANSPORT=BT $2

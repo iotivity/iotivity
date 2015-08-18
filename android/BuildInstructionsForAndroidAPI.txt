@@ -10,10 +10,11 @@ Build Instructions for Android-API:
         def ndkBuild = new File(System.env.ANDROID_NDK_HOME, 'ndk-build.cmd')
 
 4.Build scons for android and your targeted architecture (This will also build Android API):
-    a.scons TARGET_OS=android TARGET_ARCH=<target arch> TARGET_TRANSPORT=<target transport> RELEASE=1
-               where <target arch> can be armeabi, armeabi-v7a, x86, x86_64.
+    a.scons TARGET_OS=android TARGET_ARCH=<target arch> TARGET_TRANSPORT=IP RELEASE=1
+               where <target arch> can be armeabi, armeabi-v7a, x86.
                Note: To build in debug mode, use RELEASE=0.
                Note: The minimum SDK version supported is 21.
+               Note: Only TARGET_TRANSPORT currently supported is IP
     b.If the project is setup correctly, you should see a BUILD SUCCESSFUL message on the terminal
     c.You should see the .aar files generated inside of '<iotivity>/android/android_api/base/build/outputs/aar' directory. The .aar files contain jni directory and also a .jar file
 
