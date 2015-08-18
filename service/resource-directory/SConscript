@@ -76,3 +76,8 @@ else :
     rdsdk = rd_env.StaticLibrary('resource_directory', rd_src)
 
 rd_env.InstallTarget(rdsdk, 'libresource_directory')
+
+######################################################################
+# Samples for the resource directory
+######################################################################
+SConscript('samples/SConscript')

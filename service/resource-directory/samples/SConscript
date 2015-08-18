@@ -1,0 +1,32 @@
+##
+# ResourceDirectory Sample Apps build script
+##
+
+Import('env')
+
+lib_env = env.Clone()
+SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+
+rd_sample_app_env = lib_env.Clone()
+
+######################################################################
+# Build flags
+######################################################################
+rd_sample_app_env.AppendUnique(CPPPATH = ['../include'])
+
+rd_sample_app_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-Wextra', '-std=c++0x'])
+rd_sample_app_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+rd_sample_app_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
+rd_sample_app_env.PrependUnique(LIBS = ['resource_directory', 'oc', 'octbstack'])
+
+if env.get('SECURED') == '1':
+    rd_sample_app_env.AppendUnique(LIBS = ['tinydtls'])
+
+####################################################################
+# Source files and Targets
+######################################################################
+rd_server = rd_sample_app_env.Program('rd_server', 'rd_main.c')
+
+Alias("resource_directory", [rd_server])
+
+env.AppendTarget('resource_directory')
