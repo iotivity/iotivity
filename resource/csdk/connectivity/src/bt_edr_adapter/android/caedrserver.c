@@ -1145,6 +1145,7 @@ void CAEDRNatvieCloseServerTask(JNIEnv* env)
         jmethodID jni_mid_close = (*env)->GetMethodID(env, jni_cid_InputStream, "close", "()V");
         (*env)->CallVoidMethod(env, g_inputStream, jni_mid_close);
         (*env)->DeleteGlobalRef(env, g_inputStream);
+        g_inputStream = NULL;
     }
 
     if (g_serverSocket)
@@ -1167,6 +1168,7 @@ void CAEDRNatvieCloseServerTask(JNIEnv* env)
         }
         (*env)->CallVoidMethod(env, g_serverSocket, jni_mid_accept);
         (*env)->DeleteGlobalRef(env, g_serverSocket);
+        g_serverSocket = NULL;
 
         OIC_LOG(DEBUG, TAG, "[EDR][Native] close accept obj");
     }
