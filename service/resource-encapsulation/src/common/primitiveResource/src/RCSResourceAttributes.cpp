@@ -103,13 +103,15 @@ namespace
     template< >
     struct TypeInfoConverter< std::nullptr_t >
     {
-        static constexpr RCSResourceAttributes::TypeId typeId = RCSResourceAttributes::TypeId::NULL_T;
+        static constexpr RCSResourceAttributes::TypeId typeId =
+                RCSResourceAttributes::TypeId::NULL_T;
     };
 
     template< >
     struct TypeInfoConverter< double >
     {
-        static constexpr RCSResourceAttributes::TypeId typeId = RCSResourceAttributes::TypeId::DOUBLE;
+        static constexpr RCSResourceAttributes::TypeId typeId =
+                RCSResourceAttributes::TypeId::DOUBLE;
     };
 
     template< >
@@ -121,13 +123,15 @@ namespace
     template< >
     struct TypeInfoConverter< std::string >
     {
-        static constexpr RCSResourceAttributes::TypeId typeId = RCSResourceAttributes::TypeId::STRING;
+        static constexpr RCSResourceAttributes::TypeId typeId =
+                RCSResourceAttributes::TypeId::STRING;
     };
 
     template< >
     struct TypeInfoConverter< RCSResourceAttributes >
     {
-        static constexpr RCSResourceAttributes::TypeId typeId = RCSResourceAttributes::TypeId::ATTRIBUTES;
+        static constexpr RCSResourceAttributes::TypeId typeId =
+                RCSResourceAttributes::TypeId::ATTRIBUTES;
     };
 
     struct TypeInfo
@@ -154,7 +158,7 @@ namespace
     };
 
     template< typename VARIANT, int POS >
-    constexpr inline std::vector< TypeInfo > getTypeInfo(Int2Type< POS >)
+    constexpr inline std::vector< TypeInfo > getTypeInfo(Int2Type< POS >) noexcept
     {
         auto&& vec = getTypeInfo< VARIANT >(Int2Type< POS - 1 >{ });
         vec.push_back(TypeInfo::get< VARIANT, POS >());
@@ -162,13 +166,13 @@ namespace
     }
 
     template< typename VARIANT >
-    constexpr inline std::vector< TypeInfo > getTypeInfo(Int2Type< 0 >)
+    constexpr inline std::vector< TypeInfo > getTypeInfo(Int2Type< 0 >) noexcept
     {
         return { TypeInfo::get< VARIANT, 0 >() };
     }
 
     template< typename VARIANT >
-    inline TypeInfo getTypeInfo(int which)
+    inline TypeInfo getTypeInfo(int which) noexcept
     {
         static constexpr int variantEnd = boost::mpl::size< typename VARIANT::types >::value - 1;
         static const std::vector< TypeInfo > typeInfos = getTypeInfo< VARIANT >(
@@ -196,12 +200,14 @@ namespace OIC
             return *m_valueRef.m_data == *rhs.m_valueRef.m_data;
         }
 
-        bool operator==(const RCSResourceAttributes::Type& lhs, const RCSResourceAttributes::Type& rhs)
+        bool operator==(const RCSResourceAttributes::Type& lhs,
+                const RCSResourceAttributes::Type& rhs) noexcept
         {
             return lhs.m_which == rhs.m_which;
         }
 
-        bool operator!=(const RCSResourceAttributes::Type& lhs, const RCSResourceAttributes::Type& rhs)
+        bool operator!=(const RCSResourceAttributes::Type& lhs,
+                const RCSResourceAttributes::Type& rhs) noexcept
         {
             return !(lhs == rhs);
         }
@@ -228,7 +234,7 @@ namespace OIC
             return !(lhs == rhs);
         }
 
-        auto RCSResourceAttributes::Type::getId() const -> TypeId
+        auto RCSResourceAttributes::Type::getId() const noexcept -> TypeId
         {
             return ::getTypeInfo< ValueVariant >(m_which).typeId;
         }
@@ -243,10 +249,10 @@ namespace OIC
         {
         }
 
-        RCSResourceAttributes::Value::Value(Value&& from) :
+        RCSResourceAttributes::Value::Value(Value&& from) noexcept :
                 m_data{ new ValueVariant{} }
         {
-            m_data->swap(*from.m_data);
+            m_data.swap(from.m_data);
         }
 
         RCSResourceAttributes::Value::Value(const char* value) :
@@ -289,24 +295,24 @@ namespace OIC
             return boost::apply_visitor(ToStringVisitor(), *m_data);
         }
 
-        void RCSResourceAttributes::Value::swap(Value& rhs)
+        void RCSResourceAttributes::Value::swap(Value& rhs) noexcept
         {
             m_data.swap(rhs.m_data);
         }
 
         auto RCSResourceAttributes::KeyValuePair::KeyVisitor::operator()(
-                iterator* iter) const -> result_type
+                iterator* iter) const noexcept -> result_type
         {
             return iter->m_cur->first;
         }
 
         auto RCSResourceAttributes::KeyValuePair::KeyVisitor::operator()(
-                const_iterator* iter) const -> result_type
+                const_iterator* iter) const noexcept -> result_type
         {
             return iter->m_cur->first;
         }
 
-        auto RCSResourceAttributes::KeyValuePair::ValueVisitor::operator() (iterator* iter)
+        auto RCSResourceAttributes::KeyValuePair::ValueVisitor::operator() (iterator* iter) noexcept
                 -> result_type
         {
             return iter->m_cur->second;
@@ -320,23 +326,23 @@ namespace OIC
         }
 
         auto RCSResourceAttributes::KeyValuePair::ConstValueVisitor::operator()(
-                iterator*iter) const -> result_type
+                iterator*iter) const noexcept -> result_type
         {
             return iter->m_cur->second;
         }
 
         auto RCSResourceAttributes::KeyValuePair::ConstValueVisitor::operator()(
-                const_iterator* iter) const -> result_type
+                const_iterator* iter) const noexcept -> result_type
         {
             return iter->m_cur->second;
         }
 
-        auto RCSResourceAttributes::KeyValuePair::key() const -> const std::string&
+        auto RCSResourceAttributes::KeyValuePair::key() const noexcept -> const std::string&
         {
             return boost::apply_visitor(m_keyVisitor, m_iterRef);
         }
 
-        auto RCSResourceAttributes::KeyValuePair::value() const -> const Value&
+        auto RCSResourceAttributes::KeyValuePair::value() const noexcept -> const Value&
         {
             return boost::apply_visitor(m_constValueVisitor, m_iterRef);
         }
@@ -347,7 +353,7 @@ namespace OIC
         }
 
         RCSResourceAttributes::KeyValuePair::KeyValuePair(boost::variant<iterator*,
-                const_iterator*>&& ref) :
+                const_iterator*>&& ref) noexcept :
                 m_iterRef{ ref }
         {
         }
@@ -415,8 +421,9 @@ namespace OIC
         {
         }
 
-        auto RCSResourceAttributes::const_iterator::operator=(const RCSResourceAttributes::iterator& iter)
-            -> const_iterator& {
+        auto RCSResourceAttributes::const_iterator::operator=(
+                const RCSResourceAttributes::iterator& iter) -> const_iterator&
+        {
             m_cur = iter.m_cur;
             return *this;
         }
@@ -425,6 +432,7 @@ namespace OIC
         {
             return m_keyValuePair;
         }
+
         auto RCSResourceAttributes::const_iterator::operator->() const -> pointer
         {
             return &m_keyValuePair;
@@ -453,32 +461,33 @@ namespace OIC
             return !(*this == rhs);
         }
 
-        auto RCSResourceAttributes::begin() -> iterator
+
+        auto RCSResourceAttributes::begin() noexcept -> iterator
         {
             return iterator{ m_values.begin() };
         }
 
-        auto RCSResourceAttributes::end() -> iterator
+        auto RCSResourceAttributes::end() noexcept -> iterator
         {
             return iterator{ m_values.end() };
         }
 
-        auto RCSResourceAttributes::begin() const -> const_iterator
+        auto RCSResourceAttributes::begin() const noexcept -> const_iterator
         {
             return const_iterator{ m_values.begin() };
         }
 
-        auto RCSResourceAttributes::end() const -> const_iterator
+        auto RCSResourceAttributes::end() const noexcept -> const_iterator
         {
             return const_iterator{ m_values.end() };
         }
 
-        auto RCSResourceAttributes::cbegin() const -> const_iterator
+        auto RCSResourceAttributes::cbegin() const noexcept -> const_iterator
         {
             return const_iterator{ m_values.begin() };
         }
 
-        auto RCSResourceAttributes::cend() const -> const_iterator
+        auto RCSResourceAttributes::cend() const noexcept -> const_iterator
         {
             return const_iterator{ m_values.end() };
         }
@@ -517,7 +526,7 @@ namespace OIC
             }
         }
 
-        void RCSResourceAttributes::clear()
+        void RCSResourceAttributes::clear() noexcept
         {
             return m_values.clear();
         }
@@ -532,12 +541,12 @@ namespace OIC
             return m_values.find(key) != m_values.end();
         }
 
-        bool RCSResourceAttributes::empty() const
+        bool RCSResourceAttributes::empty() const noexcept
         {
             return m_values.empty();
         }
 
-        size_t RCSResourceAttributes::size() const
+        size_t RCSResourceAttributes::size() const noexcept
         {
             return m_values.size();
         }
@@ -600,5 +609,6 @@ namespace OIC
 
             return replacedList;
         }
+
     }
 }

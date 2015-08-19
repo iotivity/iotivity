@@ -2004,22 +2004,6 @@ CAData_t *CACloneCAData(const CAData_t *data)
         clone->remoteEndpoint = CACloneEndpoint(data->remoteEndpoint);
     }
 
-    if (NULL != data->options && 0 < data->numOptions)
-    {
-        // copy data
-        CAHeaderOption_t *headerOption = (CAHeaderOption_t *) OICMalloc(sizeof(CAHeaderOption_t)
-                                                                        * data->numOptions);
-        if (NULL == headerOption)
-        {
-            OIC_LOG(ERROR, TAG, "Out of memory");
-            CADestroyDataSet(clone);
-            return NULL;
-        }
-        memcpy(headerOption, data->options, sizeof(CAHeaderOption_t) * data->numOptions);
-
-        clone->options = headerOption;
-    }
-
     return clone;
 }
 
@@ -2475,8 +2459,8 @@ CABlockData_t *CACreateNewBlockData(const CAData_t *sendData)
 
     ca_mutex_lock(g_context.blockDataListMutex);
 
-    CAResult_t res = u_arraylist_add(g_context.dataList, (void *) data);
-    if (CA_STATUS_OK != res)
+    bool res = u_arraylist_add(g_context.dataList, (void *) data);
+    if (!res)
     {
         OIC_LOG(ERROR, TAG, "add has failed");
         CADestroyBlockID(data->blockDataId);
@@ -2558,7 +2542,6 @@ void CADestroyDataSet(CAData_t* data)
     CAFreeEndpoint(data->remoteEndpoint);
     CADestroyRequestInfoInternal(data->requestInfo);
     CADestroyResponseInfoInternal(data->responseInfo);
-    OICFree(data->options);
     OICFree(data);
 }
 

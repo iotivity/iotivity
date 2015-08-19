@@ -398,13 +398,6 @@ namespace OC
             }
         }
 
-        OCRepPayload* cur = root;
-        for(auto& child : this->getChildren())
-        {
-            cur->next = child.getPayload();
-            cur = cur->next;
-        }
-
         return root;
     }
 

@@ -130,12 +130,6 @@ void CAEDRNativeRemoveDevice(const char *remoteAddress);
 CAConnectedState_t CAEDRIsConnectedDevice(const char *remoteAddress);
 
 /**
- * Reordering for the list.
- * @param[in]   index           index of device list that want to reordering.
- */
-void CAEDRReorderingDeviceList(uint32_t index);
-
-/**
  * This function will create the device socket list.
  */
 void CAEDRNativeCreateDeviceSocketList();
@@ -196,11 +190,6 @@ jobject CAEDRNativeGetDeviceSocketBaseAddr(JNIEnv *env, const char* remoteAddres
  */
 uint32_t CAEDRGetSocketListLength();
 
-/**
- * Reordering for the list.
- * @param[in]   index           index of device list that want to reordering.
- */
-void CAEDRReorderingDeviceSocketList(uint32_t index);
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

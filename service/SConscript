@@ -43,7 +43,7 @@ if target_os not in ['arduino','darwin','ios']:
 		SConscript('notification-manager/SConscript')
 
 	# Build resource-encapsulation project
-	if target_os not in ['android', 'tizen']:
+	if target_os not in ['tizen']:
 		SConscript('resource-encapsulation/SConscript')
 #else:
 #	SConscript('notification-manager/SampleApp/arduino/SConscript')

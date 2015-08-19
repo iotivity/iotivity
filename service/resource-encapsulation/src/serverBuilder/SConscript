@@ -42,6 +42,7 @@ release = env.get('RELEASE')
 ######################################################################
 server_builder_env.AppendUnique(CPPPATH = [
     '../common/primitiveResource/include',
+    '../common/utils/include',
     '../../include',
     ])
 
@@ -59,7 +60,7 @@ if target_os not in ['darwin', 'ios', 'windows', 'winrt']:
 
 if target_os == 'android':
     server_builder_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-    server_builder_env.PrependUnique(LIBS = ['gnustl_shared', 'compatibility', 'log'])
+    server_builder_env.PrependUnique(LIBS = ['gnustl_shared', 'log'])
 
 server_builder_env.AppendUnique(LIBS = ['dl', 'oc', 'rcs_common'])
 
@@ -83,37 +84,36 @@ server_builder_env.InstallTarget([server_builder_static, server_builder_shared],
 ######################################################################
 # Build Test
 ######################################################################
-server_builder_test_env = server_builder_env.Clone();
+if target_os == 'linux':
+	server_builder_test_env = server_builder_env.Clone();
 
-server_builder_test_env.AppendUnique(CPPPATH = [
-    env.get('SRC_DIR')+'/extlibs/hippomocks-master',
-    gtest_dir + '/include',
-    '../common/utils/include'
-    ])
+	server_builder_test_env.AppendUnique(CPPPATH = [
+		env.get('SRC_DIR')+'/extlibs/hippomocks-master',
+		gtest_dir + '/include',
+		'../common/utils/include'
+		])
 
-gtest = File(gtest_dir + '/lib/.libs/libgtest.a')
-gtest_main = File(gtest_dir + '/lib/.libs/libgtest_main.a')
+	gtest = File(gtest_dir + '/lib/.libs/libgtest.a')
+	gtest_main = File(gtest_dir + '/lib/.libs/libgtest_main.a')
 
-server_builder_test_env.PrependUnique(LIBS = [
-    'rcs_server',
-    'octbstack',
-    'oc_logger',
-    'connectivity_abstraction',
-    'coap',
-    gtest,
-    gtest_main,
-    'pthread',
-    ])
+	server_builder_test_env.PrependUnique(LIBS = [
+		'rcs_server',
+		'octbstack',
+		'oc_logger',
+		'connectivity_abstraction',
+		'coap',
+		gtest,
+		gtest_main,
+		'pthread',
+		])
 
-server_builder_test_src = env.Glob('unittests/*.cpp')
+	server_builder_test_src = env.Glob('unittests/*.cpp')
 
-server_builder_test = server_builder_test_env.Program('rcs_server_test', server_builder_test_src)
-Alias("rcs_server_test", server_builder_test)
-env.AppendTarget('rcs_server_test')
+	server_builder_test = server_builder_test_env.Program('rcs_server_test', server_builder_test_src)
+	Alias("rcs_server_test", server_builder_test)
+	env.AppendTarget('rcs_server_test')
 
-if env.get('TEST') == '1':
-    target_os = env.get('TARGET_OS')
-    if target_os == 'linux':
-        from tools.scons.RunTest import *
-        run_test(server_builder_test_env, '',
-                'service/resource-encapsulation/src/serverBuilder/rcs_server_test')
+	if env.get('TEST') == '1':
+		from tools.scons.RunTest import *
+		run_test(server_builder_test_env, '',
+			'service/resource-encapsulation/src/serverBuilder/rcs_server_test')

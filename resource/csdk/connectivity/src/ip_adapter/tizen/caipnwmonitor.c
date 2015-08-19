@@ -36,6 +36,26 @@
 
 #define TAG "IP_MONITOR"
 
+CAResult_t CAIPInitializeNetworkMonitor()
+{
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAIPTerminateNetworkMonitor()
+{
+    return CA_STATUS_OK;
+}
+
+int CAGetPollingInterval(int interval)
+{
+    return interval;
+}
+
+CAInterface_t *CAFindInterfaceChange()
+{
+    return NULL;
+}
+
 u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
 {
     u_arraylist_t *iflist = u_arraylist_create();
@@ -92,8 +112,8 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
         ifitem->ipv4addr = ((struct sockaddr_in *)(ifa->ifa_addr))->sin_addr.s_addr;
         ifitem->flags = ifa->ifa_flags;
 
-        CAResult_t result = u_arraylist_add(iflist, ifitem);
-        if (CA_STATUS_OK != result)
+        bool result = u_arraylist_add(iflist, ifitem);
+        if (!result)
         {
             OIC_LOG(ERROR, TAG, "u_arraylist_add failed.");
             goto exit;

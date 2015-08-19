@@ -525,7 +525,7 @@ void CAEDRNativeRemoveDevice(const char *remoteAddress)
             OIC_LOG_V(DEBUG, TAG, "[EDR][Native] remove state : %s", remoteAddress);
             OICFree(state);
 
-            CAEDRReorderingDeviceList(index);
+            u_arraylist_remove(g_deviceStateList, index);
             break;
         }
     }
@@ -567,23 +567,6 @@ CAConnectedState_t CAEDRIsConnectedDevice(const char *remoteAddress)
         }
     }
     return STATE_DISCONNECTED;
-}
-
-void CAEDRReorderingDeviceList(uint32_t index)
-{
-    if (index >= g_deviceStateList->length)
-    {
-        return;
-    }
-
-    if (index < g_deviceStateList->length - 1)
-    {
-        memmove(&g_deviceStateList->data[index], &g_deviceStateList->data[index + 1],
-                (g_deviceStateList->length - index - 1) * sizeof(void *));
-    }
-
-    g_deviceStateList->size--;
-    g_deviceStateList->length--;
 }
 
 /**
@@ -808,7 +791,7 @@ void CAEDRNativeRemoveDeviceSocket(JNIEnv *env, jobject deviceSocket)
             (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
             (*env)->ReleaseStringUTFChars(env, jni_remoteAddress, remoteAddress);
 
-            CAEDRReorderingDeviceSocketList(index);
+            u_arraylist_remove(g_deviceObjectList, index);
             break;
         }
         (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
@@ -856,7 +839,7 @@ void CAEDRNativeRemoveDeviceSocketBaseAddr(JNIEnv *env, jstring address)
             (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
             (*env)->ReleaseStringUTFChars(env, address, remoteAddress);
 
-            CAEDRReorderingDeviceSocketList(index);
+            u_arraylist_remove(g_deviceObjectList, index);
             break;
         }
         (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
@@ -938,21 +921,4 @@ uint32_t CAEDRGetSocketListLength()
     uint32_t length = u_arraylist_length(g_deviceObjectList);
 
     return length;
-}
-
-void CAEDRReorderingDeviceSocketList(uint32_t index)
-{
-    if (index >= g_deviceObjectList->length)
-    {
-        return;
-    }
-
-    if (index < g_deviceObjectList->length - 1)
-    {
-        memmove(&g_deviceObjectList->data[index], &g_deviceObjectList->data[index + 1],
-                (g_deviceObjectList->length - index - 1) * sizeof(void *));
-    }
-
-    g_deviceObjectList->size--;
-    g_deviceObjectList->length--;
 }

@@ -39,8 +39,8 @@ constexpr int QUIT_INPUT = 3;
 std::shared_ptr<RCSRemoteResourceObject>  resource;
 
 const std::string defaultKey = "Temperature";
-const std::string resourceType = "?rt=core.TemperatureSensor";
-const std::string targetUri = OC_RSRVD_WELL_KNOWN_URI + resourceType;
+const std::string resourceType = "core.TemperatureSensor";
+const std::string relativetUri = OC_RSRVD_WELL_KNOWN_URI;
 
 std::mutex mtx;
 std::condition_variable cond;
@@ -397,8 +397,8 @@ bool discoverResource()
 {
     std::cout << "Wait 2 seconds until discovered." << std::endl;
 
-    RCSDiscoveryManager::getInstance()->discoverResource(RCSAddress::multicast(), targetUri,
-                                                         &onResourceDiscovered);
+    RCSDiscoveryManager::getInstance()->discoverResourceByType(RCSAddress::multicast(),
+            relativetUri, resourceType, &onResourceDiscovered);
 
     std::unique_lock<std::mutex> lck(mtx);
     cond.wait_for(lck,std::chrono::seconds(2));

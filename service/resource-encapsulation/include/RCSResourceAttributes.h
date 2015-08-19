@@ -96,7 +96,7 @@ namespace OIC
             class KeyValueVisitorHelper: public boost::static_visitor< >
             {
             public:
-                KeyValueVisitorHelper(VISITOR& visitor) :
+                KeyValueVisitorHelper(VISITOR& visitor) noexcept :
                         m_visitor( visitor )
                 {
                 }
@@ -159,7 +159,7 @@ namespace OIC
                  *
                  * @return Identifier of type.
                  */
-                TypeId getId() const;
+                TypeId getId() const noexcept;
 
                 /**
                  * Factory method to create Type instance from T.
@@ -171,18 +171,18 @@ namespace OIC
                  * @see is_supported_type
                  */
                 template < typename T >
-                static Type typeOf(const T& value)
+                static Type typeOf(const T& value) noexcept
                 {
                     return Type(value);
                 }
 
                 //! @cond
-                friend bool operator==(const Type&, const Type&);
+                friend bool operator==(const Type&, const Type&) noexcept;
                 //! @endcond
 
             private:
                 template < typename T >
-                explicit Type(const T&) :
+                explicit Type(const T&) noexcept :
                     m_which{ IndexOfType< T >::value }
                 {
                 }
@@ -207,7 +207,7 @@ namespace OIC
 
                 Value();
                 Value(const Value&);
-                Value(Value&&);
+                Value(Value&&) noexcept;
 
                 /**
                  * Constructs a Value if T is a supported type.<br/>
@@ -276,7 +276,7 @@ namespace OIC
                 /**
                  * Exchanges the content of the object by the content of the parameter.
                  */
-                void swap(Value&);
+                void swap(Value&) noexcept;
 
                 //! @cond
                 friend class RCSResourceAttributes;
@@ -328,32 +328,32 @@ namespace OIC
             /**
              * Returns an {@link iterator} referring to the first element.
              */
-            iterator begin();
+            iterator begin() noexcept;
 
             /**
              * Returns an {@link iterator} referring to the <i>past-the-end element</i>.
              */
-            iterator end();
+            iterator end() noexcept;
 
             /**
              * @copydoc cbegin()
              */
-            const_iterator begin() const;
+            const_iterator begin() const noexcept;
 
             /**
              * @copydoc cend()
              */
-            const_iterator end() const;
+            const_iterator end() const noexcept;
 
             /**
              * Returns a const_iterator referring to the first element.
              */
-            const_iterator cbegin() const;
+            const_iterator cbegin() const noexcept;
 
             /**
              * Returns a const_iterator referring to the <i>past-the-end element</i>.
              */
-            const_iterator cend() const;
+            const_iterator cend() const noexcept;
 
             /**
              * Accesses a value.
@@ -427,7 +427,7 @@ namespace OIC
             /**
              * Removes all elements.
              */
-            void clear();
+            void clear() noexcept;
 
             /**
              * Removes a single element.
@@ -452,14 +452,14 @@ namespace OIC
              *
              * @see size
              */
-            bool empty() const;
+            bool empty() const noexcept;
 
             /**
              * Returns the number of elements.
              *
              * @see empty
              */
-            size_t size() const;
+            size_t size() const noexcept;
 
         private:
             template< typename VISITOR >
@@ -538,7 +538,8 @@ namespace OIC
          *
          * @return true if the objects are equal, false otherwise.
          */
-        bool operator==(const RCSResourceAttributes::Type&, const RCSResourceAttributes::Type&);
+        bool operator==(const RCSResourceAttributes::Type&, const RCSResourceAttributes::Type&)
+                noexcept;
 
         /**
          * @relates RCSResourceAttributes::Type
@@ -547,7 +548,8 @@ namespace OIC
          *
          * @return true if the objects are not equal, false otherwise.
          */
-        bool operator!=(const RCSResourceAttributes::Type&, const RCSResourceAttributes::Type&);
+        bool operator!=(const RCSResourceAttributes::Type&, const RCSResourceAttributes::Type&)
+                noexcept;
 
         /**
          * @relates RCSResourceAttributes::Value
@@ -638,32 +640,32 @@ namespace OIC
             class KeyVisitor: public boost::static_visitor< const std::string& >
             {
             public:
-                result_type operator()(iterator*) const;
-                result_type operator()(const_iterator*) const;
+                result_type operator()(iterator*) const noexcept;
+                result_type operator()(const_iterator*) const noexcept;
             };
 
             class ValueVisitor: public boost::static_visitor< Value& >
             {
             public:
-                result_type operator()(iterator*);
+                result_type operator()(iterator*) noexcept;
                 result_type operator()(const_iterator*);
             };
 
             class ConstValueVisitor: public boost::static_visitor< const Value& >
             {
             public:
-                result_type operator()(iterator*) const;
-                result_type operator()(const_iterator*) const;
+                result_type operator()(iterator*) const noexcept;
+                result_type operator()(const_iterator*) const noexcept;
             };
 
         public:
-            const std::string& key() const;
-            const RCSResourceAttributes::Value& value() const;
+            const std::string& key() const noexcept;
+            const RCSResourceAttributes::Value& value() const noexcept;
             RCSResourceAttributes::Value& value();
 
         private:
             KeyValuePair(const KeyValuePair&) = default;
-            KeyValuePair(boost::variant< iterator*, const_iterator* >&&);
+            KeyValuePair(boost::variant< iterator*, const_iterator* >&&) noexcept;
 
             KeyValuePair& operator=(const KeyValuePair&) = default;
 

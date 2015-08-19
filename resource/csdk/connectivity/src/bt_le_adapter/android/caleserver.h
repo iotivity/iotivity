@@ -292,13 +292,6 @@ CAResult_t CALEServerRemoveAllDevices(JNIEnv *env);
 CAResult_t CALEServerRemoveDevice(JNIEnv *env, jstring address);
 
 /**
- * Reordering for the list (connected device list).
- * @param[in]   index                 index of device list that want to reordering.
- * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
- */
-CAResult_t CALEServerReorderinglist(uint32_t index);
-
-/**
  * initialize mutex.
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */

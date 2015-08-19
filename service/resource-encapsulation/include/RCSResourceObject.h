@@ -31,8 +31,6 @@
 #include <mutex>
 #include <thread>
 
-#include <boost/atomic.hpp>
-
 #include <RCSResourceAttributes.h>
 #include <RCSResponse.h>
 #include <RCSRequest.h>
@@ -59,6 +57,11 @@ namespace OIC
                 NoLockException(std::string &&what) : RCSException { std::move(what) } {}
         };
 
+        //! @cond
+        template < typename T >
+        class AtomicWrapper;
+        //! @endcond
+
         /**
          * @brief  RCSResourceObject represents a resource. It handles any requests from
          *        clients automatically with attributes.
@@ -75,6 +78,8 @@ namespace OIC
         {
             private:
                 class WeakGuard;
+
+                typedef AtomicWrapper< std::thread::id > AtomicThreadId;
 
             public:
                 /**
@@ -433,6 +438,10 @@ namespace OIC
 
             void expectOwnLock() const;
 
+            std::thread::id getLockOwner() const noexcept;
+
+            void setLockOwner(std::thread::id&&) const noexcept;
+
             void autoNotify(bool, AutoNotifyPolicy) const;
             void autoNotify(bool) const;
 
@@ -455,7 +464,7 @@ namespace OIC
             std::unordered_map< std::string, AttributeUpdatedListener >
                     m_keyAttributesUpdatedListeners;
 
-            mutable boost::atomic< std::thread::id > m_lockOwner;
+            mutable std::unique_ptr< AtomicThreadId > m_lockOwner;
             mutable std::mutex m_mutex;
 
             std::mutex m_mutexKeyAttributeUpdate;

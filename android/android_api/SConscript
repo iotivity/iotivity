@@ -43,6 +43,6 @@ if not os.path.exists(android_home + '/platforms/android-21') or not os.path.exi
     os.system(android_home + '/tools/android')
 
 jdk_env = Environment(ENV=os.environ)
-jdk_env['BUILDERS']['Gradle'] = Builder(action = env.get('ANDROID_GRADLE') + ' build -b' + os.getcwd()+'/build.gradle -PTARGET_ARCH=%s -PRELEASE=%s' %(ANDROID_TARGET_ARCH, ANDROID_RELEASE))
+jdk_env['BUILDERS']['Gradle'] = Builder(action = env.get('ANDROID_GRADLE') + ' build -b' + os.getcwd()+'/build.gradle -PTARGET_ARCH=%s -PRELEASE=%s --stacktrace' %(ANDROID_TARGET_ARCH, ANDROID_RELEASE))
 jdk_env.Gradle(target="base/objs", source="base/src/main/java/org/iotivity/base/OcResource.java")
 

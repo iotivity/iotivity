@@ -36,9 +36,9 @@ package org.iotivity.service.ssm;
 public class ModelData
 {
 
-        private int pIModelDataInstance;
+        private long pIModelDataInstance;
 
-        public ModelData(int iModelDataInstance)
+        private ModelData(long iModelDataInstance)
         {
             pIModelDataInstance = iModelDataInstance;
         }

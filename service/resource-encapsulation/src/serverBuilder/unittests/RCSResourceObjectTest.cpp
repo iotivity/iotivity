@@ -287,7 +287,8 @@ public:
     {
         auto request = make_shared<OCResourceRequest>();
 
-        OCEntityHandlerRequest ocEntityHandlerRequest { 0 };
+        OCEntityHandlerRequest ocEntityHandlerRequest;
+        memset(&ocEntityHandlerRequest, 0, sizeof(OCEntityHandlerRequest));
         OC::MessageContainer mc;
 
         mc.addRepresentation(ocRep);

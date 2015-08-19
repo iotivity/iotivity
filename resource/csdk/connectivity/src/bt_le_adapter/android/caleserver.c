@@ -2018,12 +2018,11 @@ CAResult_t CALEServerRemoveDevice(JNIEnv *env, jstring address)
                 (*env)->ReleaseStringUTFChars(env, address, remoteAddress);
                 (*env)->DeleteGlobalRef(env, jarrayObj);
 
-                CAResult_t res = CALEServerReorderinglist(index);
-                if (CA_STATUS_OK != res)
+                if (NULL == u_arraylist_remove(g_connectedDeviceList, index))
                 {
-                    OIC_LOG(ERROR, TAG, "CALEServerReorderinglist has failed");
+                    OIC_LOG(ERROR, TAG, "List removal failed.");
                     ca_mutex_unlock(g_connectedDeviceListMutex);
-                    return res;
+                    return CA_STATUS_FAILED;
                 }
                 ca_mutex_unlock(g_connectedDeviceListMutex);
                 return CA_STATUS_OK;
@@ -2039,32 +2038,6 @@ CAResult_t CALEServerRemoveDevice(JNIEnv *env, jstring address)
 
     OIC_LOG(DEBUG, TAG, "IN CALEServerRemoveDevice");
     return CA_STATUS_FAILED;
-}
-
-CAResult_t CALEServerReorderinglist(uint32_t index)
-{
-    if (!g_connectedDeviceList)
-    {
-        OIC_LOG(ERROR, TAG, "g_connectedDeviceList is null");
-        return CA_STATUS_FAILED;
-    }
-
-    if (index >= g_connectedDeviceList->length)
-    {
-        OIC_LOG(ERROR, TAG, "index is not available");
-        return CA_STATUS_FAILED;
-    }
-
-    if (index < g_connectedDeviceList->length - 1)
-    {
-        memmove(&g_connectedDeviceList->data[index], &g_connectedDeviceList->data[index + 1],
-                (g_connectedDeviceList->length - index - 1) * sizeof(void *));
-    }
-
-    g_connectedDeviceList->size--;
-    g_connectedDeviceList->length--;
-
-    return CA_STATUS_OK;
 }
 
 JNIEXPORT void JNICALL
