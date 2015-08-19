@@ -464,14 +464,14 @@ CAResult_t checkSelectNetwork()
 TEST_F(CATests, SelectNetworkTestBad)
 {
     //Select disable network
-    EXPECT_EQ(CA_NOT_SUPPORTED, CASelectNetwork((CATransportAdapter_t)1000));
+    EXPECT_EQ(CA_NOT_SUPPORTED, CASelectNetwork((CATransportAdapter_t)10000));
 }
 
 // check return value when selected network is disable
 TEST_F(CATests, UnSelectNetworkTest)
 {
     //UnSelect disable network
-    EXPECT_EQ(CA_STATUS_FAILED, CAUnSelectNetwork((CATransportAdapter_t)1000));
+    EXPECT_EQ(CA_STATUS_FAILED, CAUnSelectNetwork((CATransportAdapter_t)10000));
 }
 
 // CAHandlerRequestResponse TC

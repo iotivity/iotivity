@@ -79,6 +79,10 @@ extern "C"
 #define COAP_MAX_PDU_SIZE           1400 /* maximum size of a CoAP PDU for big platforms*/
 #endif
 
+#ifdef CI_ADAPTER
+#define COAP_TCP_MAX_PDU_SIZE   64 * 1024   /* maximum size of a CoAP over TCP PDU for Linux platform*/
+#endif
+
 #ifdef WITH_BWT
 #define CA_DEFAULT_BLOCK_SIZE       CA_BLOCK_SIZE_1024_BYTE
 #endif
@@ -142,7 +146,7 @@ typedef enum
     #endif
 
     #ifdef CI_ADAPTER
-    CA_ADAPTER_CLOUD_INTERFACE = (1 << 4),   // CoAP over TCP for Cloud Interface
+    CA_ADAPTER_CLOUD_INTERFACE = (1 << 5),   // CoAP over TCP for Cloud Interface
     #endif
 
     CA_ALL_ADAPTERS          = 0xffffffff
@@ -160,6 +164,7 @@ typedef enum
     // Indication that a message was received by multicast.
     CA_MULTICAST       = (1 << 7),
     #ifdef CI_ADAPTER
+    // A TCP transport for the CoAP
     CA_IPV4_TCP        = (1 << 8),
     #endif
     // Link-Local multicast is the default multicast scope for IPv6.
@@ -448,6 +453,17 @@ typedef struct
     int32_t ifIndex; /**< network interface index */
 } CAIfItem_t;
 
+#ifdef CI_ADAPTER
+/**
+ * CI Server Information for IPv4 TCP transport
+ */
+typedef struct
+{
+    char addr[MAX_ADDR_STR_SIZE_CA];    /**< CI Server address */
+    CASocket_t u4tcp;                   /**< CI Server port */
+} CACIServerInfo_t;
+#endif
+
 typedef struct
 {
     CATransportFlags_t clientFlags; /**< flag for client */
@@ -491,6 +507,22 @@ typedef struct
         CATransportFlags_t previousRequestFlags;/**< address family filtering */
         uint16_t previousRequestMessageId;      /**< address family filtering */
     } ca;
+
+    #ifdef CI_ADAPTER
+    /**
+     * Hold global variables for CI Adapter.
+     */
+    struct cisockets
+    {
+        void *threadpool;       /**< threadpool between Initialize and Start */
+        void *svrlist;          /**< unicast IPv4 CI server information*/
+        int selectTimeout;      /**< in seconds */
+        int maxfd;              /**< highest fd (for select) */
+        bool started;           /**< the CI adapter has started */
+        bool terminate;         /**< the CI adapter needs to stop */
+        bool ipv4tcpenabled;    /**< IPv4 TCP enabled by OCInit flags */
+    } ci;
+    #endif
 } CAGlobals_t;
 
 extern CAGlobals_t caglobals;

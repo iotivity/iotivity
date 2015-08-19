@@ -36,6 +36,10 @@ static uint32_t NETWORK_GATT = CA_ADAPTER_GATT_BTLE;
 static uint32_t NETWORK_RA = CA_ADAPTER_REMOTE_ACCESS;
 #endif
 
+#ifdef CI_ADAPTER
+static uint32_t NETWORK_CI = CA_ADAPTER_CLOUD_INTERFACE;
+#endif
+
 CAResult_t CAAddNetworkType(CATransportAdapter_t transportType)
 {
     OIC_LOG(DEBUG, TAG, "IN");
@@ -106,6 +110,18 @@ CAResult_t CAAddNetworkType(CATransportAdapter_t transportType)
            res = u_arraylist_add(g_selectedNetworkList, &NETWORK_RA);
            break;
 #endif /* RA_ADAPTER */
+
+#ifdef CI_ADAPTER
+        case CA_ADAPTER_CLOUD_INTERFACE:
+
+           OIC_LOG(DEBUG, TAG, "Add network type(CI)");
+           if (u_arraylist_contains(g_selectedNetworkList, &NETWORK_CI))
+           {
+               goto exit;
+           }
+           res = u_arraylist_add(g_selectedNetworkList, &NETWORK_CI);
+           break;
+#endif /* CI_ADAPTER */
 
         default:
             break;
@@ -189,6 +205,13 @@ CAResult_t CARemoveNetworkType(CATransportAdapter_t transportType)
                     u_arraylist_remove(g_selectedNetworkList, index);
                     break;
 #endif /* RA_ADAPTER */
+
+#ifdef CI_ADAPTER
+                case CA_ADAPTER_CLOUD_INTERFACE:
+                    OIC_LOG(DEBUG, TAG, "Remove network type(RA)");
+                    u_arraylist_remove(g_selectedNetworkList, index);
+                    break;
+#endif /* CI_ADAPTER */
 
                 default:
                     break;

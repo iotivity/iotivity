@@ -238,6 +238,24 @@ CAResult_t CAGetNetworkInformation(CAEndpoint_t **info, uint32_t *size);
  */
 CAResult_t CAHandleRequestResponse();
 
+#ifdef CI_ADAPTER
+/**
+ * Connect to CI Server.
+ * @param[in]   ciServerInfo     CI Server information
+ * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or
+ *          ::CA_STATUS_INVALID_PARAM or ::CA_MEMORY_ALLOC_FAILED
+ */
+CAResult_t CACreateTCPConnection(const CACIServerInfo_t *ciServerInfo);
+
+/**
+ * Disconnect to CI Server.
+ * @param[in]   ciServerInfo     CI Server information
+ * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or
+ *          ::CA_STATUS_INVALID_PARAM or ::CA_MEMORY_ALLOC_FAILED
+ */
+CAResult_t CADestroyTCPConnection(const CACIServerInfo_t *ciServerInfo);
+#endif
+
 #ifdef RA_ADAPTER
 /**
  * Set Remote Access information for XMPP Client.

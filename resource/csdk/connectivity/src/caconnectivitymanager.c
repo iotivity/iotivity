@@ -34,6 +34,10 @@
 #include "caadapternetdtls.h"
 #endif
 
+#ifdef CI_ADAPTER
+#include "caciadapter.h"
+#endif
+
 CAGlobals_t caglobals = { 0 };
 
 #define TAG "CA_CONN_MGR"
@@ -252,10 +256,20 @@ CAResult_t CASelectNetwork(CATransportAdapter_t interestedNetwork)
     else if (interestedNetwork & CA_ADAPTER_REMOTE_ACCESS)
     {
         res = CAAddNetworkType(CA_ADAPTER_REMOTE_ACCESS);
-        OIC_LOG_V(ERROR, TAG, "CAAddNetworkType(CA_ADAPTER_REMOTE_ACCESS) function returns error : %d",
-                                                                    res);
+        OIC_LOG_V(ERROR, TAG,
+                  "CAAddNetworkType(CA_ADAPTER_REMOTE_ACCESS) function returns error : %d", res);
     }
     #endif
+
+    #ifdef CI_ADAPTER
+    else if (interestedNetwork & CA_ADAPTER_CLOUD_INTERFACE)
+    {
+        res = CAAddNetworkType(CA_ADAPTER_CLOUD_INTERFACE);
+        OIC_LOG_V(ERROR, TAG,
+                  "CAAddNetworkType(CA_ADAPTER_CLOUD_INTERFACE) function returns error : %d", res);
+    }
+    #endif
+
     else
     {
         res = CA_NOT_SUPPORTED;
@@ -297,6 +311,16 @@ CAResult_t CAUnSelectNetwork(CATransportAdapter_t nonInterestedNetwork)
                                                 res);
     }
     #endif
+
+    #ifdef CI_ADAPTER
+    else if (nonInterestedNetwork & CA_ADAPTER_CLOUD_INTERFACE)
+    {
+        res = CARemoveNetworkType(CA_ADAPTER_CLOUD_INTERFACE);
+        OIC_LOG_V(ERROR, TAG, "CARemoveNetworkType(CA_ADAPTER_CLOUD_INTERFACE) function returns error : %d",
+                  res);
+    }
+    #endif
+
     else
     {
         res = CA_STATUS_FAILED;
@@ -316,6 +340,32 @@ CAResult_t CAHandleRequestResponse()
 
     return CA_STATUS_OK;
 }
+
+#ifdef CI_ADAPTER
+CAResult_t CACreateTCPConnection(const CACIServerInfo_t *ciServerInfo)
+{
+    if (!g_isInitialized)
+    {
+        OIC_LOG(ERROR, TAG, "not initialized");
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+
+    CAResult_t res = CACreateCIClient(ciServerInfo);
+    return res;
+}
+
+CAResult_t CADestroyTCPConnection(const CACIServerInfo_t *ciServerInfo)
+{
+    if (!g_isInitialized)
+    {
+        OIC_LOG(ERROR, TAG, "not initialized");
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+
+    CAResult_t res = CADestroyCIClient(ciServerInfo);
+    return res;
+}
+#endif
 
 #ifdef __WITH_DTLS__
 
