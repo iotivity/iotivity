@@ -36,7 +36,7 @@ static OCStackResult sendResponse(const OCEntityHandlerRequest *ehRequest, OCRDP
     response.requestHandle = ehRequest->requestHandle;
     response.resourceHandle = ehRequest->resource;
     response.ehResult = OC_EH_OK;
-    response.payload = (OCPayload*)(&rdPayload);
+    response.payload = (OCPayload*)(rdPayload);
     response.payload->type = PAYLOAD_TYPE_RD;
 
     return OCDoResponse(&response);
@@ -104,16 +104,6 @@ static OCEntityHandlerResult handlePublishRequest(const OCEntityHandlerRequest *
     {
         OCRDStorePublishedResources(payload->rdPublish);
     }
-
-    OC_LOG_V(DEBUG, TAG, "Sending success response");
-    OCRDPayload *rdPayload = OCRDPayloadCreate(RD_PAYLOAD_TYPE_PUBLISH);
-    if (sendResponse(ehRequest, rdPayload) != OC_STACK_OK)
-    {
-        OC_LOG(ERROR, TAG, "Sending response failed.");
-        ehResult = OC_EH_ERROR;
-    }
-
-    OCRDPayloadDestroy(rdPayload);
 
     return ehResult;
 }

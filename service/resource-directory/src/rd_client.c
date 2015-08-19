@@ -38,7 +38,7 @@ static OCStackResult sendRequest(OCMethod method, char *uri, OCDevAddr *addr,
     OCDoHandle handle;
     OCStackResult result;
 
-    result = OCDoResource(handle,
+    result = OCDoResource(&handle,
         method,
         uri,
         addr,
@@ -74,7 +74,7 @@ static OCStackApplicationResult handlePublishCB(void *ctx,
 
 static void retreiveRDDetails(OCClientResponse *clientResponse, OCRDBiasFactorCB clientCB)
 {
-    OC_LOG_V(DEBUG, TAG, "\tAddress of the RD: %s : %d",  clientResponse->devAddr.addr,
+    OC_LOG_V(DEBUG, TAG, "\tAddress of the RD: %s:%d", clientResponse->devAddr.addr,
             clientResponse->devAddr.port);
 
     OCRDPayload *payload = (OCRDPayload *) clientResponse->payload;
@@ -84,8 +84,10 @@ static void retreiveRDDetails(OCClientResponse *clientResponse, OCRDBiasFactorCB
     // needs to cache here detail
     // and after certain timeout then decide based on the biasFactor.
     //if (biasFactor > 75)
-    clientCB(clientResponse->devAddr.addr, clientResponse->devAddr.port);
-
+    if (clientCB)
+    {
+        clientCB(clientResponse->devAddr.addr, clientResponse->devAddr.port);
+    }
 }
 
 static OCStackApplicationResult handleDiscoverCB(void *ctx,
@@ -94,7 +96,7 @@ static OCStackApplicationResult handleDiscoverCB(void *ctx,
     OC_LOG(DEBUG, TAG, "Found Resource Directory");
     OCStackApplicationResult ret = OC_STACK_DELETE_TRANSACTION;
 
-    OCRDClientContextCB *cb = (OCRDClientContextCB *) ctx;
+    OCRDClientContextCB *cb = (OCRDClientContextCB *)ctx;
     if (!cb)
     {
         OC_LOG(ERROR, TAG, "RD Context Invalid Parameters.");
@@ -118,6 +120,8 @@ static OCStackApplicationResult handleDiscoverCB(void *ctx,
         OC_LOG(ERROR, TAG, "Discovery of RD Failed");
     }
 
+    OICFree(cb);
+
     return ret;
 }
 
@@ -135,13 +139,19 @@ OCStackResult OCRDDiscover(OCRDBiasFactorCB cbBiasFactor)
 
     OC_LOG_V(DEBUG, TAG, "Querying RD: %s\n", queryUri);
 
-    OCRDClientContextCB cbContext;
-    cbContext.context = (void *)DEFAULT_CONTEXT_VALUE;
-    cbContext.cbFunc = cbBiasFactor;
+    OCRDClientContextCB *cbContext = OICCalloc(1, sizeof(OCRDClientContextCB));
+    if (!cbContext)
+    {
+        OC_LOG(ERROR, TAG, "Failed allocating memory.");
+        return OC_STACK_NO_MEMORY;
+    }
+
+    cbContext->context = (void *)DEFAULT_CONTEXT_VALUE;
+    cbContext->cbFunc = cbBiasFactor;
 
     OCCallbackData cbData;
     cbData.cb = handleDiscoverCB;
-    cbData.context = (void *)(&cbContext);
+    cbData.context = (void *)(cbContext);
     cbData.cd = NULL;
 
     return sendRequest(OC_REST_DISCOVER, queryUri, NULL, NULL, cbData);

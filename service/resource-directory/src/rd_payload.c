@@ -62,12 +62,11 @@ OCStackResult OCRDPayloadToCbor(const OCRDPayload *rdPayload, uint8_t **outPaylo
 
     *size = MAX_REQUEST_LENGTH;
 
+    OCRDPayloadLog(DEBUG, TAG, rdPayload);
+
     CborEncoder encoder;
     int flags = 0;
     cbor_encoder_init(&encoder, *outPayload, *size, flags);
-
-    OC_LOG_V(DEBUG, TAG, "RD Payload : %d", rdPayload->base.type);
-    OC_LOG_V(DEBUG, TAG, "RD Payload Type: %d", rdPayload->payloadType);
 
     CborEncoder rootArray;
     CborError cborEncoderResult;
@@ -125,7 +124,6 @@ OCStackResult OCRDPayloadToCbor(const OCRDPayload *rdPayload, uint8_t **outPaylo
                 OC_LOG_V(ERROR, TAG, "Failed setting discovery sel value.");
                 goto exit;
             }
-            OC_LOG_V(DEBUG, TAG, "RD Payload bias factor: %d", rdPayload->rdDiscovery->sel);
         }
         else
         {
@@ -264,7 +262,6 @@ OCStackResult OCRDPayloadToCbor(const OCRDPayload *rdPayload, uint8_t **outPaylo
     }
 
     *outPayload = tempPayload;
-
     return OC_STACK_OK;
 
 no_memory:
@@ -427,7 +424,7 @@ OCStackResult OCRDCborToPayload(const CborValue *cborPayload, OCPayload **outPay
                     goto exit;
                 }
 
-                OCRDLinksPayloadCreate(href, itf, rt, &links);
+                OCRDLinksPayloadCreate(href, rt, itf, &links);
                 if (!links)
                 {
                     goto no_memory;
@@ -451,14 +448,14 @@ OCStackResult OCRDCborToPayload(const CborValue *cborPayload, OCPayload **outPay
             {
                 goto no_memory;
             }
+        }
 
-            OCRDPayloadLog(DEBUG, TAG, rdPayload);
-            cborFindResult = cbor_value_advance(rdCBORPayload);
-            if (CborNoError != cborFindResult)
-            {
-                OC_LOG_V(ERROR, TAG, "Failed advancing the payload.");
-                goto exit;
-            }
+        OCRDPayloadLog(DEBUG, TAG, rdPayload);
+        cborFindResult = cbor_value_advance(rdCBORPayload);
+        if (CborNoError != cborFindResult)
+        {
+            OC_LOG_V(ERROR, TAG, "Failed advancing the payload.");
+            goto exit;
         }
         *outPayload = (OCPayload *)rdPayload;
     }
@@ -623,25 +620,25 @@ void OCRDPublishPayloadLog(LogLevel level, const char *tag, const OCRDPublishPay
 {
     if (rdPublish)
     {
-        if (payload->rdPublish->deviceName.deviceName)
+        if (rdPublish->deviceName.deviceName)
         {
-            OC_LOG_V(level, tag, "RD Payload Pulish Name : %s", payload->rdPublish->deviceName.deviceName);
+            OC_LOG_V(level, tag, "RD Payload Pulish Name : %s", rdPublish->deviceName.deviceName);
         }
 
-        if (payload->rdPublish->deviceId.id)
+        if (rdPublish->deviceId.id)
         {
-            OC_LOG_V(level, tag, "RD Payload Publish ID : %s",  payload->rdPublish->deviceId.id);
+            OC_LOG_V(level, tag, "RD Payload Publish ID : %s",  rdPublish->deviceId.id);
         }
 
         OC_LOG_V(level, tag, "RD Payload Publish TTL : %d", rdPublish->ttl);
 
         if (rdPublish->links)
         {
-            for (OCRDLinksPayload *temp = payload->rdPublish->links; temp; temp = temp->next)
+            for (OCRDLinksPayload *temp = rdPublish->links; temp; temp = temp->next)
             {
+                OC_LOG_V(level, tag, "RD Payload Publish Link HREF : %s", temp->href);
                 OC_LOG_V(level, tag, "RD Payload Publish Link RT : %s", temp->rt);
                 OC_LOG_V(level, tag, "RD Payload Publish Link ITF : %s", temp->itf);
-                OC_LOG_V(level, tag, "RD Payload Publish Link HREF : %s", temp->href);
             }
         }
     }
