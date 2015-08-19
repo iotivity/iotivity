@@ -55,7 +55,7 @@ namespace OIC
 
             std::string address;
             std::atomic_int state;
-            boost::atomic_bool isRunningTimeOut;
+            std::atomic_bool isRunningTimeOut;
 
             std::mutex timeoutMutex;
             std::condition_variable condition;
