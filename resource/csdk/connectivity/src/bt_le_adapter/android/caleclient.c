@@ -39,6 +39,8 @@
 
 #define TAG PCF("CA_LE_CLIENT")
 
+#define MICROSECS_PER_SEC 1000000
+
 static const char METHODID_OBJECTNONPARAM[] = "()Landroid/bluetooth/BluetoothAdapter;";
 static const char CLASSPATH_BT_ADAPTER[] = "android/bluetooth/BluetoothAdapter";
 static const char CLASSPATH_BT_UUID[] = "java/util/UUID";
@@ -69,6 +71,7 @@ static bool g_isFinishedSendData = false;
 static ca_mutex g_SendFinishMutex = NULL;
 static ca_mutex g_threadMutex = NULL;
 static ca_cond g_threadCond = NULL;
+static ca_cond g_deviceDescCond = NULL;
 
 static ca_mutex g_threadSendMutex = NULL;
 
@@ -218,6 +221,8 @@ CAResult_t CALEClientInitialize(ca_thread_pool_t handle)
         return ret;
     }
 
+    g_deviceDescCond = ca_cond_new();
+
     // init mutex for send logic
     g_threadCond = ca_cond_new();
 
@@ -250,6 +255,11 @@ CAResult_t CALEClientInitialize(ca_thread_pool_t handle)
         return ret;
     }
     g_isStartedLEClient = true;
+
+    if (isAttached)
+    {
+        (*g_jvm)->DetachCurrentThread(g_jvm);
+    }
 
     return CA_STATUS_OK;
 }
@@ -324,7 +334,11 @@ void CALEClientTerminate()
 
     CALEClientTerminateGattMutexVariables();
 
+    ca_cond_free(g_deviceDescCond);
     ca_cond_free(g_threadCond);
+
+    g_deviceDescCond = NULL;
+    g_threadCond = NULL;
 
     if (isAttached)
     {
@@ -610,6 +624,10 @@ error_exit:
     {
         OIC_LOG(ERROR, TAG, "CALEClientStartScan has failed");
         ca_mutex_unlock(g_threadSendMutex);
+        if (isAttached)
+        {
+            (*g_jvm)->DetachCurrentThread(g_jvm);
+        }
         return res;
     }
 
@@ -643,9 +661,35 @@ CAResult_t CALEClientSendMulticastMessageImpl(JNIEnv *env, const uint8_t* data,
     {
         (*env)->DeleteGlobalRef(env, g_sendBuffer);
     }
-    jbyteArray jni_arr = (*env)->NewByteArray(env, dataLen);
-    (*env)->SetByteArrayRegion(env, jni_arr, 0, dataLen, (jbyte*) data);
-    g_sendBuffer = (jbyteArray)(*env)->NewGlobalRef(env, jni_arr);
+
+    if (0 == u_arraylist_length(g_deviceList))
+    {
+        // Wait for LE peripherals to be discovered.
+
+        // Number of times to wait for discovery to complete.
+        static int const RETRIES = 5;
+
+        static uint64_t const TIMEOUT =
+            2 * MICROSECS_PER_SEC;  // Microseconds
+
+        bool devicesDiscovered = false;
+        for (size_t i = 0;
+             0 == u_arraylist_length(g_deviceList) && i < RETRIES;
+             ++i)
+        {
+            if (ca_cond_wait_for(g_deviceDescCond,
+                                 g_threadSendMutex,
+                                 TIMEOUT) == 0)
+            {
+                devicesDiscovered = true;
+            }
+        }
+
+        if (!devicesDiscovered)
+        {
+            goto error_exit;
+        }
+    }
 
     // connect to gatt server
     CAResult_t res = CALEClientStopScan();
@@ -655,13 +699,12 @@ CAResult_t CALEClientSendMulticastMessageImpl(JNIEnv *env, const uint8_t* data,
         ca_mutex_unlock(g_threadSendMutex);
         return res;
     }
-
     uint32_t length = u_arraylist_length(g_deviceList);
     g_targetCnt = length;
-    if (0 == length)
-    {
-        goto error_exit;
-    }
+
+    jbyteArray jni_arr = (*env)->NewByteArray(env, dataLen);
+    (*env)->SetByteArrayRegion(env, jni_arr, 0, dataLen, (jbyte*) data);
+    g_sendBuffer = (jbyteArray)(*env)->NewGlobalRef(env, jni_arr);
 
     for (uint32_t index = 0; index < length; index++)
     {
@@ -2068,6 +2111,7 @@ CAResult_t CALEClientAddScanDeviceToList(JNIEnv *env, jobject device)
     {
         jobject gdevice = (*env)->NewGlobalRef(env, device);
         u_arraylist_add(g_deviceList, gdevice);
+        ca_cond_signal(g_deviceDescCond);
         OIC_LOG(DEBUG, TAG, "Set Object to Array as Element");
     }
     (*env)->ReleaseStringUTFChars(env, jni_remoteAddress, remoteAddress);
