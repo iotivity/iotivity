@@ -26,7 +26,8 @@ if env.get('SECURED') == '1':
 # Source files and Targets
 ######################################################################
 rd_server = rd_sample_app_env.Program('rd_server', 'rd_main.c')
+rd_publishingClient = rd_sample_app_env.Program('rd_publishingClient', 'rd_publishingClient.cpp')
 
-Alias("resource_directory", [rd_server])
+Alias("resource_directory", [rd_server, rd_publishingClient])
 
 env.AppendTarget('resource_directory')
