@@ -49,7 +49,8 @@ namespace OIC
 
             bool isEmptyResourcePresence() const;
             const std::string getAddress() const;
-            DEVICE_STATE getDeviceState() const;
+            DEVICE_STATE getDeviceState() const noexcept;
+
         private:
             std::list<ResourcePresence * > resourcePresenceList;
 
@@ -69,6 +70,8 @@ namespace OIC
             void changeAllPresenceMode(BROKER_MODE mode);
             void subscribeCB(OCStackResult ret,const unsigned int seq, const std::string& Hostaddress);
             void timeOutCB(TimerID id);
+
+            void setDeviceState(DEVICE_STATE);
         };
     } // namespace Service
 } // namespace OIC
