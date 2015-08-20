@@ -50,6 +50,7 @@ static JavaVM *g_jvm = NULL;
  * @brief pointer to store context for android callback interface
  */
 static jobject g_Context = NULL;
+static jobject g_activity = NULL;
 #endif
 
 void CALogPDUData(coap_pdu_t *pdu)
@@ -212,11 +213,18 @@ void CANativeJNISetContext(JNIEnv *env, jobject context)
 
     if (!context)
     {
-        OIC_LOG(DEBUG, CA_ADAPTER_UTILS_TAG, "context is null");
-
+        OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "context is null");
+        return;
     }
 
-    g_Context = (*env)->NewGlobalRef(env, context);
+    if (!g_Context)
+    {
+        g_Context = (*env)->NewGlobalRef(env, context);
+    }
+    else
+    {
+        OIC_LOG(INFO, CA_ADAPTER_UTILS_TAG, "context is already set");
+    }
 }
 
 void CANativeJNISetJavaVM(JavaVM *jvm)
@@ -233,5 +241,45 @@ jobject CANativeJNIGetContext()
 JavaVM *CANativeJNIGetJavaVM()
 {
     return g_jvm;
+}
+
+void CANativeSetActivity(JNIEnv *env, jobject activity)
+{
+    OIC_LOG_V(DEBUG, CA_ADAPTER_UTILS_TAG, "CANativeSetActivity");
+
+    if (!activity)
+    {
+        OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "activity is null");
+        return;
+    }
+
+    if (!g_activity)
+    {
+        g_activity = (*env)->NewGlobalRef(env, activity);
+    }
+    else
+    {
+        OIC_LOG(INFO, CA_ADAPTER_UTILS_TAG, "activity is already set");
+    }
+}
+
+jobject *CANativeGetActivity()
+{
+    return g_activity;
+}
+
+void CADeleteGlobalReferences(JNIEnv *env)
+{
+    if (g_Context)
+    {
+        (*env)->DeleteGlobalRef(env, g_Context);
+        g_Context = NULL;
+    }
+
+    if (g_activity)
+    {
+        (*env)->DeleteGlobalRef(env, g_activity);
+        g_activity = NULL;
+    }
 }
 #endif

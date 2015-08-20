@@ -200,10 +200,11 @@ void JNI_OnUnload(JavaVM *jvm, void *reserved)
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_ca_service_RMInterface_RMInitialize(JNIEnv *env, jobject obj, jobject context)
+Java_org_iotivity_ca_service_RMInterface_RMInitialize(JNIEnv *env, jobject obj, jobject context,
+                                                      jobject activity)
 {
     LOGI("RMInitialize");
-    if (!env || !obj || !context)
+    if (!env || !obj || !context || !activity)
     {
         LOGI("Invalid input parameter");
         return;
@@ -211,6 +212,7 @@ Java_org_iotivity_ca_service_RMInterface_RMInitialize(JNIEnv *env, jobject obj, 
 
     //Currently set context for Android Platform
     CANativeJNISetContext(env, context);
+    CANativeSetActivity(env, activity);
 
     CAResult_t res = CAInitialize();
 
@@ -433,6 +435,7 @@ Java_org_iotivity_ca_service_RMInterface_RMSendRequest(JNIEnv *env, jobject obj,
 
     free(requestData.payload);
     free(requestData.resourceUri);
+    LOGI("send request sucess");
 }
 
 JNIEXPORT void JNICALL
@@ -449,6 +452,7 @@ Java_org_iotivity_ca_service_RMInterface_RMSendReqestToAll(JNIEnv *env, jobject 
     CAResult_t res = get_network_type(selectedNetwork);
     if (CA_STATUS_OK != res)
     {
+        LOGE("Not supported network type");
         return;
     }
 
@@ -1345,8 +1349,9 @@ CAResult_t get_network_type(uint32_t selectedNetwork)
 
     uint32_t number = selectedNetwork;
 
-    if (!(number & 0xf))
+    if (!(number & 0xff))
     {
+        LOGE("get_network_type Out of range");
         return CA_NOT_SUPPORTED;
     }
     if (number & CA_ADAPTER_IP)
@@ -1362,6 +1367,11 @@ CAResult_t get_network_type(uint32_t selectedNetwork)
     if (number & CA_ADAPTER_GATT_BTLE)
     {
         g_selectedNwType = CA_ADAPTER_GATT_BTLE;
+        return CA_STATUS_OK;
+    }
+    if (number & CA_ADAPTER_NFC)
+    {
+        g_selectedNwType = CA_ADAPTER_NFC;
         return CA_STATUS_OK;
     }
 
@@ -1461,7 +1471,7 @@ void parsing_coap_uri(const char* uri, addressSet_t* address, CATransportFlags_t
     }
 
     // #2. copy uri for parse
-    int32_t len = strlen(uri) - startIndex;
+    size_t len = strlen(uri) - startIndex;
 
     if (len <= 0)
     {
@@ -1476,19 +1486,25 @@ void parsing_coap_uri(const char* uri, addressSet_t* address, CATransportFlags_t
         return;
     }
 
-    memcpy(cloneUri, &uri[startIndex], sizeof(char) * len);
-    cloneUri[len] = '\0';
+    OICStrcpy(cloneUri, len + 1, &uri[startIndex]);
 
-    char *pAddress = cloneUri;
-    LOGI("pAddress : %s", pAddress);
+    char *pstr = NULL;
+    //filter out the resource uri
+    char *pUrl = strtok_r(cloneUri, "/", &pstr);
 
-    int res = get_address_set(pAddress, address);
-    if (res == -1)
+    if (pUrl)
     {
-        LOGE("address parse error");
-
-        free(cloneUri);
-        return;
+        LOGI("pAddress : %s", pUrl);
+        int res = get_address_set(pUrl, address);
+        if (res == -1)
+        {
+            LOGE("address parse error");
+            return;
+        }
+    }
+    else
+    {
+        LOGE("strtok_r error, could not get the address");
     }
 
     return;
@@ -1562,5 +1578,6 @@ void delete_global_references(JNIEnv *env, jobject obj)
         return;
     }
 
+    CADeleteGlobalReferences(env);
     (*env)->DeleteGlobalRef(env, g_responseListenerObject);
 }

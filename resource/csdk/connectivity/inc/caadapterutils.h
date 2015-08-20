@@ -262,6 +262,28 @@ jobject CANativeJNIGetContext();
  * @return  JVM object.
  */
 JavaVM *CANativeJNIGetJavaVM();
+
+/**
+ * To set Activity to JNI.
+ * This must be called by the Android API before CA Initialization.
+ * @param[in]   env         JNI Environment pointer.
+ * @param[in]   activity    Activity object.
+ */
+void CANativeSetActivity(JNIEnv *env, jobject activity);
+
+/**
+ * To get Activity.
+ * Called from adapters to get Activity.
+ * @return  Activity object.
+ */
+jobject *CANativeGetActivity();
+
+/**
+ * To Delete other Global References
+ * Called during CATerminate to remove global references
+ */
+void CADeleteGlobalReferences();
+
 #endif
 
 #ifdef __cplusplus

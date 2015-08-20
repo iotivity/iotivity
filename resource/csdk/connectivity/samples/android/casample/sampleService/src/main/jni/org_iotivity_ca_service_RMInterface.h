@@ -14,7 +14,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_ca_service_RMInterface_setNativeRespons
  * Signature: (Landroid/content/Context;)V
  */
 JNIEXPORT void JNICALL Java_org_iotivity_ca_service_RMInterface_RMInitialize
-  (JNIEnv *, jobject, jobject);
+  (JNIEnv *, jobject, jobject, jobject);
 
 /*
  * Class:     org_iotivity_ca_service_RMInterface

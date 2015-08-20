@@ -111,6 +111,9 @@ if 'BT' in ca_transport:
 if 'BLE' in ca_transport:
 	env.SConscript(os.path.join(ca_path, 'bt_le_adapter/SConscript'))
 
+if 'NFC' in ca_transport:
+	env.SConscript(os.path.join(ca_path, 'nfc_adapter/SConscript'))
+
 print "Include path is %s" % env.get('CPPPATH')
 print "Files path is %s" % env.get('CA_SRC')
 if ca_os in ['android', 'tizen']:

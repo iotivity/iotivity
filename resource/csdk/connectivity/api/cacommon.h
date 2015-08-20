@@ -136,9 +136,10 @@ typedef enum
     CA_ADAPTER_IP            = (1 << 0),   // IPv4 and IPv6, including 6LoWPAN
     CA_ADAPTER_GATT_BTLE     = (1 << 1),   // GATT over Bluetooth LE
     CA_ADAPTER_RFCOMM_BTEDR  = (1 << 2),   // RFCOMM over Bluetooth EDR
+    CA_ADAPTER_NFC           = (1 << 3),   // NFC Adapter
 
     #ifdef RA_ADAPTER
-    CA_ADAPTER_REMOTE_ACCESS = (1 << 3),   // Remote Access over XMPP.
+    CA_ADAPTER_REMOTE_ACCESS = (1 << 4),   // Remote Access over XMPP.
     #endif
 
     CA_ALL_ADAPTERS          = 0xffffffff

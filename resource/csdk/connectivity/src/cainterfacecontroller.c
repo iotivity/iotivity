@@ -30,6 +30,7 @@
 #include "cainterfacecontroller.h"
 #include "caedradapter.h"
 #include "caleadapter.h"
+#include "canfcadapter.h"
 #include "caremotehandler.h"
 #include "cathreadpool.h"
 #include "caipadapter.h"
@@ -49,9 +50,9 @@
     {OIC_LOG(ERROR, TAG, "memory error");goto memory_error_exit;} }
 
 #ifdef RA_ADAPTER
-#define CA_TRANSPORT_TYPE_NUM   4
+#define CA_TRANSPORT_TYPE_NUM  5
 #else
-#define CA_TRANSPORT_TYPE_NUM   3
+#define CA_TRANSPORT_TYPE_NUM  4
 #endif
 
 static CAConnectivityHandler_t g_adapterHandler[CA_TRANSPORT_TYPE_NUM] = {};
@@ -72,10 +73,12 @@ static int CAGetAdapterIndex(CATransportAdapter_t cType)
             return 1;
         case CA_ADAPTER_RFCOMM_BTEDR:
             return 2;
+        case CA_ADAPTER_NFC:
+              return 3;
 
         #ifdef RA_ADAPTER
         case CA_ADAPTER_REMOTE_ACCESS:
-            return 3;
+            return 4;
         #endif
 
         default:
@@ -193,7 +196,10 @@ void CAInitializeAdapters(ca_thread_pool_t handle)
                    handle);
 #endif /* RA_ADAPTER */
 
-
+#ifdef NFC_ADAPTER
+    CAInitializeNFC(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback,
+                    CAAdapterErrorHandleCallback,handle);
+#endif /* NFC_ADAPTER */
 }
 
 void CASetPacketReceivedCallback(CANetworkPacketReceivedCallback callback)

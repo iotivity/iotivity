@@ -256,6 +256,11 @@ CAResult_t CASelectNetwork(CATransportAdapter_t interestedNetwork)
                                                                     res);
     }
     #endif
+    else if (interestedNetwork & CA_ADAPTER_NFC)
+    {
+        res = CAAddNetworkType(CA_ADAPTER_NFC);
+        OIC_LOG_V(ERROR, TAG, "CAAddNetworkType(CA_ADAPTER_NFC) function returns error : %d", res);
+    }
     else
     {
         res = CA_NOT_SUPPORTED;
