@@ -54,7 +54,7 @@ static void GetBigEndianBuf(uint8_t *buf, int num)
     uint8_t *nBuf = (uint8_t *)&num;
     if ( isLittle() == 1 )
     {
-        int i = 0;
+        size_t i = 0;
         for (i = 0; i < sizeof(int); i++)
         {
             buf[i] = nBuf[ sizeof(int) - i - 1];

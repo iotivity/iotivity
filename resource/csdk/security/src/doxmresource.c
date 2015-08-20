@@ -357,7 +357,7 @@ static bool ValidateQuery(unsigned char * query)
         return false;
     }
 
-    OicParseQueryIter_t parseIter = {0};
+    OicParseQueryIter_t parseIter = {.attrPos = NULL};
 
     ParseQueryIterInit(query, &parseIter);
 

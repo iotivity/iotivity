@@ -313,7 +313,9 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
     OC_LOG_V (INFO, TAG, "Inside entity handler - flags: 0x%x", flag);
     (void)callbackParam;
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
-    OCEntityHandlerResponse response = {};
+
+    OCEntityHandlerResponse response;
+    memset(&response, 0, sizeof(response));
 
     // Validate pointer
     if (!entityHandlerRequest)
@@ -414,12 +416,7 @@ int main()
     OC_LOG(DEBUG, TAG, "OCServer is starting...");
 
     // Initialize Persistent Storage for SVR database
-    OCPersistentStorage ps = {};
-    ps.open = server_fopen;
-    ps.read = fread;
-    ps.write = fwrite;
-    ps.close = fclose;
-    ps.unlink = unlink;
+    OCPersistentStorage ps = {server_fopen, fread, fwrite, fclose, unlink};
     OCRegisterPersistentStorageHandler(&ps);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
