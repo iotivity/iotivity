@@ -299,6 +299,10 @@ CAResult_t CACloneInfo(const CAInfo_t *info, CAInfo_t *clone)
         clone->resourceUri = temp;
     }
 
+#ifdef ROUTING_GATEWAY
+    clone->skipRetransmission = info->skipRetransmission;
+#endif
+
     clone->messageId = info->messageId;
     clone->type = info->type;
 

@@ -27,6 +27,13 @@
 #include "ocpayload.h"
 #include "ocpayloadcbor.h"
 
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+#include "routingutility.h"
+#ifdef ROUTING_GATEWAY
+#include "routingmanager.h"
+#endif
+#endif
+
 #include "cacommon.h"
 #include "cainterface.h"
 
@@ -225,6 +232,8 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
 {
     OCServerRequest * serverRequest = NULL;
 
+    OC_LOG_V(INFO, TAG, PCF("addserverrequest entry!! [%s:%u]"), devAddr->addr, devAddr->port);
+
     serverRequest = (OCServerRequest *) OICCalloc(1, sizeof(OCServerRequest) +
         (reqTotalSize ? reqTotalSize : 1) - 1);
     VERIFY_NON_NULL(devAddr);
@@ -284,7 +293,7 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
     serverRequest->devAddr = *devAddr;
 
     *request = serverRequest;
-    OC_LOG(INFO, TAG, PCF("Server Request Added!!"));
+    OC_LOG_V(INFO, TAG, PCF("Server Request Added!! [%s:%u] original [%s:%u]"), serverRequest->devAddr.addr, serverRequest->devAddr.port, devAddr->addr, devAddr->port);
     LL_APPEND (serverRequestList, serverRequest);
     return OC_STACK_OK;
 
@@ -414,6 +423,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     CAEndpoint_t responseEndpoint = {.adapter = CA_DEFAULT_ADAPTER};
     CAResponseInfo_t responseInfo = {.result = CA_EMPTY};
     CAHeaderOption_t* optionsPointer = NULL;
+    CAResult_t caResult = CA_STATUS_FAILED;
 
     if(!ehResponse || !ehResponse->requestHandle)
     {
@@ -506,6 +516,19 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
         responseInfo.info.options = NULL;
     }
 
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+    // Add route info in RM option.
+    result = RMAddInfo(responseEndpoint.routeData, &(responseInfo.info.options),
+                       &(responseInfo.info.numOptions));
+    if(OC_STACK_OK != result)
+    {
+        OC_LOG(ERROR, TAG, PCF("Add option failed"));
+        OICFree(responseInfo.info.token);
+        OICFree(responseInfo.info.options);
+        return result;
+    }
+#endif
+
     // Put the JSON prefix and suffix around the payload
     if(ehResponse->payload)
     {
@@ -547,7 +570,6 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     int size = sizeof(CAConnTypes)/ sizeof(CATransportAdapter_t);
 
     CATransportAdapter_t adapter = responseEndpoint.adapter;
-    CAResult_t caResult = CA_STATUS_FAILED;
     result = OC_STACK_OK;
 
     // Default adapter, try to send response out on all adapters.
@@ -588,7 +610,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     OC_LOG_V(INFO, TAG, "\tResponse result : %s", responseInfo.result);
     OC_LOG_V(INFO, TAG, "\tResponse for uri: %s", responseInfo.info.resourceUri);
 
-    CAResult_t caResult = CASendResponse(&responseEndpoint, &responseInfo);
+    caResult = CASendResponse(&responseEndpoint, &responseInfo);
     if(caResult != CA_STATUS_OK)
     {
         OC_LOG(ERROR, TAG, PCF("CASendResponse failed"));

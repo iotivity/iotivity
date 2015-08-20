@@ -126,8 +126,9 @@ CAResult_t CAEDRStopNetworkMonitor()
     }
 
     if (g_mainloop)
-        g_main_loop_unref(g_mainloop);
-
+    {
+        g_main_loop_quit(g_mainloop);
+    }
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }

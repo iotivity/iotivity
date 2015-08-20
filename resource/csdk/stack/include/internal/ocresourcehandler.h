@@ -63,7 +63,10 @@ typedef enum
 
     /** "/oic/res/d/type" .*/
     OC_RESOURCE_TYPES_URI,
-
+#ifdef ROUTING_GATEWAY
+    /** "/oic/gateway" .*/
+    OC_GATEWAY,
+#endif
     #ifdef WITH_PRESENCE
     /** "/oic/ad" .*/
     OC_PRESENCE,

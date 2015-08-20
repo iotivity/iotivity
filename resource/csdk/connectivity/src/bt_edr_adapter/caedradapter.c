@@ -234,7 +234,10 @@ CAResult_t CAStartEDR()
     {
         OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "CAAdapterStartQueue failed!, error number [%d] ", ret);
     }
-
+#ifdef __TIZEN__
+    // Initialization of EDR adapter and discovering of devices takes time in tizen.
+    sleep(10);
+#endif
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return ret;
 }

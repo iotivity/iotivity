@@ -67,7 +67,7 @@ uint8_t GetRandomBit() {
 #endif
 
 int8_t OCSeedRandom() {
-#if defined(__ANDROID__) || defined(__linux__) || defined(__APPLE__)
+#if defined(__ANDROID__) || defined(__linux__) || defined(__APPLE__) || defined(__TIZEN__)
     int32_t fd = open("/dev/urandom", O_RDONLY);
     if (fd > 0) {
         uint32_t randomSeed = 0;

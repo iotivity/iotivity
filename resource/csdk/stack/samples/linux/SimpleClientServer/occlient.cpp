@@ -805,6 +805,20 @@ int main(int argc, char* argv[])
         return 0;
     }
 
+    /**
+     * Before invoking Discover resource, we process the gateway requests
+     * and form the routing table.
+     */
+    for (int index = 0; index < 20; index++)
+    {
+        if (OCProcess() != OC_STACK_OK)
+        {
+            OC_LOG(ERROR, TAG, "OCStack process error");
+            return 0;
+        }
+        usleep(100000);
+    }
+
     if (Connectivity == CT_ADAPTER_DEFAULT || Connectivity == CT_IP)
     {
         ConnType = CT_ADAPTER_IP;
@@ -860,7 +874,6 @@ int main(int argc, char* argv[])
             return 0;
         }
 
-        sleep(2);
     }
     OC_LOG(INFO, TAG, "Exiting occlient main loop...");
 

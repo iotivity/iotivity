@@ -38,7 +38,9 @@
 
 #include "cacommon.h"
 #include "cainterface.h"
-
+#ifdef ROUTING_GATEWAY
+#include "routingmanager.h"
+#endif
 
 /// Module Name
 #define TAG PCF("ocresource")
@@ -163,6 +165,12 @@ static OCVirtualResources GetTypeOfVirtualURI(const char *uriInRequest)
     {
         return OC_RESOURCE_TYPES_URI;
     }
+#ifdef ROUTING_GATEWAY
+    else if (strcmp(uriInRequest, OC_RSRVD_GATEWAY_URI) == 0)
+    {
+        return OC_GATEWAY;
+    }
+#endif
 #ifdef WITH_PRESENCE
     else if (strcmp(uriInRequest, OC_RSRVD_PRESENCE_URI) == 0)
     {
@@ -617,6 +625,15 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
             discoveryResult = OC_STACK_OK;
         }
     }
+#ifdef ROUTING_GATEWAY
+    else if (virtualUriInRequest == OC_GATEWAY)
+    {
+        // Received request for a gateway
+        OC_LOG(INFO, TAG, PCF("Request is for Gateway Virtual Request"));
+        discoveryResult = RMHandleGatewayRequest(request, resource);
+
+    }
+#endif
 
     /**
      * Step 2: Send the discovery response
@@ -641,6 +658,10 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
     }
     else
     #endif
+#ifdef ROUTING_GATEWAY
+    // Gateway uses the RMHandleGatewayRequest to respond to the request.
+    if (OC_GATEWAY != virtualUriInRequest)
+#endif
     {
         if(discoveryResult == OC_STACK_OK)
         {

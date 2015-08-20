@@ -474,19 +474,16 @@ CAResult_t CAParseHeadOption(uint32_t code, const CAInfo_t *info, coap_list_t **
         }
         else
         {
-            if ((info->options + i)->optionData && (info->options + i)->optionLength > 0)
+            OIC_LOG_V(DEBUG, TAG, "Head opt ID: %d", id);
+            OIC_LOG_V(DEBUG, TAG, "Head opt data: %s", (info->options + i)->optionData);
+            OIC_LOG_V(DEBUG, TAG, "Head opt length: %d", (info->options + i)->optionLength);
+            int ret = coap_insert(optlist,
+                                  CACreateNewOptionNode(id, (info->options + i)->optionLength,
+                                                        (info->options + i)->optionData),
+                                  CAOrderOpts);
+            if (ret <= 0)
             {
-                OIC_LOG_V(DEBUG, TAG, "Head opt ID: %d", id);
-                OIC_LOG_V(DEBUG, TAG, "Head opt data: %s", (info->options + i)->optionData);
-                OIC_LOG_V(DEBUG, TAG, "Head opt length: %d", (info->options + i)->optionLength);
-                int ret = coap_insert(optlist,
-                                      CACreateNewOptionNode(id, (info->options + i)->optionLength,
-                                                            (info->options + i)->optionData),
-                                      CAOrderOpts);
-                if (ret <= 0)
-                {
-                    return CA_STATUS_INVALID_PARAM;
-                }
+                return CA_STATUS_INVALID_PARAM;
             }
         }
     }
@@ -618,37 +615,66 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *
     while ((option = coap_option_next(&opt_iter)))
     {
         char buf[COAP_MAX_PDU_SIZE] = {0};
-        if (CAGetOptionData((uint8_t *)(COAP_OPT_VALUE(option)),
-                            COAP_OPT_LENGTH(option), (uint8_t *)buf, sizeof(buf)))
+        uint32_t optionLen = 0;
+        optionLen = CAGetOptionData((uint8_t *)(COAP_OPT_VALUE(option)),
+                            COAP_OPT_LENGTH(option), (uint8_t *)buf, sizeof(buf));
+        OIC_LOG_V(DEBUG, TAG, "COAP URI element : %s", buf);
+        uint32_t bufLength = strlen(buf);
+        if (COAP_OPTION_URI_PATH == opt_iter.type || COAP_OPTION_URI_QUERY == opt_iter.type)
         {
-            OIC_LOG_V(DEBUG, TAG, "COAP URI element : %s", buf);
-            uint32_t bufLength = strlen(buf);
-            if (COAP_OPTION_URI_PATH == opt_iter.type || COAP_OPTION_URI_QUERY == opt_iter.type)
+            if (false == isfirstsetflag)
             {
-                if (false == isfirstsetflag)
+                isfirstsetflag = true;
+                optionResult[optionLength] = '/';
+                optionLength++;
+                // Make sure there is enough room in the optionResult buffer
+                if ((optionLength + bufLength) < sizeof(optionResult))
                 {
-                    isfirstsetflag = true;
-                    optionResult[optionLength] = '/';
-                    optionLength++;
+                    memcpy(&optionResult[optionLength], buf, bufLength);
+                    optionLength += bufLength;
+                }
+                else
+                {
+                    goto exit;
+                }
+            }
+            else
+            {
+                if (COAP_OPTION_URI_PATH == opt_iter.type)
+                {
                     // Make sure there is enough room in the optionResult buffer
-                    if ((optionLength + bufLength) < sizeof(optionResult))
+                    if (optionLength < sizeof(optionResult))
                     {
-                        memcpy(&optionResult[optionLength], buf, bufLength);
-                        optionLength += bufLength;
+                        optionResult[optionLength] = '/';
+                        optionLength++;
                     }
                     else
                     {
                         goto exit;
                     }
                 }
-                else
+                else if (COAP_OPTION_URI_QUERY == opt_iter.type)
                 {
-                    if (COAP_OPTION_URI_PATH == opt_iter.type)
+                    if (false == isQueryBeingProcessed)
                     {
                         // Make sure there is enough room in the optionResult buffer
                         if (optionLength < sizeof(optionResult))
                         {
-                            optionResult[optionLength] = '/';
+                            optionResult[optionLength] = '?';
+                            optionLength++;
+                            isQueryBeingProcessed = true;
+                        }
+                        else
+                        {
+                            goto exit;
+                        }
+                    }
+                    else
+                    {
+                        // Make sure there is enough room in the optionResult buffer
+                        if (optionLength < sizeof(optionResult))
+                        {
+                            optionResult[optionLength] = ';';
                             optionLength++;
                         }
                         else
@@ -656,67 +682,37 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *
                             goto exit;
                         }
                     }
-                    else if (COAP_OPTION_URI_QUERY == opt_iter.type)
-                    {
-                        if (false == isQueryBeingProcessed)
-                        {
-                            // Make sure there is enough room in the optionResult buffer
-                            if (optionLength < sizeof(optionResult))
-                            {
-                                optionResult[optionLength] = '?';
-                                optionLength++;
-                                isQueryBeingProcessed = true;
-                            }
-                            else
-                            {
-                                goto exit;
-                            }
-                        }
-                        else
-                        {
-                            // Make sure there is enough room in the optionResult buffer
-                            if (optionLength < sizeof(optionResult))
-                            {
-                                optionResult[optionLength] = ';';
-                                optionLength++;
-                            }
-                            else
-                            {
-                                goto exit;
-                            }
-                        }
-                    }
-                    // Make sure there is enough room in the optionResult buffer
-                    if ((optionLength + bufLength) < sizeof(optionResult))
-                    {
-                        memcpy(&optionResult[optionLength], buf, bufLength);
-                        optionLength += bufLength;
-                    }
-                    else
-                    {
-                        goto exit;
-                    }
+                }
+                // Make sure there is enough room in the optionResult buffer
+                if ((optionLength + bufLength) < sizeof(optionResult))
+                {
+                    memcpy(&optionResult[optionLength], buf, bufLength);
+                    optionLength += bufLength;
+                }
+                else
+                {
+                    goto exit;
                 }
             }
-            else if (COAP_OPTION_BLOCK1 == opt_iter.type || COAP_OPTION_BLOCK2 == opt_iter.type
-                    || COAP_OPTION_SIZE1 == opt_iter.type || COAP_OPTION_SIZE2 == opt_iter.type)
+        }
+        else if (COAP_OPTION_BLOCK1 == opt_iter.type || COAP_OPTION_BLOCK2 == opt_iter.type
+                 || COAP_OPTION_SIZE1 == opt_iter.type || COAP_OPTION_SIZE2 == opt_iter.type)
+        {
+            OIC_LOG_V(DEBUG, TAG, "option[%d] will be filtering", opt_iter.type);
+        }
+        else
+        {
+            if (idx < count)
             {
-                OIC_LOG_V(DEBUG, TAG, "option[%d] will be filtering", opt_iter.type);
-            }
-            else
-            {
-                if (idx < count)
-                {
-                    uint32_t length = bufLength;
+                uint32_t length = optionLen;
 
-                    if (length <= CA_MAX_HEADER_OPTION_DATA_LENGTH)
-                    {
-                        outInfo->options[idx].optionID = opt_iter.type;
-                        outInfo->options[idx].optionLength = length;
-                        outInfo->options[idx].protocolID = CA_COAP_ID;
-                        memcpy(outInfo->options[idx].optionData, buf, length);
-                        idx++;
-                    }
+                if (length <= CA_MAX_HEADER_OPTION_DATA_LENGTH)
+                {
+                    outInfo->options[idx].optionID = opt_iter.type;
+                    outInfo->options[idx].optionLength = length;
+                    outInfo->options[idx].protocolID = CA_COAP_ID;
+                    memcpy(outInfo->options[idx].optionData, buf, length);
+                    idx++;
                 }
             }
         }
@@ -906,15 +902,15 @@ void CADestroyInfo(CAInfo_t *info)
 
 uint32_t CAGetOptionData(const uint8_t *data, uint32_t len, uint8_t *option, uint32_t buflen)
 {
-    if (0 == buflen || 0 == len)
+    if (0 == buflen)
     {
-        OIC_LOG(ERROR, TAG, "len 0");
+        OIC_LOG(ERROR, TAG, "bufLen 0");
         return 0;
     }
 
-    if (NULL == data || NULL == option)
+    if (NULL == option)
     {
-        OIC_LOG(ERROR, TAG, "data/option NULL");
+        OIC_LOG(ERROR, TAG, "option NULL");
         return 0;
     }
 

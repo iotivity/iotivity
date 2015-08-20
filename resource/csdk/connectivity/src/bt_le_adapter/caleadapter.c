@@ -1730,6 +1730,8 @@ static void CATerminateLE()
 static CAResult_t CAStartLEListeningServer()
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
+#ifndef ROUTING_GATEWAY
+    // Routing Gateway only supports BLE client mode.
     CAResult_t result = CA_STATUS_OK;
 #ifndef SINGLE_THREAD
     result = CAInitLEServerQueues();
@@ -1762,6 +1764,10 @@ static CAResult_t CAStartLEListeningServer()
 
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
+#else
+    OIC_LOG(ERROR, CALEADAPTER_TAG, "LE server not supported in Routing Gateway");
+    return CA_NOT_SUPPORTED;
+#endif
 }
 
 static CAResult_t CAStartLEDiscoveryServer()

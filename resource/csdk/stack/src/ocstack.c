@@ -48,6 +48,13 @@
 #include "ocpayload.h"
 #include "ocpayloadcbor.h"
 
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+#include "routingutility.h"
+#ifdef ROUTING_GATEWAY
+#include "routingmanager.h"
+#endif
+#endif
+
 #ifdef WITH_ARDUINO
 #include "Time.h"
 #else
@@ -369,6 +376,15 @@ static OCResourceType *findResourceType(OCResourceType * resourceTypeList,
  */
 static OCStackResult ResetPresenceTTL(ClientCB *cbNode, uint32_t maxAgeSeconds);
 
+/**
+ * Helper function to add routing header option before sending request if routing is enabled.
+ *
+ * @param[in] endpoint RemoteEndpoint to which request has to be sent.
+ * @param[in] requestInfo request.
+ * @return ::CA_STATUS_OK on success or appropriate error code.
+ */
+static OCStackResult SendCARequest(CAEndpoint_t *endpoint, CARequestInfo_t *requestInfo);
+
 //-----------------------------------------------------------------------------
 // Internal functions
 //-----------------------------------------------------------------------------
@@ -399,6 +415,9 @@ void CopyEndpointToDevAddr(const CAEndpoint_t *in, OCDevAddr *out)
     out->flags = CAToOCTransportFlags(in->flags);
     OICStrcpy(out->addr, sizeof(out->addr), in->addr);
     out->port = in->port;
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+    memcpy(out->routeData, in->routeData, MAX_ADDR_STR_SIZE_CA);
+#endif
 }
 
 void CopyDevAddrToEndpoint(const OCDevAddr *in, CAEndpoint_t *out)
@@ -409,6 +428,9 @@ void CopyDevAddrToEndpoint(const OCDevAddr *in, CAEndpoint_t *out)
     out->adapter = (CATransportAdapter_t)in->adapter;
     out->flags = OCToCATransportFlags(in->flags);
     OICStrcpy(out->addr, sizeof(out->addr), in->addr);
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+    memcpy(out->routeData, in->routeData, MAX_ADDR_STR_SIZE_CA);
+#endif
     out->port = in->port;
 }
 
@@ -432,6 +454,9 @@ static OCStackResult OCCreateEndpoint(OCDevAddr *devAddr, CAEndpoint_t **endpoin
     OICStrcpy(ep->addr, sizeof(ep->addr), devAddr->addr);
     ep->port = devAddr->port;
 
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+    memcpy(ep->routeData, devAddr->routeData, MAX_ADDR_STR_SIZE_CA);
+#endif
     *endpoint = ep;
 
     return OC_STACK_OK;
@@ -1006,8 +1031,37 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
     VERIFY_NON_NULL_NR(endPoint, FATAL);
     VERIFY_NON_NULL_NR(responseInfo, FATAL);
 
-    OC_LOG(INFO, TAG, PCF("Enter HandleCAResponses"));
+    OC_LOG_V(INFO, TAG, PCF("Enter HandleCAResponses [%s:%u]"), endPoint->addr, endPoint->port);
 
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+#ifdef ROUTING_GATEWAY
+    bool needRIHandling = false;
+    /**
+     * Routing manager is going to update either of endpoint or response or both.
+     * This typecasting is done to avoid unnecessary duplication of Endpoint and responseInfo
+     * RM can update "routeData" option in endPoint so that future RI requests can be sent to proper
+     * destination.
+     */
+    OCStackResult ret = RMHandleResponse((CAResponseInfo_t *)responseInfo, (CAEndpoint_t *)endPoint,
+                                         &needRIHandling);
+    if(ret != OC_STACK_OK || !needRIHandling)
+    {
+        OC_LOG_V(INFO, TAG, PCF("Routing status![%d]. Not forwarding to RI"), ret);
+        return;
+    }
+#endif
+
+    /**
+     * Put source in sender endpoint so that the next packet from application can be routed to
+     * proper destination and remove "RM" coap header option before passing request / response to
+     * RI as this option will make no sense to either RI or application.
+     */
+    RMUpdateInfo((CAHeaderOption_t **) &(responseInfo->info.options),
+                 (uint8_t *) &(responseInfo->info.numOptions),
+                 (CAEndpoint_t *) endPoint);
+#endif
+
+    OC_LOG_V(INFO, TAG, PCF("handling HandleCAResponses [%s:%u]"), endPoint->addr, endPoint->port);
     if(responseInfo->info.resourceUri &&
         strcmp(responseInfo->info.resourceUri, OC_RSRVD_PRESENCE_URI) == 0)
     {
@@ -1138,7 +1192,7 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
                 }
             }
 
-            //Need to send ACK when the response is CON
+            // Need to send ACK when the response is CON
             if(responseInfo->info.type == CA_MSG_CONFIRM)
             {
                 SendDirectStackResponse(endPoint, responseInfo->info.messageId, CA_EMPTY,
@@ -1259,11 +1313,23 @@ OCStackResult SendDirectStackResponse(const CAEndpoint_t* endPoint, const uint16
     respInfo.info.tokenLength = tokenLength;
     respInfo.info.type = type;
 
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+    // Add the destination to route option from the responseEndpoint->destination.
+    OCStackResult result = RMAddInfo(endPoint->routeData,
+                                     &(respInfo.info.options),
+                                     &(respInfo.info.numOptions));
+    if(OC_STACK_OK != result)
+    {
+        OC_LOG_V(ERROR, TAG, "Add routing option failed [%d]", result);
+        return result;
+    }
+#endif
+
     CAResult_t caResult = CASendResponse(endPoint, &respInfo);
-    if(caResult != CA_STATUS_OK)
+    if(CA_STATUS_OK != caResult)
     {
         OC_LOG(ERROR, TAG, PCF("CASendResponse error"));
-        return OC_STACK_ERROR;
+        return CAResultToOCResult(caResult);
     }
     return OC_STACK_OK;
 }
@@ -1284,11 +1350,42 @@ void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
         return;
     }
 
+    OC_LOG_V(INFO, TAG, PCF("Enter HandleCARequest [%s:%u"), endPoint->addr, endPoint->port);
+
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+#ifdef ROUTING_GATEWAY
+    bool needRIHandling = false;
+    /**
+     * Routing manager is going to update either of endpoint or request or both.
+     * This typecasting is done to avoid unnecessary duplication of Endpoint and requestInfo
+     * RM can update "routeData" option in endPoint so that future RI requests can be sent to proper
+     * destination. It can also remove "RM" coap header option before passing request / response to
+     * RI as this option will make no sense to either RI or application.
+     */
+    OCStackResult ret = RMHandleRequest((CARequestInfo_t *)requestInfo, (CAEndpoint_t *)endPoint,
+                                     &needRIHandling);
+    if(ret != OC_STACK_OK || !needRIHandling)
+    {
+        OC_LOG_V(INFO, TAG, PCF("Routing status![%d]. Not forwarding to RI"), ret);
+        return;
+    }
+#endif
+
+    /**
+     * Put source in sender endpoint so that the next packet from application can be routed to
+     * proper destination and remove RM header option.
+     */
+    RMUpdateInfo((CAHeaderOption_t **) &(requestInfo->info.options),
+                 (uint8_t *) &(requestInfo->info.numOptions),
+                 (CAEndpoint_t *) endPoint);
+#endif
+    OC_LOG_V(INFO, TAG, PCF("after HandleCARequest [%s:%u"), endPoint->addr, endPoint->port);
+
     OCStackResult requestResult = OC_STACK_ERROR;
 
     if(myStackMode == OC_CLIENT)
     {
-        //TODO: should the client be responding to requests?
+        // TODO: should the client be responding to requests?
         return;
     }
 
@@ -1598,6 +1695,9 @@ OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
     OCStackResult result = OC_STACK_ERROR;
     OC_LOG(INFO, TAG, PCF("Entering OCInit"));
 
+#ifdef ROUTING_GATEWAY
+    myStackMode = OC_CLIENT_SERVER;
+#else
     // Validate mode
     if (!((mode == OC_CLIENT) || (mode == OC_SERVER) || (mode == OC_CLIENT_SERVER)))
     {
@@ -1605,7 +1705,7 @@ OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
         return OC_STACK_ERROR;
     }
     myStackMode = mode;
-
+#endif
     if (mode == OC_CLIENT || mode == OC_CLIENT_SERVER)
     {
         caglobals.client = true;
@@ -1679,6 +1779,11 @@ OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
         // TODO after BeachHead delivery: consolidate into single SRMInit()
     }
 
+#ifdef ROUTING_GATEWAY
+    result = RMInitialize();
+    VERIFY_SUCCESS(result, OC_STACK_OK);
+#endif
+
 exit:
     if(result != OC_STACK_OK)
     {
@@ -1712,6 +1817,10 @@ OCStackResult OCStop()
     // here send with the code "OC_STACK_PRESENCE_STOPPED" result.
     presenceResource.presenceTTL = 0;
     #endif // WITH_PRESENCE
+
+#ifdef ROUTING_GATEWAY
+    RMTerminate();
+#endif
 
     // Free memory dynamically allocated for resources
     deleteAllResources();
@@ -2198,11 +2307,10 @@ OCStackResult OCDoResource(OCDoHandle *handle,
     resourceType = NULL;  // Client CB list entry now owns it
 
     // send request
-    caResult = CASendRequest(endpoint, &requestInfo);
-    if (caResult != CA_STATUS_OK)
+    result = SendCARequest(endpoint, &requestInfo);
+    if (OC_STACK_OK != result)
     {
-        OC_LOG(ERROR, TAG, PCF("CASendRequest"));
-        result = OC_STACK_COMM_ERROR;
+        OC_LOG_V(ERROR, TAG, PCF("CASendRequest error [%u]"), result);
         goto exit;
     }
 
@@ -2260,7 +2368,6 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
      */
     OCStackResult ret = OC_STACK_OK;
     CAEndpoint_t* endpoint = NULL;
-    CAResult_t caResult;
     CAInfo_t requestData = {.type = CA_MSG_CONFIRM};
     CARequestInfo_t requestInfo = {.method = CA_GET};
 
@@ -2314,13 +2421,11 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
             }
 
             // send request
-            caResult = CASendRequest(endpoint, &requestInfo);
-            if (caResult != CA_STATUS_OK)
+            ret = SendCARequest(endpoint, &requestInfo);
+            if (OC_STACK_OK != ret)
             {
                 OC_LOG(ERROR, TAG, PCF("CASendRequest error"));
-                ret = OC_STACK_ERROR;
             }
-            ret = CAResultToOCResult (caResult);
             break;
 
         #ifdef WITH_PRESENCE
@@ -2441,7 +2546,6 @@ OCStackResult OCProcessPresence()
             continue;
         }
 
-        CAResult_t caResult = CA_STATUS_OK;
         CAEndpoint_t* endpoint = NULL;
         CAInfo_t requestData = {.type = CA_MSG_CONFIRM};
         CARequestInfo_t requestInfo = {.method = CA_GET};
@@ -2462,10 +2566,9 @@ OCStackResult OCProcessPresence()
         requestInfo.method = CA_GET;
         requestInfo.info = requestData;
 
-        caResult = CASendRequest(endpoint, &requestInfo);
+        result = SendCARequest(endpoint, &requestInfo);
         OCDestroyEndpoint(endpoint);
-
-        if (caResult != CA_STATUS_OK)
+        if (result != OC_STACK_OK)
         {
             OC_LOG(ERROR, TAG, PCF("CASendRequest error"));
             goto exit;
@@ -2483,6 +2586,25 @@ exit:
 }
 #endif // WITH_PRESENCE
 
+// Helper function to add Routing manager header option if routing is enabled
+OCStackResult SendCARequest(CAEndpoint_t *endpoint, CARequestInfo_t *requestInfo)
+{
+    VERIFY_NON_NULL(endpoint, FATAL, OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL(requestInfo, FATAL, OC_STACK_INVALID_PARAM);
+
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+    OCStackResult result = RMAddInfo(endpoint->routeData, &(requestInfo->info.options),
+                                     &(requestInfo->info.numOptions));
+    if (OC_STACK_OK != result)
+    {
+        OC_LOG(ERROR, TAG, "Add destination option failed");
+        return result;
+    }
+#endif
+    CAResult_t caResult = CASendRequest(endpoint, requestInfo);
+    return CAResultToOCResult(caResult);
+}
+
 OCStackResult OCProcess()
 {
     #ifdef WITH_PRESENCE
@@ -2490,6 +2612,9 @@ OCStackResult OCProcess()
     #endif
     CAHandleRequestResponse();
 
+#ifdef ROUTING_GATEWAY
+    RMProcess();
+#endif
     return OC_STACK_OK;
 }
 

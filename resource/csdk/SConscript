@@ -61,13 +61,18 @@ if target_os not in ['arduino', 'windows', 'winrt']:
 	liboctbstack_env.AppendUnique(CPPDEFINES  = ['WITH_POSIX'])
 	liboctbstack_env.AppendUnique(CFLAGS = ['-std=c99'])
 
+if liboctbstack_env.get('ROUTING') == 'GW':
+	liboctbstack_env.AppendUnique(CPPDEFINES = ['ROUTING_GATEWAY'])
+elif liboctbstack_env.get('ROUTING') == 'EP':
+	liboctbstack_env.AppendUnique(CPPDEFINES = ['ROUTING_EP'])
+
 if target_os not in ['windows', 'winrt']:
 	liboctbstack_env.AppendUnique(CFLAGS = ['-Wall'])
 
 liboctbstack_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 
 if target_os in ['android', 'linux', 'tizen']:
-	liboctbstack_env.PrependUnique(LIBS = ['connectivity_abstraction'])
+	liboctbstack_env.AppendUnique(LIBS = ['connectivity_abstraction'])
 	if with_ra:
 		liboctbstack_env.AppendUnique(LIBS = ['ra_xmpp'])
 
@@ -97,6 +102,9 @@ if env.get('LOGGING'):
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 liboctbstack_env.Append(LIBS = ['c_common'])
+
+if liboctbstack_env.get('ROUTING') in ['GW', 'EP']:
+	liboctbstack_env.Append(LIBS = ['routingmanager'])
 
 ######################################################################
 # Source files and Targets

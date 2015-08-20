@@ -64,7 +64,10 @@ extern "C" {
 
 /** Resource Type.*/
 #define OC_RSRVD_RESOURCE_TYPES_URI           "/oic/res/types/d"
-
+#ifdef ROUTING_GATEWAY
+/** Gateway URI.*/
+#define OC_RSRVD_GATEWAY_URI                  "/oic/gateway"
+#endif
 #ifdef WITH_PRESENCE
 
 /** Presence URI through which the OIC devices advertise their presence.*/
@@ -385,7 +388,9 @@ typedef struct
 
     /** usually zero for default interface.*/
     uint32_t                interface;
-
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+    char                    routeData[MAX_ADDR_STR_SIZE]; //destination GatewayID:ClientId
+#endif
 } OCDevAddr;
 
 /**

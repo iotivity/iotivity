@@ -83,7 +83,6 @@ static void CAProcessReceivedData(CAData_t *data);
 #endif
 static void CADestroyData(void *data, uint32_t size);
 static void CALogPayloadInfo(CAInfo_t *info);
-static bool CADropSecondMessage(CAHistory_t *history, const CAEndpoint_t *endpoint, uint16_t id);
 
 #ifdef WITH_BWT
 void CAAddDataToSendThread(CAData_t *data)
@@ -189,15 +188,6 @@ static CAData_t* CAGenerateHandlerData(const CAEndpoint_t *endpoint,
         if (CA_STATUS_OK != result)
         {
             OIC_LOG(ERROR, TAG, "CAGetRequestInfoFromPDU failed");
-            CAFreeEndpoint(ep);
-            CADestroyRequestInfoInternal(reqInfo);
-            OICFree(cadata);
-            return NULL;
-        }
-
-        if (CADropSecondMessage(&caglobals.ca.requestHistory, endpoint, reqInfo->info.messageId))
-        {
-            OIC_LOG(ERROR, TAG, "Second Request with same Token, Drop it");
             CAFreeEndpoint(ep);
             CADestroyRequestInfoInternal(reqInfo);
             OICFree(cadata);
@@ -422,11 +412,20 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
     {
 
         OIC_LOG(DEBUG,TAG,"Unicast message");
+#ifdef ROUTING_GATEWAY
+        // When forwarding a packet, do not attempt retransmission as its the responsibility of
+        // packet originator node
+        bool skipRetransmission = false;
+#endif
+
         if (NULL != data->requestInfo)
         {
             OIC_LOG(DEBUG, TAG, "requestInfo is available..");
 
             info = &data->requestInfo->info;
+#ifdef ROUTING_GATEWAY
+            skipRetransmission = data->requestInfo->info.skipRetransmission;
+#endif
             pdu = CAGeneratePDU(data->requestInfo->method, info, data->remoteEndpoint);
         }
         else if (NULL != data->responseInfo)
@@ -434,6 +433,9 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
             OIC_LOG(DEBUG, TAG, "responseInfo is available..");
 
             info = &data->responseInfo->info;
+#ifdef ROUTING_GATEWAY
+            skipRetransmission = data->responseInfo->info.skipRetransmission;
+#endif
             pdu = CAGeneratePDU(data->responseInfo->result, info, data->remoteEndpoint);
         }
         else
@@ -473,6 +475,10 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
                 coap_delete_pdu(pdu);
                 return res;
             }
+#ifdef ROUTING_GATEWAY
+            if(!skipRetransmission)
+            {
+#endif
             // for retransmission
             res = CARetransmissionSentData(&g_retransmissionContext, data->remoteEndpoint, pdu->hdr,
                                            pdu->length);
@@ -483,7 +489,9 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
                 coap_delete_pdu(pdu);
                 return res;
             }
-
+#ifdef ROUTING_GATEWAY
+            }
+#endif
             coap_delete_pdu(pdu);
         }
         else
@@ -558,53 +566,6 @@ static void CASendThreadProcess(void *threadData)
 }
 
 #endif
-
-/*
- * If a second message arrives with the same token and the other address
- * family, drop it.  Typically, IPv6 beats IPv4, so the IPv4 message is dropped.
- */
-static bool CADropSecondMessage(CAHistory_t *history, const CAEndpoint_t *ep, uint16_t id)
-{
-    if (!ep)
-    {
-        return true;
-    }
-    if (ep->adapter != CA_ADAPTER_IP)
-    {
-        return false;
-    }
-    if (!caglobals.ip.dualstack)
-    {
-        return false;
-    }
-
-    bool ret = false;
-    CATransportFlags_t familyFlags = ep->flags & CA_IPFAMILY_MASK;
-
-    for (size_t i = 0; i < sizeof(history->items) / sizeof(history->items[0]); i++)
-    {
-        CAHistoryItem_t *item = &(history->items[i]);
-        if (id == item->messageId)
-        {
-            if ((familyFlags ^ item->flags) == CA_IPFAMILY_MASK)
-            {
-                OIC_LOG_V(INFO, TAG, "IPv%c duplicate message ignored",
-                                            familyFlags & CA_IPV6 ? '6' : '4');
-                ret = true;
-                break;
-            }
-        }
-    }
-
-    history->items[history->nextIndex].flags = familyFlags;
-    history->items[history->nextIndex].messageId = id;
-    if (++history->nextIndex >= HISTORYSIZE)
-    {
-        history->nextIndex = 0;
-    }
-
-    return ret;
-}
 
 static void CAReceivedPacketCallback(const CASecureEndpoint_t *sep,
                                      const void *data, uint32_t dataLen)

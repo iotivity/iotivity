@@ -21,6 +21,11 @@
 #ifndef PAYLOAD_LOGGING_H_
 #define PAYLOAD_LOGGING_H_
 
+#include "logger.h"
+#ifdef __TIZEN__
+#include <dlog.h>
+#endif
+
 #ifdef __cplusplus
 extern "C"
 {
