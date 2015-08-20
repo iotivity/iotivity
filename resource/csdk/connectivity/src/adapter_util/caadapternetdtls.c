@@ -118,9 +118,10 @@ static CAResult_t CAAddIdToPeerInfoList(const char *peerAddr, uint32_t port,
     {
         OIC_LOG(ERROR, NET_DTLS_TAG, "u_arraylist_add failed!");
         OICFree(peer);
+        return CA_STATUS_FAILED;
     }
 
-    return result;
+    return CA_STATUS_OK;
 }
 
 static void CAFreePeerInfoList()
@@ -302,10 +303,11 @@ static CAResult_t CADtlsCacheMsg(stCACacheMessage_t *msg)
     if (!result)
     {
         OIC_LOG(ERROR, NET_DTLS_TAG, "u_arraylist_add failed!");
+        return CA_STATUS_FAILED;
     }
 
     OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT");
-    return result;
+    return CA_STATUS_OK;
 }
 
 
@@ -437,11 +439,13 @@ static int32_t CASendSecureData(dtls_context_t *context,
 
     stCADtlsAddrInfo_t *addrInfo = (stCADtlsAddrInfo_t *)session;
 
-    CAEndpoint_t endpoint;
+    CAEndpoint_t endpoint = {.adapter = CA_DEFAULT_ADAPTER};
+
     CAConvertAddrToName(&(addrInfo->addr.st), endpoint.addr, &endpoint.port);
     endpoint.flags = addrInfo->addr.st.ss_family == AF_INET ? CA_IPV4 : CA_IPV6;
     endpoint.flags |= CA_SECURE;
     endpoint.adapter = CA_ADAPTER_IP;
+    endpoint.interface = session->ifindex;
     int type = 0;
 
     //Mutex is not required for g_caDtlsContext. It will be called in same thread.
