@@ -519,18 +519,41 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
                     }
                 }
 #endif
-                CALogPDUInfo(pdu);
+            }
+            else
+            {
+                OIC_LOG(ERROR,TAG,"Failed to generate multicast PDU");
+                CASendErrorInfo(data->remoteEndpoint, info, CA_SEND_FAILED);
+                return CA_SEND_FAILED;
+            }
+        }
+        else if (NULL != data->responseInfo)
+        {
+            OIC_LOG(DEBUG, TAG, "responseInfo is available..");
 
-                res = CASendMulticastData(data->remoteEndpoint, pdu->hdr, pdu->length);
-                if (CA_STATUS_OK != res)
+            info = &data->responseInfo->info;
+            pdu = CAGeneratePDU(data->responseInfo->result, info, data->remoteEndpoint);
+
+            if (NULL != pdu)
+            {
+#ifdef WITH_BWT
+                if (CA_ADAPTER_GATT_BTLE != data->remoteEndpoint->adapter)
                 {
-                    OIC_LOG_V(ERROR, TAG, "send failed:%d", res);
-                    CAErrorHandler(data->remoteEndpoint, pdu->hdr, pdu->length, res);
-                    coap_delete_pdu(pdu);
-                    return res;
+                    // Blockwise transfer
+                    if (NULL != info)
+                    {
+                        CAResult_t res = CAAddBlockOption(&pdu, *info,
+                                data->remoteEndpoint);
+                        if (CA_STATUS_OK != res)
+                        {
+                            OIC_LOG(INFO, TAG, "to write block option has failed");
+                            CAErrorHandler(data->remoteEndpoint, pdu->hdr, pdu->length, res);
+                            coap_delete_pdu(pdu);
+                            return res;
+                        }
+                    }
                 }
-
-                coap_delete_pdu(pdu);
+#endif
             }
             else
             {
@@ -541,12 +564,24 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
         }
         else
         {
-            OIC_LOG(ERROR, TAG, "request info is empty");
+            OIC_LOG(ERROR, TAG, "request or response info is empty");
             return CA_SEND_FAILED;
         }
+
+        CALogPDUInfo(pdu);
+
+        res = CASendMulticastData(data->remoteEndpoint, pdu->hdr, pdu->length);
+        if (CA_STATUS_OK != res)
+        {
+            OIC_LOG_V(ERROR, TAG, "send failed:%d", res);
+            CAErrorHandler(data->remoteEndpoint, pdu->hdr, pdu->length, res);
+            coap_delete_pdu(pdu);
+            return res;
+        }
+
+        coap_delete_pdu(pdu);
     }
 
-    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
@@ -803,7 +838,7 @@ static CAData_t* CAPrepareSendData(const CAEndpoint_t *endpoint, const void *sen
             return NULL;
         }
 
-        cadata->type = SEND_TYPE_UNICAST;
+        cadata->type = response->isMulticast ? SEND_TYPE_MULTICAST : SEND_TYPE_UNICAST;
         cadata->responseInfo = response;
     }
     else

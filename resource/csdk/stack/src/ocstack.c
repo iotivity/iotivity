@@ -832,8 +832,6 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
         // check for multiicast presence
         CAEndpoint_t ep = { .adapter = endpoint->adapter,
                             .flags = endpoint->flags };
-        OICStrcpy(ep.addr, sizeof(ep.addr), OC_MULTICAST_IP);
-        ep.port = OC_MULTICAST_PORT;
 
         uriLen = FormCanonicalPresenceUri(&ep, OC_RSRVD_PRESENCE_URI, presenceUri);
 
@@ -2522,8 +2520,6 @@ OCStackResult OCStartPresence(const uint32_t ttl)
         presenceState = OC_PRESENCE_INITIALIZED;
 
         OCDevAddr devAddr = { OC_DEFAULT_ADAPTER };
-        OICStrcpy(devAddr.addr, sizeof(devAddr.addr), OC_MULTICAST_IP);
-        devAddr.port = OC_MULTICAST_PORT;
 
         CAToken_t caToken = NULL;
         CAResult_t caResult = CAGenerateToken(&caToken, tokenLength);

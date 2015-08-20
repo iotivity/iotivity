@@ -129,6 +129,7 @@ CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *rep)
         return NULL;
     }
 
+    clone->isMulticast = rep->isMulticast;
     clone->result = rep->result;
     return clone;
 }
