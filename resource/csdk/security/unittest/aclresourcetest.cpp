@@ -26,21 +26,27 @@
 #include "ocstack.h"
 #include "ocpayload.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 #include "cJSON.h"
 #include "cainterface.h"
 #include "secureresourcemanager.h"
 #include "securevirtualresourcetypes.h"
 #include "srmresourcestrings.h"
 #include "aclresource.h"
+#include "srmtestcommon.h"
+#include "srmutility.h"
+#include "logger.h"
 
 using namespace std;
+
+#define TAG  PCF("SRM-ACL-UT")
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 extern char * BinToAclJSON(const OicSecAcl_t * acl);
 extern OicSecAcl_t * JSONToAclBin(const char * jsonStr);
-char* ReadFile(const char* filename);
 extern void DeleteACLList(OicSecAcl_t* acl);
 OCStackResult  GetDefaultACL(OicSecAcl_t** defaultAcl);
 OCEntityHandlerResult ACLEntityHandler (OCEntityHandlerFlag flag,
@@ -54,56 +60,6 @@ const char* DEFAULT_ACL_JSON_FILE_NAME = "oic_unittest_default_acl.json";
 const char* ACL1_JSON_FILE_NAME = "oic_unittest_acl1.json";
 
 #define NUM_ACE_FOR_WILDCARD_IN_ACL1_JSON (2)
-
-char* ReadFile(const char* filename)
-{
-
-    FILE *fp = NULL;
-    char *data = NULL;
-    struct stat st;
-    // TODO: Find the location of the executable and concatenate the SVR file name
-    // before opening it.
-    fp = fopen(filename, "r");
-    if (fp)
-    {
-        if (stat(filename, &st) == 0)
-        {
-            data = (char*)OICMalloc(st.st_size);
-            if (data)
-            {
-                if (fread(data, 1, st.st_size, fp) != (size_t)st.st_size)
-                {
-                    printf("Error in reading file %s", filename);
-                }
-            }
-        }
-        fclose(fp);
-    }
-    else
-    {
-        printf("Unable to open %s file", filename);
-    }
-
-    return data;
-}
-
-void SetPersistentHandler(OCPersistentStorage *ps, bool set)
-{
-    if (set)
-    {
-        ps->open = fopen;
-        ps->read = fread;
-        ps->write = fwrite;
-        ps->close = fclose;
-        ps->unlink = unlink;
-    }
-    else
-    {
-        memset(ps, 0, sizeof(OCPersistentStorage));
-    }
-    EXPECT_EQ(OC_STACK_OK,
-            OCRegisterPersistentStorageHandler(ps));
-}
 
 // JSON Marshalling Tests
 TEST(ACLResourceTest, JSONMarshallingTests)
@@ -181,14 +137,14 @@ TEST(ACLResourceTest, GetDefaultACLTests)
 // 'POST' ACL tests
 TEST(ACLResourceTest, ACLPostTest)
 {
-    OCEntityHandlerRequest ehReq = {};
+    OCEntityHandlerRequest ehReq =  OCEntityHandlerRequest();
 
     // Read an ACL from the file
     char *jsonStr = ReadFile(ACL1_JSON_FILE_NAME);
     if (jsonStr)
     {
-        static OCPersistentStorage ps =
-        { };
+        static OCPersistentStorage ps = OCPersistentStorage();
+
         SetPersistentHandler(&ps, true);
 
         // Create Entity Handler POST request payload
@@ -248,5 +204,144 @@ TEST(ACLResourceTest, GetACLResourceTests)
         gAcl = NULL;
         OICFree(jsonStr);
     }
+}
+//'DELETE' ACL test
+TEST(ACLResourceTest, ACLDeleteWithSingleResourceTest)
+{
+    OCEntityHandlerRequest ehReq = OCEntityHandlerRequest();
+    static OCPersistentStorage ps = OCPersistentStorage();
+    char *jsonStr = NULL;
+    OicSecAcl_t acl = OicSecAcl_t();
+    OicSecAcl_t* savePtr = NULL;
+    const OicSecAcl_t* subjectAcl1 = NULL;
+    const OicSecAcl_t* subjectAcl2 = NULL;
+    OCEntityHandlerResult ehRet = OC_EH_ERROR;
+    char query[] = "sub=MjIyMjIyMjIyMjIyMjIyMg==;rsrc=/a/led";
+
+    SetPersistentHandler(&ps, true);
+
+    //ACE to POST
+    memcpy(acl.subject.id, "2222222222222222", sizeof(acl.subject.id));
+    acl.resourcesLen = 1;
+    acl.resources = (char**)OICCalloc(acl.resourcesLen, sizeof(char*));
+    VERIFY_NON_NULL(TAG, acl.resources, ERROR);
+    acl.resources[0] = (char*)OICMalloc(strlen("/a/led")+1);
+    VERIFY_NON_NULL(TAG, acl.resources[0], ERROR);
+    OICStrcpy(acl.resources[0], sizeof(acl.resources[0]), "/a/led");
+    acl.permission = 6;
+    acl.ownersLen = 1;
+    acl.owners = (OicUuid_t*)OICCalloc(acl.ownersLen, sizeof(OicUuid_t));
+    VERIFY_NON_NULL(TAG, acl.owners, ERROR);
+    memcpy(acl.owners->id, "1111111111111111", sizeof(acl.owners->id));
+
+    //GET json POST payload
+    jsonStr = BinToAclJSON(&acl);
+    VERIFY_NON_NULL(TAG, jsonStr, ERROR);
+
+    // Create Entity Handler POST request payload
+    ehReq.method = OC_REST_POST;
+    ehReq.payload = (OCPayload*)OCSecurityPayloadCreate(jsonStr);
+    ehRet = ACLEntityHandler(OC_REQUEST_FLAG, &ehReq);
+    EXPECT_TRUE(OC_EH_ERROR == ehRet);
+
+    // Verify if SRM contains ACE for the subject
+    savePtr = NULL;
+    subjectAcl1 = GetACLResourceData(&acl.subject, &savePtr);
+    EXPECT_TRUE(NULL != subjectAcl1);
+
+    // Create Entity Handler DELETE request
+    ehReq.method = OC_REST_DELETE;
+    ehReq.query = (char*)OICMalloc(strlen(query)+1);
+    VERIFY_NON_NULL(TAG, ehReq.query, ERROR);
+    OICStrcpy(ehReq.query, strlen(query)+1, query);
+    ehRet = ACLEntityHandler(OC_REQUEST_FLAG, &ehReq);
+    EXPECT_TRUE(OC_EH_ERROR == ehRet);
+
+    // Verify if SRM has deleted ACE for the subject
+    savePtr = NULL;
+    subjectAcl2 = GetACLResourceData(&acl.subject, &savePtr);
+    EXPECT_TRUE(NULL == subjectAcl2);
+
+exit:
+    // Perform cleanup
+    if(NULL != subjectAcl1)
+    {
+        DeInitACLResource();
+    }
+    OCPayloadDestroy(ehReq.payload);
+    OICFree(ehReq.query);
+    OICFree(jsonStr);
+
+}
+
+TEST(ACLResourceTest, ACLDeleteWithMultiResourceTest)
+{
+    OCEntityHandlerRequest ehReq = OCEntityHandlerRequest();
+    static OCPersistentStorage ps = OCPersistentStorage();
+    OicSecAcl_t acl = OicSecAcl_t();
+    char *jsonStr = NULL;
+    OicSecAcl_t* savePtr = NULL;
+    const OicSecAcl_t* subjectAcl1 = NULL;
+    const OicSecAcl_t* subjectAcl2 = NULL;
+    OCEntityHandlerResult ehRet = OC_EH_ERROR;
+    char query[] = "sub=MjIyMjIyMjIyMjIyMjIyMg==;rsrc=/a/led";
+
+    SetPersistentHandler(&ps, true);
+
+    memcpy(acl.subject.id, "2222222222222222", sizeof(acl.subject.id));
+    acl.resourcesLen = 2;
+    acl.resources = (char**)OICCalloc(acl.resourcesLen, sizeof(char*));
+    VERIFY_NON_NULL(TAG, acl.resources, ERROR);
+    acl.resources[0] = (char*)OICMalloc(strlen("/a/led")+1);
+    VERIFY_NON_NULL(TAG, acl.resources[0], ERROR);
+    OICStrcpy(acl.resources[0], sizeof(acl.resources[0]), "/a/led");
+    acl.resources[1] = (char*)OICMalloc(strlen("/a/fan")+1);
+    VERIFY_NON_NULL(TAG, acl.resources[1], ERROR);
+    OICStrcpy(acl.resources[1], sizeof(acl.resources[1]), "/a/fan");
+    acl.permission = 6;
+    acl.ownersLen = 1;
+    acl.owners = (OicUuid_t*)OICCalloc(acl.ownersLen, sizeof(OicUuid_t));
+    VERIFY_NON_NULL(TAG, acl.owners, ERROR);
+    memcpy(acl.owners->id, "1111111111111111", sizeof(acl.owners->id));
+
+    jsonStr = BinToAclJSON(&acl);
+    VERIFY_NON_NULL(TAG, jsonStr, ERROR);
+
+    // Create Entity Handler POST request payload
+    ehReq.method = OC_REST_POST;
+    ehReq.payload = (OCPayload*)OCSecurityPayloadCreate(jsonStr);
+    ehRet = ACLEntityHandler(OC_REQUEST_FLAG, &ehReq);
+    EXPECT_TRUE(OC_EH_ERROR == ehRet);
+
+    // Verify if SRM contains ACE for the subject with two resources
+    savePtr = NULL;
+    subjectAcl1 = GetACLResourceData(&acl.subject, &savePtr);
+    EXPECT_TRUE(NULL != subjectAcl1);
+    EXPECT_TRUE(subjectAcl1->resourcesLen == 2);
+
+    // Create Entity Handler DELETE request
+    ehReq.method = OC_REST_DELETE;
+    ehReq.query = (char*)OICMalloc(strlen(query)+1);
+    VERIFY_NON_NULL(TAG, ehReq.query, ERROR);
+    OICStrcpy(ehReq.query, strlen(query)+1, query);
+
+    ehRet = ACLEntityHandler(OC_REQUEST_FLAG, &ehReq);
+    EXPECT_TRUE(OC_EH_ERROR == ehRet);
+
+    // Verify if SRM contains ACL for the subject but only with one resource
+    savePtr = NULL;
+    subjectAcl2 = GetACLResourceData(&acl.subject, &savePtr);
+    EXPECT_TRUE(NULL != subjectAcl2);
+    EXPECT_TRUE(subjectAcl2->resourcesLen == 1);
+
+exit:
+    // Perform cleanup
+    if(NULL != subjectAcl1)
+    {
+        DeInitACLResource();
+    }
+    OCPayloadDestroy(ehReq.payload);
+    OICFree(ehReq.query);
+    OICFree(jsonStr);
 }
 

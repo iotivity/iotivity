@@ -24,6 +24,8 @@
 #include "pstatresource.h"
 #include "doxmresource.h"
 #include "credresource.h"
+#include "svcresource.h"
+#include "amaclresource.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "logger.h"
@@ -45,7 +47,7 @@ OCStackResult SendSRMResponse(const OCEntityHandlerRequest *ehRequest,
         OCEntityHandlerResult ehRet, const char *rspPayload)
 {
     OC_LOG (INFO, TAG, PCF("SRM sending SRM response"));
-    OCEntityHandlerResponse response = {0};
+    OCEntityHandlerResponse response = {.requestHandle = NULL};
     if (ehRequest)
     {
         OCSecurityPayload ocPayload = {.base = {.type = PAYLOAD_TYPE_INVALID}};
@@ -90,6 +92,14 @@ OCStackResult InitSecureResources( )
     if(OC_STACK_OK == ret)
     {
         ret = InitCredResource();
+    }
+    if(OC_STACK_OK == ret)
+    {
+        ret = InitSVCResource();
+	}
+	if(OC_STACK_OK == ret)
+    {
+        ret = InitAmaclResource();
     }
     if(OC_STACK_OK != ret)
     {
