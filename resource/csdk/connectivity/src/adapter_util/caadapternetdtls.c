@@ -644,7 +644,7 @@ CAResult_t CADtlsEnableAnonECDHCipherSuite(const bool enable)
     dtls_enables_anon_ecdh(g_caDtlsContext->dtlsContext,
         enable == true ? DTLS_CIPHER_ENABLE : DTLS_CIPHER_DISABLE);
     ca_mutex_unlock(g_dtlsContextMutex);
-    OIC_LOG_V(DEBUG, NET_DTLS_TAG, "TLS_ECDH_anon_WITH_AES_128_CBC_SHA  is %s",
+    OIC_LOG_V(DEBUG, NET_DTLS_TAG, "TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256  is %s",
         enable ? "enabled" : "disabled");
 
     OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT CADtlsEnablesAnonEcdh");

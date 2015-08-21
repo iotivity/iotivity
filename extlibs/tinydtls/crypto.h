@@ -39,6 +39,7 @@
 #include "numeric.h"
 #include "hmac.h"
 #include "ccm.h"
+#include "ecc/ecc.h"
 
 /* TLS_PSK_WITH_AES_128_CCM_8 */
 #define DTLS_MAC_KEY_LENGTH    0
@@ -46,6 +47,7 @@
 #define DTLS_BLK_LENGTH        16 /* AES-128 */
 #define DTLS_MAC_LENGTH        DTLS_HMAC_DIGEST_SIZE
 #define DTLS_IV_LENGTH         4  /* length of nonce_explicit */
+#define DTLS_CBC_IV_LENGTH     16
 
 /** 
  * Maximum size of the generated keyblock. Note that MAX_KEYBLOCK_LENGTH must 
@@ -128,6 +130,13 @@ typedef struct {
   dtls_compression_t compression;		/**< compression method */
   dtls_cipher_t cipher;		/**< cipher type */
   unsigned int do_client_auth:1;
+
+#ifdef DTLS_ECC && DTLS_PSK
+  struct keyx_t {
+    dtls_handshake_parameters_ecc_t ecc;
+    dtls_handshake_parameters_psk_t psk;
+  } keyx;
+#else /* DTLS_ECC && DTLS_PSK */
   union {
 #ifdef DTLS_ECC
     dtls_handshake_parameters_ecc_t ecc;
@@ -136,6 +145,7 @@ typedef struct {
     dtls_handshake_parameters_psk_t psk;
 #endif /* DTLS_PSK */
   } keyx;
+#endif /* DTLS_ECC && DTLS_PSK */
 } dtls_handshake_parameters_t;
 
 /* The following macros provide access to the components of the

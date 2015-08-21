@@ -21,6 +21,8 @@
 #ifndef IOTVT_SRM_DOXM_H
 #define IOTVT_SRM_DOXM_H
 
+#include "octypes.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

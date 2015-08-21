@@ -236,7 +236,6 @@ OCStackResult SRMRegisterPersistentStorageHandler(OCPersistentStorage* persisten
 
 OCPersistentStorage* SRMGetPersistentStorageHandler()
 {
-    OC_LOG(INFO, TAG, PCF("SRMGetPersistentStorageHandler !!"));
     return gPersistentStorageHandler;
 }
 
