@@ -66,6 +66,7 @@ char* CreateJustWorksOwnerTransferPayload(OTMContext_t* otmCtx)
 OCStackResult LoadSecretJustWorksCallback(OTMContext_t* UNUSED_PARAM)
 {
     //In case of 'just works', secret data not required
+    (void)UNUSED_PARAM;
     return OC_STACK_OK;
 }
 

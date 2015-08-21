@@ -310,7 +310,7 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
         void* callbackParam)
 {
     OC_LOG_V (INFO, TAG, "Inside entity handler - flags: 0x%x", flag);
-
+    (void)callbackParam;
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
     OCEntityHandlerResponse response = {};
 
@@ -393,7 +393,7 @@ FILE* server_fopen(const char *path, const char *mode)
     return fopen(CRED_FILE, mode);
 }
 
-int main(int argc, char* argv[])
+int main()
 {
     struct timespec timeout;
 

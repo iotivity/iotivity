@@ -19,17 +19,20 @@
  * *****************************************************************/
 #include "gtest/gtest.h"
 #include "secureresourceprovider.h"
-//#include "provisioningmanager.h"
+
 
 static OicSecAcl_t acl;
 static OCProvisionDev_t pDev1;
 static OCProvisionDev_t pDev2;
 static OicSecCredType_t credType;
 
-static void provisioningCB (void* UNUSED1, int UNUSED2,
-                            OCProvisionResult_t *UNUSED3, bool UNUSED4)
+static void provisioningCB (void* UNUSED1, int UNUSED2, OCProvisionResult_t *UNUSED3, bool UNUSED4)
 {
     //dummy callback
+    (void) UNUSED1;
+    (void) UNUSED2;
+    (void) UNUSED3;
+    (void) UNUSED4;
 }
 
 TEST(SRPProvisionACLTest, NullDeviceInfo)

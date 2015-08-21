@@ -190,6 +190,7 @@ static void AclProv2CB(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool has
         OC_LOG(ERROR,TAG,"Context is Null in ACLProv 2");
         return;
     }
+    (void)nOfRes;
     Linkdata_t *link = (Linkdata_t*)ctx;
     OCProvisionResultCB resultCallback = link->resultCallback;
 
@@ -225,6 +226,7 @@ static void AclProv1CB(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool has
         OC_LOG(ERROR,TAG,"Context is Null in ACLProv1");
         return;
     }
+    (void)nOfRes;
     Linkdata_t *link = (Linkdata_t*)ctx;
     OCProvisionResultCB resultCallback = link->resultCallback;
 

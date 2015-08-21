@@ -123,10 +123,11 @@ static void registerResultForCredProvisioning(CredentialData_t *credData,
  *          and  OC_STACK_KEEP_TRANSACTION to keep it.
  */
 static OCStackApplicationResult provisionCredentialCB2(void *ctx, OCDoHandle UNUSED,
-        OCClientResponse *clientResponse)
+                                                       OCClientResponse *clientResponse)
 {
     VERIFY_NON_NULL(TAG, ctx, ERROR, OC_STACK_DELETE_TRANSACTION);
     CredentialData_t *credData = (CredentialData_t *) ctx;
+    (void)UNUSED;
 
     OCProvisionResultCB resultCallback = credData->resultCallback;
     OC_LOG(INFO, TAG, "provisionCredentialCB2 called");
@@ -164,9 +165,10 @@ static OCStackApplicationResult provisionCredentialCB2(void *ctx, OCDoHandle UNU
  *          and  OC_STACK_KEEP_TRANSACTION to keep it.
  */
 static OCStackApplicationResult provisionCredentialCB1(void *ctx, OCDoHandle UNUSED,
-        OCClientResponse *clientResponse)
+                                                       OCClientResponse *clientResponse)
 {
     VERIFY_NON_NULL(TAG, ctx, ERROR, OC_STACK_DELETE_TRANSACTION);
+    (void)UNUSED;
     CredentialData_t* credData = (CredentialData_t*) ctx;
     OICFree(credData->credInfoFirst);
     const OCProvisionDev_t *deviceInfo = credData->deviceInfo2;
@@ -383,9 +385,10 @@ static void registerResultForACLProvisioning(ACLData_t *aclData,
  *          and  OC_STACK_KEEP_TRANSACTION to keep it.
  */
 static OCStackApplicationResult SRPProvisionACLCB(void *ctx, OCDoHandle UNUSED,
-        OCClientResponse *clientResponse)
+                                                  OCClientResponse *clientResponse)
 {
     OC_LOG_V(INFO, TAG, "Inside SRPProvisionACLCB.");
+    (void)UNUSED;
     VERIFY_NON_NULL(TAG, ctx, ERROR, OC_STACK_DELETE_TRANSACTION);
     ACLData_t *aclData = (ACLData_t*)ctx;
     OCProvisionResultCB resultCallback = aclData->resultCallback;

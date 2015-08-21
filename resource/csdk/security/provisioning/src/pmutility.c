@@ -267,15 +267,15 @@ uint16_t GetSecurePortFromJSON(char* jsonStr)
  * @return OC_STACK_KEEP_TRANSACTION to keep transaction and
  *         OC_STACK_DELETE_TRANSACTION to delete it.
  */
-static OCStackApplicationResult SecurePortDiscoveryHandler(void *ctx,
-                                OCDoHandle UNUSED, OCClientResponse *clientResponse)
+static OCStackApplicationResult SecurePortDiscoveryHandler(void *ctx, OCDoHandle UNUSED,
+                                 OCClientResponse *clientResponse)
 {
     if (ctx == NULL)
     {
         OC_LOG(ERROR, TAG, "Lost List of device information");
         return OC_STACK_KEEP_TRANSACTION;
     }
-
+    (void)UNUSED;
     if (clientResponse)
     {
         if  (NULL == clientResponse->payload)
@@ -333,14 +333,15 @@ static OCStackApplicationResult SecurePortDiscoveryHandler(void *ctx,
  * @return OC_STACK_KEEP_TRANSACTION to keep transaction and
  *         OC_STACK_DELETE_TRANSACTION to delete it.
  */
-static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx,
-                                OCDoHandle UNUSED, OCClientResponse *clientResponse)
+static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx, OCDoHandle UNUSED,
+                                OCClientResponse *clientResponse)
 {
     if (ctx == NULL)
     {
         OC_LOG(ERROR, TAG, "Lost List of device information");
         return OC_STACK_KEEP_TRANSACTION;
     }
+    (void)UNUSED;
     if (clientResponse)
     {
         if  (NULL == clientResponse->payload)

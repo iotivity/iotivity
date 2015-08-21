@@ -311,7 +311,7 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
         void* callbackParam)
 {
     OC_LOG_V (INFO, TAG, "Inside entity handler - flags: 0x%x", flag);
-
+    (void)callbackParam;
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
     OCEntityHandlerResponse response = {};
 
@@ -407,7 +407,7 @@ void GeneratePinCB(char* pin, size_t pinSize)
     OC_LOG(INFO, TAG, "============================");
 }
 
-int main(int argc, char* argv[])
+int main()
 {
     struct timespec timeout;
 

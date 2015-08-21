@@ -155,7 +155,7 @@ static int CalculateAclPermission(const char *temp_pms, uint16_t *pms)
  */
 static int InputACL(OicSecAcl_t *acl)
 {
-    int unused __attribute__((unused));
+    int ret;
     char temp_id [UUID_LENGTH + 4] = {0,};
     char temp_rsc[MAX_URI_LENGTH + 1] = {0,};
     char temp_pms[MAX_PERMISSION_LENGTH + 1] = {0,};
@@ -166,20 +166,38 @@ static int InputACL(OicSecAcl_t *acl)
     printf("-URN identifying the subject\n");
     printf("ex) 1111-1111-1111-1111 (16 Numbers except to '-')\n");
     printf("Subject : ");
-    unused = scanf("%19s", temp_id);
+    char *ptr = NULL;
+    ret = scanf("%19ms", &ptr);
+    if(1==ret)
+    {
+        OICStrcpy(temp_id, sizeof(temp_id), ptr);
+        OICFree(ptr);
+    }
+    else
+    {
+         printf("Error while input\n");
+         return -1;
+    }
     int j = 0;
     for (int i = 0; temp_id[i] != '\0'; i++)
     {
         if (DASH != temp_id[i])
+        {
+            if(j>UUID_LENGTH)
+            {
+                printf("Invalid input\n");
+                return -1;
+            }
             acl->subject.id[j++] = temp_id[i];
+        }
     }
 
     //Set Resource.
-    printf("Num. of Resource : ");
-    unused = scanf("%zu", &acl->resourcesLen);
+    printf("Num. of Resource : \n");
+    ret = scanf("%zu", &acl->resourcesLen);
     printf("-URI of resource\n");
     printf("ex)/oic/sh/temp/0 (Max_URI_Length: 64 Byte )\n");
-    acl->resources = (char **)OICMalloc(acl->resourcesLen * sizeof(char *));
+    acl->resources = (char **)OICCalloc(acl->resourcesLen, sizeof(char *));
     if (NULL == acl->resources)
     {
         OC_LOG(ERROR, TAG, "Error while memory allocation");
@@ -188,7 +206,18 @@ static int InputACL(OicSecAcl_t *acl)
     for (size_t i = 0; i < acl->resourcesLen; i++)
     {
         printf("[%zu]Resource : ", i + 1);
-        unused = scanf("%64s", temp_rsc);
+        char *ptr_tempRsc = NULL;
+        ret = scanf("%64ms", &ptr_tempRsc);
+        if (1==ret)
+        {
+            OICStrcpy(temp_rsc, sizeof(temp_rsc), ptr_tempRsc);
+            OICFree(ptr_tempRsc);
+        }
+        else
+        {
+            printf("Error while input\n");
+            return -1;
+        }
         acl->resources[i] = OICStrdup(temp_rsc);
 
         if (NULL == acl->resources[i])
@@ -196,8 +225,6 @@ static int InputACL(OicSecAcl_t *acl)
             OC_LOG(ERROR, TAG, "Error while memory allocation");
             return -1;
         }
-        strncpy(acl->resources[i], temp_rsc, strlen(temp_rsc));
-        acl->resources[i][strlen(temp_rsc)] = '\0';
     }
     // Set Permission
     do
@@ -205,12 +232,24 @@ static int InputACL(OicSecAcl_t *acl)
         printf("-Set the permission(C,R,U,D,N)\n");
         printf("ex) CRUDN, CRU_N,..(5 Charaters)\n");
         printf("Permission : ");
-        unused = scanf("%5s", temp_pms);
+        char *ptr_temp_pms = NULL;
+        ret = scanf("%5ms", &ptr_temp_pms);
+        if(1 == ret)
+        {
+            OICStrcpy(temp_pms, sizeof(temp_pms), ptr_temp_pms);
+            OICFree(ptr_temp_pms);
+
+        }
+        else
+        {
+            printf("Error while input\n");
+            return -1;
+        }
     }
     while (0 != CalculateAclPermission(temp_pms, &(acl->permission)) );
     // Set Rowner
     printf("Num. of Rowner : ");
-    unused = scanf("%zu", &acl->ownersLen);
+    ret = scanf("%zu", &acl->ownersLen);
     printf("-URN identifying the rowner\n");
     printf("ex) 1111-1111-1111-1111 (16 Numbers except to '-')\n");
     acl->owners = (OicUuid_t *)OICCalloc(acl->ownersLen, sizeof(OicUuid_t));
@@ -222,7 +261,18 @@ static int InputACL(OicSecAcl_t *acl)
     for (size_t i = 0; i < acl->ownersLen; i++)
     {
         printf("[%zu]Rowner : ", i + 1);
-        unused = scanf("%19s", temp_id);
+        char *ptr_temp_id = NULL;
+        ret = scanf("%19ms", &ptr_temp_id);
+        if (1 == ret)
+        {
+            OICStrcpy(temp_id, sizeof(temp_id), ptr_temp_id);
+            OICFree(ptr_temp_id);
+        }
+        else
+        {
+            printf("Error while input\n");
+            return -1;
+        }
         j = 0;
         for (int k = 0; temp_id[k] != '\0'; k++)
         {
@@ -237,8 +287,9 @@ static int InputACL(OicSecAcl_t *acl)
 
 
 //FILE *client_fopen(const char *path, const char *mode)
-FILE *client_fopen(const char *UNUSED_PARAM, const char *mode)
+FILE *client_fopen(const char* UNUSED_PARAM , const char *mode)
 {
+    (void)UNUSED_PARAM;
     return fopen(CRED_FILE, mode);
 }
 
@@ -311,25 +362,29 @@ void InputPinCB(char* pinBuf, size_t bufSize)
     if(pinBuf)
     {
         printf("INPUT PIN : ");
-        int unused = scanf("%s", pinBuf);
-        pinBuf[bufSize - 1] = '\0';
+        char *ptr = NULL;
+        int ret = scanf("%ms", &ptr);
+        if(1 == ret)
+        {
+            OICStrcpy(pinBuf, bufSize, ptr);
+            OICFree(ptr);
+        }
+        else
+        {
+             printf("Error in input\n");
+             return;
+        }
     }
 }
 
 /**
  * Provisioning client sample using ProvisioningAPI
  */
-int main(int argc, char **argv)
+int main()
 {
     OCStackResult res = OC_STACK_OK;
-    int unused __attribute__((unused));
-
-    gAcl1 = (OicSecAcl_t *)OICMalloc(sizeof(OicSecAcl_t));
-    if (NULL == gAcl1)
-    {
-        OC_LOG(ERROR, TAG, "Error while memory allocation");
-        goto error;
-    }
+    int unused;
+    (void)unused;
 
     // Initialize Persistent Storage for SVR database
     OCPersistentStorage ps = { .open = NULL,
@@ -452,21 +507,19 @@ int main(int argc, char **argv)
     unused = scanf("%d", &Device2);
 
 
-    gAcl1 = (OicSecAcl_t *)OICMalloc(sizeof(OicSecAcl_t));
+    gAcl1 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
     if (NULL == gAcl1)
     {
         OC_LOG(ERROR, TAG, "Error while memory allocation");
         goto error;
     }
-    memset(gAcl1, 0x00, sizeof(OicSecAcl_t));
 
-    gAcl2 = (OicSecAcl_t *)OICMalloc(sizeof(OicSecAcl_t));
+    gAcl2 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
     if (NULL == gAcl2)
     {
         OC_LOG(ERROR, TAG, "Error while memory allocation");
         goto error;
     }
-    memset(gAcl2, 0x00, sizeof(OicSecAcl_t));
 
     printf("Input ACL for Device1\n");
     if ( 0 == InputACL(gAcl1))

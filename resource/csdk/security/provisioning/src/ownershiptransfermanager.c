@@ -403,7 +403,7 @@ exit:
  *          and  OC_STACK_KEEP_TRANSACTION to keep it.
  */
 static OCStackApplicationResult OwnerTransferModeHandler(void *ctx, OCDoHandle UNUSED,
-        OCClientResponse *clientResponse)
+                                                         OCClientResponse *clientResponse)
 {
     OC_LOG(DEBUG, TAG, "IN OwnerTransferModeHandler");
 
@@ -411,7 +411,7 @@ static OCStackApplicationResult OwnerTransferModeHandler(void *ctx, OCDoHandle U
     VERIFY_NON_NULL(TAG, ctx, WARNING);
 
     OTMContext_t* otmCtx = (OTMContext_t*)ctx;
-
+    (void)UNUSED;
     if(clientResponse->result == OC_STACK_OK)
     {
         OC_LOG(INFO, TAG, "OwnerTransferModeHandler : response result = OC_STACK_OK");
@@ -446,7 +446,7 @@ exit:
  *          and  OC_STACK_KEEP_TRANSACTION to keep it.
  */
 static OCStackApplicationResult ListMethodsHandler(void *ctx, OCDoHandle UNUSED,
-        OCClientResponse *clientResponse)
+                                                    OCClientResponse *clientResponse)
 {
     OC_LOG(DEBUG, TAG, "IN ListMethodsHandler");
 
@@ -454,7 +454,7 @@ static OCStackApplicationResult ListMethodsHandler(void *ctx, OCDoHandle UNUSED,
     VERIFY_NON_NULL(TAG, ctx, WARNING);
 
     OTMContext_t* otmCtx = (OTMContext_t*)ctx;
-
+    (void)UNUSED;
     if  (OC_STACK_OK == clientResponse->result)
     {
         if  (NULL == clientResponse->payload)
@@ -514,14 +514,14 @@ exit:
  * @return  OC_STACK_DELETE_TRANSACTION to delete the transaction
  *          and  OC_STACK_KEEP_TRANSACTION to keep it.
  */
-static OCStackApplicationResult OwnershipInformationHandler(void *ctx,
-                                OCDoHandle UNUSED, OCClientResponse *clientResponse)
+static OCStackApplicationResult OwnershipInformationHandler(void *ctx, OCDoHandle UNUSED,
+                                OCClientResponse *clientResponse)
 {
     VERIFY_NON_NULL(TAG, clientResponse, WARNING);
     VERIFY_NON_NULL(TAG, ctx, WARNING);
 
     OC_LOG(DEBUG, TAG, "IN OwnershipInformationHandler");
-
+    (void)UNUSED;
     OCStackResult res = OC_STACK_OK;
     OTMContext_t* otmCtx = (OTMContext_t*)ctx;
     if  (OC_STACK_OK == clientResponse->result)
@@ -583,8 +583,8 @@ exit:
  * @return  OC_STACK_DELETE_TRANSACTION to delete the transaction
  *          and  OC_STACK_KEEP_TRANSACTION to keep it.
  */
-static OCStackApplicationResult OperationModeUpdateHandler(void *ctx,
-                                OCDoHandle UNUSED, OCClientResponse *clientResponse)
+static OCStackApplicationResult OperationModeUpdateHandler(void *ctx, OCDoHandle UNUSED,
+                                OCClientResponse *clientResponse)
 {
     OC_LOG(DEBUG, TAG, "IN OperationModeUpdateHandler");
 
@@ -592,6 +592,7 @@ static OCStackApplicationResult OperationModeUpdateHandler(void *ctx,
     VERIFY_NON_NULL(TAG, ctx, WARNING);
 
     OTMContext_t* otmCtx = (OTMContext_t*)ctx;
+    (void) UNUSED;
     if  (OC_STACK_OK == clientResponse->result)
     {
         OCStackResult res = OC_STACK_ERROR;
@@ -956,7 +957,7 @@ OCStackResult OTMDoOwnershipTransfer(void* ctx,
  *          and OC_STACK_KEEP_TRANSACTION to keep it.
  */
 static OCStackApplicationResult FinalizeProvisioningCB(void *ctx, OCDoHandle UNUSED,
-        OCClientResponse *clientResponse)
+                                                       OCClientResponse *clientResponse)
 {
     OC_LOG_V(INFO, TAG, "IN FinalizeProvisioningCB.");
 
@@ -964,7 +965,7 @@ static OCStackApplicationResult FinalizeProvisioningCB(void *ctx, OCDoHandle UNU
     VERIFY_NON_NULL(TAG, ctx, ERROR);
 
     OTMContext_t* otmCtx = (OTMContext_t*)ctx;
-
+    (void)UNUSED;
     if(OC_STACK_OK == clientResponse->result)
     {
         SetResult(otmCtx, OC_STACK_OK);
@@ -983,7 +984,7 @@ exit:
  *          and OC_STACK_KEEP_TRANSACTION to keep it.
  */
 static OCStackApplicationResult ProvisionDefaultACLCB(void *ctx, OCDoHandle UNUSED,
-        OCClientResponse *clientResponse)
+                                                       OCClientResponse *clientResponse)
 {
     OC_LOG_V(INFO, TAG, "IN ProvisionDefaultACLCB.");
 
@@ -991,6 +992,7 @@ static OCStackApplicationResult ProvisionDefaultACLCB(void *ctx, OCDoHandle UNUS
     VERIFY_NON_NULL(TAG, ctx, ERROR);
 
     OTMContext_t* otmCtx = (OTMContext_t*) ctx;
+    (void)UNUSED;
 
     if (OC_STACK_RESOURCE_CREATED == clientResponse->result)
     {
