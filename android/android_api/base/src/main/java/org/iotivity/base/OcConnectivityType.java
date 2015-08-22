@@ -38,8 +38,11 @@ public enum OcConnectivityType {
     /** RFCOMM over Bluetooth EDR.*/
     CT_ADAPTER_RFCOMM_BTEDR (1 << 18),
 
+    /** NFC Transport.*/
+    CT_ADAPTER_NFC(1 << 19),
+
     /** Remote Access over XMPP.*/
-    CT_ADAPTER_REMOTE_ACCESS(1 << 19),
+    CT_ADAPTER_REMOTE_ACCESS(1 << 20),
 
     /** Insecure transport is the default (subject to change).*/
 

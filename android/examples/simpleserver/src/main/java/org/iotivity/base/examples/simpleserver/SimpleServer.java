@@ -39,6 +39,7 @@ import android.widget.TextView;
 import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.preference.PreferenceManager;
+import android.nfc.NfcAdapter;
 
 import org.iotivity.base.ModeType;
 import org.iotivity.base.OcPlatform;
@@ -158,6 +159,7 @@ public class SimpleServer extends Activity implements IMessageLogger {
         //create platform config
         PlatformConfig cfg = new PlatformConfig(
                 this,
+                this,
                 ServiceType.IN_PROC,
                 ModeType.SERVER,
                 "0.0.0.0", // bind to all available interfaces
@@ -165,10 +167,32 @@ public class SimpleServer extends Activity implements IMessageLogger {
                 QualityOfService.LOW,
                 filePath + StringConstants.OIC_SERVER_JSON_DB_FILE);
         OcPlatform.Configure(cfg);
+
+    }
+    @Override
+    protected void onResume() {
+        super.onPostResume();
+        Log.d(TAG, "onResume  ");
         // Create instance of lightResource
-        LightResource myLight = new LightResource(this);
-        // create and register a resource
-        myLight.createResource0();
+        if(myLight ==null) {
+            Log.d(TAG, "myLight null ");
+            myLight = new LightResource(this);
+            // create and register a resource
+            myLight.createResource0();
+        }
+    }
+
+    @Override
+    public void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        Log.d(TAG, "onNewIntent IN send NFC brodadcast ");
+
+        Intent i = new Intent();
+        i.setAction(intent.getAction());
+        i.putExtra(NfcAdapter.EXTRA_NDEF_MESSAGES, intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES));
+        sendBroadcast(i);
+
+        Log.d(TAG, "onNewIntent  OUT");
     }
 
     public class MessageReceiver extends BroadcastReceiver {

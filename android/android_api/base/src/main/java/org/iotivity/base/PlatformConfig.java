@@ -23,12 +23,13 @@
 package org.iotivity.base;
 
 import android.content.Context;
+import android.app.Activity;
 
 /**
  * Data structure to provide the configuration.
  */
 public class PlatformConfig {
-
+    private Activity mActivity;
     private Context mContext;
     private ServiceType mServiceType;
     private ModeType mModeType;
@@ -39,6 +40,7 @@ public class PlatformConfig {
                               //this is only for 0.9.2
 
     /**
+     * @param activity         app activity
      * @param context          app context
      * @param serviceType      indicate IN_PROC or OUT_OF_PROC
      * @param modeType         indicate whether we want to do server, client or both
@@ -51,13 +53,15 @@ public class PlatformConfig {
      * @param qualityOfService quality of service
      * @param dbPath           Persistant storage file for SVR Database.
      */
-    public PlatformConfig(Context context,
+    public PlatformConfig(Activity activity,
+                          Context context,
                           ServiceType serviceType,
                           ModeType modeType,
                           String ipAddress,
                           int port,
                           QualityOfService qualityOfService,
                           String dbPath) {
+        this.mActivity=activity;
         this.mContext = context;
         this.mServiceType = serviceType;
         this.mModeType = modeType;
@@ -68,6 +72,7 @@ public class PlatformConfig {
     }
 
     /**
+     * @param activity         app activity
      * @param context          app context
      * @param serviceType      indicate IN_PROC or OUT_OF_PROC
      * @param modeType         indicate whether we want to do server, client or both
@@ -80,17 +85,22 @@ public class PlatformConfig {
      * @param qualityOfService quality of service
      */
     //Avoid breaking building java samples due to persistent storage SVR DB changes.
-    public PlatformConfig(Context context,
+    public PlatformConfig(Activity activity,
+                          Context context,
                           ServiceType serviceType,
                           ModeType modeType,
                           String ipAddress,
                           int port,
                           QualityOfService qualityOfService) {
-        this(context,serviceType,modeType,ipAddress,port,qualityOfService, "");
+        this(activity,context,serviceType,modeType,ipAddress,port,qualityOfService, "");
     }
 
     public Context getContext() {
         return mContext;
+    }
+
+    public Activity getActivity() {
+        return mActivity;
     }
 
     public ServiceType getServiceType() {

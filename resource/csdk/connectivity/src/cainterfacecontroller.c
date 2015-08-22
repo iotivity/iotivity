@@ -75,7 +75,6 @@ static int CAGetAdapterIndex(CATransportAdapter_t cType)
             return 2;
         case CA_ADAPTER_NFC:
               return 3;
-
         #ifdef RA_ADAPTER
         case CA_ADAPTER_REMOTE_ACCESS:
             return 4;
@@ -364,30 +363,56 @@ CAResult_t CASendUnicastData(const CAEndpoint_t *endpoint, const void *data, uin
         return CA_STATUS_INVALID_PARAM;
     }
 
-    CATransportAdapter_t type = endpoint->adapter;
 
-    int index = CAGetAdapterIndex(type);
-
-    if (index == -1)
+    u_arraylist_t *list = CAGetSelectedNetworkList();
+    if (!list)
     {
-        OIC_LOG(ERROR, TAG, "unknown transport type!");
-        return CA_STATUS_INVALID_PARAM;
-    }
-
-    int32_t sentDataLen = 0;
-
-    if (g_adapterHandler[index].sendData != NULL)
-    {
-        sentDataLen = g_adapterHandler[index].sendData(endpoint, data, length);
-    }
-
-    if (sentDataLen != (int)length)
-    {
-        OIC_LOG(ERROR, TAG, "error in sending data. Error will be reported in adapter");
-#ifdef SINGLE_THREAD
-        //in case of single thread, no error handler. Report error immediately
+        OIC_LOG(DEBUG, TAG, "No selected network");
         return CA_SEND_FAILED;
+    }
+
+    CATransportFlags_t requestedAdapter = endpoint->adapter ? endpoint->adapter : CA_ALL_ADAPTERS;
+
+    for (uint32_t i = 0; i < u_arraylist_length(list); i++)
+    {
+        void* ptrType = u_arraylist_get(list, i);
+
+        if(ptrType == NULL)
+        {
+            continue;
+        }
+
+        CATransportAdapter_t connType = *(CATransportAdapter_t *)ptrType;
+        if ((connType & requestedAdapter) == 0)
+        {
+            continue;
+        }
+
+        int index = CAGetAdapterIndex(connType);
+
+        if (index == -1)
+        {
+            OIC_LOG(ERROR, TAG, "unknown transport type!");
+            return CA_STATUS_INVALID_PARAM;
+        }
+
+        int32_t sentDataLen = 0;
+
+        if (g_adapterHandler[index].sendData != NULL)
+        {
+            OIC_LOG(DEBUG, TAG, "unicast message to adapter");
+            sentDataLen = g_adapterHandler[index].sendData(endpoint, data, length);
+        }
+
+        if (sentDataLen != (int)length)
+        {
+            OIC_LOG(ERROR, TAG, "error in sending data. Error will be reported in adapter");
+#ifdef SINGLE_THREAD
+            //in case of single thread, no error handler. Report error immediately
+            return CA_SEND_FAILED;
 #endif
+        }
+
     }
 
     OIC_LOG(DEBUG, TAG, "OUT");

@@ -291,9 +291,12 @@ typedef enum
     /** RFCOMM over Bluetooth EDR.*/
     OC_ADAPTER_RFCOMM_BTEDR = (1 << 2),
 
+    /**NFC Transport for Messaging.*/
+    OC_ADAPTER_NFC = (1 << 3),
+
 #ifdef RA_ADAPTER
     /**Remote Access over XMPP.*/
-   OC_ADAPTER_REMOTE_ACCESS = (1 << 3)
+   OC_ADAPTER_REMOTE_ACCESS = (1 << 4)
 #endif
 
 } OCTransportAdapter;
@@ -412,9 +415,12 @@ typedef enum
     /** RFCOMM over Bluetooth EDR.*/
     CT_ADAPTER_RFCOMM_BTEDR = (1 << 18),
 
+    /** NFC Transport.*/
+    CT_ADAPTER_NFC = (1 << 19),
+
     #ifdef RA_ADAPTER
     /** Remote Access over XMPP.*/
-    CT_ADAPTER_REMOTE_ACCESS = (1 << 19),
+    CT_ADAPTER_REMOTE_ACCESS = (1 << 20),
     #endif
 
     /** Insecure transport is the default (subject to change).*/

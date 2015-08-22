@@ -45,16 +45,12 @@ void JNI_OnUnload(JavaVM *jvm, void *reserved)
 
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaInterface_initialize
-(JNIEnv *env, jclass clazz, jobject context)
+(JNIEnv *env, jclass clazz, jobject activity, jobject context)
 {
     LOGI("CaInterface_initialize");
 
+    CANativeSetActivity(env, activity);
     CANativeJNISetContext(env, context);
 
-    CAResult_t res = CAInitialize();
 
-    if (CA_STATUS_OK != res)
-    {
-        LOGE("Could not Initialize");
-    }
 }

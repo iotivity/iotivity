@@ -35,6 +35,7 @@ import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.nfc.NfcAdapter;
 
 import org.iotivity.base.ErrorCode;
 import org.iotivity.base.ModeType;
@@ -89,12 +90,18 @@ public class SimpleClient extends Activity implements OcPlatform.OnResourceFound
         //create platform config
         PlatformConfig cfg = new PlatformConfig(
                 this,
+                this,
                 ServiceType.IN_PROC,
                 ModeType.CLIENT_SERVER,
                 "0.0.0.0", // bind to all available interfaces
                 0,
                 QualityOfService.LOW, filePath + StringConstants.OIC_CLIENT_JSON_DB_FILE);
         OcPlatform.Configure(cfg);
+    }
+    @Override
+    protected void onResume() {
+        super.onPostResume();
+        Log.d(TAG, "onResume  ");
         try {
             /**
              * find all resources
@@ -107,6 +114,17 @@ public class SimpleClient extends Activity implements OcPlatform.OnResourceFound
         }
     }
 
+   @Override
+    public void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        Log.d(TAG, "onNewIntent with changes sending broadcast IN ");
+
+        Intent i = new Intent();
+        i.setAction(intent.getAction());
+        i.putExtra(NfcAdapter.EXTRA_NDEF_MESSAGES, intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES));
+        sendBroadcast(i);
+        Log.d(TAG, "Initialize Context again resetting");
+    }
     @Override
     /**
      *  callback when a resource is found. This method calls doGetLightRepresentation to get the
