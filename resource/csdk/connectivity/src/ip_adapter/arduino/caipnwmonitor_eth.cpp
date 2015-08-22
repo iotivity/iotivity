@@ -104,7 +104,7 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
         goto exit;
     }
 
-    OIC_LOG_V(ERROR, TAG, "Added interface: %s (%d)", ifitem->name, ifitem->family);
+    OIC_LOG_V(DEBUG, TAG, "Added interface: %s (%d)", ifitem->name, ifitem->family);
 
     return iflist;
 
