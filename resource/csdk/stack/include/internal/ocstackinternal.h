@@ -87,7 +87,7 @@ typedef struct
     char query[MAX_QUERY_LENGTH];
 
     /** reqJSON is retrieved from the payload of the received request PDU.*/
-    uint8_t payload[MAX_REQUEST_LENGTH];
+    uint8_t *payload;
 
     /** qos is indicating if the request is CON or NON.*/
     OCQualityOfService qos;

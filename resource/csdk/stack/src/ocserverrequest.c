@@ -527,14 +527,6 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
             OICFree(responseInfo.info.options);
             return result;
         }
-
-        if(responseInfo.info.payloadSize > MAX_RESPONSE_LENGTH)
-        {
-            OICFree(responseInfo.info.payload);
-            OC_LOG(ERROR, TAG, "Payload too long!");
-            OICFree(responseInfo.info.options);
-            return OC_STACK_INVALID_PARAM;
-        }
     }
     else
     {

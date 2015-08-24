@@ -1307,10 +1307,11 @@ void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
         }
     }
 
-    if (requestInfo->info.payload)
+    if ((requestInfo->info.payload) && (0 < requestInfo->info.payloadSize))
     {
         serverRequest.reqTotalSize = requestInfo->info.payloadSize;
-        memcpy (&(serverRequest.payload), requestInfo->info.payload,
+        serverRequest.payload = (uint8_t *) OICMalloc(requestInfo->info.payloadSize);
+        memcpy (serverRequest.payload, requestInfo->info.payload,
                 requestInfo->info.payloadSize);
     }
     else
@@ -1338,6 +1339,7 @@ void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
                         requestInfo->info.type, requestInfo->info.numOptions,
                         requestInfo->info.options, requestInfo->info.token,
                         requestInfo->info.tokenLength);
+            OICFree(serverRequest.payload);
             return;
     }
 
@@ -1353,6 +1355,7 @@ void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
                 requestInfo->info.type, requestInfo->info.numOptions,
                 requestInfo->info.options, requestInfo->info.token,
                 requestInfo->info.tokenLength);
+        OICFree(serverRequest.payload);
         return;
     }
     memcpy(serverRequest.requestToken, requestInfo->info.token, requestInfo->info.tokenLength);
@@ -1384,6 +1387,7 @@ void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
                 requestInfo->info.type, requestInfo->info.numOptions,
                 requestInfo->info.options, requestInfo->info.token,
                 requestInfo->info.tokenLength);
+        OICFree(serverRequest.payload);
         OICFree(serverRequest.requestToken);
         return;
     }
@@ -1415,6 +1419,7 @@ void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
     }
     // requestToken is fed to HandleStackRequests, which then goes to AddServerRequest.
     // The token is copied in there, and is thus still owned by this function.
+    OICFree(serverRequest.payload);
     OICFree(serverRequest.requestToken);
     OC_LOG(INFO, TAG, PCF("Exit HandleCARequests"));
 }
