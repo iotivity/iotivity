@@ -533,12 +533,15 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
             OICFree(responseInfo.info.options);
             return result;
         }
+        /** @todo FIXME: this should really be set according to directives from OCConverPayload. */
+        responseInfo.info.payloadFormat = CA_FORMAT_CBOR;
     }
     else
     {
         responseInfo.isMulticast = false;
         responseInfo.info.payload = NULL;
         responseInfo.info.payloadSize = 0;
+        responseInfo.info.payloadFormat = CA_FORMAT_UNDEFINED;
     }
 
 #ifdef WITH_PRESENCE

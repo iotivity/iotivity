@@ -2138,11 +2138,13 @@ OCStackResult OCDoResource(OCDoHandle *handle,
             OC_LOG(ERROR, TAG, PCF("Failed to create CBOR Payload"));
             goto exit;
         }
+        requestInfo.info.payloadFormat = CA_FORMAT_CBOR;
     }
     else
     {
         requestInfo.info.payload = NULL;
         requestInfo.info.payloadSize = 0;
+        requestInfo.info.payloadFormat = CA_FORMAT_UNDEFINED;
     }
 
     if (result != OC_STACK_OK)
