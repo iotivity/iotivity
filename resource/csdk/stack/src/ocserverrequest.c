@@ -509,6 +509,15 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     // Put the JSON prefix and suffix around the payload
     if(ehResponse->payload)
     {
+        if (ehResponse->payload->type == PAYLOAD_TYPE_PRESENCE)
+        {
+            responseInfo.isMulticast = true;
+        }
+        else
+        {
+            responseInfo.isMulticast = false;
+        }
+
         OCStackResult result;
         if((result = OCConvertPayload(ehResponse->payload, &responseInfo.info.payload,
                     &responseInfo.info.payloadSize))
@@ -529,6 +538,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     }
     else
     {
+        responseInfo.isMulticast = false;
         responseInfo.info.payload = NULL;
         responseInfo.info.payloadSize = 0;
     }

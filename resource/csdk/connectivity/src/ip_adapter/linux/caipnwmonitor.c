@@ -36,12 +36,12 @@
 
 #define TAG "IP_MONITOR"
 
-CAResult_t CAIPInitializeNetworkMonitor()
+CAResult_t CAIPStartNetworkMonitor()
 {
     return CA_STATUS_OK;
 }
 
-CAResult_t CAIPTerminateNetworkMonitor()
+CAResult_t CAIPStopNetworkMonitor()
 {
     return CA_STATUS_OK;
 }
@@ -138,7 +138,7 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
             goto exit;
         }
 
-        OIC_LOG_V(ERROR, TAG, "Added interface: %s (%d)", ifitem->name, family);
+        OIC_LOG_V(DEBUG, TAG, "Added interface: %s (%d)", ifitem->name, family);
     }
 
     freeifaddrs(ifp);

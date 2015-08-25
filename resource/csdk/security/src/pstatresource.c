@@ -254,7 +254,7 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
              */
             for(size_t i=0; i< gPstat->smLen; i++)
             {
-                if(gPstat->sm[i] == omJson->valueint)
+                if(gPstat->sm[i] == (unsigned int)omJson->valueint)
                 {
                     gPstat->om = (OicSecDpom_t)omJson->valueint;
                     break;

@@ -118,9 +118,10 @@ static CAResult_t CAAddIdToPeerInfoList(const char *peerAddr, uint32_t port,
     {
         OIC_LOG(ERROR, NET_DTLS_TAG, "u_arraylist_add failed!");
         OICFree(peer);
+        return CA_STATUS_FAILED;
     }
 
-    return result;
+    return CA_STATUS_OK;
 }
 
 static void CAFreePeerInfoList()
@@ -302,10 +303,11 @@ static CAResult_t CADtlsCacheMsg(stCACacheMessage_t *msg)
     if (!result)
     {
         OIC_LOG(ERROR, NET_DTLS_TAG, "u_arraylist_add failed!");
+        return CA_STATUS_FAILED;
     }
 
     OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT");
-    return result;
+    return CA_STATUS_OK;
 }
 
 
@@ -437,11 +439,13 @@ static int32_t CASendSecureData(dtls_context_t *context,
 
     stCADtlsAddrInfo_t *addrInfo = (stCADtlsAddrInfo_t *)session;
 
-    CAEndpoint_t endpoint;
+    CAEndpoint_t endpoint = {.adapter = CA_DEFAULT_ADAPTER};
+
     CAConvertAddrToName(&(addrInfo->addr.st), endpoint.addr, &endpoint.port);
     endpoint.flags = addrInfo->addr.st.ss_family == AF_INET ? CA_IPV4 : CA_IPV6;
     endpoint.flags |= CA_SECURE;
     endpoint.adapter = CA_ADAPTER_IP;
+    endpoint.interface = session->ifindex;
     int type = 0;
 
     //Mutex is not required for g_caDtlsContext. It will be called in same thread.
@@ -644,7 +648,7 @@ CAResult_t CADtlsEnableAnonECDHCipherSuite(const bool enable)
     dtls_enables_anon_ecdh(g_caDtlsContext->dtlsContext,
         enable == true ? DTLS_CIPHER_ENABLE : DTLS_CIPHER_DISABLE);
     ca_mutex_unlock(g_dtlsContextMutex);
-    OIC_LOG_V(DEBUG, NET_DTLS_TAG, "TLS_ECDH_anon_WITH_AES_128_CBC_SHA  is %s",
+    OIC_LOG_V(DEBUG, NET_DTLS_TAG, "TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256  is %s",
         enable ? "enabled" : "disabled");
 
     OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT CADtlsEnablesAnonEcdh");

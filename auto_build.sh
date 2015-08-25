@@ -63,27 +63,41 @@ function build_android()
 	# Note: for android, as oic-resource uses C++11 feature stoi and to_string,
 	# it requires gcc-4.9, currently only android-ndk-r10(for linux)
 	# and windows android-ndk-r10(64bit target version) support these features.
-	echo "*********** Build Boost for android ***********"
-	# disable parallel build for android as gradle depends on scons to finish first
-	export SCONSFLAGS="-Q"
 
+    # Parallel builds for android are disabled as gradle depends on
+    # scons to finish first
+    SCONSFLAGS="-Q" build_android_x86 $1 $2
+    SCONSFLAGS="-Q" build_android_armeabi $1 $2
+}
+
+function build_android_x86()
+{
 	echo "*********** Build for android x86 *************"
 	scons TARGET_OS=android TARGET_ARCH=x86 RELEASE=$1 TARGET_TRANSPORT=IP $2
 	scons TARGET_OS=android TARGET_ARCH=x86 RELEASE=$1 TARGET_TRANSPORT=BT $2
 	scons TARGET_OS=android TARGET_ARCH=x86 RELEASE=$1 TARGET_TRANSPORT=BLE $2
+<<<<<<< HEAD
 
 	echo "*********** Build for android x86_64 *************"
 	scons TARGET_OS=android TARGET_ARCH=x86_64 RELEASE=$1 TARGET_TRANSPORT=IP $2
 	scons TARGET_OS=android TARGET_ARCH=x86_64 RELEASE=$1 TARGET_TRANSPORT=BT $2
 	scons TARGET_OS=android TARGET_ARCH=x86_64 RELEASE=$1 TARGET_TRANSPORT=BLE $2
+=======
+}
+>>>>>>> origin/master
 
+function build_android_armeabi()
+{
 	echo "*********** Build for android armeabi *************"
 	scons TARGET_OS=android TARGET_ARCH=armeabi RELEASE=$1 TARGET_TRANSPORT=IP $2
 	scons TARGET_OS=android TARGET_ARCH=armeabi RELEASE=$1 TARGET_TRANSPORT=BT $2
 	scons TARGET_OS=android TARGET_ARCH=armeabi RELEASE=$1 TARGET_TRANSPORT=BLE $2
+<<<<<<< HEAD
 
 	# enable parallel build
 	export SCONSFLAGS="-Q -j 4"
+=======
+>>>>>>> origin/master
 }
 
 function build_arduino()
@@ -191,6 +205,14 @@ then
 	then
 		build_android true
 		build_android false
+	elif [ $1 = 'android_x86' ]
+	then
+        build_android_x86 true
+        build_android_x86 false
+	elif [ $1 = 'android_armeabi' ]
+	then
+        build_android_armeabi true
+        build_android_armeabi false
 	elif [ $1 = 'arduino' ]
 	then
 		build_arduino true

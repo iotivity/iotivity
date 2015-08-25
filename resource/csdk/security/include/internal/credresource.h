@@ -100,6 +100,15 @@ OicSecCred_t * GenerateCredential(const OicUuid_t* subject, OicSecCredType_t cre
  */
 OCStackResult AddCredential(OicSecCred_t * cred);
 
+/**
+ * Function to remove the credential from SVR DB.
+ *
+ * @param credId Credential ID to be deleted.
+ *
+ * @return OC_STACK_OK for success and errorcode otherwise.
+ */
+OCStackResult RemoveCredential(const OicUuid_t* credId);
+
 #if defined(__WITH_DTLS__)
 /**
  * This internal callback is used by lower stack (i.e. CA layer) to
@@ -114,6 +123,24 @@ OCStackResult AddCredential(OicSecCred_t * cred);
  * @retval none
  */
 void GetDtlsPskCredentials(CADtlsPskCredsBlob_t **credInfo);
+
+/**
+ * Add temporal PSK to PIN based OxM
+ *
+ * @param[in] tmpSubject UUID of target device
+ * @param[in] credType Type of credential to be added
+ * @param[in] pin numeric characters
+ * @param[in] pinSize length of 'pin'
+ * @param[in] ownersLen Number of owners
+ * @param[in] owners Array of owners
+ * @param[out] tmpCredSubject Generated credential's subject.
+ *
+ * @return OC_STACK_OK for success and errorcode otherwise.
+ */
+OCStackResult AddTmpPskWithPIN(const OicUuid_t* tmpSubject, OicSecCredType_t credType,
+                            const char * pin, size_t pinSize,
+                            size_t ownersLen, const OicUuid_t * owners, OicUuid_t* tmpCredSubject);
+
 #endif /* __WITH_DTLS__ */
 
 /**

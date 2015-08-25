@@ -126,6 +126,9 @@ coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info, const CAEndpoint_
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
+    VERIFY_NON_NULL_RET(info, TAG, "info", NULL);
+    VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint", NULL);
+
     coap_pdu_t *pdu = NULL;
 
     // RESET have to use only 4byte (empty message)
@@ -264,6 +267,13 @@ coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode,
             coap_delete_pdu(outpdu);
             return NULL;
         }
+        if (outpdu->hdr->coap_hdr_udp_t.token_length > CA_MAX_TOKEN_LEN)
+        {
+            OIC_LOG_V(ERROR, TAG, "token length has been exceed : %d",
+                      outpdu->hdr->coap_hdr_udp_t.token_length);
+            coap_delete_pdu(outpdu);
+            return NULL;
+        }
     }
 
     if (outCode)
@@ -279,7 +289,8 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, coap_list_t *options, const CAInfo_t 
                               const CAEndpoint_t *endpoint)
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    VERIFY_NON_NULL_RET(info, TAG, "info is NULL", NULL);
+    VERIFY_NON_NULL_RET(info, TAG, "info", NULL);
+    VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint", NULL);
 
     coap_transport_type transport;
 

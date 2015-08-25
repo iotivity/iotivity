@@ -399,6 +399,7 @@ void CopyEndpointToDevAddr(const CAEndpoint_t *in, OCDevAddr *out)
     out->flags = CAToOCTransportFlags(in->flags);
     OICStrcpy(out->addr, sizeof(out->addr), in->addr);
     out->port = in->port;
+    out->interface = in->interface;
 }
 
 void CopyDevAddrToEndpoint(const OCDevAddr *in, CAEndpoint_t *out)
@@ -410,36 +411,7 @@ void CopyDevAddrToEndpoint(const OCDevAddr *in, CAEndpoint_t *out)
     out->flags = OCToCATransportFlags(in->flags);
     OICStrcpy(out->addr, sizeof(out->addr), in->addr);
     out->port = in->port;
-}
-
-static OCStackResult OCCreateEndpoint(OCDevAddr *devAddr, CAEndpoint_t **endpoint)
-{
-    VERIFY_NON_NULL(devAddr, FATAL, OC_STACK_INVALID_PARAM);
-    VERIFY_NON_NULL(endpoint, FATAL, OC_STACK_INVALID_PARAM);
-
-    CAEndpoint_t *ep = (CAEndpoint_t *)OICMalloc(sizeof (CAEndpoint_t));
-    if (!ep)
-    {
-        return OC_STACK_NO_MEMORY;
-    }
-
-    ep->adapter = (CATransportAdapter_t)devAddr->adapter;
-    if (!ep->adapter)
-    {
-        ep->adapter = CA_ADAPTER_IP;
-    }
-    ep->flags = OCToCATransportFlags(devAddr->flags);
-    OICStrcpy(ep->addr, sizeof(ep->addr), devAddr->addr);
-    ep->port = devAddr->port;
-
-    *endpoint = ep;
-
-    return OC_STACK_OK;
-}
-
-static void OCDestroyEndpoint(CAEndpoint_t *endpoint)
-{
-    free(endpoint);
+    out->interface = in->interface;
 }
 
 void FixUpClientResponse(OCClientResponse *cr)
@@ -832,8 +804,6 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
         // check for multiicast presence
         CAEndpoint_t ep = { .adapter = endpoint->adapter,
                             .flags = endpoint->flags };
-        OICStrcpy(ep.addr, sizeof(ep.addr), OC_MULTICAST_IP);
-        ep.port = OC_MULTICAST_PORT;
 
         uriLen = FormCanonicalPresenceUri(&ep, OC_RSRVD_PRESENCE_URI, presenceUri);
 
@@ -2003,7 +1973,7 @@ OCStackResult OCDoResource(OCDoHandle *handle,
     uint8_t tokenLength = CA_MAX_TOKEN_LEN;
     ClientCB *clientCB = NULL;
     OCDoHandle resHandle = NULL;
-    CAEndpoint_t *endpoint = NULL;
+    CAEndpoint_t endpoint = {.adapter = CA_DEFAULT_ADAPTER};
     OCDevAddr tmpDevAddr = { OC_DEFAULT_ADAPTER };
     uint32_t ttl = 0;
     OCTransportAdapter adapter;
@@ -2141,8 +2111,8 @@ OCStackResult OCDoResource(OCDoHandle *handle,
         requestInfo.info.numOptions = numOptions;
     }
 
-    // create remote endpoint
-    result = OCCreateEndpoint(devAddr, &endpoint);
+    CopyDevAddrToEndpoint(devAddr, &endpoint);
+
     if(payload)
     {
         if((result =
@@ -2159,8 +2129,6 @@ OCStackResult OCDoResource(OCDoHandle *handle,
         requestInfo.info.payloadSize = 0;
     }
 
-
-
     if (result != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, PCF("CACreateEndpoint error"));
@@ -2172,7 +2140,7 @@ OCStackResult OCDoResource(OCDoHandle *handle,
     if (method == OC_REST_PRESENCE)
     {
         char *presenceUri = NULL;
-        result = OCPreparePresence(endpoint, resourceUri, &presenceUri);
+        result = OCPreparePresence(&endpoint, resourceUri, &presenceUri);
         if (OC_STACK_OK != result)
         {
             goto exit;
@@ -2198,7 +2166,7 @@ OCStackResult OCDoResource(OCDoHandle *handle,
     resourceType = NULL;  // Client CB list entry now owns it
 
     // send request
-    caResult = CASendRequest(endpoint, &requestInfo);
+    caResult = CASendRequest(&endpoint, &requestInfo);
     if (caResult != CA_STATUS_OK)
     {
         OC_LOG(ERROR, TAG, PCF("CASendRequest"));
@@ -2230,7 +2198,6 @@ exit:
     OICFree(devAddr);
     OICFree(resourceUri);
     OICFree(resourceType);
-    OICFree(endpoint);
     if (hdrOptionMemAlloc)
     {
         OICFree(requestInfo.info.options);
@@ -2259,7 +2226,7 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
      *      Remove the callback associated on client side.
      */
     OCStackResult ret = OC_STACK_OK;
-    CAEndpoint_t* endpoint = NULL;
+    CAEndpoint_t endpoint = {.adapter = CA_DEFAULT_ADAPTER};
     CAResult_t caResult;
     CAInfo_t requestData = {.type = CA_MSG_CONFIRM};
     CARequestInfo_t requestInfo = {.method = CA_GET};
@@ -2306,15 +2273,10 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
             requestInfo.method = CA_GET;
             requestInfo.info = requestData;
 
-            ret = OCCreateEndpoint(clientCB->devAddr, &endpoint);
-            if (ret != OC_STACK_OK)
-            {
-                OC_LOG(ERROR, TAG, PCF("CACreateEndpoint error"));
-                goto Error;
-            }
+            CopyDevAddrToEndpoint(clientCB->devAddr, &endpoint);
 
             // send request
-            caResult = CASendRequest(endpoint, &requestInfo);
+            caResult = CASendRequest(&endpoint, &requestInfo);
             if (caResult != CA_STATUS_OK)
             {
                 OC_LOG(ERROR, TAG, PCF("CASendRequest error"));
@@ -2335,7 +2297,6 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
     }
 
 Error:
-    OCDestroyEndpoint(endpoint);
     if (requestData.numOptions > 0)
     {
         OICFree(requestData.options);
@@ -2344,7 +2305,6 @@ Error:
     {
         OICFree (requestData.resourceUri);
     }
-
     return ret;
 }
 
@@ -2442,18 +2402,13 @@ OCStackResult OCProcessPresence()
         }
 
         CAResult_t caResult = CA_STATUS_OK;
-        CAEndpoint_t* endpoint = NULL;
+        CAEndpoint_t endpoint = {.adapter = CA_DEFAULT_ADAPTER};
         CAInfo_t requestData = {.type = CA_MSG_CONFIRM};
         CARequestInfo_t requestInfo = {.method = CA_GET};
 
         OC_LOG(DEBUG, TAG, PCF("time to test server presence"));
 
-        result = OCCreateEndpoint(cbNode->devAddr, &endpoint);
-        if (result != OC_STACK_OK)
-        {
-            OC_LOG(ERROR, TAG, PCF("CACreateEndpoint error"));
-            goto exit;
-        }
+        CopyDevAddrToEndpoint(cbNode->devAddr, &endpoint);
 
         requestData.type = CA_MSG_NONCONFIRM;
         requestData.token = cbNode->token;
@@ -2462,8 +2417,7 @@ OCStackResult OCProcessPresence()
         requestInfo.method = CA_GET;
         requestInfo.info = requestData;
 
-        caResult = CASendRequest(endpoint, &requestInfo);
-        OCDestroyEndpoint(endpoint);
+        caResult = CASendRequest(&endpoint, &requestInfo);
 
         if (caResult != CA_STATUS_OK)
         {
@@ -2479,6 +2433,7 @@ exit:
     {
         OC_LOG(ERROR, TAG, PCF("OCProcessPresence error"));
     }
+
     return result;
 }
 #endif // WITH_PRESENCE
@@ -2522,8 +2477,6 @@ OCStackResult OCStartPresence(const uint32_t ttl)
         presenceState = OC_PRESENCE_INITIALIZED;
 
         OCDevAddr devAddr = { OC_DEFAULT_ADAPTER };
-        OICStrcpy(devAddr.addr, sizeof(devAddr.addr), OC_MULTICAST_IP);
-        devAddr.port = OC_MULTICAST_PORT;
 
         CAToken_t caToken = NULL;
         CAResult_t caResult = CAGenerateToken(&caToken, tokenLength);

@@ -731,8 +731,14 @@ exit:
 
 OCStackResult BuildStringFromActionSet(OCActionSet* actionset, char** desc)
 {
+    // Can't use the macros here as they are hardcoded to 'exit' and will
+    // result in dereferencing a null pointer.
+    if (!actionset || !desc)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
     char temp[1024] = { 0 };
-    int remaining = 1023;
+    size_t remaining = sizeof(temp) - 1;
     OCStackResult res = OC_STACK_ERROR;
 
     OCAction *action = actionset->head;
@@ -752,6 +758,11 @@ OCStackResult BuildStringFromActionSet(OCActionSet* actionset, char** desc)
 
     while (action != NULL)
     {
+        if (remaining < (strlen("uri=") + strlen(action->resourceUri) + 1))
+        {
+            res = OC_STACK_ERROR;
+            goto exit;
+        }
         strcat(temp, "uri=");
         remaining -= strlen("uri=");
         strcat(temp, action->resourceUri);
@@ -762,16 +773,28 @@ OCStackResult BuildStringFromActionSet(OCActionSet* actionset, char** desc)
         OCCapability *capas = action->head;
         while (capas != NULL)
         {
+            if (remaining < (strlen(capas->capability)
+                             + 1 + strlen(capas->status)))
+            {
+                res = OC_STACK_ERROR;
+                goto exit;
+            }
+
             strcat(temp, capas->capability);
             remaining -= strlen(capas->capability);
             strcat(temp, "=");
             remaining--;
             strcat(temp, capas->status);
-            remaining -= strlen(capas->capability);
+            remaining -= strlen(capas->status);
 
             capas = capas->next;
             if (capas != NULL)
             {
+                if (remaining < 1)
+                {
+                    res = OC_STACK_ERROR;
+                    goto exit;
+                }
                 strcat(temp, "|");
             }
         }
@@ -779,21 +802,24 @@ OCStackResult BuildStringFromActionSet(OCActionSet* actionset, char** desc)
         action = action->next;
         if (action != NULL)
         {
+            if (remaining < strlen(ACTION_DELIMITER))
+            {
+                res = OC_STACK_ERROR;
+                goto exit;
+            }
             strcat(temp, ACTION_DELIMITER);
             remaining--;
         }
     }
 
-    *desc = (char *) OICMalloc(1024 - remaining);
+    *desc = OICStrdup(temp);
     VARIFY_POINTER_NULL(*desc, res, exit);
-    strcpy(*desc, temp);
 
     return OC_STACK_OK;
 
 exit:
     OCFREE(*desc);
     return res;
-
 }
 
 OCStackApplicationResult ActionSetCB(void* context, OCDoHandle handle,

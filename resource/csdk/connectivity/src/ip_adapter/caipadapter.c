@@ -264,7 +264,6 @@ CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
     caglobals.ip.threadpool = handle;
 
     CAIPSetPacketReceiveCallback(CAIPPacketReceivedCB);
-    CAIPInitializeNetworkMonitor();
 #ifdef __WITH_DTLS__
     CAAdapterNetDtlsInit();
 
@@ -291,6 +290,7 @@ CAResult_t CAStartIP()
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
+    CAIPStartNetworkMonitor();
 #ifdef SINGLE_THREAD
     uint16_t unicastPort = 55555;
     // Address is hardcoded as we are using Single Interface
@@ -418,6 +418,7 @@ CAResult_t CAStopIP()
     CAIPDeinitializeQueueHandles();
 #endif
 
+    CAIPStopNetworkMonitor();
     CAIPStopServer();
 
     OIC_LOG(DEBUG, TAG, "OUT");
@@ -427,8 +428,6 @@ CAResult_t CAStopIP()
 void CATerminateIP()
 {
     OIC_LOG(DEBUG, TAG, "IN");
-
-    CAIPTerminateNetworkMonitor();
 
 #ifdef __WITH_DTLS__
     CADTLSSetAdapterCallbacks(NULL, NULL, 0);

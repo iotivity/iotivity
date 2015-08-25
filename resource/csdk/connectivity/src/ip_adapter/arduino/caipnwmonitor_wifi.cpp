@@ -46,12 +46,12 @@
 // defined & used (as-is defined in the linux socket headers).
 #define AF_INET (2)
 
-CAResult_t CAIPInitializeNetworkMonitor()
+CAResult_t CAIPStartNetworkMonitor()
 {
     return CA_STATUS_OK;
 }
 
-CAResult_t CAIPTerminateNetworkMonitor()
+CAResult_t CAIPStopNetworkMonitor()
 {
     return CA_STATUS_OK;
 }
@@ -108,7 +108,7 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
         goto exit;
     }
 
-    OIC_LOG_V(ERROR, TAG, "Added interface: %s (%d)", ifitem->name, ifitem->family);
+    OIC_LOG_V(DEBUG, TAG, "Added interface: %s (%d)", ifitem->name, ifitem->family);
 
     return iflist;
 
