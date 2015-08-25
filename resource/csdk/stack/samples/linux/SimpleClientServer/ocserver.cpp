@@ -514,12 +514,12 @@ OCNOPEntityHandlerCb (OCEntityHandlerFlag /*flag*/,
 
 OCEntityHandlerResult
 OCEntityHandlerCb (OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest *entityHandlerRequest, void* callback)
+        OCEntityHandlerRequest *entityHandlerRequest, void* /*callback*/)
 {
     OC_LOG_V (INFO, TAG, "Inside entity handler - flags: 0x%x", flag);
 
     OCEntityHandlerResult ehResult = OC_EH_OK;
-    OCEntityHandlerResponse response = { 0 };
+    OCEntityHandlerResponse response = { 0, 0, OC_EH_ERROR, 0, 0, { },{ 0 }, false };
 
     // Validate pointer
     if (!entityHandlerRequest)
