@@ -85,7 +85,8 @@ void printRoomRepresentation(const OCRepresentation& rep)
 }
 
 // callback handler on GET request
-void onGet(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
+void onGet(const HeaderOptions& /*headerOptions*/,
+        const OCRepresentation& rep, const int eCode)
 {
     if(eCode == SUCCESS_RESPONSE)
     {
@@ -102,7 +103,8 @@ void onGet(const HeaderOptions& headerOptions, const OCRepresentation& rep, cons
     }
 }
 
-void onGet1(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
+void onGet1(const HeaderOptions& /*headerOptions*/,
+        const OCRepresentation& rep, const int eCode)
 {
     if(eCode == SUCCESS_RESPONSE)
     {
@@ -148,7 +150,7 @@ void putRoomRepresentation(std::shared_ptr<OCResource> resource)
 }
 
 // callback handler on PUT request
-void onPut(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
+void onPut(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep, const int eCode)
 {
     if(eCode == SUCCESS_RESPONSE)
     {

@@ -241,7 +241,7 @@ OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
     return ehResult;
 }
 
-int main(int argc, char* argv[1])
+int main(int /*argc*/, char** /*argv[1]*/)
 {
     // Create PlatformConfig object
     PlatformConfig cfg {
