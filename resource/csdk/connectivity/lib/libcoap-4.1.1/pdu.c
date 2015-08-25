@@ -58,11 +58,13 @@ void coap_pdu_clear(coap_pdu_t *pdu, size_t size, coap_transport_type transport,
         /* data is NULL unless explicitly set by coap_add_data() */
         pdu->length = sizeof(pdu->hdr->coap_hdr_udp_t);
     }
+#ifdef WITH_TCP
     else
     {
         /* data is NULL unless explicitly set by coap_add_data() */
         pdu->length = length;
     }
+#endif
 }
 
 #ifdef WITH_LWIP
@@ -106,6 +108,7 @@ coap_pdu_init(unsigned char type, unsigned char code, unsigned short id,
         case coap_udp:
             length = sizeof(pdu->hdr->coap_hdr_udp_t);
             break;
+#ifdef WITH_TCP
         case coap_tcp:
             length = COAP_TCP_HEADER_NO_FIELD;
             break;
@@ -118,6 +121,7 @@ coap_pdu_init(unsigned char type, unsigned char code, unsigned short id,
         case coap_tcp_32bit:
             length = COAP_TCP_HEADER_32_BIT;
             break;
+#endif
         default:
             debug("it has wrong type\n");
     }
@@ -160,6 +164,7 @@ coap_pdu_init(unsigned char type, unsigned char code, unsigned short id,
                 pdu->hdr->coap_hdr_udp_t.type = type;
                 pdu->hdr->coap_hdr_udp_t.code = code;
                 break;
+#ifdef WITH_TCP
             case coap_tcp:
                 pdu->hdr->coap_hdr_tcp_t.message_length = 0;
                 pdu->hdr->coap_hdr_tcp_t.code = code;
@@ -178,6 +183,7 @@ coap_pdu_init(unsigned char type, unsigned char code, unsigned short id,
                 pdu->hdr->coap_hdr_tcp_32bit_t.header_data[0] = COAP_TCP_LENGTH_FIELD_NUM_32_BIT << 4;
                 pdu->hdr->coap_hdr_tcp_32bit_t.header_data[5] = code;
                 break;
+#endif
             default:
                 debug("it has wrong type\n");
         }
@@ -223,6 +229,7 @@ void coap_delete_pdu(coap_pdu_t *pdu)
 #endif
 }
 
+#ifdef WITH_TCP
 coap_transport_type coap_get_tcp_header_type_from_size(unsigned int size)
 {
     if (COAP_TCP_LENGTH_LIMIT_8_BIT < size && COAP_TCP_LENGTH_LIMIT_16_BIT >= size)
@@ -329,6 +336,7 @@ unsigned int coap_get_length(const coap_pdu_t *pdu, coap_transport_type transpor
 
     return length;
 }
+#endif
 
 void coap_add_code(const coap_pdu_t *pdu, coap_transport_type transport, unsigned int code)
 {
@@ -339,6 +347,7 @@ void coap_add_code(const coap_pdu_t *pdu, coap_transport_type transport, unsigne
         case coap_udp:
             pdu->hdr->coap_hdr_udp_t.code = COAP_RESPONSE_CODE(code);
             break;
+#ifdef WITH_TCP
         case coap_tcp:
             pdu->hdr->coap_hdr_tcp_t.code = COAP_RESPONSE_CODE(code);
             break;
@@ -351,6 +360,7 @@ void coap_add_code(const coap_pdu_t *pdu, coap_transport_type transport, unsigne
         case coap_tcp_32bit:
             pdu->hdr->coap_hdr_tcp_32bit_t.header_data[5] = COAP_RESPONSE_CODE(code);
             break;
+#endif
         default:
             debug("it has wrong type\n");
     }
@@ -366,6 +376,7 @@ unsigned int coap_get_code(const coap_pdu_t *pdu, coap_transport_type transport)
         case coap_udp:
             code = pdu->hdr->coap_hdr_udp_t.code;
             break;
+#ifdef WITH_TCP
         case coap_tcp:
             code = pdu->hdr->coap_hdr_tcp_t.code;
             break;
@@ -378,6 +389,7 @@ unsigned int coap_get_code(const coap_pdu_t *pdu, coap_transport_type transport)
         case coap_tcp_32bit:
             code = pdu->hdr->coap_hdr_tcp_32bit_t.header_data[5];
             break;
+#endif
         default:
             debug("it has wrong type\n");
     }
@@ -400,6 +412,7 @@ int coap_add_token(coap_pdu_t *pdu, size_t len, const unsigned char *data,
             token = pdu->hdr->coap_hdr_udp_t.token;
             pdu->length = HEADERLENGTH;
             break;
+#ifdef WITH_TCP
         case coap_tcp:
             pdu->hdr->coap_hdr_tcp_t.token_length = len;
             token = pdu->hdr->coap_hdr_tcp_t.token;
@@ -421,6 +434,7 @@ int coap_add_token(coap_pdu_t *pdu, size_t len, const unsigned char *data,
             token = pdu->hdr->coap_hdr_tcp_32bit_t.token;
             pdu->length = len + COAP_TCP_HEADER_32_BIT;
             break;
+#endif
         default:
             debug("it has wrong type\n");
     }
@@ -449,6 +463,7 @@ void coap_get_token(const coap_hdr_t *pdu_hdr, coap_transport_type transport,
             *token_length = pdu_hdr->coap_hdr_udp_t.token_length;
             *token = (unsigned char *)pdu_hdr->coap_hdr_udp_t.token;
             break;
+#ifdef WITH_TCP
         case coap_tcp:
             *token_length = pdu_hdr->coap_hdr_tcp_t.token_length;
             *token = (unsigned char *)pdu_hdr->coap_hdr_tcp_t.token;
@@ -465,6 +480,7 @@ void coap_get_token(const coap_hdr_t *pdu_hdr, coap_transport_type transport,
             *token_length = (pdu_hdr->coap_hdr_tcp_32bit_t.header_data[0]) & 0x0f;
             *token = (unsigned char *)pdu_hdr->coap_hdr_tcp_32bit_t.token;
             break;
+#endif
         default:
             debug("it has wrong type\n");
     }
@@ -488,6 +504,7 @@ size_t coap_add_option(coap_pdu_t *pdu, unsigned short type, unsigned int len,
 
     switch(transport)
     {
+#ifdef WITH_TCP
         case coap_tcp:
             opt = (unsigned char *) &(pdu->hdr->coap_hdr_tcp_t) + pdu->length;
             break;
@@ -500,6 +517,7 @@ size_t coap_add_option(coap_pdu_t *pdu, unsigned short type, unsigned int len,
         case coap_tcp_32bit:
             opt = (unsigned char *) &(pdu->hdr->coap_hdr_tcp_32bit_t) + pdu->length;
             break;
+#endif
         default:
             opt = (unsigned char *) &(pdu->hdr->coap_hdr_udp_t) + pdu->length;
             break;
@@ -691,6 +709,7 @@ int coap_pdu_parse(unsigned char *data, size_t length, coap_pdu_t *pdu,
     unsigned int headerSize = 0;
     switch(transport)
     {
+#ifdef WITH_TCP
         case coap_tcp:
             headerSize = COAP_TCP_HEADER_NO_FIELD;
             break;
@@ -703,6 +722,7 @@ int coap_pdu_parse(unsigned char *data, size_t length, coap_pdu_t *pdu,
         case coap_tcp_32bit:
             headerSize = COAP_TCP_HEADER_32_BIT;
             break;
+#endif
         default:
             headerSize = sizeof(pdu->hdr->coap_hdr_udp_t);
             break;
@@ -715,6 +735,7 @@ int coap_pdu_parse(unsigned char *data, size_t length, coap_pdu_t *pdu,
 
     coap_opt_t *opt = NULL;
     unsigned int tokenLength = 0;
+#ifdef WITH_TCP
     switch(transport)
     {
         case coap_tcp:
@@ -753,6 +774,7 @@ int coap_pdu_parse(unsigned char *data, size_t length, coap_pdu_t *pdu,
         default:
             debug("it has wrong type\n");
     }
+#endif
     pdu->length = length;
 
     if (coap_udp == transport)
@@ -793,6 +815,7 @@ int coap_pdu_parse(unsigned char *data, size_t length, coap_pdu_t *pdu,
         length -= (tokenLength + headerSize);
         opt = (unsigned char *) (&(pdu->hdr->coap_hdr_udp_t) + 1) + tokenLength;
     }
+#ifdef WITH_TCP
     else // common for tcp header setting
     {
         pdu->data = NULL;
@@ -812,6 +835,7 @@ int coap_pdu_parse(unsigned char *data, size_t length, coap_pdu_t *pdu,
         /* skip header + token */
         length -= (tokenLength + headerSize);
     }
+#endif
 
     while (length && *opt != COAP_PAYLOAD_START)
     {

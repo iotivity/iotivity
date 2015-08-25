@@ -27,7 +27,11 @@
 #ifdef WITH_ARDUINO
 #define COAP_MAX_PDU_SIZE           320 /* maximum size of a CoAP PDU for embedded platforms*/
 #else
+#ifdef WITH_TCP
+#define COAP_MAX_PDU_SIZE           65536 /* maximum size of a CoAP PDU for big platforms*/
+#else
 #define COAP_MAX_PDU_SIZE           1400 /* maximum size of a CoAP PDU for big platforms*/
+#endif
 #endif
 #endif /* COAP_MAX_PDU_SIZE */
 
@@ -274,7 +278,7 @@ typedef union
 
     struct
     {
-        unsigned char header_data[6]; /* coap header which 32bit payload length*/
+        unsigned char header_data[6];
         unsigned char token[]; /* the actual token, if any */
     } coap_hdr_tcp_32bit_t;
 
@@ -405,6 +409,7 @@ void coap_delete_pdu(coap_pdu_t *);
 int coap_pdu_parse(unsigned char *data, size_t length, coap_pdu_t *pdu,
                    coap_transport_type transport);
 
+#ifdef WITH_TCP
 /**
  * Get transport type of coap header for coap over tcp through payload size.
  *
@@ -439,6 +444,7 @@ void coap_add_length(const coap_pdu_t *pdu, coap_transport_type transport,
  * @return length value of init byte.
  */
 unsigned int coap_get_length(const coap_pdu_t *pdu, coap_transport_type transport);
+#endif
 
 /**
  * Add code in coap header.
@@ -498,7 +504,7 @@ size_t coap_add_option(coap_pdu_t *pdu, unsigned short type, unsigned int len,
 
 /**
  * Adds option of given type to pdu that is passed as first
- * parameter, but does not write a value. It works like coap_add_option with
+ * parameter, but does not write a val13ue. It works like coap_add_option with
  * respect to calling sequence (i.e. after token and before data).
  * This function returns a memory address to which the option data has to be
  * written before the PDU can be sent, or @c NULL on error.
