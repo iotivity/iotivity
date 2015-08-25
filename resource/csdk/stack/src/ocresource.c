@@ -39,6 +39,9 @@
 #include "cacommon.h"
 #include "cainterface.h"
 
+#ifdef WITH_RD
+#include "rd_server.h"
+#endif
 
 /// Module Name
 #define TAG PCF("ocresource")
@@ -533,6 +536,74 @@ OCStackResult SendNonPersistantDiscoveryResponse(OCServerRequest *request, OCRes
     return OCDoResponse(&response);
 }
 
+#ifdef WITH_RD
+static OCStackResult checkResourceExistsAtRD(const char *interfaceType, const char *resourceType, OCRepPayload **repPayload)
+{
+    char *uri = NULL;
+    char *rt = NULL;
+    char *itf = NULL;
+
+    if (OCRDCheckPublishedResource(interfaceType, resourceType, &uri, &rt, &itf) == OC_STACK_OK)
+    {
+        if (!uri || !rt || !itf)
+        {
+            OC_LOG_V(ERROR, TAG, "Failed allocating memory.");
+            // if any of the parameter has memory allocated free each one of them.
+            OICFree(uri);
+            OICFree(rt);
+            OICFree(itf);
+            return OC_STACK_NO_MEMORY;
+        }
+
+        OCRepPayload *rdResource = OICCalloc(1, sizeof(OCRepPayload));
+        if (!rdResource)
+        {
+            OC_LOG_V(ERROR, TAG, "Failed allocating memory.");
+            OICFree(uri);
+            OICFree(rt);
+            OICFree(itf);
+            return OC_STACK_NO_MEMORY;
+        }
+
+        rdResource->uri = uri;
+
+        rdResource->types = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
+        if(!rdResource->types)
+        {
+            OC_LOG_V(ERROR, TAG, "Failed allocating memory.");
+            OICFree(uri);
+            OICFree(rt);
+            OICFree(itf);
+            OICFree(rdResource);
+            return OC_STACK_NO_MEMORY;
+        }
+        rdResource->types->value = rt;
+
+        rdResource->interfaces = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
+        if(!rdResource->interfaces)
+        {
+            OC_LOG_V(ERROR, TAG, "Failed allocating memory.");
+            OICFree(uri);
+            OICFree(rt);
+            OICFree(itf);
+            OICFree(rdResource);
+            return OC_STACK_NO_MEMORY;
+        }
+        rdResource->interfaces->value = itf;
+
+        *repPayload = rdResource;
+
+        return OC_STACK_OK;
+    }
+    else
+    {
+        OC_LOG_V(ERROR, TAG, "The resource type or interface type doe not exist \
+                             on the resource directory");
+    }
+    return OC_STACK_ERROR;
+}
+#endif
+
 static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource* resource)
 {
     if (!request || !resource)
@@ -566,7 +637,23 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
             {
                 for(;resource && discoveryResult == OC_STACK_OK; resource = resource->next)
                 {
-                    if(includeThisResourceInResponse(resource, filterOne, filterTwo))
+                    bool foundResourceAtRD = false;
+#ifdef WITH_RD
+                    if (strcmp(resource->uri, OC_RSRVD_RD_URI) == 0)
+                    {
+                        OCRepPayload *repPayload = NULL;
+                        discoveryResult = checkResourceExistsAtRD(filterOne, filterTwo, &repPayload);
+                        if (discoveryResult != OC_STACK_OK)
+                        {
+                             break;
+                        }
+                        discoveryResult = BuildVirtualResourceResponse((OCResource *)repPayload,
+                                    (OCDiscoveryPayload*)payload,
+                                    &request->devAddr);
+                        foundResourceAtRD = true;
+                    }
+#endif
+                    if(!foundResourceAtRD && includeThisResourceInResponse(resource, filterOne, filterTwo))
                     {
                         discoveryResult = BuildVirtualResourceResponse(resource,
                                 (OCDiscoveryPayload*)payload,

@@ -22,6 +22,7 @@
 #include <pthread.h>
 
 #include "oic_malloc.h"
+#include "oic_string.h"
 #include "logger.h"
 
 #include "rd_payload.h"
@@ -55,7 +56,13 @@ OCStackResult OCRDStorePublishedResources(OCRDPublishPayload *payload)
 
     OC_LOG_V(DEBUG, TAG, "Storing Resources ... ");
 
-    storeResource->publishResource = OCRDPublishPayloadCreate(payload->ttl, payload->links);
+    OCRDLinksPayload* linksPayload = NULL;
+    for ( OCRDLinksPayload* links = payload->links ; links; links = links->next)
+    {
+        OCRDLinksPayloadCreate(links->href, links->rt, links->itf, &linksPayload);
+    }
+
+    storeResource->publishResource = OCRDPublishPayloadCreate(payload->ttl, linksPayload);
     if (!storeResource->publishResource)
     {
         OC_LOG_V(ERROR, TAG, "Failed allocating memory for OCRDPublishResources.");
@@ -68,7 +75,7 @@ OCStackResult OCRDStorePublishedResources(OCRDPublishPayload *payload)
     if (g_rdStorage)
     {
         OCRDStorePublishResources *temp = g_rdStorage;
-        while(temp->next)
+        while (temp->next)
         {
             temp = temp->next;
         }
@@ -82,4 +89,71 @@ OCStackResult OCRDStorePublishedResources(OCRDPublishPayload *payload)
 
     printStoragedResources(g_rdStorage);
     return OC_STACK_OK;
+}
+
+OCStackResult OCRDCheckPublishedResource(const char *interfaceType, const char *resourceType,
+        char **uri, char **rt, char **itf)
+{
+    // ResourceType and InterfaceType if both are NULL it will return. If either is
+    // not null it will continue execution.
+    if (!resourceType && !interfaceType)
+    {
+        OC_LOG_V(DEBUG, TAG, "Missing resource type and interace type.");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    OC_LOG_V(DEBUG, TAG, "Check Resource in RD");
+
+    if (g_rdStorage && g_rdStorage->publishResource && g_rdStorage->publishResource->links)
+    {
+        for (OCRDLinksPayload *tLinks = g_rdStorage->publishResource->links; tLinks; tLinks = tLinks->next)
+        {
+            bool found = false;
+            // If either rt or itf are NULL, it should skip remaining code execution.
+            if (!tLinks->rt || !tLinks->itf)
+            {
+                OC_LOG_V(DEBUG, TAG, "Either resource type and interface type are missing.");
+                continue;
+            }
+            OC_LOG_V(DEBUG, TAG, "Resource Type: %s %s", resourceType, tLinks->rt);
+            OC_LOG_V(DEBUG, TAG, "Resource Type: %s %s", interfaceType, tLinks->itf);
+            if (resourceType && strcmp(resourceType, tLinks->rt) == 0)
+            {
+                found = true;
+            }
+
+            if (interfaceType && strcmp(interfaceType, tLinks->itf) == 0)
+            {
+                found = true;
+            }
+
+            if (found)
+            {
+                *uri = OICStrdup(tLinks->href);
+                if (!*uri)
+                {
+                    OC_LOG_V(ERROR, TAG, "Copy failed..");
+                    return false;
+                }
+                *rt = OICStrdup(tLinks->rt);
+                if (!*rt)
+                {
+                    OC_LOG_V(ERROR, TAG, "Copy failed..");
+                    OICFree(*uri);
+                    return false;
+                }
+                *itf = OICStrdup(tLinks->itf);
+                if (!*itf)
+                {
+                    OC_LOG_V(ERROR, TAG, "Copy failed..");
+                    OICFree(*uri);
+                    OICFree(*rt);
+                    return false;
+                }
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
