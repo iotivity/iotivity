@@ -27,6 +27,7 @@ if env.get('SECURED') == '1':
 ######################################################################
 rd_server = rd_sample_app_env.Program('rd_server', 'rd_main.c')
 rd_publishingClient = rd_sample_app_env.Program('rd_publishingClient', 'rd_publishingClient.cpp')
+rd_queryClient = rd_sample_app_env.Program('rd_queryClient', 'rd_queryClient.cpp')
 
 Alias("resource_directory", [rd_server, rd_publishingClient])
 
