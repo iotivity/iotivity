@@ -181,6 +181,8 @@ namespace OC
         {
             root_size_calc<T>();
             dimensions[0] = arr.size();
+            dimensions[1] = 0;
+            dimensions[2] = 0;
             dimTotal = calcDimTotal(dimensions);
 
             array = (void*)OICMalloc(dimTotal * root_size);
@@ -196,6 +198,8 @@ namespace OC
         {
             root_size_calc<T>();
             dimensions[0] = arr.size();
+            dimensions[1] = 0;
+            dimensions[2] = 0;
             for(size_t i = 0; i < arr.size(); ++i)
             {
                 dimensions[1] = std::max(dimensions[1], arr[i].size());
@@ -216,6 +220,8 @@ namespace OC
         {
             root_size_calc<T>();
             dimensions[0] = arr.size();
+            dimensions[1] = 0;
+            dimensions[2] = 0;
             for(size_t i = 0; i < arr.size(); ++i)
             {
                 dimensions[1] = std::max(dimensions[1], arr[i].size());
