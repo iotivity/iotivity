@@ -387,6 +387,7 @@ typedef struct
 {
     CAResponseResult_t result;  /**< Result for response by resource model */
     CAInfo_t info;              /**< Information of the response */
+    bool isMulticast;
 } CAResponseInfo_t;
 
 /**

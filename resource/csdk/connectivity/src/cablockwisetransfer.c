@@ -2459,8 +2459,8 @@ CABlockData_t *CACreateNewBlockData(const CAData_t *sendData)
 
     ca_mutex_lock(g_context.blockDataListMutex);
 
-    CAResult_t res = u_arraylist_add(g_context.dataList, (void *) data);
-    if (CA_STATUS_OK != res)
+    bool res = u_arraylist_add(g_context.dataList, (void *) data);
+    if (!res)
     {
         OIC_LOG(ERROR, TAG, "add has failed");
         CADestroyBlockID(data->blockDataId);

@@ -33,27 +33,27 @@ namespace OCPlatformTest
     OCResourceHandle resourceHandle;
   //OCPersistent Storage Handlers
 
-   static FILE* client_open(const char *path, const char *mode)
+   static FILE* client_open(const char* /*path*/, const char *mode)
    {
        std::cout << "<===Opening SVR DB file = './oic_svr_db_client.json' with mode = '"<< mode<<"' "<<std::endl;
                return fopen("./oic_svr_db_client.json", mode);
    }
     // Callbacks
-    OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
+    OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> /*request*/)
     {
         return OC_EH_OK;
     }
 
-    void foundResource(std::shared_ptr<OCResource> resource)
+    void foundResource(std::shared_ptr<OCResource> /*resource*/)
     {
     }
 
-    void receivedDeviceInfo(const OCRepresentation& rep)
+    void receivedDeviceInfo(const OCRepresentation& /*rep*/)
     {
     }
 
-    void presenceHandler(OCStackResult result,
-            const unsigned int nonce, const std::string& hostAddress)
+    void presenceHandler(OCStackResult /*result*/,
+            const unsigned int /*nonce*/, const std::string& /*hostAddress*/)
     {
     }
 
@@ -697,7 +697,7 @@ namespace OCPlatformTest
 
     TEST(RegisterDeviceInfoTest, RegisterDeviceInfoWithEmptyObject)
     {
-        OCDeviceInfo di = {};
+        OCDeviceInfo di = {0};
         EXPECT_ANY_THROW(OCPlatform::registerDeviceInfo(di));
     }
 

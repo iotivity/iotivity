@@ -78,7 +78,7 @@ void CAArduinoGetInterfaceAddress(uint32_t *address)
 
 u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
 {
-    CAResult_t result = CA_STATUS_OK;
+    bool result = true;
 
     u_arraylist_t *iflist = u_arraylist_create();
     if (!iflist)
@@ -102,13 +102,13 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
     CAArduinoGetInterfaceAddress(&ifitem->ipv4addr);
 
     result = u_arraylist_add(iflist, ifitem);
-    if (CA_STATUS_OK != result)
+    if (!result)
     {
         OIC_LOG(ERROR, TAG, "u_arraylist_add failed.");
         goto exit;
     }
 
-    OIC_LOG_V(ERROR, TAG, "Added interface: %s (%d)", ifitem->name, ifitem->family);
+    OIC_LOG_V(DEBUG, TAG, "Added interface: %s (%d)", ifitem->name, ifitem->family);
 
     return iflist;
 

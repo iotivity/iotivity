@@ -373,8 +373,6 @@ void CATerminateEDR()
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
-    // Stop EDR adapter
-    CAStopEDR();
     // Terminate EDR Network Monitor
     CAEDRTerminateNetworkMonitor();
 

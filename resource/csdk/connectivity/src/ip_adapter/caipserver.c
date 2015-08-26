@@ -512,7 +512,15 @@ void CAWakeUpForChange()
 {
     if (caglobals.ip.shutdownFds[1] != -1)
     {
-        write(caglobals.ip.shutdownFds[1], "w", 1);
+        ssize_t len = 0;
+        do
+        {
+            len = write(caglobals.ip.shutdownFds[1], "w", 1);
+        } while ((len == -1) && (errno == EINTR));
+        if ((len == -1) && (errno != EINTR) && (errno != EPIPE))
+        {
+            OIC_LOG_V(DEBUG, TAG, "write failed: %s", strerror(errno));
+        }
     }
 }
 
@@ -625,7 +633,6 @@ static void CAProcessNewInterface(CAInterface_t *ifitem)
     inaddr.s_addr = ifitem->ipv4addr;
     applyMulticastToInterface4(inaddr);
 }
-
 static void CAHandleNetlink()
 {
 #ifdef __linux__

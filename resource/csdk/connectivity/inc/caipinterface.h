@@ -193,7 +193,7 @@ int CAGetPollingInterval(int interval);
 void CAWakeUpForChange();
 
 /**
- * Starts network monitor.
+ * Start network monitor.
  *
  * @return ::CA_STATUS_OK or Appropriate error code.
  */

@@ -307,15 +307,15 @@ exit:
 }
 
 static CAResult_t CAAddInterfaceItem(u_arraylist_t *iflist, int index,
-                            char *name, int family, uint32_t addr, int flags)
+                                     char *name, int family, uint32_t addr, int flags)
 {
     CAInterface_t *ifitem = CANewInterfaceItem(index, name, family, addr, flags);
     if (!ifitem)
     {
         return CA_STATUS_FAILED;
     }
-    CAResult_t result = u_arraylist_add(iflist, ifitem);
-    if (CA_STATUS_OK != result)
+    bool result = u_arraylist_add(iflist, ifitem);
+    if (!result)
     {
         OIC_LOG(ERROR, TAG, "u_arraylist_add failed.");
         OICFree(ifitem);
@@ -380,10 +380,6 @@ void CAWIFIDeviceStateChangedCb(wifi_device_state_e state, void *userData)
     if (WIFI_DEVICE_STATE_ACTIVATED == state)
     {
         OIC_LOG(DEBUG, TAG, "Wifi is in Activated State");
-    }
-    else if (WIFI_CONNECTION_STATE_CONNECTED == state)
-    {
-        CAWakeUpForChange();
     }
     else
     {

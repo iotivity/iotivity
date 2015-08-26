@@ -354,9 +354,9 @@ OCStackResult RTMAddGatewayEntry(uint32_t gatewayId, uint32_t nextHop, uint32_t 
                 *destAdr = *destInterfaces;
                 destAdr->timeElapsed = RTMGetCurrentTime();
                 destAdr->isValid = true;
-                OCStackResult res =
+                bool result =
                     u_arraylist_add(entry->destination->destIntfAddr, (void *)destAdr);
-                if (OC_STACK_OK != res)
+                if (!result)
                 {
                     OC_LOG(ERROR, TAG, "Adding node to head failed");
                     OICFree(destAdr);
@@ -1035,9 +1035,9 @@ OCStackResult RTMUpdateDestinationIntfAdr(uint32_t gatewayId, RTMDestIntfInfo_t 
                 *destAdr = destInterfaces;
                 destAdr->timeElapsed = RTMGetCurrentTime();
                 destAdr->isValid = true;
-                OCStackResult res =
+                bool result =
                     u_arraylist_add(entry->destination->destIntfAddr, (void *)destAdr);
-                if (OC_STACK_OK != res)
+                if (!result)
                 {
                     OC_LOG(ERROR, TAG, "Updating Destinterface address failed");
                     OICFree(destAdr);

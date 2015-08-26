@@ -138,7 +138,7 @@ void CADTLSSetCredentialsCallback(CAGetDTLSCredentialsHandler credCallback);
  * Select the cipher suite for dtls handshake
  *
  * @param[in] cipher    cipher suite
- *                             0xC018 : TLS_ECDH_anon_WITH_AES_128_CBC_SHA
+ *                             0xC018 : TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256
  *                             0xC0A8 : TLS_PSK_WITH_AES_128_CCM_8
  *                             0xC0AE : TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8
  *

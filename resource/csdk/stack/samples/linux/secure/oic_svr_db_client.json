@@ -8,7 +8,8 @@
                 "/oic/p",
                 "/oic/res/types/d",
                 "/oic/ad",
-                "/oic/sec/acl"
+                "/oic/sec/acl",
+                "/oic/sec/amacl"
 			],
 			"perms": 2,
 			"ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]

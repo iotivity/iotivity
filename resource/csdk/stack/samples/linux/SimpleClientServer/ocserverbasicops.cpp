@@ -226,7 +226,7 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
     OC_LOG_V (INFO, TAG, "Inside entity handler - flags: 0x%x", flag);
 
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
-    OCEntityHandlerResponse response = {0};
+    OCEntityHandlerResponse response = { 0, 0, OC_EH_ERROR, 0, 0, { },{ 0 }, false };
 
     // Validate pointer
     if (!entityHandlerRequest)
