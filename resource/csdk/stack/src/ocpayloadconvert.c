@@ -109,6 +109,8 @@ OCStackResult OCConvertPayload(OCPayload* payload, uint8_t** outPayload, size_t*
                 OICFree(out);
                 return OC_STACK_NO_MEMORY;
             }
+
+            out = out2;
         }
 
         *size = curSize;
