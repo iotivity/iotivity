@@ -19,7 +19,6 @@
  ******************************************************************/
 
 #include <stdio.h>
-#include <unistd.h>
 #include <string.h>
 #include <jni.h>
 
@@ -170,15 +169,15 @@ static void CAReceiveHandler(void *data)
         if (0 == length)
         {
             OIC_LOG(DEBUG, TAG, "socket list is empty");
-            sleep(1);
         }
-
-        uint32_t idx;
-        for (idx = 0; idx < length; idx++)
+        else
         {
-            OIC_LOG(DEBUG, TAG, "start CAEDRNativeReadData");
-            CAEDRNativeReadData(env, idx, ctx->type);
-            sleep(1);
+            uint32_t idx;
+            for (idx = 0; idx < length; idx++)
+            {
+                OIC_LOG(DEBUG, TAG, "start CAEDRNativeReadData");
+                CAEDRNativeReadData(env, idx, ctx->type);
+            }
         }
     }
 
