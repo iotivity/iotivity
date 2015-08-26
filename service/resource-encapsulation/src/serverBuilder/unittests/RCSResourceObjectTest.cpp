@@ -143,6 +143,18 @@ TEST_F(ResourceObjectTest, SettingAttributesWithinGuardDoesntCauseDeadLock)
     ASSERT_EQ(value, server->getAttribute<int>(KEY));
 }
 
+TEST_F(ResourceObjectTest, SettingNestedAttributesIsSameToGettingNestedAttributes)
+{
+    RCSResourceAttributes lightAttributes;
+
+    lightAttributes["red"]=50;
+    lightAttributes["blue"]=100;
+    lightAttributes["green"]=150;
+
+    server->setAttribute(KEY, lightAttributes);
+
+    ASSERT_EQ(lightAttributes, server->getAttribute<RCSResourceAttributes>(KEY));
+}
 
 class AutoNotifyTest: public ResourceObjectTest
 {
