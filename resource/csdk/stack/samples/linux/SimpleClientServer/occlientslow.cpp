@@ -109,7 +109,8 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
     return ret;
 }
 
-OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse)
+OCStackApplicationResult getReqCB(void* ctx,
+        OCDoHandle /*handle*/, OCClientResponse * clientResponse)
 {
     if(clientResponse == NULL)
     {
@@ -148,7 +149,7 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse
 }
 
 // This is a function called back when a device is discovered
-OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
+OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle /*handle*/,
         OCClientResponse * clientResponse)
 {
     if (ctx == (void*) DEFAULT_CONTEXT_VALUE)
@@ -324,7 +325,7 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-std::string getQueryStrForGetPut(OCClientResponse * clientResponse)
+std::string getQueryStrForGetPut(OCClientResponse * /*clientResponse*/)
 {
     return "/a/led";
 }
