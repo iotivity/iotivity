@@ -63,13 +63,11 @@ namespace OIC
          * API for discoverying candidate resources.
          * Callback is called  when all resource types are found.
          *
-         * @param resourceTypes - required resource types(called "candidate")
-         * @param candidateCallback - callback. Returns OCResource vector.
+         * @param resourceTypes required resource types(called "candidate")
+         * @param candidateCallback callback. Returns OCResource vector.
          *
-         * @return OCStackResult - return value of this API.
-         *                         It returns OC_STACK_OK if success.
-         *
-         * NOTE: OCStackResult is defined in ocstack.h.
+         * @return Returns ::OC_STACK_OK if success.
+         * @note OCStackResult is defined in ocstack.h.
          */
         OCStackResult findCandidateResources(std::vector< std::string > resourceTypes,
                 std::function< void(std::vector< std::shared_ptr< OCResource > >) > callback,
@@ -78,13 +76,11 @@ namespace OIC
         /**
          * API for subscribing child's state.
          *
-         * @param resource - collection resource for subscribing presence of all child resources.
-         * @param callback - callback funcion for result of child's presence.
+         * @param resource collection resource for subscribing presence of all child resources.
+         * @param callback callback funcion for result of child's presence.
          *
-         * @return OCStackResult - return value of this API.
-         *                         It returns OC_STACK_OK if success.
-         *
-         * NOTE: OCStackResult is defined in ocstack.h.
+         * @return Returns ::OC_STACK_OK if success.
+         * @note OCStackResult is defined in ocstack.h.
          */
         OCStackResult subscribeCollectionPresence(std::shared_ptr< OCResource > resource,
                 std::function< void(std::string, OCStackResult) > callback);
@@ -92,14 +88,12 @@ namespace OIC
         /**
          * API for registering and binding resource to group.
          *
-         * @param childHandle - child resource handle. It will be filled from resource param.
-         * @param resource - resource for registering and binding to group. It has all data.
-         * @param collectionHandle - collection resource handle. It will be added child resource.
+         * @param childHandle child resource handle. It will be filled from resource param.
+         * @param resource resource for registering and binding to group. It has all data.
+         * @param collectionHandle collection resource handle. It will be added child resource.
          *
-         * @return OCStackResult - return value of this API.
-         *                         It returns OC_STACK_OK if success.
-         *
-         * NOTE: OCStackResult is defined in ocstack.h.
+         * @return Returns ::OC_STACK_OK if success.
+         * @note OCStackResult is defined in ocstack.h.
          */
         OCStackResult bindResourceToGroup(OCResourceHandle& childHandle,
                 std::shared_ptr< OCResource > resource, OCResourceHandle& collectionHandle);
@@ -110,15 +104,13 @@ namespace OIC
          * API for finding a specific remote group when a resource tries to join a group.
          * Callback is called when a group is found or not.
          *
-         * @param collectionResourceTypes - resource types of a group to find and join
-         * @param callback - callback. It has OCResource param.
+         * @param collectionResourceTypes resource types of a group to find and join
+         * @param callback callback. It has OCResource param.
          *                    If a group is found, OCResource has the group resource.
          *                    Otherwise, OCResource is NULL.
          *
-         * @return OCStackResult - return value of this API.
-         *                         It returns OC_STACK_OK if success.
-         *
-         * NOTE: It return OC_STACK ERROR when it is already finding a group.
+         * @return Returns ::OC_STACK_OK if success.
+         * @note It returns OC_STACK ERROR when it is already finding a group.
          *       You should call this api after the group finding process has stopped.
          *       OCStackResult is defined in ocstack.h.
          */
@@ -128,12 +120,10 @@ namespace OIC
         /**
          * API for creating a new group.
          *
-         * @param collectionResourceType - resource type of a group to create
+         * @param collectionResourceType resource type of a group to create
          *
-         * @return OCStackResult - return value of this API.
-         *                         It returns OC_STACK_OK if success.
-         *
-         * NOTE: OCStackResult is defined in ocstack.h.
+         * @return Returns ::OC_STACK_OK if success.
+         * @note OCStackResult is defined in ocstack.h.
          */
         OCStackResult createGroup(std::string collectionResourceType);
 
@@ -141,13 +131,12 @@ namespace OIC
          * API for joining a group. This API is used when a resource that has a group tries
          * to find a specific remote resource and makes it join a group
          *
-         * @param collectionResourceType - resource type of a group to join.
-         * @param resourceHandle - resource handle to join a group.
+         * @param collectionResourceType resource type of a group to join.
+         * @param resourceHandle resource handle to join a group.
          *
-         * @return OCStackResult - return value of this API.
-         *                         It returns OC_STACK_OK if success.
+         * @return Returns ::OC_STACK_OK if success.
          *
-         * NOTE: If you want to join the resource in the remote(other) process,
+         * @note If you want to join the resource in the remote(other) process,
          *       use joinGroup(const std::shared_ptr< OCResource >, OCResourceHandle)
          *       instead of this.
          *       OCStackResult is defined in ocstack.h.
@@ -159,14 +148,12 @@ namespace OIC
          * API for joining a group. This API is used when a resource that
          * doesn't have a group tries to find and join a specific remote group.
          *
-         * @param resource - group resource pointer to join.
+         * @param resource group resource pointer to join.
          *                   It can be the callback result of findGroup().
-         * @param resourceHandle - resource handle to join a group.
+         * @param resourceHandle resource handle to join a group.
          *
-         * @return OCStackResult - return value of this API.
-         *                         It returns OC_STACK_OK if success.
-         *
-         * NOTE: NOTE: If you want to join the resource in the same process,
+         * @return Returns ::OC_STACK_OK if success.
+         * @note If you want to join the resource in the same process,
          *       use joinGroup(std::string, OCResourceHandle)
          *       instead of this.
          *       OCStackResult is defined in ocstack.h.
@@ -177,13 +164,11 @@ namespace OIC
         /**
          * API for leaving a joined group.
          *
-         * @param collectionResourceType - resource type of a group to leave.
-         * @param resourceHandle - resource handle to leave a group.
+         * @param collectionResourceType resource type of a group to leave.
+         * @param resourceHandle resource handle to leave a group.
          *
-         * @return OCStackResult - return value of this API.
-         *                         It returns OC_STACK_OK if success.
-         *
-         * NOTE: OCStackResult is defined in ocstack.h.
+         * @return Returns ::OC_STACK_OK if success.
+         * @note OCStackResult is defined in ocstack.h.
          */
         OCStackResult leaveGroup(std::string collectionResourceType,
                 OCResourceHandle resourceHandle);
@@ -191,16 +176,15 @@ namespace OIC
         /**
          * API for leaving a joined group.
          *
-         * @param resource - group resource pointer to join.
+         * @param resource group resource pointer to join.
          *                   It can be the callback result of findGroup().
          *
-         * @param collectionResourceType - resource type of a group to leave.
-         * @param resourceHandle - resource handle to leave a group.
+         * @param collectionResourceType resource type of a group to leave.
+         * @param resourceHandle resource handle to leave a group.
          *
-         * @return OCStackResult - return value of this API.
-         *                         It returns OC_STACK_OK if success.
+         * @return Returns ::OC_STACK_OK if success.
          *
-         * NOTE: OCStackResult is defined in ocstack.h.
+         * @note OCStackResult is defined in ocstack.h.
          */
         OCStackResult leaveGroup(const std::shared_ptr< OCResource > resource,
                         std::string collectionResourceType,
@@ -209,7 +193,7 @@ namespace OIC
         /**
          * API for deleting a group.
          *
-         * @param collectionResourceType - resource type of a group to delete.
+         * @param collectionResourceType resource type of a group to delete.
          *
          * @return void
          */
@@ -218,7 +202,7 @@ namespace OIC
         /**
          * API for getting a list of joined groups.
          *
-         * @return std::map - return value of this API.
+         * @return std::map return value of this API.
          *                  It returns group resource type and group resource handle as a map type.
          */
         std::map< std::string, OCResourceHandle > getGroupList();
@@ -240,16 +224,14 @@ namespace OIC
          * use getListOfSupportedConfigurationUnits()
          * function, which provides the list in JSON format.
          *
-         * @param resource - resource pointer representing the target group or the single thing.
-         * @param configurations - ConfigurationUnit: an attribute key of target resource.
+         * @param resource resource pointer representing the target group or the single thing.
+         * @param configurations ConfigurationUnit: an attribute key of target resource.
          *                         (e.g., loc, st, c, r)
          *                         Value : a value to be updated
-         * @param callback - callback for updateConfigurations.
+         * @param callback callback for updateConfigurations.
          *
-         * @return OCStackResult - return value of this API.
-         *                         It returns OC_STACK_OK if success.
-         *
-         * NOTE: OCStackResult is defined in ocstack.h.
+         * @return Returns ::OC_STACK_OK if success.
+         * @note OCStackResult is defined in ocstack.h.
          */
         OCStackResult updateConfigurations(std::shared_ptr< OCResource > resource,
                 std::map< std::string, std::string > configurations,
@@ -262,14 +244,12 @@ namespace OIC
          * or a single thing.
          * Callback is called when a response arrives.
          *
-         * @param resource - resource pointer representing the target group or the single thing.
-         * @param configurations - ConfigurationUnit: an attribute key of target resource.
-         * @param callback - callback for getConfigurations.
+         * @param resource resource pointer representing the target group or the single thing.
+         * @param configurations ConfigurationUnit: an attribute key of target resource.
+         * @param callback callback for getConfigurations.
          *
-         * @return OCStackResult - return value of this API.
-         *                         It returns OC_STACK_OK if success.
-         *
-         * NOTE: OCStackResult is defined in ocstack.h.
+         * @return Returns ::OC_STACK_OK if success.
+         * @note OCStackResult is defined in ocstack.h.
          */
         OCStackResult getConfigurations(std::shared_ptr< OCResource > resource,
                 std::vector< std::string > configurations,
@@ -282,7 +262,7 @@ namespace OIC
          * Callback is called when a response arrives.
          *
          * @param void
-         * @return std::string - return value of this API.
+         * @return std::string return value of this API.
          *                       It returns the list in JSON format
          */
         std::string getListOfSupportedConfigurationUnits();
@@ -291,12 +271,10 @@ namespace OIC
          * API for boostrapping system configuration parameters from a bootstrap server.
          * Callback is called when a response from the bootstrap server arrives.
          *
-         * @param callback - callback for doBootstrap.
+         * @param callback callback for doBootstrap.
          *
-         * @return OCStackResult - return value of this API.
-         *                         It returns OC_STACK_OK if success.
-         *
-         * NOTE: OCStackResult is defined in ocstack.h.
+         * @return Returns ::OC_STACK_OK if success.
+         * @note OCStackResult is defined in ocstack.h.
          */
         OCStackResult doBootstrap(
                 std::function<
@@ -310,13 +288,11 @@ namespace OIC
          * The target thing could be a group of multiple things or a single thing.
          * Callback is called when a response arrives.
          *
-         * @param resource - resource pointer representing the target group
-         * @param callback - callback for reboot.
+         * @param resource resource pointer representing the target group
+         * @param callback callback for reboot.
          *
-         * @return OCStackResult - return value of this API.
-         *                         It returns OC_STACK_OK if success.
-         *
-         * NOTE: OCStackResult is defined in ocstack.h.
+         * @return Returns ::OC_STACK_OK if success.
+         * @note OCStackResult is defined in ocstack.h.
          */
         OCStackResult reboot(std::shared_ptr< OCResource > resource,
                 std::function<
@@ -328,13 +304,11 @@ namespace OIC
          * The target thing could be a group of multiple things or a single thing.
          * Callback is called when a response arrives.
          *
-         * @param resource - resource pointer representing the target group
-         * @param callback - callback for factoryReset.
+         * @param resource resource pointer representing the target group
+         * @param callback callback for factoryReset.
          *
-         * @return OCStackResult - return value of this API.
-         *                         It returns OC_STACK_OK if success.
-         *
-         * NOTE: OCStackResult is defined in ocstack.h.
+         * @return Returns ::OC_STACK_OK if success.
+         * @note OCStackResult is defined in ocstack.h.
          */
         OCStackResult factoryReset(std::shared_ptr< OCResource > resource,
                 std::function<
@@ -346,21 +320,20 @@ namespace OIC
         /**
          * API for extracting an action set string from the ActionSet class instance
          *
-         * @param newActionSet - pointer of ActionSet class instance
+         * @param newActionSet pointer of ActionSet class instance
          *
-         * @return std::string - return value of this API.
+         * @return std::string return value of this API.
          *					     It returns an action set String.
-         *
-         * NOTE: OCStackResult is defined in ocstack.h.
+         * @note OCStackResult is defined in ocstack.h.
          */
         std::string getStringFromActionSet(const ActionSet *newActionSet);
 
         /**
          * API for extrracting ActionSet class instance from an action set string.
          *
-         * @param desc - description of an action set string
+         * @param desc description of an action set string
          *
-         * @return ActionSet* - return value of this API.
+         * @return ActionSet* return value of this API.
          *                      It returns pointer of ActionSet.
          */
         ActionSet* getActionSetfromString(std::string desc);
@@ -369,14 +342,13 @@ namespace OIC
          * API for adding an action set.
          * Callback is called when the response of PUT operation arrives.
          *
-         * @param resource - resource pointer of the group resource
-         * @param newActionSet - pointer of ActionSet class instance
-         * @param callback - callback for PUT operation.
+         * @param resource resource pointer of the group resource
+         * @param newActionSet pointer of ActionSet class instance
+         * @param callback callback for PUT operation.
          *
-         * @return OCStackResult - return value of this API.
-         *                         It returns OC_STACK_OK if success.
+         * @return Returns ::OC_STACK_OK if success.
          *
-         * NOTE: OCStackResult is defined in ocstack.h.
+         * @note OCStackResult is defined in ocstack.h.
          */
         OCStackResult addActionSet(std::shared_ptr< OCResource > resource,
                 const ActionSet* newActionSet, PutCallback cb);
@@ -385,14 +357,12 @@ namespace OIC
          * API for executing an existing action set.
          * Callback is called when the response of  POST operation arrives.
          *
-         * @param resource - resource pointer of the group resource
-         * @param actionsetName - the action set name for executing the action set
-         * @param callback - callback for POST operation.
+         * @param resource resource pointer of the group resource
+         * @param actionsetName the action set name for executing the action set
+         * @param callback callback for POST operation.
          *
-         * @return OCStackResult - return value of this API.
-         *                         It returns OC_STACK_OK if success.
-         *
-         * NOTE: OCStackResult is defined in ocstack.h.
+         * @return Returns ::OC_STACK_OK if success.
+         * @note OCStackResult is defined in ocstack.h.
          */
         OCStackResult executeActionSet(std::shared_ptr< OCResource > resource,
                 std::string actionsetName, PostCallback cb);
@@ -401,15 +371,13 @@ namespace OIC
          * API for executing an existing action set.
          * Callback is called when the response of  POST operation arrives.
          *
-         * @param resource - resource pointer of the group resource
-         * @param actionsetName - the action set name for executing the action set
-         * @param delay - waiting time for until the action set run.
-         * @param callback - callback for POST operation.
+         * @param resource resource pointer of the group resource
+         * @param actionsetName the action set name for executing the action set
+         * @param delay waiting time for until the action set run.
+         * @param callback callback for POST operation.
          *
-         * @return OCStackResult - return value of this API.
-         *                         It returns OC_STACK_OK if success.
-         *
-         * NOTE: OCStackResult is defined in ocstack.h.
+         * @return Returns ::OC_STACK_OK if success.
+         * @note OCStackResult is defined in ocstack.h.
          */
         OCStackResult executeActionSet(std::shared_ptr< OCResource > resource,
                 std::string actionsetName, long int delay, PostCallback cb);
@@ -418,14 +386,12 @@ namespace OIC
          * API for canceling an existing action set.
          * Callback is called when the response of POST operation arrives.
          *
-         * @param resource - resource pointer of the group resource
-         * @param actionsetName - the action set name for executing the action set
-         * @param callback - callback for POST operation.
+         * @param resource resource pointer of the group resource
+         * @param actionsetName the action set name for executing the action set
+         * @param callback callback for POST operation.
          *
-         * @return OCStackResult - return value of this API.
-         *                         It returns OC_STACK_OK if success.
-         *
-         * NOTE: OCStackResult is defined in ocstack.h.
+         * @return Returns ::OC_STACK_OK if success.
+         * @note OCStackResult is defined in ocstack.h.
          */
         OCStackResult cancelActionSet(std::shared_ptr< OCResource > resource,
                 std::string actionsetName, PostCallback cb);
@@ -433,14 +399,12 @@ namespace OIC
          * API for reading an existing action set.
          * Callback is called when the response of GET operation arrives.
          *
-         * @param resource - resource pointer of the group resource
-         * @param actionsetName - the action set name for reading the action set
-         * @param callback - callback for GET operation.
+         * @param resource resource pointer of the group resource
+         * @param actionsetName the action set name for reading the action set
+         * @param callback callback for GET operation.
          *
-         * @return OCStackResult - return value of this API.
-         *                         It returns OC_STACK_OK if success.
-         *
-         * NOTE: OCStackResult is defined in ocstack.h.
+         * @return Returns ::OC_STACK_OK if success.
+         * @note OCStackResult is defined in ocstack.h.
          */
         OCStackResult getActionSet(std::shared_ptr< OCResource > resource,
                 std::string actionsetName, GetCallback cb);
@@ -449,14 +413,12 @@ namespace OIC
          * API for removing an existing action set.
          * Callback is called when the response of  POST operation arrives.
          *
-         * @param resource - resource pointer of the group resource
-         * @param actionsetName - the action set name for removing the action set
-         * @param callback - callback for POST operation.
+         * @param resource resource pointer of the group resource
+         * @param actionsetName the action set name for removing the action set
+         * @param callback callback for POST operation.
          *
-         * @return OCStackResult - return value of this API.
-         *                         It returns OC_STACK_OK if success.
-         *
-         * NOTE: OCStackResult is defined in ocstack.h.
+         * @return Returns ::OC_STACK_OK if success.
+         * @note OCStackResult is defined in ocstack.h.
          */
         OCStackResult deleteActionSet(std::shared_ptr< OCResource > resource,
                 std::string actionsetName, PostCallback);
