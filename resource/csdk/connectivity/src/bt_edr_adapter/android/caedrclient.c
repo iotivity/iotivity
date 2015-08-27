@@ -595,10 +595,13 @@ void CAEDRGetLocalAddress(char **address)
             {
                 (*g_jvm)->DetachCurrentThread(g_jvm);
             }
+            (*env)->ReleaseStringUTFChars(env, jni_address, localAddress);
+            (*env)->DeleteLocalRef(env, jni_address);
             return;
         }
 
         (*env)->ReleaseStringUTFChars(env, jni_address, localAddress);
+        (*env)->DeleteLocalRef(env, jni_address);
     }
 
     OIC_LOG_V(DEBUG, TAG, "Local Address : %s", *address);
@@ -661,6 +664,7 @@ CAResult_t CAEDRSendUnicastMessageImpl(const char* address, const uint8_t* data,
             const char * name = (*env)->GetStringUTFChars(env, j_str_name, NULL);
             OIC_LOG_V(DEBUG, TAG, "[EDR][Native] getBondedDevices: ~~device name is %s", name);
             (*env)->ReleaseStringUTFChars(env, j_str_name, name);
+            (*env)->DeleteLocalRef(env, j_str_name);
         }
 
         jstring j_str_address = (*env)->CallObjectMethod(env, j_obj_device, j_mid_getAddress);
@@ -675,6 +679,11 @@ CAResult_t CAEDRSendUnicastMessageImpl(const char* address, const uint8_t* data,
             {
                 (*g_jvm)->DetachCurrentThread(g_jvm);
             }
+
+            (*env)->DeleteLocalRef(env, j_str_address);
+            (*env)->DeleteLocalRef(env, j_obj_device);
+            (*env)->DeleteLocalRef(env, jni_arrayPairedDevices);
+            (*env)->DeleteLocalRef(env, jni_cid_BTDevice);
             return CA_STATUS_INVALID_PARAM;
         }
         if (!address)
@@ -685,6 +694,10 @@ CAResult_t CAEDRSendUnicastMessageImpl(const char* address, const uint8_t* data,
                 (*g_jvm)->DetachCurrentThread(g_jvm);
             }
             (*env)->ReleaseStringUTFChars(env, j_str_address, remoteAddress);
+            (*env)->DeleteLocalRef(env, j_str_address);
+            (*env)->DeleteLocalRef(env, j_obj_device);
+            (*env)->DeleteLocalRef(env, jni_arrayPairedDevices);
+            (*env)->DeleteLocalRef(env, jni_cid_BTDevice);
             return CA_STATUS_INVALID_PARAM;
         }
         // find address
@@ -694,11 +707,20 @@ CAResult_t CAEDRSendUnicastMessageImpl(const char* address, const uint8_t* data,
             if (CA_STATUS_OK != res)
             {
                 (*env)->ReleaseStringUTFChars(env, j_str_address, remoteAddress);
+                (*env)->DeleteLocalRef(env, j_str_address);
+                (*env)->DeleteLocalRef(env, j_obj_device);
+                (*env)->DeleteLocalRef(env, jni_arrayPairedDevices);
+                (*env)->DeleteLocalRef(env, jni_cid_BTDevice);
                 return res;
             }
         }
         (*env)->ReleaseStringUTFChars(env, j_str_address, remoteAddress);
+        (*env)->DeleteLocalRef(env, j_str_address);
+        (*env)->DeleteLocalRef(env, j_obj_device);
     }
+
+    (*env)->DeleteLocalRef(env, jni_arrayPairedDevices);
+    (*env)->DeleteLocalRef(env, jni_cid_BTDevice);
 
     if (isAttached)
     {
@@ -739,6 +761,7 @@ CAResult_t CAEDRSendMulticastMessageImpl(JNIEnv *env, const uint8_t* data, uint3
             const char * name = (*env)->GetStringUTFChars(env, j_str_name, NULL);
             OIC_LOG_V(DEBUG, TAG, "[EDR][Native] getBondedDevices: ~~device name is %s", name);
             (*env)->ReleaseStringUTFChars(env, j_str_name, name);
+            (*env)->DeleteLocalRef(env, j_str_name);
         }
 
         jstring j_str_address = (*env)->CallObjectMethod(env, j_obj_device, j_mid_getAddress);
@@ -749,6 +772,7 @@ CAResult_t CAEDRSendMulticastMessageImpl(JNIEnv *env, const uint8_t* data, uint3
         // find address
         CAResult_t res = CAEDRNativeSendData(env, remoteAddress, data, dataLen);
         (*env)->ReleaseStringUTFChars(env, j_str_address, remoteAddress);
+        (*env)->DeleteLocalRef(env, j_str_address);
         if (CA_STATUS_OK != res)
         {
             OIC_LOG_V(ERROR, TAG, "CASendMulticastMessageImpl, failed to send message to : %s",
@@ -757,6 +781,9 @@ CAResult_t CAEDRSendMulticastMessageImpl(JNIEnv *env, const uint8_t* data, uint3
             continue;
         }
     }
+
+    (*env)->DeleteLocalRef(env, jni_arrayPairedDevices);
+    (*env)->DeleteLocalRef(env, jni_cid_BTDevice);
 
     return CA_STATUS_OK;
 }
@@ -812,6 +839,7 @@ CAResult_t CAEDRNativeSendData(JNIEnv *env, const char *address, const uint8_t *
             if (!jni_mid_getOutputStream)
             {
                 OIC_LOG(ERROR, TAG, "[EDR][Native] btSendData: jni_mid_getOutputStream is null");
+                (*env)->DeleteLocalRef(env, jni_cid_BTsocket);
                 return CA_STATUS_FAILED;
             }
 
@@ -821,6 +849,7 @@ CAResult_t CAEDRNativeSendData(JNIEnv *env, const char *address, const uint8_t *
             if (!jni_obj_socket)
             {
                 OIC_LOG(ERROR, TAG, "[EDR][Native] btSendData: jni_socket is not available");
+                (*env)->DeleteLocalRef(env, jni_cid_BTsocket);
                 return CA_STATUS_FAILED;
             }
 
@@ -829,6 +858,7 @@ CAResult_t CAEDRNativeSendData(JNIEnv *env, const char *address, const uint8_t *
             if (!jni_obj_outputStream)
             {
                 OIC_LOG(ERROR, TAG, "[EDR][Native] btSendData: jni_obj_outputStream is null");
+                (*env)->DeleteLocalRef(env, jni_cid_BTsocket);
                 return CA_STATUS_FAILED;
             }
 
@@ -838,6 +868,8 @@ CAResult_t CAEDRNativeSendData(JNIEnv *env, const char *address, const uint8_t *
             if (!jni_cid_OutputStream)
             {
                 OIC_LOG(ERROR, TAG, "[EDR][Native] btSendData: jni_cid_OutputStream is null");
+                (*env)->DeleteLocalRef(env, jni_cid_BTsocket);
+                (*env)->DeleteLocalRef(env, jni_obj_outputStream);
                 return CA_STATUS_FAILED;
             }
 
@@ -846,6 +878,9 @@ CAResult_t CAEDRNativeSendData(JNIEnv *env, const char *address, const uint8_t *
             if (!jni_mid_write)
             {
                 OIC_LOG(ERROR, TAG, "[EDR][Native] btSendData: jni_mid_write is null");
+                (*env)->DeleteLocalRef(env, jni_cid_BTsocket);
+                (*env)->DeleteLocalRef(env, jni_obj_outputStream);
+                (*env)->DeleteLocalRef(env, jni_cid_OutputStream);
                 return CA_STATUS_FAILED;
             }
 
@@ -855,6 +890,11 @@ CAResult_t CAEDRNativeSendData(JNIEnv *env, const char *address, const uint8_t *
 
             (*env)->CallVoidMethod(env, jni_obj_outputStream, jni_mid_write, jbuf, (jint) 0,
                                    (jint) dataLength);
+
+            (*env)->DeleteLocalRef(env, jni_cid_BTsocket);
+            (*env)->DeleteLocalRef(env, jni_obj_outputStream);
+            (*env)->DeleteLocalRef(env, jni_cid_OutputStream);
+            (*env)->DeleteLocalRef(env, jbuf);
 
             if ((*env)->ExceptionCheck(env))
             {
