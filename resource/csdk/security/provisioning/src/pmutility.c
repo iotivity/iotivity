@@ -82,11 +82,12 @@ OCProvisionDev_t* GetDevice(OCProvisionDev_t **ppDevicesList, const char* addr, 
  * @param[in] port          port of remote server.
  * @param[in] adapter       adapter type of endpoint.
  * @param[in] doxm          pointer to doxm instance.
+ * @param[in] connType  connectivity type of endpoint
  *
  * @return OC_STACK_OK for success and errorcode otherwise.
  */
 OCStackResult AddDevice(OCProvisionDev_t **ppDevicesList, const char* addr, const uint16_t port,
-                               OCTransportAdapter adapter, OicSecDoxm_t *doxm)
+                               OCTransportAdapter adapter, OCConnectivityType connType, OicSecDoxm_t *doxm)
 {
     if (NULL == addr)
     {
@@ -109,6 +110,7 @@ OCStackResult AddDevice(OCProvisionDev_t **ppDevicesList, const char* addr, cons
         ptr->securePort = DEFAULT_SECURE_PORT;
         ptr->endpoint.adapter = adapter;
         ptr->next = NULL;
+        ptr->connType = connType;
 
         LL_PREPEND(*ppDevicesList, ptr);
     }
@@ -256,6 +258,56 @@ uint16_t GetSecurePortFromJSON(char* jsonStr)
     return (uint16_t)jsonPort->valueint;
 }
 
+bool PMGenerateQuery(bool isSecure,
+                     const char* address, const uint16_t port,
+                     const OCConnectivityType connType,
+                     char* buffer, size_t bufferSize, const char* uri)
+{
+    if(!address || !buffer || !uri)
+    {
+        OC_LOG(ERROR, TAG, "PMGenerateQuery : Invalid parameters.");
+        return false;
+    }
+
+    int snRet = 0;
+    char* prefix = (isSecure == true) ? COAPS_PREFIX : COAP_PREFIX;
+
+    switch(connType & CT_MASK_ADAPTER)
+    {
+        case CT_ADAPTER_IP:
+            switch(connType & CT_MASK_FLAGS)
+            {
+                case CT_IP_USE_V4:
+                        snRet = snprintf(buffer, bufferSize, "%s%s:%d%s",
+                                         prefix, address, port, uri);
+                    break;
+                case CT_IP_USE_V6:
+                        snRet = snprintf(buffer, bufferSize, "%s[%s]:%d%s",
+                                         prefix, address, port, uri);
+                    break;
+                default:
+                    OC_LOG(ERROR, ERROR, "Unknown address format.");
+                    return false;
+            }
+            if(snRet >= bufferSize)
+            {
+                OC_LOG(ERROR, INFO, "PMGenerateQuery : URI is too long");
+                return false;
+            }
+            break;
+        // TODO: We need to verify tinyDTLS in below cases
+        case CT_ADAPTER_GATT_BTLE:
+        case CT_ADAPTER_RFCOMM_BTEDR:
+            OC_LOG(ERROR, ERROR, "Not supported connectivity adapter.");
+            return false;
+            break;
+        default:
+            OC_LOG(ERROR, ERROR, "Unknown connectivity adapter.");
+            return false;
+    }
+
+    return true;
+}
 
 /**
  * Callback handler for getting secure port information using /oic/res discovery.
@@ -290,16 +342,16 @@ static OCStackApplicationResult SecurePortDiscoveryHandler(void *ctx, OCDoHandle
                 return OC_STACK_KEEP_TRANSACTION;
             }
 
-            OCDiscoveryPayload* discover = (OCDiscoveryPayload*) clientResponse->payload;
             uint16_t securePort = 0;
+            OCResourcePayload* resPayload = ((OCDiscoveryPayload*)clientResponse->payload)->resources;
 
-            if (discover && discover->resources && discover->resources->secure)
+            if (resPayload && resPayload->secure)
             {
-                securePort = discover->resources->port;
+                securePort = resPayload->port;
             }
             else
             {
-                OC_LOG(INFO, TAG, "Secure Port info is missing");
+                OC_LOG(INFO, TAG, "Can not find secure port information.");
                 return OC_STACK_KEEP_TRANSACTION;
             }
 
@@ -376,7 +428,8 @@ static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx, OCDoHandle UNU
 
                 OCStackResult res = AddDevice(ppDevicesList, clientResponse->devAddr.addr,
                         clientResponse->devAddr.port,
-                        clientResponse->devAddr.adapter, ptrDoxm);
+                        clientResponse->devAddr.adapter,
+                        clientResponse->connType, ptrDoxm);
                 if (OC_STACK_OK != res)
                 {
                     OC_LOG(ERROR, TAG, "Error while adding data to linkedlist.");
@@ -385,27 +438,32 @@ static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx, OCDoHandle UNU
                 }
 
                 //Try to the unicast discovery to getting secure port
-                char query[MAX_QUERY_LENGTH] = { 0, };
-                sprintf(query, "%s%s:%d%s",
-                        COAP_PREFIX,
-                        clientResponse->devAddr.addr, clientResponse->devAddr.port,
-                        OC_RSRVD_WELL_KNOWN_URI);
+                char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = { 0, };
+                if(!PMGenerateQuery(false,
+                                    clientResponse->devAddr.addr, clientResponse->devAddr.port,
+                                    clientResponse->connType,
+                                    query, sizeof(query), OC_RSRVD_WELL_KNOWN_URI))
+                {
+                    OC_LOG(ERROR, TAG, "DeviceDiscoveryHandler : Failed to generate query");
+                    return OC_STACK_ERROR;
+                }
+                OC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
                 OCCallbackData cbData;
                 cbData.cb = &SecurePortDiscoveryHandler;
                 cbData.context = ctx;
                 cbData.cd = NULL;
                 OCStackResult ret = OCDoResource(NULL, OC_REST_GET, query, 0, 0,
-                        CT_ADAPTER_IP, OC_LOW_QOS, &cbData, NULL, 0);
+                        clientResponse->connType, OC_LOW_QOS, &cbData, NULL, 0);
                 // TODO: Should we use the default secure port in case of error?
                 if(OC_STACK_OK != ret)
                 {
-                    UpdateSecurePortOfDevice(ppDevicesList, clientResponse->devAddr.addr,
-                            clientResponse->devAddr.port, DEFAULT_SECURE_PORT);
+                    OC_LOG(ERROR, TAG, "Failed to Secure Port Discovery");
+                    return OC_STACK_DELETE_TRANSACTION;
                 }
                 else
                 {
-                    OC_LOG_V(ERROR, TAG, "OCDoResource with [%s] Success", query);
+                    OC_LOG_V(INFO, TAG, "OCDoResource with [%s] Success", query);
                 }
                 OC_LOG(INFO, TAG, "Exiting ProvisionDiscoveryHandler.");
             }

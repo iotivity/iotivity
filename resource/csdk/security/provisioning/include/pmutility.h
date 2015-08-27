@@ -55,6 +55,25 @@ OCStackResult PMDeviceDiscovery(unsigned short waittime, bool isOwned, OCProvisi
  */
 void DeleteDeviceList(OCProvisionDev_t **pList);
 
+
+/**
+ * Function to generate qurey for coap/coaps request.
+ *
+ * @param[in] isSeucre Choose whether to encrypt the payload.
+ * @param[in] address Network address of remote device
+ * @param[in] port Port number
+ * @param[in] connType Connectivity type of remote device
+ * @param[in,out] buffer A buffer to save the query.
+ * @param[in] bufferSize Size of buffer
+ * @param[in] uri The resource URI
+ *
+ * @return true on success
+ */
+bool PMGenerateQuery(bool isSecure,
+                     const char* address, uint16_t port,
+                     OCConnectivityType connType,
+                     char* buffer, size_t bufferSize, const char* uri);
+
 #ifdef __cplusplus
 }
 #endif
