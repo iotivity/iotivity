@@ -43,6 +43,7 @@
 #include "oic_string.h"
 #include "ocserverrequest.h"
 #include "secureresourcemanager.h"
+#include "doxmresource.h"
 #include "cacommon.h"
 #include "cainterface.h"
 #include "ocpayload.h"
@@ -3767,22 +3768,22 @@ OCStackResult getQueryFromUri(const char * uri, char** query, char ** uriWithout
         return OC_STACK_NO_MEMORY;
 }
 
-const uint8_t* OCGetServerInstanceID(void)
+const OicUuid_t* OCGetServerInstanceID(void)
 {
     static bool generated = false;
-    static ServerID sid;
-    if(generated)
+    static OicUuid_t sid;
+    if (generated)
     {
-        return sid;
+        return &sid;
     }
 
-    if (OCGenerateUuid(sid) != RAND_UUID_OK)
+    if (GetDoxmDeviceID(&sid) != OC_STACK_OK)
     {
         OC_LOG(FATAL, TAG, PCF("Generate UUID for Server Instance failed!"));
         return NULL;
     }
     generated = true;
-    return sid;
+    return &sid;
 }
 
 const char* OCGetServerInstanceIDString(void)
@@ -3795,9 +3796,9 @@ const char* OCGetServerInstanceIDString(void)
         return sidStr;
     }
 
-    const uint8_t* sid = OCGetServerInstanceID();
+    const OicUuid_t* sid = OCGetServerInstanceID();
 
-    if(OCConvertUuidToString(sid, sidStr) != RAND_UUID_OK)
+    if(OCConvertUuidToString(sid->id, sidStr) != RAND_UUID_OK)
     {
         OC_LOG(FATAL, TAG, PCF("Generate UUID String for Server Instance failed!"));
         return NULL;

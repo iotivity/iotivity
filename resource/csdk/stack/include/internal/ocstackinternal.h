@@ -43,6 +43,7 @@
 
 #include "cacommon.h"
 #include "cainterface.h"
+#include "securevirtualresourcetypes.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -273,7 +274,7 @@ OCStackResult CAResultToOCResult(CAResult_t caResult);
  *
  * @return A uint8_t representation the server instance ID.
  */
-const uint8_t* OCGetServerInstanceID(void);
+const OicUuid_t* OCGetServerInstanceID(void);
 
 /**
  * Get a string representation the server instance ID.
