@@ -250,14 +250,18 @@ static OCStackResult provisionCredentials(const OicSecCred_t *cred,
     }
 
     OC_LOG_V(INFO, TAG, "Credential for provisioning : %s",secPayload->securityData);
-    char uri[SRP_MAX_URI_LENGTH] = { 0 };
+    char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
+    if(!PMGenerateQuery(true,
+                        deviceInfo->endpoint.addr,
+                        deviceInfo->securePort,
+                        deviceInfo->connType,
+                        query, sizeof(query), OIC_RSRC_CRED_URI))
+    {
+        OC_LOG(ERROR, TAG, "DeviceDiscoveryHandler : Failed to generate query");
+        return OC_STACK_ERROR;
+    }
+    OC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
-    size_t uriLen = sizeof(uri);
-    snprintf(uri, uriLen - 1, COAPS_QUERY, deviceInfo->endpoint.addr, deviceInfo->securePort,
-            OIC_RSRC_CRED_URI);
-
-    uri[uriLen - 1] = '\0';
-    OC_LOG_V(INFO, TAG, "URI for Credential provisioning : %s",uri);
     OCCallbackData cbData = {.context=NULL, .cb=NULL, .cd=NULL};
     cbData.cb = responseHandler;
     cbData.context = (void *) credData;
@@ -265,9 +269,8 @@ static OCStackResult provisionCredentials(const OicSecCred_t *cred,
 
     OCDoHandle handle = NULL;
     OCMethod method = OC_REST_POST;
-    // TODO replace CT_ADAPTER_IP with value from discovery
-    OCStackResult ret = OCDoResource(&handle, method, uri, 0, (OCPayload*)secPayload,
-            CT_ADAPTER_IP, OC_HIGH_QOS, &cbData, NULL, 0);
+    OCStackResult ret = OCDoResource(&handle, method, query, 0, (OCPayload*)secPayload,
+            deviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
     OC_LOG_V(INFO, TAG, "OCDoResource::Credential provisioning returned : %d",ret);
     if (ret != OC_STACK_OK)
     {
@@ -439,14 +442,18 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
     }
     OC_LOG_V(INFO, TAG, "ACL : %s", secPayload->securityData);
 
-    char uri[SRP_MAX_URI_LENGTH] = {0};
-    size_t uriLen = sizeof(uri);
+    char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
+    if(!PMGenerateQuery(true,
+                        selectedDeviceInfo->endpoint.addr,
+                        selectedDeviceInfo->securePort,
+                        selectedDeviceInfo->connType,
+                        query, sizeof(query), OIC_RSRC_ACL_URI))
+    {
+        OC_LOG(ERROR, TAG, "DeviceDiscoveryHandler : Failed to generate query");
+        return OC_STACK_ERROR;
+    }
+    OC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
-    snprintf(uri, uriLen - 1, COAPS_QUERY, selectedDeviceInfo->endpoint.addr,
-            selectedDeviceInfo->securePort, OIC_RSRC_ACL_URI);
-    uri[uriLen - 1] = '\0';
-
-    OC_LOG_V(INFO, TAG, "URI : %s", uri);
     OCCallbackData cbData =  {.context=NULL, .cb=NULL, .cd=NULL};
     cbData.cb = &SRPProvisionACLCB;
     ACLData_t *aclData = (ACLData_t *) OICMalloc(sizeof(ACLData_t));
@@ -476,11 +483,9 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
     OCMethod method = OC_REST_POST;
     OCDoHandle handle = NULL;
     OC_LOG(DEBUG, TAG, "Sending ACL info to resource server");
-    // TODO replace CT_ADAPTER_IP with value from discovery
-
-    OCStackResult ret = OCDoResource(&handle, method, uri,
+    OCStackResult ret = OCDoResource(&handle, method, query,
             &selectedDeviceInfo->endpoint, (OCPayload*)secPayload,
-            CT_ADAPTER_IP, OC_HIGH_QOS, &cbData, NULL, 0);
+            selectedDeviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         OICFree(aclData->resArr);

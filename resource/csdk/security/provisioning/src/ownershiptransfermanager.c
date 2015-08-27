@@ -655,10 +655,17 @@ static OCStackResult PutOwnerTransferModeToResource(OTMContext_t* otmCtx)
 
     OCProvisionDev_t* deviceInfo = otmCtx->selectedDeviceInfo;
     OicSecOxm_t selectedOxm = deviceInfo->doxm->oxmSel;
-    char query[MAX_QUERY_LENGTH] = {};
-    sprintf(query, "%s%s:%d%s", COAP_PREFIX,
-                                deviceInfo->endpoint.addr, deviceInfo->endpoint.port,
-                                OIC_RSRC_DOXM_URI);
+    char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
+
+    if(!PMGenerateQuery(false,
+                        deviceInfo->endpoint.addr, deviceInfo->endpoint.port,
+                        deviceInfo->connType,
+                        query, sizeof(query), OIC_RSRC_DOXM_URI))
+    {
+        OC_LOG(ERROR, TAG, "DeviceDiscoveryHandler : Failed to generate query");
+        return OC_STACK_ERROR;
+    }
+    OC_LOG_V(DEBUG, TAG, "Query=%s", query);
     OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
     if(!secPayload)
     {
@@ -679,11 +686,9 @@ static OCStackResult PutOwnerTransferModeToResource(OTMContext_t* otmCtx)
     cbData.cb = &OwnerTransferModeHandler;
     cbData.context = (void *)otmCtx;
     cbData.cd = NULL;
-
-    // TODO: 6th argument need to be changed, if we have to use CT_FLAG_SECURE
     OCStackResult res = OCDoResource(NULL, OC_REST_PUT, query,
                                      &deviceInfo->endpoint, (OCPayload*)secPayload,
-                                     CT_ADAPTER_IP, OC_LOW_QOS, &cbData, NULL, 0);
+                                     deviceInfo->connType, OC_LOW_QOS, &cbData, NULL, 0);
     if (res != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "OCStack resource error");
@@ -705,18 +710,23 @@ static OCStackResult GetProvisioningStatusResource(OTMContext_t* otmCtx)
     }
 
     OCProvisionDev_t* deviceInfo = otmCtx->selectedDeviceInfo;
-    char query[MAX_QUERY_LENGTH] = {};
-    sprintf(query, "%s%s:%d%s", COAP_PREFIX,
-                                deviceInfo->endpoint.addr, deviceInfo->endpoint.port,
-                                OIC_RSRC_PSTAT_URI);
+    char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
+    if(!PMGenerateQuery(false,
+                        deviceInfo->endpoint.addr, deviceInfo->endpoint.port,
+                        deviceInfo->connType,
+                        query, sizeof(query), OIC_RSRC_PSTAT_URI))
+    {
+        OC_LOG(ERROR, TAG, "DeviceDiscoveryHandler : Failed to generate query");
+        return OC_STACK_ERROR;
+    }
+    OC_LOG_V(DEBUG, TAG, "Query=%s", query);
+
     OCCallbackData cbData;
     cbData.cb = &ListMethodsHandler;
     cbData.context = (void *)otmCtx;
     cbData.cd = NULL;
-
-    // TODO: 6th argument need to be changed, if we have to use CT_FLAG_SECURE
     OCStackResult res = OCDoResource(NULL, OC_REST_GET, query, NULL, NULL,
-                                     CT_ADAPTER_IP, OC_LOW_QOS, &cbData, NULL, 0);
+                                     deviceInfo->connType, OC_LOW_QOS, &cbData, NULL, 0);
     if (res != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "OCStack resource error");
@@ -739,10 +749,17 @@ static OCStackResult PutOwnershipInformation(OTMContext_t* otmCtx)
     }
 
     OCProvisionDev_t* deviceInfo = otmCtx->selectedDeviceInfo;
-    char query[MAX_QUERY_LENGTH] = {};
-    sprintf(query, "%s%s:%d%s", COAPS_PREFIX,
-                                deviceInfo->endpoint.addr, deviceInfo->securePort,
-                                OIC_RSRC_DOXM_URI);
+    char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
+    if(!PMGenerateQuery(true,
+                        deviceInfo->endpoint.addr, deviceInfo->securePort,
+                        deviceInfo->connType,
+                        query, sizeof(query), OIC_RSRC_DOXM_URI))
+    {
+        OC_LOG(ERROR, TAG, "DeviceDiscoveryHandler : Failed to generate query");
+        return OC_STACK_ERROR;
+    }
+    OC_LOG_V(DEBUG, TAG, "Query=%s", query);
+
     //OwnershipInformationHandler
     OicSecOxm_t selOxm = deviceInfo->doxm->oxmSel;
     OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
@@ -764,9 +781,8 @@ static OCStackResult PutOwnershipInformation(OTMContext_t* otmCtx)
     cbData.cb = &OwnershipInformationHandler;
     cbData.context = (void *)otmCtx;
     cbData.cd = NULL;
-    // TODO: 6th argument need to be changed, if we have to use CT_FLAG_SECURE
     OCStackResult res = OCDoResource(NULL, OC_REST_PUT, query, 0, (OCPayload*)secPayload,
-                                     CT_ADAPTER_IP, OC_LOW_QOS, &cbData, NULL, 0);
+                                     deviceInfo->connType, OC_LOW_QOS, &cbData, NULL, 0);
     if (res != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "OCStack resource error");
@@ -788,10 +804,17 @@ static OCStackResult PutUpdateOperationMode(OTMContext_t* otmCtx,
     }
 
     OCProvisionDev_t* deviceInfo = otmCtx->selectedDeviceInfo;
-    char query[MAX_QUERY_LENGTH] = {};
-    sprintf(query, "%s%s:%d%s", COAP_PREFIX,
-                                deviceInfo->endpoint.addr, deviceInfo->endpoint.port,
-                                OIC_RSRC_PSTAT_URI);
+    char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
+    if(!PMGenerateQuery(false,
+                        deviceInfo->endpoint.addr, deviceInfo->endpoint.port,
+                        deviceInfo->connType,
+                        query, sizeof(query), OIC_RSRC_PSTAT_URI))
+    {
+        OC_LOG(ERROR, TAG, "DeviceDiscoveryHandler : Failed to generate query");
+        return OC_STACK_ERROR;
+    }
+    OC_LOG_V(DEBUG, TAG, "Query=%s", query);
+
     deviceInfo->pstat->om = selectedOperationMode;
 
     OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
@@ -813,9 +836,8 @@ static OCStackResult PutUpdateOperationMode(OTMContext_t* otmCtx,
     cbData.cb = &OperationModeUpdateHandler;
     cbData.context = (void *)otmCtx;
     cbData.cd = NULL;
-
     OCStackResult res = OCDoResource(NULL, OC_REST_PUT, query, 0, (OCPayload*)secPayload,
-                                     CT_ADAPTER_IP, OC_LOW_QOS, &cbData, NULL, 0);
+                                     deviceInfo->connType, OC_LOW_QOS, &cbData, NULL, 0);
     if (res != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "OCStack resource error");
@@ -1017,20 +1039,24 @@ static OCStackApplicationResult ProvisionDefaultACLCB(void *ctx, OCDoHandle UNUS
         }
         OC_LOG_V(INFO, TAG, "Created payload for commit hash: %s",secPayload->securityData);
 
-        char uri[MAX_QUERY_LENGTH] = { 0 };
-        size_t uriLen = sizeof(uri);
+        char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
+        if(!PMGenerateQuery(true,
+                            otmCtx->selectedDeviceInfo->endpoint.addr,
+                            otmCtx->selectedDeviceInfo->securePort,
+                            otmCtx->selectedDeviceInfo->connType,
+                            query, sizeof(query), OIC_RSRC_PSTAT_URI))
+        {
+            OC_LOG(ERROR, TAG, "DeviceDiscoveryHandler : Failed to generate query");
+            return OC_STACK_ERROR;
+        }
+        OC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
-        snprintf(uri, uriLen - 1, COAPS_QUERY, otmCtx->selectedDeviceInfo->endpoint.addr,
-                otmCtx->selectedDeviceInfo->securePort, OIC_RSRC_PSTAT_URI);
-        uri[uriLen - 1] = '\0';
         OCCallbackData cbData = {.context=NULL, .cb=NULL, .cd=NULL};
         cbData.cb = &FinalizeProvisioningCB;
-        cbData.context = (void*)otmCtx; // forward context to SRPFinalizeProvisioningCB
+        cbData.context = (void*)otmCtx;
         cbData.cd = NULL;
-
-        // TODO change value of CT_ADAPTER_IP with val from discovery
-        OCStackResult ret = OCDoResource(NULL, OC_REST_PUT, uri, 0, (OCPayload*)secPayload,
-                CT_ADAPTER_IP, OC_HIGH_QOS, &cbData, NULL, 0);
+        OCStackResult ret = OCDoResource(NULL, OC_REST_PUT, query, 0, (OCPayload*)secPayload,
+                otmCtx->selectedDeviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
         OC_LOG_V(INFO, TAG, "OCDoResource returned: %d",ret);
         if (ret != OC_STACK_OK)
         {
@@ -1118,22 +1144,27 @@ OCStackResult FinalizeProvisioning(OTMContext_t* otmCtx)
     }
     OC_LOG_V(INFO, TAG, "Provisioning default ACL : %s",secPayload->securityData);
 
-    char uri[MAX_QUERY_LENGTH] = { 0 };
+    char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
+    if(!PMGenerateQuery(true,
+                        otmCtx->selectedDeviceInfo->endpoint.addr,
+                        otmCtx->selectedDeviceInfo->securePort,
+                        otmCtx->selectedDeviceInfo->connType,
+                        query, sizeof(query), OIC_RSRC_ACL_URI))
+    {
+        OC_LOG(ERROR, TAG, "DeviceDiscoveryHandler : Failed to generate query");
+        return OC_STACK_ERROR;
+    }
+    OC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
-    size_t uriLen = sizeof(uri);
-    snprintf(uri, uriLen - 1, COAPS_QUERY, otmCtx->selectedDeviceInfo->endpoint.addr,
-            otmCtx->selectedDeviceInfo->securePort, OIC_RSRC_ACL_URI);
-    uri[uriLen - 1] = '\0';
-    OC_LOG_V(INFO, TAG, "Request URI for Provisioning default ACL : %s",uri);
+    OC_LOG_V(INFO, TAG, "Request URI for Provisioning default ACL : %s", query);
 
     OCCallbackData cbData =  {.context=NULL, .cb=NULL, .cd=NULL};
     cbData.cb = &ProvisionDefaultACLCB;
     cbData.context = (void *)otmCtx;
     cbData.cd = NULL;
-
-    OCStackResult ret = OCDoResource(NULL, OC_REST_POST, uri,
+    OCStackResult ret = OCDoResource(NULL, OC_REST_POST, query,
             &otmCtx->selectedDeviceInfo->endpoint, (OCPayload*)secPayload,
-            CT_ADAPTER_IP, OC_HIGH_QOS, &cbData, NULL, 0);
+            otmCtx->selectedDeviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
     if (OC_STACK_OK != ret)
     {
         SetResult(otmCtx, ret);
