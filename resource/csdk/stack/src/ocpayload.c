@@ -540,7 +540,7 @@ bool OCRepPayloadSetPropStringAsOwner(OCRepPayload* payload, const char* name, c
     return OCRepPayloadSetProp(payload, name, value, OCREP_PROP_STRING);
 }
 
-bool OCRepPayloadGetPropString(const OCRepPayload* payload, const char* name, const char** value)
+bool OCRepPayloadGetPropString(const OCRepPayload* payload, const char* name, char** value)
 {
     OCRepPayloadValue* val = OCRepPayloadFindValue(payload, name);
 
