@@ -10,7 +10,7 @@ in the current directory.  You can then connect to the VM with
 
     % vagrant ssh
 
-On the newly provisioned VM, the IoTivity repo will be checked out in 
+On the newly provisioned VM, the IoTivity repo will be checked out in
 the `iotivity` directory in the vagrant user's home directory and
 configured to use the Arduino SDKs which are automatically downloaded
 and installed in the home directory and patched when the VM is provisioned.
@@ -26,7 +26,7 @@ Using Vagrant to build a VM might be useful for:
 
 The bootstrap.sh and iotivity-setup.sh files can be used independent of
 Vagrant to configure a existing Ubuntu environment.  How to do so is left
-as an exercise for the reader.  (Hint: try `sudo bootstrap.sh && 
+as an exercise for the reader.  (Hint: try `sudo bootstrap.sh &&
 iotivity-setup.sh`.)
 
 For more information about Vagrant, please see https://docs.vagrantup.com/v2/

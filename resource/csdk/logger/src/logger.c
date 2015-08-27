@@ -51,10 +51,12 @@
 #include "oc_logger.h"
 #include "oc_console_logger.h"
 
+#ifndef __TIZEN__
 static oc_log_ctx_t *logCtx = 0;
 
 static oc_log_level LEVEL_XTABLE[] = {OC_LOG_DEBUG, OC_LOG_INFO, OC_LOG_WARNING, OC_LOG_ERROR, OC_LOG_FATAL};
 
+#endif
 static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 + 1;  // Show 16 bytes, 2 chars/byte, spaces between bytes, null termination
 
 // Convert LogLevel to platform-specific severity level.  Store in PROGMEM on Arduino
@@ -87,7 +89,27 @@ static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 + 1;  // Show 16 bytes, 2
 
 
 #ifndef ARDUINO
+#ifdef __TIZEN__
 
+int OCGetTizenLogLevel(LogLevel level)
+{
+    switch(level)
+    {
+        case DEBUG:
+            return DLOG_DEBUG;
+        case INFO:
+            return DLOG_INFO;
+        case WARNING:
+            return DLOG_WARN;
+        case ERROR:
+            return DLOG_ERROR;
+        case FATAL:
+            return DLOG_FATAL;
+    }
+    return DLOG_DEBUG;
+}
+
+#else
 void OCLogConfig(oc_log_ctx_t *ctx) {
     logCtx = ctx;
 }
@@ -130,7 +152,7 @@ static void osalGetTime(int *min,int *sec, int *ms)
     if (min && sec && ms)
     {
 #if defined(_POSIX_TIMERS) && _POSIX_TIMERS > 0
-        struct timespec when = {};
+        struct timespec when = {0};
         clockid_t clk = CLOCK_REALTIME;
 #ifdef CLOCK_REALTIME_COARSE
         clk = CLOCK_REALTIME_COARSE;
@@ -221,7 +243,7 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
         OCLog(level, tag, lineBuffer);
     }
 }
-
+#endif //__TIZEN__
 #else
     /**
      * Initialize the serial logger for Arduino

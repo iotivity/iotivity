@@ -18,8 +18,12 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+
 #ifndef __PROVISIONING_HANDLER_H_
 #define __PROVISIONING_HANDLER_H_
+
+
+#include "octypes.h"
 
 #include "logger.h"
 #include "ocstack.h"
@@ -56,7 +60,7 @@ OCStackApplicationResult GetProvisioningStatusResponse(void* ctx,
         OCDoHandle handle, OCClientResponse * clientResponse);
 
 OCStackResult InvokeOCDoResource(const char* query, OCMethod method,
-        OCQualityOfService qos, OCClientResponseHandler cb, const char* request,
+        OCQualityOfService qos, OCClientResponseHandler cb,OCRepPayload * request,
         OCHeaderOption * options, uint8_t numOptions);
 
 OCStackResult GetProvisioningStatus(OCQualityOfService qos, const char* query);

@@ -23,11 +23,11 @@
 #include <string.h>
 #include <signal.h>
 #include <unistd.h>
-
+#include "ocpayload.h"
 #include "provisioninghandler.h"
 
 // External includes
-#include "cJSON.h"
+
 #include "camutex.h"
 #include "cathreadpool.h"
 #include "logger.h"
@@ -133,8 +133,7 @@ OCStackApplicationResult ProvisionEnrolleeResponse(void* ctx, OCDoHandle handle,
     ProvisioningInfo *provInfo;
 
     if (clientResponse) {
-        OIC_LOG_V(INFO, TAG, "Put Response JSON = %s",
-                clientResponse->resJSONPayload);
+        OIC_LOG_V(INFO, TAG, "Put Response");
     } else {
         OIC_LOG_V(INFO, TAG,
                 "ProvisionEnrolleeResponse received Null clientResponse");
@@ -144,34 +143,26 @@ OCStackApplicationResult ProvisionEnrolleeResponse(void* ctx, OCDoHandle handle,
         return OC_STACK_DELETE_TRANSACTION;
     }
 
-    OIC_LOG_V(DEBUG, TAG, "ProvisionEnrolleeResponse %s ",
-            clientResponse->resJSONPayload);
+    if (clientResponse->payload) {
 
-    if (clientResponse->resJSONPayload) {
-        cJSON *observeJson = cJSON_CreateObject();
-        observeJson = cJSON_Parse(clientResponse->resJSONPayload);
-
-        cJSON *ocArray = cJSON_GetObjectItem(observeJson, OC_RSRVD_OC);
-        cJSON *ocArray_sub = cJSON_GetArrayItem(ocArray, 0);
-
-        cJSON *representationArray = cJSON_GetObjectItem(ocArray_sub, OC_RSRVD_REPRESENTATION);
-        char *ocArray_str = cJSON_PrintUnformatted(representationArray);
-
-        if (strstr(ocArray_str, "[{}") == ocArray_str) {
-            OIC_LOG_V(DEBUG, TAG, "invalid payload : %s", ocArray_str);
-            cJSON_Delete(observeJson);
+        if(clientResponse->payload->type != PAYLOAD_TYPE_REPRESENTATION)
+        {
+            OIC_LOG_V(DEBUG, TAG, "Incoming payload not a representation");
             return OC_STACK_DELETE_TRANSACTION;
         }
 
-        int countofrep = cJSON_GetArraySize(representationArray);
+        OCRepPayload* input = (OCRepPayload*)(clientResponse->payload);
+        if(!input)
+        {
+            OIC_LOG_V(DEBUG, TAG, "Failed To parse");
+            return OC_STACK_DELETE_TRANSACTION;
+        }
 
-        for (int i = 0; i < countofrep; ++i) {
-            cJSON *arrayJSON = cJSON_GetArrayItem(representationArray, i);
-            OIC_LOG_V(DEBUG, TAG, "rep#%d's name : %s", i, arrayJSON->string);
+        while(input){
 
-            if (!strcmp(arrayJSON->string, OC_RSRVD_ES_PS))
-            {
-                if(arrayJSON->valueint == 1)
+            int64_t ps;
+            if(OCRepPayloadGetPropInt(input,OC_RSRVD_ES_PS,&ps))    {
+                if(ps == 1)
                 {
                     OIC_LOG_V(DEBUG, TAG, "PS is proper");
                     continue;
@@ -181,12 +172,13 @@ OCStackApplicationResult ProvisionEnrolleeResponse(void* ctx, OCDoHandle handle,
                     provInfo = PrepareProvisioingStatusCB(clientResponse,
                             DEVICE_NOT_PROVISIONED);
                     cbData(provInfo);
+
                 }
             }
 
-            if (!strcmp(arrayJSON->string, OC_RSRVD_ES_TNN))
-            {
-                if(!strcmp(arrayJSON->valuestring, netProvInfo->netAddressInfo.WIFI.ssid))
+            const char* tnn;
+            if(OCRepPayloadGetPropString(input,OC_RSRVD_ES_TNN,&tnn)){
+                if(!strcmp(tnn, netProvInfo->netAddressInfo.WIFI.ssid))
                 {
                     OIC_LOG_V(DEBUG, TAG, "SSID is proper");
                     continue;
@@ -198,10 +190,9 @@ OCStackApplicationResult ProvisionEnrolleeResponse(void* ctx, OCDoHandle handle,
                     cbData(provInfo);
                 }
             }
-
-            if (!strcmp(arrayJSON->string, OC_RSRVD_ES_CD))
-            {
-                if(!strcmp(arrayJSON->valuestring, netProvInfo->netAddressInfo.WIFI.pwd))
+            const char* cd;
+            if(OCRepPayloadGetPropString(input, OC_RSRVD_ES_CD,&cd)){
+                if(!strcmp(cd,netProvInfo->netAddressInfo.WIFI.pwd))
                 {
                     OIC_LOG_V(DEBUG, TAG, "Password is proper");
                     continue;
@@ -214,28 +205,82 @@ OCStackApplicationResult ProvisionEnrolleeResponse(void* ctx, OCDoHandle handle,
                 }
             }
 
-            switch (arrayJSON->type) {
-            case cJSON_False:
-            case cJSON_True:
-                OIC_LOG_V(DEBUG, TAG, "rep#%d's int value : %d", i,
-                        arrayJSON->valueint);
-                break;
-            case cJSON_Number:
-                OIC_LOG_V(DEBUG, TAG, "rep#%d's double value : %f", i,
-                        arrayJSON->valuedouble);
-                break;
-            case cJSON_String:
-                OIC_LOG_V(DEBUG, TAG, "rep#%d's value : %s", i,
-                        arrayJSON->valuestring);
-                break;
-            case cJSON_NULL:
-            default:
-                OIC_LOG_V(DEBUG, TAG, "rep#%d's value : NULL", i);
-                break;
+            OCRepPayloadValue* val = input->values;
+
+            switch(val->type)
+            {
+                case OCREP_PROP_NULL:
+                    OIC_LOG_V(DEBUG, TAG, "\t\t%s: NULL", val->name);
+                    break;
+                case OCREP_PROP_INT:
+                    OIC_LOG_V(DEBUG, TAG, "\t\t%s(int):%lld", val->name, val->i);
+                    break;
+                case OCREP_PROP_DOUBLE:
+                    OIC_LOG_V(DEBUG, TAG, "\t\t%s(double):%f", val->name, val->d);
+                    break;
+                case OCREP_PROP_BOOL:
+                    OIC_LOG_V(DEBUG, TAG, "\t\t%s(bool):%s", val->name, val->b ? "true" : "false");
+                    break;
+                case OCREP_PROP_STRING:
+                    OIC_LOG_V(DEBUG, TAG, "\t\t%s(string):%s", val->name, val->str);
+                    break;
+                case OCREP_PROP_OBJECT:
+                    // Note: Only prints the URI (if available), to print further, you'll
+                    // need to dig into the object better!
+                    OIC_LOG_V(DEBUG, TAG, "\t\t%s(OCRep):%s", val->name, val->obj->uri);
+                    break;
+                case OCREP_PROP_ARRAY:
+                    switch(val->arr.type)
+                    {
+                        case OCREP_PROP_INT:
+                            OIC_LOG_V(DEBUG, TAG, "\t\t%s(int array):%lld x %lld x %lld",
+                                    val->name,
+                                    val->arr.dimensions[0], val->arr.dimensions[1],
+                                    val->arr.dimensions[2]);
+                            break;
+                        case OCREP_PROP_DOUBLE:
+                            OIC_LOG_V(DEBUG, TAG, "\t\t%s(double array):%lld x %lld x %lld",
+                                    val->name,
+                                    val->arr.dimensions[0], val->arr.dimensions[1],
+                                    val->arr.dimensions[2]);
+                            break;
+                        case OCREP_PROP_BOOL:
+                            OIC_LOG_V(DEBUG, TAG, "\t\t%s(bool array):%lld x %lld x %lld",
+                                    val->name,
+                                    val->arr.dimensions[0], val->arr.dimensions[1],
+                                    val->arr.dimensions[2]);
+                            break;
+                        case OCREP_PROP_STRING:
+                            OIC_LOG_V(DEBUG, TAG, "\t\t%s(string array):%lld x %lld x %lld",
+                                    val->name,
+                                    val->arr.dimensions[0], val->arr.dimensions[1],
+                                    val->arr.dimensions[2]);
+                            break;
+                        case OCREP_PROP_OBJECT:
+                            OIC_LOG_V(DEBUG, TAG, "\t\t%s(OCRep array):%lld x %lld x %lld",
+                                    val->name,
+                                    val->arr.dimensions[0], val->arr.dimensions[1],
+                                    val->arr.dimensions[2]);
+                            break;
+                        default:
+                            //OIC_LOG_V(ERROR, TAG, "\t\t%s <-- Unknown/unsupported array type!",
+                            //  val->name);
+                            break;
+                    }
+                    break;
+                        default:
+                            /*OC_LOG_V(ERROR, TAG
+                                , "\t\t%s <-- Unknown type!", val->name);*/
+                            break;
             }
+            input=input->next;
         }
 
-        cJSON_Delete(observeJson);
+
+
+
+
+
 
         provInfo = PrepareProvisioingStatusCB(clientResponse,
                 DEVICE_PROVISIONED);
@@ -245,7 +290,7 @@ OCStackApplicationResult ProvisionEnrolleeResponse(void* ctx, OCDoHandle handle,
     } else {
         OIC_LOG(INFO, TAG,
                 "ProvisionEnrolleeResponse received NULL clientResponse. \
-                                Invoking Provisioing Status Callback");
+        Invoking Provisioing Status Callback");
         provInfo = PrepareProvisioingStatusCB(clientResponse,
                 DEVICE_NOT_PROVISIONED);
         cbData(provInfo);
@@ -253,33 +298,26 @@ OCStackApplicationResult ProvisionEnrolleeResponse(void* ctx, OCDoHandle handle,
     }
 }
 
+
+
 OCStackResult ProvisionEnrollee(OCQualityOfService qos, const char* query, const char* resUri) {
     OIC_LOG_V(INFO, TAG, "\n\nExecuting ProvisionEnrollee%s", __func__);
 
-    cJSON *jsonFinal = cJSON_CreateObject();
-    cJSON *json = cJSON_CreateObject();
-    cJSON *jsonArray;
-    cJSON *format;
-    char* payload = NULL;
 
-    cJSON_AddStringToObject(json, OC_RSRVD_HREF, resUri);
-    cJSON_AddItemToObject(json, OC_RSRVD_REPRESENTATION, format = cJSON_CreateObject());
-    cJSON_AddStringToObject(format, OC_RSRVD_ES_TNN, netProvInfo->netAddressInfo.WIFI.ssid);
-    cJSON_AddStringToObject(format, OC_RSRVD_ES_CD, netProvInfo->netAddressInfo.WIFI.pwd);
-    cJSON_AddItemToObject(jsonFinal, OC_RSRVD_OC, jsonArray = cJSON_CreateArray());
-    cJSON_AddItemToArray(jsonArray, json);
+    OCRepPayload* payload = OCRepPayloadCreate();
 
-    OIC_LOG_V(DEBUG, TAG, "ProvisionEnrollee : %s",
-            cJSON_PrintUnformatted(jsonFinal));
-    payload = cJSON_Print(jsonFinal);
-    OIC_LOG_V(DEBUG, TAG, "Payload : %s", payload);
+    OCRepPayloadSetUri(payload,resUri);
+    OCRepPayloadSetPropString(payload,OC_RSRVD_ES_TNN,netProvInfo->netAddressInfo.WIFI.ssid);
+    OCRepPayloadSetPropString(payload,OC_RSRVD_ES_CD,netProvInfo->netAddressInfo.WIFI.pwd);
+
+    OIC_LOG_V(DEBUG, TAG, "OCPayload ready for ProvisionEnrollee");
 
     OCStackResult ret = InvokeOCDoResource(query, OC_REST_PUT, OC_HIGH_QOS,
             ProvisionEnrolleeResponse, payload, NULL, 0);
 
-    cJSON_Delete(json);
     return ret;
 }
+
 
 OCStackApplicationResult GetProvisioningStatusResponse(void* ctx,
         OCDoHandle handle, OCClientResponse * clientResponse) {
@@ -288,7 +326,7 @@ OCStackApplicationResult GetProvisioningStatusResponse(void* ctx,
     if (clientResponse == NULL) {
         OIC_LOG(INFO, TAG,
                 "getReqCB received NULL clientResponse. \
-            Invoking Provisioing Status Callback");
+        Invoking Provisioing Status Callback");
         provInfo = PrepareProvisioingStatusCB(clientResponse,
                 DEVICE_NOT_PROVISIONED);
         cbData(provInfo);
@@ -318,67 +356,37 @@ OCStackApplicationResult GetProvisioningStatusResponse(void* ctx,
     char query[OIC_STRING_MAX_VALUE] = { '\0' };
 
 
-    if (clientResponse->resJSONPayload) {
-        cJSON *observeJson = cJSON_CreateObject();
-        observeJson = cJSON_Parse(clientResponse->resJSONPayload);
+    if (clientResponse->payload) {
 
-        cJSON *ocArray = cJSON_GetObjectItem(observeJson, OC_RSRVD_OC);
-        cJSON *ocArray_sub = cJSON_GetArrayItem(ocArray, 0);
+        if(clientResponse->payload && clientResponse->payload->type != PAYLOAD_TYPE_REPRESENTATION)
 
-        cJSON *resUriObj = cJSON_GetObjectItem(ocArray_sub, OC_RSRVD_HREF);
+        {
+            OIC_LOG_V(DEBUG, TAG, "Incoming payload not a representation");
+            return OC_STACK_DELETE_TRANSACTION;
+        }
 
-        OIC_LOG_V(DEBUG, TAG, "resUriObj = %s, valueString = %s",
-            resUriObj->string, resUriObj->valuestring);
+        OCRepPayload* input = (OCRepPayload*)(clientResponse->payload);
+        if(!input)
+        {
+            OIC_LOG_V(DEBUG, TAG, "Failed To parse");
+            return OC_STACK_DELETE_TRANSACTION;
+        }
+        OIC_LOG_V(DEBUG, TAG, "resUri = %s",input->uri);
 
         char resURI[MAX_URI_LENGTH]={'\0'};
 
-        strncpy(resURI, resUriObj->valuestring, sizeof(resURI));
+        strncpy(resURI, input->uri, sizeof(resURI));
 
         snprintf(query, sizeof(query), UNICAST_PROV_STATUS_QUERY,
                 clientResponse->addr->addr,
                 IP_PORT, resURI);
 
-        cJSON *representationArray = cJSON_GetObjectItem(ocArray_sub, OC_RSRVD_REPRESENTATION);
-        char *ocArray_str = cJSON_PrintUnformatted(representationArray);
-
-        if (strstr(ocArray_str, "[{}") == ocArray_str) {
-            OIC_LOG_V(DEBUG, TAG, "invalid payload : %s", ocArray_str);
-            cJSON_Delete(observeJson);
-            return OC_STACK_DELETE_TRANSACTION;
-        }
-
-        int countofrep = cJSON_GetArraySize(representationArray);
-
-        for (int i = 0; i < countofrep; ++i) {
-            cJSON *arrayJSON = cJSON_GetArrayItem(representationArray, i);
-            OIC_LOG_V(DEBUG, TAG, "rep#%d's name : %s", i, arrayJSON->string);
-
-            switch (arrayJSON->type) {
-            case cJSON_False:
-            case cJSON_True:
-                OIC_LOG_V(DEBUG, TAG, "rep#%d's value : %d", i,
-                        arrayJSON->valueint);
-                break;
-            case cJSON_Number:
-                OIC_LOG_V(DEBUG, TAG, "rep#%d's value : %f", i,
-                        arrayJSON->valuedouble);
-                break;
-            case cJSON_String:
-                OIC_LOG_V(DEBUG, TAG, "rep#%d's value : %s", i,
-                        arrayJSON->valuestring);
-                break;
-            case cJSON_NULL:
-            default:
-                OIC_LOG_V(DEBUG, TAG, "rep#%d's value : NULL", i);
-                break;
-            }
-        }
-        cJSON_Delete(observeJson);
+        //OCPayloadLogRep(DEBUG,TAG,input);
 
         if (ProvisionEnrollee(OC_HIGH_QOS, query, resURI) != OC_STACK_OK) {
             OIC_LOG(INFO, TAG,
                     "GetProvisioningStatusResponse received NULL clientResponse. \
-                Invoking Provisioing Status Callback");
+            Invoking Provisioing Status Callback");
             provInfo = PrepareProvisioingStatusCB(clientResponse,
                     DEVICE_NOT_PROVISIONED);
             cbData(provInfo);
@@ -388,7 +396,7 @@ OCStackApplicationResult GetProvisioningStatusResponse(void* ctx,
     } else {
         OIC_LOG(INFO, TAG,
                 "GetProvisioningStatusResponse received NULL clientResponse. \
-            Invoking Provisioing Status Callback");
+        Invoking Provisioing Status Callback");
         provInfo = PrepareProvisioingStatusCB(clientResponse,
                 DEVICE_NOT_PROVISIONED);
         cbData(provInfo);
@@ -398,7 +406,7 @@ OCStackApplicationResult GetProvisioningStatusResponse(void* ctx,
 }
 
 OCStackResult InvokeOCDoResource(const char* query, OCMethod method,
-        OCQualityOfService qos, OCClientResponseHandler cb, const char* request,
+        OCQualityOfService qos, OCClientResponseHandler cb,OCRepPayload* request,
         OCHeaderOption * options, uint8_t numOptions) {
     OCStackResult ret;
     OCCallbackData cbData;
@@ -407,7 +415,7 @@ OCStackResult InvokeOCDoResource(const char* query, OCMethod method,
     cbData.context = (void*) DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-    ret = OCDoResource(NULL, method, query, 0, request, OC_CONNTYPE, qos,
+    ret = OCDoResource(NULL, method, query, 0, &request->base, OC_CONNTYPE, qos,
             &cbData, options, numOptions);
 
     if (ret != OC_STACK_OK) {
@@ -468,10 +476,10 @@ OCStackResult StartProvisioningProcess(const EnrolleeNWProvInfo_t *netInfo,
     memcpy(netProvInfo, netInfo, sizeof(EnrolleeNWProvInfo_t));
 
     OIC_LOG_V(DEBUG, TAG, "Network Provisioning Info. SSID = %s",
-        netProvInfo->netAddressInfo.WIFI.ssid);
+            netProvInfo->netAddressInfo.WIFI.ssid);
 
     OIC_LOG_V(DEBUG, TAG, "Network Provisioning Info. PWD = %s",
-        netProvInfo->netAddressInfo.WIFI.pwd);
+            netProvInfo->netAddressInfo.WIFI.pwd);
 
 
     if (CA_STATUS_OK
@@ -490,6 +498,7 @@ OCStackResult StartProvisioningProcess(const EnrolleeNWProvInfo_t *netInfo,
 void StopProvisioningProcess() {
     cbData = NULL;
 }
+
 
 // This is a function called back when a device is discovered
 OCStackApplicationResult FindProvisioningResourceResponse(void* ctx,
@@ -512,39 +521,34 @@ OCStackApplicationResult FindProvisioningResourceResponse(void* ctx,
     }
 
     if (clientResponse) {
-        cJSON *discoveryJson = cJSON_CreateObject();
-        discoveryJson = cJSON_Parse((char *) clientResponse->resJSONPayload);
 
-        cJSON *ocArray = cJSON_GetObjectItem(discoveryJson, OC_RSRVD_OC);
-        char *ocArray_str = cJSON_PrintUnformatted(ocArray);
 
-        if (strstr(ocArray_str, "[{}") == ocArray_str) {
-            OIC_LOG_V(DEBUG, TAG, "invalid payload : %s", ocArray_str);
-            cJSON_Delete(discoveryJson);
+        if(clientResponse->payload && clientResponse->payload->type != PAYLOAD_TYPE_REPRESENTATION)
+        {
+            OIC_LOG_V(DEBUG, TAG, "Incoming payload not a representation");
+            return OC_STACK_DELETE_TRANSACTION;
+        }
 
+        OCRepPayload* discoveryPayload= (OCRepPayload*)(clientResponse->payload);
+        if(!discoveryPayload)
+        {
+            OIC_LOG_V(DEBUG, TAG, "Failed To parse");
             provInfo = PrepareProvisioingStatusCB(clientResponse,
                     DEVICE_NOT_PROVISIONED);
             cbData(provInfo);
             return response;
         }
-
-        cJSON *ocArray_sub = cJSON_GetArrayItem(ocArray, 0);
-        cJSON *resUriObj = cJSON_GetObjectItem(ocArray_sub, OC_RSRVD_HREF);
-
-        OIC_LOG_V(DEBUG, TAG, "resUriObj = %s, valueString = %s",
-            resUriObj->string, resUriObj->valuestring);
-
-
+        OIC_LOG_V(DEBUG, TAG, "resUri = %s",discoveryPayload->uri);
         char szQueryUri[64] = { 0 };
 
         snprintf(szQueryUri, sizeof(szQueryUri), UNICAST_PROV_STATUS_QUERY,
-                clientResponse->devAddr.addr, IP_PORT, resUriObj->valuestring);
+                clientResponse->devAddr.addr, IP_PORT, discoveryPayload->uri);
         OIC_LOG_V(DEBUG, TAG, "query before GetProvisioningStatus call = %s", szQueryUri);
 
         if (GetProvisioningStatus(OC_HIGH_QOS, szQueryUri) != OC_STACK_OK) {
             OIC_LOG(INFO, TAG,
                     "GetProvisioningStatus returned error. \
-                                Invoking Provisioing Status Callback");
+            Invoking Provisioing Status Callback");
             provInfo = PrepareProvisioingStatusCB(clientResponse,
                     DEVICE_NOT_PROVISIONED);
 
@@ -563,6 +567,7 @@ OCStackApplicationResult FindProvisioningResourceResponse(void* ctx,
     }
     return OC_STACK_KEEP_TRANSACTION;
 }
+
 
 void FindProvisioningResource(void *data)
 {
@@ -590,7 +595,7 @@ void FindProvisioningResource(void *data)
 
         OIC_LOG(ERROR, TAG,
                 "FindProvisioningResource failed. \
-            Invoking Provisioing Status Callback");
+        Invoking Provisioing Status Callback");
 
         ProvisioningInfo *provInfo;
         provInfo = (ProvisioningInfo *) OICCalloc(1, sizeof(ProvisioningInfo));
@@ -633,15 +638,16 @@ OCStackApplicationResult SubscribeProvPresenceCallback(void* ctx, OCDoHandle han
     if (clientResponse) {
         OIC_LOG(INFO, TAG, PCF("Client Response exists"));
 
-        cJSON *discoveryJson = cJSON_CreateObject();
-        discoveryJson = cJSON_Parse((char *) clientResponse->resJSONPayload);
+        if(clientResponse->payload && clientResponse->payload->type != PAYLOAD_TYPE_REPRESENTATION)
+        {
+            OIC_LOG_V(DEBUG, TAG, "Incoming payload not a representation");
+            return response;
+        }
 
-        cJSON *ocArray = cJSON_GetObjectItem(discoveryJson, OC_RSRVD_OC);
-        char *ocArray_str = cJSON_PrintUnformatted(ocArray);
-
-        if (strstr(ocArray_str, "[{}") == ocArray_str) {
-            OIC_LOG_V(DEBUG, TAG, "invalid payload : %s", ocArray_str);
-            cJSON_Delete(discoveryJson);
+        OCRepPayload* discoveryPayload= (OCRepPayload*)(clientResponse->payload);
+        if(!discoveryPayload)
+        {
+            OIC_LOG_V(DEBUG, TAG, "invalid payload");
             return response;
         }
 
@@ -649,7 +655,7 @@ OCStackApplicationResult SubscribeProvPresenceCallback(void* ctx, OCDoHandle han
         snprintf(sourceIPAddr, sizeof(sourceIPAddr), "%s", clientResponse->addr->addr);
 
         OIC_LOG_V(DEBUG, TAG, "Discovered %s @ %s",
-                clientResponse->resJSONPayload, sourceIPAddr);
+                discoveryPayload->uri, sourceIPAddr);
 
         /* Start a discovery query*/
         char szQueryUri[64] = { 0 };
@@ -667,6 +673,7 @@ OCStackApplicationResult SubscribeProvPresenceCallback(void* ctx, OCDoHandle han
     }
     return OC_STACK_KEEP_TRANSACTION;
 }
+
 
 OCStackResult SubscribeProvPresence(OCQualityOfService qos,
         const char* requestURI) {
@@ -724,4 +731,7 @@ ProvisioningInfo* PrepareProvisioingStatusCB(OCClientResponse * clientResponse, 
 
     return provInfo;
 }
+
+
+
 

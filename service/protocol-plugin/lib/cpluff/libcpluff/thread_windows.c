@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  * C-Pluff, a plug-in framework for C
  * Copyright 2007 Johannes Lehtinen
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -41,27 +41,27 @@
  * Data types
  * ----------------------------------------------------------------------*/
 
-// A generic recursive mutex implementation 
+// A generic recursive mutex implementation
 struct cpi_mutex_t {
 
-	/// The current lock count 
+	/// The current lock count
 	int lock_count;
-	
-	/// The underlying operating system mutex 
+
+	/// The underlying operating system mutex
 	HANDLE os_mutex;
-	
-	/// The condition variable for signaling availability 
+
+	/// The condition variable for signaling availability
 	HANDLE os_cond_lock;
-	
+
 	/// The condition variable for signaling a wake request
 	HANDLE os_cond_wake;
 
 	/// Number of threads currently waiting on this mutex
 	int num_wait_threads;
 
-	/// The locking thread if currently locked 
+	/// The locking thread if currently locked
 	DWORD os_thread;
-	
+
 };
 
 
@@ -71,7 +71,7 @@ struct cpi_mutex_t {
 
 CP_HIDDEN cpi_mutex_t * cpi_create_mutex(void) {
 	cpi_mutex_t *mutex;
-	
+
 	if ((mutex = malloc(sizeof(cpi_mutex_t))) == NULL) {
 		return NULL;
 	}
@@ -80,13 +80,13 @@ CP_HIDDEN cpi_mutex_t * cpi_create_mutex(void) {
 		return NULL;
 	} else if ((mutex->os_cond_lock = CreateEvent(NULL, FALSE, FALSE, NULL)) == NULL) {
 		int ec;
-		
+
 		ec = CloseHandle(mutex->os_mutex);
 		assert(ec);
 		return NULL;
 	} else if ((mutex->os_cond_wake = CreateEvent(NULL, TRUE, FALSE, NULL)) == NULL) {
 		int ec;
-		
+
 		ec = CloseHandle(mutex->os_mutex);
 		assert(ec);
 		ec = CloseHandle(mutex->os_cond_lock);
@@ -98,7 +98,7 @@ CP_HIDDEN cpi_mutex_t * cpi_create_mutex(void) {
 
 CP_HIDDEN void cpi_destroy_mutex(cpi_mutex_t *mutex) {
 	int ec;
-	
+
 	assert(mutex != NULL);
 	assert(mutex->lock_count == 0);
 	ec = CloseHandle(mutex->os_mutex);
@@ -127,7 +127,7 @@ static char *get_win_errormsg(DWORD error, char *buffer, size_t size) {
 
 static void lock_mutex(HANDLE mutex) {
 	DWORD ec;
-	
+
 	if ((ec = WaitForSingleObject(mutex, INFINITE)) != WAIT_OBJECT_0) {
 		char buffer[256];
 		ec = GetLastError();
@@ -174,7 +174,7 @@ static void reset_event(HANDLE event) {
 
 static void lock_mutex_holding(cpi_mutex_t *mutex) {
 	DWORD self = GetCurrentThreadId();
-	
+
 	while (mutex->lock_count != 0
 			&& self != mutex->os_thread) {
 		unlock_mutex(mutex->os_mutex);
@@ -194,7 +194,7 @@ CP_HIDDEN void cpi_lock_mutex(cpi_mutex_t *mutex) {
 
 CP_HIDDEN void cpi_unlock_mutex(cpi_mutex_t *mutex) {
 	DWORD self = GetCurrentThreadId();
-	
+
 	assert(mutex != NULL);
 	lock_mutex(mutex->os_mutex);
 	if (mutex->lock_count > 0
@@ -210,32 +210,32 @@ CP_HIDDEN void cpi_unlock_mutex(cpi_mutex_t *mutex) {
 
 CP_HIDDEN void cpi_wait_mutex(cpi_mutex_t *mutex) {
 	DWORD self = GetCurrentThreadId();
-	
+
 	assert(mutex != NULL);
 	lock_mutex(mutex->os_mutex);
 	if (mutex->lock_count > 0
 		&& self == mutex->os_thread) {
 		int lc = mutex->lock_count;
-		
+
 		// Release mutex
 		mutex->lock_count = 0;
 		mutex->num_wait_threads++;
 		set_event(mutex->os_cond_lock);
 		unlock_mutex(mutex->os_mutex);
-		
+
 		// Wait for signal
 		wait_for_event(mutex->os_cond_wake);
-		
+
 		// Reset wake signal if last one waking up
 		lock_mutex(mutex->os_mutex);
 		if (--mutex->num_wait_threads == 0) {
 			reset_event(mutex->os_cond_wake);
 		}
-		
+
 		// Re-acquire mutex and restore lock count for this thread
 		lock_mutex_holding(mutex);
-		mutex->lock_count = lc;		
-		
+		mutex->lock_count = lc;
+
 	} else {
 		cpi_fatalf(_("Internal C-Pluff error: Unauthorized attempt at waiting on a mutex."));
 	}
@@ -244,7 +244,7 @@ CP_HIDDEN void cpi_wait_mutex(cpi_mutex_t *mutex) {
 
 CP_HIDDEN void cpi_signal_mutex(cpi_mutex_t *mutex) {
 	DWORD self = GetCurrentThreadId();
-	
+
 	assert(mutex != NULL);
 	lock_mutex(mutex->os_mutex);
 	if (mutex->lock_count > 0
@@ -253,13 +253,13 @@ CP_HIDDEN void cpi_signal_mutex(cpi_mutex_t *mutex) {
 	} else {
 		cpi_fatalf(_("Internal C-Pluff error: Unauthorized attempt at signaling a mutex."));
 	}
-	unlock_mutex(mutex->os_mutex);	
+	unlock_mutex(mutex->os_mutex);
 }
 
 #if !defined(NDEBUG)
 CP_HIDDEN int cpi_is_mutex_locked(cpi_mutex_t *mutex) {
 	int locked;
-	
+
 	lock_mutex(mutex->os_mutex);
 	locked = (mutex->lock_count != 0);
 	unlock_mutex(mutex->os_mutex);

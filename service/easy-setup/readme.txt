@@ -12,7 +12,7 @@ Steps to build and deploy Easysetup Mediator in Android platform
 		You should see the .aar files generated inside of '<iotivity>/android/android_api/base/build/outputs/aar' directory. The .aar files contain jni directory and also a .jar file
 		
 	c) Now navigate to the Easysetup NDK folder 
-		<iotivity-root>/service/easy-setup/sdk/android
+		<iotivity-root>/service/easy-setup/sdk/mediator/android
 		
 	d) Execute NDK-Build with the following command to cross compiled Easysetup JNI .so files
 		 ~/madan/android-ndk-r10d/ndk-build

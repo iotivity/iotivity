@@ -15,26 +15,44 @@ notimgr_env.AppendUnique(CPPPATH = ['../../NotificationManager/include'])
 notimgr_env.AppendUnique(CPPPATH = ['../../../../extlibs/cjson'])
 notimgr_env.AppendUnique(CPPPATH = ['../../../../resource/csdk/connectivity/api'])
 notimgr_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
-notimgr_c_env = notimgr_env.Clone()
-notimgr_env.AppendUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap', 'pthread'])
-notimgr_c_env.AppendUnique(LIBS = ['octbstack', 'oc_logger', 'connectivity_abstraction', 'coap', 'pthread','NotificationManager'])
+notimgr_sample_env = notimgr_env.Clone()
+notimgr_env.AppendUnique(LIBS = [
+    'NotificationManager',
+    'rcs_client',
+    'rcs_server',
+    'rcs_common',
+    'oc',
+    'octbstack',
+    'oc_logger',
+    'connectivity_abstraction',
+    'coap',
+    'pthread'
+    ])
+notimgr_sample_env.AppendUnique(LIBS = [
+    'oc',
+    'octbstack',
+    'oc_logger',
+    'connectivity_abstraction',
+    'coap',
+    'pthread'
+    ])
 
 if env.get('SECURED') == '1':
     notimgr_env.AppendUnique(LIBS = ['tinydtls'])
-    notimgr_c_env.AppendUnique(LIBS = ['tinydtls'])
+    notimgr_sample_env.AppendUnique(LIBS = ['tinydtls'])
 if 'rt' in notimgr_env.get('LIBS'):
     notimgr_env.Append(LIBS = ['rt'])
-if 'rt' in notimgr_c_env.get('LIBS'):
-    notimgr_c_env.Append(LIBS = ['rt'])
+if 'rt' in notimgr_sample_env.get('LIBS'):
+    notimgr_sample_env.Append(LIBS = ['rt'])
 
 ####################################################################
 # Source files and Targets
 ######################################################################
-sampleprovider = notimgr_env.Program('sampleprovider', 'sampleProvider/SampleProvider.cpp')
-sampleconsumer = notimgr_env.Program('sampleconsumer', 'sampleConsumer/SampleConsumer.cpp')
+sampleprovider = notimgr_sample_env.Program('sampleprovider', 'sampleProvider/SampleProvider.cpp')
+sampleconsumer = notimgr_sample_env.Program('sampleconsumer', 'sampleConsumer/SampleConsumer.cpp')
 
-notificationmanager = notimgr_c_env.Program('notificationmanager', 'notificationManager/main.c')
+notificationmanager = notimgr_env.Program('notificationmanager', 'notificationManager/main.cpp')
 
-#notimgr_env.InstallTarget(sampleprovider, 'sampleprovider')
-#notimgr_env.InstallTarget(sampleconsumer, 'sampleconsumer')
-#notimgr_env.InstallTarget(notificationmanager, 'notificationmanager')
+notimgr_sample_env.InstallTarget(sampleprovider, 'sampleprovider')
+notimgr_sample_env.InstallTarget(sampleconsumer, 'sampleconsumer')
+notimgr_env.InstallTarget(notificationmanager, 'notificationmanager')

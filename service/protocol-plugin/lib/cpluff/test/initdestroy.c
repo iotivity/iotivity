@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  * C-Pluff, a plug-in framework for C
  * Copyright 2007 Johannes Lehtinen
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -27,7 +27,7 @@
 
 void initdestroy(void) {
 	int i;
-	
+
 	for (i = 0; i < 10; i++) {
 		check(cp_init() == CP_OK);
 		cp_destroy();
@@ -36,10 +36,10 @@ void initdestroy(void) {
 
 void initcreatedestroy(void) {
 	int i;
-	
+
 	for (i = 0; i < 3; i++) {
 		int errors;
-		
+
 		init_context(CP_LOG_ERROR, &errors);
 		cp_destroy();
 		check(errors == 0);
@@ -48,7 +48,7 @@ void initcreatedestroy(void) {
 
 void initloaddestroy(void) {
 	int i;
-	
+
 	for (i = 0; i < 3; i++) {
 		cp_context_t *ctx;
 		cp_plugin_info_t *pi;
@@ -56,7 +56,7 @@ void initloaddestroy(void) {
 		const char *pdir = plugindir("minimal");
 		int errors;
 
-		ctx = init_context(CP_LOG_ERROR, &errors);		
+		ctx = init_context(CP_LOG_ERROR, &errors);
 		check((pi = cp_load_plugin_descriptor(ctx, pdir, &status)) != NULL && status == CP_OK);
 		cp_release_info(ctx, pi);
 		cp_destroy();
@@ -66,7 +66,7 @@ void initloaddestroy(void) {
 
 void initinstalldestroy(void) {
 	int i;
-	
+
 	for (i = 0; i < 3; i++) {
 		cp_context_t *ctx;
 		cp_plugin_info_t *pi;
@@ -74,7 +74,7 @@ void initinstalldestroy(void) {
 		const char *pdir = plugindir("minimal");
 		int errors;
 
-		ctx = init_context(CP_LOG_ERROR, &errors);		
+		ctx = init_context(CP_LOG_ERROR, &errors);
 		check((pi = cp_load_plugin_descriptor(ctx, pdir, &status)) != NULL && status == CP_OK);
 		check(cp_install_plugin(ctx, pi) == CP_OK);
 		cp_release_info(ctx, pi);
@@ -85,14 +85,14 @@ void initinstalldestroy(void) {
 
 void initstartdestroy(void) {
 	int i;
-	
+
 	for (i = 0; i < 3; i++) {
 		cp_context_t *ctx;
 		cp_plugin_info_t *pi;
 		cp_status_t status;
 		const char *pdir = plugindir("minimal");
 		int errors;
-		
+
 		ctx = init_context(CP_LOG_ERROR, &errors);
 		check((pi = cp_load_plugin_descriptor(ctx, pdir, &status)) != NULL && status == CP_OK);
 		check(cp_install_plugin(ctx, pi) == CP_OK);
@@ -105,14 +105,14 @@ void initstartdestroy(void) {
 
 void initstartdestroyboth(void) {
 	int i;
-	
+
 	for (i = 0; i < 3; i++) {
 		cp_context_t *ctx;
 		cp_plugin_info_t *pi;
 		cp_status_t status;
 		const char *pdir = plugindir("minimal");
 		int errors;
-		
+
 		ctx = init_context(CP_LOG_ERROR, &errors);
 		check((pi = cp_load_plugin_descriptor(ctx, pdir, &status)) != NULL && status == CP_OK);
 		check(cp_install_plugin(ctx, pi) == CP_OK);

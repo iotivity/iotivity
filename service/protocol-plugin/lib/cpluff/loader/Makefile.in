@@ -289,7 +289,7 @@ clean-binPROGRAMS:
 	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
 	echo " rm -f" $$list; \
 	rm -f $$list
-cpluff-loader$(EXEEXT): $(cpluff_loader_OBJECTS) $(cpluff_loader_DEPENDENCIES) $(EXTRA_cpluff_loader_DEPENDENCIES) 
+cpluff-loader$(EXEEXT): $(cpluff_loader_OBJECTS) $(cpluff_loader_DEPENDENCIES) $(EXTRA_cpluff_loader_DEPENDENCIES)
 	@rm -f cpluff-loader$(EXEEXT)
 	$(LINK) $(cpluff_loader_OBJECTS) $(cpluff_loader_LDADD) $(LIBS)
 

@@ -128,6 +128,7 @@ OCStackResult UpdateSVRDatabase(const char* rsrcName, cJSON* jsonObj)
 {
     OCStackResult ret = OC_STACK_ERROR;
     cJSON *jsonSVRDb = NULL;
+    OCPersistentStorage* ps = NULL;
 
     // Read SVR database from PS
     char* jsonSVRDbStr = GetSVRDatabase();
@@ -140,7 +141,13 @@ OCStackResult UpdateSVRDatabase(const char* rsrcName, cJSON* jsonObj)
     OICFree(jsonSVRDbStr);
     jsonSVRDbStr = NULL;
 
-    if (jsonObj->child )
+    //If Cred resource gets updated with empty list then delete the Cred
+    //object from database.
+    if(NULL == jsonObj && (0 == strcmp(rsrcName, OIC_JSON_CRED_NAME)))
+    {
+        cJSON_DeleteItemFromObject(jsonSVRDb, rsrcName);
+    }
+    else if (jsonObj->child )
     {
         // Create a duplicate of the JSON object which was passed.
         cJSON* jsonDuplicateObj = cJSON_Duplicate(jsonObj, 1);
@@ -164,31 +171,31 @@ OCStackResult UpdateSVRDatabase(const char* rsrcName, cJSON* jsonObj)
             // Replace the modified json object in existing SVR database json
             cJSON_ReplaceItemInObject(jsonSVRDb, rsrcName, jsonDuplicateObj->child);
         }
+    }
 
-        // Generate string representation of updated SVR database json object
-        jsonSVRDbStr = cJSON_PrintUnformatted(jsonSVRDb);
-        VERIFY_NON_NULL(TAG,jsonSVRDbStr, ERROR);
+    // Generate string representation of updated SVR database json object
+    jsonSVRDbStr = cJSON_PrintUnformatted(jsonSVRDb);
+    VERIFY_NON_NULL(TAG,jsonSVRDbStr, ERROR);
 
-        // Update the persistent storage with new SVR database
-        OCPersistentStorage* ps = SRMGetPersistentStorageHandler();
-        if (ps && ps->open)
+    // Update the persistent storage with new SVR database
+    ps = SRMGetPersistentStorageHandler();
+    if (ps && ps->open)
+    {
+        FILE* fp = ps->open(SVR_DB_FILE_NAME, "w");
+        if (fp)
         {
-            FILE* fp = ps->open(SVR_DB_FILE_NAME, "w");
-            if (fp)
+            size_t bytesWritten = ps->write(jsonSVRDbStr, 1, strlen(jsonSVRDbStr), fp);
+            if (bytesWritten == strlen(jsonSVRDbStr))
             {
-                size_t bytesWritten = ps->write(jsonSVRDbStr, 1, strlen(jsonSVRDbStr), fp);
-                if (bytesWritten == strlen(jsonSVRDbStr))
-                {
-                    ret = OC_STACK_OK;
-                }
-                OC_LOG_V(INFO, TAG, PCF("Written %d bytes into SVR database file"), bytesWritten);
-                ps->close(fp);
-                fp = NULL;
+                ret = OC_STACK_OK;
             }
-            else
-            {
-                OC_LOG (ERROR, TAG, PCF("Unable to open SVR database file!! "));
-            }
+            OC_LOG_V(INFO, TAG, PCF("Written %d bytes into SVR database file"), bytesWritten);
+            ps->close(fp);
+            fp = NULL;
+        }
+        else
+        {
+            OC_LOG (ERROR, TAG, PCF("Unable to open SVR database file!! "));
         }
     }
 

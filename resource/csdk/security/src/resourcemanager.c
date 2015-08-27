@@ -24,7 +24,10 @@
 #include "pstatresource.h"
 #include "doxmresource.h"
 #include "credresource.h"
+#include "svcresource.h"
+#include "amaclresource.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 #include "logger.h"
 #include "utlist.h"
 #include <string.h>
@@ -44,14 +47,17 @@ OCStackResult SendSRMResponse(const OCEntityHandlerRequest *ehRequest,
         OCEntityHandlerResult ehRet, const char *rspPayload)
 {
     OC_LOG (INFO, TAG, PCF("SRM sending SRM response"));
-    OCEntityHandlerResponse response = {};
+    OCEntityHandlerResponse response = {.requestHandle = NULL};
     if (ehRequest)
     {
+        OCSecurityPayload ocPayload = {.base = {.type = PAYLOAD_TYPE_INVALID}};
+
         response.requestHandle = ehRequest->requestHandle;
         response.resourceHandle = ehRequest->resource;
         response.ehResult = ehRet;
-        response.payload = (char *)rspPayload;
-        response.payloadSize = (rspPayload ? strlen(rspPayload) : 0);
+        response.payload = (OCPayload*)(&ocPayload);
+        response.payload->type = PAYLOAD_TYPE_SECURITY;
+        ((OCSecurityPayload*)response.payload)->securityData = (char *)rspPayload;
         response.persistentBufferFlag = 0;
 
         return OCDoResponse(&response);
@@ -86,6 +92,14 @@ OCStackResult InitSecureResources( )
     if(OC_STACK_OK == ret)
     {
         ret = InitCredResource();
+    }
+    if(OC_STACK_OK == ret)
+    {
+        ret = InitSVCResource();
+	}
+	if(OC_STACK_OK == ret)
+    {
+        ret = InitAmaclResource();
     }
     if(OC_STACK_OK != ret)
     {

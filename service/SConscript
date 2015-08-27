@@ -43,3 +43,14 @@ target_os = env.get('TARGET_OS')
 	
 if target_os in ['arduino','android', 'linux']:
 	SConscript('easy-setup/SConscript')
+	#if target_os not in ['android', 'tizen']:
+		#SConscript('notification-manager/SConscript')
+
+	# Build resource-encapsulation project
+	#if target_os not in ['tizen']:
+		#SConscript('resource-encapsulation/SConscript')
+#else:
+#	SConscript('notification-manager/SampleApp/arduino/SConscript')
+
+#if target_os in ['arduino','android', 'linux']:
+        #SConscript('easy-setup/SConscript')

@@ -27,6 +27,7 @@
 #include "aclresource.h"
 #include "srmutility.h"
 #include "doxmresource.h"
+#include "iotvticalendar.h"
 #include <string.h>
 
 #define TAG PCF("SRM-PE")
@@ -187,22 +188,56 @@ exit:
 }
 
 /**
+ * Check whether 'resource' is getting accessed within the valid time period.
+ * @param   acl         The ACL to check.
+ * @return
+ *      true if access is within valid time period or if the period or recurrence is not present.
+ *      false if period and recurrence present and the access is not within valid time period.
+ */
+static bool IsAccessWithinValidTime(const OicSecAcl_t *acl)
+{
+#ifndef WITH_ARDUINO //Period & Recurrence not supported on Arduino due
+                     //lack of absolute time
+    if(NULL== acl || NULL == acl->periods || 0 == acl->prdRecrLen)
+    {
+        return true;
+    }
+
+    for(size_t i = 0; i < acl->prdRecrLen; i++)
+    {
+        if(IOTVTICAL_VALID_ACCESS ==  IsRequestWithinValidTime(acl->periods[i],
+            acl->recurrences[i]))
+        {
+            OC_LOG(INFO, TAG, PCF("Access request is in allowed time period"));
+            return true;
+        }
+    }
+    OC_LOG(INFO, TAG, PCF("Access request is in invalid time period"));
+    return false;
+
+#else
+    return true;
+#endif
+}
+
+/**
  * Check whether 'resource' is in the passed ACL.
  * @param   resource    The resource to search for.
  * @param   acl         The ACL to check.
  * @return true if 'resource' found, otherwise false.
  */
  bool IsResourceInAcl(const char *resource, const OicSecAcl_t *acl)
- {
-    for(size_t n = 0; n < acl->resourcesLen; n++)
-    {
-        if(0 == strcmp(resource, acl->resources[n])) // TODO null terms?
-        {
-            return true;
-        }
+{
+     for(size_t n = 0; n < acl->resourcesLen; n++)
+     {
+         if(0 == strcmp(resource, acl->resources[n]) || // TODO null terms?
+                 0 == strcmp(WILDCARD_RESOURCE_URI, acl->resources[n]))
+         {
+             return true;
+         }
     }
     return false;
- }
+}
 
 /**
  * Find ACLs containing context->subject.
@@ -227,9 +262,6 @@ void ProcessAccessRequest(PEContext_t *context)
         {
             OC_LOG(INFO, TAG, PCF("ProcessAccessRequest(): getting ACL..."));
             currentAcl = GetACLResourceData(context->subject, &savePtr);
-            char *tmp = (char*)OICMalloc(sizeof(OicUuid_t) +1);
-            memcpy(tmp, context->subject, sizeof(OicUuid_t));
-            tmp[sizeof(OicUuid_t) + 1] = '\0';
             if(NULL != currentAcl)
             {
                 // Found the subject, so how about resource?
@@ -243,12 +275,17 @@ void ProcessAccessRequest(PEContext_t *context)
                     OC_LOG(INFO, TAG, PCF("ProcessAccessRequest(): \
                         found matching resource in ACL."));
                     context->matchingAclFound = true;
-                    // Found the resource, so it's down to permission.
-                    context->retVal = ACCESS_DENIED_INSUFFICIENT_PERMISSION;
-                    if(IsPermissionAllowingRequest(currentAcl->permission, \
-                        context->permission))
+
+                    // Found the resource, so it's down to valid period & permission.
+                    context->retVal = ACCESS_DENIED_INVALID_PERIOD;
+                    if(IsAccessWithinValidTime(currentAcl))
                     {
-                        context->retVal = ACCESS_GRANTED;
+                        context->retVal = ACCESS_DENIED_INSUFFICIENT_PERMISSION;
+                        if(IsPermissionAllowingRequest(currentAcl->permission, \
+                        context->permission))
+                        {
+                            context->retVal = ACCESS_GRANTED;
+                        }
                     }
                 }
             }

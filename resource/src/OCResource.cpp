@@ -22,9 +22,12 @@
 #include "OCUtilities.h"
 
 #include <boost/lexical_cast.hpp>
+#include <sstream>
 
 namespace OC {
 
+static const char COAP[] = "coap://";
+static const char COAPS[] = "coaps://";
 using OC::nil_guard;
 using OC::result_guard;
 using OC::checked_guard;
@@ -61,7 +64,7 @@ OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
                         const std::vector<std::string>& interfaces)
  :  m_clientWrapper(clientWrapper), m_uri(uri),
     m_resourceId(serverId, m_uri),
-    m_devAddr{ OC_DEFAULT_ADAPTER },
+    m_devAddr{ OC_DEFAULT_ADAPTER, OC_DEFAULT_FLAGS, 0, {0}, 0 },
     m_isObservable(observable), m_isCollection(false),
     m_resourceTypes(resourceTypes), m_interfaces(interfaces),
     m_observeHandle(nullptr)
@@ -78,6 +81,12 @@ OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
                 interfaces.empty(), m_clientWrapper.expired(), false, false);
     }
 
+    if (uri.length() == 1 && uri[0] == '/')
+    {
+        throw ResourceInitException(m_uri.empty(), resourceTypes.empty(),
+                interfaces.empty(), m_clientWrapper.expired(), false, false);
+    }
+
     // construct the devAddr from the pieces we have
     m_devAddr.adapter = static_cast<OCTransportAdapter>(connectivityType >> CT_ADAPTER_SHIFT);
     m_devAddr.flags = static_cast<OCTransportFlags>(connectivityType & CT_MASK_FLAGS);
@@ -86,12 +95,81 @@ OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
     {
         throw std::length_error("host address is too long.");
     }
-    host.copy(m_devAddr.addr, len);
-    m_devAddr.addr[len] = '\0';
+
+    this->setHost(host);
 }
 
 OCResource::~OCResource()
 {
+}
+
+void OCResource::setHost(const std::string& host)
+{
+    size_t prefix_len;
+
+    if(host.compare(0, sizeof(COAP) - 1, COAP) == 0)
+    {
+        prefix_len = sizeof(COAP) - 1;
+    }
+    else if(host.compare(0, sizeof(COAPS) - 1, COAPS) == 0)
+    {
+        prefix_len = sizeof(COAPS) - 1;
+        m_devAddr.flags = static_cast<OCTransportFlags>(m_devAddr.flags & OC_SECURE);
+    }
+    else
+    {
+        throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+            m_interfaces.empty(), m_clientWrapper.expired(), false, false);
+    }
+
+    // removed coap:// or coaps://
+    std::string host_token = host.substr(prefix_len);
+
+    if(host_token[0] == '[')
+    {
+        m_devAddr.flags = static_cast<OCTransportFlags>(m_devAddr.flags & OC_IP_USE_V6);
+
+        size_t found = host_token.find(']');
+
+        if(found == std::string::npos || found == 0)
+        {
+            throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                m_interfaces.empty(), m_clientWrapper.expired(), false, false);
+        }
+        // extract the ipaddress
+        std::string ip6Addr = host_token.substr(1, found-1);
+        ip6Addr.copy(m_devAddr.addr, sizeof(m_devAddr.addr));
+        m_devAddr.addr[ip6Addr.length()] = '\0';
+        //skip ']' and ':' characters in host string
+        host_token = host_token.substr(found + 2);
+    }
+    else
+    {
+        size_t found = host_token.find(':');
+
+        if(found == std::string::npos || found == 0)
+        {
+            throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                m_interfaces.empty(), m_clientWrapper.expired(), false, false);
+        }
+
+        std::string addrPart = host_token.substr(0, found);
+        addrPart.copy(m_devAddr.addr, sizeof(m_devAddr.addr));
+        m_devAddr.addr[addrPart.length()] = '\0';
+        //skip ':' character in host string
+        host_token = host_token.substr(found + 1);
+    }
+
+    int port = std::stoi(host_token);
+
+    if( port < 0 || port > UINT16_MAX )
+    {
+        throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+            m_interfaces.empty(), m_clientWrapper.expired(), false, false);
+    }
+
+    m_devAddr.port = static_cast<uint16_t>(port);
+
 }
 
 OCStackResult OCResource::get(const QueryParamsMap& queryParametersMap,
@@ -306,7 +384,28 @@ OCStackResult OCResource::cancelObserve(QualityOfService QoS)
 
 std::string OCResource::host() const
 {
-    return std::string(m_devAddr.addr);
+    std::ostringstream ss;
+    if (m_devAddr.flags & OC_SECURE)
+    {
+        ss << COAPS;
+    }
+    else
+    {
+        ss << COAP;
+    }
+    if (m_devAddr.flags & OC_IP_USE_V6)
+    {
+        ss << '[' << m_devAddr.addr << ']';
+    }
+    else
+    {
+        ss << m_devAddr.addr;
+    }
+    if (m_devAddr.port)
+    {
+        ss << ':' << m_devAddr.port;
+    }
+    return ss.str();
 }
 
 std::string OCResource::uri() const

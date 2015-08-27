@@ -270,13 +270,13 @@ int mosquitto_username_pw_set(struct mosquitto *mosq, const char *username, cons
 int mosquitto_reconnect_delay_set(struct mosquitto *mosq, unsigned int reconnect_delay, unsigned int reconnect_delay_max, bool reconnect_exponential_backoff)
 {
 	if(!mosq) return MOSQ_ERR_INVAL;
-	
+
 	mosq->reconnect_delay = reconnect_delay;
 	mosq->reconnect_delay_max = reconnect_delay_max;
 	mosq->reconnect_exponential_backoff = reconnect_exponential_backoff;
-	
+
 	return MOSQ_ERR_SUCCESS;
-	
+
 }
 
 void _mosquitto_destroy(struct mosquitto *mosq)
@@ -485,7 +485,7 @@ static int _mosquitto_reconnect(struct mosquitto *mosq, bool blocking)
 	mosq->ping_t = 0;
 
 	_mosquitto_packet_cleanup(&mosq->in_packet);
-		
+
 	pthread_mutex_lock(&mosq->current_out_packet_mutex);
 	pthread_mutex_lock(&mosq->out_packet_mutex);
 
@@ -970,7 +970,7 @@ int mosquitto_loop_forever(struct mosquitto *mosq, int timeout, int max_packets)
 			}else{
 				reconnects++;
 			}
-				
+
 #ifdef WIN32
 			Sleep(reconnect_delay*1000);
 #else

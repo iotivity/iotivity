@@ -29,30 +29,32 @@ for item in temp:
 ca_common_src = [
 		ca_common_src_path + 'uarraylist.c',
 		ca_common_src_path + 'uqueue.c',
+		ca_common_src_path + 'caremotehandler.c'
 	]
 
 if ca_os == 'arduino':
 	env.Command(env.get('BUILD_DIR') + 'logger.c.o', None, '$CXX -o ' + env.get('BUILD_DIR') + 'logger.c.o' + ' $LINKFLAGS  $CCFLAGS  $CXXFLAGS ' + '-I' + Dir('.').srcnode().path + '/inc' + header + ' ' + Dir('.').srcnode().path + '/src/logger.c')
-	platform_src = [
+	logger_src = [
 		env.get('BUILD_DIR') + 'logger.c.o',
 	]
-elif env['POSIX_SUPPORTED']:
-	platform_src = [
-					ca_common_src_path + 'logger.c',
-					ca_common_src_path + 'oic_logger.c',
-					ca_common_src_path + 'oic_console_logger.c',
-					ca_common_src_path + 'cathreadpool_pthreads.c',
-					ca_common_src_path + 'camutex_pthreads.c'
-	]
 else:
-	platform_src = [
+	logger_src = [
 		ca_common_src_path + 'logger.c',
 		ca_common_src_path + 'oic_logger.c',
 		ca_common_src_path + 'oic_console_logger.c'
 		]
 
+if env['POSIX_SUPPORTED']:
+	platform_src = [
+		ca_common_src_path + 'cathreadpool_pthreads.c',
+		ca_common_src_path + 'camutex_pthreads.c'
+	]
+else:
+	platform_src = [
+		ca_common_src_path + 'camutex_noop.c'
+		]
 
 
 env.AppendUnique(CA_SRC = ca_common_src)
+env.AppendUnique(CA_SRC = logger_src)
 env.AppendUnique(CA_SRC = platform_src)
-

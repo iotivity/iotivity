@@ -24,6 +24,7 @@
  * This file provides the APIs for EDR Network Monitor.
  */
 
+#include <glib.h>
 #include <string.h>
 #include <bluetooth.h>
 
@@ -32,6 +33,10 @@
 #include "caedrutils.h"
 #include "caadapterutils.h"
 #include "caqueueingthread.h"
+#include "caremotehandler.h"
+
+static GMainLoop *g_mainloop = NULL;
+static ca_thread_pool_t g_threadPoolHandle = NULL;
 
 /**
  * @var g_edrNetworkChangeCallback
@@ -46,19 +51,15 @@ static CAEDRNetworkStatusCallback g_edrNetworkChangeCallback = NULL;
 static void CAEDRAdapterStateChangeCallback(int result, bt_adapter_state_e adapterState,
                                             void *userData);
 
+void GMainLoopThread (void *param)
+{
+    g_main_loop_run(g_mainloop);
+}
+
 CAResult_t CAEDRInitializeNetworkMonitor(const ca_thread_pool_t threadPool)
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
-
-    // Initialize Bluetooth service
-    int err = bt_initialize();
-    if (BT_ERROR_NONE != err)
-    {
-        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Bluetooth initialization failed!, error num [%x]",
-                  err);
-        return CA_STATUS_FAILED;
-    }
-
+    g_threadPoolHandle = threadPool;
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -78,6 +79,28 @@ void CAEDRTerminateNetworkMonitor(void)
 CAResult_t CAEDRStartNetworkMonitor()
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
+
+    g_mainloop = g_main_loop_new(NULL, 0);
+    if(!g_mainloop)
+    {
+        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "g_main_loop_new failed\n");
+        return CA_STATUS_FAILED;
+    }
+
+    if (CA_STATUS_OK != ca_thread_pool_add_task(g_threadPoolHandle, GMainLoopThread, (void *) NULL))
+    {
+        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to create thread!");
+        return CA_STATUS_FAILED;
+    }
+
+    // Initialize Bluetooth service
+    int err = bt_initialize();
+    if (BT_ERROR_NONE != err)
+    {
+        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Bluetooth initialization failed!, error num [%x]",
+                  err);
+        return CA_STATUS_FAILED;
+    }
 
     int ret = bt_adapter_set_state_changed_cb(CAEDRAdapterStateChangeCallback, NULL);
     if(BT_ERROR_NONE != ret)
@@ -100,6 +123,10 @@ CAResult_t CAEDRStopNetworkMonitor()
         OIC_LOG(ERROR, EDR_ADAPTER_TAG, "bt_adapter_set_state_changed_cb failed");
         return CA_STATUS_FAILED;
     }
+
+    if (g_mainloop)
+        g_main_loop_unref(g_mainloop);
+
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -110,7 +137,7 @@ void CAEDRSetNetworkChangeCallback(
     g_edrNetworkChangeCallback = networkChangeCallback;
 }
 
-CAResult_t CAEDRGetInterfaceInformation(CALocalConnectivity_t **info)
+CAResult_t CAEDRGetInterfaceInformation(CAEndpoint_t **info)
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
@@ -129,7 +156,7 @@ CAResult_t CAEDRGetInterfaceInformation(CALocalConnectivity_t **info)
     }
 
     // Create network info
-    *info = CAAdapterCreateLocalEndpoint(CA_EDR, localAddress);
+    *info = CACreateEndpointObject(CA_DEFAULT_FLAGS, CA_ADAPTER_RFCOMM_BTEDR, localAddress, 0);
     if (NULL == *info)
     {
         OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to create LocalConnectivity instance!");

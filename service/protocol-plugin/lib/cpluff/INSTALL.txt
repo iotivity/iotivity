@@ -52,7 +52,7 @@ You can specify the installation prefix (for example, /usr or /usr/local)
 when running the configure script.
 
   ./configure --prefix=/usr
-  
+
 The default installation prefix is /usr/local. More help on available
 configuration options is available using the --help option.
 

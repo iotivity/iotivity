@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  * C-Pluff, a plug-in framework for C
  * Copyright 2007 Johannes Lehtinen
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -30,7 +30,7 @@ void nocollections(void) {
 	cp_status_t status;
 	int errors;
 	int i;
-	
+
 	ctx = init_context(CP_LOG_ERROR, &errors);
 	check(cp_scan_plugins(ctx, 0) == CP_OK);
 	check((plugins = cp_get_plugins_info(ctx, &status, &i)) != NULL && status == CP_OK && i == 0);
@@ -42,7 +42,7 @@ void nocollections(void) {
 void onecollection(void) {
 	cp_context_t *ctx;
 	int errors;
-	
+
 	ctx = init_context(CP_LOG_ERROR, &errors);
 	check(cp_register_pcollection(ctx, pcollectiondir("collection1")) == CP_OK);
 	check(cp_scan_plugins(ctx, 0) == CP_OK);
@@ -54,7 +54,7 @@ void onecollection(void) {
 void twocollections(void) {
 	cp_context_t *ctx;
 	int errors;
-	
+
 	ctx = init_context(CP_LOG_ERROR, &errors);
 	check(cp_register_pcollection(ctx, pcollectiondir("collection1")) == CP_OK);
 	check(cp_register_pcollection(ctx, pcollectiondir("collection2")) == CP_OK);
@@ -69,7 +69,7 @@ void twocollections(void) {
 void unregcollection(void) {
 	cp_context_t *ctx;
 	int errors;
-	
+
 	ctx = init_context(CP_LOG_ERROR, &errors);
 	check(cp_register_pcollection(ctx, pcollectiondir("collection1")) == CP_OK);
 	check(cp_register_pcollection(ctx, pcollectiondir("collection2")) == CP_OK);
@@ -85,7 +85,7 @@ void unregcollection(void) {
 void unregcollections(void) {
 	cp_context_t *ctx;
 	int errors;
-	
+
 	ctx = init_context(CP_LOG_ERROR, &errors);
 	check(cp_register_pcollection(ctx, pcollectiondir("collection1")) == CP_OK);
 	check(cp_register_pcollection(ctx, pcollectiondir("collection2")) == CP_OK);

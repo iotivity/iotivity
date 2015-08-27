@@ -35,7 +35,7 @@ import org.iotivity.base.OcResource;
 import android.util.Log;
 
 public class OnPutBelkinplug implements OcResource.OnPutListener {
-    final private static String TAG = "OnPutBelkinplug";
+    final private static String TAG = "PPMSampleApp : OnPutBelkinplug";
 
     @Override
     public void onPutCompleted(List<OcHeaderOption> options,

@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  * C-Pluff, a plug-in framework for C
  * Copyright 2007 Johannes Lehtinen
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *-----------------------------------------------------------------------*/
 
-// Core console logic 
+// Core console logic
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -42,7 +42,7 @@
  * Function declarations
  * ----------------------------------------------------------------------*/
 
-// Function declarations for command implementations 
+// Function declarations for command implementations
 static void cmd_help(int argc, char *argv[]);
 static void cmd_set_log_level(int argc, char *argv[]);
 static void cmd_register_pcollection(int argc, char *argv[]);
@@ -72,7 +72,7 @@ static void cmd_findResourcebyType(int argc, char*argv[]);
 /// The plug-in context
 CP_HIDDEN cp_context_t *context;
 
-/// The available commands 
+/// The available commands
 CP_HIDDEN const command_info_t commands[] = {
 	{ "help", N_("displays available commands"), cmd_help, CPC_COMPL_NONE },
 	{ "set-log-level", N_("sets the displayed log level"), cmd_set_log_level, CPC_COMPL_LOG_LEVEL },
@@ -99,7 +99,7 @@ CP_HIDDEN const command_info_t commands[] = {
 	{ NULL, NULL, NULL, CPC_COMPL_NONE }
 };
 
-/// The available load flags 
+/// The available load flags
 CP_HIDDEN const flag_info_t load_flags[] = {
 	{ "upgrade", N_("enables upgrades of installed plug-ins"), CP_SP_UPGRADE },
 	{ "stop-all-on-upgrade", N_("stops all plug-ins on first upgrade"), CP_SP_STOP_ALL_ON_UPGRADE },
@@ -128,7 +128,7 @@ CP_HIDDEN const log_level_info_t log_levels[] = {
  * Returns the number of elements and the pointer to argument table including
  * command and arguments. The argument table is valid until the next call
  * to this function.
- * 
+ *
  * @param cmdline the command line to be parsed
  * @param argv pointer to the argument table is stored here
  * @return the number of command line elements, or -1 on failure
@@ -136,7 +136,7 @@ CP_HIDDEN const log_level_info_t log_levels[] = {
 static int cmdline_parse(char *cmdline, char **argv[]) {
 	static char *sargv[16];
 	int i, argc;
-			
+
 	for (i = 0; isspace(cmdline[i]); i++);
 	for (argc = 0; cmdline[i] != '\0' && argc < 16; argc++) {
 		sargv[argc] = cmdline + i;
@@ -160,20 +160,20 @@ static int cmdline_parse(char *cmdline, char **argv[]) {
 }
 
 static void cmd_exit(int argc, char *argv[]) {
-	
+
 	// Uninitialize input
 	cmdline_destroy();
-	
-	// Destroy C-Pluff framework 
+
+	// Destroy C-Pluff framework
 	cp_destroy();
-	
-	// Exit program 
+
+	// Exit program
 	exit(0);
 }
 
 static void cmd_help(int argc, char *argv[]) {
 	int i;
-	
+
 	fputs(_("The following commands are available:\n"), stdout);
 	for (i = 0; commands[i].name != NULL; i++) {
 		printf("  %s - %s\n", commands[i].name, _(commands[i].description));
@@ -200,7 +200,7 @@ static void logger(cp_log_severity_t severity, const char *msg, const char *apid
 			level = _("ERROR");
 			break;
 		default:
-			/* TRANSLATORS: A tag for unknown severity level. */ 
+			/* TRANSLATORS: A tag for unknown severity level. */
 			level = _("UNKNOWN");
 			break;
 	}
@@ -215,11 +215,11 @@ static void logger(cp_log_severity_t severity, const char *msg, const char *apid
 
 static void cmd_set_log_level(int argc, char *argv[]) {
 	if (argc != 2) {
-		/* TRANSLATORS: Usage instructions for setting log level */ 
+		/* TRANSLATORS: Usage instructions for setting log level */
 		printf(_("Usage: %s <level>\n"), argv[0]);
 	} else {
 		int i;
-		
+
 		for (i = 0; log_levels[i].name != NULL; i++) {
 			if (!strcmp(argv[1], log_levels[i].name)) {
 				break;
@@ -238,7 +238,7 @@ static void cmd_set_log_level(int argc, char *argv[]) {
 				cp_unregister_logger(context, logger);
 			}
 			/* TRANSLATORS: The first %s is the log level name and the second the localized log level description. */
-			printf(_("Using display log level %s (%s).\n"), log_levels[i].name, _(log_levels[i].description));			
+			printf(_("Using display log level %s (%s).\n"), log_levels[i].name, _(log_levels[i].description));
 		}
 	}
 }
@@ -276,7 +276,7 @@ static void api_failed(const char *func, cp_status_t status) {
 
 static void cmd_register_pcollection(int argc, char *argv[]) {
 	cp_status_t status;
-	
+
 	if (argc != 2) {
 		/* TRANSLATORS: Usage instructions for registering a plug-in collection */
 		printf(_("Usage: %s <path>\n"), argv[0]);
@@ -310,14 +310,14 @@ static void cmd_unregister_pcollections(int argc, char *argv[]) {
 static void cmd_load_plugin(int argc, char *argv[]) {
 	cp_plugin_info_t *plugin;
 	cp_status_t status;
-		
+
 	if (argc != 2) {
 		/* TRANSLATORS: Usage instructios for loading a plug-in */
 		printf(_("Usage: %s <path>\n"), argv[0]);
 	} else if ((plugin = cp_load_plugin_descriptor(context, argv[1], &status)) == NULL) {
 		api_failed("cp_load_plugin_descriptor", status);
 	} else if ((status = cp_install_plugin(context, plugin)) != CP_OK) {
-		api_failed("cp_install_plugin", status); 
+		api_failed("cp_install_plugin", status);
 		cp_release_info(context, plugin);
 	} else {
 		printf(_("Installed plug-in %s.\n"), plugin->identifier);
@@ -329,11 +329,11 @@ static void cmd_scan_plugins(int argc, char *argv[]) {
 	int flags = 0;
 	cp_status_t status;
 	int i;
-	
-	// Set flags 
+
+	// Set flags
 	for (i = 1; i < argc; i++) {
 		int j;
-		
+
 		for (j = 0; load_flags[j].name != NULL; j++) {
 			if (!strcmp(argv[i], load_flags[j].name)) {
 				flags |= load_flags[j].value;
@@ -351,7 +351,7 @@ static void cmd_scan_plugins(int argc, char *argv[]) {
 			return;
 		}
 	}
-	
+
 	if ((status = cp_scan_plugins(context, flags)) != CP_OK) {
 		api_failed("cp_scan_plugins", status);
 		return;
@@ -414,7 +414,7 @@ struct str_list_entry_t {
 };
 
 static struct str_list_entry_t *str_list = NULL;
-	
+
 static char *str_or_null(const char *str) {
 	if (str != NULL) {
 		char *s = malloc((strlen(str) + 3) * sizeof(char));
@@ -465,7 +465,7 @@ static void show_plugin_info_ext_point(cp_ext_point_t *ep) {
 
 static void strcat_quote_xml(char *dst, const char *src, int is_attr) {
 	char c;
-	
+
 	while (*dst != '\0')
 		dst++;
 	do {
@@ -498,7 +498,7 @@ static void strcat_quote_xml(char *dst, const char *src, int is_attr) {
 static int strlen_quoted_xml(const char *str,int is_attr) {
 	int len = 0;
 	int i;
-	
+
 	for (i = 0; str[i] != '\0'; i++) {
 		switch (str[i]) {
 			case '&':
@@ -535,13 +535,13 @@ static void show_plugin_info_cfg(cp_cfg_element_t *ce, int indent) {
 		rs += strlen_quoted_xml(ce->atts[2*i + 1], 1);
 		rs += 4;
 	}
-	
+
 	// Allocate buffer
 	if ((buffer = malloc(rs * sizeof(char))) == NULL) {
 		fputs(_("Memory allocation failed.\n"), stderr);
 		abort();
 	}
-	
+
 	// Create the string
 	for (i = 0; i < indent; i++) {
 		buffer[i] = ' ';
@@ -607,7 +607,7 @@ static void cmd_show_plugin_info(int argc, char *argv[]) {
 	cp_plugin_info_t *plugin;
 	cp_status_t status;
 	int i;
-	
+
 	if (argc != 2) {
 		/* TRANSLATORS: Usage instructions for showing plug-in information */
 		printf(_("Usage: %s <plugin>\n"), argv[0]);
@@ -693,10 +693,10 @@ static void cmd_list_ext_points(int argc, char *argv[]) {
 		for (i = 0; ext_points[i] != NULL; i++) {
 			printf(format,
 				ext_points[i]->identifier,
-				ext_points[i]->name != NULL ? ext_points[i]->name : ""); 
+				ext_points[i]->name != NULL ? ext_points[i]->name : "");
 		}
 		cp_release_info(context, ext_points);
-	}	
+	}
 }
 
 static void cmd_findResourcebyType(int argc, char *argv[]){
@@ -735,13 +735,13 @@ static void cmd_list_extensions(int argc, char *argv[]) {
 			}
 		}
 		cp_release_info(context, extensions);
-	}	
+	}
 }
 
 static char **argv_dup(int argc, char *argv[]) {
 	char **dup;
 	int i;
-	
+
 	if ((dup = malloc((argc + 1) * sizeof(char *))) == NULL) {
 		return NULL;
 	}
@@ -775,7 +775,7 @@ static void cmd_set_context_args(int argc, char *argv[]) {
 
 static void cmd_start_plugin(int argc, char *argv[]) {
 	cp_status_t status;
-	
+
 	if (argc != 2) {
 		/* TRANSLATORS: Usage instructions for starting a plug-in */
 		printf(_("Usage: %s <plugin>\n"), argv[0]);
@@ -787,7 +787,7 @@ static void cmd_start_plugin(int argc, char *argv[]) {
 }
 
 static void cmd_run_plugins_step(int argc, char *argv[]) {
-	
+
 	if (argc != 1) {
 		/* TRANSLATORS: Usage instructions for running one plug-in run function */
 		printf(_("Usage: %s\n"), argv[0]);
@@ -813,7 +813,7 @@ static void cmd_run_plugins(int argc, char *argv[]) {
 
 static void cmd_stop_plugin(int argc, char *argv[]) {
 	cp_status_t status;
-	
+
 	if (argc != 2) {
 		/* TRANSLATORS: Usage instructions for stopping a plug-in */
 		printf(_("Usage: %s <plugin>\n"), argv[0]);
@@ -836,7 +836,7 @@ static void cmd_stop_plugins(int argc, char *argv[]) {
 
 static void cmd_uninstall_plugin(int argc, char *argv[]) {
 	cp_status_t status;
-	
+
 	if (argc != 2) {
 		/* TRANSLATORS: Usage instructions for uninstalling a plug-in */
 		printf(_("Usage: %s <plugin>\n"), argv[0]);
@@ -867,18 +867,18 @@ int main(int argc, char *argv[]) {
 	setlocale(LC_ALL, "");
 #endif
 
-	// Initialize C-Pluff library 
+	// Initialize C-Pluff library
 	if ((status = cp_init()) != CP_OK) {
 		api_failed("cp_init", status);
 		exit(1);
 	}
-	
-	// Set gettext domain 
+
+	// Set gettext domain
 #ifdef HAVE_GETTEXT
 	textdomain(PACKAGE);
 #endif
 
-	// Display startup information 
+	// Display startup information
 	printf(
 		/* TRANSLATORS: This is a version string displayed on startup. */
 		_("C-Pluff Console, version %s\n"), PACKAGE_VERSION);
@@ -899,32 +899,32 @@ int main(int argc, char *argv[]) {
 	cp_register_logger(context, logger, NULL, log_levels[1].level);
 	printf(_("Using display log level %s (%s).\n"), log_levels[1].name, _(log_levels[1].description));
 
-	// Command line loop 
+	// Command line loop
 	fputs(_("Type \"help\" for help on available commands.\n"), stdout);
 	cmdline_init();
-	
+
 	/* TRANSLATORS: This is the input prompt for cpluff-console. */
 	prompt = _("C-Pluff Console > ");
-	
+
 	while (1) {
 		char *cmdline;
 		int argc;
 		char **argv;
-		
-		// Get command line 
+
+		// Get command line
 		cmdline = cmdline_input(prompt);
 		if (cmdline == NULL) {
 			putchar('\n');
 			cmdline = "exit";
 		}
-		
-		// Parse command line 
+
+		// Parse command line
 		argc = cmdline_parse(cmdline, &argv);
 		if (argc <= 0) {
 			continue;
 		}
-		
-		// Choose command 
+
+		// Choose command
 		for (i = 0; commands[i].name != NULL; i++) {
 			if (!strcmp(argv[0], commands[i].name)) {
 				commands[i].implementation(argc, argv);

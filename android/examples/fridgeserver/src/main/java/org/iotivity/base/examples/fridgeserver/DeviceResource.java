@@ -131,6 +131,7 @@ public class DeviceResource extends Resource implements IMessageLogger {
                     logMessage(TAG + " Client Token: " + clientToken);
                 }
             }
+
             if (clientAPIVersion.equals(StringConstants.API_VERSION) &&
                     clientToken.equals(StringConstants.CLIENT_TOKEN)) {
                 List<OcHeaderOption> serverHeaderOptions = new LinkedList<>();
@@ -156,10 +157,6 @@ public class DeviceResource extends Resource implements IMessageLogger {
                                 deleteDeviceResource();
                                 response.setErrorCode(StringConstants.OK);
                                 response.setResponseResult(EntityHandlerResult.OK);
-                                break;
-                            case POST:
-                                response.setResponseResult(EntityHandlerResult.ERROR);
-                                OcPlatform.sendResponse(response);
                                 break;
                         }
                         result = EntityHandlerResult.OK;

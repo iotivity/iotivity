@@ -180,7 +180,7 @@ class TempHumidResource
 
 TempHumidResource myResource;
 
-void *ChangeLightRepresentation(void *param)
+void *ChangeLightRepresentation(void */*param*/)
 {
     cout << "ChangeLigthRepresentation Enter\n";
     while (1)

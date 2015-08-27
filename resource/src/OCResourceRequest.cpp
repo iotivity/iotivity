@@ -22,37 +22,25 @@
 
 #include <vector>
 #include <map>
-#include <cereal/cereal.hpp>
-#include <OicJsonSerializer.hpp>
+#include "ocpayload.h"
 
 using namespace OC;
-using namespace std;
 
-void OCResourceRequest::setPayload(const std::string& requestPayload)
+void OCResourceRequest::setPayload(OCPayload* payload)
 {
     MessageContainer info;
 
-    if(requestPayload.empty())
+    if(payload == nullptr)
     {
+        return;
+    }
+    if(payload->type != PAYLOAD_TYPE_REPRESENTATION)
+    {
+        throw std::logic_error("Wrong payload type");
         return;
     }
 
-    try
-    {
-        info.setJSONRepresentation(requestPayload);
-    }
-    catch(cereal::RapidJSONException& ex)
-    {
-        oclog() << "RapidJSON Exception in setPayload: "<<ex.what()<<std::endl<<
-            "Data was:"<<requestPayload<<std::flush;
-        return;
-    }
-    catch(cereal::Exception& ex)
-    {
-        oclog() << "Cereal Exception in setPayload: "<<ex.what()<<std::endl<<
-            "Data was:"<<requestPayload<<std::flush;
-        return;
-    }
+    info.setPayload(payload);
 
     const std::vector<OCRepresentation>& reps = info.representations();
     if(reps.size() >0)

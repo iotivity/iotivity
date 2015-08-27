@@ -31,6 +31,7 @@
 #include "caqueueingthread.h"
 #include "caadapterutils.h"
 #include "cafragmentation.h"
+#include "cagattservice.h"
 #include "cableutil.h"
 #include "oic_string.h"
 #include "oic_malloc.h"
@@ -40,12 +41,6 @@
  * @brief Logging tag for module name
  */
 #define TZ_BLE_SERVER_TAG "TZ_BLE_GATT_SERVER"
-
-/**
- * @def CA_BLE_SERVICE_UUID
- * @brief UUID of OIC service. This UUID is common across all platform for LE transport.
- */
-#define CA_BLE_SERVICE_UUID  "713D0000-503E-4C75-BA94-3148F18D941E"
 
 /**
  * @def CA_BLE_INITIAL_BUF_SIZE
@@ -82,7 +77,13 @@ static bt_advertiser_h g_hAdvertiser = NULL;
  * @brief  Maintains the callback to be notified on receival of network packets from other
  *           BLE devices
  */
-static CABLEServerDataReceivedCallback g_bleServerDataReceivedCallback = NULL;
+static CABLEDataReceivedCallback g_bleServerDataReceivedCallback = NULL;
+
+/**
+ * @var g_serverErrorCallback
+ * @brief callback to update the error to le adapter
+ */
+static CABLEErrorHandleCallback g_serverErrorCallback;
 
 /**
  * @var g_isBleGattServerStarted
@@ -150,7 +151,7 @@ void CABleGattServerConnectionStateChangedCb(int result, bool connected,
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "OUT");
 }
 
-CAResult_t CAStartBleGattServer()
+CAResult_t CAStartLEGattServer()
 {
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
 
@@ -192,7 +193,7 @@ void CAStartBleGattServerThread(void *data)
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "Gatt Server is already running");
         ca_mutex_unlock(g_bleServerStateMutex);
-        CATerminateBleGattServer();
+        CATerminateLEGattServer();
         return;
     }
 
@@ -201,25 +202,25 @@ void CAStartBleGattServerThread(void *data)
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "_bt_gatt_init_service failed");
         ca_mutex_unlock(g_bleServerStateMutex);
-        CATerminateBleGattServer();
+        CATerminateLEGattServer();
         return;
     }
 
     sleep(5); // Sleep is must because of the platform issue.
 
-    char *serviceUUID = CA_BLE_SERVICE_UUID;
+    char *serviceUUID = CA_GATT_SERVICE_UUID;
 
     ret  = CAAddNewBleServiceInGattServer(serviceUUID);
     if (CA_STATUS_OK != ret )
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "CAAddNewBleServiceInGattServer failed");
         ca_mutex_unlock(g_bleServerStateMutex);
-        CATerminateBleGattServer();
+        CATerminateLEGattServer();
         return;
     }
 
-    char *charReadUUID = CA_BLE_READ_CHAR_UUID;
-    char charReadValue[] = {33, 44, 55, 66}; // These are initial random values
+    static const char charReadUUID[] = CA_GATT_RESPONSE_CHRC_UUID;
+    uint8_t charReadValue[] = {33, 44, 55, 66}; // These are initial random values
 
     ret = CAAddNewCharacteristicsToGattServer(g_gattSvcPath, charReadUUID, charReadValue,
             CA_BLE_INITIAL_BUF_SIZE, true); // For Read Characteristics.
@@ -227,12 +228,12 @@ void CAStartBleGattServerThread(void *data)
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "CAAddNewCharacteristicsToGattServer failed");
         ca_mutex_unlock(g_bleServerStateMutex);
-        CATerminateBleGattServer();
+        CATerminateLEGattServer();
         return;
     }
 
-    char *charWriteUUID = CA_BLE_WRITE_CHAR_UUID;
-    char charWriteValue[] = {33, 44, 55, 66}; // These are initial random values
+    static const char charWriteUUID[] = CA_GATT_REQUEST_CHRC_UUID;
+    uint8_t charWriteValue[] = {33, 44, 55, 66}; // These are initial random values
 
 
     ret = CAAddNewCharacteristicsToGattServer(g_gattSvcPath, charWriteUUID, charWriteValue,
@@ -241,7 +242,7 @@ void CAStartBleGattServerThread(void *data)
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "CAAddNewCharacteristicsToGattServer failed");
         ca_mutex_unlock(g_bleServerStateMutex);
-        CATerminateBleGattServer();
+        CATerminateLEGattServer();
         return;
     }
 
@@ -250,7 +251,7 @@ void CAStartBleGattServerThread(void *data)
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "CARegisterBleServicewithGattServer failed");
         ca_mutex_unlock(g_bleServerStateMutex);
-        CATerminateBleGattServer();
+        CATerminateLEGattServer();
         return;
     }
 
@@ -269,7 +270,7 @@ void CAStartBleGattServerThread(void *data)
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "g_hAdvertiser is NULL");
         ca_mutex_unlock(g_bleServerStateMutex);
-        CATerminateBleGattServer();
+        CATerminateLEGattServer();
         return;
     }
 
@@ -279,7 +280,7 @@ void CAStartBleGattServerThread(void *data)
         OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "bt_adapter_le_start_advertising failed with ret [%d] ",
                   res);
         ca_mutex_unlock(g_bleServerStateMutex);
-        CATerminateBleGattServer();
+        CATerminateLEGattServer();
         return;
     }
 
@@ -303,7 +304,7 @@ void CAStartBleGattServerThread(void *data)
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "OUT");
 }
 
-CAResult_t CAStopBleGattServer()
+CAResult_t CAStopLEGattServer()
 {
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
 
@@ -375,7 +376,7 @@ CAResult_t CAStopBleGattServer()
     return CA_STATUS_OK;
 }
 
-void CATerminateBleGattServer()
+void CATerminateLEGattServer()
 {
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
 
@@ -496,7 +497,7 @@ CAResult_t CADeInitBleGattService()
     return CA_STATUS_OK;
 }
 
-void CASetBleServerThreadPoolHandle(ca_thread_pool_t handle)
+void CASetLEServerThreadPoolHandle(ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
     ca_mutex_lock(g_bleServerThreadPoolMutex);
@@ -509,7 +510,7 @@ CAResult_t CAAddNewBleServiceInGattServer(const char *serviceUUID)
 {
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
 
-    VERIFY_NON_NULL(serviceUUID, NULL, "Param serviceUUID is NULL");
+    VERIFY_NON_NULL(serviceUUID, TZ_BLE_SERVER_TAG, "Param serviceUUID is NULL");
 
     OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "service uuid %s", serviceUUID);
 
@@ -547,7 +548,7 @@ CAResult_t CARemoveBleServiceFromGattServer(const char *svcPath)
 {
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
 
-    VERIFY_NON_NULL(svcPath, NULL, "Param svcPath is NULL");
+    VERIFY_NON_NULL(svcPath, TZ_BLE_SERVER_TAG, "Param svcPath is NULL");
 
     int ret = bt_gatt_remove_service(svcPath);
 
@@ -576,8 +577,10 @@ CAResult_t CARemoveAllBleServicesFromGattServer()
 }
 
 void CABleGattRemoteCharacteristicWriteCb(char *charPath,
-        unsigned char *charValue,
-        int charValueLen, const char *remoteAddress, void *userData)
+                                          unsigned char *charValue,
+                                          int charValueLen,
+                                          const char *remoteAddress,
+                                          void *userData)
 {
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
 
@@ -587,17 +590,21 @@ void CABleGattRemoteCharacteristicWriteCb(char *charPath,
         return;
     }
 
-    OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "charPath = [%s] charValue = [%s] len [%d]", charPath,
-              charValue, charValueLen);
+    OIC_LOG_V(DEBUG,
+              TZ_BLE_SERVER_TAG,
+              "charPath = [%s] charValue = [%p] len [%d]",
+              charPath,
+              charValue,
+              charValueLen);
 
-    char *data = (char *)OICMalloc(sizeof(char) * charValueLen + 1);
+    uint8_t *data = OICMalloc(charValueLen);
     if (NULL == data)
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "Malloc failed!");
         return;
     }
 
-    OICStrcpy(data, charValueLen + 1, charValue);
+    memcpy(data, charValue, charValueLen);
 
     ca_mutex_lock(g_bleReqRespCbMutex);
     if (NULL == g_bleServerDataReceivedCallback)
@@ -610,8 +617,8 @@ void CABleGattRemoteCharacteristicWriteCb(char *charPath,
 
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "Sending data up !");
     uint32_t sentLength = 0;
-    g_bleServerDataReceivedCallback(remoteAddress, OIC_BLE_SERVICE_ID,
-                                     data, charValueLen, &sentLength);
+    g_bleServerDataReceivedCallback(remoteAddress, data, charValueLen,
+                                    &sentLength);
 
     ca_mutex_unlock(g_bleReqRespCbMutex);
 
@@ -623,7 +630,7 @@ CAResult_t CARegisterBleServicewithGattServer(const char *svcPath)
 {
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
 
-    VERIFY_NON_NULL(svcPath, NULL, "Param svcPath is NULL");
+    VERIFY_NON_NULL(svcPath, TZ_BLE_SERVER_TAG, "Param svcPath is NULL");
 
     OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "svcPath:%s", svcPath);
 
@@ -640,12 +647,12 @@ CAResult_t CARegisterBleServicewithGattServer(const char *svcPath)
 }
 
 CAResult_t CAAddNewCharacteristicsToGattServer(const char *svcPath, const char *charUUID,
-        const char *charValue, int charValueLen, bool read)
+        const uint8_t *charValue, int charValueLen, bool read)
 {
 
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
 
-    char *charFlags[1];
+    const char *charFlags[1];
     if(read)
     {
         charFlags[0] = "notify";
@@ -658,8 +665,14 @@ CAResult_t CAAddNewCharacteristicsToGattServer(const char *svcPath, const char *
     size_t flagLen = sizeof(charFlags) / sizeof(charFlags[0]);
 
     char *charPath = NULL;
-    int ret = bt_gatt_add_characteristic(charUUID, charValue, charValueLen, charFlags, flagLen,
-                  svcPath, &charPath);
+    int ret =
+        bt_gatt_add_characteristic(charUUID,
+                                   (const char *) charValue,
+                                   charValueLen,
+                                   charFlags,
+                                   flagLen,
+                                   svcPath,
+                                   &charPath);
 
     if (0 != ret || NULL == charPath)
     {
@@ -705,14 +718,15 @@ CAResult_t CARemoveCharacteristicsFromGattServer(const char *charPath)
     return CA_STATUS_OK;
 }
 
-CAResult_t CAUpdateCharacteristicsToGattClient(const char* address, const char *charValue,
-        const uint32_t charValueLen)
+CAResult_t CAUpdateCharacteristicsToGattClient(const char *address,
+                                               const uint8_t *charValue,
+                                               uint32_t charValueLen)
 {
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
 
-    VERIFY_NON_NULL(charValue, NULL, "Param charValue is NULL");
+    VERIFY_NON_NULL(charValue, TZ_BLE_SERVER_TAG, "Param charValue is NULL");
 
-    VERIFY_NON_NULL(address, NULL, "Param address is NULL");
+    VERIFY_NON_NULL(address, TZ_BLE_SERVER_TAG, "Param address is NULL");
 
     OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "Client's Unicast address for sending data [%s]", address);
 
@@ -725,7 +739,7 @@ CAResult_t CAUpdateCharacteristicsToGattClient(const char* address, const char *
         return CA_STATUS_FAILED;
     }
 
-    char *data = (char *) OICCalloc(sizeof(char), (charValueLen + 1));
+    char *data = OICCalloc(charValueLen, 1);
     if (NULL == data)
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "malloc failed!");
@@ -733,12 +747,16 @@ CAResult_t CAUpdateCharacteristicsToGattClient(const char* address, const char *
         return CA_STATUS_FAILED;
     }
 
-    OICStrcpy(data, charValueLen + 1, charValue);
+    memcpy(data, charValue, charValueLen);   // Binary data
 
-    OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "updating characteristics char [%s] data [%s] dataLen [%d]",
+    OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "updating characteristics char [%s] data [%p] dataLen [%u]",
               (const char *)g_gattReadCharPath, data, charValueLen);
 
-    int ret =  bt_gatt_update_characteristic(g_gattReadCharPath, data, charValueLen, address);
+    int ret =
+        bt_gatt_update_characteristic(g_gattReadCharPath,
+                                      data,
+                                      charValueLen,
+                                      address);
     if (0 != ret)
     {
         OIC_LOG_V(ERROR, TZ_BLE_SERVER_TAG,
@@ -755,12 +773,11 @@ CAResult_t CAUpdateCharacteristicsToGattClient(const char* address, const char *
     return CA_STATUS_OK;
 }
 
-CAResult_t CAUpdateCharacteristicsToAllGattClients(const char *charValue,
-        const uint32_t charValueLen)
+CAResult_t CAUpdateCharacteristicsToAllGattClients(const uint8_t *charValue, uint32_t charValueLen)
 {
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
 
-    VERIFY_NON_NULL(charValue, NULL, "Param charValue is NULL");
+    VERIFY_NON_NULL(charValue, TZ_BLE_SERVER_TAG, "Param charValue is NULL");
 
     ca_mutex_lock(g_bleCharacteristicMutex);
 
@@ -771,7 +788,7 @@ CAResult_t CAUpdateCharacteristicsToAllGattClients(const char *charValue,
         return CA_STATUS_FAILED;
     }
 
-    char *data = (char *) OICMalloc(sizeof(char) * (charValueLen + 1));
+    char *data = OICMalloc(charValueLen);
     if (NULL == data)
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "malloc failed!");
@@ -779,12 +796,16 @@ CAResult_t CAUpdateCharacteristicsToAllGattClients(const char *charValue,
         return CA_STATUS_FAILED;
     }
 
-    OICStrcpy(data, charValueLen + 1, charValue);
+    memcpy(data, charValue, charValueLen);   // Binary data
 
-    OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "updating characteristics char [%s] data [%s] dataLen [%d]",
+    OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "updating characteristics char [%s] data [%p] dataLen [%u]",
               (const char *)g_gattReadCharPath, data, charValueLen);
 
-    int ret =  bt_gatt_update_characteristic(g_gattReadCharPath, data, charValueLen, NULL);
+    int ret =
+        bt_gatt_update_characteristic(g_gattReadCharPath,
+                                      data,
+                                      charValueLen,
+                                      NULL);
     if (0 != ret)
     {
         OIC_LOG_V(ERROR, TZ_BLE_SERVER_TAG,
@@ -801,7 +822,7 @@ CAResult_t CAUpdateCharacteristicsToAllGattClients(const char *charValue,
     return CA_STATUS_OK;
 }
 
-void CASetBLEReqRespServerCallback(CABLEServerDataReceivedCallback callback)
+void CASetLEReqRespServerCallback(CABLEDataReceivedCallback callback)
 {
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
 
@@ -812,4 +833,9 @@ void CASetBLEReqRespServerCallback(CABLEServerDataReceivedCallback callback)
     ca_mutex_unlock(g_bleReqRespCbMutex);
 
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "OUT");
+}
+
+void CASetBLEServerErrorHandleCallback(CABLEErrorHandleCallback callback)
+{
+    g_serverErrorCallback = callback;
 }

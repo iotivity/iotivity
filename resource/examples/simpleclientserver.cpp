@@ -33,12 +33,18 @@
 #include "OCApi.h"
 using namespace OC;
 
+static void printUsage()
+{
+    std::cout<< "    Usage simpleclientserver <0|1>" << std::endl;
+    std::cout<< "    ConnectivityType: Default IP" << std::endl;
+    std::cout << "   ConnectivityType : 0 - IP" << std::endl;
+}
 
 class ClientWorker
 {
 private:
-    void putResourceInfo(const HeaderOptions& headerOptions,
-            const OCRepresentation rep, const OCRepresentation rep2, const int eCode)
+    void putResourceInfo(const HeaderOptions& /*headerOptions*/,
+            const OCRepresentation rep, const OCRepresentation /*rep2*/, const int eCode)
     {
        std::cout << "In PutResourceInfo" << std::endl;
 
@@ -67,7 +73,7 @@ private:
        }
     }
 
-    void getResourceInfo(const HeaderOptions& headerOptions, const OCRepresentation rep,
+    void getResourceInfo(const HeaderOptions& /*headerOptions*/, const OCRepresentation rep,
                 const int eCode)
     {
         std::cout << "In getResourceInfo" << std::endl;
@@ -147,7 +153,7 @@ public:
     void start()
     {
         std::ostringstream requestURI;
-        requestURI << OC_MULTICAST_DISCOVERY_URI << "?rt=core.foo";
+        requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.foo";
 
         std::cout<<"Starting Client find:"<<std::endl;
         FindCallback f (std::bind(&ClientWorker::foundResource, this, std::placeholders::_1));
@@ -309,6 +315,7 @@ int main(int argc, char* argv[])
             {
                 if(optionSelected == 0)
                 {
+                    std::cout << "Using IP."<< std::endl;
                     connectivityType = CT_ADAPTER_IP;
                 }
                 else
@@ -328,9 +335,7 @@ int main(int argc, char* argv[])
     }
     else
     {
-        std::cout<< "Usage simpleclientserver 0>" << std::endl;
-        std::cout<< "    ConnectivityType: Default IP" << std::endl;
-        std::cout << "   ConnectivityType : 0 - IP" << std::endl;
+        printUsage();
     }
 
     PlatformConfig cfg {

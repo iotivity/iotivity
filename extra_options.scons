@@ -31,4 +31,3 @@ target_os = env.get('TARGET_OS')
 target_arch = env.get('TARGET_ARCH')
 src_dir = env.get('SRC_DIR')
 
-env.SConscript('extlibs/cereal/SConscript')

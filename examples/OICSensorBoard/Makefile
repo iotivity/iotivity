@@ -1,4 +1,4 @@
-#Set the two variables below for the client build. 
+#Set the two variables below for the client build.
 CLIENTARCH=x86
 BUILDTYPE=release
 ##
@@ -23,7 +23,7 @@ observer.o: observer.cpp
 server.o: server.cpp
 ifeq ($(SDKTARGETSYSROOT),)
 	echo "Error: Yocto cross-toolchain environment not initialized"
-	exit 1 
+	exit 1
 endif
 	$(CXX) -std=c++0x -c -o $@ $< $(YOCTOCXXFLAGS)
 

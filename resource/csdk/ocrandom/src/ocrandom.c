@@ -70,7 +70,7 @@ int8_t OCSeedRandom() {
 #if defined(__ANDROID__) || defined(__linux__) || defined(__APPLE__)
     int32_t fd = open("/dev/urandom", O_RDONLY);
     if (fd > 0) {
-        uint32_t randomSeed;
+        uint32_t randomSeed = 0;
         uint32_t totalRead = 0; //how many integers were read
         int32_t currentRead = 0;
         while (totalRead < sizeof(randomSeed)) {

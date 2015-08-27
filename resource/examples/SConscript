@@ -100,4 +100,10 @@ Alias("examples", [simpleserver, simpleclient,
      ])
 env.AppendTarget('examples')
 
-
+src_dir = examples_env.get('SRC_DIR')
+svr_db_src_dir = src_dir + '/resource/examples/'
+svr_db_build_dir = env.get('BUILD_DIR') +'/resource/examples/'
+examples_env.Alias("install", examples_env.Install( svr_db_build_dir,
+                svr_db_src_dir + 'oic_svr_db_client.json'))
+examples_env.Alias("install", examples_env.Install( svr_db_build_dir,
+                svr_db_src_dir + 'oic_svr_db_server.json'))

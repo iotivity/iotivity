@@ -30,634 +30,122 @@
 #include <unistd.h>
 
 #include "caadapterutils.h"
-#include "camutex.h"
 #include "logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 
-#define IP_MONITOR_TAG "IP_MONITOR"
-
-/**
- * @var g_networkMonitorContextMutex
- * @brief  Mutex for synchronizing access to cached interface and IP address information.
- */
-static ca_mutex g_networkMonitorContextMutex = NULL;
-
-/**
- * @var g_stopNetworkMonitor
- * @brief  Used to stop the network monitor thread.
- */
-static bool g_stopNetworkMonitor = false;
-
-/**
- * @var g_stopNetworkMonitorMutex
- * @brief  Mutex for synchronizing access to g_stopNetworkMonitor flag.
- */
-static ca_mutex g_stopNetworkMonitorMutex = NULL;
-
-/**
- * @struct CAIPNwMonitorContext
- * @brief  Used for storing network monitor context information.
- */
-typedef struct
-{
-    u_arraylist_t  *netInterfaceList;
-    ca_thread_pool_t threadPool;
-    CANetworkStatus_t nwConnectivityStatus;
-    CAIPConnectionStateChangeCallback networkChangeCb;
-} CAIPNetworkMonitorContext;
-
-/**
- * @var g_networkMonitorContext
- * @brief  network monitor context.
- */
-static CAIPNetworkMonitorContext *g_networkMonitorContext = NULL;
-
-static void CAIPGetInterfaceInformation(u_arraylist_t **netInterfaceList)
-{
-
-    VERIFY_NON_NULL_VOID(netInterfaceList, IP_MONITOR_TAG, "netInterfaceList is null");
-
-    struct ifaddrs *ifp = NULL;
-    if (-1 == getifaddrs(&ifp))
-    {
-        OIC_LOG_V(ERROR, IP_MONITOR_TAG, "Failed to get interface list!, Error code: %s",
-                  strerror(errno));
-        return;
-    }
-
-    struct ifaddrs *ifa = NULL;
-    for (ifa = ifp; ifa; ifa = ifa->ifa_next)
-    {
-        char interfaceAddress[CA_IPADDR_SIZE] = {0};
-        char interfaceSubnetMask[CA_IPADDR_SIZE] = {0};
-        socklen_t len = sizeof(struct sockaddr_in);
-
-        if (!ifa->ifa_addr)
-        {
-            continue;
-        }
-
-        int type = ifa->ifa_addr->sa_family;
-        if (ifa->ifa_flags & IFF_LOOPBACK
-            || !((ifa->ifa_flags & IFF_UP) && (ifa->ifa_flags & IFF_RUNNING)))
-        {
-            continue;
-        }
-
-        if (AF_INET != type)
-        {
-            continue;
-        }
-
-        // get the interface ip address
-        if (0 != getnameinfo(ifa->ifa_addr, len, interfaceAddress,
-                             sizeof(interfaceAddress), NULL, 0, NI_NUMERICHOST))
-        {
-            OIC_LOG_V(ERROR, IP_MONITOR_TAG, "Failed to get IPAddress, Error code: %s",
-                      strerror(errno));
-            continue;
-        }
-
-        // get the interface subnet mask
-        if (0 != getnameinfo(ifa->ifa_netmask, len, interfaceSubnetMask,
-                             sizeof(interfaceSubnetMask), NULL, 0, NI_NUMERICHOST))
-        {
-            OIC_LOG_V(ERROR, IP_MONITOR_TAG, "Failed to get subnet mask, Error code: %s",
-                      strerror(errno));
-            continue;
-        }
-
-        CANetInfo_t *netInfo = (CANetInfo_t *)OICCalloc(1, sizeof(CANetInfo_t));
-        if (!netInfo)
-        {
-            OIC_LOG(ERROR, IP_MONITOR_TAG, "Malloc failed");
-            freeifaddrs(ifp);
-            return;
-        }
-        // set interface name
-        OICStrcpy(netInfo->interfaceName, sizeof(netInfo->interfaceName), ifa->ifa_name);
-
-        // set local ip address
-        OICStrcpy(netInfo->ipAddress, sizeof(netInfo->ipAddress), interfaceAddress);
-
-        // set subnet mask
-        OICStrcpy(netInfo->subnetMask, sizeof(netInfo->subnetMask), interfaceSubnetMask);
-
-        CAResult_t result = u_arraylist_add(*netInterfaceList, (void *)netInfo);
-        if (CA_STATUS_OK != result)
-        {
-            OIC_LOG(ERROR, IP_MONITOR_TAG, "u_arraylist_add failed!Thread exiting.");
-            freeifaddrs(ifp);
-            return;
-        }
-    }
-
-    freeifaddrs(ifp);
-}
-
-static bool CACheckIsAnyInterfaceDown(const u_arraylist_t *netInterfaceList,
-                                      const CANetInfo_t *info)
-{
-    VERIFY_NON_NULL_RET(netInterfaceList, IP_MONITOR_TAG, "netInterfaceList is null", false);
-    VERIFY_NON_NULL_RET(info, IP_MONITOR_TAG, "info is null", false);
-
-    uint32_t list_index = 0;
-    uint32_t list_length = u_arraylist_length(netInterfaceList);
-    for (list_index = 0; list_index < list_length; list_index++)
-    {
-        CANetInfo_t *netInfo = (CANetInfo_t *)u_arraylist_get(netInterfaceList,
-                               list_index);
-        if (!netInfo)
-        {
-            continue;
-        }
-        if (strncmp(netInfo->interfaceName, info->interfaceName, strlen(info->interfaceName)) == 0)
-        {
-            return false;
-        }
-    }
-    OIC_LOG(DEBUG, IP_MONITOR_TAG, "Interface is down");
-    return true;
-}
-
-static bool CACheckIsInterfaceInfoChanged(const CANetInfo_t *info)
-{
-    VERIFY_NON_NULL_RET(info, IP_MONITOR_TAG, "info is null", false);
-
-    ca_mutex_lock(g_networkMonitorContextMutex);
-    uint32_t list_index = 0;
-    uint32_t list_length = u_arraylist_length(g_networkMonitorContext->netInterfaceList);
-    for (list_index = 0; list_index < list_length; list_index++)
-    {
-        CANetInfo_t *netInfo = (CANetInfo_t *)u_arraylist_get(
-                               g_networkMonitorContext->netInterfaceList, list_index);
-        if (!netInfo)
-        {
-            continue;
-        }
-        if (strncmp(netInfo->interfaceName, info->interfaceName, strlen(info->interfaceName)) == 0)
-        {
-            if (strncmp(netInfo->ipAddress, info->ipAddress, strlen(info->ipAddress)) == 0)
-            {
-                ca_mutex_unlock(g_networkMonitorContextMutex);
-                return false;
-            }
-            else
-            {
-                OIC_LOG(DEBUG, IP_MONITOR_TAG, "Network interface info changed");
-                if (u_arraylist_remove(g_networkMonitorContext->netInterfaceList, list_index))
-                {
-                    if (g_networkMonitorContext->networkChangeCb)
-                    {
-                        g_networkMonitorContext->networkChangeCb(netInfo->ipAddress,
-                                                                 CA_INTERFACE_DOWN);
-                    }
-                    OICFree(netInfo);
-                }
-                else
-                {
-                    OIC_LOG(ERROR, IP_MONITOR_TAG, "u_arraylist_remove failed");
-                }
-                break;
-            }
-        }
-    }
-
-    CANetInfo_t *newNetInfo = (CANetInfo_t *)OICMalloc(sizeof(CANetInfo_t));
-    if (!newNetInfo)
-    {
-        OIC_LOG(ERROR, IP_MONITOR_TAG, "newNetInfo malloc failed");
-        ca_mutex_unlock(g_networkMonitorContextMutex);
-        return false;
-    }
-    *newNetInfo = *info;
-
-    OIC_LOG(DEBUG, IP_MONITOR_TAG, "New Interface found");
-
-    CAResult_t result = u_arraylist_add(g_networkMonitorContext->netInterfaceList,
-                                        (void *)newNetInfo);
-    if (CA_STATUS_OK != result)
-    {
-        OIC_LOG(ERROR, IP_MONITOR_TAG, "u_arraylist_add failed!");
-        OICFree(newNetInfo);
-        ca_mutex_unlock(g_networkMonitorContextMutex);
-        return false;
-    }
-    ca_mutex_unlock(g_networkMonitorContextMutex);
-
-    /*Callback will be unset only at the time of termination. By that time, all the threads will be
-      stopped gracefully. This callback is properly protected*/
-    if (g_networkMonitorContext->networkChangeCb)
-    {
-        g_networkMonitorContext->networkChangeCb(newNetInfo->ipAddress, CA_INTERFACE_UP);
-    }
-
-    return true;
-}
-
-static void CANetworkMonitorThread(void *threadData)
-{
-    OIC_LOG(DEBUG, IP_MONITOR_TAG, "IN");
-
-    while (!g_stopNetworkMonitor)
-    {
-        u_arraylist_t  *netInterfaceList = u_arraylist_create();
-
-        VERIFY_NON_NULL_VOID(netInterfaceList, IP_MONITOR_TAG, "netInterfaceList is null");
-
-        CAIPGetInterfaceInformation(&netInterfaceList);
-
-        ca_mutex_lock(g_networkMonitorContextMutex);
-        if (!g_networkMonitorContext->netInterfaceList)
-        {
-            OIC_LOG(ERROR, IP_MONITOR_TAG,
-                    "u_arraylist_create failed. Network Monitor thread stopped");
-            CAClearNetInterfaceInfoList(netInterfaceList);
-            ca_mutex_unlock(g_networkMonitorContextMutex);
-            return;
-        }
-
-        uint32_t listIndex = 0;
-        uint32_t listLength = u_arraylist_length(g_networkMonitorContext->netInterfaceList);
-        for (listIndex = 0; listIndex < listLength;)
-        {
-            CANetInfo_t *info = (CANetInfo_t *)u_arraylist_get(
-                                    g_networkMonitorContext->netInterfaceList, listIndex);
-            if (!info)
-            {
-                listIndex++;
-                continue;
-            }
-
-            bool ret = CACheckIsAnyInterfaceDown(netInterfaceList, info);
-            if (ret)
-            {
-                OIC_LOG(DEBUG, IP_MONITOR_TAG, "Interface is down");
-                if (u_arraylist_remove(g_networkMonitorContext->netInterfaceList, listIndex))
-                {
-                    OIC_LOG(DEBUG, IP_MONITOR_TAG, "u_arraylist_remove success");
-                    if (g_networkMonitorContext->networkChangeCb)
-                    {
-                        g_networkMonitorContext->networkChangeCb(info->ipAddress,
-                                                                 CA_INTERFACE_DOWN);
-                    }
-                    OICFree(info);
-                    listLength--;
-                }
-                else
-                {
-                    OIC_LOG(ERROR, IP_MONITOR_TAG, "u_arraylist_remove failed");
-                    break;
-                }
-            }
-            else
-            {
-                listIndex++;
-            }
-        }
-        ca_mutex_unlock(g_networkMonitorContextMutex);
-
-        listLength = u_arraylist_length(netInterfaceList);
-        for (listIndex = 0; listIndex < listLength; listIndex++)
-        {
-            CANetInfo_t *info = (CANetInfo_t *)u_arraylist_get(netInterfaceList, listIndex);
-            if (!info)
-            {
-                continue;
-            }
-            bool ret = CACheckIsInterfaceInfoChanged(info);
-            if (ret)
-            {
-                OIC_LOG(DEBUG, IP_MONITOR_TAG, "CACheckIsInterfaceInfoChanged true");
-            }
-        }
-        CAClearNetInterfaceInfoList(netInterfaceList);
-        sleep(2); // To avoid maximum cpu usage.
-    }
-
-    OIC_LOG(DEBUG, IP_MONITOR_TAG, "OUT");
-}
-
-static CAResult_t CAInitializeNetworkMonitorMutexes()
-{
-    if (!g_networkMonitorContextMutex)
-    {
-        g_networkMonitorContextMutex = ca_mutex_new();
-        if (!g_networkMonitorContextMutex)
-        {
-            OIC_LOG(ERROR, IP_MONITOR_TAG, "g_networkMonitorContextMutex Malloc  failed");
-            return CA_MEMORY_ALLOC_FAILED;
-        }
-    }
-
-    if (!g_stopNetworkMonitorMutex)
-    {
-        g_stopNetworkMonitorMutex = ca_mutex_new();
-        if (!g_stopNetworkMonitorMutex)
-        {
-            OIC_LOG(ERROR, IP_MONITOR_TAG, "g_stopNetworkMonitorMutex Malloc  failed");
-            ca_mutex_free(g_networkMonitorContextMutex);
-            return CA_MEMORY_ALLOC_FAILED;
-        }
-    }
-    return CA_STATUS_OK;
-}
-static void CADestroyNetworkMonitorMutexes()
-{
-    ca_mutex_free(g_networkMonitorContextMutex);
-    g_networkMonitorContextMutex = NULL;
-
-    ca_mutex_free(g_stopNetworkMonitorMutex);
-    g_stopNetworkMonitorMutex = NULL;
-}
-
-CAResult_t CAIPInitializeNetworkMonitor(const ca_thread_pool_t threadPool)
-{
-    OIC_LOG(DEBUG, IP_MONITOR_TAG, "IN");
-
-    VERIFY_NON_NULL(threadPool, IP_MONITOR_TAG, "threadPool is null");
-
-    CAResult_t ret = CAInitializeNetworkMonitorMutexes();
-
-    if (CA_STATUS_OK != ret)
-    {
-        OIC_LOG(ERROR, IP_MONITOR_TAG, "CAInitializeNetworkMonitorMutexes failed");
-        return CA_STATUS_FAILED;
-    }
-
-    ca_mutex_lock(g_networkMonitorContextMutex);
-
-    g_networkMonitorContext = (CAIPNetworkMonitorContext *)OICCalloc(1,
-                              sizeof(*g_networkMonitorContext));
-    if (!g_networkMonitorContext)
-    {
-        OIC_LOG(ERROR, IP_MONITOR_TAG, "g_networkMonitorContext Malloc  failed");
-        ca_mutex_unlock(g_networkMonitorContextMutex);
-        CADestroyNetworkMonitorMutexes();
-        return CA_MEMORY_ALLOC_FAILED;
-    }
-    g_networkMonitorContext->threadPool = threadPool;
-
-    g_networkMonitorContext->netInterfaceList = u_arraylist_create();
-    if (!g_networkMonitorContext->netInterfaceList)
-    {
-        OIC_LOG(ERROR, IP_MONITOR_TAG, "u_arraylist_create failed");
-        OICFree(g_networkMonitorContext);
-        ca_mutex_unlock(g_networkMonitorContextMutex);
-        CADestroyNetworkMonitorMutexes();
-        return CA_MEMORY_ALLOC_FAILED;
-    }
-
-    CAIPGetInterfaceInformation(&g_networkMonitorContext->netInterfaceList);
-
-
-    if (u_arraylist_length(g_networkMonitorContext->netInterfaceList))
-    {
-        g_networkMonitorContext->nwConnectivityStatus = CA_INTERFACE_UP;
-    }
-    else
-    {
-        g_networkMonitorContext->nwConnectivityStatus = CA_INTERFACE_DOWN;
-    }
-
-    ca_mutex_unlock(g_networkMonitorContextMutex);
-
-    OIC_LOG(DEBUG, IP_MONITOR_TAG, "OUT");
-    return CA_STATUS_OK;
-}
-
-void CAIPTerminateNetworkMonitor()
-{
-    OIC_LOG(DEBUG, IP_MONITOR_TAG, "IN");
-
-    ca_mutex_lock(g_networkMonitorContextMutex);
-    g_networkMonitorContext->threadPool = NULL;
-
-    CAClearNetInterfaceInfoList(g_networkMonitorContext->netInterfaceList);
-
-    g_networkMonitorContext->netInterfaceList = NULL;
-    g_networkMonitorContext->nwConnectivityStatus = CA_INTERFACE_DOWN;
-    g_networkMonitorContext->networkChangeCb = NULL;
-    g_networkMonitorContext->threadPool = NULL;
-
-    OICFree(g_networkMonitorContext);
-    g_networkMonitorContext = NULL;
-
-    ca_mutex_unlock(g_networkMonitorContextMutex);
-
-    ca_mutex_lock(g_stopNetworkMonitorMutex);
-    g_stopNetworkMonitor = true;
-    ca_mutex_unlock(g_stopNetworkMonitorMutex);
-
-    CADestroyNetworkMonitorMutexes();
-
-    OIC_LOG(DEBUG, IP_MONITOR_TAG, "OUT");
-}
+#define TAG "IP_MONITOR"
 
 CAResult_t CAIPStartNetworkMonitor()
 {
-    OIC_LOG(DEBUG, IP_MONITOR_TAG, "IN");
-
-    ca_mutex_lock(g_stopNetworkMonitorMutex);
-
-    g_stopNetworkMonitor = false;
-
-    ca_mutex_unlock(g_stopNetworkMonitorMutex);
-
-    ca_mutex_lock(g_networkMonitorContextMutex);
-
-    if (!g_networkMonitorContext)
-    {
-        OIC_LOG(ERROR, IP_MONITOR_TAG, "g_networkMonitorContext is null");
-        ca_mutex_unlock(g_networkMonitorContextMutex);
-        return CA_STATUS_FAILED;
-    }
-
-    if (CA_STATUS_OK != ca_thread_pool_add_task(g_networkMonitorContext->threadPool,
-            CANetworkMonitorThread, NULL))
-    {
-        OIC_LOG(ERROR, IP_MONITOR_TAG, "[ThreadPool] thread_pool_add_task failed!");
-        ca_mutex_unlock(g_networkMonitorContextMutex);
-        return CA_STATUS_FAILED;
-    }
-    ca_mutex_unlock(g_networkMonitorContextMutex);
-
-    OIC_LOG(DEBUG, IP_MONITOR_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t CAIPStopNetworkMonitor()
 {
-    OIC_LOG(DEBUG, IP_MONITOR_TAG, "IN");
-
-    ca_mutex_lock(g_networkMonitorContextMutex);
-    if (!g_networkMonitorContext)
-    {
-        OIC_LOG(ERROR, IP_MONITOR_TAG, "g_networkMonitorContext is null");
-        ca_mutex_unlock(g_networkMonitorContextMutex);
-        return CA_STATUS_FAILED;
-    }
-
-    ca_mutex_unlock(g_networkMonitorContextMutex);
-
-    ca_mutex_lock(g_stopNetworkMonitorMutex);
-    if (!g_stopNetworkMonitor)
-    {
-        g_stopNetworkMonitor = true;
-    }
-    else
-    {
-        OIC_LOG(DEBUG, IP_MONITOR_TAG, "CAIPStopNetworkMonitor, already stopped!");
-    }
-    ca_mutex_unlock(g_stopNetworkMonitorMutex);
-
-    OIC_LOG(DEBUG, IP_MONITOR_TAG, "OUT");
     return CA_STATUS_OK;
 }
 
-CAResult_t CAIPGetInterfaceInfo(u_arraylist_t **netInterfaceList)
+int CAGetPollingInterval(int interval)
 {
-    OIC_LOG(DEBUG, IP_MONITOR_TAG, "IN");
+    return interval;
+}
 
-    VERIFY_NON_NULL(netInterfaceList, IP_MONITOR_TAG, "u_array_list is null");
-    VERIFY_NON_NULL(g_networkMonitorContext, IP_MONITOR_TAG,
-                    "g_networkMonitorContext is null");
-    VERIFY_NON_NULL(g_networkMonitorContextMutex, IP_MONITOR_TAG,
-                    "g_networkMonitorContextMutex is null");
+CAInterface_t *CAFindInterfaceChange()
+{
+    return NULL;
+}
 
-    // Get the interface and ipaddress information from cache
-    ca_mutex_lock(g_networkMonitorContextMutex);
-    if (!g_networkMonitorContext->netInterfaceList
-        || !(u_arraylist_length(g_networkMonitorContext->netInterfaceList)))
+u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
+{
+    if (desiredIndex < 0)
     {
-        OIC_LOG(ERROR, IP_MONITOR_TAG, "Network not enabled");
-        ca_mutex_unlock(g_networkMonitorContextMutex);
-        return CA_ADAPTER_NOT_ENABLED;
+        OIC_LOG_V(ERROR, TAG, "invalid index : %d", desiredIndex);
+        return NULL;
     }
 
-    uint32_t list_index = 0;
-    uint32_t list_length = u_arraylist_length(g_networkMonitorContext->netInterfaceList);
-    OIC_LOG_V(DEBUG, IP_MONITOR_TAG, "CAIPGetInterfaceInfo list length [%d]",
-              list_length);
-    for (list_index = 0; list_index < list_length; list_index++)
+    u_arraylist_t *iflist = u_arraylist_create();
+    if (!iflist)
     {
-        CANetInfo_t *info = (CANetInfo_t *)u_arraylist_get(
-                            g_networkMonitorContext->netInterfaceList, list_index);
-        if (!info)
+        OIC_LOG_V(ERROR, TAG, "Failed to create iflist: %s", strerror(errno));
+        return NULL;
+    }
+
+    struct ifaddrs *ifp = NULL;
+    if (-1 == getifaddrs(&ifp))
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to get ifaddrs: %s", strerror(errno));
+        u_arraylist_destroy(iflist);
+        return NULL;
+    }
+    OIC_LOG(DEBUG, TAG, "Got ifaddrs");
+
+    struct ifaddrs *ifa = NULL;
+    for (ifa = ifp; ifa; ifa = ifa->ifa_next)
+    {
+        if (!ifa->ifa_addr)
         {
             continue;
         }
-        OIC_LOG_V(DEBUG, IP_MONITOR_TAG, "CAIPGetInterfaceInfo ip [%s]",
-                  info->ipAddress);
-        CANetInfo_t *newNetinfo = (CANetInfo_t *) OICMalloc(sizeof(CANetInfo_t));
-        if (!newNetinfo)
-        {
-            OIC_LOG(ERROR, IP_MONITOR_TAG, "Malloc failed!");
-            ca_mutex_unlock(g_networkMonitorContextMutex);
-            return CA_MEMORY_ALLOC_FAILED;
-        }
-
-        *newNetinfo = *info;
-
-        CAResult_t result = u_arraylist_add(*netInterfaceList, (void *)newNetinfo);
-        if (CA_STATUS_OK != result)
-        {
-            OIC_LOG(ERROR, IP_MONITOR_TAG, "u_arraylist_add failed!");
-            ca_mutex_unlock(g_networkMonitorContextMutex);
-            return CA_STATUS_FAILED;
-        }
-    }
-
-    ca_mutex_unlock(g_networkMonitorContextMutex);
-
-    OIC_LOG(DEBUG, IP_MONITOR_TAG, "OUT");
-    return CA_STATUS_OK;
-}
-
-CAResult_t CAIPGetInterfaceSubnetMask(const char *ipAddress, char **subnetMask)
-{
-    OIC_LOG(DEBUG, IP_MONITOR_TAG, "IN");
-
-    VERIFY_NON_NULL(subnetMask, IP_MONITOR_TAG, "subnet mask");
-    VERIFY_NON_NULL(ipAddress, IP_MONITOR_TAG, "ipAddress is null");
-    VERIFY_NON_NULL(g_networkMonitorContext, IP_MONITOR_TAG,
-                    "g_networkMonitorContext is null");
-    VERIFY_NON_NULL(g_networkMonitorContextMutex, IP_MONITOR_TAG,
-                    "g_networkMonitorContextMutex is null");
-
-    // Get the interface and ipaddress information from cache
-    ca_mutex_lock(g_networkMonitorContextMutex);
-    if (!g_networkMonitorContext->netInterfaceList
-        || (0 == u_arraylist_length(g_networkMonitorContext->netInterfaceList)))
-    {
-        OIC_LOG(DEBUG, IP_MONITOR_TAG, "Network not enabled");
-        ca_mutex_unlock(g_networkMonitorContextMutex);
-        return CA_ADAPTER_NOT_ENABLED;
-    }
-
-    uint32_t list_index = 0;
-    uint32_t list_length = u_arraylist_length(g_networkMonitorContext->netInterfaceList);
-    OIC_LOG_V(DEBUG, IP_MONITOR_TAG, "list lenght [%d]", list_length);
-    for (list_index = 0; list_index < list_length; list_index++)
-    {
-        CANetInfo_t *info = (CANetInfo_t *)u_arraylist_get(
-                            g_networkMonitorContext->netInterfaceList, list_index);
-        if (!info)
+        int family = ifa->ifa_addr->sa_family;
+        if ((ifa->ifa_flags & IFF_LOOPBACK) || (AF_INET != family && AF_INET6 != family))
         {
             continue;
         }
 
-        if (strncmp(info->ipAddress, ipAddress, strlen(ipAddress)) == 0)
+        int ifindex = if_nametoindex(ifa->ifa_name);
+        if (desiredIndex && (ifindex != desiredIndex))
         {
-            OIC_LOG_V(DEBUG, IP_MONITOR_TAG,
-                      "CAIPGetInterfaceSubnetMask subnetmask is %s", info->subnetMask);
-            *subnetMask = OICStrdup(info->subnetMask);
-            break;
+            continue;
         }
-    }
-    ca_mutex_unlock(g_networkMonitorContextMutex);
 
-    OIC_LOG(DEBUG, IP_MONITOR_TAG, "OUT");
-    return CA_STATUS_OK;
+        int length = u_arraylist_length(iflist);
+        int already = false;
+        for (int i = length-1; i >= 0; i--)
+        {
+            CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
+
+            if (ifitem
+                && (int)ifitem->index == ifindex
+                && ifitem->family == (uint16_t)family)
+            {
+                already = true;
+                break;
+            }
+        }
+        if (already)
+        {
+            continue;
+        }
+
+        CAInterface_t *ifitem = (CAInterface_t *)OICCalloc(1, sizeof(CAInterface_t));
+        if (!ifitem)
+        {
+            OIC_LOG(ERROR, TAG, "Malloc failed");
+            goto exit;
+        }
+
+        OICStrcpy(ifitem->name, INTERFACE_NAME_MAX, ifa->ifa_name);
+        ifitem->index = ifindex;
+        ifitem->family = family;
+        ifitem->ipv4addr = ((struct sockaddr_in *)(ifa->ifa_addr))->sin_addr.s_addr;
+        ifitem->flags = ifa->ifa_flags;
+
+        bool result = u_arraylist_add(iflist, ifitem);
+        if (!result)
+        {
+            OIC_LOG(ERROR, TAG, "u_arraylist_add failed.");
+            goto exit;
+        }
+
+        OIC_LOG_V(DEBUG, TAG, "Added interface: %s (%d)", ifitem->name, family);
+    }
+
+    freeifaddrs(ifp);
+    return iflist;
+
+exit:
+    freeifaddrs(ifp);
+    u_arraylist_destroy(iflist);
+    return NULL;
 }
-
-bool CAIPIsConnected()
-{
-    OIC_LOG(DEBUG, IP_MONITOR_TAG, "IN");
-    if (!g_networkMonitorContextMutex || !g_networkMonitorContext)
-    {
-        OIC_LOG(ERROR, IP_MONITOR_TAG, "IP is not connected");
-        return false;
-    }
-
-    ca_mutex_lock(g_networkMonitorContextMutex);
-    if (0 == u_arraylist_length(g_networkMonitorContext->netInterfaceList))
-    {
-        OIC_LOG(ERROR, IP_MONITOR_TAG, "IP is not connected");
-        ca_mutex_unlock(g_networkMonitorContextMutex);
-        return false;
-    }
-    ca_mutex_unlock(g_networkMonitorContextMutex);
-
-    OIC_LOG(DEBUG, IP_MONITOR_TAG, "OUT");
-    return true;
-}
-
-void CAIPSetConnectionStateChangeCallback(CAIPConnectionStateChangeCallback callback)
-{
-    OIC_LOG(DEBUG, IP_MONITOR_TAG, "IN");
-    if (!g_networkMonitorContextMutex || !g_networkMonitorContext)
-    {
-        OIC_LOG(ERROR, IP_MONITOR_TAG, "CAIPSetConnectionStateChangeCallback failed");
-        return;
-    }
-    ca_mutex_lock(g_networkMonitorContextMutex);
-
-    g_networkMonitorContext->networkChangeCb = callback;
-
-    ca_mutex_unlock(g_networkMonitorContextMutex);
-
-    OIC_LOG(DEBUG, IP_MONITOR_TAG, "OUT");
-}
-

@@ -214,6 +214,7 @@ OCEntityHandlerResult entityHandlerForResource(std::shared_ptr< OCResourceReques
         if (OC_STACK_OK == sendResponseForResource(request))
         {
             ehResult = OC_EH_OK;
+            dlog_print(DLOG_INFO, LOG_TAG, "#### sendResponse success.");
         }
         else
         {
@@ -235,6 +236,7 @@ void *updateLog(void *data)
     elm_entry_entry_append(log_entry, log->c_str());
     elm_entry_cursor_end_set(log_entry);
 
+    dlog_print(DLOG_INFO, LOG_TAG, "%s", log->c_str());
     dlog_print(DLOG_INFO, LOG_TAG, "#### updateLog exit!!!!");
 
     return NULL;
@@ -296,6 +298,8 @@ void onBootStrapCallback(const HeaderOptions &headerOptions, const OCRepresentat
     logMessage += "currency : " + defaultCurrency + "<br>";
     logMessage += "Region : " + defaultRegion + "<br>";
 
+    dlog_print(DLOG_INFO, LOG_TAG, "  %s", logMessage.c_str());
+
     //Call updateLog in the thread safe mode
     ecore_main_loop_thread_safe_call_sync(updateLog, &logMessage);
 
@@ -343,6 +347,8 @@ createConfResource_cb(void *data , Evas_Object *obj , void *event_info)
     {
         logMessage += "Resources were created already!!! <br>";
     }
+
+    dlog_print(DLOG_INFO, LOG_TAG, "  %s", logMessage.c_str());
     // Show the log in the UI
     ecore_main_loop_thread_safe_call_sync(updateLog, &logMessage);
 }

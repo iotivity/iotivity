@@ -41,6 +41,12 @@ int observe_count()
     return ++oc;
 }
 
+static void printUsage()
+{
+    std::cout << "Usage roomclient <0|1>" << std::endl;
+    std::cout<<"connectivityType: Default" << std::endl;
+    std::cout << "connectivityType 0: IP" << std::endl;
+}
 // Forward declaration
 void putRoomRepresentation(std::shared_ptr<OCResource> resource);
 void onPut(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode);
@@ -79,7 +85,8 @@ void printRoomRepresentation(const OCRepresentation& rep)
 }
 
 // callback handler on GET request
-void onGet(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
+void onGet(const HeaderOptions& /*headerOptions*/,
+        const OCRepresentation& rep, const int eCode)
 {
     if(eCode == SUCCESS_RESPONSE)
     {
@@ -96,7 +103,8 @@ void onGet(const HeaderOptions& headerOptions, const OCRepresentation& rep, cons
     }
 }
 
-void onGet1(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
+void onGet1(const HeaderOptions& /*headerOptions*/,
+        const OCRepresentation& rep, const int eCode)
 {
     if(eCode == SUCCESS_RESPONSE)
     {
@@ -142,7 +150,7 @@ void putRoomRepresentation(std::shared_ptr<OCResource> resource)
 }
 
 // callback handler on PUT request
-void onPut(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
+void onPut(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep, const int eCode)
 {
     if(eCode == SUCCESS_RESPONSE)
     {
@@ -215,7 +223,7 @@ void foundResource(std::shared_ptr<OCResource> resource)
     }
     catch(std::exception& e)
     {
-        //log(e.what());
+        std::cerr << "Exception caught in Found Resource: "<< e.what() <<std::endl;
     }
 }
 
@@ -223,7 +231,7 @@ int main(int argc, char* argv[]) {
 
     std::ostringstream requestURI;
 
-    OCConnectivityType connectivityType = CT_DEFAULT;
+    OCConnectivityType connectivityType = CT_ADAPTER_IP;
     if(argc == 2)
     {
         try
@@ -235,11 +243,12 @@ int main(int argc, char* argv[]) {
             {
                 if(optionSelected == 0)
                 {
+                    std::cout << "Using IP."<< std::endl;
                     connectivityType = CT_ADAPTER_IP;
                 }
                 else
                 {
-                    std::cout << "Invalid connectivity type selected. Using default IP" << std::endl;
+                    std::cout << "Invalid connectivity type selected. Using default IP"<< std::endl;
                 }
             }
             else
@@ -247,16 +256,15 @@ int main(int argc, char* argv[]) {
                 std::cout << "Invalid connectivity type selected. Using default IP" << std::endl;
             }
         }
-        catch(std::exception& e)
+        catch(std::exception&)
         {
             std::cout << "Invalid input argument. Using IP as connectivity type" << std::endl;
         }
     }
     else
     {
-        std::cout << "Usage roomclient 0" << std::endl;
-        std::cout<<"connectivityType: Default" << std::endl;
-        std::cout << "connectivityType 0: IP" << std::endl;
+        std::cout << "Default input argument. Using IP as Default connectivity type" << std::endl;
+        printUsage();
     }
 
     // Create PlatformConfig object
@@ -273,7 +281,7 @@ int main(int argc, char* argv[]) {
     try
     {
         // Find all resources
-        requestURI << OC_MULTICAST_DISCOVERY_URI;
+        requestURI << OC_RSRVD_WELL_KNOWN_URI;
 
         OCPlatform::findResource("", requestURI.str(), connectivityType, &foundResource);
         std::cout<< "Finding Resource... " <<std::endl;

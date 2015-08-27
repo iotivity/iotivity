@@ -50,7 +50,11 @@ static const char * UNICAST_PROV_STATUS_QUERY = "coap://%s:%d%s";
 #define OC_RSRVD_ES_PS                     "ps"
 #define OC_RSRVD_ES_TNN                    "tnn"
 #define OC_RSRVD_ES_CD                     "cd"
-
+#define OC_RSRVD_ES_TR                     "tr"
+#define OC_RSRVD_ES_TNT                    "tnt"
+#define OC_RSRVD_ES_ANT                    "ant"
+#define OC_RSRVD_ES_URI_PROV               "/oic/prov"
+#define OC_RSRVD_ES_URI_NET                "/oic/net"
 
 
 

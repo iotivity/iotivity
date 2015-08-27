@@ -20,7 +20,7 @@
 
 /**
  * @file caipinterface.h
- * @brief This file provides APIs IP client/server/network monitor modules
+ * This file provides APIs IP client/server/network monitor modules.
  */
 
 #ifndef CA_IP_INTERFACE_H_
@@ -38,286 +38,180 @@ extern "C"
 #endif
 
 /**
- * @enum CAAdapterServerType_t
- * @brief Enum for defining different server types.
+ * Enum for defining different server types.
  */
 typedef enum
 {
-    CA_UNICAST_SERVER = 0,    /**< Unicast Server */
-    CA_MULTICAST_SERVER,      /**< Multicast Server */
-    CA_SECURED_UNICAST_SERVER /**< Secured Unicast Server */
+    CA_UNICAST_SERVER = 0,      /**< Unicast Server */
+    CA_MULTICAST_SERVER,        /**< Multicast Server */
+    CA_SECURED_UNICAST_SERVER   /**< Secured Unicast Server */
 } CAAdapterServerType_t;
 
 /**
- * @brief Callback to be notified on reception of any data from remote OIC devices.
+ * Callback to be notified on reception of any data from remote OIC devices.
  *
- * @param  endpoint     [IN] network endpoint description
- * @param  data         [IN] Data received from remote OIC device.
- * @param  dataLength   [IN] Length of data in bytes.
- *
- * @return NONE
- * @pre  Callback must be registered using CAIPSetPacketReceiveCallback()
+ * @param[in]  sep         network endpoint description.
+ * @param[in]  data          Data received from remote OIC device.
+ * @param[in]  dataLength    Length of data in bytes.
+ * @pre  Callback must be registered using CAIPSetPacketReceiveCallback().
  */
-typedef void (*CAIPPacketReceivedCallback)(const CAEndpoint_t *endpoint,
+typedef void (*CAIPPacketReceivedCallback)(const CASecureEndpoint_t *sep,
                                            const void *data,
                                            uint32_t dataLength);
 
 /**
- * @brief  Callback to be notified when exception occures on multicast/unicast server.
- * @param  type  [IN] Type of server(#CAAdapterServerType_t)
- * @return NONE
- * @pre  Callback must be registered using CAIPSetExceptionCallback()
+  * Callback to notify error in the IP adapter.
+  *
+  * @param[in]  endpoint       network endpoint description.
+  * @param[in]  data          Data sent/received.
+  * @param[in]  dataLength    Length of data in bytes.
+  * @param[in]  result        result of request from R.I.
+  * @pre  Callback must be registered using CAIPSetPacketReceiveCallback().
+ */
+typedef void (*CAIPErrorHandleCallback)(const CAEndpoint_t *endpoint, const void *data,
+                                        uint32_t dataLength, CAResult_t result);
+
+/**
+ * Callback to be notified when exception occures on multicast/unicast server.
+ * @param  type   Type of server(#CAAdapterServerType_t).
+ * @pre  Callback must be registered using CAIPSetExceptionCallback().
  */
 typedef void (*CAIPExceptionCallback)(CAAdapterServerType_t type);
 
 /**
- * @brief  Initialize IP server
+ * Start IP server.
  *
- * @param   threadPool  [IN] Thread pool for managing Unicast/Multicast server threads.
- *
- * @return  #CA_STATUS_OK or Appropriate error code
- * @retval  #CA_STATUS_OK  Successful
- * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
- * @retval  #CA_STATUS_FAILED Initialization failed
+ * @param   threadPool   Thread pool for managing Unicast/Multicast server threads.
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM Invalid input data.
+ * @retval ::CA_STATUS_FAILED Initialization failed.
  */
-CAResult_t CAIPInitializeServer(const ca_thread_pool_t threadPool);
+#ifdef SINGLE_THREAD
+CAResult_t CAIPStartServer();
+#else
+CAResult_t CAIPStartServer(const ca_thread_pool_t threadPool);
+#endif
 
 /**
- * @brief  Terminate IP server
- * @return NONE
+ * Stop IP server.
  */
-void CAIPTerminateServer();
+void CAIPStopServer();
 
 /**
- * @brief  Start multicast server for specified multicast address and port
+ * Set this callback for receiving data packets from peer devices.
  *
- * @param   localAddress        [IN]      Local adapter address to which server to be binded.
- * @param   multicastAddress    [IN]      Multicast group address.
- * @param   multicastPort       [IN,OUT]  Port number on which server will be running. If binding
- *                                        the port failed, server starts in the next available port.
- *
- * @return  #CA_STATUS_OK or Appropriate error code
- * @retval  #CA_STATUS_OK  Successful
- * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
- * @retval  #CA_SERVER_STARTED_ALREADY Multicast server is already started and running.
- * @retval  #CA_STATUS_FAILED Operation failed
- */
-CAResult_t CAIPStartMulticastServer(const char *localAddress, const char *multicastAddress,
-                                    uint16_t multicastPort);
-
-/**
- * @brief  Start unicast server for specified local address and port
- *
- * @param  localAddress [IN]      Local adapter address to which server to be binded.
- * @param  port         [IN,OUT]  Port number on which server will be running. If binding
- *                                the port failed, server starts in the next available port.
- * @param  forceStart   [IN]      Indicate whether to start server forcesfully on specified port
- *                                or not.
- * @param  secured      [IN]      True if the secure server to be started, otherwise false.
- *
- * @return  #CA_STATUS_OK or Appropriate error code
- * @retval  #CA_STATUS_OK  Successful
- * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
- * @retval  #CA_SERVER_STARTED_ALREADY Unicast server is already started and running.
- * @retval  #CA_STATUS_FAILED Operation failed
- */
-CAResult_t CAIPStartUnicastServer(const char *localAddress, uint16_t *port, bool forceStart,
-                                  bool secured);
-
-/**
- * @brief  Stop servers that are running in particular interface address.
- *
- * @param   interfaceAddress  [IN] interface address in which servers are running.
- *
- * @return  #CA_STATUS_OK or Appropriate error code
- * @retval  #CA_STATUS_OK  Successful
- * @retval  #CA_STATUS_FAILED Operation failed
- */
-CAResult_t CAIPStopServer(const char *interfaceAddress);
-
-/**
- * @brief  Used to stop all unicast and multicast servers.
- *
- * @return  #CA_STATUS_OK or Appropriate error code
- * @retval  #CA_STATUS_OK  Successful
- * @retval  #CA_STATUS_FAILED Operation failed
- */
-CAResult_t CAIPStopAllServers();
-
-/**
- * @brief  Used to get the socket fd based on index value of server info list.
- *
- * @param   index      [IN] Index where we need socket fd value.
- * @param   isSecured  [IN] For secured unicast server or normal server.
- *
- * @return  positive value on success and -1 on error.
- */
-int CAGetSocketFdFromUnicastIPServerbyIndex(int16_t index, bool isSecured);
-
-/**
- * @brief  Used to get the number of unicast server currently running.
- *
- * @param   isSecured  [IN] To identify whether its secured unicast server or normal server.
- *
- * @return  positive value on success and -1 on error.
- */
-int16_t CAGetNumberOfUnicastIPServers(bool isSecured);
-
-/**
- * @brief  Used to get the stored socket fd for corresponding ipAddress.
- *
- * @param   ipAddress    [IN] IpAddress of server.
- * @param   isSecured    [IN] Used to check the server is secured or not.
- * @param   isMulticast  [IN] To identify whether its for multicast or unicast.
- *
- * @return  socket fd on success and -1 on error.
- */
-int CAGetSocketFdFromUnicastIPServer(const char *ipAddress, bool isSecured, bool isMulticast);
-
-/**
- * @brief  Used to get the port number to the corresponding ip for giving interface info.
- *
- * @param   ipAddress  [IN] IpAddress of server.
- * @param   isSecured  [IN] Used to check the server is secured or not.
- *
- * @return  port number on success and -1 on error.
- */
-uint16_t CAGetServerPortNum(const char *ipAddress, bool isSecured);
-
-/**
- * @brief  Used to get the port number for corresponding ipAddress.
- *
- * @param   serverInfoList  [OUT] ServerInfoList holds unicast and multicast server informations.
- *
- * @return  #CA_STATUS_OK or Appropriate error code
- * @retval  #CA_STATUS_OK  Successful
- * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
- * @retval  #CA_STATUS_FAILED Initialization failed
- */
-CAResult_t CAGetIPServerInfoList(u_arraylist_t **serverInfoList);
-
-/**
- * @brief  Set this callback for receiving data packets from peer devices.
- *
- * @param  callback   [IN] Callback to be notified on reception of unicast/multicast data packets.
- *
- * @return  NONE
+ * @param[in]  callback    Callback to be notified on reception of unicast/multicast data packets.
  */
 void CAIPSetPacketReceiveCallback(CAIPPacketReceivedCallback callback);
 
 /**
- * @brief  Set this callback for receiving exception notifications.
+ * Set this callback for receiving exception notifications.
  *
- * @param  callback [IN] Callback to be notified on occurance of exception on running servers.
- *
- * @return  NONE
+ * @param[in]  callback  Callback to be notified on exception on running servers.
  */
 void CAIPSetExceptionCallback(CAIPExceptionCallback callback);
 
 /**
- * @brief  API to send unicast UDP data
+ * Set socket description for sending unicast UDP data.
+ * Once the Unicast server is started,
+ * the same socket descriptor is used for sending the Unicast UDP data.
  *
- * @param  endpoint         [IN] complete network address to send to
- * @param  data             [IN] Data to be send.
- * @param  dataLength       [IN] Length of data in bytes
- * @param  isMulticast      [IN] Whether data needs to be sent to multicast ip
- *
- * @return  The number of bytes sent on the network. Returns 0 on error.
- * @remarks isSecure will be ignored when isMulticast is true.
+ * @param[in]  socketFD   Socket descriptor used for sending UDP data.
  */
-uint32_t CAIPSendData(const CAEndpoint_t *endpoint,
-                      const void *data,
-                      uint32_t dataLength,
-                      bool isMulticast);
+void CAIPSetUnicastSocket(int socketFD);
 
 /**
- * @brief  Callback to be notified when IP adapter connection state changes.
- *
- * @param  ipAddress    [IN] IP address of remote OIC device.
- * @param  status       [IN] Connection status either #CA_INTERFACE_UP or #CA_INTERFACE_DOWN.
- * @return  NONE
- * @pre  Callback must be registered using CAIPSetConnectionStateChangeCallback()
+ * Set the port number for sending unicast UDP data.
+ * @param[in]  port  Port number used for sending UDP data.
  */
-typedef void (*CAIPConnectionStateChangeCallback)(const char *ipAddress,
-                                                  CANetworkStatus_t status);
+void CAIPSetUnicastPort(uint16_t port);
 
 /**
- * @brief Initialize IP network monitor
+ * API to send unicast UDP data.
  *
- * @param  threadPool [IN] Thread pool for managing network monitor thread.
- *
- * @return  #CA_STATUS_OK or Appropriate error code
- * @retval  #CA_STATUS_OK  Successful
- * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
- * @retval  #CA_STATUS_FAILED Initialization failed
+ * @param[in]  endpoint          complete network address to send to.
+ * @param[in]  data              Data to be send.
+ * @param[in]  dataLength        Length of data in bytes.
+ * @param[in]  isMulticast       Whether data needs to be sent to multicast ip.
  */
-CAResult_t CAIPInitializeNetworkMonitor(const ca_thread_pool_t threadPool);
+void CAIPSendData(CAEndpoint_t *endpoint,
+                  const void *data,
+                  uint32_t dataLength,
+                  bool isMulticast);
 
 /**
- * @brief Terminate IP network monitor by removing interface list.
- * @return  NONE
+ * Get IP adapter connection state.
+ *
+ * @return  True if IP adapter is connected, otherwise false.
  */
-void CAIPTerminateNetworkMonitor();
+bool CAIPIsConnected();
 
 /**
- * @brief  Start network monitoring process. It will start the monitor thread.
+ * Pull the Received Data.
+ */
+void CAIPPullData();
+
+#define CA_COAP        5683
+#define CA_SECURE_COAP 5684
+#define INTERFACE_NAME_MAX 16
+
+typedef struct
+{
+    char name[INTERFACE_NAME_MAX];
+    uint32_t index;
+    uint32_t flags;
+    uint16_t family;
+    uint32_t ipv4addr;        /**< used for IPv4 only. */
+} CAInterface_t;
+
+/**
+ * Get a list of CAInterface_t items.
  *
- * @return  #CA_STATUS_OK or Appropriate error code
- * @retval  #CA_STATUS_OK  Successful
- * @retval  #CA_STATUS_FAILED Operation failed
+ * @return  List of CAInterface_t items.
+ */
+u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex);
+
+/**
+ * @brief   Find a new network interface.
+ *
+ * @return  Description of interface (or NULL if no change)
+ */
+CAInterface_t *CAFindInterfaceChange();
+
+/**
+ * @brief   Let the network monitor update the polling interval.
+ * @param   [in] current polling interval
+ *
+ * @return  desired polling interval
+ */
+int CAGetPollingInterval(int interval);
+
+/**
+ * @brief   Tell the IP server an interface has been added.
+ */
+void CAWakeUpForChange();
+
+/**
+ * Start network monitor.
+ *
+ * @return ::CA_STATUS_OK or Appropriate error code.
  */
 CAResult_t CAIPStartNetworkMonitor();
 
 /**
- * @brief  Stop network monitoring process. It will stop the monitor thread.
+ * Stops network monitor.
  *
- * @return  #CA_STATUS_OK or Appropriate error code
- * @retval  #CA_STATUS_OK  Successful
- * @retval  #CA_STATUS_FAILED Operation failed
+ * @return ::CA_STATUS_OK or Appropriate error code.
  */
 CAResult_t CAIPStopNetworkMonitor();
 
 /**
- * @brief  Get local adapter network information.
+ * @brief  Set callback for error handling.
  *
- * @param  netInterfaceList [OUT] network interface information list
- *
- * @return  #CA_STATUS_OK or Appropriate error code
- * @retval  #CA_STATUS_OK  Successful
- * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
- * @retval  #CA_STATUS_FAILED Operation failed
- * @remarks  interfaceName and ipAddress must be freed using free().
+ * @param[in]  ipErrorCallback  callback to notify error to the ipadapter.
  */
-CAResult_t CAIPGetInterfaceInfo(u_arraylist_t **netInterfaceList);
-
-/**
- * @brief  Get local adapter network subnet mask.
- *
- * @param  ipAddress  [IN]  IpAddress which is used for getting subnet mask.
- * @param  subnetMask [OUT] Local adapter interface subnet mask
- *
- * @return  #CA_STATUS_OK or Appropriate error code
- * @retval  #CA_STATUS_OK  Successful
- * @retval  #CA_STATUS_INVALID_PARAM Invalid input data
- * @retval  #CA_STATUS_FAILED Operation failed
- * @remarks subnetMask must be freed using free().
- */
-CAResult_t CAIPGetInterfaceSubnetMask(const char *ipAddress, char **subnetMask);
-
-/**
- * @brief  Get IP adapter connection state.
- *
- * @return  True if IP adapter is connected, otherwise false
- */
- bool CAIPIsConnected();
-
-/**
- * @brief  Set callback for receiving local IP adapter connection status.
- *
- * @param  callback [IN] Callback to be notified when IP adapter connection state changes.
- * @return NONE
- */
-void CAIPSetConnectionStateChangeCallback(CAIPConnectionStateChangeCallback callback);
+void CAIPSetErrorHandleCallback(CAIPErrorHandleCallback ipErrorCallback);
 
 #ifdef __cplusplus
 }

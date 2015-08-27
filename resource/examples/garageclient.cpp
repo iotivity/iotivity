@@ -34,6 +34,13 @@ const int SUCCESS_RESPONSE = 0;
 std::shared_ptr<OCResource> curResource;
 std::mutex curResourceLock;
 
+static void printUsage()
+{
+    std::cout<<"Usage: garageclient <0|1> \n";
+    std::cout<<"ConnectivityType: Default IP\n";
+    std::cout<<"ConnectivityType 0: IP \n";
+}
+
 class Garage
 {
 public:
@@ -155,7 +162,7 @@ void printRepresentation(const OCRepresentation& rep)
 
 }
 // callback handler on PUT request
-void onPut(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
+void onPut(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep, const int eCode)
 {
     if(eCode == SUCCESS_RESPONSE)
     {
@@ -192,7 +199,7 @@ void putLightRepresentation(std::shared_ptr<OCResource> resource)
 }
 
 // Callback handler on GET request
-void onGet(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
+void onGet(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep, const int eCode)
 {
     if(eCode == SUCCESS_RESPONSE)
     {
@@ -288,7 +295,7 @@ int main(int argc, char* argv[]) {
 
     std::ostringstream requestURI;
 
-    OCConnectivityType connectivityType = CT_DEFAULT;
+    OCConnectivityType connectivityType = CT_ADAPTER_IP;
 
     if(argc == 2)
     {
@@ -301,6 +308,7 @@ int main(int argc, char* argv[]) {
             {
                 if(optionSelected == 0)
                 {
+                    std::cout << "Using IP."<< std::endl;
                     connectivityType = CT_ADAPTER_IP;
                 }
                 else
@@ -314,16 +322,15 @@ int main(int argc, char* argv[]) {
                 std::cout << "Invalid connectivity type selected. Using default IP" << std::endl;
             }
         }
-        catch(std::exception& e)
+        catch(std::exception&)
         {
             std::cout << "Invalid input argument. Using IP as connectivity type" << std::endl;
         }
     }
     else
     {
-        std::cout<<"Usage: garageclient 0\n";
-        std::cout<<"ConnectivityType: Default IP\n";
-        std::cout<<"ConnectivityType 0: IP\n";
+        printUsage();
+        std::cout << "Invalid input argument. Using IP as connectivity type" << std::endl;
     }
 
     // Create PlatformConfig object
@@ -339,7 +346,7 @@ int main(int argc, char* argv[]) {
     try
     {
         // Find all resources
-        requestURI << OC_MULTICAST_DISCOVERY_URI << "?rt=core.garage";
+        requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.garage";
 
         OCPlatform::findResource("", requestURI.str(),
                 connectivityType, &foundResource);

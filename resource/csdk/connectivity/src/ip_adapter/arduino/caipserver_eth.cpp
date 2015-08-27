@@ -18,7 +18,7 @@
 *
 ******************************************************************/
 
-#include "caipinterface_singlethread.h"
+#include "caipinterface.h"
 
 #include <Arduino.h>
 #include <Ethernet.h>
@@ -31,10 +31,11 @@
 #include "cacommon.h"
 #include "cainterface.h"
 #include "caadapterinterface.h"
-#include "caipadapter_singlethread.h"
+#include "caipadapter.h"
 #include "caipadapterutils_eth.h"
 #include "caadapterutils.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 
 #define TAG "IPS"
 
@@ -44,7 +45,6 @@
 CAResult_t CAIPStartUnicastServer(const char *localAddress, uint16_t *port,
                                         const bool forceStart, int32_t *serverFD);
 static CAResult_t CAArduinoRecvData(int32_t sockFd);
-static CAResult_t CAArduinoGetInterfaceAddress(char *address, int32_t addrLen);
 static void CAArduinoCheckData();
 static void CAPacketReceivedCallback(const char *ipAddress, const uint16_t port,
                               const void *data, const uint32_t dataLength);
@@ -54,12 +54,18 @@ static int g_unicastSocket = 0;
 static int g_multicastSocket = 0;
 
 /**
+ * @var g_isMulticastServerStarted
+ * @brief Flag to check if multicast server is started
+ */
+static bool g_isMulticastServerStarted = false;
+
+/**
  * @var g_unicastPort
  * @brief Unicast Port
  */
 static uint16_t g_unicastPort = 0;
 
-CAResult_t CAIPInitializeServer(void)
+CAResult_t CAIPInitializeServer(const ca_thread_pool_t threadPool)
 {
     return CA_STATUS_OK;
 }
@@ -69,14 +75,13 @@ void CAIPTerminateServer(void)
     return;
 }
 
-CAResult_t CAIPGetUnicastServerInfo(char **ipAddress, uint16_t *port,
-                                          int *serverID)
+uint16_t CAGetServerPortNum(const char *ipAddress, bool isSecured)
 {
-    return CA_STATUS_OK;
+    return g_unicastPort;
 }
 
 CAResult_t CAIPStartUnicastServer(const char *localAddress, uint16_t *port,
-                                        const bool forceStart, int *serverFD)
+                                  bool secured)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     VERIFY_NON_NULL(port, TAG, "port");
@@ -86,37 +91,63 @@ CAResult_t CAIPStartUnicastServer(const char *localAddress, uint16_t *port,
     W5100.getIPAddress(rawIPAddr);
     sprintf(address, "%d.%d.%d.%d", rawIPAddr[0], rawIPAddr[1], rawIPAddr[2], rawIPAddr[3]);
     OIC_LOG_V(DEBUG, TAG, "address:%s", address);
-
-    if (CAArduinoInitUdpSocket(port, serverFD) != CA_STATUS_OK)
+    int serverFD = 1;
+    if (CAArduinoInitUdpSocket(port, &serverFD) != CA_STATUS_OK)
     {
         OIC_LOG(DEBUG, TAG, "failed");
         return CA_STATUS_FAILED;
     }
 
     g_unicastPort = *port;
-    g_unicastSocket = *serverFD;
-    OIC_LOG_V(DEBUG, TAG, "g_unicastPort: %d", g_unicastPort);
+    g_unicastSocket = serverFD;
+    CAIPSetUnicastSocket(g_unicastSocket);
+    CAIPSetUnicastPort(g_unicastPort);
+    OIC_LOG_V(DEBUG, TAG, "g_unicastPort: %u", g_unicastPort);
     OIC_LOG_V(DEBUG, TAG, "g_unicastSocket: %d", g_unicastSocket);
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t CAIPStartMulticastServer(const char *localAddress, const char *multicastAddress,
-                                    uint16_t multicastPort, int *serverFD)
+                                    uint16_t multicastPort)
 {
     OIC_LOG(DEBUG, TAG, "IN");
+    if (g_isMulticastServerStarted == true)
+    {
+        OIC_LOG(ERROR, TAG, "Already Started!");
+        return CA_SERVER_STARTED_ALREADY;
+    }
+    int serverFD = 1;
     if (CAArduinoInitMulticastUdpSocket(multicastAddress, multicastPort, multicastPort,
-                                        serverFD) != CA_STATUS_OK)
+                                        &serverFD) != CA_STATUS_OK)
     {
         OIC_LOG(DEBUG, TAG, "failed");
         return CA_STATUS_FAILED;
     }
 
-    g_multicastSocket = *serverFD;
+    g_multicastSocket = serverFD;
+    g_isMulticastServerStarted = true;
     OIC_LOG_V(DEBUG, TAG, "gMulticastPort: %d", multicastPort);
     OIC_LOG_V(DEBUG, TAG, "g_multicastSocket: %d", g_multicastSocket);
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
+}
+
+CAResult_t CAIPStartServer()
+{
+    uint16_t unicastPort = 55555;
+
+    CAResult_t ret = CAIPStartUnicastServer("0.0.0.0", &unicastPort, false);
+    if (CA_STATUS_OK != ret)
+    {
+        OIC_LOG_V(DEBUG, TAG, "Start unicast serv failed[%d]", ret);
+    }
+    ret = CAIPStartMulticastServer("0.0.0.0", "224.0.1.187", 5683);
+    if (CA_STATUS_OK != ret)
+    {
+        OIC_LOG_V(ERROR, TAG, "Start multicast failed[%d]", ret);
+    }
+    return ret;
 }
 
 CAResult_t CAIPStopUnicastServer()
@@ -137,13 +168,36 @@ CAResult_t CAIPStopMulticastServer()
     return CA_STATUS_OK;
 }
 
+void CAIPStopServer()
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+    CAResult_t result = CAIPStopUnicastServer();
+    if (CA_STATUS_OK != result)
+    {
+        OIC_LOG_V(ERROR, TAG, "stop ucast srv fail:%d", result);
+        return;
+    }
+    CAIPSetUnicastSocket(-1);
+    CAIPSetUnicastPort(0);
+
+    result = CAIPStopMulticastServer();
+    if (CA_STATUS_OK != result)
+    {
+        OIC_LOG_V(ERROR, TAG, "stop mcast srv fail:%d", result);
+    }
+    OIC_LOG(DEBUG, TAG, "OUT");
+}
+
 void CAPacketReceivedCallback(const char *ipAddress, const uint16_t port,
                               const void *data, const uint32_t dataLength)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     if (g_packetReceivedCallback)
     {
-        g_packetReceivedCallback(ipAddress, port, data, dataLength);
+        CASecureEndpoint_t sep =
+        {.endpoint = {.adapter = CA_ADAPTER_IP, .flags = CA_IPV4, .port = port}};
+        OICStrcpy(sep.endpoint.addr, sizeof(sep.endpoint.addr), ipAddress);
+        g_packetReceivedCallback(&sep, data, dataLength);
     }
     OIC_LOG(DEBUG, TAG, "OUT");
 }
@@ -235,30 +289,58 @@ void CAIPSetExceptionCallback(CAIPExceptionCallback callback)
     // TODO
 }
 
+void CAIPSetErrorHandleCallback(CAIPErrorHandleCallback ipErrorCallback)
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "OUT");
+}
+
 void CAIPPullData()
 {
     CAArduinoCheckData();
 }
 
-/// Retrieves the IP address assigned to Arduino Ethernet shield
-CAResult_t CAArduinoGetInterfaceAddress(char *address, int32_t addrLen)
+CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    VERIFY_NON_NULL(address, TAG, "address");
 
-    //TODO : Fix this for scenarios when this API is invoked when device is not connected
-    uint8_t rawIPAddr[4];
-    if (addrLen < IPNAMESIZE)
+    VERIFY_NON_NULL(info, TAG, "info is NULL");
+    VERIFY_NON_NULL(size, TAG, "size is NULL");
+
+    u_arraylist_t *iflist = CAIPGetInterfaceInformation(0);
+    if (!iflist)
     {
-        OIC_LOG(ERROR, TAG, "Invalid addrLen");
+        OIC_LOG(ERROR, TAG, "get interface info failed");
         return CA_STATUS_FAILED;
     }
 
-    W5100.getIPAddress(rawIPAddr);
-    snprintf(address, sizeof(address), "%d.%d.%d.%d", rawIPAddr[0], rawIPAddr[1], rawIPAddr[2],
-             rawIPAddr[3]);
+    uint32_t len = u_arraylist_length(iflist);
 
-    OIC_LOG_V(DEBUG, TAG, "address:%s", address);
+    CAEndpoint_t *eps = (CAEndpoint_t *)OICCalloc(len, sizeof (CAEndpoint_t));
+    if (!eps)
+    {
+        OIC_LOG(ERROR, TAG, "Malloc Failed");
+        u_arraylist_destroy(iflist);
+        return CA_MEMORY_ALLOC_FAILED;
+    }
+
+    for (uint32_t i = 0, j = 0; i < len; i++)
+    {
+        CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
+
+        OICStrcpy(eps[j].addr, CA_INTERFACE_NAME_SIZE, ifitem->name);
+        eps[j].flags = CA_IPV4;
+        eps[j].adapter = CA_ADAPTER_IP;
+        eps[j].interface = 0;
+        eps[j].port = 0;
+        j++;
+    }
+
+    *info = eps;
+    *size = len;
+
+    u_arraylist_destroy(iflist);
+
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }

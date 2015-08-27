@@ -36,6 +36,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.content.SharedPreferences;
+import android.content.res.AssetManager;
+import android.preference.PreferenceManager;
 
 import org.iotivity.base.ModeType;
 import org.iotivity.base.OcPlatform;
@@ -43,6 +46,13 @@ import org.iotivity.base.OcRepresentation;
 import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.QualityOfService;
 import org.iotivity.base.ServiceType;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 import base.iotivity.org.examples.message.IMessageLogger;
 
@@ -56,6 +66,8 @@ import base.iotivity.org.examples.message.IMessageLogger;
 
 public class SimpleServer extends Activity implements IMessageLogger {
     private final static String TAG = "SimpleServer: ";
+    private static final int BUFFER_SIZE = 1024;
+    private String filePath = "";
     private TextView mEventsTextView;
     private MessageReceiver mMessageReceiver = new MessageReceiver();
 
@@ -73,10 +85,72 @@ public class SimpleServer extends Activity implements IMessageLogger {
         OcRepresentation rep = new OcRepresentation();
         rep.setValueBool("test", false);
         boolean result = rep.getValueBool("test");
+        filePath = getFilesDir().getPath() + "/";//  data/data/<package>/files/
+        //copy json when application runs first time
+        SharedPreferences wmbPreference = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean isFirstRun = wmbPreference.getBoolean("FIRSTRUN", true);
+        if (isFirstRun) {
+            copyJsonFromAsset();
+            SharedPreferences.Editor editor = wmbPreference.edit();
+            editor.putBoolean("FIRSTRUN", false);
+            editor.commit();
+        }
 
         initOICStack();
     }
 
+    /**
+     * Copy svr db json file from assets folder to app data files dir
+     */
+    private void copyJsonFromAsset() {
+        AssetManager assetManager = getAssets();
+
+        InputStream in = null;
+        OutputStream out = null;
+        try {
+
+            in = assetManager.open(StringConstants.OIC_SERVER_JSON_DB_FILE);
+            File file = new File(filePath);
+            //check files directory exists
+            if (!(file.exists() && file.isDirectory())) {
+                file.mkdirs();
+            }
+            out = new FileOutputStream(filePath + StringConstants.OIC_SERVER_JSON_DB_FILE);
+            copyFile(in, out);
+        } catch (NullPointerException e) {
+            logMessage(TAG + "Null pointer exception " + e.getMessage());
+            Log.e(TAG, e.getMessage());
+        } catch (FileNotFoundException e) {
+            logMessage(TAG + "Json svr db file not found " + e.getMessage());
+            Log.e(TAG, e.getMessage());
+        } catch (IOException e) {
+            logMessage(TAG + StringConstants.OIC_SERVER_JSON_DB_FILE + " file copy failed");
+            Log.e(TAG, e.getMessage());
+        } finally {
+            if (in != null) {
+                try {
+                    in.close();
+                } catch (IOException e) {
+                    Log.e(TAG, e.getMessage());
+                }
+            }
+            if (out != null) {
+                try {
+                    out.close();
+                } catch (IOException e) {
+                    Log.e(TAG, e.getMessage());
+                }
+            }
+        }
+    }
+
+    private void copyFile(InputStream in, OutputStream out) throws IOException {
+        byte[] buffer = new byte[BUFFER_SIZE];
+        int read;
+        while ((read = in.read(buffer)) != -1) {
+            out.write(buffer, 0, read);
+        }
+    }
     /**
      * configure OIC platform and call findResource
      */
@@ -88,7 +162,8 @@ public class SimpleServer extends Activity implements IMessageLogger {
                 ModeType.SERVER,
                 "0.0.0.0", // bind to all available interfaces
                 0,
-                QualityOfService.LOW);
+                QualityOfService.LOW,
+                filePath + StringConstants.OIC_SERVER_JSON_DB_FILE);
         OcPlatform.Configure(cfg);
         // Create instance of lightResource
         LightResource myLight = new LightResource(this);

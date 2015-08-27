@@ -28,24 +28,23 @@
 #include "ocstack.h"
 #include "logger.h"
 #include "occlientbasicops.h"
-#include "cJSON.h"
+#include "ocpayload.h"
+#include "payload_logging.h"
+#include "oic_string.h"
 #include "common.h"
 
 #define TAG "occlientbasicops"
-static int UNICAST_DISCOVERY = 0;
-static int TEST_CASE = 0;
+static int UnicastDiscovery = 0;
+static int TestCase = 0;
+static int ConnType = 0;
 
-static int IPV4_ADDR_SIZE = 16;
-static char UNICAST_DISCOVERY_QUERY[] = "coap://%s:6298/oic/res";
-static char MULTICAST_DISCOVERY_QUERY[] = "/oic/res";
+static char DISCOVERY_QUERY[] = "%s/oic/res";
+OCConnectivityType discoveryReqConnType = CT_ADAPTER_IP;
+static OCDevAddr endpoint;
 
-static std::string putPayload = "{\"oic\":[{\"rep\":{\"state\":\"off\",\"power\":10}}]}";
-static std::string coapServerIP;
-static std::string coapServerPort;
 static std::string coapServerResource;
 static int coapSecureResource;
 static OCConnectivityType ocConnType;
-
 
 //Secure Virtual Resource database for Iotivity Client application
 //It contains Client's Identity and the PSK credentials
@@ -64,19 +63,40 @@ void handleSigInt(int signum)
     }
 }
 
+OCPayload* putPayload()
+{
+    OCRepPayload* payload = OCRepPayloadCreate();
+
+    if(!payload)
+    {
+        std::cout << "Failed to create put payload object"<<std::endl;
+        std::exit(1);
+    }
+
+    OCRepPayloadSetPropInt(payload, "power", 15);
+    OCRepPayloadSetPropBool(payload, "state", true);
+
+    return (OCPayload*) payload;
+}
+
 static void PrintUsage()
 {
-    OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1|2|3>");
+    OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1|2|3> -c <0|1>");
     OC_LOG(INFO, TAG, "-u <0|1> : Perform multicast/unicast discovery of resources");
     OC_LOG(INFO, TAG, "-t 1 : Discover Resources");
     OC_LOG(INFO, TAG, "-t 2 : Discover Resources and"
             " Initiate Nonconfirmable Get/Put/Post Requests");
     OC_LOG(INFO, TAG, "-t 3 : Discover Resources and Initiate Confirmable Get/Put/Post Requests");
+    OC_LOG(INFO, TAG, "-c 0 : Default auto-selection");
+    OC_LOG(INFO, TAG, "-c 1 : IP Connectivity Type");
 }
 
 OCStackResult InvokeOCDoResource(std::ostringstream &query,
-        OCMethod method, OCQualityOfService qos,
-        OCClientResponseHandler cb, OCHeaderOption * options, uint8_t numOptions)
+                                 OCMethod method,
+                                 const OCDevAddr *dest,
+                                 OCQualityOfService qos,
+                                 OCClientResponseHandler cb,
+                                 OCHeaderOption * options, uint8_t numOptions)
 {
     OCStackResult ret;
     OCCallbackData cbData;
@@ -85,8 +105,8 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
     cbData.context = NULL;
     cbData.cd = NULL;
 
-    ret = OCDoResource(NULL, method, query.str().c_str(), 0,
-            (method == OC_REST_PUT || method == OC_REST_POST) ? putPayload.c_str() : NULL,
+    ret = OCDoResource(NULL, method, query.str().c_str(), dest,
+            (method == OC_REST_PUT || method == OC_REST_POST) ? putPayload() : NULL,
             ocConnType, qos, &cbData, options, numOptions);
 
     if (ret != OC_STACK_OK)
@@ -97,32 +117,33 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
     return ret;
 }
 
-OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse)
+OCStackApplicationResult putReqCB(void*, OCDoHandle, OCClientResponse * clientResponse)
 {
     OC_LOG(INFO, TAG, "Callback Context for PUT recvd successfully");
 
     if(clientResponse)
     {
         OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
-        OC_LOG_V(INFO, TAG, "JSON = %s =============> Put Response", clientResponse->resJSONPayload);
+        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+        OC_LOG(INFO, TAG, PCF("=============> Put Response"));
     }
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-OCStackApplicationResult postReqCB(void *ctx, OCDoHandle handle, OCClientResponse *clientResponse)
+OCStackApplicationResult postReqCB(void *, OCDoHandle, OCClientResponse *clientResponse)
 {
     OC_LOG(INFO, TAG, "Callback Context for POST recvd successfully");
 
     if(clientResponse)
     {
         OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
-        OC_LOG_V(INFO, TAG, "JSON = %s =============> Post Response",
-                clientResponse->resJSONPayload);
+        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+        OC_LOG(INFO, TAG, PCF("=============> Post Response"));
     }
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse)
+OCStackApplicationResult getReqCB(void*, OCDoHandle, OCClientResponse * clientResponse)
 {
     OC_LOG(INFO, TAG, "Callback Context for GET query recvd successfully");
 
@@ -130,14 +151,14 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse
     {
         OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
         OC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
-        OC_LOG_V(INFO, TAG, "JSON = %s =============> Get Response",
-                clientResponse->resJSONPayload);
+        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+        OC_LOG(INFO, TAG, PCF("=============> Get Response"));
     }
     return OC_STACK_DELETE_TRANSACTION;
 }
 
 // This is a function called back when a device is discovered
-OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
+OCStackApplicationResult discoveryReqCB(void*, OCDoHandle,
         OCClientResponse * clientResponse)
 {
     OC_LOG(INFO, TAG, "Callback Context for DISCOVER query recvd successfully");
@@ -146,30 +167,37 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
     {
         OC_LOG_V(INFO, TAG, "StackResult: %s", getResult(clientResponse->result));
         OC_LOG_V(INFO, TAG,
-                "Device =============> Discovered %s @ %s:%d",
-                clientResponse->resJSONPayload, clientResponse->devAddr.addr, clientResponse->devAddr.port);
+                "Device =============> Discovered @ %s:%d",
+                clientResponse->devAddr.addr,
+                clientResponse->devAddr.port);
 
-        ocConnType = clientResponse->connType;
-
-        if (parseClientResponse(clientResponse) != -1)
+        if (clientResponse->result == OC_STACK_OK)
         {
-            switch(TEST_CASE)
+            OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+
+            ocConnType = clientResponse->connType;
+            endpoint = clientResponse->devAddr;
+
+            if (parseClientResponse(clientResponse) != -1)
             {
-                case TEST_NON_CON_OP:
-                    InitGetRequest(OC_LOW_QOS);
-                    InitPutRequest(OC_LOW_QOS);
-                    //InitPostRequest(OC_LOW_QOS);
-                    break;
-                case TEST_CON_OP:
-                    InitGetRequest(OC_HIGH_QOS);
-                    InitPutRequest(OC_HIGH_QOS);
-                    //InitPostRequest(OC_HIGH_QOS);
-                    break;
+                switch(TestCase)
+                {
+                    case TEST_NON_CON_OP:
+                        InitGetRequest(OC_LOW_QOS);
+                        InitPutRequest(OC_LOW_QOS);
+                        //InitPostRequest(OC_LOW_QOS);
+                        break;
+                    case TEST_CON_OP:
+                        InitGetRequest(OC_HIGH_QOS);
+                        InitPutRequest(OC_HIGH_QOS);
+                        //InitPostRequest(OC_HIGH_QOS);
+                        break;
+                }
             }
         }
     }
 
-    return (UNICAST_DISCOVERY) ? OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION ;
+    return (UnicastDiscovery) ? OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION ;
 
 }
 
@@ -177,9 +205,9 @@ int InitPutRequest(OCQualityOfService qos)
 {
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
-    query << (coapSecureResource ? "coaps://" : "coap://") << coapServerIP
-        << ":" << coapServerPort  << coapServerResource;
-    return (InvokeOCDoResource(query, OC_REST_PUT,
+    query << coapServerResource;
+    endpoint.flags = (OCTransportFlags)(endpoint.flags|OC_SECURE);
+    return (InvokeOCDoResource(query, OC_REST_PUT, &endpoint,
             ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS), putReqCB, NULL, 0));
 }
 
@@ -188,11 +216,11 @@ int InitPostRequest(OCQualityOfService qos)
     OCStackResult result;
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
-    query << (coapSecureResource ? "coaps://" : "coap://") << coapServerIP
-        << ":" << coapServerPort << coapServerResource;
+    query << coapServerResource;
+    endpoint.flags = (OCTransportFlags)(endpoint.flags|OC_SECURE);
 
     // First POST operation (to create an LED instance)
-    result = InvokeOCDoResource(query, OC_REST_POST,
+    result = InvokeOCDoResource(query, OC_REST_POST, &endpoint,
             ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS),
             postReqCB, NULL, 0);
     if (OC_STACK_OK != result)
@@ -202,7 +230,7 @@ int InitPostRequest(OCQualityOfService qos)
     }
 
     // Second POST operation (to create an LED instance)
-    result = InvokeOCDoResource(query, OC_REST_POST,
+    result = InvokeOCDoResource(query, OC_REST_POST, &endpoint,
             ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS),
             postReqCB, NULL, 0);
     if (OC_STACK_OK != result)
@@ -211,7 +239,7 @@ int InitPostRequest(OCQualityOfService qos)
     }
 
     // This POST operation will update the original resourced /a/led
-    return (InvokeOCDoResource(query, OC_REST_POST,
+    return (InvokeOCDoResource(query, OC_REST_POST, &endpoint,
                 ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS),
                 postReqCB, NULL, 0));
 }
@@ -220,46 +248,38 @@ int InitGetRequest(OCQualityOfService qos)
 {
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
-    query << (coapSecureResource ? "coaps://" : "coap://") << coapServerIP
-        << ":" << coapServerPort << coapServerResource;
+    query << coapServerResource;
+    endpoint.flags = (OCTransportFlags)(endpoint.flags|OC_SECURE);
 
-    return (InvokeOCDoResource(query, OC_REST_GET, (qos == OC_HIGH_QOS)?
-            OC_HIGH_QOS:OC_LOW_QOS, getReqCB, NULL, 0));
+    return (InvokeOCDoResource(query, OC_REST_GET, &endpoint,
+                ((qos == OC_HIGH_QOS)?  OC_HIGH_QOS:OC_LOW_QOS),
+                getReqCB, NULL, 0));
 }
 
 int InitDiscovery()
 {
     OCStackResult ret;
-    OCMethod method;
     OCCallbackData cbData;
-    char szQueryUri[MAX_URI_LENGTH] = { 0 };
-    OCConnectivityType discoveryReqConnType;
+    char queryUri[200];
+    char ipaddr[100] = { '\0' };
 
-    if (UNICAST_DISCOVERY)
+    if (UnicastDiscovery)
     {
-        char ipv4addr[IPV4_ADDR_SIZE];
-        printf("Enter IPv4 address of the Server hosting secure resource (Ex: 11.12.13.14)\n");
-        if (fgets(ipv4addr, IPV4_ADDR_SIZE, stdin))
+        OC_LOG(INFO, TAG, "Enter IP address (with optional port) of the Server hosting resource\n");
+        OC_LOG(INFO, TAG, "IPv4: 192.168.0.15:45454\n");
+        OC_LOG(INFO, TAG, "IPv6: [fe80::20c:29ff:fe1b:9c5]:45454\n");
+
+        if (fgets(ipaddr, sizeof (ipaddr), stdin))
         {
-            //Strip newline char from ipv4addr
-            StripNewLineChar(ipv4addr);
-            snprintf(szQueryUri, sizeof(szQueryUri), UNICAST_DISCOVERY_QUERY, ipv4addr);
+            StripNewLineChar(ipaddr); //Strip newline char from ipaddr
         }
         else
         {
-            OC_LOG(ERROR, TAG, "!! Bad input for IPV4 address. !!");
+            OC_LOG(ERROR, TAG, "!! Bad input for IP address. !!");
             return OC_STACK_INVALID_PARAM;
         }
-        discoveryReqConnType = CT_ADAPTER_IP;
-        method = OC_REST_GET;
     }
-    else
-    {
-        //Send discovery request on Wifi and Ethernet interface
-        discoveryReqConnType = CT_DEFAULT;
-        strcpy(szQueryUri, MULTICAST_DISCOVERY_QUERY);
-        method = OC_REST_DISCOVER;
-    }
+    snprintf(queryUri, sizeof (queryUri), DISCOVERY_QUERY, ipaddr);
 
     cbData.cb = discoveryReqCB;
     cbData.context = NULL;
@@ -267,12 +287,11 @@ int InitDiscovery()
 
     /* Start a discovery query*/
     OC_LOG_V(INFO, TAG, "Initiating %s Resource Discovery : %s\n",
-        (UNICAST_DISCOVERY) ? "Unicast" : "Multicast",
-        szQueryUri);
+        (UnicastDiscovery) ? "Unicast" : "Multicast",
+        queryUri);
 
-    ret = OCDoResource(NULL, method, szQueryUri, 0, 0,
-            discoveryReqConnType, OC_LOW_QOS,
-            &cbData, NULL, 0);
+    ret = OCDoResource(NULL, OC_REST_DISCOVER, queryUri, 0, 0, CT_DEFAULT,
+                       OC_LOW_QOS, &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "OCStack resource error");
@@ -291,15 +310,18 @@ int main(int argc, char* argv[])
     int opt;
     struct timespec timeout;
 
-    while ((opt = getopt(argc, argv, "u:t:")) != -1)
+    while ((opt = getopt(argc, argv, "u:t:c:")) != -1)
     {
         switch(opt)
         {
             case 'u':
-                UNICAST_DISCOVERY = atoi(optarg);
+                UnicastDiscovery = atoi(optarg);
                 break;
             case 't':
-                TEST_CASE = atoi(optarg);
+                TestCase = atoi(optarg);
+                break;
+            case 'c':
+                ConnType = atoi(optarg);
                 break;
             default:
                 PrintUsage();
@@ -307,20 +329,28 @@ int main(int argc, char* argv[])
         }
     }
 
-    if ((UNICAST_DISCOVERY != 0 && UNICAST_DISCOVERY != 1) ||
-            (TEST_CASE < TEST_DISCOVER_REQ || TEST_CASE >= MAX_TESTS) )
+    if ((UnicastDiscovery != 0 && UnicastDiscovery != 1) ||
+            (TestCase < TEST_DISCOVER_REQ || TestCase >= MAX_TESTS)||
+            (ConnType < CT_ADAPTER_DEFAULT || ConnType >= MAX_CT))
     {
         PrintUsage();
         return -1;
     }
 
+
+    if(ConnType == CT_ADAPTER_DEFAULT || ConnType ==  CT_IP)
+    {
+        discoveryReqConnType = CT_DEFAULT;
+    }
+    else
+    {
+        OC_LOG(INFO, TAG, "Using Default Connectivity type");
+        PrintUsage();
+    }
+
+
     // Initialize Persistent Storage for SVR database
-    OCPersistentStorage ps = {};
-    ps.open = client_fopen;
-    ps.read = fread;
-    ps.write = fwrite;
-    ps.close = fclose;
-    ps.unlink = unlink;
+    OCPersistentStorage ps = { client_fopen, fread, fwrite, fclose, unlink };
     OCRegisterPersistentStorageHandler(&ps);
 
     /* Initialize OCStack*/
@@ -358,97 +388,36 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-std::string getPortTBServer(OCClientResponse * clientResponse)
-{
-    if(!clientResponse) return "";
-    std::ostringstream ss;
-    ss << clientResponse->devAddr.port;
-    return ss.str();
-}
-
 int parseClientResponse(OCClientResponse * clientResponse)
 {
-    int port = -1;
-    cJSON * root = NULL;
-    cJSON * oc = NULL;
+    OCResourcePayload* res = ((OCDiscoveryPayload*)clientResponse->payload)->resources;
 
     // Initialize all global variables
     coapServerResource.clear();
-    coapServerPort.clear();
-    coapServerIP.clear();
     coapSecureResource = 0;
 
-    root = cJSON_Parse((char *)(clientResponse->resJSONPayload));
-    if (!root)
+    while (res)
     {
-        return -1;
-    }
+        coapServerResource.assign(res->uri);
+        OC_LOG_V(INFO, TAG, "Uri -- %s", coapServerResource.c_str());
 
-    oc = cJSON_GetObjectItem(root,"oic");
-    if (!oc)
-    {
-        return -1;
-    }
-
-    if (oc->type == cJSON_Array)
-    {
-        int numRsrcs =  cJSON_GetArraySize(oc);
-        for(int i = 0; i < numRsrcs; i++)
+        if (res->secure)
         {
-            cJSON * resource = cJSON_GetArrayItem(oc, i);
-            if (cJSON_GetObjectItem(resource, "href"))
-            {
-                coapServerResource.assign(cJSON_GetObjectItem(resource, "href")->valuestring);
-            }
-            else
-            {
-                coapServerResource = "";
-            }
-            OC_LOG_V(INFO, TAG, "Uri -- %s", coapServerResource.c_str());
-
-            cJSON * prop = cJSON_GetObjectItem(resource,"prop");
-            if (prop)
-            {
-                cJSON * policy = cJSON_GetObjectItem(prop,"p");
-                if (policy)
-                {
-                    // If this is a secure resource, the info about the port at which the
-                    // resource is hosted on server is embedded inside discovery JSON response
-                    if (cJSON_GetObjectItem(policy, "sec"))
-                    {
-                        if ((cJSON_GetObjectItem(policy, "sec")->valueint) == 1)
-                        {
-                            coapSecureResource = 1;
-                        }
-                    }
-                    OC_LOG_V(INFO, TAG, "Secure -- %s", coapSecureResource == 1 ? "YES" : "NO");
-                    if (cJSON_GetObjectItem(policy, "port"))
-                    {
-                        port = cJSON_GetObjectItem(policy, "port")->valueint;
-                        OC_LOG_V(INFO, TAG, "Hosting Server Port (embedded inside JSON) -- %u", port);
-
-                        std::ostringstream ss;
-                        ss << port;
-                        coapServerPort = ss.str();
-                    }
-                }
-            }
-
-            // If we discovered a secure resource, exit from here
-            if (coapSecureResource)
-            {
-                break;
-            }
+            endpoint.port = res->port;
+            coapSecureResource = 1;
         }
-    }
-    cJSON_Delete(root);
 
-    coapServerIP = clientResponse->devAddr.addr;
-    if (port == -1)
-    {
-        coapServerPort = getPortTBServer(clientResponse);
-        OC_LOG_V(INFO, TAG, "Hosting Server Port -- %s", coapServerPort.c_str());
+        OC_LOG_V(INFO, TAG, "Secure -- %s", coapSecureResource == 1 ? "YES" : "NO");
+
+        // If we discovered a secure resource, exit from here
+        if (coapSecureResource)
+        {
+            break;
+        }
+
+        res = res->next;
     }
+
     return 0;
 }
 

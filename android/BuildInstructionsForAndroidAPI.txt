@@ -10,7 +10,7 @@ Build Instructions for Android-API:
         def ndkBuild = new File(System.env.ANDROID_NDK_HOME, 'ndk-build.cmd')
 
 4.Build scons for android and your targeted architecture (This will also build Android API):
-    a.scons TARGET_OS=android TARGET_ARCH=<target arch> TARGET_TRANSPORT=IP RELEASE=1 
+    a.scons TARGET_OS=android TARGET_ARCH=<target arch> TARGET_TRANSPORT=IP RELEASE=1
                where <target arch> can be armeabi, armeabi-v7a, x86.
                Note: To build in debug mode, use RELEASE=0.
                Note: The minimum SDK version supported is 21.
@@ -26,7 +26,7 @@ TO RUN UNIT TESTS IN ANDROID-API
 
 TO USE THE .AAR FILE IN <iotivity>/android/examples project
 
-6. Verify that 9 different *.so files exist inside <iotivity>/android/android-api/base/libs/<TARGET_ARCH> directory. (They should already be present in the *.aar file.)
+6. Verify that 7 different *.so files exist inside <iotivity>/android/android-api/base/libs/<TARGET_ARCH> directory. (They should already be present in the *.aar file.)
 7. Import Project 'Examples' into android-studio.
 8.To add an .aar file to the 'Examples' project,
    a.Right click on Examples->New->Module->Import .JAR or .AAR Package
@@ -39,7 +39,7 @@ TO USE THE .AAR FILE IN <iotivity>/android/examples project
 
 TO USE THE .AAR FILE IN A DIFFERENT PROJECT
 
-9. Verify that 9 different *.so files exist inside <iotivity base>/android/android-api/base/libs/<TARGET_ARCH> directory.
+9. Verify that 7 different *.so files exist inside <iotivity base>/android/android-api/base/libs/<TARGET_ARCH> directory.
 10. Import the .aar file in your project to use it
 
 

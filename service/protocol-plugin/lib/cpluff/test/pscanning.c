@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  * C-Pluff, a plug-in framework for C
  * Copyright 2007 Johannes Lehtinen
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -33,16 +33,16 @@
 static void scanupgrade_checkpver(cp_context_t *ctx, const char *plugin, const char *ver) {
 	cp_plugin_info_t *pi;
 	cp_status_t status;
-	
+
 	check((pi = cp_get_plugin_info(ctx, plugin, &status)) != NULL && status == CP_OK);
 	check(ver == NULL ? pi->version == NULL : (pi->version != NULL && strcmp(pi->version, ver) == 0));
-	cp_release_info(ctx, pi); 
+	cp_release_info(ctx, pi);
 }
 
 void scanupgrade(void) {
 	cp_context_t *ctx;
 	int errors;
-	
+
 	ctx = init_context(CP_LOG_ERROR, &errors);
 	check(cp_register_pcollection(ctx, pcollectiondir("collection1")) == CP_OK);
 	check(cp_register_pcollection(ctx, pcollectiondir("collection2")) == CP_OK);
@@ -51,7 +51,7 @@ void scanupgrade(void) {
 	check(cp_get_plugin_state(ctx, "plugin2a") == CP_PLUGIN_INSTALLED);
 	check(cp_get_plugin_state(ctx, "plugin2b") == CP_PLUGIN_INSTALLED);
 	scanupgrade_checkpver(ctx, "plugin1", NULL);
-	
+
 	// Register newer version of plugin1 but do not allow upgrades
 	check(cp_start_plugin(ctx, "plugin1") == CP_OK);
 	check(cp_get_plugin_state(ctx, "plugin1") == CP_PLUGIN_ACTIVE);
@@ -63,7 +63,7 @@ void scanupgrade(void) {
 	// Now allow upgrade of plugin1
 	check(cp_scan_plugins(ctx, CP_SP_UPGRADE) == CP_OK);
 	scanupgrade_checkpver(ctx, "plugin1", "2");
-	
+
 	// Register even new version and upgrade while running
 	check(cp_register_pcollection(ctx, pcollectiondir("collection1v3")) == CP_OK);
 	check(cp_start_plugin(ctx, "plugin1") == CP_OK);
@@ -71,7 +71,7 @@ void scanupgrade(void) {
 	check(cp_scan_plugins(ctx, CP_SP_UPGRADE) == CP_OK);
 	check(cp_get_plugin_state(ctx, "plugin1") == CP_PLUGIN_INSTALLED);
 	scanupgrade_checkpver(ctx, "plugin1", "3");
-	
+
 	// Check that plug-in is not downgraded when newer versions are unregistered
 	cp_unregister_pcollection(ctx, pcollectiondir("collection1v3"));
 	check(cp_scan_plugins(ctx, CP_SP_UPGRADE) == CP_OK);
@@ -84,12 +84,12 @@ void scanupgrade(void) {
 void scanstoponupgrade(void) {
 	cp_context_t *ctx;
 	int errors;
-	
+
 	ctx = init_context(CP_LOG_ERROR, &errors);
 	check(cp_register_pcollection(ctx, pcollectiondir("collection1")) == CP_OK);
 	check(cp_register_pcollection(ctx, pcollectiondir("collection2")) == CP_OK);
 	check(cp_scan_plugins(ctx, 0) == CP_OK);
-	
+
 	// First check upgrade without stopping other plug-ins
 	check(cp_start_plugin(ctx, "plugin1") == CP_OK);
 	check(cp_get_plugin_state(ctx, "plugin1") == CP_PLUGIN_ACTIVE);
@@ -99,7 +99,7 @@ void scanstoponupgrade(void) {
 	check(cp_scan_plugins(ctx, CP_SP_UPGRADE) == CP_OK);
 	check(cp_get_plugin_state(ctx, "plugin1") == CP_PLUGIN_INSTALLED);
 	check(cp_get_plugin_state(ctx, "plugin2a") == CP_PLUGIN_ACTIVE);
-	
+
 	// Then check upgrade with stop flag
 	check(cp_start_plugin(ctx, "plugin1") == CP_OK);
 	check(cp_get_plugin_state(ctx, "plugin1") == CP_PLUGIN_ACTIVE);
@@ -115,11 +115,11 @@ void scanstoponupgrade(void) {
 void scanstoponinstall(void) {
 	cp_context_t *ctx;
 	int errors;
-	
+
 	ctx = init_context(CP_LOG_ERROR, &errors);
 	check(cp_register_pcollection(ctx, pcollectiondir("collection1")) == CP_OK);
 	check(cp_scan_plugins(ctx, 0) == CP_OK);
-	
+
 	// First check install without stopping other plug-ins
 	check(cp_start_plugin(ctx, "plugin1") == CP_OK);
 	check(cp_get_plugin_state(ctx, "plugin1") == CP_PLUGIN_ACTIVE);
@@ -128,7 +128,7 @@ void scanstoponinstall(void) {
 	check(cp_scan_plugins(ctx, 0) == CP_OK);
 	check(cp_get_plugin_state(ctx, "plugin1") == CP_PLUGIN_ACTIVE);
 	check(cp_get_plugin_state(ctx, "plugin2a") == CP_PLUGIN_INSTALLED);
-	
+
 	// Then check install and stopping of other plug-ins
 	check(cp_uninstall_plugin(ctx, "plugin2a") == CP_OK);
 	check(cp_get_plugin_state(ctx, "plugin1") == CP_PLUGIN_ACTIVE);
@@ -136,7 +136,7 @@ void scanstoponinstall(void) {
 	check(cp_scan_plugins(ctx, CP_SP_STOP_ALL_ON_INSTALL) == CP_OK);
 	check(cp_get_plugin_state(ctx, "plugin1") == CP_PLUGIN_RESOLVED);
 	check(cp_get_plugin_state(ctx, "plugin2a") == CP_PLUGIN_INSTALLED);
-	
+
 	// Then check upgrade and stopping of other plug-ins
 	check(cp_start_plugin(ctx, "plugin2a") == CP_OK);
 	check(cp_get_plugin_state(ctx, "plugin2a") == CP_PLUGIN_ACTIVE);
@@ -151,7 +151,7 @@ void scanstoponinstall(void) {
 void scanrestart(void) {
 	cp_context_t *ctx;
 	int errors;
-	
+
 	ctx = init_context(CP_LOG_ERROR, &errors);
 	check(cp_register_pcollection(ctx, pcollectiondir("collection1")) == CP_OK);
 	check(cp_register_pcollection(ctx, pcollectiondir("collection2")) == CP_OK);
@@ -175,7 +175,7 @@ void scanrestart(void) {
 	check(cp_get_plugin_state(ctx, "plugin1") == CP_PLUGIN_ACTIVE);
 	check(cp_get_plugin_state(ctx, "plugin2a") == CP_PLUGIN_INSTALLED);
 	check(cp_get_plugin_state(ctx, "plugin2b") == CP_PLUGIN_ACTIVE);
-	
+
 	cp_destroy();
 	check(errors == 0);
 }

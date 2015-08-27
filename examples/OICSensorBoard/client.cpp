@@ -42,8 +42,8 @@ void IoTClient::initializePlatform()
 
 void IoTClient::findResource()
 {
-    string coap_multicast_discovery = string(OC_WELL_KNOWN_QUERY "?if=" EDISON_RESOURCE_INTERFACE);
-    OCPlatform::findResource("", coap_multicast_discovery.c_str(),  OC_ALL, m_resourceDiscoveryCallback,
+    string coap_multicast_discovery = string(OC_RSRVD_WELL_KNOWN_URI "?if=" EDISON_RESOURCE_INTERFACE);
+    OCPlatform::findResource("", coap_multicast_discovery.c_str(),  CT_DEFAULT, m_resourceDiscoveryCallback,
                              OC::QualityOfService::LowQos);
 }
 
@@ -144,16 +144,31 @@ void TemperatureSensor::stopObserve()
 void TemperatureSensor::onObserve(const HeaderOptions headerOptions, const OCRepresentation& rep,
                                   int eCode, int sequenceNumber)
 {
-    if (eCode == OC_STACK_OK)
+    if (eCode == OC_STACK_OK && sequenceNumber != OC_OBSERVE_NO_OPTION)
     {
+        if(sequenceNumber == OC_OBSERVE_REGISTER)
+        {
+            cout << "Observe registration action is successful" << endl;
+        }
+        else if(sequenceNumber == OC_OBSERVE_DEREGISTER)
+        {
+            cout << "Observe De-registration action is successful" << endl;
+        }
         double value;
         rep.getValue(TEMPERATURE_RESOURCE_KEY, value);
-        cout << "Observing TemperatureSensor: Current temperature reading is " << value << endl;
+        cout << "Observing TemperatureSensor: Current temperature reading in Celsius is " << value << endl;
         cout << "Sequence number: " << sequenceNumber << endl;
     }
     else
     {
-        cerr << "TemperatureSensor: Observer response error" << endl;
+        if(sequenceNumber == OC_OBSERVE_NO_OPTION)
+        {
+            cerr << "Observe registration or de-registration action is failed" << endl;
+        }
+        else
+        {
+            cerr << "TemperatureSensor: Observer response error" << endl;
+        }
     }
 }
 
@@ -170,7 +185,7 @@ void TemperatureSensor::onGet(const HeaderOptions& headerOptions,
     {
         double value;
         representation.getValue(TEMPERATURE_RESOURCE_KEY, value);
-        cout << endl << endl << "Current temperature reading: " << value << endl;
+        cout << endl << endl << "Current temperature reading in Celsius: " << value << endl;
     }
     else {
         cerr << endl << endl << "Error in GET response from temperature sensor resource" << endl;

@@ -141,6 +141,7 @@ void DiagnosticsResource::diagnosticsMonitor(int second)
             logMessage = "----------------------------<br>";
             logMessage += "*** System Reboot Success ***<br>";
 
+            dlog_print(DLOG_INFO, LOG_TAG, "  %s", logMessage.c_str());
             //Show the log
             ecore_main_loop_thread_safe_call_sync(updateLog, &logMessage);
 

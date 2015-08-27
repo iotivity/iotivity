@@ -184,7 +184,7 @@ void createPresenceResources()
 // Create the instance of the resource class (in this case instance of class 'LightResource').
 LightResource myLightResource;
 
-OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
+OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> /*request*/)
 {
     cout << "\tIn Server CPP entity handler:\n";
     return OC_EH_OK;

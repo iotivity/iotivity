@@ -19,53 +19,48 @@
 #include "gtest/gtest.h"
 #include "ocstack.h"
 #include "srmutility.h"
-
+#include "oic_string.h"
 
 //ParseRestQuery Tests
 TEST(ParseRestQueryTest, ParseRestQueryEmpty)
 {
     unsigned char query[] = "";
-    OicParseQueryIter_t parseIter = {};
+    OicParseQueryIter_t parseIter =  OicParseQueryIter_t();
     ParseQueryIterInit(query, &parseIter);
     EXPECT_EQ(NULL,  GetNextQuery(&parseIter));
 }
+
 
 TEST(ParseRestQueryTest, ParseSingleRestQuery)
 {
     char attr[10], val[10];
     unsigned char query[] = "owned=false";
 
-    OicParseQueryIter_t parseIter = {};
+    OicParseQueryIter_t parseIter =  OicParseQueryIter_t();
     ParseQueryIterInit(query, &parseIter);
     EXPECT_NE((OicParseQueryIter_t *)NULL,  GetNextQuery(&parseIter));
 
-    strncpy(attr, (char *)parseIter.attrPos, parseIter.attrLen);
-    strncpy(val, (char *)parseIter.valPos, parseIter.valLen);
-    attr[parseIter.attrLen] = '\0';
-    val[parseIter.valLen] = '\0';
+    OICStrcpyPartial(attr, sizeof(attr), (char *)parseIter.attrPos, parseIter.attrLen);
+    OICStrcpyPartial(val, sizeof(val), (char *)parseIter.valPos, parseIter.valLen);
     printf("\nAttribute: %s  value: %s\n\n", attr, val);
-
 }
 
 TEST(ParseRestQueryTest, ParseRestMultipleQuery)
 {
     char attr[10], val[10];
-    unsigned char query[] = "oxm=0&owned=true&owner=owner1";
+    unsigned char query[] = "oxm=0;owned=true;owner=owner1";
 
-    OicParseQueryIter_t parseIter = {};
+    OicParseQueryIter_t parseIter =  OicParseQueryIter_t();
     ParseQueryIterInit(query, &parseIter);
     printf("\n");
     while(GetNextQuery(&parseIter))
     {
         EXPECT_NE(static_cast<size_t>(0),  parseIter.pi.segment_length);
 
-        strncpy(attr, (char *)parseIter.attrPos, parseIter.attrLen);
-        strncpy(val, (char *)parseIter.valPos, parseIter.valLen);
-        attr[parseIter.attrLen] = '\0';
-        val[parseIter.valLen] = '\0';
+        OICStrcpyPartial(attr, sizeof(attr), (char *)parseIter.attrPos, parseIter.attrLen);
+        OICStrcpyPartial(val, sizeof(val), (char *)parseIter.valPos, parseIter.valLen);
         printf("Attribute: %s  value: %s\n", attr, val);
 
     }
     printf("\n");
 }
-

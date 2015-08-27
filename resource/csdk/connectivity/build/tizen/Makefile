@@ -38,7 +38,7 @@ INC_DIRS        += -I$(DTLS_INC)
 SRC = $(wildcard *.c)
 OBJECTS = $(patsubst %.c, %.o, $(SRC))
 
-#Currently compiling libcoap objects. If it's provided by external party. 
+#Currently compiling libcoap objects. If it's provided by external party.
 #Then don't compile, Instead directly extract objects and create liboicinterface.a
 all: $(OBJECTS)
 	$(MAKE) -C $(LIBCOAP) clean

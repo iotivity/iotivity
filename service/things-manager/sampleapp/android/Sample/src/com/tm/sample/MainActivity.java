@@ -54,8 +54,8 @@ public class MainActivity extends Activity {
     private ArrayAdapter<String> apis;
     private ArrayList<String>    apisList;
     private ListView             list;
-    private final String         LOG_TAG          = this.getClass()
-                                                          .getSimpleName();
+    private final String         LOG_TAG          = "[TMSample] " + this.getClass()
+                                                                           .getSimpleName();
     public ThingsManager         thingsManagerObj = new ThingsManager();
 
     @Override
@@ -130,6 +130,7 @@ public class MainActivity extends Activity {
 
             dialog = dialogBuilder.create();
             dialog.show();
+            Log.i(LOG_TAG, "WiFi is not enabled/connected! Please connect the WiFi and start application again...");
             return;
         }
         // If wifi is connected calling the configure method for configuring the

@@ -32,6 +32,7 @@
 #include "camutex.h"
 #include "uarraylist.h"
 #include "caadapterutils.h"
+#include "caremotehandler.h"
 
 //#define DEBUG_MODE
 #define TAG PCF("CA_EDR_CLIENT")
@@ -97,6 +98,12 @@ static ca_mutex g_mutexStateList = NULL;
  */
 static ca_mutex g_mutexObjectList = NULL;
 
+/**
+ * @var g_edrErrorHandler
+ * @brief Error callback to update error in EDR
+ */
+static CAEDRErrorHandleCallback g_edrErrorHandler = NULL;
+
 typedef struct send_data
 {
     char* address;
@@ -151,8 +158,8 @@ CAResult_t CAEDRGetInterfaceInformation(CAEndpoint_t **info)
     }
 
     // Create local endpoint using util function
-    CAEndpoint_t *endpoint = CAAdapterCreateEndpoint(CA_DEFAULT_FLAGS,
-                                                     CA_ADAPTER_RFCOMM_BTEDR, macAddress, 0);
+    CAEndpoint_t *endpoint = CACreateEndpointObject(CA_DEFAULT_FLAGS, CA_ADAPTER_RFCOMM_BTEDR,
+                                                    macAddress, 0);
     if (NULL == endpoint)
     {
         OIC_LOG(ERROR, TAG, "Failed to create Local Endpoint!");
@@ -166,14 +173,14 @@ CAResult_t CAEDRGetInterfaceInformation(CAEndpoint_t **info)
     {
         OIC_LOG(ERROR, TAG, "Invalid input..");
         OICFree(macAddress);
-        CAAdapterFreeEndpoint(endpoint);
+        CAFreeEndpoint(endpoint);
         return CA_MEMORY_ALLOC_FAILED;
     }
     *netInfo = *endpoint;
     *info = netInfo;
 
     OICFree(macAddress);
-    CAAdapterFreeEndpoint(endpoint);
+    CAFreeEndpoint(endpoint);
 
     OIC_LOG(DEBUG, TAG, "OUT - CAEDRGetInterfaceInformation");
     return CA_STATUS_OK;
@@ -194,22 +201,23 @@ CAResult_t CAEDRManagerReadData(void)
     return CA_NOT_SUPPORTED;
 }
 
-CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const char *serviceUUID,
-                                      const void *data, uint32_t dataLength, uint32_t *sentLength)
+CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const uint8_t *data,
+                                      uint32_t dataLength)
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    CAEDRSendUnicastMessage(remoteAddress, (const char*) data, dataLength);
+
+    CAResult_t result = CAEDRSendUnicastMessage(remoteAddress, data, dataLength);
     OIC_LOG(DEBUG, TAG, "OUT");
-    return CA_STATUS_OK;
+    return result;
 }
 
-CAResult_t CAEDRClientSendMulticastData(const char *serviceUUID, const void *data,
-                                        uint32_t dataLength, uint32_t *sentLength)
+CAResult_t CAEDRClientSendMulticastData(const uint8_t *data, uint32_t dataLength)
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    CAEDRSendMulticastMessage((const char*) data, dataLength);
+
+    CAResult_t result = CAEDRSendMulticastMessage(data, dataLength);
     OIC_LOG(DEBUG, TAG, "OUT");
-    return CA_STATUS_OK;
+    return result;
 }
 
 // It will be updated when android EDR support is added
@@ -506,15 +514,15 @@ void CAEDRCoreJniInit()
     g_jvm = (JavaVM*) CANativeJNIGetJavaVM();
 }
 
-CAResult_t CAEDRSendUnicastMessage(const char* address, const char* data, uint32_t dataLen)
+CAResult_t CAEDRSendUnicastMessage(const char* address, const uint8_t* data, uint32_t dataLen)
 {
     OIC_LOG_V(DEBUG, TAG, "CAEDRSendUnicastMessage(%s, %s)", address, data);
 
-    CAEDRSendUnicastMessageImpl(address, data, dataLen);
-    return CA_STATUS_OK;
+    CAResult_t result = CAEDRSendUnicastMessageImpl(address, data, dataLen);
+    return result;
 }
 
-CAResult_t CAEDRSendMulticastMessage(const char* data, uint32_t dataLen)
+CAResult_t CAEDRSendMulticastMessage(const uint8_t* data, uint32_t dataLen)
 {
     OIC_LOG_V(DEBUG, TAG, "CAEDRSendMulticastMessage(%s)", data);
 
@@ -534,7 +542,12 @@ CAResult_t CAEDRSendMulticastMessage(const char* data, uint32_t dataLen)
         isAttached = true;
     }
 
-    CAEDRSendMulticastMessageImpl(env, data, dataLen);
+    CAResult_t result = CAEDRSendMulticastMessageImpl(env, data, dataLen);
+    if(CA_STATUS_OK != result)
+    {
+        OIC_LOG(ERROR, TAG, "CAEDRSendMulticastMessage - could not send multicast message");
+        return result;
+    }
 
     OIC_LOG(DEBUG, TAG, "sent data");
 
@@ -595,7 +608,7 @@ void CAEDRGetLocalAddress(char **address)
     }
 }
 
-CAResult_t CAEDRSendUnicastMessageImpl(const char* address, const char* data, uint32_t dataLen)
+CAResult_t CAEDRSendUnicastMessageImpl(const char* address, const uint8_t* data, uint32_t dataLen)
 {
     OIC_LOG_V(DEBUG, TAG, "CAEDRSendUnicastMessageImpl, address: %s, data: %s", address, data);
 
@@ -677,7 +690,7 @@ CAResult_t CAEDRSendUnicastMessageImpl(const char* address, const char* data, ui
         // find address
         if (!strcmp(remoteAddress, address))
         {
-            CAResult_t res = CAEDRNativeSendData(env, remoteAddress, data, dataLen, i);
+            CAResult_t res = CAEDRNativeSendData(env, remoteAddress, data, dataLen);
             if (CA_STATUS_OK != res)
             {
                 (*env)->ReleaseStringUTFChars(env, j_str_address, remoteAddress);
@@ -695,7 +708,7 @@ CAResult_t CAEDRSendUnicastMessageImpl(const char* address, const char* data, ui
     return CA_STATUS_OK;
 }
 
-CAResult_t CAEDRSendMulticastMessageImpl(JNIEnv *env, const char* data, uint32_t dataLen)
+CAResult_t CAEDRSendMulticastMessageImpl(JNIEnv *env, const uint8_t* data, uint32_t dataLen)
 {
     OIC_LOG_V(DEBUG, TAG, "CASendMulticastMessageImpl, send to, data: %s, %d", data, dataLen);
 
@@ -734,11 +747,13 @@ CAResult_t CAEDRSendMulticastMessageImpl(JNIEnv *env, const char* data, uint32_t
                   "[EDR][Native] getBondedDevices: ~~device address is %s", remoteAddress);
 
         // find address
-        CAResult_t res = CAEDRNativeSendData(env, remoteAddress, data, dataLen, i);
+        CAResult_t res = CAEDRNativeSendData(env, remoteAddress, data, dataLen);
         (*env)->ReleaseStringUTFChars(env, j_str_address, remoteAddress);
         if (CA_STATUS_OK != res)
         {
-            OIC_LOG_V(DEBUG, TAG, "[EDR][Native] Send data has failed : %s", remoteAddress);
+            OIC_LOG_V(ERROR, TAG, "CASendMulticastMessageImpl, failed to send message to : %s",
+                      remoteAddress);
+            g_edrErrorHandler(remoteAddress, data, dataLen, res);
             continue;
         }
     }
@@ -749,8 +764,8 @@ CAResult_t CAEDRSendMulticastMessageImpl(JNIEnv *env, const char* data, uint32_t
 /**
  * EDR Method
  */
-CAResult_t CAEDRNativeSendData(JNIEnv *env, const char *address, const char *data,
-                               uint32_t dataLength, uint32_t id)
+CAResult_t CAEDRNativeSendData(JNIEnv *env, const char *address, const uint8_t *data,
+                               uint32_t dataLength)
 {
     OIC_LOG_V(DEBUG, TAG, "[EDR][Native] btSendData logic start : %s, %d", data, dataLength);
 
@@ -772,7 +787,7 @@ CAResult_t CAEDRNativeSendData(JNIEnv *env, const char *address, const char *dat
         }
         else
         {
-            CAResult_t res = CAEDRNativeConnect(env, address, id);
+            CAResult_t res = CAEDRNativeConnect(env, address);
             if (CA_STATUS_OK != res)
             {
                 return res;
@@ -867,7 +882,7 @@ CAResult_t CAEDRNativeSendData(JNIEnv *env, const char *address, const char *dat
     return CA_STATUS_OK;
 }
 
-CAResult_t CAEDRNativeConnect(JNIEnv *env, const char *address, uint32_t id)
+CAResult_t CAEDRNativeConnect(JNIEnv *env, const char *address)
 {
     OIC_LOG(DEBUG, TAG, "[EDR][Native] btConnect..");
 
@@ -1023,7 +1038,7 @@ CAResult_t CAEDRNativeConnect(JNIEnv *env, const char *address, uint32_t id)
     return CA_STATUS_OK;
 }
 
-void CAEDRNativeSocketClose(JNIEnv *env, const char *address, uint32_t id)
+void CAEDRNativeSocketClose(JNIEnv *env, const char *address)
 {
 
     jclass jni_cid_BTSocket = (*env)->FindClass(env, "android/bluetooth/BluetoothSocket");
@@ -1073,4 +1088,9 @@ void CAEDRInitializeClient(ca_thread_pool_t handle)
     OIC_LOG(DEBUG, TAG, "IN");
     CAEDRInitialize(handle);
     OIC_LOG(DEBUG, TAG, "OUT");
+}
+
+void CAEDRSetErrorHandler(CAEDRErrorHandleCallback errorHandleCallback)
+{
+    g_edrErrorHandler = errorHandleCallback;
 }

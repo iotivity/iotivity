@@ -21,6 +21,7 @@ if target_os == 'android':
 	if not android_home:
 		print 'Creating ANDROID_HOME for Android SDK'
 
+		# older IoTivity versions expected the SDK at this position, this is left for backwards compatibility
 		androidlib_dir      = src_dir + '/extlibs/android/sdk/android-sdk_r24.2'
 
 		if not os.path.exists(androidlib_dir):
@@ -28,13 +29,17 @@ if target_os == 'android':
 			if _platform == "linux" or _platform == "linux2":
 				androidlib_zip_file = src_dir + '/extlibs/android/android-sdk_r24.2-linux.tgz'
 				androidlib_url      = 'http://dl.google.com/android/android-sdk_r24.2-linux.tgz'
+				androidlib_dir      = src_dir + '/extlibs/android/sdk/android-sdk-linux'
 			elif _platform == "darwin":
 				androidlib_zip_file = src_dir + '/extlibs/android/android-sdk_r24.2-macosx.zip'
 				androidlib_url      = 'http://dl.google.com/android/android-sdk_r24.2-macosx.zip'
+				androidlib_dir      = src_dir + '/extlibs/android/sdk/android-sdk-macosx'
 			elif _platform == "win32":
 				androidlib_zip_file = src_dir + '/extlibs/android/android-sdk_r24.2-windows.zip'
 				androidlib_url      = 'http://dl.google.com/android/android-sdk_r24.2-windows.zip'
+				androidlib_dir      = src_dir + '/extlibs/android/sdk/android-sdk-windows'
 
+		if not os.path.exists(androidlib_dir):
 			# If the zip file is not already present, download it
 			if not os.path.exists(androidlib_zip_file):
 				androidlib_zip = env.Download(androidlib_zip_file, androidlib_url)

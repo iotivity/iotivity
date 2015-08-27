@@ -22,7 +22,6 @@
 #define _RESOURCE_INIT_EXCEPTION_H_
 
 #include <stdexcept>
-#include <ocstack.h>
 #include "StringConstants.h"
 
 namespace OC

@@ -27,7 +27,6 @@
 #include <iostream>
 
 #include <OCApi.h>
-#include <ocstack.h>
 #include <IClientWrapper.h>
 #include <InitializeException.h>
 #include <ResourceInitException.h>
@@ -150,7 +149,7 @@ namespace OC
     private:
         void listeningFunc();
         std::string assembleSetResourceUri(std::string uri, const QueryParamsMap& queryParams);
-        std::string assembleSetResourcePayload(const OCRepresentation& attributes);
+        OCPayload* assembleSetResourcePayload(const OCRepresentation& attributes);
         OCHeaderOption* assembleHeaderOptions(OCHeaderOption options[],
            const HeaderOptions& headerOptions);
         std::thread m_listeningThread;

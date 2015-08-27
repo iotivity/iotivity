@@ -23,6 +23,7 @@
 
 #include "logger.h"
 #include "ocstack.h"
+#include "ocpayload.h"
 #include <string.h>
 
 #ifdef ARDUINOWIFI
@@ -56,9 +57,6 @@ typedef struct LIGHTRESOURCE{
 } LightResource;
 
 static LightResource Light;
-
-static char responsePayloadGet[] = "{\"href\":\"/a/light\",\"rep\":{\"state\":true,\"power\":10}}";
-static char responsePayloadPut[] = "{\"href\":\"/a/light\",\"rep\":{\"state\":false,\"power\":0}}";
 
 #ifdef ARDUINOWIFI
 // Arduino WiFi Shield
@@ -154,7 +152,12 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandle
 {
     OCEntityHandlerResult ehRet = OC_EH_OK;
     OCEntityHandlerResponse response = {0};
-    char payload[MAX_RESPONSE_LENGTH] = {0};
+    OCRepPayload* payload = OCRepPayloadCreate();
+    if(!payload)
+    {
+        OC_LOG(ERROR, TAG, PCF("Failed to allocate Payload"));
+        return OC_EH_ERROR;
+    }
 
     if(entityHandlerRequest && (flag & OC_REQUEST_FLAG))
     {
@@ -162,28 +165,16 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandle
 
         if(OC_REST_GET == entityHandlerRequest->method)
         {
-            size_t responsePayloadGetLength = strlen(responsePayloadGet);
-            if (responsePayloadGetLength < (sizeof(payload) - 1))
-            {
-                strncpy(payload, responsePayloadGet, responsePayloadGetLength);
-            }
-            else
-            {
-                ehRet = OC_EH_ERROR;
-            }
+            OCRepPayloadSetUri(payload, "/a/light");
+            OCRepPayloadSetPropBool(payload, "state", true);
+            OCRepPayloadSetPropInt(payload, "power", 10);
         }
         else if(OC_REST_PUT == entityHandlerRequest->method)
         {
             //Do something with the 'put' payload
-            size_t responsePayloadPutLength = strlen(responsePayloadPut);
-            if (responsePayloadPutLength < (sizeof(payload) - 1))
-            {
-                strncpy((char *)payload, responsePayloadPut, responsePayloadPutLength);
-            }
-            else
-            {
-                ehRet = OC_EH_ERROR;
-            }
+            OCRepPayloadSetUri(payload, "/a/light");
+            OCRepPayloadSetPropBool(payload, "state", false);
+            OCRepPayloadSetPropInt(payload, "power", 0);
         }
 
         if (ehRet == OC_EH_OK)
@@ -192,8 +183,7 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandle
             response.requestHandle = entityHandlerRequest->requestHandle;
             response.resourceHandle = entityHandlerRequest->resource;
             response.ehResult = ehRet;
-            response.payload = payload;
-            response.payloadSize = strlen(payload);
+            response.payload = (OCPayload*) payload;
             response.numSendVendorSpecificHeaderOptions = 0;
             memset(response.sendVendorSpecificHeaderOptions, 0,
                     sizeof response.sendVendorSpecificHeaderOptions);
@@ -219,9 +209,10 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandle
         else if (OC_OBSERVE_DEREGISTER == entityHandlerRequest->obsInfo.action)
         {
             OC_LOG (INFO, TAG, PCF("Received OC_OBSERVE_DEREGISTER from client"));
+            gLightUnderObservation = 0;
         }
     }
-
+    OCRepPayloadDestroy(payload);
     return ehRet;
 }
 

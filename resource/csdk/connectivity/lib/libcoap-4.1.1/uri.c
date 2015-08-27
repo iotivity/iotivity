@@ -556,7 +556,7 @@ coap_parse_next(coap_parse_iterator_t *pi)
 
     /* skip following separator (the first segment might not have one) */
 
-      if (strchr(s,*(pi->pos)))
+      if (strchr((const char*)s,*(pi->pos)))
       {
           ++pi->pos;
           --pi->n;
@@ -564,7 +564,7 @@ coap_parse_next(coap_parse_iterator_t *pi)
 
       p = pi->pos;
 
-      while ((pi->segment_length < pi->n) && (!strchr(s,*p))
+      while ((pi->segment_length < pi->n) && (!strchr((const char*)s,*p))
               && (!strnchr(pi->delim, pi->dlen, *p)))
       {
           ++p;

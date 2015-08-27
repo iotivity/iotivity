@@ -28,9 +28,12 @@
 #include <list>
 #include "ocstack.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 #include "logger.h"
 #include "cJSON.h"
 #include "ocserverslow.h"
+#include "ocpayload.h"
+#include "payload_logging.h"
 
 volatile sig_atomic_t gQuitFlag = 0;
 
@@ -47,21 +50,11 @@ char *gResourceUri= (char *)"/a/led";
 
 //This function takes the request as an input and returns the response
 //in JSON format.
-char* constructJsonResponse (OCEntityHandlerRequest *ehRequest)
+OCRepPayload* constructResponse (OCEntityHandlerRequest *ehRequest)
 {
-    cJSON *json = cJSON_CreateObject();
-
-    if(!json)
-    {
-        OC_LOG(ERROR, TAG, "CreateObject result in null for json");
-        return NULL;
-    }
-
-    cJSON *format;
-    char *jsonResponse;
     LEDResource *currLEDResource = &LED;
 
-    OC_LOG(INFO, TAG, "Entering constructJsonResponse");
+    OC_LOG(INFO, TAG, "Entering constructResponse");
 
     if (ehRequest->resource == gLedInstance[0].handle)
     {
@@ -78,63 +71,60 @@ char* constructJsonResponse (OCEntityHandlerRequest *ehRequest)
 
     if(OC_REST_PUT == ehRequest->method)
     {
-        cJSON *putJson = cJSON_Parse((char *)ehRequest->reqJSONPayload);
-
-        if(!putJson)
+        if(ehRequest->payload && ehRequest->payload->type != PAYLOAD_TYPE_REPRESENTATION)
         {
-            OC_LOG(ERROR, TAG, "CreateObject result in null for putJson");
-            cJSON_Delete(json);
-            return NULL;
+            OC_LOG(ERROR, TAG, PCF("Incoming payload not a representation"));
+            return nullptr;
         }
 
-        currLEDResource->state = ( !strcmp(cJSON_GetObjectItem(putJson,"state")->valuestring ,
-                "on") ? true:false);
-        currLEDResource->power = cJSON_GetObjectItem(putJson,"power")->valuedouble;
-        cJSON_Delete(putJson);
+        OCRepPayload *putPayload = reinterpret_cast<OCRepPayload*> (ehRequest->payload);
+
+        int64_t power;
+        bool state;
+
+        if (OCRepPayloadGetPropBool(putPayload, "state", &state))
+        {
+            currLEDResource->state = state;
+        }
+        if (OCRepPayloadGetPropInt (putPayload, "power", &power))
+        {
+            currLEDResource->power = power;
+        }
     }
 
-    cJSON_AddStringToObject(json,"href",gResourceUri);
-    format = cJSON_CreateObject();
+    OCRepPayload *response = OCRepPayloadCreate();
 
-    if(!format)
+    if (!response)
     {
-        OC_LOG(ERROR, TAG, "CreateObject result in null for format");
-        cJSON_Delete(json);
-        return NULL;
+        OC_LOG_V(ERROR, TAG, "Memory allocation for response payload failed.");
     }
 
-    cJSON_AddItemToObject(json, "rep", format);
-    cJSON_AddStringToObject(format, "state", (char *) (currLEDResource->state ? "on":"off"));
-    cJSON_AddNumberToObject(format, "power", currLEDResource->power);
+    OCRepPayloadSetUri (response, gResourceUri);
+    OCRepPayloadSetPropBool(response, "state", currLEDResource->state);
+    OCRepPayloadSetPropInt(response, "power", currLEDResource->power);
 
-    OC_LOG(INFO, TAG, "Before constructJsonResponse print");
-    jsonResponse = cJSON_Print(json);
-    OC_LOG(INFO, TAG, "Before constructJsonResponse delete");
-    cJSON_Delete(json);
-
-    OC_LOG(INFO, TAG, "Before constructJsonResponse return");
-    return jsonResponse;
+    return response;
 }
 
-void ProcessGetRequest (OCEntityHandlerRequest *ehRequest)
+void ProcessGetPutRequest (OCEntityHandlerRequest *ehRequest)
 {
-    OC_LOG(INFO, TAG, "Entering ProcessGetRequest");
-    char *getResp = constructJsonResponse(ehRequest);
+    OC_LOG(INFO, TAG, "Entering ProcessGetPutRequest");
+
+    OCRepPayload *getResp = constructResponse(ehRequest);
 
     if(!getResp)
     {
-        OC_LOG(ERROR, TAG, "Failed to constructJsonResponse");
+        OC_LOG(ERROR, TAG, "Failed to construct response");
         return;
     }
-    OC_LOG(INFO, TAG, "After constructJsonResponse");
+
     OCEntityHandlerResponse response;
 
     // Format the response.  Note this requires some info about the request
     response.requestHandle = ehRequest->requestHandle;
     response.resourceHandle = ehRequest->resource;
     response.ehResult = OC_EH_OK;
-    response.payload = getResp;
-    response.payloadSize = strlen(getResp) + 1;
+    response.payload = reinterpret_cast<OCPayload*> (getResp);
     response.numSendVendorSpecificHeaderOptions = 0;
     memset(response.sendVendorSpecificHeaderOptions,
             0, sizeof response.sendVendorSpecificHeaderOptions);
@@ -154,46 +144,39 @@ void ProcessGetRequest (OCEntityHandlerRequest *ehRequest)
 OCEntityHandlerRequest *CopyRequest(OCEntityHandlerRequest *entityHandlerRequest)
 {
     OC_LOG(INFO, TAG, "Copying received request for slow response");
-    OCEntityHandlerRequest *request =
+
+    OCEntityHandlerRequest *copyOfRequest =
             (OCEntityHandlerRequest *)OICMalloc(sizeof(OCEntityHandlerRequest));
-    if (request)
+
+    if (copyOfRequest)
     {
         // Do shallow copy
-        memcpy(request, entityHandlerRequest, sizeof(OCEntityHandlerRequest));
-        // Do deep copy of query
-        request->query =
-                (char * )OICMalloc(strlen((const char *)entityHandlerRequest->query) + 1);
-        if (request->query)
+        memcpy(copyOfRequest, entityHandlerRequest, sizeof(OCEntityHandlerRequest));
+
+
+        if (copyOfRequest->query)
         {
-            strcpy((char *)request->query, (const char *)entityHandlerRequest->query);
-
-            // Copy the request payload
-            request->reqJSONPayload = (char * )OICMalloc(
-                            strlen((const char *)entityHandlerRequest->reqJSONPayload) + 1);
-            if (request->reqJSONPayload)
+            copyOfRequest->query = OICStrdup(entityHandlerRequest->query);
+            if(!copyOfRequest->query)
             {
-                strcpy((char *)request->reqJSONPayload,
-                        (const char *)entityHandlerRequest->reqJSONPayload);
-
-                // Ignore vendor specific header options for example
-                request->numRcvdVendorSpecificHeaderOptions = 0;
-                request->rcvdVendorSpecificHeaderOptions = NULL;
-            }
-            else
-            {
-                OICFree(request->query);
-                OICFree(request);
-                request = NULL;
+                OC_LOG(ERROR, TAG, "Copy failed due to allocation failure");
+                OICFree(copyOfRequest);
+                return NULL;
             }
         }
-        else
+
+        if (entityHandlerRequest->payload)
         {
-            OICFree(request);
-            request = NULL;
+            copyOfRequest->payload = reinterpret_cast<OCPayload*>
+                    (OCRepPayloadClone ((OCRepPayload*) entityHandlerRequest->payload));
         }
+
+        // Ignore vendor specific header options for example
+        copyOfRequest->numRcvdVendorSpecificHeaderOptions = 0;
+        copyOfRequest->rcvdVendorSpecificHeaderOptions = NULL;
     }
 
-    if (request)
+    if (copyOfRequest)
     {
         OC_LOG(INFO, TAG, "Copied client request");
     }
@@ -201,17 +184,17 @@ OCEntityHandlerRequest *CopyRequest(OCEntityHandlerRequest *entityHandlerRequest
     {
         OC_LOG(ERROR, TAG, "Error copying client request");
     }
-    return request;
+    return copyOfRequest;
 }
 
-OCEntityHandlerResult
-OCEntityHandlerCb (OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest *entityHandlerRequest, void* callbackParam)
+OCEntityHandlerResult OCEntityHandlerCb (OCEntityHandlerFlag flag,
+        OCEntityHandlerRequest *entityHandlerRequest, void* /*callbackParam*/)
 {
     OCEntityHandlerResult result = OC_EH_ERROR;
     OCEntityHandlerRequest *request = NULL;
 
     OC_LOG_V (INFO, TAG, "Inside entity handler - flags: 0x%x", flag);
+
     if (flag & OC_REQUEST_FLAG)
     {
         OC_LOG(INFO, TAG, "Flag includes OC_REQUEST_FLAG");
@@ -219,10 +202,11 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
         {
             OC_LOG_V (INFO, TAG, "request query %s from client",
                                         entityHandlerRequest->query);
-            OC_LOG_V (INFO, TAG, "request payload %s from client",
-                                        entityHandlerRequest->reqJSONPayload);
+            OC_LOG_PAYLOAD (INFO, TAG, entityHandlerRequest->payload);
+
             // Make deep copy of received request and queue it for slow processing
             request = CopyRequest(entityHandlerRequest);
+
             if (request)
             {
 
@@ -277,7 +261,12 @@ void AlarmHandler(int sig)
         if (entityHandlerRequest->method == OC_REST_GET)
         {
             OC_LOG (INFO, TAG, "Received OC_REST_GET from client");
-            ProcessGetRequest (entityHandlerRequest);
+            ProcessGetPutRequest (entityHandlerRequest);
+        }
+        else if (entityHandlerRequest->method == OC_REST_PUT)
+        {
+            OC_LOG (INFO, TAG, "Received OC_REST_PUT from client");
+            ProcessGetPutRequest (entityHandlerRequest);
         }
         else
         {
@@ -286,7 +275,7 @@ void AlarmHandler(int sig)
         }
         // Free the request
         OICFree(entityHandlerRequest->query);
-        OICFree(entityHandlerRequest->reqJSONPayload);
+        OCPayloadDestroy(entityHandlerRequest->payload);
         OICFree(entityHandlerRequest);
 
         // If there are more requests in list, re-arm the alarm signal
@@ -297,7 +286,7 @@ void AlarmHandler(int sig)
     }
 }
 
-int main(int argc, char* argv[])
+int main(int /*argc*/, char** /*argv[]*/)
 {
     OC_LOG(DEBUG, TAG, "OCServer is starting...");
 
@@ -307,10 +296,8 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    /*
-     * Declare and create the example resource: LED
-     */
-    createLEDResource(gResourceUri, &LED, false, 0);
+    // Declare and create the example resource: LED
+    createLEDResource(gResourceUri, &LED, false, 42);
 
     // Initialize slow response alarm
     signal(SIGALRM, AlarmHandler);
@@ -326,7 +313,6 @@ int main(int argc, char* argv[])
             OC_LOG(ERROR, TAG, "OCStack process error");
             return 0;
         }
-
         sleep(2);
     }
 
@@ -338,7 +324,7 @@ int main(int argc, char* argv[])
         for (auto iter = gRequestList.begin(); iter != gRequestList.end(); ++iter)
         {
             OICFree((*iter)->query);
-            OICFree((*iter)->reqJSONPayload);
+            OCPayloadDestroy((*iter)->payload);
             OICFree(*iter);
         }
         gRequestList.clear();

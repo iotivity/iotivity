@@ -24,11 +24,10 @@
 const char * SVR_DB_FILE_NAME = "oic_svr_db.json";
 const char * OIC_MI_DEF = "oic.mi.def";
 
-const char * OIC_RSRC_CORE_URI =  "/oic/res";
-const char * OIC_RSRC_CORE_D_URI =  "/oic/res/d";
-const char * OIC_RSRC_CORE_P_URI =  "/oic/p";
-const char * OIC_RSRC_PRESENCE_URI =  "/oic/ad";
-const char * OIC_RSRC_TYPES_D_URI =  "/oic/res/types/d";
+//AMACL
+const char * OIC_RSRC_TYPE_SEC_AMACL = "oic.sec.amacl";
+const char * OIC_RSRC_AMACL_URI =  "/oic/sec/amacl";
+const char * OIC_JSON_AMACL_NAME = "amacl";
 
 //ACL
 const char * OIC_RSRC_TYPE_SEC_ACL = "oic.sec.acl";
@@ -50,8 +49,15 @@ const char * OIC_RSRC_TYPE_SEC_CRED = "oic.sec.cred";
 const char * OIC_RSRC_CRED_URI =  "/oic/sec/cred";
 const char * OIC_JSON_CRED_NAME = "cred";
 
+//svc
+const char * OIC_RSRC_TYPE_SEC_SVC = "oic.sec.svc";
+const char * OIC_RSRC_SVC_URI =  "/oic/sec/svc";
+const char * OIC_JSON_SVC_NAME = "svc";
+
+
 const char * OIC_JSON_SUBJECT_NAME = "sub";
 const char * OIC_JSON_RESOURCES_NAME = "rsrc";
+const char * OIC_JSON_AMSS_NAME = "amss";
 const char * OIC_JSON_PERMISSION_NAME = "perms";
 const char * OIC_JSON_OWNERS_NAME = "ownrs";
 const char * OIC_JSON_OWNER_NAME = "ownr";
@@ -73,10 +79,15 @@ const char * OIC_JSON_ROLEIDS_NAME = "roleid";
 const char * OIC_JSON_CREDTYPE_NAME = "credtyp";
 const char * OIC_JSON_PUBLICDATA_NAME = "pbdata";
 const char * OIC_JSON_PRIVATEDATA_NAME = "pvdata";
-const char * OIC_JSON_PERIOD_NAME = "period";
+const char * OIC_JSON_SERVICE_DEVICE_ID = "svcdid";
+const char * OIC_JSON_SERVICE_TYPE = "svct";
+const char * OIC_JSON_PERIOD_NAME = "prd";
+const char * OIC_JSON_PERIODS_NAME = "prds";
+const char * OIC_JSON_RECURRENCES_NAME = "recurs";
 
 OicUuid_t WILDCARD_SUBJECT_ID = {"*"};
-size_t WILDCARD_SUBJECT_ID_LEN = 1 ;
+size_t WILDCARD_SUBJECT_ID_LEN = 1;
+const char * WILDCARD_RESOURCE_URI = "*";
 
 //Ownership Transfer Methods
 const char * OXM_JUST_WORKS = "oic.sec.doxm.jw";
@@ -88,5 +99,6 @@ const char * OXM_PRE_PROVISIONED_STRONG_CREDENTIAL = "oic.sec.doxm.ppsc";
 const char * OIC_SEC_TRUE = "true";
 const char * OIC_SEC_FALSE = "false";
 
-const char * OIC_SEC_REST_QUERY_SEPARATOR = "&";
+const char * OIC_SEC_REST_QUERY_SEPARATOR = ";";
 char OIC_SEC_REST_QUERY_DELIMETER = '=';
+

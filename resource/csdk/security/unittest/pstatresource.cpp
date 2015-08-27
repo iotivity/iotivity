@@ -27,6 +27,8 @@
 #include "base64.h"
 #include "cainterface.h"
 #include "secureresourcemanager.h"
+#include "srmtestcommon.h"
+#include "ocpayload.h"
 #include <unistd.h>
 #ifdef __cplusplus
 extern "C" {
@@ -37,7 +39,6 @@ OCEntityHandlerResult PstatEntityHandler (OCEntityHandlerFlag flag,
                                         OCEntityHandlerRequest * ehRequest);
 char * BinToPstatJSON(const OicSecPstat_t * pstat);
 OicSecPstat_t * JSONToPstatBin(const char * jsonStr);
-char* ReadFile(const char* filename);
 const char* UNIT_TEST_JSON_FILE_NAME = "oic_unittest.json";
 #ifdef __cplusplus
 }
@@ -73,8 +74,10 @@ TEST(PstatEntityHandlerTest, PstatEntityHandlerWithPostRequest)
 {
     OCEntityHandlerRequest req;
     req.method = OC_REST_POST;
-    req.reqJSONPayload = (char*)"{ \"pstat\": { \"tm\": 0, \"om\": 3 }}";
+    req.payload = reinterpret_cast<OCPayload*>(
+            OCSecurityPayloadCreate("{ \"pstat\": { \"tm\": 0, \"om\": 3 }}"));
     EXPECT_EQ(OC_EH_ERROR, PstatEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, &req));
+    OCPayloadDestroy(req.payload);
 }
 
 TEST(PstatEntityHandlerTest, PstatEntityHandlerInvalidRequest)
@@ -110,14 +113,27 @@ TEST(MarshalingAndUnMarshalingTest, BinToPstatJSONAndJSONToPstatBin)
     pstat.om = SINGLE_SERVICE_CLIENT_DRIVEN;
     pstat.smLen = 2;
     pstat.sm = (OicSecDpom_t*)OICCalloc(pstat.smLen, sizeof(OicSecDpom_t));
+    if(!pstat.sm)
+    {
+        FAIL() << "Failed to allocate the pstat.sm";
+    }
     pstat.sm[0] = SINGLE_SERVICE_CLIENT_DRIVEN;
     pstat.sm[1] = SINGLE_SERVICE_SERVER_DRIVEN;
     char* jsonPstat = BinToPstatJSON(&pstat);
+    if(!jsonPstat)
+    {
+        OICFree(pstat.sm);
+        FAIL() << "Failed to convert BinToPstatJSON";
+        return;
+    }
     printf("BinToJSON Dump:\n%s\n\n", jsonPstat);
     EXPECT_TRUE(jsonPstat != NULL);
     OicSecPstat_t *pstat1 = JSONToPstatBin(jsonPstat);
     EXPECT_TRUE(pstat1 != NULL);
-    OICFree(pstat1->sm);
+    if(pstat1)
+    {
+        OICFree(pstat1->sm);
+    }
     OICFree(pstat1);
     OICFree(jsonPstat);
     OICFree(pstat.sm);
@@ -145,7 +161,6 @@ TEST(PstatTests, JSONMarshalliingTests)
         EXPECT_TRUE(NULL != pstat);
 
         char* jsonStr2 = BinToPstatJSON(pstat);
-        printf("BinToPstatJSON Dump:\n%s\n\n", jsonStr2);
         EXPECT_STRNE(jsonStr1, jsonStr2);
 
         OICFree(jsonStr1);

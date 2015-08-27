@@ -90,6 +90,9 @@ namespace OC
         OutOfProc
     };
 
+    /**
+     * Host Mode of Operation.
+     */
     enum class ModeType
     {
         Server,
@@ -97,31 +100,55 @@ namespace OC
         Both
     };
 
+    /**
+     * Quality of Service attempts to abstract the guarantees provided by the underlying transport
+     * protocol. The precise definitions of each quality of service level depend on the
+     * implementation. In descriptions below are for the current implementation and may changed
+     * over time.
+     */
     enum class QualityOfService : uint8_t
     {
+        /** Packet delivery is best effort. */
         LowQos      = OC_LOW_QOS,
+
+        /** Packet delivery is best effort. */
         MidQos      = OC_MEDIUM_QOS,
+
+        /** Acknowledgments are used to confirm delivery. */
         HighQos     = OC_HIGH_QOS,
-        NaQos       = OC_NA_QOS // No Quality is defined, let the stack decide
+
+        /** No Quality is defined, let the stack decide. */
+        NaQos       = OC_NA_QOS
     };
 
     /**
-    *  Data structure to provide the configuration.
-    *  ServiceType: indicate InProc or OutOfProc
-    *  ModeType   : indicate whether we want to do server, client or both
-    *  ServerConnectivity : default flags for server
-    *  ClientConnectivity : default flags for client
-    *  QoS        : Quality of Service : CONFIRMABLE or NON CONFIRMABLE.
-    */
+     *  Data structure to provide the configuration.
+     */
     struct PlatformConfig
     {
+        /** indicate InProc or OutOfProc. */
         ServiceType                serviceType;
+
+        /** indicate whether we want to do server, client or both. */
         ModeType                   mode;
+
+        /** default flags for server. */
         OCConnectivityType         serverConnectivity;
+
+        /** default flags for client. */
         OCConnectivityType         clientConnectivity;
-        std::string                ipAddress;   // not used
-        uint16_t                   port;        // not used
+
+        /** not used. */
+        std::string                ipAddress;
+
+        /** not used. */
+        uint16_t                   port;
+
+        /** indicate Quality of Service : LowQos, MidQos,HighQos and NaQos(No quality Defined). */
         QualityOfService           QoS;
+
+        /** persistant storage Handler structure (open/read/write/close/unlink). */
+        OCPersistentStorage        *ps;
 
         public:
             PlatformConfig()
@@ -131,34 +158,39 @@ namespace OC
                 clientConnectivity(CT_DEFAULT),
                 ipAddress("0.0.0.0"),
                 port(0),
-                QoS(QualityOfService::NaQos)
+                QoS(QualityOfService::NaQos),
+                ps(nullptr)
         {}
             PlatformConfig(const ServiceType serviceType_,
             const ModeType mode_,
             OCConnectivityType serverConnectivity_,
             OCConnectivityType clientConnectivity_,
-            const QualityOfService QoS_)
+            const QualityOfService QoS_,
+            OCPersistentStorage *ps_ = nullptr)
                 : serviceType(serviceType_),
                 mode(mode_),
                 serverConnectivity(serverConnectivity_),
                 clientConnectivity(clientConnectivity_),
                 ipAddress(""),
                 port(0),
-                QoS(QoS_)
+                QoS(QoS_),
+                ps(ps_)
         {}
             // for backward compatibility
             PlatformConfig(const ServiceType serviceType_,
             const ModeType mode_,
             const std::string& ipAddress_,
             const uint16_t port_,
-            const QualityOfService QoS_)
+            const QualityOfService QoS_,
+            OCPersistentStorage *ps_ = nullptr)
                 : serviceType(serviceType_),
                 mode(mode_),
                 serverConnectivity(CT_DEFAULT),
                 clientConnectivity(CT_DEFAULT),
                 ipAddress(ipAddress_),
                 port(port_),
-                QoS(QoS_)
+                QoS(QoS_),
+                ps(ps_)
         {}
     };
 
@@ -210,7 +242,7 @@ namespace OC
     const std::string BATCH_INTERFACE = "oic.if.b";
 
     // Used in GET, PUT, POST methods on links to other remote resources of a group.
-    const std::string GROUP_INTERFACE = "oc.mi.grp";
+    const std::string GROUP_INTERFACE = "oic.mi.grp";
 
 
     typedef std::function<void(std::shared_ptr<OCResource>)> FindCallback;

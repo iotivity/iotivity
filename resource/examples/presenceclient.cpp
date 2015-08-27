@@ -63,9 +63,8 @@ void printUsage()
               << std::endl;
     std::cout << "-t 6 : Discover Resources and Initiate Multicast Presence with two Filters"
             << std::endl;
-    std::cout<<"ConnectivityType: Default IPv4" << std::endl;
-    std::cout << "-c 0 : Send message with IPv4" << std::endl;
-    std::cout << "-c 1 : Send message with IPv6" << std::endl;
+    std::cout<<"ConnectivityType: Default IP" << std::endl;
+    std::cout << "-c 0 : Send message with IP" << std::endl;
 }
 
 // Callback to presence
@@ -221,6 +220,7 @@ int main(int argc, char* argv[]) {
                     {
                         if(optionSelected == 0)
                         {
+                            std::cout << "Using IP."<< std::endl;
                             connectivityType = CT_ADAPTER_IP;
                         }
                         else
@@ -331,7 +331,7 @@ int main(int argc, char* argv[]) {
         else
         {
             // Find all resources
-            requestURI << OC_MULTICAST_DISCOVERY_URI;
+            requestURI << OC_RSRVD_WELL_KNOWN_URI;
 
             result = OCPlatform::findResource("", requestURI.str(),
                     CT_DEFAULT, &foundResource);

@@ -104,14 +104,12 @@ void formResourceRequest(OCEntityHandlerFlag flag,
             else if(OC_REST_PUT == entityHandlerRequest->method)
             {
                 pRequest->setRequestType(OC::PlatformCommands::PUT);
-                pRequest->setPayload(std::string(reinterpret_cast<const char*>
-                                            (entityHandlerRequest->reqJSONPayload)));
+                pRequest->setPayload(entityHandlerRequest->payload);
             }
             else if(OC_REST_POST == entityHandlerRequest->method)
             {
                 pRequest->setRequestType(OC::PlatformCommands::POST);
-                pRequest->setPayload(std::string(reinterpret_cast<const char*>
-                                            (entityHandlerRequest->reqJSONPayload)));
+                pRequest->setPayload(entityHandlerRequest->payload);
             }
             else if(OC_REST_DELETE == entityHandlerRequest->method)
             {
@@ -138,7 +136,7 @@ void formResourceRequest(OCEntityHandlerFlag flag,
 OCEntityHandlerResult DefaultEntityHandlerWrapper(OCEntityHandlerFlag flag,
                                                   OCEntityHandlerRequest * entityHandlerRequest,
                                                   char* uri,
-                                                  void * callbackParam)
+                                                  void * /*callbackParam*/)
 {
     OCEntityHandlerResult result = OC_EH_ERROR;
 
@@ -178,7 +176,7 @@ OCEntityHandlerResult DefaultEntityHandlerWrapper(OCEntityHandlerFlag flag,
 
 OCEntityHandlerResult EntityHandlerWrapper(OCEntityHandlerFlag flag,
                                            OCEntityHandlerRequest * entityHandlerRequest,
-                                           void* callbackParam)
+                                           void* /*callbackParam*/)
 {
     OCEntityHandlerResult result = OC_EH_ERROR;
 
@@ -532,23 +530,15 @@ namespace OC
         else
         {
             OCEntityHandlerResponse response;
-            std::string payLoad = pResponse->getPayload();
+//            OCRepPayload* payLoad = pResponse->getPayload();
             HeaderOptions serverHeaderOptions = pResponse->getHeaderOptions();
 
             response.requestHandle = pResponse->getRequestHandle();
             response.resourceHandle = pResponse->getResourceHandle();
             response.ehResult = pResponse->getResponseResult();
 
-            response.payload = static_cast<char*>(OICMalloc(payLoad.length() + 1));
-            if(!response.payload)
-            {
-                result = OC_STACK_NO_MEMORY;
-                throw OCException(OC::Exception::NO_MEMORY, OC_STACK_NO_MEMORY);
-            }
+            response.payload = reinterpret_cast<OCPayload*>(pResponse->getPayload());
 
-            payLoad.copy(response.payload, payLoad.length());
-            response.payload[payLoad.length()] = '\0';
-            response.payloadSize = payLoad.length() + 1;
             response.persistentBufferFlag = 0;
 
             response.numSendVendorSpecificHeaderOptions = serverHeaderOptions.size();
@@ -560,8 +550,9 @@ namespace OC
                     static_cast<uint16_t>(it->getOptionID());
                 response.sendVendorSpecificHeaderOptions[i].optionLength =
                     (it->getOptionData()).length() + 1;
-                std::copy(it->getOptionData().begin(),
-                         it->getOptionData().end(),
+                std::string optionData = it->getOptionData();
+                std::copy(optionData.begin(),
+                         optionData.end(),
                          response.sendVendorSpecificHeaderOptions[i].optionData);
                 response.sendVendorSpecificHeaderOptions[i].optionData[it->getOptionData().length()]
                     = '\0';

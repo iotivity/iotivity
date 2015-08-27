@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -19,8 +19,8 @@
  ******************************************************************/
 
 /**
- * @file caipadapter.h
- * @brief This file contains the APIs for IP Adapter.
+ * @file
+ * This file contains the APIs for IP Adapter.
  */
 #ifndef CA_IP_ADAPTER_H_
 #define CA_IP_ADAPTER_H_
@@ -35,92 +35,96 @@ extern "C"
 #endif
 
 /**
- * @brief API to initialize IP Interface.
- * @param registerCallback      [IN] Callback to register IP interfaces to Connectivity
- *                                   Abstraction Layer
- * @param networkPacketCallback [IN] Callback to notify request and response messages from server(s)
+ * API to initialize IP Interface.
+ * @param[in] registerCallback      Callback to register IP interfaces to
+ *                                   Connectivity Abstraction Layer.
+ * @param[in] networkPacketCallback Callback to notify request and
+ *                                   response messages from server(s)
  *                                   started at Connectivity Abstraction Layer.
- * @param netCallback           [IN] Callback to notify the network additions to Connectivity
- *                                   Abstraction Layer.
- * @param handle                [IN] Threadpool Handle
- * @return  #CA_STATUS_OK or Appropriate error code
+ * @param[in] netCallback           Callback to notify the network additions
+ *                                   to Connectivity Abstraction Layer.
+ * @param[in] errorCallback         Callback to notify the network errors to
+ *                                   Connectivity Abstraction Layer.
+ * @param[in] handle                Threadpool Handle.
+ * @return  ::CA_STATUS_OK or Appropriate error code
  */
-    CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
-                              CANetworkPacketReceivedCallback networkPacketCallback,
-                              CANetworkChangeCallback netCallback, ca_thread_pool_t handle);
-
+CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
+                          CANetworkPacketReceivedCallback networkPacketCallback,
+                          CANetworkChangeCallback netCallback,
+                          CAErrorHandleCallback errorCallback, ca_thread_pool_t handle);
 
 /**
- * @brief Start IP Interface adapter.
- * @return  #CA_STATUS_OK or Appropriate error code
+ * Start IP Interface adapter.
+ * @return  ::CA_STATUS_OK or Appropriate error code.
  */
 CAResult_t CAStartIP();
 
 /**
- * @brief Start listening server for receiving multicast search requests
+ * Start listening server for receiving multicast search requests.
  * Transport Specific Behavior:
- * IP Starts Multicast Server on a particular interface and prefixed port number and
- * as per OIC Specification.
- * @return  #CA_STATUS_OK or Appropriate error code
+ * IP Starts Multicast Server on a particular interface and prefixed port
+ * number and as per OIC Specification.
+ * @return  ::CA_STATUS_OK or Appropriate error code.
  */
 CAResult_t CAStartIPListeningServer();
 
 /**
- * @brief Start discovery servers for receiving multicast advertisements
+ * Start discovery servers for receiving multicast advertisements.
  * Transport Specific Behavior:
- * IP Starts Start multicast server on a particular interface and prefixed port
- * number as per OIC Specification
- * @return  #CA_STATUS_OK or Appropriate error code
+ * IP Starts multicast server on a particular interface and prefixed port
+ * number as per OIC Specification.
+ * @return  ::CA_STATUS_OK or Appropriate error code.
  */
 CAResult_t CAStartIPDiscoveryServer();
 
 /**
- * @brief Sends data to the endpoint using the adapter connectivity.
- * @param   endpoint    [IN]    Remote Endpoint information (like ipaddress , port,
- * reference uri and transport type) to which the unicast data has to be sent.
- * @param   data        [IN]    Data which is required to be sent.
- * @param   dataLen     [IN]    Size of data to be sent.
- * @return The number of bytes sent on the network. Return value equal to -1 indicates error.
- * @remarks dataLen must be > 0.
+ * Sends data to the endpoint using the adapter connectivity.
+ * @param[in]   endpoint       Remote Endpoint information (like ipaddress,
+ *                              port, reference uri and transport type) to
+ *                              which the unicast data has to be sent.
+ * @param[in]   data           Data which is required to be sent.
+ * @param[in]   dataLen        Size of data to be sent.
+ * @note  dataLen must be > 0.
+ * @return  The number of bytes sent on the network, or -1 upon error.
  */
 int32_t CASendIPUnicastData(const CAEndpoint_t *endpoint, const void *data,
-                                   uint32_t dataLen);
+                            uint32_t dataLen);
 
 /**
- * @brief Sends Multicast data to the endpoint using the IP connectivity.
- * @param   endpoint    [IN]    Remote Endpoint information (like ipaddress , port)
- * @param   data        [IN]    Data which required to be sent.
- * @param   dataLen     [IN]    Size of data to be sent.
- * @return The number of bytes sent on the network. Return value equal to -1 indicates error.
- * @remarks dataLen must be > 0.
+ * Send Multicast data to the endpoint using the IP connectivity.
+ * @param[in]   endpoint       Remote Endpoint information (like ipaddress,
+ *                              port)
+ * @param[in]   data           Data which is required to be sent.
+ * @param[in]   dataLen        Size of data to be sent.
+ * @note  dataLen must be > 0.
+ * @return  The number of bytes sent on the network, or -1 upon error.
  */
 int32_t CASendIPMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t dataLen);
 
 /**
- * @brief Get IP Connectivity network information
- * @param   info        [OUT]   Local connectivity information structures
- * @param   size        [OUT]   Number of local connectivity structures.
- * @return  #CA_STATUS_OK or Appropriate error code
- * @remarks info is allocated in this API and should be freed by the caller.
+ * Get IP Connectivity network information.
+ * @param[out]   info        Local connectivity information structures.
+ * @note info is allocated in this API and should be freed by the caller.
+ * @param[out]   size        Number of local connectivity structures.
+ * @return  ::CA_STATUS_OK or Appropriate error code.
  */
 CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size);
 
 /**
- * @brief Read Synchronous API callback.
- * @return  #CA_STATUS_OK or Appropriate error code
+ * Read Synchronous API callback.
+ * @return  ::CA_STATUS_OK or Appropriate error code.
  */
 CAResult_t CAReadIPData();
 
 /**
- * @brief Stops Unicast, Multicast servers and close the sockets.
- * @return  #CA_STATUS_OK or Appropriate error code
+ * Stops Unicast, Multicast servers and close the sockets.
+ * @return  ::CA_STATUS_OK or Appropriate error code.
  */
 CAResult_t CAStopIP();
 
 /**
- * @brief Terminate the IP connectivity adapter.
- * Configuration information will be deleted from further use
- * @return  NONE
+ * Terminate the IP connectivity adapter.
+ * Configuration information will be deleted from further use.
  */
 void CATerminateIP();
 
@@ -128,5 +132,4 @@ void CATerminateIP();
 } /* extern "C" */
 #endif
 
-#endif  // #ifndef CA_IP_ADAPTER_H_
-
+#endif  // CA_IP_ADAPTER_H_

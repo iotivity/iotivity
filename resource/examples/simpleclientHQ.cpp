@@ -67,7 +67,7 @@ int observe_count()
     return ++oc;
 }
 
-void onObserve(const HeaderOptions headerOptions, const OCRepresentation& rep,
+void onObserve(const HeaderOptions /*headerOptions*/, const OCRepresentation& rep,
                     const int& eCode, const int& sequenceNumber)
 {
     if(eCode == SUCCESS_RESPONSE)
@@ -97,7 +97,7 @@ void onObserve(const HeaderOptions headerOptions, const OCRepresentation& rep,
         std::cout << "\tpower: " << mylight.m_power << std::endl;
         std::cout << "\tname: " << mylight.m_name << std::endl;
 
-        if(observe_count() > 10)
+        if(observe_count() == 11)
         {
             std::cout<<"Cancelling Observe..."<<std::endl;
             OCStackResult result = curResource->cancelObserve(OC::QualityOfService::HighQos);
@@ -112,7 +112,7 @@ void onObserve(const HeaderOptions headerOptions, const OCRepresentation& rep,
     }
 }
 
-void onPost2(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
+void onPost2(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep, const int eCode)
 {
     if(eCode == SUCCESS_RESPONSE)
     {
@@ -150,7 +150,8 @@ void onPost2(const HeaderOptions& headerOptions, const OCRepresentation& rep, co
     }
 }
 
-void onPost(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
+void onPost(const HeaderOptions& /*headerOptions*/,
+        const OCRepresentation& rep, const int eCode)
 {
     if(eCode == SUCCESS_RESPONSE)
     {
@@ -212,7 +213,7 @@ void postLightRepresentation(std::shared_ptr<OCResource> resource)
 }
 
 // callback handler on PUT request
-void onPut(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
+void onPut(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep, const int eCode)
 {
     if(eCode == SUCCESS_RESPONSE)
     {
@@ -256,7 +257,7 @@ void putLightRepresentation(std::shared_ptr<OCResource> resource)
 }
 
 // Callback handler on GET request
-void onGet(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
+void onGet(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep, const int eCode)
 {
     if(eCode == SUCCESS_RESPONSE)
     {
@@ -381,7 +382,7 @@ int main(int argc, char* argv[]) {
 
     std::ostringstream requestURI;
 
-    OCConnectivityType connectivityType = CT_DEFAULT;
+    OCConnectivityType connectivityType = CT_ADAPTER_IP;
     try
     {
         if (argc == 1)
@@ -407,6 +408,7 @@ int main(int argc, char* argv[]) {
                 {
                     if(optionSelected == 0)
                     {
+                        std::cout << "Using IP."<< std::endl;
                         connectivityType = CT_ADAPTER_IP;
                     }
                     else
@@ -428,9 +430,11 @@ int main(int argc, char* argv[]) {
             return -1;
         }
     }
-    catch(std::exception& e)
+    catch(std::exception&)
     {
         std::cout << "Invalid input argument." << std::endl;
+        PrintUsage();
+        return -1;
     }
 
 
@@ -448,7 +452,7 @@ int main(int argc, char* argv[]) {
     try
     {
         // Find all resources
-        requestURI << OC_MULTICAST_DISCOVERY_URI << "?rt=core.light";
+        requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.light";
 
         OCPlatform::findResource("", requestURI.str(),
                 connectivityType, &foundResource, OC::QualityOfService::LowQos);

@@ -3,7 +3,7 @@
  * Copyright (C) 2012--2013 Olaf Bergmann <bergmann@tzi.org>
  *
  * This file is part of the CoAP library libcoap. Please see
- * README for terms of use. 
+ * README for terms of use.
  */
 
 #include <string.h>
@@ -51,7 +51,7 @@ typedef struct
 
 coap_payload_t *test_resources = NULL;
 
-/** 
+/**
  * This structure is used to store URIs for dynamically allocated
  * resources, usually by POST or PUT.
  */
@@ -358,7 +358,7 @@ void hnd_put_test(coap_context_t *ctx, struct coap_resource_t *resource, coap_ad
         /* set default value */
         payload->media_type = COAP_MEDIATYPE_TEXT_PLAIN;
     }
-    /* FIXME: need to change attribute ct of resource. 
+    /* FIXME: need to change attribute ct of resource.
      To do so, we need dynamic management of the attribute value
      */
 
@@ -576,7 +576,7 @@ void init_resources(coap_context_t *ctx)
         coap_add_payload(r->key, test_payload, NULL);
     }
 
-    /* TD_COAP_BLOCK_01 
+    /* TD_COAP_BLOCK_01
      * TD_COAP_BLOCK_02 */
     test_payload = make_large("etsi_iot_01_largedata.txt");
     if (!test_payload)

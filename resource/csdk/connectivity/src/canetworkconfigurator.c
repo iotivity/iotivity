@@ -25,12 +25,16 @@
 #include "uarraylist.h"
 #include "logger.h"
 
-#define TAG "CANW"
+#define TAG "CA_NW_CONFIG"
 
 static u_arraylist_t *g_selectedNetworkList = NULL;
 static uint32_t NETWORK_IP = CA_ADAPTER_IP;
 static uint32_t NETWORK_RFCOMM = CA_ADAPTER_RFCOMM_BTEDR;
 static uint32_t NETWORK_GATT = CA_ADAPTER_GATT_BTLE;
+
+#ifdef RA_ADAPTER
+static uint32_t NETWORK_RA = CA_ADAPTER_REMOTE_ACCESS;
+#endif
 
 CAResult_t CAAddNetworkType(CATransportAdapter_t transportType)
 {
@@ -46,7 +50,7 @@ CAResult_t CAAddNetworkType(CATransportAdapter_t transportType)
             return CA_MEMORY_ALLOC_FAILED;
         }
     }
-    CAResult_t res = CA_STATUS_OK;
+    bool res = true;
     switch (transportType)
     {
         case CA_ADAPTER_IP:
@@ -90,19 +94,32 @@ CAResult_t CAAddNetworkType(CATransportAdapter_t transportType)
             }
             res = u_arraylist_add(g_selectedNetworkList, &NETWORK_GATT);
             break;
+
+#ifdef RA_ADAPTER
+        case CA_ADAPTER_REMOTE_ACCESS:
+
+           OIC_LOG(DEBUG, TAG, "Add network type(RA)");
+           if (u_arraylist_contains(g_selectedNetworkList, &NETWORK_RA))
+           {
+               goto exit;
+           }
+           res = u_arraylist_add(g_selectedNetworkList, &NETWORK_RA);
+           break;
+#endif /* RA_ADAPTER */
+
         default:
             break;
     }
 
-    if (CA_STATUS_OK != res)
+    if (!res)
     {
         OIC_LOG_V(ERROR, TAG, "Add arraylist failed[Err code: %d]", res);
-        return res;
+        return CA_STATUS_FAILED;
     }
     // start selected interface adapter
-    res = CAStartAdapter(transportType);
+    CAResult_t result = CAStartAdapter(transportType);
     OIC_LOG(DEBUG, TAG, "OUT");
-    return res;
+    return result;
 
 exit:
     OIC_LOG(DEBUG, TAG, "This adapter is already enabled");
@@ -164,7 +181,14 @@ CAResult_t CARemoveNetworkType(CATransportAdapter_t transportType)
                     OIC_LOG(DEBUG, TAG, "Remove network type(LE)");
                     u_arraylist_remove(g_selectedNetworkList, index);
 #endif /* LE_ADAPTER */
+
                     break;
+#ifdef RA_ADAPTER
+                case CA_ADAPTER_REMOTE_ACCESS:
+                    OIC_LOG(DEBUG, TAG, "Remove network type(RA)");
+                    u_arraylist_remove(g_selectedNetworkList, index);
+                    break;
+#endif /* RA_ADAPTER */
 
                 default:
                     break;

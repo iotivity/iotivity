@@ -47,8 +47,8 @@ const char *getResult(OCStackResult result);
 
 PROGMEM const char TAG[] = "ThinServer";
 
-char ssid[] = "hub2.4G";
-char passwd[] = "09877890";
+char ssid[] = "EasySetup123";
+char passwd[] = "EasySetup123";
 
 void EventCallbackInApp(ES_RESULT eventFlag)
 {
@@ -92,11 +92,12 @@ void setup()
 
     InitializeProvisioning(EventCallbackInApp);
 
-    if (OCStartPresence(0) != OC_STACK_OK)
+   /* if (OCStartPresence(0) != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, PCF("Start Presence init error"));
         return;
     }
+	*/
 }
 
 // The loop function is called in an endless loop

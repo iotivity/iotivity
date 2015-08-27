@@ -63,7 +63,7 @@ public final class OcPlatform {
      */
     public static final String GROUP_INTERFACE = "oic.mi.grp";
 
-    public static final String WELL_KNOWN_QUERY = "224.0.1.187:5683/oic/res";
+    public static final String WELL_KNOWN_QUERY = "/oic/res";
     public static final String MULTICAST_PREFIX = "224.0.1.187:5683";
     public static final String MULTICAST_IP = "224.0.1.187";
     public static final int MULTICAST_PORT = 5683;
@@ -91,7 +91,8 @@ public final class OcPlatform {
                     platformConfig.getModeType().getValue(),
                     platformConfig.getIpAddress(),
                     platformConfig.getPort(),
-                    platformConfig.getQualityOfService().getValue()
+                    platformConfig.getQualityOfService().getValue(),
+                    platformConfig.getSvrDbPath()
             );
 
             sIsPlatformInitialized = true;
@@ -102,7 +103,8 @@ public final class OcPlatform {
                                          int modeType,
                                          String ipAddress,
                                          int port,
-                                         int qualityOfService);
+                                         int qualityOfService,
+                                         String dbPath);
 
     /**
      * API for notifying base that resource's attributes have changed.
@@ -225,13 +227,21 @@ public final class OcPlatform {
     public static void findResource(
             String host,
             String resourceUri,
-            OcConnectivityType connectivityType,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
             OnResourceFoundListener onResourceFoundListener) throws OcException {
         OcPlatform.initCheck();
+
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType))
+                connTypeInt |= connType.getValue();
+        }
+
         OcPlatform.findResource0(
                 host,
                 resourceUri,
-                connectivityType.getValue(),
+                connTypeInt,
                 onResourceFoundListener
         );
     }
@@ -258,13 +268,21 @@ public final class OcPlatform {
     public static void findResource(
             String host,
             String resourceUri,
-            OcConnectivityType connectivityType,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
             OnResourceFoundListener onResourceFoundListener,
             QualityOfService qualityOfService) throws OcException {
         OcPlatform.initCheck();
+
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType))
+                connTypeInt |= connType.getValue();
+        }
+
         OcPlatform.findResource1(host,
                 resourceUri,
-                connectivityType.getValue(),
+                connTypeInt,
                 onResourceFoundListener,
                 qualityOfService.getValue()
         );
@@ -290,13 +308,19 @@ public final class OcPlatform {
     public static void getDeviceInfo(
             String host,
             String deviceUri,
-            OcConnectivityType connectivityType,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
             OnDeviceFoundListener onDeviceFoundListener) throws OcException {
         OcPlatform.initCheck();
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType))
+                connTypeInt |= connType.getValue();
+        }
         OcPlatform.getDeviceInfo0(
                 host,
                 deviceUri,
-                connectivityType.getValue(),
+                connTypeInt,
                 onDeviceFoundListener
         );
     }
@@ -321,14 +345,20 @@ public final class OcPlatform {
     public static void getDeviceInfo(
             String host,
             String deviceUri,
-            OcConnectivityType connectivityType,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
             OnDeviceFoundListener onDeviceFoundListener,
             QualityOfService qualityOfService) throws OcException {
         OcPlatform.initCheck();
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType))
+                connTypeInt |= connType.getValue();
+        }
         OcPlatform.getDeviceInfo1(
                 host,
                 deviceUri,
-                connectivityType.getValue(),
+                connTypeInt,
                 onDeviceFoundListener,
                 qualityOfService.getValue()
         );
@@ -339,6 +369,84 @@ public final class OcPlatform {
             String deviceUri,
             int connectivityType,
             OnDeviceFoundListener onDeviceFoundListener,
+            int qualityOfService) throws OcException;
+
+    /**
+     * API for Platform Discovery
+     *
+     * @param host                    Host IP Address. If null or empty, Multicast is performed.
+     * @param platformUri             Uri containing address to the platform
+     * @param connectivityType        a type of connectivity indicating the interface. Example: IPV4,
+     *                                IPV6, ALL
+     * @param onPlatformFoundListener Handles events, success states and failure states.
+     * @throws OcException
+     */
+
+    public static void getPlatformInfo(
+            String host,
+            String platformUri,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
+            OnPlatformFoundListener onPlatformFoundListener) throws OcException {
+        OcPlatform.initCheck();
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType))
+                connTypeInt |= connType.getValue();
+        }
+        OcPlatform.getPlatformInfo0(
+                host,
+                platformUri,
+                connTypeInt,
+                onPlatformFoundListener
+        );
+    }
+
+    private static native void getPlatformInfo0(
+            String host,
+            String platformUri,
+            int connectivityType,
+            OnPlatformFoundListener onPlatformInfoFoundListener) throws OcException;
+
+    /**
+     * API for Platform Discovery
+     *
+     * @param host                    Host IP Address. If null or empty, Multicast is performed.
+     * @param platformUri             Uri containing address to the platform
+     * @param connectivityType        a type of connectivity indicating the interface. Example: IPV4,
+     *                                IPV6, ALL
+     * @param onPlatformFoundListener Handles events, success states and failure states.
+     * @param qualityOfService        the quality of communication
+     * @throws OcException
+     */
+
+    public static void getPlatformInfo(
+            String host,
+            String platformUri,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
+            OnPlatformFoundListener onPlatformFoundListener,
+            QualityOfService qualityOfService) throws OcException {
+        OcPlatform.initCheck();
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType))
+                connTypeInt |= connType.getValue();
+        }
+        OcPlatform.getPlatformInfo1(
+                host,
+                platformUri,
+                connTypeInt,
+                onPlatformFoundListener,
+                qualityOfService.getValue()
+        );
+    }
+
+    private static native void getPlatformInfo1(
+            String host,
+            String platformUri,
+            int connectivityType,
+            OnPlatformFoundListener onPlatformFoundListener,
             int qualityOfService) throws OcException;
 
     /**
@@ -413,7 +521,38 @@ public final class OcPlatform {
 
     private static native void registerDeviceInfo0(
             String deviceName
-            ) throws OcException;
+    ) throws OcException;
+
+    /**
+     * Register Platform Info
+     *
+     * @param ocPlatformInfo object containing all the platform specific information
+     * @throws OcException
+     */
+    public static void registerPlatformInfo(
+            OcPlatformInfo ocPlatformInfo) throws OcException {
+        OcPlatform.initCheck();
+        OcPlatform.registerPlatformInfo0(
+                ocPlatformInfo.getPlatformID(),
+                ocPlatformInfo.getManufacturerName(),
+                ocPlatformInfo.getManufacturerUrl(),
+                ocPlatformInfo.getModelNumber(),
+                ocPlatformInfo.getDateOfManufacture(),
+                ocPlatformInfo.getPlatformVersion(),
+                ocPlatformInfo.getOperatingSystemVersion(),
+                ocPlatformInfo.getHardwareVersion(),
+                ocPlatformInfo.getFirmwareVersion(),
+                ocPlatformInfo.getSupportUrl(),
+                ocPlatformInfo.getSystemTime()
+        );
+    }
+
+    private static native void registerPlatformInfo0(
+            String platformId, String manufacturerName, String manufacturerUrl,
+            String modelNumber, String dateOfManufacture, String platformVersion,
+            String operatingSystemVersion, String hardwareVersion, String firmwareVersion,
+            String supportUrl, String systemTime
+    ) throws OcException;
 
     /**
      * This API unregisters a resource with the server NOTE: This API applies to server side only.
@@ -589,12 +728,18 @@ public final class OcPlatform {
      */
     public static OcPresenceHandle subscribePresence(
             String host,
-            OcConnectivityType connectivityType,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
             OnPresenceListener onPresenceListener) throws OcException {
         OcPlatform.initCheck();
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType))
+                connTypeInt |= connType.getValue();
+        }
         return OcPlatform.subscribePresence0(
                 host,
-                connectivityType.getValue(),
+                connTypeInt,
                 onPresenceListener
         );
     }
@@ -620,13 +765,19 @@ public final class OcPlatform {
     public static OcPresenceHandle subscribePresence(
             String host,
             String resourceType,
-            OcConnectivityType connectivityType,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
             OnPresenceListener onPresenceListener) throws OcException {
         OcPlatform.initCheck();
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType))
+                connTypeInt |= connType.getValue();
+        }
         return OcPlatform.subscribePresence1(
                 host,
                 resourceType,
-                connectivityType.getValue(),
+                connTypeInt,
                 onPresenceListener);
     }
 
@@ -678,15 +829,21 @@ public final class OcPlatform {
     public static OcResource constructResourceObject(
             String host,
             String uri,
-            OcConnectivityType connectivityType,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
             boolean isObservable,
             List<String> resourceTypeList,
             List<String> interfaceList) throws OcException {
         OcPlatform.initCheck();
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType))
+                connTypeInt |= connType.getValue();
+        }
         return OcPlatform.constructResourceObject0(
                 host,
                 uri,
-                connectivityType.getValue(),
+                connTypeInt,
                 isObservable,
                 resourceTypeList.toArray(new String[resourceTypeList.size()]),
                 interfaceList.toArray(new String[interfaceList.size()])
@@ -730,6 +887,14 @@ public final class OcPlatform {
      */
     public interface OnDeviceFoundListener {
         public void onDeviceFound(OcRepresentation ocRepresentation);
+    }
+
+    /**
+     * An OnPlatformFoundListener can be registered via the OcPlatform.getPlatformInfo call.
+     * Event listeners are notified asynchronously
+     */
+    public interface OnPlatformFoundListener {
+        public void onPlatformFound(OcRepresentation ocRepresentation);
     }
 
     /**

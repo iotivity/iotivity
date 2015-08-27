@@ -314,7 +314,7 @@ clean-pluginLTLIBRARIES:
 	  echo "rm -f \"$${dir}/so_locations\""; \
 	  rm -f "$${dir}/so_locations"; \
 	done
-libextension.la: $(libextension_la_OBJECTS) $(libextension_la_DEPENDENCIES) $(EXTRA_libextension_la_DEPENDENCIES) 
+libextension.la: $(libextension_la_OBJECTS) $(libextension_la_DEPENDENCIES) $(EXTRA_libextension_la_DEPENDENCIES)
 	$(libextension_la_LINK) -rpath $(plugindir) $(libextension_la_OBJECTS) $(libextension_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:

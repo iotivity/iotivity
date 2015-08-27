@@ -54,7 +54,7 @@ ES_RESULT ConnectToWiFiNetwork(const char *ssid, const char *pass, NetworkEventC
             != 0)
     {
         OC_LOG(DEBUG, TAG, PCF("!!!!! Upgrade WiFi Shield Firmware version !!!!!!"));
-        return ES_ERROR;
+        //return ES_ERROR;
     }
 
     while (findNetwork(ssid) == 0) // found

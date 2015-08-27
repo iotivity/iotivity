@@ -53,17 +53,20 @@ class ISSMResource
         ISSMResource()
         {
             location = SENSOR_LOCATION_LOCAL;
+            connectivityType = 0;
         }
         ISSMResource(const std::string &n, const std::string &t) :
             name(n), type(t)
         {
-        	location = SENSOR_LOCATION_LOCAL;
+            location = SENSOR_LOCATION_LOCAL;
+            connectivityType = 0;
         }
         SENSOR_LOCATION location;
         std::string name;
         std::string type;
         std::string friendlyName;
         std::string ip;
+        int connectivityType;
         std::vector<std::string> inputList;
         std::vector<std::map<std::string, std::string> > outputProperty;
 };

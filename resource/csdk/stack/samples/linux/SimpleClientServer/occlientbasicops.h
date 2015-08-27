@@ -28,9 +28,6 @@
 //-----------------------------------------------------------------------------
 #define TAG "occlientbasicops"
 #define DEFAULT_CONTEXT_VALUE 0x99
-#ifndef MAX_LENGTH_IPv4_ADDR
-#define MAX_LENGTH_IPv4_ADDR 16
-#endif
 
 //-----------------------------------------------------------------------------
 // Typedefs
@@ -46,6 +43,16 @@ typedef enum {
     MAX_TESTS
 } CLIENT_TEST;
 
+/**
+ * List of connectivity types that can be initiated from the client
+ * Required for user input validation
+ */
+typedef enum {
+    CT_ADAPTER_DEFAULT = 0,
+    CT_IP,
+    MAX_CT
+} CLIENT_CONNECTIVITY_TYPE;
+
 //-----------------------------------------------------------------------------
 //ResourceNode
 //-----------------------------------------------------------------------------
@@ -53,9 +60,7 @@ struct ResourceNode
 {
     const char * sid;
     const char * uri;
-    const char * ip;
-    const char * port;
-    OCConnectivityType connType;
+    OCDevAddr endpoint;
     ResourceNode * next;
 };
 
@@ -65,12 +70,6 @@ struct ResourceNode
 
 /* call getResult in common.cpp to get the result in string format. */
 const char *getResult(OCStackResult result);
-
-/* Get the IP address of the server */
-const char * getIPAddr(const OCClientResponse * clientResponse);
-
-/* Get the port number the server is listening on */
-const char * getPort(const OCClientResponse * clientResponse);
 
 /* Performs GET/PUT/POST query on most recently discovered resource*/
 void queryResource();
@@ -122,7 +121,7 @@ void parseClientResponse(OCClientResponse * clientResponse);
  * to the lower layers
  */
 OCStackResult InvokeOCDoResource(std::ostringstream &query,
-        OCMethod method, OCQualityOfService qos,
+        OCMethod method, OCDevAddr *dest, OCQualityOfService qos,
         OCClientResponseHandler cb, OCHeaderOption * options, uint8_t numOptions);
 
 /*

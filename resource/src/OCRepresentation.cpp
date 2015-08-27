@@ -29,125 +29,130 @@
 #include <OCRepresentation.h>
 
 #include <boost/lexical_cast.hpp>
-#include <cereal/cereal.hpp>
-#include <cereal/types/map.hpp>
-#include <cereal/types/vector.hpp>
-#include <cereal/types/utility.hpp>
-#include <OicJsonSerializer.hpp>
 #include <algorithm>
+#include "ocpayload.h"
+#include "ocrandom.h"
+#include "oic_malloc.h"
+#include "oic_string.h"
 
-// code needed to serialize a string=>Attribute value map
 namespace OC
 {
-    namespace detail
-    {
-        template<class Archive>
-        class WriteAttributeValue : public boost::static_visitor<>
-        {
-            public:
-                WriteAttributeValue(const std::string& name, Archive& ar)
-                    :m_name(name), m_archive(ar)
-                {}
 
-                template<class T>
-                void operator()(const T& value) const
-                {
-                    m_archive(cereal::make_nvp(m_name, value));
-                }
-            private:
-                std::string m_name;
-                Archive& m_archive;
-        };
+    void MessageContainer::setPayload(const OCPayload* rep)
+    {
+        switch(rep->type)
+        {
+            case PAYLOAD_TYPE_REPRESENTATION:
+                setPayload(reinterpret_cast<const OCRepPayload*>(rep));
+                break;
+            case PAYLOAD_TYPE_DEVICE:
+                setPayload(reinterpret_cast<const OCDevicePayload*>(rep));
+                break;
+            case PAYLOAD_TYPE_PLATFORM:
+                setPayload(reinterpret_cast<const OCPlatformPayload*>(rep));
+                break;
+            default:
+                throw OC::OCException("Invalid Payload type in setPayload");
+                break;
+        }
     }
-}
 
-namespace cereal
-{
-    // take no action when serializing the null type, because the 'save' below
-    // doesn't use the visitor for this type.
-    template <class Archive>
-    void serialize(Archive&, OC::NullType t)
-    {}
-
-    template<class Archive>
-    void save(Archive& ar, const std::map<std::string, OC::AttributeValue>& vals)
+    void MessageContainer::setPayload(const OCDevicePayload* payload)
     {
-        for(const auto& kv : vals)
+        OCRepresentation rep;
+        rep.setUri(payload->uri);
+        char uuidString[UUID_STRING_SIZE];
+        if(payload->sid && RAND_UUID_OK == OCConvertUuidToString(payload->sid, uuidString))
         {
-            const auto& k = kv.first;
-            const auto& v = kv.second;
+            rep[OC_RSRVD_DEVICE_ID] = std::string(uuidString);
+        }
+        else
+        {
+            rep[OC_RSRVD_DEVICE_ID] = std::string();
+        }
+        rep[OC_RSRVD_DEVICE_NAME] = payload->deviceName ?
+            std::string(payload->deviceName) :
+            std::string();
+        rep[OC_RSRVD_SPEC_VERSION] = payload->specVersion ?
+            std::string(payload->specVersion) :
+            std::string();
+        rep[OC_RSRVD_DATA_MODEL_VERSION] = payload->dataModelVersion ?
+            std::string(payload->dataModelVersion) :
+            std::string();
+        m_reps.push_back(std::move(rep));
+    }
 
-            if(v.which() != OC::AttributeValueNullIndex)
+    void MessageContainer::setPayload(const OCPlatformPayload* payload)
+    {
+        OCRepresentation rep;
+        rep.setUri(payload->uri);
+
+        rep[OC_RSRVD_PLATFORM_ID] = payload->info.platformID ?
+            std::string(payload->info.platformID) :
+            std::string();
+        rep[OC_RSRVD_MFG_NAME] = payload->info.manufacturerName ?
+            std::string(payload->info.manufacturerName) :
+            std::string();
+        rep[OC_RSRVD_MFG_URL] = payload->info.manufacturerUrl ?
+            std::string(payload->info.manufacturerUrl) :
+            std::string();
+        rep[OC_RSRVD_MODEL_NUM] = payload->info.modelNumber ?
+            std::string(payload->info.modelNumber) :
+            std::string();
+        rep[OC_RSRVD_MFG_DATE] = payload->info.dateOfManufacture ?
+            std::string(payload->info.dateOfManufacture) :
+            std::string();
+        rep[OC_RSRVD_PLATFORM_VERSION] = payload->info.platformVersion ?
+            std::string(payload->info.platformVersion) :
+            std::string();
+        rep[OC_RSRVD_OS_VERSION] = payload->info.operatingSystemVersion ?
+            std::string(payload->info.operatingSystemVersion) :
+            std::string();
+        rep[OC_RSRVD_HARDWARE_VERSION] = payload->info.hardwareVersion ?
+            std::string(payload->info.hardwareVersion) :
+            std::string();
+        rep[OC_RSRVD_FIRMWARE_VERSION] = payload->info.firmwareVersion ?
+            std::string(payload->info.firmwareVersion) :
+            std::string();
+        rep[OC_RSRVD_SUPPORT_URL] = payload->info.supportUrl ?
+            std::string(payload->info.supportUrl) :
+            std::string();
+        rep[OC_RSRVD_SYSTEM_TIME] = payload->info.systemTime ?
+            std::string(payload->info.systemTime) :
+            std::string();
+
+        m_reps.push_back(std::move(rep));
+    }
+
+    void MessageContainer::setPayload(const OCRepPayload* payload)
+    {
+        const OCRepPayload* pl = payload;
+        while(pl)
+        {
+            OCRepresentation cur;
+            cur.setPayload(pl);
+
+            pl = pl->next;
+            this->addRepresentation(cur);
+        }
+    }
+
+    OCRepPayload* MessageContainer::getPayload() const
+    {
+        OCRepPayload* root = nullptr;
+        for(const auto& r : representations())
+        {
+            if(!root)
             {
-                OC::detail::WriteAttributeValue<Archive> writer(k,ar);
-                boost::apply_visitor(writer, v);
+                root = r.getPayload();
             }
             else
             {
-                ar.setNextName(k.c_str());
-                ar.writeName();
-                ar.saveValue();
+                OCRepPayloadAppend(root, r.getPayload());
             }
         }
-    }
 
-    template<class Archive>
-    void load(Archive& ar, std::map<std::string, OC::AttributeValue>& vals)
-    {
-        ar.loadAttributeValues(vals);
-    }
-}
-
-namespace OC
-{
-    typedef cereal::JSONOutputArchive OutputArchiveType;
-    typedef cereal::JSONInputArchive InputArchiveType;
-
-    void MessageContainer::setJSONRepresentation(const std::string& payload)
-    {
-        std::stringstream os(payload);
-        {
-            InputArchiveType archive(os);
-            archive(cereal::make_nvp(OC::Key::OCKEY, m_reps));
-        }
-    }
-
-    void MessageContainer::setJSONRepresentation(const char* payload)
-    {
-        setJSONRepresentation(std::string(payload));
-    }
-
-    std::string MessageContainer::getJSONRepresentation(OCInfoFormat f) const
-    {
-        std::stringstream os;
-
-        // note: the block is required because cereal closes the JSON string
-        // upon destruction, so the archive needs to be destroyed before accessing
-        // the data
-        {
-            if(f == OCInfoFormat::IncludeOC)
-            {
-                OutputArchiveType archive(os);
-                archive(cereal::make_nvp(OC::Key::OCKEY, m_reps));
-            }
-            else if(f== OCInfoFormat::ExcludeOC)
-            {
-                bool firstPrinted = false;
-                for(std::vector<OCRepresentation>::size_type i = 0; i< m_reps.size();++i)
-                {
-                    if(!m_reps[i].emptyData())
-                    {
-                        if(firstPrinted)
-                        {
-                            os<<',';
-                        }
-                        firstPrinted=true;
-                        os << m_reps[i].getJSONRepresentation();
-                    }
-                }
-            }
-        }
-        return os.str();
+        return root;
     }
 
     const std::vector<OCRepresentation>& MessageContainer::representations() const
@@ -163,24 +168,430 @@ namespace OC
 
 namespace OC
 {
-    std::string OCRepresentation::getJSONRepresentation() const
+    struct get_payload_array: boost::static_visitor<>
     {
-        if(emptyData())
+        template<typename T>
+        void operator()(T& /*arr*/)
         {
-            return "{}";
+            throw std::logic_error("Invalid calc_dimensions_visitor type");
         }
 
-        std::stringstream os;
-
-        // note: the block is required because cereal closes the JSON string
-        // upon destruction, so the archive needs to be destroyed before accessing
-        // the data
+        template<typename T>
+        void operator()(std::vector<T>& arr)
         {
-            OutputArchiveType archive (os);
-            save(archive);
+            root_size_calc<T>();
+            dimensions[0] = arr.size();
+            dimTotal = calcDimTotal(dimensions);
+
+            array = (void*)OICMalloc(dimTotal * root_size);
+
+            for(size_t i = 0; i < dimensions[0]; ++i)
+            {
+                copy_to_array(arr[i], array, i);
+            }
+
+        }
+        template<typename T>
+        void operator()(std::vector<std::vector<T>>& arr)
+        {
+            root_size_calc<T>();
+            dimensions[0] = arr.size();
+            for(size_t i = 0; i < arr.size(); ++i)
+            {
+                dimensions[1] = std::max(dimensions[1], arr[i].size());
+            }
+            dimTotal = calcDimTotal(dimensions);
+            array = (void*)OICCalloc(1, dimTotal * root_size);
+
+            for(size_t i = 0; i < dimensions[0]; ++i)
+            {
+                for(size_t j = 0; j < dimensions[1] && j < arr[i].size(); ++j)
+                {
+                    copy_to_array(arr[i][j], array, i*dimensions[1] + j);
+                }
+            }
+        }
+        template<typename T>
+        void operator()(std::vector<std::vector<std::vector<T>>>& arr)
+        {
+            root_size_calc<T>();
+            dimensions[0] = arr.size();
+            for(size_t i = 0; i < arr.size(); ++i)
+            {
+                dimensions[1] = std::max(dimensions[1], arr[i].size());
+
+                for(size_t j = 0; j < arr[i].size(); ++j)
+                {
+                    dimensions[2] = std::max(dimensions[2], arr[i][j].size());
+                }
+            }
+
+            dimTotal = calcDimTotal(dimensions);
+            array = (void*)OICCalloc(1, dimTotal * root_size);
+
+            for(size_t i = 0; i < dimensions[0]; ++i)
+            {
+                for(size_t j = 0; j < dimensions[1] && j < arr[i].size(); ++j)
+                {
+                    for(size_t k = 0; k < dimensions[2] && k < arr[i][j].size(); ++k)
+                    {
+                        copy_to_array(arr[i][j][k], array,
+                                dimensions[2] * j +
+                                dimensions[2] * dimensions[1] * i +
+                                k);
+                    }
+                }
+            }
         }
 
-        return os.str();
+        template<typename T>
+        void root_size_calc()
+        {
+            root_size = sizeof(T);
+        }
+
+        template<typename T>
+        void copy_to_array(T item, void* array, size_t pos)
+        {
+            ((T*)array)[pos] = item;
+        }
+
+        size_t dimensions[MAX_REP_ARRAY_DEPTH];
+        size_t root_size;
+        size_t dimTotal;
+        void* array;
+    };
+
+    template<>
+    void get_payload_array::root_size_calc<int>()
+    {
+        root_size = sizeof(int64_t);
+    }
+
+    template<>
+    void get_payload_array::root_size_calc<std::string>()
+    {
+        root_size = sizeof(char*);
+    }
+
+    template<>
+    void get_payload_array::root_size_calc<OC::OCRepresentation>()
+    {
+        root_size = sizeof(OCRepPayload*);
+    }
+
+    template<>
+    void get_payload_array::copy_to_array(int item, void* array, size_t pos)
+    {
+        ((int64_t*)array)[pos] = item;
+    }
+
+    template<>
+    void get_payload_array::copy_to_array(std::_Bit_reference br, void* array, size_t pos)
+    {
+        ((bool*)array)[pos] = static_cast<bool>(br);
+    }
+
+    template<>
+    void get_payload_array::copy_to_array(const std::string& item, void* array, size_t pos)
+    {
+        ((char**)array)[pos] = OICStrdup(item.c_str());
+    }
+
+    template<>
+    void get_payload_array::copy_to_array(OC::OCRepresentation item, void* array, size_t pos)
+    {
+        ((OCRepPayload**)array)[pos] = item.getPayload();
+    }
+
+    void OCRepresentation::getPayloadArray(OCRepPayload* payload,
+                    const OCRepresentation::AttributeItem& item) const
+    {
+        get_payload_array vis{};
+        boost::apply_visitor(vis, m_values[item.attrname()]);
+
+
+        switch(item.base_type())
+        {
+            case AttributeType::Integer:
+                OCRepPayloadSetIntArrayAsOwner(payload, item.attrname().c_str(),
+                        (int64_t*)vis.array,
+                        vis.dimensions);
+                break;
+            case AttributeType::Double:
+                OCRepPayloadSetDoubleArrayAsOwner(payload, item.attrname().c_str(),
+                        (double*)vis.array,
+                        vis.dimensions);
+                break;
+            case AttributeType::Boolean:
+                OCRepPayloadSetBoolArrayAsOwner(payload, item.attrname().c_str(),
+                        (bool*)vis.array,
+                        vis.dimensions);
+                break;
+            case AttributeType::String:
+                OCRepPayloadSetStringArrayAsOwner(payload, item.attrname().c_str(),
+                        (char**)vis.array,
+                        vis.dimensions);
+                break;
+            case AttributeType::OCRepresentation:
+                OCRepPayloadSetPropObjectArrayAsOwner(payload, item.attrname().c_str(),
+                        (OCRepPayload**)vis.array, vis.dimensions);
+                break;
+            default:
+                throw std::logic_error(std::string("GetPayloadArray: Not Implemented") +
+                        std::to_string((int)item.base_type()));
+        }
+    }
+
+    OCRepPayload* OCRepresentation::getPayload() const
+    {
+        OCRepPayload* root = OCRepPayloadCreate();
+        if(!root)
+        {
+            throw std::bad_alloc();
+        }
+
+        OCRepPayloadSetUri(root, getUri().c_str());
+
+        for(const std::string& type : getResourceTypes())
+        {
+            OCRepPayloadAddResourceType(root, type.c_str());
+        }
+
+        for(const std::string& iface : getResourceInterfaces())
+        {
+            OCRepPayloadAddInterface(root, iface.c_str());
+        }
+
+        for(auto& val : *this)
+        {
+            switch(val.type())
+            {
+                case AttributeType::Null:
+                    OCRepPayloadSetNull(root, val.attrname().c_str());
+                    break;
+                case AttributeType::Integer:
+                    OCRepPayloadSetPropInt(root, val.attrname().c_str(), static_cast<int>(val));
+                    break;
+                case AttributeType::Double:
+                    OCRepPayloadSetPropDouble(root, val.attrname().c_str(),
+                            val.getValue<double>());
+                    break;
+                case AttributeType::Boolean:
+                    OCRepPayloadSetPropBool(root, val.attrname().c_str(), val.getValue<bool>());
+                    break;
+                case AttributeType::String:
+                    OCRepPayloadSetPropString(root, val.attrname().c_str(),
+                            static_cast<std::string>(val).c_str());
+                    break;
+                case AttributeType::OCRepresentation:
+                    OCRepPayloadSetPropObjectAsOwner(root, val.attrname().c_str(),
+                            static_cast<OCRepresentation>(val).getPayload());
+                    break;
+                case AttributeType::Vector:
+                    getPayloadArray(root, val);
+                    break;
+                default:
+                    throw std::logic_error(std::string("Getpayload: Not Implemented") +
+                            std::to_string((int)val.type()));
+                    break;
+            }
+        }
+
+        return root;
+    }
+
+    size_t calcArrayDepth(const size_t dimensions[MAX_REP_ARRAY_DEPTH])
+    {
+        if(dimensions[0] == 0)
+        {
+            throw std::logic_error("invalid calcArrayDepth");
+        }
+        else if(dimensions[1] == 0)
+        {
+            return 1;
+        }
+        else if (dimensions[2] == 0)
+        {
+            return 2;
+        }
+        else
+        {
+            return 3;
+        }
+    }
+
+    template<typename T>
+    T OCRepresentation::payload_array_helper_copy(size_t index, const OCRepPayloadValue* pl)
+    {
+        throw std::logic_error("payload_array_helper_copy: unsupported type");
+    }
+    template<>
+    int OCRepresentation::payload_array_helper_copy<int>(size_t index, const OCRepPayloadValue* pl)
+    {
+        return pl->arr.iArray[index];
+    }
+    template<>
+    double OCRepresentation::payload_array_helper_copy<double>(size_t index, const OCRepPayloadValue* pl)
+    {
+        return pl->arr.dArray[index];
+    }
+    template<>
+    bool OCRepresentation::payload_array_helper_copy<bool>(size_t index, const OCRepPayloadValue* pl)
+    {
+        return pl->arr.bArray[index];
+    }
+    template<>
+    std::string OCRepresentation::payload_array_helper_copy<std::string>(
+            size_t index, const OCRepPayloadValue* pl)
+    {
+        return std::string(pl->arr.strArray[index]);
+    }
+    template<>
+    OCRepresentation OCRepresentation::payload_array_helper_copy<OCRepresentation>(
+            size_t index, const OCRepPayloadValue* pl)
+    {
+        OCRepresentation r;
+        r.setPayload(pl->arr.objArray[index]);
+        return r;
+    }
+
+    template<typename T>
+    void OCRepresentation::payload_array_helper(const OCRepPayloadValue* pl, size_t depth)
+    {
+        if(depth == 1)
+        {
+            std::vector<T> val(pl->arr.dimensions[0]);
+
+            for(size_t i = 0; i < pl->arr.dimensions[0]; ++i)
+            {
+                val[i] = payload_array_helper_copy<T>(i, pl);
+            }
+            this->setValue(std::string(pl->name), val);
+        }
+        else if (depth == 2)
+        {
+            std::vector<std::vector<T>> val(pl->arr.dimensions[0]);
+            for(size_t i = 0; i < pl->arr.dimensions[0]; ++i)
+            {
+                val[i].reserve(pl->arr.dimensions[1]);
+                for(size_t j = 0; j < pl->arr.dimensions[1]; ++j)
+                {
+                    val[i][j] = payload_array_helper_copy<T>(
+                            i * pl->arr.dimensions[1] + j, pl);
+                }
+            }
+            this->setValue(std::string(pl->name), val);
+        }
+        else if (depth == 3)
+        {
+            std::vector<std::vector<std::vector<T>>> val;
+            for(size_t i = 0; i < pl->arr.dimensions[0]; ++i)
+            {
+                val[i].reserve(pl->arr.dimensions[1]);
+                for(size_t j = 0; j < pl->arr.dimensions[1]; ++j)
+                {
+                    val[i][j].reserve(pl->arr.dimensions[2]);
+                    for(size_t k = 0; k < pl->arr.dimensions[2]; ++k)
+                    {
+                        val[i][j][k] = payload_array_helper_copy<T>(
+                                pl->arr.dimensions[2] * j +
+                                pl->arr.dimensions[2] * pl->arr.dimensions[1] * i +
+                                k,
+                                pl);
+                    }
+                }
+            }
+            this->setValue(std::string(pl->name), val);
+        }
+        else
+        {
+            throw std::logic_error("Invalid depth in payload_array_helper");
+        }
+    }
+
+    void OCRepresentation::setPayloadArray(const OCRepPayloadValue* pl)
+    {
+
+        switch(pl->arr.type)
+        {
+            case OCREP_PROP_INT:
+                payload_array_helper<int>(pl, calcArrayDepth(pl->arr.dimensions));
+                break;
+            case OCREP_PROP_DOUBLE:
+                payload_array_helper<double>(pl, calcArrayDepth(pl->arr.dimensions));
+                break;
+            case OCREP_PROP_BOOL:
+                payload_array_helper<bool>(pl, calcArrayDepth(pl->arr.dimensions));
+                break;
+            case OCREP_PROP_STRING:
+                payload_array_helper<std::string>(pl, calcArrayDepth(pl->arr.dimensions));
+                break;
+            case OCREP_PROP_OBJECT:
+                payload_array_helper<OCRepresentation>(pl, calcArrayDepth(pl->arr.dimensions));
+                break;
+            default:
+                throw std::logic_error("setPayload array invalid type");
+                break;
+        }
+    }
+
+    void OCRepresentation::setPayload(const OCRepPayload* pl)
+    {
+        setUri(pl->uri);
+
+        OCStringLL* ll = pl->types;
+        while(ll)
+        {
+            addResourceType(ll->value);
+            ll = ll->next;
+        }
+
+        ll = pl->interfaces;
+        while(ll)
+        {
+            addResourceInterface(ll->value);
+            ll = ll->next;
+        }
+
+        OCRepPayloadValue* val = pl->values;
+
+        while(val)
+        {
+            switch(val->type)
+            {
+                case OCREP_PROP_NULL:
+                    setNULL(val->name);
+                    break;
+                case OCREP_PROP_INT:
+                    setValue<int>(val->name, val->i);
+                    break;
+                case OCREP_PROP_DOUBLE:
+                    setValue<double>(val->name, val->d);
+                    break;
+                case OCREP_PROP_BOOL:
+                    setValue<bool>(val->name, val->b);
+                    break;
+                case OCREP_PROP_STRING:
+                    setValue<std::string>(val->name, val->str);
+                    break;
+                case OCREP_PROP_OBJECT:
+                    {
+                        OCRepresentation cur;
+                        cur.setPayload(val->obj);
+                        setValue<OCRepresentation>(val->name, cur);
+                    }
+                    break;
+                case OCREP_PROP_ARRAY:
+                    setPayloadArray(val);
+                    break;
+                default:
+                    throw std::logic_error(std::string("Not Implemented!") +
+                            std::to_string((int)val->type));
+                    break;
+            }
+            val = val->next;
+        }
     }
 
     void OCRepresentation::addChild(const OCRepresentation& rep)
@@ -201,6 +612,10 @@ namespace OC
     void OCRepresentation::setChildren(const std::vector<OCRepresentation>& children)
     {
         m_children = children;
+    }
+    void OCRepresentation::setUri(const char* uri)
+    {
+        m_uri = uri ? uri : "";
     }
 
     void OCRepresentation::setUri(const std::string& uri)
@@ -223,9 +638,19 @@ namespace OC
         m_resourceTypes = resourceTypes;
     }
 
+    void OCRepresentation::addResourceType(const std::string& str)
+    {
+        m_resourceTypes.push_back(str);
+    }
+
     const std::vector<std::string>& OCRepresentation::getResourceInterfaces() const
     {
         return m_interfaces;
+    }
+
+    void OCRepresentation::addResourceInterface(const std::string& str)
+    {
+        m_interfaces.push_back(str);
     }
 
     void OCRepresentation::setResourceInterfaces(const std::vector<std::string>& resourceInterfaces)
@@ -301,355 +726,6 @@ namespace OC
             throw OCException(OC::Exception::INVALID_ATTRIBUTE+ str);
         }
     }
-}
-
-namespace OC
-{
-    template <class Archive, class Val>
-    void OCRepresentation::optional_load(Archive& ar, Val&& v)
-    {
-        try
-        {
-            ar(v);
-        }
-        catch(cereal::Exception&)
-        {
-            ar.setNextName(nullptr);
-            // Loading a key that doesn't exist results in an exception
-            // Since "Not Found" is a valid condition for us, we swallow
-            // this exception and the archive will not load anything
-        }
-    }
-
-    template<class Archive>
-    void OCRepresentation::save(Archive& ar) const
-    {
-        // printed for all interface types
-        if(!m_uri.empty())
-        {
-            ar(cereal::make_nvp(Key::URIKEY, m_uri));
-        }
-
-        if((m_interfaceType == InterfaceType::None
-                    || m_interfaceType==InterfaceType::DefaultChild
-                    || m_interfaceType==InterfaceType::LinkChild)
-                && (m_resourceTypes.size()>0 || m_interfaces.size()>0))
-        {
-            // The Prop object requires that it refer to non-const vectors
-            // so that it can alter them in the 'load' case.  In the save case
-            // (initiated here) it will not modify the object.  So, to keep the
-            // compiler happy, removing the 'const' context here is necessary.
-            const std::vector<std::string>& rt(m_resourceTypes);
-            const std::vector<std::string>& intf(m_interfaces);
-            Prop temp(const_cast<std::vector<std::string>&>(rt),
-                    const_cast<std::vector<std::string>&>(intf));
-            ar(cereal::make_nvp(Key::PROPERTYKEY, temp));
-        }
-
-        // printed only for BatchChildren and DefaultParent
-        if((m_interfaceType == InterfaceType::None
-                    || m_interfaceType == InterfaceType::BatchChild
-                    || m_interfaceType == InterfaceType::DefaultParent)
-                && m_values.size()>0)
-        {
-            ar(cereal::make_nvp(Key::REPKEY, m_values));
-        }
-    }
-
-    template<class Archive>
-    void OCRepresentation::load(Archive& ar)
-    {
-        optional_load(ar, cereal::make_nvp(Key::URIKEY, m_uri));
-        {
-            Prop temp(m_resourceTypes, m_interfaces);
-            optional_load(ar, cereal::make_nvp(Key::PROPERTYKEY, temp));
-        }
-        optional_load(ar, cereal::make_nvp(Key::REPKEY, m_values));
-    }
-
-    template<class Archive>
-    void OCRepresentation::Prop::save(Archive& ar) const
-    {
-        if(m_types.size() > 0)
-        {
-            ar(cereal::make_nvp(Key::RESOURCETYPESKEY, m_types));
-        }
-
-        if(m_interfaces.size()>0)
-        {
-            ar(cereal::make_nvp(Key::INTERFACESKEY, m_interfaces));
-        }
-    }
-
-    template<class Archive>
-    void OCRepresentation::Prop::load(Archive& ar)
-    {
-        optional_load(ar, cereal::make_nvp(Key::RESOURCETYPESKEY, m_types));
-        optional_load(ar, cereal::make_nvp(Key::INTERFACESKEY, m_interfaces));
-    }
-}
-
-// note: the below is used to load an AttributeValue map out of JSON
-namespace OC
-{
-    namespace detail
-    {
-        enum class typeTag:uint8_t
-        {
-            NOTHING = 0,
-            _string,
-            _int,
-            _double,
-            _bool,
-            _representation
-        };
-
-        typedef rapidjson::Document::GenericValue GenericValue;
-
-        AttributeValue parseAttributeValue(const GenericValue& v);
-        AttributeValue parseAttributeValue(const GenericValue& v,
-                const unsigned int curLevel, unsigned int& maxDepth, typeTag& t);
-        AttributeValue parseAttributeValueObject(const GenericValue& v, typeTag& t);
-        AttributeValue parseAttributeValueArray(const GenericValue& v,
-                const unsigned int curLevel, unsigned int& maxDepth, typeTag& t);
-        AttributeValue parseAttributeValuePrimitive(const GenericValue& v, typeTag& t);
-
-        AttributeValue parseAttributeValue(const GenericValue& v)
-        {
-            // base entrance, start everything at '0'
-            unsigned int max_depth {0};
-            typeTag t {typeTag::NOTHING};
-
-            return parseAttributeValue(v, 0, max_depth, t);
-        }
-
-        AttributeValue parseAttributeValue(const GenericValue& v,
-                const unsigned int curLevel, unsigned int& maxDepth, typeTag& t)
-        {
-            if(v.IsObject())
-            {
-                return parseAttributeValueObject(v, t);
-            }
-            else if(v.IsArray())
-            {
-                return parseAttributeValueArray(v, curLevel + 1, maxDepth, t);
-            }
-            else
-            {
-                return parseAttributeValuePrimitive(v,t);
-            }
-        }
-
-        AttributeValue parseAttributeValueObject(const GenericValue& v, typeTag& t)
-        {
-            typedef rapidjson::Value::ConstMemberIterator CMI;
-            t = typeTag::_representation;
-            OC::OCRepresentation rep;
-
-            for(CMI itr = v.MemberBegin(); itr!= v.MemberEnd(); ++itr)
-            {
-                std::string keyName = itr->name.GetString();
-
-                if(keyName == OC::Key::URIKEY)
-                {
-                    rep.setUri(boost::get<std::string>(parseAttributeValue(itr->value)));
-                }
-                else if (keyName == OC::Key::PROPERTYKEY)
-                {
-                    for(CMI itr2 = itr->value.MemberBegin();
-                            itr->value.MemberEnd()!=itr2;
-                            ++itr2)
-                    {
-                        if(keyName == OC::Key::RESOURCETYPESKEY)
-                        {
-                            rep.setResourceTypes(
-                                    boost::get<std::vector<std::string>>(
-                                        parseAttributeValue(itr->value)));
-                        }
-                        else if(keyName == OC::Key::INTERFACESKEY)
-                        {
-                            rep.setResourceInterfaces(
-                                    boost::get<std::vector<std::string>>(
-                                        parseAttributeValue(itr->value)));
-                        }
-                    }
-                }
-                else if (keyName == OC::Key::REPKEY)
-                {
-                    for(CMI itr2 = itr->value.MemberBegin();
-                            itr->value.MemberEnd()!=itr2;
-                            ++itr2)
-                    {
-                        rep.setValue(itr2->name.GetString(),
-                                parseAttributeValue(itr2->value));
-                    }
-                }
-            }
-
-            return rep;
-        }
-
-        AttributeValue parseAttributeValuePrimitive(const GenericValue& v, typeTag& t)
-        {
-            if(v.IsString())
-            {
-                t = typeTag::_string;
-                return std::string(v.GetString());
-            }
-            else if (v.IsNumber())
-            {
-                if(v.IsDouble())
-                {
-                    t = typeTag::_double;
-                    return double(v.GetDouble());
-                }
-                else if (v.IsInt())
-                {
-                    t = typeTag::_int;
-                    return int(v.GetInt());
-                }
-                else
-                {
-                    throw OC::OCException(OC::Exception::INVALID_JSON_NUMERIC
-                            + std::to_string(v.GetType()));
-                }
-            }
-            else if(v.IsBool_())
-            {
-                t=typeTag::_bool;
-                return bool(v.GetBool_());
-            }
-            else if(v.IsNull_())
-            {
-                return OC::NullType();
-            }
-            else
-            {
-                throw OC::OCException(OC::Exception::INVALID_JSON_TYPE
-                        + std::to_string(v.GetType()));
-            }
-        }
-
-        std::vector<AttributeValue> gatherArrayContents(const GenericValue& v,
-                const unsigned int curLevel, unsigned int& maxDepth, typeTag& t)
-        {
-            std::vector<AttributeValue> out;
-
-            std::transform(v.Begin(), v.End(), back_inserter(out),
-                    [curLevel, &maxDepth, &t](const GenericValue& x)
-                    {
-                        return parseAttributeValue(x, curLevel, maxDepth, t);
-                    });
-            return out;
-        }
-
-        template<class OutT>
-        struct valueToConcrete
-        {
-            OutT operator()(const AttributeValue& v)
-            {
-                return boost::get<OutT>(v);
-            }
-
-        };
-
-        template <class OutSeqT>
-        OutSeqT valuesToConcreteVectors(const std::vector<AttributeValue>& vs)
-        {
-            OutSeqT ret;
-
-            std::transform(begin(vs),end(vs), back_inserter(ret),
-                valueToConcrete<typename OutSeqT::value_type>());
-            return ret;
-        }
-
-        template<class valueType>
-        AttributeValue remapArrayDepth(const unsigned int curLevel,
-                const std::vector<OC::AttributeValue>& vs)
-        {
-            switch(curLevel)
-            {
-                default:
-                    throw OC::OCException(OC::Exception::INVALID_JSON_ARRAY_DEPTH);
-                    break;
-                case 1:
-                    return valuesToConcreteVectors<std::vector<valueType>>(vs);
-                    break;
-                case 2:
-                    return valuesToConcreteVectors<std::vector<std::vector<valueType>>>(vs);
-                    break;
-                case 3:
-                    return valuesToConcreteVectors
-                        <std::vector<std::vector<std::vector<valueType>>>>(vs);
-                    break;
-            }
-        }
-
-        AttributeValue convertArrayToConcretes(const typeTag t,
-                const unsigned int curLevel, const std::vector<OC::AttributeValue>& vs)
-        {
-            // This function converts a std::vector of AttributeValue to a std::vector
-            // of concrete types.  Since we don't use a recursive Variant, we need
-            // to get back to a 'base' primitive type
-            switch(t)
-            {
-                default:
-                case typeTag::NOTHING:
-                    throw OC::OCException(OC::Exception::INVALID_JSON_TYPE_TAG);
-                    break;
-                case typeTag::_string:
-                    return remapArrayDepth<std::string>(curLevel, vs);
-                    break;
-                case typeTag::_int:
-                    return remapArrayDepth<int>(curLevel, vs);
-                    break;
-                case typeTag::_double:
-                    return remapArrayDepth<double>(curLevel, vs);
-                    break;
-                case typeTag::_bool:
-                    return remapArrayDepth<bool>(curLevel, vs);
-                    break;
-                case typeTag::_representation:
-                    return remapArrayDepth<OCRepresentation>(curLevel, vs);
-                    break;
-            }
-        }
-
-        AttributeValue parseAttributeValueArray(const GenericValue& v,
-                const unsigned int curLevel, unsigned int& maxDepth, typeTag& t)
-        {
-            const unsigned int max_level = 3;
-
-            if(curLevel > max_level)
-            {
-                throw OC::OCException(OC::Exception::INVALID_JSON_ARRAY_DEPTH);
-            }
-
-            if(curLevel > maxDepth)
-            {
-                maxDepth = curLevel;
-            }
-
-            auto arrayItems = gatherArrayContents(v, curLevel, maxDepth, t);
-            const int remapLevel = maxDepth - (curLevel -1);
-            return convertArrayToConcretes(t, remapLevel, arrayItems);
-        }
-    }
-}
-
-namespace cereal
-{
-   void JSONInputArchive::loadAttributeValues(std::map<std::string, OC::AttributeValue>& map)
-   {
-       for(auto&b = itsIteratorStack.back();
-           b.Member && b.itsMemberItEnd != b.itsMemberItBegin+b.itsIndex;
-           ++b)
-       {
-           std::string key = b.itsMemberItBegin[b.itsIndex].name.GetString();
-           const GenericValue& v = itsIteratorStack.back().value();
-           map[key] = OC::detail::parseAttributeValue(v);
-       }
-   }
 }
 
 namespace OC
@@ -747,7 +823,7 @@ namespace OC
             type(AttributeType::Null), base_type(AttributeType::Null), depth(0){}
 
         template <typename T>
-        void operator()(T const& item)
+        void operator()(T const& /*item*/)
         {
             type = type_info<T>::enum_type;
             base_type = type_info<T>::enum_base_type;
@@ -941,13 +1017,13 @@ namespace OC
     }
 
     template<>
-    void to_string_visitor::operator()(NullType const& item)
+    void to_string_visitor::operator()(NullType const& /*item*/)
     {
         str = "(null)";
     }
 
     template<>
-    void to_string_visitor::operator()(OCRepresentation const& item)
+    void to_string_visitor::operator()(OCRepresentation const& /*item*/)
     {
         str = "OC::OCRepresentation";
     }

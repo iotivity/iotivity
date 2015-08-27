@@ -1,4 +1,4 @@
-//******************************************************************
+//********************************************************************
 //
 // Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
 //
@@ -18,44 +18,66 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+/**
+ * @file
+ *
+ * This file contains the data structure and APIs for registered resource as an observer.
+ *
+ */
+
+
 #ifndef OC_OBSERVE_H
 #define OC_OBSERVE_H
 
-// Sequence number is a 24 bit field, per
-// https://tools.ietf.org/html/draft-ietf-core-observe-16
+/** Sequence number is a 24 bit field, per https://tools.ietf.org/html/draft-ietf-core-observe-16.*/
 #define MAX_SEQUENCE_NUMBER              (0xFFFFFF)
 
+/** Maximum number of observers to reach */
+
 #define MAX_OBSERVER_FAILED_COMM         (2)
+
+/** Maximum number of observers to reach for resources with low QOS */
 #define MAX_OBSERVER_NON_COUNT           (3)
 
 /**
- * This information is stored for each registered observer.
+ * Data structure to hold informations for each registered observer.
  */
 typedef struct ResourceObserver
 {
-    // Observation Identifier for request
+    /** Observation Identifier for request.*/
     OCObservationId observeId;
-    // URI of observed resource
+
+    /** URI of observed resource.*/
     char *resUri;
-    // Query
+
+    /** Query.*/
     char *query;
-    //token for the observe request
+
+    /** token for the observe request.*/
     CAToken_t token;
-    //token length for the observe request
+
+    /** token length for the observe request.*/
     uint8_t tokenLength;
-    // Resource handle
+
+    /** Resource handle.*/
     OCResource *resource;
-    /** Remote Endpoint **/
+
+    /** Remote Endpoint. */
     OCDevAddr devAddr;
-    // Quality of service of the request
+
+    /** Quality of service of the request.*/
     OCQualityOfService qos;
-    // number of times the server failed to reach the observer
+
+    /** number of times the server failed to reach the observer.*/
     uint8_t failedCommCount;
-    // number of times the server sent NON notifications
+
+    /** number of times the server sent NON notifications.*/
     uint8_t lowQosCount;
-    // force the qos value to CON
+
+    /** force the qos value to CON.*/
     uint8_t forceHighQos;
-    // next node in this list
+
+    /** next node in this list.*/
     struct ResourceObserver *next;
 } ResourceObserver;
 
@@ -63,11 +85,12 @@ typedef struct ResourceObserver
 /**
  * Create an observe response and send to all observers in the observe list.
  *
- * @param method RESTful method.
- * @param resPtr Observed resource.
- * @param maxAge Time To Live (in seconds) of observation.
- * @param resourceType Resource type.  Allows resource type name to be added to response.
- * @param qos Quality of service of resource.
+ * @param method          RESTful method.
+ * @param resPtr          Observed resource.
+ * @param maxAge          Time To Live (in seconds) of observation.
+ * @param resourceType    Resource type.  Allows resource type name to be added to response.
+ * @param qos             Quality of service of resource.
+ *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, uint32_t maxAge,
@@ -80,6 +103,7 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
  * @param resPtr Observed resource.
  * @param maxAge Time To Live (in seconds) of observation.
  * @param qos Quality of service of resource.
+ *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, uint32_t maxAge,
@@ -89,17 +113,18 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
 /**
  * Notify specific observers with updated value of representation.
  *
- * @param resource Observed resource
- * @param obsIdList List of observation ids that need to be notified.
- * @param numberOfIds Number of observation ids included in obsIdList.
- * @param notificationJSONPayload - JSON encoded payload to send in notification.
- * @param maxAge Time To Live (in seconds) of observation.
- * @param qos Desired quality of service of the observation notifications.
+ * @param resource                  Observed resource.
+ * @param obsIdList                 List of observation ids that need to be notified.
+ * @param numberOfIds               Number of observation ids included in obsIdList.
+ * @param notificationJSONPayload   JSON encoded payload to send in notification.
+ * @param maxAge                    Time To Live (in seconds) of observation.
+ * @param qos                       Desired quality of service of the observation notifications.
+ *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 OCStackResult SendListObserverNotification (OCResource * resource,
         OCObservationId  *obsIdList, uint8_t numberOfIds,
-        const char *notificationJSONPayload, uint32_t maxAge,
+        const OCRepPayload *payload, uint32_t maxAge,
         OCQualityOfService qos);
 
 /**
@@ -110,7 +135,8 @@ void DeleteObserverList();
 /**
  * Create a unique observation ID.
  *
- * @param observationId Pointer to generated ID.
+ * @param observationId           Pointer to generated ID.
+ *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 OCStackResult GenerateObserverId (OCObservationId *observationId);
@@ -118,14 +144,15 @@ OCStackResult GenerateObserverId (OCObservationId *observationId);
 /**
  * Add observer for a resource.
  *
- * @param resUri Resource URI string.
- * @param query Query string.
- * @param obsId Observation ID.
- * @param token Request token.
- * @param tokenLength Length of token.
- * @param resHandle Resource handle.
- * @param qos Quality of service of observation.
- * @param observer address
+ * @param resUri          Resource URI string.
+ * @param query           Query string.
+ * @param obsId           Observation ID.
+ * @param token           Request token.
+ * @param tokenLength     Length of token.
+ * @param resHandle       Resource handle.
+ * @param qos             Quality of service of observation.
+ * @param devAddr         Device address.
+ *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 OCStackResult AddObserver (const char         *resUri,
@@ -151,8 +178,8 @@ OCStackResult AddObserver (const char         *resUri,
 /**
  * Search the list of observers for the specified token.
  *
- * @param token Token to search for.
- * @param tokenLength Length of token.
+ * @param token            Token to search for.
+ * @param tokenLength      Length of token.
  *
  * @return Pointer to found observer.
  */
@@ -161,20 +188,20 @@ ResourceObserver* GetObserverUsingToken (const CAToken_t token, uint8_t tokenLen
 /**
  * Search the list of observers for the specified observe ID.
  *
- * @param observeId Observer ID to search for
+ * @param observeId        Observer ID to search for.
  *
  * @return Pointer to found observer.
  */
 ResourceObserver* GetObserverUsingId (const OCObservationId observeId);
 
 /**
- * Add observe header option to a request.
+ *  Add observe header option to a request.
  *
- * @param caHdrOpt Target request CA header option.
- * @param ocHdrOpt Pointer to existing options.
- * @param numOptions Number of existing options.
- * @param observeFlag Register/de-register observation.  Should be either
- *                      ::OC_OBSERVE_REGISTER or ::OC_OBSERVE_DEREGISTER.
+ * @param caHdrOpt        Target request CA header option.
+ * @param ocHdrOpt        Pointer to existing options.
+ * @param numOptions      Number of existing options.
+ * @param observeFlag     Register/de-register observation.  Should be either
+ *                        ::OC_OBSERVE_REGISTER or ::OC_OBSERVE_DEREGISTER.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
@@ -185,14 +212,15 @@ CreateObserveHeaderOption (CAHeaderOption_t **caHdrOpt,
                            uint8_t observeFlag);
 
 /**
- * Copy the observe option from a received request
+ *  Copy the observe option from a received request.
  *
- * @param observationOption Pointer to observe option value.  Should be either
- *  ::OC_OBSERVE_REGISTER, ::OC_OBSERVE_DEREGISTER, or ::OC_OBSERVE_NO_OPTION if observe not found.
+ * @param observationOption      Pointer to observe option value.  Should be either
+ *                               ::OC_OBSERVE_REGISTER, ::OC_OBSERVE_DEREGISTER, or
+ *                               ::OC_OBSERVE_NO_OPTION if observe not found.
  *
- * @param options Options in received request.  Observe option is removed if found.
- * @param numOptions Number of options in the received request.  Decremented if observe option is
- *                     extracted.
+ * @param options                Options in received request.  Observe option is removed if found.
+ * @param numOptions             Number of options in the received request.  Decremented if observe
+ *                               option is extracted.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */

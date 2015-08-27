@@ -54,8 +54,10 @@
 #ifndef __TIZEN__
 static oic_log_ctx_t *logCtx = 0;
 
+#ifndef __ANDROID__
 static oic_log_level LEVEL_XTABLE[] =
 { OIC_LOG_DEBUG, OIC_LOG_INFO, OIC_LOG_WARNING, OIC_LOG_ERROR, OIC_LOG_FATAL };
+#endif
 
 #endif
 
@@ -72,7 +74,7 @@ static const char *LEVEL[] =
 static android_LogPriority LEVEL[] =
 {   ANDROID_LOG_DEBUG, ANDROID_LOG_INFO, ANDROID_LOG_WARN, ANDROID_LOG_ERROR, ANDROID_LOG_FATAL};
 #endif
-#elif defined __linux__
+#elif defined (__linux__) || defined (__APPLE__)
 static const char *LEVEL[] __attribute__ ((unused)) =
 {   "DEBUG", "INFO", "WARNING", "ERROR", "FATAL"};
 #elif defined ARDUINO
@@ -114,7 +116,7 @@ void OICLogInit()
 
 void OICLogShutdown()
 {
-#ifdef __linux__
+#if defined(__linux__) || defined(__APPLE__)
     if (logCtx && logCtx->destroy)
     {
         logCtx->destroy(logCtx);
@@ -145,7 +147,7 @@ void OICLog(LogLevel level, const char *tag, const char *logStr)
     __android_log_write(LEVEL[level], tag, logStr);
 #endif
 
-#elif defined __linux__
+#elif defined __linux__ || defined __APPLE__
     if (logCtx && logCtx->write_level)
     {
         logCtx->write_level(logCtx, LEVEL_XTABLE[level], logStr);
@@ -156,8 +158,8 @@ void OICLog(LogLevel level, const char *tag, const char *logStr)
         int min = 0;
         int sec = 0;
         int ms = 0;
-#ifdef _POSIX_TIMERS
-        struct timespec when = {};
+#if defined(_POSIX_TIMERS) && _POSIX_TIMERS > 0
+        struct timespec when = { 0, 0 };
         clockid_t clk = CLOCK_REALTIME;
 #ifdef CLOCK_REALTIME_COARSE
         clk = CLOCK_REALTIME_COARSE;
@@ -456,4 +458,3 @@ void OICLogv(LogLevel level, const char *tag, const __FlashStringHelper *format,
 }
 
 #endif //ARDUINO
-

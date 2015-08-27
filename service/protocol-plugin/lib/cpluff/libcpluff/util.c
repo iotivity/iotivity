@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  * C-Pluff, a plug-in framework for C
  * Copyright 2007 Johannes Lehtinen
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -23,7 +23,7 @@
 
 /** @file
  * Internal utility functions
- */ 
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -49,15 +49,15 @@ CP_HIDDEN hash_val_t cpi_hashfunc_ptr(const void *ptr) {
 }
 
 CP_HIDDEN int cpi_ptrset_add(list_t *set, void *ptr) {
-	
 
-	// Only add the pointer if it is not already included 
+
+	// Only add the pointer if it is not already included
 	if (cpi_ptrset_contains(set, ptr)) {
 		return 1;
 	} else {
 		lnode_t *node;
 
-		/* Add the pointer to the list */		
+		/* Add the pointer to the list */
 		node = lnode_create(ptr);
 		if (node == NULL) {
 			return 0;
@@ -65,13 +65,13 @@ CP_HIDDEN int cpi_ptrset_add(list_t *set, void *ptr) {
 		list_append(set, node);
 		return 1;
 	}
-	
+
 }
 
 CP_HIDDEN int cpi_ptrset_remove(list_t *set, const void *ptr) {
 	lnode_t *node;
-	
-	// Find the pointer if it is in the set 
+
+	// Find the pointer if it is in the set
 	node = list_find(set, ptr, cpi_comp_ptr);
 	if (node != NULL) {
 		list_delete(set, node);
@@ -130,17 +130,17 @@ static int vercmp_char_value(char c) {
 }
 
 static int vercmp_num_value(const char *v, const char *vn) {
-	
+
 	// Skip leading zeros
 	while (v < vn && *v == '0') {
 		v++;
 	}
-	
+
 	// Empty string equals to zero
 	if (v == vn) {
 		return 0;
 	}
-	
+
 	// Otherwise return the integer value
 	else {
 		char str[16];
@@ -153,7 +153,7 @@ static int vercmp_num_value(const char *v, const char *vn) {
 CP_HIDDEN int cpi_vercmp(const char *v1, const char *v2) {
 	const char *v1n;
 	const char *v2n;
-	
+
 	// Check for NULL versions
 	if (v1 == NULL && v2 != NULL) {
 		return -1;
@@ -163,19 +163,19 @@ CP_HIDDEN int cpi_vercmp(const char *v1, const char *v2) {
 		return 1;
 	}
 	assert(v1 != NULL && v2 != NULL);
-	
+
 	// Component comparison loop
 	while (*v1 != '\0' || *v2 != '\0') {
-		
+
 		// Determine longest non-digit prefix
 		v1n = vercmp_nondigit_end(v1);
 		v2n = vercmp_nondigit_end(v2);
-		
+
 		// Compare the non-digit strings
 		while (v1 < v1n || v2 < v2n) {
 			char c1 = '\0';
 			char c2 = '\0';
-			
+
 			if (v1 < v1n) {
 				c1 = *v1++;
 			}
@@ -189,11 +189,11 @@ CP_HIDDEN int cpi_vercmp(const char *v1, const char *v2) {
 			assert(v1 <= v1n && v2 <= v2n);
 		}
 		assert(v1 == v1n && v2 == v2n);
-		
+
 		// Determine the longest digit prefix
 		v1n = vercmp_digit_end(v1);
 		v2n = vercmp_digit_end(v2);
-		
+
 		// Compare the digit strings
 		{
 			int i1 = vercmp_num_value(v1, v1n);
@@ -205,7 +205,7 @@ CP_HIDDEN int cpi_vercmp(const char *v1, const char *v2) {
 		}
 		v1 = v1n;
 		v2 = v2n;
-		
+
 	}
 	return 0;
 }

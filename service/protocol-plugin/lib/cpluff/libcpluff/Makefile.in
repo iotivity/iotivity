@@ -371,7 +371,7 @@ clean-libLTLIBRARIES:
 	  echo "rm -f \"$${dir}/so_locations\""; \
 	  rm -f "$${dir}/so_locations"; \
 	done
-libcpluff.la: $(libcpluff_la_OBJECTS) $(libcpluff_la_DEPENDENCIES) $(EXTRA_libcpluff_la_DEPENDENCIES) 
+libcpluff.la: $(libcpluff_la_OBJECTS) $(libcpluff_la_DEPENDENCIES) $(EXTRA_libcpluff_la_DEPENDENCIES)
 	$(libcpluff_la_LINK) -rpath $(libdir) $(libcpluff_la_OBJECTS) $(libcpluff_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:

@@ -58,9 +58,6 @@ target_os = env.get('TARGET_OS')
 if target_os not in ['arduino', 'darwin', 'ios']:
 	catest_env.AppendUnique(LIBS=['rt'])
 
-if target_os != 'darwin':
-    catest_env.PrependUnique(LIBS = ['oc_logger'])
-
 if env.get('SECURED') == '1':
     catest_env.AppendUnique(LIBS = ['tinydtls'])
 
@@ -73,7 +70,8 @@ if env.get('LOGGING'):
 catests = catest_env.Program('catests', ['catests.cpp',
                                          'caprotocolmessagetest.cpp',
                                                'ca_api_unittest.cpp',
-                                               'camutex_tests.cpp'
+                                               'camutex_tests.cpp',
+                                               'uarraylist_test.cpp'
                                                ])
 
 Alias("test", [catests])
@@ -82,12 +80,7 @@ env.AppendTarget('test')
 if env.get('TEST') == '1':
         target_os = env.get('TARGET_OS')
         if target_os == 'linux':
-                out_dir = env.get('BUILD_DIR')
-                result_dir = env.get('BUILD_DIR') + '/test_out/'
-                if not os.path.isdir(result_dir):
-                        os.makedirs(result_dir)
-                catest_env.AppendENVPath('GTEST_OUTPUT', ['xml:'+ result_dir])
-                catest_env.AppendENVPath('LD_LIBRARY_PATH', [out_dir])
-                catest_env.AppendENVPath('LD_LIBRARY_PATH', ['./extlibs/gtest/gtest-1.7.0/lib/.libs'])
-                ut = catest_env.Command ('ut', None, 'valgrind -q --leak-check=full --xml=yes --xml-file=resource_csdk_connectivity_test.memcheck ' + out_dir + 'resource/csdk/connectivity/test/catests')
-                AlwaysBuild ('ut')
+                from tools.scons.RunTest import *
+                run_test(catest_env,
+                         'resource_csdk_connectivity_test.memcheck',
+                         'resource/csdk/connectivity/test/catests')

@@ -38,7 +38,7 @@ thinserver_env.PrependUnique(CPPPATH = [
 thinserver_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 thinserver_env.AppendUnique(CPPDEFINES = ['TB_LOG', 'ARDUINOWIFI'])
 
-thinserver_env.PrependUnique(LIBS = ['octbstack', 'connectivity_abstraction','coap', 'ESSDKLibrary'])
+thinserver_env.PrependUnique(LIBS = ['octbstack','ocsrm','connectivity_abstraction','coap', 'ESSDKLibrary'])
 
 thinserver = thinserver_env.Program('thinserver', 'thinserver.cpp')
 env.CreateBin('thinserver')

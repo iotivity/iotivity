@@ -44,7 +44,7 @@ FRAMEWORK_INSTALL_NAME=$FRAMEWORK_BUNDLE/Versions/$FRAMEWORK_VERSION/$FRAMEWORK_
 
 lipolite()
 {
-   PREV="$PWD"	
+   PREV="$PWD"
    cd "$1"
    ar -x "$2"
    cd "$PREV"
@@ -61,8 +61,8 @@ for ARCH in $ARCHS
 do
     echo "extracting $ARCH"
 	mkdir $OUTDIR/objs/$ARCH
-	lipolite $OUTDIR/objs/$ARCH "$OUTDIR/$ARCH/$BUILD/$LIBCOAP.a" 
-	lipolite $OUTDIR/objs/$ARCH "$OUTDIR/$ARCH/$BUILD/$SDKLIB.a" 
+	lipolite $OUTDIR/objs/$ARCH "$OUTDIR/$ARCH/$BUILD/$LIBCOAP.a"
+	lipolite $OUTDIR/objs/$ARCH "$OUTDIR/$ARCH/$BUILD/$SDKLIB.a"
 	ar -r $OUTDIR/objs/$ARCH.a $OUTDIR/objs/$ARCH/*.o
 done
 
@@ -81,7 +81,7 @@ cp $OUTDIR/objs/x86_64.a "$FRAMEWORK_INSTALL_NAME"
 #    || abort "Lipo $1 failed"
 
 echo rm -rf objs
-find $OUTDIR/objs -name "*.o" | xargs rm 
+find $OUTDIR/objs -name "*.o" | xargs rm
 
 echo "Framework: Copying includes..."
 cp -r  resource/csdk/stack/include/*.h  $FRAMEWORK_BUNDLE/Headers

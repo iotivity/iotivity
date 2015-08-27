@@ -55,9 +55,9 @@ for file in `find  "$indir"  -type f  -name "*$fileext" ` ; do
 	else
 		infile=$file
 	fi
- 
+
 	# test end of string for no file extension
-	if [ ! "${infile:(-$extLength)}" = $fileext ] ; then	
+	if [ ! "${infile:(-$extLength)}" = $fileext ] ; then
 		fileHasSpaces=true
 		continue
 	fi
@@ -80,7 +80,7 @@ for file in `find  "$indir"  -type f  -name "*$fileext" ` ; do
 
 	#  copy or move the files
 	$copyfiles  -f  "$infile"  "$outpath"
-	if [ $? -ne 0 ] ; then  
+	if [ $? -ne 0 ] ; then
 		read -sn1 -p "press any key to continue!"
 		echo
 	fi

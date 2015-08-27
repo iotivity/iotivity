@@ -37,7 +37,7 @@ else:
 		print "CA Transport is BT"
 	else:
 		env.AppendUnique(CPPDEFINES = ['NO_EDR_ADAPTER'])
-		
+
 	if 'BLE' in transport:
 		env.AppendUnique(CPPDEFINES = ['LE_ADAPTER','BLE_ADAPTER_TEST'])
 		print "CA Transport is BLE"
@@ -49,7 +49,7 @@ else:
 		print "CA Transport is IP"
 	else:
 		env.AppendUnique(CPPDEFINES = ['NO_IP_ADAPTER'])
-		
+
 
 ca_sample_src = [sample_dir + '/casample.c']
 
