@@ -166,14 +166,9 @@ static void CAReceiveHandler(void *data)
         // if new socket object is added in socket list after below logic is ran.
         // new socket will be started to read after next while loop
         uint32_t length = CAEDRGetSocketListLength();
-        if (0 == length)
+        if (0 != length)
         {
-            OIC_LOG(DEBUG, TAG, "socket list is empty");
-        }
-        else
-        {
-            uint32_t idx;
-            for (idx = 0; idx < length; idx++)
+            for (uint32_t idx = 0; idx < length; idx++)
             {
                 OIC_LOG(DEBUG, TAG, "start CAEDRNativeReadData");
                 CAEDRNativeReadData(env, idx, ctx->type);
