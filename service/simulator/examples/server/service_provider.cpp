@@ -33,7 +33,7 @@ std::shared_ptr<AppLogger> gAppLogger(new AppLogger());
 class SimLightResource
 {
     public:
-        void startTest()
+        void startTest(std::string &configPath)
         {
             printMenu();
             bool cont = true;
@@ -49,7 +49,7 @@ class SimLightResource
 
                 switch (choice)
                 {
-                    case 1: simulateResource(); break;
+                    case 1 : simulateResource(configPath); break;
                     case 2: displayResource(); break;
                     case 3: deleteResource(); break;
                     case 4: updateAttributePower(); break;
@@ -121,11 +121,12 @@ class SimLightResource
             std::cout << "########################" << std::endl;
         }
 
-        void simulateResource()
+        void simulateResource(std::string &configPath)
         {
             SimulatorResourceServer::ResourceModelChangedCB callback = std::bind(
                         &SimLightResource::onResourceModelChanged, this, std::placeholders::_1, std::placeholders::_2);
-            SimulatorResourceServerPtr resource = SimulatorManager::getInstance()->createResource("", callback);
+            SimulatorResourceServerPtr resource = SimulatorManager::getInstance()->createResource(configPath,
+                                                  callback);
             if (NULL == resource.get())
                 std::cout << "Failed to create resource" << std::endl;
 
@@ -466,10 +467,16 @@ class SimLightResource
 void printMainMenu()
 {
     std::cout << "############### MAIN MENU###############" << std::endl;
-    std::cout << "1. Test simulation of light resource" << std::endl;
+    std::cout << "1. Test simulation of resource" << std::endl;
     std::cout << "2. Set Logger" << std::endl;
     std::cout << "3. Help" << std::endl;
     std::cout << "0. Exit" << std::endl;
+    std::cout <<
+              "To set the Resource from RAML file, run the service provider with argument of Path of Raml File."
+              << std::endl;
+    std::cout <<
+              "Example: ./simulator-server  ../../../../../../../../service/simulator/examples/resources/light.raml"
+              << std::endl;
     std::cout << "######################################" << std::endl;
 }
 
@@ -506,8 +513,18 @@ void setLogger()
     }
 }
 
-int main(void)
+int main(int argc, char *argv[])
 {
+    std::string configPath = "";
+    if (argc == 2)
+    {
+        char *value = argv[1];
+        configPath.append(value);
+    }
+    else
+    {
+        configPath = "";
+    }
     SimLightResource lightResource;
 
     printMainMenu();
@@ -524,7 +541,7 @@ int main(void)
 
         switch (choice)
         {
-            case 1: lightResource.startTest();
+            case 1: lightResource.startTest(configPath);
                 std::cout << "Welcome back to main menu !" << std::endl;
                 break;
             case 2: setLogger(); break;

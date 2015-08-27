@@ -30,7 +30,7 @@ class SimulatorResourceCreator
          * This is temporary method to get the light resource as parser
          * needs to implemented/integrated
          */
-        SimulatorResourceServerPtr createLightResoure();
+        SimulatorResourceServerPtr createResource(const std::string &configPath);
 };
 
 #endif

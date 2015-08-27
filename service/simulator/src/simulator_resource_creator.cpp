@@ -20,33 +20,74 @@
 
 #include "simulator_resource_creator.h"
 #include "simulator_logger.h"
+#include <RamlParser.h>
+#include <boost/lexical_cast.hpp>
 
-SimulatorResourceServerPtr SimulatorResourceCreator::createLightResoure()
+using namespace RAML;
+
+SimulatorResourceServerPtr SimulatorResourceCreator::createResource(const std::string &configPath)
 {
-    std::shared_ptr<SimulatorResourceServer> lightResource(new SimulatorResourceServer);
+    std::shared_ptr<SimulatorResourceServer> resource(new SimulatorResourceServer);
 
-    // set power attribute with its properties
+    if (configPath.length() > 0)
     {
-        lightResource->addAttribute("power", std::string("on"));
-        std::vector<std::string> values {"on", "off"};
-        lightResource->setAllowedValues("power", values);
-        lightResource->setUpdateInterval("power", 2000);
+        std::size_t found = configPath.find_last_of("/\\");
+        if (found > configPath.length())
+        {
+            return resource;
+        }
+        std::string filePath = configPath.substr(0, found) + "/";
+        std::string fileName = configPath.substr(found + 1);
+
+        RamlPtr raml = (new RamlParser(filePath, fileName))->build();
+        for (auto  resours : raml->getResources())
+        {
+            resource->setName(resours.first);
+            resource->setURI(resours.second.getResourceUri());
+            for (auto  action :  resours.second.getActions())
+            {
+                for (auto  response :  action.second.getResponses())
+                {
+                    for (auto bdy :  response.second.getResponseBody())
+                    {
+                        auto resourceProperties = bdy.second.getSchema()->getProperties();
+
+                        resource->setResourceType(resourceProperties->getResoureType());
+                        resource->setInterfaceType(resourceProperties->getInterface());
+
+                        for ( auto property : resourceProperties->getAttributes() )
+                        {
+                            int type = property.second.getValueType();
+                            if (type)
+                            {
+                                std::string attributeValue = property.second.getValueString();
+                                resource->addAttribute(property.second.getName(), std::string(attributeValue));
+                            }
+                            else
+                            {
+                                int attributeValue = property.second.getValueInt();
+                                resource->addAttribute(property.second.getName(), int(attributeValue));
+                            }
+
+                            resource->setUpdateInterval(property.second.getName(), property.second.getUpdateFrequencyTime());
+
+                            int min = 0, max = 0;
+                            property.second.getRange(min, max);
+                            resource->setRange(property.second.getName(), min, max);
+
+
+                            if (property.second.getAllowedValuesSize() > 0)
+                                resource->setAllowedValues(property.second.getName(), property.second.getAllowedValues());
+                        }
+                        SIM_LOG(ILogger::INFO, "Created sample resource");
+                        return resource;
+                    }
+                }
+
+            }
+        }
     }
-
-    // set intensity attributes with its properties
-    {
-        lightResource->addAttribute("intensity", int(1));
-        lightResource->setRange("intensity", 1, 10);
-        lightResource->setUpdateInterval("intensity", 3000);
-    }
-
-    // set other properties
-    lightResource->setName("Light");
-    lightResource->setURI("/oic/light");
-    lightResource->setResourceType("oic.light");
-    lightResource->setInterfaceType(OC::DEFAULT_INTERFACE);
-
-    SIM_LOG(ILogger::INFO, "Created sample light resource");
-    return lightResource;
+    SIM_LOG(ILogger::INFO, "Created sample resource");
+    return resource;
 }
 

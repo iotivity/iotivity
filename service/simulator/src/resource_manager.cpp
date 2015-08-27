@@ -43,7 +43,7 @@ SimulatorResourceServerPtr ResourceManager::createResource(const std::string &co
      * TODO: Temporarily creating the light resource for testing the basic flow
      * Once the config parser is included this method will simulate the resource based on the config file
      */
-    SimulatorResourceServerPtr simulatorResource = m_resourceCreator->createLightResoure();
+    SimulatorResourceServerPtr simulatorResource = m_resourceCreator->createResource(configPath);
     simulatorResource->setModelChangeCallback(callback);
     std::string uri = getURI(simulatorResource->getURI());
     if(uri.empty())
@@ -78,7 +78,7 @@ std::vector<SimulatorResourceServerPtr> ResourceManager::createResource(
          * TODO: Temporarily creating the light resource for testing the basic flow
          * Once the config parser is included this method will simulate the resource based on the config file
          */
-        SimulatorResourceServerPtr simulatorResource = m_resourceCreator->createLightResoure();
+        SimulatorResourceServerPtr simulatorResource = m_resourceCreator->createResource(configPath);
         simulatorResource->setModelChangeCallback(callback);
         std::string uri = getURI(simulatorResource->getURI());
         if(uri.empty())
