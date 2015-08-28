@@ -52,5 +52,4 @@ if target_os in ['arduino','android', 'linux']:
 #else:
 #	SConscript('notification-manager/SampleApp/arduino/SConscript')
 
-#if target_os in ['arduino','android', 'linux']:
-        #SConscript('easy-setup/SConscript')
+

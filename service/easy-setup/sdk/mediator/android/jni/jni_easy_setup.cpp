@@ -143,7 +143,7 @@ JNIEXPORT void JNICALL JNIProvisionEnrollee(JNIEnv *env, jobject thisObj,
     strncpy(netInfo.netAddressInfo.WIFI.ipAddress, ipAddress, IPV4_ADDR_SIZE);
     strncpy(netInfo.netAddressInfo.WIFI.ssid, netSSID, NET_WIFI_SSID_SIZE);
     strncpy(netInfo.netAddressInfo.WIFI.pwd, netPWD, NET_WIFI_PWD_SIZE);
-    netInfo.connType = OCConnectivityType::CT_ADAPTER_IP;
+    netInfo.connType = (OCConnectivityType)jConnectivityType;
     netInfo.isSecured = true;
 
     ProvisionEnrollee(&netInfo);

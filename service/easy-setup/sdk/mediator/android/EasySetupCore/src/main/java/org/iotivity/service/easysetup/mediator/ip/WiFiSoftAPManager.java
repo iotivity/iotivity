@@ -94,7 +94,7 @@ public class WiFiSoftAPManager {
         final IPEnrolleeDevice result = new IPEnrolleeDevice();
         boolean deviceAddedToList = false;
 
-        result.setConnectivityType(OcConnectivityType.IPV4);
+        result.setConnectivityType(OcConnectivityType.CT_IP_USE_V4);
 
         if (appNotification.size() > 0) {
             for (EnrolleeOnBoardingInfo ipDeviceOnBoardingNotification : appNotification) {
@@ -138,7 +138,7 @@ public class WiFiSoftAPManager {
             }
             if (!deviceAddedToList) {
                 IPEnrolleeDevice ipEnrolleeDevice = (IPEnrolleeDevice) EnrolleeDeviceFactory.getDevice(
-                        OcConnectivityType.IPV4);
+                        OcConnectivityType.CT_IP_USE_V4);
                 ipEnrolleeDevice.setIpAddr(ipAddr);
                 ipEnrolleeDevice.setHWAddr(macAddr);
                 if (isReachable) {
@@ -160,7 +160,7 @@ public class WiFiSoftAPManager {
             }
         } else {
             IPEnrolleeDevice ipEnrolleeDevice = (IPEnrolleeDevice)EnrolleeDeviceFactory.getDevice(
-                    OcConnectivityType.IPV4);
+                    OcConnectivityType.CT_IP_USE_V4);
             ipEnrolleeDevice.setIpAddr(ipAddr);
             ipEnrolleeDevice.setHWAddr(macAddr);
             if (isReachable) {

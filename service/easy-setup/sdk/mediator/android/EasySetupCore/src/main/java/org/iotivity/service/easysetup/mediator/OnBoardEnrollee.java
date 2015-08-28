@@ -35,7 +35,7 @@ public class OnBoardEnrollee {
      * Constructor for OnBoardEnrollee.
      */
     public OnBoardEnrollee(Context context, OcConnectivityType connectivityType) {
-        if(connectivityType == OcConnectivityType.IPV4) {
+        if(connectivityType == OcConnectivityType.CT_IP_USE_V4) {
             wifiSoftAPManager = new WiFiSoftAPManager(context);
         }
         this.selectedConnectivityType = connectivityType;
@@ -47,13 +47,13 @@ public class OnBoardEnrollee {
     }
 
     public void startDeviceScan(final int reachableTimeout) {
-        if(selectedConnectivityType == OcConnectivityType.IPV4) {
+        if(selectedConnectivityType == OcConnectivityType.CT_IP_USE_V4) {
             wifiSoftAPManager.getClientList(this.deviceScanListener, reachableTimeout);
         }
     }
 
     public void enableNetwork(OnBoardingConfig transportConfig, boolean enabled) {
-        if(selectedConnectivityType == OcConnectivityType.IPV4) {
+        if(selectedConnectivityType == OcConnectivityType.CT_IP_USE_V4) {
             wifiSoftAPManager.setWifiApEnabled(
                     ((WiFiSoftAPOnBoardingConfig)transportConfig).getNetConfig(),
                     true);
@@ -61,7 +61,7 @@ public class OnBoardEnrollee {
     }
 
     public void disableWiFiAP() {
-        if(selectedConnectivityType == OcConnectivityType.IPV4) {
+        if(selectedConnectivityType == OcConnectivityType.CT_IP_USE_V4) {
             wifiSoftAPManager.setWifiApEnabled(null, false);
         }
     }

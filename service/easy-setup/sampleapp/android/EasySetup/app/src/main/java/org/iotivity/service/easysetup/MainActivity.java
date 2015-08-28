@@ -75,7 +75,7 @@ public class MainActivity extends Activity implements IProvisioningListener,
         textView1 = (TextView) findViewById(R.id.textView1);
 
         // OnBoarding Process
-        onBoardingHandlerInstance = new OnBoardEnrollee(this, OcConnectivityType.IPV4);
+        onBoardingHandlerInstance = new OnBoardEnrollee(this, OcConnectivityType.CT_IP_USE_V4);
         onBoardingHandlerInstance.registerOnBoardingStatusHandler(this);
 
         // Get intent, action and MIME type
@@ -102,7 +102,7 @@ public class MainActivity extends Activity implements IProvisioningListener,
         super.onDestroy();
         if(provisionEnrolleInstance != null)
         {
-            provisionEnrolleInstance.stopEnrolleeProvisioning(OcConnectivityType.IPV4);
+            provisionEnrolleInstance.stopEnrolleeProvisioning(OcConnectivityType.CT_IP_USE_V4);
         }
         onBoardingHandlerInstance.disableWiFiAP();
         finish();
@@ -175,7 +175,7 @@ public class MainActivity extends Activity implements IProvisioningListener,
                         .set(WifiConfiguration.KeyMgmt.WPA_PSK);
                 netConfig.preSharedKey = "EasySetup123";
 
-                transportConfig.setConnectivityType(OcConnectivityType.IPV4);
+                transportConfig.setConnectivityType(OcConnectivityType.CT_IP_USE_V4);
                 transportConfig.setNetConfig(netConfig);
                 onBoardingHandlerInstance.enableNetwork(transportConfig, true);
             }
@@ -202,13 +202,13 @@ public class MainActivity extends Activity implements IProvisioningListener,
                 IPEnrolleeDevice ipEnrolleeDevice = (IPEnrolleeDevice)connectedDevice;
                 IPProvisioningInfo ipProvisioningInfo = new IPProvisioningInfo();
 
-                ipProvisioningInfo.setConnectivityType(OcConnectivityType.IPV4);
+                ipProvisioningInfo.setConnectivityType(OcConnectivityType.CT_IP_USE_V4);
                 ipProvisioningInfo.setIpAddress(ipEnrolleeDevice.getIpAddr());
                 ipProvisioningInfo.setNetSSID("EasySetup123");
                 ipProvisioningInfo.setNetPWD("EasySetup123");
 
                 provisionEnrolleInstance.provisionEnrollee(
-                        ipProvisioningInfo, OcConnectivityType.IPV4);
+                        ipProvisioningInfo, OcConnectivityType.CT_IP_USE_V4);
                 easySetupCount++;
                 Log.i("EasyConnect", "easy Setup Count-" + easySetupCount);
                 Log.i("EasyConnect",
@@ -247,7 +247,7 @@ public class MainActivity extends Activity implements IProvisioningListener,
     public void deviceOnBoardingStatus(EnrolleeDevice enrolleeDevice) {
         // TODO Auto-generated method stub
         // TODO Auto-generated method stub
-        if(enrolleeDevice.getConnectivityType() == OcConnectivityType.IPV4) {
+        if(enrolleeDevice.getConnectivityType() == OcConnectivityType.CT_IP_USE_V4) {
             IPEnrolleeDevice ipEnrolleeDevice = (IPEnrolleeDevice)enrolleeDevice;
             if (ipEnrolleeDevice.getIpAddr() != null) {
                 String finalResult = "Easy Connect : ";

@@ -33,7 +33,7 @@ import org.iotivity.service.easysetup.mediator.ip.IPEnrolleeDevice;
 public class EnrolleeDeviceFactory {
     public static EnrolleeDevice getDevice(OcConnectivityType connectivityType)
     {
-        if(connectivityType == OcConnectivityType.IPV4)
+        if(connectivityType == OcConnectivityType.CT_IP_USE_V4)
         {
             return new IPEnrolleeDevice();
         }

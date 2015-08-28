@@ -34,20 +34,20 @@ public class ProvisionEnrollee {
 
     public void provisionEnrollee(ProvisioningInfo provisioningInfo,
                                   OcConnectivityType connectivityType) {
-        if(connectivityType == OcConnectivityType.IPV4)
+        if(connectivityType == OcConnectivityType.CT_IP_USE_V4)
         {
             easySetupManagerNativeInstance.initEasySetup();
             easySetupManagerNativeInstance.provisionIPEnrollee(
                     ((IPProvisioningInfo)provisioningInfo).getIpAddress(),
                     ((IPProvisioningInfo)provisioningInfo).getNetSSID(),
                     ((IPProvisioningInfo)provisioningInfo).getNetPWD(),
-                    OcConnectivityType.IPV4.getValue());
+                    OcConnectivityType.CT_IP_USE_V4.getValue());
         }
     }
 
     public void stopEnrolleeProvisioning(OcConnectivityType connectivityType) {
         easySetupManagerNativeInstance
-                .stopEnrolleeProvisioning(OcConnectivityType.IPV4.getValue());
+                .stopEnrolleeProvisioning(OcConnectivityType.CT_IP_USE_V4.getValue());
     }
 
     public void ProvisioningStatusCallBack(int statuscode) {
