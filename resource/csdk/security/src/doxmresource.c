@@ -453,6 +453,7 @@ static OCEntityHandlerResult AddOwnerPSK(const CAEndpoint_t* endpoint,
     VERIFY_SUCCESS(TAG, OC_STACK_OK == AddCredential(cred), ERROR);
 
     gDoxm->owned = true;
+    gDoxm->oxmSel = ptDoxm->oxmSel;
     memcpy(&(gDoxm->owner), &(ptDoxm->owner), sizeof(OicUuid_t));
 
     return OC_EH_OK;
@@ -533,6 +534,7 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
                      * for global variable.
                      */
                     gDoxm->owned = false;
+                    gDoxm->oxmSel = 0;
                     memset(&(gDoxm->owner), 0, sizeof(OicUuid_t));
                 }
 
@@ -609,7 +611,22 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
                 VERIFY_SUCCESS(TAG, OC_EH_OK == ehRet, ERROR);
 
                 //Update new state in persistent storage
-                ehRet = (UpdatePersistentStorage(gDoxm) == true) ? OC_EH_OK : OC_EH_ERROR;
+                if((UpdatePersistentStorage(gDoxm) == true))
+                {
+                    ehRet = OC_EH_OK;
+                }
+                else
+                {
+                    /*
+                     * If persistent storage update failed, revert back the state
+                     * for global variable.
+                     */
+                    gDoxm->owned = false;
+                    gDoxm->oxmSel = 0;
+                    memset(&(gDoxm->owner), 0, sizeof(OicUuid_t));
+                    ehRet = OC_EH_ERROR;
+
+                }
 #endif
              }
         }
