@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -37,129 +37,120 @@ extern "C"
 #endif
 
 /**
- * @brief   Initialize context of application
- * @return  None
+ * Initialize context of application.
  */
 void CAEDRJniInitContext();
 
 /**
- * @brief   Create JNI Object
- * @param   context          [IN] context of application
- * @return  #CA_STATUS_OK or Appropriate error code
+ * Create JNI Object.
+ * @param[in]  context          context of application.
+ * @return  ::CA_STATUS_OK or Appropriate error code.
  */
 CAResult_t CAEDRCreateJNIInterfaceObject(jobject context);
 
 /**
- * @brief   Initialize client for EDR
- * @param   handle           [IN] thread pool handle object
- * @return  None
+ * Initialize client for EDR.
+ * @param[in]  handle           thread pool handle object.
  */
 void CAEDRInitialize(ca_thread_pool_t handle);
 
 /**
- * @brief   Terminate server for EDR
- * @return  None
+ * Terminate server for EDR.
  */
 void CAEDRTerminate();
 
 /**
- * @brief   Initialize JNI object
- * @return  None
+ * Initialize JNI object.
  */
 void CAEDRCoreJniInit();
 
 /**
- * @brief   Send data for unicast
- * @param   address         [IN] remote address
- * @param   data            [IN] data for transmission
- * @param   dataLen         [IN] data length
- * @return  #CA_STATUS_OK or Appropriate error code
- * @retval  #CA_STATUS_OK  Successful
- * @retval  #CA_STATUS_FAILED Operation failed
+ * Send data for unicast.
+ * @param[in]  address         remote address.
+ * @param[in]  data            data for transmission.
+ * @param[in]  dataLen         data length.
+ * @return  ::CA_STATUS_OK or Appropriate error code.
+ * @retval  ::CA_STATUS_OK  Successful.
+ * @retval  ::CA_STATUS_FAILED Operation failed.
  */
-CAResult_t CAEDRSendUnicastMessage(const char *address, const char *data, uint32_t dataLen);
+CAResult_t CAEDRSendUnicastMessage(const char *address, const uint8_t *data, uint32_t dataLen);
 
 /**
- * @brief   Send data for multicast
- * @param   data            [IN] data for transmission
- * @param   dataLen         [IN] data length
- * @return  #CA_STATUS_OK or Appropriate error code
- * @retval  #CA_STATUS_OK  Successful
- * @retval  #CA_STATUS_FAILED Operation failed
+ * Send data for multicast.
+ * @param[in]  data            data for transmission.
+ * @param[in]  dataLen         data length.
+ * @return  ::CA_STATUS_OK or Appropriate error code.
+ * @retval  ::CA_STATUS_OK  Successful.
+ * @retval  ::CA_STATUS_FAILED Operation failed.
  */
-CAResult_t CAEDRSendMulticastMessage(const char *data, uint32_t dataLen);
+CAResult_t CAEDRSendMulticastMessage(const uint8_t *data, uint32_t dataLen);
 
 /**
- * @brief   Get Local EDR Address
- * @param   address         [OUT] local address
- * @return  #CA_STATUS_OK or Appropriate error code
- * @retval  #CA_STATUS_OK  Successful
- * @retval  #CA_STATUS_FAILED Operation failed
+ * Get Local EDR Address.
+ * @param[out]   address         local address.
+ * @return  ::CA_STATUS_OK or Appropriate error code.
+ * @retval  ::CA_STATUS_OK  Successful.
+ * @retval  ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CAEDRGetInterfaceInfo(char **address);
 
 /**
- * @brief   Get address from a local device
- * @param   address         [OUT] local address
- * @return  None
+ * Get address from a local device.
+ * @param[out]   address         local address.
  */
 void CAEDRGetLocalAddress(char **address);
 
 /**
- * @brief   Send data for unicast (implement)
- * @param   address         [IN] remote address
- * @param   data            [IN] data for transmission
- * @param   dataLen         [IN] data length
- * @return  #CA_STATUS_OK or Appropriate error code
- * @retval  #CA_STATUS_OK  Successful
- * @retval  #CA_STATUS_FAILED Operation failed
+ * Send data for unicast (implement).
+ * @param[in]  address         remote address.
+ * @param[in]  data            data for transmission.
+ * @param[in]  dataLen         data length.
+ * @return  ::CA_STATUS_OK or Appropriate error code.
+ * @retval  ::CA_STATUS_OK  Successful.
+ * @retval  ::CA_STATUS_FAILED Operation failed.
  */
-CAResult_t CAEDRSendUnicastMessageImpl(const char *address, const char *data, uint32_t dataLen);
+CAResult_t CAEDRSendUnicastMessageImpl(const char *address, const uint8_t *data, uint32_t dataLen);
 
 /**
- * @brief   Send data for multicast (implement)
- * @param   env             [IN] JNI interface pointer
- * @param   data            [IN] data for transmission
- * @param   dataLen         [IN] data length
- * @return  #CA_STATUS_OK or Appropriate error code
- * @retval  #CA_STATUS_OK  Successful
- * @retval  #CA_STATUS_FAILED Operation failed
+ * Send data for multicast (implement).
+ * @param[in]  env             JNI interface pointer.
+ * @param[in]  data            data for transmission.
+ * @param[in]  dataLen         data length.
+ * @return  ::CA_STATUS_OK or Appropriate error code.
+ * @retval  ::CA_STATUS_OK  Successful.
+ * @retval  ::CA_STATUS_FAILED Operation failed.
  */
-CAResult_t CAEDRSendMulticastMessageImpl(JNIEnv *env, const char *data, uint32_t dataLen);
+CAResult_t CAEDRSendMulticastMessageImpl(JNIEnv *env, const uint8_t *data, uint32_t dataLen);
 
 /**
  * EDR Method
  */
 
 /**
- * @brief  This function will send the data to remote device.
- * @param  env              [IN] JNI interface pointer
- * @param  address          [IN] Remote Address
- * @param  data             [IN] Data to be transmitted from EDR
- * @param  dataLength       [IN] Length of data
- * @param  id               [IN] index of remote address
- * @return #CA_STATUS_OK or Appropriate error code
+ * This function will send the data to remote device.
+ * @param[in] env              JNI interface pointer.
+ * @param[in] address          Remote Address.
+ * @param[in] data             Data to be transmitted from EDR.
+ * @param[in] dataLength       Length of data.
+ * @return ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAEDRNativeSendData(JNIEnv *env, const char* address, const char* data,
-                               uint32_t dataLength, uint32_t id);
+CAResult_t CAEDRNativeSendData(JNIEnv *env, const char* address, const uint8_t* data,
+                               uint32_t dataLength);
 
 /**
- * @brief  This function will connect to remote device.
- * @param  env              [IN] JNI interface pointer
- * @param  address          [IN] Remote Address
- * @param  id               [IN] index of remote address
- * @return #CA_STATUS_OK or Appropriate error code
+ * This function will connect to remote device.
+ * @param[in] env              JNI interface pointer.
+ * @param[in] address          Remote Address.
+ * @return ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAEDRNativeConnect(JNIEnv *env, const char *address, uint32_t id);
+CAResult_t CAEDRNativeConnect(JNIEnv *env, const char *address);
 
 /**
- * @brief  This function will close socket.
- * @param  env              [IN] JNI interface pointer
- * @param  address          [IN] Remote Address
- * @param  id               [IN] index of remote address
- * @return None
+ * This function will close socket.
+ * @param[in] env              JNI interface pointer.
+ * @param[in] address          Remote Address.
  */
-void CAEDRNativeSocketClose(JNIEnv *env, const char *address, uint32_t id);
+void CAEDRNativeSocketClose(JNIEnv *env, const char *address);
 
 #ifdef __cplusplus
 } /* extern "C" */

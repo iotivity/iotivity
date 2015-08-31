@@ -31,8 +31,6 @@
 #include <mutex>
 #include <thread>
 
-#include <boost/atomic.hpp>
-
 #include <RCSResourceAttributes.h>
 #include <RCSResponse.h>
 #include <RCSRequest.h>
@@ -59,6 +57,11 @@ namespace OIC
                 NoLockException(std::string &&what) : RCSException { std::move(what) } {}
         };
 
+        //! @cond
+        template < typename T >
+        class AtomicWrapper;
+        //! @endcond
+
         /**
          * @brief  RCSResourceObject represents a resource. It handles any requests from
          *        clients automatically with attributes.
@@ -75,6 +78,8 @@ namespace OIC
         {
             private:
                 class WeakGuard;
+
+                typedef AtomicWrapper< std::thread::id > AtomicThreadId;
 
             public:
                 /**
@@ -116,7 +121,7 @@ namespace OIC
                  *          It provides the build() API
                  *          which builds a resource and return pointer to RCSResourceObject class.
                  *
-                 *@see build()
+                 * @see build()
                  */
                 class Builder
                 {
@@ -137,43 +142,43 @@ namespace OIC
                                 const std::string &interface);
 
                         /**
-                        * Sets the discoverable(OC_DISCOVERABLE) property for the resource.
-                        *
-                        * @param discoverable Whether to be discovered.
-                        *
-                        * @return reference of this Builder
-                        *
-                        *@see OC_DISCOVERABLE
-                        */
+                         * Sets the discoverable(OC_DISCOVERABLE) property for the resource.
+                         *
+                         * @param discoverable Whether to be discovered.
+                         *
+                         * @return reference of this Builder
+                         *
+                         * @see OC_DISCOVERABLE
+                         */
                         Builder &setDiscoverable(bool discoverable);
 
                         /**
-                        * Sets the observable(OC_OBSERVABLE) property of the resource.
-                        *
-                        * @param observable Whether to be observed.
-                        *
-                        * @return reference of this Builder
-                        *
-                        *@see  OC_OBSERVABLE
-                        */
+                         * Sets the observable(OC_OBSERVABLE) property of the resource.
+                         *
+                         * @param observable Whether to be observed.
+                         *
+                         * @return reference of this Builder
+                         *
+                         * @see  OC_OBSERVABLE
+                         */
                         Builder &setObservable(bool observable);
 
                         /**
-                        * Sets attribute of the resource.
-                        *
-                        * @param attributes Resource attributes to set
-                        *
-                        * @return reference of this Builder
-                        */
+                         * Sets attribute of the resource.
+                         *
+                         * @param attributes Resource attributes to set
+                         *
+                         * @return reference of this Builder
+                         */
                         Builder &setAttributes(const RCSResourceAttributes &attributes);
 
                         /**
-                        * API for setting attributes of the resource.
-                        *
-                        * @param attributes Resource Attributes to set
-                        *
-                        * @return reference of this Builder
-                        */
+                         * API for setting attributes of the resource.
+                         *
+                         * @param attributes Resource Attributes to set
+                         *
+                         * @return reference of this Builder
+                         */
                         Builder &setAttributes(RCSResourceAttributes &&attributes);
 
                         /**
@@ -203,6 +208,14 @@ namespace OIC
                 typedef std::function < RCSSetResponse(const RCSRequest&,
                                                        RCSResourceAttributes&) > SetRequestHandler;
 
+                /**
+                 * typedef for characterizing AttributeUpdatedListener with 2 parameters.
+                 *
+                 * The first Value represents the old Value before being changed.
+                 * The second Value means the new Value right after when it is used
+                 *
+                 * @see addAttributeUpdatedListener
+                 */
                 typedef std::function < void(const RCSResourceAttributes::Value&,
                                      const RCSResourceAttributes::Value &) > AttributeUpdatedListener;
 
@@ -250,7 +263,7 @@ namespace OIC
                  * @note It is guaranteed thread-safety about attributes.
                  *
                  * @throw InvalidKeyException
-                 *              Throw exception when empty string is provided as Attribute key.
+                 *              Throw an exception when key is empty.
                  */
                 RCSResourceAttributes::Value getAttributeValue(const std::string& key) const;
 
@@ -259,7 +272,9 @@ namespace OIC
                  *
                  * @param key Name of the attribute
                  *
-                 * @return resource attributes value.
+                 * @return resource attributes value which can support various types.
+                 *
+                 * @see ValueVariant
                  *
                  * It is guaranteed thread-safety about attributes.
                  */
@@ -275,7 +290,7 @@ namespace OIC
                  *
                  * @param key Name of the attribute.
                  *
-                 * @return If the key exist and matched attribute is deleted, return true.
+                 * @return If the key exists and matched attribute is deleted, return true.
                  *
                  * It is guaranteed thread-safety about attributes.
                  */
@@ -286,7 +301,7 @@ namespace OIC
                  *
                  * @param key Name of the attribute.
                  *
-                 * @return If the key exist, return true.
+                 * @return If the key exists, return true.
                  *
                  * It is guaranteed thread-safety about attributes.
                  */
@@ -296,7 +311,7 @@ namespace OIC
                  * API for getting all the attributes of the RCSResourceObject.
                  * It invokes the expectOwnLock() API to check the owner of the lock using the
                  * thread id.
-                 * If it is not the owner then it throws exception.
+                 * If it is not the owner then it throws an exception.
                  *
                  * @return reference of the attributes of this RCSResourceObject.
                  *
@@ -313,13 +328,13 @@ namespace OIC
                 const RCSResourceAttributes& getAttributes() const;
 
                 /**
-                * API for checking whether the particular resource is observable or not
-                */
+                 * API for checking whether the particular resource is observable or not
+                 */
                 virtual bool isObservable() const;
 
                 /**
-                * API for checking whether the particular resource is discoverable or not
-                */
+                 * API for checking whether the particular resource is discoverable or not
+                 */
                 virtual bool isDiscoverable() const;
 
                 /**
@@ -353,6 +368,7 @@ namespace OIC
                  * @param key The interested attribute's key
                  * @param listener Listener for updation of the interested attribute
                  *
+                 * @see AttributeUpdatedListener
                  */
                 virtual void addAttributeUpdatedListener(const std::string& key,
                         AttributeUpdatedListener listener);
@@ -363,16 +379,17 @@ namespace OIC
                  * @param key The interested attribute's key
                  * @param listener Listener for updation of the interested attribute
                  *
+                 * @see AttributeUpdatedListener
                  */
                 virtual void addAttributeUpdatedListener(std::string&& key,
                         AttributeUpdatedListener listener);
 
                 /**
-                * API for removing the handler for a particular attribute update.
-                *
-                * @param key The interested attribute's key
-                *
-                */
+                 * API for removing the Listener for a particular attribute update.
+                 *
+                 * @param key The name of interested attribute's key  
+                 *
+                 */
                 virtual bool removeAttributeUpdatedListener(const std::string& key);
 
                 /**
@@ -382,43 +399,43 @@ namespace OIC
                 virtual void notify() const;
 
                 /**
-                * API for setting Auto notify policy
-                *
-                * @param policy policy to be set
-                *
-                * @see AutoNotifyPolicy
-                *
-                */
+                 * API for setting Auto notify policy
+                 *
+                 * @param policy policy to be set
+                 *
+                 * @see AutoNotifyPolicy
+                 *
+                 */
                 void setAutoNotifyPolicy(AutoNotifyPolicy policy);
 
                 /**
-                * API for getting auto notify policy
-                *
-                * @returns AntoNotify policy
-                *
-                * @see AutoNotifyPolicy
-                *
-                */
+                 * API for getting auto notify policy
+                 *
+                 * @returns AntoNotify policy
+                 *
+                 * @see AutoNotifyPolicy
+                 *
+                 */
                 AutoNotifyPolicy getAutoNotifyPolicy() const;
 
                 /**
-                * API for setting the policy for a setRequestHandler.
-                *
-                * @param policy policy to be set
-                *
-                * @see SetRequestHandlerPolicy
-                *
-                */
+                 * API for setting the policy for a setRequestHandler.
+                 *
+                 * @param policy policy to be set
+                 *
+                 * @see SetRequestHandlerPolicy
+                 *
+                 */
                 void setSetRequestHandlerPolicy(SetRequestHandlerPolicy policy);
 
                 /**
-                * API for getting the SetRequestHandler Policy.
-                *
-                * @returns Property of setRequesthandler
-                *
-                * @see SetRequestHandlerPolicy
-                *
-                */
+                 * API for getting the SetRequestHandler Policy.
+                 *
+                 * @returns Property of setRequesthandler
+                 *
+                 * @see SetRequestHandlerPolicy
+                 *
+                 */
                 SetRequestHandlerPolicy getSetRequestHandlerPolicy() const;
 
         private:
@@ -432,6 +449,10 @@ namespace OIC
             OCEntityHandlerResult handleObserve(std::shared_ptr< OC::OCResourceRequest >);
 
             void expectOwnLock() const;
+
+            std::thread::id getLockOwner() const noexcept;
+
+            void setLockOwner(std::thread::id&&) const noexcept;
 
             void autoNotify(bool, AutoNotifyPolicy) const;
             void autoNotify(bool) const;
@@ -455,19 +476,52 @@ namespace OIC
             std::unordered_map< std::string, AttributeUpdatedListener >
                     m_keyAttributesUpdatedListeners;
 
-            mutable boost::atomic< std::thread::id > m_lockOwner;
+            mutable std::unique_ptr< AtomicThreadId > m_lockOwner;
             mutable std::mutex m_mutex;
 
             std::mutex m_mutexKeyAttributeUpdate;
 
         };
 
+        /**
+         * @class   LockGuard
+         *
+         * The class LockGuard owns a mutex for the duration of a scoped block.
+         * When a LockGuard is created, it attempts to take ownership of the mutex it is given.
+         * When control leaves the scope in which the LockGuard object was created,
+         * the LockGuard is destructed and the mutex is released.
+         *
+         */
         class RCSResourceObject::LockGuard
         {
         public:
+           /**
+            * The function locks the objects and ensures that all arguments are locked on return.
+            * Working of AutoNotifyPolicy follows the current AutoNotifyPolicy status
+            *
+            * @param Object to be locked
+            *
+            */
             LockGuard(const RCSResourceObject&);
+
+           /**
+            * @overload
+            */
             LockGuard(const RCSResourceObject::Ptr);
+
+           /**
+            * The function locks the objects and ensures that all arguments are locked on return.
+            *
+            * @param Object to be locked
+            * @param AutoNotifyPolicy is set for sepcifying AutoNotifyPolicy status
+            *
+            * @see AutoNotifyPolicy
+            */
             LockGuard(const RCSResourceObject&, AutoNotifyPolicy);
+
+           /**
+            * @overload
+            */
             LockGuard(const RCSResourceObject::Ptr, AutoNotifyPolicy);
             ~LockGuard();
 

@@ -153,7 +153,8 @@ namespace OIC
                 m_mapBundleResources.clear();
             }
 
-            delete m_config;
+            if (m_config)
+                delete m_config;
         }
 
         void ResourceContainerImpl::activateBundle(RCSBundleInfo *bundleInfo)
@@ -251,7 +252,7 @@ namespace OIC
             void *bundleHandle = m_bundles[id]->getBundleHandle();
             info_logger() << "Unregister bundle: " << m_bundles[id]->getID() << ", "
                           << m_bundles[id]->getID() << endl;
-            char *error;
+            const char *error;
             dlclose(bundleHandle);
             if ((error = dlerror()) != NULL)
             {
@@ -550,7 +551,7 @@ namespace OIC
 
         void ResourceContainerImpl::registerSoBundle(RCSBundleInfo *bundleInfo)
         {
-            char *error;
+            const char *error;
 
             activator_t *bundleActivator = NULL;
             deactivator_t *bundleDeactivator = NULL;

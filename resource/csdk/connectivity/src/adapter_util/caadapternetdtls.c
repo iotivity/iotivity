@@ -50,7 +50,7 @@ static ca_mutex g_dtlsContextMutex = NULL;
  */
 static CAGetDTLSCredentialsHandler g_getCredentialsCallback = NULL;
 
-static CAEndpoint_t *GetPeerInfo(const CAEndpoint_t *peer)
+static CASecureEndpoint_t *GetPeerInfo(const CAEndpoint_t *peer)
 {
     uint32_t list_index = 0;
     uint32_t list_length = 0;
@@ -61,18 +61,18 @@ static CAEndpoint_t *GetPeerInfo(const CAEndpoint_t *peer)
         return NULL;
     }
 
-    CAEndpoint_t *peerInfo;
+    CASecureEndpoint_t *peerInfo = NULL;
     list_length = u_arraylist_length(g_caDtlsContext->peerInfoList);
     for (list_index = 0; list_index < list_length; list_index++)
     {
-        peerInfo = (CAEndpoint_t *)u_arraylist_get(g_caDtlsContext->peerInfoList, list_index);
+        peerInfo = (CASecureEndpoint_t *)u_arraylist_get(g_caDtlsContext->peerInfoList, list_index);
         if (NULL == peerInfo)
         {
             continue;
         }
 
-        if((0 == strncmp(peer->addr, peerInfo->addr, MAX_ADDR_STR_SIZE_CA)) &&
-                (peer->port == peerInfo->port))
+        if((0 == strncmp(peer->addr, peerInfo->endpoint.addr, MAX_ADDR_STR_SIZE_CA)) &&
+                (peer->port == peerInfo->endpoint.port))
         {
             return peerInfo;
         }
@@ -81,7 +81,7 @@ static CAEndpoint_t *GetPeerInfo(const CAEndpoint_t *peer)
 }
 
 static CAResult_t CAAddIdToPeerInfoList(const char *peerAddr, uint32_t port,
-                                    const unsigned char *id, uint16_t id_length)
+        const unsigned char *id, uint16_t id_length)
 {
     if(NULL == peerAddr
        || NULL == id
@@ -93,34 +93,35 @@ static CAResult_t CAAddIdToPeerInfoList(const char *peerAddr, uint32_t port,
         return CA_STATUS_INVALID_PARAM;
     }
 
-    CAEndpoint_t *peer = (CAEndpoint_t *)OICCalloc(1, sizeof (CAEndpoint_t));
+    CASecureEndpoint_t *peer = (CASecureEndpoint_t *)OICCalloc(1, sizeof (CASecureEndpoint_t));
     if (NULL == peer)
     {
         OIC_LOG(ERROR, NET_DTLS_TAG, "peerInfo malloc failed!");
         return CA_MEMORY_ALLOC_FAILED;
     }
 
-    OICStrcpy(peer->addr, sizeof(peer->addr), peerAddr);
-    peer->port = port;
+    OICStrcpy(peer->endpoint.addr, sizeof(peer->endpoint.addr), peerAddr);
+    peer->endpoint.port = port;
 
     memcpy(peer->identity.id, id, id_length);
     peer->identity.id_length = id_length;
 
-    if(NULL != GetPeerInfo(peer))
+    if (NULL != GetPeerInfo(&peer->endpoint))
     {
         OIC_LOG(ERROR, NET_DTLS_TAG, "CAAddIdToPeerInfoList peer already exist");
         OICFree(peer);
         return CA_STATUS_FAILED;
     }
 
-    CAResult_t result = u_arraylist_add(g_caDtlsContext->peerInfoList, (void *)peer);
-    if (CA_STATUS_OK != result)
+    bool result = u_arraylist_add(g_caDtlsContext->peerInfoList, (void *)peer);
+    if (!result)
     {
         OIC_LOG(ERROR, NET_DTLS_TAG, "u_arraylist_add failed!");
         OICFree(peer);
+        return CA_STATUS_FAILED;
     }
 
-    return result;
+    return CA_STATUS_OK;
 }
 
 static void CAFreePeerInfoList()
@@ -136,7 +137,7 @@ static void CAFreePeerInfoList()
     g_caDtlsContext->peerInfoList = NULL;
 }
 
-static void CARemovePeerFromPeerInfoList(const char * addr, uint32_t port)
+static void CARemovePeerFromPeerInfoList(const char * addr, uint16_t port)
 {
     if (NULL == addr || 0 >= port)
     {
@@ -207,18 +208,23 @@ static eDtlsRet_t CAAdapterNetDtlsEncryptInternal(const stCADtlsAddrInfo_t *dstS
     int retLen = dtls_write(g_caDtlsContext->dtlsContext, (session_t *)dstSession, data,
                                 dataLen);
     OIC_LOG_V(DEBUG, NET_DTLS_TAG, "dtls_write retun len [%d]", retLen);
+    if (retLen < 0)
+    {
+        OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT FAILURE");
+        return DTLS_FAIL;
+    }
     if (0 == retLen)
     {
         // A new DTLS session was initiated by tinyDTLS library and wait for callback.
         return DTLS_SESSION_INITIATED;
     }
-    else if (dataLen == retLen)
+    else if (dataLen != (uint32_t)retLen)
     {
-        OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT");
-        return DTLS_OK;
+        OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT FAILURE");
+        return DTLS_FAIL;
     }
-    OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT FAILURE");
-    return DTLS_FAIL;
+    OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT");
+    return DTLS_OK;
 }
 
 static eDtlsRet_t CAAdapterNetDtlsDecryptInternal(const stCADtlsAddrInfo_t *srcSession,
@@ -293,14 +299,15 @@ static CAResult_t CADtlsCacheMsg(stCACacheMessage_t *msg)
         return CA_STATUS_FAILED;
     }
 
-    CAResult_t result = u_arraylist_add(g_caDtlsContext->cacheList, (void *)msg);
-    if (CA_STATUS_OK != result)
+    bool result = u_arraylist_add(g_caDtlsContext->cacheList, (void *)msg);
+    if (!result)
     {
         OIC_LOG(ERROR, NET_DTLS_TAG, "u_arraylist_add failed!");
+        return CA_STATUS_FAILED;
     }
 
     OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT");
-    return result;
+    return CA_STATUS_OK;
 }
 
 
@@ -364,11 +371,12 @@ static void CASendCachedMsg(const stCADtlsAddrInfo_t *dstSession)
     OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT");
 }
 
-static int32_t CAReadDecryptedPayload(dtls_context_t *dtlsContext,
+static int32_t CAReadDecryptedPayload(dtls_context_t *context,
                                       session_t *session,
                                       uint8_t *buf,
                                       size_t bufLen )
 {
+    (void)context;
     OIC_LOG(DEBUG, NET_DTLS_TAG, "IN");
 
     VERIFY_NON_NULL_RET(session, NET_DTLS_TAG, "Param Session is NULL", 0);
@@ -376,12 +384,13 @@ static int32_t CAReadDecryptedPayload(dtls_context_t *dtlsContext,
 
     stCADtlsAddrInfo_t *addrInfo = (stCADtlsAddrInfo_t *)session;
 
-    CAEndpoint_t endpoint = { 0 };
-    CAConvertAddrToName(&(addrInfo->addr.st), endpoint.addr, &endpoint.port);
-    endpoint.flags = addrInfo->addr.st.ss_family == AF_INET ? CA_IPV4 : CA_IPV6;
-    endpoint.flags |= CA_SECURE;
-    endpoint.adapter = CA_ADAPTER_IP;
-    int type = 0;
+    CASecureEndpoint_t sep =
+    { .endpoint =
+    { .adapter = CA_ADAPTER_IP, .flags =
+            ((addrInfo->addr.st.ss_family == AF_INET) ? CA_IPV4 : CA_IPV6) | CA_SECURE, .port = 0 },
+            .identity =
+            { 0 } };
+    CAConvertAddrToName(&(addrInfo->addr.st), sep.endpoint.addr, &sep.endpoint.port);
 
     if (NULL == g_caDtlsContext)
     {
@@ -389,17 +398,18 @@ static int32_t CAReadDecryptedPayload(dtls_context_t *dtlsContext,
         return 0;
     }
 
+    int type = 0;
     if ((0 <= type) && (MAX_SUPPORTED_ADAPTERS > type) &&
         (NULL != g_caDtlsContext->adapterCallbacks[type].recvCallback))
     {
         // Get identity of the source of packet
-        CAEndpoint_t *peerInfo = GetPeerInfo(&endpoint);
+        CASecureEndpoint_t *peerInfo = GetPeerInfo(&sep.endpoint);
         if (peerInfo)
         {
-            endpoint.identity = peerInfo->identity;
+            sep.identity = peerInfo->identity;
         }
 
-        g_caDtlsContext->adapterCallbacks[type].recvCallback(&endpoint, buf, bufLen);
+        g_caDtlsContext->adapterCallbacks[type].recvCallback(&sep, buf, bufLen);
     }
     else
     {
@@ -410,11 +420,12 @@ static int32_t CAReadDecryptedPayload(dtls_context_t *dtlsContext,
     return 0;
 }
 
-static int32_t CASendSecureData(dtls_context_t *dtlsContext,
+static int32_t CASendSecureData(dtls_context_t *context,
                                 session_t *session,
                                 uint8_t *buf,
                                 size_t bufLen)
 {
+    (void)context;
     OIC_LOG(DEBUG, NET_DTLS_TAG, "IN");
 
     VERIFY_NON_NULL_RET(session, NET_DTLS_TAG, "Param Session is NULL", -1);
@@ -428,11 +439,13 @@ static int32_t CASendSecureData(dtls_context_t *dtlsContext,
 
     stCADtlsAddrInfo_t *addrInfo = (stCADtlsAddrInfo_t *)session;
 
-    CAEndpoint_t endpoint;
+    CAEndpoint_t endpoint = {.adapter = CA_DEFAULT_ADAPTER};
+
     CAConvertAddrToName(&(addrInfo->addr.st), endpoint.addr, &endpoint.port);
     endpoint.flags = addrInfo->addr.st.ss_family == AF_INET ? CA_IPV4 : CA_IPV6;
     endpoint.flags |= CA_SECURE;
     endpoint.adapter = CA_ADAPTER_IP;
+    endpoint.interface = session->ifindex;
     int type = 0;
 
     //Mutex is not required for g_caDtlsContext. It will be called in same thread.
@@ -450,11 +463,12 @@ static int32_t CASendSecureData(dtls_context_t *dtlsContext,
     return bufLen;
 }
 
-static int32_t CAHandleSecureEvent(dtls_context_t *dtlsContext,
+static int32_t CAHandleSecureEvent(dtls_context_t *context,
                                    session_t *session,
                                    dtls_alert_level_t level,
                                    unsigned short code)
 {
+    (void)context;
     OIC_LOG(DEBUG, NET_DTLS_TAG, "IN");
 
     VERIFY_NON_NULL_RET(session, NET_DTLS_TAG, "Param Session is NULL", 0);
@@ -472,9 +486,9 @@ static int32_t CAHandleSecureEvent(dtls_context_t *dtlsContext,
         OIC_LOG(INFO, NET_DTLS_TAG, "Peer closing connection");
 
         stCADtlsAddrInfo_t *addrInfo = (stCADtlsAddrInfo_t *)session;
-        char *peerAddr = inet_ntoa(addrInfo->addr.sin.sin_addr);
-        uint32_t port = ntohs(addrInfo->addr.sin.sin_port);
-
+        char peerAddr[MAX_ADDR_STR_SIZE_CA] = { 0 };
+        uint16_t port = 0;
+        CAConvertAddrToName(&(addrInfo->addr.st), peerAddr, &port);
         CARemovePeerFromPeerInfoList(peerAddr, port);
     }
 
@@ -528,8 +542,7 @@ static int32_t CAGetPskCredentials(dtls_context_t *ctx,
     {
         // Check if we have the credentials for the device with which we
         // are trying to perform a handshake
-        int index = 0;
-        for (index = 0; index < credInfo->num; index++)
+        for (uint32_t index = 0; index < credInfo->num; index++)
         {
             if (memcmp(desc, credInfo->creds[index].id, DTLS_PSK_ID_LEN) == 0)
             {
@@ -540,10 +553,11 @@ static int32_t CAGetPskCredentials(dtls_context_t *ctx,
                     // data structure when handshake completes. Therefore, currently this is a
                     // workaround to cache remote end-point identity when tinyDTLS asks for PSK.
                     stCADtlsAddrInfo_t *addrInfo = (stCADtlsAddrInfo_t *)session;
-                    char *peerAddress = inet_ntoa(addrInfo->addr.sin.sin_addr);
-                    uint32_t port = ntohs(addrInfo->addr.sin.sin_port);
+                    char peerAddr[MAX_ADDR_STR_SIZE_CA] = { 0 };
+                    uint16_t port = 0;
+                    CAConvertAddrToName(&(addrInfo->addr.st), peerAddr, &port);
 
-                    CAResult_t result = CAAddIdToPeerInfoList(peerAddress, port, desc, descLen);
+                    CAResult_t result = CAAddIdToPeerInfoList(peerAddr, port, desc, descLen);
                     if(CA_STATUS_OK != result )
                     {
                         OIC_LOG(ERROR, NET_DTLS_TAG, "Fail to add peer id to gDtlsPeerInfoList");
@@ -634,7 +648,7 @@ CAResult_t CADtlsEnableAnonECDHCipherSuite(const bool enable)
     dtls_enables_anon_ecdh(g_caDtlsContext->dtlsContext,
         enable == true ? DTLS_CIPHER_ENABLE : DTLS_CIPHER_DISABLE);
     ca_mutex_unlock(g_dtlsContextMutex);
-    OIC_LOG_V(DEBUG, NET_DTLS_TAG, "TLS_ECDH_anon_WITH_AES_128_CBC_SHA  is %s",
+    OIC_LOG_V(DEBUG, NET_DTLS_TAG, "TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256  is %s",
         enable ? "enabled" : "disabled");
 
     OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT CADtlsEnablesAnonEcdh");
@@ -644,7 +658,7 @@ CAResult_t CADtlsEnableAnonECDHCipherSuite(const bool enable)
 
 CAResult_t CADtlsInitiateHandshake(const CAEndpoint_t *endpoint)
 {
-    stCADtlsAddrInfo_t dst = {};
+    stCADtlsAddrInfo_t dst = { 0 };
 
     OIC_LOG(DEBUG, NET_DTLS_TAG, "IN CADtlsInitiateHandshake");
 
@@ -681,7 +695,7 @@ CAResult_t CADtlsInitiateHandshake(const CAEndpoint_t *endpoint)
 
 CAResult_t CADtlsClose(const CAEndpoint_t *endpoint)
 {
-    stCADtlsAddrInfo_t dst = {};
+    stCADtlsAddrInfo_t dst = { 0 };
 
     OIC_LOG(DEBUG, NET_DTLS_TAG, "IN CADtlsDisconnect");
 
@@ -729,7 +743,7 @@ CAResult_t CADtlsGenerateOwnerPSK(const CAEndpoint_t *endpoint,
         return CA_STATUS_INVALID_PARAM;
     }
 
-    stCADtlsAddrInfo_t dst = {};
+    stCADtlsAddrInfo_t dst = { 0 };
 
     CAConvertNameToAddr(endpoint->addr, endpoint->port, &(dst.addr.st));
     dst.ifIndex = 0;
@@ -879,7 +893,7 @@ CAResult_t CAAdapterNetDtlsEncrypt(const CAEndpoint_t *endpoint,
 
     OIC_LOG_V(DEBUG, NET_DTLS_TAG, "Data to be encrypted dataLen [%d]", dataLen);
 
-    stCADtlsAddrInfo_t addrInfo = {};
+    stCADtlsAddrInfo_t addrInfo = { 0 };
 
     CAConvertNameToAddr(endpoint->addr, endpoint->port, &(addrInfo.addr.st));
     addrInfo.ifIndex = 0;
@@ -939,15 +953,15 @@ CAResult_t CAAdapterNetDtlsEncrypt(const CAEndpoint_t *endpoint,
     return CA_STATUS_OK;
 }
 
-CAResult_t CAAdapterNetDtlsDecrypt(const CAEndpoint_t *endpoint,
+CAResult_t CAAdapterNetDtlsDecrypt(const CASecureEndpoint_t *sep,
                                    uint8_t *data, uint32_t dataLen)
 {
     OIC_LOG(DEBUG, NET_DTLS_TAG, "IN");
-    VERIFY_NON_NULL_RET(endpoint, NET_DTLS_TAG, "endpoint is NULL" , CA_STATUS_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(sep, NET_DTLS_TAG, "endpoint is NULL" , CA_STATUS_INVALID_PARAM);
 
-    stCADtlsAddrInfo_t addrInfo = {};
+    stCADtlsAddrInfo_t addrInfo = { 0 };
 
-    CAConvertNameToAddr(endpoint->addr, endpoint->port, &(addrInfo.addr.st));
+    CAConvertNameToAddr(sep->endpoint.addr, sep->endpoint.port, &(addrInfo.addr.st));
     addrInfo.ifIndex = 0;
     addrInfo.size = CASizeOfAddrInfo(&addrInfo);
 

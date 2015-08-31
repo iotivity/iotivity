@@ -144,8 +144,16 @@ void TemperatureSensor::stopObserve()
 void TemperatureSensor::onObserve(const HeaderOptions headerOptions, const OCRepresentation& rep,
                                   int eCode, int sequenceNumber)
 {
-    if (eCode == OC_STACK_OK)
+    if (eCode == OC_STACK_OK && sequenceNumber != OC_OBSERVE_NO_OPTION)
     {
+        if(sequenceNumber == OC_OBSERVE_REGISTER)
+        {
+            cout << "Observe registration action is successful" << endl;
+        }
+        else if(sequenceNumber == OC_OBSERVE_DEREGISTER)
+        {
+            cout << "Observe De-registration action is successful" << endl;
+        }
         double value;
         rep.getValue(TEMPERATURE_RESOURCE_KEY, value);
         cout << "Observing TemperatureSensor: Current temperature reading in Celsius is " << value << endl;
@@ -153,7 +161,14 @@ void TemperatureSensor::onObserve(const HeaderOptions headerOptions, const OCRep
     }
     else
     {
-        cerr << "TemperatureSensor: Observer response error" << endl;
+        if(sequenceNumber == OC_OBSERVE_NO_OPTION)
+        {
+            cerr << "Observe registration or de-registration action is failed" << endl;
+        }
+        else
+        {
+            cerr << "TemperatureSensor: Observer response error" << endl;
+        }
     }
 }
 

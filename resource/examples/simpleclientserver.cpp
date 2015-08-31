@@ -43,8 +43,8 @@ static void printUsage()
 class ClientWorker
 {
 private:
-    void putResourceInfo(const HeaderOptions& headerOptions,
-            const OCRepresentation rep, const OCRepresentation rep2, const int eCode)
+    void putResourceInfo(const HeaderOptions& /*headerOptions*/,
+            const OCRepresentation rep, const OCRepresentation /*rep2*/, const int eCode)
     {
        std::cout << "In PutResourceInfo" << std::endl;
 
@@ -73,7 +73,7 @@ private:
        }
     }
 
-    void getResourceInfo(const HeaderOptions& headerOptions, const OCRepresentation rep,
+    void getResourceInfo(const HeaderOptions& /*headerOptions*/, const OCRepresentation rep,
                 const int eCode)
     {
         std::cout << "In getResourceInfo" << std::endl;

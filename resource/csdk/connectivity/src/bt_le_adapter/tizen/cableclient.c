@@ -45,8 +45,7 @@
 #define TZ_BLE_CLIENT_TAG "TZ_BLE_GATT_CLIENT"
 
 /**
- * @var g_bLEServiceList
- * @brief This contains the list of OIC services a client connect to.
+ * This contains the list of OIC services a client connect to.
  */
 static BLEServiceList *g_bLEServiceList = NULL;
 
@@ -131,7 +130,8 @@ static char *g_remoteAddress = NULL;
 
 void CABleGattCharacteristicChangedCb(bt_gatt_attribute_h characteristic,
                                       unsigned char *value,
-                                      int valueLen, void *userData)
+                                      int valueLen,
+                                      void *userData)
 {
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "IN");
 
@@ -1374,7 +1374,7 @@ CAResult_t CASetCharacteristicDescriptorValue(stGattCharDescriptor_t *stGattChar
 }
 
 CAResult_t  CAUpdateCharacteristicsToGattServer(const char *remoteAddress,
-        const char  *data, uint32_t dataLen,
+        const uint8_t *data, uint32_t dataLen,
         CALETransferType_t type, int32_t position)
 {
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "IN");
@@ -1412,15 +1412,11 @@ CAResult_t  CAUpdateCharacteristicsToGattServer(const char *remoteAddress,
 
     VERIFY_NON_NULL(bleServiceInfo, TZ_BLE_CLIENT_TAG, "bleServiceInfo is NULL");
 
-    OIC_LOG_V(DEBUG, TZ_BLE_CLIENT_TAG, "Updating the data of length [%d] to [%s] ", dataLen,
+    OIC_LOG_V(DEBUG, TZ_BLE_CLIENT_TAG, "Updating the data of length [%u] to [%s] ", dataLen,
               bleServiceInfo->bdAddress);
 
     OIC_LOG_V(DEBUG, TZ_BLE_CLIENT_TAG, "Updating to write char [%s]",
               bleServiceInfo->read_char);
-
-    OIC_LOG_V(DEBUG, TZ_BLE_CLIENT_TAG,
-              "Updating the data of length [%d] to [%s]", dataLen,
-              bleServiceInfo->bdAddress);
 
     int result = bt_gatt_set_characteristic_value(bleServiceInfo->write_char, (unsigned char *)data,
                      dataLen);
@@ -1436,7 +1432,7 @@ CAResult_t  CAUpdateCharacteristicsToGattServer(const char *remoteAddress,
     return CA_STATUS_OK;
 }
 
-CAResult_t  CAUpdateCharacteristicsToAllGattServers(const char  *data,
+CAResult_t  CAUpdateCharacteristicsToAllGattServers(const uint8_t *data,
             uint32_t dataLen)
 {
     OIC_LOG(DEBUG,  TZ_BLE_CLIENT_TAG, "IN");

@@ -23,9 +23,9 @@
 [<a class="el" href="group__cStructs.html">Data structures</a>]</small>
 </h1><!-- doxytag: class="cp_cfg_element_t" -->Collaboration diagram for cp_cfg_element_t:<p><center><img src="structcp__cfg__element__t__coll__graph.png" border="0" usemap="#cp__cfg__element__t__coll__map" alt="Collaboration graph"></center>
 <center><font size="2">[<a href="graph_legend.html">legend</a>]</font></center><hr><a name="_details"></a><h2>Detailed Description</h2>
-A configuration element contains configuration information for an extension. 
+A configuration element contains configuration information for an extension.
 <p>
-Utility functions <a class="el" href="group__cFuncsPluginInfo.html#g9868077c72df950607e2698153d593d1">cp_lookup_cfg_element</a> and <a class="el" href="group__cFuncsPluginInfo.html#g13f5121ab21951d59d3c6b985ed6adcd">cp_lookup_cfg_value</a> can be used for traversing the tree of configuration elements. Pointer to the root configuration element is stored at <a class="el" href="structcp__extension__t.html#a745fad14a2300fd48e55c33f580f91b">cp_extension_t::configuration</a> and others are contained as <a class="el" href="structcp__cfg__element__t.html#3c4e4c4df68a11f898566c3f90bcd534">children</a> of parent elements. 
+Utility functions <a class="el" href="group__cFuncsPluginInfo.html#g9868077c72df950607e2698153d593d1">cp_lookup_cfg_element</a> and <a class="el" href="group__cFuncsPluginInfo.html#g13f5121ab21951d59d3c6b985ed6adcd">cp_lookup_cfg_value</a> can be used for traversing the tree of configuration elements. Pointer to the root configuration element is stored at <a class="el" href="structcp__extension__t.html#a745fad14a2300fd48e55c33f580f91b">cp_extension_t::configuration</a> and others are contained as <a class="el" href="structcp__cfg__element__t.html#3c4e4c4df68a11f898566c3f90bcd534">children</a> of parent elements.
 <p>
 <table border="0" cellpadding="0" cellspacing="0">
 <tr><td></td></tr>
@@ -68,9 +68,9 @@ Utility functions <a class="el" href="group__cFuncsPluginInfo.html#g9868077c72df
 <div class="memdoc">
 
 <p>
-The name of the configuration element. 
+The name of the configuration element.
 <p>
-This corresponds to the name of the element in a plug-in descriptor. 
+This corresponds to the name of the element in a plug-in descriptor.
 </div>
 </div><p>
 <a class="anchor" name="b6eced8675261543cd28efea6c7a0fa4"></a><!-- doxytag: member="cp_cfg_element_t::num_atts" ref="b6eced8675261543cd28efea6c7a0fa4" args="" -->
@@ -85,7 +85,7 @@ This corresponds to the name of the element in a plug-in descriptor.
 <div class="memdoc">
 
 <p>
-Number of attribute name, value pairs in the <a class="el" href="structcp__cfg__element__t.html#719b3d0c1369478044ce59dc2f207c21">atts</a> array. 
+Number of attribute name, value pairs in the <a class="el" href="structcp__cfg__element__t.html#719b3d0c1369478044ce59dc2f207c21">atts</a> array.
 <p>
 
 </div>
@@ -102,9 +102,9 @@ Number of attribute name, value pairs in the <a class="el" href="structcp__cfg__
 <div class="memdoc">
 
 <p>
-An array of pointers to alternating attribute names and values. 
+An array of pointers to alternating attribute names and values.
 <p>
-Attribute values can be localized. 
+Attribute values can be localized.
 </div>
 </div><p>
 <a class="anchor" name="4e9aec275e566b978a3ccb4e043d8c61"></a><!-- doxytag: member="cp_cfg_element_t::value" ref="4e9aec275e566b978a3ccb4e043d8c61" args="" -->
@@ -119,9 +119,9 @@ Attribute values can be localized.
 <div class="memdoc">
 
 <p>
-An optional value of this configuration element. 
+An optional value of this configuration element.
 <p>
-NULL if not available. The value can be localized. This corresponds to the text contents of the element in a plug-in descriptor. 
+NULL if not available. The value can be localized. This corresponds to the text contents of the element in a plug-in descriptor.
 </div>
 </div><p>
 <a class="anchor" name="8c99879f94f30ed01e0b76847ab11237"></a><!-- doxytag: member="cp_cfg_element_t::parent" ref="8c99879f94f30ed01e0b76847ab11237" args="" -->
@@ -136,7 +136,7 @@ NULL if not available. The value can be localized. This corresponds to the text 
 <div class="memdoc">
 
 <p>
-A pointer to the parent element or NULL if this is a root element. 
+A pointer to the parent element or NULL if this is a root element.
 <p>
 
 </div>
@@ -153,7 +153,7 @@ A pointer to the parent element or NULL if this is a root element.
 <div class="memdoc">
 
 <p>
-The index of this element among its siblings (0-based). 
+The index of this element among its siblings (0-based).
 <p>
 
 </div>
@@ -170,7 +170,7 @@ The index of this element among its siblings (0-based).
 <div class="memdoc">
 
 <p>
-Number of children in the <a class="el" href="structcp__cfg__element__t.html#3c4e4c4df68a11f898566c3f90bcd534">children</a> array. 
+Number of children in the <a class="el" href="structcp__cfg__element__t.html#3c4e4c4df68a11f898566c3f90bcd534">children</a> array.
 <p>
 
 </div>
@@ -187,9 +187,9 @@ Number of children in the <a class="el" href="structcp__cfg__element__t.html#3c4
 <div class="memdoc">
 
 <p>
-An array of <a class="el" href="structcp__cfg__element__t.html#b7c9e81d106b95f54ff71b9096ba5dc6">num_children</a> childrens of this element. 
+An array of <a class="el" href="structcp__cfg__element__t.html#b7c9e81d106b95f54ff71b9096ba5dc6">num_children</a> childrens of this element.
 <p>
-These correspond to child elements in a plug-in descriptor. 
+These correspond to child elements in a plug-in descriptor.
 </div>
 </div><p>
 <hr>The documentation for this struct was generated from the following file:<ul>

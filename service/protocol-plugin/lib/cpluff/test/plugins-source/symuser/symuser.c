@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  * C-Pluff, a plug-in framework for C
  * Copyright 2007 Johannes Lehtinen
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -35,7 +35,7 @@ struct plugin_data_t {
 
 static void *create(cp_context_t *ctx) {
 	plugin_data_t *data;
-	
+
 	if ((data = malloc(sizeof(plugin_data_t))) != NULL) {
 		data->ctx = ctx;
 		data->str = NULL;
@@ -46,11 +46,11 @@ static void *create(cp_context_t *ctx) {
 static int start(void *d) {
 	plugin_data_t *data = d;
 	cp_extension_t **exts;
-	
+
 	exts = cp_get_extensions_info(data->ctx, "symuser.strings", NULL, NULL);
 	if (exts != NULL && exts[0] != NULL) {
 		const char *symname;
-		
+
 		symname = cp_lookup_cfg_value(exts[0]->configuration, "@string-symbol");
 		if (symname != NULL) {
 			data->str = cp_resolve_symbol(data->ctx, exts[0]->plugin->identifier, symname, NULL);
@@ -59,7 +59,7 @@ static int start(void *d) {
 			}
 		} else {
 			cp_log(data->ctx, CP_LOG_ERROR, "No string-symbol attribute present in extension.");
-		} 
+		}
 	} else {
 		cp_log(data->ctx, CP_LOG_ERROR, "No extensions available.");
 	}
@@ -74,7 +74,7 @@ static int start(void *d) {
 
 static void stop(void *d) {
 	plugin_data_t *data = d;
-	
+
 	// Check that the provided string is still available
 	if (data->str != NULL) {
 		if (strcmp(data->str, "Provided string")) {

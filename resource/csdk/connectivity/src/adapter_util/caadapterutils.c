@@ -52,20 +52,6 @@ static JavaVM *g_jvm = NULL;
 static jobject g_Context = NULL;
 #endif
 
-void CALogPDUData(coap_pdu_t *pdu)
-{
-    VERIFY_NON_NULL_VOID(pdu, CA_ADAPTER_UTILS_TAG, "pdu");
-    OIC_LOG_V(DEBUG, CA_ADAPTER_UTILS_TAG, "PDU Maker - payload : %s", pdu->data);
-
-    OIC_LOG_V(DEBUG, CA_ADAPTER_UTILS_TAG, "PDU Maker - type : %d", pdu->hdr->type);
-
-    OIC_LOG_V(DEBUG, CA_ADAPTER_UTILS_TAG, "PDU Maker - code : %d", pdu->hdr->code);
-
-    OIC_LOG_V(DEBUG, CA_ADAPTER_UTILS_TAG, "PDU Maker - id : %d", pdu->hdr->id);
-
-    OIC_LOG_V(DEBUG, CA_ADAPTER_UTILS_TAG, "PDU Maker - token : %s", pdu->hdr->token);
-}
-
 #ifdef WITH_ARDUINO
 CAResult_t CAParseIPv4AddressInternal(const char *ipAddrStr, uint8_t *ipAddr,
                                    size_t ipAddrLen, uint16_t *port)
@@ -170,10 +156,9 @@ void CAConvertNameToAddr(const char *host, uint16_t port, struct sockaddr_storag
     VERIFY_NON_NULL_VOID(sockaddr, CA_ADAPTER_UTILS_TAG, "sockaddr is null");
 
     struct addrinfo *addrs;
-    struct addrinfo hints = { 0 };
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_DGRAM;
-    hints.ai_flags = AI_NUMERICHOST;
+    struct addrinfo hints = { .ai_family = AF_UNSPEC,
+                              .ai_socktype = SOCK_DGRAM,
+                              .ai_flags = AI_NUMERICHOST };
 
     int r = getaddrinfo(host, NULL, &hints, &addrs);
     if (r)

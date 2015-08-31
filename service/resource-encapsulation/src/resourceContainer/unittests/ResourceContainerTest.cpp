@@ -18,6 +18,10 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#if defined(__linux__)
+#include <unistd.h>
+#endif
+
 #include <string>
 #include <map>
 #include <vector>
@@ -40,8 +44,29 @@ using namespace std;
 using namespace testing;
 using namespace OIC::Service;
 
+#define MAX_PATH 2048
+
 string CONFIG_FILE = "ResourceContainerTestConfig.xml";
 
+void getCurrentPath(std::string *pPath)
+{
+    char buffer[MAX_PATH];
+
+#if defined(__linux__)
+    char *strPath = NULL;
+    int length = readlink("/proc/self/exe", buffer, MAX_PATH - 1);
+
+    if (length != -1)
+    {
+        buffer[length] = '\0';
+        strPath = strrchr(buffer, '/');
+
+        if (strPath != NULL)
+            *strPath = '\0';
+    }
+#endif
+    pPath->append(buffer);
+}
 
 /*Fake bundle resource class for testing*/
 class TestBundleResource: public BundleResource
@@ -68,18 +93,22 @@ class ResourceContainerTest: public TestWithMock
 
     public:
         RCSResourceContainer *m_pResourceContainer;
+        std::string m_strConfigPath;
 
     protected:
         void SetUp()
         {
             TestWithMock::SetUp();
             m_pResourceContainer = RCSResourceContainer::getInstance();
+            getCurrentPath(&m_strConfigPath);
+            m_strConfigPath.append("/");
+            m_strConfigPath.append(CONFIG_FILE);
         }
 };
 
 TEST_F(ResourceContainerTest, BundleRegisteredWhenContainerStartedWithValidConfigFile)
 {
-    m_pResourceContainer->startContainer(CONFIG_FILE);
+    m_pResourceContainer->startContainer(m_strConfigPath);
 
     EXPECT_GT(m_pResourceContainer->listBundles().size(), (unsigned int) 0);
     EXPECT_STREQ("oic.bundle.test",
@@ -93,7 +122,7 @@ TEST_F(ResourceContainerTest, BundleRegisteredWhenContainerStartedWithValidConfi
 
 TEST_F(ResourceContainerTest, BundleLoadedWhenContainerStartedWithValidConfigFile)
 {
-    m_pResourceContainer->startContainer(CONFIG_FILE);
+    m_pResourceContainer->startContainer(m_strConfigPath);
 
     EXPECT_GT(m_pResourceContainer->listBundles().size(), (unsigned int) 0);
     EXPECT_TRUE(((BundleInfoInternal *)(*m_pResourceContainer->listBundles().begin()))->isLoaded());
@@ -105,7 +134,7 @@ TEST_F(ResourceContainerTest, BundleLoadedWhenContainerStartedWithValidConfigFil
 
 TEST_F(ResourceContainerTest, BundleActivatedWhenContainerStartedWithValidConfigFile)
 {
-    m_pResourceContainer->startContainer(CONFIG_FILE);
+    m_pResourceContainer->startContainer(m_strConfigPath);
 
     EXPECT_GT(m_pResourceContainer->listBundles().size(), (unsigned int) 0);
     EXPECT_TRUE(
@@ -132,7 +161,7 @@ TEST_F(ResourceContainerTest, BundleNotRegisteredWhenContainerStartedWithEmptyCo
 
 TEST_F(ResourceContainerTest, BundleUnregisteredWhenContainerStopped)
 {
-    m_pResourceContainer->startContainer(CONFIG_FILE);
+    m_pResourceContainer->startContainer(m_strConfigPath);
     m_pResourceContainer->stopContainer();
 
     EXPECT_EQ((unsigned int) 0, m_pResourceContainer->listBundles().size());
@@ -140,7 +169,7 @@ TEST_F(ResourceContainerTest, BundleUnregisteredWhenContainerStopped)
 
 TEST_F(ResourceContainerTest, BundleStoppedWithStartBundleAPI)
 {
-    m_pResourceContainer->startContainer(CONFIG_FILE);
+    m_pResourceContainer->startContainer(m_strConfigPath);
     m_pResourceContainer->stopBundle("oic.bundle.test");
 
     EXPECT_FALSE(
@@ -151,7 +180,7 @@ TEST_F(ResourceContainerTest, BundleStoppedWithStartBundleAPI)
 
 TEST_F(ResourceContainerTest, BundleStartedWithStartBundleAPI)
 {
-    m_pResourceContainer->startContainer(CONFIG_FILE);
+    m_pResourceContainer->startContainer(m_strConfigPath);
     m_pResourceContainer->stopBundle("oic.bundle.test");
     m_pResourceContainer->startBundle("oic.bundle.test");
 
@@ -202,7 +231,7 @@ TEST_F(ResourceContainerTest, AddAndRemoveSoBundleResource)
     std::map<string, string> resourceParams;
     resourceParams["resourceType"] = "oic.test";
 
-    m_pResourceContainer->startContainer(CONFIG_FILE);
+    m_pResourceContainer->startContainer(m_strConfigPath);
     resources = m_pResourceContainer->listBundleResources("oic.bundle.test");
 
     m_pResourceContainer->addResourceConfig("oic.bundle.test", "/test_resource", resourceParams);
@@ -233,6 +262,7 @@ class ResourceContainerBundleAPITest: public TestWithMock
         RCSResourceObject *m_pResourceObject;
         ResourceContainerBundleAPI *m_pResourceContainer;
         TestBundleResource *m_pBundleResource;
+        std::string m_strConfigPath;
 
     protected:
         void SetUp()
@@ -240,6 +270,10 @@ class ResourceContainerBundleAPITest: public TestWithMock
             TestWithMock::SetUp();
             m_pResourceObject = mocks.Mock<RCSResourceObject>();
             m_pResourceContainer = ResourceContainerBundleAPI::getInstance();
+
+            getCurrentPath(&m_strConfigPath);
+            m_strConfigPath.append("/");
+            m_strConfigPath.append(CONFIG_FILE);
 
             m_pBundleResource = new TestBundleResource();
             m_pBundleResource->m_bundleId = "oic.bundle.test";
@@ -316,7 +350,7 @@ TEST_F(ResourceContainerBundleAPITest, BundleConfigurationParsedWithValidBundleI
     configInfo bundle;
     map< string, string > results;
 
-    ((ResourceContainerImpl *)m_pResourceContainer)->startContainer(CONFIG_FILE);
+    ((ResourceContainerImpl *)m_pResourceContainer)->startContainer(m_strConfigPath);
     m_pResourceContainer->getBundleConfiguration("oic.bundle.test", &bundle);
 
     results = *bundle.begin();
@@ -333,7 +367,7 @@ TEST_F(ResourceContainerBundleAPITest, BundleResourceConfigurationListParsed)
     vector< resourceInfo > resourceConfig;
     resourceInfo result;
 
-    ((ResourceContainerImpl *)m_pResourceContainer)->startContainer(CONFIG_FILE);
+    ((ResourceContainerImpl *)m_pResourceContainer)->startContainer(m_strConfigPath);
     m_pResourceContainer->getResourceConfiguration("oic.bundle.test", &resourceConfig);
 
     result = *resourceConfig.begin();
@@ -503,7 +537,12 @@ TEST_F(ResourceContainerImplTest, SoBundleDeactivatedWithBundleID)
 /* Test for Configuration */
 TEST(ConfigurationTest, ConfigFileLoadedWithValidPath)
 {
-    Configuration *config = new Configuration(CONFIG_FILE);
+    std::string strConfigPath;
+    getCurrentPath(&strConfigPath);
+    strConfigPath.append("/");
+    strConfigPath.append(CONFIG_FILE);
+
+    Configuration *config = new Configuration(strConfigPath);
 
     EXPECT_TRUE(config->isLoaded());
 }
@@ -517,7 +556,12 @@ TEST(ConfigurationTest, ConfigFileNotLoadedWithInvalidPath)
 
 TEST(ConfigurationTest, BundleConfigurationListParsed)
 {
-    Configuration *config = new Configuration(CONFIG_FILE);
+    std::string strConfigPath;
+    getCurrentPath(&strConfigPath);
+    strConfigPath.append("/");
+    strConfigPath.append(CONFIG_FILE);
+
+    Configuration *config = new Configuration(strConfigPath);
 
     configInfo bundles;
     map< string, string > results;
@@ -533,7 +577,12 @@ TEST(ConfigurationTest, BundleConfigurationListParsed)
 
 TEST(ConfigurationTest, BundleConfigurationParsedWithValidBundleId)
 {
-    Configuration *config = new Configuration(CONFIG_FILE);
+    std::string strConfigPath;
+    getCurrentPath(&strConfigPath);
+    strConfigPath.append("/");
+    strConfigPath.append(CONFIG_FILE);
+
+    Configuration *config = new Configuration(strConfigPath);
 
     configInfo bundle;
     map< string, string > results;
@@ -549,7 +598,12 @@ TEST(ConfigurationTest, BundleConfigurationParsedWithValidBundleId)
 
 TEST(ConfigurationTest, BundleConfigurationNotParsedWithInvalidBundleId)
 {
-    Configuration *config = new Configuration(CONFIG_FILE);
+    std::string strConfigPath;
+    getCurrentPath(&strConfigPath);
+    strConfigPath.append("/");
+    strConfigPath.append(CONFIG_FILE);
+
+    Configuration *config = new Configuration(strConfigPath);
 
     configInfo bundles;
     config->getBundleConfiguration("test", &bundles);
@@ -559,7 +613,12 @@ TEST(ConfigurationTest, BundleConfigurationNotParsedWithInvalidBundleId)
 
 TEST(ConfigurationTest, BundleResourceConfigurationListParsed)
 {
-    Configuration *config = new Configuration(CONFIG_FILE);
+    std::string strConfigPath;
+    getCurrentPath(&strConfigPath);
+    strConfigPath.append("/");
+    strConfigPath.append(CONFIG_FILE);
+
+    Configuration *config = new Configuration(strConfigPath);
 
     vector< resourceInfo > resourceConfig;
     resourceInfo result;
@@ -574,7 +633,12 @@ TEST(ConfigurationTest, BundleResourceConfigurationListParsed)
 
 TEST(ConfigurationTest, BundleResourceConfigurationNotParsedWithInvalidBundleId)
 {
-    Configuration *config = new Configuration(CONFIG_FILE);
+    std::string strConfigPath;
+    getCurrentPath(&strConfigPath);
+    strConfigPath.append("/");
+    strConfigPath.append(CONFIG_FILE);
+
+    Configuration *config = new Configuration(strConfigPath);
 
     configInfo bundles;
     vector< resourceInfo > resourceConfig;

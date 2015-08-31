@@ -30,15 +30,15 @@ There are 2 main components and 1 sub module to show how Indoor Trajectory works
 
    which should working as signal beacon.
 
-2. Indoor Trajectory Sensor is the soft sensor for tizen platform that 
-   
+2. Indoor Trajectory Sensor is the soft sensor for tizen platform that
+
    checks the RSSI signal between reference thing and tizen platform using
 
    tizen BLE api.
 
 3. Trackee_Thing is sub sensor which almost same behavior as Indoor Trajector Sensor
-  
-   which not only belongs to tizen platform. This also can check the RSSI for 
+
+   which not only belongs to tizen platform. This also can check the RSSI for
 
    checking distance and send its measurements to other device using iotivity protocol.
 

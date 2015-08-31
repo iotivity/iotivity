@@ -72,8 +72,8 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
     }
 
     // Copy the subjectID
-    OicUuid_t subjectId = {};
-    memcpy(subjectId.id, endPoint->identity.id, sizeof(subjectId.id));
+    OicUuid_t subjectId = {.id = {0}};
+    memcpy(subjectId.id, requestInfo->info.identity.id, sizeof(subjectId.id));
 
     //Check the URI has the query and skip it before checking the permission
     char *uri = strstr(requestInfo->info.resourceUri, "?");
@@ -110,7 +110,7 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
     }
 
     // Form a 'access deny' or 'Error' response and send to peer
-    CAResponseInfo_t responseInfo = {};
+    CAResponseInfo_t responseInfo = {.result = CA_EMPTY};
     memcpy(&responseInfo.info, &(requestInfo->info), sizeof(responseInfo.info));
     responseInfo.info.payload = NULL;
     if (!gRequestHandler)
@@ -236,7 +236,6 @@ OCStackResult SRMRegisterPersistentStorageHandler(OCPersistentStorage* persisten
 
 OCPersistentStorage* SRMGetPersistentStorageHandler()
 {
-    OC_LOG(INFO, TAG, PCF("SRMGetPersistentStorageHandler !!"));
     return gPersistentStorageHandler;
 }
 

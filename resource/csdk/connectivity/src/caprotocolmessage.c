@@ -119,9 +119,12 @@ CAResult_t CAGetErrorInfoFromPDU(const coap_pdu_t *pdu, CAErrorInfo_t *errorInfo
     return ret;
 }
 
-coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info)
+coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info, const CAEndpoint_t *endpoint)
 {
     OIC_LOG(DEBUG, TAG, "IN");
+
+    VERIFY_NON_NULL_RET(info, TAG, "info", NULL);
+    VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint", NULL);
 
     coap_pdu_t *pdu = NULL;
 
@@ -130,7 +133,7 @@ coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info)
     if (CA_MSG_RESET == info->type || (CA_EMPTY == code && CA_MSG_ACKNOWLEDGE == info->type))
     {
         OIC_LOG(DEBUG, TAG, "code is empty");
-        if (!(pdu = CAGeneratePDUImpl((code_t) code, NULL, info, NULL, 0)))
+        if (!(pdu = CAGeneratePDUImpl((code_t) code, NULL, info, endpoint)))
         {
             OIC_LOG(ERROR, TAG, "pdu NULL");
             return NULL;
@@ -187,7 +190,8 @@ coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info)
             coap_delete_list(optlist);
             return NULL;
         }
-        pdu = CAGeneratePDUImpl((code_t) code, optlist, info, info->payload, info->payloadSize);
+
+        pdu = CAGeneratePDUImpl((code_t) code, optlist, info, endpoint);
         if (NULL == pdu)
         {
             OIC_LOG(ERROR, TAG, "pdu NULL");
@@ -228,6 +232,22 @@ coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode)
         return NULL;
     }
 
+    if (outpdu->hdr->version != COAP_DEFAULT_VERSION)
+    {
+        OIC_LOG_V(ERROR, TAG, "coap version is not available : %d",
+                  outpdu->hdr->version);
+        coap_delete_pdu(outpdu);
+        return NULL;
+    }
+
+    if (outpdu->hdr->token_length > CA_MAX_TOKEN_LEN)
+    {
+        OIC_LOG_V(ERROR, TAG, "token length has been exceed : %d",
+                  outpdu->hdr->token_length);
+        coap_delete_pdu(outpdu);
+        return NULL;
+    }
+
     if (outCode)
     {
         (*outCode) = (uint32_t) CA_RESPONSE_CODE(outpdu->hdr->code);
@@ -238,10 +258,11 @@ coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode)
 }
 
 coap_pdu_t *CAGeneratePDUImpl(code_t code, coap_list_t *options, const CAInfo_t *info,
-                              const uint8_t *payload, size_t payloadSize)
+                              const CAEndpoint_t *endpoint)
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    VERIFY_NON_NULL_RET(info, TAG, "info is NULL", NULL);
+    VERIFY_NON_NULL_RET(info, TAG, "info", NULL);
+    VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint", NULL);
 
     coap_pdu_t *pdu = coap_new_pdu();
 
@@ -296,15 +317,19 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, coap_list_t *options, const CAInfo_t 
         }
     }
 
+    bool enabledPayload = false;
 #ifndef WITH_BWT
-    if (NULL != payload)
-    {
-        coap_add_data(pdu, payloadSize, (const unsigned char *) payload);
-    }
-#else
-    (void)payload;
-    (void)payloadSize;
+    enabledPayload = true;
 #endif
+
+    if (enabledPayload || CA_ADAPTER_GATT_BTLE == endpoint->adapter)
+    {
+        if (NULL != info->payload && 0 < info->payloadSize)
+        {
+            OIC_LOG(DEBUG, TAG, "payload is added");
+            coap_add_data(pdu, info->payloadSize, (const unsigned char *) info->payload);
+        }
+    }
 
     OIC_LOG(DEBUG, TAG, "OUT");
     return pdu;
@@ -743,19 +768,18 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *
         outInfo->payloadSize = dataSize;
     }
 
-    uint32_t length = strlen(optionResult);
-    OIC_LOG_V(DEBUG, TAG, "URL length:%d", length);
-
-    outInfo->resourceUri = OICMalloc(length + 1);
-    if (!outInfo->resourceUri)
+    if (optionResult[0] != '\0')
     {
-        OIC_LOG(ERROR, TAG, "Out of memory");
-        OICFree(outInfo->options);
-        OICFree(outInfo->token);
-        return CA_MEMORY_ALLOC_FAILED;
+        OIC_LOG_V(DEBUG, TAG, "URL length:%d", strlen(optionResult));
+        outInfo->resourceUri = OICStrdup(optionResult);
+        if (!outInfo->resourceUri)
+        {
+            OIC_LOG(ERROR, TAG, "Out of memory");
+            OICFree(outInfo->options);
+            OICFree(outInfo->token);
+            return CA_MEMORY_ALLOC_FAILED;
+        }
     }
-    OICStrcpy(outInfo->resourceUri, length + 1, optionResult);
-    OIC_LOG_V(DEBUG, TAG, "made URL : %s, %s", optionResult, outInfo->resourceUri);
 
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;

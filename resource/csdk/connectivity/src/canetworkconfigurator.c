@@ -50,7 +50,7 @@ CAResult_t CAAddNetworkType(CATransportAdapter_t transportType)
             return CA_MEMORY_ALLOC_FAILED;
         }
     }
-    CAResult_t res = CA_STATUS_OK;
+    bool res = true;
     switch (transportType)
     {
         case CA_ADAPTER_IP:
@@ -111,15 +111,15 @@ CAResult_t CAAddNetworkType(CATransportAdapter_t transportType)
             break;
     }
 
-    if (CA_STATUS_OK != res)
+    if (!res)
     {
         OIC_LOG_V(ERROR, TAG, "Add arraylist failed[Err code: %d]", res);
-        return res;
+        return CA_STATUS_FAILED;
     }
     // start selected interface adapter
-    res = CAStartAdapter(transportType);
+    CAResult_t result = CAStartAdapter(transportType);
     OIC_LOG(DEBUG, TAG, "OUT");
-    return res;
+    return result;
 
 exit:
     OIC_LOG(DEBUG, TAG, "This adapter is already enabled");

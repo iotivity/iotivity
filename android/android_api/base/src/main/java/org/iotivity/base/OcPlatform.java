@@ -63,7 +63,7 @@ public final class OcPlatform {
      */
     public static final String GROUP_INTERFACE = "oic.mi.grp";
 
-    public static final String WELL_KNOWN_QUERY = "224.0.1.187:5683/oic/res";
+    public static final String WELL_KNOWN_QUERY = "/oic/res";
     public static final String MULTICAST_PREFIX = "224.0.1.187:5683";
     public static final String MULTICAST_IP = "224.0.1.187";
     public static final int MULTICAST_PORT = 5683;
@@ -489,6 +489,15 @@ public final class OcPlatform {
         for (ResourceProperty prop : ResourceProperty.values()) {
             if (resourcePropertySet.contains(prop))
                 resProperty |= prop.getValue();
+        }
+
+        if(null == entityHandler){
+            entityHandler = new EntityHandler() {
+                @Override
+                public EntityHandlerResult handleEntity(OcResourceRequest ocResourceRequest) {
+                    return EntityHandlerResult.OK;
+                }
+            };
         }
 
         return OcPlatform.registerResource1(resourceUri,

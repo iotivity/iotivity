@@ -28,6 +28,7 @@
 #include "ocstack.h"
 #include "logger.h"
 #include "ocpayload.h"
+#include "payload_logging.h"
 #include "ocremoteaccessclient.h"
 
 // Tracking user input

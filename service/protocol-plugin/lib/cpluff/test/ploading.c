@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  * C-Pluff, a plug-in framework for C
  * Copyright 2007 Johannes Lehtinen
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -29,7 +29,7 @@ void loadonlymaximal(void) {
 	cp_plugin_info_t *plugin;
 	cp_status_t status;
 	int errors;
-	
+
 	ctx = init_context(CP_LOG_ERROR, &errors);
 	check((plugin = cp_load_plugin_descriptor(ctx, plugindir("maximal"), &status)) != NULL && status == CP_OK);
 	cp_release_info(ctx, plugin);

@@ -21,37 +21,36 @@
 #include "srmutility.h"
 #include "oic_string.h"
 
-
 //ParseRestQuery Tests
 TEST(ParseRestQueryTest, ParseRestQueryEmpty)
 {
     unsigned char query[] = "";
-    OicParseQueryIter_t parseIter = {};
+    OicParseQueryIter_t parseIter =  OicParseQueryIter_t();
     ParseQueryIterInit(query, &parseIter);
     EXPECT_EQ(NULL,  GetNextQuery(&parseIter));
 }
+
 
 TEST(ParseRestQueryTest, ParseSingleRestQuery)
 {
     char attr[10], val[10];
     unsigned char query[] = "owned=false";
 
-    OicParseQueryIter_t parseIter = {};
+    OicParseQueryIter_t parseIter =  OicParseQueryIter_t();
     ParseQueryIterInit(query, &parseIter);
     EXPECT_NE((OicParseQueryIter_t *)NULL,  GetNextQuery(&parseIter));
 
     OICStrcpyPartial(attr, sizeof(attr), (char *)parseIter.attrPos, parseIter.attrLen);
     OICStrcpyPartial(val, sizeof(val), (char *)parseIter.valPos, parseIter.valLen);
     printf("\nAttribute: %s  value: %s\n\n", attr, val);
-
 }
 
 TEST(ParseRestQueryTest, ParseRestMultipleQuery)
 {
     char attr[10], val[10];
-    unsigned char query[] = "oxm=0&owned=true&owner=owner1";
+    unsigned char query[] = "oxm=0;owned=true;owner=owner1";
 
-    OicParseQueryIter_t parseIter = {};
+    OicParseQueryIter_t parseIter =  OicParseQueryIter_t();
     ParseQueryIterInit(query, &parseIter);
     printf("\n");
     while(GetNextQuery(&parseIter))
@@ -65,4 +64,3 @@ TEST(ParseRestQueryTest, ParseRestMultipleQuery)
     }
     printf("\n");
 }
-

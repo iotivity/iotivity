@@ -17,9 +17,9 @@
 <small>
 [<a class="el" href="group__cFuncs.html">Functions</a>]</small>
 </h1><hr><a name="_details"></a><h2>Detailed Description</h2>
-These functions are used for framework initialization. 
+These functions are used for framework initialization.
 <p>
-They are intended to be used by the main program. These functions are not thread safe. 
+They are intended to be used by the main program. These functions are not thread safe.
 <p>
 <table border="0" cellpadding="0" cellspacing="0">
 <tr><td></td></tr>
@@ -52,7 +52,7 @@ They are intended to be used by the main program. These functions are not thread
 <div class="memdoc">
 
 <p>
-Sets the fatal error handler called on non-recoverable errors. 
+Sets the fatal error handler called on non-recoverable errors.
 <p>
 The default error handler prints the error message out to standard error and aborts the program. If the user specified error handler returns then the framework will abort the program. Setting NULL error handler will restore the default handler. This function is not thread-safe and it should be called before initializing the framework to catch all fatal errors.<p>
 <dl compact><dt><b>Parameters:</b></dt><dd>
@@ -80,10 +80,10 @@ The default error handler prints the error message out to standard error and abo
 <div class="memdoc">
 
 <p>
-Initializes the plug-in framework. 
+Initializes the plug-in framework.
 <p>
 This function must be called by the main program before calling any other plug-in framework functions except <a class="el" href="group__cFuncsFrameworkInfo.html">framework information</a> functions and <a class="el" href="group__cFuncsInit.html#gc794f61edbd896327fabddad2b3d2fd5">cp_set_fatal_error_handler</a>. This function may be called several times but it is not thread-safe. Library resources should be released by calling <a class="el" href="group__cFuncsInit.html#g8dfbe51a3b7f23368a4ddf0d9987180e">cp_destroy</a> when the framework is not needed anymore.<p>
-Additionally, to enable localization support, the main program should set the current locale using<div class="fragment"><pre class="fragment"> setlocale(LC_ALL, <span class="stringliteral">""</span>) 
+Additionally, to enable localization support, the main program should set the current locale using<div class="fragment"><pre class="fragment"> setlocale(LC_ALL, <span class="stringliteral">""</span>)
 </pre></div> before calling this function.<p>
 <dl class="return" compact><dt><b>Returns:</b></dt><dd><a class="el" href="group__cEnums.html#ggd6a8106d281ffa4b1f43fe8e3effc7da5ffbe0fe80af75e699e4b04909912f7a">CP_OK</a> (zero) on success or error code on failure </dd></dl>
 
@@ -106,9 +106,9 @@ Additionally, to enable localization support, the main program should set the cu
 <div class="memdoc">
 
 <p>
-Destroys the plug-in framework and releases the resources used by it. 
+Destroys the plug-in framework and releases the resources used by it.
 <p>
-The plug-in framework is only destroyed after this function has been called as many times as <a class="el" href="group__cFuncsInit.html#gc72ffd50777c3e898dae661c67b04ba9">cp_init</a>. This function is not thread-safe. Plug-in framework functions other than <a class="el" href="group__cFuncsInit.html#gc72ffd50777c3e898dae661c67b04ba9">cp_init</a>, cp_get_framework_info and <a class="el" href="group__cFuncsInit.html#gc794f61edbd896327fabddad2b3d2fd5">cp_set_fatal_error_handler</a> must not be called after the plug-in framework has been destroyed. All contexts are destroyed and all data references returned by the framework become invalid. 
+The plug-in framework is only destroyed after this function has been called as many times as <a class="el" href="group__cFuncsInit.html#gc72ffd50777c3e898dae661c67b04ba9">cp_init</a>. This function is not thread-safe. Plug-in framework functions other than <a class="el" href="group__cFuncsInit.html#gc72ffd50777c3e898dae661c67b04ba9">cp_init</a>, cp_get_framework_info and <a class="el" href="group__cFuncsInit.html#gc794f61edbd896327fabddad2b3d2fd5">cp_set_fatal_error_handler</a> must not be called after the plug-in framework has been destroyed. All contexts are destroyed and all data references returned by the framework become invalid.
 </div>
 </div><p>
 <hr size="1">

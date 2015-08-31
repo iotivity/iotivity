@@ -283,7 +283,7 @@ void * handleSlowResponse (void *param, std::shared_ptr<OCResourceRequest> pRequ
 }
 
 
-int main(int argc, char* argv[])
+int main(int /*argc*/, char** /*argv[]*/)
 {
     // Create PlatformConfig object
     PlatformConfig cfg {

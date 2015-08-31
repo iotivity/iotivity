@@ -112,85 +112,85 @@ public class SmokeTest extends InstrumentationTestCase {
             assertTrue(false);
         }
     }
-//    TODO - this test fails currently
-//    public void testStartStopListenForPresence() throws InterruptedException {
-//        final String resourceType = "unit.test.resource" +
-//                new Date().getTime();
-//        final CountDownLatch signal = new CountDownLatch(1);
-//
-//        OcPlatform.EntityHandler entityHandler = new OcPlatform.EntityHandler() {
-//            @Override
-//            public EntityHandlerResult handleEntity(OcResourceRequest ocResourceRequest) {
-//                return EntityHandlerResult.OK;
-//            }
-//        };
-//
-//        final OcPlatform.OnPresenceListener presenceListener = new OcPlatform.OnPresenceListener() {
-//            @Override
-//            public void onPresence(OcPresenceStatus ocPresenceStatus, int nonce, String hostAddress) {
-//                Log.i(TAG, "onPresence status " + ocPresenceStatus.toString() + " nonce " + nonce);
-//                signal.countDown();
-//            }
-//        };
-//
-//        OcPlatform.OnResourceFoundListener resourceFoundListener =
-//                new OcPlatform.OnResourceFoundListener() {
-//                    @Override
-//                    public void onResourceFound(OcResource resource) {
-//                        try {
-//                            //client
-//                            OcPresenceHandle presenceHandle = OcPlatform.subscribePresence(
-//                                    resource.getHost(),
-//                                    EnumSet.of(OcConnectivityType.CT_DEFAULT),
-//                                    presenceListener
-//                            );
-//
-//                            //wait for onPresence event
-//                            assertTrue(signal.await(60, TimeUnit.SECONDS));
-//
-//                            //client
-//                            OcPlatform.unsubscribePresence(presenceHandle);
-//                        } catch (OcException e) {
-//                            assertTrue(false);
-//                        } catch (InterruptedException e) {
-//                            assertTrue(false);
-//                        }
-//                    }
-//                };
-//
-//        try {
-//            //server
-//            OcResourceHandle resourceHandle = OcPlatform.registerResource(
-//                    "/a/unittest",
-//                    resourceType,
-//                    OcPlatform.DEFAULT_INTERFACE,
-//                    entityHandler,
-//                    EnumSet.of(ResourceProperty.DISCOVERABLE, ResourceProperty.OBSERVABLE)
-//            );
-//
-//            //client
-//            OcPlatform.findResource("",
-//                    OcPlatform.WELL_KNOWN_QUERY + "?rt=" + resourceType,
-//                    EnumSet.of(OcConnectivityType.CT_DEFAULT),
-//                    resourceFoundListener);
-//
-//            //server
-//            OcPlatform.startPresence(OcPlatform.DEFAULT_PRESENCE_TTL);
-//
-//            //wait for onPresence event
-//            assertTrue(signal.await(60, TimeUnit.SECONDS));
-//
-//            //server
-//            OcPlatform.stopPresence();
-//
-//            //client
-//            OcPlatform.unregisterResource(resourceHandle);
-//
-//        } catch (OcException e) {
-//            Log.e(TAG, e.getMessage());
-//            assertTrue(false);
-//        }
-//    }
+
+    public void testStartStopListenForPresence() throws InterruptedException {
+        final String resourceType = "unit.test.resource" +
+                new Date().getTime();
+        final CountDownLatch signal = new CountDownLatch(1);
+
+        OcPlatform.EntityHandler entityHandler = new OcPlatform.EntityHandler() {
+            @Override
+            public EntityHandlerResult handleEntity(OcResourceRequest ocResourceRequest) {
+                return EntityHandlerResult.OK;
+            }
+        };
+
+        final OcPlatform.OnPresenceListener presenceListener = new OcPlatform.OnPresenceListener() {
+            @Override
+            public void onPresence(OcPresenceStatus ocPresenceStatus, int nonce, String hostAddress) {
+                Log.i(TAG, "onPresence status " + ocPresenceStatus.toString() + " nonce " + nonce);
+                signal.countDown();
+            }
+        };
+
+        OcPlatform.OnResourceFoundListener resourceFoundListener =
+                new OcPlatform.OnResourceFoundListener() {
+                    @Override
+                    public void onResourceFound(OcResource resource) {
+                        try {
+                            //client
+                            OcPresenceHandle presenceHandle = OcPlatform.subscribePresence(
+                                    resource.getHost(),
+                                    EnumSet.of(OcConnectivityType.CT_DEFAULT),
+                                    presenceListener
+                            );
+
+                            //wait for onPresence event
+                            assertTrue(signal.await(60, TimeUnit.SECONDS));
+
+                            //client
+                            OcPlatform.unsubscribePresence(presenceHandle);
+                        } catch (OcException e) {
+                            assertTrue(false);
+                        } catch (InterruptedException e) {
+                            assertTrue(false);
+                        }
+                    }
+                };
+
+        try {
+            //server
+            OcResourceHandle resourceHandle = OcPlatform.registerResource(
+                    "/a/unittest",
+                    resourceType,
+                    OcPlatform.DEFAULT_INTERFACE,
+                    entityHandler,
+                    EnumSet.of(ResourceProperty.DISCOVERABLE, ResourceProperty.OBSERVABLE)
+            );
+
+            //client
+            OcPlatform.findResource("",
+                    OcPlatform.WELL_KNOWN_QUERY + "?rt=" + resourceType,
+                    EnumSet.of(OcConnectivityType.CT_DEFAULT),
+                    resourceFoundListener);
+
+            //server
+            OcPlatform.startPresence(OcPlatform.DEFAULT_PRESENCE_TTL);
+
+            //wait for onPresence event
+            assertTrue(signal.await(60, TimeUnit.SECONDS));
+
+            //server
+            OcPlatform.stopPresence();
+
+            //client
+            OcPlatform.unregisterResource(resourceHandle);
+
+        } catch (OcException e) {
+            Log.e(TAG, e.getMessage());
+            assertTrue(false);
+        }
+    }
 
     public void testHandleGetRequest() throws InterruptedException {
         final String someKey = "SomeKey";
@@ -248,7 +248,7 @@ public class SmokeTest extends InstrumentationTestCase {
                         ocResourceList.add(resource);
                         try {
                             resource.get(queryParamsMap, onGetListener);
-                            //TODO there is a bug in the stack that prevents the usage of the following APIs
+//                            TODO there is a bug in the stack that prevents the usage of the following APIs
 //                            resource.get(resourceType, OcPlatform.DEFAULT_INTERFACE, queryParamsMap,
 //                                    onGetListener);
 //
@@ -291,11 +291,11 @@ public class SmokeTest extends InstrumentationTestCase {
                                     case GET:
                                         Map<String, String> queryParams =
                                                 ocResourceRequest.getQueryParameters();
-//TODO after the merge with CA, the query params are missing
-//                                        if (!(queryParams.containsKey(someKey) &&
-//                                                someValue.equals(queryParams.get(someKey)))) {
-//                                            assertTrue(false);
-//                                        }
+
+                                        if (!(queryParams.containsKey(someKey) &&
+                                                someValue.equals(queryParams.get(someKey)))) {
+                                            assertTrue(false);
+                                        }
 
                                         ocResourceResponse.setErrorCode(200);
                                         ocResourceResponse.setResponseResult(EntityHandlerResult.OK);

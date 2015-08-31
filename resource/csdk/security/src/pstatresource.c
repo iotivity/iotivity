@@ -42,7 +42,7 @@ static OicSecPstat_t gDefaultPstat =
     PROVISION_CREDENTIALS | PROVISION_ACLS),   // OicSecDpm_t cm
     (OicSecDpm_t)(TAKE_OWNER | BOOTSTRAP_SERVICE | SECURITY_MANAGEMENT_SERVICES |
     PROVISION_CREDENTIALS | PROVISION_ACLS),   // OicSecDpm_t tm
-    {},                                       // OicUuid_t deviceID
+    {.id = {0}},                              // OicUuid_t deviceID
     SINGLE_SERVICE_CLIENT_DRIVEN,             // OicSecDpom_t om */
     1,                                        // the number of elts in Sms
     &gSm,                                     // OicSecDpom_t *sm
@@ -95,7 +95,7 @@ char * BinToPstatJSON(const OicSecPstat_t * pstat)
 
     cJSON_AddItemToObject(jsonPstat, OIC_JSON_SM_NAME, jsonSmArray = cJSON_CreateArray());
     VERIFY_NON_NULL(TAG, jsonSmArray, INFO);
-    for (int i = 0; i < pstat->smLen; i++)
+    for (size_t i = 0; i < pstat->smLen; i++)
     {
         cJSON_AddItemToArray(jsonSmArray, cJSON_CreateNumber((int )pstat->sm[i]));
     }
@@ -166,7 +166,7 @@ OicSecPstat_t * JSONToPstatBin(const char * jsonStr)
     if (cJSON_Array == jsonObj->type)
     {
         pstat->smLen = cJSON_GetArraySize(jsonObj);
-        int idxx = 0;
+        size_t idxx = 0;
         VERIFY_SUCCESS(TAG, pstat->smLen != 0, ERROR);
         pstat->sm = (OicSecDpom_t*)OICCalloc(pstat->smLen, sizeof(OicSecDpom_t));
         VERIFY_NON_NULL(TAG, pstat->sm, ERROR);
@@ -254,7 +254,7 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
              */
             for(size_t i=0; i< gPstat->smLen; i++)
             {
-                if(gPstat->sm[i] == omJson->valueint)
+                if(gPstat->sm[i] == (unsigned int)omJson->valueint)
                 {
                     gPstat->om = (OicSecDpom_t)omJson->valueint;
                     break;
@@ -290,6 +290,7 @@ OCEntityHandlerResult PstatEntityHandler(OCEntityHandlerFlag flag,
         OCEntityHandlerRequest * ehRequest,
         void *callbackParam)
 {
+    (void)callbackParam;
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
     // This method will handle REST request (GET/POST) for /oic/sec/pstat
     if (flag & OC_REQUEST_FLAG)

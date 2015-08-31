@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief This file contains the APIs for BT communications.
+ * This file contains the APIs for BT communications.
  */
 #ifndef CA_EDR_UTILS_H_
 #define CA_EDR_UTILS_H_
@@ -37,191 +37,159 @@ extern "C"
 #endif
 
 /**
- * @brief   Get address from device socket
- * @param   env                 [IN] JNI interface pointer
- * @param   bluetoothSocketObj  [IN] bluetooth socket object
- * @return  Bluetooth device address
+ * Get address from device socket.
+ * @param[in]   env                 JNI interface pointer.
+ * @param[in]   bluetoothSocketObj  bluetooth socket object.
+ * @return  Bluetooth device address.
  */
 jstring CAEDRNativeGetAddressFromDeviceSocket(JNIEnv *env, jobject bluetoothSocketObj);
 
 /**
- * @brief   Get local device address
- * @param   env                 [IN] JNI interface pointer
- * @return  Bluetooth device address
+ * Get local device address.
+ * @param[in]   env                 JNI interface pointer.
+ * @return  Bluetooth device address.
  */
 jstring CAEDRNativeGetLocalDeviceAddress(JNIEnv *env);
 
 /**
- * @brief   Get bonded devices list
- * @param   env                 [IN] JNI interface pointer
- * @return  Bonded devices list
+ * Get bonded devices list.
+ * @param[in]   env                 JNI interface pointer.
+ * @return  Bonded devices list.
  */
 jobjectArray CAEDRNativeGetBondedDevices(JNIEnv *env);
 
 /**
- * @brief   Get Bluetooth device state
- * @param   env                 [IN] JNI interface pointer
- * @return  Bluetooth device state
+ * Get Bluetooth device state.
+ * @param[in]   env                 JNI interface pointer.
+ * @return  Bluetooth device state.
  */
 jint CAEDRNativeGetBTStateOnInfo(JNIEnv *env);
 
 /**
- * @brief   Check the BT Adapter enable
- * @param   env                 [IN] JNI interface pointer
- * @return  JNI_TRUE or JNI_FALSE
+ * Check the BT Adapter enable.
+ * @param[in]   env                 JNI interface pointer.
+ * @return  JNI_TRUE or JNI_FALSE.
  */
 jboolean CAEDRNativeIsEnableBTAdapter(JNIEnv *env);
 
 /**
- * @brief   Get address from BT device
- * @param   env                 [IN] JNI interface pointer
- * @param   bluetoothSocketObj  [IN] bluetooth socket object
- * @return  Bluetooth device address
+ * Get address from BT device.
+ * @param[in]   env                 JNI interface pointer.
+ * @param[in]   bluetoothDevice     bluetooth socket object.
+ * @return  Bluetooth device address.
  */
 jstring CAEDRNativeGetAddressFromBTDevice(JNIEnv *env, jobject bluetoothDevice);
 
 /**
- * BT State Info List
- */
-
-/**
- * @brief  This function will create the device state list.
- * @return None
+ * This function will create the device state list.
  */
 void CAEDRNativeCreateDeviceStateList();
 
 /**
- * @brief  Update connection state of device
- * @param  state            [IN] connection state
- * @param  address          [IN] remote address
- * @return None
+ * Update connection state of device.
+ * @param[in]  state            connection state.
+ * @param[in]  address          remote address.
  */
 void CAEDRUpdateDeviceState(CAConnectedState_t state, const char *address);
 
 /**
- * @brief  Add device object to the list
- * @param  state            [IN] connection state object
- * @return None
+ * Add device object to the list.
+ * @param[in]  state            connection state object.
  */
 void CAEDRNativeAddDeviceStateToList(state_t *state);
 
 /**
- * @brief  Check whether the device exist in the list or not
- * @param  remoteAddress    [IN] remote address
- * @return true or false
+ * Check whether the device exist in the list or not.
+ * @param[in]  remoteAddress    remote address.
+ * @return true or false.
  */
 bool CAEDRNativeIsDeviceInList(const char *remoteAddress);
 
 /**
- * @brief   Close all socket
- * @param   env       [IN] JNI interface pointer
- * @return  NONE
+ * Close all socket.
+ * @param[in]   env       JNI interface pointer.
  */
 void CAEDRNativeSocketCloseToAll(JNIEnv *env);
 
 /**
- * @brief   Remove all device objects in the list
- * @return  None
+ * Remove all device objects in the list.
  */
 void CAEDRNativeRemoveAllDeviceState();
 
 /**
- * @brief   Remove target device in the list
- * @param   remoteAddress    [IN] remote address
- * @return  None
+ * Remove target device in the list.
+ * @param[in]   remoteAddress    remote address.
  */
 void CAEDRNativeRemoveDevice(const char *remoteAddress);
 
 /**
- * @brief   Get current device connection state
- * @param   remoteAddress    [IN] remote address
- * @return  STATE_DISCONNECTED or STATE_CONNECTED
+ * Get current device connection state.
+ * @param[in]   remoteAddress    remote address.
+ * @return  STATE_DISCONNECTED or STATE_CONNECTED.
  */
 CAConnectedState_t CAEDRIsConnectedDevice(const char *remoteAddress);
 
 /**
- * @brief   Reordering for the list
- * @param   index           [IN] index of device list that want to reordering
- * @return  None
- */
-void CAEDRReorderingDeviceList(uint32_t index);
-
-/**
- * Bluetooth Socket Object List
- */
-
-/**
- * @brief  This function will create the device socket list.
- * @return None
+ * This function will create the device socket list.
  */
 void CAEDRNativeCreateDeviceSocketList();
 
 /**
- * @brief  Add device object to the list
- * @param  env              [IN] JNI interface pointer
- * @param  deviceSocket     [IN] device socket object
- * @return None
+ * Add device object to the list.
+ * @param[in]  env              JNI interface pointer.
+ * @param[in]  deviceSocket     device socket object.
  */
 void CAEDRNativeAddDeviceSocketToList(JNIEnv *env, jobject deviceSocket);
 
 /**
- * @brief  Add device object to the list
- * @param  env              [IN] JNI interface pointer
- * @param  remoteAddress    [IN] remote address
- * @return true or false
+ * Add device object to the list.
+ * @param[in]  env              JNI interface pointer.
+ * @param[in]  remoteAddress    remote address.
+ * @return true or false.
  */
 bool CAEDRNativeIsDeviceSocketInList(JNIEnv *env, const char *remoteAddress);
 
 /**
- * @brief  Add device object to the list
- * @param  env              [IN] JNI interface pointer
- * @return None
+ * Add device object to the list.
+ * @param[in]  env              JNI interface pointer.
  */
 void CAEDRNativeRemoveAllDeviceSocket(JNIEnv *env);
 
 /**
- * @brief  Add device object to the list
- * @param  env              [IN] JNI interface pointer
- * @param  deviceSocket     [IN] device socket object
- * @return None
+ * Add device object to the list.
+ * @param[in]  env              JNI interface pointer.
+ * @param[in]  deviceSocket     device socket object.
  */
 void CAEDRNativeRemoveDeviceSocket(JNIEnv *env, jobject deviceSocket);
 
 /**
- * @brief   Remove device socket
- * @param   env             [IN] JNI interface pointer
- * @param   address         [IN] remote address
- * @return  NONE
+ * Remove device socket.
+ * @param[in]   env             JNI interface pointer.
+ * @param[in]   address         remote address.
  */
 void CAEDRNativeRemoveDeviceSocketBaseAddr(JNIEnv *env, jstring address);
 
 /**
- * @brief  Get device socket object from the list
- * @param  idx              [IN] index of device list
- * @return Device socket object or NULL
+ * Get device socket object from the list.
+ * @param[in]  idx              index of device list.
+ * @return Device socket object or NULL.
  */
 jobject CAEDRNativeGetDeviceSocket(uint32_t idx);
 
 /**
- * @brief   Get device socket address
- * @param   env             [IN] JNI interface pointer
- * @param   remoteAddress   [IN] remote address
- * @return  Device socket object or NULL
+ * Get device socket address.
+ * @param[in]   env             JNI interface pointer.
+ * @param[in]   remoteAddress   remote address.
+ * @return  Device socket object or NULL.
  */
 jobject CAEDRNativeGetDeviceSocketBaseAddr(JNIEnv *env, const char* remoteAddress);
 
 /**
- * @brief  Get length of device socket list
- * @return length of list
+ * Get length of device socket list.
+ * @return length of list.
  */
 uint32_t CAEDRGetSocketListLength();
 
-/**
- * @brief   Reordering for the list
- * @param   index           [IN] index of device list that want to reordering
- * @return  None
- */
-void CAEDRReorderingDeviceSocketList(uint32_t index);
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

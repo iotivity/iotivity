@@ -7,6 +7,7 @@
 
 #include "cainterface.h"
 #include "cacommon.h"
+#include "caadapterutils.h"
 
 #include "org_iotivity_ca_service_RMInterface.h"
 
@@ -36,15 +37,17 @@ typedef struct
     uint16_t port;
 } addressSet_t;
 
-void request_handler(const CAEndpoint_t* object, const CARequestInfo_t* requestInfo);
-void response_handler(const CAEndpoint_t* object, const CAResponseInfo_t* responseInfo);
-void error_handler(const CAEndpoint_t *object, const CAErrorInfo_t* errorInfo);
-void get_resource_uri(const char *URI, char *resourceURI, uint32_t length);
-uint32_t get_secure_information(CAPayload_t payLoad);
-CAResult_t get_network_type(uint32_t selectedNetwork);
-void callback(char *subject, char *receivedData);
-CAResult_t get_remote_address(CATransportAdapter_t transportType, const char *address);
-void parsing_coap_uri(const char* uri, addressSet_t* address, CATransportFlags_t *flags);
+static void request_handler(const CAEndpoint_t* object, const CARequestInfo_t* requestInfo);
+static void response_handler(const CAEndpoint_t* object, const CAResponseInfo_t* responseInfo);
+static void error_handler(const CAEndpoint_t *object, const CAErrorInfo_t* errorInfo);
+static void get_resource_uri(const char *URI, char *resourceURI, int32_t length);
+static uint32_t get_secure_information(CAPayload_t payLoad);
+static CAResult_t get_network_type(uint32_t selectedNetwork);
+static void callback(char *subject, char *receivedData);
+static CAResult_t get_remote_address(const char *address);
+static void parsing_coap_uri(const char* uri, addressSet_t* address, CATransportFlags_t *flags);
+static void delete_global_references(JNIEnv *env, jobject obj);
+static int get_address_set(const char *pAddress, addressSet_t* outAddress);
 
 uint16_t g_localSecurePort = SECURE_DEFAULT_PORT;
 CATransportAdapter_t g_selectedNwType = CA_ADAPTER_IP;
@@ -81,7 +84,13 @@ Java_org_iotivity_ca_service_RMInterface_setNativeResponseListener(JNIEnv *env, 
                                                                    jobject listener)
 {
     LOGI("setNativeResponseListener");
-    g_responseListenerObject = (*env)->NewGlobalRef(env, obj);
+    if (!env || !obj || !listener)
+    {
+        LOGI("Invalid input parameter");
+        return;
+    }
+
+    g_responseListenerObject = (*env)->NewGlobalRef(env, listener);
 }
 
 #ifdef __WITH_DTLS__
@@ -194,6 +203,11 @@ JNIEXPORT void JNICALL
 Java_org_iotivity_ca_service_RMInterface_RMInitialize(JNIEnv *env, jobject obj, jobject context)
 {
     LOGI("RMInitialize");
+    if (!env || !obj || !context)
+    {
+        LOGI("Invalid input parameter");
+        return;
+    }
 
     //Currently set context for Android Platform
     CANativeJNISetContext(env, context);
@@ -225,14 +239,26 @@ JNIEXPORT void JNICALL
 Java_org_iotivity_ca_service_RMInterface_RMTerminate(JNIEnv *env, jobject obj)
 {
     LOGI("RMTerminate");
+    if (!env || !obj)
+    {
+        LOGI("Invalid input parameter");
+        return;
+    }
+
     CADestroyToken(g_lastRequestToken);
     CATerminate();
+    delete_global_references(env, obj);
 }
 
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_service_RMInterface_RMStartListeningServer(JNIEnv *env, jobject obj)
 {
     LOGI("RMStartListeningServer");
+    if (!env || !obj)
+    {
+        LOGI("Invalid input parameter");
+        return;
+    }
 
     if (CA_STATUS_OK != CAStartListeningServer())
     {
@@ -244,6 +270,11 @@ JNIEXPORT void JNICALL
 Java_org_iotivity_ca_service_RMInterface_RMStartDiscoveryServer(JNIEnv *env, jobject obj)
 {
     LOGI("RMStartDiscoveryServer");
+    if (!env || !obj)
+    {
+        LOGI("Invalid input parameter");
+        return;
+    }
 
     if (CA_STATUS_OK != CAStartDiscoveryServer())
     {
@@ -255,6 +286,11 @@ JNIEXPORT void JNICALL
 Java_org_iotivity_ca_service_RMInterface_RMRegisterHandler(JNIEnv *env, jobject obj)
 {
     LOGI("RMRegisterHandler");
+    if(!env || !obj)
+    {
+        LOGI("Invalid input parameter");
+        return;
+    }
 
     CARegisterHandler(request_handler, response_handler, error_handler);
 }
@@ -265,6 +301,23 @@ Java_org_iotivity_ca_service_RMInterface_RMSendRequest(JNIEnv *env, jobject obj,
                                                        jint isSecured, jint msgType)
 {
     LOGI("selectedNetwork - %d", selectedNetwork);
+    if (!env || !obj)
+    {
+        LOGI("Invalid input parameter");
+        return;
+    }
+
+    if (!payload)
+    {
+        LOGE("payload is NULL");
+    }
+
+    if (!uri)
+    {
+        LOGE("Invalid input parameter : uri");
+        return;
+    }
+
     CAResult_t res = get_network_type(selectedNetwork);
     if (CA_STATUS_OK != res)
     {
@@ -275,12 +328,12 @@ Java_org_iotivity_ca_service_RMInterface_RMSendRequest(JNIEnv *env, jobject obj,
     LOGI("RMSendRequest - %s", strUri);
 
     CATransportFlags_t flags;
-    addressSet_t address = {};
+    addressSet_t address = {{0}, 0};
     parsing_coap_uri(strUri, &address, &flags);
 
     //create remote endpoint
     CAEndpoint_t* endpoint = NULL;
-    res = CACreateEndpoint(flags, g_selectedNwType, (const char*)address.ipAddress,
+    res = CACreateEndpoint(flags, g_selectedNwType, (const char*)(address.ipAddress),
                            address.port, &endpoint);
     if (CA_STATUS_OK != res)
     {
@@ -327,7 +380,7 @@ Java_org_iotivity_ca_service_RMInterface_RMSendRequest(JNIEnv *env, jobject obj,
             CADestroyEndpoint(endpoint);
             return;
         }
-        snprintf(requestData.payload, length, SECURE_INFO_DATA, resourceURI, g_localSecurePort);
+        snprintf((char *) requestData.payload, length, SECURE_INFO_DATA, resourceURI, g_localSecurePort);
         requestData.payloadSize = length;
     }
     else
@@ -343,7 +396,7 @@ Java_org_iotivity_ca_service_RMInterface_RMSendRequest(JNIEnv *env, jobject obj,
             CADestroyEndpoint(endpoint);
             return;
         }
-        snprintf(requestData.payload, length, NORMAL_INFO_DATA, resourceURI);
+        snprintf((char *) requestData.payload, length, NORMAL_INFO_DATA, resourceURI);
         requestData.payloadSize = length;
     }
 
@@ -387,6 +440,12 @@ Java_org_iotivity_ca_service_RMInterface_RMSendReqestToAll(JNIEnv *env, jobject 
                                                            jint selectedNetwork)
 {
     LOGI("selectedNetwork - %d", selectedNetwork);
+    if (!env || !obj)
+    {
+        LOGI("Invalid input parameter");
+        return;
+    }
+
     CAResult_t res = get_network_type(selectedNetwork);
     if (CA_STATUS_OK != res)
     {
@@ -489,6 +548,11 @@ Java_org_iotivity_ca_service_RMInterface_RMSendResponse(JNIEnv *env, jobject obj
                                                         jint responseValue)
 {
     LOGI("RMSendResponse");
+    if (!env || !obj)
+    {
+        LOGI("Invalid input parameter");
+        return;
+    }
 
     LOGI("selectedNetwork - %d", selectedNetwork);
 
@@ -524,7 +588,7 @@ Java_org_iotivity_ca_service_RMInterface_RMSendResponse(JNIEnv *env, jobject obj
         {
             uint32_t length = strlen(SECURE_INFO_DATA) + strlen(g_resourceUri) + 1;
             responseData.payload = (CAPayload_t) malloc(length);
-            sprintf(responseData.payload, SECURE_INFO_DATA, g_resourceUri,
+            sprintf((char *) responseData.payload, SECURE_INFO_DATA, g_resourceUri,
                     g_localSecurePort);
             responseData.payloadSize = length;
         }
@@ -532,7 +596,7 @@ Java_org_iotivity_ca_service_RMInterface_RMSendResponse(JNIEnv *env, jobject obj
         {
             uint32_t length = strlen(NORMAL_INFO_DATA) + strlen(g_resourceUri) + 1;
             responseData.payload = (CAPayload_t) malloc(length);
-            sprintf(responseData.payload, NORMAL_INFO_DATA, g_resourceUri);
+            sprintf((char *) responseData.payload, NORMAL_INFO_DATA, g_resourceUri);
             responseData.payloadSize = length;
         }
     }
@@ -568,6 +632,22 @@ Java_org_iotivity_ca_service_RMInterface_RMSendNotification(JNIEnv *env, jobject
                                                             jint responseValue)
 {
     LOGI("selectedNetwork - %d", selectedNetwork);
+    if (!env || !obj)
+    {
+        LOGI("Invalid input parameter");
+        return;
+    }
+
+    if (!payload)
+    {
+        LOGE("payload is NULL");
+    }
+
+    if (!uri)
+    {
+        LOGE("Invalid input parameter : uri");
+        return;
+    }
 
     CAResult_t res = get_network_type(selectedNetwork);
     if (CA_STATUS_OK != res)
@@ -580,7 +660,7 @@ Java_org_iotivity_ca_service_RMInterface_RMSendNotification(JNIEnv *env, jobject
     LOGI("RMSendNotification - %s", strUri);
 
     CATransportFlags_t flags;
-    addressSet_t address = {};
+    addressSet_t address = {{0}, 0};
     parsing_coap_uri(strUri, &address, &flags);
 
     //create remote endpoint
@@ -645,7 +725,7 @@ Java_org_iotivity_ca_service_RMInterface_RMSendNotification(JNIEnv *env, jobject
             free(responseData.resourceUri);
             return;
         }
-        snprintf(responseData.payload, length, SECURE_INFO_DATA, resourceURI, g_localSecurePort);
+        snprintf((char *) responseData.payload, length, SECURE_INFO_DATA, resourceURI, g_localSecurePort);
         responseData.payloadSize = length;
     }
     else
@@ -663,7 +743,7 @@ Java_org_iotivity_ca_service_RMInterface_RMSendNotification(JNIEnv *env, jobject
             free(responseData.resourceUri);
             return;
         }
-        snprintf(responseData.payload, length, NORMAL_INFO_DATA, resourceURI);
+        snprintf((char *) responseData.payload, length, NORMAL_INFO_DATA, resourceURI);
         responseData.payloadSize = length;
     }
 
@@ -696,6 +776,11 @@ Java_org_iotivity_ca_service_RMInterface_RMSelectNetwork(JNIEnv *env, jobject ob
                                                          jint networkType)
 {
     LOGI("RMSelectNetwork Type : %d", networkType);
+    if (!env || !obj)
+    {
+        LOGI("Invalid input parameter");
+        return;
+    }
 
     if (CA_STATUS_OK != CASelectNetwork(networkType))
     {
@@ -708,6 +793,11 @@ Java_org_iotivity_ca_service_RMInterface_RMUnSelectNetwork(JNIEnv *env, jobject 
                                                            jint networkType)
 {
     LOGI("RMUnSelectNetwork Type : %d", networkType);
+    if (!env || !obj)
+    {
+        LOGI("Invalid input parameter");
+        return;
+    }
 
     if (CA_STATUS_OK != CAUnSelectNetwork(networkType))
     {
@@ -719,6 +809,11 @@ JNIEXPORT void JNICALL
 Java_org_iotivity_ca_service_RMInterface_RMGetNetworkInfomation(JNIEnv *env, jobject obj)
 {
     LOGI("RMGetNetworkInfomation");
+    if (!env || !obj)
+    {
+        LOGI("Invalid input parameter");
+        return;
+    }
 
     CAEndpoint_t *tempInfo = NULL;
     uint32_t tempSize = 0;
@@ -738,7 +833,7 @@ Java_org_iotivity_ca_service_RMInterface_RMGetNetworkInfomation(JNIEnv *env, job
     uint32_t index;
     for (index = 0; index < tempSize; index++)
     {
-        res = get_remote_address(tempInfo[index].adapter, tempInfo[index].addr);
+        res = get_remote_address(tempInfo[index].addr);
         if (CA_STATUS_OK != res)
         {
             free(tempInfo);
@@ -777,6 +872,11 @@ JNIEXPORT void JNICALL
 Java_org_iotivity_ca_service_RMInterface_RMHandleRequestResponse(JNIEnv *env, jobject obj)
 {
     LOGI("RMHandleRequestResponse");
+    if(!env || !obj)
+    {
+        LOGI("Invalid input parameter");
+        return;
+    }
 
     if (CA_STATUS_OK != CAHandleRequestResponse())
     {
@@ -807,7 +907,7 @@ void request_handler(const CAEndpoint_t* object, const CARequestInfo_t* requestI
         return;
     }
 
-    CAResult_t res = get_remote_address(object->adapter, object->addr);
+    CAResult_t res = get_remote_address(object->addr);
     if (CA_STATUS_OK != res)
     {
         return;
@@ -992,8 +1092,13 @@ void request_handler(const CAEndpoint_t* object, const CARequestInfo_t* requestI
 
 void response_handler(const CAEndpoint_t* object, const CAResponseInfo_t* responseInfo)
 {
+    if (!object || !responseInfo)
+    {
+        LOGE("Invalid input parameter");
+        return;
+    }
 
-    CAResult_t res = get_remote_address(object->adapter, object->addr);
+    CAResult_t res = get_remote_address(object->addr);
     if (CA_STATUS_OK != res)
     {
         return;
@@ -1117,9 +1222,15 @@ void response_handler(const CAEndpoint_t* object, const CAResponseInfo_t* respon
 
 void error_handler(const CAEndpoint_t *rep, const CAErrorInfo_t* errorInfo)
 {
-    printf("+++++++++++++++++++++++++++++++++++ErrorInfo+++++++++++++++++++++++++++++++++++");
+    LOGI("+++++++++++++++++++++++++++++++++++ErrorInfo+++++++++++++++++++++++++++++++++++");
 
-    if(errorInfo)
+    if (rep)
+    {
+        LOGI("Error Handler, Adapter Type : %d", rep->adapter);
+        LOGI("Error Handler, Adapter Type : %s", rep->addr);
+    }
+
+    if (errorInfo)
     {
         const CAInfo_t *info = &errorInfo->info;
         LOGI("Error Handler, ErrorInfo :");
@@ -1156,7 +1267,7 @@ void error_handler(const CAEndpoint_t *rep, const CAErrorInfo_t* errorInfo)
     return;
 }
 
-void get_resource_uri(const char *URI, char *resourceURI, uint32_t length)
+void get_resource_uri(const char *URI, char *resourceURI, int32_t length)
 {
     const char *startPos = URI;
     const char *temp = strstr(URI, "://");
@@ -1196,13 +1307,13 @@ uint32_t get_secure_information(CAPayload_t payLoad)
     }
 
     const char *subString = NULL;
-    if (NULL == (subString = strstr(payLoad, "\"sec\":1")))
+    if (NULL == (subString = strstr((const char *) payLoad, "\"sec\":1")))
     {
         LOGE("This is not secure resource");
         return -1;
     }
 
-    if (NULL == (subString = strstr(payLoad, "\"port\":")))
+    if (NULL == (subString = strstr((const char *) payLoad, "\"port\":")))
     {
         LOGE("This secure resource does not have port information");
         return -1;
@@ -1259,21 +1370,69 @@ CAResult_t get_network_type(uint32_t selectedNetwork)
 
 void callback(char *subject, char *receivedData)
 {
-    JNIEnv* env = NULL;
-    uint32_t status = (*g_jvm)->GetEnv(g_jvm, (void **) &env, JNI_VERSION_1_6);
-    uint32_t res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
+    bool isAttached = false;
+    JNIEnv* env;
+
+    if (!g_responseListenerObject)
+    {
+        LOGE("g_responseListenerObject is NULL, cannot have callback");
+        return;
+    }
+
+    jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
+    if (JNI_OK != res)
+    {
+        LOGI("Could not get JNIEnv pointer");
+        res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
+
+        if (JNI_OK != res)
+        {
+            LOGE("AttachCurrentThread has failed");
+            return;
+        }
+        isAttached = true;
+    }
 
     jclass cls = (*env)->GetObjectClass(env, g_responseListenerObject);
+    if (!cls)
+    {
+        LOGE("could not get class");
+        goto detach_thread;
+    }
+
     jmethodID mid = (*env)->GetMethodID(env, cls, "OnResponseReceived",
                                         "(Ljava/lang/String;Ljava/lang/String;)V");
+    if (!mid)
+    {
+        LOGE("could not get Method ID");
+        goto detach_thread;
+    }
 
     jstring jsubject = (*env)->NewStringUTF(env, (char*) subject);
+    if (!jsubject)
+    {
+        LOGE("NewStringUTF failed");
+        goto detach_thread;
+    }
+
     jstring jreceivedData = (*env)->NewStringUTF(env, (char*) receivedData);
+    if (!jreceivedData)
+    {
+        LOGE("NewStringUTF failed");
+        goto detach_thread;
+    }
+
     (*env)->CallVoidMethod(env, g_responseListenerObject, mid, jsubject, jreceivedData);
 
+detach_thread :
+    if (isAttached)
+    {
+        (*g_jvm)->DetachCurrentThread(g_jvm);
+        LOGI("DetachCurrentThread");
+    }
 }
 
-CAResult_t get_remote_address(CATransportAdapter_t transportType, const char *address)
+CAResult_t get_remote_address(const char *address)
 {
     uint32_t len = strlen(address);
 
@@ -1315,7 +1474,7 @@ void parsing_coap_uri(const char* uri, addressSet_t* address, CATransportFlags_t
     }
 
     // #2. copy uri for parse
-    int32_t len = strlen(uri) - startIndex;
+    size_t len = strlen(uri) - startIndex;
 
     if (len <= 0)
     {
@@ -1330,33 +1489,28 @@ void parsing_coap_uri(const char* uri, addressSet_t* address, CATransportFlags_t
         return;
     }
 
-    memcpy(cloneUri, &uri[startIndex], sizeof(char) * len);
-    cloneUri[len] = '\0';
+    OICStrcpy(cloneUri, len+1, &uri[startIndex]);
 
-    char *pAddress = cloneUri;
-    char *pResourceUri = NULL;
+    char *pstr = NULL;
+    //filter out the resource uri
+    char *pUrl = strtok_r(cloneUri, "/", &pstr);
 
-    int32_t i = 0;
-    for (i = 0; i < len; i++)
+    if (pUrl)
     {
-        if (cloneUri[i] == '/')
+        LOGI("pAddress : %s", pUrl);
+        int res = get_address_set(pUrl, address);
+        if (res == -1)
         {
-            // separate
-            cloneUri[i] = 0;
-            pResourceUri = &cloneUri[i + 1];
-            break;
+            LOGE("address parse error");
+
+            return;
         }
     }
-    LOGI("pAddress : %s", pAddress);
-
-    int res = get_address_set(pAddress, address);
-    if (res == -1)
+    else
     {
-        LOGE("address parse error");
-
-        free(cloneUri);
-        return;
+        LOGE("strtok_r error, could not get the address");
     }
+
     return;
 }
 
@@ -1368,12 +1522,11 @@ int get_address_set(const char *pAddress, addressSet_t* outAddress)
         return -1;
     }
 
-    int32_t len = strlen(pAddress);
-    int32_t isIp = 0;
-    int32_t ipLen = 0;
+    size_t len = strlen(pAddress);
+    int isIp = 0;
+    size_t ipLen = 0;
 
-    int32_t i = 0;
-    for (i = 0; i < len; i++)
+    for (size_t i = 0; i < len; i++)
     {
         if (pAddress[i] == '.')
         {
@@ -1390,12 +1543,12 @@ int get_address_set(const char *pAddress, addressSet_t* outAddress)
 
     if (isIp)
     {
-        if(ipLen && ipLen < sizeof(outAddress->ipAddress))
+        if(ipLen && (ipLen <  sizeof(outAddress->ipAddress)))
         {
             strncpy(outAddress->ipAddress, pAddress, ipLen);
             outAddress->ipAddress[ipLen] = '\0';
         }
-        else if (!ipLen && len < sizeof(outAddress->ipAddress))
+        else if (!ipLen && (len <  sizeof(outAddress->ipAddress)))
         {
             strncpy(outAddress->ipAddress, pAddress, len);
             outAddress->ipAddress[len] = '\0';
@@ -1418,4 +1571,16 @@ int get_address_set(const char *pAddress, addressSet_t* outAddress)
     }
 
     return isIp;
+}
+
+void delete_global_references(JNIEnv *env, jobject obj)
+{
+    LOGI("delete_global_references");
+    if (!env || !obj )
+    {
+        LOGI("Invalid input parameter");
+        return;
+    }
+
+    (*env)->DeleteGlobalRef(env, g_responseListenerObject);
 }

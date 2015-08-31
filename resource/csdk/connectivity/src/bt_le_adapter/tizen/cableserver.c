@@ -219,8 +219,8 @@ void CAStartBleGattServerThread(void *data)
         return;
     }
 
-    char *charReadUUID = CA_GATT_RESPONSE_CHRC_UUID;
-    char charReadValue[] = {33, 44, 55, 66}; // These are initial random values
+    static const char charReadUUID[] = CA_GATT_RESPONSE_CHRC_UUID;
+    uint8_t charReadValue[] = {33, 44, 55, 66}; // These are initial random values
 
     ret = CAAddNewCharacteristicsToGattServer(g_gattSvcPath, charReadUUID, charReadValue,
             CA_BLE_INITIAL_BUF_SIZE, true); // For Read Characteristics.
@@ -232,8 +232,8 @@ void CAStartBleGattServerThread(void *data)
         return;
     }
 
-    char *charWriteUUID = CA_GATT_REQUEST_CHRC_UUID;
-    char charWriteValue[] = {33, 44, 55, 66}; // These are initial random values
+    static const char charWriteUUID[] = CA_GATT_REQUEST_CHRC_UUID;
+    uint8_t charWriteValue[] = {33, 44, 55, 66}; // These are initial random values
 
 
     ret = CAAddNewCharacteristicsToGattServer(g_gattSvcPath, charWriteUUID, charWriteValue,
@@ -577,8 +577,10 @@ CAResult_t CARemoveAllBleServicesFromGattServer()
 }
 
 void CABleGattRemoteCharacteristicWriteCb(char *charPath,
-        unsigned char *charValue,
-        int charValueLen, const char *remoteAddress, void *userData)
+                                          unsigned char *charValue,
+                                          int charValueLen,
+                                          const char *remoteAddress,
+                                          void *userData)
 {
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
 
@@ -588,17 +590,21 @@ void CABleGattRemoteCharacteristicWriteCb(char *charPath,
         return;
     }
 
-    OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "charPath = [%s] charValue = [%s] len [%d]", charPath,
-              charValue, charValueLen);
+    OIC_LOG_V(DEBUG,
+              TZ_BLE_SERVER_TAG,
+              "charPath = [%s] charValue = [%p] len [%d]",
+              charPath,
+              charValue,
+              charValueLen);
 
-    char *data = (char *)OICMalloc(sizeof(char) * charValueLen + 1);
+    uint8_t *data = OICMalloc(charValueLen);
     if (NULL == data)
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "Malloc failed!");
         return;
     }
 
-    OICStrcpy(data, charValueLen + 1, charValue);
+    memcpy(data, charValue, charValueLen);
 
     ca_mutex_lock(g_bleReqRespCbMutex);
     if (NULL == g_bleServerDataReceivedCallback)
@@ -641,12 +647,12 @@ CAResult_t CARegisterBleServicewithGattServer(const char *svcPath)
 }
 
 CAResult_t CAAddNewCharacteristicsToGattServer(const char *svcPath, const char *charUUID,
-        const char *charValue, int charValueLen, bool read)
+        const uint8_t *charValue, int charValueLen, bool read)
 {
 
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
 
-    char *charFlags[1];
+    const char *charFlags[1];
     if(read)
     {
         charFlags[0] = "notify";
@@ -659,8 +665,14 @@ CAResult_t CAAddNewCharacteristicsToGattServer(const char *svcPath, const char *
     size_t flagLen = sizeof(charFlags) / sizeof(charFlags[0]);
 
     char *charPath = NULL;
-    int ret = bt_gatt_add_characteristic(charUUID, charValue, charValueLen, charFlags, flagLen,
-                  svcPath, &charPath);
+    int ret =
+        bt_gatt_add_characteristic(charUUID,
+                                   (const char *) charValue,
+                                   charValueLen,
+                                   charFlags,
+                                   flagLen,
+                                   svcPath,
+                                   &charPath);
 
     if (0 != ret || NULL == charPath)
     {
@@ -707,7 +719,7 @@ CAResult_t CARemoveCharacteristicsFromGattServer(const char *charPath)
 }
 
 CAResult_t CAUpdateCharacteristicsToGattClient(const char *address,
-                                               const char *charValue,
+                                               const uint8_t *charValue,
                                                uint32_t charValueLen)
 {
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
@@ -727,7 +739,7 @@ CAResult_t CAUpdateCharacteristicsToGattClient(const char *address,
         return CA_STATUS_FAILED;
     }
 
-    char *data = (char *) OICCalloc(sizeof(char), (charValueLen + 1));
+    char *data = OICCalloc(charValueLen, 1);
     if (NULL == data)
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "malloc failed!");
@@ -735,12 +747,16 @@ CAResult_t CAUpdateCharacteristicsToGattClient(const char *address,
         return CA_STATUS_FAILED;
     }
 
-    OICStrcpy(data, charValueLen + 1, charValue);
+    memcpy(data, charValue, charValueLen);   // Binary data
 
-    OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "updating characteristics char [%s] data [%s] dataLen [%d]",
+    OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "updating characteristics char [%s] data [%p] dataLen [%u]",
               (const char *)g_gattReadCharPath, data, charValueLen);
 
-    int ret =  bt_gatt_update_characteristic(g_gattReadCharPath, data, charValueLen, address);
+    int ret =
+        bt_gatt_update_characteristic(g_gattReadCharPath,
+                                      data,
+                                      charValueLen,
+                                      address);
     if (0 != ret)
     {
         OIC_LOG_V(ERROR, TZ_BLE_SERVER_TAG,
@@ -757,7 +773,7 @@ CAResult_t CAUpdateCharacteristicsToGattClient(const char *address,
     return CA_STATUS_OK;
 }
 
-CAResult_t CAUpdateCharacteristicsToAllGattClients(const char *charValue, uint32_t charValueLen)
+CAResult_t CAUpdateCharacteristicsToAllGattClients(const uint8_t *charValue, uint32_t charValueLen)
 {
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
 
@@ -772,7 +788,7 @@ CAResult_t CAUpdateCharacteristicsToAllGattClients(const char *charValue, uint32
         return CA_STATUS_FAILED;
     }
 
-    char *data = (char *) OICMalloc(sizeof(char) * (charValueLen + 1));
+    char *data = OICMalloc(charValueLen);
     if (NULL == data)
     {
         OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "malloc failed!");
@@ -780,12 +796,16 @@ CAResult_t CAUpdateCharacteristicsToAllGattClients(const char *charValue, uint32
         return CA_STATUS_FAILED;
     }
 
-    OICStrcpy(data, charValueLen + 1, charValue);
+    memcpy(data, charValue, charValueLen);   // Binary data
 
-    OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "updating characteristics char [%s] data [%s] dataLen [%d]",
+    OIC_LOG_V(DEBUG, TZ_BLE_SERVER_TAG, "updating characteristics char [%s] data [%p] dataLen [%u]",
               (const char *)g_gattReadCharPath, data, charValueLen);
 
-    int ret =  bt_gatt_update_characteristic(g_gattReadCharPath, data, charValueLen, NULL);
+    int ret =
+        bt_gatt_update_characteristic(g_gattReadCharPath,
+                                      data,
+                                      charValueLen,
+                                      NULL);
     if (0 != ret)
     {
         OIC_LOG_V(ERROR, TZ_BLE_SERVER_TAG,

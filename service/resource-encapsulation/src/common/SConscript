@@ -44,7 +44,7 @@ rcs_common_env.AppendUnique(CPPPATH = [
     env.get('SRC_DIR')+'/extlibs',
     '../../include',
     'primitiveResource/include'])
-	
+
 rcs_common_env.AppendUnique(CPPPATH = [
     'expiryTimer/include',
     'expiryTimer/src'])
@@ -62,7 +62,7 @@ if target_os not in ['darwin', 'ios', 'windows', 'winrt']:
 
 if target_os == 'android':
     rcs_common_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-    rcs_common_env.PrependUnique(LIBS = ['gnustl_shared', 'compatibility', 'log'])
+    rcs_common_env.PrependUnique(LIBS = ['gnustl_shared', 'log'])
 
 rcs_common_env.AppendUnique(LIBS = ['dl', 'oc'])
 
@@ -76,7 +76,7 @@ if not release:
 TIMER_SRC_DIR = 'expiryTimer/src/'
 RESOURCE_SRC = 'primitiveResource/src/'
 rcs_common_src = [
-        TIMER_SRC_DIR + 'ExpiryTimerImpl.cpp', 
+        TIMER_SRC_DIR + 'ExpiryTimerImpl.cpp',
 		TIMER_SRC_DIR + 'ExpiryTimer.cpp',
 		RESOURCE_SRC + 'PresenceSubscriber.cpp',
 		RESOURCE_SRC + 'PrimitiveResource.cpp',
@@ -85,48 +85,47 @@ rcs_common_src = [
 		RESOURCE_SRC + 'RCSResourceAttributes.cpp',
 		RESOURCE_SRC + 'ResponseStatement.cpp'
         ]
-		
+
 rcs_common_static = rcs_common_env.StaticLibrary('rcs_common', rcs_common_src)
 rcs_common_shared = rcs_common_env.SharedLibrary('rcs_common', rcs_common_src)
 rcs_common_env.InstallTarget([rcs_common_static,rcs_common_shared], 'rcs_common')
 
 ######################################################################
-# Build Test primitive Resource
+# Build Test Expiry Timer and primitive Resource
 ######################################################################
-rcs_common_test_env = rcs_common_env.Clone();
+if target_os == 'linux':
+	rcs_common_test_env = rcs_common_env.Clone();
 
-rcs_common_test_env.PrependUnique(CPPPATH = [
-    env.get('SRC_DIR')+'/extlibs/hippomocks-master',
-    gtest_dir + '/include',
-    'utils/include'
-    ])
+	rcs_common_test_env.PrependUnique(CPPPATH = [
+		env.get('SRC_DIR')+'/extlibs/hippomocks-master',
+		gtest_dir + '/include',
+		'utils/include'
+		])
 
-gtest = File(gtest_dir + '/lib/.libs/libgtest.a')
-gtest_main = File(gtest_dir + '/lib/.libs/libgtest_main.a')
+	gtest = File(gtest_dir + '/lib/.libs/libgtest.a')
+	gtest_main = File(gtest_dir + '/lib/.libs/libgtest_main.a')
 
-rcs_common_test_env.PrependUnique(LIBS = [
-    'octbstack',
-    'oc_logger',
-    'connectivity_abstraction',
-    'coap',
-    'rcs_common',
-     gtest,
-     gtest_main,
-    'pthread'
-    ])
+	rcs_common_test_env.PrependUnique(LIBS = [
+		'octbstack',
+		'oc_logger',
+		'connectivity_abstraction',
+		'coap',
+		'rcs_common',
+		gtest,
+		gtest_main,
+		'pthread'
+		])
 
-rcs_common_test_src = [
-    env.Glob('primitiveResource/unittests/*.cpp'),
-    'expiryTimer/unittests/ExpiryTimerTest.cpp'
-    ]
+	rcs_common_test_src = [
+		env.Glob('primitiveResource/unittests/*.cpp'),
+		'expiryTimer/unittests/ExpiryTimerTest.cpp'
+		]
 
-rcs_common_test = rcs_common_test_env.Program('rcs_common_test', rcs_common_test_src)
-Alias("rcs_common_test", rcs_common_test)
-env.AppendTarget('rcs_common_test')
+	rcs_common_test = rcs_common_test_env.Program('rcs_common_test', rcs_common_test_src)
+	Alias("rcs_common_test", rcs_common_test)
+	env.AppendTarget('rcs_common_test')
 
-if env.get('TEST') == '1':
-    target_os = env.get('TARGET_OS')
-    if target_os == 'linux':
-        from tools.scons.RunTest import *
-        run_test(rcs_common_test_env, '',
-                'service/resource-encapsulation/src/common/rcs_common_test')
+	if env.get('TEST') == '1':
+		from tools.scons.RunTest import *
+		run_test(rcs_common_test_env, '',
+			'service/resource-encapsulation/src/common/rcs_common_test')

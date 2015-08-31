@@ -33,6 +33,7 @@
 #include "cJSON.h"
 #include "ocserverslow.h"
 #include "ocpayload.h"
+#include "payload_logging.h"
 
 volatile sig_atomic_t gQuitFlag = 0;
 
@@ -187,7 +188,7 @@ OCEntityHandlerRequest *CopyRequest(OCEntityHandlerRequest *entityHandlerRequest
 }
 
 OCEntityHandlerResult OCEntityHandlerCb (OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest *entityHandlerRequest, void* callbackParam)
+        OCEntityHandlerRequest *entityHandlerRequest, void* /*callbackParam*/)
 {
     OCEntityHandlerResult result = OC_EH_ERROR;
     OCEntityHandlerRequest *request = NULL;
@@ -285,7 +286,7 @@ void AlarmHandler(int sig)
     }
 }
 
-int main(int argc, char* argv[])
+int main(int /*argc*/, char** /*argv[]*/)
 {
     OC_LOG(DEBUG, TAG, "OCServer is starting...");
 

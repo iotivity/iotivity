@@ -123,6 +123,7 @@ bool CAGattClientsInitialize(CALEContext * context)
 
 bool CAGattClientsDestroy(CALEContext * context)
 {
+    (void)context;
     /* g_hash_table_destroy(...); */   // FIXME
     return false;
 }
@@ -143,7 +144,7 @@ bool CAGattClientsDestroy(CALEContext * context)
  */
 static bool CAGattClientSendRequestData(GDBusProxy * characteristic,
                                         CALEContext * context,
-                                        char const * data,
+                                        uint8_t const * data,
                                         size_t length)
 {
     assert(context != NULL);
@@ -200,7 +201,7 @@ static bool CAGattClientSendRequestData(GDBusProxy * characteristic,
 }
 
 CAResult_t CAGattClientSendData(void const * method_info,
-                                void const * data,
+                                uint8_t const * data,
                                 size_t length)
 {
     assert(method_info != NULL);
@@ -212,12 +213,12 @@ CAResult_t CAGattClientSendData(void const * method_info,
 
     return CAGattClientSendRequestData(characteristic,
                                        info->context,
-                                       (char const *) data,
+                                       data,
                                        length);
 }
 
 CAResult_t CAGattClientSendDataToAll(void const * method_info,
-                                     void const * data,
+                                     uint8_t const * data,
                                      size_t length)
 {
     assert(method_info != NULL);
@@ -234,7 +235,7 @@ CAResult_t CAGattClientSendDataToAll(void const * method_info,
 
         result = CAGattClientSendRequestData(characteristic,
                                              info->context,
-                                             (char const *) data,
+                                             data,
                                              length);
     }
 
@@ -252,6 +253,11 @@ void CAGattReceiveResponse(GDBusConnection * connection,
                            GVariant   * parameters,
                            gpointer     user_data)
 {
+    (void)connection;
+    (void)sender_name;
+    (void)object_path;
+    (void)interface_name;
+    (void)signal_name;
     /*
       This handler is only trigged in a GATT client when receiving
       data sent by a GATT server through a notification, e.g. such as

@@ -105,8 +105,8 @@ RCSSetResponse requestHandlerForSet(const RCSRequest& request,
     std::cout << "Recieved a Set request from Client" << std::endl;
 
     std::cout << "\n\nSending response to Client : " << std::endl;
-    printAttribute(server->getAttributes());
-
+    RCSResourceObject::LockGuard lock(*server);
+    printAttribute(attrs);
     return RCSSetResponse::defaultAction();
 }
 
@@ -226,7 +226,7 @@ void process()
     {
         displayControlTemperatureMenu();
 
-        if(selectControlTemperatureMenu() == QUIT) break;
+        if (selectControlTemperatureMenu() == QUIT) return;
     }
 }
 
@@ -237,6 +237,7 @@ int main(void)
     try
     {
         process();
+        server = NULL;
     }
     catch (const std::exception& e)
     {

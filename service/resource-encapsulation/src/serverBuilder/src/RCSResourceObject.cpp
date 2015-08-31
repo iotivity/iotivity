@@ -26,6 +26,7 @@
 
 #include <RequestHandler.h>
 #include <AssertUtils.h>
+#include <AtomicHelper.h>
 #include <ResourceAttributesConverter.h>
 
 #include <logger.h>
@@ -199,6 +200,7 @@ namespace OIC
                 m_mutex{ },
                 m_mutexKeyAttributeUpdate{ }
         {
+            m_lockOwner.reset(new AtomicThreadId);
         }
 
         RCSResourceObject::~RCSResourceObject()
@@ -306,10 +308,20 @@ namespace OIC
 
         void RCSResourceObject::expectOwnLock() const
         {
-            if (m_lockOwner != std::this_thread::get_id())
+            if (getLockOwner() != std::this_thread::get_id())
             {
                 throw NoLockException{ "Must acquire the lock first using LockGuard." };
             }
+        }
+
+        std::thread::id RCSResourceObject::getLockOwner() const noexcept
+        {
+            return *m_lockOwner;
+        }
+
+        void RCSResourceObject::setLockOwner(std::thread::id&& id) const noexcept
+        {
+            m_lockOwner->store(std::move(id));
         }
 
         bool RCSResourceObject::isObservable() const
@@ -480,14 +492,14 @@ namespace OIC
             AttrKeyValuePairs replaced = requestHandler->applyAcceptanceMethod(
                     response.getAcceptanceMethod(), *this, attrs);
 
-            for (const auto& it : replaced)
+            for (const auto& attrKeyValPair : replaced)
             {
                 std::lock_guard<std::mutex> lock(m_mutexKeyAttributeUpdate);
 
-                auto keyAttribute = m_keyAttributesUpdatedListeners.find(it.first);
-                if(keyAttribute != m_keyAttributesUpdatedListeners.end())
+                auto keyAttrListener = m_keyAttributesUpdatedListeners.find(attrKeyValPair.first);
+                if(keyAttrListener != m_keyAttributesUpdatedListeners.end())
                 {
-                    keyAttribute-> second(it.second, attrs[it.first]);
+                    keyAttrListener-> second(attrKeyValPair.second, attrs[attrKeyValPair.first]);
                 }
             }
 
@@ -496,10 +508,8 @@ namespace OIC
         }
 
         OCEntityHandlerResult RCSResourceObject::handleObserve(
-                std::shared_ptr< OC::OCResourceRequest > request)
+                std::shared_ptr< OC::OCResourceRequest >)
         {
-            assert(request != nullptr);
-
             if (!isObservable())
             {
                 return OC_EH_ERROR;
@@ -549,17 +559,17 @@ namespace OIC
 
             if (m_isOwningLock)
             {
-                m_resourceObject.m_lockOwner = std::thread::id{ };
+                m_resourceObject.setLockOwner(std::thread::id{ });
                 m_resourceObject.m_mutex.unlock();
             }
         }
 
         void RCSResourceObject::LockGuard::init()
         {
-            if (m_resourceObject.m_lockOwner != std::this_thread::get_id())
+            if (m_resourceObject.getLockOwner() != std::this_thread::get_id())
             {
                 m_resourceObject.m_mutex.lock();
-                m_resourceObject.m_lockOwner = std::this_thread::get_id();
+                m_resourceObject.setLockOwner(std::this_thread::get_id());
                 m_isOwningLock = true;
             }
             m_autoNotifyFunc = ::createAutoNotifyInvoker(&RCSResourceObject::autoNotify,
@@ -571,10 +581,10 @@ namespace OIC
                 m_isOwningLock{ false },
                 m_resourceObject(resourceObject)
         {
-            if (resourceObject.m_lockOwner != std::this_thread::get_id())
+            if (m_resourceObject.getLockOwner() != std::this_thread::get_id())
             {
                 m_resourceObject.m_mutex.lock();
-                m_resourceObject.m_lockOwner = std::this_thread::get_id();
+                m_resourceObject.setLockOwner(std::this_thread::get_id());
                 m_isOwningLock = true;
             }
         }
@@ -583,7 +593,7 @@ namespace OIC
         {
             if (m_isOwningLock)
             {
-                m_resourceObject.m_lockOwner = std::thread::id{ };
+                m_resourceObject.setLockOwner(std::thread::id{ });
                 m_resourceObject.m_mutex.unlock();
             }
         }
@@ -592,5 +602,6 @@ namespace OIC
         {
             return m_isOwningLock;
         }
+
     }
 }

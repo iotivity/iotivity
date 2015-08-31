@@ -288,7 +288,7 @@ CAResult_t CAReceiveBlockWiseData(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
     }
 
     // check if block option is set and get block data
-    coap_block_t block = {0};
+    coap_block_t block = {0, 0, 0};
 
     // get block1 option
     int isBlock1 = coap_get_block(pdu, COAP_OPTION_BLOCK1, &block);
@@ -1913,7 +1913,7 @@ CAResult_t CAUpdatePayloadData(CABlockData_t *currData, const CAData_t *received
             OIC_LOG(DEBUG, TAG, "allocate memory for the received block payload");
 
             size_t totalPayloadLen = prePayloadLen + blockPayloadLen + 1;
-            void *newPayload = realloc(currData->payload, totalPayloadLen);
+            CAPayload_t newPayload = OICRealloc(currData->payload, totalPayloadLen);
             if (NULL == newPayload)
             {
                 OIC_LOG(ERROR, TAG, "out of memory");
@@ -1943,15 +1943,15 @@ CAData_t* CACreateNewDataSet(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint
     VERIFY_NON_NULL_RET(pdu->hdr, TAG, "pdu->hdr", NULL);
     VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint", NULL);
 
-    CAInfo_t responseData = { 0 };
-    responseData.token = (CAToken_t) OICMalloc(pdu->hdr->token_length);
+    CAInfo_t responseData = { .tokenLength = pdu->hdr->token_length };
+    responseData.token = (CAToken_t) OICMalloc(responseData.tokenLength);
     if (NULL == responseData.token)
     {
         OIC_LOG(ERROR, TAG, "out of memory");
         return NULL;
     }
-    memcpy(responseData.token, pdu->hdr->token, pdu->hdr->token_length);
-    responseData.tokenLength = pdu->hdr->token_length;
+    memcpy(responseData.token, pdu->hdr->token, responseData.tokenLength);
+
     CAResponseInfo_t* responseInfo = (CAResponseInfo_t*) OICCalloc(1, sizeof(CAResponseInfo_t));
     if (NULL == responseInfo)
     {
@@ -2002,22 +2002,6 @@ CAData_t *CACloneCAData(const CAData_t *data)
     if (data->remoteEndpoint)
     {
         clone->remoteEndpoint = CACloneEndpoint(data->remoteEndpoint);
-    }
-
-    if (NULL != data->options && 0 < data->numOptions)
-    {
-        // copy data
-        CAHeaderOption_t *headerOption = (CAHeaderOption_t *) OICMalloc(sizeof(CAHeaderOption_t)
-                                                                        * data->numOptions);
-        if (NULL == headerOption)
-        {
-            OIC_LOG(ERROR, TAG, "Out of memory");
-            CADestroyDataSet(clone);
-            return NULL;
-        }
-        memcpy(headerOption, data->options, sizeof(CAHeaderOption_t) * data->numOptions);
-
-        clone->options = headerOption;
     }
 
     return clone;
@@ -2475,8 +2459,8 @@ CABlockData_t *CACreateNewBlockData(const CAData_t *sendData)
 
     ca_mutex_lock(g_context.blockDataListMutex);
 
-    CAResult_t res = u_arraylist_add(g_context.dataList, (void *) data);
-    if (CA_STATUS_OK != res)
+    bool res = u_arraylist_add(g_context.dataList, (void *) data);
+    if (!res)
     {
         OIC_LOG(ERROR, TAG, "add has failed");
         CADestroyBlockID(data->blockDataId);
@@ -2558,7 +2542,6 @@ void CADestroyDataSet(CAData_t* data)
     CAFreeEndpoint(data->remoteEndpoint);
     CADestroyRequestInfoInternal(data->requestInfo);
     CADestroyResponseInfoInternal(data->responseInfo);
-    OICFree(data->options);
     OICFree(data);
 }
 

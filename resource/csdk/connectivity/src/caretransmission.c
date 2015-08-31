@@ -329,15 +329,10 @@ CAResult_t CARetransmissionInitialize(CARetransmission_t *context,
 
     memset(context, 0, sizeof(CARetransmission_t));
 
-    CARetransmissionConfig_t cfg = { 0 };
+    CARetransmissionConfig_t cfg = { .supportType = DEFAULT_RETRANSMISSION_TYPE,
+                                     .tryingCount = DEFAULT_RETRANSMISSION_COUNT };
 
-    if (NULL == config)
-    {
-        // setDefault
-        cfg.supportType = DEFAULT_RETRANSMISSION_TYPE;
-        cfg.tryingCount = DEFAULT_RETRANSMISSION_COUNT;
-    }
-    else
+    if (config)
     {
         cfg = *config;
     }

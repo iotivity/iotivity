@@ -71,7 +71,7 @@ int mosquitto_loop_stop(struct mosquitto *mosq, bool force)
 		send(mosq->sockpairW, &sockpair_data, 1, 0);
 #endif
 	}
-	
+
 	if(force){
 		pthread_cancel(mosq->thread_id);
 	}

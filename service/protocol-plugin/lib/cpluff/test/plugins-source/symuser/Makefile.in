@@ -313,7 +313,7 @@ clean-pluginLTLIBRARIES:
 	  echo "rm -f \"$${dir}/so_locations\""; \
 	  rm -f "$${dir}/so_locations"; \
 	done
-libruntime.la: $(libruntime_la_OBJECTS) $(libruntime_la_DEPENDENCIES) $(EXTRA_libruntime_la_DEPENDENCIES) 
+libruntime.la: $(libruntime_la_OBJECTS) $(libruntime_la_DEPENDENCIES) $(EXTRA_libruntime_la_DEPENDENCIES)
 	$(libruntime_la_LINK) -rpath $(plugindir) $(libruntime_la_OBJECTS) $(libruntime_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:

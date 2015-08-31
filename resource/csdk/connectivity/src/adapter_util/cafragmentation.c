@@ -26,43 +26,61 @@
 #include "cafragmentation.h"
 
 /**
- * @var CA_FRAGMENTATION_TAG
- * @brief debugging tag for fragmentation module
+ * Debugging tag for fragmentation module.
  */
 #define CA_FRAGMENTATION_TAG "CA_FRAGMENTATION"
 
-CAResult_t CAGenerateHeader(char *header, uint32_t length)
+CAResult_t CAGenerateHeader(uint8_t *header,
+                            size_t headerLength,
+                            size_t dataLength)
 {
     OIC_LOG(DEBUG, CA_FRAGMENTATION_TAG, "IN");
 
     VERIFY_NON_NULL(header, CA_FRAGMENTATION_TAG, "header is NULL");
-    memset(header, 0x0, sizeof(char) * CA_HEADER_LENGTH);
 
-    if(length > MAX_DATA_LENGTH_SUPPORTED)
+    if (headerLength < CA_HEADER_LENGTH)
     {
-        OIC_LOG(DEBUG, CA_FRAGMENTATION_TAG,
-                "Given length is more than 4095.It will be truncated");
+        return CA_STATUS_FAILED;
     }
-    //if length is more than 4095 then it will be truncated.
-    header[1] = length & 0xFF;
-    length >>= 8;
-    header[0] = length & 0x0F;
-    header[0] = header[0] | 0x40; // Adding version 0100.(Not used. Future use)
+
+    if (dataLength > MAX_DATA_LENGTH_SUPPORTED)
+    {
+        OIC_LOG_V(WARNING,
+                  CA_FRAGMENTATION_TAG,
+                  "Given length is more than %d.  It will be truncated.",
+                  MAX_DATA_LENGTH_SUPPORTED);
+    }
+
+    // Only bother initializing the header section of the buffer.  It
+    // is up to the caller to handle the data section.
+    memset(header, 0, CA_HEADER_LENGTH);
+
+    // If length is more than 4095 then it will be truncated.
+    header[1] = dataLength & 0xFF;
+    dataLength >>= 8;
+    header[0] = dataLength & 0x0F;
+    header[0] = header[0] | 0x40; // Adding version 0100.
+                                  // (Not used. Future use)
 
     OIC_LOG(DEBUG, CA_FRAGMENTATION_TAG, "OUT");
 
     return CA_STATUS_OK;
 }
 
-uint32_t CAParseHeader(const char *header)
+uint32_t CAParseHeader(const uint8_t *header, size_t length)
 {
     OIC_LOG(DEBUG, CA_FRAGMENTATION_TAG, "IN");
 
     VERIFY_NON_NULL_RET(header, CA_FRAGMENTATION_TAG, "header is NULL", 0);
 
-    uint32_t dataLen = ((header[0] & 0x0F) << 8) | (header[1] & 0xFF);
+    uint32_t dataLen = 0;
+
+    if (length >= CA_HEADER_LENGTH)
+    {
+        dataLen = ((header[0] & 0x0F) << 8) | (header[1] & 0xFF);
+    }
 
     OIC_LOG(DEBUG, CA_FRAGMENTATION_TAG, "OUT");
+
     return dataLen;
 }
-
