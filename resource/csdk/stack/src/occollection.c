@@ -387,105 +387,101 @@ OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
         return result;
     }
 
-    if(!((ehRequest->method == OC_REST_GET) ||
-        (ehRequest->method == OC_REST_PUT) ||
-        (ehRequest->method == OC_REST_POST)))
+    switch (ehRequest->method)
     {
-        return OC_STACK_ERROR;
-    }
-
-    if (ehRequest->method == OC_REST_GET)
-    {
-        switch (ifQueryParam)
-        {
-            case STACK_IF_DEFAULT:
-                // Get attributes of collection resource and properties of contined resource
-                // M1 release does not support attributes for collection resource, so the GET
-                // operation is same as the GET on LL interface.
-                OC_LOG(INFO, TAG, PCF("STACK_IF_DEFAULT"));
-                return HandleLinkedListInterface(ehRequest, STACK_RES_DISCOVERY_NOFILTER, NULL);
-
-            case STACK_IF_LL:
-                OC_LOG(INFO, TAG, PCF("STACK_IF_LL"));
-                return HandleLinkedListInterface(ehRequest, STACK_RES_DISCOVERY_NOFILTER, NULL);
-
-            case STACK_IF_BATCH:
-                OC_LOG(INFO, TAG, PCF("STACK_IF_BATCH"));
-                ((OCServerRequest *)ehRequest->requestHandle)->ehResponseHandler =
-                                                                        HandleAggregateResponse;
-
-                ((OCServerRequest *)ehRequest->requestHandle)->numResponses =
-                        GetNumOfResourcesInCollection((OCResource *)ehRequest->resource) + 1;
-
-                return HandleBatchInterface(ehRequest);
-
-            case STACK_IF_GROUP:
-                return BuildCollectionGroupActionCBORResponse(OC_REST_GET/*flag*/,
-                        (OCResource *) ehRequest->resource, ehRequest);
-            default:
-                return OC_STACK_ERROR;
-        }
-    }
-    else if (ehRequest->method == OC_REST_PUT)
-    {
-        switch (ifQueryParam)
-        {
-            case STACK_IF_DEFAULT:
-                // M1 release does not support PUT on default interface
-                return OC_STACK_ERROR;
-
-            case STACK_IF_LL:
-                // LL interface only supports GET
-                return OC_STACK_ERROR;
-
-            case STACK_IF_BATCH:
-                ((OCServerRequest *)ehRequest->requestHandle)->ehResponseHandler =
-                                                                        HandleAggregateResponse;
-                ((OCServerRequest *)ehRequest->requestHandle)->numResponses =
-                        GetNumOfResourcesInCollection((OCResource *)ehRequest->resource) + 1;
-                return HandleBatchInterface(ehRequest);
-
-            case STACK_IF_GROUP:
+        case OC_REST_GET:
+            switch (ifQueryParam)
             {
-                OC_LOG(INFO, TAG, PCF("IF_COLLECTION PUT with request ::\n"));
-                OC_LOG_PAYLOAD(INFO, TAG, ehRequest->payload);
-                return BuildCollectionGroupActionCBORResponse(OC_REST_PUT/*flag*/,
-                        (OCResource *) ehRequest->resource, ehRequest);
-            }
-            default:
-                return OC_STACK_ERROR;
-        }
-    }
-    else if (ehRequest->method == OC_REST_POST)
-    {
+                case STACK_IF_DEFAULT:
+                    // Get attributes of collection resource and properties of contained resources
+                    // M1 release does not support attributes for collection resource, so the GET
+                    // operation is same as the GET on LL interface.
+                    OC_LOG(INFO, TAG, PCF("STACK_IF_DEFAULT"));
+                    return HandleLinkedListInterface(ehRequest, STACK_RES_DISCOVERY_NOFILTER, NULL);
 
-        switch (ifQueryParam)
-        {
-            case STACK_IF_GROUP:
+                case STACK_IF_LL:
+                    OC_LOG(INFO, TAG, PCF("STACK_IF_LL"));
+                    return HandleLinkedListInterface(ehRequest, STACK_RES_DISCOVERY_NOFILTER, NULL);
+
+                case STACK_IF_BATCH:
+                    OC_LOG(INFO, TAG, PCF("STACK_IF_BATCH"));
+                    ((OCServerRequest *)ehRequest->requestHandle)->ehResponseHandler =
+                                                                            HandleAggregateResponse;
+
+                    ((OCServerRequest *)ehRequest->requestHandle)->numResponses =
+                            GetNumOfResourcesInCollection((OCResource *)ehRequest->resource) + 1;
+
+                    return HandleBatchInterface(ehRequest);
+
+                case STACK_IF_GROUP:
+                    return BuildCollectionGroupActionCBORResponse(OC_REST_GET/*flag*/,
+                            (OCResource *) ehRequest->resource, ehRequest);
+
+                default:
+                    return OC_STACK_ERROR;
+            }
+
+        case OC_REST_PUT:
+            switch (ifQueryParam)
             {
-                OC_LOG(INFO, TAG, PCF("IF_COLLECTION POST with request ::\n"));
-                OC_LOG_PAYLOAD(INFO, TAG, ehRequest->payload);
-                return BuildCollectionGroupActionCBORResponse(OC_REST_POST/*flag*/,
-                        (OCResource *) ehRequest->resource, ehRequest);
-            }
-            default:
-                return OC_STACK_ERROR;
-        }
-    }
-    else if (ehRequest->method == OC_REST_POST)
-    {
+                case STACK_IF_DEFAULT:
+                    // M1 release does not support PUT on default interface
+                    return OC_STACK_ERROR;
 
-        if(ifQueryParam == STACK_IF_GROUP)
-        {
-            OC_LOG(INFO, TAG, PCF("IF_COLLECTION POST with request ::\n"));
-            OC_LOG_PAYLOAD(INFO, TAG, ehRequest->payload);
-            return BuildCollectionGroupActionCBORResponse(OC_REST_POST/*flag*/,
-                    (OCResource *) ehRequest->resource, ehRequest);
-        }
-        else
-        {
+                case STACK_IF_LL:
+                    // LL interface only supports GET
+                    return OC_STACK_ERROR;
+
+                case STACK_IF_BATCH:
+                    ((OCServerRequest *)ehRequest->requestHandle)->ehResponseHandler =
+                                                                            HandleAggregateResponse;
+                    ((OCServerRequest *)ehRequest->requestHandle)->numResponses =
+                            GetNumOfResourcesInCollection((OCResource *)ehRequest->resource) + 1;
+                    return HandleBatchInterface(ehRequest);
+
+                case STACK_IF_GROUP:
+                    OC_LOG(INFO, TAG, PCF("IF_COLLECTION PUT with request ::\n"));
+                    OC_LOG_PAYLOAD(INFO, TAG, ehRequest->payload);
+                    return BuildCollectionGroupActionCBORResponse(OC_REST_PUT/*flag*/,
+                            (OCResource *) ehRequest->resource, ehRequest);
+
+                default:
+                    return OC_STACK_ERROR;
+            }
+
+        case OC_REST_POST:
+            switch (ifQueryParam)
+            {
+                case STACK_IF_DEFAULT:
+                    // M1 release does not support POST on default interface
+                    return OC_STACK_ERROR;
+
+                case STACK_IF_LL:
+                    // LL interface only supports GET
+                    return OC_STACK_ERROR;
+
+                case STACK_IF_BATCH:
+                    ((OCServerRequest *)ehRequest->requestHandle)->ehResponseHandler =
+                                                                            HandleAggregateResponse;
+                    ((OCServerRequest *)ehRequest->requestHandle)->numResponses =
+                            GetNumOfResourcesInCollection((OCResource *)ehRequest->resource) + 1;
+                    return HandleBatchInterface(ehRequest);
+
+                case STACK_IF_GROUP:
+                    OC_LOG(INFO, TAG, PCF("IF_COLLECTION POST with request ::\n"));
+                    OC_LOG_PAYLOAD(INFO, TAG, ehRequest->payload);
+                    return BuildCollectionGroupActionCBORResponse(OC_REST_POST/*flag*/,
+                            (OCResource *) ehRequest->resource, ehRequest);
+
+                default:
+                    return OC_STACK_ERROR;
+            }
+
+        case OC_REST_DELETE:
+            // TODO implement DELETE accordingly to the desired behavior
             return OC_STACK_ERROR;
-        }
+
+        default:
+            return OC_STACK_ERROR;
     }
-    return result;
 }
