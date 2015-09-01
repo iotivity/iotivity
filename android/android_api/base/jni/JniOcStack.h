@@ -79,6 +79,9 @@ extern jclass g_cls_OcPresenceStatus;
 extern jclass g_cls_OcHeaderOption;
 extern jclass g_cls_ObservationInfo;
 extern jclass g_cls_OcResourceIdentifier;
+extern jclass g_cls_OcProvisionResult;
+extern jclass g_cls_OcSecureResource;
+extern jclass g_cls_OcOicSecAcl;
 
 extern jmethodID g_mid_Integer_ctor;
 extern jmethodID g_mid_Double_ctor;
@@ -109,6 +112,17 @@ extern jmethodID g_mid_OcHeaderOption_get_data;
 extern jmethodID g_mid_ObservationInfo_N_ctor;
 extern jmethodID g_mid_OcPresenceStatus_get;
 extern jmethodID g_mid_OcResourceIdentifier_N_ctor;
+extern jmethodID g_mid_OcProvisionResult_ctor;
+extern jmethodID g_mid_OcSecureResource_ctor;
+extern jmethodID g_mid_OcOicSecAcl_get_subject;
+extern jmethodID g_mid_OcOicSecAcl_get_resources_cnt;
+extern jmethodID g_mid_OcOicSecAcl_get_resources;
+extern jmethodID g_mid_OcOicSecAcl_get_permission;
+extern jmethodID g_mid_OcOicSecAcl_get_periods_cnt;
+extern jmethodID g_mid_OcOicSecAcl_get_periods;
+extern jmethodID g_mid_OcOicSecAcl_get_recurrences;
+extern jmethodID g_mid_OcOicSecAcl_get_owners_cnt;
+extern jmethodID g_mid_OcOicSecAcl_get_owners;
 
 typedef void(*RemoveListenerCallback)(JNIEnv* env, jobject jListener);
 

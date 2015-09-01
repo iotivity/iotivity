@@ -60,6 +60,10 @@ jclass g_cls_OcHeaderOption = NULL;
 jclass g_cls_ObservationInfo = NULL;
 jclass g_cls_OcResourceIdentifier = NULL;
 
+jclass g_cls_OcProvisionResult = NULL;
+jclass g_cls_OcSecureResource = NULL;
+jclass g_cls_OcOicSecAcl = NULL;
+
 jmethodID g_mid_Integer_ctor = NULL;
 jmethodID g_mid_Double_ctor = NULL;
 jmethodID g_mid_Boolean_ctor = NULL;
@@ -89,6 +93,19 @@ jmethodID g_mid_OcHeaderOption_get_data = NULL;
 jmethodID g_mid_ObservationInfo_N_ctor = NULL;
 jmethodID g_mid_OcPresenceStatus_get = NULL;
 jmethodID g_mid_OcResourceIdentifier_N_ctor = NULL;
+
+jmethodID g_mid_OcProvisionResult_ctor = NULL;
+jmethodID g_mid_OcSecureResource_ctor = NULL;
+
+jmethodID g_mid_OcOicSecAcl_get_subject = NULL;
+jmethodID g_mid_OcOicSecAcl_get_resources_cnt = NULL;
+jmethodID g_mid_OcOicSecAcl_get_resources = NULL;
+jmethodID g_mid_OcOicSecAcl_get_permission = NULL;
+jmethodID g_mid_OcOicSecAcl_get_periods_cnt = NULL;
+jmethodID g_mid_OcOicSecAcl_get_periods = NULL;
+jmethodID g_mid_OcOicSecAcl_get_recurrences = NULL;
+jmethodID g_mid_OcOicSecAcl_get_owners_cnt = NULL;
+jmethodID g_mid_OcOicSecAcl_get_owners = NULL;
 
 jobject getOcException(JNIEnv* env, const char* file, const char* functionName,
     const int line, const int code, const char* message)
@@ -400,6 +417,55 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved)
     g_mid_OcResourceIdentifier_N_ctor = env->GetMethodID(g_cls_OcResourceIdentifier, "<init>", "(J)V");
     if (!g_mid_OcResourceIdentifier_N_ctor) return JNI_ERR;
 
+    //OcSecureResource
+    clazz = env->FindClass("org/iotivity/base/OcSecureResource");
+    if (!clazz) return JNI_ERR;
+    g_cls_OcSecureResource =  (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+    g_mid_OcSecureResource_ctor = env->GetMethodID(g_cls_OcSecureResource, "<init>", "(J)V");
+    if (!g_mid_OcSecureResource_ctor) return JNI_ERR;
+
+    //ProvisionResult
+    clazz = env->FindClass("org/iotivity/base/ProvisionResult");
+    if (!clazz) return JNI_ERR;
+    g_cls_OcProvisionResult =  (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+    g_mid_OcProvisionResult_ctor = env->GetMethodID(g_cls_OcProvisionResult, "<init>", "(Ljava/lang/String;I)V");
+    if (!g_mid_OcProvisionResult_ctor) return JNI_ERR;
+
+    //OicSecAcl
+    clazz = env->FindClass("org/iotivity/base/OicSecAcl");
+    if (!clazz) return JNI_ERR;
+    g_cls_OcOicSecAcl =  (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+
+    g_mid_OcOicSecAcl_get_subject = env->GetMethodID(g_cls_OcOicSecAcl, "getSubject", "()Ljava/lang/String;");
+    if (!g_mid_OcOicSecAcl_get_subject) return JNI_ERR;
+
+    g_mid_OcOicSecAcl_get_resources_cnt = env->GetMethodID(g_cls_OcOicSecAcl, "getResourcesCount", "()I");
+    if (!g_mid_OcOicSecAcl_get_resources_cnt) return JNI_ERR;
+
+    g_mid_OcOicSecAcl_get_resources = env->GetMethodID(g_cls_OcOicSecAcl, "getResources", "(I)Ljava/lang/String;");
+    if (!g_mid_OcOicSecAcl_get_resources) return JNI_ERR;
+
+    g_mid_OcOicSecAcl_get_permission = env->GetMethodID(g_cls_OcOicSecAcl, "getPermission", "()I");
+    if (!g_mid_OcOicSecAcl_get_permission) return JNI_ERR;
+
+    g_mid_OcOicSecAcl_get_periods_cnt = env->GetMethodID(g_cls_OcOicSecAcl, "getPeriodsCount", "()I");
+    if (!g_mid_OcOicSecAcl_get_periods_cnt) return JNI_ERR;
+
+    g_mid_OcOicSecAcl_get_periods = env->GetMethodID(g_cls_OcOicSecAcl, "getPeriods", "(I)Ljava/lang/String;");
+    if (!g_mid_OcOicSecAcl_get_periods) return JNI_ERR;
+
+    g_mid_OcOicSecAcl_get_recurrences = env->GetMethodID(g_cls_OcOicSecAcl, "getRecurrences", "(I)Ljava/lang/String;");
+    if (!g_mid_OcOicSecAcl_get_recurrences) return JNI_ERR;
+
+    g_mid_OcOicSecAcl_get_owners_cnt = env->GetMethodID(g_cls_OcOicSecAcl, "getOwnersCount", "()I");
+    if (!g_mid_OcOicSecAcl_get_owners_cnt) return JNI_ERR;
+
+    g_mid_OcOicSecAcl_get_owners = env->GetMethodID(g_cls_OcOicSecAcl, "getOwners", "(I)Ljava/lang/String;");
+    if (!g_mid_OcOicSecAcl_get_owners) return JNI_ERR;
+
     return JNI_CURRENT_VERSION;
 }
 
@@ -446,4 +512,7 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved)
     env->DeleteGlobalRef(g_cls_OcHeaderOption);
     env->DeleteGlobalRef(g_cls_ObservationInfo);
     env->DeleteGlobalRef(g_cls_OcResourceIdentifier);
+    env->DeleteGlobalRef(g_cls_OcSecureResource);
+    env->DeleteGlobalRef(g_cls_OcProvisionResult);
+    env->DeleteGlobalRef(g_cls_OcOicSecAcl);
 }

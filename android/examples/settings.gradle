@@ -1,1 +1,1 @@
-include ':simpleserver', ':simpleclient', ':message', ':fridgeserver', ':fridgeclient', ':guiclient'
+include ':simpleserver', ':simpleclient', ':message', ':fridgeserver', ':fridgeclient', ':guiclient', ':secureprovisionclient'
