@@ -158,21 +158,21 @@ jobject convertNativeResourceStateToJavaResourceState(ResourceState nativeResour
     LOGI("convertNativeResourceStateToJavaResourceState enter");
 
     ResourceStateWrapper::ALIVE_ID = env->GetStaticFieldID(ResourceStateWrapper::clazz, "ALIVE",
-                         "Lorg/iotivity/ResourceEncapsulation/client/RCSRemoteResourceObject$ResourceState;");
+                   "Lorg/iotivity/ResourceEncapsulation/client/RCSRemoteResourceObject$ResourceState;");
     ResourceStateWrapper::REQUESTED_ID = env->GetStaticFieldID(ResourceStateWrapper::clazz, "REQUESTED",
-                         "Lorg/iotivity/ResourceEncapsulation/client/RCSRemoteResourceObject$ResourceState;");
+                   "Lorg/iotivity/ResourceEncapsulation/client/RCSRemoteResourceObject$ResourceState;");
     ResourceStateWrapper::LOST_SIGNAL_ID = env->GetStaticFieldID(ResourceStateWrapper::clazz,
-                         "LOST_SIGNAL", "Lorg/iotivity/ResourceEncapsulation/client/RCSRemoteResourceObject$ResourceState;");
+                    "LOST_SIGNAL", "Lorg/iotivity/ResourceEncapsulation/client/RCSRemoteResourceObject$ResourceState;");
     ResourceStateWrapper::DESTROYED_ID = env->GetStaticFieldID(ResourceStateWrapper::clazz, "DESTROYED",
-                         "Lorg/iotivity/ResourceEncapsulation/client/RCSRemoteResourceObject$ResourceState;");
+                    "Lorg/iotivity/ResourceEncapsulation/client/RCSRemoteResourceObject$ResourceState;");
     ResourceStateWrapper::NONE_ID = env->GetStaticFieldID(ResourceStateWrapper::clazz, "NONE",
-                          "Lorg/iotivity/ResourceEncapsulation/client/RCSRemoteResourceObject$ResourceState;");
+                    "Lorg/iotivity/ResourceEncapsulation/client/RCSRemoteResourceObject$ResourceState;");
 
     ResourceStateWrapper::ordinal_ID = env->GetMethodID(ResourceStateWrapper::clazz, "ordinal", "()I");
     ResourceStateWrapper::toString_ID = env->GetMethodID(ResourceStateWrapper::clazz, "toString",
                                         "()Ljava/lang/String;");
     ResourceStateWrapper::valueOf_ID = env->GetStaticMethodID(ResourceStateWrapper::clazz, "valueOf",
-                                       "(Ljava/lang/String;)Lorg/iotivity/ResourceEncapsulation/client/RCSRemoteResourceObject$ResourceState;");
+                   "(Ljava/lang/String;)Lorg/iotivity/ResourceEncapsulation/client/RCSRemoteResourceObject$ResourceState;");
 
     LOGI("convertNativeResourceStateToJavaResourceState ResourceStateWrapper::clazz == NULL first time");
 
@@ -250,4 +250,59 @@ int convertSetRequestHandlerPolicyToInt(RCSResourceObject::SetRequestHandlerPoli
             return 1;
     }
     return 0;
+}
+
+void convertJavaMapToParamsMap(JNIEnv *env, jobject hashMap,
+                               std::map<std::string, std::string> &params)
+{
+
+    LOGI("convertJavaMapToParamsMap Enter");
+    if (!hashMap)
+    {
+        LOGI("convertJavaMapToParamsMap hashMap is NULL");
+        return;
+    }
+
+    jobject jEntrySet = env->CallObjectMethod(hashMap, g_mid_Map_entrySet);
+    jobject jIterator = env->CallObjectMethod(jEntrySet, g_mid_Set_iterator);
+    if (!jEntrySet || !jIterator || env->ExceptionCheck())
+    {
+        LOGI("convertJavaMapToParamsMap !jEntrySet || !jIterator || env->ExceptionCheck()");
+        return;
+    }
+
+    while (env->CallBooleanMethod(jIterator, g_mid_Iterator_hasNext))
+    {
+        jobject jEntry = env->CallObjectMethod(jIterator, g_mid_Iterator_next);
+        if (!jEntry) return;
+        jstring jKey = (jstring)env->CallObjectMethod(jEntry, g_mid_MapEntry_getKey);
+        if (!jKey) return;
+        jstring jValue = (jstring)env->CallObjectMethod(jEntry, g_mid_MapEntry_getValue);
+        if (!jValue) return;
+
+        LOGI("convertJavaMapToParamsMap about to insert");
+        params.insert(std::make_pair(env->GetStringUTFChars(jKey, NULL),
+                                     env->GetStringUTFChars(jValue, NULL)));
+
+        if (env->ExceptionCheck()) return;
+        env->DeleteLocalRef(jEntry);
+        env->DeleteLocalRef(jKey);
+        env->DeleteLocalRef(jValue);
+    }
+}
+
+jobject convertStrListToJavaStrList(JNIEnv *env, std::list<std::string> &nativeList)
+{
+    jobject jList = env->NewObject(g_cls_LinkedList, g_mid_LinkedList_ctor);
+    if (!jList) return nullptr;
+
+    for (std::list<std::string>::iterator it = nativeList.begin(); it != nativeList.end(); ++it)
+    {
+        jstring jStr = env->NewStringUTF((*it).c_str());
+        if (!jStr) return nullptr;
+        env->CallBooleanMethod(jList, g_mid_LinkedList_add_object, jStr);
+        if (env->ExceptionCheck()) return nullptr;
+        env->DeleteLocalRef(jStr);
+    }
+    return jList;
 }

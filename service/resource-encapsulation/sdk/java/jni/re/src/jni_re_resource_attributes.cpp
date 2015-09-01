@@ -156,7 +156,7 @@ Java_org_iotivity_ResourceEncapsulation_common_RCSResourceAttributes_nativeSetVa
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_ResourceEncapsulation_common_RCSResourceAttributes_nativeSetValueStringN
+Java_org_iotivity_ResourceEncapsulation_common_RCSResourceAttributes_nativeSetValueString
 (JNIEnv *env, jobject interfaceObject, jstring jKey, jstring jValue)
 {
     LOGD("RCSResourceAttributes_setValueStringN");
