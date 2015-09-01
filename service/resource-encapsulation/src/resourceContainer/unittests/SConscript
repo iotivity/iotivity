@@ -44,8 +44,8 @@ else:
 
 if env.get('LOGGING'):
 	env.AppendUnique(CPPDEFINES = ['TB_LOG'])
-	
-	
+
+
 
 
 # Add third party libraries
@@ -62,15 +62,15 @@ if int(containerJavaSupport):
 	except KeyError:
 		print '''
 	*********************************** Error *************************************
-	* Building resource container without Java support. JAVA_HOME or JAVA_LIB are not set properly 
-	* Please configure JAVA_HOME to point to your Java 7 JDK and 
+	* Building resource container without Java support. JAVA_HOME or JAVA_LIB are not set properly
+	* Please configure JAVA_HOME to point to your Java 7 JDK and
 	* JAVA_LIB to your folder containing libjvm
 	* Example: export JAVA_HOME=/usr/lib/jvm/java-7-openjdk-i386
 	*          export JAVA_LIB=/usr/lib/jvm/java-7-openjdk-i386/jre/lib/i386/server/
-	*******************************************************************************	
+	*******************************************************************************
 		'''
 		container_gtest_env.Append(CPPDEFINES={'JAVA_SUPPORT_TEST':0})
-	
+
 
 target_os = env.get('TARGET_OS')
 
@@ -88,20 +88,20 @@ gtest_main = File(gtest_dir + '/lib/.libs/libgtest_main.a')
 
 container_gtest_env.AppendUnique(
 	CPPPATH = [
-		env.get('SRC_DIR')+'/extlibs', 
+		env.get('SRC_DIR')+'/extlibs',
 		'../include',
 		'../../../include',
  		'../include/internal',
  		'../../common/utils/include',
-		'../bundle-api/include'		
+		'../bundle-api/include'
 	])
 
-if int(containerJavaSupport):	
+if int(containerJavaSupport):
 	try:
 		container_gtest_env.AppendUnique(
 		CPPPATH = [
 			os.environ['JAVA_HOME']+'/include',
-			os.environ['JAVA_HOME']+'/include/linux'		
+			os.environ['JAVA_HOME']+'/include/linux'
 		])
 	except KeyError:
 		print ''
@@ -118,23 +118,23 @@ if target_os == 'android':
 
 container_gtest_env.PrependUnique(CPPPATH = [env.get('SRC_DIR')+'/extlibs/hippomocks-master',
                              gtest_dir + '/include'])
-			
+
 if int(containerJavaSupport):
 	try:
 		container_gtest_env.AppendUnique(LIBPATH = [os.environ['JAVA_LIB']])
 	except KeyError:
 		print ''
 
-container_gtest_env.AppendUnique(CCFLAGS = ['-Wnoexcept'])	
+container_gtest_env.AppendUnique(CCFLAGS = ['-Wnoexcept'])
 
 container_gtest_env.PrependUnique(LIBS = ['rcs_container', 'rcs_server', 'rcs_common', 'oc','octbstack', 'oc_logger', 'oc_logger_core', 'connectivity_abstraction', gtest, gtest_main])
 
 container_gtest_env.AppendUnique(LIBS = ['dl'])
 
 if int(containerJavaSupport):
-	try:	
+	try:
 		print 'Java Lib: ', os.environ['JAVA_LIB']
-		container_gtest_env.AppendUnique(LIBS = ['jvm'])		
+		container_gtest_env.AppendUnique(LIBS = ['jvm'])
 	except KeyError:
 		print ''
 
@@ -151,7 +151,7 @@ TEST_BUNDLE_DIR = 'TestBundle/'
 test_bundle_env.AppendUnique(CPPPATH = [
 		TEST_BUNDLE_DIR + 'include',
 		'../include/'
-		])		
+		])
 
 test_bundle_src = [ Glob(TEST_BUNDLE_DIR + 'src/*.cpp'), Glob('src/*.cpp')]
 
@@ -175,3 +175,11 @@ Command("./ResourceContainerInvalidConfig.xml","./ResourceContainerInvalidConfig
 Ignore("./ResourceContainerInvalidConfig.xml", "./ResourceContainerInvalidConfig.xml")
 Command("./TestBundleJava/hue-0.1-jar-with-dependencies.jar","./TestBundleJava/hue-0.1-jar-with-dependencies.jar", Copy("$TARGET", "$SOURCE"))
 Ignore("./TestBundleJava/hue-0.1-jar-with-dependencies.jar", "./TestBundleJava/hue-0.1-jar-with-dependencies.jar")
+
+if env.get('TEST') == '1':
+	target_os = env.get('TARGET_OS')
+	if target_os == 'linux':
+		from tools.scons.RunTest import *
+		run_test(container_gtest_env,
+			'',
+			'service/resource-encapsulation/src/resourceContainer/unittests/container_test')

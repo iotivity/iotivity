@@ -24,7 +24,7 @@
 #include <functional>
 #include <list>
 #include <string>
-#include <boost/atomic.hpp>
+#include <atomic>
 #include <mutex>
 #include <condition_variable>
 
@@ -64,7 +64,7 @@ namespace OIC
             BROKER_MODE mode;
 
             bool isWithinTime;
-            boost::atomic_long receivedTime;
+            std::atomic_long receivedTime;
             std::mutex cbMutex;
             unsigned int timeoutHandle;
 

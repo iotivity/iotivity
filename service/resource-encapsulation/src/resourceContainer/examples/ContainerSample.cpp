@@ -18,6 +18,10 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#if defined(__linux__)
+#include <unistd.h>
+#endif
+
 #include "RCSResourceContainer.h"
 #include "RCSBundleInfo.h"
 #include "oc_logger.hpp"
@@ -26,6 +30,8 @@
 using namespace std;
 using namespace OIC::Service;
 using OC::oc_log_stream;
+
+#define MAX_PATH 2048
 
 /* Annother way to create a context: */
 auto info_logger = []() -> boost::iostreams::stream<OC::oc_log_stream> &
@@ -36,6 +42,26 @@ auto info_logger = []() -> boost::iostreams::stream<OC::oc_log_stream> &
     return os;
 };
 
+void getCurrentPath(std::string *pPath)
+{
+    char buffer[MAX_PATH];
+
+#if defined(__linux__)
+    char *strPath = NULL;
+    int length = readlink("/proc/self/exe", buffer, MAX_PATH - 1);
+
+    if (length != -1)
+    {
+        buffer[length] = '\0';
+        strPath = strrchr(buffer, '/');
+
+        if (strPath != NULL)
+            *strPath = '\0';
+    }
+#endif
+    pPath->append(buffer);
+}
+
 int main()
 {
     info_logger()->set_module("ContainerTest");
@@ -43,8 +69,12 @@ int main()
 
     info_logger() << "Starting container test." << std::flush;
 
+    std::string strConfigPath;
+    getCurrentPath(&strConfigPath);
+    strConfigPath.append("/examples/ResourceContainerConfig.xml");
+
     RCSResourceContainer *container = RCSResourceContainer::getInstance();
-    container->startContainer("examples/ResourceContainerConfig.xml");
+    container->startContainer(strConfigPath);
 
     /*so bundle add test*/
     cout << "++++++++++++++++++++++++++" << endl;

@@ -181,6 +181,8 @@ namespace OC
         {
             root_size_calc<T>();
             dimensions[0] = arr.size();
+            dimensions[1] = 0;
+            dimensions[2] = 0;
             dimTotal = calcDimTotal(dimensions);
 
             array = (void*)OICMalloc(dimTotal * root_size);
@@ -196,6 +198,8 @@ namespace OC
         {
             root_size_calc<T>();
             dimensions[0] = arr.size();
+            dimensions[1] = 0;
+            dimensions[2] = 0;
             for(size_t i = 0; i < arr.size(); ++i)
             {
                 dimensions[1] = std::max(dimensions[1], arr[i].size());
@@ -216,6 +220,8 @@ namespace OC
         {
             root_size_calc<T>();
             dimensions[0] = arr.size();
+            dimensions[1] = 0;
+            dimensions[2] = 0;
             for(size_t i = 0; i < arr.size(); ++i)
             {
                 dimensions[1] = std::max(dimensions[1], arr[i].size());
@@ -374,10 +380,11 @@ namespace OC
                     OCRepPayloadSetPropInt(root, val.attrname().c_str(), static_cast<int>(val));
                     break;
                 case AttributeType::Double:
-                    OCRepPayloadSetPropDouble(root, val.attrname().c_str(), val);
+                    OCRepPayloadSetPropDouble(root, val.attrname().c_str(),
+                            val.getValue<double>());
                     break;
                 case AttributeType::Boolean:
-                    OCRepPayloadSetPropBool(root, val.attrname().c_str(), val);
+                    OCRepPayloadSetPropBool(root, val.attrname().c_str(), val.getValue<bool>());
                     break;
                 case AttributeType::String:
                     OCRepPayloadSetPropString(root, val.attrname().c_str(),
@@ -395,13 +402,6 @@ namespace OC
                             std::to_string((int)val.type()));
                     break;
             }
-        }
-
-        OCRepPayload* cur = root;
-        for(auto& child : this->getChildren())
-        {
-            cur->next = child.getPayload();
-            cur = cur->next;
         }
 
         return root;

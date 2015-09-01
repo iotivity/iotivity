@@ -181,12 +181,11 @@ void CAPacketReceivedCallback(const char *ipAddress, const uint16_t port,
     OIC_LOG(DEBUG, TAG, "IN");
     if (gPacketReceivedCallback)
     {
-        CAEndpoint_t ep;
-        strncpy(ep.addr, ipAddress, MAX_ADDR_STR_SIZE_CA);
-        ep.port = port;
-        ep.flags = CA_IPV4;
-        ep.adapter = CA_ADAPTER_IP;
-        gPacketReceivedCallback(&ep, data, dataLength);
+        CASecureEndpoint_t sep =
+        {.endpoint = {.adapter = CA_ADAPTER_IP, .flags = CA_IPV4, .port = port}};
+
+        OICStrcpy(sep.endpoint.addr, sizeof(sep.endpoint.addr), ipAddress);
+        gPacketReceivedCallback(&sep, data, dataLength);
         OIC_LOG(DEBUG, TAG, "Notified network packet");
     }
     OIC_LOG(DEBUG, TAG, "OUT");

@@ -63,7 +63,7 @@ gtest_main = File(gtest_dir + '/lib/.libs/libgtest_main.a')
 
 ResourceClient_gtest_env.AppendUnique(
         CPPPATH = [
-                src_dir + '/extlibs/hippomocks-master', 
+                src_dir + '/extlibs/hippomocks-master',
                 src_dir + '/extlibs/gtest/gtest-1.7.0/include',
                 '../include',
                 '../src/common/utils/include',
@@ -90,7 +90,7 @@ ResourceClient_gtest_env.PrependUnique(LIBS = [
     gtest,
     gtest_main])
 
-ResourceClient_gtest_env.AppendUnique(LIBS = ['dl'])	
+ResourceClient_gtest_env.AppendUnique(LIBS = ['dl'])
 
 ######################################################################
 # Build Test
@@ -98,6 +98,12 @@ ResourceClient_gtest_env.AppendUnique(LIBS = ['dl'])
 ResourceClient_gtest_src = env.Glob('./*.cpp')
 
 ResourceClient_test = ResourceClient_gtest_env.Program('ResourceClientTest', ResourceClient_gtest_src)
-Alias("ResourceClient_Test", ResourceClient_test)
+Alias("ResourceClientTest", ResourceClient_test)
 env.AppendTarget('ResourceClient_test')
 
+if env.get('TEST') == '1':
+    target_os = env.get('TARGET_OS')
+    if target_os == 'linux':
+        from tools.scons.RunTest import *
+        run_test(ResourceClient_gtest_env, '',
+                'service/resource-encapsulation/unittests/ResourceClientTest')

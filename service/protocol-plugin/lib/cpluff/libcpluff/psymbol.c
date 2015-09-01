@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  * C-Pluff, a plug-in framework for C
  * Copyright 2007 Johannes Lehtinen
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -56,16 +56,16 @@
 
 /// Information about symbol providing plug-in
 typedef struct symbol_provider_info_t {
-	
+
 	// The providing plug-in
 	cp_plugin_t *plugin;
-	
+
 	// Whether there is also an import dependency for the plug-in
 	int imported;
-	
+
 	// Total symbol usage count
 	int usage_count;
-	
+
 } symbol_provider_info_t;
 
 /// Information about used symbol
@@ -73,10 +73,10 @@ typedef struct symbol_info_t {
 
 	// Symbol usage count
 	int usage_count;
-	
+
 	// Information about providing plug-in
 	symbol_provider_info_t *provider_info;
-	
+
 } symbol_info_t;
 
 
@@ -86,19 +86,19 @@ typedef struct symbol_info_t {
 
 CP_C_API cp_status_t cp_define_symbol(cp_context_t *context, const char *name, void *ptr) {
 	cp_status_t status = CP_OK;
-	
+
 	CHECK_NOT_NULL(context);
 	CHECK_NOT_NULL(name);
 //	CHECK_NOT_NULL(ptr);
 	if (context->plugin == NULL) {
 		cpi_fatalf(_("Only plug-ins can define context specific symbols."));
 	}
-	
+
 	cpi_lock_context(context);
 	cpi_check_invocation(context, CPI_CF_LOGGER | CPI_CF_LISTENER, __func__);
 	do {
 		char *n;
-		
+
 		// Create a symbol hash if necessary
 		if (context->plugin->defined_symbols == NULL) {
 			if ((context->plugin->defined_symbols = hash_create(HASHCOUNT_T_MAX, (int (*)(const void *, const void *)) strcmp, NULL)) == NULL) {
@@ -106,7 +106,7 @@ CP_C_API cp_status_t cp_define_symbol(cp_context_t *context, const char *name, v
 				break;
 			}
 		}
-		
+
 		// Check for a previously defined symbol
 		if (hash_lookup(context->plugin->defined_symbols, name) != NULL) {
 			status = CP_ERR_CONFLICT;
@@ -119,10 +119,10 @@ CP_C_API cp_status_t cp_define_symbol(cp_context_t *context, const char *name, v
 			free(n);
 			status = CP_ERR_RESOURCE;
 			break;
-		} 
+		}
 
 	} while (0);
-	
+
 	// Report error
 	if (status != CP_OK) {
 		switch (status) {
@@ -137,7 +137,7 @@ CP_C_API cp_status_t cp_define_symbol(cp_context_t *context, const char *name, v
 		}
 	}
 	cpi_unlock_context(context);
-	
+
 	return status;
 }
 
@@ -153,7 +153,7 @@ CP_C_API void * cp_resolve_symbol(cp_context_t *context, const char *id, const c
 	CHECK_NOT_NULL(context);
 	CHECK_NOT_NULL(id);
 	CHECK_NOT_NULL(name);
-	
+
 	// Resolve the symbol
 	cpi_lock_context(context);
 	cpi_check_invocation(context, CPI_CF_LOGGER | CPI_CF_LISTENER | CPI_CF_STOP, __func__);
@@ -223,7 +223,7 @@ CP_C_API void * cp_resolve_symbol(cp_context_t *context, const char *id, const c
 				break;
 			}
 		}
-		
+
 		// Lookup or initialize symbol information
 		if ((node = hash_lookup(context->resolved_symbols, symbol)) != NULL) {
 			symbol_info = hnode_get(node);
@@ -239,7 +239,7 @@ CP_C_API void * cp_resolve_symbol(cp_context_t *context, const char *id, const c
 				break;
 			}
 		}
-		
+
 		// Add dependencies (for plug-in)
 		if (provider_info != NULL
 			&& !provider_info->imported
@@ -255,7 +255,7 @@ CP_C_API void * cp_resolve_symbol(cp_context_t *context, const char *id, const c
 			}
 			cpi_debugf(context, "A dynamic dependency was created from plug-in %s to plug-in %s.", context->plugin->plugin->identifier, pp->plugin->identifier);
 		}
-		
+
 		// Increase usage counts
 		symbol_info->usage_count++;
 		provider_info->usage_count++;
@@ -291,7 +291,7 @@ CP_C_API void * cp_resolve_symbol(cp_context_t *context, const char *id, const c
 	if (error != NULL) {
 		*error = status;
 	}
-	
+
 	// Return symbol
 	return symbol;
 }
@@ -300,7 +300,7 @@ CP_C_API void cp_release_symbol(cp_context_t *context, const void *ptr) {
 	hnode_t *node;
 	symbol_info_t *symbol_info;
 	symbol_provider_info_t *provider_info;
-	
+
 	CHECK_NOT_NULL(context);
 	CHECK_NOT_NULL(ptr);
 
@@ -315,13 +315,13 @@ CP_C_API void cp_release_symbol(cp_context_t *context, const void *ptr) {
 		}
 		symbol_info = hnode_get(node);
 		provider_info = symbol_info->provider_info;
-	
+
 		// Decrease usage count
 		assert(symbol_info->usage_count > 0);
 		symbol_info->usage_count--;
 		assert(provider_info->usage_count > 0);
 		provider_info->usage_count--;
-	
+
 		// Check if the symbol is not being used anymore
 		if (symbol_info->usage_count == 0) {
 			hash_delete_free(context->resolved_symbols, node);
@@ -332,7 +332,7 @@ CP_C_API void cp_release_symbol(cp_context_t *context, const void *ptr) {
 				cpi_debugf(context, _("%s released the symbol at address %p defined by plug-in %s."), cpi_context_owner(context, owner, sizeof(owner)), ptr, provider_info->plugin->plugin->identifier);
 			}
 		}
-	
+
 		// Check if the symbol providing plug-in is not being used anymore
 		if (provider_info->usage_count == 0) {
 			node = hash_lookup(context->symbol_providers, provider_info->plugin);
@@ -345,7 +345,7 @@ CP_C_API void cp_release_symbol(cp_context_t *context, const void *ptr) {
 			}
 			free(provider_info);
 		}
-		
+
 	} while (0);
 	cpi_unlock_context(context);
 }

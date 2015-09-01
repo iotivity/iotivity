@@ -186,6 +186,7 @@ class ClientFridge
     {
         std::cout << "Got a response from get from the " << resourceName << std::endl;
         std::cout << "Get ID is "<<getId<<" and resource URI is " << resource->uri() << std::endl;
+        std::cout << "Get eCode is "<< eCode << std::endl;
 
         printHeaderOptions(headerOptions);
 
@@ -237,7 +238,7 @@ class ClientFridge
 
     //Callback function to handle response for deleteResource call.
     void deleteResponse(const std::string& resourceName, const HeaderOptions& headerOptions,
-                const int eCode, OCResource::Ptr resource, int deleteId)
+                const int /*eCode*/, OCResource::Ptr resource, int deleteId)
     {
         std::cout << "Got a response from delete from the "<< resourceName << std::endl;
         std::cout << "Delete ID is "<<deleteId<<" and resource URI is "<<resource->uri()<<std::endl;

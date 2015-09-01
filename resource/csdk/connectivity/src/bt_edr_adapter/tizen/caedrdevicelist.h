@@ -35,8 +35,7 @@ extern "C"
 #endif
 
 /**
- * @struct EDRData
- * @brief Structure to maintain the data needs to send to peer Bluetooth device.
+ * Structure to maintain the data needs to send to peer Bluetooth device.
  */
 typedef struct
 {
@@ -45,8 +44,7 @@ typedef struct
 } EDRData;
 
 /**
- * @struct EDRDataList
- * @brief Structure to maintain list of data needs to send to peer Bluetooth device.
+ * Structure to maintain list of data needs to send to peer Bluetooth device.
  */
 typedef struct _EDRDataList
 {
@@ -55,8 +53,7 @@ typedef struct _EDRDataList
 } EDRDataList;
 
 /**
- * @struct EDRDevice
- * @brief Structure to maintain information of peer Bluetooth device.
+ * Structure to maintain information of peer Bluetooth device.
  */
 typedef struct
 {
@@ -68,8 +65,7 @@ typedef struct
 } EDRDevice;
 
 /**
- * @struct EDRDeviceList
- * @brief Structure to maintain list of peer Bluetooth device information.
+ * Structure to maintain list of peer Bluetooth device information.
  */
 typedef struct _EDRDeviceList
 {
@@ -78,113 +74,111 @@ typedef struct _EDRDeviceList
 } EDRDeviceList;
 
 /**
- * @brief  Creates #EDRDevice for specified remote address and uuid and to device list.
+ * Creates ::EDRDevice for specified remote address and uuid and to device list.
  *
- * @param  deviceList       [IN,OUT] Device list which created device add to.
- * @param  deviceAddress    [IN]     Bluetooth device address.
- * @param  uuid             [IN]     Service uuid.
- * @param  device           [IN]     Created #EDRDevice.
+ * @param[in/out]  deviceList       Device list which created device add to.
+ * @param[in]      deviceAddress    Bluetooth device address.
+ * @param[in]      uuid             Service uuid.
+ * @param[in]      device           Created ::EDRDevice.
  *
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_STATUS_INVALID_PARAM Invalid input parameters
- * @retval #CA_STATUS_FAILED Failed to create device and add to list
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM Invalid input parameters.
+ * @retval ::CA_STATUS_FAILED Failed to create device and add to list.
  */
 CAResult_t CACreateAndAddToDeviceList(EDRDeviceList **deviceList, const char *deviceAddress,
                                       const char *uuid, EDRDevice **device);
 
 /**
- * @brief  Insert device to specified list.
+ * Insert device to specified list.
  *
- * @param  deviceList [IN,OUT] Device list to which specifed @device to be added.
- * @param  device     [IN]     Device to be added to list.
+ * @param[in/out]  deviceList        Device list to which specifed @device to be added.
+ * @param[in]      device            Device to be added to list.
  *
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_STATUS_INVALID_PARAM Invalid input parameters
- * @retval #CA_MEMORY_ALLOC_FAILED Memory allocation failed
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM Invalid input parameters.
+ * @retval ::CA_MEMORY_ALLOC_FAILED Memory allocation failed.
  */
 CAResult_t CAAddEDRDeviceToList(EDRDeviceList **deviceList, EDRDevice *device);
 
 /**
- * @brief  Get the device from list which matches specified device address.
+ * Get the device from list which matches specified device address.
  *
- * @param  deviceList    [IN]  Device list to search for the device.
- * @param  deviceAddress [IN]  Device address used for matching.
- * @param  device        [OUT] #EDRDevice which has matching device address.
+ * @param[in]   deviceList     Device list to search for the device.
+ * @param[in]   deviceAddress  Device address used for matching.
+ * @param[out]  device         ::EDRDevice which has matching device address.
  *
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_STATUS_INVALID_PARAM Invalid input parameters
- * @retval #CA_STATUS_FAILED Device is not found in the list
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM Invalid input parameters.
+ * @retval ::CA_STATUS_FAILED Device is not found in the list.
  */
 CAResult_t CAGetEDRDevice(EDRDeviceList *deviceList,
                            const char *deviceAddress, EDRDevice **device);
 
 /**
- * @brief  Get the device from list which matches specified RFCOMM socket id.
+ * Get the device from list which matches specified RFCOMM socket id.
  *
- * @param  deviceList [IN]  Device list to search for the device.
- * @param  socketID   [IN]  RFCOMM socket id.
- * @param  device     [OUT] #EDRDevice which has matching RFCOMM socket id .
+ * @param[in]   deviceList  Device list to search for the device.
+ * @param[in]   socketID    RFCOMM socket id.
+ * @param[out]  device      ::EDRDevice which has matching RFCOMM socket id .
  *
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_STATUS_INVALID_PARAM Invalid input parameters
- * @retval #CA_STATUS_FAILED Device is not found in the list
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM Invalid input parameters.
+ * @retval ::CA_STATUS_FAILED Device is not found in the list.
  */
 CAResult_t CAGetEDRDeviceBySocketId(EDRDeviceList *deviceList, int32_t socketID,
                                     EDRDevice **device);
 
 /**
- * @brief  Remove and delete the device matching specified device address from list.
+ * Remove and delete the device matching specified device address from list.
  *
- * @param  deviceList    [IN,OUT] Device list to search for the device.
- * @param  deviceAddress [IN]     Bluetooth device address.
+ * @param[in/out]  deviceList        Device list to search for the device.
+ * @param[in]      deviceAddress     Bluetooth device address.
  *
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_STATUS_INVALID_PARAM Invalid input parameters
- * @retval #CA_STATUS_FAILED Device is not found in the list
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM Invalid input parameters.
+ * @retval ::CA_STATUS_FAILED Device is not found in the list.
  */
 CAResult_t CARemoveEDRDeviceFromList(EDRDeviceList **deviceList,
                                     const char *deviceAddress);
 
 /**
- * @brief  Destroy the specified device list. Removes and delete all the devices in the list.
- * @param  deviceList [IN,OUT] Device list to be destroyed.
- * @return NONE
+ * Destroy the specified device list. Removes and delete all the devices in the list.
+ * @param[in/out]  deviceList      Device list to be destroyed.
  */
 void CADestroyEDRDeviceList(EDRDeviceList **deviceList);
 
 /**
- * @brief  Insert data to specified list.
+ * Insert data to specified list.
  *
- * @param  dataList   [IN,OUT] Data list to which data will be add.
- * @param  data       [IN]      Data to be stored.
- * @param  dataLength [IN]      Length of the data.
+ * @param[in]  dataList        Data list to which data will be add.
+ * @param[in]  data            Data to be stored.
+ * @param[in]  dataLength      Length of the data.
  *
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_STATUS_INVALID_PARAM Invalid input parameters
- * @retval #CA_MEMORY_ALLOC_FAILED Memory allocation failed
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM Invalid input parameters.
+ * @retval ::CA_MEMORY_ALLOC_FAILED Memory allocation failed.
  */
 CAResult_t CAAddEDRDataToList(EDRDataList **dataList, const void *data, uint32_t dataLength);
 
 /**
- * @brief  Remove and delete data from front end of list.
- * @param  dataList [IN,OUT] Data list from which data will be removed.
+ * Remove and delete data from front end of list.
+ * @param[in/out]  dataList      Data list from which data will be removed.
  *
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_STATUS_INVALID_PARAM Invalid input parameters
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM Invalid input parameters.
  */
 CAResult_t CARemoveEDRDataFromList(EDRDataList **dataList);
 
 /**
- * @brief  Destroy the specified data list. Removes and deletes all the data in the list.
- * @param  dataList [IN] Data list to be destroyed.
- * @return NONE
+ * Destroy the specified data list. Removes and deletes all the data in the list.
+ * @param[in]  dataList      Data list to be destroyed.
  */
 void CADestroyEDRDataList(EDRDataList **dataList);
 

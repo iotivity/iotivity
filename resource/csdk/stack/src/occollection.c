@@ -35,6 +35,7 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "ocpayload.h"
+#include "payload_logging.h"
 
 /// Module Name
 #include <stdio.h>
@@ -221,8 +222,12 @@ ValidateQuery (const char *query, OCResourceHandle resource,
 }
 
 static OCStackResult
-HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest, uint8_t filterOn, char *filterValue)
+HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest,
+                          uint8_t filterOn,
+                          char *filterValue)
 {
+    (void)filterOn;
+    (void)filterValue;
     if(!ehRequest)
     {
         return OC_STACK_INVALID_PARAM;
@@ -254,7 +259,7 @@ HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest, uint8_t filterOn, c
 
     if(ret == OC_STACK_OK)
     {
-        OCEntityHandlerResponse response = {};
+        OCEntityHandlerResponse response = {0};
         response.ehResult = OC_EH_OK;
         response.payload = (OCPayload*)payload;
         response.persistentBufferFlag = 0;
@@ -286,7 +291,7 @@ HandleBatchInterface(OCEntityHandlerRequest *ehRequest)
 
     if(stackRet == OC_STACK_OK)
     {
-        OCEntityHandlerResponse response = {};
+        OCEntityHandlerResponse response = {0};
         response.ehResult = OC_EH_OK;
         response.payload = (OCPayload*)payload;
         response.persistentBufferFlag = 0;
@@ -415,7 +420,7 @@ OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
                 return HandleBatchInterface(ehRequest);
 
             case STACK_IF_GROUP:
-                return BuildCollectionGroupActionJSONResponse(OC_REST_GET/*flag*/,
+                return BuildCollectionGroupActionCBORResponse(OC_REST_GET/*flag*/,
                         (OCResource *) ehRequest->resource, ehRequest);
             default:
                 return OC_STACK_ERROR;
@@ -444,7 +449,7 @@ OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
             {
                 OC_LOG(INFO, TAG, PCF("IF_COLLECTION PUT with request ::\n"));
                 OC_LOG_PAYLOAD(INFO, TAG, ehRequest->payload);
-                return BuildCollectionGroupActionJSONResponse(OC_REST_PUT/*flag*/,
+                return BuildCollectionGroupActionCBORResponse(OC_REST_PUT/*flag*/,
                         (OCResource *) ehRequest->resource, ehRequest);
             }
             default:
@@ -460,7 +465,7 @@ OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
             {
                 OC_LOG(INFO, TAG, PCF("IF_COLLECTION POST with request ::\n"));
                 OC_LOG_PAYLOAD(INFO, TAG, ehRequest->payload);
-                return BuildCollectionGroupActionJSONResponse(OC_REST_POST/*flag*/,
+                return BuildCollectionGroupActionCBORResponse(OC_REST_POST/*flag*/,
                         (OCResource *) ehRequest->resource, ehRequest);
             }
             default:
@@ -474,7 +479,7 @@ OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
         {
             OC_LOG(INFO, TAG, PCF("IF_COLLECTION POST with request ::\n"));
             OC_LOG_PAYLOAD(INFO, TAG, ehRequest->payload);
-            return BuildCollectionGroupActionJSONResponse(OC_REST_POST/*flag*/,
+            return BuildCollectionGroupActionCBORResponse(OC_REST_POST/*flag*/,
                     (OCResource *) ehRequest->resource, ehRequest);
         }
         else

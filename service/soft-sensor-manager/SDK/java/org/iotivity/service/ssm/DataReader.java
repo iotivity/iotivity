@@ -37,9 +37,9 @@ import java.util.List;
 public class DataReader
 {
 
-        private int pDataReaderInstance;
+        private long pDataReaderInstance;
 
-        public DataReader(int dataReaderInstance)
+        private DataReader(long dataReaderInstance)
         {
             pDataReaderInstance = dataReaderInstance;
         }

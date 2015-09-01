@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  * C-Pluff, a plug-in framework for C
  * Copyright 2007 Johannes Lehtinen
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -35,12 +35,12 @@ struct runtime_data {
 
 static void *create(cp_context_t *ctx) {
 	struct runtime_data *data;
-	
+
 	if ((data = malloc(sizeof(struct runtime_data))) == NULL) {
 		return NULL;
 	}
 	data->ctx = ctx;
-	
+
 	/*
 	 * Normally data->counters would be initialized in start function.
 	 * We do it already here to be able to record count for the create
@@ -53,25 +53,25 @@ static void *create(cp_context_t *ctx) {
 	memset(data->counters, 0, sizeof(cbc_counters_t));
 	data->counters->context_arg_0 = NULL;
 	data->counters->create++;
-	
+
 	return data;
 }
 
 static void logger(cp_log_severity_t severity, const char *msg, const char *apid, void *user_data) {
 	struct runtime_data *data = user_data;
-	
+
 	data->counters->logger++;
 }
 
 static void listener(const char *plugin_id, cp_plugin_state_t old_state, cp_plugin_state_t new_state, void *user_data) {
 	struct runtime_data *data = user_data;
-	
+
 	data->counters->listener++;
 }
 
 static int run(void *d) {
 	struct runtime_data *data = d;
-	
+
 	data->counters->run++;
 	return (data->counters->run < 3);
 }
@@ -79,7 +79,7 @@ static int run(void *d) {
 static int start(void *d) {
 	struct runtime_data *data = d;
 	char **argv;
-	
+
 	data->counters->start++;
 	argv = cp_get_context_args(data->ctx, NULL);
 	if (argv != NULL && argv[0] != NULL) {
@@ -94,7 +94,7 @@ static int start(void *d) {
 		return CP_ERR_RUNTIME;
 	} else {
 		return CP_OK;
-	}	
+	}
 }
 
 static void stop(void *d) {
@@ -102,7 +102,7 @@ static void stop(void *d) {
 
 	data->counters->stop++;
 
-	/* 
+	/*
 	 * Normally data->counters would be freed here. However, we do not free
 	 * it so that the test program can read counters after plug-in stops.
 	 */
@@ -111,7 +111,7 @@ static void stop(void *d) {
 static void destroy(void *d) {
 	struct runtime_data *data = d;
 
-	data->counters->destroy++;	
+	data->counters->destroy++;
 	data->counters = NULL;
 	free(data);
 }

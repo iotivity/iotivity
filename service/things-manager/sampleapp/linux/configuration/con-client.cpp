@@ -414,7 +414,7 @@ int main(int argc, char* argv[])
                 g_thingsmanager->findCandidateResources(types, &onFoundCollectionResource, 5);
 
                 std::cout << "Finding Collection resource... " << std::endl;
-                
+
                 pthread_mutex_lock(&mutex_lock);
                 isWaiting = 1;
                 pthread_mutex_unlock(&mutex_lock);

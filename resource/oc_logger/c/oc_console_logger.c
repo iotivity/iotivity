@@ -45,6 +45,7 @@ oc_log_ctx_t *oc_make_console_logger()
 
 int oc_console_logger_init(oc_log_ctx_t *ctx, void *world)
 {
+ (void)world;
  oc_console_logger_ctx *my_ctx;
 
  my_ctx = (oc_console_logger_ctx *)malloc(sizeof(oc_console_logger_ctx));
@@ -77,6 +78,8 @@ void oc_console_logger_flush(oc_log_ctx_t *ctx)
 
 void oc_console_logger_set_level(oc_log_ctx_t *ctx, const int level)
 {
+ (void)ctx;
+ (void)level;
  /* We don't have any special thing we need to do when a log level changes. */
  return;
 }
@@ -95,6 +98,8 @@ size_t oc_console_logger_write(oc_log_ctx_t *ctx, const int level, const char *m
 
 int oc_console_logger_set_module(oc_log_ctx_t *ctx, const char *module_name)
 {
+ (void)ctx;
+ (void)module_name;
  /* We don't do anything special when the module name changes: */
  return 1;
 }

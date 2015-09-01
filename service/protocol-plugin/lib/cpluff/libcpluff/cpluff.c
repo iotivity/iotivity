@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  * C-Pluff, a plug-in framework for C
  * Copyright 2007 Johannes Lehtinen
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -23,7 +23,7 @@
 
 /** @file
  * Core framework functions
- */ 
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,7 +46,7 @@
  * Variables
  * ----------------------------------------------------------------------*/
 
-/// Number of initializations 
+/// Number of initializations
 static int initialized = 0;
 
 #ifdef CP_THREADS
@@ -61,7 +61,7 @@ static int framework_locked = 0;
 
 #endif
 
-/// Fatal error handler, or NULL for default 
+/// Fatal error handler, or NULL for default
 static cp_fatal_error_func_t fatal_error_handler = NULL;
 
 
@@ -105,7 +105,7 @@ static void reset(void) {
 
 CP_C_API cp_status_t cp_init(void) {
 	cp_status_t status = CP_OK;
-	
+
 	// Initialize if necessary
 	do {
 		if (!initialized) {
@@ -125,12 +125,12 @@ CP_C_API cp_status_t cp_init(void) {
 		}
 		initialized++;
 	} while (0);
-	
+
 	// Rollback on failure
 	if (status != CP_OK) {
 		reset();
 	}
-	
+
 	return status;
 }
 
@@ -158,8 +158,8 @@ CP_C_API void cp_set_fatal_error_handler(cp_fatal_error_func_t error_handler) {
 CP_HIDDEN void cpi_fatalf(const char *msg, ...) {
 	va_list params;
 	char fmsg[256];
-		
-	// Format message 
+
+	// Format message
 	assert(msg != NULL);
 	va_start(params, msg);
 	vsnprintf(fmsg, sizeof(fmsg), msg, params);
@@ -172,8 +172,8 @@ CP_HIDDEN void cpi_fatalf(const char *msg, ...) {
 	} else {
 		fprintf(stderr, _("C-Pluff: FATAL ERROR: %s\n"), fmsg);
 	}
-	
-	// Abort if still alive 
+
+	// Abort if still alive
 	abort();
 }
 

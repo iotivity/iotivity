@@ -411,8 +411,8 @@ CAResponseResult_t ConvertEHResultToCAResult (OCEntityHandlerResult result)
 OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
 {
     OCStackResult result = OC_STACK_ERROR;
-    CAEndpoint_t responseEndpoint = {};
-    CAResponseInfo_t responseInfo = {};
+    CAEndpoint_t responseEndpoint = {.adapter = CA_DEFAULT_ADAPTER};
+    CAResponseInfo_t responseInfo = {.result = CA_EMPTY};
     CAHeaderOption_t* optionsPointer = NULL;
 
     if(!ehResponse || !ehResponse->requestHandle)
@@ -509,6 +509,15 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     // Put the JSON prefix and suffix around the payload
     if(ehResponse->payload)
     {
+        if (ehResponse->payload->type == PAYLOAD_TYPE_PRESENCE)
+        {
+            responseInfo.isMulticast = true;
+        }
+        else
+        {
+            responseInfo.isMulticast = false;
+        }
+
         OCStackResult result;
         if((result = OCConvertPayload(ehResponse->payload, &responseInfo.info.payload,
                     &responseInfo.info.payloadSize))
@@ -518,17 +527,10 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
             OICFree(responseInfo.info.options);
             return result;
         }
-
-        if(responseInfo.info.payloadSize > MAX_RESPONSE_LENGTH)
-        {
-            OICFree(responseInfo.info.payload);
-            OC_LOG(ERROR, TAG, "Payload too long!");
-            OICFree(responseInfo.info.options);
-            return OC_STACK_INVALID_PARAM;
-        }
     }
     else
     {
+        responseInfo.isMulticast = false;
         responseInfo.info.payload = NULL;
         responseInfo.info.payloadSize = 0;
     }

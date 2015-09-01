@@ -123,14 +123,14 @@ CAResult_t CASetAdapterRAInfo(const CARAInfo_t *caraInfo)
 }
 #endif
 
-static void CAReceivedPacketCallback(const CAEndpoint_t *endpoint, const void *data, uint32_t dataLen)
+static void CAReceivedPacketCallback(const CASecureEndpoint_t *sep,
+                                     const void *data, uint32_t dataLen)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
-    // Call the callback.
     if (g_networkPacketReceivedCallback != NULL)
     {
-        g_networkPacketReceivedCallback(endpoint, data, dataLen);
+        g_networkPacketReceivedCallback(sep, data, dataLen);
     }
     else
     {
@@ -393,12 +393,13 @@ CAResult_t CASendMulticastData(const CAEndpoint_t *endpoint, const void *data, u
     OIC_LOG(DEBUG, TAG, "IN");
 
     u_arraylist_t *list = CAGetSelectedNetworkList();
-
     if (!list)
     {
         OIC_LOG(DEBUG, TAG, "No selected network");
         return CA_SEND_FAILED;
     }
+
+    CATransportFlags_t requestedAdapter = endpoint->adapter ? endpoint->adapter : CA_ALL_ADAPTERS;
 
     for (uint32_t i = 0; i < u_arraylist_length(list); i++)
     {
@@ -410,6 +411,10 @@ CAResult_t CASendMulticastData(const CAEndpoint_t *endpoint, const void *data, u
         }
 
         CATransportAdapter_t connType = *(CATransportAdapter_t *)ptrType;
+        if ((connType & requestedAdapter) == 0)
+        {
+            continue;
+        }
 
         int index = CAGetAdapterIndex(connType);
 

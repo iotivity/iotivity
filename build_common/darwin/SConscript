@@ -58,6 +58,9 @@ else:
 	env.AppendUnique(CCFLAGS = ['-g'])
 	env.AppendUnique(LINKFLAGS = ['-g'])
 
+if env.get('LOGGING'):
+    env.AppendUnique(CPPDEFINES = ['-DTB_LOG'])
+
 if target_os == 'darwin':
 	sys_root = tc_path + '/Platforms/MacOSX.platform/Developer/SDKs/MacOSX' + sys_version + '.sdk/'
 else:

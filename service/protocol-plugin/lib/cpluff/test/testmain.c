@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  * C-Pluff, a plug-in framework for C
  * Copyright 2007 Johannes Lehtinen
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -59,7 +59,7 @@ static void full_logger(cp_log_severity_t severity, const char *msg, const char 
 		fprintf(stderr, "testsuite: %s: [testsuite] %s\n", sevstr, msg);
 	}
 	if (severity >= CP_LOG_ERROR && user_data != NULL) {
-		(*((int *) user_data))++;		
+		(*((int *) user_data))++;
 	}
 }
 
@@ -70,7 +70,7 @@ static void counting_logger(cp_log_severity_t severity, const char *msg, const c
 CP_HIDDEN cp_context_t *init_context(cp_log_severity_t min_disp_sev, int *error_counter) {
 	cp_context_t *ctx;
 	cp_status_t status;
-	
+
 	check(cp_init() == CP_OK);
 	check((ctx = cp_create_context(&status)) != NULL && status == CP_OK);
 	if (error_counter != NULL) {
@@ -90,7 +90,7 @@ static char *plugindir_buffer = NULL;
 
 CP_HIDDEN const char *plugindir(const char *plugin) {
 	const char *srcdir;
-	
+
 	if (plugindir_buffer != NULL) {
 		free(plugindir_buffer);
 		plugindir_buffer = NULL;
@@ -112,7 +112,7 @@ static char *pcollectiondir_buffer = NULL;
 
 CP_HIDDEN const char *pcollectiondir(const char *collection) {
 	const char *srcdir;
-	
+
 	if (pcollectiondir_buffer != NULL) {
 		free(pcollectiondir_buffer);
 		pcollectiondir_buffer = NULL;
@@ -163,14 +163,14 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "testsuite: ERROR: Could not resolve symbol %s.\n", argv[1]);
 		exit(2);
 	}
-	
+
 	// Execute the test
 	// (NOTE: This conversion is not ANSI C compatible)
 	((void (*)(void)) ptr)();
-	
+
 	// Free test resources
 	free_test_resources();
-	
+
 	// Successfully completed
 	exit(0);
 }

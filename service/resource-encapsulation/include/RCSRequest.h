@@ -33,9 +33,8 @@ namespace OIC
     namespace Service
     {
         /**
-        * @class  RCSRequest
-        * @brief   This class describes the resource request.
-        *              It provides API to get the resource URI from the request.
+        * This class describes the request.
+        *
         */
         class RCSRequest
         {
@@ -50,17 +49,12 @@ namespace OIC
                 RCSRequest &operator=(RCSRequest &) = delete;
 
                 /**
-                * API to get the URI from the request.
+                * Returns the URI of the request.
                 *
-                * @return string - uri of resource.
                 */
                 std::string getResourceUri() const;
 
             private:
-                /**
-                 *  resource uri value stored as a string.
-                 *  value set once during request initialization.
-                 */
                 std::string m_resourceUri;
         };
 

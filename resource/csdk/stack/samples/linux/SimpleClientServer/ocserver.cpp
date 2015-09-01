@@ -367,7 +367,7 @@ OCEntityHandlerResult ProcessDeleteRequest (OCEntityHandlerRequest *ehRequest)
     return ehResult;
 }
 
-OCEntityHandlerResult ProcessNonExistingResourceRequest(OCEntityHandlerRequest *ehRequest)
+OCEntityHandlerResult ProcessNonExistingResourceRequest(OCEntityHandlerRequest * /*ehRequest*/)
 {
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s ", __func__);
 
@@ -414,7 +414,9 @@ void ProcessObserveDeregister (OCEntityHandlerRequest *ehRequest)
 
 OCEntityHandlerResult
 OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest *entityHandlerRequest, char* uri, void* callbackParam)
+                         OCEntityHandlerRequest *entityHandlerRequest,
+                         char* uri,
+                         void* /*callbackParam*/)
 {
     OC_LOG_V (INFO, TAG, "Inside device default entity handler - flags: 0x%x, uri: %s", flag, uri);
 
@@ -501,8 +503,9 @@ OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
 }
 
 OCEntityHandlerResult
-OCNOPEntityHandlerCb (OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest *entityHandlerRequest, void* callbackParam)
+OCNOPEntityHandlerCb (OCEntityHandlerFlag /*flag*/,
+                      OCEntityHandlerRequest * /*entityHandlerRequest*/,
+                      void* /*callbackParam*/)
 {
     // This is callback is associated with the 2 presence notification
     // resources. They are non-operational.
@@ -511,12 +514,12 @@ OCNOPEntityHandlerCb (OCEntityHandlerFlag flag,
 
 OCEntityHandlerResult
 OCEntityHandlerCb (OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest *entityHandlerRequest, void* callback)
+        OCEntityHandlerRequest *entityHandlerRequest, void* /*callback*/)
 {
     OC_LOG_V (INFO, TAG, "Inside entity handler - flags: 0x%x", flag);
 
     OCEntityHandlerResult ehResult = OC_EH_OK;
-    OCEntityHandlerResponse response = { 0 };
+    OCEntityHandlerResponse response = { 0, 0, OC_EH_ERROR, 0, 0, { },{ 0 }, false };
 
     // Validate pointer
     if (!entityHandlerRequest)

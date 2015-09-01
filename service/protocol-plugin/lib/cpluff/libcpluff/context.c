@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  * C-Pluff, a plug-in framework for C
  * Copyright 2007 Johannes Lehtinen
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -51,11 +51,11 @@ static list_t *contexts = NULL;
  * Function definitions
  * ----------------------------------------------------------------------*/
 
-// Generic 
+// Generic
 
 static void free_plugin_env(cp_plugin_env_t *env) {
 	assert(env != NULL);
-	
+
 	// Free environment data
 	if (env->plugin_listeners != NULL) {
 		cpi_unregister_plisteners(env->plugin_listeners, NULL);
@@ -99,8 +99,8 @@ static void free_plugin_env(cp_plugin_env_t *env) {
 		assert(list_isempty(env->run_funcs));
 		list_destroy(env->run_funcs);
 	}
-	
-	// Destroy mutex 
+
+	// Destroy mutex
 #ifdef CP_THREADS
 	if (env->mutex != NULL) {
 		cpi_destroy_mutex(env->mutex);
@@ -114,12 +114,12 @@ static void free_plugin_env(cp_plugin_env_t *env) {
 
 CP_HIDDEN void cpi_free_context(cp_context_t *context) {
 	assert(context != NULL);
-	
+
 	// Free environment if this is the client program context
 	if (context->plugin == NULL && context->env != NULL) {
 		free_plugin_env(context->env);
 	}
-	
+
 	// Destroy symbol lists
 	if (context->resolved_symbols != NULL) {
 		assert(hash_isempty(context->resolved_symbols));
@@ -131,38 +131,38 @@ CP_HIDDEN void cpi_free_context(cp_context_t *context) {
 	}
 
 	// Free context
-	free(context);	
+	free(context);
 }
 
 CP_HIDDEN cp_context_t * cpi_new_context(cp_plugin_t *plugin, cp_plugin_env_t *env, cp_status_t *error) {
 	cp_context_t *context = NULL;
 	cp_status_t status = CP_OK;
-	
+
 	assert(env != NULL);
 	assert(error != NULL);
-	
+
 	do {
-		
+
 		// Allocate memory for the context
 		if ((context = malloc(sizeof(cp_context_t))) == NULL) {
 			status = CP_ERR_RESOURCE;
 			break;
 		}
-		
+
 		// Initialize context
 		context->plugin = plugin;
 		context->env = env;
 		context->resolved_symbols = NULL;
 		context->symbol_providers = NULL;
-		
+
 	} while (0);
-	
+
 	// Free context on error
 	if (status != CP_OK && context != NULL) {
 		free(context);
 		context = NULL;
 	}
-	
+
 	*error = status;
 	return context;
 }
@@ -174,13 +174,13 @@ CP_C_API cp_context_t * cp_create_context(cp_status_t *error) {
 
 	// Initialize internal state
 	do {
-	
+
 		// Allocate memory for the plug-in environment
 		if ((env = malloc(sizeof(cp_plugin_env_t))) == NULL) {
 			status = CP_ERR_RESOURCE;
 			break;
 		}
-	
+
 		// Initialize plug-in environment
 		memset(env, 0, sizeof(cp_plugin_env_t));
 #ifdef CP_THREADS
@@ -217,7 +217,7 @@ CP_C_API cp_context_t * cp_create_context(cp_status_t *error) {
 			status = CP_ERR_RESOURCE;
 			break;
 		}
-		
+
 		// Create the plug-in context
 		if ((context = cpi_new_context(NULL, env, &status)) == NULL) {
 			break;
@@ -233,7 +233,7 @@ CP_C_API cp_context_t * cp_create_context(cp_status_t *error) {
 		}
 		if (status == CP_OK) {
 			lnode_t *node;
-			
+
 			if ((node = lnode_create(context)) == NULL) {
 				status = CP_ERR_RESOURCE;
 			} else {
@@ -241,10 +241,10 @@ CP_C_API cp_context_t * cp_create_context(cp_status_t *error) {
 			}
 		}
 		cpi_unlock_framework();
-		
+
 	} while (0);
-	
-	// Release resources on failure 
+
+	// Release resources on failure
 	if (status != CP_OK) {
 		if (env != NULL) {
 			free_plugin_env(env);
@@ -255,12 +255,12 @@ CP_C_API cp_context_t * cp_create_context(cp_status_t *error) {
 		context = NULL;
 	}
 
-	// Return the final status 
+	// Return the final status
 	if (error != NULL) {
 		*error = status;
 	}
-	
-	// Return the context (or NULL on failure) 
+
+	// Return the context (or NULL on failure)
 	return context;
 }
 
@@ -285,7 +285,7 @@ CP_C_API void cp_destroy_context(cp_context_t *context) {
 	cpi_lock_framework();
 	if (contexts != NULL) {
 		lnode_t *node;
-		
+
 		if ((node = list_find(contexts, context, cpi_comp_ptr)) != NULL) {
 			list_delete(contexts, node);
 			lnode_destroy(node);
@@ -293,12 +293,12 @@ CP_C_API void cp_destroy_context(cp_context_t *context) {
 	}
 	cpi_unlock_framework();
 
-	// Unload all plug-ins 
+	// Unload all plug-ins
 	cp_uninstall_plugins(context);
 
 	// Release remaining information objects
 	cpi_release_infos(context);
-	
+
 	// Free context
 	cpi_free_context(context);
 }
@@ -307,7 +307,7 @@ CP_HIDDEN void cpi_destroy_all_contexts(void) {
 	cpi_lock_framework();
 	if (contexts != NULL) {
 		lnode_t *node;
-		
+
 		while ((node = list_last(contexts)) != NULL) {
 			cpi_unlock_framework();
 			cp_destroy_context(lnode_get(node));
@@ -320,37 +320,37 @@ CP_HIDDEN void cpi_destroy_all_contexts(void) {
 }
 
 
-// Plug-in directories 
+// Plug-in directories
 
 CP_C_API cp_status_t cp_register_pcollection(cp_context_t *context, const char *dir) {
 	char *d = NULL;
 	lnode_t *node = NULL;
 	cp_status_t status = CP_OK;
-	
+
 	CHECK_NOT_NULL(context);
 	CHECK_NOT_NULL(dir);
-	
+
 	cpi_lock_context(context);
 	cpi_check_invocation(context, CPI_CF_ANY, __func__);
 	do {
-	
-		// Check if directory has already been registered 
+
+		// Check if directory has already been registered
 		if (list_find(context->env->plugin_dirs, dir, (int (*)(const void *, const void *)) strcmp) != NULL) {
 			break;
 		}
-	
-		// Allocate resources 
+
+		// Allocate resources
 		d = malloc(sizeof(char) * (strlen(dir) + 1));
 		node = lnode_create(d);
 		if (d == NULL || node == NULL) {
 			status = CP_ERR_RESOURCE;
 			break;
 		}
-	
-		// Register directory 
+
+		// Register directory
 		strcpy(d, dir);
 		list_append(context->env->plugin_dirs, node);
-		
+
 	} while (0);
 
 	// Report error or success
@@ -361,8 +361,8 @@ CP_C_API cp_status_t cp_register_pcollection(cp_context_t *context, const char *
 	}
 	cpi_unlock_context(context);
 
-	// Release resources on failure 
-	if (status != CP_OK) {	
+	// Release resources on failure
+	if (status != CP_OK) {
 		if (d != NULL) {
 			free(d);
 		}
@@ -370,17 +370,17 @@ CP_C_API cp_status_t cp_register_pcollection(cp_context_t *context, const char *
 			lnode_destroy(node);
 		}
 	}
-	
+
 	return status;
 }
 
 CP_C_API void cp_unregister_pcollection(cp_context_t *context, const char *dir) {
 	char *d;
 	lnode_t *node;
-	
+
 	CHECK_NOT_NULL(context);
 	CHECK_NOT_NULL(dir);
-	
+
 	cpi_lock_context(context);
 	cpi_check_invocation(context, CPI_CF_ANY, __func__);
 	node = list_find(context->env->plugin_dirs, dir, (int (*)(const void *, const void *)) strcmp);
@@ -408,7 +408,7 @@ CP_C_API void cp_unregister_pcollections(cp_context_t *context) {
 
 CP_C_API void cp_set_context_args(cp_context_t *ctx, char **argv) {
 	int argc;
-	
+
 	CHECK_NOT_NULL(ctx);
 	CHECK_NOT_NULL(argv);
 	for (argc = 0; argv[argc] != NULL; argc++);
@@ -423,7 +423,7 @@ CP_C_API void cp_set_context_args(cp_context_t *ctx, char **argv) {
 
 CP_C_API char **cp_get_context_args(cp_context_t *ctx, int *argc) {
 	char **argv;
-	
+
 	CHECK_NOT_NULL(ctx);
 	cpi_lock_context(ctx);
 	if (argc != NULL) {
@@ -467,7 +467,7 @@ CP_HIDDEN void cpi_check_invocation(cp_context_t *ctx, int funcmask, const char 
 }
 
 
-// Locking 
+// Locking
 
 #if defined(CP_THREADS) || !defined(NDEBUG)
 

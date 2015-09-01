@@ -17,7 +17,7 @@
 <small>
 [<a class="el" href="group__cTypedefs.html">Typedefs</a>]</small>
 </h1><hr><a name="_details"></a><h2>Detailed Description</h2>
-Typedefs for client supplied callback functions. 
+Typedefs for client supplied callback functions.
 <p>
 
 <p>
@@ -50,7 +50,7 @@ Typedefs for client supplied callback functions.
 <div class="memdoc">
 
 <p>
-A listener function called synchronously after a plugin state change. 
+A listener function called synchronously after a plugin state change.
 <p>
 The function should return promptly. <a class="el" href="group__cFuncsInit.html">Library initialization</a>, <a class="el" href="group__cFuncsContext.html">plug-in context management</a>, <a class="el" href="group__cFuncsPlugin.html">plug-in management</a>, listener registration (<a class="el" href="group__cFuncsPluginInfo.html#ge9930a241e859e9eb07e36981ef7077a">cp_register_plistener</a> and <a class="el" href="group__cFuncsPluginInfo.html#g2cd49b8752e8971b569ae3e39b41723e">cp_unregister_plistener</a>) and <a class="el" href="group__cFuncsSymbols.html">dynamic symbol</a> functions must not be called from within a plug-in listener invocation. Listener functions are registered using <a class="el" href="group__cFuncsPluginInfo.html#ge9930a241e859e9eb07e36981ef7077a">cp_register_plistener</a>.<p>
 <dl compact><dt><b>Parameters:</b></dt><dd>
@@ -76,7 +76,7 @@ The function should return promptly. <a class="el" href="group__cFuncsInit.html"
 <div class="memdoc">
 
 <p>
-A logger function called to log selected plug-in framework messages. 
+A logger function called to log selected plug-in framework messages.
 <p>
 The messages may be localized. Plug-in framework API functions must not be called from within a logger function invocation. In a multi-threaded environment logger function invocations are serialized by the framework. Logger functions are registered using <a class="el" href="group__cFuncsLogging.html#g5f6962ee1b09d60d9b98d25adfd55cff">cp_register_logger</a>.<p>
 <dl compact><dt><b>Parameters:</b></dt><dd>
@@ -102,7 +102,7 @@ The messages may be localized. Plug-in framework API functions must not be calle
 <div class="memdoc">
 
 <p>
-A fatal error handler for handling unrecoverable errors. 
+A fatal error handler for handling unrecoverable errors.
 <p>
 If the error handler returns then the framework aborts the program. Plug-in framework API functions must not be called from within a fatal error handler invocation. The fatal error handler function is set using <a class="el" href="group__cFuncsInit.html#gc794f61edbd896327fabddad2b3d2fd5">cp_set_fatal_error_handler</a>.<p>
 <dl compact><dt><b>Parameters:</b></dt><dd>
@@ -125,7 +125,7 @@ If the error handler returns then the framework aborts the program. Plug-in fram
 <div class="memdoc">
 
 <p>
-A run function registered by a plug-in to perform work. 
+A run function registered by a plug-in to perform work.
 <p>
 The run function should perform a finite chunk of work and it should return a non-zero value if there is more work to be done. Run functions are registered using <a class="el" href="group__cFuncsPluginExec.html#g357c45e87ff896e8541fe3758b19a035">cp_run_function</a> and the usage is discussed in more detail in the <a class="el" href="group__cFuncsPluginExec.html">serial execution</a> section.<p>
 <dl compact><dt><b>Parameters:</b></dt><dd>

@@ -72,8 +72,7 @@ public class CaLeClientInterface {
     private native static void caLeRegisterGattCallback(BluetoothGattCallback callback);
 
     // BluetoothAdapter.LeScanCallback
-    private native static void caLeScanCallback(BluetoothDevice device,
-                                                int rssi, byte[] scanRecord);
+    private native static void caLeScanCallback(BluetoothDevice device);
 
     // BluetoothGattCallback
     private native static void caLeGattConnectionStateChangeCallback(
@@ -81,24 +80,13 @@ public class CaLeClientInterface {
 
     private native static void caLeGattServicesDiscoveredCallback(BluetoothGatt gatt, int status);
 
-    private native static void caLeGattCharacteristicReadCallback(
-            BluetoothGatt gatt, BluetoothGattCharacteristic characteristic,
-            byte[] data, int status);
-
     private native static void caLeGattCharacteristicWriteCallback(
-            BluetoothGatt gatt, BluetoothGattCharacteristic characteristic,
-            byte[] data, int status);
+            BluetoothGatt gatt, byte[] data, int status);
 
     private native static void caLeGattCharacteristicChangedCallback(
-            BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, byte[] data);
+            BluetoothGatt gatt, byte[] data);
 
-    private native static void caLeGattDescriptorReadCallback(BluetoothGatt gatt,
-                                                             BluetoothGattDescriptor descriptor,
-                                                             int status);
-
-    private native static void caLeGattDescriptorWriteCallback(BluetoothGatt gatt,
-                                                              BluetoothGattDescriptor descriptor,
-                                                              int status);
+    private native static void caLeGattDescriptorWriteCallback(BluetoothGatt gatt, int status);
 
     private native static void caLeGattReliableWriteCompletedCallback(BluetoothGatt gatt,
                                                                      int status);
@@ -125,7 +113,7 @@ public class CaLeClientInterface {
                     Log.d(TAG, "UUID : " + uuid.toString());
                     if(uuid.toString().contains(SERVICE_UUID.toLowerCase())) {
                         Log.d(TAG, "we found that has the Device");
-                        caLeScanCallback(device, rssi, scanRecord);
+                        caLeScanCallback(device);
                     }
                 }
             } catch(UnsatisfiedLinkError e) {
@@ -202,9 +190,6 @@ public class CaLeClientInterface {
         public void onCharacteristicRead(BluetoothGatt gatt,
                 BluetoothGattCharacteristic characteristic, int status) {
             super.onCharacteristicRead(gatt, characteristic, status);
-
-            caLeGattCharacteristicReadCallback(gatt, characteristic,
-                                               characteristic.getValue(), status);
         }
 
         @Override
@@ -212,8 +197,7 @@ public class CaLeClientInterface {
                 BluetoothGattCharacteristic characteristic, int status) {
             super.onCharacteristicWrite(gatt, characteristic, status);
 
-            caLeGattCharacteristicWriteCallback(gatt, characteristic,
-                                                characteristic.getValue(), status);
+            caLeGattCharacteristicWriteCallback(gatt, characteristic.getValue(), status);
         }
 
         @Override
@@ -221,16 +205,13 @@ public class CaLeClientInterface {
                 BluetoothGattCharacteristic characteristic) {
             super.onCharacteristicChanged(gatt, characteristic);
 
-            caLeGattCharacteristicChangedCallback(gatt, characteristic,
-                                                  characteristic.getValue());
+            caLeGattCharacteristicChangedCallback(gatt, characteristic.getValue());
         }
 
         @Override
         public void onDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor descriptor,
                 int status) {
             super.onDescriptorRead(gatt, descriptor, status);
-
-            caLeGattDescriptorReadCallback(gatt, descriptor, status);
         }
 
         @Override
@@ -238,21 +219,17 @@ public class CaLeClientInterface {
                 int status) {
             super.onDescriptorWrite(gatt, descriptor, status);
 
-            caLeGattDescriptorWriteCallback(gatt, descriptor, status);
+            caLeGattDescriptorWriteCallback(gatt, status);
         }
 
         @Override
         public void onReliableWriteCompleted(BluetoothGatt gatt, int status) {
             super.onReliableWriteCompleted(gatt, status);
-
-            caLeGattReliableWriteCompletedCallback(gatt, status);
         }
 
         @Override
         public void onReadRemoteRssi(BluetoothGatt gatt, int rssi, int status) {
             super.onReadRemoteRssi(gatt, rssi, status);
-
-            caLeGattReadRemoteRssiCallback(gatt, rssi, status);
         }
     };
 
@@ -292,4 +269,5 @@ public class CaLeClientInterface {
         }
     };
 }
+
 

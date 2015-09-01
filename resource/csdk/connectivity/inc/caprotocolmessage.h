@@ -18,8 +18,8 @@
  *
  ******************************************************************/
 /**
- * @file caprotocolmessage.h
- * @brief This file contains common function for handling protocol messages.
+ * @file
+ * This file contains common function for handling protocol messages.
  */
 
 #ifndef CA_PROTOCOL_MESSAGE_H_
@@ -53,13 +53,10 @@ typedef uint32_t code_t;
  * generates pdu structure from the given information.
  * @param[in]   code                 code of the pdu packet.
  * @param[in]   info                 pdu information.
+ * @param[in]   endpoint             endpoint information.
  * @return  generated pdu.
  */
-coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info);
-
-/**
- * function for generating
- */
+coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info, const CAEndpoint_t *endpoint);
 
 /**
  * extracts request information from received pdu.
@@ -90,11 +87,11 @@ CAResult_t CAGetErrorInfoFromPDU(const coap_pdu_t *pdu, CAErrorInfo_t *errorInfo
  * @param[in]   code                 request or response code.
  * @param[out]  options              options for the request and response.
  * @param[in]   info                 information to create pdu.
- * @param[in]   payload              payload for the request or response consumed.
+ * @param[in]   endpoint             endpoint information.
  * @return  generated pdu.
  */
 coap_pdu_t *CAGeneratePDUImpl(code_t code, coap_list_t *options, const CAInfo_t *info,
-                              const uint8_t *payload, size_t payloadSize);
+                              const CAEndpoint_t *endpoint);
 
 /**
  * parse the URI and creates the options.
@@ -181,7 +178,7 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *
 coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode);
 
 /**
- * get Token fromn received data(pdu).
+ * get Token from received data(pdu).
  * @param[in]    pdu_hdr             header of received pdu.
  * @param[out]   outInfo             information with token received.
  * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).

@@ -126,7 +126,7 @@ namespace OIC
             {
                 sResource->requestObserve(pObserveCB);
             }
-            networkTimeOutHandle = networkTimer.postTimer(CACHE_DEFAULT_EXPIRED_MILLITIME, pTimerCB);
+            networkTimeOutHandle = networkTimer.post(CACHE_DEFAULT_EXPIRED_MILLITIME, pTimerCB);
         }
 
         CacheID DataCache::addSubscriber(CacheCB func, REPORT_FREQUENCY rf, long repeatTime)
@@ -226,8 +226,8 @@ namespace OIC
                 mode = CACHE_MODE::OBSERVE;
             }
 
-            networkTimer.cancelTimer(networkTimeOutHandle);
-            networkTimeOutHandle = networkTimer.postTimer(CACHE_DEFAULT_EXPIRED_MILLITIME, pTimerCB);
+            networkTimer.cancel(networkTimeOutHandle);
+            networkTimeOutHandle = networkTimer.post(CACHE_DEFAULT_EXPIRED_MILLITIME, pTimerCB);
 
             notifyObservers(_rep.getAttributes());
         }
@@ -248,11 +248,11 @@ namespace OIC
 
             if (mode != CACHE_MODE::OBSERVE)
             {
-                networkTimer.cancelTimer(networkTimeOutHandle);
-                networkTimeOutHandle = networkTimer.postTimer(
+                networkTimer.cancel(networkTimeOutHandle);
+                networkTimeOutHandle = networkTimer.post(
                                            CACHE_DEFAULT_EXPIRED_MILLITIME, pTimerCB);
 
-                pollingHandle = pollingTimer.postTimer(CACHE_DEFAULT_REPORT_MILLITIME, pPollingCB);
+                pollingHandle = pollingTimer.post(CACHE_DEFAULT_REPORT_MILLITIME, pPollingCB);
             }
 
             notifyObservers(_rep.getAttributes());
@@ -291,11 +291,11 @@ namespace OIC
                 sResource->cancelObserve();
                 mode = CACHE_MODE::FREQUENCY;
 
-                networkTimer.cancelTimer(networkTimeOutHandle);
-                networkTimeOutHandle = networkTimer.postTimer(
+                networkTimer.cancel(networkTimeOutHandle);
+                networkTimeOutHandle = networkTimer.post(
                                            CACHE_DEFAULT_EXPIRED_MILLITIME, pTimerCB);
 
-                pollingHandle = pollingTimer.postTimer(CACHE_DEFAULT_REPORT_MILLITIME, pPollingCB);
+                pollingHandle = pollingTimer.post(CACHE_DEFAULT_REPORT_MILLITIME, pPollingCB);
                 return;
             }
 

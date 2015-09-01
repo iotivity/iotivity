@@ -29,12 +29,12 @@ namespace OIC
     {
         BundleResource::BundleResource()
         {
-
+            m_pNotiReceiver = nullptr;
         }
 
         BundleResource::~BundleResource()
         {
-
+            m_pNotiReceiver = nullptr;
         }
 
         void BundleResource::registerObserver(NotificationReceiver *pNotiReceiver)
@@ -45,23 +45,26 @@ namespace OIC
         std::list< string > BundleResource::getAttributeNames()
         {
             std::list< string > ret;
-            for (RCSResourceAttributes::iterator it = m_resourceAttributes.begin(); it != m_resourceAttributes.end(); ++it){
+            for (RCSResourceAttributes::iterator it = m_resourceAttributes.begin();
+                 it != m_resourceAttributes.end(); ++it)
+            {
                 ret.push_back(it->key());
             }
             return ret;
         }
 
-        RCSResourceAttributes& BundleResource::getAttributes(){
+        RCSResourceAttributes &BundleResource::getAttributes()
+        {
             return m_resourceAttributes;
         }
 
-        void BundleResource::setAttribute(std::string key, RCSResourceAttributes::Value&& value)
+        void BundleResource::setAttribute(std::string key, RCSResourceAttributes::Value &&value)
         {
-            cout << "Bundle resource set attribute " << value.toString() << "|" << endl;
             m_resourceAttributes[key] = value;
         }
 
-        RCSResourceAttributes::Value BundleResource::getAttribute(const std::string& key){
+        RCSResourceAttributes::Value BundleResource::getAttribute(const std::string &key)
+        {
             cout << "Bundle resource get attribute " << m_resourceAttributes.at(key).toString() << "|" << endl;
             return m_resourceAttributes.at(key);
         }

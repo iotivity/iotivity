@@ -63,7 +63,6 @@ namespace OIC
 
             private:
                 void getConfigDocument(string pathConfigFile);
-                void getCurrentPath(string *pPath);
 
                 bool m_loaded;
                 string m_pathConfigFile;

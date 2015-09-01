@@ -75,7 +75,7 @@ protected:
 
     void MockingFunc()
     {
-        mocks.OnCall(pResource.get(), PrimitiveResource::requestGet).Do([](GetCallback cb){});
+        mocks.OnCall(pResource.get(), PrimitiveResource::requestGet).Do([](GetCallback){});
         mocks.OnCall(pResource.get(), PrimitiveResource::getHost).Return(std::string());
         mocks.OnCallFuncOverload(static_cast< subscribePresenceSig1 >(OC::OCPlatform::subscribePresence)).Return(OC_STACK_OK);
     }
@@ -229,7 +229,7 @@ TEST_F(ResourcePresenceTest,getCB_NormalHandlingIfMessageOC_STACK_OK)
     });
 
     mocks.OnCall(pResource.get(), PrimitiveResource::requestGet).Do(
-                                [](GetCallback callback){
+                                [](GetCallback){
         std::cout <<"End call requestGetFunc()\n";
                     });
     mocks.OnCall(pResource.get(), PrimitiveResource::getHost).Return("address1");

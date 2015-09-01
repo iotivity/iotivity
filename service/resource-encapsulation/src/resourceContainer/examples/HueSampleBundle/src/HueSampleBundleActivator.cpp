@@ -30,10 +30,14 @@ HueSampleBundleActivator *bundle;
 
 HueSampleBundleActivator::HueSampleBundleActivator()
 {
+    m_pResourceContainer = nullptr;
+    m_connector = nullptr;
 }
 
 HueSampleBundleActivator::~HueSampleBundleActivator()
 {
+    m_pResourceContainer = nullptr;
+    m_connector = nullptr;
 }
 
 void HueSampleBundleActivator::activateBundle(ResourceContainerBundleAPI *resourceContainer,

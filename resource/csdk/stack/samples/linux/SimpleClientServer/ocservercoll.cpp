@@ -106,7 +106,7 @@ PrintReceivedMsgInfo(OCEntityHandlerFlag flag, OCEntityHandlerRequest * ehReques
 //The only case when this entity handler is for a non-existing resource.
 OCEntityHandlerResult
 OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest *entityHandlerRequest, char* uri, void* callbackParam)
+        OCEntityHandlerRequest *entityHandlerRequest, char* uri, void* /*callbackParam*/)
 {
     OC_LOG_V(INFO, TAG, "Inside device default entity handler - flags: 0x%x, uri: %s", flag, uri);
 
@@ -156,7 +156,7 @@ OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
 
 OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
                                             OCEntityHandlerRequest * ehRequest,
-                                            void* callback)
+                                            void* /*callback*/)
 {
     OCEntityHandlerResult ret = OC_EH_OK;
     OCEntityHandlerResponse response;
@@ -323,7 +323,7 @@ OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
 }
 
 OCEntityHandlerResult OCEntityHandlerLightCb(OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest * ehRequest,void* callbackParam)
+        OCEntityHandlerRequest * ehRequest,void* /*callbackParam*/)
 {
     OCEntityHandlerResult ret = OC_EH_OK;
     OCEntityHandlerResponse response;
@@ -388,7 +388,7 @@ OCEntityHandlerResult OCEntityHandlerLightCb(OCEntityHandlerFlag flag,
 }
 
 OCEntityHandlerResult OCEntityHandlerFanCb(OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest * ehRequest, void* callback)
+        OCEntityHandlerRequest * ehRequest, void* /*callback*/)
 {
     OCEntityHandlerResult ret = OC_EH_OK;
     OCEntityHandlerResponse response;

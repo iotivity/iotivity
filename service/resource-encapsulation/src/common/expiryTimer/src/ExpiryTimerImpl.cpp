@@ -20,144 +20,208 @@
 
 #include "ExpiryTimerImpl.h"
 
-#include <unistd.h>
-#include <cstdlib>
-#include <utility>
+#include "RCSException.h"
 
-ExpiryTimerImpl* ExpiryTimerImpl::s_instance = nullptr;
-std::once_flag* ExpiryTimerImpl::s_flag = new std::once_flag;
-
-ExpiryTimerImpl::ExpiryTimerImpl()
+namespace OIC
 {
-    m_engine = std::default_random_engine(m_device());
-    m_checkerThread = std::thread(&ExpiryTimerImpl::runChecker, this);
-}
-
-ExpiryTimerImpl::~ExpiryTimerImpl()
-{
-    m_checkerThread.join();
-}
-
-ExpiryTimerImpl* ExpiryTimerImpl::getInstance()
-{
-    std::call_once(*s_flag, [](){ s_instance = new ExpiryTimerImpl(); });
-    return s_instance;
-}
-
-ExpiryTimerImpl::Id ExpiryTimerImpl::post(DelayInMilliSec millisec, CB cb)
-{
-    Id retID = generateId();
-
-    MilliSeconds delay(millisec);
-    insertTimerCBInfo(countExpireTime(delay), cb, retID);
-
-    return retID;
-}
-
-bool ExpiryTimerImpl::cancel(Id id)
-{
-    bool ret = false;
-    std::lock_guard<std::mutex> lockf(m_mutex);
-    for(auto it: m_timerCBList)
+    namespace Service
     {
-        if(it.second.m_id == id)
+
+        namespace
         {
-            if(m_timerCBList.erase(it.first)!=0)
-                ret = true;
-            else
-                ret = false;
+            constexpr ExpiryTimerImpl::Id INVALID_ID{ 0U };
         }
+
+        ExpiryTimerImpl::ExpiryTimerImpl() :
+                m_tasks{ },
+                m_thread{ std::thread(&ExpiryTimerImpl::run, this) },
+                m_mutex{ },
+                m_cond{ },
+                m_stop{ false },
+                m_mt{ std::random_device{ }() },
+                m_dist{ }
+        {
+        }
+
+        ExpiryTimerImpl::~ExpiryTimerImpl()
+        {
+            {
+                std::lock_guard< std::mutex > lock{ m_mutex };
+                m_tasks.clear();
+                m_stop = true;
+            }
+            m_cond.notify_all();
+            m_thread.join();
+        }
+
+        ExpiryTimerImpl* ExpiryTimerImpl::getInstance()
+        {
+            static ExpiryTimerImpl instance;
+            return &instance;
+        }
+
+        std::shared_ptr< TimerTask > ExpiryTimerImpl::post(DelayInMillis delay, Callback cb)
+        {
+            if (delay < 0LL)
+            {
+                throw InvalidParameterException{ "delay can't be negative." };
+            }
+
+            if (!cb)
+            {
+                throw InvalidParameterException{ "callback is empty." };
+            }
+
+            return addTask(convertToTime(Milliseconds{ delay }), std::move(cb), generateId());
+        }
+
+        bool ExpiryTimerImpl::cancel(Id id)
+        {
+            if (id == INVALID_ID) return false;
+
+            std::lock_guard< std::mutex > lock{ m_mutex };
+
+            for(auto it = m_tasks.begin(); it != m_tasks.end(); ++it)
+            {
+                if(it->second->getId() == id)
+                {
+                    m_tasks.erase(it);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        size_t ExpiryTimerImpl::cancelAll(
+                const std::unordered_set< std::shared_ptr<TimerTask > >& tasks)
+        {
+            std::lock_guard< std::mutex > lock{ m_mutex };
+            size_t erased { 0 };
+
+            for(auto it = m_tasks.begin(); it != m_tasks.end();)
+            {
+                if(tasks.count(it->second))
+                {
+                    it = m_tasks.erase(it);
+                    ++erased;
+                }
+                else
+                {
+                    ++it;
+                }
+            }
+            return erased;
+        }
+
+        ExpiryTimerImpl::Milliseconds ExpiryTimerImpl::convertToTime(Milliseconds delay)
+        {
+            const auto now = std::chrono::system_clock::now();
+            return std::chrono::duration_cast< Milliseconds >(now.time_since_epoch()) + delay;
+        }
+
+        std::shared_ptr< TimerTask > ExpiryTimerImpl::addTask(
+                Milliseconds delay, Callback cb, Id id)
+        {
+            std::lock_guard< std::mutex > lock{ m_mutex };
+
+            auto newTask = std::make_shared< TimerTask >(id, std::move(cb));
+            m_tasks.insert({ delay, newTask });
+            m_cond.notify_all();
+
+            return newTask;
+        }
+
+        bool ExpiryTimerImpl::containsId(Id id) const
+        {
+            for (const auto& info : m_tasks)
+            {
+                if (info.second->getId() == id) return true;
+            }
+            return false;
+        }
+
+        ExpiryTimerImpl::Id ExpiryTimerImpl::generateId()
+        {
+            Id newId = m_dist(m_mt);
+
+            std::lock_guard< std::mutex > lock{ m_mutex };
+
+            while (newId == INVALID_ID || containsId(newId))
+            {
+                newId = m_dist(m_mt);
+            }
+            return newId;
+        }
+
+        void ExpiryTimerImpl::executeExpired()
+        {
+            if (m_tasks.empty()) return;
+
+            auto now = std::chrono::system_clock::now().time_since_epoch();
+
+            auto it = m_tasks.begin();
+            for (; it != m_tasks.end() && it->first <= now; ++it)
+            {
+                it->second->execute();
+            }
+
+            m_tasks.erase(m_tasks.begin(), it);
+        }
+
+        ExpiryTimerImpl::Milliseconds ExpiryTimerImpl::remainingTimeForNext() const
+        {
+            const Milliseconds& expiredTime = m_tasks.begin()->first;
+
+            return std::chrono::duration_cast< Milliseconds >(expiredTime -
+                    std::chrono::system_clock::now().time_since_epoch()) + Milliseconds{ 1 };
+        }
+
+        void ExpiryTimerImpl::run()
+        {
+            auto hasTaskOrStop = [this](){ return !m_tasks.empty() || m_stop; };
+
+            std::unique_lock< std::mutex > lock{ m_mutex };
+
+            while(!m_stop)
+            {
+                m_cond.wait(lock, hasTaskOrStop);
+
+                if (m_stop) break;
+
+                m_cond.wait_for(lock, remainingTimeForNext());
+
+                executeExpired();
+            }
+        }
+
+
+        TimerTask::TimerTask(ExpiryTimerImpl::Id id, ExpiryTimerImpl::Callback cb) :
+            m_id{ id },
+            m_callback{ std::move(cb) }
+        {
+        }
+
+        void TimerTask::execute()
+        {
+            if (isExecuted()) return;
+
+            ExpiryTimerImpl::Id id { m_id };
+            m_id = INVALID_ID;
+
+            std::thread(std::move(m_callback), id).detach();
+
+            m_callback = ExpiryTimerImpl::Callback{ };
+        }
+
+        bool TimerTask::isExecuted() const
+        {
+            return m_id == INVALID_ID;
+        }
+
+        ExpiryTimerImpl::Id TimerTask::getId() const
+        {
+            return m_id;
+        }
+
     }
-    return ret;
-}
-
-void ExpiryTimerImpl::insertTimerCBInfo(ExpiredTime msec, CB cb, Id id)
-{
-    TimerCBInfo newInfo{id, cb};
-    std::lock_guard<std::mutex> lockf(m_mutex);
-    m_timerCBList.insert({msec, newInfo});
-    m_cond.notify_all();
-}
-
-ExpiryTimerImpl::ExpiredTime ExpiryTimerImpl::countExpireTime(MilliSeconds msec)
-{
-    auto now = std::chrono::system_clock::now();
-    return std::chrono::duration_cast<MilliSeconds>(now.time_since_epoch()) + msec;
-}
-
-ExpiryTimerImpl::Id ExpiryTimerImpl::generateId()
-{
-    Id retID = m_dist(m_device);
-
-    for(auto it = m_timerCBList.begin(); it != m_timerCBList.end(); )
-     {
-       if(it->second.m_id == retID || retID == 0)
-        {
-            retID = m_dist(m_device);
-            it = m_timerCBList.begin();
-        }
-       else
-       {
-           ++it;
-       }
-     }
-
-    return retID;
-}
-
-void ExpiryTimerImpl::runChecker()
-{
-    while(true)
-    {
-        std::unique_lock<std::mutex> ul(m_mutex);
-
-        if(m_timerCBList.empty())
-        {
-            m_cond.wait(ul);
-        }
-        else
-        {
-            ExpiredTime expireTime;
-            expireTime = m_timerCBList.begin()->first;
-
-            auto now = std::chrono::system_clock::now();
-            MilliSeconds waitTime = expireTime - std::chrono::duration_cast<MilliSeconds>(now.time_since_epoch());
-            m_cond.wait_for(ul, waitTime);
-
-            auto callTime = std::chrono::system_clock::now();
-            runExecutor(std::chrono::duration_cast<MilliSeconds>(callTime.time_since_epoch()));
-        }
-    }
-}
-
-void ExpiryTimerImpl::runExecutor(ExpiredTime expireTime)
-{
-    for(auto it = m_timerCBList.begin(); it != m_timerCBList.end(); ++it)
-    {
-        if(it->first <= expireTime)
-        {
-            ExecutorThread executor(it->second);
-            m_timerCBList.erase(it);
-        }
-        else
-        {
-            break;
-        }
-    }
-}
-
-// ExecutorThread Class
-ExpiryTimerImpl::ExecutorThread::ExecutorThread(TimerCBInfo cbInfo)
-{
-    m_executorThread = std::thread(&ExpiryTimerImpl::ExecutorThread::executorFunc, this, cbInfo);
-}
-
-ExpiryTimerImpl::ExecutorThread::~ExecutorThread()
-{
-    m_executorThread.detach();
-}
-
-void ExpiryTimerImpl::ExecutorThread::executorFunc(TimerCBInfo cbInfo)
-{
-    cbInfo.m_cB(cbInfo.m_id);
 }

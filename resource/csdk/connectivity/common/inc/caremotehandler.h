@@ -35,69 +35,65 @@ extern "C"
 #endif
 
 /**
- * @brief   Creates a new remote endpoint from the input endpoint
- * @param   endpoint       [IN]    endpoint information where the data has to be sent
- * @return  remote endpoint created
+ * Creates a new remote endpoint from the input endpoint.
+ * @param[in]   endpoint           endpoint information where the data has to be sent.
+ * @return  remote endpoint created.
  */
 CAEndpoint_t *CACloneEndpoint(const CAEndpoint_t *endpoint);
 
 /**
- * @brief Allocate CAEndpoint_t instance.
- * @param   flags        [IN]  Transport flag
- * @param   adapter      [IN]  Adapter type
- * @param   address      [IN]  Address
- * @param   port         [IN]  Port
- * @return  #CA_STATUS_OK or Appropriate error code
+ * Allocate CAEndpoint_t instance.
+ * @param[in]   flags          Transport flag.
+ * @param[in]   adapter        Adapter type.
+ * @param[in]   address        Address.
+ * @param[in]   port           Port.
+ * @return  ::CA_STATUS_OK or Appropriate error code.
  */
 CAEndpoint_t *CACreateEndpointObject(CATransportFlags_t flags, CATransportAdapter_t adapter,
                                      const char *address, uint16_t port);
 /**
- * @brief   Destroy remote endpoint
- * @param   endpoint       [IN]    endpoint information where the data has to be sent
- * @return  none
+ * Destroy remote endpoint.
+ * @param[in]   endpoint           endpoint information where the data has to be sent.
  */
 void CAFreeEndpoint(CAEndpoint_t *rep);
 
 /**
- * @brief       duplicates the given info.
+ * duplicates the given info.
  * @param[in]   info    info object to be duplicated.
  * @param[out]  clone   info object to be modified.
- * @return      #CA_STATUS_OK or Appropriate error code if fail to clone.
+ * @return      ::CA_STATUS_OK or Appropriate error code if fail to clone.
  */
 CAResult_t CACloneInfo(const CAInfo_t *info, CAInfo_t *clone);
 
 /**
- * @brief   Creates a new request information
- * @param   request       [IN]    request information that needs to be duplicated
- * @return  duplicated request info object
+ * Creates a new request information.
+ * @param[in]   request           request information that needs to be duplicated.
+ * @return  duplicated request info object.
  */
 CARequestInfo_t *CACloneRequestInfo(const CARequestInfo_t *request);
 
 /**
- * @brief   Destroy the request information
- * @param   request       [IN]    request information that needs to be destroyed
- * @return none
+ * Destroy the request information.
+ * @param[in]   request           request information that needs to be destroyed.
  */
 void CADestroyRequestInfoInternal(CARequestInfo_t *request);
 
 /**
- * @brief   Creates a new response information
- * @param   response       [IN]    response information that needs to be duplicated
- * @return  duplicated response info object
+ * Creates a new response information.
+ * @param[in]   response           response information that needs to be duplicated.
+ * @return  duplicated response info object.
  */
 CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *response);
 
 /**
- * @brief   Destroy the response information
- * @param   response       [IN]    response information that needs to be destroyed
- * @return
+ * Destroy the response information.
+ * @param[in]   response           response information that needs to be destroyed.
  */
 void CADestroyResponseInfoInternal(CAResponseInfo_t *response);
 
 /**
- * @brief   Free the error information
- * @param   errorInfo       [IN]    error information to be freed
- * @return
+ * Free the error information.
+ * @param[in]   errorInfo           error information to be freed.
  */
 void CADestroyErrorInfoInternal(CAErrorInfo_t *errorInfo);
 

@@ -45,34 +45,34 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_releaseQuery
 (JNIEnv *env, jclass clz, jobject queryEngine);
 
 JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_executeContextQuery
-(JNIEnv *env, jclass clz, jint pQueryEngineInstance, jstring jstrContextQuery);
+(JNIEnv *env, jclass clz, jlong pQueryEngineInstance, jstring jstrContextQuery);
 
 JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_registerQueryEvent
-(JNIEnv *env, jclass clz, jint pQueryEngineInstance, jobject queryEngineEvent);
+(JNIEnv *env, jclass clz, jlong pQueryEngineInstance, jobject queryEngineEvent);
 
 JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_killContextQuery
-(JNIEnv *env, jclass clz, jint pQueryEngineInstance, jint cqid);
+(JNIEnv *env, jclass clz, jlong pQueryEngineInstance, jint cqid);
 
 JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_getDataId
-(JNIEnv *env, jclass clz, jint pDataReaderInstance);
+(JNIEnv *env, jclass clz, jlong pDataReaderInstance);
 
 JNIEXPORT jobject JNICALL Java_org_iotivity_service_ssm_CoreController_getAffectedModels
-(JNIEnv *env, jclass clz, jint pDataReaderInstance);
+(JNIEnv *env, jclass clz, jlong pDataReaderInstance);
 
 JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_getModelDataCount
-(JNIEnv *env, jclass clz, jint pDataReaderInstance, jstring jstrModelName);
+(JNIEnv *env, jclass clz, jlong pDataReaderInstance, jstring jstrModelName);
 
 JNIEXPORT jobject JNICALL Java_org_iotivity_service_ssm_CoreController_getModelData
-(JNIEnv *env, jclass clz, jint pDataReaderInstance, jstring jstrModelName, jint jintDataIndex );
+(JNIEnv *env, jclass clz, jlong pDataReaderInstance, jstring jstrModelName, jint jintDataIndex );
 
 JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_getPropertyCount
-(JNIEnv *env, jclass clz, jint pIModelDataInstance );
+(JNIEnv *env, jclass clz, jlong pIModelDataInstance );
 
 JNIEXPORT jstring JNICALL Java_org_iotivity_service_ssm_CoreController_getPropertyName
-(JNIEnv *env, jclass clz, jint pIModelDataInstance, jint propertyIndex );
+(JNIEnv *env, jclass clz, jlong pIModelDataInstance, jint propertyIndex );
 
 JNIEXPORT jstring JNICALL Java_org_iotivity_service_ssm_CoreController_getPropertyValue
-(JNIEnv *env, jclass clz, jint pIModelDataInstance, jint propertyIndex );
+(JNIEnv *env, jclass clz, jlong pIModelDataInstance, jint propertyIndex );
 
 JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_registerReportReceiver
 (JNIEnv *env, jclass clz, jobject reportReceiver );

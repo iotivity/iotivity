@@ -64,7 +64,7 @@ OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
                         const std::vector<std::string>& interfaces)
  :  m_clientWrapper(clientWrapper), m_uri(uri),
     m_resourceId(serverId, m_uri),
-    m_devAddr{ OC_DEFAULT_ADAPTER },
+    m_devAddr{ OC_DEFAULT_ADAPTER, OC_DEFAULT_FLAGS, 0, {0}, 0 },
     m_isObservable(observable), m_isCollection(false),
     m_resourceTypes(resourceTypes), m_interfaces(interfaces),
     m_observeHandle(nullptr)
@@ -76,6 +76,12 @@ OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
         resourceTypes.empty() ||
         interfaces.empty()||
         m_clientWrapper.expired())
+    {
+        throw ResourceInitException(m_uri.empty(), resourceTypes.empty(),
+                interfaces.empty(), m_clientWrapper.expired(), false, false);
+    }
+
+    if (uri.length() == 1 && uri[0] == '/')
     {
         throw ResourceInitException(m_uri.empty(), resourceTypes.empty(),
                 interfaces.empty(), m_clientWrapper.expired(), false, false);
@@ -125,7 +131,7 @@ void OCResource::setHost(const std::string& host)
 
         size_t found = host_token.find(']');
 
-        if(found == std::string::npos)
+        if(found == std::string::npos || found == 0)
         {
             throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
                 m_interfaces.empty(), m_clientWrapper.expired(), false, false);
@@ -141,7 +147,7 @@ void OCResource::setHost(const std::string& host)
     {
         size_t found = host_token.find(':');
 
-        if(found == std::string::npos)
+        if(found == std::string::npos || found == 0)
         {
             throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
                 m_interfaces.empty(), m_clientWrapper.expired(), false, false);

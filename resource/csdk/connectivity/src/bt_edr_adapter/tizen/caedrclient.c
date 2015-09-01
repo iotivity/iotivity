@@ -191,10 +191,9 @@ void CAEDRSocketConnectionStateCallback(int result, bt_socket_connection_state_e
                 device->socketFD = connection->socket_fd;
                 while (device->pendingDataList)
                 {
-                    uint32_t sentData = 0;
                     EDRData *edrData = device->pendingDataList->data;
                     res = CAEDRSendData(device->socketFD, edrData->data,
-                                                     edrData->dataLength, &sentData);
+                                        edrData->dataLength);
                     if (CA_STATUS_OK != res)
                     {
                         OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Failed to send pending data [%s]",
@@ -584,8 +583,9 @@ void CAEDRClientDisconnectAll(void)
 }
 
 
-CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const char *serviceUUID,
-                                      const void *data, uint32_t dataLength, uint32_t *sentLength)
+CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress,
+                                      const uint8_t *data,
+                                      uint32_t dataLength)
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
@@ -593,9 +593,7 @@ CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const char *ser
 
     // Input validation
     VERIFY_NON_NULL(remoteAddress, EDR_ADAPTER_TAG, "Remote address is null");
-    VERIFY_NON_NULL(serviceUUID, EDR_ADAPTER_TAG, "service UUID is null");
     VERIFY_NON_NULL(data, EDR_ADAPTER_TAG, "Data is null");
-    VERIFY_NON_NULL(sentLength, EDR_ADAPTER_TAG, "Sent data length holder is null");
 
     if (0 >= dataLength)
     {
@@ -661,7 +659,7 @@ CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const char *ser
 
         // Make a rfcomm connection with remote BT Device
         if (device->serviceSearched &&
-            CA_STATUS_OK != CAEDRClientConnect(remoteAddress, serviceUUID))
+            CA_STATUS_OK != CAEDRClientConnect(remoteAddress, OIC_EDR_SERVICE_ID))
         {
             OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to make RFCOMM connection!");
 
@@ -669,11 +667,10 @@ CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const char *ser
             CARemoveEDRDeviceFromList(&g_edrDeviceList, remoteAddress);
             return CA_STATUS_FAILED;
         }
-        *sentLength = dataLength;
     }
     else
     {
-        result = CAEDRSendData(device->socketFD, data, dataLength, sentLength);
+        result = CAEDRSendData(device->socketFD, data, dataLength);
         if (CA_STATUS_OK != result)
         {
             OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to send data!");
@@ -685,23 +682,19 @@ CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const char *ser
     return CA_STATUS_OK;
 }
 
-CAResult_t CAEDRClientSendMulticastData(const char *serviceUUID, const void *data,
-                                        uint32_t dataLength, uint32_t *sentLength)
+CAResult_t CAEDRClientSendMulticastData(const uint8_t *data,
+                                        uint32_t dataLength)
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     // Input validation
-    VERIFY_NON_NULL(serviceUUID, EDR_ADAPTER_TAG, "service UUID is null");
     VERIFY_NON_NULL(data, EDR_ADAPTER_TAG, "Data is null");
-    VERIFY_NON_NULL(sentLength, EDR_ADAPTER_TAG, "Sent data length holder is null");
 
     if (0 >= dataLength)
     {
         OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Invalid input: Negative data length!");
         return CA_STATUS_INVALID_PARAM;
     }
-
-    *sentLength = dataLength;
 
     // Send the packet to all OIC devices
     ca_mutex_lock(g_edrDeviceListMutex);
@@ -752,7 +745,7 @@ CAResult_t CAEDRClientSendMulticastData(const char *serviceUUID, const void *dat
         else
         {
             OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN3");
-            result = CAEDRSendData(device->socketFD, data, dataLength, sentLength);
+            result = CAEDRSendData(device->socketFD, data, dataLength);
             if (CA_STATUS_OK != result)
             {
                 OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Failed to send data to [%s] !",
@@ -855,8 +848,10 @@ void CAEDRDataRecvCallback(bt_socket_received_data_s *data, void *userData)
 
     uint32_t sentLength = 0;
 
-    g_edrPacketReceivedCallback(device->remoteAddress, data->data,
-                                (uint32_t)data->data_size, &sentLength);
+    g_edrPacketReceivedCallback(device->remoteAddress,
+                                (uint8_t *) data->data,
+                                (uint32_t) data->data_size,
+                                &sentLength);
 
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
 }

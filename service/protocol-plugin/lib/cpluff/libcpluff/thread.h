@@ -114,7 +114,7 @@ CP_HIDDEN int cpi_is_mutex_locked(cpi_mutex_t *mutex);
 
 #ifdef __cplusplus
 }
-#endif //__cplusplus 
+#endif //__cplusplus
 
 #endif //CP_THREADS
 #endif //THREAD_H_
