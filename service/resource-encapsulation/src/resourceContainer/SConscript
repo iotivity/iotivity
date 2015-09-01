@@ -127,7 +127,7 @@ resource_container_env.InstallTarget([res_container_static,res_container_shared]
 ######################################################################
 # build soft sensor sample bundle
 ######################################################################
-if target_os == 'linux':
+if target_os in ['linux', 'android']:
 	ss_resource_bundle_env = resource_container_env.Clone()
 	ss_resource_bundle_env.AppendUnique(CCFLAGS = ['-fPIC'])
 

@@ -287,7 +287,16 @@ namespace OIC
         {
             SCOPE_LOG_F(DEBUG, TAG);
 
-            return getCachedAttributes().at(key);
+            //check whether key is available or not
+            RCSResourceAttributes cachedAttributes= getCachedAttributes();
+            if(cachedAttributes.contains(key))
+            {
+                return getCachedAttributes().at(key);
+            }
+            else
+            {
+                throw BadRequestException{ "Requested Attribute is not present" };
+            }
         }
 
         std::string RCSRemoteResourceObject::getUri() const
