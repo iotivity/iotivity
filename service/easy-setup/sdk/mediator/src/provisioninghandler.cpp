@@ -165,6 +165,7 @@ OCStackApplicationResult ProvisionEnrolleeResponse(void* ctx, OCDoHandle handle,
                 if(ps == 1)
                 {
                     OIC_LOG_V(DEBUG, TAG, "PS is proper");
+                    input = input->next;
                     continue;
                 }
                 else{
@@ -172,7 +173,7 @@ OCStackApplicationResult ProvisionEnrolleeResponse(void* ctx, OCDoHandle handle,
                     provInfo = PrepareProvisioingStatusCB(clientResponse,
                             DEVICE_NOT_PROVISIONED);
                     cbData(provInfo);
-
+                    return OC_STACK_DELETE_TRANSACTION;
                 }
             }
 
@@ -181,6 +182,7 @@ OCStackApplicationResult ProvisionEnrolleeResponse(void* ctx, OCDoHandle handle,
                 if(!strcmp(tnn, netProvInfo->netAddressInfo.WIFI.ssid))
                 {
                     OIC_LOG_V(DEBUG, TAG, "SSID is proper");
+                    input = input->next;
                     continue;
                 }
                 else{
@@ -188,6 +190,7 @@ OCStackApplicationResult ProvisionEnrolleeResponse(void* ctx, OCDoHandle handle,
                     provInfo = PrepareProvisioingStatusCB(clientResponse,
                             DEVICE_NOT_PROVISIONED);
                     cbData(provInfo);
+                    return OC_STACK_DELETE_TRANSACTION;
                 }
             }
             const char* cd;
@@ -195,6 +198,7 @@ OCStackApplicationResult ProvisionEnrolleeResponse(void* ctx, OCDoHandle handle,
                 if(!strcmp(cd,netProvInfo->netAddressInfo.WIFI.pwd))
                 {
                     OIC_LOG_V(DEBUG, TAG, "Password is proper");
+                    input = input->next;
                     continue;
                 }
                 else{
@@ -202,6 +206,7 @@ OCStackApplicationResult ProvisionEnrolleeResponse(void* ctx, OCDoHandle handle,
                     provInfo = PrepareProvisioingStatusCB(clientResponse,
                             DEVICE_NOT_PROVISIONED);
                     cbData(provInfo);
+                    return OC_STACK_DELETE_TRANSACTION;
                 }
             }
 
@@ -300,7 +305,8 @@ OCStackApplicationResult ProvisionEnrolleeResponse(void* ctx, OCDoHandle handle,
 
 
 
-OCStackResult ProvisionEnrollee(OCQualityOfService qos, const char* query, const char* resUri) {
+OCStackResult ProvisionEnrollee(OCQualityOfService qos, const char* query, const char* resUri,
+                                    OCDevAddr *destination) {
     OIC_LOG_V(INFO, TAG, "\n\nExecuting ProvisionEnrollee%s", __func__);
 
 
@@ -312,7 +318,7 @@ OCStackResult ProvisionEnrollee(OCQualityOfService qos, const char* query, const
 
     OIC_LOG_V(DEBUG, TAG, "OCPayload ready for ProvisionEnrollee");
 
-    OCStackResult ret = InvokeOCDoResource(query, OC_REST_PUT, OC_HIGH_QOS,
+    OCStackResult ret = InvokeOCDoResource(query, OC_REST_PUT, destination, OC_HIGH_QOS,
             ProvisionEnrolleeResponse, payload, NULL, 0);
 
     return ret;
@@ -355,58 +361,45 @@ OCStackApplicationResult GetProvisioningStatusResponse(void* ctx,
 
     char query[OIC_STRING_MAX_VALUE] = { '\0' };
 
+    if(NULL == clientResponse->payload)
 
-    if (clientResponse->payload) {
+    {
+        OIC_LOG_V(DEBUG, TAG, "OCClientResponse is NULL");
 
-        if(clientResponse->payload && clientResponse->payload->type != PAYLOAD_TYPE_REPRESENTATION)
+        provInfo = PrepareProvisioingStatusCB(clientResponse,
+                DEVICE_NOT_PROVISIONED);
+        cbData(provInfo);
 
-        {
-            OIC_LOG_V(DEBUG, TAG, "Incoming payload not a representation");
-            return OC_STACK_DELETE_TRANSACTION;
-        }
+        return OC_STACK_DELETE_TRANSACTION;
+    }
 
-        OCRepPayload* input = (OCRepPayload*)(clientResponse->payload);
-        if(!input)
-        {
-            OIC_LOG_V(DEBUG, TAG, "Failed To parse");
-            return OC_STACK_DELETE_TRANSACTION;
-        }
-        OIC_LOG_V(DEBUG, TAG, "resUri = %s",input->uri);
+    OCRepPayload* repPayload = (OCRepPayload*)clientResponse->payload;
 
-        char resURI[MAX_URI_LENGTH]={'\0'};
+    OIC_LOG_V(DEBUG, TAG, "repPayload URI = %s",repPayload->uri);
 
-        strncpy(resURI, input->uri, sizeof(resURI));
+    snprintf(query, sizeof(query), UNICAST_PROV_STATUS_QUERY,
+            clientResponse->addr->addr,
+            IP_PORT, repPayload->uri);
 
-        snprintf(query, sizeof(query), UNICAST_PROV_STATUS_QUERY,
-                clientResponse->addr->addr,
-                IP_PORT, resURI);
+    //OCPayloadLogRep(DEBUG,TAG,input);
 
-        //OCPayloadLogRep(DEBUG,TAG,input);
-
-        if (ProvisionEnrollee(OC_HIGH_QOS, query, resURI) != OC_STACK_OK) {
-            OIC_LOG(INFO, TAG,
-                    "GetProvisioningStatusResponse received NULL clientResponse. \
-            Invoking Provisioing Status Callback");
-            provInfo = PrepareProvisioingStatusCB(clientResponse,
-                    DEVICE_NOT_PROVISIONED);
-            cbData(provInfo);
-
-            return OC_STACK_DELETE_TRANSACTION;
-        }
-    } else {
+    if (ProvisionEnrollee(OC_HIGH_QOS, query, OC_RSRVD_ES_URI_PROV,
+                          clientResponse->addr) != OC_STACK_OK) {
         OIC_LOG(INFO, TAG,
                 "GetProvisioningStatusResponse received NULL clientResponse. \
         Invoking Provisioing Status Callback");
         provInfo = PrepareProvisioingStatusCB(clientResponse,
                 DEVICE_NOT_PROVISIONED);
         cbData(provInfo);
+
         return OC_STACK_DELETE_TRANSACTION;
     }
+
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-OCStackResult InvokeOCDoResource(const char* query, OCMethod method,
-        OCQualityOfService qos, OCClientResponseHandler cb,OCRepPayload* request,
+OCStackResult InvokeOCDoResource(const char* query, OCMethod method, const OCDevAddr *dest,
+        OCQualityOfService qos, OCClientResponseHandler cb,OCRepPayload* payload,
         OCHeaderOption * options, uint8_t numOptions) {
     OCStackResult ret;
     OCCallbackData cbData;
@@ -415,7 +408,7 @@ OCStackResult InvokeOCDoResource(const char* query, OCMethod method,
     cbData.context = (void*) DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-    ret = OCDoResource(NULL, method, query, 0, &request->base, OC_CONNTYPE, qos,
+    ret = OCDoResource(NULL, method, query, dest, (OCPayload*)payload, OC_CONNTYPE, qos,
             &cbData, options, numOptions);
 
     if (ret != OC_STACK_OK) {
@@ -426,7 +419,9 @@ OCStackResult InvokeOCDoResource(const char* query, OCMethod method,
     return ret;
 }
 
-OCStackResult GetProvisioningStatus(OCQualityOfService qos, const char* query) {
+OCStackResult GetProvisioningStatus(OCQualityOfService qos,
+                                         const char* query,
+                                         const OCDevAddr *destination) {
     OCStackResult ret = OC_STACK_ERROR;
     OCHeaderOption options[MAX_HEADER_OPTIONS];
 
@@ -444,8 +439,8 @@ OCStackResult GetProvisioningStatus(OCQualityOfService qos, const char* query) {
     memcpy(options[1].optionData, option1, sizeof(option1));
     options[1].optionLength = 10;
 
-    ret = InvokeOCDoResource(query, OC_REST_GET, OC_HIGH_QOS,
-            GetProvisioningStatusResponse, NULL, options, 2);
+    ret = InvokeOCDoResource(query, OC_REST_GET, destination, OC_HIGH_QOS,
+                             GetProvisioningStatusResponse, NULL, options, 2);
     return ret;
 }
 
@@ -505,11 +500,22 @@ OCStackApplicationResult FindProvisioningResourceResponse(void* ctx,
         OCDoHandle handle, OCClientResponse * clientResponse) {
     OIC_LOG(INFO, TAG, PCF("Entering FindProvisioningResourceResponse"));
 
+    ProvisioningInfo *provInfo = NULL;
     OCStackApplicationResult response = OC_STACK_DELETE_TRANSACTION;
 
-    ProvisioningInfo *provInfo;
+    if(clientResponse == NULL)
+    {
+        OIC_LOG(ERROR, TAG,
+                "OCClientResponse is NULL");
 
-    if (clientResponse->result != OC_STACK_OK) {
+        provInfo = PrepareProvisioingStatusCB(clientResponse,
+                DEVICE_NOT_PROVISIONED);
+
+        cbData(provInfo);
+        return response;
+    }
+
+    if (clientResponse->result != OC_STACK_OK || NULL == clientResponse->payload) {
         OIC_LOG(ERROR, TAG,
                 "OCStack stop error. Calling Provisioing Status Callback");
 
@@ -520,51 +526,27 @@ OCStackApplicationResult FindProvisioningResourceResponse(void* ctx,
         return response;
     }
 
-    if (clientResponse) {
+    OCDiscoveryPayload* discoveryPayload = (OCDiscoveryPayload*)clientResponse->payload;
 
+    OIC_LOG_V(DEBUG, TAG, "discoveryPayload->resources->uri = %s",
+                                            discoveryPayload->resources->uri);
+    char szQueryUri[64] = { 0 };
 
-        if(clientResponse->payload && clientResponse->payload->type != PAYLOAD_TYPE_REPRESENTATION)
-        {
-            OIC_LOG_V(DEBUG, TAG, "Incoming payload not a representation");
-            return OC_STACK_DELETE_TRANSACTION;
-        }
+    snprintf(szQueryUri, sizeof(szQueryUri), UNICAST_PROV_STATUS_QUERY,
+            clientResponse->devAddr.addr, IP_PORT, discoveryPayload->resources->uri);
+    OIC_LOG_V(DEBUG, TAG, "query before GetProvisioningStatus call = %s", szQueryUri);
 
-        OCRepPayload* discoveryPayload= (OCRepPayload*)(clientResponse->payload);
-        if(!discoveryPayload)
-        {
-            OIC_LOG_V(DEBUG, TAG, "Failed To parse");
-            provInfo = PrepareProvisioingStatusCB(clientResponse,
-                    DEVICE_NOT_PROVISIONED);
-            cbData(provInfo);
-            return response;
-        }
-        OIC_LOG_V(DEBUG, TAG, "resUri = %s",discoveryPayload->uri);
-        char szQueryUri[64] = { 0 };
-
-        snprintf(szQueryUri, sizeof(szQueryUri), UNICAST_PROV_STATUS_QUERY,
-                clientResponse->devAddr.addr, IP_PORT, discoveryPayload->uri);
-        OIC_LOG_V(DEBUG, TAG, "query before GetProvisioningStatus call = %s", szQueryUri);
-
-        if (GetProvisioningStatus(OC_HIGH_QOS, szQueryUri) != OC_STACK_OK) {
-            OIC_LOG(INFO, TAG,
-                    "GetProvisioningStatus returned error. \
-            Invoking Provisioing Status Callback");
-            provInfo = PrepareProvisioingStatusCB(clientResponse,
-                    DEVICE_NOT_PROVISIONED);
-
-            cbData(provInfo);
-            return OC_STACK_DELETE_TRANSACTION;
-        }
-    } else {
-        // clientResponse is invalid
-        OIC_LOG(ERROR, TAG,
-                "Invalid response for Provisioning Discovery request. \
+    if (GetProvisioningStatus(OC_HIGH_QOS, szQueryUri, &clientResponse->devAddr) != OC_STACK_OK) {
+        OIC_LOG(INFO, TAG,
+                "GetProvisioningStatus returned error. \
         Invoking Provisioing Status Callback");
         provInfo = PrepareProvisioingStatusCB(clientResponse,
                 DEVICE_NOT_PROVISIONED);
+
         cbData(provInfo);
-        return response;
+        return OC_STACK_DELETE_TRANSACTION;
     }
+
     return OC_STACK_KEEP_TRANSACTION;
 }
 
@@ -587,7 +569,7 @@ void FindProvisioningResource(void *data)
     ocCBData.context = (void*) DEFAULT_CONTEXT_VALUE;
     ocCBData.cd = NULL;
 
-    ret = OCDoResource(NULL, OC_REST_GET, szQueryUri, 0, 0, OC_CONNTYPE,
+    ret = OCDoResource(NULL, OC_REST_DISCOVER, szQueryUri, NULL, NULL, OC_CONNTYPE,
             OC_LOW_QOS, &ocCBData, NULL, 0);
 
     if (ret != OC_STACK_OK) {

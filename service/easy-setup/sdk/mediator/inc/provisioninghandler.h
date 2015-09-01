@@ -54,16 +54,18 @@ void listeningFunc(void*);
 OCStackApplicationResult ProvisionEnrolleeResponse(void* ctx, OCDoHandle handle,
         OCClientResponse * clientResponse);
 
-OCStackResult ProvisionEnrollee(OCQualityOfService qos, const char* query, const char* resUri);
+OCStackResult ProvisionEnrollee(OCQualityOfService qos, const char* query, const char* resUri,
+                                    OCDevAddr *destination);
 
 OCStackApplicationResult GetProvisioningStatusResponse(void* ctx,
         OCDoHandle handle, OCClientResponse * clientResponse);
 
-OCStackResult InvokeOCDoResource(const char* query, OCMethod method,
+OCStackResult InvokeOCDoResource(const char* query, OCMethod method, const OCDevAddr *dest,
         OCQualityOfService qos, OCClientResponseHandler cb,OCRepPayload * request,
         OCHeaderOption * options, uint8_t numOptions);
 
-OCStackResult GetProvisioningStatus(OCQualityOfService qos, const char* query);
+OCStackResult GetProvisioningStatus(OCQualityOfService qos, const char* query,
+                                         const OCDevAddr *destination);
 
 OCStackResult StartProvisioningProcess(const EnrolleeNWProvInfo_t *netInfo,
         OCProvisioningStatusCB provisioningStatusCallback);

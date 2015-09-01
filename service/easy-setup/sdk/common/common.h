@@ -27,7 +27,7 @@
 // Defines
 #define OIC_STRING_MAX_VALUE 100
 #define IPV4_ADDR_SIZE 16
-#define IP_PORT 6298
+#define IP_PORT 55555
 #define NET_WIFI_SSID_SIZE 16
 #define NET_WIFI_PWD_SIZE 16
 
@@ -38,7 +38,7 @@
 
 //The following variable determines the interface (wifi, ethernet etc.)
 //to be used for sending unicast messages. Default set to Ethernet.
-static OCConnectivityType OC_CONNTYPE = CT_ADAPTER_IP;
+static OCConnectivityType OC_CONNTYPE = CT_IP_USE_V4;
 
 static const char * UNICAST_PROVISIONING_QUERY = "coap://%s:%d/oic/res?rt=oic.prov";
 static const char * UNICAST_PROV_STATUS_QUERY = "coap://%s:%d%s";

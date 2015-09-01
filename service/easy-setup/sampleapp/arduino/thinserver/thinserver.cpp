@@ -47,8 +47,8 @@ const char *getResult(OCStackResult result);
 
 PROGMEM const char TAG[] = "ThinServer";
 
-char ssid[] = "EasySetup123";
-char passwd[] = "EasySetup123";
+char ssid[] = "hub2.4G";
+char passwd[] = "11112222";
 
 void EventCallbackInApp(ES_RESULT eventFlag)
 {
