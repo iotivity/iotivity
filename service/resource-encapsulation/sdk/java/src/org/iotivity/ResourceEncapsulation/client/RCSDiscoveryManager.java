@@ -173,7 +173,18 @@ public class RCSDiscoveryManager {
             String resourceType) throws RCSException {
 
         Log.i(LOG_TAG, "discoverResource called");
+
+        if(null == address){
+            Log.e(LOG_TAG, "Empty Address");
+            throw (new RCSException("Empty Address"));
+        }
         String addr = address.getAddress();
+
+        if(null == relativeURI || "" == relativeURI){
+            Log.e(LOG_TAG, "Empty URI");
+            throw (new RCSException("Empty URI"));
+        }
+
         DiscoveryType typeOfDiscovery = address.getTypeOfDiscovery();
         this.discoverResource(addr, typeOfDiscovery.ordinal(), relativeURI,
                 resourceType, m_discoverListener);
