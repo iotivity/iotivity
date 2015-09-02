@@ -36,9 +36,11 @@ JniOnPresenceListener::~JniOnPresenceListener()
     {
         jint ret;
         JNIEnv *env = GetJNIEnv(ret);
-        if (NULL == env) return;
+        if (nullptr == env) return;
+
         env->DeleteWeakGlobalRef(m_jwListener);
         m_jwListener = nullptr;
+
         if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
     }
 }
@@ -51,7 +53,7 @@ void JniOnPresenceListener::onPresenceCallback(OCStackResult result, const unsig
 
     jint ret;
     JNIEnv *env = GetJNIEnv(ret);
-    if (NULL == env) return;
+    if (nullptr == env) return;
 
     if (OC_STACK_OK != result && OC_STACK_PRESENCE_STOPPED != result &&
         OC_STACK_PRESENCE_TIMEOUT != result &&  OC_STACK_PRESENCE_DO_NOT_HANDLE != result)

@@ -36,8 +36,9 @@ JniOnResourceFoundListener::~JniOnResourceFoundListener()
     {
         jint ret;
         JNIEnv *env = GetJNIEnv(ret);
-        if (NULL == env) return;
+        if (nullptr == env) return;
         env->DeleteWeakGlobalRef(m_jwListener);
+        m_jwListener = nullptr;
         if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
     }
 }
@@ -46,7 +47,7 @@ void JniOnResourceFoundListener::foundResourceCallback(std::shared_ptr<OC::OCRes
 {
     jint ret;
     JNIEnv *env = GetJNIEnv(ret);
-    if (NULL == env) return;
+    if (nullptr == env) return;
 
     jobject jListener = env->NewLocalRef(m_jwListener);
     if (!jListener)
