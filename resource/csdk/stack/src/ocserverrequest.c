@@ -487,8 +487,14 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
             responseInfo.info.options[0].protocolID = CA_COAP_ID;
             responseInfo.info.options[0].optionID = COAP_OPTION_OBSERVE;
             responseInfo.info.options[0].optionLength = sizeof(uint32_t);
-            memcpy(responseInfo.info.options[0].optionData,
-                    &(serverRequest->observationOption), sizeof(uint32_t));
+            uint8_t* observationData = (uint8_t*)responseInfo.info.options[0].optionData;
+            uint32_t observationOption= serverRequest->observationOption;
+            size_t i;
+            for (i=sizeof(uint32_t); i; --i)
+            {
+                observationData[i-1] = observationOption & 0xFF;
+                observationOption >>=8;
+            }
 
             // Point to the next header option before copying vender specific header options
             optionsPointer += 1;

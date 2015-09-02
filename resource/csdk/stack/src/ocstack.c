@@ -1059,8 +1059,18 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
                 //First option always with option ID is COAP_OPTION_OBSERVE if it is available.
                 if(responseInfo->info.options[0].optionID == COAP_OPTION_OBSERVE)
                 {
-                    memcpy (&(response.sequenceNumber),
-                            &(responseInfo->info.options[0].optionData), sizeof(uint32_t));
+                    size_t i;
+                    uint32_t observationOption;
+                    uint8_t* optionData = (uint8_t*)responseInfo->info.options[0].optionData;
+                    for (observationOption=0, i=0;
+                            i<sizeof(uint32_t) && i<responseInfo->info.options[0].optionLength;
+                            i++)
+                    {
+                        observationOption =
+                            (observationOption << 8) | optionData[i];
+                    }
+                    response.sequenceNumber = observationOption;
+
                     response.numRcvdVendorSpecificHeaderOptions = responseInfo->info.numOptions - 1;
                     start = 1;
                 }

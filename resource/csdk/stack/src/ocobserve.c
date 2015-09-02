@@ -347,7 +347,7 @@ OCStackResult GenerateObserverId (OCObservationId *observationId)
         resObs = GetObserverUsingId (*observationId);
     } while (NULL != resObs);
 
-    OC_LOG_V(INFO, TAG, "Generated bservation ID is %u", *observationId);
+    OC_LOG_V(INFO, TAG, "GeneratedObservation ID is %u", *observationId);
 
     return OC_STACK_OK;
 exit:
@@ -533,7 +533,7 @@ CreateObserveHeaderOption (CAHeaderOption_t **caHdrOpt,
     }
     tmpHdrOpt[0].protocolID = CA_COAP_ID;
     tmpHdrOpt[0].optionID = COAP_OPTION_OBSERVE;
-    tmpHdrOpt[0].optionLength = sizeof(uint32_t);
+    tmpHdrOpt[0].optionLength = sizeof(uint8_t);
     tmpHdrOpt[0].optionData[0] = observeFlag;
     for (uint8_t i = 0; i < numOptions; i++)
     {
