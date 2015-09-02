@@ -64,10 +64,8 @@ function build_android()
 	# it requires gcc-4.9, currently only android-ndk-r10(for linux)
 	# and windows android-ndk-r10(64bit target version) support these features.
 
-    # Parallel builds for android are disabled as gradle depends on
-    # scons to finish first
-    SCONSFLAGS="-Q" build_android_x86 $1 $2
-    SCONSFLAGS="-Q" build_android_armeabi $1 $2
+	build_android_x86 $1 $2
+	build_android_armeabi $1 $2
 }
 
 function build_android_x86()

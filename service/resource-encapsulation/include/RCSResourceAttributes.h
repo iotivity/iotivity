@@ -34,6 +34,7 @@
 
 #include <functional>
 #include <unordered_map>
+#include <vector>
 
 #include <boost/variant.hpp>
 #include <boost/mpl/contains.hpp>
@@ -81,7 +82,28 @@ namespace OIC
                 double,
                 bool,
                 std::string,
-                RCSResourceAttributes
+                RCSResourceAttributes,
+
+                std::vector< int >,
+                std::vector< double >,
+                std::vector< bool >,
+                std::vector< std::string >,
+                std::vector< RCSResourceAttributes >,
+
+                std::vector< std::vector< int > >,
+                std::vector< std::vector< std::vector< int > > >,
+
+                std::vector< std::vector< double > >,
+                std::vector< std::vector< std::vector< double > > >,
+
+                std::vector< std::vector< bool > >,
+                std::vector< std::vector< std::vector< bool > > >,
+
+                std::vector< std::vector< std::string > >,
+                std::vector< std::vector< std::vector< std::string > > >,
+
+                std::vector< std::vector< RCSResourceAttributes > >,
+                std::vector< std::vector< std::vector< RCSResourceAttributes > > >
             > ValueVariant;
 
             template< typename T, typename V = void,
@@ -158,22 +180,60 @@ namespace OIC
                  * Returns type identifier.
                  *
                  * @return Identifier of type.
+                 *
+                 * @see getBaseTypeId
                  */
                 TypeId getId() const noexcept;
+
+                /**
+                 * Returns the type identifier of a base type of sequence.
+                 *
+                 * For non sequence types, it is equivalent to calling getId.
+                 *
+                 * @return Identifier of type.
+                 *
+                 * @see getDepth
+                 * @see getId
+                 */
+                static TypeId getBaseTypeId(const Type& t) noexcept;
+
+                /**
+                 * Returns the depth of a type.
+                 *
+                 * The return will be zero for non sequence types.
+                 *
+                 * @see getBaseTypeId
+                 */
+                static size_t getDepth(const Type& t) noexcept;
 
                 /**
                  * Factory method to create Type instance from T.
                  *
                  * @return An instance that has TypeId for T.
                  *
-                 * @note T must be supported by Value. Otherwise, it won't be compiled.
+                 * @note T must be supported by Value. Otherwise, it won't compile.
                  *
                  * @see is_supported_type
                  */
                 template < typename T >
-                static Type typeOf(const T& value) noexcept
+                constexpr static Type typeOf(const T&) noexcept
                 {
-                    return Type(value);
+                    return Type{ IndexOfType< T >::value };
+                }
+
+                /**
+                 * Factory method to create Type instance from T.
+                 *
+                 * @return An instance that has TypeId for T.
+                 *
+                 * @note T must be supported by Value. Otherwise, it won't compile.
+                 *
+                 * @see is_supported_type
+                 */
+                template < typename T >
+                constexpr static Type typeOf() noexcept
+                {
+                    return Type{ IndexOfType< T >::value };
                 }
 
                 //! @cond
@@ -181,9 +241,8 @@ namespace OIC
                 //! @endcond
 
             private:
-                template < typename T >
-                explicit Type(const T&) noexcept :
-                    m_which{ IndexOfType< T >::value }
+                constexpr explicit Type(int which) noexcept :
+                    m_which{ which }
                 {
                 }
 
@@ -211,7 +270,7 @@ namespace OIC
 
                 /**
                  * Constructs a Value if T is a supported type.<br/>
-                 *       Otherwise it won't be compiled.
+                 *       Otherwise it won't compile.
                  */
                 template< typename T, typename = typename enable_if_supported< T >::type >
                 Value(T&& value) :
@@ -519,17 +578,22 @@ namespace OIC
         template< typename T >
         struct RCSResourceAttributes::IsSupportedTypeHelper
         {
-            typedef boost::mpl::contains<ValueVariant::types, typename std::decay< T >::type> type;
+            typedef boost::mpl::contains< ValueVariant::types, typename std::decay< T >::type > type;
         };
 
-        template <typename T>
+        template < typename T >
         struct RCSResourceAttributes::IndexOfType
         {
+            static_assert(RCSResourceAttributes::is_supported_type< T >::value,
+                "The type is not supported!");
+
             typedef typename boost::mpl::find< ValueVariant::types, T >::type iter;
             typedef typename boost::mpl::begin< ValueVariant::types >::type mpl_begin;
 
             static constexpr int value = boost::mpl::distance< mpl_begin, iter >::value;
         };
+
+        template < typename T > constexpr int RCSResourceAttributes::IndexOfType< T >::value;
 
         /**
          * @relates RCSResourceAttributes::Type

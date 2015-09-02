@@ -518,7 +518,7 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
                 ehRet = AddOwnerPSK((CAEndpoint_t *)&request->devAddr, newDoxm,
                         (uint8_t*) OXM_JUST_WORKS, strlen(OXM_JUST_WORKS));
 
-                VERIFY_SUCCESS(TAG, ehRet = OC_EH_OK, ERROR);
+                VERIFY_SUCCESS(TAG, OC_EH_OK == ehRet, ERROR);
 
                 // Update new state in persistent storage
                 if (true == UpdatePersistentStorage(gDoxm))

@@ -31,6 +31,8 @@ JniOcResource::JniOcResource(std::shared_ptr<OCResource> resource)
 JniOcResource::~JniOcResource()
 {
     LOGD("~JniOcResource()");
+
+    m_sharedResource->cancelObserve();
     m_sharedResource = NULL;
 
     jint envRet;

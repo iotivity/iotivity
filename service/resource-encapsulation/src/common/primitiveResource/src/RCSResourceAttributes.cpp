@@ -49,6 +49,12 @@ namespace
             return boost::lexical_cast<std::string>(value);
         }
 
+        template< typename T >
+        std::string operator()(const std::vector< T >&) const
+        {
+            return "Vector";
+        }
+
         std::string operator()(std::nullptr_t) const
         {
             return "";
@@ -134,33 +140,54 @@ namespace
                 RCSResourceAttributes::TypeId::ATTRIBUTES;
     };
 
+    template< typename T >
+    struct TypeInfoConverter< std::vector< T > >
+    {
+        static constexpr RCSResourceAttributes::TypeId typeId =
+                RCSResourceAttributes::TypeId::VECTOR;
+    };
+
+    template< typename T >
+    struct SequenceTraits
+    {
+        static constexpr size_t depth = 0;
+        typedef T base_type;
+    };
+
+    template< typename T >
+    struct SequenceTraits< std::vector< T > >
+    {
+        static constexpr size_t depth = SequenceTraits< T >::depth + 1;
+        typedef typename SequenceTraits< T >::base_type base_type;
+    };
+
     struct TypeInfo
     {
-        RCSResourceAttributes::TypeId typeId;
+        RCSResourceAttributes::TypeId m_typeId;
+        RCSResourceAttributes::Type m_baseType;
+        size_t m_depth;
 
-        template< typename TRAIT >
-        constexpr TypeInfo(TRAIT) :
-                typeId{ TRAIT::typeId }
+        template< typename T, typename ST = SequenceTraits < T > >
+        constexpr static TypeInfo get()
         {
+            return { TypeInfoConverter< T >::typeId ,
+                    RCSResourceAttributes::Type::typeOf< typename ST::base_type >(), ST::depth };
         }
 
         template< typename VARIANT, int POS >
-        static constexpr TypeInfo get()
+        constexpr static TypeInfo get()
         {
-            return TypeInfo(TypeInfoConverter<
-                        typename boost::mpl::deref<
-                            typename boost::mpl::advance<
-                                typename boost::mpl::begin< typename VARIANT::types>::type,
-                                boost::mpl::int_< POS >
-                            >::type
-                        >::type >{ });
+            typedef typename boost::mpl::begin< typename VARIANT::types >::type mpl_begin;
+            typedef typename boost::mpl::advance< mpl_begin, boost::mpl::int_< POS > >::type iter;
+
+            return get< typename boost::mpl::deref< iter >::type >();
         }
     };
 
     template< typename VARIANT, int POS >
     constexpr inline std::vector< TypeInfo > getTypeInfo(Int2Type< POS >) noexcept
     {
-        auto&& vec = getTypeInfo< VARIANT >(Int2Type< POS - 1 >{ });
+        auto vec = getTypeInfo< VARIANT >(Int2Type< POS - 1 >{ });
         vec.push_back(TypeInfo::get< VARIANT, POS >());
         return vec;
     }
@@ -174,9 +201,12 @@ namespace
     template< typename VARIANT >
     inline TypeInfo getTypeInfo(int which) noexcept
     {
-        static constexpr int variantEnd = boost::mpl::size< typename VARIANT::types >::value - 1;
+        static constexpr size_t variantSize = boost::mpl::size< typename VARIANT::types >::value;
+        static constexpr size_t variantEnd = variantSize - 1;
         static const std::vector< TypeInfo > typeInfos = getTypeInfo< VARIANT >(
                 Int2Type< variantEnd >{ });
+
+        static_assert(variantSize > 0, "Variant has no type!");
 
         return typeInfos[which];
     }
@@ -236,8 +266,19 @@ namespace OIC
 
         auto RCSResourceAttributes::Type::getId() const noexcept -> TypeId
         {
-            return ::getTypeInfo< ValueVariant >(m_which).typeId;
+            return ::getTypeInfo< ValueVariant >(m_which).m_typeId;
         }
+
+        auto RCSResourceAttributes::Type::getBaseTypeId(const Type& t) noexcept -> TypeId
+        {
+            return ::getTypeInfo< ValueVariant >(t.m_which).m_baseType.getId();
+        }
+
+        size_t RCSResourceAttributes::Type::getDepth(const Type& t) noexcept
+        {
+            return ::getTypeInfo< ValueVariant >(t.m_which).m_depth;
+        }
+
 
         RCSResourceAttributes::Value::Value() :
                 m_data{ new ValueVariant{} }

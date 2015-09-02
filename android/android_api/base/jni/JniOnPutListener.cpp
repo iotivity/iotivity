@@ -39,6 +39,7 @@ JniOnPutListener::~JniOnPutListener()
         if (NULL == env) return;
 
         env->DeleteWeakGlobalRef(m_jwListener);
+        m_jwListener = nullptr;
 
         if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
     }
