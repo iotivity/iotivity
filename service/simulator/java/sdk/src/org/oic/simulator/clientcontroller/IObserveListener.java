@@ -19,7 +19,7 @@
  */
 package org.oic.simulator.clientcontroller;
 
-import org.oic.simulator.serviceprovider.SimulatorResourceModel;
+import org.oic.simulator.SimulatorResourceModel;
 
 /**
  * Provides interface for getting notification when resource model of an
@@ -28,26 +28,8 @@ import org.oic.simulator.serviceprovider.SimulatorResourceModel;
  * asynchronously.
  */
 public interface IObserveListener {
-    /**
-     * This callback method will be called whenever the resource model of an
-     * observed resource gets changed.
-     *
-     * @param representation
-     *            Updated Simulator Resource Model
-     *
-     * @param sequenceNumber
-     *            Observe Sequence number
-     */
-    public void onObserveCompleted(SimulatorResourceModel representation,
-            int sequenceNumber);
+    public void onObserveCompleted(String uId,
+            SimulatorResourceModel representation, int sequenceNumber);
 
-    /**
-     * This callback method will be called whenever the resource model of an
-     * observed resource gets changed and there is a failure in notifying the
-     * updated resource model.
-     *
-     * @param resource
-     *            resource discovered in the network
-     */
     public void onObserveFailed(Throwable ex);
 }

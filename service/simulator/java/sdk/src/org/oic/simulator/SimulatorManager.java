@@ -130,12 +130,13 @@ public class SimulatorManager {
      *
      * @param resourceType
      *            Required resource type
-     *
+     * @param listener
+     *            Interface to receive the discovered remote resources.
+     * 
      * @return OCSimulatorResult - return value of this API. It returns
      *         OC_STACK_OK if success.
-     *
      */
-    public OCSimulatorResult findResource(String resourceType,
+    public static OCSimulatorResult findResource(String resourceType,
             IFindResourceListener listener) {
         OCSimulatorResult result;
         int ordinal = SimulatorManagerNativeInterface.findResource(
@@ -151,11 +152,11 @@ public class SimulatorManager {
      * @param resourceType
      *            Required resource type
      *
-     * @return ArrayList<SimulatorRemoteResource> - returns list of
+     * @return A list of {@link SimulatorRemoteResource} - returns list of
      *         SimulatorRemoteResource
      *
      */
-    public ArrayList<SimulatorRemoteResource> getFoundResources(
+    public static ArrayList<SimulatorRemoteResource> getFoundResources(
             String resourceType) {
         ArrayList<SimulatorRemoteResource> resourceList = SimulatorManagerNativeInterface
                 .getFoundResources(resourceType);

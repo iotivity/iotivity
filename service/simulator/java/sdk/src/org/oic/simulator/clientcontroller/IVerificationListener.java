@@ -15,19 +15,18 @@
  */
 
 /**
- * This file provides interface for post callback information.
+ * This file provides interface for verification callback information.
  */
 package org.oic.simulator.clientcontroller;
 
-import org.oic.simulator.SimulatorResourceModel;
-
 /**
- * An OnPostListener can be registered via the resource post call. Event
- * listeners are notified asynchronously
+ * An OnVerificationListener can be registered via the resource
+ * startVerification call. Event listeners are notified asynchronously.
  */
-public interface IPostListener {
-    public void onPostCompleted(String uId,
-            SimulatorResourceModel representation);
+public interface IVerificationListener {
+    public void onVerificationStarted(String uId, int id);
 
-    public void onPostFailed(Throwable ex);
+    public void onVerificationAborted(String uId, int id);
+
+    public void onVerificationCompleted(String uId, int id);
 }

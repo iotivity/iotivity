@@ -19,14 +19,14 @@
  */
 package org.oic.simulator.clientcontroller;
 
-import org.oic.simulator.serviceprovider.SimulatorResourceModel;
+import org.oic.simulator.SimulatorResourceModel;
 
 /**
  * An OnPutListener can be registered via the resource put call. Event listeners
  * are notified asynchronously
  */
 public interface IPutListener {
-    public void onPutCompleted(SimulatorResourceModel representation);
+    public void onPutCompleted(String uId, SimulatorResourceModel representation);
 
     public void onPutFailed(Throwable ex);
 }

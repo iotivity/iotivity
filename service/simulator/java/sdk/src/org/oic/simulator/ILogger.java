@@ -23,6 +23,9 @@ package org.oic.simulator;
  * Interface for receiving log messages.
  */
 public interface ILogger {
+    /**
+     * This enumeration contains different levels of log.
+     */
     public enum Level {
         INFO, DEBUG, WARNING, ERROR
     }

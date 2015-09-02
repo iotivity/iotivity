@@ -56,6 +56,8 @@ class SimulatorManagerNativeInterface {
      *
      * @param configPath
      *            Path to RAML configuration file.
+     * @param count
+     *            Number of instances.
      * @param listener
      *            Listener for receiving notifications whenever there is a
      *            change in the resource model.
@@ -94,6 +96,9 @@ class SimulatorManagerNativeInterface {
     /**
      * Native function to set the logger listener for receiving the log messages
      * from native layer.
+     * 
+     * @param logger
+     *            Interface to receive log.
      */
     public static native void setLogger(ILogger logger);
 
@@ -101,11 +106,12 @@ class SimulatorManagerNativeInterface {
      * Native function for discovering resources.
      *
      * @param resourceType
-     *            - required resource type
+     *            required resource type
+     * @param listener
+     *            Interface to receive the discovered remote resources.
      *
      * @return OCSimulatorResult - return value of this API. It returns
      *         OC_STACK_OK if success.
-     *
      */
     public static native int findResource(String resourceType,
             IFindResourceListener listener);
@@ -115,7 +121,7 @@ class SimulatorManagerNativeInterface {
      * in the network.
      *
      * @param resourceType
-     *            - required resource type
+     *            required resource type
      *
      * @return ArrayList<SimulatorRemoteResource> - returns list of
      *         SimulatorRemoteResource
@@ -127,7 +133,7 @@ class SimulatorManagerNativeInterface {
     /**
      * Method to get the URI for this resource
      *
-     * @return resource URI
+     * @return Resource URI
      */
     public static native String getUri();
 
@@ -141,7 +147,7 @@ class SimulatorManagerNativeInterface {
     /**
      * Method to get the list of resource interfaces
      *
-     * @return List of resource interface
+     * @return List of resource interfaces
      */
     public static native List<String> getResourceInterfaces();
 
@@ -149,7 +155,7 @@ class SimulatorManagerNativeInterface {
      * Method to get a string representation of the resource's server ID. This
      * is unique per-server independent on how it was discovered.
      *
-     * @return server ID
+     * @return Server ID
      */
     public static native String getServerId();
 }

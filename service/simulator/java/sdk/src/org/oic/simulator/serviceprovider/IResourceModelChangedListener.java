@@ -20,6 +20,8 @@
  */
 package org.oic.simulator.serviceprovider;
 
+import org.oic.simulator.SimulatorResourceModel;
+
 /**
  * Interface for receiving notifications whenever there is a change in the
  * resource model.

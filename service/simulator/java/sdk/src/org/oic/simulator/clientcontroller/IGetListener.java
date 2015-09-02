@@ -19,14 +19,14 @@
  */
 package org.oic.simulator.clientcontroller;
 
-import org.oic.simulator.serviceprovider.SimulatorResourceModel;
+import org.oic.simulator.SimulatorResourceModel;
 
 /**
  * An OnGetListener can be registered via the resource get call. Event listeners
  * are notified asynchronously
  */
 public interface IGetListener {
-    public void onGetCompleted(SimulatorResourceModel representation);
+    public void onGetCompleted(String uId, SimulatorResourceModel representation);
 
     public void onGetFailed(Throwable ex);
 }

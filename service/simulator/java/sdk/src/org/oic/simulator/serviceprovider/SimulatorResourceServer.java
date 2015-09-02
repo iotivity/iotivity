@@ -25,6 +25,7 @@ package org.oic.simulator.serviceprovider;
 import java.util.Vector;
 
 import org.oic.simulator.IAutomation;
+import org.oic.simulator.SimulatorResourceModel;
 
 /**
  * This class represents a resource in the simulator. It provides a set of
@@ -39,12 +40,6 @@ public class SimulatorResourceServer {
 
     private long   nativeHandle;
 
-    /**
-     * Constructor for SimulatorResourceServer.
-     *
-     * @param nativeHandle
-     *            Handle to the native {@link SimulatorResourceServer} object.
-     */
     private SimulatorResourceServer(long nativeHandle) {
         this.nativeHandle = nativeHandle;
     }
@@ -333,6 +328,34 @@ public class SimulatorResourceServer {
      *            Name of the attribute to be deleted
      */
     public native void removeAttribute(String key);
+
+    /**
+     * Native function to set the observation callback.
+     * 
+     * @param observer
+     *            Listener to be notified when clients start/stop observing.
+     */
+    public native void setObserverCallback(IObserver observer);
+
+    /**
+     * Native function to get the details of a list of observers.
+     * 
+     * @return An array of {@link ObserverInfo} objects.
+     */
+    public native ObserverInfo[] getObserversList();
+
+    /**
+     * Native function which sends notification to a specific observer.
+     * 
+     * @param id
+     *            Observer's Id.
+     */
+    public native void notifyObserver(int id);
+
+    /**
+     * Native function which sends notification to all observers.
+     */
+    public native void notifyAllObservers();
 
     /**
      * Native function to release the memory allocated to the native object for

@@ -15,21 +15,26 @@
  */
 
 /**
- * This file provides an interface for receiving notification when an automation completes.
+ * This file provides an interface for receiving the notifications on observers.
  */
-package org.oic.simulator;
+package org.oic.simulator.serviceprovider;
 
 /**
- * Interface for receiving notifications on completion of automation.
+ * Interface for receiving the observe notifications.
  */
-public interface IAutomation {
+public interface IObserver {
     /**
-     * Callback method for receiving automation complete notifications.
+     * This callback method will be called when a new observer is added or an
+     * existing observer is removed.
      * 
      * @param resourceURI
-     *            URI of the resource on which the automation has occurred.
-     * @param automationId
-     *            Unique Id of the automation.
+     *            URI of the resource.
+     * @param state
+     *            Indicates whether an observer is added or removed.
+     * @param observer
+     *            {@link ObserverInfo} object containing the details of
+     *            observer.
      */
-    public void onAutomationComplete(String resourceURI, int automationId);
+    public void onObserverChanged(String resourceURI, int state,
+            ObserverInfo observer);
 }
