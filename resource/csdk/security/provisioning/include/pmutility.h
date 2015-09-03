@@ -53,7 +53,7 @@ OCStackResult PMDeviceDiscovery(unsigned short waittime, bool isOwned, OCProvisi
  *
  * @param[in] pList         List of OCProvisionDev_t.
  */
-void DeleteDeviceList(OCProvisionDev_t **pList);
+void DeleteDeviceList(OCProvisionDev_t *pList);
 
 
 /**

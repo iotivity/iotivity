@@ -566,8 +566,8 @@ int main()
 error:
     deleteACL(gAcl1);
     deleteACL(gAcl2);
-    OCDeleteDiscoveredDevices(&pDeviceList);
-    OCDeleteDiscoveredDevices(&pOwnedList);
+    OCDeleteDiscoveredDevices(pDeviceList);
+    OCDeleteDiscoveredDevices(pOwnedList);
 
     return 0;
 }

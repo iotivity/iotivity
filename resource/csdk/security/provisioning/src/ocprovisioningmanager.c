@@ -117,9 +117,9 @@ OCStackResult OCDoOwnershipTransfer(void* ctx,
  *
  * @param[in] pList Pointer to OCProvisionDev_t which should be deleted.
  */
-void OCDeleteDiscoveredDevices(OCProvisionDev_t **ppList)
+void OCDeleteDiscoveredDevices(OCProvisionDev_t *pList)
 {
-    DeleteDeviceList(ppList);
+    DeleteDeviceList(pList);
 }
 
 /**

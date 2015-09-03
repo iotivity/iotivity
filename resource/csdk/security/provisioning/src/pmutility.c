@@ -87,7 +87,7 @@ OCProvisionDev_t* GetDevice(OCProvisionDev_t **ppDevicesList, const char* addr, 
  * @return OC_STACK_OK for success and errorcode otherwise.
  */
 OCStackResult AddDevice(OCProvisionDev_t **ppDevicesList, const char* addr, const uint16_t port,
-                               OCTransportAdapter adapter, OCConnectivityType connType, OicSecDoxm_t *doxm)
+                        OCTransportAdapter adapter, OCConnectivityType connType, OicSecDoxm_t *doxm)
 {
     if (NULL == addr)
     {
@@ -128,8 +128,8 @@ OCStackResult AddDevice(OCProvisionDev_t **ppDevicesList, const char* addr, cons
  *
  * @return OC_STACK_OK for success and errorcode otherwise.
  */
-OCStackResult UpdateSecurePortOfDevice(OCProvisionDev_t **ppDevicesList, const char *addr, uint16_t port,
-                                        uint16_t securePort)
+OCStackResult UpdateSecurePortOfDevice(OCProvisionDev_t **ppDevicesList, const char *addr,
+                                       uint16_t port, uint16_t securePort)
 {
     OCProvisionDev_t *ptr = GetDevice(ppDevicesList, addr, port);
 
@@ -147,16 +147,16 @@ OCStackResult UpdateSecurePortOfDevice(OCProvisionDev_t **ppDevicesList, const c
 /**
  * This function deletes list of provision target devices
  *
- * @param[in] pList         List of OCProvisionDev_t.
+ * @param[in] pDevicesList         List of OCProvisionDev_t.
  */
-void DeleteDeviceList(OCProvisionDev_t **ppDevicesList)
+void DeleteDeviceList(OCProvisionDev_t *pDevicesList)
 {
-    if(*ppDevicesList)
+    if(pDevicesList)
     {
         OCProvisionDev_t *del = NULL, *tmp = NULL;
-        LL_FOREACH_SAFE(*ppDevicesList, del, tmp)
+        LL_FOREACH_SAFE(pDevicesList, del, tmp)
         {
-            LL_DELETE(*ppDevicesList, del);
+            LL_DELETE(pDevicesList, del);
 
             DeleteDoxmBinData(del->doxm);
             DeletePstatBinData(del->pstat);
@@ -286,23 +286,23 @@ bool PMGenerateQuery(bool isSecure,
                                          prefix, address, port, uri);
                     break;
                 default:
-                    OC_LOG(ERROR, ERROR, "Unknown address format.");
+                    OC_LOG(ERROR, TAG, "Unknown address format.");
                     return false;
             }
             if(snRet >= bufferSize)
             {
-                OC_LOG(ERROR, INFO, "PMGenerateQuery : URI is too long");
+                OC_LOG(ERROR, TAG, "PMGenerateQuery : URI is too long");
                 return false;
             }
             break;
         // TODO: We need to verify tinyDTLS in below cases
         case CT_ADAPTER_GATT_BTLE:
         case CT_ADAPTER_RFCOMM_BTEDR:
-            OC_LOG(ERROR, ERROR, "Not supported connectivity adapter.");
+            OC_LOG(ERROR, TAG, "Not supported connectivity adapter.");
             return false;
             break;
         default:
-            OC_LOG(ERROR, ERROR, "Unknown connectivity adapter.");
+            OC_LOG(ERROR, TAG, "Unknown connectivity adapter.");
             return false;
     }
 

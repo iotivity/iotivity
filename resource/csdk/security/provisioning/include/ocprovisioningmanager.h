@@ -135,9 +135,9 @@ OCStackResult OCProvisionCredentials(void *ctx, OicSecCredType_t type, size_t ke
 /**
  * API to delete memory allocated to linked list created by OCDiscover_XXX_Devices API.
  *
- * @param[in] ppList Pointer to OCProvisionDev_t which should be deleted.
+ * @param[in] pList Pointer to OCProvisionDev_t which should be deleted.
  */
-void OCDeleteDiscoveredDevices(OCProvisionDev_t **ppList);
+void OCDeleteDiscoveredDevices(OCProvisionDev_t *pList);
 
 /**
  * API to delete memory allocated to OCProvisionResult_t list in callback function.

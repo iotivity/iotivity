@@ -28,8 +28,9 @@ using namespace std;
 extern "C" {
 #endif
 
-extern OCStackResult AddDevice(OCProvisionDev_t **ppList, const char* addr, const uint16_t port,
-                               OCTransportAdapter adapter, OicSecDoxm_t *doxm);
+extern OCStackResult AddDevice(OCProvisionDev_t **ppDevicesList, const char* addr,
+                               const uint16_t port, OCTransportAdapter adapter,
+                               OCConnectivityType connType, OicSecDoxm_t *doxm);
 #ifdef __cplusplus
 }
 #endif
@@ -45,32 +46,29 @@ TEST(ProvisionListTest, Addition)
     int cnt =0;
 
     // The first addition
-    res = AddDevice(&gList, "10.20.30.40", 5684, OC_DEFAULT_ADAPTER, pDoxm);
+    res = AddDevice(&gList, "10.20.30.40", 5684, OC_DEFAULT_ADAPTER, CT_IP_USE_V4, pDoxm);
     EXPECT_TRUE(OC_STACK_OK == res);
     EXPECT_TRUE(NULL != gList);
 
     LL_FOREACH(gList,el){ ++cnt; };
-    //LL_COUNT(gList, el, cnt);
     EXPECT_TRUE(1 == cnt);
 
     // Same node must not be inserted
-    res = AddDevice(&gList, "10.20.30.40", 5684, OC_ADAPTER_IP, pDoxm);
+    res = AddDevice(&gList, "10.20.30.40", 5684, OC_ADAPTER_IP, CT_IP_USE_V4, pDoxm);
     EXPECT_TRUE(OC_STACK_OK == res);
     EXPECT_TRUE(NULL != gList);
 
     cnt = 0;
     LL_FOREACH(gList,el){ ++cnt; };
-    //LL_COUNT(gList, el, cnt);
     EXPECT_TRUE(1 == cnt);
 
     // Differnet node must be inserted
-    res = AddDevice(&gList, "110.120.130.140", 6789, OC_DEFAULT_ADAPTER, pDoxm);
+    res = AddDevice(&gList, "110.120.130.140", 6789, OC_DEFAULT_ADAPTER, CT_IP_USE_V4, pDoxm);
     EXPECT_TRUE(OC_STACK_OK == res);
     EXPECT_TRUE(NULL != gList);
 
     cnt = 0;
     LL_FOREACH(gList,el){ ++cnt; };
-    //LL_COUNT(gList, el, cnt);
     EXPECT_TRUE(2 == cnt);
 }
 
@@ -81,10 +79,9 @@ TEST(ProvisionListTest, Deletion)
     int cnt =0;
 
     // Delete whole
-    DeleteDeviceList(&gList);
+    DeleteDeviceList(gList);
     gList = NULL;
 
     LL_FOREACH(gList,el){ ++cnt; };
-    //LL_COUNT(gList, el, cnt);
     EXPECT_TRUE(0 == cnt);
 }
