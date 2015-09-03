@@ -61,7 +61,7 @@ public class MetaPropertiesView extends ViewPart {
     public void createPartControl(Composite parent) {
         parent.setLayout(new GridLayout(1, false));
 
-        tableViewer = new TableViewer(parent, SWT.MULTI | SWT.H_SCROLL
+        tableViewer = new TableViewer(parent, SWT.SINGLE | SWT.H_SCROLL
                 | SWT.V_SCROLL | SWT.FULL_SELECTION | SWT.BORDER);
 
         createColumns(tableViewer);

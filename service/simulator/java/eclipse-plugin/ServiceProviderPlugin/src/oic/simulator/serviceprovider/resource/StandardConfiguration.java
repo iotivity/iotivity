@@ -1,57 +1,84 @@
 package oic.simulator.serviceprovider.resource;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+
+import oic.simulator.serviceprovider.Activator;
+import oic.simulator.serviceprovider.utils.Constants;
+
+import org.eclipse.core.runtime.FileLocator;
+import org.osgi.framework.Bundle;
 
 public class StandardConfiguration {
 
-    private String      configuration_directory_path;
-
-    // A map of resourceType of standard resources as the key and the complete
-    // location of the file as the value
-    Map<String, String> standardResourceConfigurationMap;
+    // A map of filename of standard resources as the key and the complete
+    // location of the file(including the filename) as the value
+    Map<String, String> stdConfigFiles;
 
     public StandardConfiguration() {
-        standardResourceConfigurationMap = new HashMap<String, String>();
+        stdConfigFiles = new HashMap<String, String>();
+        addFiles();
+        populateStandardConfigurationList();
     }
 
-    public String getConfiguration_directory_path() {
-        return configuration_directory_path;
+    private void addFiles() {
+        stdConfigFiles.put(Constants.RAML_FILE_PREFIX + "light.raml", null);
     }
 
-    public void setConfiguration_directory_path(
-            String configuration_directory_path) {
-        this.configuration_directory_path = configuration_directory_path;
+    private void populateStandardConfigurationList() {
+        if (stdConfigFiles.isEmpty()) {
+            return;
+        }
+        Iterator<String> fileItr = stdConfigFiles.keySet().iterator();
+        String fileName;
+        URL url;
+        File file;
+        String filePath;
+        Bundle bundle = Activator.getDefault().getBundle();
+        while (fileItr.hasNext()) {
+            fileName = fileItr.next();
+            url = bundle.getEntry(Constants.CONFIG_DIRECTORY_PATH + "/"
+                    + fileName);
+            if (null == url) {
+                return;
+            }
+            System.out.println("URL: " + url.toExternalForm());
+            try {
+                file = new File(FileLocator.resolve(url).toURI());
+            } catch (URISyntaxException | IOException e) {
+                System.out.println(e.getMessage());
+                return;
+            }
+            filePath = file.getAbsolutePath();
+            System.out.println(filePath);
+            stdConfigFiles.put(fileName, filePath);
+        }
+
+        // Print for debugging purpose
+        Iterator<String> itr = stdConfigFiles.keySet().iterator();
+        String key;
+        while (itr.hasNext()) {
+            key = itr.next();
+            System.out.println("FileName: " + key);
+            System.out.println("FilePath:" + stdConfigFiles.get(key));
+        }
     }
 
     public Map<String, String> getStandardResourceConfigurationList() {
-        return standardResourceConfigurationMap;
+        return stdConfigFiles;
     }
 
     public void setStandardResourceConfigurationList(
-            Map<String, String> standardResourceConfigurationList) {
-        this.standardResourceConfigurationMap = standardResourceConfigurationList;
+            Map<String, String> stdConfigFiles) {
+        this.stdConfigFiles = stdConfigFiles;
     }
 
-    public void addResourceConfiguration(String resourceType,
-            String absolutePath) {
-        if (null != resourceType && resourceType.length() > 0
-                && null != absolutePath && absolutePath.length() > 0) {
-            standardResourceConfigurationMap.put(resourceType, absolutePath);
-        }
-    }
-
-    public String getResourceConfigFilePath(String resourceType) {
-        String path = null;
-        if (null != resourceType && resourceType.length() > 0) {
-            path = standardResourceConfigurationMap.get(resourceType);
-        }
-        return path;
-    }
-
-    public void removeResourceFromConfiguration(String resourceType) {
-        if (null != resourceType && resourceType.length() > 0) {
-            standardResourceConfigurationMap.remove(resourceType);
-        }
+    public String getFilePath(String fileName) {
+        return stdConfigFiles.get(fileName);
     }
 }

@@ -51,6 +51,13 @@
             name="Properties"
             restorable="true">
          </view>
+         <view category="oic.simulator.serviceprovider.category"
+            class="oic.simulator.serviceprovider.view.ResourceObserverView"
+            icon="icons/oic_logo_16x16.png"
+            id="oic.simulator.serviceprovider.view.observer"
+            name="Resource Observers"
+            restorable="true">
+         </view>
    </extension>
    <extension
          point="org.eclipse.ui.perspectiveExtensions">
@@ -76,6 +83,9 @@
          </viewShortcut>
          <viewShortcut
                id="oic.simulator.serviceprovider.view.metaproperties">
+         </viewShortcut>
+         <viewShortcut
+               id="oic.simulator.serviceprovider.view.observer">
          </viewShortcut>
       </perspectiveExtension>
    </extension>

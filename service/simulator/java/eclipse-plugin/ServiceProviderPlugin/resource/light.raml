@@ -1,0 +1,80 @@
+#%RAML 0.8
+#RAML for Light Resource
+title: Resource Light
+version: 1.0
+mediaType : application/json
+schemas:
+- lightPublish: !include oic.light.json
+resourceTypes:
+  - typeDelete:
+      description: mdescription
+      delete:
+        description: mDeletedescription
+
+/oic/light:
+  displayName: Resource Light
+  description: |
+    Resource to be exposed by any OIC Device that can act as Light
+  type: typeDelete
+  get:
+    description: |
+      Get the attributes of light
+    responses:
+      200:
+        description: |
+          Respond with the selector criteria
+        body:
+          application/json:
+            schema: lightPublish
+            example: |
+              {
+              
+              }			  
+  put:
+    description: Publish the resource information.
+    body:
+      application/json:
+        schema: lightPublish
+    responses:
+      200:
+        description: This value is used by to update the attributes.
+        body:
+          application/json:
+            schema: lightPublish
+            example: |
+              {
+              
+              }
+      400:
+        description: not found.
+        body:
+          application/json:
+            schema: lightPublish
+            example: |
+              {
+              
+              }
+  post:
+    description: Publish the resource information.
+    body:
+      application/json:
+        schema: lightPublish
+    responses:
+      200:
+        description: This value is used by to update the attributes.
+        body:
+          application/json:
+            schema: lightPublish
+            example: |
+              {
+              
+              }
+      400:
+        description: not found.
+        body:
+          application/json:
+            schema: lightPublish
+            example: |
+              {
+              
+              }

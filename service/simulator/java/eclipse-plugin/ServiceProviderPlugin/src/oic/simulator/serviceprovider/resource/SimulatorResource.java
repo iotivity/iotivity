@@ -1,32 +1,41 @@
 package oic.simulator.serviceprovider.resource;
 
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.oic.simulator.AutomationType;
-import org.oic.simulator.serviceprovider.SimulatorResourceModel;
+import org.oic.simulator.SimulatorResourceModel;
+import org.oic.simulator.serviceprovider.ObserverInfo;
 import org.oic.simulator.serviceprovider.SimulatorResourceServer;
 
 public class SimulatorResource {
-    private String                         resourceURI;
-    private String                         resourceName;
-    private String                         resourceType;
-    private String                         resourceInterface;
+    private String                              resourceURI;
+    private String                              resourceName;
+    private String                              resourceType;
+    private String                              resourceInterface;
 
     // Native Object references
-    private SimulatorResourceServer        resourceServer;
-    private SimulatorResourceModel         resourceModel;
+    private SimulatorResourceServer             resourceServer;
+    private SimulatorResourceModel              resourceModel;
 
-    private int                            automationId;
+    private int                                 automationId;
 
-    private boolean                        resourceAutomationInProgress;
+    private boolean                             resourceAutomationInProgress;
 
-    private boolean                        attributeAutomationInProgress;
+    private boolean                             attributeAutomationInProgress;
 
-    private int                            automationUpdateInterval;
+    private int                                 automationUpdateInterval;
 
-    private AutomationType                 automationType;
+    private AutomationType                      automationType;
 
-    private Map<String, ResourceAttribute> resourceAttributesMap;
+    private Map<String, LocalResourceAttribute> resourceAttributesMap;
+
+    private Map<Integer, ObserverDetail>        observers;
+
+    public SimulatorResource() {
+        observers = new HashMap<Integer, ObserverDetail>();
+    }
 
     public String getResourceURI() {
         return resourceURI;
@@ -76,12 +85,12 @@ public class SimulatorResource {
         this.resourceModel = resourceModel;
     }
 
-    public Map<String, ResourceAttribute> getResourceAttributesMap() {
+    public Map<String, LocalResourceAttribute> getResourceAttributesMap() {
         return resourceAttributesMap;
     }
 
     public void setResourceAttributesMap(
-            Map<String, ResourceAttribute> resourceAttributesMap) {
+            Map<String, LocalResourceAttribute> resourceAttributesMap) {
         this.resourceAttributesMap = resourceAttributesMap;
     }
 
@@ -126,4 +135,51 @@ public class SimulatorResource {
             boolean attributeAutomationInProgress) {
         this.attributeAutomationInProgress = attributeAutomationInProgress;
     }
+
+    public Map<Integer, ObserverDetail> getObserver() {
+        return observers;
+    }
+
+    public void addObserverInfo(ObserverInfo observer) {
+        if (null == observer) {
+            return;
+        }
+        int id = observer.getId();
+        if (!observers.containsKey(id)) {
+            ObserverDetail obsDetail = new ObserverDetail();
+            obsDetail.setObserverInfo(observer);
+            observers.put(id, obsDetail);
+        }
+    }
+
+    public void removeObserverInfo(ObserverInfo observer) {
+        if (null == observer) {
+            return;
+        }
+        observers.remove(observer.getId());
+    }
+
+    public void printResourceInfo() {
+        System.out.println("Resource URI: " + resourceURI);
+        System.out.println("Resource Name: " + resourceName);
+        System.out.println("Resource type: " + resourceType);
+        System.out.println("Resource Interface: " + resourceInterface);
+        System.out.println("Resource Attributes:-");
+        if (null != resourceAttributesMap) {
+            Iterator<String> attItr = resourceAttributesMap.keySet().iterator();
+            while (attItr.hasNext()) {
+                resourceAttributesMap.get(attItr.next())
+                        .printAttributeDetails();;
+            }
+        }
+    }
+
+    public LocalResourceAttribute getAttribute(String attributeName) {
+        if (null == attributeName || null == resourceAttributesMap
+                || resourceAttributesMap.size() < 1) {
+            return null;
+        }
+        return resourceAttributesMap.get(attributeName);
+    }
+
 }

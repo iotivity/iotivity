@@ -1,4 +1,4 @@
-package oic.simulator.serviceprovider.view;
+package oic.simulator.serviceprovider.view.dialogs;
 
 import java.text.DateFormat;
 import java.util.Date;

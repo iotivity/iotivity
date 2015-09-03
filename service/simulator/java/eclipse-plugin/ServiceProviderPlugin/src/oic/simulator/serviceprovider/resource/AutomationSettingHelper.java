@@ -44,7 +44,7 @@ public class AutomationSettingHelper {
     }
 
     public static List<AutomationSettingHelper> getAutomationSettings(
-            ResourceAttribute attribute) {
+            LocalResourceAttribute attribute) {
         List<AutomationSettingHelper> settingList = null;
         boolean invalidSetting;
         if (null != attribute) {
@@ -53,15 +53,6 @@ public class AutomationSettingHelper {
                 invalidSetting = false;
                 AutomationSettingHelper setting = new AutomationSettingHelper();
                 if (Constants.AUTOMATION_SETTINGS[count]
-                        .equals(Constants.AUTOMATION)) {
-                    setting.setSettingID(Constants.AUTOMATION);
-                    setting.setSettingValue(attribute.isAutomationInProgress() ? Constants.ENABLE
-                            : Constants.DISABLE);
-                    List<String> valueList = new ArrayList<String>();
-                    valueList.add(Constants.ENABLE);
-                    valueList.add(Constants.DISABLE);
-                    setting.setAllowedValues(valueList);
-                } else if (Constants.AUTOMATION_SETTINGS[count]
                         .equals(Constants.AUTOMATION_TYPE)) {
                     setting.setSettingID(Constants.AUTOMATION_TYPE);
                     setting.setSettingValue(attribute.getAutomationType()

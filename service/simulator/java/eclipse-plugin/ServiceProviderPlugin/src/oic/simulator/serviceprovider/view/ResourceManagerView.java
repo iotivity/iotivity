@@ -25,6 +25,7 @@ import org.eclipse.swt.events.MenuEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -67,7 +68,6 @@ public class ResourceManagerView extends ViewPart {
                     public void run() {
                         if (null != treeViewer) {
                             treeViewer.refresh();
-                            treeViewer.expandAll();
                         }
 
                         // Trigger the visibility of delete button
@@ -84,7 +84,6 @@ public class ResourceManagerView extends ViewPart {
                     public void run() {
                         if (null != treeViewer) {
                             treeViewer.refresh();
-                            treeViewer.expandAll();
                         }
 
                         // Trigger the visibility of delete button
@@ -192,6 +191,8 @@ public class ResourceManagerView extends ViewPart {
                             String configFilePath;
                             int count;
                             configFilePath = createWizard.getConfigFilePath();
+                            System.out.println("Resultant config file path is "
+                                    + configFilePath);
                             count = createWizard.getResourceCount();
 
                             if (count <= 1) {
@@ -255,10 +256,8 @@ public class ResourceManagerView extends ViewPart {
                         TreeItem selectedItem = (TreeItem) e.item;
                         if (null != selectedItem) {
                             String selectedItemText = selectedItem.getText();
-                            if (!isSelectedTreeItemACategory(selectedItemText)) {
-                                selectedItemText = Utility
-                                        .displayNameToUri(selectedItemText);
-                            }
+                            selectedItemText = Utility
+                                    .displayNameToUri(selectedItemText);
                             // Propagate this selection change event to manager
                             resourceManager
                                     .resourceSelectionChanged(selectedItemText);
@@ -279,9 +278,6 @@ public class ResourceManagerView extends ViewPart {
                         }
                         final String selectedItem = resourceTreeHead
                                 .getSelection()[0].getText();
-                        if (isSelectedTreeItemACategory(selectedItem)) {
-                            return;
-                        }
                         MenuItem startItem = new MenuItem(menu, SWT.NONE);
                         startItem.setText(Constants.START_RESOURCE_AUTOMATION);
                         startItem.addSelectionListener(new SelectionAdapter() {
@@ -341,14 +337,6 @@ public class ResourceManagerView extends ViewPart {
         }
     }
 
-    private boolean isSelectedTreeItemACategory(String selectedItem) {
-        boolean category = false;
-        if (null != selectedItem) {
-            category = resourceManager.isTypeExist(selectedItem);
-        }
-        return category;
-    }
-
     public void addManagerListeners() {
         resourceManager
                 .addResourceListChangedUIListener(resourceListChangedListener);
@@ -382,25 +370,17 @@ class TreeContentProvider implements ITreeContentProvider {
 
     @Override
     public Object[] getChildren(Object parent) {
-        String resType = (String) parent;
-        List<String> members;
-        members = Activator.getDefault().getResourceManager()
-                .getURIListOfResourceType(resType);
-        if (null == members) {
-            members = new ArrayList<String>();
-        }
-        return members.toArray();
+        return null;
     }
 
     @Override
     public Object[] getElements(Object parent) {
-        List<String> deptTypes;
-        deptTypes = Activator.getDefault().getResourceManager()
-                .getResourceTypeList();
-        if (null == deptTypes) {
-            deptTypes = new ArrayList<String>();
+        List<String> uriList;
+        uriList = Activator.getDefault().getResourceManager().getURIList();
+        if (null == uriList) {
+            uriList = new ArrayList<String>();
         }
-        return deptTypes.toArray();
+        return uriList.toArray();
     }
 
     @Override
@@ -410,10 +390,6 @@ class TreeContentProvider implements ITreeContentProvider {
 
     @Override
     public boolean hasChildren(Object parent) {
-        String resType = (String) parent;
-        if (Activator.getDefault().getResourceManager().isTypeExist(resType)) {
-            return true;
-        }
         return false;
     }
 }
@@ -422,9 +398,14 @@ class TreeLabelProvider extends LabelProvider {
     @Override
     public String getText(Object element) {
         String value = (String) element;
-        if (!Activator.getDefault().getResourceManager().isTypeExist(value)) {
-            value = Utility.uriToDisplayName(value);
-        }
+        value = Utility.uriToDisplayName(value);
         return value;
+    }
+
+    @Override
+    public Image getImage(Object element) {
+        ResourceManager resourceManager = Activator.getDefault()
+                .getResourceManager();
+        return resourceManager.getImage((String) element);
     }
 }

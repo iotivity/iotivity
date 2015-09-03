@@ -16,6 +16,7 @@ import oic.simulator.serviceprovider.listener.ILogUIListener;
 import oic.simulator.serviceprovider.manager.LogManager;
 import oic.simulator.serviceprovider.utils.Constants;
 import oic.simulator.serviceprovider.view.dialogs.FilterDialog;
+import oic.simulator.serviceprovider.view.dialogs.LogDetailsDialog;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;

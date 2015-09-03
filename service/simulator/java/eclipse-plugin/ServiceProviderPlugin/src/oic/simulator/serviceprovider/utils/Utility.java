@@ -1,5 +1,10 @@
 package oic.simulator.serviceprovider.utils;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+
 public class Utility {
 
     public static String uriToDisplayName(String uri) {
@@ -27,6 +32,42 @@ public class Utility {
             }
         }
         return result;
+    }
+
+    public static String fileNameToDisplay(String fileName) {
+        if (null == fileName || fileName.length() < 1) {
+            return null;
+        }
+        // Remove the RAML file standard prefix
+        int len = Constants.RAML_FILE_PREFIX.length();
+        if (len > 0) {
+            if (fileName.startsWith(Constants.RAML_FILE_PREFIX)) {
+                fileName = fileName.substring(len);
+            }
+        }
+
+        // Removing the file extension
+        String[] token = fileName.split(Constants.SPLIT_BY_DOT_PATTERN);
+        int tokLen = token.length;
+        String result = null;
+        if (tokLen - 2 >= 0) {
+            result = token[tokLen - 2];
+        }
+        return result;
+    }
+
+    public static String displayToFileName(String displayName) {
+        if (null == displayName || displayName.length() < 1) {
+            return null;
+        }
+        String fileName;
+        // Adding the prefix
+        fileName = Constants.RAML_FILE_PREFIX + displayName;
+
+        // Adding the file extension
+        fileName = fileName + Constants.RAML_FILE_EXTENSION;
+
+        return fileName;
     }
 
     public static boolean isUriComplete(String uri) {
@@ -75,5 +116,17 @@ public class Utility {
             }
         }
         return result;
+    }
+
+    public static List<String> convertSetToList(Set<String> typeSet) {
+        if (null == typeSet) {
+            return null;
+        }
+        List<String> list = new ArrayList<String>();
+        Iterator<String> typeItr = typeSet.iterator();
+        while (typeItr.hasNext()) {
+            list.add(typeItr.next());
+        }
+        return list;
     }
 }

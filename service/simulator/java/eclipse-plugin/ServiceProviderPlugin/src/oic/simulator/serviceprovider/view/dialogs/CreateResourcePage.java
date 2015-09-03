@@ -1,6 +1,11 @@
 package oic.simulator.serviceprovider.view.dialogs;
 
+import java.util.Iterator;
+import java.util.Map;
+
+import oic.simulator.serviceprovider.Activator;
 import oic.simulator.serviceprovider.utils.Constants;
+import oic.simulator.serviceprovider.utils.Utility;
 
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
@@ -147,25 +152,24 @@ public class CreateResourcePage extends WizardPage {
     }
 
     private void populateResourceTypeCombo() {
-        /*
-         * List<String> configList; configList =
-         * Activator.getDefault().getManager().getResourceConfigurationList();
-         * if(null != configList) { Iterator<String> itr =
-         * configList.iterator(); while(itr.hasNext()) {
-         * resourceTypeCmb.add(itr.next()); } }
-         */
-
-        // TODO: Temporarily adding a resourceType for testing
-        resourceTypeCmb.add("oic.light");
+        Map<String, String> configMap;
+        configMap = Activator.getDefault().getResourceManager()
+                .getResourceConfigurationList();
+        if (null != configMap) {
+            Iterator<String> itr = configMap.keySet().iterator();
+            String fileName;
+            String shortName;
+            while (itr.hasNext()) {
+                fileName = itr.next();
+                shortName = Utility.fileNameToDisplay(fileName);
+                System.out.println("Display name of " + fileName + " is "
+                        + shortName);
+                resourceTypeCmb.add(shortName);
+            }
+        }
 
         // By default, selecting the first item in the resourceType combo
-        if (resourceTypeCmb.getItemCount() > 0) {
-            resourceTypeCmb.select(0);
-            // TODO: Get the RAML configuration file path of the selected
-            // resource
-            // configFilePath =
-            // Activator.getManager().getConfigFilePath(resourceTypeCmb.getItem(0));
-        }
+        selectInitialItem();
     }
 
     private void addUIListeners() {
@@ -174,12 +178,7 @@ public class CreateResourcePage extends WizardPage {
             public void widgetSelected(SelectionEvent e) {
 
                 // Set the configFilePath to the first item in the combo
-                if (resourceTypeCmb.getItemCount() > 0)
-                    resourceTypeCmb.select(0);
-
-                // TODO: Temporarily adding some random config file path
-                // To be removed after implementing resource configuration
-                configFilePath = "/Samplelight";
+                selectInitialItem();
 
                 setPageComplete(isSelectionDone());
 
@@ -227,10 +226,17 @@ public class CreateResourcePage extends WizardPage {
                 if (index >= 0) {
                     String selectedItem = resourceTypeCmb.getItem(index);
                     if (null != selectedItem) {
-                        // TODO: Get the RAML configuration file path of the
-                        // selected resource
-                        // configFilePath =
-                        // Activator.getDefault().getManager().getConfigFilePath(selectedItem);
+                        // Convert the selectedItem to the fully qualified file
+                        // name.
+                        selectedItem = Utility.displayToFileName(selectedItem);
+                        System.out
+                                .println("Selected file name:" + selectedItem);
+
+                        // Get the RAML configuration file path of the selected
+                        // resource
+                        configFilePath = Activator.getDefault()
+                                .getResourceManager()
+                                .getConfigFilePath(selectedItem);
 
                         setPageComplete(isSelectionDone());
                     }
@@ -267,6 +273,18 @@ public class CreateResourcePage extends WizardPage {
                 setPageComplete(isSelectionDone());
             }
         });
+    }
+
+    private void selectInitialItem() {
+        if (resourceTypeCmb.getItemCount() > 0) {
+            resourceTypeCmb.select(0);
+            String fileName = Utility.displayToFileName(resourceTypeCmb
+                    .getText());
+            System.out.println("Selected file in combo:" + fileName);
+            configFilePath = Activator.getDefault().getResourceManager()
+                    .getConfigFilePath(fileName);
+            System.out.println("Selected file's path:" + configFilePath);
+        }
     }
 
     private boolean isSelectionDone() {

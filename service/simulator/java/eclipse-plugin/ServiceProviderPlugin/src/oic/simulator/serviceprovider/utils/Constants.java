@@ -3,6 +3,9 @@ package oic.simulator.serviceprovider.utils;
 import org.oic.simulator.AutomationType;
 
 public class Constants {
+
+    public static final String         CONFIG_DIRECTORY_PATH            = "/resource";
+
     public static final String         UNDERSCORE                       = "_";
     public static final String         FORWARD_SLASH                    = "/";
 
@@ -29,7 +32,7 @@ public class Constants {
     public static final String         UPDATE_INTERVAL_IN_MS            = "Update Interval(ms)";
 
     public static final String[]       AUTOMATION_SETTINGS              = {
-            AUTOMATION, AUTOMATION_TYPE, UPDATE_INTERVAL_IN_MS         };
+            AUTOMATION_TYPE, UPDATE_INTERVAL_IN_MS                     };
 
     public static final int            AUTOMATION_SETTINGS_COUNT        = AUTOMATION_SETTINGS.length;
 
@@ -45,8 +48,7 @@ public class Constants {
 
     public static final int            PROPER_LOG_TIME_TOKEN_LENGTH     = 3;
 
-    public static final String[]       BROWSE_RAML_FILTER_EXTENSIONS    = new String[] {
-            "*.raml", "*"                                              };
+    public static final String[]       BROWSE_RAML_FILTER_EXTENSIONS    = new String[] { "*.raml" };
     public static final String[]       SAVE_LOG_FILTER_EXTENSIONS       = new String[] {
             "*.log", "*"                                               };
 
@@ -69,4 +71,10 @@ public class Constants {
 
     public static final String         DELETE_PAGE_TITLE                = "Delete Resource";
     public static final String         DELETE_PAGE_MESSAGE              = "Select the resource(s) to be deleted";
+
+    public static final String         RAML_FILE_PREFIX                 = "";
+
+    public static final String         RAML_FILE_EXTENSION              = ".raml";
+
+    public static final String         SPLIT_BY_DOT_PATTERN             = "\\.";
 }

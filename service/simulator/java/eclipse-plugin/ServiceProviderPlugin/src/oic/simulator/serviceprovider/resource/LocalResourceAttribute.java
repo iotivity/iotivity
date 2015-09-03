@@ -1,41 +1,40 @@
 package oic.simulator.serviceprovider.resource;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 import org.oic.simulator.AutomationType;
-import org.oic.simulator.SimulatorResourceAttribute;
+import org.oic.simulator.ResourceAttribute;
+import org.oic.simulator.ResourceAttribute.Type;
 
-public class ResourceAttribute {
+public class LocalResourceAttribute {
 
     // Native object reference
-    private SimulatorResourceAttribute resourceAttribute;
+    private ResourceAttribute resourceAttribute;
 
-    private String                     attributeName;
-    private Object                     attributeValue;
-    private AttributeValueType         attributeType;
-    private List<Object>               allowedValues;
+    private String            attributeName;
+    private Object            attributeValue;
+    private Type              attValType;
+    private Type              attValBaseType;
+    private List<Object>      allowedValues;
 
-    private Object                     minValue;
-    private Object                     maxValue;
+    private Object            minValue;
+    private Object            maxValue;
 
-    private int                        automationId;
+    private int               automationId;
 
-    private boolean                    automationInProgress;
+    private boolean           automationInProgress;
 
-    private int                        automationUpdateInterval;
+    private int               automationUpdateInterval;
 
-    private AutomationType             automationType;
+    private AutomationType    automationType;
 
-    public SimulatorResourceAttribute getResourceAttribute() {
+    public ResourceAttribute getResourceAttribute() {
         return resourceAttribute;
     }
 
-    public void setResourceAttribute(
-            SimulatorResourceAttribute resourceAttribute) {
+    public void setResourceAttribute(ResourceAttribute resourceAttribute) {
         this.resourceAttribute = resourceAttribute;
     }
 
@@ -53,14 +52,6 @@ public class ResourceAttribute {
 
     public void setAttributeValue(Object attributeValue) {
         this.attributeValue = attributeValue;
-    }
-
-    public AttributeValueType getAttributeType() {
-        return attributeType;
-    }
-
-    public void setAttributeType(AttributeValueType attributeType) {
-        this.attributeType = attributeType;
     }
 
     public List<Object> getAllowedValues() {
@@ -130,14 +121,29 @@ public class ResourceAttribute {
         this.automationId = automationId;
     }
 
-    public static ResourceAttribute clone(ResourceAttribute attribute) {
-        ResourceAttribute clone = null;
+    public Type getAttValType() {
+        return attValType;
+    }
+
+    public void setAttValType(Type attValType) {
+        this.attValType = attValType;
+    }
+
+    public Type getAttValBaseType() {
+        return attValBaseType;
+    }
+
+    public void setAttValBaseType(Type attValBaseType) {
+        this.attValBaseType = attValBaseType;
+    }
+
+    public static LocalResourceAttribute clone(LocalResourceAttribute attribute) {
+        LocalResourceAttribute clone = null;
         if (null != attribute) {
-            clone = new ResourceAttribute();
+            clone = new LocalResourceAttribute();
             clone.setAttributeName(attribute.getAttributeName());
             clone.setAttributeValue(attribute.getAttributeValue());
             clone.setAllowedValues(attribute.getAllowedValues());
-            clone.setAttributeType(attribute.getAttributeType());
             clone.setMinValue(attribute.getMinValue());
             clone.setMaxValue(attribute.getMaxValue());
             clone.setAutomationInProgress(attribute.isAutomationInProgress());
@@ -149,33 +155,48 @@ public class ResourceAttribute {
         return clone;
     }
 
-    // This method gives all known possible values of the attribute
-    // It takes allowed values or range of values whichever is available
-    public Set<Object> getValues() {
-        Set<Object> valueList = new HashSet<Object>();
+    // This method gives all known possible values of the attribute in string
+    // format. It takes allowed values or range of values whichever is available
+    public List<String> getAllValues() {
+        List<String> valueList = new ArrayList<String>();
         if (null != allowedValues) {
+            System.out.println("In getAllValues() - AllowedValues available");
             Iterator<Object> values = allowedValues.iterator();
+            Object value;
             while (values.hasNext()) {
-                valueList.add(values.next());
+                value = values.next();
+                if (null != value) {
+                    valueList.add(String.valueOf(value));
+                }
             }
         } else if (null != minValue && null != maxValue) {
-            if (attributeValue.getClass() == Integer.class) {
+            System.out.println("In getAllValues() - Range available");
+            if (attValBaseType == Type.INT) {
                 int min = (Integer) minValue;
                 int max = (Integer) maxValue;
                 for (int value = min; value <= max; value++) {
-                    valueList.add(value);
+                    valueList.add(String.valueOf(value));
                 }
-            } else if (attributeValue.getClass() == Double.class) {
+            } else if (attValBaseType == Type.DOUBLE) {
                 double min = (Double) minValue;
                 double max = (Double) maxValue;
                 for (double value = min; value <= max; value++) {
-                    valueList.add(value);
+                    valueList.add(String.valueOf(value));
                 }
             }
         }
-        if (valueList.size() < 1) {
-            valueList.add(attributeValue);
+        if (valueList.size() < 1 && null != attributeValue) {
+            valueList.add(String.valueOf(attributeValue));
         }
         return valueList;
+    }
+
+    public void printAttributeDetails() {
+        System.out.println("Attribute Name:" + attributeName);
+        System.out.println("Attribute Value:" + attributeValue);
+        System.out.println("Attribute Base Type:" + attValBaseType);
+        System.out.println("Attribute Type:" + attValType);
+        System.out.println("Allowed Values:" + allowedValues);
+        System.out.println("Range:" + minValue + " to " + maxValue);
     }
 }
