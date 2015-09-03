@@ -25,7 +25,7 @@
 
 #include "ScopeLogger.h"
 
-#define TAG PCF("RCSRemoteResourceObject")
+#define TAG "RCSRemoteResourceObject"
 
 namespace
 {

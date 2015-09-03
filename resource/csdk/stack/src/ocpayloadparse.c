@@ -26,7 +26,7 @@
 #include "ocpayload.h"
 #include "cbor.h"
 
-#define TAG PCF("OCPayloadParse")
+#define TAG "OCPayloadParse"
 
 static OCStackResult OCParseDiscoveryPayload(OCPayload** outPayload, CborValue* arrayVal);
 static OCStackResult OCParseDevicePayload(OCPayload** outPayload, CborValue* arrayVal);
@@ -132,7 +132,7 @@ static OCStackResult OCParseSecurityPayload(OCPayload** outPayload, CborValue* a
     }
     else
     {
-        OC_LOG_V(ERROR, TAG, PCF("Cbor main value not a map"));
+        OC_LOG(ERROR, TAG, "Cbor main value not a map");
         return OC_STACK_MALFORMED_RESPONSE;
     }
 
@@ -140,7 +140,7 @@ static OCStackResult OCParseSecurityPayload(OCPayload** outPayload, CborValue* a
 
     if(err)
     {
-        OC_LOG_V(ERROR, TAG, "Cbor in error condition");
+        OC_LOG(ERROR, TAG, "Cbor in error condition");
         OICFree(securityData);
         return OC_STACK_MALFORMED_RESPONSE;
     }
@@ -170,7 +170,7 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload** outPayload, CborValue* 
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
         if(!resource)
         {
-            OC_LOG_V(ERROR, TAG, "Memory allocation failed");
+            OC_LOG(ERROR, TAG, "Memory allocation failed");
             OCDiscoveryPayloadDestroy(out);
             return OC_STACK_NO_MEMORY;
         }
@@ -204,7 +204,7 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload** outPayload, CborValue* 
                     llPtr = resource->types;
                     if(!llPtr)
                     {
-                        OC_LOG(ERROR, TAG, PCF("Memory allocation failed"));
+                        OC_LOG(ERROR, TAG, "Memory allocation failed");
                         OICFree(resource->uri);
                         OICFree(resource->sid);
                         OICFree(resource);
@@ -218,7 +218,7 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload** outPayload, CborValue* 
                     llPtr = llPtr->next;
                     if(!llPtr)
                     {
-                        OC_LOG(ERROR, TAG, PCF("Memory allocation failed"));
+                        OC_LOG(ERROR, TAG, "Memory allocation failed");
                         OICFree(resource->uri);
                         OICFree(resource->sid);
                         OCFreeOCStringLL(resource->types);
@@ -229,7 +229,7 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload** outPayload, CborValue* 
                 }
                 else
                 {
-                        OC_LOG(ERROR, TAG, PCF("Unknown state in resource type copying"));
+                        OC_LOG(ERROR, TAG, "Unknown state in resource type copying");
                         OICFree(resource->uri);
                         OICFree(resource->sid);
                         OCFreeOCStringLL(resource->types);
@@ -259,7 +259,7 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload** outPayload, CborValue* 
                     llPtr = resource->interfaces;
                     if(!llPtr)
                     {
-                        OC_LOG_V(ERROR, TAG, "Memory allocation failed");
+                        OC_LOG(ERROR, TAG, "Memory allocation failed");
                         OICFree(resource->uri);
                         OICFree(resource->sid);
                         OCFreeOCStringLL(resource->types);
@@ -274,7 +274,7 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload** outPayload, CborValue* 
                     llPtr = llPtr->next;
                     if(!llPtr)
                     {
-                        OC_LOG_V(ERROR, TAG, "Memory allocation failed");
+                        OC_LOG(ERROR, TAG, "Memory allocation failed");
                         OICFree(resource->uri);
                         OICFree(resource->sid);
                         OCFreeOCStringLL(resource->types);
@@ -286,7 +286,7 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload** outPayload, CborValue* 
                 }
                 else
                 {
-                        OC_LOG(ERROR, TAG, PCF("Unknown state in resource interfaces copying"));
+                        OC_LOG(ERROR, TAG, "Unknown state in resource interfaces copying");
                         OICFree(resource->uri);
                         OICFree(resource->sid);
                         OCFreeOCStringLL(resource->types);
@@ -422,7 +422,7 @@ static OCStackResult OCParseDevicePayload(OCPayload** outPayload, CborValue* arr
     }
     else
     {
-        OC_LOG(ERROR, TAG, PCF("Root device node was not a map"));
+        OC_LOG(ERROR, TAG, "Root device node was not a map");
         return OC_STACK_MALFORMED_RESPONSE;
     }
 
@@ -538,7 +538,7 @@ static OCStackResult OCParsePlatformPayload(OCPayload** outPayload, CborValue* a
             OICFree(info.platformVersion);
             OICFree(info.supportUrl);
             OICFree(info.systemTime);
-            OC_LOG(ERROR, TAG, PCF("CBOR error In ParsePlatformPayload"));
+            OC_LOG(ERROR, TAG, "CBOR error In ParsePlatformPayload");
             return OC_STACK_MALFORMED_RESPONSE;
         }
 
@@ -553,7 +553,7 @@ static OCStackResult OCParsePlatformPayload(OCPayload** outPayload, CborValue* a
     }
     else
     {
-        OC_LOG(ERROR, TAG, PCF("Root device node was not a map"));
+        OC_LOG(ERROR, TAG, "Root device node was not a map");
         return OC_STACK_MALFORMED_RESPONSE;
     }
 }
@@ -868,7 +868,7 @@ static OCStackResult OCParseRepPayload(OCPayload** outPayload, CborValue* arrayV
         if(err)
         {
             OCRepPayloadDestroy(rootPayload);
-            OC_LOG_V(ERROR, TAG, PCF("CBOR error in ParseRepPayload"));
+            OC_LOG(ERROR, TAG, "CBOR error in ParseRepPayload");
             return OC_STACK_MALFORMED_RESPONSE;
         }
     }
@@ -923,7 +923,7 @@ static OCStackResult OCParsePresencePayload(OCPayload** outPayload, CborValue* a
         if(err)
         {
             OCPayloadDestroy(*outPayload);
-            OC_LOG_V(ERROR, TAG, PCF("CBOR error Parse Presence Payload"));
+            OC_LOG(ERROR, TAG, "CBOR error Parse Presence Payload");
             return OC_STACK_MALFORMED_RESPONSE;
         }
 
@@ -936,7 +936,7 @@ static OCStackResult OCParsePresencePayload(OCPayload** outPayload, CborValue* a
     }
     else
     {
-        OC_LOG(ERROR, TAG, PCF("Root presence node was not a map"));
+        OC_LOG(ERROR, TAG, "Root presence node was not a map");
         return OC_STACK_MALFORMED_RESPONSE;
     }
 }

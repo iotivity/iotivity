@@ -30,7 +30,7 @@
 #include "iotvticalendar.h"
 #include <string.h>
 
-#define TAG PCF("SRM-PE")
+#define TAG "SRM-PE"
 
 /**
  * Return the uint16_t CRUDN permission corresponding to passed CAMethod_t.
@@ -208,11 +208,11 @@ static bool IsAccessWithinValidTime(const OicSecAcl_t *acl)
         if(IOTVTICAL_VALID_ACCESS ==  IsRequestWithinValidTime(acl->periods[i],
             acl->recurrences[i]))
         {
-            OC_LOG(INFO, TAG, PCF("Access request is in allowed time period"));
+            OC_LOG(INFO, TAG, "Access request is in allowed time period");
             return true;
         }
     }
-    OC_LOG(INFO, TAG, PCF("Access request is in invalid time period"));
+    OC_LOG(INFO, TAG, "Access request is in invalid time period");
     return false;
 
 #else
@@ -250,7 +250,7 @@ static bool IsAccessWithinValidTime(const OicSecAcl_t *acl)
  */
 void ProcessAccessRequest(PEContext_t *context)
 {
-    OC_LOG(INFO, TAG, PCF("Entering ProcessAccessRequest()"));
+    OC_LOG(INFO, TAG, "Entering ProcessAccessRequest()");
     if(NULL != context)
     {
         const OicSecAcl_t *currentAcl = NULL;
@@ -260,20 +260,20 @@ void ProcessAccessRequest(PEContext_t *context)
         context->retVal = ACCESS_DENIED_SUBJECT_NOT_FOUND;
         do
         {
-            OC_LOG(INFO, TAG, PCF("ProcessAccessRequest(): getting ACL..."));
+            OC_LOG(INFO, TAG, "ProcessAccessRequest(): getting ACL...");
             currentAcl = GetACLResourceData(context->subject, &savePtr);
             if(NULL != currentAcl)
             {
                 // Found the subject, so how about resource?
-                OC_LOG(INFO, TAG, PCF("ProcessAccessRequest(): \
-                    found ACL matching subject."));
+                OC_LOG(INFO, TAG, "ProcessAccessRequest(): \
+                    found ACL matching subject.");
                 context->retVal = ACCESS_DENIED_RESOURCE_NOT_FOUND;
-                OC_LOG(INFO, TAG, PCF("ProcessAccessRequest(): \
-                    Searching for resource..."));
+                OC_LOG(INFO, TAG, "ProcessAccessRequest(): \
+                    Searching for resource...");
                 if(IsResourceInAcl(context->resource, currentAcl))
                 {
-                    OC_LOG(INFO, TAG, PCF("ProcessAccessRequest(): \
-                        found matching resource in ACL."));
+                    OC_LOG(INFO, TAG, "ProcessAccessRequest(): \
+                        found matching resource in ACL.");
                     context->matchingAclFound = true;
 
                     // Found the resource, so it's down to valid period & permission.
@@ -291,27 +291,27 @@ void ProcessAccessRequest(PEContext_t *context)
             }
             else
             {
-                OC_LOG(INFO, TAG, PCF("ProcessAccessRequest(): \
-                    no ACL found matching subject ."));
+                OC_LOG(INFO, TAG, "ProcessAccessRequest(): \
+                    no ACL found matching subject .");
             }
         }
         while((NULL != currentAcl) && (false == context->matchingAclFound));
 
         if(IsAccessGranted(context->retVal))
         {
-            OC_LOG(INFO, TAG, PCF("ProcessAccessRequest(): \
-                Leaving ProcessAccessRequest(ACCESS_GRANTED)"));
+            OC_LOG(INFO, TAG, "ProcessAccessRequest(): \
+                Leaving ProcessAccessRequest(ACCESS_GRANTED)");
         }
         else
         {
-            OC_LOG(INFO, TAG, PCF("ProcessAccessRequest(): \
-                Leaving ProcessAccessRequest(ACCESS_DENIED)"));
+            OC_LOG(INFO, TAG, "ProcessAccessRequest(): \
+                Leaving ProcessAccessRequest(ACCESS_DENIED)");
         }
     }
     else
     {
-        OC_LOG(INFO, TAG, PCF("ProcessAccessRequest(): \
-            Leaving ProcessAccessRequest(context is NULL)"));
+        OC_LOG(INFO, TAG, "ProcessAccessRequest(): \
+            Leaving ProcessAccessRequest(context is NULL)");
     }
 
 }

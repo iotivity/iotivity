@@ -38,7 +38,7 @@ namespace OIC
 
         class DataCache;
 
-#define CACHE_TAG  PCF("CACHE")
+#define CACHE_TAG  "CACHE"
 #define CACHE_DEFAULT_REPORT_MILLITIME 10000
 #define CACHE_DEFAULT_EXPIRED_MILLITIME 15000
 

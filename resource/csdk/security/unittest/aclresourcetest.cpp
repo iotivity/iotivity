@@ -39,7 +39,7 @@
 
 using namespace std;
 
-#define TAG  PCF("SRM-ACL-UT")
+#define TAG  "SRM-ACL-UT"
 
 #ifdef __cplusplus
 extern "C" {

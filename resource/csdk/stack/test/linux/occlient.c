@@ -27,7 +27,7 @@
 #include <ocstack.h>
 #include <logger.h>
 
-#define TAG PCF("occlient")
+#define TAG ("occlient")
 
 int gQuitFlag = 0;
 

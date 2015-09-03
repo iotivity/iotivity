@@ -36,7 +36,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define TAG  PCF("SRM-AMACL")
+#define TAG  "SRM-AMACL"
 
 OicSecAmacl_t *gAmacl = NULL;
 static OCResourceHandle gAmaclHandle = NULL;
@@ -259,7 +259,7 @@ static OCEntityHandlerResult HandleAmaclGetRequest (const OCEntityHandlerRequest
 
     OICFree(jsonStr);
 
-    OC_LOG_V (INFO, TAG, PCF("%s RetVal %d"), __func__ , ehRet);
+    OC_LOG_V (INFO, TAG, "%s RetVal %d", __func__ , ehRet);
     return ehRet;
 }
 
@@ -294,7 +294,7 @@ static OCEntityHandlerResult HandleAmaclPostRequest (const OCEntityHandlerReques
     // Send payload to request originator
     SendSRMResponse(ehRequest, ehRet, NULL);
 
-    OC_LOG_V (INFO, TAG, PCF("%s RetVal %d"), __func__ , ehRet);
+    OC_LOG_V (INFO, TAG, "%s RetVal %d", __func__ , ehRet);
     return ehRet;
 }
 
@@ -316,7 +316,7 @@ OCEntityHandlerResult AmaclEntityHandler (OCEntityHandlerFlag flag,
 
     if (flag & OC_REQUEST_FLAG)
     {
-        OC_LOG (INFO, TAG, PCF("Flag includes OC_REQUEST_FLAG"));
+        OC_LOG (INFO, TAG, "Flag includes OC_REQUEST_FLAG");
         switch (ehRequest->method)
         {
             case OC_REST_GET:
@@ -353,7 +353,7 @@ OCStackResult CreateAmaclResource()
 
     if (OC_STACK_OK != ret)
     {
-        OC_LOG (FATAL, TAG, PCF("Unable to instantiate Amacl resource"));
+        OC_LOG (FATAL, TAG, "Unable to instantiate Amacl resource");
         DeInitAmaclResource();
     }
     return ret;

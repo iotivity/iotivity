@@ -32,7 +32,7 @@ namespace OIC
 {
     namespace Service
     {
-        #define BROKER_TAG PCF("BROKER")
+        #define BROKER_TAG "BROKER"
         #define BROKER_DEVICE_PRESENCE_TIMEROUT (15000l)
         #define BROKER_SAFE_SECOND (5l)
         #define BROKER_SAFE_MILLISECOND (BROKER_SAFE_SECOND * (1000))

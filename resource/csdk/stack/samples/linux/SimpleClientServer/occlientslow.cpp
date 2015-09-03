@@ -125,7 +125,7 @@ OCStackApplicationResult getReqCB(void* ctx,
     OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
     OC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
     OC_LOG(INFO, TAG, "Get Response =============> ");
-    OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+    OC_LOG_PAYLOAD(INFO, clientResponse->payload);
 
     if(clientResponse->rcvdVendorSpecificHeaderOptions &&
             clientResponse->numRcvdVendorSpecificHeaderOptions)
@@ -163,7 +163,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle /*handle*/,
 
         OC_LOG_V(INFO, TAG, "Discovered @ %s:%u =============> ",
             clientResponse->devAddr.addr, clientResponse->devAddr.port);
-        OC_LOG_PAYLOAD (INFO, TAG, clientResponse->payload);
+        OC_LOG_PAYLOAD (INFO, clientResponse->payload);
 
         endpoint = clientResponse->devAddr;
 

@@ -28,7 +28,7 @@
 #include "ocresourcehandler.h"
 #include "cbor.h"
 
-#define TAG PCF("OCPayloadConvert")
+#define TAG "OCPayloadConvert"
 // Arbitrarily chosen size that seems to contain the majority of packages
 #define INIT_SIZE (255)
 
@@ -67,13 +67,13 @@ OCStackResult OCConvertPayload(OCPayload* payload, uint8_t** outPayload, size_t*
     #undef CborNeedsUpdating
     if (!payload)
     {
-        OC_LOG(ERROR, TAG, PCF("Payload parameter NULL"));
+        OC_LOG(ERROR, TAG, "Payload parameter NULL");
         return OC_STACK_INVALID_PARAM;
     }
 
     if (!outPayload || !size)
     {
-        OC_LOG(ERROR, TAG, PCF("Out parameter/s parameter NULL"));
+        OC_LOG(ERROR, TAG, "Out parameter/s parameter NULL");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -482,7 +482,7 @@ static int64_t OCConvertArray(CborEncoder* parent, const OCRepPayloadValueArray*
         switch(valArray->type)
         {
             case OCREP_PROP_NULL:
-                OC_LOG(ERROR, TAG, PCF("ConvertArray Invalid NULL"));
+                OC_LOG(ERROR, TAG, "ConvertArray Invalid NULL");
                 err = CborUnknownError;
                 break;
             case OCREP_PROP_INT:
@@ -502,7 +502,7 @@ static int64_t OCConvertArray(CborEncoder* parent, const OCRepPayloadValueArray*
                 err = OCConvertSingleRepPayload(&array, valArray->objArray[i]);
                 break;
             case OCREP_PROP_ARRAY:
-                OC_LOG(ERROR, TAG, PCF("ConvertArray Invalid child array"));
+                OC_LOG(ERROR, TAG, "ConvertArray Invalid child array");
                 err = CborUnknownError;
                 break;
         }
@@ -527,7 +527,7 @@ static int64_t OCConvertSingleRepPayload(CborEncoder* parent, const OCRepPayload
     // resource types, interfaces
     if(payload->types || payload->interfaces)
     {
-        OC_LOG_V(INFO, TAG, "Payload has types or interfaces");
+        OC_LOG(INFO, TAG, "Payload has types or interfaces");
         err = err | cbor_encode_text_string(&map,
                 OC_RSRVD_PROPERTY,
                 sizeof(OC_RSRVD_PROPERTY) - 1);
