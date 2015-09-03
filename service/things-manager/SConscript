@@ -59,6 +59,8 @@ tgmsdk_shared = things_manager_env.SharedLibrary('TGMSDKLibrary', tgm_src)
 
 things_manager_env.InstallTarget([tgmsdk_static,tgmsdk_shared], 'libTGMSDK')
 things_manager_env.UserInstallTargetLib([tgmsdk_static,tgmsdk_shared], 'libTGMSDK')
+things_manager_env.UserInstallTargetHeader('sdk/inc/ActionSet.h', 'service/things-manager', 'ActionSet.h')
+things_manager_env.UserInstallTargetHeader('sdk/inc/ThingsManager.h', 'service/things-manager', 'ThingsManager.h')
 
 # Build JNI layer
 #if target_os == 'android':

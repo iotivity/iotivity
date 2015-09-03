@@ -125,9 +125,14 @@ if target_os in ['arduino','darwin','ios'] :
 	static_liboctbstack = liboctbstack_env.StaticLibrary('octbstack', liboctbstack_src)
 	liboctbstack_env.InstallTarget(static_liboctbstack, 'liboctbstack')
 	liboctbstack_env.UserInstallTargetLib(static_liboctbstack, 'liboctbstack')
+	liboctbstack_env.UserInstallTargetHeader('stack/include/ocstackconfig.h', 'resource', 'ocstackconfig.h')
+	liboctbstack_env.UserInstallTargetHeader('stack/include/octypes.h', 'resource', 'octypes.h')
 else:
 	static_liboctbstack = liboctbstack_env.StaticLibrary('octbstack', liboctbstack_src)
 	shared_liboctbstack = liboctbstack_env.SharedLibrary('octbstack', liboctbstack_src)
 	liboctbstack_env.InstallTarget([static_liboctbstack, shared_liboctbstack], 'liboctbstack')
 	liboctbstack_env.UserInstallTargetLib([static_liboctbstack, shared_liboctbstack], 'liboctbstack')
+	liboctbstack_env.UserInstallTargetHeader('stack/include/ocstackconfig.h', 'resource', 'ocstackconfig.h')
+	liboctbstack_env.UserInstallTargetHeader('stack/include/octypes.h', 'resource', 'octypes.h')
+	liboctbstack_env.UserInstallTargetHeader('stack/include/ocstack.h', 'resource', 'ocstack.h')
 
