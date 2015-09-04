@@ -34,11 +34,11 @@ public class MetaPropertiesView extends ViewPart {
 
     private IResourceSelectionChangedUIListener resourceSelectionChangedListener;
 
-    private ResourceManager                     resourceManager;
+    private ResourceManager                     resourceManagerRef;
 
     public MetaPropertiesView() {
 
-        resourceManager = Activator.getDefault().getResourceManager();
+        resourceManagerRef = Activator.getDefault().getResourceManager();
 
         resourceSelectionChangedListener = new IResourceSelectionChangedUIListener() {
 
@@ -49,7 +49,7 @@ public class MetaPropertiesView extends ViewPart {
                     @Override
                     public void run() {
                         if (null != tableViewer) {
-                            updateViewer(checkSelection());
+                            updateViewer(getData());
                         }
                     }
                 });
@@ -66,7 +66,7 @@ public class MetaPropertiesView extends ViewPart {
 
         createColumns(tableViewer);
 
-        // make lines and header visible
+        // Make lines and header visible
         final Table table = tableViewer.getTable();
         table.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
         table.setHeaderVisible(true);
@@ -77,18 +77,18 @@ public class MetaPropertiesView extends ViewPart {
         addManagerListeners();
 
         // Check whether there is any resource selected already
-        List<MetaProperty> propertyList = checkSelection();
+        List<MetaProperty> propertyList = getData();
         if (null != propertyList) {
             updateViewer(propertyList);
         }
 
     }
 
-    private List<MetaProperty> checkSelection() {
-        SimulatorResource resourceInSelection = resourceManager
+    private List<MetaProperty> getData() {
+        SimulatorResource resourceInSelection = resourceManagerRef
                 .getCurrentResourceInSelection();
         if (null != resourceInSelection) {
-            List<MetaProperty> metaPropertyList = resourceManager
+            List<MetaProperty> metaPropertyList = resourceManagerRef
                     .getMetaProperties(resourceInSelection);
             return metaPropertyList;
         } else {
@@ -148,7 +148,7 @@ public class MetaPropertiesView extends ViewPart {
     }
 
     private void addManagerListeners() {
-        resourceManager
+        resourceManagerRef
                 .addResourceSelectionChangedUIListener(resourceSelectionChangedListener);
     }
 
@@ -173,7 +173,7 @@ public class MetaPropertiesView extends ViewPart {
     public void dispose() {
         // Unregister the listener
         if (null != resourceSelectionChangedListener) {
-            resourceManager
+            resourceManagerRef
                     .removeResourceSelectionChangedUIListener(resourceSelectionChangedListener);
         }
         super.dispose();

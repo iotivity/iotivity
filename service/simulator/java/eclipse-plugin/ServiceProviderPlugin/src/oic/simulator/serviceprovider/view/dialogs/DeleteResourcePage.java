@@ -4,6 +4,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import oic.simulator.serviceprovider.Activator;
+import oic.simulator.serviceprovider.resource.DeleteCategory;
 import oic.simulator.serviceprovider.utils.Constants;
 
 import org.eclipse.jface.wizard.WizardPage;
@@ -111,7 +112,6 @@ public class DeleteResourcePage extends WizardPage {
     }
 
     private void populateResourceTypeCombo() {
-
         List<String> resourceTypeList;
         resourceTypeList = Activator.getDefault().getResourceManager()
                 .getResourceTypeList();
@@ -125,8 +125,7 @@ public class DeleteResourcePage extends WizardPage {
         // By default, select the first item in the combo
         if (resourceTypeCmb.getItemCount() > 0) {
             resourceTypeCmb.select(0);
-            deleteCandidate = resourceTypeCmb.getItem(resourceTypeCmb
-                    .getSelectionIndex());
+            deleteCandidate = resourceTypeCmb.getText();
         }
     }
 

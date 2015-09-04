@@ -10,6 +10,7 @@ import oic.simulator.serviceprovider.listener.IResourceSelectionChangedUIListene
 import oic.simulator.serviceprovider.manager.ResourceManager;
 import oic.simulator.serviceprovider.resource.ObserverDetail;
 import oic.simulator.serviceprovider.resource.SimulatorResource;
+import oic.simulator.serviceprovider.utils.Constants;
 
 import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.CheckboxCellEditor;
@@ -31,35 +32,24 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.ui.part.ViewPart;
 
 public class ResourceObserverView extends ViewPart {
-    public static final String                  VIEW_ID                  = "oic.simulator.serviceprovider.view.observer";
+    public static final String                  VIEW_ID       = "oic.simulator.serviceprovider.view.observer";
 
     private TableViewer                         tblViewer;
 
-    private final String[]                      columnHeaders            = {
-            "Client Address", "Port", "Notify"                          };
+    private final String[]                      columnHeaders = {
+            "Client Address", "Port", "Notify"               };
 
-    private final Integer[]                     columnWidth              = {
-            150, 75, 50                                                 };
+    private final Integer[]                     columnWidth   = { 150, 75, 50 };
 
     private IResourceSelectionChangedUIListener resourceSelectionChangedListener;
 
     private IObserverListChangedUIListener      resourceObserverListChangedListener;
 
-    private ResourceManager                     resourceManager;
-
-    private static final Image                  NOTIFY_BUTTON_UNSELECTED = Activator
-                                                                                 .getDefault()
-                                                                                 .getImage(
-                                                                                         "icons/button_free.PNG");
-
-    private static final Image                  NOTIFY_BUTTON_SELECTED   = Activator
-                                                                                 .getDefault()
-                                                                                 .getImage(
-                                                                                         "icons/button_pressed.PNG");
+    private ResourceManager                     resourceManagerRef;
 
     public ResourceObserverView() {
 
-        resourceManager = Activator.getDefault().getResourceManager();
+        resourceManagerRef = Activator.getDefault().getResourceManager();
 
         resourceSelectionChangedListener = new IResourceSelectionChangedUIListener() {
 
@@ -71,7 +61,7 @@ public class ResourceObserverView extends ViewPart {
                     public void run() {
                         if (null != tblViewer) {
                             changeButtonStatus();
-                            updateViewer(getData(resourceManager
+                            updateViewer(getData(resourceManagerRef
                                     .getCurrentResourceInSelection()));
                         }
                     }
@@ -87,17 +77,14 @@ public class ResourceObserverView extends ViewPart {
 
                     @Override
                     public void run() {
-                        System.out.println("UI callback - observer");
                         if (null == resourceURI) {
                             return;
                         }
-                        SimulatorResource resource = resourceManager
+                        SimulatorResource resource = resourceManagerRef
                                 .getCurrentResourceInSelection();
                         if (null == resource) {
                             return;
                         }
-                        System.out
-                                .println("UI callback - observer - this resource");
                         if (resource.getResourceURI().equals(resourceURI)) {
                             if (null != tblViewer) {
                                 updateViewer(getData(resource));
@@ -118,7 +105,6 @@ public class ResourceObserverView extends ViewPart {
     }
 
     private void updateViewer(Map<Integer, ObserverDetail> observer) {
-        System.out.println(observer);
         if (null != tblViewer) {
             Table tbl = tblViewer.getTable();
             if (null != observer && observer.size() > 0) {
@@ -154,6 +140,12 @@ public class ResourceObserverView extends ViewPart {
 
         addManagerListeners();
 
+        // Check whether there is any resource selected already
+        Map<Integer, ObserverDetail> observerList = getData(resourceManagerRef
+                .getCurrentResourceInSelection());
+        if (null != observerList) {
+            updateViewer(observerList);
+        }
     }
 
     public void createColumns(TableViewer tableViewer) {
@@ -207,18 +199,20 @@ public class ResourceObserverView extends ViewPart {
                 @SuppressWarnings("unchecked")
                 Map.Entry<Integer, ObserverDetail> observer = (Map.Entry<Integer, ObserverDetail>) element;
                 if (observer.getValue().isClicked()) {
-                    return NOTIFY_BUTTON_SELECTED;
+                    return Activator.getDefault().getImageRegistry()
+                            .get(Constants.NOTIFY_BUTTON_SELECTED);
                 }
-                return NOTIFY_BUTTON_UNSELECTED;
+                return Activator.getDefault().getImageRegistry()
+                        .get(Constants.NOTIFY_BUTTON_UNSELECTED);
             }
         });
         notifyColumn.setEditingSupport(new NotifyEditor(tableViewer));
     }
 
     private void addManagerListeners() {
-        resourceManager
+        resourceManagerRef
                 .addResourceSelectionChangedUIListener(resourceSelectionChangedListener);
-        resourceManager
+        resourceManagerRef
                 .addObserverListChangedUIListener(resourceObserverListChangedListener);
     }
 
@@ -278,14 +272,14 @@ public class ResourceObserverView extends ViewPart {
             viewer.refresh();
 
             // Call Native Method
-            resourceManager.notifyObserverRequest(
-                    resourceManager.getCurrentResourceInSelection(), observer
-                            .getValue().getObserverInfo().getId());
+            resourceManagerRef.notifyObserverRequest(
+                    resourceManagerRef.getCurrentResourceInSelection(),
+                    observer.getValue().getObserverInfo().getId());
         }
     }
 
     private void changeButtonStatus() {
-        SimulatorResource resource = resourceManager
+        SimulatorResource resource = resourceManagerRef
                 .getCurrentResourceInSelection();
         if (null == resource) {
             return;
@@ -305,12 +299,12 @@ public class ResourceObserverView extends ViewPart {
     public void dispose() {
         // Unregister the listener
         if (null != resourceSelectionChangedListener) {
-            resourceManager
+            resourceManagerRef
                     .removeResourceSelectionChangedUIListener(resourceSelectionChangedListener);
         }
 
         if (null != resourceObserverListChangedListener) {
-            resourceManager
+            resourceManagerRef
                     .removeObserverListChangedUIListener(resourceObserverListChangedListener);
         }
         super.dispose();

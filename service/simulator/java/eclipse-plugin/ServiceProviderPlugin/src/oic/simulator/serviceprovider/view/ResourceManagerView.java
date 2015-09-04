@@ -6,10 +6,10 @@ import java.util.List;
 import oic.simulator.serviceprovider.Activator;
 import oic.simulator.serviceprovider.listener.IResourceListChangedUIListener;
 import oic.simulator.serviceprovider.manager.ResourceManager;
+import oic.simulator.serviceprovider.resource.DeleteCategory;
 import oic.simulator.serviceprovider.utils.Constants;
 import oic.simulator.serviceprovider.utils.Utility;
 import oic.simulator.serviceprovider.view.dialogs.CreateResourceWizard;
-import oic.simulator.serviceprovider.view.dialogs.DeleteCategory;
 import oic.simulator.serviceprovider.view.dialogs.DeleteResourceWizard;
 import oic.simulator.serviceprovider.view.dialogs.ResourceWizardDialog;
 
@@ -194,7 +194,6 @@ public class ResourceManagerView extends ViewPart {
                             System.out.println("Resultant config file path is "
                                     + configFilePath);
                             count = createWizard.getResourceCount();
-
                             if (count <= 1) {
                                 // Single resource creation
                                 resourceManager.createResource(configFilePath);
@@ -315,10 +314,11 @@ public class ResourceManagerView extends ViewPart {
                         stopItem.addSelectionListener(new SelectionAdapter() {
                             @Override
                             public void widgetSelected(SelectionEvent e) {
-                                resourceManager
+                                boolean status = resourceManager
                                         .stopResourceAutomationUIRequest(Utility
                                                 .displayNameToUri(selectedItem));
-                                String statusMsg = "Automation stop requested!!!";
+                                String statusMsg = status ? "Automation stop requested!!!"
+                                        : "Automation stop failed.";
                                 MessageDialog.openInformation(Display
                                         .getDefault().getActiveShell(),
                                         "Automation Status", statusMsg);

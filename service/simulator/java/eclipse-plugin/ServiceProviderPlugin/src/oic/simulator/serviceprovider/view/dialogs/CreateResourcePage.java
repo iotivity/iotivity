@@ -162,8 +162,9 @@ public class CreateResourcePage extends WizardPage {
             while (itr.hasNext()) {
                 fileName = itr.next();
                 shortName = Utility.fileNameToDisplay(fileName);
-                System.out.println("Display name of " + fileName + " is "
-                        + shortName);
+                if (null == shortName) {
+                    continue;
+                }
                 resourceTypeCmb.add(shortName);
             }
         }
@@ -229,8 +230,6 @@ public class CreateResourcePage extends WizardPage {
                         // Convert the selectedItem to the fully qualified file
                         // name.
                         selectedItem = Utility.displayToFileName(selectedItem);
-                        System.out
-                                .println("Selected file name:" + selectedItem);
 
                         // Get the RAML configuration file path of the selected
                         // resource
@@ -280,10 +279,8 @@ public class CreateResourcePage extends WizardPage {
             resourceTypeCmb.select(0);
             String fileName = Utility.displayToFileName(resourceTypeCmb
                     .getText());
-            System.out.println("Selected file in combo:" + fileName);
             configFilePath = Activator.getDefault().getResourceManager()
                     .getConfigFilePath(fileName);
-            System.out.println("Selected file's path:" + configFilePath);
         }
     }
 

@@ -3,6 +3,7 @@ package oic.simulator.serviceprovider.view.dialogs;
 import java.net.URL;
 
 import oic.simulator.serviceprovider.Activator;
+import oic.simulator.serviceprovider.resource.DeleteCategory;
 import oic.simulator.serviceprovider.utils.Utility;
 
 import org.eclipse.core.runtime.FileLocator;

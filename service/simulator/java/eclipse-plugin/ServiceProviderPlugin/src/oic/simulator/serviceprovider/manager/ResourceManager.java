@@ -1,6 +1,5 @@
 package oic.simulator.serviceprovider.manager;
 
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -25,7 +24,6 @@ import oic.simulator.serviceprovider.resource.StandardConfiguration;
 import oic.simulator.serviceprovider.utils.Constants;
 import oic.simulator.serviceprovider.utils.Utility;
 
-import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.graphics.Image;
 import org.oic.simulator.AutomationType;
 import org.oic.simulator.IAutomation;
@@ -100,28 +98,39 @@ public class ResourceManager {
                         if (null == resource) {
                             return;
                         }
+
+                        ModelChangeNotificationType notificationType;
                         // Fetch the resource attributes
                         Map<String, LocalResourceAttribute> resourceAttributeMapNew;
                         resourceAttributeMapNew = fetchResourceAttributesFromModel(resourceModelN);
                         if (null == resourceAttributeMapNew) {
+                            resource.setResourceAttributesMap(null);
+                            resourceModelChangedUINotification(
+                                    ModelChangeNotificationType.NO_ATTRIBUTES_IN_MODEL,
+                                    resourceURI, null);
                             return;
                         }
+
                         // Update the resource with new model data
                         Map<String, LocalResourceAttribute> resourceAttributeMapOld;
                         resourceAttributeMapOld = resource
                                 .getResourceAttributesMap();
                         if (null == resourceAttributeMapOld) {
+                            resource.setResourceAttributesMap(resourceAttributeMapNew);
+                            resourceModelChangedUINotification(
+                                    ModelChangeNotificationType.ATTRIBUTE_ADDED,
+                                    resourceURI, null);
                             return;
                         }
-                        ModelChangeNotificationType notificationType;
-                        Set<LocalResourceAttribute> changeSet = new HashSet<LocalResourceAttribute>();
+                        Set<LocalResourceAttribute> valueChangeSet = new HashSet<LocalResourceAttribute>();
                         notificationType = compareAndUpdateLocalAttributes(
                                 resourceAttributeMapOld,
-                                resourceAttributeMapNew, changeSet);
+                                resourceAttributeMapNew, valueChangeSet);
                         if (notificationType != ModelChangeNotificationType.NONE) {
                             // Update the UI listeners
                             resourceModelChangedUINotification(
-                                    notificationType, resourceURI, changeSet);
+                                    notificationType, resourceURI,
+                                    valueChangeSet);
                         }
                     }
                 });
@@ -137,24 +146,17 @@ public class ResourceManager {
 
                     @Override
                     public void run() {
-                        System.out.println("onAutomationComplete() entry");
                         SimulatorResource resource = getSimulatorResourceByURI(resourceURI);
                         if (null == resource) {
                             return;
                         }
-                        System.out
-                                .println("onAutomationComplete() resource is not null");
                         // Checking whether this notification is for an
                         // attribute or a resource
                         if (resource.isResourceAutomationInProgress()) {
-                            System.out
-                                    .println("onAutomationComplete() for resource");
                             changeResourceLevelAutomationStatus(resource, false);
                             // Notify the UI listeners
                             automationCompleteUINotification(resourceURI, null);
                         } else if (resource.isAttributeAutomationInProgress()) {
-                            System.out
-                                    .println("onAutomationComplete() for attribute");
                             // Find the attribute with the given automation id
                             LocalResourceAttribute attribute;
                             attribute = getAttributeWithGivenAutomationId(
@@ -180,32 +182,22 @@ public class ResourceManager {
             @Override
             public void onObserverChanged(final String resourceURI,
                     final int status, final ObserverInfo observer) {
-                System.out.println("onObserverListChanged in Manager");
                 new Thread() {
                     @Override
                     public void run() {
-                        if (null == resourceURI) {
+                        if (null == resourceURI || null == observer) {
                             return;
                         }
-                        System.out.println("URI:" + resourceURI);
                         SimulatorResource resource = getSimulatorResourceByURI(resourceURI);
                         if (null == resource) {
                             return;
                         }
-                        System.out.println("Resource Exist");
                         // Update the observers information
                         if (status == 0) {
                             resource.addObserverInfo(observer);
                         } else {
                             resource.removeObserverInfo(observer);
                         }
-
-                        System.out.println(observer.getAddress() + ","
-                                + observer.getPort() + "," + observer.getId());
-
-                        System.out.println(resource.getObserver());
-
-                        System.out.println("status:" + status);
                         // Notify the UI listeners
                         observerListChangedUINotification(resourceURI);
                     }
@@ -459,9 +451,6 @@ public class ResourceManager {
                 SimulatorResourceServer resourceServerN;
                 resourceServerN = SimulatorManager.createResource(
                         configFilePath, resourceModelChangeListener);
-                if (null == resourceServerN) {
-                    return;
-                }
                 SimulatorResource simulatorResource;
                 simulatorResource = fetchResourceData(resourceServerN);
                 if (null != simulatorResource) {
@@ -471,11 +460,12 @@ public class ResourceManager {
                             simulatorResource.getResourceURI());
                     resourceCreatedUINotification();
 
+                    // Set the observer for the created resource
+                    resourceServerN.setObserverCallback(observer);
+
                     // Print the resource data
                     simulatorResource.printResourceInfo();
                 }
-                // Set the observer for the created resource
-                resourceServerN.setObserverCallback(observer);
             }
         }.start();
     }
@@ -569,7 +559,6 @@ public class ResourceManager {
 
                 Set<String> attNameSet = attributeMapN.keySet();
                 String attName;
-                Object attValueObj;
                 ResourceAttribute attributeN;
                 LocalResourceAttribute attribute;
                 Iterator<String> attNameItr = attNameSet.iterator();
@@ -579,37 +568,15 @@ public class ResourceManager {
                     if (null != attributeN) {
                         attribute = new LocalResourceAttribute();
                         attribute.setResourceAttribute(attributeN);
-                        attribute.setAttributeName(attName);
 
-                        attValueObj = attributeN.getValue();
-                        if (null != attValueObj) {
-                            attribute.setAttributeValue(attValueObj);
+                        // Set the attribute value
+                        Object valueObj = attributeN.getValue();
+                        if (null != valueObj) {
+                            attribute.setAttributeValue(valueObj);
                         }
 
-                        // Set the attribute type
-                        attribute.setAttValBaseType(attributeN.getBaseType());
-                        attribute.setAttValType(attributeN.getType());
-
-                        // Set the range and allowed values
-                        Range range = attributeN.getRange();
-                        if (null != range) {
-                            attribute.setMinValue(range.getMin());
-                            attribute.setMaxValue(range.getMax());
-                            System.out.println("Fetching range");
-                            System.out.println(range.getMin() + ","
-                                    + range.getMax());
-                        } else {
-                            Object[] values = attributeN.getAllowedValues();
-                            System.out.println("Size of allowed values:"
-                                    + values.length);
-                            if (null != values && values.length > 0) {
-                                List<Object> valueList = new ArrayList<Object>();
-                                for (Object obj : values) {
-                                    valueList.add(obj);
-                                }
-                                attribute.setAllowedValues(valueList);
-                            }
-                        }
+                        // Set the attribute value list.
+                        attribute.setAttValues(getValueList(attributeN));
 
                         // Initially disabling the automation
                         attribute.setAutomationInProgress(false);
@@ -630,6 +597,45 @@ public class ResourceManager {
             }
         }
         return resourceAttributeMap;
+    }
+
+    // This method gives all known possible values of the attribute in string
+    // format. It takes allowed values or range of values whichever is available
+    private List<String> getValueList(ResourceAttribute attributeN) {
+        Object[] allowedValues = attributeN.getAllowedValues();
+        List<String> valueList = new ArrayList<String>();
+        if (null != allowedValues && allowedValues.length > 0) {
+            for (Object value : allowedValues) {
+                if (null != value) {
+                    valueList.add(String.valueOf(value));
+                }
+            }
+        } else {
+            Type valueType = attributeN.getBaseType();
+            Range range = attributeN.getRange();
+            if (null != range) {
+                Object min = range.getMin();
+                Object max = range.getMax();
+                if (valueType == Type.INT) {
+                    int minI = (Integer) min;
+                    int maxI = (Integer) max;
+                    for (int value = minI; value <= maxI; value++) {
+                        valueList.add(String.valueOf(value));
+                    }
+                } else if (valueType == Type.DOUBLE) {
+                    double minD = (Double) min;
+                    double maxD = (Double) max;
+                    for (double value = minD; value <= maxD; value++) {
+                        valueList.add(String.valueOf(value));
+                    }
+                }
+            }
+        }
+        Object attValue = attributeN.getValue();
+        if (valueList.size() < 1 && null != attValue) {
+            valueList.add(String.valueOf(attValue));
+        }
+        return valueList;
     }
 
     public void deleteResourceByURI(final String resourceURI) {
@@ -832,7 +838,7 @@ public class ResourceManager {
 
     private void resourceModelChangedUINotification(
             ModelChangeNotificationType notificationType, String resourceURI,
-            Set<LocalResourceAttribute> changeSet) {
+            Set<LocalResourceAttribute> valueChangeSet) {
         synchronized (resourceModelChangedUIListeners) {
             if (resourceModelChangedUIListeners.size() > 0
                     && notificationType != ModelChangeNotificationType.NONE
@@ -844,7 +850,7 @@ public class ResourceManager {
                     listener = listenerItr.next();
                     if (null != listener) {
                         listener.onResourceModelChange(notificationType,
-                                resourceURI, changeSet);
+                                resourceURI, valueChangeSet);
                     }
                 }
             }
@@ -986,16 +992,9 @@ public class ResourceManager {
                     propValue = resource.getResourceURI();
                 } else if (propName.equals(Constants.RESOURCE_TYPE)) {
                     propValue = resource.getResourceType();
-                } else if (propName.equals(Constants.RESOURCE_UID)) {
-                    // propValue = resource.getResourceUID();
-                    propValue = "Dummy123"; // TODO: Temporarily adding dummy
-                                            // value to
-                    // show in UI
                 } else if (propName.equals(Constants.CONNECTIVITY_TYPE)) {
-                    // propValue = resource.getConnectivityType();
-                    propValue = "IP"; // TODO: Temporarily adding dummy value to
-                                      // see
-                    // show UI
+                    // TODO: Temporarily ignoring till the implementation.
+                    propValue = null;
                 } else {
                     propValue = null;
                 }
@@ -1019,14 +1018,11 @@ public class ResourceManager {
                 Set<String> attNameSet = attMap.keySet();
                 String attName;
                 LocalResourceAttribute attribute;
-                // ResourceAttribute attributeClone;
                 Iterator<String> attNameItr = attNameSet.iterator();
                 while (attNameItr.hasNext()) {
                     attName = attNameItr.next();
                     attribute = attMap.get(attName);
                     if (null != attribute) {
-                        // attributeClone =
-                        // ResourceAttribute.clone(attribute);
                         attList.add(attribute);
                     }
                 }
@@ -1076,7 +1072,7 @@ public class ResourceManager {
     private ModelChangeNotificationType compareAndUpdateLocalAttributes(
             Map<String, LocalResourceAttribute> resourceAttributeMapOld,
             Map<String, LocalResourceAttribute> resourceAttributeMapNew,
-            Set<LocalResourceAttribute> changeSet) {
+            Set<LocalResourceAttribute> valueChangeSet) {
         ModelChangeNotificationType notificationType = ModelChangeNotificationType.NONE;
         if (null != resourceAttributeMapOld && null != resourceAttributeMapNew) {
             Set<String> oldMapKeySet = resourceAttributeMapOld.keySet();
@@ -1108,7 +1104,7 @@ public class ResourceManager {
                             if (!oldValueStr.equals(newValueStr)) {
                                 attributeOld.setAttributeValue(attValueNew);
                                 notificationType = ModelChangeNotificationType.ATTRIBUTE_VALUE_CHANGED;
-                                changeSet.add(attributeOld);
+                                valueChangeSet.add(attributeOld);
                             }
                         }
                     }
@@ -1271,30 +1267,30 @@ public class ResourceManager {
         return status;
     }
 
-    public void stopResourceAutomationUIRequest(final String resourceURI) {
+    public boolean stopResourceAutomationUIRequest(final String resourceURI) {
+        SimulatorResource resource = getSimulatorResourceByURI(resourceURI);
+        if (null == resource) {
+            return false;
+        }
+        final int autoId = resource.getAutomationId();
+        if (-1 == autoId) {
+            return false;
+        }
+        SimulatorResourceServer resourceServer = resource.getResourceServer();
+        if (null == resourceServer) {
+            return false;
+        }
+        // Call native method
+        resourceServer.stopAutomation(autoId);
+
+        // Notify the UI Listeners. Invoke the automation complete callback.
         Thread stopThread = new Thread() {
             public void run() {
-                SimulatorResource resource = getSimulatorResourceByURI(resourceURI);
-                if (null == resource) {
-                    return;
-                }
-                int autoId = resource.getAutomationId();
-                if (-1 == autoId) {
-                    return;
-                }
-                SimulatorResourceServer resourceServer = resource
-                        .getResourceServer();
-                if (null == resourceServer) {
-                    return;
-                }
-                // Call native method
-                resourceServer.stopAutomation(autoId);
-
-                // Invoke the automation complete callback
                 automationListener.onAutomationComplete(resourceURI, autoId);
             }
         };
         stopThread.start();
+        return true;
     }
 
     // Changes the automation state of the resource and its attributes
@@ -1362,7 +1358,6 @@ public class ResourceManager {
     }
 
     public void notifyObserverRequest(SimulatorResource res, int observerId) {
-        System.out.println("In notifyObserverRequest()");
         if (null == res) {
             return;
         }
@@ -1377,19 +1372,12 @@ public class ResourceManager {
         if (null == resourceURI) {
             return null;
         }
-        URL url = Activator.getDefault().getBundle()
-                .getEntry(getImageURL(resourceURI));
-        if (null == url) {
+        SimulatorResource resource = getSimulatorResourceByURI(resourceURI);
+        if (null == resource) {
             return null;
         }
-        return ImageDescriptor.createFromURL(url).createImage();
-    }
-
-    private String getImageURL(String resourceURI) {
-        // TODO: Hard-coding the image file name temporarily.
-        // It will be included in a separate class which manages all image
-        // resources
-        return "/icons/light_16x16.png";
+        return Activator.getDefault().getImageRegistry()
+                .get(resource.getResourceType());
     }
 
     public void shutdown() {

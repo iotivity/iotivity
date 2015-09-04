@@ -17,7 +17,7 @@ import org.osgi.framework.Bundle;
 public class StandardConfiguration {
 
     // A map of filename of standard resources as the key and the complete
-    // location of the file(including the filename) as the value
+    // location of the file(including the filename) as the value.
     Map<String, String> stdConfigFiles;
 
     public StandardConfiguration() {
@@ -47,7 +47,6 @@ public class StandardConfiguration {
             if (null == url) {
                 return;
             }
-            System.out.println("URL: " + url.toExternalForm());
             try {
                 file = new File(FileLocator.resolve(url).toURI());
             } catch (URISyntaxException | IOException e) {
@@ -55,17 +54,7 @@ public class StandardConfiguration {
                 return;
             }
             filePath = file.getAbsolutePath();
-            System.out.println(filePath);
             stdConfigFiles.put(fileName, filePath);
-        }
-
-        // Print for debugging purpose
-        Iterator<String> itr = stdConfigFiles.keySet().iterator();
-        String key;
-        while (itr.hasNext()) {
-            key = itr.next();
-            System.out.println("FileName: " + key);
-            System.out.println("FilePath:" + stdConfigFiles.get(key));
         }
     }
 

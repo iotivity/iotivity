@@ -10,7 +10,7 @@ Pre-requisites
     3.Import the Simulator Java SDK project from ~/iotivity/service/simulator/java/sdk/ into Eclipse IDE as given below.
         File -> Import -> Select 'Existing projects into Workspace' under General category -> click next -> Browse to the above mentioned location ->
         click Finish.
-      Export the sdk project as JAR file. 
+      Export the sdk project as JAR file.
         Right click the project -> Export -> select 'JAR file' option under Java -> Next -> Finish.
       Copy the JAR file into the libs folder of the plug-in project.
 

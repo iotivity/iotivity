@@ -11,13 +11,11 @@ import oic.simulator.serviceprovider.Activator;
 import oic.simulator.serviceprovider.listener.ILogUIListener;
 import oic.simulator.serviceprovider.utils.Constants;
 
-import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.resource.ImageRegistry;
 import org.eclipse.swt.graphics.Image;
 import org.oic.simulator.ILogger;
 import org.oic.simulator.ILogger.Level;
 import org.oic.simulator.SimulatorManager;
-import org.osgi.framework.Bundle;
 
 public class LogManager {
     private LinkedList<LogEntry>         entries           = new LinkedList<LogEntry>();
@@ -28,21 +26,6 @@ public class LogManager {
     private ILogger                      logger;
     private LogManagerSynchronizerThread synchronizerThread;
     private Thread                       threadHandle;
-
-    static {
-        ImageRegistry r = Activator.getDefault().getImageRegistry();
-        Bundle bundle = Activator.getDefault().getBundle();
-        r.put(Constants.DEBUG_LOG, ImageDescriptor.createFromURL(bundle
-                .getEntry("/icons/debug_log.gif")));
-        r.put(Constants.INFO_LOG, ImageDescriptor.createFromURL(bundle
-                .getEntry("/icons/info_log.gif")));
-        r.put(Constants.WARNING_LOG, ImageDescriptor.createFromURL(bundle
-                .getEntry("/icons/warning_log.gif")));
-        r.put(Constants.ERROR_LOG, ImageDescriptor.createFromURL(bundle
-                .getEntry("/icons/error_log.gif")));
-        r.put(Constants.UNKNOWN_LOG, ImageDescriptor.createFromURL(bundle
-                .getEntry("/icons/unknown_log.gif")));
-    }
 
     public LogManager() {
         synchronizerThread = new LogManagerSynchronizerThread();

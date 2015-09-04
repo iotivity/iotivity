@@ -18,7 +18,7 @@ public class Constants {
     public static final String         CONNECTIVITY_TYPE                = "Connectivity Type";
 
     public static final String[]       META_PROPERTIES                  = {
-            RESOURCE_URI, RESOURCE_TYPE, RESOURCE_UID, CONNECTIVITY_TYPE };
+            RESOURCE_URI, RESOURCE_TYPE, CONNECTIVITY_TYPE             };
 
     public static final int            META_PROPERTY_COUNT              = META_PROPERTIES.length;
 
@@ -66,6 +66,11 @@ public class Constants {
     public static final String         DEBUG                            = "Debug";
     public static final String         UNKNOWN                          = "Unknown";
 
+    public static final String         CHECKED                          = "Checked";
+    public static final String         UNCHECKED                        = "Unchecked";
+    public static final String         NOTIFY_BUTTON_SELECTED           = "Notify_Selected";
+    public static final String         NOTIFY_BUTTON_UNSELECTED         = "Notify_Unselected";
+
     public static final String         CREATE_PAGE_TITLE                = "Create Resource";
     public static final String         CREATE_PAGE_MESSAGE              = "Select a standard resource or custom resource to be created";
 
@@ -77,4 +82,6 @@ public class Constants {
     public static final String         RAML_FILE_EXTENSION              = ".raml";
 
     public static final String         SPLIT_BY_DOT_PATTERN             = "\\.";
+
+    public static final String         OIC_LIGHT                        = "oic.light";
 }

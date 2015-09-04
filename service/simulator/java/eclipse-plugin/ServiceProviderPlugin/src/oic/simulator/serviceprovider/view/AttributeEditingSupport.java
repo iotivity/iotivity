@@ -66,9 +66,8 @@ public class AttributeEditingSupport {
             }
 
             String values[] = null;
-            List<String> valueSet = attributeInSelection.getAllValues();
-            System.out.println("Values obtained in getCellEditor: " + valueSet);
-            values = convertListToString(valueSet);
+            List<String> valueSet = attributeInSelection.getAttValues();
+            values = convertListToStringArray(valueSet);
 
             ComboBoxCellEditor comboEditor = new ComboBoxCellEditor(
                     viewer.getTable(), values, SWT.READ_ONLY);
@@ -113,7 +112,7 @@ public class AttributeEditingSupport {
             int indexOfItem = 0;
             LocalResourceAttribute att = (LocalResourceAttribute) element;
             String valueString = String.valueOf(att.getAttributeValue());
-            List<String> valueSet = att.getAllValues();
+            List<String> valueSet = att.getAttValues();
             if (null != valueSet) {
                 indexOfItem = valueSet.indexOf(valueString);
             }
@@ -133,7 +132,7 @@ public class AttributeEditingSupport {
             viewer.update(element, null);
         }
 
-        public String[] convertListToString(List<String> valueList) {
+        public String[] convertListToStringArray(List<String> valueList) {
             String[] strArr;
             if (null != valueList && valueList.size() > 0) {
                 strArr = valueList.toArray(new String[1]);
@@ -173,15 +172,12 @@ public class AttributeEditingSupport {
 
         @Override
         protected Object getValue(Object element) {
-            System.out.println("In getValue() automation");
             LocalResourceAttribute att = (LocalResourceAttribute) element;
             return att.isAutomationInProgress();
         }
 
         @Override
         protected void setValue(Object element, Object value) {
-            System.out.println("In setValue() automation");
-
             ResourceManager resourceManager = Activator.getDefault()
                     .getResourceManager();
             // As automation depends on the current resource in selection, its
@@ -194,10 +190,8 @@ public class AttributeEditingSupport {
 
             LocalResourceAttribute att = (LocalResourceAttribute) element;
             boolean checked = (Boolean) value;
-            System.out.println("Value:" + checked);
             if (checked) {
                 // Start the automation
-
                 // Fetch the settings data
                 List<AutomationSettingHelper> automationSettings;
                 automationSettings = AutomationSettingHelper

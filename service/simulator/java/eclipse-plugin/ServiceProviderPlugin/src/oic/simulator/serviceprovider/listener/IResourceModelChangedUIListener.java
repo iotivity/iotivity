@@ -8,5 +8,5 @@ import oic.simulator.serviceprovider.resource.LocalResourceAttribute;
 public interface IResourceModelChangedUIListener {
     public void onResourceModelChange(
             ModelChangeNotificationType notificationType, String resourceURI,
-            Set<LocalResourceAttribute> changeSet);
+            Set<LocalResourceAttribute> valueChangeSet);
 }

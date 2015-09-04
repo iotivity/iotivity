@@ -1,12 +1,9 @@
 package oic.simulator.serviceprovider;
 
-import java.net.URL;
-
+import oic.simulator.serviceprovider.manager.ImageManager;
 import oic.simulator.serviceprovider.manager.LogManager;
 import oic.simulator.serviceprovider.manager.ResourceManager;
 
-import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.swt.graphics.Image;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
@@ -25,6 +22,8 @@ public class Activator extends AbstractUIPlugin {
 
     private static LogManager      logManager;
 
+    private static ImageManager    imageManager;
+
     public Activator() {
     }
 
@@ -33,6 +32,7 @@ public class Activator extends AbstractUIPlugin {
         plugin = this;
         setResourceManager(new ResourceManager());
         setLogManager(new LogManager());
+        imageManager = ImageManager.getInstance();
     }
 
     public void stop(BundleContext context) throws Exception {
@@ -71,13 +71,7 @@ public class Activator extends AbstractUIPlugin {
         Activator.logManager = logManager;
     }
 
-    public Image getImage(String imagePath) {
-        Image img = null;
-        if (null == imagePath || imagePath.length() < 1) {
-            return img;
-        }
-        URL imageURL = getBundle().getEntry(imagePath);
-        ImageDescriptor descriptor = ImageDescriptor.createFromURL(imageURL);
-        return descriptor.createImage();
+    public ImageManager getImageManager() {
+        return imageManager;
     }
 }

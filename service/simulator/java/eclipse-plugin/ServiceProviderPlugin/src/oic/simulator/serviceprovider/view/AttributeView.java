@@ -8,8 +8,8 @@ import oic.simulator.serviceprovider.listener.IAutomationUIListener;
 import oic.simulator.serviceprovider.listener.IResourceModelChangedUIListener;
 import oic.simulator.serviceprovider.listener.IResourceSelectionChangedUIListener;
 import oic.simulator.serviceprovider.manager.ResourceManager;
-import oic.simulator.serviceprovider.resource.ModelChangeNotificationType;
 import oic.simulator.serviceprovider.resource.LocalResourceAttribute;
+import oic.simulator.serviceprovider.resource.ModelChangeNotificationType;
 import oic.simulator.serviceprovider.resource.SimulatorResource;
 import oic.simulator.serviceprovider.utils.Constants;
 
@@ -50,16 +50,6 @@ public class AttributeView extends ViewPart {
 
     private ResourceManager                     resourceManager;
 
-    private static final Image                  CHECKED        = Activator
-                                                                       .getDefault()
-                                                                       .getImage(
-                                                                               "icons/checked.gif");
-
-    private static final Image                  UNCHECKED      = Activator
-                                                                       .getDefault()
-                                                                       .getImage(
-                                                                               "icons/unchecked.gif");
-
     public AttributeView() {
 
         resourceManager = Activator.getDefault().getResourceManager();
@@ -73,7 +63,7 @@ public class AttributeView extends ViewPart {
                     @Override
                     public void run() {
                         if (null != attTblViewer) {
-                            updateViewer(checkSelection());
+                            updateViewer(getData());
                             SimulatorResource resource = resourceManager
                                     .getCurrentResourceInSelection();
                             Table tbl = attTblViewer.getTable();
@@ -98,7 +88,7 @@ public class AttributeView extends ViewPart {
             public void onResourceModelChange(
                     final ModelChangeNotificationType notificationType,
                     final String resourceURI,
-                    final Set<LocalResourceAttribute> changeSet) {
+                    final Set<LocalResourceAttribute> valueChangeSet) {
                 Display.getDefault().asyncExec(new Runnable() {
                     @Override
                     public void run() {
@@ -110,6 +100,10 @@ public class AttributeView extends ViewPart {
                             return;
                         }
                         if (!resourceURI.equals(resource.getResourceURI())) {
+                            // This notification is for a different resource
+                            // whose attributes are not
+                            // currently not being shown in UI. So ignoring this
+                            // notification.
                             return;
                         }
                         // Refresh the table viewers which will display
@@ -117,11 +111,13 @@ public class AttributeView extends ViewPart {
                         if (null != attTblViewer) {
                             if (notificationType == ModelChangeNotificationType.ATTRIBUTE_ADDED
                                     || notificationType == ModelChangeNotificationType.ATTRIBUTE_REMOVED) {
-                                attTblViewer.refresh();
+                                updateViewer(getData());
+                            } else if (notificationType == ModelChangeNotificationType.NO_ATTRIBUTES_IN_MODEL) {
+                                attTblViewer.setInput(null);
                             } else if (notificationType == ModelChangeNotificationType.ATTRIBUTE_VALUE_CHANGED) {
-                                if (null != changeSet) {
-                                    attTblViewer.update(changeSet.toArray(),
-                                            null);
+                                if (null != valueChangeSet) {
+                                    attTblViewer.update(
+                                            valueChangeSet.toArray(), null);
                                 }
                             }
                         }
@@ -175,8 +171,6 @@ public class AttributeView extends ViewPart {
 
                     @Override
                     public void run() {
-                        System.out.println("onAutomationcomplete Impl: uri:"
-                                + resourceURI + ",attname:" + attName);
                         if (null == resourceURI) {
                             return;
                         }
@@ -200,7 +194,6 @@ public class AttributeView extends ViewPart {
                                 LocalResourceAttribute att = resourceManager
                                         .getAttributeByResourceURI(resourceURI,
                                                 attName);
-                                System.out.println(att == null);
                                 if (null == att) {
                                     return;
                                 } else {
@@ -251,7 +244,7 @@ public class AttributeView extends ViewPart {
         addManagerListeners();
 
         // Check whether there is any resource selected already
-        List<LocalResourceAttribute> propertyList = checkSelection();
+        List<LocalResourceAttribute> propertyList = getData();
         if (null != propertyList) {
             updateViewer(propertyList);
         }
@@ -317,9 +310,11 @@ public class AttributeView extends ViewPart {
             public Image getImage(Object element) {
                 LocalResourceAttribute att = (LocalResourceAttribute) element;
                 if (att.isAutomationInProgress()) {
-                    return CHECKED;
+                    return Activator.getDefault().getImageRegistry()
+                            .get(Constants.CHECKED);
                 } else {
-                    return UNCHECKED;
+                    return Activator.getDefault().getImageRegistry()
+                            .get(Constants.UNCHECKED);
                 }
             }
         });
@@ -335,7 +330,7 @@ public class AttributeView extends ViewPart {
         resourceManager.addAutomationUIListener(automationUIListener);
     }
 
-    private List<LocalResourceAttribute> checkSelection() {
+    private List<LocalResourceAttribute> getData() {
         SimulatorResource resourceInSelection = resourceManager
                 .getCurrentResourceInSelection();
         if (null != resourceInSelection) {
