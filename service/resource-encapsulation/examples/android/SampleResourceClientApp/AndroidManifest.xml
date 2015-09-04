@@ -30,8 +30,8 @@
             android:label="@string/app_name" >
         </activity>
         <activity
-            android:name="com.re.sampleclient.ConfigurationApiActivity"
-            android:label="@string/app_name" >  
+            android:name="com.re.sampleclient.ContainerClientActivity"
+            android:label="@string/app_name" >
         </activity>
     </application>
 

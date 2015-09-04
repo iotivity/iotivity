@@ -20,7 +20,6 @@
 package com.re.sampleclient;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 
 import android.app.Activity;
 import android.app.Dialog;
@@ -50,18 +49,16 @@ public class ResourceClientActivity extends Activity {
     private ArrayAdapter<String>          groupApis;
     private ArrayList<String>             clientApisList;
     private static ResourceClientActivity clientApiActivityObj;
-    private ResourceClient                resourceClientObj;
     private static Handler                mHandler;
+    private ResourceClient                resourceClientObj;
+    public static Context                 mcontext;
 
     private static EditText               logs;
     private static String                 logMessage;
 
-    public static Context                 mcontext;
-    public static Calendar                scheduleTime;
-
     private final String                  LOG_TAG = "[ReSample] "
                                                           + this.getClass()
-                                                                  .getSimpleName(); ;
+                                                                  .getSimpleName();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,20 +75,20 @@ public class ResourceClientActivity extends Activity {
         logs = (EditText) findViewById(R.id.EditText);
 
         // adding the item to list that will be displayed on the UI.
-        clientApisList.add("1. Start Monitoring"); // 0
-        clientApisList.add("2. Stop Monitoring"); // 1
+        clientApisList.add("1. Start Monitoring");
+        clientApisList.add("2. Stop Monitoring");
 
-        clientApisList.add("3. Get Remote Attributes"); // 2
-        clientApisList.add("4. Set Remote Attributes"); // 3
+        clientApisList.add("3. Get Remote Attributes");
+        clientApisList.add("4. Set Remote Attributes");
 
-        clientApisList.add("5. Start Caching without callback"); // 4
-        clientApisList.add("6. Start Caching with callback"); // 5
+        clientApisList.add("5. Start Caching without callback");
+        clientApisList.add("6. Start Caching with callback");
 
-        clientApisList.add("7. Get Cache State"); // 6
-        clientApisList.add("8. Get All Cached Attributes"); // 7
-        clientApisList.add("9. Get Cached Attribute"); // 8
+        clientApisList.add("7. Get Cache State");
+        clientApisList.add("8. Get All Cached Attributes");
+        clientApisList.add("9. Get Cached Attribute");
 
-        clientApisList.add("10. Stop Caching"); // 9
+        clientApisList.add("10. Stop Caching");
 
         // handler for updating the UI i.e. MessageLog (TextBox) & ListView
         mHandler = new Handler() {
@@ -173,9 +170,9 @@ public class ResourceClientActivity extends Activity {
                 @Override
                 public void onClick(View v) {
 
-                    EditText regionValue = (EditText) dialog
+                    EditText temperatureValue = (EditText) dialog
                             .findViewById(R.id.attributeValue);
-                    String value = regionValue.getText().toString();
+                    String value = temperatureValue.getText().toString();
                     if (value.equalsIgnoreCase("")) {
                         String toastmessage = "Please enter the Temperature Value";
                         displayToastMessage(toastmessage);

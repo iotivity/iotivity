@@ -23,9 +23,13 @@ import java.util.Vector;
 
 import org.iotivity.ResourceEncapsulation.client.RCSAddress;
 import org.iotivity.ResourceEncapsulation.client.RCSDiscoveryManager;
-import org.iotivity.ResourceEncapsulation.client.RCSDiscoveryManager.*;
+import org.iotivity.ResourceEncapsulation.client.RCSDiscoveryManager.IDiscoverResourceListener;
+import org.iotivity.ResourceEncapsulation.client.RCSRemoteResourceObject.IStateChangedCallbackListener;
+import org.iotivity.ResourceEncapsulation.client.RCSRemoteResourceObject.ICacheUpdateListener;
+import org.iotivity.ResourceEncapsulation.client.RCSRemoteResourceObject.IRemoteAttributeListener;
+import org.iotivity.ResourceEncapsulation.client.RCSRemoteResourceObject.CacheState;
+import org.iotivity.ResourceEncapsulation.client.RCSRemoteResourceObject.ResourceState;
 import org.iotivity.ResourceEncapsulation.client.RCSRemoteResourceObject;
-import org.iotivity.ResourceEncapsulation.client.RCSRemoteResourceObject.*;
 import org.iotivity.ResourceEncapsulation.common.RCSException;
 import org.iotivity.ResourceEncapsulation.common.RCSResourceAttributes;
 
@@ -73,7 +77,7 @@ public class ResourceClient {
     /**
      * Listener for receiving Resource discovered in network.
      */
-    private class DiscoverResourceListener implements IDiscoverResourceListener{
+    private class DiscoverResourceListener implements IDiscoverResourceListener {
 
         @Override
         public void onResourceDiscovered(RCSRemoteResourceObject foundResource) {
@@ -105,7 +109,7 @@ public class ResourceClient {
             logMessage = logMessage + "isObservable : " + isObservableflag
                     + "\n";
 
-            resourcClientActivityObj.setMessageLog(logMessage);
+            ResourceClientActivity.setMessageLog(logMessage);
             msg = Message.obtain();
             msg.what = 1;
             resourcClientActivityObj.getHandler().sendMessage(msg);
@@ -187,18 +191,19 @@ public class ResourceClient {
         }
     };
 
+    // Discover Resource
     public void disocverResources() {
         Log.d(LOG_TAG, "discover resources entry");
         RCSAddress address = RCSAddress.multicast();
         try {
             discoveyManagerObj.discoverResource(address);
-        } catch (Exception e) {
-            // TODO Auto-generated catch block
+        } catch (RCSException e) {
             e.printStackTrace();
         }
         Log.d(LOG_TAG, "discover resources exit");
     }
 
+    // Start Monitoring
     public void startMonitoring() {
         Log.d(LOG_TAG, "startMonitoring entry");
 
@@ -231,6 +236,7 @@ public class ResourceClient {
         Log.d(LOG_TAG, "startMonitoring exit");
     }
 
+    // Stop Monitoring
     public void stopMonitoring() {
         Log.d(LOG_TAG, "stopMonitoring entry");
 
@@ -256,6 +262,7 @@ public class ResourceClient {
         resourcClientActivityObj.getHandler().sendMessage(msg);
     }
 
+    // Get Attributes
     public void getRemoteAttributes() {
         Log.d(LOG_TAG, "getRemoteAttributes entry");
 
@@ -279,6 +286,7 @@ public class ResourceClient {
         Log.d(LOG_TAG, "getRemoteAttributes exit");
     }
 
+    // Set Attributes
     public void setRemoteAttributes(int value) {
         Log.d(LOG_TAG, "setRemoteAttributes entry");
 
@@ -304,6 +312,7 @@ public class ResourceClient {
         Log.d(LOG_TAG, "setRemoteAttributes exit");
     }
 
+    // Start Caching
     public void startCaching(int cachingType) {
         Log.d(LOG_TAG, "startCaching entry");
 
@@ -351,6 +360,7 @@ public class ResourceClient {
         Log.d(LOG_TAG, "startCaching exit");
     }
 
+    // Get Cache State
     public void getCacheState() {
         Log.d(LOG_TAG, "getCacheState entry");
 
@@ -371,6 +381,7 @@ public class ResourceClient {
         Log.d(LOG_TAG, "getCacheState exit");
     }
 
+    // Get Cached Attributes
     public void getCachedAttributes() {
         Log.d(LOG_TAG, "getCachedAttributes entry");
 
@@ -397,6 +408,7 @@ public class ResourceClient {
         Log.d(LOG_TAG, "getCachedAttributes exit");
     }
 
+    // Get Cached Attribute
     public void getCachedAttribute() {
         Log.d(LOG_TAG, "getCachedAttribute entry");
 
@@ -430,6 +442,7 @@ public class ResourceClient {
         Log.d(LOG_TAG, "getCachedAttribute exit");
     }
 
+    // Stop Caching
     public void stopCaching() {
         Log.d(LOG_TAG, "stopCaching entry");
 
@@ -454,6 +467,7 @@ public class ResourceClient {
         Log.d(LOG_TAG, "stopCaching exit");
     }
 
+    // For Printing the Attributes on the UI
     private void printAttributes(RCSResourceAttributes attributes) {
         Log.d(LOG_TAG, "Printing Attributes");
 
@@ -467,7 +481,6 @@ public class ResourceClient {
             e.printStackTrace();
             return;
         }
-
         ResourceClientActivity.setMessageLog(logMessage);
         msg = Message.obtain();
         msg.what = 1;
