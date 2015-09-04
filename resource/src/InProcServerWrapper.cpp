@@ -128,6 +128,12 @@ void formResourceRequest(OCEntityHandlerFlag flag,
             OC::ObservationInfo observationInfo;
             observationInfo.action = (OC::ObserveAction) entityHandlerRequest->obsInfo.action;
             observationInfo.obsId = entityHandlerRequest->obsInfo.obsId;
+
+            observationInfo.connectivityType = static_cast<OCConnectivityType>(
+                    (entityHandlerRequest->devAddr.adapter << CT_ADAPTER_SHIFT) |
+                    (entityHandlerRequest->devAddr.flags & CT_MASK_FLAGS));
+            observationInfo.address = entityHandlerRequest->devAddr.addr;
+            observationInfo.port = entityHandlerRequest->devAddr.port;
             pRequest->setObservationInfo(observationInfo);
         }
     }
