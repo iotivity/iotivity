@@ -70,3 +70,6 @@ env.PrintTargets()
 if target_os == 'arduino':
 	env.UploadHelp()
 
+# to install the generated pc file into custome prefix location
+env.UserInstallTargetPCFile('iotivity.pc', 'iotivity.pc')
+

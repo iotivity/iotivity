@@ -32,6 +32,9 @@ cp ./tools/tizen/*.spec ./tmp/packaging
 cp ./SConstruct ./tmp
 cp ./tools/tizen/*.rpm ./tmp
 cp ./tools/tizen/.gbs.conf ./tmp
+
+cp -R $sourcedir/iotivity.pc.in $sourcedir/tmp
+
 cd $sourcedir/tmp
 
 echo `pwd`
