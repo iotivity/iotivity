@@ -33,10 +33,10 @@ using namespace OC;
 
 namespace OIC
 {
-    std::map< std::string, DiagnosticsRequestEntry > diagnosticsRequestTable;
-    ThingsDiagnostics* ThingsDiagnostics::thingsDiagnosticsInstance = NULL;
+    std::map< std::string, MaintenanceRequestEntry > maintenanceRequestTable;
+    ThingsMaintenance* ThingsMaintenance::thingsMaintenanceInstance = NULL;
 
-    DiagnosticsRequestEntry::DiagnosticsRequestEntry(std::string ID, DiagnosticsCallback callback,
+    MaintenanceRequestEntry::MaintenanceRequestEntry(std::string ID, MaintenanceCallback callback,
                 std::shared_ptr< OCResource > resource, std::string updateVal)
     {
         m_ID = ID;
@@ -45,7 +45,7 @@ namespace OIC
         m_updateVal = updateVal;
     }
 
-    DiagnosticsUnitInfo::DiagnosticsUnitInfo(std::string name,
+    MaintenanceUnitInfo::MaintenanceUnitInfo(std::string name,
                                             std::string attribute,
                                             std::string uri)
     {
@@ -54,7 +54,7 @@ namespace OIC
         m_uri = uri;
     }
 
-    std::string DiagnosticsUnitInfo::getJSON()
+    std::string MaintenanceUnitInfo::getJSON()
     {
         std::string res;
 
@@ -63,48 +63,48 @@ namespace OIC
         return res;
     }
 
-    ThingsDiagnostics::ThingsDiagnostics()
+    ThingsMaintenance::ThingsMaintenance()
     {
-        DiagnosticsUnitInfo unit[] =
+        MaintenanceUnitInfo unit[] =
                 {
-                { "rb", "Reboot", "/oic/diag"},
-                { "ssc", "StartStatCollection", "/oic/diag"},
-                { "fr", "Factory Reset", "/oic/diag" } };
+                { "rb", "Reboot", "/oic/mnt"},
+                { "ssc", "StartStatCollection", "/oic/mnt"},
+                { "fr", "Factory Reset", "/oic/mnt" } };
 
         for (int i = 0; i < NUMDIAGUNIT; i++)
-            DiagnosticsUnitTable.push_back(unit[i]);
+            MaintenanceUnitTable.push_back(unit[i]);
     }
 
-    ThingsDiagnostics::~ThingsDiagnostics()
+    ThingsMaintenance::~ThingsMaintenance()
     {
     }
 
-    void ThingsDiagnostics::setGroupManager(GroupManager *groupmanager)
+    void ThingsMaintenance::setGroupManager(GroupManager *groupmanager)
     {
         g_groupmanager = groupmanager;
     }
 
-    ThingsDiagnostics* ThingsDiagnostics::getInstance()
+    ThingsMaintenance* ThingsMaintenance::getInstance()
     {
-        if (thingsDiagnosticsInstance == NULL)
+        if (thingsMaintenanceInstance == NULL)
         {
-            thingsDiagnosticsInstance = new ThingsDiagnostics();
+            thingsMaintenanceInstance = new ThingsMaintenance();
         }
-        return thingsDiagnosticsInstance;
+        return thingsMaintenanceInstance;
     }
 
-    void ThingsDiagnostics::deleteInstance()
+    void ThingsMaintenance::deleteInstance()
     {
-        if (thingsDiagnosticsInstance)
+        if (thingsMaintenanceInstance)
         {
-            delete thingsDiagnosticsInstance;
-            thingsDiagnosticsInstance = NULL;
+            delete thingsMaintenanceInstance;
+            thingsMaintenanceInstance = NULL;
         }
     }
 
-    std::string ThingsDiagnostics::getAttributeByDiagnosticsName(DiagnosticsName name)
+    std::string ThingsMaintenance::getAttributeByMaintenanceName(MaintenanceName name)
     {
-        for (auto it = DiagnosticsUnitTable.begin(); DiagnosticsUnitTable.end() != it; it++)
+        for (auto it = MaintenanceUnitTable.begin(); MaintenanceUnitTable.end() != it; it++)
         {
             if ((*it).m_name == name)
                 return (*it).m_attribute;
@@ -113,9 +113,9 @@ namespace OIC
         return "";
     }
 
-    std::string ThingsDiagnostics::getUriByDiagnosticsName(DiagnosticsName name)
+    std::string ThingsMaintenance::getUriByMaintenanceName(MaintenanceName name)
     {
-        for (auto it = DiagnosticsUnitTable.begin(); DiagnosticsUnitTable.end() != it; it++)
+        for (auto it = MaintenanceUnitTable.begin(); MaintenanceUnitTable.end() != it; it++)
         {
             if ((*it).m_name == name)
                 return (*it).m_uri;
@@ -124,40 +124,40 @@ namespace OIC
         return "";
     }
 
-    std::string ThingsDiagnostics::getUpdateVal(std::string diag)
+    std::string ThingsMaintenance::getUpdateVal(std::string mnt)
     {
-        std::map< std::string, DiagnosticsRequestEntry >::iterator it =
-                diagnosticsRequestTable.find(diag);
+        std::map< std::string, MaintenanceRequestEntry >::iterator it =
+                maintenanceRequestTable.find(mnt);
 
-        if (it == diagnosticsRequestTable.end())
+        if (it == maintenanceRequestTable.end())
             return NULL;
         else
             return it->second.m_updateVal;
 
     }
-    std::shared_ptr< OCResource > ThingsDiagnostics::getResource(std::string diag)
+    std::shared_ptr< OCResource > ThingsMaintenance::getResource(std::string mnt)
     {
-        std::map< std::string, DiagnosticsRequestEntry >::iterator it =
-                diagnosticsRequestTable.find(diag);
+        std::map< std::string, MaintenanceRequestEntry >::iterator it =
+                maintenanceRequestTable.find(mnt);
 
-        if (it == diagnosticsRequestTable.end())
+        if (it == maintenanceRequestTable.end())
             return NULL;
         else
             return it->second.m_resource;
     }
 
-    DiagnosticsCallback ThingsDiagnostics::getCallback(std::string diag)
+    MaintenanceCallback ThingsMaintenance::getCallback(std::string mnt)
     {
-        std::map< std::string, DiagnosticsRequestEntry >::iterator it =
-                diagnosticsRequestTable.find(diag);
+        std::map< std::string, MaintenanceRequestEntry >::iterator it =
+                maintenanceRequestTable.find(mnt);
 
-        if (it == diagnosticsRequestTable.end())
+        if (it == maintenanceRequestTable.end())
             return NULL;
         else
             return it->second.m_callback;
     }
 
-    std::string ThingsDiagnostics::getHostFromURI(std::string oldUri)
+    std::string ThingsMaintenance::getHostFromURI(std::string oldUri)
     {
         size_t f;
         std::string newUri;
@@ -170,19 +170,19 @@ namespace OIC
         return newUri;
     }
 
-    std::string ThingsDiagnostics::getListOfSupportedDiagnosticsUnits()
+    std::string ThingsMaintenance::getListOfSupportedMaintenanceUnits()
     {
         std::string res;
 
-        res = "{\"Diagnostics Units\":[";
+        res = "{\"Maintenance Units\":[";
 
-        auto it = DiagnosticsUnitTable.begin();
+        auto it = MaintenanceUnitTable.begin();
         while (1)
         {
             res = res + (*it).getJSON();
             it++;
 
-            if (it == DiagnosticsUnitTable.end())
+            if (it == MaintenanceUnitTable.end())
                 break;
             else
                 res += ",";
@@ -193,13 +193,13 @@ namespace OIC
         return res;
     }
 
-    void ThingsDiagnostics::onGetChildInfoForUpdate(const HeaderOptions& headerOptions,
-            const OCRepresentation& rep, const int eCode, std::string diag)
+    void ThingsMaintenance::onGetChildInfoForUpdate(const HeaderOptions& headerOptions,
+            const OCRepresentation& rep, const int eCode, std::string mnt)
     {
         if (eCode != OC_STACK_OK)
         {
             std::cout << "onGet Response error: " << eCode << std::endl;
-            getCallback(diag)(headerOptions, rep, eCode);
+            getCallback(mnt)(headerOptions, rep, eCode);
             return ;
         }
 
@@ -213,11 +213,11 @@ namespace OIC
             std::cout << "\t\tChild Resource URI: " << oit->getUri() << std::endl;
         }
 
-        // Get information by using diagnostics name(diag)
-        std::shared_ptr < OCResource > resource = getResource(diag);
-        std::string actionstring = diag;
-        std::string uri = getUriByDiagnosticsName(diag);
-        std::string attrKey = diag;
+        // Get information by using maintenance name(mnt)
+        std::shared_ptr < OCResource > resource = getResource(mnt);
+        std::string actionstring = mnt;
+        std::string uri = getUriByMaintenanceName(mnt);
+        std::string attrKey = mnt;
 
         if (uri == "")
             return;
@@ -228,7 +228,7 @@ namespace OIC
             // Required information consists of a host address, URI, attribute key, and
             // attribute value.
             ActionSet *newActionSet = new ActionSet();
-            newActionSet->actionsetName = diag;
+            newActionSet->actionsetName = mnt;
 
             for (auto oit = children.begin(); oit != children.end(); ++oit)
             {
@@ -242,7 +242,7 @@ namespace OIC
 
                 Capability *newCapability = new Capability();
                 newCapability->capability = attrKey;
-                newCapability->status = getUpdateVal(diag);
+                newCapability->status = getUpdateVal(mnt);
 
                 newAction->listOfCapability.push_back(newCapability);
                 newActionSet->listOfAction.push_back(newAction);
@@ -253,97 +253,97 @@ namespace OIC
                     std::function<
                             void(const HeaderOptions& headerOptions,
                                     const OCRepresentation& rep, const int eCode) >(
-                            std::bind(&ThingsDiagnostics::onCreateActionSet, this,
+                            std::bind(&ThingsMaintenance::onCreateActionSet, this,
                                     std::placeholders::_1, std::placeholders::_2,
-                                    std::placeholders::_3, diag)));
+                                    std::placeholders::_3, mnt)));
 
             delete(newActionSet);
 
         }
     }
 
-    void ThingsDiagnostics::onCreateActionSet(const HeaderOptions& headerOptions,
-            const OCRepresentation& rep, const int eCode, std::string diag)
+    void ThingsMaintenance::onCreateActionSet(const HeaderOptions& headerOptions,
+            const OCRepresentation& rep, const int eCode, std::string mnt)
     {
         if (eCode != OC_STACK_OK)
         {
             std::cout << "onPut Response error: " << eCode << std::endl;
-            getCallback(diag)(headerOptions, rep, eCode);
+            getCallback(mnt)(headerOptions, rep, eCode);
             return ;
         }
 
         std::cout << "PUT request was successful" << std::endl;
 
-        std::shared_ptr < OCResource > resource = getResource(diag);
+        std::shared_ptr < OCResource > resource = getResource(mnt);
         if (resource)
         {
             // Now, it is time to execute the action set.
-            g_groupmanager->executeActionSet(resource, diag,
+            g_groupmanager->executeActionSet(resource, mnt,
                     std::function<
                             void(const HeaderOptions& headerOptions,
                                     const OCRepresentation& rep, const int eCode) >(
-                            std::bind(&ThingsDiagnostics::onExecuteForGroupAction, this,
+                            std::bind(&ThingsMaintenance::onExecuteForGroupAction, this,
                                     std::placeholders::_1, std::placeholders::_2,
-                                    std::placeholders::_3, diag)));
+                                    std::placeholders::_3, mnt)));
         }
     }
 
-    void ThingsDiagnostics::onExecuteForGroupAction(const HeaderOptions& headerOptions,
-            const OCRepresentation& rep, const int eCode, std::string diag)
+    void ThingsMaintenance::onExecuteForGroupAction(const HeaderOptions& headerOptions,
+            const OCRepresentation& rep, const int eCode, std::string mnt)
     {
         if (eCode != OC_STACK_OK)
         {
             std::cout << "onPut Response error: " << eCode << std::endl;
-            getCallback(diag)(headerOptions, rep, eCode);
+            getCallback(mnt)(headerOptions, rep, eCode);
             return ;
         }
 
         std::cout << "PUT request was successful" << std::endl;
-        getCallback(diag)(headerOptions, rep, eCode);
+        getCallback(mnt)(headerOptions, rep, eCode);
 
         // Delete the created actionset
-        std::shared_ptr < OCResource > resource = getResource(diag);
+        std::shared_ptr < OCResource > resource = getResource(mnt);
         if (resource)
         {
-            g_groupmanager->deleteActionSet(resource, diag,
+            g_groupmanager->deleteActionSet(resource, mnt,
                     std::function<
                             void(const HeaderOptions& headerOptions,
                                     const OCRepresentation& rep, const int eCode) >(
-                            std::bind(&ThingsDiagnostics::onDeleteGroupAction, this,
+                            std::bind(&ThingsMaintenance::onDeleteGroupAction, this,
                                     std::placeholders::_1, std::placeholders::_2,
-                                    std::placeholders::_3, diag)));
+                                    std::placeholders::_3, mnt)));
         }
     }
 
-    void ThingsDiagnostics::onDeleteGroupAction(const HeaderOptions& headerOptions,
-            const OCRepresentation& rep, const int eCode, std::string diag)
+    void ThingsMaintenance::onDeleteGroupAction(const HeaderOptions& headerOptions,
+            const OCRepresentation& rep, const int eCode, std::string mnt)
     {
         if (eCode != OC_STACK_OK)
         {
-            std::cout << "Delete actionset returned with error: " << eCode << diag << std::endl;
+            std::cout << "Delete actionset returned with error: " << eCode << mnt << std::endl;
             return;
         }
 
-        std::cout << "Deleted the actionset created!" << diag<< std::endl;
+        std::cout << "Deleted the actionset created!" << mnt<< std::endl;
     }
 
-    void ThingsDiagnostics::onPut(const HeaderOptions& headerOptions, const OCRepresentation& rep,
-            const int eCode, std::string diag)
+    void ThingsMaintenance::onPut(const HeaderOptions& headerOptions, const OCRepresentation& rep,
+            const int eCode, std::string mnt)
     {
         if (eCode != OC_STACK_OK)
         {
             std::cout << "onPut Response error: " << eCode << std::endl;
-            getCallback(diag)(headerOptions, rep, eCode);
+            getCallback(mnt)(headerOptions, rep, eCode);
             return ;
         }
 
         std::cout << "PUT request was successful" << std::endl;
 
-        getCallback(diag)(headerOptions, rep, eCode);
+        getCallback(mnt)(headerOptions, rep, eCode);
 
     }
 
-    bool ThingsDiagnostics::isSimpleResource(std::shared_ptr< OCResource > resource)
+    bool ThingsMaintenance::isSimpleResource(std::shared_ptr< OCResource > resource)
     {
         for (unsigned int i = 0; i < resource->getResourceTypes().size(); ++i)
         {
@@ -354,8 +354,8 @@ namespace OIC
         return true;
     }
 
-    OCStackResult ThingsDiagnostics::reboot(std::shared_ptr< OCResource > resource,
-            DiagnosticsCallback callback)
+    OCStackResult ThingsMaintenance::reboot(std::shared_ptr< OCResource > resource,
+            MaintenanceCallback callback)
     {
         if (!resource)
         {
@@ -363,17 +363,17 @@ namespace OIC
             return OC_STACK_ERROR;
         }
 
-        std::string diag = "rb";
+        std::string mnt = "rb";
 
         // Check the request queue if a previous request is still left. If so, remove it.
-        std::map< std::string, DiagnosticsRequestEntry >::iterator iter =
-                diagnosticsRequestTable.find(diag);
-        if (iter != diagnosticsRequestTable.end())
-            diagnosticsRequestTable.erase(iter);
+        std::map< std::string, MaintenanceRequestEntry >::iterator iter =
+                maintenanceRequestTable.find(mnt);
+        if (iter != maintenanceRequestTable.end())
+            maintenanceRequestTable.erase(iter);
 
         // Create new request entry stored in the queue
-        DiagnosticsRequestEntry newCallback(diag, callback, resource, "true");
-        diagnosticsRequestTable.insert(std::make_pair(diag, newCallback));
+        MaintenanceRequestEntry newCallback(mnt, callback, resource, "true");
+        maintenanceRequestTable.insert(std::make_pair(mnt, newCallback));
 
         QueryParamsMap query;
         OCRepresentation rep;
@@ -382,14 +382,14 @@ namespace OIC
         {
             // This resource is a simple resource. Just send a PUT message
             OCRepresentation rep;
-            rep.setValue < std::string > (diag, "true");
+            rep.setValue < std::string > (mnt, "true");
 
             return resource->put(resource->getResourceTypes().at(0), DEFAULT_INTERFACE, rep, query,
                     std::function<
                             void(const HeaderOptions& headerOptions, const OCRepresentation& rep,
                                     const int eCode) >(
-                            std::bind(&ThingsDiagnostics::onPut, this, std::placeholders::_1,
-                                    std::placeholders::_2, std::placeholders::_3, diag)));
+                            std::bind(&ThingsMaintenance::onPut, this, std::placeholders::_1,
+                                    std::placeholders::_2, std::placeholders::_3, mnt)));
         }
         else
         {
@@ -401,14 +401,14 @@ namespace OIC
                     std::function<
                             void(const HeaderOptions& headerOptions, const OCRepresentation& rep,
                                     const int eCode) >(
-                            std::bind(&ThingsDiagnostics::onGetChildInfoForUpdate, this,
+                            std::bind(&ThingsMaintenance::onGetChildInfoForUpdate, this,
                                     std::placeholders::_1, std::placeholders::_2,
-                                    std::placeholders::_3, diag)));
+                                    std::placeholders::_3, mnt)));
         }
     }
 
-    OCStackResult ThingsDiagnostics::factoryReset(std::shared_ptr< OCResource > resource,
-            DiagnosticsCallback callback)
+    OCStackResult ThingsMaintenance::factoryReset(std::shared_ptr< OCResource > resource,
+            MaintenanceCallback callback)
     {
         if (!resource)
         {
@@ -416,17 +416,17 @@ namespace OIC
             return OC_STACK_ERROR;
         }
 
-        std::string diag = "fr";
+        std::string mnt = "fr";
 
         // Check the request queue if a previous request is still left. If so, remove it.
-        std::map< std::string, DiagnosticsRequestEntry >::iterator iter =
-                diagnosticsRequestTable.find(diag);
-        if (iter != diagnosticsRequestTable.end())
-            diagnosticsRequestTable.erase(iter);
+        std::map< std::string, MaintenanceRequestEntry >::iterator iter =
+                maintenanceRequestTable.find(mnt);
+        if (iter != maintenanceRequestTable.end())
+            maintenanceRequestTable.erase(iter);
 
         // Create new request entry stored in the queue
-        DiagnosticsRequestEntry newCallback(diag, callback, resource, "true");
-        diagnosticsRequestTable.insert(std::make_pair(diag, newCallback));
+        MaintenanceRequestEntry newCallback(mnt, callback, resource, "true");
+        maintenanceRequestTable.insert(std::make_pair(mnt, newCallback));
 
         QueryParamsMap query;
         OCRepresentation rep;
@@ -441,8 +441,8 @@ namespace OIC
                     std::function<
                             void(const HeaderOptions& headerOptions, const OCRepresentation& rep,
                                     const int eCode) >(
-                            std::bind(&ThingsDiagnostics::onPut, this, std::placeholders::_1,
-                                    std::placeholders::_2, std::placeholders::_3, diag)));
+                            std::bind(&ThingsMaintenance::onPut, this, std::placeholders::_1,
+                                    std::placeholders::_2, std::placeholders::_3, mnt)));
         }
         else
         {
@@ -454,9 +454,9 @@ namespace OIC
                     std::function<
                             void(const HeaderOptions& headerOptions, const OCRepresentation& rep,
                                     const int eCode) >(
-                            std::bind(&ThingsDiagnostics::onGetChildInfoForUpdate, this,
+                            std::bind(&ThingsMaintenance::onGetChildInfoForUpdate, this,
                                     std::placeholders::_1, std::placeholders::_2,
-                                    std::placeholders::_3, diag)));
+                                    std::placeholders::_3, mnt)));
         }
     }
 }

@@ -23,12 +23,15 @@
 #include <pthread.h>
 #include "OCPlatform.h"
 #include "OCApi.h"
-#include "ThingsManager.h"
+#include "GroupManager.h"
+#include "GroupSynchronization.h"
 
 using namespace OC;
 using namespace OIC;
+using namespace std;
 
-static ThingsManager* gThingManager = NULL;
+static GroupManager* gGroupManager = NULL;
+static GroupSynchronization* gGroupSynchronization = NULL;
 
 static OCResourceHandle gPhoneResourceHandle = NULL;
 
@@ -67,13 +70,13 @@ void onFindGroup(std::shared_ptr< OCResource > resource)
             gFindGroup = resource;
             {
                 OCStackResult res;
-                res = gThingManager->subscribeCollectionPresence( resource, &presenceCallback);
+                res = gGroupManager->subscribeCollectionPresence( resource, &presenceCallback);
 
                 std::cout << "Return Value: " << res << std::endl;
             }
         }
 
-        gThingManager->joinGroup(gFindGroup, gPhoneResourceHandle);
+        gGroupSynchronization->joinGroup(gFindGroup, gPhoneResourceHandle);
     }
     else
     {
@@ -190,7 +193,7 @@ void onGetChild(const HeaderOptions& headerOptions, const OCRepresentation& rep,
 
         if (0 == gPlayStart->listOfAction.empty())
         {
-            result = gThingManager->addActionSet(gFindGroup, gPlayStart, onAction);
+            result = gGroupManager->addActionSet(gFindGroup, gPlayStart, onAction);
             if (OC_STACK_OK == result)
             {
                 cout << "addActionSet(gPlayStart) was successful\n";
@@ -203,7 +206,7 @@ void onGetChild(const HeaderOptions& headerOptions, const OCRepresentation& rep,
 
         if (0 == gPlayStop->listOfAction.empty())
         {
-            result = gThingManager->addActionSet(gFindGroup, gPlayStop, onAction);
+            result = gGroupManager->addActionSet(gFindGroup, gPlayStop, onAction);
             if (OC_STACK_OK == result)
             {
                 cout << "addActionSet(gPlayStop) was successful\n";
@@ -227,7 +230,8 @@ int main(int argc, char* argv[])
     { OC::ServiceType::InProc, OC::ModeType::Both, "0.0.0.0", 0, OC::QualityOfService::LowQos };
 
     OCPlatform::Configure(cfg);
-    gThingManager = new ThingsManager();
+    gGroupManager = new GroupManager();
+    gGroupSynchronization = new GroupSynchronization();
 
     int selectedMenu;
     OCStackResult result;
@@ -278,7 +282,7 @@ int main(int argc, char* argv[])
                 types.clear();
                 types.push_back(collectionResourceType);
 
-                result = gThingManager->findGroup(types, &onFindGroup);
+                result = gGroupSynchronization->findGroup(types, &onFindGroup);
                 if (OC_STACK_OK == result)
                 {
                     cout << "Finding group was successful\n";
@@ -321,7 +325,7 @@ int main(int argc, char* argv[])
                     continue;
                 }
 
-                result = gThingManager->executeActionSet(gFindGroup, "playstart", onAction);
+                result = gGroupManager->executeActionSet(gFindGroup, "playstart", onAction);
                 if (OC_STACK_OK == result)
                 {
                     cout << "DoAction(playstart) was successful\n";
@@ -345,7 +349,7 @@ int main(int argc, char* argv[])
                     continue;
                 }
 
-                result = gThingManager->executeActionSet(gFindGroup, "playstop", onAction);
+                result = gGroupManager->executeActionSet(gFindGroup, "playstop", onAction);
                 if (OC_STACK_OK == result)
                 {
                     cout << "DoAction(playstop) was successful\n";
@@ -375,7 +379,7 @@ int main(int argc, char* argv[])
                     continue;
                 }
 
-                result = gThingManager->deleteActionSet(gFindGroup, "playstart", onAction);
+                result = gGroupManager->deleteActionSet(gFindGroup, "playstart", onAction);
                 if (OC_STACK_OK == result)
                 {
                     cout << "Delete Action(playstart) was successful\n";
@@ -386,7 +390,7 @@ int main(int argc, char* argv[])
                             << endl;
                 }
 
-                result = gThingManager->deleteActionSet(gFindGroup, "playstop", onAction);
+                result = gGroupManager->deleteActionSet(gFindGroup, "playstop", onAction);
                 if (OC_STACK_OK == result)
                 {
                     cout << "Delete Action(playstop) was successful\n";
@@ -445,7 +449,7 @@ int main(int argc, char* argv[])
                     continue;
                 }
 
-                result = gThingManager->leaveGroup(gFindGroup, collectionResourceType,  gPhoneResourceHandle);
+                result = gGroupSynchronization->leaveGroup(gFindGroup, collectionResourceType,  gPhoneResourceHandle);
                 if (OC_STACK_OK == result)
                 {
                     cout << "Leaving group was successful\n";

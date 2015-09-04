@@ -24,13 +24,14 @@
 
 #include <functional>
 #include <thread>
+#include <string.h>
 
 #include "OCPlatform.h"
 #include "OCApi.h"
-#include "ThingsManager.h"
 #include "ConfigurationCollection.h"
 
 using namespace OC;
+using namespace std;
 
 /// This function internally calls registerResource API.
 void ConfigurationResource::createResources(ResourceEntityHandler callback)

@@ -21,14 +21,16 @@
 #include <string>
 #include <cstdlib>
 #include <pthread.h>
+#include <string.h>
 #include "OCPlatform.h"
 #include "OCApi.h"
-#include "ThingsManager.h"
+#include "GroupSynchronization.h"
 
 using namespace OC;
 using namespace OIC;
+using namespace std;
 
-static ThingsManager* gThingManager = NULL;
+static GroupSynchronization* gGroupSynchronization = NULL;
 
 static std::vector< OCResourceHandle > gResourceHandleList;
 
@@ -54,7 +56,7 @@ void onFindResource(std::shared_ptr< OCResource > resource)
                 return;
             }
 
-            result = gThingManager->joinGroup(collectionResourceType, resourceHandle);
+            result = gGroupSynchronization->joinGroup(collectionResourceType, resourceHandle);
             if (OC_STACK_OK == result)
             {
                 cout << "onFindResource : Joining group was successful\n";
@@ -87,7 +89,7 @@ int main(int argc, char* argv[])
             OC::QualityOfService::LowQos };
 
     OCPlatform::Configure(cfg);
-    gThingManager = new ThingsManager();
+    gGroupSynchronization = new GroupSynchronization();
 
     int selectedMenu;
     OCStackResult result;
@@ -106,7 +108,7 @@ int main(int argc, char* argv[])
 
             if (selectedMenu == 1)
             {
-                result = gThingManager->createGroup(collectionResourceType);
+                result = gGroupSynchronization->createGroup(collectionResourceType);
                 if (OC_STACK_OK == result)
                 {
                     cout << "Group creation was successful\n";
@@ -165,7 +167,7 @@ int main(int argc, char* argv[])
                     std::string type = OCGetResourceTypeName(resourceHandle, 0);
                     if (0 == mpType.compare(type))
                     {
-                        result = gThingManager->leaveGroup(collectionResourceType, resourceHandle);
+                        result = gGroupSynchronization->leaveGroup(collectionResourceType, resourceHandle);
                         if (OC_STACK_OK == result)
                         {
                             cout << "Leaving group of music player was successful\n";
@@ -203,7 +205,7 @@ int main(int argc, char* argv[])
                     std::string type = OCGetResourceTypeName(resourceHandle, 0);
                     if (0 == mpType.compare(type))
                     {
-                        result = gThingManager->leaveGroup(collectionResourceType, resourceHandle);
+                        result = gGroupSynchronization->leaveGroup(collectionResourceType, resourceHandle);
                         if (OC_STACK_OK == result)
                         {
                             cout << "Leaving group of speaker was successful\n";
@@ -232,7 +234,7 @@ int main(int argc, char* argv[])
             }
             else if (selectedMenu == 31)
             {
-                gThingManager->deleteGroup(collectionResourceType);
+                gGroupSynchronization->deleteGroup(collectionResourceType);
             }
         }
     }
