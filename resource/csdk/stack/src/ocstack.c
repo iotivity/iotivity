@@ -293,9 +293,10 @@ static OCStackResult CAToOCStackResult(CAResponseResult_t caCode);
  * Convert OCStackResult to CAResponseResult_t.
  *
  * @param caCode OCStackResult code.
+ * @param method OCMethod method the return code replies to.
  * @return ::CA_SUCCESS on success, some other value upon failure.
  */
-static CAResponseResult_t OCToCAStackResult(OCStackResult ocCode);
+static CAResponseResult_t OCToCAStackResult(OCStackResult ocCode, OCMethod method);
 
 /**
  * Convert OCTransportFlags_t to CATransportModifiers_t.
@@ -567,14 +568,15 @@ OCStackResult CAToOCStackResult(CAResponseResult_t caCode)
 
     switch(caCode)
     {
-        case CA_SUCCESS:
-            ret = OC_STACK_OK;
-            break;
         case CA_CREATED:
             ret = OC_STACK_RESOURCE_CREATED;
             break;
         case CA_DELETED:
             ret = OC_STACK_RESOURCE_DELETED;
+            break;
+        case CA_CHANGED:
+        case CA_CONTENT:
+            ret = OC_STACK_OK;
             break;
         case CA_BAD_REQ:
             ret = OC_STACK_INVALID_QUERY;
@@ -597,14 +599,32 @@ OCStackResult CAToOCStackResult(CAResponseResult_t caCode)
     return ret;
 }
 
-CAResponseResult_t OCToCAStackResult(OCStackResult ocCode)
+CAResponseResult_t OCToCAStackResult(OCStackResult ocCode, OCMethod method)
 {
     CAResponseResult_t ret = CA_INTERNAL_SERVER_ERROR;
 
     switch(ocCode)
     {
         case OC_STACK_OK:
-            ret = CA_SUCCESS;
+           switch (method)
+           {
+               case OC_REST_PUT: 
+               case OC_REST_POST:
+                   // This Response Code is like HTTP 204 "No Content" but only used in
+                   // response to POST and PUT requests.
+                   ret = CA_CHANGED;
+                   break;
+               case OC_REST_GET:
+                   // This Response Code is like HTTP 200 "OK" but only used in response to
+                   // GET requests.
+                   ret = CA_CONTENT;
+                   break;
+               default:
+                   // This should not happen but,
+                   // give it a value just in case but output an error
+                   ret = CA_CONTENT;
+                   OC_LOG_V(ERROR, TAG, "Unexpected OC_STACK_OK return code for method [d].", method);
+            }
             break;
         case OC_STACK_RESOURCE_CREATED:
             ret = CA_CREATED;
@@ -808,7 +828,7 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
     int presenceSubscribe = 0;
     int multicastPresenceSubscribe = 0;
 
-    if (responseInfo->result != CA_SUCCESS)
+    if (responseInfo->result != CA_CONTENT)
     {
         OC_LOG_V(ERROR, TAG, "HandlePresenceResponse failed %d", responseInfo->result);
         return OC_STACK_ERROR;
@@ -1466,7 +1486,8 @@ void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
     {
         OC_LOG_V(ERROR, TAG, "HandleStackRequests failed. error: %d", requestResult);
 
-        CAResponseResult_t stackResponse = OCToCAStackResult(requestResult);
+        CAResponseResult_t stackResponse =
+            OCToCAStackResult(requestResult, serverRequest.method);
 
         SendDirectStackResponse(endPoint, requestInfo->info.messageId, stackResponse,
                 requestInfo->info.type, requestInfo->info.numOptions,

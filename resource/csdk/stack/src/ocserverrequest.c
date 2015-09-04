@@ -387,14 +387,32 @@ void FindAndDeleteServerRequest(OCServerRequest * serverRequest)
     }
 }
 
-CAResponseResult_t ConvertEHResultToCAResult (OCEntityHandlerResult result)
+CAResponseResult_t ConvertEHResultToCAResult (OCEntityHandlerResult result, OCMethod method)
 {
     CAResponseResult_t caResult = CA_BAD_REQ;
 
     switch (result)
     {
         case OC_EH_OK:
-            caResult = CA_SUCCESS;
+           switch (method)
+           {
+               case OC_REST_PUT: 
+               case OC_REST_POST:
+                   // This Response Code is like HTTP 204 "No Content" but only used in
+                   // response to POST and PUT requests.
+                   caResult = CA_CHANGED;
+                   break;
+               case OC_REST_GET:
+                   // This Response Code is like HTTP 200 "OK" but only used in response to
+                   // GET requests.
+                   caResult = CA_CONTENT;
+                   break;
+               default:
+                   // This should not happen but,
+                   // give it a value just in case but output an error
+                   caResult = CA_CONTENT;
+                   OC_LOG_V(ERROR, TAG, "Unexpected OC_EH_OK return code for method [d].", method);
+           }
             break;
         case OC_EH_ERROR:
             caResult = CA_BAD_REQ;
@@ -406,7 +424,7 @@ CAResponseResult_t ConvertEHResultToCAResult (OCEntityHandlerResult result)
             caResult = CA_DELETED;
             break;
         case OC_EH_SLOW:
-            caResult = CA_SUCCESS;
+            caResult = CA_CONTENT;
             break;
         case OC_EH_FORBIDDEN:
             caResult = CA_UNAUTHORIZED_REQ;
@@ -448,7 +466,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     CopyDevAddrToEndpoint(&serverRequest->devAddr, &responseEndpoint);
 
     responseInfo.info.resourceUri = serverRequest->resourceUrl;
-    responseInfo.result = ConvertEHResultToCAResult(ehResponse->ehResult);
+    responseInfo.result = ConvertEHResultToCAResult(ehResponse->ehResult, serverRequest->method);
 
     if(serverRequest->notificationFlag && serverRequest->qos == OC_HIGH_QOS)
     {

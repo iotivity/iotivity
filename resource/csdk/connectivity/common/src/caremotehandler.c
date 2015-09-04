@@ -90,7 +90,6 @@ CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *rep)
     switch (rep->result)
     {
         case CA_EMPTY:
-        case CA_SUCCESS:
         case CA_CREATED:
         case CA_DELETED:
         case CA_VALID:
@@ -109,6 +108,7 @@ CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *rep)
         case CA_RETRANSMIT_TIMEOUT:
             break;
 
+        case CA_SUCCESS:
         default:
             OIC_LOG_V(ERROR, TAG, "Response code  %u is invalid", rep->result);
             return NULL;
