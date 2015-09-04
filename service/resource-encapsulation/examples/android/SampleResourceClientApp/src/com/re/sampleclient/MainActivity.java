@@ -44,7 +44,8 @@ import android.widget.ListView;
 
 /**
  * Starting Activity of the application responsible for configuring the
- * OcPlatform and redirecting to ResourceClient activity
+ * OcPlatform and redirecting to ResourceClient activity or Container Activity
+ * as per user's selection.
  */
 public class MainActivity extends Activity {
 
@@ -67,6 +68,7 @@ public class MainActivity extends Activity {
 
         // adding the item to list that will be displayed on the UI.
         apisList.add("Resource Client API's");
+        apisList.add("Discover Container Resource");
         apis = new ArrayAdapter<String>(activityObj,
                 android.R.layout.simple_list_item_1, apisList);
         list.setAdapter(apis);
@@ -80,6 +82,12 @@ public class MainActivity extends Activity {
                 if (position == 0) {
                     Intent intent = new Intent(activityObj,
                             ResourceClientActivity.class);
+                    startActivity(intent);
+                }
+                if (position == 1) {
+
+                    Intent intent = new Intent(activityObj,
+                            ContainerClientActivity.class);
                     startActivity(intent);
                 }
             }
