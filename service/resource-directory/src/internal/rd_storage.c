@@ -133,14 +133,14 @@ OCStackResult OCRDCheckPublishedResource(const char *interfaceType, const char *
                 if (!*uri)
                 {
                     OC_LOG_V(ERROR, TAG, "Copy failed..");
-                    return false;
+                    return OC_STACK_ERROR;
                 }
                 *rt = OICStrdup(tLinks->rt);
                 if (!*rt)
                 {
                     OC_LOG_V(ERROR, TAG, "Copy failed..");
                     OICFree(*uri);
-                    return false;
+                    return OC_STACK_ERROR;
                 }
                 *itf = OICStrdup(tLinks->itf);
                 if (!*itf)
@@ -148,12 +148,12 @@ OCStackResult OCRDCheckPublishedResource(const char *interfaceType, const char *
                     OC_LOG_V(ERROR, TAG, "Copy failed..");
                     OICFree(*uri);
                     OICFree(*rt);
-                    return false;
+                    return OC_STACK_ERROR;
                 }
-                return true;
+                return OC_STACK_OK;
             }
         }
     }
 
-    return false;
+    return OC_STACK_ERROR;
 }

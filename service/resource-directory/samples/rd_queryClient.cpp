@@ -17,8 +17,6 @@
 // limitations under the License.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-#include <vector>
-
 #include "OCApi.h"
 #include "OCPlatform.h"
 

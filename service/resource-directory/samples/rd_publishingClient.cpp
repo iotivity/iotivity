@@ -89,7 +89,7 @@ int biasFactorCB(char addr[MAX_ADDR_STR_SIZE], uint16_t port)
     return 0;
 }
 
-int main(int argc , char *argv[])
+int main()
 {
     int in;
     PlatformConfig cfg;
