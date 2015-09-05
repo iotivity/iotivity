@@ -105,6 +105,21 @@ static OCEntityHandlerResult handlePublishRequest(const OCEntityHandlerRequest *
         OCRDStorePublishedResources(payload->rdPublish);
     }
 
+    OCRDPayload *rdPayload = OCRDPayloadCreate(RD_PAYLOAD_TYPE_DISCOVERY);
+    if (!rdPayload)
+    {
+        return OC_STACK_NO_MEMORY;
+    }
+
+    OCRDPayloadLog(DEBUG, TAG, rdPayload);
+    rdPayload->payloadType = RD_PAYLOAD_TYPE_RESPONSE;
+
+    if (sendResponse(ehRequest, rdPayload) != OC_STACK_OK)
+    {
+        OC_LOG(ERROR, TAG, "Sending response failed.");
+        ehResult = OC_EH_ERROR;
+    }
+
     return ehResult;
 }
 

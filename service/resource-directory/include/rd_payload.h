@@ -24,6 +24,7 @@
 #include <cbor.h>
 
 #include "rd_types.h"
+#include "logger.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,7 +43,7 @@ extern "C" {
  * failed in creating CBOR.
  */
 OCStackResult OCRDPayloadToCbor(const OCRDPayload *rdPayload,
-                                uint8_t **outPayload, size_t *size);
+                                uint8_t *outPayload, size_t *size);
 
 /**
  * Converts CBOR to OCRDPayload.

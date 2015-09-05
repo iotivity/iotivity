@@ -24,11 +24,10 @@
 
 #include "octypes.h"
 #include "ocstack.h"
-#include "logger.h"
 
 #define TAG PCF("OCRDPayload")
 
-#define CBOR_ROOT_ARRAY_LENGTH 2
+#define CBOR_ROOT_ARRAY_LENGTH 1
 #define CBOR_LINK_ARRAY_LENGTH 3
 
 static void linksPayloadDestroy(OCRDLinksPayload *linkPayload)
@@ -46,7 +45,7 @@ static void linksPayloadDestroy(OCRDLinksPayload *linkPayload)
     }
 }
 
-OCStackResult OCRDPayloadToCbor(const OCRDPayload *rdPayload, uint8_t **outPayload, size_t *size)
+OCStackResult OCRDPayloadToCbor(const OCRDPayload *rdPayload, uint8_t *outPayload, size_t *size)
 {
     if (!outPayload || !size)
     {
@@ -54,19 +53,9 @@ OCStackResult OCRDPayloadToCbor(const OCRDPayload *rdPayload, uint8_t **outPaylo
         return OC_STACK_ERROR;
     }
 
-    *outPayload = (uint8_t *)OICCalloc(1, MAX_REQUEST_LENGTH);
-    if (!*outPayload)
-    {
-        goto no_memory;
-    }
-
-    *size = MAX_REQUEST_LENGTH;
-
-    OCRDPayloadLog(DEBUG, TAG, rdPayload);
-
     CborEncoder encoder;
     int flags = 0;
-    cbor_encoder_init(&encoder, *outPayload, *size, flags);
+    cbor_encoder_init(&encoder, outPayload, *size, flags);
 
     CborEncoder rootArray;
     CborError cborEncoderResult;
@@ -74,13 +63,6 @@ OCStackResult OCRDPayloadToCbor(const OCRDPayload *rdPayload, uint8_t **outPaylo
     if (CborNoError != cborEncoderResult)
     {
         OC_LOG_V(ERROR, TAG, "Failed creating cbor array.");
-        goto exit;
-    }
-
-    cborEncoderResult = cbor_encode_uint(&rootArray, rdPayload->base.type);
-    if (CborNoError != cborEncoderResult)
-    {
-        OC_LOG_V(ERROR, TAG, "Failed setting rdPayload->base.type.");
         goto exit;
     }
 
@@ -254,23 +236,11 @@ OCStackResult OCRDPayloadToCbor(const OCRDPayload *rdPayload, uint8_t **outPaylo
         goto exit;
     }
 
-    *size = encoder.ptr - *outPayload;
-    uint8_t *tempPayload = (uint8_t *)OICRealloc(*outPayload, *size);
-    if (!tempPayload)
-    {
-        goto no_memory;
-    }
-
-    *outPayload = tempPayload;
+    *size = encoder.ptr - outPayload;
     return OC_STACK_OK;
 
-no_memory:
-    OC_LOG_V(ERROR, TAG, "Memory allocation failed.");
-    OICFree(*outPayload);
-    return OC_STACK_NO_MEMORY;
-
 exit:
-    OICFree(*outPayload);
+    OICFree(outPayload);
     return OC_STACK_ERROR;
 }
 
@@ -340,7 +310,7 @@ OCStackResult OCRDCborToPayload(const CborValue *cborPayload, OCPayload **outPay
                 goto no_memory;
             }
         }
-        else
+        else if (RD_PAYLOAD_TYPE_PUBLISH == payloadType)
         {    // TTL
             int ttl = 0;
             cborFindResult = cbor_value_map_find_value(rdCBORPayload, OC_RSRVD_TTL, &curVal);

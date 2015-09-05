@@ -1173,6 +1173,12 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
                     {
                         type = PAYLOAD_TYPE_PLATFORM;
                     }
+#ifdef WITH_RD
+                    else if (strcmp(cbNode->requestUri, OC_RSRVD_RD_URI) == 0)
+                    {
+                        type = PAYLOAD_TYPE_RD;
+                    }
+#endif
                     else
                     {
                         OC_LOG_V(ERROR, TAG, "Unknown Payload type in Discovery: %d %s",
@@ -1187,9 +1193,21 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
                          cbNode->method == OC_REST_OBSERVE_ALL ||
                          cbNode->method == OC_REST_DELETE)
                 {
-                    OC_LOG_V(INFO, TAG, "Assuming PAYLOAD_TYPE_REPRESENTATION: %d %s",
-                            cbNode->method, cbNode->requestUri);
-                    type = PAYLOAD_TYPE_REPRESENTATION;
+#ifdef WITH_RD
+                    char targetUri[MAX_URI_LENGTH];
+                    snprintf(targetUri, MAX_URI_LENGTH, "%s?rt=%s",
+                            OC_RSRVD_RD_URI, OC_RSRVD_RESOURCE_TYPE_RDPUBLISH);
+                    if (strcmp(targetUri, cbNode->requestUri) == 0)
+                    {
+                        type = PAYLOAD_TYPE_RD;
+                    }
+#endif
+                    if (type == PAYLOAD_TYPE_INVALID)
+                    {
+                        OC_LOG_V(INFO, TAG, "Assuming PAYLOAD_TYPE_REPRESENTATION: %d %s",
+                                cbNode->method, cbNode->requestUri);
+                        type = PAYLOAD_TYPE_REPRESENTATION;
+                    }
                 }
                 else
                 {
@@ -4163,4 +4181,3 @@ OCStackResult CAResultToOCResult(CAResult_t caResult)
             return OC_STACK_ERROR;
     }
 }
-

@@ -98,10 +98,12 @@ typedef struct
  */
 typedef enum
 {
-    /** Value pf the RD discovery payload. */
+    /** Value of the RD discovery payload. */
     RD_PAYLOAD_TYPE_DISCOVERY,
     /** Value of the RD publish payload. */
-    RD_PAYLOAD_TYPE_PUBLISH
+    RD_PAYLOAD_TYPE_PUBLISH,
+    /** Value of the RD response in the payload. */
+    RD_PAYLOAD_TYPE_RESPONSE
 } OCRDPayloadType;
 
 /**

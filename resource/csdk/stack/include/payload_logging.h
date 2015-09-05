@@ -261,7 +261,7 @@ static inline void OCPayloadLog(LogLevel level, OCPayload* payload)
             break;
 #ifdef WITH_RD
         case PAYLOAD_TYPE_RD:
-            OCRDPayloadLog(level, tag, (OCRDPayload*)payload);
+            OCRDPayloadLog(level, PL_TAG, (OCRDPayload*)payload);
             break;
 #endif
         default:

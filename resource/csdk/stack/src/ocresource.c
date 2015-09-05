@@ -853,6 +853,13 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
         type = PAYLOAD_TYPE_SECURITY;
 
     }
+#ifdef WITH_RD
+
+    if (request && request->resourceUrl && strcmp(request->resourceUrl, OC_RSRVD_RD_URI) == 0)
+    {
+        type = PAYLOAD_TYPE_RD;
+    }
+#endif
     result = FormOCEntityHandlerRequest(&ehRequest,
                                         (OCRequestHandle)request,
                                         request->method,
