@@ -33,9 +33,20 @@
 #include "BundleInfoInternal.h"
 #include "logger.h"
 #include "oc_logger.hpp"
+#include "SoftSensorResource.h"
 
 using OC::oc_log_stream;
 using namespace OIC::Service;
+
+namespace
+{
+    const std::string INPUT_RESOURCE = std::string("input");
+    const std::string INPUT_RESOURCE_URI = std::string("resourceUri");
+    const std::string INPUT_RESOURCE_TYPE = std::string("resourceType");
+    const std::string INPUT_RESOURCE_ATTRIBUTENAME = std::string("name");
+
+    const std::string OUTPUT_RESOURCE_URI = std::string("resourceUri");
+}
 
 auto error_logger = []() -> boost::iostreams::stream<OC::oc_log_stream> &
 {
@@ -295,6 +306,11 @@ namespace OIC
 
                     info_logger() << "Registration finished " << strUri << "," << strResourceType
                                   << endl;
+
+                    if (m_config->isHasInput(resource->m_bundleId))
+                    {
+                        discoverInputResource(strUri);
+                    }
                 }
             }
             else
@@ -310,6 +326,11 @@ namespace OIC
 
             info_logger() << "Unregistration of resource " << resource->m_uri << "," << resource->m_resourceType
                           << endl;
+
+            if (m_config->isHasInput(resource->m_bundleId))
+            {
+                undiscoverInputResource(strUri);
+            }
 
             if (m_mapServers.find(strUri) != m_mapServers.end())
             {
@@ -341,6 +362,7 @@ namespace OIC
         RCSGetResponse ResourceContainerImpl::getRequestHandler(const RCSRequest &request,
                 const RCSResourceAttributes &attributes)
         {
+            (void)attributes;
             RCSResourceAttributes attr;
 
             if (m_mapServers.find(request.getResourceUri()) != m_mapServers.end()
@@ -435,6 +457,7 @@ namespace OIC
                                               const std::string &bundlePath,
                                               std::map< string, string > params)
         {
+            (void)bundleUri;
             if (m_bundles.find(bundleId) != m_bundles.end())
                 error_logger() << "BundleId already exist" << endl;
 
@@ -615,6 +638,79 @@ namespace OIC
 
             BundleInfoInternal *bundleInfoInternal = (BundleInfoInternal *) m_bundles[bundleId];
             bundleInfoInternal->setActivated(true);
+
+        }
+
+        void ResourceContainerImpl::undiscoverInputResource(const std::string &outputResourceUri)
+        {
+            auto foundDiscoverResource
+                = m_mapDiscoverResourceUnits.find(outputResourceUri);
+            if (foundDiscoverResource != m_mapDiscoverResourceUnits.end())
+            {
+                m_mapDiscoverResourceUnits.erase(foundDiscoverResource);
+            }
+        }
+
+        void ResourceContainerImpl::discoverInputResource(const std::string &outputResourceUri)
+        {
+            auto foundOutputResource = m_mapResources.find(outputResourceUri);
+            auto resourceProperty = foundOutputResource->second->m_mapResourceProperty;
+
+            try
+            {
+                resourceProperty.at(INPUT_RESOURCE);
+            }
+            catch (std::out_of_range &e)
+            {
+                return;
+            }
+
+            for (auto iter : resourceProperty)
+            {
+                if (iter.first.compare(INPUT_RESOURCE) == 0)
+                {
+                    for (auto it : iter.second)
+                    {
+                        auto makeValue = [&](const std::string & reference) mutable -> std::string
+                        {
+                            std::string retStr = "";
+                            try
+                            {
+                                retStr = it.at(reference);
+                            }
+                            catch (std::out_of_range &e)
+                            {
+                                return "";
+                            }
+                            return retStr;
+                        };
+                        std::string uri = makeValue(INPUT_RESOURCE_URI);
+                        std::string type = makeValue(INPUT_RESOURCE_TYPE);
+                        std::string attributeName = makeValue(INPUT_RESOURCE_ATTRIBUTENAME);
+
+                        DiscoverResourceUnit::Ptr newDiscoverUnit
+                            = std::make_shared<DiscoverResourceUnit>(outputResourceUri);
+                        newDiscoverUnit->startDiscover(
+                            DiscoverResourceUnit::DiscoverResourceInfo(uri, type, attributeName),
+                            std::bind(&SoftSensorResource::onUpdatedInputResource,
+                                    (SoftSensorResource*)foundOutputResource->second,
+                                    std::placeholders::_1, std::placeholders::_2));
+
+                        auto foundDiscoverResource
+                            = m_mapDiscoverResourceUnits.find(outputResourceUri);
+                        if (foundDiscoverResource != m_mapDiscoverResourceUnits.end())
+                        {
+                            foundDiscoverResource->second.push_back(newDiscoverUnit);
+                        }
+                        else
+                        {
+                            m_mapDiscoverResourceUnits.insert(
+                                    std::make_pair(outputResourceUri,
+                                            std::list<DiscoverResourceUnit::Ptr>{newDiscoverUnit}));
+                        }
+                    }
+                }
+            }
         }
 
         void ResourceContainerImpl::deactivateSoBundle(const std::string &id)

@@ -69,3 +69,9 @@ void DiscomfortIndexSensorResource::executeLogic()
         setAttribute("discomfortIndex", RCSResourceAttributes::Value(strDiscomfortIndex.c_str()));
     }
 }
+
+void DiscomfortIndexSensorResource::onUpdatedInputResource(const std::string attributeName,
+                std::vector<RCSResourceAttributes::Value> values)
+{
+
+}

@@ -89,6 +89,9 @@ namespace OIC
                 */
                 virtual void executeLogic() = 0;
 
+                virtual void onUpdatedInputResource(const std::string attributeName,
+                        std::vector<RCSResourceAttributes::Value> values) = 0;
+
 
             public:
                 std::list<std::string> m_inputList;

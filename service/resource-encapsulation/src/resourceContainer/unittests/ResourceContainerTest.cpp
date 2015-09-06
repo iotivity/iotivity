@@ -74,11 +74,14 @@ class TestBundleResource: public BundleResource
     public:
         string getAttribute(string attributeName)
         {
+            (void)attributeName;
             return "test";
         }
         ;
         void setAttribute(string attributeName, string value)
         {
+            (void)attributeName;
+            (void)value;
         }
         ;
         void initAttributes()

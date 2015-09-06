@@ -31,6 +31,8 @@
 #include "RCSResponse.h"
 #include "RCSResourceObject.h"
 
+#include "DiscoverResourceUnit.h"
+
 #if(JAVA_SUPPORT)
     #include <jni.h>
 #endif
@@ -105,15 +107,18 @@ namespace OIC
                 map< std::string, RCSResourceObject::Ptr > m_mapServers; //<uri, serverPtr>
                 map< std::string, BundleResource * > m_mapResources; //<uri, resourcePtr>
                 map< std::string, list<string> > m_mapBundleResources; //<bundleID, vector<uri>>
+                map< std::string, list<DiscoverResourceUnit::Ptr>>
+                    m_mapDiscoverResourceUnits; //<uri, DiscoverUnit>
                 string m_configFile;
                 Configuration *m_config;
-
 
                 void activateSoBundle(const std::string &bundleId);
                 void deactivateSoBundle(const std::string &bundleId);
                 void addSoBundleResource(const std::string &bundleId, resourceInfo newResourceInfo);
                 void removeSoBundleResource(const std::string &bundleId, const std::string &resourceUri);
                 void registerSoBundle(RCSBundleInfo *bundleInfo);
+                void discoverInputResource(const std::string & outputResourceUri);
+                void undiscoverInputResource(const std::string & outputResourceUri);
 
 #if(JAVA_SUPPORT)
                 map<string, JavaVM *> m_bundleVM;

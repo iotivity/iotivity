@@ -40,6 +40,9 @@ class DiscomfortIndexSensorResource : public SoftSensorResource
 
         virtual void executeLogic();
 
+        virtual void onUpdatedInputResource(const std::string attributeName,
+                std::vector<RCSResourceAttributes::Value> values);
+
     private:
         DiscomfortIndexSensor *m_pDiscomfortIndexSensor;
 };

@@ -18,7 +18,15 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include <stdexcept>
+#include <utility>
+
 #include "Configuration.h"
+
+namespace
+{
+    const std::string INPUT_RESOURCE = std::string("input");
+}
 
 namespace OIC
 {
@@ -59,9 +67,20 @@ namespace OIC
         {
         }
 
-        bool Configuration::isLoaded()
+        bool Configuration::isLoaded() const
         {
             return m_loaded;
+        }
+
+        bool Configuration::isHasInput(std::string & bundleId) const
+        {
+            try
+            {
+                return m_mapisHasInput.at(bundleId);
+            }catch (std::out_of_range &e)
+            {
+                return false;
+            }
         }
 
         void Configuration::getConfiguredBundles(configInfo *configOutput)
@@ -75,13 +94,10 @@ namespace OIC
             {
                 try
                 {
-                    //cout << "Name of first node is: " << m_xmlDoc.first_node()->name() << endl;
-
                     for (bundle = m_xmlDoc.first_node()->first_node("bundle"); bundle; bundle =
                             bundle->next_sibling())
                     {
                         std::map< std::string, std::string > bundleMap;
-                        //cout << "Bundle: " << bundle->name() << endl;
                         for (subItem = bundle->first_node(); subItem;
                                 subItem = subItem->next_sibling())
                         {
@@ -92,7 +108,6 @@ namespace OIC
                             {
                                 bundleMap.insert(
                                         std::make_pair(trim_both(strKey), trim_both(strValue)));
-                                //cout << strKey << " " << strValue << endl;
                             }
                         }
                         configOutput->push_back(bundleMap);
@@ -208,6 +223,11 @@ namespace OIC
                                             map< string, string > propertyMap;
 
                                             strKey = subItem->name();
+
+                                            if(strKey.compare(INPUT_RESOURCE))
+                                            {
+                                                m_mapisHasInput[strBundleId] = true;
+                                            }
 
                                             for (subItem2 = subItem->first_node(); subItem2;
                                                     subItem2 = subItem2->next_sibling())
