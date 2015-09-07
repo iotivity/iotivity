@@ -56,19 +56,9 @@
 #include "pmutility.h"
 #include "srmutility.h"
 #include "provisioningdatabasemanager.h"
-
-// TODO: Not yet supported.
-//#include "oxmrandompin.h"
-
-#define DEFAULT_CONTEXT_VALUE 0x99
-#define DEFAULT_SECURE_PORT 5684
+#include "oxmrandompin.h"
 
 #define TAG "OTM"
-
-OCProvisionResultCB g_resultCallback;
-OCProvisionResult_t* g_resultArray = NULL;
-size_t g_resultArraySize = 0;
-bool g_hasError = false;
 
 /**
  * Possible states of ownership transfer manager module.
@@ -98,7 +88,7 @@ typedef enum
 /**
  * Array to store the callbacks for each owner transfer method.
  */
-OTMCallbackData_t g_OTMDatas[OIC_OXM_COUNT];
+static OTMCallbackData_t g_OTMDatas[OIC_OXM_COUNT];
 
 /**
  * Variable for storing provisioning tool's provisioning capabilities
@@ -259,11 +249,11 @@ static OCStackResult StartOwnershipTransfer(void* ctx, OCProvisionDev_t* selecte
 static OCStackResult FinalizeProvisioning(OTMContext_t* otmCtx);
 
 
-static bool IsComplete()
+static bool IsComplete(OTMContext_t* otmCtx)
 {
-    for(size_t i = 0; i < g_resultArraySize; i++)
+    for(size_t i = 0; i < otmCtx->ctxResultArraySize; i++)
     {
-        if(OC_STACK_CONTINUE == g_resultArray[i].res)
+        if(OC_STACK_CONTINUE == otmCtx->ctxResultArray[i].res)
         {
             return false;
         }
@@ -290,27 +280,30 @@ static void SetResult(OTMContext_t* otmCtx, const OCStackResult res)
 
     if(otmCtx->selectedDeviceInfo)
     {
-        for(size_t i = 0; i < g_resultArraySize; i++)
+        for(size_t i = 0; i < otmCtx->ctxResultArraySize; i++)
         {
             if(memcmp(otmCtx->selectedDeviceInfo->doxm->deviceID.id,
-                      g_resultArray[i].deviceId.id, UUID_LENGTH) == 0)
+                      otmCtx->ctxResultArray[i].deviceId.id, UUID_LENGTH) == 0)
             {
-                g_resultArray[i].res = res;
+                otmCtx->ctxResultArray[i].res = res;
                 if(OC_STACK_OK != res)
                 {
-                    g_hasError = true;
+                    otmCtx->ctxHasError = true;
                 }
             }
         }
 
         //If all request is completed, invoke the user callback.
-        if(IsComplete())
+        if(IsComplete(otmCtx))
         {
-            g_resultCallback(otmCtx->userCtx, g_resultArraySize, g_resultArray, g_hasError);
+            otmCtx->ctxResultCallback(otmCtx->userCtx, otmCtx->ctxResultArraySize,
+                                       otmCtx->ctxResultArray, otmCtx->ctxHasError);
+            OICFree(otmCtx->ctxResultArray);
+            OICFree(otmCtx);
         }
         else
         {
-            if(OC_STACK_OK != StartOwnershipTransfer(otmCtx->userCtx,
+            if(OC_STACK_OK != StartOwnershipTransfer(otmCtx,
                                                      otmCtx->selectedDeviceInfo->next))
             {
                 OC_LOG(ERROR, TAG, "Failed to StartOwnershipTransfer");
@@ -319,8 +312,6 @@ static void SetResult(OTMContext_t* otmCtx, const OCStackResult res)
     }
 
     OC_LOG(DEBUG, TAG, "OUT SetResult");
-
-    OICFree(otmCtx);
 }
 
 
@@ -529,7 +520,7 @@ static OCStackApplicationResult OwnershipInformationHandler(void *ctx, OCDoHandl
     {
         if(OIC_RANDOM_DEVICE_PIN == otmCtx->selectedDeviceInfo->doxm->oxmSel)
         {
-            res = RemoveCredential(&otmCtx->tempCredId);
+            res = RemoveCredential(&otmCtx->subIdForPinOxm);
             if(OC_STACK_RESOURCE_DELETED != res)
             {
                 OC_LOG_V(ERROR, TAG, "Failed to remove temporal PSK : %d", res);
@@ -650,7 +641,7 @@ static OCStackResult PutOwnerTransferModeToResource(OTMContext_t* otmCtx)
 
     if(!otmCtx || !otmCtx->selectedDeviceInfo)
     {
-        OC_LOG(ERROR, TAG, "Invailed parameters");
+        OC_LOG(ERROR, TAG, "Invalid parameters");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -852,19 +843,7 @@ static OCStackResult PutUpdateOperationMode(OTMContext_t* otmCtx,
 static OCStackResult StartOwnershipTransfer(void* ctx, OCProvisionDev_t* selectedDevice)
 {
     OC_LOG(INFO, TAG, "IN StartOwnershipTransfer");
-    //Checking duplication of Device ID.
-    if(true == PDMIsDuplicateDevice(&selectedDevice->doxm->deviceID))
-    {
-        OC_LOG(ERROR, TAG, "OTMDoOwnershipTransfer : Device ID is duplicated");
-        return OC_STACK_INVALID_PARAM;
-    }
-    OTMContext_t* otmCtx = (OTMContext_t*)OICMalloc(sizeof(OTMContext_t));
-    if(!otmCtx)
-    {
-        OC_LOG(ERROR, TAG, "Failed to create OTM Context");
-        return OC_STACK_NO_MEMORY;
-    }
-    otmCtx->userCtx = ctx;
+    OTMContext_t* otmCtx = (OTMContext_t*)ctx;
     otmCtx->selectedDeviceInfo = selectedDevice;
 
     //Set to the lowest level OxM, and then find more higher level OxM.
@@ -933,47 +912,56 @@ OCStackResult OTMDoOwnershipTransfer(void* ctx,
         return OC_STACK_INVALID_PARAM;
     }
 
-    g_resultCallback = resultCallback;
-    g_hasError = false;
-
+    OTMContext_t* otmCtx = (OTMContext_t*)OICCalloc(1,sizeof(OTMContext_t));
+    if(!otmCtx)
+    {
+        OC_LOG(ERROR, TAG, "Failed to create OTM Context");
+        return OC_STACK_NO_MEMORY;
+    }
+    otmCtx->ctxResultCallback = resultCallback;
+    otmCtx->ctxHasError = false;
+    otmCtx->userCtx = ctx;
     OCProvisionDev_t* pCurDev = selectedDevicelist;
 
     //Counting number of selected devices.
-    g_resultArraySize = 0;
+    otmCtx->ctxResultArraySize = 0;
     while(NULL != pCurDev)
     {
-        g_resultArraySize++;
+        otmCtx->ctxResultArraySize++;
         pCurDev = pCurDev->next;
     }
 
-    if(g_resultArray)
-    {
-        OICFree(g_resultArray);
-    }
-    g_resultArray =
-        (OCProvisionResult_t*)OICMalloc(sizeof(OCProvisionResult_t) * g_resultArraySize);
-    if(NULL == g_resultArray)
+    otmCtx->ctxResultArray =
+        (OCProvisionResult_t*)OICCalloc(otmCtx->ctxResultArraySize, sizeof(OCProvisionResult_t));
+    if(NULL == otmCtx->ctxResultArray)
     {
         OC_LOG(ERROR, TAG, "OTMDoOwnershipTransfer : Failed to memory allocation");
+        OICFree(otmCtx);
         return OC_STACK_NO_MEMORY;
     }
-
     pCurDev = selectedDevicelist;
+
     //Fill the device UUID for result array.
-    for(size_t devIdx = 0; devIdx < g_resultArraySize; devIdx++)
+    for(size_t devIdx = 0; devIdx < otmCtx->ctxResultArraySize; devIdx++)
     {
-        memcpy(g_resultArray[devIdx].deviceId.id,
+        //Checking duplication of Device ID.
+        if(true == PDMIsDuplicateDevice(&pCurDev->doxm->deviceID))
+        {
+            OC_LOG(ERROR, TAG, "OTMDoOwnershipTransfer : Device ID is duplicate");
+            OICFree(otmCtx->ctxResultArray);
+            OICFree(otmCtx);
+            return OC_STACK_INVALID_PARAM;
+        }
+        memcpy(otmCtx->ctxResultArray[devIdx].deviceId.id,
                pCurDev->doxm->deviceID.id,
                UUID_LENGTH);
-        g_resultArray[devIdx].res = OC_STACK_CONTINUE;
+        otmCtx->ctxResultArray[devIdx].res = OC_STACK_CONTINUE;
         pCurDev = pCurDev->next;
     }
-
-    StartOwnershipTransfer(ctx, selectedDevicelist);
+    StartOwnershipTransfer(otmCtx, selectedDevicelist);
 
     OC_LOG(DEBUG, TAG, "OUT OTMDoOwnershipTransfer");
-
-    return (g_hasError ? OC_STACK_ERROR : OC_STACK_OK);
+    return OC_STACK_OK;
 }
 
 /**
