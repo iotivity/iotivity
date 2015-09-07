@@ -44,6 +44,11 @@
 
 #define TAG ("PM-UTILITY")
 
+typedef struct _DiscoveryInfo{
+    OCProvisionDev_t    **ppDevicesList;
+    bool                isOwnedDiscovery;
+} DiscoveryInfo;
+
 /**
  * Function to search node in linked list that matches given IP and port.
  *
@@ -355,7 +360,8 @@ static OCStackApplicationResult SecurePortDiscoveryHandler(void *ctx, OCDoHandle
                 return OC_STACK_KEEP_TRANSACTION;
             }
 
-            OCProvisionDev_t** ppDevicesList = (OCProvisionDev_t**) ctx;
+            DiscoveryInfo* pDInfo = (DiscoveryInfo*)ctx;
+            OCProvisionDev_t **ppDevicesList = pDInfo->ppDevicesList;
 
             OCStackResult res = UpdateSecurePortOfDevice(ppDevicesList, clientResponse->devAddr.addr,
                                                          clientResponse->devAddr.port, securePort);
@@ -424,9 +430,31 @@ static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx, OCDoHandle UNU
             {
                 OC_LOG(DEBUG, TAG, "Successfully converted doxm json to bin.");
 
-                OCProvisionDev_t **ppDevicesList = (OCProvisionDev_t**) ctx;
+                //If this is owend device discovery we have to filter out the responses.
+                DiscoveryInfo* pDInfo = (DiscoveryInfo*)ctx;
+                OCProvisionDev_t **ppDevicesList = pDInfo->ppDevicesList;
 
-                OCStackResult res = AddDevice(ppDevicesList, clientResponse->devAddr.addr,
+                // Get my device ID from doxm resource
+                OicUuid_t myId;
+                memset(&myId, 0, sizeof(myId));
+                OCStackResult res = GetDoxmDevOwnerId(&myId);
+                if(OC_STACK_OK != res)
+                {
+                    OC_LOG(ERROR, TAG, "Error while getting my device ID.");
+                    DeleteDoxmBinData(ptrDoxm);
+                    return OC_STACK_KEEP_TRANSACTION;
+                }
+
+                // If this is owned discovery response but owner is not me then discard it.
+                if( (pDInfo->isOwnedDiscovery) &&
+                    (0 != memcmp(&ptrDoxm->owner.id, &myId.id, sizeof(myId.id))) )
+                {
+                    OC_LOG(DEBUG, TAG, "Discovered device is not owend by me");
+                    DeleteDoxmBinData(ptrDoxm);
+                    return OC_STACK_KEEP_TRANSACTION;
+                }
+
+                res = AddDevice(ppDevicesList, clientResponse->devAddr.addr,
                         clientResponse->devAddr.port,
                         clientResponse->devAddr.adapter,
                         clientResponse->connType, ptrDoxm);
@@ -502,9 +530,19 @@ OCStackResult PMDeviceDiscovery(unsigned short waittime, bool isOwned, OCProvisi
     const char DOXM_OWNED_FALSE_MULTICAST_QUERY[] = "/oic/sec/doxm?Owned=FALSE";
     const char DOXM_OWNED_TRUE_MULTICAST_QUERY[] = "/oic/sec/doxm?Owned=TRUE";
 
+    DiscoveryInfo *pDInfo = OICCalloc(1, sizeof(DiscoveryInfo));
+    if(NULL == pDInfo)
+    {
+        OC_LOG(ERROR, TAG, "PMDeviceDiscovery : Memory allocation failed.");
+        return OC_STACK_NO_MEMORY;
+    }
+
+    pDInfo->ppDevicesList = ppDevicesList;
+    pDInfo->isOwnedDiscovery = isOwned;
+
     OCCallbackData cbData;
     cbData.cb = &DeviceDiscoveryHandler;
-    cbData.context = (void *)ppDevicesList;
+    cbData.context = (void *)pDInfo;
     cbData.cd = NULL;
     OCStackResult res = OC_STACK_ERROR;
 
@@ -528,6 +566,8 @@ OCStackResult PMDeviceDiscovery(unsigned short waittime, bool isOwned, OCProvisi
     }
 
     OC_LOG(DEBUG, TAG, "OUT PMDeviceDiscovery");
+
 exit:
+    OICFree(pDInfo);
     return res;
 }
