@@ -55,6 +55,7 @@
 #include "pmtypes.h"
 #include "pmutility.h"
 #include "srmutility.h"
+#include "provisioningdatabasemanager.h"
 
 // TODO: Not yet supported.
 //#include "oxmrandompin.h"
@@ -851,6 +852,12 @@ static OCStackResult PutUpdateOperationMode(OTMContext_t* otmCtx,
 static OCStackResult StartOwnershipTransfer(void* ctx, OCProvisionDev_t* selectedDevice)
 {
     OC_LOG(INFO, TAG, "IN StartOwnershipTransfer");
+    //Checking duplication of Device ID.
+    if(true == PDMIsDuplicateDevice(&selectedDevice->doxm->deviceID))
+    {
+        OC_LOG(ERROR, TAG, "OTMDoOwnershipTransfer : Device ID is duplicated");
+        return OC_STACK_INVALID_PARAM;
+    }
     OTMContext_t* otmCtx = (OTMContext_t*)OICMalloc(sizeof(OTMContext_t));
     if(!otmCtx)
     {
@@ -990,7 +997,18 @@ static OCStackApplicationResult FinalizeProvisioningCB(void *ctx, OCDoHandle UNU
     (void)UNUSED;
     if(OC_STACK_OK == clientResponse->result)
     {
-        SetResult(otmCtx, OC_STACK_OK);
+        OCStackResult res = PDMAddDevice(&otmCtx->selectedDeviceInfo->doxm->deviceID);
+
+         if (OC_STACK_OK == res)
+         {
+                OC_LOG_V(INFO, TAG, "Add device's UUID in PDM_DB");
+                SetResult(otmCtx, OC_STACK_OK);
+                return OC_STACK_DELETE_TRANSACTION;
+         }
+         else
+         {
+              OC_LOG(ERROR, TAG, "Ownership transfer is complete but adding information to DB is failed.");
+         }
     }
 exit:
     return OC_STACK_DELETE_TRANSACTION;

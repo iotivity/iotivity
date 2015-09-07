@@ -26,6 +26,7 @@
 #include "oic_malloc.h"
 #include "logger.h"
 #include "secureresourceprovider.h"
+#include "provisioningdatabasemanager.h"
 
 #define TAG "OCPMAPI"
 
@@ -43,6 +44,21 @@ struct Linkdata
     OCProvisionResultCB resultCallback;
 
 };
+
+/**
+ * The function is responsible for initializaton of the provisioning manager. It will load
+ * provisioning database which have owned device's list and their linked status.
+ * TODO: In addition, if there is a device(s) which has not up-to-date credentials, this function will
+ * automatically try to update the deivce(s).
+ *
+ * @param[in] dbPath file path of the sqlite3 db
+ *
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCInitPM(const char* dbPath)
+{
+    return PDMInit(dbPath);
+}
 
 /**
  * The function is responsible for discovery of device is current subnet. It will list

@@ -36,6 +36,7 @@
 #include "cJSON.h"
 #include "pmtypes.h"
 #include "pmutility.h"
+#include "provisioningdatabasemanager.h"
 
 #define SRP_MAX_URI_LENGTH 512
 #define TAG "SRPAPI"
@@ -136,6 +137,15 @@ static OCStackApplicationResult provisionCredentialCB2(void *ctx, OCDoHandle UNU
         if(OC_STACK_RESOURCE_CREATED == clientResponse->result)
         {
             registerResultForCredProvisioning(credData, OC_STACK_RESOURCE_CREATED, 2);
+            OCStackResult res =  PDMLinkDevices(&credData->deviceInfo1->doxm->deviceID,
+                    &credData->deviceInfo2->doxm->deviceID);
+            if (OC_STACK_OK != res)
+            {
+                OC_LOG(ERROR, TAG, "Error occured on PDMlinkDevices");
+                return OC_STACK_DELETE_TRANSACTION;
+            }
+            OC_LOG(INFO, TAG, "Link created successfully");
+
             ((OCProvisionResultCB)(resultCallback))(credData->ctx, credData->numOfResults,
                                                     credData->resArr,
                                                     false);

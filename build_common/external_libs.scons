@@ -134,3 +134,6 @@ env.AddMethod(__configure, "Configure")
 env.AddMethod(__download, "Download")
 env.AddMethod(__install_head_file, "InstallHeadFile")
 env.AddMethod(__install_lib, "InstallLib")
+
+if env.get('SECURED') == '1':
+	SConscript(os.path.join(env.get('SRC_DIR'), 'extlibs', 'sqlite3', 'SConscript'))

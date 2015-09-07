@@ -32,14 +32,14 @@ extern "C" {
 /**
  * The function is responsible for initializaton of the provisioning manager. It will load
  * provisioning database which have owned device's list and their linked status.
- * In addition, if there is a device(s) which has not up-to-date credentials, this function will
+ * TODO: In addition, if there is a device(s) which has not up-to-date credentials, this function will
  * automatically try to update the deivce(s).
  *
  * @param[in] dbPath file path of the sqlite3 db
  *
  * @return OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult OCProvisionInit(const char* dbPath);
+OCStackResult OCInitPM(const char* dbPath);
 
 /**
  * The function is responsible for discovery of device is current subnet. It will list

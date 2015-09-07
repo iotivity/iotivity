@@ -387,21 +387,23 @@ int main()
     (void)unused;
 
     // Initialize Persistent Storage for SVR database
-    OCPersistentStorage ps = { .open = NULL,
-                               .read = NULL,
-                               .write = NULL,
-                               .close = NULL,
-                               .unlink = NULL };
-    ps.open = client_fopen;
-    ps.read = fread;
-    ps.write = fwrite;
-    ps.close = fclose;
-    ps.unlink = unlink;
+    OCPersistentStorage ps = { .open = client_fopen,
+                               .read = fread,
+                               .write = fwrite,
+                               .close = fclose,
+                               .unlink = unlink };
+
     OCRegisterPersistentStorageHandler(&ps);
 
     if (OC_STACK_OK != OCInit(NULL, 0, OC_CLIENT_SERVER))
     {
         OC_LOG(ERROR, TAG, "OCStack init error");
+        goto error;
+    }
+
+    if (OC_STACK_OK != OCInitPM(NULL))
+    {
+        OC_LOG(ERROR, TAG, "Initializing DB failure");
         goto error;
     }
 

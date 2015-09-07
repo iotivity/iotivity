@@ -29,6 +29,28 @@ extern "C" {
 #endif
 
 /**
+ * Node to construct list of UUID pair list.
+ */
+typedef struct OCPairList OCPairList_t;
+struct OCPairList
+{
+    OicUuid_t dev;
+    OicUuid_t dev2;
+    OCPairList_t *next;
+};
+
+/**
+ * Node to construct UUID linked list.
+ */
+typedef struct OCUuidList  OCUuidList_t;
+struct OCUuidList
+{
+    OicUuid_t dev;
+    OCUuidList_t *next;
+};
+
+
+/**
  * Device Information of discoverd unowned/owned device(s) for provisioning.
  */
 typedef struct OCProvisionDev

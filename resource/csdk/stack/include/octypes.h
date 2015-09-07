@@ -633,6 +633,10 @@ typedef enum
     /** Request is not authorized by Resource Server. */
     OC_STACK_UNAUTHORIZED_REQ,
 
+    /** Error code from PDM */
+    OC_STACK_DUPLICATE_UUID,
+    OC_STACK_INCONSISTENT_DB,
+
     /** Insert all new error codes here!.*/
     #ifdef WITH_PRESENCE
     OC_STACK_PRESENCE_STOPPED = 128,

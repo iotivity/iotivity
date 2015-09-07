@@ -105,6 +105,8 @@ namespace OC
         static const char INVALID_ATTRIBUTE[]          = "Invalid Attribute: ";
         static const char INVALID_DEVICE_INFO[]        = "Invalid Device Information";
         static const char UNAUTHORIZED_REQUEST[]       = "Unauthorized Request";
+        static const char DUPLICATE_UUID[]             = "Duplicate UUID in DB";
+        static const char INCONSISTENT_DB[]            = "Data in provisioning DB is inconsistent";
 
     }
 
