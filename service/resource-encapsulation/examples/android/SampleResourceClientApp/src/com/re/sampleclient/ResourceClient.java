@@ -21,18 +21,13 @@ package com.re.sampleclient;
 
 import java.util.Vector;
 
-import org.iotivity.ResourceEncapsulation.client.ICacheUpdateListener;
-import org.iotivity.ResourceEncapsulation.client.IDiscoverResourceListener;
-import org.iotivity.ResourceEncapsulation.client.IRemoteAttributeListener;
-import org.iotivity.ResourceEncapsulation.client.IStateChangedCallbackListener;
 import org.iotivity.ResourceEncapsulation.client.RCSAddress;
 import org.iotivity.ResourceEncapsulation.client.RCSDiscoveryManager;
+import org.iotivity.ResourceEncapsulation.client.RCSDiscoveryManager.*;
 import org.iotivity.ResourceEncapsulation.client.RCSRemoteResourceObject;
-
-import org.iotivity.ResourceEncapsulation.utils.CacheState;
+import org.iotivity.ResourceEncapsulation.client.RCSRemoteResourceObject.*;
 import org.iotivity.ResourceEncapsulation.common.RCSException;
 import org.iotivity.ResourceEncapsulation.common.RCSResourceAttributes;
-import org.iotivity.ResourceEncapsulation.utils.ResourceState;
 
 import android.os.Message;
 import android.util.Log;
@@ -62,7 +57,7 @@ public class ResourceClient {
 
     // constructor
     public ResourceClient() {
-        discoveyManagerObj = new RCSDiscoveryManager();
+        discoveyManagerObj = RCSDiscoveryManager.getInstance();
         discoverResourceListener = new DiscoverResourceListener();
         stateChangedListener = new StateChangedListener();
         cacheUpdateListener = new CacheUpdateListener();
@@ -78,7 +73,7 @@ public class ResourceClient {
     /**
      * Listener for receiving Resource discovered in network.
      */
-    private class DiscoverResourceListener implements IDiscoverResourceListener {
+    private class DiscoverResourceListener implements IDiscoverResourceListener{
 
         @Override
         public void onResourceDiscovered(RCSRemoteResourceObject foundResource) {
@@ -124,7 +119,7 @@ public class ResourceClient {
     private class StateChangedListener implements IStateChangedCallbackListener {
 
         @Override
-        public void onStateChangedCallback(ResourceState resourceState) {
+        public void onStateChanged(ResourceState resourceState) {
             Log.i(LOG_TAG, "onStateChangedCallback invoked");
 
             switch (resourceState) {
@@ -195,7 +190,12 @@ public class ResourceClient {
     public void disocverResources() {
         Log.d(LOG_TAG, "discover resources entry");
         RCSAddress address = RCSAddress.multicast();
-        discoveyManagerObj.discoverResource(address);
+        try {
+            discoveyManagerObj.discoverResource(address);
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
         Log.d(LOG_TAG, "discover resources exit");
     }
 
