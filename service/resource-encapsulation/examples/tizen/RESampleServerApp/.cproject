@@ -236,6 +236,8 @@
 									<listOptionValue builtIn="false" value="oc_logger_core"/>
 									<listOptionValue builtIn="false" value="connectivity_abstraction"/>
 									<listOptionValue builtIn="false" value="uuid"/>
+									<listOptionValue builtIn="false" value="SoftSensorBundle"/>
+									<listOptionValue builtIn="false" value="HueBundle"/>
 									<listOptionValue builtIn="false" value="rcs_client"/>
 									<listOptionValue builtIn="false" value="rcs_common"/>
 									<listOptionValue builtIn="false" value="rcs_container"/>

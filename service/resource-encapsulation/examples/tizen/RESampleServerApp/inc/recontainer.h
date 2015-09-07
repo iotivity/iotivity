@@ -20,36 +20,19 @@
 
 #include "remain.h"
 
-#include "RCSResourceObject.h"
+#ifndef __RECONTAINER_H__
+#define __RECONTAINER_H__
 
-#ifndef __RESERVER_H__
-#define __RESERVER_H__
+# define LOG_TAG "recontainer"
 
 using namespace std;
-using namespace OIC::Service;
 
-typedef void(*ClientMenuHandler)();
-typedef int ReturnValue;
+void *showContainerAPIs(void *data);
 
-constexpr int DEFALUT_VALUE = 0;
+void containerCreateUI(void *data);
 
-std::string resourceUri = "/a/TempSensor";
-std::string resourceType = "core.TemperatureSensor";
-std::string resourceInterface = "oic.if.";
-std::string attributeKey = "Temperature";
+static void startContainer(void *data, Evas_Object *obj, void *event_info);
 
-enum class Control
-{
-    INCREASE,
-    DECREASE
-};
+static void stopContainer(void *data, Evas_Object *obj, void *event_info);
 
-void printAttribute(const RCSResourceAttributes &attrs);
-
-void start_server(void *data, Evas_Object *obj, void *event_info);
-
-void start_server_cb(void *data, Evas_Object *obj, void *event_info);
-
-void *showGroupAPIs(void *data);
-
-#endif // __RESERVER_H__
+#endif // __RECONTAINER_H__

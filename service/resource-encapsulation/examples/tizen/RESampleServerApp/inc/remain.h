@@ -18,38 +18,33 @@
  *
  ******************************************************************/
 
-#include "remain.h"
+#ifndef __REMAIN_H__
+#define __REMAIN_H__
 
-#include "RCSResourceObject.h"
+#include <app.h>
+#include <Elementary.h>
+#include <system_settings.h>
+#include <efl_extension.h>
+#include <dlog.h>
 
-#ifndef __RESERVER_H__
-#define __RESERVER_H__
+#include "OCPlatform.h"
+#include "OCApi.h"
 
-using namespace std;
-using namespace OIC::Service;
+using namespace OC;
 
-typedef void(*ClientMenuHandler)();
-typedef int ReturnValue;
+#ifdef  LOG_TAG
+#undef  LOG_TAG
+#endif
+#define LOG_TAG "reservermain"
 
-constexpr int DEFALUT_VALUE = 0;
+#if !defined(PACKAGE)
+#define PACKAGE "org.tizen.resampleserver"
+#endif
 
-std::string resourceUri = "/a/TempSensor";
-std::string resourceType = "core.TemperatureSensor";
-std::string resourceInterface = "oic.if.";
-std::string attributeKey = "Temperature";
+#define ELM_DEMO_EDJ "opt/usr/apps/org.tizen.resampleserver/res/ui_controls.edj"
 
-enum class Control
-{
-    INCREASE,
-    DECREASE
-};
+void serverCreateUI(void *data, Evas_Object *obj, void *event_info);
 
-void printAttribute(const RCSResourceAttributes &attrs);
+void containerCreateUI(void *data, Evas_Object *obj, void *event_info);
 
-void start_server(void *data, Evas_Object *obj, void *event_info);
-
-void start_server_cb(void *data, Evas_Object *obj, void *event_info);
-
-void *showGroupAPIs(void *data);
-
-#endif // __RESERVER_H__
+#endif // __REMAIN_H__
