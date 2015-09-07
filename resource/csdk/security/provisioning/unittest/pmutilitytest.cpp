@@ -79,7 +79,7 @@ TEST(ProvisionListTest, Deletion)
     int cnt =0;
 
     // Delete whole
-    DeleteDeviceList(gList);
+    PMDeleteDeviceList(gList);
     gList = NULL;
 
     LL_FOREACH(gList,el){ ++cnt; };

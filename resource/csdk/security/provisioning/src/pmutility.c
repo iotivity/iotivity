@@ -149,7 +149,7 @@ OCStackResult UpdateSecurePortOfDevice(OCProvisionDev_t **ppDevicesList, const c
  *
  * @param[in] pDevicesList         List of OCProvisionDev_t.
  */
-void DeleteDeviceList(OCProvisionDev_t *pDevicesList)
+void PMDeleteDeviceList(OCProvisionDev_t *pDevicesList)
 {
     if(pDevicesList)
     {
@@ -445,7 +445,7 @@ static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx, OCDoHandle UNU
                                     query, sizeof(query), OC_RSRVD_WELL_KNOWN_URI))
                 {
                     OC_LOG(ERROR, TAG, "DeviceDiscoveryHandler : Failed to generate query");
-                    return OC_STACK_ERROR;
+                    return OC_STACK_KEEP_TRANSACTION;
                 }
                 OC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
@@ -459,7 +459,7 @@ static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx, OCDoHandle UNU
                 if(OC_STACK_OK != ret)
                 {
                     OC_LOG(ERROR, TAG, "Failed to Secure Port Discovery");
-                    return OC_STACK_DELETE_TRANSACTION;
+                    return OC_STACK_KEEP_TRANSACTION;
                 }
                 else
                 {

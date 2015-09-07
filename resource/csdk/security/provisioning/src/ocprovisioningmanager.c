@@ -119,7 +119,7 @@ OCStackResult OCDoOwnershipTransfer(void* ctx,
  */
 void OCDeleteDiscoveredDevices(OCProvisionDev_t *pList)
 {
-    DeleteDeviceList(pList);
+    PMDeleteDeviceList(pList);
 }
 
 /**

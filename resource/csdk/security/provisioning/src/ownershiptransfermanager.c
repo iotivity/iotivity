@@ -662,7 +662,7 @@ static OCStackResult PutOwnerTransferModeToResource(OTMContext_t* otmCtx)
                         deviceInfo->connType,
                         query, sizeof(query), OIC_RSRC_DOXM_URI))
     {
-        OC_LOG(ERROR, TAG, "DeviceDiscoveryHandler : Failed to generate query");
+        OC_LOG(ERROR, TAG, "PutOwnerTransferModeToResource : Failed to generate query");
         return OC_STACK_ERROR;
     }
     OC_LOG_V(DEBUG, TAG, "Query=%s", query);
@@ -716,7 +716,7 @@ static OCStackResult GetProvisioningStatusResource(OTMContext_t* otmCtx)
                         deviceInfo->connType,
                         query, sizeof(query), OIC_RSRC_PSTAT_URI))
     {
-        OC_LOG(ERROR, TAG, "DeviceDiscoveryHandler : Failed to generate query");
+        OC_LOG(ERROR, TAG, "GetProvisioningStatusResource : Failed to generate query");
         return OC_STACK_ERROR;
     }
     OC_LOG_V(DEBUG, TAG, "Query=%s", query);
@@ -755,7 +755,7 @@ static OCStackResult PutOwnershipInformation(OTMContext_t* otmCtx)
                         deviceInfo->connType,
                         query, sizeof(query), OIC_RSRC_DOXM_URI))
     {
-        OC_LOG(ERROR, TAG, "DeviceDiscoveryHandler : Failed to generate query");
+        OC_LOG(ERROR, TAG, "PutOwnershipInformation : Failed to generate query");
         return OC_STACK_ERROR;
     }
     OC_LOG_V(DEBUG, TAG, "Query=%s", query);
@@ -810,7 +810,7 @@ static OCStackResult PutUpdateOperationMode(OTMContext_t* otmCtx,
                         deviceInfo->connType,
                         query, sizeof(query), OIC_RSRC_PSTAT_URI))
     {
-        OC_LOG(ERROR, TAG, "DeviceDiscoveryHandler : Failed to generate query");
+        OC_LOG(ERROR, TAG, "PutUpdateOperationMode : Failed to generate query");
         return OC_STACK_ERROR;
     }
     OC_LOG_V(DEBUG, TAG, "Query=%s", query);
@@ -1046,7 +1046,7 @@ static OCStackApplicationResult ProvisionDefaultACLCB(void *ctx, OCDoHandle UNUS
                             otmCtx->selectedDeviceInfo->connType,
                             query, sizeof(query), OIC_RSRC_PSTAT_URI))
         {
-            OC_LOG(ERROR, TAG, "DeviceDiscoveryHandler : Failed to generate query");
+            OC_LOG(ERROR, TAG, "ProvisionDefaultACLCB : Failed to generate query");
             return OC_STACK_ERROR;
         }
         OC_LOG_V(DEBUG, TAG, "Query=%s", query);
@@ -1151,7 +1151,7 @@ OCStackResult FinalizeProvisioning(OTMContext_t* otmCtx)
                         otmCtx->selectedDeviceInfo->connType,
                         query, sizeof(query), OIC_RSRC_ACL_URI))
     {
-        OC_LOG(ERROR, TAG, "DeviceDiscoveryHandler : Failed to generate query");
+        OC_LOG(ERROR, TAG, "FinalizeProvisioning : Failed to generate query");
         return OC_STACK_ERROR;
     }
     OC_LOG_V(DEBUG, TAG, "Query=%s", query);
