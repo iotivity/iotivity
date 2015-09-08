@@ -487,8 +487,14 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
             responseInfo.info.options[0].protocolID = CA_COAP_ID;
             responseInfo.info.options[0].optionID = COAP_OPTION_OBSERVE;
             responseInfo.info.options[0].optionLength = sizeof(uint32_t);
-            memcpy(responseInfo.info.options[0].optionData,
-                    &(serverRequest->observationOption), sizeof(uint32_t));
+            uint8_t* observationData = (uint8_t*)responseInfo.info.options[0].optionData;
+            uint32_t observationOption= serverRequest->observationOption;
+            size_t i;
+            for (i=sizeof(uint32_t); i; --i)
+            {
+                observationData[i-1] = observationOption & 0xFF;
+                observationOption >>=8;
+            }
 
             // Point to the next header option before copying vender specific header options
             optionsPointer += 1;
@@ -535,15 +541,15 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
         responseInfo.info.payloadSize = 0;
     }
 
-    #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
     CATransportAdapter_t CAConnTypes[] = {
                             CA_ADAPTER_IP,
                             CA_ADAPTER_GATT_BTLE,
                             CA_ADAPTER_RFCOMM_BTEDR
 
-                            #ifdef RA_ADAPTER
+#ifdef RA_ADAPTER
                             , CA_ADAPTER_REMOTE_ACCESS
-                            #endif
+#endif
                         };
 
     int size = sizeof(CAConnTypes)/ sizeof(CATransportAdapter_t);
@@ -561,9 +567,9 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
                 CA_ADAPTER_GATT_BTLE    |
                 CA_ADAPTER_RFCOMM_BTEDR
 
-                #ifdef RA_ADAP
+#ifdef RA_ADAP
                 | CA_ADAPTER_REMOTE_ACCESS
-                #endif
+#endif
             );
     }
 
@@ -582,7 +588,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
             }
         }
     }
-    #else
+#else
 
     OC_LOG(INFO, TAG, PCF("Calling CASendResponse with:"));
     OC_LOG_V(INFO, TAG, "\tEndpoint address: %s", responseEndpoint.addr);
@@ -600,7 +606,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     {
         result = OC_STACK_OK;
     }
-    #endif
+#endif
 
     OICFree(responseInfo.info.payload);
     OICFree(responseInfo.info.options);

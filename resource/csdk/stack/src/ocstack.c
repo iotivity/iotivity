@@ -43,6 +43,7 @@
 #include "oic_string.h"
 #include "ocserverrequest.h"
 #include "secureresourcemanager.h"
+#include "doxmresource.h"
 #include "cacommon.h"
 #include "cainterface.h"
 #include "ocpayload.h"
@@ -1058,8 +1059,18 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
                 //First option always with option ID is COAP_OPTION_OBSERVE if it is available.
                 if(responseInfo->info.options[0].optionID == COAP_OPTION_OBSERVE)
                 {
-                    memcpy (&(response.sequenceNumber),
-                            &(responseInfo->info.options[0].optionData), sizeof(uint32_t));
+                    size_t i;
+                    uint32_t observationOption;
+                    uint8_t* optionData = (uint8_t*)responseInfo->info.options[0].optionData;
+                    for (observationOption=0, i=0;
+                            i<sizeof(uint32_t) && i<responseInfo->info.options[0].optionLength;
+                            i++)
+                    {
+                        observationOption =
+                            (observationOption << 8) | optionData[i];
+                    }
+                    response.sequenceNumber = observationOption;
+
                     response.numRcvdVendorSpecificHeaderOptions = responseInfo->info.numOptions - 1;
                     start = 1;
                 }
@@ -1682,11 +1693,11 @@ OCStackResult OCStop()
 
     stackState = OC_STACK_UNINIT_IN_PROGRESS;
 
-    #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
     // Ensure that the TTL associated with ANY and ALL presence notifications originating from
     // here send with the code "OC_STACK_PRESENCE_STOPPED" result.
     presenceResource.presenceTTL = 0;
-    #endif // WITH_PRESENCE
+#endif // WITH_PRESENCE
 
     // Free memory dynamically allocated for resources
     deleteAllResources();
@@ -2050,13 +2061,13 @@ OCStackResult OCDoResource(OCDoHandle *handle,
         // CA_DISCOVER will become GET and isMulticast
         requestInfo.method = CA_GET;
         break;
-    #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
     case OC_REST_PRESENCE:
         // Replacing method type with GET because "presence"
         // is a stack layer only implementation.
         requestInfo.method = CA_GET;
         break;
-    #endif
+#endif
     default:
         result = OC_STACK_INVALID_METHOD;
         goto exit;
@@ -2144,7 +2155,7 @@ OCStackResult OCDoResource(OCDoHandle *handle,
     }
 
     // prepare for response
-    #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
     if (method == OC_REST_PRESENCE)
     {
         char *presenceUri = NULL;
@@ -2159,7 +2170,7 @@ OCStackResult OCDoResource(OCDoHandle *handle,
         // look for callbacks into the application.
         resourceUri = presenceUri;
     }
-    #endif
+#endif
 
     ttl = GetTicks(MAX_CB_TIMEOUT_SECONDS * MILLISECONDS_PER_SECOND);
     result = AddClientCB(&clientCB, cbData, token, tokenLength, &resHandle,
@@ -2293,11 +2304,11 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
             ret = CAResultToOCResult (caResult);
             break;
 
-        #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
         case OC_REST_PRESENCE:
             FindAndDeleteClientCB(clientCB);
             break;
-        #endif
+#endif
 
         default:
             ret = OC_STACK_INVALID_METHOD;
@@ -2448,9 +2459,9 @@ exit:
 
 OCStackResult OCProcess()
 {
-    #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
     OCProcessPresence();
-    #endif
+#endif
     CAHandleRequestResponse();
 
     return OC_STACK_OK;
@@ -2693,13 +2704,13 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
     *handle = pointer;
     result = OC_STACK_OK;
 
-    #ifdef WITH_PRESENCE
-    if(presenceResource.handle)
+#ifdef WITH_PRESENCE
+    if (presenceResource.handle)
     {
         ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
         SendPresenceNotification(pointer->rsrcType, OC_PRESENCE_TRIGGER_CREATE);
     }
-    #endif
+#endif
 exit:
     if (result != OC_STACK_OK)
     {
@@ -2746,14 +2757,14 @@ OCStackResult OCBindResource(
             resource->rsrcResources[i] = (OCResource *) resourceHandle;
             OC_LOG(INFO, TAG, PCF("resource bound"));
 
-            #ifdef WITH_PRESENCE
-            if(presenceResource.handle)
+#ifdef WITH_PRESENCE
+            if (presenceResource.handle)
             {
                 ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
                 SendPresenceNotification(((OCResource *) resourceHandle)->rsrcType,
                         OC_PRESENCE_TRIGGER_CHANGE);
             }
-            #endif
+#endif
             return OC_STACK_OK;
 
         }
@@ -2799,14 +2810,14 @@ OCStackResult OCUnBindResource(
             OC_LOG(INFO, TAG, PCF("resource unbound"));
 
             // Send notification when resource is unbounded successfully.
-            #ifdef WITH_PRESENCE
-            if(presenceResource.handle)
+#ifdef WITH_PRESENCE
+            if (presenceResource.handle)
             {
                 ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
                 SendPresenceNotification(((OCResource *) resourceHandle)->rsrcType,
                         OC_PRESENCE_TRIGGER_CHANGE);
             }
-            #endif
+#endif
             return OC_STACK_OK;
         }
     }
@@ -2911,13 +2922,13 @@ OCStackResult OCBindResourceTypeToResource(OCResourceHandle handle,
 
     result = BindResourceTypeToResource(resource, resourceTypeName);
 
-    #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
     if(presenceResource.handle)
     {
         ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
         SendPresenceNotification(resource->rsrcType, OC_PRESENCE_TRIGGER_CHANGE);
     }
-    #endif
+#endif
 
     return result;
 }
@@ -2938,13 +2949,13 @@ OCStackResult OCBindResourceInterfaceToResource(OCResourceHandle handle,
 
     result = BindResourceInterfaceToResource(resource, resourceInterfaceName);
 
-    #ifdef WITH_PRESENCE
-    if(presenceResource.handle)
+#ifdef WITH_PRESENCE
+    if (presenceResource.handle)
     {
         ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
         SendPresenceNotification(resource->rsrcType, OC_PRESENCE_TRIGGER_CHANGE);
     }
-    #endif
+#endif
 
     return result;
 }
@@ -3133,13 +3144,13 @@ OCStackResult OCBindResourceHandler(OCResourceHandle handle,
     resource->entityHandler = entityHandler;
     resource->entityHandlerCallbackParam = callbackParam;
 
-    #ifdef WITH_PRESENCE
-    if(presenceResource.handle)
+#ifdef WITH_PRESENCE
+    if (presenceResource.handle)
     {
         ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
         SendPresenceNotification(resource->rsrcType, OC_PRESENCE_TRIGGER_CHANGE);
     }
-    #endif
+#endif
 
     return OC_STACK_OK;
 }
@@ -3222,12 +3233,12 @@ OCStackResult OCNotifyAllObservers(OCResourceHandle handle, OCQualityOfService q
     uint32_t maxAge = 0;
 
     OC_LOG(INFO, TAG, PCF("Notifying all observers"));
-    #ifdef WITH_PRESENCE
-    if(handle == presenceResource.handle)
+#ifdef WITH_PRESENCE
+    if (handle == presenceResource.handle)
     {
         return OC_STACK_OK;
     }
-    #endif // WITH_PRESENCE
+#endif // WITH_PRESENCE
     VERIFY_NON_NULL(handle, ERROR, OC_STACK_ERROR);
 
     // Verify that the resource exists
@@ -3242,12 +3253,12 @@ OCStackResult OCNotifyAllObservers(OCResourceHandle handle, OCQualityOfService q
         incrementSequenceNumber(resPtr);
         method = OC_REST_OBSERVE;
         maxAge = MAX_OBSERVE_AGE;
-        #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
         result = SendAllObserverNotification (method, resPtr, maxAge,
                 OC_PRESENCE_TRIGGER_DELETE, NULL, qos);
-        #else
+#else
         result = SendAllObserverNotification (method, resPtr, maxAge, qos);
-        #endif
+#endif
         return result;
     }
 }
@@ -3354,7 +3365,7 @@ OCStackResult initResources()
     headResource = NULL;
     tailResource = NULL;
     // Init Virtual Resources
-    #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
     presenceResource.presenceTTL = OC_DEFAULT_PRESENCE_TTL_SECONDS;
 
     result = OCCreateResource(&presenceResource.handle,
@@ -3368,7 +3379,7 @@ OCStackResult initResources()
     result = OCChangeResourceProperty(
             &(((OCResource *) presenceResource.handle)->resourceProperties),
             OC_ACTIVE, 0);
-    #endif
+#endif
 
     if (result == OC_STACK_OK)
     {
@@ -3416,24 +3427,24 @@ void deleteAllResources()
     while (pointer)
     {
         temp = pointer->next;
-        #ifdef WITH_PRESENCE
-        if(pointer != (OCResource *) presenceResource.handle)
+#ifdef WITH_PRESENCE
+        if (pointer != (OCResource *) presenceResource.handle)
         {
-        #endif // WITH_PRESENCE
+#endif // WITH_PRESENCE
             deleteResource(pointer);
-        #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
         }
-        #endif // WITH_PRESENCE
+#endif // WITH_PRESENCE
         pointer = temp;
     }
 
     SRMDeInitSecureResources();
 
-    #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
     // Ensure that the last resource to be deleted is the presence resource. This allows for all
     // presence notification attributed to their deletion to be processed.
     deleteResource((OCResource *) presenceResource.handle);
-    #endif // WITH_PRESENCE
+#endif // WITH_PRESENCE
 }
 
 OCStackResult deleteResource(OCResource *resource)
@@ -3455,12 +3466,12 @@ OCStackResult deleteResource(OCResource *resource)
         {
             // Invalidate all Resource Properties.
             resource->resourceProperties = (OCResourceProperty) 0;
-            #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
             if(resource != (OCResource *) presenceResource.handle)
             {
-            #endif // WITH_PRESENCE
+#endif // WITH_PRESENCE
                 OCNotifyAllObservers((OCResourceHandle)resource, OC_HIGH_QOS);
-            #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
             }
 
             if(presenceResource.handle)
@@ -3468,7 +3479,7 @@ OCStackResult deleteResource(OCResource *resource)
                 ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
                 SendPresenceNotification(resource->rsrcType, OC_PRESENCE_TRIGGER_DELETE);
             }
-            #endif
+#endif
             // Only resource in list.
             if (temp == headResource && temp == tailResource)
             {
@@ -3770,22 +3781,22 @@ OCStackResult getQueryFromUri(const char * uri, char** query, char ** uriWithout
         return OC_STACK_NO_MEMORY;
 }
 
-const uint8_t* OCGetServerInstanceID(void)
+const OicUuid_t* OCGetServerInstanceID(void)
 {
     static bool generated = false;
-    static ServerID sid;
-    if(generated)
+    static OicUuid_t sid;
+    if (generated)
     {
-        return sid;
+        return &sid;
     }
 
-    if (OCGenerateUuid(sid) != RAND_UUID_OK)
+    if (GetDoxmDeviceID(&sid) != OC_STACK_OK)
     {
         OC_LOG(FATAL, TAG, PCF("Generate UUID for Server Instance failed!"));
         return NULL;
     }
     generated = true;
-    return sid;
+    return &sid;
 }
 
 const char* OCGetServerInstanceIDString(void)
@@ -3798,9 +3809,9 @@ const char* OCGetServerInstanceIDString(void)
         return sidStr;
     }
 
-    const uint8_t* sid = OCGetServerInstanceID();
+    const OicUuid_t* sid = OCGetServerInstanceID();
 
-    if(OCConvertUuidToString(sid, sidStr) != RAND_UUID_OK)
+    if(OCConvertUuidToString(sid->id, sidStr) != RAND_UUID_OK)
     {
         OC_LOG(FATAL, TAG, PCF("Generate UUID String for Server Instance failed!"));
         return NULL;
@@ -3820,9 +3831,9 @@ CAResult_t OCSelectNetwork()
             CA_ADAPTER_RFCOMM_BTEDR,
             CA_ADAPTER_GATT_BTLE
 
-            #ifdef RA_ADAPTER
+#ifdef RA_ADAPTER
             ,CA_ADAPTER_REMOTE_ACCESS
-            #endif
+#endif
         };
     int numConnTypes = sizeof(connTypes)/sizeof(connTypes[0]);
 

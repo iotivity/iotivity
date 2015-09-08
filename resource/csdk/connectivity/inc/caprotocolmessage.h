@@ -151,13 +151,15 @@ uint32_t CAGetOptionCount(coap_opt_iterator_t opt_iter);
 
 /**
  * gets option data.
+ * @param[in]   key                  ID of the option
  * @param[in]   data                 data that is received.
  * @param[in]   length               length of the data.
  * @param[out]  option               result of the operation.
  * @param[in]   buflen               buffer length of the result.
  * @return  option count.
  */
-uint32_t CAGetOptionData(const uint8_t *data, uint32_t len, uint8_t *option, uint32_t buflen);
+uint32_t CAGetOptionData(uint16_t key, const uint8_t *data, uint32_t len,
+        uint8_t *option, uint32_t buflen);
 
 /**
  * extracts request information from received pdu.

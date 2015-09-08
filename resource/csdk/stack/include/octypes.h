@@ -410,10 +410,10 @@ typedef enum
     /** RFCOMM over Bluetooth EDR.*/
     CT_ADAPTER_RFCOMM_BTEDR = (1 << 18),
 
-    #ifdef RA_ADAPTER
+#ifdef RA_ADAPTER
     /** Remote Access over XMPP.*/
     CT_ADAPTER_REMOTE_ACCESS = (1 << 19),
-    #endif
+#endif
 
     /** Insecure transport is the default (subject to change).*/
 

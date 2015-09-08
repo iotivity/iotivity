@@ -591,16 +591,24 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
     }
     else if (virtualUriInRequest == OC_DEVICE_URI)
     {
-        payload = (OCPayload*)OCDevicePayloadCreate(OC_RSRVD_DEVICE_URI,
-                OCGetServerInstanceID(), savedDeviceInfo.deviceName,
-                OC_SPEC_VERSION, OC_DATA_MODEL_VERSION);
-        if (!payload)
+        const OicUuid_t* deviceId = OCGetServerInstanceID();
+        if (!deviceId)
         {
-            discoveryResult = OC_STACK_NO_MEMORY;
+            discoveryResult = OC_STACK_ERROR;
         }
         else
         {
-            discoveryResult = OC_STACK_OK;
+            payload = (OCPayload*) OCDevicePayloadCreate(OC_RSRVD_DEVICE_URI,
+                    (const uint8_t*) &deviceId->id, savedDeviceInfo.deviceName,
+                    OC_SPEC_VERSION, OC_DATA_MODEL_VERSION);
+            if (!payload)
+            {
+                discoveryResult = OC_STACK_NO_MEMORY;
+            }
+            else
+            {
+                discoveryResult = OC_STACK_OK;
+            }
         }
     }
     else if (virtualUriInRequest == OC_PLATFORM_URI)

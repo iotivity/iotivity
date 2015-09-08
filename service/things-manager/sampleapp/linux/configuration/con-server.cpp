@@ -27,7 +27,8 @@
 
 #include "OCPlatform.h"
 #include "OCApi.h"
-#include "ThingsManager.h"
+#include "ThingsConfiguration.h"
+#include "ThingsDiagnostics.h"
 #include "ConfigurationCollection.h"
 #include "DiagnosticsCollection.h"
 #include "FactorySetCollection.h"
@@ -48,7 +49,8 @@ std::string defaultRegion;
 std::string defaultSystemTime;
 std::string defaultCurrency;
 
-static ThingsManager* g_thingsmanager;
+//static ThingsManager* g_thingsmanager;
+static ThingsConfiguration* g_thingsConf;
 
 // Forward declaring the entityHandler (Configuration)
 bool prepareResponseForResource(std::shared_ptr< OCResourceRequest > request);
@@ -56,7 +58,7 @@ OCStackResult sendResponseForResource(std::shared_ptr< OCResourceRequest > pRequ
 OCEntityHandlerResult entityHandlerForResource(std::shared_ptr< OCResourceRequest > request);
 
 ConfigurationResource *myConfigurationResource;
-DiagnosticsResource *myDiagnosticsResource;
+MaintenanceResource *myMaintenanceResource;
 FactorySetResource *myFactorySetResource;
 
 typedef std::function< void(OCRepresentation&) > putFunc;
@@ -71,10 +73,10 @@ getFunc getGetFunction(std::string uri)
         res = std::bind(&ConfigurationResource::getConfigurationRepresentation,
                 myConfigurationResource);
     }
-    else if (uri == myDiagnosticsResource->getUri())
+    else if (uri == myMaintenanceResource->getUri())
     {
-        res = std::bind(&DiagnosticsResource::getDiagnosticsRepresentation,
-                myDiagnosticsResource);
+        res = std::bind(&MaintenanceResource::getMaintenanceRepresentation,
+                myMaintenanceResource);
     }
 
     return res;
@@ -89,10 +91,10 @@ putFunc getPutFunction(std::string uri)
         res = std::bind(&ConfigurationResource::setConfigurationRepresentation,
                 myConfigurationResource, std::placeholders::_1);
     }
-    else if (uri == myDiagnosticsResource->getUri())
+    else if (uri == myMaintenanceResource->getUri())
     {
-        res = std::bind(&DiagnosticsResource::setDiagnosticsRepresentation,
-                myDiagnosticsResource, std::placeholders::_1);
+        res = std::bind(&MaintenanceResource::setMaintenanceRepresentation,
+                myMaintenanceResource, std::placeholders::_1);
     }
 
     return res;
@@ -250,7 +252,8 @@ int main()
     { OC::ServiceType::InProc, OC::ModeType::Both, "0.0.0.0", 0, OC::QualityOfService::LowQos };
 
     OCPlatform::Configure(cfg);
-    g_thingsmanager = new ThingsManager();
+    g_thingsConf = new ThingsConfiguration();
+    //g_thingsDiag = new ThingsDiagnostics();
     //**************************************************************
 
     if (getuid() != 0)
@@ -286,7 +289,7 @@ int main()
             }
             else if (g_Steps == 1)
             {
-                if( g_thingsmanager->doBootstrap(&onBootstrap) == OC_STACK_OK)
+                if( g_thingsConf->doBootstrap(&onBootstrap) == OC_STACK_OK)
                 {
                     pthread_mutex_lock(&mutex_lock);
                     isWaiting = 1;
@@ -302,13 +305,12 @@ int main()
                 myConfigurationResource = new ConfigurationResource();
                 myConfigurationResource->createResources(&entityHandlerForResource);
 
-                myDiagnosticsResource = new DiagnosticsResource();
-                myDiagnosticsResource->createResources(&entityHandlerForResource);
-
+                myMaintenanceResource = new MaintenanceResource();
+                myMaintenanceResource->createResources(&entityHandlerForResource);
 
                 myFactorySetResource = new FactorySetResource();
                 myFactorySetResource->createResources(&entityHandlerForResource);
-                myDiagnosticsResource->factoryReset = std::function < void()
+                myMaintenanceResource->factoryReset = std::function < void()
                         > (std::bind(&ConfigurationResource::factoryReset,
                                 myConfigurationResource));
 

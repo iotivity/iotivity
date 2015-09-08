@@ -141,13 +141,13 @@ OCEntityHandlerResult ProcessPutRequest (OCEntityHandlerRequest *ehRequest,
         return ehResult;
     }
 
-    const char* tnn;
+    char* tnn;
     if(OCRepPayloadGetPropString(input,OC_RSRVD_ES_TNN, &tnn))
     {
         sprintf(g_prov.tnn, "%s", tnn);
     }
 
-    const char* cd;
+    char* cd;
     if(OCRepPayloadGetPropString(input, OC_RSRVD_ES_CD, &cd))
     {
         sprintf(g_prov.cd, "%s", cd);
@@ -191,7 +191,7 @@ OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRe
         OC_LOG_V(ERROR, TAG, "Failed to parse" );
         return ehResult;
     }
-    const char* tr;
+    char* tr;
     if(OCRepPayloadGetPropString(input, OC_RSRVD_ES_TR, &tr))
     {
 

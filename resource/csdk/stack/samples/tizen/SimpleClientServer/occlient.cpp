@@ -923,10 +923,7 @@ int main(int argc, char* argv[])
     {
         OC_CONNTYPE = CT_ADAPTER_RFCOMM_BTEDR;
 
-        cout << "\nSelected EDR Adapter!!! Device is scanning for OIC supported Servers....\n";
-        // Sleep is added as after initialization, EDR adapter needs to start scanning and find
-        // the devices.
-        sleep(10);
+        cout << "\nSelected EDR Adapter\n";
     }
     else
     {

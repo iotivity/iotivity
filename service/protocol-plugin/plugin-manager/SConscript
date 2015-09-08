@@ -69,6 +69,7 @@ pmimpl = pmimpl_env.SharedLibrary('pmimpl', pmimpl_src)
 
 plugin_manager_env.InstallTarget([ppm, pmimpl], 'libppm')
 plugin_manager_env.UserInstallTargetLib([ppm, pmimpl], 'libppm')
+plugin_manager_env.UserInstallTargetHeader('src/PluginManager.h', 'service/protocol-plugin', 'PluginManager.h')
 
 # Build JNI library for android
 if env.get('TARGET_OS') == 'android':

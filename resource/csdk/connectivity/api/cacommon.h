@@ -137,9 +137,9 @@ typedef enum
     CA_ADAPTER_GATT_BTLE     = (1 << 1),   // GATT over Bluetooth LE
     CA_ADAPTER_RFCOMM_BTEDR  = (1 << 2),   // RFCOMM over Bluetooth EDR
 
-    #ifdef RA_ADAPTER
+#ifdef RA_ADAPTER
     CA_ADAPTER_REMOTE_ACCESS = (1 << 3),   // Remote Access over XMPP.
-    #endif
+#endif
 
     CA_ALL_ADAPTERS          = 0xffffffff
 } CATransportAdapter_t;

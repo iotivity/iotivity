@@ -526,8 +526,30 @@ coap_list_t *CACreateNewOptionNode(uint16_t key, uint32_t length, const char *da
     memset(option, 0, sizeof(coap_option) + length + 1);
 
     COAP_OPTION_KEY(*option) = key;
-    COAP_OPTION_LENGTH(*option) = length;
-    memcpy(COAP_OPTION_DATA(*option), data, length);
+
+    coap_option_def_t* def = coap_opt_def(key);
+    if (NULL != def && coap_is_var_bytes(def))
+    {
+       if (length > def->max)
+        {
+            // make sure we shrink the value so it fits the coap option definition
+            // by truncating the value, disregard the leading bytes.
+            OIC_LOG_V(DEBUG, TAG, "Option [%d] data size [%d] shrunk to [%d]",
+                    def->key, length, def->max);
+            data = &(data[length-def->max]);
+            length = def->max;
+        }
+        // Shrink the encoding length to a minimum size for coap
+        // options that support variable length encoding.
+         COAP_OPTION_LENGTH(*option) = coap_encode_var_bytes(
+                COAP_OPTION_DATA(*option),
+                coap_decode_var_bytes((unsigned char *)data, length));
+    }
+    else
+    {
+        COAP_OPTION_LENGTH(*option) = length;
+        memcpy(COAP_OPTION_DATA(*option), data, length);
+    }
 
     /* we can pass NULL here as delete function since option is released automatically  */
     coap_list_t *node = coap_new_listnode(option, NULL);
@@ -630,11 +652,12 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *
     while ((option = coap_option_next(&opt_iter)))
     {
         char buf[COAP_MAX_PDU_SIZE] = {0};
-        if (CAGetOptionData((uint8_t *)(COAP_OPT_VALUE(option)),
-                            COAP_OPT_LENGTH(option), (uint8_t *)buf, sizeof(buf)))
+        uint32_t bufLength =
+            CAGetOptionData(opt_iter.type, (uint8_t *)(COAP_OPT_VALUE(option)),
+                    COAP_OPT_LENGTH(option), (uint8_t *)buf, sizeof(buf));
+        if (bufLength)
         {
             OIC_LOG_V(DEBUG, TAG, "COAP URI element : %s", buf);
-            uint32_t bufLength = strlen(buf);
             if (COAP_OPTION_URI_PATH == opt_iter.type || COAP_OPTION_URI_QUERY == opt_iter.type)
             {
                 if (false == isfirstsetflag)
@@ -916,11 +939,12 @@ void CADestroyInfo(CAInfo_t *info)
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
-uint32_t CAGetOptionData(const uint8_t *data, uint32_t len, uint8_t *option, uint32_t buflen)
+uint32_t CAGetOptionData(uint16_t key, const uint8_t *data, uint32_t len,
+        uint8_t *option, uint32_t buflen)
 {
-    if (0 == buflen || 0 == len)
+    if (0 == buflen)
     {
-        OIC_LOG(ERROR, TAG, "len 0");
+        OIC_LOG(ERROR, TAG, "buflen 0");
         return 0;
     }
 
@@ -936,8 +960,17 @@ uint32_t CAGetOptionData(const uint8_t *data, uint32_t len, uint8_t *option, uin
         return 0;
     }
 
-    memcpy(option, data, len);
-    option[len] = '\0';
+    coap_option_def_t* def = coap_opt_def(key);
+    if(NULL != def && coap_is_var_bytes(def) && 0 == len) {
+        // A 0 length option is permitted in CoAP but the
+        // rest or the stack is unaware of variable byte encoding
+        // should remain that way so a 0 byte of length 1 is inserted.
+        len = 1;
+        option[0]=0;
+    } else {
+        memcpy(option, data, len);
+        option[len] = '\0';
+    }
 
     return len;
 }

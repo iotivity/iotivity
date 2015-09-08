@@ -21,11 +21,12 @@
 #include <string>
 #include <cstdlib>
 #include <pthread.h>
+#include <string.h>
 #include "OCPlatform.h"
 #include "OCApi.h"
-#include "ThingsManager.h"
 
 using namespace OC;
+using namespace std;
 
 OCEntityHandlerResult speakerEntityHandler(const std::shared_ptr< OCResourceRequest > request)
 {

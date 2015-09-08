@@ -104,7 +104,12 @@ int OCGetTizenLogLevel(LogLevel level)
         case ERROR:
             return DLOG_ERROR;
         case FATAL:
-            return DLOG_FATAL;
+            /*
+             * Temp fix to resolve DLOG_FATAL runtime crash in tizen binary.
+             * TODO: Revert back to DLOG_FATAL once logging issue is fixed in
+             * Tizen binary.
+             */
+            return DLOG_ERROR;
     }
     return DLOG_DEBUG;
 }

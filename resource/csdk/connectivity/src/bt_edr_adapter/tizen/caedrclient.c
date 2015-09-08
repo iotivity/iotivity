@@ -37,6 +37,18 @@
 #include "cacommon.h"
 #include "caedrdevicelist.h"
 
+#define MICROSECS_PER_SEC 1000000
+
+/**
+ * Condition to check if OIC supported device is found.
+ */
+static ca_cond g_deviceDescCond = NULL;
+
+/**
+ * Flag that will be set when EDR adapter is stopped.
+ */
+static bool g_isStopping = false;
+
 /**
  * Mutex to synchronize the access to Bluetooth device information list.
  */
@@ -293,6 +305,8 @@ void CAEDRDeviceDiscoveryCallback(int result, bt_adapter_device_discovery_state_
                         return;
                     }
                     device->serviceSearched = true;
+                    // Signal the wait to send the data.
+                    ca_cond_signal(g_deviceDescCond);
                     ca_mutex_unlock(g_edrDeviceListMutex);
                 }
                 else
@@ -464,6 +478,7 @@ CAResult_t CAEDRClientSetCallbacks(void)
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
+    g_isStopping = false;
     // Register for discovery and rfcomm socket connection callbacks
     bt_adapter_set_device_discovery_state_changed_cb(CAEDRDeviceDiscoveryCallback, NULL);
     bt_device_set_service_searched_cb(CAEDRServiceSearchedCallback, NULL);
@@ -493,6 +508,10 @@ void CAEDRClientUnsetCallbacks(void)
     // Stop the device discovery process
     CAEDRStopDeviceDiscovery();
 
+    // Signal the conditional wait for discovery of devices.
+    g_isStopping = true;
+    ca_cond_signal(g_deviceDescCond);
+
     // reset bluetooth adapter callbacks
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "Resetting the callbacks");
     bt_adapter_unset_device_discovery_state_changed_cb();
@@ -512,6 +531,11 @@ void CAEDRManagerInitializeMutex(void)
         g_edrDeviceListMutex = ca_mutex_new();
     }
 
+    if (!g_deviceDescCond)
+    {
+        g_deviceDescCond = ca_cond_new();
+    }
+
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
 }
 
@@ -525,6 +549,11 @@ void CAEDRManagerTerminateMutex(void)
         g_edrDeviceListMutex = NULL;
     }
 
+    if (g_deviceDescCond)
+    {
+        ca_cond_free(g_deviceDescCond);
+        g_deviceDescCond = NULL;
+    }
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
 }
 
@@ -698,6 +727,33 @@ CAResult_t CAEDRClientSendMulticastData(const uint8_t *data,
 
     // Send the packet to all OIC devices
     ca_mutex_lock(g_edrDeviceListMutex);
+
+    // Check if any device is discovered.
+    if (NULL == g_edrDeviceList)
+    {
+        // Wait for BT devices to be discovered.
+
+        // Number of times to wait for discovery to complete.
+        int const RETRIES = 5;
+
+        uint64_t const TIMEOUT = 2 * MICROSECS_PER_SEC;  // Microseconds
+
+        bool devicesDiscovered = false;
+        for (size_t i = 0; NULL == g_edrDeviceList && i < RETRIES && !g_isStopping;
+             ++i)
+        {
+            if (ca_cond_wait_for(g_deviceDescCond, g_edrDeviceListMutex,
+                                 TIMEOUT) == 0)
+            {
+                devicesDiscovered = true;
+            }
+        }
+        if (!devicesDiscovered || g_isStopping)
+        {
+            goto exit;
+        }
+    }
+
     EDRDeviceList *curList = g_edrDeviceList;
     CAResult_t result = CA_STATUS_FAILED;
     while (curList != NULL)
@@ -713,7 +769,6 @@ CAResult_t CAEDRClientSendMulticastData(const uint8_t *data,
 
         if (-1 == device->socketFD)
         {
-            OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN1");
             // Check if the device service search is finished
             if (false == device->serviceSearched)
             {
@@ -740,20 +795,18 @@ CAResult_t CAEDRClientSendMulticastData(const uint8_t *data,
                 CARemoveEDRDataFromList(&device->pendingDataList);
                 continue;
             }
-            OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN2");
         }
         else
         {
-            OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN3");
             result = CAEDRSendData(device->socketFD, data, dataLength);
             if (CA_STATUS_OK != result)
             {
                 OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Failed to send data to [%s] !",
                           device->remoteAddress);
             }
-            OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN4");
         }
     }
+exit:
     ca_mutex_unlock(g_edrDeviceListMutex);
 
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");

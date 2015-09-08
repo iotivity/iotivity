@@ -24,13 +24,14 @@
 
 #include <functional>
 #include <thread>
+#include <string.h>
 
 #include "OCPlatform.h"
 #include "OCApi.h"
-#include "ThingsManager.h"
 #include "FactorySetCollection.h"
 
 using namespace OC;
+using namespace std;
 
 FactorySetResource::FactorySetResource()
 {

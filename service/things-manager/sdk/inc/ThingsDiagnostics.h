@@ -22,11 +22,11 @@
  * @file
  *
  * This file contains the declaration of classes and its members related to
- * ThingsDiagnostics.
+ * ThingsMaintenance.
  */
 
-#ifndef __OC_THINGSDIAGNOSTICS__
-#define __OC_THINGSDIAGNOSTICS__
+#ifndef __OC_THINGSMAINTENANCE__
+#define __OC_THINGSMAINTENANCE__
 
 #include <string>
 #include <vector>
@@ -39,83 +39,84 @@
 using namespace OC;
 namespace OIC
 {
-    /// Declearation of Diagnostics Callback funtion type
+    /// Declearation of Maintenance Callback funtion type
     typedef std::function<
             void(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
-            > DiagnosticsCallback;
+            > MaintenanceCallback;
 
     /**
      *  @brief
      *  The following class is used as a item stacking in request queue. The class stores a request
-     *  and referential information (e.g., a diagnostics name, a target resource object, a callback
+     *  and referential information (e.g., a maintenance name, a target resource object, a callback
      *  function passed from the applications, and a update value). When the function for updating/
-     *  getting diagnostics value is called from applications, this class instance is created and
+     *  getting maintenance value is called from applications, this class instance is created and
      *  stored in the request queue. The queue is maintained in a std::map structure so if desiring
-     *  to find a specific request, you can find it by querying a diagnostics name.
+     *  to find a specific request, you can find it by querying a maintenance name.
      */
-    class DiagnosticsRequestEntry
+    class MaintenanceRequestEntry
     {
     public:
-        DiagnosticsRequestEntry(std::string ID, DiagnosticsCallback callback,
+        MaintenanceRequestEntry(std::string ID, MaintenanceCallback callback,
                 std::shared_ptr< OCResource > resource, std::string updateVal);
 
-        // Diagnostics Name (used in key value in std::map structure)
+        // Maintenance Name (used in key value in std::map structure)
         // e.g., reboot and factoryset
         std::string m_ID;
 
         // Reference callback pointer
-        DiagnosticsCallback m_callback;
+        MaintenanceCallback m_callback;
 
         // Reference resource object
         std::shared_ptr< OCResource > m_resource;
 
-        // Update value only used for diagnostics update (always "true")
+        // Update value only used for maintenance update (always "true")
         std::string m_updateVal;
     };
 
     /**
      *  @brief
-     *  The following class is used to store providing diagnostics name and its relevant information
+     *  The following class is used to store providing maintenance name and its relevant information
      *  The relevant information includes a brief description, uri, and attribute key.
-     *  Note that a developer only specifies a diagnostics name, not URI nor attribute key, to
-     *  update a value to a remote. Thus, using diagnostics name, we convert it to more specific
+     *  Note that a developer only specifies a maintenance name, not URI nor attribute key, to
+     *  update a value to a remote. Thus, using maintenance name, we convert it to more specific
      *  information (i.e. uri and attribute key) to send a request. This class is reponsible to
      *  storing these information.
      */
-    class DiagnosticsUnitInfo
+    class MaintenanceUnitInfo
     {
     public:
         std::string m_name;
         std::string m_attribute;
         std::string m_uri;
 
-        DiagnosticsUnitInfo(std::string name, std::string attribute, std::string uri);
+        MaintenanceUnitInfo(std::string name, std::string attribute, std::string uri);
 
         // If a developer wants to know a list of configuration names, gives it in JSON format.
         std::string getJSON();
     };
 
 #define NUMDIAGUNIT 3
-    typedef std::string DiagnosticsName;
-    typedef std::string DiagnosticsValue;
+    typedef std::string MaintenanceName;
+    typedef std::string MaintenanceValue;
 
-    class ThingsDiagnostics
+    class ThingsMaintenance
     {
     public:
         /**
-         * Constructor for ThingsDiagnostics. Constructs a new ThingsDiagnostics
+         * Constructor for ThingsMaintenance. Constructs a new ThingsMaintenance
          */
-        ThingsDiagnostics(void);
+        ThingsMaintenance(void);
 
         /**
          * Virtual destructor
          */
-        ~ThingsDiagnostics(void);
+        ~ThingsMaintenance(void);
 
-        static ThingsDiagnostics *thingsDiagnosticsInstance;
-        static ThingsDiagnostics* getInstance();
+        static ThingsMaintenance *thingsMaintenanceInstance;
+        static ThingsMaintenance* getInstance();
+
+        // TODO: deprecated
         void deleteInstance();
-
         void setGroupManager(GroupManager *groupmanager);
 
         /**
@@ -129,7 +130,7 @@ namespace OIC
          *
          * NOTE: OCStackResult is defined in ocstack.h.
          */
-        OCStackResult reboot(std::shared_ptr< OCResource > resource, DiagnosticsCallback callback);
+        OCStackResult reboot(std::shared_ptr< OCResource > resource, MaintenanceCallback callback);
 
         /**
          * API for factory reset on device
@@ -144,21 +145,21 @@ namespace OIC
          */
 
         OCStackResult factoryReset(std::shared_ptr< OCResource > resource,
-                DiagnosticsCallback callback);
+                MaintenanceCallback callback);
 
         /**
-         * API to show a list of supported diagnostics units
+         * API to show a list of supported maintenance units
          * Callback call when a response arrives.
          *
          * @return the list in JSON format
          */
-        std::string getListOfSupportedDiagnosticsUnits();
+        std::string getListOfSupportedMaintenanceUnits();
 
     private:
 
         GroupManager *g_groupmanager;
 
-        std::vector< DiagnosticsUnitInfo > DiagnosticsUnitTable;
+        std::vector< MaintenanceUnitInfo > MaintenanceUnitTable;
 
         void onExecuteForGroupAction(const HeaderOptions& headerOptions,
                 const OCRepresentation& rep, const int eCode, std::string conf);
@@ -174,10 +175,10 @@ namespace OIC
                 std::string conf);
 
         std::shared_ptr< OCResource > getResource(std::string conf);
-        DiagnosticsCallback getCallback(std::string conf);
+        MaintenanceCallback getCallback(std::string conf);
         std::string getUpdateVal(std::string conf);
-        std::string getAttributeByDiagnosticsName(DiagnosticsName name);
-        std::string getUriByDiagnosticsName(DiagnosticsName name);
+        std::string getAttributeByMaintenanceName(MaintenanceName name);
+        std::string getUriByMaintenanceName(MaintenanceName name);
 
         std::string getHostFromURI(std::string oldUri);
 

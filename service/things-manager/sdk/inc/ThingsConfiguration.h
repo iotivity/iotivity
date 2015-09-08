@@ -116,8 +116,9 @@ namespace OIC
 
         static ThingsConfiguration *thingsConfigurationInstance;
         static ThingsConfiguration* getInstance();
-        void deleteInstance();
 
+        // TODO: deprecated
+        void deleteInstance();
         void setGroupManager(GroupManager *groupmanager);
 
         /**

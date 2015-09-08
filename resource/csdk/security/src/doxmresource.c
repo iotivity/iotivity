@@ -279,8 +279,7 @@ OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr)
     else // PUT/POST JSON will not have deviceID so set it to the gDoxm->deviceID.id
     {
         VERIFY_NON_NULL(TAG, gDoxm, ERROR);
-        VERIFY_SUCCESS(TAG, strcmp((char *)gDoxm->deviceID.id, "") != 0, ERROR);
-        strncpy((char *)doxm->deviceID.id, (char *)gDoxm->deviceID.id, sizeof(doxm->deviceID.id));
+        memcpy((char *)doxm->deviceID.id, (char *)gDoxm->deviceID.id, sizeof(doxm->deviceID.id));
     }
 
     //Owner -- will be empty when device status is unowned.
@@ -454,6 +453,7 @@ static OCEntityHandlerResult AddOwnerPSK(const CAEndpoint_t* endpoint,
     VERIFY_SUCCESS(TAG, OC_STACK_OK == AddCredential(cred), ERROR);
 
     gDoxm->owned = true;
+    gDoxm->oxmSel = ptDoxm->oxmSel;
     memcpy(&(gDoxm->owner), &(ptDoxm->owner), sizeof(OicUuid_t));
 
     return OC_EH_OK;
@@ -518,7 +518,7 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
                 ehRet = AddOwnerPSK((CAEndpoint_t *)&request->devAddr, newDoxm,
                         (uint8_t*) OXM_JUST_WORKS, strlen(OXM_JUST_WORKS));
 
-                VERIFY_SUCCESS(TAG, ehRet = OC_EH_OK, ERROR);
+                VERIFY_SUCCESS(TAG, OC_EH_OK == ehRet, ERROR);
 
                 // Update new state in persistent storage
                 if (true == UpdatePersistentStorage(gDoxm))
@@ -534,6 +534,7 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
                      * for global variable.
                      */
                     gDoxm->owned = false;
+                    gDoxm->oxmSel = 0;
                     memset(&(gDoxm->owner), 0, sizeof(OicUuid_t));
                 }
 
@@ -610,7 +611,22 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
                 VERIFY_SUCCESS(TAG, OC_EH_OK == ehRet, ERROR);
 
                 //Update new state in persistent storage
-                ehRet = (UpdatePersistentStorage(gDoxm) == true) ? OC_EH_OK : OC_EH_ERROR;
+                if((UpdatePersistentStorage(gDoxm) == true))
+                {
+                    ehRet = OC_EH_OK;
+                }
+                else
+                {
+                    /*
+                     * If persistent storage update failed, revert back the state
+                     * for global variable.
+                     */
+                    gDoxm->owned = false;
+                    gDoxm->oxmSel = 0;
+                    memset(&(gDoxm->owner), 0, sizeof(OicUuid_t));
+                    ehRet = OC_EH_ERROR;
+
+                }
 #endif
              }
         }
@@ -696,13 +712,39 @@ OCStackResult CreateDoxmResource()
  * Once DeviceID is assigned to the device it does not change for the lifetime of the device.
  *
  */
-void CheckDeviceID()
+static OCStackResult CheckDeviceID()
 {
-    if(strcmp((char *)gDoxm->deviceID.id, "") == 0 )
+    OCStackResult ret = OC_STACK_ERROR;
+    bool validId = false;
+    for (uint8_t i = 0; i < UUID_LENGTH; i++)
     {
-        OCFillRandomMem(gDoxm->deviceID.id, sizeof(gDoxm->deviceID.id));
-        UpdatePersistentStorage(gDoxm);
+        if (gDoxm->deviceID.id[i] != 0)
+        {
+            validId = true;
+            break;
+        }
     }
+
+    if (!validId)
+    {
+        if (OCGenerateUuid(gDoxm->deviceID.id) != RAND_UUID_OK)
+        {
+            OC_LOG(FATAL, TAG, PCF("Generate UUID for Server Instance failed!"));
+            return ret;
+        }
+        ret = OC_STACK_OK;
+
+        if (UpdatePersistentStorage(gDoxm))
+        {
+            //TODO: After registering PSI handler in all samples, do ret = OC_STACK_OK here.
+            OC_LOG(FATAL, TAG, PCF("UpdatePersistentStorage failed!"));
+        }
+    }
+    else
+    {
+        ret = OC_STACK_OK;
+    }
+    return ret;
 }
 
 /**
@@ -750,9 +792,16 @@ OCStackResult InitDoxmResource()
     {
         gDoxm = GetDoxmDefault();
     }
-    CheckDeviceID();
-    //Instantiate 'oic.sec.doxm'
-    ret = CreateDoxmResource();
+    ret = CheckDeviceID();
+    if (ret == OC_STACK_OK)
+    {
+        //Instantiate 'oic.sec.doxm'
+        ret = CreateDoxmResource();
+    }
+    else
+    {
+        OC_LOG (ERROR, TAG, PCF("CheckDeviceID failed"));
+    }
     OICFree(jsonSVRDatabase);
     return ret;
 }

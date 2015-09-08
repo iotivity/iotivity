@@ -34,6 +34,18 @@ typedef struct
     unsigned char *value;
 } coap_option_t;
 
+
+/** Representation of the association between a CoAP option key and its
+ *  data type and valid data length ranges.
+ */
+typedef struct
+{
+    unsigned short key;     /**< The ID of the option the following values apply to. */
+    unsigned char type;     /**< The type of the option: u=uint, s=string, o=opaque. */
+    unsigned int min;       /**< The minimum number of bytes allowed for the option data */
+    unsigned int max;       /**< The maximum number of bytes allowed for the option data */
+} coap_option_def_t;
+
 /**
  * Parses the option pointed to by @p opt into @p result. This
  * function returns the number of bytes that have been parsed, or @c 0
@@ -311,6 +323,16 @@ unsigned short coap_opt_length(const coap_opt_t *opt);
  * @return A pointer to the option value or @c NULL on error.
  */
 unsigned char *coap_opt_value(coap_opt_t *opt);
+
+/**
+ * Returns a pointer to the coap option range definitions. @key
+ * must be a valid option ID. This function returns @c NULL if
+ * @p key is not a valid option ID.
+ *
+ * @param key The option ID whose definition should be returned.
+ * @return A pointer to the option definition.
+ */
+coap_option_def_t* coap_opt_def(unsigned short key);
 
 /** @deprecated { Use coap_opt_value() instead. } */
 #define COAP_OPT_VALUE(opt) coap_opt_value((coap_opt_t *)opt)
