@@ -37,7 +37,7 @@ static std::string defaultURIPrefix = "/oic/con";
 static std::string defaultResourceTypePrefix = "oic.con";
 
 extern std::string defaultLocation;
-extern std::string defaultSystemTime;
+extern std::string defaultDeviceName;
 extern std::string defaultCurrency;
 extern std::string defaultRegion;
 

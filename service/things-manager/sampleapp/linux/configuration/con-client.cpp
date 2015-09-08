@@ -29,7 +29,7 @@
 #include "OCApi.h"
 //#include "ThingsManager.h"
 #include "ThingsConfiguration.h"
-#include "ThingsDiagnostics.h"
+#include "ThingsMaintenance.h"
 #include "GroupManager.h"
 
 using namespace OC;
@@ -116,10 +116,12 @@ void onUpdate(const HeaderOptions& headerOptions, const OCRepresentation& rep, c
 
     std::cout << "\tResource URI: " << rep.getUri() << std::endl;
 
+    if (rep.hasAttribute("n"))
+        std::cout << "\t\tDeviceName:" << rep.getValue< std::string >("n") << std::endl;
     if (rep.hasAttribute("loc"))
         std::cout << "\t\tLocation:" << rep.getValue< std::string >("loc") << std::endl;
-    if (rep.hasAttribute("st"))
-        std::cout << "\t\tSystemTime:" << rep.getValue< std::string >("st") << std::endl;
+    if (rep.hasAttribute("locn"))
+        std::cout << "\t\tLocationName:" << rep.getValue< std::string >("locn") << std::endl;
     if (rep.hasAttribute("c"))
         std::cout << "\t\tCurrency:" << rep.getValue< std::string >("c") << std::endl;
     if (rep.hasAttribute("r"))
@@ -139,10 +141,12 @@ void onGet(const HeaderOptions& headerOptions, const OCRepresentation& rep, cons
 
     std::cout << "\tResource URI: " << rep.getUri() << std::endl;
 
+    if (rep.hasAttribute("n"))
+        std::cout << "\t\tDeviceName:" << rep.getValue< std::string >("n") << std::endl;
     if (rep.hasAttribute("loc"))
         std::cout << "\t\tLocation:" << rep.getValue< std::string >("loc") << std::endl;
-    if (rep.hasAttribute("st"))
-        std::cout << "\t\tSystemTime:" << rep.getValue< std::string >("st") << std::endl;
+    if (rep.hasAttribute("locn"))
+        std::cout << "\t\tLocationName:" << rep.getValue< std::string >("locn") << std::endl;
     if (rep.hasAttribute("c"))
         std::cout << "\t\tCurrency:" << rep.getValue< std::string >("c") << std::endl;
     if (rep.hasAttribute("r"))
@@ -446,8 +450,8 @@ int main(int argc, char* argv[])
             }
             else if (g_Steps == 4)
             {
-                ConfigurationName name = "r";
-                ConfigurationValue value = "U.S.A (new region)";
+                ConfigurationName name = "n";
+                ConfigurationValue value = "OIC Device";
 
                 if(g_configurationCollection == NULL)
                 {

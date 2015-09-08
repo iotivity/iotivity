@@ -46,7 +46,7 @@ class MaintenanceResource
 {
 public:
 
-    // diagnostics members
+    // Maintenance members
     std::string m_maintenanceUri;
     std::string m_factoryReset;
     std::string m_reboot;

@@ -97,7 +97,7 @@ namespace OIC
         std::string getJSON();
     };
 
-#define NUMCONFUNIT 5
+#define NUMCONFUNIT 6
     typedef std::string ConfigurationName;
     typedef std::string ConfigurationValue;
 

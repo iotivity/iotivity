@@ -28,9 +28,9 @@
 #include "OCPlatform.h"
 #include "OCApi.h"
 #include "ThingsConfiguration.h"
-#include "ThingsDiagnostics.h"
+#include "ThingsMaintenance.h"
 #include "ConfigurationCollection.h"
-#include "DiagnosticsCollection.h"
+#include "MaintenanceCollection.h"
 #include "FactorySetCollection.h"
 
 using namespace OC;
@@ -44,9 +44,11 @@ pthread_mutex_t mutex_lock = PTHREAD_MUTEX_INITIALIZER;
 // Default system configuration value's variables
 // The variable's names should be same as the names of "extern" variables defined in
 // "ConfigurationResource.h"
+
+std::string defaultDeviceName;
 std::string defaultLocation;
+std::string defaultLocationName;
 std::string defaultRegion;
-std::string defaultSystemTime;
 std::string defaultCurrency;
 
 //static ThingsManager* g_thingsmanager;
@@ -231,13 +233,15 @@ void onBootstrap(const HeaderOptions& headerOptions, const OCRepresentation& rep
     std::cout << "\n\nGET request was successful" << std::endl;
     std::cout << "\tResource URI: " << rep.getUri() << std::endl;
 
-    defaultRegion = rep.getValue< std::string >("r");
-    defaultSystemTime = rep.getValue< std::string >("st");
-    defaultCurrency = rep.getValue< std::string >("c");
+    defaultDeviceName = rep.getValue< std::string >("n");
     defaultLocation = rep.getValue< std::string >("loc");
+    defaultLocationName = rep.getValue< std::string >("locn");
+    defaultRegion = rep.getValue< std::string >("r");
+    defaultCurrency = rep.getValue< std::string >("c");
 
+    std::cout << "\tSystemTime : " << defaultDeviceName << std::endl;
     std::cout << "\tLocation : " << defaultLocation << std::endl;
-    std::cout << "\tSystemTime : " << defaultSystemTime << std::endl;
+    std::cout << "\tLocationName : " << defaultLocationName << std::endl;
     std::cout << "\tCurrency : " << defaultCurrency << std::endl;
     std::cout << "\tRegion : " << defaultRegion << std::endl;
 
@@ -253,7 +257,7 @@ int main()
 
     OCPlatform::Configure(cfg);
     g_thingsConf = new ThingsConfiguration();
-    //g_thingsDiag = new ThingsDiagnostics();
+    //g_thingsDiag = new ThingsMaintenance();
     //**************************************************************
 
     if (getuid() != 0)
