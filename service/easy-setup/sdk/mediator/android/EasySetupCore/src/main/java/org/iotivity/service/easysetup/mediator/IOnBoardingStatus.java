@@ -19,18 +19,20 @@
  ******************************************************************/
 package org.iotivity.service.easysetup.mediator;
 
-import org.iotivity.service.easysetup.mediator.common.EnrolleeDevice;
+import java.util.ArrayList;
+
+import org.iotivity.service.easysetup.mediator.EnrolleeInfo;
 
 public interface IOnBoardingStatus {
 
     /**
      * Interface called when the scan method finishes. Network operations should
      * not execute on UI thread
-     * 
-     * @param enrolleeDevice
-     *            of {@link EnrolleeDevice}
+     *
+     * @param clients
+     *            of {@link EnrolleeInfo}
      */
 
-    public void deviceOnBoardingStatus(EnrolleeDevice enrolleeDevice);
+    public void deviceOnBoardingStatus(EnrolleeInfo clients);
 
 }

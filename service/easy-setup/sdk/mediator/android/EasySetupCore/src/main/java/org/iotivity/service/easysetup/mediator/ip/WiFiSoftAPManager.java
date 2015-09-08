@@ -32,8 +32,7 @@ import android.net.wifi.WifiManager;
 import android.os.Handler;
 import android.util.Log;
 
-import org.iotivity.base.OcConnectivityType;
-import org.iotivity.service.easysetup.mediator.common.EnrolleeDeviceFactory;
+import org.iotivity.service.easysetup.mediator.EnrolleeInfo;
 import org.iotivity.service.easysetup.mediator.EnrolleeOnBoardingInfo;
 import org.iotivity.service.easysetup.mediator.IOnBoardingStatus;
 
@@ -91,15 +90,12 @@ public class WiFiSoftAPManager {
     private synchronized boolean CheckForDeviceEntryAndNotify(String ipAddr,
                                                  String macAddr, boolean isReachable)
     {
-        final IPEnrolleeDevice result = new IPEnrolleeDevice();
+        final EnrolleeInfo result = new EnrolleeInfo();
         boolean deviceAddedToList = false;
-
-        result.setConnectivityType(OcConnectivityType.CT_IP_USE_V4);
 
         if (appNotification.size() > 0) {
             for (EnrolleeOnBoardingInfo ipDeviceOnBoardingNotification : appNotification) {
-                IPEnrolleeDevice ipEnrolleeDevice = (IPEnrolleeDevice)ipDeviceOnBoardingNotification
-                        .getEnrolleeDevice();
+                EnrolleeOnBoardingInfo ipEnrolleeDevice = (EnrolleeOnBoardingInfo)ipDeviceOnBoardingNotification;
                 boolean macAddressComparison = ipEnrolleeDevice.getHWAddr().equalsIgnoreCase(
                                 macAddr) ? true : false;
 
@@ -123,11 +119,11 @@ public class WiFiSoftAPManager {
                                 .remove(ipDeviceOnBoardingNotification);
                         if (isReachable) {
                             appNotification
-                                    .add(new EnrolleeOnBoardingInfo(ipEnrolleeDevice, isReachable,
+                                    .add(new EnrolleeOnBoardingInfo(ipAddr, macAddr, "", isReachable,
                                             false, true));
                         } else {
                             appNotification
-                                    .add(new EnrolleeOnBoardingInfo(ipEnrolleeDevice, isReachable,
+                                    .add(new EnrolleeOnBoardingInfo(ipAddr, macAddr, "", isReachable,
                                             true, false));
                         }
 
@@ -137,17 +133,13 @@ public class WiFiSoftAPManager {
                 }
             }
             if (!deviceAddedToList) {
-                IPEnrolleeDevice ipEnrolleeDevice = (IPEnrolleeDevice) EnrolleeDeviceFactory.getDevice(
-                        OcConnectivityType.CT_IP_USE_V4);
-                ipEnrolleeDevice.setIpAddr(ipAddr);
-                ipEnrolleeDevice.setHWAddr(macAddr);
                 if (isReachable) {
                     appNotification
-                            .add(new EnrolleeOnBoardingInfo(ipEnrolleeDevice, isReachable, false,
+                            .add(new EnrolleeOnBoardingInfo(ipAddr, macAddr, "", isReachable, false,
                                     true));
                 } else {
                     appNotification
-                            .add(new EnrolleeOnBoardingInfo(ipEnrolleeDevice, isReachable, true,
+                            .add(new EnrolleeOnBoardingInfo(ipAddr, macAddr, "", isReachable, true,
                                     false));
                 }
 
@@ -159,17 +151,13 @@ public class WiFiSoftAPManager {
                 return true;
             }
         } else {
-            IPEnrolleeDevice ipEnrolleeDevice = (IPEnrolleeDevice)EnrolleeDeviceFactory.getDevice(
-                    OcConnectivityType.CT_IP_USE_V4);
-            ipEnrolleeDevice.setIpAddr(ipAddr);
-            ipEnrolleeDevice.setHWAddr(macAddr);
             if (isReachable) {
                 appNotification
-                        .add(new EnrolleeOnBoardingInfo(ipEnrolleeDevice, isReachable, false,
+                        .add(new EnrolleeOnBoardingInfo(ipAddr, macAddr, "", isReachable, false,
                                 true));
             } else {
                 appNotification
-                        .add(new EnrolleeOnBoardingInfo(ipEnrolleeDevice, isReachable, true,
+                        .add(new EnrolleeOnBoardingInfo(ipAddr, macAddr, "", isReachable, true,
                                 false));
             }
 
@@ -284,6 +272,7 @@ public class WiFiSoftAPManager {
                     // it is maintained in the file "/proc/net/arp"
                     bufferedReader = new BufferedReader(new FileReader("/proc/net/arp"));
                     String line;
+
                     while ((line = bufferedReader.readLine()) != null) {
                         //ARP entries are splitted using Regex for getting the IP and MAC Address
                         // info
@@ -334,7 +323,7 @@ public class WiFiSoftAPManager {
         mythread.start();
     }
 
-    void NotifyApplication(final IPEnrolleeDevice result) {
+    void NotifyApplication(final EnrolleeInfo result) {
         // Get a handler that can be used to post to the main thread
         Handler mainHandler = new Handler(context.getMainLooper());
         Runnable myRunnable = new Runnable() {

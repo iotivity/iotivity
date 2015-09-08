@@ -36,7 +36,9 @@ public class EasySetupCallbackHandler {
 
     public void ProvisioningStatusCallBack(int statuscode) {
         // TODO Auto-generated method stub
-        Log.d(TAG, "onFinishProvisioning(). statuscode - " + statuscode);
+        Log.d(TAG,
+                "onFinishProvisioning() inside Android Java application. statuscode - "
+                        + statuscode);
         if (this.provisioningListener != null) {
             this.provisioningListener.ProvisioningStatusCallBack(statuscode);
         } else {

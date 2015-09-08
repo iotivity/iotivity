@@ -19,30 +19,48 @@
  ******************************************************************/
 package org.iotivity.service.easysetup.mediator;
 
-import org.iotivity.service.easysetup.mediator.common.EnrolleeDevice;
-
 public class EnrolleeOnBoardingInfo {
 
-    private EnrolleeDevice enrolleeDevice;
+    private String  IpAddr;
+    private String  HWAddr;
+    private String  Device;
     private boolean isReachable;
     private boolean isAdditionNotified;
     private boolean isRemovalNotified;
 
-    public EnrolleeOnBoardingInfo(EnrolleeDevice enrolleeDevice,
+    public EnrolleeOnBoardingInfo(String ipAddr, String hWAddr, String device,
             boolean isReachable, boolean isRemovalNotified,
             boolean isAdditionNotified) {
-        this.enrolleeDevice = enrolleeDevice;
+        this.IpAddr = ipAddr;
+        this.HWAddr = hWAddr;
+        this.Device = device;
         this.isReachable = isReachable;
         this.isRemovalNotified = isRemovalNotified;
         this.isAdditionNotified = isAdditionNotified;
     }
 
-    public void setEnrolleeDevice(EnrolleeDevice enrolleeDevice) {
-        this.enrolleeDevice = enrolleeDevice;
+    public String getIpAddr() {
+        return IpAddr;
     }
 
-    public EnrolleeDevice getEnrolleeDevice() {
-        return this.enrolleeDevice;
+    public void setIpAddr(String ipAddr) {
+        IpAddr = ipAddr;
+    }
+
+    public String getHWAddr() {
+        return HWAddr;
+    }
+
+    public void setHWAddr(String hWAddr) {
+        HWAddr = hWAddr;
+    }
+
+    public String getDevice() {
+        return Device;
+    }
+
+    public void setDevice(String device) {
+        Device = device;
     }
 
     public boolean isReachable() {

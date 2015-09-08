@@ -3,51 +3,36 @@ package org.iotivity.service.easysetup.mediator;
 import android.content.Context;
 import android.util.Log;
 
-import org.iotivity.base.OcConnectivityType;
-import org.iotivity.service.easysetup.mediator.common.ProvisioningInfo;
-import org.iotivity.service.easysetup.mediator.ip.IPProvisioningInfo;
-
 public class ProvisionEnrollee {
     private static final String   TAG                            = "ProvisionEnrollee";
+    private Context               appContext                     = null;
     private EasySetupManager      easySetupManagerNativeInstance = null;
     private IProvisioningListener provisioningListener;
 
-    static {
-        // Load Easy Setup JNI interface
-        System.loadLibrary("gnustl_shared");
-        System.loadLibrary("octbstack");
-        System.loadLibrary("connectivity_abstraction");
-        System.loadLibrary("easysetup-jni");
-    }
     /**
      * Constructor for ProvisionEnrollee. Constructs a new ProvisionEnrollee.
      */
     public ProvisionEnrollee(Context context) {
+        appContext = context;
         easySetupManagerNativeInstance = EasySetupManager.getInstance();
+        easySetupManagerNativeInstance.initEasySetup();
     }
-    
+
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
         easySetupManagerNativeInstance.terminateEasySetup();
     }
 
-    public void provisionEnrollee(ProvisioningInfo provisioningInfo,
-                                  OcConnectivityType connectivityType) {
-        if(connectivityType == OcConnectivityType.CT_IP_USE_V4)
-        {
-            easySetupManagerNativeInstance.initEasySetup();
-            easySetupManagerNativeInstance.provisionIPEnrollee(
-                    ((IPProvisioningInfo)provisioningInfo).getIpAddress(),
-                    ((IPProvisioningInfo)provisioningInfo).getNetSSID(),
-                    ((IPProvisioningInfo)provisioningInfo).getNetPWD(),
-                    OcConnectivityType.CT_IP_USE_V4.getValue());
-        }
+    public void provisionEnrollee(String ipAddress, String netSSID,
+            String netPWD, int connectivityType) {
+        easySetupManagerNativeInstance.provisionEnrollee(ipAddress, netSSID,
+                netPWD, connectivityType);
     }
 
-    public void stopEnrolleeProvisioning(OcConnectivityType connectivityType) {
+    public void stopEnrolleeProvisioning(int connectivityType) {
         easySetupManagerNativeInstance
-                .stopEnrolleeProvisioning(OcConnectivityType.CT_IP_USE_V4.getValue());
+                .stopEnrolleeProvisioning(connectivityType);
     }
 
     public void ProvisioningStatusCallBack(int statuscode) {

@@ -20,25 +20,20 @@
 package org.iotivity.service.easysetup.mediator;
 
 import android.content.Context;
-
-import org.iotivity.base.OcConnectivityType;
-import org.iotivity.service.easysetup.mediator.common.OnBoardingConfig;
+import android.net.wifi.WifiConfiguration;
 import org.iotivity.service.easysetup.mediator.ip.WiFiSoftAPManager;
-import org.iotivity.service.easysetup.mediator.ip.WiFiSoftAPOnBoardingConfig;
+
+import android.widget.Toast;
 
 public class OnBoardEnrollee {
     WiFiSoftAPManager wifiSoftAPManager;
     IOnBoardingStatus deviceScanListener;
-    OcConnectivityType selectedConnectivityType;
 
     /**
-     * Constructor for OnBoardEnrollee.
+     * Constructor for OnBoardEnrollee. Constructs a new OnBoardEnrollee.
      */
-    public OnBoardEnrollee(Context context, OcConnectivityType connectivityType) {
-        if(connectivityType == OcConnectivityType.CT_IP_USE_V4) {
-            wifiSoftAPManager = new WiFiSoftAPManager(context);
-        }
-        this.selectedConnectivityType = connectivityType;
+    public OnBoardEnrollee(Context context) {
+        wifiSoftAPManager = new WiFiSoftAPManager(context);
     }
 
     public void registerOnBoardingStatusHandler(
@@ -46,23 +41,15 @@ public class OnBoardEnrollee {
         this.deviceScanListener = deviceScanListener;
     }
 
-    public void startDeviceScan(final int reachableTimeout) {
-        if(selectedConnectivityType == OcConnectivityType.CT_IP_USE_V4) {
-            wifiSoftAPManager.getClientList(this.deviceScanListener, reachableTimeout);
-        }
+    public void startDeviceScan() {
+        wifiSoftAPManager.getClientList(this.deviceScanListener, 300);
     }
 
-    public void enableNetwork(OnBoardingConfig transportConfig, boolean enabled) {
-        if(selectedConnectivityType == OcConnectivityType.CT_IP_USE_V4) {
-            wifiSoftAPManager.setWifiApEnabled(
-                    ((WiFiSoftAPOnBoardingConfig)transportConfig).getNetConfig(),
-                    true);
-        }
+    public void enableWiFiAP(WifiConfiguration netConfig, boolean enabled) {
+        wifiSoftAPManager.setWifiApEnabled(netConfig, true);
     }
 
     public void disableWiFiAP() {
-        if(selectedConnectivityType == OcConnectivityType.CT_IP_USE_V4) {
-            wifiSoftAPManager.setWifiApEnabled(null, false);
-        }
+        wifiSoftAPManager.setWifiApEnabled(null, false);
     }
 }
