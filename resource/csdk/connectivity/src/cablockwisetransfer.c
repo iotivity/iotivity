@@ -1444,6 +1444,8 @@ CAResult_t CAAddBlockOption(coap_pdu_t **pdu, const CAInfo_t info,
         else
         {
             OIC_LOG(INFO, TAG, "not Blockwise Transfer");
+            CADestroyBlockID(blockDataID);
+            return CA_STATUS_OK;
         }
     }
 
