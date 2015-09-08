@@ -5,7 +5,11 @@ import org.iotivity.service.easysetup.mediator.EnrolleeInfo;
 
 import android.net.wifi.WifiConfiguration;
 
-public class WiFiProvConfig implements ProvisioningConfig{
+/**
+ * This class contains on provisioning configuration information for for target network.
+ * It implements ProvisioningConfig interface and provide configuration object specific to WiFi target network
+ */
+public class WiFiProvConfig implements ProvisioningConfig {
 
     private final ConnType mConnType = ProvisioningConfig.ConnType.WiFi;
 

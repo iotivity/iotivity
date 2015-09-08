@@ -22,27 +22,30 @@ import android.net.wifi.WifiConfiguration;
 import android.util.Log;
 import android.widget.Toast;
 
-public class EnrolleeDeviceWiFiOnboarding extends EnrolleeDevice  {
+/**
+ * This is a ready to use class for Enrollee device having Soft AP as on-boarding connectivity.
+ */
+public class EnrolleeDeviceWiFiOnboarding extends EnrolleeDevice {
 
     public static final String TAG = EnrolleeDeviceWiFiOnboarding.class.getName();
 
-    final Context  mContext;
+    final Context mContext;
     final WiFiSoftAPManager mWifiSoftAPManager;
-    EnrolleeInfo      connectedDevice;
-    private EasySetupManager  easySetupManagerNativeInstance ;
+    EnrolleeInfo connectedDevice;
+    private EasySetupManager easySetupManagerNativeInstance;
     ProvisionEnrollee provisionEnrolleInstance;
 
     IOnBoardingStatus deviceScanListener = new IOnBoardingStatus() {
 
-           @Override
-            public void deviceOnBoardingStatus(EnrolleeInfo enrolleStatus) {
-                Log.d("ESSoftAPOnBoarding", "Entered");
-                if (enrolleStatus != null && enrolleStatus.getIpAddr() != null) {
-                    String finalResult = "Easy Connect : ";
+        @Override
+        public void deviceOnBoardingStatus(EnrolleeInfo enrolleStatus) {
+            Log.d("ESSoftAPOnBoarding", "Entered");
+            if (enrolleStatus != null && enrolleStatus.getIpAddr() != null) {
+                String finalResult = "Easy Connect : ";
 
-                    if (enrolleStatus.isReachable()) {
-                        finalResult = "Device OnBoarded" + "["
-                                + enrolleStatus.getIpAddr() + "]";
+                if (enrolleStatus.isReachable()) {
+                    finalResult = "Device OnBoarded" + "["
+                            + enrolleStatus.getIpAddr() + "]";
 
                         /*
                          * easySetupInstance.StartEasySetup(enrolleStatus.getIpAddr()) ;
@@ -50,15 +53,15 @@ public class EnrolleeDeviceWiFiOnboarding extends EnrolleeDevice  {
                          * "easy Setup Count-"+easySetupCount); Log.i("EasyConnect",
                          * "IP Address-"+enrolleStatus.getIpAddr());
                          */
-                           connectedDevice = enrolleStatus;
-                           IpConnection conn = new IpConnection();
-                           conn.setConnectivity(true);
-                           conn.setIp(connectedDevice.getIpAddr());
-                           Log.d("ESSoftAPOnBoarding", "Entered");
-                           mOnBoardingCallback.onFinished(conn);
-                           return;
+                    connectedDevice = enrolleStatus;
+                    IpConnection conn = new IpConnection();
+                    conn.setConnectivity(true);
+                    conn.setIp(connectedDevice.getIpAddr());
+                    Log.d("ESSoftAPOnBoarding", "Entered");
+                    mOnBoardingCallback.onFinished(conn);
+                    return;
 
-                    }
+                }
 
 /*                    textView1.setText("");
                     textView1.append("Clients: \n");
@@ -75,12 +78,12 @@ public class EnrolleeDeviceWiFiOnboarding extends EnrolleeDevice  {
                             Toast.LENGTH_LONG).show();*/
 
 
-                }
-
-                   IpConnection conn = new IpConnection();
-                   conn.setConnectivity(false);
-                   mOnBoardingCallback.onFinished(conn);
             }
+
+            IpConnection conn = new IpConnection();
+            conn.setConnectivity(false);
+            mOnBoardingCallback.onFinished(conn);
+        }
     };
 
 
@@ -101,12 +104,12 @@ public class EnrolleeDeviceWiFiOnboarding extends EnrolleeDevice  {
         Log.i(TAG, "Starging on boarding process");
 
         //1. Create Soft AP
-        boolean status = mWifiSoftAPManager.setWifiApEnabled((WifiConfiguration)mOnBoardingConfig.getConfig(), true);
+        boolean status = mWifiSoftAPManager.setWifiApEnabled((WifiConfiguration) mOnBoardingConfig.getConfig(), true);
 
         Log.i(TAG, "Soft AP is created with status " + status);
 
 
-        Timer  myTimer;
+        Timer myTimer;
         myTimer = new Timer();
         myTimer.schedule(new TimerTask() {
             @Override
@@ -116,7 +119,6 @@ public class EnrolleeDeviceWiFiOnboarding extends EnrolleeDevice  {
             }
 
         }, 0, 5000);
-
 
 
     }
@@ -130,27 +132,26 @@ public class EnrolleeDeviceWiFiOnboarding extends EnrolleeDevice  {
     @Override
     protected void startProvisioningProcess(ConnectionInterface conn) {
 
-        if(mProvConfig.getConnType() == ProvisioningConfig.ConnType.WiFi) {
+        if (mProvConfig.getConnType() == ProvisioningConfig.ConnType.WiFi) {
 
             provisionEnrolleInstance = new ProvisionEnrollee(mContext);
             provisionEnrolleInstance.registerProvisioningHandler(new IProvisioningListener() {
                 @Override
                 public void onFinishProvisioning(int statuscode) {
-                    mState = ( statuscode == 0) ? EnrolleeState.DEVICE_PROVISIONING_SUCCESS_STATE : EnrolleeState.DEVICE_PROVISIONING_FAILED_STATE;
+                    mState = (statuscode == 0) ? EnrolleeState.DEVICE_PROVISIONING_SUCCESS_STATE : EnrolleeState.DEVICE_PROVISIONING_FAILED_STATE;
                     mProvisioningCallback.onFinished(EnrolleeDeviceWiFiOnboarding.this);
                 }
             });
 
-            IpConnection connection = (IpConnection)conn;
-            WiFiProvConfig wifiProvConfig = (WiFiProvConfig)mProvConfig;
+            IpConnection connection = (IpConnection) conn;
+            WiFiProvConfig wifiProvConfig = (WiFiProvConfig) mProvConfig;
             easySetupManagerNativeInstance = EasySetupManager.getInstance();
             easySetupManagerNativeInstance.initEasySetup();
-            easySetupManagerNativeInstance.provisionEnrollee(connection .getIp(), wifiProvConfig.getSsId(), wifiProvConfig.getPassword(), 0 /*In base code '0' is hard coded*/);
+            easySetupManagerNativeInstance.provisionEnrollee(connection.getIp(), wifiProvConfig.getSsId(), wifiProvConfig.getPassword(), 0 /*In base code '0' is hard coded*/);
 
         }
 
     }
-
 
 
 }

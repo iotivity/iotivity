@@ -4,9 +4,9 @@ import android.content.Context;
 import android.util.Log;
 
 public class ProvisionEnrollee {
-    private static final String   TAG                            = "ProvisionEnrollee";
-    private Context               appContext                     = null;
-    private EasySetupManager      easySetupManagerNativeInstance = null;
+    private static final String TAG = "ProvisionEnrollee";
+    private Context appContext = null;
+    private EasySetupManager easySetupManagerNativeInstance = null;
     private IProvisioningListener provisioningListener;
 
     /**
@@ -25,7 +25,7 @@ public class ProvisionEnrollee {
     }
 
     public void provisionEnrollee(String ipAddress, String netSSID,
-            String netPWD, int connectivityType) {
+                                  String netPWD, int connectivityType) {
         easySetupManagerNativeInstance.provisionEnrollee(ipAddress, netSSID,
                 netPWD, connectivityType);
     }

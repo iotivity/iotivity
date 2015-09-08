@@ -1,22 +1,24 @@
-/******************************************************************
- *
+/**
+ * ***************************************************************
+ * <p/>
  * Copyright 2015 Samsung Electronics All Rights Reserved.
- *
- *
- *
+ * <p/>
+ * <p/>
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- ******************************************************************/
+ * <p/>
+ * ****************************************************************
+ */
 package org.iotivity.service.easysetup.mediator.ip;
 
 import java.io.BufferedReader;
@@ -46,11 +48,11 @@ import org.iotivity.service.easysetup.mediator.IOnBoardingStatus;
  * </p>
  */
 public class WiFiSoftAPManager {
-    private final WifiManager                mWifiManager;
-    private Context                          context;
+    private final WifiManager mWifiManager;
+    private Context context;
     static ArrayList<EnrolleeOnBoardingInfo> appNotification =
-                                                    new ArrayList<EnrolleeOnBoardingInfo>();
-    IOnBoardingStatus finishListener  = null;
+            new ArrayList<EnrolleeOnBoardingInfo>();
+    IOnBoardingStatus finishListener = null;
 
     public enum WIFI_AP_STATE {
         WIFI_AP_STATE_DISABLING,
@@ -69,13 +71,10 @@ public class WiFiSoftAPManager {
     /*
     * Utility API to check the validity of the MAC Address read from the ARP cache
     */
-    private boolean CheckIfValidMacAddress(String macAddr)
-    {
-        if(macAddr.matches("..:..:..:..:..:.."))
-        {
+    private boolean CheckIfValidMacAddress(String macAddr) {
+        if (macAddr.matches("..:..:..:..:..:..")) {
             return true;
-        }
-        else {
+        } else {
             return false;
         }
     }
@@ -88,16 +87,15 @@ public class WiFiSoftAPManager {
     * continue
     */
     private synchronized boolean CheckForDeviceEntryAndNotify(String ipAddr,
-                                                 String macAddr, boolean isReachable)
-    {
+                                                              String macAddr, boolean isReachable) {
         final EnrolleeInfo result = new EnrolleeInfo();
         boolean deviceAddedToList = false;
 
         if (appNotification.size() > 0) {
             for (EnrolleeOnBoardingInfo ipDeviceOnBoardingNotification : appNotification) {
-                EnrolleeOnBoardingInfo ipEnrolleeDevice = (EnrolleeOnBoardingInfo)ipDeviceOnBoardingNotification;
+                EnrolleeOnBoardingInfo ipEnrolleeDevice = (EnrolleeOnBoardingInfo) ipDeviceOnBoardingNotification;
                 boolean macAddressComparison = ipEnrolleeDevice.getHWAddr().equalsIgnoreCase(
-                                macAddr) ? true : false;
+                        macAddr) ? true : false;
 
                 if (macAddressComparison) {
                     deviceAddedToList = true;
@@ -183,7 +181,7 @@ public class WiFiSoftAPManager {
      * @return {@code true} if the operation succeeds, {@code false} otherwise
      */
     public boolean setWifiApEnabled(WifiConfiguration wifiConfig,
-            boolean enabled) {
+                                    boolean enabled) {
         try {
             // Stopping Wi-Fi mode
             if (enabled) {
@@ -300,8 +298,7 @@ public class WiFiSoftAPManager {
                                 // API returns true is there is a notification to the application.
                                 // API returns false if there is no entry or if device is
                                 // already notified
-                                if(CheckForDeviceEntryAndNotify(ipAddr, macAddr, isReachable))
-                                {
+                                if (CheckForDeviceEntryAndNotify(ipAddr, macAddr, isReachable)) {
                                     break;
                                 }
                             }

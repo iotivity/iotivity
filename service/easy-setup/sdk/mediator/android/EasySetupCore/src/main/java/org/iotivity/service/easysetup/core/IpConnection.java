@@ -1,11 +1,11 @@
 package org.iotivity.service.easysetup.core;
 
-public class IpConnection implements ConnectionInterface{
+public class IpConnection implements ConnectionInterface {
 
     private boolean mIsConnected;
     private String mIp;
 
-    public void setConnectivity(boolean connected){
+    public void setConnectivity(boolean connected) {
         mIsConnected = connected;
     }
 

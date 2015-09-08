@@ -1,60 +1,118 @@
 package org.iotivity.service.easysetup.core;
 
+/**
+ * This is an abstract class represents the device being provisioned into the network. The device being enrolled or provisioned into the network is called Enrollee.
+ * Application has to extend this class and provide implementation of abstract methods according to the ON-BOARDING & PROVISION connectivity i.e. WiFi, BLE, BT etc. the device is having.
+ */
+
 public abstract class EnrolleeDevice {
 
     protected EnrolleeState mState;
     private EnrolleeSetupError mError;
 
-    protected  ConnectionInterface mConnection;
+    protected ConnectionInterface mConnection;
     protected final ProvisioningConfig mProvConfig;
     protected final OnBoardingConfig mOnBoardingConfig;
 
     protected OnBoardingCallback mOnBoardingCallback;
     protected ProvisioningCallback mProvisioningCallback;
 
+    /**
+     * @param onBoardingConfig Contains details about the connectivity to be established between the Enrollee device & Mediator device in order to perform on-boarding
+     * @param provConfig       Contains details about the network to which Enrollee device is going to connect.
+     */
     protected EnrolleeDevice(OnBoardingConfig onBoardingConfig, ProvisioningConfig provConfig) {
         mProvConfig = provConfig;
         mOnBoardingConfig = onBoardingConfig;
     }
 
-
-    // Application can override this API to provide their own implementation for on boarding.
+    /**
+     * Application has to implement it according to the on boarding connectivity the device is having.
+     * This method will be called back during the easy setup process.
+     */
     protected abstract void startOnBoardingProcess();
+
+    /**
+     * This method is called back during the easy setup process if Application cancels the setup.
+     * Easy setup service checks the state of device and calls this function accordingly.
+     * Application has to provide implementation for this method to cancel the on boarding step.
+     */
     protected abstract void stopOnBoardingProcess();
 
+    /**
+     * Application has to implement it according to the type of the network device is going to connect or provisioned.
+     * This method will be called back once on-boarding of the device is successful.
+     *
+     * @param conn Contains detail about the network established between the Enrollee device & Mediator device. Its implementation vary according to the connectivity type.
+     */
     protected abstract void startProvisioningProcess(ConnectionInterface conn);
 
+    /**
+     * Once on boarding is successful concrete Enrollee class would call this method and set the Connection.
+     *
+     * @param conn Connectivity between Enrollee device & Mediator device.
+     */
     public void setConnection(ConnectionInterface conn) {
         mConnection = conn;
     }
 
-    // Not accessible by the Application
-    void startOnBoarding(OnBoardingCallback onBoardingCallback){
+
+    /**
+     * This method is called back by Easy setup service if on boarding needs to be done.
+     *
+     * @param onBoardingCallback This is called back once the on boarding is completed.
+     */
+    void startOnBoarding(OnBoardingCallback onBoardingCallback) {
         mOnBoardingCallback = onBoardingCallback;
         startOnBoardingProcess();
     }
 
-    // Not accessible by the Application
-    void startProvisioning(ProvisioningCallback provisioningCallback){
+    /**
+     * This method is called back by Easy setup service once on boarding is successful
+     *
+     * @param provisioningCallback This is called back once the provisioning process is completed
+     */
+    void startProvisioning(ProvisioningCallback provisioningCallback) {
         mProvisioningCallback = provisioningCallback;
         startProvisioningProcess(mConnection);
     }
 
+    /**
+     * This method is used to check easy setup status
+     *
+     * @return true if successful or false
+     */
 
-    public boolean isSetupSuccessful(){
+    public boolean isSetupSuccessful() {
         return (mState == EnrolleeState.DEVICE_PROVISIONING_SUCCESS_STATE) ? true : false;
     }
 
+    /**
+     * Returns error occured during easy setup process
+     *
+     * @return True EnrolleeSetupError object
+     */
     public EnrolleeSetupError getError() {
         return mError;
     }
 
+    /**
+     * Gives the state of the device being enrolled during the easy setup process.
+     *
+     * @return Returns EnrolleeState object
+     */
     public EnrolleeState getState() {
         return mState;
     }
 
-    public boolean onBoarded(){
-        return ( mState == EnrolleeState.DEVICE_PROVISIONING_STATE ) ? true : false;
+    /**
+     * This method is used to know if the device is on boarded or not
+     *
+     * @return True if on-boarded successfully or False
+     */
+
+    public boolean onBoarded() {
+        return (mState == EnrolleeState.DEVICE_PROVISIONING_STATE) ? true : false;
     }
 
 }

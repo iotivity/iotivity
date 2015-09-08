@@ -6,7 +6,12 @@ import org.iotivity.service.easysetup.core.OnBoardingConfig;
 
 import android.net.wifi.WifiConfiguration;
 
-public class WiFiOnBoardingConfig implements OnBoardingConfig{
+/**
+ * This class contains on boarding configuration information for Soft AP on boarding connectivity.
+ * It implements OnBoardingConfig interface & provide implementation for WiFi Soft AP connectivity.
+ */
+
+public class WiFiOnBoardingConfig implements OnBoardingConfig {
 
     private final WifiConfiguration config = new WifiConfiguration();
     private final ConnType mConnType = OnBoardingConfig.ConnType.WiFi;
@@ -40,16 +45,16 @@ public class WiFiOnBoardingConfig implements OnBoardingConfig{
         return mConnType;
     }
 
-    @Override
-    public ConnectionInterface getConnection() {
-        // TODO Auto-generated method stub
-        return mConnection;
-    }
+/*	@Override
+    public OnBoardingConnection getConnection() {
+		// TODO Auto-generated method stub
+		return mConnection;
+	}
 
-    @Override
-    public void setConnection(ConnectionInterface conn) {
-        mConnection = (IpConnection)conn;
-    }
+	@Override
+	public void setConnection(OnBoardingConnection conn) {
+		mConnection = (IpConnection)conn;
+	}*/
 
 
 }
