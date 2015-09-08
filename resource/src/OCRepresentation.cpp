@@ -480,7 +480,7 @@ namespace OC
             std::vector<std::vector<T>> val(pl->arr.dimensions[0]);
             for(size_t i = 0; i < pl->arr.dimensions[0]; ++i)
             {
-                val[i].reserve(pl->arr.dimensions[1]);
+                val[i].resize(pl->arr.dimensions[1]);
                 for(size_t j = 0; j < pl->arr.dimensions[1]; ++j)
                 {
                     val[i][j] = payload_array_helper_copy<T>(
@@ -494,10 +494,10 @@ namespace OC
             std::vector<std::vector<std::vector<T>>> val;
             for(size_t i = 0; i < pl->arr.dimensions[0]; ++i)
             {
-                val[i].reserve(pl->arr.dimensions[1]);
+                val[i].resize(pl->arr.dimensions[1]);
                 for(size_t j = 0; j < pl->arr.dimensions[1]; ++j)
                 {
-                    val[i][j].reserve(pl->arr.dimensions[2]);
+                    val[i][j].resize(pl->arr.dimensions[2]);
                     for(size_t k = 0; k < pl->arr.dimensions[2]; ++k)
                     {
                         val[i][j][k] = payload_array_helper_copy<T>(
