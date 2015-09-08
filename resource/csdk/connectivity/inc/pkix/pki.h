@@ -33,9 +33,14 @@ extern "C" {
 #include "cert.h"
 
 /**
- * Maximal lengths of certificate chain.
+ * Maximal number of certificates in trust chain.
  */
 #define MAX_CHAIN_LEN    (3)
+
+/**
+ * Maximal length of the TLS certificate message.
+ */
+#define MAX_CERT_MESSAGE_LEN (2048)
 
 #ifdef X509_DEBUG
 /**
