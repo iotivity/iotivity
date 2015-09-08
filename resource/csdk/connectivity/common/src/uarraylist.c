@@ -33,7 +33,7 @@
 
 u_arraylist_t *u_arraylist_create()
 {
-    u_arraylist_t *list = (u_arraylist_t *) OICMalloc(sizeof(u_arraylist_t));
+    u_arraylist_t *list = (u_arraylist_t *) OICCalloc(1, sizeof(u_arraylist_t));
     if (!list)
     {
         OIC_LOG(DEBUG, TAG, "Out of memory");
