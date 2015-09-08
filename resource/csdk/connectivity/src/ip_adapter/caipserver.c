@@ -18,7 +18,8 @@
  *
  ******************************************************************/
 
-#include "caipinterface.h"
+#define __APPLE_USE_RFC_3542 // for PKTINFO
+#define _GNU_SOURCE // for in6_pktinfo
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -37,6 +38,7 @@
 #endif
 
 #include "pdu.h"
+#include "caipinterface.h"
 #include "caadapterutils.h"
 #ifdef __WITH_DTLS__
 #include "caadapternetdtls.h"
@@ -214,29 +216,89 @@ static CAResult_t CAReceiveMessage(int fd, CATransportFlags_t flags)
 {
     char recvBuffer[COAP_MAX_PDU_SIZE];
 
+    size_t len;
+    int level, type;
     struct sockaddr_storage srcAddr;
-    socklen_t srcAddrLen = sizeof (srcAddr);
+    unsigned char *pktinfo = NULL;
+    struct msghdr msg = { 0 };
+    struct cmsghdr *cmp;
+    struct iovec iov = { recvBuffer, sizeof (recvBuffer) };
+    union control
+    {
+        struct cmsghdr cmsg;
+        unsigned char data[CMSG_SPACE(sizeof (struct in6_pktinfo))];
+    } cmsg;
 
-    ssize_t recvLen = recvfrom(fd,
-                               recvBuffer,
-                               sizeof (recvBuffer),
-                               0,
-                               (struct sockaddr *)&srcAddr,
-                               &srcAddrLen);
+    if (flags & CA_IPV6)
+    {
+        msg.msg_namelen = sizeof (struct sockaddr_in6);
+        level = IPPROTO_IPV6;
+        type = IPV6_PKTINFO;
+        len = sizeof (struct in6_pktinfo);
+    }
+    else
+    {
+        msg.msg_namelen = sizeof (struct sockaddr_in);
+        level = IPPROTO_IP;
+        type = IP_PKTINFO;
+        len = sizeof (struct in6_pktinfo);
+    }
+
+    msg.msg_name = &srcAddr;
+    msg.msg_iov = &iov;
+    msg.msg_iovlen = 1;
+    msg.msg_control = &cmsg;
+    msg.msg_controllen = CMSG_SPACE(len);
+
+    ssize_t recvLen = recvmsg(fd, &msg, flags);
     if (-1 == recvLen)
     {
         OIC_LOG_V(ERROR, TAG, "Recvfrom failed %s", strerror(errno));
         return CA_STATUS_FAILED;
     }
 
-    CASecureEndpoint_t sep =
-    {.endpoint = {.adapter = CA_ADAPTER_IP, .flags = flags}};
+    if (flags & CA_MULTICAST)
+    {
+        for (cmp = CMSG_FIRSTHDR(&msg); cmp != NULL; cmp = CMSG_NXTHDR(&msg, cmp))
+        {
+            if (cmp->cmsg_level == level && cmp->cmsg_type == type)
+            {
+                pktinfo = CMSG_DATA(cmp);
+            }
+        }
+    }
+
+    CASecureEndpoint_t sep = {.endpoint = {.adapter = CA_ADAPTER_IP, .flags = flags}};
 
     if (flags & CA_IPV6)
     {
         sep.endpoint.interface = ((struct sockaddr_in6 *)&srcAddr)->sin6_scope_id;
         ((struct sockaddr_in6 *)&srcAddr)->sin6_scope_id = 0;
+
+        if ((flags & CA_MULTICAST) && pktinfo)
+        {
+            struct in6_addr *addr = &(((struct in6_pktinfo *)pktinfo)->ipi6_addr);
+            unsigned char topbits = ((unsigned char *)addr)[0];
+            if (topbits != 0xff)
+            {
+                sep.endpoint.flags &= ~CA_MULTICAST;
+            }
+        }
     }
+    else
+    {
+        if ((flags & CA_MULTICAST) && pktinfo)
+        {
+            struct in_addr *addr = &((struct in_pktinfo *)pktinfo)->ipi_addr;
+            uint32_t host = ntohl(addr->s_addr);
+            unsigned char topbits = ((unsigned char *)&host)[3];
+            if (topbits < 224 || topbits > 239)
+            {
+                sep.endpoint.flags &= ~CA_MULTICAST;
+            }
+        }
+    }
+
     CAConvertAddrToName(&srcAddr, sep.endpoint.addr, &sep.endpoint.port);
 
     if (flags & CA_SECURE)
@@ -294,15 +356,34 @@ static int CACreateSocket(int family, uint16_t *port)
     if (family == AF_INET6)
     {
         int on = 1;
+
         if (-1 == setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof (on)))
         {
             OIC_LOG_V(ERROR, TAG, "IPV6_V6ONLY failed: %s", strerror(errno));
         }
+
+        if (*port)      // only do this for multicast ports
+        {
+            if (-1 == setsockopt(fd, IPPROTO_IPV6, IPV6_RECVPKTINFO, &on, sizeof (on)))
+            {
+                OIC_LOG_V(ERROR, TAG, "IPV6_RECVPKTINFO failed: %s", strerror(errno));
+            }
+        }
+
         ((struct sockaddr_in6 *)&sa)->sin6_port = htons(*port);
         socklen = sizeof (struct sockaddr_in6);
     }
     else
     {
+        if (*port)      // only do this for multicast ports
+        {
+            int on = 1;
+            if (-1 == setsockopt(fd, IPPROTO_IP, IP_PKTINFO, &on, sizeof (on)))
+            {
+                OIC_LOG_V(ERROR, TAG, "IP_PKTINFO failed: %s", strerror(errno));
+            }
+        }
+
         ((struct sockaddr_in *)&sa)->sin_port = htons(*port);
         socklen = sizeof (struct sockaddr_in);
     }
@@ -799,7 +880,7 @@ static void sendData(int fd, const CAEndpoint_t *endpoint,
     }
     else
     {
-        OIC_LOG_V(INFO, TAG, "%s%s %s sendTo is successful: %d bytes", secure, cast, fam, len);
+        OIC_LOG_V(INFO, TAG, "%s%s %s sendTo is successful: %ld bytes", secure, cast, fam, len);
     }
 }
 
