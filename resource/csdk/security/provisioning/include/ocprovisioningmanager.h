@@ -165,6 +165,36 @@ OCStackResult OCRemoveDevice(void* ctx,
                              unsigned short waitTimeForOwnedDeviceDiscovery,
                              const OCProvisionDev_t* pTargetDev,
                              OCProvisionResultCB resultCallback);
+/**
+ * API to get status of all the devices in current subnet. The status include endpoint information
+ * and doxm information which can be extracted duing owned and unowned discovery. Along with this
+ * information. The API will provide information about devices' status
+ * Device can have following states
+ *  - ON/OFF: Device is switched on or off.
+ *
+ * NOTE: Caller need to call OCDeleteDiscoveredDevices to delete memory allocated by this API for out
+ * variables pOwnedDevList and pUnownedDevList.
+ *
+ * @param[in] waitime Wait time for the API. The wait time will be divided by 2, and half of wait time
+ * will be used for unowned discovery and remaining half for owned discovery.
+ * @param[out] pOwnedDevList  list of owned devices.
+ * @param[out] pUnownedDevList  list of unowned devices.
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCGetDevInfoFromNetwork(unsigned short waittime,
+                                       OCProvisionDev_t** pOwnedDevList,
+                                       OCProvisionDev_t** pUnownedDevList);
+/**
+ * This method is used to get linked devices' IDs.
+ *
+ * @param[in] uuidOfDevice a target device's uuid.
+ * @param[out] uuidList information about the list of linked devices' uuids.
+ * @param[out] numOfDevices total number of linked devices.
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCGetLinkedStatus(const OicUuid_t* uuidOfDevice,
+                                  OCUuidList_t** uuidList,
+                                  size_t* numOfDevices);
 
 /**
  * API to delete memory allocated to linked list created by OCDiscover_XXX_Devices API.
@@ -172,6 +202,13 @@ OCStackResult OCRemoveDevice(void* ctx,
  * @param[in] pList Pointer to OCProvisionDev_t which should be deleted.
  */
 void OCDeleteDiscoveredDevices(OCProvisionDev_t *pList);
+
+/**
+ * API to delete memory allocated to OicUuid_t list.
+ *
+ * @param[in] pList Pointer to OicUuid_t list which should be deleted.
+ */
+void OCDeleteUuidList(OCUuidList_t* pList);
 
 #ifdef __cplusplus
 }

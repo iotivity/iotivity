@@ -235,10 +235,10 @@ TEST(PDMClose, ValidCase)
 
 TEST(PDMDestoryOicUuidLinkList, NULLParam)
 {
-   EXPECT_EQ(OC_STACK_OK, PDMDestoryOicUuidLinkList(NULL));
+    PDMDestoryOicUuidLinkList(NULL);
 }
 
 TEST(PDMDestoryStaleLinkList, NULLParam)
 {
-   EXPECT_EQ(OC_STACK_OK, PDMDestoryOicUuidLinkList(NULL));
+    PDMDestoryStaleLinkList(NULL);
 }

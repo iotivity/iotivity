@@ -141,17 +141,16 @@ OCStackResult PDMClose();
  * This method is used by provisioning manager free memory allocated to OCUuidList_t lists.
  *
  * @param[in] ptr start pointer of link list.
- * @return OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult PDMDestoryOicUuidLinkList(OCUuidList_t* ptr);
+void PDMDestoryOicUuidLinkList(OCUuidList_t* ptr);
 
 /**
  * This method is used by provisioning manager free memory allocated to Stalelist.
  *
  * @param[in] ptr start pointer of link list.
- * @return OC_STACK_OK in case of success and other value otherwise.
+ *
  */
-OCStackResult PDMDestoryStaleLinkList(OCPairList_t* ptr);
+void PDMDestoryStaleLinkList(OCPairList_t* ptr);
 
 #ifdef __cplusplus
 }

@@ -655,24 +655,28 @@ OCStackResult PDMClose()
     return OC_STACK_OK;
 }
 
-OCStackResult PDMDestoryOicUuidLinkList(OCUuidList_t* ptr)
+void PDMDestoryOicUuidLinkList(OCUuidList_t* ptr)
 {
-    OCUuidList_t *tmp1 = NULL,*tmp2=NULL;
-    LL_FOREACH_SAFE(ptr, tmp1, tmp2)
+    if(ptr)
     {
-        LL_DELETE(ptr, tmp1);
-        OICFree(tmp1);
+        OCUuidList_t *tmp1 = NULL,*tmp2=NULL;
+        LL_FOREACH_SAFE(ptr, tmp1, tmp2)
+        {
+            LL_DELETE(ptr, tmp1);
+            OICFree(tmp1);
+        }
     }
-    return OC_STACK_OK;
 }
 
-OCStackResult PDMDestoryStaleLinkList(OCPairList_t* ptr)
+void PDMDestoryStaleLinkList(OCPairList_t* ptr)
 {
-    OCPairList_t *tmp1 = NULL,*tmp2=NULL;
-    LL_FOREACH_SAFE(ptr, tmp1, tmp2)
+    if(ptr)
     {
-        LL_DELETE(ptr, tmp1);
-        OICFree(tmp1);
+        OCPairList_t *tmp1 = NULL,*tmp2=NULL;
+        LL_FOREACH_SAFE(ptr, tmp1, tmp2)
+        {
+            LL_DELETE(ptr, tmp1);
+            OICFree(tmp1);
+        }
     }
-    return OC_STACK_OK;
 }

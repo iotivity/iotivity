@@ -28,6 +28,8 @@
 #include "secureresourceprovider.h"
 #include "provisioningdatabasemanager.h"
 #include "credresource.h"
+#include "utlist.h"
+
 
 #define TAG "OCPMAPI"
 
@@ -553,4 +555,111 @@ OCStackResult OCProvisionPairwiseDevices(void* ctx, OicSecCredType_t type, size_
     }
     return res;
 
+}
+
+OCStackResult OCGetDevInfoFromNetwork(unsigned short waittime,
+                                       OCProvisionDev_t** pOwnedDevList,
+                                       OCProvisionDev_t** pUnownedDevList)
+{
+    //TODO will be replaced by more efficient logic
+    if (pOwnedDevList == NULL || *pOwnedDevList != NULL || pUnownedDevList == NULL
+         || *pUnownedDevList != NULL)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    // Code for unowned discovery
+    OCProvisionDev_t *unownedDevice = NULL;
+    OCStackResult res =  OCDiscoverUnownedDevices(waittime/2, &unownedDevice);
+    if (OC_STACK_OK != res)
+    {
+        OC_LOG(ERROR,TAG, "Error in unowned discovery");
+        return res;
+    }
+
+    // Code for owned discovery
+    OCProvisionDev_t *ownedDevice = NULL;
+    res =  OCDiscoverOwnedDevices(waittime/2, &ownedDevice);
+    if (OC_STACK_OK != res)
+    {
+        OC_LOG(ERROR,TAG, "Error in owned discovery");
+        PMDeleteDeviceList(unownedDevice);
+        return res;
+    }
+
+    // Code to get list of all the owned devices.
+    OCUuidList_t *uuidList = NULL;
+    size_t numOfDevices = 0;
+    res =  PDMGetOwnedDevices(&uuidList, &numOfDevices);
+    if (OC_STACK_OK != res)
+    {
+        OC_LOG(ERROR, TAG, "Error while getting info from DB");
+        PMDeleteDeviceList(unownedDevice);
+        PMDeleteDeviceList(ownedDevice);
+        return res;
+    }
+
+    // Code to compare devices in owned list and deviceid from DB.
+    OCProvisionDev_t* pCurDev = ownedDevice;
+    size_t deleteCnt = 0;
+    while (pCurDev)
+    {
+        if(true == PMDeleteFromUUIDList(uuidList, &pCurDev->doxm->deviceID))
+        {
+            deleteCnt++;
+        }
+        pCurDev = pCurDev->next;
+    }
+    // If there is no remaind device in uuidList, we have to assign NULL to prevent free.
+    if (deleteCnt == numOfDevices)
+    {
+        uuidList = NULL;
+    }
+    // Code to add information of the devices which are currently off in owned list.
+    OCUuidList_t *powerOffDeviceList = uuidList;
+    while (powerOffDeviceList)
+    {
+        OCProvisionDev_t *ptr = (OCProvisionDev_t *)OICCalloc(1, sizeof (OCProvisionDev_t));
+        if (NULL == ptr)
+        {
+            OC_LOG(ERROR,TAG,"Fail to allocate memory");
+            PMDeleteDeviceList(unownedDevice);
+            PMDeleteDeviceList(ownedDevice);
+            OCDeleteUuidList(uuidList);
+            return OC_STACK_NO_MEMORY;
+        }
+
+        ptr->doxm = (OicSecDoxm_t*)OICCalloc(1, sizeof(OicSecDoxm_t));
+        if (NULL == ptr->doxm)
+        {
+            OC_LOG(ERROR,TAG,"Fail to allocate memory");
+            PMDeleteDeviceList(unownedDevice);
+            PMDeleteDeviceList(ownedDevice);
+            OCDeleteUuidList(uuidList);
+            OICFree(ptr);
+            return OC_STACK_NO_MEMORY;
+        }
+
+        memcpy(ptr->doxm->deviceID.id, powerOffDeviceList->dev.id, sizeof(ptr->doxm->deviceID.id));
+
+        ptr->devStatus = DEV_STATUS_OFF;
+        LL_PREPEND(ownedDevice, ptr);
+        powerOffDeviceList = powerOffDeviceList->next;
+
+    }
+    OCDeleteUuidList(uuidList);
+    *pOwnedDevList = ownedDevice;
+    *pUnownedDevList = unownedDevice;
+    return OC_STACK_OK;
+}
+
+OCStackResult OCGetLinkedStatus(const OicUuid_t* uuidOfDevice, OCUuidList_t** uuidList,
+                                 size_t* numOfDevices)
+{
+    return PDMGetLinkedDevices(uuidOfDevice, uuidList, numOfDevices);
+}
+
+void OCDeleteUuidList(OCUuidList_t* pList)
+{
+    PDMDestoryOicUuidLinkList(pList);
 }

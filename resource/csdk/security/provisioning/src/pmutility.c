@@ -656,3 +656,22 @@ void PMPrintOCProvisionDev(const OCProvisionDev_t* pDev)
         OC_LOG(DEBUG, TAG, "+++++ OCProvisionDev_t is NULL +++++");
     }
 }
+
+bool PMDeleteFromUUIDList(OCUuidList_t *pUuidList, OicUuid_t *targetId)
+{
+    if(pUuidList == NULL || targetId == NULL)
+    {
+        return false;
+    }
+    OCUuidList_t *tmp1 = NULL,*tmp2=NULL;
+    LL_FOREACH_SAFE(pUuidList, tmp1, tmp2)
+    {
+        if(0 == memcmp(tmp1->dev.id, targetId->id, sizeof(targetId->id)))
+        {
+            LL_DELETE(pUuidList, tmp1);
+            OICFree(tmp1);
+            return true;
+        }
+    }
+    return false;
+}

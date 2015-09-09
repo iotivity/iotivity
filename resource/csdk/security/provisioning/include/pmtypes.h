@@ -49,6 +49,13 @@ struct OCUuidList
     OCUuidList_t *next;
 };
 
+/*
+ * Device's power on/off state.
+ */
+typedef enum {
+    DEV_STATUS_ON = (1 << 0),
+    DEV_STATUS_OFF = (1 << 1)
+}DeviceStatus;
 
 /**
  * Device Information of discoverd unowned/owned device(s) for provisioning.
@@ -60,7 +67,8 @@ typedef struct OCProvisionDev
     OicSecDoxm_t    *doxm;           /**< Pointer to target's doxm resource. **/
     OCConnectivityType connType;     /**< Connectivity type of endpoint */
     uint16_t        securePort;      /**< secure port **/
-    struct OCProvisionDev  *next;           /**< Next pointer. **/
+    DeviceStatus    devStatus;       /**< status of device **/
+    struct OCProvisionDev  *next;    /**< Next pointer. **/
 }OCProvisionDev_t;
 
 /**
