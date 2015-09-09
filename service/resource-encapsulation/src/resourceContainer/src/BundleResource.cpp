@@ -65,7 +65,6 @@ namespace OIC
 
         RCSResourceAttributes::Value BundleResource::getAttribute(const std::string &key)
         {
-            cout << "Bundle resource get attribute " << m_resourceAttributes.at(key).toString() << "|" << endl;
             return m_resourceAttributes.at(key);
         }
 

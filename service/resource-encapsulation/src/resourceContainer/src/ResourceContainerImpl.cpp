@@ -21,11 +21,13 @@
 #include <dlfcn.h>
 #include <unistd.h>
 #include <string.h>
-#include <iostream>
 #include <fstream>
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
+#include <thread>
+#include <mutex>
+
 
 #include "ResourceContainerImpl.h"
 #include "BundleActivator.h"
@@ -34,6 +36,7 @@
 #include "logger.h"
 #include "oc_logger.hpp"
 #include "SoftSensorResource.h"
+
 
 using OC::oc_log_stream;
 using namespace OIC::Service;
@@ -126,7 +129,11 @@ namespace OIC
                         info_logger() << "Init Bundle:" << bundles[i]["id"] << ";" << bundles[i]["path"]
                                       << endl;
                         registerBundle(bundleInfo);
-                        activateBundle(bundleInfo);
+
+                        auto f = std::bind(&ResourceContainerImpl::activateBundleThread, this, bundleInfo);
+
+                        boost::thread activator(f);
+                        m_activators.push_back(std::move(activator));
                     }
                 }
                 else
@@ -137,6 +144,11 @@ namespace OIC
             else
             {
                 info_logger() << "No configuration file for the container provided" << endl;
+            }
+            vector<boost::thread>::iterator activatorIterator;
+
+            for(activatorIterator = m_activators.begin(); activatorIterator != m_activators.end(); activatorIterator++){
+                activatorIterator->timed_join(boost::posix_time::seconds(BUNDLE_ACTIVATION_WAIT_SEC)); // wait for bundles to be activated
             }
         }
 
@@ -278,12 +290,14 @@ namespace OIC
 
         void ResourceContainerImpl::registerResource(BundleResource *resource)
         {
+
             string strUri = resource->m_uri;
             string strResourceType = resource->m_resourceType;
             RCSResourceObject::Ptr server = nullptr;
 
             info_logger() << "Registration of resource " << strUri << "," << strResourceType << endl;
 
+            registrationLock.lock();
             if (m_mapResources.find(strUri) == m_mapResources.end())
             {
                 server = buildResourceObject(strUri, strResourceType);
@@ -317,6 +331,7 @@ namespace OIC
             {
                 error_logger() << "resource with " << strUri << " already exists." << endl;
             }
+            registrationLock.unlock();
         }
 
         void ResourceContainerImpl::unregisterResource(BundleResource *resource)
@@ -764,6 +779,10 @@ namespace OIC
                     error_logger() << "removeResource unsuccessful." << endl;
                 }
             }
+        }
+
+        void ResourceContainerImpl::activateBundleThread(RCSBundleInfo* rcsBundleInfo){
+            activateBundle(rcsBundleInfo);
         }
 
 #if(JAVA_SUPPORT)

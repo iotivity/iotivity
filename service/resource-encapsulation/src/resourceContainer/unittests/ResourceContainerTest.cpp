@@ -112,7 +112,6 @@ class ResourceContainerTest: public TestWithMock
 TEST_F(ResourceContainerTest, BundleRegisteredWhenContainerStartedWithValidConfigFile)
 {
     m_pResourceContainer->startContainer(m_strConfigPath);
-
     EXPECT_GT(m_pResourceContainer->listBundles().size(), (unsigned int) 0);
     EXPECT_STREQ("oic.bundle.test",
                  (*m_pResourceContainer->listBundles().begin())->getID().c_str());
