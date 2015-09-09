@@ -139,15 +139,6 @@ OCStackResult OCProvisionCredentials(void *ctx, OicSecCredType_t type, size_t ke
  */
 void OCDeleteDiscoveredDevices(OCProvisionDev_t *pList);
 
-/**
- * API to delete memory allocated to OCProvisionResult_t list in callback function.
- *
- * @note: This function must be called in the callback implementation after checking results.
- *
- * @param[in] pList Pointer to OCProvisionResult_t list which should be deleted.
- */
-void OCDeleteProvisionResults(OCProvisionResult_t *pList);
-
 #ifdef __cplusplus
 }
 #endif // __cplusplus
