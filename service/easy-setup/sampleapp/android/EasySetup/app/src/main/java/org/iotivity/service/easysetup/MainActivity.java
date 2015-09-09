@@ -31,26 +31,44 @@ import org.iotivity.service.easysetup.core.EnrolleeState;
 import org.iotivity.service.easysetup.impl.EnrolleeDeviceFactory;
 import org.iotivity.service.easysetup.impl.WiFiOnBoardingConfig;
 import org.iotivity.service.easysetup.impl.WiFiProvConfig;
-import org.iotivity.service.easysetup.mediator.ProvisionEnrollee;
+//import org.iotivity.service.easysetup.mediator.EasySetupManager;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.wifi.WifiConfiguration;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
-    TextView textView1;
+
+
+    /*Status to update the UI */
+    public static final int SUCCESS = 0;
+    public static final int FAILED = 1;
+    public static final int STATE_CHANGED = 2;
+
+    private boolean mRunningStatus = false;
 
     static final int REQUEST_IMAGE_CAPTURE = 1;
     ImageView imageView;
-    ProvisionEnrollee provisionEnrolleInstance;
+
+    EditText mSsidText;
+    EditText mPassText;
+    TextView mResultTextView;
+    ProgressBar mProgressbar;
+    Button mStartButton;
+    Button mStopButton;
+    Handler mHandler = new ThreadHandler();
 
     /**
      * Objects to be instantiated by the programmer
@@ -66,38 +84,30 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        textView1 = (TextView) findViewById(R.id.textView1);
+        /* Initialize widgets to get user input for target network's SSID & password*/
+        mSsidText = (EditText) findViewById(R.id.ssid);
+        mPassText = (EditText) findViewById(R.id.password);
+        mResultTextView = (TextView) findViewById(R.id.status);
+        mProgressbar = (ProgressBar) findViewById(R.id.progressBar);
 
-        // Provisioning Process - This instantiation  will be removed in the next version
-        provisionEnrolleInstance = new ProvisionEnrollee(this);
-        /* Invocation of APIs using the Easy Setup SDK APIs */
 
-        /* Create Easy Setup Service instance*/
+       /* Create Easy Setup Service instance*/
         mEasySetupService = EasySetupService.getInstance(getApplicationContext(),
                 new EasySetupStatus() {
 
                     @Override
-                    public void onFinished(EnrolleeDevice enrolledevice) {
-                        final String msg = enrolledevice.isSetupSuccessful() ?
-                                "Device configured successfully" : "Device configuration failed";
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                Toast.makeText(getApplicationContext(),
-                                        msg, Toast.LENGTH_SHORT).show();
-                            }
-                        });
+                    public void onFinished(final EnrolleeDevice enrolledevice) {
+                        mRunningStatus = false;
+                        if (enrolledevice.isSetupSuccessful()) {
+                            mHandler.sendEmptyMessage(SUCCESS);
+                        } else {
+                            mHandler.sendEmptyMessage(FAILED);
+                        }
                     }
 
                     @Override
                     public void onProgress(EnrolleeState state) {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                Toast.makeText(getApplicationContext(),
-                                        "Device state changed", Toast.LENGTH_SHORT).show();
-                            }
-                        });
+                        mHandler.sendEmptyMessage(STATE_CHANGED);
                     }
 
                 });
@@ -127,23 +137,46 @@ public class MainActivity extends Activity {
         mWiFiOnBoardingConfig.setSharedKey("EasySetup123");
         mWiFiOnBoardingConfig.setAuthAlgo(WifiConfiguration.AuthAlgorithm.OPEN);
         mWiFiOnBoardingConfig.setKms(WifiConfiguration.KeyMgmt.WPA_PSK);
+
+        // Updating the UI with default credentials
+        mSsidText.setText("EasySetup123");
+        mPassText.setText("EasySetup123");
+
         return mWiFiOnBoardingConfig;
     }
 
 
     public void onDestroy() {
         super.onDestroy();
-        provisionEnrolleInstance.stopEnrolleeProvisioning(0);
+        /*Reset the Easy setup process*/
+        mEasySetupService.finish();
     }
 
     public void addListenerForStartAP() {
-        Button button = (Button) findViewById(R.id.button1);
+        mStartButton = (Button) findViewById(R.id.startSetup);
 
-        button.setOnClickListener(new OnClickListener() {
+        mStartButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View arg0) {
                 try {
+
+                    mRunningStatus = true;
+                    mProgressbar.setVisibility(View.VISIBLE);
+                    mProgressbar.setIndeterminate(true);
+                    mStartButton.setEnabled(false);
+                    mResultTextView.setText(R.string.running);
+
+                    String ssid = mSsidText.getText().toString();
+                    String password = mPassText.getText().toString();
+
+                    mWiFiOnBoardingConfig.setSSId(ssid);
+                    mWiFiOnBoardingConfig.setSharedKey(password);
+
                     mEasySetupService.startSetup(mDevice);
+
+                    mStopButton.setEnabled(true);
+
+
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -153,11 +186,17 @@ public class MainActivity extends Activity {
     }
 
     public void addListenerForStopAP() {
-        Button button = (Button) findViewById(R.id.stopapbutton);
+        mStopButton = (Button) findViewById(R.id.stopSetup);
 
-        button.setOnClickListener(new OnClickListener() {
+        mStopButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View arg0) {
+                mRunningStatus = false;
+                mStartButton.setEnabled(true);
+                mStopButton.setEnabled(false);
+                mResultTextView.setText(R.string.stopped);
+                mProgressbar.setIndeterminate(false);
+                mProgressbar.setVisibility(View.INVISIBLE);
                 mEasySetupService.stopSetup(mDevice);
             }
         });
@@ -171,4 +210,48 @@ public class MainActivity extends Activity {
             imageView.setImageBitmap(imageBitmap);
         }
     }
+
+    class ThreadHandler extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+
+            // Returns if Test is stopped, this has to be handled in EasySetupService
+            if (!mRunningStatus) return;
+
+            switch (msg.what) {
+                case SUCCESS: {
+
+                    mProgressbar.setIndeterminate(false);
+                    mStopButton.setEnabled(false);
+                    mStartButton.setEnabled(true);
+                    mProgressbar.setVisibility(View.INVISIBLE);
+                    String resultMsg = "Device configured successfully";
+                    mResultTextView.setText(R.string.success);
+                    Toast.makeText(getApplicationContext(), resultMsg, Toast.LENGTH_SHORT).show();
+                    break;
+                }
+                case FAILED: {
+
+                    mProgressbar.setIndeterminate(false);
+                    mStopButton.setEnabled(false);
+                    mStartButton.setEnabled(true);
+                    mProgressbar.setVisibility(View.INVISIBLE);
+                    String resultMsg = "Device configuration failed";
+                    mResultTextView.setText(R.string.failed);
+                    Toast.makeText(getApplicationContext(), resultMsg, Toast.LENGTH_SHORT).show();
+                    break;
+                }
+
+                case STATE_CHANGED: {
+                    String resultMsg = "Device state changed";
+                    Toast.makeText(getApplicationContext(), resultMsg, Toast.LENGTH_SHORT).show();
+                    break;
+                }
+
+            }
+
+
+        }
+    }
+
 }

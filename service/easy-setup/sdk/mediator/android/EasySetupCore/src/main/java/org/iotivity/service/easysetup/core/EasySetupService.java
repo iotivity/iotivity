@@ -1,22 +1,22 @@
 /**
  * ***************************************************************
- * <p>
+ * <p/>
  * Copyright 2015 Samsung Electronics All Rights Reserved.
- * <p>
- * <p>
- * <p>
+ * <p/>
+ * <p/>
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ * <p/>
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * <p>
+ * <p/>
  * ****************************************************************
  */
 
@@ -25,6 +25,7 @@ package org.iotivity.service.easysetup.core;
 import android.content.Context;
 
 import org.iotivity.service.easysetup.impl.EnrolleeDeviceFactory;
+import org.iotivity.service.easysetup.mediator.EasySetupManager;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -50,17 +51,19 @@ public class EasySetupService {
 
     public EnrolleeDeviceFactory mDeviceFactory;
 
-
     private EasySetupService(EasySetupStatus callback) {
         mCallback = callback;
         mProvisioningCallback = new ProvisioningCallbackImpl(mCallback);
         mEnrolleeDeviceList = new ArrayList<EnrolleeDevice>();
         mContext = null;
         mDeviceFactory = null;
+
+        //Native Api call to initialize the OIC stack
+        EasySetupManager.getInstance().initEasySetup();
     }
 
     /**
-     * Gives a singleton instance of Easy setup service.
+     * Gives a singleton instance of Easy setup service and initialize the service
      *
      * @param callback Application needs to provide this callback to receive the status of easy
      *                 setup process.
@@ -73,6 +76,15 @@ public class EasySetupService {
             mContext = context;
         }
         return sInstance;
+    }
+
+    /**
+     * Reset the Easy setup Service
+     */
+
+    public void finish() {
+        //Native Api call to reset OIC stack
+        EasySetupManager.getInstance().terminateEasySetup();
     }
 
     /**
@@ -95,7 +107,7 @@ public class EasySetupService {
         enrolledevice.startOnBoarding(new OnBoardingCallback() {
 
             @Override
-            public void onFinished(ConnectionInterface connection) {
+            public void onFinished(OnBoardingConnection connection) {
                 if (connection.isConnected()) {
                     try {
                         Thread.sleep(15000);//Sleep for allowing thin device to start the services
@@ -120,11 +132,14 @@ public class EasySetupService {
     /**
      * Stops on-going Easy setup process for enrolling device.
      *
-     * @param enrolledevice Device to be enrolled in network
+     * @param enrolleedevice Device to be enrolled in network
      */
-    public synchronized void stopSetup(EnrolleeDevice enrolledevice) {
-        enrolledevice.stopOnBoardingProcess();
-        mEnrolleeDeviceList.remove(enrolledevice);
+    public synchronized void stopSetup(EnrolleeDevice enrolleedevice) {
+        enrolleedevice.stopOnBoardingProcess();
+        mEnrolleeDeviceList.remove(enrolleedevice);
+
+        //Native Api call to stop on-going enrolling process for the enrolling device
+        EasySetupManager.getInstance().stopEnrolleeProvisioning(enrolleedevice.mOnBoardingConfig.getConnType().getValue());
     }
 
     public synchronized void getEnrolleeDevice(OnBoardingConfig connType) {

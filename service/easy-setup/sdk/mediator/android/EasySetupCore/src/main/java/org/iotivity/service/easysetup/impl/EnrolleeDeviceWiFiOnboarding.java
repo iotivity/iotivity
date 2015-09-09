@@ -1,22 +1,22 @@
 /**
  * ***************************************************************
- * <p>
+ * <p/>
  * Copyright 2015 Samsung Electronics All Rights Reserved.
- * <p>
- * <p>
- * <p>
+ * <p/>
+ * <p/>
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ * <p/>
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * <p>
+ * <p/>
  * ****************************************************************
  */
 
@@ -25,13 +25,12 @@ package org.iotivity.service.easysetup.impl;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import org.iotivity.service.easysetup.core.ConnectionInterface;
+import org.iotivity.service.easysetup.core.OnBoardingConnection;
 import org.iotivity.service.easysetup.core.EnrolleeDevice;
 import org.iotivity.service.easysetup.core.EnrolleeState;
-import org.iotivity.service.easysetup.core.IpConnection;
+import org.iotivity.service.easysetup.core.IpOnBoardingConnection;
 import org.iotivity.service.easysetup.core.OnBoardingConfig;
 import org.iotivity.service.easysetup.core.ProvisioningConfig;
-import org.iotivity.service.easysetup.mediator.EasySetupCallbackHandler;
 import org.iotivity.service.easysetup.mediator.EasySetupManager;
 import org.iotivity.service.easysetup.mediator.EnrolleeInfo;
 import org.iotivity.service.easysetup.mediator.IOnBoardingStatus;
@@ -42,7 +41,6 @@ import org.iotivity.service.easysetup.mediator.ip.WiFiSoftAPManager;
 import android.content.Context;
 import android.net.wifi.WifiConfiguration;
 import android.util.Log;
-import android.widget.Toast;
 
 /**
  * This is a ready to use class for Enrollee device having Soft AP as on-boarding connectivity.
@@ -57,6 +55,11 @@ public class EnrolleeDeviceWiFiOnboarding extends EnrolleeDevice {
     private EasySetupManager easySetupManagerNativeInstance;
     ProvisionEnrollee provisionEnrolleInstance;
 
+    // Native Api to start provisioning process after successful on-boarding on Wifi AP.
+    // Library is already loaded while constructing EasySetupService
+    private native void ProvisionEnrollee(String ipAddress, String netSSID,
+                                          String netPWD, int connectivityType);
+
     IOnBoardingStatus deviceScanListener = new IOnBoardingStatus() {
 
         @Override
@@ -70,7 +73,7 @@ public class EnrolleeDeviceWiFiOnboarding extends EnrolleeDevice {
                             + enrolleStatus.getIpAddr() + "]";
 
                     connectedDevice = enrolleStatus;
-                    IpConnection conn = new IpConnection();
+                    IpOnBoardingConnection conn = new IpOnBoardingConnection();
                     conn.setConnectivity(true);
                     conn.setIp(connectedDevice.getIpAddr());
                     Log.d("ESSoftAPOnBoarding", "Entered");
@@ -80,7 +83,7 @@ public class EnrolleeDeviceWiFiOnboarding extends EnrolleeDevice {
                 }
             }
 
-            IpConnection conn = new IpConnection();
+            IpOnBoardingConnection conn = new IpOnBoardingConnection();
             conn.setConnectivity(false);
             mOnBoardingCallback.onFinished(conn);
         }
@@ -121,7 +124,7 @@ public class EnrolleeDeviceWiFiOnboarding extends EnrolleeDevice {
     }
 
     @Override
-    protected void startProvisioningProcess(ConnectionInterface conn) {
+    protected void startProvisioningProcess(OnBoardingConnection conn) {
 
         if (mProvConfig.getConnType() == ProvisioningConfig.ConnType.WiFi) {
 
@@ -134,11 +137,11 @@ public class EnrolleeDeviceWiFiOnboarding extends EnrolleeDevice {
                 }
             });
 
-            IpConnection connection = (IpConnection) conn;
+            IpOnBoardingConnection connection = (IpOnBoardingConnection) conn;
             WiFiProvConfig wifiProvConfig = (WiFiProvConfig) mProvConfig;
-            easySetupManagerNativeInstance = EasySetupManager.getInstance();
-            easySetupManagerNativeInstance.initEasySetup();
-            easySetupManagerNativeInstance.provisionEnrollee(connection.getIp(), wifiProvConfig.getSsId(), wifiProvConfig.getPassword(), 0 /*In base code '0' is hard coded*/);
+
+            // Native Api call to start provisioning of the enrolling device
+            EasySetupManager.getInstance().provisionEnrollee(connection.getIp(), wifiProvConfig.getSsId(), wifiProvConfig.getPassword(), mOnBoardingConfig.getConnType().getValue());
 
         }
 

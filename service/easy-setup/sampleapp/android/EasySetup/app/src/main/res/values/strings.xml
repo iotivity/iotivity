@@ -9,4 +9,16 @@
 	<string name="start_soft_ap">Start Wi-Fi Soft AP</string>
 	<string name="stop_soft_ap">Stop Soft AP</string>  
     <string name="provision_device">Provision Connected Device</string>
+
+    <string name="startSetup">Start Setup</string>
+    <string name="stopSetup">Stop Setup</string>
+    <string name="SSID">SSID</string>
+    <string name="Password">Password</string>
+    <string name="success">Successful</string>
+    <string name="failed">Failed</string>
+    <string name="not_started">Not started</string>
+    <string name="test_status">Status</string>
+    <string name="running">Running</string>
+    <string name="stopped">Stopped</string>
+
 </resources>

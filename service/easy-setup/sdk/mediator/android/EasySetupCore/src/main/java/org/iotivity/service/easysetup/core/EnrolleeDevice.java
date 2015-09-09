@@ -1,22 +1,22 @@
 /**
  * ***************************************************************
- * <p>
+ * <p/>
  * Copyright 2015 Samsung Electronics All Rights Reserved.
- * <p>
- * <p>
- * <p>
+ * <p/>
+ * <p/>
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ * <p/>
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * <p>
+ * <p/>
  * ****************************************************************
  */
 
@@ -34,7 +34,7 @@ public abstract class EnrolleeDevice {
     protected EnrolleeState mState;
     private EnrolleeSetupError mError;
 
-    protected ConnectionInterface mConnection;
+    protected OnBoardingConnection mConnection;
     protected final ProvisioningConfig mProvConfig;
     protected final OnBoardingConfig mOnBoardingConfig;
 
@@ -75,7 +75,7 @@ public abstract class EnrolleeDevice {
      * @param conn Contains detail about the network established between the Enrollee device &
      *             Mediator device. Its implementation vary according to the connectivity type.
      */
-    protected abstract void startProvisioningProcess(ConnectionInterface conn);
+    protected abstract void startProvisioningProcess(OnBoardingConnection conn);
 
     /**
      * Once on boarding is successful concrete Enrollee class would call this method and set the
@@ -83,7 +83,7 @@ public abstract class EnrolleeDevice {
      *
      * @param conn Connectivity between Enrollee device & Mediator device.
      */
-    public void setConnection(ConnectionInterface conn) {
+    public void setConnection(OnBoardingConnection conn) {
         mConnection = conn;
     }
 

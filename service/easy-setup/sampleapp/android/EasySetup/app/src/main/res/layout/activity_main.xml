@@ -1,71 +1,130 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/background"
+    android:orientation="vertical"
     android:paddingBottom="@dimen/activity_vertical_margin"
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="org.iotivity.service.easysetup.mediator.MainActivity" >
+    tools:context="org.iotivity.service.easysetup.mediator.MainActivity">
 
-    <Button
-        android:id="@+id/button1"
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="350dp"
+        android:layout_height="wrap_content"
+        android:visibility="invisible" />
+
+
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:layout_margin="10dp"
+        android:layout_gravity="center"
         android:layout_marginTop="20dp"
-        android:elegantTextHeight="true"
-        android:text="@string/start_soft_ap"
-        android:textAllCaps="false"
-        android:textSize="18sp" />
+        android:orientation="horizontal">
 
-    <Button
-        android:id="@+id/button2"
+
+        <TextView
+            android:id="@+id/lablestatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="8dp"
+            android:layout_marginRight="20dp"
+            android:elegantTextHeight="true"
+            android:text="@string/test_status"
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="30dp"
+            android:layout_marginTop="5dp"
+            android:text="@string/not_started"
+            android:textColor="@android:color/background_light"
+            android:textSize="30dp" />
+
+    </LinearLayout>
+
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginBottom="72dp"
-        android:elegantTextHeight="true"
-        android:text="@string/provision_device"
-        android:textAllCaps="false"
-        android:textSize="18sp" />
+        android:layout_gravity="center"
+        android:layout_marginTop="50dp"
+        android:orientation="vertical">
 
-    <Button
-        android:id="@+id/stopapbutton"
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Enter SSID" />
+
+
+        <EditText
+            android:id="@+id/ssid"
+            android:layout_width="250dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal" />
+
+
+        <TextView
+            android:id="@+id/textView2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="Enter Password" />
+
+
+        <EditText
+            android:id="@+id/password"
+            android:layout_width="250dp"
+            android:layout_height="wrap_content"
+
+            android:layout_gravity="center_horizontal" />
+
+    </LinearLayout>
+
+
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/button1"
         android:layout_centerHorizontal="true"
-        android:layout_margin="10dp"
-        android:elegantTextHeight="true"
-        android:text="@string/stop_soft_ap"
-        android:textAllCaps="false"
-        android:textSize="18sp" />
+        android:layout_gravity="center"
+        android:layout_marginTop="20dp"
+        android:orientation="horizontal">
 
-    <TextView
-        android:id="@+id/textView1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/TextView01"
-        android:layout_below="@+id/stopapbutton"
-        android:layout_marginTop="43dp"
-        android:text="@string/textview1"
-        android:textColor="#ffffff"
-        android:textSize="15sp" />
+        <Button
+            android:id="@+id/startSetup"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:layout_margin="10dp"
+            android:layout_marginTop="20dp"
+            android:elegantTextHeight="true"
+            android:text="@string/startSetup"
+            android:textAllCaps="false"
+            android:textSize="18sp" />
 
-    <TextView
-        android:id="@+id/TextView01"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/button2"
-        android:layout_below="@+id/stopapbutton"
-        android:layout_marginTop="16dp"
-        android:text="@string/textview2"
-        android:textColor="#ffffff"
-        android:textSize="20sp" />
+        <Button
+            android:id="@+id/stopSetup"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/startSetup"
+            android:layout_centerHorizontal="true"
+            android:layout_margin="10dp"
+            android:elegantTextHeight="true"
+            android:text="@string/stopSetup"
+            android:textAllCaps="false"
+            android:textSize="18sp"
+            android:enabled="false"/>
 
-</RelativeLayout>
+    </LinearLayout>
+
+
+</LinearLayout>

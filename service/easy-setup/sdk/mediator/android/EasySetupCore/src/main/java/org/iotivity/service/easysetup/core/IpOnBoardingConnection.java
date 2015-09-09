@@ -22,6 +22,36 @@
 
 package org.iotivity.service.easysetup.core;
 
-public abstract class OnBoardingCallback {
-    public abstract void onFinished(OnBoardingConnection connection);
+public class IpOnBoardingConnection implements OnBoardingConnection {
+
+    private boolean mIsConnected;
+    private String mIp;
+
+    public void setConnectivity(boolean connected) {
+        mIsConnected = connected;
+    }
+
+    public void setIp(String ip) {
+        mIp = ip;
+    }
+
+    public String getIp() {
+        return mIp;
+    }
+
+    @Override
+    public String getDesc() {
+        return "Description";
+    }
+
+    @Override
+    public boolean isConnected() {
+        return mIsConnected;
+    }
+
+    @Override
+    public Object getConnection() {
+        return this;
+    }
+
 }
