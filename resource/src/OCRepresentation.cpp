@@ -491,7 +491,7 @@ namespace OC
         }
         else if (depth == 3)
         {
-            std::vector<std::vector<std::vector<T>>> val;
+            std::vector<std::vector<std::vector<T>>> val(pl->arr.dimensions[0]);
             for(size_t i = 0; i < pl->arr.dimensions[0]; ++i)
             {
                 val[i].resize(pl->arr.dimensions[1]);
