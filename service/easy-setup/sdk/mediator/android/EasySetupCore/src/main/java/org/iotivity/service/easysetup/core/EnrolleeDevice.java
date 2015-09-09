@@ -1,8 +1,32 @@
+/**
+ * ***************************************************************
+ * <p>
+ * Copyright 2015 Samsung Electronics All Rights Reserved.
+ * <p>
+ * <p>
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * <p>
+ * ****************************************************************
+ */
+
 package org.iotivity.service.easysetup.core;
 
 /**
- * This is an abstract class represents the device being provisioned into the network. The device being enrolled or provisioned into the network is called Enrollee.
- * Application has to extend this class and provide implementation of abstract methods according to the ON-BOARDING & PROVISION connectivity i.e. WiFi, BLE, BT etc. the device is having.
+ * This is an abstract class represents the device being provisioned into the network. The
+ * device being enrolled or provisioned into the network is called Enrollee.
+ * Application has to extend this class and provide implementation of abstract methods according
+ * to the ON-BOARDING & PROVISION connectivity i.e. WiFi, BLE, BT etc. the device is having.
  */
 
 public abstract class EnrolleeDevice {
@@ -18,8 +42,11 @@ public abstract class EnrolleeDevice {
     protected ProvisioningCallback mProvisioningCallback;
 
     /**
-     * @param onBoardingConfig Contains details about the connectivity to be established between the Enrollee device & Mediator device in order to perform on-boarding
-     * @param provConfig       Contains details about the network to which Enrollee device is going to connect.
+     * @param onBoardingConfig Contains details about the connectivity to be established between
+     *                         the Enrollee device & Mediator device in order to perform
+     *                         on-boarding
+     * @param provConfig       Contains details about the network to which Enrollee device is
+     *                         going to connect.
      */
     protected EnrolleeDevice(OnBoardingConfig onBoardingConfig, ProvisioningConfig provConfig) {
         mProvConfig = provConfig;
@@ -27,7 +54,8 @@ public abstract class EnrolleeDevice {
     }
 
     /**
-     * Application has to implement it according to the on boarding connectivity the device is having.
+     * Application has to implement it according to the on boarding connectivity the device is
+     * having.
      * This method will be called back during the easy setup process.
      */
     protected abstract void startOnBoardingProcess();
@@ -40,15 +68,18 @@ public abstract class EnrolleeDevice {
     protected abstract void stopOnBoardingProcess();
 
     /**
-     * Application has to implement it according to the type of the network device is going to connect or provisioned.
+     * Application has to implement it according to the type of the network device is going to
+     * connect or provisioned.
      * This method will be called back once on-boarding of the device is successful.
      *
-     * @param conn Contains detail about the network established between the Enrollee device & Mediator device. Its implementation vary according to the connectivity type.
+     * @param conn Contains detail about the network established between the Enrollee device &
+     *             Mediator device. Its implementation vary according to the connectivity type.
      */
     protected abstract void startProvisioningProcess(ConnectionInterface conn);
 
     /**
-     * Once on boarding is successful concrete Enrollee class would call this method and set the Connection.
+     * Once on boarding is successful concrete Enrollee class would call this method and set the
+     * Connection.
      *
      * @param conn Connectivity between Enrollee device & Mediator device.
      */

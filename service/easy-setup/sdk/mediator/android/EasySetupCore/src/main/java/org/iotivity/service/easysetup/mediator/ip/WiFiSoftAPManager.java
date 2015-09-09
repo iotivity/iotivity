@@ -1,24 +1,25 @@
 /**
  * ***************************************************************
- * <p/>
+ * <p>
  * Copyright 2015 Samsung Electronics All Rights Reserved.
- * <p/>
- * <p/>
- * <p/>
+ * <p>
+ * <p>
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p/>
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * <p/>
+ * <p>
  * ****************************************************************
  */
+
 package org.iotivity.service.easysetup.mediator.ip;
 
 import java.io.BufferedReader;
@@ -176,8 +177,7 @@ public class WiFiSoftAPManager {
      * Note: Starting Wi-Fi Soft Access Point will disable the Wi-Fi normal operation.
      * </p>
      *
-     * @param wifiConfig
-     *            SSID, security and channel details as part of WifiConfiguration
+     * @param wifiConfig SSID, security and channel details as part of WifiConfiguration
      * @return {@code true} if the operation succeeds, {@code false} otherwise
      */
     public boolean setWifiApEnabled(WifiConfiguration wifiConfig,
@@ -250,10 +250,8 @@ public class WiFiSoftAPManager {
     /**
      * Gets a list of the Soft AP clients connected to the Wi-Fi Soft Access point
      *
-     * @param finishListener
-     *            Interface called when the scan method finishes
-     * @param reachableTimeout
-     *            Reachable Timeout in miliseconds
+     * @param finishListener   Interface called when the scan method finishes
+     * @param reachableTimeout Reachable Timeout in miliseconds
      */
     public void getClientList(IOnBoardingStatus finishListener, final int reachableTimeout) {
         this.finishListener = finishListener;

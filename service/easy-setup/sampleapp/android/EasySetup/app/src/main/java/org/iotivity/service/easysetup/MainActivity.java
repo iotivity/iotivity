@@ -1,3 +1,25 @@
+/**
+ * ***************************************************************
+ * <p/>
+ * Copyright 2015 Samsung Electronics All Rights Reserved.
+ * <p/>
+ * <p/>
+ * <p/>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * <p/>
+ * ****************************************************************
+ */
+
 package org.iotivity.service.easysetup;
 
 import java.io.IOException;
@@ -7,10 +29,8 @@ import org.iotivity.service.easysetup.core.EasySetupStatus;
 import org.iotivity.service.easysetup.core.EnrolleeDevice;
 import org.iotivity.service.easysetup.core.EnrolleeState;
 import org.iotivity.service.easysetup.impl.EnrolleeDeviceFactory;
-import org.iotivity.service.easysetup.impl.EnrolleeDeviceWiFiOnboarding;
 import org.iotivity.service.easysetup.impl.WiFiOnBoardingConfig;
 import org.iotivity.service.easysetup.impl.WiFiProvConfig;
-import org.iotivity.service.easysetup.mediator.EnrolleeInfo;
 import org.iotivity.service.easysetup.mediator.ProvisionEnrollee;
 
 import android.app.Activity;
@@ -18,7 +38,6 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.wifi.WifiConfiguration;
 import android.os.Bundle;
-import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -49,42 +68,46 @@ public class MainActivity extends Activity {
 
         textView1 = (TextView) findViewById(R.id.textView1);
 
-        // Provisioning Process
+        // Provisioning Process - This instantiation  will be removed in the next version
         provisionEnrolleInstance = new ProvisionEnrollee(this);
-
         /* Invocation of APIs using the Easy Setup SDK APIs */
 
         /* Create Easy Setup Service instance*/
-        mEasySetupService = EasySetupService.getInstance(getApplicationContext(), new EasySetupStatus() {
+        mEasySetupService = EasySetupService.getInstance(getApplicationContext(),
+                new EasySetupStatus() {
 
-            @Override
-            public void onFinished(EnrolleeDevice enrolledevice) {
-                final String msg = enrolledevice.isSetupSuccessful() ? "Device configured successfully" : "Device configuration failed";
-                runOnUiThread(new Runnable() {
                     @Override
-                    public void run() {
-                        Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
+                    public void onFinished(EnrolleeDevice enrolledevice) {
+                        final String msg = enrolledevice.isSetupSuccessful() ?
+                                "Device configured successfully" : "Device configuration failed";
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(getApplicationContext(),
+                                        msg, Toast.LENGTH_SHORT).show();
+                            }
+                        });
                     }
-                });
-            }
 
-            @Override
-            public void onProgress(EnrolleeState state) {
-                runOnUiThread(new Runnable() {
                     @Override
-                    public void run() {
-                        Toast.makeText(getApplicationContext(), "Device state changed", Toast.LENGTH_SHORT).show();
+                    public void onProgress(EnrolleeState state) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(getApplicationContext(),
+                                        "Device state changed", Toast.LENGTH_SHORT).show();
+                            }
+                        });
                     }
-                });
-            }
 
-        });
+                });
 
         /* Create EnrolleeDevice Factory instance*/
         mDeviceFactory = EnrolleeDeviceFactory.newInstance(getApplicationContext());
 
         /* Create a device using Factory instance*/
-        mDevice = mDeviceFactory.newEnrolleeDevice(getOnBoardingWifiConfig(), getEnrollerWifiConfig());
+        mDevice = mDeviceFactory.newEnrolleeDevice(getOnBoardingWifiConfig(),
+                getEnrollerWifiConfig());
 
         addListenerForStartAP();
         addListenerForStopAP();
