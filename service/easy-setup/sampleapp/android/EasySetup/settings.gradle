@@ -1,1 +1,1 @@
-include ':app', ':iotivity-armeabi-base-debug', ':easySetupCore-debug'
+include ':app'

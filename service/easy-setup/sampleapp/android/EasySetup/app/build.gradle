@@ -18,6 +18,4 @@ android {
 }
 
 dependencies {
-    compile project(':iotivity-armeabi-base-debug')
-    compile project(':easySetupCore-debug')
 }
