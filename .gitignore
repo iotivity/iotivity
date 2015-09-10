@@ -95,6 +95,9 @@ extlibs/cereal
 extlibs/android/gradle/gradle-2.2.1
 extlibs/android/ndk/android-ndk-r10d
 extlibs/android/sdk/android-sdk_r24.2
+extlibs/android/sdk/android-sdk-linux
+extlibs/android/sdk/android-sdk-macosx
+extlibs/android/sdk/android-sdk-windows
 extlibs/boost/boost_1_58_0
 extlibs/tinycbor/tinycbor
 *.tgz

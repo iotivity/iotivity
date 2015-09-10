@@ -126,6 +126,6 @@ CP_HIDDEN int cpi_vercmp(const char *v1, const char *v2) CP_GCC_PURE;
 
 #ifdef __cplusplus
 }
-#endif //__cplusplus 
+#endif //__cplusplus
 
 #endif //UTIL_H_

@@ -55,7 +55,9 @@
  * @param[in]  userData       The user data passed from the request function.
  */
 void CABleGattCharacteristicChangedCb(bt_gatt_attribute_h characteristic,
-                            unsigned char *value, int valueLen, void *userData);
+                                      unsigned char *value,
+                                      int valueLen,
+                                      void *userData);
 /**
  * This is the callback which will be called after the characteristics changed.
  *
@@ -162,7 +164,7 @@ void CAStartBleGattClientThread(void *data);
  *
  * @return ::CA_STATUS_OK or Appropriate error code.
  * @retval ::CA_STATUS_OK  Successful.
- * @retval ::CA_STATUS_INVALID_PARAM  Invalid input argumets.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
  * @retval ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CAInitGattClientMutexVariables();
@@ -182,7 +184,7 @@ void CAClearNonOICDeviceList();
  *
  * @return ::CA_STATUS_OK or Appropriate error code.
  * @retval ::CA_STATUS_OK  Successful.
- * @retval ::CA_STATUS_INVALID_PARAM  Invalid input argumets.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
  * @retval ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CABleGattSetScanParameter();
@@ -193,7 +195,7 @@ CAResult_t CABleGattSetScanParameter();
  *
  * @return ::CA_STATUS_OK or Appropriate error code.
  * @retval ::CA_STATUS_OK  Successful.
- * @retval ::CA_STATUS_INVALID_PARAM  Invalid input argumets.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
  * @retval ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CABleGattSetCallbacks();
@@ -210,7 +212,7 @@ void CABleGattUnSetCallbacks();
  *
  * @return ::CA_STATUS_OK or Appropriate error code.
  * @retval ::CA_STATUS_OK  Successful.
- * @retval ::CA_STATUS_INVALID_PARAM  Invalid input argumets.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
  * @retval ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CABleGattWatchCharacteristicChanges(bt_gatt_attribute_h service);
@@ -226,7 +228,7 @@ void CABleGattUnWatchCharacteristicChanges();
  *
  * @return ::CA_STATUS_OK or Appropriate error code.
  * @retval ::CA_STATUS_OK  Successful.
- * @retval ::CA_STATUS_INVALID_PARAM  Invalid input argumets.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
  * @retval ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CABleGattStartDeviceDiscovery();
@@ -250,7 +252,7 @@ void CAGattConnectThread (void *remoteAddress);
  *
  * @return ::CA_STATUS_OK or Appropriate error code.
  * @retval ::CA_STATUS_OK  Successful.
- * @retval ::CA_STATUS_INVALID_PARAM  Invalid input argumets.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
  * @retval ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CABleGattConnect(const char *remoteAddress);
@@ -261,7 +263,7 @@ CAResult_t CABleGattConnect(const char *remoteAddress);
  *
  * @return ::CA_STATUS_OK or Appropriate error code.
  * @retval ::CA_STATUS_OK  Successful.
- * @retval ::CA_STATUS_INVALID_PARAM  Invalid input argumets.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
  * @retval ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CABleGattDisConnect(const char *remoteAddress);
@@ -276,14 +278,14 @@ void CADiscoverBLEServicesThread (void *remoteAddress);
 
 /**
  * Used to discover the services that is advertised by Gatt Server
- * asynchrounously.
+ * asynchronously.
  *
  * @param[in] remoteAddress MAC address of remote device in which we want
  *                           to discover the services.
  *
  * @return ::CA_STATUS_OK or Appropriate error code.
  * @retval ::CA_STATUS_OK  Successful.
- * @retval ::CA_STATUS_INVALID_PARAM  Invalid input argumets.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
  * @retval ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CABleGattDiscoverServices(const char *remoteAddress);
@@ -306,7 +308,7 @@ void CADiscoverCharThread(void *stServiceInfo);
  *                            characteristics of given service handle.
  * @return ::CA_STATUS_OK or Appropriate error code.
  * @retval ::CA_STATUS_OK  Successful.
- * @retval ::CA_STATUS_INVALID_PARAM  Invalid input argumets.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
  * @retval ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CABleGattDiscoverCharacteristics(bt_gatt_attribute_h service,
@@ -330,7 +332,7 @@ void CADiscoverDescriptorThread(void *stServiceInfo);
  *                            descriptor of given char handle.
  * @return ::CA_STATUS_OK or Appropriate error code.
  * @retval ::CA_STATUS_OK  Successful.
- * @retval ::CA_STATUS_INVALID_PARAM  Invalid input argumets.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
  * @retval ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CABleGattDiscoverDescriptor(bt_gatt_attribute_h service,
@@ -353,7 +355,7 @@ void CASetCharacteristicDescriptorValueThread(void *stServiceInfo);
  *
  * @return ::CA_STATUS_OK or Appropriate error code.
  * @retval ::CA_STATUS_OK  Successful.
- * @retval ::CA_STATUS_INVALID_PARAM  Invalid input argumets.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
  * @retval ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CASetCharacteristicDescriptorValue
@@ -369,12 +371,12 @@ CAResult_t CASetCharacteristicDescriptorValue
  *
  * @return ::CA_STATUS_OK or Appropriate error code.
  * @retval ::CA_STATUS_OK  Successful.
- * @retval ::CA_STATUS_INVALID_PARAM  Invalid input argumets.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
  * @retval ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CABleClientSenderQueueEnqueueMessage
                             (const CAEndpoint_t *remoteEndpoint,
-                                                const void *data, uint32_t dataLen);
+                                                const uint8_t *data, uint32_t dataLen);
 
 /**
  * This is the thread which will be used for processing sender queue.
@@ -386,7 +388,7 @@ void CABleClientSenderQueueProcessor();
  *
  * @return ::CA_STATUS_OK or Appropriate error code.
  * @retval ::CA_STATUS_OK  Successful.
- * @retval ::CA_STATUS_INVALID_PARAM  Invalid input argumets.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
  * @retval ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CALEReadDataFromLEClient();

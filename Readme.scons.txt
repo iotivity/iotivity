@@ -9,8 +9,8 @@ command in this directory)
 
     Build release binaries:
       $ scons
-(Note: C sdk requires tiny-cbor. Please follow the instruction in the build
-message to install tiny-cbor)
+(Note: C sdk requires tinycbor. Please follow the instruction in the build
+message to install tinycbor)
 
     Build debug binaries:
       $scons RELEASE=false
@@ -116,8 +116,8 @@ so you don't need to add it in command line each time. The build script will
 guide you to do that.)
 
 Tizen:
-To build for tizen platform tiny-cbor library is needed.
-Please download tiny-cbor if it is not present in extlibs/tiny-cbor folder
+To build for tizen platform tinycbor library is needed.
+Please download tinycbor if it is not present in extlibs/tinycbor folder
 by doing the following:
 	$ git clone https://github.com/01org/tinycbor.git extlibs/tinycbor/tinycbor
 

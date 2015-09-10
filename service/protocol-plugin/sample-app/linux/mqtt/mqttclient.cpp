@@ -20,7 +20,7 @@
 
 /// @file mqttclient.cpp
 
-/// @brief Samplecode which controls MQTT-fan plugin using Protocol Plugin Manager. 
+/// @brief Samplecode which controls MQTT-fan plugin using Protocol Plugin Manager.
 
 #include <string>
 #include <cstdlib>

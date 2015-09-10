@@ -22,14 +22,13 @@
  * @file
  *
  * This file contains the Resource Client APIs provided to the developers.
- * It is a common API layer for the Resource Broker and Resource Cache module of Resource
- * Manipulation layer.
  */
 
-#ifndef RCS_RemoteResourceObject_H
-#define RCS_RemoteResourceObject_H
+#ifndef RCSREMOTERESOURCEOBJECT_H
+#define RCSREMOTERESOURCEOBJECT_H
 
-#include<vector>
+#include <vector>
+
 #include "RCSResourceAttributes.h"
 
 namespace OIC
@@ -37,384 +36,315 @@ namespace OIC
     namespace Service
     {
         /**
-        * Cache State enum specify the state of the Cache.
-        */
+         * The states of caching.
+         *
+         * @see startCaching
+         * @see getCacheState
+         */
         enum class CacheState
         {
-            READY = 0,
-            READY_YET,
-            LOST_SIGNAL,
-            DESTROYED,
-            UPDATING,
-            NONE
+            NONE, /**< Caching is not started.*/
+            UNREADY, /**< Caching is started, but the data is not ready yet.
+                          This is the default state after startCaching. */
+            READY, /**< The data is ready.*/
+            LOST_SIGNAL, /**< Failed to reach the resource. */
         };
 
         /**
-        * Resource State enum specify the state of the resource.
-        */
+         * The states of monitoring.
+         *
+         * @see startMonitoring
+         * @see getState
+         */
         enum class ResourceState
         {
-            NOT_MONITORING,
-            ALIVE, REQUESTED,
-            LOST_SIGNAL,
-            DESTROYED
+            NONE, /**< Monitoring is not started.*/
+            REQUESTED, /**< Monitoring is started and checking state is in progress.
+                            This is the default state after startMonitoring. */
+            ALIVE, /**< The resource is alive. */
+            LOST_SIGNAL, /**< Failed to reach the resource. */
+            DESTROYED /**< The resource is deleted. */
         };
 
-        /*
-        * Forward Declaration of Classes
-        */
-        class RCSException;
-        class RCSRemoteResourceObject;
         class PrimitiveResource;
 
         /**
-         * @class  BadRequestException
-         * @brief  This class is used to throw exception to the upper layer if request is invalid.
-         *             It is inherited from RCSException class.
          *
-         */
-        class BadRequestException: public RCSException
-        {
-            public:
-                BadRequestException(const std::string &what) : RCSException { what } {}
-                BadRequestException(std::string &&what) : RCSException { std::move(what) } {}
-        };
-
-        /**
-         * @class   InvalidParameterException
-         * @brief   This class is used to throw exception to the upper layer if parameter is invalid.
-         *              It is  inherited from RCSException class.
-         */
-        class InvalidParameterException: public RCSException
-        {
-            public:
-                InvalidParameterException(const std::string &what) : RCSException { what } {}
-                InvalidParameterException(std::string &&what) : RCSException { std::move(what) } {}
-        };
-
-        /**
-         * @class   RCSRemoteResourceObject
-         * @brief   This class is an interaction point between Resource
-         *              and the developers. Developer will get the RCSRemoteResourceObject by calling the
-         *              discoverResource() API of "RCSDiscoveryManager" class.
+         * The resource can be discovered with discoverResource.
+         * This class is an interaction point between Resource
+         * and the developers. Developer will get the RCSRemoteResourceObject
+         * by calling RCSDiscoveryManager::discoverResource.
          *
          * @see RCSDiscoveryManager
          *
          */
         class RCSRemoteResourceObject
         {
-            public:
+        public:
+            typedef std::shared_ptr< RCSRemoteResourceObject > Ptr;
 
-                /**
-                 * Constructor for RCSRemoteResourceObject
-                */
-                RCSRemoteResourceObject(std::shared_ptr<PrimitiveResource>  pResource);
+            /**
+             * Typedef for callback of startMonitoring API
+             *
+             * @see ResourceState
+             */
+            typedef std::function< void(ResourceState) > StateChangedCallback;
 
-                /**
-                 *  Typedef for callback of startMonitoring API
-                 *
-                 * @see ResourceState
-                 */
-                typedef std::function< void(ResourceState) > ResourceStateChangedCallback;
+            /**
+             * Typedef for callback of startCaching API
+             *
+             * @see RCSResourceAttributes
+             */
+            typedef std::function< void(const RCSResourceAttributes&) > CacheUpdatedCallback;
 
-                /**
-                *  Typedef for callback of startCaching API
-                *
-                * @see RCSResourceAttributes
-                */
-                typedef std::function< void(const RCSResourceAttributes &) > CacheUpdatedCallback;
+            /**
+             * Typedef for callback of getRemoteAttributes API
+             *
+             * @see RCSResourceAttributes
+             */
+            typedef std::function< void(const RCSResourceAttributes&) >
+                RemoteAttributesGetCallback;
 
-                /**
-                *  Typedef for callback of getRemoteAttributes API
-                *
-                *  @see RCSResourceAttributes
-                */
-                typedef std::function< void(const RCSResourceAttributes &) >
-                RemoteAttributesReceivedCallback;
-
-
-                /**
-                *  Typedef for callback of setRemoteAttributes API
-                *
-                *  @see RCSResourceAttributes
-                */
-                typedef std::function< void(const RCSResourceAttributes &) >
+            /**
+             * Typedef for callback of setRemoteAttributes API
+             *
+             * @see RCSResourceAttributes
+             */
+            typedef std::function< void(const RCSResourceAttributes&) >
                 RemoteAttributesSetCallback;
 
-                /**
-                 * Check monitoring state.
-                 *
-                 * @details This API checks the current monitoring state for the resource of interest.
-                 *
-                 * @return bool - true if monitoring the resource otherwise false.
-                 */
-                bool isMonitoring() const;
+        private:
+            typedef int CacheID;
+            typedef unsigned int BrokerID;
 
-                /**
-                 * Check current Caching state.
-                 *
-                 * @details This API checks the current caching state for the resource of interest.
-                 *
-                 * @return bool - true if Caching started otherwise false.
-                 */
+        public:
+            //! @cond
+            RCSRemoteResourceObject(std::shared_ptr< PrimitiveResource >);
+            //! @endcond
 
-                bool isCaching() const;
+            ~RCSRemoteResourceObject();
 
-                /**
-                 * Check whether reosurce is observable or not.
-                 *
-                 * @details This API checks  the observable property of the resource.
-                 *
-                 * @return bool - true if observable otherwise false.
-                 */
-                bool isObservable() const;
+            /**
+             * @return Returns whether monitoring is enabled.
+             *
+             * @see startMonitoring()
+             */
+            bool isMonitoring() const;
 
-                /**
-                 * Start Monitoring the resource.
-                 *
-                 * @details This API will start monitoring the resource of interest.
-                 *               Once this API is called it will check whether the particular resource
-                 *               is available or not. It will provide the changed resource state in the callback.
-                 *
-                 * @param cb - callback to get changed resource state.
-                 *
-                 * @throw InvalidParameterException
-                 *
-                 * @see ResourceStateChangedCallback
-                 * @see ResourceState
-                 *
-                 * NOTE: Developer can call this API any number of time. Developer should take care
-                 *            of Synchronization as ResourceStateChangedCallback is asynchronous.
-                 *            This function throws the InvalidParameterException if the callback is NULL or not valid.
-                 */
-                void startMonitoring(ResourceStateChangedCallback cb);
+            /**
+             * @return Returns whether caching is enabled.
+             *
+             * @see startCaching()
+             */
 
-                /**
-                 * Stop monitoring the resource.
-                 *
-                 * @details This API will stop monitoring the resource of interest it means it will stop to look
-                 *               for the resource presence in the network.
-                 *
-                 * NOTE: If startMonitoring() is not being called & directly this API is called it will do nothing.
-                 *           Developer can call this API any number of time. It will not results in any kind of warning.
-                 *
-                 */
-                void stopMonitoring();
+            bool isCaching() const;
 
-                /**
-                 * Provides the current resource state. Resource state is an enum class.
-                 *
-                 * @return ResourceState - current state of the resource.
-                 *
-                 * @throw BadRequestException
-                 *
-                 * @see ResourceState
-                 */
-                ResourceState getState() const ;
+            /**
+             * @return Returns whether the resource is observable.
+             *
+             */
+            bool isObservable() const;
 
-                /**
-                 * Start caching data for the resource of interest.
-                 *
-                 * @details This API will start data caching for the resource of interest.
-                 *               Once caching started it will look for the data updation on the resource of interest
-                 *                & updates the cache data accordingly. It provides the cached data on demand.
-                 *
-                 * @see getCachedAttributes()
-                 * @see getCachedAttribute( const std::string &)
-                 *
-                 * NOTE: developer can get the cached data by calling getCachedAttributes()
-                 *            or getCachedAttribute() API
-                 */
-                void startCaching();
+            /**
+             * Starts monitoring the resource.
+             *
+             * Monitoring provides a feature to check the presence of a resource,
+             * even when the server is not announcing Presence using startPresnece.
+             *
+             * @param cb A Callback to get changed resource state.
+             *
+             * @throws InvalidParameterException If cb is an empty function or null.
+             * @throws BadRequestException If monitoring is already started.
+             *
+             * @note The callback will be invoked in an internal thread.
+             *
+             * @see StateChangedCallback
+             * @see ResourceState
+             * @see isMonitoring()
+             * @see stopMonitoring()
+             *
+             */
+            void startMonitoring(StateChangedCallback cb);
 
-                /**
-                 * Start caching data for the resource of interest.
-                 *
-                 * @details This API will start data caching for the resource of interest.
-                 *              Once caching started it look for the data updation on the resource of interest &
-                 *              updates the cached data accordingly Whenever data is updated in the cache, it
-                 *              provides the updated data to the application/caller.
-                 *
-                 * @param cb - callback to get updated resourceAttributes.
-                 *
-                 * @throw InvalidParameterException
-                 *
-                 * @see CacheUpdatedCallback
-                 *
-                 * NOTE: Developer can call this API any number of time. Developer should
-                 *           take care of Synchronization as CacheUpdatedCallback is asynchronous.
-                 *           This function throws the InvalidParameterException if the callback is NULL or not valid.
-                 *
-                 */
-                void startCaching(CacheUpdatedCallback cb);
+            /**
+             * Stops monitoring the resource.
+             *
+             * It does nothing if monitoring is not started.
+             *
+             * @see startMonitoring()
+             *
+             */
+            void stopMonitoring();
 
-                /**
-                 * Provides the current cache state for the resource of interest. CacheState is the enum class.
-                 *
-                 * @return CacheState - Current state of the Cache.
-                 *
-                 * @throw BadRequestException
-                 *
-                 * @see CacheState
-                 *
-                 */
-                CacheState getResourceCacheState();
+            /**
+             * @return Returns the current state of the resource.
+             *
+             * @see startMonitoring
+             */
+            ResourceState getState() const;
 
-                /**
-                * Stop data caching for the resource of interest.
-                *
-                * @details This API will stop caching the data for the resource of interest.
-                *
-                * NOTE: If startCaching() or startCaching(CacheUpdatedCallback) is not being called &
-                *            directly this API is called it will do nothing.
-                *            Developer can call this API any number of time, it will not results in any warning.
-                *
-                */
-                void stopCaching();
+            /**
+             * Starts caching attributes of the resource.
+             *
+             * This will start data caching for the resource.
+             * Once caching started it will look for the data updation on the resource
+             * and updates the cache data accordingly.
+             *
+             * It is equivalent to calling startCaching(CacheUpdatedCallback) with an empty function.
+             *
+             * @see getCacheState()
+             * @see getCachedAttributes()
+             * @see getCachedAttribute(const std::string&) const
+             *
+             * @throws BadRequestException
+             *
+             */
+            void startCaching();
 
-                /**
-                * Refresh the cache.
-                *
-                * @details This API will refresh the cache, i.e. it will get the latest data from the server.
-                *
-                */
-                void refreshCache() ;
+            /**
+             * Starts caching attributes for the resource.
+             *
+             * This will start data caching for the resource.
+             * Once caching started it will look for the data updation on the resource and
+             * updates the cached data accordingly.
+             *
+             * @param cb If non-empty function, it will be invoked whenever the cache updated.
+             *
+             * @throws BadRequestException If caching is already started.
+             *
+             * @note The callback will be invoked in an internal thread.
+             *
+             * @see CacheUpdatedCallback
+             * @see getCacheState()
+             * @see isCachedAvailable()
+             * @see getCachedAttributes()
+             * @see getCachedAttribute(const std::string&) const
+             *
+             */
+            void startCaching(CacheUpdatedCallback cb);
 
-                /**
-                 * Get the cached RCSResourceAttributes data.
-                 *
-                 * @pre startCaching() or startCaching(CacheUpdatedCallback) API should be called.
-                 *
-                 * @return RCSResourceAttributes - cached resourceAttribute
-                 *
-                 * @throw BadRequestException
-                 *
-                 * @see startCaching()
-                 * @see startCaching(CacheUpdatedCallback)
-                 * @see RCSResourceAttributes
-                 *
-                 * NOTE: If startCaching() or startCaching(CacheUpdatedCallback) is not being called &
-                 *           directly this API is called it will throw the
-                 *           BadRequestException.
-                 */
-                RCSResourceAttributes getCachedAttributes() const;
+            /**
+             * Stops caching.
+             *
+             * It does nothing if caching is not started.
+             *
+             * @see startCaching()
+             * @see startCaching(CacheUpdatedCallback)
+             */
+            void stopCaching();
 
-                /**
-                * Get a particular cached ResourceAttribute value.
-                *
-                * @pre startCaching() or startCaching(CacheUpdatedCallback) API should be called.
-                *
-                * @return RCSResourceAttributes::Value - requested attribute Value
-                *
-                * @throw BadRequestException
-                *
-                * @see startCaching()
-                * @see startCaching(CacheUpdatedCallback)
-                * @see RCSResourceAttributes::Value
-                *
-                * NOTE: If startCaching() or startCaching(CacheUpdatedCallback) is not being called &
-                *           directly this API is called it will throw the BadRequestException.
-                *
-                */
-                RCSResourceAttributes::Value getCachedAttribute( const std::string &) ;
+            /**
+             * @return Returns the current cache state.
+             *
+             */
+            CacheState getCacheState() const;
 
-                /**
-                * Get resource attributes.
-                *
-                * @details This API send a get request to the resource of interest and provides the attributes
-                *               to the caller in the RemoteAttributesReceivedCallback.
-                *
-                *
-                * @throw InvalidParameterException
-                *
-                * @see RCSResourceAttributes::Value
-                */
-                void getRemoteAttributes(RemoteAttributesReceivedCallback cb);
+            /**
+             * @return Returns whether cached data is available.
+             *
+             * Cache will be available always after CacheState::READY even if current state is
+             * CacheState::LOST_SIGNAL.
+             *
+             * @see getCacheState()
+             */
+            bool isCachedAvailable() const;
 
-                /**
-                * Set resource attributes.
-                *
-                * @details This API send a set request to the resource of interest and provides the updated
-                *              attributes to the caller in the RemoteAttributesSetCallback.
-                *
-                * @param attributes - resourceAttributes data to set
-                * @param cb - callback on setting resourceAttributes data.
-                *
-                * @throw InvalidParameterException
-                *
-                */
-                void setRemoteAttributes(const RCSResourceAttributes &attributes, RemoteAttributesSetCallback cb);
+            /**
+             * Gets the cached RCSResourceAttributes data.
+             *
+             * @pre Cache should be available.
+             *
+             * @return The cached attributes.
+             *
+             * @throws BadRequestException If the precondition is not fulfilled.
+             *
+             * @see RCSResourceAttributes
+             * @see isCachedAvailable()
+             * @see startCaching()
+             * @see startCaching(CacheUpdatedCallback)
+             *
+             */
+            RCSResourceAttributes getCachedAttributes() const;
 
-                /**
-                 * Get resource uri.
-                 *
-                 * @return string - uri of the Resource
-                 */
-                std::string getUri() const;
+            /**
+             * Gets a particular cached a ResourceAttribute Value.
+             *
+             * @pre Cache should be available.
+             *
+             * @return A requested attribute value.
+             *
+             * @throws BadRequestException If the precondition is not fulfilled.
+             * @throws InvalidKeyException If @a key doesn't match the key of any value.
+             *
+             * @see RCSResourceAttributes::Value
+             * @see isCachedAvailable()
+             * @see startCaching()
+             * @see startCaching(CacheUpdatedCallback)
+             *
+             */
+            RCSResourceAttributes::Value getCachedAttribute(const std::string& key) const;
 
-                /**
-                 * Get resource address.
-                 *
-                 * @return string - address of the Resource
-                 */
-                std::string getAddress() const;
+            /**
+             * Gets resource attributes directly from the server.
+             *
+             * This API send a get request to the resource of interest and provides
+             * the attributes to the caller in the RemoteAttributesReceivedCallback.
+             *
+             * @throw InvalidParameterException If cb is an empty function or null.
+             *
+             * @see RCSResourceAttributes::Value
+             *
+             * @note The callback will be invoked in an internal thread.
+             */
+            void getRemoteAttributes(RemoteAttributesGetCallback cb);
 
-                /**
-                 * Get resource types.
-                 *
-                 * @return vector - resource types
-                 */
-                std::vector< std::string > getTypes() const;
+            /**
+             * Sends a set request with resource attributes to the server.
+             *
+             * The SetRequest behavior depends on the server, whether updating its attributes or not.
+             *
+             * @param attributes Attributes to set
+             * @param cb A callback to receive the response.
+             *
+             * @throw InvalidParameterException If cb is an empty function or null.
+             *
+             * @see RCSResourceObject
+             * @see RCSResourceObject::SetRequestHandlerPolicy
+             *
+             * @note The callback will be invoked in an internal thread.
+             */
+            void setRemoteAttributes(const RCSResourceAttributes& attributes,
+                    RemoteAttributesSetCallback cb);
 
-                /**
-                 * Get resource interfaces.
-                 *
-                 * @return vector - resource interfaces
-                 */
-                std::vector< std::string > getInterfaces() const;
+            /**
+             * @return Returns the uri of the resource.
+             *
+             */
+            std::string getUri() const;
 
-            private:
+            /**
+             * @return Returns the address of the resource .
+             *
+             */
+            std::string getAddress() const;
 
-                /**
-                 *  Typedef for Cache ID
-                 */
-                typedef int CacheID;
+            /**
+             * @return Returns the resource types of the resource.
+             *
+             */
+            std::vector< std::string > getTypes() const;
 
-                /**
-                 *  Typedef for Broker ID
-                 */
-                typedef unsigned int BrokerID;
+            /**
+             * @return Returns the resource interfaces of the resource.
+             *
+             */
+            std::vector< std::string > getInterfaces() const;
 
-                /**
-                 *  Flag to check monitoring state.
-                 */
-                bool m_monitoringFlag;
-
-                /**
-                 *  Flag to check caching state.
-                 */
-                bool m_cachingFlag;
-
-                /**
-                 *  Flag to check observing state.
-                 */
-                bool m_observableFlag;
-
-                /**
-                 *  PrimitiveResource
-                 */
-                std::shared_ptr<PrimitiveResource> m_primitiveResource;
-
-                /**
-                 *  caching identification number.
-                 */
-                CacheID m_cacheId;
-
-                /**
-                *  Broker  identification number.
-                */
-                BrokerID m_brokerId;
+        private:
+            std::shared_ptr< PrimitiveResource > m_primitiveResource;
+            CacheID m_cacheId;
+            BrokerID m_brokerId;
         };
     }
 }
-#endif //RCS_RemoteResourceObject_H
+#endif // RCSREMOTERESOURCEOBJECT_H

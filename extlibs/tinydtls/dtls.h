@@ -238,7 +238,7 @@ typedef struct dtls_context_t {
 
   dtls_handler_t *h;		/**< callback handlers */
 
-  dtls_cipher_enable_t is_anon_ecdh_eabled;    /**< enable/disable the TLS_ECDH_anon_WITH_AES_128_CBC_SHA */
+  dtls_cipher_enable_t is_anon_ecdh_eabled;    /**< enable/disable the TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256 */
 
   dtls_cipher_t selected_cipher; /**< selected ciper suite for handshake */
 
@@ -268,7 +268,7 @@ static inline void dtls_set_handler(dtls_context_t *ctx, dtls_handler_t *h) {
 }
 
  /**
-  * @brief Enabling the TLS_ECDH_anon_WITH_AES_128_CBC_SHA
+  * @brief Enabling the TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256
   *
   * @param ctx              The DTLS context to use.
   * @param is_enable    DTLS_CIPHER_ENABLE(1) or DTLS_CIPHER_DISABLE(0)
@@ -279,7 +279,7 @@ void dtls_enables_anon_ecdh(dtls_context_t* ctx, dtls_cipher_enable_t is_enable)
  * @brief Select the cipher suite for handshake
  *
  * @param ctx              The DTLS context to use.
- * @param cipher         TLS_ECDH_anon_WITH_AES_128_CBC_SHA (0xC018)
+ * @param cipher         TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256 (0xC018)
  *                                  TLS_PSK_WITH_AES_128_CCM_8 (0xX0A8)
  *                                  TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8 (0xC0AE)
  */

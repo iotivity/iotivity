@@ -36,12 +36,12 @@ void OIC_HOSTING_LOG(LogLevel level, const char * format, ...)
     va_start(args, format);
     vsnprintf(buffer, sizeof buffer - 1, format, args);
     va_end(args);
-    OCLog(level, PCF("Hosting"), buffer);
+    OCLog(level, "Hosting", buffer);
 }
 
 HostingObject::HostingObject()
 : remoteObject(nullptr), mirroredServer(nullptr),
-  remoteState(ResourceState::NOT_MONITORING),
+  remoteState(ResourceState::NONE),
   pStateChangedCB(nullptr), pDataUpdateCB(nullptr),
   pDestroyCB(nullptr), pSetRequestHandler(nullptr)
 {
@@ -232,7 +232,7 @@ RCSSetResponse HostingObject::setRequestHandler(const RCSRequest & primitiveRequ
     {
         RequestObject newRequest = { };
         newRequest.invokeRequest(remoteObject, RequestObject::RequestMethod::Setter,
-                primitiveRequest, resourceAttibutes);
+                resourceAttibutes);
     }catch(PlatformException &e)
     {
         OIC_HOSTING_LOG(DEBUG,

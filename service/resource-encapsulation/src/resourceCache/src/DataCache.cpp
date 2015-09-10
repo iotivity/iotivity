@@ -43,7 +43,7 @@ namespace OIC
                 int _result, int _seq, std::weak_ptr<DataCache> rpPtr)
             {
                 std::shared_ptr<DataCache> Ptr = rpPtr.lock();
-                if(Ptr)
+                if (Ptr)
                 {
                     Ptr->onObserve(_hos, _rep, _result, _seq);
                 }
@@ -52,16 +52,16 @@ namespace OIC
             ObserveCB verifiedObserveCB(std::weak_ptr<DataCache> rpPtr)
             {
                 return std::bind(verifyObserveCB,
-                        std::placeholders::_1, std::placeholders::_2,
-                        std::placeholders::_3, std::placeholders::_4, rpPtr);
+                                 std::placeholders::_1, std::placeholders::_2,
+                                 std::placeholders::_3, std::placeholders::_4, rpPtr);
             }
 
             void verifyGetCB(
-                    const HeaderOptions &_hos, const ResponseStatement &_rep,
-                    int _result, std::weak_ptr<DataCache> rpPtr)
+                const HeaderOptions &_hos, const ResponseStatement &_rep,
+                int _result, std::weak_ptr<DataCache> rpPtr)
             {
                 std::shared_ptr<DataCache> Ptr = rpPtr.lock();
-                if(Ptr)
+                if (Ptr)
                 {
                     Ptr->onGet(_hos, _rep, _result);
                 }
@@ -70,8 +70,8 @@ namespace OIC
             GetCB verifiedGetCB(std::weak_ptr<DataCache> rpPtr)
             {
                 return std::bind(verifyGetCB,
-                        std::placeholders::_1, std::placeholders::_2,
-                        std::placeholders::_3, rpPtr);
+                                 std::placeholders::_1, std::placeholders::_2,
+                                 std::placeholders::_3, rpPtr);
             }
         }
 
@@ -100,12 +100,13 @@ namespace OIC
                 subscriberList.release();
             }
 
-            if(mode == CACHE_MODE::OBSERVE)
+            if (mode == CACHE_MODE::OBSERVE)
             {
                 try
                 {
                     sResource->cancelObserve();
-                } catch (...)
+                }
+                catch (...)
                 {
                     // ignore the exception because data cache was released.
                 }
@@ -125,7 +126,7 @@ namespace OIC
             {
                 sResource->requestObserve(pObserveCB);
             }
-            networkTimeOutHandle = networkTimer.postTimer(CACHE_DEFAULT_EXPIRED_MILLITIME, pTimerCB);
+            networkTimeOutHandle = networkTimer.post(CACHE_DEFAULT_EXPIRED_MILLITIME, pTimerCB);
         }
 
         CacheID DataCache::addSubscriber(CacheCB func, REPORT_FREQUENCY rf, long repeatTime)
@@ -202,7 +203,7 @@ namespace OIC
         }
 
         void DataCache::onObserve(const HeaderOptions & /*_hos*/,
-                const ResponseStatement & _rep, int _result, int _seq)
+                                  const ResponseStatement &_rep, int _result, int _seq)
         {
 
             if (_result != OC_STACK_OK || _rep.getAttributes().empty() || lastSequenceNum > _seq)
@@ -225,8 +226,8 @@ namespace OIC
                 mode = CACHE_MODE::OBSERVE;
             }
 
-            networkTimer.cancelTimer(networkTimeOutHandle);
-            networkTimeOutHandle = networkTimer.postTimer(CACHE_DEFAULT_EXPIRED_MILLITIME, pTimerCB);
+            networkTimer.cancel(networkTimeOutHandle);
+            networkTimeOutHandle = networkTimer.post(CACHE_DEFAULT_EXPIRED_MILLITIME, pTimerCB);
 
             notifyObservers(_rep.getAttributes());
         }
@@ -247,11 +248,11 @@ namespace OIC
 
             if (mode != CACHE_MODE::OBSERVE)
             {
-                networkTimer.cancelTimer(networkTimeOutHandle);
-                networkTimeOutHandle = networkTimer.postTimer(
+                networkTimer.cancel(networkTimeOutHandle);
+                networkTimeOutHandle = networkTimer.post(
                                            CACHE_DEFAULT_EXPIRED_MILLITIME, pTimerCB);
 
-                pollingHandle = pollingTimer.postTimer(CACHE_DEFAULT_REPORT_MILLITIME, pPollingCB);
+                pollingHandle = pollingTimer.post(CACHE_DEFAULT_REPORT_MILLITIME, pPollingCB);
             }
 
             notifyObservers(_rep.getAttributes());
@@ -285,16 +286,16 @@ namespace OIC
 
         void DataCache::onTimeOut(unsigned int /*timerID*/)
         {
-            if(mode == CACHE_MODE::OBSERVE)
+            if (mode == CACHE_MODE::OBSERVE)
             {
                 sResource->cancelObserve();
                 mode = CACHE_MODE::FREQUENCY;
 
-                networkTimer.cancelTimer(networkTimeOutHandle);
-                networkTimeOutHandle = networkTimer.postTimer(
-                        CACHE_DEFAULT_EXPIRED_MILLITIME, pTimerCB);
+                networkTimer.cancel(networkTimeOutHandle);
+                networkTimeOutHandle = networkTimer.post(
+                                           CACHE_DEFAULT_EXPIRED_MILLITIME, pTimerCB);
 
-                pollingHandle = pollingTimer.postTimer(CACHE_DEFAULT_REPORT_MILLITIME, pPollingCB);
+                pollingHandle = pollingTimer.post(CACHE_DEFAULT_REPORT_MILLITIME, pPollingCB);
                 return;
             }
 

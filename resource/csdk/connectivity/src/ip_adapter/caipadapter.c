@@ -75,7 +75,7 @@ static CANetworkChangeCallback g_networkChangeCallback = NULL;
  */
 static CAErrorHandleCallback g_errorCallback = NULL;
 
-static void CAIPPacketReceivedCB(const CAEndpoint_t *endpoint,
+static void CAIPPacketReceivedCB(const CASecureEndpoint_t *endpoint,
                                  const void *data, uint32_t dataLength);
 #ifdef __WITH_DTLS__
 static void CAIPPacketSendCB(CAEndpoint_t *endpoint,
@@ -145,6 +145,8 @@ void CAIPDeinitializeQueueHandles()
 
 void CAIPConnectionStateCB(const char *ipAddress, CANetworkStatus_t status)
 {
+    (void)ipAddress;
+    (void)status;
     OIC_LOG(DEBUG, TAG, "IN");
 }
 
@@ -162,19 +164,20 @@ static void CAIPPacketSendCB(CAEndpoint_t *endpoint, const void *data, uint32_t 
 }
 #endif
 
-void CAIPPacketReceivedCB(const CAEndpoint_t *endpoint, const void *data,
+
+void CAIPPacketReceivedCB(const CASecureEndpoint_t *sep, const void *data,
                           uint32_t dataLength)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
-    VERIFY_NON_NULL_VOID(endpoint, TAG, "ipAddress is NULL");
+    VERIFY_NON_NULL_VOID(sep, TAG, "sep is NULL");
     VERIFY_NON_NULL_VOID(data, TAG, "data is NULL");
 
-    OIC_LOG_V(DEBUG, TAG, "Address: %s, port:%d", endpoint->addr, endpoint->port);
+    OIC_LOG_V(DEBUG, TAG, "Address: %s, port:%d", sep->endpoint.addr, sep->endpoint.port);
 
     if (g_networkPacketCallback)
     {
-        g_networkPacketCallback(endpoint, data, dataLength);
+        g_networkPacketCallback(sep, data, dataLength);
     }
     OIC_LOG(DEBUG, TAG, "OUT");
 }
@@ -237,6 +240,7 @@ static void CAInitializeIPGlobals()
     }
     caglobals.ip.ipv6enabled = flags & CA_IPV6;
     caglobals.ip.ipv4enabled = flags & CA_IPV4;
+    caglobals.ip.dualstack = caglobals.ip.ipv6enabled && caglobals.ip.ipv4enabled;
 }
 
 CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
@@ -286,6 +290,7 @@ CAResult_t CAStartIP()
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
+    CAIPStartNetworkMonitor();
 #ifdef SINGLE_THREAD
     uint16_t unicastPort = 55555;
     // Address is hardcoded as we are using Single Interface
@@ -413,6 +418,7 @@ CAResult_t CAStopIP()
     CAIPDeinitializeQueueHandles();
 #endif
 
+    CAIPStopNetworkMonitor();
     CAIPStopServer();
 
     OIC_LOG(DEBUG, TAG, "OUT");
@@ -528,6 +534,10 @@ void CAFreeIPData(CAIPData *ipData)
 
 void CADataDestroyer(void *data, uint32_t size)
 {
+    if (size < sizeof(CAIPData))
+    {
+        OIC_LOG_V(ERROR, TAG, "Destroy data too small %p %d", data, size);
+    }
     CAIPData *etdata = (CAIPData *) data;
 
     CAFreeIPData(etdata);

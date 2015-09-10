@@ -143,6 +143,18 @@ TEST_F(ResourceObjectTest, SettingAttributesWithinGuardDoesntCauseDeadLock)
     ASSERT_EQ(value, server->getAttribute<int>(KEY));
 }
 
+TEST_F(ResourceObjectTest, SettingNestedAttributesIsSameToGettingNestedAttributes)
+{
+    RCSResourceAttributes lightAttributes;
+
+    lightAttributes["red"]=50;
+    lightAttributes["blue"]=100;
+    lightAttributes["green"]=150;
+
+    server->setAttribute(KEY, lightAttributes);
+
+    ASSERT_EQ(lightAttributes, server->getAttribute<RCSResourceAttributes>(KEY));
+}
 
 class AutoNotifyTest: public ResourceObjectTest
 {
@@ -287,7 +299,8 @@ public:
     {
         auto request = make_shared<OCResourceRequest>();
 
-        OCEntityHandlerRequest ocEntityHandlerRequest { 0 };
+        OCEntityHandlerRequest ocEntityHandlerRequest;
+        memset(&ocEntityHandlerRequest, 0, sizeof(OCEntityHandlerRequest));
         OC::MessageContainer mc;
 
         mc.addRepresentation(ocRep);
@@ -587,50 +600,47 @@ public:
     }
 };
 
-TEST_F(AttributeUpdatedListenerTest, AddListenerReturnsTrueIfListenerIsCalled)
+class FunctionsForAttributeUpdatedListener
 {
-    bool called=false;
+public:
+    virtual void fCalled(const OIC::Service::RCSResourceAttributes::Value&,
+        const OIC::Service::RCSResourceAttributes::Value&)=0;
+    virtual void fNotCalled(const OIC::Service::RCSResourceAttributes::Value&,
+        const OIC::Service::RCSResourceAttributes::Value&)=0;
+};
+
+TEST_F(AttributeUpdatedListenerTest, AddListenerRunsAddedFunction)
+{
+    FunctionsForAttributeUpdatedListener *ptrMock =
+        mocks.Mock<FunctionsForAttributeUpdatedListener>();
 
     server->setAttribute(KEY, 0);
-    OCRepresentation ocRep = createOCRepresentation();
+
+    mocks.ExpectCall(ptrMock, FunctionsForAttributeUpdatedListener::fCalled);
 
     server->addAttributeUpdatedListener(KEY,
-        [&called](const OIC::Service::RCSResourceAttributes::Value&,
-        const OIC::Service::RCSResourceAttributes::Value& )
-        {
-            called=true;
-        } );
+        (std::bind(&FunctionsForAttributeUpdatedListener::fCalled, ptrMock, _1, _2)));
 
-    handler(ResourceObjectHandlingRequestTest::createRequest(OC_REST_PUT, ocRep));
-
-    ASSERT_TRUE(called);
+    handler(createRequest(OC_REST_PUT, createOCRepresentation()));
 }
 
-TEST_F(AttributeUpdatedListenerTest, AddListenerisChangedAccordingToLastAddedFunction)
+TEST_F(AttributeUpdatedListenerTest, AddListenerRunsAccordingToLastAddedFunction)
 {
-    int called=0, expected=100;
-    string myKey("key");  // 'myKey' and 'constexpr char KEY[]' should have same value
+    FunctionsForAttributeUpdatedListener *ptrMock =
+        mocks.Mock<FunctionsForAttributeUpdatedListener>();
 
-    server->setAttribute(KEY,0);
-    OCRepresentation ocRep = createOCRepresentation();
+    string duplicateKEY(KEY);
+    server->setAttribute(KEY, 0);
 
-    server->addAttributeUpdatedListener(myKey,
-        [&called](const OIC::Service::RCSResourceAttributes::Value&,
-        const OIC::Service::RCSResourceAttributes::Value&)
-        {
-            called=10;
-        } );
+    mocks.ExpectCall(ptrMock, FunctionsForAttributeUpdatedListener::fCalled);
+    mocks.NeverCall(ptrMock, FunctionsForAttributeUpdatedListener::fNotCalled);
 
+    server->addAttributeUpdatedListener(duplicateKEY,
+        (std::bind(&FunctionsForAttributeUpdatedListener::fNotCalled, ptrMock, _1, _2)));
     server->addAttributeUpdatedListener(KEY,
-        [&called](const OIC::Service::RCSResourceAttributes::Value&,
-        const OIC::Service::RCSResourceAttributes::Value&)
-        {
-            called=100;
-        } );
+        (std::bind(&FunctionsForAttributeUpdatedListener::fCalled, ptrMock, _1, _2)));
 
-    handler(ResourceObjectHandlingRequestTest::createRequest(OC_REST_PUT, ocRep));
-
-    ASSERT_EQ(expected, called);
+    handler(createRequest(OC_REST_PUT, createOCRepresentation()));
 }
 
 TEST_F(AttributeUpdatedListenerTest, RemoveListenerReturnsTrueIfListenerIsNotAdded)
@@ -640,13 +650,29 @@ TEST_F(AttributeUpdatedListenerTest, RemoveListenerReturnsTrueIfListenerIsNotAdd
 
 TEST_F(AttributeUpdatedListenerTest, RemoveListenerReturnsTrueIfListenerIsAdded)
 {
+    FunctionsForAttributeUpdatedListener *ptrMock =
+        mocks.Mock<FunctionsForAttributeUpdatedListener>();
+
     server->addAttributeUpdatedListener(KEY,
-        [](const OIC::Service::RCSResourceAttributes::Value&,
-        const OIC::Service::RCSResourceAttributes::Value&)
-        {
-        } );
+        (std::bind(&FunctionsForAttributeUpdatedListener::fNotCalled, ptrMock, _1, _2)));
 
     ASSERT_TRUE(server->removeAttributeUpdatedListener(KEY));
 }
+
+TEST_F(AttributeUpdatedListenerTest, RemoveListenerNeverRunsRemovedFunc)
+{
+    FunctionsForAttributeUpdatedListener *ptrMock =
+        mocks.Mock<FunctionsForAttributeUpdatedListener>();
+
+    mocks.NeverCall(ptrMock, FunctionsForAttributeUpdatedListener::fNotCalled);
+
+    server->setAttribute(KEY, 0);
+    server->addAttributeUpdatedListener(KEY,
+        (std::bind(&FunctionsForAttributeUpdatedListener::fNotCalled, ptrMock, _1, _2)));
+    server->removeAttributeUpdatedListener(KEY);
+
+    handler(createRequest(OC_REST_PUT, createOCRepresentation()));
+}
+
 
 

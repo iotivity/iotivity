@@ -171,7 +171,7 @@ namespace OC
     struct get_payload_array: boost::static_visitor<>
     {
         template<typename T>
-        void operator()(T& arr)
+        void operator()(T& /*arr*/)
         {
             throw std::logic_error("Invalid calc_dimensions_visitor type");
         }
@@ -181,6 +181,8 @@ namespace OC
         {
             root_size_calc<T>();
             dimensions[0] = arr.size();
+            dimensions[1] = 0;
+            dimensions[2] = 0;
             dimTotal = calcDimTotal(dimensions);
 
             array = (void*)OICMalloc(dimTotal * root_size);
@@ -196,6 +198,8 @@ namespace OC
         {
             root_size_calc<T>();
             dimensions[0] = arr.size();
+            dimensions[1] = 0;
+            dimensions[2] = 0;
             for(size_t i = 0; i < arr.size(); ++i)
             {
                 dimensions[1] = std::max(dimensions[1], arr[i].size());
@@ -216,6 +220,8 @@ namespace OC
         {
             root_size_calc<T>();
             dimensions[0] = arr.size();
+            dimensions[1] = 0;
+            dimensions[2] = 0;
             for(size_t i = 0; i < arr.size(); ++i)
             {
                 dimensions[1] = std::max(dimensions[1], arr[i].size());
@@ -374,10 +380,11 @@ namespace OC
                     OCRepPayloadSetPropInt(root, val.attrname().c_str(), static_cast<int>(val));
                     break;
                 case AttributeType::Double:
-                    OCRepPayloadSetPropDouble(root, val.attrname().c_str(), val);
+                    OCRepPayloadSetPropDouble(root, val.attrname().c_str(),
+                            val.getValue<double>());
                     break;
                 case AttributeType::Boolean:
-                    OCRepPayloadSetPropBool(root, val.attrname().c_str(), val);
+                    OCRepPayloadSetPropBool(root, val.attrname().c_str(), val.getValue<bool>());
                     break;
                 case AttributeType::String:
                     OCRepPayloadSetPropString(root, val.attrname().c_str(),
@@ -395,13 +402,6 @@ namespace OC
                             std::to_string((int)val.type()));
                     break;
             }
-        }
-
-        OCRepPayload* cur = root;
-        for(auto& child : this->getChildren())
-        {
-            cur->next = child.getPayload();
-            cur = cur->next;
         }
 
         return root;
@@ -480,7 +480,7 @@ namespace OC
             std::vector<std::vector<T>> val(pl->arr.dimensions[0]);
             for(size_t i = 0; i < pl->arr.dimensions[0]; ++i)
             {
-                val[i].reserve(pl->arr.dimensions[1]);
+                val[i].resize(pl->arr.dimensions[1]);
                 for(size_t j = 0; j < pl->arr.dimensions[1]; ++j)
                 {
                     val[i][j] = payload_array_helper_copy<T>(
@@ -491,13 +491,13 @@ namespace OC
         }
         else if (depth == 3)
         {
-            std::vector<std::vector<std::vector<T>>> val;
+            std::vector<std::vector<std::vector<T>>> val(pl->arr.dimensions[0]);
             for(size_t i = 0; i < pl->arr.dimensions[0]; ++i)
             {
-                val[i].reserve(pl->arr.dimensions[1]);
+                val[i].resize(pl->arr.dimensions[1]);
                 for(size_t j = 0; j < pl->arr.dimensions[1]; ++j)
                 {
-                    val[i][j].reserve(pl->arr.dimensions[2]);
+                    val[i][j].resize(pl->arr.dimensions[2]);
                     for(size_t k = 0; k < pl->arr.dimensions[2]; ++k)
                     {
                         val[i][j][k] = payload_array_helper_copy<T>(
@@ -829,7 +829,7 @@ namespace OC
             type(AttributeType::Null), base_type(AttributeType::Null), depth(0){}
 
         template <typename T>
-        void operator()(T const& item)
+        void operator()(T const& /*item*/)
         {
             type = type_info<T>::enum_type;
             base_type = type_info<T>::enum_base_type;
@@ -1023,13 +1023,13 @@ namespace OC
     }
 
     template<>
-    void to_string_visitor::operator()(NullType const& item)
+    void to_string_visitor::operator()(NullType const& /*item*/)
     {
         str = "(null)";
     }
 
     template<>
-    void to_string_visitor::operator()(OCRepresentation const& item)
+    void to_string_visitor::operator()(OCRepresentation const& /*item*/)
     {
         str = "OC::OCRepresentation";
     }

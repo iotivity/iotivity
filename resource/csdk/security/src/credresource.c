@@ -33,15 +33,52 @@
 #include "base64.h"
 #include "srmutility.h"
 #include "cainterface.h"
+#include "pbkdf2.h"
 #include <stdlib.h>
+#ifdef WITH_ARDUINO
 #include <string.h>
+#else
+#include <strings.h>
+#endif
 #include <stdint.h>
 
+#define TAG  "SRM-CREDL"
 
-#define TAG  PCF("SRM-CREDL")
 
 static OicSecCred_t        *gCred = NULL;
 static OCResourceHandle    gCredHandle = NULL;
+
+/**
+ * This function frees OicSecCred_t object's fields and object itself.
+ */
+static void FreeCred(OicSecCred_t *cred)
+{
+    if(NULL == cred)
+    {
+        OC_LOG (INFO, TAG, "Invalid Parameter");
+        return;
+    }
+    //Note: Need further clarification on roleID data type
+#if 0
+    //Clean roleIds
+    OICFree(cred->roleIds);
+#endif
+
+    //Clean PublicData
+    OICFree(cred->publicData.data);
+
+    //Clean PrivateData
+    OICFree(cred->privateData.data);
+
+    //Clean Period
+    OICFree(cred->period);
+
+    //Clean Owners
+    OICFree(cred->owners);
+
+    //Clean Cred node itself
+    OICFree(cred);
+}
 
 void DeleteCredList(OicSecCred_t* cred)
 {
@@ -51,27 +88,7 @@ void DeleteCredList(OicSecCred_t* cred)
         LL_FOREACH_SAFE(cred, credTmp1, credTmp2)
         {
             LL_DELETE(cred, credTmp1);
-
-            //Note: Need further clarification on roleID data type
-#if 0
-            //Clean roleIds
-            OICFree(credTmp1->roleIds);
-#endif
-
-            //Clean PublicData
-            OICFree(credTmp1->publicData.data);
-
-            //Clean PrivateData
-            OICFree(credTmp1->privateData.data);
-
-            //Clean Period
-            OICFree(credTmp1->period);
-
-            //Clean Owners
-            OICFree(credTmp1->owners);
-
-            //Clean Cred node itself
-            OICFree(credTmp1);
+            FreeCred(credTmp1);
         }
     }
 }
@@ -290,7 +307,7 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
             //Owners -- Mandatory
             jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_OWNERS_NAME);
             VERIFY_NON_NULL(TAG, jsonObj, ERROR);
-            VERIFY_SUCCESS(TAG, cJSON_Array == jsonObj->type, ERROR)
+            VERIFY_SUCCESS(TAG, cJSON_Array == jsonObj->type, ERROR);
             cred->ownersLen = cJSON_GetArraySize(jsonObj);
             VERIFY_SUCCESS(TAG, cred->ownersLen > 0, ERROR);
             cred->owners = (OicUuid_t*)OICCalloc(cred->ownersLen, sizeof(OicUuid_t));
@@ -343,6 +360,7 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
                                  const char * publicData, const char * privateData,
                                  size_t ownersLen, const OicUuid_t * owners)
 {
+    (void)publicData;
     OCStackResult ret = OC_STACK_ERROR;
 
     OicSecCred_t *cred = (OicSecCred_t*)OICCalloc(1, sizeof(OicSecCred_t));
@@ -395,7 +413,35 @@ exit:
     return cred;
 }
 
-/*
+static bool UpdatePersistentStorage(const OicSecCred_t *cred)
+{
+    bool ret = false;
+
+    // Convert Cred data into JSON for update to persistent storage
+    char *jsonStr = BinToCredJSON(cred);
+    if (jsonStr)
+    {
+        cJSON *jsonCred = cJSON_Parse(jsonStr);
+        OICFree(jsonStr);
+
+        if ((jsonCred) &&
+          (OC_STACK_OK == UpdateSVRDatabase(OIC_JSON_CRED_NAME, jsonCred)))
+        {
+            ret = true;
+        }
+        cJSON_Delete(jsonCred );
+    }
+    else //Empty cred list
+    {
+        if (OC_STACK_OK == UpdateSVRDatabase(OIC_JSON_CRED_NAME, NULL))
+        {
+            ret = true;
+        }
+    }
+    return ret;
+}
+
+/**
  * Compare function used LL_SORT for sorting credentials
  *
  * @param first   pointer to OicSecCred_t struct
@@ -458,6 +504,8 @@ static uint16_t GetCredId()
 exit:
     return 0;
 }
+
+
 /**
  * This function adds the new cred to the credential list.
  *
@@ -470,7 +518,6 @@ exit:
 OCStackResult AddCredential(OicSecCred_t * newCred)
 {
     OCStackResult ret = OC_STACK_ERROR;
-    char * jsonStr = NULL;
 
     VERIFY_SUCCESS(TAG, NULL != newCred, ERROR);
 
@@ -482,23 +529,41 @@ OCStackResult AddCredential(OicSecCred_t * newCred)
     //Append the new Cred to existing list
     LL_APPEND(gCred, newCred);
 
-    //Convert CredList to JSON and update the persistent Storage
-    jsonStr = BinToCredJSON(gCred);
-
-    if(jsonStr)
+    if(UpdatePersistentStorage(gCred))
     {
-        cJSON *jsonCred = cJSON_Parse(jsonStr);
-        OICFree(jsonStr);
-
-        if((jsonCred) && (OC_STACK_OK == UpdateSVRDatabase(OIC_JSON_CRED_NAME, jsonCred)))
-        {
-            ret = OC_STACK_OK;
-        }
-        cJSON_Delete(jsonCred);
+        ret = OC_STACK_OK;
     }
 
 exit:
     return ret;
+}
+
+OCStackResult RemoveCredential(const OicUuid_t *subject)
+{
+    OCStackResult ret = OC_STACK_ERROR;
+    OicSecCred_t *cred = NULL;
+    OicSecCred_t *tempCred = NULL;
+    bool deleteFlag = false;
+
+    LL_FOREACH_SAFE(gCred, cred, tempCred)
+    {
+        if(memcmp(cred->subject.id, subject->id, sizeof(subject->id)) == 0)
+        {
+            LL_DELETE(gCred, cred);
+            FreeCred(cred);
+            deleteFlag = 1;
+        }
+    }
+
+    if(deleteFlag)
+    {
+        if(UpdatePersistentStorage(gCred))
+        {
+            ret = OC_STACK_RESOURCE_DELETED;
+        }
+    }
+    return ret;
+
 }
 
 static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * ehRequest)
@@ -520,6 +585,49 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
     return ret;
 }
 
+static OCEntityHandlerResult HandleDeleteRequest(const OCEntityHandlerRequest *ehRequest)
+{
+    OC_LOG(INFO, TAG, "Processing CredDeleteRequest");
+
+    OCEntityHandlerResult ehRet = OC_EH_ERROR;
+
+    if(NULL == ehRequest->query)
+   {
+       return ehRet;
+   }
+
+   OicParseQueryIter_t parseIter = {.attrPos=NULL};
+   OicUuid_t subject = {.id={0}};
+
+   //Parsing REST query to get the subject
+   ParseQueryIterInit((unsigned char *)ehRequest->query, &parseIter);
+   while(GetNextQuery(&parseIter))
+   {
+       if(strncasecmp((char *)parseIter.attrPos, OIC_JSON_SUBJECT_NAME,
+               parseIter.attrLen) == 0)
+       {
+           unsigned char base64Buff[sizeof(((OicUuid_t*)0)->id)] = {};
+           uint32_t outLen = 0;
+           B64Result b64Ret = B64_OK;
+
+           b64Ret = b64Decode((char *)parseIter.valPos, parseIter.valLen,
+                   base64Buff, sizeof(base64Buff), &outLen);
+
+           VERIFY_SUCCESS(TAG, (b64Ret == B64_OK && outLen <= sizeof(subject.id)), ERROR);
+           memcpy(subject.id, base64Buff, outLen);
+       }
+   }
+
+   if(OC_STACK_RESOURCE_DELETED == RemoveCredential(&subject))
+   {
+       ehRet = OC_EH_RESOURCE_DELETED;
+   }
+
+exit:
+    return ehRet;
+}
+
+
 /*
  * This internal method is the entity handler for Cred resources
  * to handle REST request (PUT/POST/DEL)
@@ -528,6 +636,7 @@ OCEntityHandlerResult CredEntityHandler (OCEntityHandlerFlag flag,
                                         OCEntityHandlerRequest * ehRequest,
                                         void* callbackParameter)
 {
+    (void)callbackParameter;
     OCEntityHandlerResult ret = OC_EH_ERROR;
 
     if(!ehRequest)
@@ -536,7 +645,7 @@ OCEntityHandlerResult CredEntityHandler (OCEntityHandlerFlag flag,
     }
     if (flag & OC_REQUEST_FLAG)
     {
-        OC_LOG (INFO, TAG, PCF("Flag includes OC_REQUEST_FLAG"));
+        OC_LOG (INFO, TAG, "Flag includes OC_REQUEST_FLAG");
         //TODO :  Handle PUT/DEL methods
         switch(ehRequest->method)
         {
@@ -545,6 +654,9 @@ OCEntityHandlerResult CredEntityHandler (OCEntityHandlerFlag flag,
                 break;
             case OC_REST_POST:
                 ret = HandlePostRequest(ehRequest);
+                break;
+            case OC_REST_DELETE:
+                ret = HandleDeleteRequest(ehRequest);
                 break;
             default:
                 ret = OC_EH_ERROR;
@@ -576,7 +688,7 @@ OCStackResult CreateCredResource()
 
     if (OC_STACK_OK != ret)
     {
-        OC_LOG (FATAL, TAG, PCF("Unable to instantiate Cred resource"));
+        OC_LOG (FATAL, TAG, "Unable to instantiate Cred resource");
         DeInitCredResource();
     }
     return ret;
@@ -655,16 +767,16 @@ const OicSecCred_t* GetCredResourceData(const OicUuid_t* subject)
 {
     OicSecCred_t *cred = NULL;
 
-    if ( NULL == subject)
+   if ( NULL == subject)
     {
-        return NULL;
+       return NULL;
     }
 
     LL_FOREACH(gCred, cred)
     {
         if(memcmp(cred->subject.id, subject->id, sizeof(subject->id)) == 0)
         {
-             return cred;
+            return cred;
         }
     }
     return NULL;
@@ -692,7 +804,7 @@ void GetDtlsPskCredentials(CADtlsPskCredsBlob_t **credInfo)
         caBlob = (CADtlsPskCredsBlob_t *)OICCalloc(sizeof(CADtlsPskCredsBlob_t), 1);
         if (caBlob)
         {
-            OicUuid_t deviceID = {};
+            OicUuid_t deviceID = {.id={}};
 
             // Retrieve Device ID from doxm resource and copy in PSK creds blob
             VERIFY_SUCCESS(TAG, GetDoxmDeviceID(&deviceID) == OC_STACK_OK, ERROR);
@@ -750,4 +862,61 @@ exit:
     }
     OICFree(caBlob);
 }
+
+/**
+ * Add temporal PSK to PIN based OxM
+ *
+ * @param[in] tmpSubject UUID of target device
+ * @param[in] credType Type of credential to be added
+ * @param[in] pin numeric characters
+ * @param[in] pinSize length of 'pin'
+ * @param[in] ownersLen Number of owners
+ * @param[in] owners Array of owners
+ * @param[out] tmpCredSubject Generated credential's subject.
+ *
+ * @return OC_STACK_OK for success and errorcode otherwise.
+ */
+OCStackResult AddTmpPskWithPIN(const OicUuid_t* tmpSubject, OicSecCredType_t credType,
+                            const char * pin, size_t pinSize,
+                            size_t ownersLen, const OicUuid_t * owners, OicUuid_t* tmpCredSubject)
+{
+    OCStackResult ret = OC_STACK_ERROR;
+
+    if(tmpSubject == NULL || pin == NULL || pinSize == 0 || tmpCredSubject == NULL)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    uint8_t privData[OWNER_PSK_LENGTH_128] = {0,};
+    int dtlsRes = DeriveCryptoKeyFromPassword((const unsigned char *)pin, pinSize, owners->id,
+                                              UUID_LENGTH, PBKDF_ITERATIONS,
+                                              OWNER_PSK_LENGTH_128, privData);
+    VERIFY_SUCCESS(TAG, (dtlsRes == 0) , ERROR);
+
+    uint32_t outLen = 0;
+    char base64Buff[B64ENCODE_OUT_SAFESIZE(OWNER_PSK_LENGTH_128) + 1] = {};
+    B64Result b64Ret = b64Encode(privData, OWNER_PSK_LENGTH_128, base64Buff,
+                                sizeof(base64Buff), &outLen);
+    VERIFY_SUCCESS(TAG, (B64_OK == b64Ret), ERROR);
+
+    OicSecCred_t* cred = GenerateCredential(tmpSubject, credType, NULL,
+                                            base64Buff, ownersLen, owners);
+    if(NULL == cred)
+    {
+        OC_LOG(ERROR, TAG, "GeneratePskWithPIN() : Failed to generate credential");
+        return OC_STACK_ERROR;
+    }
+
+    memcpy(tmpCredSubject->id, cred->subject.id, UUID_LENGTH);
+
+    ret = AddCredential(cred);
+    if( OC_STACK_OK != ret)
+    {
+        OC_LOG(ERROR, TAG, "GeneratePskWithPIN() : Failed to add credential");
+    }
+
+exit:
+    return ret;
+}
+
 #endif /* __WITH_DTLS__ */

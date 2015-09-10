@@ -57,12 +57,18 @@ namespace itst = iotivity::test;
 //-----------------------------------------------------------------------------
 static const char TAG[] = "TestHarness";
 
+char gDeviceUUID[] = "myDeviceUUID";
+char gManufacturerName[] = "myName";
+char gTooLongManufacturerName[] = "extremelylongmanufacturername";
+char gManufacturerUrl[] = "www.foooooooooooooooo.baaaaaaaaaaaaar";
+
 std::chrono::seconds const SHORT_TEST_TIMEOUT = std::chrono::seconds(5);
 
 //-----------------------------------------------------------------------------
 // Callback functions
 //-----------------------------------------------------------------------------
-extern "C"  OCStackApplicationResult asyncDoResourcesCallback(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse)
+extern "C"  OCStackApplicationResult asyncDoResourcesCallback(void* ctx,
+        OCDoHandle /*handle*/, OCClientResponse * clientResponse)
 {
     OC_LOG(INFO, TAG, "Entering asyncDoResourcesCallback");
 
@@ -79,8 +85,9 @@ extern "C"  OCStackApplicationResult asyncDoResourcesCallback(void* ctx, OCDoHan
 //-----------------------------------------------------------------------------
 // Entity handler
 //-----------------------------------------------------------------------------
-OCEntityHandlerResult entityHandler(OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest,
-                                    void* callbackParam)
+OCEntityHandlerResult entityHandler(OCEntityHandlerFlag /*flag*/,
+        OCEntityHandlerRequest * /*entityHandlerRequest*/,
+        void* /*callbackParam*/)
 {
     OC_LOG(INFO, TAG, "Entering entityHandler");
 
@@ -187,10 +194,12 @@ TEST(StackStart, SetPlatformInfoValid)
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
 
-    OCPlatformInfo info = {};
-    info.platformID = (char *) "platform_id";
-    info.manufacturerName = (char *) "manufac_name";
-
+    OCPlatformInfo info =
+    {
+        gDeviceUUID,
+        gManufacturerName,
+        0, 0, 0, 0, 0, 0, 0, 0, 0
+    };
     EXPECT_EQ(OC_STACK_OK, OCSetPlatformInfo(info));
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
@@ -200,8 +209,12 @@ TEST(StackStart, SetPlatformInfoWithNoPlatformID)
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
 
-    OCPlatformInfo info = {};
-    info.manufacturerName = (char *) "manufac_name";
+    OCPlatformInfo info =
+     {
+         0,
+         gDeviceUUID,
+         0, 0, 0, 0, 0, 0, 0, 0, 0
+     };
 
     EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSetPlatformInfo(info));
     EXPECT_EQ(OC_STACK_OK, OCStop());
@@ -212,8 +225,11 @@ TEST(StackStart, SetPlatformInfoWithNoManufacturerName)
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
 
-    OCPlatformInfo info = {};
-    info.platformID = (char *) "platform_id";
+    OCPlatformInfo info =
+    {
+        gDeviceUUID,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    };
 
     EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSetPlatformInfo(info));
     EXPECT_EQ(OC_STACK_OK, OCStop());
@@ -224,8 +240,11 @@ TEST(StackStart, SetPlatformInfoWithZeroLengthManufacturerName)
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
 
-    OCPlatformInfo info = {};
-    info.platformID = (char *) "platform_id";
+    OCPlatformInfo info =
+    {
+        gDeviceUUID,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    };
     info.manufacturerName = (char *) "";
 
     EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSetPlatformInfo(info));
@@ -237,9 +256,12 @@ TEST(StackStart, SetPlatformInfoWithTooLongManufacName)
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
 
-    OCPlatformInfo info = {};
-    info.platformID = (char *) "platform_id";
-    info.manufacturerName = (char *) "extremelylongmanufacturername";
+    OCPlatformInfo info =
+    {
+        gDeviceUUID,
+        gTooLongManufacturerName,
+        0, 0, 0, 0, 0, 0, 0, 0, 0
+    };
 
     EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSetPlatformInfo(info));
     EXPECT_EQ(OC_STACK_OK, OCStop());
@@ -249,16 +271,17 @@ TEST(StackStart, SetPlatformInfoWithTooLongManufacURL)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
-
-    OCPlatformInfo info = {};
-    info.platformID = (char *) "platform_id";
-    info.manufacturerName = (char *) "extremelylongmanufacturername";
-    info.manufacturerUrl = (char *)"www.foooooooooooooooo.baaaaaaaaaaaaar";
+    OCPlatformInfo info =
+    {
+        gDeviceUUID,
+        gManufacturerName,
+        gManufacturerUrl,
+        0, 0, 0, 0, 0, 0, 0, 0
+    };
 
     EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSetPlatformInfo(info));
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
-
 
 TEST(StackDiscovery, DISABLED_DoResourceDeviceDiscovery)
 {

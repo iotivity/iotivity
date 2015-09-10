@@ -29,8 +29,6 @@
 #include "NotificationReceiver.h"
 #include "RCSResourceAttributes.h"
 
-using namespace std;
-
 namespace OIC
 {
     namespace Service
@@ -61,7 +59,7 @@ namespace OIC
                 *
                 * @return std::list - return list of the attribute names
                 */
-                std::list<string> getAttributeNames();
+                std::list<std::string> getAttributeNames();
 
                 /**
                 * Initialize attributes of the resource
@@ -108,9 +106,9 @@ namespace OIC
 
 
             public:
-                string m_bundleId;
-                string m_name, m_uri, m_resourceType, m_address;
-                map< string, vector< map< string, string > > > m_mapResourceProperty;
+                std::string m_bundleId;
+                std::string m_name, m_uri, m_resourceType, m_address;
+                std::map< std::string, std::vector< std::map< std::string, std::string > > > m_mapResourceProperty;
 
             private:
                 NotificationReceiver *m_pNotiReceiver;

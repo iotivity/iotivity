@@ -88,7 +88,7 @@ void foundResource(std::shared_ptr< OCResource > resource)
     }
 }
 
-void onGet(const HeaderOptions& opt, const OCRepresentation &rep, const int eCode)
+void onGet(const HeaderOptions& /*opt*/, const OCRepresentation &rep, const int /*eCode*/)
 {
     // printf("onGet\n");
 
@@ -105,12 +105,14 @@ void onGet(const HeaderOptions& opt, const OCRepresentation &rep, const int eCod
     cv.notify_one();
 }
 
-void onPut(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
+void onPut(const HeaderOptions& /*headerOptions*/,
+        const OCRepresentation& /*rep*/, const int /*eCode*/)
 {
     printf("\nonPut\n");
 }
 
-void onPost(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
+void onPost(const HeaderOptions& /*headerOptions*/,
+        const OCRepresentation& rep, const int /*eCode*/)
 {
     printf("\nonPost\n");
 
@@ -168,7 +170,7 @@ bool isResourceReady()
     return isReady;
 }
 
-int main(int argc, char* argv[])
+int main(int /*argc*/, char** /*argv[]*/)
 {
     ostringstream requestURI;
     requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=a.collection";

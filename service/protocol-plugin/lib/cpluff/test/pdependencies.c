@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  * C-Pluff, a plug-in framework for C
  * Copyright 2007 Johannes Lehtinen
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -30,13 +30,13 @@ static int active(cp_context_t *ctx, const char * const * const plugins) {
 	cp_status_t status;
 	int i;
 	int errors = 0;
-	
+
 	check((pis = cp_get_plugins_info(ctx, &status, NULL)) != NULL && status == CP_OK);
 	for (i = 0; !errors && pis[i] != NULL; i++) {
 		int j;
 		int should_be_active = 0;
 		cp_plugin_state_t state;
-		
+
 		for (j = 0; !should_be_active && plugins[j] != NULL; j++) {
 			if (!strcmp(pis[i]->identifier, plugins[j])) {
 				should_be_active = 1;
@@ -56,11 +56,11 @@ static int active(cp_context_t *ctx, const char * const * const plugins) {
 void pluginmissingdep(void) {
 	cp_context_t *ctx;
 	const char * const act_none[] = { NULL };
-	
+
 	ctx = init_context(CP_LOG_ERROR + 1, NULL);
 	check((cp_register_pcollection(ctx, pcollectiondir("dependencies"))) == CP_OK);
 	check(cp_scan_plugins(ctx, 0) == CP_OK);
-	
+
 	// Try starting a plugin depending on plug-in missing dependency
 	check(cp_start_plugin(ctx, "chainmissingdep") == CP_ERR_DEPENDENCY);
 	check(active(ctx, act_none));
@@ -78,11 +78,11 @@ void plugindepchain(void) {
 	const char * const act_chain123[] = { "chain1", "chain2", "chain3", NULL };
 	const char * const act_chain23[] = { "chain2", "chain3", NULL };
 	const char * const act_chain3[] = { "chain3", NULL };
-	
+
 	ctx = init_context(CP_LOG_ERROR, NULL);
 	check((cp_register_pcollection(ctx, pcollectiondir("dependencies"))) == CP_OK);
 	check(cp_scan_plugins(ctx, 0) == CP_OK);
-	
+
 	// Try starting and stopping plug-ins in dependency chain
 	check(cp_start_plugin(ctx, "chain1") == CP_OK);
 	check(active(ctx, act_chain123));
@@ -113,7 +113,7 @@ void plugindeploop(void) {
 	const char * const act_loop1234[] = { "loop1", "loop2", "loop3", "loop4", NULL };
 	const char * const act_loop4[] = { "loop4", NULL };
 	const char * const act_loop12345[] = { "loop1", "loop2", "loop3", "loop4", "loop5", NULL };
-	
+
 	ctx = init_context(CP_LOG_ERROR, NULL);
 	check((cp_register_pcollection(ctx, pcollectiondir("dependencies"))) == CP_OK);
 	check(cp_scan_plugins(ctx, 0) == CP_OK);
@@ -155,5 +155,5 @@ void plugindeploop(void) {
 	check(cp_get_plugin_state(ctx, "loop4") == CP_PLUGIN_UNINSTALLED);
 	check(cp_get_plugin_state(ctx, "loop5") == CP_PLUGIN_INSTALLED);
 
-	cp_destroy();	
+	cp_destroy();
 }

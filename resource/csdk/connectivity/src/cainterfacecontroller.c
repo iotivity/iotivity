@@ -73,10 +73,10 @@ static int CAGetAdapterIndex(CATransportAdapter_t cType)
         case CA_ADAPTER_RFCOMM_BTEDR:
             return 2;
 
-        #ifdef RA_ADAPTER
+#ifdef RA_ADAPTER
         case CA_ADAPTER_REMOTE_ACCESS:
             return 3;
-        #endif
+#endif
 
         default:
             break;
@@ -123,14 +123,14 @@ CAResult_t CASetAdapterRAInfo(const CARAInfo_t *caraInfo)
 }
 #endif
 
-static void CAReceivedPacketCallback(const CAEndpoint_t *endpoint, const void *data, uint32_t dataLen)
+static void CAReceivedPacketCallback(const CASecureEndpoint_t *sep,
+                                     const void *data, uint32_t dataLen)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
-    // Call the callback.
     if (g_networkPacketReceivedCallback != NULL)
     {
-        g_networkPacketReceivedCallback(endpoint, data, dataLen);
+        g_networkPacketReceivedCallback(sep, data, dataLen);
     }
     else
     {
@@ -368,14 +368,14 @@ CAResult_t CASendUnicastData(const CAEndpoint_t *endpoint, const void *data, uin
         return CA_STATUS_INVALID_PARAM;
     }
 
-    uint32_t sentDataLen = 0;
+    int32_t sentDataLen = 0;
 
     if (g_adapterHandler[index].sendData != NULL)
     {
         sentDataLen = g_adapterHandler[index].sendData(endpoint, data, length);
     }
 
-    if (sentDataLen != length)
+    if (sentDataLen != (int)length)
     {
         OIC_LOG(ERROR, TAG, "error in sending data. Error will be reported in adapter");
 #ifdef SINGLE_THREAD
@@ -393,15 +393,15 @@ CAResult_t CASendMulticastData(const CAEndpoint_t *endpoint, const void *data, u
     OIC_LOG(DEBUG, TAG, "IN");
 
     u_arraylist_t *list = CAGetSelectedNetworkList();
-
     if (!list)
     {
         OIC_LOG(DEBUG, TAG, "No selected network");
         return CA_SEND_FAILED;
     }
 
-    int i = 0;
-    for (i = 0; i < u_arraylist_length(list); i++)
+    CATransportFlags_t requestedAdapter = endpoint->adapter ? endpoint->adapter : CA_ALL_ADAPTERS;
+
+    for (uint32_t i = 0; i < u_arraylist_length(list); i++)
     {
         void* ptrType = u_arraylist_get(list, i);
 
@@ -411,6 +411,10 @@ CAResult_t CASendMulticastData(const CAEndpoint_t *endpoint, const void *data, u
         }
 
         CATransportAdapter_t connType = *(CATransportAdapter_t *)ptrType;
+        if ((connType & requestedAdapter) == 0)
+        {
+            continue;
+        }
 
         int index = CAGetAdapterIndex(connType);
 
@@ -461,8 +465,7 @@ CAResult_t CAStartListeningServerAdapters()
         return CA_STATUS_FAILED;
     }
 
-    int i = 0;
-    for (i = 0; i < u_arraylist_length(list); i++)
+    for (uint32_t i = 0; i < u_arraylist_length(list); i++)
     {
         void* ptrType = u_arraylist_get(list, i);
 
@@ -502,8 +505,7 @@ CAResult_t CAStartDiscoveryServerAdapters()
         return CA_STATUS_FAILED;
     }
 
-    int i = 0;
-    for (i = 0; i < u_arraylist_length(list); i++)
+    for (uint32_t i = 0; i < u_arraylist_length(list); i++)
     {
         void* ptrType = u_arraylist_get(list, i);
 

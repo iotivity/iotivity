@@ -63,7 +63,7 @@ int ConnectToNetwork()
     // check for the presence of the shield:
     if (WiFi.status() == WL_NO_SHIELD)
     {
-        OC_LOG(ERROR, TAG, PCF("WiFi shield not present"));
+        OC_LOG(ERROR, TAG, ("WiFi shield not present"));
         return -1;
     }
 
@@ -72,7 +72,7 @@ int ConnectToNetwork()
     OC_LOG_V(INFO, TAG, "WiFi Shield Firmware version %s", fwVersion);
     if ( strncmp(fwVersion, INTEL_WIFI_SHIELD_FW_VER, sizeof(INTEL_WIFI_SHIELD_FW_VER)) != 0 )
     {
-        OC_LOG(DEBUG, TAG, PCF("!!!!! Upgrade WiFi Shield Firmware version !!!!!!"));
+        OC_LOG(DEBUG, TAG, ("!!!!! Upgrade WiFi Shield Firmware version !!!!!!"));
         return -1;
     }
 
@@ -85,7 +85,7 @@ int ConnectToNetwork()
         // wait 10 seconds for connection:
         delay(10000);
     }
-    OC_LOG(DEBUG, TAG, PCF("Connected to wifi"));
+    OC_LOG(DEBUG, TAG, ("Connected to wifi"));
 
     IPAddress ip = WiFi.localIP();
     OC_LOG_V(INFO, TAG, "IP Address:  %d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);

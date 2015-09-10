@@ -53,7 +53,7 @@ if 'rt' in linux_sample_env.get('LIBS'):
 ######################################################################
 #build sampleapp
 ######################################################################
-conserver = linux_sample_env.Program('con-server', ['ConfigurationCollection.cpp', 'DiagnosticsCollection.cpp', 'FactorySetCollection.cpp', 'con-server.cpp'])
+conserver = linux_sample_env.Program('con-server', ['ConfigurationCollection.cpp', 'MaintenanceCollection.cpp', 'FactorySetCollection.cpp', 'con-server.cpp'])
 conclient = linux_sample_env.Program('con-client', 'con-client.cpp')
 bootstrapserver = linux_sample_env.Program('bootstrapserver', 'bootstrapserver.cpp')
 Alias("ConServerApp", conserver)

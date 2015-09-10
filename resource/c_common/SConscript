@@ -23,6 +23,7 @@ Import('env')
 import os
 
 env.AppendUnique(CPPPATH = [
+            os.path.join(Dir('.').abspath),
             os.path.join(Dir('.').abspath, 'oic_malloc/include'),
             os.path.join(Dir('.').abspath, 'oic_string/include')
         ])

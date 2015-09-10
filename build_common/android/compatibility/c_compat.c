@@ -45,16 +45,3 @@ void srandom(unsigned int __s)
 {
     srand48(__s);
 }
-
-/* from unistd.h */
-int getpagesize(void)
-{
-  extern unsigned int __page_size;
-  return __page_size;
-}
-
-int __getpageshift(void)
-{
-  extern unsigned int __page_shift;
-  return __page_shift;
-}

@@ -63,89 +63,16 @@ CARequestInfo_t *CACloneRequestInfo(const CARequestInfo_t *rep)
         return NULL;
     }
 
-    *clone = *rep;
-
-    if (rep->info.token)
+    CAResult_t result = CACloneInfo(&rep->info, &clone->info);
+    if(CA_STATUS_OK != result)
     {
-        char *temp = NULL;
-
-        // allocate token field
-        uint8_t len = rep->info.tokenLength;
-
-        if (len)
-        {
-            temp = (char *) OICCalloc(len, sizeof(char));
-            if (!temp)
-            {
-                OIC_LOG(ERROR, TAG, "CACloneRequestInfo Out of memory");
-
-                CADestroyRequestInfoInternal(clone);
-
-                return NULL;
-            }
-            memcpy(temp, rep->info.token, len);
-        }
-
-        // save the token
-        clone->info.token = temp;
-        clone->info.tokenLength = len;
+        OIC_LOG(ERROR, TAG, "CACloneRequestInfo error in CACloneInfo");
+        CADestroyRequestInfoInternal(clone);
+        return NULL;
     }
 
-    if (NULL != rep->info.options && 0 < rep->info.numOptions)
-    {
-        // save the options
-        clone->info.options =
-            (CAHeaderOption_t *) OICMalloc(sizeof(CAHeaderOption_t) * rep->info.numOptions);
-        if (NULL == clone->info.options)
-        {
-            OIC_LOG(ERROR, TAG, "CACloneRequestInfo Out of memory");
-            OICFree(clone->info.token);
-            OICFree(clone);
-            return NULL;
-        }
-        memcpy(clone->info.options, rep->info.options,
-               sizeof(CAHeaderOption_t) * rep->info.numOptions);
-    }
-    else
-    {
-        clone->info.options = NULL;
-        clone->info.numOptions = 0;
-    }
-
-    if (NULL != rep->info.payload)
-    {
-        // allocate payload field
-        uint8_t *temp = OICMalloc(rep->info.payloadSize);
-        if (NULL == temp)
-        {
-            OIC_LOG(ERROR, TAG, "CACloneRequestInfo Out of memory");
-
-            CADestroyRequestInfoInternal(clone);
-
-            return NULL;
-        }
-        memcpy(temp, rep->info.payload, rep->info.payloadSize);
-
-        // save the payload
-        clone->info.payload = temp;
-    }
-
-    if (NULL != rep->info.resourceUri)
-    {
-        // allocate payload field
-        char *temp = OICStrdup(rep->info.resourceUri);
-        if (NULL == temp)
-        {
-            OIC_LOG(ERROR, TAG, "CACloneRequestInfo Out of memory");
-
-            CADestroyRequestInfoInternal(clone);
-
-            return NULL;
-        }
-
-        // save the resourceUri
-        clone->info.resourceUri = temp;
-    }
+    clone->method = rep->method;
+    clone->isMulticast = rep->isMulticast;
 
     return clone;
 }
@@ -193,91 +120,17 @@ CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *rep)
         OIC_LOG(ERROR, TAG, "CACloneResponseInfo Out of memory");
         return NULL;
     }
-    *clone = *rep;
 
-    if (rep->info.token)
+    CAResult_t result = CACloneInfo(&rep->info, &clone->info);
+    if(CA_STATUS_OK != result)
     {
-        char *temp = NULL;
-
-        // allocate token field
-        uint8_t len = rep->info.tokenLength;
-
-        if (len)
-        {
-            temp = (char *) OICCalloc(len, sizeof(char));
-            if (!temp)
-            {
-                OIC_LOG(ERROR, TAG, "CACloneResponseInfo Out of memory");
-
-                CADestroyResponseInfoInternal(clone);
-
-                return NULL;
-            }
-            memcpy(temp, rep->info.token, len);
-        }
-        // save the token
-        clone->info.token = temp;
-        clone->info.tokenLength = len;
+        OIC_LOG(ERROR, TAG, "CACloneResponseInfo error in CACloneInfo");
+        CADestroyResponseInfoInternal(clone);
+        return NULL;
     }
 
-    if (NULL != rep->info.options && rep->info.numOptions)
-    {
-        // save the options
-        clone->info.options =
-                (CAHeaderOption_t *) OICMalloc(sizeof(CAHeaderOption_t) * rep->info.numOptions);
-
-        if (NULL == clone->info.options)
-        {
-            OIC_LOG(ERROR, TAG, "CACloneResponseInfo Out of memory");
-
-            OICFree(clone->info.token);
-            OICFree(clone);
-            return NULL;
-        }
-        memcpy(clone->info.options, rep->info.options,
-                sizeof(CAHeaderOption_t) * rep->info.numOptions);
-    }
-    else
-    {
-        clone->info.options = NULL;
-        clone->info.numOptions = 0;
-    }
-
-    if (NULL != rep->info.payload)
-    {
-        // allocate payload field
-        uint8_t *temp = (uint8_t *) OICMalloc(rep->info.payloadSize);
-        if (NULL == temp)
-        {
-            OIC_LOG(ERROR, TAG, "CACloneResponseInfo Out of memory");
-
-            CADestroyResponseInfoInternal(clone);
-
-            return NULL;
-        }
-        memcpy(temp, rep->info.payload, rep->info.payloadSize);
-
-        // save the payload
-        clone->info.payload = temp;
-    }
-
-    if (NULL != rep->info.resourceUri)
-    {
-        // allocate payload field
-        char *temp = OICStrdup(rep->info.resourceUri);
-        if (NULL == temp)
-        {
-            OIC_LOG(ERROR, TAG, "CACloneResponseInfo Out of memory");
-
-            CADestroyResponseInfoInternal(clone);
-
-            return NULL;
-        }
-
-        // save the resourceUri
-        clone->info.resourceUri = temp;
-    }
-
+    clone->isMulticast = rep->isMulticast;
+    clone->result = rep->result;
     return clone;
 }
 
@@ -321,7 +174,6 @@ static void CADestroyInfoInternal(CAInfo_t *info)
     OICFree(info->options);
     info->options = NULL;
     info->numOptions = 0;
-
 
     // free payload field
     OICFree((char *) info->payload);
@@ -377,6 +229,8 @@ CAResult_t CACloneInfo(const CAInfo_t *info, CAInfo_t *clone)
         return CA_STATUS_INVALID_PARAM;
     }
 
+    memset(clone, 0 , sizeof(CAInfo_t));
+
     //Do not free clone. we cannot declare it const, as the content is modified
     if ((info->token) && (0 < info->tokenLength))
     {
@@ -388,7 +242,7 @@ CAResult_t CACloneInfo(const CAInfo_t *info, CAInfo_t *clone)
         temp = (char *) OICMalloc(len * sizeof(char));
         if (!temp)
         {
-            OIC_LOG(ERROR, TAG, "CAClonePayloadInfo Out of memory");
+            OIC_LOG(ERROR, TAG, "CACloneInfo Out of memory");
             return CA_MEMORY_ALLOC_FAILED;
         }
 
@@ -406,20 +260,21 @@ CAResult_t CACloneInfo(const CAInfo_t *info, CAInfo_t *clone)
 
         if (!clone->options)
         {
-            OIC_LOG(ERROR, TAG, "CAClonePayloadInfo Out of memory");
+            OIC_LOG(ERROR, TAG, "CACloneInfo Out of memory");
             CADestroyInfoInternal(clone);
             return CA_MEMORY_ALLOC_FAILED;
         }
         memcpy(clone->options, info->options, sizeof(CAHeaderOption_t) * info->numOptions);
+        clone->numOptions = info->numOptions;
     }
 
-    if (info->payload)
+    if ((info->payload) && (0 < info->payloadSize))
     {
         // allocate payload field
         uint8_t *temp = OICMalloc(info->payloadSize);
         if (!temp)
         {
-            OIC_LOG(ERROR, TAG, "CAClonePayloadInfo Out of memory");
+            OIC_LOG(ERROR, TAG, "CACloneInfo Out of memory");
             CADestroyInfoInternal(clone);
             return CA_MEMORY_ALLOC_FAILED;
         }
@@ -427,7 +282,9 @@ CAResult_t CACloneInfo(const CAInfo_t *info, CAInfo_t *clone)
 
         // save the payload
         clone->payload = temp;
+        clone->payloadSize = info->payloadSize;
     }
+    clone->payloadFormat = info->payloadFormat;
 
     if (info->resourceUri)
     {
@@ -435,7 +292,7 @@ CAResult_t CACloneInfo(const CAInfo_t *info, CAInfo_t *clone)
         char *temp = OICStrdup(info->resourceUri);
         if (!temp)
         {
-            OIC_LOG(ERROR, TAG, "CAClonePayloadInfo Out of memory");
+            OIC_LOG(ERROR, TAG, "CACloneInfo Out of memory");
             CADestroyInfoInternal(clone);
             return CA_MEMORY_ALLOC_FAILED;
         }
@@ -443,6 +300,9 @@ CAResult_t CACloneInfo(const CAInfo_t *info, CAInfo_t *clone)
         // save the resourceUri
         clone->resourceUri = temp;
     }
+
+    clone->messageId = info->messageId;
+    clone->type = info->type;
 
     return CA_STATUS_OK;
 

@@ -150,6 +150,7 @@ char *coap_response_phrase(unsigned char code);
 #define COAP_MEDIATYPE_APPLICATION_RDF_XML           43 /* application/rdf+xml */
 #define COAP_MEDIATYPE_APPLICATION_EXI               47 /* application/exi  */
 #define COAP_MEDIATYPE_APPLICATION_JSON              50 /* application/json  */
+#define COAP_MEDIATYPE_APPLICATION_CBOR              60 /* application/cbor  */
 
 /* Note that identifiers for registered media types are in the range 0-65535. We
  * use an unallocated type here and hope for the best. */
@@ -169,7 +170,7 @@ typedef struct
     unsigned int code:8; /* request method (value 1--10) or response code (value 40-255) */
     unsigned short id; /* message id */
     unsigned char token[]; /* the actual token, if any */
-}coap_hdr_t;
+} coap_hdr_t;
 #else
 typedef struct
 {

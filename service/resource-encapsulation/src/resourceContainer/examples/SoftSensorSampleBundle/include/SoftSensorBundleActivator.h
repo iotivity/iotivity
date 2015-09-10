@@ -21,9 +21,6 @@
 #ifndef SOFTSENSOR_SAMPLEBUNDLE_H_
 #define SOFTSENSOR_SAMPLEBUNDLE_H_
 
-#include <algorithm>
-#include <vector>
-
 #include "ResourceContainerBundleAPI.h"
 #include "BundleActivator.h"
 #include "BundleResource.h"

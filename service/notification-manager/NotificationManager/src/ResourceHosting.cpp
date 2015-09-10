@@ -122,7 +122,7 @@ void ResourceHosting::requestMulticastPresence()
     }
 }
 
-void ResourceHosting::presenceHandler(OCStackResult ret, const unsigned int seq,
+void ResourceHosting::presenceHandler(OCStackResult ret, const unsigned int /*seq*/,
         const std::string & address)
 {
     switch(ret)
@@ -184,9 +184,9 @@ void ResourceHosting::requestMulticastDiscovery()
 void ResourceHosting::requestDiscovery(std::string address)
 {
     std::string host = address;
-    std::string uri = OC_RSRVD_WELL_KNOWN_URI + std::string("?rt=") + HOSTING_RESOURSE_TYPE;
     RCSAddress rcsAddress = RCSAddress::unicast(host);
-    discoveryManager->discoverResource(rcsAddress, uri, pDiscoveryCB);
+    discoveryManager->discoverResourceByType(rcsAddress, OC_RSRVD_WELL_KNOWN_URI,
+            HOSTING_RESOURSE_TYPE, pDiscoveryCB);
 }
 
 void ResourceHosting::discoverHandler(RemoteObjectPtr remoteResource)

@@ -1,4 +1,4 @@
-/******************************************************************
+/* ****************************************************************
  *
  * Copyright 2014 Samsung Electronics All Rights Reserved.
  *
@@ -22,7 +22,7 @@
 #define U_ARRAYLIST_H_
 
 #include <stdint.h>
-#include "cacommon.h"
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -30,85 +30,97 @@ extern "C"
 #endif
 
 /**
- * @struct u_arraylist_t
- * @brief array list structure
+ * array list structure.
+ *
+ * @note
+ * Members should be treated as private and not accessed directly. Instead
+ * all access should be through the defined u_arraylist_*() functions.
  */
 typedef struct u_arraylist_t
 {
     void **data;
     uint32_t length;
-    uint32_t size;
+    uint32_t capacity;
 } u_arraylist_t;
 
 /**
- * @brief API to creates array list and initializes the elements.
- * @return  u_arraylist_t if Success, NULL otherwise
+ * API to creates array list and initializes the elements.
+ * @return  u_arraylist_t if Success, NULL otherwise.
  */
 u_arraylist_t *u_arraylist_create();
 
 /**
- * @brief Resets and deletes the array list
+ * Resets and deletes the array list.
  * Arraylist elements are deleted. Calling function must take care of free
- * dynamic memory allocated before freeing the arraylist
- * @param list- u_arraylist pointer
- * @return CAResult_t
- * CA_STATUS_OK if Success, CA_STATUS_INVALID_PARAM if pointer to list is NULL
+ * dynamic memory allocated before freeing the arraylist.
+ * @param[in] list       u_arraylist pointer
  */
-CAResult_t u_arraylist_free(u_arraylist_t **list);
+void u_arraylist_free(u_arraylist_t **list);
 
 /**
- * @brief Returns the data of the index from the array list
- * @param list
- *     [IN] pointer of array list
- * @param index
- *     [IN] index of array list
- * @return void pointer of data if success or NULL pointer otherwise
+ * Request that the list prepare room for the specified number of entries.
+ * If count is greater than the current internal storage size then an
+ * an attempt will be made to reallocate room for at least count items.
+ *
+ * In other cases there will be no effect.
+ *
+ * This call will not affect the length used and cannot be used to remove
+ * entries.
+ * @param list the list to operate on.
+ * @param count the size to attempt to reserve room for.
+ */
+void u_arraylist_reserve(u_arraylist_t *list, size_t count);
+
+/**
+ * Request that the storage in the list be reduced to fit its current length.
+ *
+ * The request is non-binding, and may not affect the entries in the list.
+ * @param list the list to operate on.
+ */
+void u_arraylist_shrink_to_fit(u_arraylist_t *list);
+
+/**
+ * Returns the data of the index from the array list.
+ * @param[in] list         pointer of array list.
+ * @param[in] index        index of array list.
+ * @return void pointer of data if success or NULL pointer otherwise.
  */
 void *u_arraylist_get(const u_arraylist_t *list, uint32_t index);
 
 /**
- * @brief Add data in the array list
- * @param list
- *     [IN] pointer of array list
- * @param data
- *     [IN] pointer of data
- * @return CAResult_t
- * CA_STATUS_OK if Success, CA_MEMORY_ALLOC_FAILED if memory allocation fails
+ * Add data in the array list.
+ * @param[in] list        pointer of array list.
+ * @param[in] data        pointer of data.
+ * @return true if success, false otherwise.
  */
-CAResult_t u_arraylist_add(u_arraylist_t *list, void *data);
+bool u_arraylist_add(u_arraylist_t *list, void *data);
 
 /**
- * @brief Remove the data of the index from the array list
- * @param list
- *     [IN] pointer of array list
- * @param index
- *     [IN] index of array list
- * @return void pointer of the data if success or NULL pointer otherwise
+ * Remove the data of the index from the array list.
+ * @param[in] list       pointer of array list.
+ * @param[in] index      index of array list.
+ * @return void pointer of the data if success or NULL pointer otherwise.
  */
 void *u_arraylist_remove(u_arraylist_t *list, uint32_t index);
 
 /**
- * @brief Returns the length of the array list
- * @param list
- *     [IN] pointer of array list
- * @return length of the array list
+ * Returns the length of the array list.
+ * @param[in] list       pointer of array list.
+ * @return length of the array list.
  */
 uint32_t u_arraylist_length(const u_arraylist_t *list);
 
 /**
- * @brief Returns whether the data exists or not
- * @param list
- *     [IN] pointer of array list
- * @param data
- *     [IN] pointer of data
- * @return true if exists, false otherwise
+ * Returns whether the data exists or not.
+ * @param[in] list       pointer of array list.
+ * @param[in] data       pointer of data.
+ * @return true if exists, false otherwise.
  */
 bool u_arraylist_contains(const u_arraylist_t *list,const void *data);
 
 /**
- * @brief Destroys array list and elements (assuming elements are shallow)
- * @param list
- *    [IN] pointer of array list
+ * Destroys array list and elements (assuming elements are shallow).
+ * @param[in] list       pointer of array list.
  */
 void u_arraylist_destroy(u_arraylist_t *list);
 

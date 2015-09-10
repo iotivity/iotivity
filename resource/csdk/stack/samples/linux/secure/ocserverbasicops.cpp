@@ -30,6 +30,7 @@
 #include "ocserverbasicops.h"
 #include "common.h"
 
+
 int gQuitFlag = 0;
 
 static LEDResource LED;
@@ -226,13 +227,12 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest,
 OCEntityHandlerResult
 OCEntityHandlerCb (OCEntityHandlerFlag flag,
         OCEntityHandlerRequest *entityHandlerRequest,
-        void* callbackParam)
+        void* /*callbackParam*/)
 {
     OC_LOG_V (INFO, TAG, "Inside entity handler - flags: 0x%x", flag);
 
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
-    OCEntityHandlerResponse response = {};
-
+    OCEntityHandlerResponse response = { 0, 0, OC_EH_ERROR, 0, 0, { },{ 0 }, false };
     // Validate pointer
     if (!entityHandlerRequest)
     {
@@ -311,19 +311,14 @@ FILE* server_fopen(const char *path, const char *mode)
     return fopen(CRED_FILE, mode);
 }
 
-int main(int argc, char* argv[])
+int main(int /*argc*/, char* /*argv*/[])
 {
     struct timespec timeout;
 
     OC_LOG(DEBUG, TAG, "OCServer is starting...");
 
     // Initialize Persistent Storage for SVR database
-    OCPersistentStorage ps = {};
-    ps.open = server_fopen;
-    ps.read = fread;
-    ps.write = fwrite;
-    ps.close = fclose;
-    ps.unlink = unlink;
+    OCPersistentStorage ps = { server_fopen, fread, fwrite, fclose, unlink };
     OCRegisterPersistentStorageHandler(&ps);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)

@@ -53,23 +53,23 @@ if int(containerJavaSupport):
 	except KeyError:
 		print '''
 	*********************************** Error *************************************
-	* Building resource container without Java support. JAVA_HOME or JAVA_LIB are not set properly 
-	* Please configure JAVA_HOME to point to your Java 7 JDK and 
+	* Building resource container without Java support. JAVA_HOME or JAVA_LIB are not set properly
+	* Please configure JAVA_HOME to point to your Java 7 JDK and
 	* JAVA_LIB to your folder containing libjvm
 	* Example: export JAVA_HOME=/usr/lib/jvm/java-7-openjdk-i386
 	*          export JAVA_LIB=/usr/lib/jvm/java-7-openjdk-i386/jre/lib/i386/server
-	*******************************************************************************	
+	*******************************************************************************
 		'''
 		resource_container_env.Append(CPPDEFINES={'JAVA_SUPPORT':0})
-	
+
 
 resource_container_env.AppendUnique(
 	CPPPATH = [
-		env.get('SRC_DIR')+'/extlibs', 
+		env.get('SRC_DIR')+'/extlibs',
 		'../../include',
 		'include',
 		'bundle-api/include',
-		'src'		
+		'src'
 	])
 
 if int(containerJavaSupport):
@@ -77,11 +77,11 @@ if int(containerJavaSupport):
 		resource_container_env.AppendUnique(
 		CPPPATH = [
 			os.environ['JAVA_HOME']+'/include',
-			os.environ['JAVA_HOME']+'/include/linux'		
+			os.environ['JAVA_HOME']+'/include/linux'
 		])
 	except KeyError:
 		print ''
-		
+
 
 if target_os not in ['windows', 'winrt']:
     resource_container_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
@@ -93,32 +93,32 @@ if target_os not in ['darwin', 'ios', 'windows', 'winrt']:
 
 if target_os == 'android':
     resource_container_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-    resource_container_env.PrependUnique(LIBS = ['gnustl_shared', 'compatibility', 'log'])
-	
+    resource_container_env.PrependUnique(LIBS = ['gnustl_shared', 'log'])
+
 try:
 	resource_container_env.AppendUnique(LIBPATH = [os.environ['JAVA_LIB']])
 except KeyError:
 	print ''
-	
+
 
 resource_container_env.PrependUnique(LIBS = ['rcs_server', 'rcs_common', 'oc','octbstack', 'oc_logger', 'oc_logger_core', 'connectivity_abstraction'])
-resource_container_env.AppendUnique(LIBS = ['dl'])	
+resource_container_env.AppendUnique(LIBS = ['dl'])
 
 if int(containerJavaSupport):
-	try:	
+	try:
 		print 'Java Lib: ', os.environ['JAVA_LIB']
-		resource_container_env.AppendUnique(LIBS = ['jvm'])		
+		resource_container_env.AppendUnique(LIBS = ['jvm'])
 	except KeyError:
 		print ''
 
 ######################################################################
 # Source files and Targets
 ######################################################################
-res_container_src = ['src/BaseActivator.cpp','src/BundleActivator.cpp','src/RCSBundleInfo.cpp', 
+res_container_src = ['src/BaseActivator.cpp','src/BundleActivator.cpp','src/RCSBundleInfo.cpp',
 	'src/BundleInfoInternal.cpp', 'src/BundleResource.cpp', 'src/Configuration.cpp', 'src/JavaBundleResource.cpp', 'src/ProtocolBridgeResource.cpp',
-	'src/ProtocolBridgeConnector.cpp', 'src/RCSResourceContainer.cpp', 'src/ResourceContainerBundleAPI.cpp', 'src/ResourceContainerImpl.cpp', 
+	'src/ProtocolBridgeConnector.cpp', 'src/RCSResourceContainer.cpp', 'src/ResourceContainerBundleAPI.cpp', 'src/ResourceContainerImpl.cpp',
 	'src/SoftSensorResource.cpp']
-	
+
 res_container_static = resource_container_env.StaticLibrary('rcs_container', res_container_src)
 res_container_shared = resource_container_env.SharedLibrary('rcs_container', res_container_src)
 
@@ -127,24 +127,24 @@ resource_container_env.InstallTarget([res_container_static,res_container_shared]
 ######################################################################
 # build soft sensor sample bundle
 ######################################################################
+if target_os in ['linux', 'android']:
+	ss_resource_bundle_env = resource_container_env.Clone()
+	ss_resource_bundle_env.AppendUnique(CCFLAGS = ['-fPIC'])
 
-ss_resource_bundle_env = resource_container_env.Clone()
-ss_resource_bundle_env.AppendUnique(CCFLAGS = ['-fPIC'])
+	SS_RESOURCE_BUNDLE_DIR = 'examples/SoftSensorSampleBundle/'
+	ss_resource_bundle_env.AppendUnique(CPPPATH = [
+			SS_RESOURCE_BUNDLE_DIR + 'include',
+			'include/',
+			'../../include',
+			])
 
-SS_RESOURCE_BUNDLE_DIR = 'examples/SoftSensorSampleBundle/'
-ss_resource_bundle_env.AppendUnique(CPPPATH = [
-		SS_RESOURCE_BUNDLE_DIR + 'include',
-		'include/',
-		'../../include',
-		])		
-		
-ss_resource_bundle_env.PrependUnique(LIBS = ['rcs_container'])
+	ss_resource_bundle_env.PrependUnique(LIBS = ['rcs_container'])
 
-ss_resource_bundle_src = [ Glob(SS_RESOURCE_BUNDLE_DIR + 'src/*.cpp')]
+	ss_resource_bundle_src = [ Glob(SS_RESOURCE_BUNDLE_DIR + 'src/*.cpp')]
 
-SoftSensorBundle = ss_resource_bundle_env.SharedLibrary('SoftSensorBundle', ss_resource_bundle_src)
-ss_resource_bundle_env.InstallTarget(SoftSensorBundle, 'libSoftSensorBundle')
-
+	SoftSensorBundle = ss_resource_bundle_env.SharedLibrary('SoftSensorBundle', ss_resource_bundle_src)
+	ss_resource_bundle_env.InstallTarget(SoftSensorBundle, 'libSoftSensorBundle')
+	
 ######################################################################
 # build hue sample bundle
 ######################################################################
@@ -154,35 +154,36 @@ if not conf2.CheckLib('curl'):
 	print '''X
 *********************************** Error *************************************
 * Cannot build hue sample. Please install libcurl.
-* Example (Ubuntu): 
+* Example (Ubuntu):
 *	sudo apt-get install libcurl4-openssl-dev
 *	sudo ldconfig
 * Hint: check with pkg-config --libs libcurl and clear scons cache.
 * Skipping hue sample build.
-*******************************************************************************	
+*******************************************************************************
 	'''
 else:
 	hue_resource_bundle_env = resource_container_env.Clone()
 	hue_resource_bundle_env.AppendUnique(CCFLAGS = ['-fPIC'])
-	
+
 	HUE_RESOURCE_BUNDLE_DIR = 'examples/HueSampleBundle/'
 	hue_resource_bundle_env.AppendUnique(CPPPATH = [
 			HUE_RESOURCE_BUNDLE_DIR + 'include',
 			'include/'
-			])		
-		
+			])
+
 	hue_resource_bundle_env.PrependUnique(LIBS = ['curl', 'rcs_container'])
-		
+
 	hue_resource_bundle_src = [ Glob(HUE_RESOURCE_BUNDLE_DIR + 'src/*.cpp')]
-	
+
 	HueBundle = hue_resource_bundle_env.SharedLibrary('HueBundle', hue_resource_bundle_src)
 	hue_resource_bundle_env.InstallTarget(HueBundle, 'libHueBundle')
-	lib_env = conf2.Finish()
+lib_env = conf2.Finish()
 
 ######################################################################
 # build resource container unit tests
 ######################################################################
-SConscript('unittests/SConscript')
+if target_os == 'linux':
+	SConscript('unittests/SConscript')
 
 ######################################################################
 # Build Container Sample
@@ -196,7 +197,7 @@ Ignore("examples/ResourceContainerConfig.xml", "examples/ResourceContainerConfig
 
 containersample_env.AppendUnique(LIBS = ['rcs_container'])
 
-containersampleapp_src =  ['src/ContainerSample.cpp']
+containersampleapp_src =  ['examples/ContainerSample.cpp']
 containersampleapp = containersample_env.Program('ContainerSample',containersampleapp_src)
 Alias("containersample", containersampleapp)
 env.AppendTarget('containersample')
@@ -207,7 +208,7 @@ env.AppendTarget('containersample')
 containersampleclient_env = resource_container_env.Clone();
 
 containersample_env.AppendUnique(LIBS = ['rcs_container'])
-containersampleclient_src =  ['src/ContainerSampleClient.cpp']
+containersampleclient_src =  ['examples/ContainerSampleClient.cpp']
 containersampleclientapp = containersample_env.Program('ContainerSampleClient',containersampleclient_src)
 Alias("containersampleclient", containersampleclientapp)
 env.AppendTarget('containersampleclient')

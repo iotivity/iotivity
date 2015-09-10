@@ -42,6 +42,7 @@
 #include <string.h>
 #include <iostream>
 
+using namespace std;
 using namespace OIC::Service;
 
 HueConnector::HueConnector()
@@ -102,7 +103,7 @@ std::string HueConnector::transmit(std::string target, std::string payload)
     return "";
 }
 
-static int writer(char* data, size_t size, size_t nmemb, std::string *buffer_in)
+static int writer(char *data, size_t size, size_t nmemb, std::string *buffer_in)
 {
     buffer_in->append(data, size * nmemb);
     return size * nmemb;

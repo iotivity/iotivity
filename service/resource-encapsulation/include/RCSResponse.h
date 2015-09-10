@@ -35,108 +35,79 @@ namespace OIC
 {
     namespace Service
     {
-        //forward declaration of classes
         class RCSResourceAttributes;
 
         class RequestHandler;
         class SetRequestHandler;
 
         /**
-         * @class   RCSGetResponse
-         * @brief   This class provides APIs to create the response for the recieved Get request.
+         * This class provides factory methods to create the response for a received get request.
+         * The response consists of a result code, an error code and result attributes.
+         *
+         * @see RCSResourceObject
          */
         class RCSGetResponse
         {
         public:
             /**
-             * Create RCSGetResponse with default response.
+             * Creates a default RCSGetResponse.
+             * The response will have OC_EH_OK for the result and 200 for the errorCode.
+             * The attributes of RCSResourceObject will be set as the result attributes.
              *
-             * @return RCSGetResponse - instance of RCSGetResponse
              */
             static RCSGetResponse defaultAction();
 
             /**
-             * Create RCSGetResponse using OCEntityHandlerResult value and error code provided.
+             * Creates a RCSGetResponse with a result and error code passed.
+             * The attributes of the RCSResourceObject will be set as the result attributes.
              *
-             * @param result -OCEntityHandlerResult
+             * @param result The response result.
+             * @param errorCode The error code to set in response.
              *
-             * @param errorCode - error code to set in response
-             *
-             * @return RCSGetResponse - instance of RCSGetResponse
-             *
-             * NOTE : OCEntityHandlerResult is defined in octypes.h
              */
-            static RCSGetResponse create(const OCEntityHandlerResult &result, int errorCode);
+            static RCSGetResponse create(const OCEntityHandlerResult& result, int errorCode);
 
             /**
-             * Create RCSGetResponse using resource attributes.
+             * Creates a RCSGetResponse with custom attributes.
+             * This sends the passed attributes as the result attributes
+             * instead of the one the RCSResourceObject holds.
              *
-             * @param attrs -RCSResourceAttributes to set
-             *
-             * @return RCSGetResponse - instance of RCSGetResponse
-             *
-             * @see RCSResourceAttributes
-             *
-             * NOTE : RCSResourceAttributes is defined in RCSResourceAttributes.h
-             */
-            static RCSGetResponse create(const RCSResourceAttributes &attrs);
-            /**
-             * Create RCSGetResponse using RCSResourceAttributes, OCEntityHandlerResult and error code.
-             *
-             * @param attrs - RCSResourceAttributes to set
-             *
-             * @param result - OCEntityHandlerResult
-             *
-             * @param errorCode - error code for response
-             *
-             * @return RCSGetResponse - instance of RCSGetResponse
+             * @param attrs The attributes to set.
              *
              * @see RCSResourceAttributes
              *
-             *NOTE : OCEntityHandlerResult is defined in octypes.h.
-             *           RCSResourceAttributes is defined in RCSResourceAttributes.h.
              */
-            static RCSGetResponse create(const RCSResourceAttributes &attrs,
-                    const OCEntityHandlerResult &result, int errorCode);
+            static RCSGetResponse create(const RCSResourceAttributes& attrs);
 
             /**
-             * Create RCSGetResponse using RCSResourceAttributes value.
-             *
-             * @param attrs - RCSResourceAttributes to set
-             *
-             * @return RCSGetResponse - instance of RCSGetResponse
-             *
-             * @see RCSResourceAttributes
-             *
-             *NOTE : RCSResourceAttributes is defined in RCSResourceAttributes.h.
+             * @override
              */
-            static RCSGetResponse create(RCSResourceAttributes &&attrs);
-            /**
-             * Create RCSGetResponse using RCSResourceAttributes value.
-             *
-             * @param attrs - RCSResourceAttributes to set
-             *
-             * @param result - OCEntityHandlerResult
-             *
-             * @param errorCode - error code for response
-             *
-             * @return RCSGetResponse - instance of RCSGetResponse
-             *
-             * @see RCSResourceAttributes
-             *
-             *NOTE : OCEntityHandlerResult is defined in octypes.h.
-             *           RCSResourceAttributes is defined in RCSResourceAttributes.h.
-             */
-            static RCSGetResponse create(RCSResourceAttributes &&attrs,
-                    const OCEntityHandlerResult &result, int errorCode);
+            static RCSGetResponse create(RCSResourceAttributes&& attrs);
 
             /**
-             * Get the request handler.
+             * Creates a RCSGetResponse with a result and error code passed.
+             * This sends the passed attributes as the result attributes
+             * instead of the one the RCSResourceObject holds.
              *
-             * @return RequestHandler - RequestHandler pointer.
+             * @param attrs The attributes to set.
+             * @param result The response result.
+             * @param errorCode The error code for response.
+             *
+             * @see RCSResourceAttributes
              *
              */
+            static RCSGetResponse create(const RCSResourceAttributes& attrs,
+                    const OCEntityHandlerResult& result, int errorCode);
+
+            /**
+             * @override
+             */
+            static RCSGetResponse create(RCSResourceAttributes&& attrs,
+                    const OCEntityHandlerResult& result, int errorCode);
+
+            //! @cond
             RequestHandler* getHandler() const;
+            //! @endcond
 
         private:
             RCSGetResponse(std::shared_ptr< RequestHandler >&&);
@@ -146,176 +117,160 @@ namespace OIC
         };
 
         /**
-         * @class   RCSSetResponse
-         * @brief   This class provides API to create a response for received Set request.
+         * This class provides factory methods to create the response for a received set request.
+         * The response consists of a result code, an error code and result attributes.
+         *
+         * AcceptanceMethod provides ways how to handle attributes from a request.
+         *
+         * @see RCSResourceObject
          */
         class RCSSetResponse
         {
         public:
             /**
-             * AcceptanceMethod enum provides values for different acceptance method policy to be
-             * used in setting response.
+             * Options for handling a set request.
+             *
+             * This overrides SetRequestHandlerPolicy.
+             *
+             * @see SetRequestHandlerPolicy
+             *
              */
             enum class AcceptanceMethod
             {
-                DEFAULT, ACCEPT, IGNORE
+                /**
+                 * Follow SetRequestHandlerPolicy of the RCSResourceObject.
+                 */
+                DEFAULT,
+
+                /**
+                 * Accept the request attributes even if there is an unknown key or mismatched type.
+                 */
+                ACCEPT,
+
+                /**
+                 * Ignore the request attributes.
+                 */
+                IGNORE
             };
 
             /**
-             * Create default RCSSetResponse with default response.
+             * Creates a default RCSSetResponse that has AcceptanceMethod::DEFAULT.
+             * The response will have OC_EH_OK for the result and 200 for the errorCode.
+             * The attributes of RCSResourceObject will be set as the result attributes.
              *
-             * @return RCSSetResponse - instance of RCSSetResponse
              */
             static RCSSetResponse defaultAction();
 
             /**
-             * Internally it invokes the defaultAction() API.
-             *  It sets the AcceptanceMethod as ACCEPT.
+             * Creates a default RCSSetResponse that has AcceptanceMethod::ACCEPT.
+             * The response will have OC_EH_OK for the result and 200 for the errorCode.
+             * The attributes of RCSResourceObject will be set as the result attributes.
              *
-             * @return RCSSetResponse - instance of RCSSetResponse
-             *
-             * @see AcceptanceMethod
              */
             static RCSSetResponse accept();
-            /**
-             * Internally it invokes the create(const OCEntityHandlerResult&, int errorCode) API.
-             * It sets the AcceptanceMethod as ACCEPT.
-             *
-             * @param result - OCEntityHandlerResult value.
-             *
-             * @param errorCode - error code for the response
-             *
-             * @return RCSSetResponse - instance of RCSSetResponse
-             *
-             * @see AcceptanceMethod
-             *
-             *NOTE : OCEntityHandlerResult is defined in octypes.h
-             */
-            static RCSSetResponse accept(const OCEntityHandlerResult &result, int errorCode);
 
             /**
-             * Internally it invokes the defaultAction() API.
-             * It sets the AcceptanceMethod as IGNORE.
+             * Creates a RCSSetResponse that has AcceptanceMethod::ACCEPT
+             * with a result and error code passed.
+             * The attributes of the RCSResourceObject will be set as the result attributes.
              *
-             * @return RCSSetResponse - instance of RCSSetResponse.
+             * @param result The response result.
+             * @param errorCode The error code to set in response.
              *
-             *  @see AcceptanceMethod
+             */
+            static RCSSetResponse accept(const OCEntityHandlerResult& result, int errorCode);
+
+            /**
+             * Creates a default RCSSetResponse that has AcceptanceMethod::IGNORE.
+             * The response will have OC_EH_OK for the result and 200 for the errorCode.
+             * The attributes of RCSResourceObject will be set as the result attributes.
+             *
              */
             static RCSSetResponse ignore();
-            /**
-             * Internaly it invokes the create(const OCEntityHandlerResult&, int errorCode) API.
-             * It sets the AcceptanceMethod as IGNORE.
-             *
-             * @param result - OCEntityHandlerResult value.
-             *
-             * @param errorCode - error code for the response.
-             *
-             * @return RCSSetResponse - instance of RCSSetResponse.
-             *
-             *  @see AcceptanceMethod
-             *
-             *NOTE : OCEntityHandlerResult is defined in octypes.h
-             */
-            static RCSSetResponse ignore(const OCEntityHandlerResult &result, int errorCode);
 
             /**
-             * Create RCSSetResponse with OCEntityHandlerResult and errorCode.
+             * Creates a RCSSetResponse that has AcceptanceMethod::IGNORE
+             * with a result and error code passed.
+             * The attributes of the RCSResourceObject will be set as the result attributes.
              *
-             * @param result - OCEntityHandlerResult value
+             * @param result The response result.
+             * @param errorCode The error code to set in response.
              *
-             * @param errorCode - error code for the response
-             *
-             * @return RCSSetResponse - instance of RCSSetResponse
-             *
-             *NOTE : OCEntityHandlerResult is defined in octypes.h
              */
-            static RCSSetResponse create(const OCEntityHandlerResult &result, int errorCode);
+            static RCSSetResponse ignore(const OCEntityHandlerResult& result, int errorCode);
 
             /**
-             * Create RCSSetResponse with RCSResourceAttributes.
+             * Creates a RCSSetResponse that has AcceptanceMethod::DEFAULT
+             * with a result and error code passed.
+             * The attributes of the RCSResourceObject will be set as the result attributes.
              *
-             * @param attrs - RCSResourceAttributes to set
+             * @param result The response result.
+             * @param errorCode The error code to set in response.
              *
-             * @return RCSSetResponse - instance of RCSSetResponse
-             *
-             * @see RCSResourceAttributes
              */
-            static RCSSetResponse create(const RCSResourceAttributes &attrs);
+            static RCSSetResponse create(const OCEntityHandlerResult& result, int errorCode);
+
             /**
-             * Create RCSSetResponse with RCSResourceAttributes, OCEntityHandlerResult and errorCode.
+             * Creates a RCSSetResponse that has AcceptanceMethod::DEFAULT with custom attributes.
+             * This sends the passed attributes as the result attributes
+             * instead of the one the RCSResourceObject holds.
              *
-             * @param attrs - RCSResourceAttributes to set.
-             *
-             * @param result - OCEntityHandlerResult value
-             *
-             * @param errorCode - error code for the response
-             *
-             * @return RCSSetResponse - instance of RCSSetResponse
+             * @param attrs The attributes to set.
              *
              * @see RCSResourceAttributes
              *
-             *NOTE : OCEntityHandlerResult is defined in octypes.h.
              */
-            static RCSSetResponse create(const RCSResourceAttributes &attrs,
-                    const OCEntityHandlerResult &result, int errorCode);
+            static RCSSetResponse create(const RCSResourceAttributes& attrs);
 
             /**
-             * Create RCSSetResponse with RCSResourceAttributes.
-             *
-             * @param attrs - RCSResourceAttributes value to set
-             *
-             * @return RCSSetResponse - instance of RCSSetResponse
-             *
-             * @see RCSResourceAttributes
+             * @override
              */
             static RCSSetResponse create(RCSResourceAttributes &&attrs);
+
             /**
-             * Create RCSSetResponse with RCSResourceAttributes, OCEntityHandlerResult and errorCode.
+             * Creates a RCSSetResponse with a result and error code passed.
+             * This sends the passed attributes as the result attributes
+             * instead of the one the RCSResourceObject holds.
              *
-             * @param attrs - RCSResourceAttributes value to set
-             *
-             * @param result - OCEntityHandlerResult value
-             *
-             * @param errorCode - error code for the response
-             *
-             * @return RCSSetResponse - instance of RCSSetResponse
+             * @param attrs The attributes to set.
+             * @param result The response result.
+             * @param errorCode The error code for response.
              *
              * @see RCSResourceAttributes
              *
-             *NOTE : OCEntityHandlerResult is defined in octypes.h.
+             */
+            static RCSSetResponse create(const RCSResourceAttributes& attrs,
+                    const OCEntityHandlerResult& result, int errorCode);
+
+
+            /**
+             * @override
              */
             static RCSSetResponse create(RCSResourceAttributes &&attrs,
                     const OCEntityHandlerResult &result, int errorCode);
 
-            /**
-             * API to get the set request handler.
-             *
-             * @return SetRequestHandler - pointer to SetRequestHandler.
-             *
-             */
+
+            //! @cond/
             SetRequestHandler* getHandler() const;
+            //! @endcond
 
             /**
-             * API to get the acceptance method of the  RCSSetResponse.
-             *
-             * @return AcceptanceMethod - acceptance methods enum value.
-             *
-             * @see AcceptanceMethod
+             * Returns the acceptance method.
              *
              */
             AcceptanceMethod getAcceptanceMethod() const;
 
             /**
-             * API to get the acceptance method of the  RCSSetResponse.
+             * Sets the acceptance method for the RCSSetResponse.
              *
-             * @param method - AcceptanceMethod value to set
+             * @param method AcceptanceMethod value to set
              *
-             * @return RCSSetResponse - reference to RCSSetResponse
+             * @return The reference to this RCSSetResponse
              *
              * @see AcceptanceMethod
              *
              */
-            RCSSetResponse &setAcceptanceMethod(AcceptanceMethod method);
+            RCSSetResponse& setAcceptanceMethod(AcceptanceMethod method);
 
         private:
             RCSSetResponse(std::shared_ptr< SetRequestHandler >&&);

@@ -29,25 +29,22 @@
 #include "logger.h"
 #include "occlientbasicops.h"
 #include "ocpayload.h"
+#include "payload_logging.h"
 #include "oic_string.h"
 #include "common.h"
 
 #define TAG "occlientbasicops"
-static int UNICAST_DISCOVERY = 0;
-static int TEST_CASE = 0;
-static int CONN_TYPE = 0;
+static int UnicastDiscovery = 0;
+static int TestCase = 0;
+static int ConnType = 0;
 
-static int IPV4_ADDR_SIZE = 24;
-static char UNICAST_DISCOVERY_QUERY[] = "coap://%s/oic/res";
-static char MULTICAST_DISCOVERY_QUERY[] = "/oic/res";
+static char DISCOVERY_QUERY[] = "%s/oic/res";
 OCConnectivityType discoveryReqConnType = CT_ADAPTER_IP;
+static OCDevAddr endpoint;
 
-static std::string coapServerIP;
-static std::string coapServerPort;
 static std::string coapServerResource;
 static int coapSecureResource;
 static OCConnectivityType ocConnType;
-
 
 //Secure Virtual Resource database for Iotivity Client application
 //It contains Client's Identity and the PSK credentials
@@ -91,12 +88,15 @@ static void PrintUsage()
             " Initiate Nonconfirmable Get/Put/Post Requests");
     OC_LOG(INFO, TAG, "-t 3 : Discover Resources and Initiate Confirmable Get/Put/Post Requests");
     OC_LOG(INFO, TAG, "-c 0 : Default auto-selection");
-    OC_LOG(INFO, TAG, "-c 1 : IPv4 Connectivity Type");
+    OC_LOG(INFO, TAG, "-c 1 : IP Connectivity Type");
 }
 
 OCStackResult InvokeOCDoResource(std::ostringstream &query,
-        OCMethod method, OCQualityOfService qos,
-        OCClientResponseHandler cb, OCHeaderOption * options, uint8_t numOptions)
+                                 OCMethod method,
+                                 const OCDevAddr *dest,
+                                 OCQualityOfService qos,
+                                 OCClientResponseHandler cb,
+                                 OCHeaderOption * options, uint8_t numOptions)
 {
     OCStackResult ret;
     OCCallbackData cbData;
@@ -105,7 +105,7 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
     cbData.context = NULL;
     cbData.cd = NULL;
 
-    ret = OCDoResource(NULL, method, query.str().c_str(), 0,
+    ret = OCDoResource(NULL, method, query.str().c_str(), dest,
             (method == OC_REST_PUT || method == OC_REST_POST) ? putPayload() : NULL,
             ocConnType, qos, &cbData, options, numOptions);
 
@@ -117,33 +117,33 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
     return ret;
 }
 
-OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse)
+OCStackApplicationResult putReqCB(void*, OCDoHandle, OCClientResponse * clientResponse)
 {
     OC_LOG(INFO, TAG, "Callback Context for PUT recvd successfully");
 
     if(clientResponse)
     {
         OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
-        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
-        OC_LOG(INFO, TAG, PCF("=============> Put Response"));
+        OC_LOG_PAYLOAD(INFO, clientResponse->payload);
+        OC_LOG(INFO, TAG, ("=============> Put Response"));
     }
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-OCStackApplicationResult postReqCB(void *ctx, OCDoHandle handle, OCClientResponse *clientResponse)
+OCStackApplicationResult postReqCB(void *, OCDoHandle, OCClientResponse *clientResponse)
 {
     OC_LOG(INFO, TAG, "Callback Context for POST recvd successfully");
 
     if(clientResponse)
     {
         OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
-        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
-        OC_LOG(INFO, TAG, PCF("=============> Post Response"));
+        OC_LOG_PAYLOAD(INFO, clientResponse->payload);
+        OC_LOG(INFO, TAG, ("=============> Post Response"));
     }
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse)
+OCStackApplicationResult getReqCB(void*, OCDoHandle, OCClientResponse * clientResponse)
 {
     OC_LOG(INFO, TAG, "Callback Context for GET query recvd successfully");
 
@@ -151,14 +151,14 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse
     {
         OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
         OC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
-        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
-        OC_LOG(INFO, TAG, PCF("=============> Get Response"));
+        OC_LOG_PAYLOAD(INFO, clientResponse->payload);
+        OC_LOG(INFO, TAG, ("=============> Get Response"));
     }
     return OC_STACK_DELETE_TRANSACTION;
 }
 
 // This is a function called back when a device is discovered
-OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
+OCStackApplicationResult discoveryReqCB(void*, OCDoHandle,
         OCClientResponse * clientResponse)
 {
     OC_LOG(INFO, TAG, "Callback Context for DISCOVER query recvd successfully");
@@ -173,13 +173,14 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
 
         if (clientResponse->result == OC_STACK_OK)
         {
-            OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+            OC_LOG_PAYLOAD(INFO, clientResponse->payload);
 
             ocConnType = clientResponse->connType;
+            endpoint = clientResponse->devAddr;
 
             if (parseClientResponse(clientResponse) != -1)
             {
-                switch(TEST_CASE)
+                switch(TestCase)
                 {
                     case TEST_NON_CON_OP:
                         InitGetRequest(OC_LOW_QOS);
@@ -196,7 +197,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
         }
     }
 
-    return (UNICAST_DISCOVERY) ? OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION ;
+    return (UnicastDiscovery) ? OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION ;
 
 }
 
@@ -204,9 +205,9 @@ int InitPutRequest(OCQualityOfService qos)
 {
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
-    query << (coapSecureResource ? "coaps://" : "coap://") << coapServerIP
-        << ":" << coapServerPort  << coapServerResource;
-    return (InvokeOCDoResource(query, OC_REST_PUT,
+    query << coapServerResource;
+    endpoint.flags = (OCTransportFlags)(endpoint.flags|OC_SECURE);
+    return (InvokeOCDoResource(query, OC_REST_PUT, &endpoint,
             ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS), putReqCB, NULL, 0));
 }
 
@@ -215,11 +216,11 @@ int InitPostRequest(OCQualityOfService qos)
     OCStackResult result;
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
-    query << (coapSecureResource ? "coaps://" : "coap://") << coapServerIP
-        << ":" << coapServerPort << coapServerResource;
+    query << coapServerResource;
+    endpoint.flags = (OCTransportFlags)(endpoint.flags|OC_SECURE);
 
     // First POST operation (to create an LED instance)
-    result = InvokeOCDoResource(query, OC_REST_POST,
+    result = InvokeOCDoResource(query, OC_REST_POST, &endpoint,
             ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS),
             postReqCB, NULL, 0);
     if (OC_STACK_OK != result)
@@ -229,7 +230,7 @@ int InitPostRequest(OCQualityOfService qos)
     }
 
     // Second POST operation (to create an LED instance)
-    result = InvokeOCDoResource(query, OC_REST_POST,
+    result = InvokeOCDoResource(query, OC_REST_POST, &endpoint,
             ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS),
             postReqCB, NULL, 0);
     if (OC_STACK_OK != result)
@@ -238,7 +239,7 @@ int InitPostRequest(OCQualityOfService qos)
     }
 
     // This POST operation will update the original resourced /a/led
-    return (InvokeOCDoResource(query, OC_REST_POST,
+    return (InvokeOCDoResource(query, OC_REST_POST, &endpoint,
                 ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS),
                 postReqCB, NULL, 0));
 }
@@ -247,45 +248,38 @@ int InitGetRequest(OCQualityOfService qos)
 {
     OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
-    query << (coapSecureResource ? "coaps://" : "coap://") << coapServerIP
-        << ":" << coapServerPort << coapServerResource;
+    query << coapServerResource;
+    endpoint.flags = (OCTransportFlags)(endpoint.flags|OC_SECURE);
 
-    return (InvokeOCDoResource(query, OC_REST_GET, (qos == OC_HIGH_QOS)?
-            OC_HIGH_QOS:OC_LOW_QOS, getReqCB, NULL, 0));
+    return (InvokeOCDoResource(query, OC_REST_GET, &endpoint,
+                ((qos == OC_HIGH_QOS)?  OC_HIGH_QOS:OC_LOW_QOS),
+                getReqCB, NULL, 0));
 }
 
 int InitDiscovery()
 {
     OCStackResult ret;
-    OCMethod method;
     OCCallbackData cbData;
-    char szQueryUri[MAX_URI_LENGTH] = { 0 };
+    char queryUri[200];
+    char ipaddr[100] = { '\0' };
 
-    if (UNICAST_DISCOVERY)
+    if (UnicastDiscovery)
     {
-        char ipv4addr[IPV4_ADDR_SIZE];
-        OC_LOG(INFO, TAG, "Enter IPv4 address:port of the Server hosting secure resource"\
-                "(Ex: 11.12.13.14:1234)\n");
-        if (fgets(ipv4addr, IPV4_ADDR_SIZE, stdin))
+        OC_LOG(INFO, TAG, "Enter IP address (with optional port) of the Server hosting resource\n");
+        OC_LOG(INFO, TAG, "IPv4: 192.168.0.15:45454\n");
+        OC_LOG(INFO, TAG, "IPv6: [fe80::20c:29ff:fe1b:9c5]:45454\n");
+
+        if (fgets(ipaddr, sizeof (ipaddr), stdin))
         {
-            //Strip newline char from ipv4addr
-            StripNewLineChar(ipv4addr);
-            snprintf(szQueryUri, sizeof(szQueryUri), UNICAST_DISCOVERY_QUERY, ipv4addr);
+            StripNewLineChar(ipaddr); //Strip newline char from ipaddr
         }
         else
         {
-            OC_LOG(ERROR, TAG, "!! Bad input for IPV4 address. !!");
+            OC_LOG(ERROR, TAG, "!! Bad input for IP address. !!");
             return OC_STACK_INVALID_PARAM;
         }
-        method = OC_REST_GET;
     }
-    else
-    {
-        //Send discovery request on Wifi and Ethernet interface
-        discoveryReqConnType = CT_DEFAULT;
-        OICStrcpy(szQueryUri, sizeof(szQueryUri), MULTICAST_DISCOVERY_QUERY);
-        method = OC_REST_DISCOVER;
-    }
+    snprintf(queryUri, sizeof (queryUri), DISCOVERY_QUERY, ipaddr);
 
     cbData.cb = discoveryReqCB;
     cbData.context = NULL;
@@ -293,12 +287,11 @@ int InitDiscovery()
 
     /* Start a discovery query*/
     OC_LOG_V(INFO, TAG, "Initiating %s Resource Discovery : %s\n",
-        (UNICAST_DISCOVERY) ? "Unicast" : "Multicast",
-        szQueryUri);
+        (UnicastDiscovery) ? "Unicast" : "Multicast",
+        queryUri);
 
-    ret = OCDoResource(NULL, method, szQueryUri, 0, 0,
-            discoveryReqConnType, OC_LOW_QOS,
-            &cbData, NULL, 0);
+    ret = OCDoResource(NULL, OC_REST_DISCOVER, queryUri, 0, 0, CT_DEFAULT,
+                       OC_LOW_QOS, &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "OCStack resource error");
@@ -322,13 +315,13 @@ int main(int argc, char* argv[])
         switch(opt)
         {
             case 'u':
-                UNICAST_DISCOVERY = atoi(optarg);
+                UnicastDiscovery = atoi(optarg);
                 break;
             case 't':
-                TEST_CASE = atoi(optarg);
+                TestCase = atoi(optarg);
                 break;
             case 'c':
-                CONN_TYPE = atoi(optarg);
+                ConnType = atoi(optarg);
                 break;
             default:
                 PrintUsage();
@@ -336,16 +329,16 @@ int main(int argc, char* argv[])
         }
     }
 
-    if ((UNICAST_DISCOVERY != 0 && UNICAST_DISCOVERY != 1) ||
-            (TEST_CASE < TEST_DISCOVER_REQ || TEST_CASE >= MAX_TESTS)||
-            (CONN_TYPE < CT_ADAPTER_DEFAULT || CONN_TYPE >= MAX_CT))
+    if ((UnicastDiscovery != 0 && UnicastDiscovery != 1) ||
+            (TestCase < TEST_DISCOVER_REQ || TestCase >= MAX_TESTS)||
+            (ConnType < CT_ADAPTER_DEFAULT || ConnType >= MAX_CT))
     {
         PrintUsage();
         return -1;
     }
 
 
-    if(CONN_TYPE == CT_ADAPTER_DEFAULT || CONN_TYPE ==  CT_IP)
+    if(ConnType == CT_ADAPTER_DEFAULT || ConnType ==  CT_IP)
     {
         discoveryReqConnType = CT_DEFAULT;
     }
@@ -357,12 +350,7 @@ int main(int argc, char* argv[])
 
 
     // Initialize Persistent Storage for SVR database
-    OCPersistentStorage ps = {};
-    ps.open = client_fopen;
-    ps.read = fread;
-    ps.write = fwrite;
-    ps.close = fclose;
-    ps.unlink = unlink;
+    OCPersistentStorage ps = { client_fopen, fread, fwrite, fclose, unlink };
     OCRegisterPersistentStorageHandler(&ps);
 
     /* Initialize OCStack*/
@@ -400,40 +388,26 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-std::string getPortTBServer(OCClientResponse * clientResponse)
-{
-    if(!clientResponse) return "";
-    std::ostringstream ss;
-    ss << clientResponse->devAddr.port;
-    return ss.str();
-}
-
 int parseClientResponse(OCClientResponse * clientResponse)
 {
     OCResourcePayload* res = ((OCDiscoveryPayload*)clientResponse->payload)->resources;
 
     // Initialize all global variables
     coapServerResource.clear();
-    coapServerPort.clear();
-    coapServerIP.clear();
     coapSecureResource = 0;
 
-    while(res)
+    while (res)
     {
         coapServerResource.assign(res->uri);
         OC_LOG_V(INFO, TAG, "Uri -- %s", coapServerResource.c_str());
 
-        if(res->secure)
+        if (res->secure)
         {
+            endpoint.port = res->port;
             coapSecureResource = 1;
         }
 
         OC_LOG_V(INFO, TAG, "Secure -- %s", coapSecureResource == 1 ? "YES" : "NO");
-
-        std::ostringstream ss;
-        ss << res->port;
-        coapServerPort = ss.str();
-        std::cout<<"PORT: "<<coapServerPort;
 
         // If we discovered a secure resource, exit from here
         if (coapSecureResource)
@@ -442,14 +416,6 @@ int parseClientResponse(OCClientResponse * clientResponse)
         }
 
         res = res->next;
-    }
-
-    coapServerIP = clientResponse->devAddr.addr;
-
-    if(coapServerPort.length() == 0 || coapServerPort == "0")
-    {
-        coapServerPort = getPortTBServer(clientResponse);
-        OC_LOG_V(INFO, TAG, "Hosting Server Port -- %s", coapServerPort.c_str());
     }
 
     return 0;

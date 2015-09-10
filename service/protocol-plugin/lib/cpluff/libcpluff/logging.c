@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  * C-Pluff, a plug-in framework for C
  * Copyright 2007 Johannes Lehtinen
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -23,7 +23,7 @@
 
 /** @file
  * Logging functions
- */ 
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -42,19 +42,19 @@
 
 /// Contains information about installed loggers
 typedef struct logger_t {
-	
+
 	/// Pointer to logger
 	cp_logger_func_t logger;
-	
+
 	/// Pointer to registering plug-in or NULL for the main program
 	cp_plugin_t *plugin;
-	
+
 	/// User data pointer
 	void *user_data;
-	
+
 	/// Minimum severity
 	cp_log_severity_t min_severity;
-	
+
 	/// Selected environment or NULL
 	cp_plugin_env_t *env_selection;
 } logger_t;
@@ -71,7 +71,7 @@ typedef struct logger_t {
 static void update_logging_limits(cp_context_t *context) {
 	lnode_t *node;
 	int nms = CP_LOG_NONE;
-	
+
 	node = list_first(context->env->loggers);
 	while (node != NULL) {
 		logger_t *lh = lnode_get(node);
@@ -100,7 +100,7 @@ CP_C_API cp_status_t cp_register_logger(cp_context_t *context, cp_logger_func_t 
 	cpi_lock_context(context);
 	cpi_check_invocation(context, CPI_CF_LOGGER, __func__);
 	do {
-	
+
 		// Check if logger already exists and allocate new holder if necessary
 		l.logger = logger;
 		if ((node = list_find(context->env->loggers, &l, comp_logger)) == NULL) {
@@ -116,19 +116,19 @@ CP_C_API cp_status_t cp_register_logger(cp_context_t *context, cp_logger_func_t 
 		} else {
 			lh = lnode_get(node);
 		}
-		
+
 		// Initialize or update the logger holder
 		lh->user_data = user_data;
 		lh->min_severity = min_severity;
-		
+
 		// Update global limits
 		update_logging_limits(context);
-		
+
 	} while (0);
 
 	// Report error
 	if (status == CP_ERR_RESOURCE) {
-		cpi_error(context, N_("Logger could not be registered due to insufficient memory."));		
+		cpi_error(context, N_("Logger could not be registered due to insufficient memory."));
 	} else if (cpi_is_logged(context, CP_LOG_DEBUG)) {
 		char owner[64];
 		/* TRANSLATORS: %s is the context owner */
@@ -152,12 +152,12 @@ CP_C_API cp_status_t cp_register_logger(cp_context_t *context, cp_logger_func_t 
 CP_C_API void cp_unregister_logger(cp_context_t *context, cp_logger_func_t logger) {
 	logger_t l;
 	lnode_t *node;
-	
+
 	CHECK_NOT_NULL(context);
 	CHECK_NOT_NULL(logger);
 	cpi_lock_context(context);
 	cpi_check_invocation(context, CPI_CF_LOGGER, __func__);
-	
+
 	l.logger = logger;
 	if ((node = list_find(context->env->loggers, &l, comp_logger)) != NULL) {
 		logger_t *lh = lnode_get(node);
@@ -178,7 +178,7 @@ static void do_log(cp_context_t *context, cp_log_severity_t severity, const char
 	lnode_t *node;
 	const char *apid = NULL;
 
-	assert(cpi_is_context_locked(context));	
+	assert(cpi_is_context_locked(context));
 	if (context->env->in_logger_invocation) {
 		cpi_fatalf(_("Encountered a recursive logging request within a logger invocation."));
 	}
@@ -207,11 +207,11 @@ CP_HIDDEN void cpi_log(cp_context_t *context, cp_log_severity_t severity, const 
 CP_HIDDEN void cpi_logf(cp_context_t *context, cp_log_severity_t severity, const char *msg, ...) {
 	char buffer[256];
 	va_list va;
-	
+
 	assert(context != NULL);
 	assert(msg != NULL);
 	assert(severity >= CP_LOG_DEBUG && severity <= CP_LOG_ERROR);
-		
+
 	va_start(va, msg);
 	vsnprintf(buffer, sizeof(buffer), _(msg), va);
 	va_end(va);
@@ -248,7 +248,7 @@ CP_C_API void cp_log(cp_context_t *context, cp_log_severity_t severity, const ch
 
 CP_C_API int cp_is_logged(cp_context_t *context, cp_log_severity_t severity) {
 	int is_logged;
-	
+
 	CHECK_NOT_NULL(context);
 	cpi_lock_context(context);
 	cpi_check_invocation(context, CPI_CF_LOGGER, __func__);

@@ -22,11 +22,12 @@
 
 #include <iostream>
 
+using namespace std;
 using namespace OIC::Service;
 
 HueLight::HueLight()
 {
-
+    m_connector = nullptr;
 }
 
 HueLight::HueLight(HueConnector *connector, std::string address)
@@ -38,27 +39,32 @@ HueLight::HueLight(HueConnector *connector, std::string address)
 
 HueLight::~HueLight()
 {
-
+    m_connector = nullptr;
 }
 
-void HueLight::initAttributes(){
+void HueLight::initAttributes()
+{
 
     BundleResource::setAttribute("on-off", false);
     BundleResource::setAttribute("dim", 0);
     BundleResource::setAttribute("color", 0);
 }
 
-RCSResourceAttributes& HueLight::getAttributes(){
+RCSResourceAttributes &HueLight::getAttributes()
+{
     return BundleResource::getAttributes();
 }
 
-RCSResourceAttributes::Value HueLight::getAttribute(const std::string& key){
+RCSResourceAttributes::Value HueLight::getAttribute(const std::string &key)
+{
     cout << "HueLight::getAttribute called for " << key <<  " called" << endl;
     return BundleResource::getAttribute(key);
 }
 
-void HueLight::setAttribute(std::string attributeName, RCSResourceAttributes::Value&& value){
-    cout << "HueLight::setAttribute setting " << attributeName << " to " << value.toString() << std::endl;
+void HueLight::setAttribute(std::string attributeName, RCSResourceAttributes::Value &&value)
+{
+    cout << "HueLight::setAttribute setting " << attributeName << " to " << value.toString() <<
+         std::endl;
 
     if (attributeName == "on-off")
     {
@@ -74,7 +80,7 @@ void HueLight::setAttribute(std::string attributeName, RCSResourceAttributes::Va
     if (attributeName == "color")
     {
         // needs conversion *650
-        m_connector->transmit(this->m_address+ "/state", "{\"hue\":" + value.toString()   + "}");
+        m_connector->transmit(this->m_address + "/state", "{\"hue\":" + value.toString()   + "}");
     }
 
     BundleResource::setAttribute(attributeName, std::move(value));

@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  * C-Pluff, a plug-in framework for C
  * Copyright 2007 Johannes Lehtinen
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -40,7 +40,7 @@
  * Defines
  * ---------------------------------------------------------------------*/
 
-// Gettext defines 
+// Gettext defines
 #ifdef HAVE_GETTEXT
 #define _(String) gettext(String)
 #define gettext_noop(String) String
@@ -77,21 +77,21 @@ typedef struct str_list_entry_t str_list_entry_t;
 
 /// A string list container
 struct str_list_t {
-	
+
 	/// The first entry or NULL if empty
 	str_list_entry_t *first;
-	
+
 	/// The last entry or NULL if empty
 	str_list_entry_t *last;
-	
+
 };
 
 /// A holder for a string list entry
 struct str_list_entry_t {
-	
+
 	/// The string
 	const char *str;
-	
+
 	/// Next entry
 	str_list_entry_t *next;
 };
@@ -112,7 +112,7 @@ static int verbosity = 1;
 /**
  * Prints an error message and exits. In quiet mode the error message is
  * not printed.
- * 
+ *
  * @param msg the error message
  */
 CP_GCC_NORETURN static void error(const char *msg) {
@@ -126,7 +126,7 @@ CP_GCC_NORETURN static void error(const char *msg) {
 /**
  * Formats and prints an error message and exits. In quiet mode the error
  * message is not printed.
- * 
+ *
  * @param msg the error message
  */
 CP_GCC_NORETURN static void errorf(const char *msg, ...) {
@@ -142,7 +142,7 @@ CP_GCC_NORETURN static void errorf(const char *msg, ...) {
 
 /**
  * Allocates memory using malloc and checks for failures.
- * 
+ *
  * @param size the amount of memory to allocate
  * @return the allocated memory (always non-NULL)
  */
@@ -228,20 +228,20 @@ static void logger(cp_log_severity_t severity, const char *msg, const char *apid
 			minv = 1;
 			break;
 		default:
-			/* TRANSLATORS: A tag for unknown severity level. */ 
+			/* TRANSLATORS: A tag for unknown severity level. */
 			level = _("UNKNOWN");
 			minv = 1;
 			break;
 	}
 	if (verbosity >= minv) {
 		if (apid != NULL) {
-			/* TRANSLATORS: A formatting string for log messages caused by plug-in activity. */ 
+			/* TRANSLATORS: A formatting string for log messages caused by plug-in activity. */
 			fprintf(stderr, _("C-Pluff: %s: [%s] %s\n"), level, apid, msg);
 		} else {
-			/* TRANSLATORS: A formatting string for log messages caused by loader activity. */ 
+			/* TRANSLATORS: A formatting string for log messages caused by loader activity. */
 			fprintf(stderr, _("C-Pluff: %s: [loader] %s\n"), level, msg);
 		}
-	} 
+	}
 }
 
 /// The main function
@@ -258,13 +258,13 @@ int main(int argc, char *argv[]) {
 #ifdef HAVE_GETTEXT
 	setlocale(LC_ALL, "");
 #endif
-	
+
 	// Initialize the framework
 	if (cp_init() != CP_OK) {
 		error(_("The C-Pluff initialization failed."));
 	}
-	
-	// Set gettext domain 
+
+	// Set gettext domain
 #ifdef HAVE_GETTEXT
 	textdomain(PACKAGE);
 #endif
@@ -272,7 +272,7 @@ int main(int argc, char *argv[]) {
 	// Parse arguments
 	while ((i = getopt(argc, argv, "hc:p:s:vqV")) != -1) {
 		switch (i) {
-			
+
 			// Display help and exit
 			case 'h':
 				print_help();
@@ -287,7 +287,7 @@ int main(int argc, char *argv[]) {
 			case 'p':
 				str_list_append(&lst_plugin_dirs, optarg);
 				break;
-				
+
 			// Add a plug-in to be started
 			case 's':
 				str_list_append(&lst_start, optarg);
@@ -314,7 +314,7 @@ int main(int argc, char *argv[]) {
 				fputs(cp_get_version(), stdout);
 				putchar('\n');
 				exit(0);
-				
+
 			// Unrecognized option
 			default:
 				error(_("Unrecognized option or argument. Try option -h for help."));
@@ -323,26 +323,26 @@ int main(int argc, char *argv[]) {
 
 	// Display startup information
 	if (verbosity >= 1) {
-		
+
 		/* TRANSLATORS: This is a version string displayed on startup. */
 		fprintf(stderr, _("C-Pluff Loader, version %s\n"), PACKAGE_VERSION);
-		
+
 		/* TRANSLATORS: This is a version string displayed on startup.
 		   The first %s is version and the second %s is platform type. */
 		fprintf(stderr, _("C-Pluff Library, version %s for %s\n"),
 			cp_get_version(), cp_get_host_type());
 	}
-	
+
 	// Check arguments
 	if (lst_plugin_dirs.first == NULL && lst_plugin_collections.first == NULL) {
 		error(_("No plug-ins to load. Try option -h for help."));
 	}
-	
+
 	// Create the context
 	if ((context = cp_create_context(NULL)) == NULL) {
 		error(_("Plug-in context creation failed."));
 	}
-	
+
 	// Register logger
 	if (verbosity >= 1) {
 		cp_log_severity_t mv = CP_LOG_DEBUG;
@@ -359,7 +359,7 @@ int main(int argc, char *argv[]) {
 		}
 		cp_register_logger(context, logger, NULL, mv);
 	}
-	
+
 	// Set context arguments
 	ctx_argv = chk_malloc((argc - optind + 2) * sizeof(char *));
 	ctx_argv[0] = "";
@@ -381,11 +381,11 @@ int main(int argc, char *argv[]) {
 		cp_release_info(context, pi);
 	}
 	str_list_clear(&lst_plugin_dirs);
-	
+
 	// Load plug-in collections
 	for (entry = lst_plugin_collections.first; entry != NULL; entry = entry->next) {
 		if (cp_register_pcollection(context, entry->str) != CP_OK) {
-			errorf(_("Failed to register a plug-in collection at path %s."), entry->str); 
+			errorf(_("Failed to register a plug-in collection at path %s."), entry->str);
 		}
 	}
 	if (lst_plugin_collections.first != NULL
@@ -393,7 +393,7 @@ int main(int argc, char *argv[]) {
 		error(_("Failed to load and install plug-ins from plug-in collections."));
 	}
 	str_list_clear(&lst_plugin_collections);
-	
+
 	// Start plug-ins
 	for (entry = lst_start.first; entry != NULL; entry = entry->next) {
 		if (cp_start_plugin(context, entry->str) != CP_OK) {
@@ -407,7 +407,7 @@ int main(int argc, char *argv[]) {
 
 	// Destroy framework
 	cp_destroy();
-	
+
 	// Release context argument data
 	free(ctx_argv);
 

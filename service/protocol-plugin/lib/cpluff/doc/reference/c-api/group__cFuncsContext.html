@@ -17,9 +17,9 @@
 <small>
 [<a class="el" href="group__cFuncs.html">Functions</a>]</small>
 </h1><hr><a name="_details"></a><h2>Detailed Description</h2>
-These functions are used to manage plug-in contexts from the main program perspective. 
+These functions are used to manage plug-in contexts from the main program perspective.
 <p>
-They are not intended to be used by a plug-in runtime. From the main program perspective a plug-in context is a container for installed plug-ins. There can be several plug-in context instances if there are several independent sets of plug-ins. However, different plug-in contexts are not very isolated from each other in practice because the global symbols exported by a plug-in runtime in one context are visible to all plug-ins in all context instances. 
+They are not intended to be used by a plug-in runtime. From the main program perspective a plug-in context is a container for installed plug-ins. There can be several plug-in context instances if there are several independent sets of plug-ins. However, different plug-in contexts are not very isolated from each other in practice because the global symbols exported by a plug-in runtime in one context are visible to all plug-ins in all context instances.
 <p>
 <table border="0" cellpadding="0" cellspacing="0">
 <tr><td></td></tr>
@@ -58,7 +58,7 @@ They are not intended to be used by a plug-in runtime. From the main program per
 <div class="memdoc">
 
 <p>
-Creates a new plug-in context which can be used as a container for plug-ins. 
+Creates a new plug-in context which can be used as a container for plug-ins.
 <p>
 Plug-ins are loaded and installed into a specific context. The main program may have more than one plug-in context but the plug-ins that interact with each other should be placed in the same context. The resources associated with the context are released by calling <a class="el" href="group__cFuncsContext.html#g754ff895992fab0aae81a09c727e5868">cp_destroy_context</a> when the context is not needed anymore. Remaining contexts are automatically destroyed when the plug-in framework is destroyed.<p>
 <dl compact><dt><b>Parameters:</b></dt><dd>
@@ -87,7 +87,7 @@ Plug-ins are loaded and installed into a specific context. The main program may 
 <div class="memdoc">
 
 <p>
-Destroys the specified plug-in context and releases the associated resources. 
+Destroys the specified plug-in context and releases the associated resources.
 <p>
 Stops and uninstalls all plug-ins in the context. The context must not be accessed after calling this function.<p>
 <dl compact><dt><b>Parameters:</b></dt><dd>
@@ -124,7 +124,7 @@ Stops and uninstalls all plug-ins in the context. The context must not be access
 <div class="memdoc">
 
 <p>
-Registers a plug-in collection with a plug-in context. 
+Registers a plug-in collection with a plug-in context.
 <p>
 A plug-in collection is a directory that has plug-ins as its immediate subdirectories. The plug-in context will scan the directory when <a class="el" href="group__cFuncsPlugin.html#ga9603cd8d153b0ce192ac7b6e56779af">cp_scan_plugins</a> is called. Returns <a class="el" href="group__cEnums.html#ggd6a8106d281ffa4b1f43fe8e3effc7da5ffbe0fe80af75e699e4b04909912f7a">CP_OK</a> if the directory has already been registered. A plug-in collection can be unregistered using <a class="el" href="group__cFuncsContext.html#g59817fdae1aeb28dbc7d3dcfc5568c15">cp_unregister_pcollection</a> or <a class="el" href="group__cFuncsContext.html#g0473208ccfde69e0c57ec1f2b4789781">cp_unregister_pcollections</a>.<p>
 <dl compact><dt><b>Parameters:</b></dt><dd>
@@ -163,7 +163,7 @@ A plug-in collection is a directory that has plug-ins as its immediate subdirect
 <div class="memdoc">
 
 <p>
-Unregisters a previously registered plug-in collection from a plug-in context. 
+Unregisters a previously registered plug-in collection from a plug-in context.
 <p>
 Plug-ins already loaded from the collection are not affected. Does nothing if the directory has not been registered. Plug-in collections can be registered using <a class="el" href="group__cFuncsContext.html#g998d8350e64a129101f9da687ff5713b">cp_register_pcollection</a>.<p>
 <dl compact><dt><b>Parameters:</b></dt><dd>
@@ -192,7 +192,7 @@ Plug-ins already loaded from the collection are not affected. Does nothing if th
 <div class="memdoc">
 
 <p>
-Unregisters all plug-in collections from a plug-in context. 
+Unregisters all plug-in collections from a plug-in context.
 <p>
 Plug-ins already loaded are not affected. Plug-in collections can be registered using <a class="el" href="group__cFuncsContext.html#g998d8350e64a129101f9da687ff5713b">cp_register_pcollection</a>.<p>
 <dl compact><dt><b>Parameters:</b></dt><dd>

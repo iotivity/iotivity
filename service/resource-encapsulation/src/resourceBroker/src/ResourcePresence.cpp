@@ -83,7 +83,7 @@ namespace OIC
             = std::unique_ptr<std::list<BrokerRequesterInfoPtr>>
             (new std::list<BrokerRequesterInfoPtr>);
 
-            timeoutHandle = expiryTimer.postTimer(BROKER_SAFE_MILLISECOND, pTimeoutCB);
+            timeoutHandle = expiryTimer.post(BROKER_SAFE_MILLISECOND, pTimeoutCB);
             OC_LOG_V(DEBUG,BROKER_TAG,"initializeResourcePresence::requestGet.\n");
             primitiveResource->requestGet(pGetCB);
 
@@ -208,7 +208,7 @@ namespace OIC
             this->state = _state;
         }
 
-        void ResourcePresence::timeOutCB(unsigned int msg)
+        void ResourcePresence::timeOutCB(unsigned int /*msg*/)
         {
             OC_LOG_V(DEBUG, BROKER_TAG, "timeOutCB()");
             OC_LOG_V(DEBUG, BROKER_TAG, "waiting for terminate getCB\n");
@@ -218,8 +218,7 @@ namespace OIC
             time(&currentTime);
             currentTime += 0L;
 
-            if((receivedTime.load(boost::memory_order_consume) == 0) ||
-              ((receivedTime + BROKER_SAFE_SECOND) > currentTime ))
+            if((receivedTime == 0) || ((receivedTime + BROKER_SAFE_SECOND) > currentTime ))
             {
                 this->isWithinTime = true;
                 return;
@@ -232,18 +231,18 @@ namespace OIC
             pollingCB();
         }
 
-        void ResourcePresence::pollingCB(unsigned int msg)
+        void ResourcePresence::pollingCB(unsigned int /*msg*/)
         {
             OC_LOG_V(DEBUG, BROKER_TAG, "pollingCB().\n");
             if(this->requesterList->size() != 0)
             {
                 this->requestResourceState();
-                timeoutHandle = expiryTimer.postTimer(BROKER_SAFE_MILLISECOND,pTimeoutCB);
+                timeoutHandle = expiryTimer.post(BROKER_SAFE_MILLISECOND,pTimeoutCB);
             }
         }
 
-        void ResourcePresence::getCB(const HeaderOptions &hos,
-                const ResponseStatement& rep, int eCode)
+        void ResourcePresence::getCB(const HeaderOptions & /*hos*/,
+                const ResponseStatement & /*rep*/, int eCode)
         {
             OC_LOG_V(DEBUG, BROKER_TAG, "getCB().\n");
             OC_LOG_V(DEBUG, BROKER_TAG, "waiting for terminate TimeoutCB.\n");
@@ -257,13 +256,13 @@ namespace OIC
 
             if(isWithinTime)
             {
-                expiryTimer.cancelTimer(timeoutHandle);
+                expiryTimer.cancel(timeoutHandle);
                 isWithinTime = true;
             }
 
             if(mode == BROKER_MODE::NON_PRESENCE_MODE)
             {
-                expiryTimer.postTimer(BROKER_SAFE_MILLISECOND,pPollingCB);
+                expiryTimer.post(BROKER_SAFE_MILLISECOND,pPollingCB);
             }
 
         }
@@ -314,10 +313,10 @@ namespace OIC
             OC_LOG_V(DEBUG, BROKER_TAG, "changePresenceMode()\n");
             if(newMode != mode)
             {
-                expiryTimer.cancelTimer(timeoutHandle);
+                expiryTimer.cancel(timeoutHandle);
                 if(newMode == BROKER_MODE::NON_PRESENCE_MODE)
                 {
-                    timeoutHandle = expiryTimer.postTimer(BROKER_SAFE_MILLISECOND,pTimeoutCB);
+                    timeoutHandle = expiryTimer.post(BROKER_SAFE_MILLISECOND,pTimeoutCB);
                     requestResourceState();
                 }
                 mode = newMode;

@@ -707,9 +707,10 @@ public class MainActivity extends Activity {
         } else if (subject.equals(getString(R.string.remote_port))) {
             StringBuilder sb = new StringBuilder();
             String uri = mReqData_ed.getText().toString();
+            sb.append(uri);
             if (null != receivedData && uri.contains("."))
             {
-                sb.append(uri).append(":").append(receivedData);
+                sb.append(":").append(receivedData);
             }
             sb.append(getString(R.string.uri));
             mReqData_ed.setText(sb.toString());

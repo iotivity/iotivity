@@ -37,20 +37,18 @@ extern "C"
 #endif
 
 /**
- * @brief  Send data over RFCOMM connection.
+ * Send data over RFCOMM connection.
  *
- * @param  serverFD         [IN] The RFCOMM connection socket file descriptor.
- * @param  data             [IN] The data needs to be sent.
- * @param  dataLength       [IN] The length of data.
- * @param  sentDataLength   [IN] The length of data which actually sent successful.
+ * @param[in]  serverFD          The RFCOMM connection socket file descriptor.
+ * @param[in]  data              The data needs to be sent.
+ * @param[in]  dataLength        The length of data.
  *
- * @return #CA_STATUS_OK or Appropriate error code
- * @retval #CA_STATUS_OK  Successful
- * @retval #CA_STATUS_INVALID_PARAM  Invalid input argumets
- * @retval #CA_STATUS_FAILED Operation failed
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval ::CA_STATUS_FAILED Operation failed.
  */
-CAResult_t CAEDRSendData(int serverFD, const void *data, uint32_t dataLength,
-                        uint32_t *sentDataLength);
+CAResult_t CAEDRSendData(int serverFD, const void *data, uint32_t dataLength);
 
 #ifdef __cplusplus
 } /* extern "C" */

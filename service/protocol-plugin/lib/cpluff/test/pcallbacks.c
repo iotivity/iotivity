@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  * C-Pluff, a plug-in framework for C
  * Copyright 2007 Johannes Lehtinen
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -35,13 +35,13 @@ void plugincallbacks(void) {
 	cp_plugin_info_t *plugin;
 	int errors;
 	cbc_counters_t *counters;
-	
+
 	ctx = init_context(CP_LOG_ERROR, &errors);
 	cp_set_context_args(ctx, argv);
 	check((plugin = cp_load_plugin_descriptor(ctx, "tmp/install/plugins/callbackcounter", &status)) != NULL && status == CP_OK);
 	check(cp_install_plugin(ctx, plugin) == CP_OK);
 	cp_release_info(ctx, plugin);
-	
+
 	// Start plug-in implicitly by resolving a symbol
 	check((counters = cp_resolve_symbol(ctx, "callbackcounter", "cbc_counters", &status)) != NULL && status == CP_OK);
 	check(counters->create == 1);
@@ -100,7 +100,7 @@ void plugincallbacks(void) {
 	check(counters->stop == 1);
 	// for now 1 but might be 0 in future (delay destroy)
 	check(counters->destroy == 0 || counters->destroy == 1);
-	
+
 	// Uninstall plugin
 	check(cp_uninstall_plugin(ctx, "callbackcounter") == CP_OK);
 	check(counters->create == 1);
@@ -113,7 +113,7 @@ void plugincallbacks(void) {
 
 	cp_destroy();
 	check(errors == 0);
-	
+
 	/* Free the counter data that was intentionally leaked by the plug-in */
 	free(counters);
 }

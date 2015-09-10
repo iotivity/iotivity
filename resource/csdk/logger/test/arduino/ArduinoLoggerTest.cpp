@@ -23,16 +23,16 @@
 #include "ArduinoLoggerTest.h"
 #include "logger.h"
 
-PROGMEM const char tag[] = "Arduino";
-PROGMEM const char msg[] = "Arduino Logger Test";
+#define tag "Arduino"
+#define msg "Arduino Logger Test"
 
-PROGMEM const char debugMsg[] = "this is a DEBUG message";
-PROGMEM const char infoMsg[] = "this is a INFO message";
-PROGMEM const char warningMsg[] = "this is a WARNING message";
-PROGMEM const char errorMsg[] = "this is a ERROR message";
-PROGMEM const char fatalMsg[] = "this is a FATAL message";
+#define debugMsg "this is a DEBUG message"
+#define infoMsg "this is a INFO message"
+#define warningMsg "this is a WARNING message"
+#define errorMsg "this is a ERROR message"
+#define fatalMsg "this is a FATAL message"
 
-PROGMEM const char multiLineMsg[] = "this is a DEBUG message\non multiple\nlines";
+#define multiLineMsg "this is a DEBUG message\non multiple\nlines"
 
 
 //-----------------------------------------------------------------------------

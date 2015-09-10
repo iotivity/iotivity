@@ -32,7 +32,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define TAG  PCF("SRM-PSTAT")
+#define TAG  "SRM-PSTAT"
 
 static OicSecDpom_t gSm = SINGLE_SERVICE_CLIENT_DRIVEN;
 static OicSecPstat_t gDefaultPstat =
@@ -42,7 +42,7 @@ static OicSecPstat_t gDefaultPstat =
     PROVISION_CREDENTIALS | PROVISION_ACLS),   // OicSecDpm_t cm
     (OicSecDpm_t)(TAKE_OWNER | BOOTSTRAP_SERVICE | SECURITY_MANAGEMENT_SERVICES |
     PROVISION_CREDENTIALS | PROVISION_ACLS),   // OicSecDpm_t tm
-    {},                                       // OicUuid_t deviceID
+    {.id = {0}},                              // OicUuid_t deviceID
     SINGLE_SERVICE_CLIENT_DRIVEN,             // OicSecDpom_t om */
     1,                                        // the number of elts in Sms
     &gSm,                                     // OicSecDpom_t *sm
@@ -95,7 +95,7 @@ char * BinToPstatJSON(const OicSecPstat_t * pstat)
 
     cJSON_AddItemToObject(jsonPstat, OIC_JSON_SM_NAME, jsonSmArray = cJSON_CreateArray());
     VERIFY_NON_NULL(TAG, jsonSmArray, INFO);
-    for (int i = 0; i < pstat->smLen; i++)
+    for (size_t i = 0; i < pstat->smLen; i++)
     {
         cJSON_AddItemToArray(jsonSmArray, cJSON_CreateNumber((int )pstat->sm[i]));
     }
@@ -166,7 +166,7 @@ OicSecPstat_t * JSONToPstatBin(const char * jsonStr)
     if (cJSON_Array == jsonObj->type)
     {
         pstat->smLen = cJSON_GetArraySize(jsonObj);
-        int idxx = 0;
+        size_t idxx = 0;
         VERIFY_SUCCESS(TAG, pstat->smLen != 0, ERROR);
         pstat->sm = (OicSecDpom_t*)OICCalloc(pstat->smLen, sizeof(OicSecDpom_t));
         VERIFY_NON_NULL(TAG, pstat->sm, ERROR);
@@ -183,7 +183,7 @@ exit:
     cJSON_Delete(jsonRoot);
     if (OC_STACK_OK != ret)
     {
-        OC_LOG (ERROR, TAG, PCF("JSONToPstatBin failed"));
+        OC_LOG (ERROR, TAG, "JSONToPstatBin failed");
         DeletePstatBinData(pstat);
         pstat = NULL;
     }
@@ -238,11 +238,11 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
             {
                 gPstat->isOp = true;
                 gPstat->cm = NORMAL;
-                OC_LOG (INFO, TAG, PCF("CommitHash is valid and isOp is TRUE"));
+                OC_LOG (INFO, TAG, "CommitHash is valid and isOp is TRUE");
             }
             else
             {
-                OC_LOG (INFO, TAG, PCF("CommitHash is not valid"));
+                OC_LOG (INFO, TAG, "CommitHash is not valid");
             }
         }
         cJSON *omJson = cJSON_GetObjectItem(jsonPstat, OIC_JSON_OM_NAME);
@@ -254,7 +254,7 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
              */
             for(size_t i=0; i< gPstat->smLen; i++)
             {
-                if(gPstat->sm[i] == omJson->valueint)
+                if(gPstat->sm[i] == (unsigned int)omJson->valueint)
                 {
                     gPstat->om = (OicSecDpom_t)omJson->valueint;
                     break;
@@ -277,7 +277,7 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
     //Send payload to request originator
     if(OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL))
     {
-        OC_LOG (ERROR, TAG, PCF("SendSRMResponse failed in HandlePstatPostRequest"));
+        OC_LOG (ERROR, TAG, "SendSRMResponse failed in HandlePstatPostRequest");
     }
     cJSON_Delete(postJson);
     return ehRet;
@@ -290,11 +290,12 @@ OCEntityHandlerResult PstatEntityHandler(OCEntityHandlerFlag flag,
         OCEntityHandlerRequest * ehRequest,
         void *callbackParam)
 {
+    (void)callbackParam;
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
     // This method will handle REST request (GET/POST) for /oic/sec/pstat
     if (flag & OC_REQUEST_FLAG)
     {
-        OC_LOG (INFO, TAG, PCF("Flag includes OC_REQUEST_FLAG"));
+        OC_LOG (INFO, TAG, "Flag includes OC_REQUEST_FLAG");
         switch (ehRequest->method)
         {
             case OC_REST_GET:
@@ -329,7 +330,7 @@ OCStackResult CreatePstatResource()
 
     if (ret != OC_STACK_OK)
     {
-        OC_LOG (FATAL, TAG, PCF("Unable to instantiate pstat resource"));
+        OC_LOG (FATAL, TAG, "Unable to instantiate pstat resource");
         DeInitPstatResource();
     }
     return ret;

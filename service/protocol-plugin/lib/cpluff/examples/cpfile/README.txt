@@ -12,7 +12,7 @@ of file usage in a Linux environment.
   /sbin/init: ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV),
   for GNU/Linux 2.4.1, dynamically linked (uses shared libs), for
   GNU/Linux 2.4.1, stripped
-  
+
   $ file COPYRIGHT.txt
   COPYRIGHT.txt: ASCII English text
 
@@ -85,12 +85,12 @@ Here are couple of examples of using the resulting cpfile application.
   C-Pluff Loader, version 0.1.0
   C-Pluff Library, version 0.1.0 for i686-pc-linux-gnu
   /tmp/testdir: directory
-  
+
   $ cpfile /tmp/test.foo
   C-Pluff Loader, version 0.1.0
   C-Pluff Library, version 0.1.0 for i686-pc-linux-gnu
   /tmp/test.foo: unknown file type
-  
+
   $ cpfile /tmp/test.c
   C-Pluff Loader, version 0.1.0
   C-Pluff Library, version 0.1.0 for i686-pc-linux-gnu
@@ -108,7 +108,7 @@ accordingly.
 
   $ cpfile -q /tmp/test.c
   /tmp/test.c: C source file
-  
+
   $ cpfile -vv /tmp/test.c
   C-Pluff Loader, version 0.1.0
   C-Pluff Library, version 0.1.0 for i686-pc-linux-gnu

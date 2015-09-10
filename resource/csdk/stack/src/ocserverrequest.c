@@ -36,7 +36,7 @@
 // Module Name
 #define VERIFY_NON_NULL(arg) { if (!arg) {OC_LOG(FATAL, TAG, #arg " is NULL"); goto exit;} }
 
-#define TAG  PCF("ocserverrequest")
+#define TAG  "ocserverrequest"
 
 static struct OCServerRequest * serverRequestList = NULL;
 static struct OCServerResponse * serverResponseList = NULL;
@@ -66,7 +66,7 @@ static OCStackResult AddServerResponse (OCServerResponse ** response, OCRequestH
     serverResponse->requestHandle = requestHandle;
 
     *response = serverResponse;
-    OC_LOG(INFO, TAG, PCF("Server Response Added!!"));
+    OC_LOG(INFO, TAG, "Server Response Added!!");
     LL_APPEND (serverResponseList, serverResponse);
     return OC_STACK_OK;
 
@@ -93,7 +93,7 @@ static void DeleteServerRequest(OCServerRequest * serverRequest)
         OICFree(serverRequest->requestToken);
         OICFree(serverRequest);
         serverRequest = NULL;
-        OC_LOG(INFO, TAG, PCF("Server Request Removed!!"));
+        OC_LOG(INFO, TAG, "Server Request Removed!!");
     }
 }
 
@@ -109,7 +109,7 @@ static void DeleteServerResponse(OCServerResponse * serverResponse)
         LL_DELETE(serverResponseList, serverResponse);
         OICFree(serverResponse->payload);
         OICFree(serverResponse);
-        OC_LOG(INFO, TAG, PCF("Server Response Removed!!"));
+        OC_LOG(INFO, TAG, "Server Response Removed!!");
     }
 }
 
@@ -151,15 +151,15 @@ OCServerRequest * GetServerRequestUsingToken (const CAToken_t token, uint8_t tok
 {
     if(!token)
     {
-        OC_LOG(ERROR, TAG, PCF("Invalid Parameter Token"));
+        OC_LOG(ERROR, TAG, "Invalid Parameter Token");
         return NULL;
     }
 
     OCServerRequest * out = NULL;
-    OC_LOG(INFO, TAG,PCF("Get server request with token"));
+    OC_LOG(INFO, TAG,"Get server request with token");
     OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)token, tokenLength);
 
-    OC_LOG(INFO, TAG,PCF("Found token"));
+    OC_LOG(INFO, TAG,"Found token");
     LL_FOREACH (serverRequestList, out)
     {
         OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)out->requestToken, tokenLength);
@@ -168,7 +168,7 @@ OCServerRequest * GetServerRequestUsingToken (const CAToken_t token, uint8_t tok
             return out;
         }
     }
-    OC_LOG(ERROR, TAG, PCF("Server Request not found!!"));
+    OC_LOG(ERROR, TAG, "Server Request not found!!");
     return NULL;
 }
 
@@ -189,7 +189,7 @@ OCServerRequest * GetServerRequestUsingHandle (const OCServerRequest * handle)
             return out;
         }
     }
-    OC_LOG(ERROR, TAG, PCF("Server Request not found!!"));
+    OC_LOG(ERROR, TAG, "Server Request not found!!");
     return NULL;
 }
 
@@ -211,7 +211,7 @@ OCServerResponse * GetServerResponseUsingHandle (const OCServerRequest * handle)
             return out;
         }
     }
-    OC_LOG(ERROR, TAG, PCF("Server Response not found!!"));
+    OC_LOG(ERROR, TAG, "Server Response not found!!");
     return NULL;
 }
 
@@ -284,7 +284,7 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
     serverRequest->devAddr = *devAddr;
 
     *request = serverRequest;
-    OC_LOG(INFO, TAG, PCF("Server Request Added!!"));
+    OC_LOG(INFO, TAG, "Server Request Added!!");
     LL_APPEND (serverRequestList, serverRequest);
     return OC_STACK_OK;
 
@@ -411,8 +411,8 @@ CAResponseResult_t ConvertEHResultToCAResult (OCEntityHandlerResult result)
 OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
 {
     OCStackResult result = OC_STACK_ERROR;
-    CAEndpoint_t responseEndpoint = {};
-    CAResponseInfo_t responseInfo = {};
+    CAEndpoint_t responseEndpoint = {.adapter = CA_DEFAULT_ADAPTER};
+    CAResponseInfo_t responseInfo = {.result = CA_EMPTY};
     CAHeaderOption_t* optionsPointer = NULL;
 
     if(!ehResponse || !ehResponse->requestHandle)
@@ -474,7 +474,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
 
         if(!responseInfo.info.options)
         {
-            OC_LOG(FATAL, TAG, PCF("Memory alloc for options failed"));
+            OC_LOG(FATAL, TAG, "Memory alloc for options failed");
             return OC_STACK_NO_MEMORY;
         }
 
@@ -487,8 +487,14 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
             responseInfo.info.options[0].protocolID = CA_COAP_ID;
             responseInfo.info.options[0].optionID = COAP_OPTION_OBSERVE;
             responseInfo.info.options[0].optionLength = sizeof(uint32_t);
-            memcpy(responseInfo.info.options[0].optionData,
-                    &(serverRequest->observationOption), sizeof(uint32_t));
+            uint8_t* observationData = (uint8_t*)responseInfo.info.options[0].optionData;
+            uint32_t observationOption= serverRequest->observationOption;
+            size_t i;
+            for (i=sizeof(uint32_t); i; --i)
+            {
+                observationData[i-1] = observationOption & 0xFF;
+                observationOption >>=8;
+            }
 
             // Point to the next header option before copying vender specific header options
             optionsPointer += 1;
@@ -509,6 +515,15 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     // Put the JSON prefix and suffix around the payload
     if(ehResponse->payload)
     {
+        if (ehResponse->payload->type == PAYLOAD_TYPE_PRESENCE)
+        {
+            responseInfo.isMulticast = true;
+        }
+        else
+        {
+            responseInfo.isMulticast = false;
+        }
+
         OCStackResult result;
         if((result = OCConvertPayload(ehResponse->payload, &responseInfo.info.payload,
                     &responseInfo.info.payloadSize))
@@ -518,30 +533,26 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
             OICFree(responseInfo.info.options);
             return result;
         }
-
-        if(responseInfo.info.payloadSize > MAX_RESPONSE_LENGTH)
-        {
-            OICFree(responseInfo.info.payload);
-            OC_LOG(ERROR, TAG, "Payload too long!");
-            OICFree(responseInfo.info.options);
-            return OC_STACK_INVALID_PARAM;
-        }
+        /** @todo FIXME: this should really be set according to directives from OCConverPayload. */
+        responseInfo.info.payloadFormat = CA_FORMAT_CBOR;
     }
     else
     {
+        responseInfo.isMulticast = false;
         responseInfo.info.payload = NULL;
         responseInfo.info.payloadSize = 0;
+        responseInfo.info.payloadFormat = CA_FORMAT_UNDEFINED;
     }
 
-    #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
     CATransportAdapter_t CAConnTypes[] = {
                             CA_ADAPTER_IP,
                             CA_ADAPTER_GATT_BTLE,
                             CA_ADAPTER_RFCOMM_BTEDR
 
-                            #ifdef RA_ADAPTER
+#ifdef RA_ADAPTER
                             , CA_ADAPTER_REMOTE_ACCESS
-                            #endif
+#endif
                         };
 
     int size = sizeof(CAConnTypes)/ sizeof(CATransportAdapter_t);
@@ -559,9 +570,9 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
                 CA_ADAPTER_GATT_BTLE    |
                 CA_ADAPTER_RFCOMM_BTEDR
 
-                #ifdef RA_ADAP
+#ifdef RA_ADAP
                 | CA_ADAPTER_REMOTE_ACCESS
-                #endif
+#endif
             );
     }
 
@@ -580,9 +591,9 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
             }
         }
     }
-    #else
+#else
 
-    OC_LOG(INFO, TAG, PCF("Calling CASendResponse with:"));
+    OC_LOG(INFO, TAG, "Calling CASendResponse with:");
     OC_LOG_V(INFO, TAG, "\tEndpoint address: %s", responseEndpoint.addr);
     OC_LOG_V(INFO, TAG, "\tEndpoint adapter: %s", responseEndpoint.adapter);
     OC_LOG_V(INFO, TAG, "\tResponse result : %s", responseInfo.result);
@@ -591,14 +602,14 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     CAResult_t caResult = CASendResponse(&responseEndpoint, &responseInfo);
     if(caResult != CA_STATUS_OK)
     {
-        OC_LOG(ERROR, TAG, PCF("CASendResponse failed"));
+        OC_LOG(ERROR, TAG, "CASendResponse failed");
         result = CAResultToOCResult(caResult);
     }
     else
     {
         result = OC_STACK_OK;
     }
-    #endif
+#endif
 
     OICFree(responseInfo.info.payload);
     OICFree(responseInfo.info.options);
@@ -627,7 +638,7 @@ OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
 
     if(!ehResponse || !ehResponse->payload)
     {
-        OC_LOG(ERROR, TAG, PCF("HandleAggregateResponse invalid parameters"));
+        OC_LOG(ERROR, TAG, "HandleAggregateResponse invalid parameters");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -640,11 +651,11 @@ OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
     {
         if(!serverResponse)
         {
-            OC_LOG(INFO, TAG, PCF("This is the first response fragment"));
+            OC_LOG(INFO, TAG, "This is the first response fragment");
             stackRet = AddServerResponse(&serverResponse, ehResponse->requestHandle);
             if (OC_STACK_OK != stackRet)
             {
-                OC_LOG(ERROR, TAG, PCF("Error adding server response"));
+                OC_LOG(ERROR, TAG, "Error adding server response");
                 return stackRet;
             }
             VERIFY_NON_NULL(serverResponse);
@@ -653,7 +664,7 @@ OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
         if(ehResponse->payload->type != PAYLOAD_TYPE_REPRESENTATION)
         {
             stackRet = OC_STACK_ERROR;
-            OC_LOG(ERROR, TAG, PCF("Error adding payload, as it was the incorrect type"));
+            OC_LOG(ERROR, TAG, "Error adding payload, as it was the incorrect type");
             goto exit;
         }
 
@@ -672,7 +683,7 @@ OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
 
         if(serverRequest->numResponses == 0)
         {
-            OC_LOG(INFO, TAG, PCF("This is the last response fragment"));
+            OC_LOG(INFO, TAG, "This is the last response fragment");
             ehResponse->payload = serverResponse->payload;
             stackRet = HandleSingleResponse(ehResponse);
             //Delete the request and response
@@ -681,7 +692,7 @@ OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
         }
         else
         {
-            OC_LOG(INFO, TAG, PCF("More response fragments to come"));
+            OC_LOG(INFO, TAG, "More response fragments to come");
             stackRet = OC_STACK_OK;
         }
     }

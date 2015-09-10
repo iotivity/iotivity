@@ -28,6 +28,7 @@
 #ifndef OCTYPES_H_
 #define OCTYPES_H_
 
+#include "platform_features.h"
 #include "ocstackconfig.h"
 #include <stdbool.h>
 #include <stdint.h>
@@ -376,17 +377,15 @@ typedef struct
     /** transport modifiers.*/
     OCTransportFlags        flags;
 
+    /** for IP.*/
+    uint16_t                port;
+
     /** address for all adapters.*/
     char                    addr[MAX_ADDR_STR_SIZE];
 
     /** usually zero for default interface.*/
     uint32_t                interface;
 
-    /** for IP.*/
-    uint16_t                port;
-
-    /** secure node identity.*/
-    OCIdentity              identity;
 } OCDevAddr;
 
 /**
@@ -411,10 +410,10 @@ typedef enum
     /** RFCOMM over Bluetooth EDR.*/
     CT_ADAPTER_RFCOMM_BTEDR = (1 << 18),
 
-    #ifdef RA_ADAPTER
+#ifdef RA_ADAPTER
     /** Remote Access over XMPP.*/
     CT_ADAPTER_REMOTE_ACCESS = (1 << 19),
-    #endif
+#endif
 
     /** Insecure transport is the default (subject to change).*/
 
@@ -751,7 +750,7 @@ typedef struct OCHeaderOption
     /** pointer to its data.*/
     uint8_t optionData[MAX_HEADER_OPTION_DATA_LENGTH];
 
-#ifdef __cplusplus
+#ifdef SUPPORTS_DEFAULT_CTOR
     OCHeaderOption() = default;
     OCHeaderOption(OCTransportProtocolID pid,
                    uint16_t optId,
@@ -1028,6 +1027,9 @@ typedef struct
     /** backward compatibility.*/
     OCConnectivityType connType;
 
+    /** the security identity of the remote server.*/
+    OCIdentity identity;
+
     /** the is the result of our stack, OCStackResult should contain coap/other error codes.*/
     OCStackResult result;
 
@@ -1131,7 +1133,7 @@ typedef struct OCCallbackData
     /** A pointer to a function to delete the context when this callback is removed.*/
     OCClientContextDeleter cd;
 
-#ifdef __cplusplus
+#ifdef SUPPORTS_DEFAULT_CTOR
     OCCallbackData() = default;
     OCCallbackData(void* ctx, OCClientResponseHandler callback, OCClientContextDeleter deleter)
         :context(ctx), cb(callback), cd(deleter){}

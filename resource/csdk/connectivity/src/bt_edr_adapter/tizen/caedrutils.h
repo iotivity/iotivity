@@ -34,8 +34,7 @@
 #include "oic_malloc.h"
 
 /**
- * @var EDR_ADAPTER_TAG
- * @brief Logging tag for module name.
+ * Logging tag for module name.
  */
 #ifndef EDR_ADAPTER_TAG
 #define EDR_ADAPTER_TAG "CA_EDR_ADAPTER"
@@ -47,11 +46,11 @@ extern "C"
 #endif
 
 /**
- * @brief  Checks if the specified list of service UUIDs contains OIC service UUID.
+ * Checks if the specified list of service UUIDs contains OIC service UUID.
  *
- * @param  serviceUUID  [IN] Array of service UUIDs
- * @param  serviceCount [IN] Size of the service UUIDs array.
- * @param  matchService [IN] Service UUID to be checked in the given array of service UUIDs
+ * @param[in]  serviceUUID   Array of service UUIDs.
+ * @param[in]  serviceCount  Size of the service UUIDs array.
+ * @param[in]  matchService  Service UUID to be checked in the given array of service UUIDs.
  *
  * @return  true if match service UUID found otherwise false.
  *

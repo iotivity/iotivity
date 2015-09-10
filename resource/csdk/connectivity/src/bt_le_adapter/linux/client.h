@@ -59,7 +59,7 @@ typedef struct _CAGattRequestInfo
  * @see @c CAGattSendMethod() for further details.
  */
 bool CAGattSendRequest(void const * method_info,
-                       void const * data,
+                       uint8_t const * data,
                        size_t length);
 
 // ---------------------------------------------------------------
@@ -84,7 +84,7 @@ bool CAGattSendRequest(void const * method_info,
  * @return @c CA_STATUS_OK on success, @c CA_STATUS_FAILED otherwise.
  */
 CAResult_t CAGattClientSendDataToAll(void const * method_info,
-                                     void const * data,
+                                     uint8_t const * data,
                                      size_t length);
 
 

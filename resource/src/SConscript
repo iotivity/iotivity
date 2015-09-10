@@ -77,3 +77,11 @@ oclib = oclib_env.SharedLibrary('oc', oclib_src)
 oclib_env.InstallTarget(oclib, 'liboc')
 oclib_env.UserInstallTargetLib(oclib, 'liboc')
 
+src_dir = env.get('SRC_DIR')
+
+oclib_env.UserInstallTargetHeader(src_dir + '/resource/include/OCApi.h', 'resource', 'OCApi.h')
+oclib_env.UserInstallTargetHeader(src_dir + '/resource/include/OCPlatform.h', 'resource', 'OCPlatform.h')
+oclib_env.UserInstallTargetHeader(src_dir + '/resource/include/OCRepresentation.h', 'resource', 'OCRepresentation.h')
+oclib_env.UserInstallTargetHeader(src_dir + '/resource/include/OCResource.h', 'resource', 'OCResource.h')
+oclib_env.UserInstallTargetHeader(src_dir + '/resource/include/OCResourceRequest.h', 'resource', 'OCResourceRequest.h')
+oclib_env.UserInstallTargetHeader(src_dir + '/resource/include/OCResourceResponse.h', 'resource', 'OCResourceResponse.h')

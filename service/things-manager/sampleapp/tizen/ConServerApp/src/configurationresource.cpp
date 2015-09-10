@@ -31,7 +31,7 @@ using namespace OC;
 
 // Constructor
 ConfigurationResource::ConfigurationResource() :
-    m_location(defaultLocation), m_systemTime(defaultSystemTime), m_currency(
+    m_location(defaultLocation), m_systemTime(defaultDeviceName), m_currency(
         defaultCurrency), m_region(defaultRegion)
 {
     m_configurationUri = "/oic/con"; // URI of the resource
@@ -124,7 +124,7 @@ std::string ConfigurationResource::getUri()
 void ConfigurationResource::factoryReset()
 {
     m_location = defaultLocation;
-    m_systemTime = defaultSystemTime;
+    m_systemTime = defaultDeviceName;
     m_currency = defaultCurrency;
     m_region = defaultRegion;
 }

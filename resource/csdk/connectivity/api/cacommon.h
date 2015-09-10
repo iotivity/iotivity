@@ -137,9 +137,11 @@ typedef enum
     CA_ADAPTER_GATT_BTLE     = (1 << 1),   // GATT over Bluetooth LE
     CA_ADAPTER_RFCOMM_BTEDR  = (1 << 2),   // RFCOMM over Bluetooth EDR
 
-    #ifdef RA_ADAPTER
-    CA_ADAPTER_REMOTE_ACCESS = (1 << 3)   // Remote Access over XMPP.
-    #endif
+#ifdef RA_ADAPTER
+    CA_ADAPTER_REMOTE_ACCESS = (1 << 3),   // Remote Access over XMPP.
+#endif
+
+    CA_ALL_ADAPTERS          = 0xffffffff
 } CATransportAdapter_t;
 
 typedef enum
@@ -234,11 +236,19 @@ typedef struct
 {
     CATransportAdapter_t    adapter;    // adapter type
     CATransportFlags_t      flags;      // transport modifiers
+    uint16_t                port;       // for IP
     char                    addr[MAX_ADDR_STR_SIZE_CA]; // address for all
     uint32_t                interface;  // usually zero for default interface
-    uint16_t                port;       // for IP
-    CARemoteId_t identity;              // endpoint identity
 } CAEndpoint_t;
+
+/**
+ * Endpoint information for secure messages
+ */
+typedef struct
+{
+    CAEndpoint_t endpoint;      /**< endpoint */
+    CARemoteId_t identity;      /**< endpoint identity */
+} CASecureEndpoint_t;
 
 /**
  * @enum CAResult_t
@@ -313,6 +323,16 @@ typedef enum
 } CAAdapterState_t;
 
 /**
+ * Format indicating which encoding has been used on the payload.
+ */
+typedef enum
+{
+    CA_FORMAT_UNDEFINED,    /**< Undefined enoding format */
+    CA_FORMAT_UNSUPPORTED,  /**< Unsupported encoding format */
+    CA_FORMAT_CBOR          /**< CBOR encoding format */
+} CAPayloadFormat_t;
+
+/**
  * Header options structure to be filled
  *
  * This structure is used to hold header information.
@@ -344,7 +364,9 @@ typedef struct
     uint8_t numOptions;         /**< Number of Header options */
     CAPayload_t payload;        /**< payload of the request  */
     size_t payloadSize;         /**< size in bytes of the payload */
+    CAPayloadFormat_t payloadFormat;         /**< format of the payload */
     CAURI_t resourceUri;        /**< Resource URI information **/
+    CARemoteId_t identity;      /**< endpoint identity */
 } CAInfo_t;
 
 /**
@@ -368,6 +390,7 @@ typedef struct
 {
     CAResponseResult_t result;  /**< Result for response by resource model */
     CAInfo_t info;              /**< Information of the response */
+    bool isMulticast;
 } CAResponseInfo_t;
 
 /**
@@ -404,16 +427,38 @@ typedef struct
  */
 typedef struct
 {
-    int fd;
-    uint16_t port;
+    int fd;        /**< socket fd */
+    uint16_t port; /**< socket port */
 } CASocket_t;
+
+#define HISTORYSIZE (4)
 
 typedef struct
 {
-    CATransportFlags_t clientFlags;
-    CATransportFlags_t serverFlags;
-    bool client;
-    bool server;
+    CATransportFlags_t flags;
+    uint16_t messageId;
+} CAHistoryItem_t;
+
+typedef struct
+{
+    int nextIndex;
+    CAHistoryItem_t items[HISTORYSIZE];
+} CAHistory_t;
+
+/**
+ * Hold interface index for keeping track of comings and goings
+ */
+typedef struct
+{
+    int32_t ifIndex; /**< network interface index */
+} CAIfItem_t;
+
+typedef struct
+{
+    CATransportFlags_t clientFlags; /**< flag for client */
+    CATransportFlags_t serverFlags; /**< flag for server */
+    bool client; /**< client mode */
+    bool server; /**< server mode */
 
     struct sockets
     {
@@ -430,17 +475,26 @@ typedef struct
         int shutdownFds[2]; /**< shutdown pipe */
         int selectTimeout;  /**< in seconds */
         int maxfd;          /**< highest fd (for select) */
-        int numInterfaces;  /**< number of active interfaces */
         bool started;       /**< the IP adapter has started */
         bool terminate;     /**< the IP adapter needs to stop */
         bool ipv6enabled;   /**< IPv6 enabled by OCInit flags */
         bool ipv4enabled;   /**< IPv4 enabled by OCInit flags */
+        bool dualstack;     /**< IPv6 and IPv4 enabled */
+
+        struct networkmonitors
+        {
+            CAIfItem_t *ifItems; /**< current network interface index list */
+            size_t sizeIfItems;  /**< size of network interface index array */
+            size_t numIfItems;   /**< number of valid network interfaces */
+        } nm;
     } ip;
 
     struct calayer
     {
-        CATransportFlags_t previousRequestFlags; /**< address family filtering */
-        uint16_t previousRequestMessageId;       /**< address family filtering */
+        CAHistory_t requestHistory;  /**< filter IP family in requests */
+        CAHistory_t responseHistory; /**< filter IP family in responses */
+        CATransportFlags_t previousRequestFlags;/**< address family filtering */
+        uint16_t previousRequestMessageId;      /**< address family filtering */
     } ca;
 } CAGlobals_t;
 

@@ -113,8 +113,7 @@ BMISensor_src = [ Glob(BMISENSOR_DIR + 'src/*.cpp')]
 BMISensor = BMISensor_env.SharedLibrary('BMISensor', BMISensor_src)
 BMISensor_env.InstallTarget(BMISensor, 'libBMISensor')
 BMISensor_env.UserInstallTargetLib(BMISensor, 'libBMISensor')
-
-
+BMISensor_env.UserInstallTargetHeader('SDK/cpp/include/SSMInterface.h', 'service/soft-sensor-manager', 'SSMInterface.h')
 
 ######################################################################
 # build SSM CORE

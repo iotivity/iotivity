@@ -37,85 +37,113 @@ namespace OIC
     {
 
         /**
-         * @class   RCSException
-         * @brief    This class helps to throw wide range of exception to the application/developers.
-         *               It inherits the standard exception class.
+         * The base exception class for resource encapsulation.
          *
          */
         class RCSException: public std::exception
         {
-            public:
-                /**
-                * Default Constructor
-                */
-                RCSException();
+        public:
 
-                /**
-                * Parametrized Constructor  to set exception description as a string.
-                *
-                * @param what - exception description
-                */
-                explicit RCSException(const std::string &what);
+            /**
+             * Constructs an exception with an empty description.
+             */
+            RCSException();
 
-                /**
-                * Parametrized Constructor  to set exception description as a string.
-                *
-                * @param what - exception description
-                */
-                explicit RCSException(std::string &&what);
+            /**
+             * Constructs an exception with a description.
+             *
+             * @param what The description for the error.
+             */
+            explicit RCSException(const std::string &what);
 
-                /**
-                * virtual destructor
-                */
-                virtual ~RCSException() noexcept {}
+            /**
+             * @overload
+             */
+            explicit RCSException(std::string &&what);
 
-                /**
-                * API for returning the exception description in string format
-                *
-                * @return  const char* - exception description
-                */
-                virtual const char *what() const noexcept;
+            virtual ~RCSException() noexcept;
 
-            private:
-                /**
-                 *  Exception description
-                 */
-                std::string m_what;
+            /**
+             * Returns the exception description.
+             *
+             */
+            virtual const char *what() const noexcept;
+
+        private:
+            /**
+             *  Exception description
+             */
+            const std::string m_what;
         };
 
         /**
-         * @class   PlatformException
-         * @brief   This class helps in throwing platform exception to the application/developers.
-         *              It inherits from RCSException class.
+         * Thrown when OC layer returns an error.
          *
-         * NOTE: OCStackResult is defined in octypes.h.
          */
         class PlatformException: public RCSException
         {
-            public:
-                explicit PlatformException(OCStackResult reason);
+        public:
+            explicit PlatformException(OCStackResult reason);
 
-                /**
-                 * API for getting exception code.
-                 *
-                 * @return  OCStackResult - exception code.
-                 *
-                 */
-                OCStackResult getReasonCode() const;
-                /**
-                 * API for getting exception reason.
-                 *
-                 * @return string - exception reason as a string.
-                 *
-                 */
-                std::string getReason() const;
+            /**
+             * Returns the reason.
+             *
+             */
+            OCStackResult getReasonCode() const;
 
-            private:
-                /*
-                * reason for the exception, stored as OCStackResult value.
-                */
-                OCStackResult m_reason;
+            /**
+             * Returns the reason description.
+             *
+             */
+            std::string getReason() const;
+
+        private:
+            OCStackResult m_reason;
         };
+
+        /**
+         * Thrown when a request is not acceptable.
+         *
+         */
+        class BadRequestException: public RCSException
+        {
+        public:
+            explicit BadRequestException(const std::string& what);
+            explicit BadRequestException(std::string&& what);
+        };
+
+        /**
+         * Thrown when a parameter is not valid.
+         *
+         */
+        class InvalidParameterException: public RCSException
+        {
+        public:
+            explicit InvalidParameterException(const std::string& what);
+            explicit InvalidParameterException(std::string&& what);
+        };
+
+        /**
+         * Thrown when getting value with wrong template parameter.
+         */
+        class BadGetException: public RCSException
+        {
+        public:
+            explicit BadGetException(const std::string& what);
+            explicit BadGetException(std::string&& what);
+        };
+
+        /**
+         * Thrown when a key is invalid.
+         *
+         */
+        class InvalidKeyException: public RCSException
+        {
+        public:
+            explicit InvalidKeyException(const std::string& what);
+            explicit InvalidKeyException(std::string&& what);
+        };
+
     }
 }
 

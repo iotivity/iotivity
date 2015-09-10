@@ -27,9 +27,10 @@
 #include "aclresource.h"
 #include "srmutility.h"
 #include "doxmresource.h"
+#include "iotvticalendar.h"
 #include <string.h>
 
-#define TAG PCF("SRM-PE")
+#define TAG "SRM-PE"
 
 /**
  * Return the uint16_t CRUDN permission corresponding to passed CAMethod_t.
@@ -187,23 +188,56 @@ exit:
 }
 
 /**
+ * Check whether 'resource' is getting accessed within the valid time period.
+ * @param   acl         The ACL to check.
+ * @return
+ *      true if access is within valid time period or if the period or recurrence is not present.
+ *      false if period and recurrence present and the access is not within valid time period.
+ */
+static bool IsAccessWithinValidTime(const OicSecAcl_t *acl)
+{
+#ifndef WITH_ARDUINO //Period & Recurrence not supported on Arduino due
+                     //lack of absolute time
+    if(NULL== acl || NULL == acl->periods || 0 == acl->prdRecrLen)
+    {
+        return true;
+    }
+
+    for(size_t i = 0; i < acl->prdRecrLen; i++)
+    {
+        if(IOTVTICAL_VALID_ACCESS ==  IsRequestWithinValidTime(acl->periods[i],
+            acl->recurrences[i]))
+        {
+            OC_LOG(INFO, TAG, "Access request is in allowed time period");
+            return true;
+        }
+    }
+    OC_LOG(INFO, TAG, "Access request is in invalid time period");
+    return false;
+
+#else
+    return true;
+#endif
+}
+
+/**
  * Check whether 'resource' is in the passed ACL.
  * @param   resource    The resource to search for.
  * @param   acl         The ACL to check.
  * @return true if 'resource' found, otherwise false.
  */
  bool IsResourceInAcl(const char *resource, const OicSecAcl_t *acl)
- {
-    for(size_t n = 0; n < acl->resourcesLen; n++)
-    {
-        if(0 == strcmp(resource, acl->resources[n]) || // TODO null terms?
-         0 == strcmp(WILDCARD_RESOURCE_URI, acl->resources[n]))
-        {
-            return true;
-        }
+{
+     for(size_t n = 0; n < acl->resourcesLen; n++)
+     {
+         if(0 == strcmp(resource, acl->resources[n]) || // TODO null terms?
+                 0 == strcmp(WILDCARD_RESOURCE_URI, acl->resources[n]))
+         {
+             return true;
+         }
     }
     return false;
- }
+}
 
 /**
  * Find ACLs containing context->subject.
@@ -216,7 +250,7 @@ exit:
  */
 void ProcessAccessRequest(PEContext_t *context)
 {
-    OC_LOG(INFO, TAG, PCF("Entering ProcessAccessRequest()"));
+    OC_LOG(INFO, TAG, "Entering ProcessAccessRequest()");
     if(NULL != context)
     {
         const OicSecAcl_t *currentAcl = NULL;
@@ -226,53 +260,58 @@ void ProcessAccessRequest(PEContext_t *context)
         context->retVal = ACCESS_DENIED_SUBJECT_NOT_FOUND;
         do
         {
-            OC_LOG(INFO, TAG, PCF("ProcessAccessRequest(): getting ACL..."));
+            OC_LOG(INFO, TAG, "ProcessAccessRequest(): getting ACL...");
             currentAcl = GetACLResourceData(context->subject, &savePtr);
             if(NULL != currentAcl)
             {
                 // Found the subject, so how about resource?
-                OC_LOG(INFO, TAG, PCF("ProcessAccessRequest(): \
-                    found ACL matching subject."));
+                OC_LOG(INFO, TAG, "ProcessAccessRequest(): \
+                    found ACL matching subject.");
                 context->retVal = ACCESS_DENIED_RESOURCE_NOT_FOUND;
-                OC_LOG(INFO, TAG, PCF("ProcessAccessRequest(): \
-                    Searching for resource..."));
+                OC_LOG(INFO, TAG, "ProcessAccessRequest(): \
+                    Searching for resource...");
                 if(IsResourceInAcl(context->resource, currentAcl))
                 {
-                    OC_LOG(INFO, TAG, PCF("ProcessAccessRequest(): \
-                        found matching resource in ACL."));
+                    OC_LOG(INFO, TAG, "ProcessAccessRequest(): \
+                        found matching resource in ACL.");
                     context->matchingAclFound = true;
-                    // Found the resource, so it's down to permission.
-                    context->retVal = ACCESS_DENIED_INSUFFICIENT_PERMISSION;
-                    if(IsPermissionAllowingRequest(currentAcl->permission, \
-                        context->permission))
+
+                    // Found the resource, so it's down to valid period & permission.
+                    context->retVal = ACCESS_DENIED_INVALID_PERIOD;
+                    if(IsAccessWithinValidTime(currentAcl))
                     {
-                        context->retVal = ACCESS_GRANTED;
+                        context->retVal = ACCESS_DENIED_INSUFFICIENT_PERMISSION;
+                        if(IsPermissionAllowingRequest(currentAcl->permission, \
+                        context->permission))
+                        {
+                            context->retVal = ACCESS_GRANTED;
+                        }
                     }
                 }
             }
             else
             {
-                OC_LOG(INFO, TAG, PCF("ProcessAccessRequest(): \
-                    no ACL found matching subject ."));
+                OC_LOG(INFO, TAG, "ProcessAccessRequest(): \
+                    no ACL found matching subject .");
             }
         }
         while((NULL != currentAcl) && (false == context->matchingAclFound));
 
         if(IsAccessGranted(context->retVal))
         {
-            OC_LOG(INFO, TAG, PCF("ProcessAccessRequest(): \
-                Leaving ProcessAccessRequest(ACCESS_GRANTED)"));
+            OC_LOG(INFO, TAG, "ProcessAccessRequest(): \
+                Leaving ProcessAccessRequest(ACCESS_GRANTED)");
         }
         else
         {
-            OC_LOG(INFO, TAG, PCF("ProcessAccessRequest(): \
-                Leaving ProcessAccessRequest(ACCESS_DENIED)"));
+            OC_LOG(INFO, TAG, "ProcessAccessRequest(): \
+                Leaving ProcessAccessRequest(ACCESS_DENIED)");
         }
     }
     else
     {
-        OC_LOG(INFO, TAG, PCF("ProcessAccessRequest(): \
-            Leaving ProcessAccessRequest(context is NULL)"));
+        OC_LOG(INFO, TAG, "ProcessAccessRequest(): \
+            Leaving ProcessAccessRequest(context is NULL)");
     }
 
 }

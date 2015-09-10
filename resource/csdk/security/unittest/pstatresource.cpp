@@ -27,6 +27,7 @@
 #include "base64.h"
 #include "cainterface.h"
 #include "secureresourcemanager.h"
+#include "srmtestcommon.h"
 #include "ocpayload.h"
 #include <unistd.h>
 #ifdef __cplusplus
@@ -38,7 +39,6 @@ OCEntityHandlerResult PstatEntityHandler (OCEntityHandlerFlag flag,
                                         OCEntityHandlerRequest * ehRequest);
 char * BinToPstatJSON(const OicSecPstat_t * pstat);
 OicSecPstat_t * JSONToPstatBin(const char * jsonStr);
-char* ReadFile(const char* filename);
 const char* UNIT_TEST_JSON_FILE_NAME = "oic_unittest.json";
 #ifdef __cplusplus
 }

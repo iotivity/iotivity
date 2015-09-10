@@ -29,16 +29,22 @@ namespace OIC
         {
             m_activator = nullptr;
             m_deactivator = nullptr;
+            m_resourceCreator = nullptr;
+            m_resourceDestroyer = nullptr;
             m_bundleHandle = nullptr;
 
             m_loaded = false;
             m_activated = false;
+            m_java_bundle = false;
+            m_id = 0;
         }
 
         BundleInfoInternal::~BundleInfoInternal()
         {
             m_activator = nullptr;
             m_deactivator = nullptr;
+            m_resourceCreator = nullptr;
+            m_resourceDestroyer = nullptr;
             m_bundleHandle = nullptr;
         }
 
@@ -205,9 +211,15 @@ namespace OIC
 
         void BundleInfoInternal::setBundleInfo(RCSBundleInfo *bundleInfo)
         {
-            m_ID = bundleInfo->getID();
-            m_path = bundleInfo->getPath();
-            m_version = bundleInfo->getPath();
+            BundleInfoInternal *source = (BundleInfoInternal *)bundleInfo;
+            m_ID = source->getID();
+            m_path = source->getPath();
+            m_version = source->getVersion();
+            m_loaded = source->isLoaded();
+            m_activated = source->isActivated();
+            m_java_bundle = source->getJavaBundle();
+            m_activator = source->getBundleActivator();
+            m_bundleHandle = source->getBundleHandle();
         }
     }
 }

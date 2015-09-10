@@ -17,9 +17,9 @@
 <small>
 [<a class="el" href="group__cFuncs.html">Functions</a>]</small>
 </h1><hr><a name="_details"></a><h2>Detailed Description</h2>
-These functions can be used to query information about the installed plug-ins, extension points and extensions or to listen for plug-in state changes. 
+These functions can be used to query information about the installed plug-ins, extension points and extensions or to listen for plug-in state changes.
 <p>
-They may be used by the main program or by a plug-in runtime. 
+They may be used by the main program or by a plug-in runtime.
 <p>
 <table border="0" cellpadding="0" cellspacing="0">
 <tr><td></td></tr>
@@ -88,7 +88,7 @@ They may be used by the main program or by a plug-in runtime.
 <div class="memdoc">
 
 <p>
-Returns static information about the specified plug-in. 
+Returns static information about the specified plug-in.
 <p>
 The returned information must not be modified and the caller must release the information by calling <a class="el" href="group__cFuncsPluginInfo.html#gbac266df43a4850cf43224aa7b863942">cp_release_info</a> when the information is not needed anymore. When a plug-in runtime calls this function it may pass NULL as the identifier to get information about the plug-in itself.<p>
 <dl compact><dt><b>Parameters:</b></dt><dd>
@@ -134,7 +134,7 @@ The returned information must not be modified and the caller must release the in
 <div class="memdoc">
 
 <p>
-Returns static information about the installed plug-ins. 
+Returns static information about the installed plug-ins.
 <p>
 The returned information must not be modified and the caller must release the information by calling <a class="el" href="group__cFuncsPluginInfo.html#gbac266df43a4850cf43224aa7b863942">cp_release_info</a> when the information is not needed anymore.<p>
 <dl compact><dt><b>Parameters:</b></dt><dd>
@@ -180,7 +180,7 @@ The returned information must not be modified and the caller must release the in
 <div class="memdoc">
 
 <p>
-Returns static information about the currently installed extension points. 
+Returns static information about the currently installed extension points.
 <p>
 The returned information must not be modified and the caller must release the information by calling <a class="el" href="group__cFuncsPluginInfo.html#gbac266df43a4850cf43224aa7b863942">cp_release_info</a> when the information is not needed anymore.<p>
 <dl compact><dt><b>Parameters:</b></dt><dd>
@@ -232,7 +232,7 @@ The returned information must not be modified and the caller must release the in
 <div class="memdoc">
 
 <p>
-Returns static information about the currently installed extension points. 
+Returns static information about the currently installed extension points.
 <p>
 The returned information must not be modified and the caller must release the information by calling <a class="el" href="group__cFuncsPluginInfo.html#gbac266df43a4850cf43224aa7b863942">cp_release_info</a> when the information is not needed anymore.<p>
 <dl compact><dt><b>Parameters:</b></dt><dd>
@@ -273,7 +273,7 @@ The returned information must not be modified and the caller must release the in
 <div class="memdoc">
 
 <p>
-Releases a previously obtained reference counted information object. 
+Releases a previously obtained reference counted information object.
 <p>
 The documentation for functions returning such information refers to this function. The information must not be accessed after it has been released. The framework uses reference counting to deallocate the information when it is not in use anymore.<p>
 <dl compact><dt><b>Parameters:</b></dt><dd>
@@ -311,7 +311,7 @@ The documentation for functions returning such information refers to this functi
 <div class="memdoc">
 
 <p>
-Returns the current state of the specified plug-in. 
+Returns the current state of the specified plug-in.
 <p>
 Returns <a class="el" href="group__cEnums.html#ggd517a8088e2ed89fda71251d9c7b325290eacd4f02fb7d65eaf68f7251a99689">CP_PLUGIN_UNINSTALLED</a> if the specified plug-in identifier is unknown.<p>
 <dl compact><dt><b>Parameters:</b></dt><dd>
@@ -356,7 +356,7 @@ Returns <a class="el" href="group__cEnums.html#ggd517a8088e2ed89fda71251d9c7b325
 <div class="memdoc">
 
 <p>
-Registers a plug-in listener with a plug-in context. 
+Registers a plug-in listener with a plug-in context.
 <p>
 The listener is called synchronously immediately after a plug-in state change. There can be several listeners registered with the same context. A plug-in listener can be unregistered using <a class="el" href="group__cFuncsPluginInfo.html#g2cd49b8752e8971b569ae3e39b41723e">cp_unregister_plistener</a> and it is automatically unregistered when the registering plug-in is stopped or when the context is destroyed.<p>
 <dl compact><dt><b>Parameters:</b></dt><dd>
@@ -396,7 +396,7 @@ The listener is called synchronously immediately after a plug-in state change. T
 <div class="memdoc">
 
 <p>
-Removes a plug-in listener from a plug-in context. 
+Removes a plug-in listener from a plug-in context.
 <p>
 Does nothing if the specified listener was not registered.<p>
 <dl compact><dt><b>Parameters:</b></dt><dd>
@@ -434,7 +434,7 @@ Does nothing if the specified listener was not registered.<p>
 <div class="memdoc">
 
 <p>
-Traverses a configuration element tree and returns the specified element. 
+Traverses a configuration element tree and returns the specified element.
 <p>
 The target element is specified by a base element and a relative path from the base element to the target element. The path includes element names separated by slash '/'. Two dots ".." can be used to designate a parent element. Returns NULL if the specified element does not exist. If there are several subelements with the same name, this function chooses the first one when traversing the tree.<p>
 <dl compact><dt><b>Parameters:</b></dt><dd>
@@ -473,7 +473,7 @@ The target element is specified by a base element and a relative path from the b
 <div class="memdoc">
 
 <p>
-Traverses a configuration element tree and returns the value of the specified element or attribute. 
+Traverses a configuration element tree and returns the value of the specified element or attribute.
 <p>
 The target element or attribute is specified by a base element and a relative path from the base element to the target element or attributes. The path includes element names separated by slash '/'. Two dots ".." can be used to designate a parent element. The path may end with '@' followed by an attribute name to select an attribute. Returns NULL if the specified element or attribute does not exist or does not have a value. If there are several subelements with the same name, this function chooses the first one when traversing the tree.<p>
 <dl compact><dt><b>Parameters:</b></dt><dd>

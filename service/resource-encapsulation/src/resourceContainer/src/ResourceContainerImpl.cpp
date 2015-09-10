@@ -88,7 +88,8 @@ namespace OIC
             info_logger() << "Resource container without Java support" << endl;
 #endif
 
-            if(!configFile.empty()){
+            if (!configFile.empty())
+            {
                 m_config = new Configuration(configFile);
 
                 if (m_config->isLoaded())
@@ -122,7 +123,8 @@ namespace OIC
                     error_logger() << "Container started with invalid configfile path" << endl;
                 }
             }
-            else{
+            else
+            {
                 info_logger() << "No configuration file for the container provided" << endl;
             }
         }
@@ -151,7 +153,8 @@ namespace OIC
                 m_mapBundleResources.clear();
             }
 
-            delete m_config;
+            if (m_config)
+                delete m_config;
         }
 
         void ResourceContainerImpl::activateBundle(RCSBundleInfo *bundleInfo)
@@ -249,7 +252,7 @@ namespace OIC
             void *bundleHandle = m_bundles[id]->getBundleHandle();
             info_logger() << "Unregister bundle: " << m_bundles[id]->getID() << ", "
                           << m_bundles[id]->getID() << endl;
-            char *error;
+            const char *error;
             dlclose(bundleHandle);
             if ((error = dlerror()) != NULL)
             {
@@ -391,8 +394,8 @@ namespace OIC
             return &m_instance;
         }
 
-        RCSResourceObject::Ptr ResourceContainerImpl::buildResourceObject(const std::string & strUri,
-                const std::string & strResourceType)
+        RCSResourceObject::Ptr ResourceContainerImpl::buildResourceObject(const std::string &strUri,
+                const std::string &strResourceType)
         {
             return RCSResourceObject::Builder(strUri, strResourceType, "DEFAULT_INTERFACE").setObservable(
                        true).setDiscoverable(true).build();
@@ -428,7 +431,8 @@ namespace OIC
             }
         }
 
-        void ResourceContainerImpl::addBundle(const std::string &bundleId, const std::string &bundleUri, const std::string &bundlePath,
+        void ResourceContainerImpl::addBundle(const std::string &bundleId, const std::string &bundleUri,
+                                              const std::string &bundlePath,
                                               std::map< string, string > params)
         {
             if (m_bundles.find(bundleId) != m_bundles.end())
@@ -481,13 +485,14 @@ namespace OIC
                 {
                     RCSBundleInfo *bundleInfo = RCSBundleInfo::build();
                     ((BundleInfoInternal *) bundleInfo)->setBundleInfo((RCSBundleInfo *) it->second);
-                    ret.push_back(it->second);
+                    ret.push_back(bundleInfo);
                 }
             }
             return ret;
         }
 
-        void ResourceContainerImpl::addResourceConfig(const std::string &bundleId, const std::string &resourceUri,
+        void ResourceContainerImpl::addResourceConfig(const std::string &bundleId,
+                const std::string &resourceUri,
                 std::map< string, string > params)
         {
             if (m_bundles.find(bundleId) != m_bundles.end())
@@ -514,7 +519,8 @@ namespace OIC
             }
         }
 
-        void ResourceContainerImpl::removeResourceConfig(const std::string &bundleId, const std::string &resourceUri)
+        void ResourceContainerImpl::removeResourceConfig(const std::string &bundleId,
+                const std::string &resourceUri)
         {
             if (m_bundles.find(bundleId) != m_bundles.end())
             {
@@ -545,7 +551,7 @@ namespace OIC
 
         void ResourceContainerImpl::registerSoBundle(RCSBundleInfo *bundleInfo)
         {
-            char *error;
+            const char *error;
 
             activator_t *bundleActivator = NULL;
             deactivator_t *bundleDeactivator = NULL;
@@ -645,7 +651,8 @@ namespace OIC
             }
         }
 
-        void ResourceContainerImpl::removeSoBundleResource(const std::string &bundleId, const std::string &resourceUri)
+        void ResourceContainerImpl::removeSoBundleResource(const std::string &bundleId,
+                const std::string &resourceUri)
         {
             if (m_mapResources.find(resourceUri) != m_mapResources.end())
             {

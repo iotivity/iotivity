@@ -22,32 +22,49 @@
 #define _EXPIRY_TIMER_H_
 
 #include <functional>
-#include <list>
+#include <unordered_map>
+#include <memory>
 
-class ExpiryTimerImpl;
-
-class ExpiryTimer
+namespace OIC
 {
-public:
-    typedef unsigned int Id;
-    typedef std::function<void(Id)> CB;
-    typedef long long DelayInMilliSec;
+    namespace Service
+    {
 
-public:
-    ExpiryTimer();
-    ~ExpiryTimer();
+        class TimerTask;
 
-public:
-    Id postTimer(DelayInMilliSec, CB); // will change name to post()
-    bool cancelTimer(Id); // will change name to cancel()
-    void destroyTimer(); // This function will be removed
+        class ExpiryTimer
+        {
+        public:
+            typedef unsigned int Id;
+            typedef std::function< void(Id) > Callback;
+            typedef long long DelayInMilliSec;
 
-private:
-    void cancelAll();
+        public:
+            ExpiryTimer();
+            ~ExpiryTimer();
 
-private:
-    std::list<Id> m_timerIDList;
-    ExpiryTimerImpl* timerPtr;
-};
+            ExpiryTimer(ExpiryTimer&&) = default;
+            ExpiryTimer& operator=(ExpiryTimer&&) = default;
 
+            ExpiryTimer(const ExpiryTimer&) = delete;
+            ExpiryTimer& operator=(const ExpiryTimer&) = delete;
+
+            Id post(DelayInMilliSec, Callback);
+            bool cancel(Id);
+            void cancelAll();
+
+            size_t getNumOfPending();
+            size_t getNumOfPending() const;
+
+        private:
+            void sweep();
+
+        private:
+            size_t m_nextSweep;
+
+            std::unordered_map< Id, std::shared_ptr< TimerTask > > m_tasks;
+        };
+
+    }
+}
 #endif //_EXPIRY_TIMER_H_

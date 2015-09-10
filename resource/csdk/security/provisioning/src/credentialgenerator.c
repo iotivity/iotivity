@@ -18,59 +18,97 @@
  *
  * *****************************************************************/
 #include <string.h>
-
-#include "provisioningmanager.h"
 #include "credentialgenerator.h"
 #include "oic_malloc.h"
 #include "logger.h"
 #include "credresource.h"
 #include "ocrandom.h"
 #include "base64.h"
-#define TAG "SPProvisionAPI"
-#define KEY_LENGTH 16
+#include "stdbool.h"
+#include "securevirtualresourcetypes.h"
 
-SPResult SPGeneratePairWiseCredentials(OicSecCredType_t type, const OicUuid_t *ptDeviceId,
-                                       const OicUuid_t *firstDeviceId,
-                                       const OicUuid_t *secondDeviceId,
-                                       OicSecCred_t **firstCred,
-                                       OicSecCred_t **secondCred)
+#define TAG "SRPAPI-CG"
+
+/**
+ * @def PM_VERIFY_SUCCESS
+ * @brief Macro to verify success of operation.
+ *        eg: PM_VERIFY_SUCCESS(TAG, OC_STACK_OK == foo(), OC_STACK_ERROR, ERROR);
+ * @note Invoking function must define "bail:" label for goto functionality to work correctly and
+ *       must define "OCStackResult res" for setting error code.
+ * */
+#define PM_VERIFY_SUCCESS(tag, op, errCode, logLevel) { if (!(op)) \
+                       {OC_LOG((logLevel), tag, #op " failed!!"); res = errCode; goto bail;} }
+/**
+ * @def PM_VERIFY_NON_NULL
+ * @brief Macro to verify argument is not equal to NULL.
+ *        eg: PM_VERIFY_NON_NULL(TAG, ptrData, ERROR);
+ * @note Invoking function must define "bail:" label for goto functionality to work correctly.
+ * */
+#define PM_VERIFY_NON_NULL(tag, arg, errCode, logLevel) { if (NULL == (arg)) \
+                   { OC_LOG((logLevel), tag, #arg " is NULL"); res = errCode; goto bail;} }
+
+OCStackResult PMGeneratePairWiseCredentials(OicSecCredType_t type, size_t keySize,
+                                    const OicUuid_t *ptDeviceId,
+                                    const OicUuid_t *firstDeviceId, const OicUuid_t *secondDeviceId,
+                                    OicSecCred_t **firstCred, OicSecCred_t **secondCred)
 {
 
-    if (NULL == ptDeviceId || NULL == firstDeviceId || NULL == secondDeviceId)
+    if (NULL == ptDeviceId || NULL == firstDeviceId || NULL != *firstCred || \
+        NULL == secondDeviceId || NULL != *secondCred)
     {
-        return SP_RESULT_INVALID_PARAM;
+        OC_LOG(INFO, TAG, "Invalid params");
+        return OC_STACK_INVALID_PARAM;
     }
-    uint8_t privData[KEY_LENGTH] = {0,};
-    OCFillRandomMem(privData, KEY_LENGTH);
+    if(!(keySize == OWNER_PSK_LENGTH_128 || keySize == OWNER_PSK_LENGTH_256))
+    {
+        OC_LOG(INFO, TAG, "Invalid key size");
+        return OC_STACK_INVALID_PARAM;
+    }
+    OCStackResult res = OC_STACK_ERROR;
+    uint8_t* privData = NULL;
+    char* base64Buff = NULL;
+    OicSecCred_t *tempFirstCred = NULL;
+    OicSecCred_t *tempSecondCred = NULL;
+
+    size_t privDataKeySize = keySize;
+
+    privData = (uint8_t*) OICCalloc(privDataKeySize,sizeof(uint8_t));
+    PM_VERIFY_NON_NULL(TAG, privData, OC_STACK_NO_MEMORY, ERROR);
+
+    OCFillRandomMem(privData,privDataKeySize);
 
     uint32_t outLen = 0;
-    char base64Buff[B64ENCODE_OUT_SAFESIZE(sizeof(privData)) + 1] = {};
-    B64Result b64Ret = b64Encode(privData, sizeof(privData), base64Buff,
-                                sizeof(base64Buff), &outLen);
-    if (B64_OK != b64Ret)
-    {
-        OC_LOG(ERROR, TAG, "Error while encoding key");
-        return SP_RESULT_INTERNAL_ERROR;
-    }
 
-    // TODO currently owner array is 1. only provisioning tool's id.
-    OicSecCred_t *tempFirstCred =  GenerateCredential(secondDeviceId, type, NULL, base64Buff, 1,
-                                   ptDeviceId);
-    if (NULL == tempFirstCred)
-    {
-        OC_LOG(ERROR, TAG, "Error while generating credential.");
-        return SP_RESULT_INTERNAL_ERROR;
-    }
-    // TODO currently owner array is 1. only provisioning tool's id.
-    OicSecCred_t *tempSecondCred =  GenerateCredential(firstDeviceId, type, NULL, base64Buff, 1,
-                                    ptDeviceId);
-    if (NULL == tempSecondCred)
-    {
-        DeleteCredList(tempFirstCred);
-        OC_LOG(ERROR, TAG, "Error while generating credential.");
-        return SP_RESULT_INTERNAL_ERROR;
-    }
+    base64Buff = (char*) OICCalloc(B64ENCODE_OUT_SAFESIZE(privDataKeySize) + 1, sizeof(char));
+    PM_VERIFY_NON_NULL(TAG, base64Buff, OC_STACK_NO_MEMORY, ERROR);
+    int memReq = (B64ENCODE_OUT_SAFESIZE(privDataKeySize) + 1) * sizeof(char);
+    B64Result b64Ret = b64Encode(privData, privDataKeySize*sizeof(uint8_t), base64Buff,
+                                 memReq, &outLen);
+    PM_VERIFY_SUCCESS(TAG, B64_OK == b64Ret, OC_STACK_ERROR, ERROR);
+
+    // TODO: currently owner array is 1. only provisioning tool's id.
+    tempFirstCred =  GenerateCredential(secondDeviceId, type, NULL, base64Buff, 1, ptDeviceId);
+    PM_VERIFY_NON_NULL(TAG, tempFirstCred, OC_STACK_ERROR, ERROR);
+
+    // TODO: currently owner array is 1. only provisioning tool's id.
+    tempSecondCred =  GenerateCredential(firstDeviceId, type, NULL, base64Buff, 1, ptDeviceId);
+    PM_VERIFY_NON_NULL(TAG, tempSecondCred, OC_STACK_ERROR, ERROR);
+
     *firstCred = tempFirstCred;
     *secondCred = tempSecondCred;
-    return SP_RESULT_SUCCESS;
+    res = OC_STACK_OK;
+
+bail:
+    OICFree(privData);
+    OICFree(base64Buff);
+
+    if(res != OC_STACK_OK)
+    {
+        OICFree(tempFirstCred);
+        OICFree(tempSecondCred);
+        *firstCred = NULL;
+        *secondCred = NULL;
+    }
+
+    return res;
 }
