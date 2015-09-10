@@ -21,10 +21,11 @@
 #define __DIAGNOSTICS_RESOURCE_H__
 
 #include <functional>
+#include <thread>
+#include <string>
 
 #include "OCPlatform.h"
 #include "OCApi.h"
-#include "ThingsManager.h"
 
 #pragma once
 
@@ -37,32 +38,32 @@ static std::string defaultFactoryReset = "false";
 static std::string defaultReboot = "false";
 static std::string defaultStartStatCollection = "false";
 
-class DiagnosticsResource
+class MaintenanceResource
 {
     public:
-        // Diagnostics members
-        std::string m_diagnosticsUri;
+        // Maintenance members
+        std::string m_maintenanceUri;
         std::string m_factoryReset;
         std::string m_reboot;
         std::string m_startStatCollection;
-        std::vector< std::string > m_diagnosticsTypes;
-        std::vector< std::string > m_diagnosticsInterfaces;
-        OCResourceHandle m_diagnosticsHandle;
-        OCRepresentation m_diagnosticsRep;
+        std::vector< std::string > m_maintenanceTypes;
+        std::vector< std::string > m_maintenanceInterfaces;
+        OCResourceHandle m_maintenanceHandle;
+        OCRepresentation m_maintenanceRep;
 
     public:
 
-        DiagnosticsResource();
+        MaintenanceResource();
 
         void createResource(ResourceEntityHandler callback);
 
-        void setDiagnosticsRepresentation(OCRepresentation &rep);
+        void setMaintenanceRepresentation(OCRepresentation &rep);
 
-        OCRepresentation getDiagnosticsRepresentation();
+        OCRepresentation getMaintenanceRepresentation();
 
         std::string getUri();
 
-        void diagnosticsMonitor(int second);
+        void maintenanceMonitor(int second);
 
         std::function< void() > factoryReset;
 

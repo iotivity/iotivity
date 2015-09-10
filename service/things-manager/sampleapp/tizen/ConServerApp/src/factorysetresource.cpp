@@ -22,10 +22,11 @@
 
 #include <functional>
 #include <dlog.h>
+#include <string.h>
 
 #include "OCPlatform.h"
 #include "OCApi.h"
-#include "ThingsManager.h"
+#include "configurationresource.h"
 
 using namespace OC;
 
@@ -68,29 +69,29 @@ void FactorySetResource::createResource(ResourceEntityHandler callback)
 
 void FactorySetResource::setFactorySetRepresentation(OCRepresentation &rep)
 {
-    string value;
+    std::string value;
 
-    if (rep.getValue("loc", value))
+    if (rep.getValue(DEFAULT_LOCATION, value))
     {
         m_location = value;
         dlog_print(DLOG_INFO, "FactorySetResource", "#### m_location: %s",
                    m_location.c_str());
     }
 
-    if (rep.getValue("st", value))
+    if (rep.getValue(DEFAULT_SYSTIME, value))
     {
         dlog_print(DLOG_INFO, "FactorySetResource", "#### SystemTime is not"
                    "allowed to be written");
     }
 
-    if (rep.getValue("c", value))
+    if (rep.getValue(DEFAULT_CURRENCY, value))
     {
         m_currency = value;
         dlog_print(DLOG_INFO, "FactorySetResource", "#### m_currency: %s",
                    m_currency.c_str());
     }
 
-    if (rep.getValue("r", value))
+    if (rep.getValue(DEFAULT_REGION, value))
     {
         m_region = value;
         dlog_print(DLOG_INFO, "FactorySetResource", "#### m_region: %s",
@@ -100,10 +101,10 @@ void FactorySetResource::setFactorySetRepresentation(OCRepresentation &rep)
 
 OCRepresentation FactorySetResource::getFactorySetRepresentation()
 {
-    m_configurationRep.setValue("loc", m_location);
-    m_configurationRep.setValue("st", m_systemTime);
-    m_configurationRep.setValue("c", m_currency);
-    m_configurationRep.setValue("r", m_region);
+    m_configurationRep.setValue(DEFAULT_LOCATION, m_location);
+    m_configurationRep.setValue(DEFAULT_SYSTIME, m_systemTime);
+    m_configurationRep.setValue(DEFAULT_CURRENCY, m_currency);
+    m_configurationRep.setValue(DEFAULT_REGION, m_region);
 
     return m_configurationRep;
 }

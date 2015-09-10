@@ -29,7 +29,6 @@
 
 #include "OCPlatform.h"
 #include "OCApi.h"
-#include "thingsmanager.h"
 
 #ifdef  LOG_TAG
 #undef  LOG_TAG

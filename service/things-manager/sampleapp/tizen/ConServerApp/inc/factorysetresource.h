@@ -24,7 +24,6 @@
 
 #include "OCPlatform.h"
 #include "OCApi.h"
-#include "ThingsManager.h"
 #include "configurationresource.h"
 
 #pragma once

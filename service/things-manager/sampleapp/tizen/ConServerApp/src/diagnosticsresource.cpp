@@ -22,108 +22,112 @@
 
 #include <functional>
 #include <dlog.h>
+#include <thread>
+#include <string>
 
 #include "conserverapp.h"
 #include "OCPlatform.h"
 #include "OCApi.h"
-#include "ThingsManager.h"
-
-extern string logMessage;
-
-extern void *updateLog(void *);
 
 using namespace OC;
 
+extern std::string logMessage;
+
+extern void *updateLog(void *);
+
+static std::string defaultMntURI = "/oic/mnt";
+static std::string defaultMntResourceType = "oic.wk.mnt";
+
 // Constructor
-DiagnosticsResource::DiagnosticsResource() :
+MaintenanceResource::MaintenanceResource() :
     m_factoryReset(defaultFactoryReset), m_reboot(defaultReboot),
     m_startStatCollection(defaultStartStatCollection)
 {
-    m_diagnosticsUri = "/oic/diag"; // URI of the resource
-    m_diagnosticsTypes.push_back("oic.diag"); // resource type name
-    m_diagnosticsInterfaces.push_back(DEFAULT_INTERFACE); // resource interface
-    m_diagnosticsRep.setValue("fr", m_factoryReset);
-    m_diagnosticsRep.setValue("rb", m_reboot);
-    m_diagnosticsRep.setValue("ssc", m_startStatCollection);
-    m_diagnosticsRep.setUri(m_diagnosticsUri);
-    m_diagnosticsRep.setResourceTypes(m_diagnosticsTypes);
-    m_diagnosticsRep.setResourceInterfaces(m_diagnosticsInterfaces);
-    m_diagnosticsHandle = NULL;
+    m_maintenanceUri = defaultMntURI; // URI of the resource
+    m_maintenanceTypes.push_back(defaultMntResourceType); // resource type name
+    m_maintenanceInterfaces.push_back(DEFAULT_INTERFACE); // resource interface
+    m_maintenanceRep.setValue("fr", m_factoryReset);
+    m_maintenanceRep.setValue("rb", m_reboot);
+    m_maintenanceRep.setValue("ssc", m_startStatCollection);
+    m_maintenanceRep.setUri(m_maintenanceUri);
+    m_maintenanceRep.setResourceTypes(m_maintenanceTypes);
+    m_maintenanceRep.setResourceInterfaces(m_maintenanceInterfaces);
+    m_maintenanceHandle = NULL;
 }
 
 // Creates a DiagnosticResource
-void DiagnosticsResource::createResource(ResourceEntityHandler callback)
+void MaintenanceResource::createResource(ResourceEntityHandler callback)
 {
     using namespace OC::OCPlatform;
 
     if (NULL == callback)
     {
-        dlog_print(DLOG_INFO, "DiagnosticsResource", "#### Callback should be binded");
+        dlog_print(DLOG_INFO, "MaintenanceResource", "#### Callback should be binded");
         return;
     }
 
     // This will internally create and register the resource
-    OCStackResult result = registerResource(m_diagnosticsHandle, m_diagnosticsUri,
-                                            m_diagnosticsTypes[0], m_diagnosticsInterfaces[0],
+    OCStackResult result = registerResource(m_maintenanceHandle, m_maintenanceUri,
+                                            m_maintenanceTypes[0], m_maintenanceInterfaces[0],
                                             callback, OC_DISCOVERABLE | OC_OBSERVABLE);
 
     if (OC_STACK_OK != result)
     {
-        dlog_print(DLOG_INFO, "DiagnosticsResource", "#### Resource creation"
-                   "(configuration) was unsuccessful");
+        dlog_print(DLOG_INFO, "MaintenanceResource", "#### Resource creation"
+                   "(maintenance) was unsuccessful");
         return;
     }
 
-    thread exec(
+    std::thread exec(
         std::function< void(int second) >(
-            std::bind(&DiagnosticsResource::diagnosticsMonitor, this,
+            std::bind(&MaintenanceResource::maintenanceMonitor, this,
                       std::placeholders::_1)), 1);
     exec.detach();
 
-    dlog_print(DLOG_INFO, "DiagnosticsResource", "#### Diagnostics Resource is Created");
+    dlog_print(DLOG_INFO, "MaintenanceResource", "#### maintenance Resource is Created");
 }
 
-void DiagnosticsResource::setDiagnosticsRepresentation(OCRepresentation &rep)
+void MaintenanceResource::setMaintenanceRepresentation(OCRepresentation &rep)
 {
-    string value;
+    std::string value;
 
     if (rep.getValue("fr", value))
     {
         m_factoryReset = value;
-        dlog_print(DLOG_INFO, "DiagnosticsResource", "#### m_factoryReset: %s",
+        dlog_print(DLOG_INFO, "MaintenanceResource", "#### m_factoryReset: %s",
                    m_factoryReset.c_str());
     }
 
     if (rep.getValue("rb", value))
     {
         m_reboot = value;
-        dlog_print(DLOG_INFO, "DiagnosticsResource", "#### m_reboot: %s", m_reboot.c_str());
+        dlog_print(DLOG_INFO, "MaintenanceResource", "#### m_reboot: %s", m_reboot.c_str());
     }
 
     if (rep.getValue("ssc", value))
     {
         m_startStatCollection = value;
-        dlog_print(DLOG_INFO, "DiagnosticsResource", "#### m_startStatCollection: %s",
+        dlog_print(DLOG_INFO, "MaintenanceResource", "#### m_startStatCollection: %s",
                    m_startStatCollection.c_str());
     }
 }
 
-OCRepresentation DiagnosticsResource::getDiagnosticsRepresentation()
+OCRepresentation MaintenanceResource::getMaintenanceRepresentation()
 {
-    m_diagnosticsRep.setValue("fr", m_factoryReset);
-    m_diagnosticsRep.setValue("rb", m_reboot);
-    m_diagnosticsRep.setValue("ssc", m_startStatCollection);
+    m_maintenanceRep.setValue("fr", m_factoryReset);
+    m_maintenanceRep.setValue("rb", m_reboot);
+    m_maintenanceRep.setValue("ssc", m_startStatCollection);
 
-    return m_diagnosticsRep;
+    return m_maintenanceRep;
 }
 
-std::string DiagnosticsResource::getUri()
+std::string MaintenanceResource::getUri()
 {
-    return m_diagnosticsUri;
+    return m_maintenanceUri;
 }
 
 // Handles the Reboot and FactoryReset request
-void DiagnosticsResource::diagnosticsMonitor(int second)
+void MaintenanceResource::maintenanceMonitor(int second)
 {
     while (1)
     {
@@ -132,11 +136,11 @@ void DiagnosticsResource::diagnosticsMonitor(int second)
         if (m_reboot == "true")
         {
             int res;
-            dlog_print(DLOG_INFO, "DiagnosticsResource", "#### Reboot will be soon...");
+            dlog_print(DLOG_INFO, "MaintenanceResource", "#### Reboot will be soon...");
             m_reboot = defaultReboot;
             res = system("sudo reboot"); // System reboot
 
-            dlog_print(DLOG_INFO, "DiagnosticsResource", "#### return: %d", res);
+            dlog_print(DLOG_INFO, "MaintenanceResource", "#### return: %d", res);
 
             logMessage = "----------------------------<br>";
             logMessage += "*** System Reboot Success ***<br>";
@@ -148,7 +152,7 @@ void DiagnosticsResource::diagnosticsMonitor(int second)
         }
         else if (m_factoryReset == "true")
         {
-            dlog_print(DLOG_INFO, "DiagnosticsResource", "#### Factory Reset will be soon...");
+            dlog_print(DLOG_INFO, "MaintenanceResource", "#### Factory Reset will be soon...");
             m_factoryReset = defaultFactoryReset;
             factoryReset();
         }
@@ -156,11 +160,11 @@ void DiagnosticsResource::diagnosticsMonitor(int second)
 }
 
 // Deletes the diagnostic resource which has been created using createResource()
-void DiagnosticsResource::deleteResource()
+void MaintenanceResource::deleteResource()
 {
     // Unregister the resource
-    if (NULL != m_diagnosticsHandle)
+    if (NULL != m_maintenanceHandle)
     {
-        OCPlatform::unregisterResource(m_diagnosticsHandle);
+        OCPlatform::unregisterResource(m_maintenanceHandle);
     }
 }

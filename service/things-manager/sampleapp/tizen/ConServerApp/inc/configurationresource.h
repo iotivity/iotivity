@@ -24,20 +24,24 @@
 
 #include "OCPlatform.h"
 #include "OCApi.h"
-#include "ThingsManager.h"
 
 #pragma once
+
+#define DEFAULT_LOCATION "loc"
+#define DEFAULT_SYSTIME "st"
+#define DEFAULT_CURRENCY "c"
+#define DEFAULT_REGION "r"
 
 using namespace OC;
 
 typedef std::function<OCEntityHandlerResult(std::shared_ptr< OCResourceRequest > request)>
 ResourceEntityHandler;
 
-static std::string defaultURIPrefix = "/oic/con";
-static std::string defaultResourceTypePrefix = "oic.con";
+static std::string defaultConURI = "/oic/con";
+static std::string defaultConResourceType = "oic.wk.con";
 
 extern std::string defaultLocation;
-extern std::string defaultDeviceName;
+extern std::string defaultSystemTime;
 extern std::string defaultCurrency;
 extern std::string defaultRegion;
 

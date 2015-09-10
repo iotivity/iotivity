@@ -56,7 +56,7 @@ if target_os == 'android':
 
 
 # Remove it if the conversion for Android and Tizen platform is done
-if target_os == 'linux':
+if target_os in ['linux', 'tizen']:
    tgm_src = env.Glob('sdk/src/*.cpp', '../../extlibs/timer/timer.c')
    tgmsdk_static = things_manager_env.StaticLibrary('TGMSDKLibrary', tgm_src)
    tgmsdk_shared = things_manager_env.SharedLibrary('TGMSDKLibrary', tgm_src)

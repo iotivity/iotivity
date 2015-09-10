@@ -29,7 +29,9 @@
 
 #include "OCPlatform.h"
 #include "OCApi.h"
-#include "ThingsManager.h"
+#include "GroupManager.h"
+#include "ThingsConfiguration.h"
+#include "ThingsMaintenance.h"
 
 
 #ifdef  LOG_TAG
@@ -42,6 +44,14 @@
 #endif
 
 #define ELM_DEMO_EDJ "opt/usr/apps/org.tizen.tmsampleapp/res/ui_controls.edj"
+
+#define FINDGROUP_TIMEOUT 5
+#define FINDRESOURCE_TIMEOUT 6
+
+#define DEFAULT_LOCATION "loc"
+#define DEFAULT_SYSTIME "st"
+#define DEFAULT_CURRENCY "c"
+#define DEFAULT_REGION "r"
 
 void group_cb(void *data, Evas_Object *obj, void *event_info);
 void configuration_cb(void *data, Evas_Object *obj, void *event_info);
