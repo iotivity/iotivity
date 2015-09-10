@@ -23,7 +23,8 @@
 
 #include "octypes.h"
 
-OCStackResult OCParsePayload(OCPayload** outPayload, const uint8_t* payload, size_t payloadSize);
+OCStackResult OCParsePayload(OCPayload** outPayload, OCPayloadType type,
+        const uint8_t* payload, size_t payloadSize);
 
 OCStackResult OCConvertPayload(OCPayload* payload, uint8_t** outPayload, size_t* size);
 #endif

@@ -36,7 +36,8 @@ static OCStackResult OCParseRepPayload(OCPayload** outPayload, CborValue* arrayV
 static OCStackResult OCParsePresencePayload(OCPayload** outPayload, CborValue* arrayVal);
 static OCStackResult OCParseSecurityPayload(OCPayload** outPayload, CborValue* arrayVal);
 
-OCStackResult OCParsePayload(OCPayload** outPayload, const uint8_t* payload, size_t payloadSize)
+OCStackResult OCParsePayload(OCPayload** outPayload, OCPayloadType payloadType,
+        const uint8_t* payload, size_t payloadSize)
 {
     CborParser parser;
     CborValue rootValue;
@@ -59,11 +60,7 @@ OCStackResult OCParsePayload(OCPayload** outPayload, const uint8_t* payload, siz
     // enter the array
     err = err || cbor_value_enter_container(&rootValue, &arrayValue);
 
-    int payloadType = 0;
-    err = err || cbor_value_get_int(&arrayValue, &payloadType);
-    err = err || cbor_value_advance_fixed(&arrayValue);
-
-    if(err)
+    if(err || arrayValue.type != CborMapType)
     {
         OC_LOG_V(ERROR, TAG, "CBOR payload parse failed :%d", err);
         return OC_STACK_MALFORMED_RESPONSE;

@@ -875,7 +875,9 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
 
     if (responseInfo->info.payload)
     {
-        result = OCParsePayload(&response.payload,  responseInfo->info.payload,
+        result = OCParsePayload(&response.payload,
+                PAYLOAD_TYPE_PRESENCE,
+                responseInfo->info.payload,
                 responseInfo->info.payloadSize);
 
         if(result != OC_STACK_OK)
@@ -1088,14 +1090,60 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
             response.identity.id_length = responseInfo->info.identity.id_length;
 
             response.result = CAToOCStackResult(responseInfo->result);
+
             if(responseInfo->info.payload &&
-               responseInfo->info.payloadSize &&
-               OC_STACK_OK != OCParsePayload(&response.payload, responseInfo->info.payload,
-                                           responseInfo->info.payloadSize))
+               responseInfo->info.payloadSize)
             {
-                OC_LOG(ERROR, TAG, "Error converting payload");
-                OCPayloadDestroy(response.payload);
-                return;
+                OCPayloadType type = PAYLOAD_TYPE_INVALID;
+                if (cbNode->method == OC_REST_DISCOVER)
+                {
+                    if (strncmp(OC_RSRVD_WELL_KNOWN_URI,cbNode->requestUri,
+                                sizeof(OC_RSRVD_WELL_KNOWN_URI) - 1) == 0)
+                    {
+                        type = PAYLOAD_TYPE_DISCOVERY;
+                    }
+                    else if (strcmp(cbNode->requestUri, OC_RSRVD_DEVICE_URI) == 0)
+                    {
+                        type = PAYLOAD_TYPE_DEVICE;
+                    }
+                    else if (strcmp(cbNode->requestUri, OC_RSRVD_PLATFORM_URI) == 0)
+                    {
+                        type = PAYLOAD_TYPE_PLATFORM;
+                    }
+                    else
+                    {
+                        OC_LOG_V(ERROR, TAG, "Unknown Payload type in Discovery: %d %s",
+                                cbNode->method, cbNode->requestUri);
+                        return;
+                    }
+                }
+                else if (cbNode->method == OC_REST_GET ||
+                         cbNode->method == OC_REST_PUT ||
+                         cbNode->method == OC_REST_POST ||
+                         cbNode->method == OC_REST_OBSERVE ||
+                         cbNode->method == OC_REST_OBSERVE_ALL ||
+                         cbNode->method == OC_REST_DELETE)
+                {
+                    OC_LOG_V(INFO, TAG, "Assuming PAYLOAD_TYPE_REPRESENTATION: %d %s",
+                            cbNode->method, cbNode->requestUri);
+                    type = PAYLOAD_TYPE_REPRESENTATION;
+                }
+                else
+                {
+                    OC_LOG_V(ERROR, TAG, "Unknown Payload type: %d %s",
+                            cbNode->method, cbNode->requestUri);
+                    return;
+                }
+
+                if(OC_STACK_OK != OCParsePayload(&response.payload,
+                            type,
+                            responseInfo->info.payload,
+                            responseInfo->info.payloadSize))
+                {
+                    OC_LOG(ERROR, TAG, "Error converting payload");
+                    OCPayloadDestroy(response.payload);
+                    return;
+                }
             }
 
             response.numRcvdVendorSpecificHeaderOptions = 0;

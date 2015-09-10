@@ -176,9 +176,7 @@ static int64_t OCConvertSecurityPayload(OCSecurityPayload* payload, uint8_t* out
     cbor_encoder_init(&encoder, outPayload, *size, 0);
 
     CborEncoder rootArray;
-    err = err | cbor_encoder_create_array(&encoder, &rootArray, 2);
-    err = err | cbor_encode_uint(&rootArray, PAYLOAD_TYPE_SECURITY);
-
+    err = err | cbor_encoder_create_array(&encoder, &rootArray, 1);
     CborEncoder map;
 
     err = err | cbor_encoder_create_map(&rootArray, &map, CborIndefiniteLength);
@@ -207,8 +205,7 @@ static int64_t OCConvertDiscoveryPayload(OCDiscoveryPayload* payload, uint8_t* o
     cbor_encoder_init(&encoder, outPayload, *size, 0);
 
     CborEncoder rootArray;
-    err = err | cbor_encoder_create_array(&encoder, &rootArray, 1 + resourceCount);
-    err = err | cbor_encode_uint(&rootArray, PAYLOAD_TYPE_DISCOVERY);
+    err = err | cbor_encoder_create_array(&encoder, &rootArray, resourceCount);
 
     for(size_t i = 0; i < resourceCount; ++i)
     {
@@ -320,8 +317,7 @@ static int64_t OCConvertDevicePayload(OCDevicePayload* payload, uint8_t* outPayl
 
     cbor_encoder_init(&encoder, outPayload, *size, 0);
     CborEncoder rootArray;
-    err = err | cbor_encoder_create_array(&encoder, &rootArray, 2);
-    err = err | cbor_encode_uint(&rootArray, PAYLOAD_TYPE_DEVICE);
+    err = err | cbor_encoder_create_array(&encoder, &rootArray, 1);
 
     {
         CborEncoder map;
@@ -379,8 +375,7 @@ static int64_t OCConvertPlatformPayload(OCPlatformPayload* payload, uint8_t* out
 
     cbor_encoder_init(&encoder, outPayload, *size, 0);
     CborEncoder rootArray;
-    err = err | cbor_encoder_create_array(&encoder, &rootArray, 2);
-    err = err | cbor_encode_uint(&rootArray, PAYLOAD_TYPE_PLATFORM);
+    err = err | cbor_encoder_create_array(&encoder, &rootArray, 1);
     {
         CborEncoder map;
         err = err | cbor_encoder_create_map(&rootArray, &map, CborIndefiniteLength);
@@ -678,7 +673,6 @@ static int64_t OCConvertRepPayload(OCRepPayload* payload, uint8_t* outPayload, s
     cbor_encoder_init(&encoder, outPayload, *size, 0);
     CborEncoder rootArray;
     err = err | cbor_encoder_create_array(&encoder, &rootArray, CborIndefiniteLength);
-    err = err | cbor_encode_uint(&rootArray, PAYLOAD_TYPE_REPRESENTATION);
 
     while(payload != NULL && (err == 0 || err == CborErrorOutOfMemory))
     {
@@ -701,9 +695,7 @@ static int64_t OCConvertPresencePayload(OCPresencePayload* payload,
     cbor_encoder_init(&encoder, outPayload, *size, 0);
     CborEncoder rootArray;
 
-    err = err | cbor_encoder_create_array(&encoder, &rootArray, 2);
-    err = err | cbor_encode_uint(&rootArray, PAYLOAD_TYPE_PRESENCE);
-
+    err = err | cbor_encoder_create_array(&encoder, &rootArray, 1);
 
     CborEncoder map;
     err = err | cbor_encoder_create_map(&rootArray, &map, CborIndefiniteLength);

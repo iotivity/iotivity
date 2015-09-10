@@ -347,7 +347,8 @@ OCStackResult FormOCEntityHandlerRequest(
 
         if(payload && payloadSize)
         {
-            if(OCParsePayload(&entityHandlerRequest->payload, payload, payloadSize) != OC_STACK_OK)
+            if(OCParsePayload(&entityHandlerRequest->payload, PAYLOAD_TYPE_REPRESENTATION,
+                        payload, payloadSize) != OC_STACK_OK)
             {
                 return OC_STACK_ERROR;
             }
