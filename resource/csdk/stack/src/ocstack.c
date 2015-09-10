@@ -374,6 +374,16 @@ static OCResourceType *findResourceType(OCResourceType * resourceTypeList,
  */
 static OCStackResult ResetPresenceTTL(ClientCB *cbNode, uint32_t maxAgeSeconds);
 
+/**
+ * Ensure the accept header option is set appropriatly before sending the requests.
+ *
+ * @param object CA remote endpoint.
+ * @param requestInfo CA request info.
+ *
+ * @return ::OC_STACK_OK on success, some other value upon failure.
+ */
+static OCStackResult OCSendRequest(const CAEndpoint_t *object, CARequestInfo_t *requestInfo);
+
 //-----------------------------------------------------------------------------
 // Internal functions
 //-----------------------------------------------------------------------------
@@ -428,6 +438,18 @@ void FixUpClientResponse(OCClientResponse *cr)
         ((cr->devAddr.adapter << CT_ADAPTER_SHIFT) | (cr->devAddr.flags & CT_MASK_FLAGS));
 }
 
+static OCStackResult OCSendRequest(const CAEndpoint_t *object, CARequestInfo_t *requestInfo)
+{
+    // OC stack prefer CBOR encoded payloads.
+    requestInfo->info.acceptFormat = CA_FORMAT_APPLICATION_CBOR;
+    CAResult_t result = CASendRequest(object, requestInfo);
+    if(CA_STATUS_OK != result)
+    {
+        OC_LOG_V(ERROR, TAG, "CASendRequest failed with CA error %u", result);
+        return CAResultToOCResult(result);
+    }
+    return OC_STACK_OK;
+}
 //-----------------------------------------------------------------------------
 // Internal API function
 //-----------------------------------------------------------------------------
@@ -1244,6 +1266,7 @@ OCStackResult SendDirectStackResponse(const CAEndpoint_t* endPoint, const uint16
     respInfo.info.tokenLength = tokenLength;
     respInfo.info.type = type;
     respInfo.info.resourceUri = OICStrdup (resourceUri);
+    respInfo.info.acceptFormat = CA_FORMAT_UNDEFINED;
 
     CAResult_t caResult = CASendResponse(endPoint, &respInfo);
 
@@ -1381,6 +1404,18 @@ void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
     }
     memcpy(serverRequest.requestToken, requestInfo->info.token, requestInfo->info.tokenLength);
 
+    switch (requestInfo->info.acceptFormat)
+    {
+        case CA_FORMAT_APPLICATION_CBOR:
+            serverRequest.acceptFormat = OC_FORMAT_CBOR;
+            break;
+        case CA_FORMAT_UNDEFINED:
+            serverRequest.acceptFormat = OC_FORMAT_UNDEFINED;
+            break;
+        default:
+            serverRequest.acceptFormat = OC_FORMAT_UNSUPPORTED;
+    }
+
     if (requestInfo->info.type == CA_MSG_CONFIRM)
     {
         serverRequest.qos = OC_HIGH_QOS;
@@ -1463,13 +1498,13 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
     {
         OC_LOG(INFO, TAG, "This is a new Server Request");
         result = AddServerRequest(&request, protocolRequest->coapID,
-                protocolRequest->delayedResNeeded, 0,
-                protocolRequest->method, protocolRequest->numRcvdVendorSpecificHeaderOptions,
+                protocolRequest->delayedResNeeded, 0, protocolRequest->method,
+                protocolRequest->numRcvdVendorSpecificHeaderOptions,
                 protocolRequest->observationOption, protocolRequest->qos,
                 protocolRequest->query, protocolRequest->rcvdVendorSpecificHeaderOptions,
                 protocolRequest->payload, protocolRequest->requestToken,
-                protocolRequest->tokenLength,
-                protocolRequest->resourceUrl, protocolRequest->reqTotalSize,
+                protocolRequest->tokenLength, protocolRequest->resourceUrl,
+                protocolRequest->reqTotalSize, protocolRequest->acceptFormat,
                 &protocolRequest->devAddr);
         if (OC_STACK_OK != result)
         {
@@ -2184,7 +2219,7 @@ OCStackResult OCDoResource(OCDoHandle *handle,
             OC_LOG(ERROR, TAG, "Failed to create CBOR Payload");
             goto exit;
         }
-        requestInfo.info.payloadFormat = CA_FORMAT_CBOR;
+        requestInfo.info.payloadFormat = CA_FORMAT_APPLICATION_CBOR;
     }
     else
     {
@@ -2230,11 +2265,9 @@ OCStackResult OCDoResource(OCDoHandle *handle,
     resourceType = NULL;  // Client CB list entry now owns it
 
     // send request
-    caResult = CASendRequest(&endpoint, &requestInfo);
-    if (caResult != CA_STATUS_OK)
+    result = OCSendRequest(&endpoint, &requestInfo);
+    if (OC_STACK_OK != result)
     {
-        OC_LOG(ERROR, TAG, "CASendRequest");
-        result = OC_STACK_COMM_ERROR;
         goto exit;
     }
 
@@ -2291,7 +2324,6 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
      */
     OCStackResult ret = OC_STACK_OK;
     CAEndpoint_t endpoint = {.adapter = CA_DEFAULT_ADAPTER};
-    CAResult_t caResult;
     CAInfo_t requestData = {.type = CA_MSG_CONFIRM};
     CARequestInfo_t requestInfo = {.method = CA_GET};
 
@@ -2340,13 +2372,7 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
             CopyDevAddrToEndpoint(clientCB->devAddr, &endpoint);
 
             // send request
-            caResult = CASendRequest(&endpoint, &requestInfo);
-            if (caResult != CA_STATUS_OK)
-            {
-                OC_LOG(ERROR, TAG, "CASendRequest error");
-                ret = OC_STACK_ERROR;
-            }
-            ret = CAResultToOCResult (caResult);
+            ret = OCSendRequest(&endpoint, &requestInfo);
             break;
 
 #ifdef WITH_PRESENCE
@@ -2465,7 +2491,6 @@ OCStackResult OCProcessPresence()
             continue;
         }
 
-        CAResult_t caResult = CA_STATUS_OK;
         CAEndpoint_t endpoint = {.adapter = CA_DEFAULT_ADAPTER};
         CAInfo_t requestData = {.type = CA_MSG_CONFIRM};
         CARequestInfo_t requestInfo = {.method = CA_GET};
@@ -2481,11 +2506,9 @@ OCStackResult OCProcessPresence()
         requestInfo.method = CA_GET;
         requestInfo.info = requestData;
 
-        caResult = CASendRequest(&endpoint, &requestInfo);
-
-        if (caResult != CA_STATUS_OK)
+        result = OCSendRequest(&endpoint, &requestInfo);
+        if (OC_STACK_OK != result)
         {
-            OC_LOG(ERROR, TAG, "CASendRequest error");
             goto exit;
         }
 
@@ -2552,7 +2575,7 @@ OCStackResult OCStartPresence(const uint32_t ttl)
         }
 
         AddObserver(OC_RSRVD_PRESENCE_URI, NULL, 0, caToken, tokenLength,
-                (OCResource *)presenceResource.handle, OC_LOW_QOS, &devAddr);
+                (OCResource *)presenceResource.handle, OC_LOW_QOS, OC_FORMAT_UNDEFINED, &devAddr);
         CADestroyToken(caToken);
     }
 
@@ -3939,3 +3962,4 @@ OCStackResult CAResultToOCResult(CAResult_t caResult)
             return OC_STACK_ERROR;
     }
 }
+

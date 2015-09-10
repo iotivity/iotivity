@@ -102,6 +102,7 @@ CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *rep)
         case CA_BAD_OPT:
         case CA_FORBIDDEN_REQ:
         case CA_NOT_FOUND:
+        case CA_NOT_ACCEPTABLE:
         case CA_REQUEST_ENTITY_INCOMPLETE:
         case CA_REQUEST_ENTITY_TOO_LARGE:
         case CA_INTERNAL_SERVER_ERROR:
@@ -285,6 +286,7 @@ CAResult_t CACloneInfo(const CAInfo_t *info, CAInfo_t *clone)
         clone->payloadSize = info->payloadSize;
     }
     clone->payloadFormat = info->payloadFormat;
+    clone->acceptFormat = info->acceptFormat;
 
     if (info->resourceUri)
     {

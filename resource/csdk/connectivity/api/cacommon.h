@@ -295,6 +295,7 @@ typedef enum
     CA_BAD_OPT = 402,                /**< Bad Option */
     CA_FORBIDDEN_REQ = 403,          /**< Forbidden Request */
     CA_NOT_FOUND = 404,              /**< Not found */
+    CA_NOT_ACCEPTABLE = 406,         /**< Not Acceptable */
     CA_REQUEST_ENTITY_INCOMPLETE = 408, /**< Request Entity Incomplete */
     CA_REQUEST_ENTITY_TOO_LARGE = 413,  /**< Request Entity Too Large */
     CA_INTERNAL_SERVER_ERROR = 500,  /**< Internal Server Error */
@@ -327,9 +328,16 @@ typedef enum
  */
 typedef enum
 {
-    CA_FORMAT_UNDEFINED,    /**< Undefined enoding format */
-    CA_FORMAT_UNSUPPORTED,  /**< Unsupported encoding format */
-    CA_FORMAT_CBOR          /**< CBOR encoding format */
+    CA_FORMAT_UNDEFINED = 0,            /**< Undefined enoding format */
+    CA_FORMAT_TEXT_PLAIN,
+    CA_FORMAT_APPLICATION_LINK_FORMAT,
+    CA_FORMAT_APPLICATION_XML,
+    CA_FORMAT_APPLICATION_OCTET_STREAM,
+    CA_FORMAT_APPLICATION_RDF_XML,
+    CA_FORMAT_APPLICATION_EXI,
+    CA_FORMAT_APPLICATION_JSON,
+    CA_FORMAT_APPLICATION_CBOR,
+    CA_FORMAT_UNSUPPORTED
 } CAPayloadFormat_t;
 
 /**
@@ -364,7 +372,8 @@ typedef struct
     uint8_t numOptions;         /**< Number of Header options */
     CAPayload_t payload;        /**< payload of the request  */
     size_t payloadSize;         /**< size in bytes of the payload */
-    CAPayloadFormat_t payloadFormat;         /**< format of the payload */
+    CAPayloadFormat_t payloadFormat;    /**< encoding format of the request payload */
+    CAPayloadFormat_t acceptFormat;     /**< accept format for the response payload */
     CAURI_t resourceUri;        /**< Resource URI information **/
     CARemoteId_t identity;      /**< endpoint identity */
 } CAInfo_t;

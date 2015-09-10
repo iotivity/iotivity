@@ -231,6 +231,13 @@ uint16_t CAGetMessageIdFromPduBinaryData(const void *pdu, uint32_t size);
  */
 CAResponseResult_t CAGetCodeFromPduBinaryData(const void *pdu, uint32_t size);
 
+/**
+ * convert format from coap to OC.
+ * @param[in]   format              coap format code.
+ * @return format.
+ */
+CAPayloadFormat_t CAConvertFormat(uint8_t format);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

@@ -509,7 +509,7 @@ CAResult_t CAParseHeadOption(uint32_t code, const CAInfo_t *info, coap_list_t **
         coap_list_t* node = NULL;
         uint8_t buf[3] = {0};
         switch (info->payloadFormat) {
-            case CA_FORMAT_CBOR:
+            case CA_FORMAT_APPLICATION_CBOR:
                 node = CACreateNewOptionNode(
                         COAP_OPTION_CONTENT_FORMAT,
                         coap_encode_var_bytes(buf, (uint16_t)COAP_MEDIATYPE_APPLICATION_CBOR),
@@ -517,6 +517,33 @@ CAResult_t CAParseHeadOption(uint32_t code, const CAInfo_t *info, coap_list_t **
                 break;
             default:
                 OIC_LOG_V(ERROR, TAG, "format option:[%d] not supported", info->payloadFormat);
+        }
+        if (!node)
+        {
+            OIC_LOG(ERROR, TAG, "format option not created");
+            return CA_STATUS_INVALID_PARAM;
+        }
+        int ret = coap_insert(optlist, node, CAOrderOpts);
+        if (ret <= 0)
+        {
+            coap_delete(node);
+            OIC_LOG(ERROR, TAG, "format option not inserted in header");
+            return CA_STATUS_INVALID_PARAM;
+        }
+    }
+    if (CA_FORMAT_UNDEFINED != info->acceptFormat)
+    {
+        coap_list_t* node = NULL;
+        uint8_t buf[3] = {0};
+        switch (info->acceptFormat) {
+            case CA_FORMAT_APPLICATION_CBOR:
+                node = CACreateNewOptionNode(
+                        COAP_OPTION_ACCEPT,
+                        coap_encode_var_bytes(buf, (uint16_t)COAP_MEDIATYPE_APPLICATION_CBOR),
+                        (char *)buf);
+                break;
+            default:
+                OIC_LOG_V(ERROR, TAG, "format option:[%d] not supported", info->acceptFormat);
         }
         if (!node)
         {
@@ -622,7 +649,8 @@ uint32_t CAGetOptionCount(coap_opt_iterator_t opt_iter)
         if (COAP_OPTION_URI_PATH != opt_iter.type && COAP_OPTION_URI_QUERY != opt_iter.type
             && COAP_OPTION_BLOCK1 != opt_iter.type && COAP_OPTION_BLOCK2 != opt_iter.type
             && COAP_OPTION_SIZE1 != opt_iter.type && COAP_OPTION_SIZE2 != opt_iter.type
-            && COAP_OPTION_CONTENT_FORMAT != opt_iter.type)
+            && COAP_OPTION_CONTENT_FORMAT != opt_iter.type
+            && COAP_OPTION_ACCEPT != opt_iter.type)
         {
             count++;
         }
@@ -662,6 +690,7 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *
     // set message id
     outInfo->messageId = pdu->hdr->id;
     outInfo->payloadFormat = CA_FORMAT_UNDEFINED;
+    outInfo->acceptFormat = CA_FORMAT_UNDEFINED;
 
     if (count > 0)
     {
@@ -771,15 +800,29 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *
             }
             else if (COAP_OPTION_CONTENT_FORMAT == opt_iter.type)
             {
-                if (1 == COAP_OPT_LENGTH(option) && COAP_MEDIATYPE_APPLICATION_CBOR == buf[0])
+                if (1 == COAP_OPT_LENGTH(option))
                 {
-                    outInfo->payloadFormat = CA_FORMAT_CBOR;
+                    outInfo->payloadFormat = CAConvertFormat((uint8_t)buf[0]);
                 }
                 else
                 {
                     outInfo->payloadFormat = CA_FORMAT_UNSUPPORTED;
+                    OIC_LOG_V(DEBUG, TAG, "option[%d] has an unsupported format [%d]",
+                            opt_iter.type, (uint8_t)buf[0]);
                 }
-                OIC_LOG_V(DEBUG, TAG, "option[%d] has format [%d]", opt_iter.type, (uint8_t)buf[0]);
+            }
+            else if (COAP_OPTION_ACCEPT == opt_iter.type)
+            {
+                if (1 == COAP_OPT_LENGTH(option))
+                {
+                    outInfo->acceptFormat = CAConvertFormat((uint8_t)buf[0]);
+                }
+                else
+                {
+                    outInfo->acceptFormat = CA_FORMAT_UNSUPPORTED;
+                }
+                OIC_LOG_V(DEBUG, TAG, "option[%d] has an unsupported format [%d]",
+                        opt_iter.type, (uint8_t)buf[0]);
             }
             else
             {
@@ -1076,4 +1119,29 @@ CAResponseResult_t CAGetCodeFromPduBinaryData(const void *pdu, uint32_t size)
     coap_hdr_t *hdr = (coap_hdr_t *) pdu;
 
     return (CAResponseResult_t) CA_RESPONSE_CODE(hdr->code);
+}
+
+CAPayloadFormat_t CAConvertFormat(uint8_t format)
+{
+    switch (format)
+    {
+        case COAP_MEDIATYPE_TEXT_PLAIN:
+            return CA_FORMAT_TEXT_PLAIN;
+        case COAP_MEDIATYPE_APPLICATION_LINK_FORMAT:
+            return CA_FORMAT_APPLICATION_LINK_FORMAT;
+        case COAP_MEDIATYPE_APPLICATION_XML:
+            return CA_FORMAT_APPLICATION_XML;
+        case COAP_MEDIATYPE_APPLICATION_OCTET_STREAM:
+            return CA_FORMAT_APPLICATION_OCTET_STREAM;
+        case COAP_MEDIATYPE_APPLICATION_RDF_XML:
+            return CA_FORMAT_APPLICATION_RDF_XML;
+        case COAP_MEDIATYPE_APPLICATION_EXI:
+            return CA_FORMAT_APPLICATION_EXI;
+        case COAP_MEDIATYPE_APPLICATION_JSON:
+            return CA_FORMAT_APPLICATION_JSON;
+        case COAP_MEDIATYPE_APPLICATION_CBOR:
+            return CA_FORMAT_APPLICATION_CBOR;
+        default:
+            return CA_FORMAT_UNSUPPORTED;
+    }
 }

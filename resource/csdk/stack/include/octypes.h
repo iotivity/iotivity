@@ -510,6 +510,16 @@ typedef enum
 } OCMethod;
 
 /**
+ *  Formats for payload encoding.
+ */
+typedef enum
+{
+    OC_FORMAT_CBOR,
+    OC_FORMAT_UNDEFINED,
+    OC_FORMAT_UNSUPPORTED,
+} OCPayloadFormat;
+
+/**
  * Host Mode of Operation.
  */
 typedef enum
@@ -1018,7 +1028,6 @@ typedef struct
 
     /** the payload from the request PDU.*/
     OCPayload *payload;
-
 
 } OCEntityHandlerRequest;
 

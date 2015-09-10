@@ -133,7 +133,7 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
                         0, resPtr->sequenceNum, qos, resourceObserver->query,
                         NULL, NULL,
                         resourceObserver->token, resourceObserver->tokenLength,
-                        resourceObserver->resUri, 0,
+                        resourceObserver->resUri, 0, resourceObserver->acceptFormat,
                         &resourceObserver->devAddr);
 
                 if(request)
@@ -178,7 +178,7 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
                         0, resPtr->sequenceNum, qos, resourceObserver->query,
                         NULL, NULL,
                         resourceObserver->token, resourceObserver->tokenLength,
-                        resourceObserver->resUri, 0,
+                        resourceObserver->resUri, 0, resourceObserver->acceptFormat,
                         &resourceObserver->devAddr);
 
                 if(result == OC_STACK_OK)
@@ -265,7 +265,7 @@ OCStackResult SendListObserverNotification (OCResource * resource,
                 result = AddServerRequest(&request, 0, 0, 1, OC_REST_GET,
                         0, resource->sequenceNum, qos, observer->query,
                         NULL, NULL, observer->token, observer->tokenLength,
-                        observer->resUri, 0,
+                        observer->resUri, 0, observer->acceptFormat,
                         &observer->devAddr);
 
                 if(request)
@@ -361,6 +361,7 @@ OCStackResult AddObserver (const char         *resUri,
                            uint8_t            tokenLength,
                            OCResource         *resHandle,
                            OCQualityOfService qos,
+                           OCPayloadFormat    acceptFormat,
                            const OCDevAddr    *devAddr)
 {
     // Check if resource exists and is observable.
@@ -388,6 +389,7 @@ OCStackResult AddObserver (const char         *resUri,
         VERIFY_NON_NULL (obsNode->resUri);
 
         obsNode->qos = qos;
+        obsNode->acceptFormat = acceptFormat;
         if(query)
         {
             obsNode->query = OICStrdup(query);

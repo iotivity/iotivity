@@ -81,6 +81,9 @@ typedef struct
     /** The REST method retrieved from received request PDU.*/
     OCMethod method;
 
+    /** the requested payload format. */
+    OCPayloadFormat acceptFormat;
+
     /** resourceUrl will be filled in occoap using the path options in received request PDU.*/
     char resourceUrl[MAX_URI_LENGTH];
 
