@@ -647,15 +647,18 @@ static bool OCParseArray(OCRepPayload* out, const char* name, CborValue* contain
             }
             break;
         case OCREP_PROP_STRING:
-            arr = (char**)OICMalloc(dimTotal * sizeof(char*));
+            arr = (char**)OICCalloc(dimTotal, sizeof(char*));
             if(arr)
             {
                 for(size_t i = 0; i < dimTotal && !err; ++i)
                 {
-                    err = err || cbor_value_dup_text_string(&insideArray, &tempStr,
-                            &len, NULL);
+                    if (!cbor_type_is_null(&insideArray))
+                    {
+                        err = err || cbor_value_dup_text_string(&insideArray, &tempStr,
+                                &len, NULL);
+                        ((char**)arr)[i] = tempStr;
+                    }
                     err = err || cbor_value_advance(&insideArray);
-                    ((char**)arr)[i] = tempStr;
                 }
                 if(err || !OCRepPayloadSetStringArrayAsOwner(out, name, (char**)arr, dimensions))
                 {
@@ -669,15 +672,18 @@ static bool OCParseArray(OCRepPayload* out, const char* name, CborValue* contain
             }
             break;
         case OCREP_PROP_OBJECT:
-            arr = (OCRepPayload**)OICMalloc(dimTotal * sizeof(OCRepPayload*));
+            arr = (OCRepPayload**)OICCalloc(dimTotal, sizeof(OCRepPayload*));
             if(arr)
             {
                 for(size_t i = 0; i < dimTotal && !err; ++i)
                 {
-                    pl = NULL;
-                    err = err || OCParseSingleRepPayload(&pl, &insideArray);
+                    if (!cbor_type_is_null(&insideArray))
+                    {
+                        pl = NULL;
+                        err = err || OCParseSingleRepPayload(&pl, &insideArray);
+                        ((OCRepPayload**)arr)[i] = pl;
+                    }
                     err = err || cbor_value_advance(&insideArray);
-                    ((OCRepPayload**)arr)[i] = pl;
                 }
                 if(err || !OCRepPayloadSetPropObjectArrayAsOwner(out, name,
                         (OCRepPayload**)arr, dimensions))
@@ -760,6 +766,7 @@ static bool OCParseSingleRepPayload(OCRepPayload** outPayload, CborValue* repPar
             err = err || cbor_value_leave_container(&insidePropArray, &ifArray);
         }
     }
+
     err = err || cbor_value_map_find_value(repParent, OC_RSRVD_REPRESENTATION, &curVal);
     if(cbor_value_is_map(&curVal))
     {

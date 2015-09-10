@@ -299,6 +299,18 @@ namespace OC
     }
 
     template<>
+    void get_payload_array::copy_to_array(std::string item, void* array, size_t pos)
+    {
+        ((char**)array)[pos] = OICStrdup(item.c_str());
+    }
+
+    template<>
+    void get_payload_array::copy_to_array(std::string& item, void* array, size_t pos)
+    {
+        ((char**)array)[pos] = OICStrdup(item.c_str());
+    }
+
+    template<>
     void get_payload_array::copy_to_array(const std::string& item, void* array, size_t pos)
     {
         ((char**)array)[pos] = OICStrdup(item.c_str());
@@ -451,14 +463,24 @@ namespace OC
     std::string OCRepresentation::payload_array_helper_copy<std::string>(
             size_t index, const OCRepPayloadValue* pl)
     {
-        return std::string(pl->arr.strArray[index]);
+        if (pl->arr.strArray[index])
+        {
+            return std::string(pl->arr.strArray[index]);
+        }
+        else
+        {
+            return std::string{};
+        }
     }
     template<>
     OCRepresentation OCRepresentation::payload_array_helper_copy<OCRepresentation>(
             size_t index, const OCRepPayloadValue* pl)
     {
         OCRepresentation r;
-        r.setPayload(pl->arr.objArray[index]);
+        if (pl->arr.objArray[index])
+        {
+            r.setPayload(pl->arr.objArray[index]);
+        }
         return r;
     }
 

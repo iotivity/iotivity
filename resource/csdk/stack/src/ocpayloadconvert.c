@@ -495,11 +495,25 @@ static int64_t OCConvertArray(CborEncoder* parent, const OCRepPayloadValueArray*
                 err = err | cbor_encode_boolean(&array, valArray->bArray[i]);
                 break;
             case OCREP_PROP_STRING:
-                err = err | cbor_encode_text_string(&array, valArray->strArray[i],
-                        strlen(valArray->strArray[i]));
+                if (!valArray->strArray[i])
+                {
+                    err = err | cbor_encode_null(&array);
+                }
+                else
+                {
+                    err = err | cbor_encode_text_string(&array, valArray->strArray[i],
+                            strlen(valArray->strArray[i]));
+                }
                 break;
             case OCREP_PROP_OBJECT:
-                err = OCConvertSingleRepPayload(&array, valArray->objArray[i]);
+                if (!valArray->objArray[i])
+                {
+                    err = err | cbor_encode_null(&array);
+                }
+                else
+                {
+                    err = OCConvertSingleRepPayload(&array, valArray->objArray[i]);
+                }
                 break;
             case OCREP_PROP_ARRAY:
                 OC_LOG(ERROR, TAG, "ConvertArray Invalid child array");
