@@ -18,52 +18,35 @@
  *
  ******************************************************************/
 
-#include "jni_string.h"
+/**
+ * @file
+ * This file contains the declaration of GroupSynchronizationCallbacks class.
+ */
 
-#define LOG_TAG "TM_JString"
+#ifndef JNI_GROUP_SYNCHRONIZATION_CALLBACKS_H_
+#define JNI_GROUP_SYNCHRONIZATION_CALLBACKS_H_
 
-JString::JString(JNIEnv *env, jstring value) : JObject(env, value)
+#include <string>
+
+#include "GroupSynchronization.h"
+
+/**
+ * This class provides callback function for group Synchronization.
+ */
+class GroupSynchronizationCallbacks
 {
-    const char *buff = env->GetStringUTFChars(value, 0);
 
-    m_cstr = buff;
+    public:
+        GroupSynchronizationCallbacks() {}
+        virtual ~GroupSynchronizationCallbacks() {}
 
-    env->ReleaseStringUTFChars(value, buff);
-}
-
-JString::JString(JNIEnv *env, const char *value) : JObject(env)
-{
-    m_cstr = value;
-
-    if (env)
-    {
-        m_pObject = env->NewStringUTF( value );
-    }
-}
-
-JString::JString(JNIEnv *env, const std::string &value) : JObject(env)
-{
-    m_cstr = value;
-
-    if (env)
-    {
-        m_pObject = env->NewStringUTF( value.c_str() );
-    }
-}
-
-JString::~JString()
-{
-}
-
-bool JString::getValue(std::string &value)
-{
-    value = m_cstr;
-    return true;
-}
-
-const char *JString::c_str()
-{
-    return m_cstr.c_str();
-}
+        /**
+         * This callback method is called to notify whether group is found or not.
+         *
+         * @param resource - Resource URI
+         */
+        static void onFoundGroup(std::shared_ptr<OC::OCResource> resource);
 
 
+};
+#endif //JNI_GROUP_SYNCHRONIZATION_CALLBACKS_H_

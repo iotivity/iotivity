@@ -1,4 +1,4 @@
-/******************************************************************
+/* *****************************************************************
  *
  * Copyright 2015 Samsung Electronics All Rights Reserved.
  *
@@ -19,10 +19,9 @@
  ******************************************************************/
 
 /**
- * @file   Action.java
- *
- * @brief  This file contains class which provides functions to retrieve the Action details from a
- *            Segment.
+ * @file
+ * This file contains class which provides functions to retrieve the Action
+ * details from a Segment.
  */
 
 package org.iotivity.service.tm;
@@ -33,9 +32,7 @@ import java.util.Vector;
 import android.util.Log;
 
 /**
- * This class provides functions to retrieve the Action details from a
- *  Segment.
- *
+ * This class provides functions to retrieve the Action details from a Segment.
  */
 public class Action {
     private static final String LOG_TAG          = "Action";
@@ -54,7 +51,6 @@ public class Action {
      * uri=coap://10.251.44.228:49858/a/light|power=10)
      *
      * @return String for a specific action.
-     *
      */
     public String toString() {
         StringBuilder result = new StringBuilder();
@@ -71,13 +67,12 @@ public class Action {
 
     /**
      * This function parses the Segment value to retrieve sub segments separated
-     * by a vertical bar(|): URI and a pair of attribute key and value
+     * by a vertical bar(|): URI and a pair of attribute key and value.
      *
      * @param actionString
      *            Segment String
      *
      * @return Action needed by remote devices as members of a specific group
-     *
      */
     public static Action toAction(String actionString) {
         Action result = new Action();
@@ -112,7 +107,6 @@ public class Action {
                 result.listOfCapability.add(capability);
             }
         }
-
         return result;
     }
 }

@@ -1,12 +1,31 @@
+/* *****************************************************************
+ *
+ * Copyright 2015 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************/
+
 package org.iotivity.service.tm;
 
 import android.util.Log;
 
 /**
- * This class provides time-related information used for
- * scheduled/recursive group action features. Along with time-related
- * variables, it also provides various useful functionality including
- * translating time to second unit
+ * This class provides time-related information used for scheduled/recursive
+ * group action features. Along with time-related variables, it also provides
+ * various useful functionality including translating time to second unit
  */
 public class Time {
 
@@ -44,7 +63,6 @@ public class Time {
      *            Second to be set
      * @param dayOfTheWeek
      *            Day of the week to be set
-     *
      */
     public void setTime(int year, int month, int day, int hour, int min,
             int sec, int dayOfTheWeek) {
@@ -96,7 +114,6 @@ public class Time {
      *
      * @param seconds
      *            time delay in seconds
-     *
      */
     public void setDelay(long seconds) {
         if (mType != ActionSetType.NONE) {
@@ -108,7 +125,6 @@ public class Time {
      * Get absolute time in seconds.
      *
      * @return long - Absolute time in seconds.
-     *
      */
     public long getSecAbsTime() {
         long interval;
@@ -124,7 +140,6 @@ public class Time {
      * Get the type of ActionSet.
      *
      * @return ActionSetType - Type of ActionSet.
-     *
      */
     public ActionSetType getType() {
         return mType;
@@ -134,7 +149,6 @@ public class Time {
      * Get the time delay in seconds set in the ActionSet.
      *
      * @return long - Delay in seconds.
-     *
      */
     public long getDelay() {
         return mDelay;
