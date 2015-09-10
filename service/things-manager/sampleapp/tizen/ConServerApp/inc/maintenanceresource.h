@@ -17,8 +17,8 @@
  * limitations under the License.
  *
  ******************************************************************/
-#ifndef __DIAGNOSTICS_RESOURCE_H__
-#define __DIAGNOSTICS_RESOURCE_H__
+#ifndef MAINTENANCE_RESOURCE_H__
+#define MAINTENANCE_RESOURCE_H__
 
 #include <functional>
 #include <thread>
@@ -28,6 +28,10 @@
 #include "OCApi.h"
 
 #pragma once
+
+#define DEFAULT_REBOOT "rb"
+#define DEFAULT_FACTORYRESET "fr"
+#define DEFAULT_STARTCOLLECTION "ssc"
 
 using namespace OC;
 
@@ -70,4 +74,4 @@ class MaintenanceResource
         void deleteResource();
 };
 
-#endif // __DIAGNOSTICS_RESOURCE_H__
+#endif // MAINTENANCE_RESOURCE_H__

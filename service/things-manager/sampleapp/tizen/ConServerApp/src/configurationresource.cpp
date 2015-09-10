@@ -30,14 +30,16 @@ using namespace OC;
 
 // Constructor
 ConfigurationResource::ConfigurationResource() :
-    m_location(defaultLocation), m_systemTime(defaultSystemTime), m_currency(
-        defaultCurrency), m_region(defaultRegion)
+    m_deviceName(defaultDeviceName), m_location(defaultLocation),
+    m_locationName(defaultLocationName), m_currency(defaultCurrency),
+    m_region(defaultRegion)
 {
     m_configurationUri = defaultConURI; // URI of the resource
     m_configurationTypes.push_back(defaultConResourceType); // resource type name
     m_configurationInterfaces.push_back(DEFAULT_INTERFACE); // resource interface
+    m_configurationRep.setValue(DEFAULT_DEVICENAME, m_deviceName);
     m_configurationRep.setValue(DEFAULT_LOCATION, m_location);
-    m_configurationRep.setValue(DEFAULT_SYSTIME, m_systemTime);
+    m_configurationRep.setValue(DEFAULT_LOCATIONNAME, m_locationName);
     m_configurationRep.setValue(DEFAULT_CURRENCY, m_currency);
     m_configurationRep.setValue(DEFAULT_REGION, m_region);
     m_configurationRep.setUri(m_configurationUri);
@@ -76,6 +78,13 @@ void ConfigurationResource::setConfigurationRepresentation(OCRepresentation &rep
 {
     std::string value;
 
+    if (rep.getValue(DEFAULT_DEVICENAME, value))
+    {
+        m_deviceName = value;
+        dlog_print(DLOG_INFO, "ConfigurationResource", "#### m_deviceName: %s",
+                   m_deviceName.c_str());
+    }
+
     if (rep.getValue(DEFAULT_LOCATION, value))
     {
         m_location = value;
@@ -83,10 +92,11 @@ void ConfigurationResource::setConfigurationRepresentation(OCRepresentation &rep
                    m_location.c_str());
     }
 
-    if (rep.getValue(DEFAULT_SYSTIME, value))
+    if (rep.getValue(DEFAULT_LOCATIONNAME, value))
     {
-        dlog_print(DLOG_INFO, "ConfigurationResource", "#### SystemTime is not"
-                   "allowed to be written");
+        m_locationName = value;
+        dlog_print(DLOG_INFO, "ConfigurationResource", "#### m_locationName: %s",
+                   m_locationName.c_str());
     }
 
     if (rep.getValue(DEFAULT_CURRENCY, value))
@@ -106,8 +116,9 @@ void ConfigurationResource::setConfigurationRepresentation(OCRepresentation &rep
 
 OCRepresentation ConfigurationResource::getConfigurationRepresentation()
 {
+    m_configurationRep.setValue(DEFAULT_DEVICENAME, m_deviceName);
     m_configurationRep.setValue(DEFAULT_LOCATION, m_location);
-    m_configurationRep.setValue(DEFAULT_SYSTIME, m_systemTime);
+    m_configurationRep.setValue(DEFAULT_LOCATIONNAME, m_locationName);
     m_configurationRep.setValue(DEFAULT_CURRENCY, m_currency);
     m_configurationRep.setValue(DEFAULT_REGION, m_region);
 
@@ -122,8 +133,9 @@ std::string ConfigurationResource::getUri()
 // Assigns default values to all the attributes of the configuration resource
 void ConfigurationResource::factoryReset()
 {
+    m_deviceName = defaultDeviceName;
     m_location = defaultLocation;
-    m_systemTime = defaultSystemTime;
+    m_locationName = defaultLocationName;
     m_currency = defaultCurrency;
     m_region = defaultRegion;
 }

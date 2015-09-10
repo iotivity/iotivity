@@ -26,7 +26,7 @@
 #include "ThingsConfiguration.h"
 #include "ThingsMaintenance.h"
 #include "configurationresource.h"
-#include "diagnosticsresource.h"
+#include "maintenanceresource.h"
 #include "factorysetresource.h"
 
 using namespace OC;
@@ -37,9 +37,10 @@ namespace PH = std::placeholders;
 /* Default system configuration value's variables
    The variable's names should be same as the names of "extern" variables defined in
    "configurationresource.h" */
+std::string defaultDeviceName;
 std::string defaultLocation;
+std::string defaultLocationName;
 std::string defaultRegion;
-std::string defaultSystemTime;
 std::string defaultCurrency;
 
 static ThingsConfiguration *g_thingsConf;
@@ -298,12 +299,14 @@ void onBootStrapCallback(const HeaderOptions &headerOptions, const OCRepresentat
     logMessage += "URI : " + rep.getUri() + "<br>";
 
     defaultRegion = rep.getValue< std::string >(DEFAULT_REGION);
-    defaultSystemTime = rep.getValue< std::string >(DEFAULT_SYSTIME);
     defaultCurrency = rep.getValue< std::string >(DEFAULT_CURRENCY);
     defaultLocation = rep.getValue< std::string >(DEFAULT_LOCATION);
+    defaultLocationName = rep.getValue< std::string >(DEFAULT_LOCATIONNAME);
+    defaultDeviceName = rep.getValue< std::string >(DEFAULT_DEVICENAME);
 
+    logMessage += "Device Name : " + defaultDeviceName + "<br>";
     logMessage += "Location : " + defaultLocation + "<br>";
-    logMessage += "SystemTime : " + defaultSystemTime + "<br>";
+    logMessage += "Location Name : " + defaultLocationName + "<br>";
     logMessage += "currency : " + defaultCurrency + "<br>";
     logMessage += "Region : " + defaultRegion + "<br>";
 

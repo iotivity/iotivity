@@ -18,8 +18,8 @@
  *
  ******************************************************************/
 
-#ifndef __TMSAMPLEAPP_H__
-#define __TMSAMPLEAPP_H__
+#ifndef TMSAMPLEAPP_H__
+#define TMSAMPLEAPP_H__
 
 #include <app.h>
 #include <Elementary.h>
@@ -48,12 +48,13 @@
 #define FINDGROUP_TIMEOUT 5
 #define FINDRESOURCE_TIMEOUT 6
 
+#define DEFAULT_DEVICENAME "n"
 #define DEFAULT_LOCATION "loc"
-#define DEFAULT_SYSTIME "st"
+#define DEFAULT_LOCATIONNAME "locn"
 #define DEFAULT_CURRENCY "c"
 #define DEFAULT_REGION "r"
 
 void group_cb(void *data, Evas_Object *obj, void *event_info);
 void configuration_cb(void *data, Evas_Object *obj, void *event_info);
 
-#endif // __TMSAMPLEAPP_H__
+#endif // TMSAMPLEAPP_H__

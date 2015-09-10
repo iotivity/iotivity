@@ -18,7 +18,7 @@
  *
  ******************************************************************/
 
-#include "diagnosticsresource.h"
+#include "maintenanceresource.h"
 
 #include <functional>
 #include <dlog.h>
@@ -46,9 +46,9 @@ MaintenanceResource::MaintenanceResource() :
     m_maintenanceUri = defaultMntURI; // URI of the resource
     m_maintenanceTypes.push_back(defaultMntResourceType); // resource type name
     m_maintenanceInterfaces.push_back(DEFAULT_INTERFACE); // resource interface
-    m_maintenanceRep.setValue("fr", m_factoryReset);
-    m_maintenanceRep.setValue("rb", m_reboot);
-    m_maintenanceRep.setValue("ssc", m_startStatCollection);
+    m_maintenanceRep.setValue(DEFAULT_FACTORYRESET, m_factoryReset);
+    m_maintenanceRep.setValue(DEFAULT_REBOOT, m_reboot);
+    m_maintenanceRep.setValue(DEFAULT_STARTCOLLECTION, m_startStatCollection);
     m_maintenanceRep.setUri(m_maintenanceUri);
     m_maintenanceRep.setResourceTypes(m_maintenanceTypes);
     m_maintenanceRep.setResourceInterfaces(m_maintenanceInterfaces);
@@ -91,20 +91,20 @@ void MaintenanceResource::setMaintenanceRepresentation(OCRepresentation &rep)
 {
     std::string value;
 
-    if (rep.getValue("fr", value))
+    if (rep.getValue(DEFAULT_FACTORYRESET, value))
     {
         m_factoryReset = value;
         dlog_print(DLOG_INFO, "MaintenanceResource", "#### m_factoryReset: %s",
                    m_factoryReset.c_str());
     }
 
-    if (rep.getValue("rb", value))
+    if (rep.getValue(DEFAULT_REBOOT, value))
     {
         m_reboot = value;
         dlog_print(DLOG_INFO, "MaintenanceResource", "#### m_reboot: %s", m_reboot.c_str());
     }
 
-    if (rep.getValue("ssc", value))
+    if (rep.getValue(DEFAULT_STARTCOLLECTION, value))
     {
         m_startStatCollection = value;
         dlog_print(DLOG_INFO, "MaintenanceResource", "#### m_startStatCollection: %s",
@@ -114,9 +114,9 @@ void MaintenanceResource::setMaintenanceRepresentation(OCRepresentation &rep)
 
 OCRepresentation MaintenanceResource::getMaintenanceRepresentation()
 {
-    m_maintenanceRep.setValue("fr", m_factoryReset);
-    m_maintenanceRep.setValue("rb", m_reboot);
-    m_maintenanceRep.setValue("ssc", m_startStatCollection);
+    m_maintenanceRep.setValue(DEFAULT_FACTORYRESET, m_factoryReset);
+    m_maintenanceRep.setValue(DEFAULT_REBOOT, m_reboot);
+    m_maintenanceRep.setValue(DEFAULT_STARTCOLLECTION, m_startStatCollection);
 
     return m_maintenanceRep;
 }

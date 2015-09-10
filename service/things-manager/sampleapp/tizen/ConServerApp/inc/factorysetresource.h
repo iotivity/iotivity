@@ -17,8 +17,8 @@
  * limitations under the License.
  *
  ******************************************************************/
-#ifndef __FACTORYSET_RESOURCE_H__
-#define __FACTORYSET_RESOURCE_H__
+#ifndef FACTORYSET_RESOURCE_H__
+#define FACTORYSET_RESOURCE_H__
 
 #include <functional>
 
@@ -52,4 +52,4 @@ class FactorySetResource : public ConfigurationResource
         void deleteResource();
 };
 
-#endif // __FACTORYSET_RESOURCE_H__
+#endif // FACTORYSET_RESOURCE_H__

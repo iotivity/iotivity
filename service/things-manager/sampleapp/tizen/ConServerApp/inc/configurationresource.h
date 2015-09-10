@@ -17,8 +17,8 @@
  * limitations under the License.
  *
  ******************************************************************/
-#ifndef __CONFIGURATION_RESOURCE_H__
-#define __CONFIGURATION_RESOURCE_H__
+#ifndef CONFIGURATION_RESOURCE_H__
+#define CONFIGURATION_RESOURCE_H__
 
 #include <functional>
 
@@ -27,8 +27,9 @@
 
 #pragma once
 
+#define DEFAULT_DEVICENAME "n"
 #define DEFAULT_LOCATION "loc"
-#define DEFAULT_SYSTIME "st"
+#define DEFAULT_LOCATIONNAME "locn"
 #define DEFAULT_CURRENCY "c"
 #define DEFAULT_REGION "r"
 
@@ -40,8 +41,9 @@ ResourceEntityHandler;
 static std::string defaultConURI = "/oic/con";
 static std::string defaultConResourceType = "oic.wk.con";
 
+extern std::string defaultDeviceName;
 extern std::string defaultLocation;
-extern std::string defaultSystemTime;
+extern std::string defaultLocationName;
 extern std::string defaultCurrency;
 extern std::string defaultRegion;
 
@@ -50,8 +52,9 @@ class ConfigurationResource
     public:
         // Configuration members
         std::string m_configurationUri;
+        std::string m_deviceName;
         std::string m_location;
-        std::string m_systemTime;
+        std::string m_locationName;
         std::string m_currency;
         std::string m_region;
         std::vector< std::string > m_configurationTypes;
@@ -76,4 +79,4 @@ class ConfigurationResource
         void deleteResource();
 };
 
-#endif // __CONFIGURATION_RESOURCE_H__
+#endif // CONFIGURATION_RESOURCE_H__

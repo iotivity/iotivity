@@ -62,9 +62,9 @@ string CONFIGURATION_RESOURCE_URI             = "/oic/con";
 string MAINTENANCE_RESOURCE_URI                = "/oic/mnt";
 string FACTORYSET_RESOURCE_URI                = "/factorySet";
 
-GroupManager *g_groupManager = new GroupManager();
-ThingsConfiguration *g_thingsConfig = new ThingsConfiguration();
-ThingsMaintenance *g_thingsMnt = new ThingsMaintenance();
+GroupManager *g_groupManager = nullptr;
+ThingsConfiguration *g_thingsConfig = nullptr;
+ThingsMaintenance *g_thingsMnt = nullptr;
 
 
 typedef struct region_popup
@@ -276,29 +276,40 @@ static void onUpdateConfigurationsCallback(const HeaderOptions &headerOptions,
     string logMessage = "Resource URI: " + rep.getUri() + "<br>";
     dlog_print(DLOG_INFO, LOG_TAG, "#### Resource URI: %s", rep.getUri().c_str());
 
+    if (rep.hasAttribute(DEFAULT_DEVICENAME))
+    {
+        dlog_print(DLOG_INFO, LOG_TAG, "#### Device Name : %s",
+                   rep.getValue< std::string >(DEFAULT_DEVICENAME).c_str());
+        logMessage = logMessage + "Device Name : " +
+                     rep.getValue< std::string >(DEFAULT_DEVICENAME) + "<br>";
+    }
     if (rep.hasAttribute(DEFAULT_LOCATION))
     {
         dlog_print(DLOG_INFO, LOG_TAG, "#### Location : %s",
-                   rep.getValue< std::string >("loc").c_str());
-        logMessage = logMessage + "Location : " + rep.getValue< std::string >("loc") + "<br>";
+                   rep.getValue< std::string >(DEFAULT_LOCATION).c_str());
+        logMessage = logMessage + "Location : " +
+                     rep.getValue< std::string >(DEFAULT_LOCATION) + "<br>";
     }
-    if (rep.hasAttribute(DEFAULT_SYSTIME))
+    if (rep.hasAttribute(DEFAULT_LOCATIONNAME))
     {
-        dlog_print(DLOG_INFO, LOG_TAG, "#### SystemTime : %s",
-                   rep.getValue< std::string >("st").c_str());
-        logMessage = logMessage + "SystemTime : " + rep.getValue< std::string >("st") + "<br>";
+        dlog_print(DLOG_INFO, LOG_TAG, "#### Location Name : %s",
+                   rep.getValue< std::string >(DEFAULT_LOCATIONNAME).c_str());
+        logMessage = logMessage + "Location Name: " +
+                     rep.getValue< std::string >(DEFAULT_LOCATIONNAME) + "<br>";
     }
     if (rep.hasAttribute(DEFAULT_CURRENCY))
     {
         dlog_print(DLOG_INFO, LOG_TAG, "#### Currency : %s",
-                   rep.getValue< std::string >("c").c_str());
-        logMessage = logMessage + "Currency : " + rep.getValue< std::string >("c") + "<br>";
+                   rep.getValue< std::string >(DEFAULT_CURRENCY).c_str());
+        logMessage = logMessage + "Currency : " +
+                     rep.getValue< std::string >(DEFAULT_CURRENCY) + "<br>";
     }
     if (rep.hasAttribute(DEFAULT_REGION))
     {
         dlog_print(DLOG_INFO, LOG_TAG, "#### Region : %s",
-                   rep.getValue< std::string >("r").c_str());
-        logMessage = logMessage + "Region : " + rep.getValue< std::string >("r") + "<br>";
+                   rep.getValue< std::string >(DEFAULT_REGION).c_str());
+        logMessage = logMessage + "Region : " +
+                     rep.getValue< std::string >(DEFAULT_REGION) + "<br>";
     }
     logMessage += "----------------------<br>";
     dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
@@ -325,29 +336,40 @@ static void onGetConfigurationsCallback(const HeaderOptions &headerOptions,
     string logMessage = "Resource URI: " + rep.getUri() + "<br>";
     dlog_print(DLOG_INFO, LOG_TAG, "#### Resource URI: %s", rep.getUri().c_str());
 
+    if (rep.hasAttribute(DEFAULT_DEVICENAME))
+    {
+        dlog_print(DLOG_INFO, LOG_TAG, "#### Device Name : %s",
+                   rep.getValue< std::string >(DEFAULT_DEVICENAME).c_str());
+        logMessage = logMessage + "Device Name : "
+                     + rep.getValue< std::string >(DEFAULT_DEVICENAME) + "<br>";
+    }
     if (rep.hasAttribute(DEFAULT_LOCATION))
     {
         dlog_print(DLOG_INFO, LOG_TAG, "#### Location : %s",
                    rep.getValue< std::string >(DEFAULT_LOCATION).c_str());
-        logMessage = logMessage + "Location : " + rep.getValue< std::string >(DEFAULT_LOCATION) + "<br>";
+        logMessage = logMessage + "Location : "
+                     + rep.getValue< std::string >(DEFAULT_LOCATION) + "<br>";
     }
-    if (rep.hasAttribute(DEFAULT_SYSTIME))
+    if (rep.hasAttribute(DEFAULT_LOCATIONNAME))
     {
-        dlog_print(DLOG_INFO, LOG_TAG, "#### SystemTime : %s",
-                   rep.getValue< std::string >(DEFAULT_SYSTIME).c_str());
-        logMessage = logMessage + "SystemTime : " + rep.getValue< std::string >(DEFAULT_SYSTIME) + "<br>";
+        dlog_print(DLOG_INFO, LOG_TAG, "#### Location Name : %s",
+                   rep.getValue< std::string >(DEFAULT_LOCATIONNAME).c_str());
+        logMessage = logMessage + "Location Name : "
+                     + rep.getValue< std::string >(DEFAULT_LOCATIONNAME) + "<br>";
     }
     if (rep.hasAttribute(DEFAULT_CURRENCY))
     {
         dlog_print(DLOG_INFO, LOG_TAG, "#### Currency : %s",
                    rep.getValue< std::string >(DEFAULT_CURRENCY).c_str());
-        logMessage = logMessage + "Currency : " + rep.getValue< std::string >(DEFAULT_CURRENCY) + "<br>";
+        logMessage = logMessage + "Currency : "
+                     + rep.getValue< std::string >(DEFAULT_CURRENCY) + "<br>";
     }
     if (rep.hasAttribute(DEFAULT_REGION))
     {
         dlog_print(DLOG_INFO, LOG_TAG, "#### Region : %s",
                    rep.getValue< std::string >(DEFAULT_REGION).c_str());
-        logMessage = logMessage + "Region : " + rep.getValue< std::string >(DEFAULT_REGION) + "<br>";
+        logMessage = logMessage + "Region : "
+                     + rep.getValue< std::string >(DEFAULT_REGION) + "<br>";
     }
 
     logMessage += "----------------------<br>";
@@ -574,7 +596,7 @@ static void updateConfiguration(std::string newRegionValue)
     }
 
     OCStackResult result;
-    ConfigurationName name = "r";
+    ConfigurationName name = DEFAULT_REGION;
     ConfigurationValue value = newRegionValue;
 
     std::map< ConfigurationName, ConfigurationValue > configurations;
@@ -701,6 +723,10 @@ static void onStartConfigure()
     createResourceCollection(FACTORYSET_COLLECTION_RESOURCE_URI,
                              FACTORYSET_COLLECTION_RESOURCE_TYPE,
                              setCollectionHandle);
+
+    g_groupManager = new GroupManager();
+    g_thingsConfig = new ThingsConfiguration();
+    g_thingsMnt = new ThingsMaintenance();
 }
 
 // Deletes all the resources
@@ -708,11 +734,15 @@ static void onDestroyConfigure()
 {
     dlog_print(DLOG_INFO, LOG_TAG, "#### Destroy sequence called");
 
-    deleteResource(configurationCollectionHandle, configurationFoundHandle);
+    deleteResource(setCollectionHandle, setFoundHandle);
 
     deleteResource(maintenanceCollectionHandle, maintenanceFoundHandle);
 
-    deleteResource(setCollectionHandle, setFoundHandle);
+    deleteResource(configurationCollectionHandle, configurationFoundHandle);
+
+    delete g_thingsMnt;
+    delete g_thingsConfig;
+    delete g_groupManager;
 
     dlog_print(DLOG_INFO, LOG_TAG, "#### Resources destroyed successfully");
 }

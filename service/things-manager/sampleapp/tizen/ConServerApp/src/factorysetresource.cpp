@@ -71,6 +71,13 @@ void FactorySetResource::setFactorySetRepresentation(OCRepresentation &rep)
 {
     std::string value;
 
+    if (rep.getValue(DEFAULT_DEVICENAME, value))
+    {
+        m_deviceName = value;
+        dlog_print(DLOG_INFO, "FactorySetResource", "#### m_deviceName: %s",
+                   m_deviceName.c_str());
+    }
+
     if (rep.getValue(DEFAULT_LOCATION, value))
     {
         m_location = value;
@@ -78,10 +85,11 @@ void FactorySetResource::setFactorySetRepresentation(OCRepresentation &rep)
                    m_location.c_str());
     }
 
-    if (rep.getValue(DEFAULT_SYSTIME, value))
+    if (rep.getValue(DEFAULT_LOCATIONNAME, value))
     {
-        dlog_print(DLOG_INFO, "FactorySetResource", "#### SystemTime is not"
-                   "allowed to be written");
+        m_locationName = value;
+        dlog_print(DLOG_INFO, "FactorySetResource", "#### m_locationName: %s",
+                   m_locationName.c_str());
     }
 
     if (rep.getValue(DEFAULT_CURRENCY, value))
@@ -101,8 +109,9 @@ void FactorySetResource::setFactorySetRepresentation(OCRepresentation &rep)
 
 OCRepresentation FactorySetResource::getFactorySetRepresentation()
 {
+    m_configurationRep.setValue(DEFAULT_DEVICENAME, m_deviceName);
     m_configurationRep.setValue(DEFAULT_LOCATION, m_location);
-    m_configurationRep.setValue(DEFAULT_SYSTIME, m_systemTime);
+    m_configurationRep.setValue(DEFAULT_LOCATIONNAME, m_locationName);
     m_configurationRep.setValue(DEFAULT_CURRENCY, m_currency);
     m_configurationRep.setValue(DEFAULT_REGION, m_region);
 
