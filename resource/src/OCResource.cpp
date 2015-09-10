@@ -101,11 +101,6 @@ OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
     // construct the devAddr from the pieces we have
     m_devAddr.adapter = static_cast<OCTransportAdapter>(connectivityType >> CT_ADAPTER_SHIFT);
     m_devAddr.flags = static_cast<OCTransportFlags>(connectivityType & CT_MASK_FLAGS);
-    size_t len = host.length();
-    if (len >= MAX_ADDR_STR_SIZE)
-    {
-        throw std::length_error("host address is too long.");
-    }
 
     this->setHost(host);
 }
@@ -156,6 +151,12 @@ void OCResource::setHost(const std::string& host)
         }
         // extract the ipaddress
         std::string ip6Addr = host_token.substr(1, found-1);
+
+        if (ip6Addr.length() >= MAX_ADDR_STR_SIZE)
+        {
+            throw std::length_error("host address is too long.");
+        }
+
         ip6Addr.copy(m_devAddr.addr, sizeof(m_devAddr.addr));
         m_devAddr.addr[ip6Addr.length()] = '\0';
         //skip ']' and ':' characters in host string
@@ -172,6 +173,12 @@ void OCResource::setHost(const std::string& host)
         }
 
         std::string addrPart = host_token.substr(0, found);
+
+        if (addrPart.length() >= MAX_ADDR_STR_SIZE)
+        {
+            throw std::length_error("host address is too long.");
+        }
+
         addrPart.copy(m_devAddr.addr, sizeof(m_devAddr.addr));
         m_devAddr.addr[addrPart.length()] = '\0';
         //skip ':' character in host string
