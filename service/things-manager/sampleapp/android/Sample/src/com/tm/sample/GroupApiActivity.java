@@ -63,9 +63,10 @@ public class GroupApiActivity extends Activity {
     // For Scheduled ActionSet
     public static Context           mcontext;
     public static Calendar          scheduleTime;
-    
-    private final String            LOG_TAG = "[TMSample] " + this.getClass()
-                                                               .getSimpleName();;
+
+    private final String            LOG_TAG = "[TMSample] "
+                                                    + this.getClass()
+                                                            .getSimpleName(); ;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

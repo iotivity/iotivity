@@ -35,10 +35,11 @@ import org.iotivity.base.OcResourceHandle;
 import org.iotivity.service.tm.Action;
 import org.iotivity.service.tm.ActionSet;
 import org.iotivity.service.tm.Capability;
-import org.iotivity.service.tm.IFindCandidateResourceListener;
-import org.iotivity.service.tm.IFindGroupListener;
+import org.iotivity.service.tm.GroupSynchronization;
+import org.iotivity.service.tm.GroupSynchronization.*;
 import org.iotivity.service.tm.OCStackResult;
-import org.iotivity.service.tm.ThingsManager;
+import org.iotivity.service.tm.GroupManager;
+import org.iotivity.service.tm.GroupManager.*;
 import org.iotivity.service.tm.Time.ActionSetType;
 
 import android.os.Message;
@@ -50,21 +51,22 @@ import android.util.Log;
  */
 public class GroupClient {
 
-    private static final String     LOG_TAG             = "[TMSample] GroupClient";
-    private static Message          msg;
-    public String                   logMessage;
+    private static final String        LOG_TAG             = "[TMSample] GroupClient";
+    private static Message             msg;
+    public String                      logMessage;
 
-    private final String groupResourceType = "b.collection";
+    private final String               groupResourceType   = "b.collection";
 
-    private final ThingsManager     thingsManagerObj;
-    private final ActionListener    actionListener;
-    private final ObserveListener   observeListener;
-    private OcResource              groupResource;
-    private OcResourceHandle        groupResourceHandle;
-    private OcResourceHandle        foundLightHandle;
-    private static GroupApiActivity groupApiActivityObj = null;
-    public static Vector<String>    lights              = new Vector<String>();
-    public static Vector<String>    bookmarks           = new Vector<String>();
+    private final GroupManager         groupManagerObj;
+    private final GroupSynchronization groupSynObj;
+    private final ActionListener       actionListener;
+    private final ObserveListener      observeListener;
+    private OcResource                 groupResource;
+    private OcResourceHandle           groupResourceHandle;
+    private OcResourceHandle           foundLightHandle;
+    private static GroupApiActivity    groupApiActivityObj = null;
+    public static Vector<String>       lights              = new Vector<String>();
+    public static Vector<String>       bookmarks           = new Vector<String>();
 
     /**
      * Listener for receiving observe notifications.
@@ -108,8 +110,8 @@ public class GroupClient {
                     groupApiActivityObj.getHandler().sendMessage(msg);
 
                     logMessage = "onGroupFind" + "\n";
-                    logMessage = logMessage + "URI : " + uri + "\n";
-                    logMessage = logMessage + "Host :" + hostAddress;
+                    logMessage += "URI : " + uri + "\n";
+                    logMessage += "Host :" + hostAddress;
                     GroupApiActivity.setMessageLog(logMessage);
                     msg = Message.obtain();
                     msg.what = 1;
@@ -129,8 +131,10 @@ public class GroupClient {
      */
     private class FindCadidateResourceListener implements
             IFindCandidateResourceListener {
+
         @Override
-        public void onResourceCallback(Vector<OcResource> resources) {
+        public void onResourceFoundCallback(Vector<OcResource> resources) {
+            // TODO Auto-generated method stub
             Log.i(LOG_TAG, "onResourceCallback invoked");
 
             if (resources != null) {
@@ -141,8 +145,8 @@ public class GroupClient {
                     String hostAddress = ocResource.getHost();
 
                     logMessage = "API RESULT : " + "OC_STACK_OK" + "\n";
-                    logMessage = logMessage + "URI: " + resourceURI + "\n";
-                    logMessage = logMessage + "Host:" + hostAddress;
+                    logMessage += "URI: " + resourceURI + "\n";
+                    logMessage += "Host:" + hostAddress;
                     GroupApiActivity.setMessageLog(logMessage);
                     msg = Message.obtain();
                     msg.what = 1;
@@ -155,16 +159,15 @@ public class GroupClient {
 
                                 logMessage = "API RESULT : " + "OC_STACK_OK"
                                         + "\n";
-                                logMessage = logMessage + "URI: " + resourceURI
-                                        + "\n";
-                                logMessage = logMessage + "Host:" + hostAddress;
+                                logMessage += "URI: " + resourceURI + "\n";
+                                logMessage += "Host:" + hostAddress;
                                 GroupApiActivity.setMessageLog(logMessage);
                                 msg = Message.obtain();
                                 msg.what = 1;
                                 groupApiActivityObj.getHandler().sendMessage(
                                         msg);
                                 try {
-                                    foundLightHandle = thingsManagerObj
+                                    foundLightHandle = groupManagerObj
                                             .bindResourceToGroup(ocResource,
                                                     groupResourceHandle);
 
@@ -182,9 +185,8 @@ public class GroupClient {
                             if (groupApiActivityObj != null) {
                                 logMessage = "API RESULT : " + "OC_STACK_OK"
                                         + "\n";
-                                logMessage = logMessage + "URI: " + resourceURI
-                                        + "\n";
-                                logMessage = logMessage + "Host:" + hostAddress;
+                                logMessage += "URI: " + resourceURI + "\n";
+                                logMessage += "Host:" + hostAddress;
                                 GroupApiActivity.setMessageLog(logMessage);
                                 msg = Message.obtain();
                                 msg.what = 1;
@@ -197,6 +199,7 @@ public class GroupClient {
                     }
                 }
             }
+
         }
     };
 
@@ -204,16 +207,17 @@ public class GroupClient {
     private final FindGroupListener            findGroupListener;
 
     public GroupClient() {
-        thingsManagerObj = new ThingsManager();
+        groupManagerObj = new GroupManager();
+        groupSynObj = GroupSynchronization.getInstance();
         findGroupListener = new FindGroupListener();
         actionListener = new ActionListener();
         observeListener = new ObserveListener();
         findCandidateResourceListener = new FindCadidateResourceListener();
 
-        thingsManagerObj.setGroupListener(findGroupListener);
-        thingsManagerObj
+        groupSynObj.setGroupListener(findGroupListener);
+        groupManagerObj
                 .setFindCandidateResourceListener(findCandidateResourceListener);
-        thingsManagerObj.setActionListener(actionListener);
+        groupManagerObj.setActionListener(actionListener);
 
         groupApiActivityObj = GroupApiActivity.getGroupApiActivityObj();
     }
@@ -226,7 +230,8 @@ public class GroupClient {
         Map<String, OcResourceHandle> groupList = new HashMap<String, OcResourceHandle>();
 
         // creating group of type b.collection
-        OCStackResult result = thingsManagerObj.createGroup(groupResourceType);
+        // OcPlatform.registerResource(ocResource);
+        OCStackResult result = groupSynObj.createGroup(groupResourceType);
         if ((OCStackResult.OC_STACK_OK != result)) {
             Log.e(LOG_TAG, "createGroup returned error: " + result.name());
             return;
@@ -235,7 +240,7 @@ public class GroupClient {
         }
 
         // getting the Created group Handle
-        groupList = thingsManagerObj.getGroupList();
+        groupList = groupSynObj.getGroupList();
         if (groupList.containsKey(groupResourceType)) {
             groupResourceHandle = groupList.get(groupResourceType);
         } else {
@@ -252,7 +257,7 @@ public class GroupClient {
 
         Vector<String> resourceTypes = new Vector<String>();
         resourceTypes.add(groupResourceType);
-        OCStackResult result = thingsManagerObj.findGroup(resourceTypes);
+        OCStackResult result = groupSynObj.findGroup(resourceTypes);
         if (OCStackResult.OC_STACK_OK != result) {
             Log.e(LOG_TAG, "findGroup returned error: " + result.name());
             return;
@@ -276,8 +281,7 @@ public class GroupClient {
 
         Vector<String> types = new Vector<String>();
         types.add("core.light");
-        OCStackResult result = thingsManagerObj
-                .findCandidateResources(types, 5);
+        OCStackResult result = groupManagerObj.findCandidateResources(types, 5);
         if (OCStackResult.OC_STACK_OK != result) {
             Log.e(LOG_TAG,
                     "findCandidateResources returned error: " + result.name());
@@ -292,8 +296,7 @@ public class GroupClient {
 
         Vector<String> types = new Vector<String>();
         types.add("core.bookmark");
-        OCStackResult result = thingsManagerObj
-                .findCandidateResources(types, 5);
+        OCStackResult result = groupManagerObj.findCandidateResources(types, 5);
         if (OCStackResult.OC_STACK_OK != result) {
             Log.e(LOG_TAG,
                     "findCandidateResources returned error: " + result.name());
@@ -329,7 +332,7 @@ public class GroupClient {
         }
 
         try {
-            OCStackResult result = thingsManagerObj.addActionSet(groupResource,
+            OCStackResult result = groupManagerObj.addActionSet(groupResource,
                     actionSet);
             if (OCStackResult.OC_STACK_OK != result) {
                 Log.e(LOG_TAG, "addActionSet returned error: " + result.name());
@@ -370,7 +373,7 @@ public class GroupClient {
         }
 
         try {
-            OCStackResult result = thingsManagerObj.addActionSet(groupResource,
+            OCStackResult result = groupManagerObj.addActionSet(groupResource,
                     actionSet);
             if (OCStackResult.OC_STACK_OK != result) {
                 Log.e(LOG_TAG, "addActionSet returned error: " + result.name());
@@ -419,7 +422,7 @@ public class GroupClient {
         }
 
         try {
-            OCStackResult result = thingsManagerObj.addActionSet(groupResource,
+            OCStackResult result = groupManagerObj.addActionSet(groupResource,
                     actionSet);
             if (OCStackResult.OC_STACK_OK != result) {
                 Log.e(LOG_TAG, "addActionSet returned error: " + result.name());
@@ -463,7 +466,7 @@ public class GroupClient {
         }
 
         try {
-            OCStackResult result = thingsManagerObj.addActionSet(groupResource,
+            OCStackResult result = groupManagerObj.addActionSet(groupResource,
                     actionSet);
             if (OCStackResult.OC_STACK_OK != result) {
                 Log.e(LOG_TAG, "addActionSet returned error: " + result.name());
@@ -606,7 +609,7 @@ public class GroupClient {
         Log.i(LOG_TAG, "getting the action set of bulb on action");
 
         try {
-            OCStackResult result = thingsManagerObj.getActionSet(groupResource,
+            OCStackResult result = groupManagerObj.getActionSet(groupResource,
                     "AllBulbOn");
             if (OCStackResult.OC_STACK_OK != result) {
                 Log.e(LOG_TAG,
@@ -625,7 +628,7 @@ public class GroupClient {
         Log.i(LOG_TAG, "getting the action set of bulb off action");
 
         try {
-            OCStackResult result = thingsManagerObj.getActionSet(groupResource,
+            OCStackResult result = groupManagerObj.getActionSet(groupResource,
                     "AllBulbOff");
             if (OCStackResult.OC_STACK_OK != result) {
                 Log.e(LOG_TAG,
@@ -644,7 +647,7 @@ public class GroupClient {
         Log.i(LOG_TAG, "deleting the action set of bulb on action");
 
         try {
-            OCStackResult result = thingsManagerObj.deleteActionSet(
+            OCStackResult result = groupManagerObj.deleteActionSet(
                     groupResource, "AllBulbOn");
             if (OCStackResult.OC_STACK_OK != result) {
                 Log.e(LOG_TAG,
@@ -663,7 +666,7 @@ public class GroupClient {
         Log.i(LOG_TAG, "deleting the action set of bulb off action");
 
         try {
-            OCStackResult result = thingsManagerObj.deleteActionSet(
+            OCStackResult result = groupManagerObj.deleteActionSet(
                     groupResource, "AllBulbOff");
             if (OCStackResult.OC_STACK_OK != result) {
                 Log.e(LOG_TAG,
@@ -694,9 +697,9 @@ public class GroupClient {
      * groups.
      */
     public void leaveGroup() {
-        thingsManagerObj.setGroupListener(null);
-        thingsManagerObj.setFindCandidateResourceListener(null);
-        thingsManagerObj.setActionListener(null);
+        groupSynObj.setGroupListener(null);
+        groupManagerObj.setFindCandidateResourceListener(null);
+        groupManagerObj.setActionListener(null);
 
         if (null != foundLightHandle) {
             try {
@@ -710,7 +713,7 @@ public class GroupClient {
         }
         if (null != groupResourceHandle) {
 
-            thingsManagerObj.deleteGroup(groupResourceType);
+            groupSynObj.deleteGroup(groupResourceType);
         } else {
             Log.i(LOG_TAG, "groupResourceHandle is NULL");
         }
@@ -718,7 +721,7 @@ public class GroupClient {
 
     private void executeActionSet(String actonSetName, long delay) {
         try {
-            OCStackResult result = thingsManagerObj.executeActionSet(
+            OCStackResult result = groupManagerObj.executeActionSet(
                     groupResource, actonSetName, delay);
             if (OCStackResult.OC_STACK_OK != result) {
                 Log.e(LOG_TAG,
@@ -732,7 +735,7 @@ public class GroupClient {
 
     private void cancelActionSet(String actionSetName) {
         try {
-            OCStackResult result = thingsManagerObj.cancelActionSet(
+            OCStackResult result = groupManagerObj.cancelActionSet(
                     groupResource, actionSetName);
             if (OCStackResult.OC_STACK_OK != result) {
                 Log.e(LOG_TAG,
