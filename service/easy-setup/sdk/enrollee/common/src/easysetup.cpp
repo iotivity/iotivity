@@ -19,10 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "easysetup.h"
-
-/// WiFi network info and credentials
-char defaultSsid[] = "EasyConnect";
-char defaultPass[] = "EasyConnect";
+#include "ocstack.h"
 
 int g_eventflag = 0;
 int g_cnt = 0;
@@ -32,11 +29,11 @@ char *targetPass;
 EventCallback g_cbForProvisioning = NULL;
 EventCallback g_cbForOnboarding = NULL;
 
-void EventCallbackInOnboarding(ES_RESULT event);
-void EventCallbackInProvisioning(ES_RESULT event);
-void EventCallbackAfterProvisioning(ES_RESULT event);
+void EventCallbackInOnboarding(ESResult event);
+void EventCallbackInProvisioning(ESResult event);
+void EventCallbackAfterProvisioning(ESResult event);
 
-void EventCallbackInOnboarding(ES_RESULT event)
+void EventCallbackInOnboarding(ESResult event)
 {
     if (event == ES_NETWORKFOUND || event == ES_NETWORKCONNECTED)
     {
@@ -47,14 +44,20 @@ void EventCallbackInOnboarding(ES_RESULT event)
     }
 }
 
-void EventCallbackInProvisioning(ES_RESULT event)
+void EventCallbackInProvisioning(ESResult event)
 {
-    ES_RESULT res = ES_OK;
+    ESResult res = ES_OK;
 
     if (event == ES_RECVTRIGGEROFPROVRES)
     {
         targetSsid = (char *) malloc(MAXSSIDLEN);
         targetPass = (char *) malloc(MAXNETCREDLEN);
+
+        if(TerminateEasySetup() != OC_STACK_OK)
+        {
+            OC_LOG(ERROR, TAG, "Terminating stack failed");
+            return;
+        }
 
         GetTargetNetworkInfoFromProvResource(targetSsid, targetPass);
 
@@ -67,7 +70,7 @@ void EventCallbackInProvisioning(ES_RESULT event)
     }
 }
 
-void EventCallbackAfterProvisioning(ES_RESULT event)
+void EventCallbackAfterProvisioning(ESResult event)
 {
     if (event == ES_NETWORKFOUND || event == ES_NETWORKCONNECTED)
     {
@@ -78,21 +81,10 @@ void EventCallbackAfterProvisioning(ES_RESULT event)
     }
 }
 
-ES_RESULT FindNetworkForOnboarding(NetworkType networkType, EventCallback cb)
-{
-    if (networkType == ES_WIFI)
-    {
-        if (g_cbForOnboarding == NULL)
-        {
-            g_cbForOnboarding = cb;
-        }
-
-        return ConnectToWiFiNetwork(defaultSsid, defaultPass, EventCallbackInOnboarding);
-    }
-}
-
-ES_RESULT FindNetworkForOnboarding(NetworkType networkType, const char *ssid, const char *passwd,
-        EventCallback cb)
+ESResult FindNetworkForOnboarding(NetworkType networkType,
+                                           const char *ssid,
+                                           const char *passwd,
+                                           EventCallback cb)
 {
     if (!ssid || !passwd)
     {
@@ -110,7 +102,44 @@ ES_RESULT FindNetworkForOnboarding(NetworkType networkType, const char *ssid, co
     }
 }
 
-ES_RESULT InitializeProvisioning(EventCallback cb)
+
+ESResult InitEasySetup(NetworkType networkType, const char *ssid, const char *passwd,
+              EventCallback cb)
+{
+    if(FindNetworkForOnboarding(networkType, ssid, passwd, cb) != ES_OK)
+    {
+        OC_LOG(ERROR, TAG, "OnBoarding Failed");
+        return ES_ERROR;
+    }
+
+    // Initialize the OC Stack in Server mode
+    if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
+    {
+        OC_LOG(INFO, TAG, PCF("OCStack init error"));
+        return ES_ERROR;
+    }
+    else
+    {
+        OC_LOG(ERROR, TAG, PCF("OCStack init success"));
+        return ES_OK;
+    }
+}
+
+ESResult TerminateEasySetup()
+{
+    if(OCStop() != OC_STACK_OK)
+    {
+        OC_LOG(ERROR, TAG, PCF("OCStack stop failed"));
+        return ES_ERROR;
+    }
+    else
+    {
+        OC_LOG(ERROR, TAG, PCF("OCStack stop success"));
+        return ES_OK;
+    }
+}
+
+ESResult InitProvisioning(EventCallback cb)
 {
     if (cb == NULL)
     {

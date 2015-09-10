@@ -29,15 +29,10 @@
 #include "networkHandler.h"
 #include "resourceHandler.h"
 
-typedef void (*EventCallback)(ES_RESULT);
+typedef void (*EventCallback)(ESResult);
 
-OCStackResult Init();
+ESResult InitEasySetup(NetworkType networkType, const char *ssid, const char *passwd,
+              EventCallback cb);
+ESResult InitProvisioning(EventCallback cb);
+ESResult TerminateEasySetup();
 
-ES_RESULT FindNetworkForOnboarding(NetworkType networkType, EventCallback);
-ES_RESULT FindNetworkForOnboarding(NetworkType networkType, const char *name, const char *pass,
-        EventCallback);
-
-//OCStackResult FindNetworkForOnboarding(NetworkType networkType, char *name);
-//OCStackResult FindNetworkForOnboarding(NetworkType networkType, char *name, char *pass);
-
-ES_RESULT InitializeProvisioning(EventCallback);

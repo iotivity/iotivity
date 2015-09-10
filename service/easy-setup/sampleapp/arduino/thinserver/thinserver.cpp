@@ -22,7 +22,6 @@
 #include "Arduino.h"
 
 #include "logger.h"
-#include "ocstack.h"
 #include <string.h>
 
 #ifdef ARDUINOWIFI
@@ -50,7 +49,7 @@ PROGMEM const char TAG[] = "ThinServer";
 char ssid[] = "hub2.4G";
 char passwd[] = "11112222";
 
-void EventCallbackInApp(ES_RESULT eventFlag)
+void EventCallbackInApp(ESResult eventFlag)
 {
     Serial.println("callback!!! in app");
 }
@@ -81,23 +80,17 @@ void setup()
     OC_LOG_INIT();
     OC_LOG(DEBUG, TAG, PCF("OCServer is starting..."));
 
-    FindNetworkForOnboarding(ES_WIFI, ssid, passwd, EventCallbackInApp);
-
-    // Initialize the OC Stack in Server mode
-    if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
+    if(InitEasySetup(ES_WIFI, ssid, passwd, EventCallbackInApp) != ES_OK)
     {
-        OC_LOG(ERROR, TAG, PCF("OCStack init error"));
+        OC_LOG(ERROR, TAG, "EasySetup Init Failed");
         return;
     }
 
-    InitializeProvisioning(EventCallbackInApp);
-
-   /* if (OCStartPresence(0) != OC_STACK_OK)
+    if(InitProvisioning(EventCallbackInApp)!= ES_OK)
     {
-        OC_LOG(ERROR, TAG, PCF("Start Presence init error"));
+        OC_LOG(ERROR, TAG, "Init Provisioning Failed");
         return;
     }
-	*/
 }
 
 // The loop function is called in an endless loop

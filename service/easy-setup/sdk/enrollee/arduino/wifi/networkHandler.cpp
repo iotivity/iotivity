@@ -34,7 +34,7 @@ static const char ARDUINO_WIFI_SHIELD_UDP_FW_VER[] = "1.1.0";
 
 IPAddress myIP;
 
-ES_RESULT ConnectToWiFiNetwork(const char *ssid, const char *pass, NetworkEventCallback cb)
+ESResult ConnectToWiFiNetwork(const char *ssid, const char *pass, NetworkEventCallback cb)
 {
     char *fwVersion;
     int status = WL_IDLE_STATUS;

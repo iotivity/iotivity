@@ -32,7 +32,7 @@
 #ifndef ES_RESOURCE_HANDLER_H_
 #define ES_RESOURCE_HANDLER_H_
 
-typedef void (*ResourceEventCallback)(ES_RESULT);
+typedef void (*ResourceEventCallback)(ESResult);
 
 /* Structure to represent a Light resource */
 typedef struct PROVRESOURCE

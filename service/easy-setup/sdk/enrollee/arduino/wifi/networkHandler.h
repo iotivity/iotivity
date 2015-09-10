@@ -40,7 +40,7 @@
 #define MAXNUMTYPE 5
 #define MAXADDRLEN 15
 
-typedef void (*NetworkEventCallback)(ES_RESULT);
+typedef void (*NetworkEventCallback)(ESResult);
 
 enum NetworkType
 {
@@ -59,7 +59,7 @@ typedef struct NETWORKINFO
     byte mac[6];
 } NetworkInfo;
 
-ES_RESULT ConnectToWiFiNetwork(const char *ssid, const char *pass, NetworkEventCallback);
+ESResult ConnectToWiFiNetwork(const char *ssid, const char *pass, NetworkEventCallback);
 int getCurrentNetworkInfo(NetworkType targetType, NetworkInfo *info);
 
 #endif

@@ -26,13 +26,19 @@ PROGMEM const char TAG[] = "resourceHandler";
 ProvResource g_prov;
 NetResource g_net;
 
-OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag, OCEntityHandlerRequest *, void *callback);
+OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
+                                              OCEntityHandlerRequest *ehRequest,
+                                              void *callback);
 const char *getResult(OCStackResult result);
 
-OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest,OCRepPayload** payload);
-OCEntityHandlerResult ProcessPutRequest(OCEntityHandlerRequest *ehRequest,OCRepPayload** payload);
-OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest,OCRepPayload** payload);
+OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest,
+                                               OCRepPayload** payload);
+OCEntityHandlerResult ProcessPutRequest(OCEntityHandlerRequest *ehRequest,
+                                               OCRepPayload** payload);
+OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest,
+                                               OCRepPayload** payload);
 OCRepPayload* constructResponse(OCEntityHandlerRequest *ehRequest);
+
 int g_flag = 0;
 
 ResourceEventCallback g_cbForResEvent = NULL;
@@ -96,7 +102,8 @@ OCStackResult CreateNetworkResource()
     return res;
 }
 
-OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest, OCRepPayload **payload)
+OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest,
+                                                OCRepPayload **payload)
 {
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
     if(!ehRequest)
@@ -124,7 +131,7 @@ OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest, OCRep
 }
 
 OCEntityHandlerResult ProcessPutRequest (OCEntityHandlerRequest *ehRequest,
-        OCRepPayload** payload)
+                                                OCRepPayload** payload)
 {
 
     OCEntityHandlerResult ehResult=OC_EH_ERROR;
@@ -171,7 +178,8 @@ OCEntityHandlerResult ProcessPutRequest (OCEntityHandlerRequest *ehRequest,
 }
 
 
-OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRepPayload** payload)
+OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest,
+                                                OCRepPayload** payload)
 {
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
     if(!ehRequest)
@@ -232,7 +240,6 @@ OCRepPayload* constructResponse(OCEntityHandlerRequest *ehRequest)
 
 // This is the entity handler for the registered resource.
 // This is invoked by OCStack whenever it recevies a request for this resource.
-
 OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
         OCEntityHandlerRequest* entityHandlerRequest,void *callback)
 {
@@ -274,7 +281,8 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
             response.requestHandle = entityHandlerRequest->requestHandle;
             response.resourceHandle = entityHandlerRequest->resource;
             response.ehResult = ehRet;
-            response.payload = (OCPayload*)(payload);  //response uses OCPaylod while all get,put methodes use OCRepPayload
+            //response uses OCPaylod while all get,put methodes use OCRepPayload
+            response.payload = (OCPayload*)(payload);
             response.numSendVendorSpecificHeaderOptions = 0;
             memset(response.sendVendorSpecificHeaderOptions, 0,
                     sizeof response.sendVendorSpecificHeaderOptions);
