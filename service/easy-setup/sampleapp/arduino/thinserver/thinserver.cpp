@@ -46,8 +46,8 @@ const char *getResult(OCStackResult result);
 
 PROGMEM const char TAG[] = "ThinServer";
 
-char ssid[] = "hub2.4G";
-char passwd[] = "11112222";
+char ssid[] = "EasySetup123";
+char passwd[] = "EasySetup123";
 
 void EventCallbackInApp(ESResult eventFlag)
 {
@@ -80,13 +80,13 @@ void setup()
     OC_LOG_INIT();
     OC_LOG(DEBUG, TAG, PCF("OCServer is starting..."));
 
-    if(InitEasySetup(ES_WIFI, ssid, passwd, EventCallbackInApp) != ES_OK)
+    if(InitEasySetup(ES_WIFI, ssid, passwd, EventCallbackInApp) == ES_ERROR)
     {
         OC_LOG(ERROR, TAG, "EasySetup Init Failed");
         return;
     }
 
-    if(InitProvisioning(EventCallbackInApp)!= ES_OK)
+    if(InitProvisioning(EventCallbackInApp)== ES_ERROR)
     {
         OC_LOG(ERROR, TAG, "Init Provisioning Failed");
         return;

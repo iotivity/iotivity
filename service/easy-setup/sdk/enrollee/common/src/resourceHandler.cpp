@@ -21,7 +21,7 @@
 #include "resourceHandler.h"
 #include "ocpayload.h"
 
-PROGMEM const char TAG[] = "resourceHandler";
+#define TAG PCF("ES_RH")
 
 ProvResource g_prov;
 NetResource g_net;
@@ -67,7 +67,7 @@ OCStackResult CreateProvisioningResource()
     OCStackResult res = OCCreateResource(&g_prov.handle, "oic.prov", OC_RSRVD_INTERFACE_DEFAULT,
             OC_RSRVD_ES_URI_PROV, OCEntityHandlerCb,NULL, OC_DISCOVERABLE | OC_OBSERVABLE);
 
-    OC_LOG_V(INFO, TAG, "Created Prov resource with result: %s", getResult(res));
+    OC_LOG_V(INFO, TAG, PCF("Created Prov resource with result: %s"), getResult(res));
 
     return res;
 }
@@ -92,8 +92,8 @@ OCStackResult CreateNetworkResource()
             netInfo.ipaddr[3]);
     sprintf(g_net.cnn, "%s", netInfo.ssid);
 
-    OC_LOG_V(INFO, TAG, "SSID: %s", g_net.cnn);
-    OC_LOG_V(INFO, TAG, "IP Address: %s", g_net.ipaddr);
+    OC_LOG_V(INFO, TAG, PCF("SSID: %s"), g_net.cnn);
+    OC_LOG_V(INFO, TAG, PCF("IP Address: %s"), g_net.ipaddr);
 
     OCStackResult res = OCCreateResource(&g_net.handle, "oic.net", OC_RSRVD_INTERFACE_DEFAULT,
             OC_RSRVD_ES_URI_NET, OCEntityHandlerCb,NULL, OC_DISCOVERABLE | OC_OBSERVABLE);
@@ -120,7 +120,7 @@ OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest,
     OCRepPayload *getResp = constructResponse(ehRequest);
     if(!getResp)
     {
-        OC_LOG(ERROR, TAG, "constructResponse failed");
+        OC_LOG(ERROR, TAG, PCF("constructResponse failed"));
         return OC_EH_ERROR;
     }
 
@@ -144,7 +144,7 @@ OCEntityHandlerResult ProcessPutRequest (OCEntityHandlerRequest *ehRequest,
     OCRepPayload* input = (OCRepPayload*)(ehRequest->payload);
     if(!input)
     {
-        OC_LOG_V(ERROR, TAG, "Failed to parse");
+        OC_LOG_V(ERROR, TAG, PCF("Failed to parse"));
         return ehResult;
     }
 
@@ -165,7 +165,7 @@ OCEntityHandlerResult ProcessPutRequest (OCEntityHandlerRequest *ehRequest,
     OCRepPayload *getResp = constructResponse(ehRequest);
     if(!getResp)
     {
-        OC_LOG(ERROR, TAG, "constructResponse failed");
+        OC_LOG(ERROR, TAG, PCF("constructResponse failed"));
         return OC_EH_ERROR;
     }
 
@@ -196,7 +196,7 @@ OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest,
     OCRepPayload* input = (OCRepPayload*)(ehRequest->payload);
     if(!input)
     {
-        OC_LOG_V(ERROR, TAG, "Failed to parse" );
+        OC_LOG_V(ERROR, TAG, PCF("Failed to parse") );
         return ehResult;
     }
     char* tr;
@@ -252,12 +252,12 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
     {
         if (OC_REST_GET == entityHandlerRequest->method)
         {
-            OC_LOG_V(INFO, TAG, "Received GET request");
+            OC_LOG_V(INFO, TAG, PCF("Received GET request"));
             ehRet = ProcessGetRequest(entityHandlerRequest, &payload);
         }
         else if (OC_REST_PUT == entityHandlerRequest->method)
         {
-            OC_LOG_V(INFO, TAG, "Received PUT request");
+            OC_LOG_V(INFO, TAG, PCF("Received PUT request"));
 
             if (g_prov.handle != NULL && entityHandlerRequest->resource == g_prov.handle)
             {
@@ -293,7 +293,7 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
             // Send the response
             if (OCDoResponse(&response) != OC_STACK_OK)
             {
-                OC_LOG(ERROR, TAG, "Error sending response");
+                OC_LOG(ERROR, TAG, PCF("Error sending response"));
                 ehRet = OC_EH_ERROR;
             }
         }

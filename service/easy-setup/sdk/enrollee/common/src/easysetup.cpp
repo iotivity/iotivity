@@ -21,6 +21,8 @@
 #include "easysetup.h"
 #include "ocstack.h"
 
+#define TAG PCF("ES")
+
 int g_eventflag = 0;
 int g_cnt = 0;
 char *targetSsid;
@@ -55,7 +57,7 @@ void EventCallbackInProvisioning(ESResult event)
 
         if(TerminateEasySetup() != OC_STACK_OK)
         {
-            OC_LOG(ERROR, TAG, "Terminating stack failed");
+            OC_LOG(ERROR, TAG, PCF("Terminating stack failed"));
             return;
         }
 
@@ -98,7 +100,15 @@ ESResult FindNetworkForOnboarding(NetworkType networkType,
             g_cbForOnboarding = cb;
         }
 
-        return ConnectToWiFiNetwork(ssid, passwd, EventCallbackInOnboarding);
+        if(ConnectToWiFiNetwork(ssid, passwd, EventCallbackInOnboarding) != ES_NETWORKCONNECTED)
+        {
+            OC_LOG(ERROR, TAG, PCF("ConnectToWiFiNetwork Failed"));
+            return ES_ERROR;
+        }
+        else{
+            OC_LOG(INFO, TAG, PCF("ConnectToWiFiNetwork Success"));
+            return ES_OK;
+        }
     }
 }
 
@@ -108,19 +118,19 @@ ESResult InitEasySetup(NetworkType networkType, const char *ssid, const char *pa
 {
     if(FindNetworkForOnboarding(networkType, ssid, passwd, cb) != ES_OK)
     {
-        OC_LOG(ERROR, TAG, "OnBoarding Failed");
+        OC_LOG(ERROR, TAG, PCF("OnBoarding Failed"));
         return ES_ERROR;
     }
 
     // Initialize the OC Stack in Server mode
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
     {
-        OC_LOG(INFO, TAG, PCF("OCStack init error"));
+        OC_LOG(ERROR, TAG, PCF("OCStack init error"));
         return ES_ERROR;
     }
     else
     {
-        OC_LOG(ERROR, TAG, PCF("OCStack init success"));
+        OC_LOG(DEBUG, TAG, PCF("OCStack init success"));
         return ES_OK;
     }
 }

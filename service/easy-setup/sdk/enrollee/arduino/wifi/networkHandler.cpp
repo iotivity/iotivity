@@ -20,7 +20,7 @@
 
 #include "networkHandler.h"
 
-PROGMEM const char TAG[] = "networkHandler";
+#define TAG PCF("ES_NH")
 
 int findNetwork(const char *ssid);
 int ConnectToNetwork(const char *ssid, const char *pass);
@@ -124,7 +124,7 @@ int ConnectToNetwork(const char *ssid, const char *pass)
     // attempt to connect to Wifi network:
     while (status != WL_CONNECTED)
     {
-        OC_LOG_V(INFO, TAG, "Attempting to connect to SSID: %s", ssid);
+        OC_LOG_V(INFO, TAG, PCF("Attempting to connect to SSID: %s"), ssid);
 
         status = WiFi.begin((char *) ssid, (char *) pass);
 
@@ -134,7 +134,7 @@ int ConnectToNetwork(const char *ssid, const char *pass)
     OC_LOG(DEBUG, TAG, PCF("Connected to wifi"));
 
     myIP = WiFi.localIP();
-    OC_LOG_V(INFO, TAG, "IP Address:  %d.%d.%d.%d", myIP[0], myIP[1], myIP[2], myIP[3]);
+    OC_LOG_V(INFO, TAG, PCF("IP Address:  %d.%d.%d.%d"), myIP[0], myIP[1], myIP[2], myIP[3]);
 
     char buf[50];
     sprintf(buf, "IP Address:  %d.%d.%d.%d", myIP[0], myIP[1], myIP[2], myIP[3]);
