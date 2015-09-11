@@ -41,6 +41,7 @@
 #include <map>
 
 #define BUNDLE_ACTIVATION_WAIT_SEC 10
+#define BUNDLE_SET_GET_WAIT_SEC 10
 
 using namespace OIC::Service;
 
