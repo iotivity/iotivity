@@ -27,7 +27,7 @@
 #include <OCPlatform.h>
 #include <cstdlib>
 
-#include "ThingsDiagnostics.h"
+#include "ThingsMaintenance.h"
 
 using namespace OC;
 

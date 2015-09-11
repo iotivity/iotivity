@@ -133,7 +133,7 @@ OCRepPayload* getPayload(const char* uri, int64_t power, bool state)
     OCRepPayload* payload = OCRepPayloadCreate();
     if(!payload)
     {
-        OC_LOG(ERROR, TAG, PCF("Failed to allocate Payload"));
+        OC_LOG(ERROR, TAG, "Failed to allocate Payload");
         return NULL;
     }
 
@@ -149,7 +149,7 @@ OCRepPayload* constructResponse (OCEntityHandlerRequest *ehRequest)
 {
     if(ehRequest->payload && ehRequest->payload->type != PAYLOAD_TYPE_REPRESENTATION)
     {
-        OC_LOG(ERROR, TAG, PCF("Incoming payload not a representation"));
+        OC_LOG(ERROR, TAG, "Incoming payload not a representation");
         return NULL;
     }
 

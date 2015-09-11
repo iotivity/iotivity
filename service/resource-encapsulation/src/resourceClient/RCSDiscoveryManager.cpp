@@ -25,7 +25,7 @@
 
 #include "ScopeLogger.h"
 
-#define TAG PCF("RCSDiscoveryManager")
+#define TAG "RCSDiscoveryManager"
 
 using namespace OIC::Service;
 

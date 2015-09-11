@@ -56,7 +56,7 @@ namespace OIC
                                        ResourceDiscoveredCallback;
 
                 /**
-                 * Returns RCSDiscoveryManager instance.
+                 * @return Returns RCSDiscoveryManager instance.
                  *
                  */
                 static RCSDiscoveryManager* getInstance();

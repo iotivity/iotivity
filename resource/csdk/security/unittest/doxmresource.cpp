@@ -27,7 +27,7 @@
 #include "oic_malloc.h"
 #include "logger.h"
 
-#define TAG  PCF("SRM-DOXM")
+#define TAG  "SRM-DOXM"
 
 #ifdef __cplusplus
 extern "C" {
@@ -152,7 +152,7 @@ TEST(BinToDoxmJSONTest, BinToDoxmJSONValidDoxm)
     OicSecDoxm_t * doxm =  getBinDoxm();
 
     char * json = BinToDoxmJSON(doxm);
-    OC_LOG_V(INFO, TAG, PCF("BinToDoxmJSON:%s"), json);
+    OC_LOG_V(INFO, TAG, "BinToDoxmJSON:%s", json);
     EXPECT_TRUE(json != NULL);
 
     DeleteDoxmBinData(doxm);

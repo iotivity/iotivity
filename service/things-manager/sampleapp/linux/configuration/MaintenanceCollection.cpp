@@ -28,7 +28,7 @@
 
 #include "OCPlatform.h"
 #include "OCApi.h"
-#include "DiagnosticsCollection.h"
+#include "MaintenanceCollection.h"
 
 using namespace OC;
 using namespace std;

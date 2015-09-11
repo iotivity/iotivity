@@ -101,6 +101,7 @@
                                     <listOptionValue builtIn="false" value="&quot;..\..\..\..\sdk\inc&quot;"/>
                                     <listOptionValue builtIn="false" value="&quot;..\..\..\..\sdk\src&quot;"/>
                                     <listOptionValue builtIn="false" value="&quot;..\..\..\..\..\..\resource\include&quot;"/>
+                                    <listOptionValue builtIn="false" value="&quot;..\..\..\..\..\..\resource\c_common&quot;"/>
                                     <listOptionValue builtIn="false" value="&quot;..\..\..\..\..\..\resource\csdk\stack\include&quot;"/>
                                     <listOptionValue builtIn="false" value="&quot;..\..\..\..\..\..\resource\csdk\logger\include&quot;"/>
                                     <listOptionValue builtIn="false" value="&quot;..\..\..\..\..\..\resource\csdk\occoap\include&quot;"/>

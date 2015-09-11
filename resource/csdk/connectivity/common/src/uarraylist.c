@@ -33,7 +33,7 @@
 
 u_arraylist_t *u_arraylist_create()
 {
-    u_arraylist_t *list = (u_arraylist_t *) OICMalloc(sizeof(u_arraylist_t));
+    u_arraylist_t *list = (u_arraylist_t *) OICCalloc(1, sizeof(u_arraylist_t));
     if (!list)
     {
         OIC_LOG(DEBUG, TAG, "Out of memory");
@@ -126,7 +126,6 @@ void *u_arraylist_get(const u_arraylist_t *list, uint32_t index)
 
 bool u_arraylist_add(u_arraylist_t *list, void *data)
 {
-    static const double GROWTH_FACTOR = 1.5;
     if (!list)
     {
         return false;
@@ -134,7 +133,10 @@ bool u_arraylist_add(u_arraylist_t *list, void *data)
 
     if (list->capacity <= list->length)
     {
-        uint32_t new_capacity = (list->capacity * GROWTH_FACTOR) + 0.5;
+        // Does a non-FP calcuation of the 1.5 growth factor. Helpful for
+        // certain limited platforms.
+        size_t new_capacity = ((list->capacity * 3) + 1) / 2;
+
         // In case the re-alloc returns null, use a local variable to avoid
         // losing the current block of memory.
         void *tmp = OICRealloc(list->data,
@@ -147,7 +149,7 @@ bool u_arraylist_add(u_arraylist_t *list, void *data)
         list->data = (void **) tmp;
         memset(list->data + list->capacity, 0,
                (new_capacity - list->capacity) * sizeof(list->data[0]));
-        list->capacity = new_capacity;
+        list->capacity = (uint32_t)new_capacity;
     }
 
     list->data[list->length] = data;

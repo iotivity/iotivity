@@ -36,7 +36,7 @@
 #include "cainterface.h"
 
 /// Module Name
-#define TAG PCF("occlientcb")
+#define TAG "occlientcb"
 
 struct ClientCB *cbList = NULL;
 static OCMulticastNode * mcPresenceNodes = NULL;
@@ -72,7 +72,7 @@ AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
         }
         else
         {
-            OC_LOG(INFO, TAG, PCF("Adding client callback with token"));
+            OC_LOG(INFO, TAG, "Adding client callback with token");
             OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)token, tokenLength);
             cbNode->callBack = cbData->cb;
             cbNode->context = cbData->context;
@@ -150,7 +150,7 @@ void DeleteClientCB(ClientCB * cbNode)
     if(cbNode)
     {
         LL_DELETE(cbList, cbNode);
-        OC_LOG (INFO, TAG, PCF("Deleting token"));
+        OC_LOG (INFO, TAG, "Deleting token");
         OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)cbNode->token, cbNode->tokenLength);
         CADestroyToken (cbNode->token);
         OICFree(cbNode->devAddr);
@@ -208,7 +208,7 @@ static void CheckAndDeleteTimedOutCB(ClientCB* cbNode)
 
     if (cbNode->TTL < now)
     {
-        OC_LOG(INFO, TAG, PCF("Deleting timed-out callback"));
+        OC_LOG(INFO, TAG, "Deleting timed-out callback");
         DeleteClientCB(cbNode);
     }
 }
@@ -221,9 +221,9 @@ ClientCB* GetClientCB(const CAToken_t token, uint8_t tokenLength,
 
     if(token && *token && tokenLength <= CA_MAX_TOKEN_LEN && tokenLength > 0)
     {
-        OC_LOG (INFO, TAG, PCF ("Looking for token"));
+        OC_LOG (INFO, TAG,  "Looking for token");
         OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)token, tokenLength);
-        OC_LOG(INFO, TAG, PCF("\tFound in callback list"));
+        OC_LOG(INFO, TAG, "\tFound in callback list");
         LL_FOREACH(cbList, out)
         {
             OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)out->token, tokenLength);
@@ -259,7 +259,7 @@ ClientCB* GetClientCB(const CAToken_t token, uint8_t tokenLength,
             CheckAndDeleteTimedOutCB(out);
         }
     }
-    OC_LOG(INFO, TAG, PCF("Callback Not found !!"));
+    OC_LOG(INFO, TAG, "Callback Not found !!");
     return NULL;
 }
 
@@ -350,7 +350,7 @@ OCMulticastNode* GetMCPresenceNode(const char * uri)
             }
         }
     }
-    OC_LOG(INFO, TAG, PCF("MulticastNode Not found !!"));
+    OC_LOG(INFO, TAG, "MulticastNode Not found !!");
     return NULL;
 }
 

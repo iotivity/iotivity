@@ -1,4 +1,4 @@
-/******************************************************************
+/* *****************************************************************
  *
  * Copyright 2015 Samsung Electronics All Rights Reserved.
  *
@@ -19,22 +19,18 @@
  ******************************************************************/
 
 /**
-  * @file   jni_setter.h
-  *
-  * @brief  This file contains the JSetter class declarations and and its functions required
-  *            to set data types in C++ object from Java object
-*/
+  * @file
+  * This file contains the JSetter class declarations and and its functions required
+  * to set data types in C++ object from Java object.
+  */
 
-#ifndef __JNI_SETTER_H_
-#define __JNI_SETTER_H_
-
+#ifndef JNI_SETTER_H_
+#define JNI_SETTER_H_
 
 #include <jni.h>
 
 /**
- * @class   JSetter
- * @brief  This class provide utility to set data types in C++ object from Java object
- *
+ * This class provide utility to set data types in C++ object from Java object.
  */
 class JSetter
 {
@@ -74,7 +70,7 @@ class JSetter
                                   jlong value);
 
         /**
-         * This function is called to Set Boolean field to C++ object
+         * This function is called to Set Boolean field to C++ object.
          *
          * @param env
          *           JNI Environment reference
@@ -89,7 +85,7 @@ class JSetter
          */
         static bool setJBoolField(JNIEnv *env, jobject &object, const char *fieldName, bool value);
         /**
-         * This function is called to Set String field from the C++ object
+         * This function is called to Set String field from the C++ object.
          *
          * @param env
          *           JNI Environment reference
@@ -125,4 +121,4 @@ class JSetter
                                     const char *fieldType, const jobject value);
 };
 
-#endif //__JNI_SETTER_H_
+#endif //JNI_SETTER_H_

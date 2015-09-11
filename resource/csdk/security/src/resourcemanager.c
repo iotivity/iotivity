@@ -32,7 +32,7 @@
 #include "utlist.h"
 #include <string.h>
 
-#define TAG PCF("SRM-RM")
+#define TAG "SRM-RM"
 
 /**
  * This method is used by all secure resource modules to send responses to REST queries.
@@ -46,7 +46,7 @@
 OCStackResult SendSRMResponse(const OCEntityHandlerRequest *ehRequest,
         OCEntityHandlerResult ehRet, const char *rspPayload)
 {
-    OC_LOG (INFO, TAG, PCF("SRM sending SRM response"));
+    OC_LOG (INFO, TAG, "SRM sending SRM response");
     OCEntityHandlerResponse response = {.requestHandle = NULL};
     if (ehRequest)
     {

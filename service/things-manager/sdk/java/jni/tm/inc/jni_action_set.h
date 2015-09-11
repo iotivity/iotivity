@@ -1,4 +1,4 @@
-/******************************************************************
+/* *****************************************************************
  *
  * Copyright 2015 Samsung Electronics All Rights Reserved.
  *
@@ -19,20 +19,18 @@
  ******************************************************************/
 
 /**
-  * @file   jni_action_set.h
-  *
-  * @brief  This file contains the declaration of  JniActionSet class
-  *            and its members related to JniActionSet.
+  * @file
+  * This file contains the declaration of JniActionSet class
+  * and its members related to JniActionSet.
   */
 
-#ifndef __JNI_ACTIONSET_H_
-#define __JNI_ACTIONSET_H_
-
+#ifndef JNI_ACTIONSET_H_
+#define JNI_ACTIONSET_H_
 
 #include <vector>
 #include <string>
 
-#include "ThingsManager.h"
+#include "GroupManager.h"
 #include "ActionSet.h"
 #include "jni_object.h"
 #include "jni_action.h"
@@ -41,36 +39,33 @@ using namespace OC;
 using namespace OIC;
 
 /**
- * @class   JniActionSet
- * @brief   This class provides a set of functions to get and set ActionSet Class member variables
- *
+ * This class provides a set of functions to get and
+ * set ActionSet Class member variables.
  */
 class JniActionSet : public JObject
 {
     public:
         /**
-         * @brief constructor
+         * constructor
          */
         JniActionSet(JNIEnv *env, jobject obj);
 
         /**
-         * @brief constructor
+         * constructor
          */
         JniActionSet(JNIEnv *env);
 
         /**
-         * @brief destructor
-         *
+         * destructor
          */
         ~JniActionSet();
 
         /**
-         * Retrieves target value from JniActionSet class object
+         * Retrieves target value from JniActionSet class object.
          *
          * @param name - ActionSet Name
          *
          * @return  Boolean, true on success, otherwise false
-         *
          */
         bool getJniActionSetName(std::string &name);
 
@@ -80,12 +75,11 @@ class JniActionSet : public JObject
          * @param name - ActionSet Name
          *
          * @return  Boolean, true on success, otherwise false
-         *
          */
         bool setJniActionSetName(const std::string name);
 
         /**
-         * Retrieves capability values from JniActionSet class object
+         * Retrieves capability values from JniActionSet class object.
          *
          * @param actionList - List of Actions
          *
@@ -94,9 +88,9 @@ class JniActionSet : public JObject
         bool getJniListOfActions(std::vector<OIC::Action *> &actionList);
 
         /**
-         * Converts actionSet class from java to CPP
+         * Converts actionSet class from java to CPP.
          *
-         * @param env - Default JNI Environment Pointer
+         * @param env           - Default JNI Environment Pointer
          * @param jnewActionSet - action set
          *
          * @return  OIC CPP ActionSet
@@ -104,15 +98,15 @@ class JniActionSet : public JObject
         ActionSet *getActionSet(JNIEnv *env, jobject jnewActionSet);
 
         /**
-         * Converts Time class from java to CPP
+         * Converts Time class from java to CPP.
          *
-         * @param env - Default JNI Environment Pointer
+         * @param env           - Default JNI Environment Pointer
          * @param jnewActionSet - Java action set
-         * @param pActionSet - CPP action set
+         * @param pActionSet    - CPP action set
          *
          * @return  Boolean, true on success, otherwise false
          */
         bool setTimeInfo(JNIEnv *env, jobject jnewActionSet, OIC::ActionSet *pActionSet);
 };
-#endif  //__JNI_ACTIONSET_H_
+#endif  //JNI_ACTIONSET_H_
 

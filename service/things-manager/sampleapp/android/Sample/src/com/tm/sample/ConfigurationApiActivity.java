@@ -31,11 +31,14 @@ import org.iotivity.base.OcPlatform;
 import org.iotivity.base.OcRepresentation;
 import org.iotivity.base.OcResource;
 import org.iotivity.base.OcResourceHandle;
-import org.iotivity.service.tm.IConfigurationListener;
-import org.iotivity.service.tm.IDiagnosticsListener;
-import org.iotivity.service.tm.IFindCandidateResourceListener;
+import org.iotivity.service.tm.GroupSynchronization;
 import org.iotivity.service.tm.OCStackResult;
-import org.iotivity.service.tm.ThingsManager;
+import org.iotivity.service.tm.GroupManager;
+import org.iotivity.service.tm.ThingsMaintenance;
+import org.iotivity.service.tm.GroupManager.*;
+import org.iotivity.service.tm.ThingsConfiguration;
+import org.iotivity.service.tm.ThingsConfiguration.*;
+import org.iotivity.service.tm.ThingsMaintenance.*;
 
 import android.app.Activity;
 import android.app.Dialog;
@@ -71,13 +74,13 @@ public class ConfigurationApiActivity extends Activity {
 
     private final String                     CONFIGURATION_COLLECTION_RESOURCE_URI  = "/core/configuration/resourceset";
     private final String                     CONFIGURATION_COLLECTION_RESOURCE_TYPE = "core.configuration.resourceset";
-    private final String                     DIAGNOSTIC_COLLECTION_RESOURCE_URI     = "/core/diagnostics/resourceset";
-    private final String                     DIAGNOSTIC_COLLECTION_RESOURCE_TYPE    = "core.diagnostics.resourceset";
+    private final String                     MAINTENANCE_COLLECTION_RESOURCE_URI    = "/core/maintenance/resourceset";
+    private final String                     MAINTENANCE_COLLECTION_RESOURCE_TYPE   = "core.maintenance.resourceset";
     private final String                     FACTORYSET_COLLECTION_RESOURCE_URI     = "/core/factoryset/resourceset";
     private final String                     FACTORYSET_COLLECTION_RESOURCE_TYPE    = "core.factoryset.resourceset";
 
     private final String                     CONFIGURATION_RESOURCE_URI             = "/oic/con";
-    private final String                     DIAGNOSTIC_RESOURCE_URI                = "/oic/diag";
+    private final String                     MAINTENANCE_RESOURCE_URI               = "/oic/mnt";
     private final String                     FACTORYSET_RESOURCE_URI                = "/factorySet";
 
     private ListView                         list;
@@ -90,13 +93,16 @@ public class ConfigurationApiActivity extends Activity {
     private static Handler                   mHandler;
     private static Message                   msg;
 
-    private ThingsManager                    thingsManager                          = null;
+    private GroupManager                     groupManager                           = null;
+    private GroupSynchronization             groupSyn                               = null;
+    private ThingsConfiguration              thingsConfiguration                    = null;
+    private ThingsMaintenance                thingsMaintenance                      = null;
     private Map<String, ResourceInformation> resourceList                           = null;
     private Map<String, ResourceInformation> collectionList                         = null;
 
     public boolean                           configurationResourceFlag              = false;
     public boolean                           factorySetResourceFlag                 = false;
-    public boolean                           diagnosticsResourceFlag                = false;
+    public boolean                           maintenanceResourceFlag                = false;
 
     public static Context                    mcontext;
     public String                            region                                 = "";
@@ -108,7 +114,10 @@ public class ConfigurationApiActivity extends Activity {
         setContentView(R.layout.configapis);
 
         mcontext = this;
-        thingsManager = new ThingsManager();
+        groupManager = new GroupManager();
+        groupSyn = new GroupSynchronization();
+        thingsConfiguration = ThingsConfiguration.getInstance();
+        thingsMaintenance = ThingsMaintenance.getInstance();
 
         // set the listeners
         setResourceListener();
@@ -166,7 +175,7 @@ public class ConfigurationApiActivity extends Activity {
                         displayToastMessage("Configuration collection resource does not exist!");
                     } else {
                         Vector<String> resourceTypes = new Vector<String>();
-                        resourceTypes.add("oic.con");
+                        resourceTypes.add("oic.wk.con");
                         findCandidateResources(resourceTypes);
 
                         logMessage = "";
@@ -174,7 +183,7 @@ public class ConfigurationApiActivity extends Activity {
                         messageCount++;
 
                         resourceTypes.clear();
-                        resourceTypes.add("oic.diag");
+                        resourceTypes.add("oic.wk.mnt");
                         findCandidateResources(resourceTypes);
 
                         messageCount++;
@@ -211,8 +220,8 @@ public class ConfigurationApiActivity extends Activity {
         try {
             createResourceCollection(CONFIGURATION_COLLECTION_RESOURCE_URI,
                     CONFIGURATION_COLLECTION_RESOURCE_TYPE);
-            createResourceCollection(DIAGNOSTIC_COLLECTION_RESOURCE_URI,
-                    DIAGNOSTIC_COLLECTION_RESOURCE_TYPE);
+            createResourceCollection(MAINTENANCE_COLLECTION_RESOURCE_URI,
+                    MAINTENANCE_COLLECTION_RESOURCE_TYPE);
             createResourceCollection(FACTORYSET_COLLECTION_RESOURCE_URI,
                     FACTORYSET_COLLECTION_RESOURCE_TYPE);
         } catch (OcException e) {
@@ -292,12 +301,13 @@ public class ConfigurationApiActivity extends Activity {
     }
 
     private void setResourceListener() {
-        thingsManager
+        groupManager
                 .setFindCandidateResourceListener(new IFindCandidateResourceListener() {
 
                     @Override
-                    synchronized public void onResourceCallback(
+                    public void onResourceFoundCallback(
                             Vector<OcResource> resources) {
+                        // TODO Auto-generated method stub
                         Log.i(LOG_TAG, "onResourceCallback: enter");
                         for (int i = 0; i < resources.size(); i++) {
                             OcResource resource = resources.get(i);
@@ -308,17 +318,14 @@ public class ConfigurationApiActivity extends Activity {
                             Log.i(LOG_TAG, "Resource URI:" + uri);
                             Log.i(LOG_TAG, "Resource HOST: " + host);
                             Log.i(LOG_TAG, "Resource types: ");
-                            logMessage = logMessage + "Resource URI : " + uri
-                                    + "\n";
-                            logMessage = logMessage + "Resource Host : " + host
-                                    + "\n";
+                            logMessage += "Resource URI : " + uri + "\n";
+                            logMessage += "Resource Host : " + host + "\n";
 
                             List<String> resourcetypes = resource
                                     .getResourceTypes();
                             for (int j = 0; j < resourcetypes.size(); j++) {
                                 Log.i(LOG_TAG, resourcetypes.get(j));
-                                logMessage = logMessage + "ResourceType "
-                                        + (j + 1) + " : "
+                                logMessage += "ResourceType " + (j + 1) + " : "
                                         + resourcetypes.get(j) + "\n";
                             }
 
@@ -327,9 +334,8 @@ public class ConfigurationApiActivity extends Activity {
                                     .getResourceInterfaces();
                             for (int j = 0; j < interfacetypes.size(); j++) {
                                 Log.i(LOG_TAG, interfacetypes.get(j));
-                                logMessage = logMessage + "interfacetype "
-                                        + (j + 1) + " : "
-                                        + interfacetypes.get(j) + "\n";
+                                logMessage += "interfacetype " + (j + 1)
+                                        + " : " + interfacetypes.get(j) + "\n";
                             }
 
                             try {
@@ -353,95 +359,105 @@ public class ConfigurationApiActivity extends Activity {
     }
 
     private void setConfigurationListener() {
-        thingsManager.setConfigurationListener(new IConfigurationListener() {
-            @Override
-            public void onBootStrapCallback(
-                    Vector<OcHeaderOption> headerOptions, OcRepresentation rep,
-                    int errorValue) {
-                Log.i(LOG_TAG, "onBootStrapCallback: enter");
-            }
+        thingsConfiguration
+                .setConfigurationListener(new IConfigurationListener() {
+                    @Override
+                    public void onBootStrapCallback(
+                            Vector<OcHeaderOption> headerOptions,
+                            OcRepresentation rep, int errorValue) {
+                        Log.i(LOG_TAG, "onBootStrapCallback: enter");
+                    }
 
-            @Override
-            public void onUpdateConfigurationsCallback(
-                    Vector<OcHeaderOption> headerOptions, OcRepresentation rep,
-                    int errorValue) {
-                Log.i(LOG_TAG, "onUpdateConfigurationsCallback: enter");
-                Log.i(LOG_TAG, "Resource URI: " + rep.getUri());
-                if (rep.hasAttribute("loc")) {
-                    logMessage = logMessage + "Location : "
-                            + rep.getValueString("loc") + "\n";
-                }
-                if (rep.hasAttribute("st")) {
-                    logMessage = logMessage + "System Time : "
-                            + rep.getValueString("loc") + "\n";
-                }
-                if (rep.hasAttribute("c")) {
-                    logMessage = logMessage + "Currency : "
-                            + rep.getValueString("c") + "\n";
-                }
-                if (rep.hasAttribute("r")) {
-                    logMessage = logMessage + "Region : "
-                            + rep.getValueString("r") + "\n";
-                }
+                    @Override
+                    public void onUpdateConfigurationsCallback(
+                            Vector<OcHeaderOption> headerOptions,
+                            OcRepresentation rep, int errorValue) {
+                        Log.i(LOG_TAG, "onUpdateConfigurationsCallback: enter");
+                        Log.i(LOG_TAG, "Resource URI: " + rep.getUri());
+                        if (rep.hasAttribute("n")) {
+                            logMessage += "Device Name : "
+                                    + rep.getValueString("n") + "\n";
+                        }
+                        if (rep.hasAttribute("loc")) {
+                            logMessage += "Location : "
+                                    + rep.getValueString("loc") + "\n";
+                        }
+                        if (rep.hasAttribute("locn")) {
+                            logMessage += "Location Name : "
+                                    + rep.getValueString("locn") + "\n";
+                        }
+                        if (rep.hasAttribute("r")) {
+                            logMessage += "Region : " + rep.getValueString("r")
+                                    + "\n";
+                        }
+                        if (rep.hasAttribute("c")) {
+                            logMessage += "Currency : "
+                                    + rep.getValueString("c") + "\n";
+                        }
+                    }
 
-            }
+                    @Override
+                    public void onGetConfigurationsCallback(
+                            Vector<OcHeaderOption> headerOptions,
+                            OcRepresentation rep, int errorValue) {
+                        Log.i(LOG_TAG, "onGetConfigurationsCallback: enter");
+                        Log.i(LOG_TAG, "Resource URI: " + rep.getUri());
+                        logMessage += "Resource URI : " + rep.getUri() + "\n";
 
-            @Override
-            public void onGetConfigurationsCallback(
-                    Vector<OcHeaderOption> headerOptions, OcRepresentation rep,
-                    int errorValue) {
-                Log.i(LOG_TAG, "onGetConfigurationsCallback: enter");
-                Log.i(LOG_TAG, "Resource URI: " + rep.getUri());
-                logMessage = logMessage + "Resource URI : " + rep.getUri()
-                        + "\n";
+                        if (rep.hasAttribute("n")) {
+                            logMessage += "Device Name : "
+                                    + rep.getValueString("n") + "\n";
+                        }
+                        if (rep.hasAttribute("loc")) {
+                            logMessage += "Location : "
+                                    + rep.getValueString("loc") + "\n";
+                        }
+                        if (rep.hasAttribute("locn")) {
+                            logMessage += "Location Name : "
+                                    + rep.getValueString("locn") + "\n";
+                        }
+                        if (rep.hasAttribute("r")) {
+                            logMessage += "Region : " + rep.getValueString("r")
+                                    + "\n";
+                        }
+                        if (rep.hasAttribute("c")) {
+                            logMessage += "Currency : "
+                                    + rep.getValueString("c") + "\n";
+                        }
 
-                if (rep.hasAttribute("loc")) {
-                    logMessage = logMessage + "Location : "
-                            + rep.getValueString("loc") + "\n";
-                }
-                if (rep.hasAttribute("st")) {
-                    logMessage = logMessage + "System Time : "
-                            + rep.getValueString("st") + "\n";
-                }
-                if (rep.hasAttribute("c")) {
-                    logMessage = logMessage + "Currency : "
-                            + rep.getValueString("c") + "\n";
-                }
-                if (rep.hasAttribute("r")) {
-                    logMessage = logMessage + "Region : "
-                            + rep.getValueString("r") + "\n";
-                }
-
-                msg = Message.obtain();
-                msg.what = 0;
-                mHandler.sendMessage(msg);
-            }
-        });
+                        msg = Message.obtain();
+                        msg.what = 0;
+                        mHandler.sendMessage(msg);
+                    }
+                });
     }
 
     private void setDiagnosticsListener() {
-        thingsManager.setDiagnosticsListener(new IDiagnosticsListener() {
+        thingsMaintenance
+                .setThingsMaintenanceListener(new IThingsMaintenanceListener() {
 
-            @Override
-            public void onRebootCallback(Vector<OcHeaderOption> headerOptions,
-                    OcRepresentation rep, int errorValue) {
-                Log.i(LOG_TAG, "onRebootCallback: enter");
-            }
+                    @Override
+                    public void onRebootCallback(
+                            Vector<OcHeaderOption> headerOptions,
+                            OcRepresentation rep, int errorValue) {
+                        // TODO Auto-generated method stu
+                    }
 
-            @Override
-            public void onFactoryResetCallback(
-                    Vector<OcHeaderOption> headerOptions, OcRepresentation rep,
-                    int errorValue) {
-                Log.i(LOG_TAG, "onFactoryResetCallback: enter");
-            }
-        });
+                    @Override
+                    public void onFactoryResetCallback(
+                            Vector<OcHeaderOption> headerOptions,
+                            OcRepresentation rep, int errorValue) {
+                        // TODO Auto-generated method stub
+
+                    }
+                });
     }
 
     /**
      * This method find the resources available in network.
      */
     private void findCandidateResources(Vector<String> resourceTypes) {
-        OCStackResult result = thingsManager.findCandidateResources(
+        OCStackResult result = groupManager.findCandidateResources(
                 resourceTypes, 5);
         if (OCStackResult.OC_STACK_OK != result) {
             Log.e(LOG_TAG, "Error while calling findCandidateResources");
@@ -450,8 +466,7 @@ public class ConfigurationApiActivity extends Activity {
             displayToastMessage(toastmessage);
         }
         if (messageCount == 1)
-            logMessage = logMessage + "API RESULT : " + result.toString()
-                    + "\n";
+            logMessage += "API RESULT : " + result.toString() + "\n";
     }
 
     /**
@@ -479,7 +494,7 @@ public class ConfigurationApiActivity extends Activity {
 
         OCStackResult result = OCStackResult.OC_STACK_ERROR;
         try {
-            result = thingsManager.getConfigurations(
+            result = thingsConfiguration.getConfigurations(
                     configurationCollection.resource, configs);
         } catch (OcException e) {
             e.printStackTrace();
@@ -517,7 +532,7 @@ public class ConfigurationApiActivity extends Activity {
 
         OCStackResult result = OCStackResult.OC_STACK_ERROR;
         try {
-            result = thingsManager.updateConfigurations(
+            result = thingsConfiguration.updateConfigurations(
                     configurationCollection.resource, configurations);
         } catch (OcException e) {
             e.printStackTrace();
@@ -529,7 +544,7 @@ public class ConfigurationApiActivity extends Activity {
             displayToastMessage(toastmessage);
         }
         logMessage = "API RESULT : " + result.toString() + "\n";
-        logMessage = logMessage + "Updating region to " + region;
+        logMessage += "Updating region to " + region;
         msg = Message.obtain();
         msg.what = 0;
         mHandler.sendMessage(msg);
@@ -541,14 +556,14 @@ public class ConfigurationApiActivity extends Activity {
      */
     private void factoryReset() {
         ResourceInformation diagnosticsCollection = collectionList
-                .get(DIAGNOSTIC_COLLECTION_RESOURCE_URI);
+                .get(MAINTENANCE_COLLECTION_RESOURCE_URI);
         if (null == diagnosticsCollection
                 || null == diagnosticsCollection.resource) {
             displayToastMessage("Diagnostic collection does not exist!");
             return;
         }
 
-        if (false == diagnosticsResourceFlag) {
+        if (false == maintenanceResourceFlag) {
             displayToastMessage("Diagnostic resource does not exist!");
             return;
         }
@@ -556,7 +571,8 @@ public class ConfigurationApiActivity extends Activity {
         OCStackResult result = OCStackResult.values()[30];
 
         try {
-            result = thingsManager.factoryReset(diagnosticsCollection.resource);
+            result = thingsMaintenance
+                    .factoryReset(diagnosticsCollection.resource);
         } catch (OcException e) {
             e.printStackTrace();
         }
@@ -579,20 +595,20 @@ public class ConfigurationApiActivity extends Activity {
      */
     private void reboot() {
         ResourceInformation diagnosticsCollection = collectionList
-                .get(DIAGNOSTIC_COLLECTION_RESOURCE_URI);
+                .get(MAINTENANCE_COLLECTION_RESOURCE_URI);
         if (null == diagnosticsCollection
                 || null == diagnosticsCollection.resource) {
             displayToastMessage("Diagnostic collection does not exist!");
             return;
         }
-        if (false == diagnosticsResourceFlag) {
+        if (false == maintenanceResourceFlag) {
             displayToastMessage("Diagnostic resource does not exist!");
             return;
         }
 
         OCStackResult result = OCStackResult.OC_STACK_ERROR;
         try {
-            result = thingsManager.reboot(diagnosticsCollection.resource);
+            result = thingsMaintenance.reboot(diagnosticsCollection.resource);
         } catch (OcException e) {
             e.printStackTrace();
         }
@@ -613,7 +629,7 @@ public class ConfigurationApiActivity extends Activity {
      * Response will be in JSON format (key-value pair).
      */
     private String getListOfSupportedConfigurationUnits() {
-        return thingsManager.getListOfSupportedConfigurationUnits();
+        return thingsConfiguration.getListOfSupportedConfigurationUnits();
     }
 
     private void displayToastMessage(String message) {
@@ -674,14 +690,14 @@ public class ConfigurationApiActivity extends Activity {
             OcResourceHandle handle;
             handle = resourceInfoCollection.resourceHandle;
             resourceInfo.resourceHandle = handle;
-            resourceInfo.resourceHandle = thingsManager.bindResourceToGroup(
+            resourceInfo.resourceHandle = groupManager.bindResourceToGroup(
                     resource, handle);
 
             resourceList.put(uri + host, resourceInfo);
             configurationResourceFlag = true;
-        } else if (uri.equalsIgnoreCase("/oic/diag")) {
+        } else if (uri.equalsIgnoreCase("/oic/mnt")) {
             ResourceInformation diagnosticResource = collectionList
-                    .get(DIAGNOSTIC_COLLECTION_RESOURCE_URI);
+                    .get(MAINTENANCE_COLLECTION_RESOURCE_URI);
             if (null == diagnosticResource
                     || null == diagnosticResource.resourceHandle) {
                 Log.e(LOG_TAG, "Invalid Configuration collection!");
@@ -690,15 +706,15 @@ public class ConfigurationApiActivity extends Activity {
 
             ResourceInformation resourceInfoCollection;
             resourceInfoCollection = collectionList
-                    .get(DIAGNOSTIC_COLLECTION_RESOURCE_URI);
+                    .get(MAINTENANCE_COLLECTION_RESOURCE_URI);
             OcResourceHandle handle;
             handle = resourceInfoCollection.resourceHandle;
             resourceInfo.resourceHandle = handle;
-            resourceInfo.resourceHandle = thingsManager.bindResourceToGroup(
+            resourceInfo.resourceHandle = groupManager.bindResourceToGroup(
                     resource, handle);
 
             resourceList.put(uri + host, resourceInfo);
-            diagnosticsResourceFlag = true;
+            maintenanceResourceFlag = true;
         } else if (uri.equalsIgnoreCase("/factorySet")) {
             ResourceInformation factorysetResource = collectionList
                     .get(FACTORYSET_COLLECTION_RESOURCE_URI);
@@ -714,7 +730,7 @@ public class ConfigurationApiActivity extends Activity {
             OcResourceHandle handle;
             handle = resourceInfoCollection.resourceHandle;
             resourceInfo.resourceHandle = handle;
-            resourceInfo.resourceHandle = thingsManager.bindResourceToGroup(
+            resourceInfo.resourceHandle = groupManager.bindResourceToGroup(
                     resource, handle);
 
             resourceList.put(uri + host, resourceInfo);
@@ -740,14 +756,14 @@ public class ConfigurationApiActivity extends Activity {
         OcResourceHandle resourceHandle = null;
 
         // Crate group
-        OCStackResult result = thingsManager.createGroup(typename);
+        OCStackResult result = groupSyn.createGroup(typename);
         if ((OCStackResult.OC_STACK_OK != result)) {
             Log.e(LOG_TAG, "createGroup returned error: " + result.name());
             return;
         } else {
             Log.e(LOG_TAG, "createGroup returned: " + result.name());
         }
-        groupList = thingsManager.getGroupList();
+        groupList = groupSyn.getGroupList();
         if (groupList.containsKey(typename)) {
             resourceHandle = groupList.get(typename);
         } else {
@@ -785,9 +801,9 @@ public class ConfigurationApiActivity extends Activity {
 
                         }
                     } else if (resource.resource.getUri().equalsIgnoreCase(
-                            DIAGNOSTIC_RESOURCE_URI)) {
+                            MAINTENANCE_RESOURCE_URI)) {
                         ResourceInformation diagnosticResource = collectionList
-                                .get(DIAGNOSTIC_COLLECTION_RESOURCE_URI);
+                                .get(MAINTENANCE_COLLECTION_RESOURCE_URI);
                         if (null != diagnosticResource
                                 && null != diagnosticResource.resourceHandle) {
                             OcPlatform
@@ -805,16 +821,15 @@ public class ConfigurationApiActivity extends Activity {
                                     .unregisterResource(resource.resourceHandle);
                             Log.i(LOG_TAG, "unregistered resource"
                                     + CONFIGURATION_COLLECTION_RESOURCE_URI);
-
                         }
                     }
                 }
             }
 
             // delete all the groups
-            thingsManager.deleteGroup(CONFIGURATION_COLLECTION_RESOURCE_TYPE);
-            thingsManager.deleteGroup(DIAGNOSTIC_COLLECTION_RESOURCE_TYPE);
-            thingsManager.deleteGroup(FACTORYSET_COLLECTION_RESOURCE_TYPE);
+            groupSyn.deleteGroup(CONFIGURATION_COLLECTION_RESOURCE_TYPE);
+            groupSyn.deleteGroup(MAINTENANCE_COLLECTION_RESOURCE_TYPE);
+            groupSyn.deleteGroup(FACTORYSET_COLLECTION_RESOURCE_TYPE);
         } catch (OcException e) {
             Log.e(LOG_TAG, "OcException occured! " + e.toString());
         }
