@@ -26,6 +26,26 @@ public class IpOnBoardingConnection implements OnBoardingConnection {
 
     private boolean mIsConnected;
     private String mIp;
+    private String mHardwareAddress;
+    private String mDeviceName;
+
+    private boolean isReachable;
+
+    public void setHardwareAddress(String address) {
+        mHardwareAddress = address;
+    }
+
+    public String getHardwareAddress() {
+        return mHardwareAddress;
+    }
+
+    public void setDeviceName(String name) {
+        mDeviceName = name;
+    }
+
+    public String getDeviceName() {
+        return mDeviceName;
+    }
 
     public void setConnectivity(boolean connected) {
         mIsConnected = connected;

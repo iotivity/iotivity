@@ -23,7 +23,7 @@ package org.iotivity.service.easysetup.mediator;
 
 import android.content.Context;
 
-//import org.iotivity.ca.CaInterface;
+import org.iotivity.ca.CaInterface;
 
 public class EasySetupManager {
     private native void InitEasySetup();
@@ -73,7 +73,7 @@ public class EasySetupManager {
     }
 
     public void initEasySetup() {
-        // CaInterface.initialize(appContext);
+        CaInterface.initialize(appContext);
         InitEasySetup();
     }
 

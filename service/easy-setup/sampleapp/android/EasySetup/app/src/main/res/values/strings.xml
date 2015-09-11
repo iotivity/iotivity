@@ -17,8 +17,10 @@
     <string name="success">Successful</string>
     <string name="failed">Failed</string>
     <string name="not_started">Not started</string>
-    <string name="test_status">Status</string>
+    <string name="test_status">Device configuration</string>
     <string name="running">Running</string>
     <string name="stopped">Stopped</string>
+    <string name="not_available">Not available</string>
+
 
 </resources>

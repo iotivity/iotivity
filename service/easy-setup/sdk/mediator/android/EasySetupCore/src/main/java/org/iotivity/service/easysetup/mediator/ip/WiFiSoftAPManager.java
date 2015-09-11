@@ -49,6 +49,7 @@ import org.iotivity.service.easysetup.mediator.IOnBoardingStatus;
  * </p>
  */
 public class WiFiSoftAPManager {
+    private static final String TAG = WiFiSoftAPManager.class.getName();
     private final WifiManager mWifiManager;
     private Context context;
     static ArrayList<EnrolleeOnBoardingInfo> appNotification =
@@ -183,6 +184,7 @@ public class WiFiSoftAPManager {
     public boolean setWifiApEnabled(WifiConfiguration wifiConfig,
                                     boolean enabled) {
         try {
+            appNotification.clear();
             // Stopping Wi-Fi mode
             if (enabled) {
                 mWifiManager.setWifiEnabled(false);
@@ -257,6 +259,7 @@ public class WiFiSoftAPManager {
         this.finishListener = finishListener;
         Runnable runnable = new Runnable() {
             public void run() {
+                Log.i(TAG, "Scanning enrolling device in the network" );
 
                 BufferedReader bufferedReader = null;
 
@@ -320,6 +323,7 @@ public class WiFiSoftAPManager {
 
     void NotifyApplication(final EnrolleeInfo result) {
         // Get a handler that can be used to post to the main thread
+/*
         Handler mainHandler = new Handler(context.getMainLooper());
         Runnable myRunnable = new Runnable() {
             @Override
@@ -328,5 +332,9 @@ public class WiFiSoftAPManager {
             }
         };
         mainHandler.post(myRunnable);
+*/
+        Log.i(TAG, "Scanning is finished with result, IP : " +  result.getIpAddr() + "Notifying to Application");
+        finishListener.deviceOnBoardingStatus(result);
+
     }
 }

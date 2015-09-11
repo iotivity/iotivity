@@ -54,6 +54,7 @@ void ErrorCallback(ProvStatus status)
 {
     ProvisioningInfo *provInfo = GetCallbackObjectOnError(status);
     cbData(provInfo);
+    ResetProgress();
 }
 
 OCStackResult InitProvisioningHandler()
@@ -95,6 +96,9 @@ OCStackResult InitProvisioningHandler()
         ca_cond_free(g_provisioningCond);
         return OC_STACK_ERROR;
     }
+
+    ResetProgress();
+
     return OC_STACK_OK;
 }
 
@@ -727,6 +731,7 @@ void SuccessCallback(OCClientResponse * clientResponse)
 {
     ProvisioningInfo *provInfo = GetCallbackObjectOnSuccess(clientResponse, DEVICE_PROVISIONED);
     cbData(provInfo);
+    ResetProgress();
 }
 
 bool ClearMemory()

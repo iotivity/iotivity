@@ -87,6 +87,8 @@ public abstract class EnrolleeDevice {
         mConnection = conn;
     }
 
+    public OnBoardingConnection getConnection() { return mConnection;}
+
 
     /**
      * This method is called back by Easy setup service if on boarding needs to be done.
@@ -145,5 +147,7 @@ public abstract class EnrolleeDevice {
     public boolean onBoarded() {
         return (mState == EnrolleeState.DEVICE_PROVISIONING_STATE) ? true : false;
     }
+
+
 
 }

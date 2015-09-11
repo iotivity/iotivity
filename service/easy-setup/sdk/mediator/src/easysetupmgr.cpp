@@ -33,8 +33,8 @@ char ipv4addr[IPV4_ADDR_SIZE] = { 0 };
 static OCProvisioningStatusCB cbData = NULL;
 
 OCStackResult InitEasySetupManager() {
-	
-	
+
+
     OCStackResult result = OC_STACK_ERROR;
 
     if (InitProvisioningHandler() == OC_STACK_OK) {
@@ -78,7 +78,7 @@ void UnRegisterProvisioningStausCallback() {
 
 OCStackResult ProvisionEnrollee(const EnrolleeNWProvInfo_t *netInfo)
 {
-	return StartProvisioningProcess(netInfo, cbData);
+    return StartProvisioningProcess(netInfo, cbData);
 }
 
 OCStackResult StopEnrolleeProvisioning(OCConnectivityType connectivityType) {

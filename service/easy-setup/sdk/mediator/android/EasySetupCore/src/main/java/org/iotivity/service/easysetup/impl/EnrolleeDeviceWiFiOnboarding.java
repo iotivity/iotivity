@@ -1,22 +1,22 @@
 /**
  * ***************************************************************
- * <p/>
+ * <p>
  * Copyright 2015 Samsung Electronics All Rights Reserved.
- * <p/>
- * <p/>
- * <p/>
+ * <p>
+ * <p>
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p/>
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * <p/>
+ * <p>
  * ****************************************************************
  */
 
@@ -31,6 +31,7 @@ import org.iotivity.service.easysetup.core.EnrolleeState;
 import org.iotivity.service.easysetup.core.IpOnBoardingConnection;
 import org.iotivity.service.easysetup.core.OnBoardingConfig;
 import org.iotivity.service.easysetup.core.ProvisioningConfig;
+import org.iotivity.service.easysetup.mediator.EasySetupCallbackHandler;
 import org.iotivity.service.easysetup.mediator.EasySetupManager;
 import org.iotivity.service.easysetup.mediator.EnrolleeInfo;
 import org.iotivity.service.easysetup.mediator.IOnBoardingStatus;
@@ -54,43 +55,51 @@ public class EnrolleeDeviceWiFiOnboarding extends EnrolleeDevice {
     EnrolleeInfo connectedDevice;
     private EasySetupManager easySetupManagerNativeInstance;
     ProvisionEnrollee provisionEnrolleInstance;
-
-    // Native Api to start provisioning process after successful on-boarding on Wifi AP.
-    // Library is already loaded while constructing EasySetupService
-    private native void ProvisionEnrollee(String ipAddress, String netSSID,
-                                          String netPWD, int connectivityType);
+    Timer myTimer;
 
     IOnBoardingStatus deviceScanListener = new IOnBoardingStatus() {
 
         @Override
         public void deviceOnBoardingStatus(EnrolleeInfo enrolleStatus) {
             Log.d("ESSoftAPOnBoarding", "Entered");
-            if (enrolleStatus != null && enrolleStatus.getIpAddr() != null) {
-                String finalResult = "Easy Connect : ";
+            if (mState == EnrolleeState.DEVICE_ON_BOARDING_STATE) {
+                Log.d("ESSoftAPOnBoarding", "Device in OnBoarding State");
+                if (enrolleStatus != null && enrolleStatus.getIpAddr() != null) {
+                    String finalResult = "Easy Connect : ";
 
-                if (enrolleStatus.isReachable()) {
-                    finalResult = "Device OnBoarded" + "["
-                            + enrolleStatus.getIpAddr() + "]";
+                    if (enrolleStatus.isReachable()) {
+                        finalResult = "Device OnBoarded" + "["
+                                + enrolleStatus.getIpAddr() + "]";
 
-                    connectedDevice = enrolleStatus;
-                    IpOnBoardingConnection conn = new IpOnBoardingConnection();
-                    conn.setConnectivity(true);
-                    conn.setIp(connectedDevice.getIpAddr());
-                    Log.d("ESSoftAPOnBoarding", "Entered");
-                    mOnBoardingCallback.onFinished(conn);
-                    return;
+                        connectedDevice = enrolleStatus;
+                        IpOnBoardingConnection conn = new IpOnBoardingConnection();
 
+                        conn.setConnectivity(true);
+                        conn.setIp(connectedDevice.getIpAddr());
+                        conn.setHardwareAddress(enrolleStatus.getHWAddr());
+                        conn.setDeviceName(enrolleStatus.getDevice());
+
+                        Log.d("ESSoftAPOnBoarding", "Entered");
+                        mOnBoardingCallback.onFinished(conn);
+                        return;
+
+                    }
                 }
-            }
 
-            IpOnBoardingConnection conn = new IpOnBoardingConnection();
-            conn.setConnectivity(false);
-            mOnBoardingCallback.onFinished(conn);
+                IpOnBoardingConnection conn = new IpOnBoardingConnection();
+                conn.setConnectivity(false);
+                mOnBoardingCallback.onFinished(conn);
+            }
+            else
+            {
+                Log.e("ESSoftAPOnBoarding", "Device NOT in OnBoarding State. Ignoring the event");
+            }
         }
     };
 
 
-    protected EnrolleeDeviceWiFiOnboarding(Context context, OnBoardingConfig onBoardingConfig, ProvisioningConfig provConfig) {
+    protected EnrolleeDeviceWiFiOnboarding(Context context, OnBoardingConfig onBoardingConfig,
+                                           ProvisioningConfig provConfig) {
         super(onBoardingConfig, provConfig);
         mContext = context;
         mWifiSoftAPManager = new WiFiSoftAPManager(mContext);
@@ -98,14 +107,16 @@ public class EnrolleeDeviceWiFiOnboarding extends EnrolleeDevice {
 
     @Override
     protected void startOnBoardingProcess() {
-        Log.i(TAG, "Starging on boarding process");
+        Log.i(TAG, "Starting on boarding process");
 
         //1. Create Soft AP
-        boolean status = mWifiSoftAPManager.setWifiApEnabled((WifiConfiguration) mOnBoardingConfig.getConfig(), true);
+        boolean status = mWifiSoftAPManager.setWifiApEnabled((WifiConfiguration)
+                mOnBoardingConfig.getConfig(), true);
+
+        mState = EnrolleeState.DEVICE_ON_BOARDING_STATE;
 
         Log.i(TAG, "Soft AP is created with status " + status);
 
-        Timer myTimer;
         myTimer = new Timer();
         myTimer.schedule(new TimerTask() {
             @Override
@@ -119,12 +130,14 @@ public class EnrolleeDeviceWiFiOnboarding extends EnrolleeDevice {
 
     protected void stopOnBoardingProcess() {
         Log.i(TAG, "Stopping on boarding process");
+        myTimer.cancel();
         boolean status = mWifiSoftAPManager.setWifiApEnabled(null, false);
         Log.i(TAG, "Soft AP is disabled with status " + status);
     }
 
     @Override
     protected void startProvisioningProcess(OnBoardingConnection conn) {
+        mState = EnrolleeState.DEVICE_PROVISIONING_STATE;
 
         if (mProvConfig.getConnType() == ProvisioningConfig.ConnType.WiFi) {
 
@@ -132,7 +145,11 @@ public class EnrolleeDeviceWiFiOnboarding extends EnrolleeDevice {
             provisionEnrolleInstance.registerProvisioningHandler(new IProvisioningListener() {
                 @Override
                 public void onFinishProvisioning(int statuscode) {
-                    mState = (statuscode == 0) ? EnrolleeState.DEVICE_PROVISIONING_SUCCESS_STATE : EnrolleeState.DEVICE_PROVISIONING_FAILED_STATE;
+
+                    Log.i(TAG, "Provisioning is finished with status code " + statuscode);
+                    mState = (statuscode == 0) ? EnrolleeState.DEVICE_PROVISIONING_SUCCESS_STATE
+                            : EnrolleeState.DEVICE_PROVISIONING_FAILED_STATE;
+                    stopOnBoardingProcess();
                     mProvisioningCallback.onFinished(EnrolleeDeviceWiFiOnboarding.this);
                 }
             });
@@ -140,12 +157,13 @@ public class EnrolleeDeviceWiFiOnboarding extends EnrolleeDevice {
             IpOnBoardingConnection connection = (IpOnBoardingConnection) conn;
             WiFiProvConfig wifiProvConfig = (WiFiProvConfig) mProvConfig;
 
+            easySetupManagerNativeInstance = EasySetupManager.getInstance();
+            easySetupManagerNativeInstance.initEasySetup();
+
             // Native Api call to start provisioning of the enrolling device
-            EasySetupManager.getInstance().provisionEnrollee(connection.getIp(), wifiProvConfig.getSsId(), wifiProvConfig.getPassword(), mOnBoardingConfig.getConnType().getValue());
-
+            easySetupManagerNativeInstance.provisionEnrollee(connection.getIp(), wifiProvConfig
+                    .getSsId(), wifiProvConfig.getPassword(), mOnBoardingConfig.getConnType()
+                    .getValue());
         }
-
     }
-
-
 }

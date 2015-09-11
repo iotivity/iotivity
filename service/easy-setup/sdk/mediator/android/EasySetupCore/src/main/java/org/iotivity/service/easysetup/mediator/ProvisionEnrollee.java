@@ -48,18 +48,20 @@ public class ProvisionEnrollee {
 
     public void provisionEnrollee(String ipAddress, String netSSID,
                                   String netPWD, int connectivityType) {
+        Log.i(TAG, "JNI start provisioning is called ");
         easySetupManagerNativeInstance.provisionEnrollee(ipAddress, netSSID,
                 netPWD, connectivityType);
     }
 
     public void stopEnrolleeProvisioning(int connectivityType) {
+        Log.i(TAG, "JNI stop provisioning is called ");
         easySetupManagerNativeInstance
                 .stopEnrolleeProvisioning(connectivityType);
     }
 
     public void ProvisioningStatusCallBack(int statuscode) {
         Log.d(TAG,
-                "onFinishProvisioning() inside Android Java application. statuscode - "
+                "JNI onFinishProvisioning() inside Android Java application. statuscode - "
                         + statuscode);
         this.provisioningListener.onFinishProvisioning(statuscode);
     }
@@ -69,5 +71,6 @@ public class ProvisionEnrollee {
         this.provisioningListener = provisioningListener;
         EasySetupCallbackHandler.getInstance()
                 .registerProvisioningHandler(this);
+        Log.i(TAG, "JNI Callback is registered for getting provisioning status");
     }
 }

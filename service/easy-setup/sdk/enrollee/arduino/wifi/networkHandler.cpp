@@ -57,6 +57,8 @@ ESResult ConnectToWiFiNetwork(const char *ssid, const char *pass, NetworkEventCa
         //return ES_ERROR;
     }
 
+    OC_LOG_V(INFO, TAG, PCF("Finding SSID: %s"), ssid);
+
     while (findNetwork(ssid) == 0) // found
     {
         delay(1000);

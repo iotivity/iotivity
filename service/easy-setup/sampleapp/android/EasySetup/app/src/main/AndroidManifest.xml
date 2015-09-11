@@ -11,6 +11,9 @@
     <uses-feature android:name="android.hardware.camera" android:required="true" />
 	<uses-feature android:name="android.hardware.camera.autofocus" android:required="false"/>
 	<uses-feature android:name="android.hardware.touchscreen" android:required="false"/>
+    <uses-feature android:name="android.permission.CONNECTIVITY_INTERNAL" android:required="true"/>
+
+
 
     <uses-permission android:name="android.permission.CAMERA"/>
 

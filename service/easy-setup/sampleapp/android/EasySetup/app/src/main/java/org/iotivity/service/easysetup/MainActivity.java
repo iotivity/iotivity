@@ -28,10 +28,10 @@ import org.iotivity.service.easysetup.core.EasySetupService;
 import org.iotivity.service.easysetup.core.EasySetupStatus;
 import org.iotivity.service.easysetup.core.EnrolleeDevice;
 import org.iotivity.service.easysetup.core.EnrolleeState;
+import org.iotivity.service.easysetup.core.IpOnBoardingConnection;
 import org.iotivity.service.easysetup.impl.EnrolleeDeviceFactory;
 import org.iotivity.service.easysetup.impl.WiFiOnBoardingConfig;
 import org.iotivity.service.easysetup.impl.WiFiProvConfig;
-//import org.iotivity.service.easysetup.mediator.EasySetupManager;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -40,6 +40,7 @@ import android.net.wifi.WifiConfiguration;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -57,13 +58,20 @@ public class MainActivity extends Activity {
     public static final int FAILED = 1;
     public static final int STATE_CHANGED = 2;
 
-    private boolean mRunningStatus = false;
-
     static final int REQUEST_IMAGE_CAPTURE = 1;
     ImageView imageView;
 
     EditText mSsidText;
     EditText mPassText;
+
+    EditText mEnrolleeSsidText;
+    EditText mmEnrolleePasswordPassText;
+
+
+    TextView mDeviceIpTextView;
+    TextView mDeviceMacTextView;
+
+
     TextView mResultTextView;
     ProgressBar mProgressbar;
     Button mStartButton;
@@ -87,8 +95,15 @@ public class MainActivity extends Activity {
         /* Initialize widgets to get user input for target network's SSID & password*/
         mSsidText = (EditText) findViewById(R.id.ssid);
         mPassText = (EditText) findViewById(R.id.password);
+        mEnrolleeSsidText = (EditText) findViewById(R.id.enrolleeSsid);
+        mmEnrolleePasswordPassText = (EditText) findViewById(R.id.enrolleePass);
+        mDeviceIpTextView = (TextView) findViewById(R.id.ipAddr);
+        mDeviceMacTextView = (TextView) findViewById(R.id.hardAddr);
+
         mResultTextView = (TextView) findViewById(R.id.status);
         mProgressbar = (ProgressBar) findViewById(R.id.progressBar);
+
+
 
 
        /* Create Easy Setup Service instance*/
@@ -97,7 +112,8 @@ public class MainActivity extends Activity {
 
                     @Override
                     public void onFinished(final EnrolleeDevice enrolledevice) {
-                        mRunningStatus = false;
+                        Log.i("MainActivity", "onFinished() is received " + enrolledevice
+                                .isSetupSuccessful());
                         if (enrolledevice.isSetupSuccessful()) {
                             mHandler.sendEmptyMessage(SUCCESS);
                         } else {
@@ -107,6 +123,7 @@ public class MainActivity extends Activity {
 
                     @Override
                     public void onProgress(EnrolleeState state) {
+                        Log.i("MainActivity", "onProgress() is received ");
                         mHandler.sendEmptyMessage(STATE_CHANGED);
                     }
 
@@ -125,7 +142,10 @@ public class MainActivity extends Activity {
 
     public WiFiProvConfig getEnrollerWifiConfig() {
         /* Provide the credentials for the Mediator Soft AP to be connected by Enrollee*/
-        mWiFiProvConfig = new WiFiProvConfig("EasySetup123", "EasySetup123");
+        mWiFiProvConfig = new WiFiProvConfig("hub2.4G", "11112222");
+        mEnrolleeSsidText.setText("hub2.4G");
+        mmEnrolleePasswordPassText.setText("11112222");
+
         return mWiFiProvConfig;
     }
 
@@ -149,7 +169,10 @@ public class MainActivity extends Activity {
     public void onDestroy() {
         super.onDestroy();
         /*Reset the Easy setup process*/
-        mEasySetupService.finish();
+        if(mEasySetupService != null)
+        {
+            mEasySetupService.finish();
+        }
     }
 
     public void addListenerForStartAP() {
@@ -160,17 +183,27 @@ public class MainActivity extends Activity {
             public void onClick(View arg0) {
                 try {
 
-                    mRunningStatus = true;
                     mProgressbar.setVisibility(View.VISIBLE);
                     mProgressbar.setIndeterminate(true);
                     mStartButton.setEnabled(false);
                     mResultTextView.setText(R.string.running);
 
+                    //Reset Device information
+                    mDeviceIpTextView.setText(R.string.not_available);
+                    mDeviceMacTextView.setText(R.string.not_available);
+
+
                     String ssid = mSsidText.getText().toString();
                     String password = mPassText.getText().toString();
 
+                    String enrolleeSsid = mEnrolleeSsidText.getText().toString();
+                    String enrolleePassword = mmEnrolleePasswordPassText.getText().toString();
+
+                    mWiFiProvConfig = new WiFiProvConfig(enrolleeSsid, enrolleePassword);
+
                     mWiFiOnBoardingConfig.setSSId(ssid);
                     mWiFiOnBoardingConfig.setSharedKey(password);
+
 
                     mEasySetupService.startSetup(mDevice);
 
@@ -191,7 +224,6 @@ public class MainActivity extends Activity {
         mStopButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View arg0) {
-                mRunningStatus = false;
                 mStartButton.setEnabled(true);
                 mStopButton.setEnabled(false);
                 mResultTextView.setText(R.string.stopped);
@@ -215,9 +247,6 @@ public class MainActivity extends Activity {
         @Override
         public void handleMessage(Message msg) {
 
-            // Returns if Test is stopped, this has to be handled in EasySetupService
-            if (!mRunningStatus) return;
-
             switch (msg.what) {
                 case SUCCESS: {
 
@@ -227,6 +256,13 @@ public class MainActivity extends Activity {
                     mProgressbar.setVisibility(View.INVISIBLE);
                     String resultMsg = "Device configured successfully";
                     mResultTextView.setText(R.string.success);
+
+                    /* Update device information on the Ui */
+                    IpOnBoardingConnection connection = (IpOnBoardingConnection) mDevice
+                            .getConnection();
+                    mDeviceIpTextView.setText(connection.getIp());
+                    mDeviceMacTextView.setText(connection.getHardwareAddress());
+
                     Toast.makeText(getApplicationContext(), resultMsg, Toast.LENGTH_SHORT).show();
                     break;
                 }

@@ -23,9 +23,11 @@
 package org.iotivity.service.easysetup.core;
 
 import android.content.Context;
+import android.util.Log;
 
 import org.iotivity.service.easysetup.impl.EnrolleeDeviceFactory;
 import org.iotivity.service.easysetup.mediator.EasySetupManager;
+import org.iotivity.service.easysetup.mediator.ProvisionEnrollee;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -39,6 +41,8 @@ import java.util.ArrayList;
  */
 public class EasySetupService {
 
+    public static String TAG = EasySetupService.class.getName();
+
     private static EasySetupService sInstance;
 
     private final EasySetupStatus mCallback;
@@ -51,15 +55,14 @@ public class EasySetupService {
 
     public EnrolleeDeviceFactory mDeviceFactory;
 
+    ProvisionEnrollee mProvisionEnrolleeInstance;
+
     private EasySetupService(EasySetupStatus callback) {
         mCallback = callback;
         mProvisioningCallback = new ProvisioningCallbackImpl(mCallback);
         mEnrolleeDeviceList = new ArrayList<EnrolleeDevice>();
         mContext = null;
         mDeviceFactory = null;
-
-        //Native Api call to initialize the OIC stack
-        EasySetupManager.getInstance().initEasySetup();
     }
 
     /**
@@ -84,7 +87,10 @@ public class EasySetupService {
 
     public void finish() {
         //Native Api call to reset OIC stack
-        EasySetupManager.getInstance().terminateEasySetup();
+        if(mProvisionEnrolleeInstance != null)
+        {
+            mProvisionEnrolleeInstance.stopEnrolleeProvisioning(0);
+        }
     }
 
     /**
@@ -109,7 +115,9 @@ public class EasySetupService {
             @Override
             public void onFinished(OnBoardingConnection connection) {
                 if (connection.isConnected()) {
+                    Log.i(TAG, "On boarding is successful ");
                     try {
+                        Log.i(TAG, "waiting for 15 seconds to start provisioning");
                         Thread.sleep(15000);//Sleep for allowing thin device to start the services
                     } catch (InterruptedException e) {
                         e.printStackTrace();
@@ -157,8 +165,9 @@ public class EasySetupService {
         @Override
         public void onFinished(EnrolleeDevice enrolledevice) {
             //if(mEnrolleeDeviceList.contains(enrolledevice)) {
+            Log.i(TAG, "onFinished() is received " + enrolledevice.isSetupSuccessful());
             mCallback.onFinished(enrolledevice);
-            //}
+            // }
         }
 
     }
