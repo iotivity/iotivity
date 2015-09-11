@@ -995,12 +995,8 @@ public class SmokeTest extends InstrumentationTestCase {
         };
 
         OcPlatformInfo platformInfo = null;
-        try {
-            platformInfo = new OcPlatformInfo("myPlatformID", "myManuName", "myManuUrl");
-        } catch (OcException e) {
-            Log.e(TAG, "Could not construct platformInfo. " + e.getMessage());
-            assertTrue(false);
-        }
+
+        platformInfo = new OcPlatformInfo("myPlatformID", "myManuName", "myManuUrl");
 
         platformInfo.setModelNumber("myModelNumber");
         platformInfo.setDateOfManufacture("myDateOfManufacture");
@@ -1013,13 +1009,12 @@ public class SmokeTest extends InstrumentationTestCase {
 
         try {
             //server
-
             OcPlatform.registerPlatformInfo(platformInfo);
 
             //client
             OcPlatform.getPlatformInfo(
                     "",
-                    OcPlatform.MULTICAST_PREFIX + "/oic/p",
+                    OcPlatform.WELL_KNOWN_PLATFORM_QUERY,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT),
                     platformFoundListener);
 
@@ -1053,17 +1048,15 @@ public class SmokeTest extends InstrumentationTestCase {
             }
         };
 
-        OcDeviceInfo devInfo = new OcDeviceInfo();
-        devInfo.setDeviceName("myDeviceName");
+        OcDeviceInfo devInfo = new OcDeviceInfo("myDeviceName");
 
         try {
             //server
             OcPlatform.registerDeviceInfo(devInfo);
-
             //client
             OcPlatform.getDeviceInfo(
                     "",
-                    OcPlatform.MULTICAST_PREFIX + OcPlatform.DEVICE_URI,
+                    OcPlatform.WELL_KNOWN_DEVICE_QUERY,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT),
                     deviceFoundListener);
 

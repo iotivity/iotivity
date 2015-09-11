@@ -24,25 +24,14 @@ package org.iotivity.base;
 
 public class OcDeviceInfo {
 
-    private String deviceName;
-
-    public OcDeviceInfo() {
-
-        deviceName = "";
-    }
+    private String mDeviceName;
 
     public OcDeviceInfo(String deviceName) {
 
-        this.deviceName = deviceName;
+        this.mDeviceName = deviceName;
     }
 
     public String getDeviceName() {
-
-        return deviceName;
-    }
-
-    public void setDeviceName(String deviceName) {
-
-        this.deviceName = deviceName;
+        return mDeviceName;
     }
 }

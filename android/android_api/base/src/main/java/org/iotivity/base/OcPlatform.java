@@ -64,11 +64,9 @@ public final class OcPlatform {
     public static final String GROUP_INTERFACE = "oic.mi.grp";
 
     public static final String WELL_KNOWN_QUERY = "/oic/res";
-    public static final String MULTICAST_PREFIX = "224.0.1.187:5683";
-    public static final String MULTICAST_IP = "224.0.1.187";
-    public static final int MULTICAST_PORT = 5683;
+    public static final String WELL_KNOWN_DEVICE_QUERY = "/oic/d";
+    public static final String WELL_KNOWN_PLATFORM_QUERY = "/oic/p";
     public static final int DEFAULT_PRESENCE_TTL = 60;
-    public static final String DEVICE_URI = "/oic/d";
     public static final String PRESENCE_URI = "/oic/ad";
 
     private static volatile boolean sIsPlatformInitialized = false;
@@ -491,7 +489,7 @@ public final class OcPlatform {
                 resProperty |= prop.getValue();
         }
 
-        if(null == entityHandler){
+        if (null == entityHandler) {
             entityHandler = new EntityHandler() {
                 @Override
                 public EntityHandlerResult handleEntity(OcResourceRequest ocResourceRequest) {
@@ -542,7 +540,7 @@ public final class OcPlatform {
             OcPlatformInfo ocPlatformInfo) throws OcException {
         OcPlatform.initCheck();
         OcPlatform.registerPlatformInfo0(
-                ocPlatformInfo.getPlatformID(),
+                ocPlatformInfo.getPlatformId(),
                 ocPlatformInfo.getManufacturerName(),
                 ocPlatformInfo.getManufacturerUrl(),
                 ocPlatformInfo.getModelNumber(),

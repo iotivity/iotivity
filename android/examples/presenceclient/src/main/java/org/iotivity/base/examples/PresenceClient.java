@@ -39,22 +39,23 @@ import org.iotivity.base.OcPlatform;
 import org.iotivity.base.OcPresenceHandle;
 import org.iotivity.base.OcPresenceStatus;
 import org.iotivity.base.OcResource;
-import org.iotivity.base.OcResourceHandle;
 import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.QualityOfService;
-import org.iotivity.base.ResourceProperty;
 import org.iotivity.base.ServiceType;
 
 import java.util.EnumSet;
-import java.util.LinkedList;
-import java.util.List;
 
-
+/**
+ * A client example for presence notification
+ */
 public class PresenceClient extends Activity implements
         OcPlatform.OnResourceFoundListener,
         OcPlatform.OnPresenceListener {
+    private final static String TAG = PresenceClient.class.getSimpleName();
     private OcResource mResource;
     private OcPresenceHandle mPresenceHandle;
+    private TextView mConsoleTextView;
+    private ScrollView mScrollView;
 
     private void startPresenceClient() {
         Context context = this;
@@ -82,6 +83,10 @@ public class PresenceClient extends Activity implements
         printLine();
         enableStartStopButton();
     }
+
+    //******************************************************************************
+    // End of the OIC specific code
+    //******************************************************************************
 
     @Override
     public synchronized void onResourceFound(OcResource foundResource) {
@@ -151,14 +156,6 @@ public class PresenceClient extends Activity implements
         enableStartStopButton();
     }
 
-    //******************************************************************************
-    // End of the OIC specific code
-    //******************************************************************************
-
-    private final static String TAG = PresenceClient.class.getSimpleName();
-    private TextView mConsoleTextView;
-    private ScrollView mScrollView;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -189,9 +186,7 @@ public class PresenceClient extends Activity implements
                     }
                 }
             });
-        }
-
-        if (null != savedInstanceState) {
+        } else {
             String consoleOutput = savedInstanceState.getString("consoleOutputString");
             mConsoleTextView.setText(consoleOutput);
             boolean buttonCheked = savedInstanceState.getBoolean("toggleButtonChecked");
@@ -232,15 +227,6 @@ public class PresenceClient extends Activity implements
 
     private void printLine() {
         msg("------------------------------------------------------------------------");
-    }
-
-    private void sleep(int seconds) {
-        try {
-            Thread.sleep(seconds * 1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            Log.e(TAG, e.toString());
-        }
     }
 
     private void enableStartStopButton() {
