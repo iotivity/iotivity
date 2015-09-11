@@ -27,6 +27,7 @@
 #include "logger.h"
 #include "secureresourceprovider.h"
 #include "provisioningdatabasemanager.h"
+#include "credresource.h"
 
 #define TAG "OCPMAPI"
 
@@ -175,6 +176,144 @@ OCStackResult OCProvisionCredentials(void *ctx, OicSecCredType_t type, size_t ke
 
 }
 
+/*
+* Function to unlink devices.
+* This function will remove the credential & relationship between the two devices.
+*
+* @param[in] ctx Application context would be returned in result callback
+* @param[in] pTargetDev1 first device information to be unlinked.
+* @param[in] pTargetDev2 second device information to be unlinked.
+* @param[in] resultCallback callback provided by API user, callback will be called when
+*            device unlink is finished.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+*/
+OCStackResult OCUnlinkDevices(void* ctx,
+                              const OCProvisionDev_t* pTargetDev1,
+                              const OCProvisionDev_t* pTargetDev2,
+                              OCProvisionResultCB resultCallback)
+{
+    OC_LOG(INFO, TAG, "IN OCUnlinkDevices");
+    OCUuidList_t* idList = NULL;
+    size_t numOfDev = 0;
+
+    if (!pTargetDev1 || !pTargetDev2 || !resultCallback)
+    {
+        OC_LOG(ERROR, TAG, "OCUnlinkDevices : NULL parameters");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    // Get linked devices with the first device.
+    OCStackResult res = PDMGetLinkedDevices(&(pTargetDev1->doxm->deviceID), &idList, &numOfDev);
+    if (OC_STACK_OK != res)
+    {
+        OC_LOG(ERROR, TAG, "OCUnlinkDevices : PDMgetOwnedDevices failed");
+        goto error;
+    }
+    if (1 > numOfDev)
+    {
+        OC_LOG(DEBUG, TAG, "OCUnlinkDevices : Can not find linked devices");
+        res = OC_STACK_INVALID_PARAM; // Input devices are not linked, No request is made
+        goto error;
+    }
+
+    // Check the linked devices contains the second device. If yes send credential DELETE request.
+    OCUuidList_t* curDev = idList;
+    while (NULL != curDev)
+    {
+        if (memcmp(pTargetDev2->doxm->deviceID.id, curDev->dev.id, sizeof(curDev->dev.id)) == 0)
+        {
+            res = SRPUnlinkDevices(ctx, pTargetDev1, pTargetDev2, resultCallback);
+            if (OC_STACK_OK != res)
+            {
+                OC_LOG(ERROR, TAG, "OCUnlinkDevices : Failed to unlink devices.");
+            }
+            goto error;
+        }
+        curDev = curDev->next;
+    }
+    OC_LOG(DEBUG, TAG, "No matched pair found from provisioning database");
+    res = OC_STACK_INVALID_PARAM; // Input devices are not linked, No request is made
+
+error:
+    OC_LOG(INFO, TAG, "OUT OCUnlinkDevices");
+
+    PDMDestoryOicUuidLinkList(idList);
+    return res;
+}
+
+/*
+* Function to device revocation
+* This function will remove credential of target device from all devices in subnet.
+*
+* @param[in] ctx Application context would be returned in result callback
+* @param[in] waitTimeForOwnedDeviceDiscovery Maximum wait time for owned device discovery.(seconds)
+* @param[in] pTargetDev Device information to be revoked.
+* @param[in] resultCallback callback provided by API user, callback will be called when
+*            credential revocation is finished.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+*/
+OCStackResult OCRemoveDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDiscovery,
+                            const OCProvisionDev_t* pTargetDev,
+                            OCProvisionResultCB resultCallback)
+{
+    OC_LOG(INFO, TAG, "IN OCRemoveDevice");
+    OCStackResult res = OC_STACK_ERROR;
+    if (!pTargetDev || !resultCallback || 0 == waitTimeForOwnedDeviceDiscovery)
+    {
+        OC_LOG(INFO, TAG, "OCRemoveDevice : Invalied parameters");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    // Send DELETE requests to linked devices
+    OCStackResult resReq = OC_STACK_ERROR; // Check that we have to wait callback or not.
+    resReq = SRPRemoveDevice(ctx, waitTimeForOwnedDeviceDiscovery, pTargetDev, resultCallback);
+    if (OC_STACK_OK != resReq)
+    {
+        if (OC_STACK_CONTINUE == resReq)
+        {
+            OC_LOG(DEBUG, TAG, "OCRemoveDevice : Revoked device has no linked device except PT.");
+        }
+        else
+        {
+            OC_LOG(ERROR, TAG, "OCRemoveDevice : Failed to invoke SRPRemoveDevice");
+            res = resReq;
+            goto error;
+        }
+    }
+
+    // Remove credential of revoked device from SVR database
+    const OicSecCred_t *cred = NULL;
+    cred = GetCredResourceData(&pTargetDev->doxm->deviceID);
+    if (cred == NULL)
+    {
+        OC_LOG(ERROR, TAG, "OCRemoveDevice : Failed to get credential of remove device.");
+        goto error;
+    }
+
+    res = RemoveCredential(&cred->subject);
+    if (res != OC_STACK_RESOURCE_DELETED)
+    {
+        OC_LOG(ERROR, TAG, "OCRemoveDevice : Failed to remove credential.");
+        goto error;
+    }
+
+    // Remove device info from prvisioning database.
+    res = PDMDeleteDevice(&pTargetDev->doxm->deviceID);
+    if (res != OC_STACK_OK)
+    {
+        OC_LOG(ERROR, TAG, "OCRemoveDevice : Failed to delete device in PDM.");
+        goto error;
+    }
+
+    // Check that we have to wait callback for DELETE request or not
+    res = resReq;
+
+error:
+    OC_LOG(INFO, TAG, "OUT OCRemoveDevice");
+    return res;
+}
+
+
 /**
  * Internal Function to update result in link result array.
  */
@@ -182,7 +321,7 @@ static void UpdateLinkResults(Linkdata_t *link, int device, OCStackResult stackr
 {
 
     OC_LOG_V(INFO,TAG,"value of link->currentCountResults is %d",link->currentCountResults);
-    if(1 == device)
+    if (1 == device)
     {
         memcpy(link->resArr[(link->currentCountResults)].deviceId.id, link->pDev1->doxm->deviceID.id,UUID_LENGTH);
     }
@@ -211,7 +350,7 @@ static void AclProv2CB(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool has
     OCProvisionResultCB resultCallback = link->resultCallback;
 
 
-    if(hasError)
+    if (hasError)
     {
         UpdateLinkResults(link, 2,arr[0].res);
         OC_LOG(ERROR,TAG,"Error occured while ACL provisioning device 1");
@@ -246,7 +385,7 @@ static void AclProv1CB(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool has
     Linkdata_t *link = (Linkdata_t*)ctx;
     OCProvisionResultCB resultCallback = link->resultCallback;
 
-    if(hasError)
+    if (hasError)
     {
         OC_LOG(ERROR,TAG,"Error occured while ACL provisioning device 1");
         UpdateLinkResults(link, 1, arr[0].res);
@@ -336,7 +475,6 @@ static void ProvisionCredsCB(void* ctx, int nOfRes, OCProvisionResult_t *arr, bo
               OICFree(link->resArr);
               OICFree(link);
         }
-
     }
     else
     {
@@ -368,7 +506,7 @@ OCStackResult OCProvisionPairwiseDevices(void* ctx, OicSecCredType_t type, size_
                                          OCProvisionResultCB resultCallback)
 {
 
-    if(!pDev1 || !pDev2 || !resultCallback)
+    if (!pDev1 || !pDev2 || !resultCallback)
     {
         OC_LOG(ERROR, TAG, "OCProvisionPairwiseDevices : Invalid parameters");
         return OC_STACK_INVALID_PARAM;
@@ -383,12 +521,12 @@ OCStackResult OCProvisionPairwiseDevices(void* ctx, OicSecCredType_t type, size_
     {
         ++noOfResults;
     }
-    if(NULL!=pDev2Acl)
+    if (NULL!=pDev2Acl)
     {
        ++noOfResults;
     }
     Linkdata_t *link = (Linkdata_t*) OICMalloc(sizeof(Linkdata_t));
-    if(!link)
+    if (!link)
     {
         OC_LOG(ERROR, TAG, "Failed to memory allocation");
         return OC_STACK_NO_MEMORY;

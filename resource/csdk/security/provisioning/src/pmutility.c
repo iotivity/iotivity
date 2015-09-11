@@ -42,6 +42,8 @@
 #include "pmtypes.h"
 #include "pmutility.h"
 
+#include "srmutility.h"
+
 #define TAG ("PM-UTILITY")
 
 typedef struct _DiscoveryInfo{
@@ -170,14 +172,73 @@ void PMDeleteDeviceList(OCProvisionDev_t *pDevicesList)
     }
 }
 
+OCProvisionDev_t* PMCloneOCProvisionDev(const OCProvisionDev_t* src)
+{
+    OC_LOG(DEBUG, TAG, "IN PMCloneOCProvisionDev");
+
+    if (!src)
+    {
+        OC_LOG(ERROR, TAG, "PMCloneOCProvisionDev : Invalid parameter");
+        return NULL;
+    }
+
+    // TODO: Consider use VERIFY_NON_NULL instead of if ( null check ) { goto exit; }
+    OCProvisionDev_t* newDev = (OCProvisionDev_t*)OICCalloc(1, sizeof(OCProvisionDev_t));
+    VERIFY_NON_NULL(TAG, newDev, ERROR);
+
+    memcpy(&newDev->endpoint, &src->endpoint, sizeof(OCDevAddr));
+
+    if (src->pstat)
+    {
+        newDev->pstat= (OicSecPstat_t*)OICCalloc(1, sizeof(OicSecPstat_t));
+        VERIFY_NON_NULL(TAG, newDev->pstat, ERROR);
+
+        memcpy(newDev->pstat, src->pstat, sizeof(OicSecPstat_t));
+        // We have to assign NULL for not necessary information to prevent memory corruption.
+        newDev->pstat->sm = NULL;
+    }
+
+    if (src->doxm)
+    {
+        newDev->doxm = (OicSecDoxm_t*)OICCalloc(1, sizeof(OicSecDoxm_t));
+        VERIFY_NON_NULL(TAG, newDev->doxm, ERROR);
+
+        memcpy(newDev->doxm, src->doxm, sizeof(OicSecDoxm_t));
+        // We have to assign NULL for not necessary information to prevent memory corruption.
+        newDev->doxm->oxmType = NULL;
+        newDev->doxm->oxm = NULL;
+    }
+
+    newDev->securePort = src->securePort;
+    //TODO: Below comment line should be activated after 2333 change is merged
+    //newDev->devStatus = src->devStatus;
+    newDev->connType = src->connType;
+    newDev->next = NULL;
+
+    OC_LOG(DEBUG, TAG, "OUT PMCloneOCProvisionDev");
+
+    return newDev;
+
+exit:
+    OC_LOG(ERROR, TAG, "PMCloneOCProvisionDev : Failed to allocate memory");
+    if (newDev)
+    {
+        OICFree(newDev->pstat);
+        OICFree(newDev->doxm);
+        OICFree(newDev);
+    }
+    return NULL;
+}
+
 /**
  * Timeout implementation for secure discovery. When performing secure discovery,
  * we should wait a certain period of time for getting response of each devices.
  *
  * @param[in]  waittime  Timeout in seconds.
+ * @param[in]  waitForStackResponse if true timeout function will call OCProcess while waiting.
  * @return OC_STACK_OK on success otherwise error.
  */
-OCStackResult PMTimeout(unsigned short waittime)
+OCStackResult PMTimeout(unsigned short waittime, bool waitForStackResponse)
 {
     struct timespec startTime = {.tv_sec=0, .tv_nsec=0};
     struct timespec currTime  = {.tv_sec=0, .tv_nsec=0};
@@ -208,9 +269,11 @@ OCStackResult PMTimeout(unsigned short waittime)
         {
             return OC_STACK_OK;
         }
-        res = OCProcess();
+        if (waitForStackResponse)
+        {
+            res = OCProcess();
+        }
     }
-
     return res;
 }
 
@@ -558,7 +621,7 @@ OCStackResult PMDeviceDiscovery(unsigned short waittime, bool isOwned, OCProvisi
     }
 
     //Waiting for each response.
-    res = PMTimeout(waittime);
+    res = PMTimeout(waittime, true);
     if(OC_STACK_OK != res)
     {
         OC_LOG(ERROR, TAG, "Failed to wait response for secure discovery.");
@@ -570,4 +633,26 @@ OCStackResult PMDeviceDiscovery(unsigned short waittime, bool isOwned, OCProvisi
 exit:
     OICFree(pDInfo);
     return res;
+}
+
+/**
+ * Function to print OCProvisionDev_t for debug purpose.
+ *
+ * @param[in] pDev Pointer to OCProvisionDev_t. It's information will be printed by OC_LOG_XX
+ *
+ */
+void PMPrintOCProvisionDev(const OCProvisionDev_t* pDev)
+{
+    if (pDev)
+    {
+        OC_LOG(DEBUG, TAG, "+++++ OCProvisionDev_t Information +++++");
+        OC_LOG_V(DEBUG, TAG, "IP %s", pDev->endpoint.addr);
+        OC_LOG_V(DEBUG, TAG, "PORT %d", pDev->endpoint.port);
+        OC_LOG_V(DEBUG, TAG, "S-PORT %d", pDev->securePort);
+        OC_LOG(DEBUG, TAG, "++++++++++++++++++++++++++++++++++++++++");
+    }
+    else
+    {
+        OC_LOG(DEBUG, TAG, "+++++ OCProvisionDev_t is NULL +++++");
+    }
 }

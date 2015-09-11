@@ -233,9 +233,11 @@ static OCStackResult getIdForUUID(const OicUuid_t *UUID , int *id)
         int tempId = sqlite3_column_int(stmt, PDM_FIRST_INDEX);
         OC_LOG_V(DEBUG, TAG, "ID is %d", tempId);
         *id = tempId;
+        sqlite3_finalize(stmt);
+        return OC_STACK_OK;
     }
     sqlite3_finalize(stmt);
-    return OC_STACK_OK;
+    return OC_STACK_INVALID_PARAM;
 }
 
 /**
@@ -447,7 +449,7 @@ static OCStackResult updateLinkState(int id1, int id2, int state)
     {
         OC_LOG_V(ERROR, TAG, "Error message: %s", sqlite3_errmsg(g_db));
         sqlite3_finalize(stmt);
-        return OC_STACK_OK;
+        return OC_STACK_ERROR;
     }
     sqlite3_finalize(stmt);
     return OC_STACK_OK;

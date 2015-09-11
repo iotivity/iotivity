@@ -131,7 +131,7 @@ static const char* GetOxmString(OicSecOxm_t oxmType)
  * @param[in] supportedMethods   Array of supported methods
  * @param[in] numberOfMethods   number of supported methods
  * @param[out]  selectedMethod         Selected methods
- * @return  SP_SUCCESS on success
+ * @return  OC_STACK_OK on success
  */
 static OCStackResult SelectProvisioningMethod(const OicSecOxm_t *supportedMethods,
                                                             size_t numberOfMethods,
@@ -162,7 +162,7 @@ static OCStackResult SelectProvisioningMethod(const OicSecOxm_t *supportedMethod
  *
  * @param[in] selectedDeviceInfo   selected device information to performing provisioning.
  * @param[out]   selectedMode   selected operation mode
- * @return  SP_SUCCESS on success
+ * @return  OC_STACK_OK on success
  */
 static void SelectOperationMode(const OCProvisionDev_t *selectedDeviceInfo,
                                 OicSecDpom_t *selectedMode)

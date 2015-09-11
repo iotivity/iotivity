@@ -67,7 +67,8 @@ if not env.get('RELEASE'):
 ######################################################################
 unittest = sptest_env.Program('unittest', ['pmutilitytest.cpp', 'otmunittest.cpp',
                                            'secureresourceprovider.cpp',
-                                           'provisioningdatabasemanager.cpp'])
+                                           'provisioningdatabasemanager.cpp',
+                                           'ocprovisioningmanager.cpp' ])
 
 Alias("test", [unittest])
 

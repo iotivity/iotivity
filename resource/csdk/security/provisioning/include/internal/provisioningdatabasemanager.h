@@ -34,7 +34,7 @@ extern "C" {
  *
  * @param[in] dbPath file path of the sqlite3 db
  *
- * @return  OC_STACK_OK in case of success and other value otherwise.
+ * @return OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult PDMInit(const char* dbPath);
 
@@ -44,7 +44,7 @@ OCStackResult PDMInit(const char* dbPath);
  *
  * @param[in] uuidOfDevice information about the target device's uuid.
  *
- * @return  false when non-duplication and true when duplication or uuidOfDevicea is NULL .
+ * @return false when non-duplication and true when duplication or uuidOfDevicea is NULL .
  */
 bool PDMIsDuplicateDevice(const OicUuid_t* uuidOfDevice);
 
@@ -53,7 +53,7 @@ bool PDMIsDuplicateDevice(const OicUuid_t* uuidOfDevice);
  *
  * @param[in] uuidOfDevice information about the owned device's uuid.
  *
- * @return  OC_STACK_OK in case of success and other value otherwise.
+ * @return OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult PDMAddDevice(const OicUuid_t* uuidOfDevice);
 
@@ -63,7 +63,7 @@ OCStackResult PDMAddDevice(const OicUuid_t* uuidOfDevice);
  * @param[in] uuidOfDevice1 DeviceID which is going to be linked with uuid of device 2.
  * @param[in] uuidOfDevice2 DeviceID which is going to be linked with uuid of device 1.
  *
- * @return  OC_STACK_OK in case of success and other value otherwise.
+ * @return OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult PDMLinkDevices(const OicUuid_t *uuidOfDevice1, const OicUuid_t *uuidOfDevice2);
 
@@ -73,7 +73,7 @@ OCStackResult PDMLinkDevices(const OicUuid_t *uuidOfDevice1, const OicUuid_t *uu
  * @param[in] uuidOfDevice1 DeviceID which is going to be unlinked with uuid of device 2.
  * @param[in] uuidOfDevice2 DeviceID which is going to be unlinked with uuid of device 1.
  *
- * @return  OC_STACK_OK in case of success and other value otherwise.
+ * @return OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult PDMUnlinkDevices(const OicUuid_t *uuidOfDevice1, const OicUuid_t *uuidOfDevice2);
 
@@ -82,7 +82,7 @@ OCStackResult PDMUnlinkDevices(const OicUuid_t *uuidOfDevice1, const OicUuid_t *
  *
  * @param[in] uuidOfDevice information about the owned device's uuid to be deleted.
  *
- * @return  OC_STACK_OK in case of success and other value otherwise.
+ * @return OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult PDMDeleteDevice(const OicUuid_t *uuidOfDevice);
 
@@ -92,7 +92,7 @@ OCStackResult PDMDeleteDevice(const OicUuid_t *uuidOfDevice);
  * @param[out] uuidList information about the list of owned devices' uuids.
  * @param[out] numOfDevices total number of owned devices.
  *
- * @return  OC_STACK_OK in case of success and other value otherwise.
+ * @return OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult PDMGetOwnedDevices(OCUuidList_t** uuidList, size_t* numOfDevices);
 
@@ -103,7 +103,7 @@ OCStackResult PDMGetOwnedDevices(OCUuidList_t** uuidList, size_t* numOfDevices);
  * @param[out] uuidList information about the list of linked devices' uuids.
  * @param[out] numOfDevices total number of linked devices.
  *
- * @return  OC_STACK_OK in case of success and other value otherwise.
+ * @return OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult PDMGetLinkedDevices(const OicUuid_t* uuidOfDevice, OCUuidList_t** uuidList,
                                     size_t* numOfDevices);
@@ -114,7 +114,7 @@ OCStackResult PDMGetLinkedDevices(const OicUuid_t* uuidOfDevice, OCUuidList_t** 
  * @param[in] uuidOfDevice1 first id of stale link.
  * @param[in] uuidOfDevice2 other id for stale link.
  *
- * @return  OC_STACK_OK in case of success and other value otherwise.
+ * @return OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult PDMSetLinkStale(const OicUuid_t* uuidOfDevice1, const OicUuid_t* uuidOfDevice2);
 
@@ -126,7 +126,7 @@ OCStackResult PDMSetLinkStale(const OicUuid_t* uuidOfDevice1, const OicUuid_t* u
  * @param[out] staleDevices information about the list of "To be Removed" devices' uuid.
  * @param[out] numOfDevices total number of devices to be removed.
  *
- * @return  OC_STACK_OK in case of success and other value otherwise.
+ * @return OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult PDMGetToBeUnlinkedDevices(OCPairList_t** staleDevList, size_t* numOfDevices);
 
@@ -138,10 +138,10 @@ OCStackResult PDMGetToBeUnlinkedDevices(OCPairList_t** staleDevList, size_t* num
 OCStackResult PDMClose();
 
 /**
- * This method is used by provisioning manager free memory allocated to  OicUuidList lists.
+ * This method is used by provisioning manager free memory allocated to OCUuidList_t lists.
  *
  * @param[in] ptr start pointer of link list.
- * @return  OC_STACK_OK in case of success and other value otherwise.
+ * @return OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult PDMDestoryOicUuidLinkList(OCUuidList_t* ptr);
 
@@ -149,7 +149,7 @@ OCStackResult PDMDestoryOicUuidLinkList(OCUuidList_t* ptr);
  * This method is used by provisioning manager free memory allocated to Stalelist.
  *
  * @param[in] ptr start pointer of link list.
- * @return  OC_STACK_OK in case of success and other value otherwise.
+ * @return OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult PDMDestoryStaleLinkList(OCPairList_t* ptr);
 

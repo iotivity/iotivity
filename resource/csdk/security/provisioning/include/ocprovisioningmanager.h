@@ -70,7 +70,7 @@ OCStackResult OCDoOwnershipTransfer(void* ctx,
  *
  * @param[in] Ownership transfer method.
  * @param[in] Implementation of callback functions for owership transfer.
- * @return  OC_STACK_OK in case of success and other value otherwise.
+ * @return OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult OCSetOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t* callbackData);
 
@@ -96,7 +96,7 @@ OCStackResult OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **
  * @param[in] acl ACL for device 2. If this is not required set NULL.
  * @param[in] resultCallback callback provided by API user, callback will be called when
  *            provisioning request recieves a response from first resource server.
- * @return  OC_STACK_OK in case of success and other value otherwise.
+ * @return OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult OCProvisionPairwiseDevices(void* ctx, OicSecCredType_t type, size_t keySize,
                                          const OCProvisionDev_t *pDev1, OicSecAcl_t *pDev1Acl,
@@ -111,7 +111,7 @@ OCStackResult OCProvisionPairwiseDevices(void* ctx, OicSecCredType_t type, size_
  * @param[in] acl ACL to provision.
  * @param[in] resultCallback callback provided by API user, callback will be called when provisioning
               request recieves a response from resource server.
- * @return  OC_STACK_OK in case of success and other value otherwise.
+ * @return OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult OCProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceInfo, OicSecAcl_t *acl,
                              OCProvisionResultCB resultCallback);
@@ -125,12 +125,46 @@ OCStackResult OCProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceIn
    @param[in] pDev2 Pointer to OCProvisionDev_t instance,respresenting resource to be provsioned.
  * @param[in] resultCallback callback provided by API user, callback will be called when
  *            provisioning request recieves a response from first resource server.
- * @return  OC_STACK_OK in case of success and other value otherwise.
+ * @return OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult OCProvisionCredentials(void *ctx, OicSecCredType_t type, size_t keySize,
                                       const OCProvisionDev_t *pDev1,
                                       const OCProvisionDev_t *pDev2,
                                       OCProvisionResultCB resultCallback);
+
+/**
+ * Function to unlink devices.
+ * This function will remove the credential & relasionship between the two devices.
+ *
+ * @param[in] ctx Application context would be returned in result callback
+ * @param[in] pTargetDev1 fitst device information to be unlinked.
+ * @param[in] pTargetDev2 second device information to be unlinked.
+ * @param[in] resultCallback callback provided by API user, callback will be called when
+ *            device unlink is finished.
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCUnlinkDevices(void* ctx,
+                              const OCProvisionDev_t* pTargetDev1,
+                              const OCProvisionDev_t* pTargetDev2,
+                              OCProvisionResultCB resultCallback);
+
+/**
+ * Function for device revocation
+ * This function will remove credential of target device from all devices in subnet.
+ *
+ * @param[in] ctx Application context would be returned in result callback
+ * @param[in] waitTimeForOwnedDeviceDiscovery Maximum wait time for owned device discovery.(seconds)
+ * @param[in] pTargetDev Device information to be revoked.
+ * @param[in] resultCallback callback provided by API user, callback will be called when
+ *            credential revocation is finished.
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ *         if OC_STACK_OK is returned, the caller of this API should wait for callback.
+ *         OC_STACK_CONTINUE means operation is success but no need to wait for callback.
+ */
+OCStackResult OCRemoveDevice(void* ctx,
+                             unsigned short waitTimeForOwnedDeviceDiscovery,
+                             const OCProvisionDev_t* pTargetDev,
+                             OCProvisionResultCB resultCallback);
 
 /**
  * API to delete memory allocated to linked list created by OCDiscover_XXX_Devices API.
