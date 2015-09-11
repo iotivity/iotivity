@@ -29,36 +29,6 @@
 #ifndef OCSTACK_CONFIG_H_
 #define OCSTACK_CONFIG_H_
 
-/** This would need to be updated in future as we move to support IPv6 and other
- *  technologies.
- */
-#define DEV_ADDR_SIZE_MAX (16)
-
-/**
- * Maximum length of the response supported by Server for any REST request.
- * The actual repsonse length is 256 for Arduino and 1024 for other platforms.
- * Note that the stack will add a prefix and suffix to the payload.
- * @code
- * Prefix : {"oic":[
- * Suffix : ]}
- * @endcode
- * They have a combined size of 10 bytes.
- */
-#ifdef WITH_ARDUINO
-#define MAX_RESPONSE_LENGTH (256)
-#else
-#define MAX_RESPONSE_LENGTH (1024)
-#endif
-
-/**
- * Maximum length of the request supported by Client/Server for any REST request.
- */
-#ifdef WITH_ARDUINO
-#define MAX_REQUEST_LENGTH (256)
-#else
-#define MAX_REQUEST_LENGTH (1024)
-#endif
-
 /**
  * Maximum length of the URI supported by client/server while processing
  * REST requests/responses.

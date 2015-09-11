@@ -300,6 +300,7 @@ public class RCSRemoteResourceObject {
      * Returns whether resource is observable.
      *
      * @return boolean - true if resource is observable.
+     *
      */
     public boolean isObservable() {
 
@@ -320,6 +321,7 @@ public class RCSRemoteResourceObject {
      *
      *             {@link IStateChangedCallbackListener} {@link ResourceState}
      *             {@link #isMonitoring()} {@link #stopMonitoring()}
+     *
      */
     public void startMonitoring() throws RCSException {
 
@@ -333,6 +335,7 @@ public class RCSRemoteResourceObject {
      * It does nothing if monitoring is not started.
      * <p>
      * {@link #startMonitoring()}
+     *
      */
     public void stopMonitoring() {
 
@@ -438,6 +441,7 @@ public class RCSRemoteResourceObject {
      *
      *             {@link RCSResourceAttributes} {@link #isCachedAvailable()}
      *             {@link #startCaching()}
+     *
      */
     public RCSResourceAttributes getCachedAttributes() throws RCSException {
 
@@ -462,6 +466,7 @@ public class RCSRemoteResourceObject {
      *
      *             {@link RCSResourceAttributes} {@link #isCachedAvailable()}
      *             {@link #startCaching()}
+     *
      */
     public String getCachedAttribute(String key) throws RCSException {
 

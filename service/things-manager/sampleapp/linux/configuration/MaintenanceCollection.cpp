@@ -24,16 +24,17 @@
 
 #include <functional>
 #include <thread>
+#include <string.h>
 
 #include "OCPlatform.h"
 #include "OCApi.h"
-#include "ThingsManager.h"
-#include "DiagnosticsCollection.h"
+#include "MaintenanceCollection.h"
 
 using namespace OC;
+using namespace std;
 
 /// This function internally calls registerResource API.
-void DiagnosticsResource::createResources(ResourceEntityHandler callback)
+void MaintenanceResource::createResources(ResourceEntityHandler callback)
 {
     using namespace OC::OCPlatform;
 
@@ -44,25 +45,25 @@ void DiagnosticsResource::createResources(ResourceEntityHandler callback)
     }
 
     // This will internally create and register the resource.
-    OCStackResult result = registerResource(m_diagnosticsHandle, m_diagnosticsUri,
-            m_diagnosticsTypes[0], m_diagnosticsInterfaces[0], callback,
+    OCStackResult result = registerResource(m_maintenanceHandle, m_maintenanceUri,
+            m_maintenanceTypes[0], m_maintenanceInterfaces[0], callback,
             OC_DISCOVERABLE | OC_OBSERVABLE);
 
     if (OC_STACK_OK != result)
     {
-        std::cout << "Resource creation (diagnostics) was unsuccessful\n";
+        std::cout << "Resource creation (maintenance) was unsuccessful\n";
     }
 
     thread exec(
             std::function< void(int second) >(
-                    std::bind(&DiagnosticsResource::diagnosticsMonitor, this,
+                    std::bind(&MaintenanceResource::maintenanceMonitor, this,
                             std::placeholders::_1)), 10); // every 10 seconds
     exec.detach();
 
-    std::cout << "Diagnostics Resource is Created!\n";
+    std::cout << "maintenance Resource is Created!\n";
 }
 
-void DiagnosticsResource::setDiagnosticsRepresentation(OCRepresentation& rep)
+void MaintenanceResource::setMaintenanceRepresentation(OCRepresentation& rep)
 {
     string value;
 
@@ -85,21 +86,21 @@ void DiagnosticsResource::setDiagnosticsRepresentation(OCRepresentation& rep)
     }
 }
 
-OCRepresentation DiagnosticsResource::getDiagnosticsRepresentation()
+OCRepresentation MaintenanceResource::getMaintenanceRepresentation()
 {
-    m_diagnosticsRep.setValue("fr", m_factoryReset);
-    m_diagnosticsRep.setValue("rb", m_reboot);
-    m_diagnosticsRep.setValue("ssc", m_startStatCollection);
+    m_maintenanceRep.setValue("fr", m_factoryReset);
+    m_maintenanceRep.setValue("rb", m_reboot);
+    m_maintenanceRep.setValue("ssc", m_startStatCollection);
 
-    return m_diagnosticsRep;
+    return m_maintenanceRep;
 }
 
-std::string DiagnosticsResource::getUri()
+std::string MaintenanceResource::getUri()
 {
-    return m_diagnosticsUri;
+    return m_maintenanceUri;
 }
 
-void DiagnosticsResource::diagnosticsMonitor(int second)
+void MaintenanceResource::maintenanceMonitor(int second)
 {
     while (1)
     {

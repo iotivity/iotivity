@@ -110,6 +110,7 @@ public class RCSDiscoveryManager {
      *            A RCSAddress object
      *
      *            {@link RCSAddress}
+     *
      */
     public void discoverResource(RCSAddress address) throws RCSException {
 
@@ -127,6 +128,7 @@ public class RCSDiscoveryManager {
      *            The relative uri of resource to be searched
      *
      *            {@link RCSAddress}
+     *
      */
     public void discoverResource(RCSAddress address, String relativeURI)
             throws RCSException {
@@ -144,6 +146,7 @@ public class RCSDiscoveryManager {
      *            Ressource Type
      *
      *            {@link RCSAddress}
+     *
      */
     public void discoverResourceByType(RCSAddress address, String resourceType)
             throws RCSException {
@@ -164,12 +167,25 @@ public class RCSDiscoveryManager {
      *            Ressource Type
      *
      *            {@link RCSAddress}
+     *
      */
     public void discoverResourceByType(RCSAddress address, String relativeURI,
             String resourceType) throws RCSException {
 
         Log.i(LOG_TAG, "discoverResource called");
         String addr = address.getAddress();
+
+        if(null == address){
+            Log.e(LOG_TAG, "Empty Address");
+            throw (new RCSException("Empty Address"));
+        }
+        String addr = address.getAddress();
+
+        if(null == relativeURI || "" == relativeURI){
+            Log.e(LOG_TAG, "Empty URI");
+            throw (new RCSException("Empty URI"));
+        }
+
         DiscoveryType typeOfDiscovery = address.getTypeOfDiscovery();
         this.discoverResource(addr, typeOfDiscovery.ordinal(), relativeURI,
                 resourceType, m_discoverListener);

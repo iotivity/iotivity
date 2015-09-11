@@ -18,6 +18,7 @@
 
 #include "option.h"
 #include "debug.h"
+#include "pdu.h"
 
 coap_opt_t *
 options_start(coap_pdu_t *pdu)
@@ -438,3 +439,42 @@ size_t coap_opt_encode(coap_opt_t *opt, size_t maxlen, unsigned short delta,
     return l + length;
 }
 
+static coap_option_def_t coap_option_def[] = {
+    { COAP_OPTION_IF_MATCH,       'o',	0,   8 },
+    { COAP_OPTION_URI_HOST,       's',	1, 255 },
+    { COAP_OPTION_ETAG,           'o',	1,   8 },
+    { COAP_OPTION_IF_NONE_MATCH,  'e',	0,   0 },
+    { COAP_OPTION_URI_PORT,       'u',	0,   2 },
+    { COAP_OPTION_LOCATION_PATH,  's',	0, 255 },
+    { COAP_OPTION_URI_PATH,       's',	0, 255 },
+    { COAP_OPTION_CONTENT_TYPE,   'u',	0,   2 },
+    { COAP_OPTION_MAXAGE,         'u',	0,   4 },
+    { COAP_OPTION_URI_QUERY,      's',	1, 255 },
+    { COAP_OPTION_ACCEPT,         'u',	0,   2 },
+    { COAP_OPTION_LOCATION_QUERY, 's',	0, 255 },
+    { COAP_OPTION_PROXY_URI,      's',	1,1034 },
+    { COAP_OPTION_PROXY_SCHEME,   's',	1, 255 },
+    { COAP_OPTION_SIZE1,          'u',	0,   4 },
+    { COAP_OPTION_SIZE2,          'u',	0,   4 },
+    { COAP_OPTION_OBSERVE,        'u',	0,   3 },
+    { COAP_OPTION_BLOCK2,         'u',	0,   3 },
+    { COAP_OPTION_BLOCK1,         'u',	0,   3 },
+};
+
+
+coap_option_def_t* coap_opt_def(unsigned short key)
+{
+    int i;
+
+    if (COAP_MAX_OPT < key)
+    {
+        return NULL;
+    }
+    for (i = 0; i < (int)(sizeof(coap_option_def)/sizeof(coap_option_def_t)); i++)
+    {
+        if (key == coap_option_def[i].key)
+            return &(coap_option_def[i]);
+    }
+    debug("coap_opt_def: add key:[%d] to coap_is_var_bytes", key);
+    return NULL;
+}

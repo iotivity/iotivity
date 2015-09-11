@@ -27,7 +27,6 @@
 
 #include "OCPlatform.h"
 #include "OCApi.h"
-#include "ThingsManager.h"
 
 #pragma once
 
@@ -36,53 +35,56 @@ using namespace OC;
 typedef std::function<
     OCEntityHandlerResult(std::shared_ptr< OCResourceRequest > request) > ResourceEntityHandler;
 
+static std::string defaultMntURI = "/oic/mnt";
+static std::string defaultMntResourceType = "oic.wk.mnt";
+
 static std::string defaultFactoryReset = "false";
 static std::string defaultReboot = "false";
 static std::string defaultStartStatCollection = "false";
 
-class DiagnosticsResource
+class MaintenanceResource
 {
 public:
 
-    // diagnostics members
-    std::string m_diagnosticsUri;
+    // Maintenance members
+    std::string m_maintenanceUri;
     std::string m_factoryReset;
     std::string m_reboot;
     std::string m_startStatCollection;
-    std::vector< std::string > m_diagnosticsTypes;
-    std::vector< std::string > m_diagnosticsInterfaces;
-    OCResourceHandle m_diagnosticsHandle;
-    OCRepresentation m_diagnosticsRep;
+    std::vector< std::string > m_maintenanceTypes;
+    std::vector< std::string > m_maintenanceInterfaces;
+    OCResourceHandle m_maintenanceHandle;
+    OCRepresentation m_maintenanceRep;
 
 public:
     /// Constructor
-    DiagnosticsResource() :
+    MaintenanceResource() :
            m_factoryReset(defaultFactoryReset), m_reboot(defaultReboot),
             m_startStatCollection(defaultStartStatCollection)
     {
-        m_diagnosticsUri = "/oic/diag"; // URI of the resource
-        m_diagnosticsTypes.push_back("oic.diag"); // resource type name.
-        m_diagnosticsInterfaces.push_back(DEFAULT_INTERFACE); // resource interface.
-        m_diagnosticsRep.setValue("fr", m_factoryReset);
-        m_diagnosticsRep.setValue("rb", m_reboot);
-        m_diagnosticsRep.setValue("ssc", m_startStatCollection);
-        m_diagnosticsRep.setUri(m_diagnosticsUri);
-        m_diagnosticsRep.setResourceTypes(m_diagnosticsTypes);
-        m_diagnosticsRep.setResourceInterfaces(m_diagnosticsInterfaces);
-        m_diagnosticsHandle = NULL;
+        m_maintenanceUri = defaultMntURI; // URI of the resource
+        m_maintenanceTypes.push_back(defaultMntResourceType); // resource type name.
+        m_maintenanceInterfaces.push_back(DEFAULT_INTERFACE); // resource interface.
+        m_maintenanceRep.setValue("fr", m_factoryReset);
+        m_maintenanceRep.setValue("rb", m_reboot);
+        m_maintenanceRep.setValue("ssc", m_startStatCollection);
+        m_maintenanceRep.setUri(m_maintenanceUri);
+        m_maintenanceRep.setResourceTypes(m_maintenanceTypes);
+        m_maintenanceRep.setResourceInterfaces(m_maintenanceInterfaces);
+        m_maintenanceHandle = NULL;
     }
     ;
 
     /// This function internally calls registerResource API.
     void createResources(ResourceEntityHandler callback);
 
-    void setDiagnosticsRepresentation(OCRepresentation& rep);
+    void setMaintenanceRepresentation(OCRepresentation& rep);
 
-    OCRepresentation getDiagnosticsRepresentation();
+    OCRepresentation getMaintenanceRepresentation();
 
     std::string getUri();
 
-    void diagnosticsMonitor(int second);
+    void maintenanceMonitor(int second);
 
     std::function< void() > factoryReset;
 };

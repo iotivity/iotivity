@@ -23,7 +23,7 @@
 #include "iotvticalendar.h"
 #include "logger.h"
 
-#define TAG  PCF("CALENDAR-UT")
+#define TAG  "CALENDAR-UT"
 
 static void printPeriod(IotvtICalPeriod_t *period)
 {
@@ -32,56 +32,56 @@ static void printPeriod(IotvtICalPeriod_t *period)
         return;
     }
 
-    OC_LOG_V(INFO, TAG, PCF("period->startDateTime.tm_year = %d"),period->startDateTime.tm_year);
-    OC_LOG_V(INFO, TAG, PCF("period->startDateTime.tm_mon = %d"),period->startDateTime.tm_mon);
-    OC_LOG_V(INFO, TAG, PCF("period->startDateTime.tm_mday = %d"),period->startDateTime.tm_mday);
-    OC_LOG_V(INFO, TAG, PCF("period->startDateTime.tm_hour = %d"),period->startDateTime.tm_hour);
-    OC_LOG_V(INFO, TAG, PCF("period->startDateTime.tm_min = %d"),period->startDateTime.tm_min);
-    OC_LOG_V(INFO, TAG, PCF("period->startDateTime.tm_sec = %d"),period->startDateTime.tm_sec);
+    OC_LOG_V(INFO, TAG, "period->startDateTime.tm_year = %d",period->startDateTime.tm_year);
+    OC_LOG_V(INFO, TAG, "period->startDateTime.tm_mon = %d",period->startDateTime.tm_mon);
+    OC_LOG_V(INFO, TAG, "period->startDateTime.tm_mday = %d",period->startDateTime.tm_mday);
+    OC_LOG_V(INFO, TAG, "period->startDateTime.tm_hour = %d",period->startDateTime.tm_hour);
+    OC_LOG_V(INFO, TAG, "period->startDateTime.tm_min = %d",period->startDateTime.tm_min);
+    OC_LOG_V(INFO, TAG, "period->startDateTime.tm_sec = %d",period->startDateTime.tm_sec);
 
-    OC_LOG_V(INFO, TAG, PCF("period->endDateTime.tm_year = %d"),period->endDateTime.tm_year);
-    OC_LOG_V(INFO, TAG, PCF("period->endDateTime.tm_mon = %d"),period->endDateTime.tm_mon);
-    OC_LOG_V(INFO, TAG, PCF("period->endDateTime.tm_mday = %d"),period->endDateTime.tm_mday);
-    OC_LOG_V(INFO, TAG, PCF("period->endDateTime.tm_hour = %d"),period->endDateTime.tm_hour);
-    OC_LOG_V(INFO, TAG, PCF("period->endDateTime.tm_min = %d"),period->endDateTime.tm_min);
-    OC_LOG_V(INFO, TAG, PCF("period->startDateTime.tm_sec = %d"),period->endDateTime.tm_sec);
+    OC_LOG_V(INFO, TAG, "period->endDateTime.tm_year = %d",period->endDateTime.tm_year);
+    OC_LOG_V(INFO, TAG, "period->endDateTime.tm_mon = %d",period->endDateTime.tm_mon);
+    OC_LOG_V(INFO, TAG, "period->endDateTime.tm_mday = %d",period->endDateTime.tm_mday);
+    OC_LOG_V(INFO, TAG, "period->endDateTime.tm_hour = %d",period->endDateTime.tm_hour);
+    OC_LOG_V(INFO, TAG, "period->endDateTime.tm_min = %d",period->endDateTime.tm_min);
+    OC_LOG_V(INFO, TAG, "period->startDateTime.tm_sec = %d",period->endDateTime.tm_sec);
 }
 
 
 static void printRecur(IotvtICalRecur_t *recur)
 {
-    OC_LOG_V(INFO, TAG, PCF("recur->freq = %d"), recur->freq);
-    OC_LOG_V(INFO, TAG, PCF("recur->until.tm_year = %d"), recur->until.tm_year);
-    OC_LOG_V(INFO, TAG, PCF("recur->until.tm_mon = %d"), recur->until.tm_mon);
-    OC_LOG_V(INFO, TAG, PCF("recur->until.tm_mday = %d"), recur->until.tm_mday);
+    OC_LOG_V(INFO, TAG, "recur->freq = %d", recur->freq);
+    OC_LOG_V(INFO, TAG, "recur->until.tm_year = %d", recur->until.tm_year);
+    OC_LOG_V(INFO, TAG, "recur->until.tm_mon = %d", recur->until.tm_mon);
+    OC_LOG_V(INFO, TAG, "recur->until.tm_mday = %d", recur->until.tm_mday);
 
     if(recur->byDay & SUNDAY)
     {
-        OC_LOG_V(INFO, TAG, PCF("recur->byDay = %s"), "Sunday");
+        OC_LOG_V(INFO, TAG, "recur->byDay = %s", "Sunday");
     }
     if(recur->byDay & MONDAY)
     {
-        OC_LOG_V(INFO, TAG, PCF("recur->byDay = %s"), "Monday");
+        OC_LOG_V(INFO, TAG, "recur->byDay = %s", "Monday");
     }
     if(recur->byDay & TUESDAY)
     {
-        OC_LOG_V(INFO, TAG, PCF("recur->byDay = %s"), "Tuesday");
+        OC_LOG_V(INFO, TAG, "recur->byDay = %s", "Tuesday");
     }
     if(recur->byDay & WEDNESDAY)
     {
-        OC_LOG_V(INFO, TAG, PCF("recur->byDay = %s"), "Wednesday");
+        OC_LOG_V(INFO, TAG, "recur->byDay = %s", "Wednesday");
     }
     if(recur->byDay & THURSDAY)
     {
-        OC_LOG_V(INFO, TAG, PCF("recur->byDay = %s"), "Thursday");
+        OC_LOG_V(INFO, TAG, "recur->byDay = %s", "Thursday");
     }
     if(recur->byDay & FRIDAY)
     {
-        OC_LOG_V(INFO, TAG, PCF("recur->byDay = %s"), "Friday");
+        OC_LOG_V(INFO, TAG, "recur->byDay = %s", "Friday");
     }
     if(recur->byDay & SATURDAY)
     {
-        OC_LOG_V(INFO, TAG, PCF("recur->byDay = %s"), "Saturday");
+        OC_LOG_V(INFO, TAG, "recur->byDay = %s", "Saturday");
     }
 }
 
@@ -110,8 +110,8 @@ static void checkValidityOfRequest(char *recurStr, char *periodStr,int startTime
         tzset();
         localtime_r(&rt, &t2);
 
-        OC_LOG_V(INFO, TAG, PCF("t1 = %02d:%02d:%02d"), t1.tm_hour, t1.tm_min, t1.tm_sec );
-        OC_LOG_V(INFO, TAG, PCF("t2 = %02d:%02d:%02d"), t2.tm_hour, t2.tm_min, t2.tm_sec );
+        OC_LOG_V(INFO, TAG, "t1 = %02d:%02d:%02d", t1.tm_hour, t1.tm_min, t1.tm_sec );
+        OC_LOG_V(INFO, TAG, "t2 = %02d:%02d:%02d", t2.tm_hour, t2.tm_min, t2.tm_sec );
     }while(t1.tm_hour != t2.tm_hour);
 
     if(byDay > 0)

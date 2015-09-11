@@ -111,6 +111,7 @@ public class RCSResourceAttributes {
      *            - Key of the element.
      *
      * @return int - integer value of key provided.
+     *
      */
     public int getValueInt(String key) {
         Integer value = 0;
@@ -129,6 +130,7 @@ public class RCSResourceAttributes {
      *            - Key of the element.
      *
      * @return boolean - boolean value of key provided.
+     *
      */
     public double getValueDouble(String key) {
         double value = 0;
@@ -147,6 +149,7 @@ public class RCSResourceAttributes {
      *            - Key of the element.
      *
      * @return boolean - boolean value of key provided.
+     *
      */
     public boolean getValueBool(String key) {
         Boolean value = false;
@@ -165,6 +168,7 @@ public class RCSResourceAttributes {
      *            - Key of the element.
      *
      * @return String - String value of key provided.
+     *
      */
     public String getValueString(String key) {
         String value = "";
@@ -184,6 +188,7 @@ public class RCSResourceAttributes {
      *
      * @param value
      *            - integer value of key to be set.
+     *
      */
     public void setValueInt(String key, int value) throws RCSException {
         try {
@@ -201,6 +206,7 @@ public class RCSResourceAttributes {
      *
      * @param value
      *            - double value of key to be set.
+     *
      */
     public void setValueDouble(String key, double value) throws RCSException {
         try {
@@ -218,6 +224,7 @@ public class RCSResourceAttributes {
      *
      * @param value
      *            - integer value of key to be set.
+     *
      */
     public void setValueBool(String key, boolean value) throws RCSException {
         try {
@@ -235,6 +242,7 @@ public class RCSResourceAttributes {
      *
      * @param value
      *            - integer value of key to be set.
+     *
      */
     public void setValueString(String key, String value) throws RCSException {
         try {

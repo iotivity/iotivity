@@ -17,11 +17,11 @@
  * limitations under the License.
  *
  ******************************************************************/
+
 /**
- * @file    Capability.java
- *
- * @brief   This file contains class which provides functions  to specify an attribute key and value
- *                of the target resource
+ * @file
+ * This file contains class which provides functions to specify an attribute key and value
+ * of the target resource.
  *
  */
 
@@ -32,12 +32,11 @@ import java.util.StringTokenizer;
 import android.util.Log;
 
 /**
- * This class needs to be created to specify an attribute key and value
- * of the target resource. The attribute key and value are written in
- * capability and status variables of Capability instance class,
- * respectively. After filling the Capability instance, store it to
- * listOfCapability vector variable of Action instance.
- *
+ * This class needs to be created to specify an attribute key and value of the
+ * target resource. The attribute key and value are written in capability and
+ * status variables of Capability instance class, respectively. After filling
+ * the Capability instance, store it to listOfCapability vector variable of
+ * Action instance.
  */
 public class Capability {
     /**
@@ -57,7 +56,6 @@ public class Capability {
      * This function generates a Capability String.
      *
      * @return String for a specific Capability.
-     *
      */
     public String toString() {
         StringBuilder result = new StringBuilder();
@@ -72,7 +70,6 @@ public class Capability {
      *            Capability in String format.
      *
      * @return Capability class.
-     *
      */
     public static Capability toCapability(String capabilityString) {
         StringTokenizer tokenizer = new StringTokenizer(capabilityString, "=");

@@ -221,7 +221,7 @@ OCStackApplicationResult deleteReqCB(void *ctx,
     if(clientResponse)
     {
         cout << "\nStackResult: " << getResult(clientResponse->result);
-        //OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+        //OC_LOG_PAYLOAD(INFO, clientResponse->payload);
     }
     else
     {
@@ -275,7 +275,7 @@ OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle handle, OCClientResponse
         cout << "\nStackResult: " << getResult(clientResponse->result);
         cout << "\nSEQUENCE NUMBER: " << clientResponse->sequenceNumber;
         cout << "\nCallback Context for OBSERVE notification recvd successfully ";
-        //OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+        //OC_LOG_PAYLOAD(INFO, clientResponse->payload);
         gNumObserveNotifies++;
         if (gNumObserveNotifies == 15) //large number to test observing in DELETE case.
         {
@@ -329,7 +329,7 @@ OCStackApplicationResult presenceCB(void* ctx, OCDoHandle handle, OCClientRespon
         cout << "\nStackResult: " << getResult(clientResponse->result);
         cout << "\nNONCE NUMBER: " << clientResponse->sequenceNumber;
         cout << "\nCallback Context for Presence notification recvd successfully ";
-        //OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+        //OC_LOG_PAYLOAD(INFO, clientResponse->payload);
         gNumPresenceNotifies++;
         if (gNumPresenceNotifies == 20)
         {
@@ -370,7 +370,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
         {
             cout << ":" << clientResponse->devAddr.port;
         }
-        //OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+        //OC_LOG_PAYLOAD(INFO, clientResponse->payload);
         cout << "\nConnectivity type: " << clientResponse->connType;
         OC_CONNTYPE = clientResponse->connType;
         parseClientResponse(clientResponse);
@@ -451,7 +451,7 @@ OCStackApplicationResult PlatformDiscoveryReqCB (void* ctx, OCDoHandle handle,
     if(clientResponse)
     {
         //OC_LOG truncates the response as it is too long.
-        //OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+        //OC_LOG_PAYLOAD(INFO, clientResponse->payload);
     }
     else
     {
@@ -923,10 +923,7 @@ int main(int argc, char* argv[])
     {
         OC_CONNTYPE = CT_ADAPTER_RFCOMM_BTEDR;
 
-        cout << "\nSelected EDR Adapter!!! Device is scanning for OIC supported Servers....\n";
-        // Sleep is added as after initialization, EDR adapter needs to start scanning and find
-        // the devices.
-        sleep(10);
+        cout << "\nSelected EDR Adapter\n";
     }
     else
     {

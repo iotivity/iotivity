@@ -24,13 +24,14 @@
 
 #include <functional>
 #include <thread>
+#include <string.h>
 
 #include "OCPlatform.h"
 #include "OCApi.h"
-#include "ThingsManager.h"
 #include "ConfigurationCollection.h"
 
 using namespace OC;
+using namespace std;
 
 /// This function internally calls registerResource API.
 void ConfigurationResource::createResources(ResourceEntityHandler callback)
@@ -60,15 +61,22 @@ void ConfigurationResource::setConfigurationRepresentation(OCRepresentation& rep
 {
     string value;
 
+    if (rep.getValue("n", value))
+    {
+        m_deviceName = value;
+        std::cout << "\t\t\t\t" << "m_deviceName: " << m_deviceName << std::endl;
+    }
+
     if (rep.getValue("loc", value))
     {
         m_location = value;
         std::cout << "\t\t\t\t" << "m_location: " << m_location << std::endl;
     }
 
-    if (rep.getValue("st", value))
+    if (rep.getValue("locn", value))
     {
-        std::cout << "\t\t\t\t" << "SystemTime is not allowed to be written." << std::endl;
+        m_locationName = value;
+        std::cout << "\t\t\t\t" << "m_locationName: " << m_locationName << std::endl;
     }
 
     if (rep.getValue("c", value))
@@ -86,8 +94,9 @@ void ConfigurationResource::setConfigurationRepresentation(OCRepresentation& rep
 
 OCRepresentation ConfigurationResource::getConfigurationRepresentation()
 {
+    m_configurationRep.setValue("n", m_deviceName);
     m_configurationRep.setValue("loc", m_location);
-    m_configurationRep.setValue("st", m_systemTime);
+    m_configurationRep.setValue("locn", m_locationName);
     m_configurationRep.setValue("c", m_currency);
     m_configurationRep.setValue("r", m_region);
 
@@ -101,8 +110,9 @@ std::string ConfigurationResource::getUri()
 
 void ConfigurationResource::factoryReset()
 {
+    m_deviceName = defaultDeviceName;
     m_location = defaultLocation;
-    m_systemTime = defaultSystemTime;
+    m_locationName = defaultLocationName;
     m_currency = defaultCurrency;
     m_region = defaultRegion;
 }

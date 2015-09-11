@@ -952,7 +952,7 @@ int main(int argc, char* argv[])
         PrintUsage();
         return -1;
     }
-    #ifdef RA_ADAPTER
+#ifdef RA_ADAPTER
     OCRAInfo_t rainfo;
     rainfo.hostname = "localhost";
     rainfo.port = 5222;
@@ -963,7 +963,7 @@ int main(int argc, char* argv[])
     rainfo.user_jid = "";
 
     OCSetRAInfo(&rainfo);
-    #endif
+#endif
 
     OC_LOG(DEBUG, TAG, "OCServer is starting...");
 

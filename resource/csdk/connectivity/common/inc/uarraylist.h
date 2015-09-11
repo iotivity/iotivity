@@ -40,7 +40,7 @@ typedef struct u_arraylist_t
 {
     void **data;
     uint32_t length;
-    uint32_t size;
+    uint32_t capacity;
 } u_arraylist_t;
 
 /**

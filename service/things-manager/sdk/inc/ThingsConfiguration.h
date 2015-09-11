@@ -97,7 +97,7 @@ namespace OIC
         std::string getJSON();
     };
 
-#define NUMCONFUNIT 5
+#define NUMCONFUNIT 6
     typedef std::string ConfigurationName;
     typedef std::string ConfigurationValue;
 
@@ -116,8 +116,9 @@ namespace OIC
 
         static ThingsConfiguration *thingsConfigurationInstance;
         static ThingsConfiguration* getInstance();
-        void deleteInstance();
 
+        // TODO: deprecated
+        void deleteInstance();
         void setGroupManager(GroupManager *groupmanager);
 
         /**

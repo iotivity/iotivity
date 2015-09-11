@@ -71,6 +71,7 @@ public class RCSGetResponse {
      * @return RCSGetResponse
      *
      *         {@link EntityHandlerResult}
+     *
      */
     public static RCSGetResponse create(EntityHandlerResult result,
             int errorCode) {
@@ -89,6 +90,7 @@ public class RCSGetResponse {
      * @return RCSGetResponse
      *
      *         {@link RCSResourceAttributes}
+     *
      */
     public static RCSGetResponse create(RCSResourceAttributes attributes) {
         return new RCSGetResponse(attributes);
@@ -140,18 +142,22 @@ public class RCSGetResponse {
         this.m_errorCode = errorCode;
     }
 
+    @SuppressWarnings("unused")
     private int getTypeOfGetResponse() {
         return m_typeOfGetResponse;
     }
 
+    @SuppressWarnings("unused")
     private int getResult() {
         return m_handlerResult;
     }
 
+    @SuppressWarnings("unused")
     private int getErrorCode() {
         return m_errorCode;
     }
 
+    @SuppressWarnings("unused")
     private RCSResourceAttributes getAttributes() {
         return m_attributes;
     }

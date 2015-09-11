@@ -1011,17 +1011,17 @@ jobject jListener, jint jResourceProperty)
     {
         resourceInterface = env->GetStringUTFChars(jResourceInterface, NULL);
     }
-    if (!jListener)
+    JniEntityHandler* entityHandler = NULL;
+    EntityHandler handleEntityCallback = NULL;
+    if (jListener)
     {
-        ThrowOcException(OC_STACK_INVALID_PARAM, "entityHandler cannot be null");
-        return nullptr;
+        entityHandler = new JniEntityHandler(env, jListener);
+        handleEntityCallback =
+            [entityHandler](const std::shared_ptr<OCResourceRequest> request) -> OCEntityHandlerResult
+            {
+                return entityHandler->handleEntity(request);
+            };
     }
-    JniEntityHandler* entityHandler = new JniEntityHandler(env, jListener);
-    EntityHandler handleEntityCallback =
-        [entityHandler](const std::shared_ptr<OCResourceRequest> request) -> OCEntityHandlerResult
-        {
-            return entityHandler->handleEntity(request);
-        };
 
     OCResourceHandle resourceHandle;
     try

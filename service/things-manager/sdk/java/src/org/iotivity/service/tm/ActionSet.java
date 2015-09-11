@@ -17,11 +17,10 @@
  * limitations under the License.
  *
  ******************************************************************/
+
 /**
- * @file   ActionSet.java
- *
- * @brief  This file contains class which provides functions to retrieve ActionSet from plain text.
- *
+ * @file
+ * This file contains class which provides functions to retrieve ActionSet from plain text.
  */
 package org.iotivity.service.tm;
 
@@ -31,11 +30,10 @@ import java.util.Vector;
 import android.util.Log;
 
 /**
- * This class provides functions to retrieve ActionSet from plain text.
- * An ActionSet is a set of descriptions of actions needed by remote
- * devices as members of a specific group. To create an ActionSet, one
- * needs to know the Delimeter serialization.
- *
+ * This class provides functions to retrieve ActionSet from plain text. An
+ * ActionSet is a set of descriptions of actions needed by remote devices as
+ * members of a specific group. To create an ActionSet, one needs to know the
+ * Delimeter serialization.
  */
 public class ActionSet extends Time {
     /**
@@ -68,7 +66,6 @@ public class ActionSet extends Time {
      * and a pair of attribute key and value.
      *
      * @return String for a specific action.
-     *
      */
     @Override
     public String toString() {
@@ -110,7 +107,6 @@ public class ActionSet extends Time {
      *
      * @return ActionSet which is a set of descriptions of actions needed by
      *         remote devices as members of a specific group.
-     *
      */
     public static ActionSet toActionSet(String actionsetString) {
         if (0 == actionsetString.length()) {
@@ -141,7 +137,6 @@ public class ActionSet extends Time {
                 result.listOfAction.add(action);
             }
         }
-
         return result;
     }
 }

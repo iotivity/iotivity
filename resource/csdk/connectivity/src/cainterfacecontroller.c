@@ -73,10 +73,10 @@ static int CAGetAdapterIndex(CATransportAdapter_t cType)
         case CA_ADAPTER_RFCOMM_BTEDR:
             return 2;
 
-        #ifdef RA_ADAPTER
+#ifdef RA_ADAPTER
         case CA_ADAPTER_REMOTE_ACCESS:
             return 3;
-        #endif
+#endif
 
         default:
             break;

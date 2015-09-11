@@ -229,18 +229,22 @@ public class RCSSetResponse {
         m_errorCode = errorCode;
     }
 
+    @SuppressWarnings("unused")
     private int getTypeOfGetResponse() {
         return m_typeOfSetResponse;
     }
 
+    @SuppressWarnings("unused")
     private int getResult() {
         return m_handlerResult;
     }
 
+    @SuppressWarnings("unused")
     private int getErrorCode() {
         return m_errorCode;
     }
 
+    @SuppressWarnings("unused")
     private RCSResourceAttributes getAttributes() {
         return m_attributes;
     }

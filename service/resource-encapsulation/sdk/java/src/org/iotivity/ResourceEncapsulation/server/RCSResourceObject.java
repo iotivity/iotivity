@@ -417,6 +417,7 @@ public class RCSResourceObject {
      * listener call setGetRequestListener() API
      *
      * {@link RCSGetResponse} {@link #setGetRequestListener(IGetRequestHandler)}
+     *
      */
     public void setGetRequestHandler() {
         if (null == m_getRequestListener) {
@@ -438,6 +439,7 @@ public class RCSResourceObject {
      * listener call setSetRequestListener() API
      *
      * {@link RCSSetResponse} {@link #setSetRequestListener(ISetRequestHandler)}
+     *
      */
     public void setSetRequestHandler() {
         if (null == m_setRequestListener) {
@@ -496,6 +498,7 @@ public class RCSResourceObject {
      *            policy to be set
      *
      *            {@link AutoNotifyPolicy}
+     *
      */
     public void setAutoNotifyPolicy(AutoNotifyPolicy policy) {
         Log.i(LOG_TAG, "setAutoNotifyPolicy called");
@@ -508,6 +511,7 @@ public class RCSResourceObject {
      * @return AutoNotifyPolicy
      *
      *         {@link AutoNotifyPolicy}
+     *
      */
     public AutoNotifyPolicy getAutoNotifyPolicy() {
         Log.i(LOG_TAG, "getAutoNotifyPolicy called");
@@ -522,6 +526,7 @@ public class RCSResourceObject {
      *            policy to be set
      *
      *            {@link SetRequestHandlerPolicy}
+     *
      */
     public void setSetRequestHandlerPolicy(SetRequestHandlerPolicy policy) {
         Log.i(LOG_TAG, "setSetRequestHandlerPolicy called");
@@ -534,6 +539,7 @@ public class RCSResourceObject {
      * @return SetRequestHandlerPolicy
      *
      *         {@link SetRequestHandlerPolicy}
+     *
      */
     public SetRequestHandlerPolicy getSetRequestHandlerPolicy() {
         Log.i(LOG_TAG, "getSetRequestHandlerPolicy called");
