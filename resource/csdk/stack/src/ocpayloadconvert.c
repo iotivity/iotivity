@@ -54,9 +54,6 @@ static int64_t AddTextStringToMap(CborEncoder* map, const char* key, size_t keyl
 static int64_t ConditionalAddTextStringToMap(CborEncoder* map, const char* key, size_t keylen,
         const char* value);
 
-#define STRINGIFY(s) XSTRINGIFY(s)
-#define XSTRINGIFY(s) #s
-
 OCStackResult OCConvertPayload(OCPayload* payload, uint8_t** outPayload, size_t* size)
 {
     // TinyCbor Version 47a78569c0 or better on master is required for the re-allocation

@@ -89,6 +89,7 @@ namespace OC
     class OCRepresentation
     {
         public:
+            friend bool operator==(const OC::OCRepresentation&, const OC::OCRepresentation&);
             // Note: Implementation of all constructors and destructors
             // are all placed in the same location due to a crash that
             // was observed in Android, where merely constructing/destructing
