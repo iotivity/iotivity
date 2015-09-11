@@ -31,12 +31,29 @@
 #include <memory>
 #include <functional>
 
+#include "octypes.h"
+
 namespace OIC
 {
     namespace Service
     {
         class RCSRemoteResourceObject;
         class RCSAddress;
+
+        class DiscoveryTask
+        {
+            public:
+
+                DiscoveryTask(unsigned int id) : m_id{ id } {};
+                void cancel();
+                bool isCanceled();
+                ~DiscoveryTask();
+            private:
+
+                unsigned int m_id;
+                friend class RCSDiscoveryManager;
+                friend class RCSDiscoveryManagerImpl;
+        };
 
         /**
          * This class contains the resource discovery methods.
@@ -74,7 +91,8 @@ namespace OIC
                  * @see RCSAddress
                  *
                  */
-                void discoverResource(const RCSAddress& address, ResourceDiscoveredCallback cb);
+                std::unique_ptr<DiscoveryTask> discoverResource(const RCSAddress& address,
+                        ResourceDiscoveredCallback cb);
 
                 /**
                  * API for discovering the resource of Interest, regardless of resource type
@@ -90,8 +108,8 @@ namespace OIC
                  * @see RCSAddress
                  *
                  */
-                void discoverResource(const RCSAddress& address, const std::string& relativeURI,
-                                      ResourceDiscoveredCallback cb);
+                std::unique_ptr<DiscoveryTask> discoverResource(const RCSAddress& address,
+                        const std::string& relativeURI, ResourceDiscoveredCallback cb);
 
                 /**
                  * API for discovering the resource of Interest by Resource type.
@@ -107,8 +125,8 @@ namespace OIC
                  * @see RCSAddress
                  *
                  */
-                void discoverResourceByType(const RCSAddress& address, const std::string& resourceType,
-                                            ResourceDiscoveredCallback cb);
+                std::unique_ptr<DiscoveryTask> discoverResourceByType(const RCSAddress& address,
+                        const std::string& resourceType, ResourceDiscoveredCallback cb);
 
                 /**
                  * API for discovering the resource of Interest by Resource type with provided relativeURI
@@ -125,14 +143,16 @@ namespace OIC
                  * @see RCSAddress
                  *
                  */
-                void discoverResourceByType(const RCSAddress& address, const std::string& relativeURI,
-                                            const std::string& resourceType,
-                                            ResourceDiscoveredCallback cb);
+                std::unique_ptr<DiscoveryTask>  discoverResourceByType(const RCSAddress& address,
+                        const std::string& relativeURI, const std::string& resourceType,
+                        ResourceDiscoveredCallback cb);
 
             private:
 
                 RCSDiscoveryManager() = default;
-                ~RCSDiscoveryManager() = default;
+                ~RCSDiscoveryManager()= default;;
+
+                friend class DiscoveryTask;
         };
     }
 }

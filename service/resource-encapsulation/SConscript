@@ -88,6 +88,7 @@ client_src = [
         CACHE_SRC_DIR + 'DataCache.cpp',
         CACHE_SRC_DIR + 'ResourceCacheManager.cpp',
         RESOURCECLIENT_DIR + 'RCSDiscoveryManager.cpp',
+        RESOURCECLIENT_DIR + 'RCSDiscoveryManagerImpl.cpp',
         RESOURCECLIENT_DIR + 'RCSRemoteResourceObject.cpp'
 		]
 ResourceClientsdk_static = resourceClient_env.StaticLibrary('rcs_client', client_src)
