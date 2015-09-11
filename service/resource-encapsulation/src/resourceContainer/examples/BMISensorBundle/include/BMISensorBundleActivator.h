@@ -18,33 +18,30 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef DISCOMFORTINDEXSENSORRESOURCE_H_
-#define DISCOMFORTINDEXSENSORRESOURCE_H_
+#ifndef BMISENSOR_BUNDLE_ACTIVATOR_H_
+#define BMISENSOR_BUNDLE_ACTIVATOR_H_
 
-#include "SoftSensorResource.h"
-#include "DiscomfortIndexSensor.h"
+#include "ResourceContainerBundleAPI.h"
+#include "BundleActivator.h"
+#include "BundleResource.h"
 
-using namespace DiscomfortIndexSensorName;
 using namespace OIC::Service;
 
-class DiscomfortIndexSensorResource : public SoftSensorResource
+class BMISensorBundleActivator : public BundleActivator
 {
     public:
-        DiscomfortIndexSensorResource();
-        ~DiscomfortIndexSensorResource();
+        BMISensorBundleActivator();
+        ~BMISensorBundleActivator();
 
-        void initAttributes();
-        virtual RCSResourceAttributes &getAttributes();
-        virtual void setAttribute(std::string key, RCSResourceAttributes::Value &&value);
-        virtual RCSResourceAttributes::Value getAttribute(const std::string &key);
+        void activateBundle(ResourceContainerBundleAPI *resourceContainer, std::string bundleId);
+        void deactivateBundle();
 
-        virtual void executeLogic();
+        void createResource(resourceInfo resourceInfo);
+        void destroyResource(BundleResource *pBundleResource);
 
-        virtual void onUpdatedInputResource(const std::string attributeName,
-                std::vector<RCSResourceAttributes::Value> values);
-
-    private:
-        DiscomfortIndexSensor *m_pDiscomfortIndexSensor;
+        std::string m_bundleId;
+        ResourceContainerBundleAPI *m_pResourceContainer;
+        std::vector<BundleResource *> m_vecResources;
 };
 
-#endif
+#endif /* BMISENSOR_BUNDLE_ACTIVATOR_H_ */

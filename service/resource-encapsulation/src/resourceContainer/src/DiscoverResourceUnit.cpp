@@ -24,19 +24,21 @@
 
 using namespace OIC::Service;
 
-DiscoverResourceUnit::DiscoverResourceUnit(const std::string & bundleId)
-: m_bundleId(bundleId)
+DiscoverResourceUnit::DiscoverResourceUnit(const std::string &bundleId)
+    : m_bundleId(bundleId)
 {
     pUpdatedCB = nullptr;
     isStartedDiscovery = false;
-    pDiscoveredCB = std::bind(&DiscoverResourceUnit::discoverdCB, this,
-            std::placeholders::_1);
+
     pUpdatedCBFromServer = std::bind(&DiscoverResourceUnit::onUpdate, this,
-            std::placeholders::_1, std::placeholders::_2);
+                                     std::placeholders::_1, std::placeholders::_2);
 }
 
 DiscoverResourceUnit::~DiscoverResourceUnit()
 {
+    pUpdatedCB = nullptr;
+    pUpdatedCBFromServer = nullptr;
+
     m_vecRemoteResource.clear();
 }
 
@@ -58,14 +60,16 @@ void DiscoverResourceUnit::startDiscover(DiscoverResourceInfo info, UpdatedCB up
         // TODO may be will changed active discovery
         if (m_Uri.empty())
         {
-            RCSDiscoveryManager::getInstance()->discoverResourceByType(
-                RCSAddress::multicast(), m_ResourceType, pDiscoveredCB);
+            pDiscoveredCB = std::bind(&DiscoverResourceUnit::discoverdCB, this, std::placeholders::_1,
+                                      std::string(""));
         }
         else
         {
-            RCSDiscoveryManager::getInstance()->discoverResourceByType(
-                RCSAddress::multicast(), m_Uri, m_ResourceType, pDiscoveredCB);
+            pDiscoveredCB = std::bind(&DiscoverResourceUnit::discoverdCB, this, std::placeholders::_1, m_Uri);
         }
+
+        RCSDiscoveryManager::getInstance()->discoverResourceByType(RCSAddress::multicast(), m_ResourceType,
+                pDiscoveredCB);
     }
     catch (InvalidParameterException &e)
     {
@@ -76,28 +80,29 @@ void DiscoverResourceUnit::startDiscover(DiscoverResourceInfo info, UpdatedCB up
     isStartedDiscovery = true;
 }
 
-void DiscoverResourceUnit::discoverdCB(RCSRemoteResourceObject::Ptr remoteObject)
+void DiscoverResourceUnit::discoverdCB(RCSRemoteResourceObject::Ptr remoteObject, std::string uri)
 {
-    if (!isAlreadyDiscoveredResource(remoteObject))
+    if (remoteObject && !isAlreadyDiscoveredResource(remoteObject))
     {
         RemoteResourceUnit::Ptr newDiscoveredResource =
-                RemoteResourceUnit::createRemoteResourceInfo(remoteObject, pUpdatedCBFromServer);
+            RemoteResourceUnit::createRemoteResourceInfo(remoteObject, pUpdatedCBFromServer);
 
-        m_vecRemoteResource.push_back(newDiscoveredResource);
-
-        newDiscoveredResource->startMonitoring();
-        newDiscoveredResource->startCaching();
+        if (uri.empty() || uri.compare(remoteObject->getUri()) == 0)
+        {
+            m_vecRemoteResource.push_back(newDiscoveredResource);
+            newDiscoveredResource->startMonitoring();
+            newDiscoveredResource->startCaching();
+        }
     }
     else
     {
         // Already Discovered Resource
     }
-
 }
 
 void DiscoverResourceUnit::onUpdate(REMOTE_MSG msg, RCSRemoteResourceObject::Ptr updatedResource)
 {
-    if(msg == REMOTE_MSG::DATA_UPDATED)
+    if (msg == REMOTE_MSG::DATA_UPDATED)
     {
         if (updatedResource == nullptr)
         {
@@ -131,13 +136,13 @@ void DiscoverResourceUnit::onUpdate(REMOTE_MSG msg, RCSRemoteResourceObject::Ptr
 }
 
 std::vector<RCSResourceAttributes::Value> DiscoverResourceUnit::buildInputResourceData(
-        RCSRemoteResourceObject::Ptr updatedResource)
+    RCSRemoteResourceObject::Ptr updatedResource)
 {
     (void)updatedResource;
     std::vector<RCSResourceAttributes::Value> retVector = {};
-    for(auto iter : m_vecRemoteResource)
+    for (auto iter : m_vecRemoteResource)
     {
-        if(iter->getRemoteResourceObject()->getCacheState() != CacheState::READY)
+        if (iter->getRemoteResourceObject()->getCacheState() != CacheState::READY)
         {
             continue;
         }
@@ -145,7 +150,7 @@ std::vector<RCSResourceAttributes::Value> DiscoverResourceUnit::buildInputResour
         try
         {
             RCSResourceAttributes::Value value =
-                    iter->getRemoteResourceObject()->getCachedAttribute(m_AttrubuteName);
+                iter->getRemoteResourceObject()->getCachedAttribute(m_AttrubuteName);
             retVector.push_back(value);
 
         }
@@ -159,7 +164,7 @@ std::vector<RCSResourceAttributes::Value> DiscoverResourceUnit::buildInputResour
 }
 
 bool DiscoverResourceUnit::isAlreadyDiscoveredResource(
-        RCSRemoteResourceObject::Ptr discoveredResource)
+    RCSRemoteResourceObject::Ptr discoveredResource)
 {
     for (auto iter : m_vecRemoteResource)
     {

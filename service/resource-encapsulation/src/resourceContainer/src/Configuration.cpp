@@ -18,10 +18,10 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include "Configuration.h"
+
 #include <stdexcept>
 #include <utility>
-
-#include "Configuration.h"
 
 namespace
 {
@@ -34,19 +34,17 @@ namespace OIC
     {
         static inline std::string trim_both(const std::string &str)
         {
-            int npos = str.find_first_not_of(" \t\v\n\r");
+            size_t npos = str.find_first_not_of(" \t\v\n\r");
 
-            if (npos == -1)
+            if (npos == std::string::npos)
             {
                 return "";
             }
 
-            unsigned int n = (unsigned int) npos;
-            std::string tempString = n == std::string::npos ? str : str.substr(n, str.length());
+            std::string tempString = str.substr(npos, str.length());
+            npos = tempString.find_last_not_of(" \t\v\n\r");
 
-            n = tempString.find_last_not_of(" \t\v\n\r");
-
-            return n == std::string::npos ? tempString : tempString.substr(0, n + 1);
+            return npos == std::string::npos ? tempString : tempString.substr(0, npos + 1);
         }
 
         Configuration::Configuration()
@@ -72,12 +70,13 @@ namespace OIC
             return m_loaded;
         }
 
-        bool Configuration::isHasInput(std::string & bundleId) const
+        bool Configuration::isHasInput(std::string &bundleId) const
         {
             try
             {
                 return m_mapisHasInput.at(bundleId);
-            }catch (std::out_of_range &e)
+            }
+            catch (std::out_of_range &e)
             {
                 return false;
             }
@@ -95,11 +94,11 @@ namespace OIC
                 try
                 {
                     for (bundle = m_xmlDoc.first_node()->first_node("bundle"); bundle; bundle =
-                            bundle->next_sibling())
+                             bundle->next_sibling())
                     {
                         std::map< std::string, std::string > bundleMap;
                         for (subItem = bundle->first_node(); subItem;
-                                subItem = subItem->next_sibling())
+                             subItem = subItem->next_sibling())
                         {
                             strKey = subItem->name();
                             strValue = subItem->value();
@@ -107,7 +106,7 @@ namespace OIC
                             if (strlen(subItem->value()) > 0)
                             {
                                 bundleMap.insert(
-                                        std::make_pair(trim_both(strKey), trim_both(strValue)));
+                                    std::make_pair(trim_both(strKey), trim_both(strValue)));
                             }
                         }
                         configOutput->push_back(bundleMap);
@@ -136,7 +135,7 @@ namespace OIC
 
                     // <bundle>
                     for (bundle = m_xmlDoc.first_node()->first_node("bundle"); bundle; bundle =
-                            bundle->next_sibling())
+                             bundle->next_sibling())
                     {
                         // <id>
                         strBundleId = bundle->first_node("id")->value();
@@ -152,7 +151,7 @@ namespace OIC
                             // <version>
                             strVersion = bundle->first_node("version")->value();
                             bundleConfigMap.insert(
-                                    std::make_pair("version", trim_both(strVersion)));
+                                std::make_pair("version", trim_both(strVersion)));
 
                             configOutput->push_back(bundleConfigMap);
 
@@ -184,7 +183,7 @@ namespace OIC
                 {
                     // <bundle>
                     for (bundle = m_xmlDoc.first_node()->first_node("bundle"); bundle; bundle =
-                            bundle->next_sibling())
+                             bundle->next_sibling())
                     {
                         // <id>
                         strBundleId = bundle->first_node("id")->value();
@@ -193,12 +192,12 @@ namespace OIC
                         {
                             // <resourceInfo>
                             for (resource = bundle->first_node("resources")->first_node(
-                                    "resourceInfo"); resource; resource = resource->next_sibling())
+                                                "resourceInfo"); resource; resource = resource->next_sibling())
                             {
                                 resourceInfo tempResourceInfo;
 
                                 for (item = resource->first_node(); item; item =
-                                        item->next_sibling())
+                                         item->next_sibling())
                                 {
                                     strKey = item->name();
                                     strValue = item->value();
@@ -218,29 +217,29 @@ namespace OIC
                                     else
                                     {
                                         for (subItem = item->first_node(); subItem; subItem =
-                                                subItem->next_sibling())
+                                                 subItem->next_sibling())
                                         {
                                             map< string, string > propertyMap;
 
                                             strKey = subItem->name();
 
-                                            if(strKey.compare(INPUT_RESOURCE))
+                                            if (strKey.compare(INPUT_RESOURCE))
                                             {
                                                 m_mapisHasInput[strBundleId] = true;
                                             }
 
                                             for (subItem2 = subItem->first_node(); subItem2;
-                                                    subItem2 = subItem2->next_sibling())
+                                                 subItem2 = subItem2->next_sibling())
                                             {
                                                 string newStrKey = subItem2->name();
                                                 string newStrValue = subItem2->value();
 
                                                 propertyMap[trim_both(newStrKey)] = trim_both(
-                                                        newStrValue);
+                                                                                        newStrValue);
                                             }
 
                                             tempResourceInfo.resourceProperty[trim_both(strKey)].push_back(
-                                                    propertyMap);
+                                                propertyMap);
                                         }
                                     }
                                 }

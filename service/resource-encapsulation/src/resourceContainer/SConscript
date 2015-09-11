@@ -84,16 +84,16 @@ if int(containerJavaSupport):
 
 
 if target_os not in ['windows', 'winrt']:
-    resource_container_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
-    if target_os != 'android':
-        resource_container_env.AppendUnique(CXXFLAGS = ['-pthread'])
+	resource_container_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
+	if target_os != 'android':
+		resource_container_env.AppendUnique(CXXFLAGS = ['-pthread'])
 
 if target_os not in ['darwin', 'ios', 'windows', 'winrt']:
-    resource_container_env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
+	resource_container_env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
 
 if target_os == 'android':
-    resource_container_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-    resource_container_env.PrependUnique(LIBS = ['gnustl_shared', 'log'])
+	resource_container_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
+	resource_container_env.PrependUnique(LIBS = ['gnustl_shared', 'log'])
 
 try:
 	resource_container_env.AppendUnique(LIBPATH = [os.environ['JAVA_LIB']])
@@ -126,26 +126,49 @@ res_container_shared = resource_container_env.SharedLibrary('rcs_container', res
 resource_container_env.InstallTarget([res_container_static,res_container_shared], 'libResContainer')
 
 ######################################################################
-# build soft sensor sample bundle
+# build discomfort index sensor sample bundle
 ######################################################################
 if target_os in ['linux', 'tizen', 'android']:
-	ss_resource_bundle_env = resource_container_env.Clone()
-	ss_resource_bundle_env.AppendUnique(CCFLAGS = ['-fPIC'])
+	DI_sensor_bundle_env = resource_container_env.Clone()
+	DI_sensor_bundle_env.AppendUnique(CCFLAGS = ['-fPIC'])
 
-	SS_RESOURCE_BUNDLE_DIR = 'examples/SoftSensorSampleBundle/'
-	ss_resource_bundle_env.AppendUnique(CPPPATH = [
-			SS_RESOURCE_BUNDLE_DIR + 'include',
-			'include/',
-			'../../include',
-			])
+	DI_SENSOR_BUNDLE_DIR = 'examples/DiscomfortIndexSensorBundle/'
+	DI_sensor_bundle_env.AppendUnique(CPPPATH = [ DI_SENSOR_BUNDLE_DIR + 'include' ])
 
-	ss_resource_bundle_env.PrependUnique(LIBS = ['rcs_container'])
+	DI_sensor_bundle_env.PrependUnique(LIBS = ['rcs_container'])
 
-	ss_resource_bundle_src = [ Glob(SS_RESOURCE_BUNDLE_DIR + 'src/*.cpp')]
+	DI_sensor_bundle_src = [ Glob(DI_SENSOR_BUNDLE_DIR + 'src/*.cpp')]
 
-	SoftSensorBundle = ss_resource_bundle_env.SharedLibrary('SoftSensorBundle', ss_resource_bundle_src)
-	ss_resource_bundle_env.InstallTarget(SoftSensorBundle, 'libSoftSensorBundle')
-	
+	DISensorBundle = DI_sensor_bundle_env.SharedLibrary('DISensorBundle', DI_sensor_bundle_src)
+	DI_sensor_bundle_env.InstallTarget(DISensorBundle, 'libDISensorBundle')
+
+	if target_os == 'linux' :
+		SConscript(DI_SENSOR_BUNDLE_DIR + 'src/inputSensors/SConscript')
+		Command("THSensorApp", DI_SENSOR_BUNDLE_DIR + "src/inputSensors/THSensorApp/THSensorApp", Copy("$TARGET", "$SOURCE"))
+		Command("THSensorApp1", DI_SENSOR_BUNDLE_DIR + "src/inputSensors/THSensorApp1/THSensorApp1", Copy("$TARGET", "$SOURCE"))
+
+######################################################################
+# build BMI sensor sample bundle
+######################################################################
+if target_os in ['linux', 'tizen', 'android']:
+	BMI_sensor_bundle_env = resource_container_env.Clone()
+	BMI_sensor_bundle_env.AppendUnique(CCFLAGS = ['-fPIC'])
+
+	BMI_SENSOR_BUNDLE_DIR = 'examples/BMISensorBundle/'
+	BMI_sensor_bundle_env.AppendUnique(CPPPATH = [ BMI_SENSOR_BUNDLE_DIR + 'include' ])
+
+	BMI_sensor_bundle_env.PrependUnique(LIBS = ['rcs_container'])
+
+	BMI_sensor_bundle_src = [ Glob(BMI_SENSOR_BUNDLE_DIR + 'src/*.cpp')]
+
+	BMISensorBundle = BMI_sensor_bundle_env.SharedLibrary('BMISensorBundle', BMI_sensor_bundle_src)
+	BMI_sensor_bundle_env.InstallTarget(BMISensorBundle, 'libBMISensorBundle')
+
+	if target_os == 'linux' :
+		SConscript(BMI_SENSOR_BUNDLE_DIR + 'src/inputSensors/SConscript')
+		Command("HeightSensorApp", BMI_SENSOR_BUNDLE_DIR + "src/inputSensors/HeightSensorApp/HeightSensorApp", Copy("$TARGET", "$SOURCE"))
+		Command("WeightSensorApp", BMI_SENSOR_BUNDLE_DIR + "src/inputSensors/WeightSensorApp/WeightSensorApp", Copy("$TARGET", "$SOURCE"))
+
 ######################################################################
 # build hue sample bundle
 ######################################################################

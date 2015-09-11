@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef SOFTSENSOR_SAMPLEBUNDLE_H_
-#define SOFTSENSOR_SAMPLEBUNDLE_H_
+#ifndef DISENSOR_BUNDLE_ACTIVATOR_H_
+#define DISENSOR_BUNDLE_ACTIVATOR_H_
 
 #include "ResourceContainerBundleAPI.h"
 #include "BundleActivator.h"
@@ -27,11 +27,11 @@
 
 using namespace OIC::Service;
 
-class SoftSensorBundleActivator : public BundleActivator
+class DISensorBundleActivator : public BundleActivator
 {
     public:
-        SoftSensorBundleActivator();
-        ~SoftSensorBundleActivator();
+        DISensorBundleActivator();
+        ~DISensorBundleActivator();
 
         void activateBundle(ResourceContainerBundleAPI *resourceContainer, std::string bundleId);
         void deactivateBundle();
@@ -44,4 +44,4 @@ class SoftSensorBundleActivator : public BundleActivator
         std::vector<BundleResource *> m_vecResources;
 };
 
-#endif /* SOFTSENSOR_SAMPLEBUNDLE_H_ */
+#endif /* DISENSOR_BUNDLE_ACTIVATOR_H_ */

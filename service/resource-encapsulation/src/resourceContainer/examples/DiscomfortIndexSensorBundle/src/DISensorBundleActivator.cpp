@@ -18,24 +18,25 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "SoftSensorBundleActivator.h"
-#include "DiscomfortIndexSensorResource.h"
+#include "DISensorBundleActivator.h"
+
 #include <algorithm>
 #include <sstream>
+#include "DiscomfortIndexSensorResource.h"
 
-SoftSensorBundleActivator *bundle;
+DISensorBundleActivator *bundle;
 
-SoftSensorBundleActivator::SoftSensorBundleActivator()
+DISensorBundleActivator::DISensorBundleActivator()
 {
     m_pResourceContainer = nullptr;
 }
 
-SoftSensorBundleActivator::~SoftSensorBundleActivator()
+DISensorBundleActivator::~DISensorBundleActivator()
 {
     m_pResourceContainer = nullptr;
 }
 
-void SoftSensorBundleActivator::activateBundle(ResourceContainerBundleAPI *resourceContainer,
+void DISensorBundleActivator::activateBundle(ResourceContainerBundleAPI *resourceContainer,
         std::string bundleId)
 {
     m_pResourceContainer = resourceContainer;
@@ -52,7 +53,7 @@ void SoftSensorBundleActivator::activateBundle(ResourceContainerBundleAPI *resou
     }
 }
 
-void SoftSensorBundleActivator::deactivateBundle()
+void DISensorBundleActivator::deactivateBundle()
 {
     std::vector<BundleResource *>::iterator itor;
     for (itor = m_vecResources.begin(); itor != m_vecResources.end();)
@@ -61,7 +62,7 @@ void SoftSensorBundleActivator::deactivateBundle()
     }
 }
 
-void SoftSensorBundleActivator::createResource(resourceInfo resourceInfo)
+void DISensorBundleActivator::createResource(resourceInfo resourceInfo)
 {
     if (resourceInfo.resourceType == "oic.softsensor")
     {
@@ -89,7 +90,7 @@ void SoftSensorBundleActivator::createResource(resourceInfo resourceInfo)
     }
 }
 
-void SoftSensorBundleActivator::destroyResource(BundleResource *resource)
+void DISensorBundleActivator::destroyResource(BundleResource *resource)
 {
     std::vector <BundleResource *>::iterator itor;
 
@@ -105,7 +106,7 @@ void SoftSensorBundleActivator::destroyResource(BundleResource *resource)
 extern "C" void externalActivateBundle(ResourceContainerBundleAPI *resourceContainer,
                                        std::string bundleId)
 {
-    bundle = new SoftSensorBundleActivator();
+    bundle = new DISensorBundleActivator();
     bundle->activateBundle(resourceContainer, bundleId);
 }
 
