@@ -813,6 +813,7 @@ CAResult_t CASetNextBlockOption1(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
             CADestroyBlockID(blockDataID);
             return CA_STATUS_FAILED;
         }
+        CADestroyDataSet(data);
     }
 
     // update BLOCK OPTION1 type
@@ -989,6 +990,7 @@ CAResult_t CASetNextBlockOption2(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
             CADestroyBlockID(blockDataID);
             return CA_STATUS_FAILED;
         }
+        CADestroyDataSet(data);
     }
 
     // set Block Option Type
@@ -1444,6 +1446,8 @@ CAResult_t CAAddBlockOption(coap_pdu_t **pdu, const CAInfo_t info,
         else
         {
             OIC_LOG(INFO, TAG, "not Blockwise Transfer");
+            CADestroyBlockID(blockDataID);
+            return CA_STATUS_OK;
         }
     }
 
@@ -2482,6 +2486,8 @@ CABlockData_t *CACreateNewBlockData(const CAData_t *sendData)
     {
         OIC_LOG(ERROR, TAG, "blockId is null");
         CADestroyBlockID(blockDataID);
+        CADestroyDataSet(data->sentData);
+        OICFree(data);
         return NULL;
     }
     data->blockDataId = blockDataID;
@@ -2493,6 +2499,7 @@ CABlockData_t *CACreateNewBlockData(const CAData_t *sendData)
     {
         OIC_LOG(ERROR, TAG, "add has failed");
         CADestroyBlockID(data->blockDataId);
+        CADestroyDataSet(data->sentData);
         OICFree(data);
         ca_mutex_unlock(g_context.blockDataListMutex);
         return NULL;
@@ -2529,8 +2536,9 @@ CAResult_t CARemoveBlockDataFromList(const CABlockDataID_t *blockID)
             {
                 CADestroyDataSet(currData->sentData);
             }
-            OICFree(currData->payload);
             CADestroyBlockID(currData->blockDataId);
+            OICFree(currData->payload);
+            OICFree(currData);
             ca_mutex_unlock(g_context.blockDataListMutex);
             return CA_STATUS_OK;
         }

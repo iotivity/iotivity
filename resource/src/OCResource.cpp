@@ -87,6 +87,12 @@ OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
                 interfaces.empty(), m_clientWrapper.expired(), false, false);
     }
 
+    if (uri[0] != '/')
+    {
+        throw ResourceInitException(m_uri.empty(), resourceTypes.empty(),
+                interfaces.empty(), m_clientWrapper.expired(), false, false);
+    }
+
     // construct the devAddr from the pieces we have
     m_devAddr.adapter = static_cast<OCTransportAdapter>(connectivityType >> CT_ADAPTER_SHIFT);
     m_devAddr.flags = static_cast<OCTransportFlags>(connectivityType & CT_MASK_FLAGS);

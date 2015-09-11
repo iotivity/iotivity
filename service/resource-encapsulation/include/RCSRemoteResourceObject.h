@@ -125,14 +125,14 @@ namespace OIC
             ~RCSRemoteResourceObject();
 
             /**
-             * Returns whether monitoring is enabled.
+             * @return Returns whether monitoring is enabled.
              *
              * @see startMonitoring()
              */
             bool isMonitoring() const;
 
             /**
-             * Returns whether caching is enabled.
+             * @return Returns whether caching is enabled.
              *
              * @see startCaching()
              */
@@ -140,7 +140,7 @@ namespace OIC
             bool isCaching() const;
 
             /**
-             * Returns whether the resource is observable.
+             * @return Returns whether the resource is observable.
              *
              */
             bool isObservable() const;
@@ -177,7 +177,7 @@ namespace OIC
             void stopMonitoring();
 
             /**
-             * Returns the current state of the resource.
+             * @return Returns the current state of the resource.
              *
              * @see startMonitoring
              */
@@ -234,13 +234,13 @@ namespace OIC
             void stopCaching();
 
             /**
-             * Returns the current cache state.
+             * @return Returns the current cache state.
              *
              */
             CacheState getCacheState() const;
 
             /**
-             * Returns whether cached data is available.
+             * @return Returns whether cached data is available.
              *
              * Cache will be available always after CacheState::READY even if current state is
              * CacheState::LOST_SIGNAL.
@@ -317,25 +317,25 @@ namespace OIC
                     RemoteAttributesSetCallback cb);
 
             /**
-             * Returns the uri of the resource.
+             * @return Returns the uri of the resource.
              *
              */
             std::string getUri() const;
 
             /**
-             * Returns the address of the resource .
+             * @return Returns the address of the resource .
              *
              */
             std::string getAddress() const;
 
             /**
-             * Returns the resource types of the resource.
+             * @return Returns the resource types of the resource.
              *
              */
             std::vector< std::string > getTypes() const;
 
             /**
-             * Returns the resource interfaces of the resource.
+             * @return Returns the resource interfaces of the resource.
              *
              */
             std::vector< std::string > getInterfaces() const;

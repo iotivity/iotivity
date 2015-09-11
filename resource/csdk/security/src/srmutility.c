@@ -26,7 +26,7 @@
 #include "oic_malloc.h"
 #include "base64.h"
 
-#define TAG  PCF("SRM-UTILITY")
+#define TAG  "SRM-UTILITY"
 
 /**
  * This method initializes the OicParseQueryIter_t struct
@@ -37,7 +37,7 @@
  */
 void ParseQueryIterInit(unsigned char * query, OicParseQueryIter_t * parseIter)
 {
-    OC_LOG (INFO, TAG, PCF("Initializing coap iterator"));
+    OC_LOG (INFO, TAG, "Initializing coap iterator");
     if((NULL == query) || (NULL == parseIter))
         return;
 
@@ -61,7 +61,7 @@ void ParseQueryIterInit(unsigned char * query, OicParseQueryIter_t * parseIter)
  */
 OicParseQueryIter_t * GetNextQuery(OicParseQueryIter_t * parseIter)
 {
-    OC_LOG (INFO, TAG, PCF("Getting Next Query"));
+    OC_LOG (INFO, TAG, "Getting Next Query");
     if(NULL == parseIter)
         return NULL;
 

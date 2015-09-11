@@ -58,7 +58,7 @@ namespace OIC
             * Get affected DataId. ContextModel has plenty of data so \n
             *         returned data is matched from given condition
             *
-            * @return int - the affected DataId
+            * @return the affected DataId
             */
             virtual int getDataId() = 0;
 
@@ -66,16 +66,16 @@ namespace OIC
             * ContextModel has at least one property that contains data \n
             *         property is described from its specification.
             *
-            * @return int - number of properties
+            * @return number of properties
             */
             virtual int getPropertyCount() = 0;
 
             /**
             * Retrieve propertyName
             *
-            * @param propertyIndex - index of property to read
+            * @param propertyIndex index of property to read
             *
-            * @return std::string - property name
+            * @return property name
             */
             virtual std::string getPropertyName(int propertyIndex) = 0;
 
@@ -84,16 +84,16 @@ namespace OIC
             *
             * @param propertyIndex index of property to read
             *
-            * @return std::string - property value
+            * @return property value
             */
             virtual std::string getPropertyValue(int propertyIndex) = 0;
 
             /**
             * Retrieve propertyValue using given name
             *
-            * @param propertyName - property name looking for
+            * @param propertyName property name looking for
             *
-            * @return std::string - property name
+            * @return property value
             */
             virtual std::string getPropertyValueByName(std::string propertyName) = 0;
         protected:
@@ -112,33 +112,33 @@ namespace OIC
             /**
             * Get affected ContextModels. The query can specify multiple ContextModels for retrieving data.
             *
-            * @param pAffectedModels - affected ContextModel list
+            * @param pAffectedModels affected ContextModel list
             *
-            * @return SSMRESULT - return value of the API. Returns SSM_S_OK if success
+            * @return Returns ::SSM_S_OK if success, some other value upon failure.
             */
             virtual SSMRESULT getAffectedModels(std::vector<std::string> *pAffectedModels) = 0;
 
             /**
             * Get affected data count. There are multiple data can exist from given condition.
             *
-            * @param modelName - affected ContextModel name
+            * @param modelName affected ContextModel name
             *
-            * @param pDataCount - affected dataId count
+            * @param pDataCount affected dataId count
             *
-            * @return SSMRESULT - return value of the API. Returns SSM_S_OK if success
+            * @return Returns ::SSM_S_OK if success, some other value upon failure.
             */
             virtual SSMRESULT getModelDataCount(std::string modelName, int *pDataCount) = 0;
 
             /**
             * Get actual Context Model data
             *
-            * @param modelName - affected ContextModel name
+            * @param modelName affected ContextModel name
             *
-            * @param dataIndex - affected dataId index
+            * @param dataIndex affected dataId index
             *
-            * @param ppModelData - affected ContextModel data reader
+            * @param ppModelData affected ContextModel data reader
             *
-            * @return SSMRESULT - return value of the API. Returns SSM_S_OK if success
+            * @return Returns ::SSM_S_OK if success, some other value upon failure.
             */
             virtual SSMRESULT getModelData(std::string modelName, int dataIndex, IModelData **ppModelData) = 0;
         protected:
@@ -157,11 +157,11 @@ namespace OIC
             /**
             * Transmit result of SSMCore to Application layer
             *
-            * @param cqid - entered ContextQuery ID
+            * @param cqid entered ContextQuery ID
             *
-            * @param pResult - result of SSMCore
+            * @param pResult result of SSMCore
             *
-            * @return SSMRESULT - return value of the API. Returns SSM_S_OK if success
+            * @return Returns ::SSM_S_OK if success, some other value upon failure.
             */
             virtual SSMRESULT onQueryEngineEvent(int cqid, IDataReader *pResult) = 0;
         protected:
@@ -171,38 +171,38 @@ namespace OIC
     /**
     * Initialize Soft sensor manager using given configuration information.
     *
-    * @param xmlDescription - specification described in XML
+    * @param xmlDescription specification described in XML
     *
-    * @return SSMRESULT - return value of the API. Returns SSM_S_OK if success
+    * @return Returns ::SSM_S_OK if success, some other value upon failure.
     */
     SSMRESULT InitializeSSM(std::string xmlDescription);
 
     /**
     * Terminates Soft sensor manager
     *
-    * @return SSMRESULT - return value of the API. Returns SSM_S_OK if success
+    * @return Returns ::SSM_S_OK if success,some other value upon failure.
     */
     SSMRESULT TerminateSSM();
 
     /**
     * Execute query and return ContextQuery ID
     *
-    * @param queryString - query for requesting data
+    * @param queryString query for requesting data
     *
-    * @param listener - listener for receiving data related to query
+    * @param listener listener for receiving data related to query
     *
-    * @param cqid - ID of ContextQuery
+    * @param cqid ID of ContextQuery
     *
-    * @return SSMRESULT - return value of the API. Returns SSM_S_OK if success
+    * @return Returns ::SSM_S_OK if success, some other value upon failure.
     */
     SSMRESULT RegisterQuery(std::string queryString, IQueryEngineEvent *listener, int &cqid);
 
     /**
     * Unregister registered query according to cqid
     *
-    * @param cqid - Query corresponding to the cqid will be terminated
+    * @param cqid Query corresponding to the cqid will be terminated
     *
-    * @return SSMRESULT - return value of the API. Returns SSM_S_OK if success
+    * @return Returns ::SSM_S_OK if success, some other value upon failure.
     */
     SSMRESULT UnregisterQuery(int cqid);
 }

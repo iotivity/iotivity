@@ -22,7 +22,7 @@
 #include "logger.h"
 #include "pinoxmcommon.h"
 
-#define TAG PCF("PIN_OXM_COMMON")
+#define TAG "PIN_OXM_COMMON"
 
 static GeneratePinCallback gGenPinCallback = NULL;
 static InputPinCallback gInputPinCallback = NULL;

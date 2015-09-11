@@ -28,7 +28,7 @@
 #include <ocstack.h>
 #include <logger.h>
 
-#define TAG PCF("ocserver")
+#define TAG ("ocserver")
 
 int gQuitFlag = 0;
 OCStackResult createLightResource();

@@ -284,6 +284,7 @@ CAResult_t CACloneInfo(const CAInfo_t *info, CAInfo_t *clone)
         clone->payload = temp;
         clone->payloadSize = info->payloadSize;
     }
+    clone->payloadFormat = info->payloadFormat;
 
     if (info->resourceUri)
     {

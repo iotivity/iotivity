@@ -17,16 +17,21 @@
  * limitations under the License.
  *
  ******************************************************************/
-#ifndef __DIAGNOSTICS_RESOURCE_H__
-#define __DIAGNOSTICS_RESOURCE_H__
+#ifndef MAINTENANCE_RESOURCE_H__
+#define MAINTENANCE_RESOURCE_H__
 
 #include <functional>
+#include <thread>
+#include <string>
 
 #include "OCPlatform.h"
 #include "OCApi.h"
-#include "ThingsManager.h"
 
 #pragma once
+
+#define DEFAULT_REBOOT "rb"
+#define DEFAULT_FACTORYRESET "fr"
+#define DEFAULT_STARTCOLLECTION "ssc"
 
 using namespace OC;
 
@@ -37,36 +42,36 @@ static std::string defaultFactoryReset = "false";
 static std::string defaultReboot = "false";
 static std::string defaultStartStatCollection = "false";
 
-class DiagnosticsResource
+class MaintenanceResource
 {
     public:
-        // Diagnostics members
-        std::string m_diagnosticsUri;
+        // Maintenance members
+        std::string m_maintenanceUri;
         std::string m_factoryReset;
         std::string m_reboot;
         std::string m_startStatCollection;
-        std::vector< std::string > m_diagnosticsTypes;
-        std::vector< std::string > m_diagnosticsInterfaces;
-        OCResourceHandle m_diagnosticsHandle;
-        OCRepresentation m_diagnosticsRep;
+        std::vector< std::string > m_maintenanceTypes;
+        std::vector< std::string > m_maintenanceInterfaces;
+        OCResourceHandle m_maintenanceHandle;
+        OCRepresentation m_maintenanceRep;
 
     public:
 
-        DiagnosticsResource();
+        MaintenanceResource();
 
         void createResource(ResourceEntityHandler callback);
 
-        void setDiagnosticsRepresentation(OCRepresentation &rep);
+        void setMaintenanceRepresentation(OCRepresentation &rep);
 
-        OCRepresentation getDiagnosticsRepresentation();
+        OCRepresentation getMaintenanceRepresentation();
 
         std::string getUri();
 
-        void diagnosticsMonitor(int second);
+        void maintenanceMonitor(int second);
 
         std::function< void() > factoryReset;
 
         void deleteResource();
 };
 
-#endif // __DIAGNOSTICS_RESOURCE_H__
+#endif // MAINTENANCE_RESOURCE_H__

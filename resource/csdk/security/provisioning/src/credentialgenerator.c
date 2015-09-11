@@ -37,7 +37,7 @@
  *       must define "OCStackResult res" for setting error code.
  * */
 #define PM_VERIFY_SUCCESS(tag, op, errCode, logLevel) { if (!(op)) \
-                       {OC_LOG((logLevel), tag, PCF(#op " failed!!")); res = errCode; goto bail;} }
+                       {OC_LOG((logLevel), tag, #op " failed!!"); res = errCode; goto bail;} }
 /**
  * @def PM_VERIFY_NON_NULL
  * @brief Macro to verify argument is not equal to NULL.
@@ -45,7 +45,7 @@
  * @note Invoking function must define "bail:" label for goto functionality to work correctly.
  * */
 #define PM_VERIFY_NON_NULL(tag, arg, errCode, logLevel) { if (NULL == (arg)) \
-                   { OC_LOG((logLevel), tag, PCF(#arg " is NULL")); res = errCode; goto bail;} }
+                   { OC_LOG((logLevel), tag, #arg " is NULL"); res = errCode; goto bail;} }
 
 OCStackResult PMGeneratePairWiseCredentials(OicSecCredType_t type, size_t keySize,
                                     const OicUuid_t *ptDeviceId,

@@ -41,7 +41,7 @@
 #include <strings.h>
 #endif
 
-#define TAG  PCF("SRM-ACL")
+#define TAG  "SRM-ACL"
 
 OicSecAcl_t               *gAcl = NULL;
 static OCResourceHandle    gAclHandle = NULL;
@@ -54,7 +54,7 @@ static void FreeACE(OicSecAcl_t *ace)
     size_t i;
     if(NULL == ace)
     {
-        OC_LOG (INFO, TAG, PCF("Invalid Parameter"));
+        OC_LOG (INFO, TAG, "Invalid Parameter");
         return;
     }
 
@@ -423,7 +423,7 @@ static bool UpdatePersistentStorage(const OicSecAcl_t *acl)
 static OCStackResult RemoveACE(const OicUuid_t * subject,
                                const char * resource)
 {
-    OC_LOG(INFO, TAG, PCF("IN RemoveACE"));
+    OC_LOG(INFO, TAG, "IN RemoveACE");
 
     OicSecAcl_t *acl = NULL;
     OicSecAcl_t *tempAcl = NULL;
@@ -432,7 +432,7 @@ static OCStackResult RemoveACE(const OicUuid_t * subject,
 
     if(memcmp(subject->id, &WILDCARD_SUBJECT_ID, sizeof(subject->id)) == 0)
     {
-        OC_LOG_V (INFO, TAG, PCF("%s received invalid parameter"), __func__ );
+        OC_LOG_V (INFO, TAG, "%s received invalid parameter", __func__ );
         return  OC_STACK_INVALID_PARAM;
     }
 
@@ -521,7 +521,7 @@ static OCEntityHandlerResult HandleACLGetRequest (const OCEntityHandlerRequest *
 
     OICFree(jsonStr);
 
-    OC_LOG_V (INFO, TAG, PCF("%s RetVal %d"), __func__ , ehRet);
+    OC_LOG_V (INFO, TAG, "%s RetVal %d", __func__ , ehRet);
     return ehRet;
 }
 
@@ -546,13 +546,13 @@ static OCEntityHandlerResult HandleACLPostRequest (const OCEntityHandlerRequest 
     // Send payload to request originator
     SendSRMResponse(ehRequest, ehRet, NULL);
 
-    OC_LOG_V (INFO, TAG, PCF("%s RetVal %d"), __func__ , ehRet);
+    OC_LOG_V (INFO, TAG, "%s RetVal %d", __func__ , ehRet);
     return ehRet;
 }
 
 static OCEntityHandlerResult HandleACLDeleteRequest(const OCEntityHandlerRequest *ehRequest)
 {
-    OC_LOG (INFO, TAG, PCF("Processing ACLDeleteRequest"));
+    OC_LOG (INFO, TAG, "Processing ACLDeleteRequest");
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
     if(NULL == ehRequest->query)
@@ -609,7 +609,7 @@ OCEntityHandlerResult ACLEntityHandler (OCEntityHandlerFlag flag,
                                         OCEntityHandlerRequest * ehRequest,
                                         void* callbackParameter)
 {
-    OC_LOG(INFO, TAG, PCF("Received request ACLEntityHandler"));
+    OC_LOG(INFO, TAG, "Received request ACLEntityHandler");
     (void)callbackParameter;
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
@@ -621,7 +621,7 @@ OCEntityHandlerResult ACLEntityHandler (OCEntityHandlerFlag flag,
     if (flag & OC_REQUEST_FLAG)
     {
         // TODO :  Handle PUT and DEL methods
-        OC_LOG (INFO, TAG, PCF("Flag includes OC_REQUEST_FLAG"));
+        OC_LOG (INFO, TAG, "Flag includes OC_REQUEST_FLAG");
         switch (ehRequest->method)
         {
             case OC_REST_GET:
@@ -662,7 +662,7 @@ OCStackResult CreateACLResource()
 
     if (OC_STACK_OK != ret)
     {
-        OC_LOG (FATAL, TAG, PCF("Unable to instantiate ACL resource"));
+        OC_LOG (FATAL, TAG, "Unable to instantiate ACL resource");
         DeInitACLResource();
     }
     return ret;

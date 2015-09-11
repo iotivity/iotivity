@@ -31,44 +31,44 @@ import org.iotivity.base.ResourceProperty;
 import android.util.Log;
 
 //For creating/deleting the Diagnostics Resource
-public class DiagnosticsResource {
-    private final String     LOG_TAG               = "[CON-SERVER]"
-                                                           + this.getClass()
-                                                                   .getSimpleName();
-    // diagnostics members
-    private String           diagnosticsUri;
-    private String           factoryReset;
-    private String           reboot;
-    private String           startCollection;
-    private Vector<String>   diagnosticsTypes      = new Vector<String>();
-    private Vector<String>   diagnosticsInterfaces = new Vector<String>();
-    private OcResourceHandle diagnosticsHandle;
-    private OcRepresentation diagnosticsRep        = new OcRepresentation();
+public class MaintenanceResource {
+    private final String     LOG_TAG                 = "[CON-SERVER]"
+                                                             + this.getClass()
+                                                                     .getSimpleName();
+    // maintenance members
+    private String           m_maintenanceUri;
+    private String           m_factoryReset;
+    private String           m_reboot;
+    private String           m_startCollection;
+    private Vector<String>   m_maintenanceTypes      = new Vector<String>();
+    private Vector<String>   m_maintenanceInterfaces = new Vector<String>();
+    private OcResourceHandle m_maintenanceHandle     = null;
+    private OcRepresentation m_maintenanceRep        = new OcRepresentation();
 
     // constructor
-    public DiagnosticsResource() {
-        Log.i(LOG_TAG, "DiagnosticsCollection: enter");
+    public MaintenanceResource() {
+        Log.i(LOG_TAG, "MaintenanceResource: enter");
 
-        factoryReset = ConfigurationDefaultValues.defaultFactoryReset;
-        reboot = ConfigurationDefaultValues.defaultReboot;
-        startCollection = ConfigurationDefaultValues.defaultStartCollection;
+        m_factoryReset = ConfigurationDefaultValues.defaultFactoryReset;
+        m_reboot = ConfigurationDefaultValues.defaultReboot;
+        m_startCollection = ConfigurationDefaultValues.defaultStartCollection;
 
-        diagnosticsUri = ConfigurationDefaultValues.diagURIPrefix;
-        diagnosticsTypes.add(ConfigurationDefaultValues.diagResourceTypePrefix);
-        diagnosticsInterfaces.add(OcPlatform.DEFAULT_INTERFACE);
-        diagnosticsRep.setValueString("fr", factoryReset);
-        diagnosticsRep.setValueString("rb", reboot);
-        diagnosticsRep.setValueString("ssc", startCollection);
-        diagnosticsRep.setUri(diagnosticsUri);
-        diagnosticsRep.setResourceTypes(diagnosticsTypes);
-        diagnosticsRep.setResourceInterfaces(diagnosticsInterfaces);
-
+        m_maintenanceUri = ConfigurationDefaultValues.diagURIPrefix;
+        m_maintenanceTypes
+                .add(ConfigurationDefaultValues.diagResourceTypePrefix);
+        m_maintenanceInterfaces.add(OcPlatform.DEFAULT_INTERFACE);
+        m_maintenanceRep.setValueString("fr", m_factoryReset);
+        m_maintenanceRep.setValueString("rb", m_reboot);
+        m_maintenanceRep.setValueString("ssc", m_startCollection);
+        m_maintenanceRep.setUri(m_maintenanceUri);
+        m_maintenanceRep.setResourceTypes(m_maintenanceTypes);
+        m_maintenanceRep.setResourceInterfaces(m_maintenanceInterfaces);
     }
 
     // for creating Diagnostic Resource
     public void createResource(OcPlatform.EntityHandler listener)
             throws OcException {
-        Log.i(LOG_TAG, "createResource(Diagnostics): enter");
+        Log.i(LOG_TAG, "createResource(Maintenance): enter");
         EnumSet<ResourceProperty> propertySet = EnumSet.of(
                 ResourceProperty.DISCOVERABLE, ResourceProperty.OBSERVABLE);
         if (null == listener) {
@@ -77,10 +77,10 @@ public class DiagnosticsResource {
         }
 
         // Register diagnostic resource
-        diagnosticsHandle = OcPlatform.registerResource(diagnosticsUri,
-                diagnosticsTypes.get(0), diagnosticsInterfaces.get(0),
+        m_maintenanceHandle = OcPlatform.registerResource(m_maintenanceUri,
+                m_maintenanceTypes.get(0), m_maintenanceInterfaces.get(0),
                 listener, propertySet);
-        if (null == diagnosticsHandle) {
+        if (null == m_maintenanceHandle) {
             Log.e(LOG_TAG, "registerResource failed!");
             return;
         }
@@ -94,7 +94,7 @@ public class DiagnosticsResource {
                         // Sleep value can be changed as per the developer
                         // convenience.
                         Thread.sleep(1000);
-                        if (reboot.equalsIgnoreCase("true")) {
+                        if (m_reboot.equalsIgnoreCase("true")) {
                             Log.i(LOG_TAG, "Reboot will be soon...");
                             MainActivity mainActivityObj = MainActivity
                                     .getMainActivityObject();
@@ -119,10 +119,10 @@ public class DiagnosticsResource {
                                         + e.toString());
                                 continue;
                             }
-                            reboot = ConfigurationDefaultValues.defaultReboot;
+                            m_reboot = ConfigurationDefaultValues.defaultReboot;
                         }
-                        if (factoryReset.equalsIgnoreCase("true")) {
-                            factoryReset = ConfigurationDefaultValues.defaultFactoryReset;
+                        if (m_factoryReset.equalsIgnoreCase("true")) {
+                            m_factoryReset = ConfigurationDefaultValues.defaultFactoryReset;
                             factoryReset();
                         }
                     }
@@ -144,51 +144,50 @@ public class DiagnosticsResource {
         String ssc = rep.getValueString("ssc");
 
         if (!(fr.equalsIgnoreCase(""))) {
-            factoryReset = fr;
+            m_factoryReset = fr;
             Log.i(LOG_TAG,
                     "setConfigurationRepresentation: New value(FactoryReset): "
                             + fr);
         }
         if (!(rb.equalsIgnoreCase(""))) {
-            reboot = rb;
+            m_reboot = rb;
             Log.i(LOG_TAG, "setDiagnosticsRepresentation: new value:(reboot) "
                     + rb);
         }
 
         if (!(ssc.equalsIgnoreCase(""))) {
-            startCollection = ssc;
+            m_startCollection = ssc;
             Log.i(LOG_TAG,
                     "setDiagnosticsRepresentation: new value:(startcollection) "
                             + ssc);
         }
-
         Log.i(LOG_TAG, "setDiagnosticsRepresentation: exit");
     }
 
     OcRepresentation getDiagnosticsRepresentation() {
-        diagnosticsRep.setValueString("fr", factoryReset);
-        diagnosticsRep.setValueString("rb", reboot);
-        diagnosticsRep.setValueString("ssc", startCollection);
-        return diagnosticsRep;
+        m_maintenanceRep.setValueString("fr", m_factoryReset);
+        m_maintenanceRep.setValueString("rb", m_reboot);
+        m_maintenanceRep.setValueString("ssc", m_startCollection);
+        return m_maintenanceRep;
     }
 
     public String getUri() {
-        return diagnosticsUri;
+        return m_maintenanceUri;
     }
 
     // For Resetting diagnostics Resource attributes to their default values
     public void factoryReset() {
-        factoryReset = ConfigurationDefaultValues.defaultFactoryReset;
-        reboot = ConfigurationDefaultValues.defaultReboot;
-        startCollection = ConfigurationDefaultValues.defaultStartCollection;
+        m_factoryReset = ConfigurationDefaultValues.defaultFactoryReset;
+        m_reboot = ConfigurationDefaultValues.defaultReboot;
+        m_startCollection = ConfigurationDefaultValues.defaultStartCollection;
     }
 
     // For Deleting diagnostic resource
     public void deleteResource() {
         try {
-            if (null != diagnosticsHandle) {
+            if (null != m_maintenanceHandle) {
                 // Unregister the collection resource
-                OcPlatform.unregisterResource(diagnosticsHandle);
+                OcPlatform.unregisterResource(m_maintenanceHandle);
             }
         } catch (OcException e) {
             Log.e(LOG_TAG, "OcException occured! " + e.toString());

@@ -32,7 +32,7 @@
 const char *getResult(OCStackResult result);
 std::string getQueryStrForGetPut();
 
-#define TAG PCF("occlient")
+#define TAG ("occlient")
 #define DEFAULT_CONTEXT_VALUE 0x99
 #ifndef MAX_LENGTH_IPv4_ADDR
 #define MAX_LENGTH_IPv4_ADDR 16
@@ -166,7 +166,7 @@ OCStackApplicationResult putReqCB(void* ctx, OCDoHandle /*handle*/,
     if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
         OC_LOG_V(INFO, TAG, "Callback Context for PUT query recvd successfully");
-        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+        OC_LOG_PAYLOAD(INFO, clientResponse->payload);
     }
 
     return OC_STACK_KEEP_TRANSACTION;
@@ -183,13 +183,13 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle /*handle*/,
         if(clientResponse->sequenceNumber == 0)
         {
             OC_LOG_V(INFO, TAG, "Callback Context for GET query recvd successfully");
-            OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+            OC_LOG_PAYLOAD(INFO, clientResponse->payload);
         }
         else
         {
             OC_LOG_V(INFO, TAG, "Callback Context for Get recvd successfully %d",
                     gNumObserveNotifies);
-            OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);;
+            OC_LOG_PAYLOAD(INFO, clientResponse->payload);;
             gNumObserveNotifies++;
             if (gNumObserveNotifies == 3)
             {
@@ -225,7 +225,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle /*handle*/,
             "Device =============> Discovered @ %s:%d",
             clientResponse->devAddr.addr,
             clientResponse->devAddr.port);
-    OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+    OC_LOG_PAYLOAD(INFO, clientResponse->payload);
 
     ConnType = clientResponse->connType;
 
@@ -275,7 +275,7 @@ int InitObserveRequest(OCClientResponse * clientResponse)
     cbData.cd = NULL;
     OC_LOG_V(INFO, TAG, "OBSERVE payload from client =");
     OCPayload* payload = putPayload();
-    OC_LOG_PAYLOAD(INFO, TAG, payload);
+    OC_LOG_PAYLOAD(INFO, payload);
     OCPayloadDestroy(payload);
 
     ret = OCDoResource(&handle, OC_REST_OBSERVE, obsReg.str().c_str(),
@@ -307,7 +307,7 @@ int InitPutRequest(OCClientResponse * clientResponse)
     cbData.cd = NULL;
     OC_LOG_V(INFO, TAG, "PUT payload from client = ");
     OCPayload* payload = putPayload();
-    OC_LOG_PAYLOAD(INFO, TAG, payload);
+    OC_LOG_PAYLOAD(INFO, payload);
     OCPayloadDestroy(payload);
 
     ret = OCDoResource(NULL, OC_REST_PUT, getQuery.str().c_str(),
