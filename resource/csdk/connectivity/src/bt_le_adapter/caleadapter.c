@@ -844,9 +844,17 @@ static void CALEDataReceiverHandler(void *threadData)
                 ca_mutex_unlock(g_bleReceiveDataMutex);
                 return;
             }
+
             OIC_LOG(DEBUG, CALEADAPTER_TAG, "Sending data up !");
-            g_networkPacketReceivedCallback(senderInfo->remoteEndpoint,
-                                                senderInfo->defragData, senderInfo->recvDataLen);
+
+            const CASecureEndpoint_t tmp =
+                {
+                    .endpoint = *senderInfo->remoteEndpoint
+                };
+
+            g_networkPacketReceivedCallback(&tmp,
+                                            senderInfo->defragData,
+                                            senderInfo->recvDataLen);
             ca_mutex_unlock(g_bleAdapterReqRespCbMutex);
             u_arraylist_remove(g_senderInfo, senderIndex);
             senderInfo->remoteEndpoint = NULL;
@@ -2180,11 +2188,12 @@ static CAResult_t CALEAdapterServerReceivedData(const char *remoteAddress,
 #ifdef SINGLE_THREAD
     if(g_networkPacketReceivedCallback)
     {
-        CAEndpoint_t endPoint =
-            { .adapter = CA_ADAPTER_GATT_BTLE };  // will be filled by
-                                                  // upper layer
+        // will be filled by upper layer
+        const CASecureEndpoint_t endpoint =
+            { .endpoint = { .adapter = CA_ADAPTER_GATT_BTLE } };
 
-        g_networkPacketReceivedCallback(&endPoint, data, dataLength);
+
+        g_networkPacketReceivedCallback(&endpoint, data, dataLength);
     }
 #else
     VERIFY_NON_NULL_RET(g_bleReceiverQueue,
