@@ -61,31 +61,6 @@
 #define TAG "OTM"
 
 /**
- * Possible states of ownership transfer manager module.
- */
-typedef enum
-{
-    SP_NO_MASK                = (0       ),
-    SP_DISCOVERY_STARTED      = (0x1 << 1),
-    SP_DISCOVERY_ERROR        = (0x1 << 2),
-    SP_DISCOVERY_DONE         = (0x1 << 3),
-    SP_UP_OWN_TR_METH_STARTED = (0x1 << 4),
-    SP_UP_OWN_TR_METH_ERROR   = (0x1 << 5),
-    SP_UP_OWN_TR_METH_DONE    = (0x1 << 6),
-    SP_LIST_METHODS_STARTED   = (0x1 << 7),
-    SP_LIST_METHODS_ERROR     = (0x1 << 8),
-    SP_LIST_METHODS_DONE      = (0x1 << 9),
-    SP_UPDATE_OP_MODE_STARTED = (0x1 << 10),
-    SP_UPDATE_OP_MODE_ERROR   = (0x1 << 11),
-    SP_UPDATE_OP_MODE_DONE    = (0x1 << 12),
-    SP_UPDATE_OWNER_STARTED   = (0x1 << 13),
-    SP_UPDATE_OWNER_ERROR     = (0x1 << 14),
-    SP_UPDATE_OWNER_DONE      = (0x1 << 15)
-} OTMStates;
-
-
-
-/**
  * Array to store the callbacks for each owner transfer method.
  */
 static OTMCallbackData_t g_OTMDatas[OIC_OXM_COUNT];
