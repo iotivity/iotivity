@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *		http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,11 +23,11 @@
 namespace RAML
 {
 
-    std::map<std::string, Header> Response::getHeaders() const
+    std::map<std::string, HeaderPtr> const &Response::getHeaders() const
     {
         return m_headers;
     }
-    void Response::setHeader(const std::string &headerName, const Header &header)
+    void Response::setHeader(const std::string &headerName, const HeaderPtr &header)
     {
         m_headers[headerName] = header;
     }
@@ -41,24 +41,23 @@ namespace RAML
     }
     void Response::setResponseBody(const std::string &typeName)
     {
-        m_responseBody[typeName] = *(new RequestResponseBody(typeName));
+        m_responseBody[typeName] = std::make_shared<RequestResponseBody>(typeName);
     }
-    void Response::setResponseBody(const std::string &type, const RequestResponseBody &body)
+    void Response::setResponseBody(const std::string &type, const RequestResponseBodyPtr &body)
     {
         m_responseBody[type] = body;
     }
-    std::map<std::string, RequestResponseBody> Response::getResponseBody() const
+    std::map<std::string, RequestResponseBodyPtr> const &Response::getResponseBody() const
     {
         return m_responseBody;
     }
-    RequestResponseBody &Response::getResponseBody(std::string bodyType)
+    RequestResponseBodyPtr Response::getResponseBody(const std::string &bodyType)
     {
         return m_responseBody[bodyType];
     }
 
-    void Response::readResponse(const YAML::Node &yamlNode, IncludeResolver *includeResolver)
+    void Response::readResponse(const YAML::Node &yamlNode)
     {
-        m_includeResolver = includeResolver;
         for ( YAML::const_iterator it = yamlNode.begin(); it != yamlNode.end(); ++it )
         {
             std::string key = READ_NODE_AS_STRING(it->first);
@@ -72,7 +71,7 @@ namespace RAML
                 for ( YAML::const_iterator tt = responseBody.begin(); tt != responseBody.end(); ++tt )
                 {
                     std::string type = READ_NODE_AS_STRING(tt->first);
-                    setResponseBody(type, *(new RequestResponseBody(type, tt->second, m_includeResolver)));
+                    setResponseBody(type, std::make_shared<RequestResponseBody>(type, tt->second, m_includeResolver));
                 }
             }
             else if (key == Keys::Headers)
@@ -80,8 +79,7 @@ namespace RAML
                 YAML::Node paramNode = it->second;
                 for ( YAML::const_iterator tt = paramNode.begin(); tt != paramNode.end(); ++tt )
                 {
-                    Header *header = new Header(tt->second);
-                    setHeader(READ_NODE_AS_STRING(tt->first), *header);
+                    setHeader(READ_NODE_AS_STRING(tt->first), std::make_shared<Header>(tt->second));
                 }
             }
         }

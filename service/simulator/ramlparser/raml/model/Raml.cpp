@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *		http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -50,7 +50,7 @@ namespace RAML
         m_baseUri = baseUri;
     }
 
-    std::list<std::string> Raml::getProtocols() const
+    std::list<std::string> const &Raml::getProtocols() const
     {
         return m_protocols;
     }
@@ -58,11 +58,11 @@ namespace RAML
     {
         m_protocols.push_back(protocol);
     }
-    std::map<std::string, UriParameter> Raml::getBaseUriParameters() const
+    std::map<std::string, UriParameterPtr> const &Raml::getBaseUriParameters() const
     {
         return m_baseUriParameters;
     }
-    void Raml::setBaseUriParameter(const std::string &paramName, const UriParameter &uriParameter)
+    void Raml::setBaseUriParameter(const std::string &paramName, const UriParameterPtr &uriParameter)
     {
         m_baseUriParameters[paramName] = uriParameter;
     }
@@ -76,54 +76,54 @@ namespace RAML
         m_mediaType = mediaType;
     }
 
-    std::list<std::pair<std::string, Schema> > Raml::getSchemas() const
+    std::list<std::pair<std::string, SchemaPtr> > const &Raml::getSchemas() const
     {
         return m_schemas;
     }
 
-    void Raml::setSchema(const std::pair<std::string, Schema> &schema)
+    void Raml::setSchema(const std::string &schemaName, const SchemaPtr &schema)
     {
-        m_schemas.push_back(schema);
+        m_schemas.push_back(std::make_pair(schemaName, schema));
     }
 
-    std::list<std::pair<std::string, RamlResource> > Raml::getResourceTypes() const
+    std::list<std::pair<std::string, RamlResourcePtr> > const &Raml::getResourceTypes() const
     {
         return m_resourceTypes;
     }
-    void Raml::setResourceType(const std::pair<std::string, RamlResource> &resourceType)
+    void Raml::setResourceType(const std::string &typeName, const RamlResourcePtr &resourceType)
     {
-        m_resourceTypes.push_back(resourceType);
+        m_resourceTypes.push_back(std::make_pair(typeName, resourceType));
     }
 
-    std::list<std::pair<std::string, Action> > Raml::getTraits() const
+    std::list<std::pair<std::string, ActionPtr> > const &Raml::getTraits() const
     {
         return m_traits;
     }
-    void Raml::setTrait(const std::pair<std::string, Action> &trait)
+    void Raml::setTrait(const std::string &traitName, const ActionPtr &trait)
     {
-        m_traits.push_back(trait);
+        m_traits.push_back(std::make_pair(traitName, trait));
     }
-    RamlResource &Raml::getResource(std::string resourceName)
+    RamlResourcePtr Raml::getResource(const std::string &resourceName)
     {
         return m_resources[resourceName];
     }
 
-    std::map<std::string, RamlResource> Raml::getResources() const
+    std::map<std::string, RamlResourcePtr> const &Raml::getResources() const
     {
         return m_resources;
     }
 
-    void Raml::setResource(const std::string &resourceKey, const RamlResource &resource)
+    void Raml::setResource(const std::string &resourceKey, const RamlResourcePtr &resource)
     {
         m_resources[resourceKey] = resource;
     }
 
-    void Raml::setDocumentationItem(const DocumentationItem &documentationItem)
+    void Raml::setDocumentationItem(const std::shared_ptr<DocumentationItem> &documentationItem)
     {
         m_documentation.push_back(documentationItem);
     }
 
-    std::list<DocumentationItem> Raml::getDocumentation() const
+    std::list<std::shared_ptr<DocumentationItem> > const &Raml::getDocumentation() const
     {
         return m_documentation;
     }
@@ -151,8 +151,7 @@ namespace RAML
                     YAML::Node paramNode = it->second;
                     for ( YAML::const_iterator tt = paramNode.begin(); tt != paramNode.end(); ++tt )
                     {
-                        UriParameter *uriParameter = new UriParameter(tt->second);
-                        setBaseUriParameter(READ_NODE_AS_STRING(tt->first), *uriParameter);
+                        setBaseUriParameter(READ_NODE_AS_STRING(tt->first), std::make_shared<UriParameter>(tt->second));
                     }
                 }
                 else if (key == Keys::Protocols)
@@ -185,7 +184,7 @@ namespace RAML
                                 content = READ_NODE_AS_STRING(tt->second);
 
                         }
-                        setDocumentationItem(*(new DocumentationItem(title, content)));
+                        setDocumentationItem(std::make_shared<DocumentationItem>(title, content));
                     }
                 }
                 else if (key == Keys::Schemas)
@@ -201,23 +200,20 @@ namespace RAML
                             IncludeResolver::FileType fileType = m_includeResolver->getFileType(tt->second);
                             if ((fileType == IncludeResolver::FileType::JSON) || (fileType == IncludeResolver::FileType::FILE))
                             {
-                                Schema *schemaPtr = new Schema(m_includeResolver->readFromFile(tt->second));
-                                schema = std::make_pair(key, *schemaPtr);
+                                setSchema(key, std::make_shared<Schema>(m_includeResolver->readFromFile(tt->second),
+                                                                        m_includeResolver));
                             }
                             else
                             {
-                                std::string value = READ_NODE_AS_STRING(tt->second);
-                                schema = std::make_pair(key, *(new Schema(value)));
+                                setSchema(key, std::make_shared<Schema>(READ_NODE_AS_STRING(tt->second), m_includeResolver));
                             }
-                            setSchema(schema);
                         }
                     }
                 }
 
                 else if (key.compare(0, Keys::Resource.length(), Keys::Resource)  == 0)
                 {
-                    RamlResource *resource = new RamlResource(key, it->second, m_includeResolver, getBaseUri());
-                    setResource(key, *resource);
+                    setResource(key, std::make_shared<RamlResource>(key, it->second, m_includeResolver, getBaseUri()));
                 }
                 else if (key == Keys::Traits)
                 {
@@ -227,12 +223,7 @@ namespace RAML
                         for (auto elem : *tt)
                         {
                             std::string trait = READ_NODE_AS_STRING(elem.first);
-                            Action *action = new Action(ActionType::NONE, elem.second , m_includeResolver);
-
-                            std::pair<std::string, Action> resourceTrait;
-                            resourceTrait = std::make_pair(trait, *action);
-
-                            setTrait(resourceTrait);
+                            setTrait(trait, std::make_shared<Action>(ActionType::NONE, elem.second , m_includeResolver));
                         }
                     }
                 }
@@ -244,12 +235,8 @@ namespace RAML
                         for (auto elem : *tt)
                         {
                             std::string type = READ_NODE_AS_STRING(elem.first);
-                            RamlResource *resource = new RamlResource(type, elem.second, m_includeResolver, getBaseUri());
-
-                            std::pair<std::string, RamlResource> resourceType;
-                            resourceType = std::make_pair(type, *resource);
-
-                            setResourceType(resourceType);
+                            setResourceType(type, std::make_shared<RamlResource>(type, elem.second, m_includeResolver,
+                                            getBaseUri()));
 
                         }
 

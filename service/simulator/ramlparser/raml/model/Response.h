@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *		http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -34,25 +34,27 @@ namespace RAML
     class Response
     {
         public:
-            virtual std::map<std::string, Header> getHeaders() const;
-            virtual void setHeader(const std::string &headerName, const Header &header);
+            virtual std::map<std::string, HeaderPtr> const &getHeaders() const;
+            virtual void setHeader(const std::string &headerName, const HeaderPtr &header);
             virtual std::string getDescription() const;
             virtual void setDescription(const std::string &description);
             virtual void setResponseBody(const std::string &typeName);
-            virtual void setResponseBody(const std::string &type, const RequestResponseBody &body) ;
-            virtual std::map<std::string, RequestResponseBody> getResponseBody() const;
-            virtual RequestResponseBody &getResponseBody(const std::string bodyType);
+            virtual void setResponseBody(const std::string &type, const RequestResponseBodyPtr &body) ;
+            virtual std::map<std::string, RequestResponseBodyPtr> const &getResponseBody() const;
+            virtual RequestResponseBodyPtr getResponseBody(const std::string &bodyType);
 
 
-            Response() {}
-            Response(const YAML::Node &yamlNode, IncludeResolver *includeResolver) { readResponse(yamlNode, includeResolver);}
+            Response() : m_includeResolver(NULL) {}
+            Response(const YAML::Node &yamlNode,
+                     const IncludeResolverPtr &includeResolver): m_includeResolver(includeResolver)  { readResponse(yamlNode);}
         private:
-            void readResponse(const YAML::Node &yamlNode, IncludeResolver *includeResolver) ;
+            void readResponse(const YAML::Node &yamlNode) ;
         private:
             std::string m_description;
-            std::map<std::string, RequestResponseBody> m_responseBody;
-            std::map<std::string, Header> m_headers;
-            IncludeResolver *m_includeResolver;
+            std::map<std::string, RequestResponseBodyPtr> m_responseBody;
+            std::map<std::string, HeaderPtr> m_headers;
+            IncludeResolverPtr m_includeResolver;
     };
+    typedef std::shared_ptr<Response> ResponsePtr;
 }
 #endif

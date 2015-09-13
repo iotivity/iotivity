@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *		http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,15 +23,6 @@
 
 namespace RAML
 {
-    RamlResource *RamlResource::getParentResource()
-    {
-        return m_parentResource;
-    }
-    void RamlResource::setParentResource(RamlResource *parentResource)
-    {
-        m_parentResource = parentResource;
-    }
-
     std::string RamlResource::getDisplayName() const
     {
         return m_displayName;
@@ -64,45 +55,47 @@ namespace RAML
     {
         m_relativeUri = relativeUri;
     }
-    std::map<std::string, UriParameter> RamlResource::getUriParameters() const
+    std::map<std::string, UriParameterPtr> const &RamlResource::getUriParameters() const
     {
         return m_uriParameters;
     }
-    void RamlResource::setUriParameter(const std::string &paramName, const UriParameter &uriParameter)
+    void RamlResource::setUriParameter(const std::string &paramName,
+                                       const UriParameterPtr &uriParameter)
     {
         m_uriParameters[paramName] = uriParameter;
     }
-    std::map<std::string, UriParameter > RamlResource::getBaseUriParameters() const
+    std::map<std::string, UriParameterPtr > const &RamlResource::getBaseUriParameters() const
     {
         return m_baseUriParameters;
     }
     void RamlResource::setBaseUriParameter(const std::string &paramName,
-                                           const UriParameter &baseUriParameter)
+                                           const UriParameterPtr &baseUriParameter)
     {
         m_baseUriParameters[paramName] = baseUriParameter;
     }
-    Action &RamlResource::getAction(ActionType actionType)
+    ActionPtr RamlResource::getAction(ActionType actionType)
     {
         return m_actions[actionType];
     }
 
-    std::map<ActionType , Action> RamlResource::getActions() const
+    std::map<ActionType , ActionPtr> const &RamlResource::getActions() const
     {
         return m_actions;
     }
-    void RamlResource::setAction(const ActionType &actiontype , const Action &action )
+    void RamlResource::setAction(const ActionType &actiontype , const ActionPtr &action )
     {
         m_actions[actiontype] = action;
     }
-    std::map<std::string, RamlResource> RamlResource::getResources() const
+    std::map<std::string, std::shared_ptr<RamlResource> > const &RamlResource::getResources() const
     {
         return m_resources;
     }
-    void RamlResource::setResource(const std::string &resourceName, const RamlResource &resources)
+    void RamlResource::setResource(const std::string &resourceName,
+                                   const std::shared_ptr<RamlResource> &resources)
     {
         m_resources[resourceName] = resources;
     }
-    std::list<std::string> RamlResource::getTraits() const
+    std::list<std::string> const &RamlResource::getTraits() const
     {
         return m_traits;
     }
@@ -123,9 +116,8 @@ namespace RAML
         return (m_parentUri + m_relativeUri);
     }
     void RamlResource::readResource(const std::string resourceKey, const YAML::Node &yamlNode,
-                                    IncludeResolver *includeResolver, const std::string &parentUri)
+                                    const std::string &parentUri)
     {
-        m_includeResolver = includeResolver;
         m_relativeUri = resourceKey;
         m_parentUri = parentUri;
         for ( YAML::const_iterator it = yamlNode.begin(); it != yamlNode.end(); ++it )
@@ -140,15 +132,14 @@ namespace RAML
             {
                 ActionType actionType = GET_ACTION_TYPE(key);
 
-                setAction(actionType, *(new Action(actionType, it->second, m_includeResolver)));
+                setAction(actionType, std::make_shared<Action>(actionType, it->second, m_includeResolver));
             }
             else if (key == Keys::UriParameters)
             {
                 YAML::Node paramNode = it->second;
                 for ( YAML::const_iterator tt = paramNode.begin(); tt != paramNode.end(); ++tt )
                 {
-                    UriParameter *uriParameter = new UriParameter(tt->second);
-                    setUriParameter(READ_NODE_AS_STRING(tt->first), *uriParameter);
+                    setUriParameter(READ_NODE_AS_STRING(tt->first), std::make_shared<UriParameter>(tt->second));
                 }
             }
             else if (key == Keys::BaseUriParameters)
@@ -156,8 +147,7 @@ namespace RAML
                 YAML::Node paramNode = it->second;
                 for ( YAML::const_iterator tt = paramNode.begin(); tt != paramNode.end(); ++tt )
                 {
-                    UriParameter *uriParameter = new UriParameter(tt->second);
-                    setBaseUriParameter(READ_NODE_AS_STRING(tt->first), *uriParameter);
+                    setBaseUriParameter(READ_NODE_AS_STRING(tt->first), std::make_shared<UriParameter>(tt->second));
                 }
             }
             else if (key == Keys::IsTrait)
@@ -171,6 +161,11 @@ namespace RAML
             else if (key == Keys::Type)
             {
                 setResourceType(READ_NODE_AS_STRING(it->second));
+            }
+            else if (key.compare(0, Keys::Resource.length(), Keys::Resource)  == 0)
+            {
+                setResource(key, std::make_shared<RamlResource>(key, it->second, m_includeResolver,
+                            getResourceUri()));
             }
         }
     }

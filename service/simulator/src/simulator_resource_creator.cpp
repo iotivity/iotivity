@@ -29,55 +29,47 @@ SimulatorResourceServerPtr SimulatorResourceCreator::createResource(const std::s
 {
     std::shared_ptr<SimulatorResourceServer> resource(new SimulatorResourceServer);
 
-    if (configPath.length() > 0)
-    {
-        std::size_t found = configPath.find_last_of("/\\");
-        if (found > configPath.length())
-        {
-            return resource;
-        }
-        std::string filePath = configPath.substr(0, found) + "/";
-        std::string fileName = configPath.substr(found + 1);
-
-        RamlPtr raml = (new RamlParser(filePath, fileName))->build();
+    RamlParser *ramlParser = new RamlParser(configPath);
+    RamlPtr raml = ramlParser->getRamlPtr();
         for (auto  resours : raml->getResources())
         {
             resource->setName(resours.first);
-            resource->setURI(resours.second.getResourceUri());
-            for (auto  action :  resours.second.getActions())
+        resource->setURI(resours.second->getResourceUri());
+        // TODO: Currently setting only baseline interface.
+        resource->setInterfaceType(OC::DEFAULT_INTERFACE);
+        // TODO: Need to modify based on the spec for observable property
+        resource->setObservable(true);
+        for (auto  action :  resours.second->getActions())
             {
-                for (auto  response :  action.second.getResponses())
+            for (auto  response :  action.second->getResponses())
                 {
-                    for (auto bdy :  response.second.getResponseBody())
+                for (auto bdy :  response.second->getResponseBody())
                     {
-                        auto resourceProperties = bdy.second.getSchema()->getProperties();
+                    auto resourceProperties = bdy.second->getSchema()->getProperties();
 
-                        resource->setResourceType(resourceProperties->getResoureType());
-                        resource->setInterfaceType(resourceProperties->getInterface());
-
-                        for ( auto property : resourceProperties->getAttributes() )
-                        {
-                            int type = property.second.getValueType();
+                    for ( auto property : resourceProperties->getProperties() )
+                    {
+                            int type = property.second->getValueType();
                             if (type)
                             {
-                                std::string attributeValue = property.second.getValueString();
-                                resource->addAttribute(property.second.getName(), std::string(attributeValue));
+                                std::string attributeValue = property.second->getValueString();
+                                resource->addAttribute(property.second->getName(), std::string(attributeValue));
                             }
                             else
                             {
-                                int attributeValue = property.second.getValueInt();
-                                resource->addAttribute(property.second.getName(), int(attributeValue));
+                                int attributeValue = property.second->getValueInt();
+                                resource->addAttribute(property.second->getName(), int(attributeValue));
                             }
 
-                            resource->setUpdateInterval(property.second.getName(), property.second.getUpdateFrequencyTime());
+                            resource->setUpdateInterval(property.second->getName(), property.second->getUpdateFrequencyTime());
 
-                            int min = 0, max = 0;
-                            property.second.getRange(min, max);
-                            resource->setRange(property.second.getName(), min, max);
+                            int min = 0, max = 0, multipleof = 0;
+                            property.second->getRange(min, max, multipleof);
+                            resource->setRange(property.second->getName(), min, max);
 
 
-                            if (property.second.getAllowedValuesSize() > 0)
-                                resource->setAllowedValues(property.second.getName(), property.second.getAllowedValues());
+                            if (property.second->getAllowedValuesSize() > 0)
+                                resource->setAllowedValues(property.second->getName(), property.second->getAllowedValues());
                         }
                         SIM_LOG(ILogger::INFO, "Created sample resource");
                         return resource;
@@ -86,8 +78,7 @@ SimulatorResourceServerPtr SimulatorResourceCreator::createResource(const std::s
 
             }
         }
-    }
-    SIM_LOG(ILogger::INFO, "Created sample resource");
+
     return resource;
 }
 

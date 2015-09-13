@@ -17,21 +17,25 @@
  * limitations under the License.
  *
  ******************************************************************/
+#ifndef HELPERS_H_
+#define HELPERS_H_
 
-#ifndef QUERY_PARAMETER_H
-#define QUERY_PARAMETER_H
-
-#include "AbstractParam.h"
+#include <string>
+#include <vector>
+#include <map>
+#include <boost/variant.hpp>
+#include <boost/lexical_cast.hpp>
 
 namespace RAML
 {
-    class QueryParameter: public AbstractParam
-    {
-        public:
-            QueryParameter(const YAML::Node &yamlNode) : AbstractParam(yamlNode) {}
-            QueryParameter() {}
-    };
-    typedef std::shared_ptr<QueryParameter> QueryParameterPtr;
+
+
+    typedef boost::variant <
+    int,
+    double,
+    bool,
+    std::string
+    > ValueVariant;
 
 }
 #endif

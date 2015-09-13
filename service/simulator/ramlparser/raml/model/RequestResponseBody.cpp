@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *		http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,11 +31,11 @@ namespace RAML
     {
         m_type = type;
     }
-    Schema *RequestResponseBody::getSchema() const
+    SchemaPtr const &RequestResponseBody::getSchema() const
     {
         return m_schema;
     }
-    void RequestResponseBody::setSchema(Schema *schema)
+    void RequestResponseBody::setSchema(const SchemaPtr &schema)
     {
         m_schema = schema;
     }
@@ -47,22 +47,19 @@ namespace RAML
     {
         m_example = example;
     }
-    std::map<std::string, FormParameter > RequestResponseBody::getFormParameters() const
+    std::map<std::string, FormParameterPtr > const &RequestResponseBody::getFormParameters() const
     {
         return m_formParameters ;
     }
     void RequestResponseBody::setFormParameter(const std::string &paramName,
-            const FormParameter  &formParameter)
+            const FormParameterPtr  &formParameter)
     {
         m_formParameters[paramName] = formParameter;
     }
     void RequestResponseBody::readRequestResponseBody(const std::string &type,
-            const YAML::Node &yamlNode,
-            IncludeResolver *includeResolver)
+            const YAML::Node &yamlNode)
     {
         m_type = type;
-        m_schema = NULL;
-        m_includeResolver = includeResolver;
         for ( YAML::const_iterator it = yamlNode.begin(); it != yamlNode.end(); ++it )
         {
             std::string key = READ_NODE_AS_STRING(it->first);
@@ -72,12 +69,12 @@ namespace RAML
                 IncludeResolver::FileType fileType = m_includeResolver->getFileType(it->second);
                 if ((fileType == IncludeResolver::FileType::JSON) || (fileType == IncludeResolver::FileType::FILE))
                 {
-                    setSchema(new Schema(m_includeResolver->readFromFile(it->second)));
+                    setSchema(std::make_shared<Schema>(m_includeResolver->readFromFile(it->second), m_includeResolver));
                 }
                 else
                 {
                     std::string value = READ_NODE_AS_STRING(it->second);
-                    setSchema(new Schema(value));
+                    setSchema(std::make_shared<Schema>(value, m_includeResolver));
                 }
             }
             else if (key == Keys::Example)
@@ -87,8 +84,7 @@ namespace RAML
                 YAML::Node paramNode = it->second;
                 for ( YAML::const_iterator tt = paramNode.begin(); tt != paramNode.end(); ++tt )
                 {
-                    FormParameter *formParameter = new FormParameter(tt->second);
-                    setFormParameter(READ_NODE_AS_STRING(tt->first), *formParameter);
+                    setFormParameter(READ_NODE_AS_STRING(tt->first), std::make_shared<FormParameter>(tt->second));
                 }
             }
         }

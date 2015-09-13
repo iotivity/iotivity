@@ -18,20 +18,18 @@
  *
  ******************************************************************/
 
-#ifndef QUERY_PARAMETER_H
-#define QUERY_PARAMETER_H
-
-#include "AbstractParam.h"
-
+#include "RamlExceptions.h"
 namespace RAML
 {
-    class QueryParameter: public AbstractParam
+    const char *RamlException::what() const noexcept
     {
-        public:
-            QueryParameter(const YAML::Node &yamlNode) : AbstractParam(yamlNode) {}
-            QueryParameter() {}
-    };
-    typedef std::shared_ptr<QueryParameter> QueryParameterPtr;
-
+        if (m_mark.is_null())
+        {
+            return m_message.c_str();
+        }
+        std::stringstream output;
+        output << "Error at line " << m_mark.line + 1 << ", column "
+               << m_mark.column + 1 << ": " << m_message;
+        return output.str().c_str();
+    }
 }
-#endif

@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *		http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,6 +29,9 @@
 #include "Action.h"
 #include "Response.h"
 #include <map>
+#include "RamlErrorCodes.h"
+#include "yaml-cpp/exceptions.h"
+#include "RamlExceptions.h"
 
 namespace RAML
 {
@@ -36,23 +39,53 @@ namespace RAML
     {
         private:
             void setDataFromRoot();
-            void setBodyDefaultMediaType(std::map<std::string, RamlResource> resource);
-            void setBodySchema(std::map<std::string, RamlResource> resource);
-            void setTypes(std::map<std::string, RamlResource> resource);
-            void setTraits(std::map<std::string, RamlResource> resource);
+            void setBodyDefaultMediaType(const std::map<std::string, RamlResourcePtr> &resource);
+            void setBodySchema(const std::map<std::string, RamlResourcePtr> &resource);
+            void setTypes(const std::map<std::string, RamlResourcePtr> &resource);
+            void setTraits(const std::map<std::string, RamlResourcePtr> &resource);
 
         public:
-            virtual RamlPtr build();
+            virtual RamlPtr getRamlPtr(RamlParserResult &result);
             virtual RamlPtr getRamlPtr();
-            RamlParser(): m_ramlPtr(new Raml()) {}
-            RamlParser(std::string &fileLocation,
-                       std::string &ramlName): m_ramlPtr(new Raml(fileLocation)) ,
-                m_fileLocation(fileLocation) , m_ramlName(ramlName) {}
+            RamlParser(): m_ramlPtr(std::make_shared<Raml>()), m_ramlParserResult(RAML_FILE_PATH_REQUIRED) {}
+            RamlParser(const std::string &path): m_ramlParserResult(RAML_PARSER_ERROR)
+            {
+                if (path.length() > 0)
+                {
+                    std::size_t found = path.find_last_of("/\\");
+                    if (found < path.length())
+                    {
+                        m_fileLocation = path.substr(0, found) + "/";
+                        m_ramlName = path.substr(found + 1);
+                        try
+                        {
+                            m_ramlPtr = std::make_shared<Raml>(m_fileLocation, m_ramlName);
+                            setDataFromRoot();
+                            m_ramlParserResult = RAML_PARSER_OK;
+                        }
+                        catch (RamlException &e)
+                        {
+                            throw;
+                        }
+                    }
+                    else
+                    {
+                        m_ramlParserResult = RAML_FILE_PATH_REQUIRED;
+                        throw RamlBadFile("Raml File Path incorrect");
+                    }
+                }
+                else
+                {
+                    m_ramlParserResult = RAML_FILE_PATH_REQUIRED;
+                    throw RamlBadFile("Raml File Path required");
+                }
+            }
         private:
 
             RamlPtr m_ramlPtr;
             std::string m_fileLocation;
             std::string m_ramlName;
+            RamlParserResult m_ramlParserResult;
     };
 
 }

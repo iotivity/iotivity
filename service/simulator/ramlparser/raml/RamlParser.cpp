@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *		http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,13 +23,10 @@
 
 namespace RAML
 {
-    RamlPtr RamlParser::build()
+    RamlPtr RamlParser::getRamlPtr(RamlParserResult &result)
     {
-        YAML::Node yamlRootNode = YAML::LoadFile(m_fileLocation + m_ramlName);
-        m_ramlPtr->readRamlFromYaml(yamlRootNode);
-        setDataFromRoot();
-        return (m_ramlPtr);
-
+        result = m_ramlParserResult;
+        return m_ramlPtr;
     }
     RamlPtr RamlParser::getRamlPtr()
     {
@@ -42,70 +39,66 @@ namespace RAML
         setBodyDefaultMediaType(getRamlPtr()->getResources());
         setBodySchema(getRamlPtr()->getResources());
     }
-    void RamlParser::setBodyDefaultMediaType(std::map<std::string, RamlResource> resource)
+    void RamlParser::setBodyDefaultMediaType(const std::map<std::string, RamlResourcePtr> &resource)
     {
         if (getRamlPtr()->getMediaType().empty())
         {
             return;
         }
-        for (auto it : resource)
+        for (auto const & it : resource)
         {
             std::string type = getRamlPtr()->getMediaType();
 
-            for (auto  action :  it.second.getActions())
+            for (auto const & action :  it.second->getActions())
             {
-                if (action.second.getRequestBody().empty())
+                if (action.second->getRequestBody().empty())
                 {
-                    std::string resName = it.first;
-                    getRamlPtr()->getResource(resName).getAction(action.first).setRequestBody(type);
+                    action.second->setRequestBody(type);
                 }
-                for (auto  response : action.second.getResponses())
+                for (auto const & response : action.second->getResponses())
                 {
-                    if (response.second.getResponseBody().empty())
+                    if (response.second->getResponseBody().empty())
                     {
-                        std::string resName = it.first;
-                        std::string responseCode = response.first;
-                        getRamlPtr()->getResource(resName).getAction(action.first).getResponse(
-                            responseCode).setResponseBody(
-                                type);
+                        response.second->setResponseBody(type);
                     }
                 }
             }
+            setBodyDefaultMediaType(it.second->getResources());
         }
     }
-    void RamlParser::setBodySchema(std::map<std::string, RamlResource> resource)
+    void RamlParser::setBodySchema(const std::map<std::string, RamlResourcePtr> &resource)
     {
         if (getRamlPtr()->getSchemas().empty())
         {
             return;
         }
-        for (auto  it : resource)
+        for (auto const & it : resource)
         {
-            for (auto  action :  it.second.getActions())
+            for (auto const & action :  it.second->getActions())
             {
-                for (auto  body :  action.second.getRequestBody())
+                for (auto const & body :  action.second->getRequestBody())
                 {
-                    Schema *schema = body.second.getSchema();
+                    SchemaPtr schema = body.second->getSchema();
 
                     if (schema != NULL)
                     {
                         std::string schemaValue = schema->getSchema();
                         auto pos = std::find_if(getRamlPtr()->getSchemas().begin(), getRamlPtr()->getSchemas().end(),
-                                                [schemaValue](std::pair<std::string, Schema> const & pair)
+                                                [schemaValue](std::pair<std::string, SchemaPtr> const & pair)
                         {
                             return (pair.first == schemaValue);
                         });
                         if (pos != getRamlPtr()->getSchemas().end())
                         {
-                            schema->setSchema((pos->second.getSchema()));
+                            schema->setSchema((pos->second->getSchema()));
                         }
                     }
                 }
-                for (auto  response : action.second.getResponses())
+                for (auto const & response : action.second->getResponses())
                 {
-                    for (auto  body :  response.second.getResponseBody())
+                    for (auto const & body :  response.second->getResponseBody())
                     {
-                        Schema *schema = body.second.getSchema();
+                        SchemaPtr schema = body.second->getSchema();
                         if (schema != NULL)
                         {
                             std::string schemaValue = schema->getSchema();
@@ -119,24 +112,25 @@ namespace RAML
                             }
                             if (iter != schemas.end())
                             {
-                                schema->setSchema((*iter).second.getSchema());
+                                schema->setSchema((*iter).second->getSchema());
                             }
                         }
                     }
                 }
             }
+            setBodySchema(it.second->getResources());
         }
     }
-    void RamlParser::setTypes(std::map<std::string, RamlResource> resource)
+    void RamlParser::setTypes(const std::map<std::string, RamlResourcePtr> &resource)
     {
         if (getRamlPtr()->getResourceTypes().empty())
         {
             return;
         }
-        for (auto  it : resource)
+        for (auto const & it : resource)
         {
-            auto resourceTypes = getRamlPtr()->getResourceTypes();
-            std::string typeValue = it.second.getResourceType();
+            auto const &resourceTypes = getRamlPtr()->getResourceTypes();
+            std::string typeValue = it.second->getResourceType();
 
             auto iter = resourceTypes.begin();
             for (; iter != resourceTypes.end(); iter++)
@@ -146,33 +140,30 @@ namespace RAML
             }
             if (iter != resourceTypes.end())
             {
-                std::string resName = it.first;
-                RamlResource &res = getRamlPtr()->getResource(resName);
-                RamlResource resType =  (*iter).second;
-
-                if (resType.getActions().empty())
+                if ((*iter).second->getActions().empty())
                     return;
 
-                for (auto resActions : resType.getActions())
+                for (auto resActions : (*iter).second->getActions())
                 {
-                    if (res.getActions().count(resActions.first) == 0)
-                        res.setAction(resActions.first, resActions.second);
+                    if (it.second->getActions().count(resActions.first) == 0)
+                        it.second->setAction(resActions.first, std::make_shared<Action>(*(resActions.second)));
                 }
             }
+            setTypes(it.second->getResources());
         }
     }
-    void RamlParser::setTraits(std::map<std::string, RamlResource> resource)
+    void RamlParser::setTraits(const std::map<std::string, RamlResourcePtr> &resource)
     {
         if (getRamlPtr()->getTraits().empty())
         {
             return;
         }
-        for (auto  it : resource)
+        for (auto const & it : resource)
         {
-            auto trait = getRamlPtr()->getTraits();
-            for (auto act : it.second.getActions())
+            auto const &trait = getRamlPtr()->getTraits();
+            for (auto const & act : it.second->getActions())
             {
-                for (std::string  traitValue :  act.second.getTraits())
+                for (const std::string & traitValue :  act.second->getTraits())
                 {
                     auto iter = trait.begin();
                     for (; iter != trait.end(); iter++)
@@ -182,30 +173,25 @@ namespace RAML
                     }
                     if (iter != trait.end())
                     {
-                        std::string resName = it.first;
-                        RamlResource &res = getRamlPtr()->getResource(resName);
-                        Action resTrait =  (*iter).second;
-
-                        Action &action = res.getAction(act.first);
-                        for (auto head : resTrait.getHeaders())
+                        for (auto head : (*iter).second->getHeaders())
                         {
-                            if (action.getHeaders().count(head.first) == 0)
-                                action.setHeader(head.first, head.second);
+                            if (act.second->getHeaders().count(head.first) == 0)
+                                act.second->setHeader(head.first, head.second);
                         }
-                        for (auto query : resTrait.getQueryParameters())
+                        for (auto query : (*iter).second->getQueryParameters())
                         {
-                            if (action.getQueryParameters().count(query.first) == 0)
-                                action.setQueryParameter(query.first, query.second);
+                            if (act.second->getQueryParameters().count(query.first) == 0)
+                                act.second->setQueryParameter(query.first, query.second);
                         }
-                        for (auto resp : resTrait.getResponses())
+                        for (auto resp : (*iter).second->getResponses())
                         {
-                            if (action.getResponses().count(resp.first) == 0)
-                                action.setResponse(resp.first, resp.second);
+                            if (act.second->getResponses().count(resp.first) == 0)
+                                act.second->setResponse(resp.first, resp.second);
                         }
                     }
                 }
             }
-            for (std::string  traitValue :  it.second.getTraits())
+            for (const std::string & traitValue :  it.second->getTraits())
             {
                 auto iter = trait.begin();
                 for (; iter != trait.end(); iter++)
@@ -215,31 +201,27 @@ namespace RAML
                 }
                 if (iter != trait.end())
                 {
-                    std::string resName = it.first;
-                    RamlResource &res = getRamlPtr()->getResource(resName);
-                    Action resTrait =  (*iter).second;
-
-                    for (auto act : res.getActions())
+                    for (auto act : it.second->getActions())
                     {
-                        Action &action = res.getAction(act.first);
-                        for (auto head : resTrait.getHeaders())
+                        for (auto head : (*iter).second->getHeaders())
                         {
-                            if (action.getHeaders().count(head.first) == 0)
-                                action.setHeader(head.first, head.second);
+                            if (act.second->getHeaders().count(head.first) == 0)
+                                act.second->setHeader(head.first, head.second);
                         }
-                        for (auto query : resTrait.getQueryParameters())
+                        for (auto query : (*iter).second->getQueryParameters())
                         {
-                            if (action.getQueryParameters().count(query.first) == 0)
-                                action.setQueryParameter(query.first, query.second);
+                            if (act.second->getQueryParameters().count(query.first) == 0)
+                                act.second->setQueryParameter(query.first, query.second);
                         }
-                        for (auto resp : resTrait.getResponses())
+                        for (auto resp : (*iter).second->getResponses())
                         {
-                            if (action.getResponses().count(resp.first) == 0)
-                                action.setResponse(resp.first, resp.second);
+                            if (act.second->getResponses().count(resp.first) == 0)
+                                act.second->setResponse(resp.first, resp.second);
                         }
                     }
                 }
             }
+            setTraits(it.second->getResources());
         }
     }
 

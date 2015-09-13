@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *		http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,8 +26,27 @@ namespace RAML
     YAML::Node IncludeResolver::readToYamlNode(const YAML::Node &yamlFile )
     {
         std::string value = yamlFile.as<std::string>();
-        YAML::Node yamlInclueNode = YAML::LoadFile(value);
-        return yamlInclueNode;
+        try
+        {
+            YAML::Node yamlInclueNode = YAML::LoadFile(value);
+            return yamlInclueNode;
+        }
+        catch (YAML::ParserException &e)
+        {
+            throw RamlParserException(e.mark, e.msg);
+        }
+        catch (YAML::RepresentationException &e)
+        {
+            throw RamlRepresentationException(e.mark, e.msg);
+        }
+        catch (YAML::BadFile &e)
+        {
+            throw RamlBadFile(e.mark, e.msg);
+        }
+        catch (JsonException &e)
+        {
+            throw;
+        }
     }
 
     IncludeResolver::FileType IncludeResolver::getFileType(const YAML::Node &yamlNode )
@@ -64,10 +83,20 @@ namespace RAML
         std::string val = file.as<std::string>();
         std::ifstream fin((m_path + val).c_str());
         if (!fin)
-            throw std::runtime_error("Error Include File not present ");
+            throw RamlParserException("Error Include File not present " + m_path + val);
         std::stringstream buffer;
         buffer << fin.rdbuf();
         return buffer.str();
+    }
+    cJSON *IncludeResolver::readToJson(const std::string &jsonFileName)
+    {
+        std::ifstream fin((m_path + jsonFileName).c_str());
+        if (!fin)
+            throw JsonException("Error Json Referenced File not present " + m_path + jsonFileName);
+        std::stringstream buffer;
+        buffer << fin.rdbuf();
+        std::string str = buffer.str();
+        return cJSON_Parse(str.c_str());
     }
 
 }

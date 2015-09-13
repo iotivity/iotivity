@@ -18,20 +18,14 @@
  *
  ******************************************************************/
 
-#ifndef QUERY_PARAMETER_H
-#define QUERY_PARAMETER_H
+#ifndef RAML_ERROR_CODES_H_
+#define RAML_ERROR_CODES_H_
 
-#include "AbstractParam.h"
-
-namespace RAML
+typedef enum
 {
-    class QueryParameter: public AbstractParam
-    {
-        public:
-            QueryParameter(const YAML::Node &yamlNode) : AbstractParam(yamlNode) {}
-            QueryParameter() {}
-    };
-    typedef std::shared_ptr<QueryParameter> QueryParameterPtr;
+    RAML_PARSER_OK = 0,
 
-}
+    RAML_FILE_PATH_REQUIRED,
+    RAML_PARSER_ERROR = 255
+} RamlParserResult;
 #endif

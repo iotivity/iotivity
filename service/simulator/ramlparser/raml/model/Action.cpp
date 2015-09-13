@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *		http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -38,55 +38,56 @@ namespace RAML
     {
         m_description = description;
     }
-    std::map<std::string, Header> Action::getHeaders() const
+    std::map<std::string, HeaderPtr > const &Action::getHeaders() const
     {
         return m_headers;
     }
-    void Action::setHeader(const std::string &headerName, const Header &header)
+    void Action::setHeader(const std::string &headerName, const HeaderPtr &header)
     {
         m_headers[headerName] = header;
     }
-    std::map<std::string, QueryParameter> Action::getQueryParameters()const
+    std::map<std::string, QueryParameterPtr > const &Action::getQueryParameters()const
     {
         return m_queryParameters;
     }
-    void Action::setQueryParameter(const std::string &paramName, const QueryParameter &queryParameter)
+    void Action::setQueryParameter(const std::string &paramName,
+                                   const QueryParameterPtr &queryParameter)
     {
         m_queryParameters[paramName] = queryParameter;
     }
-    RequestResponseBody &Action::getRequestBody(std::string bodyType)
+    RequestResponseBodyPtr Action::getRequestBody(const std::string &bodyType)
     {
         return m_requestBody[bodyType];
     }
 
-    std::map<std::string, RequestResponseBody> Action::getRequestBody() const
+    std::map<std::string, RequestResponseBodyPtr> const &Action::getRequestBody() const
     {
         return m_requestBody;
     }
     void Action::setRequestBody(const std::string &typeName)
     {
-        m_requestBody[typeName] = *(new RequestResponseBody(typeName));
+        m_requestBody[typeName] = std::make_shared<RequestResponseBody>(typeName);
     }
 
-    void Action::setRequestBody(const std::string &typeName , const RequestResponseBody &body)
+    void Action::setRequestBody(const std::string &typeName , const RequestResponseBodyPtr &body)
     {
         m_requestBody[typeName] = body;
     }
-    Response &Action::getResponse(std::string responseCode)
+    ResponsePtr Action::getResponse(const std::string &responseCode)
     {
         return m_responses[responseCode];
     }
 
-    std::map<std::string, Response> Action::getResponses() const
+    std::map<std::string, ResponsePtr> const &Action::getResponses() const
     {
         return m_responses;
     }
-    void Action::setResponse(const std::string &responseCode, const Response &response)
+    void Action::setResponse(const std::string &responseCode, const ResponsePtr &response)
     {
         m_responses[responseCode] = response;
     }
 
-    std::list<std::string> Action::getProtocols() const
+    std::list<std::string> const &Action::getProtocols() const
     {
         return m_protocols;
     }
@@ -94,17 +95,17 @@ namespace RAML
     {
         m_protocols.push_back(protocol);
     }
-    std::map<std::string, UriParameter > Action::getBaseUriParameters() const
+    std::map<std::string, UriParameterPtr > const &Action::getBaseUriParameters() const
     {
         return m_baseUriParameters;
     }
     void Action::setBaseUriParameter(const std::string &paramName ,
-                                     const UriParameter  &baseUriParameter)
+                                     const UriParameterPtr &baseUriParameter)
     {
         m_baseUriParameters[paramName] = baseUriParameter;
     }
 
-    std::list<std::string> Action::getTraits() const
+    std::list<std::string> const &Action::getTraits() const
     {
         return m_trait;
     }
@@ -112,10 +113,8 @@ namespace RAML
     {
         m_trait.push_back(trait);
     }
-    void Action::readAction(const ActionType actionType, const YAML::Node &yamlNode,
-                            IncludeResolver *includeResolver)
+    void Action::readAction(const ActionType actionType, const YAML::Node &yamlNode)
     {
-        m_includeResolver = includeResolver;
         m_type = actionType;
         for ( YAML::const_iterator it = yamlNode.begin(); it != yamlNode.end(); ++it )
         {
@@ -129,7 +128,7 @@ namespace RAML
                 for ( YAML::const_iterator tt = responseNode.begin(); tt != responseNode.end(); ++tt )
                 {
                     std::string responseCode = READ_NODE_AS_STRING(tt->first);
-                    setResponse(responseCode, *(new Response(tt->second, m_includeResolver)));
+                    setResponse(responseCode, std::make_shared<Response>(tt->second, m_includeResolver));
                 }
             }
             else if (key == Keys::Headers)
@@ -137,8 +136,7 @@ namespace RAML
                 YAML::Node paramNode = it->second;
                 for ( YAML::const_iterator tt = paramNode.begin(); tt != paramNode.end(); ++tt )
                 {
-                    Header *header = new Header(tt->second);
-                    setHeader(READ_NODE_AS_STRING(tt->first), *header);
+                    setHeader(READ_NODE_AS_STRING(tt->first), std::make_shared<Header>(tt->second));
                 }
             }
             else if (key == Keys::QueryParameters)
@@ -146,8 +144,7 @@ namespace RAML
                 YAML::Node paramNode = it->second;
                 for ( YAML::const_iterator tt = paramNode.begin(); tt != paramNode.end(); ++tt )
                 {
-                    QueryParameter *queryParameter = new QueryParameter(tt->second);
-                    setQueryParameter(READ_NODE_AS_STRING(tt->first), *queryParameter);
+                    setQueryParameter(READ_NODE_AS_STRING(tt->first), std::make_shared<QueryParameter>(tt->second));
                 }
             }
             else if (key == Keys::Protocols)
@@ -163,8 +160,7 @@ namespace RAML
                 YAML::Node paramNode = it->second;
                 for ( YAML::const_iterator tt = paramNode.begin(); tt != paramNode.end(); ++tt )
                 {
-                    UriParameter *uriParameter = new UriParameter(tt->second);
-                    setBaseUriParameter(READ_NODE_AS_STRING(tt->first), *uriParameter);
+                    setBaseUriParameter(READ_NODE_AS_STRING(tt->first), std::make_shared<UriParameter>(tt->second));
                 }
             }
             else if (key == Keys::Body)
@@ -174,7 +170,7 @@ namespace RAML
                 for ( YAML::const_iterator tt = responseBody.begin(); tt != responseBody.end(); ++tt )
                 {
                     std::string type = READ_NODE_AS_STRING(tt->first);
-                    setRequestBody(type, *(new RequestResponseBody(type, tt->second, m_includeResolver)));
+                    setRequestBody(type, std::make_shared<RequestResponseBody>(type, tt->second, m_includeResolver));
                 }
             }
             else if (key == Keys::IsTrait)
