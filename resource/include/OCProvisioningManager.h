@@ -227,13 +227,16 @@ namespace OC
                     ResultCallBack resultCallback);
 
             /*
-            * API to remove device credential from all devices in subnet.
-            *
-            * @param[in] resultCallback callback provided by API user, callback will be called when
-            *            credential revocation is finished.
+             * API to remove device credential from all devices in subnet.
+             *
+             * @param[in] resultCallback callback provided by API user, callback will be called when
+             *            credential revocation is finished.
+             * @param[in] waitTimeForOwnedDeviceDiscovery Maximum wait time for owned device
+             *            discovery.(seconds)
              * @return  OC_STACK_OK in case of success and other value otherwise.
-            */
-            OCStackResult removeDevice(ResultCallBack resultCallback);
+             */
+            OCStackResult removeDevice(unsigned short waitTimeForOwnedDeviceDiscovery,
+                    ResultCallBack resultCallback);
 
             /**
              * This method is used to get linked devices' IDs.

@@ -18,7 +18,8 @@
  *
  * *****************************************************************/
 
-//#include <ocprovisioningmanager.h>
+#include <ocstack.h>
+#include <oic_malloc.h>
 #include <OCApi.h>
 #include <OCPlatform_impl.h>
 #include <oxmjustworks.h>
@@ -32,21 +33,10 @@ namespace OCProvisioningTest
 {
     using namespace OC;
 
-    static OicSecAcl_t defaultAcl =
-    { {},
-        1,
-        NULL,
-        0x001F,
-        0,
-        NULL,
-        NULL,
-        1,
-        NULL,
-        NULL,
-    };
-
     void resultCallback(PMResultList_t *result, int hasError)
     {
+        (void)result;
+        (void)hasError;
     }
 
     TEST(ProvisionInitTest, TestWithEmptyPath)
@@ -148,8 +138,9 @@ namespace OCProvisioningTest
     TEST(ProvisionAclTest, ProvisionAclTestNullCallback)
     {
         OCSecureResource device;
-        OicSecAcl_t acl = defaultAcl;
-        EXPECT_EQ(OC_STACK_INVALID_PARAM, device.provisionACL(&acl, nullptr));
+        OicSecAcl_t *acl = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+        EXPECT_EQ(OC_STACK_INVALID_PARAM, device.provisionACL(acl, nullptr));
+        OICFree(acl);
     }
 
     TEST(ProvisionAclTest, ProvisionAclTestNullCallbackNUllAcl)
@@ -169,9 +160,12 @@ namespace OCProvisioningTest
     {
         OCSecureResource device, dev2;
         Credential cred;
-        OicSecAcl_t acl1 = defaultAcl, acl2 = defaultAcl;
-        EXPECT_EQ(OC_STACK_INVALID_PARAM, device.provisionPairwiseDevices(cred, &acl1,
-                    dev2, &acl2, nullptr));
+        OicSecAcl_t *acl1 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+        OicSecAcl_t *acl2 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+        EXPECT_EQ(OC_STACK_INVALID_PARAM, device.provisionPairwiseDevices(cred, acl1,
+                    dev2, acl2, nullptr));
+        OICFree(acl1);
+        OICFree(acl2);
     }
 
 }

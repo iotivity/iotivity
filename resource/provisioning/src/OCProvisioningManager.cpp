@@ -169,10 +169,8 @@ namespace OC
         if(cLock)
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
-//TODO: this change is dependent on changesets #2333, 2316. Once these are merged, this code will be
-//      updated
 
-//            result = OCGetDevInfoFromNetwork(nullptr, timeout, &owned, &unowned);
+            result = OCGetDevInfoFromNetwork(timeout, &owned, &unowned);
 
             if (result == OC_STACK_OK)
             {
@@ -379,11 +377,9 @@ namespace OC
             ProvisionContext* context = new ProvisionContext(resultCallback);
 
             std::lock_guard<std::recursive_mutex> lock(*cLock);
-//TODO: this change is dependent on changesets #2344. Once these are merged, this code will be
-//      updated
 
-//           result = OCUnlinkDevices(static_cast<void*>(context),
-//                   devPtr, device2.getDevPtr(), &OCSecureResource::callbackWrapper);
+            result = OCUnlinkDevices(static_cast<void*>(context),
+                    devPtr, device2.getDevPtr(), &OCSecureResource::callbackWrapper);
         }
         else
         {
@@ -393,7 +389,8 @@ namespace OC
         return result;
     }
 
-    OCStackResult OCSecureResource::removeDevice(ResultCallBack resultCallback)
+    OCStackResult OCSecureResource::removeDevice(unsigned short waitTimeForOwnedDeviceDiscovery,
+            ResultCallBack resultCallback)
     {
         if(!resultCallback)
         {
@@ -409,11 +406,9 @@ namespace OC
             ProvisionContext* context = new ProvisionContext(resultCallback);
 
             std::lock_guard<std::recursive_mutex> lock(*cLock);
-//TODO: this change is dependent on changesets #2344. Once these are merged, this code will be
-//      updated
 
-//           result = OCRemoveDevice(static_cast<void*>(context),
-//                   devPtr, &OCSecureResource::callbackWrapper);
+            result = OCRemoveDevice(static_cast<void*>(context), waitTimeForOwnedDeviceDiscovery,
+                    devPtr, &OCSecureResource::callbackWrapper);
         }
         else
         {
@@ -433,11 +428,8 @@ namespace OC
         if(cLock)
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
-//TODO: this change is dependent on changesets #2333, 2316. Once these are merged, this code will be 
-//      updated
 
-#if CHANGESET_2316
-            OicUuidList* linkedDevs = nullptr, *tmp = nullptr;
+            OCUuidList_t* linkedDevs = nullptr, *tmp = nullptr;
             result = OCGetLinkedStatus(&devUuid, &linkedDevs, &numOfDevices);
             if (result == OC_STACK_OK)
             {
@@ -445,9 +437,8 @@ namespace OC
                 {
                     uuidList.push_back(tmp->dev);
                 }
-                OCDeleteUuidList(&linkedDevs);
+                OCDeleteUuidList(linkedDevs);
             }
-#endif
         }
         else
         {
@@ -468,7 +459,10 @@ namespace OC
         b64Ret = b64Encode(devPtr->doxm->deviceID.id, sizeof(devPtr->doxm->deviceID.id), base64Buff,
                 sizeof(base64Buff), &outLen);
 
-        deviceId << base64Buff;
+        if (B64_OK == b64Ret)
+        {
+            deviceId << base64Buff;
+        }
         return deviceId.str();
     }
 
@@ -487,10 +481,7 @@ namespace OC
     int OCSecureResource::getDeviceStatus()
     {
         validateSecureResource();
-//TODO: this change is dependent on changesets #2333, 2316. Once these are merged, this code will be 
-//      updated
-//      return (int)devPtr->devStatus;
-        return 0;
+        return (int)devPtr->devStatus;
     }
 
     bool OCSecureResource::getOwnedStatus()

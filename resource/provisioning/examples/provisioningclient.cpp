@@ -60,22 +60,9 @@ using namespace OC;
 DeviceList_t pUnownedDevList, pOwnedDevList;
 static int transferDevIdx, ask = 1;
 
-OicSecAcl_t defaultAcl =
+static FILE* client_open(const char *UNUSED_PARAM, const char *mode)
 {
-    {},
-    1,
-    NULL,
-    0x001F,
-    0,
-    NULL,
-    NULL,
-    1,
-    NULL,
-    NULL,
-};
-
-static FILE* client_open(const char *path, const char *mode)
-{
+    (void)UNUSED_PARAM;
     return fopen(JSON_DB_PATH, mode);
 }
 
@@ -117,7 +104,7 @@ void printUuid(OicUuid_t uuid)
 {
     for (int i = 0; i < UUID_LENGTH; i++)
     {
-        std::cout << uuid.id[i];
+        std::cout <<std::hex << uuid.id[i] << " ";
     }
     std::cout<<std::endl;
 }
@@ -173,8 +160,8 @@ void provisionCB(PMResultList_t *result, int hasError)
        std::cout<< "\nReceived provisioning results: ";
        for (unsigned int i = 0; i < result->size(); i++)
        {
-           for (int j = 0; j < UUID_LENGTH; j++) std::cout << result->at(i).deviceId.id[j];
-           std::cout << ", result = " << result->at(i).res << std::endl;
+           std::cout << "Result is = " << result->at(i).res <<" for device ";
+           printUuid(result->at(i).deviceId);
        }
 
        delete result;
@@ -289,7 +276,7 @@ static void deleteACL(OicSecAcl_t *acl)
 
         /* Clean ACL node itself */
         /* Required only if acl was created in heap */
-        //OICFree((acl));
+        OICFree((acl));
     }
 }
 
@@ -542,10 +529,11 @@ int main(void)
     try
     {
         int choice;
+        OicSecAcl_t *acl1 = nullptr, *acl2 = nullptr;
         if (OCSecure::provisionInit("") != OC_STACK_OK)
         {
             std::cout <<"PM Init failed"<< std::endl;
-            //return 1;
+            return 1;
         }
 
         for (int out = 0; !out;)
@@ -554,6 +542,19 @@ int main(void)
             {
                 sleep(1);
             }
+
+            if (acl1)
+            {
+                deleteACL(acl1);
+                acl1 = nullptr;
+            }
+
+            if (acl2)
+            {
+                deleteACL(acl2);
+                acl2 = nullptr;
+            }
+
             printMenu();
             std::cin >> choice;
             switch(choice) {
@@ -677,23 +678,26 @@ int main(void)
                         std::cout << "Provision ACL for : "<<
                             pOwnedDevList[index]->getDeviceID()<< std::endl;
 
-                        OicSecAcl_t acl = defaultAcl;
+                        acl1 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+                        if (NULL == acl1)
+                        {
+                            OC_LOG(ERROR, TAG, "Error while memory allocation");
+                            break;
+                        }
 
                         std::cout << "Please input ACL for selected device: " << std::endl;
-                        if (0 != InputACL(&acl))
+                        if (0 != InputACL(acl1))
                         {
-                            deleteACL(&acl);
                             break;
                         }
 
                         ask = 0;
 
-                        if (pOwnedDevList[index]->provisionACL(&acl, provisionCB) != OC_STACK_OK)
+                        if (pOwnedDevList[index]->provisionACL(acl1, provisionCB) != OC_STACK_OK)
                         {
                             ask = 1;
                             std::cout <<"provisionACL is failed"<< std::endl;
                         }
-                        deleteACL(&acl);
                     }
                     break;
                 case 5: //Provision Credentials
@@ -742,75 +746,82 @@ int main(void)
                         if (0 != InputCredentials(cred))
                             break;
 
-                        OicSecAcl_t acl1 = defaultAcl;
-
-                        std::cout << "Please input ACL for selected device: " << std::endl;
-                        if (0 != InputACL(&acl1))
+                        acl1 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+                        if (NULL == acl1)
                         {
-                            deleteACL(&acl1);
+                            OC_LOG(ERROR, TAG, "Error while memory allocation");
                             break;
                         }
 
-                        OicSecAcl_t acl2 = defaultAcl;
+                        std::cout << "Please input ACL for selected device: " << std::endl;
+                        if (0 != InputACL(acl1))
+                        {
+                            break;
+                        }
+
+                        acl2 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
+                        if (NULL == acl2)
+                        {
+                            OC_LOG(ERROR, TAG, "Error while memory allocation");
+                            break;
+                        }
 
                         std::cout << "Please input ACL for selected device: " << std::endl;
-                        if (0 != InputACL(&acl2))
+                        if (0 != InputACL(acl2))
                         {
-                            deleteACL(&acl2);
                             break;
                         }
 
                         ask = 0;
 
-                        if (pOwnedDevList[first]->provisionPairwiseDevices(cred, &acl1,
-                               *pOwnedDevList[second].get(), &acl2, provisionCB) != OC_STACK_OK)
+                        if (pOwnedDevList[first]->provisionPairwiseDevices(cred, acl1,
+                                    *pOwnedDevList[second].get(), acl2, provisionCB) != OC_STACK_OK)
                         {
                             ask = 1;
                             std::cout <<"provisionPairwiseDevices is failed"<< std::endl;
                         }
-                        deleteACL(&acl1);
-                        deleteACL(&acl2);
                     }
                     break;
                 case 7: //Unlink Devices
-                {
-                   int devices[2];
+                    {
+                        int devices[2];
 
-                   if (0 != readDeviceNumber(pOwnedDevList, 2, devices)) break;
+                        if (0 != readDeviceNumber(pOwnedDevList, 2, devices)) break;
 
-                   int first  = devices[0];
-                   int second = devices[1];
+                        int first  = devices[0];
+                        int second = devices[1];
 
-                   std::cout << "Unlink devices: "<< pOwnedDevList[first]->getDeviceID();
-                   std::cout << " and "<< pOwnedDevList[second]->getDeviceID() << std::endl;
+                        std::cout << "Unlink devices: "<< pOwnedDevList[first]->getDeviceID();
+                        std::cout << " and "<< pOwnedDevList[second]->getDeviceID() << std::endl;
 
-                   ask = 0;
+                        ask = 0;
 
-                   if (pOwnedDevList[first]->unlinkDevices(*pOwnedDevList[second].get(),
-                         provisionCB) != OC_STACK_OK)
-                   {
-                       ask = 1;
-                       std::cout <<"removeDevice is failed"<< std::endl;
-                   }
-                   break;
-                }
+                        if (pOwnedDevList[first]->unlinkDevices(*pOwnedDevList[second].get(),
+                                    provisionCB) != OC_STACK_OK)
+                        {
+                            ask = 1;
+                            std::cout <<"unlinkDevice is failed"<< std::endl;
+                        }
+                        break;
+                    }
                 case 8: //Remove Device
-                {
-                   int index;
+                    {
+                        int index;
 
-                   if (0 != readDeviceNumber(pOwnedDevList, 1, &index)) break;
+                        if (0 != readDeviceNumber(pOwnedDevList, 1, &index)) break;
 
-                   std::cout << "Remove Device: "<< pOwnedDevList[index]->getDeviceID()<< std::endl;
+                        std::cout << "Remove Device: "<< pOwnedDevList[index]->getDeviceID()<< std::endl;
 
-                   ask = 0;
+                        ask = 0;
 
-                   if (pOwnedDevList[index]->removeDevice(provisionCB) != OC_STACK_OK)
-                   {
-                       ask = 1;
-                       std::cout <<"removeDevice is failed"<< std::endl;
-                   }
-                   break;
-                }
+                        if (pOwnedDevList[index]->removeDevice(DISCOVERY_TIMEOUT, provisionCB)
+                                != OC_STACK_OK)
+                        {
+                            ask = 1;
+                            std::cout <<"removeDevice is failed"<< std::endl;
+                        }
+                        break;
+                    }
                 case 9: //Get Linked devices
                     {
                         UuidList_t linkedUuid;
