@@ -22,8 +22,8 @@
 
 #include "RCSResourceObject.h"
 
-#ifndef __RESERVER_H__
-#define __RESERVER_H__
+#ifndef RESERVER_H__
+#define RESERVER_H__
 
 using namespace std;
 using namespace OIC::Service;
@@ -52,4 +52,4 @@ void start_server_cb(void *data, Evas_Object *obj, void *event_info);
 
 void *showGroupAPIs(void *data);
 
-#endif // __RESERVER_H__
+#endif // RESERVER_H__

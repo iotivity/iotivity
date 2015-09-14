@@ -18,9 +18,31 @@
  *
  ******************************************************************/
 
-collections
-{
-    base_scale: 1.8;
-    #include "../edc_resource/re_client_control.edc"
-    #include "../edc_resource/re_container_control.edc"
-}
+#include "reclientmain.h"
+
+#include "RCSRemoteResourceObject.h"
+
+#include <app.h>
+#include <Elementary.h>
+#include <system_settings.h>
+#include <efl_extension.h>
+#include <dlog.h>
+
+#ifndef RECONTAINER_H__
+#define RECONTAINER_H__
+
+# define LOG_TAG "recontainerclient"
+
+using namespace OIC::Service;
+
+void *showContainerAPIs(void *data);
+
+void onContainerDiscovered(std::shared_ptr<RCSRemoteResourceObject> foundResource);
+
+static void find_resource_cb(void *data, Evas_Object *obj, void *event_info);
+
+static void findLight(void *data, Evas_Object *obj, void *event_info);
+
+static void findSoftsensor(void *data, Evas_Object *obj, void *event_info);
+
+#endif // RECONTAINER_H__

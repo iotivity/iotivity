@@ -18,8 +18,8 @@
  *
  ******************************************************************/
 
-#ifndef __REMAIN_H__
-#define __REMAIN_H__
+#ifndef REMAIN_H__
+#define REMAIN_H__
 
 #include <app.h>
 #include <Elementary.h>
@@ -47,4 +47,4 @@ void serverCreateUI(void *data, Evas_Object *obj, void *event_info);
 
 void containerCreateUI(void *data, Evas_Object *obj, void *event_info);
 
-#endif // __REMAIN_H__
+#endif // REMAIN_H__

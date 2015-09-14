@@ -98,7 +98,7 @@ void onResourceDiscovered(std::shared_ptr<RCSRemoteResourceObject> foundResource
 
     resource = foundResource;
 
-    ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))showGroupAPIs, NULL);
+    ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))showClientAPIs, NULL);
     cond.notify_all();
 }
 
@@ -596,7 +596,21 @@ list_scheduled_actionset_cb(void *data, Evas_Object *obj, void *event_info)
     evas_object_show(popup);
 }
 
-void *showGroupAPIs(void *data)
+// Method to be called when the Discover Resource UI Button is selected
+static void
+find_resource_cb(void *data, Evas_Object *obj, void *event_info)
+{
+    if (NULL != list)
+    {
+        discoverResource();
+    }
+    else
+    {
+        dlog_print(DLOG_ERROR, "find_resource_cb", "list is NULL - So unable to add items!!!");
+    }
+}
+
+void *showClientAPIs(void *data)
 {
     // Add items to the list only if the list is empty
     const Eina_List *eina_list = elm_list_items_get(list);
@@ -659,6 +673,7 @@ void group_cb(void *data, Evas_Object *obj, void *event_info)
     Evas_Object *layout;
     Evas_Object *scroller;
     Evas_Object *nf = (Evas_Object *)data;
+    Evas_Object *find_button;
     Elm_Object_Item *nf_it;
 
     naviframe = nf;
@@ -674,6 +689,12 @@ void group_cb(void *data, Evas_Object *obj, void *event_info)
     evas_object_size_hint_weight_set(layout, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
 
     elm_object_content_set(scroller, layout);
+
+    // Button
+    find_button = elm_button_add(layout);
+    elm_object_part_content_set(layout, "find_button", find_button);
+    elm_object_text_set(find_button, "Discover Resource");
+    evas_object_smart_callback_add(find_button, "clicked", find_resource_cb, NULL);
 
     // List
     list = elm_list_add(layout);
@@ -693,6 +714,4 @@ void group_cb(void *data, Evas_Object *obj, void *event_info)
 
     nf_it = elm_naviframe_item_push(nf, "Resource Encapsulation", NULL, NULL, scroller, NULL);
     elm_naviframe_item_pop_cb_set(nf_it, naviframe_pop_cb, NULL);
-
-    discoverResource();
 }

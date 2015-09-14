@@ -18,12 +18,12 @@
  *
  ******************************************************************/
 
-#ifndef __RECLIENT_H__
-#define __RECLIENT_H__
+#ifndef RECLIENT_H__
+#define RECLIENT_H__
 
 typedef void(*ClientMenuHandler)();
 typedef int ReturnValue;
 
-void *showGroupAPIs(void *data);
+void *showClientAPIs(void *data);
 
-#endif // __RECLIENT_H__
+#endif // RECLIENT_H__

@@ -20,8 +20,8 @@
 
 #include "remain.h"
 
-#ifndef __RECONTAINER_H__
-#define __RECONTAINER_H__
+#ifndef RECONTAINER_H__
+#define RECONTAINER_H__
 
 # define LOG_TAG "recontainer"
 
@@ -35,4 +35,4 @@ static void startContainer(void *data, Evas_Object *obj, void *event_info);
 
 static void stopContainer(void *data, Evas_Object *obj, void *event_info);
 
-#endif // __RECONTAINER_H__
+#endif // RECONTAINER_H__

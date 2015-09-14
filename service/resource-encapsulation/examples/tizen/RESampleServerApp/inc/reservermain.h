@@ -18,8 +18,8 @@
  *
  ******************************************************************/
 
-#ifndef __RESERVERMAIN_H__
-#define __RESERVERMAIN_H__
+#ifndef RESERVERMAIN_H__
+#define RESERVERMAIN_H__
 
 #include <app.h>
 #include <Elementary.h>
@@ -47,4 +47,4 @@ void start_server(void *data, Evas_Object *obj, void *event_info);
 
 void start_server_cb(void *data, Evas_Object *obj, void *event_info);
 
-#endif // __RESERVERMAIN_H__
+#endif // RESERVERMAIN_H__

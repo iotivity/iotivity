@@ -18,28 +18,14 @@
  *
  ******************************************************************/
 
-#define POPUP_CONTENT_DEFAULT_PADDING_LEFT_MIN_INC 15
-#define POPUP_EDITFIELD_LAYOUT_MINMAX_HEIGHT_INC 96
-
 group
 {
-    name: "group_layout";
+    name: "container_layout";
     parts
     {
         part
         {
-            name: "find_button";
-            type: SWALLOW;
-            scale: 1;
-            description
-            {
-                rel1.relative: 0.01 0.01;
-                rel2.relative: 0.7 0.09;
-            }
-        }
-        part
-        {
-            name: "list";
+            name: "listnew";
             type: SWALLOW;
             scale: 1;
             description
