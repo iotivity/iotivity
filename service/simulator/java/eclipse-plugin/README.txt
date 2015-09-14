@@ -1,4 +1,4 @@
-Service Provider eclipse plug-in
+Eclipse plug-in
 
 Pre-requisites
 --------------

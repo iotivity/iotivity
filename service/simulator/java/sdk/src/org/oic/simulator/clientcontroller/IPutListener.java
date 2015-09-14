@@ -14,19 +14,32 @@
  * limitations under the License.
  */
 
-/**
- * This file provides interface for put callback information.
- */
 package org.oic.simulator.clientcontroller;
 
 import org.oic.simulator.SimulatorResourceModel;
 
 /**
- * An OnPutListener can be registered via the resource put call. Event listeners
- * are notified asynchronously
+ * Interface for receiving response for PUT request. An IPutListener can be
+ * registered via the resource put call. Event listeners are notified
+ * asynchronously.
  */
 public interface IPutListener {
+    /**
+     * This method will be called when response from the remote resource for PUT
+     * request arrives.
+     * 
+     * @param uId
+     *            Unique Id of the resource.
+     * @param representation
+     *            {@link SimulatorResourceModel}.
+     */
     public void onPutCompleted(String uId, SimulatorResourceModel representation);
 
+    /**
+     * Called when there is an error in PUT request.
+     * 
+     * @param ex
+     *            Error information.
+     */
     public void onPutFailed(Throwable ex);
 }

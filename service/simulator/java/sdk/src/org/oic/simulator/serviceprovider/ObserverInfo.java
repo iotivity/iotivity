@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * This file contains a class for storing observer related information.
- */
 package org.oic.simulator.serviceprovider;
 
 /**

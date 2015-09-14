@@ -14,25 +14,15 @@
  * limitations under the License.
  */
 
-/**
- * This file contains a class which provides a set of native methods
- * for creation and deletion of resources.
- */
 package org.oic.simulator;
 
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Vector;
-
 import org.oic.simulator.clientcontroller.IFindResourceListener;
-import org.oic.simulator.clientcontroller.SimulatorRemoteResource;
-import org.oic.simulator.ILogger;
 import org.oic.simulator.serviceprovider.IResourceModelChangedListener;
 import org.oic.simulator.serviceprovider.SimulatorResourceServer;
 
 /**
- * This class provides a set of native functions for creation and deletion of
- * resources.
+ * This class provides a set of native functions for creation, discovery and
+ * deletion of resources.
  */
 class SimulatorManagerNativeInterface {
 
@@ -47,9 +37,15 @@ class SimulatorManagerNativeInterface {
      *
      * @return {@link SimulatorResourceServer} object on success, otherwise
      *         null.
+     * 
+     * @throws InvalidArgsException
+     *             Thrown if the input parameters are empty.
+     * @throws SimulatorException
+     *             Thrown for other errors.
      */
     public static native SimulatorResourceServer createResource(
-            String configPath, IResourceModelChangedListener listener);
+            String configPath, IResourceModelChangedListener listener)
+            throws InvalidArgsException, SimulatorException;
 
     /**
      * Native function for creating several resources.
@@ -64,34 +60,75 @@ class SimulatorManagerNativeInterface {
      *
      * @return An array of {@link SimulatorResourceServer} objects on success,
      *         otherwise null.
+     *
+     * @throws InvalidArgsException
+     *             Thrown if the input parameters are empty.
+     * @throws SimulatorException
+     *             Thrown for other errors.
      */
     public static native SimulatorResourceServer[] createResources(
-            String configPath, int count, IResourceModelChangedListener listener);
+            String configPath, int count, IResourceModelChangedListener listener)
+            throws InvalidArgsException, SimulatorException;
 
     /**
-     * Native function to get the list of locally created resources.
-     *
-     * @return A list of {@link SimulatorResourceServer} objects on success,
-     *         otherwise null.
-     */
-    public static native Vector<SimulatorResourceServer> getResources();
-
-    /**
-     * Native function to delete a specific resource
+     * Native function to delete a specific resource.
      *
      * @param resource
      *            {@link SimulatorResourceServer} object of the resource to be
      *            deleted.
+     * 
+     * @throws InvalidArgsException
+     *             Thrown if the input parameter is empty.
+     * @throws SimulatorException
+     *             Thrown for other errors.
      */
-    public static native void deleteResource(SimulatorResourceServer resource);
+    public static native void deleteResource(SimulatorResourceServer resource)
+            throws InvalidArgsException, SimulatorException;
 
     /**
      * Native function to delete all resources or resources of a specific type.
      *
      * @param resourceType
      *            Type of the resource.
+     * 
+     * @throws InvalidArgsException
+     *             Thrown if the input parameter is empty.
+     * @throws SimulatorException
+     *             Thrown for other errors.
      */
-    public static native void deleteResources(String resourceType);
+    public static native void deleteResources(String resourceType)
+            throws InvalidArgsException, SimulatorException;
+
+    /**
+     * Native function for discovering all types of resources.
+     *
+     * @param listener
+     *            Interface to receive the discovered remote resources.
+     * 
+     * @throws InvalidArgsException
+     *             Thrown if the input parameter is empty.
+     * @throws SimulatorException
+     *             Thrown for other errors.
+     */
+    public static native void findResource(IFindResourceListener listener)
+            throws InvalidArgsException, SimulatorException;
+
+    /**
+     * Native function for discovering specific type of resources.
+     *
+     * @param resourceType
+     *            required resource type
+     * @param listener
+     *            Interface to receive the discovered remote resources.
+     * 
+     * @throws InvalidArgsException
+     *             Thrown if the input parameter is empty.
+     * @throws SimulatorException
+     *             Thrown for other errors.
+     */
+    public static native void findResources(String resourceType,
+            IFindResourceListener listener) throws InvalidArgsException,
+            SimulatorException;
 
     /**
      * Native function to set the logger listener for receiving the log messages
@@ -103,59 +140,36 @@ class SimulatorManagerNativeInterface {
     public static native void setLogger(ILogger logger);
 
     /**
-     * Native function for discovering resources.
-     *
-     * @param resourceType
-     *            required resource type
+     * Native function to set the device information.
+     * 
+     * @param deviceInfo
+     *            Device information.
+     */
+    public static native void setDeviceInfo(String deviceInfo);
+
+    /**
+     * Native function to get the device information asynchronously via the
+     * listener.
+     * 
      * @param listener
-     *            Interface to receive the discovered remote resources.
-     *
-     * @return OCSimulatorResult - return value of this API. It returns
-     *         OC_STACK_OK if success.
+     *            Interface for receiving the device information.
      */
-    public static native int findResource(String resourceType,
-            IFindResourceListener listener);
+    public static native void getDeviceInfo(IDeviceInfo listener);
 
     /**
-     * Native function for getting the list of previously discovered resources
-     * in the network.
-     *
-     * @param resourceType
-     *            required resource type
-     *
-     * @return ArrayList<SimulatorRemoteResource> - returns list of
-     *         SimulatorRemoteResource
-     *
+     * Native function to set the platform information.
+     * 
+     * @param platformInfo
+     *            Platform information.
      */
-    public static native ArrayList<SimulatorRemoteResource> getFoundResources(
-            String resourceType);
+    public static native void setPlatformInfo(PlatformInfo platformInfo);
 
     /**
-     * Method to get the URI for this resource
-     *
-     * @return Resource URI
+     * Native function to get the platform information asynchronously via the
+     * listener.
+     * 
+     * @param listener
+     *            Interface for receiving the platform information.
      */
-    public static native String getUri();
-
-    /**
-     * Method to get the list of resource types
-     *
-     * @return List of resource types
-     */
-    public static native List<String> getResourceTypes();
-
-    /**
-     * Method to get the list of resource interfaces
-     *
-     * @return List of resource interfaces
-     */
-    public static native List<String> getResourceInterfaces();
-
-    /**
-     * Method to get a string representation of the resource's server ID. This
-     * is unique per-server independent on how it was discovered.
-     *
-     * @return Server ID
-     */
-    public static native String getServerId();
+    public static native void getPlatformInfo(IPlatformInfo listener);
 }

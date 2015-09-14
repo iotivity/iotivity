@@ -14,22 +14,36 @@
  * limitations under the License.
  */
 
-/**
- * This file provides interface for getting notification on resource model change.
- */
 package org.oic.simulator.clientcontroller;
 
 import org.oic.simulator.SimulatorResourceModel;
 
 /**
  * Provides interface for getting notification when resource model of an
- * observed resource gets changed. An OnObserveListener can be registered via
- * the SimulatorRemoteResource observe call. Event listeners are notified
+ * observed resource gets changed. An IObserveListener can be registered via the
+ * SimulatorRemoteResource observe call. Event listeners are notified
  * asynchronously.
  */
 public interface IObserveListener {
+    /**
+     * This method will be called when there is a change in the resource model
+     * of the remote resource.
+     * 
+     * @param uId
+     *            Unique Id of the resource.
+     * @param representation
+     *            {@link SimulatorResourceModel}.
+     * @param sequenceNumber
+     *            Sequential number for ordering the model change notifications.
+     */
     public void onObserveCompleted(String uId,
             SimulatorResourceModel representation, int sequenceNumber);
 
+    /**
+     * Called when there is an error in observe request.
+     * 
+     * @param ex
+     *            Error information.
+     */
     public void onObserveFailed(Throwable ex);
 }

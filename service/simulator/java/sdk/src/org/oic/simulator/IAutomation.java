@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * This file provides an interface for receiving notification when an automation completes.
- */
 package org.oic.simulator;
 
 /**

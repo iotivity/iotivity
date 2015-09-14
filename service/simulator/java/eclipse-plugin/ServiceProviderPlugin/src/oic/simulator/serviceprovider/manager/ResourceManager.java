@@ -1,7 +1,24 @@
+/*
+ * Copyright 2015 Samsung Electronics All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package oic.simulator.serviceprovider.manager;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -25,18 +42,27 @@ import oic.simulator.serviceprovider.utils.Constants;
 import oic.simulator.serviceprovider.utils.Utility;
 
 import org.eclipse.swt.graphics.Image;
-import org.oic.simulator.AutomationType;
 import org.oic.simulator.IAutomation;
+import org.oic.simulator.ILogger.Level;
 import org.oic.simulator.ResourceAttribute;
 import org.oic.simulator.ResourceAttribute.Range;
 import org.oic.simulator.ResourceAttribute.Type;
+import org.oic.simulator.SimulatorException;
 import org.oic.simulator.SimulatorManager;
 import org.oic.simulator.SimulatorResourceModel;
+import org.oic.simulator.serviceprovider.AutomationType;
 import org.oic.simulator.serviceprovider.IObserver;
 import org.oic.simulator.serviceprovider.IResourceModelChangedListener;
 import org.oic.simulator.serviceprovider.ObserverInfo;
 import org.oic.simulator.serviceprovider.SimulatorResourceServer;
 
+/**
+ * This class acts as an interface between the simulator java SDK and the
+ * various UI modules. It maintains all the details of resources and provides
+ * other UI modules with the information required. It also handles model change,
+ * automation, and observer related events from native layer and propagates
+ * those events to the registered UI listeners.
+ */
 public class ResourceManager {
 
     private Map<String, Map<String, SimulatorResource>> resourceMap;
@@ -66,10 +92,6 @@ public class ResourceManager {
     private NotificationSynchronizerThread              synchronizerThread;
 
     private Thread                                      threadHandle;
-
-    static {
-        System.loadLibrary("SimulatorManager");
-    }
 
     public ResourceManager() {
         resourceMap = new HashMap<String, Map<String, SimulatorResource>>();
@@ -449,8 +471,20 @@ public class ResourceManager {
             @Override
             public void run() {
                 SimulatorResourceServer resourceServerN;
-                resourceServerN = SimulatorManager.createResource(
-                        configFilePath, resourceModelChangeListener);
+                try {
+                    resourceServerN = SimulatorManager.createResource(
+                            configFilePath, resourceModelChangeListener);
+                } catch (SimulatorException e) {
+                    Activator
+                            .getDefault()
+                            .getLogManager()
+                            .log(Level.ERROR.ordinal(),
+                                    new Date(),
+                                    "[" + e.getClass().getSimpleName() + "]"
+                                            + e.code().toString() + "-"
+                                            + e.message());
+                    return;
+                }
                 SimulatorResource simulatorResource;
                 simulatorResource = fetchResourceData(resourceServerN);
                 if (null != simulatorResource) {
@@ -461,7 +495,18 @@ public class ResourceManager {
                     resourceCreatedUINotification();
 
                     // Set the observer for the created resource
-                    resourceServerN.setObserverCallback(observer);
+                    try {
+                        resourceServerN.setObserverCallback(observer);
+                    } catch (SimulatorException e) {
+                        Activator
+                                .getDefault()
+                                .getLogManager()
+                                .log(Level.ERROR.ordinal(),
+                                        new Date(),
+                                        "[" + e.getClass().getSimpleName()
+                                                + "]" + e.code().toString()
+                                                + "-" + e.message());
+                    }
 
                     // Print the resource data
                     simulatorResource.printResourceInfo();
@@ -477,9 +522,21 @@ public class ResourceManager {
             public void run() {
                 Map<String, SimulatorResource> resourceTypeMap;
                 SimulatorResourceServer[] simulatorResourceServers = null;
-                simulatorResourceServers = SimulatorManager.createResource(
-                        configFilePath, noOfInstances,
-                        resourceModelChangeListener);
+                try {
+                    simulatorResourceServers = SimulatorManager.createResource(
+                            configFilePath, noOfInstances,
+                            resourceModelChangeListener);
+                } catch (SimulatorException e) {
+                    Activator
+                            .getDefault()
+                            .getLogManager()
+                            .log(Level.ERROR.ordinal(),
+                                    new Date(),
+                                    "[" + e.getClass().getSimpleName() + "]"
+                                            + e.code().toString() + "-"
+                                            + e.message());
+                    return;
+                }
                 if (null == simulatorResourceServers) {
                     return;
                 }
@@ -495,7 +552,18 @@ public class ResourceManager {
                                 uri);
                     }
                     // Set the observer for the created resource
-                    resourceServerN.setObserverCallback(observer);
+                    try {
+                        resourceServerN.setObserverCallback(observer);
+                    } catch (SimulatorException e) {
+                        Activator
+                                .getDefault()
+                                .getLogManager()
+                                .log(Level.ERROR.ordinal(),
+                                        new Date(),
+                                        "[" + e.getClass().getSimpleName()
+                                                + "]" + e.code().toString()
+                                                + "-" + e.message());
+                    }
                 }
 
                 // Find the resourceType and add it to the local data
@@ -532,7 +600,20 @@ public class ResourceManager {
             simulatorResource.setResourceInterface(resourceServerN
                     .getInterfaceType());
 
-            SimulatorResourceModel resourceModelN = resourceServerN.getModel();
+            SimulatorResourceModel resourceModelN;
+            try {
+                resourceModelN = resourceServerN.getModel();
+            } catch (SimulatorException e) {
+                Activator
+                        .getDefault()
+                        .getLogManager()
+                        .log(Level.ERROR.ordinal(),
+                                new Date(),
+                                "[" + e.getClass().getSimpleName() + "]"
+                                        + e.code().toString() + "-"
+                                        + e.message());
+                return null;
+            }
             if (null != resourceModelN) {
                 simulatorResource.setResourceModel(resourceModelN);
 
@@ -702,7 +783,18 @@ public class ResourceManager {
             SimulatorResourceServer resourceServerN = resource
                     .getResourceServer();
             if (null != resourceServerN) {
-                SimulatorManager.deleteResource(resourceServerN);
+                try {
+                    SimulatorManager.deleteResource(resourceServerN);
+                } catch (SimulatorException e) {
+                    Activator
+                            .getDefault()
+                            .getLogManager()
+                            .log(Level.ERROR.ordinal(),
+                                    new Date(),
+                                    "[" + e.getClass().getSimpleName() + "]"
+                                            + e.code().toString() + "-"
+                                            + e.message());
+                }
             }
         }
     }
@@ -739,7 +831,18 @@ public class ResourceManager {
 
     private void deleteResource(String resourceType) {
         if (null != resourceType) {
-            SimulatorManager.deleteResources(resourceType);
+            try {
+                SimulatorManager.deleteResources(resourceType);
+            } catch (SimulatorException e) {
+                Activator
+                        .getDefault()
+                        .getLogManager()
+                        .log(Level.ERROR.ordinal(),
+                                new Date(),
+                                "[" + e.getClass().getSimpleName() + "]"
+                                        + e.code().toString() + "-"
+                                        + e.message());
+            }
         }
     }
 
@@ -767,7 +870,17 @@ public class ResourceManager {
     }
 
     private void deleteResource() {
-        SimulatorManager.deleteResources(null);
+        try {
+            SimulatorManager.deleteResources(null);
+        } catch (SimulatorException e) {
+            Activator
+                    .getDefault()
+                    .getLogManager()
+                    .log(Level.ERROR.ordinal(),
+                            new Date(),
+                            "[" + e.getClass().getSimpleName() + "]"
+                                    + e.code().toString() + "-" + e.message());
+        }
     }
 
     private void deleteLocalResourceDetails(String resourceType,
@@ -1042,28 +1155,39 @@ public class ResourceManager {
                     return;
                 }
                 Type baseType = att.getAttValBaseType();
-                if (baseType == Type.STRING) {
-                    server.updateAttributeStringN(attributeName, value);
-                } else if (baseType == Type.INT) {
-                    int val;
-                    try {
-                        val = Integer.parseInt(value);
-                    } catch (NumberFormatException nfe) {
-                        return;
+                try {
+                    if (baseType == Type.STRING) {
+                        server.updateAttributeString(attributeName, value);
+                    } else if (baseType == Type.INT) {
+                        int val;
+                        try {
+                            val = Integer.parseInt(value);
+                        } catch (NumberFormatException nfe) {
+                            return;
+                        }
+                        server.updateAttributeInteger(attributeName, val);
+                    } else if (baseType == Type.DOUBLE) {
+                        double val;
+                        try {
+                            val = Double.parseDouble(value);
+                        } catch (NumberFormatException nfe) {
+                            return;
+                        }
+                        server.updateAttributeDouble(attributeName, val);
+                    } else if (baseType == Type.BOOL) {
+                        boolean val;
+                        val = Boolean.parseBoolean(value);
+                        server.updateAttributeBoolean(attributeName, val);
                     }
-                    server.updateAttributeInteger(attributeName, val);
-                } else if (baseType == Type.DOUBLE) {
-                    double val;
-                    try {
-                        val = Double.parseDouble(value);
-                    } catch (NumberFormatException nfe) {
-                        return;
-                    }
-                    server.updateAttributeDouble(attributeName, val);
-                } else if (baseType == Type.BOOL) {
-                    boolean val;
-                    val = Boolean.parseBoolean(value);
-                    server.updateAttributeBoolean(attributeName, val);
+                } catch (SimulatorException e) {
+                    Activator
+                            .getDefault()
+                            .getLogManager()
+                            .log(Level.ERROR.ordinal(),
+                                    new Date(),
+                                    "[" + e.getClass().getSimpleName() + "]"
+                                            + e.code().toString() + "-"
+                                            + e.message());
                 }
             }
         }
@@ -1145,8 +1269,20 @@ public class ResourceManager {
                     .getResourceServer();
             if (null != resourceServerN) {
                 String attrName = attribute.getAttributeName();
-                autoId = resourceServerN.startAttributeAutomation(attrName,
-                        autoType.ordinal(), automationListener);
+                try {
+                    autoId = resourceServerN.startAttributeAutomation(attrName,
+                            autoType, automationListener);
+                } catch (SimulatorException e) {
+                    Activator
+                            .getDefault()
+                            .getLogManager()
+                            .log(Level.ERROR.ordinal(),
+                                    new Date(),
+                                    "[" + e.getClass().getSimpleName() + "]"
+                                            + e.code().toString() + "-"
+                                            + e.message());
+                    return -1;
+                }
                 if (-1 != autoId) {
                     attribute.setAutomationId(autoId);
                     attribute.setAutomationType(autoType);
@@ -1167,7 +1303,19 @@ public class ResourceManager {
             SimulatorResourceServer resourceServerN = resource
                     .getResourceServer();
             if (null != resourceServerN) {
-                resourceServerN.stopAutomation(autoId);
+                try {
+                    resourceServerN.stopAutomation(autoId);
+                } catch (SimulatorException e) {
+                    Activator
+                            .getDefault()
+                            .getLogManager()
+                            .log(Level.ERROR.ordinal(),
+                                    new Date(),
+                                    "[" + e.getClass().getSimpleName() + "]"
+                                            + e.code().toString() + "-"
+                                            + e.message());
+                    return;
+                }
                 // Change the automation status
                 att.setAutomationInProgress(false);
                 resource.setAttributeAutomationInProgress(isAnyAttributeInAutomation(resource));
@@ -1241,8 +1389,21 @@ public class ResourceManager {
             if (null != resourceServer) {
                 // TODO: Temporarily handling the normal one-time automation for
                 // resources
-                int autoId = resourceServer.startResourceAutomation(
-                        AutomationType.NORMAL.ordinal(), automationListener);
+                int autoId = -1;
+                try {
+                    autoId = resourceServer.startResourceAutomation(
+                            AutomationType.NORMAL, automationListener);
+                } catch (SimulatorException e) {
+                    Activator
+                            .getDefault()
+                            .getLogManager()
+                            .log(Level.ERROR.ordinal(),
+                                    new Date(),
+                                    "[" + e.getClass().getSimpleName() + "]"
+                                            + e.code().toString() + "-"
+                                            + e.message());
+                    autoId = -1;
+                }
                 if (-1 == autoId) {
                     // Automation request failed and hence status is being
                     // rolled back
@@ -1281,7 +1442,18 @@ public class ResourceManager {
             return false;
         }
         // Call native method
-        resourceServer.stopAutomation(autoId);
+        try {
+            resourceServer.stopAutomation(autoId);
+        } catch (SimulatorException e) {
+            Activator
+                    .getDefault()
+                    .getLogManager()
+                    .log(Level.ERROR.ordinal(),
+                            new Date(),
+                            "[" + e.getClass().getSimpleName() + "]"
+                                    + e.code().toString() + "-" + e.message());
+            return false;
+        }
 
         // Notify the UI Listeners. Invoke the automation complete callback.
         Thread stopThread = new Thread() {
@@ -1365,7 +1537,17 @@ public class ResourceManager {
         if (null == server) {
             return;
         }
-        server.notifyObserver(observerId);
+        try {
+            server.notifyObserver(observerId);
+        } catch (SimulatorException e) {
+            Activator
+                    .getDefault()
+                    .getLogManager()
+                    .log(Level.ERROR.ordinal(),
+                            new Date(),
+                            "[" + e.getClass().getSimpleName() + "]"
+                                    + e.code().toString() + "-" + e.message());
+        }
     }
 
     public Image getImage(String resourceURI) {

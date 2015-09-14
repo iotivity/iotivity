@@ -14,19 +14,41 @@
  * limitations under the License.
  */
 
-/**
- * This file provides interface for verification callback information.
- */
 package org.oic.simulator.clientcontroller;
 
 /**
- * An OnVerificationListener can be registered via the resource
- * startVerification call. Event listeners are notified asynchronously.
+ * Interface for receiving the verification status via callback. An
+ * IVerificationListener can be registered via the resource startVerification
+ * call. Event listeners are notified asynchronously.
  */
 public interface IVerificationListener {
+    /**
+     * Called when the verification request is accepted and started.
+     * 
+     * @param uId
+     *            Unique Id of the resource.
+     * @param id
+     *            Verification Id.
+     */
     public void onVerificationStarted(String uId, int id);
 
+    /**
+     * Called when the verification is stopped before its completion.
+     * 
+     * @param uId
+     *            Unique Id of the resource.
+     * @param id
+     *            Verification Id.
+     */
     public void onVerificationAborted(String uId, int id);
 
+    /**
+     * Called when the verification is done.
+     * 
+     * @param uId
+     *            Unique Id of the resource.
+     * @param id
+     *            Verification Id.
+     */
     public void onVerificationCompleted(String uId, int id);
 }

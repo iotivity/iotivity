@@ -14,34 +14,17 @@
  * limitations under the License.
  */
 
-/**
- * This file contains a class which has the methods
- * for creation and deletion of resources.
- */
 package org.oic.simulator;
 
-import java.util.ArrayList;
-import java.util.Vector;
-
 import org.oic.simulator.clientcontroller.IFindResourceListener;
-import org.oic.simulator.clientcontroller.SimulatorRemoteResource;
 import org.oic.simulator.serviceprovider.IResourceModelChangedListener;
 import org.oic.simulator.serviceprovider.SimulatorResourceServer;
 
 /**
- * This class provides a set of methods for creation and deletion of resources.
+ * This class provides a set of methods for creation, discovery and deletion of
+ * resources.
  */
 public class SimulatorManager {
-
-    /**
-     * Set listener for receiving log messages.
-     *
-     * @param logger
-     *            {@link ILogger} to receive the log messages.
-     */
-    public static void setLogger(ILogger logger) {
-        SimulatorManagerNativeInterface.setLogger(logger);
-    }
 
     /**
      * API for creating a resource from a RAML configuration file whose path is
@@ -55,9 +38,15 @@ public class SimulatorManager {
      * 
      * @return {@link SimulatorResourceServer} - Created resource on success,
      *         otherwise null.
+     * 
+     * @throws InvalidArgsException
+     *             Thrown if the input parameters are empty.
+     * @throws SimulatorException
+     *             Thrown for other errors.
      */
     public static SimulatorResourceServer createResource(String configPath,
-            IResourceModelChangedListener listener) {
+            IResourceModelChangedListener listener)
+            throws InvalidArgsException, SimulatorException {
         SimulatorResourceServer simulatorResourceServerObj;
         simulatorResourceServerObj = SimulatorManagerNativeInterface
                 .createResource(configPath, listener);
@@ -78,26 +67,19 @@ public class SimulatorManager {
      * 
      * @return Returns an array of {@link SimulatorResourceServer} objects one
      *         for each created resource on success, otherwise null.
+     * 
+     * @throws InvalidArgsException
+     *             Thrown if the input parameters are empty.
+     * @throws SimulatorException
+     *             Thrown for other errors.
      */
     public static SimulatorResourceServer[] createResource(String configPath,
-            int count, IResourceModelChangedListener listener) {
+            int count, IResourceModelChangedListener listener)
+            throws InvalidArgsException, SimulatorException {
         SimulatorResourceServer[] simulatorResourceServers;
         simulatorResourceServers = SimulatorManagerNativeInterface
                 .createResources(configPath, count, listener);
         return simulatorResourceServers;
-    }
-
-    /**
-     * API for getting all locally created resources.
-     *
-     * @return Returns a list of {@link SimulatorResourceServer} objects on
-     *         success, otherwise null.
-     */
-    public static Vector<SimulatorResourceServer> getLocalResources() {
-        Vector<SimulatorResourceServer> simulatorResourceServerVector = null;
-        simulatorResourceServerVector = SimulatorManagerNativeInterface
-                .getResources();
-        return simulatorResourceServerVector;
     }
 
     /**
@@ -106,8 +88,14 @@ public class SimulatorManager {
      * @param resource
      *            {@link SimulatorResourceServer} object of the resource to be
      *            deleted.
+     *
+     * @throws InvalidArgsException
+     *             Thrown if the input parameter is empty.
+     * @throws SimulatorException
+     *             Thrown for other errors.
      */
-    public static void deleteResource(SimulatorResourceServer resource) {
+    public static void deleteResource(SimulatorResourceServer resource)
+            throws InvalidArgsException, SimulatorException {
         SimulatorManagerNativeInterface.deleteResource(resource);
     }
 
@@ -119,47 +107,101 @@ public class SimulatorManager {
      *
      * @param resourceType
      *            Type of resource to be deleted.
+     *
+     * @throws InvalidArgsException
+     *             Thrown if the input parameter is empty.
+     * @throws SimulatorException
+     *             Thrown for other errors.
      */
-    public static void deleteResources(String resourceType) {
+    public static void deleteResources(String resourceType)
+            throws InvalidArgsException, SimulatorException {
         SimulatorManagerNativeInterface.deleteResources(resourceType);
     }
 
     /**
-     * API for discovering resources in the network. Callback is called whenever
-     * a resource is discovered in the network.
+     * API for discovering all types of resources in the network. Callback is
+     * called when a resource is discovered in the network.
+     *
+     * @param listener
+     *            Interface to receive the discovered remote resources.
+     * 
+     * @throws InvalidArgsException
+     *             Thrown if the input parameter is empty.
+     * @throws SimulatorException
+     *             Thrown for other errors.
+     */
+    public static void findResource(IFindResourceListener listener)
+            throws InvalidArgsException, SimulatorException {
+        SimulatorManagerNativeInterface.findResource(listener);
+    }
+
+    /**
+     * API for discovering specific type of resources in the network. Callback
+     * is called when a resource is discovered in the network.
      *
      * @param resourceType
      *            Required resource type
      * @param listener
      *            Interface to receive the discovered remote resources.
      * 
-     * @return OCSimulatorResult - return value of this API. It returns
-     *         OC_STACK_OK if success.
+     * @throws InvalidArgsException
+     *             Thrown if the input parameter is empty.
+     * @throws SimulatorException
+     *             Thrown for other errors.
      */
-    public static OCSimulatorResult findResource(String resourceType,
-            IFindResourceListener listener) {
-        OCSimulatorResult result;
-        int ordinal = SimulatorManagerNativeInterface.findResource(
-                resourceType, listener);
-        result = OCSimulatorResult.conversion(ordinal);
-        return result;
+    public static void findResources(String resourceType,
+            IFindResourceListener listener) throws InvalidArgsException,
+            SimulatorException {
+        SimulatorManagerNativeInterface.findResources(resourceType, listener);
     }
 
     /**
-     * API for getting the list of previously discovered resources in the
-     * network.
+     * API to set the listener for receiving log messages.
      *
-     * @param resourceType
-     *            Required resource type
-     *
-     * @return A list of {@link SimulatorRemoteResource} - returns list of
-     *         SimulatorRemoteResource
-     *
+     * @param logger
+     *            {@link ILogger} to receive the log messages.
      */
-    public static ArrayList<SimulatorRemoteResource> getFoundResources(
-            String resourceType) {
-        ArrayList<SimulatorRemoteResource> resourceList = SimulatorManagerNativeInterface
-                .getFoundResources(resourceType);
-        return resourceList;
+    public static void setLogger(ILogger logger) {
+        SimulatorManagerNativeInterface.setLogger(logger);
+    }
+
+    /**
+     * API to set the device information.
+     * 
+     * @param deviceInfo
+     *            Device information.
+     */
+    public static void setDeviceInfo(String deviceInfo) {
+        SimulatorManagerNativeInterface.setDeviceInfo(deviceInfo);
+    }
+
+    /**
+     * API to get the device information asynchronously via the listener.
+     * 
+     * @param listener
+     *            Interface for receiving the device information.
+     */
+    public static void getDeviceInfo(IDeviceInfo listener) {
+        SimulatorManagerNativeInterface.getDeviceInfo(listener);
+    }
+
+    /**
+     * API to set the platform information.
+     * 
+     * @param platformInfo
+     *            {@link PlatformInfo} - Platform information.
+     */
+    public static void setPlatformInfo(PlatformInfo platformInfo) {
+        SimulatorManagerNativeInterface.setPlatformInfo(platformInfo);
+    }
+
+    /**
+     * API to get the platform information asynchronously via the listener.
+     * 
+     * @param listener
+     *            Interface for receiving the platform information.
+     */
+    public static void getPlatformInfo(IPlatformInfo listener) {
+        SimulatorManagerNativeInterface.getPlatformInfo(listener);
     }
 }

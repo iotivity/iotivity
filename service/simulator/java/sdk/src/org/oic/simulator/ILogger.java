@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * This file provides an interface for handling the log messages.
- */
 package org.oic.simulator;
 
 /**

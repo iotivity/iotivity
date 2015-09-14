@@ -1,3 +1,19 @@
+/*
+ * Copyright 2015 Samsung Electronics All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package oic.simulator.serviceprovider.utils;
 
 import java.util.ArrayList;
@@ -5,6 +21,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * This class has common utility methods.
+ */
 public class Utility {
 
     public static String uriToDisplayName(String uri) {
@@ -13,7 +32,7 @@ public class Utility {
             String tokens[] = uri.split(Constants.FORWARD_SLASH);
             if (Constants.PROPER_RESOURCE_URI_TOKEN_COUNT == tokens.length) {
                 // Proper URI
-                result = tokens[2] + Constants.UNDERSCORE + tokens[4];
+                result = tokens[3] + Constants.UNDERSCORE + tokens[5];
             }
         }
         return result;
@@ -25,10 +44,10 @@ public class Utility {
             String tokens[] = displayName.split(Constants.UNDERSCORE);
             if (Constants.DISPLAY_RESOURCE_URI_TOKEN_COUNT == tokens.length) {
                 // Proper Display Name
-                result = Constants.FORWARD_SLASH + Constants.OIC
-                        + Constants.FORWARD_SLASH + tokens[0]
-                        + Constants.FORWARD_SLASH + Constants.SIMULATOR
-                        + Constants.FORWARD_SLASH + tokens[1];
+                result = Constants.OIC_PREFIX + Constants.FORWARD_SLASH
+                        + tokens[0] + Constants.FORWARD_SLASH
+                        + Constants.SIMULATOR + Constants.FORWARD_SLASH
+                        + tokens[1];
             }
         }
         return result;
@@ -47,13 +66,9 @@ public class Utility {
         }
 
         // Removing the file extension
-        String[] token = fileName.split(Constants.SPLIT_BY_DOT_PATTERN);
-        int tokLen = token.length;
-        String result = null;
-        if (tokLen - 2 >= 0) {
-            result = token[tokLen - 2];
-        }
-        return result;
+        int index = fileName.lastIndexOf('.');
+        fileName = fileName.substring(0, index);
+        return fileName;
     }
 
     public static String displayToFileName(String displayName) {

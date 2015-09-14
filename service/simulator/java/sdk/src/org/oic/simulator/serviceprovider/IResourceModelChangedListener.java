@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * This file provides an interface for handling the resource model
- * related notifications.
- */
 package org.oic.simulator.serviceprovider;
 
 import org.oic.simulator.SimulatorResourceModel;
@@ -34,7 +30,7 @@ public interface IResourceModelChangedListener {
      * @param resourceURI
      *            URI of resource.
      * @param resourceModel
-     *            Resource model of the resource.
+     *            {@link SimulatorResourceModel} of the resource.
      */
     public void onResourceModelChanged(String resourceURI,
             SimulatorResourceModel resourceModel);

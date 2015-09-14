@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-/**
- * This file contains a class which has a set of native methods for
- * communicating with a remote resource.
- */
 package org.oic.simulator.clientcontroller;
 
 import java.util.LinkedList;
 import java.util.Map;
 
+import org.oic.simulator.InvalidArgsException;
+import org.oic.simulator.NoSupportException;
+import org.oic.simulator.OperationInProgressException;
+import org.oic.simulator.SimulatorException;
 import org.oic.simulator.SimulatorResourceModel;
 
 /**
@@ -37,102 +37,125 @@ public class SimulatorRemoteResource {
     }
 
     /**
-     * Method to get the URI for this resource
+     * Method to get the URI for this resource.
      * 
-     * @return resource URI
+     * @return Resource URI
      */
     public String getUri() {
         return mUri;
     }
 
     /**
-     * Method to get the observe capability of this resource
+     * Method to get the observe capability of this resource.
      * 
-     * @return true if the resource is observable, otherwise false.
+     * @return True if the resource is observable, otherwise false.
      */
     public boolean getIsObservable() {
         return mIsObservable;
     }
 
     /**
-     * Method to get the connectivity type for this resource
+     * Method to get the connectivity type for this resource.
      * 
      * @return Connectivity type.
      */
-    public String getConnectivityType() {
-        return mConnType;
+    public SimulatorConnectivityType getConnectivityType() {
+        return SimulatorConnectivityType.getConnectivityType(mConnType);
     }
 
     /**
-     * Method to get the list of resource types
+     * Method to get the list of resource types.
      * 
-     * @return List of resource types
+     * @return List of resource types.
      */
     public LinkedList<String> getResourceTypes() {
         return mResTypes;
     }
 
     /**
-     * Method to get the list of resource interfaces
+     * Method to get the list of resource interfaces.
      * 
-     * @return List of resource interface
+     * @return List of resource interfaces.
      */
     public LinkedList<String> getResourceInterfaces() {
         return mResInterfaces;
     }
 
     /**
-     * Method to get a string representation of the resource's server ID. This
-     * is unique per-server independent on how it was discovered.
+     * Method to get a string representation of the host address of the remote
+     * resource.
      * 
-     * @return server ID
+     * @return Host address.
      */
-    public String getServerId() {
-        return mSid;
+    public String getHost() {
+        return mHost;
     }
 
     /**
-     * Method to get a unique Id of the resource.
+     * Method to get a unique Id for the resource.
      * 
      * @return Unique ID.
      */
-    public String getUid() {
-        return mUid;
+    public String getId() {
+        return mId;
     }
 
     /**
-     * Method to set observation on the resource
+     * Method to set observation on the remote resource.
      * 
      * @param observeType
-     *            allows the client to specify how it wants to observe
+     *            Allows the client to specify how it wants to observe.
      * @param queryParamsMap
-     *            map which can have the query parameter name and value
+     *            Map which can have the query parameter names and values.
      * @param onObserveListener
-     *            event handler The handler method will be invoked with a map of
-     *            attribute name and values.
+     *            The handler method which will be invoked with a map of
+     *            attribute names and values whenever there is a change in
+     *            resource model of the remote resource.
      * 
+     * @throws InvalidArgsException
+     *             This exception will be thrown if any parameter has invalid
+     *             values.
+     * @throws SimulatorException
+     *             This exception will be thrown for other errors.
      */
     public native void observe(SimulatorObserveType observeType,
             Map<String, String> queryParamsMap,
-            IObserveListener onObserveListener);
+            IObserveListener onObserveListener) throws InvalidArgsException,
+            SimulatorException;
 
     /**
-     * Method to cancel the observation on the resource
+     * Method to cancel the observation on the resource.
+     * 
+     * @throws InvalidArgsException
+     *             This exception will be thrown if the native remote resource
+     *             object is unavailable.
+     * @throws SimulatorException
+     *             This exception will be thrown for other errors.
      */
-    public native void cancelObserve();
+    public native void cancelObserve() throws InvalidArgsException,
+            SimulatorException;
 
     /**
      * Method to get the attributes of a resource.
      * 
      * @param queryParamsMap
-     *            map which can have the query parameter name and value
+     *            Map which can have the query parameter name and value.
      * @param onGetListener
-     *            The event handler will be invoked with a map of attribute name
-     *            and values. The event handler will also have the result from
-     *            this Get operation This will have error codes
+     *            Event handler which will be invoked with the response for GET
+     *            request with a map of attribute name and values.
+     * 
+     * @throws InvalidArgsException
+     *             This exception will be thrown if any parameter has invalid
+     *             values.
+     * @throws NoSupportException
+     *             This exception will be thrown if we cannot send GET request
+     *             to the remote resource.
+     * @throws SimulatorException
+     *             This exception will be thrown for other errors.
      */
     public void get(Map<String, String> queryParamsMap,
-            IGetListener onGetListener) {
+            IGetListener onGetListener) throws InvalidArgsException,
+            NoSupportException, SimulatorException {
         this.get(null, queryParamsMap, onGetListener);
     }
 
@@ -140,106 +163,184 @@ public class SimulatorRemoteResource {
      * Method to get the attributes of a resource.
      * 
      * @param resourceInterface
-     *            interface type of the resource to operate on
+     *            Interface type of the resource to operate on.
      * @param queryParamsMap
-     *            map which can have the query parameter name and value
+     *            Map which can have the query parameter name and value.
      * @param onGetListener
-     *            The event handler will be invoked with a map of attribute name
-     *            and values. The event handler will also have the result from
-     *            this Get operation This will have error codes
+     *            Event handler which will be invoked with the response for GET
+     *            request with a map of attribute name and values.
+     * 
+     * @throws InvalidArgsException
+     *             This exception will be thrown if any parameter has invalid
+     *             values.
+     * @throws NoSupportException
+     *             This exception will be thrown if we cannot send GET request
+     *             to the remote resource.
+     * @throws SimulatorException
+     *             This exception will be thrown for other errors.
      */
     public native void get(String resourceInterface,
-            Map<String, String> queryParamsMap, IGetListener onGetListener);
+            Map<String, String> queryParamsMap, IGetListener onGetListener)
+            throws InvalidArgsException, NoSupportException, SimulatorException;
 
     /**
      * Method to set the representation of a resource (via PUT)
      * 
      * @param representation
-     *            representation of the resource
+     *            {@link SimulatorResourceModel} holding the representation of
+     *            the resource.
      * @param queryParamsMap
-     *            Map which can have the query parameter name and value
+     *            Map which can have the query parameter name and value.
      * @param onPutListener
-     *            event handler The event handler will be invoked with a map of
-     *            attribute name and values.
+     *            Event handler which will be invoked with the response for PUT
+     *            request with a map of attribute name and values.
+     * 
+     * @throws InvalidArgsException
+     *             This exception will be thrown if any parameter has invalid
+     *             value.
+     * @throws NoSupportException
+     *             This exception will be thrown if we cannot send PUT request
+     *             to the remote resource.
+     * @throws SimulatorException
+     *             This exception will be thrown for other errors.
      */
     public void put(SimulatorResourceModel representation,
-            Map<String, String> queryParamsMap, IPutListener onPutListener) {
+            Map<String, String> queryParamsMap, IPutListener onPutListener)
+            throws InvalidArgsException, NoSupportException, SimulatorException {
         this.put(null, representation, queryParamsMap, onPutListener);
     }
 
     /**
-     * Method to set the representation of a resource (via PUT)
+     * Method to set the representation of a resource (via PUT).
      * 
      * @param resourceInterface
-     *            interface type of the resource to operate on
+     *            Interface type of the resource to operate on.
      * @param representation
-     *            representation of the resource
+     *            {@link SimulatorResourceModel} holding the representation of
+     *            the resource.
      * @param queryParamsMap
-     *            Map which can have the query parameter name and value
+     *            Map which can have the query parameter name and value.
      * @param onPutListener
-     *            event handler The event handler will be invoked with a map of
-     *            attribute name and values.
+     *            Event handler which will be invoked with the response for PUT
+     *            request with a map of attribute name and values.
+     * 
+     * @throws InvalidArgsException
+     *             This exception will be thrown if any parameter has invalid
+     *             value.
+     * @throws NoSupportException
+     *             This exception will be thrown if we cannot send PUT request
+     *             to the remote resource.
+     * @throws SimulatorException
+     *             This exception will be thrown for other errors.
      */
-    private native int put(String resourceInterface,
+    private native void put(String resourceInterface,
             SimulatorResourceModel representation,
-            Map<String, String> queryParamsMap, IPutListener onPutListener);
+            Map<String, String> queryParamsMap, IPutListener onPutListener)
+            throws InvalidArgsException, NoSupportException, SimulatorException;
 
     /**
-     * Method to POST on a resource
+     * Method to POST on a resource.
      * 
      * @param representation
-     *            representation of the resource
+     *            {@link SimulatorResourceModel} holding the representation of
+     *            the resource
      * @param queryParamsMap
      *            Map which can have the query parameter name and value
      * @param onPostListener
-     *            event handler The event handler will be invoked with a map of
-     *            attribute name and values.
+     *            Event handler which will be invoked with the response for POST
+     *            request with a map of attribute name and values.
+     * 
+     * @throws InvalidArgsException
+     *             This exception will be thrown if any parameter has invalid
+     *             value.
+     * @throws NoSupportException
+     *             This exception will be thrown if we cannot send POST request
+     *             on the remote resource.
+     * @throws SimulatorException
+     *             This exception will be thrown for other errors.
      */
     public void post(SimulatorResourceModel representation,
-            Map<String, String> queryParamsMap, IPostListener onPostListener) {
+            Map<String, String> queryParamsMap, IPostListener onPostListener)
+            throws InvalidArgsException, NoSupportException, SimulatorException {
         this.post(null, representation, queryParamsMap, onPostListener);
     }
 
     /**
-     * Method to POST on a resource
+     * Method to POST on a resource.
      * 
      * @param resourceInterface
-     *            interface type of the resource to operate on
+     *            Interface type of the resource to operate on.
      * @param representation
-     *            representation of the resource
+     *            {@link SimulatorResourceModel} holding the representation of
+     *            the resource.
      * @param queryParamsMap
-     *            Map which can have the query parameter name and value
+     *            Map which can have the query parameter name and value.
      * @param onPostListener
-     *            event handler The event handler will be invoked with a map of
-     *            attribute name and values.
+     *            Event handler which will be invoked with the response for POST
+     *            request with a map of attribute name and values.
+     * 
+     * @throws InvalidArgsException
+     *             This exception will be thrown if any parameter has invalid
+     *             value.
+     * @throws NoSupportException
+     *             This exception will be thrown if we cannot send POST request
+     *             on the remote resource.
+     * @throws SimulatorException
+     *             This exception will be thrown for other errors.
      */
-    private native int post(String resourceInterface,
+    public native void post(String resourceInterface,
             SimulatorResourceModel representation,
-            Map<String, String> queryParamsMap, IPostListener onPostListener);
+            Map<String, String> queryParamsMap, IPostListener onPostListener)
+            throws InvalidArgsException, NoSupportException, SimulatorException;
 
     /**
      * Method to set the RAML file path from application
      * 
      * @param ramlPath
      *            RAML configuration file path
+     * 
+     * @throws InvalidArgsException
+     *             Thrown if the RAML configuration file path is invalid.
+     * @throws SimulatorException
+     *             Thrown for other errors.
      */
-    public native void configureRAMLPath(String ramlPath);
+    public native void configureRAMLPath(String ramlPath)
+            throws InvalidArgsException, SimulatorException;
 
     /**
-     * Method to start verification of a resource using automation
+     * Method to start verification of a resource using automation.
      * 
      * @param requestType
-     *            request type to verify
-     * 
+     *            Request type to verify.
      * @param onVerifyListener
-     *            event handler The event handler will be invoked with the
-     *            automation ID.
+     *            This event handler will be invoked with the current status of
+     *            the automation.
      * 
      * @return Automation ID.
      * 
+     * @throws InvalidArgsException
+     *             This exception will be thrown if any parameter has invalid
+     *             value.
+     * @throws NoSupportException
+     *             Thrown either if the resource does not support the request
+     *             type or the resource is not configured with RAML.
+     * @throws OperationInProgressException
+     *             Thrown if another request generation session is already in
+     *             progress.
+     * @throws SimulatorException
+     *             This exception will be thrown for other errors.
      */
-    public native int startVerification(int requestType,
-            IVerificationListener onVerifyListener);
+    public int startVerification(SimulatorVerificationType requestType,
+            IVerificationListener onVerifyListener)
+            throws InvalidArgsException, NoSupportException,
+            OperationInProgressException, SimulatorException {
+        return startVerification(requestType.ordinal(), onVerifyListener);
+    }
+
+    private native int startVerification(int requestType,
+            IVerificationListener onVerifyListener)
+            throws InvalidArgsException, NoSupportException,
+            OperationInProgressException, SimulatorException;
 
     /**
      * Method to stop verification of a resource previously started.
@@ -247,8 +348,15 @@ public class SimulatorRemoteResource {
      * @param id
      *            Automation ID.
      * 
+     * @throws InvalidArgsException
+     *             Thrown if the automation ID is invalid.
+     * @throws NoSupportException
+     *             Thrown if the resource is not configured with RAML.
+     * @throws SimulatorException
+     *             Thrown for other errors.
      */
-    public native void stopVerification(int id);
+    public native void stopVerification(int id) throws InvalidArgsException,
+            NoSupportException, SimulatorException;
 
     @Override
     protected void finalize() throws Throwable {
@@ -261,10 +369,10 @@ public class SimulatorRemoteResource {
 
     private long               nativeHandle;
     private String             mUri;
-    private String             mConnType;
-    private String             mSid;
-    private String             mUid;
-    private boolean            mIsObservable;
+    private int                mConnType;
+    private String             mHost;
+    private String             mId;
     private LinkedList<String> mResTypes;
     private LinkedList<String> mResInterfaces;
+    private boolean            mIsObservable;
 }

@@ -14,15 +14,22 @@
  * limitations under the License.
  */
 
-/**
- * This file provides a enum which contains the automation types.
- */
-package org.oic.simulator;
+package org.oic.simulator.serviceprovider;
 
 /**
- * This Enum contains the different types of automation which are supported by
- * the simulator.
+ * This enum contains the different levels of server side automation which are
+ * supported by the simulator.
  */
 public enum AutomationType {
-    NORMAL, RECURRENT
+    NORMAL(0), RECURRENT(1);
+
+    private int value;
+
+    private AutomationType(int value) {
+        this.value = value;
+    }
+
+    public int getValue() {
+        return this.value;
+    }
 }

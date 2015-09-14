@@ -1,3 +1,19 @@
+/*
+ * Copyright 2015 Samsung Electronics All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package oic.simulator.serviceprovider.manager;
 
 import java.net.URL;
@@ -10,6 +26,10 @@ import org.eclipse.jface.resource.ImageRegistry;
 import org.eclipse.swt.graphics.Image;
 import org.osgi.framework.Bundle;
 
+/**
+ * Class which loads the icons/images into the image registry, and has methods
+ * to handle the image related requests from other UI modules.
+ */
 public class ImageManager {
 
     private static ImageManager imageManager;
@@ -36,7 +56,7 @@ public class ImageManager {
                 .createFromURL(bundle.getEntry("icons/button_pressed.PNG")));
 
         // Resource icons based on the resource type
-        r.put(Constants.OIC_LIGHT, ImageDescriptor.createFromURL(bundle
+        r.put(Constants.OIC_R_LIGHT, ImageDescriptor.createFromURL(bundle
                 .getEntry("/icons/light_16x16.png")));
 
         // Log View related icons

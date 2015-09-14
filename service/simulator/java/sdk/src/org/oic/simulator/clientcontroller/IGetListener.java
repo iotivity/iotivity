@@ -14,19 +14,32 @@
  * limitations under the License.
  */
 
-/**
- * This file provides interface for get callback information.
- */
 package org.oic.simulator.clientcontroller;
 
 import org.oic.simulator.SimulatorResourceModel;
 
 /**
- * An OnGetListener can be registered via the resource get call. Event listeners
- * are notified asynchronously
+ * Interface for receiving response for GET request. An IGetListener can be
+ * registered via the resource get call. Event listeners are notified
+ * asynchronously.
  */
 public interface IGetListener {
+    /**
+     * This method will be called when response from the remote resource for GET
+     * request arrives.
+     * 
+     * @param uId
+     *            Unique Id of the resource.
+     * @param representation
+     *            {@link SimulatorResourceModel}.
+     */
     public void onGetCompleted(String uId, SimulatorResourceModel representation);
 
+    /**
+     * Called when there is an error in GET request.
+     * 
+     * @param ex
+     *            Error information.
+     */
     public void onGetFailed(Throwable ex);
 }

@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * This file provides interface for getting notification when resources are
- * discovered in network.
- */
 package org.oic.simulator.clientcontroller;
 
 import org.oic.simulator.clientcontroller.SimulatorRemoteResource;
@@ -28,11 +24,12 @@ import org.oic.simulator.clientcontroller.SimulatorRemoteResource;
  */
 public interface IFindResourceListener {
     /**
-     * This callback method will be called whenever resource is discovered in
-     * the network.
+     * This callback method will be called when resource is discovered in the
+     * network.
      *
      * @param resource
-     *            resource discovered in the network
+     *            {@link SimulatorRemoteResource} object representing the
+     *            resource discovered in the network.
      */
     public void onResourceCallback(SimulatorRemoteResource resource);
 }

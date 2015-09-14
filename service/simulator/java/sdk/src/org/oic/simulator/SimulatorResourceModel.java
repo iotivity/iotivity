@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * This file contains a class which has a set of native methods for accessing
- * the resource model.
- */
 package org.oic.simulator;
 
 import org.oic.simulator.ResourceAttribute;
@@ -30,7 +26,9 @@ import java.util.Map;
 public class SimulatorResourceModel {
 
     /**
-     * Constructor.
+     * Constructor for creating a native resource model object. Client requests
+     * such as PUT and POST uses this method for passing the new new/updated
+     * resource model.
      */
     public SimulatorResourceModel() {
         create();

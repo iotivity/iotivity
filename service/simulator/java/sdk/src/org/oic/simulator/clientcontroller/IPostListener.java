@@ -14,20 +14,33 @@
  * limitations under the License.
  */
 
-/**
- * This file provides interface for post callback information.
- */
 package org.oic.simulator.clientcontroller;
 
 import org.oic.simulator.SimulatorResourceModel;
 
 /**
- * An OnPostListener can be registered via the resource post call. Event
- * listeners are notified asynchronously
+ * Interface for receiving response for POST request. An IPostListener can be
+ * registered via the resource post call. Event listeners are notified
+ * asynchronously.
  */
 public interface IPostListener {
+    /**
+     * This method will be called when response from the remote resource for
+     * POST request arrives.
+     * 
+     * @param uId
+     *            Unique Id of the resource.
+     * @param representation
+     *            {@link SimulatorResourceModel}.
+     */
     public void onPostCompleted(String uId,
             SimulatorResourceModel representation);
 
+    /**
+     * Called when there is an error in POST request.
+     * 
+     * @param ex
+     *            Error information.
+     */
     public void onPostFailed(Throwable ex);
 }

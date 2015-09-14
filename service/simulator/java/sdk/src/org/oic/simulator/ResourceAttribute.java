@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * This file contains a class which has a set of native methods for
- * getting the information associated with a particular attribute.
- */
 package org.oic.simulator;
 
 /**

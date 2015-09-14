@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-/**
- * This file provides a enum which contains the observable types.
- */
 package org.oic.simulator.clientcontroller;
 
+/**
+ * Enum for observe types.
+ */
 public enum SimulatorObserveType {
-    OBSERVE(0), OBSERVE_ALL(1), ;
+    OBSERVE(0), OBSERVE_ALL(1);
 
     private int value;
 

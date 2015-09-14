@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * This file provides an interface for receiving the notifications on observers.
- */
 package org.oic.simulator.serviceprovider;
 
 /**
