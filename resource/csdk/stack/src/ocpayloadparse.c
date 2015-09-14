@@ -558,142 +558,298 @@ static OCStackResult OCParsePlatformPayload(OCPayload** outPayload, CborValue* a
     }
 }
 
+static OCRepPayloadPropType DecodeCborType(CborType type)
+{
+    switch (type)
+    {
+            case CborNullType:
+                return OCREP_PROP_NULL;
+            case CborIntegerType:
+                return OCREP_PROP_INT;
+            case CborDoubleType:
+                return OCREP_PROP_DOUBLE;
+            case CborBooleanType:
+                return OCREP_PROP_BOOL;
+            case CborTextStringType:
+                return OCREP_PROP_STRING;
+            case CborMapType:
+                return OCREP_PROP_OBJECT;
+            case CborArrayType:
+                return OCREP_PROP_ARRAY;
+            default:
+                return OCREP_PROP_NULL;
+    }
+}
+static bool OCParseArrayFindDimensionsAndType(const CborValue* parent, size_t dimensions[MAX_REP_ARRAY_DEPTH],
+        OCRepPayloadPropType* type)
+{
+    bool err = false;
+    CborValue insideArray;
+    *type = OCREP_PROP_NULL;
+    dimensions[0] = dimensions[1] = dimensions[2] = 0;
+
+    err = err || cbor_value_enter_container(parent, &insideArray);
+
+    while (cbor_value_is_valid(&insideArray))
+    {
+        OCRepPayloadPropType tempType = DecodeCborType(cbor_value_get_type(&insideArray));
+
+        if (tempType == OCREP_PROP_ARRAY)
+        {
+            size_t subdim[MAX_REP_ARRAY_DEPTH];
+            tempType = OCREP_PROP_NULL;
+            err = err || OCParseArrayFindDimensionsAndType(&insideArray, subdim, &tempType);
+
+            if (subdim[2] != 0)
+            {
+                OC_LOG(ERROR, TAG, "Parse array helper, sub-array too deep");
+            }
+
+            dimensions[1] = dimensions[1] >= subdim[0] ? dimensions[1] : subdim[0];
+            dimensions[2] = dimensions[2] >= subdim[1] ? dimensions[2] : subdim[1];
+
+            if (*type != OCREP_PROP_NULL && tempType != OCREP_PROP_NULL
+                    && *type != tempType)
+            {
+                OC_LOG(ERROR, TAG, "Array parse failed, mixed arrays not allowed (subtype)");
+                return true;
+            }
+            else if (*type == OCREP_PROP_NULL)
+            {
+                // We don't know the type of this array yet, so the assignment is OK
+                *type = tempType;
+            }
+        }
+        else if (*type == OCREP_PROP_NULL)
+        {
+            // We don't know the type of this array yet, so the assignment is OK
+            *type = tempType;
+        }
+        // tempType is allowed to be NULL, since it might now know the answer yet
+        else if (tempType != OCREP_PROP_NULL && *type != tempType)
+        {
+            // this is an invalid situation!
+            OC_LOG(ERROR, TAG, "Array parse failed, mixed arrays not allowed");
+            return true;
+        }
+
+        ++dimensions[0];
+        cbor_value_advance(&insideArray);
+    }
+
+    return err;
+}
+
+static size_t getAllocSize(OCRepPayloadPropType type)
+{
+    switch (type)
+    {
+        case OCREP_PROP_INT:
+            return sizeof (int64_t);
+        case OCREP_PROP_DOUBLE:
+            return sizeof (double);
+        case OCREP_PROP_BOOL:
+            return sizeof (bool);
+        case OCREP_PROP_STRING:
+            return sizeof (char*);
+        case OCREP_PROP_OBJECT:
+            return sizeof (OCRepPayload*);
+        default:
+            return 0;
+    }
+}
+
+static size_t arrayStep(size_t dimensions[MAX_REP_ARRAY_DEPTH], size_t elementNum)
+{
+    return
+        (dimensions[1] == 0 ? 1 : dimensions[1]) *
+        (dimensions[2] == 0 ? 1 : dimensions[2]) *
+        elementNum;
+}
+
+static bool OCParseArrayFillArray(const CborValue* parent, size_t dimensions[MAX_REP_ARRAY_DEPTH],
+        OCRepPayloadPropType type, void* targetArray)
+{
+    bool err = false;
+    CborValue insideArray;
+
+    err = err || cbor_value_enter_container(parent, &insideArray);
+
+    size_t i = 0;
+    char* tempStr = NULL;
+    size_t tempLen = 0;
+    OCRepPayload* tempPl = NULL;
+
+    size_t newdim[MAX_REP_ARRAY_DEPTH];
+    newdim[0] = dimensions[1];
+    newdim[1] = dimensions[2];
+    newdim[2] = 0;
+
+    while (!err && i < dimensions[0] && cbor_value_is_valid(&insideArray))
+    {
+        if (cbor_value_get_type(&insideArray) != CborNullType)
+        {
+            switch (type)
+            {
+                case OCREP_PROP_INT:
+                    if (dimensions[1] == 0)
+                    {
+                        err = err || cbor_value_get_int64(&insideArray,
+                                &(((int64_t*)targetArray)[i]));
+                    }
+                    else
+                    {
+                        err = err || OCParseArrayFillArray(&insideArray, newdim,
+                            type,
+                            &(((int64_t*)targetArray)[arrayStep(dimensions, i)])
+                            );
+                    }
+                    break;
+                case OCREP_PROP_DOUBLE:
+                    if (dimensions[1] == 0)
+                    {
+                        err = err || cbor_value_get_double(&insideArray,
+                                &(((double*)targetArray)[i]));
+                    }
+                    else
+                    {
+                        err = err || OCParseArrayFillArray(&insideArray, newdim,
+                            type,
+                            &(((double*)targetArray)[arrayStep(dimensions, i)])
+                            );
+                    }
+                    break;
+                case OCREP_PROP_BOOL:
+                    if (dimensions[1] == 0)
+                    {
+                        err = err || cbor_value_get_boolean(&insideArray,
+                                &(((bool*)targetArray)[i]));
+                    }
+                    else
+                    {
+                        err = err || OCParseArrayFillArray(&insideArray, newdim,
+                            type,
+                            &(((bool*)targetArray)[arrayStep(dimensions, i)])
+                            );
+                    }
+                    break;
+                case OCREP_PROP_STRING:
+                    if (dimensions[1] == 0)
+                    {
+                        err = err || cbor_value_dup_text_string(&insideArray,
+                                &tempStr, &tempLen, NULL);
+                        ((char**)targetArray)[i] = tempStr;
+                        tempStr = NULL;
+                    }
+                    else
+                    {
+                        err = err || OCParseArrayFillArray(&insideArray, newdim,
+                            type,
+                            &(((char**)targetArray)[arrayStep(dimensions, i)])
+                            );
+                    }
+                    break;
+                case OCREP_PROP_OBJECT:
+                    if (dimensions[1] == 0)
+                    {
+                        err = err || OCParseSingleRepPayload(&tempPl, &insideArray);
+                        ((OCRepPayload**)targetArray)[i] = tempPl;
+                        tempPl = NULL;
+                    }
+                    else
+                    {
+                        err = err || OCParseArrayFillArray(&insideArray, newdim,
+                            type,
+                            &(((OCRepPayload**)targetArray)[arrayStep(dimensions, i)])
+                            );
+                    }
+                    break;
+                default:
+                    OC_LOG(ERROR, TAG, "Invalid Array type in Parse Array");
+                    err = true;
+                    break;
+            }
+        }
+        ++i;
+        err = err || cbor_value_advance(&insideArray);
+    }
+
+    return err;
+}
+
 static bool OCParseArray(OCRepPayload* out, const char* name, CborValue* container)
 {
-    CborValue insideArray;
-    bool err = false;
-    uint64_t tempInt = 0;
     OCRepPayloadPropType type;
     size_t dimensions[MAX_REP_ARRAY_DEPTH];
-    err = err || cbor_value_enter_container(container, &insideArray);
+    bool err = OCParseArrayFindDimensionsAndType(container, dimensions, &type);
 
-    err = err || cbor_value_get_uint64(&insideArray, &tempInt);
-    err = err || cbor_value_advance_fixed(&insideArray);
-    type = (OCRepPayloadPropType)tempInt;
-
-    for(int i = 0; i < MAX_REP_ARRAY_DEPTH; ++ i)
+    if (err)
     {
-         err = err || cbor_value_get_uint64(&insideArray, &tempInt);
-         err = err || cbor_value_advance_fixed(&insideArray);
-        dimensions[i] = tempInt;
+        OC_LOG(ERROR, TAG, "Array details weren't clear");
+        return err;
+    }
+
+    if (type == OCREP_PROP_NULL)
+    {
+        err = err || OCRepPayloadSetNull(out, name);
+        err = err || cbor_value_advance(container);
+        return err;
     }
 
     size_t dimTotal = calcDimTotal(dimensions);
+    size_t allocSize = getAllocSize(type);
+    void* arr = OICCalloc(dimTotal, allocSize);
 
-    void* arr = NULL;
-    char* tempStr;
-    size_t len;
-    OCRepPayload* pl;
-    switch(type)
+    if (!arr)
+    {
+        OC_LOG(ERROR, TAG, "Array Parse allocation failed");
+        return true;
+    }
+
+    err = err || OCParseArrayFillArray(container, dimensions, type, arr);
+
+    switch (type)
     {
         case OCREP_PROP_INT:
-            arr = (int64_t*)OICMalloc(dimTotal * sizeof(int64_t));
-            if (arr)
+            if (err || !OCRepPayloadSetIntArrayAsOwner(out, name, (int64_t*)arr, dimensions))
             {
-                for(size_t i = 0; i < dimTotal && !err; ++i)
-                {
-                     err = err || cbor_value_get_int64(&insideArray, &(((int64_t*)arr)[i]));
-                     err = err || cbor_value_advance_fixed(&insideArray);
-                }
-                if(err || !OCRepPayloadSetIntArrayAsOwner(out, name, (int64_t*)arr, dimensions))
-                {
-                    OICFree(arr);
-                    err = true;
-                }
-            }
-            else
-            {
+                OICFree(arr);
                 err = true;
             }
             break;
         case OCREP_PROP_DOUBLE:
-            arr = (double*)OICMalloc(dimTotal * sizeof(double));
-            if(arr)
+            if (err || !OCRepPayloadSetDoubleArrayAsOwner(out, name, (double*)arr, dimensions))
             {
-                for(size_t i = 0; i < dimTotal && !err; ++i)
-                {
-                     err = err || cbor_value_get_double(&insideArray, &(((double*)arr)[i]));
-                     err = err || cbor_value_advance_fixed(&insideArray);
-                }
-                if(err || !OCRepPayloadSetDoubleArrayAsOwner(out, name, (double*)arr, dimensions))
-                {
-                    OICFree(arr);
-                    err = true;
-                }
-            }
-            else
-            {
+                OICFree(arr);
                 err = true;
             }
             break;
         case OCREP_PROP_BOOL:
-            arr = (bool*)OICMalloc(dimTotal * sizeof(bool));
-            if(arr)
+            if (err || !OCRepPayloadSetBoolArrayAsOwner(out, name, (bool*)arr, dimensions))
             {
-                for(size_t i = 0; i < dimTotal && !err; ++i)
-                {
-                     err = err || cbor_value_get_boolean(&insideArray, &(((bool*)arr)[i]));
-                     err = err || cbor_value_advance_fixed(&insideArray);
-                }
-                if(err || !OCRepPayloadSetBoolArrayAsOwner(out, name, (bool*)arr, dimensions))
-                {
-                    OICFree(arr);
-                    err = true;
-                }
-            }
-            else
-            {
+                OICFree(arr);
                 err = true;
             }
             break;
         case OCREP_PROP_STRING:
-            arr = (char**)OICCalloc(dimTotal, sizeof(char*));
-            if(arr)
+            if (err || !OCRepPayloadSetStringArrayAsOwner(out, name, (char**)arr, dimensions))
             {
-                for(size_t i = 0; i < dimTotal && !err; ++i)
+                for(size_t i = 0; i < dimTotal; ++i)
                 {
-                    if (!cbor_type_is_null(&insideArray))
-                    {
-                        err = err || cbor_value_dup_text_string(&insideArray, &tempStr,
-                                &len, NULL);
-                        ((char**)arr)[i] = tempStr;
-                    }
-                    err = err || cbor_value_advance(&insideArray);
+                    OICFree(((char**)arr)[i]);
                 }
-                if(err || !OCRepPayloadSetStringArrayAsOwner(out, name, (char**)arr, dimensions))
-                {
-                    OICFree(arr);
-                    err = true;
-                }
-            }
-            else
-            {
+                OICFree(arr);
                 err = true;
             }
             break;
         case OCREP_PROP_OBJECT:
-            arr = (OCRepPayload**)OICCalloc(dimTotal, sizeof(OCRepPayload*));
-            if(arr)
+            if (err || !OCRepPayloadSetPropObjectArrayAsOwner(out, name, (OCRepPayload**)arr, dimensions))
             {
-                for(size_t i = 0; i < dimTotal && !err; ++i)
+                for(size_t i = 0; i < dimTotal; ++i)
                 {
-                    if (!cbor_type_is_null(&insideArray))
-                    {
-                        pl = NULL;
-                        err = err || OCParseSingleRepPayload(&pl, &insideArray);
-                        ((OCRepPayload**)arr)[i] = pl;
-                    }
-                    err = err || cbor_value_advance(&insideArray);
+                    OCRepPayloadDestroy(((OCRepPayload**)arr)[i]);
                 }
-                if(err || !OCRepPayloadSetPropObjectArrayAsOwner(out, name,
-                        (OCRepPayload**)arr, dimensions))
-                {
-                    OICFree(arr);
-                    err = true;
-                }
-            }
-            else
-            {
+                OICFree(arr);
                 err = true;
             }
             break;
