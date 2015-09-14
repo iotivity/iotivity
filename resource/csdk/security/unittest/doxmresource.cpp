@@ -140,6 +140,18 @@ TEST(DoxmEntityHandlerTest, DoxmEntityHandlerValidRequest)
     OICFree(req.query);
 }
 
+TEST(DoxmEntityHandlerTest, DoxmEntityHandlerDeviceIdQuery)
+{
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, InitDoxmResource());
+    char query[] = "deviceid=MjIyMjIyMjIyMjIyMjIyMg==";
+    OCEntityHandlerRequest req = OCEntityHandlerRequest();
+    req.method = OC_REST_GET;
+    req.query = OICStrdup(query);
+    EXPECT_EQ(OC_EH_ERROR, DoxmEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, &req));
+
+    OICFree(req.query);
+}
+
 //BinToDoxmJSON Tests
 TEST(BinToDoxmJSONTest, BinToDoxmJSONNullDoxm)
 {
