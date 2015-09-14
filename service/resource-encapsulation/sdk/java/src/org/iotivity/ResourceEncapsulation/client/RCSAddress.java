@@ -18,11 +18,9 @@
  *
  ******************************************************************/
 /**
- * @file    RCSAddress.java
- *
- * @brief    This file provides a class for a set of APIs relating to resource address and the
- *        the type of discovery request for a resource of interest.
- *
+ * @file
+ * This file provides a class for a set of APIs relating to resource address and the
+ * the type of discovery request for a resource of interest.
  */
 
 package org.iotivity.ResourceEncapsulation.client;

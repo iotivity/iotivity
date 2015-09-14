@@ -453,6 +453,12 @@ Java_org_iotivity_ResourceEncapsulation_client_RCSRemoteResourceObject_nativeGet
 (JNIEnv *env, jobject interfaceClass, jobject jResourceAttributesListener)
 {
     LOGD("RCSRemoteResourceObject_nativeGetRemoteAttributes");
+    if (!jResourceAttributesListener)
+    {
+        LOGE("RCSRemoteResourceObject_nativeGetRemoteAttributes: listener is NULL");
+        throwRCSException(env,  "Invalid parameter");
+        return;
+    }
     JniRCSRemoteResourceObject *resource = JniRCSRemoteResourceObject::getJniRCSRemoteResourceObject(
             env, interfaceClass);
     if (!resource) return;
@@ -467,6 +473,12 @@ Java_org_iotivity_ResourceEncapsulation_client_RCSRemoteResourceObject_nativeSet
  jobject jResourceAttributesListener)
 {
     LOGD("RCSRemoteResourceObject_nativeSetRemoteAttributes");
+    if (!jResourceAttributesListener)
+    {
+        LOGE("RCSRemoteResourceObject_nativeSetRemoteAttributes: listener is NULL");
+        throwRCSException(env,  "Invalid parameter");
+        return;
+    }
     JniRCSRemoteResourceObject *resource = JniRCSRemoteResourceObject::getJniRCSRemoteResourceObject(
             env, interfaceClass);
     if (!resource) return;

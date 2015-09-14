@@ -119,13 +119,13 @@ Java_org_iotivity_ResourceEncapsulation_client_RCSDiscoveryManager_discoverResou
     {
         onResFoundListener->discoverResourceCallback(resource);
     };
-    if ( 0 == jTypeofDiscovery )
+    if ( 1 == jTypeofDiscovery )
     {
         RCSDiscoveryManager::getInstance()->discoverResourceByType(RCSAddress::multicast(), relativeUri,
                 resourceType, discoverCallback);
         LOGI("NativeInterface_discoverResource multicast");
     }
-    else if ( 1 == jTypeofDiscovery)
+    else if ( 0 == jTypeofDiscovery)
     {
         RCSDiscoveryManager::getInstance()->discoverResourceByType(RCSAddress::unicast(address),
                 relativeUri, resourceType, discoverCallback );

@@ -18,10 +18,8 @@
  *
  ******************************************************************/
 /**
- * @file    RCSRequest.java
- *
- *      This file provides RCSRequest class which will describes the request.
- *
+ * @file
+ * This file provides RCSRequest class which will describes the request.
  */
 
 package org.iotivity.ResourceEncapsulation.server;

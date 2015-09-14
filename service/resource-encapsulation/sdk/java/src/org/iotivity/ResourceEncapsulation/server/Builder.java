@@ -18,10 +18,8 @@
  *
  ******************************************************************/
 /**
- * @file    Builder.java
- *
- *    This file contains Builder class which provides the easy creation of Resource.
- *
+ * @file
+ *  This file contains Builder class which provides the easy creation of Resource.
  */
 
 package org.iotivity.ResourceEncapsulation.server;
@@ -76,7 +74,6 @@ public class Builder {
      *            Resource type value to be set
      * @param resourceInterface
      *            Interface value to be set
-     *
      */
     public Builder(String resourceURI, String resourceType,
             String resourceInterface) {
@@ -90,7 +87,6 @@ public class Builder {
      *
      * @param isDiscoverable
      *            Whether to be discovered or not
-     *
      */
     public void setDiscoverable(boolean isDiscoverable) {
         m_discovervableFlag = isDiscoverable;
@@ -101,7 +97,6 @@ public class Builder {
      *
      * @param isObservable
      *            Whether to be observed or not
-     *
      */
     public void setObservable(boolean isObservable) {
         m_observableFlag = isObservable;
@@ -135,7 +130,6 @@ public class Builder {
      *             Observable as needed. [optional] - Set the attributes for the
      *             resource. [optional] - At last call the build() method to
      *             create the resource.
-     *
      */
     public RCSResourceObject build() throws RCSException {
         return this.nativeBuild(m_resourceUri, m_resourceType,
