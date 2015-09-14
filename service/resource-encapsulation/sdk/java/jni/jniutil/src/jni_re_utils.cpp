@@ -79,19 +79,19 @@ OCEntityHandlerResult convertIntToOCEntityHandlerResult(int result)
 {
     switch (result)
     {
-        case 1:
+        case 0:
             return OCEntityHandlerResult::OC_EH_OK;
-        case 2:
+        case 1:
             return OCEntityHandlerResult::OC_EH_ERROR;
-        case 3:
+        case 2:
             return OCEntityHandlerResult::OC_EH_RESOURCE_CREATED;
-        case 4:
+        case 3:
             return OCEntityHandlerResult::OC_EH_RESOURCE_DELETED;
-        case 5:
+        case 4:
             return OCEntityHandlerResult::OC_EH_SLOW;
-        case 6:
+        case 5:
             return OCEntityHandlerResult::OC_EH_FORBIDDEN;
-        case 7:
+        case 6:
             return OCEntityHandlerResult::OC_EH_RESOURCE_NOT_FOUND;
     }
     return OCEntityHandlerResult::OC_EH_ERROR;
@@ -199,13 +199,13 @@ RCSResourceObject::AutoNotifyPolicy convertJavaNotifyPolicyToNativePolicy( int p
 {
     switch (policy)
     {
-        case 1:
+        case 0:
             return RCSResourceObject::AutoNotifyPolicy::NEVER;
 
-        case 2:
+        case 1:
             return RCSResourceObject::AutoNotifyPolicy::ALWAYS;
 
-        case 3:
+        case 2:
             return RCSResourceObject::AutoNotifyPolicy::UPDATED;
     }
 }
@@ -215,10 +215,10 @@ RCSResourceObject::SetRequestHandlerPolicy convertJavasetRequestHandlerPolicyToN
 {
     switch (policy)
     {
-        case 1:
+        case 0:
             return RCSResourceObject::SetRequestHandlerPolicy::NEVER;
 
-        case 2:
+        case 1:
             return RCSResourceObject::SetRequestHandlerPolicy::ACCEPTANCE;
     }
 }

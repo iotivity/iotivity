@@ -18,10 +18,8 @@
  *
  ******************************************************************/
 /**
- * @file    RCSBundleInfo.java
- *
- *  This file contains RCSBundleInfo class, which provides APIs related to Bundle information.
- *
+ * @file
+ * This file contains RCSBundleInfo class, which provides APIs related to Bundle information.
  */
 
 package org.iotivity.ResourceEncapsulation.server;
@@ -63,7 +61,6 @@ public class RCSBundleInfo {
      * API for getting the Id of the bundle
      *
      * @return string - Id of the bundle
-     *
      */
     public String getID() {
         return this.nativeGetID();
@@ -73,7 +70,6 @@ public class RCSBundleInfo {
      * API for getting the path of the bundle
      *
      * @return path - path of the bundle
-     *
      */
     public String getPath() {
         return this.nativeGetPath();
@@ -83,7 +79,6 @@ public class RCSBundleInfo {
      * API for setting the Activator name for the bundle
      *
      * @return string - Name of the activator
-     *
      */
     public String getActivatorName() {
         return nativeGetActivatorName();
@@ -93,7 +88,6 @@ public class RCSBundleInfo {
      * API for getting the library path for the bundle
      *
      * @return string - Library path in string form
-     *
      */
     public String getLibraryPath() {
         return nativeGetLibraryPath();
@@ -103,7 +97,6 @@ public class RCSBundleInfo {
      * API for getting the version of the bundle
      *
      * @return string - version of the bundle
-     *
      */
     public String getVersion() {
         return nativeGetVersion();
@@ -114,7 +107,6 @@ public class RCSBundleInfo {
      *
      * @param id
      *            - Id of the bundle in string form
-     *
      */
     public void setID(String id) {
         this.nativeSetID(id);
@@ -125,7 +117,6 @@ public class RCSBundleInfo {
      *
      * @param path
      *            - path of the bundle in string form
-     *
      */
     public void setPath(String path) {
         this.nativeSetPath(path);
@@ -134,9 +125,8 @@ public class RCSBundleInfo {
     /**
      * API for setting the Activator name for the bundle
      *
-     * @param activator
+     * @param activatorName
      *            - Activator name in string form
-     *
      */
     public void setActivatorName(String activatorName) {
         this.nativeSetActivatorName(activatorName);
@@ -145,9 +135,8 @@ public class RCSBundleInfo {
     /**
      * API for setting the library path for the bundle
      *
-     * @param libpath
+     * @param libraryPath
      *            - Library path in string form
-     *
      */
     public void setLibraryPath(String libraryPath) {
         this.nativeSetLibraryPath(libraryPath);
@@ -158,7 +147,6 @@ public class RCSBundleInfo {
      *
      * @param version
      *            - version of the bundle in string form
-     *
      */
     public void setVersion(String version) {
         this.nativeSetVersion(version);

@@ -1,4 +1,4 @@
-/******************************************************************
+/* *****************************************************************
  *
  * Copyright 2015 Samsung Electronics All Rights Reserved.
  *
@@ -18,11 +18,9 @@
  *
  ******************************************************************/
 /**
- * @file   RCSResourceObject.java
- *
- *  This file contains the resource object APIs provided to the developers.
- *        RCSResourceObject is a part of the server builder module.
- *
+ * @file
+ * This file contains the resource object APIs provided to the developers.
+ * RCSResourceObject is a part of the server builder module.
  */
 
 package org.iotivity.ResourceEncapsulation.server;
@@ -114,12 +112,12 @@ public class RCSResourceObject {
      * {@link RCSResourceObject}
      */
     public enum AutoNotifyPolicy {
-        NEVER, /** < Never notify. */
-        ALWAYS, /** < Always notify. */
+        NEVER, /* < Never notify. */
+        ALWAYS, /* < Always notify. */
         UPDATED;
-        /** < When attributes are changed, notify. */
+        /* < When attributes are changed, notify. */
 
-        /**
+        /*
          * Utility API for integer to enum conversion.
          */
         public static AutoNotifyPolicy getAutoNotifyPolicy(int ordinal) {
@@ -135,17 +133,17 @@ public class RCSResourceObject {
 
     public enum SetRequestHandlerPolicy {
 
-        NEVER, /**
-         * < Server ignore when server is received set-request of
-         * attributes of the new key.
-         */
+        NEVER, /*
+                * < Server ignore when server is received set-request of
+                * attributes of the new key.
+                */
         ACCEPTANCE;
-        /**
+        /*
          * < Server creates attributes of the new key When server is received
          * set-request of attributes of the new key.
          */
 
-        /**
+        /*
          * Utility API for integer to enum conversion.
          */
         public static SetRequestHandlerPolicy getSetRequestHandlerPolicy(
@@ -417,7 +415,6 @@ public class RCSResourceObject {
      * listener call setGetRequestListener() API
      *
      * {@link RCSGetResponse} {@link #setGetRequestListener(IGetRequestHandler)}
-     *
      */
     public void setGetRequestHandler() {
         if (null == m_getRequestListener) {
@@ -439,7 +436,6 @@ public class RCSResourceObject {
      * listener call setSetRequestListener() API
      *
      * {@link RCSSetResponse} {@link #setSetRequestListener(ISetRequestHandler)}
-     *
      */
     public void setSetRequestHandler() {
         if (null == m_setRequestListener) {
@@ -498,7 +494,6 @@ public class RCSResourceObject {
      *            policy to be set
      *
      *            {@link AutoNotifyPolicy}
-     *
      */
     public void setAutoNotifyPolicy(AutoNotifyPolicy policy) {
         Log.i(LOG_TAG, "setAutoNotifyPolicy called");
@@ -511,7 +506,6 @@ public class RCSResourceObject {
      * @return AutoNotifyPolicy
      *
      *         {@link AutoNotifyPolicy}
-     *
      */
     public AutoNotifyPolicy getAutoNotifyPolicy() {
         Log.i(LOG_TAG, "getAutoNotifyPolicy called");
@@ -526,7 +520,6 @@ public class RCSResourceObject {
      *            policy to be set
      *
      *            {@link SetRequestHandlerPolicy}
-     *
      */
     public void setSetRequestHandlerPolicy(SetRequestHandlerPolicy policy) {
         Log.i(LOG_TAG, "setSetRequestHandlerPolicy called");
@@ -539,7 +532,6 @@ public class RCSResourceObject {
      * @return SetRequestHandlerPolicy
      *
      *         {@link SetRequestHandlerPolicy}
-     *
      */
     public SetRequestHandlerPolicy getSetRequestHandlerPolicy() {
         Log.i(LOG_TAG, "getSetRequestHandlerPolicy called");

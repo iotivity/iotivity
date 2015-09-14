@@ -18,17 +18,17 @@
  *
  ******************************************************************/
 /**
- * @file    DiscoveryType.java
- *
- * @brief     This file provides a Enum to handle unicast or multicast discovery.
- *
- *@link RCSAddress
+ * @file
+ * This file provides a Enum to handle unicast or multicast discovery.
+ * @link RCSAddress
  */
 
 package org.iotivity.ResourceEncapsulation.utils;
 
+import org.iotivity.ResourceEncapsulation.client.RCSAddress;
+
 /**
- * This Enum defines discovery codes for different discovery types.
+ * This Enum discovery codes for different discovery types.
  *
  * <p>
  * Application will get this DiscoveryType as a result of getTypeOfDiscovery API
@@ -38,12 +38,12 @@ package org.iotivity.ResourceEncapsulation.utils;
  */
 public enum DiscoveryType {
 
-    UNICAST, /** < Unicast type discovery. */
+    UNICAST, /* < Unicast type discovery. */
     MULTICAST;
-    /** < Multicast type discovery. */
+    /* < Multicast type discovery. */
 
-    /**
-     * Utility API for int to enum conversion.
+    /*
+     * Utility API for integer to enum conversion.
      */
     public static DiscoveryType getDiscoveryType(int ordinal) {
 

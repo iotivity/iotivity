@@ -18,13 +18,13 @@
  *
  ******************************************************************/
 /**
- * @file    EntityHandlerResult.java
- *
- * @brief     This file provides EntityHandlerResult Enum & utility function.
- *
+ * @file
+ * This file provides EntityHandlerResult Enum & utility function.
  */
 
 package org.iotivity.ResourceEncapsulation.utils;
+
+import org.iotivity.ResourceEncapsulation.server.*;
 
 /**
  * Represents the EntityHandlerResult, that application can send for a Get or a

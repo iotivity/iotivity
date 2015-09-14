@@ -67,7 +67,7 @@ LOCAL_SRC_FILES := $(OIC_LIB_PATH)/librcs_container.so
 include $(PREBUILT_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
-OIC_SRC_DIR := ../../../../..
+OIC_SRC_DIR := ../../../..
 LOCAL_MODULE    := re-jni
 
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/jniutil/inc \

@@ -18,11 +18,9 @@
  *
  ******************************************************************/
 /**
- * @file    RCSAddress.java
- *
- * @brief    This file provides a class for a set of APIs relating to resource address and the
- *        the type of discovery request for a resource of interest.
- *
+ * @file
+ * This file provides a class for a set of APIs relating to resource address and the
+ * the type of discovery request for a resource of interest.
  */
 
 package org.iotivity.ResourceEncapsulation.client;
@@ -105,9 +103,7 @@ public class RCSAddress {
     /**
      * Get the resource discovery type(unicast or multicast).
      *
-     * @return DiscoveryType
-     *
-     * {@link DiscoveryType}
+     * @return int - 0 for unicast and 1 for multicast.
      */
     public DiscoveryType getTypeOfDiscovery() {
         return m_typeOfDiscovery;

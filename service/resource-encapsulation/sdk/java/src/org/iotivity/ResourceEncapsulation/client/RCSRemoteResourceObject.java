@@ -18,10 +18,9 @@
  *
  ******************************************************************/
 /**
- * @file    RCSRemoteResourceObject.java
- *
- * @brief     This file provides a class which provides a set of native functions and API's
- *        of resource client, provided to the developers.
+ * @file
+ * This file provides a class which provides a set of native functions and API's
+ * of resource client, provided to the developers.
  */
 
 package org.iotivity.ResourceEncapsulation.client;
@@ -43,13 +42,13 @@ import android.util.Log;
  * API.
  *
  * {@link RCSDiscoveryManager}
- *
  */
 public class RCSRemoteResourceObject {
 
     private IStateChangedCallbackListener m_stateChangedListener;
     private ICacheUpdateListener          m_cacheUpdateListener;
-    private IRemoteAttributeListener      m_remoteAttributeListener;
+    private IGetRemoteAttributeListener   m_getremoteAttributeListener;
+    private ISetRemoteAttributeListener   m_setremoteAttributeListener;
     private long                          m_nativeHandle;
     private String                        LOG_TAG = this.getClass()
                                                           .getSimpleName();
@@ -81,10 +80,11 @@ public class RCSRemoteResourceObject {
     private native String nativeGetCachedAttribute(String key);
 
     private native void nativeGetRemoteAttributes(
-            IRemoteAttributeListener listener);
+            IGetRemoteAttributeListener listener);
 
     private native void nativeSetRemoteAttributes(
-            RCSResourceAttributes attributes, IRemoteAttributeListener listener);
+            RCSResourceAttributes attributes,
+            ISetRemoteAttributeListener listener);
 
     private native String nativeGetUri();
 
@@ -110,17 +110,17 @@ public class RCSRemoteResourceObject {
      */
     public enum ResourceState {
 
-        NONE, /** < Monitoring is not started. */
-        REQUESTED, /**
-         * < Monitoring is started and checking state is in progress.
-         * This is the default state after startMonitoring.
-         */
-        ALIVE, /** < The resource is alive. */
-        LOST_SIGNAL, /** < Failed to reach the resource. */
+        NONE, /* < Monitoring is not started. */
+        REQUESTED, /*
+                    * < Monitoring is started and checking state is in progress.
+                    * This is the default state after startMonitoring.
+                    */
+        ALIVE, /* < The resource is alive. */
+        LOST_SIGNAL, /* < Failed to reach the resource. */
         DESTROYED;
-        /** < The resource is deleted. */
+        /* < The resource is deleted. */
 
-        /**
+        /*
          * Utility API for integer to enum conversion.
          */
         public static ResourceState getResourceState(int ordinal) {
@@ -133,6 +133,8 @@ public class RCSRemoteResourceObject {
                 return ResourceState.values()[2];
             else if (ordinal == 3)
                 return ResourceState.values()[3];
+            else if (ordinal == 4)
+                return ResourceState.values()[4];
 
             return null;
         }
@@ -149,30 +151,30 @@ public class RCSRemoteResourceObject {
      */
     public enum CacheState {
 
-        NONE, /** < Caching is not started. */
-        UNREADY, /**
-         * < Caching is started, but the data is not ready yet. This is
-         * the default state after startCaching.
-         */
-        READY, /** < The data is ready. */
+        NONE, /* < Caching is not started. */
+        UNREADY, /*
+                  * < Caching is started, but the data is not ready yet. This is
+                  * the default state after startCaching.
+                  */
+        READY, /* < The data is ready. */
         LOST_SIGNAL;
-        /** < Failed to reach the resource. */
+        /* < Failed to reach the resource. */
 
-        /**
+        /*
          * Utility API for int to enum conversion.
          */
         public static CacheState getCacheState(int ordinal) {
 
-            CacheState result = CacheState.values()[0];
-
-            if (ordinal == 1)
-                result = CacheState.values()[1];
+            if (ordinal == 0)
+                return CacheState.values()[0];
+            else if (ordinal == 1)
+                return CacheState.values()[1];
             else if (ordinal == 2)
-                result = CacheState.values()[2];
+                return CacheState.values()[2];
             else if (ordinal == 3)
-                result = CacheState.values()[3];
+                return CacheState.values()[3];
 
-            return result;
+            return null;
         }
     }
 
@@ -197,14 +199,13 @@ public class RCSRemoteResourceObject {
 
     /**
      * Provides interface for receiving the callback for the getRemoteAttributes
-     * and setRemoteAttributes requested actions.
+     * requested action.
      */
-    public interface IRemoteAttributeListener {
+    public interface IGetRemoteAttributeListener {
 
         /**
          * This callback method is called when a asynchronous response for the
-         * getRemoteAttributes request or setRemoteAttributes request is
-         * received.
+         * getRemoteAttributes request is received.
          *
          * @param attributes
          *            It is the updated resource attributes value received from
@@ -213,6 +214,27 @@ public class RCSRemoteResourceObject {
          *            {@link RCSResourceAttributes}
          */
         public void onRemoteAttributesGetCallback(
+                RCSResourceAttributes attributes);
+
+    }
+
+    /**
+     * Provides interface for receiving the callback for the setRemoteAttributes
+     * requested action.
+     */
+    public interface ISetRemoteAttributeListener {
+
+        /**
+         * This callback method is called when a asynchronous response for the
+         * setRemoteAttributes request is received.
+         *
+         * @param attributes
+         *            It is the updated resource attributes value received from
+         *            the remote resource.
+         *
+         *            {@link RCSResourceAttributes}
+         */
+        public void onRemoteAttributesSetCallback(
                 RCSResourceAttributes attributes);
 
     }
@@ -260,14 +282,28 @@ public class RCSRemoteResourceObject {
 
     /**
      * Set listener for receiving asynchronous response for resource attributes
-     * SET and GET request.
+     * GET request.
      *
      * @param listener
-     *            IRemoteAttributeListener to receive asynchronous response for
-     *            resource attributes SET and GET request.
+     *            IGetRemoteAttributeListener to receive asynchronous response
+     *            for resource attributes SET and GET request.
      */
-    public void setRemoteAttributesListener(IRemoteAttributeListener listener) {
-        m_remoteAttributeListener = listener;
+    public void setGetRemoteAttributesListener(
+            IGetRemoteAttributeListener listener) {
+        m_getremoteAttributeListener = listener;
+    }
+
+    /**
+     * Set listener for receiving asynchronous response for resource attributes
+     * SET request.
+     *
+     * @param listener
+     *            IGetRemoteAttributeListener to receive asynchronous response
+     *            for resource attributes SET and GET request.
+     */
+    public void setSetRemoteAttributesListener(
+            ISetRemoteAttributeListener listener) {
+        m_setremoteAttributeListener = listener;
     }
 
     /**
@@ -321,7 +357,6 @@ public class RCSRemoteResourceObject {
      *
      *             {@link IStateChangedCallbackListener} {@link ResourceState}
      *             {@link #isMonitoring()} {@link #stopMonitoring()}
-     *
      */
     public void startMonitoring() throws RCSException {
 
@@ -434,14 +469,13 @@ public class RCSRemoteResourceObject {
      * <p>
      * Cache should be available.
      *
-     * @return RCSResourceAttributes
+     * @return The cached attributes.
      *
      * @throws RCSException
      *             If the Cache is not started.
      *
      *             {@link RCSResourceAttributes} {@link #isCachedAvailable()}
      *             {@link #startCaching()}
-     *
      */
     public RCSResourceAttributes getCachedAttributes() throws RCSException {
 
@@ -466,7 +500,6 @@ public class RCSRemoteResourceObject {
      *
      *             {@link RCSResourceAttributes} {@link #isCachedAvailable()}
      *             {@link #startCaching()}
-     *
      */
     public String getCachedAttribute(String key) throws RCSException {
 
@@ -481,14 +514,15 @@ public class RCSRemoteResourceObject {
      * attributes to the caller in the RemoteAttributesReceivedCallback.
      *
      * <p>
-     * IRemoteAttributeListener should be set to get the attributes
+     * IGetRemoteAttributeListener should be set to get the attributes
      *
-     * {@link IRemoteAttributeListener}
+     * @throws RCSException
+     *             {@link IGetRemoteAttributeListener}
      */
     public void getRemoteAttributes() throws RCSException {
 
         Log.i(LOG_TAG, "getRemoteAttributes called");
-        this.nativeGetRemoteAttributes(m_remoteAttributeListener);
+        this.nativeGetRemoteAttributes(m_getremoteAttributeListener);
     }
 
     /**
@@ -501,15 +535,16 @@ public class RCSRemoteResourceObject {
      *            Attribute value to set for the remote resource.
      *
      *            <p>
-     *            IRemoteAttributeListener should be set to call this API
+     *            ISetRemoteAttributeListener should be set to call this API
      *
-     *            {@link IRemoteAttributeListener}
+     * @throws RCSException
+     *             {@link ISetRemoteAttributeListener}
      */
     public void setRemoteAttributes(RCSResourceAttributes attributes)
             throws RCSException {
 
         Log.i(LOG_TAG, "getRemoteAttributes called");
-        this.nativeSetRemoteAttributes(attributes, m_remoteAttributeListener);
+        this.nativeSetRemoteAttributes(attributes, m_setremoteAttributeListener);
     }
 
     /**

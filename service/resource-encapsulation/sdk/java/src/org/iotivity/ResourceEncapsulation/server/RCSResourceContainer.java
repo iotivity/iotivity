@@ -18,10 +18,8 @@
  *
  ******************************************************************/
 /**
- * @file    RCSResourceContainer.java
- *
- *    This file contains the Resource Container APIs
- *
+ * @file
+ * This file contains the Resource Container APIs
  */
 
 package org.iotivity.ResourceEncapsulation.server;
@@ -116,8 +114,7 @@ public class RCSResourceContainer {
     /**
      * API for getting the list of all bundles in the container
      *
-     * @return list<RCSBundleInfo> -List of BundleInfo objects each associated
-     *         with a bundle
+     * @return list -List of BundleInfo objects each associated with a bundle
      *
      *         {@link RCSBundleInfo}
      */
@@ -213,7 +210,7 @@ public class RCSResourceContainer {
      * @param bundleId
      *            - Id of the Bundle
      *
-     * @return List<String> All the bundle resources
+     * @return List All the bundle resources
      */
     public List<String> listBundleResources(String bundleId) {
         return this.nativeListBundleResources(bundleId);
