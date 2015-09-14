@@ -460,11 +460,15 @@ CAResult_t CAIPStartServer(const ca_thread_pool_t threadPool)
 
     OIC_LOG_V(DEBUG, TAG,
               "socket summary: u6=%d, u6s=%d, u4=%d, u4s=%d, m6=%d, m6s=%d, m4=%d, m4s=%d",
-                             caglobals.ip.u6.fd, caglobals.ip.u6s.fd,
-                             caglobals.ip.u4.fd, caglobals.ip.u4s.fd,
-                             caglobals.ip.m6.fd, caglobals.ip.m6s.fd,
-                             caglobals.ip.m4.fd, caglobals.ip.m4s.fd);
+              caglobals.ip.u6.fd, caglobals.ip.u6s.fd, caglobals.ip.u4.fd, caglobals.ip.u4s.fd,
+              caglobals.ip.m6.fd, caglobals.ip.m6s.fd, caglobals.ip.m4.fd, caglobals.ip.m4s.fd);
 
+    OIC_LOG_V(DEBUG, TAG,
+              "port summary: u6 port=%d, u6s port=%d, u4 port=%d, u4s port=%d, m6 port=%d,"
+              "m6s port=%d, m4 port=%d, m4s port=%d",
+              caglobals.ip.u6.port, caglobals.ip.u6s.port, caglobals.ip.u4.port,
+              caglobals.ip.u4s.port, caglobals.ip.m6.port, caglobals.ip.m6s.port,
+              caglobals.ip.m4.port, caglobals.ip.m4s.port);
     // create pipe for fast shutdown
     CAInitializePipe();
     CHECKFD(caglobals.ip.shutdownFds[0]);
@@ -897,8 +901,14 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
     }
 
     uint32_t len = u_arraylist_length(iflist);
+    uint32_t length = len;
 
-    CAEndpoint_t *eps = (CAEndpoint_t *)OICCalloc(len, sizeof (CAEndpoint_t));
+#ifdef __WITH_DTLS__
+    //If DTLS is supported, each interface can support secure port as well
+    length = len * 2;
+#endif
+
+    CAEndpoint_t *eps = (CAEndpoint_t *)OICCalloc(length, sizeof (CAEndpoint_t));
     if (!eps)
     {
         OIC_LOG(ERROR, TAG, "Malloc Failed");
@@ -914,11 +924,45 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
             continue;
         }
 
-        OICStrcpy(eps[j].addr, CA_INTERFACE_NAME_SIZE, ifitem->name);
-        eps[j].flags = ifitem->family == AF_INET6 ? CA_IPV6 : CA_IPV4;
         eps[j].adapter = CA_ADAPTER_IP;
         eps[j].interface = 0;
-        eps[j].port = 0;
+
+        if (ifitem->family == AF_INET6)
+        {
+            eps[j].flags = CA_IPV6;
+            eps[j].port = caglobals.ip.u6.port;
+        }
+        else
+        {
+            eps[j].flags = CA_IPV4;
+            eps[j].port = caglobals.ip.u4.port;
+
+            unsigned char *addr=  (unsigned char *) &(ifitem->ipv4addr);
+            snprintf(eps[j].addr, MAX_ADDR_STR_SIZE_CA, "%d.%d.%d.%d",
+                     addr[0], addr[1], addr[2], addr[3]);
+        }
+
+#ifdef __WITH_DTLS__
+        j++;
+
+        eps[j].adapter = CA_ADAPTER_IP;
+        eps[j].interface = 0;
+
+        if (ifitem->family == AF_INET6)
+        {
+            eps[j].flags = CA_IPV6 | CA_SECURE;
+            eps[j].port = caglobals.ip.u6s.port;
+        }
+        else
+        {
+            eps[j].flags = CA_IPV4 | CA_SECURE;
+            eps[j].port = caglobals.ip.u4s.port;
+
+            unsigned char *addr=  (unsigned char *) &(ifitem->ipv4addr);
+            snprintf(eps[j].addr, MAX_ADDR_STR_SIZE_CA, "%d.%d.%d.%d",
+                     addr[0], addr[1], addr[2], addr[3]);
+        }
+#endif
         j++;
     }
 

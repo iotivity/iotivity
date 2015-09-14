@@ -988,13 +988,14 @@ void get_network_info()
         if (CA_ADAPTER_IP == tempInfo[index].adapter)
         {
             printf("Port: %d\n", tempInfo[index].port);
-        }
-        printf("Secured: %s\n\n", (tempInfo[index].flags & CA_SECURE) ? "true" : "false");
+            printf("Secured: %s flag : %x\n\n", (tempInfo[index].flags & CA_SECURE) ? "true" :
+                   "false", tempInfo[index].flags);
 
-        if (tempInfo[index].flags & CA_SECURE)
-        {
-            g_local_secure_port = tempInfo[index].port;
-            printf("Secured: in global %d\n\n", g_local_secure_port);
+            if (tempInfo[index].flags & CA_SECURE)
+            {
+                g_local_secure_port = tempInfo[index].port;
+                printf("Secured: in global %d\n\n", g_local_secure_port);
+            }
         }
     }
 
