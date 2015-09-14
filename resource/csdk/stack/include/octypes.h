@@ -293,12 +293,12 @@ typedef enum
 
 #ifdef RA_ADAPTER
     /**Remote Access over XMPP.*/
-   OC_ADAPTER_REMOTE_ACCESS = (1 << 3)
+    OC_ADAPTER_REMOTE_ACCESS = (1 << 3),
 #endif
 
 #ifdef TCP_ADAPTER
     /** CoAP over TCP.*/
-   OC_ADAPTER_TCP           = (1 << 4)
+    OC_ADAPTER_TCP           = (1 << 4)
 #endif
 
 } OCTransportAdapter;
