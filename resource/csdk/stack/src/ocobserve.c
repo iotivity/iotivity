@@ -72,14 +72,14 @@ static OCQualityOfService DetermineObserverQoS(OCMethod method,
     {
         OC_LOG_V(INFO, TAG, "Current NON count for this observer is %d",
                 resourceObserver->lowQosCount);
-        #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
         if((resourceObserver->forceHighQos \
                 || resourceObserver->lowQosCount >= MAX_OBSERVER_NON_COUNT) \
                 && method != OC_REST_PRESENCE)
-        #else
+#else
         if(resourceObserver->forceHighQos \
                 || resourceObserver->lowQosCount >= MAX_OBSERVER_NON_COUNT)
-        #endif
+#endif
         {
             resourceObserver->lowQosCount = 0;
             // at some point we have to to send CON to check on the
@@ -123,10 +123,10 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
         if (resourceObserver->resource == resPtr)
         {
             numObs++;
-            #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
             if(method != OC_REST_PRESENCE)
             {
-            #endif
+#endif
                 qos = DetermineObserverQoS(method, resourceObserver, qos);
 
                 result = AddServerRequest(&request, 0, 0, 1, OC_REST_GET,
@@ -166,7 +166,7 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
                         OCPayloadDestroy(ehRequest.payload);
                     }
                 }
-            #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
             }
             else
             {
@@ -207,7 +207,7 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
                     OCPresencePayloadDestroy(presenceResBuf);
                 }
             }
-            #endif
+#endif
 
             // Since we are in a loop, set an error flag to indicate at least one error occurred.
             if (result != OC_STACK_OK)
@@ -521,7 +521,7 @@ CreateObserveHeaderOption (CAHeaderOption_t **caHdrOpt,
                            uint8_t numOptions,
                            uint8_t observeFlag)
 {
-    if(!caHdrOpt)
+    if(!caHdrOpt || !ocHdrOpt)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -563,12 +563,13 @@ GetObserveHeaderOption (uint32_t * observationOption,
     {
         return OC_STACK_INVALID_PARAM;
     }
-    *observationOption = OC_OBSERVE_NO_OPTION;
 
     if(!options || !numOptions)
     {
         return OC_STACK_INVALID_PARAM;
     }
+
+    *observationOption = OC_OBSERVE_NO_OPTION;
 
     for(uint8_t i = 0; i < *numOptions; i++)
     {

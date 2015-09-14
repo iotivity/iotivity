@@ -113,6 +113,11 @@ void OCFreeOCStringLL(OCStringLL* ll);
 
 static OCStackResult OCParseSecurityPayload(OCPayload** outPayload, CborValue* arrayVal)
 {
+    if (!outPayload)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
     bool err = false;
     char * securityData = NULL;
 
@@ -151,6 +156,11 @@ static OCStackResult OCParseSecurityPayload(OCPayload** outPayload, CborValue* a
 
 static OCStackResult OCParseDiscoveryPayload(OCPayload** outPayload, CborValue* arrayVal)
 {
+    if (!outPayload)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
     bool err = false;
 
     OCDiscoveryPayload* out = OCDiscoveryPayloadCreate();
@@ -356,6 +366,11 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload** outPayload, CborValue* 
 
 static OCStackResult OCParseDevicePayload(OCPayload** outPayload, CborValue* arrayVal)
 {
+    if (!outPayload)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
     bool err = false;
 
     if(cbor_value_is_map(arrayVal))
@@ -427,6 +442,11 @@ static OCStackResult OCParseDevicePayload(OCPayload** outPayload, CborValue* arr
 
 static OCStackResult OCParsePlatformPayload(OCPayload** outPayload, CborValue* arrayVal)
 {
+    if (!outPayload)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
     bool err = false;
 
     if(cbor_value_is_map(arrayVal))
@@ -861,6 +881,11 @@ static bool OCParseArray(OCRepPayload* out, const char* name, CborValue* contain
 
 static bool OCParseSingleRepPayload(OCRepPayload** outPayload, CborValue* repParent)
 {
+    if (!outPayload)
+    {
+        return false;
+    }
+
     *outPayload = OCRepPayloadCreate();
     OCRepPayload* curPayload = *outPayload;
     bool err = false;
@@ -929,9 +954,9 @@ static bool OCParseSingleRepPayload(OCRepPayload** outPayload, CborValue* repPar
         while(!err && cbor_value_is_valid(&repMap))
         {
             char* name;
-             err = err || cbor_value_dup_text_string(&repMap, &name, &len, NULL);
+            err = err || cbor_value_dup_text_string(&repMap, &name, &len, NULL);
 
-             err = err || cbor_value_advance(&repMap);
+            err = err || cbor_value_advance(&repMap);
 
             int64_t intval = 0;
             bool boolval = false;
@@ -1003,6 +1028,11 @@ static bool OCParseSingleRepPayload(OCRepPayload** outPayload, CborValue* repPar
 }
 static OCStackResult OCParseRepPayload(OCPayload** outPayload, CborValue* arrayVal)
 {
+    if (!outPayload)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
     bool err = false;
 
     OCRepPayload* rootPayload = NULL;
@@ -1040,6 +1070,11 @@ static OCStackResult OCParseRepPayload(OCPayload** outPayload, CborValue* arrayV
 
 static OCStackResult OCParsePresencePayload(OCPayload** outPayload, CborValue* arrayVal)
 {
+    if (!outPayload)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
     bool err = false;
     if(cbor_value_is_map(arrayVal))
     {

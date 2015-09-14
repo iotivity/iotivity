@@ -56,6 +56,11 @@ static struct OCServerResponse * serverResponseList = NULL;
  */
 static OCStackResult AddServerResponse (OCServerResponse ** response, OCRequestHandle requestHandle)
 {
+    if (!response)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
     OCServerResponse * serverResponse = NULL;
 
     serverResponse = (OCServerResponse *) OICCalloc(1, sizeof(OCServerResponse));
@@ -245,6 +250,11 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
         char * resourceUrl, size_t reqTotalSize, OCPayloadFormat acceptFormat,
         const OCDevAddr *devAddr)
 {
+    if (!request)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
     OCServerRequest * serverRequest = NULL;
 
     serverRequest = (OCServerRequest *) OICCalloc(1, sizeof(OCServerRequest) +
@@ -390,7 +400,7 @@ void FindAndDeleteServerRequest(OCServerRequest * serverRequest)
 
 CAResponseResult_t ConvertEHResultToCAResult (OCEntityHandlerResult result, OCMethod method)
 {
-    CAResponseResult_t caResult = CA_BAD_REQ;
+    CAResponseResult_t caResult;
 
     switch (result)
     {
@@ -491,6 +501,11 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     {
         responseInfo.info.type = CA_MSG_NONCONFIRM;
     }
+    else
+    {
+        OC_LOG(ERROR, TAG, "default responseInfo type is NON");
+        responseInfo.info.type = CA_MSG_NONCONFIRM;
+    }
 
     char rspToken[CA_MAX_TOKEN_LEN + 1] = {};
     responseInfo.info.messageId = serverRequest->coapID;
@@ -531,8 +546,8 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
             responseInfo.info.options[0].optionLength = sizeof(uint32_t);
             uint8_t* observationData = (uint8_t*)responseInfo.info.options[0].optionData;
             uint32_t observationOption= serverRequest->observationOption;
-            size_t i;
-            for (i=sizeof(uint32_t); i; --i)
+
+            for (size_t i=sizeof(uint32_t); i; --i)
             {
                 observationData[i-1] = observationOption & 0xFF;
                 observationOption >>=8;
@@ -606,7 +621,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
 #endif
                         };
 
-    int size = sizeof(CAConnTypes)/ sizeof(CATransportAdapter_t);
+    size_t size = sizeof(CAConnTypes)/ sizeof(CATransportAdapter_t);
 
     CATransportAdapter_t adapter = responseEndpoint.adapter;
     // Default adapter, try to send response out on all adapters.
@@ -631,7 +646,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     result = OC_STACK_OK;
     OCStackResult tempResult = OC_STACK_OK;
 
-    for(int i = 0; i < size; i++ )
+    for(size_t i = 0; i < size; i++ )
     {
         responseEndpoint.adapter = (CATransportAdapter_t)(adapter & CAConnTypes[i]);
         if(responseEndpoint.adapter)
@@ -677,10 +692,6 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
  */
 OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
 {
-    OCStackResult stackRet = OC_STACK_ERROR;
-    OCServerRequest * serverRequest = NULL;
-    OCServerResponse * serverResponse = NULL;
-
     if(!ehResponse || !ehResponse->payload)
     {
         OC_LOG(ERROR, TAG, "HandleAggregateResponse invalid parameters");
@@ -689,9 +700,12 @@ OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
 
     OC_LOG(INFO, TAG, "Inside HandleAggregateResponse");
 
-    serverRequest = GetServerRequestUsingHandle((OCServerRequest *)ehResponse->requestHandle);
-    serverResponse = GetServerResponseUsingHandle((OCServerRequest *)ehResponse->requestHandle);
+    OCServerRequest *serverRequest = GetServerRequestUsingHandle((OCServerRequest *)
+                                                                 ehResponse->requestHandle);
+    OCServerResponse *serverResponse = GetServerResponseUsingHandle((OCServerRequest *)
+                                                                    ehResponse->requestHandle);
 
+    OCStackResult stackRet = OC_STACK_ERROR;
     if(serverRequest)
     {
         if(!serverResponse)

@@ -340,8 +340,7 @@ OCStackResult DetermineResourceHandling (const OCServerRequest *request,
     }
     else
     {
-        OCResource *resourcePtr = NULL;
-        resourcePtr = FindResourceByUri((const char*)request->resourceUrl);
+        OCResource *resourcePtr = FindResourceByUri((const char*)request->resourceUrl);
         *resource = resourcePtr;
         if (!resourcePtr)
         {
@@ -493,7 +492,7 @@ static bool includeThisResourceInResponse(OCResource *resource,
         return false;
     }
 
-    if ( resource->resourceProperties & OC_EXPLICIT_DISCOVERABLE)
+    if (resource->resourceProperties & OC_EXPLICIT_DISCOVERABLE)
     {
         /*
          * At least one valid filter should be available to
@@ -507,7 +506,7 @@ static bool includeThisResourceInResponse(OCResource *resource,
             return false;
         }
     }
-    else if ( !(resource->resourceProperties & OC_ACTIVE) ||
+    else if (!(resource->resourceProperties & OC_ACTIVE) ||
          !(resource->resourceProperties & OC_DISCOVERABLE))
     {
         OC_LOG_V(INFO, TAG, "%s not ACTIVE or DISCOVERABLE", resource->uri);
@@ -640,7 +639,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
      *   request is unicast, it should send an error(RESOURCE_NOT_FOUND - 404) response.
      */
 
-    #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
     if ((virtualUriInRequest == OC_PRESENCE) &&
         (resource->resourceProperties & OC_ACTIVE))
     {
@@ -648,7 +647,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         SendPresenceNotification(resource->rsrcType, OC_PRESENCE_TRIGGER_CHANGE);
     }
     else
-    #endif
+#endif
     {
         if(discoveryResult == OC_STACK_OK)
         {
@@ -1008,7 +1007,7 @@ OCStackResult SavePlatformInfo(OCPlatformInfo info)
     }
     else
     {
-        OC_LOG(ERROR, TAG, "Platform info saved.");
+        OC_LOG(INFO, TAG, "Platform info saved.");
     }
 
     return res;
@@ -1055,8 +1054,7 @@ OCStackResult SaveDeviceInfo(OCDeviceInfo info)
     OC_LOG(INFO, TAG, "Device initialized successfully.");
     return OC_STACK_OK;
 
-    exit:
-        DeleteDeviceInfo();
-        return res;
-
+exit:
+    DeleteDeviceInfo();
+    return res;
 }

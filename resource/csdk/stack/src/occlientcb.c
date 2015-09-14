@@ -55,12 +55,12 @@ AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
 
     ClientCB *cbNode = NULL;
 
-    #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
     if(method == OC_REST_PRESENCE)
     {   // Retrieve the presence callback structure for this specific requestUri.
         cbNode = GetClientCB(NULL, 0, NULL, requestUri);
     }
-    #endif // WITH_PRESENCE
+#endif // WITH_PRESENCE
 
     if(!cbNode)// If it does not already exist, create new node.
     {
@@ -124,7 +124,7 @@ AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
         *handle = cbNode->handle;
     }
 
-    #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
     if(method == OC_REST_PRESENCE && resourceTypeName)
     {
         // Amend the found or created node by adding a new resourceType to it.
@@ -135,14 +135,14 @@ AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
     {
         OICFree(resourceTypeName);
     }
-    #else
+#else
     OICFree(resourceTypeName);
-    #endif
+#endif
 
     return OC_STACK_OK;
 
-    exit:
-        return OC_STACK_NO_MEMORY;
+exit:
+     return OC_STACK_NO_MEMORY;
 }
 
 void DeleteClientCB(ClientCB * cbNode)
@@ -162,7 +162,7 @@ void DeleteClientCB(ClientCB * cbNode)
             cbNode->deleteCallback(cbNode->context);
         }
 
-        #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
         if(cbNode->presence)
         {
             OICFree(cbNode->presence->timeOut);
@@ -180,7 +180,7 @@ void DeleteClientCB(ClientCB * cbNode)
                 pointer = next;
             }
         }
-        #endif // WITH_PRESENCE
+#endif // WITH_PRESENCE
         OICFree(cbNode);
         cbNode = NULL;
     }
