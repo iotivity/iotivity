@@ -22,11 +22,8 @@
 
 #include <stdexcept>
 #include <utility>
+#include "InternalTypes.h"
 
-namespace
-{
-    const std::string INPUT_RESOURCE = std::string("input");
-}
 
 namespace OIC
 {
@@ -93,7 +90,7 @@ namespace OIC
             {
                 try
                 {
-                    for (bundle = m_xmlDoc.first_node()->first_node("bundle"); bundle; bundle =
+                    for (bundle = m_xmlDoc.first_node()->first_node(BUNDLE_TAG); bundle; bundle =
                              bundle->next_sibling())
                     {
                         std::map< std::string, std::string > bundleMap;
@@ -115,8 +112,8 @@ namespace OIC
                 }
                 catch (rapidxml::parse_error &e)
                 {
-                    cout << "xml parsing failed !!" << endl;
-                    cout << e.what() << endl;
+                    OC_LOG_V(ERROR, CONTAINER_TAG, "xml parsing failed !!");
+                    OC_LOG_V(ERROR, CONTAINER_TAG, e.what());
                 }
             }
         }
@@ -134,24 +131,24 @@ namespace OIC
                     std::map< std::string, std::string > bundleConfigMap;
 
                     // <bundle>
-                    for (bundle = m_xmlDoc.first_node()->first_node("bundle"); bundle; bundle =
+                    for (bundle = m_xmlDoc.first_node()->first_node(BUNDLE_TAG); bundle; bundle =
                              bundle->next_sibling())
                     {
                         // <id>
-                        strBundleId = bundle->first_node("id")->value();
+                        strBundleId = bundle->first_node(BUNDLE_ID)->value();
 
                         if (!strBundleId.compare(bundleId))
                         {
-                            bundleConfigMap.insert(std::make_pair("id", trim_both(strBundleId)));
+                            bundleConfigMap.insert(std::make_pair(BUNDLE_ID, trim_both(strBundleId)));
 
                             // <path>
-                            strPath = bundle->first_node("path")->value();
-                            bundleConfigMap.insert(std::make_pair("path", trim_both(strPath)));
+                            strPath = bundle->first_node(BUNDLE_PATH)->value();
+                            bundleConfigMap.insert(std::make_pair(BUNDLE_PATH, trim_both(strPath)));
 
                             // <version>
-                            strVersion = bundle->first_node("version")->value();
+                            strVersion = bundle->first_node(BUNDLE_VERSION)->value();
                             bundleConfigMap.insert(
-                                std::make_pair("version", trim_both(strVersion)));
+                                std::make_pair(BUNDLE_VERSION, trim_both(strVersion)));
 
                             configOutput->push_back(bundleConfigMap);
 
@@ -161,8 +158,8 @@ namespace OIC
                 }
                 catch (rapidxml::parse_error &e)
                 {
-                    cout << "xml parsing failed !!" << endl;
-                    cout << e.what() << endl;
+                    OC_LOG_V(ERROR, CONTAINER_TAG, "xml parsing failed !!");
+                    OC_LOG_V(ERROR, CONTAINER_TAG, e.what());
                 }
             }
         }
@@ -182,17 +179,17 @@ namespace OIC
                 try
                 {
                     // <bundle>
-                    for (bundle = m_xmlDoc.first_node()->first_node("bundle"); bundle; bundle =
+                    for (bundle = m_xmlDoc.first_node()->first_node(BUNDLE_TAG); bundle; bundle =
                              bundle->next_sibling())
                     {
                         // <id>
-                        strBundleId = bundle->first_node("id")->value();
+                        strBundleId = bundle->first_node(BUNDLE_ID)->value();
 
                         if (!strBundleId.compare(bundleId))
                         {
                             // <resourceInfo>
-                            for (resource = bundle->first_node("resources")->first_node(
-                                                "resourceInfo"); resource; resource = resource->next_sibling())
+                            for (resource = bundle->first_node(OUTPUT_RESOURCES_TAG)->first_node(OUTPUT_RESOURCE_INFO);
+                                 resource; resource = resource->next_sibling())
                             {
                                 resourceInfo tempResourceInfo;
 
@@ -202,16 +199,16 @@ namespace OIC
                                     strKey = item->name();
                                     strValue = item->value();
 
-                                    if (!strKey.compare("name"))
+                                    if (!strKey.compare(OUTPUT_RESOURCE_NAME))
                                         tempResourceInfo.name = trim_both(strValue);
 
-                                    else if (!strKey.compare("uri"))
+                                    else if (!strKey.compare(OUTPUT_RESOURCE_URI))
                                         tempResourceInfo.uri = trim_both(strValue);
 
-                                    else if (!strKey.compare("address"))
+                                    else if (!strKey.compare(OUTPUT_RESOURCE_ADDR))
                                         tempResourceInfo.address = trim_both(strValue);
 
-                                    else if (!strKey.compare("resourceType"))
+                                    else if (!strKey.compare(OUTPUT_RESOURCE_TYPE))
                                         tempResourceInfo.resourceType = trim_both(strValue);
 
                                     else
@@ -250,8 +247,8 @@ namespace OIC
                 }
                 catch (rapidxml::parse_error &e)
                 {
-                    std::cout << "xml parsing failed !!" << std::endl;
-                    std::cout << e.what() << std::endl;
+                    OC_LOG_V(ERROR, CONTAINER_TAG, "xml parsing failed !!");
+                    OC_LOG_V(ERROR, CONTAINER_TAG, e.what());
                 }
             }
         }
@@ -280,13 +277,13 @@ namespace OIC
                 }
                 catch (rapidxml::parse_error &e)
                 {
-                    std::cout << "xml parsing failed !!" << std::endl;
-                    std::cout << e.what() << std::endl;
+                    OC_LOG_V(ERROR, CONTAINER_TAG, "xml parsing failed !!");
+                    OC_LOG_V(ERROR, CONTAINER_TAG, e.what());
                 }
             }
             else
             {
-                std::cout << "Configuration File load failed !!" << std::endl;
+                OC_LOG_V(ERROR, CONTAINER_TAG, "Configuration File load failed !!");
             }
         }
     }
