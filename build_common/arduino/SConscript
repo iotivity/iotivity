@@ -194,12 +194,11 @@ def __upload(env, binary):
                 install_cmd = env.Command('install_cmd', None, upload_cmd)
                 env.Default('install_cmd')
         elif target_arch == 'arm':
-                protocol = __get_board_info(board, '.upload.protocol')
-                speed = __get_board_info(board, '.upload.speed')
                 port = 'ttyACM0'
-                uu = __get_board_info(board, '.upload.native_usb')
-                os.system('stty -F /dev/' + port + ' speed 1200 cs8 -cstopb -parenb')
-                os.system(arduino_home + '/hardware/tools/bossac -i --port=' + port + ' -U false -e -w -b ' + binary + ' -R')
+                upload_cmd = 'stty -F /dev/' + port + ' speed 1200 cs8 -cstopb -parenb \n' + arduino_home + '/hardware/tools/bossac -i --port=' + port + ' -U false -e -w -b ' + binary + ' -R'
+                print "Upload command: %s" %upload_cmd
+                install_cmd = env.Command('install_cmd', None, upload_cmd)
+                env.Default('install_cmd')
 
 # Print the command line that to upload binary to the board
 def __upload_help(env):
