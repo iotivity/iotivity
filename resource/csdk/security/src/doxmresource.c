@@ -518,7 +518,7 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
                 ehRet = AddOwnerPSK((CAEndpoint_t *)&request->devAddr, newDoxm,
                         (uint8_t*) OXM_JUST_WORKS, strlen(OXM_JUST_WORKS));
 
-                VERIFY_SUCCESS(TAG, ehRet = OC_EH_OK, ERROR);
+                VERIFY_SUCCESS(TAG, ehRet == OC_EH_OK, ERROR);
 
                 // Update new state in persistent storage
                 if (true == UpdatePersistentStorage(gDoxm))
@@ -543,6 +543,10 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
                  * in owned state.
                  */
                 CAEnableAnonECDHCipherSuite(false);
+#ifdef __WITH_X509__
+#define TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8 0xC0AE
+                CASelectCipherSuite(TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
+#endif //__WITH_X509__
 #endif //__WITH_DTLS__
             }
         }

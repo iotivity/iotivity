@@ -93,6 +93,12 @@ OCStackResult InitSecureResources( )
     {
         ret = InitCredResource();
     }
+#ifdef __WITH_X509__
+    if(OC_STACK_OK == ret)
+    {
+        ret = InitCRLResource();
+    }
+#endif // __WITH_X509__
     if(OC_STACK_OK == ret)
     {
         ret = InitSVCResource();

@@ -52,6 +52,11 @@ extern const char * OIC_RSRC_TYPE_SEC_CRED;
 extern const char * OIC_RSRC_CRED_URI;
 extern const char * OIC_JSON_CRED_NAME;
 
+//CRL
+extern const char * OIC_RSRC_TYPE_SEC_CRL;
+extern const char * OIC_RSRC_CRL_URI;
+extern const char * OIC_JSON_CRL_NAME;
+
 //SVC
 extern const char * OIC_RSRC_TYPE_SEC_SVC;
 extern const char * OIC_RSRC_SVC_URI;

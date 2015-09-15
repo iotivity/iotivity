@@ -23,6 +23,8 @@
 
 #include "ocsecurityconfig.h"
 #include "cainterface.h"
+#include "securevirtualresourcetypes.h"
+#include "octypes.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -142,6 +144,18 @@ OCStackResult AddTmpPskWithPIN(const OicUuid_t* tmpSubject, OicSecCredType_t cre
                             size_t ownersLen, const OicUuid_t * owners, OicUuid_t* tmpCredSubject);
 
 #endif /* __WITH_DTLS__ */
+
+#ifdef __WITH_X509__
+/**
+ * This function is used toretrieve certificate credentials from RI security layer.
+ *
+ * @param credInfo
+ *     binary structure containing certificate credentials
+ *
+ * @retval OC_STACK_OK  on scuccess
+ */
+OCStackResult GetDtlsCertCredentials(CADtlsCertCreds_t *credInfo);
+#endif /*__WITH_X509__*/
 
 /**
  * Function to deallocate allocated memory to OicSecCred_t
