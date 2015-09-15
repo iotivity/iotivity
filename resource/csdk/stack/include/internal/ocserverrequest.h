@@ -240,18 +240,19 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
  *     OCStackResult
  */
 OCStackResult FormOCEntityHandlerRequest(
-                                OCEntityHandlerRequest *entityHandlerRequest,
-                                OCRequestHandle request,
-                                OCMethod method,
-                                OCDevAddr *endpoint,
-                                OCResourceHandle resource,
-                                char *queryBuf,
-                                uint8_t *payload,
-                                size_t payloadSize,
-                                uint8_t numVendorOptions,
-                                OCHeaderOption *vendorOptions,
-                                OCObserveAction observeAction,
-                                OCObservationId observeID);
+        OCEntityHandlerRequest * entityHandlerRequest,
+        OCRequestHandle request,
+        OCMethod method,
+        OCDevAddr *endpoint,
+        OCResourceHandle resource,
+        char * queryBuf,
+        OCPayloadType payloadType,
+        uint8_t * payload,
+        size_t payloadSize,
+        uint8_t numVendorOptions,
+        OCHeaderOption * vendorOptions,
+        OCObserveAction observeAction,
+        OCObservationId observeID);
 
 /**
  * Find a server request in the server request list and delete

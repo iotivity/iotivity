@@ -25,8 +25,8 @@
 // For POSIX.1-2001 base specification,
 // Refer http://pubs.opengroup.org/onlinepubs/009695399/
 #define _POSIX_C_SOURCE 200112L
-#include "ocresource.h"
 #include <string.h>
+#include "ocresource.h"
 #include "ocresourcehandler.h"
 #include "ocobserve.h"
 #include "occollection.h"
@@ -35,10 +35,9 @@
 #include "logger.h"
 #include "cJSON.h"
 #include "ocpayload.h"
-
+#include "secureresourcemanager.h"
 #include "cacommon.h"
 #include "cainterface.h"
-
 
 /// Module Name
 #define TAG "ocresource"
@@ -691,6 +690,7 @@ HandleDefaultDeviceEntityHandler (OCServerRequest *request)
                                         request->method,
                                         &request->devAddr,
                                         (OCResourceHandle) NULL, request->query,
+                                        PAYLOAD_TYPE_REPRESENTATION,
                                         request->payload,
                                         request->payloadSize,
                                         request->numRcvdVendorSpecificHeaderOptions,
@@ -735,13 +735,20 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
     OCEntityHandlerRequest ehRequest = {0};
 
     OC_LOG(INFO, TAG, "Entering HandleResourceWithEntityHandler");
+    OCPayloadType type = PAYLOAD_TYPE_REPRESENTATION;
+    // check the security resource
+    if (request && request->resourceUrl && SRMIsSecurityResourceURI(request->resourceUrl))
+    {
+        type = PAYLOAD_TYPE_SECURITY;
 
+    }
     result = FormOCEntityHandlerRequest(&ehRequest,
                                         (OCRequestHandle)request,
                                         request->method,
                                         &request->devAddr,
                                         (OCResourceHandle)resource,
                                         request->query,
+                                        type,
                                         request->payload,
                                         request->payloadSize,
                                         request->numRcvdVendorSpecificHeaderOptions,
@@ -857,6 +864,7 @@ HandleCollectionResourceDefaultEntityHandler (OCServerRequest *request,
                                         &request->devAddr,
                                         (OCResourceHandle)resource,
                                         request->query,
+                                        PAYLOAD_TYPE_REPRESENTATION,
                                         request->payload,
                                         request->payloadSize,
                                         request->numRcvdVendorSpecificHeaderOptions,

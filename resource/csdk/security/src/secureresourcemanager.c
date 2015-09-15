@@ -18,6 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include <string.h>
 #include "ocstack.h"
 #include "logger.h"
 #include "cainterface.h"
@@ -26,7 +27,7 @@
 #include "credresource.h"
 #include "policyengine.h"
 #include "oic_string.h"
-#include <string.h>
+#include "srmresourcestrings.h"
 
 #define TAG  "SRM"
 
@@ -282,4 +283,27 @@ OCStackResult SRMInitPolicyEngine()
 void SRMDeInitPolicyEngine()
 {
     return DeInitPolicyEngine(&g_policyEngineContext);
+}
+
+/**
+ * @brief   Check the security resource URI.
+ * @param   uri [IN] Pointers to security resource URI.
+ * @return  true if the URI is one of security resources, otherwise false.
+ */
+bool SRMIsSecurityResourceURI(const char* uri)
+{
+    bool result = false;
+    if (!uri)
+    {
+        return result;
+    }
+
+    if (strcmp(uri, OIC_RSRC_AMACL_URI) == 0 || strcmp(uri, OIC_RSRC_ACL_URI) == 0
+            || strcmp(uri, OIC_RSRC_PSTAT_URI) == 0
+            || strncmp(OIC_RSRC_DOXM_URI, uri, sizeof(OIC_RSRC_DOXM_URI) - 1) == 0
+            || strcmp(uri, OIC_RSRC_CRED_URI) == 0 || strcmp(uri, OIC_RSRC_SVC_URI) == 0)
+    {
+        result = true;
+    }
+    return result;
 }

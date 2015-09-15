@@ -338,6 +338,7 @@ OCStackResult FormOCEntityHandlerRequest(
         OCDevAddr *endpoint,
         OCResourceHandle resource,
         char * queryBuf,
+        OCPayloadType payloadType,
         uint8_t * payload,
         size_t payloadSize,
         uint8_t numVendorOptions,
@@ -357,7 +358,7 @@ OCStackResult FormOCEntityHandlerRequest(
 
         if(payload && payloadSize)
         {
-            if(OCParsePayload(&entityHandlerRequest->payload, PAYLOAD_TYPE_REPRESENTATION,
+            if(OCParsePayload(&entityHandlerRequest->payload, payloadType,
                         payload, payloadSize) != OC_STACK_OK)
             {
                 return OC_STACK_ERROR;

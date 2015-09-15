@@ -475,7 +475,8 @@ OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t stat
                                                 OC_REST_NOMETHOD,
                                                 &observer->devAddr,
                                                 (OCResourceHandle)NULL,
-                                                NULL, NULL, 0, 0, NULL,
+                                                NULL, PAYLOAD_TYPE_REPRESENTATION,
+                                                NULL, 0, 0, NULL,
                                                 OC_OBSERVE_DEREGISTER,
                                                 observer->observeId);
             if(result != OC_STACK_OK)
@@ -525,7 +526,8 @@ OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t stat
                                                     OC_REST_NOMETHOD,
                                                     &observer->devAddr,
                                                     (OCResourceHandle)NULL,
-                                                    NULL, NULL, 0, 0, NULL,
+                                                    NULL, PAYLOAD_TYPE_REPRESENTATION,
+                                                    NULL, 0, 0, NULL,
                                                     OC_OBSERVE_DEREGISTER,
                                                     observer->observeId);
                 if(result != OC_STACK_OK)
@@ -1095,7 +1097,12 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
                responseInfo->info.payloadSize)
             {
                 OCPayloadType type = PAYLOAD_TYPE_INVALID;
-                if (cbNode->method == OC_REST_DISCOVER)
+                // check the security resource
+                if (SRMIsSecurityResourceURI(cbNode->requestUri))
+                {
+                    type = PAYLOAD_TYPE_SECURITY;
+                }
+                else if (cbNode->method == OC_REST_DISCOVER)
                 {
                     if (strncmp(OC_RSRVD_WELL_KNOWN_URI,cbNode->requestUri,
                                 sizeof(OC_RSRVD_WELL_KNOWN_URI) - 1) == 0)

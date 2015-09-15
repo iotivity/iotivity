@@ -356,6 +356,7 @@ static OCStackApplicationResult SecurePortDiscoveryHandler(void *ctx, OCDoHandle
             }
 
             OCProvisionDev_t** ppDevicesList = (OCProvisionDev_t**) ctx;
+            OC_LOG_V(INFO, TAG, "UpdateSecurePortOfDevice with %d",  securePort);
 
             OCStackResult res = UpdateSecurePortOfDevice(ppDevicesList, clientResponse->devAddr.addr,
                                                          clientResponse->devAddr.port, securePort);
@@ -453,7 +454,7 @@ static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx, OCDoHandle UNU
                 cbData.cb = &SecurePortDiscoveryHandler;
                 cbData.context = ctx;
                 cbData.cd = NULL;
-                OCStackResult ret = OCDoResource(NULL, OC_REST_GET, query, 0, 0,
+                OCStackResult ret = OCDoResource(NULL, OC_REST_DISCOVER, query, 0, 0,
                         clientResponse->connType, OC_LOW_QOS, &cbData, NULL, 0);
                 // TODO: Should we use the default secure port in case of error?
                 if(OC_STACK_OK != ret)
