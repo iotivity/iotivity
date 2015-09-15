@@ -295,6 +295,9 @@ namespace OIC
                     {
                         discoverInputResource(strUri);
                     }
+
+                    // to get notified if bundle resource attributes are updated
+                    resource->registerObserver((NotificationReceiver *) this);
                 }
             }
             else

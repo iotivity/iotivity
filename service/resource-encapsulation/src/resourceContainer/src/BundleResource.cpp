@@ -61,6 +61,9 @@ namespace OIC
         void BundleResource::setAttribute(std::string key, RCSResourceAttributes::Value &&value)
         {
             m_resourceAttributes[key] = value;
+
+            if (m_pNotiReceiver)
+                m_pNotiReceiver->onNotificationReceived(m_uri);
         }
 
         RCSResourceAttributes::Value BundleResource::getAttribute(const std::string &key)
