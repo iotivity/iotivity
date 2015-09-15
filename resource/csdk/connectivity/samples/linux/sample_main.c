@@ -44,7 +44,9 @@
 #define SYSTEM_INVOKE_ERROR 127
 #define SYSTEM_ERROR -1
 
+#ifdef WITH_BWT
 #define BLOCK_SIZE(arg) (1 << ((arg) + 4))
+#endif
 
 /**
  * @def RS_IDENTITY
@@ -102,8 +104,11 @@ static CAToken_t g_last_request_token = NULL;
 
 static const char COAP_PREFIX[] =  "coap://";
 static const char COAPS_PREFIX[] = "coaps://";
+static const char COAP_TCP_PREFIX[] =  "coap+tcp://";
+
 static const uint16_t COAP_PREFIX_LEN = sizeof(COAP_PREFIX) - 1;
 static const uint16_t COAPS_PREFIX_LEN = sizeof(COAPS_PREFIX) - 1;
+static const uint16_t COAP_TCP_PREFIX_LEN = sizeof(COAP_TCP_PREFIX) - 1;
 
 static const char SECURE_INFO_DATA[] =
                                     "{\"oc\":[{\"href\":\"%s\",\"prop\":{\"rt\":[\"core.led\"],"
@@ -434,6 +439,7 @@ void send_request()
         printf("Enter the URI like below....\n");
         printf("coap://10.11.12.13:4545/resource_uri ( for IP )\n");
         printf("coap://10:11:12:13:45:45/resource_uri ( for BT )\n");
+        printf("coap+tcp://10:11:12:13:45:45/resource_uri ( for TCP )\n");
     }
     else
     {
@@ -754,6 +760,7 @@ void send_notification()
     printf("Enter the URI like below....\n");
     printf("coap://10.11.12.13:4545/resource_uri ( for IP )\n");
     printf("coap://10:11:12:13:45:45/resource_uri ( for BT )\n");
+    printf("coap+tcp://10:11:12:13:45:45/resource_uri ( for TCP )\n");
     printf("uri : ");
 
     char uri[MAX_BUF_LEN] = { 0 };
@@ -848,6 +855,7 @@ void select_network()
     printf("IP     : 0\n");
     printf("GATT   : 1\n");
     printf("RFCOMM : 2\n");
+    printf("TCP    : 4\n");
     printf("select : ");
 
     char buf[MAX_BUF_LEN] = { 0 };
@@ -858,7 +866,7 @@ void select_network()
 
     int number = buf[0] - '0';
 
-    if (number < 0 || number > 3)
+    if (number < 0 || number > 4)
     {
         printf("Invalid network type\n");
         return;
@@ -884,6 +892,7 @@ void unselect_network()
     printf("IP     : 0\n");
     printf("GATT   : 1\n");
     printf("RFCOMM : 2\n");
+    printf("TCP    : 4\n");
     printf("select : ");
 
     char buf[MAX_BUF_LEN] = { 0 };
@@ -894,7 +903,7 @@ void unselect_network()
 
     int number = buf[0] - '0';
 
-    if (number < 0 || number > 3)
+    if (number < 0 || number > 4)
     {
         printf("Invalid network type\n");
         return;
@@ -1057,12 +1066,14 @@ void request_handler(const CAEndpoint_t *object, const CARequestInfo_t *requestI
         }
     }
 
+#ifdef WITH_BWT
     // if received message is bulk data, create output file
     if ((requestInfo->info.payload) &&
             (requestInfo->info.payloadSize > BLOCK_SIZE(CA_DEFAULT_BLOCK_SIZE)))
     {
         create_file(requestInfo->info.payload, requestInfo->info.payloadSize);
     }
+#endif
 
     printf("Send response with URI\n");
     send_response(object, &requestInfo->info);
@@ -1111,12 +1122,14 @@ void response_handler(const CAEndpoint_t *object, const CAResponseInfo_t *respon
         }
     }
 
+#ifdef WITH_BWT
     // if received message is bulk data, create output file
     if ((responseInfo->info.payload) &&
             (responseInfo->info.payloadSize > BLOCK_SIZE(CA_DEFAULT_BLOCK_SIZE)))
     {
         create_file(responseInfo->info.payload, responseInfo->info.payloadSize);
     }
+#endif
 }
 
 void error_handler(const CAEndpoint_t *rep, const CAErrorInfo_t* errorInfo)
@@ -1404,6 +1417,7 @@ CAResult_t get_network_type()
     printf("IP     : 0\n");
     printf("GATT   : 1\n");
     printf("RFCOMM : 2\n");
+    printf("TCP    : 4\n");
     printf("select : ");
 
     if (CA_STATUS_OK != get_input_data(buf, MAX_BUF_LEN))
@@ -1413,25 +1427,19 @@ CAResult_t get_network_type()
 
     int number = buf[0] - '0';
 
-    number = (number < 0 || number > 3) ? 0 : 1 << number;
+    number = (number < 0 || number > 4) ? 0 : 1 << number;
 
-    if (number == 1)
+    switch (number)
     {
-        g_selected_nw_type = CA_ADAPTER_IP;
-        return CA_STATUS_OK;
+        case CA_ADAPTER_IP:
+        case CA_ADAPTER_GATT_BTLE:
+        case CA_ADAPTER_RFCOMM_BTEDR:
+        case CA_ADAPTER_TCP:
+            g_selected_nw_type = number;
+            return CA_STATUS_OK;
+        default:
+            return CA_NOT_SUPPORTED;
     }
-    if (number == 2)
-    {
-        g_selected_nw_type = CA_ADAPTER_GATT_BTLE;
-        return CA_STATUS_OK;
-    }
-    if (number == 3)
-    {
-        g_selected_nw_type = CA_ADAPTER_RFCOMM_BTEDR;
-        return CA_STATUS_OK;
-    }
-
-    return CA_NOT_SUPPORTED;
 }
 
 CAResult_t get_input_data(char *buf, int32_t length)
@@ -1535,6 +1543,12 @@ void parsing_coap_uri(const char* uri, addressSet_t* address, CATransportFlags_t
     {
         printf("uri has '%s' prefix\n", COAP_PREFIX);
         startIndex = COAP_PREFIX_LEN;
+        *flags = CA_IPV4;
+    }
+    else if (strncmp(COAP_TCP_PREFIX, uri, COAP_TCP_PREFIX_LEN) == 0)
+    {
+        printf("uri has '%s' prefix\n", COAP_TCP_PREFIX);
+        startIndex = COAP_TCP_PREFIX_LEN;
         *flags = CA_IPV4;
     }
 

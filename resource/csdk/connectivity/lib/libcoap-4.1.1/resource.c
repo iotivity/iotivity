@@ -469,7 +469,7 @@ void coap_hash_request_uri(const coap_pdu_t *request, coap_key_t key)
     coap_option_filter_clear(filter);
     coap_option_setb(filter, COAP_OPTION_URI_PATH);
 
-    coap_option_iterator_init((coap_pdu_t *) request, &opt_iter, filter);
+    coap_option_iterator_init((coap_pdu_t *) request, &opt_iter, filter, coap_udp);
     while ((option = coap_option_next(&opt_iter)))
         coap_hash(COAP_OPT_VALUE(option), COAP_OPT_LENGTH(option), key);
 }
@@ -757,13 +757,14 @@ static void coap_notify_observers(coap_context_t *context, coap_resource_t *r)
                 obs; obs = (coap_subscription_t *) list_item_next((void *) obs))
         {
             if (r->dirty == 0 && obs->dirty == 0)
-                /* running this resource due to partiallydirty, but this observation's notification was already enqueued */
+                /* running this resource due to partiallydirty,
+                 * but this observation's notification was already enqueued */
                 continue;
 
             coap_tid_t tid = COAP_INVALID_TID;
             obs->dirty = 0;
             /* initialize response */
-            response = coap_pdu_init(COAP_MESSAGE_CON, 0, 0, COAP_MAX_PDU_SIZE);
+            response = coap_pdu_init(COAP_MESSAGE_CON, 0, 0, COAP_MAX_PDU_SIZE, coap_udp);
             if (!response)
             {
                 obs->dirty = 1;
@@ -772,7 +773,7 @@ static void coap_notify_observers(coap_context_t *context, coap_resource_t *r)
                 continue;
             }
 
-            if (!coap_add_token(response, obs->token_length, obs->token))
+            if (!coap_add_token(response, obs->token_length, obs->token, coap_udp))
             {
                 obs->dirty = 1;
                 r->partiallydirty = 1;
@@ -784,19 +785,19 @@ static void coap_notify_observers(coap_context_t *context, coap_resource_t *r)
             token.length = obs->token_length;
             token.s = obs->token;
 
-            response->hdr->id = coap_new_message_id(context);
+            response->hdr->coap_hdr_udp_t.id = coap_new_message_id(context);
             if (obs->non && obs->non_cnt < COAP_OBS_MAX_NON)
             {
-                response->hdr->type = COAP_MESSAGE_NON;
+                response->hdr->coap_hdr_udp_t.type = COAP_MESSAGE_NON;
             }
             else
             {
-                response->hdr->type = COAP_MESSAGE_CON;
+                response->hdr->coap_hdr_udp_t.type = COAP_MESSAGE_CON;
             }
             /* fill with observer-specific data */
             h(context, r, &obs->subscriber, NULL, &token, response);
 
-            if (response->hdr->type == COAP_MESSAGE_CON)
+            if (response->hdr->coap_hdr_udp_t.type == COAP_MESSAGE_CON)
             {
                 tid = coap_send_confirmed(context, &obs->subscriber, response);
                 obs->non_cnt = 0;
@@ -807,7 +808,7 @@ static void coap_notify_observers(coap_context_t *context, coap_resource_t *r)
                 obs->non_cnt++;
             }
 
-            if (COAP_INVALID_TID == tid || response->hdr->type != COAP_MESSAGE_CON)
+            if (COAP_INVALID_TID == tid || response->hdr->coap_hdr_udp_t.type != COAP_MESSAGE_CON)
                 coap_delete_pdu(response);
             if (COAP_INVALID_TID == tid)
             {

@@ -51,9 +51,9 @@ notify(coap_context_t *context, coap_resource_t *res,
     if ( !context || !res || !sub || !(pdu = coap_new_pdu()) )
     return;
 
-    pdu->hdr->type = COAP_MESSAGE_CON;
-    pdu->hdr->id = rand(); /* use a random transaction id */
-    pdu->hdr->code = code;
+    pdu->hdr->coap_hdr_udp_t.type = COAP_MESSAGE_CON;
+    pdu->hdr->coap_hdr_udp_t.id = rand(); /* use a random transaction id */
+    pdu->hdr->coap_hdr_udp_t.code = code;
 
     /* FIXME: content-type and data (how about block?) */
     if (res->uri->host.length)

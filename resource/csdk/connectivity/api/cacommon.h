@@ -141,6 +141,7 @@ typedef enum
     CA_ADAPTER_REMOTE_ACCESS = (1 << 3),   // Remote Access over XMPP.
 #endif
 
+    CA_ADAPTER_TCP = (1 << 4),   // CoAP over TCP
     CA_ALL_ADAPTERS          = 0xffffffff
 } CATransportAdapter_t;
 
@@ -505,6 +506,23 @@ typedef struct
         CATransportFlags_t previousRequestFlags;/**< address family filtering */
         uint16_t previousRequestMessageId;      /**< address family filtering */
     } ca;
+
+#ifdef TCP_ADAPTER
+    /**
+     * Hold global variables for TCP Adapter.
+     */
+    struct tcpsockets
+    {
+        void *threadpool;       /**< threadpool between Initialize and Start */
+        void *svrlist;          /**< unicast IPv4 TCP server information*/
+        int selectTimeout;      /**< in seconds */
+        int listenBacklog;      /**< backlog counts*/
+        int maxfd;              /**< highest fd (for select) */
+        bool started;           /**< the TCP adapter has started */
+        bool terminate;         /**< the TCP adapter needs to stop */
+        bool ipv4tcpenabled;    /**< IPv4 TCP enabled by OCInit flags */
+    } tcp;
+#endif
 } CAGlobals_t;
 
 extern CAGlobals_t caglobals;
