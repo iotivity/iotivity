@@ -22,7 +22,6 @@
 
 package com.example.sample.provider;
 
-public interface IMessageLogger
-{
+public interface IMessageLogger {
     public void logMessage(String msg);
 }
