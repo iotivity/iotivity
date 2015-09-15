@@ -45,6 +45,7 @@
 #endif
 
 #ifdef RA_ADAPTER_IBB
+#define SET_BUT_NOT_USED(x) (void) x
 /**
  * Logging tag for module name.
  */
@@ -69,16 +70,18 @@ typedef struct
 {
     xmpp_t     *xmpp;
     int         port;
-    char        hostname[RA_MAX_HOSTNAME_LENGTH];
+    char        hostName[RA_MAX_HOSTNAME_LENGTH];
     char        password[RA_MAX_PASSWORD_LENGTH];
     char        jid[CA_RAJABBERID_SIZE];
-    CANetworkStatus_t connection_status;
+    CANetworkStatus_t connectionStatus;
+    CAJidBoundCallback jidBoundCallback;
 } CARAXmppData_t;
 
 static ca_mutex g_raadapterMutex = NULL;
 
-static CARAXmppData_t g_xmppData = {.xmpp = NULL, .port = 5222, .hostname = {0},
-    .password = {0}, .jid = {0}, .connection_status = CA_INTERFACE_DOWN};
+static CARAXmppData_t g_xmppData = {.xmpp = NULL, .port = 5222, .hostName = {0},
+    .password = {0}, .jid = {0}, .connectionStatus = CA_INTERFACE_DOWN,
+    .jidBoundCallback = NULL};
 
 static void CARANotifyNetworkChange(const char *address, CANetworkStatus_t status);
 
@@ -86,7 +89,7 @@ void CARANotifyNetworkChange(const char *address, CANetworkStatus_t status)
 {
     OIC_LOG(DEBUG, RA_ADAPTER_TAG, "CARANotifyNetworkChange IN");
 
-    g_xmppData.connection_status = status;
+    g_xmppData.connectionStatus = status;
 
     CAEndpoint_t *localEndpoint = CACreateEndpointObject(CA_DEFAULT_FLAGS,
                                 CA_ADAPTER_REMOTE_ACCESS,
@@ -157,7 +160,7 @@ static void CARAUpdateObsList(int option, char *sid)
     }
     else if (option == OBSERVE_DEREGISTER)
     {
-        obs_item_t *item = ilist_finditem_func(g_observerList, CARAFindSessID, sid);
+        obs_item_t *item = ilist_finditem_func(g_observerList, (find_fp) CARAFindSessID, sid);
         if (item != NULL)
         {
             item->option = OBSERVE_DEREGISTER;
@@ -203,14 +206,18 @@ static int CARAGetReqObsOption(coap_pdu_t *pdu)
 
 static int CARAErrorCB(xmpp_ibb_session_t *sess, xmpperror_t *xerr)
 {
-    OIC_LOG_V(DEBUG, RA_ADAPTER_TAG, "%s(): code(%d) tyep'%s' mesg'%s'",
+    OIC_LOG_V(ERROR, RA_ADAPTER_TAG, "%s(): code(%d) tyep'%s' mesg'%s'",
             __FUNCTION__, xerr->code, xerr->type, xerr->mesg);
+    SET_BUT_NOT_USED(sess);
+    SET_BUT_NOT_USED(xerr);
     return 0;
 }
 
 static int CARAOpenCB(xmpp_ibb_session_t *sess, char *type)
 {
     OIC_LOG_V(DEBUG, RA_ADAPTER_TAG, "%s(): set type '%s'", __FUNCTION__, type);
+    SET_BUT_NOT_USED(sess);
+    SET_BUT_NOT_USED(type);
     return 0;
 }
 
@@ -218,12 +225,13 @@ static int CARACloseCB(xmpp_ibb_session_t *sess, char *type)
 {
     OIC_LOG_V(DEBUG, RA_ADAPTER_TAG, "%s(): set type '%s'", __FUNCTION__, type);
     char *sid = xmpp_ibb_get_sid(sess);
-    obs_item_t *item = ilist_finditem_func(g_observerList, CARAFindSessID, sid);
+    obs_item_t *item = ilist_finditem_func(g_observerList, (find_fp) CARAFindSessID, sid);
     if (item != NULL)
     {
         ilist_remove(g_observerList, item);
         OICFree(item);
     }
+    SET_BUT_NOT_USED(type);
     return 0;
 }
 
@@ -290,7 +298,7 @@ static int CARARecvCB(xmpp_ibb_session_t *sess, xmppdata_t *xdata)
         else
         {
             OIC_LOG(DEBUG, RA_ADAPTER_TAG, "this is a response data");
-            obs_item_t *item = ilist_finditem_func(g_observerList, CARAFindSessID, sid);
+            obs_item_t *item = ilist_finditem_func(g_observerList, (find_fp) CARAFindSessID, sid);
             if (item != NULL)
             {
                 if (item->option == OBSERVE_DEREGISTER)
@@ -315,7 +323,10 @@ static int CARARecvCB(xmpp_ibb_session_t *sess, xmppdata_t *xdata)
             return -1;
         }
         memcpy(buf, xdata->data, xdata->size);
-        g_networkPacketCallback(endPoint, buf, xdata->size);
+        CASecureEndpoint_t sep =
+        {.endpoint = {.adapter = CA_ADAPTER_IP, .flags = CA_DEFAULT_FLAGS}};
+        memcpy(&sep.endpoint, endPoint, sizeof(sep.endpoint));
+        g_networkPacketCallback(&sep, buf, xdata->size);
 
         CAFreeEndpoint (endPoint);
     }
@@ -330,14 +341,19 @@ static int CARAConnHandler(xmpp_t *xmpp, xmppconn_info_t *conninfo, void *udata)
 {
     if (conninfo->connevent != 0)
     {
-        OIC_LOG_V(DEBUG, RA_ADAPTER_TAG, " status(%d) error(%d) errorType(%d) errorText '%s'\n",
+        OIC_LOG_V(ERROR, RA_ADAPTER_TAG, " status(%d) error(%d) errorType(%d) errorText '%s'\n",
                 conninfo->connevent, conninfo->error, conninfo->errortype,
                 conninfo->errortext);
         CARANotifyNetworkChange(g_xmppData.jid, CA_INTERFACE_DOWN);
         return -1;
     }
-    OIC_LOG_V(DEBUG, RA_ADAPTER_TAG, "\n\n  Bound JID: '%s'\n\n\n", xmpphelper_get_bound_jid(xmpp));
+    OIC_LOG_V(DEBUG, RA_ADAPTER_TAG, "Bound JID: '%s'", xmpphelper_get_bound_jid(xmpp));
+    if (g_xmppData.jidBoundCallback != NULL)
+    {
+        g_xmppData.jidBoundCallback((char *) xmpphelper_get_bound_jid(xmpp));
+    }
     CARANotifyNetworkChange(xmpphelper_get_bound_jid(xmpp), CA_INTERFACE_UP);
+    VERIFY_NON_NULL_RET(udata, RA_ADAPTER_TAG, "Invalid parameter!", 0);
     return 0;
 }
 
@@ -366,8 +382,12 @@ CAResult_t CAInitializeRA(CARegisterConnectivityCallback registerCallback,
         .stopAdapter = CAStopRA,
         .terminate = CATerminateRA};
     registerCallback(raHandler, CA_ADAPTER_REMOTE_ACCESS);
-
-    g_xmppData.xmpp = xmpphelper_new(CARAConnHandler, NULL);
+#ifdef NDEBUG
+    xmpp_log_t *log = xmpp_get_default_logger(XMPP_LEVEL_ERROR);
+#else
+    xmpp_log_t *log = xmpp_get_default_logger(XMPP_LEVEL_DEBUG);
+#endif
+    g_xmppData.xmpp = xmpphelper_new(CARAConnHandler, NULL, log, NULL);
     xmpphelper_force_tls(g_xmppData.xmpp);
     g_observerList = ilist_new();
 
@@ -381,28 +401,28 @@ CAResult_t CASetRAInfo(const CARAInfo_t *caraInfo)
         OIC_LOG(ERROR, RA_ADAPTER_TAG, "Invalid parameter!");
         return CA_STATUS_INVALID_PARAM;
     }
-    if (caraInfo->hostname != NULL)
+    if (caraInfo->hostName != NULL)
     {
-        OICStrcpy(g_xmppData.hostname, sizeof(g_xmppData.hostname), caraInfo->hostname);
+        OICStrcpy(g_xmppData.hostName, sizeof(g_xmppData.hostName), caraInfo->hostName);
     }
     else
     {
         OIC_LOG(ERROR, RA_ADAPTER_TAG, "Invalid parameter!");
         return CA_STATUS_INVALID_PARAM;
     }
-    if (caraInfo->username != NULL && strlen(caraInfo->username) != 0)
+    if (caraInfo->userName != NULL && strlen(caraInfo->userName) != 0)
     {
-        OICStrcpy(g_xmppData.jid, sizeof(g_xmppData.jid), caraInfo->username);
+        OICStrcpy(g_xmppData.jid, sizeof(g_xmppData.jid), caraInfo->userName);
     }
     else
     {
         OIC_LOG(ERROR, RA_ADAPTER_TAG, "Invalid parameter!");
         return CA_STATUS_INVALID_PARAM;
     }
-    if (caraInfo->xmpp_domain != NULL && strlen(caraInfo->xmpp_domain) != 0)
+    if (caraInfo->xmppDomain != NULL && strlen(caraInfo->xmppDomain) != 0)
     {
         OICStrcat(g_xmppData.jid, sizeof(g_xmppData.jid), "@");
-        OICStrcat(g_xmppData.jid, sizeof(g_xmppData.jid), caraInfo->xmpp_domain);
+        OICStrcat(g_xmppData.jid, sizeof(g_xmppData.jid), caraInfo->xmppDomain);
         if (caraInfo->resource != NULL && strlen(caraInfo->resource) != 0)
         {
             OICStrcat(g_xmppData.jid, sizeof(g_xmppData.jid), "/");
@@ -414,6 +434,7 @@ CAResult_t CASetRAInfo(const CARAInfo_t *caraInfo)
         OICStrcpy(g_xmppData.password, sizeof(g_xmppData.password), caraInfo->password);
     }
     g_xmppData.port = caraInfo->port;
+    g_xmppData.jidBoundCallback = caraInfo->jidBoundCallback;
 
     return CA_STATUS_OK;
 }
@@ -446,7 +467,7 @@ CAResult_t CAStartRA()
 
     ca_mutex_lock (g_raadapterMutex);
 
-    xmpphelper_connect(g_xmppData.xmpp, g_xmppData.hostname, g_xmppData.port,
+    xmpphelper_connect(g_xmppData.xmpp, g_xmppData.hostName, g_xmppData.port,
                     g_xmppData.jid, g_xmppData.password);
     xmpp_ibb_reg_funcs_t regfuncs;
     regfuncs.open_cb = CARAOpenCB;
@@ -501,7 +522,7 @@ int32_t CASendRAUnicastData(const CAEndpoint_t *remoteEndpoint, const void *data
     coap_delete_pdu(pdu);
 
     ca_mutex_lock (g_raadapterMutex);
-    if (CA_INTERFACE_UP != g_xmppData.connection_status)
+    if (CA_INTERFACE_UP != g_xmppData.connectionStatus)
     {
         OIC_LOG(ERROR, RA_ADAPTER_TAG, "Unable to send XMPP message, RA not connected");
         ca_mutex_unlock (g_raadapterMutex);
@@ -511,7 +532,7 @@ int32_t CASendRAUnicastData(const CAEndpoint_t *remoteEndpoint, const void *data
     xmpp_ibb_session_t *sess = xmpp_ibb_get_session_by_sid(sid);
     if (sess == NULL)
     {
-        sess = xmpp_ibb_open(xmpphelper_get_conn(g_xmppData.xmpp), remoteEndpoint->addr, sid);
+        sess = xmpp_ibb_open(xmpphelper_get_conn(g_xmppData.xmpp), (char * const) remoteEndpoint->addr, sid);
         if (sess == NULL)
         {
             OIC_LOG(ERROR, RA_ADAPTER_TAG, "IBB session establish failed!");
@@ -526,7 +547,7 @@ int32_t CASendRAUnicastData(const CAEndpoint_t *remoteEndpoint, const void *data
             CARAUpdateObsList(obsopt, sid);
         }
     }
-    xmppdata_t xdata = {.data = data, .size = dataLength};
+    xmppdata_t xdata = {.data = (char *) data, .size = dataLength};
     int rc = xmpp_ibb_send_data(sess, &xdata);
     ca_mutex_unlock (g_raadapterMutex);
     if (rc < 0)
@@ -552,6 +573,9 @@ int32_t CASendRAMulticastData(const CAEndpoint_t *endpoint,
                     const void *data, uint32_t dataLength)
 {
     OIC_LOG(INFO, RA_ADAPTER_TAG, "RA adapter does not support sending multicast data");
+    SET_BUT_NOT_USED(endpoint);
+    SET_BUT_NOT_USED(data);
+    SET_BUT_NOT_USED(dataLength);
     return 0;
 }
 

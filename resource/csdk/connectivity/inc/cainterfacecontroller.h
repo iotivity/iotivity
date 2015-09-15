@@ -28,6 +28,7 @@
 #define CA_INTERFACE_CONTROLLER_H_
 
 #include "caadapterinterface.h"
+#include "cainterface.h"
 
 #ifndef SINGLE_THREAD
 #include "cathreadpool.h" /* for thread pool */

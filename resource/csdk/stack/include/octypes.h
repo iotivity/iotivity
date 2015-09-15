@@ -826,6 +826,11 @@ typedef struct
 
 #ifdef RA_ADAPTER
 /**
+ * callback for bound JID
+ */
+typedef void (*jid_bound_cb)(char *jid);
+
+/**
  * CA Remote Access information for XMPP Client
  *
  */
@@ -838,6 +843,7 @@ typedef struct
     char *password;     /**< login password */
     char *resource;     /**< specific resource for login */
     char *user_jid;     /**< specific JID for login */
+    jid_bound_cb jidbound;  /**< callback when JID bound */
 } OCRAInfo_t;
 #endif  /* RA_ADAPTER */
 

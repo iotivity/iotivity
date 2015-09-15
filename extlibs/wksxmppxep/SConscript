@@ -26,7 +26,7 @@ if with_ra_ibb:
 	if not os.path.exists(SRC_NAME):
 		raxmpp_env = Environment(ENV = os.environ)
 		c = raxmpp_env.Action(['git clone https://github.com/WorksSystems/wks_xep0047.git ' + SRC_NAME,
-			'cd ' + SRC_NAME + ' && git checkout b95f22064241d1319c4dc967878706b4a446d186'
+			'cd ' + SRC_NAME + ' && git checkout 1d2edd460c0e85e2b647176e74ebbe519e6019de'
         ])
 
 		print 'Downloading', SRC_NAME ,'library ...'

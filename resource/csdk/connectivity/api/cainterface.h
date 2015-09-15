@@ -64,6 +64,31 @@ typedef void (*CAResponseCallback)(const CAEndpoint_t *object,
  */
 typedef void (*CAErrorCallback)(const CAEndpoint_t *object,
                                 const CAErrorInfo_t *errorInfo);
+#ifdef RA_ADAPTER
+
+/**
+ * Callback for bound JID
+ * @param[out]   jid           Boud Jabber Identifier.
+ */
+typedef void (*CAJidBoundCallback)(char *jid);
+
+/**
+ * CA Remote Access information for XMPP Client
+ *
+ */
+typedef struct
+{
+    char *hostName;     /**< XMPP server hostname */
+    uint16_t port;      /**< XMPP server serivce port */
+    char *xmppDomain;  /**< XMPP login domain */
+    char *userName;     /**< login username */
+    char *password;     /**< login password */
+    char *resource;     /**< specific resource for login */
+    char *userJid;     /**< specific JID for login */
+    CAJidBoundCallback jidBoundCallback;  /**< callback when JID bound */
+} CARAInfo_t;
+
+#endif //RA_ADAPTER
 
 #ifdef __WITH_DTLS__
 

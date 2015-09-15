@@ -31,11 +31,10 @@
 #include "payload_logging.h"
 #include "ocremoteaccessclient.h"
 
+#define SET_BUT_NOT_USED(x) (void) x
 // Tracking user input
 static int TEST_CASE = 0;
 
-static const char * MULTICAST_DEVICE_DISCOVERY_QUERY = "/oic/d";
-static const char * MULTICAST_PLATFORM_DISCOVERY_QUERY = "/oic/p";
 static const char * MULTICAST_RESOURCE_DISCOVERY_QUERY = "/oic/res";
 
 static std::string coapServerIP = "255.255.255.255";
@@ -162,6 +161,7 @@ OCStackApplicationResult restRequestCB(void* ctx,
     {
         OC_LOG (INFO, TAG, "Received vendor specific options. Ignoring");
     }
+    SET_BUT_NOT_USED(handle);
     return OC_STACK_DELETE_TRANSACTION;
 }
 
@@ -211,6 +211,7 @@ OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle handle, OCClientResponse
         return OC_STACK_DELETE_TRANSACTION;
     }
 
+    SET_BUT_NOT_USED(handle);
     return OC_STACK_KEEP_TRANSACTION;
 }
 #ifdef WITH_PRESENCE
@@ -243,6 +244,7 @@ OCStackApplicationResult presenceCB(void* ctx,
     {
         OC_LOG_V(INFO, TAG, "presenceCB received Null clientResponse");
     }
+    SET_BUT_NOT_USED(handle);
     return OC_STACK_KEEP_TRANSACTION;
 }
 #endif
@@ -289,6 +291,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
             PrintUsage();
             break;
     }
+    SET_BUT_NOT_USED(handle);
     return OC_STACK_KEEP_TRANSACTION;
 }
 
@@ -309,6 +312,7 @@ OCStackApplicationResult PlatformDiscoveryReqCB (void* ctx, OCDoHandle handle,
         OC_LOG_V(INFO, TAG, "PlatformDiscoveryReqCB received Null clientResponse");
     }
 
+    SET_BUT_NOT_USED(handle);
     return OC_STACK_DELETE_TRANSACTION;
 }
 
@@ -329,6 +333,7 @@ OCStackApplicationResult DeviceDiscoveryReqCB (void* ctx, OCDoHandle handle,
         OC_LOG_V(INFO, TAG, "PlatformDiscoveryReqCB received Null clientResponse");
     }
 
+    SET_BUT_NOT_USED(handle);
     return OC_STACK_DELETE_TRANSACTION;
 }
 
@@ -438,11 +443,20 @@ int InitDiscovery(OCQualityOfService qos)
     return ret;
 }
 
+static void jidbound(char *jid)
+{
+    OC_LOG_V(INFO, TAG, "\n\n    Bound JID: %s\n\n", jid);
+}
+
 int main(int argc, char* argv[])
 {
-    OCRAInfo_t rainfo = {.hostname = "localhost", .port = 5222,
-        .xmpp_domain = "localhost", .username = "test1", .password = "intel123",
-        .resource = "", .user_jid = ""};
+    char host[] = "localhost";
+    char user[] = "test1";
+    char pass[] = "intel123";
+    char empstr[] = "";
+    OCRAInfo_t rainfo = {.hostname = host, .port = 5222,
+        .xmpp_domain = host, .username = user, .password = pass,
+        .resource = empstr, .user_jid = empstr, .jidbound = jidbound};
 
     int opt = 0;
     while ((opt = getopt(argc, argv, "t:s:p:d:u:w:r:j:")) != -1)

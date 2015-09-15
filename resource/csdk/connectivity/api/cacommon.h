@@ -407,22 +407,6 @@ typedef struct
 } CAErrorInfo_t;
 
 /**
- * CA Remote Access information for XMPP Client
- *
- */
-typedef struct
-{
-    char *hostname;     /**< XMPP server hostname */
-    uint16_t port;      /**< XMPP server serivce port */
-    char *xmpp_domain;  /**< XMPP login domain */
-    char *username;     /**< login username */
-    char *password;     /**< login password */
-    char *resource;     /**< specific resource for login */
-    char *user_jid;     /**< specific JID for login */
-} CARAInfo_t;
-
-
-/**
  * Hold global variables for CA layer (also used by RI layer)
  */
 typedef struct

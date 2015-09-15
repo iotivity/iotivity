@@ -928,15 +928,26 @@ static void PrintUsage()
     OC_LOG(INFO, TAG, "-o 1 : Notify list of observers");
 }
 
+#ifdef RA_ADAPTER
+static void jidbound(char *jid)
+{
+    OC_LOG_V(INFO, TAG, "\n\n    Bound JID: %s\n\n", jid);
+}
+#endif
+
 int main(int argc, char* argv[])
 {
     pthread_t threadId;
     pthread_t threadId_presence;
 
 #ifdef RA_ADAPTER
-    OCRAInfo_t rainfo = {.hostname = "localhost", .port = 5222,
-        .xmpp_domain = "localhost", .username = "test1", .password = "intel123",
-        .resource = "", .user_jid = ""};
+    char host[] = "localhost";
+    char user[] = "test1";
+    char pass[] = "intel123";
+    char empstr[] = "";
+    OCRAInfo_t rainfo = {.hostname = host, .port = 5222,
+        .xmpp_domain = host, .username = user, .password = pass,
+        .resource = empstr, .user_jid = empstr, .jidbound = jidbound};
 #endif
 
     int opt = 0;
@@ -983,15 +994,6 @@ int main(int argc, char* argv[])
     }
 
 #ifdef RA_ADAPTER
-    OCRAInfo_t rainfo;
-    rainfo.hostname = "localhost";
-    rainfo.port = 5222;
-    rainfo.xmpp_domain = "localhost";
-    rainfo.username = "test1";
-    rainfo.password = "intel123";
-    rainfo.resource = "";
-    rainfo.user_jid = "";
-
     OCSetRAInfo(&rainfo);
 #endif
 
