@@ -39,9 +39,13 @@
 //The following variable determines the interface (wifi, ethernet etc.)
 //to be used for sending unicast messages. Default set to Ethernet.
 static OCConnectivityType OC_CONNTYPE = CT_IP_USE_V4;
+static OCConnectivityType OC_CONNTYPE_BLE =  CT_ADAPTER_GATT_BTLE;
 
 static const char * UNICAST_PROVISIONING_QUERY = "coap://%s:%d/oic/res?rt=oic.prov";
 static const char * UNICAST_PROV_STATUS_QUERY = "coap://%s:%d%s";
+
+static const char * UNICAST_PROVISIONING_QUERY_BLE = "coap://%s/oic/prov";
+static const char * MULTICAST_PROVISIONING_QUERY_BLE = "/oic/res?rt=oic.prov";
 
 
 /**
