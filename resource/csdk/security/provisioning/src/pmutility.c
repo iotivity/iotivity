@@ -118,6 +118,7 @@ OCStackResult AddDevice(OCProvisionDev_t **ppDevicesList, const char* addr, cons
         ptr->endpoint.adapter = adapter;
         ptr->next = NULL;
         ptr->connType = connType;
+        ptr->devStatus = DEV_STATUS_ON; //AddDevice is called when discovery(=alive)
 
         LL_PREPEND(*ppDevicesList, ptr);
     }
@@ -210,8 +211,7 @@ OCProvisionDev_t* PMCloneOCProvisionDev(const OCProvisionDev_t* src)
     }
 
     newDev->securePort = src->securePort;
-    //TODO: Below comment line should be activated after 2333 change is merged
-    //newDev->devStatus = src->devStatus;
+    newDev->devStatus = src->devStatus;
     newDev->connType = src->connType;
     newDev->next = NULL;
 
