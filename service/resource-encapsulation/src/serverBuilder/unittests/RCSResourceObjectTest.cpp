@@ -156,6 +156,17 @@ TEST_F(ResourceObjectTest, SettingNestedAttributesIsSameToGettingNestedAttribute
     ASSERT_EQ(lightAttributes, server->getAttribute<RCSResourceAttributes>(KEY));
 }
 
+TEST_F(ResourceObjectTest, SettingNestedVectorAttributesIsSameToGettingNestedVectorAttributes)
+{
+    vector<int> arr11 = {0,1}, arr12 = {4,5}, arr13 ={7,8};
+    vector<vector<int>> arr21 = { arr11, arr12 }, arr22 = { arr12, arr13 };
+    vector<vector<vector<int>>> arr31={ arr21, arr22 };
+
+    server->setAttribute(KEY, arr31);
+
+    ASSERT_EQ(arr31, server->getAttribute<vector<vector<vector<int>>>>(KEY));
+}
+
 class AutoNotifyTest: public ResourceObjectTest
 {
 protected:
