@@ -601,12 +601,17 @@ static OCStackResult SendDeleteCredentialRequest(void* ctx,
                     //coaps://0.0.0.0:5684/oic/sec/cred?sub=(BASE64 ENCODED UUID)
     snRet = snprintf(reqBuf, sizeof(reqBuf), SRP_FORM_DELETE_CREDENTIAL, destDev->endpoint.addr,
                      destDev->securePort, OIC_RSRC_CRED_URI, OIC_JSON_SUBJECT_NAME, base64Buff);
-    if (snRet < 0 || snRet >= sizeof(reqBuf))
+    if (snRet < 0)
     {
         OC_LOG_V(ERROR, TAG, "SendDeleteCredentialRequest : Error (snprintf) %d\n", snRet);
-        OC_LOG(ERROR, TAG, "                              Truncated or error");
         return OC_STACK_ERROR;
     }
+    else if ((size_t)snRet >= sizeof(reqBuf))
+    {
+        OC_LOG_V(ERROR, TAG, "SendDeleteCredentialRequest : Truncated (snprintf) %d\n", snRet);
+        return OC_STACK_ERROR;
+    }
+
     OCCallbackData cbData;
     memset(&cbData, 0, sizeof(cbData));
     cbData.context = ctx;

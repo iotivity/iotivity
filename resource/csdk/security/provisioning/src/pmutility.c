@@ -357,11 +357,18 @@ bool PMGenerateQuery(bool isSecure,
                     OC_LOG(ERROR, TAG, "Unknown address format.");
                     return false;
             }
-            if(snRet >= bufferSize)
+            // snprintf return value check
+            if (snRet < 0)
             {
-                OC_LOG(ERROR, TAG, "PMGenerateQuery : URI is too long");
+                OC_LOG_V(ERROR, TAG, "PMGenerateQuery : Error (snprintf) %d\n", snRet);
                 return false;
             }
+            else if ((size_t)snRet >= bufferSize)
+            {
+                OC_LOG_V(ERROR, TAG, "PMGenerateQuery : Truncated (snprintf) %d\n", snRet);
+                return false;
+            }
+
             break;
         // TODO: We need to verify tinyDTLS in below cases
         case CT_ADAPTER_GATT_BTLE:
