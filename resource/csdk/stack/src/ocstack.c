@@ -294,7 +294,7 @@ static OCStackResult CAToOCStackResult(CAResponseResult_t caCode);
  *
  * @param caCode OCStackResult code.
  * @param method OCMethod method the return code replies to.
- * @return ::CA_SUCCESS on success, some other value upon failure.
+ * @return ::CA_CONTENT on OK, some other value upon failure.
  */
 static CAResponseResult_t OCToCAStackResult(OCStackResult ocCode, OCMethod method);
 

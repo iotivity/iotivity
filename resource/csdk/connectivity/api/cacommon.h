@@ -284,7 +284,6 @@ typedef enum
 {
     /* Response status code - START HERE */
     CA_EMPTY = 0,                    /**< Empty */
-    CA_SUCCESS = 200,                /**< Success */
     CA_CREATED = 201,                /**< Created */
     CA_DELETED = 202,                /**< Deleted */
     CA_VALID = 203,                  /**< Valid */
