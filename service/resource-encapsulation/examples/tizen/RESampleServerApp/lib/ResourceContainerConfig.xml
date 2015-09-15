@@ -1,35 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <container>
-<!--
     <bundle>
-        <id>oic.bundle.discomfortIndexSensor</id>
-        <path>/opt/usr/apps/org.tizen.resampleserver/lib/libSoftSensorBundle.so</path>
-        <version>1.0.0</version>
-        <resources>
-            <resourceInfo>
-                <name>DiscomfortIndexSensor1</name>
-                <resourceType>oic.softsensor</resourceType>
-                <outputs>
-                  <output>
-                    <name>discomfortIndex</name>
-                    <type>int</type>
-                  </output>
-                </outputs>
-                <inputs>
-                  <input>
-                    <name>humidity</name>
-                    <type>double</type>
-                  </input>
-                  <input>
-                    <name>temperature</name>
-                    <type>double</type>
-                  </input>
-                </inputs>
-            </resourceInfo>
-        </resources>
-    </bundle>
-    -->
-	<bundle>
         <id>oic.bundle.hueSample</id>
         <path>/opt/usr/apps/org.tizen.resampleserver/lib/libHueBundle.so</path>
         <version>1.0.0</version>

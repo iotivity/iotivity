@@ -35,6 +35,7 @@ using namespace OIC::Service;
 RCSResourceContainer *container;
 static bool s_containerFlag = false;
 static bool s_hueBundleFlag = false;
+static bool s_bmiBundleFlag = false;
 
 static Evas_Object *log_entry = NULL;
 static Evas_Object *listnew = NULL;
@@ -58,7 +59,7 @@ static void list_selected_cb(void *data, Evas_Object *obj, void *event_info)
 
 static void onDestroy()
 {
-    //stopContainer(NULL, NULL, NULL);
+    container = nullptr;
 }
 
 static void listBundles(void *data, Evas_Object *obj, void *event_info)
@@ -120,21 +121,29 @@ static void listHueResources(void *data, Evas_Object *obj, void *event_info)
     dlog_print(DLOG_INFO, LOG_TAG, "#### listHueResources exit");
 }
 
-static void listDiscomfortResources(void *data, Evas_Object *obj, void *event_info)
+static void listBMIResources(void *data, Evas_Object *obj, void *event_info)
 {
-    dlog_print(DLOG_INFO, LOG_TAG, "#### listDiscomfortResources starting");
+    dlog_print(DLOG_INFO, LOG_TAG, "#### listBMIResources starting");
     string logMessage = "";
 
     if (checkContainer)
     {
-        std::list<string> resources = container->listBundleResources("oic.bundle.discomfortIndexSensor");
-        std::list<string>::iterator resourceIt;
-        logMessage += "Resource Bundle Size : " + to_string(resources.size()) + "<br>";
-        for (resourceIt = resources.begin(); resourceIt != resources.end(); resourceIt++)
+        if (s_bmiBundleFlag)
         {
-            string resourceString((*resourceIt).c_str());
-            logMessage += "Resource URI : " +  resourceString + "<br>";
+            std::list<string> resources = container->listBundleResources("oic.bundle.BMISensor");
+            std::list<string>::iterator resourceIt;
+            logMessage += "Resource Bundle Size : " + to_string(resources.size()) + "<br>";
+            for (resourceIt = resources.begin(); resourceIt != resources.end(); resourceIt++)
+            {
+                string resourceString((*resourceIt).c_str());
+                logMessage += "Resource URI : " +  resourceString + "<br>";
+            }
         }
+        else
+        {
+            logMessage = "FIRST ADD AND START BMI BUNDLE <br>";
+        }
+
     }
     else
     {
@@ -146,12 +155,12 @@ static void listDiscomfortResources(void *data, Evas_Object *obj, void *event_in
     ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateContainerLog,
                                           &logMessage);
 
-    dlog_print(DLOG_INFO, LOG_TAG, "#### listDiscomfortResources exit");
+    dlog_print(DLOG_INFO, LOG_TAG, "#### listBMIResources exit");
 }
 
-static void addResourceConfig(void *data, Evas_Object *obj, void *event_info)
+static void addHueResourceConfig(void *data, Evas_Object *obj, void *event_info)
 {
-    dlog_print(DLOG_INFO, LOG_TAG, "#### addResourceConfig starting");
+    dlog_print(DLOG_INFO, LOG_TAG, "#### addHueResourceConfig starting");
     string logMessage = "";
 
     if (checkContainer)
@@ -167,7 +176,40 @@ static void addResourceConfig(void *data, Evas_Object *obj, void *event_info)
         }
         else
         {
-            logMessage += "BUNDLE NOT FOUND<br>";
+            logMessage += "HUE BUNDLE NOT FOUND<br>";
+        }
+    }
+    else
+    {
+        logMessage = "NO CONTAINER <br>";
+    }
+
+    dlog_print(DLOG_INFO, LOG_TAG, "#### %s", logMessage.c_str());
+    logMessage += "----------------------<br>";
+    ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateContainerLog,
+                                          &logMessage);
+
+    dlog_print(DLOG_INFO, LOG_TAG, "#### addHueResourceConfig exit");
+}
+
+static void addBMIResourceConfig(void *data, Evas_Object *obj, void *event_info)
+{
+    dlog_print(DLOG_INFO, LOG_TAG, "#### addBMIResourceConfig starting");
+    string logMessage = "";
+
+    if (checkContainer)
+    {
+        std::map<string, string> resourceParams;
+        resourceParams["resourceType"] = "oic.softsensor";
+        if (s_bmiBundleFlag)
+        {
+            container->addResourceConfig("oic.bundle.BMISensor", "", resourceParams);
+            logMessage += "Resource added<br>";
+            listBMIResources(NULL, NULL, NULL);
+        }
+        else
+        {
+            logMessage += "BMI BUNDLE NOT FOUND<br>";
         }
 
     }
@@ -181,12 +223,12 @@ static void addResourceConfig(void *data, Evas_Object *obj, void *event_info)
     ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateContainerLog,
                                           &logMessage);
 
-    dlog_print(DLOG_INFO, LOG_TAG, "#### addResourceConfig exit");
+    dlog_print(DLOG_INFO, LOG_TAG, "#### addBMIResourceConfig exit");
 }
 
-static void removeResourceConfig(void *data, Evas_Object *obj, void *event_info)
+static void removeHueResourceConfig(void *data, Evas_Object *obj, void *event_info)
 {
-    dlog_print(DLOG_INFO, LOG_TAG, "#### removeResourceConfig starting");
+    dlog_print(DLOG_INFO, LOG_TAG, "#### removeHueResourceConfig starting");
     string logMessage = "";
 
     if (checkContainer)
@@ -204,15 +246,14 @@ static void removeResourceConfig(void *data, Evas_Object *obj, void *event_info)
             if (s_hueBundleFlag)
             {
                 container->removeResourceConfig("oic.bundle.hueSample", resourceString);
-                logMessage += "Resource added<br>";
+                logMessage += "Resource removed <br>";
                 listHueResources(NULL, NULL, NULL);
             }
             else
             {
-                logMessage += "BUNDLE NOT FOUND<br>";
+                logMessage += "HUE BUNDLE NOT FOUND<br>";
             }
         }
-        logMessage += "Resource removed <br>";
         listHueResources(NULL, NULL, NULL);
     }
     else
@@ -225,21 +266,38 @@ static void removeResourceConfig(void *data, Evas_Object *obj, void *event_info)
     ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateContainerLog,
                                           &logMessage);
 
-    dlog_print(DLOG_INFO, LOG_TAG, "#### removeResourceConfig exit");
+    dlog_print(DLOG_INFO, LOG_TAG, "#### removeHueResourceConfig exit");
 }
 
-static void addBundle(void *data, Evas_Object *obj, void *event_info)
+static void removeBMIResourceConfig(void *data, Evas_Object *obj, void *event_info)
 {
-    dlog_print(DLOG_INFO, LOG_TAG, "#### addBundle starting");
-
+    dlog_print(DLOG_INFO, LOG_TAG, "#### removeBMIResourceConfig starting");
     string logMessage = "";
 
     if (checkContainer)
     {
-        std::map<string, string> bundleParams;
-        container->addBundle("oic.bundle.hueSample", "",
-                             "/opt/usr/apps/org.tizen.resampleserver/lib/libHueBundle.so", bundleParams);
-        logMessage += "Hue Bundle added <br>";
+        std::list<string> resources = container->listBundleResources("oic.bundle.BMISensor");
+        std::list<string>::iterator resourceIt;
+        if (!resources.size())
+        {
+            logMessage += "No Resource to remove <br>";
+        }
+        else
+        {
+            resourceIt = resources.begin();
+            string resourceString((*resourceIt).c_str());
+            if (s_bmiBundleFlag)
+            {
+                container->removeResourceConfig("oic.bundle.BMISensor", resourceString);
+                logMessage += "Resource removed <br>";
+                listBMIResources(NULL, NULL, NULL);
+            }
+            else
+            {
+                logMessage += "BMI BUNDLE NOT FOUND<br>";
+            }
+        }
+        listHueResources(NULL, NULL, NULL);
     }
     else
     {
@@ -251,18 +309,70 @@ static void addBundle(void *data, Evas_Object *obj, void *event_info)
     ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateContainerLog,
                                           &logMessage);
 
-    dlog_print(DLOG_INFO, LOG_TAG, "#### addBundle exit");
+    dlog_print(DLOG_INFO, LOG_TAG, "#### removeBMIResourceConfig exit");
 }
 
-static void removeBundle(void *data, Evas_Object *obj, void *event_info)
+static void addHueBundle(void *data, Evas_Object *obj, void *event_info)
 {
-    dlog_print(DLOG_INFO, LOG_TAG, "#### removeBundle starting");
+    dlog_print(DLOG_INFO, LOG_TAG, "#### addHUEBundle starting");
+
+    string logMessage = "";
+
+    if (checkContainer)
+    {
+        std::map<string, string> bundleParams;
+        container->addBundle("oic.bundle.hueSample", "",
+                             "/opt/usr/apps/org.tizen.resampleserver/lib/libHueBundle.so", bundleParams);
+        logMessage += "HUE Bundle added <br>";
+    }
+    else
+    {
+        logMessage = "NO CONTAINER <br>";
+    }
+
+    dlog_print(DLOG_INFO, LOG_TAG, "#### %s", logMessage.c_str());
+    logMessage += "----------------------<br>";
+    ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateContainerLog,
+                                          &logMessage);
+
+    dlog_print(DLOG_INFO, LOG_TAG, "#### addHUEBundle exit");
+}
+
+static void addBMIBundle(void *data, Evas_Object *obj, void *event_info)
+{
+    dlog_print(DLOG_INFO, LOG_TAG, "#### addBMIBundle starting");
+
+    string logMessage = "";
+
+    if (checkContainer)
+    {
+        std::map<string, string> bundleParams;
+        container->addBundle("oic.bundle.BMISensor", "",
+                             "/opt/usr/apps/org.tizen.resampleserver/lib/libBMISensorBundle.so", bundleParams);
+        logMessage += "BMI Bundle added <br>";
+    }
+    else
+    {
+        logMessage = "NO CONTAINER <br>";
+    }
+
+    dlog_print(DLOG_INFO, LOG_TAG, "#### %s", logMessage.c_str());
+    logMessage += "----------------------<br>";
+    ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateContainerLog,
+                                          &logMessage);
+
+    dlog_print(DLOG_INFO, LOG_TAG, "#### addBMIBundle exit");
+}
+
+static void removeHueBundle(void *data, Evas_Object *obj, void *event_info)
+{
+    dlog_print(DLOG_INFO, LOG_TAG, "#### removeHUEBundle starting");
     string logMessage = "";
 
     if (checkContainer)
     {
         container->removeBundle("oic.bundle.hueSample");
-        logMessage += "Hue Bundle removed <br>";
+        logMessage += "BMI Bundle removed <br>";
         s_hueBundleFlag = false;
     }
     else
@@ -275,18 +385,42 @@ static void removeBundle(void *data, Evas_Object *obj, void *event_info)
     ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateContainerLog,
                                           &logMessage);
 
-    dlog_print(DLOG_INFO, LOG_TAG, "#### removeBundle exit");
+    dlog_print(DLOG_INFO, LOG_TAG, "#### removeHUEBundle exit");
 }
 
-static void startBundle(void *data, Evas_Object *obj, void *event_info)
+static void removeBMIBundle(void *data, Evas_Object *obj, void *event_info)
 {
-    dlog_print(DLOG_INFO, LOG_TAG, "#### startBundle starting");
+    dlog_print(DLOG_INFO, LOG_TAG, "#### removeBMIBundle starting");
+    string logMessage = "";
+
+    if (checkContainer)
+    {
+        container->removeBundle("oic.bundle.BMISensor");
+        logMessage += "BMI Bundle removed <br>";
+        s_hueBundleFlag = false;
+    }
+    else
+    {
+        logMessage = "NO CONTAINER <br>";
+    }
+
+    dlog_print(DLOG_INFO, LOG_TAG, "#### %s", logMessage.c_str());
+    logMessage += "----------------------<br>";
+    ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateContainerLog,
+                                          &logMessage);
+
+    dlog_print(DLOG_INFO, LOG_TAG, "#### removeBMIBundle exit");
+}
+
+static void startHueBundle(void *data, Evas_Object *obj, void *event_info)
+{
+    dlog_print(DLOG_INFO, LOG_TAG, "#### startHUEBundle starting");
     string logMessage = "";
 
     if (checkContainer)
     {
         container->startBundle("oic.bundle.hueSample");
-        logMessage += "Hue Bundle started <br>";
+        logMessage += "BMI Bundle started <br>";
         s_hueBundleFlag = true;
     }
     else
@@ -299,18 +433,42 @@ static void startBundle(void *data, Evas_Object *obj, void *event_info)
     ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateContainerLog,
                                           &logMessage);
 
-    dlog_print(DLOG_INFO, LOG_TAG, "#### startBundle exit");
+    dlog_print(DLOG_INFO, LOG_TAG, "#### startHUEBundle exit");
 }
 
-static void stopBundle(void *data, Evas_Object *obj, void *event_info)
+static void startBMIBundle(void *data, Evas_Object *obj, void *event_info)
 {
-    dlog_print(DLOG_INFO, LOG_TAG, "#### stopBundle starting");
+    dlog_print(DLOG_INFO, LOG_TAG, "#### startBMIBundle starting");
+    string logMessage = "";
+
+    if (checkContainer)
+    {
+        container->startBundle("oic.bundle.BMISensor");
+        logMessage += "BMI Bundle started <br>";
+        s_bmiBundleFlag = true;
+    }
+    else
+    {
+        logMessage = "NO CONTAINER <br>";
+    }
+
+    dlog_print(DLOG_INFO, LOG_TAG, "#### %s", logMessage.c_str());
+    logMessage += "----------------------<br>";
+    ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateContainerLog,
+                                          &logMessage);
+
+    dlog_print(DLOG_INFO, LOG_TAG, "#### startBMIBundle exit");
+}
+
+static void stopHueBundle(void *data, Evas_Object *obj, void *event_info)
+{
+    dlog_print(DLOG_INFO, LOG_TAG, "#### stopHUEBundle starting");
     string logMessage = "";
 
     if (checkContainer)
     {
         container->stopBundle("oic.bundle.hueSample");
-        logMessage += "HueBundle stopped <br>";
+        logMessage += "HUE Bundle stopped <br>";
         s_hueBundleFlag = false;
     }
     else
@@ -323,7 +481,31 @@ static void stopBundle(void *data, Evas_Object *obj, void *event_info)
     ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateContainerLog,
                                           &logMessage);
 
-    dlog_print(DLOG_INFO, LOG_TAG, "#### stopBundle exit");
+    dlog_print(DLOG_INFO, LOG_TAG, "#### stopHUEBundle exit");
+}
+
+static void stopBMIBundle(void *data, Evas_Object *obj, void *event_info)
+{
+    dlog_print(DLOG_INFO, LOG_TAG, "#### stopBMIBundle starting");
+    string logMessage = "";
+
+    if (checkContainer)
+    {
+        container->stopBundle("oic.bundle.BMISensor");
+        logMessage += "BMI Bundle stopped <br>";
+        s_bmiBundleFlag = false;
+    }
+    else
+    {
+        logMessage = "NO CONTAINER <br>";
+    }
+
+    dlog_print(DLOG_INFO, LOG_TAG, "#### %s", logMessage.c_str());
+    logMessage += "----------------------<br>";
+    ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateContainerLog,
+                                          &logMessage);
+
+    dlog_print(DLOG_INFO, LOG_TAG, "#### stopBMIBundle exit");
 }
 
 void *showContainerAPIs(void *data)
@@ -339,23 +521,32 @@ void *showContainerAPIs(void *data)
         elm_list_item_append(listnew, "2. List Hue resources", NULL, NULL,
                              listHueResources, NULL);
 
-        elm_list_item_append(listnew, "3. Add Resource Config", NULL, NULL,
-                             addResourceConfig, NULL);
+        elm_list_item_append(listnew, "3. Add HUE Resource Config", NULL, NULL,
+                             addHueResourceConfig, NULL);
 
-        elm_list_item_append(listnew, "4. Remove Resource Config", NULL, NULL,
-                             removeResourceConfig, NULL);
+        elm_list_item_append(listnew, "4. Remove HUE Resource Config", NULL, NULL,
+                             removeHueResourceConfig, NULL);
 
-        elm_list_item_append(listnew, "5. Remove Bundle", NULL, NULL,
-                             removeBundle, NULL);
+        elm_list_item_append(listnew, "5. List BMI resources", NULL, NULL,
+                             listBMIResources, NULL);
 
-        elm_list_item_append(listnew, "6. Add Bundle", NULL, NULL,
-                             addBundle, NULL);
+        elm_list_item_append(listnew, "6. Add BMI Bundle", NULL, NULL,
+                             addBMIBundle, NULL);
 
-        elm_list_item_append(listnew, "7. Start Bundle", NULL, NULL,
-                             startBundle, NULL);
+        elm_list_item_append(listnew, "7. Start BMI Bundle", NULL, NULL,
+                             startBMIBundle, NULL);
 
-        elm_list_item_append(listnew, "8. Stop Bundle", NULL, NULL,
-                             stopBundle, NULL);
+        elm_list_item_append(listnew, "8. Add BMI Resource Config", NULL, NULL,
+                             addBMIResourceConfig, NULL);
+
+        elm_list_item_append(listnew, "9. Remove BMI Resource Config", NULL, NULL,
+                             removeBMIResourceConfig, NULL);
+
+        elm_list_item_append(listnew, "10. Remove BMI Bundle", NULL, NULL,
+                             removeBMIBundle, NULL);
+
+        elm_list_item_append(listnew, "11. Stop BMI Bundle", NULL, NULL,
+                             stopBMIBundle, NULL);
 
         elm_list_go(listnew);
     }
@@ -380,6 +571,8 @@ static void startContainer(void *data, Evas_Object *obj, void *event_info)
             s_containerFlag = true;
             s_hueBundleFlag = true;
             logMessage += "CONTAINER STARTED<br>";
+            logMessage += "HUE BUNDLE ADDED<br>";
+            logMessage += "HUE BUNDLE STARTED<br>";
         }
         else
         {
@@ -408,8 +601,9 @@ static void stopContainer(void *data, Evas_Object *obj, void *event_info)
 
     if (checkContainer)
     {
-        removeBundle(NULL, NULL, NULL);
-        stopBundle(NULL, NULL, NULL);
+        s_containerFlag = false;
+        removeHueBundle(NULL, NULL, NULL);
+        stopHueBundle(NULL, NULL, NULL);
 
         container->stopContainer();
         logMessage += "CONTAINER STOPPED<br>";
