@@ -667,7 +667,7 @@ CAResult_t CALEClientSendMulticastMessageImpl(JNIEnv *env, const uint8_t* data,
         // Wait for LE peripherals to be discovered.
 
         // Number of times to wait for discovery to complete.
-        static int const RETRIES = 5;
+        static size_t const RETRIES = 5;
 
         static uint64_t const TIMEOUT =
             2 * MICROSECS_PER_SEC;  // Microseconds
