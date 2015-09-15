@@ -210,6 +210,13 @@ void OCDeleteDiscoveredDevices(OCProvisionDev_t *pList);
  */
 void OCDeleteUuidList(OCUuidList_t* pList);
 
+/**
+ * This function deletes ACL data.
+ *
+ * @param pAcl Pointer to OicSecAcl_t structure.
+ */
+void OCDeleteACLList(OicSecAcl_t* pAcl);
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus

@@ -29,7 +29,7 @@
 #include "provisioningdatabasemanager.h"
 #include "credresource.h"
 #include "utlist.h"
-
+#include "aclresource.h" //Note: SRM internal header
 
 #define TAG "OCPMAPI"
 
@@ -662,4 +662,14 @@ OCStackResult OCGetLinkedStatus(const OicUuid_t* uuidOfDevice, OCUuidList_t** uu
 void OCDeleteUuidList(OCUuidList_t* pList)
 {
     PDMDestoryOicUuidLinkList(pList);
+}
+
+/**
+ * This function deletes ACL data.
+ *
+ * @param pAcl Pointer to OicSecAcl_t structure.
+ */
+void OCDeleteACLList(OicSecAcl_t* pAcl)
+{
+    DeleteACLList(pAcl);
 }
