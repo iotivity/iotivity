@@ -24,6 +24,10 @@
 #include "simulator_manager.h"
 #include "simulator_remote_resource_jni.h"
 #include "simulator_resource_model_jni.h"
+#include "simulator_device_info_jni.h"
+#include "simulator_platform_info_jni.h"
+#include "simulator_resource_jni_util.h"
+#include "simulator_jni_utils.h"
 
 SimulatorClassRefs gSimulatorClassRefs;
 std::mutex gEnvMutex;
@@ -172,6 +176,40 @@ class JNIFoundResourceListener
             jobject simulatorResource = SimulatorRemoteResourceToJava(env,
                                         reinterpret_cast<jlong>(jniSimulatorResource));
 
+            jfieldID fieldID = env->GetFieldID(gSimulatorClassRefs.classSimulatorRemoteResource, "mUri",
+                                               "Ljava/lang/String;");
+            jstring jUri = env->NewStringUTF(resource->getURI().c_str());
+            env->SetObjectField(simulatorResource, fieldID, jUri);
+
+            fieldID = env->GetFieldID(gSimulatorClassRefs.classSimulatorRemoteResource, "mConnType", "I");
+            jint jConnType = resource->getConnectivityType();
+            env->SetIntField(simulatorResource, fieldID, jConnType);
+
+            fieldID = env->GetFieldID(gSimulatorClassRefs.classSimulatorRemoteResource, "mHost",
+                                      "Ljava/lang/String;");
+            jstring jHost = env->NewStringUTF(resource->getHost().c_str());
+            env->SetObjectField(simulatorResource, fieldID, jHost);
+
+            fieldID = env->GetFieldID(gSimulatorClassRefs.classSimulatorRemoteResource, "mId",
+                                      "Ljava/lang/String;");
+            jstring jUid = env->NewStringUTF(resource->getID().c_str());
+            env->SetObjectField(simulatorResource, fieldID, jUid);
+
+            fieldID = env->GetFieldID(gSimulatorClassRefs.classSimulatorRemoteResource, "mResTypes",
+                                      "Ljava/util/LinkedList;");
+            std::vector<std::string> resourceTypes = resource->getResourceTypes();
+            jobject jResTypes = convertStringVectorToJavaList(env, resourceTypes);
+            env->SetObjectField(simulatorResource, fieldID, jResTypes);
+
+            fieldID = env->GetFieldID(gSimulatorClassRefs.classSimulatorRemoteResource, "mResInterfaces",
+                                      "Ljava/util/LinkedList;");
+            std::vector<std::string> interfaceTypes = resource->getResourceInterfaces();
+            jobject jResInterfaces = convertStringVectorToJavaList(env, interfaceTypes);
+            env->SetObjectField(simulatorResource, fieldID, jResInterfaces);
+
+            fieldID = env->GetFieldID(gSimulatorClassRefs.classSimulatorRemoteResource, "mIsObservable", "Z");
+            env->SetBooleanField(simulatorResource, fieldID, resource->isObservable());
+
             env->CallVoidMethod(foundResourceListener, foundResourceMId, simulatorResource);
             if ((env)->ExceptionCheck())
             {
@@ -209,21 +247,21 @@ void onResourceModelChange(jweak jlistenerRef, const std::string &uri,
     }
 
     jmethodID foundModelChangeMId = env->GetMethodID(modelChangeCls, "onResourceModelChanged",
-                                    "(Ljava/lang/String;Lorg/oic/simulator/serviceprovider/SimulatorResourceModel;)V");
+                                    "(Ljava/lang/String;Lorg/oic/simulator/SimulatorResourceModel;)V");
     if (!foundModelChangeMId)
     {
         releaseEnv();
         return;
     }
 
-    JniSimulatorResourceModel *jniModel = new JniSimulatorResourceModel(resModel);
+    JSimulatorResourceModel *jniModel = new JSimulatorResourceModel(resModel);
     if (!jniModel)
     {
         releaseEnv();
         return;
     }
 
-    jobject jModel = JniSimulatorResourceModel::toJava(env, reinterpret_cast<jlong>(jniModel));
+    jobject jModel = JSimulatorResourceModel::toJava(env, reinterpret_cast<jlong>(jniModel));
 
     jstring jUri = env->NewStringUTF(uri.c_str());
 
@@ -245,10 +283,18 @@ Java_org_oic_simulator_SimulatorManagerNativeInterface_createResource
 (JNIEnv *env, jclass object, jstring configPath, jobject listener)
 {
     if (!configPath)
-        return NULL;
+    {
+        throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM,
+                                  "Resource creation failed. Configuration file path is empty!");
+        return nullptr;
+    }
 
     if (!listener)
-        return NULL;
+    {
+        throwInvalidArgsException(env, SIMULATOR_INVALID_CALLBACK,
+                                  "Resource creation failed. Resource model change callback not set!");
+        return nullptr;
+    }
 
     jweak jlistenerRef = env->NewWeakGlobalRef(listener);
     SimulatorResourceServer::ResourceModelChangedCB callback =  [jlistenerRef](const std::string & uri,
@@ -258,13 +304,32 @@ Java_org_oic_simulator_SimulatorManagerNativeInterface_createResource
     };
 
     const char *configPathCStr = env->GetStringUTFChars(configPath, NULL);
-    SimulatorResourceServerPtr resource = SimulatorManager::getInstance()->createResource(
-            configPathCStr, callback);
-    if (nullptr == resource)
+    SimulatorResourceServerSP resource = NULL;
+    try
     {
-        if (configPathCStr)
-            env->ReleaseStringUTFChars(configPath, configPathCStr);
-        return NULL;
+        resource = SimulatorManager::getInstance()->createResource(
+                       configPathCStr, callback);
+        if (nullptr == resource)
+        {
+            if (configPathCStr)
+                env->ReleaseStringUTFChars(configPath, configPathCStr);
+            return NULL;
+        }
+    }
+    catch (InvalidArgsException &e)
+    {
+        throwInvalidArgsException(env, e.code(), e.what());
+        return nullptr;
+    }
+    catch (SimulatorException &e)
+    {
+        throwSimulatorException(env, e.code(), e.what());
+        return nullptr;
+    }
+    catch (...)
+    {
+        throwSimulatorException(env, SIMULATOR_ERROR, "Unknown Exception");
+        return nullptr;
     }
 
     JniSimulatorResource *jniSimResource = new JniSimulatorResource(resource);
@@ -283,10 +348,18 @@ Java_org_oic_simulator_SimulatorManagerNativeInterface_createResources
 (JNIEnv *env, jclass object, jstring configPath, jint count, jobject listener)
 {
     if (!configPath)
-        return NULL;
+    {
+        throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM,
+                                  "Resource(s) creation failed. Configuration file path is empty!");
+        return nullptr;
+    }
 
     if (!listener)
-        return NULL;
+    {
+        throwInvalidArgsException(env, SIMULATOR_INVALID_CALLBACK,
+                                  "Resource(s) creation failed. Resource model change callback not set!");
+        return nullptr;
+    }
 
     jweak jlistenerRef = env->NewWeakGlobalRef(listener);
     SimulatorResourceServer::ResourceModelChangedCB callback =  [jlistenerRef](const std::string & uri,
@@ -295,10 +368,27 @@ Java_org_oic_simulator_SimulatorManagerNativeInterface_createResources
         onResourceModelChange(jlistenerRef, uri, resModel);
     };
 
-
     const char *configPathCStr = env->GetStringUTFChars(configPath, NULL);
-    std::vector<SimulatorResourceServerPtr> resources =
-        SimulatorManager::getInstance()->createResource(configPathCStr, count, callback);
+    std::vector<SimulatorResourceServerSP> resources;
+    try
+    {
+        resources = SimulatorManager::getInstance()->createResource(configPathCStr, count, callback);
+    }
+    catch (InvalidArgsException &e)
+    {
+        throwInvalidArgsException(env, e.code(), e.what());
+        return nullptr;
+    }
+    catch (SimulatorException &e)
+    {
+        throwSimulatorException(env, e.code(), e.what());
+        return nullptr;
+    }
+    catch (...)
+    {
+        throwSimulatorException(env, SIMULATOR_ERROR, "Unknown Exception");
+        return nullptr;
+    }
 
     // Construct the object array and send it java layer
     jobjectArray resourceArray = env->NewObjectArray(resources.size(),
@@ -320,27 +410,38 @@ Java_org_oic_simulator_SimulatorManagerNativeInterface_createResources
     return resourceArray;
 }
 
-JNIEXPORT jobjectArray JNICALL
-Java_org_oic_simulator_SimulatorManagerNativeInterface_getResources
-(JNIEnv *env, jclass object)
-{
-    //TODO: Need to implement this method
-    return nullptr;
-}
-
 JNIEXPORT void JNICALL
 Java_org_oic_simulator_SimulatorManagerNativeInterface_deleteResource
 (JNIEnv *env, jclass object, jobject jResource)
 {
     if (!jResource)
+    {
+        throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM,
+                                  "Deletion failed. No resource has been passed!");
         return;
+    }
 
-    SimulatorResourceServerPtr resource =
-        JniSimulatorResource::getJniSimulatorResourcePtr(env, jResource);
+    SimulatorResourceServerSP resource =
+        JniSimulatorResource::getJniSimulatorResourceSP(env, jResource);
     if (!resource)
+    {
+        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE,
+                                  "Deletion failed. Native resource not found!");
         return;
+    }
 
-    SimulatorManager::getInstance()->deleteResource(resource);
+    try
+    {
+        SimulatorManager::getInstance()->deleteResource(resource);
+    }
+    catch (InvalidArgsException &e)
+    {
+        throwInvalidArgsException(env, e.code(), e.what());
+    }
+    catch (...)
+    {
+        throwSimulatorException(env, SIMULATOR_ERROR, "Unknown Exception");
+    }
 }
 
 JNIEXPORT void JNICALL
@@ -355,81 +456,92 @@ Java_org_oic_simulator_SimulatorManagerNativeInterface_deleteResources
         type = typeCStr;
     }
 
-    SimulatorManager::getInstance()->deleteResources(type);
+    try
+    {
+        SimulatorManager::getInstance()->deleteResources(type);
+    }
+    catch (InvalidArgsException &e)
+    {
+        throwInvalidArgsException(env, e.code(), e.what());
+        return;
+    }
+    catch (...)
+    {
+        throwSimulatorException(env, SIMULATOR_ERROR, "Unknown Exception");
+        return;
+    }
+
     if (typeCStr)
         env->ReleaseStringUTFChars(resourceType, typeCStr);
 }
 
-JNIEXPORT jint JNICALL
+JNIEXPORT void JNICALL
 Java_org_oic_simulator_SimulatorManagerNativeInterface_findResource
-(JNIEnv *env, jobject object, jstring resourceType, jobject listener)
+(JNIEnv *env, jobject object, jobject listener)
+{
+    JNIFoundResourceListener *resourceListener = new JNIFoundResourceListener();
+    resourceListener->setJavaFoundResourceListener(env, listener);
+    try
+    {
+        SimulatorManager::getInstance()->findResources(
+            std::bind(&JNIFoundResourceListener::onFoundResource,
+                      resourceListener, std::placeholders::_1));
+    }
+    catch (InvalidArgsException &e)
+    {
+        throwInvalidArgsException(env, e.code(), e.what());
+    }
+    catch (SimulatorException &e)
+    {
+        throwSimulatorException(env, e.code(), e.what());
+    }
+    catch (...)
+    {
+        throwSimulatorException(env, SIMULATOR_ERROR, "Unknown Exception");
+    }
+}
+
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_SimulatorManagerNativeInterface_findResources
+(JNIEnv *env, jobject object, jstring jResourceType, jobject listener)
 {
     const char *typeCStr = NULL;
-
-    if (resourceType)
+    std::string resourceType;
+    if (jResourceType)
     {
-        typeCStr = env->GetStringUTFChars(resourceType, NULL);
+        typeCStr = env->GetStringUTFChars(jResourceType, NULL);
+        resourceType = typeCStr;
     }
 
     JNIFoundResourceListener *resourceListener = new JNIFoundResourceListener();
     resourceListener->setJavaFoundResourceListener(env, listener);
 
-    SimulatorResult result = SimulatorManager::getInstance()->findResource(typeCStr,
-                             std::bind(&JNIFoundResourceListener::onFoundResource, resourceListener, std::placeholders::_1));
-
-    if (typeCStr)
-        env->ReleaseStringUTFChars(resourceType, typeCStr);
-    return result;
-}
-
-JNIEXPORT jobject JNICALL
-Java_org_oic_simulator_SimulatorManagerNativeInterface_getFoundResources
-(JNIEnv *env, jobject object, jstring resourceType)
-{
-    const char *typeCStr = NULL;
-    if (resourceType)
+    try
     {
-        typeCStr = env->GetStringUTFChars(resourceType, NULL);
+        SimulatorManager::getInstance()->findResources(resourceType,
+                std::bind(&JNIFoundResourceListener::onFoundResource,
+                          resourceListener, std::placeholders::_1));
     }
-
-    std::vector<SimulatorRemoteResourcePtr> resourceList;
-    resourceList = SimulatorManager::getInstance()->getFoundResources(typeCStr);
-    if (resourceList.empty())
+    catch (InvalidArgsException &e)
     {
-        if (typeCStr)
-            env->ReleaseStringUTFChars(resourceType, typeCStr);
-        return NULL;
+        throwInvalidArgsException(env, e.code(), e.what());
+        return;
     }
-
-    jobject vectorObj = env->NewObject(gSimulatorClassRefs.classVector,
-                                       gSimulatorClassRefs.classVectorCtor);
-    if (!vectorObj)
+    catch (SimulatorException &e)
     {
-        if (typeCStr)
-            env->ReleaseStringUTFChars(resourceType, typeCStr);
-        return NULL;
+        throwSimulatorException(env, e.code(), e.what());
+        return;
     }
-
-    // Convert to java SimulatorRemoteResource object
-    for (unsigned int i = 0; i < resourceList.size(); i++)
+    catch (...)
     {
-        JniSimulatorRemoteResource *jniSimulatorResource = new JniSimulatorRemoteResource(resourceList[i]);
-        if (!jniSimulatorResource)
-        {
-            if (typeCStr)
-                env->ReleaseStringUTFChars(resourceType, typeCStr);
-            return NULL;
-        }
-
-        jobject resource = SimulatorRemoteResourceToJava(env,
-                           reinterpret_cast<jlong>(jniSimulatorResource));
-        env->CallVoidMethod(vectorObj, gSimulatorClassRefs.classVectorAddElement, resource);
+        throwSimulatorException(env, SIMULATOR_ERROR, "Unknown Exception");
+        return;
     }
 
     if (typeCStr)
-        env->ReleaseStringUTFChars(resourceType, typeCStr);
-    return vectorObj;
+        env->ReleaseStringUTFChars(jResourceType, typeCStr);
 }
+
 
 JNIEXPORT void JNICALL
 Java_org_oic_simulator_SimulatorManagerNativeInterface_setLogger
@@ -438,6 +550,118 @@ Java_org_oic_simulator_SimulatorManagerNativeInterface_setLogger
     static std::shared_ptr<ILogger> target(new JNILogger());
     dynamic_cast<JNILogger *>(target.get())->setJavaLogger(env, logger);
     SimulatorManager::getInstance()->setLogger(target);
+}
+
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_SimulatorManagerNativeInterface_setDeviceInfo
+(JNIEnv *env, jobject interfaceObject, jstring deviceInfo)
+{
+    if (!deviceInfo)
+    {
+        throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM, "Invalid device info!");
+        return;
+    }
+
+    const char *deviceName = env->GetStringUTFChars(deviceInfo, NULL);
+
+    try
+    {
+        SimulatorManager::getInstance()->setDeviceInfo(deviceName);
+    }
+    catch (InvalidArgsException &e)
+    {
+        throwInvalidArgsException(env, e.code(), e.what());
+    }
+    catch (SimulatorException &e)
+    {
+        throwSimulatorException(env, e.code(), e.what());
+    }
+
+    env->ReleaseStringUTFChars(deviceInfo, deviceName);
+}
+
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_SimulatorManagerNativeInterface_getDeviceInfo
+(JNIEnv *env, jobject interfaceObject, jobject jListener)
+{
+    if (!jListener)
+    {
+        throwInvalidArgsException(env, SIMULATOR_INVALID_CALLBACK, "Invalid callback!");
+        return;
+    }
+
+    JniDeviceInfoListener *deviceInfoListener = new JniDeviceInfoListener(env, jListener);
+    DeviceInfoCallback callback = std::bind([deviceInfoListener](DeviceInfo & deviceInfo)
+    {
+        deviceInfoListener->onDeviceInfoReceived(deviceInfo);
+        delete deviceInfoListener;
+    }, std::placeholders::_1);
+
+    try
+    {
+        SimulatorManager::getInstance()->getDeviceInfo(callback);
+    }
+    catch (InvalidArgsException &e)
+    {
+        throwInvalidArgsException(env, e.code(), e.what());
+    }
+    catch (SimulatorException &e)
+    {
+        throwSimulatorException(env, e.code(), e.what());
+    }
+}
+
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_SimulatorManagerNativeInterface_setPlatformInfo
+(JNIEnv *env, jobject interfaceObject, jobject jPlatformInfo)
+{
+    if (!jPlatformInfo)
+    {
+        throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM, "Invalid platform info!");
+        return;
+    }
+
+    JPlatformInfo jniPlatformInfo(env);
+    try
+    {
+        PlatformInfo platformInfo = jniPlatformInfo.toCPP(jPlatformInfo);
+        SimulatorManager::getInstance()->setPlatformInfo(platformInfo);
+    }
+    catch (SimulatorException &e)
+    {
+        throwSimulatorException(env, e.code(), e.what());
+    }
+}
+
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_SimulatorManagerNativeInterface_getPlatformInfo
+(JNIEnv *env, jobject interfaceObject, jobject jListener)
+{
+    if (!jListener)
+    {
+        throwInvalidArgsException(env, SIMULATOR_INVALID_CALLBACK, "Invalid callback!");
+        return;
+    }
+
+    JniPlatformInfoListener *platformInfoListener = new JniPlatformInfoListener(env, jListener);
+    PlatformInfoCallback callback = std::bind([platformInfoListener](PlatformInfo & platformInfo)
+    {
+        platformInfoListener->onPlatformInfoReceived(platformInfo);
+        delete platformInfoListener;
+    }, std::placeholders::_1);
+
+    try
+    {
+        SimulatorManager::getInstance()->getPlatformInfo(callback);
+    }
+    catch (InvalidArgsException &e)
+    {
+        throwInvalidArgsException(env, e.code(), e.what());
+    }
+    catch (SimulatorException &e)
+    {
+        throwSimulatorException(env, e.code(), e.what());
+    }
 }
 
 static bool getClassRef(JNIEnv *env, const char *className, jclass &classRef)
@@ -469,6 +693,11 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
     }
 
     // Get the class references
+    if (false == getClassRef(env, "java/lang/Object", gSimulatorClassRefs.classObject))
+    {
+        return JNI_ERR;
+    }
+
     if (false == getClassRef(env, "java/lang/Integer", gSimulatorClassRefs.classInteger))
     {
         return JNI_ERR;
@@ -514,26 +743,73 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
         return JNI_ERR;
     }
 
+    if (false == getClassRef(env, "java/util/LinkedList", gSimulatorClassRefs.classLinkedList))
+    {
+        return JNI_ERR;
+    }
+
     if (false == getClassRef(env, "org/oic/simulator/serviceprovider/SimulatorResourceServer",
                              gSimulatorClassRefs.classSimulatorResource))
     {
         return JNI_ERR;
     }
 
-    if (false == getClassRef(env, "org/oic/simulator/serviceprovider/SimulatorResourceModel",
+    if (false == getClassRef(env, "org/oic/simulator/SimulatorResourceModel",
                              gSimulatorClassRefs.classSimulatorResourceModel))
     {
         return JNI_ERR;
     }
 
-    if (false == getClassRef(env, "org/oic/simulator/SimulatorResourceAttribute",
-                             gSimulatorClassRefs.classSimulatorResourceAttribute))
+    if (false == getClassRef(env, "org/oic/simulator/ResourceAttribute",
+                             gSimulatorClassRefs.classResourceAttribute))
     {
         return JNI_ERR;
     }
 
     if (false == getClassRef(env, "org/oic/simulator/clientcontroller/SimulatorRemoteResource",
                              gSimulatorClassRefs.classSimulatorRemoteResource))
+    {
+        return JNI_ERR;
+    }
+
+    if (false == getClassRef(env, "org/oic/simulator/serviceprovider/ObserverInfo",
+                             gSimulatorClassRefs.classObserverInfo))
+    {
+        return JNI_ERR;
+    }
+
+    if (false == getClassRef(env, "org/oic/simulator/DeviceInfo",
+                             gSimulatorClassRefs.classDeviceInfo))
+    {
+        return JNI_ERR;
+    }
+
+    if (false == getClassRef(env, "org/oic/simulator/PlatformInfo",
+                             gSimulatorClassRefs.classPlatformInfo))
+    {
+        return JNI_ERR;
+    }
+
+    if (false == getClassRef(env, "org/oic/simulator/SimulatorException",
+                             gSimulatorClassRefs.classSimulatorException))
+    {
+        return JNI_ERR;
+    }
+
+    if (false == getClassRef(env, "org/oic/simulator/InvalidArgsException",
+                             gSimulatorClassRefs.classInvalidArgsException))
+    {
+        return JNI_ERR;
+    }
+
+    if (false == getClassRef(env, "org/oic/simulator/NoSupportException",
+                             gSimulatorClassRefs.classNoSupportException))
+    {
+        return JNI_ERR;
+    }
+
+    if (false == getClassRef(env, "org/oic/simulator/OperationInProgressException",
+                             gSimulatorClassRefs.classOperationInProgressException))
     {
         return JNI_ERR;
     }
@@ -600,29 +876,19 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
     if (!gSimulatorClassRefs.classNextId)
         return JNI_ERR;
 
+    gSimulatorClassRefs.classLinkedListCtor = env->GetMethodID(gSimulatorClassRefs.classLinkedList,
+            "<init>", "()V");
+    if (!gSimulatorClassRefs.classLinkedListCtor)
+        return JNI_ERR;
+
+    gSimulatorClassRefs.classLinkedListAddObject = env->GetMethodID(gSimulatorClassRefs.classLinkedList,
+            "add", "(Ljava/lang/Object;)Z");
+    if (!gSimulatorClassRefs.classLinkedListAddObject)
+        return JNI_ERR;
+
     gSimulatorClassRefs.classSimulatorResourceCtor = env->GetMethodID(
                 gSimulatorClassRefs.classSimulatorResource, "<init>", "(J)V");
     if (!gSimulatorClassRefs.classSimulatorResourceCtor)
-        return JNI_ERR;
-
-    gSimulatorClassRefs.classSimulatorResourceSetURI = env->GetMethodID(
-                gSimulatorClassRefs.classSimulatorResource, "setURI", "(Ljava/lang/String;)V");
-    if (!gSimulatorClassRefs.classSimulatorResourceSetURI)
-        return JNI_ERR;
-
-    gSimulatorClassRefs.classSimulatorResourceSetResourceType = env->GetMethodID(
-                gSimulatorClassRefs.classSimulatorResource, "setResourceType", "(Ljava/lang/String;)V");
-    if (!gSimulatorClassRefs.classSimulatorResourceSetResourceType)
-        return JNI_ERR;
-
-    gSimulatorClassRefs.classSimulatorResourceSetInterfaceType = env->GetMethodID(
-                gSimulatorClassRefs.classSimulatorResource, "setInterfaceType", "(Ljava/lang/String;)V");
-    if (!gSimulatorClassRefs.classSimulatorResourceSetInterfaceType)
-        return JNI_ERR;
-
-    gSimulatorClassRefs.classSimulatorResourceSetName = env->GetMethodID(
-                gSimulatorClassRefs.classSimulatorResource, "setName", "(Ljava/lang/String;)V");
-    if (!gSimulatorClassRefs.classSimulatorResourceSetName)
         return JNI_ERR;
 
     gSimulatorClassRefs.classSimulatorResourceModelCtor = env->GetMethodID(
@@ -630,14 +896,49 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
     if (!gSimulatorClassRefs.classSimulatorResourceModelCtor)
         return JNI_ERR;
 
-    gSimulatorClassRefs.classSimulatorResourceAttributeCtor = env->GetMethodID(
-                gSimulatorClassRefs.classSimulatorResourceAttribute, "<init>", "(J)V");
-    if (!gSimulatorClassRefs.classSimulatorResourceAttributeCtor)
+    gSimulatorClassRefs.classResourceAttributeCtor = env->GetMethodID(
+                gSimulatorClassRefs.classResourceAttribute, "<init>", "()V");
+    if (!gSimulatorClassRefs.classResourceAttributeCtor)
+        return JNI_ERR;
+
+    gSimulatorClassRefs.classResourceAttributeSetRange = env->GetMethodID(
+                gSimulatorClassRefs.classResourceAttribute, "setRange", "(II)V");
+    if (!gSimulatorClassRefs.classResourceAttributeSetRange)
         return JNI_ERR;
 
     gSimulatorClassRefs.classSimulatorResourceModelId = env->GetMethodID(
                 gSimulatorClassRefs.classSimulatorResourceModel, "<init>", "(J)V");
     if (!gSimulatorClassRefs.classSimulatorResourceModelId)
+        return JNI_ERR;
+
+    gSimulatorClassRefs.classObserverInfoCtor = env->GetMethodID(
+                gSimulatorClassRefs.classObserverInfo, "<init>",
+                "(ILjava/lang/String;I)V");
+    if (!gSimulatorClassRefs.classObserverInfoCtor)
+        return JNI_ERR;
+
+    gSimulatorClassRefs.classSimulatorExceptionCtor = env->GetMethodID(
+                gSimulatorClassRefs.classSimulatorException, "<init>",
+                "(ILjava/lang/String;)V");
+    if (!gSimulatorClassRefs.classSimulatorExceptionCtor)
+        return JNI_ERR;
+
+    gSimulatorClassRefs.classInvalidArgsExceptionCtor = env->GetMethodID(
+                gSimulatorClassRefs.classInvalidArgsException, "<init>",
+                "(ILjava/lang/String;)V");
+    if (!gSimulatorClassRefs.classInvalidArgsExceptionCtor)
+        return JNI_ERR;
+
+    gSimulatorClassRefs.classNoSupportExceptionCtor = env->GetMethodID(
+                gSimulatorClassRefs.classNoSupportException, "<init>",
+                "(ILjava/lang/String;)V");
+    if (!gSimulatorClassRefs.classNoSupportExceptionCtor)
+        return JNI_ERR;
+
+    gSimulatorClassRefs.classOperationInProgressExceptionCtor = env->GetMethodID(
+                gSimulatorClassRefs.classOperationInProgressException, "<init>",
+                "(ILjava/lang/String;)V");
+    if (!gSimulatorClassRefs.classOperationInProgressExceptionCtor)
         return JNI_ERR;
 
     gvm = vm;

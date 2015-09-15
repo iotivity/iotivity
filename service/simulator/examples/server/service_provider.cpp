@@ -50,14 +50,15 @@ class SimLightResource
                 switch (choice)
                 {
                     case 1 : simulateResource(configPath); break;
-                    case 2: displayResource(); break;
-                    case 3: deleteResource(); break;
-                    case 4: updateAttributePower(); break;
-                    case 5: updateAttributeIntensity(); break;
-                    case 6: automateResourceUpdate(); break;
-                    case 7: automateAttributeUpdate(); break;
-                    case 8: stopAutomation(); break;
-                    case 9: printMenu(); break;
+                    case 2 : displayResource(); break;
+                    case 3 : deleteResource(); break;
+                    case 4 : updateAttributePower(); break;
+                    case 5 : updateAttributeIntensity(); break;
+                    case 6 : automateResourceUpdate(); break;
+                    case 7 : automateAttributeUpdate(); break;
+                    case 8 : stopAutomation(); break;
+                    case 9 : getObservers(); break;
+                    case 10: printMenu(); break;
                     case 0: cont = false;
                 }
             }
@@ -75,7 +76,8 @@ class SimLightResource
             std::cout << "6. Automate resource update" << std::endl;
             std::cout << "7. Automate attributes update" << std::endl;
             std::cout << "8. Stop Automation" << std::endl;
-            std::cout << "9: Help" << std::endl;
+            std::cout << "9. Get Observers of a resource" << std::endl;
+            std::cout << "10: Help" << std::endl;
             std::cout << "0. Exit" << std::endl;
             std::cout << "#######################################" << std::endl;
         }
@@ -125,7 +127,7 @@ class SimLightResource
         {
             SimulatorResourceServer::ResourceModelChangedCB callback = std::bind(
                         &SimLightResource::onResourceModelChanged, this, std::placeholders::_1, std::placeholders::_2);
-            SimulatorResourceServerPtr resource = SimulatorManager::getInstance()->createResource(configPath,
+            SimulatorResourceServerSP resource = SimulatorManager::getInstance()->createResource(configPath,
                                                   callback);
             if (NULL == resource.get())
                 std::cout << "Failed to create resource" << std::endl;
@@ -157,15 +159,10 @@ class SimLightResource
                         if (-1 == index)
                             return;
 
-                        if (SIMULATOR_SUCCESS == SimulatorManager::getInstance()->deleteResource(m_resources[index - 1]))
-                        {
-                            std::cout << "Resource deleted successfully! " << std::endl;
-                            m_resources.erase(m_resources.begin() + (index - 1));
-                        }
-                        else
-                        {
-                            std::cout << "Failed to delete resource!" << std::endl;
-                        }
+                        SimulatorManager::getInstance()->deleteResource(m_resources[index - 1]);
+                        std::cout << "Resource deleted successfully! " << std::endl;
+                        m_resources.erase(m_resources.begin() + (index - 1));
+
                     } break;
                 case 2:
                     {
@@ -178,37 +175,25 @@ class SimLightResource
                             break;
                         }
 
-                        if (SIMULATOR_SUCCESS == SimulatorManager::getInstance()->deleteResources(resourceType))
+                        SimulatorManager::getInstance()->deleteResources(resourceType);
+                        std::cout << "Resources of type \"" << resourceType << "\"" << " deleted successfully! " <<
+                                  std::endl;
+                        std::vector<SimulatorResourceServerSP>::iterator ite = m_resources.begin();
+                        while (ite != m_resources.end())
                         {
-                            std::cout << "Resources of type \"" << resourceType << "\"" << " deleted successfully! " <<
-                                      std::endl;
-                            std::vector<SimulatorResourceServerPtr>::iterator ite = m_resources.begin();
-                            while (ite != m_resources.end())
+                            if (!resourceType.compare((*ite)->getResourceType()))
                             {
-                                if (!resourceType.compare((*ite)->getResourceType()))
-                                {
-                                    ite = m_resources.erase(ite);
-                                    continue;
-                                }
-                                ite++;
+                                ite = m_resources.erase(ite);
+                                continue;
                             }
-                        }
-                        else
-                        {
-                            std::cout << "Failed to delete resources of type \"" << resourceType << "\"!" << std::endl;
+                            ite++;
                         }
                     } break;
                 case 3:
                     {
-                        if (SIMULATOR_SUCCESS == SimulatorManager::getInstance()->deleteResources())
-                        {
-                            std::cout << "All resources deleted successfully! " << std::endl;
-                            m_resources.clear();
-                        }
-                        else
-                        {
-                            std::cout << "Failed to delete all resources!" << std::endl;
-                        }
+                        SimulatorManager::getInstance()->deleteResources();
+                        std::cout << "All resources deleted successfully! " << std::endl;
+                        m_resources.clear();
                     } break;
             }
 
@@ -220,7 +205,7 @@ class SimLightResource
             if (-1 == index)
                 return;
 
-            SimulatorResourceServerPtr resource = m_resources[index - 1];
+            SimulatorResourceServerSP resource = m_resources[index - 1];
             SimulatorResourceModel resModel = resource->getModel();
             SimulatorResourceModel::Attribute powerAttribute;
             resModel.getAttribute("power", powerAttribute);
@@ -237,7 +222,7 @@ class SimLightResource
             for (int index = 0; index < allowedValuesSize; index++)
             {
                 // Update the new value and display the resource model after modifying
-                resource->updateAttributeFromAllowedValues("power", index);
+                resource->updateFromAllowedValues("power", index);
                 std::cout << "Attribute value is modified ####" << std::endl;
 
                 // Display the resource to user to verify the changed attribute value
@@ -264,24 +249,25 @@ class SimLightResource
             if (-1 == index)
                 return;
 
-            SimulatorResourceServerPtr resource = m_resources[index - 1];
+            SimulatorResourceServerSP resource = m_resources[index - 1];
             SimulatorResourceModel resModel = resource->getModel();
             SimulatorResourceModel::Attribute intensityAttribute;
             resModel.getAttribute("intensity", intensityAttribute);
 
-            int allowedValuesSize = intensityAttribute.getAllowedValuesSize();
-            if (0 == allowedValuesSize)
+            int min, max;
+            intensityAttribute.getRange(min, max);
+            if (!min && !max)
             {
-                std::cout << "This attribute does not have allowed values!" << std::endl;
+                std::cout << "This attribute does not have range!" << std::endl;
                 return;
             }
 
             std::cout << "Setting the new values from allowed values list to intensity attribute" << std::endl;
             // Update all possible values from allowed values
-            for (int index = 0; index < allowedValuesSize; index++)
+            for (int index = min; index <= max; index++)
             {
                 // Update the new value and display the resource model after modifying
-                resource->updateAttributeFromAllowedValues("intensity", index);
+                resource->updateAttributeValue("intensity", index);
                 std::cout << "Attribute value is modified ####" << std::endl;
 
                 // Display the resource to user to verify the changed attribute value
@@ -289,7 +275,7 @@ class SimLightResource
                 std::cout << std::endl << std::endl;
 
                 // Get user input for continuing this operation
-                if ((index + 1) < allowedValuesSize)
+                if ((index + 1) <= max)
                 {
                     int choice;
                     std::cout << "Would you like to continue the attribute values changing process? (1/0): ";
@@ -308,11 +294,11 @@ class SimLightResource
             if (-1 == index)
                 return;
 
-            SimulatorResourceServerPtr resource = m_resources[index - 1];
+            SimulatorResourceServerSP resource = m_resources[index - 1];
             displayResource(resource);
         }
 
-        void displayResource(SimulatorResourceServerPtr resource)
+        void displayResource(SimulatorResourceServerSP resource)
         {
             std::cout << "#############################" << std::endl;
             std::cout << "Name: " << resource->getName().c_str() << std::endl;
@@ -332,7 +318,11 @@ class SimLightResource
                 (attribute.second).getRange(min, max);
                 std::cout << "min: " << min << std::endl;
                 std::cout << "max: " << max << std::endl;
-                std::cout << "allowed values : " << (attribute.second).allowedValuesToString() << std::endl;
+                std::cout << "allowed values : ";
+                std::cout << "[ ";
+                for (auto &value : (attribute.second).allowedValuesToString())
+                    std::cout << value << " ";
+                std::cout << "]" << std::endl;
                 std::cout << "}" << std::endl << std::endl;
             }
             std::cout << "#############################" << std::endl;
@@ -358,14 +348,18 @@ class SimLightResource
             if (1 == choice)
                 type = AutomationType::RECURRENT;
 
-            int id;
-            if (SIMULATOR_SUCCESS != m_resources[index - 1]->startUpdateAutomation(type,
-                    std::bind(&SimLightResource::onUpdateAutomationCompleted, this, std::placeholders::_1,
-                              std::placeholders::_2),
-                    id))
-                std::cout << "startUpdateAutomation() returned error!" << std::endl;
-            else
+            try
+            {
+                int id = m_resources[index - 1]->startUpdateAutomation(type,
+                                    std::bind(&SimLightResource::onUpdateAutomationCompleted, this, std::placeholders::_1,
+                                    std::placeholders::_2));
+
                 std::cout << "startUpdateAutomation() returned succces : " << id << std::endl;
+            }
+            catch (SimulatorException &e)
+            {
+                std::cout << "SimulatorException occured [Error: " << e.code() << " Details: " << e.what() << "]" << std::endl;
+            }
         }
 
         void automateAttributeUpdate()
@@ -374,7 +368,7 @@ class SimLightResource
             if (-1 == index)
                 return;
 
-            SimulatorResourceServerPtr resource = m_resources[index - 1];
+            SimulatorResourceServerSP resource = m_resources[index - 1];
             SimulatorResourceModel resModel = resource->getModel();
             std::map<std::string, SimulatorResourceModel::Attribute> attributes = resModel.getAttributes();
             int size = 0;
@@ -418,14 +412,19 @@ class SimLightResource
                 type = AutomationType::RECURRENT;
 
             std::cout << "Requesting attribute automation for " << attributeName.c_str() << std::endl;
-            int id;
-            if (SIMULATOR_SUCCESS != resource->startUpdateAutomation(attributeName, type,
-                    std::bind(&SimLightResource::onUpdateAutomationCompleted, this, std::placeholders::_1,
-                              std::placeholders::_2),
-                    id))
-                std::cout << "startUpdateAutomation() returned error!" << std::endl;
-            else
+
+            try
+            {
+
+                int id = resource->startUpdateAutomation(attributeName, type,
+                                    std::bind(&SimLightResource::onUpdateAutomationCompleted, this, std::placeholders::_1,
+                                    std::placeholders::_2));
                 std::cout << "startUpdateAutomation() returned succces : " << id << std::endl;
+            }
+            catch (SimulatorException &e)
+            {
+                std::cout << "SimulatorException occured [Error: " << e.code() << " Details: " << e.what() << "]" << std::endl;
+            }
         }
 
         void stopAutomation()
@@ -434,7 +433,7 @@ class SimLightResource
             if (-1 == index)
                 return;
 
-            SimulatorResourceServerPtr resource = m_resources[index - 1];
+            SimulatorResourceServerSP resource = m_resources[index - 1];
 
             // Select the automation to stop
             std::vector<int> ids;
@@ -460,8 +459,40 @@ class SimLightResource
             resource->stopUpdateAutomation(automationid);
         }
 
+        void onObserverChanged(const std::string &uri, ObservationStatus state, const ObserverInfo &observerInfo)
+        {
+            std::cout << "[callback] Observer notification received..." << uri.c_str() << std::endl;
+            std::ostringstream out;
+            out << "ID:  " << (int) observerInfo.id << std::endl;
+            out << " [address: " << observerInfo.address << " port: " << observerInfo.port << "]" << std::endl;
+            std::cout << out.str();
+        }
+
+        void getObservers()
+        {
+            int index = selectResource();
+            if (-1 == index)
+                return;
+
+            SimulatorResourceServerSP resource = m_resources[index - 1];
+
+            SimulatorResourceServer::ObserverCB callback = std::bind(
+                        &SimLightResource::onObserverChanged, this, std::placeholders::_1,
+                        std::placeholders::_2, std::placeholders::_3);
+            resource->setObserverCallback(callback);
+
+            std::vector<ObserverInfo> observersList = resource->getObserversList();
+
+            std::cout << "##### Number of Observers [" << observersList.size() << "]" << std::endl;
+            for (auto & observerInfo : observersList)
+            {
+                std::cout << " ID :  " << (int) observerInfo.id << " [address: " << observerInfo.address <<" port: " << observerInfo.port << "]" << std::endl;
+            }
+            std::cout << "########################" << std::endl;
+        }
+
     private:
-        std::vector<SimulatorResourceServerPtr> m_resources;
+        std::vector<SimulatorResourceServerSP> m_resources;
 };
 
 void printMainMenu()
@@ -475,7 +506,7 @@ void printMainMenu()
               "To set the Resource from RAML file, run the service provider with argument of Path of Raml File."
               << std::endl;
     std::cout <<
-              "Example: ./simulator-server  ../../../../../../../../service/simulator/examples/resources/light.raml"
+              "Example: ./simulator-server PATH-TO-RAML-FILE"
               << std::endl;
     std::cout << "######################################" << std::endl;
 }
@@ -516,6 +547,7 @@ void setLogger()
 int main(int argc, char *argv[])
 {
     std::string configPath = "";
+
     if (argc == 2)
     {
         char *value = argv[1];

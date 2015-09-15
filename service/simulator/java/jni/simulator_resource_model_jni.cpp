@@ -20,39 +20,68 @@
 
 #include "simulator_resource_model_jni.h"
 #include "simulator_common_jni.h"
-#include "simulator_resource_attributes_jni.h"
+#include "resource_attributes_jni.h"
 #include "simulator_error_codes.h"
 
 using namespace std;
 
 extern SimulatorClassRefs gSimulatorClassRefs;
 
-JniSimulatorResourceModel::JniSimulatorResourceModel(SimulatorResourceModel resourceModel)
-    : m_resourceModel(resourceModel)
+JSimulatorResourceModel::JSimulatorResourceModel(SimulatorResourceModel resModel)
+    : m_resourceModel(resModel)
 {}
 
-bool JniSimulatorResourceModel::getResourceModel(JNIEnv *env, jobject thiz,
-        SimulatorResourceModel &resourceModel)
+JSimulatorResourceModel::JSimulatorResourceModel(SimulatorResourceModelSP resModel)
+    : m_resModelPtr(resModel)
+{}
+
+bool JSimulatorResourceModel::getResourceModel(JNIEnv *env, jobject thiz,
+        SimulatorResourceModel &resModel)
 {
-    JniSimulatorResourceModel *resource = GetHandle<JniSimulatorResourceModel>(env, thiz);
+    JSimulatorResourceModel *resource = GetHandle<JSimulatorResourceModel>(env, thiz);
     if (env->ExceptionCheck())
     {
-        cout << "Exception while converting the nativeHandle to JniSimulatorResourceModel" << endl;
+        cout << "Exception while converting the nativeHandle to JSimulatorResourceModel" << endl;
         return false;
     }
-    resourceModel = resource->m_resourceModel;
+
+    if (nullptr != resource->m_resModelPtr)
+        resModel = *(resource->m_resModelPtr.get());
+    else
+        resModel = resource->m_resourceModel;
     return true;
 }
 
-jobject JniSimulatorResourceModel::toJava(JNIEnv *env, jlong resource)
+SimulatorResourceModelSP JSimulatorResourceModel::getResourceModelPtr(JNIEnv *env, jobject thiz)
+{
+    JSimulatorResourceModel *resource = GetHandle<JSimulatorResourceModel>(env, thiz);
+    if (env->ExceptionCheck())
+    {
+        return nullptr;
+    }
+
+    if (nullptr != resource->m_resModelPtr)
+        return resource->m_resModelPtr;
+    return nullptr;
+}
+
+jobject JSimulatorResourceModel::toJava(JNIEnv *env, jlong nativeHandle)
 {
     jobject resourceObj = (jobject) env->NewObject(gSimulatorClassRefs.classSimulatorResourceModel,
-                          gSimulatorClassRefs.classSimulatorResourceModelCtor, resource);
+                          gSimulatorClassRefs.classSimulatorResourceModelCtor, nativeHandle);
     if (!resourceObj)
     {
         return NULL;
     }
     return resourceObj;
+}
+
+void JSimulatorResourceModel::toJava(JNIEnv *env, jobject thiz, jlong nativeHandle)
+{
+    if (env && thiz && nativeHandle)
+    {
+        env->SetLongField(thiz, GetHandleField(env, thiz), nativeHandle);
+    }
 }
 
 static jobject createHashMap(JNIEnv *env)
@@ -72,12 +101,21 @@ static void addEntryToHashMap(JNIEnv *env, jobject mapobj, jobject key, jobject 
     env->CallObjectMethod(mapobj, gSimulatorClassRefs.classHashMapPut, key, value);
 }
 
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_SimulatorResourceModel_create
+(JNIEnv *env, jobject thiz)
+{
+    SimulatorResourceModelSP resModel = std::make_shared<SimulatorResourceModel>();
+    JSimulatorResourceModel *jresModel = new JSimulatorResourceModel(resModel);
+    JSimulatorResourceModel::toJava(env, thiz, reinterpret_cast<jlong>(jresModel));
+}
+
 JNIEXPORT jint JNICALL
-Java_org_oic_simulator_serviceprovider_SimulatorResourceModel_size
+Java_org_oic_simulator_SimulatorResourceModel_size
 (JNIEnv *env, jobject thiz)
 {
     SimulatorResourceModel resourceModel;
-    bool result = JniSimulatorResourceModel::getResourceModel(env, thiz, resourceModel);
+    bool result = JSimulatorResourceModel::getResourceModel(env, thiz, resourceModel);
     if (!result)
     {
         return SIMULATOR_ERROR;
@@ -87,11 +125,11 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceModel_size
 }
 
 JNIEXPORT jobject JNICALL
-Java_org_oic_simulator_serviceprovider_SimulatorResourceModel_getAttributes
+Java_org_oic_simulator_SimulatorResourceModel_getAttributes
 (JNIEnv *env, jobject thiz)
 {
     SimulatorResourceModel resourceModel;
-    bool result = JniSimulatorResourceModel::getResourceModel(env, thiz, resourceModel);
+    bool result = JSimulatorResourceModel::getResourceModel(env, thiz, resourceModel);
     if (!result)
     {
         return NULL;
@@ -109,126 +147,172 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceModel_getAttributes
 
     for (auto & attributeEntry : attributesMap)
     {
+        SimulatorResourceModel::Attribute attribute(attributeEntry.second);
 
-        // Create JniSimulatorResourceAttribute object and put the attribute.second into it
-        SimulatorResourceModel::Attribute *attribute = new SimulatorResourceModel::Attribute(
-            attributeEntry.second);
-
-        // Create a java object for SimulatorResourceAttribute
-        jobject jAttribute = JniSimulatorResourceAttribute::toJava(env, reinterpret_cast<jlong>(attribute));
+        // Create a object of ResourceAttribute java class
+        JResourceAttributeConverter converter(attribute);
+        jobject jAttribute = converter.toJava(env);
 
         // Add an entry with attribute.first and javaSimualatorResourceAttribute to the HashMap
         jstring jAttrName = env->NewStringUTF((attributeEntry.first).c_str());
         addEntryToHashMap(env, jHashMap, static_cast<jobject>(jAttrName), jAttribute);
         env->DeleteLocalRef(jAttrName);
     }
+
     return jHashMap;
 }
 
 JNIEXPORT jobject JNICALL
-Java_org_oic_simulator_serviceprovider_SimulatorResourceModel_getAttribute
+Java_org_oic_simulator_SimulatorResourceModel_getAttribute
 (JNIEnv *env, jobject thiz, jstring jAttrName)
 {
     if (!jAttrName)
     {
-        std::cout << "getAttribute: AttributeName is Empty";
         return NULL;
     }
 
     const char *attrName = env->GetStringUTFChars(jAttrName, NULL);
     if (!attrName)
     {
-        std::cout << "getAttribute: Failed to convert jstring to char string!";
         return NULL;
     }
 
     SimulatorResourceModel resourceModel;
-    bool result = JniSimulatorResourceModel::getResourceModel(env, thiz, resourceModel);
+    bool result = JSimulatorResourceModel::getResourceModel(env, thiz, resourceModel);
     if (!result)
     {
-        std::cout << "getAttribute: getResourceModel failed!";
         env->ReleaseStringUTFChars(jAttrName, attrName);
         return NULL;
     }
 
-    SimulatorResourceModel::Attribute *attribute = new SimulatorResourceModel::Attribute();
-    bool found = resourceModel.getAttribute(attrName, *attribute);
+    SimulatorResourceModel::Attribute attribute;
+    bool found = resourceModel.getAttribute(attrName, attribute);
     if (!found)
     {
-        std::cout << "getAttribute: Attribute not found in ResourceModel!";
         env->ReleaseStringUTFChars(jAttrName, attrName);
-        delete attribute;
         return NULL;
     }
 
     env->ReleaseStringUTFChars(jAttrName, attrName);
 
-    // Create a java object for SimulatorResourceAttribute
-    jobject jsimulatorResourceAttribute = JniSimulatorResourceAttribute::toJava(env,
-                                          reinterpret_cast<jlong>(attribute));
-    return jsimulatorResourceAttribute;
-}
-
-JNIEXPORT jobjectArray JNICALL
-Java_org_oic_simulator_serviceprovider_SimulatorResourceModel_getAllowedValues
-(JNIEnv *env, jobject thiz, jstring jAttrName)
-{
-    if (!jAttrName)
-    {
-        std::cout << "getAllowedValues: AttributeName is Empty";
-        return NULL;
-    }
-
-    const char *attrName = env->GetStringUTFChars(jAttrName, NULL);
-    if (!attrName)
-    {
-        std::cout << "getAllowedValues: Failed to convert jstring to char string!";
-        env->ReleaseStringUTFChars(jAttrName, attrName);
-        return NULL;
-    }
-
-    SimulatorResourceModel resourceModel;
-    bool result = JniSimulatorResourceModel::getResourceModel(env, thiz, resourceModel);
-    if (!result)
-    {
-        std::cout << "getAllowedValues: getResourceModel failed!";
-        env->ReleaseStringUTFChars(jAttrName, attrName);
-        return NULL;
-    }
-
-    SimulatorResourceModel::Attribute *attribute = new SimulatorResourceModel::Attribute();
-    bool found = resourceModel.getAttribute(attrName, *attribute);
-    if (!found)
-    {
-        std::cout << "getAllowedValues: Attribute not found in ResourceModel!";
-        env->ReleaseStringUTFChars(jAttrName, attrName);
-        delete attribute;
-        return NULL;
-    }
-
-    env->ReleaseStringUTFChars(jAttrName, attrName);
-
-    std::vector<std::string> values = attribute->allowedValuesToVectorString();
-
-    int size = attribute->getAllowedValuesSize();
-
-    // Create a jObjectArray for AllowedValues vector.
-    jobjectArray allowedValuesArr = env->NewObjectArray(size, env->FindClass("java/lang/String"),
-                                    env->NewStringUTF(""));
-
-    int i = 0;
-    for (std::vector<std::string>::iterator it = values.begin(); it != values.end(); ++it, i++)
-    {
-        env->SetObjectArrayElement(allowedValuesArr, i, env->NewStringUTF((*it).c_str()));
-    }
-    return allowedValuesArr;
+    // Create a object of ResourceAttribute java class
+    JResourceAttributeConverter converter(attribute);
+    return converter.toJava(env);
 }
 
 JNIEXPORT void JNICALL
-Java_org_oic_simulator_serviceprovider_SimulatorResourceModel_dispose
+Java_org_oic_simulator_SimulatorResourceModel_addAttributeInt
+(JNIEnv *env, jobject thiz, jstring jname, jint jvalue)
+{
+    SimulatorResourceModelSP resModelPtr;
+    resModelPtr = JSimulatorResourceModel::getResourceModelPtr(env, thiz);
+    if (!resModelPtr)
+    {
+        return;
+    }
+
+    const char *nameCstr = env->GetStringUTFChars(jname, NULL);
+    if (!nameCstr)
+    {
+        return;
+    }
+
+    std::string attrName(nameCstr);
+    int value = static_cast<int>(jvalue);
+    resModelPtr->addAttribute(attrName, value);
+
+    // Release created c string
+    env->ReleaseStringUTFChars(jname, nameCstr);
+}
+
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_SimulatorResourceModel_addAttributeDouble
+(JNIEnv *env, jobject thiz, jstring jname, jdouble jvalue)
+{
+    SimulatorResourceModelSP resModelPtr;
+    resModelPtr = JSimulatorResourceModel::getResourceModelPtr(env, thiz);
+    if (!resModelPtr)
+    {
+        return;
+    }
+
+    const char *nameCstr = env->GetStringUTFChars(jname, NULL);
+    if (!nameCstr)
+    {
+        return;
+    }
+
+    std::string attrName(nameCstr);
+    double value = static_cast<double>(jvalue);
+    resModelPtr->addAttribute(attrName, value);
+
+    // Release created c string
+    env->ReleaseStringUTFChars(jname, nameCstr);
+}
+
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_SimulatorResourceModel_addAttributeBoolean
+(JNIEnv *env, jobject thiz, jstring jname, jboolean jvalue)
+{
+    SimulatorResourceModelSP resModelPtr;
+    resModelPtr = JSimulatorResourceModel::getResourceModelPtr(env, thiz);
+    if (!resModelPtr)
+    {
+        return;
+    }
+
+    const char *nameCstr = env->GetStringUTFChars(jname, NULL);
+    if (!nameCstr)
+    {
+        return;
+    }
+
+    std::string attrName(nameCstr);
+    bool value = static_cast<bool>(jvalue);
+    resModelPtr->addAttribute(attrName, value);
+
+    // Release created c string
+    env->ReleaseStringUTFChars(jname, nameCstr);
+}
+
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_SimulatorResourceModel_addAttributeString
+(JNIEnv *env, jobject thiz, jstring jname, jstring jvalue)
+{
+    SimulatorResourceModelSP resModelPtr;
+    resModelPtr = JSimulatorResourceModel::getResourceModelPtr(env, thiz);
+    if (!resModelPtr)
+    {
+        return;
+    }
+
+    const char *nameCstr = env->GetStringUTFChars(jname, NULL);
+    if (!nameCstr)
+    {
+        return;
+    }
+
+    const char *valueCstr = env->GetStringUTFChars(jvalue, NULL);
+    if (!valueCstr)
+    {
+        env->ReleaseStringUTFChars(jname, nameCstr);
+        return;
+    }
+
+    std::string attrName(nameCstr);
+    std::string value(valueCstr);
+    resModelPtr->addAttribute(attrName, value);
+
+    // Release created c string
+    env->ReleaseStringUTFChars(jname, nameCstr);
+    env->ReleaseStringUTFChars(jvalue, valueCstr);
+}
+
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_SimulatorResourceModel_dispose
 (JNIEnv *env, jobject thiz)
 {
-    JniSimulatorResourceModel *resourceModel = GetHandle<JniSimulatorResourceModel>(env, thiz);
+    JSimulatorResourceModel *resourceModel = GetHandle<JSimulatorResourceModel>(env, thiz);
     delete resourceModel;
 }
 

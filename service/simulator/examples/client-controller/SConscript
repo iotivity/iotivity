@@ -8,7 +8,6 @@ sim_env = lib_env.Clone()
 ######################################################################
 sim_env.AppendUnique(CPPPATH = ['../../../../extlibs/timer'])
 sim_env.AppendUnique(CPPPATH = ['../../inc'])
-sim_env.AppendUnique(CPPPATH = ['../../src'])
 sim_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
 sim_env.AppendUnique(CPPDEFINES = ['LINUX'])
 sim_env.AppendUnique(LIBS = ['SimulatorManager'])

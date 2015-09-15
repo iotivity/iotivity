@@ -157,7 +157,7 @@ void convertJavaMapToQueryParamsMap(JNIEnv *env, jobject hashMap,
         if (!jValue) return;
 
         queryParams.insert(std::make_pair(env->GetStringUTFChars(jKey, NULL),
-                                  env->GetStringUTFChars(jValue, NULL)));
+                                          env->GetStringUTFChars(jValue, NULL)));
 
         if (env->ExceptionCheck()) return;
         env->DeleteLocalRef(jEntry);
@@ -165,4 +165,43 @@ void convertJavaMapToQueryParamsMap(JNIEnv *env, jobject hashMap,
         env->DeleteLocalRef(jValue);
     }
 }
+
+jobject convertHashMapToJavaMap(JNIEnv *env,
+                                const std::map<std::string, uint8_t> &observersList)
+{
+    if (observersList.empty())
+    {
+        std::cout << "observersList Map is empty";
+        return NULL;
+    }
+
+    jobject jObserverListMap = env->NewObject(gSimulatorClassRefs.classHashMap,
+                               gSimulatorClassRefs.classHashMapCtor);
+
+    for (auto it = observersList.begin(); it != observersList.end(); ++it)
+    {
+        jstring key = (*env).NewStringUTF( (*it).first.c_str() );
+        jint value = (*it).second;
+        env->CallObjectMethod(jObserverListMap, gSimulatorClassRefs.classHashMapPut, key, value);
+    }
+
+    return jObserverListMap;
+}
+
+jobject convertStringVectorToJavaList(JNIEnv *env, std::vector<std::string> &vector)
+{
+    jobject jList = env->NewObject(gSimulatorClassRefs.classLinkedList,
+                                   gSimulatorClassRefs.classLinkedListCtor);
+    if (!jList) return nullptr;
+    for (size_t i = 0; i < vector.size(); ++i)
+    {
+        jstring jStr = env->NewStringUTF(vector[i].c_str());
+        if (!jStr) return nullptr;
+        env->CallBooleanMethod(jList, gSimulatorClassRefs.classLinkedListAddObject, jStr);
+        if (env->ExceptionCheck()) return nullptr;
+        env->DeleteLocalRef(jStr);
+    }
+    return jList;
+}
+
 

@@ -35,10 +35,6 @@ JNIEXPORT jobjectArray JNICALL
 Java_org_oic_simulator_SimulatorManagerNativeInterface_createResources
 (JNIEnv *env, jclass object, jstring jConfigPath, jint count, jobject jListener);
 
-JNIEXPORT jobjectArray JNICALL
-Java_org_oic_simulator_SimulatorManageNativeInterface_getResources
-(JNIEnv *env, jclass object);
-
 JNIEXPORT void JNICALL
 Java_org_oic_simulator_SimulatorManagerNativeInterface_deleteResource
 (JNIEnv *env, jclass object, jobject jResource);
@@ -48,16 +44,32 @@ Java_org_oic_simulator_SimulatorManagerNativeInterface_deleteResources
 (JNIEnv *env, jclass object, jstring resourceType);
 
 JNIEXPORT void JNICALL
-Java_org_oic_simulator_SimulatorManagerNativeInterface_setLogger
-(JNIEnv *env, jclass object, jobject logger);
-
-JNIEXPORT jint JNICALL
 Java_org_oic_simulator_SimulatorManagerNativeInterface_findResource
+(JNIEnv *env, jobject interfaceObject, jobject jListener);
+
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_SimulatorManagerNativeInterface_findResources
 (JNIEnv *env, jobject interfaceObject, jstring jResourceType, jobject jListener);
 
-JNIEXPORT jobject JNICALL
-Java_org_oic_simulator_SimulatorManagerNativeInterface_getFoundResources
-(JNIEnv *env, jobject interfaceObject, jstring jResourceType);
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_SimulatorManagerNativeInterface_setDeviceInfo
+(JNIEnv *env, jobject interfaceObject, jstring deviceInfo);
+
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_SimulatorManagerNativeInterface_getDeviceInfo
+(JNIEnv *env, jobject interfaceObject, jobject jListener);
+
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_SimulatorManagerNativeInterface_setPlatformInfo
+(JNIEnv *env, jobject interfaceObject, jobject platformInfo);
+
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_SimulatorManagerNativeInterface_getPlatformInfo
+(JNIEnv *env, jobject interfaceObject, jobject jListener);
+
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_SimulatorManagerNativeInterface_setLogger
+(JNIEnv *env, jclass object, jobject logger);
 
 #ifdef __cplusplus
 }

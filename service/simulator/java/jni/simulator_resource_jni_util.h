@@ -66,7 +66,12 @@ std::vector<double> convertDoubleVector(JNIEnv *env, jobject jVectorDouble);
 std::vector<std::string> convertStringVector(JNIEnv *env, jobject jVectorString);
 
 void convertJavaMapToQueryParamsMap(JNIEnv *env, jobject hashMap,
-                            std::map<std::string, std::string> &map);
+                                    std::map<std::string, std::string> &map);
+
+jobject convertHashMapToJavaMap(JNIEnv *env,
+                                const std::map<std::string, uint8_t> &observersList);
+
+jobject convertStringVectorToJavaList(JNIEnv *env, std::vector<std::string> &vector);
 
 #endif //__SIMULATOR_RESOURCE_JNI_UTIL_H_
 

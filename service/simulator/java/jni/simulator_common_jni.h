@@ -25,20 +25,30 @@
 
 typedef struct
 {
+    jclass classObject;
     jclass classInteger;
     jclass classDouble;
     jclass classString;
     jclass classHashMap;
     jclass classVector;
-    jclass classSimulatorResource;
-    jclass classSimulatorResourceModel;
-    jclass classSimulatorResourceAttribute;
-    jclass classSimulatorRemoteResource;
-    jclass classSimulatorCallback;
     jclass classMap;
     jclass classMapEntry;
     jclass classSet;
     jclass classIterator;
+    jclass classLinkedList;
+
+    jclass classSimulatorResource;
+    jclass classSimulatorResourceModel;
+    jclass classResourceAttribute;
+    jclass classSimulatorRemoteResource;
+    jclass classSimulatorCallback;
+    jclass classObserverInfo;
+    jclass classDeviceInfo;
+    jclass classPlatformInfo;
+    jclass classSimulatorException;
+    jclass classInvalidArgsException;
+    jclass classNoSupportException;
+    jclass classOperationInProgressException;
 
     jmethodID classIntegerCtor;
     jmethodID classDoubleCtor;
@@ -46,20 +56,26 @@ typedef struct
     jmethodID classHashMapPut;
     jmethodID classVectorCtor;
     jmethodID classVectorAddElement;
-    jmethodID classSimulatorResourceCtor;
-    jmethodID classSimulatorResourceSetURI;
-    jmethodID classSimulatorResourceSetResourceType;
-    jmethodID classSimulatorResourceSetInterfaceType;
-    jmethodID classSimulatorResourceSetName;
-    jmethodID classSimulatorResourceModelCtor;
-    jmethodID classSimulatorResourceAttributeCtor;
-    jmethodID classSimulatorResourceModelId;
     jmethodID classMapEntrySet;
     jmethodID classMapGetKey;
     jmethodID classMapGetValue;
     jmethodID classIteratorId;
     jmethodID classHasNextId;
     jmethodID classNextId;
+    jmethodID classLinkedListCtor;
+    jmethodID classLinkedListAddObject;
+
+    jmethodID classSimulatorResourceCtor;
+    jmethodID classSimulatorResourceModelCtor;
+    jmethodID classResourceAttributeCtor;
+    jmethodID classResourceAttributeSetRange;
+    jmethodID classSimulatorResourceModelId;
+    jmethodID classObserverInfoCtor;
+    jmethodID classSimulatorExceptionCtor;
+    jmethodID classInvalidArgsExceptionCtor;
+    jmethodID classNoSupportExceptionCtor;
+    jmethodID classOperationInProgressExceptionCtor;
+
 } SimulatorClassRefs;
 
 static jfieldID GetHandleField(JNIEnv *env, jobject jobj)

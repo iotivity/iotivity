@@ -24,16 +24,20 @@
 #include <jni.h>
 #include "simulator_resource_model.h"
 
-class JniSimulatorResourceModel
+class JSimulatorResourceModel
 {
-
     public:
-        JniSimulatorResourceModel(SimulatorResourceModel);
+        JSimulatorResourceModel(SimulatorResourceModel resModel);
+        JSimulatorResourceModel(SimulatorResourceModelSP resModel);
 
-        static jobject toJava(JNIEnv *, jlong);
-        static bool getResourceModel(JNIEnv *env, jobject thiz, SimulatorResourceModel &resourceModel);
+        static jobject toJava(JNIEnv *env, jlong nativeHandle);
+        static void toJava(JNIEnv *env, jobject thiz, jlong nativeHandle);
+        static bool getResourceModel(JNIEnv *env, jobject thiz, SimulatorResourceModel &resModel);
+        static SimulatorResourceModelSP getResourceModelPtr(JNIEnv *env, jobject thiz);
+
     private:
         SimulatorResourceModel m_resourceModel;
+        SimulatorResourceModelSP m_resModelPtr;
 };
 
 
@@ -41,24 +45,40 @@ class JniSimulatorResourceModel
 extern "C" {
 #endif
 
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_SimulatorResourceModel_create
+(JNIEnv *, jobject);
+
 JNIEXPORT jint JNICALL
-Java_org_oic_simulator_serviceprovider_SimulatorResourceModel_size
+Java_org_oic_simulator_SimulatorResourceModel_size
 (JNIEnv *, jobject);
 
 JNIEXPORT jobject JNICALL
-Java_org_oic_simulator_serviceprovider_SimulatorResourceModel_getAttributes
+Java_org_oic_simulator_SimulatorResourceModel_getAttributes
 (JNIEnv *, jobject);
 
 JNIEXPORT jobject JNICALL
-Java_org_oic_simulator_serviceprovider_SimulatorResourceModel_getAttribute
-(JNIEnv *, jobject, jstring);
-
-JNIEXPORT jobjectArray JNICALL
-Java_org_oic_simulator_serviceprovider_SimulatorResourceModel_getAllowedValues
+Java_org_oic_simulator_SimulatorResourceModel_getAttribute
 (JNIEnv *, jobject, jstring);
 
 JNIEXPORT void JNICALL
-Java_org_oic_simulator_serviceprovider_SimulatorResourceModel_dispose
+Java_org_oic_simulator_SimulatorResourceModel_addAttributeInt
+(JNIEnv *, jobject, jstring, jint);
+
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_SimulatorResourceModel_addAttributeDouble
+(JNIEnv *, jobject, jstring, jdouble);
+
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_SimulatorResourceModel_addAttributeBoolean
+(JNIEnv *, jobject, jstring, jboolean);
+
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_SimulatorResourceModel_addAttributeString
+(JNIEnv *, jobject, jstring, jstring);
+
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_SimulatorResourceModel_dispose
 (JNIEnv *, jobject);
 
 

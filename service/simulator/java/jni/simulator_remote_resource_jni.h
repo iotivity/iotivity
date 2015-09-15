@@ -27,40 +27,51 @@
 class JniSimulatorRemoteResource
 {
     public:
-        JniSimulatorRemoteResource(SimulatorRemoteResourcePtr &resource)
-        : m_resource(resource) {};
-        static SimulatorRemoteResourcePtr getResourceHandle(JNIEnv *env, jobject object);
+        JniSimulatorRemoteResource(SimulatorRemoteResourceSP &resource)
+            : m_resource(resource) {};
+        static SimulatorRemoteResourceSP getResourceHandle(JNIEnv *env, jobject object);
     private:
-        SimulatorRemoteResourcePtr m_resource;
+        SimulatorRemoteResourceSP m_resource;
 };
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-JNIEXPORT jint JNICALL
-Java_org_oic_simulator_SimulatorRemoteResource_observe
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_observe
 (JNIEnv *env, jobject thiz, jint observeType, jobject jQueryParamsMap, jobject jListener);
 
-JNIEXPORT jint JNICALL
-Java_org_oic_simulator_SimulatorRemoteResource_cancelObserve
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_cancelObserve
 (JNIEnv *env, jobject thiz);
 
-JNIEXPORT jint JNICALL
-Java_org_oic_simulator_SimulatorRemoteResource_get
-(JNIEnv *env, jobject thiz, jstring jResourceType, jstring jResourceInterface,
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_get
+(JNIEnv *env, jobject thiz, jstring jResourceInterface,
  jobject jQueryParamsMap, jobject jListener);
 
-JNIEXPORT jint JNICALL
-Java_org_oic_simulator_SimulatorRemoteResource_put
-(JNIEnv *env, jobject thiz, jstring jResourceType, jstring jResourceInterface,
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_put
+(JNIEnv *env, jobject thiz, jstring jResourceInterface,
  jobject jRepresentation, jobject jQueryParamsMap, jobject jListener);
 
-JNIEXPORT jint JNICALL
-Java_org_oic_simulator_SimulatorRemoteResource_post
-(JNIEnv *env, jobject thiz, jstring jResourceType, jstring jResourceInterface,
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_post
+(JNIEnv *env, jobject thiz, jstring jResourceInterface,
  jobject jRepresentation, jobject jQueryParamsMap, jobject jListener);
 
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_configureRAMLPath
+(JNIEnv *env, jobject thiz, jstring jConfigPath);
+
+JNIEXPORT jint JNICALL
+Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_startVerification
+(JNIEnv *env, jobject thiz, jint jReqType, jobject jListener);
+
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_stopVerification
+(JNIEnv *env, jobject thiz, jint jId);
 
 #ifdef __cplusplus
 }

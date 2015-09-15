@@ -21,8 +21,7 @@
 #include "simulator_manager.h"
 #include "resource_manager.h"
 #include "simulator_client.h"
-
-using namespace OC;
+#include "simulator_utils.h"
 
 SimulatorManager *SimulatorManager::getInstance()
 {
@@ -44,48 +43,146 @@ SimulatorManager::SimulatorManager()
     OC::OCPlatform::Configure(conf);
 }
 
-SimulatorResourceServerPtr SimulatorManager::createResource(const std::string &configPath,
-        SimulatorResourceServer::ResourceModelChangedCB callback)
+std::shared_ptr<SimulatorResourceServer> SimulatorManager::createResource(
+    const std::string &configPath,
+    SimulatorResourceServer::ResourceModelChangedCB callback)
 {
     return ResourceManager::getInstance()->createResource(configPath, callback);
 }
 
-std::vector<SimulatorResourceServerPtr> SimulatorManager::createResource(
-    const std::string &configPath,
-    const int count, SimulatorResourceServer::ResourceModelChangedCB callback)
+std::vector<std::shared_ptr<SimulatorResourceServer>> SimulatorManager::createResource(
+            const std::string &configPath, unsigned short count,
+            SimulatorResourceServer::ResourceModelChangedCB callback)
 {
     return ResourceManager::getInstance()->createResource(configPath, count, callback);
 }
 
-std::vector<SimulatorResourceServerPtr> SimulatorManager::getResources(
-    const std::string &resourceType)
+std::vector<std::shared_ptr<SimulatorResourceServer>> SimulatorManager::getResources(
+            const std::string &resourceType)
 {
     return ResourceManager::getInstance()->getResources(resourceType);
 }
 
-SimulatorResult SimulatorManager::deleteResource(SimulatorResourceServerPtr &resource)
+void SimulatorManager::deleteResource(
+    const std::shared_ptr<SimulatorResourceServer> &resource)
 {
-    return ResourceManager::getInstance()->deleteResource(resource);
+    ResourceManager::getInstance()->deleteResource(resource);
 }
 
-SimulatorResult SimulatorManager::deleteResources(const std::string &resourceType)
+void SimulatorManager::deleteResources(const std::string &resourceType)
 {
-    return ResourceManager::getInstance()->deleteResources(resourceType);
+    ResourceManager::getInstance()->deleteResources(resourceType);
 }
 
-SimulatorResult SimulatorManager::findResource(const std::string &resourceType,
-        ResourceFindCallback callback)
+void SimulatorManager::findResources(ResourceFindCallback callback)
 {
-    return SimulatorClient::getInstance()->findResource(resourceType, callback);
+    SimulatorClient::getInstance()->findResources(callback);
 }
 
-std::vector<SimulatorRemoteResourcePtr> SimulatorManager::getFoundResources(
-    const std::string resourceType)
+void SimulatorManager::findResources(const std::string &resourceType,
+                                     ResourceFindCallback callback)
 {
-    return SimulatorClient::getInstance()->getFoundResources(resourceType);
+    SimulatorClient::getInstance()->findResources(resourceType, callback);
 }
 
-void SimulatorManager::setLogger(std::shared_ptr<ILogger> logger)
+void SimulatorManager::getDeviceInfo(DeviceInfoCallback callback)
+{
+    if (!callback)
+        throw InvalidArgsException(SIMULATOR_INVALID_CALLBACK, "Invalid callback!");
+
+    OC::FindDeviceCallback deviceCallback = [this, callback](const OC::OCRepresentation & rep)
+    {
+        std::string deviceName = rep.getValue<std::string>("n");
+        std::string deviceID = rep.getValue<std::string>("di");
+        std::string deviceSpecVersion = rep.getValue<std::string>("lcv");
+        std::string deviceDMV = rep.getValue<std::string>("dmv");
+
+        DeviceInfo deviceInfo(deviceName, deviceID, deviceSpecVersion, deviceDMV);
+        callback(deviceInfo);
+    };
+
+    std::ostringstream uri;
+    uri << OC_MULTICAST_PREFIX << OC_RSRVD_DEVICE_URI;
+
+    typedef OCStackResult (*GetDeviceInfo)(const std::string &, const std::string &,
+                                           OCConnectivityType, OC::FindDeviceCallback);
+
+    invokeocplatform(static_cast<GetDeviceInfo>(OC::OCPlatform::getDeviceInfo), "",
+                     uri.str(),
+                     CT_DEFAULT,
+                     deviceCallback);
+}
+
+void SimulatorManager::setDeviceInfo(const std::string &deviceName)
+{
+    if (deviceName.empty())
+        throw InvalidArgsException(SIMULATOR_INVALID_PARAM, "Device name is empty!");
+
+
+    typedef OCStackResult (*RegisterDeviceInfo)(const OCDeviceInfo);
+
+    OCDeviceInfo ocDeviceInfo;
+    ocDeviceInfo.deviceName = const_cast<char *>(deviceName.c_str());
+    invokeocplatform(static_cast<RegisterDeviceInfo>(OC::OCPlatform::registerDeviceInfo),
+                     ocDeviceInfo);
+}
+
+void SimulatorManager::getPlatformInfo(PlatformInfoCallback callback)
+{
+    if (!callback)
+        throw InvalidArgsException(SIMULATOR_INVALID_CALLBACK, "Invalid callback!");
+
+    OC::FindPlatformCallback platformCallback = [this, callback](const OC::OCRepresentation & rep)
+    {
+        PlatformInfo platformInfo;
+        platformInfo.setPlatformID(rep.getValue<std::string>("pi"));
+        platformInfo.setPlatformVersion(rep.getValue<std::string>("mnpv"));
+        platformInfo.setManufacturerName(rep.getValue<std::string>("mnmn"));
+        platformInfo.setManufacturerUrl(rep.getValue<std::string>("mnml"));
+        platformInfo.setModelNumber(rep.getValue<std::string>("mnmo"));
+        platformInfo.setDateOfManfacture(rep.getValue<std::string>("mndt"));
+        platformInfo.setOSVersion(rep.getValue<std::string>("mnos"));
+        platformInfo.setHardwareVersion(rep.getValue<std::string>("mnhw"));
+        platformInfo.setFirmwareVersion(rep.getValue<std::string>("mnfv"));
+        platformInfo.setSupportUrl(rep.getValue<std::string>("mnsl"));
+        platformInfo.setSystemTime(rep.getValue<std::string>("st"));
+
+        callback(platformInfo);
+    };
+
+    std::ostringstream uri;
+    uri << OC_MULTICAST_PREFIX << OC_RSRVD_PLATFORM_URI;
+
+    typedef OCStackResult (*GetPlatformInfo)(const std::string &, const std::string &,
+            OCConnectivityType, OC::FindPlatformCallback);
+
+    invokeocplatform(static_cast<GetPlatformInfo>(OC::OCPlatform::getPlatformInfo), "",
+                     uri.str(),
+                     CT_DEFAULT,
+                     platformCallback);
+}
+
+void SimulatorManager::setPlatformInfo(PlatformInfo &platformInfo)
+{
+    OCPlatformInfo ocPlatformInfo;
+    ocPlatformInfo.platformID = const_cast<char *>(platformInfo.getPlatformID().c_str());
+    ocPlatformInfo.manufacturerName = const_cast<char *>(platformInfo.getManufacturerName().c_str());
+    ocPlatformInfo.manufacturerUrl = const_cast<char *>(platformInfo.getManufacturerUrl().c_str());
+    ocPlatformInfo.modelNumber = const_cast<char *>(platformInfo.getModelNumber().c_str());
+    ocPlatformInfo.dateOfManufacture = const_cast<char *>(platformInfo.getDateOfManfacture().c_str());
+    ocPlatformInfo.platformVersion = const_cast<char *>(platformInfo.getPlatformVersion().c_str());
+    ocPlatformInfo.operatingSystemVersion = const_cast<char *>(platformInfo.getOSVersion().c_str());
+    ocPlatformInfo.hardwareVersion = const_cast<char *>(platformInfo.getHardwareVersion().c_str());
+    ocPlatformInfo.firmwareVersion = const_cast<char *>(platformInfo.getFirmwareVersion().c_str());
+    ocPlatformInfo.supportUrl = const_cast<char *>(platformInfo.getSupportUrl().c_str());
+    ocPlatformInfo.systemTime = const_cast<char *>(platformInfo.getSystemTime().c_str());
+
+    typedef OCStackResult (*RegisterPlatformInfo)(const OCPlatformInfo);
+    invokeocplatform(static_cast<RegisterPlatformInfo>(OC::OCPlatform::registerPlatformInfo),
+                     ocPlatformInfo);
+}
+
+void SimulatorManager::setLogger(const std::shared_ptr<ILogger> &logger)
 {
     simLogger().setCustomTarget(logger);
 }
@@ -95,7 +192,7 @@ bool SimulatorManager::setDefaultConsoleLogger()
     return simLogger().setDefaultConsoleTarget();
 }
 
-bool SimulatorManager::setDefaultFileLogger(std::string &path)
+bool SimulatorManager::setDefaultFileLogger(const std::string &path)
 {
     return simLogger().setDefaultFileTarget(path);
 }

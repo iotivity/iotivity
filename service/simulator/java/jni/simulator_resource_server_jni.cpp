@@ -22,13 +22,16 @@
 #include "simulator_resource_jni_util.h"
 #include "simulator_common_jni.h"
 #include "simulator_resource_model_jni.h"
+#include "simulator_jni_utils.h"
+#include "simulator_logger.h"
+#include "simulator_jni_utils.h"
 
 extern SimulatorClassRefs gSimulatorClassRefs;
 
-JniSimulatorResource::JniSimulatorResource(SimulatorResourceServerPtr &resource)
+JniSimulatorResource::JniSimulatorResource(SimulatorResourceServerSP &resource)
     : m_sharedResource(resource) {}
 
-SimulatorResourceServerPtr JniSimulatorResource::getJniSimulatorResourcePtr(JNIEnv *env,
+SimulatorResourceServerSP JniSimulatorResource::getJniSimulatorResourceSP(JNIEnv *env,
         jobject thiz)
 {
     JniSimulatorResource *resource = GetHandle<JniSimulatorResource>(env, thiz);
@@ -60,34 +63,30 @@ void JniSimulatorResource::setResourceInfo(JNIEnv *env, jobject jobj)
     std::string name = m_sharedResource->getName();
     std::string interfaceType = m_sharedResource->getInterfaceType();
 
-    jstring jURI = env->NewStringUTF(uri.c_str());
-    if (jURI)
-    {
-        env->CallVoidMethod(jobj, gSimulatorClassRefs.classSimulatorResourceSetURI, jURI);
-        env->DeleteLocalRef(jURI);
-    }
+    jfieldID fieldID = env->GetFieldID(gSimulatorClassRefs.classSimulatorResource, "resourceURI",
+                                       "Ljava/lang/String;");
+    jstring jUri = env->NewStringUTF(uri.c_str());
+    env->SetObjectField(jobj, fieldID, jUri);
 
-    jstring jResourceType = env->NewStringUTF(resourceType.c_str());
-    if (jResourceType)
-    {
-        env->CallVoidMethod(jobj, gSimulatorClassRefs.classSimulatorResourceSetResourceType, jResourceType);
-        env->DeleteLocalRef(jResourceType);
-    }
-
+    fieldID = env->GetFieldID(gSimulatorClassRefs.classSimulatorResource, "resourceName",
+                              "Ljava/lang/String;");
     jstring jName = env->NewStringUTF(name.c_str());
-    if (jName)
-    {
-        env->CallVoidMethod(jobj, gSimulatorClassRefs.classSimulatorResourceSetName, jName);
-        env->DeleteLocalRef(jName);
-    }
+    env->SetObjectField(jobj, fieldID, jName);
 
+    fieldID = env->GetFieldID(gSimulatorClassRefs.classSimulatorResource, "resourceType",
+                              "Ljava/lang/String;");
+    jstring jResourceType = env->NewStringUTF(resourceType.c_str());
+    env->SetObjectField(jobj, fieldID, jResourceType);
+
+    fieldID = env->GetFieldID(gSimulatorClassRefs.classSimulatorResource, "interfaceType",
+                              "Ljava/lang/String;");
     jstring jInterfaceType = env->NewStringUTF(interfaceType.c_str());
-    if (jInterfaceType)
-    {
-        env->CallVoidMethod(jobj, gSimulatorClassRefs.classSimulatorResourceSetInterfaceType,
-                            jInterfaceType);
-        env->DeleteLocalRef(jInterfaceType);
-    }
+    env->SetObjectField(jobj, fieldID, jInterfaceType);
+
+    env->DeleteLocalRef(jUri);
+    env->DeleteLocalRef(jName);
+    env->DeleteLocalRef(jResourceType);
+    env->DeleteLocalRef(jInterfaceType);
 }
 
 void onAutomationComplete(jweak jlistenerRef, const std::string &uri,
@@ -138,77 +137,17 @@ JNIEXPORT jobject JNICALL
 Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_getModel
 (JNIEnv *env, jobject object)
 {
-    SimulatorResourceServerPtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env, object);
+    SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env, object);
     if (nullptr == resource.get())
     {
-        std::cout << "getModel: Resource is NULL";
+        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
         return nullptr;
     }
 
     SimulatorResourceModel resModel = resource->getModel();
-    JniSimulatorResourceModel *model = new JniSimulatorResourceModel(resModel);
-    jobject jModel = JniSimulatorResourceModel::toJava(env, reinterpret_cast<jlong>(model));
+    JSimulatorResourceModel *model = new JSimulatorResourceModel(resModel);
+    jobject jModel = JSimulatorResourceModel::toJava(env, reinterpret_cast<jlong>(model));
     return jModel;
-}
-
-JNIEXPORT void JNICALL
-Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_updateAttributeFromAllowedValues
-(JNIEnv *env, jobject object, jstring attrName, jint index)
-{
-    SimulatorResourceServerPtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env, object);
-    if (nullptr == resource.get())
-    {
-        std::cout << "updateAttributeFromAllowedValues: Resource is NULL";
-        return;
-    }
-
-    const char *attrNamePtr = env->GetStringUTFChars(attrName, NULL);
-    if (!attrNamePtr)
-    {
-        std::cout << "updateAttributeFromAllowedValues: Failed to convert jstring to char string!";
-        return;
-    }
-
-    resource->updateAttributeFromAllowedValues(attrNamePtr, static_cast<int>(index));
-    env->ReleaseStringUTFChars(attrName, attrNamePtr);
-}
-
-JNIEXPORT void JNICALL
-Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_setRange
-(JNIEnv *env, jobject object, jstring attrName, jint min, jint max)
-{
-    SimulatorResourceServerPtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env, object);
-    if (nullptr == resource.get())
-    {
-        std::cout << "setRange: Resource is NULL";
-        return;
-    }
-
-    const char *attrNamePtr = env->GetStringUTFChars(attrName, NULL);
-    if (!attrNamePtr)
-    {
-        std::cout << "setRange: Failed to convert jstring to char string!";
-        return;
-    }
-
-    resource->setRange(attrNamePtr, static_cast<int>(min), static_cast<int>(max));
-    env->ReleaseStringUTFChars(attrName, attrNamePtr);
-}
-
-JNIEXPORT void JNICALL
-Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_setInterfaceType
-(JNIEnv *env, jobject jobject, const std::string &interfaceType)
-{
-    jstring jInterfaceType = env->NewStringUTF(interfaceType.c_str());
-    if (!jInterfaceType)
-    {
-        std::cout << "setInterfaceType: InterfaceType is NULL";
-        return;
-    }
-
-    env->CallVoidMethod(jobject, gSimulatorClassRefs.classSimulatorResourceSetInterfaceType,
-                        jInterfaceType);
-    env->DeleteLocalRef(jInterfaceType);
 }
 
 JNIEXPORT void JNICALL
@@ -217,20 +156,23 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_addAttributeInteg
 {
     if (!jKey)
     {
-        std::cout << "addAttributeInteger: AttributeName is Empty";
+        throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM, "Invalid Attribute name!");
         return;
     }
 
-    SimulatorResourceServerPtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env,
-                                          jobject);
+    SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env,
+                                         jobject);
     if (nullptr == resource.get())
     {
-        std::cout << "addAttributeInteger: Resource is NULL";
+        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
         return;
     }
 
     std::string str = env->GetStringUTFChars(jKey, NULL);
-    resource->addAttribute(str, static_cast<int>(jValue));
+    SimulatorResourceModel::Attribute att;
+    att.setName(str);
+    att.setValue(static_cast<int>(jValue));
+    resource->addAttribute(att);
 }
 
 JNIEXPORT void JNICALL
@@ -239,20 +181,23 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_addAttributeDoubl
 {
     if (!jKey)
     {
-        std::cout << "addAttributeDouble: AttributeName is Empty";
+        throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM, "Invalid Attribute name!");
         return;
     }
 
-    SimulatorResourceServerPtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env,
-                                          jobject);
+    SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env,
+                                         jobject);
     if (nullptr == resource.get())
     {
-        std::cout << "addAttributeDouble: Resource is NULL";
+        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
         return;
     }
 
     std::string str = env->GetStringUTFChars(jKey, NULL);
-    resource->addAttribute(str, static_cast<double>(jValue));
+    SimulatorResourceModel::Attribute att;
+    att.setName(str);
+    att.setValue(static_cast<double>(jValue));
+    resource->addAttribute(att);
 }
 
 JNIEXPORT void JNICALL
@@ -261,44 +206,49 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_addAttributeBoole
 {
     if (!jKey)
     {
-        std::cout << "addAttributeBoolean: AttributeName is Empty";
+        throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM, "Invalid Attribute name!");
         return;
     }
 
-    SimulatorResourceServerPtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env,
-                                          jobject);
+    SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env,
+                                         jobject);
     if (nullptr == resource.get())
     {
-        std::cout << "addAttributeBoolean: Resource is NULL";
+        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
         return;
     }
 
     std::string str = env->GetStringUTFChars(jKey, NULL);
-    resource->addAttribute(str, static_cast<bool>(jValue));
+    SimulatorResourceModel::Attribute att;
+    att.setName(str);
+    att.setValue(static_cast<bool>(jValue));
+    resource->addAttribute(att);
 }
 
 JNIEXPORT void JNICALL
-Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_addAttributeStringN
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_addAttributeString
 (JNIEnv *env, jobject jobject, jstring jKey, jstring jValue)
 {
     if (!jKey)
     {
-        std::cout << "addAttributeStringN: AttributeName is Empty";
+        throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM, "Invalid Attribute name!");
         return;
     }
 
-    SimulatorResourceServerPtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env,
-                                          jobject);
+    SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env,
+                                         jobject);
     if (nullptr == resource.get())
     {
-        std::cout << "addAttributeStringN: Resource is NULL";
+        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
         return;
     }
 
     std::string key = env->GetStringUTFChars(jKey, NULL);
     std::string value = env->GetStringUTFChars(jValue, NULL);
-
-    resource->addAttribute(key, value);
+    SimulatorResourceModel::Attribute att;
+    att.setName(key);
+    att.setValue(value);
+    resource->addAttribute(att);
 }
 
 JNIEXPORT void JNICALL
@@ -307,20 +257,20 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_updateAttributeIn
 {
     if (!jKey)
     {
-        std::cout << "updateAttributeInteger: AttributeName is Empty";
+        throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM, "Invalid Attribute name!");
         return;
     }
 
-    SimulatorResourceServerPtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env,
-                                          jobject);
+    SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env,
+                                         jobject);
     if (nullptr == resource.get())
     {
-        std::cout << "updateAttributeInteger: Resource is NULL";
+        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
         return;
     }
 
     std::string str = env->GetStringUTFChars(jKey, NULL);
-    resource->updateAttribute(str, static_cast<int>(jValue));
+    resource->updateAttributeValue(str, static_cast<int>(jValue));
 }
 
 JNIEXPORT void JNICALL
@@ -329,20 +279,20 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_updateAttributeDo
 {
     if (!jKey)
     {
-        std::cout << "updateAttributeDouble: AttributeName is Empty";
+        throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM, "Invalid Attribute name!");
         return;
     }
 
-    SimulatorResourceServerPtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env,
-                                          jobject);
+    SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env,
+                                         jobject);
     if (nullptr == resource.get())
     {
-        std::cout << "updateAttributeDouble: Resource is NULL";
+        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
         return;
     }
 
     std::string str = env->GetStringUTFChars(jKey, NULL);
-    resource->updateAttribute(str, static_cast<double>(jValue));
+    resource->updateAttributeValue(str, static_cast<double>(jValue));
 }
 
 JNIEXPORT void JNICALL
@@ -351,121 +301,201 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_updateAttributeBo
 {
     if (!jKey)
     {
-        std::cout << "updateAttributeBoolean: AttributeName is Empty";
+        throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM, "Invalid Attribute name!");
         return;
     }
 
-    SimulatorResourceServerPtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env,
-                                          jobject);
+    SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env,
+                                         jobject);
     if (nullptr == resource.get())
     {
-        std::cout << "updateAttributeBoolean: Resource is NULL";
+        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
         return;
     }
 
     std::string str = env->GetStringUTFChars(jKey, NULL);
-    resource->updateAttribute(str, static_cast<bool>(jValue));
+    resource->updateAttributeValue(str, static_cast<bool>(jValue));
 }
 
 JNIEXPORT void JNICALL
-Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_updateAttributeStringN
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_updateAttributeString
 (JNIEnv *env, jobject jobject, jstring jKey, jstring jValue)
 {
     if (!jKey)
     {
-        std::cout << "updateAttributeStringN: AttributeName is Empty";
+        throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM, "Invalid Attribute name!");
         return;
     }
 
-    SimulatorResourceServerPtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env,
-                                          jobject);
+    SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env,
+                                         jobject);
     if (nullptr == resource.get())
     {
-        std::cout << "updateAttributeStringN: Resource is NULL";
+        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
         return;
     }
 
     std::string key = env->GetStringUTFChars(jKey, NULL);
     std::string value = env->GetStringUTFChars(jValue, NULL);
 
-    resource->updateAttribute(key, value);
+    resource->updateAttributeValue(key, value);
+}
+
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_updateAttributeFromAllowedValues
+(JNIEnv *env, jobject object, jstring attrName, jint index)
+{
+    if (!attrName || index < 0)
+    {
+        throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM, "Invalid parameter!");
+        return;
+    }
+
+    SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env, object);
+    if (resource)
+    {
+        throwSimulatorException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
+        return;
+    }
+
+    const char *attrNameCStr = env->GetStringUTFChars(attrName, NULL);
+    if (!attrNameCStr)
+    {
+        throwSimulatorException(env, SIMULATOR_ERROR, "String error!");
+        return;
+    }
+
+    resource->updateAttributeValue(attrNameCStr, static_cast<int>(index));
+    env->ReleaseStringUTFChars(attrName, attrNameCStr);
+}
+
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_setRange
+(JNIEnv *env, jobject object, jstring attrName, jint min, jint max)
+{
+    if (!attrName)
+    {
+        throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM, "Invalid parameter!");
+        return;
+    }
+
+    SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env, object);
+    if (resource)
+    {
+        throwSimulatorException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
+        return;
+    }
+
+    const char *attrNameCStr = env->GetStringUTFChars(attrName, NULL);
+    if (!attrNameCStr)
+    {
+        throwSimulatorException(env, SIMULATOR_ERROR, "String error!");
+        return;
+    }
+
+    resource->setRange(attrNameCStr, static_cast<int>(min), static_cast<int>(max));
+    env->ReleaseStringUTFChars(attrName, attrNameCStr);
 }
 
 JNIEXPORT void JNICALL
 Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_setAllowedValuesInteger
 (JNIEnv *env, jobject object, jstring jKey, jobject jAllowedValues)
 {
-    if (!jKey)
+    if (!jKey || jAllowedValues)
     {
-        std::cout << "setAllowedValuesInteger: AttributeName is Empty";
+        throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM, "Invalid parameter!");
         return;
     }
 
-    SimulatorResourceServerPtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env, object);
-    if (nullptr == resource.get())
+    SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env, object);
+    if (resource)
     {
-        std::cout << "setAllowedValuesInteger: Resource is NULL";
+        throwSimulatorException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
         return;
     }
 
-    std::string str = env->GetStringUTFChars(jKey, NULL);
-    resource->setAllowedValues(str, convertIntegerVector(env, jAllowedValues));
+    const char *keyCStr = env->GetStringUTFChars(jKey, NULL);
+    if (!keyCStr)
+    {
+        throwSimulatorException(env, SIMULATOR_ERROR, "String error!");
+        return;
+    }
+
+    resource->setAllowedValues(keyCStr, convertIntegerVector(env, jAllowedValues));
+    env->ReleaseStringUTFChars(jKey, keyCStr);
 }
 
 JNIEXPORT void JNICALL
 Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_setAllowedValuesDouble
 (JNIEnv *env, jobject object, jstring jKey, jobject jAllowedValues)
 {
-    if (!jKey)
+    if (!jKey || jAllowedValues)
     {
-        std::cout << "setAllowedValuesDouble: AttributeName is Empty";
+        throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM, "Invalid parameter!");
         return;
     }
 
-    SimulatorResourceServerPtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env, object);
-    if (nullptr == resource.get())
+    SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env, object);
+    if (resource)
     {
-        std::cout << "setAllowedValuesDouble: Resource is NULL";
+        throwSimulatorException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
         return;
     }
 
-    std::string str = env->GetStringUTFChars(jKey, NULL);
-    resource->setAllowedValues(str, convertDoubleVector(env, jAllowedValues));
+    const char *keyCStr = env->GetStringUTFChars(jKey, NULL);
+    if (!keyCStr)
+    {
+        throwSimulatorException(env, SIMULATOR_ERROR, "String error!");
+        return;
+    }
+
+    resource->setAllowedValues(keyCStr, convertDoubleVector(env, jAllowedValues));
+    env->ReleaseStringUTFChars(jKey, keyCStr);
 }
 
 JNIEXPORT void JNICALL
-Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_setAllowedValuesStringN
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_setAllowedValuesString
 (JNIEnv *env, jobject object, jstring jKey, jobject jAllowedValues)
 {
-    if (!jKey)
+    if (!jKey || jAllowedValues)
     {
-        std::cout << "setAllowedValuesStringN: AttributeName is Empty";
+        throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM, "Invalid parameter!");
         return;
     }
 
-    SimulatorResourceServerPtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env, object);
-    if (nullptr == resource.get())
+    SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env, object);
+    if (resource)
     {
-        std::cout << "setAllowedValuesStringN: Resource is NULL";
+        throwSimulatorException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
         return;
     }
 
-    std::string str = env->GetStringUTFChars(jKey, NULL);
-    resource->setAllowedValues(str, convertStringVector(env, jAllowedValues));
+    const char *keyCStr = env->GetStringUTFChars(jKey, NULL);
+    if (!keyCStr)
+    {
+        throwSimulatorException(env, SIMULATOR_ERROR, "String error!");
+        return;
+    }
+
+    resource->setAllowedValues(keyCStr, convertStringVector(env, jAllowedValues));
+    env->ReleaseStringUTFChars(jKey, keyCStr);
 }
 
 JNIEXPORT jint JNICALL
 Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_startResourceAutomation
 (JNIEnv *env, jobject object, jint automationType, jobject listener)
 {
-    SimulatorResourceServerPtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env, object);
-    if (nullptr == resource.get())
+    SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env, object);
+    if (!resource)
     {
+        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
         return -1;
     }
 
     if (!listener)
     {
+        throwInvalidArgsException(env, SIMULATOR_INVALID_CALLBACK,
+                                  "Start Resource Automation failed! Callback not set");
         return -1;
     }
 
@@ -481,11 +511,24 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_startResourceAuto
         type = AutomationType::RECURRENT;
     }
 
-    int automationId;
-    if (SIMULATOR_SUCCESS != resource->startUpdateAutomation(type, callback,
-            automationId))
-        return -1;
+    int automationId = -1;
 
+    try
+    {
+        automationId = resource->startUpdateAutomation(type, callback);
+    }
+    catch (InvalidArgsException &e)
+    {
+        throwInvalidArgsException(env, e.code(), e.what());
+    }
+    catch (SimulatorException &e)
+    {
+        throwSimulatorException(env, e.code(), e.what());
+    }
+    catch (...)
+    {
+        throwSimulatorException(env, SIMULATOR_ERROR, "Unknown Exception");
+    }
     return automationId;
 }
 
@@ -493,20 +536,23 @@ JNIEXPORT jint JNICALL
 Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_startAttributeAutomation
 (JNIEnv *env, jobject object, jstring attrName, jint automationType, jobject listener)
 {
-    std::cout << "starAttributeAutomation JNI" << std::endl;
-    SimulatorResourceServerPtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env, object);
+    SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env, object);
     if (nullptr == resource.get())
     {
+        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
         return -1;
     }
 
     if (!attrName)
     {
+        throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM, "Invalid Attribute name!");
         return -1;
     }
 
     if (!listener)
     {
+        throwInvalidArgsException(env, SIMULATOR_INVALID_CALLBACK,
+                                  "Start Attribute Automation failed! Callback not set");
         return -1;
     }
 
@@ -525,8 +571,25 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_startAttributeAut
     }
 
     int automationId = -1;
-    resource->startUpdateAutomation(attrNamePtr, type, callback, automationId);
-
+    try
+    {
+        automationId = resource->startUpdateAutomation(attrNamePtr, type, callback);
+    }
+    catch (InvalidArgsException &e)
+    {
+        throwInvalidArgsException(env, e.code(), e.what());
+        return -1;
+    }
+    catch (SimulatorException &e)
+    {
+        throwSimulatorException(env, e.code(), e.what());
+        return -1;
+    }
+    catch (...)
+    {
+        throwSimulatorException(env, SIMULATOR_ERROR, "Unknown Exception");
+        return -1;
+    }
     env->ReleaseStringUTFChars(attrName, attrNamePtr);
     return automationId;
 }
@@ -535,13 +598,15 @@ JNIEXPORT void JNICALL
 Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_stopAutomation
 (JNIEnv *env, jobject object, jint automationId)
 {
-    SimulatorResourceServerPtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env, object);
+    SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env, object);
     if (nullptr == resource.get())
     {
+        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
         return;
     }
 
     resource->stopUpdateAutomation(automationId);
+    SIM_LOG(ILogger::INFO, "Automation has been forcibly stopped.")
 }
 
 JNIEXPORT void JNICALL
@@ -550,20 +615,182 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_removeAttribute
 {
     if (!jKey)
     {
-        std::cout << "removeAttribute: AttributeName is Empty";
+        throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM, "Invalid Attribute name!");
         return;
     }
 
-    SimulatorResourceServerPtr resource = JniSimulatorResource::getJniSimulatorResourcePtr(env,
-                                          jobject);
+    SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env,
+                                         jobject);
     if (nullptr == resource.get())
     {
-        std::cout << "removeAttribute: Resource is NULL";
+        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
         return;
     }
 
     std::string str = env->GetStringUTFChars(jKey, NULL);
     resource->removeAttribute(str);
+}
+
+JNIEXPORT jobjectArray JNICALL
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_getObserversList
+(JNIEnv *env, jobject object)
+{
+    SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env, object);
+    if (nullptr == resource.get())
+    {
+        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
+        return nullptr;
+    }
+
+    std::vector<ObserverInfo> observersList;
+    observersList = resource->getObserversList();
+
+    // Construct the object array and send it java layer
+    jobjectArray jobserversArray = env->NewObjectArray(observersList.size(),
+                                   gSimulatorClassRefs.classObserverInfo, NULL);
+    if (jobserversArray)
+    {
+        for (size_t i = 0; i < observersList.size(); i++)
+        {
+            jstring jaddress = env->NewStringUTF(observersList[i].address.c_str());
+            jobject jobserver = (jobject) env->NewObject(gSimulatorClassRefs.classObserverInfo,
+                                gSimulatorClassRefs.classObserverInfoCtor, observersList[i].id,
+                                jaddress, observersList[i].port);
+
+            env->SetObjectArrayElement(jobserversArray, i, jobserver);
+            env->DeleteLocalRef(jaddress);
+        }
+    }
+
+    return jobserversArray;
+}
+
+void onObserverChange(jweak jlistenerRef, const std::string &uri,
+                      ObservationStatus state, const ObserverInfo &observerInfo)
+{
+    JNIEnv *env = getEnv();
+    if (nullptr == env)
+        return;
+
+    jobject observerChangeListener = env->NewLocalRef(jlistenerRef);
+    if (!observerChangeListener)
+    {
+        releaseEnv();
+        return;
+    }
+
+    jclass observerChangeCls = env->GetObjectClass(observerChangeListener);
+    if (!observerChangeCls)
+    {
+        releaseEnv();
+        return;
+    }
+
+    jmethodID observerChangeMId = env->GetMethodID(observerChangeCls, "onObserverChanged",
+                                  "(Ljava/lang/String;ILorg/oic/simulator/serviceprovider/ObserverInfo;)V");
+    if (!observerChangeMId)
+    {
+        releaseEnv();
+        return;
+    }
+
+    // Convert URI
+    jstring jUri = env->NewStringUTF(uri.c_str());
+
+    // Convert state
+    jint jstate = (state == ObservationStatus::OBSERVE_REGISTER) ? 0 : 1;
+
+    // Construct the java object of observerinfo
+    jstring jaddress = env->NewStringUTF(observerInfo.address.c_str());
+    jobject jobserver = (jobject) env->NewObject(gSimulatorClassRefs.classObserverInfo,
+                        gSimulatorClassRefs.classObserverInfoCtor, observerInfo.id,
+                        jaddress, observerInfo.port);
+
+    env->CallVoidMethod(observerChangeListener, observerChangeMId, jUri, jstate, jobserver);
+    env->DeleteLocalRef(jaddress);
+    if ((env)->ExceptionCheck())
+    {
+        releaseEnv();
+        return;
+    }
+
+    env->DeleteLocalRef(jUri);
+
+    releaseEnv();
+}
+
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_setObserverCallback
+(JNIEnv *env, jobject object, jobject jcallback)
+{
+    if (!jcallback)
+        return;
+
+    jweak jlistenerRef = env->NewWeakGlobalRef(jcallback);
+    SimulatorResourceServer::ObserverCB callback =  [jlistenerRef](const std::string & uri,
+            ObservationStatus state, const ObserverInfo & observerInfo)
+    {
+        onObserverChange(jlistenerRef, uri, state, observerInfo);
+    };
+
+    SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env, object);
+    if (nullptr == resource.get())
+    {
+        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
+        return;
+    }
+
+    resource->setObserverCallback(callback);
+}
+
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_notifyObserver
+(JNIEnv *env, jobject object, jint jId)
+{
+    SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env, object);
+    if (nullptr == resource.get())
+    {
+        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
+        return;
+    }
+
+    try
+    {
+        resource->notify(jId);
+    }
+    catch (SimulatorException &e)
+    {
+        throwSimulatorException(env, e.code(), e.what());
+    }
+    catch (...)
+    {
+        throwSimulatorException(env, SIMULATOR_ERROR, "Unknown Exception");
+    }
+}
+
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_notifyAllObservers
+(JNIEnv *env, jobject object)
+{
+    SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env, object);
+    if (nullptr == resource.get())
+    {
+        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
+        return;
+    }
+
+    try
+    {
+        resource->notifyAll();
+    }
+    catch (SimulatorException &e)
+    {
+        throwSimulatorException(env, e.code(), e.what());
+    }
+    catch (...)
+    {
+        throwSimulatorException(env, SIMULATOR_ERROR, "Unknown Exception");
+    }
 }
 
 JNIEXPORT void JNICALL Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_dispose

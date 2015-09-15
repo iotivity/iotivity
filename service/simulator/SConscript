@@ -22,7 +22,7 @@
 # Simulator build script
 ##
 
-import os
+import os, sys
 Import('env')
 
 lib_env = env.Clone()
@@ -36,7 +36,7 @@ target_os = env.get('TARGET_OS')
 ######################################################################
 # Build flags
 ######################################################################
-simulator_env.AppendUnique(CPPPATH = ['inc', 'src'])
+simulator_env.AppendUnique(CPPPATH = ['inc', 'src/client-controller', 'src/service-provider', 'src/common'])
 simulator_env.AppendUnique(CPPPATH = [
 		'../../resource/include/',
 		'../../resource/csdk/stack/include',
@@ -76,7 +76,10 @@ simulator_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0
 ######################################################################
 # Source files and Targets
 ######################################################################
-simulator_src = [env.Glob('src/*.cpp'), env.Glob('java/jni/*.cpp')]
+simulator_src = [env.Glob('src/*.cpp')
+                 ,env.Glob('src/*/*.cpp')
+                 ,env.Glob('java/jni/*.cpp')
+                ]
 simulatorsdk = simulator_env.SharedLibrary('SimulatorManager', simulator_src)
 
 simulator_env.InstallTarget(simulatorsdk, 'libSimulator')
