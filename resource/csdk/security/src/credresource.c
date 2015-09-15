@@ -275,7 +275,7 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
             jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_CREDTYPE_NAME);
             VERIFY_NON_NULL(TAG, jsonObj, ERROR);
             VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
-            cred->credType = jsonObj->valueint;
+            cred->credType = (OicSecCredType_t)jsonObj->valueint;
 
             //PrivateData is mandatory for some of the credential types listed below.
             jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_PRIVATEDATA_NAME);

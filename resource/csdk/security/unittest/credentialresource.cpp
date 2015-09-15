@@ -69,7 +69,7 @@ OicSecCred_t * getCredList()
 
 #endif
 
-    cred->credType = 1;
+    cred->credType = SYMMETRIC_PAIR_WISE_KEY;
     cred->privateData.data = (char *)OICCalloc(1, strlen("My private Key11") + 1);
     VERIFY_NON_NULL(TAG, cred->privateData.data, ERROR);
     strcpy(cred->privateData.data, "My private Key11");
@@ -85,7 +85,7 @@ OicSecCred_t * getCredList()
 #if 0
     cred->next->roleIdsLen = 0;
 #endif
-    cred->next->credType = 1;
+    cred->next->credType = SYMMETRIC_PAIR_WISE_KEY;
     sz = strlen("My private Key21") + 1;
     cred->next->privateData.data = (char *)OICCalloc(1, sz);
     VERIFY_NON_NULL(TAG, cred->next->privateData.data, ERROR);

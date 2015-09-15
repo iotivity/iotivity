@@ -84,6 +84,7 @@ OicSecDoxm_t * getBinDoxm()
 
     doxm->oxm[0]     = OIC_JUST_WORKS;
     doxm->oxmSel     = OIC_JUST_WORKS;
+    doxm->sct        = SYMMETRIC_PAIR_WISE_KEY;
     doxm->owned      = true;
     //TODO: Need more clarification on deviceIDFormat field type.
     //doxm.deviceIDFormat = URN;

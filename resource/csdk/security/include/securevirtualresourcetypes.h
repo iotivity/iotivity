@@ -160,18 +160,6 @@ typedef struct OicSecAmacl OicSecAmacl_t;
 typedef struct OicSecCred OicSecCred_t;
 
 /**
- * @brief   /oic/sec/credtype (Credential Type) data type.
- *          Derived from OIC Security Spec /oic/sec/cred; see Spec for details.
- *              0:  no security mode
- *              1:  symmetric pair-wise key
- *              2:  symmetric group key
- *              4:  asymmetric key
- *              8:  signed asymmetric key (aka certificate)
- *              16: PIN /password
- */
-typedef uint16_t OicSecCredType_t;
-
-/**
  * Aid for assigning/testing vals with OicSecCredType_t.
  * Example:
  *  OicSecCredType_t ct = PIN_PASSWORD | ASYMMETRIC_KEY;
@@ -188,7 +176,20 @@ typedef enum OSCTBitmask
     ASYMMETRIC_KEY                  = (0x1 << 2),
     SIGNED_ASYMMETRIC_KEY           = (0x1 << 3),
     PIN_PASSWORD                    = (0x1 << 4),
+    ASYMMETRIC_ENCRYPTION_KEY       = (0x1 << 5),
 } OSCTBitmask_t;
+
+/**
+ * @brief   /oic/sec/credtype (Credential Type) data type.
+ *          Derived from OIC Security Spec /oic/sec/cred; see Spec for details.
+ *              0:  no security mode
+ *              1:  symmetric pair-wise key
+ *              2:  symmetric group key
+ *              4:  asymmetric key
+ *              8:  signed asymmetric key (aka certificate)
+ *              16: PIN /password
+ */
+typedef OSCTBitmask_t OicSecCredType_t;
 
 typedef struct OicSecDoxm OicSecDoxm_t;
 
@@ -362,14 +363,16 @@ struct OicSecDoxm
     OicSecOxm_t         *oxm;           // 1:R:M:N:UINT16
     size_t              oxmLen;         // the number of elts in Oxm
     OicSecOxm_t         oxmSel;         // 2:R/W:S:Y:UINT16
-    bool                owned;          // 3:R:S:Y:Boolean
+    OicSecCredType_t    sct;            // 3:R:S:Y:oic.sec.credtype
+    bool                owned;          // 4:R:S:Y:Boolean
     //TODO: Need more clarification on deviceIDFormat field type.
-    //OicSecDvcIdFrmt_t   deviceIDFormat; // 4:R:S:Y:UINT8
-    OicUuid_t           deviceID;       // 5:R:S:Y:oic.uuid
-    OicUuid_t           owner;         // 6:R:S:Y:oic.uuid
+    //OicSecDvcIdFrmt_t   deviceIDFormat; // 5:R:S:Y:UINT8
+    OicUuid_t           deviceID;       // 6:R:S:Y:oic.uuid
+    OicUuid_t           owner;         // 7:R:S:Y:oic.uuid
     // NOTE: we are using UUID for Owner instead of Svc type for mid-April
     // SRM version only; this will change to Svc type for full implementation.
-    //OicSecSvc_t       Owner;        // 5:R:S:Y:oic.sec.svc
+    //OicSecSvc_t       devOwner;        // 7:R:S:Y:oic.sec.svc
+    //OicSecSvc_t       rOwner;        // 8:R:S:Y:oic.sec.svc
     //TODO change Owner type to oic.sec.svc
 };
 

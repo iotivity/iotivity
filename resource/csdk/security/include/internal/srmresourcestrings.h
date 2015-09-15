@@ -85,6 +85,7 @@ extern const char * OIC_JSON_OM_NAME;
 extern const char * OIC_JSON_SM_NAME;
 extern const char * OIC_JSON_SERVICE_DEVICE_ID;
 extern const char * OIC_JSON_SERVICE_TYPE;
+extern const char * OIC_JSON_SUPPORTED_CRED_TYPE_NAME;
 
 extern OicUuid_t WILDCARD_SUBJECT_ID;
 extern size_t WILDCARD_SUBJECT_ID_LEN;

@@ -60,6 +60,7 @@ static OicSecDoxm_t gDefaultDoxm =
     &gOicSecDoxmJustWorks,  /* uint16_t *oxm */
     1,                      /* size_t oxmLen */
     OIC_JUST_WORKS,         /* uint16_t oxmSel */
+    SYMMETRIC_PAIR_WISE_KEY,/* OicSecCredType_t sct */
     false,                  /* bool owned */
     {.id = {0}},            /* OicUuid_t deviceID */
     {.id = {0}},            /* OicUuid_t owner */
@@ -130,6 +131,9 @@ char * BinToDoxmJSON(const OicSecDoxm_t * doxm)
 
     //OxmSel -- Mandatory
     cJSON_AddNumberToObject(jsonDoxm, OIC_JSON_OXM_SEL_NAME, (int)doxm->oxmSel);
+
+    //sct -- Mandatory
+    cJSON_AddNumberToObject(jsonDoxm, OIC_JSON_SUPPORTED_CRED_TYPE_NAME, (int)doxm->sct);
 
     //Owned -- Mandatory
     cJSON_AddBoolToObject(jsonDoxm, OIC_JSON_OWNED_NAME, doxm->owned);
@@ -242,6 +246,19 @@ OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr)
     {
         VERIFY_NON_NULL(TAG, gDoxm, ERROR);
         doxm->oxmSel = gDoxm->oxmSel;
+    }
+
+    //sct -- Mandatory
+    jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_SUPPORTED_CRED_TYPE_NAME);
+    if(jsonObj)
+    {
+        VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
+        doxm->sct = (OicSecCredType_t)jsonObj->valueint;
+    }
+    else // PUT/POST JSON may not have sct so set it to the gDoxm->sct
+    {
+        VERIFY_NON_NULL(TAG, gDoxm, ERROR);
+        doxm->sct = gDoxm->sct;
     }
 
     //Owned -- Mandatory

@@ -488,7 +488,7 @@ static int InputCredentials(Credential &cred)
 
        switch (choice){
            case 1:
-               cred.setCredentialType(choice);
+               cred.setCredentialType(static_cast<OicSecCredType_t>(choice));
                choice = 0; //validation of the accepted choice.
                break;
            case 2:
@@ -709,7 +709,7 @@ int main(void)
                             pOwnedDevList[first]->getDeviceID();
                         std::cout << " and "<< pOwnedDevList[second]->getDeviceID() << std::endl;
 
-                        Credential cred(0,0);
+                        Credential cred( NO_SECURITY_MODE ,0);
                         std::cout << "Please input credentials for selected devices: " << std::endl;
                         if (0 != InputCredentials(cred))
                             break;
@@ -737,7 +737,7 @@ int main(void)
                             pOwnedDevList[first]->getDeviceID();
                         std::cout << " and "<< pOwnedDevList[second]->getDeviceID() << std::endl;
 
-                        Credential cred(0,0);
+                        Credential cred( NO_SECURITY_MODE, 0);
                         std::cout << "Please input credentials for selected devices: " << std::endl;
                         if (0 != InputCredentials(cred))
                             break;
