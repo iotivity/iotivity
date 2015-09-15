@@ -154,7 +154,7 @@ public class ServerBuilderAutoActivity extends Activity {
 
         ServerBuilder.rcsResourceObject.setAttribute("Temperature", value);
         logMessage = "Attribute set successfully" + "\n";
-        logMessage = logMessage + "Temperature : " + value;
+        logMessage += "Temperature : " + value;
         Message msg;
         ServerBuilderAutoActivity.setMessageLog(logMessage);
         msg = Message.obtain();

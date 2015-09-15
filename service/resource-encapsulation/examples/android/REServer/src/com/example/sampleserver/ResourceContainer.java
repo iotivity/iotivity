@@ -28,7 +28,6 @@ import java.util.Map;
 import org.iotivity.ResourceEncapsulation.server.RCSBundleInfo;
 import org.iotivity.ResourceEncapsulation.server.RCSResourceContainer;
 
-import android.content.Context;
 import android.os.Message;
 
 /**
@@ -43,8 +42,9 @@ public class ResourceContainer {
     public static String                     logMessage;
     private static ResourceContainerActivity resourceContainerActivityInstance;
     private static Message                   msg;
-    private static boolean                   startBundleFlag;
-    private static boolean                   isStarted = false;
+    public static boolean                    startBundleFlag;
+    public static boolean                    isStarted     = false;
+    public static boolean                    isInitialized = false;
 
     // constructor
     public ResourceContainer() {
@@ -56,18 +56,21 @@ public class ResourceContainer {
     // Start Container
     public void startContainer(String sdCardPath) {
 
-        startBundleFlag = true;
         String configFile = sdCardPath + "/ResourceContainerConfig.xml";
-
-        if (!isStarted) {
+        if (!isStarted && !isInitialized) {
             for (int i = 0; i < 2; i++) {
                 containerInstance.startContainer(configFile);
-                isStarted = true;
             }
+            isStarted = true;
+            isInitialized = true;
         } else {
             containerInstance.startContainer(configFile);
         }
+
         logMessage = "Container Started";
+        logMessage += "with one Bundle" + "\n";
+        logMessage += "ID : oic.bundle.discomfortIndexSensor";
+
         ResourceContainerActivity.setMessageLog(logMessage);
         msg = Message.obtain();
         msg.what = 1;
@@ -81,28 +84,54 @@ public class ResourceContainer {
     // Stop Container
     public void stopContainer() {
 
-        containerInstance.stopContainer();
-        logMessage = "Container stopped";
+        if (isStarted) {
+            containerInstance.stopContainer();
+            logMessage = "Container stopped";
+            isStarted = false;
+            ResourceContainerActivity.setMessageLog(logMessage);
+            msg = Message.obtain();
+            msg.what = 1;
+            resourceContainerActivityInstance.getHandler().sendMessage(msg);
+        }
+    }
+
+    // List Bundle Resources DI
+    public void listBundleResourcesDI() {
+
+        List<String> bundleResources = containerInstance
+                .listBundleResources("oic.bundle.discomfortIndexSensor");
+
+        Iterator<String> it = bundleResources.iterator();
+        logMessage = "";
+
+        if (0 == bundleResources.size()) {
+            logMessage += "No resource found in the bundle" + "\n";
+        } else {
+            while (it.hasNext()) {
+                String element = (String) it.next();
+                logMessage += element + "\n";
+            }
+        }
         ResourceContainerActivity.setMessageLog(logMessage);
         msg = Message.obtain();
         msg.what = 1;
         resourceContainerActivityInstance.getHandler().sendMessage(msg);
     }
 
-    // List Bundle Resources
-    public void listBundleResources() {
+    // List Bundle Resources BMI
+    public void listBundleResourcesBMI() {
 
         List<String> bundleResources = containerInstance
-                .listBundleResources("oic.bundle.discomfortIndexSensor");
+                .listBundleResources("oic.bundle.BMISensor");
         Iterator<String> it = bundleResources.iterator();
         logMessage = "";
 
         if (0 == bundleResources.size()) {
-            logMessage = logMessage + "No resource found in the bundle" + "\n";
+            logMessage += "No resource found in the bundle" + "\n";
         } else {
             while (it.hasNext()) {
                 String element = (String) it.next();
-                logMessage = logMessage + element + "\n";
+                logMessage += element + "\n";
             }
         }
         ResourceContainerActivity.setMessageLog(logMessage);
@@ -116,16 +145,20 @@ public class ResourceContainer {
 
         List<RCSBundleInfo> bundleList = containerInstance.listBundles();
         Iterator<RCSBundleInfo> it = bundleList.iterator();
+        int i = 0;
         logMessage = "";
-        logMessage = logMessage + "size of bundleList : " + bundleList.size()
-                + "\n";
+        logMessage += "size of bundleList : " + bundleList.size() + "\n\n";
 
         while (it.hasNext()) {
-
+            i++;
             RCSBundleInfo object = (RCSBundleInfo) it.next();
-            logMessage = logMessage + "ID :" + object.getID() + "\n";
-            logMessage = logMessage + "Path: " + object.getPath() + "\n";
-            logMessage = logMessage + "version : " + object.getVersion() + "\n";
+            logMessage += "Bundle : " + i + " -: \n";
+            logMessage += "ID : " + object.getID() + "\n";
+            logMessage += "Lib Path: " + object.getPath() + "\n";
+            if (!(object.getVersion().equalsIgnoreCase("")))
+                logMessage += "version : " + object.getVersion() + "\n\n";
+            else
+                logMessage += "\n";
         }
         ResourceContainerActivity.setMessageLog(logMessage);
         msg = Message.obtain();
@@ -133,33 +166,30 @@ public class ResourceContainer {
         resourceContainerActivityInstance.getHandler().sendMessage(msg);
     }
 
-    // Add Bundles
-    public void addBundle() {
+    // Add Bundle BMI
+    public void addBundleBMI() {
 
         Map<String, String> bundleParams = null;
         List<RCSBundleInfo> bundleList = containerInstance.listBundles();
-        if (0 < bundleList.size()) {
+        if (1 < bundleList.size()) {
             logMessage = "Bundle already added" + "\n";
-
         } else {
             for (int i = 0; i < 2; i++) {
                 containerInstance
                         .addBundle(
-                                "oic.bundle.discomfortIndexSensor",
+                                "oic.bundle.BMISensor",
                                 "xyz",
-                                "data/data/com.example.sampleresourceserver/files/libSoftSensorBundle.so",
+                                "data/data/com.example.sampleresourceserver/files/libBMISensorBundle.so",
                                 bundleParams);
             }
 
             logMessage = "bundle to add : " + "\n";
-            logMessage = logMessage + "ID :"
-                    + "oic.bundle.discomfortIndexSensor" + "\n";
-            logMessage = logMessage + "Uri: " + "xyz" + "\n";
-            logMessage = logMessage
-                    + "Path : "
-                    + "data/data/com.re.sampleclient/files/libSoftSensorBundle.so"
+            logMessage += "ID :" + "oic.bundle.BMISensor" + "\n";
+            logMessage += "Uri: " + "xyz" + "\n";
+            logMessage += "Path : "
+                    + "data/data/com.re.sampleclient/files/libBMISensorBundle.so"
                     + "\n";
-            logMessage = logMessage + "bundle added successfully" + "\n";
+            logMessage += "bundle added successfully" + "\n";
         }
 
         ResourceContainerActivity.setMessageLog(logMessage);
@@ -168,24 +198,21 @@ public class ResourceContainer {
         resourceContainerActivityInstance.getHandler().sendMessage(msg);
     }
 
-    // Remove Bundle
-    public void removeBundle() {
+    // Remove Bundle BMI
+    public void removeBundleBMI() {
 
         List<RCSBundleInfo> bundleList = containerInstance.listBundles();
-        if (0 == bundleList.size()) {
-            logMessage = "No bundle to remove" + "\n";
-
+        if (1 == bundleList.size()) {
+            logMessage = "Bundle already removed" + "\n";
         } else {
 
             for (int i = 0; i < 2; i++) {
-                containerInstance
-                        .removeBundle("oic.bundle.discomfortIndexSensor");
+                containerInstance.removeBundle("oic.bundle.BMISensor");
             }
             startBundleFlag = false;
             logMessage = "bundle to remove : " + "\n";
-            logMessage = logMessage + "ID :"
-                    + "oic.bundle.discomfortIndexSensor" + "\n";
-            logMessage = logMessage + " bundle removed  successfully" + "\n";
+            logMessage += "ID :" + "oic.bundle.BMISensor" + "\n";
+            logMessage += " bundle removed  successfully" + "\n";
         }
         ResourceContainerActivity.setMessageLog(logMessage);
         msg = Message.obtain();
@@ -193,22 +220,21 @@ public class ResourceContainer {
         resourceContainerActivityInstance.getHandler().sendMessage(msg);
     }
 
-    // Start Bundle
-    public void startBundle() {
+    // Start Bundle BMI
+    public void startBundleBMI() {
 
         List<RCSBundleInfo> bundleList = containerInstance.listBundles();
-        if (0 == bundleList.size()) {
-            logMessage = "No bundle to Start" + "\n";
+        if (1 == bundleList.size()) {
+            logMessage = "BMI bundle not added" + "\n";
         } else if (true == startBundleFlag) {
             logMessage = "Bundle already started" + "\n";
         } else {
             startBundleFlag = true;
-            containerInstance.startBundle("oic.bundle.discomfortIndexSensor");
+            containerInstance.startBundle("oic.bundle.BMISensor");
 
             logMessage = " bundle to start" + "\n";
-            logMessage = logMessage + " ID : oic.bundle.discomfortIndexSensor"
-                    + "\n";
-            logMessage = logMessage + " bundle started successfully" + "\n";
+            logMessage += " ID : oic.bundle.BMISensor" + "\n";
+            logMessage += " bundle started successfully" + "\n";
         }
         ResourceContainerActivity.setMessageLog(logMessage);
         msg = Message.obtain();
@@ -216,25 +242,21 @@ public class ResourceContainer {
         resourceContainerActivityInstance.getHandler().sendMessage(msg);
     }
 
-    // Stop Bundle
-    public void stopBundle() {
+    // Stop Bundle BMI
+    public void stopBundleBMI() {
 
         if (false == startBundleFlag) {
-            logMessage = "Bundle already stopped" + "\n";
+            logMessage = "Bundle is not Started" + "\n";
         } else {
-
             List<RCSBundleInfo> bundleList = containerInstance.listBundles();
             if (0 == bundleList.size()) {
                 logMessage = "No bundle to Stop" + "\n";
-
             } else {
-                containerInstance
-                        .stopBundle("oic.bundle.discomfortIndexSensor");
+                containerInstance.stopBundle("oic.bundle.BMISensor");
                 startBundleFlag = false;
                 logMessage = " bundle to stop" + "\n";
-                logMessage = logMessage
-                        + " ID : oic.bundle.discomfortIndexSensor" + "\n";
-                logMessage = logMessage + " bundle stopped successfully" + "\n";
+                logMessage += " ID : oic.bundle.BMISensor" + "\n";
+                logMessage += " bundle stopped successfully" + "\n";
             }
         }
 
@@ -244,34 +266,54 @@ public class ResourceContainer {
         resourceContainerActivityInstance.getHandler().sendMessage(msg);
     }
 
-    // Add Resource Configuration
-    public void addResourceConfig() {
+    // Add Resource Configuration to DI bundle
+    public void addResourceConfigDI() {
+
+        List<RCSBundleInfo> bundleList = containerInstance.listBundles();
+        List<String> bundleResources = containerInstance
+                .listBundleResources("oic.bundle.discomfortIndexSensor");
+
+        if (0 == bundleList.size()) {
+            logMessage = "No bundle found" + "\n";
+        } else if ((0 == bundleList.size()) && (0 == bundleResources.size())) {
+            logMessage = "No bundle found" + "\n";
+        } else {
+            Map<String, String> params = new HashMap<String, String>();
+            params.put("resourceType", "oic.softsensor");
+            params.put("address",
+                    "http://192.168.0.2/api/newdeveloper/sensor/22");
+            containerInstance.addResourceConfig(
+                    "oic.bundle.discomfortIndexSensor", "", params);
+            logMessage = "resource added successfully" + "\n";
+        }
+        ResourceContainerActivity.setMessageLog(logMessage);
+        msg = Message.obtain();
+        msg.what = 1;
+        resourceContainerActivityInstance.getHandler().sendMessage(msg);
+    }
+
+    // Add Resource Configuration to BMI bundle
+    public void addResourceConfigBMI() {
 
         if (false == startBundleFlag) {
             logMessage = "Bundle is not started" + "\n";
-
         } else {
-
             List<RCSBundleInfo> bundleList = containerInstance.listBundles();
             List<String> bundleResources = containerInstance
-                    .listBundleResources("oic.bundle.discomfortIndexSensor");
+                    .listBundleResources("oic.bundle.BMISensor");
 
             if (0 == bundleList.size()) {
-
                 logMessage = "No bundle found" + "\n";
-
             } else if ((0 == bundleList.size())
                     && (0 == bundleResources.size())) {
-
                 logMessage = "No bundle found" + "\n";
             } else {
-
                 Map<String, String> params = new HashMap<String, String>();
                 params.put("resourceType", "oic.softsensor");
                 params.put("address",
                         "http://192.168.0.2/api/newdeveloper/sensor/22");
-                containerInstance.addResourceConfig(
-                        "oic.bundle.discomfortIndexSensor", "", params);
+                containerInstance.addResourceConfig("oic.bundle.BMISensor", "",
+                        params);
                 logMessage = "resource added successfully" + "\n";
             }
         }
@@ -281,8 +323,8 @@ public class ResourceContainer {
         resourceContainerActivityInstance.getHandler().sendMessage(msg);
     }
 
-    // Remove Resource Configuration
-    public void removeResourceConfig() {
+    // Remove Resource Configuration from DI Bundle
+    public void removeResourceConfigDI() {
 
         List<String> bundleResources = containerInstance
                 .listBundleResources("oic.bundle.discomfortIndexSensor");
@@ -290,6 +332,30 @@ public class ResourceContainer {
             String element = bundleResources.get(0);
             containerInstance.removeResourceConfig(
                     "oic.bundle.discomfortIndexSensor", element);
+            Message msg;
+            logMessage = "resource removed successfully: \n" + element + "\n";
+            ResourceContainerActivity.setMessageLog(logMessage);
+            msg = Message.obtain();
+            msg.what = 1;
+            resourceContainerActivityInstance.getHandler().sendMessage(msg);
+        } else {
+            logMessage = "No resource to remove" + "\n";
+            ResourceContainerActivity.setMessageLog(logMessage);
+            msg = Message.obtain();
+            msg.what = 1;
+            resourceContainerActivityInstance.getHandler().sendMessage(msg);
+        }
+    }
+
+    // Remove Resource Configuration from BMI Bundle
+    public void removeResourceConfigBMI() {
+
+        List<String> bundleResources = containerInstance
+                .listBundleResources("oic.bundle.BMISensor");
+        if (bundleResources.size() >= 1) {
+            String element = bundleResources.get(0);
+            containerInstance.removeResourceConfig("oic.bundle.BMISensor",
+                    element);
             Message msg;
             logMessage = "resource removed successfully: \n" + element + "\n";
             ResourceContainerActivity.setMessageLog(logMessage);

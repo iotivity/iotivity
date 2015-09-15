@@ -81,7 +81,7 @@ public class ServerBuilder {
 
         rcsResourceObject.setAttribute("Temperature", value);
         logMessage = "Attribute set successfully" + "\n";
-        logMessage = logMessage + "Temperature : " + value;
+        logMessage += "Temperature : " + value;
 
         serverBuilderDevActivityInstance.setMessageLog(logMessage);
         msg = Message.obtain();
@@ -189,8 +189,8 @@ public class ServerBuilder {
         public void onAttributeUpdate(String oldValue, String newValue) {
 
             logMessage = "attributed updated" + "\n";
-            logMessage = logMessage + "oldValue : " + oldValue + "\n";
-            logMessage = logMessage + "newValue : " + newValue + "\n";
+            logMessage += "oldValue : " + oldValue + "\n";
+            logMessage += "newValue : " + newValue + "\n";
             serverBuilderDevActivityInstance.setMessageLog(logMessage);
             msg = Message.obtain();
             msg.what = 0;
