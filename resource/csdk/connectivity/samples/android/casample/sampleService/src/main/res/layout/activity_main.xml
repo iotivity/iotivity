@@ -239,6 +239,13 @@
                 android:layout_toRightOf="@id/btn_receive"
                 android:text="@string/get_network_info" />
 
+            <Button
+                android:id="@+id/btn_big_data"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toRightOf="@id/btn_get_network_info"
+                android:text="big data" />
+
         </RelativeLayout>
     </RelativeLayout>
 

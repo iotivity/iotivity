@@ -4,6 +4,7 @@
 #include <dlfcn.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "cainterface.h"
 #include "cacommon.h"
@@ -30,6 +31,9 @@
 #define RESOURCE_URI_LENGTH 14
 #define OPTION_INFO_LENGTH 1024
 #define NETWORK_INFO_LENGTH 1024
+#define BIG_PAYLOAD_LENGTH 1024
+#define RECEIVED_FILE_NAME_PREFIX_LENGTH 7
+#define RECEIVED_FILE_NAME_LENGTH 14
 
 typedef struct
 {
@@ -48,6 +52,9 @@ static CAResult_t get_remote_address(const char *address);
 static void parsing_coap_uri(const char* uri, addressSet_t* address, CATransportFlags_t *flags);
 static void delete_global_references(JNIEnv *env, jobject obj);
 static int get_address_set(const char *pAddress, addressSet_t* outAddress);
+bool read_file(const char* name, char** bytes, size_t* length);
+uint32_t gettodaydate();
+void saveFile(const char *payload, size_t payloadSize);
 
 uint16_t g_localSecurePort = SECURE_DEFAULT_PORT;
 CATransportAdapter_t g_selectedNwType = CA_ADAPTER_IP;
@@ -58,6 +65,8 @@ static const char COAP_PREFIX[] =  "coap://";
 static const char COAPS_PREFIX[] = "coaps://";
 static const uint16_t COAP_PREFIX_LEN = sizeof(COAP_PREFIX) - 1;
 static const uint16_t COAPS_PREFIX_LEN = sizeof(COAPS_PREFIX) - 1;
+
+static const char RECEIVED_FILE_PATH[] = "/storage/emulated/0/Download/%d%s.txt";
 
 static const char SECURE_INFO_DATA[]
                                    = "{\"oc\":[{\"href\":\"%s\",\"prop\":{\"rt\":[\"core.led\"],"
@@ -298,18 +307,14 @@ Java_org_iotivity_ca_service_RMInterface_RMRegisterHandler(JNIEnv *env, jobject 
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_service_RMInterface_RMSendRequest(JNIEnv *env, jobject obj, jstring uri,
                                                        jstring payload, jint selectedNetwork,
-                                                       jint isSecured, jint msgType)
+                                                       jint isSecured, jint msgType,
+                                                       jboolean isBigData)
 {
     LOGI("selectedNetwork - %d", selectedNetwork);
     if (!env || !obj)
     {
         LOGI("Invalid input parameter");
         return;
-    }
-
-    if (!payload)
-    {
-        LOGE("payload is NULL");
     }
 
     if (!uri)
@@ -367,37 +372,75 @@ Java_org_iotivity_ca_service_RMInterface_RMSendRequest(JNIEnv *env, jobject obj,
     requestData.token = token;
     requestData.tokenLength = tokenLength;
 
-    if (1 == isSecured)
+    size_t payloadLength = 0;
+    if (isBigData)
     {
-        uint32_t length = sizeof(SECURE_INFO_DATA) + strlen(resourceURI);
-        requestData.payload = (CAPayload_t) malloc(length);
-        if (NULL == requestData.payload)
+        const char* path = NULL;
+        if (payload)
         {
-            LOGE("Memory allocation failed!");
-            // destroy token
-            CADestroyToken(token);
-            // destroy remote endpoint
-            CADestroyEndpoint(endpoint);
-            return;
+            path = (*env)->GetStringUTFChars(env, payload, NULL);
+            if(path)
+            {
+                char* bigData = NULL;
+                bool result = read_file(path, &bigData, &payloadLength);
+                if (!result)
+                {
+                    LOGE("read has failed");
+                    (*env)->ReleaseStringUTFChars(env, payload, path);
+                    return;
+                }
+                (*env)->ReleaseStringUTFChars(env, payload, path);
+
+                requestData.payload = (CAPayload_t) malloc(payloadLength);
+                if (NULL == requestData.payload)
+                {
+                    LOGE("Memory allocation failed!");
+                    // destroy token
+                    CADestroyToken(token);
+                    // destroy remote endpoint
+                    CADestroyEndpoint(endpoint);
+                    return;
+                }
+                memcpy(requestData.payload, bigData, payloadLength);
+                requestData.payloadSize = payloadLength;
+            }
         }
-        snprintf((char *) requestData.payload, length, SECURE_INFO_DATA, resourceURI, g_localSecurePort);
-        requestData.payloadSize = length;
     }
     else
     {
-        uint32_t length = sizeof(NORMAL_INFO_DATA) + strlen(resourceURI);
-        requestData.payload = (CAPayload_t) malloc(length);
-        if (NULL == requestData.payload)
+        if (isSecured)
         {
-            LOGE("Memory allocation failed!");
-            // destroy token
-            CADestroyToken(token);
-            // destroy remote endpoint
-            CADestroyEndpoint(endpoint);
-            return;
+            payloadLength = sizeof(SECURE_INFO_DATA) + strlen(resourceURI);
+            requestData.payload = (CAPayload_t) malloc(payloadLength);
+            if (NULL == requestData.payload)
+            {
+                LOGE("Memory allocation failed!");
+                // destroy token
+                CADestroyToken(token);
+                // destroy remote endpoint
+                CADestroyEndpoint(endpoint);
+                return;
+            }
+            snprintf((char *) requestData.payload, payloadLength, SECURE_INFO_DATA,
+                     resourceURI, g_localSecurePort);
+            requestData.payloadSize = payloadLength;
         }
-        snprintf((char *) requestData.payload, length, NORMAL_INFO_DATA, resourceURI);
-        requestData.payloadSize = length;
+        else
+        {
+            payloadLength = sizeof(NORMAL_INFO_DATA) + strlen(resourceURI);
+            requestData.payload = (CAPayload_t) malloc(payloadLength);
+            if (NULL == requestData.payload)
+            {
+                LOGE("Memory allocation failed!");
+                // destroy token
+                CADestroyToken(token);
+                // destroy remote endpoint
+                CADestroyEndpoint(endpoint);
+                return;
+            }
+            snprintf((char *) requestData.payload, payloadLength, NORMAL_INFO_DATA, resourceURI);
+            requestData.payloadSize = payloadLength;
+        }
     }
 
     requestData.type = messageType;
@@ -1023,7 +1066,14 @@ void request_handler(const CAEndpoint_t* object, const CARequestInfo_t* requestI
             memcpy(clonePayload, requestInfo->info.payload, len);
             clonePayload[len] = '\0';
 
-            callback("Data: ", clonePayload);
+            if (len > BIG_PAYLOAD_LENGTH)
+            {
+                saveFile(clonePayload, len);
+            }
+            else
+            {
+                callback("Data: ", clonePayload);
+            }
             free(clonePayload);
         }
     }
@@ -1168,7 +1218,14 @@ void response_handler(const CAEndpoint_t* object, const CAResponseInfo_t* respon
             memcpy(clonePayload, responseInfo->info.payload, len);
             clonePayload[len] = '\0';
 
-            callback("Data: ", clonePayload);
+            if (len > BIG_PAYLOAD_LENGTH)
+            {
+                saveFile(clonePayload, len);
+            }
+            else
+            {
+                callback("Data: ", clonePayload);
+            }
             free(clonePayload);
         }
     }
@@ -1583,4 +1640,105 @@ void delete_global_references(JNIEnv *env, jobject obj)
     }
 
     (*env)->DeleteGlobalRef(env, g_responseListenerObject);
+}
+
+
+bool read_file(const char* name, char** bytes, size_t* length)
+{
+    if (NULL == name)
+    {
+        LOGE("parameter is null");
+        return false;
+    }
+
+    FILE* file;
+    char* buffer;
+    size_t fileLen;
+
+    // Open file
+    file = fopen(name, "rt");
+    if (!file)
+    {
+        fprintf(stderr, "Unable to open file %s", name);
+        return false;
+    }
+
+    // Get file length
+    fseek(file, 0, SEEK_END);
+    fileLen = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    LOGI("file size: %d", fileLen);
+
+    // Allocate memory
+    buffer = calloc(1, sizeof(char) * fileLen + 1);
+    if (!buffer)
+    {
+        fprintf(stderr, "Memory error!");
+        fclose(file);
+        return false;
+    }
+
+    // Read file contents into buffer
+    fread(buffer, fileLen, 1, file);
+    fclose(file);
+
+    LOGI("file bytes: %s", buffer);
+
+    *bytes = buffer;
+    *length = fileLen;
+
+    return true;
+}
+
+void saveFile(const char *payload, size_t payloadSize)
+{
+    // 1. get day
+    uint32_t day = gettodaydate();
+
+    // 2. get time
+    time_t current_time;
+    struct tm * time_info;
+    char timeString[RECEIVED_FILE_NAME_PREFIX_LENGTH];
+
+    time(&current_time);
+    time_info = localtime(&current_time);
+
+    strftime(timeString, sizeof(timeString), "%H%M%S", time_info);
+
+    uint32_t path_length = strlen(RECEIVED_FILE_PATH) + RECEIVED_FILE_NAME_LENGTH + 1;
+    char* path = calloc(1, sizeof(char) * path_length);
+    if (path != NULL)
+    {
+        sprintf(path, RECEIVED_FILE_PATH, day, timeString);
+        LOGI("received file path: %s", path);
+
+        FILE *fp = fopen(path, "wt");
+        fwrite(payload, 1, payloadSize, fp);
+        fclose(fp);
+
+        callback("File Path: ", path);
+    }
+    else
+    {
+        LOGE("path Out of memory");
+    }
+}
+
+uint32_t gettodaydate()
+{
+    uint32_t ldate;
+    time_t clock;
+    struct tm *date;
+
+    clock = time(0);
+    date = localtime(&clock);
+    ldate = date->tm_year * 100000;
+    ldate += (date->tm_mon + 1) * 1000;
+    ldate += date->tm_mday * 10;
+    ldate += date->tm_wday;
+    ldate += 190000000;
+    ldate /= 10;
+
+    return(ldate);
 }
