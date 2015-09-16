@@ -390,6 +390,8 @@ Java_org_iotivity_ca_service_RMInterface_RMSendRequest(JNIEnv *env, jobject obj,
                 {
                     LOGE("read has failed");
                     (*env)->ReleaseStringUTFChars(env, payload, path);
+                    CADestroyToken(token);
+                    CADestroyEndpoint(endpoint);
                     return;
                 }
                 (*env)->ReleaseStringUTFChars(env, payload, path);
@@ -1683,7 +1685,15 @@ bool read_file(const char* name, char** bytes, size_t* length)
     }
 
     // Read file contents into buffer
-    fread(buffer, fileLen, 1, file);
+    size_t ret = fread(buffer, fileLen, 1, file);
+    if (ret != 1)
+    {
+        printf("Failed to read data from file, %s\n", name);
+        fclose(file);
+        free(buffer);
+        return false;
+    }
+
     fclose(file);
 
     LOGI("file bytes: %s", buffer);

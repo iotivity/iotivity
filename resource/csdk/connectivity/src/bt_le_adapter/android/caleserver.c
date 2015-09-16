@@ -174,7 +174,7 @@ jobject CALEServerSetResponseData(JNIEnv *env, jbyteArray responseData)
 
     jclass jni_cid_bluetoothGattCharacteristic = (*env)->FindClass(env, "android/bluetooth/"
                                                                    "BluetoothGattCharacteristic");
-    if (!jni_cid_bluetoothGattService)
+    if (!jni_cid_bluetoothGattCharacteristic)
     {
         OIC_LOG(ERROR, TAG, "jni_cid_bluetoothGattCharacteristic is null");
         return NULL;
@@ -184,7 +184,7 @@ jobject CALEServerSetResponseData(JNIEnv *env, jbyteArray responseData)
                                                        "getService",
                                                        "(Ljava/util/UUID;)Landroid/bluetooth/"
                                                        "BluetoothGattService;");
-    if (!jni_cid_bluetoothGattService)
+    if (!jni_mid_getService)
     {
         OIC_LOG(ERROR, TAG, "jni_mid_getService is null");
         return NULL;
@@ -682,9 +682,9 @@ CAResult_t CALEServerStopAdvertise(JNIEnv *env, jobject advertiseCallback)
                                                                     "getDefaultAdapter",
                                                                     "()Landroid/bluetooth/"
                                                                     "BluetoothAdapter;");
-    if (!jni_cid_leAdvertiser)
+    if (!jni_mid_getDefaultAdapter)
     {
-        OIC_LOG(ERROR, TAG, "jni_cid_leAdvertiser is null");
+        OIC_LOG(ERROR, TAG, "jni_mid_getDefaultAdapter is null");
         return CA_STATUS_FAILED;
     }
 
