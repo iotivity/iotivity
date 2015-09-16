@@ -50,11 +50,6 @@ void HueLight::initAttributes()
     BundleResource::setAttribute("color", 0);
 }
 
-RCSResourceAttributes &HueLight::getAttributes()
-{
-    return BundleResource::getAttributes();
-}
-
 RCSResourceAttributes::Value HueLight::getAttribute(const std::string &key)
 {
     cout << "HueLight::getAttribute called for " << key <<  " called" << endl;

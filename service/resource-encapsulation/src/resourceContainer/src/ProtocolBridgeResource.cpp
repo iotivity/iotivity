@@ -22,8 +22,10 @@
 
 using namespace OIC::Service;
 
-namespace OIC{
-    namespace Service{
+namespace OIC
+{
+    namespace Service
+    {
         ProtocolBridgeResource::ProtocolBridgeResource()
         {
 
@@ -32,6 +34,28 @@ namespace OIC{
         ProtocolBridgeResource::~ProtocolBridgeResource()
         {
 
+        }
+
+        RCSResourceAttributes &ProtocolBridgeResource::getAttributes()
+        {
+            // execute implemented logic to get attribute, and update bundle resource attribute data
+            RCSResourceAttributes attr;
+            for (std::string attrName : getAttributeNames())
+            {
+                attr[attrName] = getAttribute(attrName);
+            }
+            BundleResource::setAttributes(attr);
+
+            return BundleResource::getAttributes();
+        }
+
+        void ProtocolBridgeResource::setAttributes(RCSResourceAttributes &attrs)
+        {
+            // execute implemented logic to set attribute
+            for (RCSResourceAttributes::iterator it = attrs.begin(); it != attrs.end(); ++it)
+            {
+                setAttribute(it->key(), std::move(it->value()));
+            }
         }
     }
 }

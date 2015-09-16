@@ -348,58 +348,75 @@ namespace OIC
         }
 
         RCSGetResponse ResourceContainerImpl::getRequestHandler(const RCSRequest &request,
-                const RCSResourceAttributes &attributes)
+                const RCSResourceAttributes &)
         {
-            (void) attributes;
-            RCSResourceAttributes attr;
+            OCEntityHandlerResult result = OC_EH_ERROR;
 
-            if (m_mapServers.find(request.getResourceUri()) != m_mapServers.end()
-                && m_mapResources.find(request.getResourceUri()) != m_mapResources.end())
+            RCSResourceAttributes attr;
+            std::string strResourceUri = request.getResourceUri();
+
+            if (m_mapServers.find(strResourceUri) != m_mapServers.end()
+                && m_mapResources.find(strResourceUri) != m_mapResources.end())
             {
-                auto getFunction = [this, &attr, &request] ()
+                if (m_mapResources[strResourceUri])
                 {
-                    for (string attrName : m_mapResources[request.getResourceUri()]->getAttributeNames())
+                    auto getFunction = [this, &attr, &strResourceUri]()
                     {
-                        attr[attrName] = m_mapResources[request.getResourceUri()]->getAttribute(attrName);
-                    }
-                };
-                boost::thread getThread(getFunction);
-                getThread.timed_join(boost::posix_time::seconds(BUNDLE_SET_GET_WAIT_SEC));
+                        attr = m_mapResources[strResourceUri]->getAttributes();
+                    };
+                    boost::thread getThread(getFunction);
+                    getThread.timed_join(boost::posix_time::seconds(BUNDLE_SET_GET_WAIT_SEC));
+
+                    result = OC_EH_OK;
+                }
             }
 
-            return RCSGetResponse::create(attr);
+            return RCSGetResponse::create(attr, result, 200);
         }
 
         RCSSetResponse ResourceContainerImpl::setRequestHandler(const RCSRequest &request,
                 const RCSResourceAttributes &attributes)
         {
-            RCSResourceAttributes attr = attributes;
+            OCEntityHandlerResult result = OC_EH_ERROR;
 
-            if (m_mapServers.find(request.getResourceUri()) != m_mapServers.end()
-                && m_mapResources.find(request.getResourceUri()) != m_mapResources.end())
+            RCSResourceAttributes attr;
+            std::list<std::string> lstAttributes;
+            std::string strResourceUri = request.getResourceUri();
+
+            if (m_mapServers.find(strResourceUri) != m_mapServers.end()
+                && m_mapResources.find(strResourceUri) != m_mapResources.end())
             {
-                auto setFunction = [this, &attr, &request] ()
+                if (m_mapResources[strResourceUri])
                 {
-                    for (string attrName : m_mapResources[request.getResourceUri()]->getAttributeNames())
+                    auto setFunction = [this, &lstAttributes, &strResourceUri, &attributes, &attr]()
                     {
-                        if (!attr[attrName].toString().empty())
+                        lstAttributes = m_mapResources[strResourceUri]->getAttributeNames();
+
+                        for (RCSResourceAttributes::const_iterator itor = attributes.begin();
+                             itor != attributes.end(); itor++)
                         {
-                            m_mapResources[request.getResourceUri()]->setAttribute(attrName,
-                                    attr[attrName].toString());
+                            if (std::find(lstAttributes.begin(), lstAttributes.end(), itor->key())
+                                != lstAttributes.end())
+                            {
+                                attr[itor->key()] = itor->value();
+                            }
                         }
-                    }
-                };
-                boost::thread setThread(setFunction);
-                setThread.timed_join(boost::posix_time::seconds(BUNDLE_SET_GET_WAIT_SEC));
+
+                        m_mapResources[strResourceUri]->setAttributes(attr);
+                    };
+                    boost::thread setThread(setFunction);
+                    setThread.timed_join(boost::posix_time::seconds(BUNDLE_SET_GET_WAIT_SEC));
+
+                    result = OC_EH_OK;
+                }
             }
 
-            return RCSSetResponse::create(attr);
+            return RCSSetResponse::create(attr, result, 200);
         }
 
         void ResourceContainerImpl::onNotificationReceived(const std::string &strResourceUri)
         {
-            OC_LOG_V(INFO, CONTAINER_TAG, std::string("onNotificationReceived\n\tnotification from "
-                     + strResourceUri + ".").c_str());
+            OC_LOG_V(INFO, CONTAINER_TAG, std::string("notification from " + strResourceUri + ".").c_str());
 
             if (m_mapServers.find(strResourceUri) != m_mapServers.end())
             {

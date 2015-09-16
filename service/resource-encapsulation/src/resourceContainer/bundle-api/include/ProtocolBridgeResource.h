@@ -51,31 +51,48 @@ namespace OIC
                 virtual ~ProtocolBridgeResource();
 
                 /**
-                * Return all attributes of the resource
-                *
-                * @return RCSResourceAttributes - attributes of the resource
-                */
-                virtual RCSResourceAttributes &getAttributes() = 0;
-
-                /**
-                * Execute the logic of bundle to set the value of attribute
-                *
-                * @param key - name of attribute to set
-                *
-                * @param value - value of attribute to set
+                * Initialize attributes of the resource
                 *
                 * @return void
                 */
-                virtual void setAttribute(std::string key, RCSResourceAttributes::Value &&value) = 0;
+                virtual void initAttributes() = 0;
+
+                /**
+                * Return all attributes of the resource
+                *
+                * @return Attributes of the resource
+                */
+                virtual RCSResourceAttributes &getAttributes();
+
+                /**
+                * Set attributes of the resource
+                *
+                * @param attrs Attributes to set
+                *
+                * @return void
+                */
+                virtual void setAttributes(RCSResourceAttributes &attrs);
 
                 /**
                 * Execute the logic of bundle to get the value of attribute
                 *
-                * @param key - key of attribute to get
+                * @param key Key of attribute to get
                 *
-                * @return RCSResourceAttributes::Value - return value of the attribute
+                * @return Value of the attribute
                 */
                 virtual RCSResourceAttributes::Value getAttribute(const std::string &key) = 0;
+
+                /**
+                * Execute the logic of bundle to set the value of attribute
+                *
+                * @param key Name of attribute to set
+                *
+                * @param value Value of attribute to set
+                *
+                * @return void
+                */
+                virtual void setAttribute(std::string key,
+                                          RCSResourceAttributes::Value &&value) = 0;
         };
     }
 }

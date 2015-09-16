@@ -57,7 +57,7 @@ namespace OIC
                 /**
                 * Return the list of attribute names of the resource
                 *
-                * @return std::list - return list of the attribute names
+                * @return List of the attribute names
                 */
                 std::list<std::string> getAttributeNames();
 
@@ -71,7 +71,7 @@ namespace OIC
                 /**
                 * Register notification receiver(resource container) to notify for the changes of attributes
                 *
-                * @param pNotiReceiver - Notification Receiver to get notification from bundle resource
+                * @param pNotiReceiver Notification Receiver to get notification from bundle resource
                 *
                 * @return void
                 */
@@ -80,30 +80,38 @@ namespace OIC
                 /**
                 * Return all attributes of the resource
                 *
-                * @return RCSResourceAttributes - attributes of the resource
+                * @return Attributes of the resource
                 */
                 virtual RCSResourceAttributes &getAttributes();
 
                 /**
-                * Execute the logic of bundle to set the value of attribute
+                * Set attributes of the resource
                 *
-                * @param key - name of attribute to set
-                *
-                * @param value - value of attribute to set
+                * @param attrs Attributes to set
                 *
                 * @return void
                 */
-                virtual void setAttribute(std::string key, RCSResourceAttributes::Value &&value);
+                virtual void setAttributes(RCSResourceAttributes &attrs);
 
                 /**
                 * Execute the logic of bundle to get the value of attribute
                 *
-                * @param key - key of attribute to get
+                * @param key Key of attribute to get
                 *
-                * @return RCSResourceAttributes::Value - return value of the attribute
+                * @return Value of the attribute
                 */
                 virtual RCSResourceAttributes::Value getAttribute(const std::string &key);
 
+                /**
+                * Execute the logic of bundle to set the value of attribute
+                *
+                * @param key Name of attribute to set
+                *
+                * @param value Value of attribute to set
+                *
+                * @return void
+                */
+                virtual void setAttribute(std::string key, RCSResourceAttributes::Value &&value);
 
             public:
                 std::string m_bundleId;
@@ -113,7 +121,6 @@ namespace OIC
             private:
                 NotificationReceiver *m_pNotiReceiver;
                 RCSResourceAttributes m_resourceAttributes;
-
         };
     }
 }

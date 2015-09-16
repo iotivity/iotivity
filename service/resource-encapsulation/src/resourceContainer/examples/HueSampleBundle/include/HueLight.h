@@ -33,20 +33,21 @@ namespace OIC
         class HueLight: public ProtocolBridgeResource
         {
 
-        public:
-            HueLight();
-            HueLight(HueConnector* connector, std::string address);
-            virtual ~HueLight();
-            virtual void initAttributes();
-            virtual RCSResourceAttributes& getAttributes();
+            public:
+                HueLight();
+                HueLight(HueConnector *connector, std::string address);
+                virtual ~HueLight();
 
-            virtual void setAttribute(std::string key, RCSResourceAttributes::Value&&);
+                virtual void initAttributes();
 
-            virtual RCSResourceAttributes::Value getAttribute(const std::string& key);
-        private:
-            std::string m_address;
-            HueConnector* m_connector;
-        };}
+                virtual void setAttribute(std::string key, RCSResourceAttributes::Value &&);
+                virtual RCSResourceAttributes::Value getAttribute(const std::string &key);
+
+            private:
+                std::string m_address;
+                HueConnector *m_connector;
+        };
+    }
 }
 
 #endif /* HUEGATEWAYCLIENT_H_ */

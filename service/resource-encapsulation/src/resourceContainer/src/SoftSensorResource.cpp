@@ -55,17 +55,24 @@ namespace OIC
 
         RCSResourceAttributes &SoftSensorResource::getAttributes()
         {
+            // execute implemented logic to get attribute, and update bundle resource attribute data
+            RCSResourceAttributes attr;
+            for (std::string attrName : getAttributeNames())
+            {
+                attr[attrName] = getAttribute(attrName);
+            }
+            BundleResource::setAttributes(attr);
+
             return BundleResource::getAttributes();
         }
 
-        void SoftSensorResource::setAttribute(std::string key, RCSResourceAttributes::Value &&value)
+        void SoftSensorResource::setAttributes(RCSResourceAttributes &attrs)
         {
-            BundleResource::setAttribute(key, std::move(value));
-        }
-
-        RCSResourceAttributes::Value SoftSensorResource::getAttribute(const std::string &key)
-        {
-            return BundleResource::getAttribute(key);
+            // execute implemented logic to set attribute
+            for (RCSResourceAttributes::iterator it = attrs.begin(); it != attrs.end(); ++it)
+            {
+                setAttribute(it->key(), std::move(it->value()));
+            }
         }
     }
 }

@@ -31,25 +31,15 @@ BMISensorResource::~BMISensorResource()
     delete m_pBMISensor;
 }
 
-void BMISensorResource::initAttributes()
-{
-    SoftSensorResource::initAttributes();
-}
-
-RCSResourceAttributes &BMISensorResource::getAttributes()
-{
-    return SoftSensorResource::getAttributes();
-}
-
 RCSResourceAttributes::Value BMISensorResource::getAttribute(const std::string &key)
 {
-    return SoftSensorResource::getAttribute(key);
+    return BundleResource::getAttribute(key);
 }
 
 void BMISensorResource::setAttribute(std::string key,
                                      RCSResourceAttributes::Value &&value)
 {
-    SoftSensorResource::setAttribute(key, std::move(value));
+    BundleResource::setAttribute(key, std::move(value));
 }
 
 void BMISensorResource::executeLogic()

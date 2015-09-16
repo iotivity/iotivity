@@ -19,9 +19,12 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "BundleResource.h"
-#include "Configuration.h"
+
 #include <list>
 #include <string.h>
+
+#include "InternalTypes.h"
+
 
 namespace OIC
 {
@@ -42,9 +45,9 @@ namespace OIC
             m_pNotiReceiver = pNotiReceiver;
         }
 
-        std::list< string > BundleResource::getAttributeNames()
+        std::list< std::string > BundleResource::getAttributeNames()
         {
-            std::list< string > ret;
+            std::list< std::string > ret;
             for (RCSResourceAttributes::iterator it = m_resourceAttributes.begin();
                  it != m_resourceAttributes.end(); ++it)
             {
@@ -58,8 +61,19 @@ namespace OIC
             return m_resourceAttributes;
         }
 
+        void BundleResource::setAttributes(RCSResourceAttributes &attrs)
+        {
+            for (RCSResourceAttributes::iterator it = attrs.begin(); it != attrs.end(); ++it)
+            {
+                m_resourceAttributes[it->key()] = it->value();
+            }
+        }
+
         void BundleResource::setAttribute(std::string key, RCSResourceAttributes::Value &&value)
         {
+            OC_LOG_V(INFO, CONTAINER_TAG, std::string("set attribute \'" + key + "\', with " +
+                     value.toString()).c_str());
+
             m_resourceAttributes[key] = value;
 
             if (m_pNotiReceiver)
@@ -68,8 +82,9 @@ namespace OIC
 
         RCSResourceAttributes::Value BundleResource::getAttribute(const std::string &key)
         {
+            OC_LOG_V(INFO, CONTAINER_TAG, std::string("get attribute \'" + key + "\'").c_str());
+
             return m_resourceAttributes.at(key);
         }
-
     }
 }
