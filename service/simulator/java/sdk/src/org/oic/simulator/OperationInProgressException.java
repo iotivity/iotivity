@@ -22,7 +22,7 @@ package org.oic.simulator;
  */
 @SuppressWarnings("serial")
 public class OperationInProgressException extends SimulatorException {
-    private OperationInProgressException(int errorCode, String errMessage) {
+    public OperationInProgressException(int errorCode, String errMessage) {
         super(errorCode, errMessage);
     }
 }

@@ -213,13 +213,16 @@ public class ResourceManagerView extends ViewPart {
                             System.out.println("Resultant config file path is "
                                     + configFilePath);
                             count = createWizard.getResourceCount();
-                            if (count <= 1) {
-                                // Single resource creation
-                                resourceManager.createResource(configFilePath);
-                            } else {
-                                // Multi-resource creation
-                                resourceManager.createResource(configFilePath,
-                                        count);
+                            if (count > 0) {
+                                if (count == 1) {
+                                    // Single resource creation
+                                    resourceManager
+                                            .createResource(configFilePath);
+                                } else {
+                                    // Multi-resource creation
+                                    resourceManager.createResource(
+                                            configFilePath, count);
+                                }
                             }
                         }
                     }
@@ -244,12 +247,14 @@ public class ResourceManagerView extends ViewPart {
                                     .getDeleteCategory();
                             if (deleteCategory == DeleteCategory.BY_URI) {
                                 String uri = deleteWizard.getDeleteCandidate();
-                                boolean completeURI = Utility
-                                        .isUriComplete(uri);
-                                if (!completeURI) {
-                                    uri = Utility.displayNameToUri(uri);
+                                if (null != uri) {
+                                    boolean completeURI = Utility
+                                            .isUriComplete(uri);
+                                    if (!completeURI) {
+                                        uri = Utility.displayNameToUri(uri);
+                                    }
+                                    resourceManager.deleteResourceByURI(uri);
                                 }
-                                resourceManager.deleteResourceByURI(uri);
                             } else if (deleteCategory == DeleteCategory.BY_TYPE) {
                                 resourceManager
                                         .deleteResourceByType(deleteWizard

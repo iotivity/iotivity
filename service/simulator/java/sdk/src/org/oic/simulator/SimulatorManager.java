@@ -108,13 +108,11 @@ public class SimulatorManager {
      * @param resourceType
      *            Type of resource to be deleted.
      *
-     * @throws InvalidArgsException
-     *             Thrown if the input parameter is empty.
      * @throws SimulatorException
      *             Thrown for other errors.
      */
     public static void deleteResources(String resourceType)
-            throws InvalidArgsException, SimulatorException {
+            throws SimulatorException {
         SimulatorManagerNativeInterface.deleteResources(resourceType);
     }
 
@@ -130,9 +128,9 @@ public class SimulatorManager {
      * @throws SimulatorException
      *             Thrown for other errors.
      */
-    public static void findResource(IFindResourceListener listener)
+    public static void findResources(IFindResourceListener listener)
             throws InvalidArgsException, SimulatorException {
-        SimulatorManagerNativeInterface.findResource(listener);
+        SimulatorManagerNativeInterface.findResources(null, listener);
     }
 
     /**
@@ -152,6 +150,11 @@ public class SimulatorManager {
     public static void findResources(String resourceType,
             IFindResourceListener listener) throws InvalidArgsException,
             SimulatorException {
+        if (null == resourceType || resourceType.isEmpty()) {
+            throw new InvalidArgsException(
+                    SimulatorResult.SIMULATOR_INVALID_PARAM.ordinal(),
+                    "Resource type is empty");
+        }
         SimulatorManagerNativeInterface.findResources(resourceType, listener);
     }
 

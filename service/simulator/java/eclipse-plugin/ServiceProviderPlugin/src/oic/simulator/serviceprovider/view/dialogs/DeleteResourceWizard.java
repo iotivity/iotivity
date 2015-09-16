@@ -54,6 +54,9 @@ public class DeleteResourceWizard extends Wizard {
 
     @Override
     public boolean performFinish() {
+        if (null == page) {
+            return false;
+        }
         // Check the existence of the resource if the user has entered the uri
         if (page.getDeleteCategory() == DeleteCategory.BY_URI) {
             // Check whether the uri is in full form or short form
@@ -81,10 +84,16 @@ public class DeleteResourceWizard extends Wizard {
     }
 
     public DeleteCategory getDeleteCategory() {
+        if (null == page) {
+            return DeleteCategory.NONE;
+        }
         return page.getDeleteCategory();
     }
 
     public String getDeleteCandidate() {
+        if (null == page) {
+            return null;
+        }
         return page.getDeleteCandidate();
     }
 }

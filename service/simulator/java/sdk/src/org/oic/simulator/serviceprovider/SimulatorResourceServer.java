@@ -81,7 +81,14 @@ public class SimulatorResourceServer {
 
     @Override
     protected void finalize() throws Throwable {
-        dispose();
+        try {
+            dispose();
+        } catch(Throwable t){
+            throw t;
+        } finally{
+            System.out.println("Calling finalize of Super Class");
+            super.finalize();
+        }
     }
 
     /**
@@ -440,7 +447,7 @@ public class SimulatorResourceServer {
             throws InvalidArgsException, SimulatorException;
 
     /**
-     * Native function to set the observation callback.
+     * Native function to set callback to receive the clients information who are started or stopped observing the simulated resource.
      * 
      * @param observer
      *            Listener to be notified when clients start/stop observing.

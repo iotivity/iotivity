@@ -48,10 +48,16 @@ public class CreateResourceWizard extends Wizard {
     }
 
     public String getConfigFilePath() {
+        if (null == page) {
+            return null;
+        }
         return page.getConfigFilePath();
     }
 
     public int getResourceCount() {
+        if (null == page) {
+            return 0;
+        }
         return page.getResourceCount();
     }
 

@@ -21,7 +21,7 @@ import java.util.List;
 import oic.simulator.logger.LogEntry;
 
 /**
- * 
+ * Interface through which the log events are sent to the UI listeners.
  */
 public interface ILogUIListener {
     public void logAdded(LogEntry added);

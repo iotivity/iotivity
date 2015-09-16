@@ -68,9 +68,8 @@ public class ImageManager {
     }
 
     public static Image getImage(String imagePath) {
-        Image img = null;
         if (null == imagePath || imagePath.length() < 1) {
-            return img;
+            return null;
         }
         URL imageURL = Activator.getDefault().getBundle().getEntry(imagePath);
         ImageDescriptor descriptor = ImageDescriptor.createFromURL(imageURL);

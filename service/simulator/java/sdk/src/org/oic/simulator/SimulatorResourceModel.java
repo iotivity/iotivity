@@ -27,7 +27,7 @@ public class SimulatorResourceModel {
 
     /**
      * Constructor for creating a native resource model object. Client requests
-     * such as PUT and POST uses this method for passing the new new/updated
+     * such as PUT and POST uses this method for passing the new/updated
      * resource model.
      */
     public SimulatorResourceModel() {
@@ -41,10 +41,16 @@ public class SimulatorResourceModel {
      *            Name of the attribute
      * @param value
      *            Value of the attribute
+     *
+     * @throws InvalidArgsException
+     *             This exception will be thrown if the attribute name is
+     *             invalid.
+     * @throws SimulatorException
+     *             This exception will be thrown either if the resource model is
+     *             not found or for some general errors.
      */
-    public void addAttribute(String name, int value) {
-        addAttributeInt(name, value);
-    }
+    public native void addAttributeInt(String name, int value)
+            throws InvalidArgsException, SimulatorException;
 
     /**
      * Method for adding an attribute whose value is of type double.
@@ -53,10 +59,16 @@ public class SimulatorResourceModel {
      *            Name of the attribute
      * @param value
      *            Value of the attribute
+     *
+     * @throws InvalidArgsException
+     *             This exception will be thrown if the attribute name is
+     *             invalid.
+     * @throws SimulatorException
+     *             This exception will be thrown either if the resource model is
+     *             not found or for some general errors.
      */
-    public void addAttribute(String name, double value) {
-        addAttributeDouble(name, value);
-    }
+    public native void addAttributeDouble(String name, double value)
+            throws InvalidArgsException, SimulatorException;
 
     /**
      * Method for adding an attribute whose value is of type boolean.
@@ -65,10 +77,16 @@ public class SimulatorResourceModel {
      *            Name of the attribute
      * @param value
      *            Value of the attribute
+     *
+     * @throws InvalidArgsException
+     *             This exception will be thrown if the attribute name is
+     *             invalid.
+     * @throws SimulatorException
+     *             This exception will be thrown either if the resource model is
+     *             not found or for some general errors.
      */
-    public void addAttribute(String name, boolean value) {
-        addAttributeBoolean(name, value);
-    }
+    public native void addAttributeBoolean(String name, boolean value)
+            throws InvalidArgsException, SimulatorException;
 
     /**
      * Method for adding an attribute whose value is of type string.
@@ -77,25 +95,40 @@ public class SimulatorResourceModel {
      *            Name of the attribute
      * @param value
      *            Value of the attribute
+     *
+     * @throws InvalidArgsException
+     *             This exception will be thrown if the attribute name is
+     *             invalid.
+     * @throws SimulatorException
+     *             This exception will be thrown either if the resource model is
+     *             not found or for some general errors.
      */
-    public void addAttribute(String name, String value) {
-        addAttributeString(name, value);
-    }
+    public native void addAttributeString(String name, String value)
+            throws InvalidArgsException, SimulatorException;
 
     /**
      * Method for getting the number of attributes this model comprised of.
      *
      * @return Number of attributes.
+     * 
+     * @throws SimulatorException
+     *             This exception will be thrown either if the resource model is
+     *             not found or for some general errors.
      */
-    public native int size();
+    public native int size() throws SimulatorException;
 
     /**
      * Method for getting all attributes.
      *
      * @return Map of attributes with attribute name as the key and its
      *         corresponding {@link ResourceAttribute} object as the value.
+     * 
+     * @throws SimulatorException
+     *             This exception will be thrown either if the resource model is
+     *             not found or for some general errors.
      */
-    public native Map<String, ResourceAttribute> getAttributes();
+    public native Map<String, ResourceAttribute> getAttributes()
+            throws SimulatorException;
 
     /**
      * Method for getting a specific attribute by its name.
@@ -104,16 +137,17 @@ public class SimulatorResourceModel {
      *            Name of the attribute
      *
      * @return An object of {@link ResourceAttribute}.
+     * 
+     * @throws InvalidArgsException
+     *             This exception will be thrown if the attribute does not
+     *             exist.
+     * 
+     * @throws SimulatorException
+     *             This exception will be thrown either if the resource model is
+     *             not found or for some general errors.
      */
-    public native ResourceAttribute getAttribute(String attrName);
-
-    private native void addAttributeInt(String name, int value);
-
-    private native void addAttributeDouble(String name, double value);
-
-    private native void addAttributeBoolean(String name, boolean value);
-
-    private native void addAttributeString(String name, String value);
+    public native ResourceAttribute getAttribute(String attrName)
+            throws InvalidArgsException, SimulatorException;
 
     private SimulatorResourceModel(long nativeHandle) {
         this.nativeHandle = nativeHandle;
@@ -121,7 +155,14 @@ public class SimulatorResourceModel {
 
     @Override
     protected void finalize() throws Throwable {
-        dispose();
+        try {
+            dispose();
+        } catch(Throwable t){
+            throw t;
+        } finally{
+            System.out.println("Calling finalize of Super Class");
+            super.finalize();
+        }
     }
 
     private native void create();

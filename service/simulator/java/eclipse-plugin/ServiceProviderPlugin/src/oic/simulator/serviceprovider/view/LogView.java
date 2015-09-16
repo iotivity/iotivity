@@ -440,9 +440,11 @@ public class LogView extends ViewPart {
                                     + e.getMessage());
                 } finally {
                     try {
-                        out.close();
+                        if (null != out) {
+                            out.close();
+                        }
                     } catch (IOException e) {
-                        // Error occurred during close. Ignoring
+                        System.out.println("Error occurred during close.");
                     }
                 }
             }

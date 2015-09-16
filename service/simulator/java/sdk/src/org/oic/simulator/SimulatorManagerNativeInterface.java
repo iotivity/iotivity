@@ -100,21 +100,7 @@ class SimulatorManagerNativeInterface {
             throws InvalidArgsException, SimulatorException;
 
     /**
-     * Native function for discovering all types of resources.
-     *
-     * @param listener
-     *            Interface to receive the discovered remote resources.
-     * 
-     * @throws InvalidArgsException
-     *             Thrown if the input parameter is empty.
-     * @throws SimulatorException
-     *             Thrown for other errors.
-     */
-    public static native void findResource(IFindResourceListener listener)
-            throws InvalidArgsException, SimulatorException;
-
-    /**
-     * Native function for discovering specific type of resources.
+     * Native function for discovering resources.
      *
      * @param resourceType
      *            required resource type

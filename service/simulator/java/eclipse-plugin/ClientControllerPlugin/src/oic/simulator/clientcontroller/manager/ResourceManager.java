@@ -66,9 +66,9 @@ import org.oic.simulator.clientcontroller.SimulatorVerificationType;
 /**
  * This class acts as an interface between the simulator java SDK and the
  * various UI modules. It maintains all the details of resources and provides
- * other UI modules with the information required. It also handles responses for find,
- * GET, PUT, POST, Observe and automatic verification operations from native layer and propagates
- * those events to the registered UI listeners.
+ * other UI modules with the information required. It also handles responses for
+ * find, GET, PUT, POST, Observe and automatic verification operations from
+ * native layer and propagates those events to the registered UI listeners.
  */
 public class ResourceManager {
 
@@ -384,11 +384,13 @@ public class ResourceManager {
         Map<String, RemoteResourceAttribute> attributeMap = fetchResourceAttributesFromModel(resourceModelN);
 
         // TODO: For debugging
-        RemoteResourceAttribute.printAttributes(attributeMap);
-        System.out.println("Attributes found: " + (null != attributeMap));
-        System.out.println("No of attributes: " + attributeMap.size());
+        if (null != attributeMap) {
+            RemoteResourceAttribute.printAttributes(attributeMap);
+            System.out.println("Attributes found: " + (null != attributeMap));
+            System.out.println("No of attributes: " + attributeMap.size());
 
-        resource.setResourceAttributesMap(attributeMap);
+            resource.setResourceAttributesMap(attributeMap);
+        }
         return resource;
     }
 
@@ -632,7 +634,19 @@ public class ResourceManager {
         Map<String, RemoteResourceAttribute> resourceAttributeMap = null;
         if (null != resourceModelN) {
             Map<String, ResourceAttribute> attributeMapN;
-            attributeMapN = resourceModelN.getAttributes();
+            try {
+                attributeMapN = resourceModelN.getAttributes();
+            } catch (SimulatorException e) {
+                Activator
+                        .getDefault()
+                        .getLogManager()
+                        .log(Level.ERROR.ordinal(),
+                                new Date(),
+                                "[" + e.getClass().getSimpleName() + "]"
+                                        + e.code().toString() + "-"
+                                        + e.message());
+                return null;
+            }
             if (null != attributeMapN) {
                 resourceAttributeMap = new HashMap<String, RemoteResourceAttribute>();
 
@@ -1239,31 +1253,82 @@ public class ResourceManager {
             model = itr.next();
             attName = model.getAttName();
             attribute = attMap.get(attName);
+            if (null == attribute) {
+                continue;
+            }
             attType = attribute.getAttValBaseType();
             if (attType == Type.INT) {
                 int attValue;
                 try {
                     attValue = Integer.parseInt(model.getAttValue());
+                    resourceModel.addAttributeInt(attName, attValue);
                 } catch (NumberFormatException e) {
-                    attValue = -1;
+                    Activator
+                            .getDefault()
+                            .getLogManager()
+                            .log(Level.ERROR.ordinal(), new Date(),
+                                    e.getMessage());
+                } catch (SimulatorException e) {
+                    Activator
+                            .getDefault()
+                            .getLogManager()
+                            .log(Level.ERROR.ordinal(),
+                                    new Date(),
+                                    "[" + e.getClass().getSimpleName() + "]"
+                                            + e.code().toString() + "-"
+                                            + e.message());
                 }
-                resourceModel.addAttribute(attName, attValue);
             } else if (attType == Type.DOUBLE) {
                 double attValue;
                 try {
                     attValue = Double.parseDouble(model.getAttValue());
+                    resourceModel.addAttributeDouble(attName, attValue);
                 } catch (NumberFormatException e) {
-                    attValue = -1.0;
+                    Activator
+                            .getDefault()
+                            .getLogManager()
+                            .log(Level.ERROR.ordinal(), new Date(),
+                                    e.getMessage());
+                } catch (SimulatorException e) {
+                    Activator
+                            .getDefault()
+                            .getLogManager()
+                            .log(Level.ERROR.ordinal(),
+                                    new Date(),
+                                    "[" + e.getClass().getSimpleName() + "]"
+                                            + e.code().toString() + "-"
+                                            + e.message());
                 }
-                resourceModel.addAttribute(attName, attValue);
             } else if (attType == Type.BOOL) {
                 boolean attValue;
                 attValue = Boolean.parseBoolean(model.getAttValue());
-                resourceModel.addAttribute(attName, attValue);
+                try {
+                    resourceModel.addAttributeBoolean(attName, attValue);
+                } catch (SimulatorException e) {
+                    Activator
+                            .getDefault()
+                            .getLogManager()
+                            .log(Level.ERROR.ordinal(),
+                                    new Date(),
+                                    "[" + e.getClass().getSimpleName() + "]"
+                                            + e.code().toString() + "-"
+                                            + e.message());
+                }
             } else if (attType == Type.STRING) {
                 String attValue;
                 attValue = model.getAttValue();
-                resourceModel.addAttribute(attName, attValue);
+                try {
+                    resourceModel.addAttributeString(attName, attValue);
+                } catch (SimulatorException e) {
+                    Activator
+                            .getDefault()
+                            .getLogManager()
+                            .log(Level.ERROR.ordinal(),
+                                    new Date(),
+                                    "[" + e.getClass().getSimpleName() + "]"
+                                            + e.code().toString() + "-"
+                                            + e.message());
+                }
             }
         }
         return resourceModel;

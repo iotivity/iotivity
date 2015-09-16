@@ -143,7 +143,8 @@ public class FindResourcePage extends WizardPage {
          */
 
         // TODO: Temporarily adding a resourceType for testing
-        resourceTypeCmb.add("oic.r.light");
+       // resourceTypeCmb.add("oic.r.light");
+        resourceTypeCmb.add("sample.light");
 
         // By default, selecting the first item in the resourceType combo
         if (resourceTypeCmb.getItemCount() > 0) {

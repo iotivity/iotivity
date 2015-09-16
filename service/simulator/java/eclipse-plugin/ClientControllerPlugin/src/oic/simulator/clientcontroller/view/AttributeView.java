@@ -729,9 +729,7 @@ public class AttributeView extends ViewPart {
                         }
                         VerificationDialog ad = new VerificationDialog(Display
                                 .getDefault().getActiveShell(), autoStatus);
-                        if (ad.open() == Window.OK) {
-
-                        }
+                        ad.open();
                     }
                 });
             }

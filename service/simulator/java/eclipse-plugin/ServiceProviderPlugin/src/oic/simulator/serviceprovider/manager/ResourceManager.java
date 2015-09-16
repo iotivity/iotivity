@@ -634,7 +634,19 @@ public class ResourceManager {
         Map<String, LocalResourceAttribute> resourceAttributeMap = null;
         if (null != resourceModelN) {
             Map<String, ResourceAttribute> attributeMapN;
-            attributeMapN = resourceModelN.getAttributes();
+            try {
+                attributeMapN = resourceModelN.getAttributes();
+            } catch (SimulatorException e) {
+                Activator
+                        .getDefault()
+                        .getLogManager()
+                        .log(Level.ERROR.ordinal(),
+                                new Date(),
+                                "[" + e.getClass().getSimpleName() + "]"
+                                        + e.code().toString() + "-"
+                                        + e.message());
+                return null;
+            }
             if (null != attributeMapN) {
                 resourceAttributeMap = new HashMap<String, LocalResourceAttribute>();
 
@@ -1049,7 +1061,7 @@ public class ResourceManager {
             Set<String> typeSet = orderedResourceUriMap.keySet();
             List<String> typeList = Utility.convertSetToList(typeSet);
             if (null == typeList || typeList.size() < 1) {
-                return null;
+                return list;
             }
             list = new ArrayList<String>();
 

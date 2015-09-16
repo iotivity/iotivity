@@ -467,34 +467,38 @@ public class ResourceManagerView extends ViewPart {
 
                             Set<String> searchTypes = findWizard
                                     .getSearchTypes();
-                            System.out.println(searchTypes);
-                            // Call native method to clear existing resources of
-                            // the given search types.
-                            resourceManager.deleteResources(searchTypes);
+                            if (null != searchTypes) {
+                                System.out.println(searchTypes);
+                                // Call native method to clear existing
+                                // resources of
+                                // the given search types.
+                                resourceManager.deleteResources(searchTypes);
 
-                            // Update the tree
-                            treeViewer.refresh();
-                            favTreeViewer.refresh();
+                                // Update the tree
+                                treeViewer.refresh();
+                                favTreeViewer.refresh();
 
-                            // Call native method to find Resources
-                            boolean result = resourceManager
-                                    .findResourceRequest(searchTypes);
-                            if (result) {
-                                searchUIOperation(false);
-                            } else {
-                                MessageDialog
-                                        .openError(Display.getDefault()
-                                                .getActiveShell(),
-                                                "Find Resource status",
-                                                "Operation failed due to some problems in core layer.");
+                                // Call native method to find Resources
+                                boolean result = resourceManager
+                                        .findResourceRequest(searchTypes);
+                                if (result) {
+                                    searchUIOperation(false);
+                                } else {
+                                    MessageDialog
+                                            .openError(Display.getDefault()
+                                                    .getActiveShell(),
+                                                    "Find Resource status",
+                                                    "Operation failed due to some problems in core layer.");
+                                }
+
+                                // Store this information for refresh
+                                // functionality
+                                resourceManager
+                                        .setLastKnownSearchTypes(searchTypes);
+
+                                // Change the refresh visibility
+                                refreshButton.setEnabled(true);
                             }
-
-                            // Store this information for refresh functionality
-                            resourceManager
-                                    .setLastKnownSearchTypes(searchTypes);
-
-                            // Change the refresh visibility
-                            refreshButton.setEnabled(true);
                         }
                     }
                 });

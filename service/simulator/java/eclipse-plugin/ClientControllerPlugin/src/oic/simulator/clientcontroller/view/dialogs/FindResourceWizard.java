@@ -42,6 +42,9 @@ public class FindResourceWizard extends Wizard {
     }
 
     public Set<String> getSearchTypes() {
+        if (null == page) {
+            return null;
+        }
         return page.getSearchTypes();
     }
 

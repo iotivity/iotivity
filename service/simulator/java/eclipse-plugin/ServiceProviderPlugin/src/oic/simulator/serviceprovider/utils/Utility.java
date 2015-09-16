@@ -127,7 +127,8 @@ public class Utility {
             try {
                 result = Integer.parseInt(value);
             } catch (NumberFormatException nfe) {
-                // Do nothing
+                System.out
+                        .println("Getting UpdateInterval from string failed!");
             }
         }
         return result;
