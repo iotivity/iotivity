@@ -102,11 +102,12 @@ namespace OIC
                  * @param bundleId Id of the Bundle
                  * @param bundleUri Uri of the bundle
                  * @param bundlePath Path of the bundle
+                 * @param activator Activation prefix for .so bundles, or activator class name for .jar bundles
                  * @param params  key-value pairs in string form for other Bundle parameters
                  *
                  */
                 virtual void addBundle(const std::string &bundleId, const std::string &bundleUri, const std::string &bundlePath,
-                                       std::map<std::string, std::string> params) = 0;
+                                       const std::string &activator, std::map<std::string, std::string> params) = 0;
                 /**
                  * API for removing the bundle from the container
                  *

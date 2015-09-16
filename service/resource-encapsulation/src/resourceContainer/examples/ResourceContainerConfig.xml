@@ -41,6 +41,7 @@
     <bundle>
         <id>oic.bundle.BMISensor</id>
         <path>libBMISensorBundle.so</path>
+        <activator>bmisensor</activator>
         <version>1.0.0</version>
         <resources>
             <resourceInfo>
@@ -73,6 +74,7 @@
     <bundle>
         <id>oic.bundle.hueSample</id>
         <path>libHueBundle.so</path>
+        <activator>huesample</activator>
         <version>1.0.0</version>
         <resources>
             <resourceInfo>

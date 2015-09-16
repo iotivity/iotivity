@@ -106,25 +106,25 @@ void HueSampleBundleActivator::destroyResource(BundleResource *pBundleResource)
     }
 }
 
-extern "C" void externalActivateBundle(ResourceContainerBundleAPI *resourceContainer,
+extern "C" void huesample_externalActivateBundle(ResourceContainerBundleAPI *resourceContainer,
                                        std::string bundleId)
 {
     bundle = new HueSampleBundleActivator();
     bundle->activateBundle(resourceContainer, bundleId);
 }
 
-extern "C" void externalDeactivateBundle()
+extern "C" void huesample_externalDeactivateBundle()
 {
     bundle->deactivateBundle();
     delete bundle;
 }
 
-extern "C" void externalCreateResource(resourceInfo resourceInfo)
+extern "C" void huesample_externalCreateResource(resourceInfo resourceInfo)
 {
     bundle->createResource(resourceInfo);
 }
 
-extern "C" void externalDestroyResource(BundleResource *pBundleResource)
+extern "C" void huesample_externalDestroyResource(BundleResource *pBundleResource)
 {
     bundle->destroyResource(pBundleResource);
 }

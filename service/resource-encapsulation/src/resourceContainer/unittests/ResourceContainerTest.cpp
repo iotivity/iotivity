@@ -202,7 +202,7 @@ TEST_F(ResourceContainerTest, AddNewSoBundleToContainer)
     std::list<RCSBundleInfo *> bundles;
 
     bundles = m_pResourceContainer->listBundles();
-    m_pResourceContainer->addBundle("oic.bundle.test", "", "libTestBundle.so", bundleParams);
+    m_pResourceContainer->addBundle("oic.bundle.test", "", "libTestBundle.so","test", bundleParams);
 
     EXPECT_EQ(bundles.size() + 1, m_pResourceContainer->listBundles().size());
     EXPECT_TRUE(((BundleInfoInternal *)(*m_pResourceContainer->listBundles().begin()))->isLoaded());
@@ -224,9 +224,9 @@ TEST_F(ResourceContainerTest, AddBundleAlreadyRegistered)
     std::map<string, string> bundleParams;
     std::list<RCSBundleInfo *> bundles;
 
-    m_pResourceContainer->addBundle("oic.bundle.test", "", "libTestBundle.so", bundleParams);
+    m_pResourceContainer->addBundle("oic.bundle.test", "", "libTestBundle.so", "test", bundleParams);
     bundles = m_pResourceContainer->listBundles();
-    m_pResourceContainer->addBundle("oic.bundle.test", "", "libTestBundle.so", bundleParams);
+    m_pResourceContainer->addBundle("oic.bundle.test", "", "libTestBundle.so", "test",  bundleParams);
 
     EXPECT_EQ(bundles.size(), m_pResourceContainer->listBundles().size());
 }
@@ -403,6 +403,7 @@ class ResourceContainerImplTest: public TestWithMock
 TEST_F(ResourceContainerImplTest, SoBundleLoadedWhenRegisteredWithRegisterBundleAPI)
 {
     m_pBundleInfo->setPath("libTestBundle.so");
+    m_pBundleInfo->setActivatorName("test");
     m_pBundleInfo->setVersion("1.0");
     m_pBundleInfo->setLibraryPath(".");
     m_pBundleInfo->setID("oic.bundle.test");
@@ -461,6 +462,7 @@ TEST_F(ResourceContainerImplTest, SoBundleActivatedWithValidBundleInfo)
 {
     m_pBundleInfo->setPath("libTestBundle.so");
     m_pBundleInfo->setVersion("1.0");
+    m_pBundleInfo->setActivatorName("test");
     m_pBundleInfo->setLibraryPath("../.");
     m_pBundleInfo->setID("oic.bundle.test");
 
@@ -473,6 +475,7 @@ TEST_F(ResourceContainerImplTest, SoBundleActivatedWithValidBundleInfo)
 TEST_F(ResourceContainerImplTest, BundleNotActivatedWhenNotRegistered)
 {
     m_pBundleInfo->setPath("libTestBundle.so");
+    m_pBundleInfo->setActivatorName("test");
     m_pBundleInfo->setVersion("1.0");
     m_pBundleInfo->setLibraryPath("../.");
     m_pBundleInfo->setID("oic.bundle.test");
@@ -487,6 +490,7 @@ TEST_F(ResourceContainerImplTest, SoBundleActivatedWithBundleID)
     m_pBundleInfo->setPath("libTestBundle.so");
     m_pBundleInfo->setVersion("1.0");
     m_pBundleInfo->setLibraryPath("../.");
+    m_pBundleInfo->setActivatorName("test");
     m_pBundleInfo->setID("oic.bundle.test");
 
     m_pResourceContainer->registerBundle(m_pBundleInfo);
@@ -501,6 +505,7 @@ TEST_F(ResourceContainerImplTest, BundleDeactivatedWithBundleInfo)
     m_pBundleInfo->setPath("libTestBundle.so");
     m_pBundleInfo->setVersion("1.0");
     m_pBundleInfo->setLibraryPath("../.");
+    m_pBundleInfo->setActivatorName("test");
     m_pBundleInfo->setID("oic.bundle.test");
 
     m_pResourceContainer->registerBundle(m_pBundleInfo);
@@ -530,6 +535,7 @@ TEST_F(ResourceContainerImplTest, SoBundleDeactivatedWithBundleID)
     m_pBundleInfo->setPath("libTestBundle.so");
     m_pBundleInfo->setVersion("1.0");
     m_pBundleInfo->setLibraryPath("../.");
+    m_pBundleInfo->setActivatorName("test");
     m_pBundleInfo->setID("oic.bundle.test");
 
     m_pResourceContainer->registerBundle(m_pBundleInfo);

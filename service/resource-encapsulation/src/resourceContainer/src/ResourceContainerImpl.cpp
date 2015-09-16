@@ -474,8 +474,8 @@ namespace OIC
         }
 
         void ResourceContainerImpl::addBundle(const std::string &bundleId,
-                                              const std::string &bundleUri, const std::string &bundlePath,
-                                              std::map< string, string > params)
+                const std::string &bundleUri, const std::string &bundlePath,
+                const std::string &activator, std::map< string, string > params)
         {
             (void) bundleUri;
 
@@ -487,9 +487,10 @@ namespace OIC
                 RCSBundleInfo *bundleInfo = RCSBundleInfo::build();
                 bundleInfo->setID(bundleId);
                 bundleInfo->setPath(bundlePath);
-                if (params.find(BUNDLE_ACTIVATOR) != params.end())
+                bundleInfo->setActivatorName(activator);
+                if (params.find("libraryPath") != params.end())
                 {
-                    string activatorName = params[BUNDLE_ACTIVATOR];
+                    string activatorName = params["activator"]; // modify activator for Java bundle
                     std::replace(activatorName.begin(), activatorName.end(), '.', '/');
                     ((BundleInfoInternal *) bundleInfo)->setActivatorName(activatorName);
                     ((BundleInfoInternal *)bundleInfo)->setLibraryPath(params[BUNDLE_LIBRARY_PATH]);
@@ -601,19 +602,29 @@ namespace OIC
             deactivator_t *bundleDeactivator = NULL;
             resourceCreator_t *resourceCreator = NULL;
             resourceDestroyer_t *resourceDestroyer = NULL;
-
+            BundleInfoInternal *bundleInfoInternal = (BundleInfoInternal*) bundleInfo;
             void *bundleHandle = NULL;
             bundleHandle = dlopen(bundleInfo->getPath().c_str(), RTLD_LAZY);
 
             if (bundleHandle != NULL)
             {
-                bundleActivator = (activator_t *) dlsym(bundleHandle, "externalActivateBundle");
-                bundleDeactivator = (deactivator_t *) dlsym(bundleHandle,
-                                    "externalDeactivateBundle");
-                resourceCreator = (resourceCreator_t *) dlsym(bundleHandle,
-                                  "externalCreateResource");
-                resourceDestroyer = (resourceDestroyer_t *) dlsym(bundleHandle,
-                                    "externalDestroyResource");
+                bundleActivator =
+                        (activator_t *) dlsym(bundleHandle,
+                                ("" + bundleInfoInternal->getActivatorName()
+                                        + "_externalActivateBundle").c_str());
+                bundleDeactivator =
+                        (deactivator_t *) dlsym(bundleHandle,
+                                ("" + bundleInfoInternal->getActivatorName()
+                                        + "_externalDeactivateBundle").c_str());
+                resourceCreator =
+                        (resourceCreator_t *) dlsym(bundleHandle,
+                                ("" + bundleInfoInternal->getActivatorName()
+                                        + "_externalCreateResource").c_str());
+                resourceDestroyer =
+                        (resourceDestroyer_t *) dlsym(bundleHandle,
+                                ("" + bundleInfoInternal->getActivatorName()
+                                        + "_externalDestroyResource").c_str());
+
 
                 if ((error = dlerror()) != NULL)
                 {

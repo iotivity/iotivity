@@ -102,25 +102,25 @@ void BMISensorBundleActivator::destroyResource(BundleResource *resource)
     }
 }
 
-extern "C" void externalActivateBundle(ResourceContainerBundleAPI *resourceContainer,
+extern "C" void bmisensor_externalActivateBundle(ResourceContainerBundleAPI *resourceContainer,
                                        std::string bundleId)
 {
     bundle = new BMISensorBundleActivator();
     bundle->activateBundle(resourceContainer, bundleId);
 }
 
-extern "C" void externalDeactivateBundle()
+extern "C" void bmisensor_externalDeactivateBundle()
 {
     bundle->deactivateBundle();
     delete bundle;
 }
 
-extern "C" void externalCreateResource(resourceInfo resourceInfo)
+extern "C" void bmisensor_externalCreateResource(resourceInfo resourceInfo)
 {
     bundle->createResource(resourceInfo);
 }
 
-extern "C" void externalDestroyResource(BundleResource *pBundleResource)
+extern "C" void bmisensor_externalDestroyResource(BundleResource *pBundleResource)
 {
     bundle->destroyResource(pBundleResource);
 }

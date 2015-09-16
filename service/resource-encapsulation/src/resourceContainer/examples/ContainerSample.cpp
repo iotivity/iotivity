@@ -83,7 +83,7 @@ int main()
     cout << "Press enter to add SO bundle " << endl;
     getchar();
     std::map<string, string> bundleParams;
-    container->addBundle("oic.bundle.hueSample", "", "libHueBundle.so", bundleParams);
+    container->addBundle("oic.bundle.hueSample", "", "libHueBundle.so", "test", bundleParams);
 
     std::list<RCSBundleInfo *> bundles = container->listBundles();
     std::list<RCSBundleInfo *>::iterator bundleIt;

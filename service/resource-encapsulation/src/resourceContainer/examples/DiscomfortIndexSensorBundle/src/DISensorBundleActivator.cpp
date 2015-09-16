@@ -103,25 +103,25 @@ void DISensorBundleActivator::destroyResource(BundleResource *resource)
     }
 }
 
-extern "C" void externalActivateBundle(ResourceContainerBundleAPI *resourceContainer,
+extern "C" void disensor_externalActivateBundle(ResourceContainerBundleAPI *resourceContainer,
                                        std::string bundleId)
 {
     bundle = new DISensorBundleActivator();
     bundle->activateBundle(resourceContainer, bundleId);
 }
 
-extern "C" void externalDeactivateBundle()
+extern "C" void disensor_externalDeactivateBundle()
 {
     bundle->deactivateBundle();
     delete bundle;
 }
 
-extern "C" void externalCreateResource(resourceInfo resourceInfo)
+extern "C" void disensor_externalCreateResource(resourceInfo resourceInfo)
 {
     bundle->createResource(resourceInfo);
 }
 
-extern "C" void externalDestroyResource(BundleResource *pBundleResource)
+extern "C" void disensor_externalDestroyResource(BundleResource *pBundleResource)
 {
     bundle->destroyResource(pBundleResource);
 }

@@ -90,7 +90,7 @@ namespace OIC
             void stopBundle(const std::string &bundleId);
 
             void addBundle(const std::string &bundleId, const std::string &bundleUri,
-                    const std::string &bundlePath, std::map< string, string > params);
+                    const std::string &bundlePath, const std::string &activator, std::map< string, string > params);
             void removeBundle(const std::string &bundleId);
 
             std::list< RCSBundleInfo * > listBundles();

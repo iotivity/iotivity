@@ -3,6 +3,7 @@
     <bundle>
         <id>oic.bundle.test</id>
         <path>libTestBundle.so</path>
+        <activator>test</activator>
         <version>1.0.0</version>
     <!--</bundle>-->
 </container>

@@ -68,25 +68,25 @@ void TestBundleActivator::destroyResource(BundleResource *pBundleResource)
     m_pResourceContainer->unregisterResource(pBundleResource);
 }
 
-extern "C" void externalActivateBundle(ResourceContainerBundleAPI *resourceContainer,
+extern "C" void test_externalActivateBundle(ResourceContainerBundleAPI *resourceContainer,
                                        std::string bundleId)
 {
     bundle = new TestBundleActivator();
     bundle->activateBundle(resourceContainer, bundleId);
 }
 
-extern "C" void externalDeactivateBundle()
+extern "C" void test_externalDeactivateBundle()
 {
     bundle->deactivateBundle();
     delete bundle;
 }
 
-extern "C" void externalCreateResource(resourceInfo resourceInfo)
+extern "C" void test_externalCreateResource(resourceInfo resourceInfo)
 {
     bundle->createResource(resourceInfo);
 }
 
-extern "C" void externalDestroyResource(BundleResource *pBundleResource)
+extern "C" void test_externalDestroyResource(BundleResource *pBundleResource)
 {
     bundle->destroyResource(pBundleResource);
 }
