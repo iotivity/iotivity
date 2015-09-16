@@ -86,7 +86,7 @@ OCPayload* putPayload()
     if(!payload)
     {
         std::cout << "Failed to create put payload object"<<std::endl;
-        std::exit(1);
+        exit(1);
     }
 
     OCRepPayloadSetPropInt(payload, "power", 15);
