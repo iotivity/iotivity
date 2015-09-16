@@ -28,6 +28,10 @@
 #include "oic_string.h"
 #include <string.h>
 
+#ifdef __WITH_X509__
+#include "crlresource.h"
+#endif // __WITH_X509__
+
 #define TAG  PCF("SRM")
 
 //Request Callback handler
@@ -253,6 +257,10 @@ OCStackResult SRMInitSecureResources()
 #if defined(__WITH_DTLS__)
     CARegisterDTLSCredentialsHandler(GetDtlsPskCredentials);
 #endif // (__WITH_DTLS__)
+#if defined(__WITH_X509__)
+    CARegisterDTLSX509CredentialsHandler(GetDtlsX509Credentials);
+    CARegisterDTLSCrlHandler(GetDerCrl);
+#endif // (__WITH_X509__)
 
     return OC_STACK_OK;
 }

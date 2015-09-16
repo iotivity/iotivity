@@ -52,6 +52,17 @@ typedef struct
     ByteArray    signS;     /**< Signature  s value.*/
 } CertificateList;
 
+/**@def CRL_INITIALIZER
+ *
+ * Initializes of existing CRL fields to {NULL, 0}.
+ */
+#undef CRL_INITIALIZER
+#define CRL_INITIALIZER {BYTE_ARRAY_INITIALIZER,\
+                         BYTE_ARRAY_INITIALIZER,\
+                         BYTE_ARRAY_INITIALIZER,\
+                         BYTE_ARRAY_INITIALIZER,\
+                         BYTE_ARRAY_INITIALIZER}
+
 #ifdef X509_DEBUG
 /**
  * Prints Certificate List to console.

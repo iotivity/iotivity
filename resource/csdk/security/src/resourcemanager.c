@@ -32,6 +32,10 @@
 #include "utlist.h"
 #include <string.h>
 
+#ifdef __WITH_X509__
+#include "crlresource.h"
+#endif // __WITH_X509__
+
 #define TAG PCF("SRM-RM")
 
 /**

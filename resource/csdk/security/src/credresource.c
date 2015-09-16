@@ -1028,7 +1028,7 @@ exit:
     return ret;
 }
 
-static OCStackResult GetCAPublicKeyData(CADtlsCertCreds_t *credInfo){
+static OCStackResult GetCAPublicKeyData(CADtlsX509Creds_t *credInfo){
     OCStackResult ret = OC_STACK_ERROR;
     uint8_t *ccPtr = credInfo->certificateChain;
     for(uint32_t i =0; i < credInfo->chainLen - 1; ++i)
@@ -1054,7 +1054,7 @@ static OCStackResult GetCAPublicKeyData(CADtlsCertCreds_t *credInfo){
     return ret;
 }
 
-static OCStackResult GetCertCredPublicData(CADtlsCertCreds_t *credInfo, OicSecCred_t *cred)
+static OCStackResult GetCertCredPublicData(CADtlsX509Creds_t *credInfo, OicSecCred_t *cred)
 {
     OCStackResult ret = OC_STACK_ERROR;
     VERIFY_NON_NULL(TAG, credInfo, ERROR);
@@ -1090,7 +1090,7 @@ exit:
     return ret;
 }
 
-static OCStackResult GetCertCredPrivateData(CADtlsCertCreds_t *credInfo, OicSecCred_t *cred)
+static OCStackResult GetCertCredPrivateData(CADtlsX509Creds_t *credInfo, OicSecCred_t *cred)
 {
     OCStackResult ret = OC_STACK_ERROR;
     VERIFY_NON_NULL(TAG, credInfo, ERROR);
@@ -1114,9 +1114,9 @@ exit:
     return ret;
 }
 
-OCStackResult GetDtlsCertCredentials(CADtlsCertCreds_t *credInfo)
+int GetDtlsX509Credentials(CADtlsX509Creds_t *credInfo)
 {
-    OCStackResult ret = OC_STACK_ERROR;
+    int ret = 1;
     VERIFY_NON_NULL(TAG, credInfo, ERROR);
     if (NULL == gCred)
     {
@@ -1130,7 +1130,7 @@ OCStackResult GetDtlsCertCredentials(CADtlsCertCreds_t *credInfo)
     VERIFY_SUCCESS(TAG, OC_STACK_OK == GetCertCredPrivateData(credInfo, cred), ERROR);
     VERIFY_SUCCESS(TAG, OC_STACK_OK == GetCertCredPublicData(credInfo, cred), ERROR);
 
-    ret = OC_STACK_OK;
+    ret = 0;
 exit:
 
     return ret;

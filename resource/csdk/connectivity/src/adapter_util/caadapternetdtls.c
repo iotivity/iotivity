@@ -28,8 +28,13 @@
 
 #ifdef __WITH_X509__
 #include "pki.h"
+#include "crl.h"
 #include "cainterface.h"
-#include "credresource.h"
+
+/* lenght of ASN.1 header in DER format
+ * for subject field in X.509 certificate */
+#define DER_SUBJECT_HEADER_LEN  (9)
+
 #undef VERIFY_SUCCESS
 #define VERIFY_SUCCESS(op, successCode) { if ((op) != (successCode)) \
             {OIC_LOG_V(FATAL, NET_DTLS_TAG, "%s failed!!", #op); goto exit;} }
@@ -58,6 +63,19 @@ static ca_mutex g_dtlsContextMutex = NULL;
  * @brief callback to get DTLS credentials
  */
 static CAGetDTLSCredentialsHandler g_getCredentialsCallback = NULL;
+
+#ifdef __WITH_X509__
+/**
+ * @var g_getX509CredentialsCallback
+ * @brief callback to get DTLS certificate credentials
+ */
+static CAGetDTLSX509CredentialsHandler g_getX509CredentialsCallback = NULL;
+/**
+ * @var g_getCrlCallback
+ * @brief callback to get CRL for DTLS
+ */
+static CAGetDTLSCrlHandler g_getCrlCallback = NULL;
+#endif //__WITH_X509__
 
 static CASecureEndpoint_t *GetPeerInfo(const CAEndpoint_t *peer)
 {
@@ -622,6 +640,22 @@ void CADTLSSetCredentialsCallback(CAGetDTLSCredentialsHandler credCallback)
     OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT");
 }
 
+#ifdef __WITH_X509__
+void CADTLSSetX509CredentialsCallback(CAGetDTLSX509CredentialsHandler credCallback)
+{
+    OIC_LOG(DEBUG, NET_DTLS_TAG, "IN");
+    g_getX509CredentialsCallback = credCallback;
+    OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT");
+}
+void CADTLSSetCrlCallback(CAGetDTLSCrlHandler crlCallback)
+{
+    // TODO Does this method needs protection of DtlsContextMutex ?
+    OIC_LOG(DEBUG, NET_DTLS_TAG, "IN");
+    g_getCrlCallback = crlCallback;
+    OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT");
+}
+#endif // __WITH_X509__
+
 CAResult_t CADtlsSelectCipherSuite(const dtls_cipher_t cipher)
 {
     OIC_LOG(DEBUG, NET_DTLS_TAG, "IN CADtlsSelectCipherSuite");
@@ -782,23 +816,39 @@ CAResult_t CADtlsGenerateOwnerPSK(const CAEndpoint_t *endpoint,
 }
 
 #ifdef __WITH_X509__
-static CADtlsCertCreds_t g_X509Cred = {{0}, 0, 0, {0}, {0}, {0}};
-
-static int g_IsX509Init = 0;
+static CADtlsX509Creds_t g_X509Cred = {{0}, 0, 0, {0}, {0}, {0}};
 
 int CAInitX509()
 {
     OIC_LOG(DEBUG, NET_DTLS_TAG, "IN CAInitX509");
-    g_IsX509Init = (OC_STACK_OK == GetDtlsCertCredentials(&g_X509Cred));
+    VERIFY_NON_NULL_RET(g_getX509CredentialsCallback, NET_DTLS_TAG, "GetX509Credential callback", -1);
+    int isX509Init = (0 == g_getX509CredentialsCallback(&g_X509Cred));
+
+    if (isX509Init)
+    {
+        uint8_t crlData[CRL_MAX_LEN] = {0};
+        ByteArray crlArray = {crlData, CRL_MAX_LEN};
+        g_getCrlCallback(crlArray);
+        if (crlArray.len > 0)
+        {
+            uint8_t keyData[PUBLIC_KEY_SIZE] = {0};
+            CertificateList crl = CRL_INITIALIZER;
+            ByteArray rootPubKey = {keyData, PUBLIC_KEY_SIZE};
+            memcpy(keyData, g_X509Cred.rootPublicKeyX, PUBLIC_KEY_SIZE / 2);
+            memcpy(keyData + PUBLIC_KEY_SIZE / 2, g_X509Cred.rootPublicKeyY, PUBLIC_KEY_SIZE / 2);
+            DecodeCertificateList(crlArray, &crl, rootPubKey);
+        }
+    }
 
     OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT CAInitX509");
-    return !g_IsX509Init;
-}
-
-
-void CADeInitX509()
-{
-    g_IsX509Init = 0;
+    if (isX509Init)
+    {
+        return 0;
+    }
+    else
+    {
+        return 1;
+    }
 }
 
 
@@ -816,10 +866,7 @@ static int CAGetDeviceKey(struct dtls_context_t *ctx,
     static dtls_ecc_key_t ecdsa_key = {DTLS_ECDH_CURVE_SECP256R1, NULL, NULL, NULL};
 
     int ret = 1;
-    if (!g_IsX509Init)
-    {
-        VERIFY_SUCCESS(CAInitX509(), 0);
-    }
+    VERIFY_SUCCESS(CAInitX509(), 0);
 
     ecdsa_key.priv_key = g_X509Cred.devicePrivateKey;
     *result = &ecdsa_key;
@@ -837,10 +884,9 @@ CAGetDeviceCertificate(struct dtls_context_t *ctx,
 {
     OIC_LOG(DEBUG, NET_DTLS_TAG, "CAGetDeviceCertificate");
     int ret = 1;
-    if (!g_IsX509Init)
-    {
-        VERIFY_SUCCESS(CAInitX509(), 0);
-    }
+
+    VERIFY_SUCCESS(CAInitX509(), 0);
+
     *cert = g_X509Cred.certificateChain;
     *cert_size = g_X509Cred.certificateChainLen;
 #ifdef X509_DEBUG
@@ -863,10 +909,9 @@ static int CAGetRootKey(const unsigned char **ca_pub_x, const unsigned char **ca
 {
     OIC_LOG(DEBUG, NET_DTLS_TAG, "CAGetRootKey");
     int ret = 1;
-    if (!g_IsX509Init)
-    {
-        VERIFY_SUCCESS(CAInitX509(), 0);
-    }
+
+    VERIFY_SUCCESS(CAInitX509(), 0);
+
     *ca_pub_x = g_X509Cred.rootPublicKeyX;
     *ca_pub_y = g_X509Cred.rootPublicKeyY;
 
@@ -932,7 +977,7 @@ static int CAVerifyCertificate(struct dtls_context_t *ctx, const session_t *sess
         CAConvertAddrToName(&(addrInfo->addr.st), peerAddr, &port);
 
         CAResult_t result = CAAddIdToPeerInfoList(peerAddr, port,
-        crtChain[0].subject.data + crtChain[0].subject.len - sizeof(OicUuid_t), sizeof(OicUuid_t));
+        crtChain[0].subject.data + DER_SUBJECT_HEADER_LEN + 2, crtChain[0].subject.data[DER_SUBJECT_HEADER_LEN + 1]);
         if (CA_STATUS_OK != result )
         {
             OIC_LOG(ERROR, NET_DTLS_TAG, "Fail to add peer id to gDtlsPeerInfoList");
@@ -947,9 +992,6 @@ exit:
 }
 
 #endif
-
-
-
 
 CAResult_t CAAdapterNetDtlsInit()
 {
@@ -1017,8 +1059,7 @@ CAResult_t CAAdapterNetDtlsInit()
     g_caDtlsContext->callbacks.event = CAHandleSecureEvent;
 
 #ifdef __WITH_X509__
-    CAInitX509();
-    if (g_IsX509Init == 0)
+    if (0 == CAInitX509())
 #endif //__WITH_X509__
     g_caDtlsContext->callbacks.get_psk_info = CAGetPskCredentials;
 #ifdef __WITH_X509__

@@ -110,7 +110,7 @@ typedef struct
     // EC private key
     uint8_t   devicePrivateKey[PRIVATE_KEY_SIZE];
 
-} CADtlsCertCreds_t;
+} CADtlsX509Creds_t;
 
 /**
  * @brief   Callback function type for getting certificate credentials.
@@ -118,7 +118,14 @@ typedef struct
  *                                  credInfo which is then freed by CA
  * @return  NONE
  */
-typedef void (*CAGetCertCredentialsHandler)(CADtlsCertCreds_t *credInfo);
+typedef int (*CAGetDTLSX509CredentialsHandler)(CADtlsX509Creds_t *credInfo);
+/**
+ * @brief   Callback function type for getting CRL.
+ * @param   crlInfo          [OUT] Certificate credentials info. Handler has to allocate new memory for
+ *                                  credInfo which is then freed by CA
+ * @return  NONE
+ */
+typedef void (*CAGetDTLSCrlHandler)(ByteArray crlInfo);
 #endif //__WITH_X509__
 
 /**
@@ -179,7 +186,13 @@ CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSCredentialsHandler GetDTLSC
  * @param   GetCertCredentials   [IN] GetCert Credetials callback
  * @return  #CA_STATUS_OK
  */
-CAResult_t CARegisterCertCredentialsHandler(CAGetCertCredentialsHandler GetCertCredentials);
+CAResult_t CARegisterDTLSX509CredentialsHandler(CAGetDTLSX509CredentialsHandler GetX509Credentials);
+/**
+ * @brief   Register callback to get CRL.
+ * @param   GetCrl   [IN] GetCrl callback
+ * @return  #CA_STATUS_OK
+ */
+CAResult_t CARegisterDTLSCrlHandler(CAGetDTLSCrlHandler GetCrl);
 #endif //__WITH_X509__
 
 /**

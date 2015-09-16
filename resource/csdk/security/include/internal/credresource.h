@@ -152,9 +152,9 @@ OCStackResult AddTmpPskWithPIN(const OicUuid_t* tmpSubject, OicSecCredType_t cre
  * @param credInfo
  *     binary structure containing certificate credentials
  *
- * @retval OC_STACK_OK  on scuccess
+ * @retval 0  on scuccess
  */
-OCStackResult GetDtlsCertCredentials(CADtlsCertCreds_t *credInfo);
+int GetDtlsX509Credentials(CADtlsX509Creds_t *credInfo);
 #endif /*__WITH_X509__*/
 
 /**

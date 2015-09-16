@@ -253,13 +253,6 @@ CAResult_t CAAdapterNetDtlsDecrypt(const CASecureEndpoint_t *sep,
                                    uint8_t *data,
                                    uint32_t dataLen);
 
-#ifdef __WITH_X509__
-/**
- * @fn  CADeInitX509
- * @brief  Deinitializes certificate based credential
- */
-void CADeInitX509();
-#endif //__WITH_X509__
 #endif /* CA_ADAPTER_NET_DTLS_H_ */
 
 

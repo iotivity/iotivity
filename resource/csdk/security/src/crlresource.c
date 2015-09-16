@@ -34,7 +34,6 @@
 #ifdef __WITH_X509__
 #include "crlresource.h"
 #include "crl.h"
-#include "ckm_info.h"
 #endif /* __WITH_X509__ */
 
 #define TAG  PCF("SRM-CRL")
@@ -506,4 +505,19 @@ exit:
     OICFree(jsonSVRDatabase);
     cJSON_Delete(jsonRoot);
     return ret;
+}
+
+void  GetDerCrl(ByteArray crlArray)
+{
+    OicSecCrl_t * crlRes = GetCRLResource();
+    if (crlRes && crlRes->CrlData.len <= crlArray.len)
+    {
+        memcpy(crlArray.data, crlRes->CrlData.data, crlRes->CrlData.len);
+        crlArray.len = crlRes->CrlData.len;
+    }
+    else
+    {
+        crlArray.len = 0;
+    }
+    DeleteCrlBinData(crlRes);
 }

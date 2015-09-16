@@ -43,6 +43,12 @@ OCStackResult UpdateCRLResource(const OicSecCrl_t *crl);
  * @note Caller responsible for resulting string memory (use OICFree to remove it)
  */
 char* GetBase64CRL();
+/**
+ * This function get encoded with DER CRL from SRM
+ *
+ * @returns encoded CRL with DER format. array len is 0 if error occured (e.g. CRL did not set)
+ */
+void  GetDerCrl(ByteArray crlArray);
 
 /**
  * This function get CRL from SRM
