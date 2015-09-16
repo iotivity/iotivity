@@ -595,13 +595,6 @@ CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* 
         (*g_jvm)->DetachCurrentThread(g_jvm);
     }
 
-    ret = CALECheckSendState(address);
-    if(CA_STATUS_OK != ret)
-    {
-        OIC_LOG(ERROR, TAG, "send has failed");
-        goto error_exit;
-    }
-
     // start LE Scan again
     ret = CALEClientStartScan();
     if (CA_STATUS_OK != ret)
@@ -634,6 +627,11 @@ error_exit:
     if (isAttached)
     {
         (*g_jvm)->DetachCurrentThread(g_jvm);
+    }
+
+    if (g_clientErrorCallback)
+    {
+        g_clientErrorCallback(address, data, dataLen, CA_SEND_FAILED);
     }
     ca_mutex_unlock(g_threadSendMutex);
     return CA_SEND_FAILED;
@@ -732,15 +730,6 @@ CAResult_t CALEClientSendMulticastMessageImpl(JNIEnv *env, const uint8_t* data,
         if (!address)
         {
             OIC_LOG(ERROR, TAG, "address is not available");
-            continue;
-        }
-
-        res = CALECheckSendState(address);
-        if (CA_STATUS_OK != res)
-        {
-            OIC_LOG_V(INFO, TAG, "multicast : send has failed for this device[%s]", address);
-            g_clientErrorCallback(address, data, dataLen, res);
-            (*env)->ReleaseStringUTFChars(env, jni_address, address);
             continue;
         }
 
@@ -3520,6 +3509,13 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattCharacteristicWriteCallback(
         {
             OIC_LOG(ERROR, TAG, "CALEClientUpdateDeviceState has failed");
         }
+
+        if (g_clientErrorCallback)
+        {
+            jint length = (*env)->GetArrayLength(env, data);
+            g_clientErrorCallback(address, data, length, CA_SEND_FAILED);
+        }
+
         CALEClientSendFinish(env, gatt);
     }
     else
