@@ -2865,7 +2865,6 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
 {
 
     OCResource *pointer = NULL;
-    char *str = NULL;
     OCStackResult result = OC_STACK_ERROR;
 
     OC_LOG(INFO, TAG, "Entering OCCreateResource");
@@ -2929,13 +2928,12 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
     insertResource(pointer);
 
     // Set the uri
-    str = OICStrdup(uri);
-    if (!str)
+    pointer->uri = OICStrdup(uri);
+    if (!pointer->uri)
     {
         result = OC_STACK_NO_MEMORY;
         goto exit;
     }
-    pointer->uri = str;
 
     // Set properties.  Set OC_ACTIVE
     pointer->resourceProperties = (OCResourceProperty) (resourceProperties
@@ -2985,7 +2983,6 @@ exit:
     {
         // Deep delete of resource and other dynamic elements that it contains
         deleteResource(pointer);
-        OICFree(str);
     }
     return result;
 }
@@ -3097,6 +3094,29 @@ OCStackResult OCUnBindResource(
     return OC_STACK_ERROR;
 }
 
+// Precondition is that the parameter has been checked to not equal NULL.
+static bool ValidateResourceTypeInterface(const char *resourceItemName)
+{
+    if (resourceItemName[0] < 'a' || resourceItemName[0] > 'z')
+    {
+        return false;
+    }
+
+    size_t index = 1;
+    while (resourceItemName[index] != '\0')
+    {
+        if (resourceItemName[index] != '.' &&
+                resourceItemName[index] != '-' &&
+                (resourceItemName[index] < 'a' || resourceItemName[index] > 'z') &&
+                (resourceItemName[index] < '0' || resourceItemName[index] > '9'))
+        {
+            return false;
+        }
+        ++index;
+    }
+
+    return true;
+}
 OCStackResult BindResourceTypeToResource(OCResource* resource,
                                             const char *resourceTypeName)
 {
@@ -3105,6 +3125,12 @@ OCStackResult BindResourceTypeToResource(OCResource* resource,
     OCStackResult result = OC_STACK_ERROR;
 
     VERIFY_NON_NULL(resourceTypeName, ERROR, OC_STACK_INVALID_PARAM);
+
+    if (!ValidateResourceTypeInterface(resourceTypeName))
+    {
+        OC_LOG(ERROR, TAG, "resource type illegal (see RFC 6690)");
+        return OC_STACK_INVALID_PARAM;
+    }
 
     pointer = (OCResourceType *) OICCalloc(1, sizeof(OCResourceType));
     if (!pointer)
@@ -3142,6 +3168,12 @@ OCStackResult BindResourceInterfaceToResource(OCResource* resource,
     OCStackResult result = OC_STACK_ERROR;
 
     VERIFY_NON_NULL(resourceInterfaceName, ERROR, OC_STACK_INVALID_PARAM);
+
+    if (!ValidateResourceTypeInterface(resourceInterfaceName))
+    {
+        OC_LOG(ERROR, TAG, "resource /interface illegal (see RFC 6690)");
+        return OC_STACK_INVALID_PARAM;
+    }
 
     OC_LOG_V(INFO, TAG, "Binding %s interface to %s", resourceInterfaceName, resource->uri);
 
