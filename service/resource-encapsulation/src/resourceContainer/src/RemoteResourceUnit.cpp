@@ -34,8 +34,14 @@ RemoteResourceUnit::~RemoteResourceUnit()
 {
     if (remoteObject)
     {
-        remoteObject->stopCaching();
-        remoteObject->stopMonitoring();
+        if(remoteObject->isCaching())
+        {
+            remoteObject->stopCaching();
+        }
+        if(remoteObject->isMonitoring())
+        {
+            remoteObject->stopMonitoring();
+        }
     }
 }
 
@@ -45,7 +51,33 @@ RemoteResourceUnit::Ptr RemoteResourceUnit::createRemoteResourceInfo(
     RemoteResourceUnit::Ptr retRemoteResourceUnit = std::make_shared<RemoteResourceUnit>();
     retRemoteResourceUnit->remoteObject = ptr;
     retRemoteResourceUnit->pUpdatedCB = updatedCB;
-	
+
+    return retRemoteResourceUnit;
+}
+
+RemoteResourceUnit::Ptr RemoteResourceUnit::createRemoteResourceInfoWithStateCB(
+    RCSRemoteResourceObject::Ptr ptr, UpdatedCBFromServer updatedCB,
+    RCSRemoteResourceObject::StateChangedCallback stateCB)
+{
+    RemoteResourceUnit::Ptr retRemoteResourceUnit = std::make_shared<RemoteResourceUnit>();
+    retRemoteResourceUnit->remoteObject = ptr;
+    retRemoteResourceUnit->pUpdatedCB = updatedCB;
+
+    retRemoteResourceUnit->pStateChangedCB = stateCB;
+
+    return retRemoteResourceUnit;
+}
+
+RemoteResourceUnit::Ptr RemoteResourceUnit::createRemoteResourceInfoWithCacheCB(
+    RCSRemoteResourceObject::Ptr ptr, UpdatedCBFromServer updatedCB,
+    RCSRemoteResourceObject::CacheUpdatedCallback cacheCB)
+{
+    RemoteResourceUnit::Ptr retRemoteResourceUnit = std::make_shared<RemoteResourceUnit>();
+    retRemoteResourceUnit->remoteObject = ptr;
+    retRemoteResourceUnit->pUpdatedCB = updatedCB;
+
+    retRemoteResourceUnit->pCacheUpdateCB = cacheCB;
+
     return retRemoteResourceUnit;
 }
 

@@ -39,7 +39,8 @@ namespace OIC
             };
 
             typedef std::shared_ptr<RemoteResourceUnit> Ptr;
-            typedef std::function<void(UPDATE_MSG, RCSRemoteResourceObject::Ptr)> UpdatedCBFromServer;
+            typedef std::function<void(UPDATE_MSG,
+                RCSRemoteResourceObject::Ptr)> UpdatedCBFromServer;
 
             RemoteResourceUnit();
             ~RemoteResourceUnit();
@@ -57,8 +58,13 @@ namespace OIC
 
         public:
             static RemoteResourceUnit::Ptr createRemoteResourceInfo(
-                    RCSRemoteResourceObject::Ptr ptr,
-                    UpdatedCBFromServer updatedCB);
+                RCSRemoteResourceObject::Ptr ptr, UpdatedCBFromServer updatedCB);
+            static RemoteResourceUnit::Ptr createRemoteResourceInfoWithStateCB(
+                RCSRemoteResourceObject::Ptr ptr, UpdatedCBFromServer updatedCB,
+                RCSRemoteResourceObject::StateChangedCallback stateCB);
+            static RemoteResourceUnit::Ptr createRemoteResourceInfoWithCacheCB(
+                RCSRemoteResourceObject::Ptr ptr, UpdatedCBFromServer updatedCB,
+                RCSRemoteResourceObject::CacheUpdatedCallback cacheCB);
 
             RCSRemoteResourceObject::Ptr getRemoteResourceObject() const;
             std::string getRemoteResourceUri() const;
