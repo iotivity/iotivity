@@ -27,16 +27,12 @@ ProvResource g_prov;
 NetResource g_net;
 
 OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
-                                              OCEntityHandlerRequest *ehRequest,
-                                              void *callback);
+        OCEntityHandlerRequest *ehRequest, void *callback);
 const char *getResult(OCStackResult result);
 
-OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest,
-                                               OCRepPayload** payload);
-OCEntityHandlerResult ProcessPutRequest(OCEntityHandlerRequest *ehRequest,
-                                               OCRepPayload** payload);
-OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest,
-                                               OCRepPayload** payload);
+OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest, OCRepPayload** payload);
+OCEntityHandlerResult ProcessPutRequest(OCEntityHandlerRequest *ehRequest, OCRepPayload** payload);
+OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRepPayload** payload);
 OCRepPayload* constructResponse(OCEntityHandlerRequest *ehRequest);
 
 int g_flag = 0;
@@ -65,13 +61,13 @@ OCStackResult CreateProvisioningResource()
     sprintf(g_prov.cd, "Unknown");
 
     OCStackResult res = OCCreateResource(&g_prov.handle, "oic.prov", OC_RSRVD_INTERFACE_DEFAULT,
-            OC_RSRVD_ES_URI_PROV, OCEntityHandlerCb,NULL, OC_DISCOVERABLE | OC_OBSERVABLE);
+            OC_RSRVD_ES_URI_PROV, OCEntityHandlerCb, NULL, OC_DISCOVERABLE | OC_OBSERVABLE);
 
     OC_LOG_V(INFO, TAG, "Created Prov resource with result: %s", getResult(res));
 
     return res;
 }
-
+#ifdef ESWIFI
 OCStackResult CreateNetworkResource()
 {
     NetworkInfo netInfo;
@@ -101,24 +97,23 @@ OCStackResult CreateNetworkResource()
 
     return res;
 }
-
-OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest,
-                                                OCRepPayload **payload)
+#endif
+OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest, OCRepPayload **payload)
 {
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
-    if(!ehRequest)
+    if (!ehRequest)
     {
         OC_LOG(ERROR, TAG, "Request is Null");
         return ehResult;
     }
-    if(ehRequest->payload && ehRequest->payload->type != PAYLOAD_TYPE_REPRESENTATION)
+    if (ehRequest->payload && ehRequest->payload->type != PAYLOAD_TYPE_REPRESENTATION)
     {
         OC_LOG(ERROR, TAG, "Incoming payload not a representation");
         return ehResult;
     }
 
     OCRepPayload *getResp = constructResponse(ehRequest);
-    if(!getResp)
+    if (!getResp)
     {
         OC_LOG(ERROR, TAG, "constructResponse failed");
         return OC_EH_ERROR;
@@ -130,32 +125,31 @@ OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest,
     return ehResult;
 }
 
-OCEntityHandlerResult ProcessPutRequest (OCEntityHandlerRequest *ehRequest,
-                                                OCRepPayload** payload)
+OCEntityHandlerResult ProcessPutRequest(OCEntityHandlerRequest *ehRequest, OCRepPayload** payload)
 {
 
-    OCEntityHandlerResult ehResult=OC_EH_ERROR;
-    if(ehRequest->payload && ehRequest->payload->type != PAYLOAD_TYPE_REPRESENTATION)
+    OCEntityHandlerResult ehResult = OC_EH_ERROR;
+    if (ehRequest->payload && ehRequest->payload->type != PAYLOAD_TYPE_REPRESENTATION)
     {
         OC_LOG(ERROR, TAG, "Incoming payload not a representation");
         return ehResult;
     }
 
-    OCRepPayload* input = (OCRepPayload*)(ehRequest->payload);
-    if(!input)
+    OCRepPayload* input = (OCRepPayload*) (ehRequest->payload);
+    if (!input)
     {
         OC_LOG(ERROR, TAG, "Failed to parse");
         return ehResult;
     }
 
     char* tnn;
-    if(OCRepPayloadGetPropString(input,OC_RSRVD_ES_TNN, &tnn))
+    if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_TNN, &tnn))
     {
         sprintf(g_prov.tnn, "%s", tnn);
     }
 
     char* cd;
-    if(OCRepPayloadGetPropString(input, OC_RSRVD_ES_CD, &cd))
+    if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_CD, &cd))
     {
         sprintf(g_prov.cd, "%s", cd);
     }
@@ -163,7 +157,7 @@ OCEntityHandlerResult ProcessPutRequest (OCEntityHandlerRequest *ehRequest,
     g_flag = 1;
 
     OCRepPayload *getResp = constructResponse(ehRequest);
-    if(!getResp)
+    if (!getResp)
     {
         OC_LOG(ERROR, TAG, "constructResponse failed");
         return OC_EH_ERROR;
@@ -172,35 +166,31 @@ OCEntityHandlerResult ProcessPutRequest (OCEntityHandlerRequest *ehRequest,
     *payload = getResp;
     ehResult = OC_EH_OK;
 
-
-
     return ehResult;
 }
 
-
-OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest,
-                                                OCRepPayload** payload)
+OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRepPayload** payload)
 {
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
-    if(!ehRequest)
+    if (!ehRequest)
     {
         OC_LOG(ERROR, TAG, "Request is Null");
         return ehResult;
     }
-    if(ehRequest->payload && ehRequest->payload->type != PAYLOAD_TYPE_REPRESENTATION)
+    if (ehRequest->payload && ehRequest->payload->type != PAYLOAD_TYPE_REPRESENTATION)
     {
         OC_LOG(ERROR, TAG, "Incoming payload not a representation");
         return ehResult;
     }
 
-    OCRepPayload* input = (OCRepPayload*)(ehRequest->payload);
-    if(!input)
+    OCRepPayload* input = (OCRepPayload*) (ehRequest->payload);
+    if (!input)
     {
         OC_LOG(ERROR, TAG, "Failed to parse");
         return ehResult;
     }
     char* tr;
-    if(OCRepPayloadGetPropString(input, OC_RSRVD_ES_TR, &tr))
+    if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_TR, &tr))
     {
 
         // Triggering
@@ -215,7 +205,7 @@ OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest,
 OCRepPayload* constructResponse(OCEntityHandlerRequest *ehRequest)
 {
     OCRepPayload* payload = OCRepPayloadCreate();
-    if(!payload)
+    if (!payload)
     {
         OC_LOG(ERROR, TAG, "Failed to allocate Payload");
         return NULL;
@@ -223,11 +213,11 @@ OCRepPayload* constructResponse(OCEntityHandlerRequest *ehRequest)
 
     if (ehRequest->resource == g_prov.handle)
     {
-        OCRepPayloadSetUri(payload,OC_RSRVD_ES_URI_PROV);
-        OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_PS,g_prov.ps);
+        OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_PROV);
+        OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_PS, g_prov.ps);
         OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_TNT, g_prov.tnt);
-        OCRepPayloadSetPropString(payload,OC_RSRVD_ES_TNN, g_prov.tnn);
-        OCRepPayloadSetPropString(payload,OC_RSRVD_ES_CD, g_prov.cd);
+        OCRepPayloadSetPropString(payload, OC_RSRVD_ES_TNN, g_prov.tnn);
+        OCRepPayloadSetPropString(payload, OC_RSRVD_ES_CD, g_prov.cd);
     }
     else if (ehRequest->requestHandle == g_net.handle)
     {
@@ -241,9 +231,9 @@ OCRepPayload* constructResponse(OCEntityHandlerRequest *ehRequest)
 // This is the entity handler for the registered resource.
 // This is invoked by OCStack whenever it recevies a request for this resource.
 OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest* entityHandlerRequest,void *callback)
+        OCEntityHandlerRequest* entityHandlerRequest, void *callback)
 {
-    (void)callback;
+    (void) callback;
     OCEntityHandlerResult ehRet = OC_EH_OK;
     OCEntityHandlerResponse response =
     { 0 };
@@ -282,7 +272,7 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
             response.resourceHandle = entityHandlerRequest->resource;
             response.ehResult = ehRet;
             //response uses OCPaylod while all get,put methodes use OCRepPayload
-            response.payload = (OCPayload*)(payload);
+            response.payload = (OCPayload*) (payload);
             response.numSendVendorSpecificHeaderOptions = 0;
             memset(response.sendVendorSpecificHeaderOptions, 0,
                     sizeof response.sendVendorSpecificHeaderOptions);
@@ -312,40 +302,40 @@ const char *getResult(OCStackResult result)
 {
     switch (result)
     {
-    case OC_STACK_OK:
-        return "OC_STACK_OK";
-    case OC_STACK_INVALID_URI:
-        return "OC_STACK_INVALID_URI";
-    case OC_STACK_INVALID_QUERY:
-        return "OC_STACK_INVALID_QUERY";
-    case OC_STACK_INVALID_IP:
-        return "OC_STACK_INVALID_IP";
-    case OC_STACK_INVALID_PORT:
-        return "OC_STACK_INVALID_PORT";
-    case OC_STACK_INVALID_CALLBACK:
-        return "OC_STACK_INVALID_CALLBACK";
-    case OC_STACK_INVALID_METHOD:
-        return "OC_STACK_INVALID_METHOD";
-    case OC_STACK_NO_MEMORY:
-        return "OC_STACK_NO_MEMORY";
-    case OC_STACK_COMM_ERROR:
-        return "OC_STACK_COMM_ERROR";
-    case OC_STACK_INVALID_PARAM:
-        return "OC_STACK_INVALID_PARAM";
-    case OC_STACK_NOTIMPL:
-        return "OC_STACK_NOTIMPL";
-    case OC_STACK_NO_RESOURCE:
-        return "OC_STACK_NO_RESOURCE";
-    case OC_STACK_RESOURCE_ERROR:
-        return "OC_STACK_RESOURCE_ERROR";
-    case OC_STACK_SLOW_RESOURCE:
-        return "OC_STACK_SLOW_RESOURCE";
-    case OC_STACK_NO_OBSERVERS:
-        return "OC_STACK_NO_OBSERVERS";
-    case OC_STACK_ERROR:
-        return "OC_STACK_ERROR";
-    default:
-        return "UNKNOWN";
+        case OC_STACK_OK:
+            return "OC_STACK_OK";
+        case OC_STACK_INVALID_URI:
+            return "OC_STACK_INVALID_URI";
+        case OC_STACK_INVALID_QUERY:
+            return "OC_STACK_INVALID_QUERY";
+        case OC_STACK_INVALID_IP:
+            return "OC_STACK_INVALID_IP";
+        case OC_STACK_INVALID_PORT:
+            return "OC_STACK_INVALID_PORT";
+        case OC_STACK_INVALID_CALLBACK:
+            return "OC_STACK_INVALID_CALLBACK";
+        case OC_STACK_INVALID_METHOD:
+            return "OC_STACK_INVALID_METHOD";
+        case OC_STACK_NO_MEMORY:
+            return "OC_STACK_NO_MEMORY";
+        case OC_STACK_COMM_ERROR:
+            return "OC_STACK_COMM_ERROR";
+        case OC_STACK_INVALID_PARAM:
+            return "OC_STACK_INVALID_PARAM";
+        case OC_STACK_NOTIMPL:
+            return "OC_STACK_NOTIMPL";
+        case OC_STACK_NO_RESOURCE:
+            return "OC_STACK_NO_RESOURCE";
+        case OC_STACK_RESOURCE_ERROR:
+            return "OC_STACK_RESOURCE_ERROR";
+        case OC_STACK_SLOW_RESOURCE:
+            return "OC_STACK_SLOW_RESOURCE";
+        case OC_STACK_NO_OBSERVERS:
+            return "OC_STACK_NO_OBSERVERS";
+        case OC_STACK_ERROR:
+            return "OC_STACK_ERROR";
+        default:
+            return "UNKNOWN";
     }
 }
 

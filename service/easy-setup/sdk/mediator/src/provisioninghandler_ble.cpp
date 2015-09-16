@@ -416,7 +416,8 @@ OCStackApplicationResult FindProvisioningResourceResponse(void* ctx, OCDoHandle 
     devaddress->adapter = OC_ADAPTER_GATT_BTLE;
 
     if (strcmp(netProvInfo->netAddressInfo.WIFI.ipAddress, clientResponse->devAddr.addr))
-        OIC_LOG(INFO, TAG, "equal");
+        OIC_LOG_V(INFO, TAG, "unequal %s %s", netProvInfo->netAddressInfo.WIFI.ipAddress,
+                clientResponse->devAddr.addr);
     else
         OIC_LOG_V(INFO, TAG, "unequal %s %s", netProvInfo->netAddressInfo.WIFI.ipAddress,
                 clientResponse->devAddr.addr);
@@ -761,7 +762,7 @@ bool ConfigEnrolleeObject(const EnrolleeNWProvInfo_t *netInfo)
             netProvInfo->netAddressInfo.WIFI.pwd);
 
     OIC_LOG_V(DEBUG, TAG, "Network Provisioning Info. MAC ADDRESS = %s",
-            netProvInfo->netAddressInfo.WIFI.ipAddress);
+            netInfo->netAddressInfo.LE.leMacAddress);
 
     return true;
 

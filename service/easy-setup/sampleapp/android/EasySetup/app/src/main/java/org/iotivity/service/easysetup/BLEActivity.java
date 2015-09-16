@@ -88,14 +88,14 @@ public class BLEActivity extends Activity {
     }
 
     public WiFiProvConfig getEnrollerWifiConfig() {
+        // SET the wifi credentials here
         mWiFiProvConfig = new WiFiProvConfig("linksysy", "12345678");
         return mWiFiProvConfig;
     }
 
     public BLEOnBoardingConfig getOnBoardingWifiConfig() {
-        //TODO : Check proper configuration
+        // Set the uuid of the OIC device here
         bleOnBoardingConfig = new BLEOnBoardingConfig();
-
         bleOnBoardingConfig.setUuid("ade3d529-c784-4f63-a987-eb69f70ee816");
 
         return bleOnBoardingConfig;
@@ -113,7 +113,8 @@ public class BLEActivity extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         // User chose not to enable Bluetooth.
         if (requestCode == REQUEST_ENABLE_BT && resultCode == Activity.RESULT_CANCELED) {
-            Log.e("error enablg bluetooth", resultCode + "");
+            Log.e("error bluetooth", "Bluetooth not enabled..Try again");
+            Toast.makeText(BLEActivity.this, "Bluetooth not enabled..Try again", Toast.LENGTH_SHORT).show();
             finish();
             return;
         } else try {
@@ -142,15 +143,16 @@ public class BLEActivity extends Activity {
 
     public void start() {
         //This function starts the bluetooth adpater so that the easysetup can start scanning for BLE devices
-        //IF bluetooth is directly enabled it will directly start the setup of enrollee devices
         final BluetoothManager bluetoothManager =
                 (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         BluetoothAdapter mBluetoothAdapter = bluetoothManager.getAdapter();
 
         if (!mBluetoothAdapter.isEnabled()) {
+            //Bluetooth is disabled, enable it
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         } else try {
+            //IF bluetooth is directly enabled it will directly start the setup of enrollee devices
             mEasySetupService.startSetup(mDevice);
         } catch (IOException e) {
             e.printStackTrace();

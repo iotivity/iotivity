@@ -21,20 +21,30 @@
 // Do not remove the include below
 #include "Arduino.h"
 
-#include <string.h>
+#include "logger.h"
 #include "ocstack.h"
-#include "networkHandler.h"
+#include <string.h>
 
-typedef void (*EventCallback)(ESResult);
+#include "common.h"
 
-#ifdef ESWIFI
-ESResult InitEasySetup(NetworkType networkType, const char *ssid, const char *passwd,EventCallback cb);
+#ifndef ES_NETWORK_HANDLER_H_
+#define ES_NETWORK_HANDLER_H_
+
+#define MAXSSIDLEN 33
+#define MAXNETCREDLEN 20
+#define MAXNUMTYPE 5
+#define MAXADDRLEN 15
+
+typedef void (*NetworkEventCallback)(ESResult);
+
+enum NetworkType
+{
+    ES_WIFI = 1, ES_BT = 2, ES_BLE = 3, ES_ZIGBEE = 4, ES_ETH = 5
+};
+typedef struct NETWORKINFO
+{
+    NetworkType type;
+    byte mac[6];
+} NetworkInfo;
+
 #endif
-
-#ifdef ESBLE
-ESResult InitEasySetup(NetworkType networkType,EventCallback cb);
-#endif
-
-ESResult InitProvisioning(EventCallback cb);
-ESResult TerminateEasySetup();
-

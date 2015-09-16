@@ -22,8 +22,9 @@ package org.iotivity.service.easysetup.impl;
 import android.content.Context;
 import android.util.Log;
 
+import org.iotivity.base.OcConnectivityType;
 import org.iotivity.service.easysetup.core.BleConnection;
-import org.iotivity.service.easysetup.core.OnBoardingConnection;
+import org.iotivity.service.easysetup.core.ConnectionInterface;
 import org.iotivity.service.easysetup.core.EnrolleeDevice;
 import org.iotivity.service.easysetup.core.EnrolleeState;
 import org.iotivity.service.easysetup.core.OnBoardingConfig;
@@ -81,7 +82,8 @@ public class EnrolleeDeviceBLEOnBoarding extends EnrolleeDevice {
         }
     };
 
-    protected EnrolleeDeviceBLEOnBoarding(Context context, OnBoardingConfig onBoardingConfig, ProvisioningConfig provConfig) {
+    protected EnrolleeDeviceBLEOnBoarding(Context context, OnBoardingConfig onBoardingConfig,
+                                          ProvisioningConfig provConfig) {
         super(onBoardingConfig, provConfig);
         mContext = context;
         bleManager = new BLEManager(mContext, (BLEOnBoardingConfig) onBoardingConfig);
@@ -110,36 +112,33 @@ public class EnrolleeDeviceBLEOnBoarding extends EnrolleeDevice {
     }
 
     @Override
-    protected void startProvisioningProcess(OnBoardingConnection conn) {
+    protected void startProvisioningProcess(ConnectionInterface conn) {
 
         Log.i("start provisioning BLE", mProvConfig.getConnType() + "");
 
-        //if (mProvConfig.getConnType() == ProvisioningConfig.ConnType.WiFi)
-        {
 
-            provisionEnrolleInstance = new ProvisionEnrollee(mContext);
-            provisionEnrolleInstance.registerProvisioningHandler(new IProvisioningListener() {
-                @Override
-                public void onFinishProvisioning(int statuscode) {
-                    mState = (statuscode == 0) ? EnrolleeState.DEVICE_PROVISIONING_SUCCESS_STATE : EnrolleeState.DEVICE_PROVISIONING_FAILED_STATE;
-                    mProvisioningCallback.onFinished(EnrolleeDeviceBLEOnBoarding.this);
-                }
-            });
+        provisionEnrolleInstance = new ProvisionEnrollee(mContext);
+        provisionEnrolleInstance.registerProvisioningHandler(new IProvisioningListener() {
+            @Override
+            public void onFinishProvisioning(int statuscode) {
+                mState = (statuscode == 0) ? EnrolleeState.DEVICE_PROVISIONING_SUCCESS_STATE :
+                        EnrolleeState.DEVICE_PROVISIONING_FAILED_STATE;
+                mProvisioningCallback.onFinished(EnrolleeDeviceBLEOnBoarding.this);
+            }
+        });
 
-            BleConnection connection = (BleConnection) conn;
-            WiFiProvConfig wifiProvConfig = (WiFiProvConfig) mProvConfig;
-            if (mContext == null)
-                Log.d("BLE context is null", "");
-            else Log.d("BLE context is not null", "");
-            easySetupManagerNativeInstance = EasySetupManager.getInstance();
+        BleConnection connection = (BleConnection) conn;
+        WiFiProvConfig wifiProvConfig = (WiFiProvConfig) mProvConfig;
+        easySetupManagerNativeInstance = EasySetupManager.getInstance();
+        easySetupManagerNativeInstance.setApplicationContext(mContext);
+        easySetupManagerNativeInstance.initEasySetup();
+        Log.d("init", "successful");
+        OcConnectivityType ocConnectivityType = OcConnectivityType.CT_ADAPTER_GATT_BTLE;
+        easySetupManagerNativeInstance.provisionEnrollee(connection.getMacaddress(),
+                wifiProvConfig.getSsId(),
+                wifiProvConfig.getPassword(),
+                ocConnectivityType.getValue());
 
-
-            easySetupManagerNativeInstance.setApplicationContext(mContext);
-            easySetupManagerNativeInstance.initEasySetup();
-            Log.d("init", "successful");
-            easySetupManagerNativeInstance.provisionEnrollee(connection.getMacaddress(), wifiProvConfig.getSsId(), wifiProvConfig.getPassword(), 0);
-
-        }
 
     }
 }

@@ -55,7 +55,12 @@ typedef struct NETRESOURCE
 } NetResource;
 
 OCStackResult CreateProvisioningResource();
+
+//created only for in case of wifi
+#ifdef ESWIFI
 OCStackResult CreateNetworkResource();
+#endif
+
 void GetTargetNetworkInfoFromProvResource(char *, char *);
 void RegisterResourceEventCallBack(ResourceEventCallback);
 

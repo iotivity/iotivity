@@ -21,10 +21,25 @@
 Import('env')
 
 thinserver_env = env.Clone()
+transport = thinserver_env.get('TARGET_TRANSPORT')
+
 ######################################################################
 # Build flags
 ######################################################################
-thinserver_env.PrependUnique(CPPPATH = [
+if 'BLE' in transport:
+	thinserver_env.PrependUnique(CPPPATH = [
+                '../../../../../resource/oc_logger/include',
+	        '../../../../../resource/csdk/logger/include',
+                '../../../../../resource/csdk/stack/include',
+		'../../../../../extlibs/cjson',
+		'../../../sdk/common',
+		'../../../sdk/enrollee/arduino/ble',
+		'../../../sdk/enrollee/common/inc',
+		'../../../sdk/enrollee/common/src'
+		])
+	thinserver_env.AppendUnique(CPPDEFINES = ['TB_LOG', 'ESBLE'])	
+else : 
+	thinserver_env.PrependUnique(CPPPATH = [
                 '../../../../../resource/oc_logger/include',
 	        '../../../../../resource/csdk/logger/include',
                 '../../../../../resource/csdk/stack/include',
@@ -34,13 +49,15 @@ thinserver_env.PrependUnique(CPPPATH = [
 		'../../../sdk/enrollee/common/inc',
 		'../../../sdk/enrollee/common/src'
 		])
-
+	thinserver_env.AppendUnique(CPPDEFINES = ['TB_LOG', 'ESWIFI'])
+	
 thinserver_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-thinserver_env.AppendUnique(CPPDEFINES = ['TB_LOG', 'ARDUINOWIFI'])
 
 thinserver_env.PrependUnique(LIBS = ['octbstack','ocsrm','connectivity_abstraction','coap', 'ESSDKLibrary'])
-
-thinserver = thinserver_env.Program('thinserver', 'thinserver.cpp')
+if 'BLE' in transport:
+	thinserver = thinserver_env.Program('thinserver', 'thinserverble.cpp')
+else :
+	thinserver = thinserver_env.Program('thinserver', 'thinserver.cpp')
 env.CreateBin('thinserver')
 
 i_thinserver = thinserver_env.Install(env.get('BUILD_DIR'), thinserver)
