@@ -345,6 +345,44 @@ CAResult_t CALEServerSendResponse(JNIEnv *env, jobject device, jint requestId, j
     return CA_STATUS_OK;
 }
 
+CAResult_t CALEStartAdvertise()
+{
+    if (!g_jvm)
+    {
+        OIC_LOG(ERROR, TAG, "g_jvm is null");
+        return CA_STATUS_FAILED;
+    }
+
+    bool isAttached = false;
+    JNIEnv* env;
+    jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
+    if (JNI_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "Could not get JNIEnv pointer");
+        res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
+
+        if (JNI_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "AttachCurrentThread has failed");
+            return CA_STATUS_FAILED;
+        }
+        isAttached = true;
+    }
+
+    // start advertise
+    CAResult_t ret = CALEServerStartAdvertise(env, g_leAdvertiseCallback);
+    if (CA_STATUS_OK != ret)
+    {
+        OIC_LOG(ERROR, TAG, "CALEServerStartAdvertise has failed");
+    }
+
+    if (isAttached)
+    {
+        (*g_jvm)->DetachCurrentThread(g_jvm);
+    }
+    return ret;
+}
+
 CAResult_t CALEServerStartAdvertise(JNIEnv *env, jobject advertiseCallback)
 {
     OIC_LOG(DEBUG, TAG, "IN - CALEServerStartAdvertise");
@@ -1459,7 +1497,13 @@ void CALEServerTerminate()
         isAttached = true;
     }
 
-    CAResult_t ret = CALEServerStopMulticastServer(0);
+    CAResult_t ret = CALEServerGattClose(env, g_bluetoothGattServer);
+    if (CA_STATUS_OK != ret)
+    {
+        OIC_LOG(ERROR, TAG, "CALEServerGattClose has failed");
+    }
+
+    ret = CALEServerStopMulticastServer(0);
     if (CA_STATUS_OK != ret)
     {
         OIC_LOG(ERROR, TAG, "CALEServerStopMulticastServer has failed");
@@ -2136,10 +2180,19 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerConnectionStateChangeCall
     else if (newState == jni_int_state_disconnected)
     {
         OIC_LOG(DEBUG, TAG, "LE DISCONNECTED");
-        CAResult_t res = CALEServerGattClose(env, g_bluetoothGattServer);
-        if (CA_STATUS_OK != res)
+
+        jstring jni_remoteAddress = CALEGetAddressFromBTDevice(env, device);
+        CAResult_t ret = CALEServerRemoveDevice(env, jni_remoteAddress);
+        if (CA_STATUS_OK != ret)
         {
-            OIC_LOG(ERROR, TAG, "CALEServerGattClose has failed");
+            OIC_LOG(ERROR, TAG, "CALEServerRemoveDevice has failed");
+        }
+
+        // start advertise
+        ret = CALEServerStartAdvertise(env, g_leAdvertiseCallback);
+        if (CA_STATUS_OK != ret)
+        {
+            OIC_LOG(ERROR, TAG, "CALEServerStartAdvertise has failed");
         }
     }
     else
@@ -2261,8 +2314,7 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeAdvertiseStartFailureCallback(JNIEn
     VERIFY_NON_NULL_VOID(env, TAG, "env");
     VERIFY_NON_NULL_VOID(obj, TAG, "obj");
 
-    OIC_LOG_V(ERROR, TAG, "LE Advertise Start Failure Callback(%d)",
-              errorCode);
+    OIC_LOG_V(INFO, TAG, "LE Advertise Start Failure Callback(%d)", errorCode);
 }
 
 /**
