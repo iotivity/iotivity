@@ -49,6 +49,7 @@ LOCAL_MODULE    := things-manager-jni
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/jniutil/inc \
                     $(OIC_SRC_DIR)/android/android_api/base/jni \
                     $(OIC_SRC_DIR)/resource/include \
+                    $(OIC_SRC_DIR)/resource/c_common \
                     $(OIC_SRC_DIR)/resource/csdk/stack/include \
                     $(OIC_SRC_DIR)/resource/oc_logger/include \
                     $(OIC_SRC_DIR)/extlibs/boost/boost_1_58_0 \

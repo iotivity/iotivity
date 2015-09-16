@@ -58,12 +58,22 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_ResourceEncapsulation_server_Builder
             NativeRCSResourceObject = RCSResourceObject::Builder(resourceURI, resourceType,
                                       resourceInterface).setDiscoverable((bool)jObservableFlag).setObservable((
                                                   bool)jObservableFlag).setAttributes(*attributesObj).build();
+
+            jobject jResource = env->NewObject(g_cls_RCSResourceObject, g_mid_RCSResourceObject_ctor);
+            JniRCSResourceObject *jniRCSResourceObject = new JniRCSResourceObject(NativeRCSResourceObject);
+            RESetHandle<JniRCSResourceObject>(env, jResource, jniRCSResourceObject);
+            return jResource;
         }
         else
         {
             NativeRCSResourceObject = RCSResourceObject::Builder(resourceURI, resourceType,
                                       resourceInterface).setDiscoverable((bool)jObservableFlag).setObservable((
                                                   bool)jObservableFlag).build();
+
+            jobject jResource = env->NewObject(g_cls_RCSResourceObject, g_mid_RCSResourceObject_ctor);
+            JniRCSResourceObject *jniRCSResourceObject = new JniRCSResourceObject(NativeRCSResourceObject);
+            RESetHandle<JniRCSResourceObject>(env, jResource, jniRCSResourceObject);
+            return jResource;
         }
     }
     catch (OIC::Service::PlatformException exception)
@@ -71,11 +81,9 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_ResourceEncapsulation_server_Builder
         LOGE("nativeBuild : platform Exception");
         throwRCSException(env,  exception.what());
     }
-
-    jobject jResource = env->NewObject(g_cls_RCSResourceObject, g_mid_RCSResourceObject_ctor);
-    JniRCSResourceObject *jniRCSResourceObject = new JniRCSResourceObject(NativeRCSResourceObject);
-    RESetHandle<JniRCSResourceObject>(env, jResource, jniRCSResourceObject);
-
-    return jResource;
-
+    catch (OIC::Service::RCSException exception)
+    {
+        LOGE("nativeBuild : RCSException");
+        throwRCSException(env,  exception.what());
+    }
 }

@@ -78,7 +78,7 @@
   { int temp; temp = id1; id1 = id2; id2 = temp; }}while(0)
 
 #define CHECK_PDM_INIT(tag) do{if(true != gInit)\
-  { OC_LOG(ERROR, (tag), PCF("PDB is not initialized")); \
+  { OC_LOG(ERROR, (tag), "PDB is not initialized"); \
     return OC_STACK_PDM_IS_NOT_INITIALIZED; }}while(0)
 
 static sqlite3 *g_db = NULL;
@@ -272,7 +272,7 @@ bool PDMIsDuplicateDevice(const OicUuid_t* UUID)
         sqlite3_finalize(stmt);
         return false;
     }
-    OC_LOG(ERROR, TAG, PCF("PDB is not initialized"));
+    OC_LOG(ERROR, TAG, "PDB is not initialized");
     return true; // return true will stop futher process.
 }
 

@@ -24,7 +24,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#define TAG  PCF("MAIN")
+#define TAG  ("MAIN")
 
 static int customLogger = 0;
 

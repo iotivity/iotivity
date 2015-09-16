@@ -73,7 +73,7 @@ OCRepPayload* constructResponse (OCEntityHandlerRequest *ehRequest)
     {
         if(ehRequest->payload && ehRequest->payload->type != PAYLOAD_TYPE_REPRESENTATION)
         {
-            OC_LOG(ERROR, TAG, PCF("Incoming payload not a representation"));
+            OC_LOG(ERROR, TAG, ("Incoming payload not a representation"));
             return nullptr;
         }
 
@@ -202,7 +202,7 @@ OCEntityHandlerResult OCEntityHandlerCb (OCEntityHandlerFlag flag,
         {
             OC_LOG_V (INFO, TAG, "request query %s from client",
                                         entityHandlerRequest->query);
-            OC_LOG_PAYLOAD (INFO, TAG, entityHandlerRequest->payload);
+            OC_LOG_PAYLOAD (INFO, entityHandlerRequest->payload);
 
             // Make deep copy of received request and queue it for slow processing
             request = CopyRequest(entityHandlerRequest);

@@ -293,7 +293,12 @@ typedef enum
 
 #ifdef RA_ADAPTER
     /**Remote Access over XMPP.*/
-   OC_ADAPTER_REMOTE_ACCESS = (1 << 3)
+    OC_ADAPTER_REMOTE_ACCESS = (1 << 3),
+#endif
+
+#ifdef TCP_ADAPTER
+    /** CoAP over TCP.*/
+    OC_ADAPTER_TCP           = (1 << 4)
 #endif
 
 } OCTransportAdapter;
@@ -410,10 +415,15 @@ typedef enum
     /** RFCOMM over Bluetooth EDR.*/
     CT_ADAPTER_RFCOMM_BTEDR = (1 << 18),
 
-    #ifdef RA_ADAPTER
+#ifdef RA_ADAPTER
     /** Remote Access over XMPP.*/
     CT_ADAPTER_REMOTE_ACCESS = (1 << 19),
-    #endif
+#endif
+
+#ifdef TCP_ADAPTER
+    /** CoAP over TCP.*/
+    CT_ADAPTER_TCP          = (1 << 20),
+#endif
 
     /** Insecure transport is the default (subject to change).*/
 
@@ -498,6 +508,16 @@ typedef enum
     /** Allows OCDoResource caller to do discovery.*/
     OC_REST_DISCOVER       = (1 << 8)
 } OCMethod;
+
+/**
+ *  Formats for payload encoding.
+ */
+typedef enum
+{
+    OC_FORMAT_CBOR,
+    OC_FORMAT_UNDEFINED,
+    OC_FORMAT_UNSUPPORTED,
+} OCPayloadFormat;
 
 /**
  * Host Mode of Operation.
@@ -1013,7 +1033,6 @@ typedef struct
 
     /** the payload from the request PDU.*/
     OCPayload *payload;
-
 
 } OCEntityHandlerRequest;
 

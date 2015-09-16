@@ -596,7 +596,7 @@ static OCStackResult SendDeleteCredentialRequest(void* ctx,
         return OC_STACK_ERROR;
     }
 
-    char reqBuf[MAX_REQUEST_LENGTH] = {0};
+    char reqBuf[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     int snRet = 0;
                     //coaps://0.0.0.0:5684/oic/sec/cred?sub=(BASE64 ENCODED UUID)
     snRet = snprintf(reqBuf, sizeof(reqBuf), SRP_FORM_DELETE_CREDENTIAL, destDev->endpoint.addr,

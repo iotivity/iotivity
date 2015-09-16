@@ -201,6 +201,7 @@ static void CASelectReturned(fd_set *readFds, int ret)
             if (ifchanged)
             {
                 CAProcessNewInterface(ifchanged);
+                OICFree(ifchanged);
             }
             break;
         }

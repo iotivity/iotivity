@@ -503,6 +503,62 @@ CAResult_t CAParseHeadOption(uint32_t code, const CAInfo_t *info, coap_list_t **
         }
     }
 
+    // insert one extra header with the payload format if applicable.
+    if (CA_FORMAT_UNDEFINED != info->payloadFormat)
+    {
+        coap_list_t* node = NULL;
+        uint8_t buf[3] = {0};
+        switch (info->payloadFormat) {
+            case CA_FORMAT_APPLICATION_CBOR:
+                node = CACreateNewOptionNode(
+                        COAP_OPTION_CONTENT_FORMAT,
+                        coap_encode_var_bytes(buf, (uint16_t)COAP_MEDIATYPE_APPLICATION_CBOR),
+                        (char *)buf);
+                break;
+            default:
+                OIC_LOG_V(ERROR, TAG, "format option:[%d] not supported", info->payloadFormat);
+        }
+        if (!node)
+        {
+            OIC_LOG(ERROR, TAG, "format option not created");
+            return CA_STATUS_INVALID_PARAM;
+        }
+        int ret = coap_insert(optlist, node, CAOrderOpts);
+        if (ret <= 0)
+        {
+            coap_delete(node);
+            OIC_LOG(ERROR, TAG, "format option not inserted in header");
+            return CA_STATUS_INVALID_PARAM;
+        }
+    }
+    if (CA_FORMAT_UNDEFINED != info->acceptFormat)
+    {
+        coap_list_t* node = NULL;
+        uint8_t buf[3] = {0};
+        switch (info->acceptFormat) {
+            case CA_FORMAT_APPLICATION_CBOR:
+                node = CACreateNewOptionNode(
+                        COAP_OPTION_ACCEPT,
+                        coap_encode_var_bytes(buf, (uint16_t)COAP_MEDIATYPE_APPLICATION_CBOR),
+                        (char *)buf);
+                break;
+            default:
+                OIC_LOG_V(ERROR, TAG, "format option:[%d] not supported", info->acceptFormat);
+        }
+        if (!node)
+        {
+            OIC_LOG(ERROR, TAG, "format option not created");
+            return CA_STATUS_INVALID_PARAM;
+        }
+        int ret = coap_insert(optlist, node, CAOrderOpts);
+        if (ret <= 0)
+        {
+            coap_delete(node);
+            OIC_LOG(ERROR, TAG, "format option not inserted in header");
+            return CA_STATUS_INVALID_PARAM;
+        }
+    }
+
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -526,8 +582,30 @@ coap_list_t *CACreateNewOptionNode(uint16_t key, uint32_t length, const char *da
     memset(option, 0, sizeof(coap_option) + length + 1);
 
     COAP_OPTION_KEY(*option) = key;
-    COAP_OPTION_LENGTH(*option) = length;
-    memcpy(COAP_OPTION_DATA(*option), data, length);
+
+    coap_option_def_t* def = coap_opt_def(key);
+    if (NULL != def && coap_is_var_bytes(def))
+    {
+       if (length > def->max)
+        {
+            // make sure we shrink the value so it fits the coap option definition
+            // by truncating the value, disregard the leading bytes.
+            OIC_LOG_V(DEBUG, TAG, "Option [%d] data size [%d] shrunk to [%d]",
+                    def->key, length, def->max);
+            data = &(data[length-def->max]);
+            length = def->max;
+        }
+        // Shrink the encoding length to a minimum size for coap
+        // options that support variable length encoding.
+         COAP_OPTION_LENGTH(*option) = coap_encode_var_bytes(
+                COAP_OPTION_DATA(*option),
+                coap_decode_var_bytes((unsigned char *)data, length));
+    }
+    else
+    {
+        COAP_OPTION_LENGTH(*option) = length;
+        memcpy(COAP_OPTION_DATA(*option), data, length);
+    }
 
     /* we can pass NULL here as delete function since option is released automatically  */
     coap_list_t *node = coap_new_listnode(option, NULL);
@@ -570,7 +648,9 @@ uint32_t CAGetOptionCount(coap_opt_iterator_t opt_iter)
     {
         if (COAP_OPTION_URI_PATH != opt_iter.type && COAP_OPTION_URI_QUERY != opt_iter.type
             && COAP_OPTION_BLOCK1 != opt_iter.type && COAP_OPTION_BLOCK2 != opt_iter.type
-            && COAP_OPTION_SIZE1 != opt_iter.type && COAP_OPTION_SIZE2 != opt_iter.type)
+            && COAP_OPTION_SIZE1 != opt_iter.type && COAP_OPTION_SIZE2 != opt_iter.type
+            && COAP_OPTION_CONTENT_FORMAT != opt_iter.type
+            && COAP_OPTION_ACCEPT != opt_iter.type)
         {
             count++;
         }
@@ -609,6 +689,8 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *
 
     // set message id
     outInfo->messageId = pdu->hdr->id;
+    outInfo->payloadFormat = CA_FORMAT_UNDEFINED;
+    outInfo->acceptFormat = CA_FORMAT_UNDEFINED;
 
     if (count > 0)
     {
@@ -630,11 +712,12 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *
     while ((option = coap_option_next(&opt_iter)))
     {
         char buf[COAP_MAX_PDU_SIZE] = {0};
-        if (CAGetOptionData((uint8_t *)(COAP_OPT_VALUE(option)),
-                            COAP_OPT_LENGTH(option), (uint8_t *)buf, sizeof(buf)))
+        uint32_t bufLength =
+            CAGetOptionData(opt_iter.type, (uint8_t *)(COAP_OPT_VALUE(option)),
+                    COAP_OPT_LENGTH(option), (uint8_t *)buf, sizeof(buf));
+        if (bufLength)
         {
             OIC_LOG_V(DEBUG, TAG, "COAP URI element : %s", buf);
-            uint32_t bufLength = strlen(buf);
             if (COAP_OPTION_URI_PATH == opt_iter.type || COAP_OPTION_URI_QUERY == opt_iter.type)
             {
                 if (false == isfirstsetflag)
@@ -714,6 +797,32 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *
                     || COAP_OPTION_SIZE1 == opt_iter.type || COAP_OPTION_SIZE2 == opt_iter.type)
             {
                 OIC_LOG_V(DEBUG, TAG, "option[%d] will be filtering", opt_iter.type);
+            }
+            else if (COAP_OPTION_CONTENT_FORMAT == opt_iter.type)
+            {
+                if (1 == COAP_OPT_LENGTH(option))
+                {
+                    outInfo->payloadFormat = CAConvertFormat((uint8_t)buf[0]);
+                }
+                else
+                {
+                    outInfo->payloadFormat = CA_FORMAT_UNSUPPORTED;
+                    OIC_LOG_V(DEBUG, TAG, "option[%d] has an unsupported format [%d]",
+                            opt_iter.type, (uint8_t)buf[0]);
+                }
+            }
+            else if (COAP_OPTION_ACCEPT == opt_iter.type)
+            {
+                if (1 == COAP_OPT_LENGTH(option))
+                {
+                    outInfo->acceptFormat = CAConvertFormat((uint8_t)buf[0]);
+                }
+                else
+                {
+                    outInfo->acceptFormat = CA_FORMAT_UNSUPPORTED;
+                }
+                OIC_LOG_V(DEBUG, TAG, "option[%d] has an unsupported format [%d]",
+                        opt_iter.type, (uint8_t)buf[0]);
             }
             else
             {
@@ -916,11 +1025,12 @@ void CADestroyInfo(CAInfo_t *info)
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
-uint32_t CAGetOptionData(const uint8_t *data, uint32_t len, uint8_t *option, uint32_t buflen)
+uint32_t CAGetOptionData(uint16_t key, const uint8_t *data, uint32_t len,
+        uint8_t *option, uint32_t buflen)
 {
-    if (0 == buflen || 0 == len)
+    if (0 == buflen)
     {
-        OIC_LOG(ERROR, TAG, "len 0");
+        OIC_LOG(ERROR, TAG, "buflen 0");
         return 0;
     }
 
@@ -936,8 +1046,17 @@ uint32_t CAGetOptionData(const uint8_t *data, uint32_t len, uint8_t *option, uin
         return 0;
     }
 
-    memcpy(option, data, len);
-    option[len] = '\0';
+    coap_option_def_t* def = coap_opt_def(key);
+    if(NULL != def && coap_is_var_bytes(def) && 0 == len) {
+        // A 0 length option is permitted in CoAP but the
+        // rest or the stack is unaware of variable byte encoding
+        // should remain that way so a 0 byte of length 1 is inserted.
+        len = 1;
+        option[0]=0;
+    } else {
+        memcpy(option, data, len);
+        option[len] = '\0';
+    }
 
     return len;
 }
@@ -1000,4 +1119,29 @@ CAResponseResult_t CAGetCodeFromPduBinaryData(const void *pdu, uint32_t size)
     coap_hdr_t *hdr = (coap_hdr_t *) pdu;
 
     return (CAResponseResult_t) CA_RESPONSE_CODE(hdr->code);
+}
+
+CAPayloadFormat_t CAConvertFormat(uint8_t format)
+{
+    switch (format)
+    {
+        case COAP_MEDIATYPE_TEXT_PLAIN:
+            return CA_FORMAT_TEXT_PLAIN;
+        case COAP_MEDIATYPE_APPLICATION_LINK_FORMAT:
+            return CA_FORMAT_APPLICATION_LINK_FORMAT;
+        case COAP_MEDIATYPE_APPLICATION_XML:
+            return CA_FORMAT_APPLICATION_XML;
+        case COAP_MEDIATYPE_APPLICATION_OCTET_STREAM:
+            return CA_FORMAT_APPLICATION_OCTET_STREAM;
+        case COAP_MEDIATYPE_APPLICATION_RDF_XML:
+            return CA_FORMAT_APPLICATION_RDF_XML;
+        case COAP_MEDIATYPE_APPLICATION_EXI:
+            return CA_FORMAT_APPLICATION_EXI;
+        case COAP_MEDIATYPE_APPLICATION_JSON:
+            return CA_FORMAT_APPLICATION_JSON;
+        case COAP_MEDIATYPE_APPLICATION_CBOR:
+            return CA_FORMAT_APPLICATION_CBOR;
+        default:
+            return CA_FORMAT_UNSUPPORTED;
+    }
 }

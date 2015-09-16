@@ -27,9 +27,7 @@
 #include "ocstackinternal.h"
 #include <string.h>
 
-#define PCF(str) ((PROGMEM const char *)(F(str)))
-
-PROGMEM const char TAG[] = "Arduino";
+#define TAG "Arduino"
 static OCUri SERVICE_URI = "coap://127.0.0.1:5683/";
 
 #if 0  // Turn off logger test stuff
@@ -47,17 +45,17 @@ PROGMEM const char multiLineMsg[] = "this is a DEBUG message\non multiple\nlines
 
 void EXPECT_EQ(int a, int b)  {
   if (a == b) {
-    OC_LOG(INFO, TAG, PCF("PASS"));
+    OC_LOG(INFO, TAG, ("PASS"));
   } else {
-    OC_LOG(ERROR, TAG, PCF("FAIL"));
+    OC_LOG(ERROR, TAG, ("FAIL"));
   }
 }
 
 void EXPECT_STREQ(const char *a, const char *b)  {
   if (strcmp(a, b) == 0) {
-    OC_LOG(INFO, TAG, PCF("PASS"));
+    OC_LOG(INFO, TAG, ("PASS"));
   } else {
-    OC_LOG(ERROR, TAG, PCF("FAIL"));
+    OC_LOG(ERROR, TAG, ("FAIL"));
   }
 }
 //-----------------------------------------------------------------------------
@@ -125,7 +123,7 @@ void test6() {
 #endif
 
 extern "C" void asyncDoResourcesCallback(OCStackResult result, OCRepresentationHandle representation) {
-    OC_LOG(INFO, TAG, PCF("Entering asyncDoResourcesCallback"));
+    OC_LOG(INFO, TAG, ("Entering asyncDoResourcesCallback"));
 
     EXPECT_EQ(OC_STACK_OK, result);
     OCResource *resource = (OCResource *)representation;
@@ -134,34 +132,34 @@ extern "C" void asyncDoResourcesCallback(OCStackResult result, OCRepresentationH
 }
 
 void test0() {
-    OC_LOG(INFO, TAG, PCF("test0"));
+    OC_LOG(INFO, TAG, ("test0"));
     EXPECT_EQ(OC_STACK_OK, OCInit(0, 5683, OC_SERVER));
 }
 
 void test1() {
-    OC_LOG(INFO, TAG, PCF("test1"));
+    OC_LOG(INFO, TAG, ("test1"));
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 0, OC_SERVER));
 }
 
 void test2() {
-    OC_LOG(INFO, TAG, PCF("test2"));
+    OC_LOG(INFO, TAG, ("test2"));
     EXPECT_EQ(OC_STACK_OK, OCInit(0, 0, OC_SERVER));
 }
 
 void test3() {
-    OC_LOG(INFO, TAG, PCF("test3"));
+    OC_LOG(INFO, TAG, ("test3"));
     EXPECT_EQ(OC_STACK_ERROR, OCInit(0, 0, (OCMode)10));
 }
 
 void test4() {
-    OC_LOG(INFO, TAG, PCF("test4"));
+    OC_LOG(INFO, TAG, ("test4"));
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_CLIENT));
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_CLIENT_SERVER));
 }
 
 void test5() {
-    OC_LOG(INFO, TAG, PCF("test5"));
+    OC_LOG(INFO, TAG, ("test5"));
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_CLIENT));
     EXPECT_EQ(OC_STACK_OK, OCDoResource(OC_REST_GET, OC_EXPLICIT_DEVICE_DISCOVERY_URI, 0, 0, asyncDoResourcesCallback), NULL, 0);
     EXPECT_EQ(OC_STACK_OK, OCUpdateResources(SERVICE_URI));
@@ -169,14 +167,14 @@ void test5() {
 }
 
 void test6() {
-    OC_LOG(INFO, TAG, PCF("test6"));
+    OC_LOG(INFO, TAG, ("test6"));
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_CLIENT));
     EXPECT_EQ(OC_STACK_OK, OCStop());
     EXPECT_EQ(OC_STACK_ERROR, OCStop());
 }
 
 void test7() {
-    OC_LOG(INFO, TAG, PCF("test7"));
+    OC_LOG(INFO, TAG, ("test7"));
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_CLIENT));
     EXPECT_EQ(OC_STACK_OK, OCDoResource(OC_REST_GET, OC_EXPLICIT_DEVICE_DISCOVERY_URI, 0, 0, asyncDoResourcesCallback), NULL, 0);
     EXPECT_EQ(OC_STACK_INVALID_URI, OCUpdateResources(0));

@@ -151,13 +151,15 @@ uint32_t CAGetOptionCount(coap_opt_iterator_t opt_iter);
 
 /**
  * gets option data.
+ * @param[in]   key                  ID of the option
  * @param[in]   data                 data that is received.
  * @param[in]   length               length of the data.
  * @param[out]  option               result of the operation.
  * @param[in]   buflen               buffer length of the result.
  * @return  option count.
  */
-uint32_t CAGetOptionData(const uint8_t *data, uint32_t len, uint8_t *option, uint32_t buflen);
+uint32_t CAGetOptionData(uint16_t key, const uint8_t *data, uint32_t len,
+        uint8_t *option, uint32_t buflen);
 
 /**
  * extracts request information from received pdu.
@@ -228,6 +230,13 @@ uint16_t CAGetMessageIdFromPduBinaryData(const void *pdu, uint32_t size);
  * @return  code.
  */
 CAResponseResult_t CAGetCodeFromPduBinaryData(const void *pdu, uint32_t size);
+
+/**
+ * convert format from coap to OC.
+ * @param[in]   format              coap format code.
+ * @return format.
+ */
+CAPayloadFormat_t CAConvertFormat(uint8_t format);
 
 #ifdef __cplusplus
 } /* extern "C" */

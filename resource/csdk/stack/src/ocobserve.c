@@ -35,9 +35,9 @@
 
 
 // Module Name
-#define MOD_NAME PCF("ocobserve")
+#define MOD_NAME "ocobserve"
 
-#define TAG  PCF("OCStackObserve")
+#define TAG  "OCStackObserve"
 
 #define VERIFY_NON_NULL(arg) { if (!arg) {OC_LOG(FATAL, TAG, #arg " is NULL"); goto exit;} }
 
@@ -84,7 +84,7 @@ static OCQualityOfService DetermineObserverQoS(OCMethod method,
             resourceObserver->lowQosCount = 0;
             // at some point we have to to send CON to check on the
             // availability of observer
-            OC_LOG(INFO, TAG, PCF("This time we are sending the  notification as High qos"));
+            OC_LOG(INFO, TAG, "This time we are sending the  notification as High qos");
             decidedQoS = OC_HIGH_QOS;
         }
         else
@@ -103,7 +103,7 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
         OCQualityOfService qos)
 #endif
 {
-    OC_LOG(INFO, TAG, PCF("Entering SendObserverNotification"));
+    OC_LOG(INFO, TAG, "Entering SendObserverNotification");
     if(!resPtr)
     {
         return OC_STACK_INVALID_PARAM;
@@ -133,7 +133,7 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
                         0, resPtr->sequenceNum, qos, resourceObserver->query,
                         NULL, NULL,
                         resourceObserver->token, resourceObserver->tokenLength,
-                        resourceObserver->resUri, 0,
+                        resourceObserver->resUri, 0, resourceObserver->acceptFormat,
                         &resourceObserver->devAddr);
 
                 if(request)
@@ -173,12 +173,12 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
                 OCEntityHandlerResponse ehResponse = {0};
 
                 //This is effectively the implementation for the presence entity handler.
-                OC_LOG(DEBUG, TAG, PCF("This notification is for Presence"));
+                OC_LOG(DEBUG, TAG, "This notification is for Presence");
                 result = AddServerRequest(&request, 0, 0, 1, OC_REST_GET,
                         0, resPtr->sequenceNum, qos, resourceObserver->query,
                         NULL, NULL,
                         resourceObserver->token, resourceObserver->tokenLength,
-                        resourceObserver->resUri, 0,
+                        resourceObserver->resUri, 0, resourceObserver->acceptFormat,
                         &resourceObserver->devAddr);
 
                 if(result == OC_STACK_OK)
@@ -220,12 +220,12 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
 
     if (numObs == 0)
     {
-        OC_LOG(INFO, TAG, PCF("Resource has no observers"));
+        OC_LOG(INFO, TAG, "Resource has no observers");
         result = OC_STACK_NO_OBSERVERS;
     }
     else if (observeErrorFlag)
     {
-        OC_LOG(ERROR, TAG, PCF("Observer notification error"));
+        OC_LOG(ERROR, TAG, "Observer notification error");
         result = OC_STACK_ERROR;
     }
     return result;
@@ -250,7 +250,7 @@ OCStackResult SendListObserverNotification (OCResource * resource,
     OCStackResult result = OC_STACK_ERROR;
     bool observeErrorFlag = false;
 
-    OC_LOG(INFO, TAG, PCF("Entering SendListObserverNotification"));
+    OC_LOG(INFO, TAG, "Entering SendListObserverNotification");
     while(numIds)
     {
         observer = GetObserverUsingId (*obsIdList);
@@ -265,7 +265,7 @@ OCStackResult SendListObserverNotification (OCResource * resource,
                 result = AddServerRequest(&request, 0, 0, 1, OC_REST_GET,
                         0, resource->sequenceNum, qos, observer->query,
                         NULL, NULL, observer->token, observer->tokenLength,
-                        observer->resUri, 0,
+                        observer->resUri, 0, observer->acceptFormat,
                         &observer->devAddr);
 
                 if(request)
@@ -328,7 +328,7 @@ OCStackResult SendListObserverNotification (OCResource * resource,
     }
     else
     {
-        OC_LOG(ERROR, TAG, PCF("Observer notification error"));
+        OC_LOG(ERROR, TAG, "Observer notification error");
         return OC_STACK_ERROR;
     }
 }
@@ -337,7 +337,7 @@ OCStackResult GenerateObserverId (OCObservationId *observationId)
 {
     ResourceObserver *resObs = NULL;
 
-    OC_LOG(INFO, TAG, PCF("Entering GenerateObserverId"));
+    OC_LOG(INFO, TAG, "Entering GenerateObserverId");
     VERIFY_NON_NULL (observationId);
 
     do
@@ -347,7 +347,7 @@ OCStackResult GenerateObserverId (OCObservationId *observationId)
         resObs = GetObserverUsingId (*observationId);
     } while (NULL != resObs);
 
-    OC_LOG_V(INFO, TAG, "Generated bservation ID is %u", *observationId);
+    OC_LOG_V(INFO, TAG, "GeneratedObservation ID is %u", *observationId);
 
     return OC_STACK_OK;
 exit:
@@ -361,6 +361,7 @@ OCStackResult AddObserver (const char         *resUri,
                            uint8_t            tokenLength,
                            OCResource         *resHandle,
                            OCQualityOfService qos,
+                           OCPayloadFormat    acceptFormat,
                            const OCDevAddr    *devAddr)
 {
     // Check if resource exists and is observable.
@@ -388,6 +389,7 @@ OCStackResult AddObserver (const char         *resUri,
         VERIFY_NON_NULL (obsNode->resUri);
 
         obsNode->qos = qos;
+        obsNode->acceptFormat = acceptFormat;
         if(query)
         {
             obsNode->query = OICStrdup(query);
@@ -435,7 +437,7 @@ ResourceObserver* GetObserverUsingId (const OCObservationId observeId)
             }
         }
     }
-    OC_LOG(INFO, TAG, PCF("Observer node not found!!"));
+    OC_LOG(INFO, TAG, "Observer node not found!!");
     return NULL;
 }
 
@@ -445,9 +447,9 @@ ResourceObserver* GetObserverUsingToken (const CAToken_t token, uint8_t tokenLen
 
     if(token && *token)
     {
-        OC_LOG(INFO, TAG,PCF("Looking for token"));
+        OC_LOG(INFO, TAG, "Looking for token");
         OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)token, tokenLength);
-        OC_LOG(INFO, TAG,PCF("\tFound token:"));
+        OC_LOG(INFO, TAG, "\tFound token:");
 
         LL_FOREACH (serverObsList, out)
         {
@@ -460,10 +462,10 @@ ResourceObserver* GetObserverUsingToken (const CAToken_t token, uint8_t tokenLen
     }
     else
     {
-        OC_LOG(ERROR, TAG,PCF("Passed in NULL token"));
+        OC_LOG(ERROR, TAG, "Passed in NULL token");
     }
 
-    OC_LOG(INFO, TAG, PCF("Observer node not found!!"));
+    OC_LOG(INFO, TAG, "Observer node not found!!");
     return NULL;
 }
 
@@ -533,7 +535,7 @@ CreateObserveHeaderOption (CAHeaderOption_t **caHdrOpt,
     }
     tmpHdrOpt[0].protocolID = CA_COAP_ID;
     tmpHdrOpt[0].optionID = COAP_OPTION_OBSERVE;
-    tmpHdrOpt[0].optionLength = sizeof(uint32_t);
+    tmpHdrOpt[0].optionLength = sizeof(uint8_t);
     tmpHdrOpt[0].optionData[0] = observeFlag;
     for (uint8_t i = 0; i < numOptions; i++)
     {

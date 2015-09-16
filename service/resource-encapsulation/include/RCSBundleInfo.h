@@ -48,7 +48,7 @@ namespace OIC
                 /**
                 * API for setting the Id of the bundle
                 *
-                * @param name - Id of the bundle in string form
+                * @param name Id of the bundle in string form
                 *
                 */
                 virtual void setID(const std::string &name) = 0;
@@ -56,7 +56,7 @@ namespace OIC
                 /**
                 * API for getting the Id of the bundle
                 *
-                * @return string - Id of the bundle
+                * @return Id of the bundle
                 *
                 */
                 virtual const std::string &getID() = 0;
@@ -64,7 +64,7 @@ namespace OIC
                 /**
                 * API for setting the path of the bundle
                 *
-                * @param path - path of the bundle in string form
+                * @param path path of the bundle in string form
                 *
                 */
                 virtual void setPath(const std::string &path) = 0;
@@ -72,7 +72,7 @@ namespace OIC
                 /**
                 * API for getting the path of the bundle
                 *
-                * @return path - path of the bundle
+                * @return path of the bundle
                 *
                 */
                 virtual const std::string &getPath() = 0;
@@ -80,7 +80,7 @@ namespace OIC
                 /**
                 * API for setting the Activator name for the bundle
                 *
-                * @param activator - Activator name in string form
+                * @param activator Activator name in string form
                 *
                 */
                 virtual void setActivatorName(const std::string &activator) = 0;
@@ -88,7 +88,7 @@ namespace OIC
                 /**
                 * API for setting the Activator name for the bundle
                 *
-                * @return string - Name of the activator
+                * @return Name of the activator
                 *
                 */
                 virtual const std::string &getActivatorName() = 0;
@@ -96,7 +96,7 @@ namespace OIC
                 /**
                 * API for setting the library path for the bundle
                 *
-                * @param libpath - Library path in string form
+                * @param libpath Library path in string form
                 *
                 */
                 virtual void setLibraryPath(const std::string &libpath) = 0;
@@ -104,7 +104,7 @@ namespace OIC
                 /**
                 * API for getting the library path for the bundle
                 *
-                * @return string - Library path  in string form
+                * @return Library path  in string form
                 *
                 */
                 virtual const std::string& getLibraryPath() = 0;
@@ -112,7 +112,7 @@ namespace OIC
                 /**
                 * API for setting the version of the bundle
                 *
-                * @param version - version of the bundle in string form
+                * @param version version of the bundle in string form
                 *
                 */
                 virtual void setVersion(const std::string &version) = 0;
@@ -120,7 +120,7 @@ namespace OIC
                 /**
                 * API for getting the version of the bundle
                 *
-                * @return string - version of the bundle
+                * @return version of the bundle
                 *
                 */
                 virtual const std::string &getVersion() = 0;
@@ -128,7 +128,7 @@ namespace OIC
                 /**
                  * API for creating new bundle information
                  *
-                 * @return  RCSBundleInfo - RCSBundleInfo pointer.
+                 * @return RCSBundleInfo pointer.
                  *
                  */
                 static RCSBundleInfo *build();

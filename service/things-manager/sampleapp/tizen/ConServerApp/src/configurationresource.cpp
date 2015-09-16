@@ -25,26 +25,27 @@
 
 #include "OCPlatform.h"
 #include "OCApi.h"
-#include "ThingsManager.h"
 
 using namespace OC;
 
 // Constructor
 ConfigurationResource::ConfigurationResource() :
-    m_location(defaultLocation), m_systemTime(defaultSystemTime), m_currency(
-        defaultCurrency), m_region(defaultRegion)
+    m_deviceName(defaultDeviceName), m_location(defaultLocation),
+    m_locationName(defaultLocationName), m_currency(defaultCurrency),
+    m_region(defaultRegion)
 {
-    m_configurationUri = "/oic/con"; // URI of the resource
-    m_configurationTypes.push_back("oic.con"); // resource type name
+    m_configurationUri = defaultConURI; // URI of the resource
+    m_configurationTypes.push_back(defaultConResourceType); // resource type name
     m_configurationInterfaces.push_back(DEFAULT_INTERFACE); // resource interface
-    m_configurationRep.setValue("loc", m_location);
-    m_configurationRep.setValue("st", m_systemTime);
-    m_configurationRep.setValue("c", m_currency);
-    m_configurationRep.setValue("r", m_region);
+    m_configurationRep.setValue(DEFAULT_DEVICENAME, m_deviceName);
+    m_configurationRep.setValue(DEFAULT_LOCATION, m_location);
+    m_configurationRep.setValue(DEFAULT_LOCATIONNAME, m_locationName);
+    m_configurationRep.setValue(DEFAULT_CURRENCY, m_currency);
+    m_configurationRep.setValue(DEFAULT_REGION, m_region);
     m_configurationRep.setUri(m_configurationUri);
     m_configurationRep.setResourceTypes(m_configurationTypes);
     m_configurationRep.setResourceInterfaces(m_configurationInterfaces);
-    m_configurationHandle = NULL;
+    m_configurationHandle = nullptr;
 }
 
 // Creates a ConfigurationResource
@@ -75,29 +76,37 @@ void ConfigurationResource::createResource(ResourceEntityHandler callback)
 
 void ConfigurationResource::setConfigurationRepresentation(OCRepresentation &rep)
 {
-    string value;
+    std::string value;
 
-    if (rep.getValue("loc", value))
+    if (rep.getValue(DEFAULT_DEVICENAME, value))
+    {
+        m_deviceName = value;
+        dlog_print(DLOG_INFO, "ConfigurationResource", "#### m_deviceName: %s",
+                   m_deviceName.c_str());
+    }
+
+    if (rep.getValue(DEFAULT_LOCATION, value))
     {
         m_location = value;
         dlog_print(DLOG_INFO, "ConfigurationResource", "#### m_location: %s",
                    m_location.c_str());
     }
 
-    if (rep.getValue("st", value))
+    if (rep.getValue(DEFAULT_LOCATIONNAME, value))
     {
-        dlog_print(DLOG_INFO, "ConfigurationResource", "#### SystemTime is not"
-                   "allowed to be written");
+        m_locationName = value;
+        dlog_print(DLOG_INFO, "ConfigurationResource", "#### m_locationName: %s",
+                   m_locationName.c_str());
     }
 
-    if (rep.getValue("c", value))
+    if (rep.getValue(DEFAULT_CURRENCY, value))
     {
         m_currency = value;
         dlog_print(DLOG_INFO, "ConfigurationResource", "#### m_currency: %s",
                    m_currency.c_str());
     }
 
-    if (rep.getValue("r", value))
+    if (rep.getValue(DEFAULT_REGION, value))
     {
         m_region = value;
         dlog_print(DLOG_INFO, "ConfigurationResource", "#### m_region: %s",
@@ -107,10 +116,11 @@ void ConfigurationResource::setConfigurationRepresentation(OCRepresentation &rep
 
 OCRepresentation ConfigurationResource::getConfigurationRepresentation()
 {
-    m_configurationRep.setValue("loc", m_location);
-    m_configurationRep.setValue("st", m_systemTime);
-    m_configurationRep.setValue("c", m_currency);
-    m_configurationRep.setValue("r", m_region);
+    m_configurationRep.setValue(DEFAULT_DEVICENAME, m_deviceName);
+    m_configurationRep.setValue(DEFAULT_LOCATION, m_location);
+    m_configurationRep.setValue(DEFAULT_LOCATIONNAME, m_locationName);
+    m_configurationRep.setValue(DEFAULT_CURRENCY, m_currency);
+    m_configurationRep.setValue(DEFAULT_REGION, m_region);
 
     return m_configurationRep;
 }
@@ -123,8 +133,9 @@ std::string ConfigurationResource::getUri()
 // Assigns default values to all the attributes of the configuration resource
 void ConfigurationResource::factoryReset()
 {
+    m_deviceName = defaultDeviceName;
     m_location = defaultLocation;
-    m_systemTime = defaultSystemTime;
+    m_locationName = defaultLocationName;
     m_currency = defaultCurrency;
     m_region = defaultRegion;
 }
@@ -133,7 +144,7 @@ void ConfigurationResource::factoryReset()
 void ConfigurationResource::deleteResource()
 {
     // Unregister the resource
-    if (NULL != m_configurationHandle)
+    if (nullptr != m_configurationHandle)
     {
         OCPlatform::unregisterResource(m_configurationHandle);
     }

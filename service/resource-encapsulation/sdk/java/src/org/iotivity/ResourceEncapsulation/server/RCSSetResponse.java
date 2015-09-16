@@ -18,17 +18,16 @@
  *
  ******************************************************************/
 /**
- * @file    RCSSetResponse.java
- *
- *    This file contains the class for creating a Set response
- *             for the received Set request.
- *
+ * @file
+ * This file contains the class for creating a Set response
+ * for the received Set request.
  */
 
 package org.iotivity.ResourceEncapsulation.server;
 
 import org.iotivity.ResourceEncapsulation.common.RCSResourceAttributes;
 import org.iotivity.ResourceEncapsulation.utils.EntityHandlerResult;
+import org.iotivity.ResourceEncapsulation.server.RCSResourceObject;
 
 /**
  * This class provides methods to create the response for a received set
@@ -59,10 +58,6 @@ public class RCSSetResponse {
      *
      * <p>
      * DEFAULT : Follow SetRequestHandlerPolicy of the RCSResourceObject.
-     *
-     * @return RCSSetResponse
-     *
-     *         {@link SetRequestHandlerPolicy}
      */
     public static RCSSetResponse defaultAction() {
         return new RCSSetResponse(DEFAULT_RESPONSE);
@@ -229,22 +224,18 @@ public class RCSSetResponse {
         m_errorCode = errorCode;
     }
 
-    @SuppressWarnings("unused")
     private int getTypeOfGetResponse() {
         return m_typeOfSetResponse;
     }
 
-    @SuppressWarnings("unused")
     private int getResult() {
         return m_handlerResult;
     }
 
-    @SuppressWarnings("unused")
     private int getErrorCode() {
         return m_errorCode;
     }
 
-    @SuppressWarnings("unused")
     private RCSResourceAttributes getAttributes() {
         return m_attributes;
     }

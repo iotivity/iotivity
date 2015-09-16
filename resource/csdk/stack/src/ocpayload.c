@@ -148,7 +148,7 @@ static void OCCopyPropertyValueArray(OCRepPayloadValue* dest, OCRepPayloadValue*
             }
             break;
         default:
-            OC_LOG(ERROR, TAG, PCF("CopyPropertyValueArray invalid type"));
+            OC_LOG(ERROR, TAG, "CopyPropertyValueArray invalid type");
             break;
     }
 }
@@ -337,7 +337,7 @@ static OCRepPayloadValue* OCRepPayloadFindAndSetValue(OCRepPayload* payload, con
         val = val->next;
     }
 
-    OC_LOG(ERROR, TAG, PCF("FindAndSetValue reached point after while loop, pointer corruption?"));
+    OC_LOG(ERROR, TAG, "FindAndSetValue reached point after while loop, pointer corruption?");
     return NULL;
 }
 

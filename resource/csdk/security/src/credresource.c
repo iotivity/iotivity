@@ -42,7 +42,7 @@
 #endif
 #include <stdint.h>
 
-#define TAG  PCF("SRM-CREDL")
+#define TAG  "SRM-CREDL"
 
 
 static OicSecCred_t        *gCred = NULL;
@@ -55,7 +55,7 @@ static void FreeCred(OicSecCred_t *cred)
 {
     if(NULL == cred)
     {
-        OC_LOG (INFO, TAG, PCF("Invalid Parameter"));
+        OC_LOG (INFO, TAG, "Invalid Parameter");
         return;
     }
     //Note: Need further clarification on roleID data type
@@ -587,7 +587,7 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
 
 static OCEntityHandlerResult HandleDeleteRequest(const OCEntityHandlerRequest *ehRequest)
 {
-    OC_LOG_V (INFO, TAG, PCF("Processing CredDeleteRequest"));
+    OC_LOG(INFO, TAG, "Processing CredDeleteRequest");
 
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
@@ -645,7 +645,7 @@ OCEntityHandlerResult CredEntityHandler (OCEntityHandlerFlag flag,
     }
     if (flag & OC_REQUEST_FLAG)
     {
-        OC_LOG (INFO, TAG, PCF("Flag includes OC_REQUEST_FLAG"));
+        OC_LOG (INFO, TAG, "Flag includes OC_REQUEST_FLAG");
         //TODO :  Handle PUT/DEL methods
         switch(ehRequest->method)
         {
@@ -688,7 +688,7 @@ OCStackResult CreateCredResource()
 
     if (OC_STACK_OK != ret)
     {
-        OC_LOG (FATAL, TAG, PCF("Unable to instantiate Cred resource"));
+        OC_LOG (FATAL, TAG, "Unable to instantiate Cred resource");
         DeInitCredResource();
     }
     return ret;

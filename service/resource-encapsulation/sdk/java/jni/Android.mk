@@ -8,6 +8,12 @@ include $(PREBUILT_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
 OIC_LIB_PATH := ../../../../../out/android/$(TARGET_ARCH_ABI)/release
+LOCAL_MODULE := android-oc_loggercore
+LOCAL_SRC_FILES := $(OIC_LIB_PATH)/liboc_logger_core.so
+include $(PREBUILT_SHARED_LIBRARY)
+
+include $(CLEAR_VARS)
+OIC_LIB_PATH := ../../../../../out/android/$(TARGET_ARCH_ABI)/release
 LOCAL_MODULE := android-octbstack
 LOCAL_SRC_FILES := $(OIC_LIB_PATH)/liboctbstack.so
 include $(PREBUILT_SHARED_LIBRARY)
@@ -55,7 +61,13 @@ LOCAL_SRC_FILES := $(OIC_LIB_PATH)/librcs_server.so
 include $(PREBUILT_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
-OIC_SRC_DIR := ../../../../..
+OIC_LIB_PATH := ../../../../../out/android/$(TARGET_ARCH_ABI)/release
+LOCAL_MODULE := android-resourcecontainer
+LOCAL_SRC_FILES := $(OIC_LIB_PATH)/librcs_container.so
+include $(PREBUILT_SHARED_LIBRARY)
+
+include $(CLEAR_VARS)
+OIC_SRC_DIR := ../../../..
 LOCAL_MODULE    := re-jni
 
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/jniutil/inc \
@@ -79,6 +91,7 @@ LOCAL_SHARED_LIBRARIES := android-ocstack-jni
 LOCAL_SHARED_LIBRARIES += android-resourcecommon
 LOCAL_SHARED_LIBRARIES += android-resourceclient
 LOCAL_SHARED_LIBRARIES += android-resourceserver
+LOCAL_SHARED_LIBRARIES += android-resourcecontainer
 LOCAL_SHARED_LIBRARIES += android-oc
 LOCAL_SHARED_LIBRARIES += android-octbstack
 

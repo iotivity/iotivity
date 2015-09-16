@@ -124,8 +124,8 @@ OCStackApplicationResult putReqCB(void*, OCDoHandle, OCClientResponse * clientRe
     if(clientResponse)
     {
         OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
-        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
-        OC_LOG(INFO, TAG, PCF("=============> Put Response"));
+        OC_LOG_PAYLOAD(INFO, clientResponse->payload);
+        OC_LOG(INFO, TAG, ("=============> Put Response"));
     }
     return OC_STACK_DELETE_TRANSACTION;
 }
@@ -137,8 +137,8 @@ OCStackApplicationResult postReqCB(void *, OCDoHandle, OCClientResponse *clientR
     if(clientResponse)
     {
         OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
-        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
-        OC_LOG(INFO, TAG, PCF("=============> Post Response"));
+        OC_LOG_PAYLOAD(INFO, clientResponse->payload);
+        OC_LOG(INFO, TAG, ("=============> Post Response"));
     }
     return OC_STACK_DELETE_TRANSACTION;
 }
@@ -151,8 +151,8 @@ OCStackApplicationResult getReqCB(void*, OCDoHandle, OCClientResponse * clientRe
     {
         OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
         OC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
-        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
-        OC_LOG(INFO, TAG, PCF("=============> Get Response"));
+        OC_LOG_PAYLOAD(INFO, clientResponse->payload);
+        OC_LOG(INFO, TAG, ("=============> Get Response"));
     }
     return OC_STACK_DELETE_TRANSACTION;
 }
@@ -173,7 +173,7 @@ OCStackApplicationResult discoveryReqCB(void*, OCDoHandle,
 
         if (clientResponse->result == OC_STACK_OK)
         {
-            OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+            OC_LOG_PAYLOAD(INFO, clientResponse->payload);
 
             ocConnType = clientResponse->connType;
             endpoint = clientResponse->devAddr;
