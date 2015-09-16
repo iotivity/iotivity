@@ -20,7 +20,7 @@
 
 #include "networkHandler.h"
 
-#define TAG PCF("ES_NH")
+#define TAG "ES_NH"
 
 int findNetwork(const char *ssid);
 int ConnectToNetwork(const char *ssid, const char *pass);
@@ -43,7 +43,7 @@ ESResult ConnectToWiFiNetwork(const char *ssid, const char *pass, NetworkEventCa
     // check for the presence of the shield:
     if (WiFi.status() == WL_NO_SHIELD)
     {
-        OC_LOG(ERROR, TAG, PCF("WiFi shield not present"));
+        OC_LOG(ERROR, TAG, "WiFi shield not present");
         return ES_ERROR;
     }
 
@@ -53,11 +53,11 @@ ESResult ConnectToWiFiNetwork(const char *ssid, const char *pass, NetworkEventCa
     if (strncmp(fwVersion, ARDUINO_WIFI_SHIELD_UDP_FW_VER, sizeof(ARDUINO_WIFI_SHIELD_UDP_FW_VER))
             != 0)
     {
-        OC_LOG(DEBUG, TAG, PCF("!!!!! Upgrade WiFi Shield Firmware version !!!!!!"));
+        OC_LOG(DEBUG, TAG, "!!!!! Upgrade WiFi Shield Firmware version !!!!!!");
         //return ES_ERROR;
     }
 
-    OC_LOG_V(INFO, TAG, PCF("Finding SSID: %s"), ssid);
+    OC_LOG_V(INFO, TAG, "Finding SSID: %s", ssid);
 
     while (findNetwork(ssid) == 0) // found
     {
@@ -126,17 +126,17 @@ int ConnectToNetwork(const char *ssid, const char *pass)
     // attempt to connect to Wifi network:
     while (status != WL_CONNECTED)
     {
-        OC_LOG_V(INFO, TAG, PCF("Attempting to connect to SSID: %s"), ssid);
+        OC_LOG_V(INFO, TAG, "Attempting to connect to SSID: %s", ssid);
 
         status = WiFi.begin((char *) ssid, (char *) pass);
 
         // wait 10 seconds for connection:
         delay(10000);
     }
-    OC_LOG(DEBUG, TAG, PCF("Connected to wifi"));
+    OC_LOG(DEBUG, TAG, "Connected to wifi");
 
     myIP = WiFi.localIP();
-    OC_LOG_V(INFO, TAG, PCF("IP Address:  %d.%d.%d.%d"), myIP[0], myIP[1], myIP[2], myIP[3]);
+    OC_LOG_V(INFO, TAG, "IP Address:  %d.%d.%d.%d", myIP[0], myIP[1], myIP[2], myIP[3]);
 
     char buf[50];
     sprintf(buf, "IP Address:  %d.%d.%d.%d", myIP[0], myIP[1], myIP[2], myIP[3]);

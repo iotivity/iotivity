@@ -42,9 +42,9 @@
 
 #include "easysetup.h"
 
-const char *getResult(OCStackResult result);
+#define TAG "TS"
 
-PROGMEM const char TAG[] = "ThinServer";
+const char *getResult(OCStackResult result);
 
 char ssid[] = "EasySetup123";
 char passwd[] = "EasySetup123";
@@ -78,7 +78,7 @@ void setup()
     // Add your initialization code here
     // Note : This will initialize Serial port on Arduino at 115200 bauds
     OC_LOG_INIT();
-    OC_LOG(DEBUG, TAG, PCF("OCServer is starting..."));
+    OC_LOG(DEBUG, TAG, "OCServer is starting...");
 
     if(InitEasySetup(ES_WIFI, ssid, passwd, EventCallbackInApp) == ES_ERROR)
     {
@@ -106,7 +106,7 @@ void loop()
     // Give CPU cycles to OCStack to perform send/recv and other OCStack stuff
     if (OCProcess() != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, PCF("OCStack process error"));
+        OC_LOG(ERROR, TAG, "OCStack process error");
         return;
     }
 }

@@ -21,13 +21,9 @@
 // Do not remove the include below
 #include "Arduino.h"
 
-#include "logger.h"
-#include "ocstack.h"
 #include <string.h>
-
-#include "common.h"
+#include "ocstack.h"
 #include "networkHandler.h"
-#include "resourceHandler.h"
 
 typedef void (*EventCallback)(ESResult);
 

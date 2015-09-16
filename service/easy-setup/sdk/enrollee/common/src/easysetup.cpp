@@ -19,9 +19,11 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "easysetup.h"
-#include "ocstack.h"
 
-#define TAG PCF("ES")
+#include "logger.h"
+#include "resourceHandler.h"
+
+#define TAG "ES"
 
 int g_eventflag = 0;
 int g_cnt = 0;
@@ -57,7 +59,7 @@ void EventCallbackInProvisioning(ESResult event)
 
         if(TerminateEasySetup() != OC_STACK_OK)
         {
-            OC_LOG(ERROR, TAG, PCF("Terminating stack failed"));
+            OC_LOG(ERROR, TAG, "Terminating stack failed");
             return;
         }
 
@@ -102,11 +104,11 @@ ESResult FindNetworkForOnboarding(NetworkType networkType,
 
         if(ConnectToWiFiNetwork(ssid, passwd, EventCallbackInOnboarding) != ES_NETWORKCONNECTED)
         {
-            OC_LOG(ERROR, TAG, PCF("ConnectToWiFiNetwork Failed"));
+            OC_LOG(ERROR, TAG, "ConnectToWiFiNetwork Failed");
             return ES_ERROR;
         }
         else{
-            OC_LOG(INFO, TAG, PCF("ConnectToWiFiNetwork Success"));
+            OC_LOG(INFO, TAG, "ConnectToWiFiNetwork Success");
             return ES_OK;
         }
     }
@@ -118,19 +120,19 @@ ESResult InitEasySetup(NetworkType networkType, const char *ssid, const char *pa
 {
     if(FindNetworkForOnboarding(networkType, ssid, passwd, cb) != ES_OK)
     {
-        OC_LOG(ERROR, TAG, PCF("OnBoarding Failed"));
+        OC_LOG(ERROR, TAG, "OnBoarding Failed");
         return ES_ERROR;
     }
 
     // Initialize the OC Stack in Server mode
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, PCF("OCStack init error"));
+        OC_LOG(ERROR, TAG, "OCStack init error");
         return ES_ERROR;
     }
     else
     {
-        OC_LOG(DEBUG, TAG, PCF("OCStack init success"));
+        OC_LOG(DEBUG, TAG, "OCStack init success");
         return ES_OK;
     }
 }
@@ -139,12 +141,12 @@ ESResult TerminateEasySetup()
 {
     if(OCStop() != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, PCF("OCStack stop failed"));
+        OC_LOG(ERROR, TAG, "OCStack stop failed");
         return ES_ERROR;
     }
     else
     {
-        OC_LOG(ERROR, TAG, PCF("OCStack stop success"));
+        OC_LOG(ERROR, TAG, "OCStack stop success");
         return ES_OK;
     }
 }
