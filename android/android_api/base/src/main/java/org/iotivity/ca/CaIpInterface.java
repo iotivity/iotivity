@@ -27,9 +27,30 @@ import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
+import android.util.Log;
 
 public class CaIpInterface {
     private static Context mContext;
+
+    public enum WifiAPState{
+        WIFI_AP_STATE_DISABLING (10),
+        WIFI_AP_STATE_DISABLED (11),
+        WIFI_AP_STATE_ENABLING (12),
+        WIFI_AP_STATE_ENABLED (13),
+        WIFI_AP_STATE_FAILED (14)
+        ; // semicolon needed when fields / methods follow
+
+
+        private final int apstate;
+
+        WifiAPState(int apstate)
+        {
+            this.apstate = apstate;
+        }
+        public int getIntValue() {
+           return this.apstate;
+        }
+    }
 
     private CaIpInterface(Context context) {
         mContext = context;
@@ -40,6 +61,7 @@ public class CaIpInterface {
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
         intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+        intentFilter.addAction("android.net.wifi.WIFI_AP_STATE_CHANGED");
 
         mContext.registerReceiver(mReceiver, intentFilter);
     }
@@ -59,6 +81,26 @@ public class CaIpInterface {
                     caIpStateEnabled();
                 }
             }
+
+            if (intent.getAction().equals("android.net.wifi.WIFI_AP_STATE_CHANGED")) {
+                if (intent.getIntExtra("wifi_state",
+                    WifiAPState.WIFI_AP_STATE_DISABLED.getIntValue())
+                    == WifiAPState.WIFI_AP_STATE_DISABLED.getIntValue())
+                {
+                    caIpStateDisabled();
+                }else if(intent.getIntExtra("wifi_state",
+                    WifiAPState.WIFI_AP_STATE_DISABLED.getIntValue())
+                    == WifiAPState.WIFI_AP_STATE_ENABLED.getIntValue())
+                {
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                    caIpStateEnabled();
+                }
+           }
         }
     };
 

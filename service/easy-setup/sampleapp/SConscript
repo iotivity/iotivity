@@ -19,32 +19,28 @@
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 ##
-# 'service' sub-project main build script
-#
+# sampleapp build script
 ##
+
 Import('env')
 
+# Add third party libraries
+lib_env = env.Clone()
+
+sample_env = lib_env.Clone()
 target_os = env.get('TARGET_OS')
 
-if target_os not in ['arduino','darwin']:
-	# Build things manager project
-	SConscript('things-manager/SConscript')
+######################################################################
+# Build flags
+######################################################################
 
-	# Build soft sensor manager project
-	SConscript('soft-sensor-manager/SConscript')
+######################################################################
+# Source files and Targets
+######################################################################
+if target_os == 'arduino' :
+	# Build linux sample app
+	SConscript('arduino/thinserver/SConscript')
 
-	# Build protocol plugin project
-	# protocol-plugin use 'inotify', this feature isn't support by MAC OSX
-	if target_os not in ['darwin', 'ios', 'android']:
-		SConscript('protocol-plugin/SConscript')
-
-	# Build notification manager project
-	SConscript('notification-manager/SConscript')
-	
-if target_os in ['arduino','android', 'linux']:
-	SConscript('easy-setup/SConscript')
-
-	# Build resource-encapsulation project
-	if target_os not in ['tizen']:
-		SConscript('resource-encapsulation/SConscript')
-
+if target_os == 'linux' :
+	# Build linux sample app
+	SConscript('linux/richclient/SConscript')
