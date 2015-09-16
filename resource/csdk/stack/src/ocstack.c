@@ -106,6 +106,10 @@ static bool gRASetInfo = false;
 OCDeviceEntityHandler defaultDeviceHandler;
 void* defaultDeviceHandlerCallbackParameter = NULL;
 
+#ifdef TCP_ADAPTER
+static const char COAP_TCP[] = "coap+tcp:";
+#endif
+
 //-----------------------------------------------------------------------------
 // Macros
 //-----------------------------------------------------------------------------
@@ -1123,7 +1127,7 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
             if(responseInfo->info.type == CA_MSG_CONFIRM)
             {
                 SendDirectStackResponse(endPoint, responseInfo->info.messageId, CA_EMPTY,
-                        CA_MSG_ACKNOWLEDGE, 0, NULL, NULL, 0);
+                        CA_MSG_ACKNOWLEDGE, 0, NULL, NULL, 0, NULL);
             }
 
             OCPayloadDestroy(response.payload);
@@ -1172,7 +1176,7 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
             {
                 OC_LOG(INFO, TAG, "Received a message without callbacks. Sending RESET");
                 SendDirectStackResponse(endPoint, responseInfo->info.messageId, CA_EMPTY,
-                        CA_MSG_RESET, 0, NULL, NULL, 0);
+                        CA_MSG_RESET, 0, NULL, NULL, 0, NULL);
             }
         }
 
@@ -1227,7 +1231,7 @@ void HandleCAErrorResponse(const CAEndpoint_t *endPoint, const CAErrorInfo_t *er
 OCStackResult SendDirectStackResponse(const CAEndpoint_t* endPoint, const uint16_t coapID,
         const CAResponseResult_t responseResult, const CAMessageType_t type,
         const uint8_t numOptions, const CAHeaderOption_t *options,
-        CAToken_t token, uint8_t tokenLength)
+        CAToken_t token, uint8_t tokenLength, const char *resourceUri)
 {
     CAResponseInfo_t respInfo = {
         .result = responseResult
@@ -1239,8 +1243,14 @@ OCStackResult SendDirectStackResponse(const CAEndpoint_t* endPoint, const uint16
     respInfo.info.token = token;
     respInfo.info.tokenLength = tokenLength;
     respInfo.info.type = type;
+    respInfo.info.resourceUri = OICStrdup (resourceUri);
 
     CAResult_t caResult = CASendResponse(endPoint, &respInfo);
+
+    // resourceUri in the info field is cloned in the CA layer and
+    // thus ownership is still here.
+    OICFree (respInfo.info.resourceUri);
+
     if(caResult != CA_STATUS_OK)
     {
         OC_LOG(ERROR, TAG, "CASendResponse error");
@@ -1349,7 +1359,7 @@ void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
             SendDirectStackResponse(endPoint, requestInfo->info.messageId, CA_BAD_REQ,
                         requestInfo->info.type, requestInfo->info.numOptions,
                         requestInfo->info.options, requestInfo->info.token,
-                        requestInfo->info.tokenLength);
+                        requestInfo->info.tokenLength, requestInfo->info.resourceUri);
             OICFree(serverRequest.payload);
             return;
     }
@@ -1365,7 +1375,7 @@ void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
         SendDirectStackResponse(endPoint, requestInfo->info.messageId, CA_INTERNAL_SERVER_ERROR,
                 requestInfo->info.type, requestInfo->info.numOptions,
                 requestInfo->info.options, requestInfo->info.token,
-                requestInfo->info.tokenLength);
+                requestInfo->info.tokenLength, requestInfo->info.resourceUri);
         OICFree(serverRequest.payload);
         return;
     }
@@ -1397,7 +1407,7 @@ void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
         SendDirectStackResponse(endPoint, requestInfo->info.messageId, CA_BAD_OPT,
                 requestInfo->info.type, requestInfo->info.numOptions,
                 requestInfo->info.options, requestInfo->info.token,
-                requestInfo->info.tokenLength);
+                requestInfo->info.tokenLength, requestInfo->info.resourceUri);
         OICFree(serverRequest.payload);
         OICFree(serverRequest.requestToken);
         return;
@@ -1415,7 +1425,7 @@ void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
     if(requestResult == OC_STACK_SLOW_RESOURCE)
     {
         SendDirectStackResponse(endPoint, requestInfo->info.messageId, CA_EMPTY,
-                    CA_MSG_ACKNOWLEDGE,0, NULL, NULL, 0);
+                    CA_MSG_ACKNOWLEDGE,0, NULL, NULL, 0, NULL);
     }
     else if(requestResult != OC_STACK_OK)
     {
@@ -1426,7 +1436,7 @@ void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
         SendDirectStackResponse(endPoint, requestInfo->info.messageId, stackResponse,
                 requestInfo->info.type, requestInfo->info.numOptions,
                 requestInfo->info.options, requestInfo->info.token,
-                requestInfo->info.tokenLength);
+                requestInfo->info.tokenLength, requestInfo->info.resourceUri);
     }
     // requestToken is fed to HandleStackRequests, which then goes to AddServerRequest.
     // The token is copied in there, and is thus still owned by this function.
@@ -1612,6 +1622,17 @@ OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
         caglobals.clientFlags = (CATransportFlags_t)(caglobals.clientFlags|CA_IPV4|CA_IPV6);
     }
 
+#ifdef TCP_ADAPTER
+    if (!(caglobals.serverFlags & CA_IPFAMILY_MASK))
+    {
+        caglobals.serverFlags = (CATransportFlags_t)(caglobals.serverFlags|CA_IPV4);
+    }
+    if (!(caglobals.clientFlags & CA_IPFAMILY_MASK))
+    {
+        caglobals.clientFlags = (CATransportFlags_t)(caglobals.clientFlags|CA_IPV4);
+    }
+#endif
+
     defaultDeviceHandler = NULL;
     defaultDeviceHandlerCallbackParameter = NULL;
     OCSeedRandom();
@@ -1760,7 +1781,9 @@ OCStackResult verifyUriQueryLength(const char *inputUri, uint16_t uriLen)
 /**
  *  A request uri consists of the following components in order:
  *                              example
- *  optional prefix             "coap://"
+ *  optionally one of
+ *      CoAP over UDP prefix    "coap://"
+ *      CoAP over TCP prefix    "coap+tcp://"
  *  optionally one of
  *      IPv6 address            "[1234::5678]"
  *      IPv4 address            "192.168.1.1"
@@ -1810,6 +1833,20 @@ static OCStackResult ParseRequestUri(const char *fullUri,
         return OC_STACK_INVALID_URI;
     }
 
+#ifdef TCP_ADAPTER
+    // process url scheme
+    size_t prefixLen = slash2 - fullUri;
+    bool istcp = false;
+    if (prefixLen)
+    {
+        if ((prefixLen == sizeof(COAP_TCP) - 1) && (!strncmp(fullUri, COAP_TCP, prefixLen)))
+        {
+            istcp = true;
+        }
+    }
+#endif
+
+    // TODO: this logic should come in with unit tests exercising the various strings
     // processs url prefix, if any
     size_t urlLen = slash - start;
     // port
@@ -1839,8 +1876,17 @@ static OCStackResult ParseRequestUri(const char *fullUri,
             {   // ipv4 address
                 colon = strchr(start, ':');
                 end = (colon && colon < slash) ? colon : slash;
-                adapter = (OCTransportAdapter)(adapter | OC_ADAPTER_IP);
-                flags = (OCTransportFlags)(flags | OC_IP_USE_V4);
+#ifdef TCP_ADAPTER
+                if (istcp)
+                {   // coap over tcp
+                    adapter = (OCTransportAdapter)(adapter | OC_ADAPTER_TCP);
+                }
+                else
+#endif
+                {
+                    adapter = (OCTransportAdapter)(adapter | OC_ADAPTER_IP);
+                    flags = (OCTransportFlags)(flags | OC_IP_USE_V4);
+                }
             }
             else
             {   // MAC address
