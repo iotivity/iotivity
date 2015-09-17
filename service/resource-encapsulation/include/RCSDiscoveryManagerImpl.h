@@ -50,7 +50,7 @@ namespace OIC
         class RCSDiscoveryManager;
         class PrimitiveResource;
         class RCSAddress;
-        class DiscoveryTask;
+        class RCSDiscoveryTask;
         class DiscoverRequestInfo
         {
             public:
@@ -93,7 +93,7 @@ namespace OIC
 
             public:
 
-                std::unique_ptr<DiscoveryTask> startDiscovery(const RCSAddress& address,
+                std::unique_ptr<RCSDiscoveryTask> startDiscovery(const RCSAddress& address,
                         const std::string& relativeURI,const std::string& resourceType,
                         RCSDiscoveryManager::ResourceDiscoveredCallback cb);
 

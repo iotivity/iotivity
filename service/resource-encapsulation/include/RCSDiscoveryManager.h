@@ -40,14 +40,24 @@ namespace OIC
         class RCSRemoteResourceObject;
         class RCSAddress;
 
-        class DiscoveryTask
+        class RCSDiscoveryTask
         {
             public:
 
-                DiscoveryTask(unsigned int id) : m_id{ id } {};
                 void cancel();
                 bool isCanceled();
-                ~DiscoveryTask();
+                ~RCSDiscoveryTask();
+
+            public:
+
+                RCSDiscoveryTask(const RCSDiscoveryTask&) = delete;
+                RCSDiscoveryTask(RCSDiscoveryTask&&) = delete;
+                RCSDiscoveryTask& operator = (const RCSDiscoveryTask&) const = delete;
+                RCSDiscoveryTask& operator = (RCSDiscoveryTask&&) const = delete;
+
+            private:
+
+                explicit RCSDiscoveryTask(unsigned int id) : m_id{ id } {};
             private:
 
                 unsigned int m_id;
@@ -91,7 +101,7 @@ namespace OIC
                  * @see RCSAddress
                  *
                  */
-                std::unique_ptr<DiscoveryTask> discoverResource(const RCSAddress& address,
+                std::unique_ptr<RCSDiscoveryTask> discoverResource(const RCSAddress& address,
                         ResourceDiscoveredCallback cb);
 
                 /**
@@ -108,7 +118,7 @@ namespace OIC
                  * @see RCSAddress
                  *
                  */
-                std::unique_ptr<DiscoveryTask> discoverResource(const RCSAddress& address,
+                std::unique_ptr<RCSDiscoveryTask> discoverResource(const RCSAddress& address,
                         const std::string& relativeURI, ResourceDiscoveredCallback cb);
 
                 /**
@@ -125,7 +135,7 @@ namespace OIC
                  * @see RCSAddress
                  *
                  */
-                std::unique_ptr<DiscoveryTask> discoverResourceByType(const RCSAddress& address,
+                std::unique_ptr<RCSDiscoveryTask> discoverResourceByType(const RCSAddress& address,
                         const std::string& resourceType, ResourceDiscoveredCallback cb);
 
                 /**
@@ -143,7 +153,7 @@ namespace OIC
                  * @see RCSAddress
                  *
                  */
-                std::unique_ptr<DiscoveryTask>  discoverResourceByType(const RCSAddress& address,
+                std::unique_ptr<RCSDiscoveryTask>  discoverResourceByType(const RCSAddress& address,
                         const std::string& relativeURI, const std::string& resourceType,
                         ResourceDiscoveredCallback cb);
 
@@ -152,7 +162,7 @@ namespace OIC
                 RCSDiscoveryManager() = default;
                 ~RCSDiscoveryManager()= default;;
 
-                friend class DiscoveryTask;
+                friend class RCSDiscoveryTask;
         };
     }
 }

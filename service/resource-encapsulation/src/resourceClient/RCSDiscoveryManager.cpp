@@ -30,33 +30,33 @@ namespace OIC {
             return &instance;
         }
 
-        std::unique_ptr<DiscoveryTask> RCSDiscoveryManager::discoverResource(const RCSAddress& address,
+        std::unique_ptr<RCSDiscoveryTask> RCSDiscoveryManager::discoverResource(const RCSAddress& address,
                 ResourceDiscoveredCallback cb) {
             return discoverResourceByType(address, OC_RSRVD_WELL_KNOWN_URI, "",
                     std::move(cb));
         }
 
-        std::unique_ptr<DiscoveryTask> RCSDiscoveryManager::discoverResource(const RCSAddress& address,
+        std::unique_ptr<RCSDiscoveryTask> RCSDiscoveryManager::discoverResource(const RCSAddress& address,
                 const std::string& relativeURI, ResourceDiscoveredCallback cb) {
             return discoverResourceByType(address, relativeURI, "", std::move(cb));
         }
 
-        std::unique_ptr<DiscoveryTask> RCSDiscoveryManager::discoverResourceByType(
+        std::unique_ptr<RCSDiscoveryTask> RCSDiscoveryManager::discoverResourceByType(
                 const RCSAddress& address, const std::string& resourceType, ResourceDiscoveredCallback cb) {
             return discoverResourceByType(address, OC_RSRVD_WELL_KNOWN_URI,
                     resourceType, std::move(cb));
         }
 
-        std::unique_ptr<DiscoveryTask> RCSDiscoveryManager::discoverResourceByType(
+        std::unique_ptr<RCSDiscoveryTask> RCSDiscoveryManager::discoverResourceByType(
                 const RCSAddress& address, const std::string& relativeURI,
                 const std::string& resourceType, ResourceDiscoveredCallback cb) {
            return RCSDiscoveryManagerImpl::getInstance()->startDiscovery(address,
                    relativeURI, resourceType, std::move(cb));
         }
-        DiscoveryTask::~DiscoveryTask(){
+        RCSDiscoveryTask::~RCSDiscoveryTask(){
             cancel();
         }
-        bool DiscoveryTask::isCanceled() {
+        bool RCSDiscoveryTask::isCanceled() {
             auto it = RCSDiscoveryManagerImpl::getInstance();
 
             if(it->m_discoveryMap.find(m_id) == it->m_discoveryMap.end())
@@ -66,7 +66,7 @@ namespace OIC {
             return false;
         }
 
-        void DiscoveryTask::cancel(){
+        void RCSDiscoveryTask::cancel(){
             RCSDiscoveryManagerImpl::getInstance()->m_discoveryMap.erase(m_id);
         }
     }
