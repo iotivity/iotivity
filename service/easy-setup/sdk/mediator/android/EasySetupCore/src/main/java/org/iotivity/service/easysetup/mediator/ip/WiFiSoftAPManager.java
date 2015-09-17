@@ -88,14 +88,15 @@ public class WiFiSoftAPManager {
     * If the device entry is found in the device, as application is already notified it will
     * continue
     */
-    private synchronized boolean CheckForDeviceEntryAndNotify(String ipAddr,
+    private boolean CheckForDeviceEntryAndNotify(String ipAddr,
                                                               String macAddr, boolean isReachable) {
         final EnrolleeInfo result = new EnrolleeInfo();
         boolean deviceAddedToList = false;
 
         if (appNotification.size() > 0) {
             for (EnrolleeOnBoardingInfo ipDeviceOnBoardingNotification : appNotification) {
-                EnrolleeOnBoardingInfo ipEnrolleeDevice = (EnrolleeOnBoardingInfo) ipDeviceOnBoardingNotification;
+                EnrolleeOnBoardingInfo ipEnrolleeDevice =  (EnrolleeOnBoardingInfo)
+                        ipDeviceOnBoardingNotification;
                 boolean macAddressComparison = ipEnrolleeDevice.getHWAddr().equalsIgnoreCase(
                         macAddr) ? true : false;
 
@@ -119,14 +120,14 @@ public class WiFiSoftAPManager {
                                 .remove(ipDeviceOnBoardingNotification);
                         if (isReachable) {
                             appNotification
-                                    .add(new EnrolleeOnBoardingInfo(ipAddr, macAddr, "", isReachable,
+                                    .add(new EnrolleeOnBoardingInfo(ipAddr, macAddr, "",
+                                            isReachable,
                                             false, true));
-                        } else {
-                            appNotification
-                                    .add(new EnrolleeOnBoardingInfo(ipAddr, macAddr, "", isReachable,
-                                            true, false));
+                       } else {
+                            //This case will happen during the transition from connected to
+                            // disconneted. This case need not be notified to application.
+                            // Notifying this state will cause failure of OnBoarding
                         }
-
                         NotifyApplication(result);
                         return true;
                     }
@@ -137,17 +138,17 @@ public class WiFiSoftAPManager {
                     appNotification
                             .add(new EnrolleeOnBoardingInfo(ipAddr, macAddr, "", isReachable, false,
                                     true));
+
+                    result.setIpAddr(ipAddr);
+                    result.setHWAddr(macAddr);
+                    result.setReachable(isReachable);
+
+                    NotifyApplication(result);
                 } else {
-                    appNotification
-                            .add(new EnrolleeOnBoardingInfo(ipAddr, macAddr, "", isReachable, true,
-                                    false));
+                    //This case will happen for the first time device is listed, but reachability
+                    // is false. This case need not be notified to application. Notifying this
+                    // state will cause failure of OnBoarding
                 }
-
-                result.setIpAddr(ipAddr);
-                result.setHWAddr(macAddr);
-                result.setReachable(isReachable);
-
-                NotifyApplication(result);
                 return true;
             }
         } else {
@@ -155,17 +156,17 @@ public class WiFiSoftAPManager {
                 appNotification
                         .add(new EnrolleeOnBoardingInfo(ipAddr, macAddr, "", isReachable, false,
                                 true));
+                result.setIpAddr(ipAddr);
+                result.setHWAddr(macAddr);
+                result.setReachable(isReachable);
+
+                NotifyApplication(result);
             } else {
-                appNotification
-                        .add(new EnrolleeOnBoardingInfo(ipAddr, macAddr, "", isReachable, true,
-                                false));
+                //This case will happen for the first time device is listed,  but
+                // reachability is false. This case need not be notified to
+                // application. Notifying this state will cause failure of OnBoarding
             }
 
-            result.setIpAddr(ipAddr);
-            result.setHWAddr(macAddr);
-            result.setReachable(isReachable);
-
-            NotifyApplication(result);
             return true;
         }
         return false;
@@ -255,8 +256,11 @@ public class WiFiSoftAPManager {
      * @param finishListener   Interface called when the scan method finishes
      * @param reachableTimeout Reachable Timeout in miliseconds
      */
-    public void getClientList(IOnBoardingStatus finishListener, final int reachableTimeout) {
+    public synchronized void getClientList(IOnBoardingStatus finishListener, final int
+            reachableTimeout) {
         this.finishListener = finishListener;
+        //Clearing the scan list for providing u
+        appNotification.clear();
         Runnable runnable = new Runnable() {
             public void run() {
                 Log.i(TAG, "Scanning enrolling device in the network" );
@@ -333,7 +337,8 @@ public class WiFiSoftAPManager {
         };
         mainHandler.post(myRunnable);
 */
-        Log.i(TAG, "Scanning is finished with result, IP : " +  result.getIpAddr() + "Notifying to Application");
+        Log.i(TAG, "Scanning is finished with result, IP : " +  result.getIpAddr() + "Notifying " +
+                "to Application");
         finishListener.deviceOnBoardingStatus(result);
 
     }

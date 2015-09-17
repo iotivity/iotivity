@@ -23,7 +23,7 @@ import android.content.Context;
 import android.util.Log;
 
 import org.iotivity.service.easysetup.core.BleConnection;
-import org.iotivity.service.easysetup.core.ConnectionInterface;
+import org.iotivity.service.easysetup.core.OnBoardingConnection;
 import org.iotivity.service.easysetup.core.EnrolleeDevice;
 import org.iotivity.service.easysetup.core.EnrolleeState;
 import org.iotivity.service.easysetup.core.OnBoardingConfig;
@@ -110,7 +110,7 @@ public class EnrolleeDeviceBLEOnBoarding extends EnrolleeDevice {
     }
 
     @Override
-    protected void startProvisioningProcess(ConnectionInterface conn) {
+    protected void startProvisioningProcess(OnBoardingConnection conn) {
 
         Log.i("start provisioning BLE", mProvConfig.getConnType() + "");
 

@@ -19,7 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 package org.iotivity.service.easysetup.core;
 
-public class BleConnection implements ConnectionInterface {
+public class BleConnection implements OnBoardingConnection {
 
     private boolean mIsConnected;
     private String mServiceUUID;

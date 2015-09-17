@@ -86,6 +86,7 @@ public class EasySetupService {
      */
 
     public void finish() {
+
         //Native Api call to reset OIC stack
         if(mProvisionEnrolleeInstance != null)
         {
@@ -143,11 +144,26 @@ public class EasySetupService {
      * @param enrolleedevice Device to be enrolled in network
      */
     public synchronized void stopSetup(EnrolleeDevice enrolleedevice) {
-        enrolleedevice.stopOnBoardingProcess();
-        mEnrolleeDeviceList.remove(enrolleedevice);
+        if(enrolleedevice.mState == EnrolleeState.DEVICE_ON_BOARDING_STATE) {
+            if(mEnrolleeDeviceList.contains(enrolleedevice)) {
+                Log.i(TAG, "stopOnBoardingProcess for enrolleedevice");
+                enrolleedevice.stopOnBoardingProcess();
+                mEnrolleeDeviceList.remove(enrolleedevice);
+            }
+        }
+        else if(enrolleedevice.mState == EnrolleeState.DEVICE_PROVISIONING_STATE)
+        {
+            if(mEnrolleeDeviceList.contains(enrolleedevice)) {
+                Log.i(TAG, "stopOnBoardingProcess for enrolleedevice");
+                enrolleedevice.stopOnBoardingProcess();
 
-        //Native Api call to stop on-going enrolling process for the enrolling device
-        EasySetupManager.getInstance().stopEnrolleeProvisioning(enrolleedevice.mOnBoardingConfig.getConnType().getValue());
+                Log.i(TAG, "stopEnrolleeProvisioning for enrolleedevice");
+                //Native Api call to stop on-going enrolling process for the enrolling device
+                EasySetupManager.getInstance().stopEnrolleeProvisioning(enrolleedevice
+                        .mOnBoardingConfig.getConnType().getValue());
+                mEnrolleeDeviceList.remove(enrolleedevice);
+            }
+        }
     }
 
     public synchronized void getEnrolleeDevice(OnBoardingConfig connType) {
@@ -164,10 +180,11 @@ public class EasySetupService {
 
         @Override
         public void onFinished(EnrolleeDevice enrolledevice) {
-            //if(mEnrolleeDeviceList.contains(enrolledevice)) {
-            Log.i(TAG, "onFinished() is received " + enrolledevice.isSetupSuccessful());
-            mCallback.onFinished(enrolledevice);
-            // }
+            if(mEnrolleeDeviceList.contains(enrolledevice)) {
+                Log.i(TAG, "onFinished() is received " + enrolledevice.isSetupSuccessful());
+                mCallback.onFinished(enrolledevice);
+                mEnrolleeDeviceList.remove(enrolledevice);
+            }
         }
 
     }

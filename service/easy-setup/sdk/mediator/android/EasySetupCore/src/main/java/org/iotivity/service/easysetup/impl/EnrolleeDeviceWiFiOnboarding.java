@@ -61,6 +61,7 @@ public class EnrolleeDeviceWiFiOnboarding extends EnrolleeDevice {
 
         @Override
         public void deviceOnBoardingStatus(EnrolleeInfo enrolleStatus) {
+            myTimer.cancel();
             Log.d("ESSoftAPOnBoarding", "Entered");
             if (mState == EnrolleeState.DEVICE_ON_BOARDING_STATE) {
                 Log.d("ESSoftAPOnBoarding", "Device in OnBoarding State");

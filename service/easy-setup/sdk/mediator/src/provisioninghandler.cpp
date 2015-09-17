@@ -18,16 +18,20 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include "provisioninghandler.h"
+
+//Standard includes
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
 #include <unistd.h>
-#include "ocpayload.h"
-#include "provisioninghandler.h"
-#include "common.h"
-// External includes
 
+//EasySetup include files
+#include "ocpayload.h"
+#include "common.h"
+
+// External includes
 #include "camutex.h"
 #include "cathreadpool.h"
 #include "logger.h"
