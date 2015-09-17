@@ -1607,6 +1607,12 @@ void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
 
     // copy vendor specific header options
     uint8_t tempNum = (requestInfo->info.numOptions);
+
+    // Assume no observation requested and it is a pure GET.
+    // If obs registration/de-registration requested it'll be fetched from the
+    // options in GetObserveHeaderOption()
+    serverRequest.observationOption = OC_OBSERVE_NO_OPTION;
+
     GetObserveHeaderOption(&serverRequest.observationOption, requestInfo->info.options, &tempNum);
     if (requestInfo->info.numOptions > MAX_HEADER_OPTIONS)
     {
