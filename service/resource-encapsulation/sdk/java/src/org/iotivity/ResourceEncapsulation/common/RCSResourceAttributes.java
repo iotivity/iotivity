@@ -24,6 +24,8 @@
 
 package org.iotivity.ResourceEncapsulation.common;
 
+import java.util.Vector;
+
 import org.iotivity.ResourceEncapsulation.client.RCSDiscoveryManager;
 import org.iotivity.ResourceEncapsulation.client.RCSRemoteResourceObject;
 import org.iotivity.ResourceEncapsulation.server.RCSResourceObject;
@@ -31,8 +33,8 @@ import org.iotivity.ResourceEncapsulation.server.RCSResourceObject;
 /**
  * RCSResourceAttributes represents the attributes for a resource.
  *
- * An attribute value can be one of various types : integer, double, boolean,
- * String.
+ * An attribute value can be one of types specified in enum
+ * "AttriubtesGetValueTypes"
  *
  * <p>
  * If developer on client side wants to get the RCSResourceAttributes for the
@@ -44,7 +46,7 @@ import org.iotivity.ResourceEncapsulation.server.RCSResourceObject;
  * steps: Call the getAttributes() API of RCSResourceObject class.
  *
  * {@link RCSDiscoveryManager} {@link RCSRemoteResourceObject}
- * {@link RCSResourceObject}
+ * {@link RCSResourceObject} {@link AttriubtesGetValueTypes}
  */
 public class RCSResourceAttributes {
 
@@ -52,15 +54,54 @@ public class RCSResourceAttributes {
     private boolean m_nativeNeedsDelete;
 
     // native methods
-    private native Object nativeGetValueN(String key);
+    private native Object nativeGetValueN(String key, int type);
 
-    private native void nativeSetValueInteger(String key, int value);
+    private native void nativeSetValueInt(String key, int value);
+
+    private native void nativeSetValueVectorOfInt(String key,
+            Vector<Integer> values);
+
+    private native void nativeSetValueVectorOfVectorOfInt(String key,
+            Vector<Vector<Integer>> values);
+
+    private native void nativeSetValueVectorOfVectorOfVectorOfInt(String key,
+            Vector<Vector<Vector<Integer>>> values);
 
     private native void nativeSetValueDouble(String key, double value);
 
+    private native void nativeSetValueVectorOfDouble(String key,
+            Vector<Double> values);
+
+    private native void nativeSetValueVectorOfVectorOfDouble(String key,
+            Vector<Vector<Double>> values);
+
+    private native void nativeSetValueVectorOfVectorOfVectorOfDouble(
+            String key, Vector<Vector<Vector<Double>>> values);
+
     private native void nativeSetValueBoolean(String key, boolean value);
 
+    private native void nativeSetValueVectorOfBoolean(String key,
+            Vector<Boolean> values);
+
+    private native void nativeSetValueVectorOfVectorOfBoolean(String key,
+            Vector<Vector<Boolean>> values);
+
+    private native void nativeSetValueVectorOfVectorOfVectorOfBoolean(
+            String key, Vector<Vector<Vector<Boolean>>> values);
+
     private native void nativeSetValueString(String key, String value);
+
+    private native void nativeSetValueVectorOfString(String key,
+            Vector<String> values);
+
+    private native void nativeSetValueVectorOfVectorOfString(String key,
+            Vector<Vector<String>> values);
+
+    private native void nativeSetValueVectorOfVectorOfVectorOfString(
+            String key, Vector<Vector<Vector<String>>> values);
+
+    private native void nativeSetValueAttributes(String key,
+            RCSResourceAttributes value);
 
     private native boolean nativeIsEmpty();
 
@@ -97,98 +138,106 @@ public class RCSResourceAttributes {
         this.m_nativeNeedsDelete = nativeNeedsDelete;
     }
 
-    private <T> T getValue(String key) throws RCSException {
-        Object obj = this.nativeGetValueN(key);
+    /**
+     * Get the Resource Attribute value.
+     *
+     * @param key
+     *            Key for which value is requested
+     *
+     * @param type
+     *            AttriubtesGetValueTypes
+     *
+     * @return Value of the attribute.
+     *
+     * @throws RCSException
+     *             In case of bad Request
+     *
+     *             {@link AttriubtesGetValueTypes}
+     */
+    public <T> T getValue(String key, AttriubtesGetValueTypes type)
+            throws RCSException {
+        Object obj = this.nativeGetValueN(key, type.ordinal());
         T t = (T) obj;
         return t;
     }
 
     /**
-     * get attribute value as an integer
+     * Set Integer as Attribute value.
      *
      * @param key
-     *            - Key of the element.
-     *
-     * @return int - integer value of key provided.
-     */
-    public int getValueInt(String key) {
-        Integer value = 0;
-        try {
-            value = this.getValue(key);
-        } catch (RCSException e) {
-            e.printStackTrace();
-        }
-        return value;
-    }
-
-    /**
-     * get attribute value as a double
-     *
-     * @param key
-     *            - Key of the element.
-     *
-     * @return boolean - boolean value of key provided.
-     */
-    public double getValueDouble(String key) {
-        double value = 0;
-        try {
-            value = this.getValue(key);
-        } catch (RCSException e) {
-            e.printStackTrace();
-        }
-        return value;
-    }
-
-    /**
-     * get attribute value as a boolean
-     *
-     * @param key
-     *            - Key of the element.
-     *
-     * @return boolean - boolean value of key provided.
-     */
-    public boolean getValueBool(String key) {
-        Boolean value = false;
-        try {
-            value = this.getValue(key);
-        } catch (RCSException e) {
-            e.printStackTrace();
-        }
-        return value;
-    }
-
-    /**
-     * get attribute value as a string
-     *
-     * @param key
-     *            - Key of the element.
-     *
-     * @return String - String value of key provided.
-     */
-    public String getValueString(String key) {
-        String value = "";
-        try {
-            value = this.getValue(key);
-        } catch (RCSException e) {
-            e.printStackTrace();
-        }
-        return value;
-    }
-
-    /**
-     * set an integer type attribute value.
-     *
-     * @param key
-     *            - Key of the element to be added.
+     *            Key of the element to be added.
      *
      * @param value
-     *            - integer value of key to be set.
+     *            integer value to be set.
      *
      * @throws RCSException
+     *             In case of bad Request
      */
     public void setValueInt(String key, int value) throws RCSException {
         try {
-            this.nativeSetValueInteger(key, value);
+            this.nativeSetValueInt(key, value);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Set Vector of Integer as Attribute Value.
+     *
+     * @param key
+     *            Key of the element to be added.
+     *
+     * @param values
+     *            Vector of integer to be set.
+     *
+     * @throws RCSException
+     *             In case of bad Request
+     */
+    public void setValueVectorOfInt(String key, Vector<Integer> values) {
+        try {
+            this.nativeSetValueVectorOfInt(key, values);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Set Vector of Vector of Integer as Attribute Value.
+     *
+     * @param key
+     *            Key of the element to be added.
+     *
+     * @param values
+     *            Vector of Vector of integer to be set.
+     *
+     * @throws RCSException
+     *             In case of bad Request
+     */
+    public void setValueVectorOfVectorInt(String key,
+            Vector<Vector<Integer>> values) {
+        try {
+            this.nativeSetValueVectorOfVectorOfInt(key, values);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Set Vector Vector of Vector of Integer as Attribute Value.
+     *
+     * @param key
+     *            Key of the element to be added.
+     *
+     * @param values
+     *            Vector of Vector of Vector of integer to be set.
+     *
+     * @throws RCSException
+     *             In case of bad Request
+     */
+    public void setValueVectorOfVectorOfVectorInt(String key,
+            Vector<Vector<Vector<Integer>>> values) {
+        try {
+            this.nativeSetValueVectorOfVectorOfVectorOfInt(key, values);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -198,12 +247,13 @@ public class RCSResourceAttributes {
      * set a double attribute value.
      *
      * @param key
-     *            - Key of the element to be added.
+     *            Key of the element to be added.
      *
      * @param value
-     *            - double value of key to be set.
+     *            double value of key to be set.
      *
      * @throws RCSException
+     *             In case of bad Request
      */
     public void setValueDouble(String key, double value) throws RCSException {
         try {
@@ -214,15 +264,79 @@ public class RCSResourceAttributes {
     }
 
     /**
+     * Set Vector of double as Attribute Value.
+     *
+     * @param key
+     *            Key of the element to be added.
+     *
+     * @param values
+     *            Vector of double value of key to be set.
+     *
+     * @throws RCSException
+     *             In case of bad Request
+     */
+    public void setValueVectorOfDouble(String key, Vector<Double> values) {
+        try {
+            this.nativeSetValueVectorOfDouble(key, values);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Set Vector of Vector of double as Attribute Value.
+     *
+     * @param key
+     *            Key of the element to be added.
+     *
+     * @param values
+     *            Vector of vector of double value of key to be set.
+     *
+     * @throws RCSException
+     *             In case of bad Request
+     */
+    public void setValueVectorOfVectorOfDouble(String key,
+            Vector<Vector<Double>> values) {
+        try {
+            this.nativeSetValueVectorOfVectorOfDouble(key, values);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Set Vector Vector of Vector of double as Attribute Value.
+     *
+     * @param key
+     *            Key of the element to be added.
+     *
+     * @param values
+     *            Vector of Vector of Vector of double value of key to be set.
+     *
+     * @throws RCSException
+     *             In case of bad Request
+     */
+    public void setValueVectorOfVectorOfVectorOfDouble(String key,
+            Vector<Vector<Vector<Double>>> values) {
+        try {
+            this.nativeSetValueVectorOfVectorOfVectorOfDouble(key, values);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
      * set a boolean attribute value.
      *
      * @param key
-     *            - Key of the element to be added.
+     *            Key of the element to be added.
      *
-     * @param value
-     *            - integer value of key to be set.
+     * @param values
+     *            boolean value of key to be set.
      *
      * @throws RCSException
+     *             In case of bad Request
+     *
      */
     public void setValueBool(String key, boolean value) throws RCSException {
         try {
@@ -233,19 +347,165 @@ public class RCSResourceAttributes {
     }
 
     /**
+     * Set Vector of boolean as Attribute Value.
+     *
+     * @param key
+     *            Key of the element to be added.
+     *
+     * @param values
+     *            Vector of boolean value of key to be set.
+     *
+     * @throws RCSException
+     *             In case of bad Request
+     */
+    public void setValueVectorOfBool(String key, Vector<Boolean> values) {
+        try {
+            this.nativeSetValueVectorOfBoolean(key, values);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Set Vector of Vector of boolean as Attribute Value.
+     *
+     * @param key
+     *            Key of the element to be added.
+     *
+     * @param values
+     *            Vector of vector of boolean value of key to be set.
+     *
+     * @throws RCSException
+     *             In case of bad Request
+     */
+    public void setValueVectorOfVectorOfBool(String key,
+            Vector<Vector<Boolean>> values) {
+        try {
+            this.nativeSetValueVectorOfVectorOfBoolean(key, values);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Set Vector Vector of Vector of boolean as Attribute Value.
+     *
+     * @param key
+     *            Key of the element to be added.
+     *
+     * @param values
+     *            Vector of Vector of Vector of boolean value of key to be set.
+     *
+     * @throws RCSException
+     *             In case of bad Request
+     */
+    public void setValueVectorOfVectorOfVectorOfBool(String key,
+            Vector<Vector<Vector<Boolean>>> values) {
+        try {
+            this.nativeSetValueVectorOfVectorOfVectorOfBoolean(key, values);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
      * set a string attribute value.
      *
      * @param key
-     *            - Key of the element to be added.
+     *            Key of the element to be added.
      *
      * @param value
-     *            - integer value of key to be set.
+     *            String value of key to be set.
      *
      * @throws RCSException
+     *             In case of bad Request
      */
     public void setValueString(String key, String value) throws RCSException {
         try {
             this.nativeSetValueString(key, value);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Set Vector of String as Attribute Value.
+     *
+     * @param key
+     *            Key of the element to be added.
+     *
+     * @param values
+     *            Vector of String value of key to be set.
+     *
+     * @throws RCSException
+     *             In case of bad Request
+     */
+    public void setValueVectorOfString(String key, Vector<String> values) {
+        try {
+            this.nativeSetValueVectorOfString(key, values);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Set Vector of Vector of String as Attribute Value.
+     *
+     * @param key
+     *            Key of the element to be added.
+     *
+     * @param values
+     *            Vector of vector of String value of key to be set.
+     *
+     * @throws RCSException
+     *             In case of bad Request
+     */
+    public void setValueVectorOfVectorOfString(String key,
+            Vector<Vector<String>> values) {
+        try {
+            this.nativeSetValueVectorOfVectorOfString(key, values);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Set Vector Vector of Vector of String as Attribute Value.
+     *
+     * @param key
+     *            Key of the element to be added.
+     *
+     * @param values
+     *            Vector of Vector of Vector of String value of key to be set.
+     *
+     * @throws RCSException
+     *             In case of bad Request
+     */
+    public void setValueVectorOfVectorOfVectorOfString(String key,
+            Vector<Vector<Vector<String>>> values) {
+        try {
+            this.nativeSetValueVectorOfVectorOfVectorOfString(key, values);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * set a Attribute as attribute value.
+     *
+     * @param key
+     *            Key of the element to be added.
+     *
+     * @param values
+     *            RCSResourceAttributes to be set.
+     *
+     * @throws RCSException
+     *             In case of bad Request
+     */
+    public void setValueAttributes(String key, RCSResourceAttributes value)
+            throws RCSException {
+        try {
+            this.nativeSetValueAttributes(key, value);
         } catch (Exception e) {
             e.printStackTrace();
         }

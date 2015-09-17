@@ -41,11 +41,18 @@ jclass g_cls_RCSRequest = NULL;
 jclass g_cls_RCSBundleInfo = NULL;
 
 jmethodID g_mid_Integer_ctor = NULL;
+jmethodID g_mid_Integer_getInt = NULL;
 jmethodID g_mid_Double_ctor = NULL;
+jmethodID g_mid_Double_getDouble = NULL;
+jmethodID g_mid_Boolean_getBoolean = NULL;
 jmethodID g_mid_Boolean_ctor = NULL;
 jmethodID g_mid_LinkedList_ctor = NULL;
 jmethodID g_mid_Set_iterator = NULL;
 jmethodID g_mid_LinkedList_add_object = NULL;
+jmethodID g_mid_Vector_ctor = NULL;
+jmethodID g_mid_Vector_size = NULL;
+jmethodID g_mid_Vector_get = NULL;
+jmethodID g_mid_Vector_add = NULL;
 jmethodID g_mid_Map_entrySet = NULL;
 jmethodID g_mid_MapEntry_getKey = NULL;
 jmethodID g_mid_MapEntry_getValue = NULL;
@@ -53,6 +60,7 @@ jmethodID g_mid_Iterator_hasNext = NULL;
 jmethodID g_mid_Iterator_next = NULL;
 jmethodID g_mid_RCSRemoteResourceObject_ctor = NULL;
 jmethodID g_mid_RCSRemoteResourceAttributesObject_ctor = NULL;
+jmethodID g_mid_RCSRemoteResourceAttributesObject_ctor_bool = NULL;
 jmethodID g_mid_RCSException_ctor = NULL;
 
 jmethodID g_mid_RCSResourceObject_ctor = NULL;
@@ -83,6 +91,9 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
     g_mid_Integer_ctor = env->GetMethodID(g_cls_Integer, "<init>", "(I)V");
     if (!g_mid_Integer_ctor) return JNI_ERR;
 
+    g_mid_Integer_getInt = env->GetMethodID(g_cls_Integer, "intValue", "()I");
+    if (!g_mid_Integer_getInt) return JNI_ERR;
+
     //Double
     clazz = env->FindClass("java/lang/Double");
     if (!clazz) return JNI_ERR;
@@ -92,6 +103,10 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
     g_mid_Double_ctor = env->GetMethodID(g_cls_Double, "<init>", "(D)V");
     if (!g_mid_Double_ctor) return JNI_ERR;
 
+    g_mid_Double_getDouble = env->GetMethodID(g_cls_Double, "doubleValue", "()D");
+    if (!g_mid_Double_getDouble) return JNI_ERR;
+
+
     //Boolean
     clazz = env->FindClass("java/lang/Boolean");
     if (!clazz) return JNI_ERR;
@@ -100,6 +115,10 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
 
     g_mid_Boolean_ctor = env->GetMethodID(g_cls_Boolean, "<init>", "(Z)V");
     if (!g_mid_Boolean_ctor) return JNI_ERR;
+
+    g_mid_Boolean_getBoolean = env->GetMethodID(g_cls_Boolean, "booleanValue", "()Z");
+    if (!g_mid_Boolean_getBoolean) return JNI_ERR;
+
 
     //String
     clazz = env->FindClass("java/lang/String");
@@ -166,6 +185,18 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
     g_cls_Vector = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
 
+    g_mid_Vector_ctor = env->GetMethodID(g_cls_Vector, "<init>", "()V");
+    if (!g_mid_Vector_ctor) return JNI_ERR;
+
+    g_mid_Vector_size = env->GetMethodID(g_cls_Vector, "size", "()I");
+    if (!g_mid_Vector_size) return JNI_ERR;
+
+    g_mid_Vector_get = env->GetMethodID(g_cls_Vector, "get", "(I)""Ljava/lang/Object;");
+    if (!g_mid_Vector_get) return JNI_ERR;
+
+    g_mid_Vector_add =  env->GetMethodID(g_cls_Vector, "add", "(Ljava/lang/Object;)Z");
+    if (!g_mid_Vector_add) return JNI_ERR;
+
     //RCSRemoteResourceObject
     clazz = env->FindClass("org/iotivity/ResourceEncapsulation/client/RCSRemoteResourceObject");
     if (!clazz) return JNI_ERR;
@@ -196,6 +227,10 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
     g_mid_RCSRemoteResourceAttributesObject_ctor = env->GetMethodID(
                 g_cls_RCSRemoteResourceAttributesObject, "<init>", "(J)V");
     if (!g_mid_RCSRemoteResourceAttributesObject_ctor) return JNI_ERR;
+
+    g_mid_RCSRemoteResourceAttributesObject_ctor_bool = env->GetMethodID(
+               g_cls_RCSRemoteResourceAttributesObject, "<init>", "(JZ)V");
+    if (!g_mid_RCSRemoteResourceAttributesObject_ctor_bool) return JNI_ERR;
 
     //RCSException
     clazz = env->FindClass("org/iotivity/ResourceEncapsulation/common/RCSException");
@@ -251,6 +286,7 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved)
     env->DeleteGlobalRef(g_cls_Boolean);
     env->DeleteGlobalRef(g_cls_String);
     env->DeleteGlobalRef(g_cls_LinkedList);
+    env->DeleteGlobalRef(g_cls_Vector);
     env->DeleteGlobalRef(g_cls_Iterator);
     env->DeleteGlobalRef(g_cls_RCSRemoteResourceObject);
     env->DeleteGlobalRef(g_cls_RCSRemoteResourceAttributesObject);

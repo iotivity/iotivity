@@ -18,10 +18,9 @@
  *
  ******************************************************************/
 
-/** @file   jni_re_resource_attributes.h
- *
- *   @brief  This file contains the declaration of Resource Attribute APIs
- *               for JNI implementation
+/** @file
+ * This file contains the declaration of Resource Attribute APIs
+ *  for JNI implementation
  */
 
 #ifndef __JNI_RE_RCS_RESOURCE_ATTRIBUTES_H_
@@ -40,22 +39,22 @@
 struct NullType {};
 
 /**
- * @class   JniResourceAttributes
- * @brief   This class provides the API for getting the RCSResourceAttribute pointer
- *
+ * @class
+ * This class provides the API for getting the RCSResourceAttribute pointer
  */
 class JniResourceAttributes
 {
     public:
+
         /**
-         * @brief Get the ResourceAttibute pointer
-         *      internally get the native handle by calling REGetHandle
+         * Get the ResourceAttibute pointer
+         * internally get the native handle by calling REGetHandle
          */
         static RCSResourceAttributes *getResourceAttributePtr(JNIEnv *env, jobject thiz);
 };
 
 /**
- * @brief Utility structure for jobject conversion
+ * Utility structure for jobject conversion
  */
 struct JObjectConverter : boost::static_visitor < jobject >
 {
@@ -100,69 +99,222 @@ extern "C" {
 #endif
 
 /**
- * API for getting attribute value corresponding the requested Key
+ * API for getting attribute value corresponding to requested Key
  *
  * @param key - Attribute key
+ * @param dataType - dataType for the value.
  *
+ * @return value of attribute
+ *
+ * @throws RCSException
  */
 JNIEXPORT jobject JNICALL
 Java_org_iotivity_ResourceEncapsulation_common_RCSResourceAttributes_nativeGetValueN
-(JNIEnv *env, jobject interfaceObject, jstring key);
+(JNIEnv *env, jobject interfaceObject, jstring key, jint dataType);
 
 /**
  * API for setting integer value for attribute
  *
  * @param key - Attribute key
  * @param value - Attribute value
- *
  */
 JNIEXPORT void JNICALL
-Java_org_iotivity_ResourceEncapsulation_common_RCSResourceAttributes_nativeSetValueInteger
+Java_org_iotivity_ResourceEncapsulation_common_RCSResourceAttributes_nativeSetValueInt
 (JNIEnv *env, jobject interfaceObject, jstring key, jint value);
 
 /**
- * API for setting Double value for attribute
+ * API for setting Vector of integer as attribute value
  *
  * @param key - Attribute key
  * @param value - Attribute value
  *
+ * @throws RCSException - If Key is empty
+ */
+JNIEXPORT void JNICALL
+Java_org_iotivity_ResourceEncapsulation_common_RCSResourceAttributes_nativeSetValueVectorOfInt
+(JNIEnv *env, jobject interfaceObject, jstring key, jobject value);
+
+/**
+ * API for setting vector of vector of integer as attribute value
+ *
+ * @param key - Attribute key
+ * @param value - Attribute value
+ *
+ * @throws RCSException - If Key is empty
+ */
+JNIEXPORT void JNICALL
+Java_org_iotivity_ResourceEncapsulation_common_RCSResourceAttributes_nativeSetValueVectorOfVectorOfInt
+(JNIEnv *env, jobject interfaceObject, jstring key, jobject value);
+
+/**
+ * API for setting vector of vector of vector of integer as attribute value
+ *
+ * @param key - Attribute key
+ * @param value - Attribute value
+ *
+ * @throws RCSException - If Key is empty
+ */
+JNIEXPORT void JNICALL
+Java_org_iotivity_ResourceEncapsulation_common_RCSResourceAttributes_nativeSetValueVectorOfVectorOfVectorOfInt
+(JNIEnv *env, jobject interfaceObject, jstring key, jobject value);
+
+/**
+ * API for setting double as attribute value
+ *
+ * @param key - Attribute key
+ * @param value - Attribute value
+ *
+ * @throws RCSException - If Key is empty
  */
 JNIEXPORT void JNICALL
 Java_org_iotivity_ResourceEncapsulation_common_RCSResourceAttributes_nativeSetValueDouble
 (JNIEnv *env, jobject interfaceObject, jstring key, jdouble value);
 
 /**
- * API for setting Boolean value for attribute
+ * API for setting Vector of double as attribute value
  *
  * @param key - Attribute key
  * @param value - Attribute value
  *
+ * @throws RCSException - If Key is empty
+ */
+JNIEXPORT void JNICALL
+Java_org_iotivity_ResourceEncapsulation_common_RCSResourceAttributes_nativeSetValueVectorOfDouble
+(JNIEnv *env, jobject interfaceObject, jstring key, jobject value);
+
+/**
+ * API for setting Vector of Vector of double as attribute value
+ *
+ * @param key - Attribute key
+ * @param value - Attribute value
+ *
+ * @throws RCSException - If Key is empty
+ */
+JNIEXPORT void JNICALL
+Java_org_iotivity_ResourceEncapsulation_common_RCSResourceAttributes_nativeSetValueVectorOfVectorOfDouble
+(JNIEnv *env, jobject interfaceObject, jstring key, jobject value);
+
+/**
+ * API for setting Vector of Vector of Vector of double as attribute value
+ *
+ * @param key - Attribute key
+ * @param value - Attribute value
+ *
+ * @throws RCSException - If Key is empty
+ */
+JNIEXPORT void JNICALL
+Java_org_iotivity_ResourceEncapsulation_common_RCSResourceAttributes_nativeSetValueVectorOfVectorOfVectorOfDouble
+(JNIEnv *env, jobject interfaceObject, jstring key, jobject value);
+
+
+/**
+ * API for setting boolean as attribute value
+ *
+ * @param key - Attribute key
+ * @param value - Attribute value
+ *
+ * @throws RCSException - If Key is empty
  */
 JNIEXPORT void JNICALL
 Java_org_iotivity_ResourceEncapsulation_common_RCSResourceAttributes_nativeSetValueBoolean
 (JNIEnv *env, jobject interfaceObject, jstring key, jboolean value);
 
 /**
- * API for setting String value for attribute
+ * API for setting vector of boolean as attribute value
  *
- * @param Key - Attribute key
+ * @param key - Attribute key
  * @param value - Attribute value
  *
+ * @throws RCSException - If Key is empty
+ */
+JNIEXPORT void JNICALL
+Java_org_iotivity_ResourceEncapsulation_common_RCSResourceAttributes_nativeSetValueVectorOfBoolean
+(JNIEnv *env, jobject interfaceObject, jstring key, jobject value);
+
+/**
+ * API for setting vector of vector of boolean as attribute value
+ *
+ * @param key - Attribute key
+ * @param value - Attribute value
+ *
+ * @throws RCSException - If Key is empty
+ */
+JNIEXPORT void JNICALL
+Java_org_iotivity_ResourceEncapsulation_common_RCSResourceAttributes_nativeSetValueVectorOfVectorOfBoolean
+(JNIEnv *env, jobject interfaceObject, jstring key, jobject value);
+
+/**
+ * API for setting vector of vector of vector of boolean as attribute value
+ *
+ * @param key - Attribute key
+ * @param value - Attribute value
+ *
+ * @throws RCSException - If Key is empty
+ */
+JNIEXPORT void JNICALL
+Java_org_iotivity_ResourceEncapsulation_common_RCSResourceAttributes_nativeSetValueVectorOfVectorOfVectorOfBoolean
+(JNIEnv *env, jobject interfaceObject, jstring key, jobject value);
+
+/**
+ * API for setting String as attribute value
+ *
+ * @param key - Attribute key
+ * @param value - Attribute value
+ *
+ * @throws RCSException - If Key is empty
  */
 JNIEXPORT void JNICALL
 Java_org_iotivity_ResourceEncapsulation_common_RCSResourceAttributes_nativeSetValueString
 (JNIEnv *env, jobject interfaceObject, jstring key, jstring value);
 
 /**
- * API for setting IntegerArray for attribute
+ * API for setting Vector of String as attribute value
  *
  * @param key - Attribute key
  * @param value - Attribute value
  *
+ * @throws RCSException - If Key is empty
  */
 JNIEXPORT void JNICALL
-Java_org_iotivity_ResourceEncapsulation_common_RCSResourceAttributes_nativeSetValueIntegerArray
-(JNIEnv *env, jobject interfaceObject, jstring key, jintArray value);
+Java_org_iotivity_ResourceEncapsulation_common_RCSResourceAttributes_nativeSetValueVectorOfString
+(JNIEnv *env, jobject interfaceObject, jstring key, jobject value);
+
+/**
+ * API for setting Vector of Vector of String as attribute value
+ *
+ * @param key - Attribute key
+ * @param value - Attribute value
+ *
+ * @throws RCSException - If Key is empty
+ */
+JNIEXPORT void JNICALL
+Java_org_iotivity_ResourceEncapsulation_common_RCSResourceAttributes_nativeSetValueVectorOfVectorOfString
+(JNIEnv *env, jobject interfaceObject, jstring key, jobject value);
+
+/**
+ * API for setting Vector of Vector of Vector of String as attribute value
+ *
+ * @param key - Attribute key
+ * @param value - Attribute value
+ *
+ * @throws RCSException - If Key is empty
+ */
+JNIEXPORT void JNICALL
+Java_org_iotivity_ResourceEncapsulation_common_RCSResourceAttributes_nativeSetValueVectorOfVectorOfVectorOfString
+(JNIEnv *env, jobject interfaceObject, jstring key, jobject value);
+
+/**
+ * API for setting RCSResourceAttribute as attribute value
+ *
+ * @param key - Attribute key
+ * @param value - Attribute value
+ *
+ * @throws RCSException - If Key is empty
+ */
+JNIEXPORT void JNICALL
+Java_org_iotivity_ResourceEncapsulation_common_RCSResourceAttributes_nativeSetValueAttributes
+(JNIEnv *env, jobject interfaceObject, jstring key, jobject value);
+
 
 /**
  * API for checking whether attribute is empty or not
@@ -211,13 +363,13 @@ Java_org_iotivity_ResourceEncapsulation_common_RCSResourceAttributes_nativeHasAt
 (JNIEnv *env, jobject interfaceObject, jstring key);
 
 /**
- * @brief API for creating a new RCSResourceAttributes object and setting of Native handle
+ * API for creating a new RCSResourceAttributes object and setting of Native handle
  */
 JNIEXPORT void JNICALL Java_org_iotivity_ResourceEncapsulation_common_RCSResourceAttributes_create
 (JNIEnv *env, jobject interfaceObject);
 
 /**
- * @brief API for deleting the RCSResourceAttributes object
+ *  API for deleting the RCSResourceAttributes object
  */
 JNIEXPORT void JNICALL Java_org_iotivity_ResourceEncapsulation_common_RCSResourceAttributes_dispose
 (JNIEnv *env, jobject interfaceObject, jboolean jNeedsDelete);

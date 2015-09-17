@@ -60,10 +60,17 @@ extern jclass g_cls_RCSRequest;
 extern jclass g_cls_RCSBundleInfo;
 
 extern jmethodID g_mid_Integer_ctor;
+extern jmethodID g_mid_Integer_getInt;
+extern jmethodID g_mid_Double_getDouble;
+extern jmethodID g_mid_Boolean_getBoolean;
 extern jmethodID g_mid_Double_ctor;
 extern jmethodID g_mid_Boolean_ctor;
 extern jmethodID g_mid_LinkedList_ctor;
 extern jmethodID g_mid_LinkedList_add_object;
+extern jmethodID g_mid_Vector_ctor;
+extern jmethodID g_mid_Vector_size;
+extern jmethodID g_mid_Vector_get;
+extern jmethodID g_mid_Vector_add;
 extern jmethodID g_mid_Map_entrySet;
 extern jmethodID g_mid_MapEntry_getKey;
 extern jmethodID g_mid_MapEntry_getValue;
@@ -74,6 +81,7 @@ extern jmethodID g_mid_HashMap_ctor;
 extern jmethodID g_mid_HashMap_put;
 extern jmethodID g_mid_RCSRemoteResourceObject_ctor;
 extern jmethodID g_mid_RCSRemoteResourceAttributesObject_ctor;
+extern jmethodID g_mid_RCSRemoteResourceAttributesObject_ctor_bool;
 extern jmethodID g_mid_RCSException_ctor;
 
 extern jmethodID g_mid_RCSResourceObject_ctor;

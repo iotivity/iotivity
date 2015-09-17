@@ -31,6 +31,7 @@ import org.iotivity.ResourceEncapsulation.client.RCSRemoteResourceObject.ICacheU
 import org.iotivity.ResourceEncapsulation.client.RCSRemoteResourceObject.CacheState;
 import org.iotivity.ResourceEncapsulation.client.RCSRemoteResourceObject.ResourceState;
 import org.iotivity.ResourceEncapsulation.client.RCSRemoteResourceObject;
+import org.iotivity.ResourceEncapsulation.common.AttriubtesGetValueTypes;
 import org.iotivity.ResourceEncapsulation.common.RCSException;
 import org.iotivity.ResourceEncapsulation.common.RCSResourceAttributes;
 
@@ -489,7 +490,7 @@ public class ResourceClient {
         Log.d(LOG_TAG, "Printing Attributes");
 
         try {
-            int temperature = attributes.getValueInt("Temperature");
+            int temperature = attributes.getValue("Temperature", AttriubtesGetValueTypes.Integer);
             Log.i(LOG_TAG, "Temperature : " + temperature);
             logMessage = "Attributes : \n\nTemperature : " + temperature + "\n";
         } catch (Exception e) {

@@ -18,6 +18,7 @@
  *
  ******************************************************************/
 #include "jni_re_utils.h"
+#include "jni_re_resource_attributes.h"
 
 int covertResourceStateToInt(ResourceState state)
 {
@@ -255,11 +256,8 @@ int convertSetRequestHandlerPolicyToInt(RCSResourceObject::SetRequestHandlerPoli
 void convertJavaMapToParamsMap(JNIEnv *env, jobject hashMap,
                                std::map<std::string, std::string> &params)
 {
-
-    LOGI("convertJavaMapToParamsMap Enter");
     if (!hashMap)
     {
-        LOGI("convertJavaMapToParamsMap hashMap is NULL");
         return;
     }
 
@@ -267,7 +265,6 @@ void convertJavaMapToParamsMap(JNIEnv *env, jobject hashMap,
     jobject jIterator = env->CallObjectMethod(jEntrySet, g_mid_Set_iterator);
     if (!jEntrySet || !jIterator || env->ExceptionCheck())
     {
-        LOGI("convertJavaMapToParamsMap !jEntrySet || !jIterator || env->ExceptionCheck()");
         return;
     }
 
@@ -280,7 +277,6 @@ void convertJavaMapToParamsMap(JNIEnv *env, jobject hashMap,
         jstring jValue = (jstring)env->CallObjectMethod(jEntry, g_mid_MapEntry_getValue);
         if (!jValue) return;
 
-        LOGI("convertJavaMapToParamsMap about to insert");
         params.insert(std::make_pair(env->GetStringUTFChars(jKey, NULL),
                                      env->GetStringUTFChars(jValue, NULL)));
 
@@ -305,4 +301,697 @@ jobject convertStrListToJavaStrList(JNIEnv *env, std::list<std::string> &nativeL
         env->DeleteLocalRef(jStr);
     }
     return jList;
+}
+
+std::vector<int> covertJavaIntVectorToNativeVector(JNIEnv *env, jobject javaVector)
+{
+    std::vector<int> vectorInt;
+    LOGI("covertJavaIntVectorToNativeVector");
+
+    jint jSize = env->CallIntMethod(javaVector, g_mid_Vector_size);
+    int sizeOfVector = jSize;
+    int nativeValue;
+    jint jIndex;
+
+    for (int index = 0; index < sizeOfVector; index++)
+    {
+        jIndex = index;
+        jobject intValue = env->CallObjectMethod(javaVector, g_mid_Vector_get, jIndex);
+        nativeValue = env->CallIntMethod( intValue, g_mid_Integer_getInt);
+        vectorInt.push_back(nativeValue);
+    }
+    return vectorInt;
+}
+
+std::vector<std::vector<int>> convertJavaVectorOfVectorOfIntToNativeVector(JNIEnv *env,
+                           jobject javaVector)
+{
+    std::vector<std::vector<int>> vectorInt;
+    LOGI("covertJavaIntVectorToNativeVector");
+
+    jint jSizeOne = env->CallIntMethod(javaVector, g_mid_Vector_size);
+    int sizeOfVectorOne = jSizeOne;
+    int nativeValue;
+    jint jIndex1;
+    jint jIndex2;
+
+    for (int index1 = 0; index1 < sizeOfVectorOne; index1++)
+    {
+        jIndex1 = index1;
+
+        jobject vectorTwoObj = env->CallObjectMethod(javaVector, g_mid_Vector_get, jIndex1);
+
+        jint jSizeTwo = env->CallIntMethod(vectorTwoObj, g_mid_Vector_size);
+        int sizeOfVectorTwo = jSizeTwo;
+        std::vector<int> vectorTwo;
+        for (int index2 = 0; index2 < sizeOfVectorTwo; index2++)
+        {
+            jIndex2 = index2;
+            jobject intValue = env->CallObjectMethod(vectorTwoObj, g_mid_Vector_get, jIndex2);
+            nativeValue = env->CallIntMethod( intValue, g_mid_Integer_getInt);
+            vectorTwo.push_back(nativeValue);
+        }
+        vectorInt.push_back(vectorTwo);
+    }
+    return vectorInt;
+}
+
+std::vector<std::vector<std::vector<int>>> convertJavaVectorOfVectorOfVectorOfIntToNativeVector(
+    JNIEnv *env, jobject javaVector)
+{
+    std::vector<std::vector<std::vector<int>>> vectorInt;
+    LOGI("convertJavaVectorOfVectorOfVectorOfIntToNativeVector");
+
+    jint jSizeOne = env->CallIntMethod(javaVector, g_mid_Vector_size);
+    int sizeOfVectorOne = jSizeOne;
+    int nativeValue;
+    jint jIndex1;
+    jint jIndex2;
+    jint jIndex3;
+
+    for (int index1 = 0; index1 < sizeOfVectorOne; index1++)
+    {
+        jIndex1 = index1;
+
+        jobject vectorTwoObj = env->CallObjectMethod(javaVector, g_mid_Vector_get, jIndex1);
+
+        jint jSizeTwo = env->CallIntMethod(vectorTwoObj, g_mid_Vector_size);
+        int sizeOfVectorTwo = jSizeTwo;
+        std::vector<std::vector<int>> vectorTwo;
+        for (int index2 = 0; index2 < sizeOfVectorTwo; index2++)
+        {
+            jIndex2 = index2;
+
+            jobject vectorThreeObj = env->CallObjectMethod(vectorTwoObj, g_mid_Vector_get, jIndex2);
+
+            jint jSizeThree = env->CallIntMethod(vectorThreeObj, g_mid_Vector_size);
+            int sizeOfVectorThree = jSizeThree;
+            std::vector<int> vectorThree;
+            for (int index3 = 0; index3 < sizeOfVectorTwo; index3++)
+            {
+                jIndex3 = index3;
+                jobject intValue = env->CallObjectMethod(vectorThreeObj, g_mid_Vector_get, jIndex3);
+                nativeValue = env->CallIntMethod( intValue, g_mid_Integer_getInt);
+                vectorThree.push_back(nativeValue);
+            }
+            vectorTwo.push_back(vectorThree);
+        }
+        vectorInt.push_back(vectorTwo);
+    }
+    return vectorInt;
+}
+
+jobject convertNativeIntVectorToJavaVector(JNIEnv *env, std::vector<int> &nativeVector)
+{
+    LOGI("convertNativeIntVectorToJavaVector");
+    jobject javaVector = env->NewObject(g_cls_Vector, g_mid_Vector_ctor);
+
+    if (!javaVector) return nullptr;
+
+    for (std::vector<int>::iterator it = nativeVector.begin(); it != nativeVector.end(); ++it)
+    {
+        jint jInt = (jint)(*it);
+        jobject value = env->NewObject(g_cls_Integer, g_mid_Integer_ctor, jInt);
+        env->CallBooleanMethod(javaVector, g_mid_Vector_add, value);
+    }
+    return javaVector;
+}
+
+jobject convertNativeVectorOfVectorOfIntToJavaVector(JNIEnv *env,
+        std::vector<std::vector<int>> &nativeVector)
+{
+    LOGI("convertNativeVectorOfVectorOfIntToJavaVector");
+    jobject javaVector1 = env->NewObject(g_cls_Vector, g_mid_Vector_ctor);
+
+    if (!javaVector1) return nullptr;
+
+    std::vector<std::vector<int>>::iterator firstIt;
+    std::vector<int>::iterator secondIt;
+
+    jobject javaVector2 = env->NewObject(g_cls_Vector, g_mid_Vector_ctor);
+
+    for (firstIt = nativeVector.begin(); firstIt != nativeVector.end(); firstIt++)
+    {
+        jobject javaVector1 = env->NewObject(g_cls_Vector, g_mid_Vector_ctor);
+        for (secondIt = firstIt->begin(); secondIt != firstIt->end(); secondIt++)
+        {
+            jint jInt = (jint)(*secondIt);
+            jobject value = env->NewObject(g_cls_Integer, g_mid_Integer_ctor, jInt);
+            env->CallBooleanMethod(javaVector1, g_mid_Vector_add, value);
+        }
+        env->CallBooleanMethod(javaVector2, g_mid_Vector_add, javaVector1);
+    }
+    return javaVector2;
+}
+
+jobject convertNativeVectorOfVectorOfVectorOfIntToJavaVector(JNIEnv *env,
+        std::vector<std::vector<std::vector<int>>> &nativeVector)
+{
+
+    LOGI("convertNativeVectorOfVectorOfVectorOfIntToJavaVector");
+    jobject javaVector1 = env->NewObject(g_cls_Vector, g_mid_Vector_ctor);
+
+    std::vector<std::vector<std::vector<int>>>::iterator firstIt;
+    std::vector<std::vector<int>>::iterator secondIt;
+    std::vector<int>::iterator thirdIt;
+
+    jobject javaVector3 = env->NewObject(g_cls_Vector, g_mid_Vector_ctor);
+
+    for (firstIt = nativeVector.begin(); firstIt != nativeVector.end(); firstIt++)
+    {
+        jobject javaVector1 = env->NewObject(g_cls_Vector, g_mid_Vector_ctor);
+        for (secondIt = firstIt->begin(); secondIt != firstIt->end(); secondIt++)
+        {
+            jobject javaVector2 = env->NewObject(g_cls_Vector, g_mid_Vector_ctor);
+            for (thirdIt = secondIt->begin(); thirdIt != secondIt->end(); thirdIt++)
+            {
+                jint jInt = (jint)(*thirdIt);
+                jobject value = env->NewObject(g_cls_Integer, g_mid_Integer_ctor, jInt);
+                env->CallBooleanMethod(javaVector2, g_mid_Vector_add, value);
+            }
+            env->CallBooleanMethod(javaVector1, g_mid_Vector_add, javaVector2);
+        }
+        env->CallBooleanMethod(javaVector3, g_mid_Vector_add, javaVector1);
+    }
+    return javaVector3;
+}
+
+
+//double
+std::vector<double> covertJavaDoubleVectorToNativeVector(JNIEnv *env, jobject javaVector)
+{
+    std::vector<double> vectorDouble;
+    LOGI("covertJavaDoubleVectorToNativeVector");
+
+    jint jSize = env->CallIntMethod(javaVector, g_mid_Vector_size);
+    int sizeOfVector = jSize;
+    double nativeValue;
+    jint jIndex;
+
+    for (int index = 0; index < sizeOfVector; index++)
+    {
+        jIndex = index;
+        jobject doubleValue = env->CallObjectMethod(javaVector, g_mid_Vector_get, jIndex);
+        nativeValue = env->CallDoubleMethod( doubleValue, g_mid_Double_getDouble);
+
+        vectorDouble.push_back(nativeValue);
+    }
+    return vectorDouble;
+}
+
+std::vector<std::vector<double>> convertJavaVectorOfVectorOfDoubleToNativeVector(JNIEnv *env,
+                              jobject javaVector)
+{
+
+    std::vector<std::vector<double>> vectorDouble;
+    LOGI("convertJavaVectorOfVectorOfDoubleToNativeVector");
+
+    jint jSizeOne = env->CallIntMethod(javaVector, g_mid_Vector_size);
+    int sizeOfVectorOne = jSizeOne;
+    double nativeValue;
+    jint jIndex1;
+    jint jIndex2;
+
+    for (int index1 = 0; index1 < sizeOfVectorOne; index1++)
+    {
+        jIndex1 = index1;
+
+        jobject vectorTwoObj = env->CallObjectMethod(javaVector, g_mid_Vector_get, jIndex1);
+
+        jint jSizeTwo = env->CallIntMethod(vectorTwoObj, g_mid_Vector_size);
+        int sizeOfVectorTwo = jSizeTwo;
+        std::vector<double> vectorTwo;
+        for (int index2 = 0; index2 < sizeOfVectorTwo; index2++)
+        {
+            jIndex2 = index2;
+            jobject doubleValue = env->CallObjectMethod(vectorTwoObj, g_mid_Vector_get, jIndex2);
+            nativeValue = env->CallDoubleMethod( doubleValue, g_mid_Double_getDouble);
+            vectorTwo.push_back(nativeValue);
+        }
+        vectorDouble.push_back(vectorTwo);
+    }
+    return vectorDouble;
+}
+
+std::vector<std::vector<std::vector<double>>>
+convertJavaVectorOfVectorOfVectorOfDoubleToNativeVector(JNIEnv *env, jobject javaVector)
+{
+
+    std::vector<std::vector<std::vector<double>>> vectorDouble;
+    LOGI("convertJavaVectorOfVectorOfVectorOfDoubleToNativeVector");
+
+    jint jSizeOne = env->CallIntMethod(javaVector, g_mid_Vector_size);
+    int sizeOfVectorOne = jSizeOne;
+    double nativeValue;
+    jint jIndex1;
+    jint jIndex2;
+    jint jIndex3;
+
+    for (int index1 = 0; index1 < sizeOfVectorOne; index1++)
+    {
+        jIndex1 = index1;
+
+        jobject vectorTwoObj = env->CallObjectMethod(javaVector, g_mid_Vector_get, jIndex1);
+
+        jint jSizeTwo = env->CallIntMethod(vectorTwoObj, g_mid_Vector_size);
+        int sizeOfVectorTwo = jSizeTwo;
+        std::vector<std::vector<double>> vectorTwo;
+        for (int index2 = 0; index2 < sizeOfVectorTwo; index2++)
+        {
+            jIndex2 = index2;
+
+            jobject vectorThreeObj = env->CallObjectMethod(vectorTwoObj, g_mid_Vector_get, jIndex2);
+
+            jint jSizeThree = env->CallIntMethod(vectorThreeObj, g_mid_Vector_size);
+            int sizeOfVectorThree = jSizeThree;
+            std::vector<double> vectorThree;
+            for (int index3 = 0; index3 < sizeOfVectorTwo; index3++)
+            {
+                jIndex3 = index3;
+
+                jobject doubleValue = env->CallObjectMethod(vectorThreeObj, g_mid_Vector_get, jIndex3);
+                nativeValue = env->CallDoubleMethod( doubleValue, g_mid_Double_getDouble);
+
+                vectorThree.push_back(nativeValue);
+            }
+            vectorTwo.push_back(vectorThree);
+        }
+        vectorDouble.push_back(vectorTwo);
+    }
+    return vectorDouble;
+}
+
+jobject convertNativeDoubleVectorToJavaVector(JNIEnv *env, std::vector<double> &nativeVector)
+{
+    LOGI("convertNativeIntVectorToJavaVector");
+    jobject javaVector = env->NewObject(g_cls_Vector, g_mid_Vector_ctor);
+    if (!javaVector) return nullptr;
+
+    for (std::vector<double>::iterator it = nativeVector.begin(); it != nativeVector.end(); ++it)
+    {
+        jdouble jDouble = (jdouble)(*it);
+        jobject value = env->NewObject(g_cls_Double, g_mid_Double_ctor, jDouble);
+        env->CallBooleanMethod(javaVector, g_mid_Vector_add, value);
+    }
+    return javaVector;
+}
+
+jobject convertNativeVectorOfVectorOfDoubleToJavaVector(JNIEnv *env,
+        std::vector<std::vector<double>> &nativeVector)
+{
+    LOGI("convertNativeVectorOfVectorOfIntToJavaVector");
+
+    jobject javaVector1 = env->NewObject(g_cls_Vector, g_mid_Vector_ctor);
+    if (!javaVector1) return nullptr;
+
+    std::vector<std::vector<double>>::iterator firstIt;
+    std::vector<double>::iterator secondIt;
+
+    jobject javaVector2 = env->NewObject(g_cls_Vector, g_mid_Vector_ctor);
+
+    for (firstIt = nativeVector.begin(); firstIt != nativeVector.end(); firstIt++)
+    {
+        jobject javaVector1 = env->NewObject(g_cls_Vector, g_mid_Vector_ctor);
+        for (secondIt = firstIt->begin(); secondIt != firstIt->end(); secondIt++)
+        {
+            jdouble jDouble = (jdouble)(*secondIt);
+            jobject value = env->NewObject(g_cls_Double, g_mid_Double_ctor, jDouble);
+            env->CallBooleanMethod(javaVector1, g_mid_Vector_add, value);
+        }
+        env->CallBooleanMethod(javaVector2, g_mid_Vector_add, javaVector1);
+    }
+    return javaVector2;
+}
+
+jobject convertNativeVectorOfVectorOfVectorOfDoubleToJavaVector(JNIEnv *env,
+        std::vector<std::vector<std::vector<double>>> &nativeVector)
+{
+    LOGI("convertNativeVectorOfVectorOfVectorOfDoubleToJavaVector");
+    jobject javaVector1 = env->NewObject(g_cls_Vector, g_mid_Vector_ctor);
+
+    std::vector<std::vector<std::vector<double>>>::iterator firstIt;
+    std::vector<std::vector<double>>::iterator secondIt;
+    std::vector<double>::iterator thirdIt;
+
+    jobject javaVector3 = env->NewObject(g_cls_Vector, g_mid_Vector_ctor);
+
+    for (firstIt = nativeVector.begin(); firstIt != nativeVector.end(); firstIt++)
+    {
+        jobject javaVector1 = env->NewObject(g_cls_Vector, g_mid_Vector_ctor);
+        for (secondIt = firstIt->begin(); secondIt != firstIt->end(); secondIt++)
+        {
+            jobject javaVector2 = env->NewObject(g_cls_Vector, g_mid_Vector_ctor);
+            for (thirdIt = secondIt->begin(); thirdIt != secondIt->end(); thirdIt++)
+            {
+                jdouble jDouble = (jdouble)(*thirdIt);
+                jobject value = env->NewObject(g_cls_Double, g_mid_Double_ctor, jDouble);
+                env->CallBooleanMethod(javaVector2, g_mid_Vector_add, value);
+            }
+            env->CallBooleanMethod(javaVector1, g_mid_Vector_add, javaVector2);
+        }
+        env->CallBooleanMethod(javaVector3, g_mid_Vector_add, javaVector1);
+    }
+    return javaVector3;
+}
+
+//booean
+std::vector<bool> covertJavaBooleanVectorToNativeVector(JNIEnv *env, jobject javaVector)
+{
+    std::vector<bool> vectorBoolean;
+    LOGI("covertJavaBooleanVectorToNativeVector");
+
+    jint jSize = env->CallIntMethod(javaVector, g_mid_Vector_size);
+    int sizeOfVector = jSize;
+    bool nativeValue;
+    jint jIndex;
+
+    for (int index = 0; index < sizeOfVector; index++)
+    {
+        jIndex = index;
+        jobject boolValue = env->CallObjectMethod(javaVector, g_mid_Vector_get, jIndex);
+        nativeValue = env->CallBooleanMethod( boolValue, g_mid_Boolean_getBoolean);
+        vectorBoolean.push_back(nativeValue);
+    }
+    return vectorBoolean;
+}
+
+std::vector<std::vector<bool>> convertJavaVectorOfVectorOfBooleanToNativeVector(JNIEnv *env,
+                            jobject javaVector)
+{
+    std::vector<std::vector<bool>> vectorBoolean;
+    LOGI("convertJavaVectorOfVectorOfBooleanToNativeVector");
+
+    jint jSizeOne = env->CallIntMethod(javaVector, g_mid_Vector_size);
+    int sizeOfVectorOne = jSizeOne;
+    bool nativeValue;
+    jint jIndex1;
+    jint jIndex2;
+
+    for (int index1 = 0; index1 < sizeOfVectorOne; index1++)
+    {
+        jIndex1 = index1;
+
+        jobject vectorTwoObj = env->CallObjectMethod(javaVector, g_mid_Vector_get, jIndex1);
+
+        jint jSizeTwo = env->CallIntMethod(vectorTwoObj, g_mid_Vector_size);
+        int sizeOfVectorTwo = jSizeTwo;
+        std::vector<bool> vectorTwo;
+        for (int index2 = 0; index2 < sizeOfVectorTwo; index2++)
+        {
+            jIndex2 = index2;
+            jobject boolValue = env->CallObjectMethod(vectorTwoObj, g_mid_Vector_get, jIndex2);
+            nativeValue = env->CallBooleanMethod( boolValue, g_mid_Boolean_getBoolean);
+            vectorTwo.push_back(nativeValue);
+        }
+        vectorBoolean.push_back(vectorTwo);
+    }
+    return vectorBoolean;
+}
+
+std::vector<std::vector<std::vector<bool>>>
+convertJavaVectorOfVectorOfVectorOfBooleanToNativeVector(JNIEnv *env, jobject javaVector)
+{
+    std::vector<std::vector<std::vector<bool>>> vectorBoolean;
+    LOGI("convertJavaVectorOfVectorOfVectorOfDoubleToNativeVector");
+
+    jint jSizeOne = env->CallIntMethod(javaVector, g_mid_Vector_size);
+    int sizeOfVectorOne = jSizeOne;
+    bool nativeValue;
+    jint jIndex1;
+    jint jIndex2;
+    jint jIndex3;
+
+    for (int index1 = 0; index1 < sizeOfVectorOne; index1++)
+    {
+        jIndex1 = index1;
+
+        jobject vectorTwoObj = env->CallObjectMethod(javaVector, g_mid_Vector_get, jIndex1);
+
+        jint jSizeTwo = env->CallIntMethod(vectorTwoObj, g_mid_Vector_size);
+        int sizeOfVectorTwo = jSizeTwo;
+        std::vector<std::vector<bool>> vectorTwo;
+        for (int index2 = 0; index2 < sizeOfVectorTwo; index2++)
+        {
+            jIndex2 = index2;
+
+            jobject vectorThreeObj = env->CallObjectMethod(vectorTwoObj, g_mid_Vector_get, jIndex2);
+
+            jint jSizeThree = env->CallIntMethod(vectorThreeObj, g_mid_Vector_size);
+            int sizeOfVectorThree = jSizeThree;
+            std::vector<bool> vectorThree;
+            for (int index3 = 0; index3 < sizeOfVectorTwo; index3++)
+            {
+                jIndex3 = index3;
+
+                jobject boolValue = env->CallObjectMethod(vectorThreeObj, g_mid_Vector_get, jIndex3);
+                nativeValue = env->CallBooleanMethod( boolValue, g_mid_Boolean_getBoolean);
+
+                vectorThree.push_back(nativeValue);
+            }
+            vectorTwo.push_back(vectorThree);
+        }
+        vectorBoolean.push_back(vectorTwo);
+    }
+    return vectorBoolean;
+}
+
+jobject convertNativeBooleanVectorToJavaVector(JNIEnv *env, std::vector<bool> &nativeVector)
+{
+    LOGI("convertNativeBooleanVectorToJavaVector");
+
+    jobject javaVector = env->NewObject(g_cls_Vector, g_mid_Vector_ctor);
+    if (!javaVector) return nullptr;
+
+    for (std::vector<bool>::iterator it = nativeVector.begin(); it != nativeVector.end(); ++it)
+    {
+        jboolean jBoolean = (jboolean)(*it);
+        jobject value = env->NewObject(g_cls_Boolean, g_mid_Boolean_ctor, jBoolean);
+        env->CallBooleanMethod(javaVector, g_mid_Vector_add, value);
+    }
+    return javaVector;
+}
+
+jobject convertNativeVectorOfVectorOfBooleanToJavaVector(JNIEnv *env,
+        std::vector<std::vector<bool>> &nativeVector)
+{
+    LOGI("convertNativeVectorOfVectorOfBooleanToJavaVector");
+
+    jobject javaVector1 = env->NewObject(g_cls_Vector, g_mid_Vector_ctor);
+    if (!javaVector1) return nullptr;
+
+    std::vector<std::vector<bool>>::iterator firstIt;
+    std::vector<bool>::iterator secondIt;
+
+    jobject javaVector2 = env->NewObject(g_cls_Vector, g_mid_Vector_ctor);
+
+    for (firstIt = nativeVector.begin(); firstIt != nativeVector.end(); firstIt++)
+    {
+        jobject javaVector1 = env->NewObject(g_cls_Vector, g_mid_Vector_ctor);
+        for (secondIt = firstIt->begin(); secondIt != firstIt->end(); secondIt++)
+        {
+            jboolean jBoolean = (jboolean)(*secondIt);
+            jobject value = env->NewObject(g_cls_Boolean, g_mid_Boolean_ctor, jBoolean);
+            env->CallBooleanMethod(javaVector1, g_mid_Vector_add, value);
+        }
+        env->CallBooleanMethod(javaVector2, g_mid_Vector_add, javaVector1);
+    }
+    return javaVector2;
+}
+
+jobject convertNativeVectorOfVectorOfVectorOfBooleanToJavaVector(JNIEnv *env,
+        std::vector<std::vector<std::vector<bool>>> &nativeVector)
+{
+    LOGI("convertNativeVectorOfVectorOfVectorOfBooleanToJavaVector");
+    jobject javaVector1 = env->NewObject(g_cls_Vector, g_mid_Vector_ctor);
+
+    std::vector<std::vector<std::vector<bool>>>::iterator firstIt;
+    std::vector<std::vector<bool>>::iterator secondIt;
+    std::vector<bool>::iterator thirdIt;
+
+    jobject javaVector3 = env->NewObject(g_cls_Vector, g_mid_Vector_ctor);
+
+    for (firstIt = nativeVector.begin(); firstIt != nativeVector.end(); firstIt++)
+    {
+        jobject javaVector1 = env->NewObject(g_cls_Vector, g_mid_Vector_ctor);
+        for (secondIt = firstIt->begin(); secondIt != firstIt->end(); secondIt++)
+        {
+            jobject javaVector2 = env->NewObject(g_cls_Vector, g_mid_Vector_ctor);
+            for (thirdIt = secondIt->begin(); thirdIt != secondIt->end(); thirdIt++)
+            {
+                jboolean jBoolean = (jboolean)(*thirdIt);
+                jobject value = env->NewObject(g_cls_Boolean, g_mid_Boolean_ctor, jBoolean);
+                env->CallBooleanMethod(javaVector2, g_mid_Vector_add, value);
+            }
+            env->CallBooleanMethod(javaVector1, g_mid_Vector_add, javaVector2);
+        }
+        env->CallBooleanMethod(javaVector3, g_mid_Vector_add, javaVector1);
+    }
+    return javaVector3;
+}
+
+//String
+std::vector<std::string> covertJavaStringVectorToNativeVector(JNIEnv *env, jobject javaVector)
+{
+    std::vector<std::string> vectorString;
+    LOGI("covertJavaBooleanVectorToNativeVector");
+
+    jint jSize = env->CallIntMethod(javaVector, g_mid_Vector_size);
+    int sizeOfVector = jSize;
+    std::string nativeValue;
+    jint jIndex;
+
+    for (int index = 0; index < sizeOfVector; index++)
+    {
+        jIndex = index;
+        jstring StringValue = (jstring)env->CallObjectMethod(javaVector, g_mid_Vector_get, jIndex);
+        nativeValue = env->GetStringUTFChars(StringValue, NULL);
+        vectorString.push_back(nativeValue);
+    }
+    return vectorString;
+}
+
+std::vector<std::vector<std::string>> convertJavaVectorOfVectorOfStringToNativeVector(JNIEnv *env,
+                                   jobject javaVector)
+{
+    std::vector<std::vector<std::string>> vectorString;
+    LOGI("convertJavaVectorOfVectorOfBooleanToNativeVector");
+
+    jint jSizeOne = env->CallIntMethod(javaVector, g_mid_Vector_size);
+    int sizeOfVectorOne = jSizeOne;
+    std::string nativeValue;
+    jint jIndex1;
+    jint jIndex2;
+
+    for (int index1 = 0; index1 < sizeOfVectorOne; index1++)
+    {
+        jIndex1 = index1;
+
+        jobject vectorTwoObj = env->CallObjectMethod(javaVector, g_mid_Vector_get, jIndex1);
+
+        jint jSizeTwo = env->CallIntMethod(vectorTwoObj, g_mid_Vector_size);
+        int sizeOfVectorTwo = jSizeTwo;
+        std::vector<std::string> vectorTwo;
+        for (int index2 = 0; index2 < sizeOfVectorTwo; index2++)
+        {
+            jIndex2 = index2;
+            jstring StringValue = (jstring)env->CallObjectMethod(vectorTwoObj, g_mid_Vector_get, jIndex2);
+            nativeValue = env->GetStringUTFChars(StringValue, NULL);
+            vectorTwo.push_back(nativeValue);
+        }
+        vectorString.push_back(vectorTwo);
+    }
+    return vectorString;
+}
+
+std::vector<std::vector<std::vector<std::string>>>
+convertJavaVectorOfVectorOfVectorOfStringToNativeVector(JNIEnv *env, jobject javaVector)
+{
+    std::vector<std::vector<std::vector<std::string>>> vectorString;
+    LOGI("convertJavaVectorOfVectorOfVectorOfDoubleToNativeVector");
+
+    jint jSizeOne = env->CallIntMethod(javaVector, g_mid_Vector_size);
+    int sizeOfVectorOne = jSizeOne;
+    std::string nativeValue;
+    jint jIndex1;
+    jint jIndex2;
+    jint jIndex3;
+
+    for (int index1 = 0; index1 < sizeOfVectorOne; index1++)
+    {
+        jIndex1 = index1;
+        jobject vectorTwoObj = env->CallObjectMethod(javaVector, g_mid_Vector_get, jIndex1);
+        jint jSizeTwo = env->CallIntMethod(vectorTwoObj, g_mid_Vector_size);
+        int sizeOfVectorTwo = jSizeTwo;
+        std::vector<std::vector<std::string>> vectorTwo;
+        for (int index2 = 0; index2 < sizeOfVectorTwo; index2++)
+        {
+            jIndex2 = index2;
+
+            jobject vectorThreeObj = env->CallObjectMethod(vectorTwoObj, g_mid_Vector_get, jIndex2);
+
+            jint jSizeThree = env->CallIntMethod(vectorThreeObj, g_mid_Vector_size);
+            int sizeOfVectorThree = jSizeThree;
+            std::vector<std::string> vectorThree;
+            for (int index3 = 0; index3 < sizeOfVectorTwo; index3++)
+            {
+                jIndex3 = index3;
+
+                jstring StringValue = (jstring)env->CallObjectMethod(vectorThreeObj, g_mid_Vector_get, jIndex3);
+                nativeValue = env->GetStringUTFChars(StringValue, NULL);
+
+                vectorThree.push_back(nativeValue);
+            }
+            vectorTwo.push_back(vectorThree);
+        }
+        vectorString.push_back(vectorTwo);
+    }
+    return vectorString;
+}
+
+jobject convertNativeStringVectorToJavaVector(JNIEnv *env, std::vector<std::string> &nativeVector)
+{
+    LOGI("convertNativeStringVectorToJavaVector");
+
+    jobject javaVector = env->NewObject(g_cls_Vector, g_mid_Vector_ctor);
+    if (!javaVector) return nullptr;
+
+    for (std::vector<std::string>::iterator it = nativeVector.begin(); it != nativeVector.end(); ++it)
+    {
+        env->CallBooleanMethod(javaVector, g_mid_Vector_add, env -> NewStringUTF((*it).c_str()));
+    }
+    return javaVector;
+}
+
+jobject convertNativeVectorOfVectorOfStringToJavaVector(JNIEnv *env,
+        std::vector<std::vector<std::string>> &nativeVector)
+{
+    LOGI("convertNativeVectorOfVectorOfBooleanToJavaVector");
+
+    jobject javaVector1 = env->NewObject(g_cls_Vector, g_mid_Vector_ctor);
+    if (!javaVector1) return nullptr;
+
+    std::vector<std::vector<std::string>>::iterator firstIt;
+    std::vector<std::string>::iterator secondIt;
+
+    jobject javaVector2 = env->NewObject(g_cls_Vector, g_mid_Vector_ctor);
+
+    for (firstIt = nativeVector.begin(); firstIt != nativeVector.end(); firstIt++)
+    {
+        jobject javaVector1 = env->NewObject(g_cls_Vector, g_mid_Vector_ctor);
+        for (secondIt = firstIt->begin(); secondIt != firstIt->end(); secondIt++)
+        {
+            env->CallBooleanMethod(javaVector1, g_mid_Vector_add, env -> NewStringUTF((*secondIt).c_str()));
+        }
+        env->CallBooleanMethod(javaVector2, g_mid_Vector_add, javaVector1);
+    }
+    return javaVector2;
+}
+
+jobject convertNativeVectorOfVectorOfVectorOfStringToJavaVector(JNIEnv *env,
+        std::vector<std::vector<std::vector<std::string>>> &nativeVector)
+{
+    LOGI("convertNativeVectorOfVectorOfVectorOfStringToJavaVector");
+    jobject javaVector1 = env->NewObject(g_cls_Vector, g_mid_Vector_ctor);
+
+    std::vector<std::vector<std::vector<std::string>>>::iterator firstIt;
+    std::vector<std::vector<std::string>>::iterator secondIt;
+    std::vector<std::string>::iterator thirdIt;
+
+    jobject javaVector3 = env->NewObject(g_cls_Vector, g_mid_Vector_ctor);
+
+    for (firstIt = nativeVector.begin(); firstIt != nativeVector.end(); firstIt++)
+    {
+        jobject javaVector1 = env->NewObject(g_cls_Vector, g_mid_Vector_ctor);
+        for (secondIt = firstIt->begin(); secondIt != firstIt->end(); secondIt++)
+        {
+            jobject javaVector2 = env->NewObject(g_cls_Vector, g_mid_Vector_ctor);
+            for (thirdIt = secondIt->begin(); thirdIt != secondIt->end(); thirdIt++)
+            {
+                env->CallBooleanMethod(javaVector2, g_mid_Vector_add, env -> NewStringUTF((*thirdIt).c_str()));
+            }
+            env->CallBooleanMethod(javaVector1, g_mid_Vector_add, javaVector2);
+        }
+        env->CallBooleanMethod(javaVector3, g_mid_Vector_add, javaVector1);
+    }
+    return javaVector3;
 }
