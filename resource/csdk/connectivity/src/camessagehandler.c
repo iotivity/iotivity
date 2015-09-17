@@ -471,7 +471,7 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
                 // Blockwise transfer
                 if (NULL != info)
                 {
-                    CAResult_t res = CAAddBlockOption(&pdu, *info,
+                    CAResult_t res = CAAddBlockOption(&pdu, info,
                                                       data->remoteEndpoint);
                     if (CA_STATUS_OK != res)
                     {
@@ -506,8 +506,8 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
 #endif
             {
                 // for retransmission
-                res = CARetransmissionSentData(&g_retransmissionContext, data->remoteEndpoint, pdu->hdr,
-                                               pdu->length);
+                res = CARetransmissionSentData(&g_retransmissionContext, data->remoteEndpoint,
+                                               pdu->hdr, pdu->length);
                 if ((CA_STATUS_OK != res) && (CA_NOT_SUPPORTED != res))
                 {
                     //when retransmission not supported this will return CA_NOT_SUPPORTED, ignore
@@ -545,7 +545,7 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
                         )
                 {
                     // Blockwise transfer
-                    CAResult_t res = CAAddBlockOption(&pdu, data->requestInfo->info,
+                    CAResult_t res = CAAddBlockOption(&pdu, &data->requestInfo->info,
                                                       data->remoteEndpoint);
                     if (CA_STATUS_OK != res)
                     {
@@ -583,8 +583,8 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
                     // Blockwise transfer
                     if (NULL != info)
                     {
-                        CAResult_t res = CAAddBlockOption(&pdu, *info,
-                                data->remoteEndpoint);
+                        CAResult_t res = CAAddBlockOption(&pdu, info,
+                                                          data->remoteEndpoint);
                         if (CA_STATUS_OK != res)
                         {
                             OIC_LOG(INFO, TAG, "to write block option has failed");

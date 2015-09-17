@@ -1377,19 +1377,20 @@ CAResult_t CAUpdateMessageId(coap_pdu_t *pdu, const CABlockDataID_t *blockID)
     return CA_STATUS_OK;
 }
 
-CAResult_t CAAddBlockOption(coap_pdu_t **pdu, const CAInfo_t info,
+CAResult_t CAAddBlockOption(coap_pdu_t **pdu, const CAInfo_t *info,
                             const CAEndpoint_t *endpoint)
 {
     OIC_LOG(DEBUG, TAG, "IN-AddBlockOption");
     VERIFY_NON_NULL(pdu, TAG, "pdu");
     VERIFY_NON_NULL((*pdu), TAG, "(*pdu)");
     VERIFY_NON_NULL((*pdu)->hdr, TAG, "(*pdu)->hdr");
+    VERIFY_NON_NULL(info, TAG, "info");
     VERIFY_NON_NULL(endpoint, TAG, "endpoint");
 
     size_t dataLength = 0;
-    if (info.payload)
+    if (info->payload)
     {
-        dataLength = info.payloadSize;
+        dataLength = info->payloadSize;
         OIC_LOG_V(DEBUG, TAG, "dataLength - %d", dataLength);
     }
 
@@ -1441,7 +1442,7 @@ CAResult_t CAAddBlockOption(coap_pdu_t **pdu, const CAInfo_t info,
     {
         OIC_LOG(DEBUG, TAG, "no BLOCK option");
         // if response data is so large. it have to send as block transfer
-        if (!coap_add_data(*pdu, dataLength, (const unsigned char *) info.payload))
+        if (!coap_add_data(*pdu, dataLength, (const unsigned char *) info->payload))
         {
             OIC_LOG(INFO, TAG, "it have to use block");
         }
@@ -1466,13 +1467,14 @@ CAResult_t CAAddBlockOption(coap_pdu_t **pdu, const CAInfo_t info,
     return CA_STATUS_OK;
 }
 
-CAResult_t CAAddBlockOption2(coap_pdu_t **pdu, const CAInfo_t info, size_t dataLength,
+CAResult_t CAAddBlockOption2(coap_pdu_t **pdu, const CAInfo_t *info, size_t dataLength,
                              const CABlockDataID_t *blockID)
 {
     OIC_LOG(DEBUG, TAG, "IN-AddBlockOption2");
     VERIFY_NON_NULL(pdu, TAG, "pdu");
     VERIFY_NON_NULL((*pdu), TAG, "(*pdu)");
     VERIFY_NON_NULL((*pdu)->hdr, TAG, "(*pdu)->hdr");
+    VERIFY_NON_NULL(info, TAG, "info");
     VERIFY_NON_NULL(blockID, TAG, "blockID");
 
     // get set block data from CABlock list-set.
@@ -1538,7 +1540,7 @@ CAResult_t CAAddBlockOption2(coap_pdu_t **pdu, const CAInfo_t info, size_t dataL
             }
         }
 
-        if (!coap_add_block(*pdu, dataLength, (const unsigned char *) info.payload,
+        if (!coap_add_block(*pdu, dataLength, (const unsigned char *) info->payload,
                             block2->num, block2->szx))
         {
             OIC_LOG(ERROR, TAG, "Data length is smaller than the start index");
@@ -1595,13 +1597,14 @@ error:
     return CA_STATUS_FAILED;
 }
 
-CAResult_t CAAddBlockOption1(coap_pdu_t **pdu, const CAInfo_t info, size_t dataLength,
+CAResult_t CAAddBlockOption1(coap_pdu_t **pdu, const CAInfo_t *info, size_t dataLength,
                              const CABlockDataID_t *blockID)
 {
     OIC_LOG(DEBUG, TAG, "IN-AddBlockOption1");
     VERIFY_NON_NULL(pdu, TAG, "pdu");
     VERIFY_NON_NULL((*pdu), TAG, "(*pdu)");
     VERIFY_NON_NULL((*pdu)->hdr, TAG, "(*pdu)->hdr");
+    VERIFY_NON_NULL(info, TAG, "info");
     VERIFY_NON_NULL(blockID, TAG, "blockID");
 
     // get set block data from CABlock list-set.
@@ -1661,7 +1664,7 @@ CAResult_t CAAddBlockOption1(coap_pdu_t **pdu, const CAInfo_t info, size_t dataL
             }
         }
 
-        if (!coap_add_block(*pdu, dataLength, (const unsigned char *) info.payload,
+        if (!coap_add_block(*pdu, dataLength, (const unsigned char *) info->payload,
                             block1->num, block1->szx))
         {
             OIC_LOG(ERROR, TAG, "Data length is smaller than the start index");
