@@ -83,7 +83,8 @@ static void CAProcessReceivedData(CAData_t *data);
 #endif
 static void CADestroyData(void *data, uint32_t size);
 static void CALogPayloadInfo(CAInfo_t *info);
-static bool CADropSecondMessage(CAHistory_t *history, const CAEndpoint_t *endpoint, uint16_t id);
+static bool CADropSecondMessage(CAHistory_t *history, const CAEndpoint_t *endpoint, uint16_t id,
+                                CAToken_t token, uint8_t tokenLength);
 
 #ifdef WITH_BWT
 void CAAddDataToSendThread(CAData_t *data)
@@ -195,7 +196,8 @@ static CAData_t* CAGenerateHandlerData(const CAEndpoint_t *endpoint,
             return NULL;
         }
 
-        if (CADropSecondMessage(&caglobals.ca.requestHistory, endpoint, reqInfo->info.messageId))
+        if (CADropSecondMessage(&caglobals.ca.requestHistory, endpoint, reqInfo->info.messageId,
+                                reqInfo->info.token, reqInfo->info.tokenLength))
         {
             OIC_LOG(ERROR, TAG, "Second Request with same Token, Drop it");
             CAFreeEndpoint(ep);
@@ -422,11 +424,22 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
     if (SEND_TYPE_UNICAST == type)
     {
         OIC_LOG(DEBUG,TAG,"Unicast message");
+#ifdef ROUTING_GATEWAY
+        /*
+         * When forwarding a packet, do not attempt retransmission as its the responsibility of
+         * packet originator node
+         */
+        bool skipRetransmission = false;
+#endif
+
         if (NULL != data->requestInfo)
         {
             OIC_LOG(DEBUG, TAG, "requestInfo is available..");
 
             info = &data->requestInfo->info;
+#ifdef ROUTING_GATEWAY
+            skipRetransmission = data->requestInfo->info.skipRetransmission;
+#endif
             pdu = CAGeneratePDU(data->requestInfo->method, info, data->remoteEndpoint);
         }
         else if (NULL != data->responseInfo)
@@ -434,6 +447,9 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
             OIC_LOG(DEBUG, TAG, "responseInfo is available..");
 
             info = &data->responseInfo->info;
+#ifdef ROUTING_GATEWAY
+            skipRetransmission = data->responseInfo->info.skipRetransmission;
+#endif
             pdu = CAGeneratePDU(data->responseInfo->result, info, data->remoteEndpoint);
         }
         else
@@ -484,6 +500,9 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
                 OIC_LOG(INFO, TAG, "retransmission will be not worked");
             }
             else
+#endif
+#ifdef ROUTING_GATEWAY
+            if(!skipRetransmission)
 #endif
             {
                 // for retransmission
@@ -620,10 +639,11 @@ static void CASendThreadProcess(void *threadData)
 #endif
 
 /*
- * If a second message arrives with the same token and the other address
+ * If a second message arrives with the same message ID, token and the other address
  * family, drop it.  Typically, IPv6 beats IPv4, so the IPv4 message is dropped.
  */
-static bool CADropSecondMessage(CAHistory_t *history, const CAEndpoint_t *ep, uint16_t id)
+static bool CADropSecondMessage(CAHistory_t *history, const CAEndpoint_t *ep, uint16_t id,
+                                CAToken_t token, uint8_t tokenLength)
 {
     if (!ep)
     {
@@ -638,13 +658,23 @@ static bool CADropSecondMessage(CAHistory_t *history, const CAEndpoint_t *ep, ui
         return false;
     }
 
+    if (tokenLength > CA_MAX_TOKEN_LEN)
+    {
+        /*
+         * If token length is more than CA_MAX_TOKEN_LEN,
+         * we compare the first CA_MAX_TOKEN_LEN bytes only.
+         */
+        tokenLength = CA_MAX_TOKEN_LEN;
+    }
+
     bool ret = false;
     CATransportFlags_t familyFlags = ep->flags & CA_IPFAMILY_MASK;
 
     for (size_t i = 0; i < sizeof(history->items) / sizeof(history->items[0]); i++)
     {
         CAHistoryItem_t *item = &(history->items[i]);
-        if (id == item->messageId)
+        if (id == item->messageId && tokenLength == item->tokenLength
+            && memcmp(item->token, token, tokenLength) == 0)
         {
             if ((familyFlags ^ item->flags) == CA_IPFAMILY_MASK)
             {
@@ -658,6 +688,12 @@ static bool CADropSecondMessage(CAHistory_t *history, const CAEndpoint_t *ep, ui
 
     history->items[history->nextIndex].flags = familyFlags;
     history->items[history->nextIndex].messageId = id;
+    if (token && tokenLength)
+    {
+        memcpy(history->items[history->nextIndex].token, token, tokenLength);
+        history->items[history->nextIndex].tokenLength = tokenLength;
+    }
+
     if (++history->nextIndex >= HISTORYSIZE)
     {
         history->nextIndex = 0;

@@ -28,6 +28,7 @@ for item in temp:
 ######################################################################
 ca_common_src = [
 		ca_common_src_path + 'uarraylist.c',
+		ca_common_src_path + 'ulinklist.c',
 		ca_common_src_path + 'uqueue.c',
 		ca_common_src_path + 'caremotehandler.c'
 	]

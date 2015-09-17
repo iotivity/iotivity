@@ -58,6 +58,9 @@ if target_os == 'android':
 	oclib_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
 	oclib_env.AppendUnique(LIBS = ['boost_thread', 'gnustl_shared', 'log'])
 
+if target_os == 'tizen':
+	oclib_env.AppendUnique(CPPDEFINES = ['__TIZEN__'])
+
 ######################################################################
 # Source files and Targets
 ######################################################################

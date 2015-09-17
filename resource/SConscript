@@ -42,6 +42,10 @@ SConscript('c_common/SConscript')
 # Build connectivity
 SConscript('csdk/connectivity/SConscript')
 
+if env.get('ROUTING') in ['GW', 'EP']:
+	# Build Routing
+	SConscript('csdk/routing/SConscript')
+
 # Build libocsrm
 SConscript('csdk/security/SConscript')
 

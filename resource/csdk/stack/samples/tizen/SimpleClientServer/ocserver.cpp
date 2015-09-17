@@ -632,6 +632,7 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
         }
     }
 
+    OCPayloadDestroy(response.payload);
     return ehResult;
 }
 
@@ -1039,8 +1040,9 @@ int main(int argc, char* argv[])
             cout << "\nOCStack process error";
             return 0;
         }
-
-        sleep(2);
+#ifndef ROUTING_GATEWAY
+        sleep(1);
+#endif
     }
 
     /*

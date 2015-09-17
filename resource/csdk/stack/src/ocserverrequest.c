@@ -26,6 +26,11 @@
 #include "oic_string.h"
 #include "ocpayload.h"
 #include "ocpayloadcbor.h"
+#include "logger.h"
+
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+#include "routingutility.h"
+#endif
 
 #include "cacommon.h"
 #include "cainterface.h"
@@ -140,7 +145,8 @@ static void FindAndDeleteServerResponse(OCServerResponse * serverResponse)
 }
 
 /**
- * Ensure no accept header option is included when sending responses
+ * Ensure no accept header option is included when sending responses and add routing info to
+ * outgoing response.
  *
  * @param object CA remote endpoint.
  * @param requestInfo CA request info.
@@ -149,6 +155,17 @@ static void FindAndDeleteServerResponse(OCServerResponse * serverResponse)
  */
 static OCStackResult OCSendResponse(const CAEndpoint_t *object, CAResponseInfo_t *responseInfo)
 {
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+    // Add route info in RM option.
+    OCStackResult rmResult = RMAddInfo(object->routeData, &(responseInfo->info.options),
+                       &(responseInfo->info.numOptions));
+    if(OC_STACK_OK != rmResult)
+    {
+        OC_LOG(ERROR, TAG, "Add option failed");
+        return rmResult;
+    }
+#endif
+
     // Do not include the accept header option
     responseInfo->info.acceptFormat = CA_FORMAT_UNDEFINED;
     CAResult_t result = CASendResponse(object, responseInfo);
@@ -256,6 +273,8 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
     }
 
     OCServerRequest * serverRequest = NULL;
+
+    OC_LOG_V(INFO, TAG, "addserverrequest entry!! [%s:%u]", devAddr->addr, devAddr->port);
 
     serverRequest = (OCServerRequest *) OICCalloc(1, sizeof(OCServerRequest) +
         (reqTotalSize ? reqTotalSize : 1) - 1);
@@ -408,7 +427,7 @@ CAResponseResult_t ConvertEHResultToCAResult (OCEntityHandlerResult result, OCMe
         case OC_EH_OK:
            switch (method)
            {
-               case OC_REST_PUT: 
+               case OC_REST_PUT:
                case OC_REST_POST:
                    // This Response Code is like HTTP 204 "No Content" but only used in
                    // response to POST and PUT requests.
@@ -460,7 +479,6 @@ CAResponseResult_t ConvertEHResultToCAResult (OCEntityHandlerResult result, OCMe
  * @return
  *     OCStackResult
  */
-
 OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
 {
     OCStackResult result = OC_STACK_ERROR;

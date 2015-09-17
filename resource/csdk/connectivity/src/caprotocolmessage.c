@@ -563,19 +563,16 @@ CAResult_t CAParseHeadOption(uint32_t code, const CAInfo_t *info, coap_list_t **
         }
         else
         {
-            if ((info->options + i)->optionData && (info->options + i)->optionLength > 0)
+            OIC_LOG_V(DEBUG, TAG, "Head opt ID: %d", id);
+            OIC_LOG_V(DEBUG, TAG, "Head opt data: %s", (info->options + i)->optionData);
+            OIC_LOG_V(DEBUG, TAG, "Head opt length: %d", (info->options + i)->optionLength);
+            int ret = coap_insert(optlist,
+                                  CACreateNewOptionNode(id, (info->options + i)->optionLength,
+                                                        (info->options + i)->optionData),
+                                  CAOrderOpts);
+            if (ret <= 0)
             {
-                OIC_LOG_V(DEBUG, TAG, "Head opt ID: %d", id);
-                OIC_LOG_V(DEBUG, TAG, "Head opt data: %s", (info->options + i)->optionData);
-                OIC_LOG_V(DEBUG, TAG, "Head opt length: %d", (info->options + i)->optionLength);
-                int ret = coap_insert(optlist,
-                                      CACreateNewOptionNode(id, (info->options + i)->optionLength,
-                                                            (info->options + i)->optionData),
-                                      CAOrderOpts);
-                if (ret <= 0)
-                {
-                    return CA_STATUS_INVALID_PARAM;
-                }
+                return CA_STATUS_INVALID_PARAM;
             }
         }
     }
@@ -929,14 +926,12 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
             {
                 if (idx < count)
                 {
-                    uint32_t length = bufLength;
-
-                    if (length <= CA_MAX_HEADER_OPTION_DATA_LENGTH)
+                    if (bufLength <= sizeof(outInfo->options[0].optionData))
                     {
                         outInfo->options[idx].optionID = opt_iter.type;
-                        outInfo->options[idx].optionLength = length;
+                        outInfo->options[idx].optionLength = bufLength;
                         outInfo->options[idx].protocolID = CA_COAP_ID;
-                        memcpy(outInfo->options[idx].optionData, buf, length);
+                        memcpy(outInfo->options[idx].optionData, buf, bufLength);
                         idx++;
                     }
                 }
@@ -1153,12 +1148,6 @@ uint32_t CAGetOptionData(uint16_t key, const uint8_t *data, uint32_t len,
     if (0 == buflen)
     {
         OIC_LOG(ERROR, TAG, "buflen 0");
-        return 0;
-    }
-
-    if (NULL == data || NULL == option)
-    {
-        OIC_LOG(ERROR, TAG, "data/option NULL");
         return 0;
     }
 

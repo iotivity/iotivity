@@ -38,6 +38,9 @@
 #include "secureresourcemanager.h"
 #include "cacommon.h"
 #include "cainterface.h"
+#ifdef ROUTING_GATEWAY
+#include "routingmanager.h"
+#endif
 
 /// Module Name
 #define TAG "ocresource"
@@ -162,6 +165,12 @@ static OCVirtualResources GetTypeOfVirtualURI(const char *uriInRequest)
     {
         return OC_RESOURCE_TYPES_URI;
     }
+#ifdef ROUTING_GATEWAY
+    else if (0 == strcmp(uriInRequest, OC_RSRVD_GATEWAY_URI))
+    {
+        return OC_GATEWAY_URI;
+    }
+#endif
 #ifdef WITH_PRESENCE
     else if (strcmp(uriInRequest, OC_RSRVD_PRESENCE_URI) == 0)
     {
@@ -491,7 +500,7 @@ static bool includeThisResourceInResponse(OCResource *resource,
         return false;
     }
 
-    if (resource->resourceProperties & OC_EXPLICIT_DISCOVERABLE)
+    if ( resource->resourceProperties & OC_EXPLICIT_DISCOVERABLE)
     {
         /*
          * At least one valid filter should be available to
@@ -505,7 +514,7 @@ static bool includeThisResourceInResponse(OCResource *resource,
             return false;
         }
     }
-    else if (!(resource->resourceProperties & OC_ACTIVE) ||
+    else if ( !(resource->resourceProperties & OC_ACTIVE) ||
          !(resource->resourceProperties & OC_DISCOVERABLE))
     {
         OC_LOG_V(INFO, TAG, "%s not ACTIVE or DISCOVERABLE", resource->uri);
@@ -623,6 +632,15 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
             discoveryResult = OC_STACK_OK;
         }
     }
+#ifdef ROUTING_GATEWAY
+    else if (OC_GATEWAY_URI == virtualUriInRequest)
+    {
+        // Received request for a gateway
+        OC_LOG(INFO, TAG, "Request is for Gateway Virtual Request");
+        discoveryResult = RMHandleGatewayRequest(request, resource);
+
+    }
+#endif
 
     /**
      * Step 2: Send the discovery response
@@ -646,6 +664,10 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         SendPresenceNotification(resource->rsrcType, OC_PRESENCE_TRIGGER_CHANGE);
     }
     else
+    #endif
+#ifdef ROUTING_GATEWAY
+    // Gateway uses the RMHandleGatewayRequest to respond to the request.
+    if (OC_GATEWAY != virtualUriInRequest)
 #endif
     {
         if(discoveryResult == OC_STACK_OK)

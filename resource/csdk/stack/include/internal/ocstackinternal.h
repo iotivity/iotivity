@@ -38,7 +38,6 @@
 #include "ocstack.h"
 #include "ocstackconfig.h"
 #include "occlientcb.h"
-#include <logger.h>
 #include <ocrandom.h>
 
 #include "cacommon.h"

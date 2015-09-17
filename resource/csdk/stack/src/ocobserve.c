@@ -29,6 +29,7 @@
 #include "oic_string.h"
 #include "ocpayload.h"
 #include "ocserverrequest.h"
+#include "logger.h"
 
 #include "utlist.h"
 #include "pdu.h"

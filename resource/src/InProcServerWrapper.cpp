@@ -257,6 +257,10 @@ namespace OC
         {
             initType = OC_CLIENT_SERVER;
         }
+        else if (cfg.mode == ModeType::Gateway)
+        {
+            initType = OC_GATEWAY;
+        }
         else
         {
             throw InitializeException(OC::InitException::NOT_CONFIGURED_AS_SERVER,

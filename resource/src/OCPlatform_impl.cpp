@@ -80,6 +80,7 @@ namespace OC
                 break;
 
             case ModeType::Both:
+            case ModeType::Gateway:
                 m_server = m_WrapperInstance->CreateServerWrapper(m_csdkLock, config);
                 m_client = m_WrapperInstance->CreateClientWrapper(m_csdkLock, config);
                 break;

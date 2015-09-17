@@ -41,6 +41,7 @@
 #include "ocrandom.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
+#include "logger.h"
 #include "ocserverrequest.h"
 #include "secureresourcemanager.h"
 #include "doxmresource.h"
@@ -48,6 +49,13 @@
 #include "cainterface.h"
 #include "ocpayload.h"
 #include "ocpayloadcbor.h"
+
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+#include "routingutility.h"
+#ifdef ROUTING_GATEWAY
+#include "routingmanager.h"
+#endif
+#endif
 
 #ifdef WITH_ARDUINO
 #include "Time.h"
@@ -376,7 +384,8 @@ static OCResourceType *findResourceType(OCResourceType * resourceTypeList,
 static OCStackResult ResetPresenceTTL(ClientCB *cbNode, uint32_t maxAgeSeconds);
 
 /**
- * Ensure the accept header option is set appropriatly before sending the requests.
+ * Ensure the accept header option is set appropriatly before sending the requests and routing
+ * header option is updated with destination.
  *
  * @param object CA remote endpoint.
  * @param requestInfo CA request info.
@@ -416,6 +425,9 @@ void CopyEndpointToDevAddr(const CAEndpoint_t *in, OCDevAddr *out)
     OICStrcpy(out->addr, sizeof(out->addr), in->addr);
     out->port = in->port;
     out->interface = in->interface;
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+    memcpy(out->routeData, in->routeData, sizeof(out->routeData));
+#endif
 }
 
 void CopyDevAddrToEndpoint(const OCDevAddr *in, CAEndpoint_t *out)
@@ -426,6 +438,9 @@ void CopyDevAddrToEndpoint(const OCDevAddr *in, CAEndpoint_t *out)
     out->adapter = (CATransportAdapter_t)in->adapter;
     out->flags = OCToCATransportFlags(in->flags);
     OICStrcpy(out->addr, sizeof(out->addr), in->addr);
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+    memcpy(out->routeData, in->routeData, sizeof(out->routeData));
+#endif
     out->port = in->port;
     out->interface = in->interface;
 }
@@ -441,6 +456,19 @@ void FixUpClientResponse(OCClientResponse *cr)
 
 static OCStackResult OCSendRequest(const CAEndpoint_t *object, CARequestInfo_t *requestInfo)
 {
+    VERIFY_NON_NULL(object, FATAL, OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL(requestInfo, FATAL, OC_STACK_INVALID_PARAM);
+
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+    OCStackResult rmResult = RMAddInfo(object->routeData, &(requestInfo->info.options),
+                                     &(requestInfo->info.numOptions));
+    if (OC_STACK_OK != rmResult)
+    {
+        OC_LOG(ERROR, TAG, "Add destination option failed");
+        return rmResult;
+    }
+#endif
+
     // OC stack prefer CBOR encoded payloads.
     requestInfo->info.acceptFormat = CA_FORMAT_APPLICATION_CBOR;
     CAResult_t result = CASendRequest(object, requestInfo);
@@ -610,7 +638,7 @@ CAResponseResult_t OCToCAStackResult(OCStackResult ocCode, OCMethod method)
         case OC_STACK_OK:
            switch (method)
            {
-               case OC_REST_PUT: 
+               case OC_REST_PUT:
                case OC_REST_POST:
                    // This Response Code is like HTTP 204 "No Content" but only used in
                    // response to POST and PUT requests.
@@ -1029,6 +1057,34 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
 
     OC_LOG(INFO, TAG, "Enter HandleCAResponses");
 
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+#ifdef ROUTING_GATEWAY
+    bool needRIHandling = false;
+    /*
+     * Routing manager is going to update either of endpoint or response or both.
+     * This typecasting is done to avoid unnecessary duplication of Endpoint and responseInfo
+     * RM can update "routeData" option in endPoint so that future RI requests can be sent to proper
+     * destination.
+     */
+    OCStackResult ret = RMHandleResponse((CAResponseInfo_t *)responseInfo, (CAEndpoint_t *)endPoint,
+                                         &needRIHandling);
+    if(ret != OC_STACK_OK || !needRIHandling)
+    {
+        OC_LOG_V(INFO, TAG, "Routing status![%d]. Not forwarding to RI", ret);
+        return;
+    }
+#endif
+
+    /*
+     * Put source in sender endpoint so that the next packet from application can be routed to
+     * proper destination and remove "RM" coap header option before passing request / response to
+     * RI as this option will make no sense to either RI or application.
+     */
+    RMUpdateInfo((CAHeaderOption_t **) &(responseInfo->info.options),
+                 (uint8_t *) &(responseInfo->info.numOptions),
+                 (CAEndpoint_t *) endPoint);
+#endif
+
     if(responseInfo->info.resourceUri &&
         strcmp(responseInfo->info.resourceUri, OC_RSRVD_PRESENCE_URI) == 0)
     {
@@ -1262,7 +1318,8 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
 
     if(!cbNode && !observer)
     {
-        if(myStackMode == OC_CLIENT || myStackMode == OC_CLIENT_SERVER)
+        if(myStackMode == OC_CLIENT || myStackMode == OC_CLIENT_SERVER
+           || myStackMode == OC_GATEWAY)
         {
             OC_LOG(INFO, TAG, "This is a client, but no cbNode was found for token");
             if(responseInfo->result == CA_EMPTY)
@@ -1277,7 +1334,8 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
             }
         }
 
-        if(myStackMode == OC_SERVER || myStackMode == OC_CLIENT_SERVER)
+        if(myStackMode == OC_SERVER || myStackMode == OC_CLIENT_SERVER
+           || myStackMode == OC_GATEWAY)
         {
             OC_LOG(INFO, TAG, "This is a server, but no observer was found for token");
             if (responseInfo->info.type == CA_MSG_ACKNOWLEDGE)
@@ -1343,16 +1401,28 @@ OCStackResult SendDirectStackResponse(const CAEndpoint_t* endPoint, const uint16
     respInfo.info.resourceUri = OICStrdup (resourceUri);
     respInfo.info.acceptFormat = CA_FORMAT_UNDEFINED;
 
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+    // Add the destination to route option from the endpoint->routeData.
+    OCStackResult result = RMAddInfo(endPoint->routeData,
+                                     &(respInfo.info.options),
+                                     &(respInfo.info.numOptions));
+    if(OC_STACK_OK != result)
+    {
+        OC_LOG_V(ERROR, TAG, "Add routing option failed [%d]", result);
+        return result;
+    }
+#endif
+
     CAResult_t caResult = CASendResponse(endPoint, &respInfo);
 
     // resourceUri in the info field is cloned in the CA layer and
     // thus ownership is still here.
     OICFree (respInfo.info.resourceUri);
 
-    if(caResult != CA_STATUS_OK)
+    if(CA_STATUS_OK != caResult)
     {
         OC_LOG(ERROR, TAG, "CASendResponse error");
-        return OC_STACK_ERROR;
+        return CAResultToOCResult(caResult);
     }
     return OC_STACK_OK;
 }
@@ -1372,6 +1442,34 @@ void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
         OC_LOG(ERROR, TAG, "requestInfo is NULL");
         return;
     }
+
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+#ifdef ROUTING_GATEWAY
+    bool needRIHandling = false;
+    /*
+     * Routing manager is going to update either of endpoint or request or both.
+     * This typecasting is done to avoid unnecessary duplication of Endpoint and requestInfo
+     * RM can update "routeData" option in endPoint so that future RI requests can be sent to proper
+     * destination. It can also remove "RM" coap header option before passing request / response to
+     * RI as this option will make no sense to either RI or application.
+     */
+    OCStackResult ret = RMHandleRequest((CARequestInfo_t *)requestInfo, (CAEndpoint_t *)endPoint,
+                                     &needRIHandling);
+    if(OC_STACK_OK != ret || !needRIHandling)
+    {
+        OC_LOG_V(INFO, TAG, "Routing status![%d]. Not forwarding to RI", ret);
+        return;
+    }
+#endif
+
+    /*
+     * Put source in sender endpoint so that the next packet from application can be routed to
+     * proper destination and remove RM header option.
+     */
+    RMUpdateInfo((CAHeaderOption_t **) &(requestInfo->info.options),
+                 (uint8_t *) &(requestInfo->info.numOptions),
+                 (CAEndpoint_t *) endPoint);
+#endif
 
     OCStackResult requestResult = OC_STACK_ERROR;
 
@@ -1694,6 +1792,14 @@ OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
         return OC_STACK_OK;
     }
 
+#ifndef ROUTING_GATEWAY
+    if (OC_GATEWAY == mode)
+    {
+        OC_LOG(ERROR, TAG, "Routing Manager not supported");
+        return OC_STACK_INVALID_PARAM;
+    }
+#endif
+
 #ifdef RA_ADAPTER
     if(!gRASetInfo)
     {
@@ -1706,18 +1812,19 @@ OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
     OC_LOG(INFO, TAG, "Entering OCInit");
 
     // Validate mode
-    if (!((mode == OC_CLIENT) || (mode == OC_SERVER) || (mode == OC_CLIENT_SERVER)))
+    if (!((mode == OC_CLIENT) || (mode == OC_SERVER) || (mode == OC_CLIENT_SERVER)
+        || (mode == OC_GATEWAY)))
     {
         OC_LOG(ERROR, TAG, "Invalid mode");
         return OC_STACK_ERROR;
     }
     myStackMode = mode;
 
-    if (mode == OC_CLIENT || mode == OC_CLIENT_SERVER)
+    if (mode == OC_CLIENT || mode == OC_CLIENT_SERVER || mode == OC_GATEWAY)
     {
         caglobals.client = true;
     }
-    if (mode == OC_SERVER || mode == OC_CLIENT_SERVER)
+    if (mode == OC_SERVER || mode == OC_CLIENT_SERVER || mode == OC_GATEWAY)
     {
         caglobals.server = true;
     }
@@ -1767,6 +1874,7 @@ OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
             OC_LOG(INFO, TAG, "Server mode: CAStartListeningServer");
             break;
         case OC_CLIENT_SERVER:
+        case OC_GATEWAY:
 			SRMRegisterHandler(HandleCARequests, HandleCAResponses, HandleCAErrorResponse);
             result = CAResultToOCResult(CAStartListeningServer());
             if(result == OC_STACK_OK)
@@ -1796,6 +1904,13 @@ OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
         result = SRMInitPolicyEngine();
         // TODO after BeachHead delivery: consolidate into single SRMInit()
     }
+
+#ifdef ROUTING_GATEWAY
+    if (OC_GATEWAY == myStackMode)
+    {
+        result = RMInitialize();
+    }
+#endif
 
 exit:
     if(result != OC_STACK_OK)
@@ -1830,6 +1945,13 @@ OCStackResult OCStop()
     // here send with the code "OC_STACK_PRESENCE_STOPPED" result.
     presenceResource.presenceTTL = 0;
 #endif // WITH_PRESENCE
+
+#ifdef ROUTING_GATEWAY
+    if (OC_GATEWAY == myStackMode)
+    {
+        RMTerminate();
+    }
+#endif
 
     // Free memory dynamically allocated for resources
     deleteAllResources();
@@ -2608,6 +2730,9 @@ OCStackResult OCProcess()
 #endif
     CAHandleRequestResponse();
 
+#ifdef ROUTING_GATEWAY
+    RMProcess();
+#endif
     return OC_STACK_OK;
 }
 
@@ -2701,7 +2826,7 @@ OCStackResult OCSetPlatformInfo(OCPlatformInfo platformInfo)
 {
     OC_LOG(INFO, TAG, "Entering OCSetPlatformInfo");
 
-    if(myStackMode ==  OC_SERVER || myStackMode == OC_CLIENT_SERVER)
+    if(myStackMode ==  OC_SERVER || myStackMode == OC_CLIENT_SERVER || myStackMode == OC_GATEWAY)
     {
         if (validatePlatformInfo(platformInfo))
         {
