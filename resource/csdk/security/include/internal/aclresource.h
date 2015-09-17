@@ -62,6 +62,13 @@ const OicSecAcl_t* GetACLResourceData(const OicUuid_t* subjectId, OicSecAcl_t **
  */
 char* BinToAclJSON(const OicSecAcl_t * acl);
 
+/**
+ * This function deletes ACL data.
+ *
+ * @param acl  instance of OicSecAcl_t structure.
+ */
+void DeleteACLList(OicSecAcl_t* acl);
+
 #ifdef __cplusplus
 }
 #endif
