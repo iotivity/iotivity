@@ -22,6 +22,7 @@
 #include "platform_features.h"
 #include <stdlib.h>
 #include "oic_malloc.h"
+#include "oic_string.h"
 #include "logger.h"
 #include "ocpayload.h"
 #include "ocrandom.h"
@@ -192,6 +193,35 @@ static int64_t OCConvertSecurityPayload(OCSecurityPayload* payload, uint8_t* out
 
 }
 
+static char* OCStringLLJoin(OCStringLL* val)
+{
+    OCStringLL* temp = val;
+    size_t size = strlen(temp->value);
+
+    while (temp->next)
+    {
+        ++size;
+        temp = temp->next;
+        size += strlen(temp->value);
+    }
+
+    char* joinedStr = (char*)OICCalloc(sizeof(char), size + 1);
+
+    if (!joinedStr)
+    {
+        return NULL;
+    }
+
+    OICStrcat(joinedStr, size + 1, val->value);
+    while (val->next)
+    {
+        val = val->next;
+        OICStrcat(joinedStr, size + 1, " ");
+        OICStrcat(joinedStr, size + 1, val->value);
+    }
+    return joinedStr;
+}
+
 static int64_t OCConvertDiscoveryPayload(OCDiscoveryPayload* payload, uint8_t* outPayload,
         size_t* size)
 {
@@ -232,40 +262,40 @@ static int64_t OCConvertDiscoveryPayload(OCDiscoveryPayload* payload, uint8_t* o
             err = err | cbor_encoder_create_map(&map, &propMap, 3);
 
             // Resource Type
+            if (resource->types)
             {
-                CborEncoder rtArray;
-                err = err | cbor_encode_text_string(&propMap, OC_RSRVD_RESOURCE_TYPE,
-                    sizeof(OC_RSRVD_RESOURCE_TYPE) - 1);
-                err = err | cbor_encoder_create_array(&propMap, &rtArray, CborIndefiniteLength);
-
-                OCStringLL* rtPtr = resource->types;
-                while(rtPtr)
+                char* joinedTypes = OCStringLLJoin(resource->types);
+                if (joinedTypes)
                 {
-                    err = err | cbor_encode_text_string(&rtArray, rtPtr->value,
-                            strlen(rtPtr->value));
-                    rtPtr = rtPtr->next;
+                    err = err | cbor_encode_text_string(&propMap, OC_RSRVD_RESOURCE_TYPE,
+                            sizeof(OC_RSRVD_RESOURCE_TYPE) - 1);
+                    err = err | cbor_encode_text_string(&propMap, joinedTypes,
+                            strlen(joinedTypes));
+                    OICFree(joinedTypes);
                 }
-
-                err = err | cbor_encoder_close_container(&propMap, &rtArray);
+                else
+                {
+                    return OC_STACK_NO_MEMORY;
+                }
             }
-
             // Interface Types
+            if (resource->interfaces)
             {
-                CborEncoder ifArray;
-                err = err | cbor_encode_text_string(&propMap, OC_RSRVD_INTERFACE,
-                        sizeof(OC_RSRVD_INTERFACE) - 1);
-                err = err | cbor_encoder_create_array(&propMap, &ifArray, CborIndefiniteLength);
-                OCStringLL* ifPtr = resource->interfaces;
-
-                while(ifPtr)
+                char* joinedInterfaces = OCStringLLJoin(resource->interfaces);
+                if (joinedInterfaces)
                 {
-                    err = err | cbor_encode_text_string(&ifArray, ifPtr->value,
-                        strlen(ifPtr->value));
-                    ifPtr= ifPtr->next;
+                    err = err | cbor_encode_text_string(&propMap, OC_RSRVD_INTERFACE,
+                            sizeof(OC_RSRVD_INTERFACE) - 1);
+                    err = err | cbor_encode_text_string(&propMap, joinedInterfaces,
+                            strlen(joinedInterfaces));
+                    OICFree(joinedInterfaces);
                 }
-
-                err = err | cbor_encoder_close_container(&propMap, &ifArray);
+                else
+                {
+                    return OC_STACK_NO_MEMORY;
+                }
             }
+
             // Policy
             {
                 CborEncoder policyMap;
@@ -573,34 +603,37 @@ static int64_t OCConvertSingleRepPayload(CborEncoder* parent, const OCRepPayload
         CborEncoder propMap;
         err = err | cbor_encoder_create_map(&map, &propMap, 2);
 
-        CborEncoder curArray;
-        if(payload->types)
+        if (payload->types)
         {
-            err = err | cbor_encode_text_string(&propMap,
-                    OC_RSRVD_RESOURCE_TYPE,
-                    sizeof(OC_RSRVD_RESOURCE_TYPE) - 1);
-            err = err | cbor_encoder_create_array(&propMap, &curArray, CborIndefiniteLength);
-            OCStringLL* val = payload->types;
-            while(val)
+            char* joinedTypes = OCStringLLJoin(payload->types);
+            if (joinedTypes)
             {
-                err = err | cbor_encode_text_string(&curArray, val->value, strlen(val->value));
-                val = val->next;
+                err = err | cbor_encode_text_string(&propMap, OC_RSRVD_RESOURCE_TYPE,
+                        sizeof(OC_RSRVD_RESOURCE_TYPE) - 1);
+                err = err | cbor_encode_text_string(&propMap, joinedTypes,
+                        strlen(joinedTypes));
+                OICFree(joinedTypes);
             }
-            err = err | cbor_encoder_close_container(&propMap, &curArray);
+            else
+            {
+                return OC_STACK_NO_MEMORY;
+            }
         }
-        if(payload->interfaces)
+        if (payload->interfaces)
         {
-            err = err | cbor_encode_text_string(&propMap,
-                    OC_RSRVD_INTERFACE,
-                    sizeof(OC_RSRVD_INTERFACE) - 1);
-            err = err | cbor_encoder_create_array(&propMap, &curArray, CborIndefiniteLength);
-            OCStringLL* val = payload->interfaces;
-            while(val)
+            char* joinedInterfaces = OCStringLLJoin(payload->interfaces);
+            if (joinedInterfaces)
             {
-                err = err | cbor_encode_text_string(&curArray, val->value, strlen(val->value));
-                val = val->next;
+                err = err | cbor_encode_text_string(&propMap, OC_RSRVD_INTERFACE,
+                        sizeof(OC_RSRVD_INTERFACE) - 1);
+                err = err | cbor_encode_text_string(&propMap, joinedInterfaces,
+                        strlen(joinedInterfaces));
+                OICFree(joinedInterfaces);
             }
-            err = err | cbor_encoder_close_container(&propMap, &curArray);
+            else
+            {
+                return OC_STACK_NO_MEMORY;
+            }
         }
         err = err | cbor_encoder_close_container(&map, &propMap);
     }
