@@ -105,7 +105,7 @@ OCStackResult InputPinCodeCallback(OTMContext_t* otmCtx)
     res = AddTmpPskWithPIN(&otmCtx->selectedDeviceInfo->doxm->deviceID,
                            SYMMETRIC_PAIR_WISE_KEY,
                            (char*)pinData, OXM_RANDOM_PIN_SIZE,
-                           1, &deviceUUID, &otmCtx->tempCredId);
+                           1, &deviceUUID, &otmCtx->subIdForPinOxm);
     if(res != OC_STACK_OK)
     {
         OC_LOG_V(ERROR, TAG, "Failed to save the temporal PSK : %d", res);

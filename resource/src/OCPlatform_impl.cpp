@@ -359,5 +359,10 @@ namespace OC
         return checked_guard(m_server, &IServerWrapper::sendResponse,
                              pResponse);
     }
+
+    std::weak_ptr<std::recursive_mutex> OCPlatform_impl::csdkLock()
+    {
+        return m_csdkLock;
+    }
 } //namespace OC
 

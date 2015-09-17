@@ -84,6 +84,7 @@ const char * OIC_JSON_SERVICE_TYPE = "svct";
 const char * OIC_JSON_PERIOD_NAME = "prd";
 const char * OIC_JSON_PERIODS_NAME = "prds";
 const char * OIC_JSON_RECURRENCES_NAME = "recurs";
+const char * OIC_JSON_SUPPORTED_CRED_TYPE_NAME = "sct";
 
 OicUuid_t WILDCARD_SUBJECT_ID = {"*"};
 size_t WILDCARD_SUBJECT_ID_LEN = 1;
