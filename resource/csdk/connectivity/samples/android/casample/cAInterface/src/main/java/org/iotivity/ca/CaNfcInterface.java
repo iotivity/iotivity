@@ -67,23 +67,11 @@ public class CaNfcInterface implements NfcAdapter.CreateNdefMessageCallback {
             Log.e(MYTAG, "Failed to get the Adapter");
             return;
         }
-
-        mAdapter.setNdefPushMessageCallback(this, mActivity);
-
-        Log.d(MYTAG, "setNdefPushMessageCallback set");
     }
 
-    private native static void caNfcPacketReceived(byte[] receivedData);
-
-    private NdefRecord createMimeRecord(String mimeType, byte[]payload) {
-
-        Log.d(MYTAG, "NFC createMimeRecord");
-
-        byte[] mimeBytes = mimeType.getBytes(Charset.forName("US-ASCII"));
-        NdefRecord mimeRecord = new NdefRecord(NdefRecord.TNF_MIME_MEDIA,
-                mimeBytes, new byte[0], payload);
-        return mimeRecord;
-    }
+    private native static void caNativeNfcPacketReceived(byte[] receivedData);
+    private native static NdefMessage CaNativeNfcCreateNdefMessage(byte[] sendData);
+    private native static boolean CaNativeNfcInvokeBeam();
 
     @Override
     public NdefMessage createNdefMessage(NfcEvent event) {
@@ -95,13 +83,10 @@ public class CaNfcInterface implements NfcAdapter.CreateNdefMessageCallback {
 
     public void processSendRquest(byte[] sendData) {
 
-        Log.d(MYTAG, "NFC  processSendRquest IN 1");
+        Log.d(MYTAG, "NFC  processSendRquest IN");
 
-        mMessage = new NdefMessage(new NdefRecord[] {
-                createMimeRecord("application/org.iotivity.ca.sample_service", sendData)
-        });
-
-        invokeBeam = mAdapter.invokeBeam(mActivity);
+        mMessage = CaNativeNfcCreateNdefMessage(sendData);
+        invokeBeam = CaNativeNfcInvokeBeam();
 
         if(!invokeBeam )
         {
@@ -159,7 +144,7 @@ public class CaNfcInterface implements NfcAdapter.CreateNdefMessageCallback {
             NdefMessage msg = (NdefMessage) rawMsgs[0];
             Log.d(MYTAG, msg.getRecords()[0].toMimeType().toString());
             Log.d(MYTAG, "processIntent");
-            caNfcPacketReceived(msg.getRecords()[0].getPayload());
+            caNativeNfcPacketReceived(msg.getRecords()[0].getPayload());
         }
     };
 }

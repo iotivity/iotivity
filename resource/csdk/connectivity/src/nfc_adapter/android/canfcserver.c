@@ -67,9 +67,60 @@ void CANFCSetPacketReceiveCallback(CANFCPacketReceivedCallback callback)
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
+CAResult_t SetCreateNdefMessageCallbackfromNative(JNIEnv* env)
+{
+    OIC_LOG(DEBUG, TAG, "SetCreateNdefMessageCallbackfromNative IN");
+    jclass cid_NfcAdapter = (*env)->FindClass(env, "android/nfc/NfcAdapter");
+    if (!cid_NfcAdapter)
+    {
+        OIC_LOG(ERROR, TAG, "Could not get NfcAdapter class");
+        return CA_STATUS_FAILED;
+    }
+
+    jmethodID mid_getAdapter = (*env)->GetStaticMethodID(env, cid_NfcAdapter,
+                                       "getDefaultAdapter",
+                                       "(Landroid/content/Context;)Landroid/nfc/NfcAdapter;");
+    if (!mid_getAdapter)
+    {
+        OIC_LOG(ERROR, TAG, "Could not get methodId mid_getAdapter");
+        return CA_STATUS_FAILED;
+    }
+
+    jobject adapter = (*env)->CallStaticObjectMethod(env, cid_NfcAdapter, mid_getAdapter,
+                                                     g_context);
+    if (!adapter)
+    {
+        OIC_LOG(ERROR, TAG, "Could not get NfcAdapter");
+        return CA_STATUS_FAILED;
+    }
+
+    jmethodID mid_setCallback = (*env)->GetMethodID(
+        env, cid_NfcAdapter, "setNdefPushMessageCallback",
+        "(Landroid/nfc/NfcAdapter$CreateNdefMessageCallback;Landroid/app/Activity;"
+        "[Landroid/app/Activity;)V");
+    if (!mid_setCallback)
+    {
+        OIC_LOG(ERROR, TAG, "Could not get mid_setCallback");
+        return CA_STATUS_FAILED;
+    }
+
+    jclass cid_Activity = (*env)->FindClass(env, "android/app/Activity");
+    if (!cid_Activity)
+    {
+        OIC_LOG(ERROR, TAG, "Could not get Activity class");
+        return CA_STATUS_FAILED;
+    }
+
+    jobjectArray tempArr = (jobjectArray) (*env)->NewObjectArray(env, 0, cid_Activity, NULL);
+    (*env)->CallVoidMethod(env, adapter, mid_setCallback, g_nfcInterface, g_activity, tempArr);
+
+    OIC_LOG(DEBUG, TAG, "SetCreateNdefMessageCallbackfromNative OUT");
+    return CA_STATUS_OK;
+}
+
 CAResult_t CANfcCreateJniInterfaceObject()
 {
-    OIC_LOG(DEBUG, TAG, "CANfcCreateJniInterfaceObject");
+    OIC_LOG(DEBUG, TAG, "CANfcCreateJniInterfaceObject IN");
 
     if (!g_context)
     {
@@ -132,11 +183,19 @@ CAResult_t CANfcCreateJniInterfaceObject()
 
     OIC_LOG(DEBUG, TAG, "Create instance for CaNfcInterface");
 
+    CAResult_t result = SetCreateNdefMessageCallbackfromNative(env);
+    if (CA_STATUS_OK != result)
+    {
+        OIC_LOG(ERROR, TAG, "SetCreateNdefMessageCallbackfromNative failed");
+        goto error_exit;
+    }
+
     if (isAttached)
     {
         (*g_jvm)->DetachCurrentThread(g_jvm);
     }
 
+    OIC_LOG(DEBUG, TAG, "CANfcCreateJniInterfaceObject OUT");
     return CA_STATUS_OK;
 
 error_exit:
@@ -215,7 +274,6 @@ CAResult_t CANFCStartServer()
     }
 
     g_sendMethod = sendDataMethodId;
-    OIC_LOG(DEBUG, TAG, "processSendRquest");
 
     if (isAttached)
     {
@@ -238,7 +296,177 @@ void CANFCStopServer()
     // JNI Call to unregstier nfc adapter
 }
 
-void CANativeNfcPacketReceived(JNIEnv *env, jobject obj, jbyteArray data)
+/*
+ * Class:     org_iotivity_ca_CaNfcInterface
+ * Method:    CaNativeNfcCreateNdefMessage
+ * Signature: ([B)Landroid/nfc/NdefMessage;
+ */
+JNIEXPORT jobject JNICALL
+Java_org_iotivity_ca_CaNfcInterface_CaNativeNfcCreateNdefMessage(JNIEnv *env, jobject obj,
+                                                                 jbyteArray sendData)
+{
+    OIC_LOG(DEBUG, TAG, "CaNativeNfcCreateNdefMessage : IN");
+    VERIFY_NON_NULL_RET(env, TAG, "env is null", NULL);
+    VERIFY_NON_NULL_RET(obj, TAG, "obj is null", NULL);
+
+    char *mime = "application/org.iotivity.ca.sample_service";
+    jstring mimeString = (*env)->NewStringUTF(env, mime);
+    if(!mimeString)
+    {
+        OIC_LOG(ERROR, TAG, "NewStringUTF failed for mimeString");
+        return NULL;
+    }
+
+    char *type = "US_ASCII";
+    jstring charSetString = (*env)->NewStringUTF(env, type);
+    if(!charSetString)
+    {
+        OIC_LOG(ERROR, TAG, "NewStringUTF failed for charSetString");
+        return NULL;
+    }
+
+    jclass cid_string = (*env)->FindClass(env, "java/lang/String");
+    if (!cid_string)
+    {
+        OIC_LOG(ERROR, TAG, "Could not get NfcAdapter class for cid_string");
+        return NULL;
+    }
+
+    jmethodID mid_getBytes = (*env)->GetMethodID(env, cid_string, "getBytes",
+                                                                 "(Ljava/lang/String;)[B");
+    if (!mid_getBytes)
+    {
+        OIC_LOG(ERROR, TAG, "Could not get methodId for mid_getBytes");
+        return NULL;
+    }
+
+    jbyteArray mimeTypeArr = (*env)->CallObjectMethod(env, mimeString, mid_getBytes,
+                                                      charSetString);
+    if (!mimeTypeArr)
+    {
+        OIC_LOG(ERROR, TAG, "getBytes failed for mimeTypeArr");
+    }
+
+    jclass cid_NdefRecord = (*env)->FindClass(env, "android/nfc/NdefRecord");
+    if (!cid_NdefRecord)
+    {
+        OIC_LOG(ERROR, TAG, "Could not get NdefRecord class for cid_NdefRecord");
+        return NULL;
+    }
+
+    jmethodID mid_createRecord = (*env)->GetMethodID(env, cid_NdefRecord, "<init>",
+                                                                 "(S[B[B[B)V");
+    if (!mid_createRecord)
+    {
+        OIC_LOG(ERROR, TAG, "Could not get methodId for mid_createRecord");
+        return NULL;
+    }
+
+    jfieldID fid_tnfType = (*env)->GetStaticFieldID(env, cid_NdefRecord, "TNF_MIME_MEDIA", "S");
+
+    jint tnfType = (*env)->GetStaticShortField(env, cid_NdefRecord, fid_tnfType);
+    OIC_LOG_V(ERROR, TAG, "tnfType : %d", tnfType);
+
+    jbyteArray nullArr = (*env)->NewByteArray(env, 0);
+
+    jobject ndefRecord = (*env)->NewObject(env, cid_NdefRecord, mid_createRecord, tnfType,
+                                           mimeTypeArr, nullArr, sendData);
+    if (!ndefRecord)
+    {
+        OIC_LOG(ERROR, TAG, "createNdefRecord failed for ndefRecord");
+        return NULL;
+    }
+
+    jclass cid_NdefMsg = (*env)->FindClass(env, "android/nfc/NdefMessage");
+    if (!cid_NdefMsg)
+    {
+        OIC_LOG(ERROR, TAG, "Could not get NdefMessage class for cid_NdefMsg");
+        return NULL;
+    }
+
+    jmethodID mid_createMsg = (*env)->GetMethodID(env, cid_NdefMsg, "<init>",
+                                                                 "([Landroid/nfc/NdefRecord;)V");
+    if (!mid_createMsg)
+    {
+        OIC_LOG(ERROR, TAG, "Could not get methodId for mid_createMsg");
+        return NULL;
+    }
+    jobjectArray tempArr = (jobjectArray) (*env)->NewObjectArray(env, 1, cid_NdefRecord,
+                                                                 ndefRecord);
+
+    jobject ndefMsg = (*env)->NewObject(env, cid_NdefMsg, mid_createMsg, tempArr);
+    if (!ndefMsg)
+    {
+        OIC_LOG(ERROR, TAG, "createNdefMessage failed for ndefMsg");
+        return NULL;
+    }
+
+    OIC_LOG(DEBUG, TAG, "CaNativeNfcCreateNdefMessage : OUT");
+    return ndefMsg;
+}
+
+/*
+ * Class:     org_iotivity_ca_CaNfcInterface
+ * Method:    CaNativeNfcInvokeBeam
+ * Signature: ()Z
+ */
+JNIEXPORT jboolean JNICALL
+Java_org_iotivity_ca_CaNfcInterface_CaNativeNfcInvokeBeam(JNIEnv *env, jobject obj)
+{
+    OIC_LOG(DEBUG, TAG, "CANativeNfcInvokeBeam : IN");
+    VERIFY_NON_NULL_RET(env, TAG, "env is null", false);
+    VERIFY_NON_NULL_RET(obj, TAG, "obj is null", false);
+
+    jclass cid_NfcAdapter = (*env)->FindClass(env, "android/nfc/NfcAdapter");
+    if (!cid_NfcAdapter)
+    {
+        OIC_LOG(ERROR, TAG, "Could not get NfcAdapter cid_NfcAdapter ");
+        return JNI_FALSE;
+    }
+
+    jmethodID mid_getAdapter = (*env)->GetStaticMethodID(env, cid_NfcAdapter,
+                                       "getDefaultAdapter",
+                                       "(Landroid/content/Context;)Landroid/nfc/NfcAdapter;");
+    if (!mid_getAdapter)
+    {
+        OIC_LOG(ERROR, TAG, "Could not get methodId mid_getAdapter");
+        return JNI_FALSE;
+    }
+
+    jobject adapter = (*env)->CallStaticObjectMethod(env, cid_NfcAdapter, mid_getAdapter,
+                                                     g_context);
+    if (!adapter)
+    {
+        OIC_LOG(ERROR, TAG, "getDefaultAdapter failed adapter");
+        return JNI_FALSE;
+    }
+
+    jmethodID mid_invokeBeam = (*env)->GetMethodID(env, cid_NfcAdapter, "invokeBeam",
+                                                                 "(Landroid/app/Activity;)Z");
+    if (!mid_invokeBeam)
+    {
+        OIC_LOG(ERROR, TAG, "Could not get methodId mid_invokeBeam");
+        return JNI_FALSE;
+    }
+
+
+    jboolean isSuccess = (*env)->CallBooleanMethod(env, adapter, mid_invokeBeam, g_activity);
+    if (!isSuccess)
+    {
+        OIC_LOG(ERROR, TAG, "invokeBeam has failed");
+    }
+    OIC_LOG(DEBUG, TAG, "CANativeNfcInvokeBeam : OUT");
+    return isSuccess;
+}
+
+/*
+ * Class:     org_iotivity_ca_CaNfcInterface
+ * Method:    caNativeNfcPacketReceived
+ * Signature: ([B)V
+ */
+JNIEXPORT void JNICALL
+Java_org_iotivity_ca_CaNfcInterface_caNativeNfcPacketReceived(JNIEnv *env, jobject obj,
+                                                              jbyteArray data)
 {
     OIC_LOG(DEBUG, TAG, "caNfcPacketReceived : IN");
     VERIFY_NON_NULL_VOID(env, TAG, "env is null");
@@ -280,19 +508,8 @@ void CANativeNfcPacketReceived(JNIEnv *env, jobject obj, jbyteArray data)
 
     g_packetReceivedCallback(&ep, recvBuffer, length);
     OIC_LOG(DEBUG, TAG, "caNfcPacketReceived : OUT");
-
 }
 
-/*
- * Class:     org_iotivity_ca_CaNfcInterface
- * Method:    caNfcPacketReceived
- * Signature: ([B)V
- */
-JNIEXPORT void JNICALL
-Java_org_iotivity_ca_CaNfcInterface_caNfcPacketReceived(JNIEnv *env, jobject obj, jbyteArray data)
-{
-    CANativeNfcPacketReceived(env, obj, data);
-}
 CAResult_t CANfcSendDataImpl(const CAEndpoint_t * ep, const char* data, uint32_t dataLen)
 {
     VERIFY_NON_NULL(ep, TAG, "CANfcSendDataImpl : endpoint is null");
