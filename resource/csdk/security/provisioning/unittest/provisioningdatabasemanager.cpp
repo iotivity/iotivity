@@ -32,7 +32,7 @@ const char ID_8[] = "8777777777777777";
 TEST(CallPDMAPIbeforeInit, BeforeInit)
 {
     EXPECT_EQ(OC_STACK_PDM_IS_NOT_INITIALIZED, PDMAddDevice(NULL));
-    EXPECT_EQ(true, PDMIsDuplicateDevice(NULL)); // return type is not OCStackResult
+    EXPECT_EQ(OC_STACK_PDM_IS_NOT_INITIALIZED, PDMIsDuplicateDevice(NULL,NULL));
     EXPECT_EQ(OC_STACK_PDM_IS_NOT_INITIALIZED, PDMLinkDevices(NULL, NULL));
     EXPECT_EQ(OC_STACK_PDM_IS_NOT_INITIALIZED, PDMUnlinkDevices(NULL, NULL));
     EXPECT_EQ(OC_STACK_PDM_IS_NOT_INITIALIZED, PDMDeleteDevice(NULL));
@@ -55,7 +55,7 @@ TEST(PDMAddDeviceTest, NullUUID)
 
 TEST(PDMIsDuplicateDeviceTest, NullUUID)
 {
-    EXPECT_TRUE(PDMIsDuplicateDevice(NULL));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, PDMIsDuplicateDevice(NULL,NULL));
 }
 
 
@@ -69,9 +69,12 @@ TEST(PDMIsDuplicateDeviceTest, ValidUUID)
     PDMAddDevice(&uid2);
     OicUuid_t uid3 = {{0,}};
     memcpy(&uid3.id, ID_3, sizeof(uid3.id));
+    bool isDuplicate = true;
+    EXPECT_EQ(OC_STACK_OK, PDMIsDuplicateDevice(&uid1,&isDuplicate));
+    EXPECT_TRUE(isDuplicate);
 
-    EXPECT_TRUE(PDMIsDuplicateDevice(&uid1));
-    EXPECT_FALSE(PDMIsDuplicateDevice(&uid3));
+    EXPECT_EQ(OC_STACK_OK, PDMIsDuplicateDevice(&uid3, &isDuplicate));
+    EXPECT_FALSE(isDuplicate);
 }
 
 TEST(PDMAddDeviceTest, ValidUUID)
