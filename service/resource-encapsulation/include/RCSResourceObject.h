@@ -63,7 +63,7 @@ namespace OIC
         //! @endcond
 
         /**
-         * @brief  RCSResourceObject represents a resource. It handles any requests from
+         * @brief RCSResourceObject represents a resource. It handles any requests from
          *        clients automatically with attributes.
          *        It also provides an auto notification mechanism that notifies to the observers.
          *        <br/>
@@ -142,7 +142,7 @@ namespace OIC
                          * @param discoverable Whether to be discovered.
                          *
                          */
-                        Builder &setDiscoverable(bool discoverable);
+                        Builder& setDiscoverable(bool discoverable);
 
                         /**
                          * Sets the observable property of the resource.
@@ -150,7 +150,7 @@ namespace OIC
                          * @param observable Whether to be observed.
                          *
                          */
-                        Builder &setObservable(bool observable);
+                        Builder& setObservable(bool observable);
 
                         /**
                          * Sets attribute of the resource.
@@ -158,12 +158,12 @@ namespace OIC
                          * @param attributes Resource attributes to set
                          *
                          */
-                        Builder &setAttributes(const RCSResourceAttributes &attributes);
+                        Builder& setAttributes(const RCSResourceAttributes &attributes);
 
                         /**
                          * @overload
                          */
-                        Builder &setAttributes(RCSResourceAttributes &&attributes);
+                        Builder& setAttributes(RCSResourceAttributes &&attributes);
 
                         /**
                          * Construct a RCSResourceObject.
@@ -197,7 +197,7 @@ namespace OIC
                  * The second Value means the new Value right after when it is used
                  */
                 typedef std::function < void(const RCSResourceAttributes::Value&,
-                                     const RCSResourceAttributes::Value &) > AttributeUpdatedListener;
+                                     const RCSResourceAttributes::Value&) > AttributeUpdatedListener;
 
             public:
                 RCSResourceObject(RCSResourceObject&&) = delete;
@@ -371,6 +371,8 @@ namespace OIC
 
                 /**
                  * Notifies all observers of the updated attributes.
+                 *
+                 * @throws PlatformException If the operation failed.
                  */
                 virtual void notify() const;
 

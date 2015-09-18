@@ -22,7 +22,7 @@
 #define SERVERBUILDER_REQUESTHANDLER_H
 
 #include <RCSResponse.h>
-#include <ResourceAttributesUtils.h>
+#include <RCSResourceAttributes.h>
 
 namespace OC
 {
@@ -75,6 +75,10 @@ namespace OIC
 
         class SetRequestHandler: public RequestHandler
         {
+        private:
+            typedef std::pair< std::string, RCSResourceAttributes::Value > AttrKeyValuePair;
+            typedef std::vector< AttrKeyValuePair > AttrKeyValuePairs;
+
         public:
             typedef std::shared_ptr< SetRequestHandler > Ptr;
 

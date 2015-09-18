@@ -168,7 +168,7 @@ void onCacheUpdated(const RCSResourceAttributes& attributes)
     }
 }
 
-void onRemoteAttributesReceivedCallback(const RCSResourceAttributes& attributes)
+void onRemoteAttributesReceivedCallback(const RCSResourceAttributes& attributes, int)
 {
     std::cout << "onRemoteAttributesReceivedCallback callback" << std::endl;
 

@@ -145,7 +145,7 @@ namespace OIC
                 IsSupportedTypeHelper< T >::type::value, std::true_type, std::false_type>::type { };
 
             /**
-             * Identifier for types of Value.
+             * Identifiers for types of Value.
              *
              * @see Type
              */
@@ -278,7 +278,7 @@ namespace OIC
                 {
                 }
 
-                Value(const char* value);
+                Value(const char*);
 
                 Value& operator=(const Value&);
                 Value& operator=(Value&&);

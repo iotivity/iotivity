@@ -122,3 +122,5 @@ if target_os == 'linux':
     SConscript('src/resourceBroker/unittest/SConscript')
     SConscript('src/resourceClient/unittests/SConscript')
 
+if target_os == 'android':
+	SConscript('android/SConscript')

@@ -23,6 +23,7 @@
 #include <OCResourceResponse.h>
 #include <ResourceAttributesConverter.h>
 #include <RCSResourceObject.h>
+#include <ResourceAttributesUtils.h>
 
 namespace
 {

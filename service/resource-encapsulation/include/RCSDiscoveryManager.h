@@ -82,7 +82,7 @@ namespace OIC
                                        ResourceDiscoveredCallback;
 
                 /**
-                 * @return Returns RCSDiscoveryManager instance.
+                 * Returns RCSDiscoveryManager instance.
                  *
                  */
                 static RCSDiscoveryManager* getInstance();
@@ -94,6 +94,7 @@ namespace OIC
                  * @param cb A callback to obtain discovered resource
                  *
                  * @throws InvalidParameterException If cb is empty.
+                 * @throws PlatformException If the operation failed.
                  *
                  * @note The callback will be invoked in an internal thread.
                  *
@@ -111,6 +112,7 @@ namespace OIC
                  * @param cb A callback to obtain discovered resource
                  *
                  * @throws InvalidParameterException If cb is empty.
+                 * @throws PlatformException If the operation failed.
                  *
                  * @note The callback will be invoked in an internal thread.
                  *
@@ -128,6 +130,7 @@ namespace OIC
                  * @param cb A callback to obtain discovered resource
                  *
                  * @throws InvalidParameterException If cb is empty.
+                 * @throws PlatformException If the operation failed.
                  *
                  * @note The callback will be invoked in an internal thread.
                  *
@@ -146,6 +149,7 @@ namespace OIC
                  * @param cb A callback to obtain discovered resource
                  *
                  * @throws InvalidParameterException If cb is empty.
+                 * @throws PlatformException If the operation failed.
                  *
                  * @note The callback will be invoked in an internal thread.
                  *

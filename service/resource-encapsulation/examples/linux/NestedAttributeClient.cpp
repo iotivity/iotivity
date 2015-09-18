@@ -117,7 +117,7 @@ void onResourceDiscovered(std::shared_ptr<RCSRemoteResourceObject> foundResource
     cond.notify_all();
 }
 
-void onRemoteAttributesReceivedCallback(const RCSResourceAttributes &attributes)
+void onRemoteAttributesReceivedCallback(const RCSResourceAttributes &attributes, int /*eCode*/)
 {
     std::cout << "onRemoteAttributesReceivedCallback callback\n" << std::endl;
 

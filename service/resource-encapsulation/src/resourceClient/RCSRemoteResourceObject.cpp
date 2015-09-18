@@ -25,7 +25,7 @@
 
 #include "ScopeLogger.h"
 
-#define TAG "RCSRemoteResourceObject"
+#define TAG PCF("RCSRemoteResourceObject")
 
 namespace
 {
@@ -99,20 +99,20 @@ namespace
         return OC_STACK_OK;
     }
 
-    void setCallback(const HeaderOptions&, const ResponseStatement& response, int,
+    void setCallback(const HeaderOptions&, const ResponseStatement& response, int eCode,
             RCSRemoteResourceObject::RemoteAttributesSetCallback onRemoteAttributesSet)
     {
         SCOPE_LOG_F(DEBUG, TAG);
 
-        onRemoteAttributesSet(response.getAttributes());
+        onRemoteAttributesSet(response.getAttributes(), eCode);
     }
 
-    void getCallback(const HeaderOptions&, const ResponseStatement& response, int,
+    void getCallback(const HeaderOptions&, const ResponseStatement& response, int eCode,
             RCSRemoteResourceObject::RemoteAttributesGetCallback onRemoteAttributesReceived)
     {
         SCOPE_LOG_F(DEBUG, TAG);
 
-        onRemoteAttributesReceived(response.getAttributes());
+        onRemoteAttributesReceived(response.getAttributes(), eCode);
     }
 }
 
@@ -287,16 +287,7 @@ namespace OIC
         {
             SCOPE_LOG_F(DEBUG, TAG);
 
-            //check whether key is available or not
-            RCSResourceAttributes cachedAttributes= getCachedAttributes();
-            if(cachedAttributes.contains(key))
-            {
-                return getCachedAttributes().at(key);
-            }
-            else
-            {
-                throw BadRequestException{ "Requested Attribute is not present" };
-            }
+            return getCachedAttributes().at(key);
         }
 
         std::string RCSRemoteResourceObject::getUri() const

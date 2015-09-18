@@ -101,7 +101,7 @@ except KeyError:
 	print ''
 
 
-resource_container_env.PrependUnique(LIBS = ['rcs_client', 'rcs_server', 'rcs_common', 'oc','octbstack', 'oc_logger', 'oc_logger_core', 'connectivity_abstraction'])
+resource_container_env.PrependUnique(LIBS = ['rcs_client', 'rcs_server', 'rcs_common', 'oc','octbstack', 'oc_logger', 'connectivity_abstraction'])
 resource_container_env.AppendUnique(LIBS = ['dl', 'boost_system', 'boost_date_time', 'boost_thread'])
 
 if int(containerJavaSupport):

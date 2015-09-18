@@ -28,6 +28,7 @@
 #include <AssertUtils.h>
 #include <AtomicHelper.h>
 #include <ResourceAttributesConverter.h>
+#include <ResourceAttributesUtils.h>
 
 #include <logger.h>
 #include <OCPlatform.h>
@@ -419,6 +420,7 @@ namespace OIC
         OCEntityHandlerResult RCSResourceObject::entityHandler(
                 std::shared_ptr< OC::OCResourceRequest > request)
         {
+            OC_LOG(WARNING, LOG_TAG, "entityHandler");
             if (!request)
             {
                 return OC_EH_ERROR;
@@ -492,6 +494,7 @@ namespace OIC
             AttrKeyValuePairs replaced = requestHandler->applyAcceptanceMethod(
                     response.getAcceptanceMethod(), *this, attrs);
 
+            OC_LOG_V(WARNING, LOG_TAG, "replaced num %d", replaced.size());
             for (const auto& attrKeyValPair : replaced)
             {
                 std::lock_guard<std::mutex> lock(m_mutexKeyAttributeUpdate);
@@ -503,8 +506,14 @@ namespace OIC
                 }
             }
 
-            autoNotify(!replaced.empty(), m_autoNotifyPolicy);
-            return sendResponse(*this, request, response);
+            try
+            {
+                autoNotify(!replaced.empty(), m_autoNotifyPolicy);
+                return sendResponse(*this, request, response);
+            } catch (const PlatformException& e) {
+                OC_LOG(ERROR, LOG_TAG, e.what());
+                return OC_EH_ERROR;
+            }
         }
 
         OCEntityHandlerResult RCSResourceObject::handleObserve(

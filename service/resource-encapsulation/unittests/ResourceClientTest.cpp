@@ -39,8 +39,8 @@ constexpr int ATTR_VALUE{ 0 };
 
 constexpr int DEFAULT_WAITING_TIME_IN_MILLIS = 3000;
 
-void getRemoteAttributesCallback(const RCSResourceAttributes&) {}
-void setRemoteAttributesCallback(const RCSResourceAttributes&) {}
+void getRemoteAttributesCallback(const RCSResourceAttributes&, int) {}
+void setRemoteAttributesCallback(const RCSResourceAttributes&, int) {}
 void resourceStateChanged(ResourceState) { }
 void cacheUpdatedCallback(const RCSResourceAttributes&) {}
 
@@ -150,12 +150,12 @@ TEST_F(RemoteResourceObjectTest, GetRemoteAttributesDoesNotAllowEmptyFunction)
 TEST_F(RemoteResourceObjectTest, GetRemoteAttributesGetsAttributesOfServer)
 {
     mocks.ExpectCallFunc(getRemoteAttributesCallback).Match(
-            [this](const RCSResourceAttributes& attrs)
+            [this](const RCSResourceAttributes& attrs, int)
             {
                 RCSResourceObject::LockGuard lock{ server };
                 return attrs == server->getAttributes();
             }
-    ).Do([this](const RCSResourceAttributes&){ Proceed(); });
+    ).Do([this](const RCSResourceAttributes&, int){ Proceed(); });
 
     object->getRemoteAttributes(getRemoteAttributesCallback);
 
@@ -174,7 +174,7 @@ TEST_F(RemoteResourceObjectTest, SetRemoteAttributesSetsAttributesOfServer)
     newAttrs[ATTR_KEY] = newValue;
 
     mocks.ExpectCallFunc(setRemoteAttributesCallback).
-            Do([this](const RCSResourceAttributes&){ Proceed(); });
+            Do([this](const RCSResourceAttributes&, int){ Proceed(); });
 
     object->setRemoteAttributes(newAttrs, setRemoteAttributesCallback);
     Wait();
