@@ -243,37 +243,34 @@ static OCStackResult getIdForUUID(const OicUuid_t *UUID , int *id)
 /**
  * Function to check duplication of device's Device ID.
  */
-bool PDMIsDuplicateDevice(const OicUuid_t* UUID)
+OCStackResult PDMIsDuplicateDevice(const OicUuid_t* UUID, bool *result)
 {
-    if(gInit)
+
+    CHECK_PDM_INIT(TAG);
+    if (NULL == UUID || NULL == result)
     {
-        if (NULL == UUID)
-        {
-            OC_LOG(ERROR, TAG, "UUID is NULL");
-            return true;
-        }
-
-        sqlite3_stmt *stmt = 0;
-        int res = 0;
-        res = sqlite3_prepare_v2(g_db, PDM_SQLITE_GET_ID, strlen(PDM_SQLITE_GET_ID) + 1, &stmt, NULL);
-        PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
-
-        res = sqlite3_bind_blob(stmt, PDM_BIND_INDEX_FIRST, UUID, UUID_LENGTH, SQLITE_STATIC);
-        PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
-
-        OC_LOG(DEBUG, TAG, "Binding Done");
-
-        while (SQLITE_ROW == sqlite3_step(stmt))
-        {
-            OC_LOG(ERROR, TAG, "UUID is duplicated");
-            sqlite3_finalize(stmt);
-            return true;
-        }
-        sqlite3_finalize(stmt);
-        return false;
+        OC_LOG(ERROR, TAG, "UUID or result is NULL");
+        return OC_STACK_INVALID_PARAM;
     }
-    OC_LOG(ERROR, TAG, "PDB is not initialized");
-    return true; // return true will stop futher process.
+    sqlite3_stmt *stmt = 0;
+    int res = 0;
+    res = sqlite3_prepare_v2(g_db, PDM_SQLITE_GET_ID, strlen(PDM_SQLITE_GET_ID) + 1, &stmt, NULL);
+    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+
+    res = sqlite3_bind_blob(stmt, PDM_BIND_INDEX_FIRST, UUID, UUID_LENGTH, SQLITE_STATIC);
+    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+
+    OC_LOG(DEBUG, TAG, "Binding Done");
+    bool retValue = false;
+    while(SQLITE_ROW == sqlite3_step(stmt))
+    {
+        OC_LOG(INFO, TAG, "Duplicated UUID");
+        retValue = true;
+    }
+
+    sqlite3_finalize(stmt);
+    *result = retValue;
+    return OC_STACK_OK;
 }
 
 /**
