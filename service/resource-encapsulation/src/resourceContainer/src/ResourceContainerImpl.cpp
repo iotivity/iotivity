@@ -350,8 +350,6 @@ namespace OIC
         RCSGetResponse ResourceContainerImpl::getRequestHandler(const RCSRequest &request,
                 const RCSResourceAttributes &)
         {
-            OCEntityHandlerResult result = OC_EH_ERROR;
-
             RCSResourceAttributes attr;
             std::string strResourceUri = request.getResourceUri();
 
@@ -367,18 +365,15 @@ namespace OIC
                     boost::thread getThread(getFunction);
                     getThread.timed_join(boost::posix_time::seconds(BUNDLE_SET_GET_WAIT_SEC));
 
-                    result = OC_EH_OK;
                 }
             }
 
-            return RCSGetResponse::create(attr, result, 200);
+            return RCSGetResponse::create(std::move(attr), 200);
         }
 
         RCSSetResponse ResourceContainerImpl::setRequestHandler(const RCSRequest &request,
                 const RCSResourceAttributes &attributes)
         {
-            OCEntityHandlerResult result = OC_EH_ERROR;
-
             RCSResourceAttributes attr;
             std::list<std::string> lstAttributes;
             std::string strResourceUri = request.getResourceUri();
@@ -406,12 +401,10 @@ namespace OIC
                     };
                     boost::thread setThread(setFunction);
                     setThread.timed_join(boost::posix_time::seconds(BUNDLE_SET_GET_WAIT_SEC));
-
-                    result = OC_EH_OK;
                 }
             }
 
-            return RCSSetResponse::create(attr, result, 200);
+            return RCSSetResponse::create(std::move(attr), 200);
         }
 
         void ResourceContainerImpl::onNotificationReceived(const std::string &strResourceUri)

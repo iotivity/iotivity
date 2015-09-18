@@ -73,6 +73,8 @@ protected:
         CreateResource();
 
         WaitUntilDiscovered();
+
+        ASSERT_NE(object, nullptr);
     }
 
     void TearDown()
@@ -100,7 +102,7 @@ private:
 
     void WaitUntilDiscovered()
     {
-        while (checkObject())
+        for (int i=0; i<10 && checkObject(); ++i)
         {
             const std::string uri  = "/oic/res";
             const std::string type = "Resource.Hosting";

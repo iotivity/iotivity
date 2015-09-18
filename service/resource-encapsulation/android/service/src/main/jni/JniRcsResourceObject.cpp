@@ -202,18 +202,17 @@ namespace
 
         if (responseAttrsObj)
         {
-            return RESPONSE::create(toNativeAttributes(env.get(), responseAttrsObj), OC_EH_OK,
-                    errorCode);
+            return RESPONSE::create(toNativeAttributes(env.get(), responseAttrsObj), errorCode);
         }
 
-        return RESPONSE::create(OC_EH_OK, errorCode);
+        return RESPONSE::create(errorCode);
     }
 
     RCSGetResponse onGetRequest(const RCSRequest& request, const RCSResourceAttributes& attrs,
             const JavaGlobalRef& listener)
     {
         ScopedEnvWrapper env;
-        EXPECT_RET(env, "env is null!", RCSGetResponse::create(OC_EH_ERROR, -1));
+        EXPECT_RET(env, "env is null!", RCSGetResponse::create(-1));
 
         try
         {
@@ -227,14 +226,14 @@ namespace
             env->ExceptionDescribe();
             env->ExceptionClear();
         }
-        return RCSGetResponse::create(OC_EH_ERROR, -1);
+        return RCSGetResponse::create({ }, -1);
     }
 
     RCSSetResponse onSetRequest(const RCSRequest& request, const RCSResourceAttributes& attrs,
              const JavaGlobalRef& listener)
     {
         ScopedEnvWrapper env;
-        EXPECT_RET(env, "env is null!", RCSSetResponse::create(OC_EH_ERROR, -1));
+        EXPECT_RET(env, "env is null!", RCSSetResponse::create(-1));
 
         try
         {
@@ -251,7 +250,7 @@ namespace
             env->ExceptionDescribe();
             env->ExceptionClear();
         }
-        return RCSSetResponse::create(OC_EH_ERROR, -1);
+        return RCSSetResponse::create(-1);
     }
 
 

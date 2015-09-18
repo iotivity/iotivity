@@ -29,8 +29,6 @@
 #include <cstdint>
 #include <memory>
 
-#include <octypes.h>
-
 namespace OIC
 {
     namespace Service
@@ -61,11 +59,10 @@ namespace OIC
              * Creates a RCSGetResponse with a result and error code passed.
              * The attributes of the RCSResourceObject will be set as the result attributes.
              *
-             * @param result The response result.
              * @param errorCode The error code to set in response.
              *
              */
-            static RCSGetResponse create(const OCEntityHandlerResult& result, int errorCode);
+            static RCSGetResponse create(int errorCode);
 
             /**
              * Creates a RCSGetResponse with custom attributes.
@@ -90,20 +87,17 @@ namespace OIC
              * instead of the one the RCSResourceObject holds.
              *
              * @param attrs The attributes to set.
-             * @param result The response result.
              * @param errorCode The error code for response.
              *
              * @see RCSResourceAttributes
              *
              */
-            static RCSGetResponse create(const RCSResourceAttributes& attrs,
-                    const OCEntityHandlerResult& result, int errorCode);
+            static RCSGetResponse create(const RCSResourceAttributes& attrs, int errorCode);
 
             /**
              * @override
              */
-            static RCSGetResponse create(RCSResourceAttributes&& attrs,
-                    const OCEntityHandlerResult& result, int errorCode);
+            static RCSGetResponse create(RCSResourceAttributes&& attrs, int errorCode);
 
             //! @cond
             RequestHandler* getHandler() const;
@@ -174,11 +168,10 @@ namespace OIC
              * with a result and error code passed.
              * The attributes of the RCSResourceObject will be set as the result attributes.
              *
-             * @param result The response result.
              * @param errorCode The error code to set in response.
              *
              */
-            static RCSSetResponse accept(const OCEntityHandlerResult& result, int errorCode);
+            static RCSSetResponse accept(int errorCode);
 
             /**
              * Creates a default RCSSetResponse that has AcceptanceMethod::IGNORE.
@@ -193,22 +186,20 @@ namespace OIC
              * with a result and error code passed.
              * The attributes of the RCSResourceObject will be set as the result attributes.
              *
-             * @param result The response result.
              * @param errorCode The error code to set in response.
              *
              */
-            static RCSSetResponse ignore(const OCEntityHandlerResult& result, int errorCode);
+            static RCSSetResponse ignore(int errorCode);
 
             /**
              * Creates a RCSSetResponse that has AcceptanceMethod::DEFAULT
              * with a result and error code passed.
              * The attributes of the RCSResourceObject will be set as the result attributes.
              *
-             * @param result The response result.
              * @param errorCode The error code to set in response.
              *
              */
-            static RCSSetResponse create(const OCEntityHandlerResult& result, int errorCode);
+            static RCSSetResponse create(int errorCode);
 
             /**
              * Creates a RCSSetResponse that has AcceptanceMethod::DEFAULT with custom attributes.
@@ -225,7 +216,7 @@ namespace OIC
             /**
              * @override
              */
-            static RCSSetResponse create(RCSResourceAttributes &&attrs);
+            static RCSSetResponse create(RCSResourceAttributes&& attrs);
 
             /**
              * Creates a RCSSetResponse with a result and error code passed.
@@ -239,15 +230,12 @@ namespace OIC
              * @see RCSResourceAttributes
              *
              */
-            static RCSSetResponse create(const RCSResourceAttributes& attrs,
-                    const OCEntityHandlerResult& result, int errorCode);
-
+            static RCSSetResponse create(const RCSResourceAttributes& attrs, int errorCode);
 
             /**
              * @override
              */
-            static RCSSetResponse create(RCSResourceAttributes &&attrs,
-                    const OCEntityHandlerResult &result, int errorCode);
+            static RCSSetResponse create(RCSResourceAttributes&& attrs, int errorCode);
 
 
             //! @cond/
