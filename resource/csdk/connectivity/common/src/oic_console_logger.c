@@ -38,6 +38,7 @@ oic_log_ctx_t *oic_make_console_logger()
 
 int oic_console_logger_init(oic_log_ctx_t *ctx, void *world)
 {
+    (void)world;
     oic_console_logger_ctx *my_ctx;
 
     my_ctx = (oic_console_logger_ctx *) malloc(sizeof(oic_console_logger_ctx));
@@ -70,6 +71,8 @@ void oic_console_logger_flush(oic_log_ctx_t *ctx)
 
 void oic_console_logger_set_level(oic_log_ctx_t *ctx, const int level)
 {
+    (void)ctx;
+    (void)level;
     /* We don't have any special thing we need to do when a log level changes. */
     return;
 }
@@ -88,6 +91,8 @@ size_t oic_console_logger_write(oic_log_ctx_t *ctx, const int level, const char 
 
 int oic_console_logger_set_module(oic_log_ctx_t *ctx, const char *module_name)
 {
+    (void)ctx;
+    (void)module_name;
     /* We don't do anything special when the module name changes: */
     return 1;
 }

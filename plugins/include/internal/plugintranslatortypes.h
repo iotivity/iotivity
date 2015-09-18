@@ -22,38 +22,107 @@
 /**
  * @file
  *
- * This file contains the definition, types and APIs for resource(s) be
- * implemented.
+ * This file contains the definition, types and APIs for all operations
+ * required to translate plugin's respective devices to an OCResource.
  */
 
 #ifndef PLUGINTRANSLATORTYPES_H_
 #define PLUGINTRANSLATORTYPES_H_
 
-#include "octypes.h"
+#include "plugintypes.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
 
-// This file will hold structs which will help aid in abstraction of zigbee
-// protocol to a PIPlugin.:
+#define PI_ZIGBEE_PREFIX "/zb"
 
+// Forward definitions to support inter-linking between structs in this file
+// and the following callback.
+// Note: If there are issues with either of the following two structs, please
+//       manually check these structs and their uses for valid operation.
+struct PIPluginBase;
+struct PIResourceBase;
+
+/**
+ *
+ * This callback will be called when a new resource is created by radio wrapper.
+ *
+ */
+typedef void (* PINewResourceFound)(struct PIPluginBase * plugin,
+                                    struct PIResourceBase *newResource);
+
+/**
+ *
+ * This function type is used by the radio's mapping implementation against IoTivity.
+ * The mapping implementation must implement this function to handle GET & PUT requests.
+ *
+ */
+typedef OCEntityHandlerResult (* PIProcessRequest) (struct PIPluginBase * plugin,
+                                                    OCEntityHandlerRequest *ehRequest,
+                                                    OCRepPayload **payload);
+
+/**
+ * Parameter list for a plugin.
+ */
+typedef struct PIPluginBase
+{
+    /** The type of plugin this represents. */
+    PIPluginType type;
+
+    /** The file location which represents the interface of the plugin.  */
+    char * comPort;
+
+    /** Linked list of plugins. */
+    struct PIPluginBase * next;
+
+    /** Callback to be used when a new resource has been found. */
+    PINewResourceFound NewResourceFoundCB;
+
+    /** Function Pointer to be invoked upon an incoming IoTivity request. */
+    PIProcessRequest processEHRequest;
+
+    /** All resources which exist within the context of this plugin. */
+    struct PIResourceBase * resourceList;
+
+    // Any other common internal properties between plugins can be placed here.
+} PIPluginBase;
+
+/**
+ * The inherite plugin type to be associated with the ZigBee radio and its
+ * implementation.
+ */
+// Note: Although ZigBee has no new members for it's Plugin Type, other radio
+// implementations should follow this paradigm where each radio type has
+// inherited from the PIPluginBase type.
 typedef struct
 {
-    PIPluginBase * header;
-    struct PIResource_Zigbee * resource; // All resources which exist within this context.
-    //Todo: Whatever other zigbee plugin specific stuff...
-    //Todo:  zigbee_homeautomationprofile profile;
+    PIPluginBase header;
 } PIPlugin_Zigbee;
+
+/**
+ * Parameter list for a new OCResource. This will be handed up in the
+ * PINewResource callback.
+ */
+typedef struct
+{
+    OCResourceHandle resourceHandle;
+    char *resourceTypeName;
+    char *resourceInterfaceName;
+    char *uri;
+    OCEntityHandler entityHandler;
+    void* callbackParam;
+    uint8_t resourceProperties;
+} PIResource;
 
 /**
  *  Header for all PIResources.
  */
-typedef struct
+typedef struct PIResourceBase
 {
+    PIResource piResource;
     struct PIResourceBase * next; // Linked list of resources.
     PIPluginBase * plugin; // Context this resource exists.
-    OCResourceHandle * resourceHandle; // Handle to OIC Resource.
 } PIResourceBase;
 
 typedef struct
@@ -68,9 +137,11 @@ typedef struct
  */
 typedef struct
 {
-    PIResourceBase * header;
-    PIPlugin_Zigbee * plugin; // Context which this Zigbee device exists.
-    PIZigbeeProfile zigbeeProfile; // Representation of a Zigbee Device.
+    PIResourceBase header;
+    char * eui;
+    char * nodeId;
+    char * endpointId;
+    char * clusterId;
 } PIResource_Zigbee;
 
 #ifdef __cplusplus

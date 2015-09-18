@@ -24,21 +24,17 @@
 #include <logger.h>
 
 #define TAG "IoTivityZigbeeServer"
-
-int main(int argc, char* argv[])
+#define defaultComPort "/dev/ttyUSB0"
+int main()
 {
-    OCStackResult result;
     OC_LOG(INFO, TAG, "Initializing IoTivity...");
-
-    // Initialize Stack
-    result = OCInit(NULL, 0, OC_SERVER);
+    OCStackResult result = OCInit(NULL, 0, OC_SERVER);
     if (result != OC_STACK_OK)
     {
         OC_LOG_V(ERROR, TAG, "OCInit Failed %d", result);
         return -1;
     }
 
-    // Set Platform info
     result = SetPlatformInfo();
     if (result != OC_STACK_OK)
     {
@@ -46,14 +42,13 @@ int main(int argc, char* argv[])
         goto IotivityStop;
     }
 
-    // Set Device Info
     result  = SetDeviceInfo();
     if (result != OC_STACK_OK)
     {
         OC_LOG_V(ERROR, TAG, "SetPlatformInfo Failed: %d", result);
         goto IotivityStop;
     }
-    // Start Presence
+
     result  = OCStartPresence(0);
     if (result != OC_STACK_OK)
     {
@@ -62,9 +57,9 @@ int main(int argc, char* argv[])
     }
 
     // PIStartPlugin
-    PIPluginBase* plugin = NULL;
+    PIPlugin* plugin = NULL;
     OC_LOG(INFO, TAG, "IoTivity Initialized properly, Starting Zigbee Plugin...");
-    result = PIStartPlugin(PLUGIN_ZIGBEE, &plugin);
+    result = PIStartPlugin(defaultComPort, PLUGIN_ZIGBEE, &plugin);
     if (result != OC_STACK_OK)
     {
         OC_LOG_V(ERROR, TAG, "Zigbee Plugin Start Failed: %d", result);
@@ -116,6 +111,7 @@ IotivityStop:
     }
 
     OC_LOG(INFO, TAG, "Application Completed Successfully");
+    return 0;
 }
 
 OCStackResult SetPlatformInfo()

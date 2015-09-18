@@ -30,12 +30,11 @@ pi_dir = os.path.join(src_dir, 'plugins')
 # Build flags
 ######################################################################
 samples_env.PrependUnique(CPPPATH = [
-		'../../../resource/oc_logger/include',
-		'../../../resource/csdk/logger/include',
-		'../../../resource/csdk/stack/include',
-		'../../../extlibs/cjson',
+		os.path.join(src_dir, 'resource', 'oc_logger', 'include'),
+		os.path.join(src_dir, 'resource', 'csdk', 'logger', 'include'),
+		os.path.join(src_dir, 'resource', 'csdk', 'stack', 'include'),
                 os.path.join(pi_dir, 'include')
-		])
+                ])
 
 samples_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-Wextra', '-Werror'])
 samples_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])

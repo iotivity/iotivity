@@ -23,6 +23,8 @@ extern "C"
 #endif
 
 #include "config.h"
+#include <stdlib.h>  // rand(), srand()
+#include <time.h>    // time()
 
     /**
      * @defgroup clock Clock Handling
