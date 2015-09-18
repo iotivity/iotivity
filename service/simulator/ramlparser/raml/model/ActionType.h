@@ -18,11 +18,18 @@
  *
  ******************************************************************/
 
+/**
+ * @file   ActionType.h
+ *
+ * @brief   This file provides data Model for RAML ActionType.
+ */
+
 #ifndef ACTION_TYPE_H
 #define ACTION_TYPE_H
 
 namespace RAML
 {
+    /** ActionType - This class provides data Model for RAML ActionType. */
     enum class ActionType
     {
         GET, POST, PUT, DELETE, HEAD, PATCH, OPTIONS, TRACE, NONE

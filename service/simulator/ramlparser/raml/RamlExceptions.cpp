@@ -23,13 +23,14 @@ namespace RAML
 {
     const char *RamlException::what() const noexcept
     {
-        if (m_mark.is_null())
-        {
-            return m_message.c_str();
-        }
+        return m_message.c_str();
+    }
+
+    RamlException::RamlException(const YAML::Mark &mark, const std::string &message): m_mark(mark)
+    {
         std::stringstream output;
         output << "Error at line " << m_mark.line + 1 << ", column "
-               << m_mark.column + 1 << ": " << m_message;
-        return output.str().c_str();
+               << m_mark.column + 1 << ": " << message;
+        m_message = output.str();
     }
 }

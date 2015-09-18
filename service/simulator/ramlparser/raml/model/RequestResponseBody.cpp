@@ -67,9 +67,11 @@ namespace RAML
             if (key == Keys::Schema)
             {
                 IncludeResolver::FileType fileType = m_includeResolver->getFileType(it->second);
-                if ((fileType == IncludeResolver::FileType::JSON) || (fileType == IncludeResolver::FileType::FILE))
+                if ((fileType == IncludeResolver::FileType::JSON) ||
+                    (fileType == IncludeResolver::FileType::FILE))
                 {
-                    setSchema(std::make_shared<Schema>(m_includeResolver->readFromFile(it->second), m_includeResolver));
+                    setSchema(std::make_shared<Schema>(m_includeResolver->readFromFile(it->second),
+                                                       m_includeResolver));
                 }
                 else
                 {
@@ -84,7 +86,8 @@ namespace RAML
                 YAML::Node paramNode = it->second;
                 for ( YAML::const_iterator tt = paramNode.begin(); tt != paramNode.end(); ++tt )
                 {
-                    setFormParameter(READ_NODE_AS_STRING(tt->first), std::make_shared<FormParameter>(tt->second));
+                    setFormParameter(READ_NODE_AS_STRING(tt->first),
+                                     std::make_shared<FormParameter>(tt->second));
                 }
             }
         }

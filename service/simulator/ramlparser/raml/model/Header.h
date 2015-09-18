@@ -18,6 +18,12 @@
  *
  ******************************************************************/
 
+/**
+ * @file   Header.h
+ *
+ * @brief   This file provides data Model for RAML Header.
+ */
+
 #ifndef HEADER_PARAMETER_H
 #define HEADER_PARAMETER_H
 
@@ -25,12 +31,28 @@
 
 namespace RAML
 {
+    /**
+     * @class   Header
+     * @brief   This class provides data Model for RAML Header.
+     */
     class Header: public AbstractParam
     {
         public:
+            /**
+                   * Constructor of Header.
+                   *
+                   * @param yamlNode - Reference to YamlNode for reading the Header
+                   *
+                   */
             Header(const YAML::Node &yamlNode) : AbstractParam(yamlNode) {}
+
+            /**
+                  * Constructor of Header.
+                  */
             Header() {}
     };
+
+    /** HeaderPtr - shared Ptr to Header.*/
     typedef std::shared_ptr<Header> HeaderPtr;
 
 }

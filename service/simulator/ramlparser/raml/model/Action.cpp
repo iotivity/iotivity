@@ -128,7 +128,8 @@ namespace RAML
                 for ( YAML::const_iterator tt = responseNode.begin(); tt != responseNode.end(); ++tt )
                 {
                     std::string responseCode = READ_NODE_AS_STRING(tt->first);
-                    setResponse(responseCode, std::make_shared<Response>(tt->second, m_includeResolver));
+                    setResponse(responseCode, std::make_shared<Response>(tt->second,
+                                m_includeResolver));
                 }
             }
             else if (key == Keys::Headers)
@@ -144,7 +145,8 @@ namespace RAML
                 YAML::Node paramNode = it->second;
                 for ( YAML::const_iterator tt = paramNode.begin(); tt != paramNode.end(); ++tt )
                 {
-                    setQueryParameter(READ_NODE_AS_STRING(tt->first), std::make_shared<QueryParameter>(tt->second));
+                    setQueryParameter(READ_NODE_AS_STRING(tt->first),
+                                      std::make_shared<QueryParameter>(tt->second));
                 }
             }
             else if (key == Keys::Protocols)
@@ -160,7 +162,8 @@ namespace RAML
                 YAML::Node paramNode = it->second;
                 for ( YAML::const_iterator tt = paramNode.begin(); tt != paramNode.end(); ++tt )
                 {
-                    setBaseUriParameter(READ_NODE_AS_STRING(tt->first), std::make_shared<UriParameter>(tt->second));
+                    setBaseUriParameter(READ_NODE_AS_STRING(tt->first),
+                                        std::make_shared<UriParameter>(tt->second));
                 }
             }
             else if (key == Keys::Body)
@@ -170,7 +173,8 @@ namespace RAML
                 for ( YAML::const_iterator tt = responseBody.begin(); tt != responseBody.end(); ++tt )
                 {
                     std::string type = READ_NODE_AS_STRING(tt->first);
-                    setRequestBody(type, std::make_shared<RequestResponseBody>(type, tt->second, m_includeResolver));
+                    setRequestBody(type, std::make_shared<RequestResponseBody>(type, tt->second,
+                                   m_includeResolver));
                 }
             }
             else if (key == Keys::IsTrait)

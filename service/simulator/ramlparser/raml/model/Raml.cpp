@@ -62,7 +62,8 @@ namespace RAML
     {
         return m_baseUriParameters;
     }
-    void Raml::setBaseUriParameter(const std::string &paramName, const UriParameterPtr &uriParameter)
+    void Raml::setBaseUriParameter(const std::string &paramName,
+                                   const UriParameterPtr &uriParameter)
     {
         m_baseUriParameters[paramName] = uriParameter;
     }
@@ -151,7 +152,8 @@ namespace RAML
                     YAML::Node paramNode = it->second;
                     for ( YAML::const_iterator tt = paramNode.begin(); tt != paramNode.end(); ++tt )
                     {
-                        setBaseUriParameter(READ_NODE_AS_STRING(tt->first), std::make_shared<UriParameter>(tt->second));
+                        setBaseUriParameter(READ_NODE_AS_STRING(tt->first),
+                                            std::make_shared<UriParameter>(tt->second));
                     }
                 }
                 else if (key == Keys::Protocols)
@@ -198,14 +200,18 @@ namespace RAML
                             std::pair<std::string, Schema> schema;
 
                             IncludeResolver::FileType fileType = m_includeResolver->getFileType(tt->second);
-                            if ((fileType == IncludeResolver::FileType::JSON) || (fileType == IncludeResolver::FileType::FILE))
+                            if ((fileType == IncludeResolver::FileType::JSON) ||
+                                (fileType == IncludeResolver::FileType::FILE))
                             {
-                                setSchema(key, std::make_shared<Schema>(m_includeResolver->readFromFile(tt->second),
-                                                                        m_includeResolver));
+                                setSchema(key,
+                                          std::make_shared<Schema>(m_includeResolver->readFromFile(tt->second),
+                                                                   m_includeResolver));
                             }
                             else
                             {
-                                setSchema(key, std::make_shared<Schema>(READ_NODE_AS_STRING(tt->second), m_includeResolver));
+                                setSchema(key,
+                                          std::make_shared<Schema>(READ_NODE_AS_STRING(tt->second),
+                                                                   m_includeResolver));
                             }
                         }
                     }
@@ -213,7 +219,8 @@ namespace RAML
 
                 else if (key.compare(0, Keys::Resource.length(), Keys::Resource)  == 0)
                 {
-                    setResource(key, std::make_shared<RamlResource>(key, it->second, m_includeResolver, getBaseUri()));
+                    setResource(key, std::make_shared<RamlResource>(key, it->second, m_includeResolver,
+                                getBaseUri()));
                 }
                 else if (key == Keys::Traits)
                 {
@@ -223,7 +230,8 @@ namespace RAML
                         for (auto elem : *tt)
                         {
                             std::string trait = READ_NODE_AS_STRING(elem.first);
-                            setTrait(trait, std::make_shared<Action>(ActionType::NONE, elem.second , m_includeResolver));
+                            setTrait(trait, std::make_shared<Action>(ActionType::NONE, elem.second ,
+                                     m_includeResolver));
                         }
                     }
                 }
@@ -235,7 +243,8 @@ namespace RAML
                         for (auto elem : *tt)
                         {
                             std::string type = READ_NODE_AS_STRING(elem.first);
-                            setResourceType(type, std::make_shared<RamlResource>(type, elem.second, m_includeResolver,
+                            setResourceType(type, std::make_shared<RamlResource>(type, elem.second,
+                                            m_includeResolver,
                                             getBaseUri()));
 
                         }

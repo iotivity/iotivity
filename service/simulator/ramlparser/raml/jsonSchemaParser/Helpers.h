@@ -17,6 +17,13 @@
  * limitations under the License.
  *
  ******************************************************************/
+
+/**
+ * @file   Helpers.h
+ *
+ * @brief   This file provides helper definitions for Json Schema parser.
+ */
+
 #ifndef HELPERS_H_
 #define HELPERS_H_
 
@@ -29,13 +36,20 @@
 namespace RAML
 {
 
-
+    /** ValueVariant - Boost Variant to hold type of int, string, double and bool*/
     typedef boost::variant <
     int,
     double,
     bool,
     std::string
     > ValueVariant;
+
+    /** VariantType - enumeration for variant types*/
+    enum class VariantType
+    {
+        INT, DOUBLE, BOOL, STRING
+    };
+
 
 }
 #endif

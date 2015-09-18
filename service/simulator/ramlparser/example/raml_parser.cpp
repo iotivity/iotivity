@@ -1,6 +1,27 @@
+/******************************************************************
+ *
+ * Copyright 2015 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************/
+
 #include "RamlParser.h"
 #include <iostream>
 #include <string>
+#include <memory>
 
 //#define PRINT_PARAMS
 //#define PRINT_PROTOCOLS
@@ -207,7 +228,7 @@ void printResource(const RamlResourcePtr &resource)
     }
 
 }
-void printProperties(Properties *prop)
+void printProperties(const PropertiesPtr &prop)
 {
 #ifdef PRINT_JSON_PROPERTIES
     std::cout << "-------------------------------" << std::endl;
@@ -304,108 +325,115 @@ int main(int argc, char *argv[])
     char *value = argv[1];
     std::string s(value);
 
-    RamlParser *ramlParser = new RamlParser(s);
-    RamlPtr m_raml = ramlParser->getRamlPtr();
+    try
+    {
+        std::shared_ptr<RamlParser> ramlParser = std::make_shared<RamlParser>(s);
+        RamlPtr m_raml = ramlParser->getRamlPtr();
 #ifdef PRINT_RAML
 
-    std::cout << "#############################################" << std::endl;
-    std::cout << "Test Raml Parser" << std::endl;
-    std::cout << "#############################################" << std::endl;
+        std::cout << "#############################################" << std::endl;
+        std::cout << "Test Raml Parser" << std::endl;
+        std::cout << "#############################################" << std::endl;
 
-    std::cout << "Title : " << m_raml->getTitle() << std::endl;
-    std::cout << "Version : " <<  m_raml->getVersion() << std::endl;
+        std::cout << "Title : " << m_raml->getTitle() << std::endl;
+        std::cout << "Version : " <<  m_raml->getVersion() << std::endl;
 #ifdef PRINT_PROTOCOLS
-    std::cout << "Protocols : "   ;
-    for (auto  it : m_raml->getProtocols())
-    {
-        std::cout << it  << "     ";
-    }
+        std::cout << "Protocols : "   ;
+        for (auto  it : m_raml->getProtocols())
+        {
+            std::cout << it  << "     ";
+        }
 
-    std::cout << std::endl;
+        std::cout << std::endl;
 #endif
 #ifdef PRINT_BASEURI
-    std::cout << "BaseUri : " <<  m_raml->getBaseUri() << std::endl;
+        std::cout << "BaseUri : " <<  m_raml->getBaseUri() << std::endl;
 
-    std::cout << "BaseUriParameters : " << std::endl;
-    for (auto  it : m_raml->getBaseUriParameters())
-    {
-        std::cout << "-----------------------------" << std::endl;
-        std::cout << it.first << " : "  << std::endl;
-        std::cout << "-----------------------------" << std::endl;
-        UriParameter uriParameter = *it.second;
-        printParameters((AbstractParam)uriParameter);
-    }
+        std::cout << "BaseUriParameters : " << std::endl;
+        for (auto  it : m_raml->getBaseUriParameters())
+        {
+            std::cout << "-----------------------------" << std::endl;
+            std::cout << it.first << " : "  << std::endl;
+            std::cout << "-----------------------------" << std::endl;
+            UriParameter uriParameter = *it.second;
+            printParameters((AbstractParam)uriParameter);
+        }
 #endif
 #ifdef PRINT_SCHEMAS
-    std::cout << "#############################################" << std::endl;
-    std::cout << "Schemas" << std::endl;
-    std::cout << "-----------------------------" << std::endl;
-    for (auto  it : m_raml->getSchemas())
-    {
-        std::cout << it.first   << " : " << it.second->getSchema() << std::endl;
-    }
-#endif
-    std::cout << "MediaType : " <<  m_raml->getMediaType() << std::endl;
-    std::cout << "#############################################" << std::endl;
-#ifdef PRINT_DOCUMENTATION
-    std::cout << "#############################################" << std::endl;
-
-    std::cout << "Documentation" << std::endl;
-    std::cout << "-----------------------------" << std::endl;
-    for (auto  it : m_raml->getDocumentation())
-    {
-        std::cout << it->getTitle() << " : " << it->getContent() << std::endl;
-    }
-    std::cout << "#############################################" << std::endl;
-#endif
-
-    std::cout << "Resources" << std::endl;
-    for (auto  it : m_raml->getResources())
-    {
+        std::cout << "#############################################" << std::endl;
+        std::cout << "Schemas" << std::endl;
         std::cout << "-----------------------------" << std::endl;
-        std::cout << "ResourceName :" << it.first << std::endl;
-        printResource(it.second);
-    }
+        for (auto  it : m_raml->getSchemas())
+        {
+            std::cout << it.first   << " : " << it.second->getSchema() << std::endl;
+        }
+#endif
+        std::cout << "MediaType : " <<  m_raml->getMediaType() << std::endl;
+        std::cout << "#############################################" << std::endl;
+#ifdef PRINT_DOCUMENTATION
+        std::cout << "#############################################" << std::endl;
+
+        std::cout << "Documentation" << std::endl;
+        std::cout << "-----------------------------" << std::endl;
+        for (auto  it : m_raml->getDocumentation())
+        {
+            std::cout << it->getTitle() << " : " << it->getContent() << std::endl;
+        }
+        std::cout << "#############################################" << std::endl;
+#endif
+
+        std::cout << "Resources" << std::endl;
+        for (auto  it : m_raml->getResources())
+        {
+            std::cout << "-----------------------------" << std::endl;
+            std::cout << "ResourceName :" << it.first << std::endl;
+            printResource(it.second);
+        }
 #ifdef PRINT_TYPES
 
-    std::cout << "#############################################" << std::endl;
+        std::cout << "#############################################" << std::endl;
 
-    std::cout << "ResourceTypes " << std::endl;
-    for (auto  it : m_raml->getResourceTypes())
-    {
-        std::cout << "------------" << it.first << "-----------------" << std::endl;
-        printResource(it.second);
-    }
+        std::cout << "ResourceTypes " << std::endl;
+        for (auto  it : m_raml->getResourceTypes())
+        {
+            std::cout << "------------" << it.first << "-----------------" << std::endl;
+            printResource(it.second);
+        }
 #endif
 #ifdef PRINT_TRAITS
 
-    std::cout << "#############################################" << std::endl;
+        std::cout << "#############################################" << std::endl;
 
-    std::cout << "Traits " << std::endl;
-    for (auto  it : m_raml->getTraits())
-    {
-        std::cout << "-------------" << it.first << "----------------" << std::endl;
-        printAction(it.second);
-    }
+        std::cout << "Traits " << std::endl;
+        for (auto  it : m_raml->getTraits())
+        {
+            std::cout << "-------------" << it.first << "----------------" << std::endl;
+            printAction(it.second);
+        }
 #endif
 #endif
 #ifdef PRINT_JSON
-    for (auto  it : m_raml->getResources())
-    {
-        for (auto  tt :  it.second->getActions())
+        for (auto  it : m_raml->getResources())
         {
-            for (auto  tu :  tt.second->getResponses())
+            for (auto  tt :  it.second->getActions())
             {
-                for (auto  tv :  tu.second->getResponseBody())
+                for (auto  tu :  tt.second->getResponses())
                 {
-                    auto pro = tv.second->getSchema()->getProperties();
-                    printJsonSchema(pro);
-                    break;
+                    for (auto  tv :  tu.second->getResponseBody())
+                    {
+                        auto pro = tv.second->getSchema()->getProperties();
+                        printJsonSchema(pro);
+                        break;
+                    }
                 }
             }
         }
-    }
 #endif
+    }
+    catch (RamlException &e)
+    {
+        std::cout << e.what() << std::endl;
+    }
 
 }
 

@@ -71,7 +71,8 @@ namespace RAML
                 for ( YAML::const_iterator tt = responseBody.begin(); tt != responseBody.end(); ++tt )
                 {
                     std::string type = READ_NODE_AS_STRING(tt->first);
-                    setResponseBody(type, std::make_shared<RequestResponseBody>(type, tt->second, m_includeResolver));
+                    setResponseBody(type, std::make_shared<RequestResponseBody>(type, tt->second,
+                                    m_includeResolver));
                 }
             }
             else if (key == Keys::Headers)

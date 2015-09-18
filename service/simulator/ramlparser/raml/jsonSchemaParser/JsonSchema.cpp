@@ -88,15 +88,13 @@ namespace RAML
                     do
                     {
                         cJSON *item = cJSON_GetArrayItem(jsonItems, item_index);
-                        Items *newItem = readItems(item);
-                        setItem(newItem);
+                        setItem(readItems(item));
                     }
                     while ( ++item_index < item_size);
                 }
                 else
                 {
-                    Items *newItem = readItems(jsonItems);
-                    setItem(newItem);
+                    setItem(readItems(jsonItems));
                 }
             }
         }
@@ -129,9 +127,9 @@ namespace RAML
         }
     }
 
-    Definitions *JsonSchema::readDef(cJSON *childDefinitions, const std::string &defName)
+    DefinitionsPtr JsonSchema::readDef(cJSON *childDefinitions, const std::string &defName)
     {
-        Definitions *definition = new Definitions(defName);
+        DefinitionsPtr definition = std::make_shared<Definitions>(defName);
 
         cJSON *defType = cJSON_GetObjectItem(childDefinitions, "type");
         if (defType)
@@ -174,9 +172,9 @@ namespace RAML
         return definition;
     }
 
-    Properties *JsonSchema::readProp(cJSON *childProperties, const std::string &attName )
+    PropertiesPtr JsonSchema::readProp(cJSON *childProperties, const std::string &attName )
     {
-        Properties *property = new Properties(attName);
+        PropertiesPtr property = std::make_shared<Properties>(attName);
 
         cJSON *propertyUpdateFrequency = cJSON_GetObjectItem(childProperties, "update_frequency");
         if (propertyUpdateFrequency)
@@ -288,7 +286,7 @@ namespace RAML
         return property;
     }
 
-    void JsonSchema::readValues(cJSON *childProperties,  Properties *property ,
+    void JsonSchema::readValues(cJSON *childProperties,  PropertiesPtr property ,
                                 const std::string &attType)
     {
         if (attType == "string")
@@ -309,7 +307,7 @@ namespace RAML
         }
     }
 
-    void JsonSchema::readString(cJSON *childProperties, Properties *property)
+    void JsonSchema::readString(cJSON *childProperties, PropertiesPtr property)
     {
         cJSON *stringMax = cJSON_GetObjectItem(childProperties, "maxLength");
         if (stringMax)
@@ -351,7 +349,7 @@ namespace RAML
         }
     }
 
-    void JsonSchema::readArray(cJSON *childProperties,  Properties *property)
+    void JsonSchema::readArray(cJSON *childProperties,  PropertiesPtr property)
     {
         cJSON *itemValues = cJSON_GetObjectItem(childProperties, "items");
         if (itemValues)
@@ -363,15 +361,13 @@ namespace RAML
                 do
                 {
                     cJSON *item = cJSON_GetArrayItem(itemValues, item_index);
-                    Items *newItem = readItems(item);
-                    property->setItem(newItem);
+                    property->setItem(readItems(item));
                 }
                 while ( ++item_index < item_size);
             }
             else
             {
-                Items *newItem = readItems(itemValues);
-                property->setItem(newItem);
+                property->setItem(readItems(itemValues));
             }
         }
         cJSON *itemsMax = cJSON_GetObjectItem(childProperties, "maxItems");
@@ -422,7 +418,7 @@ namespace RAML
         }
     }
 
-    void JsonSchema::readNumber(cJSON *childProperties,  Properties *property)
+    void JsonSchema::readNumber(cJSON *childProperties,  PropertiesPtr property)
     {
         cJSON *Max = cJSON_GetObjectItem(childProperties, "maximum");
         if (Max)
@@ -459,7 +455,7 @@ namespace RAML
         }
 
     }
-    Definitions *JsonSchema::readRef(std::string m_ref)
+    DefinitionsPtr JsonSchema::readRef(std::string m_ref)
     {
         std::string delimiter1 = "#";
         std::string delimiter2 = "/";
@@ -501,8 +497,8 @@ namespace RAML
                 if (!(defName.empty()))
                 {
                     cJSON *m_json = m_includeResolver->readToJson(fileName);
-                    JsonSchema *Refparser = new JsonSchema(m_json, m_includeResolver);
-                    Definitions *definition = Refparser->getDefinition(defName);
+                    JsonSchemaPtr Refparser = std::make_shared<JsonSchema>(m_json, m_includeResolver);
+                    DefinitionsPtr definition = Refparser->getDefinition(defName);
                     if (definition == nullptr)
                         throw JsonException("Definition Name Incorrect");
                     return definition;
@@ -518,6 +514,8 @@ namespace RAML
                 }
             }
         }
+        throw JsonException("Definition Name Empty");
+        return nullptr;
     }
     void JsonSchema::readAllOf(cJSON *allofValues)
     {
@@ -548,7 +546,7 @@ namespace RAML
     void JsonSchema::readJsonRef(cJSON *jsonReference)
     {
         std::string m_ref = jsonReference->valuestring;
-        std::map<std::string, Properties *> properties;
+        std::map<std::string, PropertiesPtr > properties;
         std::vector<std::string> required;
 
         std::string web = "http://";
@@ -562,14 +560,14 @@ namespace RAML
             {
                 std::string fileName = m_ref.substr(0, pos);
                 cJSON *m_json = m_includeResolver->readToJson(fileName);
-                JsonSchema *Refparser = new JsonSchema(m_json, m_includeResolver);
+                JsonSchemaPtr Refparser = std::make_shared<JsonSchema>(m_json, m_includeResolver);
 
                 properties = Refparser->getProperties();
                 required = Refparser->getRequiredValues();
             }
             else
             {
-                Definitions *definition = readRef(m_ref);
+                DefinitionsPtr definition = readRef(m_ref);
                 properties = definition->getProperties();
                 required = definition->getRequiredValues();
             }
@@ -585,7 +583,7 @@ namespace RAML
 
         }
     }
-    void JsonSchema::readDefAllOf(cJSON *allofValues, Definitions *definition)
+    void JsonSchema::readDefAllOf(cJSON *allofValues, DefinitionsPtr definition)
     {
         int size = cJSON_GetArraySize(allofValues);
         int index = 0;
@@ -611,10 +609,10 @@ namespace RAML
         }
         while ( ++index < size);
     }
-    void JsonSchema::readDefRef(cJSON *defReference, Definitions *definition)
+    void JsonSchema::readDefRef(cJSON *defReference, DefinitionsPtr definition)
     {
         std::string m_ref = defReference->valuestring;
-        std::map<std::string, Properties *> properties;
+        std::map<std::string, PropertiesPtr > properties;
         std::vector<std::string> required;
         std::string type;
 
@@ -629,7 +627,7 @@ namespace RAML
             {
                 std::string fileName = m_ref.substr(0, pos);
                 cJSON *m_json = m_includeResolver->readToJson(fileName);
-                JsonSchema *Refparser = new JsonSchema(m_json, m_includeResolver);
+                JsonSchemaPtr Refparser = std::make_shared<JsonSchema>(m_json, m_includeResolver);
 
                 properties = Refparser->getProperties();
                 required = Refparser->getRequiredValues();
@@ -637,7 +635,7 @@ namespace RAML
             }
             else
             {
-                Definitions *definitionRef = readRef(m_ref);
+                DefinitionsPtr definitionRef = readRef(m_ref);
                 properties = definitionRef->getProperties();
                 required = definitionRef->getRequiredValues();
                 type =    definitionRef->getType();
@@ -653,9 +651,9 @@ namespace RAML
             definition->setType(type);
         }
     }
-    Items *JsonSchema::readItems(cJSON *item)
+    ItemsPtr JsonSchema::readItems(cJSON *item)
     {
-        Items *newItem = new Items();
+        ItemsPtr newItem = std::make_shared<Items>();
         cJSON *itemType = cJSON_GetObjectItem(item, "type");
         if (itemType)
         {
@@ -670,9 +668,8 @@ namespace RAML
             while (childProperties)
             {
                 std::string attName = childProperties->string;
-                Properties *property = readProp(childProperties, attName);
 
-                newItem->addProperty(attName, property);
+                newItem->addProperty(attName, readProp(childProperties, attName));
                 childProperties = childProperties->next;
             }
         }
@@ -755,13 +752,13 @@ namespace RAML
         {
             readItemAllOf(itemAllOf , newItem);
         }
-        return (newItem);
+        return newItem;
     }
 
-    void JsonSchema::readItemRef(cJSON *itemReference, Items *item)
+    void JsonSchema::readItemRef(cJSON *itemReference, ItemsPtr item)
     {
         std::string m_ref = itemReference->valuestring;
-        std::map<std::string, Properties *> properties;
+        std::map<std::string, PropertiesPtr > properties;
         std::vector<std::string> required;
         std::string type;
 
@@ -776,7 +773,7 @@ namespace RAML
             {
                 std::string fileName = m_ref.substr(0, pos);
                 cJSON *m_json = m_includeResolver->readToJson(fileName);
-                JsonSchema *Refparser = new JsonSchema(m_json, m_includeResolver);
+                JsonSchemaPtr Refparser = std::make_shared<JsonSchema>(m_json, m_includeResolver);
 
                 properties = Refparser->getProperties();
                 required = Refparser->getRequiredValues();
@@ -784,7 +781,7 @@ namespace RAML
             }
             else
             {
-                Definitions *definitionRef = readRef(m_ref);
+                DefinitionsPtr definitionRef = readRef(m_ref);
                 properties = definitionRef->getProperties();
                 required = definitionRef->getRequiredValues();
                 type =    definitionRef->getType();
@@ -802,7 +799,7 @@ namespace RAML
         }
     }
 
-    void JsonSchema::readItemAllOf(cJSON *allofValues,  Items *item)
+    void JsonSchema::readItemAllOf(cJSON *allofValues, ItemsPtr item)
     {
         int size = cJSON_GetArraySize(allofValues);
         int index = 0;

@@ -128,18 +128,21 @@ namespace RAML
                 setDisplayName(READ_NODE_AS_STRING(it->second));
             else if (key == Keys::Description)
                 setDescription(READ_NODE_AS_STRING(it->second));
-            else if (std::find(Keys::ActionType.begin(), Keys::ActionType.end(), key) != Keys::ActionType.end())
+            else if (std::find(Keys::ActionType.begin(), Keys::ActionType.end(), key) !=
+                     Keys::ActionType.end())
             {
                 ActionType actionType = GET_ACTION_TYPE(key);
 
-                setAction(actionType, std::make_shared<Action>(actionType, it->second, m_includeResolver));
+                setAction(actionType, std::make_shared<Action>(actionType, it->second,
+                          m_includeResolver));
             }
             else if (key == Keys::UriParameters)
             {
                 YAML::Node paramNode = it->second;
                 for ( YAML::const_iterator tt = paramNode.begin(); tt != paramNode.end(); ++tt )
                 {
-                    setUriParameter(READ_NODE_AS_STRING(tt->first), std::make_shared<UriParameter>(tt->second));
+                    setUriParameter(READ_NODE_AS_STRING(tt->first),
+                                    std::make_shared<UriParameter>(tt->second));
                 }
             }
             else if (key == Keys::BaseUriParameters)
@@ -147,7 +150,8 @@ namespace RAML
                 YAML::Node paramNode = it->second;
                 for ( YAML::const_iterator tt = paramNode.begin(); tt != paramNode.end(); ++tt )
                 {
-                    setBaseUriParameter(READ_NODE_AS_STRING(tt->first), std::make_shared<UriParameter>(tt->second));
+                    setBaseUriParameter(READ_NODE_AS_STRING(tt->first),
+                                        std::make_shared<UriParameter>(tt->second));
                 }
             }
             else if (key == Keys::IsTrait)

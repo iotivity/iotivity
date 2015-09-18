@@ -18,6 +18,12 @@
  *
  ******************************************************************/
 
+/**
+ * @file   Response.h
+ *
+ * @brief   This file provides data Model for RAML Response.
+ */
+
 #ifndef RESPONSE_H
 #define RESPONSE_H
 
@@ -31,22 +37,88 @@
 
 namespace RAML
 {
+    /**
+     * @class   Response
+     * @brief   This class provides data Model for RAML Response.
+     */
     class Response
     {
         public:
+            /**
+                 * This method is for getting Headers from Response.
+                 *
+                 * @return map of headerName and Pointer to Header.
+                 */
             virtual std::map<std::string, HeaderPtr> const &getHeaders() const;
+
+            /**
+                 * This method is for setting Header to Response.
+                 *
+                 * @param headerName - header Name
+                 * @param header - pointer to Header Object.
+                 */
             virtual void setHeader(const std::string &headerName, const HeaderPtr &header);
+
+            /**
+                 * This method is for getting Description from Response.
+                 *
+                 * @return Description string.
+                 */
             virtual std::string getDescription() const;
+
+            /**
+                 * This method is for setting Description to Response.
+                 *
+                 * @param description - description string
+                 */
             virtual void setDescription(const std::string &description);
+
+            /**
+                 * This method is for setting ResponseBody to Response.
+                 *
+                 * @param typeName - response body typeName
+                 */
             virtual void setResponseBody(const std::string &typeName);
+
+            /**
+                 * This method is for setting ResponseBody to Response.
+                 *
+                 * @param type - response body typeName
+                 * @param body - Pointer to RequestResponseBody
+                 */
             virtual void setResponseBody(const std::string &type, const RequestResponseBodyPtr &body) ;
+
+            /**
+                 * This method is for getting ResponseBody from Response.
+                 *
+                 * @return map of body type and Pointer to RequestResponseBody.
+                 */
             virtual std::map<std::string, RequestResponseBodyPtr> const &getResponseBody() const;
+
+            /**
+                 * This method is for getting ResponseBody from Response.
+                 *
+                 * @param bodyType - response body type
+                 *
+                 * @return  Pointer to RequestResponseBody.
+                 */
             virtual RequestResponseBodyPtr getResponseBody(const std::string &bodyType);
 
-
+            /**
+                  * Constructor of Response.
+                  */
             Response() : m_includeResolver(NULL) {}
+
+            /**
+                   * Constructor of Response.
+                   *
+                   * @param yamlNode - Reference to YamlNode for reading the Response
+                   * @param includeResolver - Reference to IncludeResolver for reading external files
+                   *
+                   */
             Response(const YAML::Node &yamlNode,
-                     const IncludeResolverPtr &includeResolver): m_includeResolver(includeResolver)  { readResponse(yamlNode);}
+                     const IncludeResolverPtr &includeResolver): m_includeResolver(includeResolver)
+            { readResponse(yamlNode);}
         private:
             void readResponse(const YAML::Node &yamlNode) ;
         private:
@@ -55,6 +127,8 @@ namespace RAML
             std::map<std::string, HeaderPtr> m_headers;
             IncludeResolverPtr m_includeResolver;
     };
+
+    /** ResponsePtr - shared Ptr to Response.*/
     typedef std::shared_ptr<Response> ResponsePtr;
 }
 #endif

@@ -18,6 +18,12 @@
  *
  ******************************************************************/
 
+/**
+ * @file   IncludeResolver.h
+ *
+ * @brief   This file provides APIs for resolving included files.
+ */
+
 #ifndef INCLUDE_RESOLVER_H
 #define INCLUDE_RESOLVER_H
 
@@ -30,28 +36,84 @@
 
 namespace RAML
 {
+    /**
+     * @class   IncludeResolver
+     * @brief   This class provides a set of APIs for resolving included files.
+     */
     class IncludeResolver
     {
-
         public:
+            /** FileType - enumeration for Included File types*/
             enum class FileType
             {
                 NODE, JSON, FILE, NOTAG , ERROR
             };
 
-
         public:
+            /**
+                 * This method is for reading a file specified in YamlNode and parse it to
+                 * getting the created RootNode from RAML file.
+                 *
+                 * @param yamlFile - Reference to YamlNode specifying the FileName.
+                 *
+                 * @return pointer to root node from the Parsed file.
+                 */
             YAML::Node readToYamlNode(const YAML::Node &yamlFile );
+
+            /**
+                 * This method is for reading a file specified in YamlNode and parse the specified Json file.
+                 *
+                 * @param jsonFile - Reference to YamlNode specifying the FileName.
+                 *
+                 * @return cJSON pointer to CJson object.
+                 */
             cJSON *readToJson(const YAML::Node &jsonFile );
+
+            /**
+                 * This method is for reading a file specified in YamlNode and parse the content of file.
+                 *
+                 * @param file - Reference to YamlNode specifying the FileName.
+                 *
+                 * @return contents of the file.
+                 */
             std::string readFromFile(const YAML::Node &file );
+
+            /**
+                 * This method is checking the file type specified in YamlNode.
+                 *
+                 * @param yamlNode - Reference to YamlNode specifying the FileName.
+                 *
+                 * @return FileType type of file.
+                 */
             FileType getFileType(const YAML::Node &yamlNode );
+
+            /**
+                 * This method is for reading a file specified and parse the content of file.
+                 *
+                 * @param jsonFileName - FileName of Json file to be read.
+                 *
+                 * @return pointer to CJson object.
+                 */
             cJSON *readToJson(const std::string &jsonFileName);
 
+            /**
+                  * Constructor of IncludeResolver.
+                  */
             IncludeResolver() {}
+
+            /**
+                  * Constructor of IncludeResolver.
+                  *
+                  * @param path -  configuration file path.
+                  *
+                  */
             IncludeResolver(const std::string &path) : m_path(path) {}
+
         private:
             std::string m_path;
     };
+
+    /** IncludeResolverPtr - shared Ptr to IncludeResolver.*/
     typedef std::shared_ptr<IncludeResolver> IncludeResolverPtr;
 
 }

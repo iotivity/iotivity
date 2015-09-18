@@ -18,13 +18,19 @@
  *
  ******************************************************************/
 
+/**
+ * @file   RamlErrorCodes.h
+ *
+ * @brief   This file provides list of error codes while parsing Raml file.
+ */
+
 #ifndef RAML_ERROR_CODES_H_
 #define RAML_ERROR_CODES_H_
 
+/** RamlParserResult - This enum provides list of error codes from RamlParser*/
 typedef enum
 {
     RAML_PARSER_OK = 0,
-
     RAML_FILE_PATH_REQUIRED,
     RAML_PARSER_ERROR = 255
 } RamlParserResult;

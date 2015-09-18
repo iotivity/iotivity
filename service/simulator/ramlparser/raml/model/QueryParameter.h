@@ -18,6 +18,12 @@
  *
  ******************************************************************/
 
+/**
+ * @file   QueryParameter.h
+ *
+ * @brief   This file provides data Model for RAML QueryParameter.
+ */
+
 #ifndef QUERY_PARAMETER_H
 #define QUERY_PARAMETER_H
 
@@ -25,12 +31,28 @@
 
 namespace RAML
 {
+    /**
+     * @class   QueryParameter
+     * @brief   This class provides data Model for RAML QueryParameter.
+     */
     class QueryParameter: public AbstractParam
     {
         public:
+            /**
+                   * Constructor of QueryParameter.
+                   *
+                   * @param yamlNode - Reference to YamlNode for reading the QueryParameter
+                   *
+                   */
             QueryParameter(const YAML::Node &yamlNode) : AbstractParam(yamlNode) {}
+
+            /**
+                  * Constructor of QueryParameter.
+                  */
             QueryParameter() {}
     };
+
+    /** QueryParameterPtr - shared Ptr to QueryParameter.*/
     typedef std::shared_ptr<QueryParameter> QueryParameterPtr;
 
 }

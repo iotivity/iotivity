@@ -18,6 +18,12 @@
  *
  ******************************************************************/
 
+/**
+ * @file   UriParameter.h
+ *
+ * @brief   This file provides data Model for RAML UriParameters.
+ */
+
 #ifndef URI_PARAMETER_H
 #define URI_PARAMETER_H
 
@@ -25,12 +31,29 @@
 
 namespace RAML
 {
+    /**
+     * @class   UriParameter
+     * @brief   This class provides data Model for RAML UriParameters.
+     */
     class UriParameter: public AbstractParam
     {
         public:
+            /**
+                   * Constructor of UriParameter.
+                   *
+                   * @param yamlNode - Reference to YamlNode for reading the UriParameter
+                   *
+                   */
             UriParameter(const YAML::Node &yamlNode) : AbstractParam(yamlNode) {}
+
+            /**
+                  * Constructor of UriParameter.
+                  */
             UriParameter() {}
     };
+
+    /** UriParameterPtr - shared Ptr to UriParameter.*/
+
     typedef std::shared_ptr<UriParameter> UriParameterPtr;
 
 }

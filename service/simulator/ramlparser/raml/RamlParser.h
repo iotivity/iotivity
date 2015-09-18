@@ -18,6 +18,12 @@
  *
  ******************************************************************/
 
+/**
+ * @file   RamlParser.h
+ *
+ * @brief   This file provides APIs for parsing Raml file.
+ */
+
 #ifndef RAML_PARSER_H
 #define RAML_PARSER_H
 
@@ -35,6 +41,10 @@
 
 namespace RAML
 {
+    /**
+      * @class   RamlParser
+      * @brief   This class provides a set of APIs for parsing Raml file.
+      */
     class RamlParser
     {
         private:
@@ -45,9 +55,38 @@ namespace RAML
             void setTraits(const std::map<std::string, RamlResourcePtr> &resource);
 
         public:
+            /**
+                   * This method is for getting the created and Parsed RAML object from RAML file.
+                   *
+                   * @param result - Reference to RamlParserResult.
+                   *
+                   * @return pointer to Raml shared object parsed.
+                   */
             virtual RamlPtr getRamlPtr(RamlParserResult &result);
+
+            /**
+                   * This method is for getting the created and Parsed RAML object from RAML file.
+                   *
+                   * @return pointer to Raml shared object parsed.
+                   */
             virtual RamlPtr getRamlPtr();
-            RamlParser(): m_ramlPtr(std::make_shared<Raml>()), m_ramlParserResult(RAML_FILE_PATH_REQUIRED) {}
+
+            /**
+                   * Constructor of RamlParser.
+                   *
+                   *  NOTE: Constructor would initialize the RamlParserResult with File Path Required
+                   */
+            RamlParser(): m_ramlPtr(std::make_shared<Raml>()),
+                m_ramlParserResult(RAML_FILE_PATH_REQUIRED) {}
+
+            /**
+                   * Constructor of RamlParser.
+                   *
+                   * @param path - RAML configuration file path.
+                   *
+                   *  NOTE: Constructor would throw RamlBadFile when invalid arguments passed, and
+                   * RamlException if any other error occured.
+                   */
             RamlParser(const std::string &path): m_ramlParserResult(RAML_PARSER_ERROR)
             {
                 if (path.length() > 0)

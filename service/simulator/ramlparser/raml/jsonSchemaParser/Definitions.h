@@ -17,6 +17,13 @@
  * limitations under the License.
  *
  ******************************************************************/
+
+/**
+ * @file   Definitions.h
+ *
+ * @brief   This file provides data Model for Json Schema Definitions.
+ */
+
 #ifndef DEFINITIONS_H_
 #define DEFINITIONS_H_
 
@@ -24,72 +31,154 @@
 #include <vector>
 #include <map>
 #include "Properties.h"
+#include <memory>
 
 namespace RAML
 {
+    /**
+     * @class   Definitions
+     * @brief   This class provides data Model for Json Schema Definitions.
+     */
     class Definitions
     {
         public:
 
+            /**
+                  * Constructor of Definitions.
+                  */
             Definitions() = default;
+
+            /**
+                  * Constructor of Definitions.
+                  *
+                  * @param name - Definitions name as string.
+                  */
             Definitions(const std::string &name) : m_defName(name) {}
 
+            /**
+                 * This method is for getting Name from Definitions.
+                 *
+                 * @return Definitions name as string
+                 */
             inline std::string getName(void) const
             {
                 return m_defName;
             }
+
+            /**
+                 * This method is for setting name to Definitions
+                 *
+                 * @param name - Definitions name as string.
+                 */
             inline void setName(const std::string &name)
             {
                 m_defName = name;
             }
+
+            /**
+                 * This method is for getting Type from Definitions.
+                 *
+                 * @return Definitions Type as string
+                 */
             inline std::string getType(void) const
             {
                 return m_type;
             }
+
+            /**
+                 * This method is for setting Type to Definitions
+                 *
+                 * @param type - Definitions Type as string.
+                 */
             inline void setType(const std::string &type)
             {
                 m_type = type;
             }
-            void addProperty(const std::string &propName, Properties *property)
+
+            /**
+                 * This method is for getting RequiredValue from Definitions.
+                 *
+                 * @return list of RequiredValue as string
+                 */
+            std::vector<std::string> const &getRequiredValues() const
+            {
+                return m_required;
+            }
+
+            /**
+                 * This method is for setting RequiredValue to Definitions
+                 *
+                 * @param reqValue - RequiredValue as string.
+                 */
+            void setRequiredValue(const std::string &reqValue)
+            {
+                auto it = m_required.begin();
+                for (; it != m_required.end(); ++it)
+                {
+                    if (*it == reqValue)
+                        break;
+                }
+                if (m_required.end() != it)
+                {
+                    m_required.push_back(reqValue);
+                }
+            }
+
+            /**
+                 * This method is for getting size of Properties from Definitions.
+                 *
+                 * @return size of Properties map
+                 */
+            int propertiesSize() const { return m_properties.size(); }
+
+            /**
+                 * This method is for getting Properties from Definitions.
+                 *
+                 * @param propName - name of property as string.
+                 *
+                 * @return pointer to Properties.
+                 */
+            inline PropertiesPtr getproperty(const std::string &propName )
+            {
+                if (m_properties.end() != m_properties.find(propName))
+                {
+                    return m_properties[propName];
+                }
+                return nullptr;
+            }
+
+            /**
+                 * This method is for getting Properties from Definitions.
+                 *
+                 * @return map of Property name and pointer to Properties
+                 */
+            inline std::map<std::string, PropertiesPtr> const  &getProperties()
+            {
+                return m_properties;
+            }
+
+            /**
+                 * This method is for setting Properties to Definitions
+                 *
+                 * @param propName - Definitions Type as string.
+                 * @param property - pointer to Properties.
+                 */
+            void addProperty(const std::string &propName, const PropertiesPtr &property)
             {
                 if (m_properties.end() == m_properties.find(propName))
                 {
                     m_properties[propName] =  property;
                 }
             }
-            void setRequiredValue(const std::string &reqValue)
-            {
-                if (m_required.end() == std::find(m_required.begin(), m_required.end(), reqValue))
-                {
-                    m_required.push_back(reqValue);
-                }
-            }
-            std::vector<std::string> getRequiredValues() const
-            {
-                return m_required;
-            }
-            int propertiesSize() const { return m_properties.size(); }
-
-            inline bool getproperty(const std::string &propName, Properties *value)
-            {
-                if (m_properties.end() != m_properties.find(propName))
-                {
-                    value = m_properties[propName];
-                    return true;
-                }
-                return false;
-            }
-            inline std::map<std::string, Properties *>  getProperties()
-            {
-                return m_properties;
-            }
         private:
-            std::map<std::string, Properties *> m_properties;
+            std::map<std::string, PropertiesPtr > m_properties;
             std::string m_defName;
             std::string m_type;
             std::vector<std::string> m_required;
 
     };
+
+    /** DefinitionsPtr - shared Ptr to Definitions.*/
     typedef std::shared_ptr<Definitions> DefinitionsPtr;
 
 }

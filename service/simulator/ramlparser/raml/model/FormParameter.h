@@ -18,6 +18,12 @@
  *
  ******************************************************************/
 
+/**
+ * @file   FormParameter.h
+ *
+ * @brief   This file provides data Model for RAML FormParameter.
+ */
+
 #ifndef FORM_PARAMETER_H
 #define FORM_PARAMETER_H
 
@@ -25,12 +31,28 @@
 
 namespace RAML
 {
+    /**
+     * @class   FormParameter
+     * @brief   This class provides data Model for RAML FormParameter.
+     */
     class FormParameter: public AbstractParam
     {
         public:
+            /**
+                   * Constructor of FormParameter.
+                   *
+                   * @param yamlNode - Reference to YamlNode for reading the FormParameter
+                   *
+                   */
             FormParameter(const YAML::Node &yamlNode) : AbstractParam(yamlNode) {}
+
+            /**
+                  * Constructor of FormParameter.
+                  */
             FormParameter() {}
     };
+
+    /** FormParameterPtr - shared Ptr to FormParameter.*/
     typedef std::shared_ptr<FormParameter> FormParameterPtr;
 
 }

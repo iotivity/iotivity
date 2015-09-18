@@ -18,6 +18,12 @@
  *
  ******************************************************************/
 
+/**
+ * @file   DocumentationItem.h
+ *
+ * @brief   This file provides data Model for RAML DocumentationItem.
+ */
+
 #ifndef DOCUMENTATION_ITEM_H
 #define DOCUMENTATION_ITEM_H
 
@@ -26,18 +32,56 @@
 
 namespace RAML
 {
+    /**
+     * @class   DocumentationItem
+     * @brief   This class provides data Model for RAML DocumentationItem.
+     */
     class DocumentationItem
     {
 
         public:
+            /**
+                 * This method is for getting Title from DocumentationItem.
+                 *
+                 * @return title as string.
+                 */
             virtual std::string getTitle() const;
+
+            /**
+                 * This method is for setting Title to DocumentationItem.
+                 *
+                 * @param title - title as string
+                 */
             virtual void setTitle(const std::string &title);
+
+            /**
+                 * This method is for getting Content from DocumentationItem.
+                 *
+                 * @return content as string
+                 */
             virtual std::string getContent() const;
+
+            /**
+                 * This method is for setting Content to DocumentationItem.
+                 *
+                 * @param content - content as string
+                 */
             virtual void setContent(const std::string &content);
 
+            /**
+                  * Constructor of DocumentationItem.
+                  */
             DocumentationItem();
-            DocumentationItem(const std::string &title , const std::string &content) : m_title(title),
-                m_content(content) {}
+
+            /**
+                   * Constructor of Action.
+                   *
+                   * @param title - title of Documentation Item
+                   * @param content - content of Documentation Item
+                   *
+                   */
+            DocumentationItem(const std::string &title , const std::string &content)
+                : m_title(title), m_content(content) {}
         private:
             std::string m_title;
             std::string m_content;
