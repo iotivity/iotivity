@@ -30,7 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define TAG  PCF("SRM-PSI")
+#define TAG  "SRM-PSI"
 
 //SVR database buffer block size
 const size_t DB_FILE_SIZE_BLOCK = 1023;
@@ -81,7 +81,7 @@ char * GetSVRDatabase()
     int size = GetSVRDatabaseSize(ps);
     if (0 == size)
     {
-        OC_LOG (ERROR, TAG, PCF("FindSVRDatabaseSize failed"));
+        OC_LOG (ERROR, TAG, "FindSVRDatabaseSize failed");
         return NULL;
     }
 
@@ -96,13 +96,13 @@ char * GetSVRDatabase()
             size_t bytesRead = ps->read(jsonStr, 1, size, fp);
             jsonStr[bytesRead] = '\0';
 
-            OC_LOG_V(INFO, TAG, PCF("Read %d bytes from SVR database file"), bytesRead);
+            OC_LOG_V(INFO, TAG, "Read %d bytes from SVR database file", bytesRead);
             ps->close(fp);
             fp = NULL;
         }
         else
         {
-            OC_LOG (ERROR, TAG, PCF("Unable to open SVR database file!!"));
+            OC_LOG (ERROR, TAG, "Unable to open SVR database file!!");
         }
     }
 
@@ -189,13 +189,13 @@ OCStackResult UpdateSVRDatabase(const char* rsrcName, cJSON* jsonObj)
             {
                 ret = OC_STACK_OK;
             }
-            OC_LOG_V(INFO, TAG, PCF("Written %d bytes into SVR database file"), bytesWritten);
+            OC_LOG_V(INFO, TAG, "Written %d bytes into SVR database file", bytesWritten);
             ps->close(fp);
             fp = NULL;
         }
         else
         {
-            OC_LOG (ERROR, TAG, PCF("Unable to open SVR database file!! "));
+            OC_LOG (ERROR, TAG, "Unable to open SVR database file!! ");
         }
     }
 

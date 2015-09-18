@@ -1,4 +1,4 @@
-/******************************************************************
+/* *****************************************************************
  *
  * Copyright 2015 Samsung Electronics All Rights Reserved.
  *
@@ -17,16 +17,16 @@
  * limitations under the License.
  *
  ******************************************************************/
-#include "jni_action.h"
 
-#include <ActionSet.h>
+#include "jni_action.h"
 #include "jni_things_manager_jvm.h"
 #include "jni_getter.h"
 #include "jni_setter.h"
 
+#include <ActionSet.h>
+
 #define JACTION_TARGET              ("target")
 #define JACTION_LISTOF_CAPABILITY   ("listOfCapability")
-
 
 JniAction::JniAction(JNIEnv *env, jobject obj) : JObject(env, obj)
 {

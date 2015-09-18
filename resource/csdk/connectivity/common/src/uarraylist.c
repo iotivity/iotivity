@@ -27,23 +27,23 @@
 #define TAG "UARRAYLIST"
 
 /**
- * Use this default size when initialized
+ * Use this default capacity when initialized
  */
-#define U_ARRAYLIST_DEFAULT_SIZE 1
+#define U_ARRAYLIST_DEFAULT_CAPACITY 1
 
 u_arraylist_t *u_arraylist_create()
 {
-    u_arraylist_t *list = (u_arraylist_t *) OICMalloc(sizeof(u_arraylist_t));
+    u_arraylist_t *list = (u_arraylist_t *) OICCalloc(1, sizeof(u_arraylist_t));
     if (!list)
     {
         OIC_LOG(DEBUG, TAG, "Out of memory");
         return NULL;
     }
 
-    list->size = U_ARRAYLIST_DEFAULT_SIZE;
+    list->capacity = U_ARRAYLIST_DEFAULT_CAPACITY;
     list->length = 0;
 
-    list->data = (void **) OICMalloc(list->size * sizeof(list->data[0]));
+    list->data = (void **) OICMalloc(list->capacity * sizeof(list->data[0]));
     if (!list->data)
     {
         OIC_LOG(DEBUG, TAG, "Out of memory");
@@ -68,7 +68,7 @@ void u_arraylist_free(u_arraylist_t **list)
 
 void u_arraylist_reserve(u_arraylist_t *list, size_t count)
 {
-    if (list && (count > list->size))
+    if (list && (count > list->capacity))
     {
         void *tmp = OICRealloc(list->data, count * sizeof(list->data[0]));
         if (!tmp)
@@ -79,7 +79,7 @@ void u_arraylist_reserve(u_arraylist_t *list, size_t count)
         else
         {
             list->data = (void **) tmp;
-            list->size = count;
+            list->capacity = count;
         }
     }
 }
@@ -91,8 +91,8 @@ void u_arraylist_shrink_to_fit(u_arraylist_t *list)
         return;
     }
 
-    if ((list->size > list->length)
-        && (list->length >= U_ARRAYLIST_DEFAULT_SIZE))
+    if ((list->capacity > list->length)
+        && (list->length >= U_ARRAYLIST_DEFAULT_CAPACITY))
     {
         void *tmp = OICRealloc(list->data,
                                list->length * sizeof(list->data[0]));
@@ -104,7 +104,7 @@ void u_arraylist_shrink_to_fit(u_arraylist_t *list)
         else
         {
             list->data = (void **) tmp;
-            list->size = list->length;
+            list->capacity = list->length;
         }
     }
 }
@@ -126,27 +126,30 @@ void *u_arraylist_get(const u_arraylist_t *list, uint32_t index)
 
 bool u_arraylist_add(u_arraylist_t *list, void *data)
 {
-    static const double GROWTH_FACTOR = 1.5;
     if (!list)
     {
         return false;
     }
 
-    if (list->size <= list->length)
+    if (list->capacity <= list->length)
     {
-        uint32_t new_size = (list->size * GROWTH_FACTOR) + 0.5;
+        // Does a non-FP calcuation of the 1.5 growth factor. Helpful for
+        // certain limited platforms.
+        size_t new_capacity = ((list->capacity * 3) + 1) / 2;
+
         // In case the re-alloc returns null, use a local variable to avoid
         // losing the current block of memory.
-        void *tmp = OICRealloc(list->data, new_size * sizeof(list->data[0]));
+        void *tmp = OICRealloc(list->data,
+                               new_capacity * sizeof(list->data[0]));
         if (!tmp)
         {
             OIC_LOG(DEBUG, TAG, "Memory reallocation failed.");
             return false;
         }
         list->data = (void **) tmp;
-        memset(list->data + list->size, 0,
-               (new_size - list->size) * sizeof(list->data[0]));
-        list->size = new_size;
+        memset(list->data + list->capacity, 0,
+               (new_capacity - list->capacity) * sizeof(list->data[0]));
+        list->capacity = (uint32_t)new_capacity;
     }
 
     list->data[list->length] = data;
@@ -195,7 +198,7 @@ bool u_arraylist_contains(const u_arraylist_t *list, const void *data)
         return false;
     }
 
-    for (uint32_t i = 0; i < list->size; i++)
+    for (uint32_t i = 0; i < list->length; i++)
     {
         if (data == list->data[i])
         {

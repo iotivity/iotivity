@@ -39,16 +39,18 @@
 #include "caraadapter.h"
 #endif
 
-#define TAG "CA_INTRFC_CNTRLR"
-#ifdef RA_ADAPTER
-#include "caraadapter.h"
+#ifdef TCP_ADAPTER
+#include "catcpadapter.h"
 #endif
 
+#define TAG "CA_INTRFC_CNTRLR"
 
 #define CA_MEMORY_ALLOC_CHECK(arg) {if (arg == NULL) \
     {OIC_LOG(ERROR, TAG, "memory error");goto memory_error_exit;} }
 
-#ifdef RA_ADAPTER
+#ifdef TCP_ADAPTER
+#define CA_TRANSPORT_TYPE_NUM   5
+#elif RA_ADAPTER
 #define CA_TRANSPORT_TYPE_NUM   4
 #else
 #define CA_TRANSPORT_TYPE_NUM   3
@@ -73,10 +75,15 @@ static int CAGetAdapterIndex(CATransportAdapter_t cType)
         case CA_ADAPTER_RFCOMM_BTEDR:
             return 2;
 
-        #ifdef RA_ADAPTER
+#ifdef RA_ADAPTER
         case CA_ADAPTER_REMOTE_ACCESS:
             return 3;
-        #endif
+#endif
+
+#ifdef TCP_ADAPTER
+        case CA_ADAPTER_TCP:
+            return 4;
+#endif
 
         default:
             break;
@@ -193,7 +200,10 @@ void CAInitializeAdapters(ca_thread_pool_t handle)
                    handle);
 #endif /* RA_ADAPTER */
 
-
+#ifdef TCP_ADAPTER
+    CAInitializeTCP(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback,
+                    CAAdapterErrorHandleCallback, handle);
+#endif /* TCP_ADAPTER */
 }
 
 void CASetPacketReceivedCallback(CANetworkPacketReceivedCallback callback)

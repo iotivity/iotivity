@@ -1,4 +1,4 @@
-/******************************************************************
+/* *****************************************************************
  *
  * Copyright 2015 Samsung Electronics All Rights Reserved.
  *
@@ -17,6 +17,7 @@
  * limitations under the License.
  *
  ******************************************************************/
+
 #include "jni_setter.h"
 
 #include <string>
@@ -24,7 +25,6 @@
 #include "JniOcResource.h"
 
 #define LOG_TAG "TM_JSetter"
-
 
 bool JSetter::setJStringField(JNIEnv *env, jobject &object, const char *fieldName,
                               const char *value)
@@ -76,7 +76,6 @@ bool JSetter::setJStringField(JNIEnv *env, jobject &object, const char *fieldNam
     return true;
 }
 
-
 bool JSetter::setJIntField(JNIEnv *env, jobject &object, const char *fieldName, int value)
 {
     if (NULL == env || NULL == fieldName)
@@ -105,7 +104,6 @@ bool JSetter::setJIntField(JNIEnv *env, jobject &object, const char *fieldName, 
 
     return true;
 }
-
 
 bool JSetter::setJLongField(JNIEnv *env, jobject &object, const char *fieldName, jlong value)
 {
@@ -136,7 +134,6 @@ bool JSetter::setJLongField(JNIEnv *env, jobject &object, const char *fieldName,
     return true;
 }
 
-
 bool JSetter::setJBoolField(JNIEnv *env, jobject &object, const char *fieldName, bool value)
 {
     if (NULL == env || NULL == fieldName)
@@ -165,7 +162,6 @@ bool JSetter::setJBoolField(JNIEnv *env, jobject &object, const char *fieldName,
 
     return true;
 }
-
 
 bool JSetter::setJObjectField(JNIEnv *env, jobject &object, const char *fieldName,
                               const char *fieldType, const jobject value)

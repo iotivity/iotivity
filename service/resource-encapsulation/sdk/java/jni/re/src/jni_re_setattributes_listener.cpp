@@ -81,7 +81,7 @@ void JniSetAttributesListener::onRemoteAttributesSetCallback(OIC::Service::RCSRe
         return;
     }
 
-    jmethodID midL = env->GetMethodID(clsL, "onRemoteAttributesGetCallback",
+    jmethodID midL = env->GetMethodID(clsL, "onRemoteAttributesSetCallback",
                                       "(Lorg/iotivity/ResourceEncapsulation/common/RCSResourceAttributes;)V");
 
     if (!midL)

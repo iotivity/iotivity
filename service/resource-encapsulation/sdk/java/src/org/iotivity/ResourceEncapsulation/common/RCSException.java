@@ -18,10 +18,8 @@
  *
  ******************************************************************/
 /**
- * @file    RCSException.java
- *
- * @brief     This file provides RCSException class for RE layer
- *
+ * @file
+ *This file provides RCSException class for RE layer
  */
 
 package org.iotivity.ResourceEncapsulation.common;

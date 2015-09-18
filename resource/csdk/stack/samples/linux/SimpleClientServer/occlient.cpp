@@ -31,6 +31,17 @@
 #include "ocpayload.h"
 #include "payload_logging.h"
 
+#ifdef ROUTING_GATEWAY
+/**
+ * Maximum number of gateway requests to form the routing table.
+ */
+#define MAX_NUM_GATEWAY_REQUEST 20
+
+/**
+ * Sleep duration after every OCProcess().
+ */
+#define SLEEP_DURATION 100000
+#endif
 // Tracking user input
 static int UnicastDiscovery = 0;
 static int TestCase = 0;
@@ -176,8 +187,8 @@ OCStackApplicationResult putReqCB(void* ctx, OCDoHandle /*handle*/,
     if (clientResponse)
     {
         OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
-        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
-        OC_LOG(INFO, TAG, PCF("=============> Put Response"));
+        OC_LOG_PAYLOAD(INFO, clientResponse->payload);
+        OC_LOG(INFO, TAG, ("=============> Put Response"));
     }
     else
     {
@@ -197,8 +208,8 @@ OCStackApplicationResult postReqCB(void *ctx, OCDoHandle /*handle*/,
     if (clientResponse)
     {
         OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
-        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
-        OC_LOG(INFO, TAG, PCF("=============> Post Response"));
+        OC_LOG_PAYLOAD(INFO, clientResponse->payload);
+        OC_LOG(INFO, TAG, ("=============> Post Response"));
     }
     else
     {
@@ -219,8 +230,8 @@ OCStackApplicationResult deleteReqCB(void *ctx,
     if (clientResponse)
     {
         OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
-        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
-        OC_LOG(INFO, TAG, PCF("=============> Delete Response"));
+        OC_LOG_PAYLOAD(INFO, clientResponse->payload);
+        OC_LOG(INFO, TAG, ("=============> Delete Response"));
     }
     else
     {
@@ -245,8 +256,8 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle /*handle*/,
 
     OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
     OC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
-    OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
-    OC_LOG(INFO, TAG, PCF("=============> Get Response"));
+    OC_LOG_PAYLOAD(INFO, clientResponse->payload);
+    OC_LOG(INFO, TAG, ("=============> Get Response"));
 
     if (clientResponse->numRcvdVendorSpecificHeaderOptions > 0)
     {
@@ -282,8 +293,8 @@ OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle /*handle*/,
         OC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
         OC_LOG_V(INFO, TAG, "Callback Context for OBSERVE notification recvd successfully %d",
                 gNumObserveNotifies);
-        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
-        OC_LOG(INFO, TAG, PCF("=============> Obs Response"));
+        OC_LOG_PAYLOAD(INFO, clientResponse->payload);
+        OC_LOG(INFO, TAG, ("=============> Obs Response"));
         gNumObserveNotifies++;
         if (gNumObserveNotifies == 15) //large number to test observing in DELETE case.
         {
@@ -338,8 +349,8 @@ OCStackApplicationResult presenceCB(void* ctx, OCDoHandle /*handle*/,
         OC_LOG_V(INFO, TAG, "StackResult: %s", getResult(clientResponse->result));
         OC_LOG_V(INFO, TAG, "Callback Context for Presence notification recvd successfully %d",
                 gNumPresenceNotifies);
-        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
-        OC_LOG(INFO, TAG, PCF("=============> Presence Response"));
+        OC_LOG_PAYLOAD(INFO, clientResponse->payload);
+        OC_LOG(INFO, TAG, ("=============> Presence Response"));
         gNumPresenceNotifies++;
         if (gNumPresenceNotifies == 20)
         {
@@ -377,7 +388,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle /*handle*/,
                 "Device =============> Discovered @ %s:%d",
                 clientResponse->devAddr.addr,
                 clientResponse->devAddr.port);
-        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+        OC_LOG_PAYLOAD(INFO, clientResponse->payload);
 
         ConnType = clientResponse->connType;
         serverAddr = clientResponse->devAddr;
@@ -459,8 +470,8 @@ OCStackApplicationResult PlatformDiscoveryReqCB(void* ctx,
 
     if (clientResponse)
     {
-        OC_LOG(INFO, TAG, PCF("Discovery Response:"));
-        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+        OC_LOG(INFO, TAG, ("Discovery Response:"));
+        OC_LOG_PAYLOAD(INFO, clientResponse->payload);
     }
     else
     {
@@ -480,8 +491,8 @@ OCStackApplicationResult DeviceDiscoveryReqCB(void* ctx, OCDoHandle /*handle*/,
 
     if (clientResponse)
     {
-        OC_LOG(INFO, TAG, PCF("Discovery Response:"));
-        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+        OC_LOG(INFO, TAG, ("Discovery Response:"));
+        OC_LOG_PAYLOAD(INFO, clientResponse->payload);
     }
     else
     {
@@ -805,6 +816,21 @@ int main(int argc, char* argv[])
         return 0;
     }
 
+#ifdef ROUTING_GATEWAY
+    /*
+     * Before invoking Discover resource, we process the gateway requests
+     * and form the routing table.
+     */
+    for (int index = 0; index < MAX_NUM_GATEWAY_REQUEST; index++)
+    {
+        if (OC_STACK_OK != OCProcess())
+        {
+            OC_LOG(ERROR, TAG, "OCStack process error");
+            return 0;
+        }
+        usleep(SLEEP_DURATION);
+    }
+#endif
     if (Connectivity == CT_ADAPTER_DEFAULT || Connectivity == CT_IP)
     {
         ConnType = CT_ADAPTER_IP;
@@ -859,8 +885,9 @@ int main(int argc, char* argv[])
             OC_LOG(ERROR, TAG, "OCStack process error");
             return 0;
         }
-
-        sleep(2);
+#ifndef ROUTING_GATEAWAY
+        sleep(1);
+#endif
     }
     OC_LOG(INFO, TAG, "Exiting occlient main loop...");
 

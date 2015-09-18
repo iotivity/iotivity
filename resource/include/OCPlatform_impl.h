@@ -222,6 +222,8 @@ namespace OC
                         const std::vector<std::string>& interfaces);
         OCStackResult sendResponse(const std::shared_ptr<OCResourceResponse> pResponse);
 
+        std::weak_ptr<std::recursive_mutex> csdkLock();
+
     private:
         PlatformConfig m_cfg;
 

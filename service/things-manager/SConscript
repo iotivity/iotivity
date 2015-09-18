@@ -53,18 +53,22 @@ if target_os == 'android':
 ######################################################################
 # Source files and Targets
 ######################################################################
-tgm_src = env.Glob('sdk/src/*.cpp', '../../extlibs/timer/timer.c')
-tgmsdk_static = things_manager_env.StaticLibrary('TGMSDKLibrary', tgm_src)
-tgmsdk_shared = things_manager_env.SharedLibrary('TGMSDKLibrary', tgm_src)
 
-things_manager_env.InstallTarget([tgmsdk_static,tgmsdk_shared], 'libTGMSDK')
-things_manager_env.UserInstallTargetLib([tgmsdk_static,tgmsdk_shared], 'libTGMSDK')
 
-# Build JNI layer
-#if target_os == 'android':
-#    SConscript(os.path.join('sdk', 'java', 'jni', 'SConscript'))
+# Remove it if the conversion for Android and Tizen platform is done
+if target_os in ['linux', 'tizen']:
+   tgm_src = env.Glob('sdk/src/*.cpp', '../../extlibs/timer/timer.c')
+   tgmsdk_static = things_manager_env.StaticLibrary('TGMSDKLibrary', tgm_src)
+   tgmsdk_shared = things_manager_env.SharedLibrary('TGMSDKLibrary', tgm_src)
 
-#Go to build sample apps
-SConscript('sampleapp/SConscript')
+   things_manager_env.InstallTarget([tgmsdk_static,tgmsdk_shared], 'libTGMSDK')
+   things_manager_env.UserInstallTargetLib([tgmsdk_static,tgmsdk_shared], 'libTGMSDK')
+
+   # Build JNI layer
+   #if target_os == 'android':
+   #    SConscript(os.path.join('sdk', 'java', 'jni', 'SConscript'))
+
+    #Go to build sample apps
+   SConscript('sampleapp/SConscript')
 
 

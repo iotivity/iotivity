@@ -156,7 +156,7 @@ OCStackApplicationResult restRequestCB(void* ctx,
 
     OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
     OC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
-    OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+    OC_LOG_PAYLOAD(INFO, clientResponse->payload);
 
     if(clientResponse->numRcvdVendorSpecificHeaderOptions > 0)
     {
@@ -178,7 +178,7 @@ OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle handle, OCClientResponse
     OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
     OC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
     OC_LOG_V(INFO, TAG, "OBSERVE notification %d recvd", gNumObserveNotifies);
-    OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+    OC_LOG_PAYLOAD(INFO, clientResponse->payload);
 
     gNumObserveNotifies++;
     if (gNumObserveNotifies == maxNotification)
@@ -227,7 +227,7 @@ OCStackApplicationResult presenceCB(void* ctx,
         OC_LOG_V(INFO, TAG, "StackResult: %s", getResult(clientResponse->result));
         OC_LOG_V(INFO, TAG, "NONCE NUMBER: %u", clientResponse->sequenceNumber);
         OC_LOG_V(INFO, TAG, "PRESENCE notification %d recvd", gNumPresenceNotifies);
-        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+        OC_LOG_PAYLOAD(INFO, clientResponse->payload);
 
         gNumPresenceNotifies++;
         if (gNumPresenceNotifies == maxNotification)
@@ -262,7 +262,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
     }
 
     OC_LOG_V(INFO, TAG, "StackResult: %s", getResult(clientResponse->result));
-    OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+    OC_LOG_PAYLOAD(INFO, clientResponse->payload);
 
     responseAddr = clientResponse->devAddr;
 
@@ -302,7 +302,7 @@ OCStackApplicationResult PlatformDiscoveryReqCB (void* ctx, OCDoHandle handle,
 
     if(clientResponse)
     {
-        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+        OC_LOG_PAYLOAD(INFO, clientResponse->payload);
     }
     else
     {
@@ -322,7 +322,7 @@ OCStackApplicationResult DeviceDiscoveryReqCB (void* ctx, OCDoHandle handle,
 
     if(clientResponse)
     {
-        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+        OC_LOG_PAYLOAD(INFO, clientResponse->payload);
     }
     else
     {

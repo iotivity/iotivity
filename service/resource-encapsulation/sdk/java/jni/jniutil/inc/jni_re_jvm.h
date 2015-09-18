@@ -48,26 +48,37 @@ extern jclass g_cls_String;
 extern jclass g_cls_LinkedList;
 extern jclass g_cls_Iterator;
 extern jclass g_cls_Vector;
+extern jclass g_cls_Map;
+extern jclass g_cls_Set;
+extern jclass g_cls_MapEntry;
 extern jclass g_cls_RCSRemoteResourceObject;
 extern jclass g_cls_RCSRemoteResourceAttributesObject;
 extern jclass g_cls_RCSException;
 
 extern jclass g_cls_RCSResourceObject;
 extern jclass g_cls_RCSRequest;
+extern jclass g_cls_RCSBundleInfo;
 
 extern jmethodID g_mid_Integer_ctor;
 extern jmethodID g_mid_Double_ctor;
 extern jmethodID g_mid_Boolean_ctor;
 extern jmethodID g_mid_LinkedList_ctor;
 extern jmethodID g_mid_LinkedList_add_object;
+extern jmethodID g_mid_Map_entrySet;
+extern jmethodID g_mid_MapEntry_getKey;
+extern jmethodID g_mid_MapEntry_getValue;
+extern jmethodID g_mid_Set_iterator;
 extern jmethodID g_mid_Iterator_hasNext;
 extern jmethodID g_mid_Iterator_next;
+extern jmethodID g_mid_HashMap_ctor;
+extern jmethodID g_mid_HashMap_put;
 extern jmethodID g_mid_RCSRemoteResourceObject_ctor;
 extern jmethodID g_mid_RCSRemoteResourceAttributesObject_ctor;
 extern jmethodID g_mid_RCSException_ctor;
 
 extern jmethodID g_mid_RCSResourceObject_ctor;
 extern jmethodID g_mid_RCSRequest_ctor;
+extern jmethodID g_mid_RCSBundleInfo_ctor;
 
 typedef void(*RemoveListenerCallback)(JNIEnv *env, jobject jListener);
 

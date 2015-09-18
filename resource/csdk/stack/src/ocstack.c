@@ -41,6 +41,7 @@
 #include "ocrandom.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
+#include "logger.h"
 #include "ocserverrequest.h"
 #include "secureresourcemanager.h"
 #include "doxmresource.h"
@@ -48,6 +49,13 @@
 #include "cainterface.h"
 #include "ocpayload.h"
 #include "ocpayloadcbor.h"
+
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+#include "routingutility.h"
+#ifdef ROUTING_GATEWAY
+#include "routingmanager.h"
+#endif
+#endif
 
 #ifdef WITH_ARDUINO
 #include "Time.h"
@@ -106,16 +114,20 @@ static bool gRASetInfo = false;
 OCDeviceEntityHandler defaultDeviceHandler;
 void* defaultDeviceHandlerCallbackParameter = NULL;
 
+#ifdef TCP_ADAPTER
+static const char COAP_TCP[] = "coap+tcp:";
+#endif
+
 //-----------------------------------------------------------------------------
 // Macros
 //-----------------------------------------------------------------------------
-#define TAG  PCF("OCStack")
+#define TAG  "OCStack"
 #define VERIFY_SUCCESS(op, successCode) { if ((op) != (successCode)) \
             {OC_LOG_V(FATAL, TAG, "%s failed!!", #op); goto exit;} }
 #define VERIFY_NON_NULL(arg, logLevel, retVal) { if (!(arg)) { OC_LOG((logLevel), \
-             TAG, PCF(#arg " is NULL")); return (retVal); } }
+             TAG, #arg " is NULL"); return (retVal); } }
 #define VERIFY_NON_NULL_NR(arg, logLevel) { if (!(arg)) { OC_LOG((logLevel), \
-             TAG, PCF(#arg " is NULL")); return; } }
+             TAG, #arg " is NULL"); return; } }
 #define VERIFY_NON_NULL_V(arg) { if (!arg) {OC_LOG_V(FATAL, TAG, "%s is NULL", #arg);\
     goto exit;} }
 
@@ -289,9 +301,10 @@ static OCStackResult CAToOCStackResult(CAResponseResult_t caCode);
  * Convert OCStackResult to CAResponseResult_t.
  *
  * @param caCode OCStackResult code.
- * @return ::CA_SUCCESS on success, some other value upon failure.
+ * @param method OCMethod method the return code replies to.
+ * @return ::CA_CONTENT on OK, some other value upon failure.
  */
-static CAResponseResult_t OCToCAStackResult(OCStackResult ocCode);
+static CAResponseResult_t OCToCAStackResult(OCStackResult ocCode, OCMethod method);
 
 /**
  * Convert OCTransportFlags_t to CATransportModifiers_t.
@@ -370,6 +383,17 @@ static OCResourceType *findResourceType(OCResourceType * resourceTypeList,
  */
 static OCStackResult ResetPresenceTTL(ClientCB *cbNode, uint32_t maxAgeSeconds);
 
+/**
+ * Ensure the accept header option is set appropriatly before sending the requests and routing
+ * header option is updated with destination.
+ *
+ * @param object CA remote endpoint.
+ * @param requestInfo CA request info.
+ *
+ * @return ::OC_STACK_OK on success, some other value upon failure.
+ */
+static OCStackResult OCSendRequest(const CAEndpoint_t *object, CARequestInfo_t *requestInfo);
+
 //-----------------------------------------------------------------------------
 // Internal functions
 //-----------------------------------------------------------------------------
@@ -401,6 +425,9 @@ void CopyEndpointToDevAddr(const CAEndpoint_t *in, OCDevAddr *out)
     OICStrcpy(out->addr, sizeof(out->addr), in->addr);
     out->port = in->port;
     out->interface = in->interface;
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+    memcpy(out->routeData, in->routeData, sizeof(out->routeData));
+#endif
 }
 
 void CopyDevAddrToEndpoint(const OCDevAddr *in, CAEndpoint_t *out)
@@ -411,6 +438,9 @@ void CopyDevAddrToEndpoint(const OCDevAddr *in, CAEndpoint_t *out)
     out->adapter = (CATransportAdapter_t)in->adapter;
     out->flags = OCToCATransportFlags(in->flags);
     OICStrcpy(out->addr, sizeof(out->addr), in->addr);
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+    memcpy(out->routeData, in->routeData, sizeof(out->routeData));
+#endif
     out->port = in->port;
     out->interface = in->interface;
 }
@@ -424,6 +454,31 @@ void FixUpClientResponse(OCClientResponse *cr)
         ((cr->devAddr.adapter << CT_ADAPTER_SHIFT) | (cr->devAddr.flags & CT_MASK_FLAGS));
 }
 
+static OCStackResult OCSendRequest(const CAEndpoint_t *object, CARequestInfo_t *requestInfo)
+{
+    VERIFY_NON_NULL(object, FATAL, OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL(requestInfo, FATAL, OC_STACK_INVALID_PARAM);
+
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+    OCStackResult rmResult = RMAddInfo(object->routeData, &(requestInfo->info.options),
+                                     &(requestInfo->info.numOptions));
+    if (OC_STACK_OK != rmResult)
+    {
+        OC_LOG(ERROR, TAG, "Add destination option failed");
+        return rmResult;
+    }
+#endif
+
+    // OC stack prefer CBOR encoded payloads.
+    requestInfo->info.acceptFormat = CA_FORMAT_APPLICATION_CBOR;
+    CAResult_t result = CASendRequest(object, requestInfo);
+    if(CA_STATUS_OK != result)
+    {
+        OC_LOG_V(ERROR, TAG, "CASendRequest failed with CA error %u", result);
+        return CAResultToOCResult(result);
+    }
+    return OC_STACK_OK;
+}
 //-----------------------------------------------------------------------------
 // Internal API function
 //-----------------------------------------------------------------------------
@@ -439,7 +494,7 @@ OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t stat
     switch(status)
     {
     case OC_OBSERVER_NOT_INTERESTED:
-        OC_LOG(DEBUG, TAG, PCF("observer not interested in our notifications"));
+        OC_LOG(DEBUG, TAG, "observer not interested in our notifications");
         observer = GetObserverUsingToken (token, tokenLength);
         if(observer)
         {
@@ -448,7 +503,8 @@ OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t stat
                                                 OC_REST_NOMETHOD,
                                                 &observer->devAddr,
                                                 (OCResourceHandle)NULL,
-                                                NULL, NULL, 0, 0, NULL,
+                                                NULL, PAYLOAD_TYPE_REPRESENTATION,
+                                                NULL, 0, 0, NULL,
                                                 OC_OBSERVE_DEREGISTER,
                                                 observer->observeId);
             if(result != OC_STACK_OK)
@@ -462,17 +518,17 @@ OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t stat
         result = DeleteObserverUsingToken (token, tokenLength);
         if(result == OC_STACK_OK)
         {
-            OC_LOG(DEBUG, TAG, PCF("Removed observer successfully"));
+            OC_LOG(DEBUG, TAG, "Removed observer successfully");
         }
         else
         {
             result = OC_STACK_OK;
-            OC_LOG(DEBUG, TAG, PCF("Observer Removal failed"));
+            OC_LOG(DEBUG, TAG, "Observer Removal failed");
         }
         break;
 
     case OC_OBSERVER_STILL_INTERESTED:
-        OC_LOG(DEBUG, TAG, PCF("observer still interested, reset the failedCount"));
+        OC_LOG(DEBUG, TAG, "observer still interested, reset the failedCount");
         observer = GetObserverUsingToken (token, tokenLength);
         if(observer)
         {
@@ -487,7 +543,7 @@ OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t stat
         break;
 
     case OC_OBSERVER_FAILED_COMM:
-        OC_LOG(DEBUG, TAG, PCF("observer is unreachable"));
+        OC_LOG(DEBUG, TAG, "observer is unreachable");
         observer = GetObserverUsingToken (token, tokenLength);
         if(observer)
         {
@@ -498,7 +554,8 @@ OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t stat
                                                     OC_REST_NOMETHOD,
                                                     &observer->devAddr,
                                                     (OCResourceHandle)NULL,
-                                                    NULL, NULL, 0, 0, NULL,
+                                                    NULL, PAYLOAD_TYPE_REPRESENTATION,
+                                                    NULL, 0, 0, NULL,
                                                     OC_OBSERVE_DEREGISTER,
                                                     observer->observeId);
                 if(result != OC_STACK_OK)
@@ -511,12 +568,12 @@ OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t stat
                 result = DeleteObserverUsingToken (token, tokenLength);
                 if(result == OC_STACK_OK)
                 {
-                    OC_LOG(DEBUG, TAG, PCF("Removed observer successfully"));
+                    OC_LOG(DEBUG, TAG, "Removed observer successfully");
                 }
                 else
                 {
                     result = OC_STACK_OK;
-                    OC_LOG(DEBUG, TAG, PCF("Observer Removal failed"));
+                    OC_LOG(DEBUG, TAG, "Observer Removal failed");
                 }
             }
             else
@@ -529,7 +586,7 @@ OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t stat
         }
         break;
     default:
-        OC_LOG(ERROR, TAG, PCF("Unknown status"));
+        OC_LOG(ERROR, TAG, "Unknown status");
         result = OC_STACK_ERROR;
         break;
         }
@@ -541,14 +598,15 @@ OCStackResult CAToOCStackResult(CAResponseResult_t caCode)
 
     switch(caCode)
     {
-        case CA_SUCCESS:
-            ret = OC_STACK_OK;
-            break;
         case CA_CREATED:
             ret = OC_STACK_RESOURCE_CREATED;
             break;
         case CA_DELETED:
             ret = OC_STACK_RESOURCE_DELETED;
+            break;
+        case CA_CHANGED:
+        case CA_CONTENT:
+            ret = OC_STACK_OK;
             break;
         case CA_BAD_REQ:
             ret = OC_STACK_INVALID_QUERY;
@@ -571,14 +629,32 @@ OCStackResult CAToOCStackResult(CAResponseResult_t caCode)
     return ret;
 }
 
-CAResponseResult_t OCToCAStackResult(OCStackResult ocCode)
+CAResponseResult_t OCToCAStackResult(OCStackResult ocCode, OCMethod method)
 {
     CAResponseResult_t ret = CA_INTERNAL_SERVER_ERROR;
 
     switch(ocCode)
     {
         case OC_STACK_OK:
-            ret = CA_SUCCESS;
+           switch (method)
+           {
+               case OC_REST_PUT:
+               case OC_REST_POST:
+                   // This Response Code is like HTTP 204 "No Content" but only used in
+                   // response to POST and PUT requests.
+                   ret = CA_CHANGED;
+                   break;
+               case OC_REST_GET:
+                   // This Response Code is like HTTP 200 "OK" but only used in response to
+                   // GET requests.
+                   ret = CA_CONTENT;
+                   break;
+               default:
+                   // This should not happen but,
+                   // give it a value just in case but output an error
+                   ret = CA_CONTENT;
+                   OC_LOG_V(ERROR, TAG, "Unexpected OC_STACK_OK return code for method [d].", method);
+            }
             break;
         case OC_STACK_RESOURCE_CREATED:
             ret = CA_CREATED;
@@ -782,7 +858,7 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
     int presenceSubscribe = 0;
     int multicastPresenceSubscribe = 0;
 
-    if (responseInfo->result != CA_SUCCESS)
+    if (responseInfo->result != CA_CONTENT)
     {
         OC_LOG_V(ERROR, TAG, "HandlePresenceResponse failed %d", responseInfo->result);
         return OC_STACK_ERROR;
@@ -817,7 +893,7 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
 
     if (!presenceSubscribe && !multicastPresenceSubscribe)
     {
-        OC_LOG(ERROR, TAG, PCF("Received a presence notification, but no callback, ignoring"));
+        OC_LOG(ERROR, TAG, "Received a presence notification, but no callback, ignoring");
         goto exit;
     }
 
@@ -829,17 +905,19 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
 
     if (responseInfo->info.payload)
     {
-        result = OCParsePayload(&response.payload,  responseInfo->info.payload,
+        result = OCParsePayload(&response.payload,
+                PAYLOAD_TYPE_PRESENCE,
+                responseInfo->info.payload,
                 responseInfo->info.payloadSize);
 
         if(result != OC_STACK_OK)
         {
-            OC_LOG(ERROR, TAG, PCF("Presence parse failed"));
+            OC_LOG(ERROR, TAG, "Presence parse failed");
             goto exit;
         }
         if(!response.payload || response.payload->type != PAYLOAD_TYPE_PRESENCE)
         {
-            OC_LOG(ERROR, TAG, PCF("Presence payload was wrong type"));
+            OC_LOG(ERROR, TAG, "Presence payload was wrong type");
             result = OC_STACK_ERROR;
             goto exit;
         }
@@ -852,13 +930,13 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
     {
         if(cbNode->sequenceNumber == response.sequenceNumber)
         {
-            OC_LOG(INFO, TAG, PCF("No presence change"));
+            OC_LOG(INFO, TAG, "No presence change");
             goto exit;
         }
 
         if(maxAge == 0)
         {
-            OC_LOG(INFO, TAG, PCF("Stopping presence"));
+            OC_LOG(INFO, TAG, "Stopping presence");
             response.result = OC_STACK_PRESENCE_STOPPED;
             if(cbNode->presence)
             {
@@ -875,7 +953,7 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
 
                 if(!(cbNode->presence))
                 {
-                    OC_LOG(ERROR, TAG, PCF("Could not allocate memory for cbNode->presence"));
+                    OC_LOG(ERROR, TAG, "Could not allocate memory for cbNode->presence");
                     result = OC_STACK_NO_MEMORY;
                     goto exit;
                 }
@@ -886,7 +964,7 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
                         OICMalloc(PresenceTimeOutSize * sizeof(uint32_t));
                 if(!(cbNode->presence->timeOut)){
                     OC_LOG(ERROR, TAG,
-                                  PCF("Could not allocate memory for cbNode->presence->timeOut"));
+                                  "Could not allocate memory for cbNode->presence->timeOut");
                     OICFree(cbNode->presence);
                     result = OC_STACK_NO_MEMORY;
                     goto exit;
@@ -917,14 +995,14 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
         {
             if(mcNode->nonce == response.sequenceNumber)
             {
-                OC_LOG(INFO, TAG, PCF("No presence change (Multicast)"));
+                OC_LOG(INFO, TAG, "No presence change (Multicast)");
                 goto exit;
             }
             mcNode->nonce = response.sequenceNumber;
 
             if(maxAge == 0)
             {
-                OC_LOG(INFO, TAG, PCF("Stopping presence"));
+                OC_LOG(INFO, TAG, "Stopping presence");
                 response.result = OC_STACK_PRESENCE_STOPPED;
             }
         }
@@ -934,7 +1012,7 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
             if (!uri)
             {
                 OC_LOG(INFO, TAG,
-                    PCF("No Memory for URI to store in the presence node"));
+                    "No Memory for URI to store in the presence node");
                 result = OC_STACK_NO_MEMORY;
                 goto exit;
             }
@@ -943,7 +1021,7 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
             if(result == OC_STACK_NO_MEMORY)
             {
                 OC_LOG(INFO, TAG,
-                    PCF("No Memory for Multicast Presence Node"));
+                    "No Memory for Multicast Presence Node");
                 OICFree(uri);
                 goto exit;
             }
@@ -977,7 +1055,35 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
     VERIFY_NON_NULL_NR(endPoint, FATAL);
     VERIFY_NON_NULL_NR(responseInfo, FATAL);
 
-    OC_LOG(INFO, TAG, PCF("Enter HandleCAResponses"));
+    OC_LOG(INFO, TAG, "Enter HandleCAResponses");
+
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+#ifdef ROUTING_GATEWAY
+    bool needRIHandling = false;
+    /*
+     * Routing manager is going to update either of endpoint or response or both.
+     * This typecasting is done to avoid unnecessary duplication of Endpoint and responseInfo
+     * RM can update "routeData" option in endPoint so that future RI requests can be sent to proper
+     * destination.
+     */
+    OCStackResult ret = RMHandleResponse((CAResponseInfo_t *)responseInfo, (CAEndpoint_t *)endPoint,
+                                         &needRIHandling);
+    if(ret != OC_STACK_OK || !needRIHandling)
+    {
+        OC_LOG_V(INFO, TAG, "Routing status![%d]. Not forwarding to RI", ret);
+        return;
+    }
+#endif
+
+    /*
+     * Put source in sender endpoint so that the next packet from application can be routed to
+     * proper destination and remove "RM" coap header option before passing request / response to
+     * RI as this option will make no sense to either RI or application.
+     */
+    RMUpdateInfo((CAHeaderOption_t **) &(responseInfo->info.options),
+                 (uint8_t *) &(responseInfo->info.numOptions),
+                 (CAEndpoint_t *) endPoint);
+#endif
 
     if(responseInfo->info.resourceUri &&
         strcmp(responseInfo->info.resourceUri, OC_RSRVD_PRESENCE_URI) == 0)
@@ -994,23 +1100,23 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
 
     if(cbNode)
     {
-        OC_LOG(INFO, TAG, PCF("There is a cbNode associated with the response token"));
+        OC_LOG(INFO, TAG, "There is a cbNode associated with the response token");
         if(responseInfo->result == CA_EMPTY)
         {
-            OC_LOG(INFO, TAG, PCF("Receiving A ACK/RESET for this token"));
+            OC_LOG(INFO, TAG, "Receiving A ACK/RESET for this token");
             // We do not have a case for the client to receive a RESET
             if(responseInfo->info.type == CA_MSG_ACKNOWLEDGE)
             {
                 //This is the case of receiving an ACK on a request to a slow resource!
-                OC_LOG(INFO, TAG, PCF("This is a pure ACK"));
+                OC_LOG(INFO, TAG, "This is a pure ACK");
                 //TODO: should we inform the client
                 //      app that at least the request was received at the server?
             }
         }
         else if(responseInfo->result == CA_RETRANSMIT_TIMEOUT)
         {
-            OC_LOG(INFO, TAG, PCF("Receiving A Timeout for this token"));
-            OC_LOG(INFO, TAG, PCF("Calling into application address space"));
+            OC_LOG(INFO, TAG, "Receiving A Timeout for this token");
+            OC_LOG(INFO, TAG, "Calling into application address space");
 
             OCClientResponse response =
                 {.devAddr = {.adapter = OC_DEFAULT_ADAPTER}};
@@ -1028,8 +1134,8 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
         }
         else
         {
-            OC_LOG(INFO, TAG, PCF("This is a regular response, A client call back is found"));
-            OC_LOG(INFO, TAG, PCF("Calling into application address space"));
+            OC_LOG(INFO, TAG, "This is a regular response, A client call back is found");
+            OC_LOG(INFO, TAG, "Calling into application address space");
 
             OCClientResponse response =
                 {.devAddr = {.adapter = OC_DEFAULT_ADAPTER}};
@@ -1042,14 +1148,65 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
             response.identity.id_length = responseInfo->info.identity.id_length;
 
             response.result = CAToOCStackResult(responseInfo->result);
+
             if(responseInfo->info.payload &&
-               responseInfo->info.payloadSize &&
-               OC_STACK_OK != OCParsePayload(&response.payload, responseInfo->info.payload,
-                                           responseInfo->info.payloadSize))
+               responseInfo->info.payloadSize)
             {
-                OC_LOG(ERROR, TAG, PCF("Error converting payload"));
-                OCPayloadDestroy(response.payload);
-                return;
+                OCPayloadType type = PAYLOAD_TYPE_INVALID;
+                // check the security resource
+                if (SRMIsSecurityResourceURI(cbNode->requestUri))
+                {
+                    type = PAYLOAD_TYPE_SECURITY;
+                }
+                else if (cbNode->method == OC_REST_DISCOVER)
+                {
+                    if (strncmp(OC_RSRVD_WELL_KNOWN_URI,cbNode->requestUri,
+                                sizeof(OC_RSRVD_WELL_KNOWN_URI) - 1) == 0)
+                    {
+                        type = PAYLOAD_TYPE_DISCOVERY;
+                    }
+                    else if (strcmp(cbNode->requestUri, OC_RSRVD_DEVICE_URI) == 0)
+                    {
+                        type = PAYLOAD_TYPE_DEVICE;
+                    }
+                    else if (strcmp(cbNode->requestUri, OC_RSRVD_PLATFORM_URI) == 0)
+                    {
+                        type = PAYLOAD_TYPE_PLATFORM;
+                    }
+                    else
+                    {
+                        OC_LOG_V(ERROR, TAG, "Unknown Payload type in Discovery: %d %s",
+                                cbNode->method, cbNode->requestUri);
+                        return;
+                    }
+                }
+                else if (cbNode->method == OC_REST_GET ||
+                         cbNode->method == OC_REST_PUT ||
+                         cbNode->method == OC_REST_POST ||
+                         cbNode->method == OC_REST_OBSERVE ||
+                         cbNode->method == OC_REST_OBSERVE_ALL ||
+                         cbNode->method == OC_REST_DELETE)
+                {
+                    OC_LOG_V(INFO, TAG, "Assuming PAYLOAD_TYPE_REPRESENTATION: %d %s",
+                            cbNode->method, cbNode->requestUri);
+                    type = PAYLOAD_TYPE_REPRESENTATION;
+                }
+                else
+                {
+                    OC_LOG_V(ERROR, TAG, "Unknown Payload type: %d %s",
+                            cbNode->method, cbNode->requestUri);
+                    return;
+                }
+
+                if(OC_STACK_OK != OCParsePayload(&response.payload,
+                            type,
+                            responseInfo->info.payload,
+                            responseInfo->info.payloadSize))
+                {
+                    OC_LOG(ERROR, TAG, "Error converting payload");
+                    OCPayloadDestroy(response.payload);
+                    return;
+                }
             }
 
             response.numRcvdVendorSpecificHeaderOptions = 0;
@@ -1059,8 +1216,18 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
                 //First option always with option ID is COAP_OPTION_OBSERVE if it is available.
                 if(responseInfo->info.options[0].optionID == COAP_OPTION_OBSERVE)
                 {
-                    memcpy (&(response.sequenceNumber),
-                            &(responseInfo->info.options[0].optionData), sizeof(uint32_t));
+                    size_t i;
+                    uint32_t observationOption;
+                    uint8_t* optionData = (uint8_t*)responseInfo->info.options[0].optionData;
+                    for (observationOption=0, i=0;
+                            i<sizeof(uint32_t) && i<responseInfo->info.options[0].optionLength;
+                            i++)
+                    {
+                        observationOption =
+                            (observationOption << 8) | optionData[i];
+                    }
+                    response.sequenceNumber = observationOption;
+
                     response.numRcvdVendorSpecificHeaderOptions = responseInfo->info.numOptions - 1;
                     start = 1;
                 }
@@ -1071,7 +1238,7 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
 
                 if(response.numRcvdVendorSpecificHeaderOptions > MAX_HEADER_OPTIONS)
                 {
-                    OC_LOG(ERROR, TAG, PCF("#header options are more than MAX_HEADER_OPTIONS"));
+                    OC_LOG(ERROR, TAG, "#header options are more than MAX_HEADER_OPTIONS");
                     OCPayloadDestroy(response.payload);
                     return;
                 }
@@ -1087,7 +1254,7 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
                 response.sequenceNumber > OC_OFFSET_SEQUENCE_NUMBER &&
                 response.sequenceNumber <= cbNode->sequenceNumber)
             {
-                OC_LOG_V(INFO, TAG, PCF("Received stale notification. Number :%d"),
+                OC_LOG_V(INFO, TAG, "Received stale notification. Number :%d",
                                                  response.sequenceNumber);
             }
             else
@@ -1113,7 +1280,7 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
             if(responseInfo->info.type == CA_MSG_CONFIRM)
             {
                 SendDirectStackResponse(endPoint, responseInfo->info.messageId, CA_EMPTY,
-                        CA_MSG_ACKNOWLEDGE, 0, NULL, NULL, 0);
+                        CA_MSG_ACKNOWLEDGE, 0, NULL, NULL, 0, NULL);
             }
 
             OCPayloadDestroy(response.payload);
@@ -1123,26 +1290,26 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
 
     if(observer)
     {
-        OC_LOG(INFO, TAG, PCF("There is an observer associated with the response token"));
+        OC_LOG(INFO, TAG, "There is an observer associated with the response token");
         if(responseInfo->result == CA_EMPTY)
         {
-            OC_LOG(INFO, TAG, PCF("Receiving A ACK/RESET for this token"));
+            OC_LOG(INFO, TAG, "Receiving A ACK/RESET for this token");
             if(responseInfo->info.type == CA_MSG_RESET)
             {
-                OC_LOG(INFO, TAG, PCF("This is a RESET"));
+                OC_LOG(INFO, TAG, "This is a RESET");
                 OCStackFeedBack(responseInfo->info.token, responseInfo->info.tokenLength,
                         OC_OBSERVER_NOT_INTERESTED);
             }
             else if(responseInfo->info.type == CA_MSG_ACKNOWLEDGE)
             {
-                OC_LOG(INFO, TAG, PCF("This is a pure ACK"));
+                OC_LOG(INFO, TAG, "This is a pure ACK");
                 OCStackFeedBack(responseInfo->info.token, responseInfo->info.tokenLength,
                         OC_OBSERVER_STILL_INTERESTED);
             }
         }
         else if(responseInfo->result == CA_RETRANSMIT_TIMEOUT)
         {
-            OC_LOG(INFO, TAG, PCF("Receiving Time Out for an observer"));
+            OC_LOG(INFO, TAG, "Receiving Time Out for an observer");
             OCStackFeedBack(responseInfo->info.token, responseInfo->info.tokenLength,
                     OC_OBSERVER_FAILED_COMM);
         }
@@ -1151,32 +1318,34 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
 
     if(!cbNode && !observer)
     {
-        if(myStackMode == OC_CLIENT || myStackMode == OC_CLIENT_SERVER)
+        if(myStackMode == OC_CLIENT || myStackMode == OC_CLIENT_SERVER
+           || myStackMode == OC_GATEWAY)
         {
-            OC_LOG(INFO, TAG, PCF("This is a client, but no cbNode was found for token"));
+            OC_LOG(INFO, TAG, "This is a client, but no cbNode was found for token");
             if(responseInfo->result == CA_EMPTY)
             {
-                OC_LOG(INFO, TAG, PCF("Receiving CA_EMPTY in the ocstack"));
+                OC_LOG(INFO, TAG, "Receiving CA_EMPTY in the ocstack");
             }
             else
             {
-                OC_LOG(INFO, TAG, PCF("Received a message without callbacks. Sending RESET"));
+                OC_LOG(INFO, TAG, "Received a message without callbacks. Sending RESET");
                 SendDirectStackResponse(endPoint, responseInfo->info.messageId, CA_EMPTY,
-                        CA_MSG_RESET, 0, NULL, NULL, 0);
+                        CA_MSG_RESET, 0, NULL, NULL, 0, NULL);
             }
         }
 
-        if(myStackMode == OC_SERVER || myStackMode == OC_CLIENT_SERVER)
+        if(myStackMode == OC_SERVER || myStackMode == OC_CLIENT_SERVER
+           || myStackMode == OC_GATEWAY)
         {
-            OC_LOG(INFO, TAG, PCF("This is a server, but no observer was found for token"));
+            OC_LOG(INFO, TAG, "This is a server, but no observer was found for token");
             if (responseInfo->info.type == CA_MSG_ACKNOWLEDGE)
             {
-                OC_LOG_V(INFO, TAG, PCF("Received ACK at server for messageId : %d"),
+                OC_LOG_V(INFO, TAG, "Received ACK at server for messageId : %d",
                                             responseInfo->info.messageId);
             }
             if (responseInfo->info.type == CA_MSG_RESET)
             {
-                OC_LOG_V(INFO, TAG, PCF("Received RESET at server for messageId : %d"),
+                OC_LOG_V(INFO, TAG, "Received RESET at server for messageId : %d",
                                             responseInfo->info.messageId);
             }
         }
@@ -1184,7 +1353,7 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
         return;
     }
 
-    OC_LOG(INFO, TAG, PCF("Exit HandleCAResponses"));
+    OC_LOG(INFO, TAG, "Exit HandleCAResponses");
 }
 
 /*
@@ -1193,20 +1362,20 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
  */
 void HandleCAErrorResponse(const CAEndpoint_t *endPoint, const CAErrorInfo_t *errrorInfo)
 {
-    OC_LOG(INFO, TAG, PCF("Enter HandleCAErrorResponse"));
+    OC_LOG(INFO, TAG, "Enter HandleCAErrorResponse");
 
     if(NULL == endPoint)
     {
-        OC_LOG(ERROR, TAG, PCF("endPoint is NULL"));
+        OC_LOG(ERROR, TAG, "endPoint is NULL");
         return;
     }
 
     if(NULL == errrorInfo)
     {
-        OC_LOG(ERROR, TAG, PCF("errrorInfo is NULL"));
+        OC_LOG(ERROR, TAG, "errrorInfo is NULL");
         return;
     }
-    OC_LOG(INFO, TAG, PCF("Exit HandleCAErrorResponse"));
+    OC_LOG(INFO, TAG, "Exit HandleCAErrorResponse");
 }
 
 /*
@@ -1217,7 +1386,7 @@ void HandleCAErrorResponse(const CAEndpoint_t *endPoint, const CAErrorInfo_t *er
 OCStackResult SendDirectStackResponse(const CAEndpoint_t* endPoint, const uint16_t coapID,
         const CAResponseResult_t responseResult, const CAMessageType_t type,
         const uint8_t numOptions, const CAHeaderOption_t *options,
-        CAToken_t token, uint8_t tokenLength)
+        CAToken_t token, uint8_t tokenLength, const char *resourceUri)
 {
     CAResponseInfo_t respInfo = {
         .result = responseResult
@@ -1229,12 +1398,31 @@ OCStackResult SendDirectStackResponse(const CAEndpoint_t* endPoint, const uint16
     respInfo.info.token = token;
     respInfo.info.tokenLength = tokenLength;
     respInfo.info.type = type;
+    respInfo.info.resourceUri = OICStrdup (resourceUri);
+    respInfo.info.acceptFormat = CA_FORMAT_UNDEFINED;
+
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+    // Add the destination to route option from the endpoint->routeData.
+    OCStackResult result = RMAddInfo(endPoint->routeData,
+                                     &(respInfo.info.options),
+                                     &(respInfo.info.numOptions));
+    if(OC_STACK_OK != result)
+    {
+        OC_LOG_V(ERROR, TAG, "Add routing option failed [%d]", result);
+        return result;
+    }
+#endif
 
     CAResult_t caResult = CASendResponse(endPoint, &respInfo);
-    if(caResult != CA_STATUS_OK)
+
+    // resourceUri in the info field is cloned in the CA layer and
+    // thus ownership is still here.
+    OICFree (respInfo.info.resourceUri);
+
+    if(CA_STATUS_OK != caResult)
     {
-        OC_LOG(ERROR, TAG, PCF("CASendResponse error"));
-        return OC_STACK_ERROR;
+        OC_LOG(ERROR, TAG, "CASendResponse error");
+        return CAResultToOCResult(caResult);
     }
     return OC_STACK_OK;
 }
@@ -1242,18 +1430,46 @@ OCStackResult SendDirectStackResponse(const CAEndpoint_t* endPoint, const uint16
 //This function will be called back by CA layer when a request is received
 void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* requestInfo)
 {
-    OC_LOG(INFO, TAG, PCF("Enter HandleCARequests"));
+    OC_LOG(INFO, TAG, "Enter HandleCARequests");
     if(!endPoint)
     {
-        OC_LOG(ERROR, TAG, PCF("endPoint is NULL"));
+        OC_LOG(ERROR, TAG, "endPoint is NULL");
         return;
     }
 
     if(!requestInfo)
     {
-        OC_LOG(ERROR, TAG, PCF("requestInfo is NULL"));
+        OC_LOG(ERROR, TAG, "requestInfo is NULL");
         return;
     }
+
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+#ifdef ROUTING_GATEWAY
+    bool needRIHandling = false;
+    /*
+     * Routing manager is going to update either of endpoint or request or both.
+     * This typecasting is done to avoid unnecessary duplication of Endpoint and requestInfo
+     * RM can update "routeData" option in endPoint so that future RI requests can be sent to proper
+     * destination. It can also remove "RM" coap header option before passing request / response to
+     * RI as this option will make no sense to either RI or application.
+     */
+    OCStackResult ret = RMHandleRequest((CARequestInfo_t *)requestInfo, (CAEndpoint_t *)endPoint,
+                                     &needRIHandling);
+    if(OC_STACK_OK != ret || !needRIHandling)
+    {
+        OC_LOG_V(INFO, TAG, "Routing status![%d]. Not forwarding to RI", ret);
+        return;
+    }
+#endif
+
+    /*
+     * Put source in sender endpoint so that the next packet from application can be routed to
+     * proper destination and remove RM header option.
+     */
+    RMUpdateInfo((CAHeaderOption_t **) &(requestInfo->info.options),
+                 (uint8_t *) &(requestInfo->info.numOptions),
+                 (CAEndpoint_t *) endPoint);
+#endif
 
     OCStackResult requestResult = OC_STACK_ERROR;
 
@@ -1265,7 +1481,7 @@ void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
 
     OCServerProtocolRequest serverRequest = {0};
 
-    OC_LOG_V(INFO, TAG, PCF("Endpoint URI : %s"), requestInfo->info.resourceUri);
+    OC_LOG_V(INFO, TAG, "Endpoint URI : %s", requestInfo->info.resourceUri);
 
     char * uriWithoutQuery = NULL;
     char * query  = NULL;
@@ -1277,8 +1493,8 @@ void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
         OC_LOG_V(ERROR, TAG, "getQueryFromUri() failed with OC error code %d\n", requestResult);
         return;
     }
-    OC_LOG_V(INFO, TAG, PCF("URI without query: %s"), uriWithoutQuery);
-    OC_LOG_V(INFO, TAG, PCF("Query : %s"), query);
+    OC_LOG_V(INFO, TAG, "URI without query: %s", uriWithoutQuery);
+    OC_LOG_V(INFO, TAG, "Query : %s", query);
 
     if(strlen(uriWithoutQuery) < MAX_URI_LENGTH)
     {
@@ -1287,7 +1503,7 @@ void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
     }
     else
     {
-        OC_LOG(ERROR, TAG, PCF("URI length exceeds MAX_URI_LENGTH."));
+        OC_LOG(ERROR, TAG, "URI length exceeds MAX_URI_LENGTH.");
         OICFree(uriWithoutQuery);
         OICFree(query);
         return;
@@ -1302,7 +1518,7 @@ void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
         }
         else
         {
-            OC_LOG(ERROR, TAG, PCF("Query length exceeds MAX_QUERY_LENGTH."));
+            OC_LOG(ERROR, TAG, "Query length exceeds MAX_QUERY_LENGTH.");
             OICFree(query);
             return;
         }
@@ -1339,7 +1555,7 @@ void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
             SendDirectStackResponse(endPoint, requestInfo->info.messageId, CA_BAD_REQ,
                         requestInfo->info.type, requestInfo->info.numOptions,
                         requestInfo->info.options, requestInfo->info.token,
-                        requestInfo->info.tokenLength);
+                        requestInfo->info.tokenLength, requestInfo->info.resourceUri);
             OICFree(serverRequest.payload);
             return;
     }
@@ -1355,11 +1571,23 @@ void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
         SendDirectStackResponse(endPoint, requestInfo->info.messageId, CA_INTERNAL_SERVER_ERROR,
                 requestInfo->info.type, requestInfo->info.numOptions,
                 requestInfo->info.options, requestInfo->info.token,
-                requestInfo->info.tokenLength);
+                requestInfo->info.tokenLength, requestInfo->info.resourceUri);
         OICFree(serverRequest.payload);
         return;
     }
     memcpy(serverRequest.requestToken, requestInfo->info.token, requestInfo->info.tokenLength);
+
+    switch (requestInfo->info.acceptFormat)
+    {
+        case CA_FORMAT_APPLICATION_CBOR:
+            serverRequest.acceptFormat = OC_FORMAT_CBOR;
+            break;
+        case CA_FORMAT_UNDEFINED:
+            serverRequest.acceptFormat = OC_FORMAT_UNDEFINED;
+            break;
+        default:
+            serverRequest.acceptFormat = OC_FORMAT_UNSUPPORTED;
+    }
 
     if (requestInfo->info.type == CA_MSG_CONFIRM)
     {
@@ -1383,11 +1611,11 @@ void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
     if (requestInfo->info.numOptions > MAX_HEADER_OPTIONS)
     {
         OC_LOG(ERROR, TAG,
-                PCF("The request info numOptions is greater than MAX_HEADER_OPTIONS"));
+                "The request info numOptions is greater than MAX_HEADER_OPTIONS");
         SendDirectStackResponse(endPoint, requestInfo->info.messageId, CA_BAD_OPT,
                 requestInfo->info.type, requestInfo->info.numOptions,
                 requestInfo->info.options, requestInfo->info.token,
-                requestInfo->info.tokenLength);
+                requestInfo->info.tokenLength, requestInfo->info.resourceUri);
         OICFree(serverRequest.payload);
         OICFree(serverRequest.requestToken);
         return;
@@ -1405,35 +1633,36 @@ void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
     if(requestResult == OC_STACK_SLOW_RESOURCE)
     {
         SendDirectStackResponse(endPoint, requestInfo->info.messageId, CA_EMPTY,
-                    CA_MSG_ACKNOWLEDGE,0, NULL, NULL, 0);
+                    CA_MSG_ACKNOWLEDGE,0, NULL, NULL, 0, NULL);
     }
     else if(requestResult != OC_STACK_OK)
     {
-        OC_LOG_V(ERROR, TAG, PCF("HandleStackRequests failed. error: %d"), requestResult);
+        OC_LOG_V(ERROR, TAG, "HandleStackRequests failed. error: %d", requestResult);
 
-        CAResponseResult_t stackResponse = OCToCAStackResult(requestResult);
+        CAResponseResult_t stackResponse =
+            OCToCAStackResult(requestResult, serverRequest.method);
 
         SendDirectStackResponse(endPoint, requestInfo->info.messageId, stackResponse,
                 requestInfo->info.type, requestInfo->info.numOptions,
                 requestInfo->info.options, requestInfo->info.token,
-                requestInfo->info.tokenLength);
+                requestInfo->info.tokenLength, requestInfo->info.resourceUri);
     }
     // requestToken is fed to HandleStackRequests, which then goes to AddServerRequest.
     // The token is copied in there, and is thus still owned by this function.
     OICFree(serverRequest.payload);
     OICFree(serverRequest.requestToken);
-    OC_LOG(INFO, TAG, PCF("Exit HandleCARequests"));
+    OC_LOG(INFO, TAG, "Exit HandleCARequests");
 }
 
 OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
 {
-    OC_LOG(INFO, TAG, PCF("Entering HandleStackRequests (OCStack Layer)"));
+    OC_LOG(INFO, TAG, "Entering HandleStackRequests (OCStack Layer)");
     OCStackResult result = OC_STACK_ERROR;
     ResourceHandling resHandling;
     OCResource *resource;
     if(!protocolRequest)
     {
-        OC_LOG(ERROR, TAG, PCF("protocolRequest is NULL"));
+        OC_LOG(ERROR, TAG, "protocolRequest is NULL");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -1441,25 +1670,25 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
             protocolRequest->tokenLength);
     if(!request)
     {
-        OC_LOG(INFO, TAG, PCF("This is a new Server Request"));
+        OC_LOG(INFO, TAG, "This is a new Server Request");
         result = AddServerRequest(&request, protocolRequest->coapID,
-                protocolRequest->delayedResNeeded, 0,
-                protocolRequest->method, protocolRequest->numRcvdVendorSpecificHeaderOptions,
+                protocolRequest->delayedResNeeded, 0, protocolRequest->method,
+                protocolRequest->numRcvdVendorSpecificHeaderOptions,
                 protocolRequest->observationOption, protocolRequest->qos,
                 protocolRequest->query, protocolRequest->rcvdVendorSpecificHeaderOptions,
                 protocolRequest->payload, protocolRequest->requestToken,
-                protocolRequest->tokenLength,
-                protocolRequest->resourceUrl, protocolRequest->reqTotalSize,
+                protocolRequest->tokenLength, protocolRequest->resourceUrl,
+                protocolRequest->reqTotalSize, protocolRequest->acceptFormat,
                 &protocolRequest->devAddr);
         if (OC_STACK_OK != result)
         {
-            OC_LOG(ERROR, TAG, PCF("Error adding server request"));
+            OC_LOG(ERROR, TAG, "Error adding server request");
             return result;
         }
 
         if(!request)
         {
-            OC_LOG(ERROR, TAG, PCF("Out of Memory"));
+            OC_LOG(ERROR, TAG, "Out of Memory");
             return OC_STACK_NO_MEMORY;
         }
 
@@ -1470,12 +1699,12 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
     }
     else
     {
-        OC_LOG(INFO, TAG, PCF("This is either a repeated or blocked Server Request"));
+        OC_LOG(INFO, TAG, "This is either a repeated or blocked Server Request");
     }
 
     if(request->requestComplete)
     {
-        OC_LOG(INFO, TAG, PCF("This Server Request is complete"));
+        OC_LOG(INFO, TAG, "This Server Request is complete");
         result = DetermineResourceHandling (request, &resHandling, &resource);
         if (result == OC_STACK_OK)
         {
@@ -1484,7 +1713,7 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
     }
     else
     {
-        OC_LOG(INFO, TAG, PCF("This Server Request is incomplete"));
+        OC_LOG(INFO, TAG, "This Server Request is incomplete");
         result = OC_STACK_CONTINUE;
     }
     return result;
@@ -1495,7 +1724,7 @@ bool validatePlatformInfo(OCPlatformInfo info)
 
     if (!info.platformID)
     {
-        OC_LOG(ERROR, TAG, PCF("No platform ID found."));
+        OC_LOG(ERROR, TAG, "No platform ID found.");
         return false;
     }
 
@@ -1505,13 +1734,13 @@ bool validatePlatformInfo(OCPlatformInfo info)
 
         if(lenManufacturerName == 0 || lenManufacturerName > MAX_MANUFACTURER_NAME_LENGTH)
         {
-            OC_LOG(ERROR, TAG, PCF("Manufacturer name fails length requirements."));
+            OC_LOG(ERROR, TAG, "Manufacturer name fails length requirements.");
             return false;
         }
     }
     else
     {
-        OC_LOG(ERROR, TAG, PCF("No manufacturer name present"));
+        OC_LOG(ERROR, TAG, "No manufacturer name present");
         return false;
     }
 
@@ -1519,7 +1748,7 @@ bool validatePlatformInfo(OCPlatformInfo info)
     {
         if(strlen(info.manufacturerUrl) > MAX_MANUFACTURER_URL_LENGTH)
         {
-            OC_LOG(ERROR, TAG, PCF("Manufacturer url fails length requirements."));
+            OC_LOG(ERROR, TAG, "Manufacturer url fails length requirements.");
             return false;
         }
     }
@@ -1558,35 +1787,44 @@ OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
 {
     if(stackState == OC_STACK_INITIALIZED)
     {
-        OC_LOG(INFO, TAG, PCF("Subsequent calls to OCInit() without calling \
-                OCStop() between them are ignored."));
+        OC_LOG(INFO, TAG, "Subsequent calls to OCInit() without calling \
+                OCStop() between them are ignored.");
         return OC_STACK_OK;
     }
+
+#ifndef ROUTING_GATEWAY
+    if (OC_GATEWAY == mode)
+    {
+        OC_LOG(ERROR, TAG, "Routing Manager not supported");
+        return OC_STACK_INVALID_PARAM;
+    }
+#endif
 
 #ifdef RA_ADAPTER
     if(!gRASetInfo)
     {
-        OC_LOG(ERROR, TAG, PCF("Need to call OCSetRAInfo before calling OCInit"));
+        OC_LOG(ERROR, TAG, "Need to call OCSetRAInfo before calling OCInit");
         return OC_STACK_ERROR;
     }
 #endif
 
     OCStackResult result = OC_STACK_ERROR;
-    OC_LOG(INFO, TAG, PCF("Entering OCInit"));
+    OC_LOG(INFO, TAG, "Entering OCInit");
 
     // Validate mode
-    if (!((mode == OC_CLIENT) || (mode == OC_SERVER) || (mode == OC_CLIENT_SERVER)))
+    if (!((mode == OC_CLIENT) || (mode == OC_SERVER) || (mode == OC_CLIENT_SERVER)
+        || (mode == OC_GATEWAY)))
     {
-        OC_LOG(ERROR, TAG, PCF("Invalid mode"));
+        OC_LOG(ERROR, TAG, "Invalid mode");
         return OC_STACK_ERROR;
     }
     myStackMode = mode;
 
-    if (mode == OC_CLIENT || mode == OC_CLIENT_SERVER)
+    if (mode == OC_CLIENT || mode == OC_CLIENT_SERVER || mode == OC_GATEWAY)
     {
         caglobals.client = true;
     }
-    if (mode == OC_SERVER || mode == OC_CLIENT_SERVER)
+    if (mode == OC_SERVER || mode == OC_CLIENT_SERVER || mode == OC_GATEWAY)
     {
         caglobals.server = true;
     }
@@ -1601,6 +1839,17 @@ OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
     {
         caglobals.clientFlags = (CATransportFlags_t)(caglobals.clientFlags|CA_IPV4|CA_IPV6);
     }
+
+#ifdef TCP_ADAPTER
+    if (!(caglobals.serverFlags & CA_IPFAMILY_MASK))
+    {
+        caglobals.serverFlags = (CATransportFlags_t)(caglobals.serverFlags|CA_IPV4);
+    }
+    if (!(caglobals.clientFlags & CA_IPFAMILY_MASK))
+    {
+        caglobals.clientFlags = (CATransportFlags_t)(caglobals.clientFlags|CA_IPV4);
+    }
+#endif
 
     defaultDeviceHandler = NULL;
     defaultDeviceHandlerCallbackParameter = NULL;
@@ -1617,14 +1866,15 @@ OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
         case OC_CLIENT:
 			CARegisterHandler(HandleCARequests, HandleCAResponses, HandleCAErrorResponse);
             result = CAResultToOCResult(CAStartDiscoveryServer());
-            OC_LOG(INFO, TAG, PCF("Client mode: CAStartDiscoveryServer"));
+            OC_LOG(INFO, TAG, "Client mode: CAStartDiscoveryServer");
             break;
         case OC_SERVER:
 			SRMRegisterHandler(HandleCARequests, HandleCAResponses, HandleCAErrorResponse);
             result = CAResultToOCResult(CAStartListeningServer());
-            OC_LOG(INFO, TAG, PCF("Server mode: CAStartListeningServer"));
+            OC_LOG(INFO, TAG, "Server mode: CAStartListeningServer");
             break;
         case OC_CLIENT_SERVER:
+        case OC_GATEWAY:
 			SRMRegisterHandler(HandleCARequests, HandleCAResponses, HandleCAErrorResponse);
             result = CAResultToOCResult(CAStartListeningServer());
             if(result == OC_STACK_OK)
@@ -1655,10 +1905,17 @@ OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
         // TODO after BeachHead delivery: consolidate into single SRMInit()
     }
 
+#ifdef ROUTING_GATEWAY
+    if (OC_GATEWAY == myStackMode)
+    {
+        result = RMInitialize();
+    }
+#endif
+
 exit:
     if(result != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, PCF("Stack initialization error"));
+        OC_LOG(ERROR, TAG, "Stack initialization error");
         deleteAllResources();
         CATerminate();
         stackState = OC_STACK_UNINITIALIZED;
@@ -1668,26 +1925,33 @@ exit:
 
 OCStackResult OCStop()
 {
-    OC_LOG(INFO, TAG, PCF("Entering OCStop"));
+    OC_LOG(INFO, TAG, "Entering OCStop");
 
     if (stackState == OC_STACK_UNINIT_IN_PROGRESS)
     {
-        OC_LOG(DEBUG, TAG, PCF("Stack already stopping, exiting"));
+        OC_LOG(DEBUG, TAG, "Stack already stopping, exiting");
         return OC_STACK_OK;
     }
     else if (stackState != OC_STACK_INITIALIZED)
     {
-        OC_LOG(ERROR, TAG, PCF("Stack not initialized"));
+        OC_LOG(ERROR, TAG, "Stack not initialized");
         return OC_STACK_ERROR;
     }
 
     stackState = OC_STACK_UNINIT_IN_PROGRESS;
 
-    #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
     // Ensure that the TTL associated with ANY and ALL presence notifications originating from
     // here send with the code "OC_STACK_PRESENCE_STOPPED" result.
     presenceResource.presenceTTL = 0;
-    #endif // WITH_PRESENCE
+#endif // WITH_PRESENCE
+
+#ifdef ROUTING_GATEWAY
+    if (OC_GATEWAY == myStackMode)
+    {
+        RMTerminate();
+    }
+#endif
 
     // Free memory dynamically allocated for resources
     deleteAllResources();
@@ -1750,7 +2014,9 @@ OCStackResult verifyUriQueryLength(const char *inputUri, uint16_t uriLen)
 /**
  *  A request uri consists of the following components in order:
  *                              example
- *  optional prefix             "coap://"
+ *  optionally one of
+ *      CoAP over UDP prefix    "coap://"
+ *      CoAP over TCP prefix    "coap+tcp://"
  *  optionally one of
  *      IPv6 address            "[1234::5678]"
  *      IPv4 address            "192.168.1.1"
@@ -1800,6 +2066,20 @@ static OCStackResult ParseRequestUri(const char *fullUri,
         return OC_STACK_INVALID_URI;
     }
 
+#ifdef TCP_ADAPTER
+    // process url scheme
+    size_t prefixLen = slash2 - fullUri;
+    bool istcp = false;
+    if (prefixLen)
+    {
+        if ((prefixLen == sizeof(COAP_TCP) - 1) && (!strncmp(fullUri, COAP_TCP, prefixLen)))
+        {
+            istcp = true;
+        }
+    }
+#endif
+
+    // TODO: this logic should come in with unit tests exercising the various strings
     // processs url prefix, if any
     size_t urlLen = slash - start;
     // port
@@ -1829,8 +2109,17 @@ static OCStackResult ParseRequestUri(const char *fullUri,
             {   // ipv4 address
                 colon = strchr(start, ':');
                 end = (colon && colon < slash) ? colon : slash;
-                adapter = (OCTransportAdapter)(adapter | OC_ADAPTER_IP);
-                flags = (OCTransportFlags)(flags | OC_IP_USE_V4);
+#ifdef TCP_ADAPTER
+                if (istcp)
+                {   // coap over tcp
+                    adapter = (OCTransportAdapter)(adapter | OC_ADAPTER_TCP);
+                }
+                else
+#endif
+                {
+                    adapter = (OCTransportAdapter)(adapter | OC_ADAPTER_IP);
+                    flags = (OCTransportFlags)(flags | OC_IP_USE_V4);
+                }
             }
             else
             {   // MAC address
@@ -1966,7 +2255,7 @@ OCStackResult OCDoResource(OCDoHandle *handle,
                             OCHeaderOption *options,
                             uint8_t numOptions)
 {
-    OC_LOG(INFO, TAG, PCF("Entering OCDoResource"));
+    OC_LOG(INFO, TAG, "Entering OCDoResource");
 
     // Validate input parameters
     VERIFY_NON_NULL(cbData, FATAL, OC_STACK_INVALID_CALLBACK);
@@ -2048,13 +2337,13 @@ OCStackResult OCDoResource(OCDoHandle *handle,
         // CA_DISCOVER will become GET and isMulticast
         requestInfo.method = CA_GET;
         break;
-    #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
     case OC_REST_PRESENCE:
         // Replacing method type with GET because "presence"
         // is a stack layer only implementation.
         requestInfo.method = CA_GET;
         break;
-    #endif
+#endif
     default:
         result = OC_STACK_INVALID_METHOD;
         goto exit;
@@ -2062,7 +2351,7 @@ OCStackResult OCDoResource(OCDoHandle *handle,
 
     if (!devAddr && !destination)
     {
-        OC_LOG_V(DEBUG, TAG, "no devAddr and no destination");
+        OC_LOG(DEBUG, TAG, "no devAddr and no destination");
         result = OC_STACK_INVALID_PARAM;
         goto exit;
     }
@@ -2089,7 +2378,7 @@ OCStackResult OCDoResource(OCDoHandle *handle,
     caResult = CAGenerateToken(&token, tokenLength);
     if (caResult != CA_STATUS_OK)
     {
-        OC_LOG(ERROR, TAG, PCF("CAGenerateToken error"));
+        OC_LOG(ERROR, TAG, "CAGenerateToken error");
         result= OC_STACK_ERROR;
         goto exit;
     }
@@ -2125,24 +2414,26 @@ OCStackResult OCDoResource(OCDoHandle *handle,
             OCConvertPayload(payload, &requestInfo.info.payload, &requestInfo.info.payloadSize))
                 != OC_STACK_OK)
         {
-            OC_LOG(ERROR, TAG, PCF("Failed to create CBOR Payload"));
+            OC_LOG(ERROR, TAG, "Failed to create CBOR Payload");
             goto exit;
         }
+        requestInfo.info.payloadFormat = CA_FORMAT_APPLICATION_CBOR;
     }
     else
     {
         requestInfo.info.payload = NULL;
         requestInfo.info.payloadSize = 0;
+        requestInfo.info.payloadFormat = CA_FORMAT_UNDEFINED;
     }
 
     if (result != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, PCF("CACreateEndpoint error"));
+        OC_LOG(ERROR, TAG, "CACreateEndpoint error");
         goto exit;
     }
 
     // prepare for response
-    #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
     if (method == OC_REST_PRESENCE)
     {
         char *presenceUri = NULL;
@@ -2157,7 +2448,7 @@ OCStackResult OCDoResource(OCDoHandle *handle,
         // look for callbacks into the application.
         resourceUri = presenceUri;
     }
-    #endif
+#endif
 
     ttl = GetTicks(MAX_CB_TIMEOUT_SECONDS * MILLISECONDS_PER_SECOND);
     result = AddClientCB(&clientCB, cbData, token, tokenLength, &resHandle,
@@ -2172,11 +2463,9 @@ OCStackResult OCDoResource(OCDoHandle *handle,
     resourceType = NULL;  // Client CB list entry now owns it
 
     // send request
-    caResult = CASendRequest(&endpoint, &requestInfo);
-    if (caResult != CA_STATUS_OK)
+    result = OCSendRequest(&endpoint, &requestInfo);
+    if (OC_STACK_OK != result)
     {
-        OC_LOG(ERROR, TAG, PCF("CASendRequest"));
-        result = OC_STACK_COMM_ERROR;
         goto exit;
     }
 
@@ -2188,7 +2477,7 @@ OCStackResult OCDoResource(OCDoHandle *handle,
 exit:
     if (result != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, PCF("OCDoResource error"));
+        OC_LOG(ERROR, TAG, "OCDoResource error");
         FindAndDeleteClientCB(clientCB);
         CADestroyToken(token);
         if (handle)
@@ -2233,7 +2522,6 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
      */
     OCStackResult ret = OC_STACK_OK;
     CAEndpoint_t endpoint = {.adapter = CA_DEFAULT_ADAPTER};
-    CAResult_t caResult;
     CAInfo_t requestData = {.type = CA_MSG_CONFIRM};
     CARequestInfo_t requestInfo = {.method = CA_GET};
 
@@ -2245,7 +2533,7 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
     ClientCB *clientCB = GetClientCB(NULL, 0, handle, NULL);
     if (!clientCB)
     {
-        OC_LOG(ERROR, TAG, PCF("Client callback not found. Called OCCancel twice?"));
+        OC_LOG(ERROR, TAG, "Client callback not found. Called OCCancel twice?");
         goto Error;
     }
 
@@ -2262,7 +2550,7 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
             }
             else
             {
-                OC_LOG(INFO, TAG, PCF("Cancelling observation as CONFIRMABLE"));
+                OC_LOG(INFO, TAG, "Cancelling observation as CONFIRMABLE");
             }
 
             requestData.type = qualityOfServiceToMessageType(qos);
@@ -2282,20 +2570,14 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
             CopyDevAddrToEndpoint(clientCB->devAddr, &endpoint);
 
             // send request
-            caResult = CASendRequest(&endpoint, &requestInfo);
-            if (caResult != CA_STATUS_OK)
-            {
-                OC_LOG(ERROR, TAG, PCF("CASendRequest error"));
-                ret = OC_STACK_ERROR;
-            }
-            ret = CAResultToOCResult (caResult);
+            ret = OCSendRequest(&endpoint, &requestInfo);
             break;
 
-        #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
         case OC_REST_PRESENCE:
             FindAndDeleteClientCB(clientCB);
             break;
-        #endif
+#endif
 
         default:
             ret = OC_STACK_INVALID_METHOD;
@@ -2323,10 +2605,10 @@ Error:
  */
 OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
 {
-    OC_LOG(INFO, TAG, PCF("RegisterPersistentStorageHandler !!"));
+    OC_LOG(INFO, TAG, "RegisterPersistentStorageHandler !!");
     if(!persistentStorageHandler)
     {
-        OC_LOG(ERROR, TAG, PCF("The persistent storage handler is invalid"));
+        OC_LOG(ERROR, TAG, "The persistent storage handler is invalid");
         return OC_STACK_INVALID_PARAM;
     }
     else
@@ -2337,7 +2619,7 @@ OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistent
                 !persistentStorageHandler->unlink ||
                 !persistentStorageHandler->write)
         {
-            OC_LOG(ERROR, TAG, PCF("The persistent storage handler is invalid"));
+            OC_LOG(ERROR, TAG, "The persistent storage handler is invalid");
             return OC_STACK_INVALID_PARAM;
         }
     }
@@ -2352,7 +2634,7 @@ OCStackResult OCProcessPresence()
 
     // the following line floods the log with messages that are irrelevant
     // to most purposes.  Uncomment as needed.
-    //OC_LOG(INFO, TAG, PCF("Entering RequestPresence"));
+    //OC_LOG(INFO, TAG, "Entering RequestPresence");
     ClientCB* cbNode = NULL;
     OCClientResponse clientResponse;
     OCStackApplicationResult cbResult = OC_STACK_DELETE_TRANSACTION;
@@ -2381,7 +2663,7 @@ OCStackResult OCProcessPresence()
         }
         if (cbNode->presence->TTLlevel >= PresenceTimeOutSize)
         {
-            OC_LOG(DEBUG, TAG, PCF("No more timeout ticks"));
+            OC_LOG(DEBUG, TAG, "No more timeout ticks");
 
             clientResponse.sequenceNumber = 0;
             clientResponse.result = OC_STACK_PRESENCE_TIMEOUT;
@@ -2407,12 +2689,11 @@ OCStackResult OCProcessPresence()
             continue;
         }
 
-        CAResult_t caResult = CA_STATUS_OK;
         CAEndpoint_t endpoint = {.adapter = CA_DEFAULT_ADAPTER};
         CAInfo_t requestData = {.type = CA_MSG_CONFIRM};
         CARequestInfo_t requestInfo = {.method = CA_GET};
 
-        OC_LOG(DEBUG, TAG, PCF("time to test server presence"));
+        OC_LOG(DEBUG, TAG, "time to test server presence");
 
         CopyDevAddrToEndpoint(cbNode->devAddr, &endpoint);
 
@@ -2423,11 +2704,9 @@ OCStackResult OCProcessPresence()
         requestInfo.method = CA_GET;
         requestInfo.info = requestData;
 
-        caResult = CASendRequest(&endpoint, &requestInfo);
-
-        if (caResult != CA_STATUS_OK)
+        result = OCSendRequest(&endpoint, &requestInfo);
+        if (OC_STACK_OK != result)
         {
-            OC_LOG(ERROR, TAG, PCF("CASendRequest error"));
             goto exit;
         }
 
@@ -2437,7 +2716,7 @@ OCStackResult OCProcessPresence()
 exit:
     if (result != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, PCF("OCProcessPresence error"));
+        OC_LOG(ERROR, TAG, "OCProcessPresence error");
     }
 
     return result;
@@ -2446,11 +2725,14 @@ exit:
 
 OCStackResult OCProcess()
 {
-    #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
     OCProcessPresence();
-    #endif
+#endif
     CAHandleRequestResponse();
 
+#ifdef ROUTING_GATEWAY
+    RMProcess();
+#endif
     return OC_STACK_OK;
 }
 
@@ -2465,12 +2747,12 @@ OCStackResult OCStartPresence(const uint32_t ttl)
     if (OC_MAX_PRESENCE_TTL_SECONDS < ttl)
     {
         presenceResource.presenceTTL = OC_MAX_PRESENCE_TTL_SECONDS;
-        OC_LOG(INFO, TAG, PCF("Setting Presence TTL to max value"));
+        OC_LOG(INFO, TAG, "Setting Presence TTL to max value");
     }
     else if (0 == ttl)
     {
         presenceResource.presenceTTL = OC_DEFAULT_PRESENCE_TTL_SECONDS;
-        OC_LOG(INFO, TAG, PCF("Setting Presence TTL to default value"));
+        OC_LOG(INFO, TAG, "Setting Presence TTL to default value");
     }
     else
     {
@@ -2488,13 +2770,13 @@ OCStackResult OCStartPresence(const uint32_t ttl)
         CAResult_t caResult = CAGenerateToken(&caToken, tokenLength);
         if (caResult != CA_STATUS_OK)
         {
-            OC_LOG(ERROR, TAG, PCF("CAGenerateToken error"));
+            OC_LOG(ERROR, TAG, "CAGenerateToken error");
             CADestroyToken(caToken);
             return OC_STACK_ERROR;
         }
 
         AddObserver(OC_RSRVD_PRESENCE_URI, NULL, 0, caToken, tokenLength,
-                (OCResource *)presenceResource.handle, OC_LOW_QOS, &devAddr);
+                (OCResource *)presenceResource.handle, OC_LOW_QOS, OC_FORMAT_UNDEFINED, &devAddr);
         CADestroyToken(caToken);
     }
 
@@ -2523,7 +2805,7 @@ OCStackResult OCStopPresence()
     if(result != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG,
-                      PCF("Changing the presence resource properties to ACTIVE not successful"));
+                      "Changing the presence resource properties to ACTIVE not successful");
         return result;
     }
 
@@ -2542,9 +2824,9 @@ OCStackResult OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandler entityHandle
 
 OCStackResult OCSetPlatformInfo(OCPlatformInfo platformInfo)
 {
-    OC_LOG(INFO, TAG, PCF("Entering OCSetPlatformInfo"));
+    OC_LOG(INFO, TAG, "Entering OCSetPlatformInfo");
 
-    if(myStackMode ==  OC_SERVER || myStackMode == OC_CLIENT_SERVER)
+    if(myStackMode ==  OC_SERVER || myStackMode == OC_CLIENT_SERVER || myStackMode == OC_GATEWAY)
     {
         if (validatePlatformInfo(platformInfo))
         {
@@ -2563,11 +2845,11 @@ OCStackResult OCSetPlatformInfo(OCPlatformInfo platformInfo)
 
 OCStackResult OCSetDeviceInfo(OCDeviceInfo deviceInfo)
 {
-    OC_LOG(INFO, TAG, PCF("Entering OCSetDeviceInfo"));
+    OC_LOG(INFO, TAG, "Entering OCSetDeviceInfo");
 
     if (!deviceInfo.deviceName || deviceInfo.deviceName[0] == '\0')
     {
-        OC_LOG(ERROR, TAG, PCF("Null or empty device name."));
+        OC_LOG(ERROR, TAG, "Null or empty device name.");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -2586,7 +2868,7 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
     char *str = NULL;
     OCStackResult result = OC_STACK_ERROR;
 
-    OC_LOG(INFO, TAG, PCF("Entering OCCreateResource"));
+    OC_LOG(INFO, TAG, "Entering OCCreateResource");
 
     if(myStackMode == OC_CLIENT)
     {
@@ -2595,13 +2877,13 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
     // Validate parameters
     if(!uri || uri[0]=='\0' || strlen(uri)>=MAX_URI_LENGTH )
     {
-        OC_LOG(ERROR, TAG, PCF("URI is empty or too long"));
+        OC_LOG(ERROR, TAG, "URI is empty or too long");
         return OC_STACK_INVALID_URI;
     }
     // Is it presented during resource discovery?
     if (!handle || !resourceTypeName || resourceTypeName[0] == '\0' )
     {
-        OC_LOG(ERROR, TAG, PCF("Input parameter is NULL"));
+        OC_LOG(ERROR, TAG, "Input parameter is NULL");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -2615,7 +2897,7 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
             > (OC_ACTIVE | OC_DISCOVERABLE | OC_OBSERVABLE | OC_SLOW | OC_SECURE |
                OC_EXPLICIT_DISCOVERABLE))
     {
-        OC_LOG(ERROR, TAG, PCF("Invalid property"));
+        OC_LOG(ERROR, TAG, "Invalid property");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -2663,7 +2945,7 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
     result = BindResourceTypeToResource(pointer, resourceTypeName);
     if (result != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, PCF("Error adding resourcetype"));
+        OC_LOG(ERROR, TAG, "Error adding resourcetype");
         goto exit;
     }
 
@@ -2671,7 +2953,7 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
     result = BindResourceInterfaceToResource(pointer, resourceInterfaceName);
     if (result != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, PCF("Error adding resourceinterface"));
+        OC_LOG(ERROR, TAG, "Error adding resourceinterface");
         goto exit;
     }
 
@@ -2691,13 +2973,13 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
     *handle = pointer;
     result = OC_STACK_OK;
 
-    #ifdef WITH_PRESENCE
-    if(presenceResource.handle)
+#ifdef WITH_PRESENCE
+    if (presenceResource.handle)
     {
         ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
         SendPresenceNotification(pointer->rsrcType, OC_PRESENCE_TRIGGER_CREATE);
     }
-    #endif
+#endif
 exit:
     if (result != OC_STACK_OK)
     {
@@ -2715,7 +2997,7 @@ OCStackResult OCBindResource(
     OCResource *resource = NULL;
     uint8_t i = 0;
 
-    OC_LOG(INFO, TAG, PCF("Entering OCBindResource"));
+    OC_LOG(INFO, TAG, "Entering OCBindResource");
 
     // Validate parameters
     VERIFY_NON_NULL(collectionHandle, ERROR, OC_STACK_ERROR);
@@ -2723,7 +3005,7 @@ OCStackResult OCBindResource(
     // Container cannot contain itself
     if (collectionHandle == resourceHandle)
     {
-        OC_LOG(ERROR, TAG, PCF("Added handle equals collection handle"));
+        OC_LOG(ERROR, TAG, "Added handle equals collection handle");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -2731,7 +3013,7 @@ OCStackResult OCBindResource(
     resource = findResource((OCResource *) collectionHandle);
     if (!resource)
     {
-        OC_LOG(ERROR, TAG, PCF("Collection handle not found"));
+        OC_LOG(ERROR, TAG, "Collection handle not found");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -2742,16 +3024,16 @@ OCStackResult OCBindResource(
         if (!resource->rsrcResources[i])
         {
             resource->rsrcResources[i] = (OCResource *) resourceHandle;
-            OC_LOG(INFO, TAG, PCF("resource bound"));
+            OC_LOG(INFO, TAG, "resource bound");
 
-            #ifdef WITH_PRESENCE
-            if(presenceResource.handle)
+#ifdef WITH_PRESENCE
+            if (presenceResource.handle)
             {
                 ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
                 SendPresenceNotification(((OCResource *) resourceHandle)->rsrcType,
                         OC_PRESENCE_TRIGGER_CHANGE);
             }
-            #endif
+#endif
             return OC_STACK_OK;
 
         }
@@ -2767,7 +3049,7 @@ OCStackResult OCUnBindResource(
     OCResource *resource = NULL;
     uint8_t i = 0;
 
-    OC_LOG(INFO, TAG, PCF("Entering OCUnBindResource"));
+    OC_LOG(INFO, TAG, "Entering OCUnBindResource");
 
     // Validate parameters
     VERIFY_NON_NULL(collectionHandle, ERROR, OC_STACK_ERROR);
@@ -2775,7 +3057,7 @@ OCStackResult OCUnBindResource(
     // Container cannot contain itself
     if (collectionHandle == resourceHandle)
     {
-        OC_LOG(ERROR, TAG, PCF("removing handle equals collection handle"));
+        OC_LOG(ERROR, TAG, "removing handle equals collection handle");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -2783,7 +3065,7 @@ OCStackResult OCUnBindResource(
     resource = findResource((OCResource *) collectionHandle);
     if (!resource)
     {
-        OC_LOG(ERROR, TAG, PCF("Collection handle not found"));
+        OC_LOG(ERROR, TAG, "Collection handle not found");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -2794,22 +3076,22 @@ OCStackResult OCUnBindResource(
         if (resourceHandle == resource->rsrcResources[i])
         {
             resource->rsrcResources[i] = (OCResource *) NULL;
-            OC_LOG(INFO, TAG, PCF("resource unbound"));
+            OC_LOG(INFO, TAG, "resource unbound");
 
             // Send notification when resource is unbounded successfully.
-            #ifdef WITH_PRESENCE
-            if(presenceResource.handle)
+#ifdef WITH_PRESENCE
+            if (presenceResource.handle)
             {
                 ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
                 SendPresenceNotification(((OCResource *) resourceHandle)->rsrcType,
                         OC_PRESENCE_TRIGGER_CHANGE);
             }
-            #endif
+#endif
             return OC_STACK_OK;
         }
     }
 
-    OC_LOG(INFO, TAG, PCF("resource not found in collection"));
+    OC_LOG(INFO, TAG, "resource not found in collection");
 
     // Unable to add resourceHandle, so return error
     return OC_STACK_ERROR;
@@ -2903,19 +3185,19 @@ OCStackResult OCBindResourceTypeToResource(OCResourceHandle handle,
     resource = findResource((OCResource *) handle);
     if (!resource)
     {
-        OC_LOG(ERROR, TAG, PCF("Resource not found"));
+        OC_LOG(ERROR, TAG, "Resource not found");
         return OC_STACK_ERROR;
     }
 
     result = BindResourceTypeToResource(resource, resourceTypeName);
 
-    #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
     if(presenceResource.handle)
     {
         ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
         SendPresenceNotification(resource->rsrcType, OC_PRESENCE_TRIGGER_CHANGE);
     }
-    #endif
+#endif
 
     return result;
 }
@@ -2930,19 +3212,19 @@ OCStackResult OCBindResourceInterfaceToResource(OCResourceHandle handle,
     resource = findResource((OCResource *) handle);
     if (!resource)
     {
-        OC_LOG(ERROR, TAG, PCF("Resource not found"));
+        OC_LOG(ERROR, TAG, "Resource not found");
         return OC_STACK_ERROR;
     }
 
     result = BindResourceInterfaceToResource(resource, resourceInterfaceName);
 
-    #ifdef WITH_PRESENCE
-    if(presenceResource.handle)
+#ifdef WITH_PRESENCE
+    if (presenceResource.handle)
     {
         ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
         SendPresenceNotification(resource->rsrcType, OC_PRESENCE_TRIGGER_CHANGE);
     }
-    #endif
+#endif
 
     return result;
 }
@@ -2976,20 +3258,20 @@ OCStackResult OCDeleteResource(OCResourceHandle handle)
 {
     if (!handle)
     {
-        OC_LOG(ERROR, TAG, PCF("Invalid handle for deletion"));
+        OC_LOG(ERROR, TAG, "Invalid handle for deletion");
         return OC_STACK_INVALID_PARAM;
     }
 
     OCResource *resource = findResource((OCResource *) handle);
     if (resource == NULL)
     {
-        OC_LOG(ERROR, TAG, PCF("Resource not found"));
+        OC_LOG(ERROR, TAG, "Resource not found");
         return OC_STACK_NO_RESOURCE;
     }
 
     if (deleteResource((OCResource *) handle) != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, PCF("Error deleting resource"));
+        OC_LOG(ERROR, TAG, "Error deleting resource");
         return OC_STACK_ERROR;
     }
 
@@ -3123,7 +3405,7 @@ OCStackResult OCBindResourceHandler(OCResourceHandle handle,
     resource = findResource((OCResource *)handle);
     if (!resource)
     {
-        OC_LOG(ERROR, TAG, PCF("Resource not found"));
+        OC_LOG(ERROR, TAG, "Resource not found");
         return OC_STACK_ERROR;
     }
 
@@ -3131,13 +3413,13 @@ OCStackResult OCBindResourceHandler(OCResourceHandle handle,
     resource->entityHandler = entityHandler;
     resource->entityHandlerCallbackParam = callbackParam;
 
-    #ifdef WITH_PRESENCE
-    if(presenceResource.handle)
+#ifdef WITH_PRESENCE
+    if (presenceResource.handle)
     {
         ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
         SendPresenceNotification(resource->rsrcType, OC_PRESENCE_TRIGGER_CHANGE);
     }
-    #endif
+#endif
 
     return OC_STACK_OK;
 }
@@ -3149,7 +3431,7 @@ OCEntityHandler OCGetResourceHandler(OCResourceHandle handle)
     resource = findResource((OCResource *)handle);
     if (!resource)
     {
-        OC_LOG(ERROR, TAG, PCF("Resource not found"));
+        OC_LOG(ERROR, TAG, "Resource not found");
         return NULL;
     }
 
@@ -3219,13 +3501,13 @@ OCStackResult OCNotifyAllObservers(OCResourceHandle handle, OCQualityOfService q
     OCMethod method = OC_REST_NOMETHOD;
     uint32_t maxAge = 0;
 
-    OC_LOG(INFO, TAG, PCF("Notifying all observers"));
-    #ifdef WITH_PRESENCE
+    OC_LOG(INFO, TAG, "Notifying all observers");
+#ifdef WITH_PRESENCE
     if(handle == presenceResource.handle)
     {
         return OC_STACK_OK;
     }
-    #endif // WITH_PRESENCE
+#endif // WITH_PRESENCE
     VERIFY_NON_NULL(handle, ERROR, OC_STACK_ERROR);
 
     // Verify that the resource exists
@@ -3240,12 +3522,12 @@ OCStackResult OCNotifyAllObservers(OCResourceHandle handle, OCQualityOfService q
         incrementSequenceNumber(resPtr);
         method = OC_REST_OBSERVE;
         maxAge = MAX_OBSERVE_AGE;
-        #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
         result = SendAllObserverNotification (method, resPtr, maxAge,
                 OC_PRESENCE_TRIGGER_DELETE, NULL, qos);
-        #else
+#else
         result = SendAllObserverNotification (method, resPtr, maxAge, qos);
-        #endif
+#endif
         return result;
     }
 }
@@ -3257,7 +3539,7 @@ OCNotifyListOfObservers (OCResourceHandle handle,
                          const OCRepPayload       *payload,
                          OCQualityOfService qos)
 {
-    OC_LOG(INFO, TAG, PCF("Entering OCNotifyListOfObservers"));
+    OC_LOG(INFO, TAG, "Entering OCNotifyListOfObservers");
 
     OCResource *resPtr = NULL;
     //TODO: we should allow the server to define this
@@ -3285,7 +3567,7 @@ OCStackResult OCDoResponse(OCEntityHandlerResponse *ehResponse)
     OCStackResult result = OC_STACK_ERROR;
     OCServerRequest *serverRequest = NULL;
 
-    OC_LOG(INFO, TAG, PCF("Entering OCDoResponse"));
+    OC_LOG(INFO, TAG, "Entering OCDoResponse");
 
     // Validate input parameters
     VERIFY_NON_NULL(ehResponse, ERROR, OC_STACK_INVALID_PARAM);
@@ -3330,7 +3612,7 @@ OCStackResult OCChangeResourceProperty(OCResourceProperty * inputProperty,
     if (resourceProperties
             > (OC_ACTIVE | OC_DISCOVERABLE | OC_OBSERVABLE | OC_SLOW))
     {
-        OC_LOG(ERROR, TAG, PCF("Invalid property"));
+        OC_LOG(ERROR, TAG, "Invalid property");
         return OC_STACK_INVALID_PARAM;
     }
     if(!enable)
@@ -3352,7 +3634,7 @@ OCStackResult initResources()
     headResource = NULL;
     tailResource = NULL;
     // Init Virtual Resources
-    #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
     presenceResource.presenceTTL = OC_DEFAULT_PRESENCE_TTL_SECONDS;
 
     result = OCCreateResource(&presenceResource.handle,
@@ -3366,7 +3648,7 @@ OCStackResult initResources()
     result = OCChangeResourceProperty(
             &(((OCResource *) presenceResource.handle)->resourceProperties),
             OC_ACTIVE, 0);
-    #endif
+#endif
 
     if (result == OC_STACK_OK)
     {
@@ -3414,24 +3696,24 @@ void deleteAllResources()
     while (pointer)
     {
         temp = pointer->next;
-        #ifdef WITH_PRESENCE
-        if(pointer != (OCResource *) presenceResource.handle)
+#ifdef WITH_PRESENCE
+        if (pointer != (OCResource *) presenceResource.handle)
         {
-        #endif // WITH_PRESENCE
+#endif // WITH_PRESENCE
             deleteResource(pointer);
-        #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
         }
-        #endif // WITH_PRESENCE
+#endif // WITH_PRESENCE
         pointer = temp;
     }
 
     SRMDeInitSecureResources();
 
-    #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
     // Ensure that the last resource to be deleted is the presence resource. This allows for all
     // presence notification attributed to their deletion to be processed.
     deleteResource((OCResource *) presenceResource.handle);
-    #endif // WITH_PRESENCE
+#endif // WITH_PRESENCE
 }
 
 OCStackResult deleteResource(OCResource *resource)
@@ -3440,7 +3722,7 @@ OCStackResult deleteResource(OCResource *resource)
     OCResource *temp = NULL;
     if(!resource)
     {
-        OC_LOG_V(DEBUG,TAG,"resource is NULL");
+        OC_LOG(DEBUG,TAG,"resource is NULL");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -3453,12 +3735,12 @@ OCStackResult deleteResource(OCResource *resource)
         {
             // Invalidate all Resource Properties.
             resource->resourceProperties = (OCResourceProperty) 0;
-            #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
             if(resource != (OCResource *) presenceResource.handle)
             {
-            #endif // WITH_PRESENCE
+#endif // WITH_PRESENCE
                 OCNotifyAllObservers((OCResourceHandle)resource, OC_HIGH_QOS);
-            #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
             }
 
             if(presenceResource.handle)
@@ -3466,7 +3748,7 @@ OCStackResult deleteResource(OCResource *resource)
                 ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
                 SendPresenceNotification(resource->rsrcType, OC_PRESENCE_TRIGGER_DELETE);
             }
-            #endif
+#endif
             // Only resource in list.
             if (temp == headResource && temp == tailResource)
             {
@@ -3779,7 +4061,7 @@ const OicUuid_t* OCGetServerInstanceID(void)
 
     if (GetDoxmDeviceID(&sid) != OC_STACK_OK)
     {
-        OC_LOG(FATAL, TAG, PCF("Generate UUID for Server Instance failed!"));
+        OC_LOG(FATAL, TAG, "Generate UUID for Server Instance failed!");
         return NULL;
     }
     generated = true;
@@ -3800,7 +4082,7 @@ const char* OCGetServerInstanceIDString(void)
 
     if(OCConvertUuidToString(sid->id, sidStr) != RAND_UUID_OK)
     {
-        OC_LOG(FATAL, TAG, PCF("Generate UUID String for Server Instance failed!"));
+        OC_LOG(FATAL, TAG, "Generate UUID String for Server Instance failed!");
         return NULL;
     }
 
@@ -3818,9 +4100,9 @@ CAResult_t OCSelectNetwork()
             CA_ADAPTER_RFCOMM_BTEDR,
             CA_ADAPTER_GATT_BTLE
 
-            #ifdef RA_ADAPTER
+#ifdef RA_ADAPTER
             ,CA_ADAPTER_REMOTE_ACCESS
-            #endif
+#endif
         };
     int numConnTypes = sizeof(connTypes)/sizeof(connTypes[0]);
 
@@ -3881,3 +4163,4 @@ OCStackResult CAResultToOCResult(CAResult_t caResult)
             return OC_STACK_ERROR;
     }
 }
+

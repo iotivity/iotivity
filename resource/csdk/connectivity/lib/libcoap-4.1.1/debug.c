@@ -248,16 +248,21 @@ size_t coap_print_addr(const struct coap_address_t *addr, unsigned char *buf, si
 #ifndef WITH_CONTIKI
 void coap_show_pdu(const coap_pdu_t *pdu)
 {
+#ifndef WITH_TCP
     unsigned char buf[COAP_MAX_PDU_SIZE]; /* need some space for output creation */
+#else
+    unsigned char buf[COAP_TCP_LENGTH_LIMIT_32_BIT]; /* need some space for output creation */
+#endif
     int encode = 0, have_options = 0;
     coap_opt_iterator_t opt_iter;
     coap_opt_t *option;
 
-    fprintf(COAP_DEBUG_FD, "v:%d t:%d tkl:%d c:%d id:%u", pdu->hdr->version, pdu->hdr->type,
-            pdu->hdr->token_length, pdu->hdr->code, ntohs(pdu->hdr->id));
+    fprintf(COAP_DEBUG_FD, "v:%d t:%d tkl:%d c:%d id:%u", pdu->hdr->coap_hdr_udp_t.version,
+            pdu->hdr->coap_hdr_udp_t.type, pdu->hdr->coap_hdr_udp_t.token_length,
+            pdu->hdr->coap_hdr_udp_t.code, ntohs(pdu->hdr->coap_hdr_udp_t.id));
 
     /* show options, if any */
-    coap_option_iterator_init((coap_pdu_t *) pdu, &opt_iter, COAP_OPT_ALL);
+    coap_option_iterator_init((coap_pdu_t *) pdu, &opt_iter, COAP_OPT_ALL, coap_udp);
 
     while ((option = coap_option_next(&opt_iter)))
     {
@@ -311,15 +316,16 @@ coap_show_pdu(const coap_pdu_t *pdu)
     unsigned char buf[80]; /* need some space for output creation */
 
     PRINTF("v:%d t:%d oc:%d c:%d id:%u",
-            pdu->hdr->version, pdu->hdr->type,
-            pdu->hdr->optcnt, pdu->hdr->code, uip_ntohs(pdu->hdr->id));
+            pdu->hdr->coap_hdr_udp_t.version, pdu->hdr->coap_hdr_udp_t.type,
+            pdu->hdr->coap_hdr_udp_t.optcnt, pdu->hdr->coap_hdr_udp_t.code,
+            uip_ntohs(pdu->hdr->coap_hdr_udp_t.id));
 
     /* show options, if any */
-    if (pdu->hdr->optcnt)
+    if (pdu->hdr->coap_hdr_udp_t.optcnt)
     {
         coap_opt_iterator_t opt_iter;
         coap_opt_t *option;
-        coap_option_iterator_init((coap_pdu_t *)pdu, &opt_iter, COAP_OPT_ALL);
+        coap_option_iterator_init((coap_pdu_t *)pdu, &opt_iter, COAP_OPT_ALL, coap_udp);
 
         PRINTF(" o:");
         while ((option = coap_option_next(&opt_iter)))

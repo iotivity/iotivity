@@ -18,9 +18,8 @@
  *
  ******************************************************************/
 /**
- * @file    RCSResourceAttributes.java
- *
- * @brief     This file provides a class which represents the attributes for a resource.
+ * @file
+ * This file provides a class which represents the attributes for a resource.
  */
 
 package org.iotivity.ResourceEncapsulation.common;
@@ -33,7 +32,7 @@ import org.iotivity.ResourceEncapsulation.server.RCSResourceObject;
  * RCSResourceAttributes represents the attributes for a resource.
  *
  * An attribute value can be one of various types : integer, double, boolean,
- * String<br/>
+ * String.
  *
  * <p>
  * If developer on client side wants to get the RCSResourceAttributes for the
@@ -111,7 +110,6 @@ public class RCSResourceAttributes {
      *            - Key of the element.
      *
      * @return int - integer value of key provided.
-     *
      */
     public int getValueInt(String key) {
         Integer value = 0;
@@ -130,7 +128,6 @@ public class RCSResourceAttributes {
      *            - Key of the element.
      *
      * @return boolean - boolean value of key provided.
-     *
      */
     public double getValueDouble(String key) {
         double value = 0;
@@ -149,7 +146,6 @@ public class RCSResourceAttributes {
      *            - Key of the element.
      *
      * @return boolean - boolean value of key provided.
-     *
      */
     public boolean getValueBool(String key) {
         Boolean value = false;
@@ -168,7 +164,6 @@ public class RCSResourceAttributes {
      *            - Key of the element.
      *
      * @return String - String value of key provided.
-     *
      */
     public String getValueString(String key) {
         String value = "";
@@ -189,6 +184,7 @@ public class RCSResourceAttributes {
      * @param value
      *            - integer value of key to be set.
      *
+     * @throws RCSException
      */
     public void setValueInt(String key, int value) throws RCSException {
         try {
@@ -207,6 +203,7 @@ public class RCSResourceAttributes {
      * @param value
      *            - double value of key to be set.
      *
+     * @throws RCSException
      */
     public void setValueDouble(String key, double value) throws RCSException {
         try {
@@ -225,6 +222,7 @@ public class RCSResourceAttributes {
      * @param value
      *            - integer value of key to be set.
      *
+     * @throws RCSException
      */
     public void setValueBool(String key, boolean value) throws RCSException {
         try {
@@ -243,6 +241,7 @@ public class RCSResourceAttributes {
      * @param value
      *            - integer value of key to be set.
      *
+     * @throws RCSException
      */
     public void setValueString(String key, String value) throws RCSException {
         try {

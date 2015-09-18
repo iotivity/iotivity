@@ -1,4 +1,4 @@
-/******************************************************************
+/* *****************************************************************
  *
  * Copyright 2015 Samsung Electronics All Rights Reserved.
  *
@@ -18,11 +18,9 @@
  *
  ******************************************************************/
 /**
- * @file   RCSResourceObject.java
- *
- *  This file contains the resource object APIs provided to the developers.
- *        RCSResourceObject is a part of the server builder module.
- *
+ * @file
+ * This file contains the resource object APIs provided to the developers.
+ * RCSResourceObject is a part of the server builder module.
  */
 
 package org.iotivity.ResourceEncapsulation.server;
@@ -114,12 +112,12 @@ public class RCSResourceObject {
      * {@link RCSResourceObject}
      */
     public enum AutoNotifyPolicy {
-        NEVER, /** < Never notify. */
-        ALWAYS, /** < Always notify. */
+        NEVER, /* < Never notify. */
+        ALWAYS, /* < Always notify. */
         UPDATED;
-        /** < When attributes are changed, notify. */
+        /* < When attributes are changed, notify. */
 
-        /**
+        /*
          * Utility API for integer to enum conversion.
          */
         public static AutoNotifyPolicy getAutoNotifyPolicy(int ordinal) {
@@ -135,17 +133,17 @@ public class RCSResourceObject {
 
     public enum SetRequestHandlerPolicy {
 
-        NEVER, /**
-         * < Server ignore when server is received set-request of
-         * attributes of the new key.
-         */
+        NEVER, /*
+                * < Server ignore when server is received set-request of
+                * attributes of the new key.
+                */
         ACCEPTANCE;
-        /**
+        /*
          * < Server creates attributes of the new key When server is received
          * set-request of attributes of the new key.
          */
 
-        /**
+        /*
          * Utility API for integer to enum conversion.
          */
         public static SetRequestHandlerPolicy getSetRequestHandlerPolicy(
@@ -279,7 +277,7 @@ public class RCSResourceObject {
      *            The thread-safety for attributes is taken care internally.
      */
     public void setAttribute(String key, int value) {
-        Log.e(LOG_TAG, "setAttribute (integer) called");
+        Log.i(LOG_TAG, "setAttribute (integer) called");
         this.nativeSetAttributeInteger(key, value);
     }
 
@@ -294,7 +292,7 @@ public class RCSResourceObject {
      *            The thread-safety for attributes is taken care internally.
      */
     public void setAttribute(String key, double value) {
-        Log.e(LOG_TAG, "setAttribute (float) called");
+        Log.i(LOG_TAG, "setAttribute (float) called");
         this.nativeSetAttributeDouble(key, value);
     }
 
@@ -309,7 +307,7 @@ public class RCSResourceObject {
      *            The thread-safety for attributes is taken care internally.
      */
     public void setAttribute(String key, boolean value) {
-        Log.e(LOG_TAG, "setAttribute (double) called ");
+        Log.i(LOG_TAG, "setAttribute (double) called ");
         this.nativeSetAttributeBool(key, value);
     }
 
@@ -324,7 +322,7 @@ public class RCSResourceObject {
      *            The thread-safety for attributes is taken care internally.
      */
     public void setAttribute(String key, String value) {
-        Log.e(LOG_TAG, "setAttribute (String) called ");
+        Log.i(LOG_TAG, "setAttribute (String) called ");
         this.nativeSetAttributeString(key, value);
     }
 
@@ -339,7 +337,7 @@ public class RCSResourceObject {
      *         The thread-safety for attributes is taken care internally.
      */
     public String getAttributeValue(String key) {
-        Log.e(LOG_TAG, "getAttributeValue called");
+        Log.i(LOG_TAG, "getAttributeValue called");
         return this.nativeGetAttributeValue(key);
     }
 
@@ -354,7 +352,7 @@ public class RCSResourceObject {
      *         The thread-safety for attributes is taken care internally.
      */
     public boolean removeAttribute(String key) {
-        Log.e(LOG_TAG, "removeAttribute called");
+        Log.i(LOG_TAG, "removeAttribute called");
         return this.nativeRemoveAttribute(key);
     }
 
@@ -370,7 +368,7 @@ public class RCSResourceObject {
      *         The thread-safety for attributes is taken care internally.
      */
     public boolean containsAttribute(String key) {
-        Log.e(LOG_TAG, "containsAttribute called");
+        Log.i(LOG_TAG, "containsAttribute called");
         return this.nativeContainsAttribute(key);
     }
 
@@ -382,7 +380,7 @@ public class RCSResourceObject {
      *         {@link RCSResourceAttributes}
      */
     public RCSResourceAttributes getAttributes() {
-        Log.e(LOG_TAG, "getAttributes called");
+        Log.i(LOG_TAG, "getAttributes called");
         return this.nativeGetAttributes();
     }
 
@@ -392,7 +390,7 @@ public class RCSResourceObject {
      * @return true if observable otherwise false
      */
     public boolean isObservable() {
-        Log.e(LOG_TAG, "isObservable called");
+        Log.i(LOG_TAG, "isObservable called");
         return this.nativeIsObservable();
     }
 
@@ -402,7 +400,7 @@ public class RCSResourceObject {
      * @return true if discoverable else false
      */
     public boolean isDiscoverable() {
-        Log.e(LOG_TAG, "isDiscoverable called");
+        Log.i(LOG_TAG, "isDiscoverable called");
         return this.nativeIsDiscoverable();
     }
 
@@ -417,11 +415,10 @@ public class RCSResourceObject {
      * listener call setGetRequestListener() API
      *
      * {@link RCSGetResponse} {@link #setGetRequestListener(IGetRequestHandler)}
-     *
      */
     public void setGetRequestHandler() {
         if (null == m_getRequestListener) {
-            Log.e(LOG_TAG, "getRequestListener is not set");
+            Log.i(LOG_TAG, "getRequestListener is not set");
             return;
         } else {
             this.nativeSetGetRequestHandler(m_getRequestListener);
@@ -439,11 +436,10 @@ public class RCSResourceObject {
      * listener call setSetRequestListener() API
      *
      * {@link RCSSetResponse} {@link #setSetRequestListener(ISetRequestHandler)}
-     *
      */
     public void setSetRequestHandler() {
         if (null == m_setRequestListener) {
-            Log.e(LOG_TAG, "setRequestListener is not set");
+            Log.i(LOG_TAG, "setRequestListener is not set");
             return;
         } else {
             this.nativeSetSetRequestHandler(m_setRequestListener);
@@ -462,7 +458,7 @@ public class RCSResourceObject {
      */
     public void addAttributeUpdatedListener(String key) {
         if (null == m_attributeUpdatedListener) {
-            Log.e(LOG_TAG, "addAttributeUpdatedListener is not set");
+            Log.i(LOG_TAG, "addAttributeUpdatedListener is not set");
             return;
         } else {
             this.nativeAddAttributeUpdatedListener(key,
@@ -487,7 +483,7 @@ public class RCSResourceObject {
      * attributes value
      */
     public void notifyObservers() {
-        Log.e(LOG_TAG, "notifyObservers called");
+        Log.i(LOG_TAG, "notifyObservers called");
         this.nativeNotify();
     }
 
@@ -498,23 +494,21 @@ public class RCSResourceObject {
      *            policy to be set
      *
      *            {@link AutoNotifyPolicy}
-     *
      */
     public void setAutoNotifyPolicy(AutoNotifyPolicy policy) {
-        Log.e(LOG_TAG, "setAutoNotifyPolicy called");
+        Log.i(LOG_TAG, "setAutoNotifyPolicy called");
         this.nativeSetAutoNotifyPolicy(policy.ordinal());
     }
 
     /**
      * API for getting auto notify policy
      *
-     * @return AntoNotify policy
+     * @return AutoNotifyPolicy
      *
      *         {@link AutoNotifyPolicy}
-     *
      */
     public AutoNotifyPolicy getAutoNotifyPolicy() {
-        Log.e(LOG_TAG, "getAutoNotifyPolicy called");
+        Log.i(LOG_TAG, "getAutoNotifyPolicy called");
         return AutoNotifyPolicy.getAutoNotifyPolicy(this
                 .nativeGetAutoNotifyPolicy());
     }
@@ -526,23 +520,21 @@ public class RCSResourceObject {
      *            policy to be set
      *
      *            {@link SetRequestHandlerPolicy}
-     *
      */
     public void setSetRequestHandlerPolicy(SetRequestHandlerPolicy policy) {
-        Log.e(LOG_TAG, "setSetRequestHandlerPolicy called");
+        Log.i(LOG_TAG, "setSetRequestHandlerPolicy called");
         this.nativeSetSetRequestHandlerPolicy(policy.ordinal());
     }
 
     /**
      * API for getting the SetRequestHandler Policy.
      *
-     * @return Property of setRequesthandler
+     * @return SetRequestHandlerPolicy
      *
      *         {@link SetRequestHandlerPolicy}
-     *
      */
     public SetRequestHandlerPolicy getSetRequestHandlerPolicy() {
-        Log.e(LOG_TAG, "getSetRequestHandlerPolicy called");
+        Log.i(LOG_TAG, "getSetRequestHandlerPolicy called");
         return SetRequestHandlerPolicy.getSetRequestHandlerPolicy(this
                 .nativeGetSetRequestHandlerPolicy());
     }

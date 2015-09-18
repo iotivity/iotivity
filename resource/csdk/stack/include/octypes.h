@@ -64,7 +64,10 @@ extern "C" {
 
 /** Resource Type.*/
 #define OC_RSRVD_RESOURCE_TYPES_URI           "/oic/res/types/d"
-
+#ifdef ROUTING_GATEWAY
+/** Gateway URI.*/
+#define OC_RSRVD_GATEWAY_URI                  "/oic/gateway"
+#endif
 #ifdef WITH_PRESENCE
 
 /** Presence URI through which the OIC devices advertise their presence.*/
@@ -293,7 +296,12 @@ typedef enum
 
 #ifdef RA_ADAPTER
     /**Remote Access over XMPP.*/
-   OC_ADAPTER_REMOTE_ACCESS = (1 << 3)
+    OC_ADAPTER_REMOTE_ACCESS = (1 << 3),
+#endif
+
+#ifdef TCP_ADAPTER
+    /** CoAP over TCP.*/
+    OC_ADAPTER_TCP           = (1 << 4)
 #endif
 
 } OCTransportAdapter;
@@ -385,7 +393,9 @@ typedef struct
 
     /** usually zero for default interface.*/
     uint32_t                interface;
-
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+    char                    routeData[MAX_ADDR_STR_SIZE]; //destination GatewayID:ClientId
+#endif
 } OCDevAddr;
 
 /**
@@ -410,10 +420,15 @@ typedef enum
     /** RFCOMM over Bluetooth EDR.*/
     CT_ADAPTER_RFCOMM_BTEDR = (1 << 18),
 
-    #ifdef RA_ADAPTER
+#ifdef RA_ADAPTER
     /** Remote Access over XMPP.*/
     CT_ADAPTER_REMOTE_ACCESS = (1 << 19),
-    #endif
+#endif
+
+#ifdef TCP_ADAPTER
+    /** CoAP over TCP.*/
+    CT_ADAPTER_TCP          = (1 << 20),
+#endif
 
     /** Insecure transport is the default (subject to change).*/
 
@@ -500,13 +515,24 @@ typedef enum
 } OCMethod;
 
 /**
+ *  Formats for payload encoding.
+ */
+typedef enum
+{
+    OC_FORMAT_CBOR,
+    OC_FORMAT_UNDEFINED,
+    OC_FORMAT_UNSUPPORTED,
+} OCPayloadFormat;
+
+/**
  * Host Mode of Operation.
  */
 typedef enum
 {
     OC_CLIENT = 0,
     OC_SERVER,
-    OC_CLIENT_SERVER
+    OC_CLIENT_SERVER,
+    OC_GATEWAY          /**< Client server mode along with routing capabilities.*/
 } OCMode;
 
 /**
@@ -632,6 +658,11 @@ typedef enum
 
     /** Request is not authorized by Resource Server. */
     OC_STACK_UNAUTHORIZED_REQ,
+
+    /** Error code from PDM */
+    OC_STACK_PDM_IS_NOT_INITIALIZED,
+    OC_STACK_DUPLICATE_UUID,
+    OC_STACK_INCONSISTENT_DB,
 
     /** Insert all new error codes here!.*/
     #ifdef WITH_PRESENCE
@@ -1008,7 +1039,6 @@ typedef struct
 
     /** the payload from the request PDU.*/
     OCPayload *payload;
-
 
 } OCEntityHandlerRequest;
 

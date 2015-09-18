@@ -27,7 +27,7 @@
 #include "oic_malloc.h"
 #include "logger.h"
 
-#define TAG  PCF("SRM-DOXM")
+#define TAG  "SRM-DOXM"
 
 #ifdef __cplusplus
 extern "C" {
@@ -84,6 +84,7 @@ OicSecDoxm_t * getBinDoxm()
 
     doxm->oxm[0]     = OIC_JUST_WORKS;
     doxm->oxmSel     = OIC_JUST_WORKS;
+    doxm->sct        = SYMMETRIC_PAIR_WISE_KEY;
     doxm->owned      = true;
     //TODO: Need more clarification on deviceIDFormat field type.
     //doxm.deviceIDFormat = URN;
@@ -140,6 +141,18 @@ TEST(DoxmEntityHandlerTest, DoxmEntityHandlerValidRequest)
     OICFree(req.query);
 }
 
+TEST(DoxmEntityHandlerTest, DoxmEntityHandlerDeviceIdQuery)
+{
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, InitDoxmResource());
+    char query[] = "deviceid=MjIyMjIyMjIyMjIyMjIyMg==";
+    OCEntityHandlerRequest req = OCEntityHandlerRequest();
+    req.method = OC_REST_GET;
+    req.query = OICStrdup(query);
+    EXPECT_EQ(OC_EH_ERROR, DoxmEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, &req));
+
+    OICFree(req.query);
+}
+
 //BinToDoxmJSON Tests
 TEST(BinToDoxmJSONTest, BinToDoxmJSONNullDoxm)
 {
@@ -152,7 +165,7 @@ TEST(BinToDoxmJSONTest, BinToDoxmJSONValidDoxm)
     OicSecDoxm_t * doxm =  getBinDoxm();
 
     char * json = BinToDoxmJSON(doxm);
-    OC_LOG_V(INFO, TAG, PCF("BinToDoxmJSON:%s"), json);
+    OC_LOG_V(INFO, TAG, "BinToDoxmJSON:%s", json);
     EXPECT_TRUE(json != NULL);
 
     DeleteDoxmBinData(doxm);

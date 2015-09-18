@@ -45,6 +45,9 @@ typedef struct OCServerRequest
     /** The REST method retrieved from received request PDU.*/
     OCMethod method;
 
+    /** Accept format retrieved from the received request PDU. */
+    OCPayloadFormat acceptFormat;
+
     /** resourceUrl will be filled in occoap using the path options in received request PDU.*/
     char resourceUrl[MAX_URI_LENGTH];
 
@@ -105,6 +108,9 @@ typedef struct OCServerRequest
 
     /** payload is retrieved from the payload of the received request PDU.*/
     uint8_t payload[1];
+
+    // WARNING: Do NOT add attributes after payload as they get overwritten
+    // when payload content gets copied over!
 
 } OCServerRequest;
 
@@ -199,6 +205,7 @@ OCServerResponse * GetServerResponseUsingHandle (const OCServerRequest * handle)
  * @param tokenLength                           Request token length.
  * @param resourceUrl                           URL of resource.
  * @param reqTotalSize                          Total size of the request.
+ * @param acceptFormat                          The format requested for the payload encoding.
  * @param devAddr                               Device Address.
  *
  * @return
@@ -212,6 +219,7 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
         uint8_t * payload, CAToken_t requestToken,
         uint8_t tokenLength,
         char * resourceUrl, size_t reqTotalSize,
+        OCPayloadFormat acceptFormat,
         const OCDevAddr *devAddr);
 
 /**
@@ -232,18 +240,19 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
  *     OCStackResult
  */
 OCStackResult FormOCEntityHandlerRequest(
-                                OCEntityHandlerRequest *entityHandlerRequest,
-                                OCRequestHandle request,
-                                OCMethod method,
-                                OCDevAddr *endpoint,
-                                OCResourceHandle resource,
-                                char *queryBuf,
-                                uint8_t *payload,
-                                size_t payloadSize,
-                                uint8_t numVendorOptions,
-                                OCHeaderOption *vendorOptions,
-                                OCObserveAction observeAction,
-                                OCObservationId observeID);
+        OCEntityHandlerRequest * entityHandlerRequest,
+        OCRequestHandle request,
+        OCMethod method,
+        OCDevAddr *endpoint,
+        OCResourceHandle resource,
+        char * queryBuf,
+        OCPayloadType payloadType,
+        uint8_t * payload,
+        size_t payloadSize,
+        uint8_t numVendorOptions,
+        OCHeaderOption * vendorOptions,
+        OCObserveAction observeAction,
+        OCObservationId observeID);
 
 /**
  * Find a server request in the server request list and delete

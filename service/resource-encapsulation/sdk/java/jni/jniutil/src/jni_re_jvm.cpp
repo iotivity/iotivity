@@ -29,18 +29,26 @@ jclass g_cls_String = NULL;
 jclass g_cls_LinkedList = NULL;
 jclass g_cls_Iterator = NULL;
 jclass g_cls_Vector = NULL;
+jclass g_cls_Map = NULL;
+jclass g_cls_Set = NULL;
+jclass g_cls_MapEntry = NULL;
 jclass g_cls_RCSRemoteResourceObject = NULL;
 jclass g_cls_RCSRemoteResourceAttributesObject = NULL;
 jclass g_cls_RCSException = NULL;
 
 jclass g_cls_RCSResourceObject = NULL;
 jclass g_cls_RCSRequest = NULL;
+jclass g_cls_RCSBundleInfo = NULL;
 
 jmethodID g_mid_Integer_ctor = NULL;
 jmethodID g_mid_Double_ctor = NULL;
 jmethodID g_mid_Boolean_ctor = NULL;
 jmethodID g_mid_LinkedList_ctor = NULL;
+jmethodID g_mid_Set_iterator = NULL;
 jmethodID g_mid_LinkedList_add_object = NULL;
+jmethodID g_mid_Map_entrySet = NULL;
+jmethodID g_mid_MapEntry_getKey = NULL;
+jmethodID g_mid_MapEntry_getValue = NULL;
 jmethodID g_mid_Iterator_hasNext = NULL;
 jmethodID g_mid_Iterator_next = NULL;
 jmethodID g_mid_RCSRemoteResourceObject_ctor = NULL;
@@ -49,7 +57,7 @@ jmethodID g_mid_RCSException_ctor = NULL;
 
 jmethodID g_mid_RCSResourceObject_ctor = NULL;
 jmethodID g_mid_RCSRequest_ctor = NULL;
-
+jmethodID g_mid_RCSBundleInfo_ctor = NULL;
 
 // JNI OnLoad
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
@@ -111,6 +119,35 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
     g_mid_LinkedList_add_object = env->GetMethodID(g_cls_LinkedList, "add", "(Ljava/lang/Object;)Z");
     if (!g_mid_LinkedList_add_object) return JNI_ERR;
 
+    //Map
+    clazz = env->FindClass("java/util/Map");
+    if (!clazz) return JNI_ERR;
+    g_cls_Map = (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+
+    g_mid_Map_entrySet = env->GetMethodID(g_cls_Map, "entrySet", "()Ljava/util/Set;");
+    if (!g_mid_Map_entrySet) return JNI_ERR;
+
+    //MapEntry
+    clazz = env->FindClass("java/util/Map$Entry");
+    if (!clazz) return JNI_ERR;
+    g_cls_MapEntry = (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+
+    g_mid_MapEntry_getKey = env->GetMethodID(g_cls_MapEntry, "getKey", "()Ljava/lang/Object;");
+    if (!g_mid_MapEntry_getKey) return JNI_ERR;
+    g_mid_MapEntry_getValue = env->GetMethodID(g_cls_MapEntry, "getValue", "()Ljava/lang/Object;");
+    if (!g_mid_MapEntry_getValue) return JNI_ERR;
+
+    //Set
+    clazz = env->FindClass("java/util/Set");
+    if (!clazz) return JNI_ERR;
+    g_cls_Set = (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+
+    g_mid_Set_iterator = env->GetMethodID(g_cls_Set, "iterator", "()Ljava/util/Iterator;");
+    if (!g_mid_Set_iterator) return JNI_ERR;
+
     //Iterator
     clazz = env->FindClass("java/util/Iterator");
     if (!clazz) return JNI_ERR;
@@ -141,11 +178,12 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
 
     //ResourceState enum
     jclass tmpclazz = reinterpret_cast<jclass>
-           (env->FindClass("org/iotivity/ResourceEncapsulation/client/RCSRemoteResourceObject$ResourceState"));
-     if (!tmpclazz) {
-       LOGE("Failed to get the class ResourceState");
+            (env->FindClass("org/iotivity/ResourceEncapsulation/client/RCSRemoteResourceObject$ResourceState"));
+    if (!tmpclazz)
+    {
+        LOGE("Failed to get the class ResourceState");
         return JNI_ERR;
-   }
+    }
     ResourceStateWrapper::clazz = reinterpret_cast<jclass> (env->NewGlobalRef(tmpclazz));
     env->DeleteLocalRef(tmpclazz);
 
@@ -184,9 +222,15 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
     g_cls_RCSRequest = (jclass)env->NewGlobalRef(clazz);
     env->DeleteLocalRef(clazz);
 
-    /* g_mid_RCSRequest_ctor = env->GetMethodID(g_cls_RCSRequest, "<init>",
-                                          "(J)V");
-       if (!g_mid_RCSRequest_ctor) return JNI_ERR;*/
+    //RCSBundleInfo
+    clazz = env->FindClass("org/iotivity/ResourceEncapsulation/server/RCSBundleInfo");
+    if (!clazz) return JNI_ERR;
+    g_cls_RCSBundleInfo = (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+
+    g_mid_RCSBundleInfo_ctor = env->GetMethodID(g_cls_RCSBundleInfo, "<init>",
+                               "(J)V");
+    if (!g_mid_RCSBundleInfo_ctor) return JNI_ERR;
 
     return JNI_CURRENT_VERSION;
 }
@@ -213,6 +257,10 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved)
     env->DeleteGlobalRef(g_cls_RCSException);
     env->DeleteGlobalRef(g_cls_RCSResourceObject);
     env->DeleteGlobalRef(g_cls_RCSRequest);
+    env->DeleteGlobalRef(g_cls_Map);
+    env->DeleteGlobalRef(g_cls_Set);
+    env->DeleteGlobalRef(g_cls_MapEntry);
+    env->DeleteGlobalRef(g_cls_RCSBundleInfo);
 
     if (env)
     {

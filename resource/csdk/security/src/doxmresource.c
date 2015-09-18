@@ -47,7 +47,7 @@
 #include <strings.h>
 #endif
 
-#define TAG  PCF("SRM-DOXM")
+#define TAG  "SRM-DOXM"
 
 static OicSecDoxm_t        *gDoxm = NULL;
 static OCResourceHandle    gDoxmHandle = NULL;
@@ -60,6 +60,7 @@ static OicSecDoxm_t gDefaultDoxm =
     &gOicSecDoxmJustWorks,  /* uint16_t *oxm */
     1,                      /* size_t oxmLen */
     OIC_JUST_WORKS,         /* uint16_t oxmSel */
+    SYMMETRIC_PAIR_WISE_KEY,/* OicSecCredType_t sct */
     false,                  /* bool owned */
     {.id = {0}},            /* OicUuid_t deviceID */
     {.id = {0}},            /* OicUuid_t owner */
@@ -130,6 +131,9 @@ char * BinToDoxmJSON(const OicSecDoxm_t * doxm)
 
     //OxmSel -- Mandatory
     cJSON_AddNumberToObject(jsonDoxm, OIC_JSON_OXM_SEL_NAME, (int)doxm->oxmSel);
+
+    //sct -- Mandatory
+    cJSON_AddNumberToObject(jsonDoxm, OIC_JSON_SUPPORTED_CRED_TYPE_NAME, (int)doxm->sct);
 
     //Owned -- Mandatory
     cJSON_AddBoolToObject(jsonDoxm, OIC_JSON_OWNED_NAME, doxm->owned);
@@ -244,6 +248,19 @@ OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr)
         doxm->oxmSel = gDoxm->oxmSel;
     }
 
+    //sct -- Mandatory
+    jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_SUPPORTED_CRED_TYPE_NAME);
+    if(jsonObj)
+    {
+        VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
+        doxm->sct = (OicSecCredType_t)jsonObj->valueint;
+    }
+    else // PUT/POST JSON may not have sct so set it to the gDoxm->sct
+    {
+        VERIFY_NON_NULL(TAG, gDoxm, ERROR);
+        doxm->sct = gDoxm->sct;
+    }
+
     //Owned -- Mandatory
     jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_OWNED_NAME);
     if(jsonObj)
@@ -340,7 +357,7 @@ static bool UpdatePersistentStorage(OicSecDoxm_t * doxm)
     return bRet;
 }
 
-static bool ValidateQuery(unsigned char * query)
+static bool ValidateQuery(const char * query)
 {
     // Send doxm resource data if the state of doxm resource
     // matches with the query parameters.
@@ -350,33 +367,60 @@ static bool ValidateQuery(unsigned char * query)
     // access rules. Eventually, the PE and PM code will
     // not send a request to the /doxm Entity Handler at all
     // if it should not respond.
-    OC_LOG (INFO, TAG, PCF("In ValidateQuery"));
+    OC_LOG (INFO, TAG, "In ValidateQuery");
     if(NULL == gDoxm)
     {
         return false;
     }
 
+    bool bOwnedQry = false;         // does querystring contains 'owned' query ?
+    bool bOwnedMatch = false;       // does 'owned' query value matches with doxm.owned status?
+    bool bDeviceIDQry = false;      // does querystring contains 'deviceid' query ?
+    bool bDeviceIDMatch = false;    // does 'deviceid' query matches with doxm.deviceid ?
+
     OicParseQueryIter_t parseIter = {.attrPos = NULL};
 
-    ParseQueryIterInit(query, &parseIter);
+    ParseQueryIterInit((unsigned char*)query, &parseIter);
 
     while(GetNextQuery(&parseIter))
     {
         if(strncasecmp((char *)parseIter.attrPos, OIC_JSON_OWNED_NAME, parseIter.attrLen) == 0)
         {
+            bOwnedQry = true;
             if((strncasecmp((char *)parseIter.valPos, OIC_SEC_TRUE, parseIter.valLen) == 0) &&
                     (gDoxm->owned))
             {
-                return true;
+                bOwnedMatch = true;
             }
             else if((strncasecmp((char *)parseIter.valPos, OIC_SEC_FALSE, parseIter.valLen) == 0)
                     && (!gDoxm->owned))
             {
-                return true;
+                bOwnedMatch = true;
+            }
+        }
+
+        if(strncasecmp((char *)parseIter.attrPos, OIC_JSON_DEVICE_ID_NAME, parseIter.attrLen) == 0)
+        {
+            bDeviceIDQry = true;
+            OicUuid_t subject = {.id={0}};
+            unsigned char base64Buff[sizeof(((OicUuid_t*)0)->id)] = {};
+            uint32_t outLen = 0;
+            B64Result b64Ret = B64_OK;
+
+            b64Ret = b64Decode((char *)parseIter.valPos, parseIter.valLen, base64Buff,
+                                           sizeof(base64Buff), &outLen);
+
+            VERIFY_SUCCESS(TAG, (B64_OK == b64Ret && outLen <= sizeof(subject.id)), ERROR);
+                       memcpy(subject.id, base64Buff, outLen);
+            if(0 == memcmp(&gDoxm->deviceID.id, &subject.id, sizeof(gDoxm->deviceID.id)))
+            {
+                bDeviceIDMatch = true;
             }
         }
     }
-    return false;
+
+exit:
+    return ((bOwnedQry ? bOwnedMatch : true) && (bDeviceIDQry ? bDeviceIDMatch : true));
 }
 
 static OCEntityHandlerResult HandleDoxmGetRequest (const OCEntityHandlerRequest * ehRequest)
@@ -384,13 +428,13 @@ static OCEntityHandlerResult HandleDoxmGetRequest (const OCEntityHandlerRequest 
     char* jsonStr = NULL;
     OCEntityHandlerResult ehRet = OC_EH_OK;
 
-    OC_LOG (INFO, TAG, PCF("Doxm EntityHandle processing GET request"));
+    OC_LOG (INFO, TAG, "Doxm EntityHandle processing GET request");
 
     //Checking if Get request is a query.
     if(ehRequest->query)
     {
-        OC_LOG (INFO, TAG, PCF("HandleDoxmGetRequest processing query"));
-        if(!ValidateQuery((unsigned char *)ehRequest->query))
+        OC_LOG (INFO, TAG, "HandleDoxmGetRequest processing query");
+        if(!ValidateQuery(ehRequest->query))
         {
             ehRet = OC_EH_ERROR;
         }
@@ -408,7 +452,7 @@ static OCEntityHandlerResult HandleDoxmGetRequest (const OCEntityHandlerRequest 
     // Send response payload to request originator
     if(OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, jsonStr))
     {
-        OC_LOG (ERROR, TAG, PCF("SendSRMResponse failed in HandleDoxmGetRequest"));
+        OC_LOG (ERROR, TAG, "SendSRMResponse failed in HandleDoxmGetRequest");
     }
 
     OICFree(jsonStr);
@@ -444,7 +488,7 @@ static OCEntityHandlerResult AddOwnerPSK(const CAEndpoint_t* endpoint,
                     sizeof(base64Buff), &outLen);
     VERIFY_SUCCESS(TAG, b64Ret == B64_OK, ERROR);
 
-    OC_LOG (INFO, TAG, PCF("Doxm EntityHandle  generating Credential"));
+    OC_LOG (INFO, TAG, "Doxm EntityHandle  generating Credential");
     cred = GenerateCredential(&ptDoxm->owner, SYMMETRIC_PAIR_WISE_KEY,
                               NULL, base64Buff, ownLen, &ptDoxm->owner);
     VERIFY_NON_NULL(TAG, cred, ERROR);
@@ -465,7 +509,7 @@ exit:
 
 static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest * ehRequest)
 {
-    OC_LOG (INFO, TAG, PCF("Doxm EntityHandle  processing PUT request"));
+    OC_LOG (INFO, TAG, "Doxm EntityHandle  processing PUT request");
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
     OicUuid_t emptyOwner = {.id = {0}};
 
@@ -487,7 +531,7 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
              */
             if ((false == gDoxm->owned) && (false == newDoxm->owned))
             {
-                OC_LOG (INFO, TAG, PCF("Doxm EntityHandle  enabling AnonECDHCipherSuite"));
+                OC_LOG (INFO, TAG, "Doxm EntityHandle  enabling AnonECDHCipherSuite");
 #ifdef __WITH_DTLS__
                 ehRet = (CAEnableAnonECDHCipherSuite(true) == CA_STATUS_OK) ? OC_EH_OK : OC_EH_ERROR;
 #endif //__WITH_DTLS__
@@ -512,13 +556,13 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
                 OCServerRequest *request = (OCServerRequest *)ehRequest->requestHandle;
 
                 //Generating OwnerPSK
-                OC_LOG (INFO, TAG, PCF("Doxm EntityHandle  generating OwnerPSK"));
+                OC_LOG (INFO, TAG, "Doxm EntityHandle  generating OwnerPSK");
 
                 //Generate new credential for provisioning tool
                 ehRet = AddOwnerPSK((CAEndpoint_t *)&request->devAddr, newDoxm,
                         (uint8_t*) OXM_JUST_WORKS, strlen(OXM_JUST_WORKS));
 
-                VERIFY_SUCCESS(TAG, ehRet = OC_EH_OK, ERROR);
+                VERIFY_SUCCESS(TAG, OC_EH_OK == ehRet, ERROR);
 
                 // Update new state in persistent storage
                 if (true == UpdatePersistentStorage(gDoxm))
@@ -637,7 +681,7 @@ exit:
     //Send payload to request originator
     if(OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL))
     {
-        OC_LOG (ERROR, TAG, PCF("SendSRMResponse failed in HandlePstatPostRequest"));
+        OC_LOG (ERROR, TAG, "SendSRMResponse failed in HandlePstatPostRequest");
     }
     DeleteDoxmBinData(newDoxm);
 
@@ -662,7 +706,7 @@ OCEntityHandlerResult DoxmEntityHandler (OCEntityHandlerFlag flag,
 
     if (flag & OC_REQUEST_FLAG)
     {
-        OC_LOG (INFO, TAG, PCF("Flag includes OC_REQUEST_FLAG"));
+        OC_LOG (INFO, TAG, "Flag includes OC_REQUEST_FLAG");
         switch (ehRequest->method)
         {
             case OC_REST_GET:
@@ -700,7 +744,7 @@ OCStackResult CreateDoxmResource()
 
     if (OC_STACK_OK != ret)
     {
-        OC_LOG (FATAL, TAG, PCF("Unable to instantiate Doxm resource"));
+        OC_LOG (FATAL, TAG, "Unable to instantiate Doxm resource");
         DeInitDoxmResource();
     }
     return ret;
@@ -729,7 +773,7 @@ static OCStackResult CheckDeviceID()
     {
         if (OCGenerateUuid(gDoxm->deviceID.id) != RAND_UUID_OK)
         {
-            OC_LOG(FATAL, TAG, PCF("Generate UUID for Server Instance failed!"));
+            OC_LOG(FATAL, TAG, "Generate UUID for Server Instance failed!");
             return ret;
         }
         ret = OC_STACK_OK;
@@ -737,7 +781,7 @@ static OCStackResult CheckDeviceID()
         if (UpdatePersistentStorage(gDoxm))
         {
             //TODO: After registering PSI handler in all samples, do ret = OC_STACK_OK here.
-            OC_LOG(FATAL, TAG, PCF("UpdatePersistentStorage failed!"));
+            OC_LOG(FATAL, TAG, "UpdatePersistentStorage failed!");
         }
     }
     else
@@ -753,7 +797,7 @@ static OCStackResult CheckDeviceID()
  */
 static OicSecDoxm_t* GetDoxmDefault()
 {
-    OC_LOG (INFO, TAG, PCF("GetDoxmToDefault"));
+    OC_LOG (INFO, TAG, "GetDoxmToDefault");
     return &gDefaultDoxm;
 }
 
@@ -800,7 +844,7 @@ OCStackResult InitDoxmResource()
     }
     else
     {
-        OC_LOG (ERROR, TAG, PCF("CheckDeviceID failed"));
+        OC_LOG (ERROR, TAG, "CheckDeviceID failed");
     }
     OICFree(jsonSVRDatabase);
     return ret;

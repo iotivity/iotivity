@@ -263,7 +263,7 @@ namespace OIC
             /**
              * Sets the acceptance method for the RCSSetResponse.
              *
-             * @param method - AcceptanceMethod value to set
+             * @param method AcceptanceMethod value to set
              *
              * @return The reference to this RCSSetResponse
              *

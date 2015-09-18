@@ -36,7 +36,7 @@ void OIC_HOSTING_LOG(LogLevel level, const char * format, ...)
     va_start(args, format);
     vsnprintf(buffer, sizeof buffer - 1, format, args);
     va_end(args);
-    OCLog(level, PCF("Hosting"), buffer);
+    OCLog(level, "Hosting", buffer);
 }
 
 HostingObject::HostingObject()
