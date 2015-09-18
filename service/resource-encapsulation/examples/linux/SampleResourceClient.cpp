@@ -18,7 +18,9 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include<iostream>
+#include <iostream>
+#include <functional>
+
 #include "mutex"
 #include "condition_variable"
 
@@ -26,7 +28,6 @@
 #include "RCSRemoteResourceObject.h"
 #include "RCSResourceAttributes.h"
 #include "RCSAddress.h"
-
 #include "OCPlatform.h"
 
 using namespace OC;
@@ -36,11 +37,15 @@ constexpr int CORRECT_INPUT = 1;
 constexpr int INCORRECT_INPUT = 2;
 constexpr int QUIT_INPUT = 3;
 
+constexpr int REQUEST_TEMP = 1;
+constexpr int REQUEST_LIGHT = 2;
+
+std::unique_ptr<RCSDiscoveryTask> discoveryTask = nullptr;
 std::shared_ptr<RCSRemoteResourceObject>  resource;
 
-const std::string defaultKey = "Temperature";
-const std::string resourceType = "core.TemperatureSensor";
-const std::string relativetUri = OC_RSRVD_WELL_KNOWN_URI;
+std::string defaultKey = "Temperature";
+const std::string relativeUri = OC_RSRVD_WELL_KNOWN_URI;
+const std::string multicastAdd = "multi";
 
 std::mutex mtx;
 std::condition_variable cond;
@@ -56,6 +61,9 @@ void getResourceCacheState();
 void getCachedAttributes();
 void getCachedAttribute();
 void stopCaching();
+void discoverResource();
+void cancelDiscovery();
+int processUserInput();
 
 enum Menu
 {
@@ -69,6 +77,8 @@ enum Menu
     GET_CACHED_ATTRIBUTES,
     GET_CACHED_ATTRIBUTE,
     STOP_CACHING,
+    DISCOVERY_RESOURCE,
+    CANCEL_DISCOVERY,
     QUIT,
     END_OF_MENU
 };
@@ -94,23 +104,22 @@ ClientMenu clientMenu[] = {
         {Menu::GET_CACHED_ATTRIBUTES, getCachedAttributes, CORRECT_INPUT},
         {Menu::GET_CACHED_ATTRIBUTE, getCachedAttribute, CORRECT_INPUT},
         {Menu::STOP_CACHING, stopCaching, CORRECT_INPUT},
+        {Menu::DISCOVERY_RESOURCE, discoverResource, CORRECT_INPUT},
+        {Menu::CANCEL_DISCOVERY, cancelDiscovery, CORRECT_INPUT},
         {Menu::QUIT, [](){}, QUIT_INPUT},
         {Menu::END_OF_MENU, nullptr, INCORRECT_INPUT}
     };
 
-void onResourceDiscovered(std::shared_ptr<RCSRemoteResourceObject> foundResource)
+void onResourceDiscovered(std::shared_ptr<RCSRemoteResourceObject> discoveredResource)
 {
-    std::cout << "onResourceDiscovered callback" << std::endl;
+    std::cout << "onResourceDiscovered callback :: " << std::endl;
+    std::string resourceURI = discoveredResource->getUri();
+    std::string hostAddress = discoveredResource->getAddress();
 
-    std::string resourceURI = foundResource->getUri();
-    std::string hostAddress = foundResource->getAddress();
+    std::cout << resourceURI << std::endl;
+    std::cout << hostAddress << std::endl;
 
-    std::cout << "\t\tResource URI : " << resourceURI << std::endl;
-    std::cout << "\t\tResource Host : " << hostAddress << std::endl;
-
-    resource = foundResource;
-
-    cond.notify_all();
+    resource = discoveredResource;
 }
 
 void onResourceStateChanged(const ResourceState& resourceState)
@@ -189,7 +198,9 @@ void displayMenu()
     std::cout << "8 :: Get Cached Attributes" << std::endl;
     std::cout << "9 :: Get Cached Attribute"  << std::endl;
     std::cout << "10 :: Stop Caching" << std::endl;
-    std::cout << "11 :: Stop Server" << std::endl;
+    std::cout << "11 :: Discover Resource" << std::endl;
+    std::cout << "12 :: Cancel Discovery" << std::endl;
+    std::cout << "13 :: Stop Server" << std::endl;
 }
 
 int processUserInput()
@@ -393,28 +404,62 @@ void platFormConfigure()
     OCPlatform::Configure(config);
 }
 
-bool discoverResource()
+void discoverResource()
 {
-    std::cout << "Wait 2 seconds until discovered." << std::endl;
+    std::string resourceType;
 
-    RCSDiscoveryManager::getInstance()->discoverResourceByType(RCSAddress::multicast(),
-            relativetUri, resourceType, &onResourceDiscovered);
+    std::cout << "========================================================" << std::endl;
+    std::cout << "1. Temperature Resource Discovery" << std::endl;
+    std::cout << "2. Light Resource Discovery" << std::endl;
+    std::cout << "========================================================" << std::endl;
 
-    std::unique_lock<std::mutex> lck(mtx);
-    cond.wait_for(lck,std::chrono::seconds(2));
+    switch (processUserInput())
+    {
+    case REQUEST_TEMP:
+        resourceType = "core.TemperatureSensor";
+        break;
+    case REQUEST_LIGHT:
+        resourceType = "core.light";
+        defaultKey = "Light";
+        break;
+    default :
+        std::cout << "Invalid input, please try again" << std::endl;
+        return;
+    }
 
-    return resource != nullptr;
+    std::string addressInput;
+    std::cout << "========================================================" << std::endl;
+    std::cout << "Please input address" << std::endl;
+    std::cout << "(want to use multicast -> please input 'multi')" << std::endl;
+    std::cout << "========================================================" << std::endl;
+
+    std::cin >> addressInput;
+
+    if(addressInput == multicastAdd)
+    {
+        discoveryTask = RCSDiscoveryManager::getInstance()->discoverResourceByType(RCSAddress::multicast(),
+                relativeUri, resourceType, &onResourceDiscovered);
+    }
+    else
+    {
+        discoveryTask = RCSDiscoveryManager::getInstance()->discoverResourceByType(RCSAddress::unicast
+                (addressInput), relativeUri, resourceType, &onResourceDiscovered);
+    }
+}
+
+void cancelDiscovery()
+{
+    if(!discoveryTask)
+    {
+        std::cout << "There isn't discovery request..." << std::endl;
+        return;
+    }
+    discoveryTask->cancel();
 }
 
 int main()
 {
     platFormConfigure();
-
-    if (!discoverResource())
-    {
-        std::cout << "Can't discovered Server... Exiting the Client." << std::endl;
-        return -1;
-    }
 
     try
     {
@@ -429,4 +474,3 @@ int main()
 
     return 0;
 }
-
