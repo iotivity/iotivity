@@ -639,8 +639,9 @@ static size_t CACheckPayloadLength(const void *data, size_t dlen)
     if (pdu->data)
     {
         payloadLen = (unsigned char *) pdu->hdr + pdu->length - pdu->data;
-        OICFree(pdu);
     }
+
+    OICFree(pdu);
 
     return payloadLen;
 }
@@ -685,10 +686,10 @@ static void sendData(const CAEndpoint_t *endpoint,
     }
 
     // #4. send data to TCP Server
-    size_t remainLen = dlen;
+    ssize_t remainLen = dlen;
     do
     {
-        size_t len = send(svritem->u4tcp.fd, data, remainLen, 0);
+        ssize_t len = send(svritem->u4tcp.fd, data, remainLen, 0);
         if (-1 == len)
         {
             if (EWOULDBLOCK != errno)
