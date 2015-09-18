@@ -21,11 +21,6 @@
 #ifndef RESOURCECONTAINERBUNDLEAPI_H_
 #define RESOURCECONTAINERBUNDLEAPI_H_
 
-#include <unistd.h>
-#include <string.h>
-#include <fstream>
-
-#include "RCSBundleInfo.h"
 #include "Configuration.h"
 #include "NotificationReceiver.h"
 #include "BundleResource.h"
@@ -39,17 +34,6 @@ namespace OIC
         class ResourceContainerBundleAPI: public NotificationReceiver
         {
             public:
-
-                /**
-                * Constructor for ResourceContainerBundleAPI
-                */
-                ResourceContainerBundleAPI();
-
-                /**
-                * Virtual destructor for ResourceContainerBundleAPI
-                */
-                virtual ~ResourceContainerBundleAPI();
-
                 /**
                 * Register bundle resource in the container
                 *   and register resource server for bundle resource
@@ -99,6 +83,15 @@ namespace OIC
                 * @return ResourceContainerBundleAPI * - return the object pointer of ResourceContainerBundleAPI
                 */
                 static ResourceContainerBundleAPI *getInstance();
+
+            protected:
+                ResourceContainerBundleAPI();
+                virtual ~ResourceContainerBundleAPI();
+
+                ResourceContainerBundleAPI(const ResourceContainerBundleAPI &) = delete;
+                ResourceContainerBundleAPI(ResourceContainerBundleAPI &&) = delete;
+                ResourceContainerBundleAPI &operator=(const ResourceContainerBundleAPI &) const = delete;
+                ResourceContainerBundleAPI &operator=(ResourceContainerBundleAPI &&) const = delete;
         };
     }
 }

@@ -79,7 +79,7 @@ namespace OIC
 
                     for (unsigned int i = 0; i < bundles.size(); i++)
                     {
-                        RCSBundleInfo *bundleInfo = RCSBundleInfo::build();
+                        BundleInfoInternal *bundleInfo = new BundleInfoInternal();
                         bundleInfo->setPath(bundles[i][BUNDLE_PATH]);
                         bundleInfo->setVersion(bundles[i][BUNDLE_VERSION]);
                         bundleInfo->setID(bundles[i][BUNDLE_ID]);
@@ -480,8 +480,8 @@ namespace OIC
         }
 
         void ResourceContainerImpl::addBundle(const std::string &bundleId,
-                const std::string &bundleUri, const std::string &bundlePath,
-                const std::string &activator, std::map< string, string > params)
+                                              const std::string &bundleUri, const std::string &bundlePath,
+                                              const std::string &activator, std::map< string, string > params)
         {
             (void) bundleUri;
 
@@ -490,7 +490,7 @@ namespace OIC
 
             else
             {
-                RCSBundleInfo *bundleInfo = RCSBundleInfo::build();
+                BundleInfoInternal *bundleInfo = new BundleInfoInternal();
                 bundleInfo->setID(bundleId);
                 bundleInfo->setPath(bundlePath);
                 bundleInfo->setActivatorName(activator);
@@ -536,10 +536,9 @@ namespace OIC
                  it != m_bundles.end(); ++it)
             {
                 {
-                    RCSBundleInfo *bundleInfo = RCSBundleInfo::build();
-                    ((BundleInfoInternal *) bundleInfo)->setBundleInfo(
-                        (RCSBundleInfo *) it->second);
-                    ret.push_back(bundleInfo);
+                    BundleInfoInternal *bundleInfo = new BundleInfoInternal();
+                    (bundleInfo)->setBundleInfo(it->second);
+                    ret.push_back((RCSBundleInfo *) bundleInfo);
                 }
             }
             return ret;
@@ -612,28 +611,28 @@ namespace OIC
             deactivator_t *bundleDeactivator = NULL;
             resourceCreator_t *resourceCreator = NULL;
             resourceDestroyer_t *resourceDestroyer = NULL;
-            BundleInfoInternal *bundleInfoInternal = (BundleInfoInternal*) bundleInfo;
+            BundleInfoInternal *bundleInfoInternal = (BundleInfoInternal *) bundleInfo;
             void *bundleHandle = NULL;
             bundleHandle = dlopen(bundleInfo->getPath().c_str(), RTLD_LAZY);
 
             if (bundleHandle != NULL)
             {
                 bundleActivator =
-                        (activator_t *) dlsym(bundleHandle,
-                                ("" + bundleInfoInternal->getActivatorName()
-                                        + "_externalActivateBundle").c_str());
+                    (activator_t *) dlsym(bundleHandle,
+                                          ("" + bundleInfoInternal->getActivatorName()
+                                           + "_externalActivateBundle").c_str());
                 bundleDeactivator =
-                        (deactivator_t *) dlsym(bundleHandle,
-                                ("" + bundleInfoInternal->getActivatorName()
-                                        + "_externalDeactivateBundle").c_str());
+                    (deactivator_t *) dlsym(bundleHandle,
+                                            ("" + bundleInfoInternal->getActivatorName()
+                                             + "_externalDeactivateBundle").c_str());
                 resourceCreator =
-                        (resourceCreator_t *) dlsym(bundleHandle,
-                                ("" + bundleInfoInternal->getActivatorName()
-                                        + "_externalCreateResource").c_str());
+                    (resourceCreator_t *) dlsym(bundleHandle,
+                                                ("" + bundleInfoInternal->getActivatorName()
+                                                 + "_externalCreateResource").c_str());
                 resourceDestroyer =
-                        (resourceDestroyer_t *) dlsym(bundleHandle,
-                                ("" + bundleInfoInternal->getActivatorName()
-                                        + "_externalDestroyResource").c_str());
+                    (resourceDestroyer_t *) dlsym(bundleHandle,
+                                                  ("" + bundleInfoInternal->getActivatorName()
+                                                   + "_externalDestroyResource").c_str());
 
 
                 if ((error = dlerror()) != NULL)

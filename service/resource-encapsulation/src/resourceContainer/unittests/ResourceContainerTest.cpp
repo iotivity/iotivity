@@ -204,7 +204,7 @@ TEST_F(ResourceContainerTest, AddNewSoBundleToContainer)
     std::list<RCSBundleInfo *> bundles;
 
     bundles = m_pResourceContainer->listBundles();
-    m_pResourceContainer->addBundle("oic.bundle.test", "", "libTestBundle.so","test", bundleParams);
+    m_pResourceContainer->addBundle("oic.bundle.test", "", "libTestBundle.so", "test", bundleParams);
 
     EXPECT_EQ(bundles.size() + 1, m_pResourceContainer->listBundles().size());
     EXPECT_TRUE(((BundleInfoInternal *)(*m_pResourceContainer->listBundles().begin()))->isLoaded());
@@ -391,14 +391,19 @@ class ResourceContainerImplTest: public TestWithMock
 
     public:
         ResourceContainerImpl *m_pResourceContainer;
-        RCSBundleInfo *m_pBundleInfo;
+        BundleInfoInternal *m_pBundleInfo;
 
     protected:
         void SetUp()
         {
             TestWithMock::SetUp();
             m_pResourceContainer = ResourceContainerImpl::getImplInstance();
-            m_pBundleInfo = RCSBundleInfo::build();
+            m_pBundleInfo = new BundleInfoInternal();
+        }
+
+        void TearDown()
+        {
+            delete m_pBundleInfo;
         }
 };
 

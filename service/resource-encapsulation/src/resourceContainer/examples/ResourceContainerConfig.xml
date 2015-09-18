@@ -3,6 +3,7 @@
     <bundle>
         <id>oic.bundle.discomfortIndexSensor</id>
         <path>libDISensorBundle.so</path>
+        <activator>disensor</activator>
         <version>1.0.0</version>
         <resources>
             <resourceInfo>

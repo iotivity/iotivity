@@ -24,8 +24,8 @@
  * This file contains RCSBundleInfo class, which provides APIs related to Bundle information.
  */
 
-#ifndef BUNDLEINFO_H_
-#define BUNDLEINFO_H_
+#ifndef RCSBUNDLEINFO_H_
+#define RCSBUNDLEINFO_H_
 
 #include <string>
 
@@ -42,17 +42,6 @@ namespace OIC
         class RCSBundleInfo
         {
             public:
-                RCSBundleInfo();
-                virtual ~RCSBundleInfo();
-
-                /**
-                * API for setting the Id of the bundle
-                *
-                * @param name Id of the bundle in string form
-                *
-                */
-                virtual void setID(const std::string &name) = 0;
-
                 /**
                 * API for getting the Id of the bundle
                 *
@@ -60,14 +49,6 @@ namespace OIC
                 *
                 */
                 virtual const std::string &getID() = 0;
-
-                /**
-                * API for setting the path of the bundle
-                *
-                * @param path path of the bundle in string form
-                *
-                */
-                virtual void setPath(const std::string &path) = 0;
 
                 /**
                 * API for getting the path of the bundle
@@ -80,26 +61,10 @@ namespace OIC
                 /**
                 * API for setting the Activator name for the bundle
                 *
-                * @param activator Activator name in string form
-                *
-                */
-                virtual void setActivatorName(const std::string &activator) = 0;
-
-                /**
-                * API for setting the Activator name for the bundle
-                *
                 * @return Name of the activator
                 *
                 */
                 virtual const std::string &getActivatorName() = 0;
-
-                /**
-                * API for setting the library path for the bundle
-                *
-                * @param libpath Library path in string form
-                *
-                */
-                virtual void setLibraryPath(const std::string &libpath) = 0;
 
                 /**
                 * API for getting the library path for the bundle
@@ -107,15 +72,7 @@ namespace OIC
                 * @return Library path  in string form
                 *
                 */
-                virtual const std::string& getLibraryPath() = 0;
-
-                /**
-                * API for setting the version of the bundle
-                *
-                * @param version version of the bundle in string form
-                *
-                */
-                virtual void setVersion(const std::string &version) = 0;
+                virtual const std::string &getLibraryPath() = 0;
 
                 /**
                 * API for getting the version of the bundle
@@ -125,17 +82,14 @@ namespace OIC
                 */
                 virtual const std::string &getVersion() = 0;
 
-                /**
-                 * API for creating new bundle information
-                 *
-                 * @return RCSBundleInfo pointer.
-                 *
-                 */
-                static RCSBundleInfo *build();
+
             protected:
                 std::string m_ID, m_path, m_version;
+
+                RCSBundleInfo();
+                virtual ~RCSBundleInfo();
         };
     }
 }
 
-#endif /* BUNDLEINFO_H_ */
+#endif /* RCSBUNDLEINFO_H_ */
