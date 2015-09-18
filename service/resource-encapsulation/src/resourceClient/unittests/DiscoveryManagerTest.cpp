@@ -31,7 +31,7 @@ using namespace OC::OCPlatform;
 constexpr char RESOURCEURI[]{ "/a/TemperatureSensor" };
 constexpr char RESOURCETYPE[]{ "Resource.Hosting" };
 constexpr char RESOURCEINTERFACE[]{ "oic.if.baseline" };
-constexpr int RCSDiscoveryTaskDELAYTIME = 7;
+constexpr int DiscoveryTaskDELAYTIME = 7;
 
 class DiscoveryManagerTest: public TestWithMock
 {
@@ -39,7 +39,7 @@ public:
 
     RCSResourceObject::Ptr server;
     RCSRemoteResourceObject::Ptr object;
-    std::unique_ptr<RCSDiscoveryTask> discoveryTask;
+    std::unique_ptr<RCSDiscoveryManager::DiscoveryTask> discoveryTask;
 
 public:
 
@@ -61,9 +61,9 @@ public:
         server = RCSResourceObject::Builder(RESOURCEURI, RESOURCETYPE, RESOURCEINTERFACE).build();
     }
 
-    void waitForRCSDiscoveryTask()
+    void waitForDiscoveryTask()
     {
-        sleep(RCSDiscoveryTaskDELAYTIME);
+        sleep(DiscoveryTaskDELAYTIME);
     }
 
     static void resourceDiscovered(std::shared_ptr< RCSRemoteResourceObject >) {}
@@ -77,7 +77,7 @@ TEST_F(DiscoveryManagerTest, resourceIsNotSupportedPresenceBeforeDiscovering)
     mocks.ExpectCallFunc(resourceDiscovered);
 
     startDiscovery();
-    waitForRCSDiscoveryTask();
+    waitForDiscoveryTask();
 }
 
 TEST_F(DiscoveryManagerTest, resourceIsSupportedPresenceBeforeDiscovering)
@@ -88,7 +88,7 @@ TEST_F(DiscoveryManagerTest, resourceIsSupportedPresenceBeforeDiscovering)
     mocks.ExpectCallFunc(resourceDiscovered);
 
     startDiscovery();
-    waitForRCSDiscoveryTask();
+    waitForDiscoveryTask();
 }
 
 TEST_F(DiscoveryManagerTest, resourceIsNotSupportedPresenceAfterDiscovering)
@@ -97,7 +97,7 @@ TEST_F(DiscoveryManagerTest, resourceIsNotSupportedPresenceAfterDiscovering)
 
     startDiscovery();
     createResource();
-    waitForRCSDiscoveryTask();
+    waitForDiscoveryTask();
 }
 
 TEST_F(DiscoveryManagerTest, resourceIsSupportedPresenceAndAfterDiscovering)
@@ -107,10 +107,10 @@ TEST_F(DiscoveryManagerTest, resourceIsSupportedPresenceAndAfterDiscovering)
     startPresence(10);
     startDiscovery();
     createResource();
-    waitForRCSDiscoveryTask();
+    waitForDiscoveryTask();
 }
 
-TEST_F(DiscoveryManagerTest, cancelRCSDiscoveryTaskAfterDiscoveryResource)
+TEST_F(DiscoveryManagerTest, cancelDiscoveryTaskAfterDiscoveryResource)
 {
     startDiscovery();
     cancelDiscovery();
@@ -122,7 +122,7 @@ TEST_F(DiscoveryManagerTest, cancelRCSDiscoveryTaskAfterDiscoveryResource)
 
 }
 
-TEST_F(DiscoveryManagerTest, cancelRCSDiscoveryTaskNotStartDiscoveryResource)
+TEST_F(DiscoveryManagerTest, cancelDiscoveryTaskNotStartDiscoveryResource)
 {
     startDiscovery();
     cancelDiscovery();

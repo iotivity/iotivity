@@ -73,7 +73,7 @@ namespace OIC
             }
         }
 
-        std::unique_ptr<RCSDiscoveryTask> RCSDiscoveryManagerImpl::startDiscovery(const RCSAddress& address,
+        std::unique_ptr<RCSDiscoveryManager::DiscoveryTask> RCSDiscoveryManagerImpl::startDiscovery(const RCSAddress& address,
                 const std::string& relativeURI, const std::string& resourceType,
                 RCSDiscoveryManager::ResourceDiscoveredCallback cb)
         {
@@ -98,7 +98,7 @@ namespace OIC
                     discoveryItem.m_relativeUri + "?rt=" +discoveryItem.m_resourceType,
                     OCConnectivityType::CT_DEFAULT, discoveryItem.m_findCB);
 
-            return std::unique_ptr<RCSDiscoveryTask>(new RCSDiscoveryTask(discoverID));
+            return std::unique_ptr<RCSDiscoveryManager::DiscoveryTask>(new RCSDiscoveryManager::DiscoveryTask(discoverID));
         }
 
         void RCSDiscoveryManagerImpl::initializedDiscoveryEnvironment()

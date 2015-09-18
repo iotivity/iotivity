@@ -40,31 +40,6 @@ namespace OIC
         class RCSRemoteResourceObject;
         class RCSAddress;
 
-        class RCSDiscoveryTask
-        {
-            public:
-
-                void cancel();
-                bool isCanceled();
-                ~RCSDiscoveryTask();
-
-            public:
-
-                RCSDiscoveryTask(const RCSDiscoveryTask&) = delete;
-                RCSDiscoveryTask(RCSDiscoveryTask&&) = delete;
-                RCSDiscoveryTask& operator = (const RCSDiscoveryTask&) const = delete;
-                RCSDiscoveryTask& operator = (RCSDiscoveryTask&&) const = delete;
-
-            private:
-
-                explicit RCSDiscoveryTask(unsigned int id) : m_id{ id } {};
-            private:
-
-                unsigned int m_id;
-                friend class RCSDiscoveryManager;
-                friend class RCSDiscoveryManagerImpl;
-        };
-
         /**
          * This class contains the resource discovery methods.
          *
@@ -72,6 +47,30 @@ namespace OIC
          */
         class RCSDiscoveryManager
         {
+            public:
+                class DiscoveryTask
+                {
+                    public:
+
+                        void cancel();
+                        bool isCanceled();
+                        ~DiscoveryTask();
+
+                    public:
+
+                        DiscoveryTask(const DiscoveryTask&) = delete;
+                        DiscoveryTask(DiscoveryTask&&) = delete;
+                        DiscoveryTask& operator = (const DiscoveryTask&) const = delete;
+                        DiscoveryTask& operator = (DiscoveryTask&&) const = delete;
+
+                    private:
+
+                        explicit DiscoveryTask(unsigned int id) : m_id{ id } {};
+                    private:
+
+                        unsigned int m_id;
+                        friend class RCSDiscoveryManagerImpl;
+                };
             public:
 
                 /**
@@ -101,7 +100,7 @@ namespace OIC
                  * @see RCSAddress
                  *
                  */
-                std::unique_ptr<RCSDiscoveryTask> discoverResource(const RCSAddress& address,
+                std::unique_ptr<DiscoveryTask> discoverResource(const RCSAddress& address,
                         ResourceDiscoveredCallback cb);
 
                 /**
@@ -118,7 +117,7 @@ namespace OIC
                  * @see RCSAddress
                  *
                  */
-                std::unique_ptr<RCSDiscoveryTask> discoverResource(const RCSAddress& address,
+                std::unique_ptr<DiscoveryTask> discoverResource(const RCSAddress& address,
                         const std::string& relativeURI, ResourceDiscoveredCallback cb);
 
                 /**
@@ -135,7 +134,7 @@ namespace OIC
                  * @see RCSAddress
                  *
                  */
-                std::unique_ptr<RCSDiscoveryTask> discoverResourceByType(const RCSAddress& address,
+                std::unique_ptr<DiscoveryTask> discoverResourceByType(const RCSAddress& address,
                         const std::string& resourceType, ResourceDiscoveredCallback cb);
 
                 /**
@@ -153,7 +152,7 @@ namespace OIC
                  * @see RCSAddress
                  *
                  */
-                std::unique_ptr<RCSDiscoveryTask>  discoverResourceByType(const RCSAddress& address,
+                std::unique_ptr<DiscoveryTask>  discoverResourceByType(const RCSAddress& address,
                         const std::string& relativeURI, const std::string& resourceType,
                         ResourceDiscoveredCallback cb);
 
@@ -162,7 +161,7 @@ namespace OIC
                 RCSDiscoveryManager() = default;
                 ~RCSDiscoveryManager()= default;;
 
-                friend class RCSDiscoveryTask;
+                friend class DiscoveryTask;
         };
     }
 }
