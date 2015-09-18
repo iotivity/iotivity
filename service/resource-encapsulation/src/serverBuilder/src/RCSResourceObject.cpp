@@ -32,11 +32,11 @@
 #include <logger.h>
 #include <OCPlatform.h>
 
+#define LOG_TAG "RCSResourceObject"
+
 namespace
 {
     using namespace OIC::Service;
-
-    constexpr char LOG_TAG[]{ "RCSResourceObject" };
 
     inline bool hasProperty(uint8_t base, uint8_t target)
     {
@@ -70,7 +70,7 @@ namespace
         }
         catch (const OC::OCException& e)
         {
-            OC_LOG(WARNING, LOG_TAG, e.what());
+            OC_LOG_V(WARNING, LOG_TAG, "Error (%s)", e.what());
         }
 
         return OC_EH_ERROR;

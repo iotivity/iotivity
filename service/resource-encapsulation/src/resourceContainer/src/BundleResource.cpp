@@ -25,7 +25,6 @@
 
 #include "InternalTypes.h"
 
-
 namespace OIC
 {
     namespace Service
@@ -71,7 +70,7 @@ namespace OIC
 
         void BundleResource::setAttribute(std::string key, RCSResourceAttributes::Value &&value)
         {
-            OC_LOG_V(INFO, CONTAINER_TAG, std::string("set attribute \'" + key + "\', with " +
+            OC_LOG_V(INFO, CONTAINER_TAG, "set attribute \(%s)'", std::string(key + "\', with " +
                      value.toString()).c_str());
 
             m_resourceAttributes[key] = value;
@@ -82,7 +81,7 @@ namespace OIC
 
         RCSResourceAttributes::Value BundleResource::getAttribute(const std::string &key)
         {
-            OC_LOG_V(INFO, CONTAINER_TAG, std::string("get attribute \'" + key + "\'").c_str());
+            OC_LOG_V(INFO, CONTAINER_TAG, "get attribute \'(%s)" , std::string(key + "\'").c_str());
 
             return m_resourceAttributes.at(key);
         }

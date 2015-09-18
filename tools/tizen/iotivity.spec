@@ -154,11 +154,14 @@ cp service/protocol-plugin/plugin-manager/src/*.h %{buildroot}%{_includedir}
 %manifest %{name}.manifest
 %defattr(-,root,root,-)
 %{_libdir}/libBMISensor.so
+%{_libdir}/libBMISensorBundle.so
+%{_libdir}/libDISensorBundle.so
 %{_libdir}/libDiscomfortIndexSensor.so
 %{_libdir}/libmosquittopp.so
 %{_libdir}/libpmimpl.so
 %{_libdir}/libSSMCore.so
 %{_libdir}/libNotificationManager.so
+%{_libdir}/libTGMSDKLibrary.so
 %{_libdir}/libHueBundle.so
 %{_libdir}/librcs_client.so
 %{_libdir}/librcs_common.so

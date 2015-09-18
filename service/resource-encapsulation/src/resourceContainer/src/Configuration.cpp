@@ -24,6 +24,7 @@
 #include <utility>
 #include "InternalTypes.h"
 
+#define CONTAINER_TAG "RESOURCE_CONTAINER"
 
 namespace OIC
 {
@@ -112,8 +113,8 @@ namespace OIC
                 }
                 catch (rapidxml::parse_error &e)
                 {
-                    OC_LOG_V(ERROR, CONTAINER_TAG, "xml parsing failed !!");
-                    OC_LOG_V(ERROR, CONTAINER_TAG, e.what());
+                    OC_LOG(ERROR, CONTAINER_TAG, "xml parsing failed !!");
+                    OC_LOG_V(ERROR, CONTAINER_TAG, "Exception : (%s)", e.what());
                 }
             }
         }
@@ -158,8 +159,8 @@ namespace OIC
                 }
                 catch (rapidxml::parse_error &e)
                 {
-                    OC_LOG_V(ERROR, CONTAINER_TAG, "xml parsing failed !!");
-                    OC_LOG_V(ERROR, CONTAINER_TAG, e.what());
+                    OC_LOG(ERROR, CONTAINER_TAG, "xml parsing failed !!");
+                    OC_LOG_V(ERROR, CONTAINER_TAG, "Exception (%s)", e.what());
                 }
             }
         }
@@ -247,8 +248,8 @@ namespace OIC
                 }
                 catch (rapidxml::parse_error &e)
                 {
-                    OC_LOG_V(ERROR, CONTAINER_TAG, "xml parsing failed !!");
-                    OC_LOG_V(ERROR, CONTAINER_TAG, e.what());
+                    OC_LOG(ERROR, CONTAINER_TAG, "xml parsing failed !!");
+                    OC_LOG_V(ERROR, CONTAINER_TAG, "Exception (%s)", e.what());
                 }
             }
         }
@@ -277,13 +278,13 @@ namespace OIC
                 }
                 catch (rapidxml::parse_error &e)
                 {
-                    OC_LOG_V(ERROR, CONTAINER_TAG, "xml parsing failed !!");
-                    OC_LOG_V(ERROR, CONTAINER_TAG, e.what());
+                    OC_LOG(ERROR, CONTAINER_TAG, "xml parsing failed !!");
+                    OC_LOG_V(ERROR, CONTAINER_TAG, "Exception (%s)", e.what());
                 }
             }
             else
             {
-                OC_LOG_V(ERROR, CONTAINER_TAG, "Configuration File load failed !!");
+                OC_LOG(ERROR, CONTAINER_TAG, "Configuration File load failed !!");
             }
         }
     }

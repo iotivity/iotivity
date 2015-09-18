@@ -29,6 +29,7 @@ cp -R ./resource $sourcedir/tmp
 cp -R ./service $sourcedir/tmp
 cp ./extra_options.scons $sourcedir/tmp
 cp ./tools/tizen/*.spec ./tmp/packaging
+cp ./tools/tizen/*.manifest ./tmp/packaging
 cp ./SConstruct ./tmp
 cp ./tools/tizen/*.rpm ./tmp
 cp ./tools/tizen/.gbs.conf ./tmp
