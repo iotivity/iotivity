@@ -23,8 +23,9 @@
 package org.iotivity.service.easysetup.mediator.ip;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.util.ArrayList;
@@ -32,7 +33,6 @@ import java.util.ArrayList;
 import android.content.Context;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
-import android.os.Handler;
 import android.util.Log;
 
 import org.iotivity.service.easysetup.mediator.EnrolleeInfo;
@@ -89,13 +89,13 @@ public class WiFiSoftAPManager {
     * continue
     */
     private boolean CheckForDeviceEntryAndNotify(String ipAddr,
-                                                              String macAddr, boolean isReachable) {
+                                                 String macAddr, boolean isReachable) {
         final EnrolleeInfo result = new EnrolleeInfo();
         boolean deviceAddedToList = false;
 
         if (appNotification.size() > 0) {
             for (EnrolleeOnBoardingInfo ipDeviceOnBoardingNotification : appNotification) {
-                EnrolleeOnBoardingInfo ipEnrolleeDevice =  (EnrolleeOnBoardingInfo)
+                EnrolleeOnBoardingInfo ipEnrolleeDevice = (EnrolleeOnBoardingInfo)
                         ipDeviceOnBoardingNotification;
                 boolean macAddressComparison = ipEnrolleeDevice.getHWAddr().equalsIgnoreCase(
                         macAddr) ? true : false;
@@ -123,7 +123,7 @@ public class WiFiSoftAPManager {
                                     .add(new EnrolleeOnBoardingInfo(ipAddr, macAddr, "",
                                             isReachable,
                                             false, true));
-                       } else {
+                        } else {
                             //This case will happen during the transition from connected to
                             // disconneted. This case need not be notified to application.
                             // Notifying this state will cause failure of OnBoarding
@@ -263,7 +263,7 @@ public class WiFiSoftAPManager {
         appNotification.clear();
         Runnable runnable = new Runnable() {
             public void run() {
-                Log.i(TAG, "Scanning enrolling device in the network" );
+                Log.i(TAG, "Scanning enrolling device in the network");
 
                 BufferedReader bufferedReader = null;
 
@@ -273,9 +273,15 @@ public class WiFiSoftAPManager {
                     // There is no Android API for getting list of connected devices to the Soft AP.
                     // The connected device information is fetched from Arp cache for Soft AP and
                     // it is maintained in the file "/proc/net/arp"
-                    bufferedReader = new BufferedReader(new FileReader("/proc/net/arp"));
+                    // This holds an ASCII readable dump of the kernel ARP  table  used
+                    // for  address resolutions.  It will show both dynamically learned
+                    // and preprogrammed ARP entries.  The format is:
+                    // IP address     HW type   Flags     HW address          Mask   Device
+                    // 192.168.0.50   0x1       0x2       00:50:BF:25:68:F3   *      eth0
+                    // 192.168.0.250  0x1       0xc       00:00:00:00:00:00   *      eth0
+                    bufferedReader = new BufferedReader(new InputStreamReader(
+                            new FileInputStream("/proc/net/arp"), "UTF-8"));
                     String line;
-
                     while ((line = bufferedReader.readLine()) != null) {
                         //ARP entries are splitted using Regex for getting the IP and MAC Address
                         // info
@@ -337,7 +343,7 @@ public class WiFiSoftAPManager {
         };
         mainHandler.post(myRunnable);
 */
-        Log.i(TAG, "Scanning is finished with result, IP : " +  result.getIpAddr() + "Notifying " +
+        Log.i(TAG, "Scanning is finished with result, IP : " + result.getIpAddr() + "Notifying " +
                 "to Application");
         finishListener.deviceOnBoardingStatus(result);
 
