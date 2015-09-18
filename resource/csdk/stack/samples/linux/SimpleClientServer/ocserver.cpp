@@ -1057,8 +1057,9 @@ int main(int argc, char* argv[])
             OC_LOG(ERROR, TAG, "OCStack process error");
             return 0;
         }
-
+#ifndef ROUTING_GATEWAY
         sleep(2);
+#endif
     }
 
     /*

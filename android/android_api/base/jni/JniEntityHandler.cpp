@@ -35,11 +35,14 @@ JniEntityHandler::~JniEntityHandler()
     {
         jint ret;
         JNIEnv *env = GetJNIEnv(ret);
-        if (NULL == env)
+        if (nullptr == env)
         {
             return;
         }
+
         env->DeleteGlobalRef(m_jListener);
+        m_jListener = nullptr;
+
         if (JNI_EDETACHED == ret)
         {
             g_jvm->DetachCurrentThread();
@@ -53,7 +56,7 @@ OCEntityHandlerResult JniEntityHandler::handleEntity(
     LOGD("JniEntityHandler_handleEntity");
     jint envRet;
     JNIEnv *env = GetJNIEnv(envRet);
-    if (NULL == env)
+    if (nullptr == env)
     {
         return OC_EH_ERROR;
     }

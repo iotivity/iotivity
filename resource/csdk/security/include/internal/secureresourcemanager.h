@@ -94,6 +94,13 @@ typedef bool (*SPResponseCallback) (const CAEndpoint_t *object,
  */
 void SRMRegisterProvisioningResponseHandler(SPResponseCallback respHandler);
 
+/**
+ * @brief   Check the security resource URI.
+ * @param   uri [IN] Pointers to security resource URI.
+ * @return  true if the URI is one of security resources, otherwise false.
+ */
+bool SRMIsSecurityResourceURI(const char* uri);
+
 #ifdef __cplusplus
 }
 #endif

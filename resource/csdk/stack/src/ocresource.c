@@ -25,8 +25,8 @@
 // For POSIX.1-2001 base specification,
 // Refer http://pubs.opengroup.org/onlinepubs/009695399/
 #define _POSIX_C_SOURCE 200112L
-#include "ocresource.h"
 #include <string.h>
+#include "ocresource.h"
 #include "ocresourcehandler.h"
 #include "ocobserve.h"
 #include "occollection.h"
@@ -35,10 +35,12 @@
 #include "logger.h"
 #include "cJSON.h"
 #include "ocpayload.h"
-
+#include "secureresourcemanager.h"
 #include "cacommon.h"
 #include "cainterface.h"
-
+#ifdef ROUTING_GATEWAY
+#include "routingmanager.h"
+#endif
 
 /// Module Name
 #define TAG "ocresource"
@@ -163,6 +165,12 @@ static OCVirtualResources GetTypeOfVirtualURI(const char *uriInRequest)
     {
         return OC_RESOURCE_TYPES_URI;
     }
+#ifdef ROUTING_GATEWAY
+    else if (0 == strcmp(uriInRequest, OC_RSRVD_GATEWAY_URI))
+    {
+        return OC_GATEWAY_URI;
+    }
+#endif
 #ifdef WITH_PRESENCE
     else if (strcmp(uriInRequest, OC_RSRVD_PRESENCE_URI) == 0)
     {
@@ -340,8 +348,7 @@ OCStackResult DetermineResourceHandling (const OCServerRequest *request,
     }
     else
     {
-        OCResource *resourcePtr = NULL;
-        resourcePtr = FindResourceByUri((const char*)request->resourceUrl);
+        OCResource *resourcePtr = FindResourceByUri((const char*)request->resourceUrl);
         *resource = resourcePtr;
         if (!resourcePtr)
         {
@@ -625,6 +632,15 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
             discoveryResult = OC_STACK_OK;
         }
     }
+#ifdef ROUTING_GATEWAY
+    else if (OC_GATEWAY_URI == virtualUriInRequest)
+    {
+        // Received request for a gateway
+        OC_LOG(INFO, TAG, "Request is for Gateway Virtual Request");
+        discoveryResult = RMHandleGatewayRequest(request, resource);
+
+    }
+#endif
 
     /**
      * Step 2: Send the discovery response
@@ -640,7 +656,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
      *   request is unicast, it should send an error(RESOURCE_NOT_FOUND - 404) response.
      */
 
-    #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
     if ((virtualUriInRequest == OC_PRESENCE) &&
         (resource->resourceProperties & OC_ACTIVE))
     {
@@ -649,6 +665,10 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
     }
     else
     #endif
+#ifdef ROUTING_GATEWAY
+    // Gateway uses the RMHandleGatewayRequest to respond to the request.
+    if (OC_GATEWAY != virtualUriInRequest)
+#endif
     {
         if(discoveryResult == OC_STACK_OK)
         {
@@ -692,6 +712,7 @@ HandleDefaultDeviceEntityHandler (OCServerRequest *request)
                                         request->method,
                                         &request->devAddr,
                                         (OCResourceHandle) NULL, request->query,
+                                        PAYLOAD_TYPE_REPRESENTATION,
                                         request->payload,
                                         request->payloadSize,
                                         request->numRcvdVendorSpecificHeaderOptions,
@@ -736,13 +757,20 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
     OCEntityHandlerRequest ehRequest = {0};
 
     OC_LOG(INFO, TAG, "Entering HandleResourceWithEntityHandler");
+    OCPayloadType type = PAYLOAD_TYPE_REPRESENTATION;
+    // check the security resource
+    if (request && request->resourceUrl && SRMIsSecurityResourceURI(request->resourceUrl))
+    {
+        type = PAYLOAD_TYPE_SECURITY;
 
+    }
     result = FormOCEntityHandlerRequest(&ehRequest,
                                         (OCRequestHandle)request,
                                         request->method,
                                         &request->devAddr,
                                         (OCResourceHandle)resource,
                                         request->query,
+                                        type,
                                         request->payload,
                                         request->payloadSize,
                                         request->numRcvdVendorSpecificHeaderOptions,
@@ -766,7 +794,7 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
         result = AddObserver ((const char*)(request->resourceUrl),
                 (const char *)(request->query),
                 ehRequest.obsInfo.obsId, request->requestToken, request->tokenLength,
-                resource, request->qos,
+                resource, request->qos, request->acceptFormat,
                 &request->devAddr);
 
         if(result == OC_STACK_OK)
@@ -858,6 +886,7 @@ HandleCollectionResourceDefaultEntityHandler (OCServerRequest *request,
                                         &request->devAddr,
                                         (OCResourceHandle)resource,
                                         request->query,
+                                        PAYLOAD_TYPE_REPRESENTATION,
                                         request->payload,
                                         request->payloadSize,
                                         request->numRcvdVendorSpecificHeaderOptions,
@@ -1008,7 +1037,7 @@ OCStackResult SavePlatformInfo(OCPlatformInfo info)
     }
     else
     {
-        OC_LOG(ERROR, TAG, "Platform info saved.");
+        OC_LOG(INFO, TAG, "Platform info saved.");
     }
 
     return res;
@@ -1055,8 +1084,7 @@ OCStackResult SaveDeviceInfo(OCDeviceInfo info)
     OC_LOG(INFO, TAG, "Device initialized successfully.");
     return OC_STACK_OK;
 
-    exit:
-        DeleteDeviceInfo();
-        return res;
-
+exit:
+    DeleteDeviceInfo();
+    return res;
 }

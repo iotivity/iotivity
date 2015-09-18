@@ -43,11 +43,10 @@ extern "C" {
 // Use the PCF macro to wrap strings stored in FLASH on the Arduino
 // Example:  OC_LOG(INFO, TAG, PCF("Entering function"));
 #ifdef ARDUINO
-
 #ifdef __cplusplus
-    #define PCF(str)  ((PROGMEM const char *)(F(str)))
+#define PCF(str)  ((PROGMEM const char *)(F(str)))
 #else
-    #define PCF(str)  ((PROGMEM const char *)(PSTR(str)))
+#define PCF(str)  ((PROGMEM const char *)(PSTR(str)))
 #endif //__cplusplus
 #else
     #define PCF(str) str
@@ -57,6 +56,15 @@ extern "C" {
 #define MAX_LOG_V_BUFFER_SIZE (256)
 
 // Log levels
+#ifdef __TIZEN__
+typedef enum {
+    DEBUG = DLOG_DEBUG,
+    INFO = DLOG_INFO,
+    WARNING = DLOG_WARN,
+    ERROR = DLOG_ERROR,
+    FATAL = DLOG_ERROR
+} LogLevel;
+#else
 typedef enum {
     DEBUG = 0,
     INFO,
@@ -64,11 +72,6 @@ typedef enum {
     ERROR,
     FATAL
 } LogLevel;
-
-#ifdef __TIZEN__
-
-int OCGetTizenLogLevel(LogLevel level);
-
 #endif
 
 #ifdef __TIZEN__
@@ -162,8 +165,8 @@ int OCGetTizenLogLevel(LogLevel level);
 
 #ifdef TB_LOG
 #ifdef __TIZEN__
-    #define OC_LOG(level,tag,mes) LOG_(LOG_ID_MAIN, OCGetTizenLogLevel(level), tag, mes)
-    #define OC_LOG_V(level,tag,fmt,args...) LOG_(LOG_ID_MAIN, OCGetTizenLogLevel(level), tag, fmt,##args)
+    #define OC_LOG(level,tag,mes) LOG_(LOG_ID_MAIN, level, tag, mes)
+    #define OC_LOG_V(level,tag,fmt,args...) LOG_(LOG_ID_MAIN, level, tag, fmt,##args)
     #define OC_LOG_BUFFER(level, tag, buffer, bufferSize)
 #else // These macros are defined for Linux, Android, and Arduino
     #define OC_LOG_INIT()    OCLogInit()

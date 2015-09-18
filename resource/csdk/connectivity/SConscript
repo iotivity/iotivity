@@ -25,7 +25,7 @@ if 'ALL' in transport:
 	if with_ra == True:
 			env.AppendUnique(CPPDEFINES = ['RA_ADAPTER'])
 	if target_os == 'linux':
-		env.AppendUnique(CPPDEFINES = ['IP_ADAPTER','NO_EDR_ADAPTER','LE_ADAPTER'])
+		env.AppendUnique(CPPDEFINES = ['IP_ADAPTER','NO_EDR_ADAPTER','LE_ADAPTER', 'TCP_ADAPTER'])
 	elif target_os == 'tizen':
 		env.AppendUnique(CPPDEFINES = ['IP_ADAPTER','EDR_ADAPTER','LE_ADAPTER'])
 	elif target_os in['darwin','ios']:
@@ -55,6 +55,16 @@ else:
 		print "CA Transport is IP"
 	else:
 		env.AppendUnique(CPPDEFINES = ['NO_IP_ADAPTER'])
+
+	if 'TCP' in transport:
+		if target_os in['linux']:
+			env.AppendUnique(CPPDEFINES = ['TCP_ADAPTER'])
+			print "CA Transport is TCP"
+		else:
+			print "CA Transport TCP is not supported "
+			Exit(1)
+	else:
+		env.AppendUnique(CPPDEFINES = ['NO_TCP_ADAPTER'])
 
 env.SConscript('./src/SConscript')
 

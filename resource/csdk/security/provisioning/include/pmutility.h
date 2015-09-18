@@ -53,7 +53,26 @@ OCStackResult PMDeviceDiscovery(unsigned short waittime, bool isOwned, OCProvisi
  *
  * @param[in] pList         List of OCProvisionDev_t.
  */
-void DeleteDeviceList(OCProvisionDev_t **pList);
+void PMDeleteDeviceList(OCProvisionDev_t *pList);
+
+/**
+ * Timeout implementation for secure discovery. When performing secure discovery,
+ * we should wait a certain period of time for getting response of each devices.
+ *
+ * @param[in]  waittime  Timeout in seconds.
+ * @param[in]  waitForStackResponse if true timeout function will call OCProcess while waiting.
+ * @return OC_STACK_OK on success otherwise error.
+ */
+OCStackResult PMTimeout(unsigned short waittime, bool waitForStackResponse);
+
+/**
+ * Function to clone OCProvisionDev_t
+ *
+ * @param[in] src pointer of OCProvisionDev_t to be copied.
+ *
+ * @return copied OCProvisionDev_t on success otherwise NULL.
+ */
+OCProvisionDev_t* PMCloneOCProvisionDev(const OCProvisionDev_t* src);
 
 
 /**
@@ -73,6 +92,24 @@ bool PMGenerateQuery(bool isSecure,
                      const char* address, uint16_t port,
                      OCConnectivityType connType,
                      char* buffer, size_t bufferSize, const char* uri);
+
+/**
+ * Function to print OCProvisionDev_t for debug purpose.
+ *
+ * @param[in] pDev Pointer to OCProvisionDev_t. It's information will be printed by OC_LOG_XX
+ *
+ */
+void PMPrintOCProvisionDev(const OCProvisionDev_t* pDev);
+
+/** Function to delete matched UUID from the UUIDlist.
+ *
+ * @param[in] pUuidList a pointer to UUID list.
+ * @param[in] targetId  a pointer to UUID to be deleted in the list.
+ *
+ * @return true when deletion is happened, false when no deletion is occured. In case either of
+ * two arguments is null it will return false.
+ */
+bool PMDeleteFromUUIDList(OCUuidList_t *pUuidList, OicUuid_t *targetId);
 
 #ifdef __cplusplus
 }

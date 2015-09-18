@@ -28,7 +28,6 @@
 #include "cacommon.h"
 #include "config.h"
 #include "coap.h"
-#include "debug.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -61,37 +60,43 @@ coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info, const CAEndpoint_
 /**
  * extracts request information from received pdu.
  * @param[in]   pdu                   received pdu.
+ * @param[in]   endpoint              endpoint information.
  * @param[out]  outReqInfo            request info structure made from received pdu.
  * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAGetRequestInfoFromPDU(const coap_pdu_t *pdu, CARequestInfo_t *outReqInfo);
+CAResult_t CAGetRequestInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
+                                   CARequestInfo_t *outReqInfo);
 
 /**
  * extracts response information from received pdu.
  * @param[in]   pdu                   received pdu.
  * @param[out]  outResInfo            response info structure made from received pdu.
+ * @param[in]   endpoint              endpoint information.
  * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAGetResponseInfoFromPDU(const coap_pdu_t *pdu, CAResponseInfo_t *outResInfo);
+CAResult_t CAGetResponseInfoFromPDU(const coap_pdu_t *pdu, CAResponseInfo_t *outResInfo,
+                                    const CAEndpoint_t *endpoint);
 
 /**
  * extracts error information from received pdu.
  * @param[in]   pdu                   received pdu.
+ * @param[in]   endpoint              endpoint information.
  * @param[out]  errorInfo             error info structure made from received pdu.
  * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAGetErrorInfoFromPDU(const coap_pdu_t *pdu, CAErrorInfo_t *errorInfo);
+CAResult_t CAGetErrorInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
+                                 CAErrorInfo_t *errorInfo);
 
 /**
  * creates pdu from the request information.
  * @param[in]   code                 request or response code.
- * @param[out]  options              options for the request and response.
  * @param[in]   info                 information to create pdu.
  * @param[in]   endpoint             endpoint information.
+ * @param[out]  options              options for the request and response.
  * @return  generated pdu.
  */
-coap_pdu_t *CAGeneratePDUImpl(code_t code, coap_list_t *options, const CAInfo_t *info,
-                              const CAEndpoint_t *endpoint);
+coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
+                              const CAEndpoint_t *endpoint, coap_list_t *options);
 
 /**
  * parse the URI and creates the options.
@@ -159,33 +164,39 @@ uint32_t CAGetOptionCount(coap_opt_iterator_t opt_iter);
  * @return  option count.
  */
 uint32_t CAGetOptionData(uint16_t key, const uint8_t *data, uint32_t len,
-        uint8_t *option, uint32_t buflen);
+                         uint8_t *option, uint32_t buflen);
 
 /**
  * extracts request information from received pdu.
  * @param[in]    pdu                  received pdu.
+ * @param[in]    endpoint             endpoint information.
  * @param[out]   outCode              code of the received pdu.
  * @param[out]   outInfo              request info structure made from received pdu.
  * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, uint32_t *outCode, CAInfo_t *outInfo);
+CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
+                            uint32_t *outCode, CAInfo_t *outInfo);
 
 /**
  * create pdu from received data.
  * @param[in]   data                received data.
  * @param[in]   length              length of the data received.
  * @param[out]  outCode             code received.
+ * @param[in]   endpoint            endpoint information.
  * @return  coap_pdu_t value.
  */
-coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode);
+coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode,
+                       const CAEndpoint_t *endpoint);
 
 /**
  * get Token from received data(pdu).
  * @param[in]    pdu_hdr             header of received pdu.
  * @param[out]   outInfo             information with token received.
+ * @param[in]    endpoint            endpoint information.
  * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAGetTokenFromPDU(const coap_hdr_t *pdu_hdr, CAInfo_t *outInfo);
+CAResult_t CAGetTokenFromPDU(const coap_hdr_t *pdu_hdr, CAInfo_t *outInfo,
+                             const CAEndpoint_t *endpoint);
 
 /**
  * generates the token.
@@ -230,6 +241,13 @@ uint16_t CAGetMessageIdFromPduBinaryData(const void *pdu, uint32_t size);
  * @return  code.
  */
 CAResponseResult_t CAGetCodeFromPduBinaryData(const void *pdu, uint32_t size);
+
+/**
+ * convert format from CoAP media type encoding to CAPayloadFormat_t.
+ * @param[in]   format              coap format code.
+ * @return format.
+ */
+CAPayloadFormat_t CAConvertFormat(uint8_t format);
 
 #ifdef __cplusplus
 } /* extern "C" */

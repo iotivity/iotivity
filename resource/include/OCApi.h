@@ -97,7 +97,8 @@ namespace OC
     {
         Server,
         Client,
-        Both
+        Both,
+        Gateway  /**< Client server mode along with routing capabilities.*/
     };
 
     /**

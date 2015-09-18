@@ -61,6 +61,11 @@ if target_os not in ['arduino', 'windows', 'winrt']:
 	liboctbstack_env.AppendUnique(CPPDEFINES  = ['WITH_POSIX'])
 	liboctbstack_env.AppendUnique(CFLAGS = ['-std=c99'])
 
+if liboctbstack_env.get('ROUTING') == 'GW':
+	liboctbstack_env.AppendUnique(CPPDEFINES = ['ROUTING_GATEWAY'])
+elif liboctbstack_env.get('ROUTING') == 'EP':
+	liboctbstack_env.AppendUnique(CPPDEFINES = ['ROUTING_EP'])
+
 if target_os not in ['windows', 'winrt']:
 	liboctbstack_env.AppendUnique(CFLAGS = ['-Wall'])
 
@@ -97,6 +102,9 @@ if env.get('LOGGING'):
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 liboctbstack_env.Append(LIBS = ['c_common'])
+
+if liboctbstack_env.get('ROUTING') in ['GW', 'EP']:
+	liboctbstack_env.Prepend(LIBS = ['routingmanager'])
 
 ######################################################################
 # Source files and Targets

@@ -7,6 +7,7 @@ Import('env')
 libcoap_env = env.Clone()
 
 target_os = env.get('TARGET_OS')
+ca_transport = env.get('TARGET_TRANSPORT')
 # As in the source code(C) includes arduino Time library head file(C++)
 # It requires compile the .c with g++
 if target_os == 'arduino':
@@ -34,6 +35,10 @@ if target_os not in ['arduino', 'windows', 'winrt']:
 if target_os not in ['windows', 'winrt']:
 	libcoap_env.AppendUnique(CFLAGS = ['-Wall', '-ffunction-sections',
 			'-fdata-sections', '-fno-exceptions'])
+
+if target_os == 'linux':
+	if (('TCP' in ca_transport) or ('ALL' in ca_transport)):
+		libcoap_env.AppendUnique(CPPDEFINES = ['WITH_TCP'])
 
 if target_os == 'android':
 	libcoap_env.AppendUnique(LIBS = ['log'])

@@ -54,9 +54,6 @@ static int64_t AddTextStringToMap(CborEncoder* map, const char* key, size_t keyl
 static int64_t ConditionalAddTextStringToMap(CborEncoder* map, const char* key, size_t keylen,
         const char* value);
 
-#define STRINGIFY(s) XSTRINGIFY(s)
-#define XSTRINGIFY(s) #s
-
 OCStackResult OCConvertPayload(OCPayload* payload, uint8_t** outPayload, size_t* size)
 {
     // TinyCbor Version 47a78569c0 or better on master is required for the re-allocation
@@ -176,9 +173,7 @@ static int64_t OCConvertSecurityPayload(OCSecurityPayload* payload, uint8_t* out
     cbor_encoder_init(&encoder, outPayload, *size, 0);
 
     CborEncoder rootArray;
-    err = err | cbor_encoder_create_array(&encoder, &rootArray, 2);
-    err = err | cbor_encode_uint(&rootArray, PAYLOAD_TYPE_SECURITY);
-
+    err = err | cbor_encoder_create_array(&encoder, &rootArray, 1);
     CborEncoder map;
 
     err = err | cbor_encoder_create_map(&rootArray, &map, CborIndefiniteLength);
@@ -207,8 +202,7 @@ static int64_t OCConvertDiscoveryPayload(OCDiscoveryPayload* payload, uint8_t* o
     cbor_encoder_init(&encoder, outPayload, *size, 0);
 
     CborEncoder rootArray;
-    err = err | cbor_encoder_create_array(&encoder, &rootArray, 1 + resourceCount);
-    err = err | cbor_encode_uint(&rootArray, PAYLOAD_TYPE_DISCOVERY);
+    err = err | cbor_encoder_create_array(&encoder, &rootArray, resourceCount);
 
     for(size_t i = 0; i < resourceCount; ++i)
     {
@@ -320,8 +314,7 @@ static int64_t OCConvertDevicePayload(OCDevicePayload* payload, uint8_t* outPayl
 
     cbor_encoder_init(&encoder, outPayload, *size, 0);
     CborEncoder rootArray;
-    err = err | cbor_encoder_create_array(&encoder, &rootArray, 2);
-    err = err | cbor_encode_uint(&rootArray, PAYLOAD_TYPE_DEVICE);
+    err = err | cbor_encoder_create_array(&encoder, &rootArray, 1);
 
     {
         CborEncoder map;
@@ -379,8 +372,7 @@ static int64_t OCConvertPlatformPayload(OCPlatformPayload* payload, uint8_t* out
 
     cbor_encoder_init(&encoder, outPayload, *size, 0);
     CborEncoder rootArray;
-    err = err | cbor_encoder_create_array(&encoder, &rootArray, 2);
-    err = err | cbor_encode_uint(&rootArray, PAYLOAD_TYPE_PLATFORM);
+    err = err | cbor_encoder_create_array(&encoder, &rootArray, 1);
     {
         CborEncoder map;
         err = err | cbor_encoder_create_map(&rootArray, &map, CborIndefiniteLength);
@@ -463,65 +455,98 @@ static int64_t OCConvertPlatformPayload(OCPlatformPayload* payload, uint8_t* out
     return checkError(err, &encoder, outPayload, size);
 }
 
+static int64_t OCConvertArrayItem(CborEncoder* array, const OCRepPayloadValueArray* valArray,
+        size_t index)
+{
+    int64_t err = 0;
+    switch (valArray->type)
+    {
+        case OCREP_PROP_NULL:
+            OC_LOG(ERROR, TAG, "ConvertArray Invalid NULL");
+            err = CborUnknownError;
+            break;
+        case OCREP_PROP_INT:
+            err = err | cbor_encode_int(array, valArray->iArray[index]);
+            break;
+        case OCREP_PROP_DOUBLE:
+            err = err | cbor_encode_double(array, valArray->dArray[index]);
+            break;
+        case OCREP_PROP_BOOL:
+            err = err | cbor_encode_boolean(array, valArray->bArray[index]);
+            break;
+        case OCREP_PROP_STRING:
+            if (!valArray->strArray[index])
+            {
+                err = err | cbor_encode_null(array);
+            }
+            else
+            {
+                err = err | cbor_encode_text_string(array, valArray->strArray[index],
+                        strlen(valArray->strArray[index]));
+            }
+            break;
+        case OCREP_PROP_OBJECT:
+            if (!valArray->objArray[index])
+            {
+                err = err | cbor_encode_null(array);
+            }
+            else
+            {
+                err = OCConvertSingleRepPayload(array, valArray->objArray[index]);
+            }
+            break;
+        case OCREP_PROP_ARRAY:
+            OC_LOG(ERROR, TAG, "ConvertArray Invalid child array");
+            err = CborUnknownError;
+            break;
+    }
+
+    return err;
+}
 static int64_t OCConvertArray(CborEncoder* parent, const OCRepPayloadValueArray* valArray)
 {
     CborEncoder array;
     int64_t err = 0;
 
-    err = err | cbor_encoder_create_array(parent, &array, CborIndefiniteLength);
-    err = err | cbor_encode_uint(&array, valArray->type);
-    for(int i = 0; i < MAX_REP_ARRAY_DEPTH; ++i)
-    {
-        err = err | cbor_encode_uint(&array, valArray->dimensions[i]);
-    }
+    err = err | cbor_encoder_create_array(parent, &array, valArray->dimensions[0]);
 
-    size_t dimTotal = calcDimTotal(valArray->dimensions);
-
-    for(size_t i = 0; i < dimTotal; ++i)
+    for (size_t i = 0; i < valArray->dimensions[0];++i)
     {
-        switch(valArray->type)
+        if (valArray->dimensions[1] != 0)
         {
-            case OCREP_PROP_NULL:
-                OC_LOG(ERROR, TAG, "ConvertArray Invalid NULL");
-                err = CborUnknownError;
-                break;
-            case OCREP_PROP_INT:
-                err = err | cbor_encode_int(&array, valArray->iArray[i]);
-                break;
-            case OCREP_PROP_DOUBLE:
-                err = err | cbor_encode_double(&array, valArray->dArray[i]);
-                break;
-            case OCREP_PROP_BOOL:
-                err = err | cbor_encode_boolean(&array, valArray->bArray[i]);
-                break;
-            case OCREP_PROP_STRING:
-                if (!valArray->strArray[i])
+            CborEncoder array2;
+            err = err | cbor_encoder_create_array(&array, &array2, valArray->dimensions[1]);
+
+            for (size_t j = 0; j < valArray->dimensions[1]; ++j)
+            {
+                if (valArray->dimensions[2] != 0)
                 {
-                    err = err | cbor_encode_null(&array);
+                    CborEncoder array3;
+                    err = err | cbor_encoder_create_array(&array2, &array3,
+                            valArray->dimensions[2]);
+
+                    for(size_t k = 0; k < valArray->dimensions[2]; ++k)
+                    {
+                        OCConvertArrayItem(&array3, valArray,
+                            j * valArray->dimensions[2] +
+                            i * valArray->dimensions[2] * valArray->dimensions[1] +
+                            k);
+                    }
+                    err = err | cbor_encoder_close_container(&array2, &array3);
                 }
                 else
                 {
-                    err = err | cbor_encode_text_string(&array, valArray->strArray[i],
-                            strlen(valArray->strArray[i]));
+                    OCConvertArrayItem(&array2, valArray,
+                            i * valArray->dimensions[1] + j);
                 }
-                break;
-            case OCREP_PROP_OBJECT:
-                if (!valArray->objArray[i])
-                {
-                    err = err | cbor_encode_null(&array);
-                }
-                else
-                {
-                    err = OCConvertSingleRepPayload(&array, valArray->objArray[i]);
-                }
-                break;
-            case OCREP_PROP_ARRAY:
-                OC_LOG(ERROR, TAG, "ConvertArray Invalid child array");
-                err = CborUnknownError;
-                break;
+            }
+            err = err | cbor_encoder_close_container(&array, &array2);
+        }
+        else
+        {
+            OCConvertArrayItem(&array, valArray, i);
         }
     }
-
     err = err | cbor_encoder_close_container(parent, &array);
     return err;
 }
@@ -645,7 +670,6 @@ static int64_t OCConvertRepPayload(OCRepPayload* payload, uint8_t* outPayload, s
     cbor_encoder_init(&encoder, outPayload, *size, 0);
     CborEncoder rootArray;
     err = err | cbor_encoder_create_array(&encoder, &rootArray, CborIndefiniteLength);
-    err = err | cbor_encode_uint(&rootArray, PAYLOAD_TYPE_REPRESENTATION);
 
     while(payload != NULL && (err == 0 || err == CborErrorOutOfMemory))
     {
@@ -668,9 +692,7 @@ static int64_t OCConvertPresencePayload(OCPresencePayload* payload,
     cbor_encoder_init(&encoder, outPayload, *size, 0);
     CborEncoder rootArray;
 
-    err = err | cbor_encoder_create_array(&encoder, &rootArray, 2);
-    err = err | cbor_encode_uint(&rootArray, PAYLOAD_TYPE_PRESENCE);
-
+    err = err | cbor_encoder_create_array(&encoder, &rootArray, 1);
 
     CborEncoder map;
     err = err | cbor_encoder_create_map(&rootArray, &map, CborIndefiniteLength);

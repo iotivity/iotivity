@@ -9,6 +9,7 @@
 #include "cainterface.h"
 #include "cacommon.h"
 #include "caadapterutils.h"
+#include "oic_string.h"
 
 #include "org_iotivity_ca_service_RMInterface.h"
 
@@ -182,6 +183,7 @@ CAResult_t SetCredentials()
 JNIEXPORT jint JNI_OnLoad(JavaVM *jvm, void *reserved)
 {
     LOGI("JNI_OnLoad");
+    (void)reserved;
 
     JNIEnv* env;
     if (JNI_OK != (*jvm)->GetEnv(jvm, (void**) &env, JNI_VERSION_1_6))
@@ -198,6 +200,7 @@ JNIEXPORT jint JNI_OnLoad(JavaVM *jvm, void *reserved)
 void JNI_OnUnload(JavaVM *jvm, void *reserved)
 {
     LOGI("JNI_OnUnload");
+    (void)reserved;
 
     JNIEnv* env;
     if (JNI_OK != (*jvm)->GetEnv(jvm, (void**) &env, JNI_VERSION_1_6))

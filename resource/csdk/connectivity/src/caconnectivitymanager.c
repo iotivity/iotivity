@@ -34,6 +34,10 @@
 #include "caadapternetdtls.h"
 #endif
 
+#ifdef TCP_ADAPTER
+#include "catcpadapter.h"
+#endif
+
 CAGlobals_t caglobals = { 0 };
 
 #define TAG "CA_CONN_MGR"
@@ -256,6 +260,16 @@ CAResult_t CASelectNetwork(CATransportAdapter_t interestedNetwork)
                   "CAAddNetworkType(CA_ADAPTER_REMOTE_ACCESS) function returns result : %d", res);
     }
 #endif
+
+#ifdef TCP_ADAPTER
+    else if (interestedNetwork & CA_ADAPTER_TCP)
+    {
+        res = CAAddNetworkType(CA_ADAPTER_TCP);
+        OIC_LOG_V(DEBUG, TAG,
+                  "CAAddNetworkType(CA_ADAPTER_TCP) function returns result : %d", res);
+    }
+#endif
+
     else
     {
         res = CA_NOT_SUPPORTED;
@@ -294,9 +308,20 @@ CAResult_t CAUnSelectNetwork(CATransportAdapter_t nonInterestedNetwork)
     {
         res = CARemoveNetworkType(CA_ADAPTER_REMOTE_ACCESS);
         OIC_LOG_V(DEBUG, TAG, "CARemoveNetworkType(CA_ADAPTER_REMOTE_ACCESS) function returns result : %d",
-                                                res);
+                  res);
     }
 #endif
+
+
+#ifdef TCP_ADAPTER
+    else if (nonInterestedNetwork & CA_ADAPTER_TCP)
+    {
+        res = CARemoveNetworkType(CA_ADAPTER_TCP);
+        OIC_LOG_V(DEBUG, TAG, "CARemoveNetworkType(CA_ADAPTER_TCP) function returns result : %d",
+                  res);
+    }
+#endif
+
     else
     {
         res = CA_STATUS_FAILED;
