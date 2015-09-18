@@ -919,6 +919,12 @@ void RTMGetObserverList(OCObservationId **obsList, uint8_t *obsListLen,
     RM_NULL_CHECK_VOID(obsList, TAG, "obsList");
 
     *obsList = (OCObservationId *) OICCalloc(MAX_OBSERVER_LIST_LENGTH, sizeof(OCObservationId));
+    if (!(*obsList))
+    {
+        OC_LOG(ERROR, TAG, "out of memory");
+        return;
+    }
+
     u_linklist_iterator_t *iterTable = NULL;
     u_linklist_init_iterator(gatewayTable, &iterTable);
     uint8_t len = 0;

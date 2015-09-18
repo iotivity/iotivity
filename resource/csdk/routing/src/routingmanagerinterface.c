@@ -121,7 +121,7 @@ OCStackResult RMDiscoverGatewayResource()
                           OC_LOW_QOS, &discoverData, NULL, 0);
 
     // Temp fix for packet drops in WIFI.
-    for (int sendData = 0; sendData < MAX_SEND_DATA; sendData++)
+    for (uint8_t sendData = 0; sendData < MAX_SEND_DATA; sendData++)
     {
         result = OCDoResource(NULL, OC_REST_DISCOVER, GW_RESOURCE_URI, 0, 0,
                               CT_ADAPTER_IP, OC_LOW_QOS, &discoverData, NULL, 0);
