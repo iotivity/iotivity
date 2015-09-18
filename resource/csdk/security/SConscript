@@ -78,6 +78,9 @@ if target_os in ['darwin', 'ios']:
 if not env.get('RELEASE'):
 	libocsrm_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
+if env.get('DTLS_WITH_X509') == '1':
+	libocsrm_env.AppendUnique(CPPDEFINES = ['__WITH_X509__'])
+
 ######################################################################
 # Source files and Targets
 ######################################################################
@@ -120,6 +123,11 @@ else:
 		OCSRM_SRC + 'iotvticalendar.c',
 		OCSRM_SRC + 'base64.c'
 		]
+
+if env.get('DTLS_WITH_X509') == '1' and env.get('SECURED') == '1':
+	crl_src = [OCSRM_SRC + 'crlresource.c']
+	libocsrm_src  = libocsrm_src + crl_src
+
 
 libocsrm = libocsrm_env.StaticLibrary('libocsrm', libocsrm_src)
 

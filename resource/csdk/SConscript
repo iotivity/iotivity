@@ -68,6 +68,7 @@ liboctbstack_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 
 if target_os in ['android', 'linux', 'tizen']:
 	liboctbstack_env.PrependUnique(LIBS = ['connectivity_abstraction'])
+
 	if with_ra:
 		liboctbstack_env.AppendUnique(LIBS = ['ra_xmpp'])
 
@@ -95,6 +96,9 @@ if env.get('SECURED') == '1':
 
 if env.get('LOGGING'):
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+
+if env.get('DTLS_WITH_X509') == '1':
+	liboctbstack_env.AppendUnique(CPPDEFINES = ['__WITH_X509__'])
 
 liboctbstack_env.Append(LIBS = ['c_common'])
 

@@ -56,6 +56,16 @@ if env.get('SECURED') == '1':
                                                 'adapter_util/caadapternetdtls.c')])
 	env.AppendUnique(CPPPATH = [os.path.join(root_dir,
                                                  'external/inc')])
+if env.get('DTLS_WITH_X509') == '1':
+	src_dir = env.get('SRC_DIR')
+	env.AppendUnique(CPPPATH = [src_dir + '/resource/csdk/connectivity/inc/pkix'])
+	env.AppendUnique(CPPPATH = [src_dir + '/extlibs/tinydtls/ecc/'])
+	env.AppendUnique(CPPPATH = [src_dir + '/extlibs/tinydtls/sha2/'])
+	env.AppendUnique(CPPDEFINES = ['__WITH_X509__'])
+	if not env.get('RELEASE'):
+		env.AppendUnique(CPPDEFINES = ['X509_DEBUG'])
+	pkix_src = Glob('adapter_util/pkix/*.c');
+	env.AppendUnique(CA_SRC = pkix_src)
 
 ca_common_src = None
 if ca_os == 'arduino':

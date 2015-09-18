@@ -58,6 +58,9 @@ sptest_env.PrependUnique(LIBS = [   'ocpmapi',
 
 if env.get('SECURED') == '1':
     sptest_env.AppendUnique(LIBS = ['tinydtls'])
+if env.get('DTLS_WITH_X509') == '1':
+	sptest_env.AppendUnique(LIBS = ['CKManager'])
+	sptest_env.AppendUnique(LIBS = ['asn1'])
 
 if not env.get('RELEASE'):
 	sptest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
