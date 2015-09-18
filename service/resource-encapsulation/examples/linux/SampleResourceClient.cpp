@@ -40,7 +40,7 @@ constexpr int QUIT_INPUT = 3;
 constexpr int REQUEST_TEMP = 1;
 constexpr int REQUEST_LIGHT = 2;
 
-std::unique_ptr<RCSDiscoveryTask> discoveryTask = nullptr;
+std::unique_ptr<RCSDiscoveryManager::DiscoveryTask> discoveryTask = nullptr;
 std::shared_ptr<RCSRemoteResourceObject>  resource;
 
 std::string defaultKey = "Temperature";
