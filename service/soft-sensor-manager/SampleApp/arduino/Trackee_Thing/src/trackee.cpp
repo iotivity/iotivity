@@ -168,7 +168,7 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
 
     if (entityHandlerRequest && (flag & OC_REQUEST_FLAG))
     {
-        OC_LOG (INFO, TAG, PCF("Flag includes OC_REQUEST_FLAG"));
+        OC_LOG (INFO, TAG, ("Flag includes OC_REQUEST_FLAG"));
         if (OC_REST_GET == entityHandlerRequest->method)
         {
             if (JsonGenerator((char *)entityHandlerRequest->resJSONPayload, \
@@ -197,12 +197,12 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
     {
         if (OC_OBSERVE_REGISTER == entityHandlerRequest->obsInfo->action)
         {
-            OC_LOG (INFO, TAG, PCF("Received OC_OBSERVE_REGISTER from client"));
+            OC_LOG (INFO, TAG, ("Received OC_OBSERVE_REGISTER from client"));
             g_PROXIUnderObservation = 1;
         }
         else if (OC_OBSERVE_DEREGISTER == entityHandlerRequest->obsInfo->action)
         {
-            OC_LOG (INFO, TAG, PCF("Received OC_OBSERVE_DEREGISTER from client"));
+            OC_LOG (INFO, TAG, ("Received OC_OBSERVE_DEREGISTER from client"));
         }
     }
 
@@ -317,7 +317,7 @@ void setup()
     // Add your initialization code here
     OC_LOG_INIT();
 
-    OC_LOG(DEBUG, TAG, PCF("OCServer is starting..."));
+    OC_LOG(DEBUG, TAG, ("OCServer is starting..."));
     //    uint16_t port = OC_WELL_KNOWN_PORT;
 
     // Connect to Ethernet or WiFi network
@@ -330,7 +330,7 @@ void setup()
     // Initialize the OC Stack in Server mode
     if (OCInit(NULL, OC_WELL_KNOWN_PORT, OC_SERVER) != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, PCF("OCStack init error"));
+        OC_LOG(ERROR, TAG, ("OCStack init error"));
         return;
     }
 
@@ -362,7 +362,7 @@ void loop()
 
     if (OCProcess() != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, PCF("OCStack process error"));
+        OC_LOG(ERROR, TAG, ("OCStack process error"));
         return;
     }
 #if (ARDUINO == 0)

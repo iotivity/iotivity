@@ -1,4 +1,4 @@
-/******************************************************************
+/* *****************************************************************
  *
  * Copyright 2015 Samsung Electronics All Rights Reserved.
  *
@@ -19,29 +19,25 @@
  ******************************************************************/
 
 /**
-  * @file   jni_getter.h
-  *
-  * @brief  This file contains the JGetter class  declarations and its functions required
-  *            for getting and setting basic data types in C++ and Java
+  * @file
+  * This file contains the JGetter class  declarations and its functions required
+  * for getting and setting basic data types in C++ and Java.
   */
 
-#ifndef __JNI_GETTER_H_
-#define __JNI_GETTER_H_
-
+#ifndef JNI_GETTER_H_
+#define JNI_GETTER_H_
 
 #include <string>
 #include <jni.h>
 
 /**
- * @class   JGetter
- * @brief  This class provide utility for get/set basic data types in C++ and Java
- *
+ * This class provide utility for get/set basic data types in C++ and Java.
  */
 class JGetter
 {
     public:
         /**
-         * This function is called to get String field from the C++ object
+         * This function is called to get String field from the C++ object.
          *
          * @param env
          *           JNI Environment reference
@@ -58,7 +54,7 @@ class JGetter
                                     std::string &value);
 
         /**
-         * This function is called to get Boolean field from the C++ object
+         * This function is called to get Boolean field from the C++ object.
          *
          * @param env
          *           JNI Environment reference
@@ -75,7 +71,7 @@ class JGetter
                                   bool &value);
 
         /**
-         * This function is called to get Integer field from the C++ object
+         * This function is called to get Integer field from the C++ object.
          *
          * @param env
          *           JNI Environment reference
@@ -91,7 +87,7 @@ class JGetter
         static bool getJIntField(JNIEnv *env, jobject &object, const char *fieldName, int &value);
 
         /**
-         * This function is called to get Object reference from the C++ object
+         * This function is called to get Object reference from the C++ object.
          *
          * @param env
          *           JNI Environment reference
@@ -104,9 +100,9 @@ class JGetter
          * @param value
          *         reference to Object reference mentioned in fieldName
          *
-         * @return returns true on success and false on failer.
+         * @return returns true on success and false on failure
          */
         static bool getJObjectField(JNIEnv *env, jobject &object, const char *fieldName,
                                     const char *fieldType, jobject &value);
 };
-#endif //__JNI_GETTER_H_
+#endif //JNI_GETTER_H_

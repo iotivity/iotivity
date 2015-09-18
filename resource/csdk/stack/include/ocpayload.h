@@ -23,7 +23,6 @@
 
 #include <stdbool.h>
 #include <inttypes.h>
-#include "logger.h"
 #include "octypes.h"
 
 #ifdef __cplusplus

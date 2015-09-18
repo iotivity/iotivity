@@ -80,6 +80,7 @@ namespace OC
                 break;
 
             case ModeType::Both:
+            case ModeType::Gateway:
                 m_server = m_WrapperInstance->CreateServerWrapper(m_csdkLock, config);
                 m_client = m_WrapperInstance->CreateClientWrapper(m_csdkLock, config);
                 break;
@@ -358,6 +359,11 @@ namespace OC
     {
         return checked_guard(m_server, &IServerWrapper::sendResponse,
                              pResponse);
+    }
+
+    std::weak_ptr<std::recursive_mutex> OCPlatform_impl::csdkLock()
+    {
+        return m_csdkLock;
     }
 } //namespace OC
 

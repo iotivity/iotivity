@@ -73,9 +73,10 @@ namespace OIC
         ConfigurationUnitInfo unit[] =
         {
         { "all", "All attributes", "/oic/con" },
-        { "r", "Region", "/oic/con" },
-        { "st", "System Time", "/oic/con"},
+        { "n", "Device Name", "/oic/con"},
         { "loc", "Location", "/oic/con"},
+        { "locn", "Location Name", "/oic/con"},
+        { "r", "Region", "/oic/con" },
         { "c","Currency", "/oic/con" } };
 
         for (int i = 0; i < NUMCONFUNIT; i++)

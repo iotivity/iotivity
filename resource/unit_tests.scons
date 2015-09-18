@@ -57,6 +57,7 @@ if target_os == 'linux':
 	# Build Provisioning API unit test
 	if env.get('SECURED') == '1':
 		SConscript('csdk/security/provisioning/unittest/SConscript')
+		SConscript('provisioning/unittests/SConscript')
 
 elif target_os == 'darwin':
 	# Verify that 'google unit test' library is installed.  If not,

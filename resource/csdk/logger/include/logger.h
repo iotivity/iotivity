@@ -43,7 +43,11 @@ extern "C" {
 // Use the PCF macro to wrap strings stored in FLASH on the Arduino
 // Example:  OC_LOG(INFO, TAG, PCF("Entering function"));
 #ifdef ARDUINO
-    #define PCF(str)  ((PROGMEM const char *)(F(str)))
+#ifdef __cplusplus
+#define PCF(str)  ((PROGMEM const char *)(F(str)))
+#else
+#define PCF(str)  ((PROGMEM const char *)(PSTR(str)))
+#endif //__cplusplus
 #else
     #define PCF(str) str
 #endif
@@ -52,6 +56,15 @@ extern "C" {
 #define MAX_LOG_V_BUFFER_SIZE (256)
 
 // Log levels
+#ifdef __TIZEN__
+typedef enum {
+    DEBUG = DLOG_DEBUG,
+    INFO = DLOG_INFO,
+    WARNING = DLOG_WARN,
+    ERROR = DLOG_ERROR,
+    FATAL = DLOG_ERROR
+} LogLevel;
+#else
 typedef enum {
     DEBUG = 0,
     INFO,
@@ -59,11 +72,6 @@ typedef enum {
     ERROR,
     FATAL
 } LogLevel;
-
-#ifdef __TIZEN__
-
-int OCGetTizenLogLevel(LogLevel level);
-
 #endif
 
 #ifdef __TIZEN__
@@ -157,23 +165,24 @@ int OCGetTizenLogLevel(LogLevel level);
 
 #ifdef TB_LOG
 #ifdef __TIZEN__
-    #define OC_LOG(level,tag,mes) LOG_(LOG_ID_MAIN, OCGetTizenLogLevel(level), tag, mes)
-    #define OC_LOG_V(level,tag,fmt,args...) LOG_(LOG_ID_MAIN, OCGetTizenLogLevel(level), tag, fmt,##args)
+    #define OC_LOG(level,tag,mes) LOG_(LOG_ID_MAIN, level, tag, mes)
+    #define OC_LOG_V(level,tag,fmt,args...) LOG_(LOG_ID_MAIN, level, tag, fmt,##args)
     #define OC_LOG_BUFFER(level, tag, buffer, bufferSize)
 #else // These macros are defined for Linux, Android, and Arduino
     #define OC_LOG_INIT()    OCLogInit()
-    #define OC_LOG(level, tag, logStr)  OCLog((level), (tag), (logStr))
-    #define OC_LOG_BUFFER(level, tag, buffer, bufferSize)  OCLogBuffer((level), (tag), (buffer), (bufferSize))
+    #define OC_LOG_BUFFER(level, tag, buffer, bufferSize)  OCLogBuffer((level), PCF(tag), (buffer), (bufferSize))
 
     #ifdef ARDUINO
         #define OC_LOG_CONFIG(ctx)
         #define OC_LOG_SHUTDOWN()
+        #define OC_LOG(level, tag, logStr)  OCLog((level), PCF(tag), PCF(logStr))
         // Use full namespace for logInit to avoid function name collision
         #define OC_LOG_INIT()    OCLogInit()
         // Don't define variable argument log function for Arduino
-        #define OC_LOG_V(level, tag, ...) OCLogv((level), (tag), __VA_ARGS__)
+        #define OC_LOG_V(level, tag, format, ...) OCLogv((level), PCF(tag), PCF(format), __VA_ARGS__)
     #else
         #define OC_LOG_CONFIG(ctx)    OCLogConfig((ctx))
+        #define OC_LOG(level, tag, logStr)  OCLog((level), (tag), (logStr))
         #define OC_LOG_SHUTDOWN()     OCLogShutdown()
         // Define variable argument log function for Linux and Android
         #define OC_LOG_V(level, tag, ...)  OCLogv((level), (tag), __VA_ARGS__)

@@ -67,6 +67,8 @@ public:
             return OC::ModeType::Client;
         case 2:
             return OC::ModeType::Both;
+        case 3:
+            return OC::ModeType::Gateway;
         default:
             ThrowOcException(OC_STACK_INVALID_PARAM, "Unexpected mode type");
             return OC::ModeType::Both;

@@ -157,9 +157,9 @@ TEST_F(UArrayListF, ShrinkToFit)
         u_arraylist_remove(list, i);
     }
 
-    EXPECT_GT(list->size, list->length);
+    EXPECT_GT(list->capacity, list->length);
     u_arraylist_shrink_to_fit(list);
-    EXPECT_EQ(list->size, list->length);
+    EXPECT_EQ(list->capacity, list->length);
 }
 
 TEST_F(UArrayListF, Get)

@@ -83,13 +83,14 @@ help_vars.Add(BoolVariable('WITH_RA', 'Build with Remote Access module', False))
 if target_os in targets_disallow_multitransport:
 	help_vars.Add(ListVariable('TARGET_TRANSPORT', 'Target transport', 'IP', ['BT', 'BLE', 'IP']))
 else:
-	help_vars.Add(ListVariable('TARGET_TRANSPORT', 'Target transport', 'ALL', ['ALL', 'BT', 'BLE', 'IP']))
+	help_vars.Add(ListVariable('TARGET_TRANSPORT', 'Target transport', 'ALL', ['ALL', 'BT', 'BLE', 'IP', 'TCP']))
 
 help_vars.Add(EnumVariable('TARGET_ARCH', 'Target architecture', default_arch, os_arch_map[target_os]))
 help_vars.Add(EnumVariable('SECURED', 'Build with DTLS', '0', allowed_values=('0', '1')))
 help_vars.Add(EnumVariable('TEST', 'Run unit tests', '0', allowed_values=('0', '1')))
 help_vars.Add(BoolVariable('LOGGING', 'Enable stack logging', logging_default))
 help_vars.Add(BoolVariable('UPLOAD', 'Upload binary ? (For Arduino)', require_upload))
+help_vars.Add(EnumVariable('ROUTING', 'Enable routing', 'EP', allowed_values=('GW', 'EP')))
 help_vars.Add(EnumVariable('BUILD_SAMPLE', 'Build with sample', 'ON', allowed_values=('ON', 'OFF')))
 help_vars.AddVariables(('DEVICE_NAME', 'Network display name for device (For Arduino)', device_name, None, None),)
 help_vars.Add(PathVariable('ANDROID_NDK', 'Android NDK path', None, PathVariable.PathAccept))
@@ -218,6 +219,14 @@ def __installbin(ienv, targets, name):
 		i_n = ienv.Install(env.get('BUILD_DIR'), targets)
 	ienv.Alias("install", i_n)
 
+def __installheader(ienv, targets, dir, name):
+	user_prefix = env.get('PREFIX')
+	if user_prefix:
+		i_n = ienv.Install(user_prefix + '/include/' + dir ,targets)
+	else:
+		i_n = ienv.Install(env.get('BUILD_DIR'), targets)
+	ienv.Alias("install", i_n)
+
 def __append_target(ienv, name, targets = None):
 	if targets:
 		env.Alias(name, targets)
@@ -243,6 +252,7 @@ env.AddMethod(__append_target, 'AppendTarget')
 env.AddMethod(__install, 'InstallTarget')
 env.AddMethod(__installlib, 'UserInstallTargetLib')
 env.AddMethod(__installbin, 'UserInstallTargetBin')
+env.AddMethod(__installheader, 'UserInstallTargetHeader')
 env.SetDir(env.GetLaunchDir())
 env['ROOT_DIR']=env.GetLaunchDir()+'/..'
 

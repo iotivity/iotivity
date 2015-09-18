@@ -21,7 +21,6 @@
 #include "caipinterface.h"
 
 #include <sys/types.h>
-#include <ifaddrs.h>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <string.h>

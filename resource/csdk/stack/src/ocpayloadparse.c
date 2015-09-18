@@ -26,7 +26,7 @@
 #include "ocpayload.h"
 #include "cbor.h"
 
-#define TAG PCF("OCPayloadParse")
+#define TAG "OCPayloadParse"
 
 static OCStackResult OCParseDiscoveryPayload(OCPayload** outPayload, CborValue* arrayVal);
 static OCStackResult OCParseDevicePayload(OCPayload** outPayload, CborValue* arrayVal);
@@ -36,7 +36,8 @@ static OCStackResult OCParseRepPayload(OCPayload** outPayload, CborValue* arrayV
 static OCStackResult OCParsePresencePayload(OCPayload** outPayload, CborValue* arrayVal);
 static OCStackResult OCParseSecurityPayload(OCPayload** outPayload, CborValue* arrayVal);
 
-OCStackResult OCParsePayload(OCPayload** outPayload, const uint8_t* payload, size_t payloadSize)
+OCStackResult OCParsePayload(OCPayload** outPayload, OCPayloadType payloadType,
+        const uint8_t* payload, size_t payloadSize)
 {
     CborParser parser;
     CborValue rootValue;
@@ -59,11 +60,7 @@ OCStackResult OCParsePayload(OCPayload** outPayload, const uint8_t* payload, siz
     // enter the array
     err = err || cbor_value_enter_container(&rootValue, &arrayValue);
 
-    int payloadType = 0;
-    err = err || cbor_value_get_int(&arrayValue, &payloadType);
-    err = err || cbor_value_advance_fixed(&arrayValue);
-
-    if(err)
+    if(err || arrayValue.type != CborMapType)
     {
         OC_LOG_V(ERROR, TAG, "CBOR payload parse failed :%d", err);
         return OC_STACK_MALFORMED_RESPONSE;
@@ -116,6 +113,11 @@ void OCFreeOCStringLL(OCStringLL* ll);
 
 static OCStackResult OCParseSecurityPayload(OCPayload** outPayload, CborValue* arrayVal)
 {
+    if (!outPayload)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
     bool err = false;
     char * securityData = NULL;
 
@@ -132,7 +134,7 @@ static OCStackResult OCParseSecurityPayload(OCPayload** outPayload, CborValue* a
     }
     else
     {
-        OC_LOG_V(ERROR, TAG, PCF("Cbor main value not a map"));
+        OC_LOG(ERROR, TAG, "Cbor main value not a map");
         return OC_STACK_MALFORMED_RESPONSE;
     }
 
@@ -140,7 +142,7 @@ static OCStackResult OCParseSecurityPayload(OCPayload** outPayload, CborValue* a
 
     if(err)
     {
-        OC_LOG_V(ERROR, TAG, "Cbor in error condition");
+        OC_LOG(ERROR, TAG, "Cbor in error condition");
         OICFree(securityData);
         return OC_STACK_MALFORMED_RESPONSE;
     }
@@ -154,6 +156,11 @@ static OCStackResult OCParseSecurityPayload(OCPayload** outPayload, CborValue* a
 
 static OCStackResult OCParseDiscoveryPayload(OCPayload** outPayload, CborValue* arrayVal)
 {
+    if (!outPayload)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
     bool err = false;
 
     OCDiscoveryPayload* out = OCDiscoveryPayloadCreate();
@@ -170,7 +177,7 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload** outPayload, CborValue* 
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
         if(!resource)
         {
-            OC_LOG_V(ERROR, TAG, "Memory allocation failed");
+            OC_LOG(ERROR, TAG, "Memory allocation failed");
             OCDiscoveryPayloadDestroy(out);
             return OC_STACK_NO_MEMORY;
         }
@@ -204,7 +211,7 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload** outPayload, CborValue* 
                     llPtr = resource->types;
                     if(!llPtr)
                     {
-                        OC_LOG(ERROR, TAG, PCF("Memory allocation failed"));
+                        OC_LOG(ERROR, TAG, "Memory allocation failed");
                         OICFree(resource->uri);
                         OICFree(resource->sid);
                         OICFree(resource);
@@ -218,7 +225,7 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload** outPayload, CborValue* 
                     llPtr = llPtr->next;
                     if(!llPtr)
                     {
-                        OC_LOG(ERROR, TAG, PCF("Memory allocation failed"));
+                        OC_LOG(ERROR, TAG, "Memory allocation failed");
                         OICFree(resource->uri);
                         OICFree(resource->sid);
                         OCFreeOCStringLL(resource->types);
@@ -229,7 +236,7 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload** outPayload, CborValue* 
                 }
                 else
                 {
-                        OC_LOG(ERROR, TAG, PCF("Unknown state in resource type copying"));
+                        OC_LOG(ERROR, TAG, "Unknown state in resource type copying");
                         OICFree(resource->uri);
                         OICFree(resource->sid);
                         OCFreeOCStringLL(resource->types);
@@ -259,7 +266,7 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload** outPayload, CborValue* 
                     llPtr = resource->interfaces;
                     if(!llPtr)
                     {
-                        OC_LOG_V(ERROR, TAG, "Memory allocation failed");
+                        OC_LOG(ERROR, TAG, "Memory allocation failed");
                         OICFree(resource->uri);
                         OICFree(resource->sid);
                         OCFreeOCStringLL(resource->types);
@@ -274,7 +281,7 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload** outPayload, CborValue* 
                     llPtr = llPtr->next;
                     if(!llPtr)
                     {
-                        OC_LOG_V(ERROR, TAG, "Memory allocation failed");
+                        OC_LOG(ERROR, TAG, "Memory allocation failed");
                         OICFree(resource->uri);
                         OICFree(resource->sid);
                         OCFreeOCStringLL(resource->types);
@@ -286,7 +293,7 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload** outPayload, CborValue* 
                 }
                 else
                 {
-                        OC_LOG(ERROR, TAG, PCF("Unknown state in resource interfaces copying"));
+                        OC_LOG(ERROR, TAG, "Unknown state in resource interfaces copying");
                         OICFree(resource->uri);
                         OICFree(resource->sid);
                         OCFreeOCStringLL(resource->types);
@@ -359,6 +366,11 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload** outPayload, CborValue* 
 
 static OCStackResult OCParseDevicePayload(OCPayload** outPayload, CborValue* arrayVal)
 {
+    if (!outPayload)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
     bool err = false;
 
     if(cbor_value_is_map(arrayVal))
@@ -422,7 +434,7 @@ static OCStackResult OCParseDevicePayload(OCPayload** outPayload, CborValue* arr
     }
     else
     {
-        OC_LOG(ERROR, TAG, PCF("Root device node was not a map"));
+        OC_LOG(ERROR, TAG, "Root device node was not a map");
         return OC_STACK_MALFORMED_RESPONSE;
     }
 
@@ -430,6 +442,11 @@ static OCStackResult OCParseDevicePayload(OCPayload** outPayload, CborValue* arr
 
 static OCStackResult OCParsePlatformPayload(OCPayload** outPayload, CborValue* arrayVal)
 {
+    if (!outPayload)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
     bool err = false;
 
     if(cbor_value_is_map(arrayVal))
@@ -538,7 +555,7 @@ static OCStackResult OCParsePlatformPayload(OCPayload** outPayload, CborValue* a
             OICFree(info.platformVersion);
             OICFree(info.supportUrl);
             OICFree(info.systemTime);
-            OC_LOG(ERROR, TAG, PCF("CBOR error In ParsePlatformPayload"));
+            OC_LOG(ERROR, TAG, "CBOR error In ParsePlatformPayload");
             return OC_STACK_MALFORMED_RESPONSE;
         }
 
@@ -553,141 +570,303 @@ static OCStackResult OCParsePlatformPayload(OCPayload** outPayload, CborValue* a
     }
     else
     {
-        OC_LOG(ERROR, TAG, PCF("Root device node was not a map"));
+        OC_LOG(ERROR, TAG, "Root device node was not a map");
         return OC_STACK_MALFORMED_RESPONSE;
     }
 }
 
+static OCRepPayloadPropType DecodeCborType(CborType type)
+{
+    switch (type)
+    {
+            case CborNullType:
+                return OCREP_PROP_NULL;
+            case CborIntegerType:
+                return OCREP_PROP_INT;
+            case CborDoubleType:
+                return OCREP_PROP_DOUBLE;
+            case CborBooleanType:
+                return OCREP_PROP_BOOL;
+            case CborTextStringType:
+                return OCREP_PROP_STRING;
+            case CborMapType:
+                return OCREP_PROP_OBJECT;
+            case CborArrayType:
+                return OCREP_PROP_ARRAY;
+            default:
+                return OCREP_PROP_NULL;
+    }
+}
+static bool OCParseArrayFindDimensionsAndType(const CborValue* parent, size_t dimensions[MAX_REP_ARRAY_DEPTH],
+        OCRepPayloadPropType* type)
+{
+    bool err = false;
+    CborValue insideArray;
+    *type = OCREP_PROP_NULL;
+    dimensions[0] = dimensions[1] = dimensions[2] = 0;
+
+    err = err || cbor_value_enter_container(parent, &insideArray);
+
+    while (cbor_value_is_valid(&insideArray))
+    {
+        OCRepPayloadPropType tempType = DecodeCborType(cbor_value_get_type(&insideArray));
+
+        if (tempType == OCREP_PROP_ARRAY)
+        {
+            size_t subdim[MAX_REP_ARRAY_DEPTH];
+            tempType = OCREP_PROP_NULL;
+            err = err || OCParseArrayFindDimensionsAndType(&insideArray, subdim, &tempType);
+
+            if (subdim[2] != 0)
+            {
+                OC_LOG(ERROR, TAG, "Parse array helper, sub-array too deep");
+            }
+
+            dimensions[1] = dimensions[1] >= subdim[0] ? dimensions[1] : subdim[0];
+            dimensions[2] = dimensions[2] >= subdim[1] ? dimensions[2] : subdim[1];
+
+            if (*type != OCREP_PROP_NULL && tempType != OCREP_PROP_NULL
+                    && *type != tempType)
+            {
+                OC_LOG(ERROR, TAG, "Array parse failed, mixed arrays not allowed (subtype)");
+                return true;
+            }
+            else if (*type == OCREP_PROP_NULL)
+            {
+                // We don't know the type of this array yet, so the assignment is OK
+                *type = tempType;
+            }
+        }
+        else if (*type == OCREP_PROP_NULL)
+        {
+            // We don't know the type of this array yet, so the assignment is OK
+            *type = tempType;
+        }
+        // tempType is allowed to be NULL, since it might now know the answer yet
+        else if (tempType != OCREP_PROP_NULL && *type != tempType)
+        {
+            // this is an invalid situation!
+            OC_LOG(ERROR, TAG, "Array parse failed, mixed arrays not allowed");
+            return true;
+        }
+
+        ++dimensions[0];
+        cbor_value_advance(&insideArray);
+    }
+
+    return err;
+}
+
+static size_t getAllocSize(OCRepPayloadPropType type)
+{
+    switch (type)
+    {
+        case OCREP_PROP_INT:
+            return sizeof (int64_t);
+        case OCREP_PROP_DOUBLE:
+            return sizeof (double);
+        case OCREP_PROP_BOOL:
+            return sizeof (bool);
+        case OCREP_PROP_STRING:
+            return sizeof (char*);
+        case OCREP_PROP_OBJECT:
+            return sizeof (OCRepPayload*);
+        default:
+            return 0;
+    }
+}
+
+static size_t arrayStep(size_t dimensions[MAX_REP_ARRAY_DEPTH], size_t elementNum)
+{
+    return
+        (dimensions[1] == 0 ? 1 : dimensions[1]) *
+        (dimensions[2] == 0 ? 1 : dimensions[2]) *
+        elementNum;
+}
+
+static bool OCParseArrayFillArray(const CborValue* parent, size_t dimensions[MAX_REP_ARRAY_DEPTH],
+        OCRepPayloadPropType type, void* targetArray)
+{
+    bool err = false;
+    CborValue insideArray;
+
+    err = err || cbor_value_enter_container(parent, &insideArray);
+
+    size_t i = 0;
+    char* tempStr = NULL;
+    size_t tempLen = 0;
+    OCRepPayload* tempPl = NULL;
+
+    size_t newdim[MAX_REP_ARRAY_DEPTH];
+    newdim[0] = dimensions[1];
+    newdim[1] = dimensions[2];
+    newdim[2] = 0;
+
+    while (!err && i < dimensions[0] && cbor_value_is_valid(&insideArray))
+    {
+        if (cbor_value_get_type(&insideArray) != CborNullType)
+        {
+            switch (type)
+            {
+                case OCREP_PROP_INT:
+                    if (dimensions[1] == 0)
+                    {
+                        err = err || cbor_value_get_int64(&insideArray,
+                                &(((int64_t*)targetArray)[i]));
+                    }
+                    else
+                    {
+                        err = err || OCParseArrayFillArray(&insideArray, newdim,
+                            type,
+                            &(((int64_t*)targetArray)[arrayStep(dimensions, i)])
+                            );
+                    }
+                    break;
+                case OCREP_PROP_DOUBLE:
+                    if (dimensions[1] == 0)
+                    {
+                        err = err || cbor_value_get_double(&insideArray,
+                                &(((double*)targetArray)[i]));
+                    }
+                    else
+                    {
+                        err = err || OCParseArrayFillArray(&insideArray, newdim,
+                            type,
+                            &(((double*)targetArray)[arrayStep(dimensions, i)])
+                            );
+                    }
+                    break;
+                case OCREP_PROP_BOOL:
+                    if (dimensions[1] == 0)
+                    {
+                        err = err || cbor_value_get_boolean(&insideArray,
+                                &(((bool*)targetArray)[i]));
+                    }
+                    else
+                    {
+                        err = err || OCParseArrayFillArray(&insideArray, newdim,
+                            type,
+                            &(((bool*)targetArray)[arrayStep(dimensions, i)])
+                            );
+                    }
+                    break;
+                case OCREP_PROP_STRING:
+                    if (dimensions[1] == 0)
+                    {
+                        err = err || cbor_value_dup_text_string(&insideArray,
+                                &tempStr, &tempLen, NULL);
+                        ((char**)targetArray)[i] = tempStr;
+                        tempStr = NULL;
+                    }
+                    else
+                    {
+                        err = err || OCParseArrayFillArray(&insideArray, newdim,
+                            type,
+                            &(((char**)targetArray)[arrayStep(dimensions, i)])
+                            );
+                    }
+                    break;
+                case OCREP_PROP_OBJECT:
+                    if (dimensions[1] == 0)
+                    {
+                        err = err || OCParseSingleRepPayload(&tempPl, &insideArray);
+                        ((OCRepPayload**)targetArray)[i] = tempPl;
+                        tempPl = NULL;
+                    }
+                    else
+                    {
+                        err = err || OCParseArrayFillArray(&insideArray, newdim,
+                            type,
+                            &(((OCRepPayload**)targetArray)[arrayStep(dimensions, i)])
+                            );
+                    }
+                    break;
+                default:
+                    OC_LOG(ERROR, TAG, "Invalid Array type in Parse Array");
+                    err = true;
+                    break;
+            }
+        }
+        ++i;
+        err = err || cbor_value_advance(&insideArray);
+    }
+
+    return err;
+}
+
 static bool OCParseArray(OCRepPayload* out, const char* name, CborValue* container)
 {
-    CborValue insideArray;
-    bool err = false;
-    uint64_t tempInt = 0;
     OCRepPayloadPropType type;
     size_t dimensions[MAX_REP_ARRAY_DEPTH];
-    err = err || cbor_value_enter_container(container, &insideArray);
+    bool err = OCParseArrayFindDimensionsAndType(container, dimensions, &type);
 
-    err = err || cbor_value_get_uint64(&insideArray, &tempInt);
-    err = err || cbor_value_advance_fixed(&insideArray);
-    type = (OCRepPayloadPropType)tempInt;
-
-    for(int i = 0; i < MAX_REP_ARRAY_DEPTH; ++ i)
+    if (err)
     {
-         err = err || cbor_value_get_uint64(&insideArray, &tempInt);
-         err = err || cbor_value_advance_fixed(&insideArray);
-        dimensions[i] = tempInt;
+        OC_LOG(ERROR, TAG, "Array details weren't clear");
+        return err;
+    }
+
+    if (type == OCREP_PROP_NULL)
+    {
+        err = err || OCRepPayloadSetNull(out, name);
+        err = err || cbor_value_advance(container);
+        return err;
     }
 
     size_t dimTotal = calcDimTotal(dimensions);
+    size_t allocSize = getAllocSize(type);
+    void* arr = OICCalloc(dimTotal, allocSize);
 
-    void* arr = NULL;
-    char* tempStr;
-    size_t len;
-    OCRepPayload* pl;
-    switch(type)
+    if (!arr)
+    {
+        OC_LOG(ERROR, TAG, "Array Parse allocation failed");
+        return true;
+    }
+
+    err = err || OCParseArrayFillArray(container, dimensions, type, arr);
+
+    switch (type)
     {
         case OCREP_PROP_INT:
-            arr = (int64_t*)OICMalloc(dimTotal * sizeof(int64_t));
-            if (arr)
+            if (err || !OCRepPayloadSetIntArrayAsOwner(out, name, (int64_t*)arr, dimensions))
             {
-                for(size_t i = 0; i < dimTotal && !err; ++i)
-                {
-                     err = err || cbor_value_get_int64(&insideArray, &(((int64_t*)arr)[i]));
-                     err = err || cbor_value_advance_fixed(&insideArray);
-                }
-                if(err || !OCRepPayloadSetIntArrayAsOwner(out, name, (int64_t*)arr, dimensions))
-                {
-                    OICFree(arr);
-                    err = true;
-                }
-            }
-            else
-            {
+                OICFree(arr);
                 err = true;
             }
             break;
         case OCREP_PROP_DOUBLE:
-            arr = (double*)OICMalloc(dimTotal * sizeof(double));
-            if(arr)
+            if (err || !OCRepPayloadSetDoubleArrayAsOwner(out, name, (double*)arr, dimensions))
             {
-                for(size_t i = 0; i < dimTotal && !err; ++i)
-                {
-                     err = err || cbor_value_get_double(&insideArray, &(((double*)arr)[i]));
-                     err = err || cbor_value_advance_fixed(&insideArray);
-                }
-                if(err || !OCRepPayloadSetDoubleArrayAsOwner(out, name, (double*)arr, dimensions))
-                {
-                    OICFree(arr);
-                    err = true;
-                }
-            }
-            else
-            {
+                OICFree(arr);
                 err = true;
             }
             break;
         case OCREP_PROP_BOOL:
-            arr = (bool*)OICMalloc(dimTotal * sizeof(bool));
-            if(arr)
+            if (err || !OCRepPayloadSetBoolArrayAsOwner(out, name, (bool*)arr, dimensions))
             {
-                for(size_t i = 0; i < dimTotal && !err; ++i)
-                {
-                     err = err || cbor_value_get_boolean(&insideArray, &(((bool*)arr)[i]));
-                     err = err || cbor_value_advance_fixed(&insideArray);
-                }
-                if(err || !OCRepPayloadSetBoolArrayAsOwner(out, name, (bool*)arr, dimensions))
-                {
-                    OICFree(arr);
-                    err = true;
-                }
-            }
-            else
-            {
+                OICFree(arr);
                 err = true;
             }
             break;
         case OCREP_PROP_STRING:
-            arr = (char**)OICMalloc(dimTotal * sizeof(char*));
-            if(arr)
+            if (err || !OCRepPayloadSetStringArrayAsOwner(out, name, (char**)arr, dimensions))
             {
-                for(size_t i = 0; i < dimTotal && !err; ++i)
+                for(size_t i = 0; i < dimTotal; ++i)
                 {
-                    err = err || cbor_value_dup_text_string(&insideArray, &tempStr,
-                            &len, NULL);
-                    err = err || cbor_value_advance(&insideArray);
-                    ((char**)arr)[i] = tempStr;
+                    OICFree(((char**)arr)[i]);
                 }
-                if(err || !OCRepPayloadSetStringArrayAsOwner(out, name, (char**)arr, dimensions))
-                {
-                    OICFree(arr);
-                    err = true;
-                }
-            }
-            else
-            {
+                OICFree(arr);
                 err = true;
             }
             break;
         case OCREP_PROP_OBJECT:
-            arr = (OCRepPayload**)OICMalloc(dimTotal * sizeof(OCRepPayload*));
-            if(arr)
+            if (err || !OCRepPayloadSetPropObjectArrayAsOwner(out, name, (OCRepPayload**)arr, dimensions))
             {
-                for(size_t i = 0; i < dimTotal && !err; ++i)
+                for(size_t i = 0; i < dimTotal; ++i)
                 {
-                    pl = NULL;
-                    err = err || OCParseSingleRepPayload(&pl, &insideArray);
-                    err = err || cbor_value_advance(&insideArray);
-                    ((OCRepPayload**)arr)[i] = pl;
+                    OCRepPayloadDestroy(((OCRepPayload**)arr)[i]);
                 }
-                if(err || !OCRepPayloadSetPropObjectArrayAsOwner(out, name,
-                        (OCRepPayload**)arr, dimensions))
-                {
-                    OICFree(arr);
-                    err = true;
-                }
-            }
-            else
-            {
+                OICFree(arr);
                 err = true;
             }
             break;
@@ -702,6 +881,11 @@ static bool OCParseArray(OCRepPayload* out, const char* name, CborValue* contain
 
 static bool OCParseSingleRepPayload(OCRepPayload** outPayload, CborValue* repParent)
 {
+    if (!outPayload)
+    {
+        return false;
+    }
+
     *outPayload = OCRepPayloadCreate();
     OCRepPayload* curPayload = *outPayload;
     bool err = false;
@@ -760,6 +944,7 @@ static bool OCParseSingleRepPayload(OCRepPayload** outPayload, CborValue* repPar
             err = err || cbor_value_leave_container(&insidePropArray, &ifArray);
         }
     }
+
     err = err || cbor_value_map_find_value(repParent, OC_RSRVD_REPRESENTATION, &curVal);
     if(cbor_value_is_map(&curVal))
     {
@@ -769,9 +954,9 @@ static bool OCParseSingleRepPayload(OCRepPayload** outPayload, CborValue* repPar
         while(!err && cbor_value_is_valid(&repMap))
         {
             char* name;
-             err = err || cbor_value_dup_text_string(&repMap, &name, &len, NULL);
+            err = err || cbor_value_dup_text_string(&repMap, &name, &len, NULL);
 
-             err = err || cbor_value_advance(&repMap);
+            err = err || cbor_value_advance(&repMap);
 
             int64_t intval = 0;
             bool boolval = false;
@@ -843,6 +1028,11 @@ static bool OCParseSingleRepPayload(OCRepPayload** outPayload, CborValue* repPar
 }
 static OCStackResult OCParseRepPayload(OCPayload** outPayload, CborValue* arrayVal)
 {
+    if (!outPayload)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
     bool err = false;
 
     OCRepPayload* rootPayload = NULL;
@@ -868,7 +1058,7 @@ static OCStackResult OCParseRepPayload(OCPayload** outPayload, CborValue* arrayV
         if(err)
         {
             OCRepPayloadDestroy(rootPayload);
-            OC_LOG_V(ERROR, TAG, PCF("CBOR error in ParseRepPayload"));
+            OC_LOG(ERROR, TAG, "CBOR error in ParseRepPayload");
             return OC_STACK_MALFORMED_RESPONSE;
         }
     }
@@ -880,6 +1070,11 @@ static OCStackResult OCParseRepPayload(OCPayload** outPayload, CborValue* arrayV
 
 static OCStackResult OCParsePresencePayload(OCPayload** outPayload, CborValue* arrayVal)
 {
+    if (!outPayload)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
     bool err = false;
     if(cbor_value_is_map(arrayVal))
     {
@@ -923,7 +1118,7 @@ static OCStackResult OCParsePresencePayload(OCPayload** outPayload, CborValue* a
         if(err)
         {
             OCPayloadDestroy(*outPayload);
-            OC_LOG_V(ERROR, TAG, PCF("CBOR error Parse Presence Payload"));
+            OC_LOG(ERROR, TAG, "CBOR error Parse Presence Payload");
             return OC_STACK_MALFORMED_RESPONSE;
         }
 
@@ -936,7 +1131,7 @@ static OCStackResult OCParsePresencePayload(OCPayload** outPayload, CborValue* a
     }
     else
     {
-        OC_LOG(ERROR, TAG, PCF("Root presence node was not a map"));
+        OC_LOG(ERROR, TAG, "Root presence node was not a map");
         return OC_STACK_MALFORMED_RESPONSE;
     }
 }

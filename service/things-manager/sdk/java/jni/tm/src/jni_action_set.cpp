@@ -1,4 +1,4 @@
-/******************************************************************
+/* *****************************************************************
  *
  * Copyright 2015 Samsung Electronics All Rights Reserved.
  *
@@ -17,8 +17,8 @@
  * limitations under the License.
  *
  ******************************************************************/
-#include "jni_action_set.h"
 
+#include "jni_action_set.h"
 #include "jni_things_manager_jvm.h"
 #include "jni_getter.h"
 #include "jni_setter.h"

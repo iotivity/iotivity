@@ -29,6 +29,7 @@
 #include "caedrinterface.h"
 #include "caadapterutils.h"
 #include "logger.h"
+#include "cafragmentation.h"
 #include "caqueueingthread.h"
 #include "oic_malloc.h"
 #include "caremotehandler.h"
@@ -94,6 +95,25 @@ static CAEndpoint_t *g_localConnectivity = NULL;
  */
 static bool g_serverState = false;
 
+/**
+ * Stores information of all the senders.
+ *
+ * This structure will be used to track and defragment all incoming
+ * data packet.
+ */
+typedef struct
+{
+    uint32_t recvDataLen;
+    uint32_t totalDataLen;
+    uint8_t *defragData;
+    CAEndpoint_t *remoteEndpoint;
+} CAEDRSenderInfo_t;
+
+/**
+ * Sender information.
+ */
+static u_arraylist_t *g_senderInfo = NULL;
+
 static CAResult_t CAStartServer();
 static CAResult_t CAEDRInitializeQueueHandlers();
 CAResult_t CAEDRInitializeSendHandler();
@@ -138,6 +158,8 @@ static void CAEDRDataDestroyer(void *data, uint32_t size);
 
 static void CAEDRErrorHandler(const char *remoteAddress, const uint8_t *data,
                               uint32_t dataLength, CAResult_t result);
+
+static void CAEDRClearSenderInfo();
 
 CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
                            CANetworkPacketReceivedCallback packetReceivedCallback,
@@ -478,11 +500,23 @@ CAResult_t CAEDRInitializeReceiveHandler()
         return CA_MEMORY_ALLOC_FAILED;
     }
 
+    g_senderInfo = u_arraylist_create();
+    if (!g_senderInfo)
+    {
+        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "ClientInfo memory allcation failed!");
+        OICFree(g_recvQueueHandle);
+        g_recvQueueHandle = NULL;
+        return CA_MEMORY_ALLOC_FAILED;
+    }
+
     if (CA_STATUS_OK != CAQueueingThreadInitialize(g_recvQueueHandle, g_edrThreadPool,
                                                    CAAdapterDataReceiverHandler,
                                                    CAEDRDataDestroyer))
     {
         OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to Initialize send queue thread");
+        u_arraylist_free(&g_senderInfo);
+        OICFree(g_recvQueueHandle);
+        g_recvQueueHandle = NULL;
         return CA_STATUS_FAILED;
     }
 
@@ -504,6 +538,8 @@ void CAAdapterTerminateQueues()
         CAQueueingThreadDestroy(g_recvQueueHandle);
         g_recvQueueHandle = NULL;
     }
+
+    CAEDRClearSenderInfo();
 
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
 }
@@ -538,9 +574,38 @@ void CAAdapterDataSendHandler(void *context)
         return;
     }
 
-    CAResult_t result = CAEDRClientSendData(remoteAddress, message->data,
-                                            message->dataLen);
-    if(CA_STATUS_OK != result)
+    uint32_t dataSegmentLength = message->dataLen + CA_HEADER_LENGTH;
+
+    uint8_t *header = (uint8_t *) OICCalloc(CA_HEADER_LENGTH, sizeof(uint8_t));
+    VERIFY_NON_NULL_VOID(header, EDR_ADAPTER_TAG, "Memory allocation failed");
+
+    uint8_t* dataSegment = (uint8_t *) OICCalloc(dataSegmentLength, sizeof(uint8_t));
+    if (NULL == dataSegment)
+    {
+        CAEDRErrorHandler(remoteAddress, message->data, message->dataLen, CA_SEND_FAILED);
+        OICFree(header);
+        return;
+    }
+
+    CAResult_t result = CAGenerateHeader(header, CA_HEADER_LENGTH, message->dataLen);
+    if (CA_STATUS_OK != result)
+    {
+        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Generate header failed");
+        OICFree(header);
+        OICFree(dataSegment);
+        CAEDRErrorHandler(remoteAddress, message->data, message->dataLen, result);
+        return;
+    }
+
+    memcpy(dataSegment, header, CA_HEADER_LENGTH);
+    OICFree(header);
+
+    memcpy(dataSegment + CA_HEADER_LENGTH, message->data, message->dataLen);
+
+    result = CAEDRClientSendData(remoteAddress, dataSegment, dataSegmentLength);
+    OICFree(dataSegment);
+
+    if (CA_STATUS_OK != result)
     {
         OIC_LOG(ERROR, EDR_ADAPTER_TAG, "CAEDRClientSendData API failed");
         CAEDRErrorHandler(remoteAddress, message->data, message->dataLen, result);
@@ -581,9 +646,74 @@ CAResult_t CAEDRClientSendData(const char *remoteAddress,
     return result;
 }
 
+static void CAEDRClearSenderInfo()
+{
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
+
+    uint32_t listIndex = 0;
+    uint32_t listLength = u_arraylist_length(g_senderInfo);
+    for (listIndex = 0; listIndex < listLength; listIndex++)
+    {
+        CAEDRSenderInfo_t *info = (CAEDRSenderInfo_t *) u_arraylist_get(g_senderInfo, listIndex);
+        if (!info)
+        {
+            continue;
+        }
+
+        OICFree(info->defragData);
+        CAFreeEndpoint(info->remoteEndpoint);
+        OICFree(info);
+    }
+    u_arraylist_free(&g_senderInfo);
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
+}
+
+static CAResult_t CAEDRGetSenderInfo(const char *edrAddress,
+                                     CAEDRSenderInfo_t **senderInfo,
+                                     uint32_t *senderIndex)
+{
+    VERIFY_NON_NULL_RET(edrAddress,
+                        EDR_ADAPTER_TAG,
+                        "NULL edr address argument",
+                        CA_STATUS_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(senderIndex,
+                        EDR_ADAPTER_TAG,
+                        "NULL index argument",
+                        CA_STATUS_INVALID_PARAM);
+
+    const uint32_t listLength = u_arraylist_length(g_senderInfo);
+    const uint32_t addrLength = strlen(edrAddress);
+    for (uint32_t index = 0; index < listLength; index++)
+    {
+        CAEDRSenderInfo_t *info = (CAEDRSenderInfo_t *) u_arraylist_get(g_senderInfo, index);
+        if (!info || !(info->remoteEndpoint))
+        {
+            continue;
+        }
+
+        if (!strncmp(info->remoteEndpoint->addr, edrAddress, addrLength))
+        {
+            *senderIndex = index;
+            if (senderInfo)
+            {
+                *senderInfo = info;
+            }
+            return CA_STATUS_OK;
+        }
+    }
+
+    return CA_STATUS_FAILED;
+}
+
 void CAAdapterDataReceiverHandler(void *context)
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN_CAAdapterDataReceiverHandler");
+
+    if (NULL == g_networkPacketReceivedCallback)
+    {
+        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "g_networkPacketReceivedCallback is NULL");
+        return;
+    }
 
     CAEDRData *message = (CAEDRData *) context;
     if (NULL == message || NULL == message->remoteEndpoint)
@@ -591,17 +721,132 @@ void CAAdapterDataReceiverHandler(void *context)
         OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to get message!");
         return;
     }
+    uint32_t dataLen = 0;
 
-    CAEndpoint_t *remoteEndpoint = CACreateEndpointObject(CA_DEFAULT_FLAGS,
-                                                          CA_ADAPTER_RFCOMM_BTEDR,
-                                                          message->remoteEndpoint->addr,
-                                                          0);
+    CAEDRSenderInfo_t *senderInfo = NULL;
+    uint32_t senderIndex = 0;
 
-    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "Sending data up !");
-    g_networkPacketReceivedCallback(remoteEndpoint, message->data, message->dataLen);
+    while (dataLen < message->dataLen)
+    {
+        if(CA_STATUS_OK != CAEDRGetSenderInfo(message->remoteEndpoint->addr,
+                                              &senderInfo, &senderIndex))
+        {
+            OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "This is a new client [%s]",
+                                                message->remoteEndpoint->addr);
+        }
 
-    CAFreeEndpoint(remoteEndpoint);
+        if (!senderInfo)
+        {
+            CAEDRSenderInfo_t *newSender = OICMalloc(sizeof(CAEDRSenderInfo_t));
+            if (!newSender)
+            {
+                return;
+            }
+            newSender->recvDataLen = 0;
+            newSender->totalDataLen = 0;
+            newSender->defragData = NULL;
+            newSender->remoteEndpoint = NULL;
 
+            OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "Parsing the header");
+            newSender->totalDataLen = CAParseHeader(message->data + dataLen,
+                                                    message->dataLen - dataLen);
+            if(!(newSender->totalDataLen))
+            {
+                OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Total Data Length is parsed as 0!!!");
+                OICFree(newSender);
+                return;
+            }
+
+            OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "Total data to be accumulated [%u] bytes",
+                                                newSender->totalDataLen);
+            OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "data received in the first packet [%u] bytes",
+                                                message->dataLen);
+
+            newSender->defragData = OICCalloc(newSender->totalDataLen,
+                                              sizeof(*newSender->defragData));
+
+            if (NULL == newSender->defragData)
+            {
+                OICFree(newSender);
+                return;
+            }
+
+            newSender->remoteEndpoint = CACloneEndpoint(message->remoteEndpoint);
+            if (NULL == newSender->remoteEndpoint)
+            {
+                OIC_LOG(ERROR, EDR_ADAPTER_TAG, "remoteEndpoint is NULL!");
+                OICFree(newSender->defragData);
+                OICFree(newSender);
+                return;
+            }
+
+            if (message->dataLen - CA_HEADER_LENGTH - dataLen <= newSender->totalDataLen)
+            {
+                memcpy(newSender->defragData, message->data + dataLen + CA_HEADER_LENGTH,
+                       message->dataLen - dataLen - CA_HEADER_LENGTH);
+                newSender->recvDataLen += message->dataLen - dataLen - CA_HEADER_LENGTH;
+                u_arraylist_add(g_senderInfo,(void *)newSender);
+                dataLen = message->dataLen;
+            }
+            else
+            {
+                memcpy(newSender->defragData, message->data + dataLen + CA_HEADER_LENGTH,
+                       newSender->totalDataLen);
+                newSender->recvDataLen = newSender->totalDataLen;
+                u_arraylist_add(g_senderInfo,(void *)newSender);
+                dataLen += newSender->totalDataLen + CA_HEADER_LENGTH;
+            }
+            //Getting newSender index position in g_senderInfo array list
+            if (CA_STATUS_OK !=
+                CAEDRGetSenderInfo(newSender->remoteEndpoint->addr, NULL, &senderIndex))
+            {
+                OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Existing sender index not found!!");
+                OICFree(newSender->defragData);
+                CAFreeEndpoint(newSender->remoteEndpoint);
+                OICFree(newSender);
+                return;
+            }
+            senderInfo = newSender;
+        }
+        else
+        {
+            if (senderInfo->recvDataLen + message->dataLen - dataLen <= senderInfo->totalDataLen)
+            {
+                OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "Copying the data of length [%d]",
+                          message->dataLen - dataLen);
+                memcpy(senderInfo->defragData + senderInfo->recvDataLen, message->data + dataLen,
+                       message->dataLen - dataLen);
+                senderInfo->recvDataLen += message->dataLen - dataLen;
+                OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "totalDatalength  [%d] recveived Datalen [%d]",
+                          senderInfo->totalDataLen, senderInfo->recvDataLen);
+                dataLen = message->dataLen;
+            }
+            else
+            {
+                OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "Copying the data of length [%d]",
+                          senderInfo->totalDataLen - senderInfo->recvDataLen);
+                memcpy(senderInfo->defragData + senderInfo->recvDataLen, message->data + dataLen,
+                       senderInfo->totalDataLen - senderInfo->recvDataLen);
+                dataLen += senderInfo->totalDataLen - senderInfo->recvDataLen;
+                senderInfo->recvDataLen = senderInfo->totalDataLen;
+                OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "totalDatalength  [%d] recveived Datalen [%d]",
+                          senderInfo->totalDataLen, senderInfo->recvDataLen);
+            }
+        }
+
+        if (senderInfo->totalDataLen == senderInfo->recvDataLen)
+        {
+            OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "Sending data up !");
+
+            CASecureEndpoint_t sep = {.endpoint = *(senderInfo->remoteEndpoint)};
+            g_networkPacketReceivedCallback(&sep, senderInfo->defragData, senderInfo->recvDataLen);
+            u_arraylist_remove(g_senderInfo, senderIndex);
+            senderInfo->remoteEndpoint = NULL;
+            senderInfo->defragData = NULL;
+            OICFree(senderInfo);
+            senderInfo = NULL;
+        }
+    }
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT_CAAdapterDataReceiverHandler");
 }
 

@@ -811,7 +811,6 @@ void SendResponse(CAEndpoint_t *endpoint, const CAInfo_t* info)
         Serial.println("============");
         Serial.println("Enter Resp Code:");
         Serial.println("For Ex: Empty  : 0");
-        Serial.println("Success: 200");
         Serial.println("Created: 201");
         Serial.println("Deleted: 202");
         Serial.println("Valid  : 203");

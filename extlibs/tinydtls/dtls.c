@@ -2065,6 +2065,8 @@ dtls_send_server_hello(dtls_context_t *ctx, dtls_peer_t *peer)
 }
 
 #ifdef DTLS_ECC
+#define DTLS_EC_SUBJECTPUBLICKEY_SIZE (2 * DTLS_EC_KEY_SIZE + sizeof(cert_asn1_header))
+
 static int
 dtls_send_certificate_ecdsa(dtls_context_t *ctx, dtls_peer_t *peer,
 			    const dtls_ecc_key_t *key)
@@ -2077,12 +2079,10 @@ dtls_send_certificate_ecdsa(dtls_context_t *ctx, dtls_peer_t *peer,
    * Start message construction at beginning of buffer. */
   p = buf;
 
-  dtls_int_to_uint24(p, 94);	/* certificates length */
+  /* length of this certificate */
+  dtls_int_to_uint24(p, DTLS_EC_SUBJECTPUBLICKEY_SIZE);
   p += sizeof(uint24);
 
-  dtls_int_to_uint24(p, 91);	/* length of this certificate */
-  p += sizeof(uint24);
-  
   memcpy(p, &cert_asn1_header, sizeof(cert_asn1_header));
   p += sizeof(cert_asn1_header);
 
@@ -2999,14 +2999,9 @@ check_server_certificate(dtls_context_t *ctx,
 
   data += DTLS_HS_LENGTH;
 
-  if (dtls_uint24_to_int(data) != 94) {
-    dtls_alert("expect length of 94 bytes for server certificate message\n");
-    return dtls_alert_fatal_create(DTLS_ALERT_DECODE_ERROR);
-  }
-  data += sizeof(uint24);
-
-  if (dtls_uint24_to_int(data) != 91) {
-    dtls_alert("expect length of 91 bytes for certificate\n");
+  if (dtls_uint24_to_int(data) != DTLS_EC_SUBJECTPUBLICKEY_SIZE) {
+    dtls_alert("expect length of %d bytes for certificate\n",
+	       DTLS_EC_SUBJECTPUBLICKEY_SIZE);
     return dtls_alert_fatal_create(DTLS_ALERT_DECODE_ERROR);
   }
   data += sizeof(uint24);

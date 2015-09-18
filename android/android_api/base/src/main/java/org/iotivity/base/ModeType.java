@@ -25,7 +25,8 @@ package org.iotivity.base;
 public enum ModeType {
     SERVER(0),
     CLIENT(1),
-    CLIENT_SERVER(2),;
+    CLIENT_SERVER(2),
+    GATEWAY(3),;  /**< Client server mode along with Routing capabilities.*/
 
     private int value;
 

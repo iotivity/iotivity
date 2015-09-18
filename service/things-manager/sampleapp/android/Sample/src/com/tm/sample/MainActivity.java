@@ -26,7 +26,8 @@ import org.iotivity.base.OcPlatform;
 import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.QualityOfService;
 import org.iotivity.base.ServiceType;
-import org.iotivity.service.tm.ThingsManager;
+import org.iotivity.service.tm.GroupManager;
+import org.iotivity.service.tm.GroupManager.*;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -54,9 +55,10 @@ public class MainActivity extends Activity {
     private ArrayAdapter<String> apis;
     private ArrayList<String>    apisList;
     private ListView             list;
-    private final String         LOG_TAG          = "[TMSample] " + this.getClass()
-                                                                           .getSimpleName();
-    public ThingsManager         thingsManagerObj = new ThingsManager();
+    private final String         LOG_TAG         = "[TMSample] "
+                                                         + this.getClass()
+                                                                 .getSimpleName();
+    public GroupManager          groupManagerObj = new GroupManager();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -130,13 +132,15 @@ public class MainActivity extends Activity {
 
             dialog = dialogBuilder.create();
             dialog.show();
-            Log.i(LOG_TAG, "WiFi is not enabled/connected! Please connect the WiFi and start application again...");
+            Log.i(LOG_TAG,
+                    "WiFi is not enabled/connected! Please connect the WiFi and start application again...");
             return;
         }
         // If wifi is connected calling the configure method for configuring the
         // OcPlatform
-        platformConfigObj = new PlatformConfig(getApplicationContext(),ServiceType.IN_PROC,
-                ModeType.CLIENT_SERVER, "0.0.0.0", 0, QualityOfService.LOW);
+        platformConfigObj = new PlatformConfig(getApplicationContext(),
+                ServiceType.IN_PROC, ModeType.CLIENT_SERVER, "0.0.0.0", 0,
+                QualityOfService.LOW);
 
         Log.i(LOG_TAG, "Before Calling Configure of ocPlatform");
         OcPlatform.Configure(platformConfigObj);

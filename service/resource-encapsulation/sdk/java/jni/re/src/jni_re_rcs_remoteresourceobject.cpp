@@ -107,20 +107,28 @@ int JniRCSRemoteResourceObject::getCacheState()
 
 void JniRCSRemoteResourceObject::startMonitoring(JNIEnv *env, jobject jListener)
 {
-    JniResourceStateChangeListener *onResourceStateChanged = addOnStateChangeListener(env, jListener);
-    RCSRemoteResourceObject::StateChangedCallback stateChangecb = [onResourceStateChanged](
-                OIC::Service::ResourceState state)
-    {
-        onResourceStateChanged->stateChangeCallback(state);
-    };
+
     try
     {
+        JniResourceStateChangeListener *onResourceStateChanged = addOnStateChangeListener(env, jListener);
+        RCSRemoteResourceObject::StateChangedCallback stateChangecb = [onResourceStateChanged](
+                    OIC::Service::ResourceState state)
+        {
+            onResourceStateChanged->stateChangeCallback(state);
+        };
         m_sharedResource->startMonitoring(stateChangecb);
+    }
+    catch (InvalidParameterException exception)
+    {
+        LOGE("native startMonitoring InvalidParameterException");
+        throwRCSException(env,  exception.what());
     }
     catch (BadRequestException exception)
     {
+        LOGE("native startMonitoring : BadRequestException ");
         throwRCSException(env,  exception.what());
     }
+
 }
 
 void  JniRCSRemoteResourceObject::stopMonitoring()
@@ -331,6 +339,13 @@ JNIEXPORT void JNICALL
 Java_org_iotivity_ResourceEncapsulation_client_RCSRemoteResourceObject_nativeStartMonitoring
 (JNIEnv *env, jobject interfaceClass, jobject jStateChangedListener)
 {
+
+    if (!jStateChangedListener)
+    {
+        LOGE("RCSRemoteResourceObject_nativeStartMonitoring : listener is NULL");
+        throwRCSException(env,  "Invalid parameter");
+        return;
+    }
     LOGD("RCSRemoteResourceObject_nativeStartMonitoring");
     JniRCSRemoteResourceObject *resource = JniRCSRemoteResourceObject::getJniRCSRemoteResourceObject(
             env, interfaceClass);
@@ -404,7 +419,7 @@ Java_org_iotivity_ResourceEncapsulation_client_RCSRemoteResourceObject_nativeIsC
     LOGD("RCSRemoteResourceObject_nativeIsMonitoring");
     JniRCSRemoteResourceObject *resource = JniRCSRemoteResourceObject::getJniRCSRemoteResourceObject(
             env, interfaceClass);
-    return (jboolean)resource->isMonitoring();
+    return (jboolean)resource->isCachedAvailable();
 }
 
 JNIEXPORT jobject JNICALL
@@ -421,10 +436,16 @@ JNIEXPORT jstring JNICALL
 Java_org_iotivity_ResourceEncapsulation_client_RCSRemoteResourceObject_nativeGetCachedAttribute
 (JNIEnv *env, jobject interfaceClass, jstring jKey)
 {
+    if (!jKey)
+    {
+        LOGE("RCSRemoteResourceObject_nativeGetCachedAttributes : key is NULL");
+        throwRCSException(env,  "Key is empty");
+        return NULL;
+    }
     LOGD("RCSRemoteResourceObject_nativeGetRemoteAttributes");
     JniRCSRemoteResourceObject *resource = JniRCSRemoteResourceObject::getJniRCSRemoteResourceObject(
             env, interfaceClass);
-    resource->getCachedAttribute(env, jKey, interfaceClass);
+    return resource->getCachedAttribute(env, jKey, interfaceClass);
 }
 
 JNIEXPORT void JNICALL
@@ -432,6 +453,12 @@ Java_org_iotivity_ResourceEncapsulation_client_RCSRemoteResourceObject_nativeGet
 (JNIEnv *env, jobject interfaceClass, jobject jResourceAttributesListener)
 {
     LOGD("RCSRemoteResourceObject_nativeGetRemoteAttributes");
+    if (!jResourceAttributesListener)
+    {
+        LOGE("RCSRemoteResourceObject_nativeGetRemoteAttributes: listener is NULL");
+        throwRCSException(env,  "Invalid parameter");
+        return;
+    }
     JniRCSRemoteResourceObject *resource = JniRCSRemoteResourceObject::getJniRCSRemoteResourceObject(
             env, interfaceClass);
     if (!resource) return;
@@ -446,6 +473,12 @@ Java_org_iotivity_ResourceEncapsulation_client_RCSRemoteResourceObject_nativeSet
  jobject jResourceAttributesListener)
 {
     LOGD("RCSRemoteResourceObject_nativeSetRemoteAttributes");
+    if (!jResourceAttributesListener)
+    {
+        LOGE("RCSRemoteResourceObject_nativeSetRemoteAttributes: listener is NULL");
+        throwRCSException(env,  "Invalid parameter");
+        return;
+    }
     JniRCSRemoteResourceObject *resource = JniRCSRemoteResourceObject::getJniRCSRemoteResourceObject(
             env, interfaceClass);
     if (!resource) return;

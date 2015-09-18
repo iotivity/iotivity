@@ -1,4 +1,4 @@
-/******************************************************************
+/* *****************************************************************
  *
  * Copyright 2015 Samsung Electronics All Rights Reserved.
  *
@@ -17,6 +17,7 @@
  * limitations under the License.
  *
  ******************************************************************/
+
 #include "jni_getter.h"
 
 #include <string>
@@ -24,7 +25,6 @@
 #include "JniOcResource.h"
 
 #define LOG_TAG "TM_JGetter"
-
 
 bool JGetter::getJStringField(JNIEnv *env, jobject &object, const char *fieldName,
                               std::string &value)
@@ -76,7 +76,6 @@ bool JGetter::getJStringField(JNIEnv *env, jobject &object, const char *fieldNam
 
     return true;
 }
-
 
 bool JGetter::getJBoolField(JNIEnv *env, jobject &object, const char *fieldName, bool &value)
 {

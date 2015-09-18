@@ -34,6 +34,18 @@ typedef struct
     unsigned char *value;
 } coap_option_t;
 
+
+/** Representation of the association between a CoAP option key and its
+ *  data type and valid data length ranges.
+ */
+typedef struct
+{
+    unsigned short key;     /**< The ID of the option the following values apply to. */
+    unsigned char type;     /**< The type of the option: u=uint, s=string, o=opaque. */
+    unsigned int min;       /**< The minimum number of bytes allowed for the option data */
+    unsigned int max;       /**< The maximum number of bytes allowed for the option data */
+} coap_option_def_t;
+
 /**
  * Parses the option pointed to by @p opt into @p result. This
  * function returns the number of bytes that have been parsed, or @c 0
@@ -70,7 +82,7 @@ size_t coap_opt_size(const coap_opt_t *opt);
  * @param pdu The PDU containing the options.
  * @return A pointer to the first option if available, or @c NULL otherwise.
  */
-coap_opt_t *options_start(coap_pdu_t *pdu);
+coap_opt_t *options_start(coap_pdu_t *pdu, coap_transport_type transport);
 
 /**
  * Interprets @p opt as pointer to a CoAP option and advances to
@@ -194,7 +206,7 @@ typedef struct
  * @return The iterator object @p oi on success, @c NULL otherwise.
  */
 coap_opt_iterator_t *coap_option_iterator_init(coap_pdu_t *pdu, coap_opt_iterator_t *oi,
-        const coap_opt_filter_t filter);
+        const coap_opt_filter_t filter, coap_transport_type transport);
 
 /**
  * Updates the iterator @p oi to point to the next option. This
@@ -281,9 +293,10 @@ unsigned short coap_opt_delta(const coap_opt_t *opt);
 #define COAP_OPT_DELTA(opt) coap_opt_delta(opt)
 
 /** @deprecated { Use coap_opt_encode() instead. } */
+#ifndef WITH_TCP
 #define COAP_OPT_SETDELTA(opt,val)          \
   coap_opt_encode((opt), COAP_MAX_PDU_SIZE, (val), NULL, 0)
-
+#endif
 /**
  * Returns the length of the given option. @p opt must point to an
  * option jump or the beginning of the option. This function returns
@@ -311,6 +324,16 @@ unsigned short coap_opt_length(const coap_opt_t *opt);
  * @return A pointer to the option value or @c NULL on error.
  */
 unsigned char *coap_opt_value(coap_opt_t *opt);
+
+/**
+ * Returns a pointer to the coap option range definitions. @key
+ * must be a valid option ID. This function returns @c NULL if
+ * @p key is not a valid option ID.
+ *
+ * @param key The option ID whose definition should be returned.
+ * @return A pointer to the option definition.
+ */
+coap_option_def_t* coap_opt_def(unsigned short key);
 
 /** @deprecated { Use coap_opt_value() instead. } */
 #define COAP_OPT_VALUE(opt) coap_opt_value((coap_opt_t *)opt)

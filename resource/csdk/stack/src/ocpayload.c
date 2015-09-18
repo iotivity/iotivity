@@ -118,6 +118,11 @@ static OCRepPayloadValue* OCRepPayloadFindValue(const OCRepPayload* payload, con
 
 static void OCCopyPropertyValueArray(OCRepPayloadValue* dest, OCRepPayloadValue* source)
 {
+    if(!dest || !source)
+    {
+        return;
+    }
+
     size_t dimTotal = calcDimTotal(source->arr.dimensions);
     switch(source->arr.type)
     {
@@ -148,7 +153,7 @@ static void OCCopyPropertyValueArray(OCRepPayloadValue* dest, OCRepPayloadValue*
             }
             break;
         default:
-            OC_LOG(ERROR, TAG, PCF("CopyPropertyValueArray invalid type"));
+            OC_LOG(ERROR, TAG, "CopyPropertyValueArray invalid type");
             break;
     }
 }
@@ -337,7 +342,7 @@ static OCRepPayloadValue* OCRepPayloadFindAndSetValue(OCRepPayload* payload, con
         val = val->next;
     }
 
-    OC_LOG(ERROR, TAG, PCF("FindAndSetValue reached point after while loop, pointer corruption?"));
+    OC_LOG(ERROR, TAG, "FindAndSetValue reached point after while loop, pointer corruption?");
     return NULL;
 }
 
@@ -1223,7 +1228,7 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t port)
 
         OCStringLL* cur = pl->interfaces;
         ifPtr = ifPtr->next;
-        while(ifPtr)
+        while(ifPtr && cur)
         {
             cur->next = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
             if(!cur->next)
@@ -1369,6 +1374,11 @@ void OCDevicePayloadDestroy(OCDevicePayload* payload)
 
 static void OCCopyPlatformInfo(const OCPlatformInfo* platformInfo, OCPlatformPayload* target)
 {
+    if(!platformInfo || !target)
+    {
+        return;
+    }
+
     target->info.platformID = OICStrdup(platformInfo->platformID);
     target->info.manufacturerName = OICStrdup(platformInfo->manufacturerName);
     target->info.manufacturerUrl = OICStrdup(platformInfo->manufacturerUrl);

@@ -31,6 +31,8 @@
 #include "RCSRemoteResourceObject.h"
 #include "RCSResourceObject.h"
 
+#include <map>
+#include <list>
 #include <jni.h>
 
 using namespace OIC::Service;
@@ -78,8 +80,21 @@ RCSResourceObject::SetRequestHandlerPolicy convertJavasetRequestHandlerPolicyToN
  */
 int convertSetRequestHandlerPolicyToInt( RCSResourceObject::SetRequestHandlerPolicy policy);
 
-
+/**
+ *@brief Convert int to OCEntityHandlerResult
+ */
 OCEntityHandlerResult convertIntToOCEntityHandlerResult(int result);
+
+/**
+ *@brief Convert java map to native map
+ */
+void convertJavaMapToParamsMap(JNIEnv *env, jobject hashMap,
+                               std::map<std::string, std::string> &params);
+
+/**
+ *@brief Convert native string list to java list
+ */
+jobject convertStrListToJavaStrList(JNIEnv *env, std::list<std::string> &list);
 
 /**
  * @brief Throw the RCS exception to the upper layer
