@@ -107,8 +107,7 @@ namespace OIC
                 ID createId();
 
             private:
-
-                RCSDiscoveryManagerImpl() = default;;
+                RCSDiscoveryManagerImpl();
                 ~RCSDiscoveryManagerImpl() = default;
         };
     }

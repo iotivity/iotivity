@@ -37,6 +37,8 @@ namespace OIC
         RCSDiscoveryManagerImpl * RCSDiscoveryManagerImpl::s_instance(nullptr);
         std::mutex RCSDiscoveryManagerImpl::s_mutexForCreation;
 
+        RCSDiscoveryManagerImpl::RCSDiscoveryManagerImpl() : m_timerHandle(0){}
+
         RCSDiscoveryManagerImpl* RCSDiscoveryManagerImpl::getInstance()
         {
             if (!s_instance)
