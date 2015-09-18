@@ -43,6 +43,13 @@ public class OcResourceIdentifier {
         return equalsN(other);
     }
 
+    @Override
+    public int hashCode() {
+        //return the same hash code for every object to force dictionary objects to use equals() in
+        //key comparisons, since IoTivity wants to treat OcResourceIdentifier as a blob
+        return 0;
+    }
+
     private native boolean equalsN(OcResourceIdentifier other);
 
     private native void dispose();
