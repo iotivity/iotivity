@@ -56,8 +56,6 @@ namespace OIC
                         bool isCanceled();
                         ~DiscoveryTask();
 
-                    public:
-
                         DiscoveryTask(const DiscoveryTask&) = delete;
                         DiscoveryTask(DiscoveryTask&&) = delete;
                         DiscoveryTask& operator = (const DiscoveryTask&) const = delete;

@@ -30,14 +30,14 @@ namespace OIC {
             return &instance;
         }
 
-        std::unique_ptr<RCSDiscoveryManager::DiscoveryTask> RCSDiscoveryManager::discoverResource(const RCSAddress& address,
-                ResourceDiscoveredCallback cb) {
+        std::unique_ptr<RCSDiscoveryManager::DiscoveryTask> RCSDiscoveryManager::discoverResource
+        (const RCSAddress& address, ResourceDiscoveredCallback cb) {
             return discoverResourceByType(address, OC_RSRVD_WELL_KNOWN_URI, "",
                     std::move(cb));
         }
 
-        std::unique_ptr<RCSDiscoveryManager::DiscoveryTask> RCSDiscoveryManager::discoverResource(const RCSAddress& address,
-                const std::string& relativeURI, ResourceDiscoveredCallback cb) {
+        std::unique_ptr<RCSDiscoveryManager::DiscoveryTask> RCSDiscoveryManager::discoverResource
+        (const RCSAddress& address, const std::string& relativeURI, ResourceDiscoveredCallback cb) {
             return discoverResourceByType(address, relativeURI, "", std::move(cb));
         }
 
