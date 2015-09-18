@@ -44,7 +44,7 @@ std::map<RequestType, RequestModelSP> RequestModelBuilder::build(const std::stri
         for (auto  & action :  (resource.second)->getActions())
         {
             RequestModelSP requestModel = createRequestModel(action.second);
-            if (!requestModel)
+            if (requestModel)
                 modelList[requestModel->type()] = requestModel;
         }
     }
@@ -67,7 +67,7 @@ RequestModelSP RequestModelBuilder::createRequestModel(const RAML::ActionPtr &ac
         return nullptr;
     }
 
-    // Construcut RequestModel
+    // Construct RequestModel
     RequestModelSP requestModel(new RequestModel(getRequestType(actionType)));
 
     // Get the allowed query parameters of the request
@@ -111,6 +111,10 @@ ResponseModelSP RequestModelBuilder::createResponseModel(int code,
 SimulatorResourceModelSP RequestModelBuilder::createRepSchema(const RAML::RequestResponseBodyPtr
         &rep)
 {
+    if (!rep)
+    {
+        return nullptr;
+    }
     RAML::SchemaPtr schema = rep->getSchema();
     if (!schema)
     {
@@ -124,13 +128,17 @@ SimulatorResourceModelSP RequestModelBuilder::createRepSchema(const RAML::Reques
     SimulatorResourceModelSP repSchema = std::make_shared<SimulatorResourceModel>();
     for (auto & propertyEntry : properties->getProperties())
     {
+        std::string propName = propertyEntry.second->getName();
+        if ("rt" == propName || "resourceType" == propName || "if" == propName
+            || "p" == propName || "n" == propName || "id" == propName)
+            continue;
+
         int valueType = propertyEntry.second->getValueType();
         switch (valueType)
         {
             case 0: // Integer
                 {
                     // Add the attribute with value
-                    std::cout << "[createRepresentationSchema] Adding Attribute of type int" << std::endl;
                     repSchema->addAttribute(propertyEntry.second->getName(), propertyEntry.second->getValue<int>());
 
                     // Set the range
@@ -143,7 +151,6 @@ SimulatorResourceModelSP RequestModelBuilder::createRepSchema(const RAML::Reques
             case 1: // Double
                 {
                     // Add the attribute with value
-                    std::cout << "[createRepresentationSchema] Adding Attribute of type double" << std::endl;
                     repSchema->addAttribute(propertyEntry.second->getName(), propertyEntry.second->getValue<double>());
 
                     std::vector<SimulatorResourceModel::Attribute::ValueVariant> propValues =
@@ -166,7 +173,6 @@ SimulatorResourceModelSP RequestModelBuilder::createRepSchema(const RAML::Reques
             case 2: // Boolean
                 {
                     // Add the attribute with value
-                    std::cout << "[createRepresentationSchema] Adding Attribute of type boolean" << std::endl;
                     repSchema->addAttribute(propertyEntry.second->getName(), propertyEntry.second->getValue<bool>());
                 }
                 break;
@@ -174,7 +180,6 @@ SimulatorResourceModelSP RequestModelBuilder::createRepSchema(const RAML::Reques
             case 3: // String
                 {
                     // Add the attribute with value
-                    std::cout << "[createRepresentationSchema] Adding Attribute of type string" << std::endl;
                     repSchema->addAttribute(propertyEntry.second->getName(),
                                             propertyEntry.second->getValue<std::string>());
 

@@ -69,17 +69,17 @@ void SimulatorManager::deleteResource(
     ResourceManager::getInstance()->deleteResource(resource);
 }
 
-void SimulatorManager::deleteResources(const std::string &resourceType)
+void SimulatorManager::deleteResource(const std::string &resourceType)
 {
     ResourceManager::getInstance()->deleteResources(resourceType);
 }
 
-void SimulatorManager::findResources(ResourceFindCallback callback)
+void SimulatorManager::findResource(ResourceFindCallback callback)
 {
     SimulatorClient::getInstance()->findResources(callback);
 }
 
-void SimulatorManager::findResources(const std::string &resourceType,
+void SimulatorManager::findResource(const std::string &resourceType,
                                      ResourceFindCallback callback)
 {
     SimulatorClient::getInstance()->findResources(resourceType, callback);
@@ -187,12 +187,12 @@ void SimulatorManager::setLogger(const std::shared_ptr<ILogger> &logger)
     simLogger().setCustomTarget(logger);
 }
 
-bool SimulatorManager::setDefaultConsoleLogger()
+bool SimulatorManager::setConsoleLogger()
 {
     return simLogger().setDefaultConsoleTarget();
 }
 
-bool SimulatorManager::setDefaultFileLogger(const std::string &path)
+bool SimulatorManager::setFileLogger(const std::string &path)
 {
     return simLogger().setDefaultFileTarget(path);
 }

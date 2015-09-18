@@ -75,16 +75,18 @@ void PUTRequestGenerator::SendAllRequests()
     OC_LOG(DEBUG, TAG, "Sending OP_START event");
     m_callback(m_id, OP_START);
 
-    bool hasNext = false;
-    std::map<std::string, SimulatorResourceModel::Attribute> attributes = m_rep->getAttributes();
-    if (!attributes.size())
-        return;
+    // Create attribute generator for value manipulation
+    std::vector<AttributeGenerator> attributeGenList;
+    for (auto &attributeElement : m_rep->getAttributes())
+        attributeGenList.push_back(AttributeGenerator(attributeElement.second));
 
-    std::vector<std::shared_ptr<AttributeGenerator>> attributeGenList;
-    for (auto & attribute : attributes)
+    if (!attributeGenList.size())
     {
-        attributeGenList.push_back(std::make_shared<AttributeGenerator>(attribute.second));
+        OC_LOG(ERROR, TAG, "Zero attribute found from resource model!");
+        return;
     }
+
+    bool hasNext = false;
 
     do
     {
@@ -95,43 +97,22 @@ void PUTRequestGenerator::SendAllRequests()
 
             while (true)
             {
-                SimulatorResourceModelSP repModel = std::make_shared<SimulatorResourceModel>();
-
+                SimulatorResourceModelSP repModel(new SimulatorResourceModel);
                 for (auto & attributeGen : attributeGenList)
                 {
-                    if (attributeGen->hasNext())
+                    if (attributeGen.hasNext())
                     {
-                        AttributeSP attr = attributeGen->next();
-                        int type = attr->getValueType();
-                        if (!type)
-                        {
-                            int attributeValue = attr->getValue<int>();
-                            std::string attributeName = attr->getName();
-                            repModel->addAttribute(attributeName, attributeValue);
-                        }
-                        else
-                        {
-                            std::string attributeValue = attr->getValue<std::string>();
-                            std::string attributeName = attr->getName();
-                            repModel->addAttribute(attr->getName(), attributeValue);
-                        }
+                        SimulatorResourceModel::Attribute attribute;
+                        if (true == attributeGen.next(attribute))
+                            repModel->addAttribute(attribute);
 
                         hasNext = true;
                     }
                     else
                     {
-                        AttributeSP attr = attributeGen->previous();
-                        int type = attr->getValueType();
-                        if (!type)
-                        {
-                            int attributeValue = attr->getValue<int>();
-                            repModel->addAttribute(attr->getName(), attributeValue);
-                        }
-                        else
-                        {
-                            std::string attributeValue = attr->getValue<std::string>();
-                            repModel->addAttribute(attr->getName(), attributeValue);
-                        }
+                        SimulatorResourceModel::Attribute attribute;
+                        if (true == attributeGen.previous(attribute))
+                            repModel->addAttribute(attribute);
                     }
                 }
 
@@ -139,8 +120,8 @@ void PUTRequestGenerator::SendAllRequests()
                 {
                     // Send the request
                     m_requestSender->sendRequest(queryParam, repModel,
-                                                 std::bind(&PUTRequestGenerator::onResponseReceived, this,
-                                                           std::placeholders::_1, std::placeholders::_2), true);
+                            std::bind(&PUTRequestGenerator::onResponseReceived, this,
+                            std::placeholders::_1, std::placeholders::_2), true);
 
                     m_requestCnt++;
                     hasNext = false;

@@ -63,6 +63,9 @@ void SimulatorResourceServer::updateFromAllowedValues(const std::string &attrNam
         unsigned int index)
 {
     m_resModel.updateAttributeFromAllowedValues(attrName, index);
+
+    // Notify all the subscribers
+    notifyAll();
 }
 
 void SimulatorResourceServer::removeAttribute(const std::string &attrName)

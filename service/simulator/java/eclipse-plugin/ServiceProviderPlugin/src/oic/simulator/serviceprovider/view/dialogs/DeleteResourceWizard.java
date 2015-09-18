@@ -20,7 +20,6 @@ import java.net.URL;
 
 import oic.simulator.serviceprovider.Activator;
 import oic.simulator.serviceprovider.resource.DeleteCategory;
-import oic.simulator.serviceprovider.utils.Utility;
 
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.IPath;
@@ -62,9 +61,11 @@ public class DeleteResourceWizard extends Wizard {
             // Check whether the uri is in full form or short form
             // If it is in short form, expand it to its full form.
             String uri = page.getDeleteCandidate();
-            boolean uriComplete = Utility.isUriComplete(uri);
-            if (!uriComplete) {
-                uri = Utility.displayNameToUri(uri);
+            boolean dispName = Activator.getDefault().getResourceManager()
+                    .isDisplayName(uri);
+            if (dispName) {
+                uri = Activator.getDefault().getResourceManager()
+                        .getCompleteUriFromDisplayName(uri);
             }
             boolean exist = Activator.getDefault().getResourceManager()
                     .isResourceExist(uri);

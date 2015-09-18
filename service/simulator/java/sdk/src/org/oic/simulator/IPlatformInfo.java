@@ -22,7 +22,7 @@ package org.oic.simulator;
 public interface IPlatformInfo {
     /**
      * Callback method which provides remote device platform information.
-     * 
+     *
      * @param platformInfo
      *            {@link PlatformInfo} object holding the platform information.
      */

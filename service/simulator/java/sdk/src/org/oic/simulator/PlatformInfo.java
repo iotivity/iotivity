@@ -35,7 +35,7 @@ public class PlatformInfo {
 
     /**
      * This method is for getting platform id.
-     * 
+     *
      * @return Platform id.
      */
     public String getPlatformID() {
@@ -44,7 +44,7 @@ public class PlatformInfo {
 
     /**
      * This method is for setting platform id.
-     * 
+     *
      * @param mPlatformId
      *            Platform identifier.
      */
@@ -54,7 +54,7 @@ public class PlatformInfo {
 
     /**
      * This method is for getting manufacturer name.
-     * 
+     *
      * @return Manufacturer name.
      */
     public String getManufacturerName() {
@@ -63,7 +63,7 @@ public class PlatformInfo {
 
     /**
      * This method is for setting manufacturer name.
-     * 
+     *
      * @param m_manufacturerName
      *            Manufacturer name.
      */
@@ -73,7 +73,7 @@ public class PlatformInfo {
 
     /**
      * This method is for getting manufacturer URL.
-     * 
+     *
      * @return Manufacturer URL.
      */
     public String getManufacturerUrl() {
@@ -82,7 +82,7 @@ public class PlatformInfo {
 
     /**
      * This method is for setting manufacturer URL.
-     * 
+     *
      * @param m_manufacturerUrl
      *            Manufacturer URL.
      */
@@ -92,7 +92,7 @@ public class PlatformInfo {
 
     /**
      * This method is for getting model number.
-     * 
+     *
      * @return Model number.
      */
     public String getModelNumber() {
@@ -101,7 +101,7 @@ public class PlatformInfo {
 
     /**
      * This method is for setting model number.
-     * 
+     *
      * @param m_modelNumber
      *            Model number.
      */
@@ -111,7 +111,7 @@ public class PlatformInfo {
 
     /**
      * This method is for getting date of manufacture.
-     * 
+     *
      * @return Date of manufacture.
      */
     public String getDateOfManufacture() {
@@ -120,7 +120,7 @@ public class PlatformInfo {
 
     /**
      * This method is for setting date of manufacture.
-     * 
+     *
      * @param m_dateOfManufacture
      *            Date of manufacture.
      */
@@ -130,7 +130,7 @@ public class PlatformInfo {
 
     /**
      * This method is for getting platform version.
-     * 
+     *
      * @return Platform version.
      */
     public String getPlatformVersion() {
@@ -139,7 +139,7 @@ public class PlatformInfo {
 
     /**
      * This method is for setting platform version.
-     * 
+     *
      * @param m_platformVersion
      *            Platform version.
      */
@@ -149,7 +149,7 @@ public class PlatformInfo {
 
     /**
      * This method is for getting operating system version.
-     * 
+     *
      * @return Operation system version.
      */
     public String getOperationSystemVersion() {
@@ -158,7 +158,7 @@ public class PlatformInfo {
 
     /**
      * This method is for setting operating system version.
-     * 
+     *
      * @param m_operationSystemVersion
      *            Operation system version.
      */
@@ -168,7 +168,7 @@ public class PlatformInfo {
 
     /**
      * This method is for getting hardware version.
-     * 
+     *
      * @return Hardware version.
      */
     public String getHardwareVersion() {
@@ -177,7 +177,7 @@ public class PlatformInfo {
 
     /**
      * This method is for setting hardware version.
-     * 
+     *
      * @param m_hardwareVersion
      *            Hardware version.
      */
@@ -187,7 +187,7 @@ public class PlatformInfo {
 
     /**
      * This method is for getting firmware version.
-     * 
+     *
      * @return Firmware version.
      */
     public String getFirmwareVersion() {
@@ -196,7 +196,7 @@ public class PlatformInfo {
 
     /**
      * This method is for setting firmware version.
-     * 
+     *
      * @param m_firmwareVersion
      *            Firmware version.
      */
@@ -206,7 +206,7 @@ public class PlatformInfo {
 
     /**
      * This method is for getting support link URL.
-     * 
+     *
      * @return URL of support link.
      */
     public String getSupportUrl() {
@@ -215,7 +215,7 @@ public class PlatformInfo {
 
     /**
      * This method is for setting support link URL.
-     * 
+     *
      * @param m_supportUrl
      *            URL of support link.
      */
@@ -225,7 +225,7 @@ public class PlatformInfo {
 
     /**
      * This method is for getting system time.
-     * 
+     *
      * @return System time.
      */
     public String getSystemTime() {
@@ -234,7 +234,7 @@ public class PlatformInfo {
 
     /**
      * This method is for setting system time.
-     * 
+     *
      * @param m_systemTime
      *            System time.
      */

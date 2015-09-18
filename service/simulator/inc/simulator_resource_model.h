@@ -41,9 +41,9 @@ class SimulatorResourceModel
 {
     public:
         SimulatorResourceModel() = default;
-        SimulatorResourceModel(SimulatorResourceModel &&) = default;
         SimulatorResourceModel(const SimulatorResourceModel &) = default;
         SimulatorResourceModel &operator=(const SimulatorResourceModel &) = default;
+        SimulatorResourceModel(SimulatorResourceModel &&) = default;
         SimulatorResourceModel &operator=(SimulatorResourceModel && ) = default;
 
         /**
@@ -59,6 +59,15 @@ class SimulatorResourceModel
                 bool,
                 std::string
                 > ValueVariant;
+
+                enum class ValueType
+                {
+                    UNKNOWN,
+                    INTEGER,
+                    DOUBLE,
+                    BOOLEAN,
+                    STRING
+                };
 
                 Attribute()
                 {
@@ -114,12 +123,9 @@ class SimulatorResourceModel
                 /**
                  * API to get attribute's value type.
                  *
-                 * @return type of value.
+                 * @return ValueType enum.
                  */
-                int getValueType() const
-                {
-                    return m_value.which();
-                }
+                ValueType getValueType() const;
 
                 /**
                  * API to set the attribute's value.
@@ -285,11 +291,7 @@ class SimulatorResourceModel
           * @param attr  - Attribute pointer
           *
           */
-        void addAttribute(Attribute &attr)
-        {
-            std::string attrName = attr.getName();
-            m_attributes[attrName] = Attribute(attr);
-        }
+        void addAttribute(const Attribute &attribute);
 
         /**
          * API to set range of attribute value.

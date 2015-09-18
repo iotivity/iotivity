@@ -113,7 +113,7 @@ class SimulatorManager
           *
           * NOTE: API would throw @InvalidArgsException when invalid arguments passed
           */
-        void deleteResources(const std::string &resourceType = "");
+        void deleteResource(const std::string &resourceType = "");
 
         /**
          * API for discovering all type of resources.
@@ -125,7 +125,7 @@ class SimulatorManager
          * NOTE: API would throw @InvalidArgsException when invalid arguments passed, and
          * @SimulatorException if any other error occured.
          */
-        void findResources(ResourceFindCallback callback);
+        void findResource(ResourceFindCallback callback);
 
         /**
          * API for discovering resources of a particular resource type.
@@ -138,7 +138,7 @@ class SimulatorManager
          * NOTE: API would throw @InvalidArgsException when invalid arguments passed, and
          * @SimulatorException if any other error occured.
          */
-        void findResources(const std::string &resourceType, ResourceFindCallback callback);
+        void findResource(const std::string &resourceType, ResourceFindCallback callback);
 
         /**
          * API for getting device information from remote device.
@@ -197,7 +197,7 @@ class SimulatorManager
          *         otherwise false.
          *
          */
-        bool setDefaultConsoleLogger();
+        bool setConsoleLogger();
 
         /**
          * API for setting file as logger target.
@@ -208,7 +208,7 @@ class SimulatorManager
          *         otherwise false.
          *
          */
-        bool setDefaultFileLogger(const std::string &path);
+        bool setFileLogger(const std::string &path);
 
     private:
         SimulatorManager();

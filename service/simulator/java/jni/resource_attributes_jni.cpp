@@ -165,7 +165,7 @@ bool JResourceAttributeConverter::setType(JNIEnv *env, jobject &jattributeObj)
         return false;
     }
 
-    int type = m_attribute.getValueType();
+    int type = static_cast<int>(m_attribute.getValueType());
     jobject jtype = env->CallStaticObjectMethod(clsType, midGetType, type);
     if (env->ExceptionCheck())
     {

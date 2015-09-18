@@ -22,7 +22,7 @@ package org.oic.simulator;
 public interface IAutomation {
     /**
      * Callback method for receiving automation complete notifications.
-     * 
+     *
      * @param resourceURI
      *            URI of the resource on which the automation has occurred.
      * @param automationId

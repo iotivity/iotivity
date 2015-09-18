@@ -91,18 +91,20 @@ class JNIOnObserveListener
                     return;
                 }
 
-                jobject jRepresentation = JSimulatorResourceModel::toJava(env, reinterpret_cast<jlong>(jniModel));
-
+                jobject jRepresentation = JSimulatorResourceModel::toJava(env,
+                        reinterpret_cast<jlong>(jniModel));
                 if (!jRepresentation)
                 {
+                    delete jniModel;
                     releaseEnv();
                     return;
                 }
 
                 jmethodID midL = env->GetMethodID(onObserveCls, "onObserveCompleted",
-                                                  "(Ljava/lang/String;Lorg/oic/simulator/SimulatorResourceModel;I)V");
+                        "(Ljava/lang/String;Lorg/oic/simulator/SimulatorResourceModel;I)V");
                 if (!midL)
                 {
+                    delete jniModel;
                     releaseEnv();
                     return;
                 }
@@ -113,6 +115,7 @@ class JNIOnObserveListener
                                     static_cast<jint>(seqNumber));
                 if (env->ExceptionCheck())
                 {
+                    delete jniModel;
                     releaseEnv();
                 }
             }
@@ -173,9 +176,9 @@ class JNIOnGetListener
                 }
 
                 jobject jRepresentation = JSimulatorResourceModel::toJava(env, reinterpret_cast<jlong>(jniModel));
-
                 if (!jRepresentation)
                 {
+                    delete jniModel;
                     releaseEnv();
                     return;
                 }
@@ -184,15 +187,16 @@ class JNIOnGetListener
                                                   "(Ljava/lang/String;Lorg/oic/simulator/SimulatorResourceModel;)V");
                 if (!midL)
                 {
+                    delete jniModel;
                     releaseEnv();
                     return;
                 }
 
                 jstring jUid = env->NewStringUTF(uId.c_str());
-
                 env->CallVoidMethod(onGetListener, midL, jUid, jRepresentation);
                 if (env->ExceptionCheck())
                 {
+                    delete jniModel;
                     releaseEnv();
                 }
             }
@@ -252,27 +256,29 @@ class JNIOnPutListener
                     return;
                 }
 
-                jobject jRepresentation = JSimulatorResourceModel::toJava(env, reinterpret_cast<jlong>(jniModel));
-
+                jobject jRepresentation = JSimulatorResourceModel::toJava(env,
+                        reinterpret_cast<jlong>(jniModel));
                 if (!jRepresentation)
                 {
+                    delete jniModel;
                     releaseEnv();
                     return;
                 }
 
                 jmethodID midL = env->GetMethodID(onGetCls, "onPutCompleted",
-                                                  "(Ljava/lang/String;Lorg/oic/simulator/SimulatorResourceModel;)V");
+                            "(Ljava/lang/String;Lorg/oic/simulator/SimulatorResourceModel;)V");
                 if (!midL)
                 {
+                    delete jniModel;
                     releaseEnv();
                     return;
                 }
 
                 jstring jUid = env->NewStringUTF(uId.c_str());
-
                 env->CallVoidMethod(onPutListener, midL, jUid, jRepresentation);
                 if (env->ExceptionCheck())
                 {
+                    delete jniModel;
                     releaseEnv();
                 }
             }
@@ -332,18 +338,20 @@ class JNIOnPostListener
                     return;
                 }
 
-                jobject jRepresentation = JSimulatorResourceModel::toJava(env, reinterpret_cast<jlong>(jniModel));
-
+                jobject jRepresentation = JSimulatorResourceModel::toJava(env,
+                        reinterpret_cast<jlong>(jniModel));
                 if (!jRepresentation)
                 {
+                    delete jniModel;
                     releaseEnv();
                     return;
                 }
 
                 jmethodID midL = env->GetMethodID(onGetCls, "onPostCompleted",
-                                                  "(Ljava/lang/String;Lorg/oic/simulator/SimulatorResourceModel;)V");
+                        "(Ljava/lang/String;Lorg/oic/simulator/SimulatorResourceModel;)V");
                 if (!midL)
                 {
+                    delete jniModel;
                     releaseEnv();
                     return;
                 }
@@ -353,6 +361,7 @@ class JNIOnPostListener
                 env->CallVoidMethod(onPostListener, midL, jUid, jRepresentation);
                 if (env->ExceptionCheck())
                 {
+                    delete jniModel;
                     releaseEnv();
                 }
             }
@@ -429,7 +438,7 @@ class JNIOnVerificationListener
 
 
 JNIEXPORT void JNICALL
-Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_observe
+Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_startObserve
 (JNIEnv *env, jobject thiz, jint observeType, jobject jQueryParamsMap, jobject jListener)
 {
     if (!jListener)
@@ -440,9 +449,9 @@ Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_observe
 
     SimulatorRemoteResourceSP resource = JniSimulatorRemoteResource::getResourceHandle(env,
                                          thiz);
-    if (nullptr == resource)
+    if (!resource)
     {
-        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "No resource!");
+        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "No resource!");
         return;
     }
 
@@ -480,14 +489,14 @@ Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_observe
 }
 
 JNIEXPORT void JNICALL
-Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_cancelObserve
+Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_stopObserve
 (JNIEnv *env, jobject thiz)
 {
     SimulatorRemoteResourceSP resource = JniSimulatorRemoteResource::getResourceHandle(env,
                                          thiz);
-    if (nullptr == resource)
+    if (!resource)
     {
-        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "No resource!");
+        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "No resource!");
         return;
     }
 
@@ -518,9 +527,9 @@ Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_get
 
     SimulatorRemoteResourceSP resource = JniSimulatorRemoteResource::getResourceHandle(env,
                                          thiz);
-    if (nullptr == resource)
+    if (!resource)
     {
-        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "No resource!");
+        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "No resource!");
         return;
     }
 
@@ -588,9 +597,9 @@ Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_put
 
     SimulatorRemoteResourceSP resource = JniSimulatorRemoteResource::getResourceHandle(env,
                                          thiz);
-    if (nullptr == resource)
+    if (!resource)
     {
-        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "No resource!");
+        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "No resource!");
         return;
     }
 
@@ -662,9 +671,9 @@ Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_post
 
     SimulatorRemoteResourceSP resource = JniSimulatorRemoteResource::getResourceHandle(env,
                                          thiz);
-    if (nullptr == resource)
+    if (!resource)
     {
-        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "No resource!");
+        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "No resource!");
         return;
     }
 
@@ -724,14 +733,21 @@ Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_post
 }
 
 JNIEXPORT void JNICALL
-Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_configureRAMLPath
+Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_setConfigInfo
 (JNIEnv *env, jobject thiz, jstring jConfigPath)
 {
+    if (!jConfigPath)
+    {
+        throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM,
+                                  "Configuration file path is empty!");
+        return;
+    }
+
     SimulatorRemoteResourceSP resource = JniSimulatorRemoteResource::getResourceHandle(env,
                                          thiz);
-    if (nullptr == resource)
+    if (!resource)
     {
-        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "No resource!");
+        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "No resource!");
         return;
     }
 
@@ -769,17 +785,16 @@ Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_startVerificatio
 {
     if (!jListener)
     {
-        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "No resource!");
-        return -1;
+        throwInvalidArgsException(env, SIMULATOR_INVALID_CALLBACK, "Invalid callback!");
+        return SIMULATOR_INVALID_CALLBACK;
     }
-
 
     SimulatorRemoteResourceSP resource = JniSimulatorRemoteResource::getResourceHandle(env,
                                          thiz);
-    if (nullptr == resource)
+    if (!resource)
     {
-        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "No resource!");
-        return -1;
+        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "No resource!");
+        return SIMULATOR_BAD_OBJECT;
     }
 
     // Convert RequestType
@@ -850,9 +865,9 @@ Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_stopVerification
 {
     SimulatorRemoteResourceSP resource = JniSimulatorRemoteResource::getResourceHandle(env,
                                          thiz);
-    if (nullptr == resource)
+    if (!resource)
     {
-        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "No resource!");
+        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "No resource!");
         return;
     }
 

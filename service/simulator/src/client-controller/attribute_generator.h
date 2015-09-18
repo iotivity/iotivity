@@ -29,16 +29,16 @@ class AttributeGenerator
 {
     public:
         AttributeGenerator(SimulatorResourceModel::Attribute &attribute);
-        ~AttributeGenerator();
         bool hasNext();
-        AttributeSP next();
-        AttributeSP previous();
+        bool next(SimulatorResourceModel::Attribute &attribute);
+        bool previous(SimulatorResourceModel::Attribute &attribute);
+        void reset();
 
     private:
         std::string m_name;
-        int m_type;
-        int m_max;
+        SimulatorResourceModel::Attribute::ValueType m_type;
         int m_min;
+        int m_max;
         int m_rangeIndex;
         int m_nextAllowedValueIndex;
         int m_prevAllowedValueIndex;

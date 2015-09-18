@@ -35,7 +35,7 @@ public enum SimulatorVerificationType {
     /**
      * Method to get the {@link SimulatorVerificationType} from an integer
      * value.
-     * 
+     *
      * @param value
      *            Integral value of {@link SimulatorVerificationType}.
      * @return {@link SimulatorVerificationType} corresponding to the given

@@ -127,7 +127,7 @@ OCStackResult PUTRequestSender::send(OC::QueryParamsMap &queryParams,
                                      SimulatorResourceModelSP &repModel, OC::GetCallback callback)
 {
     OC::OCRepresentation ocRep;
-    if (!repModel)
+    if (repModel)
     {
         ocRep = repModel->getOCRepresentation();
     }
@@ -143,7 +143,7 @@ OCStackResult POSTRequestSender::send(OC::QueryParamsMap &queryParams,
                                       SimulatorResourceModelSP &repModel, OC::GetCallback callback)
 {
     OC::OCRepresentation ocRep;
-    if (!repModel)
+    if (repModel)
         ocRep = repModel->getOCRepresentation();
 
     SIM_LOG(ILogger::INFO, "Sending POST request..." << "\n" << getRequestString(queryParams, ocRep));

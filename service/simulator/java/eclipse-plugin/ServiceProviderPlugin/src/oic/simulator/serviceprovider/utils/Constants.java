@@ -59,7 +59,6 @@ public class Constants {
     public static final String         START_RESOURCE_AUTOMATION        = "Start Automation";
     public static final String         STOP_RESOURCE_AUTOMATION         = "Stop Automation";
 
-    public static final int            PROPER_RESOURCE_URI_TOKEN_COUNT  = 6;
     public static final int            DISPLAY_RESOURCE_URI_TOKEN_COUNT = 2;
 
     public static final AutomationType DEFAULT_AUTOMATION_TYPE          = AutomationType.NORMAL;

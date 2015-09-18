@@ -44,12 +44,12 @@ class AttributeUpdateAutomation
         std::string m_attrName;
         AutomationType m_type;
         int m_id;
-        std::thread *m_thread;
         bool m_stopRequested;
         int m_updateInterval;
         SimulatorResourceModel::Attribute m_attribute;
         updateCompleteCallback m_callback;
         std::function<void (const int)> m_finishedCallback;
+        std::thread *m_thread;
 };
 
 typedef std::shared_ptr<AttributeUpdateAutomation> AttributeUpdateAutomationSP;
@@ -72,7 +72,6 @@ class ResourceUpdateAutomation
         SimulatorResourceServer *m_resource;
         AutomationType m_type;
         int m_id;
-        std::thread *m_thread;
         int m_updateInterval;
         SimulatorResourceModel m_resModel;
         std::map<int, AttributeUpdateAutomationSP> m_attrUpdationList;

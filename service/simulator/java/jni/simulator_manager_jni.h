@@ -45,10 +45,6 @@ Java_org_oic_simulator_SimulatorManagerNativeInterface_deleteResources
 
 JNIEXPORT void JNICALL
 Java_org_oic_simulator_SimulatorManagerNativeInterface_findResource
-(JNIEnv *env, jobject interfaceObject, jobject jListener);
-
-JNIEXPORT void JNICALL
-Java_org_oic_simulator_SimulatorManagerNativeInterface_findResources
 (JNIEnv *env, jobject interfaceObject, jstring jResourceType, jobject jListener);
 
 JNIEXPORT void JNICALL

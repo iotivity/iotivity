@@ -39,7 +39,8 @@ AttributeUpdateAutomation::AttributeUpdateAutomation(int id, SimulatorResourceSe
         m_stopRequested(false),
         m_updateInterval(interval),
         m_callback(callback),
-        m_finishedCallback(finishedCallback) {}
+        m_finishedCallback(finishedCallback),
+        m_thread(nullptr) {}
 
 void AttributeUpdateAutomation::start()
 {
@@ -64,7 +65,8 @@ void AttributeUpdateAutomation::start()
 void AttributeUpdateAutomation::stop()
 {
     m_stopRequested = true;
-    m_thread->join();
+    if (m_thread)
+        m_thread->join();
 }
 
 void AttributeUpdateAutomation::updateAttribute()
@@ -75,7 +77,7 @@ void AttributeUpdateAutomation::updateAttribute()
         {
             setAttributeValue();
         }
-        catch(SimulatorException &e)
+        catch (SimulatorException &e)
         {
             break;
         }
@@ -100,32 +102,35 @@ void AttributeUpdateAutomation::updateAttribute()
 
 void AttributeUpdateAutomation::setAttributeValue()
 {
-    if (0 == m_attribute.getValueType()) // For integer type values
+    SimulatorResourceServerImpl *resourceImpl =
+        dynamic_cast<SimulatorResourceServerImpl *>(m_resource);
+    if (!resourceImpl)
+        return;
+
+    if (SimulatorResourceModel::Attribute::ValueType::INTEGER ==
+            m_attribute.getValueType()) // For integer type values
     {
         int min;
         int max;
-        SimulatorResourceServerImpl *resourceImpl;
-        resourceImpl = dynamic_cast<SimulatorResourceServerImpl *>(m_resource);
+
         m_attribute.getRange(min, max);
         for (int value = min; value <= max; value++)
         {
             if (m_stopRequested)
                 break;
-            m_resource->updateAttributeValue(m_attribute.getName(), value);
-            resourceImpl->resourceModified();
+            resourceImpl->updateAttributeValue(m_attribute.getName(), value);
+            resourceImpl->notifyApp();
             SLEEP_FOR(m_updateInterval);
         }
     }
     else
     {
-        SimulatorResourceServerImpl *resourceImpl;
-        resourceImpl = dynamic_cast<SimulatorResourceServerImpl *>(m_resource);
         for (int index = 0; index < m_attribute.getAllowedValuesSize(); index++)
         {
             if (m_stopRequested)
                 break;
-            m_resource->updateFromAllowedValues(m_attribute.getName(), index);
-            resourceImpl->resourceModified();
+            resourceImpl->updateFromAllowedValues(m_attribute.getName(), index);
+            resourceImpl->notifyApp();
             SLEEP_FOR(m_updateInterval);
         }
     }

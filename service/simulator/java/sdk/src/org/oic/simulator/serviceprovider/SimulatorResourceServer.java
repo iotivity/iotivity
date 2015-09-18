@@ -79,41 +79,26 @@ public class SimulatorResourceServer {
         return interfaceType;
     }
 
-    @Override
-    protected void finalize() throws Throwable {
-        try {
-            dispose();
-        } catch(Throwable t){
-            throw t;
-        } finally{
-            System.out.println("Calling finalize of Super Class");
-            super.finalize();
-        }
-    }
-
-    /**
-     * Native function to get the {@link SimulatorResourceModel} of the
-     * corresponding resource.
+   /**
+     * API to get the {@link SimulatorResourceModel} of the
+     * simulated resource.
      *
      * @return {@link SimulatorResourceModel} object on success, otherwise null.
-     * 
-     * @throws InvalidArgsException
-     *             This exception will be thrown if the native resource object
-     *             is invalid. values.
+     *
      * @throws SimulatorException
-     *             This exception will be thrown for other errors.
+     *             This exception will be thrown if simulated resource is not proper.
      */
     public native SimulatorResourceModel getModel()
-            throws InvalidArgsException, SimulatorException;
+            throws SimulatorException;
 
     /**
-     * Native function to add an attribute whose value is of type int.
+     * API to add an attribute whose value is of type int.
      *
      * @param key
      *            Name of the attribute.
      * @param value
      *            Initial value of the attribute.
-     * 
+     *
      * @throws InvalidArgsException
      *             This exception will be thrown if any parameter has invalid
      *             values.
@@ -124,13 +109,13 @@ public class SimulatorResourceServer {
             throws InvalidArgsException, SimulatorException;
 
     /**
-     * Native function to add an attribute whose value is of type double.
+     * API to  add an attribute whose value is of type double.
      *
      * @param key
      *            Name of the attribute.
      * @param value
      *            Initial value of the attribute.
-     * 
+     *
      * @throws InvalidArgsException
      *             This exception will be thrown if any parameter has invalid
      *             values.
@@ -141,13 +126,13 @@ public class SimulatorResourceServer {
             throws InvalidArgsException, SimulatorException;
 
     /**
-     * Native function to add an attribute whose value is of type boolean.
+     * API to  add an attribute whose value is of type boolean.
      *
      * @param key
      *            Name of the attribute.
      * @param value
      *            Initial value of the attribute.
-     * 
+     *
      * @throws InvalidArgsException
      *             This exception will be thrown if any parameter has invalid
      *             values.
@@ -158,13 +143,13 @@ public class SimulatorResourceServer {
             throws InvalidArgsException, SimulatorException;
 
     /**
-     * Native function to add an attribute whose value is of type String.
+     * API to  add an attribute whose value is of type String.
      *
      * @param key
      *            Name of the attribute.
      * @param value
      *            Initial value of the attribute.
-     * 
+     *
      * @throws InvalidArgsException
      *             This exception will be thrown if any parameter has invalid
      *             values.
@@ -175,14 +160,14 @@ public class SimulatorResourceServer {
             throws InvalidArgsException, SimulatorException;
 
     /**
-     * Native function to update the value of an attribute whose value is of
+     * API to  update the value of an attribute whose value is of
      * type int.
      *
      * @param key
      *            Name of the attribute.
      * @param value
      *            New value of the attribute.
-     * 
+     *
      * @throws InvalidArgsException
      *             This exception will be thrown if any parameter has invalid
      *             values.
@@ -193,14 +178,14 @@ public class SimulatorResourceServer {
             throws InvalidArgsException, SimulatorException;
 
     /**
-     * Native function to update the value of an attribute whose value is of
+     * API to  update the value of an attribute whose value is of
      * type double.
      *
      * @param key
      *            Name of the attribute.
      * @param value
      *            New value of the attribute.
-     * 
+     *
      * @throws InvalidArgsException
      *             This exception will be thrown if any parameter has invalid
      *             values.
@@ -211,14 +196,14 @@ public class SimulatorResourceServer {
             throws InvalidArgsException, SimulatorException;
 
     /**
-     * Native function to update the value of an attribute whose value is of
+     * API to  update the value of an attribute whose value is of
      * type boolean.
      *
      * @param key
      *            Name of the attribute.
      * @param value
      *            New value of the attribute.
-     * 
+     *
      * @throws InvalidArgsException
      *             This exception will be thrown if any parameter has invalid
      *             values.
@@ -229,14 +214,14 @@ public class SimulatorResourceServer {
             throws InvalidArgsException, SimulatorException;
 
     /**
-     * Native function to update the value of an attribute whose value is of
+     * API to  update the value of an attribute whose value is of
      * type String.
      *
      * @param key
      *            Name of the attribute.
      * @param value
      *            New value of the attribute.
-     * 
+     *
      * @throws InvalidArgsException
      *             This exception will be thrown if any parameter has invalid
      *             values.
@@ -247,52 +232,52 @@ public class SimulatorResourceServer {
             throws InvalidArgsException, SimulatorException;
 
     /**
-     * Native function to automatically update the value of an attribute from
+     * API to update the value of an attribute from
      * its allowed values.
      *
-     * @param attrName
+     * @param key
      *            Name of the attribute.
      * @param index
      *            Index of the value in the allowed values.
-     * 
+     *
      * @throws InvalidArgsException
      *             This exception will be thrown if any parameter has invalid
      *             values.
      * @throws SimulatorException
      *             This exception will be thrown for other errors.
      */
-    public native void updateAttributeFromAllowedValues(String attrName,
+    public native void updateAttributeFromAllowedValues(String key,
             int index) throws InvalidArgsException, SimulatorException;
 
     /**
-     * Native function to set the range of allowed values. This function is
-     * intended to be used for integral type attributes.
+     * API to  set the range of allowed values. This function is
+     * intended to be used for integer type attributes.
      *
-     * @param attrName
+     * @param key
      *            Name of the attribute.
      * @param min
      *            Minimum value in the range.
      * @param max
      *            Maximum value in the range.
-     * 
+     *
      * @throws InvalidArgsException
      *             This exception will be thrown if any parameter has invalid
      *             values.
      * @throws SimulatorException
      *             This exception will be thrown for other errors.
      */
-    public native void setRange(String attrName, int min, int max)
+    public native void setRange(String key, int min, int max)
             throws InvalidArgsException, SimulatorException;
 
     /**
-     * Native function to set the allowed values of attribute whose value is of
+     * API to  set the allowed values of attribute whose value is of
      * type int.
      *
      * @param key
      *            Name of the attribute.
      * @param allowedValues
      *            Allowed values of the attribute.
-     * 
+     *
      * @throws InvalidArgsException
      *             This exception will be thrown if any parameter has invalid
      *             values.
@@ -304,14 +289,14 @@ public class SimulatorResourceServer {
             SimulatorException;
 
     /**
-     * Native function to set the allowed values of attribute whose value is of
+     * API to  set the allowed values of attribute whose value is of
      * type double.
      *
      * @param key
      *            Name of the attribute.
      * @param allowedValues
      *            Allowed values of the attribute.
-     * 
+     *
      * @throws InvalidArgsException
      *             This exception will be thrown if any parameter has invalid
      *             values.
@@ -323,14 +308,14 @@ public class SimulatorResourceServer {
             SimulatorException;
 
     /**
-     * Native function to set the allowed values of attribute whose value is of
+     * API to  set the allowed values of attribute whose value is of
      * type String.
      *
      * @param key
      *            Name of the attribute.
      * @param allowedValues
      *            Allowed values of the attribute.
-     * 
+     *
      * @throws InvalidArgsException
      *             This exception will be thrown if any parameter has invalid
      *             values.
@@ -342,7 +327,7 @@ public class SimulatorResourceServer {
             SimulatorException;
 
     /**
-     * Native function to start the resource level automation. This automation
+     * API to  start the resource level automation. This automation
      * involves automatically updating all the possible values for all the
      * attributes sequentially.
      *
@@ -353,7 +338,7 @@ public class SimulatorResourceServer {
      *            Listener to be notified when automation ends.
      *
      * @return Automation ID using which the automation can be stopped.
-     * 
+     *
      * @throws InvalidArgsException
      *             This exception will be thrown if any parameter has invalid
      *             values.
@@ -366,12 +351,8 @@ public class SimulatorResourceServer {
         return startResourceAutomation(typeOfAutomation.getValue(), listener);
     }
 
-    private native int startResourceAutomation(int typeOfAutomation,
-            IAutomation listener) throws InvalidArgsException,
-            SimulatorException;
-
     /**
-     * Native function to start the attribute level automation. This automation
+     * API to  start the attribute level automation. This automation
      * involves automatically updating all the possible values for a given
      * attribute sequentially.
      *
@@ -384,7 +365,7 @@ public class SimulatorResourceServer {
      *            Listener to be notified when automation ends.
      *
      * @return Automation ID using which the automation can be stopped.
-     * 
+     *
      * @throws InvalidArgsException
      *             This exception will be thrown if any parameter has invalid
      *             values.
@@ -398,31 +379,24 @@ public class SimulatorResourceServer {
                 listener);
     }
 
-    private native int startAttributeAutomation(String attrName,
-            int typeOfAutomation, IAutomation listener)
-            throws InvalidArgsException, SimulatorException;
-
     /**
-     * Native function to stop the automation.
+     * API to  stop the automation based on automation id.
      *
      * @param automationId
      *            Using which a specific automation can be stopped.
-     * 
-     * @throws InvalidArgsException
-     *             This exception will be thrown if the native resource object
-     *             does not exist.
+     *
      * @throws SimulatorException
      *             This exception will be thrown for other errors.
      */
     public native void stopAutomation(int automationId)
-            throws InvalidArgsException, SimulatorException;
+            throws SimulatorException;
 
     /**
-     * Native function to remove an attribute from the resource model.
+     * API to remove an attribute from the simulated resource.
      *
      * @param key
      *            Name of the attribute to be deleted.
-     * 
+     *
      * @throws InvalidArgsException
      *             This exception will be thrown either if the parameter has
      *             invalid value or the native resource object does not exist.
@@ -433,10 +407,10 @@ public class SimulatorResourceServer {
             SimulatorException;
 
     /**
-     * Native function to get the details of a list of observers.
-     * 
+     * API to get observers  information.
+     *
      * @return An array of {@link ObserverInfo} objects.
-     * 
+     *
      * @throws InvalidArgsException
      *             This exception will be thrown if the native resource object
      *             does not exist.
@@ -447,11 +421,11 @@ public class SimulatorResourceServer {
             throws InvalidArgsException, SimulatorException;
 
     /**
-     * Native function to set callback to receive the clients information who are started or stopped observing the simulated resource.
-     * 
+     * API to set callback to receive notifications when observer is added/removed.
+     *
      * @param observer
      *            Listener to be notified when clients start/stop observing.
-     * 
+     *
      * @throws InvalidArgsException
      *             This exception will be thrown either if the parameter has
      *             invalid value or the native resource object does not exist.
@@ -462,11 +436,11 @@ public class SimulatorResourceServer {
             throws InvalidArgsException, SimulatorException;
 
     /**
-     * Native function which sends notification to a specific observer.
-     * 
+     * API to notify simulated resource's state to a specific observer.
+     *
      * @param id
      *            Observer's Id.
-     * 
+     *
      * @throws InvalidArgsException
      *             This exception will be thrown if the native resource object
      *             does not exist.
@@ -477,8 +451,8 @@ public class SimulatorResourceServer {
             SimulatorException;
 
     /**
-     * Native function which sends notification to all observers.
-     * 
+     * API to notify simualted resource's state to all observers.
+     *
      * @throws InvalidArgsException
      *             This exception will be thrown if the native resource object
      *             does not exist.
@@ -488,9 +462,25 @@ public class SimulatorResourceServer {
     public native void notifyAllObservers() throws InvalidArgsException,
             SimulatorException;
 
-    /**
-     * Native function to release the memory allocated to the native object for
-     * SimulatorResourceServer.
-     */
+    private native int startResourceAutomation(int typeOfAutomation,
+            IAutomation listener) throws InvalidArgsException,
+            SimulatorException;
+
+    private native int startAttributeAutomation(String attrName,
+        int typeOfAutomation, IAutomation listener)
+        throws InvalidArgsException, SimulatorException;
+
+    @Override
+    protected void finalize() throws Throwable {
+        try {
+            dispose();
+        } catch(Throwable t){
+            throw t;
+        } finally{
+            System.out.println("Calling finalize of Super Class");
+            super.finalize();
+        }
+    }
+
     private native void dispose();
 }

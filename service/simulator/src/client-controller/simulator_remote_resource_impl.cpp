@@ -286,7 +286,7 @@ int SimulatorRemoteResourceImpl::startVerification(RequestType type,
         throw NoSupportException("Resource is not configured with RAML!");
     }
 
-    if (m_requestModelList.end() != m_requestModelList.find(type))
+    if (m_requestModelList.end() == m_requestModelList.find(type))
         throw NoSupportException("Resource does not support this request type!");
 
     // Local callback for handling progress sate callback
@@ -302,8 +302,8 @@ int SimulatorRemoteResourceImpl::startVerification(RequestType type,
             if (m_getRequestSender)
             {
                 return m_autoRequestGenMngr->startOnGET(m_getRequestSender,
-                                                        m_requestModelList[RequestType::RQ_TYPE_GET]->getQueryParams(),
-                                                        localCallback);
+                                    m_requestModelList[RequestType::RQ_TYPE_GET]->getQueryParams(),
+                                    localCallback);
             }
             break;
 
@@ -311,9 +311,9 @@ int SimulatorRemoteResourceImpl::startVerification(RequestType type,
             if (m_putRequestSender)
             {
                 return m_autoRequestGenMngr->startOnPUT(m_putRequestSender,
-                                                        m_requestModelList[RequestType::RQ_TYPE_PUT]->getQueryParams(),
-                                                        m_requestModelList[RequestType::RQ_TYPE_PUT]->getRepSchema(),
-                                                        localCallback);
+                                    m_requestModelList[RequestType::RQ_TYPE_PUT]->getQueryParams(),
+                                    m_requestModelList[RequestType::RQ_TYPE_PUT]->getRepSchema(),
+                                    localCallback);
             }
             break;
 
@@ -321,9 +321,9 @@ int SimulatorRemoteResourceImpl::startVerification(RequestType type,
             if (m_postRequestSender)
             {
                 return m_autoRequestGenMngr->startOnPOST(m_putRequestSender,
-                        m_requestModelList[RequestType::RQ_TYPE_PUT]->getQueryParams(),
-                        m_requestModelList[RequestType::RQ_TYPE_PUT]->getRepSchema(),
-                        localCallback);
+                                    m_requestModelList[RequestType::RQ_TYPE_POST]->getQueryParams(),
+                                    m_requestModelList[RequestType::RQ_TYPE_POST]->getRepSchema(),
+                                    localCallback);
             }
             break;
 
@@ -387,7 +387,7 @@ void SimulatorRemoteResourceImpl::configure(std::shared_ptr<RAML::Raml> &raml)
         m_postRequestSender->setRequestModel(m_requestModelList[RequestType::RQ_TYPE_POST]);
     }
 
-    if (m_autoRequestGenMngr)
+    if (!m_autoRequestGenMngr)
     {
         m_autoRequestGenMngr = std::make_shared<AutoRequestGenMngr>();
     }

@@ -27,7 +27,7 @@ public interface IPostListener {
     /**
      * This method will be called when response from the remote resource for
      * POST request arrives.
-     * 
+     *
      * @param uId
      *            Unique Id of the resource.
      * @param representation
@@ -38,7 +38,7 @@ public interface IPostListener {
 
     /**
      * Called when there is an error in POST request.
-     * 
+     *
      * @param ex
      *            Error information.
      */

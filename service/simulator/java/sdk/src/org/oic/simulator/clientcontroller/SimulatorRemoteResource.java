@@ -37,8 +37,8 @@ public class SimulatorRemoteResource {
     }
 
     /**
-     * Method to get the URI for this resource.
-     * 
+     * API to get the URI for this resource.
+     *
      * @return Resource URI
      */
     public String getUri() {
@@ -46,8 +46,8 @@ public class SimulatorRemoteResource {
     }
 
     /**
-     * Method to get the observe capability of this resource.
-     * 
+     * API to get the observe policy of this resource.
+     *
      * @return True if the resource is observable, otherwise false.
      */
     public boolean getIsObservable() {
@@ -55,8 +55,8 @@ public class SimulatorRemoteResource {
     }
 
     /**
-     * Method to get the connectivity type for this resource.
-     * 
+     * API to get the connectivity type for this resource.
+     *
      * @return Connectivity type.
      */
     public SimulatorConnectivityType getConnectivityType() {
@@ -64,8 +64,8 @@ public class SimulatorRemoteResource {
     }
 
     /**
-     * Method to get the list of resource types.
-     * 
+     * API to get the list of resource types.
+     *
      * @return List of resource types.
      */
     public LinkedList<String> getResourceTypes() {
@@ -73,8 +73,8 @@ public class SimulatorRemoteResource {
     }
 
     /**
-     * Method to get the list of resource interfaces.
-     * 
+     * API to get the list of resource interfaces.
+     *
      * @return List of resource interfaces.
      */
     public LinkedList<String> getResourceInterfaces() {
@@ -82,9 +82,8 @@ public class SimulatorRemoteResource {
     }
 
     /**
-     * Method to get a string representation of the host address of the remote
-     * resource.
-     * 
+     * API to get host address and port information of the resource.
+     *
      * @return Host address.
      */
     public String getHost() {
@@ -92,8 +91,8 @@ public class SimulatorRemoteResource {
     }
 
     /**
-     * Method to get a unique Id for the resource.
-     * 
+     * API to get a unique Id of the resource .
+     *
      * @return Unique ID.
      */
     public String getId() {
@@ -101,8 +100,8 @@ public class SimulatorRemoteResource {
     }
 
     /**
-     * Method to set observation on the remote resource.
-     * 
+     * API to start observing the resource.
+     *
      * @param observeType
      *            Allows the client to specify how it wants to observe.
      * @param queryParamsMap
@@ -111,39 +110,40 @@ public class SimulatorRemoteResource {
      *            The handler method which will be invoked with a map of
      *            attribute names and values whenever there is a change in
      *            resource model of the remote resource.
-     * 
+     *
      * @throws InvalidArgsException
      *             This exception will be thrown if any parameter has invalid
      *             values.
      * @throws SimulatorException
      *             This exception will be thrown for other errors.
      */
-    public native void observe(SimulatorObserveType observeType,
+    public native void startObserve(SimulatorObserveType observeType,
             Map<String, String> queryParamsMap,
             IObserveListener onObserveListener) throws InvalidArgsException,
             SimulatorException;
 
     /**
-     * Method to cancel the observation on the resource.
-     * 
+     * API to stop observing the resource.
+     *
      * @throws InvalidArgsException
      *             This exception will be thrown if the native remote resource
      *             object is unavailable.
      * @throws SimulatorException
      *             This exception will be thrown for other errors.
      */
-    public native void cancelObserve() throws InvalidArgsException,
+    public native void stopObserve() throws InvalidArgsException,
             SimulatorException;
 
     /**
-     * Method to get the attributes of a resource.
-     * 
+     * API to send GET request to the resource. Response will be notified
+     * asynchronously via callback set for {@link IGetListener}.
+     *
      * @param queryParamsMap
      *            Map which can have the query parameter name and value.
      * @param onGetListener
      *            Event handler which will be invoked with the response for GET
      *            request with a map of attribute name and values.
-     * 
+     *
      * @throws InvalidArgsException
      *             This exception will be thrown if any parameter has invalid
      *             values.
@@ -160,8 +160,9 @@ public class SimulatorRemoteResource {
     }
 
     /**
-     * Method to get the attributes of a resource.
-     * 
+     * API to send GET request to the resource. Response will be notified
+     * asynchronously via callback set for {@link IGetListener}.
+     *
      * @param resourceInterface
      *            Interface type of the resource to operate on.
      * @param queryParamsMap
@@ -169,7 +170,7 @@ public class SimulatorRemoteResource {
      * @param onGetListener
      *            Event handler which will be invoked with the response for GET
      *            request with a map of attribute name and values.
-     * 
+     *
      * @throws InvalidArgsException
      *             This exception will be thrown if any parameter has invalid
      *             values.
@@ -184,8 +185,9 @@ public class SimulatorRemoteResource {
             throws InvalidArgsException, NoSupportException, SimulatorException;
 
     /**
-     * Method to set the representation of a resource (via PUT)
-     * 
+     * API to send PUT request to the resource. Response will be notified
+     * asynchronously via callback set for {@link IPutListener}.
+     *
      * @param representation
      *            {@link SimulatorResourceModel} holding the representation of
      *            the resource.
@@ -194,7 +196,7 @@ public class SimulatorRemoteResource {
      * @param onPutListener
      *            Event handler which will be invoked with the response for PUT
      *            request with a map of attribute name and values.
-     * 
+     *
      * @throws InvalidArgsException
      *             This exception will be thrown if any parameter has invalid
      *             value.
@@ -211,8 +213,9 @@ public class SimulatorRemoteResource {
     }
 
     /**
-     * Method to set the representation of a resource (via PUT).
-     * 
+     * API to send PUT request to the resource. Response will be notified
+     * asynchronously via callback set for {@link IPutListener}.
+     *
      * @param resourceInterface
      *            Interface type of the resource to operate on.
      * @param representation
@@ -223,7 +226,7 @@ public class SimulatorRemoteResource {
      * @param onPutListener
      *            Event handler which will be invoked with the response for PUT
      *            request with a map of attribute name and values.
-     * 
+     *
      * @throws InvalidArgsException
      *             This exception will be thrown if any parameter has invalid
      *             value.
@@ -239,8 +242,9 @@ public class SimulatorRemoteResource {
             throws InvalidArgsException, NoSupportException, SimulatorException;
 
     /**
-     * Method to POST on a resource.
-     * 
+     * API to send POST request to the resource. Response will be notified
+     * asynchronously via callback set for {@link IPostListener}.
+     *
      * @param representation
      *            {@link SimulatorResourceModel} holding the representation of
      *            the resource
@@ -249,7 +253,7 @@ public class SimulatorRemoteResource {
      * @param onPostListener
      *            Event handler which will be invoked with the response for POST
      *            request with a map of attribute name and values.
-     * 
+     *
      * @throws InvalidArgsException
      *             This exception will be thrown if any parameter has invalid
      *             value.
@@ -266,8 +270,9 @@ public class SimulatorRemoteResource {
     }
 
     /**
-     * Method to POST on a resource.
-     * 
+     * API to send POST request to the resource. Response will be notified
+     * asynchronously via callback set for {@link IPostListener}.
+     *
      * @param resourceInterface
      *            Interface type of the resource to operate on.
      * @param representation
@@ -278,7 +283,7 @@ public class SimulatorRemoteResource {
      * @param onPostListener
      *            Event handler which will be invoked with the response for POST
      *            request with a map of attribute name and values.
-     * 
+     *
      * @throws InvalidArgsException
      *             This exception will be thrown if any parameter has invalid
      *             value.
@@ -294,30 +299,33 @@ public class SimulatorRemoteResource {
             throws InvalidArgsException, NoSupportException, SimulatorException;
 
     /**
-     * Method to set the RAML file path from application
-     * 
-     * @param ramlPath
-     *            RAML configuration file path
-     * 
+     * API to provide remote resource configure information,
+     * which is required for using automation feature.
+     *
+     * @param path
+     *            Path to RAML file.
+     *
      * @throws InvalidArgsException
      *             Thrown if the RAML configuration file path is invalid.
      * @throws SimulatorException
      *             Thrown for other errors.
      */
-    public native void configureRAMLPath(String ramlPath)
+    public native void setConfigInfo(String path)
             throws InvalidArgsException, SimulatorException;
 
     /**
-     * Method to start verification of a resource using automation.
-     * 
+     * API to send multiple requests for the resource, based on
+     * the configure file provided from {@link setConfigInfo}.
+     * This verifies response received as well.
+     *
      * @param requestType
      *            Request type to verify.
      * @param onVerifyListener
      *            This event handler will be invoked with the current status of
      *            the automation.
-     * 
+     *
      * @return Automation ID.
-     * 
+     *
      * @throws InvalidArgsException
      *             This exception will be thrown if any parameter has invalid
      *             value.
@@ -337,17 +345,12 @@ public class SimulatorRemoteResource {
         return startVerification(requestType.ordinal(), onVerifyListener);
     }
 
-    private native int startVerification(int requestType,
-            IVerificationListener onVerifyListener)
-            throws InvalidArgsException, NoSupportException,
-            OperationInProgressException, SimulatorException;
-
     /**
-     * Method to stop verification of a resource previously started.
-     * 
+     * API to stop sending requests which has been started using {@link setConfigInfo}.
+     *
      * @param id
      *            Automation ID.
-     * 
+     *
      * @throws InvalidArgsException
      *             Thrown if the automation ID is invalid.
      * @throws NoSupportException
@@ -357,6 +360,11 @@ public class SimulatorRemoteResource {
      */
     public native void stopVerification(int id) throws InvalidArgsException,
             NoSupportException, SimulatorException;
+
+    private native int startVerification(int requestType,
+            IVerificationListener onVerifyListener)
+            throws InvalidArgsException, NoSupportException,
+            OperationInProgressException, SimulatorException;
 
     @Override
     protected void finalize() throws Throwable {

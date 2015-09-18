@@ -114,7 +114,7 @@ class ClientController
             for (auto & resourceEntry : m_resList)
             {
                 std::cout << index++ << ": " << (resourceEntry.second)->getURI() << "[" <<
-                (resourceEntry.second)->getHost()  << "]" << std::endl;
+                          (resourceEntry.second)->getHost()  << "]" << std::endl;
                 ids.push_back((resourceEntry.second)->getID());
             }
 
@@ -128,7 +128,7 @@ class ClientController
                 return nullptr;
             }
 
-            return m_resList[ids[choice-1]];
+            return m_resList[ids[choice - 1]];
         }
 
         void findResource()
@@ -147,21 +147,24 @@ class ClientController
                 if (m_resList.end() == m_resList.find(resource->getID()))
                     m_resList[resource->getID()] = resource;
                 else
-                    std::cout << "Resource with UID: "<< resource->getID() << "already exist in the list!"<< std::endl;
+                    std::cout << "Resource with UID: " << resource->getID() << "already exist in the list!" <<
+                              std::endl;
             };
 
             try
             {
-                SimulatorManager::getInstance()->findResources(resourceType, callback);
+                SimulatorManager::getInstance()->findResource(resourceType, callback);
                 std::cout << "SimulatorManager::findResource is successfull" << std::endl;
             }
-            catch(InvalidArgsException &e)
+            catch (InvalidArgsException &e)
             {
-                std::cout << "InvalidArgsException occured [code : " << e.code() << " Detail: " << e.what() << "]" << std::endl;
+                std::cout << "InvalidArgsException occured [code : " << e.code() << " Detail: " << e.what() << "]"
+                          << std::endl;
             }
-            catch(SimulatorException &e)
+            catch (SimulatorException &e)
             {
-                std::cout << "SimulatorException occured [code : " << e.code() << " Detail: " << e.what() << "]" << std::endl;
+                std::cout << "SimulatorException occured [code : " << e.code() << " Detail: " << e.what() << "]" <<
+                          std::endl;
             }
         }
 
@@ -179,12 +182,13 @@ class ClientController
             std::cout << "Host: " << resource->getHost().c_str() << std::endl;
             std::cout << "ID: " << resource->getID().c_str() << std::endl;
             std::cout << "Resource Types: ";
-            for (auto &type : resource->getResourceTypes())
+            for (auto & type : resource->getResourceTypes())
                 std::cout << type << " ";
             std::cout << "\nInterface Types: ";
-            for (auto &type : resource->getResourceInterfaces())
+            for (auto & type : resource->getResourceInterfaces())
                 std::cout << type << " ";
-            std::cout << std::boolalpha << "\nisObservable : " << resource->isObservable() << std::endl;
+            std::cout << std::boolalpha << "\nisObservable : " << resource->isObservable()
+                    << std::noboolalpha << std::endl;
             std::cout << "#############################" << std::endl;
         }
 
@@ -195,10 +199,10 @@ class ClientController
 
             // callback implementaion
             SimulatorRemoteResource::ObserveNotificationCallback callback =
-            [](std::string uid, SimulatorResult errorCode, SimulatorResourceModelSP rep, int seq)
+                [](std::string uid, SimulatorResult errorCode, SimulatorResourceModelSP rep, int seq)
             {
-                std::cout << "\nObserve notificatoin received ###[errorcode:  " << errorCode <<
-                    " seq:  " << seq << "UID: " << uid << "]" << std::endl;
+                std::cout << "\nObserve notification received ###[errorcode:  " << errorCode <<
+                          " seq:  " << seq << "UID: " << uid << "]" << std::endl;
                 std::map<std::string, SimulatorResourceModel::Attribute> attributes = rep->getAttributes();
                 for (auto & attribute : attributes)
                 {
@@ -214,13 +218,15 @@ class ClientController
                 resource->observe(ObserveType::OBSERVE, callback);
                 std::cout << "Observe is successfull!" << std::endl;
             }
-            catch(InvalidArgsException &e)
+            catch (InvalidArgsException &e)
             {
-                std::cout << "InvalidArgsException occured [code : " << e.code() << " Detail: " << e.what() << "]" << std::endl;
+                std::cout << "InvalidArgsException occured [code : " << e.code() << " Detail: "
+                        << e.what() << "]" << std::endl;
             }
-            catch(SimulatorException &e)
+            catch (SimulatorException &e)
             {
-                std::cout << "SimulatorException occured [code : " << e.code() << " Detail: " << e.what() << "]" << std::endl;
+                std::cout << "SimulatorException occured [code : " << e.code() << " Detail: " <<
+                        e.what() << "]" << std::endl;
             }
         }
 
@@ -234,9 +240,10 @@ class ClientController
                 resource->cancelObserve();
                 std::cout << "Cancelling observe is successfull!" << std::endl;
             }
-            catch(SimulatorException &e)
+            catch (SimulatorException &e)
             {
-                std::cout << "SimulatorException occured [code : " << e.code() << " Detail: " << e.what() << "]" << std::endl;
+                std::cout << "SimulatorException occured [code : " << e.code() << " Detail: " <<
+                        e.what() << "]" << std::endl;
             }
         }
 
@@ -247,16 +254,19 @@ class ClientController
 
             // callback implementaion
             SimulatorRemoteResource::ResponseCallback callback =
-            [](std::string uId, SimulatorResult errorCode, SimulatorResourceModelSP rep)
+                [](std::string uId, SimulatorResult errorCode, SimulatorResourceModelSP rep)
             {
-                std::cout << "\nGET Response received ### [errorcode:  " << errorCode << "]" << std::endl;
+                std::cout << "\nGET Response received ### [errorcode:  " << errorCode << "]"
+                        << std::endl;
                 std::cout << "UID is: " << uId << std::endl;
                 std::cout << "Representation is: " << std::endl;
-                std::map<std::string, SimulatorResourceModel::Attribute> attributes = rep->getAttributes();
+                std::map<std::string, SimulatorResourceModel::Attribute> attributes =
+                        rep->getAttributes();
                 for (auto & attribute : attributes)
                 {
                     std::cout << (attribute.second).getName() << " :  {" << std::endl;
-                    std::cout << "value: " << (attribute.second).valueToString().c_str() << std::endl;
+                    std::cout << "value: " << (attribute.second).valueToString().c_str()
+                            << std::endl;
                     std::cout << "}" << std::endl;
                 }
                 std::cout << std::endl;
@@ -267,17 +277,20 @@ class ClientController
                 resource->get(std::map <std::string, std::string>(), callback);
                 std::cout << "GET is successfull!" << std::endl;
             }
-            catch(InvalidArgsException &e)
+            catch (InvalidArgsException &e)
             {
-                std::cout << "InvalidArgsException occured [code : " << e.code() << " Detail: " << e.what() << "]" << std::endl;
+                std::cout << "InvalidArgsException occured [code : " << e.code() << " Detail: "
+                        << e.what() << "]" << std::endl;
             }
-            catch(NoSupportException &e)
+            catch (NoSupportException &e)
             {
-                std::cout << "NoSupportException occured [code : " << e.code() << " Detail: " << e.what() << "]" << std::endl;
+                std::cout << "NoSupportException occured [code : " << e.code() << " Detail: " <<
+                        e.what() << "]" << std::endl;
             }
-            catch(SimulatorException &e)
+            catch (SimulatorException &e)
             {
-                std::cout << "SimulatorException occured [code : " << e.code() << " Detail: " << e.what() << "]" << std::endl;
+                std::cout << "SimulatorException occured [code : " << e.code() << " Detail: " <<
+                        e.what() << "]" << std::endl;
             }
         }
 
@@ -288,16 +301,19 @@ class ClientController
 
             // callback implementaion
             SimulatorRemoteResource::ResponseCallback callback =
-            [](std::string uId, SimulatorResult errorCode, SimulatorResourceModelSP rep)
+                [](std::string uId, SimulatorResult errorCode, SimulatorResourceModelSP rep)
             {
-                std::cout << "\nPUT Response received ![errorcode:  " << errorCode << "]" << std::endl;
+                std::cout << "\nPUT Response received ![errorcode:  " << errorCode << "]"
+                        << std::endl;
                 std::cout << "UID is: " << uId << std::endl;
                 std::cout << "Representation is: " << std::endl;
-                std::map<std::string, SimulatorResourceModel::Attribute> attributes = rep->getAttributes();
+                std::map<std::string, SimulatorResourceModel::Attribute> attributes =
+                        rep->getAttributes();
                 for (auto & attribute : attributes)
                 {
                     std::cout << (attribute.second).getName() << " :  {" << std::endl;
-                    std::cout << "value: " << (attribute.second).valueToString().c_str() << std::endl;
+                    std::cout << "value: " << (attribute.second).valueToString().c_str()
+                            << std::endl;
                     std::cout << "}" << std::endl;
                 }
                 std::cout << std::endl;
@@ -313,17 +329,20 @@ class ClientController
                 resource->put(std::map <std::string, std::string>(), rep, callback);
                 std::cout << "PUT is successfull!" << std::endl;
             }
-            catch(InvalidArgsException &e)
+            catch (InvalidArgsException &e)
             {
-                std::cout << "InvalidArgsException occured [code : " << e.code() << " Detail: " << e.what() << "]" << std::endl;
+                std::cout << "InvalidArgsException occured [code : " << e.code() << " Detail: "
+                        << e.what() << "]" << std::endl;
             }
-            catch(NoSupportException &e)
+            catch (NoSupportException &e)
             {
-                std::cout << "NoSupportException occured [code : " << e.code() << " Detail: " << e.what() << "]" << std::endl;
+                std::cout << "NoSupportException occured [code : " << e.code() << " Detail: " <<
+                        e.what() << "]" << std::endl;
             }
-            catch(SimulatorException &e)
+            catch (SimulatorException &e)
             {
-                std::cout << "SimulatorException occured [code : " << e.code() << " Detail: " << e.what() << "]" << std::endl;
+                std::cout << "SimulatorException occured [code : " << e.code() << " Detail: " <<
+                        e.what() << "]" << std::endl;
             }
         }
 
@@ -334,16 +353,19 @@ class ClientController
 
             // callback implementaion
             SimulatorRemoteResource::ResponseCallback callback =
-            [](std::string uId, SimulatorResult errorCode, SimulatorResourceModelSP rep)
+                [](std::string uId, SimulatorResult errorCode, SimulatorResourceModelSP rep)
             {
-                std::cout << "\nPOST Response received ![errorcode:  " << errorCode << "]" << std::endl;
+                std::cout << "\nPOST Response received ![errorcode:  " << errorCode << "]"
+                        << std::endl;
                 std::cout << "UID is: " << uId << std::endl;
                 std::cout << "Representation is: " << std::endl;
-                std::map<std::string, SimulatorResourceModel::Attribute> attributes = rep->getAttributes();
+                std::map<std::string, SimulatorResourceModel::Attribute> attributes =
+                        rep->getAttributes();
                 for (auto & attribute : attributes)
                 {
                     std::cout << (attribute.second).getName() << " :  {" << std::endl;
-                    std::cout << "value: " << (attribute.second).valueToString().c_str() << std::endl;
+                    std::cout << "value: " << (attribute.second).valueToString().c_str()
+                            << std::endl;
                     std::cout << "}" << std::endl;
                 }
                 std::cout << std::endl;
@@ -359,17 +381,20 @@ class ClientController
                 resource->post(std::map <std::string, std::string>(), rep, callback);
                 std::cout << "POST is successfull!" << std::endl;
             }
-            catch(InvalidArgsException &e)
+            catch (InvalidArgsException &e)
             {
-                std::cout << "InvalidArgsException occured [code : " << e.code() << " Detail: " << e.what() << "]" << std::endl;
+                std::cout << "InvalidArgsException occured [code : " << e.code() << " Detail: "
+                        << e.what() << "]" << std::endl;
             }
-            catch(NoSupportException &e)
+            catch (NoSupportException &e)
             {
-                std::cout << "NoSupportException occured [code : " << e.code() << " Detail: " << e.what() << "]" << std::endl;
+                std::cout << "NoSupportException occured [code : " << e.code() << " Detail: " <<
+                        e.what() << "]" << std::endl;
             }
-            catch(SimulatorException &e)
+            catch (SimulatorException &e)
             {
-                std::cout << "SimulatorException occured [code : " << e.code() << " Detail: " << e.what() << "]" << std::endl;
+                std::cout << "SimulatorException occured [code : " << e.code() << " Detail: " <<
+                        e.what() << "]" << std::endl;
             }
         }
 
@@ -378,28 +403,33 @@ class ClientController
             SimulatorRemoteResourceSP resource = selectResource();
             if (!resource) return;
 
-            SimulatorRemoteResource::StateCallback callback = [] (std::string uid, int sessionId, OperationState state)
+            SimulatorRemoteResource::StateCallback callback = [] (std::string uid, int sessionId,
+                    OperationState state)
             {
-                std::cout << "\nResource verification status received ![id:  " << sessionId << "  State: "
-                << getOperationStateString(state) << " UID: "<< uid << "]" << std::endl;
+                std::cout << "\nResource verification status received ![id:  " << sessionId <<
+                        "  State: " << getOperationStateString(state) << " UID: " << uid << "]" <<
+                        std::endl;
             };
 
             try
             {
                 int id = resource->startVerification(RequestType::RQ_TYPE_GET, callback);
-                std::cout << "startVerification for GET is successfull!id: " << id <<std::endl;
+                std::cout << "startVerification for GET is successfull!id: " << id << std::endl;
             }
-            catch(InvalidArgsException &e)
+            catch (InvalidArgsException &e)
             {
-                std::cout << "InvalidArgsException occured [code : " << e.code() << " Detail: " << e.what() << "]" << std::endl;
+                std::cout << "InvalidArgsException occured [code : " << e.code() << " Detail: "
+                        << e.what() << "]" << std::endl;
             }
-            catch(NoSupportException &e)
+            catch (NoSupportException &e)
             {
-                std::cout << "NoSupportException occured [code : " << e.code() << " Detail: " << e.what() << "]" << std::endl;
+                std::cout << "NoSupportException occured [code : " << e.code() << " Detail: " <<
+                        e.what() << "]" << std::endl;
             }
-            catch(SimulatorException &e)
+            catch (SimulatorException &e)
             {
-                std::cout << "SimulatorException occured [code : " << e.code() << " Detail: " << e.what() << "]" << std::endl;
+                std::cout << "SimulatorException occured [code : " << e.code() << " Detail: " <<
+                        e.what() << "]" << std::endl;
             }
         }
 
@@ -408,28 +438,33 @@ class ClientController
             SimulatorRemoteResourceSP resource = selectResource();
             if (!resource) return;
 
-            SimulatorRemoteResource::StateCallback callback = [] (std::string uid, int sessionId, OperationState state)
+            SimulatorRemoteResource::StateCallback callback = [] (std::string uid, int sessionId,
+                    OperationState state)
             {
-                std::cout << "\nResource verification status received ![id:  " << sessionId << "  State: "
-                << getOperationStateString(state) << " UID: "<< uid << "]" << std::endl;
+                std::cout << "\nResource verification status received ![id:  " << sessionId <<
+                        "  State: " << getOperationStateString(state) << " UID: " << uid << "]" <<
+                        std::endl;
             };
 
             try
             {
                 int id = resource->startVerification(RequestType::RQ_TYPE_PUT, callback);
-                std::cout << "startVerification for PUT is successfull!id: " << id <<std::endl;
+                std::cout << "startVerification for PUT is successfull!id: " << id << std::endl;
             }
-            catch(InvalidArgsException &e)
+            catch (InvalidArgsException &e)
             {
-                std::cout << "InvalidArgsException occured [code : " << e.code() << " Detail: " << e.what() << "]" << std::endl;
+                std::cout << "InvalidArgsException occured [code : " << e.code() << " Detail: "
+                        << e.what() << "]" << std::endl;
             }
-            catch(NoSupportException &e)
+            catch (NoSupportException &e)
             {
-                std::cout << "NoSupportException occured [code : " << e.code() << " Detail: " << e.what() << "]" << std::endl;
+                std::cout << "NoSupportException occured [code : " << e.code() << " Detail: " <<
+                        e.what() << "]" << std::endl;
             }
-            catch(SimulatorException &e)
+            catch (SimulatorException &e)
             {
-                std::cout << "SimulatorException occured [code : " << e.code() << " Detail: " << e.what() << "]" << std::endl;
+                std::cout << "SimulatorException occured [code : " << e.code() << " Detail: " <<
+                        e.what() << "]" << std::endl;
             }
         }
 
@@ -438,48 +473,60 @@ class ClientController
             SimulatorRemoteResourceSP resource = selectResource();
             if (!resource) return;
 
-            SimulatorRemoteResource::StateCallback callback = [] (std::string uid, int sessionId, OperationState state)
+            SimulatorRemoteResource::StateCallback callback = [] (std::string uid, int sessionId,
+                    OperationState state)
             {
-                std::cout << "\nResource verification status received ![id:  " << sessionId << "  State: "
-                << getOperationStateString(state) << " UID: "<< uid << "]" << std::endl;
+                std::cout << "\nResource verification status received ![id:  " << sessionId <<
+                        "  State: " << getOperationStateString(state) << " UID: " << uid << "]"
+                        << std::endl;
             };
 
             try
             {
                 int id = resource->startVerification(RequestType::RQ_TYPE_POST, callback);
-                std::cout << "startVerification for POST is successfull!id: " << id <<std::endl;
+                std::cout << "startVerification for POST is successfull!id: " << id << std::endl;
             }
-            catch(InvalidArgsException &e)
+            catch (InvalidArgsException &e)
             {
-                std::cout << "InvalidArgsException occured [code : " << e.code() << " Detail: " << e.what() << "]" << std::endl;
+                std::cout << "InvalidArgsException occured [code : " << e.code() << " Detail: "
+                        << e.what() << "]" << std::endl;
             }
-            catch(NoSupportException &e)
+            catch (NoSupportException &e)
             {
-                std::cout << "NoSupportException occured [code : " << e.code() << " Detail: " << e.what() << "]" << std::endl;
+                std::cout << "NoSupportException occured [code : " << e.code() << " Detail: " <<
+                        e.what() << "]" << std::endl;
             }
-            catch(SimulatorException &e)
+            catch (SimulatorException &e)
             {
-                std::cout << "SimulatorException occured [code : " << e.code() << " Detail: " << e.what() << "]" << std::endl;
+                std::cout << "SimulatorException occured [code : " << e.code() << " Detail: " <<
+                        e.what() << "]" << std::endl;
             }
         }
 
         void configure()
         {
             SimulatorRemoteResourceSP resource = selectResource();
-            if (!resource) return;
+            if (!resource)
+                return;
 
             try
             {
-                resource->configure("../../../../../../../../service/simulator/ramlparser/example/oic.r.light.raml");
+                std::string configPath;
+                std::cout << "Enter the config path: ";
+                std::cin >> configPath;
+
+                resource->configure(configPath);
                 std::cout << "configuration is successfull!" << std::endl;
             }
             catch (InvalidArgsException &e)
             {
-                std::cout << "InvalidArgsException occured [code : " << e.code() << " Detail: " << e.what() << "]" << std::endl;
+                std::cout << "InvalidArgsException occured [code : " << e.code() << " Detail: "
+                        << e.what() << "]" << std::endl;
             }
             catch (SimulatorException &e)
             {
-                 std::cout << "SimulatorException occured [code : " << e.code() << " Detail: " << e.what() << "]" << std::endl;
+                std::cout << "SimulatorException occured [code : " << e.code() << " Detail: " <<
+                        e.what() << "]" << std::endl;
             }
         }
 
@@ -518,7 +565,7 @@ void setLogger()
     {
         case 1:
             {
-                if (false == SimulatorManager::getInstance()->setDefaultConsoleLogger())
+                if (false == SimulatorManager::getInstance()->setConsoleLogger())
                     std::cout << "Failed to set the default console logger" << std::endl;
             }
             break;
@@ -528,7 +575,7 @@ void setLogger()
                 std::string filePath;
                 std::cout << "Enter the file path (without file name) : ";
                 std::cin >> filePath;
-                if (false == SimulatorManager::getInstance()->setDefaultFileLogger(filePath))
+                if (false == SimulatorManager::getInstance()->setFileLogger(filePath))
                     std::cout << "Failed to set default file logger" << std::endl;
             }
             break;
@@ -563,7 +610,7 @@ int main(void)
                 {
                     try
                     {
-                        SimulatorManager::getInstance()->getDeviceInfo(std::bind([](DeviceInfo &deviceInfo)
+                        SimulatorManager::getInstance()->getDeviceInfo(std::bind([](DeviceInfo & deviceInfo)
                         {
                             std::cout << "###Device Information received...." << std::endl;
                             std::ostringstream out;
@@ -575,13 +622,15 @@ int main(void)
                             std::cout << out.str() << std::endl;
                         }, std::placeholders::_1));
                     }
-                    catch(InvalidArgsException &e)
+                    catch (InvalidArgsException &e)
                     {
-                        std::cout << "InvalidArgsException occured [code : " << e.code() << " Detail: " << e.what() << "]" << std::endl;
+                        std::cout << "InvalidArgsException occured [code : " << e.code() << " Detail: " << e.what() << "]"
+                                  << std::endl;
                     }
-                    catch(SimulatorException &e)
+                    catch (SimulatorException &e)
                     {
-                        std::cout << "SimulatorException occured [code : " << e.code() << " Detail: " << e.what() << "]" << std::endl;
+                        std::cout << "SimulatorException occured [code : " << e.code() << " Detail: " << e.what() << "]" <<
+                                  std::endl;
                     }
                 }
                 break;
@@ -590,7 +639,7 @@ int main(void)
                 {
                     try
                     {
-                        SimulatorManager::getInstance()->getPlatformInfo(std::bind([](PlatformInfo &platformInfo)
+                        SimulatorManager::getInstance()->getPlatformInfo(std::bind([](PlatformInfo & platformInfo)
                         {
                             std::cout << "###Platform Information received...." << std::endl;
                             std::ostringstream out;
@@ -609,13 +658,15 @@ int main(void)
                             std::cout << out.str() << std::endl;
                         }, std::placeholders::_1));
                     }
-                    catch(InvalidArgsException &e)
+                    catch (InvalidArgsException &e)
                     {
-                        std::cout << "InvalidArgsException occured [code : " << e.code() << " Detail: " << e.what() << "]" << std::endl;
+                        std::cout << "InvalidArgsException occured [code : " << e.code()
+                                << " Detail: " << e.what() << "]" << std::endl;
                     }
-                    catch(SimulatorException &e)
+                    catch (SimulatorException &e)
                     {
-                        std::cout << "SimulatorException occured [code : " << e.code() << " Detail: " << e.what() << "]" << std::endl;
+                        std::cout << "SimulatorException occured [code : " << e.code()
+                                << " Detail: " << e.what() << "]" << std::endl;
                     }
                 }
                 break;

@@ -86,7 +86,7 @@ public enum SimulatorConnectivityType {
     /**
      * Method to get the {@link SimulatorConnectivityType} from an integer
      * value.
-     * 
+     *
      * @param value
      *            Integral value of {@link SimulatorConnectivityType}.
      * @return {@link SimulatorConnectivityType} corresponding to the given

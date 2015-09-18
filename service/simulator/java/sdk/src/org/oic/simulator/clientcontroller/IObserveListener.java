@@ -28,7 +28,7 @@ public interface IObserveListener {
     /**
      * This method will be called when there is a change in the resource model
      * of the remote resource.
-     * 
+     *
      * @param uId
      *            Unique Id of the resource.
      * @param representation
@@ -41,7 +41,7 @@ public interface IObserveListener {
 
     /**
      * Called when there is an error in observe request.
-     * 
+     *
      * @param ex
      *            Error information.
      */

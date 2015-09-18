@@ -27,7 +27,7 @@ public class DeviceInfo {
 
     /**
      * This method is for getting the device name.
-     * 
+     *
      * @return Device name.
      */
     public String getName() {
@@ -36,7 +36,7 @@ public class DeviceInfo {
 
     /**
      * This method is for getting the device id.
-     * 
+     *
      * @return Device id.
      */
     public String getID() {
@@ -45,7 +45,7 @@ public class DeviceInfo {
 
     /**
      * This method is for getting device specification version.
-     * 
+     *
      * @return Specification version.
      */
     public String getSpecVersion() {
@@ -54,7 +54,7 @@ public class DeviceInfo {
 
     /**
      * This method is for getting device data model version.
-     * 
+     *
      * @return Device data model version.
      */
     public String getDataModelVersion() {

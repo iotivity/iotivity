@@ -37,7 +37,7 @@ class SimulatorManagerNativeInterface {
      *
      * @return {@link SimulatorResourceServer} object on success, otherwise
      *         null.
-     * 
+     *
      * @throws InvalidArgsException
      *             Thrown if the input parameters are empty.
      * @throws SimulatorException
@@ -76,7 +76,7 @@ class SimulatorManagerNativeInterface {
      * @param resource
      *            {@link SimulatorResourceServer} object of the resource to be
      *            deleted.
-     * 
+     *
      * @throws InvalidArgsException
      *             Thrown if the input parameter is empty.
      * @throws SimulatorException
@@ -90,14 +90,14 @@ class SimulatorManagerNativeInterface {
      *
      * @param resourceType
      *            Type of the resource.
-     * 
+     *
      * @throws InvalidArgsException
      *             Thrown if the input parameter is empty.
      * @throws SimulatorException
      *             Thrown for other errors.
      */
     public static native void deleteResources(String resourceType)
-            throws InvalidArgsException, SimulatorException;
+            throws SimulatorException;
 
     /**
      * Native function for discovering resources.
@@ -106,20 +106,20 @@ class SimulatorManagerNativeInterface {
      *            required resource type
      * @param listener
      *            Interface to receive the discovered remote resources.
-     * 
+     *
      * @throws InvalidArgsException
      *             Thrown if the input parameter is empty.
      * @throws SimulatorException
      *             Thrown for other errors.
      */
-    public static native void findResources(String resourceType,
+    public static native void findResource(String resourceType,
             IFindResourceListener listener) throws InvalidArgsException,
             SimulatorException;
 
     /**
      * Native function to set the logger listener for receiving the log messages
      * from native layer.
-     * 
+     *
      * @param logger
      *            Interface to receive log.
      */
@@ -127,7 +127,7 @@ class SimulatorManagerNativeInterface {
 
     /**
      * Native function to set the device information.
-     * 
+     *
      * @param deviceInfo
      *            Device information.
      */
@@ -136,7 +136,7 @@ class SimulatorManagerNativeInterface {
     /**
      * Native function to get the device information asynchronously via the
      * listener.
-     * 
+     *
      * @param listener
      *            Interface for receiving the device information.
      */
@@ -144,7 +144,7 @@ class SimulatorManagerNativeInterface {
 
     /**
      * Native function to set the platform information.
-     * 
+     *
      * @param platformInfo
      *            Platform information.
      */
@@ -153,7 +153,7 @@ class SimulatorManagerNativeInterface {
     /**
      * Native function to get the platform information asynchronously via the
      * listener.
-     * 
+     *
      * @param listener
      *            Interface for receiving the platform information.
      */

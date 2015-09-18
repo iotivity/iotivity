@@ -39,11 +39,11 @@ extern "C" {
 #endif
 
 JNIEXPORT void JNICALL
-Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_observe
+Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_startObserve
 (JNIEnv *env, jobject thiz, jint observeType, jobject jQueryParamsMap, jobject jListener);
 
 JNIEXPORT void JNICALL
-Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_cancelObserve
+Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_stopObserve
 (JNIEnv *env, jobject thiz);
 
 JNIEXPORT void JNICALL
@@ -62,7 +62,7 @@ Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_post
  jobject jRepresentation, jobject jQueryParamsMap, jobject jListener);
 
 JNIEXPORT void JNICALL
-Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_configureRAMLPath
+Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_setConfigInfo
 (JNIEnv *env, jobject thiz, jstring jConfigPath);
 
 JNIEXPORT jint JNICALL

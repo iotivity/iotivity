@@ -32,9 +32,9 @@ import oic.simulator.clientcontroller.remoteresource.PutPostAttributeModel;
 import oic.simulator.clientcontroller.remoteresource.RemoteResource;
 import oic.simulator.clientcontroller.remoteresource.RemoteResourceAttribute;
 import oic.simulator.clientcontroller.utils.Constants;
-import oic.simulator.clientcontroller.view.dialogs.VerificationDialog;
 import oic.simulator.clientcontroller.view.dialogs.PostRequestDialog;
 import oic.simulator.clientcontroller.view.dialogs.PutRequestDialog;
+import oic.simulator.clientcontroller.view.dialogs.VerificationDialog;
 
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
@@ -45,10 +45,6 @@ import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerCell;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.custom.CTabFolder;
-import org.eclipse.swt.custom.CTabFolder2Adapter;
-import org.eclipse.swt.custom.CTabFolderEvent;
-import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Color;
@@ -59,7 +55,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Table;
-import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
@@ -77,12 +72,6 @@ public class AttributeView extends ViewPart {
     private Button                              postButton;
     private Button                              automateButton;
     private Button                              observeResButton;
-
-    private CTabFolder                          payloadFolder;
-    private CTabItem                            requestPayloadTab;
-    private CTabItem                            responsePayloadTab;
-    private Text                                requestPayloadTxt;
-    private Text                                responsePayloadTxt;
 
     private final String[]                      attTblHeaders  = {
             "Attribute Name", "Attribute Value"               };
@@ -403,8 +392,10 @@ public class AttributeView extends ViewPart {
         gd = new GridData();
         gd.grabExcessHorizontalSpace = true;
         gd.horizontalAlignment = SWT.FILL;
+        gd.grabExcessVerticalSpace = true;
+        gd.verticalAlignment = SWT.FILL;
         gd.horizontalSpan = 2;
-        gd.heightHint = 175;
+        // gd.heightHint = 175;
         attGroup.setLayoutData(gd);
         attGroup.setText("Attributes");
         attGroup.setBackground(color);
@@ -414,8 +405,6 @@ public class AttributeView extends ViewPart {
         setupMessageArea(parent);
 
         setupResourceLevelOpsArea(parent);
-
-        setupTabArea(parent);
 
         setUIListeners();
 
@@ -494,65 +483,6 @@ public class AttributeView extends ViewPart {
         gd.grabExcessHorizontalSpace = true;
         gd.horizontalAlignment = SWT.FILL;
         observeResButton.setLayoutData(gd);
-    }
-
-    private void setupTabArea(final Composite parent) {
-        GridData gd;
-        payloadFolder = new CTabFolder(parent, SWT.BORDER);
-        gd = new GridData(SWT.FILL, SWT.FILL, true, true);
-        gd.horizontalSpan = 2;
-        payloadFolder.setLayoutData(gd);
-        payloadFolder.setSimple(false);
-        payloadFolder.setUnselectedCloseVisible(false);
-        payloadFolder.setUnselectedImageVisible(false);
-        // payloadFolder.setMaximizeVisible(true);
-        // payloadFolder.setMinimizeVisible(true);
-
-        requestPayloadTab = new CTabItem(payloadFolder, SWT.NULL);
-        requestPayloadTab.setText("Request Payload");
-
-        requestPayloadTxt = new Text(payloadFolder, SWT.MULTI | SWT.V_SCROLL
-                | SWT.H_SCROLL | SWT.READ_ONLY | SWT.WRAP);
-        requestPayloadTab.setControl(requestPayloadTxt);
-
-        responsePayloadTab = new CTabItem(payloadFolder, SWT.NULL);
-        responsePayloadTab.setText("Response Payload");
-
-        responsePayloadTxt = new Text(payloadFolder, SWT.MULTI | SWT.V_SCROLL
-                | SWT.H_SCROLL | SWT.READ_ONLY | SWT.WRAP);
-        responsePayloadTab.setControl(responsePayloadTxt);
-
-        // Add Listeners
-
-        payloadFolder.addCTabFolder2Listener(new CTabFolder2Adapter() {
-            @Override
-            public void minimize(CTabFolderEvent event) {
-                payloadFolder.setMinimized(true);
-                GridData gd = new GridData(SWT.FILL, SWT.FILL, true, false);
-                gd.horizontalSpan = 2;
-                payloadFolder.setLayoutData(gd);
-                parent.layout(true);
-            }
-
-            @Override
-            public void maximize(CTabFolderEvent event) {
-                payloadFolder.setMaximized(true);
-                GridData gd = new GridData(SWT.FILL, SWT.FILL, true, true);
-                gd.horizontalSpan = 2;
-                payloadFolder.setLayoutData(gd);
-                parent.layout(true);
-            }
-
-            @Override
-            public void restore(CTabFolderEvent event) {
-                payloadFolder.setMaximized(false);
-                payloadFolder.setMinimized(false);
-                GridData gd = new GridData(SWT.FILL, SWT.FILL, true, false);
-                gd.horizontalSpan = 2;
-                payloadFolder.setLayoutData(gd);
-                parent.layout(true);
-            }
-        });
     }
 
     private void setupAttributeTable(Group attGroup) {

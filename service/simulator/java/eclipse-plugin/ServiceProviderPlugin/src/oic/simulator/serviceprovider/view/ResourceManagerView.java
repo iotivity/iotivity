@@ -248,10 +248,15 @@ public class ResourceManagerView extends ViewPart {
                             if (deleteCategory == DeleteCategory.BY_URI) {
                                 String uri = deleteWizard.getDeleteCandidate();
                                 if (null != uri) {
-                                    boolean completeURI = Utility
-                                            .isUriComplete(uri);
-                                    if (!completeURI) {
-                                        uri = Utility.displayNameToUri(uri);
+                                    boolean dispName = Activator.getDefault()
+                                            .getResourceManager()
+                                            .isDisplayName(uri);
+                                    if (dispName) {
+                                        uri = Activator
+                                                .getDefault()
+                                                .getResourceManager()
+                                                .getCompleteUriFromDisplayName(
+                                                        uri);
                                     }
                                     resourceManager.deleteResourceByURI(uri);
                                 }
@@ -279,8 +284,8 @@ public class ResourceManagerView extends ViewPart {
                         TreeItem selectedItem = (TreeItem) e.item;
                         if (null != selectedItem) {
                             String selectedItemText = selectedItem.getText();
-                            selectedItemText = Utility
-                                    .displayNameToUri(selectedItemText);
+                            selectedItemText = resourceManager
+                                    .getCompleteUriFromDisplayName(selectedItemText);
                             // Propagate this selection change event to manager
                             resourceManager
                                     .resourceSelectionChanged(selectedItemText);
@@ -310,8 +315,9 @@ public class ResourceManagerView extends ViewPart {
                                 // automation if any attribute level
                                 // automation is in progress for the
                                 // selected resource
-                                boolean started = resourceManager.isAttributeAutomationStarted(Utility
-                                        .displayNameToUri(selectedItem));
+                                boolean started = resourceManager
+                                        .isAttributeAutomationStarted(resourceManager
+                                                .getCompleteUriFromDisplayName(selectedItem));
                                 if (started) {
                                     MessageDialog
                                             .openInformation(
@@ -322,8 +328,8 @@ public class ResourceManagerView extends ViewPart {
                                                             + "running attribute level automations to start resource level automation.");
                                 } else {
                                     boolean status = resourceManager
-                                            .startResourceAutomationUIRequest(Utility
-                                                    .displayNameToUri(selectedItem));
+                                            .startResourceAutomationUIRequest(resourceManager
+                                                    .getCompleteUriFromDisplayName(selectedItem));
                                     String statusMsg = status ? "Automation started successfully!!!"
                                             : "Automation request failed!!!";
                                     MessageDialog.openInformation(Display
@@ -339,8 +345,8 @@ public class ResourceManagerView extends ViewPart {
                             @Override
                             public void widgetSelected(SelectionEvent e) {
                                 boolean status = resourceManager
-                                        .stopResourceAutomationUIRequest(Utility
-                                                .displayNameToUri(selectedItem));
+                                        .stopResourceAutomationUIRequest(resourceManager
+                                                .getCompleteUriFromDisplayName(selectedItem));
                                 String statusMsg = status ? "Automation stop requested!!!"
                                         : "Automation stop failed.";
                                 MessageDialog.openInformation(Display
@@ -350,9 +356,8 @@ public class ResourceManagerView extends ViewPart {
                         });
 
                         // Set the initial visibility of menu items
-                        boolean status = resourceManager
-                                .isResourceAutomationStarted(Utility
-                                        .displayNameToUri(selectedItem));
+                        boolean status = resourceManager.isResourceAutomationStarted(resourceManager
+                                .getCompleteUriFromDisplayName(selectedItem));
                         startItem.setEnabled(!status);
                         stopItem.setEnabled(status);
                     }

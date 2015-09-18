@@ -171,7 +171,6 @@ jobject convertHashMapToJavaMap(JNIEnv *env,
 {
     if (observersList.empty())
     {
-        std::cout << "observersList Map is empty";
         return NULL;
     }
 

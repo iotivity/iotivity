@@ -69,6 +69,8 @@ public class ResourceManager {
 
     private Map<String, ArrayList<String>>              orderedResourceUriMap;
 
+    private Map<String, String>                         displayNameMap;
+
     private StandardConfiguration                       stdConfig;
 
     private SimulatorResource                           currentResourceInSelection;
@@ -96,6 +98,7 @@ public class ResourceManager {
     public ResourceManager() {
         resourceMap = new HashMap<String, Map<String, SimulatorResource>>();
         orderedResourceUriMap = new HashMap<String, ArrayList<String>>();
+        displayNameMap = new HashMap<String, String>();
         stdConfig = new StandardConfiguration();
 
         resourceListChangedUIListeners = new ArrayList<IResourceListChangedUIListener>();
@@ -466,6 +469,34 @@ public class ResourceManager {
         return result;
     }
 
+    public void addResourceDisplayName(String displayName, String completeURI) {
+        synchronized (displayNameMap) {
+            displayNameMap.put(displayName, completeURI);
+        }
+    }
+
+    public void removeResourceDisplayName(String displayName) {
+        synchronized (displayNameMap) {
+            displayNameMap.remove(displayName);
+        }
+    }
+
+    public boolean isDisplayName(String displayName) {
+        boolean exist = false;
+        synchronized (displayNameMap) {
+            exist = displayNameMap.containsKey(displayName);
+        }
+        return exist;
+    }
+
+    public String getCompleteUriFromDisplayName(String displayName) {
+        String completeURI = null;
+        synchronized (displayNameMap) {
+            completeURI = displayNameMap.get(displayName);
+        }
+        return completeURI;
+    }
+
     public void createResource(final String configFilePath) {
         new Thread() {
             @Override
@@ -488,11 +519,25 @@ public class ResourceManager {
                 SimulatorResource simulatorResource;
                 simulatorResource = fetchResourceData(resourceServerN);
                 if (null != simulatorResource) {
+                    String uri = simulatorResource.getResourceURI();
                     addResourceToMap(simulatorResource);
                     addResourceUriToOrderedMap(
-                            simulatorResource.getResourceType(),
-                            simulatorResource.getResourceURI());
+                            simulatorResource.getResourceType(), uri);
                     resourceCreatedUINotification();
+
+                    // Form the display URI
+                    String displayName = Utility.uriToDisplayName(uri);
+                    if (null != displayName) {
+                        addResourceDisplayName(displayName, uri);
+                    } else {
+                        Activator
+                                .getDefault()
+                                .getLogManager()
+                                .log(Level.ERROR.ordinal(),
+                                        new Date(),
+                                        "Converting the URI to display format for "
+                                                + uri + "failed!");
+                    }
 
                     // Set the observer for the created resource
                     try {
@@ -543,6 +588,7 @@ public class ResourceManager {
                 resourceTypeMap = new HashMap<String, SimulatorResource>();
                 SimulatorResource resource;
                 String uri;
+                String displayName;
                 for (SimulatorResourceServer resourceServerN : simulatorResourceServers) {
                     resource = fetchResourceData(resourceServerN);
                     if (null != resource) {
@@ -550,6 +596,20 @@ public class ResourceManager {
                         resourceTypeMap.put(uri, resource);
                         addResourceUriToOrderedMap(resource.getResourceType(),
                                 uri);
+
+                        // Form the display URI
+                        displayName = Utility.uriToDisplayName(uri);
+                        if (null != displayName) {
+                            addResourceDisplayName(displayName, uri);
+                        } else {
+                            Activator
+                                    .getDefault()
+                                    .getLogManager()
+                                    .log(Level.ERROR.ordinal(),
+                                            new Date(),
+                                            "Converting the URI to display format for "
+                                                    + uri + "failed!");
+                        }
                     }
                     // Set the observer for the created resource
                     try {
@@ -910,6 +970,12 @@ public class ResourceManager {
                     removeResourceUriFromOrderedMap(null, null);
                 }
             }
+        }
+        // Remove the display name from the map
+        if (null != resourceURI) {
+            String dispName = Utility.uriToDisplayName(resourceURI);
+            if (null != dispName)
+                removeResourceDisplayName(dispName);
         }
     }
 

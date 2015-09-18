@@ -30,24 +30,9 @@ public class Utility {
         String result = null;
         if (null != uri) {
             String tokens[] = uri.split(Constants.FORWARD_SLASH);
-            if (Constants.PROPER_RESOURCE_URI_TOKEN_COUNT == tokens.length) {
-                // Proper URI
-                result = tokens[3] + Constants.UNDERSCORE + tokens[5];
-            }
-        }
-        return result;
-    }
-
-    public static String displayNameToUri(String displayName) {
-        String result = null;
-        if (null != displayName) {
-            String tokens[] = displayName.split(Constants.UNDERSCORE);
-            if (Constants.DISPLAY_RESOURCE_URI_TOKEN_COUNT == tokens.length) {
-                // Proper Display Name
-                result = Constants.OIC_PREFIX + Constants.FORWARD_SLASH
-                        + tokens[0] + Constants.FORWARD_SLASH
-                        + Constants.SIMULATOR + Constants.FORWARD_SLASH
-                        + tokens[1];
+            if (null != tokens && tokens.length > 2) {
+                result = tokens[tokens.length - 3] + Constants.UNDERSCORE
+                        + tokens[tokens.length - 1];
             }
         }
         return result;
@@ -83,17 +68,6 @@ public class Utility {
         fileName = fileName + Constants.RAML_FILE_EXTENSION;
 
         return fileName;
-    }
-
-    public static boolean isUriComplete(String uri) {
-        boolean uriComplete = false;
-        if (null != uri) {
-            String tokens[] = uri.split(Constants.FORWARD_SLASH);
-            if (Constants.PROPER_RESOURCE_URI_TOKEN_COUNT == tokens.length) {
-                uriComplete = true;
-            }
-        }
-        return uriComplete;
     }
 
     public static String getAutomationStatus(boolean status) {

@@ -25,7 +25,7 @@ public class ResourceAttribute {
      * Type of attribute value.
      */
     public enum Type {
-        INT, DOUBLE, BOOL, STRING;
+        UNKNOWN, INT, DOUBLE, BOOL, STRING;
 
         private static Type[] m_cvalues = Type.values();
 

@@ -166,7 +166,6 @@ class JNIFoundResourceListener
             }
 
             JniSimulatorRemoteResource *jniSimulatorResource = new JniSimulatorRemoteResource(resource);
-
             if (!jniSimulatorResource)
             {
                 releaseEnv();
@@ -213,6 +212,7 @@ class JNIFoundResourceListener
             env->CallVoidMethod(foundResourceListener, foundResourceMId, simulatorResource);
             if ((env)->ExceptionCheck())
             {
+                delete jniSimulatorResource;
                 releaseEnv();
                 return;
             }
@@ -262,12 +262,11 @@ void onResourceModelChange(jweak jlistenerRef, const std::string &uri,
     }
 
     jobject jModel = JSimulatorResourceModel::toJava(env, reinterpret_cast<jlong>(jniModel));
-
     jstring jUri = env->NewStringUTF(uri.c_str());
-
     env->CallVoidMethod(modelChangeListener, foundModelChangeMId, jUri, jModel);
     if ((env)->ExceptionCheck())
     {
+        delete jniModel;
         releaseEnv();
         return;
     }
@@ -285,14 +284,14 @@ Java_org_oic_simulator_SimulatorManagerNativeInterface_createResource
     if (!configPath)
     {
         throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM,
-                                  "Resource creation failed. Configuration file path is empty!");
+                                  "Configuration file path is empty!");
         return nullptr;
     }
 
     if (!listener)
     {
         throwInvalidArgsException(env, SIMULATOR_INVALID_CALLBACK,
-                                  "Resource creation failed. Resource model change callback not set!");
+                                  "Resource model change callback not set!");
         return nullptr;
     }
 
@@ -350,14 +349,14 @@ Java_org_oic_simulator_SimulatorManagerNativeInterface_createResources
     if (!configPath)
     {
         throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM,
-                                  "Resource(s) creation failed. Configuration file path is empty!");
+                                  "Configuration file path is empty!");
         return nullptr;
     }
 
     if (!listener)
     {
         throwInvalidArgsException(env, SIMULATOR_INVALID_CALLBACK,
-                                  "Resource(s) creation failed. Resource model change callback not set!");
+                                  "Resource model change callback not set!");
         return nullptr;
     }
 
@@ -417,7 +416,7 @@ Java_org_oic_simulator_SimulatorManagerNativeInterface_deleteResource
     if (!jResource)
     {
         throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM,
-                                  "Deletion failed. No resource has been passed!");
+                                  "No resource has been passed!");
         return;
     }
 
@@ -425,8 +424,8 @@ Java_org_oic_simulator_SimulatorManagerNativeInterface_deleteResource
         JniSimulatorResource::getJniSimulatorResourceSP(env, jResource);
     if (!resource)
     {
-        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE,
-                                  "Deletion failed. Native resource not found!");
+        throwSimulatorException(env, SIMULATOR_BAD_OBJECT,
+                                "Simulator resource not found!");
         return;
     }
 
@@ -458,12 +457,7 @@ Java_org_oic_simulator_SimulatorManagerNativeInterface_deleteResources
 
     try
     {
-        SimulatorManager::getInstance()->deleteResources(type);
-    }
-    catch (InvalidArgsException &e)
-    {
-        throwInvalidArgsException(env, e.code(), e.what());
-        return;
+        SimulatorManager::getInstance()->deleteResource(type);
     }
     catch (...)
     {
@@ -477,34 +471,14 @@ Java_org_oic_simulator_SimulatorManagerNativeInterface_deleteResources
 
 JNIEXPORT void JNICALL
 Java_org_oic_simulator_SimulatorManagerNativeInterface_findResource
-(JNIEnv *env, jobject object, jobject listener)
+(JNIEnv *env, jobject object, jstring jResourceType, jobject jListener)
 {
-    JNIFoundResourceListener *resourceListener = new JNIFoundResourceListener();
-    resourceListener->setJavaFoundResourceListener(env, listener);
-    try
+    if (!jListener)
     {
-        SimulatorManager::getInstance()->findResources(
-            std::bind(&JNIFoundResourceListener::onFoundResource,
-                      resourceListener, std::placeholders::_1));
+        throwInvalidArgsException(env, SIMULATOR_INVALID_CALLBACK, "Invalid callback!");
+        return;
     }
-    catch (InvalidArgsException &e)
-    {
-        throwInvalidArgsException(env, e.code(), e.what());
-    }
-    catch (SimulatorException &e)
-    {
-        throwSimulatorException(env, e.code(), e.what());
-    }
-    catch (...)
-    {
-        throwSimulatorException(env, SIMULATOR_ERROR, "Unknown Exception");
-    }
-}
 
-JNIEXPORT void JNICALL
-Java_org_oic_simulator_SimulatorManagerNativeInterface_findResources
-(JNIEnv *env, jobject object, jstring jResourceType, jobject listener)
-{
     const char *typeCStr = NULL;
     std::string resourceType;
     if (jResourceType)
@@ -514,13 +488,23 @@ Java_org_oic_simulator_SimulatorManagerNativeInterface_findResources
     }
 
     JNIFoundResourceListener *resourceListener = new JNIFoundResourceListener();
-    resourceListener->setJavaFoundResourceListener(env, listener);
+    resourceListener->setJavaFoundResourceListener(env, jListener);
 
     try
     {
-        SimulatorManager::getInstance()->findResources(resourceType,
+        if (!jResourceType)
+        {
+            SimulatorManager::getInstance()->findResource(
                 std::bind(&JNIFoundResourceListener::onFoundResource,
                           resourceListener, std::placeholders::_1));
+        }
+        else
+        {
+            SimulatorManager::getInstance()->findResource(resourceType,
+                    std::bind(&JNIFoundResourceListener::onFoundResource,
+                              resourceListener, std::placeholders::_1));
+        }
+
     }
     catch (InvalidArgsException &e)
     {
@@ -547,8 +531,8 @@ JNIEXPORT void JNICALL
 Java_org_oic_simulator_SimulatorManagerNativeInterface_setLogger
 (JNIEnv *env, jclass object, jobject logger)
 {
-    static std::shared_ptr<ILogger> target(new JNILogger());
-    dynamic_cast<JNILogger *>(target.get())->setJavaLogger(env, logger);
+    static std::shared_ptr<JNILogger> target(new JNILogger());
+    target->setJavaLogger(env, logger);
     SimulatorManager::getInstance()->setLogger(target);
 }
 

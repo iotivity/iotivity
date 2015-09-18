@@ -23,13 +23,66 @@
 #include <sstream>
 #include <boost/lexical_cast.hpp>
 
+template <typename T>
+struct TypeConverter
+{
+    constexpr static SimulatorResourceModel::Attribute::ValueType type =
+            SimulatorResourceModel::Attribute::ValueType::UNKNOWN;
+};
+
+template <>
+struct TypeConverter<int>
+{
+    constexpr static SimulatorResourceModel::Attribute::ValueType type =
+            SimulatorResourceModel::Attribute::ValueType::INTEGER;
+};
+
+template <>
+struct TypeConverter<double>
+{
+    constexpr static SimulatorResourceModel::Attribute::ValueType type =
+            SimulatorResourceModel::Attribute::ValueType::DOUBLE;
+};
+
+template <>
+struct TypeConverter<bool>
+{
+    constexpr static SimulatorResourceModel::Attribute::ValueType type =
+            SimulatorResourceModel::Attribute::ValueType::BOOLEAN;
+};
+
+template <>
+struct TypeConverter<std::string>
+{
+    constexpr static SimulatorResourceModel::Attribute::ValueType type =
+            SimulatorResourceModel::Attribute::ValueType::STRING;
+};
+
+class attribute_type_visitor : public boost::static_visitor<
+        SimulatorResourceModel::Attribute::ValueType>
+{
+    public:
+        template <typename T>
+        result_type operator ()(const T &)
+        {
+            return TypeConverter<T>::type;
+        }
+};
+
 class to_string_visitor : public boost::static_visitor<std::string>
 {
     public:
         template <typename T>
         result_type operator ()(const T &value)
         {
-            return boost::lexical_cast<std::string>(value);
+            try
+            {
+                return boost::lexical_cast<std::string>(value);
+            }
+            catch (const boost::bad_lexical_cast &e)
+            {
+                return "";
+            }
         }
 };
 
@@ -167,6 +220,12 @@ void SimulatorResourceModel::Attribute::setFromAllowedValue(unsigned int index)
     m_value = m_allowedValues.at(index);
 }
 
+SimulatorResourceModel::Attribute::ValueType SimulatorResourceModel::Attribute::getValueType() const
+{
+    attribute_type_visitor typeVisitor;
+    return boost::apply_visitor(typeVisitor, m_value);
+}
+
 std::string SimulatorResourceModel::Attribute::valueToString() const
 {
     to_string_visitor visitor;
@@ -220,6 +279,15 @@ std::map<std::string, SimulatorResourceModel::Attribute> SimulatorResourceModel:
 const
 {
     return m_attributes;
+}
+
+void SimulatorResourceModel::addAttribute(const SimulatorResourceModel::Attribute &attribute)
+{
+    if (!attribute.getName().empty() &&
+        m_attributes.end() == m_attributes.find(attribute.getName()))
+    {
+        m_attributes[attribute.getName()] = attribute;
+    }
 }
 
 void SimulatorResourceModel::setRange(const std::string &attrName, const int min, const int max)

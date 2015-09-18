@@ -26,9 +26,9 @@
 #define TAG "SIM_RESOURCE_SERVER"
 
 SimulatorResourceServerImpl::SimulatorResourceServerImpl()
-    : m_resourceHandle(NULL)
+    :   m_resourceHandle(NULL)
 {
-    m_property = static_cast<OCResourceProperty>(OC_DISCOVERABLE);
+    m_property = static_cast<OCResourceProperty>(OC_DISCOVERABLE | OC_OBSERVABLE);
     m_interfaceType.assign(OC::DEFAULT_INTERFACE);
 }
 
@@ -235,6 +235,15 @@ void SimulatorResourceServerImpl::stop()
                      m_resourceHandle);
 
     m_resourceHandle = nullptr;
+}
+
+void SimulatorResourceServerImpl::notifyApp()
+{
+    // Notify the application callback
+    if (m_callback)
+    {
+        m_callback(m_uri, m_resModel);
+    }
 }
 
 OC::OCRepresentation SimulatorResourceServerImpl::getOCRepresentation()

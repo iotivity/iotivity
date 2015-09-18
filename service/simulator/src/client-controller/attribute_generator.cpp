@@ -21,42 +21,39 @@
 #include "attribute_generator.h"
 
 AttributeGenerator::AttributeGenerator(SimulatorResourceModel::Attribute &attribute)
+    :   m_name(attribute.getName()),
+        m_min(INT_MIN),
+        m_max(INT_MAX),
+        m_rangeIndex(-1),
+        m_nextAllowedValueIndex(0),
+        m_prevAllowedValueIndex(0),
+        m_hasRange(false),
+        m_hasAllowedValue(false)
 {
-    m_name.assign(attribute.getName());
-    m_type = attribute.getValueType();
-
-    if (!attribute.getValueType())
+    if (attribute.getValueType() ==
+        SimulatorResourceModel::Attribute::ValueType::INTEGER)
+    {
         attribute.getRange(m_min, m_max);
-    if (m_max > 0)
-    {
-        m_hasRange = true;
+        if (INT_MIN != m_min && INT_MAX != m_max)
+        {
+            m_hasRange = true;
+            m_rangeIndex = m_min;
+        }
     }
-
-    if (!m_type)
-        m_rangeIndex = m_min;
-
-    m_allowedValues = attribute.getAllowedValues();
-    if (0 != m_allowedValues.size())
+    else
     {
-        m_hasAllowedValue = true;
+        m_allowedValues = attribute.getAllowedValues();
+        if (0 != m_allowedValues.size())
+        {
+            m_hasAllowedValue = true;
+        }
+        m_prevAllowedValueIndex = m_allowedValues.size();
     }
-    m_nextAllowedValueIndex = 0;
-    m_prevAllowedValueIndex = m_allowedValues.size();
-}
-
-AttributeGenerator::~AttributeGenerator()
-{
-    m_rangeIndex = 0;
-    m_min = 0;
-    m_max = 0;
-    m_nextAllowedValueIndex = 0;
-    m_prevAllowedValueIndex = 0;
-    m_type = 0;
 }
 
 bool AttributeGenerator::hasNext()
 {
-    if (m_hasRange && m_rangeIndex <= m_max && !m_type)
+    if (m_hasRange && m_rangeIndex <= m_max)
     {
         return true;
     }
@@ -69,72 +66,39 @@ bool AttributeGenerator::hasNext()
     return false;
 }
 
-AttributeSP AttributeGenerator::next()
+bool AttributeGenerator::next(SimulatorResourceModel::Attribute &attribute)
 {
-    AttributeSP attr = std::make_shared<SimulatorResourceModel::Attribute>(m_name);
+    attribute.setName(m_name);
 
-    if (!attr)
-        return nullptr;
-
-    if (m_hasRange && !m_type)
+    if (m_hasRange)
     {
-        attr->setName(m_name);
-        attr->setValue(m_rangeIndex++);
-        return attr;
+        attribute.setValue(m_rangeIndex++);
+        return true;
+    }
+    else if (m_hasAllowedValue)
+    {
+        attribute.setValue(m_allowedValues[m_nextAllowedValueIndex++]);
+        return true;
     }
 
-    if (m_hasAllowedValue)
-    {
-        switch (m_type)
-        {
-            case 1:
-                {
-                    attr->setValue(m_allowedValues[m_nextAllowedValueIndex++]);
-                }
-                break;
-
-            case 3:
-                {
-                    attr->setValue(m_allowedValues[m_nextAllowedValueIndex++]);
-                }
-                break;
-        }
-
-        return attr;
-    }
+    return false;
 }
 
-AttributeSP AttributeGenerator::previous()
+bool AttributeGenerator::previous(SimulatorResourceModel::Attribute &attribute)
 {
-    AttributeSP attr = std::make_shared<SimulatorResourceModel::Attribute>(m_name);
+    attribute.setName(m_name);
 
-    if (!attr)
-        return nullptr;
-
-    if (m_hasRange && !m_type)
+    if (m_hasRange)
     {
-        attr->setValue(m_rangeIndex - 1);
-        return attr;
+        attribute.setValue(m_rangeIndex - 1);
+        return true;
+    }
+    else if (m_hasAllowedValue)
+    {
+        attribute.setValue(m_allowedValues[m_prevAllowedValueIndex - 1]);
+        return true;
     }
 
-    if (m_hasAllowedValue)
-    {
-        switch (m_type)
-        {
-            case 1:
-                {
-                    attr->setValue(m_allowedValues[m_prevAllowedValueIndex - 1]);
-                }
-                break;
-
-            case 3:
-                {
-                    attr->setValue(m_allowedValues[m_prevAllowedValueIndex - 1]);
-                }
-                break;
-        }
-
-        return attr;
-    }
+    return false;
 }
 

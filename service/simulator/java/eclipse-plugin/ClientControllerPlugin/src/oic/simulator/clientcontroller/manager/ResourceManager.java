@@ -99,13 +99,17 @@ public class ResourceManager {
     // Map with Server ID as key and the complete object as the value
     private Map<String, RemoteResource>               resourceMap;
     private List<RemoteResource>                      favoriteResources;
-    // TODO: Temporarily maintaining a list of favorite resource URIs.
+    // Maintaining a list of resource URIs for favorite resources feature.
     private List<String>                              favoriteURIList;
+
+    // Maintaining a list of observed resource URIs.
+    private List<String>                              observedResourceURIList;
 
     public ResourceManager() {
         resourceMap = new HashMap<String, RemoteResource>();
         favoriteResources = new ArrayList<RemoteResource>();
         favoriteURIList = new ArrayList<String>();
+        observedResourceURIList = new ArrayList<String>();
         findResourceUIListeners = new ArrayList<IFindResourceUIListener>();
         resourceSelectionChangedUIListeners = new ArrayList<IResourceSelectionChangedUIListener>();
         getUIListeners = new ArrayList<IGetUIListener>();
@@ -147,16 +151,23 @@ public class ResourceManager {
 
                         resource.setResource(resourceN);
 
-                        // Add the resource in local data structure
-                        addResourceDetails(resource);
-
-                        // Add resource to favorite list
                         String uri = resource.getResourceURI();
                         if (null != uri) {
+                            // Add resource to favorite list if it was in
+                            // favorites list during find/refresh operation.
                             if (favoriteURIList.contains(uri)) {
                                 addResourcetoFavorites(resource);
                             }
+                            // Add resource to observed resources list if it was
+                            // in observe list during find/refresh operation.
+                            if (observedResourceURIList.contains(uri)) {
+                                resource.setObserved(true);
+                            }
                         }
+
+                        // Add the resource in local data structure
+                        addResourceDetails(resource);
+
                         // Notify the UI listener
                         newResourceFoundNotification(resource);
 
@@ -557,6 +568,26 @@ public class ResourceManager {
         }
     }
 
+    public void addObservedResourceURI(String resourceURI) {
+        synchronized (observedResourceURIList) {
+            observedResourceURIList.add(resourceURI);
+        }
+    }
+
+    public void removeObservedResourceURI(String resourceURI) {
+        synchronized (observedResourceURIList) {
+            observedResourceURIList.remove(resourceURI);
+        }
+    }
+
+    public boolean isResourceObserved(String resourceURI) {
+        boolean observed = false;
+        synchronized (observedResourceURIList) {
+            observed = observedResourceURIList.contains(resourceURI);
+        }
+        return observed;
+    }
+
     public synchronized RemoteResource getCurrentResourceInSelection() {
         return currentResourceInSelection;
     }
@@ -689,7 +720,7 @@ public class ResourceManager {
                             }
                             /*
                              * Type baseType = attribute.getAttValBaseType();
-                             * 
+                             *
                              * if(baseType == Type.INT) { //int[] values =
                              * attributeN.getAllowedValues();
                              * attribute.setAllowedValues
@@ -926,7 +957,7 @@ public class ResourceManager {
         while (searchItr.hasNext()) {
             rType = searchItr.next();
             try {
-                SimulatorManager.findResources(rType, findResourceListener);
+                SimulatorManager.findResource(rType, findResourceListener);
                 result = true;
             } catch (SimulatorException e) {
                 Activator
@@ -1011,6 +1042,7 @@ public class ResourceManager {
                     if (exist) {
                         // Remove the resource
                         keyItr.remove();
+                        // Remove the resource from favorites list.
                         removeResourceFromFavorites(resource);
                     }
                 }
@@ -1346,8 +1378,11 @@ public class ResourceManager {
             return;
         }
         try {
-            resourceN.observe(SimulatorObserveType.OBSERVE, null,
+            resourceN.startObserve(SimulatorObserveType.OBSERVE, null,
                     observeListener);
+            // Add observed resource URI to show the proper status after every
+            // find/refresh operations.
+            addObservedResourceURI(resource.getResourceURI());
         } catch (SimulatorException e) {
             Activator
                     .getDefault()
@@ -1370,7 +1405,10 @@ public class ResourceManager {
             return;
         }
         try {
-            resourceN.cancelObserve();
+            resourceN.stopObserve();
+            // Remove observed resource URI to show the proper status after
+            // every find/refresh operations.
+            removeObservedResourceURI(resource.getResourceURI());
         } catch (SimulatorException e) {
             Activator
                     .getDefault()
@@ -1464,7 +1502,7 @@ public class ResourceManager {
             return;
         }
         try {
-            resourceN.configureRAMLPath(configFilePath);
+            resourceN.setConfigInfo(configFilePath);
         } catch (SimulatorException e) {
             Activator
                     .getDefault()

@@ -27,7 +27,7 @@ public interface IGetListener {
     /**
      * This method will be called when response from the remote resource for GET
      * request arrives.
-     * 
+     *
      * @param uId
      *            Unique Id of the resource.
      * @param representation
@@ -37,7 +37,7 @@ public interface IGetListener {
 
     /**
      * Called when there is an error in GET request.
-     * 
+     *
      * @param ex
      *            Error information.
      */

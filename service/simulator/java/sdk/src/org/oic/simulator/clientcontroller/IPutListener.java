@@ -27,7 +27,7 @@ public interface IPutListener {
     /**
      * This method will be called when response from the remote resource for PUT
      * request arrives.
-     * 
+     *
      * @param uId
      *            Unique Id of the resource.
      * @param representation
@@ -37,9 +37,10 @@ public interface IPutListener {
 
     /**
      * Called when there is an error in PUT request.
-     * 
+     *
      * @param ex
      *            Error information.
      */
     public void onPutFailed(Throwable ex);
 }
+

@@ -92,7 +92,6 @@ void JniSimulatorResource::setResourceInfo(JNIEnv *env, jobject jobj)
 void onAutomationComplete(jweak jlistenerRef, const std::string &uri,
                           const int automationID)
 {
-    std::cout << "onAutomationComplete JNI entry" << std::endl;
     JNIEnv *env = getEnv();
     if (nullptr == env)
         return;
@@ -138,9 +137,9 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_getModel
 (JNIEnv *env, jobject object)
 {
     SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env, object);
-    if (nullptr == resource.get())
+    if (!resource)
     {
-        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
+        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "No resource!");
         return nullptr;
     }
 
@@ -162,9 +161,9 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_addAttributeInteg
 
     SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env,
                                          jobject);
-    if (nullptr == resource.get())
+    if (!resource)
     {
-        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
+        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "No resource!");
         return;
     }
 
@@ -187,9 +186,9 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_addAttributeDoubl
 
     SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env,
                                          jobject);
-    if (nullptr == resource.get())
+    if (!resource)
     {
-        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
+        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "No resource!");
         return;
     }
 
@@ -212,9 +211,9 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_addAttributeBoole
 
     SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env,
                                          jobject);
-    if (nullptr == resource.get())
+    if (!resource)
     {
-        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
+        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "No resource!");
         return;
     }
 
@@ -237,9 +236,9 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_addAttributeStrin
 
     SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env,
                                          jobject);
-    if (nullptr == resource.get())
+    if (!resource)
     {
-        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
+        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "No resource!");
         return;
     }
 
@@ -263,9 +262,9 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_updateAttributeIn
 
     SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env,
                                          jobject);
-    if (nullptr == resource.get())
+    if (!resource)
     {
-        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
+        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "No resource!");
         return;
     }
 
@@ -285,9 +284,9 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_updateAttributeDo
 
     SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env,
                                          jobject);
-    if (nullptr == resource.get())
+    if (!resource)
     {
-        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
+        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "No resource!");
         return;
     }
 
@@ -307,9 +306,9 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_updateAttributeBo
 
     SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env,
                                          jobject);
-    if (nullptr == resource.get())
+    if (!resource)
     {
-        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
+        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "No resource!");
         return;
     }
 
@@ -329,9 +328,9 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_updateAttributeSt
 
     SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env,
                                          jobject);
-    if (nullptr == resource.get())
+    if (!resource)
     {
-        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
+        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "No resource!");
         return;
     }
 
@@ -352,9 +351,9 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_updateAttributeFr
     }
 
     SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env, object);
-    if (resource)
+    if (!resource)
     {
-        throwSimulatorException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
+        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "No resource!");
         return;
     }
 
@@ -380,9 +379,9 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_setRange
     }
 
     SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env, object);
-    if (resource)
+    if (!resource)
     {
-        throwSimulatorException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
+        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "No resource!");
         return;
     }
 
@@ -408,9 +407,9 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_setAllowedValuesI
     }
 
     SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env, object);
-    if (resource)
+    if (!resource)
     {
-        throwSimulatorException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
+        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "No resource!");
         return;
     }
 
@@ -436,9 +435,9 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_setAllowedValuesD
     }
 
     SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env, object);
-    if (resource)
+    if (!resource)
     {
-        throwSimulatorException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
+        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "No resource!");
         return;
     }
 
@@ -464,9 +463,9 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_setAllowedValuesS
     }
 
     SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env, object);
-    if (resource)
+    if (!resource)
     {
-        throwSimulatorException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
+        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "No resource!");
         return;
     }
 
@@ -488,15 +487,15 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_startResourceAuto
     SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env, object);
     if (!resource)
     {
-        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
-        return -1;
+        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "No resource!");
+        return SIMULATOR_BAD_OBJECT;
     }
 
     if (!listener)
     {
         throwInvalidArgsException(env, SIMULATOR_INVALID_CALLBACK,
                                   "Start Resource Automation failed! Callback not set");
-        return -1;
+        return SIMULATOR_INVALID_CALLBACK;
     }
 
     jweak jlistenerRef = env->NewWeakGlobalRef(listener);
@@ -537,23 +536,23 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_startAttributeAut
 (JNIEnv *env, jobject object, jstring attrName, jint automationType, jobject listener)
 {
     SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env, object);
-    if (nullptr == resource.get())
+    if (!resource)
     {
-        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
-        return -1;
+        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "No resource!");
+        return SIMULATOR_BAD_OBJECT;
     }
 
     if (!attrName)
     {
         throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM, "Invalid Attribute name!");
-        return -1;
+        return SIMULATOR_INVALID_PARAM;
     }
 
     if (!listener)
     {
         throwInvalidArgsException(env, SIMULATOR_INVALID_CALLBACK,
                                   "Start Attribute Automation failed! Callback not set");
-        return -1;
+        return SIMULATOR_INVALID_CALLBACK;
     }
 
     jweak jlistenerRef = env->NewWeakGlobalRef(listener);
@@ -599,9 +598,9 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_stopAutomation
 (JNIEnv *env, jobject object, jint automationId)
 {
     SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env, object);
-    if (nullptr == resource.get())
+    if (!resource)
     {
-        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
+        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "No resource!");
         return;
     }
 
@@ -621,9 +620,9 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_removeAttribute
 
     SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env,
                                          jobject);
-    if (nullptr == resource.get())
+    if (!resource)
     {
-        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
+        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "No resource!");
         return;
     }
 
@@ -636,9 +635,9 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_getObserversList
 (JNIEnv *env, jobject object)
 {
     SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env, object);
-    if (nullptr == resource.get())
+    if (!resource)
     {
-        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
+        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "No resource!");
         return nullptr;
     }
 
@@ -724,7 +723,10 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_setObserverCallba
 (JNIEnv *env, jobject object, jobject jcallback)
 {
     if (!jcallback)
+    {
+        throwInvalidArgsException(env, SIMULATOR_INVALID_CALLBACK, "Callback not set");
         return;
+    }
 
     jweak jlistenerRef = env->NewWeakGlobalRef(jcallback);
     SimulatorResourceServer::ObserverCB callback =  [jlistenerRef](const std::string & uri,
@@ -734,9 +736,9 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_setObserverCallba
     };
 
     SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env, object);
-    if (nullptr == resource.get())
+    if (!resource)
     {
-        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
+        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "No resource!");
         return;
     }
 
@@ -748,9 +750,9 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_notifyObserver
 (JNIEnv *env, jobject object, jint jId)
 {
     SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env, object);
-    if (nullptr == resource.get())
+    if (!resource)
     {
-        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
+        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "No resource!");
         return;
     }
 
@@ -773,9 +775,9 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_notifyAllObserver
 (JNIEnv *env, jobject object)
 {
     SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env, object);
-    if (nullptr == resource.get())
+    if (!resource)
     {
-        throwInvalidArgsException(env, SIMULATOR_NO_RESOURCE, "Resource not found!");
+        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "No resource!");
         return;
     }
 

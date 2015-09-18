@@ -139,7 +139,7 @@ public enum SimulatorResult {
             result = SimulatorResult.values()[29];
         else if (ordinal == 46)
             result = SimulatorResult.values()[30];
-                
+
         else if (ordinal == 128)
             result = SimulatorResult.values()[31];
         else if (ordinal == 129)
@@ -155,7 +155,7 @@ public enum SimulatorResult {
             result = SimulatorResult.values()[36];
         else if (ordinal == 134 || ordinal == 50)
             result = SimulatorResult.values()[37];
-        
+
         else if (ordinal == 135 || ordinal == 51)
             result = SimulatorResult.values()[38];
         else if (ordinal == 136 || ordinal == 52)
@@ -164,7 +164,7 @@ public enum SimulatorResult {
             result = SimulatorResult.values()[40];
         else if (ordinal == 138 || ordinal == 54)
             result = SimulatorResult.values()[41];
-        
+
         else
             result = SimulatorResult.values()[42];
         return result;

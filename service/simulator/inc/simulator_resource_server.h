@@ -151,6 +151,9 @@ class SimulatorResourceServer
         void updateAttributeValue(const std::string &attrName, const T &value)
         {
             m_resModel.updateAttribute(attrName, value);
+
+            // Notify all the subscribers
+            notifyAll();
         }
 
         /**

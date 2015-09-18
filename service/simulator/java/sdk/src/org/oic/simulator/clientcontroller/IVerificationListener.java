@@ -24,7 +24,7 @@ package org.oic.simulator.clientcontroller;
 public interface IVerificationListener {
     /**
      * Called when the verification request is accepted and started.
-     * 
+     *
      * @param uId
      *            Unique Id of the resource.
      * @param id
@@ -34,7 +34,7 @@ public interface IVerificationListener {
 
     /**
      * Called when the verification is stopped before its completion.
-     * 
+     *
      * @param uId
      *            Unique Id of the resource.
      * @param id
@@ -44,7 +44,7 @@ public interface IVerificationListener {
 
     /**
      * Called when the verification is done.
-     * 
+     *
      * @param uId
      *            Unique Id of the resource.
      * @param id

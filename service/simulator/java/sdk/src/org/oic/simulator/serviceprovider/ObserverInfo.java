@@ -33,7 +33,7 @@ public class ObserverInfo {
 
     /**
      * This method is used to return the observer's id.
-     * 
+     *
      * @return Observer's Id.
      */
     public int getId() {
@@ -42,7 +42,7 @@ public class ObserverInfo {
 
     /**
      * This method is used to return the observer's address.
-     * 
+     *
      * @return Observer's device address.
      */
     public String getAddress() {
@@ -51,7 +51,7 @@ public class ObserverInfo {
 
     /**
      * This method is used to return the observer's port number.
-     * 
+     *
      * @return Observer's port number.
      */
     public int getPort() {

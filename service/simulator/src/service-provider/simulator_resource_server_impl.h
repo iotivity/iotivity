@@ -67,12 +67,13 @@ class SimulatorResourceServerImpl : public SimulatorResourceServer
 
         void stop();
 
-        void resourceModified();
+        void notifyApp();
 
     private:
         OC::OCRepresentation getOCRepresentation();
         bool modifyResourceModel(OC::OCRepresentation &ocRep);
         OCEntityHandlerResult entityHandler(std::shared_ptr<OC::OCResourceRequest> request);
+        void resourceModified();
 
         ResourceModelChangedCB m_callback;
         ObserverCB m_observeCallback;

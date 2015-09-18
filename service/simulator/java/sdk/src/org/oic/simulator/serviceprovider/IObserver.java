@@ -23,7 +23,7 @@ public interface IObserver {
     /**
      * This callback method will be called when a new observer is added or an
      * existing observer is removed.
-     * 
+     *
      * @param resourceURI
      *            URI of the resource.
      * @param state

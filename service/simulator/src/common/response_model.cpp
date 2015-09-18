@@ -37,10 +37,9 @@ SimulatorResult ResponseModel::verifyResponse(const OC::OCRepresentation &rep)
             return SIMULATOR_UKNOWN_PROPERTY;
         }
 
-        int type = attribute.getValueType();
-        switch (type)
+        switch (attribute.getValueType())
         {
-            case 0: // Integer
+            case SimulatorResourceModel::Attribute::ValueType::INTEGER : // Integer
                 {
                     SimulatorResult result = validateAttributeInteger(attribute, ocAttribute);
                     if (SIMULATOR_OK != result)
@@ -50,7 +49,7 @@ SimulatorResult ResponseModel::verifyResponse(const OC::OCRepresentation &rep)
                 }
                 break;
 
-            case 1: // Double
+            case SimulatorResourceModel::Attribute::ValueType::DOUBLE : // Double
                 {
                     SimulatorResult result = validateAttributeDouble(attribute, ocAttribute);
                     if (SIMULATOR_OK != result)
@@ -60,7 +59,7 @@ SimulatorResult ResponseModel::verifyResponse(const OC::OCRepresentation &rep)
                 }
                 break;
 
-            case 2: // String
+            case SimulatorResourceModel::Attribute::ValueType::STRING : // String
                 {
                     SimulatorResult result = validateAttributeString(attribute, ocAttribute);
                     if (SIMULATOR_OK != result)

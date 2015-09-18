@@ -22,6 +22,7 @@
 #include "simulator_common_jni.h"
 #include "resource_attributes_jni.h"
 #include "simulator_error_codes.h"
+#include "simulator_jni_utils.h"
 
 using namespace std;
 
@@ -41,7 +42,6 @@ bool JSimulatorResourceModel::getResourceModel(JNIEnv *env, jobject thiz,
     JSimulatorResourceModel *resource = GetHandle<JSimulatorResourceModel>(env, thiz);
     if (env->ExceptionCheck())
     {
-        cout << "Exception while converting the nativeHandle to JSimulatorResourceModel" << endl;
         return false;
     }
 
@@ -118,7 +118,8 @@ Java_org_oic_simulator_SimulatorResourceModel_size
     bool result = JSimulatorResourceModel::getResourceModel(env, thiz, resourceModel);
     if (!result)
     {
-        return SIMULATOR_ERROR;
+        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "Resource model not found!");
+        return SIMULATOR_BAD_OBJECT;
     }
 
     return resourceModel.size();
@@ -132,7 +133,8 @@ Java_org_oic_simulator_SimulatorResourceModel_getAttributes
     bool result = JSimulatorResourceModel::getResourceModel(env, thiz, resourceModel);
     if (!result)
     {
-        return NULL;
+        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "Resource model not found!");
+        return nullptr;
     }
 
     map<string, SimulatorResourceModel::Attribute> attributesMap = resourceModel.getAttributes();
@@ -142,7 +144,8 @@ Java_org_oic_simulator_SimulatorResourceModel_getAttributes
     jHashMap = createHashMap(env);
     if (!jHashMap)
     {
-        return NULL;
+        throwSimulatorException(env, SIMULATOR_ERROR, "Java map creation failed!");
+        return nullptr;
     }
 
     for (auto & attributeEntry : attributesMap)
@@ -168,13 +171,15 @@ Java_org_oic_simulator_SimulatorResourceModel_getAttribute
 {
     if (!jAttrName)
     {
-        return NULL;
+        throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM, "Invalid attribute name!");
+        return nullptr;
     }
 
     const char *attrName = env->GetStringUTFChars(jAttrName, NULL);
     if (!attrName)
     {
-        return NULL;
+        throwSimulatorException(env, SIMULATOR_ERROR, "String error!");
+        return nullptr;
     }
 
     SimulatorResourceModel resourceModel;
@@ -182,7 +187,8 @@ Java_org_oic_simulator_SimulatorResourceModel_getAttribute
     if (!result)
     {
         env->ReleaseStringUTFChars(jAttrName, attrName);
-        return NULL;
+        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "Resource model not found!");
+        return nullptr;
     }
 
     SimulatorResourceModel::Attribute attribute;
@@ -190,7 +196,8 @@ Java_org_oic_simulator_SimulatorResourceModel_getAttribute
     if (!found)
     {
         env->ReleaseStringUTFChars(jAttrName, attrName);
-        return NULL;
+        throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM, "Attribute does not exist!");
+        return nullptr;
     }
 
     env->ReleaseStringUTFChars(jAttrName, attrName);
@@ -204,16 +211,24 @@ JNIEXPORT void JNICALL
 Java_org_oic_simulator_SimulatorResourceModel_addAttributeInt
 (JNIEnv *env, jobject thiz, jstring jname, jint jvalue)
 {
+    if (!jname)
+    {
+        throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM, "Invalid attribute name!");
+        return;
+    }
+
     SimulatorResourceModelSP resModelPtr;
     resModelPtr = JSimulatorResourceModel::getResourceModelPtr(env, thiz);
     if (!resModelPtr)
     {
+        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "Resource model not found!");
         return;
     }
 
     const char *nameCstr = env->GetStringUTFChars(jname, NULL);
     if (!nameCstr)
     {
+        throwSimulatorException(env, SIMULATOR_ERROR, "String error!");
         return;
     }
 
@@ -229,16 +244,24 @@ JNIEXPORT void JNICALL
 Java_org_oic_simulator_SimulatorResourceModel_addAttributeDouble
 (JNIEnv *env, jobject thiz, jstring jname, jdouble jvalue)
 {
+    if (!jname)
+    {
+        throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM, "Invalid attribute name!");
+        return;
+    }
+
     SimulatorResourceModelSP resModelPtr;
     resModelPtr = JSimulatorResourceModel::getResourceModelPtr(env, thiz);
     if (!resModelPtr)
     {
+        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "Resource model not found!");
         return;
     }
 
     const char *nameCstr = env->GetStringUTFChars(jname, NULL);
     if (!nameCstr)
     {
+        throwSimulatorException(env, SIMULATOR_ERROR, "String error!");
         return;
     }
 
@@ -254,16 +277,24 @@ JNIEXPORT void JNICALL
 Java_org_oic_simulator_SimulatorResourceModel_addAttributeBoolean
 (JNIEnv *env, jobject thiz, jstring jname, jboolean jvalue)
 {
+    if (!jname)
+    {
+        throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM, "Invalid attribute name!");
+        return;
+    }
+
     SimulatorResourceModelSP resModelPtr;
     resModelPtr = JSimulatorResourceModel::getResourceModelPtr(env, thiz);
     if (!resModelPtr)
     {
+        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "Resource model not found!");
         return;
     }
 
     const char *nameCstr = env->GetStringUTFChars(jname, NULL);
     if (!nameCstr)
     {
+        throwSimulatorException(env, SIMULATOR_ERROR, "String error!");
         return;
     }
 
@@ -279,16 +310,24 @@ JNIEXPORT void JNICALL
 Java_org_oic_simulator_SimulatorResourceModel_addAttributeString
 (JNIEnv *env, jobject thiz, jstring jname, jstring jvalue)
 {
+    if (!jname)
+    {
+        throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM, "Invalid attribute name!");
+        return;
+    }
+
     SimulatorResourceModelSP resModelPtr;
     resModelPtr = JSimulatorResourceModel::getResourceModelPtr(env, thiz);
     if (!resModelPtr)
     {
+        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "Resource model not found!");
         return;
     }
 
     const char *nameCstr = env->GetStringUTFChars(jname, NULL);
     if (!nameCstr)
     {
+        throwSimulatorException(env, SIMULATOR_ERROR, "String error!");
         return;
     }
 
@@ -296,6 +335,7 @@ Java_org_oic_simulator_SimulatorResourceModel_addAttributeString
     if (!valueCstr)
     {
         env->ReleaseStringUTFChars(jname, nameCstr);
+        throwSimulatorException(env, SIMULATOR_ERROR, "String error!");
         return;
     }
 
@@ -315,4 +355,3 @@ Java_org_oic_simulator_SimulatorResourceModel_dispose
     JSimulatorResourceModel *resourceModel = GetHandle<JSimulatorResourceModel>(env, thiz);
     delete resourceModel;
 }
-

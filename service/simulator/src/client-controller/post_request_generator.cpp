@@ -76,14 +76,15 @@ void POSTRequestGenerator::SendAllRequests()
     OC_LOG(DEBUG, TAG, "Sending OP_START event");
     m_callback(m_id, OP_START);
 
-    std::map<std::string, SimulatorResourceModel::Attribute> attributes = m_rep->getAttributes();
-    if (!attributes.size())
-        return;
+    // Create attribute generator for value manipulation
+    std::vector<AttributeGenerator> attributeGenList;
+    for (auto &attributeElement : m_rep->getAttributes())
+        attributeGenList.push_back(AttributeGenerator(attributeElement.second));
 
-    std::vector<std::shared_ptr<AttributeGenerator>> attributeGenList;
-    for (auto & attribute : attributes)
+    if (!attributeGenList.size())
     {
-        attributeGenList.push_back(std::make_shared<AttributeGenerator>(attribute.second));
+        OC_LOG(ERROR, TAG, "Zero attribute found from resource model!");
+        return;
     }
 
     do
@@ -95,35 +96,17 @@ void POSTRequestGenerator::SendAllRequests()
 
             for (auto & attributeGen : attributeGenList)
             {
-                while (attributeGen->hasNext())
+                while (attributeGen.hasNext())
                 {
-                    SimulatorResourceModelSP repModel = std::make_shared<SimulatorResourceModel>();
-                    AttributeSP attr = attributeGen->next();
-                    int type = attr->getValueType();
-
-                    switch (type)
-                    {
-                        case 0:
-                            {
-                                int attributeValue = attr->getValue<int>();
-                                std::string attributeName = attr->getName();
-                                repModel->addAttribute(attributeName, attributeValue);
-                            }
-                            break;
-
-                        case 3:
-                            {
-                                std::string attributeValue = attr->getValue<std::string>();
-                                std::string attributeName = attr->getName();
-                                repModel->addAttribute(attributeName, attributeValue);
-                            }
-                            break;
-                    }
+                    SimulatorResourceModelSP repModel(new SimulatorResourceModel);
+                    SimulatorResourceModel::Attribute attribute;
+                    if (true == attributeGen.next(attribute))
+                        repModel->addAttribute(attribute);
 
                     // Send the request
                     m_requestSender->sendRequest(queryParam, repModel,
-                                                 std::bind(&POSTRequestGenerator::onResponseReceived,
-                                                           this, std::placeholders::_1, std::placeholders::_2), true);
+                            std::bind(&POSTRequestGenerator::onResponseReceived,
+                            this, std::placeholders::_1, std::placeholders::_2), true);
 
                     m_requestCnt++;
                 }

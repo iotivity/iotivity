@@ -22,7 +22,7 @@ package org.oic.simulator;
 public interface IDeviceInfo {
     /**
      * Callback method which provides remote device information.
-     * 
+     *
      * @param devInfo
      *            {@link DeviceInfo} object holding the device information.
      */

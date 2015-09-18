@@ -45,7 +45,7 @@ int UpdateAutomationMngr::startResourceAutomation(SimulatorResourceServer *resou
     resourceAutomation->start();
 
     OC_LOG_V(DEBUG, TAG, "Resource automation successfully started [id: %d]", m_id);
-    SIM_LOG(ILogger::INFO, "Resource automation successfully started : " << m_id);
+    SIM_LOG(ILogger::INFO, "Resource automation successfully started [ id: " << m_id << " ]");
 
     m_resourceUpdationList[m_id] = resourceAutomation;
     return m_id++;
@@ -70,8 +70,9 @@ int UpdateAutomationMngr::startAttributeAutomation(SimulatorResourceServer *reso
 
     OC_LOG_V(DEBUG, TAG, "Attribute automation successfully started [name: %s, id: %d]",
              attrName.c_str(), m_id);
-    SIM_LOG(ILogger::INFO, "Automation for " << attrName << " attribute has successfully started : " <<
-            m_id);
+    SIM_LOG(ILogger::INFO, "Automation for " << attrName << " attribute has successfully started [ id: "
+            <<
+            m_id << " ]");
 
     m_attrUpdationList[m_id] = attributeAutomation;
     return m_id++;

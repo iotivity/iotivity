@@ -35,10 +35,10 @@ public class SimulatorManager {
      * @param listener
      *            Listener for receiving notifications whenever there is a
      *            change in the resource model.
-     * 
+     *
      * @return {@link SimulatorResourceServer} - Created resource on success,
      *         otherwise null.
-     * 
+     *
      * @throws InvalidArgsException
      *             Thrown if the input parameters are empty.
      * @throws SimulatorException
@@ -64,10 +64,10 @@ public class SimulatorManager {
      * @param listener
      *            Listener for receiving notifications whenever there is a
      *            change in the resource model.
-     * 
+     *
      * @return Returns an array of {@link SimulatorResourceServer} objects one
      *         for each created resource on success, otherwise null.
-     * 
+     *
      * @throws InvalidArgsException
      *             Thrown if the input parameters are empty.
      * @throws SimulatorException
@@ -122,15 +122,15 @@ public class SimulatorManager {
      *
      * @param listener
      *            Interface to receive the discovered remote resources.
-     * 
+     *
      * @throws InvalidArgsException
      *             Thrown if the input parameter is empty.
      * @throws SimulatorException
      *             Thrown for other errors.
      */
-    public static void findResources(IFindResourceListener listener)
+    public static void findResource(IFindResourceListener listener)
             throws InvalidArgsException, SimulatorException {
-        SimulatorManagerNativeInterface.findResources(null, listener);
+        SimulatorManagerNativeInterface.findResource(null, listener);
     }
 
     /**
@@ -141,13 +141,13 @@ public class SimulatorManager {
      *            Required resource type
      * @param listener
      *            Interface to receive the discovered remote resources.
-     * 
+     *
      * @throws InvalidArgsException
      *             Thrown if the input parameter is empty.
      * @throws SimulatorException
      *             Thrown for other errors.
      */
-    public static void findResources(String resourceType,
+    public static void findResource(String resourceType,
             IFindResourceListener listener) throws InvalidArgsException,
             SimulatorException {
         if (null == resourceType || resourceType.isEmpty()) {
@@ -155,7 +155,7 @@ public class SimulatorManager {
                     SimulatorResult.SIMULATOR_INVALID_PARAM.ordinal(),
                     "Resource type is empty");
         }
-        SimulatorManagerNativeInterface.findResources(resourceType, listener);
+        SimulatorManagerNativeInterface.findResource(resourceType, listener);
     }
 
     /**
@@ -170,7 +170,7 @@ public class SimulatorManager {
 
     /**
      * API to set the device information.
-     * 
+     *
      * @param deviceInfo
      *            Device information.
      */
@@ -179,8 +179,9 @@ public class SimulatorManager {
     }
 
     /**
-     * API to get the device information asynchronously via the listener.
-     * 
+     * API to get the device information asynchronously via callback
+     * using {@link IDeviceInfo}.
+     *
      * @param listener
      *            Interface for receiving the device information.
      */
@@ -190,7 +191,7 @@ public class SimulatorManager {
 
     /**
      * API to set the platform information.
-     * 
+     *
      * @param platformInfo
      *            {@link PlatformInfo} - Platform information.
      */
@@ -199,8 +200,9 @@ public class SimulatorManager {
     }
 
     /**
-     * API to get the platform information asynchronously via the listener.
-     * 
+     * API to get the platform information asynchronously via callback
+     * using {@link IPlatformInfo}..
+     *
      * @param listener
      *            Interface for receiving the platform information.
      */
