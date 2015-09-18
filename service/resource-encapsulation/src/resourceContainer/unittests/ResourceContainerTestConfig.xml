@@ -3,8 +3,8 @@
     <bundle>
         <id>oic.bundle.test</id>
         <path>libTestBundle.so</path>
-        <libraryPath>.</libraryPath>
         <activator>test</activator>
+        <libraryPath>.</libraryPath>
         <version>1.0.0</version>
 		<resources>
 			<resourceInfo>

@@ -117,12 +117,14 @@ TEST_F(ResourceContainerTest, BundleRegisteredWhenContainerStartedWithValidConfi
 {
     m_pResourceContainer->startContainer(m_strConfigPath);
     EXPECT_GT(m_pResourceContainer->listBundles().size(), (unsigned int) 0);
+    cout << "now checking for bunlde ids " << endl;
     EXPECT_STREQ("oic.bundle.test",
                  (*m_pResourceContainer->listBundles().begin())->getID().c_str());
     EXPECT_STREQ("libTestBundle.so",
                  (*m_pResourceContainer->listBundles().begin())->getPath().c_str());
     EXPECT_STREQ("1.0.0", (*m_pResourceContainer->listBundles().begin())->getVersion().c_str());
 
+    cout << "Now stopping container." << endl;
     m_pResourceContainer->stopContainer();
 }
 
@@ -761,7 +763,7 @@ class RemoteResourceUnitTest: public TestWithMock
         }
 };
 
-TEST_F(RemoteResourceUnitTest, createRemoteResourceInfo)
+/*TEST_F(RemoteResourceUnitTest, createRemoteResourceInfo)
 {
     EXPECT_NE(nullptr, m_pRemoteResourceUnit->createRemoteResourceInfo(m_pRCSRemoteResourceObject,
               m_updatedCBFromServer));
@@ -823,4 +825,4 @@ TEST_F(RemoteResourceUnitTest, onStateCBCalled)
     ptr->startMonitoring();
     testObject->ChangeResourceState();
     EXPECT_TRUE(isCalled);
-}
+}*/

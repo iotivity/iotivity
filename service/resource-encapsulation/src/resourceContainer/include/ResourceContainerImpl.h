@@ -90,7 +90,8 @@ namespace OIC
             void stopBundle(const std::string &bundleId);
 
             void addBundle(const std::string &bundleId, const std::string &bundleUri,
-                    const std::string &bundlePath, const std::string &activator, std::map< string, string > params);
+                    const std::string &bundlePath, const std::string &activator,
+                    std::map< string, string > params);
             void removeBundle(const std::string &bundleId);
 
             std::list< RCSBundleInfo * > listBundles();
@@ -111,11 +112,17 @@ namespace OIC
             map< std::string, RCSResourceObject::Ptr > m_mapServers; //<uri, serverPtr>
             map< std::string, BundleResource * > m_mapResources; //<uri, resourcePtr>
             map< std::string, list< string > > m_mapBundleResources; //<bundleID, vector<uri>>
-            map< std::string, list< DiscoverResourceUnit::Ptr > > m_mapDiscoverResourceUnits; //<uri, DiscoverUnit>
+            map< std::string, list< DiscoverResourceUnit::Ptr > > m_mapDiscoverResourceUnits;
+            //<uri, DiscoverUnit>
             string m_configFile;
             Configuration *m_config;
-            vector< boost::thread > m_activators; // holds threads for bundle activation
-            std::mutex registrationLock; // used for synchronize the resource registration of multiple bundles
+            // holds for a bundle the threads for bundle activation
+            map< std::string, boost::thread > m_activators;
+            // used for synchronize the resource registration of multiple bundles
+            std::mutex registrationLock;
+            // used to synchronize the startup of the container with other operation
+            // such as individual bundle activation
+            std::recursive_mutex activationLock;
 
             void activateSoBundle(const std::string &bundleId);
             void deactivateSoBundle(const std::string &bundleId);
@@ -125,7 +132,7 @@ namespace OIC
             void registerSoBundle(RCSBundleInfo *bundleInfo);
             void discoverInputResource(const std::string & outputResourceUri);
             void undiscoverInputResource(const std::string & outputResourceUri);
-            void activateBundleThread(RCSBundleInfo *bundleInfo);
+            void activateBundleThread(const std::string &bundleId);
 
 #if(JAVA_SUPPORT)
             map<string, JavaVM *> m_bundleVM;
