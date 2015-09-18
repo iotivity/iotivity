@@ -20,7 +20,7 @@
 
 package com.example.sampleserver;
 
-import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -61,6 +61,7 @@ public class MainActivity extends Activity {
     private static MainActivity  activityObj;
     private ArrayAdapter<String> apis;
     private ArrayList<String>    apisList;
+    private Context              context;
     private ListView             list;
     private final String         LOG_TAG = "[ReSampleServer]"
                                                  + this.getClass()
@@ -71,7 +72,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         activityObj = this;
-
+        context = this;
         list = (ListView) findViewById(R.id.list);
         apisList = new ArrayList<String>();
 
@@ -109,58 +110,46 @@ public class MainActivity extends Activity {
         // the OcPlatform
         configurePlatform();
 
-        // copy assets folder file to SDcard
-        copyFiles("lib");
+        // copy all the files from assets folder to SDcard
+        CopyAssetsToSDCard();
     }
 
-    private void copyFiles(String path) {
+    private void CopyAssetsToSDCard() {
         AssetManager assetManager = getAssets();
-        String assets[] = null;
-
+        String[] files = null;
         try {
-            assets = assetManager.list(path);
+            files = assetManager.list("lib");
+        } catch (IOException e) {
+            Log.e(LOG_TAG, e.getMessage());
+        }
 
-            if (assets.length == 0) {
-                copyFile(path);
-            } else {
-                String fullPath = "/data/data/"
-                        + this.getClass().getPackage().toString() + "/" + path;
-                File dir = new File(fullPath);
-
-                if (!dir.exists())
-                    dir.mkdir();
-                for (int i = 0; i < assets.length; ++i) {
-                    copyFiles(path + "/" + assets[i]);
-                }
+        for (String filename : files) {
+            InputStream in = null;
+            OutputStream out = null;
+            try {
+                in = assetManager.open("lib/" + filename);
+                out = new FileOutputStream(context.getFilesDir().getParent()
+                        + "/files/" + filename);
+                copyIndividualFile(in, out);
+                in.close();
+                in = null;
+                out.flush();
+                out.close();
+                out = null;
+            } catch (Exception e) {
+                Log.e(LOG_TAG, e.getMessage());
             }
-        } catch (IOException ex) {
-            Log.e("tag", "I/O Exception", ex);
         }
     }
 
-    private void copyFile(String filename) {
-        AssetManager assetManager = getAssets();
-        InputStream in = null;
-        OutputStream out = null;
+    private void copyIndividualFile(InputStream in, OutputStream out)
+            throws IOException {
 
-        try {
-            in = assetManager.open(filename);
-            out = openFileOutput(filename.split("/")[1], Context.MODE_PRIVATE);
-
-            byte[] buffer = new byte[1024];
-            int read;
-
-            while ((read = in.read(buffer)) != -1) {
-                out.write(buffer, 0, read);
-            }
-
-            in.close();
-            in = null;
-            out.flush();
-            out.close();
-            out = null;
-        } catch (Exception e) {
-            Log.e("tag", e.getMessage());
+        Log.i(LOG_TAG, "copyIndividualFile");
+        byte[] buffer = new byte[2048];
+        int read;
+        while ((read = in.read(buffer)) != -1) {
+            out.write(buffer, 0, read);
         }
     }
 

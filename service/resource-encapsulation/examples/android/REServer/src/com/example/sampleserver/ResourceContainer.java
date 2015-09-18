@@ -65,6 +65,7 @@ public class ResourceContainer {
             isInitialized = true;
         } else {
             containerInstance.startContainer(configFile);
+            isStarted = true;
         }
 
         logMessage = "Container Started";

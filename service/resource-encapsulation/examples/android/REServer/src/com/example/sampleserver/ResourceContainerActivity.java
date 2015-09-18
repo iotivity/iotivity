@@ -64,7 +64,7 @@ public class ResourceContainerActivity extends Activity {
     public List<String>                      sensors;
     public List<String>                      diApiList;
     public List<String>                      bmiApiList;
-    HashMap<String, List<String>>            listDataChild;
+    HashMap<String, List<String>>            listChild;
 
     private static Handler                   mHandler;
     private Button                           startContainer;
@@ -89,7 +89,7 @@ public class ResourceContainerActivity extends Activity {
         sensors = new ArrayList<String>();
         diApiList = new ArrayList<String>();
         bmiApiList = new ArrayList<String>();
-        listDataChild = new HashMap<String, List<String>>();
+        listChild = new HashMap<String, List<String>>();
 
         // Adding list items (header)
         sensors.add("Discomfort Index Sensor");
@@ -109,9 +109,9 @@ public class ResourceContainerActivity extends Activity {
         bmiApiList.add("6. Stop Bundle");
         bmiApiList.add("7. Remove Bundle");
 
-        listDataChild.put(sensors.get(0), diApiList); // Header, Child data
-        listDataChild.put(sensors.get(1), bmiApiList);
-        listAdapter = new ExpandableList(this, sensors, listDataChild);
+        listChild.put(sensors.get(0), diApiList);
+        listChild.put(sensors.get(1), bmiApiList);
+        listAdapter = new ExpandableList(this, sensors, listChild);
 
         // getting the sd card path
         sdCardPath = this.getFilesDir().getPath();
@@ -149,7 +149,7 @@ public class ResourceContainerActivity extends Activity {
                     resourceContainerInstance.startContainer(sdCardPath);
                     listAdapter = new ExpandableList(ResourceContainerActivity
                             .getResourceContainerActivityObj(), sensors,
-                            listDataChild);
+                            listChild);
                     listBundles.setEnabled(true);
                     startContainer.setText("Stop Container");
                 } else {
@@ -222,96 +222,108 @@ public class ResourceContainerActivity extends Activity {
     // class for handling expandable list items
     public class ExpandableList extends BaseExpandableListAdapter {
 
-        private Context                       _context;
-        private List<String>                  _listDataHeader; // header titles
-        // child data in format of header title, child title
-        private HashMap<String, List<String>> _listDataChild;
+        private Context                       mContext;
+        private HashMap<String, List<String>> mListDataChild;
+        private List<String>                  mListDataHeader;
 
-        public ExpandableList(Context context, List<String> listDataHeader,
-                HashMap<String, List<String>> listChildData) {
-            this._context = context;
-            this._listDataHeader = listDataHeader;
-            this._listDataChild = listChildData;
+        // constructor
+        public ExpandableList(Context context, List<String> dataHeader,
+                HashMap<String, List<String>> childData) {
+            this.mContext = context;
+            this.mListDataHeader = dataHeader;
+            this.mListDataChild = childData;
         }
 
+        // get the child ID
         @Override
-        public Object getChild(int groupPosition, int childPosititon) {
-            return this._listDataChild.get(
-                    this._listDataHeader.get(groupPosition))
-                    .get(childPosititon);
-        }
-
-        @Override
-        public long getChildId(int groupPosition, int childPosition) {
+        public long getChildId(int grpPosition, int childPosition) {
             return childPosition;
         }
 
+        // get the child
         @Override
-        public View getChildView(int groupPosition, final int childPosition,
-                boolean isLastChild, View convertView, ViewGroup parent) {
+        public Object getChild(int grpPosition, int childPosititon) {
+            return this.mListDataChild.get(
+                    this.mListDataHeader.get(grpPosition)).get(childPosititon);
+        }
 
-            final String childText = (String) getChild(groupPosition,
-                    childPosition);
-
-            if (convertView == null) {
-                LayoutInflater infalInflater = (LayoutInflater) this._context
+        // get Group View
+        @Override
+        public View getGroupView(int grpPosition, boolean isExpandable,
+                View changeView, ViewGroup head) {
+            String mainHeading = (String) getGroup(grpPosition);
+            if (changeView == null) {
+                LayoutInflater flater;
+                flater = (LayoutInflater) this.mContext
                         .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                convertView = infalInflater.inflate(R.layout.list_item, null);
+                changeView = flater.inflate(R.layout.group, null);
             }
 
-            TextView txtListChild = (TextView) convertView
-                    .findViewById(R.id.lblListItem);
-
-            txtListChild.setText(childText);
-            return convertView;
+            TextView listHeader = (TextView) changeView
+                    .findViewById(R.id.ListHead);
+            listHeader.setTypeface(null, Typeface.BOLD);
+            listHeader.setText(mainHeading);
+            return changeView;
         }
 
+        // get Children count
         @Override
-        public int getChildrenCount(int groupPosition) {
-            return this._listDataChild.get(
-                    this._listDataHeader.get(groupPosition)).size();
+        public int getChildrenCount(int grpPosition) {
+            int count = this.mListDataChild.get(
+                    this.mListDataHeader.get(grpPosition)).size();
+            return count;
         }
 
+        // Get Group
         @Override
-        public Object getGroup(int groupPosition) {
-            return this._listDataHeader.get(groupPosition);
+        public Object getGroup(int grpPosition) {
+            return this.mListDataHeader.get(grpPosition);
         }
 
+        // get Group size
         @Override
         public int getGroupCount() {
-            return this._listDataHeader.size();
+            int size = this.mListDataHeader.size();
+            return size;
         }
 
+        // get Group ID
         @Override
-        public long getGroupId(int groupPosition) {
-            return groupPosition;
+        public long getGroupId(int grpPosition) {
+            return grpPosition;
         }
 
+        // get Group View
         @Override
-        public View getGroupView(int groupPosition, boolean isExpanded,
-                View convertView, ViewGroup parent) {
-            String headerTitle = (String) getGroup(groupPosition);
-            if (convertView == null) {
-                LayoutInflater infalInflater = (LayoutInflater) this._context
+        public View getChildView(int grpPosition, final int childPosition,
+                boolean isLastItem, View changeView, ViewGroup head) {
+
+            final String innerText = (String) getChild(grpPosition,
+                    childPosition);
+
+            if (changeView == null) {
+                LayoutInflater flater = (LayoutInflater) this.mContext
                         .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                convertView = infalInflater.inflate(R.layout.list_group, null);
+                changeView = flater.inflate(R.layout.list_item, null);
             }
 
-            TextView lblListHeader = (TextView) convertView
-                    .findViewById(R.id.lblListHeader);
-            lblListHeader.setTypeface(null, Typeface.BOLD);
-            lblListHeader.setText(headerTitle);
-            return convertView;
+            TextView textListChild = (TextView) changeView
+                    .findViewById(R.id.listItem);
+
+            textListChild.setText(innerText);
+            return changeView;
         }
 
+        // To check whether child is selectable or not
+        @Override
+        public boolean isChildSelectable(int grpPosition, int childPosition) {
+            return true;
+        }
+
+        // To check the stable IDs
         @Override
         public boolean hasStableIds() {
             return false;
-        }
-
-        @Override
-        public boolean isChildSelectable(int groupPosition, int childPosition) {
-            return true;
         }
     }
 
