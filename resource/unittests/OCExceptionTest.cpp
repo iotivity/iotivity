@@ -67,7 +67,10 @@ namespace OC
                 OC_STACK_PRESENCE_STOPPED,
                 OC_STACK_PRESENCE_TIMEOUT,
                 OC_STACK_PRESENCE_DO_NOT_HANDLE,
-                OC_STACK_ERROR
+                OC_STACK_ERROR,
+                OC_STACK_PDM_IS_NOT_INITIALIZED,
+                OC_STACK_DUPLICATE_UUID,
+                OC_STACK_INCONSISTENT_DB
             };
 
             std::string resultMessages[]=
@@ -106,7 +109,10 @@ namespace OC
                 OC::Exception::PRESENCE_STOPPED,
                 OC::Exception::PRESENCE_TIMEOUT,
                 OC::Exception::PRESENCE_NOT_HANDLED,
-                OC::Exception::GENERAL_FAULT
+                OC::Exception::GENERAL_FAULT,
+                OC::Exception::PDM_DB_NOT_INITIALIZED,
+                OC::Exception::DUPLICATE_UUID,
+                OC::Exception::INCONSISTENT_DB
             };
             TEST(OCExceptionTest, ReasonCodeMatches)
             {

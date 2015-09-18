@@ -36,6 +36,10 @@ static uint32_t NETWORK_GATT = CA_ADAPTER_GATT_BTLE;
 static uint32_t NETWORK_RA = CA_ADAPTER_REMOTE_ACCESS;
 #endif
 
+#ifdef TCP_ADAPTER
+static uint32_t NETWORK_TCP = CA_ADAPTER_TCP;
+#endif
+
 CAResult_t CAAddNetworkType(CATransportAdapter_t transportType)
 {
     OIC_LOG(DEBUG, TAG, "IN");
@@ -106,6 +110,18 @@ CAResult_t CAAddNetworkType(CATransportAdapter_t transportType)
            res = u_arraylist_add(g_selectedNetworkList, &NETWORK_RA);
            break;
 #endif /* RA_ADAPTER */
+
+#ifdef TCP_ADAPTER
+        case CA_ADAPTER_TCP:
+
+           OIC_LOG(DEBUG, TAG, "Add network type(TCP)");
+           if (u_arraylist_contains(g_selectedNetworkList, &NETWORK_TCP))
+           {
+               goto exit;
+           }
+           res = u_arraylist_add(g_selectedNetworkList, &NETWORK_TCP);
+           break;
+#endif /* TCP_ADAPTER */
 
         default:
             break;
@@ -189,6 +205,13 @@ CAResult_t CARemoveNetworkType(CATransportAdapter_t transportType)
                     u_arraylist_remove(g_selectedNetworkList, index);
                     break;
 #endif /* RA_ADAPTER */
+
+#ifdef TCP_ADAPTER
+                case CA_ADAPTER_TCP:
+                    OIC_LOG(DEBUG, TAG, "Remove network type(TCP)");
+                    u_arraylist_remove(g_selectedNetworkList, index);
+                    break;
+#endif /* TCP_ADAPTER */
 
                 default:
                     break;

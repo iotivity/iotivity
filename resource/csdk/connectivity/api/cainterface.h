@@ -254,10 +254,10 @@ CAResult_t CASetRAInfo(const CARAInfo_t *caraInfo);
 /**
  * Select the cipher suite for dtls handshake.
  *
- * @param[IN] cipher  cipher suite (Note : Make sure endianness)
- *                               0xC018 : TLS_ECDH_anon_WITH_AES_128_CBC_SHA
- *                               0xC0A8 : TLS_PSK_WITH_AES_128_CCM_8
- *                               0xC0AE : TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8
+ * @param[in] cipher  cipher suite (Note : Make sure endianness).
+ *                    0xC018 : TLS_ECDH_anon_WITH_AES_128_CBC_SHA
+ *                    0xC0A8 : TLS_PSK_WITH_AES_128_CCM_8
+ *                    0xC0AE : TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8
  *
  * @retval  ::CA_STATUS_OK    Successful.
  * @retval  ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
@@ -266,7 +266,7 @@ CAResult_t CASetRAInfo(const CARAInfo_t *caraInfo);
 CAResult_t CASelectCipherSuite(const uint16_t cipher);
 
 /**
- * Enable TLS_ECDH_anon_WITH_AES_128_CBC_SHA cipher suite in dtls
+ * Enable TLS_ECDH_anon_WITH_AES_128_CBC_SHA cipher suite in dtls.
  *
  * @param[in] enable  TRUE/FALSE enables/disables anonymous cipher suite.
  *

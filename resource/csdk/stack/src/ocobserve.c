@@ -29,6 +29,7 @@
 #include "oic_string.h"
 #include "ocpayload.h"
 #include "ocserverrequest.h"
+#include "logger.h"
 
 #include "utlist.h"
 #include "pdu.h"
@@ -72,14 +73,14 @@ static OCQualityOfService DetermineObserverQoS(OCMethod method,
     {
         OC_LOG_V(INFO, TAG, "Current NON count for this observer is %d",
                 resourceObserver->lowQosCount);
-        #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
         if((resourceObserver->forceHighQos \
                 || resourceObserver->lowQosCount >= MAX_OBSERVER_NON_COUNT) \
                 && method != OC_REST_PRESENCE)
-        #else
+#else
         if(resourceObserver->forceHighQos \
                 || resourceObserver->lowQosCount >= MAX_OBSERVER_NON_COUNT)
-        #endif
+#endif
         {
             resourceObserver->lowQosCount = 0;
             // at some point we have to to send CON to check on the
@@ -123,17 +124,17 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
         if (resourceObserver->resource == resPtr)
         {
             numObs++;
-            #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
             if(method != OC_REST_PRESENCE)
             {
-            #endif
+#endif
                 qos = DetermineObserverQoS(method, resourceObserver, qos);
 
                 result = AddServerRequest(&request, 0, 0, 1, OC_REST_GET,
                         0, resPtr->sequenceNum, qos, resourceObserver->query,
                         NULL, NULL,
                         resourceObserver->token, resourceObserver->tokenLength,
-                        resourceObserver->resUri, 0,
+                        resourceObserver->resUri, 0, resourceObserver->acceptFormat,
                         &resourceObserver->devAddr);
 
                 if(request)
@@ -148,6 +149,7 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
                                     &request->devAddr,
                                     (OCResourceHandle) resPtr,
                                     request->query,
+                                    PAYLOAD_TYPE_REPRESENTATION,
                                     request->payload,
                                     request->payloadSize,
                                     request->numRcvdVendorSpecificHeaderOptions,
@@ -166,7 +168,7 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
                         OCPayloadDestroy(ehRequest.payload);
                     }
                 }
-            #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
             }
             else
             {
@@ -178,7 +180,7 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
                         0, resPtr->sequenceNum, qos, resourceObserver->query,
                         NULL, NULL,
                         resourceObserver->token, resourceObserver->tokenLength,
-                        resourceObserver->resUri, 0,
+                        resourceObserver->resUri, 0, resourceObserver->acceptFormat,
                         &resourceObserver->devAddr);
 
                 if(result == OC_STACK_OK)
@@ -207,7 +209,7 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
                     OCPresencePayloadDestroy(presenceResBuf);
                 }
             }
-            #endif
+#endif
 
             // Since we are in a loop, set an error flag to indicate at least one error occurred.
             if (result != OC_STACK_OK)
@@ -265,7 +267,7 @@ OCStackResult SendListObserverNotification (OCResource * resource,
                 result = AddServerRequest(&request, 0, 0, 1, OC_REST_GET,
                         0, resource->sequenceNum, qos, observer->query,
                         NULL, NULL, observer->token, observer->tokenLength,
-                        observer->resUri, 0,
+                        observer->resUri, 0, observer->acceptFormat,
                         &observer->devAddr);
 
                 if(request)
@@ -361,6 +363,7 @@ OCStackResult AddObserver (const char         *resUri,
                            uint8_t            tokenLength,
                            OCResource         *resHandle,
                            OCQualityOfService qos,
+                           OCPayloadFormat    acceptFormat,
                            const OCDevAddr    *devAddr)
 {
     // Check if resource exists and is observable.
@@ -388,6 +391,7 @@ OCStackResult AddObserver (const char         *resUri,
         VERIFY_NON_NULL (obsNode->resUri);
 
         obsNode->qos = qos;
+        obsNode->acceptFormat = acceptFormat;
         if(query)
         {
             obsNode->query = OICStrdup(query);
@@ -519,7 +523,7 @@ CreateObserveHeaderOption (CAHeaderOption_t **caHdrOpt,
                            uint8_t numOptions,
                            uint8_t observeFlag)
 {
-    if(!caHdrOpt)
+    if(!caHdrOpt || !ocHdrOpt)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -561,12 +565,13 @@ GetObserveHeaderOption (uint32_t * observationOption,
     {
         return OC_STACK_INVALID_PARAM;
     }
-    *observationOption = OC_OBSERVE_NO_OPTION;
 
     if(!options || !numOptions)
     {
         return OC_STACK_INVALID_PARAM;
     }
+
+    *observationOption = OC_OBSERVE_NO_OPTION;
 
     for(uint8_t i = 0; i < *numOptions; i++)
     {

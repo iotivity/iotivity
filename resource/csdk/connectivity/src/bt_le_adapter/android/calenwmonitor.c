@@ -226,6 +226,21 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeStateChangedCallback(JNIEnv *env, j
     if (BT_STATE_ON == status) // STATE_ON:12
     {
         CANetworkStatus_t newStatus = CA_INTERFACE_UP;
+        CALEClientCreateDeviceList();
+        CALEServerCreateCachedDeviceList();
+
+        CAResult_t res = CALEClientStartScan();
+        if (CA_STATUS_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "CALEClientStartScan has failed");
+        }
+
+        res = CALEStartAdvertise();
+        if (CA_STATUS_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "CALEStartAdvertise has failed");
+        }
+
         gCALEDeviceStateChangedCallback(newStatus);
     }
     else if (BT_STATE_OFF == status) // STATE_OFF:10
@@ -243,12 +258,20 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeStateChangedCallback(JNIEnv *env, j
             OIC_LOG(ERROR, TAG, "CALEClientRemoveAllScanDevices has failed");
         }
 
+        res = CALEClientRemoveAllDeviceState();
+        if (CA_STATUS_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "CALEClientRemoveAllDeviceState has failed");
+        }
+
         // remove obej for server
         res = CALEServerRemoveAllDevices(env);
         if (CA_STATUS_OK != res)
         {
             OIC_LOG(ERROR, TAG, "CALEServerRemoveAllDevices has failed");
         }
+
+        CALEClientSetScanFlag(false);
 
         CANetworkStatus_t newStatus = CA_INTERFACE_DOWN;
         gCALEDeviceStateChangedCallback(newStatus);

@@ -27,7 +27,6 @@
 #include <vector>
 #include "OCPlatform.h"
 #include "OCApi.h"
-//#include "ThingsManager.h"
 #include "ThingsConfiguration.h"
 #include "ThingsMaintenance.h"
 #include "GroupManager.h"
@@ -41,7 +40,6 @@ pthread_mutex_t mutex_lock = PTHREAD_MUTEX_INITIALIZER;
 
 const int SUCCESS_RESPONSE = 0;
 
-//static ThingsManager* g_thingsmanager;
 static GroupManager* g_groupmanager;
 static ThingsConfiguration* g_thingsConf;
 static ThingsMaintenance* g_thingsMnt;
@@ -312,7 +310,7 @@ int main(int argc, char* argv[])
             cout << "(1) Find all resources(URI: /oic/con, /oic/mnt, /factoryset)" << std::endl;
             cout << "(2) Find all groups" << std::endl;
             cout << "(3) Get a Configuration resource" << std::endl;
-            cout << "(4) Update a region attribute value" << std::endl;
+            cout << "(4) Update a device name attribute value" << std::endl;
             cout << "(5) FactoryReset (for the group)" << std::endl;
             cout << "(6) Reboot (for the group)" << std::endl;
             cout << "(10) Show Configuration Units" << std::endl;
@@ -459,7 +457,7 @@ int main(int argc, char* argv[])
                     continue;
                 }
 
-                std::cout << "For example, change region resource's value" << std::endl;
+                std::cout << "For example, change a device name" << std::endl;
                 std::cout << g_configurationCollection->uri() << std::endl;
 
                 std::map< ConfigurationName, ConfigurationValue > configurations;

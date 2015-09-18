@@ -1190,7 +1190,6 @@ void send_response(const CAEndpoint_t *endpoint, const CAInfo_t *info)
         printf("\n=============================================\n");
         printf("\tselect response code\n");
         printf("EMPTY                    :   0\n");
-        printf("SUCCESS                  : 200\n");
         printf("CREATED                  : 201\n");
         printf("DELETED                  : 202\n");
         printf("VALID                    : 203\n");

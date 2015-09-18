@@ -56,6 +56,12 @@ if env.get('SECURED') == '1':
                                                  'external/inc')])
 
 ca_common_src = None
+
+if env.get('ROUTING') == 'GW':
+	env.AppendUnique(CPPDEFINES = ['ROUTING_GATEWAY'])
+elif env.get('ROUTING') == 'EP':
+	env.AppendUnique(CPPDEFINES = ['ROUTING_EP'])
+
 if ca_os == 'arduino':
 	env.AppendUnique(CPPDEFINES = ['SINGLE_THREAD'])
 	env.AppendUnique(CPPDEFINES = ['WITH_ARDUINO'])
@@ -94,7 +100,9 @@ ca_common_src = [
 env.AppendUnique(CA_SRC = ca_common_src)
 
 if 'ALL' in ca_transport:
-		transports = [ 'ip_adapter', 'bt_edr_adapter', 'bt_le_adapter' ]
+		transports = [ 'ip_adapter', 'bt_edr_adapter', 'bt_le_adapter']
+		if ca_os == 'linux':
+				transports.append ('tcp_adapter')
 		if with_ra:
 				transports.append ('ra_adapter')
 		env.SConscript(dirs = [
@@ -108,6 +116,9 @@ if 'BT' in ca_transport:
 
 if 'BLE' in ca_transport:
 	env.SConscript(os.path.join(ca_path, 'bt_le_adapter/SConscript'))
+
+if 'TCP' in ca_transport:
+	env.SConscript(os.path.join(ca_path, 'tcp_adapter/SConscript'))
 
 print "Include path is %s" % env.get('CPPPATH')
 print "Files path is %s" % env.get('CA_SRC')

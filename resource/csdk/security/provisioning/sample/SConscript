@@ -49,7 +49,7 @@ provisioning_env.AppendUnique(CPPPATH = [
 provisioning_env.AppendUnique(CFLAGS = ['-D__WITH_DTLS__','-std=c99'])
 provisioning_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread', '-fpermissive'])
 provisioning_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
-provisioning_env.AppendUnique(LIBS = ['-lpthread'])
+provisioning_env.AppendUnique(LIBS = ['-lpthread','-ldl'])
 provisioning_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 provisioning_env.PrependUnique(LIBS = ['ocpmapi','oc', 'oc_logger', 'ocsrm','m', 'octbstack', 'connectivity_abstraction', 'coap'])
 

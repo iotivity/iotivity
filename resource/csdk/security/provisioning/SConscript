@@ -22,6 +22,7 @@
 Import('env')
 
 provisioning_env = env.Clone()
+root_dir = './../../../../'
 
 ######################################################################
 # Build flags
@@ -38,14 +39,14 @@ provisioning_env.AppendUnique(CPPPATH = [
 		'include/oxm',
 		'../../resource/csdk/security/include',
 		'../../../../extlibs/cjson/',
-		'../../../../../extlibs/tinydtls/',
 		'../../connectivity/inc',
 		'../../connectivity/external/inc',
 		'../../connectivity/common/inc',
 		'../../connectivity/lib/libcoap-4.1.1',
 		'../../connectivity/api',
 		'../include',
-		'../include/internal'
+		'../include/internal',
+		'../../../../extlibs/sqlite3'
 		])
 target_os = env.get('TARGET_OS')
 provisioning_env.AppendUnique(CFLAGS = ['-D__WITH_DTLS__'])
@@ -86,7 +87,9 @@ provisioning_src = [
 	'src/secureresourceprovider.c',
 	'src/ocprovisioningmanager.c',
 	'src/oxmjustworks.c',
-	'src/oxmrandompin.c' ]
+	'src/oxmrandompin.c',
+	'src/provisioningdatabasemanager.c',
+	root_dir+'/extlibs/sqlite3/sqlite3.c' ]
 provisioningserver = provisioning_env.StaticLibrary('ocpmapi', provisioning_src)
 
 provisioning_env.InstallTarget(provisioningserver, 'libocpmapi')

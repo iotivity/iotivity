@@ -35,6 +35,7 @@
 	"doxm":	{
 		"oxm":	[0],
 		"oxmsel": 0,
+		"sct": 1,
 		"owned": true,
 		"deviceid":	"MjIyMjIyMjIyMjIyMjIyMg==",
 		"ownr":	"MjIyMjIyMjIyMjIyMjIyMg=="

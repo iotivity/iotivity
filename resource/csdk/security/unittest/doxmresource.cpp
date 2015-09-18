@@ -84,6 +84,7 @@ OicSecDoxm_t * getBinDoxm()
 
     doxm->oxm[0]     = OIC_JUST_WORKS;
     doxm->oxmSel     = OIC_JUST_WORKS;
+    doxm->sct        = SYMMETRIC_PAIR_WISE_KEY;
     doxm->owned      = true;
     //TODO: Need more clarification on deviceIDFormat field type.
     //doxm.deviceIDFormat = URN;
@@ -132,6 +133,18 @@ TEST(DoxmEntityHandlerTest, DoxmEntityHandlerValidRequest)
 {
     EXPECT_EQ(OC_STACK_INVALID_PARAM, InitDoxmResource());
     char query[] = "oxm=0;owned=false;owner=owner1";
+    OCEntityHandlerRequest req = OCEntityHandlerRequest();
+    req.method = OC_REST_GET;
+    req.query = OICStrdup(query);
+    EXPECT_EQ(OC_EH_ERROR, DoxmEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, &req));
+
+    OICFree(req.query);
+}
+
+TEST(DoxmEntityHandlerTest, DoxmEntityHandlerDeviceIdQuery)
+{
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, InitDoxmResource());
+    char query[] = "deviceid=MjIyMjIyMjIyMjIyMjIyMg==";
     OCEntityHandlerRequest req = OCEntityHandlerRequest();
     req.method = OC_REST_GET;
     req.query = OICStrdup(query);

@@ -31,6 +31,17 @@
 #include "ocpayload.h"
 #include "payload_logging.h"
 
+#ifdef ROUTING_GATEWAY
+/**
+ * Maximum number of gateway requests to form the routing table.
+ */
+#define MAX_NUM_GATEWAY_REQUEST 20
+
+/**
+ * Sleep duration after every OCProcess().
+ */
+#define SLEEP_DURATION 100000
+#endif
 // Tracking user input
 static int UnicastDiscovery = 0;
 static int TestCase = 0;
@@ -805,6 +816,21 @@ int main(int argc, char* argv[])
         return 0;
     }
 
+#ifdef ROUTING_GATEWAY
+    /*
+     * Before invoking Discover resource, we process the gateway requests
+     * and form the routing table.
+     */
+    for (int index = 0; index < MAX_NUM_GATEWAY_REQUEST; index++)
+    {
+        if (OC_STACK_OK != OCProcess())
+        {
+            OC_LOG(ERROR, TAG, "OCStack process error");
+            return 0;
+        }
+        usleep(SLEEP_DURATION);
+    }
+#endif
     if (Connectivity == CT_ADAPTER_DEFAULT || Connectivity == CT_IP)
     {
         ConnType = CT_ADAPTER_IP;
@@ -859,8 +885,9 @@ int main(int argc, char* argv[])
             OC_LOG(ERROR, TAG, "OCStack process error");
             return 0;
         }
-
-        sleep(2);
+#ifndef ROUTING_GATEAWAY
+        sleep(1);
+#endif
     }
     OC_LOG(INFO, TAG, "Exiting occlient main loop...");
 

@@ -30,7 +30,7 @@ OIC RIsample application
 %build
 
 scons TARGET_OS=tizen -c
-scons TARGET_OS=tizen TARGET_TRANSPORT=%{TARGET_TRANSPORT} SECURED=%{SECURED} RELEASE=%{RELEASE}
+scons TARGET_OS=tizen TARGET_TRANSPORT=%{TARGET_TRANSPORT} SECURED=%{SECURED} RELEASE=%{RELEASE} ROUTING=%{ROUTING}
 
 %install
 
@@ -42,12 +42,14 @@ mkdir -p %{buildroot}/usr/apps/com.oic.ri.sample/bin/internal
 cp -rf %{ROOTDIR}/com.oic.ri.sample.xml %{buildroot}/%{_datadir}/packages
 cp -rf %{ROOTDIR}/scons/occlient %{buildroot}/usr/apps/com.oic.ri.sample/bin/
 cp -rf %{ROOTDIR}/scons/ocserver %{buildroot}/usr/apps/com.oic.ri.sample/bin/
+cp -rf %{ROOTDIR}/scons/ocrouting %{buildroot}/usr/apps/com.oic.ri.sample/bin/
 
 %files
 %manifest com.oic.ri.sample.manifest
 %defattr(-,root,root,-)
 /usr/apps/com.oic.ri.sample/bin/occlient
 /usr/apps/com.oic.ri.sample/bin/ocserver
+/usr/apps/com.oic.ri.sample/bin/ocrouting
 /%{_datadir}/packages/com.oic.ri.sample.xml
 
 

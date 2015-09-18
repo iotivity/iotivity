@@ -22,6 +22,7 @@
 #include "cainterface.h"
 #include "cacommon.h"
 
+#define CA_TRANSPORT_ADAPTER_SCOPE  1000
 
 class CATests : public testing::Test {
     protected:
@@ -464,14 +465,16 @@ CAResult_t checkSelectNetwork()
 TEST_F(CATests, SelectNetworkTestBad)
 {
     //Select disable network
-    EXPECT_EQ(CA_NOT_SUPPORTED, CASelectNetwork((CATransportAdapter_t)1000));
+    EXPECT_EQ(CA_NOT_SUPPORTED, CASelectNetwork((CATransportAdapter_t)
+                                                CA_TRANSPORT_ADAPTER_SCOPE));
 }
 
 // check return value when selected network is disable
 TEST_F(CATests, UnSelectNetworkTest)
 {
     //UnSelect disable network
-    EXPECT_EQ(CA_STATUS_FAILED, CAUnSelectNetwork((CATransportAdapter_t)1000));
+    EXPECT_EQ(CA_STATUS_FAILED, CAUnSelectNetwork((CATransportAdapter_t)
+                                                  CA_TRANSPORT_ADAPTER_SCOPE));
 }
 
 // CAHandlerRequestResponse TC
