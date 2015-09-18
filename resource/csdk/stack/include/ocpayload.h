@@ -25,10 +25,6 @@
 #include <inttypes.h>
 #include "octypes.h"
 
-#ifdef WITH_RD
-#include "rd_payload.h"
-#endif
-
 #ifdef __cplusplus
 extern "C"
 {
@@ -143,9 +139,12 @@ OCPresencePayload* OCPresencePayloadCreate(uint32_t seqNum, uint32_t maxAge,
         OCPresenceTrigger trigger, const char* resourceType);
 void OCPresencePayloadDestroy(OCPresencePayload* payload);
 
+// Helper API
+OCStringLL* CloneOCStringLL (OCStringLL* ll);
+void OCFreeOCStringLL(OCStringLL* ll);
+
 #ifdef __cplusplus
 }
 #endif
 
 #endif
-

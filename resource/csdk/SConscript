@@ -101,11 +101,6 @@ if env.get('SECURED') == '1':
 if env.get('LOGGING'):
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
-if env.get('WITH_RD') == '1':
-	liboctbstack_env.PrependUnique(CPPPATH = ['../../service/resource-directory/include'])
-	liboctbstack_env.AppendUnique(CPPDEFINES = ['-DWITH_RD'])
-	liboctbstack_env.AppendUnique(LIBS = ['resource_directory'])
-
 liboctbstack_env.Append(LIBS = ['c_common'])
 
 if liboctbstack_env.get('ROUTING') in ['GW', 'EP']:
@@ -129,7 +124,8 @@ liboctbstack_src = [
 	OCTBSTACK_SRC + 'occollection.c',
 	OCTBSTACK_SRC + 'oicgroup.c',
 	'logger/src/logger.c',
-	'ocrandom/src/ocrandom.c'
+	'ocrandom/src/ocrandom.c',
+	OCTBSTACK_SRC + "rdpayload.c"
 	]
 
 liboctbstack_src.extend(env['cbor_files'])

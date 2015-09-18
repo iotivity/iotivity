@@ -34,7 +34,12 @@ void handleSigInt(int signum);
 int main()
 {
     printf("OCResourceDirectory is starting...\n");
-
+    OCStackResult result = OCInit(NULL, 0, OC_CLIENT_SERVER);
+    if (result != OC_STACK_OK)
+    {
+        printf("Failed starting RD server ...\n");
+        return 0;
+    }
     if (OCRDStart() != OC_STACK_OK)
     {
         printf("OCRDStart failed...\n");

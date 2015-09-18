@@ -38,10 +38,11 @@
 #include "secureresourcemanager.h"
 #include "cacommon.h"
 #include "cainterface.h"
+#include "rdpayload.h"
 
 #ifdef WITH_RD
 #include "rd_server.h"
-#endif 
+#endif
 
 #ifdef ROUTING_GATEWAY
 #include "routingmanager.h"
@@ -287,6 +288,27 @@ OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
     return OC_STACK_OK;
 }
 
+OCStackResult BuildVirtualCollectionResourceResponse(const OCResourceCollectionPayload *resourcePtr,
+        OCDiscoveryPayload *payload, OCDevAddr *devAddr)
+{
+    if (!resourcePtr || !payload)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+    if (resourcePtr->tags && (resourcePtr->tags->bitmap & OC_SECURE))
+    {
+       if (GetSecurePortInfo(devAddr, &resourcePtr->tags->port) != OC_STACK_OK)
+       {
+           OC_LOG(ERROR, TAG, "Failed setting secure port.");
+       }
+    }
+    if (resourcePtr->tags && !resourcePtr->tags->baseURI)
+    {
+        resourcePtr->tags->baseURI = OICStrdup(devAddr->addr);
+    }
+    OCDiscoveryCollectionPayloadAddResource(payload, resourcePtr->tags, resourcePtr->setLinks);
+    return OC_STACK_OK;
+}
 
 uint8_t IsCollectionResource (OCResource *resource)
 {
@@ -546,62 +568,11 @@ OCStackResult SendNonPersistantDiscoveryResponse(OCServerRequest *request, OCRes
 }
 
 #ifdef WITH_RD
-static OCStackResult checkResourceExistsAtRD(const char *interfaceType, const char *resourceType, OCRepPayload **repPayload)
+static OCStackResult checkResourceExistsAtRD(const char *interfaceType, const char *resourceType,
+    OCResourceCollectionPayload **repPayload)
 {
-    char *uri = NULL;
-    char *rt = NULL;
-    char *itf = NULL;
-
-    if (OCRDCheckPublishedResource(interfaceType, resourceType, &uri, &rt, &itf) == OC_STACK_OK)
+    if (OCRDCheckPublishedResource(interfaceType, resourceType, repPayload) == OC_STACK_OK)
     {
-        if (!uri || !rt || !itf)
-        {
-            OC_LOG_V(ERROR, TAG, "Failed allocating memory.");
-            // if any of the parameter has memory allocated free each one of them.
-            OICFree(uri);
-            OICFree(rt);
-            OICFree(itf);
-            return OC_STACK_NO_MEMORY;
-        }
-
-        OCRepPayload *rdResource = OICCalloc(1, sizeof(OCRepPayload));
-        if (!rdResource)
-        {
-            OC_LOG_V(ERROR, TAG, "Failed allocating memory.");
-            OICFree(uri);
-            OICFree(rt);
-            OICFree(itf);
-            return OC_STACK_NO_MEMORY;
-        }
-
-        rdResource->uri = uri;
-
-        rdResource->types = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
-        if(!rdResource->types)
-        {
-            OC_LOG_V(ERROR, TAG, "Failed allocating memory.");
-            OICFree(uri);
-            OICFree(rt);
-            OICFree(itf);
-            OICFree(rdResource);
-            return OC_STACK_NO_MEMORY;
-        }
-        rdResource->types->value = rt;
-
-        rdResource->interfaces = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
-        if(!rdResource->interfaces)
-        {
-            OC_LOG_V(ERROR, TAG, "Failed allocating memory.");
-            OICFree(uri);
-            OICFree(rt);
-            OICFree(itf);
-            OICFree(rdResource);
-            return OC_STACK_NO_MEMORY;
-        }
-        rdResource->interfaces->value = itf;
-
-        *repPayload = rdResource;
-
         return OC_STACK_OK;
     }
     else
@@ -644,19 +615,19 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
 
             if(payload)
             {
+                bool foundResourceAtRD = false;
                 for(;resource && discoveryResult == OC_STACK_OK; resource = resource->next)
                 {
-                    bool foundResourceAtRD = false;
 #ifdef WITH_RD
                     if (strcmp(resource->uri, OC_RSRVD_RD_URI) == 0)
                     {
-                        OCRepPayload *repPayload = NULL;
+                        OCResourceCollectionPayload *repPayload;
                         discoveryResult = checkResourceExistsAtRD(filterOne, filterTwo, &repPayload);
                         if (discoveryResult != OC_STACK_OK)
                         {
                              break;
                         }
-                        discoveryResult = BuildVirtualResourceResponse((OCResource *)repPayload,
+                        discoveryResult = BuildVirtualCollectionResourceResponse(repPayload,
                                     (OCDiscoveryPayload*)payload,
                                     &request->devAddr);
                         foundResourceAtRD = true;
@@ -669,8 +640,8 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
                                 &request->devAddr);
                     }
                 }
-                // Set discoveryResult appropriately if no 'valid' resources are available.
-                if (((OCDiscoveryPayload*)payload)->resources == NULL)
+                // Set discoveryResult appropriately if no 'valid' resources are available
+                if (((OCDiscoveryPayload*)payload)->resources == NULL && !foundResourceAtRD)
                 {
                     discoveryResult = OC_STACK_NO_RESOURCE;
                 }
@@ -853,13 +824,12 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
         type = PAYLOAD_TYPE_SECURITY;
 
     }
-#ifdef WITH_RD
 
-    if (request && request->resourceUrl && strcmp(request->resourceUrl, OC_RSRVD_RD_URI) == 0)
+    if (request && strcmp(request->resourceUrl, OC_RSRVD_RD_URI) == 0)
     {
         type = PAYLOAD_TYPE_RD;
     }
-#endif
+
     result = FormOCEntityHandlerRequest(&ehRequest,
                                         (OCRequestHandle)request,
                                         request->method,

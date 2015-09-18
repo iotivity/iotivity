@@ -1,6 +1,6 @@
-// Copyright 2015 Samsung Electronics All Rights Reserved.
 //******************************************************************
 //
+// Copyright 2015 Samsung Electronics All Rights Reserved.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //
@@ -19,11 +19,10 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #include "rd_server.h"
 
-#include "rd_types.h"
-#include "rd_payload.h"
 #include "rd_storage.h"
 
-#include "logger.h"
+#include "rdpayload.h"
+#include "payload_logging.h"
 
 #define TAG  PCF("RDServer")
 
@@ -37,8 +36,6 @@ static OCStackResult sendResponse(const OCEntityHandlerRequest *ehRequest, OCRDP
     response.resourceHandle = ehRequest->resource;
     response.ehResult = OC_EH_OK;
     response.payload = (OCPayload*)(rdPayload);
-    response.payload->type = PAYLOAD_TYPE_RD;
-
     return OCDoResponse(&response);
 }
 
@@ -50,35 +47,33 @@ static OCEntityHandlerResult handleGetRequest(const OCEntityHandlerRequest *ehRe
 {
     if (!ehRequest)
     {
-        OC_LOG_V(DEBUG, TAG, "Invalid request pointer.");
+        OC_LOG(DEBUG, TAG, "Invalid request pointer.");
         return OC_EH_ERROR;
     }
 
     OCEntityHandlerResult ehResult = OC_EH_OK;
     OC_LOG_V(DEBUG, TAG, "Received OC_REST_GET from client with query: %s.", ehRequest->query);
 
-    OCRDPayload *rdPayload = OCRDPayloadCreate(RD_PAYLOAD_TYPE_DISCOVERY);
+    OCRDPayload *rdPayload = OCRDPayloadCreate();
     if (!rdPayload)
     {
         return OC_STACK_NO_MEMORY;
     }
 
-    rdPayload->rdDiscovery = OCRDDiscoveryPayloadCreate(OC_RD_DISC_SEL);
+    rdPayload->rdDiscovery = OCRDDiscoveryPayloadCreate(NULL, OCGetServerInstanceIDString(), OC_RD_DISC_SEL);
     if (!rdPayload->rdDiscovery)
     {
         OCRDPayloadDestroy(rdPayload);
         return OC_STACK_NO_MEMORY;
     }
 
-    OCRDPayloadLog(DEBUG, TAG, rdPayload);
+    OC_LOG_PAYLOAD(DEBUG, (OCPayload *) rdPayload);
 
     if (sendResponse(ehRequest, rdPayload) != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "Sending response failed.");
         ehResult = OC_EH_ERROR;
     }
-
-    OCRDPayloadDestroy(rdPayload);
 
     return ehResult;
 }
@@ -91,28 +86,28 @@ static OCEntityHandlerResult handlePublishRequest(const OCEntityHandlerRequest *
 {
     OCEntityHandlerResult ehResult = OC_EH_OK;
 
-    OC_LOG_V(DEBUG, TAG, "Received OC_REST_PUT from client with query: %s.", ehRequest->query);
-
     if (!ehRequest)
     {
-        OC_LOG_V(DEBUG, TAG, "Invalid request pointer");
+        OC_LOG(DEBUG, TAG, "Invalid request pointer");
         return OC_EH_ERROR;
     }
 
+    OC_LOG_V(DEBUG, TAG, "Received OC_REST_PUT from client with query: %s.", ehRequest->query);
+
     OCRDPayload *payload = (OCRDPayload *)ehRequest->payload;
-    if (payload->payloadType == RD_PAYLOAD_TYPE_PUBLISH)
+    if (payload && payload->rdPublish)
     {
         OCRDStorePublishedResources(payload->rdPublish);
     }
 
-    OCRDPayload *rdPayload = OCRDPayloadCreate(RD_PAYLOAD_TYPE_DISCOVERY);
+    OCRDPayload *rdPayload = OCRDPayloadCreate();
     if (!rdPayload)
     {
+        OC_LOG(ERROR, TAG, "Failed allocating memory.");
         return OC_STACK_NO_MEMORY;
     }
 
-    OCRDPayloadLog(DEBUG, TAG, rdPayload);
-    rdPayload->payloadType = RD_PAYLOAD_TYPE_RESPONSE;
+    OC_LOG_PAYLOAD(DEBUG, (OCPayload *) rdPayload);
 
     if (sendResponse(ehRequest, rdPayload) != OC_STACK_OK)
     {
@@ -128,7 +123,7 @@ static OCEntityHandlerResult handlePublishRequest(const OCEntityHandlerRequest *
  * will handle REST request (GET/PUT/POST/DEL) for them.
  */
 static OCEntityHandlerResult rdEntityHandler(OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest *ehRequest, void *callbackParameter)
+        OCEntityHandlerRequest *ehRequest, __attribute__((unused)) void *callbackParameter)
 {
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
@@ -139,7 +134,7 @@ static OCEntityHandlerResult rdEntityHandler(OCEntityHandlerFlag flag,
 
     if (flag & OC_REQUEST_FLAG)
     {
-        OC_LOG_V(DEBUG, TAG, "Flag includes OC_REQUEST_FLAG.");
+        OC_LOG(DEBUG, TAG, "Flag includes OC_REQUEST_FLAG.");
         switch (ehRequest->method)
         {
             case OC_REST_GET:
@@ -164,31 +159,27 @@ static OCEntityHandlerResult rdEntityHandler(OCEntityHandlerFlag flag,
 }
 
 /**
- * Starts resource directory server and registers RD resource
+ * Registers RD resource
  */
 OCStackResult OCRDStart()
 {
-    OCStackResult result = OCInit(NULL, 0, OC_CLIENT_SERVER);
     OCResourceHandle rdHandle = NULL;
+
+    OCStackResult result = OCCreateResource(&rdHandle,
+                                OC_RSRVD_RESOURCE_TYPE_RD,
+                                OC_RSRVD_INTERFACE_DEFAULT,
+                                OC_RSRVD_RD_URI,
+                                rdEntityHandler,
+                                NULL,
+                                (OC_ACTIVE | OC_DISCOVERABLE | OC_OBSERVABLE));
 
     if (result == OC_STACK_OK)
     {
-        result = OCCreateResource(&rdHandle,
-                                  OC_RSRVD_RESOURCE_TYPE_RD,
-                                  OC_RSRVD_INTERFACE_DEFAULT,
-                                  OC_RSRVD_RD_URI,
-                                  rdEntityHandler,
-                                  NULL,
-                                  (OC_ACTIVE | OC_DISCOVERABLE | OC_OBSERVABLE));
-
-        if (result == OC_STACK_OK)
-        {
-            OC_LOG_V(DEBUG, TAG, "Resource Directory Started.");
-        }
-        else
-        {
-            OC_LOG(ERROR, TAG, "Failed starting Resource Directory.");
-        }
+        OC_LOG(DEBUG, TAG, "Resource Directory Started.");
+    }
+    else
+    {
+        OC_LOG(ERROR, TAG, "Failed starting Resource Directory.");
     }
 
     return result;
@@ -203,7 +194,7 @@ OCStackResult OCRDStop()
 
     if (result == OC_STACK_OK)
     {
-        OC_LOG_V(DEBUG, TAG, "Resource Directory Stopped.");
+        OC_LOG(DEBUG, TAG, "Resource Directory Stopped.");
     }
     else
     {

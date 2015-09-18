@@ -20,13 +20,13 @@
 #ifndef _RESOURCE_DIRECTORY_SERVER_STORAGE_H_
 #define _RESOURCE_DIRECTORY_SERVER_STORAGE_H_
 
-#include "rd_types.h"
+#include "octypes.h"
 
 /** Stucture holding Published Resources on the Resource Directory. */
 typedef struct OCRDStorePublishResources
 {
     /** Publish resource. */
-    OCRDPublishPayload *publishResource;
+    OCResourceCollectionPayload *publishedResource;
     /** Linked list pointing to next published resource. */
     struct OCRDStorePublishResources *next;
 } OCRDStorePublishResources;
@@ -38,7 +38,7 @@ typedef struct OCRDStorePublishResources
  *
  * @return ::OC_STACK_OK upon success, ::OC_STACK_ERROR in case of error.
  */
-OCStackResult OCRDStorePublishedResources(OCRDPublishPayload *payload);
+OCStackResult OCRDStorePublishedResources(const OCResourceCollectionPayload *payload);
 
 #ifdef __cplusplus
 }

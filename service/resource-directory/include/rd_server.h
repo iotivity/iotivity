@@ -29,8 +29,7 @@ extern "C" {
 #endif // __cplusplus
 
 /**
-* Starts resource directory.
-* This function creates a RD server and create resource /oic/rd.
+* This function creates resource /oic/rd.
 *
 * @return ::OC_STACK_OK upon success, ::OC_STACK_ERROR in case of error.
 */
@@ -59,7 +58,7 @@ OCStackResult OCRDStop();
  * the case that OC_STACK_SUCCESS is returned.
  */
 OCStackResult OCRDCheckPublishedResource(const char *interfaceType, const char *resourceType,
-         char **uri, char **rt, char **itf);
+        OCResourceCollectionPayload **payload);
 
 #ifdef __cplusplus
 }

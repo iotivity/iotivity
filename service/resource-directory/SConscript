@@ -66,7 +66,6 @@ RD_SRC_DIR = 'src/'
 rd_src = [
         RD_SRC_DIR + '/internal/rd_storage.c',
         RD_SRC_DIR + 'rd_server.c',
-        RD_SRC_DIR + 'rd_payload.c',
         RD_SRC_DIR + 'rd_client.c',
          ]
 
