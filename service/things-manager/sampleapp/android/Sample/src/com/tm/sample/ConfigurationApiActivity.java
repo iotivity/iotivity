@@ -20,6 +20,7 @@
 package com.tm.sample;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +32,7 @@ import org.iotivity.base.OcPlatform;
 import org.iotivity.base.OcRepresentation;
 import org.iotivity.base.OcResource;
 import org.iotivity.base.OcResourceHandle;
-import org.iotivity.service.tm.GroupSynchronization;
+import org.iotivity.base.ResourceProperty;
 import org.iotivity.service.tm.OCStackResult;
 import org.iotivity.service.tm.GroupManager;
 import org.iotivity.service.tm.ThingsMaintenance;
@@ -94,7 +95,6 @@ public class ConfigurationApiActivity extends Activity {
     private static Message                   msg;
 
     private GroupManager                     groupManager                           = null;
-    private GroupSynchronization             groupSyn                               = null;
     private ThingsConfiguration              thingsConfiguration                    = null;
     private ThingsMaintenance                thingsMaintenance                      = null;
     private Map<String, ResourceInformation> resourceList                           = null;
@@ -115,7 +115,6 @@ public class ConfigurationApiActivity extends Activity {
 
         mcontext = this;
         groupManager = new GroupManager();
-        groupSyn = new GroupSynchronization();
         thingsConfiguration = ThingsConfiguration.getInstance();
         thingsMaintenance = ThingsMaintenance.getInstance();
 
@@ -755,20 +754,27 @@ public class ConfigurationApiActivity extends Activity {
 
         OcResourceHandle resourceHandle = null;
 
-        // Crate group
-        OCStackResult result = groupSyn.createGroup(typename);
-        if ((OCStackResult.OC_STACK_OK != result)) {
-            Log.e(LOG_TAG, "createGroup returned error: " + result.name());
-            return;
-        } else {
-            Log.e(LOG_TAG, "createGroup returned: " + result.name());
+        try {
+            resourceHandle = OcPlatform.registerResource(
+                    uri,
+                    typename,
+                    OcPlatform.BATCH_INTERFACE, null, EnumSet.of(
+                            ResourceProperty.DISCOVERABLE));
+        } catch (OcException e) {
+            Log.e(LOG_TAG, "go exception");
+            Log.e(LOG_TAG, "RegisterResource error. " + e.getMessage());
         }
-        groupList = groupSyn.getGroupList();
-        if (groupList.containsKey(typename)) {
-            resourceHandle = groupList.get(typename);
-        } else {
-            Log.e(LOG_TAG, "group does not contain groupResourceType: "
-                    + result.name());
+        try {
+            OcPlatform.bindInterfaceToResource(resourceHandle, OcPlatform.GROUP_INTERFACE);
+        } catch (OcException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        try {
+            OcPlatform.bindInterfaceToResource(resourceHandle, OcPlatform.DEFAULT_INTERFACE);
+        } catch (OcException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
 
         if (null == resourceHandle) {
@@ -826,10 +832,6 @@ public class ConfigurationApiActivity extends Activity {
                 }
             }
 
-            // delete all the groups
-            groupSyn.deleteGroup(CONFIGURATION_COLLECTION_RESOURCE_TYPE);
-            groupSyn.deleteGroup(MAINTENANCE_COLLECTION_RESOURCE_TYPE);
-            groupSyn.deleteGroup(FACTORYSET_COLLECTION_RESOURCE_TYPE);
         } catch (OcException e) {
             Log.e(LOG_TAG, "OcException occured! " + e.toString());
         }

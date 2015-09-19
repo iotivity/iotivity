@@ -34,9 +34,6 @@
 #define TM_SERVICE_GROUP_MANAGER_CLASS_PATH    "org/iotivity/service/tm/GroupManager"
 #define TM_SERVICE_GROUP_MANAGER_CLASS_TYPE    "Lorg/iotivity/service/tm/GroupManager;"
 
-#define TM_SERVICE_GROUP_SYNCHRONIZATION_CLASS_PATH    "org/iotivity/service/tm/GroupSynchronization"
-#define TM_SERVICE_GROUP_SYNCHRONIZATION_CLASS_TYPE    "Lorg/iotivity/service/tm/GroupSynchronization;"
-
 #define TM_SERVICE_THINGS_CONFIGURATION_CLASS_PATH    "org/iotivity/service/tm/ThingsConfiguration"
 #define TM_SERVICE_THINGS_CONFIGURATION_CLASS_TYPE    "Lorg/iotivity/service/tm/ThingsConfigurationn;"
 
