@@ -42,7 +42,7 @@
 #include "RCSResourceObject.h"
 #include "RCSRemoteResourceObject.h"
 
-#include "ResourceEncapsulationTesetSimulator.h"
+#include "ResourceContainerTestSimulator.h"
 
 using namespace std;
 using namespace testing;
@@ -679,7 +679,7 @@ class DiscoverResourceUnitTest: public TestWithMock
                                    std::vector<RCSResourceAttributes::Value> values)>
         UpdatedCB;
     public:
-        ResourceEncapsulationTestSimulator::Ptr testObject;
+        ResourceContainerTestSimulator::Ptr testObject;
         DiscoverResourceUnit::Ptr m_pDiscoverResourceUnit;
         std::string m_bundleId;
         UpdatedCB m_updatedCB;
@@ -689,7 +689,7 @@ class DiscoverResourceUnitTest: public TestWithMock
         {
             TestWithMock::SetUp();
 
-            testObject = std::make_shared<ResourceEncapsulationTestSimulator>();
+            testObject = std::make_shared<ResourceContainerTestSimulator>();
             testObject->createResource();
             m_bundleId = "/a/TempHumSensor/Container";
             m_pDiscoverResourceUnit = std::make_shared< DiscoverResourceUnit >( m_bundleId );
@@ -744,7 +744,7 @@ class RemoteResourceUnitTest: public TestWithMock
         UpdatedCBFromServer;
 
     public:
-        ResourceEncapsulationTestSimulator::Ptr testObject;
+        ResourceContainerTestSimulator::Ptr testObject;
         RemoteResourceUnit::Ptr m_pRemoteResourceUnit;
         RCSRemoteResourceObject::Ptr m_pRCSRemoteResourceObject;
         UpdatedCBFromServer m_updatedCBFromServer;
@@ -754,7 +754,7 @@ class RemoteResourceUnitTest: public TestWithMock
         {
             TestWithMock::SetUp();
 
-            testObject = std::make_shared<ResourceEncapsulationTestSimulator>();
+            testObject = std::make_shared<ResourceContainerTestSimulator>();
             testObject->defaultRunSimulator();
             m_pRCSRemoteResourceObject = testObject->getRemoteResource();
             m_updatedCBFromServer = ([](RemoteResourceUnit::UPDATE_MSG, RCSRemoteResourceObject::Ptr) {});
@@ -768,7 +768,7 @@ class RemoteResourceUnitTest: public TestWithMock
         }
 };
 
-/*TEST_F(RemoteResourceUnitTest, createRemoteResourceInfo)
+TEST_F(RemoteResourceUnitTest, createRemoteResourceInfo)
 {
     EXPECT_NE(nullptr, m_pRemoteResourceUnit->createRemoteResourceInfo(m_pRCSRemoteResourceObject,
               m_updatedCBFromServer));
@@ -816,18 +816,3 @@ TEST_F(RemoteResourceUnitTest, onCacheCBCalled)
     testObject->ChangeAttributeValue();
     EXPECT_TRUE(isCalled);
 }
-
-TEST_F(RemoteResourceUnitTest, onStateCBCalled)
-{
-    bool isCalled = false;
-    mocks.ExpectCallFunc(onStateCB).Do(
-        [this, &isCalled](ResourceState)
-    {
-        isCalled = true;
-    });
-    RemoteResourceUnit::Ptr ptr = m_pRemoteResourceUnit->createRemoteResourceInfoWithStateCB(
-                                      m_pRCSRemoteResourceObject, m_updatedCBFromServer, onStateCB);
-    ptr->startMonitoring();
-    testObject->ChangeResourceState();
-    EXPECT_TRUE(isCalled);
-}*/

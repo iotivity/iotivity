@@ -1,4 +1,23 @@
-//ResourceEncapsulationTestSimulator.h
+//******************************************************************
+//
+// Copyright 2015 Samsung Electronics All Rights Reserved.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 #include <memory>
 #include <mutex>
 #include <atomic>
@@ -10,16 +29,14 @@
 #include "RCSResourceAttributes.h"
 #include "RCSAddress.h"
 
-//#include "RequestObject.h"
-
 using namespace testing;
 using namespace OIC::Service;
 
-class ResourceEncapsulationTestSimulator
-    : public std::enable_shared_from_this<ResourceEncapsulationTestSimulator>
+class ResourceContainerTestSimulator
+    : public std::enable_shared_from_this<ResourceContainerTestSimulator>
 {
     public:
-        typedef std::shared_ptr<ResourceEncapsulationTestSimulator> Ptr;
+        typedef std::shared_ptr<ResourceContainerTestSimulator> Ptr;
 
         RCSResourceObject::Ptr server;
         RCSRemoteResourceObject::Ptr remoteResource;
@@ -33,9 +50,10 @@ class ResourceEncapsulationTestSimulator
         std::string RESOURCEINTERFACE;
         std::string ATTR_KEY;
         int ATTR_VALUE;
+        std::unique_ptr<RCSDiscoveryManager::DiscoveryTask> discoveryTask;
 
     public:
-        ResourceEncapsulationTestSimulator()
+        ResourceContainerTestSimulator()
             : server(nullptr), remoteResource(nullptr),
               mutexForDiscovery(),
               MULTICASTURI("/oic/res"),
@@ -46,7 +64,7 @@ class ResourceEncapsulationTestSimulator
               ATTR_VALUE(0)
         { }
 
-        ~ResourceEncapsulationTestSimulator()
+        ~ResourceContainerTestSimulator()
         {
             if (remoteResource != nullptr && remoteResource->isCaching())
             {
@@ -76,9 +94,9 @@ class ResourceEncapsulationTestSimulator
         }
 
         static void onDiscoveryResource(RCSRemoteResourceObject::Ptr resourceObject,
-                                        std::weak_ptr<ResourceEncapsulationTestSimulator> rPtr)
+                                        std::weak_ptr<ResourceContainerTestSimulator> rPtr)
         {
-            std::shared_ptr<ResourceEncapsulationTestSimulator> ptr = rPtr.lock();
+            std::shared_ptr<ResourceContainerTestSimulator> ptr = rPtr.lock();
             if (ptr != nullptr)
             {
                 ptr->onDiscoveryResource_Impl(resourceObject);
@@ -126,11 +144,10 @@ class ResourceEncapsulationTestSimulator
         {
             try
             {
-                RCSDiscoveryManager::getInstance()->discoverResourceByType(RCSAddress::multicast(),
-                        MULTICASTURI, resourceType,
-                        std::bind(onDiscoveryResource,
-                                  std::placeholders::_1,
-                                  std::weak_ptr<ResourceEncapsulationTestSimulator>(shared_from_this())));
+                discoveryTask = RCSDiscoveryManager::getInstance()->discoverResourceByType(
+                        RCSAddress::multicast(), MULTICASTURI, resourceType,
+                        std::bind(onDiscoveryResource, std::placeholders::_1,
+                           std::weak_ptr<ResourceContainerTestSimulator>(shared_from_this())));
                 mutexForDiscovery.lock();
             }
             catch (std::exception &e)

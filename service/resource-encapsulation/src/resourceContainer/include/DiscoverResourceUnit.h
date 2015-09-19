@@ -70,6 +70,7 @@ namespace OIC
                 std::string m_ResourceType;
                 std::string m_AttrubuteName;
                 std::atomic_bool isStartedDiscovery;
+                std::unique_ptr<RCSDiscoveryManager::DiscoveryTask> discoveryTask;
 
                 std::vector<RemoteResourceUnit::Ptr> m_vecRemoteResource;
                 RCSDiscoveryManager::ResourceDiscoveredCallback pDiscoveredCB;

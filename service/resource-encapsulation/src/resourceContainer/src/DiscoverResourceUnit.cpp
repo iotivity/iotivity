@@ -68,8 +68,8 @@ void DiscoverResourceUnit::startDiscover(DiscoverResourceInfo info, UpdatedCB up
             pDiscoveredCB = std::bind(&DiscoverResourceUnit::discoverdCB, this, std::placeholders::_1, m_Uri);
         }
 
-        RCSDiscoveryManager::getInstance()->discoverResourceByType(RCSAddress::multicast(), m_ResourceType,
-                pDiscoveredCB);
+        discoveryTask = RCSDiscoveryManager::getInstance()->discoverResourceByType(
+                RCSAddress::multicast(), m_ResourceType, pDiscoveredCB);
     }
     catch (InvalidParameterException &e)
     {
