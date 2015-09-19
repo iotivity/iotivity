@@ -587,6 +587,10 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
                  * in owned state.
                  */
                 CAEnableAnonECDHCipherSuite(false);
+#ifdef __WITH_X509__
+#define TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8 0xC0AE
+                CASelectCipherSuite(TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
+#endif //__WITH_X509__
 #endif //__WITH_DTLS__
             }
         }

@@ -49,6 +49,10 @@ const char * OIC_RSRC_TYPE_SEC_CRED = "oic.sec.cred";
 const char * OIC_RSRC_CRED_URI =  "/oic/sec/cred";
 const char * OIC_JSON_CRED_NAME = "cred";
 
+//CRL
+const char * OIC_RSRC_TYPE_SEC_CRL = "oic.sec.crl";
+const char * OIC_RSRC_CRL_URI =  "/oic/sec/crl";
+const char * OIC_JSON_CRL_NAME = "crl";
 //svc
 const char * OIC_RSRC_TYPE_SEC_SVC = "oic.sec.svc";
 const char * OIC_RSRC_SVC_URI =  "/oic/sec/svc";

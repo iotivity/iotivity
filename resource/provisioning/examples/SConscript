@@ -57,6 +57,9 @@ examples_env.PrependUnique(LIBS = ['ocprovision', 'oc', 'ocpmapi', 'octbstack',
                                     'oc_logger', 'connectivity_abstraction', 'coap'])
 if env.get('SECURED') == '1':
     examples_env.AppendUnique(LIBS = ['tinydtls'])
+if env.get('DTLS_WITH_X509') == '1':
+	examples_env.AppendUnique(LIBS = ['CKManager'])
+	examples_env.AppendUnique(LIBS = ['asn1'])
 
 if target_os == 'android':
 	examples_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])

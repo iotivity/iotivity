@@ -43,6 +43,17 @@ OCStackResult PMGeneratePairWiseCredentials(OicSecCredType_t type, size_t keySiz
                                        OicSecCred_t **firstCred,
                                        OicSecCred_t **secondCred);
 
+/**
+ * Function to generate certificate credentials.
+ *
+ * @param[in]  ptDeviceId     Device ID of provisioning tool.
+ * @param[in]  deviceId       DeviceID of the device.
+ * @param[out] cred           Generated credential for device.
+ * @return  OC_STACK_OK on success
+ */
+OCStackResult PMGenerateCertificateCredentials(const OicUuid_t *ptDeviceId,
+                                          const OicUuid_t *deviceId, OicSecCred_t **cred);
+
 #ifdef __cplusplus
 }
 #endif

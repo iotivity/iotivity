@@ -43,6 +43,9 @@
 
 #include <stdint.h> // for uint8_t typedef
 #include <stdbool.h>
+#ifdef __WITH_X509__
+#include "byte_array.h"
+#endif /* __WITH_X509__ */
 
 #ifdef __cplusplus
 extern "C" {
@@ -253,6 +256,10 @@ typedef char *OicUrn_t; //TODO is URN type defined elsewhere?
 typedef struct OicUuid OicUuid_t; //TODO is UUID type defined elsewhere?
 
 
+#ifdef __WITH_X509__
+typedef struct OicSecCrl OicSecCrl_t;
+#endif /* __WITH_X509__ */
+
 /**
  * @brief   /oic/uuid (Universal Unique Identifier) data type.
  */
@@ -430,6 +437,15 @@ struct OicSecSvc
     OicUuid_t               *owners;                //3:R:M:Y:oic.uuid
     OicSecSvc_t             *next;
 };
+
+#ifdef __WITH_X509__
+struct OicSecCrl
+{
+    uint16_t CrlId;
+    ByteArray ThisUpdate;   
+    ByteArray CrlData;      
+};
+#endif /* __WITH_X509__ */
 
 #ifdef __cplusplus
 }
