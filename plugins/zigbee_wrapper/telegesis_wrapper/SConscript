@@ -1,0 +1,10 @@
+##
+# Telegesis Wrapper build script
+##
+
+Import('env')
+
+Print "Reading top Telegesis Wrapper."
+
+env.SConscript('./src/SConscript')
+

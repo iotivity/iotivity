@@ -1,0 +1,10 @@
+##
+# Zigbee Wrapper build script
+##
+
+Import('env')
+
+Print "Reading top Zigbee Wrapper."
+
+env.SConscript('./telegesis_wrapper/SConscript')
+

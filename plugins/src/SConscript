@@ -1,0 +1,43 @@
+##
+# Plugin Interface build script
+##
+
+import os.path
+
+Import('env')
+
+target_os = env.get('TARGET_OS')
+src_dir = env.get('SRC_DIR')
+pi_path = os.path.join(src_dir, 'plugins')
+
+#####################################################################
+# Source files and Target(s)
+######################################################################
+
+print"Reading PI script"
+
+env.PrependUnique(CPPPATH = [ os.path.join(src_dir, 'resource', 'csdk', 'stack', 'include') ])
+env.AppendUnique(CPPPATH = [ os.path.join(pi_path, 'include'),
+                             os.path.join(pi_path, 'include', 'internal') ])
+
+if target_os not in ['arduino', 'windows', 'winrt']:
+	env.AppendUnique(CPPDEFINES = ['WITH_POSIX'])
+
+if target_os in ['darwin','ios']:
+	env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
+
+pi_src = [
+	'plugininterface.c',
+	]
+
+env.AppendUnique(PI_SRC = pi_src)
+
+print "Include path is %s" % env.get('CPPPATH')
+print "Files path is %s" % env.get('PI_SRC')
+if target_os in ['android', 'tizen']:
+	calib = env.SharedLibrary('plugin_interface', env.get('PI_SRC'))
+else:
+	calib = env.StaticLibrary('plugin_interface', env.get('PI_SRC'))
+env.InstallTarget(calib, 'libplugin_interface')
+env.UserInstallTargetLib(calib, 'libplugin_interface')
+
