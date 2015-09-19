@@ -50,6 +50,13 @@ static bool g_isInitialized = false;
 extern void CADTLSSetCredentialsCallback(CAGetDTLSCredentialsHandler credCallback);
 #endif
 
+#ifdef __WITH_X509__
+// CAAdapterNetDTLS will register the callback.
+// Taking callback all the way through adapters not the right approach, hence calling here.
+extern void CADTLSSetX509CredentialsCallback(CAGetDTLSX509CredentialsHandler credCallback);
+extern void CADTLSSetCrlCallback(CAGetDTLSCrlHandler crlCallback);
+#endif
+
 CAResult_t CAInitialize()
 {
     OIC_LOG(DEBUG, TAG, "CAInitialize");
@@ -132,6 +139,34 @@ CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSCredentialsHandler GetDTLSC
     return CA_STATUS_OK;
 }
 #endif //__WITH_DTLS__
+
+#ifdef __WITH_X509__
+CAResult_t CARegisterDTLSX509CredentialsHandler(CAGetDTLSX509CredentialsHandler GetDTLSX509CredentialsHandler)
+{
+    OIC_LOG(DEBUG, TAG, "CARegisterDTLSX509CredentialsHandler");
+
+    if(!g_isInitialized)
+    {
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+
+    CADTLSSetX509CredentialsCallback(GetDTLSX509CredentialsHandler);
+    return CA_STATUS_OK;
+}
+
+CAResult_t CARegisterDTLSCrlHandler(CAGetDTLSCrlHandler GetDTLSCrlHandler)
+{
+    OIC_LOG(DEBUG, TAG, "CARegisterDTLSCrlHandler");
+
+    if(!g_isInitialized)
+    {
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+
+    CADTLSSetCrlCallback(GetDTLSCrlHandler);
+    return CA_STATUS_OK;
+}
+#endif //__WITH_X509__
 
 CAResult_t CACreateEndpoint(CATransportFlags_t flags,
                             CATransportAdapter_t adapter,

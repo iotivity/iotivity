@@ -673,3 +673,22 @@ void OCDeleteACLList(OicSecAcl_t* pAcl)
 {
     DeleteACLList(pAcl);
 }
+
+
+#ifdef __WITH_X509__
+/**
+ * this function sends CRL information to resource.
+ *
+ * @param[in] ctx Application context would be returned in result callback.
+ * @param[in] selectedDeviceInfo Selected target device.
+ * @param[in] crl CRL to provision.
+ * @param[in] resultCallback callback provided by API user, callback will be called when provisioning
+              request recieves a response from resource server.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCProvisionCRL(void* ctx, const OCProvisionDev_t *selectedDeviceInfo, OicSecCrl_t *crl,
+                             OCProvisionResultCB resultCallback)
+{
+    return SRPProvisionCRL(ctx, selectedDeviceInfo, crl, resultCallback);
+}
+#endif // __WITH_X509__

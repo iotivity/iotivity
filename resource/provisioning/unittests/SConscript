@@ -64,6 +64,10 @@ provisiontests_env.PrependUnique(LIBS = [
 
 if env.get('SECURED') == '1':
     provisiontests_env.AppendUnique(LIBS = ['tinydtls'])
+if env.get('DTLS_WITH_X509') == '1':
+	provisiontests_env.AppendUnique(LIBS = ['CKManager'])
+	provisiontests_env.AppendUnique(LIBS = ['asn1'])
+
 
 if env.get('LOGGING'):
 	provisiontests_env.AppendUnique(CPPDEFINES = ['TB_LOG'])

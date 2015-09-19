@@ -131,14 +131,14 @@ typedef struct {
   dtls_cipher_t cipher;		/**< cipher type */
   unsigned int do_client_auth:1;
 
-#ifdef DTLS_ECC && DTLS_PSK
+#if defined(DTLS_ECC) && defined(DTLS_PSK)
   struct keyx_t {
     dtls_handshake_parameters_ecc_t ecc;
     dtls_handshake_parameters_psk_t psk;
   } keyx;
 #else /* DTLS_ECC && DTLS_PSK */
   union {
-#ifdef DTLS_ECC
+#if defined(DTLS_ECC) || defined(DTLS_X509)
     dtls_handshake_parameters_ecc_t ecc;
 #endif /* DTLS_ECC */
 #ifdef DTLS_PSK

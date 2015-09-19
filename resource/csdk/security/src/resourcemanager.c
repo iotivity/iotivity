@@ -34,6 +34,10 @@
 
 #define TAG "SRM-RM"
 
+#ifdef __WITH_X509__
+#include "crlresource.h"
+#endif // __WITH_X509__
+
 /**
  * This method is used by all secure resource modules to send responses to REST queries.
  *
@@ -93,6 +97,12 @@ OCStackResult InitSecureResources( )
     {
         ret = InitCredResource();
     }
+#ifdef __WITH_X509__
+    if(OC_STACK_OK == ret)
+    {
+        ret = InitCRLResource();
+    }
+#endif // __WITH_X509__
     if(OC_STACK_OK == ret)
     {
         ret = InitSVCResource();

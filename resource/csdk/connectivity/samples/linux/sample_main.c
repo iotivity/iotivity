@@ -140,6 +140,18 @@ void clearDtlsCredentialInfo()
     printf("clearDtlsCredentialInfo OUT\n");
 }
 
+#ifdef __WITH_X509__
+int GetDtlsX509Credentials(CADtlsX509Creds_t *credInfo)
+{
+    (void) credInfo;
+    return -1;
+}
+int * GetCRLResource()
+{
+    return (int*) NULL;
+}
+#endif
+
 // Internal API. Invoked by CA stack to retrieve credentials from this module
 void CAGetDtlsPskCredentials(CADtlsPskCredsBlob_t **credInfo)
 {
