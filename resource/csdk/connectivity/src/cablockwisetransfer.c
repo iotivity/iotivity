@@ -2054,44 +2054,39 @@ CAResult_t CAUpdatePayloadToCAData(CAData_t *data, const CAPayload_t payload,
     VERIFY_NON_NULL(data, TAG, "data is NULL");
     VERIFY_NON_NULL(payload, TAG, "payload is NULL");
 
-    if (data->requestInfo)
+    CAPayload_t newPayload = NULL;
+    switch (data->dataType)
     {
-        // allocate payload field
-        if (data->requestInfo->info.payload)
-        {
-            char *temp = (char *) OICCalloc(payloadLen, sizeof(char));
-            if (!temp)
+        case CA_REQUEST_DATA:
+            // allocate payload field
+            newPayload = OICRealloc(data->requestInfo->info.payload, payloadLen);
+            if (!newPayload)
             {
                 OIC_LOG(ERROR, TAG, "out of memory");
                 return CA_STATUS_FAILED;
             }
-            memcpy(temp, payload, payloadLen);
+            data->requestInfo->info.payload = newPayload;
+            memcpy(data->requestInfo->info.payload, payload, payloadLen);
+            data->requestInfo->info.payloadSize = payloadLen;
+            break;
 
-            // save the full payload
-            OICFree(data->requestInfo->info.payload);
-            data->requestInfo->info.payload = (CAPayload_t) temp;
-        }
-        data->requestInfo->info.payloadSize = payloadLen;
-    }
-
-    if (data->responseInfo)
-    {
-        // allocate payload field
-        if (data->responseInfo->info.payload)
-        {
-            char *temp = (char *) OICCalloc(payloadLen, sizeof(char));
-            if (!temp)
+        case CA_RESPONSE_DATA:
+            // allocate payload field
+            newPayload = OICRealloc(data->responseInfo->info.payload, payloadLen);
+            if (!newPayload)
             {
                 OIC_LOG(ERROR, TAG, "out of memory");
                 return CA_STATUS_FAILED;
             }
-            memcpy(temp, payload, payloadLen);
+            data->responseInfo->info.payload = newPayload;
+            memcpy(data->responseInfo->info.payload, payload, payloadLen);
+            data->responseInfo->info.payloadSize = payloadLen;
+            break;
 
-            // save the full payload
-            OICFree(data->responseInfo->info.payload);
-            data->responseInfo->info.payload = (CAPayload_t) temp;
-        }
-        data->responseInfo->info.payloadSize = payloadLen;
+        default:
+            // does not occur case
+            OIC_LOG(ERROR, TAG, "not supported data type");
+            return CA_NOT_SUPPORTED;
     }
 
     OIC_LOG(DEBUG, TAG, "OUT-UpdatePayload");

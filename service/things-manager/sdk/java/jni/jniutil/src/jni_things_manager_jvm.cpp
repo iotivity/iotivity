@@ -22,7 +22,6 @@
 
 #include "jni_things_manager_jvm.h"
 #include "jni_group_manager.h"
-#include "jni_group_synchronization.h"
 #include "jni_things_configuration.h"
 #include "jni_things_maintenance.h"
 #include "jni_things_manager_util.h"
@@ -84,7 +83,6 @@ class JObjectMap
 static JClassMap gJClassMapArray[] =
 {
     JClassMap(TM_SERVICE_GROUP_MANAGER_CLASS_PATH),
-    JClassMap(TM_SERVICE_GROUP_SYNCHRONIZATION_CLASS_PATH),
     JClassMap(TM_SERVICE_THINGS_CONFIGURATION_CLASS_PATH),
     JClassMap(TM_SERVICE_THINGS_MAINTENANCE_CLASS_PATH),
     JClassMap(TM_SERVICE_OCRESOURCE_PATH),
@@ -100,7 +98,6 @@ static JClassMap gJClassMapArray[] =
 
 static JObjectMap gJObjectMapArray[] =
 {
-    JObjectMap(TM_SERVICE_GROUP_SYNCHRONIZATION_CLASS_PATH),
     JObjectMap(TM_SERVICE_THINGS_CONFIGURATION_CLASS_PATH),
     JObjectMap(TM_SERVICE_THINGS_MAINTENANCE_CLASS_PATH)
 };
@@ -116,18 +113,6 @@ static JNINativeMethod gGroupManagerMethodTable[] =
     { "nativeCancelActionSet", "(Lorg/iotivity/base/OcResource;Ljava/lang/String;)I", (void *) JNIGroupManagerCancelActionSet},
     { "nativeGetActionSet", "(Lorg/iotivity/base/OcResource;Ljava/lang/String;)I", (void *) JNIGroupManagerGetActionSet},
     { "nativeDeleteActionSet", "(Lorg/iotivity/base/OcResource;Ljava/lang/String;)I", (void *) JNIGroupManagerDeleteActionSet}
-};
-
-static JNINativeMethod gGroupSynchronizationMethodTable[] =
-{
-    { "nativeFindGroup", "(Ljava/util/Vector;)I", (void *) JNIGroupSynchronizationFindGroup},
-    { "nativeCreateGroup", "(Ljava/lang/String;)I", (void *) JNIGroupSynchronizationCreateGroup},
-    { "nativeJoinGroupString", "(Ljava/lang/String;Lorg/iotivity/base/OcResourceHandle;)I", (void *) JNIGroupSynchronizationJoinGroupString},
-    { "nativeJoinGroupObject", "(Lorg/iotivity/base/OcResource;Lorg/iotivity/base/OcResourceHandle;)I", (void *) JNIGroupSynchronizationJoinGroupObject},
-    { "nativeLeaveGroup", "(Ljava/lang/String;Lorg/iotivity/base/OcResourceHandle;)I", (void *) JNIGroupSynchronizationLeaveGroup},
-    { "nativeLeaveGroupForResource", "(Lorg/iotivity/base/OcResource;Ljava/lang/String;Lorg/iotivity/base/OcResourceHandle;)I", (void *) JNIGroupSynchronizationLeaveGroupForResource},
-    { "nativeDeleteGroup", "(Ljava/lang/String;)V", (void *) JNIGroupSynchronizationDeleteGroup},
-    { "nativeGetGroupList", "()Ljava/util/Map;", (void *) JNIGroupSynchronizationGetGroupList}
 };
 
 static JNINativeMethod gThingsConfigurationMethodTable[] =
@@ -148,10 +133,6 @@ static JNINativeMethod gThingsMaintenanceMethodTable[] =
 
 static int gGroupManagerMethodTableSize = sizeof(gGroupManagerMethodTable) / sizeof(
             gGroupManagerMethodTable[0]);
-
-static int gGroupSynchronizationMethodTableSize = sizeof(gGroupSynchronizationMethodTable) / sizeof(
-            gGroupSynchronizationMethodTable[0]);
-
 
 static int gThingsConfigurationMethodTableSize = sizeof(gThingsConfigurationMethodTable) / sizeof(
             gThingsConfigurationMethodTable[0]);
@@ -386,18 +367,6 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
 
     env->RegisterNatives(groupManagerClassRef, gGroupManagerMethodTable,
                          gGroupManagerMethodTableSize);
-
-    // Group Synchronization
-    jclass groupSynchronizationClassRef = GetJClass(TM_SERVICE_GROUP_SYNCHRONIZATION_CLASS_PATH);
-
-    if (NULL == groupSynchronizationClassRef)
-    {
-        LOGE("JNI_OnLoad: GetJClass gThingsManagerClass failed !");
-        return JNI_ERR;
-    }
-
-    env->RegisterNatives(groupSynchronizationClassRef, gGroupSynchronizationMethodTable,
-                         gGroupSynchronizationMethodTableSize);
 
     //Things Configuration
     jclass thingsConfigurationClassRef = GetJClass(TM_SERVICE_THINGS_CONFIGURATION_CLASS_PATH);

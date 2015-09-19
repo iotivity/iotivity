@@ -61,6 +61,8 @@ cd $sourcedir/build_common/
 cp -R ./iotivityconfig/* $sourcedir/tmp/iotivityconfig/
 cp -R ./SConscript $sourcedir/tmp/
 
+cp -R $sourcedir/iotivity.pc.in $sourcedir/tmp/
+
 cd $sourcedir/tmp
 
 echo `pwd`
