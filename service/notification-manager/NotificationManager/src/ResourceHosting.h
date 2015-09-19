@@ -34,6 +34,7 @@
 #include "PresenceSubscriber.h"
 #include "HostingObject.h"
 #include "PrimitiveResource.h"
+#include "RCSDiscoveryManager.h"
 
 namespace OIC
 {
@@ -45,6 +46,8 @@ class ResourceHosting
 {
 private:
     typedef std::shared_ptr<HostingObject> HostingObjectPtr;
+    typedef std::weak_ptr<HostingObject> HostingObjectWeakPtr;
+
     typedef std::shared_ptr<RCSRemoteResourceObject> RemoteObjectPtr;
     typedef std::shared_ptr<PrimitiveResource> PrimiteveResourcePtr;
 
@@ -71,11 +74,13 @@ private:
 
     static ResourceHosting * s_instance;
     static std::mutex s_mutexForCreation;
+    std::mutex mutexForList;
 
     std::list<HostingObjectPtr> hostingObjectList;
 
     RCSDiscoveryManager * discoveryManager;
     PresenceSubscriber presenceHandle;
+    std::unique_ptr<RCSDiscoveryManager::DiscoveryTask> discoveryTask;
 
     SubscribeCallback pPresenceCB;
     DiscoveryCallback pDiscoveryCB;
@@ -92,7 +97,7 @@ private:
     HostingObjectPtr findRemoteResource(RemoteObjectPtr remoteResource);
     bool isSameRemoteResource(RemoteObjectPtr remoteResource_1, RemoteObjectPtr remoteResource_2);
 
-    void destroyedHostingObject(HostingObjectPtr destroyedPtr);
+    void destroyedHostingObject(HostingObjectWeakPtr destroyedWeakPtr);
 
 };
 

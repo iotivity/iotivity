@@ -94,10 +94,8 @@ void ResourceHosting::stopHosting()
     {
         presenceHandle.unsubscribe();
     }
-    for(auto it : hostingObjectList)
-    {
-        it.reset();
-    }
+
+    hostingObjectList.clear();
 }
 
 void ResourceHosting::initializeResourceHosting()
@@ -185,8 +183,8 @@ void ResourceHosting::requestDiscovery(std::string address)
 {
     std::string host = address;
     RCSAddress rcsAddress = RCSAddress::unicast(host);
-    discoveryManager->discoverResourceByType(rcsAddress, OC_RSRVD_WELL_KNOWN_URI,
-            HOSTING_RESOURSE_TYPE, pDiscoveryCB);
+    discoveryTask = discoveryManager->discoverResourceByType(
+        rcsAddress, OC_RSRVD_WELL_KNOWN_URI, HOSTING_RESOURSE_TYPE, pDiscoveryCB);
 }
 
 void ResourceHosting::discoverHandler(RemoteObjectPtr remoteResource)
@@ -203,9 +201,10 @@ void ResourceHosting::discoverHandler(RemoteObjectPtr remoteResource)
     {
         try
         {
-            foundHostingObject.reset(new HostingObject());
+            foundHostingObject = std::make_shared<HostingObject>();
             foundHostingObject->initializeHostingObject(remoteResource,
-                    std::bind(&ResourceHosting::destroyedHostingObject, this, foundHostingObject));
+                    std::bind(&ResourceHosting::destroyedHostingObject, this,
+                            HostingObjectWeakPtr(foundHostingObject)));
             hostingObjectList.push_back(foundHostingObject);
         }catch(InvalidParameterException &e)
         {
@@ -237,7 +236,6 @@ bool ResourceHosting::isSameRemoteResource(
 {
     bool ret = false;
     if(remoteResource_1->getAddress() == remoteResource_2->getAddress() &&
-//       remoteResource_1->getID() == remoteResource_2->getID() &&
        remoteResource_1->getUri() == remoteResource_2->getUri())
     {
         ret = true;
@@ -245,8 +243,12 @@ bool ResourceHosting::isSameRemoteResource(
     return ret;
 }
 
-void ResourceHosting::destroyedHostingObject(HostingObjectPtr destroyedPtr)
+void ResourceHosting::destroyedHostingObject(HostingObjectWeakPtr destroyedWeakPtr)
 {
+    auto destroyedPtr = destroyedWeakPtr.lock();
+    if (destroyedPtr) return;
+
+    std::unique_lock<std::mutex> lock(mutexForList);
     hostingObjectList.remove(destroyedPtr);
 }
 

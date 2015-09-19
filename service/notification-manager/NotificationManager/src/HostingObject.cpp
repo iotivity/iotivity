@@ -36,7 +36,12 @@ void OIC_HOSTING_LOG(LogLevel level, const char * format, ...)
     va_start(args, format);
     vsnprintf(buffer, sizeof buffer - 1, format, args);
     va_end(args);
-    OCLog(level, "Hosting", buffer);
+    OCLog(level, PCF("Hosting"), buffer);
+}
+
+namespace
+{
+    std::mutex mutexForCB;
 }
 
 HostingObject::HostingObject()
@@ -47,6 +52,19 @@ HostingObject::HostingObject()
 {
 }
 
+HostingObject::~HostingObject()
+{
+	// shared_ptr release
+    pStateChangedCB = {};
+    pDataUpdateCB = {};
+
+    if (remoteObject)
+    {
+        remoteObject->stopMonitoring();
+        remoteObject->stopCaching();
+    }
+}
+
 HostingObject::RemoteObjectPtr HostingObject::getRemoteResource() const
 {
     return remoteObject;
@@ -54,7 +72,6 @@ HostingObject::RemoteObjectPtr HostingObject::getRemoteResource() const
 
 void HostingObject::initializeHostingObject(RemoteObjectPtr rResource, DestroyedCallback destroyCB)
 {
-
     remoteObject = rResource;
 
     pStateChangedCB = std::bind(&HostingObject::stateChangedCB, this,
@@ -142,6 +159,7 @@ void HostingObject::stateChangedCB(ResourceState state, RemoteObjectPtr rObject)
 
 void HostingObject::dataChangedCB(const RCSResourceAttributes & attributes, RemoteObjectPtr rObject)
 {
+    std::unique_lock<std::mutex> lock(mutexForCB);
     if(attributes.empty())
     {
         return;
@@ -228,6 +246,7 @@ HostingObject::ResourceObjectPtr HostingObject::createMirroredServer(RemoteObjec
 RCSSetResponse HostingObject::setRequestHandler(const RCSRequest & primitiveRequest,
             RCSResourceAttributes & resourceAttibutes)
 {
+    (void)primitiveRequest;
     try
     {
         RequestObject newRequest = { };
