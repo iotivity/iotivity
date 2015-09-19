@@ -30,9 +30,10 @@ pi_dir = os.path.join(src_dir, 'plugins')
 # Build flags
 ######################################################################
 samples_env.PrependUnique(CPPPATH = [
-		'../../../../logger/include',
-		'../../../../stack/include',
-		'../../../../../../extlibs/cjson',
+		'../../../resource/oc_logger/include',
+		'../../../resource/csdk/logger/include',
+		'../../../resource/csdk/stack/include',
+		'../../../extlibs/cjson',
                 os.path.join(pi_dir, 'include')
 		])
 
@@ -63,9 +64,12 @@ samples_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 ######################################################################
 # Source files and Targets
 ######################################################################
-iotivityandzigbee         = samples_env.Program('iotivityandzigbee', ['IotivityandZigbee.c'])
+iotivityandzigbeeserver = samples_env.Program('iotivityandzigbeeserver',
+        ['IotivityandZigbeeServer.c'])
+iotivityandzigbeeclient = samples_env.Program('iotivityandzigbeeclient',
+        ['IotivityandZigbeeClient.c'])
 
-list_of_samples = [iotivityandzigbee]
+list_of_samples = [iotivityandzigbeeserver, iotivityandzigbeeclient]
 
 Alias("samples", list_of_samples)
 

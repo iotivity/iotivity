@@ -56,7 +56,7 @@ std::chrono::seconds const SHORT_TEST_TIMEOUT = std::chrono::seconds(5);
 TEST(PITests, StartPluginTest)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
-    EXPECT_EQ(OC_STACK_NOTIMPL, PIStartPlugin(NULL));
+    EXPECT_EQ(OC_STACK_NOTIMPL, PIStartPlugin(PLUGIN_UNKNOWN, NULL));
 }
 
 // Plugin Interface API PIStopPlugin()

@@ -41,11 +41,12 @@ extern "C" {
  *
  * Makes any required calls to instantiate IoTivity and/or plugin's radio.
  *
- * @param[in] plugin The plugin to be started.
+ * @param[in]  pluginType The type of plugin to start.
+ * @param[out] plugin The plugin handle that will be started.
  *   Note: Please note that the plugin will need to be managed in the
  *         application space.
  */
-OCStackResult PIStartPlugin(PIPluginBase * plugin);
+OCStackResult PIStartPlugin(PIPluginType pluginType, PIPluginBase ** plugin);
 
 /**
  *

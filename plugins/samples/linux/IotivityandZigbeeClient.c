@@ -5,4 +5,9 @@
 // except for resource-specific IoTivity APIs (ie. OCCreateResource(),
 // OCDeleteResource(), EntityHandler()..etc.)
 
-#include "plugininterface.h"
+#include "IotivityandZigbeeClient.h"
+
+int main(int argc, char* argv[])
+{
+    return 0;
+}
