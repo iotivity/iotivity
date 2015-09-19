@@ -79,7 +79,7 @@ int main(int argc, char* argv[])
     {
         OC_LOG(INFO, TAG, "Zigbee Plugin started correctly, press Ctrl-C to terminate application");
         // Loop until sigint
-        while (processSignal(false) && result == OC_STACK_OK)
+        while (!processSignal(false) && result == OC_STACK_OK)
         {
             result = OCProcess();
             if (result != OC_STACK_OK)
@@ -150,16 +150,13 @@ OCStackResult SetDeviceInfo()
 
 bool processSignal(bool set)
 {
-    static bool signal = false;
+    static sig_atomic_t signal = 0;
     if (set)
     {
-        // boolean assignments are atomic, and since we
-        // only have a single modifier, and only in one direction,
-        // this does not require locking.
-        signal = true;
+        signal = 1;
     }
 
-    return signal;
+    return signal == 1;
 }
 
 void processCancel(int signal)
