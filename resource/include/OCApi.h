@@ -229,6 +229,10 @@ namespace OC
         ObserveAction action;
         // Identifier for observation being registered/unregistered
         OCObservationId obsId;
+
+        OCConnectivityType connectivityType;
+        std::string address;
+        uint16_t port;
     } ObservationInfo;
 
     // const strings for different interfaces
