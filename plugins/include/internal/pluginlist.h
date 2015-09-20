@@ -1,6 +1,6 @@
 //******************************************************************
 //
-// Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
+// Copyright 2015 Intel Mobile Communications GmbH All Rights Reserved.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //
@@ -21,29 +21,35 @@
 /**
  * @file
  *
- * This file contains APIs for PIPlugin module to be implemented.
+ * This file contains the accessors and setters for the PluginList
  */
 
-#ifndef PLUGININTERFACEINTERNAL_H_
-#define PLUGININTERFACEINTERNAL_H_
+#ifndef PLUGINLIST_H_
+#define PLUGINLIST_H_
 
-#include "plugintypes.h"
 #include "plugintranslatortypes.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
 
-/**
- *
- * Called from PIProcess. Gives cycles for Zigbee Wrapper'
- * internal operation.
- *
- */
-OCStackResult ProcessZigbee(PIPlugin_Zigbee * plugin);
+OCStackResult AddPlugin(PIPluginBase * plugin);
+
+OCStackResult DeletePlugin(PIPluginBase * plugin);
+
+OCStackResult DeletePluginList();
+
+OCStackResult GetResourceFromHandle(PIPluginBase * plugin, PIResource ** piResource,
+                                    OCResourceHandle * resourceHandle);
+
+OCStackResult AddResourceToPlugin(PIPluginBase * plugin, PIResourceBase * resource);
+
+OCStackResult DeleteResource(PIPluginBase * plugin, PIResourceBase * resource);
+
+OCStackResult DeleteResourceList(PIPluginBase * plugin);
 
 #ifdef __cplusplus
 }
 #endif // __cplusplus
 
-#endif /* PLUGININTERFACEINTERNAL_H_ */
+#endif /* PLUGINLIST_H_ */

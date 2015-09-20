@@ -20,7 +20,6 @@
 
 
 #include "plugininterface.h"
-
 #include "gtest/gtest.h"
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -56,29 +55,26 @@ std::chrono::seconds const SHORT_TEST_TIMEOUT = std::chrono::seconds(5);
 TEST(PITests, StartPluginTest)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
-    EXPECT_EQ(OC_STACK_NOTIMPL, PIStartPlugin(PLUGIN_UNKNOWN, NULL));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, PIStartPlugin(NULL, PLUGIN_UNKNOWN, NULL));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, PIStartPlugin("", PLUGIN_UNKNOWN, NULL));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, PIStartPlugin("", PLUGIN_UNKNOWN, NULL));
+// Note: The following test is invalid for unit tests. Please do not enable tests which
+//       actually enable hardware radios.
+//    EXPECT_EQ(OC_STACK_INVALID_PARAM, PIStartPlugin("/dev/ttyUSB0", PLUGIN_ZIGBEE, NULL));
 }
 
 // Plugin Interface API PIStopPlugin()
 TEST(PITests, StopPluginTest)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
-    EXPECT_EQ(OC_STACK_NOTIMPL, PIStopPlugin(NULL));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, PIStopPlugin(NULL));
 }
 
 // Plugin Interface API PIProcess()
 TEST(PITests, ProcessTest)
 {
-    PIPluginBase zigbeePlugin;
-    zigbeePlugin.type = PLUGIN_ZIGBEE;
-
-    PIPluginBase invalidPlugin;
-    invalidPlugin.type = PLUGIN_UNKNOWN;
-
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     EXPECT_EQ(OC_STACK_INVALID_PARAM, PIProcess(NULL));
-    EXPECT_EQ(OC_STACK_OK, PIProcess(&zigbeePlugin));
-    EXPECT_EQ(OC_STACK_ERROR, PIProcess(&invalidPlugin));
 }
 
 

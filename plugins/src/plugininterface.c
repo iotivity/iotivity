@@ -1,6 +1,6 @@
 //******************************************************************
 //
-// Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
+// Copyright 2015 Intel Mobile Communications GmbH All Rights Reserved.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //
@@ -25,47 +25,164 @@
  */
 
 #include "plugininterface.h"
-#include "plugininterfaceinternal.h"
 #include "plugintranslatortypes.h"
+#include "pluginlist.h"
+#include "zigbee_wrapper.h"
+#include "oic_string.h"
+#include "oic_malloc.h"
+#include "ocstack.h"
+#include "ocpayload.h"
+#include "logger.h"
 
-// Internal Note: This API will try to start IoTivity. If it is already
-//                started, nothing will occur. The IoTivity stack will not
-//                allow another instance to occur within the same program space
-//                and will even return a soft success when we try (ie.
-//                OC_STACK_OK).
-OCStackResult PIStartPlugin(PIPluginType pluginType, PIPluginBase** plugin)
-{
-    return OC_STACK_NOTIMPL;
-}
+#include <string.h>
+#include <stdlib.h>
 
-OCStackResult PIStopPlugin(PIPluginBase * plugin)
-{
-    return OC_STACK_NOTIMPL;
-}
+#define TAG PCF("pluginInterface")
 
-OCStackResult PIProcess(PIPluginBase * plugin)
+/**
+ * Entity handler callback that fills the resPayload of the entityHandlerRequest.
+ */
+OCEntityHandlerResult PluginInterfaceEntityHandler(OCEntityHandlerFlag flag,
+                                                   OCEntityHandlerRequest * entityHandlerRequest,
+                                                   void* callbackParam)
 {
-    OCStackResult result = OC_STACK_OK;
-    if(!plugin)
+    if (!entityHandlerRequest)
     {
-        return OC_STACK_INVALID_PARAM;
+        OC_LOG (ERROR, TAG, "Invalid request pointer");
+        return OC_EH_ERROR;
     }
-    if(plugin->type == PLUGIN_ZIGBEE)
+
+    OCEntityHandlerResult ehResult = OC_EH_ERROR;
+    OCStackResult result = OC_STACK_ERROR;
+    PIPluginBase * plugin = (PIPluginBase *) callbackParam;
+
+    OCEntityHandlerResponse * response =
+                        (OCEntityHandlerResponse *) OICCalloc(1, sizeof(*response));
+
+    if (!response)
     {
-        result = ProcessZigbee((PIPlugin_Zigbee *) plugin);
-        if(result != OC_STACK_OK)
+        return OC_EH_ERROR;
+    }
+
+    OCRepPayload* payload = (OCRepPayload *) entityHandlerRequest->payload;
+
+    if (flag & OC_REQUEST_FLAG)
+    {
+        if (plugin->processEHRequest)
         {
-            return result;
+            ehResult = plugin->processEHRequest(plugin, entityHandlerRequest, &payload);
+        }
+    }
+
+    // If the result isn't an error or forbidden, send response
+    if (!((ehResult == OC_EH_ERROR) || (ehResult == OC_EH_FORBIDDEN)))
+    {
+        // Format the response.  Note this requires some info about the request
+        response->requestHandle = entityHandlerRequest->requestHandle;
+        response->resourceHandle = entityHandlerRequest->resource;
+        response->ehResult = ehResult;
+        response->payload = (OCPayload*) payload;
+        // Indicate that response is NOT in a persistent buffer
+        response->persistentBufferFlag = 0;
+
+        result = OCDoResponse(response);
+        if (result != OC_STACK_OK)
+        {
+            OC_LOG_V(ERROR, TAG, "Error sending response %u", result);
+            ehResult = OC_EH_ERROR;
         }
     }
     else
     {
-        return OC_STACK_ERROR;
+        OC_LOG_V(ERROR, TAG, "Error handling request %u", ehResult);
+    }
+
+    OCPayloadDestroy(response->payload);
+    OICFree(response);
+    return ehResult;
+}
+
+void piNewResourceCB(PIPluginBase * p_plugin, PIResourceBase * r_newResource)
+{
+    if (!p_plugin || !r_newResource)
+    {
+        return;
+    }
+
+    r_newResource->piResource.resourceProperties = OC_DISCOVERABLE;
+    OCStackResult result = OCCreateResource(&r_newResource->piResource.resourceHandle,
+                                            r_newResource->piResource.resourceTypeName,
+                                            r_newResource->piResource.resourceInterfaceName,
+                                            r_newResource->piResource.uri,
+                                            PluginInterfaceEntityHandler,
+                                            (void *) p_plugin,
+                                            r_newResource->piResource.resourceProperties);
+    if (result != OC_STACK_OK)
+    {
+        OICFree (r_newResource->piResource.uri);
+        OICFree (r_newResource);
+        return;
+    }
+    OC_LOG_V(INFO, TAG, "Created resource of type: %s\n",
+        r_newResource->piResource.resourceTypeName);
+
+    result = AddResourceToPlugin(p_plugin, r_newResource);
+}
+
+OCStackResult PIStartPlugin(const char * comPort, PIPluginType pluginType, PIPlugin ** plugin)
+{
+    if (!plugin || !comPort || strlen(comPort) == 0)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+    OCStackResult result = OC_STACK_ERROR;
+    if (pluginType == PLUGIN_ZIGBEE)
+    {
+        result = ZigbeeInit(comPort, (PIPlugin_Zigbee **) plugin, piNewResourceCB);
+        if (result != OC_STACK_OK)
+        {
+            return result;
+        }
+        if (!*plugin)
+        {
+            return OC_STACK_ERROR;
+        }
+        result = AddPlugin((PIPluginBase *) *plugin);
+        if (result == OC_STACK_OK)
+        {
+            result = ZigbeeDiscover((PIPlugin_Zigbee *) plugin);
+        }
     }
     return result;
 }
 
-OCStackResult ProcessZigbee(PIPlugin_Zigbee * plugin)
+OCStackResult PIStopPlugin(PIPlugin * plugin)
 {
-    return OC_STACK_OK;
+    if (!plugin)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    return DeletePlugin((PIPluginBase *) plugin);
 }
+
+OCStackResult PIStopAll()
+{
+    return DeletePluginList();
+}
+
+OCStackResult PIProcess(PIPlugin * p_plugin)
+{
+    PIPluginBase * plugin = (PIPluginBase *) p_plugin;
+    if (!plugin)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+    OCStackResult result = OC_STACK_ERROR;
+    if (plugin->type == PLUGIN_ZIGBEE)
+    {
+        result = ZigbeeProcess((PIPlugin_Zigbee *)plugin);
+    }
+    return result;
+}
+

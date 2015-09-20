@@ -21,15 +21,16 @@
 # Plugin Interface build script
 ##
 
+import os
 import os.path
 
 Import('env')
 
 target_os = env.get('TARGET_OS')
 src_dir = env.get('SRC_DIR')
-pi_path = os.path.join(src_dir, 'plugins')
+zw_path = os.path.join(src_dir, 'plugins')
 
-print"Reading PI script"
+print"Reading Zigbee Wrapper (ZW) script"
 
 ######################################################################
 # Build flags
@@ -40,13 +41,11 @@ env.PrependUnique(CPPPATH = [ os.path.join(src_dir, 'resource', 'c_common', 'oic
                               os.path.join(src_dir, 'resource', 'oc_logger', 'include'),
                               os.path.join(src_dir, 'resource', 'csdk', 'logger', 'include'),
                               os.path.join(src_dir, 'resource', 'csdk', 'stack', 'include'),
-                              os.path.join(src_dir, 'resource', 'csdk', 'connectivity', 'lib', 'libcoap-4.1.1')
-                            ])
-env.AppendUnique(CPPPATH = [ os.path.join(pi_path, 'include'),
-                             os.path.join(pi_path, 'include', 'internal'),
-                             os.path.join(pi_path, 'zigbee_wrapper', 'include'),
-                             os.path.join(pi_path, 'include', 'internal')
-                           ])
+                              ])
+env.AppendUnique(CPPPATH = [ os.path.join(zw_path, 'include'),
+                             os.path.join(zw_path, 'include', 'internal'),
+                             os.path.join(zw_path, 'zigbee_wrapper', 'include')
+                             ])
 
 if target_os not in ['arduino', 'windows', 'winrt']:
 	env.AppendUnique(CPPDEFINES = ['WITH_POSIX'])
@@ -58,7 +57,7 @@ env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-Wextra', '-Werror'])
 env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
 env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 
-env.PrependUnique(LIBS = ['zigbee_wrapper'])
+env.PrependUnique(LIBS = ['telegesis_wrapper'])
 
 if env.get('LOGGING'):
 	env.AppendUnique(CPPDEFINES = ['TB_LOG'])
@@ -66,20 +65,18 @@ if env.get('LOGGING'):
 #####################################################################
 # Source files and Target(s)
 ######################################################################
-pi_src = [
+
+zw_src = [
+         os.path.join(src_dir, 'resource', 'c_common', 'oic_malloc', 'src', 'oic_malloc.c'),
          os.path.join(src_dir, 'resource', 'csdk', 'logger', 'src', 'logger.c'),
-         'pluginlist.c',
-         'plugininterface.c',
-	     ]
+	     'zigbee_wrapper.c',
+         ]
 
-env.AppendUnique(PI_SRC = pi_src)
+env.AppendUnique(ZW_SRC = zw_src)
 
-print "Include path is %s" % env.get('CPPPATH')
-print "Files path is %s" % env.get('PI_SRC')
 if target_os in ['android', 'tizen']:
-	calib = env.SharedLibrary('plugin_interface', env.get('PI_SRC'))
+	calib = env.SharedLibrary('zigbee_wrapper', env.get('ZW_SRC'))
 else:
-	calib = env.StaticLibrary('plugin_interface', env.get('PI_SRC'))
-env.InstallTarget(calib, 'libplugin_interface')
-env.UserInstallTargetLib(calib, 'libplugin_interface')
-
+	calib = env.StaticLibrary('zigbee_wrapper', env.get('ZW_SRC'))
+env.InstallTarget(calib, 'libzigbee_wrapper')
+env.UserInstallTargetLib(calib, 'libzigbee_wrapper')

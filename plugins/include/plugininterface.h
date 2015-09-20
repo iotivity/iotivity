@@ -33,38 +33,42 @@
 extern "C" {
 #endif // __cplusplus
 
-// Todo: The following APIs can be modified as needed. This just a loose
-// declaration to illustrate how we can manage our plugins. The types are
-// defined in plugintypes.h.
-
 /**
  *
- * Makes any required calls to instantiate IoTivity and/or plugin's radio.
+ * Makes any required calls to instantiate plugin's radio.
  *
+ * @param[in]  comPort The com port which this plugin is located.
  * @param[in]  pluginType The type of plugin to start.
  * @param[out] plugin The plugin handle that will be started.
- *   Note: Please note that the plugin will need to be managed in the
- *         application space.
+ *
  */
-OCStackResult PIStartPlugin(PIPluginType pluginType, PIPluginBase ** plugin);
+OCStackResult PIStartPlugin(const char * comPort, PIPluginType pluginType, PIPlugin ** plugin);
 
 /**
  *
- * Makes any required calls to stop plugin's radio.
+ * Makes any required calls to stop plugin.
  *
- * @param[in] PIStopPlugin The plugin to be stopped.
- *           Note: If NULL Makes any required calls to stop IoTivity and ALL
- *                 plugin radios.
+ * @param[in] plugin The plugin to be stopped.
+ *
  */
-OCStackResult PIStopPlugin(PIPluginBase * plugin);
+OCStackResult PIStopPlugin(PIPlugin * plugin);
+
+/**
+ *
+ * Makes any required calls to stop all plugins.
+ *
+ */
+OCStackResult PIStopAll();
 
 /**
  *
  * Called in main loop of application. Gives cycles for Plugin Interface'
  * internal operation.
  *
+ * @param[in] plugin The plugin to get cycles from this function's invocation.
+ *
  */
-OCStackResult PIProcess(PIPluginBase * plugin);
+OCStackResult PIProcess(PIPlugin * plugin);
 
 #ifdef __cplusplus
 }

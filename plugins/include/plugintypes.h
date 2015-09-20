@@ -41,19 +41,15 @@ extern "C" {
 typedef enum
 {
     PLUGIN_UNKNOWN = 0,
-    /** Zigbee */
     PLUGIN_ZIGBEE = 1
 
 } PIPluginType;
 
+
 /**
- * Parameter list for a plugin.
+ * Handle to a plugin.
  */
-typedef struct
-{
-    PIPluginType type;
-// Todo: Any other common properties between plugins can be placed here.
-} PIPluginBase;
+typedef struct PIPlugin {} PIPlugin;
 
 #ifdef __cplusplus
 }
