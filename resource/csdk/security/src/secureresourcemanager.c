@@ -21,11 +21,15 @@
 #include "ocstack.h"
 #include "logger.h"
 #include "cainterface.h"
-#include "secureresourcemanager.h"
 #include "resourcemanager.h"
 #include "credresource.h"
 #include "policyengine.h"
+#include "srmutility.h"
+#include "amsmgr.h"
 #include "oic_string.h"
+#include "oic_malloc.h"
+#include "securevirtualresourcetypes.h"
+#include "secureresourcemanager.h"
 #include <string.h>
 
 #define TAG  "SRM"
@@ -55,6 +59,55 @@ void SRMRegisterProvisioningResponseHandler(SPResponseCallback respHandler)
 {
     gSPResponseHandler = respHandler;
 }
+
+
+static void SRMSendUnAuthorizedAccessresponse(PEContext_t *context)
+{
+    CAResponseInfo_t responseInfo = {.result = CA_EMPTY};
+    memcpy(&responseInfo.info, &(context->amsMgrContext->requestInfo->info),
+            sizeof(responseInfo.info));
+    responseInfo.info.payload = NULL;
+    responseInfo.result = CA_UNAUTHORIZED_REQ;
+    if (CA_STATUS_OK != CASendResponse(context->amsMgrContext->endpoint, &responseInfo))
+    {
+        OC_LOG(ERROR, TAG, "Failed in sending response to a unauthorized request!");
+    }
+    else
+    {
+        OC_LOG(INFO, TAG, "Succeed in sending response to a unauthorized request!");
+    }
+}
+
+
+void SRMSendResponse(SRMAccessResponse_t responseVal)
+{
+    OC_LOG(INFO, TAG, "Sending response to remote device");
+
+    if (IsAccessGranted(responseVal) && gRequestHandler)
+    {
+        OC_LOG_V(INFO, TAG, "%s : Access granted. Passing Request to RI layer", __func__);
+        if (!g_policyEngineContext.amsMgrContext->endpoint ||
+                !g_policyEngineContext.amsMgrContext->requestInfo)
+        {
+            OC_LOG_V(ERROR, TAG, "%s : Invalid arguments", __func__);
+            SRMSendUnAuthorizedAccessresponse(&g_policyEngineContext);
+            goto exit;
+        }
+        gRequestHandler(g_policyEngineContext.amsMgrContext->endpoint,
+                g_policyEngineContext.amsMgrContext->requestInfo);
+    }
+    else
+    {
+        OC_LOG_V(INFO, TAG, "%s : ACCESS_DENIED.", __func__);
+        SRMSendUnAuthorizedAccessresponse(&g_policyEngineContext);
+    }
+
+exit:
+    //Resting PE state to AWAITING_REQUEST
+    SetPolicyEngineState(&g_policyEngineContext, AWAITING_REQUEST);
+}
+
+
 /**
  * @brief   Handle the request from the SRM.
  * @param   endPoint       [IN] Endpoint object from which the response is received.
@@ -80,42 +133,55 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
     int position = 0;
     if (uri)
     {
+        //Skip query and pass the resource uri
         position = uri - requestInfo->info.resourceUri;
-    }
-    if (position > MAX_URI_LENGTH)
-    {
-        OC_LOG(ERROR, TAG, "URI length is too long");
-        return;
-    }
-    SRMAccessResponse_t response = ACCESS_DENIED;
-    if (position > 0)
-    {
-        char newUri[MAX_URI_LENGTH + 1];
-        OICStrcpyPartial(newUri, MAX_URI_LENGTH + 1, requestInfo->info.resourceUri, position);
-        //Skip query and pass the newUri.
-        response = CheckPermission(&g_policyEngineContext, &subjectId,
-                              newUri,
-                              GetPermissionFromCAMethod_t(requestInfo->method));
     }
     else
     {
-        //Pass resourceUri if there is no query info.
-        response = CheckPermission(&g_policyEngineContext, &subjectId,
-                              requestInfo->info.resourceUri,
-                              GetPermissionFromCAMethod_t(requestInfo->method));
+        position = strlen(requestInfo->info.resourceUri);
     }
+    if (MAX_URI_LENGTH < position  || 0 > position)
+    {
+        OC_LOG(ERROR, TAG, "Incorrect URI length");
+        return;
+    }
+    SRMAccessResponse_t response = ACCESS_DENIED;
+    char newUri[MAX_URI_LENGTH + 1];
+    OICStrcpyPartial(newUri, MAX_URI_LENGTH + 1, requestInfo->info.resourceUri, position);
+
+    //New request are only processed if the policy engine state is AWAITING_REQUEST.
+    if(AWAITING_REQUEST == g_policyEngineContext.state)
+    {
+        OC_LOG_V(INFO, TAG, "Processing request with uri, %s for method, %d",
+                requestInfo->info.resourceUri, requestInfo->method);
+        response = CheckPermission(&g_policyEngineContext, &subjectId, newUri,
+                GetPermissionFromCAMethod_t(requestInfo->method));
+    }
+    else
+    {
+        OC_LOG_V(INFO, TAG, "PE state %d. Ignoring request with uri, %s for method, %d",
+                g_policyEngineContext.state, requestInfo->info.resourceUri, requestInfo->method);
+    }
+
     if (IsAccessGranted(response) && gRequestHandler)
     {
         return (gRequestHandler(endPoint, requestInfo));
     }
 
-    // Form a 'access deny' or 'Error' response and send to peer
+    // Form a 'Error', 'slow response' or 'access deny' response and send to peer
     CAResponseInfo_t responseInfo = {.result = CA_EMPTY};
     memcpy(&responseInfo.info, &(requestInfo->info), sizeof(responseInfo.info));
     responseInfo.info.payload = NULL;
-    if (!gRequestHandler)
+
+    VERIFY_NON_NULL(TAG, gRequestHandler, ERROR);
+
+    if(ACCESS_WAITING_FOR_AMS == response)
     {
-        responseInfo.result = CA_INTERNAL_SERVER_ERROR;
+        OC_LOG(INFO, TAG, "Sending slow response");
+
+        UpdateAmsMgrContext(&g_policyEngineContext, endPoint, requestInfo);
+        responseInfo.result = CA_EMPTY;
+        responseInfo.info.type = CA_MSG_ACKNOWLEDGE;
     }
     else
     {
@@ -124,9 +190,17 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
          * CA_UNAUTHORIZED_REQ or CA_FORBIDDEN_REQ depending
          * upon SRMAccessResponseReasonCode_t
          */
+        OC_LOG(INFO, TAG, "Sending for regular response");
         responseInfo.result = CA_UNAUTHORIZED_REQ;
     }
 
+    if (CA_STATUS_OK != CASendResponse(endPoint, &responseInfo))
+    {
+        OC_LOG(ERROR, TAG, "Failed in sending response to a unauthorized request!");
+    }
+    return;
+exit:
+    responseInfo.result = CA_INTERNAL_SERVER_ERROR;
     if (CA_STATUS_OK != CASendResponse(endPoint, &responseInfo))
     {
         OC_LOG(ERROR, TAG, "Failed in sending response to a unauthorized request!");
@@ -169,7 +243,8 @@ void SRMResponseHandler(const CAEndpoint_t *endPoint, const CAResponseInfo_t *re
  */
 void SRMErrorHandler(const CAEndpoint_t *endPoint, const CAErrorInfo_t *errorInfo)
 {
-    OC_LOG(INFO, TAG, "Received error from remote device");
+    OC_LOG_V(INFO, TAG, "Received error from remote device with result, %d for request uri, %s",
+            errorInfo->result, errorInfo->info.resourceUri);
     if (gErrorHandler)
     {
         gErrorHandler(endPoint, errorInfo);

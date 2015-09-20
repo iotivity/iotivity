@@ -48,10 +48,11 @@ libocsrm_env.PrependUnique(CPPPATH = [
 		'../../oc_logger/include',
 		'../connectivity/lib/libcoap-4.1.1',
 		'../connectivity/external/inc',
+		'../connectivity/common/inc',
 		'../connectivity/inc',
 		'../connectivity/api',
 		'../security/include',
-		'../security/include/internal',
+		'../security/include/internal'
 		])
 
 if target_os not in ['arduino', 'windows', 'winrt']:
@@ -88,6 +89,7 @@ if env.get('SECURED') == '1':
 		OCSRM_SRC + 'resourcemanager.c',
 		OCSRM_SRC + 'aclresource.c',
 		OCSRM_SRC + 'amaclresource.c',
+		OCSRM_SRC + 'amsmgr.c',
 		OCSRM_SRC + 'pstatresource.c',
 		OCSRM_SRC + 'doxmresource.c',
 		OCSRM_SRC + 'credresource.c',
@@ -109,6 +111,7 @@ else:
 		OCSRM_SRC + 'resourcemanager.c',
 		OCSRM_SRC + 'aclresource.c',
 		OCSRM_SRC + 'amaclresource.c',
+		OCSRM_SRC + 'amsmgr.c',
 		OCSRM_SRC + 'pstatresource.c',
 		OCSRM_SRC + 'doxmresource.c',
 		OCSRM_SRC + 'credresource.c',
