@@ -409,6 +409,7 @@ static bool UpdatePersistentStorage(const OicSecAcl_t *acl)
     }
     return false;
 }
+
 /*
  * This method removes ACE for the subject and resource from the ACL
  *
@@ -519,6 +520,7 @@ static bool GetSubjectFromQueryString(const char *query, OicUuid_t *subject)
     OicParseQueryIter_t parseIter = {.attrPos=NULL};
 
     ParseQueryIterInit((unsigned char *)query, &parseIter);
+
 
     while(GetNextQuery(&parseIter))
     {
@@ -968,4 +970,35 @@ const OicSecAcl_t* GetACLResourceData(const OicUuid_t* subjectId, OicSecAcl_t **
     // Cleanup in case no ACL is found
     *savePtr = NULL;
     return NULL;
+}
+
+
+OCStackResult InstallNewACL(const char* newJsonStr)
+{
+    OCStackResult ret = OC_STACK_ERROR;
+
+    // Convert JSON ACL data into binary. This will also validate the ACL data received.
+    OicSecAcl_t* newAcl = JSONToAclBin(newJsonStr);
+
+    if (newAcl)
+    {
+        // Append the new ACL to existing ACL
+        LL_APPEND(gAcl, newAcl);
+
+        // Convert ACL data into JSON for update to persistent storage
+        char *jsonStr = BinToAclJSON(gAcl);
+        if (jsonStr)
+        {
+            cJSON *jsonAcl = cJSON_Parse(jsonStr);
+            OICFree(jsonStr);
+
+            if (jsonAcl)
+            {
+                ret = UpdateSVRDatabase(OIC_JSON_ACL_NAME, jsonAcl);
+            }
+            cJSON_Delete(jsonAcl);
+        }
+    }
+
+    return ret;
 }

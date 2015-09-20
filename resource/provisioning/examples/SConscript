@@ -49,7 +49,7 @@ if target_os not in ['windows', 'winrt']:
 	# Note: 'pthread' is in libc for android. On other platform, if use
 	# new gcc(>4.9?) it isn't required, otherwise, it's required
 	if target_os != 'android':
-		examples_env.AppendUnique(LIBS = ['-lpthread'])
+		examples_env.AppendUnique(LIBS = ['-lpthread', '-ldl'])
 
 examples_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 examples_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])

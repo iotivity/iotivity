@@ -20,6 +20,7 @@
 
 #include "oic_malloc.h"
 #include "policyengine.h"
+#include "amsmgr.h"
 #include "resourcemanager.h"
 #include "securevirtualresourcetypes.h"
 #include "srmresourcestrings.h"
@@ -78,20 +79,19 @@ bool UuidCmp(OicUuid_t *firstId, OicUuid_t *secondId)
     return true;
 }
 
-
 /**
  * Set the state and clear other stateful context vars.
  */
 void SetPolicyEngineState(PEContext_t *context, const PEState_t state)
 {
     // Clear stateful context variables.
-    OICFree(context->subject);
-    context->subject = NULL;
-    OICFree(context->resource);
-    context->resource = NULL;
+    memset(&context->subject, 0, sizeof(context->subject));
+    memset(&context->resource, 0, sizeof(context->resource));
     context->permission = 0x0;
     context->matchingAclFound = false;
+    context->amsProcessing = false;
     context->retVal = ACCESS_DENIED_POLICY_ENGINE_ERROR;
+    memset(context->amsMgrContext, 0, sizeof(AmsMgrContext_t));
 
     // Set state.
     context->state = state;
@@ -109,11 +109,20 @@ bool IsRequestFromDevOwner(PEContext_t *context)
 
     if(OC_STACK_OK == GetDoxmDevOwnerId(&owner))
     {
-        retVal = UuidCmp(context->subject, &owner);
+        retVal = UuidCmp(&context->subject, &owner);
     }
 
     return retVal;
 }
+
+
+inline static bool IsRequestSubjectEmpty(PEContext_t *context)
+{
+    OicUuid_t emptySubject = {.id={}};
+    return (memcmp(&context->subject, &emptySubject, sizeof(OicUuid_t)) == 0) ?
+            true : false;
+}
+
 
 /**
  * Bitwise check to see if 'permission' contains 'request'.
@@ -162,30 +171,20 @@ void CopyParamsToContext(
 {
     size_t length = 0;
 
-    // Free any existing subject.
-    OICFree(context->subject);
-    // Copy the subjectId into context.
-    context->subject = (OicUuid_t*)OICMalloc(sizeof(OicUuid_t));
-    VERIFY_NON_NULL(TAG, context->subject, ERROR);
-    memcpy(context->subject, subjectId, sizeof(OicUuid_t));
+     memcpy(&context->subject, subjectId, sizeof(OicUuid_t));
 
     // Copy the resource string into context.
     length = strlen(resource) + 1;
     if(0 < length)
     {
-        OICFree(context->resource);
-        context->resource = (char*)OICMalloc(length);
-        VERIFY_NON_NULL(TAG, context->resource, ERROR);
         strncpy(context->resource, resource, length);
         context->resource[length - 1] = '\0';
     }
 
     // Assign the permission field.
     context->permission = requestedPermission;
-
-exit:
-    return;
 }
+
 
 /**
  * Check whether 'resource' is getting accessed within the valid time period.
@@ -239,10 +238,13 @@ static bool IsAccessWithinValidTime(const OicSecAcl_t *acl)
     return false;
 }
 
+
 /**
  * Find ACLs containing context->subject.
  * Search each ACL for requested resource.
- * If resource found, check for context->permission.
+ * If resource found, check for context->permission and period validity.
+ * If the ACL is not found locally and AMACL for the resource is found
+ * then sends the request to AMS service for the ACL
  * Set context->retVal to result from first ACL found which contains
  * correct subject AND resource.
  *
@@ -258,22 +260,25 @@ void ProcessAccessRequest(PEContext_t *context)
 
         // Start out assuming subject not found.
         context->retVal = ACCESS_DENIED_SUBJECT_NOT_FOUND;
+
+        // Loop through all ACLs with a matching Subject searching for the right
+        // ACL for this request.
         do
         {
-            OC_LOG(INFO, TAG, "ProcessAccessRequest(): getting ACL...");
-            currentAcl = GetACLResourceData(context->subject, &savePtr);
+            OC_LOG_V(INFO, TAG, ("%s: getting ACL..."),__func__);
+            currentAcl = GetACLResourceData(&context->subject, &savePtr);
+
             if(NULL != currentAcl)
             {
                 // Found the subject, so how about resource?
-                OC_LOG(INFO, TAG, "ProcessAccessRequest(): \
-                    found ACL matching subject.");
+                OC_LOG_V(INFO, TAG, ("%s:found ACL matching subject"),__func__);
+
+                // Subject was found, so err changes to Rsrc not found for now.
                 context->retVal = ACCESS_DENIED_RESOURCE_NOT_FOUND;
-                OC_LOG(INFO, TAG, "ProcessAccessRequest(): \
-                    Searching for resource...");
+                OC_LOG_V(INFO, TAG, ("%s:Searching for resource..."),__func__);
                 if(IsResourceInAcl(context->resource, currentAcl))
                 {
-                    OC_LOG(INFO, TAG, "ProcessAccessRequest(): \
-                        found matching resource in ACL.");
+                    OC_LOG_V(INFO, TAG, ("%s:found matching resource in ACL"),__func__);
                     context->matchingAclFound = true;
 
                     // Found the resource, so it's down to valid period & permission.
@@ -281,8 +286,7 @@ void ProcessAccessRequest(PEContext_t *context)
                     if(IsAccessWithinValidTime(currentAcl))
                     {
                         context->retVal = ACCESS_DENIED_INSUFFICIENT_PERMISSION;
-                        if(IsPermissionAllowingRequest(currentAcl->permission, \
-                        context->permission))
+                        if(IsPermissionAllowingRequest(currentAcl->permission, context->permission))
                         {
                             context->retVal = ACCESS_GRANTED;
                         }
@@ -291,29 +295,24 @@ void ProcessAccessRequest(PEContext_t *context)
             }
             else
             {
-                OC_LOG(INFO, TAG, "ProcessAccessRequest(): \
-                    no ACL found matching subject .");
+                OC_LOG_V(INFO, TAG, ("%s:no ACL found matching subject for resource %s"),__func__, context->resource);
             }
         }
         while((NULL != currentAcl) && (false == context->matchingAclFound));
 
         if(IsAccessGranted(context->retVal))
         {
-            OC_LOG(INFO, TAG, "ProcessAccessRequest(): \
-                Leaving ProcessAccessRequest(ACCESS_GRANTED)");
+            OC_LOG_V(INFO, TAG, ("%s:Leaving ProcessAccessRequest(ACCESS_GRANTED)"), __func__);
         }
         else
         {
-            OC_LOG(INFO, TAG, "ProcessAccessRequest(): \
-                Leaving ProcessAccessRequest(ACCESS_DENIED)");
+            OC_LOG_V(INFO, TAG, ("%s:Leaving ProcessAccessRequest(ACCESS_DENIED)"), __func__);
         }
     }
     else
     {
-        OC_LOG(INFO, TAG, "ProcessAccessRequest(): \
-            Leaving ProcessAccessRequest(context is NULL)");
+        OC_LOG_V(INFO, TAG, ("%s:Leaving ProcessAccessRequest(context is NULL)"), __func__);
     }
-
 }
 
 /**
@@ -338,12 +337,16 @@ SRMAccessResponse_t CheckPermission(
     VERIFY_NON_NULL(TAG, resource, ERROR);
 
     // Each state machine context can only be processing one request at a time.
-    // Therefore if the context is not in AWAITING_REQUEST state, return error.
-    // Otherwise, change to BUSY state and begin processing request.
-    if(AWAITING_REQUEST == context->state)
+    // Therefore if the context is not in AWAITING_REQUEST or AWAITING_AMS_RESPONSE
+    // state, return error. Otherwise, change to BUSY state and begin processing request.
+    if(AWAITING_REQUEST == context->state || AWAITING_AMS_RESPONSE == context->state)
     {
-        SetPolicyEngineState(context, BUSY);
-        CopyParamsToContext(context, subjectId, resource, requestedPermission);
+        if(AWAITING_REQUEST == context->state)
+        {
+            SetPolicyEngineState(context, BUSY);
+            CopyParamsToContext(context, subjectId, resource, requestedPermission);
+        }
+
         // Before doing any processing, check if request coming
         // from DevOwner and if so, always GRANT.
         if(IsRequestFromDevOwner(context))
@@ -352,18 +355,45 @@ SRMAccessResponse_t CheckPermission(
         }
         else
         {
+            OicUuid_t saveSubject = {.id={}};
+            bool isSubEmpty = IsRequestSubjectEmpty(context);
+
             ProcessAccessRequest(context);
+
             // If matching ACL not found, and subject != wildcard, try wildcard.
             if((false == context->matchingAclFound) && \
-                (false == IsWildCardSubject(context->subject)))
+              (false == IsWildCardSubject(&context->subject)))
             {
-                OICFree(context->subject);
-                context->subject = (OicUuid_t*)OICMalloc(sizeof(OicUuid_t));
-                VERIFY_NON_NULL(TAG, context->subject, ERROR);
-                memcpy(context->subject, &WILDCARD_SUBJECT_ID,
-                    sizeof(OicUuid_t));
+                //Saving subject for Amacl check
+                memcpy(&saveSubject, &context->subject,sizeof(OicUuid_t));
+
+                //Setting context subject to WILDCARD_SUBJECT_ID
+                //TODO: change ProcessAccessRequest method signature to
+                //ProcessAccessRequest(context, subject) so that context
+                //subject is not tempered.
+                memset(&context->subject, 0, sizeof(context->subject));
+                memcpy(&context->subject, &WILDCARD_SUBJECT_ID,sizeof(OicUuid_t));
                 ProcessAccessRequest(context); // TODO anonymous subj can result
                                                // in confusing err code return.
+            }
+
+            //No local ACE found for the request so checking Amacl resource
+            if(ACCESS_GRANTED != context->retVal)
+            {
+                //If subject is not empty then restore the original subject
+                //else keep the subject to WILDCARD_SUBJECT_ID
+                if(!isSubEmpty)
+                {
+                    memcpy(&context->subject, &saveSubject, sizeof(OicUuid_t));
+                }
+
+                //FoundAmaclForRequest method checks for Amacl and fills up
+                //context->amsMgrContext->amsDeviceId with the AMS deviceId
+                //if Amacl was found for the requested resource.
+                if(FoundAmaclForRequest(context))
+                {
+                    ProcessAMSRequest(context);
+                }
             }
         }
     }
@@ -374,7 +404,19 @@ SRMAccessResponse_t CheckPermission(
 
     // Capture retVal before resetting state for next request.
     retVal = context->retVal;
-    SetPolicyEngineState(context, AWAITING_REQUEST);
+
+    //Change the state of PE to "AWAITING_AMS_RESPONSE", if waiting
+    //for response from AMS service else to "AWAITING_REQUEST"
+    if(ACCESS_WAITING_FOR_AMS == retVal)
+    {
+        OC_LOG(INFO, TAG, ("Setting PE State to AWAITING_AMS_RESPONSE"));
+        context->state = AWAITING_AMS_RESPONSE;
+    }
+    else if(!context->amsProcessing)
+    {
+        OC_LOG(INFO, TAG, ("Resetting PE context and PE State to AWAITING_REQUEST"));
+        SetPolicyEngineState(context, AWAITING_REQUEST);
+    }
 
 exit:
     return retVal;
@@ -387,6 +429,7 @@ exit:
  */
 OCStackResult InitPolicyEngine(PEContext_t *context)
 {
+    context->amsMgrContext = (AmsMgrContext_t *)OICMalloc(sizeof(AmsMgrContext_t));
     if(NULL != context)
     {
         SetPolicyEngineState(context, AWAITING_REQUEST);
@@ -407,6 +450,6 @@ void DeInitPolicyEngine(PEContext_t *context)
     {
         SetPolicyEngineState(context, STOPPED);
     }
-
+    OICFree(context->amsMgrContext);
     return;
 }

@@ -25,25 +25,32 @@
 #include "logger.h"
 #include "securevirtualresourcetypes.h"
 #include "cainterface.h"
+#include "amsmgr.h"
 #include <stdlib.h>
 #include <stdint.h>
+
+typedef struct AmsMgrContext AmsMgrContext_t;
 
 
 typedef enum PEState
 {
-    STOPPED = 0,
-    AWAITING_REQUEST,
-    BUSY
+    STOPPED = 0,              //Policy engine state machine is not running
+    AWAITING_REQUEST,         //Can process new request
+    AWAITING_AMS_RESPONSE,    //Can't process new request; waiting for AMS response
+    BUSY                      //Can't process new request as processing other requests
 } PEState_t;
+
 
 typedef struct PEContext
 {
     PEState_t   state;
-    OicUuid_t   *subject;
-    char        *resource;
+    OicUuid_t   subject;
+    char        resource[MAX_URI_LENGTH];
     uint16_t    permission;
     bool        matchingAclFound;
+    bool        amsProcessing;
     SRMAccessResponse_t retVal;
+    AmsMgrContext_t     *amsMgrContext;
 } PEContext_t;
 
 /**
@@ -84,5 +91,17 @@ void DeInitPolicyEngine(PEContext_t *context);
  * Return the uint16_t CRUDN permission corresponding to passed CAMethod_t.
  */
 uint16_t GetPermissionFromCAMethod_t(const CAMethod_t method);
+
+
+/*
+ * This method reset Policy Engine context to default state and update
+ * it's state to @param state.
+ *
+ * @param context  Policy engine context.
+ * @param state    Set Policy engine state to this.
+ *
+ * @return         none
+ */
+void SetPolicyEngineState(PEContext_t *context, const PEState_t state);
 
 #endif //IOTVT_SRM_PE_H

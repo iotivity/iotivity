@@ -1,1 +1,1 @@
-include ':simpleserver', ':simpleclient', ':message', ':fridgeserver', ':fridgeclient', ':guiclient', ':presenceserver', ':presenceclient', ':devicediscoveryclient', ':devicediscoveryserver', ':iotivity-armeabi-base-debug'
+include ':simpleserver', ':simpleclient', ':message', ':fridgeserver', ':fridgeclient', ':guiclient', ':secureprovisionclient', ':presenceserver', ':presenceclient', ':devicediscoveryclient', ':devicediscoveryserver', ':iotivity-armeabi-base-debug'
