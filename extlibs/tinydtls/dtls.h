@@ -193,7 +193,7 @@ typedef struct {
   /**
    * Called during handshake to check the peer's pubic key in this
    * session. If the public key matches the session and should be
-   * considerated valid the return value must be @c 0. If not valid,
+   * considered valid the return value must be @c 0. If not valid,
    * the return value must be less than zero.
    *
    * If ECDSA should not be supported, set this pointer to NULL.
@@ -321,6 +321,7 @@ typedef struct {
    */
   int (*is_x509_active)(struct dtls_context_t *ctx);
 #endif /* DTLS_X509 */
+
 } dtls_handler_t;
 
 /** Holds global information of the DTLS engine. */

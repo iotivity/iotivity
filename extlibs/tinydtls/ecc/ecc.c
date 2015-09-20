@@ -321,6 +321,13 @@ static void vli_modInv(uECC_word_t *p_result, uECC_word_t *p_input, uECC_word_t 
 static void vli_square(uECC_word_t *p_result, uECC_word_t *p_left);
 static void vli_modSquare_fast(uECC_word_t *p_result, uECC_word_t *p_left);
 #endif
+// Function declarations to support the HAL shims
+int uECC_make_key_impl(uint8_t p_publicKey[uECC_BYTES*2], uint8_t p_privateKey[uECC_BYTES]);
+int uECC_shared_secret_impl(const uint8_t p_publicKey[uECC_BYTES*2], const uint8_t p_privateKey[uECC_BYTES], uint8_t p_secret[uECC_BYTES]);
+int uECC_sign_impl(const uint8_t p_privateKey[uECC_BYTES], const uint8_t p_hash[uECC_BYTES], uint8_t p_signature[uECC_BYTES*2]);
+int uECC_verify_impl(const uint8_t p_publicKey[uECC_BYTES*2], const uint8_t p_hash[uECC_BYTES], const uint8_t p_signature[uECC_BYTES*2]);
+int uECC_ecdhe_impl(const uint8_t p_public_key_in[uECC_BYTES*2], uint8_t p_public_key_out[uECC_BYTES*2], uint8_t p_secret[uECC_BYTES]);
+int uECC_get_pubkey_impl(const uint8_t p_key_handle[uECC_BYTES], uint8_t p_public_key[uECC_BYTES*2]);
 
 #if (defined(_WIN32) || defined(_WIN64))
 /* Windows */
@@ -394,12 +401,59 @@ static int default_RNG(uint8_t *p_dest, unsigned p_size)
 
 #endif
 
+///////////////////////////////////////////////////////
+// Functions to set the callbacks for crypto operations
 static uECC_RNG_Function g_rng = &default_RNG;
 
 void uECC_set_rng(uECC_RNG_Function p_rng)
 {
     g_rng = p_rng;
 }
+
+static uECC_make_key_Function g_make_key_cb = &uECC_make_key_impl;
+
+void uECC_set_make_key_cb(uECC_make_key_Function p_make_key_cb)
+{
+    g_make_key_cb = p_make_key_cb;
+}
+
+static uECC_shared_secret_Function g_shared_secret_cb = &uECC_shared_secret_impl;
+
+void uECC_set_shared_secret_cb(uECC_shared_secret_Function p_shared_secret_cb)
+{
+    g_shared_secret_cb = p_shared_secret_cb;
+}
+
+static uECC_sign_Function g_sign_cb = &uECC_sign_impl;
+
+void uECC_set_sign_cb(uECC_sign_Function p_sign_cb)
+{
+    g_sign_cb = p_sign_cb;
+}
+
+static uECC_verify_Function g_verify_cb = &uECC_verify_impl;
+
+void uECC_set_verify_cb(uECC_verify_Function p_verify_cb)
+{
+	g_verify_cb = p_verify_cb;
+}
+
+static uECC_ecdhe_Function g_ecdhe_cb = &uECC_ecdhe_impl;
+
+void uECC_set_ecdhe_cb(uECC_ecdhe_Function p_ecdhe_cb)
+{
+	g_ecdhe_cb = p_ecdhe_cb;
+}
+
+static uECC_get_pubkey_Function g_get_pubkey_cb = &uECC_get_pubkey_impl;
+
+void uECC_set_get_pubkey_cb(uECC_get_pubkey_Function p_get_pubkey_cb)
+{
+	g_get_pubkey_cb = p_get_pubkey_cb;
+}
+
+///////////////////////////////////////////////////////
+
 
 #ifdef __GNUC__ /* Only support GCC inline asm for now */
     #if (uECC_ASM && (uECC_PLATFORM == uECC_avr))
@@ -1773,7 +1827,96 @@ static void vli_bytesToNative(uint64_t *p_native, const uint8_t *p_bytes)
 
 #endif /* uECC_WORD_SIZE */
 
+// Safe calls to the callback functions
 int uECC_make_key(uint8_t p_publicKey[uECC_BYTES*2], uint8_t p_privateKey[uECC_BYTES])
+{
+    // Check for a valid function pointer
+    if (g_make_key_cb != NULL)
+    {
+        return g_make_key_cb(p_publicKey, p_privateKey);
+    }
+    else
+    {
+        return uECC_make_key_impl(p_publicKey, p_privateKey);
+    }
+}
+
+int uECC_shared_secret(const uint8_t p_publicKey[uECC_BYTES*2], const uint8_t p_privateKey[uECC_BYTES], uint8_t p_secret[uECC_BYTES])
+{
+    // Check for a valid function pointer
+    if (g_shared_secret_cb != NULL)
+    {
+        return g_shared_secret_cb(p_publicKey, p_privateKey, p_secret);
+    }
+    else
+    {
+        return uECC_shared_secret_impl(p_publicKey, p_privateKey, p_secret);
+    }
+}
+
+int uECC_sign(const uint8_t p_privateKey[uECC_BYTES], const uint8_t p_hash[uECC_BYTES], uint8_t p_signature[uECC_BYTES*2])
+{
+    // Check for a valid function pointer
+    if (g_sign_cb != NULL)
+    {
+        return g_sign_cb(p_privateKey, p_hash, p_signature);
+    }
+    else
+    {
+        return uECC_sign_impl(p_privateKey, p_hash, p_signature);
+    }
+}
+
+int uECC_verify(const uint8_t p_publicKey[uECC_BYTES*2], const uint8_t p_hash[uECC_BYTES], const uint8_t p_signature[uECC_BYTES*2])
+{
+	// Check for a valid function pointer
+	if (g_verify_cb != NULL)
+	{
+		return g_verify_cb(p_publicKey, p_hash, p_signature);
+	}
+	else
+	{
+		return uECC_verify_impl(p_publicKey, p_hash, p_signature);
+	}
+}
+
+int uECC_ecdhe(const uint8_t p_public_key_in[uECC_BYTES*2], uint8_t p_public_key_out[uECC_BYTES*2], uint8_t p_secret[uECC_BYTES])
+{
+	// Check for a valid function pointer
+	if (g_ecdhe_cb != NULL)
+	{
+		return g_ecdhe_cb(p_public_key_in, p_public_key_out, p_secret);
+	}
+	else
+	{
+		return uECC_ecdhe_impl(p_public_key_in, p_public_key_out, p_secret);
+	}
+}
+
+int uECC_get_pubkey(const uint8_t p_key_handle[uECC_BYTES], uint8_t p_public_key[uECC_BYTES*2])
+{
+	// Check for a valid function pointer
+	if (g_get_pubkey_cb != NULL)
+	{
+		return g_get_pubkey_cb(p_key_handle, p_public_key);
+	}
+	else
+	{
+		return uECC_get_pubkey_impl(p_key_handle, p_public_key);
+	}
+}
+
+int uECC_ecdhe_impl(const uint8_t p_public_key_in[uECC_BYTES*2], uint8_t p_public_key_out[uECC_BYTES*2], uint8_t p_secret[uECC_BYTES])
+{
+	return 0;
+}
+
+int uECC_get_pubkey_impl(const uint8_t p_key_handle[uECC_BYTES], uint8_t p_public_key[uECC_BYTES*2])
+{
+	return 0;
+}
+
+int uECC_make_key_impl(uint8_t p_publicKey[uECC_BYTES*2], uint8_t p_privateKey[uECC_BYTES])
 {
     EccPoint l_public;
     uECC_word_t l_private[uECC_WORDS];
@@ -1808,7 +1951,7 @@ int uECC_make_key(uint8_t p_publicKey[uECC_BYTES*2], uint8_t p_privateKey[uECC_B
     return 1;
 }
 
-int uECC_shared_secret(const uint8_t p_publicKey[uECC_BYTES*2], const uint8_t p_privateKey[uECC_BYTES], uint8_t p_secret[uECC_BYTES])
+int uECC_shared_secret_impl(const uint8_t p_publicKey[uECC_BYTES*2], const uint8_t p_privateKey[uECC_BYTES], uint8_t p_secret[uECC_BYTES])
 {
     EccPoint l_public;
     uECC_word_t l_private[uECC_WORDS];
@@ -2143,7 +2286,7 @@ static void vli_modMult_n(uECC_word_t *p_result, uECC_word_t *p_left, uECC_word_
 }
 #endif /* (uECC_CURVE != uECC_secp160r1) */
 
-int uECC_sign(const uint8_t p_privateKey[uECC_BYTES], const uint8_t p_hash[uECC_BYTES], uint8_t p_signature[uECC_BYTES*2])
+int uECC_sign_impl(const uint8_t p_privateKey[uECC_BYTES], const uint8_t p_hash[uECC_BYTES], uint8_t p_signature[uECC_BYTES*2])
 {
     uECC_word_t k[uECC_N_WORDS];
     uECC_word_t l_tmp[uECC_N_WORDS];
@@ -2242,7 +2385,7 @@ static bitcount_t smax(bitcount_t a, bitcount_t b)
     return (a > b ? a : b);
 }
 
-int uECC_verify(const uint8_t p_publicKey[uECC_BYTES*2], const uint8_t p_hash[uECC_BYTES], const uint8_t p_signature[uECC_BYTES*2])
+int uECC_verify_impl(const uint8_t p_publicKey[uECC_BYTES*2], const uint8_t p_hash[uECC_BYTES], const uint8_t p_signature[uECC_BYTES*2])
 {
     uECC_word_t u1[uECC_N_WORDS], u2[uECC_N_WORDS];
     uECC_word_t z[uECC_N_WORDS];
