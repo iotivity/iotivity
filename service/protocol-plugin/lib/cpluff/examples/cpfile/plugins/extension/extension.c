@@ -29,7 +29,7 @@ static int classify(void *d, const char *path) {
 	cp_extension_t **exts;
 	const char *type = NULL;
 	int i;
-	
+
 	// Go through all extensions registered at the extension point
 	exts = cp_get_extensions_info(ctx, "org.c-pluff.examples.cpfile.extension.file-types", NULL, NULL);
 	if (exts == NULL) {
@@ -38,12 +38,12 @@ static int classify(void *d, const char *path) {
 	}
 	for (i = 0; type == NULL && exts[i] != NULL; i++) {
 		int j;
-		
+
 		// Go through all file types provided by the extension
 		for (j = 0; type == NULL && j < exts[i]->configuration->num_children; j++) {
 			cp_cfg_element_t *elem = exts[i]->configuration->children + j;
 			const char *desc = NULL;
-			
+
 			if (strcmp(elem->name, "file-type") == 0
 				&& (desc = cp_lookup_cfg_value(elem, "@description")) != NULL
 				&& (is_of_type(path, elem))) {
@@ -51,10 +51,10 @@ static int classify(void *d, const char *path) {
 			}
 		}
 	}
-	
+
 	// Release extension information
 	cp_release_info(ctx, exts);
-	
+
 	// Print file type if recognized, otherwise try other classifiers
 	if (type != NULL) {
 		fputs(type, stdout);
@@ -72,18 +72,18 @@ static int classify(void *d, const char *path) {
 static int is_of_type(const char *path, const cp_cfg_element_t *type) {
 	int i;
 	int iot = 0;
-	
+
 	/* Go through all extensions specified for the type */
 	for (i = 0; !iot && i < type->num_children; i++) {
 		cp_cfg_element_t *ee = type->children + i;
 		const char *ext;
-		
+
 		iot = (strcmp(ee->name, "file-extension") == 0
 			&& (ext = cp_lookup_cfg_value(ee, "@ext")) != NULL
 			&& strlen(path) >= strlen(ext)
 			&& strcmp(path + (strlen(path) - strlen(ext)), ext) == 0);
 	}
-	
+
 	return iot;
 }
 
@@ -93,7 +93,7 @@ static int is_of_type(const char *path, const cp_cfg_element_t *type) {
  */
 static void *create(cp_context_t *ctx) {
 	classifier_t *cl;
-	
+
 	cl = malloc(sizeof(classifier_t));
 	if (cl != NULL) {
 		cl->data = ctx;
@@ -108,7 +108,7 @@ static void *create(cp_context_t *ctx) {
 static int start(void *d) {
 	classifier_t *cl = d;
 	cp_context_t *ctx = cl->data;
-	
+
 	return cp_define_symbol(ctx, "cp_ex_cpfile_extension_classifier", cl);
 }
 

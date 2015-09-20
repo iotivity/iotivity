@@ -123,6 +123,11 @@ static OCRepPayloadValue* OCRepPayloadFindValue(const OCRepPayload* payload, con
 
 static void OCCopyPropertyValueArray(OCRepPayloadValue* dest, OCRepPayloadValue* source)
 {
+    if(!dest || !source)
+    {
+        return;
+    }
+
     size_t dimTotal = calcDimTotal(source->arr.dimensions);
     switch(source->arr.type)
     {
@@ -153,7 +158,7 @@ static void OCCopyPropertyValueArray(OCRepPayloadValue* dest, OCRepPayloadValue*
             }
             break;
         default:
-            OC_LOG(ERROR, TAG, PCF("CopyPropertyValueArray invalid type"));
+            OC_LOG(ERROR, TAG, "CopyPropertyValueArray invalid type");
             break;
     }
 }
@@ -342,7 +347,7 @@ static OCRepPayloadValue* OCRepPayloadFindAndSetValue(OCRepPayload* payload, con
         val = val->next;
     }
 
-    OC_LOG(ERROR, TAG, PCF("FindAndSetValue reached point after while loop, pointer corruption?"));
+    OC_LOG(ERROR, TAG, "FindAndSetValue reached point after while loop, pointer corruption?");
     return NULL;
 }
 
@@ -450,24 +455,50 @@ bool OCRepPayloadIsNull(const OCRepPayload* payload, const char* name)
     return val->type == OCREP_PROP_NULL;
 }
 
+static bool OCRepPayloadSetProp(OCRepPayload* payload, const char* name,
+        void* value, OCRepPayloadPropType type)
+{
+    OCRepPayloadValue* val = OCRepPayloadFindAndSetValue(payload, name, type);
+    if(!val)
+    {
+        return false;
+    }
+    switch(type)
+    {
+        case OCREP_PROP_INT:
+               val->i = *(int64_t*)value;
+               break;
+        case OCREP_PROP_DOUBLE:
+               val->d = *(double*)value;
+               break;
+        case OCREP_PROP_BOOL:
+               val->b = *(bool*)value;
+               break;
+        case OCREP_PROP_OBJECT:
+               val->obj = (OCRepPayload*)value;
+               break;
+        case OCREP_PROP_STRING:
+               val->str = (char*)value;
+               return val->str != NULL;
+        case OCREP_PROP_NULL:
+               return val != NULL;
+        case OCREP_PROP_ARRAY:
+        default:
+               return false;
+    }
+
+    return true;
+}
+
 bool OCRepPayloadSetNull(OCRepPayload* payload, const char* name)
 {
-    OCRepPayloadValue* val = OCRepPayloadFindAndSetValue(payload, name, OCREP_PROP_NULL);
-    return val != NULL;
+    return OCRepPayloadSetProp(payload, name, NULL, OCREP_PROP_NULL);
 }
 
 bool OCRepPayloadSetPropInt(OCRepPayload* payload,
         const char* name, int64_t value)
 {
-    OCRepPayloadValue* val = OCRepPayloadFindAndSetValue(payload, name, OCREP_PROP_INT);
-
-    if(!val)
-    {
-        return false;
-    }
-
-    val->i = value;
-    return true;
+    return OCRepPayloadSetProp(payload, name, &value, OCREP_PROP_INT);
 }
 
 bool OCRepPayloadGetPropInt(const OCRepPayload* payload, const char* name, int64_t* value)
@@ -486,15 +517,7 @@ bool OCRepPayloadGetPropInt(const OCRepPayload* payload, const char* name, int64
 bool OCRepPayloadSetPropDouble(OCRepPayload* payload,
         const char* name, double value)
 {
-    OCRepPayloadValue* val = OCRepPayloadFindAndSetValue(payload, name, OCREP_PROP_DOUBLE);
-
-    if(!val )
-    {
-        return false;
-    }
-
-    val->d = value;
-    return true;
+    return OCRepPayloadSetProp(payload, name, &value, OCREP_PROP_DOUBLE);
 }
 
 bool OCRepPayloadGetPropDouble(const OCRepPayload* payload, const char* name, double* value)
@@ -524,18 +547,10 @@ bool OCRepPayloadSetPropString(OCRepPayload* payload, const char* name, const ch
 
 bool OCRepPayloadSetPropStringAsOwner(OCRepPayload* payload, const char* name, char* value)
 {
-    OCRepPayloadValue* val = OCRepPayloadFindAndSetValue(payload, name, OCREP_PROP_STRING);
-
-    if(!val)
-    {
-        return false;
-    }
-
-    val->str = value;
-    return val->str != NULL;
+    return OCRepPayloadSetProp(payload, name, value, OCREP_PROP_STRING);
 }
 
-bool OCRepPayloadGetPropString(const OCRepPayload* payload, const char* name, const char** value)
+bool OCRepPayloadGetPropString(const OCRepPayload* payload, const char* name, char** value)
 {
     OCRepPayloadValue* val = OCRepPayloadFindValue(payload, name);
 
@@ -551,15 +566,7 @@ bool OCRepPayloadGetPropString(const OCRepPayload* payload, const char* name, co
 bool OCRepPayloadSetPropBool(OCRepPayload* payload,
         const char* name, bool value)
 {
-    OCRepPayloadValue* val = OCRepPayloadFindAndSetValue(payload, name, OCREP_PROP_BOOL);
-
-    if(!val)
-    {
-        return false;
-    }
-
-    val->b = value;
-    return true;
+    return OCRepPayloadSetProp(payload, name, &value, OCREP_PROP_BOOL);
 }
 
 bool OCRepPayloadGetPropBool(const OCRepPayload* payload, const char* name, bool* value)
@@ -589,15 +596,7 @@ bool OCRepPayloadSetPropObject(OCRepPayload* payload, const char* name, const OC
 
 bool OCRepPayloadSetPropObjectAsOwner(OCRepPayload* payload, const char* name, OCRepPayload* value)
 {
-    OCRepPayloadValue* val = OCRepPayloadFindAndSetValue(payload, name, OCREP_PROP_OBJECT);
-
-    if(!val)
-    {
-        return false;
-    }
-
-    val->obj = value;
-    return true;
+    return OCRepPayloadSetProp(payload, name, value, OCREP_PROP_OBJECT);
 }
 
 bool OCRepPayloadGetPropObject(const OCRepPayload* payload, const char* name, OCRepPayload** value)
@@ -1234,7 +1233,7 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t port)
 
         OCStringLL* cur = pl->interfaces;
         ifPtr = ifPtr->next;
-        while(ifPtr)
+        while(ifPtr && cur)
         {
             cur->next = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
             if(!cur->next)
@@ -1380,6 +1379,11 @@ void OCDevicePayloadDestroy(OCDevicePayload* payload)
 
 static void OCCopyPlatformInfo(const OCPlatformInfo* platformInfo, OCPlatformPayload* target)
 {
+    if(!platformInfo || !target)
+    {
+        return;
+    }
+
     target->info.platformID = OICStrdup(platformInfo->platformID);
     target->info.manufacturerName = OICStrdup(platformInfo->manufacturerName);
     target->info.manufacturerUrl = OICStrdup(platformInfo->manufacturerUrl);

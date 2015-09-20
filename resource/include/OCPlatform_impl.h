@@ -96,12 +96,13 @@ namespace OC
         /**
          * API for Device Discovery
          *
-         * @param host - Host IP Address. If null or empty, Multicast is performed.
-         * @param resourceURI - Uri containing address to the virtual device in C Stack
+         * @param host Host IP Address. If null or empty, Multicast is performed.
+         * @param deviceURI Uri containing address to the virtual device in C Stack
          *                       ("/oic/d")
-         *
+         * @param deviceInfoHandler device discovery callback
          * @param QualityOfService the quality of communication
-         *
+         * @return Returns ::OC_STACK_OK if success.
+         * @note OCStackResult is defined in ocstack.h.
          */
         OCStackResult getDeviceInfo(const std::string& host, const std::string& deviceURI,
                     FindDeviceCallback deviceInfoHandler);
@@ -111,12 +112,13 @@ namespace OC
         /**
          * API for Platform Discovery
          *
-         * @param host - Host IP Address. If null or empty, Multicast is performed.
-         * @param resourceURI - Uri containing address to the virtual platform in C Stack
+         * @param host Host IP Address. If null or empty, Multicast is performed.
+         * @param platformURI Uri containing address to the virtual platform in C Stack
          *                       ("/oic/p")
-         *
+         * @param platformInfoHandler platform discovery callback
          * @param QualityOfService the quality of communication
-         *
+         * @return Returns ::OC_STACK_OK if success.
+         * @note OCStackResult is defined in ocstack.h.
          */
         OCStackResult getPlatformInfo(const std::string& host, const std::string& platformURI,
                     FindPlatformCallback platformInfoHandler);
@@ -125,21 +127,21 @@ namespace OC
 
         /**
         * This API registers a resource with the server
-        * NOTE: This API applies to server side only.
+        * @note This API applies to server side only.
         *
-        * @param resourceHandle - Upon successful registration, resourceHandle will be filled
-        * @param resourceURI - The URI of the resource. Example: "a/light". See NOTE below
-        * @param resourceTypeName - The resource type. Example: "light"
-        * @param resourceInterface - The resource interface (whether it is collection etc).
-        * @param entityHandler - entity handler callback.
-        * @param resourceProperty - indicates the property of the resource. Defined in ocstack.h.
+        * @param resourceHandle Upon successful registration, resourceHandle will be filled
+        * @param resourceURI The URI of the resource. Example: "a/light". See NOTE below
+        * @param resourceTypeName The resource type. Example: "light"
+        * @param resourceInterface The resource interface (whether it is collection etc).
+        * @param entityHandler entity handler callback.
+        * @param resourceProperty indicates the property of the resource. Defined in ocstack.h.
         * setting resourceProperty as OC_DISCOVERABLE will allow Discovery of this resource
         * setting resourceProperty as OC_OBSERVABLE will allow observation
         * settings resourceProperty as OC_DISCOVERABLE | OC_OBSERVABLE will allow both discovery
         * and observation
         *
-        * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
-        * NOTE: "a/light" is a relative URI.
+        * @return Returns ::OC_STACK_OK if success.
+        * @note "a/light" is a relative URI.
         * Above relative URI will be prepended (by core) with a host IP + namespace "oc"
         * Therefore, fully qualified URI format would be //HostIP-Address/namespace/relativeURI"
         * Example, a relative URI: 'a/light' will result in a fully qualified URI:
@@ -148,7 +150,7 @@ namespace OC
         * qualified URI OR
         * first parameter can take fully qualified URI and core will take that as is for further
         * operations
-        * NOTE: OCStackResult is defined in ocstack.h.
+        * @note OCStackResult is defined in ocstack.h.
         */
         OCStackResult registerResource(OCResourceHandle& resourceHandle,
                         std::string& resourceURI,
@@ -163,22 +165,20 @@ namespace OC
         /**
          * This API registers all the device specific information
          *
-         * @param OCDeviceInfo - Structure containing all the device related information
+         * @param deviceInfo Structure containing all the device related information
          *
-         * @return OCStackResult return value of the API. Returns OC_STACK_OK if success
-         *
-         * Note: OCDeviceInfo is defined in OCStack.h
+         * @return Returns ::OC_STACK_OK if success
+         * @note OCDeviceInfo is defined in OCStack.h
          */
         OCStackResult registerDeviceInfo(const OCDeviceInfo deviceInfo);
 
         /**
          * This API registers all the platform specific information
          *
-         * @param OCPlatformInfo - Structure containing all the platform related information
+         * @param platformInfo Structure containing all the platform related information
          *
-         * @return OCStackResult return value of the API. Returns OC_STACK_OK if success
-         *
-         * Note: OCPlatformInfo is defined in OCStack.h
+         * @return Returns ::OC_STACK_OK if success
+         * @note OCPlatformInfo is defined in OCStack.h
          */
         OCStackResult registerPlatformInfo(const OCPlatformInfo platformInfo);
 
@@ -221,6 +221,8 @@ namespace OC
                         const std::vector<std::string>& resourceTypes,
                         const std::vector<std::string>& interfaces);
         OCStackResult sendResponse(const std::shared_ptr<OCResourceResponse> pResponse);
+
+        std::weak_ptr<std::recursive_mutex> csdkLock();
 
     private:
         PlatformConfig m_cfg;

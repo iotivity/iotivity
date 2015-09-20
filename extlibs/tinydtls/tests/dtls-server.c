@@ -254,8 +254,8 @@ usage(const char *program, const char *version) {
 	  "\t-p port\t\tlisten on specified port (default is %d)\n"
 	  "\t-v num\t\tverbosity level (default: 3)\n"
 	  "\t-a enable|disable\t(default: disable)\n"
-  	  "\t\t\t\tenable:enable TLS_ECDH_anon_with_AES_128_CBC_SHA\n"
-	  "\t\t\t\tdisable:disable TLS_ECDH_anon_with_AES_128_CBC_SHA\n",
+  	  "\t\t\t\tenable:enable TLS_ECDH_anon_with_AES_128_CBC_SHA_256\n"
+	  "\t\t\t\tdisable:disable TLS_ECDH_anon_with_AES_128_CBC_SHA_256\n",
 	   program, version, program, DEFAULT_PORT);
 }
 
@@ -280,7 +280,7 @@ main(int argc, char **argv) {
   struct timeval timeout;
   int fd, opt, result;
   int on = 1;
-  int ecdh_anon_enalbe = DTLS_CIPHER_DISABLE;
+  dtls_cipher_enable_t ecdh_anon_enalbe = DTLS_CIPHER_DISABLE;
   struct sockaddr_in6 listen_addr;
 
   memset(&listen_addr, 0, sizeof(struct sockaddr_in6));
@@ -356,7 +356,7 @@ main(int argc, char **argv) {
 
   the_context = dtls_new_context(&fd);
 
-  /* enable/disable tls_ecdh_anon_with_aes_128_cbc_sha */
+  /* enable/disable tls_ecdh_anon_with_aes_128_cbc_sha_256 */
   dtls_enables_anon_ecdh(the_context, ecdh_anon_enalbe);
 
   dtls_set_handler(the_context, &cb);

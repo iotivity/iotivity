@@ -60,7 +60,7 @@ typedef struct le_state_info
  * @param[in]  data                   Data received from remote device.
  * @pre  Callback must be registered using CALESetCallback(CAPacketReceiveCallback callback)
  */
-typedef void (*CAPacketReceiveCallback)(const char *address, const char *data);
+typedef void (*CAPacketReceiveCallback)(const char *address, const uint8_t *data);
 
 /**
  * initialize JNI object.
@@ -104,7 +104,7 @@ void CALEClientSendFinish(JNIEnv *env, jobject gatt);
  * @param[in]   dataLen               data length.
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CALEClientSendUnicastMessage(const char *address, const char *data,
+CAResult_t CALEClientSendUnicastMessage(const char *address, const uint8_t *data,
                                         const uint32_t dataLen);
 
 /**
@@ -113,7 +113,7 @@ CAResult_t CALEClientSendUnicastMessage(const char *address, const char *data,
  * @param[in]   dataLen               data length.
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CALEClientSendMulticastMessage(const char *data, const uint32_t dataLen);
+CAResult_t CALEClientSendMulticastMessage(const uint8_t *data, const uint32_t dataLen);
 
 /**
  * start unicast server.
@@ -152,7 +152,7 @@ void CALEClientSetCallback(CAPacketReceiveCallback callback);
  * @param[in]   dataLen               data length.
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CALEClientSendUnicastMessageImpl(const char *address, const char *data,
+CAResult_t CALEClientSendUnicastMessageImpl(const char *address, const uint8_t *data,
                                             const uint32_t dataLen);
 
 /**
@@ -162,7 +162,7 @@ CAResult_t CALEClientSendUnicastMessageImpl(const char *address, const char *dat
  * @param[in]   dataLen               data length.
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CALEClientSendMulticastMessageImpl(JNIEnv *env, const char *data,
+CAResult_t CALEClientSendMulticastMessageImpl(JNIEnv *env, const uint8_t *data,
                                               const uint32_t dataLen);
 
 /**
@@ -242,6 +242,12 @@ jobject CALEClientGetUUIDObject(JNIEnv *env, const char *uuid);
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CALEClientStopScan();
+
+/**
+ * set ble scanning flag.
+ * @param[in]   flag        scan flag.
+ */
+void CALEClientSetScanFlag(bool flag);
 
 /**
  * stop scan (implement).
@@ -507,14 +513,6 @@ bool CALEClientIsSetCharacteristic(const char* remoteAddress);
  * create scan device list.
  */
 void CALEClientCreateDeviceList();
-
-/**
- * Reordering for device state list.
- * @param[in]   index                 index of device list that want to reordering.
- * @param[in]   list                  the list to reorder.
- * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
- */
-CAResult_t CALEClientReorderingList(uint32_t index, u_arraylist_t *list);
 
 /**
  * update the counter which data is sent to remote device.

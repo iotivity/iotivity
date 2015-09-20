@@ -22,7 +22,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/syscall.h>
 #include <sys/types.h>
 
 #include "caqueueingthread.h"
@@ -60,17 +59,20 @@ static void CAQueueingThreadBaseRoutine(void *threadValue)
             OIC_LOG(DEBUG, TAG, "wake up..");
         }
 
-        // mutex unlock
-        ca_mutex_unlock(thread->threadMutex);
+
 
         // check stop flag
         if (thread->isStop)
         {
+            // mutex unlock
+            ca_mutex_unlock(thread->threadMutex);
             continue;
         }
 
         // get data
         u_queue_message_t *message = u_queue_get_element(thread->dataQueue);
+        // mutex unlock
+        ca_mutex_unlock(thread->threadMutex);
         if (NULL == message)
         {
             continue;

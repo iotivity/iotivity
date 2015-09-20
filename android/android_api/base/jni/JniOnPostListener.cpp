@@ -36,9 +36,10 @@ JniOnPostListener::~JniOnPostListener()
     {
         jint ret;
         JNIEnv *env = GetJNIEnv(ret);
-        if (NULL == env) return;
+        if (nullptr == env) return;
 
         env->DeleteWeakGlobalRef(m_jwListener);
+        m_jwListener = nullptr;
 
         if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
     }
@@ -49,7 +50,7 @@ void JniOnPostListener::onPostCallback(const HeaderOptions& headerOptions,
 {
     jint envRet;
     JNIEnv *env = GetJNIEnv(envRet);
-    if (NULL == env) return;
+    if (nullptr == env) return;
 
     jobject jListener = env->NewLocalRef(m_jwListener);
     if (!jListener)

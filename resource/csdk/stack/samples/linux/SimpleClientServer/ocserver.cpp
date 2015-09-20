@@ -514,12 +514,12 @@ OCNOPEntityHandlerCb (OCEntityHandlerFlag /*flag*/,
 
 OCEntityHandlerResult
 OCEntityHandlerCb (OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest *entityHandlerRequest, void* callback)
+        OCEntityHandlerRequest *entityHandlerRequest, void* /*callback*/)
 {
     OC_LOG_V (INFO, TAG, "Inside entity handler - flags: 0x%x", flag);
 
     OCEntityHandlerResult ehResult = OC_EH_OK;
-    OCEntityHandlerResponse response = { 0 };
+    OCEntityHandlerResponse response = { 0, 0, OC_EH_ERROR, 0, 0, { },{ 0 }, false };
 
     // Validate pointer
     if (!entityHandlerRequest)
@@ -952,7 +952,7 @@ int main(int argc, char* argv[])
         PrintUsage();
         return -1;
     }
-    #ifdef RA_ADAPTER
+#ifdef RA_ADAPTER
     OCRAInfo_t rainfo;
     rainfo.hostname = "localhost";
     rainfo.port = 5222;
@@ -963,7 +963,7 @@ int main(int argc, char* argv[])
     rainfo.user_jid = "";
 
     OCSetRAInfo(&rainfo);
-    #endif
+#endif
 
     OC_LOG(DEBUG, TAG, "OCServer is starting...");
 
@@ -1057,8 +1057,9 @@ int main(int argc, char* argv[])
             OC_LOG(ERROR, TAG, "OCStack process error");
             return 0;
         }
-
+#ifndef ROUTING_GATEWAY
         sleep(2);
+#endif
     }
 
     /*

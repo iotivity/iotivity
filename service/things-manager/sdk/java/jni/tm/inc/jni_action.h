@@ -1,4 +1,4 @@
-/******************************************************************
+/* *****************************************************************
  *
  * Copyright 2015 Samsung Electronics All Rights Reserved.
  *
@@ -19,14 +19,13 @@
  ******************************************************************/
 
 /**
-  * @file   jni_action.h
-  *
-  * @brief  This file contains the declaration of JniAction class and its members related to JniAction.
+  * @file
+  * This file contains the declaration of JniAction class and
+  * its members related to JniAction.
   */
 
-#ifndef __JNI_ACTION_H_
-#define __JNI_ACTION_H_
-
+#ifndef JNI_ACTION_H_
+#define JNI_ACTION_H_
 
 #include <vector>
 #include <string>
@@ -35,51 +34,47 @@
 #include "jni_capability.h"
 
 /**
- * @class   JniAction
- * @brief   This class provides a set of functions to get and set Action Class member variables
- *
+ * This class provides a set of functions to get and
+ * set Action Class member variables.
  */
 class JniAction : public JObject
 {
     public:
         /**
-         * @brief constructor
+         * constructor
          */
         JniAction(JNIEnv *env, jobject obj);
 
         /**
-         * @brief constructor
+         * constructor
          */
         JniAction(JNIEnv *env);
 
         /**
-         * @brief destructor
-         *
+         * destructor
          */
         ~JniAction();
 
         /**
-         * Retrieves target value from JniAction class object
+         * Retrieves target value from JniAction class object.
          *
          * @param target - target value
          *
          * @return Boolean, true on success, otherwise false
-         *
          */
         bool getTarget(std::string &target);
 
         /**
-         * Sets target value of JniAction class object
+         * Sets target value of JniAction class object.
          *
          * @param target - target value
          *
          * @return Boolean, true on success, otherwise false
-         *
          */
         bool setTarget(const std::string target);
 
         /**
-         * Retrieves capability values from JniAction class object
+         * Retrieves capability values from JniAction class object.
          *
          * @param capabilityList - capability list
          *
@@ -88,4 +83,4 @@ class JniAction : public JObject
         bool getJniCapabilityValues(std::vector<OIC::Capability *> &capabilityList);
 
 };
-#endif //__JNI_ACTION_H_
+#endif //JNI_ACTION_H_

@@ -27,7 +27,7 @@ import org.iotivity.base.OcRepresentation;
 import org.iotivity.service.tm.Action;
 import org.iotivity.service.tm.ActionSet;
 import org.iotivity.service.tm.Capability;
-import org.iotivity.service.tm.IActionListener;
+import org.iotivity.service.tm.GroupManager.*;
 
 import android.os.Message;
 import android.util.Log;
@@ -38,8 +38,9 @@ import android.util.Log;
  */
 public class ActionListener implements IActionListener {
 
-    private final String     LOG_TAG             = "[TMSample] " + this.getClass()
-                                                                   .getSimpleName();
+    private final String     LOG_TAG             = "[TMSample] "
+                                                         + this.getClass()
+                                                                 .getSimpleName();
     private static Message   msg;
     private String           logMessage;
     private GroupApiActivity groupApiActivityObj = null;
@@ -51,15 +52,14 @@ public class ActionListener implements IActionListener {
 
         groupApiActivityObj = GroupApiActivity.getGroupApiActivityObj();
         logMessage = "API Result : SUCCESS" + "\n";
-        logMessage = logMessage
-                + "Recieved Callback for called API (OnPostCallback)" + "\n";
+        logMessage += "Recieved Callback for called API (OnPostCallback)"
+                + "\n";
 
         // sending message to handler of GroupApiActivity to Update the UI
         GroupApiActivity.setMessageLog(logMessage);
         msg = Message.obtain();
         msg.what = 1;
         groupApiActivityObj.getHandler().sendMessage(msg);
-
     }
 
     @Override
@@ -103,7 +103,6 @@ public class ActionListener implements IActionListener {
         msg = Message.obtain();
         msg.what = 1;
         groupApiActivityObj.getHandler().sendMessage(msg);
-
     }
 
     @Override
@@ -113,15 +112,12 @@ public class ActionListener implements IActionListener {
 
         groupApiActivityObj = GroupApiActivity.getGroupApiActivityObj();
         logMessage = "API Result : SUCCESS" + "\n";
-        logMessage = logMessage
-                + "Recieved Callback for called API (onPutResponseCallback)"
+        logMessage += "Recieved Callback for called API (onPutResponseCallback)"
                 + "\n";
         GroupApiActivity.setMessageLog(logMessage);
         // sending message to handler of GroupApiActivity to Update the UI
         msg = Message.obtain();
         msg.what = 1;
         groupApiActivityObj.getHandler().sendMessage(msg);
-
     }
-
 }

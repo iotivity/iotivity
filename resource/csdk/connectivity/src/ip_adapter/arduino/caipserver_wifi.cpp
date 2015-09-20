@@ -110,6 +110,7 @@ CAResult_t CAIPStartUnicastServer(const char *localAddress, uint16_t *port,
     Udp.begin((uint16_t ) *port);
     gServerRunning = true;
     g_unicastPort = *port;
+    caglobals.ip.u4.port =  *port;
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -130,7 +131,8 @@ CAResult_t CAIPStartServer()
     CAResult_t ret = CAIPStartUnicastServer("0.0.0.0", &unicastPort, false);
     if (CA_STATUS_OK != ret)
     {
-        OIC_LOG_V(DEBUG, TAG, "Start unicast serv failed[%d]", ret);
+        OIC_LOG_V(ERROR, TAG, "Start unicast server failed[%d]", ret);
+        return ret;
     }
     ret = CAIPStartMulticastServer("0.0.0.0", "224.0.1.187", 5683);
     if (CA_STATUS_OK != ret)
@@ -146,6 +148,7 @@ CAResult_t CAIPStopUnicastServer()
     Udp.stop();
 
     gServerRunning = false;
+    caglobals.ip.u4.port =  0;
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -181,12 +184,11 @@ void CAPacketReceivedCallback(const char *ipAddress, const uint16_t port,
     OIC_LOG(DEBUG, TAG, "IN");
     if (gPacketReceivedCallback)
     {
-        CAEndpoint_t ep;
-        strncpy(ep.addr, ipAddress, MAX_ADDR_STR_SIZE_CA);
-        ep.port = port;
-        ep.flags = CA_IPV4;
-        ep.adapter = CA_ADAPTER_IP;
-        gPacketReceivedCallback(&ep, data, dataLength);
+        CASecureEndpoint_t sep =
+        {.endpoint = {.adapter = CA_ADAPTER_IP, .flags = CA_IPV4, .port = port}};
+
+        OICStrcpy(sep.endpoint.addr, sizeof(sep.endpoint.addr), ipAddress);
+        gPacketReceivedCallback(&sep, data, dataLength);
         OIC_LOG(DEBUG, TAG, "Notified network packet");
     }
     OIC_LOG(DEBUG, TAG, "OUT");
@@ -274,11 +276,13 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
     {
         CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
 
-        OICStrcpy(eps[j].addr, CA_INTERFACE_NAME_SIZE, ifitem->name);
+        unsigned char *addr=  (unsigned char *) &(ifitem->ipv4addr);
+        snprintf(eps[j].addr, MAX_ADDR_STR_SIZE_CA, "%d.%d.%d.%d", addr[0], addr[1], addr[2], addr[3]);
+
         eps[j].flags = CA_IPV4;
         eps[j].adapter = CA_ADAPTER_IP;
         eps[j].interface = 0;
-        eps[j].port = 0;
+        eps[j].port = caglobals.ip.u4.port;
         j++;
     }
 

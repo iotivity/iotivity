@@ -71,9 +71,34 @@ namespace OCResourceTest
         EXPECT_ANY_THROW(ConstructResourceObject(std::string(""), std::string("")));
     }
 
+    TEST(ConstructResourceTest, ConstructResourceObjectWithoutCoapScheme)
+    {
+        EXPECT_ANY_THROW(ConstructResourceObject("//192.168.1.2:5000", "/resource"));
+    }
+
     TEST(ConstructResourceTest, ConstructResourceObjectWithoutPortNumber)
     {
         EXPECT_ANY_THROW(ConstructResourceObject("coap://192.168.1.2", "/resource"));
+    }
+
+    TEST(ConstructResourceTest, ConstructResourceObjectInvalidHost)
+    {
+        EXPECT_ANY_THROW(ConstructResourceObject("192.168.1.2:5000", "/resource"));
+    }
+
+    TEST(ConstructResourceTest, ConstructResourceObjectInvalidHost2)
+    {
+        EXPECT_ANY_THROW(ConstructResourceObject("coap://:5000", "/resource"));
+    }
+
+    TEST(ConstructResourceTest, ConstructResourceObjectInvalidUri)
+    {
+        EXPECT_ANY_THROW(ConstructResourceObject("coap://192.168.1.2:5000", "/"));
+    }
+
+    TEST(ConstructResourceTest, ConstructResourceObjectInvalidUri2)
+    {
+        EXPECT_ANY_THROW(ConstructResourceObject("coap://192.168.1.2:5000", "resource"));
     }
 
     TEST(ResourceGetTest, DISABLED_ResourceGetForValidUri)

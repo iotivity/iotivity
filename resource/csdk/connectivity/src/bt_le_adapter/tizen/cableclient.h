@@ -55,7 +55,9 @@
  * @param[in]  userData       The user data passed from the request function.
  */
 void CABleGattCharacteristicChangedCb(bt_gatt_attribute_h characteristic,
-                            unsigned char *value, int valueLen, void *userData);
+                                      unsigned char *value,
+                                      int valueLen,
+                                      void *userData);
 /**
  * This is the callback which will be called after the characteristics changed.
  *
@@ -374,7 +376,7 @@ CAResult_t CASetCharacteristicDescriptorValue
  */
 CAResult_t CABleClientSenderQueueEnqueueMessage
                             (const CAEndpoint_t *remoteEndpoint,
-                                                const void *data, uint32_t dataLen);
+                                                const uint8_t *data, uint32_t dataLen);
 
 /**
  * This is the thread which will be used for processing sender queue.

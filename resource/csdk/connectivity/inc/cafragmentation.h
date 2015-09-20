@@ -123,43 +123,47 @@ extern "C"
 
 /**
  * This function is used to generate the CA specific header to
- * maintain the fragmentation logic. The header structure
- * explained above will be formed and returned to the caller.
+ * maintain the fragmentation logic. The header structure explained
+ * above will be formed and returned to the caller.
  *
- * @param[in,out] header Pointer to the octet array that will contain
- *                       the generated header.
- * @param[in]     length The total length of the data.  The length will
- *                       be embedded in bits 5-16 of the header,
- *                       meaning the maximum overall length of the
- *                       data to be fragmented can be no more than 4096
- *                       (2^12).
+ * @param[in,out] header       Pointer to the octet array that will
+ *                             contain the generated header.
+ * @param[in]     headerLength Length of the @a header octet array.
+ * @param[in]     dataLength   The total length of the data.  The
+ *                             length will be embedded in bits 5-16 of
+ *                             the header, meaning the maximum overall
+ *                             length of the data to be fragmented can
+ *                             be no more than 4096 (2^12).
  *
- * @return ::CA_STATUS_OK on success. One of the ::CA_STATUS_FAILED or
- *           other error values on error.
- * @retval ::CA_STATUS_OK             Successful
- * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments
- * @retval ::CA_STATUS_FAILED         Operation failed
-*/
-CAResult_t CAGenerateHeader(char *header, uint32_t length);
+ * @return @c CA_STATUS_OK on success. One of the @c CA_STATUS_FAILED
+ *         or other error values on error.
+ * @retval @c CA_STATUS_OK             Successful
+ * @retval @c CA_STATUS_INVALID_PARAM  Invalid input arguments
+ * @retval @c CA_STATUS_FAILED         Operation failed
+ */
+CAResult_t CAGenerateHeader(uint8_t *header,
+                            size_t headerLength,
+                            size_t datalength);
 
 /**
- * This function is used to parse the header in the receiver
- * end. This function will provide the information of the total
- * length of the data which has been fragmented.
+ * This function is used to parse the header in the receiver end. This
+ * function will provide the information of the total length of the
+ * data which has been fragmented.
  *
- * @param[in] header Pointer to the octet array data which contains the
- *                   header information.  Note that pointer should
+ * @param[in] header Pointer to the octet array data which contains
+ *                   the header information.  Note that pointer should
  *                   point to two bytes of data header which needs to
  *                   be parsed.
+ * @param[in] length Length of the @a octet array containing the
+ *                   header.
  *
  * @return Overall length of the data to be reassembled, or 0 on
  *         failure.
  */
-uint32_t CAParseHeader(const char *header);
+uint32_t CAParseHeader(const uint8_t *header, size_t length);
 
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
 
 #endif  /* CA_FRAGMENTATION_H_ */
-

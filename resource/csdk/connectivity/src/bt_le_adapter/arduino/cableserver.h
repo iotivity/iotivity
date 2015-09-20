@@ -60,7 +60,7 @@ unsigned char CAIsLEConnected();
  * API to read data from BLE shield.
  * @return - Data read.
  */
-char CALEReadData();
+uint8_t CALEReadData();
 
 /**
  * API to perform BLE events.

@@ -67,7 +67,7 @@ typedef enum
 typedef struct
 {
     CAEndpoint_t *remoteEndpoint;       /**< Remote Endpoint. */
-    void *data;                         /**< Data to be sent. */
+    uint8_t *data;                      /**< Data to be sent. */
     uint32_t dataLen;                   /**< Length of the data to be sent. */
 } CAEDRData;
 
@@ -88,7 +88,7 @@ typedef struct
  * @param[out] sentLength    Length of the sent data.
  * @pre Callback must be registered using CAEDRSetPacketReceivedCallback().
  */
-typedef void (*CAEDRDataReceivedCallback)(const char *remoteAddress, const void *data,
+typedef void (*CAEDRDataReceivedCallback)(const char *remoteAddress, const uint8_t *data,
                                           uint32_t dataLength, uint32_t *sentLength);
 
 /**
@@ -105,8 +105,10 @@ typedef void (*CAEDRNetworkStatusCallback)(CANetworkStatus_t status);
  * @param[in]  result          error code as defined in ::CAResult_t.
  * @pre Callback must be registered using CAEDRSetPacketReceivedCallback().
  */
-typedef void (*CAEDRErrorHandleCallback)(const char *remoteAddress, const void *data,
-        uint32_t dataLength, CAResult_t result);
+typedef void (*CAEDRErrorHandleCallback)(const char *remoteAddress,
+                                         const uint8_t *data,
+                                         uint32_t dataLength,
+                                         CAResult_t result);
 
 /**
  * Initialize the network monitor module
@@ -263,7 +265,8 @@ CAResult_t CAEDRGetAdapterEnableState(bool *state);
  * @param[in]  dataLength      Length of the data to be sent.
  * @return ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const void *data,
+CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress,
+                                      const uint8_t *data,
                                       uint32_t dataLength);
 
 /**
@@ -272,7 +275,8 @@ CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const void *dat
  * @param[in]  dataLength      Length of the data to be sent.
  * @return ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAEDRClientSendMulticastData(const void *data, uint32_t dataLength);
+CAResult_t CAEDRClientSendMulticastData(const uint8_t *data,
+                                        uint32_t dataLength);
 
 /**
  * This function gets bonded bluetooth device list

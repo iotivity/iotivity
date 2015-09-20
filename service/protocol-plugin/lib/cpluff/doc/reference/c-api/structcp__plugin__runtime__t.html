@@ -22,7 +22,7 @@
 <small>
 [<a class="el" href="group__cStructs.html">Data structures</a>]</small>
 </h1><!-- doxytag: class="cp_plugin_runtime_t" --><hr><a name="_details"></a><h2>Detailed Description</h2>
-Container for plug-in runtime information. 
+Container for plug-in runtime information.
 <p>
 A plug-in runtime defines a static instance of this structure to pass information to the plug-in framework. The plug-in framework then uses the information to create and control plug-in instances. The symbol pointing to the runtime information instance is named by the <em>funcs</em> attribute of the <em>runtime</em> element in a plug-in descriptor.<p>
 The following graph displays how these functions are used to control the state of the plug-in instance.<p>
@@ -42,7 +42,7 @@ The following graph displays how these functions are used to control the state o
 <area href="structcp__plugin__runtime__t.html#ede7dc51a6d9f47d0e21445dc952d5d4" shape="rect" coords="268,52,276,60" alt="">
 </map>
 </div>
- 
+
 <p>
 <table border="0" cellpadding="0" cellspacing="0">
 <tr><td></td></tr>
@@ -73,7 +73,7 @@ The following graph displays how these functions are used to control the state o
 <div class="memdoc">
 
 <p>
-An initialization function called to create a new plug-in runtime instance. 
+An initialization function called to create a new plug-in runtime instance.
 <p>
 The initialization function initializes and returns an opaque plug-in instance data pointer which is then passed on to other control functions. This data pointer should be used to access plug-in instance specific data. For example, the context reference must be stored as part of plug-in instance data if the plug-in runtime needs it. On failure, the function must return NULL.<p>
 C-pluff API functions must not be called from within a create function invocation and symbols from imported plug-ins must not be used because they may not available yet.<p>
@@ -98,7 +98,7 @@ C-pluff API functions must not be called from within a create function invocatio
 <div class="memdoc">
 
 <p>
-A start function called to start a plug-in instance. 
+A start function called to start a plug-in instance.
 <p>
 The start function must return zero (CP_OK) on success and non-zero on failure. If the start fails then the stop function (if any) is called to clean up plug-in state. <a class="el" href="group__cFuncsInit.html">Library initialization</a>, <a class="el" href="group__cFuncsContext.html">plug-in context management</a> and <a class="el" href="group__cFuncsPlugin.html">plug-in management</a> functions must not be called from within a start function invocation. The start function pointer can be NULL if the plug-in runtime does not have a start function.<p>
 The start function implementation should set up plug-in and return promptly. If there is further work to be done then a plug-in can start a thread or register a run function using <a class="el" href="group__cFuncsPluginExec.html#g357c45e87ff896e8541fe3758b19a035">cp_run_function</a>. Symbols from imported plug-ins are guaranteed to be available for the start function.<p>
@@ -123,7 +123,7 @@ The start function implementation should set up plug-in and return promptly. If 
 <div class="memdoc">
 
 <p>
-A stop function called to stop a plugin instance. 
+A stop function called to stop a plugin instance.
 <p>
 This function must cease all plug-in runtime activities. <a class="el" href="group__cFuncsInit.html">Library initialization</a>, <a class="el" href="group__cFuncsContext.html">plug-in context management</a>, <a class="el" href="group__cFuncsPlugin.html">plug-in management</a> functions, <a class="el" href="group__cFuncsPluginExec.html#g357c45e87ff896e8541fe3758b19a035">cp_run_function</a> and <a class="el" href="group__cFuncsSymbols.html#g8bc3b7fcf4f4ed414837f5a3998d46b7">cp_resolve_symbol</a> must not be called from within a stop function invocation. The stop function pointer can be NULL if the plug-in runtime does not have a stop function. It is guaranteed that no run functions registered by the plug-in are called simultaneously or after the call to the stop function.<p>
 The stop function should release any external resources hold by the plug-in. Dynamically resolved symbols are automatically released and dynamically defined symbols and registered run functions are automatically unregistered after the call to stop function. Resolved external symbols are still available for the stop function and symbols provided by the plug-in should remain available after the call to stop function (although functionality might be limited). Final cleanup can be safely done in the destroy function.<p>
@@ -147,7 +147,7 @@ The stop function should release any external resources hold by the plug-in. Dyn
 <div class="memdoc">
 
 <p>
-A destroy function called to destroy a plug-in instance. 
+A destroy function called to destroy a plug-in instance.
 <p>
 This function should release any plug-in instance data. The plug-in is stopped before this function is called. C-Pluff API functions must not be called from within a destroy function invocation and symbols from imported plug-ins must not be used because they may not be available anymore. Correspondingly, it is guaranteed that the symbols provided by the plug-in are not used by other plug-ins when destroy function has been called.<p>
 <dl compact><dt><b>Parameters:</b></dt><dd>

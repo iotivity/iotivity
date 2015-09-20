@@ -41,28 +41,28 @@ coap_register_async(coap_context_t *context, coap_address_t *peer, coap_pdu_t *r
 
     /* store information for handling the asynchronous task */
     s = (coap_async_state_t *) coap_malloc(sizeof(coap_async_state_t) +
-            request->hdr->token_length);
+            request->hdr->coap_hdr_udp_t.token_length);
     if (!s)
     {
         coap_log(LOG_CRIT, "coap_register_async: insufficient memory\n");
         return NULL;
     }
 
-    memset(s, 0, sizeof(coap_async_state_t) + request->hdr->token_length);
+    memset(s, 0, sizeof(coap_async_state_t) + request->hdr->coap_hdr_udp_t.token_length);
 
     /* set COAP_ASYNC_CONFIRM according to request's type */
     s->flags = flags & ~COAP_ASYNC_CONFIRM;
-    if (request->hdr->type == COAP_MESSAGE_CON)
+    if (request->hdr->coap_hdr_udp_t.type == COAP_MESSAGE_CON)
         s->flags |= COAP_ASYNC_CONFIRM;
 
     s->appdata = data;
 
     memcpy(&s->peer, peer, sizeof(coap_address_t));
 
-    if (request->hdr->token_length)
+    if (request->hdr->coap_hdr_udp_t.token_length)
     {
-        s->tokenlen = request->hdr->token_length;
-        memcpy(s->token, request->hdr->token, request->hdr->token_length);
+        s->tokenlen = request->hdr->coap_hdr_udp_t.token_length;
+        memcpy(s->token, request->hdr->coap_hdr_udp_t.token, request->hdr->coap_hdr_udp_t.token_length);
     }
 
     memcpy(&s->id, &id, sizeof(coap_tid_t));

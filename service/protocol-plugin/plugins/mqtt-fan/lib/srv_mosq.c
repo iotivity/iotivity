@@ -42,7 +42,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef WITH_SRV
 static void srv_callback(void *arg, int status, int timeouts, unsigned char *abuf, int alen)
-{   
+{
 	struct mosquitto *mosq = arg;
 	struct ares_srv_reply *reply = NULL;
 	if(status == ARES_SUCCESS){

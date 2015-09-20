@@ -46,7 +46,9 @@ void CAGattRecvInfoDestroy(CAGattRecvInfo * info)
     *info = g_null_info;
 }
 
-bool CAGattRecv(CAGattRecvInfo * info, char const * data, uint32_t length)
+bool CAGattRecv(CAGattRecvInfo * info,
+                uint8_t const * data,
+                uint32_t length)
 {
     uint32_t sent_length = 0;
 

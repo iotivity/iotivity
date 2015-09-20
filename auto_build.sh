@@ -77,18 +77,25 @@ function build_android()
 	# Note: for android, as oic-resource uses C++11 feature stoi and to_string,
 	# it requires gcc-4.9, currently only android-ndk-r10(for linux)
 	# and windows android-ndk-r10(64bit target version) support these features.
-	echo "*********** Build Boost for android ***********"
-	# disable parallel build for android as gradle depends on scons to finish first
-	export SCONSFLAGS="-Q"
 
+	build_android_x86 $1 $2
+	build_android_armeabi $1 $2
+}
+
+function build_android_x86()
+{
 	echo "*********** Build for android x86 *************"
 	scons TARGET_OS=android TARGET_ARCH=x86 RELEASE=$1 TARGET_TRANSPORT=IP $2
+	scons TARGET_OS=android TARGET_ARCH=x86 RELEASE=$1 TARGET_TRANSPORT=BT $2
+	scons TARGET_OS=android TARGET_ARCH=x86 RELEASE=$1 TARGET_TRANSPORT=BLE $2
+}
 
+function build_android_armeabi()
+{
 	echo "*********** Build for android armeabi *************"
 	scons TARGET_OS=android TARGET_ARCH=armeabi RELEASE=$1 TARGET_TRANSPORT=IP $2
-
-	# enable parallel build
-	export SCONSFLAGS="-Q -j 4"
+	scons TARGET_OS=android TARGET_ARCH=armeabi RELEASE=$1 TARGET_TRANSPORT=BT $2
+	scons TARGET_OS=android TARGET_ARCH=armeabi RELEASE=$1 TARGET_TRANSPORT=BLE $2
 }
 
 function build_arduino()
@@ -96,10 +103,12 @@ function build_arduino()
 	echo "*********** Build for arduino avr *************"
 	scons resource TARGET_OS=arduino UPLOAD=false BOARD=mega TARGET_ARCH=avr TARGET_TRANSPORT=IP SHIELD=ETH RELEASE=$1 $2
 	scons resource TARGET_OS=arduino UPLOAD=false BOARD=mega TARGET_ARCH=avr TARGET_TRANSPORT=IP SHIELD=WIFI RELEASE=$1 $2
+	scons resource TARGET_OS=arduino UPLOAD=false BOARD=mega TARGET_ARCH=avr TARGET_TRANSPORT=BLE SHIELD=RBL_NRF8001 RELEASE=$1 $2
 
 	echo "*********** Build for arduino arm *************"
 	scons resource TARGET_OS=arduino UPLOAD=false BOARD=arduino_due_x TARGET_ARCH=arm TARGET_TRANSPORT=IP SHIELD=ETH RELEASE=$1 $2
 	scons resource TARGET_OS=arduino UPLOAD=false BOARD=arduino_due_x TARGET_ARCH=arm TARGET_TRANSPORT=IP SHIELD=WIFI RELEASE=$1 $2
+	# BLE support for the Arduino Due is currently unavailable.
 }
 
 function build_tizen()
@@ -202,6 +211,14 @@ then
 	then
 		build_android true
 		build_android false
+	elif [ $1 = 'android_x86' ]
+	then
+        build_android_x86 true
+        build_android_x86 false
+	elif [ $1 = 'android_armeabi' ]
+	then
+        build_android_armeabi true
+        build_android_armeabi false
 	elif [ $1 = 'arduino' ]
 	then
 		build_arduino true
@@ -232,5 +249,3 @@ else
 fi
 
 echo "===================== done ====================="
-
-

@@ -140,7 +140,7 @@ CAResult_t CARegisterBleServicewithGattServer(const char *svcPath);
  * @return  ::CA_STATUS_OK or Appropriate error code.
  */
 CAResult_t CAAddNewCharacteristicsToGattServer(const char *svcPath, const char *charUUID,
-                                               const char *charValue, int charValueLen,
+                                               const uint8_t *charValue, int charValueLen,
                                                bool read);
 
 /**
@@ -208,7 +208,7 @@ CAResult_t CALEReadDataFromLEServer();
  * @retval  ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CABleServerSenderQueueEnqueueMessage
-                (const CAEndpoint_t *remoteEndpoint, const void *data, uint32_t dataLen);
+                (const CAEndpoint_t *remoteEndpoint, const uint8_t *data, uint32_t dataLen);
 
 /**
  * This is the thread which will be used for processing receiver queue.

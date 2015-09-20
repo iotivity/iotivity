@@ -23,11 +23,12 @@
 #include <tizen.h>
 #include <pthread.h>
 
+#include "ThingsConfiguration.h"
+#include "ThingsMaintenance.h"
 #include "configurationresource.h"
-#include "diagnosticsresource.h"
+#include "maintenanceresource.h"
 #include "factorysetresource.h"
 
-using namespace std;
 using namespace OC;
 using namespace OIC;
 
@@ -36,12 +37,13 @@ namespace PH = std::placeholders;
 /* Default system configuration value's variables
    The variable's names should be same as the names of "extern" variables defined in
    "configurationresource.h" */
+std::string defaultDeviceName;
 std::string defaultLocation;
+std::string defaultLocationName;
 std::string defaultRegion;
-std::string defaultSystemTime;
 std::string defaultCurrency;
 
-static ThingsManager *g_thingsmanager;
+static ThingsConfiguration *g_thingsConf;
 
 const int SUCCESS_RESPONSE = 0;
 
@@ -53,7 +55,7 @@ OCStackResult sendResponseForResource(std::shared_ptr< OCResourceRequest > pRequ
 OCEntityHandlerResult entityHandlerForResource(std::shared_ptr< OCResourceRequest > request);
 
 ConfigurationResource *myConfigurationResource;
-DiagnosticsResource *myDiagnosticsResource;
+MaintenanceResource *myMaintenanceResource;
 FactorySetResource *myFactorySetResource;
 
 typedef std::function< void(OCRepresentation &) > putFunc;
@@ -83,10 +85,10 @@ getFunc getGetFunction(std::string uri)
         res = std::bind(&ConfigurationResource::getConfigurationRepresentation,
                         myConfigurationResource);
     }
-    else if (uri == myDiagnosticsResource->getUri())
+    else if (uri == myMaintenanceResource->getUri())
     {
-        res = std::bind(&DiagnosticsResource::getDiagnosticsRepresentation,
-                        myDiagnosticsResource);
+        res = std::bind(&MaintenanceResource::getMaintenanceRepresentation,
+                        myMaintenanceResource);
     }
 
     return res;
@@ -101,10 +103,10 @@ putFunc getPutFunction(std::string uri)
         res = std::bind(&ConfigurationResource::setConfigurationRepresentation,
                         myConfigurationResource, std::placeholders::_1);
     }
-    else if (uri == myDiagnosticsResource->getUri())
+    else if (uri == myMaintenanceResource->getUri())
     {
-        res = std::bind(&DiagnosticsResource::setDiagnosticsRepresentation,
-                        myDiagnosticsResource, std::placeholders::_1);
+        res = std::bind(&MaintenanceResource::setMaintenanceRepresentation,
+                        myMaintenanceResource, std::placeholders::_1);
     }
 
     return res;
@@ -231,14 +233,20 @@ OCEntityHandlerResult entityHandlerForResource(std::shared_ptr< OCResourceReques
 // Updates the log in the UI
 void *updateLog(void *data)
 {
-    string *log = (string *)data;
-    //Show the log
-    elm_entry_entry_append(log_entry, log->c_str());
-    elm_entry_cursor_end_set(log_entry);
+    std::string *log = (std::string *)data;
 
-    dlog_print(DLOG_INFO, LOG_TAG, "%s", log->c_str());
+    if (nullptr == log)
+    {
+        dlog_print(DLOG_INFO, LOG_TAG, "#### No log !!!!");
+    }
+    else
+    {
+        //Show the log
+        elm_entry_entry_append(log_entry, log->c_str());
+        elm_entry_cursor_end_set(log_entry);
+        dlog_print(DLOG_INFO, LOG_TAG, "%s", log->c_str());
+    }
     dlog_print(DLOG_INFO, LOG_TAG, "#### updateLog exit!!!!");
-
     return NULL;
 }
 
@@ -253,10 +261,12 @@ void deleteResources()
 {
     if (NULL != myConfigurationResource)
         myConfigurationResource->deleteResource();
-    if (NULL != myDiagnosticsResource)
-        myDiagnosticsResource->deleteResource();
+    if (NULL != myMaintenanceResource)
+        myMaintenanceResource->deleteResource();
     if (NULL != myFactorySetResource)
         myFactorySetResource->deleteResource();
+
+    delete g_thingsConf;
 }
 
 static void
@@ -288,13 +298,15 @@ void onBootStrapCallback(const HeaderOptions &headerOptions, const OCRepresentat
     logMessage += "GET request was successful<br>";
     logMessage += "URI : " + rep.getUri() + "<br>";
 
-    defaultRegion = rep.getValue< std::string >("r");
-    defaultSystemTime = rep.getValue< std::string >("st");
-    defaultCurrency = rep.getValue< std::string >("c");
-    defaultLocation = rep.getValue< std::string >("loc");
+    defaultRegion = rep.getValue< std::string >(DEFAULT_REGION);
+    defaultCurrency = rep.getValue< std::string >(DEFAULT_CURRENCY);
+    defaultLocation = rep.getValue< std::string >(DEFAULT_LOCATION);
+    defaultLocationName = rep.getValue< std::string >(DEFAULT_LOCATIONNAME);
+    defaultDeviceName = rep.getValue< std::string >(DEFAULT_DEVICENAME);
 
+    logMessage += "Device Name : " + defaultDeviceName + "<br>";
     logMessage += "Location : " + defaultLocation + "<br>";
-    logMessage += "SystemTime : " + defaultSystemTime + "<br>";
+    logMessage += "Location Name : " + defaultLocationName + "<br>";
     logMessage += "currency : " + defaultCurrency + "<br>";
     logMessage += "Region : " + defaultRegion + "<br>";
 
@@ -309,7 +321,15 @@ void onBootStrapCallback(const HeaderOptions &headerOptions, const OCRepresentat
 static void
 doBootStrap_cb(void *data , Evas_Object *obj , void *event_info)
 {
-    OCStackResult result = g_thingsmanager->doBootstrap(&onBootStrapCallback);
+
+    if (NULL  == g_thingsConf)
+    {
+        dlog_print(DLOG_ERROR, LOG_TAG, "#### doBootstrap returned g_thingsConf NULL check");
+        return;
+    }
+
+    OCStackResult result = g_thingsConf->doBootstrap(&onBootStrapCallback);
+
     if (OC_STACK_OK == result)
     {
         dlog_print(DLOG_INFO, LOG_TAG, "#### doBootstrap returned OC_STACK_OK");
@@ -331,13 +351,13 @@ createConfResource_cb(void *data , Evas_Object *obj , void *event_info)
         myConfigurationResource = new ConfigurationResource();
         myConfigurationResource->createResource(&entityHandlerForResource);
 
-        myDiagnosticsResource = new DiagnosticsResource();
-        myDiagnosticsResource->createResource(&entityHandlerForResource);
+        myMaintenanceResource = new MaintenanceResource();
+        myMaintenanceResource->createResource(&entityHandlerForResource);
 
         myFactorySetResource = new FactorySetResource();
         myFactorySetResource->createResource(&entityHandlerForResource);
 
-        myDiagnosticsResource->factoryReset = std::function < void()
+        myMaintenanceResource->factoryReset = std::function < void()
                                               > (std::bind(&ConfigurationResource::factoryReset,
                                                       myConfigurationResource));
 
@@ -464,7 +484,7 @@ app_create(void *data)
     // Configure the OCPlatform
     configure_platform();
 
-    g_thingsmanager = new ThingsManager();
+    g_thingsConf = new ThingsConfiguration();
 
     return true;
 }

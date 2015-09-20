@@ -22,6 +22,7 @@
 Import('env')
 
 provisioning_env = env.Clone()
+root_dir = './../../../../'
 
 ######################################################################
 # Build flags
@@ -35,15 +36,17 @@ provisioning_env.AppendUnique(CPPPATH = [
 		'../../ocmalloc/include',
 		'include',
 		'include/internal',
+		'include/oxm',
 		'../../resource/csdk/security/include',
 		'../../../../extlibs/cjson/',
-		'../../../../../extlibs/tinydtlsra/',
 		'../../connectivity/inc',
 		'../../connectivity/external/inc',
 		'../../connectivity/common/inc',
+		'../../connectivity/lib/libcoap-4.1.1',
 		'../../connectivity/api',
 		'../include',
-		'../include/internal'
+		'../include/internal',
+		'../../../../extlibs/sqlite3'
 		])
 target_os = env.get('TARGET_OS')
 provisioning_env.AppendUnique(CFLAGS = ['-D__WITH_DTLS__'])
@@ -78,13 +81,19 @@ if target_os in ['darwin', 'ios']:
 # Source files and Targets
 ######################################################################
 provisioning_src = [
-	'src/provisioningmanager.c',
-    'src/credentialgenerator.c'
-	]
-provisioningserver = provisioning_env.StaticLibrary('ocspapi', provisioning_src)
+	'src/pmutility.c',
+	'src/credentialgenerator.c',
+	'src/ownershiptransfermanager.c',
+	'src/secureresourceprovider.c',
+	'src/ocprovisioningmanager.c',
+	'src/oxmjustworks.c',
+	'src/oxmrandompin.c',
+	'src/provisioningdatabasemanager.c',
+	root_dir+'/extlibs/sqlite3/sqlite3.c' ]
+provisioningserver = provisioning_env.StaticLibrary('ocpmapi', provisioning_src)
 
-provisioning_env.InstallTarget(provisioningserver, 'libocspapi')
-provisioning_env.UserInstallTargetLib(provisioningserver, 'libocspapi')
+provisioning_env.InstallTarget(provisioningserver, 'libocpmapi')
+provisioning_env.UserInstallTargetLib(provisioningserver, 'libocpmapi')
 
 if target_os in ['linux']:
 	SConscript('sample/SConscript')

@@ -21,6 +21,7 @@
 #include "SoftSensorBundleActivator.h"
 #include "DiscomfortIndexSensorResource.h"
 #include <algorithm>
+#include <sstream>
 
 SoftSensorBundleActivator *bundle;
 
@@ -70,8 +71,14 @@ void SoftSensorBundleActivator::createResource(resourceInfo resourceInfo)
         DiscomfortIndexSensorResource *newResource = new DiscomfortIndexSensorResource();
 
         newResource->m_bundleId = m_bundleId;
-        newResource->m_uri = "/softsensor/discomfortIndex/" + std::to_string(
-                                 discomfortIndexSensorCount++);
+
+        std::string indexCount;//string which will contain the indexCount
+        stringstream convert; // stringstream used for the conversion
+        convert << discomfortIndexSensorCount++;//add the value of Number to the characters in the stream
+        indexCount = convert.str();//set indexCount to the content of the stream
+
+        newResource->m_uri = "/softsensor/discomfortIndex/" + indexCount;
+
         newResource->m_resourceType = resourceInfo.resourceType;
         newResource->m_mapResourceProperty = resourceInfo.resourceProperty;
 

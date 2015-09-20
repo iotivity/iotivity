@@ -64,7 +64,7 @@ protected:
         instance->addDevice(device);
     }
 
-    void SetUp() 
+    void SetUp()
     {
         TestWithMock::SetUp();
         instance = DeviceAssociation::getInstance();
@@ -72,7 +72,7 @@ protected:
         pResource = PrimitiveResource::Ptr(mocks.Mock< PrimitiveResource >(), [](PrimitiveResource*){});
     }
 
-    void TearDown() 
+    void TearDown()
     {
         TestWithMock::TearDown();
         device.reset();

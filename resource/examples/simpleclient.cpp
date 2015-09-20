@@ -59,7 +59,7 @@ int observe_count()
     return ++oc;
 }
 
-void onObserve(const HeaderOptions headerOptions, const OCRepresentation& rep,
+void onObserve(const HeaderOptions /*headerOptions*/, const OCRepresentation& rep,
                     const int& eCode, const int& sequenceNumber)
 {
     try
@@ -85,7 +85,7 @@ void onObserve(const HeaderOptions headerOptions, const OCRepresentation& rep,
             std::cout << "\tpower: " << mylight.m_power << std::endl;
             std::cout << "\tname: " << mylight.m_name << std::endl;
 
-            if(observe_count() > 10)
+            if(observe_count() == 11)
             {
                 std::cout<<"Cancelling Observe..."<<std::endl;
                 OCStackResult result = curResource->cancelObserve();
@@ -116,7 +116,8 @@ void onObserve(const HeaderOptions headerOptions, const OCRepresentation& rep,
 
 }
 
-void onPost2(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
+void onPost2(const HeaderOptions& /*headerOptions*/,
+        const OCRepresentation& rep, const int eCode)
 {
     try
     {
@@ -161,7 +162,8 @@ void onPost2(const HeaderOptions& headerOptions, const OCRepresentation& rep, co
 
 }
 
-void onPost(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
+void onPost(const HeaderOptions& /*headerOptions*/,
+        const OCRepresentation& rep, const int eCode)
 {
     try
     {
@@ -230,7 +232,7 @@ void postLightRepresentation(std::shared_ptr<OCResource> resource)
 }
 
 // callback handler on PUT request
-void onPut(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
+void onPut(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep, const int eCode)
 {
     try
     {
@@ -281,7 +283,7 @@ void putLightRepresentation(std::shared_ptr<OCResource> resource)
 }
 
 // Callback handler on GET request
-void onGet(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
+void onGet(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep, const int eCode)
 {
     try
     {
@@ -428,7 +430,7 @@ void checkObserverValue(int value)
     }
 }
 
-static FILE* client_open(const char *path, const char *mode)
+static FILE* client_open(const char* /*path*/, const char *mode)
 {
     return fopen("./oic_svr_db_client.json", mode);
 }

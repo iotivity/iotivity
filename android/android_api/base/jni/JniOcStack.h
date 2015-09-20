@@ -135,14 +135,14 @@ static void SetHandle(JNIEnv *env, jobject jobj, T *type)
 
 static JNIEnv* GetJNIEnv(jint& ret)
 {
-    JNIEnv *env = NULL;
+    JNIEnv *env = nullptr;
 
     ret = g_jvm->GetEnv((void **)&env, JNI_CURRENT_VERSION);
     switch (ret) {
     case JNI_OK:
         return env;
     case JNI_EDETACHED:
-        if (g_jvm->AttachCurrentThread(&env, NULL) < 0)
+        if (g_jvm->AttachCurrentThread(&env, nullptr) < 0)
         {
             LOGE("Failed to get the environment");
             return nullptr;

@@ -26,7 +26,7 @@ Import('env')
 
 target_os = env.get('TARGET_OS')
 
-if target_os not in ['arduino','darwin','ios']:
+if target_os not in ['arduino','darwin']:
 	# Build things manager project
 	SConscript('things-manager/SConscript')
 
@@ -35,19 +35,16 @@ if target_os not in ['arduino','darwin','ios']:
 
 	# Build protocol plugin project
 	# protocol-plugin use 'inotify', this feature isn't support by MAC OSX
-	if target_os not in ['darwin', 'ios']:
+	if target_os not in ['darwin', 'ios', 'android']:
 		SConscript('protocol-plugin/SConscript')
 
 	# Build notification manager project
-	if target_os not in ['android', 'tizen']:
-		SConscript('notification-manager/SConscript')
-
+	SConscript('notification-manager/SConscript')
+	
 	# Build resource-encapsulation project
-	if target_os not in ['android', 'tizen']:
+	if target_os not in ['tizen']:
 		SConscript('resource-encapsulation/SConscript')
 
 	# Build resource directory project
 	if env.get('WITH_RD') == '1':
 		SConscript('resource-directory/SConscript')
-#else:
-#	SConscript('notification-manager/SampleApp/arduino/SConscript')

@@ -36,9 +36,9 @@ package org.iotivity.service.ssm;
 */
 public class QueryEngine
 {
-        private int pQueryEngineInstance;
+        private long pQueryEngineInstance;
 
-        public QueryEngine(int queryEngineInstance)
+        private QueryEngine(long queryEngineInstance)
         {
             pQueryEngineInstance = queryEngineInstance;
         }
@@ -50,7 +50,7 @@ public class QueryEngine
          * @return int - Instance of the query engine object, set on object's creation
          * 
          */
-        public int getQueryEngineInstance()
+        public long getQueryEngineInstance()
         {
             return pQueryEngineInstance;
         }

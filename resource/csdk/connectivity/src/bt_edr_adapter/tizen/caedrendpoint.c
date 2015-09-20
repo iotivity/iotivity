@@ -34,7 +34,6 @@ CAResult_t CAEDRSendData(int serverFD, const void *data, uint32_t dataLength)
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     VERIFY_NON_NULL(data, EDR_ADAPTER_TAG, "Data is null");
-    VERIFY_NON_NULL(sentDataLen, EDR_ADAPTER_TAG, "Sent data length holder is null");
 
     if (0 > serverFD)
     {

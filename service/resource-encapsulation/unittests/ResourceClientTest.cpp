@@ -102,10 +102,11 @@ private:
     {
         while (checkObject())
         {
-            RCSDiscoveryManager::getInstance()->discoverResource(RCSAddress::multicast(),
-                    "/oic/res?rt=Resource.Hosting", std::bind(resourceDiscovered, this, finished,
-                            std::placeholders::_1));
-
+            const std::string uri  = "/oic/res";
+            const std::string type = "Resource.Hosting";
+            RCSDiscoveryManager::getInstance()->discoverResourceByType(RCSAddress::multicast(),
+                     uri, type, std::bind(resourceDiscovered, this, finished,
+                           std::placeholders::_1));
             Wait(1000);
         }
     }

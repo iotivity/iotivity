@@ -31,29 +31,32 @@ namespace OCPlatformTest
     const std::string gResourceInterface = DEFAULT_INTERFACE;
     const uint8_t gResourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
     OCResourceHandle resourceHandle;
-  //OCPersistent Storage Handlers
 
-   static FILE* client_open(const char *path, const char *mode)
-   {
-       std::cout << "<===Opening SVR DB file = './oic_svr_db_client.json' with mode = '"<< mode<<"' "<<std::endl;
-               return fopen("./oic_svr_db_client.json", mode);
-   }
+    //OCPersistent Storage Handlers
+    static FILE* client_open(const char * /*path*/, const char *mode)
+    {
+        std::cout << "<===Opening SVR DB file = './oic_svr_db_client.json' with mode = '" << mode
+                << "' " << std::endl;
+        return fopen("./oic_svr_db_client.json", mode);
+    }
+    OCPersistentStorage gps {client_open, fread, fwrite, fclose, unlink };
+
     // Callbacks
-    OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
+    OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> /*request*/)
     {
         return OC_EH_OK;
     }
 
-    void foundResource(std::shared_ptr<OCResource> resource)
+    void foundResource(std::shared_ptr<OCResource> /*resource*/)
     {
     }
 
-    void receivedDeviceInfo(const OCRepresentation& rep)
+    void receivedDeviceInfo(const OCRepresentation& /*rep*/)
     {
     }
 
-    void presenceHandler(OCStackResult result,
-            const unsigned int nonce, const std::string& hostAddress)
+    void presenceHandler(OCStackResult /*result*/,
+            const unsigned int /*nonce*/, const std::string& /*hostAddress*/)
     {
     }
 
@@ -72,7 +75,9 @@ namespace OCPlatformTest
 
     OCResourceHandle RegisterResource(std::string uri, std::string type, std::string iface)
     {
-        PlatformConfig cfg = {};
+        PlatformConfig cfg
+        { OC::ServiceType::OutOfProc, OC::ModeType::Server, "0.0.0.0", 0,
+                OC::QualityOfService::LowQos, &gps };
         OCPlatform::Configure(cfg);
         EXPECT_EQ(OC_STACK_OK,OCPlatform::registerResource(
                                         resourceHandle, uri, type,
@@ -82,7 +87,9 @@ namespace OCPlatformTest
 
     OCResourceHandle RegisterResource(std::string uri, std::string type)
     {
-        PlatformConfig cfg = {};
+        PlatformConfig cfg
+        { OC::ServiceType::OutOfProc, OC::ModeType::Server, "0.0.0.0", 0,
+                OC::QualityOfService::LowQos, &gps };
         OCPlatform::Configure(cfg);
         EXPECT_EQ(OC_STACK_OK, OCPlatform::registerResource(
                                         resourceHandle, uri, type,
@@ -92,7 +99,9 @@ namespace OCPlatformTest
 
     OCResourceHandle RegisterResource(std::string uri)
     {
-        PlatformConfig cfg = {};
+        PlatformConfig cfg
+        { OC::ServiceType::OutOfProc, OC::ModeType::Server, "0.0.0.0", 0,
+                OC::QualityOfService::LowQos, &gps };
         OCPlatform::Configure(cfg);
         EXPECT_EQ(OC_STACK_OK, OCPlatform::registerResource(
                                         resourceHandle, uri, gResourceTypeName,
@@ -153,12 +162,13 @@ namespace OCPlatformTest
 
     TEST(ConfigureTest, ConfigureServerOutProc)
     {
-        PlatformConfig cfg {
+        PlatformConfig cfg
+        {
             OC::ServiceType::OutOfProc,
             OC::ModeType::Server,
             "0.0.0.0",
             0,
-            OC::QualityOfService::LowQos
+            OC::QualityOfService::LowQos, &gps
         };
         std::string uri = "/a/light67";
         std::string type = "core.light";
@@ -193,7 +203,7 @@ namespace OCPlatformTest
             OC::ModeType::Server,
             "0.0.0.0",
             0,
-            OC::QualityOfService::LowQos
+            OC::QualityOfService::LowQos, &gps
         };
         OCPlatform::Configure(cfg);
 
@@ -207,14 +217,15 @@ namespace OCPlatformTest
         std::string uri = "/a/light70";
         std::string type = "core.light";
         uint8_t gResourceProperty = 0;
-        PlatformConfig cfg {
+        PlatformConfig cfg
+        {
             OC::ServiceType::InProc,
             OC::ModeType::Client,
             "0.0.0.0",
             0,
-            OC::QualityOfService::LowQos
+            OC::QualityOfService::LowQos,
+            &gps
         };
-        OCPlatform::Configure(cfg);
 
         EXPECT_NO_THROW(OCPlatform::registerResource(
                  resourceHandle, uri, type,
@@ -252,14 +263,13 @@ namespace OCPlatformTest
     //PersistentStorageTest
     TEST(ConfigureTest, ConfigurePersistentStorage)
     {
-        OCPersistentStorage ps {client_open, fread, fwrite, fclose, unlink };
-        PlatformConfig cfg {
+         PlatformConfig cfg {
              OC::ServiceType::InProc,
              OC::ModeType::Both,
              "0.0.0.0",
              0,
              OC::QualityOfService::LowQos,
-             &ps
+             &gps
          };
          OCPlatform::Configure(cfg);
          EXPECT_NO_THROW(OCPlatform::setDefaultDeviceEntityHandler(nullptr));
@@ -268,14 +278,13 @@ namespace OCPlatformTest
     //PersistentStorageTest
     TEST(ConfigureTest, ConfigureNULLHandlersPersistentStorage)
     {
-        OCPersistentStorage ps {client_open, nullptr, nullptr, nullptr, nullptr };
         PlatformConfig cfg {
              OC::ServiceType::InProc,
              OC::ModeType::Both,
              "0.0.0.0",
              0,
              OC::QualityOfService::LowQos,
-             &ps
+             &gps
          };
          OCPlatform::Configure(cfg);
          EXPECT_NO_THROW(OCPlatform::setDefaultDeviceEntityHandler(nullptr));
@@ -690,14 +699,13 @@ namespace OCPlatformTest
         OCDeviceInfo deviceInfo;
 
         DuplicateString(&deviceInfo.deviceName, "myDeviceName");
-
         EXPECT_EQ(OC_STACK_OK, OCPlatform::registerDeviceInfo(deviceInfo));
         EXPECT_NO_THROW(DeleteDeviceInfo(deviceInfo));
     }
 
     TEST(RegisterDeviceInfoTest, RegisterDeviceInfoWithEmptyObject)
     {
-        OCDeviceInfo di = {};
+        OCDeviceInfo di = {0};
         EXPECT_ANY_THROW(OCPlatform::registerDeviceInfo(di));
     }
 

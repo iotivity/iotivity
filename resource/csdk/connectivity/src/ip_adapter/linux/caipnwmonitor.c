@@ -36,6 +36,26 @@
 
 #define TAG "IP_MONITOR"
 
+CAResult_t CAIPStartNetworkMonitor()
+{
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAIPStopNetworkMonitor()
+{
+    return CA_STATUS_OK;
+}
+
+int CAGetPollingInterval(int interval)
+{
+    return interval;
+}
+
+CAInterface_t *CAFindInterfaceChange()
+{
+    return NULL;
+}
+
 u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
 {
     if (desiredIndex < 0)
@@ -63,6 +83,10 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
     struct ifaddrs *ifa = NULL;
     for (ifa = ifp; ifa; ifa = ifa->ifa_next)
     {
+        if (!ifa->ifa_addr)
+        {
+            continue;
+        }
         int family = ifa->ifa_addr->sa_family;
         if ((ifa->ifa_flags & IFF_LOOPBACK) || (AF_INET != family && AF_INET6 != family))
         {
@@ -107,14 +131,14 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
         ifitem->ipv4addr = ((struct sockaddr_in *)(ifa->ifa_addr))->sin_addr.s_addr;
         ifitem->flags = ifa->ifa_flags;
 
-        CAResult_t result = u_arraylist_add(iflist, ifitem);
-        if (CA_STATUS_OK != result)
+        bool result = u_arraylist_add(iflist, ifitem);
+        if (!result)
         {
             OIC_LOG(ERROR, TAG, "u_arraylist_add failed.");
             goto exit;
         }
 
-        OIC_LOG_V(ERROR, TAG, "Added interface: %s (%d)", ifitem->name, family);
+        OIC_LOG_V(DEBUG, TAG, "Added interface: %s (%d)", ifitem->name, family);
     }
 
     freeifaddrs(ifp);

@@ -118,7 +118,7 @@ struct JObjectConverter : boost::static_visitor < jobject >
     jobject operator()(const std::vector<std::string>& val) const
     {
         size_t len = val.size();
-        jobjectArray strArr = env->NewObjectArray(len, g_cls_String, NULL);
+        jobjectArray strArr = env->NewObjectArray(len, g_cls_String, nullptr);
         if (!strArr) return nullptr;
         for (size_t i = 0; i < len; ++i)
         {
@@ -132,7 +132,7 @@ struct JObjectConverter : boost::static_visitor < jobject >
     jobject operator()(const std::vector<OC::OCRepresentation>& val) const
     {
         jsize len = static_cast<jsize>(val.size());
-        jobjectArray repArr = env->NewObjectArray(len, g_cls_OcRepresentation, NULL);
+        jobjectArray repArr = env->NewObjectArray(len, g_cls_OcRepresentation, nullptr);
         if (!repArr) return nullptr;
         for (jsize i = 0; i < len; ++i)
         {
@@ -160,7 +160,7 @@ struct JObjectConverter : boost::static_visitor < jobject >
     jobject operator()(const std::vector<std::vector<int>>& val) const
     {
         jsize lenOuter = static_cast<jsize>(val.size());
-        jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_int1DArray, NULL);
+        jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_int1DArray, nullptr);
         if (!jOuterArr)
         {
             return nullptr;
@@ -182,12 +182,12 @@ struct JObjectConverter : boost::static_visitor < jobject >
     jobject operator()(const std::vector<std::vector<std::vector<int>>>& val) const
     {
         jsize lenOuter = static_cast<jsize>(val.size());
-        jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_int2DArray, NULL);
+        jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_int2DArray, nullptr);
         if (!jOuterArr) return nullptr;
         for (jsize k = 0; k < lenOuter; ++k)
         {
             jsize lenMiddle = static_cast<jsize>(val[k].size());
-            jobjectArray jMiddleArr = env->NewObjectArray(lenMiddle, g_cls_int1DArray, NULL);
+            jobjectArray jMiddleArr = env->NewObjectArray(lenMiddle, g_cls_int1DArray, nullptr);
             if (!jMiddleArr) return nullptr;
             for (jsize i = 0; i < lenMiddle; ++i)
             {
@@ -211,7 +211,7 @@ struct JObjectConverter : boost::static_visitor < jobject >
     jobject operator()(const std::vector<std::vector<double>>& val) const
     {
         jsize lenOuter = static_cast<jsize>(val.size());
-        jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_double1DArray, NULL);
+        jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_double1DArray, nullptr);
         if (!jOuterArr) return nullptr;
         for (jsize i = 0; i < lenOuter; ++i)
         {
@@ -231,12 +231,12 @@ struct JObjectConverter : boost::static_visitor < jobject >
     jobject operator()(const std::vector<std::vector<std::vector<double>>>& val) const
     {
         jsize lenOuter = static_cast<jsize>(val.size());
-        jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_double2DArray, NULL);
+        jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_double2DArray, nullptr);
         if (!jOuterArr) return nullptr;
         for (jsize k = 0; k < lenOuter; ++k)
         {
             jsize lenMiddle = static_cast<jsize>(val[k].size());
-            jobjectArray jMiddleArr = env->NewObjectArray(lenMiddle, g_cls_double1DArray, NULL);
+            jobjectArray jMiddleArr = env->NewObjectArray(lenMiddle, g_cls_double1DArray, nullptr);
             if (!jMiddleArr) return nullptr;
             for (jsize i = 0; i < lenMiddle; ++i)
             {
@@ -284,12 +284,12 @@ struct JObjectConverter : boost::static_visitor < jobject >
     jobject operator()(const std::vector<std::vector<std::vector<bool>>>& val) const
     {
         jsize lenOuter = static_cast<jsize>(val.size());
-        jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_boolean2DArray, NULL);
+        jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_boolean2DArray, nullptr);
         if (!jOuterArr) return nullptr;
         for (jsize k = 0; k < lenOuter; ++k)
         {
             jsize lenMiddle = static_cast<jsize>(val[k].size());
-            jobjectArray jMiddleArr = env->NewObjectArray(lenMiddle, g_cls_boolean1DArray, NULL);
+            jobjectArray jMiddleArr = env->NewObjectArray(lenMiddle, g_cls_boolean1DArray, nullptr);
             if (!jMiddleArr) return nullptr;
             for (jsize i = 0; i < lenMiddle; ++i)
             {
@@ -317,12 +317,12 @@ struct JObjectConverter : boost::static_visitor < jobject >
     jobject operator()(const std::vector<std::vector<std::string>>& val) const
     {
         jsize lenOuter = static_cast<jsize>(val.size());
-        jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_String1DArray, NULL);
+        jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_String1DArray, nullptr);
         if (!jOuterArr) return nullptr;
         for (jsize i = 0; i < lenOuter; ++i)
         {
             jsize lenInner = static_cast<jsize>(val[i].size());
-            jobjectArray strArr = env->NewObjectArray(lenInner, g_cls_String, NULL);
+            jobjectArray strArr = env->NewObjectArray(lenInner, g_cls_String, nullptr);
             if (!strArr) return nullptr;
             for (jsize j = 0; j < lenInner; ++j)
             {
@@ -341,17 +341,17 @@ struct JObjectConverter : boost::static_visitor < jobject >
     jobject operator()(const std::vector<std::vector<std::vector<std::string>>>& val) const
     {
         jsize lenOuter = static_cast<jsize>(val.size());
-        jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_String2DArray, NULL);
+        jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_String2DArray, nullptr);
         if (!jOuterArr) return nullptr;
         for (jsize k = 0; k < lenOuter; ++k)
         {
             jsize lenMiddle = static_cast<jsize>(val[k].size());
-            jobjectArray jMiddleArr = env->NewObjectArray(lenMiddle, g_cls_String1DArray, NULL);
+            jobjectArray jMiddleArr = env->NewObjectArray(lenMiddle, g_cls_String1DArray, nullptr);
             if (!jMiddleArr) return nullptr;
             for (jsize i = 0; i < lenMiddle; ++i)
             {
                 jsize lenInner = static_cast<jsize>(val[k][i].size());
-                jobjectArray strArr = env->NewObjectArray(lenInner, g_cls_String, NULL);
+                jobjectArray strArr = env->NewObjectArray(lenInner, g_cls_String, nullptr);
                 if (!strArr) return nullptr;
                 for (jsize j = 0; j < lenInner; ++j)
                 {
@@ -374,12 +374,12 @@ struct JObjectConverter : boost::static_visitor < jobject >
     jobject operator()(const std::vector<std::vector<OC::OCRepresentation>>& val) const
     {
         jsize lenOuter = static_cast<jsize>(val.size());
-        jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_OcRepresentation1DArray, NULL);
+        jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_OcRepresentation1DArray, nullptr);
         if (!jOuterArr) return nullptr;
         for (jsize i = 0; i < lenOuter; ++i)
         {
             jsize lenInner = static_cast<jsize>(val[i].size());
-            jobjectArray repArr = env->NewObjectArray(lenInner, g_cls_OcRepresentation, NULL);
+            jobjectArray repArr = env->NewObjectArray(lenInner, g_cls_OcRepresentation, nullptr);
             if (!repArr) return nullptr;
             for (jsize j = 0; j < lenInner; ++j)
             {
@@ -405,17 +405,17 @@ struct JObjectConverter : boost::static_visitor < jobject >
     jobject operator()(const std::vector<std::vector<std::vector<OC::OCRepresentation>>>& val) const
     {
         jsize lenOuter = static_cast<jsize>(val.size());
-        jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_OcRepresentation2DArray, NULL);
+        jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_OcRepresentation2DArray, nullptr);
         if (!jOuterArr) return nullptr;
         for (jsize k = 0; k < lenOuter; ++k)
         {
             jsize lenMiddle = static_cast<jsize>(val[k].size());
-            jobjectArray jMiddleArr = env->NewObjectArray(lenMiddle, g_cls_OcRepresentation1DArray, NULL);
+            jobjectArray jMiddleArr = env->NewObjectArray(lenMiddle, g_cls_OcRepresentation1DArray, nullptr);
             if (!jMiddleArr) return nullptr;
             for (jsize i = 0; i < lenMiddle; ++i)
             {
                 jsize lenInner = static_cast<jsize>(val[k][i].size());
-                jobjectArray repArr = env->NewObjectArray(lenInner, g_cls_OcRepresentation, NULL);
+                jobjectArray repArr = env->NewObjectArray(lenInner, g_cls_OcRepresentation, nullptr);
                 if (!repArr) return nullptr;
                 for (jsize j = 0; j < lenInner; ++j)
                 {

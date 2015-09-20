@@ -79,6 +79,10 @@ typedef struct ResourceObserver
 
     /** next node in this list.*/
     struct ResourceObserver *next;
+
+    /** requested payload encoding format. */
+    OCPayloadFormat acceptFormat;
+
 } ResourceObserver;
 
 #ifdef WITH_PRESENCE
@@ -162,6 +166,7 @@ OCStackResult AddObserver (const char         *resUri,
                            uint8_t            tokenLength,
                            OCResource         *resHandle,
                            OCQualityOfService qos,
+                           OCPayloadFormat    acceptFormat,
                            const OCDevAddr    *devAddr);
 
 /**

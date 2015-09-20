@@ -18,8 +18,8 @@
  *
  ******************************************************************/
 
-#ifndef __CONSERVERAPP_H__
-#define __CONSERVERAPP_H__
+#ifndef CONSERVERAPP_H__
+#define CONSERVERAPP_H__
 
 #include <app.h>
 #include <Elementary.h>
@@ -29,7 +29,6 @@
 
 #include "OCPlatform.h"
 #include "OCApi.h"
-#include "thingsmanager.h"
 
 #ifdef  LOG_TAG
 #undef  LOG_TAG
@@ -42,4 +41,4 @@
 
 #define ELM_DEMO_EDJ "opt/usr/apps/org.tizen.conserverapp/res/ui_controls.edj"
 
-#endif // __CONSERVERAPP_H__
+#endif // CONSERVERAPP_H__

@@ -144,7 +144,7 @@ bool CAGattClientsDestroy(CALEContext * context)
  */
 static bool CAGattClientSendRequestData(GDBusProxy * characteristic,
                                         CALEContext * context,
-                                        char const * data,
+                                        uint8_t const * data,
                                         size_t length)
 {
     assert(context != NULL);
@@ -201,7 +201,7 @@ static bool CAGattClientSendRequestData(GDBusProxy * characteristic,
 }
 
 CAResult_t CAGattClientSendData(void const * method_info,
-                                void const * data,
+                                uint8_t const * data,
                                 size_t length)
 {
     assert(method_info != NULL);
@@ -213,12 +213,12 @@ CAResult_t CAGattClientSendData(void const * method_info,
 
     return CAGattClientSendRequestData(characteristic,
                                        info->context,
-                                       (char const *) data,
+                                       data,
                                        length);
 }
 
 CAResult_t CAGattClientSendDataToAll(void const * method_info,
-                                     void const * data,
+                                     uint8_t const * data,
                                      size_t length)
 {
     assert(method_info != NULL);
@@ -235,7 +235,7 @@ CAResult_t CAGattClientSendDataToAll(void const * method_info,
 
         result = CAGattClientSendRequestData(characteristic,
                                              info->context,
-                                             (char const *) data,
+                                             data,
                                              length);
     }
 

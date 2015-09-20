@@ -124,7 +124,7 @@ int ConnectToNetwork()
     // check for the presence of the shield:
     if (WiFi.status() == WL_NO_SHIELD)
     {
-        OC_LOG(ERROR, TAG, PCF("WiFi shield not present"));
+        OC_LOG(ERROR, TAG, ("WiFi shield not present"));
         return -1;
     }
 
@@ -133,7 +133,7 @@ int ConnectToNetwork()
     OC_LOG_V(INFO, TAG, "WiFi Shield Firmware version %s", fwVersion);
     if ( strncmp(fwVersion, INTEL_WIFI_SHIELD_FW_VER, sizeof(INTEL_WIFI_SHIELD_FW_VER)) != 0 )
     {
-        OC_LOG(DEBUG, TAG, PCF("!!!!! Upgrade WiFi Shield Firmware version !!!!!!"));
+        OC_LOG(DEBUG, TAG, ("!!!!! Upgrade WiFi Shield Firmware version !!!!!!"));
         return -1;
     }
 
@@ -146,7 +146,7 @@ int ConnectToNetwork()
         // wait 10 seconds for connection:
         delay(10000);
     }
-    OC_LOG(DEBUG, TAG, PCF("Connected to wifi"));
+    OC_LOG(DEBUG, TAG, ("Connected to wifi"));
 
     IPAddress ip = WiFi.localIP();
     OC_LOG_V(INFO, TAG, "IP Address:  %d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
@@ -202,7 +202,7 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
 
     if (entityHandlerRequest && (flag & OC_REQUEST_FLAG))
     {
-        OC_LOG (INFO, TAG, PCF("Flag includes OC_REQUEST_FLAG"));
+        OC_LOG (INFO, TAG, ("Flag includes OC_REQUEST_FLAG"));
         if (OC_REST_GET == entityHandlerRequest->method)
         {
             if (JsonGenerator( TH, payload, MAX_RESPONSE_LENGTH))
@@ -252,12 +252,12 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
     {
         if (OC_OBSERVE_REGISTER == entityHandlerRequest->obsInfo.action)
         {
-            OC_LOG (INFO, TAG, PCF("Received OC_OBSERVE_REGISTER from client"));
+            OC_LOG (INFO, TAG, ("Received OC_OBSERVE_REGISTER from client"));
             g_THUnderObservation = 1;
         }
         else if (OC_OBSERVE_DEREGISTER == entityHandlerRequest->obsInfo.action)
         {
-            OC_LOG (INFO, TAG, PCF("Received OC_OBSERVE_DEREGISTER from client"));
+            OC_LOG (INFO, TAG, ("Received OC_OBSERVE_DEREGISTER from client"));
         }
     }
 
@@ -348,7 +348,7 @@ void setup()
     // Add your initialization code here
     OC_LOG_INIT();
 
-    OC_LOG(DEBUG, TAG, PCF("OCServer is starting..."));
+    OC_LOG(DEBUG, TAG, ("OCServer is starting..."));
     uint16_t port = OC_WELL_KNOWN_PORT;
 
     // Connect to Ethernet or WiFi network
@@ -361,7 +361,7 @@ void setup()
     // Initialize the OC Stack in Server mode
     if (OCInit(NULL, port, OC_SERVER) != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, PCF("OCStack init error"));
+        OC_LOG(ERROR, TAG, ("OCStack init error"));
         return;
     }
     OCStartPresence(60);
@@ -382,7 +382,7 @@ void loop()
 
     if (OCProcess() != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, PCF("OCStack process error"));
+        OC_LOG(ERROR, TAG, ("OCStack process error"));
         return;
     }
     ChangeTHRepresentation(NULL);

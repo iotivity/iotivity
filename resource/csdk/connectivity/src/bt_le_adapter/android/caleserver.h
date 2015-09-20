@@ -41,7 +41,7 @@ extern "C"
  * @param[in]  data              Data received from remote device.
  * @pre  Callback must be registered using CALEServerSetCallback(CAPacketReceiveCallback callback).
  */
-typedef void (*CAPacketReceiveCallback)(const char *address, const char *data);
+typedef void (*CAPacketReceiveCallback)(const char *address, const uint8_t *data);
 
 /**
  * initialize server for BLE.
@@ -62,7 +62,7 @@ void CALEServerTerminate();
  * @param[in]   dataLen          data length.
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CALEServerSendUnicastMessage(const char *address, const char *data, uint32_t dataLen);
+CAResult_t CALEServerSendUnicastMessage(const char *address, const uint8_t *data, uint32_t dataLen);
 
 /**
  * send data for multicast (interface).
@@ -70,7 +70,7 @@ CAResult_t CALEServerSendUnicastMessage(const char *address, const char *data, u
  * @param[in]   dataLen          data length.
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CALEServerSendMulticastMessage(const char *data, uint32_t dataLen);
+CAResult_t CALEServerSendMulticastMessage(const uint8_t *data, uint32_t dataLen);
 
 /**
  * start multicast server (start advertise).
@@ -99,7 +99,7 @@ void CALEServerSetCallback(CAPacketReceiveCallback callback);
  * @param[in]   dataLen          data length.
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CALEServerSendUnicastMessageImpl(JNIEnv *env, const char *address, const char *data,
+CAResult_t CALEServerSendUnicastMessageImpl(JNIEnv *env, const char *address, const uint8_t *data,
                                             uint32_t dataLen);
 
 /**
@@ -109,7 +109,7 @@ CAResult_t CALEServerSendUnicastMessageImpl(JNIEnv *env, const char *address, co
  * @param[in]   dataLen          data length
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CALEServerSendMulticastMessageImpl(JNIEnv *env, const char *data, uint32_t dataLen);
+CAResult_t CALEServerSendMulticastMessageImpl(JNIEnv *env, const uint8_t *data, uint32_t dataLen);
 
 /**
  * set context of application.
@@ -126,6 +126,11 @@ void CALeServerJniInit();
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CALEServerCreateJniInterfaceObject();
+
+/**
+ * start advertise in gatt server.
+ */
+CAResult_t CALEStartAdvertise();
 
 /**
  * start advertise in gatt server.
@@ -290,13 +295,6 @@ CAResult_t CALEServerRemoveAllDevices(JNIEnv *env);
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CALEServerRemoveDevice(JNIEnv *env, jstring address);
-
-/**
- * Reordering for the list (connected device list).
- * @param[in]   index                 index of device list that want to reordering.
- * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
- */
-CAResult_t CALEServerReorderinglist(uint32_t index);
 
 /**
  * initialize mutex.

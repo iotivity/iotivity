@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  * C-Pluff, a plug-in framework for C
  * Copyright 2007 Johannes Lehtinen
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -29,7 +29,7 @@ static int testvar;
 
 static void cause_fatal_error(void) {
 	cp_context_t *ctx;
-	
+
 	cp_init();
 	ctx = init_context(CP_LOG_ERROR + 1, NULL);
 	cp_release_info(ctx, &testvar);

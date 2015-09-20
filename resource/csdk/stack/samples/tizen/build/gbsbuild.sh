@@ -23,6 +23,8 @@ export RELEASE=$4
 echo $5
 export LOGGING=$5
 
+echo $6
+export ROUTING=$6
 
 echo $TARGET_TRANSPORT
 echo $BUILD_SAMPLE
@@ -59,6 +61,8 @@ cd $sourcedir/build_common/
 cp -R ./iotivityconfig/* $sourcedir/tmp/iotivityconfig/
 cp -R ./SConscript $sourcedir/tmp/
 
+cp -R $sourcedir/iotivity.pc.in $sourcedir/tmp/
+
 cd $sourcedir/tmp
 
 echo `pwd`
@@ -74,7 +78,7 @@ if [ ! -d .git ]; then
 fi
 
 echo "Calling core gbs build command"
-gbscommand="gbs build -A armv7l -B ~/GBS-ROOT-RI --include-all --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $4' --define 'LOGGING $5' --repository ./"
+gbscommand="gbs build -A armv7l -B ~/GBS-ROOT-RI --include-all --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $4' --define 'LOGGING $5' --define 'ROUTING $6' --repository ./"
 echo $gbscommand
 if eval $gbscommand; then
    echo "Core build is successful"
@@ -97,7 +101,7 @@ if echo $BUILD_SAMPLE|grep -qi '^ON$'; then
       git commit -m "Initial commit"
    fi
    echo "Calling sample gbs build command"
-   gbscommand="gbs build -A armv7l -B ~/GBS-ROOT-RI --include-all --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $4' --define 'LOGGING $5' --repository ./"
+   gbscommand="gbs build -A armv7l -B ~/GBS-ROOT-RI --include-all --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $4' --define 'LOGGING $5' --define 'ROUTING $6' --repository ./"
    echo $gbscommand
    if eval $gbscommand; then
       echo "Sample build is successful"

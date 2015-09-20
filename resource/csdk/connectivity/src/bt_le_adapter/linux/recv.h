@@ -91,7 +91,7 @@ void CAGattRecvInfoDestroy(CAGattRecvInfo * info);
  * @return @c true on success, @c false otherwise.
  */
 bool CAGattRecv(CAGattRecvInfo * info,
-                char const * data,
+                uint8_t const * data,
                 uint32_t length);
 
 

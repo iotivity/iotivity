@@ -23,8 +23,10 @@
 #include "srmutility.h"
 #include "srmresourcestrings.h"
 #include "logger.h"
+#include "oic_malloc.h"
+#include "base64.h"
 
-#define TAG  PCF("SRM-UTILITY")
+#define TAG  "SRM-UTILITY"
 
 /**
  * This method initializes the OicParseQueryIter_t struct
@@ -35,7 +37,7 @@
  */
 void ParseQueryIterInit(unsigned char * query, OicParseQueryIter_t * parseIter)
 {
-    OC_LOG (INFO, TAG, PCF("Initializing coap iterator"));
+    OC_LOG (INFO, TAG, "Initializing coap iterator");
     if((NULL == query) || (NULL == parseIter))
         return;
 
@@ -46,7 +48,6 @@ void ParseQueryIterInit(unsigned char * query, OicParseQueryIter_t * parseIter)
     coap_parse_iterator_init(query, strlen((char *)query),
           (unsigned char *)OIC_SEC_REST_QUERY_SEPARATOR, (unsigned char *) "", 0, &parseIter->pi);
 }
-
 
 /**
  * This method fills the OicParseQueryIter_t struct with next REST query's
@@ -60,7 +61,7 @@ void ParseQueryIterInit(unsigned char * query, OicParseQueryIter_t * parseIter)
  */
 OicParseQueryIter_t * GetNextQuery(OicParseQueryIter_t * parseIter)
 {
-    OC_LOG (INFO, TAG, PCF("Getting Next Query"));
+    OC_LOG (INFO, TAG, "Getting Next Query");
     if(NULL == parseIter)
         return NULL;
 
@@ -83,4 +84,47 @@ OicParseQueryIter_t * GetNextQuery(OicParseQueryIter_t * parseIter)
         }
     }
     return NULL;
+}
+
+
+// TODO This functionality is replicated in all SVR's and therefore we need
+// to encapsulate it in a common method. However, this may not be the right
+// file for this method.
+OCStackResult AddUuidArray(cJSON* jsonRoot, const char* arrayItem,
+                           size_t *numUuids, OicUuid_t** uuids )
+{
+    size_t idxx = 0;
+    cJSON* jsonObj = cJSON_GetObjectItem(jsonRoot, arrayItem);
+    VERIFY_NON_NULL(TAG, jsonObj, ERROR);
+    VERIFY_SUCCESS(TAG, cJSON_Array == jsonObj->type, ERROR);
+
+    *numUuids = cJSON_GetArraySize(jsonObj);
+    VERIFY_SUCCESS(TAG, *numUuids > 0, ERROR);
+    *uuids = (OicUuid_t*)OICCalloc(*numUuids, sizeof(OicUuid_t));
+    VERIFY_NON_NULL(TAG, *uuids, ERROR);
+
+    do
+    {
+        unsigned char base64Buff[sizeof(((OicUuid_t*)0)->id)] = {};
+        uint32_t outLen = 0;
+        B64Result b64Ret = B64_OK;
+
+        cJSON *jsonOwnr = cJSON_GetArrayItem(jsonObj, idxx);
+        VERIFY_NON_NULL(TAG, jsonOwnr, ERROR);
+        VERIFY_SUCCESS(TAG, cJSON_String == jsonOwnr->type, ERROR);
+
+        outLen = 0;
+        b64Ret = b64Decode(jsonOwnr->valuestring, strlen(jsonOwnr->valuestring), base64Buff,
+                sizeof(base64Buff), &outLen);
+
+        VERIFY_SUCCESS(TAG, (b64Ret == B64_OK && outLen <= sizeof((*uuids)[idxx].id)),
+                ERROR);
+        memcpy((*uuids)[idxx].id, base64Buff, outLen);
+    } while ( ++idxx < *numUuids);
+
+    return OC_STACK_OK;
+
+exit:
+    return OC_STACK_ERROR;
+
 }

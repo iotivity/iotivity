@@ -17,9 +17,9 @@
 <small>
 [<a class="el" href="group__cFuncs.html">Functions</a>]</small>
 </h1><hr><a name="_details"></a><h2>Detailed Description</h2>
-These functions can be used to dynamically access symbols exported by the plug-ins. 
+These functions can be used to dynamically access symbols exported by the plug-ins.
 <p>
-They are intended to be used by a plug-in runtime or by the main program. 
+They are intended to be used by a plug-in runtime or by the main program.
 <p>
 <table border="0" cellpadding="0" cellspacing="0">
 <tr><td></td></tr>
@@ -67,7 +67,7 @@ They are intended to be used by a plug-in runtime or by the main program.
 <div class="memdoc">
 
 <p>
-Defines a context specific symbol. 
+Defines a context specific symbol.
 <p>
 If a plug-in has symbols which have a plug-in instance specific value then the plug-in should define those symbols when it is started. The defined symbols are cleared automatically when the plug-in instance is stopped. Symbols can not be redefined.<p>
 <dl compact><dt><b>Parameters:</b></dt><dd>
@@ -119,7 +119,7 @@ If a plug-in has symbols which have a plug-in instance specific value then the p
 <div class="memdoc">
 
 <p>
-Resolves a symbol provided by the specified plug-in. 
+Resolves a symbol provided by the specified plug-in.
 <p>
 The plug-in is started automatically if it is not already active. The symbol may be context specific or global. The framework first looks for a context specific symbol and then falls back to resolving a global symbol exported by the plug-in runtime library. The symbol can be released using <a class="el" href="group__cFuncsSymbols.html#g150629125a61ac9fa4e2095b0d9c7e57">cp_release_symbol</a> when it is not needed anymore. Pointers obtained from this function must not be passed on to other plug-ins or the main program.<p>
 When a plug-in runtime calls this function the plug-in framework creates a dynamic dependency from the symbol using plug-in to the symbol defining plug-in. The symbol using plug-in is stopped automatically if the symbol defining plug-in is about to be stopped. If the symbol using plug-in does not explicitly release the symbol then it is automatically released after a call to the stop function. It is not safe to refer to a dynamically resolved symbol in the stop function except to release it using <a class="el" href="group__cFuncsSymbols.html#g150629125a61ac9fa4e2095b0d9c7e57">cp_release_symbol</a>.<p>
@@ -162,7 +162,7 @@ When the main program calls this function it is the responsibility of the main p
 <div class="memdoc">
 
 <p>
-Releases a previously obtained symbol. 
+Releases a previously obtained symbol.
 <p>
 The pointer must not be used after the symbol has been released. The symbol is released only after as many calls to this function as there have been for <a class="el" href="group__cFuncsSymbols.html#g8bc3b7fcf4f4ed414837f5a3998d46b7">cp_resolve_symbol</a> for the same plug-in and symbol.<p>
 <dl compact><dt><b>Parameters:</b></dt><dd>

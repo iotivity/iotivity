@@ -1,4 +1,4 @@
-/******************************************************************
+/* *****************************************************************
  *
  * Copyright 2015 Samsung Electronics All Rights Reserved.
  *
@@ -19,42 +19,37 @@
  ******************************************************************/
 
 /**
-  * @file   jni_string.h
-  *
-  * @brief  This file contains the declaration of JString class and its members related to JString.
-  *
-*/
+  * @file
+  * This file contains the declaration of JString class and its members related to JString.
+  */
 
-#ifndef __JNI_STRING_H_
-#define __JNI_STRING_H_
-
+#ifndef JNI_STRING_H_
+#define JNI_STRING_H_
 
 #include <string>
 
 #include "jni_object.h"
 
 /**
- * @class   JString
- * @brief   This class inherits JObject class and provides a set of functions for JNI String.
- *
+ * This class inherits JObject class and provides a set of functions for JNI String.
  */
 class JString : public JObject
 {
     public:
         /**
-         * @brief constructor
+         * constructor
          */
         JString(JNIEnv *env, jstring value);
         /**
-         * @brief constructor
+         * constructor
          */
         JString(JNIEnv *env, const char *value);
         /**
-         * @brief constructor
+         * constructor
          */
         JString(JNIEnv *env, const std::string &value);
         /**
-         * @brief destructor
+         * destructor
          */
         ~JString();
 
@@ -64,7 +59,6 @@ class JString : public JObject
          * @param value - String value to set to a private member variable.
          *
          * @return bool - true on success
-         *
          */
         bool getValue(std::string &value);
 
@@ -72,11 +66,10 @@ class JString : public JObject
          * Function to get the private string value.
          *
          * @return  C String value.
-         *
          */
         const char *c_str();
 
     private:
         std::string m_cstr;
 };
-#endif //__JNI_STRING_H_
+#endif //JNI_STRING_H_

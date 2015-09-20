@@ -38,11 +38,11 @@
 #include "ocstack.h"
 #include "ocstackconfig.h"
 #include "occlientcb.h"
-#include <logger.h>
 #include <ocrandom.h>
 
 #include "cacommon.h"
 #include "cainterface.h"
+#include "securevirtualresourcetypes.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -80,6 +80,9 @@ typedef struct
     /** The REST method retrieved from received request PDU.*/
     OCMethod method;
 
+    /** the requested payload format. */
+    OCPayloadFormat acceptFormat;
+
     /** resourceUrl will be filled in occoap using the path options in received request PDU.*/
     char resourceUrl[MAX_URI_LENGTH];
 
@@ -87,7 +90,7 @@ typedef struct
     char query[MAX_QUERY_LENGTH];
 
     /** reqJSON is retrieved from the payload of the received request PDU.*/
-    uint8_t payload[MAX_REQUEST_LENGTH];
+    uint8_t *payload;
 
     /** qos is indicating if the request is CON or NON.*/
     OCQualityOfService qos;
@@ -199,7 +202,7 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest);
 OCStackResult SendDirectStackResponse(const CAEndpoint_t* endPoint, const uint16_t coapID,
         const CAResponseResult_t responseResult, const CAMessageType_t type,
         const uint8_t numOptions, const CAHeaderOption_t *options,
-        CAToken_t token, uint8_t tokenLength);
+        CAToken_t token, uint8_t tokenLength, const char *resourceUri);
 
 #ifdef WITH_PRESENCE
 
@@ -273,7 +276,7 @@ OCStackResult CAResultToOCResult(CAResult_t caResult);
  *
  * @return A uint8_t representation the server instance ID.
  */
-const uint8_t* OCGetServerInstanceID(void);
+const OicUuid_t* OCGetServerInstanceID(void);
 
 /**
  * Get a string representation the server instance ID.

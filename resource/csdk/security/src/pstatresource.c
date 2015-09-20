@@ -32,7 +32,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define TAG  PCF("SRM-PSTAT")
+#define TAG  "SRM-PSTAT"
 
 static OicSecDpom_t gSm = SINGLE_SERVICE_CLIENT_DRIVEN;
 static OicSecPstat_t gDefaultPstat =
@@ -183,7 +183,7 @@ exit:
     cJSON_Delete(jsonRoot);
     if (OC_STACK_OK != ret)
     {
-        OC_LOG (ERROR, TAG, PCF("JSONToPstatBin failed"));
+        OC_LOG (ERROR, TAG, "JSONToPstatBin failed");
         DeletePstatBinData(pstat);
         pstat = NULL;
     }
@@ -195,7 +195,8 @@ exit:
  */
 static OCEntityHandlerResult HandlePstatGetRequest (const OCEntityHandlerRequest * ehRequest)
 {
-    // Convert ACL data into JSON for transmission
+    OC_LOG (INFO, TAG, "HandlePstatGetRequest  processing GET request");
+   // Convert ACL data into JSON for transmission
     char* jsonStr = BinToPstatJSON(gPstat);
 
     // A device should always have a default pstat. Therefore, jsonStr should never be NULL.
@@ -217,6 +218,7 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
 {
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
     cJSON *postJson = NULL;
+    OC_LOG (INFO, TAG, "HandlePstatPutRequest  processing PUT request");
 
     if (ehRequest->resource)
     {
@@ -238,11 +240,11 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
             {
                 gPstat->isOp = true;
                 gPstat->cm = NORMAL;
-                OC_LOG (INFO, TAG, PCF("CommitHash is valid and isOp is TRUE"));
+                OC_LOG (INFO, TAG, "CommitHash is valid and isOp is TRUE");
             }
             else
             {
-                OC_LOG (INFO, TAG, PCF("CommitHash is not valid"));
+                OC_LOG (INFO, TAG, "CommitHash is not valid");
             }
         }
         cJSON *omJson = cJSON_GetObjectItem(jsonPstat, OIC_JSON_OM_NAME);
@@ -254,7 +256,7 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
              */
             for(size_t i=0; i< gPstat->smLen; i++)
             {
-                if(gPstat->sm[i] == omJson->valueint)
+                if(gPstat->sm[i] == (unsigned int)omJson->valueint)
                 {
                     gPstat->om = (OicSecDpom_t)omJson->valueint;
                     break;
@@ -277,7 +279,7 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
     //Send payload to request originator
     if(OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL))
     {
-        OC_LOG (ERROR, TAG, PCF("SendSRMResponse failed in HandlePstatPostRequest"));
+        OC_LOG (ERROR, TAG, "SendSRMResponse failed in HandlePstatPostRequest");
     }
     cJSON_Delete(postJson);
     return ehRet;
@@ -295,7 +297,7 @@ OCEntityHandlerResult PstatEntityHandler(OCEntityHandlerFlag flag,
     // This method will handle REST request (GET/POST) for /oic/sec/pstat
     if (flag & OC_REQUEST_FLAG)
     {
-        OC_LOG (INFO, TAG, PCF("Flag includes OC_REQUEST_FLAG"));
+        OC_LOG (INFO, TAG, "Flag includes OC_REQUEST_FLAG");
         switch (ehRequest->method)
         {
             case OC_REST_GET:
@@ -330,7 +332,7 @@ OCStackResult CreatePstatResource()
 
     if (ret != OC_STACK_OK)
     {
-        OC_LOG (FATAL, TAG, PCF("Unable to instantiate pstat resource"));
+        OC_LOG (FATAL, TAG, "Unable to instantiate pstat resource");
         DeInitPstatResource();
     }
     return ret;

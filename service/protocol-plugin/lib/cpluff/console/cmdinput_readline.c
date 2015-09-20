@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  * C-Pluff, a plug-in framework for C
  * Copyright 2007 Johannes Lehtinen
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -21,7 +21,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *-----------------------------------------------------------------------*/
 
-// GNU readline based command line input 
+// GNU readline based command line input
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -55,7 +55,7 @@ static char *cp_console_compl_cmdgen(const char *text, int state) {
 static char *cp_console_compl_flagsgen(const char *text, int state) {
 	static int counter;
 	static int textlen;
-	
+
 	if (!state) {
 		counter = 0;
 		textlen = strlen(text);
@@ -75,7 +75,7 @@ static char *cp_console_compl_flagsgen(const char *text, int state) {
 static char *cp_console_compl_loggen(const char *text, int state) {
 	static int counter;
 	static int textlen;
-	
+
 	if (!state) {
 		counter = 0;
 		textlen = strlen(text);
@@ -95,7 +95,7 @@ static char *cp_console_compl_loggen(const char *text, int state) {
 static char *cp_console_compl_plugingen(const char *text, int state) {
 	static int counter;
 	static int textlen;
-	
+
 	if (!state) {
 		counter = 0;
 		textlen = strlen(text);
@@ -126,16 +126,16 @@ static char **cp_console_completion(const char *text, int start, int end) {
 	int cs, ce;
 	char **matches = NULL;
 
-	// Search for start and end of command	
+	// Search for start and end of command
 	for (cs = 0; cs < start && isspace(rl_line_buffer[cs]); cs++);
 	for (ce = cs; ce <= start && !isspace(rl_line_buffer[ce]); ce++);
-	
+
 	// If no command entered yet, use command completion
 	if (ce >= start) {
 		matches = rl_completion_matches(text, cp_console_compl_cmdgen);
 		rl_attempted_completion_over = 1;
 	}
-	
+
 	// Otherwise check if known command and complete accordingly
 	else {
 		int j = 0;
@@ -177,19 +177,19 @@ CP_HIDDEN void cmdline_init(void) {
 
 CP_HIDDEN char *cmdline_input(const char *prompt) {
 	static char *cmdline = NULL;
-	
-	// Free previously returned command line, if any 
+
+	// Free previously returned command line, if any
 	if (cmdline != NULL) {
 		free(cmdline);
 		cmdline = NULL;
 	}
-	
-	// Obtain new command line and record it for history 
+
+	// Obtain new command line and record it for history
 	cmdline = readline(prompt);
 	if (cmdline != NULL && *cmdline != '\0') {
 		add_history(cmdline);
 	}
-	
+
 	return cmdline;
 }
 

@@ -34,6 +34,7 @@
 
 #include <functional>
 #include <unordered_map>
+#include <vector>
 
 #include <boost/variant.hpp>
 #include <boost/mpl/contains.hpp>
@@ -81,7 +82,28 @@ namespace OIC
                 double,
                 bool,
                 std::string,
-                RCSResourceAttributes
+                RCSResourceAttributes,
+
+                std::vector< int >,
+                std::vector< double >,
+                std::vector< bool >,
+                std::vector< std::string >,
+                std::vector< RCSResourceAttributes >,
+
+                std::vector< std::vector< int > >,
+                std::vector< std::vector< std::vector< int > > >,
+
+                std::vector< std::vector< double > >,
+                std::vector< std::vector< std::vector< double > > >,
+
+                std::vector< std::vector< bool > >,
+                std::vector< std::vector< std::vector< bool > > >,
+
+                std::vector< std::vector< std::string > >,
+                std::vector< std::vector< std::vector< std::string > > >,
+
+                std::vector< std::vector< RCSResourceAttributes > >,
+                std::vector< std::vector< std::vector< RCSResourceAttributes > > >
             > ValueVariant;
 
             template< typename T, typename V = void,
@@ -96,7 +118,7 @@ namespace OIC
             class KeyValueVisitorHelper: public boost::static_visitor< >
             {
             public:
-                KeyValueVisitorHelper(VISITOR& visitor) :
+                KeyValueVisitorHelper(VISITOR& visitor) noexcept :
                         m_visitor( visitor )
                 {
                 }
@@ -158,32 +180,69 @@ namespace OIC
                  * Returns type identifier.
                  *
                  * @return Identifier of type.
+                 *
+                 * @see getBaseTypeId
                  */
-                TypeId getId() const;
+                TypeId getId() const noexcept;
+
+                /**
+                 * Returns the type identifier of a base type of sequence.
+                 *
+                 * For non sequence types, it is equivalent to calling getId.
+                 *
+                 * @return Identifier of type.
+                 *
+                 * @see getDepth
+                 * @see getId
+                 */
+                static TypeId getBaseTypeId(const Type& t) noexcept;
+
+                /**
+                 * Returns the depth of a type.
+                 *
+                 * The return will be zero for non sequence types.
+                 *
+                 * @see getBaseTypeId
+                 */
+                static size_t getDepth(const Type& t) noexcept;
 
                 /**
                  * Factory method to create Type instance from T.
                  *
                  * @return An instance that has TypeId for T.
                  *
-                 * @note T must be supported by Value. Otherwise, it won't be compiled.
+                 * @note T must be supported by Value. Otherwise, it won't compile.
                  *
                  * @see is_supported_type
                  */
                 template < typename T >
-                static Type typeOf(const T& value)
+                constexpr static Type typeOf(const T&) noexcept
                 {
-                    return Type(value);
+                    return Type{ IndexOfType< T >::value };
+                }
+
+                /**
+                 * Factory method to create Type instance from T.
+                 *
+                 * @return An instance that has TypeId for T.
+                 *
+                 * @note T must be supported by Value. Otherwise, it won't compile.
+                 *
+                 * @see is_supported_type
+                 */
+                template < typename T >
+                constexpr static Type typeOf() noexcept
+                {
+                    return Type{ IndexOfType< T >::value };
                 }
 
                 //! @cond
-                friend bool operator==(const Type&, const Type&);
+                friend bool operator==(const Type&, const Type&) noexcept;
                 //! @endcond
 
             private:
-                template < typename T >
-                explicit Type(const T&) :
-                    m_which{ IndexOfType< T >::value }
+                constexpr explicit Type(int which) noexcept :
+                    m_which{ which }
                 {
                 }
 
@@ -207,11 +266,11 @@ namespace OIC
 
                 Value();
                 Value(const Value&);
-                Value(Value&&);
+                Value(Value&&) noexcept;
 
                 /**
                  * Constructs a Value if T is a supported type.<br/>
-                 *       Otherwise it won't be compiled.
+                 *       Otherwise it won't compile.
                  */
                 template< typename T, typename = typename enable_if_supported< T >::type >
                 Value(T&& value) :
@@ -276,7 +335,7 @@ namespace OIC
                 /**
                  * Exchanges the content of the object by the content of the parameter.
                  */
-                void swap(Value&);
+                void swap(Value&) noexcept;
 
                 //! @cond
                 friend class RCSResourceAttributes;
@@ -328,32 +387,32 @@ namespace OIC
             /**
              * Returns an {@link iterator} referring to the first element.
              */
-            iterator begin();
+            iterator begin() noexcept;
 
             /**
              * Returns an {@link iterator} referring to the <i>past-the-end element</i>.
              */
-            iterator end();
+            iterator end() noexcept;
 
             /**
              * @copydoc cbegin()
              */
-            const_iterator begin() const;
+            const_iterator begin() const noexcept;
 
             /**
              * @copydoc cend()
              */
-            const_iterator end() const;
+            const_iterator end() const noexcept;
 
             /**
              * Returns a const_iterator referring to the first element.
              */
-            const_iterator cbegin() const;
+            const_iterator cbegin() const noexcept;
 
             /**
              * Returns a const_iterator referring to the <i>past-the-end element</i>.
              */
-            const_iterator cend() const;
+            const_iterator cend() const noexcept;
 
             /**
              * Accesses a value.
@@ -427,7 +486,7 @@ namespace OIC
             /**
              * Removes all elements.
              */
-            void clear();
+            void clear() noexcept;
 
             /**
              * Removes a single element.
@@ -452,14 +511,14 @@ namespace OIC
              *
              * @see size
              */
-            bool empty() const;
+            bool empty() const noexcept;
 
             /**
              * Returns the number of elements.
              *
              * @see empty
              */
-            size_t size() const;
+            size_t size() const noexcept;
 
         private:
             template< typename VISITOR >
@@ -519,17 +578,22 @@ namespace OIC
         template< typename T >
         struct RCSResourceAttributes::IsSupportedTypeHelper
         {
-            typedef boost::mpl::contains<ValueVariant::types, typename std::decay< T >::type> type;
+            typedef boost::mpl::contains< ValueVariant::types, typename std::decay< T >::type > type;
         };
 
-        template <typename T>
+        template < typename T >
         struct RCSResourceAttributes::IndexOfType
         {
+            static_assert(RCSResourceAttributes::is_supported_type< T >::value,
+                "The type is not supported!");
+
             typedef typename boost::mpl::find< ValueVariant::types, T >::type iter;
             typedef typename boost::mpl::begin< ValueVariant::types >::type mpl_begin;
 
             static constexpr int value = boost::mpl::distance< mpl_begin, iter >::value;
         };
+
+        template < typename T > constexpr int RCSResourceAttributes::IndexOfType< T >::value;
 
         /**
          * @relates RCSResourceAttributes::Type
@@ -538,7 +602,8 @@ namespace OIC
          *
          * @return true if the objects are equal, false otherwise.
          */
-        bool operator==(const RCSResourceAttributes::Type&, const RCSResourceAttributes::Type&);
+        bool operator==(const RCSResourceAttributes::Type&, const RCSResourceAttributes::Type&)
+                noexcept;
 
         /**
          * @relates RCSResourceAttributes::Type
@@ -547,7 +612,8 @@ namespace OIC
          *
          * @return true if the objects are not equal, false otherwise.
          */
-        bool operator!=(const RCSResourceAttributes::Type&, const RCSResourceAttributes::Type&);
+        bool operator!=(const RCSResourceAttributes::Type&, const RCSResourceAttributes::Type&)
+                noexcept;
 
         /**
          * @relates RCSResourceAttributes::Value
@@ -638,32 +704,32 @@ namespace OIC
             class KeyVisitor: public boost::static_visitor< const std::string& >
             {
             public:
-                result_type operator()(iterator*) const;
-                result_type operator()(const_iterator*) const;
+                result_type operator()(iterator*) const noexcept;
+                result_type operator()(const_iterator*) const noexcept;
             };
 
             class ValueVisitor: public boost::static_visitor< Value& >
             {
             public:
-                result_type operator()(iterator*);
+                result_type operator()(iterator*) noexcept;
                 result_type operator()(const_iterator*);
             };
 
             class ConstValueVisitor: public boost::static_visitor< const Value& >
             {
             public:
-                result_type operator()(iterator*) const;
-                result_type operator()(const_iterator*) const;
+                result_type operator()(iterator*) const noexcept;
+                result_type operator()(const_iterator*) const noexcept;
             };
 
         public:
-            const std::string& key() const;
-            const RCSResourceAttributes::Value& value() const;
+            const std::string& key() const noexcept;
+            const RCSResourceAttributes::Value& value() const noexcept;
             RCSResourceAttributes::Value& value();
 
         private:
             KeyValuePair(const KeyValuePair&) = default;
-            KeyValuePair(boost::variant< iterator*, const_iterator* >&&);
+            KeyValuePair(boost::variant< iterator*, const_iterator* >&&) noexcept;
 
             KeyValuePair& operator=(const KeyValuePair&) = default;
 

@@ -59,17 +59,25 @@ extern "C"
 #define MAX_LOG_V_BUFFER_SIZE (256)
 
 // Log levels
-#ifndef __TIZEN__
+#ifdef __TIZEN__
+typedef enum {
+    DEBUG = DLOG_DEBUG,
+    INFO = DLOG_INFO,
+    WARNING = DLOG_WARN,
+    ERROR = DLOG_ERROR,
+    FATAL = DLOG_ERROR
+} LogLevel;
+#else
 typedef enum
 {
     DEBUG = 0, INFO, WARNING, ERROR, FATAL
 } LogLevel;
-#else
-#define DEBUG DLOG_DEBUG
-#define INFO DLOG_INFO
-#define WARNING DLOG_WARN
-#define ERROR DLOG_ERROR
-#define FATAL DLOG_ERROR
+#endif
+
+#ifdef __TIZEN__
+#define OC_LOG(level,tag,mes) LOG_(LOG_ID_MAIN, level, tag, mes)
+#define OC_LOG_V(level,tag,fmt,args...) LOG_(LOG_ID_MAIN, level, tag, fmt,##args)
+#define OC_LOG_BUFFER(level, tag, buffer, bufferSize)
 #endif
 
 #ifdef __TIZEN__
