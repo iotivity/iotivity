@@ -600,16 +600,20 @@ exit:
         OCFREE(*value)
     }
 
+    OCFREE(actionSetStr);
+
     return result;
 }
 
 OCStackResult ExtractActionSetNameAndDelaytime(char *pChar, char **setName,
         long int *pa)
 {
-    char *token, *tokenPtr;
+    char *token = NULL, *tokenPtr = NULL;
     OCStackResult result = OC_STACK_OK;
 
     token = (char*) strtok_r(pChar, ACTION_DELIMITER, &tokenPtr);
+    VARIFY_POINTER_NULL(token, result, exit)
+
     *setName = (char *) OICMalloc(strlen(token) + 1);
     VARIFY_POINTER_NULL(*setName, result, exit)
     VARIFY_PARAM_NULL(token, result, exit)
@@ -661,7 +665,11 @@ OCStackResult BuildActionSetFromString(OCActionSet **set, char* actiondesc)
     iterToken = (char *) strtok_r(NULL, ACTION_DELIMITER, &iterTokenPtr);
     VARIFY_PARAM_NULL(iterToken, result, exit)
 #ifndef WITH_ARDUINO
-    sscanf(iterToken, "%ld %u", &(*set)->timesteps, &(*set)->type);
+    if( 2 != sscanf(iterToken, "%ld %u", &(*set)->timesteps, &(*set)->type) )
+    {
+        // If the return value should be 2, the number of items in the argument. Otherwise, it fails.
+        goto exit;
+    }
 #endif
 
     OC_LOG_V(INFO, TAG, "ActionSet Name : %s", (*set)->actionsetName);
@@ -684,6 +692,8 @@ OCStackResult BuildActionSetFromString(OCActionSet **set, char* actiondesc)
 
             attrIterToken = (char *) strtok_r(attr, ATTR_ASSIGN,
                     &attrIterTokenPtr);
+            VARIFY_POINTER_NULL(attrIterToken, result, exit);
+
             key = (char *) OICMalloc(strlen(attrIterToken) + 1);
             VARIFY_POINTER_NULL(key, result, exit)
             VARIFY_PARAM_NULL(attrIterToken, result, exit)
@@ -1024,7 +1034,10 @@ OCStackResult DoAction(OCResource* resource, OCActionSet* actionset,
                 sizeof(ClientRequestInfo));
 
         if( info == NULL )
+        {
+            OCFREE(payload);
             return OC_STACK_NO_MEMORY;
+        }
 
         memset(info, 0, sizeof(ClientRequestInfo));
 
@@ -1329,6 +1342,8 @@ OCStackResult BuildCollectionGroupActionCBORResponse(
                             {
                                 stackRet = OC_STACK_ERROR;
                             }
+
+                            OICFree(schedule);
                         }
                     }
                 }
@@ -1412,4 +1427,3 @@ exit:
 
     return stackRet;
 }
-

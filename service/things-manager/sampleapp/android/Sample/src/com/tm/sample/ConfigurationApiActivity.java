@@ -82,7 +82,7 @@ public class ConfigurationApiActivity extends Activity {
 
     private final String                     CONFIGURATION_RESOURCE_URI             = "/oic/con";
     private final String                     MAINTENANCE_RESOURCE_URI               = "/oic/mnt";
-    private final String                     FACTORYSET_RESOURCE_URI                = "/factorySet";
+    private final String                     FACTORYSET_RESOURCE_URI                = "/factoryset";
 
     private ListView                         list;
     private ArrayAdapter<String>             configurationApis;
@@ -101,7 +101,7 @@ public class ConfigurationApiActivity extends Activity {
     private Map<String, ResourceInformation> collectionList                         = null;
 
     public boolean                           configurationResourceFlag              = false;
-    public boolean                           factorySetResourceFlag                 = false;
+    public boolean                           factorysetResourceFlag                 = false;
     public boolean                           maintenanceResourceFlag                = false;
 
     public static Context                    mcontext;
@@ -188,7 +188,7 @@ public class ConfigurationApiActivity extends Activity {
                         messageCount++;
 
                         resourceTypes.clear();
-                        resourceTypes.add("factorySet");
+                        resourceTypes.add("factoryset");
                         findCandidateResources(resourceTypes);
 
                         messageCount++;
@@ -714,7 +714,7 @@ public class ConfigurationApiActivity extends Activity {
 
             resourceList.put(uri + host, resourceInfo);
             maintenanceResourceFlag = true;
-        } else if (uri.equalsIgnoreCase("/factorySet")) {
+        } else if (uri.equalsIgnoreCase("/factoryset")) {
             ResourceInformation factorysetResource = collectionList
                     .get(FACTORYSET_COLLECTION_RESOURCE_URI);
             if (null == factorysetResource
@@ -733,7 +733,7 @@ public class ConfigurationApiActivity extends Activity {
                     resource, handle);
 
             resourceList.put(uri + host, resourceInfo);
-            factorySetResourceFlag = true;
+            factorysetResourceFlag = true;
         } else {
             Log.e(LOG_TAG, "Resource is of different type: " + uri);
             return;
