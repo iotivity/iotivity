@@ -931,9 +931,9 @@ void RTMGetObserverList(OCObservationId **obsList, uint8_t *obsListLen,
     while (NULL != iterTable)
     {
         RTMGatewayEntry_t *entry = u_linklist_get_data(iterTable);
-        for (uint32_t i = 0; i < u_arraylist_length(entry->destination->destIntfAddr); i++)
+        if (0 < u_arraylist_length(entry->destination->destIntfAddr))
         {
-            RTMDestIntfInfo_t *destCheck = u_arraylist_get(entry->destination->destIntfAddr, i);
+            RTMDestIntfInfo_t *destCheck = u_arraylist_get(entry->destination->destIntfAddr, 0);
             if (NULL == destCheck)
             {
                 OC_LOG(ERROR, TAG, "destCheck is null");
@@ -950,7 +950,6 @@ void RTMGetObserverList(OCObservationId **obsList, uint8_t *obsListLen,
                 *obsList = (OCObservationId *) OICRealloc((void *)*obsList,
                            (sizeof(OCObservationId) * (len + 1)));
             }
-            break;
         }
         u_linklist_get_next(&iterTable);
     }

@@ -1173,6 +1173,12 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
                     {
                         type = PAYLOAD_TYPE_PLATFORM;
                     }
+#ifdef ROUTING_GATEWAY
+                    else if (strcmp(cbNode->requestUri, OC_RSRVD_GATEWAY_URI) == 0)
+                    {
+                        type = PAYLOAD_TYPE_REPRESENTATION;
+                    }
+#endif
                     else
                     {
                         OC_LOG_V(ERROR, TAG, "Unknown Payload type in Discovery: %d %s",

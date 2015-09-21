@@ -316,11 +316,16 @@ OCStackResult RMHandleRequestPayload(OCDevAddr devAddr, const uint8_t *reqPayloa
     result = RMPConstructObserveResPayload(g_GatewayID, g_sequenceNumber,
                                            updatedTableList, false,
                                            &updatedPayload);
-    RM_VERIFY_SUCCESS(result, OC_STACK_OK);
+    if (OC_STACK_OK != result)
+    {
+        OC_LOG_V(ERROR, TAG, "RMPConstructObserveResPayload failed[%d]", result);
+        RMPFreePayload(updatedPayload);
+        goto exit;
+    }
 
     result = RMSendNotificationToAll(updatedPayload);
-    RM_VERIFY_SUCCESS(result, OC_STACK_OK);
     RMPFreePayload(updatedPayload);
+    RM_VERIFY_SUCCESS(result, OC_STACK_OK);
 
 exit:
     u_linklist_free(&updatedTableList);
@@ -411,6 +416,7 @@ OCStackResult RMHandleResponsePayload(const OCDevAddr *devAddr, const OCRepPaylo
                 result = RMPConstructObserveResPayload(g_GatewayID, g_sequenceNumber,
                                                        updatedTableList, false,
                                                        &updatedPayload);
+                RM_VERIFY_SUCCESS(result, OC_STACK_OK);
                 goto sendNotification;
             }
         }
@@ -470,15 +476,21 @@ OCStackResult RMHandleResponsePayload(const OCDevAddr *devAddr, const OCRepPaylo
         result = RMPConstructObserveResPayload(g_GatewayID, g_sequenceNumber,
                                                alternativeRouteList, false,
                                                &removeTablePayload);
-        RM_VERIFY_SUCCESS(result, OC_STACK_OK);
+        if (OC_STACK_OK != result)
+        {
+            OC_LOG_V(ERROR, TAG, "RMPConstructObserveResPayload failed[%d]", result);
+            RMPFreePayload(removeTablePayload);
+            goto exit;
+        }
         result = RMSendNotificationToAll(removeTablePayload);
-        RM_VERIFY_SUCCESS(result, OC_STACK_OK);
         RMPFreePayload(removeTablePayload);
+        RM_VERIFY_SUCCESS(result, OC_STACK_OK);
     }
 
     if ( 0 >= u_linklist_length(updatedTableList))
     {
-        OC_LOG_V(DEBUG, TAG, "No updation is needed, Length is %d", u_linklist_length(updatedTableList));
+        OC_LOG_V(DEBUG, TAG, "No updation is needed, Length is %d",
+                 u_linklist_length(updatedTableList));
         goto exit;
     }
 
@@ -499,11 +511,11 @@ OCStackResult RMHandleResponsePayload(const OCDevAddr *devAddr, const OCRepPaylo
 sendNotification:
     result = RMSendNotificationToAll(updatedPayload);
     RM_VERIFY_SUCCESS(result, OC_STACK_OK);
-    RMPFreePayload(updatedPayload);
 
 exit:
+    RMPFreePayload(updatedPayload);
+    RTMFreeGatewayRouteTable(&gatewayTableList);
     u_linklist_free(&updatedTableList);
-    u_linklist_free(&gatewayTableList);
     u_linklist_free(&alternativeRouteList);
     OC_LOG(DEBUG, TAG, "RMHandleResponsePayload OUT");
     return OC_STACK_OK;
@@ -532,7 +544,6 @@ OCStackResult RMHandleGETRequest(const OCServerRequest *request, const OCResourc
     }
 
     RMPFreePayload(payload);
-
     // Send a observe request
     result = RMSendObserveRequest(&(request->devAddr), NULL);
     if (OC_STACK_OK != result)
@@ -569,11 +580,16 @@ OCStackResult RMHandleOBSERVERequest(OCServerRequest *request, const OCResource 
     result = RMPConstructObserveResPayload(g_GatewayID, g_sequenceNumber,
                                            g_routingGatewayTable, true,
                                            &payload);
-    RM_VERIFY_SUCCESS(result, OC_STACK_OK);
+    if (OC_STACK_OK != result)
+    {
+        OC_LOG_V(ERROR, TAG, "RMPConstructObserveResPayload failed[%d]", result);
+        RMPFreePayload(payload);
+        goto exit;
+    }
 
     result = RMSendResponse(request, resource, payload);
-    RM_VERIFY_SUCCESS(result, OC_STACK_OK);
     RMPFreePayload(payload);
+    RM_VERIFY_SUCCESS(result, OC_STACK_OK);
 exit:
     OC_LOG(DEBUG, TAG, "RMHandleOBSERVERequest OUT");
     return result;
@@ -603,14 +619,20 @@ OCStackResult RMHandleDELETERequest(const OCServerRequest *request, const OCReso
         g_sequenceNumber++;
         result = RMPConstructRemovalPayload(g_GatewayID, g_sequenceNumber, removedGatewayNodes,
                                             false, &resPayloads);
-        RTMFreeGatewayRouteTable(&removedGatewayNodes);
-        RM_VERIFY_SUCCESS(result, OC_STACK_OK);
+        if (OC_STACK_OK != result)
+        {
+            OC_LOG_V(ERROR, TAG, "RMPConstructRemovalPayload failed[%d]", result);
+            RMPFreePayload(resPayloads);
+            goto exit;
+        }
         result = RMSendNotificationToAll(resPayloads);
+        RMPFreePayload(resPayloads);
         RM_VERIFY_SUCCESS(result, OC_STACK_OK);
         RTMPrintTable(g_routingGatewayTable, g_routingEndpointTable);
     }
 
 exit:
+    RTMFreeGatewayRouteTable(&removedGatewayNodes);
     OC_LOG(DEBUG, TAG, "RMHandleDELETERequest OUT");
     return result;
 }
@@ -692,11 +714,16 @@ void RMProcess()
         OCRepPayload *payload = NULL;
         result = RMPConstructObserveResPayload(g_GatewayID, g_sequenceNumber, NULL,
                                                false, &payload);
-        RM_VERIFY_SUCCESS(result, OC_STACK_OK);
-
+        if (OC_STACK_OK != result)
+        {
+            OC_LOG_V(ERROR, TAG, "RMPConstructObserveResPayload failed[%d]", result);
+            RMPFreePayload(payload);
+            goto exit;
+        }
         OC_LOG(DEBUG, TAG, "Sending the alive notification to all");
         // Send notification for every 15s to all the neighbours.
         result = RMSendNotificationToAll(payload);
+        RMPFreePayload(payload);
         RM_VERIFY_SUCCESS(result, OC_STACK_OK);
     }
 
@@ -713,13 +740,20 @@ void RMProcess()
             result = RMPConstructRemovalPayload(g_GatewayID, g_sequenceNumber, removedEntries,
                                                 false, &resPayloads);
             RTMFreeGatewayRouteTable(&removedEntries);
-            RM_VERIFY_SUCCESS(result, OC_STACK_OK);
+            if (OC_STACK_OK != result)
+            {
+                OC_LOG_V(ERROR, TAG, "RMPConstructRemovalPayload failed[%d]", result);
+                RMPFreePayload(resPayloads);
+                goto exit;
+            }
             result = RMSendNotificationToAll(resPayloads);
+            RMPFreePayload(resPayloads);
             RM_VERIFY_SUCCESS(result, OC_STACK_OK);
             RTMPrintTable(g_routingGatewayTable, g_routingEndpointTable);
         }
         g_refreshTableTime = currentTime;
         g_isValidated = false;
+        u_linklist_free(&removedEntries);
         goto exit;
     }
 
@@ -787,6 +821,7 @@ void RMSendDeleteToNeighbourNodes()
         if (OC_STACK_OK != result)
         {
             OC_LOG_V(DEBUG, TAG, "RMPConstructGatewayPayload failed[%d]", result);
+            RMPFreePayload(payload);
             u_linklist_free(&neighbourNodes);
             return;
         }
@@ -804,6 +839,7 @@ void RMSendDeleteToNeighbourNodes()
                 RMSendDeleteRequest(&devAddr, payload);
             }
         }
+        RMPFreePayload(payload);
         u_linklist_get_next(&iterTable);
     }
 
