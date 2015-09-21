@@ -146,7 +146,7 @@ private:
 
 TEST_F(RemoteResourceObjectTest, GetRemoteAttributesDoesNotAllowEmptyFunction)
 {
-    ASSERT_THROW(object->getRemoteAttributes({ }), InvalidParameterException);
+    ASSERT_THROW(object->getRemoteAttributes({ }), RCSInvalidParameterException);
 }
 
 TEST_F(RemoteResourceObjectTest, GetRemoteAttributesGetsAttributesOfServer)
@@ -166,7 +166,7 @@ TEST_F(RemoteResourceObjectTest, GetRemoteAttributesGetsAttributesOfServer)
 
 TEST_F(RemoteResourceObjectTest, SetRemoteAttributesDoesNotAllowEmptyFunction)
 {
-    ASSERT_THROW(object->setRemoteAttributes({ }, { }), InvalidParameterException);
+    ASSERT_THROW(object->setRemoteAttributes({ }, { }), RCSInvalidParameterException);
 }
 
 TEST_F(RemoteResourceObjectTest, SetRemoteAttributesSetsAttributesOfServer)
@@ -191,7 +191,7 @@ TEST_F(RemoteResourceObjectTest, MonitoringIsNotStartedByDefault)
 
 TEST_F(RemoteResourceObjectTest, StartMonitoringThrowsIfFunctionIsEmpty)
 {
-    ASSERT_THROW(object->startMonitoring({ }), InvalidParameterException);
+    ASSERT_THROW(object->startMonitoring({ }), RCSInvalidParameterException);
 }
 
 TEST_F(RemoteResourceObjectTest, IsMonitoringReturnsTrueAfterStartMonitoring)
@@ -205,7 +205,7 @@ TEST_F(RemoteResourceObjectTest, StartMonitoringThrowsIfTryingToStartAgain)
 {
     object->startMonitoring(resourceStateChanged);
 
-    ASSERT_THROW(object->startMonitoring(resourceStateChanged), BadRequestException);
+    ASSERT_THROW(object->startMonitoring(resourceStateChanged), RCSBadRequestException);
 }
 
 TEST_F(RemoteResourceObjectTest, DefaultStateIsNone)
@@ -229,7 +229,7 @@ TEST_F(RemoteResourceObjectTest, StartCachingThrowsIfTryingToStartAgain)
 {
     object->startCaching(cacheUpdatedCallback);
 
-    ASSERT_THROW(object->startCaching(), BadRequestException);
+    ASSERT_THROW(object->startCaching(), RCSBadRequestException);
 }
 
 TEST_F(RemoteResourceObjectTest, DefaultCacheStateIsNone)
@@ -303,7 +303,7 @@ TEST_F(RemoteResourceObjectTest, DISABLED_CacheUpdatedCallbackBeCalledWithUpdate
 
 TEST_F(RemoteResourceObjectTest, GetCachedAttributesThrowsIfCachingIsNotStarted)
 {
-    ASSERT_THROW(object->getCachedAttributes(), BadRequestException);
+    ASSERT_THROW(object->getCachedAttributes(), RCSBadRequestException);
 }
 
 TEST_F(RemoteResourceObjectTest, CachedAttributesHasSameAttributesWithServer)
@@ -320,7 +320,7 @@ TEST_F(RemoteResourceObjectTest, CachedAttributesHasSameAttributesWithServer)
 
 TEST_F(RemoteResourceObjectTest, GetCachedAttributeThrowsIfCachingIsNotStarted)
 {
-    ASSERT_THROW(object->getCachedAttribute(ATTR_KEY), BadRequestException);
+    ASSERT_THROW(object->getCachedAttribute(ATTR_KEY), RCSBadRequestException);
 }
 
 TEST_F(RemoteResourceObjectTest, GetCachedAttributeThrowsIfKeyIsInvalid)
@@ -330,7 +330,7 @@ TEST_F(RemoteResourceObjectTest, GetCachedAttributeThrowsIfKeyIsInvalid)
     object->startCaching(cacheUpdatedCallback);
     Wait();
 
-    ASSERT_THROW(object->getCachedAttribute(""), InvalidKeyException);
+    ASSERT_THROW(object->getCachedAttribute(""), RCSInvalidKeyException);
 }
 
 TEST_F(RemoteResourceObjectTest, HasSameUriWithServer)

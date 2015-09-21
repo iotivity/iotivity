@@ -117,7 +117,7 @@ Java_org_iotivity_service_client_RcsDiscoveryManager_nativeDiscoverResource(
 
         return taskObj;
     }
-    catch (const PlatformException& e) {
+    catch (const RCSPlatformException& e) {
         throwPlatformException(env, e);
     }
 

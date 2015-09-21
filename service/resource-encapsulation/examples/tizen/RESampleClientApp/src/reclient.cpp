@@ -195,12 +195,12 @@ static void startMonitoring(void *data, Evas_Object *obj, void *event_info)
                 logMessage = logMessage + "Started Monitoring <br>";
                 resource->startMonitoring(&onResourceStateChanged);
             }
-            catch (const BadRequestException &e)
+            catch (const RCSBadRequestException &e)
             {
                 logMessage = logMessage + "Exception BadRequest<br>";
                 dlog_print(DLOG_INFO, LOG_TAG, "#### Exception in isMonitoring : %s", e.what());
             }
-            catch (const InvalidParameterException &e)
+            catch (const RCSInvalidParameterException &e)
             {
                 logMessage = logMessage + "Exception Invalid Param<br>";
                 dlog_print(DLOG_INFO, LOG_TAG, "#### Exception in isMonitoring : %s", e.what());
@@ -303,7 +303,7 @@ static void startCaching(std::function <void (const RCSResourceAttributes &)>cb)
                     logMessage = logMessage + "Caching with callback <br>";
                     resource->startCaching(&onCacheUpdated);
                 }
-                catch (const BadRequestException &e)
+                catch (const RCSBadRequestException &e)
                 {
                     logMessage = logMessage + "Exception BadRequest<br>";
                     dlog_print(DLOG_INFO, LOG_TAG, "#### Exception in startCaching : %s", e.what());
@@ -317,7 +317,7 @@ static void startCaching(std::function <void (const RCSResourceAttributes &)>cb)
                     logMessage = logMessage + "Caching without callback <br>";
                     resource->startCaching();
                 }
-                catch (const BadRequestException &e)
+                catch (const RCSBadRequestException &e)
                 {
                     logMessage = logMessage + "Exception BadRequest<br>";
                     dlog_print(DLOG_INFO, LOG_TAG, "#### Exception in startCaching : %s", e.what());
@@ -401,7 +401,7 @@ static void getCachedAttributes(void *data, Evas_Object *obj, void *event_info)
                 }
             }
         }
-        catch (const BadRequestException &e)
+        catch (const RCSBadRequestException &e)
         {
             logMessage = "Exception Received<br>";
             dlog_print(DLOG_INFO, LOG_TAG, "#### Exception in getCachedAttributes : %s", e.what());
@@ -430,12 +430,12 @@ static void getCachedAttribute(void *data, Evas_Object *obj, void *event_info)
             int attrValue = resource->getCachedAttribute(defaultKey).get< int >();
             logMessage = logMessage + "VALUE:" + to_string(attrValue) + "<br>";
         }
-        catch (const BadRequestException &e)
+        catch (const RCSBadRequestException &e)
         {
             logMessage = logMessage + "Exception BadRequest<br>";
             dlog_print(DLOG_INFO, LOG_TAG, "#### Exception in getCachedAttribute : %s", e.what());
         }
-        catch (const BadGetException &e)
+        catch (const RCSBadGetException &e)
         {
             logMessage = logMessage + "Exception BadGet<br>";
             dlog_print(DLOG_INFO, LOG_TAG, "#### Exception in getCachedAttribute : %s", e.what());

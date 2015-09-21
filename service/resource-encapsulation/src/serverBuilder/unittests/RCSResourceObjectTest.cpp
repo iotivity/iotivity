@@ -42,7 +42,7 @@ constexpr int value{ 100 };
 
 TEST(ResourceObjectBuilderCreateTest, ThrowIfUriIsInvalid)
 {
-    ASSERT_THROW(RCSResourceObject::Builder("", "", "").build(), PlatformException);
+    ASSERT_THROW(RCSResourceObject::Builder("", "", "").build(), RCSPlatformException);
 }
 
 class ResourceObjectBuilderTest: public TestWithMock

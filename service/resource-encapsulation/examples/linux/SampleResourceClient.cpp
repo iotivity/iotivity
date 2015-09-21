@@ -332,7 +332,7 @@ void getCachedAttributes()
             }
         }
     }
-    catch (const BadRequestException& e)
+    catch (const RCSBadRequestException& e)
     {
         std::cout << "Exception in getCachedAttributes : " << e.what() << std::endl;
     }
@@ -346,11 +346,11 @@ void getCachedAttribute()
                   << "\tvalue : " << resource->getCachedAttribute(defaultKey).get< int >()
                   << std::endl;
     }
-    catch (const BadRequestException& e)
+    catch (const RCSBadRequestException& e)
     {
         std::cout << "Exception in getCachedAttribute : " << e.what() << std::endl;
     }
-    catch (const BadGetException& e)
+    catch (const RCSBadGetException& e)
     {
         std::cout << "Exception in getCachedAttribute : " << e.what() << std::endl;
     }

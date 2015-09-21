@@ -351,7 +351,7 @@ namespace OIC
                     }
                     catch (const boost::bad_get&)
                     {
-                        throw BadGetException{ "Wrong type" };
+                        throw RCSBadGetException{ "Wrong type" };
                     }
                 }
 
@@ -362,7 +362,7 @@ namespace OIC
                     {
                         return get< T >() == rhs;
                     }
-                    catch (const BadGetException&)
+                    catch (const RCSBadGetException&)
                     {
                         return false;
                     }

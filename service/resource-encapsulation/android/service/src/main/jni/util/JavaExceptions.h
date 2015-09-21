@@ -29,7 +29,7 @@ namespace OIC
 {
     namespace Service
     {
-        class PlatformException;
+        class RCSPlatformException;
     }
 }
 
@@ -38,7 +38,7 @@ class JNIEnvWrapper;
 void initJavaExceptions(JNIEnvWrapper*);
 void clearJavaExceptions(JNIEnvWrapper*);
 
-void throwPlatformException(JNIEnv*, const OIC::Service::PlatformException&);
+void throwPlatformException(JNIEnv*, const OIC::Service::RCSPlatformException&);
 
 template < typename ENV >
 void throwRCSException(ENV* env, const char* msg)

@@ -69,17 +69,17 @@ void ResourceHosting::startHosting()
     {
         requestMulticastPresence();
         requestMulticastDiscovery();
-    }catch(PlatformException &e)
+    }catch(const RCSPlatformException &e)
     {
         OIC_HOSTING_LOG(DEBUG,
                 "[ResourceHosting::startHosting]PlatformException:%s", e.what());
         throw;
-    }catch(InvalidParameterException &e)
+    }catch(const RCSInvalidParameterException &e)
     {
         OIC_HOSTING_LOG(DEBUG,
                 "[ResourceHosting::startHosting]InvalidParameterException:%s", e.what());
         throw;
-    }catch(std::exception &e)
+    }catch(const std::exception &e)
     {
         OIC_HOSTING_LOG(DEBUG,
                 "[ResourceHosting::startHosting]std::exception:%s", e.what());
@@ -206,7 +206,7 @@ void ResourceHosting::discoverHandler(RemoteObjectPtr remoteResource)
                     std::bind(&ResourceHosting::destroyedHostingObject, this,
                             HostingObjectWeakPtr(foundHostingObject)));
             hostingObjectList.push_back(foundHostingObject);
-        }catch(InvalidParameterException &e)
+        }catch(const RCSInvalidParameterException &e)
         {
             OIC_HOSTING_LOG(DEBUG,
                     "[ResourceHosting::discoverHandler]InvalidParameterException:%s", e.what());
