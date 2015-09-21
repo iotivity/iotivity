@@ -511,7 +511,7 @@ namespace OIC
                 autoNotify(!replaced.empty(), m_autoNotifyPolicy);
                 return sendResponse(*this, request, response);
             } catch (const PlatformException& e) {
-                OC_LOG(ERROR, LOG_TAG, e.what());
+                OC_LOG_V(ERROR, LOG_TAG, "Error : %s ", e.what());
                 return OC_EH_ERROR;
             }
         }
