@@ -417,7 +417,7 @@ Java_org_iotivity_service_server_RcsResourceObject_nativeBuild
 
         return resourceObj;
     }
-    catch (const PlatformException& e)
+    catch (const RCSPlatformException& e)
     {
         LOGE("%s", e.what());
         throwPlatformException(env, e);
@@ -460,7 +460,7 @@ Java_org_iotivity_service_server_RcsResourceObject_nativeGetAttributeValue
 
         return valueObj;
     }
-    catch(const InvalidKeyException& e)
+    catch(const RCSInvalidKeyException& e)
     {
         return nullptr;
     }
@@ -602,7 +602,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_server_RcsResourceObject_native
     {
         res->notify();
     }
-    catch (const PlatformException& e) {
+    catch (const RCSPlatformException& e) {
         throwPlatformException(env, e);
     }
 }

@@ -82,7 +82,7 @@ TEST_F(PrimitiveResourceTest, RequestGetThrowsOCResourceGetReturnsNotOK)
 {
     mocks.OnCall(fakeResource, FakeOCResource::get).Return(OC_STACK_ERROR);
 
-    ASSERT_THROW(resource->requestGet(PrimitiveResource::GetCallback()), PlatformException);
+    ASSERT_THROW(resource->requestGet(PrimitiveResource::GetCallback()), RCSPlatformException);
 }
 
 TEST_F(PrimitiveResourceTest, RequestSetInvokesOCResourcePut)
@@ -97,7 +97,7 @@ TEST_F(PrimitiveResourceTest, RequestSetThrowsOCResourcePutReturnsNotOK)
     mocks.OnCall(fakeResource, FakeOCResource::put).Return(OC_STACK_ERROR);
 
     ASSERT_THROW(resource->requestSet(RCSResourceAttributes{ }, PrimitiveResource::SetCallback()),
-            PlatformException);
+            RCSPlatformException);
 }
 
 TEST_F(PrimitiveResourceTest, RequestSetPassResourceAttributesToOCResourcePut)
@@ -129,7 +129,7 @@ TEST_F(PrimitiveResourceTest, RequestObserveThrowsOCResourceObserveReturnsNotOK)
 {
     mocks.OnCall(fakeResource, FakeOCResource::observe).Return(OC_STACK_ERROR);
 
-    ASSERT_THROW(resource->requestObserve(PrimitiveResource::ObserveCallback()), PlatformException);
+    ASSERT_THROW(resource->requestObserve(PrimitiveResource::ObserveCallback()), RCSPlatformException);
 }
 
 TEST_F(PrimitiveResourceTest, DelegteGettersToOCResource)
@@ -204,6 +204,6 @@ TEST_F(DiscoverResourceTest, ThrowsdWhenOCPlatformFindResourceReturnsNotOK)
     mocks.ExpectCallFuncOverload(static_cast<FindResource>(OC::OCPlatform::findResource)).
             Return(OC_STACK_ERROR);
 
-    EXPECT_THROW(discoverResource("", "", OCConnectivityType{ }, discovered), PlatformException);
+    EXPECT_THROW(discoverResource("", "", OCConnectivityType{ }, discovered), RCSPlatformException);
 }
 

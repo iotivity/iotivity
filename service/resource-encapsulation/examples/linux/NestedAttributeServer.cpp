@@ -248,7 +248,7 @@ void initServer()
     {
         createResource();
     }
-    catch (const PlatformException &e)
+    catch (const RCSPlatformException &e)
     {
         std::cout << "Exception in initServer : " << e.what() << std::endl;
     }

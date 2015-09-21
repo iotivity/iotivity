@@ -44,7 +44,7 @@ void clearJavaExceptions(JNIEnvWrapper* env)
     env->DeleteGlobalRef(g_cls_PlatformException);
 }
 
-void throwPlatformException(JNIEnv* env, const OIC::Service::PlatformException& e)
+void throwPlatformException(JNIEnv* env, const OIC::Service::RCSPlatformException& e)
 {
     auto msg = newStringObject(env, e.getReason());
     VERIFY_NO_EXC(env);

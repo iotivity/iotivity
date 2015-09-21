@@ -81,7 +81,7 @@ namespace OIC
         {
             if (!cb)
             {
-                throw InvalidParameterException { "input Parameter(callback) is NULL" };
+                throw RCSInvalidParameterException { "input Parameter(callback) is NULL" };
             }
 
             DiscoverRequestInfo discoveryItem;

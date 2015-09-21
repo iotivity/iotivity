@@ -297,7 +297,7 @@ Java_org_iotivity_service_client_RcsRemoteResourceObject_nativeStartMonitoring
         res->startMonitoring(
                 std::bind(onStateChanged, std::placeholders::_1, JavaGlobalRef{ env, listener }));
     }
-    catch (const BadRequestException& e)
+    catch (const RCSBadRequestException& e)
     {
         env->ThrowNew(env->FindClass(EXC_NAME_ILLEGAL_STATE), e.what());
     }
@@ -348,7 +348,7 @@ Java_org_iotivity_service_client_RcsRemoteResourceObject_nativeStartCaching
             res->startCaching();
         }
     }
-    catch (const BadRequestException& e)
+    catch (const RCSBadRequestException& e)
     {
         env->ThrowNew(env->FindClass(EXC_NAME_ILLEGAL_STATE), e.what());
     }
@@ -391,7 +391,7 @@ Java_org_iotivity_service_client_RcsRemoteResourceObject_nativeIsCachedAvailable
     {
         return res->isCachedAvailable();
     }
-    catch (const BadRequestException& e)
+    catch (const RCSBadRequestException& e)
     {
         env->ThrowNew(env->FindClass(EXC_NAME_ILLEGAL_STATE), e.what());
         return false;
@@ -414,7 +414,7 @@ Java_org_iotivity_service_client_RcsRemoteResourceObject_nativeGetCachedAttribut
 
         return newAttributesObject(env, attrs);
     }
-    catch (const BadRequestException& e)
+    catch (const RCSBadRequestException& e)
     {
         env->ThrowNew(env->FindClass(EXC_NAME_ILLEGAL_STATE), e.what());
         return { };
@@ -436,7 +436,7 @@ Java_org_iotivity_service_client_RcsRemoteResourceObject_nativeGetRemoteAttribut
         res->getRemoteAttributes(std::bind(onRemoteAttributesReceived,
                 std::placeholders::_1, std::placeholders::_2, JavaGlobalRef{ env, listener }));
     }
-    catch (const PlatformException& e) {
+    catch (const RCSPlatformException& e) {
         throwPlatformException(env, e);
     }
 }
@@ -457,7 +457,7 @@ Java_org_iotivity_service_client_RcsRemoteResourceObject_nativeSetRemoteAttribut
         res->setRemoteAttributes(attrs, std::bind(onRemoteAttributesReceived,
                 std::placeholders::_1, std::placeholders::_2, JavaGlobalRef{ env, listener }));
     }
-    catch (const PlatformException& e) {
+    catch (const RCSPlatformException& e) {
         throwPlatformException(env, e);
     }
 }

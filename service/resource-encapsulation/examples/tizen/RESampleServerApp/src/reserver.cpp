@@ -178,7 +178,7 @@ static void initServer()
         server = RCSResourceObject::Builder(resourceUri, resourceType,
                                             resourceInterface).setDiscoverable(true).setObservable(true).build();
     }
-    catch (const PlatformException &e)
+    catch (const RCSPlatformException &e)
     {
         dlog_print(DLOG_ERROR, LOG_TAG, "#### Create resource exception! (%s)", e.what());
     }

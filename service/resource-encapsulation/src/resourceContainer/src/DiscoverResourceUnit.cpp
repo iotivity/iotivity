@@ -71,7 +71,7 @@ void DiscoverResourceUnit::startDiscover(DiscoverResourceInfo info, UpdatedCB up
         discoveryTask = RCSDiscoveryManager::getInstance()->discoverResourceByType(
                 RCSAddress::multicast(), m_ResourceType, pDiscoveredCB);
     }
-    catch (InvalidParameterException &e)
+    catch (RCSInvalidParameterException &e)
     {
         // TODO Handle Exception
         return;
@@ -112,7 +112,7 @@ void DiscoverResourceUnit::onUpdate(REMOTE_MSG msg, RCSRemoteResourceObject::Ptr
         {
             updatedResource->getCachedAttribute(m_AttrubuteName);
         }
-        catch (InvalidKeyException &e)
+        catch (RCSInvalidKeyException &e)
         {
             // TODO Handle Exception
             return;
@@ -154,7 +154,7 @@ std::vector<RCSResourceAttributes::Value> DiscoverResourceUnit::buildInputResour
             retVector.push_back(value);
 
         }
-        catch (InvalidKeyException &e)
+        catch (RCSInvalidKeyException &e)
         {
             // TODO Handle Exception
         }

@@ -111,7 +111,7 @@ void HostingObject::stateChangedCB(ResourceState state, RemoteObjectPtr rObject)
             try
             {
                 rObject->startCaching(pDataUpdateCB);
-            }catch(InvalidParameterException &e)
+            }catch(const RCSInvalidParameterException &e)
             {
                 OIC_HOSTING_LOG(DEBUG,
                         "[HostingObject::stateChangedCB]startCaching InvalidParameterException:%s",
@@ -128,7 +128,7 @@ void HostingObject::stateChangedCB(ResourceState state, RemoteObjectPtr rObject)
             try
             {
                 rObject->stopCaching();
-            }catch(InvalidParameterException &e)
+            }catch(const RCSInvalidParameterException &e)
             {
                 OIC_HOSTING_LOG(DEBUG,
                         "[HostingObject::stateChangedCB]stopCaching InvalidParameterException:%s",
@@ -140,7 +140,7 @@ void HostingObject::stateChangedCB(ResourceState state, RemoteObjectPtr rObject)
             try
             {
                 rObject->stopMonitoring();
-            }catch(InvalidParameterException &e)
+            }catch(const RCSInvalidParameterException &e)
             {
                 OIC_HOSTING_LOG(DEBUG,
                         "[HostingObject::stateChangedCB]stopWatching InvalidParameterException:%s",
@@ -170,7 +170,7 @@ void HostingObject::dataChangedCB(const RCSResourceAttributes & attributes, Remo
         try
         {
             mirroredServer = createMirroredServer(rObject);
-        }catch(PlatformException &e)
+        }catch(const RCSPlatformException &e)
         {
             OIC_HOSTING_LOG(DEBUG,
                         "[HostingObject::dataChangedCB]createMirroredServer PlatformException:%s",
@@ -237,7 +237,7 @@ HostingObject::ResourceObjectPtr HostingObject::createMirroredServer(RemoteObjec
     }
     else
     {
-        throw PlatformException(OC_STACK_ERROR);
+        throw RCSPlatformException(OC_STACK_ERROR);
     }
 
     return retResource;
@@ -252,7 +252,7 @@ RCSSetResponse HostingObject::setRequestHandler(const RCSRequest & primitiveRequ
         RequestObject newRequest = { };
         newRequest.invokeRequest(remoteObject, RequestObject::RequestMethod::Setter,
                 resourceAttibutes);
-    }catch(PlatformException &e)
+    }catch(const RCSPlatformException &e)
     {
         OIC_HOSTING_LOG(DEBUG,
                 "[HostingObject::setRequestHandler] PlatformException:%s",

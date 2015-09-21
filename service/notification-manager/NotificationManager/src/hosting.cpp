@@ -38,13 +38,13 @@ OCStackResult OICStartCoordinate()
     try
     {
         ResourceHosting::getInstance()->startHosting();
-    }catch(PlatformException &e)
+    }catch(const RCSPlatformException &e)
     {
         OIC_HOSTING_LOG(DEBUG,
                 "[OICStartCoordinate] platformException, reason:%s", e.what());
         retResult = OC_STACK_ERROR;
         throw;
-    }catch(InvalidParameterException &e)
+    }catch(const RCSInvalidParameterException &e)
     {
         OIC_HOSTING_LOG(DEBUG,
                 "[OICStartCoordinate] InvalidParameterException, reason:%s", e.what());

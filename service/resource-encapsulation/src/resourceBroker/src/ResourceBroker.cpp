@@ -84,7 +84,7 @@ namespace OIC
                     OC_LOG_V(DEBUG, BROKER_TAG, "create the ResourcePresence.");
                     presenceItem.reset(new ResourcePresence());
                     presenceItem->initializeResourcePresence(pResource);
-                }catch(PlatformException &e)
+                }catch(RCSPlatformException &e)
                 {
                     throw FailedSubscribePresenceException(e.getReasonCode());
                 }

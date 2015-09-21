@@ -57,7 +57,7 @@ TEST_F(PresenceSubscriberNonMemberTest, SubscribePresenceThrowsIfResultIsNotOK)
             static_cast< SubscribePresence1>(OC::OCPlatform::subscribePresence))
                     .Return(OC_STACK_ERROR);
 
-    ASSERT_THROW(subscribePresence(handle, "", CONTYPE, SubscribeCallback()), PlatformException);
+    ASSERT_THROW(subscribePresence(handle, "", CONTYPE, SubscribeCallback()), RCSPlatformException);
 }
 
 TEST_F(PresenceSubscriberNonMemberTest, OCPlatformUnsubscribePresenceWillBeCalled)
@@ -71,7 +71,7 @@ TEST_F(PresenceSubscriberNonMemberTest, UnsubscribePresenceThrowIfResultIsNotOK)
 {
     mocks.ExpectCallFuncOverload(OC::OCPlatform::unsubscribePresence).Return(OC_STACK_ERROR);
 
-    ASSERT_THROW(unsubscribePresence(handle), PlatformException);
+    ASSERT_THROW(unsubscribePresence(handle), RCSPlatformException);
 }
 
 class PresenceSubscriberTest: public TestWithMock
@@ -126,7 +126,7 @@ TEST_F(PresenceSubscriberTest, ConstructorThrowsIfResultIsNotOK)
             static_cast< SubscribePresence1 >(OC::OCPlatform::subscribePresence))
                     .Return(OC_STACK_ERROR);
 
-    ASSERT_THROW(PresenceSubscriber(HOST, CONTYPE, SubscribeCallback()), PlatformException);
+    ASSERT_THROW(PresenceSubscriber(HOST, CONTYPE, SubscribeCallback()), RCSPlatformException);
 }
 
 TEST_F(PresenceSubscriberTest, IsSubscribingIfConstructedWithoutException)
