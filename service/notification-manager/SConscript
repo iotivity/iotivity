@@ -89,6 +89,9 @@ else :
     notificationsdk = notimgr_env.StaticLibrary('NotificationManager', notimgr_src)
 
 notimgr_env.InstallTarget(notificationsdk, 'libResouceHosting')
+notimgr_env.UserInstallTargetLib(notificationsdk, 'libResouceHosting')
+notimgr_env.UserInstallTargetHeader('NotificationManager/include/hosting.h',\
+	'service/notification-manager', 'hosting.h')
 
 # Go to build Unit test
 if target_os == 'linux':
