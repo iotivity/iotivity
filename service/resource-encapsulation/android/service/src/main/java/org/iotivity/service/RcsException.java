@@ -18,10 +18,6 @@
  *
  ******************************************************************/
 
-/**
- * @file
- *This file provides RCSException class for RE layer
- */
 package org.iotivity.service;
 
 /**
