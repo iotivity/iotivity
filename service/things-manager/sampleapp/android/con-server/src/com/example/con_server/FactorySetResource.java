@@ -37,9 +37,9 @@ public class FactorySetResource extends ConfigurationResource {
     public FactorySetResource() {
         Log.i(LOG_TAG, "FactorySetCollection: enter");
 
-        configurationUri = "/factorySet"; // uri of the resource
+        configurationUri = "/factoryset"; // uri of the resource
         configurationTypes.clear();
-        configurationTypes.add("factorySet");
+        configurationTypes.add("factoryset");
         configurationRep.setUri(configurationUri);
         configurationRep.setResourceTypes(configurationTypes);
     }

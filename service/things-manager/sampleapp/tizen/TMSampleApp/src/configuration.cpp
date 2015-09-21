@@ -60,7 +60,7 @@ string FACTORYSET_COLLECTION_RESOURCE_TYPE    = "core.factoryset.resourceset";
 
 string CONFIGURATION_RESOURCE_URI             = "/oic/con";
 string MAINTENANCE_RESOURCE_URI                = "/oic/mnt";
-string FACTORYSET_RESOURCE_URI                = "/factorySet";
+string FACTORYSET_RESOURCE_URI                = "/factoryset";
 
 GroupManager *g_groupManager = nullptr;
 ThingsConfiguration *g_thingsConfig = nullptr;
@@ -537,7 +537,7 @@ static void findAllResources(void *data, Evas_Object *obj, void *event_info)
     }
 
     resourceTypes.clear();
-    resourceTypes.push_back("factorySet");
+    resourceTypes.push_back("factoryset");
     if (NULL != g_groupManager)
     {
         g_groupManager->findCandidateResources(resourceTypes, &onFoundCandidateResource,
