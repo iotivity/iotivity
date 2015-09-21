@@ -58,7 +58,7 @@ void findResourceCandidate(oicappData *ad)
 {
     try
     {
-        nmfindResource("" , "coap://224.0.1.187/oc/core?rt=NotificationManager.Hosting");
+        nmfindResource("" , "coap://224.0.1.187/oc/core?rt=notificationmanager.hosting");
         std::cout << "Finding Resource... " << std::endl;
 
     }

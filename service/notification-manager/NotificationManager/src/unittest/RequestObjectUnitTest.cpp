@@ -58,13 +58,15 @@ protected:
     void TearDown()
     {
         TestWithMock::TearDown();
-        if(remoteObject->isCaching())
-        {
-            remoteObject->stopCaching();
-        }
-        if(remoteObject->isMonitoring())
-        {
-            remoteObject->stopMonitoring();
+        if(remoteObject){
+          if(remoteObject->isCaching())
+          {
+              remoteObject->stopCaching();
+          }
+          if(remoteObject->isMonitoring())
+          {
+              remoteObject->stopMonitoring();
+          }
         }
          testObject->destroy();
     }

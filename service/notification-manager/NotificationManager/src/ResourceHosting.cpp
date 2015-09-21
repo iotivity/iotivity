@@ -34,7 +34,7 @@ namespace
     std::string HOSTING_TAG = "/hosting";
     size_t HOSTING_TAG_SIZE = (size_t)HOSTING_TAG.size();
     std::string MULTICAST_PRESENCE_ADDRESS = std::string("coap://") + OC_MULTICAST_PREFIX;
-    std::string HOSTING_RESOURSE_TYPE = "Resource.Hosting";
+    std::string HOSTING_RESOURSE_TYPE = "resource.hosting";
 }
 
 ResourceHosting * ResourceHosting::s_instance(nullptr);
