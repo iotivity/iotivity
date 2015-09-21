@@ -265,20 +265,20 @@ void ProcessAccessRequest(PEContext_t *context)
         // ACL for this request.
         do
         {
-            OC_LOG_V(INFO, TAG, ("%s: getting ACL..."),__func__);
+            OC_LOG_V(INFO, TAG, "%s: getting ACL..." ,__func__);
             currentAcl = GetACLResourceData(&context->subject, &savePtr);
 
             if(NULL != currentAcl)
             {
                 // Found the subject, so how about resource?
-                OC_LOG_V(INFO, TAG, ("%s:found ACL matching subject"),__func__);
+                OC_LOG_V(INFO, TAG, "%s:found ACL matching subject" ,__func__);
 
                 // Subject was found, so err changes to Rsrc not found for now.
                 context->retVal = ACCESS_DENIED_RESOURCE_NOT_FOUND;
-                OC_LOG_V(INFO, TAG, ("%s:Searching for resource..."),__func__);
+                OC_LOG_V(INFO, TAG, "%s:Searching for resource..." ,__func__);
                 if(IsResourceInAcl(context->resource, currentAcl))
                 {
-                    OC_LOG_V(INFO, TAG, ("%s:found matching resource in ACL"),__func__);
+                    OC_LOG_V(INFO, TAG, "%s:found matching resource in ACL" ,__func__);
                     context->matchingAclFound = true;
 
                     // Found the resource, so it's down to valid period & permission.
@@ -295,23 +295,23 @@ void ProcessAccessRequest(PEContext_t *context)
             }
             else
             {
-                OC_LOG_V(INFO, TAG, ("%s:no ACL found matching subject for resource %s"),__func__, context->resource);
+                OC_LOG_V(INFO, TAG, "%s:no ACL found matching subject for resource %s",__func__, context->resource);
             }
         }
         while((NULL != currentAcl) && (false == context->matchingAclFound));
 
         if(IsAccessGranted(context->retVal))
         {
-            OC_LOG_V(INFO, TAG, ("%s:Leaving ProcessAccessRequest(ACCESS_GRANTED)"), __func__);
+            OC_LOG_V(INFO, TAG, "%s:Leaving ProcessAccessRequest(ACCESS_GRANTED)", __func__);
         }
         else
         {
-            OC_LOG_V(INFO, TAG, ("%s:Leaving ProcessAccessRequest(ACCESS_DENIED)"), __func__);
+            OC_LOG_V(INFO, TAG, "%s:Leaving ProcessAccessRequest(ACCESS_DENIED)", __func__);
         }
     }
     else
     {
-        OC_LOG_V(INFO, TAG, ("%s:Leaving ProcessAccessRequest(context is NULL)"), __func__);
+        OC_LOG_V(INFO, TAG, "%s:Leaving ProcessAccessRequest(context is NULL)", __func__);
     }
 }
 
@@ -409,12 +409,12 @@ SRMAccessResponse_t CheckPermission(
     //for response from AMS service else to "AWAITING_REQUEST"
     if(ACCESS_WAITING_FOR_AMS == retVal)
     {
-        OC_LOG(INFO, TAG, ("Setting PE State to AWAITING_AMS_RESPONSE"));
+        OC_LOG(INFO, TAG, "Setting PE State to AWAITING_AMS_RESPONSE");
         context->state = AWAITING_AMS_RESPONSE;
     }
     else if(!context->amsProcessing)
     {
-        OC_LOG(INFO, TAG, ("Resetting PE context and PE State to AWAITING_REQUEST"));
+        OC_LOG(INFO, TAG, "Resetting PE context and PE State to AWAITING_REQUEST");
         SetPolicyEngineState(context, AWAITING_REQUEST);
     }
 
