@@ -20,17 +20,17 @@
 
 Import('env')
 
-richclient_env = env.Clone()
+mediator_env = env.Clone()
 
 target_os = env.get('TARGET_OS')
 
 ######################################################################
 # Build flags
 ######################################################################
-richclient_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-richclient_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+mediator_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+mediator_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
-richclient_env.PrependUnique(CPPPATH = [
+mediator_env.PrependUnique(CPPPATH = [
 			env.get('SRC_DIR') + '/resource/csdk/ocmalloc/include',		
 			env.get('SRC_DIR') + '/resource/csdk/connectivity/common/inc',
 			env.get('SRC_DIR') + '/resource/csdk/connectivity/api',
@@ -41,11 +41,11 @@ richclient_env.PrependUnique(CPPPATH = [
 			env.get('SRC_DIR') + '/service/easy-setup/sdk/mediator/inc',
 			env.get('SRC_DIR') + '/service/easy-setup/sdk/common'])
 
-richclient_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'pthread', 'connectivity_abstraction', 'coap', 'ESSDKLibrary'])
+mediator_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'pthread', 'connectivity_abstraction', 'coap', 'ESSDKLibrary'])
 
-richclient = richclient_env.Program('richclient', 'easysetupsample.cpp')
+mediator = mediator_env.Program('mediator', 'mediator.cpp')
 
-i_richclient = richclient_env.Install(env.get('BUILD_DIR'), richclient)
+i_mediator = mediator_env.Install(env.get('BUILD_DIR'), mediator)
 
-Alias('richclient', i_richclient)
-env.AppendTarget('richclient')
+Alias('mediator', i_mediator)
+env.AppendTarget('mediator')

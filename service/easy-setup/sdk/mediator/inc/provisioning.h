@@ -48,44 +48,46 @@ OCStackResult InitProvisioningHandler();
 
 OCStackResult TerminateProvisioningHandler();
 
-void listeningFunc(void*);
+void *listeningFunc(void *);
 
-OCStackApplicationResult ProvisionEnrolleeResponse(void* ctx, OCDoHandle handle,
-        OCClientResponse * clientResponse);
+OCStackApplicationResult ProvisionEnrolleeResponse(void *ctx, OCDoHandle handle,
+                                                   OCClientResponse *clientResponse);
 
-OCStackResult ProvisionEnrollee(OCQualityOfService qos, const char* query, const char* resUri,OCDevAddr *destination);
+OCStackResult ProvisionEnrollee(OCQualityOfService qos, const char *query, const char *resUri,
+                                OCDevAddr *destination);
 
-OCStackApplicationResult GetProvisioningStatusResponse(void* ctx, OCDoHandle handle,
-        OCClientResponse * clientResponse);
+OCStackApplicationResult GetProvisioningStatusResponse(void *ctx, OCDoHandle handle,
+                                                       OCClientResponse *clientResponse);
 
-OCStackResult InvokeOCDoResource(const char* query, OCMethod method, const OCDevAddr *dest,
-        OCQualityOfService qos, OCClientResponseHandler cb, OCRepPayload* payload,
-        OCHeaderOption * options, uint8_t numOptions);
+OCStackResult InvokeOCDoResource(const char *query, OCMethod method, const OCDevAddr *dest,
+                                 OCQualityOfService qos, OCClientResponseHandler cb,
+                                 OCRepPayload *payload,
+                                 OCHeaderOption *options, uint8_t numOptions);
 
-OCStackResult GetProvisioningStatus(OCQualityOfService qos, const char* query,
-        const OCDevAddr*destination);
+OCStackResult GetProvisioningStatus(OCQualityOfService qos, const char *query,
+                                    const OCDevAddr *destination);
 
 OCStackResult StartProvisioningProcess(const EnrolleeNWProvInfo_t *netInfo,
-        OCProvisioningStatusCB provisioningStatusCallback);
+                                       OCProvisioningStatusCB provisioningStatusCallback);
 
 void StopProvisioningProcess();
 
-OCStackApplicationResult SubscribeProvPresenceCallback(void* ctx, OCDoHandle handle,
-        OCClientResponse* clientResponse);
+OCStackApplicationResult SubscribeProvPresenceCallback(void *ctx, OCDoHandle handle,
+                                                       OCClientResponse *clientResponse);
 
-OCStackResult SubscribeProvPresence(OCQualityOfService qos, const char* requestURI);
+OCStackResult SubscribeProvPresence(OCQualityOfService qos, const char *requestURI);
 
-OCStackApplicationResult FindProvisioningResourceResponse(void* ctx, OCDoHandle handle,
-        OCClientResponse * clientResponse);
+OCStackApplicationResult FindProvisioningResourceResponse(void *ctx, OCDoHandle handle,
+                                                          OCClientResponse *clientResponse);
 
-void FindProvisioningResource(void *data);
+void *FindProvisioningResource(void *data);
 
 //Invoke Provisioning Status Callback
-ProvisioningInfo* PrepareProvisioingStatusCB(OCClientResponse * clientResponse,
-        ProvStatus provStatus);
+ProvisioningInfo *PrepareProvisioingStatusCB(OCClientResponse *clientResponse,
+                                             ProvStatus provStatus);
 
 
-void LogProvisioningResponse(OCRepPayloadValue* val);
+void LogProvisioningResponse(OCRepPayloadValue * val);
 
 bool ConfigEnrolleeObject(const EnrolleeNWProvInfo_t *netInfo);
 
@@ -99,12 +101,12 @@ bool ValidateEnrolleResponse(OCClientResponse * clientResponse);
 
 bool ValidateFinddResourceResponse(OCClientResponse * clientResponse);
 
-ProvisioningInfo* GetCallbackObjectOnSuccess(OCClientResponse * clientResponse,
-        ProvStatus provStatus);
+ProvisioningInfo *GetCallbackObjectOnSuccess(OCClientResponse *clientResponse,
+                                             ProvStatus provStatus);
 
-ProvisioningInfo* GetCallbackObjectOnError(ProvStatus status);
+ProvisioningInfo *GetCallbackObjectOnError(ProvStatus status);
 
-ProvisioningInfo* CreateCallBackObject();
+ProvisioningInfo *CreateCallBackObject();
 
 bool ResetProgress();
 
@@ -113,7 +115,7 @@ bool SetProgress(OCProvisioningStatusCB provisioningStatusCallback);
 bool InProgress();
 
 bool ValidateEasySetupParams(const EnrolleeNWProvInfo_t *netInfo,
-        OCProvisioningStatusCB provisioningStatusCallback);
+                             OCProvisioningStatusCB provisioningStatusCallback);
 
 
 #endif

@@ -26,7 +26,7 @@
 #include <stdint.h>
 #include <sstream>
 
-#include "easysetupmgr.h"
+#include "prov_adapter.h"
 #include "logger.h"
 
 #define TAG "easysetupsample"
@@ -34,10 +34,8 @@
 int quitFlag = 0;
 
 /* SIGINT handler: set quitFlag to 1 for graceful termination */
-void handleSigInt(int signum)
-{
-    if (signum == SIGINT)
-    {
+void handleSigInt(int signum) {
+    if (signum == SIGINT) {
         quitFlag = 1;
     }
 }
@@ -48,28 +46,23 @@ void handleSigInt(int signum)
  * and also holds the Enrollee information for which provisioning is requested
  * This function can be used to update the application about the current provisioning status of the Enrollee
  */
-void ProvisioningStatusCallback(ProvisioningInfo *provInfo)
-{
+void ProvisioningStatusCallback(ProvisioningInfo * provInfo) {
     OIC_LOG_V(INFO, TAG, "Enrollee connectivity: %d", provInfo->provDeviceInfo.connType);
-    if (provInfo->provStatus == DEVICE_PROVISIONED)
-    {
+    if (provInfo->provStatus == DEVICE_PROVISIONED) {
         OIC_LOG_V(INFO, TAG, "Successfully provisioned the Enrollee with IP : %s ",
-                provInfo->provDeviceInfo.addr->addr);
+                  provInfo->provDeviceInfo.addr->addr);
     }
-    else
-    {
+    else {
         OIC_LOG_V(INFO, TAG, "Provisioing Failed for the Enrollee with IP : %s",
-                provInfo->provDeviceInfo.addr->addr);
+                  provInfo->provDeviceInfo.addr->addr);
     }
 }
 
-static void PrintUsage()
-{
+static void PrintUsage() {
     OIC_LOG(INFO, TAG, "Usage : occlient -d \"192.168.0.20\"");
 }
 
-int main(int argc, char**argv)
-{
+int main(int argc, char **argv) {
     int opt;
     EnrolleeNWProvInfo_t netInfo;
     PrintUsage();
@@ -77,10 +70,8 @@ int main(int argc, char**argv)
 
     RegisterProvisioningStausCallback(ProvisioningStatusCallback);
 
-    while ((opt = getopt(argc, argv, "d:s:p:")) != -1)
-    {
-        switch (opt)
-        {
+    while ((opt = getopt(argc, argv, "d:s:p:")) != -1) {
+        switch (opt) {
             case 'd':
                 strncpy(netInfo.netAddressInfo.WIFI.ipAddress, optarg, IPV4_ADDR_SIZE - 1);
                 break;
@@ -98,15 +89,14 @@ int main(int argc, char**argv)
 
     netInfo.connType = CT_ADAPTER_IP;
     OIC_LOG_V(INFO, TAG, "IP Address of the Provisioning device is =%s\n",
-            netInfo.netAddressInfo.WIFI.ipAddress);
+              netInfo.netAddressInfo.WIFI.ipAddress);
     OIC_LOG_V(INFO, TAG, "SSID of the Enroller is =%s\n", netInfo.netAddressInfo.WIFI.ssid);
     OIC_LOG_V(INFO, TAG, "Password of the Enroller is =%s\n", netInfo.netAddressInfo.WIFI.pwd);
 
     ProvisionEnrollee(&netInfo);
 
     signal(SIGINT, handleSigInt);
-    while (!quitFlag)
-    {
+    while (!quitFlag) {
         sleep(1);
     }
 

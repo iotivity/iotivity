@@ -96,7 +96,7 @@ Steps to build and deploy Easysetup Mediator in Arduino platform
         $ scons TARGET_OS=arduino BOARD=arduino_due_x_dbg TARGET_ARCH=arm SHIELD=WIFI RELEASE=0
 
         Note :- Only single transport can be built at a time for Arduino
-    f) The above command will build sample. The "thinserver.hex" can be found at "out/arduino/arm/release/service/easy-setup/sampleapp/arduino/thinserver/"
+    f) The above command will build sample. The "enrollee.hex" can be found at "out/arduino/arm/release/service/easy-setup/sampleapp/enrollee/arduino"
     g) After building sample, script will try to install on "/dev/ttyACM0" port in 'sudo' mode.
         To skip installation, set command line argument 'UPLOAD=false' or without UPLOAD option
     h) To set BLE Shield Name, include the option DEVICE_NAME during scons build.
@@ -125,7 +125,7 @@ iotivity/
         │            └──inc
         │            └──src
         │── sampleapp
-        │    └──android
-        │    └──arduino
-        │    └──linux
+        │    └──mediator/android
+        │    └──mediator/linux
+        │    └──enrollee/arduino
         └── Build_Instructions_Android_Arduino.txt - You are reading this.

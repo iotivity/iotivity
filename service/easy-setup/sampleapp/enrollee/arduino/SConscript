@@ -20,14 +20,14 @@
 
 Import('env')
 
-thinserver_env = env.Clone()
-transport = thinserver_env.get('TARGET_TRANSPORT')
+enrollee_env = env.Clone()
+transport = enrollee_env.get('TARGET_TRANSPORT')
 
 ######################################################################
 # Build flags
 ######################################################################
 if 'BLE' in transport:
-	thinserver_env.PrependUnique(CPPPATH = [
+	enrollee_env.PrependUnique(CPPPATH = [
                 '../../../../../resource/oc_logger/include',
 	        '../../../../../resource/csdk/logger/include',
                 '../../../../../resource/csdk/stack/include',
@@ -37,9 +37,9 @@ if 'BLE' in transport:
 		'../../../sdk/enrollee/common/inc',
 		'../../../sdk/enrollee/common/src'
 		])
-	thinserver_env.AppendUnique(CPPDEFINES = ['TB_LOG', 'ESBLE'])	
+	enrollee_env.AppendUnique(CPPDEFINES = ['TB_LOG', 'ESBLE'])	
 else : 
-	thinserver_env.PrependUnique(CPPPATH = [
+	enrollee_env.PrependUnique(CPPPATH = [
                 '../../../../../resource/oc_logger/include',
 	        '../../../../../resource/csdk/logger/include',
                 '../../../../../resource/csdk/stack/include',
@@ -49,25 +49,25 @@ else :
 		'../../../sdk/enrollee/common/inc',
 		'../../../sdk/enrollee/common/src'
 		])
-	thinserver_env.AppendUnique(CPPDEFINES = ['TB_LOG', 'ESWIFI'])
+	enrollee_env.AppendUnique(CPPDEFINES = ['TB_LOG', 'ESWIFI'])
 	
-thinserver_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+enrollee_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 
-thinserver_env.PrependUnique(LIBS = ['octbstack','ocsrm','connectivity_abstraction','coap', 'ESSDKLibrary'])
+enrollee_env.PrependUnique(LIBS = ['octbstack','ocsrm','connectivity_abstraction','coap', 'ESSDKLibrary'])
 if 'BLE' in transport:
-	thinserver = thinserver_env.Program('thinserver', 'thinserverble.cpp')
+	enrollee = enrollee_env.Program('enrollee', 'enrollee_ble.cpp')
 else :
-	thinserver = thinserver_env.Program('thinserver', 'thinserver.cpp')
-env.CreateBin('thinserver')
+	enrollee = enrollee_env.Program('enrollee', 'enrollee_wifi.cpp')
+env.CreateBin('enrollee')
 
-i_thinserver = thinserver_env.Install(env.get('BUILD_DIR'), thinserver)
+i_enrollee = enrollee_env.Install(env.get('BUILD_DIR'), enrollee)
 
-Alias('thinserver', i_thinserver)
-env.AppendTarget('thinserver')
+Alias('enrollee', i_enrollee)
+env.AppendTarget('enrollee')
 
-if(thinserver_env['UPLOAD'] == True):
+if(enrollee_env['UPLOAD'] == True):
 	from sys import platform as _platform
 	if _platform == "linux" or _platform == "linux2":
-		thinserver_env.Upload(env.get('BUILD_DIR') + '/service/easy-setup/sampleapp/arduino/thinserver/thinserver.hex')
+		enrollee_env.Upload(env.get('BUILD_DIR') + '/service/easy-setup/sampleapp/enrollee/arduino/enrollee.hex')
 	else:
 		print 'Please use appropriate install method for your developing machine. Linux is the only supported platform right now.'

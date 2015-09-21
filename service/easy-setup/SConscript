@@ -110,21 +110,18 @@ if target_os == 'arduino':
 if target_os == 'android':
 	if 'BLE' in transport:
 		es_sdk_shared = easy_setup_env.StaticLibrary('libESSDK',
-						['sdk/mediator/src/easysetupmgr.cpp',
-						'sdk/mediator/src/camutex_pthreads.c',
-						'sdk/mediator/src/provisioninghandler_ble.cpp'])
+						['sdk/mediator/src/prov_adapter.cpp',
+						'sdk/mediator/src/ble_provisioning.cpp'])
 	else :
 		es_sdk_shared = easy_setup_env.StaticLibrary('libESSDK',
-						['sdk/mediator/src/easysetupmgr.cpp',
-						'sdk/mediator/src/camutex_pthreads.c',
-						'sdk/mediator/src/provisioninghandler.cpp'])
+						['sdk/mediator/src/prov_adapter.cpp',
+						'sdk/mediator/src/wifi_provisioning.cpp'])
 	easy_setup_env.InstallTarget(es_sdk_shared, 'libESSDK')
 
 if target_os == 'linux':
 	es_sdk_shared = easy_setup_env.SharedLibrary('ESSDKLibrary',
-					['sdk/mediator/src/easysetupmgr.cpp',
-					'sdk/mediator/src/camutex_pthreads.c',
-					'sdk/mediator/src/provisioninghandler.cpp'])
+					['sdk/mediator/src/prov_adapter.cpp',
+					'sdk/mediator/src/wifi_provisioning.cpp'])
 	easy_setup_env.InstallTarget(es_sdk_shared, 'libESSDK')
 
 #Go to build sample apps

@@ -1,4 +1,4 @@
- //******************************************************************
+//******************************************************************
 //
 // Copyright 2015 Samsung Electronics All Rights Reserved.
 //
@@ -25,10 +25,10 @@
 #include <stdint.h>
 #include <sstream>
 
-#include "easysetupmgr.h"
+#include "prov_adapter.h"
 
 //Use ipv4addr for both InitDiscovery and InitDeviceDiscovery
-char ipv4addr[IPV4_ADDR_SIZE] = { 0 };
+char ipv4addr[IPV4_ADDR_SIZE] = {0};
 
 static OCProvisioningStatusCB cbData = NULL;
 
@@ -43,7 +43,7 @@ OCStackResult InitEasySetupManager() {
     } else {
         result = OC_STACK_ERROR;
         OIC_LOG_V(ERROR, TAG, "InitProvisioningHandler returned error = %s",
-                result);
+                  result);
     }
 
     return result;
@@ -57,12 +57,10 @@ OCStackResult RegisterProvisioningStausCallback(
         OCProvisioningStatusCB provisioningStatusCallback) {
     OCStackResult result = OC_STACK_OK;
 
-    if(provisioningStatusCallback != NULL)
-    {
+    if (provisioningStatusCallback != NULL) {
         cbData = provisioningStatusCallback;
     }
-    else
-    {
+    else {
         result = OC_STACK_ERROR;
         OIC_LOG(ERROR, TAG, "provisioningStatusCallback is NULL");
     }
@@ -76,8 +74,7 @@ void UnRegisterProvisioningStausCallback() {
     }
 }
 
-OCStackResult ProvisionEnrollee(const EnrolleeNWProvInfo_t *netInfo)
-{
+OCStackResult ProvisionEnrollee(const EnrolleeNWProvInfo_t *netInfo) {
     return StartProvisioningProcess(netInfo, cbData);
 }
 

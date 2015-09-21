@@ -39,8 +39,8 @@ target_os = env.get('TARGET_OS')
 ######################################################################
 if target_os == 'arduino' :
 	# Build linux sample app
-	SConscript('arduino/thinserver/SConscript')
+	SConscript('enrollee/arduino/SConscript')
 
 if target_os == 'linux' :
 	# Build linux sample app
-	SConscript('linux/richclient/SConscript')
+	SConscript('mediator/linux/SConscript')
