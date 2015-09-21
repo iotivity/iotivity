@@ -40,8 +40,8 @@ namespace OIC
     {
 
         /**
-         * @class   ResourceContainer
-         * @brief    This class provides APIs for managing the container and bundles in the container.
+         * @class   RCSResourceContainer
+         * @brief   This class provides APIs for managing the container and bundles in the container.
          *
          */
         class RCSResourceContainer
