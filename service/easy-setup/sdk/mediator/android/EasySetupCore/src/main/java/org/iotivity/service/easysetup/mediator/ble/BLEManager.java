@@ -21,12 +21,7 @@ package org.iotivity.service.easysetup.mediator.ble;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothGatt;
-import android.bluetooth.BluetoothGattCallback;
-import android.bluetooth.BluetoothGattCharacteristic;
-import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
-import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.os.Handler;
 import android.util.Log;
@@ -35,7 +30,6 @@ import org.iotivity.service.easysetup.impl.BLEOnBoardingConfig;
 import org.iotivity.service.easysetup.mediator.EnrolleeInfo;
 import org.iotivity.service.easysetup.mediator.IOnBoardingStatus;
 
-import java.util.List;
 import java.util.UUID;
 
 public class BLEManager {
@@ -44,10 +38,8 @@ public class BLEManager {
     private Context mcontext;
     private Handler mHandler;
     private static final long SCAN_PERIOD = 10000;
-    private BluetoothGatt gatt;
     private BLEOnBoardingConfig bleOnBoardingConfig;
     private IOnBoardingStatus finishlistener;
-    private boolean connection_successful = false;
 
     public BLEManager(Context context, BLEOnBoardingConfig config) {
         mcontext = context;
@@ -92,18 +84,13 @@ public class BLEManager {
 
     }
 
-    public void connect(BluetoothDevice device) {
-        gatt = device.connectGatt(mcontext, false, gattCallback);
-
-    }
-
 
     private BluetoothAdapter.LeScanCallback mLeScanCallback =
             new BluetoothAdapter.LeScanCallback() {
 
                 @Override
                 public void onLeScan(final BluetoothDevice device, int rssi, byte[] scanRecord) {
-                    Log.d("device found", device.getAddress() + " " + device.getUuids());
+                    Log.d("device found", device.getAddress());
                     bleOnBoardingConfig.setMacaddress(device.getAddress());
                     {
                         stopscan();
@@ -112,56 +99,10 @@ public class BLEManager {
                         result.setHWAddr(bleOnBoardingConfig.getMacaddress());
                         NotifyApplication(result);
 
-                        //TODO- Device will have to be disconnected so that the multicast works while discovery resources
-                        //Not connecting to device
-                        //connect(device);
                     }
                 }
             };
-    private BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
-        @Override
-        public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
-            super.onConnectionStateChange(gatt, status, newState);
-            Log.d("connection state:", "status" + status + ":" + newState);
-            EnrolleeInfo result = new EnrolleeInfo();
-            switch (newState) {
-                case BluetoothProfile.STATE_CONNECTED:
-                    Log.d("gattCallback", "STATE_CONNECTED");
-                    connection_successful = true;
-                    gatt.disconnect();
-                    break;
-                case BluetoothProfile.STATE_DISCONNECTED:
-                    Log.e("gattCallback", "STATE_DISCONNECTED");
-                    if (connection_successful) {
-                        result.setReachable(true);
-                        result.setHWAddr(bleOnBoardingConfig.getMacaddress());
-                        NotifyApplication(result);
-                    } else {
-                        result.setReachable(false);
-                        NotifyApplication(result);
-                    }
-                    break;
-                default:
-                    Log.e("gattCallback", "STATE_OTHER");
-            }
-        }
 
-        @Override
-        public void onServicesDiscovered(BluetoothGatt gatt, int status) {
-            List<BluetoothGattService> services = gatt.getServices();
-            Log.i("onServicesDiscovered", services.toString());
-            gatt.readCharacteristic(services.get(1).getCharacteristics().get
-                    (0));
-        }
-
-        @Override
-        public void onCharacteristicRead(BluetoothGatt gatt,
-                                         BluetoothGattCharacteristic
-                                                 characteristic, int status) {
-
-        }
-
-    };
 
     void NotifyApplication(final EnrolleeInfo result) {
         // Get a handler that can be used to post to the main thread

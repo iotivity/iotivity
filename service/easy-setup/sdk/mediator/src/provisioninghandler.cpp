@@ -278,7 +278,7 @@ OCStackApplicationResult GetProvisioningStatusResponse(void* ctx, OCDoHandle han
 
     OIC_LOG_V(DEBUG, TAG, "resUri = %s", input->uri);
 
-    strncpy(resURI, input->uri, sizeof(resURI));
+    strncpy(resURI, input->uri, sizeof(resURI)-1);
 
     snprintf(query, sizeof(query), UNICAST_PROV_STATUS_QUERY, clientResponse->addr->addr, IP_PORT,
             resURI);
@@ -592,7 +592,7 @@ bool ValidateEasySetupParams(const EnrolleeNWProvInfo_t *netInfo,
         OCProvisioningStatusCB provisioningStatusCallback)
 {
 
-    if (netInfo == NULL || netInfo->netAddressInfo.WIFI.ipAddress == NULL)
+    if (netInfo == NULL || strlen(netInfo->netAddressInfo.WIFI.ipAddress) == 0)
     {
         OIC_LOG(ERROR, TAG, "Request URI is NULL");
         return false;
@@ -642,6 +642,7 @@ bool ResetProgress()
     cbData = NULL;
 
     ca_mutex_unlock(g_provisioningMutex);
+	return true;
 }
 
 ProvisioningInfo* CreateCallBackObject()

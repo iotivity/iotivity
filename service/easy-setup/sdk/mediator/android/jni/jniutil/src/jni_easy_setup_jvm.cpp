@@ -233,6 +233,7 @@ JNIEnv *EasySetupJVM::getEnv() {
         return env;
     case JNI_EVERSION:
         LOGE("JNI version not supported");
+        return NULL;
     default:
         LOGE("Failed to get the environment");
         return NULL;

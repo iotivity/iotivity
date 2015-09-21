@@ -34,8 +34,6 @@ import org.iotivity.service.easysetup.impl.WiFiOnBoardingConfig;
 import org.iotivity.service.easysetup.impl.WiFiProvConfig;
 
 import android.app.Activity;
-import android.content.Intent;
-import android.graphics.Bitmap;
 import android.net.wifi.WifiConfiguration;
 import android.os.Bundle;
 import android.os.Handler;
@@ -45,7 +43,6 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -57,9 +54,6 @@ public class MainActivity extends Activity {
     public static final int SUCCESS = 0;
     public static final int FAILED = 1;
     public static final int STATE_CHANGED = 2;
-
-    static final int REQUEST_IMAGE_CAPTURE = 1;
-    ImageView imageView;
 
     EditText mSsidText;
     EditText mPassText;
@@ -169,8 +163,7 @@ public class MainActivity extends Activity {
     public void onDestroy() {
         super.onDestroy();
         /*Reset the Easy setup process*/
-        if(mEasySetupService != null)
-        {
+        if (mEasySetupService != null) {
             mEasySetupService.finish();
         }
     }
@@ -234,14 +227,6 @@ public class MainActivity extends Activity {
         });
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
-            Bundle extras = data.getExtras();
-            Bitmap imageBitmap = (Bitmap) extras.get("data");
-            imageView.setImageBitmap(imageBitmap);
-        }
-    }
 
     class ThreadHandler extends Handler {
         @Override

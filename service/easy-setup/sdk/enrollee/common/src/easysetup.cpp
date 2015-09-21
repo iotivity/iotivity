@@ -112,6 +112,7 @@ ESResult FindNetworkForOnboarding(NetworkType networkType,
             return ES_OK;
         }
     }
+    return ES_ERROR;
 }
 
 

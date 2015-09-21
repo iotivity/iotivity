@@ -145,15 +145,15 @@ JNIEXPORT void JNICALL JNIProvisionEnrollee(JNIEnv *env, jobject thisObj,
     OCConnectivityType connecitivityType;
     EnrolleeNWProvInfo_t netInfo =
     {   0};
-
-    strncpy(netInfo.netAddressInfo.WIFI.ipAddress, ipAddress, IPV4_ADDR_SIZE);
-    strncpy(netInfo.netAddressInfo.WIFI.ssid, netSSID, NET_WIFI_SSID_SIZE);
-    strncpy(netInfo.netAddressInfo.WIFI.pwd, netPWD, NET_WIFI_PWD_SIZE);
+	strncpy(netInfo.netAddressInfo.WIFI.ipAddress, ipAddress, IPV4_ADDR_SIZE-1);
+	strncpy(netInfo.netAddressInfo.WIFI.ssid, netSSID, NET_WIFI_SSID_SIZE-1);
+    strncpy(netInfo.netAddressInfo.WIFI.pwd, netPWD, NET_WIFI_PWD_SIZE-1);
     netInfo.connType = (OCConnectivityType)jConnectivityType;
 
     if(netInfo.connType==CT_ADAPTER_GATT_BTLE)
     {
-        strncpy(netInfo.netAddressInfo.LE.leMacAddress,ipAddress,NET_MACADDR_SIZE);
+        
+		 strncpy(netInfo.netAddressInfo.LE.leMacAddress,ipAddress,NET_MACADDR_SIZE-1);
         LOGI("MAC set=%s",netInfo.netAddressInfo.LE.leMacAddress);
 
     }
@@ -169,7 +169,7 @@ JNIEXPORT void JNICALL JNIStopEnrolleeProvisioning(JNIEnv *env, jobject thisObj,
 {
     LOGI("JNI Stop Easy Setup: Entering");
 
-    OCConnectivityType connecitivityType;
+    OCConnectivityType connecitivityType=OCConnectivityType::CT_DEFAULT;
 
     if(jConnectivityType == 0)
     {

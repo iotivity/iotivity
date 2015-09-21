@@ -29,8 +29,6 @@ public class IpOnBoardingConnection implements OnBoardingConnection {
     private String mHardwareAddress;
     private String mDeviceName;
 
-    private boolean isReachable;
-
     public void setHardwareAddress(String address) {
         mHardwareAddress = address;
     }

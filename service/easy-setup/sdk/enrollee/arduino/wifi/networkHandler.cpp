@@ -151,7 +151,9 @@ int getCurrentNetworkInfo(NetworkType targetType, NetworkInfo *info)
     {
         info->type = ES_WIFI;
         info->ipaddr = WiFi.localIP();
-        strcpy(info->ssid, WiFi.SSID());
+        if(strlen(WiFi.SSID())<=MAXSSIDLEN)
+           strcpy(info->ssid, WiFi.SSID());
+        else return -1;
 
         return 0;
     }

@@ -274,7 +274,7 @@ OCStackApplicationResult GetProvisioningStatusResponse(void* ctx, OCDoHandle han
 
     OIC_LOG_V(DEBUG, TAG, "resUri = %s", input->uri);
 
-    strncpy(resURI, input->uri, sizeof(resURI));
+    strncpy(resURI, input->uri, sizeof(resURI))-1;
 
     snprintf(query, sizeof(query), UNICAST_PROVISIONING_QUERY_BLE, clientResponse->addr->addr);
 
@@ -470,15 +470,22 @@ OCStackApplicationResult SubscribeProvPresenceCallback(void* ctx, OCDoHandle han
 
     OCStackApplicationResult response = OC_STACK_DELETE_TRANSACTION;
 
-    if (clientResponse->result != OC_STACK_OK)
+    if (clientResponse == NULL)
     {
-        OIC_LOG(ERROR, TAG, "OCStack stop error");
+        // clientResponse is invalid
+        OIC_LOG(ERROR, TAG, PCF("Client Response is NULL!"));
         return response;
     }
-
-    if (clientResponse)
+    else
     {
+
         OIC_LOG(INFO, TAG, PCF("Client Response exists"));
+        if (clientResponse->result != OC_STACK_OK)
+
+        {
+            OIC_LOG(ERROR, TAG, "OCStack stop error");
+            return response;
+        }
 
         if (clientResponse->payload && clientResponse->payload->type != PAYLOAD_TYPE_REPRESENTATION)
         {
@@ -509,11 +516,6 @@ OCStackApplicationResult SubscribeProvPresenceCallback(void* ctx, OCDoHandle han
          OIC_LOG(ERROR, TAG, "FindProvisioningResource failed");
          return OC_STACK_KEEP_TRANSACTION;
          }*/
-    }
-    else
-    {
-        // clientResponse is invalid
-        OIC_LOG(ERROR, TAG, PCF("Client Response is NULL!"));
     }
     return OC_STACK_KEEP_TRANSACTION;
 }
@@ -634,6 +636,7 @@ bool ResetProgress()
     cbData = NULL;
 
     ca_mutex_unlock(g_provisioningMutex);
+	return true;
 }
 
 ProvisioningInfo* CreateCallBackObject()

@@ -87,7 +87,9 @@ public abstract class EnrolleeDevice {
         mConnection = conn;
     }
 
-    public OnBoardingConnection getConnection() { return mConnection;}
+    public OnBoardingConnection getConnection() {
+        return mConnection;
+    }
 
 
     /**
@@ -121,6 +123,13 @@ public abstract class EnrolleeDevice {
     }
 
     /**
+     * sets error occured during easy setup process
+     */
+    public void setError(EnrolleeSetupError error) {
+        mError = error;
+    }
+
+    /**
      * Returns error occured during easy setup process
      *
      * @return True EnrolleeSetupError object
@@ -147,7 +156,6 @@ public abstract class EnrolleeDevice {
     public boolean onBoarded() {
         return (mState == EnrolleeState.DEVICE_PROVISIONING_STATE) ? true : false;
     }
-
 
 
 }

@@ -31,7 +31,6 @@ import org.iotivity.service.easysetup.core.EnrolleeState;
 import org.iotivity.service.easysetup.core.IpOnBoardingConnection;
 import org.iotivity.service.easysetup.core.OnBoardingConfig;
 import org.iotivity.service.easysetup.core.ProvisioningConfig;
-import org.iotivity.service.easysetup.mediator.EasySetupCallbackHandler;
 import org.iotivity.service.easysetup.mediator.EasySetupManager;
 import org.iotivity.service.easysetup.mediator.EnrolleeInfo;
 import org.iotivity.service.easysetup.mediator.IOnBoardingStatus;
@@ -80,7 +79,7 @@ public class EnrolleeDeviceWiFiOnboarding extends EnrolleeDevice {
                         conn.setHardwareAddress(enrolleStatus.getHWAddr());
                         conn.setDeviceName(enrolleStatus.getDevice());
 
-                        Log.d("ESSoftAPOnBoarding", "Entered");
+                        Log.d("ESSoftAPOnBoarding", "Entered"+finalResult);
                         mOnBoardingCallback.onFinished(conn);
                         return;
 

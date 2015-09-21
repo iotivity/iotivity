@@ -36,7 +36,6 @@ public class WiFiOnBoardingConfig implements OnBoardingConfig {
 
     private final WifiConfiguration config = new WifiConfiguration();
     private final ConnType mConnType = OnBoardingConfig.ConnType.WiFi;
-    private IpOnBoardingConnection mConnection;
 
     @Override
     public Object getConfig() {
