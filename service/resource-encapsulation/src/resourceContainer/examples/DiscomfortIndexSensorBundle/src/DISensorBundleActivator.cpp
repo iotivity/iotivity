@@ -64,7 +64,7 @@ void DISensorBundleActivator::deactivateBundle()
 
 void DISensorBundleActivator::createResource(resourceInfo resourceInfo)
 {
-    if (resourceInfo.resourceType == "oic.softsensor")
+    if (resourceInfo.resourceType == "oic.r.sensor")
     {
         static int discomfortIndexSensorCount = 1;
 
@@ -104,7 +104,7 @@ void DISensorBundleActivator::destroyResource(BundleResource *resource)
 }
 
 extern "C" void disensor_externalActivateBundle(ResourceContainerBundleAPI *resourceContainer,
-                                       std::string bundleId)
+        std::string bundleId)
 {
     bundle = new DISensorBundleActivator();
     bundle->activateBundle(resourceContainer, bundleId);

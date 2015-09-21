@@ -34,8 +34,8 @@
 #define COAP_MODE               OC::ModeType::Server
 #define COAP_SRVTYPE            OC::ServiceType::InProc
 
-#define RESOURCE_TYPE_NAME_TEMP          "oic.sensor.temperature"
-#define RESOURCE_TYPE_NAME_HUMID          "oic.sensor.humidity"
+#define RESOURCE_TYPE_NAME_TEMP          "oic.r.temperature"
+#define RESOURCE_TYPE_NAME_HUMID          "oic.r.humidity"
 
 
 class TemphumidResource

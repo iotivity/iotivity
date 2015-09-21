@@ -58,7 +58,7 @@ class ResourceContainerTestSimulator
               mutexForDiscovery(),
               MULTICASTURI("/oic/res"),
               RESOURCEURI("/a/TempHumSensor/Container"),
-              RESOURCETYPE("Resource.Container"),
+              RESOURCETYPE("resource.container"),
               RESOURCEINTERFACE("oic.if.baseline"),
               ATTR_KEY("Temperature"),
               ATTR_VALUE(0)
@@ -145,9 +145,9 @@ class ResourceContainerTestSimulator
             try
             {
                 discoveryTask = RCSDiscoveryManager::getInstance()->discoverResourceByType(
-                        RCSAddress::multicast(), MULTICASTURI, resourceType,
-                        std::bind(onDiscoveryResource, std::placeholders::_1,
-                           std::weak_ptr<ResourceContainerTestSimulator>(shared_from_this())));
+                                    RCSAddress::multicast(), MULTICASTURI, resourceType,
+                                    std::bind(onDiscoveryResource, std::placeholders::_1,
+                                              std::weak_ptr<ResourceContainerTestSimulator>(shared_from_this())));
                 mutexForDiscovery.lock();
             }
             catch (std::exception &e)

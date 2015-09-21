@@ -428,7 +428,7 @@ void foundResource(std::shared_ptr<OCResource> resource)
             {
                 std::cout << "\t\t" << resourceTypes << std::endl;
 
-                if (resourceTypes == "oic.light.control")
+                if (resourceTypes == "oic.r.light")
                 {
                     curResource = resource;
                     // Call a local function which will internally invoke get API on the resource pointer

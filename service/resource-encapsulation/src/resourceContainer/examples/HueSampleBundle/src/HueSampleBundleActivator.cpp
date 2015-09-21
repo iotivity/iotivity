@@ -75,7 +75,7 @@ void HueSampleBundleActivator::deactivateBundle()
 void HueSampleBundleActivator::createResource(resourceInfo resourceInfo)
 {
 
-    if (resourceInfo.resourceType == "oic.light.control")
+    if (resourceInfo.resourceType == "oic.r.light")
     {
         static int lightCount = 1;
         HueLight *hueLight = new HueLight(m_connector, resourceInfo.address);
@@ -107,7 +107,7 @@ void HueSampleBundleActivator::destroyResource(BundleResource *pBundleResource)
 }
 
 extern "C" void huesample_externalActivateBundle(ResourceContainerBundleAPI *resourceContainer,
-                                       std::string bundleId)
+        std::string bundleId)
 {
     bundle = new HueSampleBundleActivator();
     bundle->activateBundle(resourceContainer, bundleId);
