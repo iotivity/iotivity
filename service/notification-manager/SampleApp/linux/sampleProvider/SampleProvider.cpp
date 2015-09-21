@@ -63,7 +63,7 @@ class TempHumidResource
         void createResource()
         {
             std::string resourceURI = "/a/TempHumSensor/hosting";
-            std::string resourceTypeName = "Resource.Hosting";
+            std::string resourceTypeName = "resource.hosting";
             std::string resourceInterface = DEFAULT_INTERFACE;
 
             m_uri = resourceURI;
@@ -83,7 +83,7 @@ class TempHumidResource
         {
             std::string resourceURI = "/a/NM/TempHumSensor1"; // URI of the resource
             std::string resourceTypeName =
-                "NotificationManager.Hosting"; // resource type name. In this case, it is light
+                "notificationmanager.hosting"; // resource type name. In this case, it is light
             std::string resourceInterface = DEFAULT_INTERFACE; // resource interface.
 
             // OCResourceProperty is defined ocstack.h

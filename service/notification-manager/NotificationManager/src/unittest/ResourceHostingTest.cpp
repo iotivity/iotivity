@@ -103,7 +103,7 @@ TEST_F(ResourceHostingTest, HostingFoundBeforeMakeOriginServer)
             });
 
     discoveryTask = RCSDiscoveryManager::getInstance()->discoverResourceByType(
-            RCSAddress::multicast(), "Resource.Hosting", onDiscoveryResource);
+            RCSAddress::multicast(), "resource.hosting", onDiscoveryResource);
     waitForCondition(2000);
 
     std::string mirroredUri = { testObject->getServerUri() };

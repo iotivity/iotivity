@@ -173,7 +173,7 @@ public class SampleConsumer extends Activity implements View.OnClickListener,
     }
 
     public void findResourceCandidate() {
-        nmfindResource("", "/oic/res?rt=Resource.Hosting");
+        nmfindResource("", "/oic/res?rt=resource.hosting");
         current_log_result += "Finding Resource... \n";
         tv_current_log_result.setText(current_log_result);
         Log.i(TAG, current_log_result);

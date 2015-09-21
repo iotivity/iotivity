@@ -63,7 +63,7 @@ public:
      MULTICASTURI("/oic/res"),
      HOSTED_RESOURCEURI("/a/TempHumSensor"),
      RESOURCEURI("/a/TempHumSensor/hosting"),
-     RESOURCETYPE("Resource.Hosting"),
+     RESOURCETYPE("resource.hosting"),
      RESOURCEINTERFACE("oic.if.baseline"),
      ATTR_KEY("Temperature"),
      ATTR_VALUE(0)
@@ -71,17 +71,6 @@ public:
     ~ResourceEncapsulationTestSimulator()
     {
         std::cout << "~ResourceEncapsulationTestSimulator()" << std::endl;
-       // if(remoteResource->isCaching())
-       // {
-       //     std::cout << "stop cache" << std::endl;
-       //     remoteResource->stopCaching();
-       // }
-       // if(remoteResource->isMonitoring())
-       // {
-       //     std::cout << "stop monitoring" << std::endl;
-       //     remoteResource->stopMonitoring();
-       // }
-       //std::cout << "11111: " << remoteResource.use_count() << std::endl;
     }
 
 private:
