@@ -101,7 +101,7 @@ int main()
     std::map<string, string> resourceParams;
     cout << "Press enter to add SO bundle resource " << endl;
     getchar();
-    resourceParams["resourceType"] = "oic.light.control";
+    resourceParams["resourceType"] = "oic.r.light";
     resourceParams["address"] = "http://192.168.0.2/api/newdeveloper/lights/1";
     container->addResourceConfig("oic.bundle.hueSample", "", resourceParams);
     container->addResourceConfig("oic.bundle.hueSample", "", resourceParams);

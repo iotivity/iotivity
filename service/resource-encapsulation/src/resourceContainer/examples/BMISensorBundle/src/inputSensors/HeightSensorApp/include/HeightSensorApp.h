@@ -35,7 +35,7 @@
 #define COAP_MODE               OC::ModeType::Server
 #define COAP_SRVTYPE            OC::ServiceType::InProc
 
-#define RESOURCE_TYPE_NAME          "oic.sensor.height"
+#define RESOURCE_TYPE_NAME          "oic.r.sensor.height"
 
 //  testing case
 #define INTERVAL_FOR_CHECK          4   // seconds

@@ -175,13 +175,13 @@ namespace OIC
                      std::string(m_bundles[id]->getID()).c_str());
             activationLock.lock();
             auto f = std::bind(&ResourceContainerImpl::activateBundleThread, this,
-                                                       id);
+                               id);
             boost::thread activator(f);
             activator.timed_join(boost::posix_time::seconds(BUNDLE_SET_GET_WAIT_SEC));
             activationLock.unlock();
             OC_LOG_V(INFO, CONTAINER_TAG, "Bundle activated: (%s)",
                      std::string(m_bundles[id]->getID()).c_str());
-}
+        }
 
         void ResourceContainerImpl::deactivateBundle(const std::string &id)
         {
@@ -275,8 +275,6 @@ namespace OIC
                     m_mapServers[strUri] = server;
                     m_mapResources[strUri] = resource;
                     m_mapBundleResources[resource->m_bundleId].push_back(strUri);
-
-                    resource->registerObserver(this);
 
                     server->setGetRequestHandler(
                         std::bind(&ResourceContainerImpl::getRequestHandler, this,
@@ -426,7 +424,7 @@ namespace OIC
         RCSResourceObject::Ptr ResourceContainerImpl::buildResourceObject(const std::string &strUri,
                 const std::string &strResourceType)
         {
-            return RCSResourceObject::Builder(strUri, strResourceType, "DEFAULT_INTERFACE").setObservable(
+            return RCSResourceObject::Builder(strUri, strResourceType, "oic.if.baseline").setObservable(
                        true).setDiscoverable(true).build();
         }
 
@@ -794,7 +792,7 @@ namespace OIC
         void ResourceContainerImpl::activateBundleThread(const std::string &id)
         {
             OC_LOG_V(INFO, CONTAINER_TAG, "Activating bundle: (%s)",
-                    std::string(m_bundles[id]->getID()).c_str());
+                     std::string(m_bundles[id]->getID()).c_str());
 
             if (m_bundles[id]->getJavaBundle())
             {
@@ -808,7 +806,7 @@ namespace OIC
             }
 
             OC_LOG_V(INFO, CONTAINER_TAG, "Bundle activated: (%s)",
-                    std::string(m_bundles[id]->getID()).c_str());
+                     std::string(m_bundles[id]->getID()).c_str());
         }
 
 #if(JAVA_SUPPORT)

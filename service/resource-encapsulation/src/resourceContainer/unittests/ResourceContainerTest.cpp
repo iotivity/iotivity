@@ -237,7 +237,7 @@ TEST_F(ResourceContainerTest, AddAndRemoveSoBundleResource)
 {
     std::list<string> resources;
     std::map<string, string> resourceParams;
-    resourceParams["resourceType"] = "oic.test";
+    resourceParams["resourceType"] = "container.test";
 
     m_pResourceContainer->startContainer(m_strConfigPath);
     resources = m_pResourceContainer->listBundleResources("oic.bundle.test");
@@ -286,7 +286,7 @@ class ResourceContainerBundleAPITest: public TestWithMock
             m_pBundleResource = new TestBundleResource();
             m_pBundleResource->m_bundleId = "oic.bundle.test";
             m_pBundleResource->m_uri = "/test_resource";
-            m_pBundleResource->m_resourceType = "oic.test";
+            m_pBundleResource->m_resourceType = "container.test";
         }
 };
 
@@ -295,7 +295,7 @@ TEST_F(ResourceContainerBundleAPITest, ResourceServerCreatedWhenRegisterResource
     m_pBundleResource = new TestBundleResource();
     m_pBundleResource->m_bundleId = "oic.bundle.test";
     m_pBundleResource->m_uri = "/test_resource/test";
-    m_pBundleResource->m_resourceType = "oic.test";
+    m_pBundleResource->m_resourceType = "container.test";
 
     mocks.ExpectCallFunc(ResourceContainerImpl::buildResourceObject).With(m_pBundleResource->m_uri,
             m_pBundleResource->m_resourceType).Return(nullptr);
@@ -381,7 +381,7 @@ TEST_F(ResourceContainerBundleAPITest, BundleResourceConfigurationListParsed)
     result = *resourceConfig.begin();
 
     EXPECT_STREQ("test_resource", result.name.c_str());
-    EXPECT_STREQ("oic.test", result.resourceType.c_str());
+    EXPECT_STREQ("container.test", result.resourceType.c_str());
 
     ((ResourceContainerImpl *)m_pResourceContainer)->stopContainer();
 }
@@ -553,6 +553,7 @@ TEST_F(ResourceContainerImplTest, SoBundleDeactivatedWithBundleID)
     EXPECT_FALSE(((BundleInfoInternal *)m_pBundleInfo)->isActivated());
 }
 
+
 /* Test for Configuration */
 TEST(ConfigurationTest, ConfigFileLoadedWithValidPath)
 {
@@ -564,6 +565,8 @@ TEST(ConfigurationTest, ConfigFileLoadedWithValidPath)
     Configuration *config = new Configuration(strConfigPath);
 
     EXPECT_TRUE(config->isLoaded());
+
+    delete config;
 }
 
 TEST(ConfigurationTest, ConfigFileNotLoadedWithInvalidPath)
@@ -571,6 +574,8 @@ TEST(ConfigurationTest, ConfigFileNotLoadedWithInvalidPath)
     Configuration *config = new Configuration("InvalidPath");
 
     EXPECT_FALSE(config->isLoaded());
+
+    delete config;
 }
 
 TEST(ConfigurationTest, BundleConfigurationListParsed)
@@ -592,6 +597,8 @@ TEST(ConfigurationTest, BundleConfigurationListParsed)
     EXPECT_STREQ("oic.bundle.test", results["id"].c_str());
     EXPECT_STREQ("libTestBundle.so", results["path"].c_str());
     EXPECT_STREQ("1.0.0", results["version"].c_str());
+
+    delete config;
 }
 
 TEST(ConfigurationTest, BundleConfigurationParsedWithValidBundleId)
@@ -613,6 +620,8 @@ TEST(ConfigurationTest, BundleConfigurationParsedWithValidBundleId)
     EXPECT_STREQ("oic.bundle.test", results["id"].c_str());
     EXPECT_STREQ("libTestBundle.so", results["path"].c_str());
     EXPECT_STREQ("1.0.0", results["version"].c_str());
+
+    delete config;
 }
 
 TEST(ConfigurationTest, BundleConfigurationNotParsedWithInvalidBundleId)
@@ -628,6 +637,8 @@ TEST(ConfigurationTest, BundleConfigurationNotParsedWithInvalidBundleId)
     config->getBundleConfiguration("test", &bundles);
 
     EXPECT_TRUE(bundles.empty());
+
+    delete config;
 }
 
 TEST(ConfigurationTest, BundleResourceConfigurationListParsed)
@@ -647,7 +658,9 @@ TEST(ConfigurationTest, BundleResourceConfigurationListParsed)
     result = *resourceConfig.begin();
 
     EXPECT_STREQ("test_resource", result.name.c_str());
-    EXPECT_STREQ("oic.test", result.resourceType.c_str());
+    EXPECT_STREQ("container.test", result.resourceType.c_str());
+
+    delete config;
 }
 
 TEST(ConfigurationTest, BundleResourceConfigurationNotParsedWithInvalidBundleId)
@@ -664,6 +677,8 @@ TEST(ConfigurationTest, BundleResourceConfigurationNotParsedWithInvalidBundleId)
     config->getResourceConfiguration("test", &resourceConfig);
 
     EXPECT_TRUE(bundles.empty());
+
+    delete config;
 }
 
 namespace

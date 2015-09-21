@@ -29,6 +29,7 @@ DiscoverResourceUnit::DiscoverResourceUnit(const std::string &bundleId)
 {
     pUpdatedCB = nullptr;
     isStartedDiscovery = false;
+    discoveryTask = nullptr;
 
     pUpdatedCBFromServer = std::bind(&DiscoverResourceUnit::onUpdate, this,
                                      std::placeholders::_1, std::placeholders::_2);
@@ -37,6 +38,7 @@ DiscoverResourceUnit::DiscoverResourceUnit(const std::string &bundleId)
 DiscoverResourceUnit::~DiscoverResourceUnit()
 {
     pUpdatedCB = nullptr;
+    discoveryTask = nullptr;
     pUpdatedCBFromServer = nullptr;
 
     m_vecRemoteResource.clear();
@@ -69,7 +71,7 @@ void DiscoverResourceUnit::startDiscover(DiscoverResourceInfo info, UpdatedCB up
         }
 
         discoveryTask = RCSDiscoveryManager::getInstance()->discoverResourceByType(
-                RCSAddress::multicast(), m_ResourceType, pDiscoveredCB);
+                            RCSAddress::multicast(), m_ResourceType, pDiscoveredCB);
     }
     catch (RCSInvalidParameterException &e)
     {

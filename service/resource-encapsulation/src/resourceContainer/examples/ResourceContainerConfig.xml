@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<container>      
+<container>    
     <bundle>
         <id>oic.bundle.discomfortIndexSensor</id>
         <path>libDISensorBundle.so</path>
@@ -8,7 +8,7 @@
         <resources>
             <resourceInfo>
                 <name>DiscomfortIndexSensor1</name>
-                <resourceType>oic.softsensor</resourceType>
+                <resourceType>oic.r.sensor</resourceType>
                 <outputs>
                     <output>
                         <name>discomfortIndex</name>
@@ -27,12 +27,12 @@
                     <input>
                         <name>humidity</name>
                         <type>double</type>
-                        <resourceType>oic.sensor.humidity</resourceType>
+                        <resourceType>oic.r.humidity</resourceType>
                     </input>
                     <input>
                         <name>temperature</name>
                         <type>double</type>
-                        <resourceType>oic.sensor.temperature</resourceType>
+                        <resourceType>oic.r.temperature</resourceType>
                     </input>
                 </inputs>
             </resourceInfo>       
@@ -47,7 +47,7 @@
         <resources>
             <resourceInfo>
                 <name>BMISensor1</name>
-                <resourceType>oic.softsensor</resourceType>
+                <resourceType>oic.r.sensor</resourceType>
                 <outputs>
                     <output>
                         <name>BMIresult</name>
@@ -58,13 +58,13 @@
                     <input>
                         <name>weight</name>
                         <type>double</type>
-                        <resourceType>oic.sensor.weight</resourceType>
+                        <resourceType>oic.r.sensor.weight</resourceType>
                         <resourceUri>/Thing_WeightSensor</resourceUri>
                     </input>
                     <input>
                         <name>height</name>
                         <type>double</type>
-                        <resourceType>oic.sensor.height</resourceType>
+                        <resourceType>oic.r.sensor.height</resourceType>
                         <resourceUri>/Thing_HeightSensor</resourceUri>
                     </input>
                 </inputs>
@@ -80,7 +80,7 @@
         <resources>
             <resourceInfo>
                 <name>light</name>
-                <resourceType>oic.light.control</resourceType>
+                <resourceType>oic.r.light</resourceType>
                 <address>http://192.168.0.2/api/newdeveloper/lights/1</address>
             </resourceInfo>       
         </resources>
@@ -97,7 +97,7 @@
             <resourceInfo>
                 <name>light</name>
                 <uri>light/1</uri>
-                <resourceType>oic.light.control</resourceType>
+                <resourceType>oic.r.light</resourceType>
                 <address>http://192.168.0.2/api/newdeveloper/lights/1</address>
             </resourceInfo>       
         </resources>

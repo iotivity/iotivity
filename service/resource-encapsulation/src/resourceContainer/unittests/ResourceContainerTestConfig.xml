@@ -9,7 +9,7 @@
 		<resources>
 			<resourceInfo>
 				<name>test_resource</name>
-				<resourceType>oic.test</resourceType>
+				<resourceType>container.test</resourceType>
 			</resourceInfo>   
 		</resources>
     </bundle>

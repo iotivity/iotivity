@@ -34,7 +34,7 @@
 #define COAP_MODE               OC::ModeType::Server
 #define COAP_SRVTYPE            OC::ServiceType::InProc
 
-#define RESOURCE_TYPE_NAME          "oic.sensor.weight"
+#define RESOURCE_TYPE_NAME          "oic.r.sensor.weight"
 
 //  testing case
 #define INTERVAL_FOR_CHECK          14   // seconds

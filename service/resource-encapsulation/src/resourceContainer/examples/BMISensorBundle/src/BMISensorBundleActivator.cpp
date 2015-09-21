@@ -65,7 +65,7 @@ void BMISensorBundleActivator::deactivateBundle()
 
 void BMISensorBundleActivator::createResource(resourceInfo resourceInfo)
 {
-    if (resourceInfo.resourceType == "oic.softsensor")
+    if (resourceInfo.resourceType == "oic.r.sensor")
     {
         static int BMISensorCount = 1;
 
@@ -103,7 +103,7 @@ void BMISensorBundleActivator::destroyResource(BundleResource *resource)
 }
 
 extern "C" void bmisensor_externalActivateBundle(ResourceContainerBundleAPI *resourceContainer,
-                                       std::string bundleId)
+        std::string bundleId)
 {
     bundle = new BMISensorBundleActivator();
     bundle->activateBundle(resourceContainer, bundleId);
