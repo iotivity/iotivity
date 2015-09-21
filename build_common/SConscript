@@ -79,6 +79,7 @@ help_vars.Add(EnumVariable('TARGET_OS', 'Target platform', host, host_target_map
 
 
 help_vars.Add(BoolVariable('WITH_RA', 'Build with Remote Access module', False))
+help_vars.Add(BoolVariable('SIMULATOR', 'Build with simulator module', False))
 
 if target_os in targets_disallow_multitransport:
 	help_vars.Add(ListVariable('TARGET_TRANSPORT', 'Target transport', 'IP', ['BT', 'BLE', 'IP']))
