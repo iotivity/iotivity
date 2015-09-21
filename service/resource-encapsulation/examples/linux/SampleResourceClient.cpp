@@ -435,15 +435,29 @@ void discoverResource()
 
     std::cin >> addressInput;
 
-    if(addressInput == multicastAdd)
+    if (addressInput == multicastAdd)
     {
-        discoveryTask = RCSDiscoveryManager::getInstance()->discoverResourceByType(RCSAddress::multicast(),
-                relativeUri, resourceType, &onResourceDiscovered);
+        try
+        {
+            discoveryTask = RCSDiscoveryManager::getInstance()->discoverResourceByType(RCSAddress::multicast(),
+                            relativeUri, resourceType, &onResourceDiscovered);
+        }
+        catch (PlatformException e)
+        {
+            std::cout << "Platform Exception while calling discoverResourceByType" << std::endl;
+        }
     }
     else
     {
-        discoveryTask = RCSDiscoveryManager::getInstance()->discoverResourceByType(RCSAddress::unicast
-                (addressInput), relativeUri, resourceType, &onResourceDiscovered);
+        try
+        {
+            discoveryTask = RCSDiscoveryManager::getInstance()->discoverResourceByType(RCSAddress::unicast
+                            (addressInput), relativeUri, resourceType, &onResourceDiscovered);
+        }
+        catch (PlatformException e)
+        {
+            std::cout << "Platform Exception while calling discoverResourceByType" << std::endl;
+        }
     }
 }
 

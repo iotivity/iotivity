@@ -294,9 +294,15 @@ bool discoverResource()
 {
     std::cout << "Wait 2 seconds until discovered." << std::endl;
 
-    RCSDiscoveryManager::getInstance()->discoverResourceByType(RCSAddress::multicast(),
-            relativetUri, resourceType, &onResourceDiscovered);
-
+    try
+    {
+        RCSDiscoveryManager::getInstance()->discoverResourceByType(RCSAddress::multicast(),
+                relativetUri, resourceType, &onResourceDiscovered);
+    }
+    catch(PlatformException e)
+    {
+         std::cout << "Platform Exception while calling discoverResourceByType" << std::endl;
+    }
     std::unique_lock<std::mutex> lck(mtx);
     cond.wait_for(lck, std::chrono::seconds(2));
 
