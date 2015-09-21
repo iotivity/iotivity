@@ -38,20 +38,24 @@ Unit Test Requirements:
 3. The unit test assumes that a network interface is available
    (e.g. "eth0", "wlan0", etc.)
    If no interface is available, the unit tests will FAIL.
+
 4. To run the unit test, first build the C OCStack.
    At the time of this writing this was done by running
 
-   root/csdk/make deepclean
-   root/csdk/make BUILD=release    *default
-   root/csdk/make BUILD=debug
+   scons -c resource/csdk/
+   scons resource/csdk/ RELEASE=1  //*default
+   scons resource/csdk/ RELEASE=0
 
 5. Next, build the ocstack
-   root/csdk/stack/test/make clean
-   root/csdk/stack/test/make BUILD=release    *default
-   root/csdk/stack/test/make BUILD=debug
+   scons -c resource/csdk/stack/test
+   scons resource/csdk/stack/test RELEASE=1  //*default
+   scons resource/csdk/stack/test RELEASE=0
 
-6. Run the unit test by
-   root/csdk/stack/test/release/stacktests
-   root/csdk/stack/test/debug/stacktests
+6. Export LD_LIBRARY_PATH before running the unit tests.
+   Example:
+   export LD_LIBRARY_PATH=/home/tester/Documents/iotivity/extlibs/gtest/gtest-1.7.0/lib/.libs/
 
+7. Run the unit test by issuing the following command from root 'iotivity' folder
+   ./out/<TARGET_OS>/<TARGET_ARCH>/<release/debug>/resource/csdk/stack/test
+   Example: ./out/linux/x86/release/resource/csdk/stack/test/stacktests
 
