@@ -73,7 +73,7 @@ public abstract class BundleResource {
 
     /**
      * Returns the URI of the resource
-     * @return
+     * @return Resource URI
      */
     public String getURI() {
         return m_uri;
@@ -97,7 +97,7 @@ public abstract class BundleResource {
 
     /**
      * Sets the technology specific address information (e.g., ZigBee short or long identifier)    
-     * @param address
+     * @param address Resource address
      */
     public void setAddress(String address) {
         this.m_address = address;
@@ -105,7 +105,7 @@ public abstract class BundleResource {
 
     /**
      * Returns the technology specific address information
-     * @return
+     * @return Resource address
      */
     public String getAddress() {
         return m_address;
@@ -113,7 +113,7 @@ public abstract class BundleResource {
 
     /**
      * Sets the name property of the resource
-     * @param name
+     * @param name Resource name
      */
     public void setName(String name) {
         this.m_name = name;
@@ -121,7 +121,7 @@ public abstract class BundleResource {
 
     /**
      * Returns the name property of the resource
-     * @return
+     * @return Resource name
      */
     public String getName() {
         return m_name;

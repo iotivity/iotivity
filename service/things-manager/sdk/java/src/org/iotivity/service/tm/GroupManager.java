@@ -257,6 +257,8 @@ public class GroupManager {
      *
      * @return OCStackResult - return value of this API. It returns OC_STACK_OK
      *         if success.
+     *
+     * @throws OcException {@link OcException}
      */
     public OCStackResult subscribeCollectionPresence(OcResource resource)
             throws OcException {
@@ -283,6 +285,8 @@ public class GroupManager {
      *            collection resource handle. It will be added child resource.
      *
      * @return OcResourceHandle - Child resource handle.
+     *
+     * @throws OcException {@link OcException}
      */
     public OcResourceHandle bindResourceToGroup(OcResource resource,
             OcResourceHandle collectionHandle) throws OcException {
@@ -305,6 +309,8 @@ public class GroupManager {
      *
      * @return OCStackResult - OC_STACK_OK on success, otherwise a failure error
      *         code.
+     *
+     * @throws OcException {@link OcException}
      */
     public OCStackResult addActionSet(OcResource resource, ActionSet actionSet)
             throws OcException {
@@ -333,6 +339,8 @@ public class GroupManager {
      *
      * @return OCStackResult - OC_STACK_OK on success, otherwise a failure error
      *         code.
+     *
+     * @throws OcException {@link OcException}
      */
     public OCStackResult executeActionSet(OcResource resource,
             String actionsetName) throws OcException {
@@ -364,6 +372,8 @@ public class GroupManager {
      *
      * @return OCStackResult - OC_STACK_OK on success, otherwise a failure error
      *         code.
+     *
+     * @throws OcException {@link OcException}
      */
     public OCStackResult executeActionSet(OcResource resource,
             String actionsetName, long delay) throws OcException {
@@ -396,6 +406,8 @@ public class GroupManager {
      *
      * @return OCStackResult - OC_STACK_OK on success, otherwise a failure error
      *         code.
+     *
+     * @throws OcException {@link OcException}
      */
 
     public OCStackResult cancelActionSet(OcResource resource,
@@ -428,6 +440,8 @@ public class GroupManager {
      *
      * @return OCStackResult - OC_STACK_OK on success, otherwise a failure error
      *         code.
+     *
+     * @throws OcException {@link OcException}
      */
     public OCStackResult getActionSet(OcResource resource, String actionsetName)
             throws OcException {
@@ -459,6 +473,8 @@ public class GroupManager {
      *
      * @return OCStackResult - OC_STACK_OK on success, otherwise a failure error
      *         code.
+     *
+     * @throws OcException {@link OcException}
      */
     public OCStackResult deleteActionSet(OcResource resource,
             String actionsetName) throws OcException {
