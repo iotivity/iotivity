@@ -1,7 +1,7 @@
 LOCAL_PATH := $(call my-dir)
 
 ROOT_PATH := ../../../../../../..
-IOTIVITY_LIB_PATH := $(ROOT_PATH)/out/android/$(TARGET_ARCH_ABI)/release
+IOTIVITY_LIB_PATH := $(ROOT_PATH)/out/android/$(TARGET_ARCH_ABI)/$(APP_OPTIM)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := rcs_common
