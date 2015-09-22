@@ -633,6 +633,19 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
 
     OC_LOG(INFO, TAG, "In SRPProvisionCredentials");
 
+    bool linkExisits = true;
+    OCStackResult res = PDMIsLinkExists(&pDev1->doxm->deviceID, &pDev2->doxm->deviceID, &linkExisits);
+    if (res != OC_STACK_OK)
+    {
+        OC_LOG(ERROR, TAG, "Internal error occured");
+        return res;
+    }
+    if (linkExisits)
+    {
+        OC_LOG(ERROR, TAG, "Link already exists");
+        return OC_STACK_INVALID_PARAM;
+    }
+
     OicUuid_t provTooldeviceID =   {{0,}};
     if (OC_STACK_OK != GetDoxmDeviceID(&provTooldeviceID))
     {

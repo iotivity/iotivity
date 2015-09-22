@@ -152,6 +152,19 @@ void PDMDestoryOicUuidLinkList(OCUuidList_t* ptr);
  */
 void PDMDestoryStaleLinkList(OCPairList_t* ptr);
 
+/**
+ * This method is used by provisioning manager to check does the link exists between
+ * two devices or not.
+ *
+ * @param[in] uuidOfDevice1 UUID of device1.
+ * @param[in] uuidOfDevice2 UUID of device2.
+ * @param[out] result true when link exists otherwise false.
+ *
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult PDMIsLinkExists(const OicUuid_t* uuidOfDevice1, const OicUuid_t* uuidOfDevice2,
+                                bool *result );
+
 #ifdef __cplusplus
 }
 #endif
