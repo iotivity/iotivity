@@ -540,8 +540,15 @@ Java_org_iotivity_service_server_RcsResourceObject_nativeSetGetRequestHandler
     auto res = getResource(env, obj);
     VERIFY_NO_EXC(env);
 
-    res->setGetRequestHandler(std::bind(onGetRequest, std::placeholders::_1, std::placeholders::_2,
-            JavaGlobalRef{ env, listenerObj }));
+    if (listenerObj)
+    {
+        res->setGetRequestHandler(std::bind(onGetRequest, std::placeholders::_1, std::placeholders::_2,
+                JavaGlobalRef{ env, listenerObj }));
+    }
+    else
+    {
+        res->setGetRequestHandler({ });
+    }
 }
 
 JNIEXPORT void JNICALL
@@ -553,8 +560,15 @@ Java_org_iotivity_service_server_RcsResourceObject_nativeSetSetRequestHandler
     auto res = getResource(env, obj);
     VERIFY_NO_EXC(env);
 
-    res->setSetRequestHandler(std::bind(onSetRequest, std::placeholders::_1, std::placeholders::_2,
-           JavaGlobalRef{ env, listenerObj }));
+    if (listenerObj)
+    {
+        res->setSetRequestHandler(std::bind(onSetRequest, std::placeholders::_1,
+                std::placeholders::_2, JavaGlobalRef{ env, listenerObj }));
+    }
+    else
+    {
+        res->setSetRequestHandler({ });
+    }
 }
 
 JNIEXPORT void JNICALL
