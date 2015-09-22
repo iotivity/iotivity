@@ -12,6 +12,7 @@ function build_all()
 		build_linux_secured $1 $2
 		build_linux_unsecured_with_ra $1 $2
 		build_linux_secured_with_ra $1 $2
+		build_linux_unsecured_with_rm $1 $2
 	fi
 
 	build_android $1 $2
@@ -37,6 +38,12 @@ function build_linux_unsecured()
 {
 	echo "*********** Build for linux ************"
 	scons RELEASE=$1 $2
+}
+
+function build_linux_unsecured_with_rm()
+{
+	echo "*********** Build for linux with RoutingManager************"
+	scons ROUTING=GW RELEASE=$1 $2
 }
 
 function build_linux_secured()
@@ -65,7 +72,9 @@ function build_android()
 	# and windows android-ndk-r10(64bit target version) support these features.
 
 	build_android_x86 $1 $2
+	build_android_x86_with_rm $1 $2
 	build_android_armeabi $1 $2
+	build_android_armeabi_with_rm $1 $2
 }
 
 function build_android_x86()
@@ -76,12 +85,28 @@ function build_android_x86()
 	scons TARGET_OS=android TARGET_ARCH=x86 RELEASE=$1 TARGET_TRANSPORT=BLE $2
 }
 
+function build_android_x86_with_rm()
+{
+	echo "*********** Build for android x86 with Routing Manager *************"
+	scons TARGET_OS=android TARGET_ARCH=x86 ROUTING=GW RELEASE=$1 TARGET_TRANSPORT=IP $2
+	scons TARGET_OS=android TARGET_ARCH=x86 ROUTING=GW RELEASE=$1 TARGET_TRANSPORT=BT $2
+	scons TARGET_OS=android TARGET_ARCH=x86 ROUTING=GW RELEASE=$1 TARGET_TRANSPORT=BLE $2
+}
+
 function build_android_armeabi()
 {
 	echo "*********** Build for android armeabi *************"
 	scons TARGET_OS=android TARGET_ARCH=armeabi RELEASE=$1 TARGET_TRANSPORT=IP $2
 	scons TARGET_OS=android TARGET_ARCH=armeabi RELEASE=$1 TARGET_TRANSPORT=BT $2
 	scons TARGET_OS=android TARGET_ARCH=armeabi RELEASE=$1 TARGET_TRANSPORT=BLE $2
+}
+
+function build_android_armeabi_with_rm()
+{
+	echo "*********** Build for android armeabi with Routing Manager*************"
+	scons TARGET_OS=android TARGET_ARCH=armeabi ROUTING=GW RELEASE=$1 TARGET_TRANSPORT=IP $2
+	scons TARGET_OS=android TARGET_ARCH=armeabi ROUTING=GW RELEASE=$1 TARGET_TRANSPORT=BT $2
+	scons TARGET_OS=android TARGET_ARCH=armeabi ROUTING=GW RELEASE=$1 TARGET_TRANSPORT=BLE $2
 }
 
 function build_arduino()
@@ -107,6 +132,12 @@ function build_tizen()
 
 	echo "*********** Build for Tizen CA lib and sample with Security *************"
 	scons -f resource/csdk/connectivity/build/tizen/SConscript TARGET_OS=tizen TARGET_TRANSPORT=IP LOGGING=true SECURED=1 RELEASE=$1 $2
+
+	echo "*********** Build for Tizen octbstack lib and sample *************"
+	scons -f resource/csdk/stack/samples/tizen/build/SConscript TARGET_OS=tizen TARGET_TRANSPORT=IP LOGGING=true RELEASE=$1 $2
+
+	echo "*********** Build for Tizen octbstack lib and sample with Routing Manager*************"
+	scons -f resource/csdk/stack/samples/tizen/build/SConscript TARGET_OS=tizen TARGET_TRANSPORT=IP LOGGING=true ROUTING=GW RELEASE=$1 $2
 }
 
 function build_darwin() # Mac OSx and iOS
@@ -176,6 +207,8 @@ then
 	then
 		build_linux_unsecured true
 		build_linux_unsecured false
+		build_linux_unsecured_with_rm true
+		build_linux_unsecured_with_rm false
 	elif [ $1 = 'linux_secured' ]
 	then
 		build_linux_secured true
@@ -196,10 +229,14 @@ then
 	then
         build_android_x86 true
         build_android_x86 false
+		build_android_x86_with_rm true
+		build_android_x86_with_rm false
 	elif [ $1 = 'android_armeabi' ]
 	then
         build_android_armeabi true
         build_android_armeabi false
+		build_android_armeabi_with_rm true
+		build_android_armeabi_with_rm false
 	elif [ $1 = 'arduino' ]
 	then
 		build_arduino true
