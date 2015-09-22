@@ -35,6 +35,7 @@
 #include <stdlib.h>
 #include <inttypes.h> // To convert "int64_t" to string.
 #include <math.h>
+#include <errno.h>
 
 #include "zigbee_wrapper.h"
 #include "telegesis_wrapper.h"
@@ -477,6 +478,36 @@ bool getZigBeeAttributesIfValid (char * OICResourceType,
     return false;
 }
 
+
+// str will be a 4 digit positive hex number.
+// Prepend with 0x and use strtod to convert to double.
+OCEntityHandlerResult getDoubleValueFromString (const char *str, double *outDouble)
+{
+    size_t hexOutValSize = strlen(HexPrepend) + strlen(str) + 1;
+    char * hexOutVal = (char *) OICCalloc(1, hexOutValSize);
+    if(!hexOutVal)
+    {
+        return OC_EH_ERROR;
+    }
+    OICStrcpy(hexOutVal, hexOutValSize, HexPrepend);
+    OICStrcat(hexOutVal, hexOutValSize, str);
+
+    char *endPtr = NULL;
+    errno = 0;
+    double value = strtod(hexOutVal, &endPtr);
+
+    if(errno != 0 || *endPtr != 0 || value == HUGE_VALF || value == HUGE_VALL)
+    {
+        OICFree(hexOutVal);
+        return OC_EH_ERROR;
+    }
+
+    OICFree(hexOutVal);
+    *outDouble = value;
+    return OC_EH_OK;
+
+}
+
 OCEntityHandlerResult processGetRequest (PIPluginBase * plugin,
         OCEntityHandlerRequest *ehRequest, OCRepPayload **payload)
 {
@@ -539,22 +570,16 @@ OCEntityHandlerResult processGetRequest (PIPluginBase * plugin,
         }
         if (attributeList.list[i].oicType == OIC_ATTR_INT)
         {
-            size_t hexOutValSize = strlen(HexPrepend) + strlen(outVal) + 1;
-            char * hexOutVal = (char *) OICCalloc(1, hexOutValSize);
-            if(!hexOutVal)
+            char *endPtr = NULL;
+            errno = 0;
+            // Third arg is 16 as outVal is a hex Number
+            uint64_t value = strtol (outVal, &endPtr, 16);
+
+            if (*endPtr != 0 || errno != 0)
             {
                 return OC_EH_ERROR;
             }
-            OICStrcpy(hexOutVal, hexOutValSize, HexPrepend);
-            OICStrcat(hexOutVal, hexOutValSize, outVal);
-            double value = strtod(hexOutVal, NULL);
-            if(value == 0.0 || value == HUGE_VALF || value == HUGE_VALL)
-            {
-                OICFree(hexOutVal);
-                return OC_EH_ERROR;
-            }
-            if (strcmp(attributeList.list[i].oicAttribute, OIC_DIMMING_ATTRIBUTE)
-                == 0)
+            if (strcmp(attributeList.list[i].oicAttribute, OIC_DIMMING_ATTRIBUTE) == 0)
             {
                 // OIC Dimming operates between 0-100, while Zigbee operates
                 // between 0-254 (ie. 0xFE).
@@ -570,22 +595,13 @@ OCEntityHandlerResult processGetRequest (PIPluginBase * plugin,
             boolRes = OCRepPayloadSetPropInt(*payload,
                                              attributeList.list[i].oicAttribute,
                                              (uint64_t) value);
-            OICFree (hexOutVal);
         }
         else if (attributeList.list[i].oicType == OIC_ATTR_DOUBLE)
         {
-            size_t hexOutValSize = strlen(HexPrepend) + strlen(outVal) + 1;
-            char * hexOutVal = (char *) OICCalloc(1, hexOutValSize);
-            if(!hexOutVal)
+            double value = 0;
+
+            if (getDoubleValueFromString (outVal, &value) != OC_EH_OK)
             {
-                return OC_EH_ERROR;
-            }
-            OICStrcat(hexOutVal, hexOutValSize, HexPrepend);
-            OICStrcat(hexOutVal, hexOutValSize, outVal);
-            double value = strtod(hexOutVal, NULL);
-            if(value == 0.0 || value == HUGE_VAL || value == -HUGE_VAL)
-            {
-                OICFree(hexOutVal);
                 return OC_EH_ERROR;
             }
             if (strcmp(piResource->clusterId, ZB_TEMPERATURE_CLUSTER) == 0)
@@ -597,7 +613,6 @@ OCEntityHandlerResult processGetRequest (PIPluginBase * plugin,
             boolRes = OCRepPayloadSetPropDouble(*payload,
                                                 attributeList.list[i].oicAttribute,
                                                 value);
-            OICFree(hexOutVal);
         }
         else if (attributeList.list[i].oicType == OIC_ATTR_STRING)
         {
@@ -607,19 +622,24 @@ OCEntityHandlerResult processGetRequest (PIPluginBase * plugin,
         }
         else if (attributeList.list[i].oicType == OIC_ATTR_BOOL)
         {
-            bool value = true;
-            if(strcmp(outVal, "0") == 0)
-            {
-                value = false;
-            }
+            char *endPtr = NULL;
+            errno = 0;
+            // Third arg is 16 as outVal is a hex Number
+            uint64_t value = strtol (outVal, &endPtr, 16);
 
-            // value is a bit mask and the LSB indicates boolean true/false.
+            if (errno != 0 || *endPtr != 0)
+            {
+                return OC_EH_ERROR;
+            }
+            // value COULD be a bit mask and the LSB indicates boolean true/false.
+            // If not a bit mask, it'll be plain 0 or 1.
             value = value & 1;
             boolRes = OCRepPayloadSetPropBool(*payload,
                                               attributeList.list[i].oicAttribute,
                                               value);
         }
-        OICFree(outVal);
+
+        OICFree (outVal);
     }
 
     if (boolRes == false)
