@@ -17,19 +17,21 @@
 // limitations under the License.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-#include <unistd.h>
-#include "OCPlatform.h"
+
 #include "UnitTestHelper.h"
+
 #include "RCSRemoteResourceObject.h"
 #include "RCSDiscoveryManager.h"
 #include "RCSResourceObject.h"
-#include "PrimitiveResource.h"
+#include "RCSAddress.h"
+
+#include "OCPlatform.h"
 
 using namespace OIC::Service;
 using namespace OC::OCPlatform;
 
 constexpr char RESOURCEURI[]{ "/a/TemperatureSensor" };
-constexpr char RESOURCETYPE[]{ "Resource.Hosting" };
+constexpr char RESOURCETYPE[]{ "resource.type" };
 constexpr char RESOURCEINTERFACE[]{ "oic.if.baseline" };
 constexpr int DiscoveryTaskDELAYTIME = 7;
 
@@ -46,9 +48,8 @@ public:
     void startDiscovery()
     {
         const std::string uri  = "/oic/res";
-        const std::string type = "Resource.Hosting";
         discoveryTask = RCSDiscoveryManager::getInstance()->discoverResourceByType(RCSAddress::multicast(),
-                 uri, type, &resourceDiscovered);
+                 uri, RESOURCETYPE, &resourceDiscovered);
     }
 
     void cancelDiscovery()
