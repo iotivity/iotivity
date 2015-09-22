@@ -429,9 +429,9 @@ exit:
  */
 OCStackResult InitPolicyEngine(PEContext_t *context)
 {
-    context->amsMgrContext = (AmsMgrContext_t *)OICMalloc(sizeof(AmsMgrContext_t));
     if(NULL != context)
     {
+        context->amsMgrContext = (AmsMgrContext_t *)OICMalloc(sizeof(AmsMgrContext_t));
         SetPolicyEngineState(context, AWAITING_REQUEST);
     }
 
@@ -449,7 +449,7 @@ void DeInitPolicyEngine(PEContext_t *context)
     if(NULL != context)
     {
         SetPolicyEngineState(context, STOPPED);
+        OICFree(context->amsMgrContext);
     }
-    OICFree(context->amsMgrContext);
     return;
 }
