@@ -428,24 +428,28 @@ namespace OIC
             template< typename K, typename V >
             void setAttributeInternal(K&&, V&&);
 
+            bool applyAcceptanceMethod(const RCSSetResponse&, const RCSResourceAttributes&);
+
         private:
             const uint8_t m_properties;
 
             OCResourceHandle m_resourceHandle;
+
             RCSResourceAttributes m_resourceAttributes;
 
             GetRequestHandler m_getRequestHandler;
             SetRequestHandler m_setRequestHandler;
+
             AutoNotifyPolicy m_autoNotifyPolicy;
             SetRequestHandlerPolicy m_setRequestHandlerPolicy;
 
-            std::unordered_map< std::string, AttributeUpdatedListener >
-                    m_keyAttributesUpdatedListeners;
+            std::unordered_map< std::string, std::shared_ptr< AttributeUpdatedListener > >
+                    m_attributeUpdatedListeners;
 
             mutable std::unique_ptr< AtomicThreadId > m_lockOwner;
             mutable std::mutex m_mutex;
 
-            std::mutex m_mutexKeyAttributeUpdate;
+            std::mutex m_mutexAttributeUpdatedListeners;
 
         };
 
