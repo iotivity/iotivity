@@ -49,8 +49,9 @@
 static uint32_t countDiscoveredResources = 0;
 static bool promptUser = false;
 
-static const char*      coapServerIP    = "255.255.255.255";
-static       uint32_t   coapServerPort  = 5683;
+static OCDevAddr destinationAddress = {
+    .adapter = OC_ADAPTER_IP
+};
 
 typedef struct
 {
@@ -73,7 +74,7 @@ static void PrintTestCases()
 static void PrintResources ()
 {
     printf("\nResources: \n");
-    for (int i = 0; i < countDiscoveredResources; ++i)
+    for (uint32_t i = 0; i < countDiscoveredResources; ++i)
     {
         printf("\t# : %u \t URI: %s \t Type:%s\n", i, g_discoveredResources[i].uri,
             g_discoveredResources[i].resourceType);
@@ -108,7 +109,7 @@ void rememberDiscoveredResources (OCClientResponse *clientResponse)
     }
 }
 
-OCStackResult InvokeOCDoResource (char *query,
+OCStackResult InvokeOCDoResource (const char *query,
                                  OCPayload *payload,
                                  OCMethod method,
                                  OCClientResponseHandler cb)
@@ -120,8 +121,8 @@ OCStackResult InvokeOCDoResource (char *query,
 
     OCDoHandle handle = NULL;
 
-    OCStackResult ret = OCDoResource(&handle, method, query, 0, payload,
-                        CT_ADAPTER_IP, OC_LOW_QOS, &cbData, NULL, 0);
+    OCStackResult ret = OCDoResource(&handle, method, query, &destinationAddress,
+                    payload, CT_ADAPTER_IP, OC_LOW_QOS, &cbData, NULL, 0);
 
     if (ret != OC_STACK_OK)
     {
@@ -136,6 +137,7 @@ OCStackApplicationResult responseCallbacks(void* ctx,
                 OCClientResponse * clientResponse)
 {
     (void)handle;
+    (void) ctx;
     if(clientResponse == NULL)
     {
         OC_LOG(INFO, TAG, "responseCallbacks received NULL clientResponse");
@@ -149,23 +151,14 @@ OCStackApplicationResult responseCallbacks(void* ctx,
 
 int InitGetRequest (const char *resourceUri)
 {
-    char query[MAX_QUERY_SIZE] = {0};
-    snprintf (query, sizeof(query), "coap://%s:%u%s", coapServerIP,
-                                            coapServerPort,resourceUri);
-
-    OC_LOG_V(INFO, TAG, "Executing %s queryString is: %s", __func__, query);
-
-    return (InvokeOCDoResource(query, NULL, OC_REST_GET, responseCallbacks));
+    OC_LOG_V(INFO, TAG, "Executing %s for resource: %s", __func__, resourceUri);
+    return (InvokeOCDoResource(resourceUri, NULL, OC_REST_GET, responseCallbacks));
 }
 
 int InitPutRequest (const char *resourceUri, OCPayload* payload)
 {
-    char query[MAX_QUERY_SIZE] = {0};
-    snprintf (query, sizeof(query), "coap://%s:%u%s", coapServerIP, coapServerPort,
-                                                            resourceUri);
-    OC_LOG_V(INFO, TAG, "Executing %s queryString is: %s", __func__, query);
-
-    return (InvokeOCDoResource(query, payload, OC_REST_PUT, responseCallbacks));
+    OC_LOG_V(INFO, TAG, "Executing %s for resource: %s", __func__, resourceUri);
+    return (InvokeOCDoResource(resourceUri, payload, OC_REST_PUT, responseCallbacks));
 }
 
 OCPayload * getSwitchStatePayload (bool state)
@@ -198,6 +191,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
                             OCClientResponse * clientResponse)
 {
     (void)handle;
+    (void) ctx;
     if (!clientResponse)
     {
         OC_LOG(INFO, TAG, "Discovery response is NULL");
@@ -208,8 +202,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
     OC_LOG_V(INFO, TAG, "Discovered @ %s:%d", clientResponse->devAddr.addr,
                                 clientResponse->devAddr.port);
 
-    coapServerIP   = OICStrdup (clientResponse->devAddr.addr);
-    coapServerPort = clientResponse->devAddr.port;
+    destinationAddress = clientResponse->devAddr;
 
     rememberDiscoveredResources (clientResponse);
 
@@ -361,7 +354,7 @@ void getTestCaseFromUser ()
     printf("\nUsage:<resource number> <test case> :");
 
     char input[10] = {0};
-    int resourceNo = 0;
+    uint32_t resourceNo = 0;
     int testCase = 0;
 
     char * ret = fgets (input, sizeof(input), stdin);
@@ -420,6 +413,8 @@ void processCancel(int signal)
 
 int main(int argc, char* argv[])
 {
+    (void) argc;
+    (void) argv;
     OCStackResult result;
     OC_LOG(INFO, TAG, "Initializing IoTivity...");
 
