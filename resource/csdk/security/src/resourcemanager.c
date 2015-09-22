@@ -130,6 +130,11 @@ OCStackResult DestroySecureResources( )
     DeInitCredResource();
     DeInitDoxmResource();
     DeInitPstatResource();
+#ifdef __WITH_X509__
+    DeInitCRLResource();
+#endif // __WITH_X509__
+    DeInitSVCResource();
+    DeInitAmaclResource();
 
     return OC_STACK_OK;
 }
