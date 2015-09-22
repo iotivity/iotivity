@@ -650,13 +650,15 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
                     &firstCred, &secondCred);
             VERIFY_SUCCESS(TAG, (res==OC_STACK_OK), ERROR, OC_STACK_ERROR);
             OC_LOG(INFO, TAG, "Credentials generated successfully");
-            CredentialData_t *credData = (CredentialData_t *) OICMalloc(sizeof(CredentialData_t));
+            CredentialData_t *credData =
+                (CredentialData_t *) OICCalloc(1, sizeof(CredentialData_t));
             if (NULL == credData)
             {
+                OICFree(firstCred);
+                OICFree(secondCred);
                 OC_LOG(ERROR, TAG, "Memory allocation problem");
                 return OC_STACK_NO_MEMORY;
             }
-            memset(credData, 0x00, sizeof(CredentialData_t));
             credData->deviceInfo1 = firstDevice;
             credData->deviceInfo2 = secondDevice;
             credData->credInfo = secondCred;
@@ -668,13 +670,15 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
             // second call to provision creds to device2.
             int noOfRiCalls = 2;
             credData->resArr =
-                (OCProvisionResult_t*)OICMalloc(sizeof(OCProvisionResult_t) * noOfRiCalls);
+                (OCProvisionResult_t*)OICCalloc(noOfRiCalls, sizeof(OCProvisionResult_t));
             if (NULL == credData->resArr)
             {
+                OICFree(firstCred);
+                OICFree(secondCred);
+                OICFree(credData);
                 OC_LOG(ERROR, TAG, "Memory allocation problem");
                 return OC_STACK_NO_MEMORY;
             }
-            memset(credData->resArr, 0x00, sizeof(sizeof(OCProvisionResult_t)*noOfRiCalls));
             res = provisionCredentials(firstCred, firstDevice, credData, &provisionCredentialCB1);
             if (OC_STACK_OK != res)
             {
@@ -699,6 +703,7 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
             CertData_t *certData = (CertData_t *) OICCalloc(1, sizeof(CertData_t));
             if (NULL == certData)
             {
+                OICFree(cred);
                 OC_LOG(ERROR, TAG, "Memory allocation problem");
                 return OC_STACK_NO_MEMORY;
             }
@@ -831,28 +836,29 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
 
     OCCallbackData cbData =  {.context=NULL, .cb=NULL, .cd=NULL};
     cbData.cb = &SRPProvisionACLCB;
-    ACLData_t *aclData = (ACLData_t *) OICMalloc(sizeof(ACLData_t));
+    ACLData_t *aclData = (ACLData_t *) OICCalloc(1, sizeof(ACLData_t));
     if (aclData == NULL)
     {
+        OICFree(secPayload->securityData);
         OICFree(secPayload);
         OC_LOG(ERROR, TAG, "Unable to allocate memory");
         return OC_STACK_NO_MEMORY;
     }
-    memset(aclData, 0x00, sizeof(ACLData_t));
     aclData->deviceInfo = selectedDeviceInfo;
     aclData->resultCallback = resultCallback;
     aclData->numOfResults=0;
     aclData->ctx = ctx;
     // call to provision ACL to device1.
     int noOfRiCalls = 1;
-    aclData->resArr = (OCProvisionResult_t*)OICMalloc(sizeof(OCProvisionResult_t)*noOfRiCalls);
+    aclData->resArr = (OCProvisionResult_t*)OICCalloc(noOfRiCalls, sizeof(OCProvisionResult_t));
     if (aclData->resArr == NULL)
     {
+        OICFree(aclData);
+        OICFree(secPayload->securityData);
         OICFree(secPayload);
         OC_LOG(ERROR, TAG, "Unable to allocate memory");
         return OC_STACK_NO_MEMORY;
     }
-    memset(aclData->resArr, 0x00, sizeof(sizeof(OCProvisionResult_t)*noOfRiCalls));
     cbData.context = (void *)aclData;
     cbData.cd = NULL;
     OCMethod method = OC_REST_POST;
