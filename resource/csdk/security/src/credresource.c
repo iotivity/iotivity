@@ -55,7 +55,7 @@ static void FreeCred(OicSecCred_t *cred)
 {
     if(NULL == cred)
     {
-        OC_LOG (INFO, TAG, "Invalid Parameter");
+        OC_LOG (ERROR, TAG, "Invalid Parameter");
         return;
     }
     //Note: Need further clarification on roleID data type
@@ -650,7 +650,7 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
 
 static OCEntityHandlerResult HandleDeleteRequest(const OCEntityHandlerRequest *ehRequest)
 {
-    OC_LOG(INFO, TAG, "Processing CredDeleteRequest");
+    OC_LOG(DEBUG, TAG, "Processing CredDeleteRequest");
 
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
@@ -707,7 +707,7 @@ OCEntityHandlerResult CredEntityHandler (OCEntityHandlerFlag flag,
     }
     if (flag & OC_REQUEST_FLAG)
     {
-        OC_LOG (INFO, TAG, "Flag includes OC_REQUEST_FLAG");
+        OC_LOG (DEBUG, TAG, "Flag includes OC_REQUEST_FLAG");
         //TODO :  Handle PUT/DEL methods
         switch(ehRequest->method)
         {

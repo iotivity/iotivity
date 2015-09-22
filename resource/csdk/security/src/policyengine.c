@@ -211,7 +211,7 @@ static bool IsAccessWithinValidTime(const OicSecAcl_t *acl)
             return true;
         }
     }
-    OC_LOG(INFO, TAG, "Access request is in invalid time period");
+    OC_LOG(ERROR, TAG, "Access request is in invalid time period");
     return false;
 
 #else
@@ -252,7 +252,7 @@ static bool IsAccessWithinValidTime(const OicSecAcl_t *acl)
  */
 void ProcessAccessRequest(PEContext_t *context)
 {
-    OC_LOG(INFO, TAG, "Entering ProcessAccessRequest()");
+    OC_LOG(DEBUG, TAG, "Entering ProcessAccessRequest()");
     if(NULL != context)
     {
         const OicSecAcl_t *currentAcl = NULL;
@@ -265,17 +265,17 @@ void ProcessAccessRequest(PEContext_t *context)
         // ACL for this request.
         do
         {
-            OC_LOG_V(INFO, TAG, "%s: getting ACL..." ,__func__);
+            OC_LOG_V(DEBUG, TAG, "%s: getting ACL..." ,__func__);
             currentAcl = GetACLResourceData(&context->subject, &savePtr);
 
             if(NULL != currentAcl)
             {
                 // Found the subject, so how about resource?
-                OC_LOG_V(INFO, TAG, "%s:found ACL matching subject" ,__func__);
+                OC_LOG_V(DEBUG, TAG, "%s:found ACL matching subject" ,__func__);
 
                 // Subject was found, so err changes to Rsrc not found for now.
                 context->retVal = ACCESS_DENIED_RESOURCE_NOT_FOUND;
-                OC_LOG_V(INFO, TAG, "%s:Searching for resource..." ,__func__);
+                OC_LOG_V(DEBUG, TAG, "%s:Searching for resource..." ,__func__);
                 if(IsResourceInAcl(context->resource, currentAcl))
                 {
                     OC_LOG_V(INFO, TAG, "%s:found matching resource in ACL" ,__func__);
@@ -311,7 +311,7 @@ void ProcessAccessRequest(PEContext_t *context)
     }
     else
     {
-        OC_LOG_V(INFO, TAG, "%s:Leaving ProcessAccessRequest(context is NULL)", __func__);
+        OC_LOG_V(ERROR, TAG, "%s:Leaving ProcessAccessRequest(context is NULL)", __func__);
     }
 }
 
