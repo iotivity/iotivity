@@ -299,9 +299,9 @@ bool discoverResource()
         RCSDiscoveryManager::getInstance()->discoverResourceByType(RCSAddress::multicast(),
                 relativetUri, resourceType, &onResourceDiscovered);
     }
-    catch(PlatformException e)
+    catch(const RCSPlatformException& e)
     {
-         std::cout << "Platform Exception while calling discoverResourceByType" << std::endl;
+         std::cout << e.what() << std::endl;
     }
     std::unique_lock<std::mutex> lck(mtx);
     cond.wait_for(lck, std::chrono::seconds(2));

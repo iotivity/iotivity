@@ -529,15 +529,11 @@ public final class RcsResourceObject extends RcsObject {
      *
      * @throws RcsException
      *             If the object is destroyed.
-     * @throws NullPointerException
-     *             If handler is null.
-     *
      */
     public void setGetRequestHandler(GetRequestHandler handler)
             throws RcsException {
         assertAlive();
 
-        if (handler == null) throw new NullPointerException("handler is null.");
         nativeSetGetRequestHandler(handler);
     }
 
@@ -549,15 +545,11 @@ public final class RcsResourceObject extends RcsObject {
      *
      * @throws RcsException
      *             If the object is destroyed.
-     * @throws NullPointerException
-     *             If handler is null.
      *
      */
     public void setSetRequestHandler(SetRequestHandler handler)
             throws RcsException {
         assertAlive();
-
-        if (handler == null) throw new NullPointerException("handler is null.");
 
         nativeSetSetRequestHandler(handler);
     }
